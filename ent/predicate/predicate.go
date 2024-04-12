@@ -63,6 +63,9 @@ type FeatureFlag func(*sql.Selector)
 // FleetCode is the predicate function for fleetcode builders.
 type FleetCode func(*sql.Selector)
 
+// FormulaTemplate is the predicate function for formulatemplate builders.
+type FormulaTemplate func(*sql.Selector)
+
 // GeneralLedgerAccount is the predicate function for generalledgeraccount builders.
 type GeneralLedgerAccount func(*sql.Selector)
 
@@ -117,8 +120,14 @@ type Session func(*sql.Selector)
 // Shipment is the predicate function for shipment builders.
 type Shipment func(*sql.Selector)
 
+// ShipmentCharges is the predicate function for shipmentcharges builders.
+type ShipmentCharges func(*sql.Selector)
+
 // ShipmentComment is the predicate function for shipmentcomment builders.
 type ShipmentComment func(*sql.Selector)
+
+// ShipmentCommodity is the predicate function for shipmentcommodity builders.
+type ShipmentCommodity func(*sql.Selector)
 
 // ShipmentControl is the predicate function for shipmentcontrol builders.
 type ShipmentControl func(*sql.Selector)

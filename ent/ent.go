@@ -31,6 +31,7 @@ import (
 	"github.com/emoss08/trenova/ent/feasibilitytoolcontrol"
 	"github.com/emoss08/trenova/ent/featureflag"
 	"github.com/emoss08/trenova/ent/fleetcode"
+	"github.com/emoss08/trenova/ent/formulatemplate"
 	"github.com/emoss08/trenova/ent/generalledgeraccount"
 	"github.com/emoss08/trenova/ent/googleapi"
 	"github.com/emoss08/trenova/ent/hazardousmaterial"
@@ -49,7 +50,9 @@ import (
 	"github.com/emoss08/trenova/ent/servicetype"
 	"github.com/emoss08/trenova/ent/session"
 	"github.com/emoss08/trenova/ent/shipment"
+	"github.com/emoss08/trenova/ent/shipmentcharges"
 	"github.com/emoss08/trenova/ent/shipmentcomment"
+	"github.com/emoss08/trenova/ent/shipmentcommodity"
 	"github.com/emoss08/trenova/ent/shipmentcontrol"
 	"github.com/emoss08/trenova/ent/shipmentdocumentation"
 	"github.com/emoss08/trenova/ent/shipmenttype"
@@ -143,6 +146,7 @@ func checkColumn(table, column string) error {
 			feasibilitytoolcontrol.Table:       feasibilitytoolcontrol.ValidColumn,
 			featureflag.Table:                  featureflag.ValidColumn,
 			fleetcode.Table:                    fleetcode.ValidColumn,
+			formulatemplate.Table:              formulatemplate.ValidColumn,
 			generalledgeraccount.Table:         generalledgeraccount.ValidColumn,
 			googleapi.Table:                    googleapi.ValidColumn,
 			hazardousmaterial.Table:            hazardousmaterial.ValidColumn,
@@ -161,7 +165,9 @@ func checkColumn(table, column string) error {
 			servicetype.Table:                  servicetype.ValidColumn,
 			session.Table:                      session.ValidColumn,
 			shipment.Table:                     shipment.ValidColumn,
+			shipmentcharges.Table:              shipmentcharges.ValidColumn,
 			shipmentcomment.Table:              shipmentcomment.ValidColumn,
+			shipmentcommodity.Table:            shipmentcommodity.ValidColumn,
 			shipmentcontrol.Table:              shipmentcontrol.ValidColumn,
 			shipmentdocumentation.Table:        shipmentdocumentation.ValidColumn,
 			shipmenttype.Table:                 shipmenttype.ValidColumn,

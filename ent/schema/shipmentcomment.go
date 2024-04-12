@@ -28,6 +28,13 @@ func (ShipmentComment) Fields() []ent.Field {
 	}
 }
 
+// Mixin of the ShipmentComment.
+func (ShipmentComment) Mixin() []ent.Mixin {
+	return []ent.Mixin{
+		BaseMixin{},
+	}
+}
+
 // Edges of the ShipmentComment.
 func (ShipmentComment) Edges() []ent.Edge {
 	return []ent.Edge{

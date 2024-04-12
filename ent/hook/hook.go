@@ -237,6 +237,18 @@ func (f FleetCodeFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, e
 	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.FleetCodeMutation", m)
 }
 
+// The FormulaTemplateFunc type is an adapter to allow the use of ordinary
+// function as FormulaTemplate mutator.
+type FormulaTemplateFunc func(context.Context, *ent.FormulaTemplateMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f FormulaTemplateFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.FormulaTemplateMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.FormulaTemplateMutation", m)
+}
+
 // The GeneralLedgerAccountFunc type is an adapter to allow the use of ordinary
 // function as GeneralLedgerAccount mutator.
 type GeneralLedgerAccountFunc func(context.Context, *ent.GeneralLedgerAccountMutation) (ent.Value, error)
@@ -453,6 +465,18 @@ func (f ShipmentFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, er
 	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.ShipmentMutation", m)
 }
 
+// The ShipmentChargesFunc type is an adapter to allow the use of ordinary
+// function as ShipmentCharges mutator.
+type ShipmentChargesFunc func(context.Context, *ent.ShipmentChargesMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f ShipmentChargesFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.ShipmentChargesMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.ShipmentChargesMutation", m)
+}
+
 // The ShipmentCommentFunc type is an adapter to allow the use of ordinary
 // function as ShipmentComment mutator.
 type ShipmentCommentFunc func(context.Context, *ent.ShipmentCommentMutation) (ent.Value, error)
@@ -463,6 +487,18 @@ func (f ShipmentCommentFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Va
 		return f(ctx, mv)
 	}
 	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.ShipmentCommentMutation", m)
+}
+
+// The ShipmentCommodityFunc type is an adapter to allow the use of ordinary
+// function as ShipmentCommodity mutator.
+type ShipmentCommodityFunc func(context.Context, *ent.ShipmentCommodityMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f ShipmentCommodityFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.ShipmentCommodityMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.ShipmentCommodityMutation", m)
 }
 
 // The ShipmentControlFunc type is an adapter to allow the use of ordinary

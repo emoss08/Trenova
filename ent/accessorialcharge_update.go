@@ -13,6 +13,8 @@ import (
 	"entgo.io/ent/schema/field"
 	"github.com/emoss08/trenova/ent/accessorialcharge"
 	"github.com/emoss08/trenova/ent/predicate"
+	"github.com/emoss08/trenova/ent/shipmentcharges"
+	"github.com/google/uuid"
 )
 
 // AccessorialChargeUpdate is the builder for updating AccessorialCharge entities.
@@ -153,9 +155,45 @@ func (acu *AccessorialChargeUpdate) AddAmount(f float64) *AccessorialChargeUpdat
 	return acu
 }
 
+// AddShipmentChargeIDs adds the "shipment_charges" edge to the ShipmentCharges entity by IDs.
+func (acu *AccessorialChargeUpdate) AddShipmentChargeIDs(ids ...uuid.UUID) *AccessorialChargeUpdate {
+	acu.mutation.AddShipmentChargeIDs(ids...)
+	return acu
+}
+
+// AddShipmentCharges adds the "shipment_charges" edges to the ShipmentCharges entity.
+func (acu *AccessorialChargeUpdate) AddShipmentCharges(s ...*ShipmentCharges) *AccessorialChargeUpdate {
+	ids := make([]uuid.UUID, len(s))
+	for i := range s {
+		ids[i] = s[i].ID
+	}
+	return acu.AddShipmentChargeIDs(ids...)
+}
+
 // Mutation returns the AccessorialChargeMutation object of the builder.
 func (acu *AccessorialChargeUpdate) Mutation() *AccessorialChargeMutation {
 	return acu.mutation
+}
+
+// ClearShipmentCharges clears all "shipment_charges" edges to the ShipmentCharges entity.
+func (acu *AccessorialChargeUpdate) ClearShipmentCharges() *AccessorialChargeUpdate {
+	acu.mutation.ClearShipmentCharges()
+	return acu
+}
+
+// RemoveShipmentChargeIDs removes the "shipment_charges" edge to ShipmentCharges entities by IDs.
+func (acu *AccessorialChargeUpdate) RemoveShipmentChargeIDs(ids ...uuid.UUID) *AccessorialChargeUpdate {
+	acu.mutation.RemoveShipmentChargeIDs(ids...)
+	return acu
+}
+
+// RemoveShipmentCharges removes "shipment_charges" edges to ShipmentCharges entities.
+func (acu *AccessorialChargeUpdate) RemoveShipmentCharges(s ...*ShipmentCharges) *AccessorialChargeUpdate {
+	ids := make([]uuid.UUID, len(s))
+	for i := range s {
+		ids[i] = s[i].ID
+	}
+	return acu.RemoveShipmentChargeIDs(ids...)
 }
 
 // Save executes the query and returns the number of nodes affected by the update operation.
@@ -270,6 +308,51 @@ func (acu *AccessorialChargeUpdate) sqlSave(ctx context.Context) (n int, err err
 	}
 	if value, ok := acu.mutation.AddedAmount(); ok {
 		_spec.AddField(accessorialcharge.FieldAmount, field.TypeFloat64, value)
+	}
+	if acu.mutation.ShipmentChargesCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   accessorialcharge.ShipmentChargesTable,
+			Columns: []string{accessorialcharge.ShipmentChargesColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(shipmentcharges.FieldID, field.TypeUUID),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := acu.mutation.RemovedShipmentChargesIDs(); len(nodes) > 0 && !acu.mutation.ShipmentChargesCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   accessorialcharge.ShipmentChargesTable,
+			Columns: []string{accessorialcharge.ShipmentChargesColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(shipmentcharges.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := acu.mutation.ShipmentChargesIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   accessorialcharge.ShipmentChargesTable,
+			Columns: []string{accessorialcharge.ShipmentChargesColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(shipmentcharges.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
 	_spec.AddModifiers(acu.modifiers...)
 	if n, err = sqlgraph.UpdateNodes(ctx, acu.driver, _spec); err != nil {
@@ -417,9 +500,45 @@ func (acuo *AccessorialChargeUpdateOne) AddAmount(f float64) *AccessorialChargeU
 	return acuo
 }
 
+// AddShipmentChargeIDs adds the "shipment_charges" edge to the ShipmentCharges entity by IDs.
+func (acuo *AccessorialChargeUpdateOne) AddShipmentChargeIDs(ids ...uuid.UUID) *AccessorialChargeUpdateOne {
+	acuo.mutation.AddShipmentChargeIDs(ids...)
+	return acuo
+}
+
+// AddShipmentCharges adds the "shipment_charges" edges to the ShipmentCharges entity.
+func (acuo *AccessorialChargeUpdateOne) AddShipmentCharges(s ...*ShipmentCharges) *AccessorialChargeUpdateOne {
+	ids := make([]uuid.UUID, len(s))
+	for i := range s {
+		ids[i] = s[i].ID
+	}
+	return acuo.AddShipmentChargeIDs(ids...)
+}
+
 // Mutation returns the AccessorialChargeMutation object of the builder.
 func (acuo *AccessorialChargeUpdateOne) Mutation() *AccessorialChargeMutation {
 	return acuo.mutation
+}
+
+// ClearShipmentCharges clears all "shipment_charges" edges to the ShipmentCharges entity.
+func (acuo *AccessorialChargeUpdateOne) ClearShipmentCharges() *AccessorialChargeUpdateOne {
+	acuo.mutation.ClearShipmentCharges()
+	return acuo
+}
+
+// RemoveShipmentChargeIDs removes the "shipment_charges" edge to ShipmentCharges entities by IDs.
+func (acuo *AccessorialChargeUpdateOne) RemoveShipmentChargeIDs(ids ...uuid.UUID) *AccessorialChargeUpdateOne {
+	acuo.mutation.RemoveShipmentChargeIDs(ids...)
+	return acuo
+}
+
+// RemoveShipmentCharges removes "shipment_charges" edges to ShipmentCharges entities.
+func (acuo *AccessorialChargeUpdateOne) RemoveShipmentCharges(s ...*ShipmentCharges) *AccessorialChargeUpdateOne {
+	ids := make([]uuid.UUID, len(s))
+	for i := range s {
+		ids[i] = s[i].ID
+	}
+	return acuo.RemoveShipmentChargeIDs(ids...)
 }
 
 // Where appends a list predicates to the AccessorialChargeUpdate builder.
@@ -564,6 +683,51 @@ func (acuo *AccessorialChargeUpdateOne) sqlSave(ctx context.Context) (_node *Acc
 	}
 	if value, ok := acuo.mutation.AddedAmount(); ok {
 		_spec.AddField(accessorialcharge.FieldAmount, field.TypeFloat64, value)
+	}
+	if acuo.mutation.ShipmentChargesCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   accessorialcharge.ShipmentChargesTable,
+			Columns: []string{accessorialcharge.ShipmentChargesColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(shipmentcharges.FieldID, field.TypeUUID),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := acuo.mutation.RemovedShipmentChargesIDs(); len(nodes) > 0 && !acuo.mutation.ShipmentChargesCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   accessorialcharge.ShipmentChargesTable,
+			Columns: []string{accessorialcharge.ShipmentChargesColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(shipmentcharges.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := acuo.mutation.ShipmentChargesIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   accessorialcharge.ShipmentChargesTable,
+			Columns: []string{accessorialcharge.ShipmentChargesColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(shipmentcharges.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
 	_spec.AddModifiers(acuo.modifiers...)
 	_node = &AccessorialCharge{config: acuo.config}

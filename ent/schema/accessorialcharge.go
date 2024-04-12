@@ -3,6 +3,7 @@ package schema
 import (
 	"entgo.io/ent"
 	"entgo.io/ent/dialect"
+	"entgo.io/ent/schema/edge"
 	"entgo.io/ent/schema/field"
 )
 
@@ -64,5 +65,8 @@ func (AccessorialCharge) Mixin() []ent.Mixin {
 
 // Edges of the AccessorialCharge.
 func (AccessorialCharge) Edges() []ent.Edge {
-	return nil
+	return []ent.Edge{
+		edge.To("shipment_charges", ShipmentCharges.Type).
+			StructTag(`json:"shipmentCharges,omitempty"`),
+	}
 }

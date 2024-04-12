@@ -127,14 +127,18 @@ const (
 	EdgeTrailerType = "trailer_type"
 	// EdgeTractorType holds the string denoting the tractor_type edge name in mutations.
 	EdgeTractorType = "tractor_type"
-	// EdgeCreatedByUser holds the string denoting the created_by_user edge name in mutations.
-	EdgeCreatedByUser = "created_by_user"
-	// EdgeCustomer holds the string denoting the customer edge name in mutations.
-	EdgeCustomer = "customer"
 	// EdgeShipmentDocumentation holds the string denoting the shipment_documentation edge name in mutations.
 	EdgeShipmentDocumentation = "shipment_documentation"
 	// EdgeShipmentComments holds the string denoting the shipment_comments edge name in mutations.
 	EdgeShipmentComments = "shipment_comments"
+	// EdgeShipmentCharges holds the string denoting the shipment_charges edge name in mutations.
+	EdgeShipmentCharges = "shipment_charges"
+	// EdgeShipmentCommodities holds the string denoting the shipment_commodities edge name in mutations.
+	EdgeShipmentCommodities = "shipment_commodities"
+	// EdgeCreatedByUser holds the string denoting the created_by_user edge name in mutations.
+	EdgeCreatedByUser = "created_by_user"
+	// EdgeCustomer holds the string denoting the customer edge name in mutations.
+	EdgeCustomer = "customer"
 	// Table holds the table name of the shipment in the database.
 	Table = "shipments"
 	// BusinessUnitTable is the table that holds the business_unit relation/edge.
@@ -200,20 +204,6 @@ const (
 	TractorTypeInverseTable = "equipment_types"
 	// TractorTypeColumn is the table column denoting the tractor_type relation/edge.
 	TractorTypeColumn = "tractor_type_id"
-	// CreatedByUserTable is the table that holds the created_by_user relation/edge.
-	CreatedByUserTable = "shipments"
-	// CreatedByUserInverseTable is the table name for the User entity.
-	// It exists in this package in order to avoid circular dependency with the "user" package.
-	CreatedByUserInverseTable = "users"
-	// CreatedByUserColumn is the table column denoting the created_by_user relation/edge.
-	CreatedByUserColumn = "created_by"
-	// CustomerTable is the table that holds the customer relation/edge.
-	CustomerTable = "shipments"
-	// CustomerInverseTable is the table name for the Customer entity.
-	// It exists in this package in order to avoid circular dependency with the "customer" package.
-	CustomerInverseTable = "customers"
-	// CustomerColumn is the table column denoting the customer relation/edge.
-	CustomerColumn = "customer_id"
 	// ShipmentDocumentationTable is the table that holds the shipment_documentation relation/edge.
 	ShipmentDocumentationTable = "shipment_documentations"
 	// ShipmentDocumentationInverseTable is the table name for the ShipmentDocumentation entity.
@@ -228,6 +218,34 @@ const (
 	ShipmentCommentsInverseTable = "shipment_comments"
 	// ShipmentCommentsColumn is the table column denoting the shipment_comments relation/edge.
 	ShipmentCommentsColumn = "shipment_id"
+	// ShipmentChargesTable is the table that holds the shipment_charges relation/edge.
+	ShipmentChargesTable = "shipment_charges"
+	// ShipmentChargesInverseTable is the table name for the ShipmentCharges entity.
+	// It exists in this package in order to avoid circular dependency with the "shipmentcharges" package.
+	ShipmentChargesInverseTable = "shipment_charges"
+	// ShipmentChargesColumn is the table column denoting the shipment_charges relation/edge.
+	ShipmentChargesColumn = "shipment_id"
+	// ShipmentCommoditiesTable is the table that holds the shipment_commodities relation/edge.
+	ShipmentCommoditiesTable = "shipment_commodities"
+	// ShipmentCommoditiesInverseTable is the table name for the ShipmentCommodity entity.
+	// It exists in this package in order to avoid circular dependency with the "shipmentcommodity" package.
+	ShipmentCommoditiesInverseTable = "shipment_commodities"
+	// ShipmentCommoditiesColumn is the table column denoting the shipment_commodities relation/edge.
+	ShipmentCommoditiesColumn = "shipment_id"
+	// CreatedByUserTable is the table that holds the created_by_user relation/edge.
+	CreatedByUserTable = "shipments"
+	// CreatedByUserInverseTable is the table name for the User entity.
+	// It exists in this package in order to avoid circular dependency with the "user" package.
+	CreatedByUserInverseTable = "users"
+	// CreatedByUserColumn is the table column denoting the created_by_user relation/edge.
+	CreatedByUserColumn = "created_by"
+	// CustomerTable is the table that holds the customer relation/edge.
+	CustomerTable = "shipments"
+	// CustomerInverseTable is the table name for the Customer entity.
+	// It exists in this package in order to avoid circular dependency with the "customer" package.
+	CustomerInverseTable = "customers"
+	// CustomerColumn is the table column denoting the customer relation/edge.
+	CustomerColumn = "customer_id"
 )
 
 // Columns holds all SQL columns for shipment fields.
@@ -727,20 +745,6 @@ func ByTractorTypeField(field string, opts ...sql.OrderTermOption) OrderOption {
 	}
 }
 
-// ByCreatedByUserField orders the results by created_by_user field.
-func ByCreatedByUserField(field string, opts ...sql.OrderTermOption) OrderOption {
-	return func(s *sql.Selector) {
-		sqlgraph.OrderByNeighborTerms(s, newCreatedByUserStep(), sql.OrderByField(field, opts...))
-	}
-}
-
-// ByCustomerField orders the results by customer field.
-func ByCustomerField(field string, opts ...sql.OrderTermOption) OrderOption {
-	return func(s *sql.Selector) {
-		sqlgraph.OrderByNeighborTerms(s, newCustomerStep(), sql.OrderByField(field, opts...))
-	}
-}
-
 // ByShipmentDocumentationCount orders the results by shipment_documentation count.
 func ByShipmentDocumentationCount(opts ...sql.OrderTermOption) OrderOption {
 	return func(s *sql.Selector) {
@@ -766,6 +770,48 @@ func ByShipmentCommentsCount(opts ...sql.OrderTermOption) OrderOption {
 func ByShipmentComments(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
 	return func(s *sql.Selector) {
 		sqlgraph.OrderByNeighborTerms(s, newShipmentCommentsStep(), append([]sql.OrderTerm{term}, terms...)...)
+	}
+}
+
+// ByShipmentChargesCount orders the results by shipment_charges count.
+func ByShipmentChargesCount(opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborsCount(s, newShipmentChargesStep(), opts...)
+	}
+}
+
+// ByShipmentCharges orders the results by shipment_charges terms.
+func ByShipmentCharges(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newShipmentChargesStep(), append([]sql.OrderTerm{term}, terms...)...)
+	}
+}
+
+// ByShipmentCommoditiesCount orders the results by shipment_commodities count.
+func ByShipmentCommoditiesCount(opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborsCount(s, newShipmentCommoditiesStep(), opts...)
+	}
+}
+
+// ByShipmentCommodities orders the results by shipment_commodities terms.
+func ByShipmentCommodities(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newShipmentCommoditiesStep(), append([]sql.OrderTerm{term}, terms...)...)
+	}
+}
+
+// ByCreatedByUserField orders the results by created_by_user field.
+func ByCreatedByUserField(field string, opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newCreatedByUserStep(), sql.OrderByField(field, opts...))
+	}
+}
+
+// ByCustomerField orders the results by customer field.
+func ByCustomerField(field string, opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newCustomerStep(), sql.OrderByField(field, opts...))
 	}
 }
 func newBusinessUnitStep() *sqlgraph.Step {
@@ -831,20 +877,6 @@ func newTractorTypeStep() *sqlgraph.Step {
 		sqlgraph.Edge(sqlgraph.M2O, false, TractorTypeTable, TractorTypeColumn),
 	)
 }
-func newCreatedByUserStep() *sqlgraph.Step {
-	return sqlgraph.NewStep(
-		sqlgraph.From(Table, FieldID),
-		sqlgraph.To(CreatedByUserInverseTable, FieldID),
-		sqlgraph.Edge(sqlgraph.M2O, true, CreatedByUserTable, CreatedByUserColumn),
-	)
-}
-func newCustomerStep() *sqlgraph.Step {
-	return sqlgraph.NewStep(
-		sqlgraph.From(Table, FieldID),
-		sqlgraph.To(CustomerInverseTable, FieldID),
-		sqlgraph.Edge(sqlgraph.M2O, true, CustomerTable, CustomerColumn),
-	)
-}
 func newShipmentDocumentationStep() *sqlgraph.Step {
 	return sqlgraph.NewStep(
 		sqlgraph.From(Table, FieldID),
@@ -857,5 +889,33 @@ func newShipmentCommentsStep() *sqlgraph.Step {
 		sqlgraph.From(Table, FieldID),
 		sqlgraph.To(ShipmentCommentsInverseTable, FieldID),
 		sqlgraph.Edge(sqlgraph.O2M, false, ShipmentCommentsTable, ShipmentCommentsColumn),
+	)
+}
+func newShipmentChargesStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(ShipmentChargesInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.O2M, false, ShipmentChargesTable, ShipmentChargesColumn),
+	)
+}
+func newShipmentCommoditiesStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(ShipmentCommoditiesInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.O2M, false, ShipmentCommoditiesTable, ShipmentCommoditiesColumn),
+	)
+}
+func newCreatedByUserStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(CreatedByUserInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.M2O, true, CreatedByUserTable, CreatedByUserColumn),
+	)
+}
+func newCustomerStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(CustomerInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.M2O, true, CustomerTable, CustomerColumn),
 	)
 }

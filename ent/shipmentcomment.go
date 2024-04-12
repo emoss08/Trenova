@@ -5,10 +5,13 @@ package ent
 import (
 	"fmt"
 	"strings"
+	"time"
 
 	"entgo.io/ent"
 	"entgo.io/ent/dialect/sql"
+	"github.com/emoss08/trenova/ent/businessunit"
 	"github.com/emoss08/trenova/ent/commenttype"
+	"github.com/emoss08/trenova/ent/organization"
 	"github.com/emoss08/trenova/ent/shipment"
 	"github.com/emoss08/trenova/ent/shipmentcomment"
 	"github.com/emoss08/trenova/ent/user"
@@ -19,7 +22,17 @@ import (
 type ShipmentComment struct {
 	config `json:"-" validate:"-"`
 	// ID of the ent.
-	ID int `json:"id,omitempty"`
+	ID uuid.UUID `json:"id,omitempty"`
+	// BusinessUnitID holds the value of the "business_unit_id" field.
+	BusinessUnitID uuid.UUID `json:"businessUnitId"`
+	// OrganizationID holds the value of the "organization_id" field.
+	OrganizationID uuid.UUID `json:"organizationId"`
+	// CreatedAt holds the value of the "created_at" field.
+	CreatedAt time.Time `json:"createdAt"`
+	// UpdatedAt holds the value of the "updated_at" field.
+	UpdatedAt time.Time `json:"updatedAt"`
+	// Version holds the value of the "version" field.
+	Version int `json:"version" validate:"omitempty"`
 	// ShipmentID holds the value of the "shipment_id" field.
 	ShipmentID uuid.UUID `json:"shipmentId" validate:"omitempty"`
 	// CommentTypeID holds the value of the "comment_type_id" field.
@@ -36,6 +49,10 @@ type ShipmentComment struct {
 
 // ShipmentCommentEdges holds the relations/edges for other nodes in the graph.
 type ShipmentCommentEdges struct {
+	// BusinessUnit holds the value of the business_unit edge.
+	BusinessUnit *BusinessUnit `json:"business_unit,omitempty"`
+	// Organization holds the value of the organization edge.
+	Organization *Organization `json:"organization,omitempty"`
 	// Shipment holds the value of the shipment edge.
 	Shipment *Shipment `json:"shipment,omitempty"`
 	// CommentType holds the value of the comment_type edge.
@@ -44,7 +61,29 @@ type ShipmentCommentEdges struct {
 	CreatedByUser *User `json:"created_by_user,omitempty"`
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
-	loadedTypes [3]bool
+	loadedTypes [5]bool
+}
+
+// BusinessUnitOrErr returns the BusinessUnit value or an error if the edge
+// was not loaded in eager-loading, or loaded but was not found.
+func (e ShipmentCommentEdges) BusinessUnitOrErr() (*BusinessUnit, error) {
+	if e.BusinessUnit != nil {
+		return e.BusinessUnit, nil
+	} else if e.loadedTypes[0] {
+		return nil, &NotFoundError{label: businessunit.Label}
+	}
+	return nil, &NotLoadedError{edge: "business_unit"}
+}
+
+// OrganizationOrErr returns the Organization value or an error if the edge
+// was not loaded in eager-loading, or loaded but was not found.
+func (e ShipmentCommentEdges) OrganizationOrErr() (*Organization, error) {
+	if e.Organization != nil {
+		return e.Organization, nil
+	} else if e.loadedTypes[1] {
+		return nil, &NotFoundError{label: organization.Label}
+	}
+	return nil, &NotLoadedError{edge: "organization"}
 }
 
 // ShipmentOrErr returns the Shipment value or an error if the edge
@@ -52,7 +91,7 @@ type ShipmentCommentEdges struct {
 func (e ShipmentCommentEdges) ShipmentOrErr() (*Shipment, error) {
 	if e.Shipment != nil {
 		return e.Shipment, nil
-	} else if e.loadedTypes[0] {
+	} else if e.loadedTypes[2] {
 		return nil, &NotFoundError{label: shipment.Label}
 	}
 	return nil, &NotLoadedError{edge: "shipment"}
@@ -63,7 +102,7 @@ func (e ShipmentCommentEdges) ShipmentOrErr() (*Shipment, error) {
 func (e ShipmentCommentEdges) CommentTypeOrErr() (*CommentType, error) {
 	if e.CommentType != nil {
 		return e.CommentType, nil
-	} else if e.loadedTypes[1] {
+	} else if e.loadedTypes[3] {
 		return nil, &NotFoundError{label: commenttype.Label}
 	}
 	return nil, &NotLoadedError{edge: "comment_type"}
@@ -74,7 +113,7 @@ func (e ShipmentCommentEdges) CommentTypeOrErr() (*CommentType, error) {
 func (e ShipmentCommentEdges) CreatedByUserOrErr() (*User, error) {
 	if e.CreatedByUser != nil {
 		return e.CreatedByUser, nil
-	} else if e.loadedTypes[2] {
+	} else if e.loadedTypes[4] {
 		return nil, &NotFoundError{label: user.Label}
 	}
 	return nil, &NotLoadedError{edge: "created_by_user"}
@@ -85,11 +124,13 @@ func (*ShipmentComment) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
 	for i := range columns {
 		switch columns[i] {
-		case shipmentcomment.FieldID:
+		case shipmentcomment.FieldVersion:
 			values[i] = new(sql.NullInt64)
 		case shipmentcomment.FieldComment:
 			values[i] = new(sql.NullString)
-		case shipmentcomment.FieldShipmentID, shipmentcomment.FieldCommentTypeID, shipmentcomment.FieldCreatedBy:
+		case shipmentcomment.FieldCreatedAt, shipmentcomment.FieldUpdatedAt:
+			values[i] = new(sql.NullTime)
+		case shipmentcomment.FieldID, shipmentcomment.FieldBusinessUnitID, shipmentcomment.FieldOrganizationID, shipmentcomment.FieldShipmentID, shipmentcomment.FieldCommentTypeID, shipmentcomment.FieldCreatedBy:
 			values[i] = new(uuid.UUID)
 		default:
 			values[i] = new(sql.UnknownType)
@@ -107,11 +148,41 @@ func (sc *ShipmentComment) assignValues(columns []string, values []any) error {
 	for i := range columns {
 		switch columns[i] {
 		case shipmentcomment.FieldID:
-			value, ok := values[i].(*sql.NullInt64)
-			if !ok {
-				return fmt.Errorf("unexpected type %T for field id", value)
+			if value, ok := values[i].(*uuid.UUID); !ok {
+				return fmt.Errorf("unexpected type %T for field id", values[i])
+			} else if value != nil {
+				sc.ID = *value
 			}
-			sc.ID = int(value.Int64)
+		case shipmentcomment.FieldBusinessUnitID:
+			if value, ok := values[i].(*uuid.UUID); !ok {
+				return fmt.Errorf("unexpected type %T for field business_unit_id", values[i])
+			} else if value != nil {
+				sc.BusinessUnitID = *value
+			}
+		case shipmentcomment.FieldOrganizationID:
+			if value, ok := values[i].(*uuid.UUID); !ok {
+				return fmt.Errorf("unexpected type %T for field organization_id", values[i])
+			} else if value != nil {
+				sc.OrganizationID = *value
+			}
+		case shipmentcomment.FieldCreatedAt:
+			if value, ok := values[i].(*sql.NullTime); !ok {
+				return fmt.Errorf("unexpected type %T for field created_at", values[i])
+			} else if value.Valid {
+				sc.CreatedAt = value.Time
+			}
+		case shipmentcomment.FieldUpdatedAt:
+			if value, ok := values[i].(*sql.NullTime); !ok {
+				return fmt.Errorf("unexpected type %T for field updated_at", values[i])
+			} else if value.Valid {
+				sc.UpdatedAt = value.Time
+			}
+		case shipmentcomment.FieldVersion:
+			if value, ok := values[i].(*sql.NullInt64); !ok {
+				return fmt.Errorf("unexpected type %T for field version", values[i])
+			} else if value.Valid {
+				sc.Version = int(value.Int64)
+			}
 		case shipmentcomment.FieldShipmentID:
 			if value, ok := values[i].(*uuid.UUID); !ok {
 				return fmt.Errorf("unexpected type %T for field shipment_id", values[i])
@@ -147,6 +218,16 @@ func (sc *ShipmentComment) assignValues(columns []string, values []any) error {
 // This includes values selected through modifiers, order, etc.
 func (sc *ShipmentComment) Value(name string) (ent.Value, error) {
 	return sc.selectValues.Get(name)
+}
+
+// QueryBusinessUnit queries the "business_unit" edge of the ShipmentComment entity.
+func (sc *ShipmentComment) QueryBusinessUnit() *BusinessUnitQuery {
+	return NewShipmentCommentClient(sc.config).QueryBusinessUnit(sc)
+}
+
+// QueryOrganization queries the "organization" edge of the ShipmentComment entity.
+func (sc *ShipmentComment) QueryOrganization() *OrganizationQuery {
+	return NewShipmentCommentClient(sc.config).QueryOrganization(sc)
 }
 
 // QueryShipment queries the "shipment" edge of the ShipmentComment entity.
@@ -187,6 +268,21 @@ func (sc *ShipmentComment) String() string {
 	var builder strings.Builder
 	builder.WriteString("ShipmentComment(")
 	builder.WriteString(fmt.Sprintf("id=%v, ", sc.ID))
+	builder.WriteString("business_unit_id=")
+	builder.WriteString(fmt.Sprintf("%v", sc.BusinessUnitID))
+	builder.WriteString(", ")
+	builder.WriteString("organization_id=")
+	builder.WriteString(fmt.Sprintf("%v", sc.OrganizationID))
+	builder.WriteString(", ")
+	builder.WriteString("created_at=")
+	builder.WriteString(sc.CreatedAt.Format(time.ANSIC))
+	builder.WriteString(", ")
+	builder.WriteString("updated_at=")
+	builder.WriteString(sc.UpdatedAt.Format(time.ANSIC))
+	builder.WriteString(", ")
+	builder.WriteString("version=")
+	builder.WriteString(fmt.Sprintf("%v", sc.Version))
+	builder.WriteString(", ")
 	builder.WriteString("shipment_id=")
 	builder.WriteString(fmt.Sprintf("%v", sc.ShipmentID))
 	builder.WriteString(", ")

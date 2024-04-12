@@ -24,6 +24,7 @@ import (
 	"github.com/emoss08/trenova/ent/feasibilitytoolcontrol"
 	"github.com/emoss08/trenova/ent/featureflag"
 	"github.com/emoss08/trenova/ent/fleetcode"
+	"github.com/emoss08/trenova/ent/formulatemplate"
 	"github.com/emoss08/trenova/ent/generalledgeraccount"
 	"github.com/emoss08/trenova/ent/googleapi"
 	"github.com/emoss08/trenova/ent/hazardousmaterial"
@@ -43,7 +44,9 @@ import (
 	"github.com/emoss08/trenova/ent/servicetype"
 	"github.com/emoss08/trenova/ent/session"
 	"github.com/emoss08/trenova/ent/shipment"
+	"github.com/emoss08/trenova/ent/shipmentcharges"
 	"github.com/emoss08/trenova/ent/shipmentcomment"
+	"github.com/emoss08/trenova/ent/shipmentcommodity"
 	"github.com/emoss08/trenova/ent/shipmentcontrol"
 	"github.com/emoss08/trenova/ent/shipmentdocumentation"
 	"github.com/emoss08/trenova/ent/shipmenttype"
@@ -969,6 +972,41 @@ func init() {
 	fleetcodeDescID := fleetcodeMixinFields0[0].Descriptor()
 	// fleetcode.DefaultID holds the default value on creation for the id field.
 	fleetcode.DefaultID = fleetcodeDescID.Default.(func() uuid.UUID)
+	formulatemplateMixin := schema.FormulaTemplate{}.Mixin()
+	formulatemplateMixinFields0 := formulatemplateMixin[0].Fields()
+	_ = formulatemplateMixinFields0
+	formulatemplateFields := schema.FormulaTemplate{}.Fields()
+	_ = formulatemplateFields
+	// formulatemplateDescCreatedAt is the schema descriptor for created_at field.
+	formulatemplateDescCreatedAt := formulatemplateMixinFields0[3].Descriptor()
+	// formulatemplate.DefaultCreatedAt holds the default value on creation for the created_at field.
+	formulatemplate.DefaultCreatedAt = formulatemplateDescCreatedAt.Default.(func() time.Time)
+	// formulatemplateDescUpdatedAt is the schema descriptor for updated_at field.
+	formulatemplateDescUpdatedAt := formulatemplateMixinFields0[4].Descriptor()
+	// formulatemplate.DefaultUpdatedAt holds the default value on creation for the updated_at field.
+	formulatemplate.DefaultUpdatedAt = formulatemplateDescUpdatedAt.Default.(func() time.Time)
+	// formulatemplate.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
+	formulatemplate.UpdateDefaultUpdatedAt = formulatemplateDescUpdatedAt.UpdateDefault.(func() time.Time)
+	// formulatemplateDescVersion is the schema descriptor for version field.
+	formulatemplateDescVersion := formulatemplateMixinFields0[5].Descriptor()
+	// formulatemplate.DefaultVersion holds the default value on creation for the version field.
+	formulatemplate.DefaultVersion = formulatemplateDescVersion.Default.(int)
+	// formulatemplateDescName is the schema descriptor for name field.
+	formulatemplateDescName := formulatemplateFields[0].Descriptor()
+	// formulatemplate.NameValidator is a validator for the "name" field. It is called by the builders before save.
+	formulatemplate.NameValidator = formulatemplateDescName.Validators[0].(func(string) error)
+	// formulatemplateDescFormulaText is the schema descriptor for formula_text field.
+	formulatemplateDescFormulaText := formulatemplateFields[1].Descriptor()
+	// formulatemplate.FormulaTextValidator is a validator for the "formula_text" field. It is called by the builders before save.
+	formulatemplate.FormulaTextValidator = formulatemplateDescFormulaText.Validators[0].(func(string) error)
+	// formulatemplateDescAutoApply is the schema descriptor for auto_apply field.
+	formulatemplateDescAutoApply := formulatemplateFields[6].Descriptor()
+	// formulatemplate.DefaultAutoApply holds the default value on creation for the auto_apply field.
+	formulatemplate.DefaultAutoApply = formulatemplateDescAutoApply.Default.(bool)
+	// formulatemplateDescID is the schema descriptor for id field.
+	formulatemplateDescID := formulatemplateMixinFields0[0].Descriptor()
+	// formulatemplate.DefaultID holds the default value on creation for the id field.
+	formulatemplate.DefaultID = formulatemplateDescID.Default.(func() uuid.UUID)
 	generalledgeraccountMixin := schema.GeneralLedgerAccount{}.Mixin()
 	generalledgeraccountMixinFields0 := generalledgeraccountMixin[0].Fields()
 	_ = generalledgeraccountMixinFields0
@@ -1727,12 +1765,99 @@ func init() {
 	shipmentDescID := shipmentMixinFields0[0].Descriptor()
 	// shipment.DefaultID holds the default value on creation for the id field.
 	shipment.DefaultID = shipmentDescID.Default.(func() uuid.UUID)
+	shipmentchargesMixin := schema.ShipmentCharges{}.Mixin()
+	shipmentchargesMixinFields0 := shipmentchargesMixin[0].Fields()
+	_ = shipmentchargesMixinFields0
+	shipmentchargesFields := schema.ShipmentCharges{}.Fields()
+	_ = shipmentchargesFields
+	// shipmentchargesDescCreatedAt is the schema descriptor for created_at field.
+	shipmentchargesDescCreatedAt := shipmentchargesMixinFields0[3].Descriptor()
+	// shipmentcharges.DefaultCreatedAt holds the default value on creation for the created_at field.
+	shipmentcharges.DefaultCreatedAt = shipmentchargesDescCreatedAt.Default.(func() time.Time)
+	// shipmentchargesDescUpdatedAt is the schema descriptor for updated_at field.
+	shipmentchargesDescUpdatedAt := shipmentchargesMixinFields0[4].Descriptor()
+	// shipmentcharges.DefaultUpdatedAt holds the default value on creation for the updated_at field.
+	shipmentcharges.DefaultUpdatedAt = shipmentchargesDescUpdatedAt.Default.(func() time.Time)
+	// shipmentcharges.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
+	shipmentcharges.UpdateDefaultUpdatedAt = shipmentchargesDescUpdatedAt.UpdateDefault.(func() time.Time)
+	// shipmentchargesDescVersion is the schema descriptor for version field.
+	shipmentchargesDescVersion := shipmentchargesMixinFields0[5].Descriptor()
+	// shipmentcharges.DefaultVersion holds the default value on creation for the version field.
+	shipmentcharges.DefaultVersion = shipmentchargesDescVersion.Default.(int)
+	// shipmentchargesDescChargeAmount is the schema descriptor for charge_amount field.
+	shipmentchargesDescChargeAmount := shipmentchargesFields[3].Descriptor()
+	// shipmentcharges.ChargeAmountValidator is a validator for the "charge_amount" field. It is called by the builders before save.
+	shipmentcharges.ChargeAmountValidator = shipmentchargesDescChargeAmount.Validators[0].(func(float64) error)
+	// shipmentchargesDescUnits is the schema descriptor for units field.
+	shipmentchargesDescUnits := shipmentchargesFields[4].Descriptor()
+	// shipmentcharges.UnitsValidator is a validator for the "units" field. It is called by the builders before save.
+	shipmentcharges.UnitsValidator = shipmentchargesDescUnits.Validators[0].(func(int) error)
+	// shipmentchargesDescSubTotal is the schema descriptor for sub_total field.
+	shipmentchargesDescSubTotal := shipmentchargesFields[5].Descriptor()
+	// shipmentcharges.SubTotalValidator is a validator for the "sub_total" field. It is called by the builders before save.
+	shipmentcharges.SubTotalValidator = shipmentchargesDescSubTotal.Validators[0].(func(float64) error)
+	// shipmentchargesDescID is the schema descriptor for id field.
+	shipmentchargesDescID := shipmentchargesMixinFields0[0].Descriptor()
+	// shipmentcharges.DefaultID holds the default value on creation for the id field.
+	shipmentcharges.DefaultID = shipmentchargesDescID.Default.(func() uuid.UUID)
+	shipmentcommentMixin := schema.ShipmentComment{}.Mixin()
+	shipmentcommentMixinFields0 := shipmentcommentMixin[0].Fields()
+	_ = shipmentcommentMixinFields0
 	shipmentcommentFields := schema.ShipmentComment{}.Fields()
 	_ = shipmentcommentFields
+	// shipmentcommentDescCreatedAt is the schema descriptor for created_at field.
+	shipmentcommentDescCreatedAt := shipmentcommentMixinFields0[3].Descriptor()
+	// shipmentcomment.DefaultCreatedAt holds the default value on creation for the created_at field.
+	shipmentcomment.DefaultCreatedAt = shipmentcommentDescCreatedAt.Default.(func() time.Time)
+	// shipmentcommentDescUpdatedAt is the schema descriptor for updated_at field.
+	shipmentcommentDescUpdatedAt := shipmentcommentMixinFields0[4].Descriptor()
+	// shipmentcomment.DefaultUpdatedAt holds the default value on creation for the updated_at field.
+	shipmentcomment.DefaultUpdatedAt = shipmentcommentDescUpdatedAt.Default.(func() time.Time)
+	// shipmentcomment.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
+	shipmentcomment.UpdateDefaultUpdatedAt = shipmentcommentDescUpdatedAt.UpdateDefault.(func() time.Time)
+	// shipmentcommentDescVersion is the schema descriptor for version field.
+	shipmentcommentDescVersion := shipmentcommentMixinFields0[5].Descriptor()
+	// shipmentcomment.DefaultVersion holds the default value on creation for the version field.
+	shipmentcomment.DefaultVersion = shipmentcommentDescVersion.Default.(int)
 	// shipmentcommentDescComment is the schema descriptor for comment field.
 	shipmentcommentDescComment := shipmentcommentFields[2].Descriptor()
 	// shipmentcomment.CommentValidator is a validator for the "comment" field. It is called by the builders before save.
 	shipmentcomment.CommentValidator = shipmentcommentDescComment.Validators[0].(func(string) error)
+	// shipmentcommentDescID is the schema descriptor for id field.
+	shipmentcommentDescID := shipmentcommentMixinFields0[0].Descriptor()
+	// shipmentcomment.DefaultID holds the default value on creation for the id field.
+	shipmentcomment.DefaultID = shipmentcommentDescID.Default.(func() uuid.UUID)
+	shipmentcommodityMixin := schema.ShipmentCommodity{}.Mixin()
+	shipmentcommodityMixinFields0 := shipmentcommodityMixin[0].Fields()
+	_ = shipmentcommodityMixinFields0
+	shipmentcommodityFields := schema.ShipmentCommodity{}.Fields()
+	_ = shipmentcommodityFields
+	// shipmentcommodityDescCreatedAt is the schema descriptor for created_at field.
+	shipmentcommodityDescCreatedAt := shipmentcommodityMixinFields0[3].Descriptor()
+	// shipmentcommodity.DefaultCreatedAt holds the default value on creation for the created_at field.
+	shipmentcommodity.DefaultCreatedAt = shipmentcommodityDescCreatedAt.Default.(func() time.Time)
+	// shipmentcommodityDescUpdatedAt is the schema descriptor for updated_at field.
+	shipmentcommodityDescUpdatedAt := shipmentcommodityMixinFields0[4].Descriptor()
+	// shipmentcommodity.DefaultUpdatedAt holds the default value on creation for the updated_at field.
+	shipmentcommodity.DefaultUpdatedAt = shipmentcommodityDescUpdatedAt.Default.(func() time.Time)
+	// shipmentcommodity.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
+	shipmentcommodity.UpdateDefaultUpdatedAt = shipmentcommodityDescUpdatedAt.UpdateDefault.(func() time.Time)
+	// shipmentcommodityDescVersion is the schema descriptor for version field.
+	shipmentcommodityDescVersion := shipmentcommodityMixinFields0[5].Descriptor()
+	// shipmentcommodity.DefaultVersion holds the default value on creation for the version field.
+	shipmentcommodity.DefaultVersion = shipmentcommodityDescVersion.Default.(int)
+	// shipmentcommodityDescSubTotal is the schema descriptor for sub_total field.
+	shipmentcommodityDescSubTotal := shipmentcommodityFields[3].Descriptor()
+	// shipmentcommodity.SubTotalValidator is a validator for the "sub_total" field. It is called by the builders before save.
+	shipmentcommodity.SubTotalValidator = shipmentcommodityDescSubTotal.Validators[0].(func(float64) error)
+	// shipmentcommodityDescPlacardNeeded is the schema descriptor for placard_needed field.
+	shipmentcommodityDescPlacardNeeded := shipmentcommodityFields[4].Descriptor()
+	// shipmentcommodity.DefaultPlacardNeeded holds the default value on creation for the placard_needed field.
+	shipmentcommodity.DefaultPlacardNeeded = shipmentcommodityDescPlacardNeeded.Default.(bool)
+	// shipmentcommodityDescID is the schema descriptor for id field.
+	shipmentcommodityDescID := shipmentcommodityMixinFields0[0].Descriptor()
+	// shipmentcommodity.DefaultID holds the default value on creation for the id field.
+	shipmentcommodity.DefaultID = shipmentcommodityDescID.Default.(func() uuid.UUID)
 	shipmentcontrolMixin := schema.ShipmentControl{}.Mixin()
 	shipmentcontrolMixinFields0 := shipmentcontrolMixin[0].Fields()
 	_ = shipmentcontrolMixinFields0

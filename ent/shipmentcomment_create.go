@@ -6,10 +6,13 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"time"
 
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
+	"github.com/emoss08/trenova/ent/businessunit"
 	"github.com/emoss08/trenova/ent/commenttype"
+	"github.com/emoss08/trenova/ent/organization"
 	"github.com/emoss08/trenova/ent/shipment"
 	"github.com/emoss08/trenova/ent/shipmentcomment"
 	"github.com/emoss08/trenova/ent/user"
@@ -21,6 +24,60 @@ type ShipmentCommentCreate struct {
 	config
 	mutation *ShipmentCommentMutation
 	hooks    []Hook
+}
+
+// SetBusinessUnitID sets the "business_unit_id" field.
+func (scc *ShipmentCommentCreate) SetBusinessUnitID(u uuid.UUID) *ShipmentCommentCreate {
+	scc.mutation.SetBusinessUnitID(u)
+	return scc
+}
+
+// SetOrganizationID sets the "organization_id" field.
+func (scc *ShipmentCommentCreate) SetOrganizationID(u uuid.UUID) *ShipmentCommentCreate {
+	scc.mutation.SetOrganizationID(u)
+	return scc
+}
+
+// SetCreatedAt sets the "created_at" field.
+func (scc *ShipmentCommentCreate) SetCreatedAt(t time.Time) *ShipmentCommentCreate {
+	scc.mutation.SetCreatedAt(t)
+	return scc
+}
+
+// SetNillableCreatedAt sets the "created_at" field if the given value is not nil.
+func (scc *ShipmentCommentCreate) SetNillableCreatedAt(t *time.Time) *ShipmentCommentCreate {
+	if t != nil {
+		scc.SetCreatedAt(*t)
+	}
+	return scc
+}
+
+// SetUpdatedAt sets the "updated_at" field.
+func (scc *ShipmentCommentCreate) SetUpdatedAt(t time.Time) *ShipmentCommentCreate {
+	scc.mutation.SetUpdatedAt(t)
+	return scc
+}
+
+// SetNillableUpdatedAt sets the "updated_at" field if the given value is not nil.
+func (scc *ShipmentCommentCreate) SetNillableUpdatedAt(t *time.Time) *ShipmentCommentCreate {
+	if t != nil {
+		scc.SetUpdatedAt(*t)
+	}
+	return scc
+}
+
+// SetVersion sets the "version" field.
+func (scc *ShipmentCommentCreate) SetVersion(i int) *ShipmentCommentCreate {
+	scc.mutation.SetVersion(i)
+	return scc
+}
+
+// SetNillableVersion sets the "version" field if the given value is not nil.
+func (scc *ShipmentCommentCreate) SetNillableVersion(i *int) *ShipmentCommentCreate {
+	if i != nil {
+		scc.SetVersion(*i)
+	}
+	return scc
 }
 
 // SetShipmentID sets the "shipment_id" field.
@@ -45,6 +102,30 @@ func (scc *ShipmentCommentCreate) SetComment(s string) *ShipmentCommentCreate {
 func (scc *ShipmentCommentCreate) SetCreatedBy(u uuid.UUID) *ShipmentCommentCreate {
 	scc.mutation.SetCreatedBy(u)
 	return scc
+}
+
+// SetID sets the "id" field.
+func (scc *ShipmentCommentCreate) SetID(u uuid.UUID) *ShipmentCommentCreate {
+	scc.mutation.SetID(u)
+	return scc
+}
+
+// SetNillableID sets the "id" field if the given value is not nil.
+func (scc *ShipmentCommentCreate) SetNillableID(u *uuid.UUID) *ShipmentCommentCreate {
+	if u != nil {
+		scc.SetID(*u)
+	}
+	return scc
+}
+
+// SetBusinessUnit sets the "business_unit" edge to the BusinessUnit entity.
+func (scc *ShipmentCommentCreate) SetBusinessUnit(b *BusinessUnit) *ShipmentCommentCreate {
+	return scc.SetBusinessUnitID(b.ID)
+}
+
+// SetOrganization sets the "organization" edge to the Organization entity.
+func (scc *ShipmentCommentCreate) SetOrganization(o *Organization) *ShipmentCommentCreate {
+	return scc.SetOrganizationID(o.ID)
 }
 
 // SetShipment sets the "shipment" edge to the Shipment entity.
@@ -75,6 +156,7 @@ func (scc *ShipmentCommentCreate) Mutation() *ShipmentCommentMutation {
 
 // Save creates the ShipmentComment in the database.
 func (scc *ShipmentCommentCreate) Save(ctx context.Context) (*ShipmentComment, error) {
+	scc.defaults()
 	return withHooks(ctx, scc.sqlSave, scc.mutation, scc.hooks)
 }
 
@@ -100,8 +182,43 @@ func (scc *ShipmentCommentCreate) ExecX(ctx context.Context) {
 	}
 }
 
+// defaults sets the default values of the builder before save.
+func (scc *ShipmentCommentCreate) defaults() {
+	if _, ok := scc.mutation.CreatedAt(); !ok {
+		v := shipmentcomment.DefaultCreatedAt()
+		scc.mutation.SetCreatedAt(v)
+	}
+	if _, ok := scc.mutation.UpdatedAt(); !ok {
+		v := shipmentcomment.DefaultUpdatedAt()
+		scc.mutation.SetUpdatedAt(v)
+	}
+	if _, ok := scc.mutation.Version(); !ok {
+		v := shipmentcomment.DefaultVersion
+		scc.mutation.SetVersion(v)
+	}
+	if _, ok := scc.mutation.ID(); !ok {
+		v := shipmentcomment.DefaultID()
+		scc.mutation.SetID(v)
+	}
+}
+
 // check runs all checks and user-defined validators on the builder.
 func (scc *ShipmentCommentCreate) check() error {
+	if _, ok := scc.mutation.BusinessUnitID(); !ok {
+		return &ValidationError{Name: "business_unit_id", err: errors.New(`ent: missing required field "ShipmentComment.business_unit_id"`)}
+	}
+	if _, ok := scc.mutation.OrganizationID(); !ok {
+		return &ValidationError{Name: "organization_id", err: errors.New(`ent: missing required field "ShipmentComment.organization_id"`)}
+	}
+	if _, ok := scc.mutation.CreatedAt(); !ok {
+		return &ValidationError{Name: "created_at", err: errors.New(`ent: missing required field "ShipmentComment.created_at"`)}
+	}
+	if _, ok := scc.mutation.UpdatedAt(); !ok {
+		return &ValidationError{Name: "updated_at", err: errors.New(`ent: missing required field "ShipmentComment.updated_at"`)}
+	}
+	if _, ok := scc.mutation.Version(); !ok {
+		return &ValidationError{Name: "version", err: errors.New(`ent: missing required field "ShipmentComment.version"`)}
+	}
 	if _, ok := scc.mutation.ShipmentID(); !ok {
 		return &ValidationError{Name: "shipment_id", err: errors.New(`ent: missing required field "ShipmentComment.shipment_id"`)}
 	}
@@ -118,6 +235,12 @@ func (scc *ShipmentCommentCreate) check() error {
 	}
 	if _, ok := scc.mutation.CreatedBy(); !ok {
 		return &ValidationError{Name: "created_by", err: errors.New(`ent: missing required field "ShipmentComment.created_by"`)}
+	}
+	if _, ok := scc.mutation.BusinessUnitID(); !ok {
+		return &ValidationError{Name: "business_unit", err: errors.New(`ent: missing required edge "ShipmentComment.business_unit"`)}
+	}
+	if _, ok := scc.mutation.OrganizationID(); !ok {
+		return &ValidationError{Name: "organization", err: errors.New(`ent: missing required edge "ShipmentComment.organization"`)}
 	}
 	if _, ok := scc.mutation.ShipmentID(); !ok {
 		return &ValidationError{Name: "shipment", err: errors.New(`ent: missing required edge "ShipmentComment.shipment"`)}
@@ -142,8 +265,13 @@ func (scc *ShipmentCommentCreate) sqlSave(ctx context.Context) (*ShipmentComment
 		}
 		return nil, err
 	}
-	id := _spec.ID.Value.(int64)
-	_node.ID = int(id)
+	if _spec.ID.Value != nil {
+		if id, ok := _spec.ID.Value.(*uuid.UUID); ok {
+			_node.ID = *id
+		} else if err := _node.ID.Scan(_spec.ID.Value); err != nil {
+			return nil, err
+		}
+	}
 	scc.mutation.id = &_node.ID
 	scc.mutation.done = true
 	return _node, nil
@@ -152,11 +280,61 @@ func (scc *ShipmentCommentCreate) sqlSave(ctx context.Context) (*ShipmentComment
 func (scc *ShipmentCommentCreate) createSpec() (*ShipmentComment, *sqlgraph.CreateSpec) {
 	var (
 		_node = &ShipmentComment{config: scc.config}
-		_spec = sqlgraph.NewCreateSpec(shipmentcomment.Table, sqlgraph.NewFieldSpec(shipmentcomment.FieldID, field.TypeInt))
+		_spec = sqlgraph.NewCreateSpec(shipmentcomment.Table, sqlgraph.NewFieldSpec(shipmentcomment.FieldID, field.TypeUUID))
 	)
+	if id, ok := scc.mutation.ID(); ok {
+		_node.ID = id
+		_spec.ID.Value = &id
+	}
+	if value, ok := scc.mutation.CreatedAt(); ok {
+		_spec.SetField(shipmentcomment.FieldCreatedAt, field.TypeTime, value)
+		_node.CreatedAt = value
+	}
+	if value, ok := scc.mutation.UpdatedAt(); ok {
+		_spec.SetField(shipmentcomment.FieldUpdatedAt, field.TypeTime, value)
+		_node.UpdatedAt = value
+	}
+	if value, ok := scc.mutation.Version(); ok {
+		_spec.SetField(shipmentcomment.FieldVersion, field.TypeInt, value)
+		_node.Version = value
+	}
 	if value, ok := scc.mutation.Comment(); ok {
 		_spec.SetField(shipmentcomment.FieldComment, field.TypeString, value)
 		_node.Comment = value
+	}
+	if nodes := scc.mutation.BusinessUnitIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   shipmentcomment.BusinessUnitTable,
+			Columns: []string{shipmentcomment.BusinessUnitColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(businessunit.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_node.BusinessUnitID = nodes[0]
+		_spec.Edges = append(_spec.Edges, edge)
+	}
+	if nodes := scc.mutation.OrganizationIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   shipmentcomment.OrganizationTable,
+			Columns: []string{shipmentcomment.OrganizationColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(organization.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_node.OrganizationID = nodes[0]
+		_spec.Edges = append(_spec.Edges, edge)
 	}
 	if nodes := scc.mutation.ShipmentIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
@@ -230,6 +408,7 @@ func (sccb *ShipmentCommentCreateBulk) Save(ctx context.Context) ([]*ShipmentCom
 	for i := range sccb.builders {
 		func(i int, root context.Context) {
 			builder := sccb.builders[i]
+			builder.defaults()
 			var mut Mutator = MutateFunc(func(ctx context.Context, m Mutation) (Value, error) {
 				mutation, ok := m.(*ShipmentCommentMutation)
 				if !ok {
@@ -256,10 +435,6 @@ func (sccb *ShipmentCommentCreateBulk) Save(ctx context.Context) ([]*ShipmentCom
 					return nil, err
 				}
 				mutation.id = &nodes[i].ID
-				if specs[i].ID.Value != nil {
-					id := specs[i].ID.Value.(int64)
-					nodes[i].ID = int(id)
-				}
 				mutation.done = true
 				return nodes[i], nil
 			})

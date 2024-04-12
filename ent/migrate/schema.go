@@ -743,6 +743,54 @@ var (
 			},
 		},
 	}
+	// FormulaTemplatesColumns holds the columns for the "formula_templates" table.
+	FormulaTemplatesColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeUUID},
+		{Name: "created_at", Type: field.TypeTime},
+		{Name: "updated_at", Type: field.TypeTime},
+		{Name: "version", Type: field.TypeInt, Default: 1},
+		{Name: "name", Type: field.TypeString},
+		{Name: "formula_text", Type: field.TypeString, Size: 2147483647},
+		{Name: "description", Type: field.TypeString, Nullable: true, Size: 2147483647},
+		{Name: "template_type", Type: field.TypeEnum, Enums: []string{"Refrigerated", "Hazardous", "General"}, Default: "General"},
+		{Name: "auto_apply", Type: field.TypeBool, Default: false},
+		{Name: "business_unit_id", Type: field.TypeUUID},
+		{Name: "organization_id", Type: field.TypeUUID},
+		{Name: "customer_id", Type: field.TypeUUID, Nullable: true},
+		{Name: "shipment_type_id", Type: field.TypeUUID, Nullable: true},
+	}
+	// FormulaTemplatesTable holds the schema information for the "formula_templates" table.
+	FormulaTemplatesTable = &schema.Table{
+		Name:       "formula_templates",
+		Columns:    FormulaTemplatesColumns,
+		PrimaryKey: []*schema.Column{FormulaTemplatesColumns[0]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "formula_templates_business_units_business_unit",
+				Columns:    []*schema.Column{FormulaTemplatesColumns[9]},
+				RefColumns: []*schema.Column{BusinessUnitsColumns[0]},
+				OnDelete:   schema.Cascade,
+			},
+			{
+				Symbol:     "formula_templates_organizations_organization",
+				Columns:    []*schema.Column{FormulaTemplatesColumns[10]},
+				RefColumns: []*schema.Column{OrganizationsColumns[0]},
+				OnDelete:   schema.Cascade,
+			},
+			{
+				Symbol:     "formula_templates_customers_customer",
+				Columns:    []*schema.Column{FormulaTemplatesColumns[11]},
+				RefColumns: []*schema.Column{CustomersColumns[0]},
+				OnDelete:   schema.Cascade,
+			},
+			{
+				Symbol:     "formula_templates_shipment_types_shipment_type",
+				Columns:    []*schema.Column{FormulaTemplatesColumns[12]},
+				RefColumns: []*schema.Column{ShipmentTypesColumns[0]},
+				OnDelete:   schema.Cascade,
+			},
+		},
+	}
 	// GeneralLedgerAccountsColumns holds the columns for the "general_ledger_accounts" table.
 	GeneralLedgerAccountsColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeUUID},
@@ -1377,18 +1425,18 @@ var (
 		{Name: "destination_appointment_end", Type: field.TypeTime, Nullable: true},
 		{Name: "rating_unit", Type: field.TypeInt, Comment: "The rating unit for the shipment.", Default: 1},
 		{Name: "mileage", Type: field.TypeFloat64, Nullable: true},
-		{Name: "other_charge_amount", Type: field.TypeFloat64, Nullable: true},
-		{Name: "freight_charge_amount", Type: field.TypeFloat64, Nullable: true},
+		{Name: "other_charge_amount", Type: field.TypeFloat64, Nullable: true, SchemaType: map[string]string{"mysql": "decimal(19,4)", "postgres": "numeric(19,4)"}},
+		{Name: "freight_charge_amount", Type: field.TypeFloat64, Nullable: true, SchemaType: map[string]string{"mysql": "decimal(19,4)", "postgres": "numeric(19,4)"}},
 		{Name: "rating_method", Type: field.TypeEnum, Enums: []string{"FlatRate", "PerMile", "PerHundredWeight", "PerStop", "PerPound", "Other"}, Default: "FlatRate"},
-		{Name: "pieces", Type: field.TypeFloat64, Nullable: true},
-		{Name: "weight", Type: field.TypeFloat64, Nullable: true},
+		{Name: "pieces", Type: field.TypeFloat64, Nullable: true, SchemaType: map[string]string{"mysql": "decimal(10,2)", "postgres": "numeric(10,2)"}},
+		{Name: "weight", Type: field.TypeFloat64, Nullable: true, SchemaType: map[string]string{"mysql": "decimal(10,2)", "postgres": "numeric(10,2)"}},
 		{Name: "ready_to_bill", Type: field.TypeBool, Default: false},
 		{Name: "bill_date", Type: field.TypeOther, Nullable: true, SchemaType: map[string]string{"postgres": "date", "sqlite3": "date"}},
 		{Name: "ship_date", Type: field.TypeOther, Nullable: true, SchemaType: map[string]string{"postgres": "date", "sqlite3": "date"}},
 		{Name: "billed", Type: field.TypeBool, Default: false},
 		{Name: "transferred_to_billing", Type: field.TypeBool, Default: false},
 		{Name: "transferred_to_billing_date", Type: field.TypeOther, Nullable: true, SchemaType: map[string]string{"postgres": "date", "sqlite3": "date"}},
-		{Name: "total_charge_amount", Type: field.TypeFloat64, Nullable: true},
+		{Name: "total_charge_amount", Type: field.TypeFloat64, Nullable: true, SchemaType: map[string]string{"mysql": "decimal(19,4)", "postgres": "numeric(19,4)"}},
 		{Name: "temperature_min", Type: field.TypeInt, Nullable: true},
 		{Name: "temperature_max", Type: field.TypeInt, Nullable: true},
 		{Name: "bill_of_lading_number", Type: field.TypeString, Nullable: true},
@@ -1396,7 +1444,7 @@ var (
 		{Name: "comment", Type: field.TypeString, Nullable: true, Size: 2147483647},
 		{Name: "voided_comment", Type: field.TypeString, Nullable: true, Size: 100, Comment: "The comment for voiding the shipment.", SchemaType: map[string]string{"postgres": "VARCHAR(100)", "sqlite3": "VARCHAR(100)"}},
 		{Name: "auto_rated", Type: field.TypeBool, Comment: "Indicates if the shipment was auto rated.", Default: false},
-		{Name: "current_suffix", Type: field.TypeString, Nullable: true},
+		{Name: "current_suffix", Type: field.TypeString, Nullable: true, SchemaType: map[string]string{"postgres": "VARCHAR(2)", "sqlite3": "VARCHAR(2)"}},
 		{Name: "entry_method", Type: field.TypeEnum, Enums: []string{"Manual", "EDI", "Web", "Mobile", "API"}, Default: "Manual"},
 		{Name: "is_hazardous", Type: field.TypeBool, Comment: "Indicates if the shipment is hazardous.", Default: false},
 		{Name: "customer_id", Type: field.TypeUUID},
@@ -1508,12 +1556,71 @@ var (
 			},
 		},
 	}
+	// ShipmentChargesColumns holds the columns for the "shipment_charges" table.
+	ShipmentChargesColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeUUID},
+		{Name: "created_at", Type: field.TypeTime},
+		{Name: "updated_at", Type: field.TypeTime},
+		{Name: "version", Type: field.TypeInt, Default: 1},
+		{Name: "description", Type: field.TypeString, Size: 2147483647},
+		{Name: "charge_amount", Type: field.TypeFloat64, SchemaType: map[string]string{"mysql": "decimal(19,4)", "postgres": "numeric(19,4)"}},
+		{Name: "units", Type: field.TypeInt},
+		{Name: "sub_total", Type: field.TypeFloat64, SchemaType: map[string]string{"mysql": "decimal(19,4)", "postgres": "numeric(19,4)"}},
+		{Name: "accessorial_charge_id", Type: field.TypeUUID},
+		{Name: "shipment_id", Type: field.TypeUUID},
+		{Name: "business_unit_id", Type: field.TypeUUID},
+		{Name: "organization_id", Type: field.TypeUUID},
+		{Name: "created_by", Type: field.TypeUUID},
+	}
+	// ShipmentChargesTable holds the schema information for the "shipment_charges" table.
+	ShipmentChargesTable = &schema.Table{
+		Name:       "shipment_charges",
+		Columns:    ShipmentChargesColumns,
+		PrimaryKey: []*schema.Column{ShipmentChargesColumns[0]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "shipment_charges_accessorial_charges_shipment_charges",
+				Columns:    []*schema.Column{ShipmentChargesColumns[8]},
+				RefColumns: []*schema.Column{AccessorialChargesColumns[0]},
+				OnDelete:   schema.NoAction,
+			},
+			{
+				Symbol:     "shipment_charges_shipments_shipment_charges",
+				Columns:    []*schema.Column{ShipmentChargesColumns[9]},
+				RefColumns: []*schema.Column{ShipmentsColumns[0]},
+				OnDelete:   schema.Cascade,
+			},
+			{
+				Symbol:     "shipment_charges_business_units_business_unit",
+				Columns:    []*schema.Column{ShipmentChargesColumns[10]},
+				RefColumns: []*schema.Column{BusinessUnitsColumns[0]},
+				OnDelete:   schema.Cascade,
+			},
+			{
+				Symbol:     "shipment_charges_organizations_organization",
+				Columns:    []*schema.Column{ShipmentChargesColumns[11]},
+				RefColumns: []*schema.Column{OrganizationsColumns[0]},
+				OnDelete:   schema.Cascade,
+			},
+			{
+				Symbol:     "shipment_charges_users_shipment_charges",
+				Columns:    []*schema.Column{ShipmentChargesColumns[12]},
+				RefColumns: []*schema.Column{UsersColumns[0]},
+				OnDelete:   schema.NoAction,
+			},
+		},
+	}
 	// ShipmentCommentsColumns holds the columns for the "shipment_comments" table.
 	ShipmentCommentsColumns = []*schema.Column{
-		{Name: "id", Type: field.TypeInt, Increment: true},
+		{Name: "id", Type: field.TypeUUID},
+		{Name: "created_at", Type: field.TypeTime},
+		{Name: "updated_at", Type: field.TypeTime},
+		{Name: "version", Type: field.TypeInt, Default: 1},
 		{Name: "comment", Type: field.TypeString, Size: 2147483647},
 		{Name: "comment_type_id", Type: field.TypeUUID},
 		{Name: "shipment_id", Type: field.TypeUUID},
+		{Name: "business_unit_id", Type: field.TypeUUID},
+		{Name: "organization_id", Type: field.TypeUUID},
 		{Name: "created_by", Type: field.TypeUUID},
 	}
 	// ShipmentCommentsTable holds the schema information for the "shipment_comments" table.
@@ -1524,21 +1631,73 @@ var (
 		ForeignKeys: []*schema.ForeignKey{
 			{
 				Symbol:     "shipment_comments_comment_types_shipment_comments",
-				Columns:    []*schema.Column{ShipmentCommentsColumns[2]},
+				Columns:    []*schema.Column{ShipmentCommentsColumns[5]},
 				RefColumns: []*schema.Column{CommentTypesColumns[0]},
 				OnDelete:   schema.NoAction,
 			},
 			{
 				Symbol:     "shipment_comments_shipments_shipment_comments",
-				Columns:    []*schema.Column{ShipmentCommentsColumns[3]},
+				Columns:    []*schema.Column{ShipmentCommentsColumns[6]},
 				RefColumns: []*schema.Column{ShipmentsColumns[0]},
 				OnDelete:   schema.Cascade,
 			},
 			{
+				Symbol:     "shipment_comments_business_units_business_unit",
+				Columns:    []*schema.Column{ShipmentCommentsColumns[7]},
+				RefColumns: []*schema.Column{BusinessUnitsColumns[0]},
+				OnDelete:   schema.Cascade,
+			},
+			{
+				Symbol:     "shipment_comments_organizations_organization",
+				Columns:    []*schema.Column{ShipmentCommentsColumns[8]},
+				RefColumns: []*schema.Column{OrganizationsColumns[0]},
+				OnDelete:   schema.Cascade,
+			},
+			{
 				Symbol:     "shipment_comments_users_shipment_comments",
-				Columns:    []*schema.Column{ShipmentCommentsColumns[4]},
+				Columns:    []*schema.Column{ShipmentCommentsColumns[9]},
 				RefColumns: []*schema.Column{UsersColumns[0]},
 				OnDelete:   schema.NoAction,
+			},
+		},
+	}
+	// ShipmentCommoditiesColumns holds the columns for the "shipment_commodities" table.
+	ShipmentCommoditiesColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeUUID},
+		{Name: "created_at", Type: field.TypeTime},
+		{Name: "updated_at", Type: field.TypeTime},
+		{Name: "version", Type: field.TypeInt, Default: 1},
+		{Name: "commodity_id", Type: field.TypeUUID},
+		{Name: "hazardous_material_id", Type: field.TypeUUID},
+		{Name: "sub_total", Type: field.TypeFloat64, SchemaType: map[string]string{"mysql": "decimal(10,2)", "postgres": "numeric(10,2)"}},
+		{Name: "placard_needed", Type: field.TypeBool, Default: false},
+		{Name: "shipment_id", Type: field.TypeUUID},
+		{Name: "business_unit_id", Type: field.TypeUUID},
+		{Name: "organization_id", Type: field.TypeUUID},
+	}
+	// ShipmentCommoditiesTable holds the schema information for the "shipment_commodities" table.
+	ShipmentCommoditiesTable = &schema.Table{
+		Name:       "shipment_commodities",
+		Columns:    ShipmentCommoditiesColumns,
+		PrimaryKey: []*schema.Column{ShipmentCommoditiesColumns[0]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "shipment_commodities_shipments_shipment_commodities",
+				Columns:    []*schema.Column{ShipmentCommoditiesColumns[8]},
+				RefColumns: []*schema.Column{ShipmentsColumns[0]},
+				OnDelete:   schema.Cascade,
+			},
+			{
+				Symbol:     "shipment_commodities_business_units_business_unit",
+				Columns:    []*schema.Column{ShipmentCommoditiesColumns[9]},
+				RefColumns: []*schema.Column{BusinessUnitsColumns[0]},
+				OnDelete:   schema.Cascade,
+			},
+			{
+				Symbol:     "shipment_commodities_organizations_organization",
+				Columns:    []*schema.Column{ShipmentCommoditiesColumns[10]},
+				RefColumns: []*schema.Column{OrganizationsColumns[0]},
+				OnDelete:   schema.Cascade,
 			},
 		},
 	}
@@ -2246,6 +2405,7 @@ var (
 		FeasibilityToolControlsTable,
 		FeatureFlagsTable,
 		FleetCodesTable,
+		FormulaTemplatesTable,
 		GeneralLedgerAccountsTable,
 		GoogleApisTable,
 		HazardousMaterialsTable,
@@ -2264,7 +2424,9 @@ var (
 		ServiceTypesTable,
 		SessionsTable,
 		ShipmentsTable,
+		ShipmentChargesTable,
 		ShipmentCommentsTable,
+		ShipmentCommoditiesTable,
 		ShipmentControlsTable,
 		ShipmentDocumentationsTable,
 		ShipmentTypesTable,
@@ -2330,6 +2492,10 @@ func init() {
 	FleetCodesTable.ForeignKeys[0].RefTable = BusinessUnitsTable
 	FleetCodesTable.ForeignKeys[1].RefTable = OrganizationsTable
 	FleetCodesTable.ForeignKeys[2].RefTable = UsersTable
+	FormulaTemplatesTable.ForeignKeys[0].RefTable = BusinessUnitsTable
+	FormulaTemplatesTable.ForeignKeys[1].RefTable = OrganizationsTable
+	FormulaTemplatesTable.ForeignKeys[2].RefTable = CustomersTable
+	FormulaTemplatesTable.ForeignKeys[3].RefTable = ShipmentTypesTable
 	GeneralLedgerAccountsTable.ForeignKeys[0].RefTable = BusinessUnitsTable
 	GeneralLedgerAccountsTable.ForeignKeys[1].RefTable = OrganizationsTable
 	GoogleApisTable.ForeignKeys[0].RefTable = BusinessUnitsTable
@@ -2381,9 +2547,19 @@ func init() {
 	ShipmentsTable.ForeignKeys[9].RefTable = EquipmentTypesTable
 	ShipmentsTable.ForeignKeys[10].RefTable = UsersTable
 	ShipmentsTable.Annotation = &entsql.Annotation{}
+	ShipmentChargesTable.ForeignKeys[0].RefTable = AccessorialChargesTable
+	ShipmentChargesTable.ForeignKeys[1].RefTable = ShipmentsTable
+	ShipmentChargesTable.ForeignKeys[2].RefTable = BusinessUnitsTable
+	ShipmentChargesTable.ForeignKeys[3].RefTable = OrganizationsTable
+	ShipmentChargesTable.ForeignKeys[4].RefTable = UsersTable
 	ShipmentCommentsTable.ForeignKeys[0].RefTable = CommentTypesTable
 	ShipmentCommentsTable.ForeignKeys[1].RefTable = ShipmentsTable
-	ShipmentCommentsTable.ForeignKeys[2].RefTable = UsersTable
+	ShipmentCommentsTable.ForeignKeys[2].RefTable = BusinessUnitsTable
+	ShipmentCommentsTable.ForeignKeys[3].RefTable = OrganizationsTable
+	ShipmentCommentsTable.ForeignKeys[4].RefTable = UsersTable
+	ShipmentCommoditiesTable.ForeignKeys[0].RefTable = ShipmentsTable
+	ShipmentCommoditiesTable.ForeignKeys[1].RefTable = BusinessUnitsTable
+	ShipmentCommoditiesTable.ForeignKeys[2].RefTable = OrganizationsTable
 	ShipmentControlsTable.ForeignKeys[0].RefTable = OrganizationsTable
 	ShipmentControlsTable.ForeignKeys[1].RefTable = BusinessUnitsTable
 	ShipmentDocumentationsTable.ForeignKeys[0].RefTable = DocumentClassificationsTable

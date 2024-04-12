@@ -537,6 +537,29 @@ func HasOrganizationWith(preds ...predicate.Organization) predicate.AccessorialC
 	})
 }
 
+// HasShipmentCharges applies the HasEdge predicate on the "shipment_charges" edge.
+func HasShipmentCharges() predicate.AccessorialCharge {
+	return predicate.AccessorialCharge(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, ShipmentChargesTable, ShipmentChargesColumn),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasShipmentChargesWith applies the HasEdge predicate on the "shipment_charges" edge with a given conditions (other predicates).
+func HasShipmentChargesWith(preds ...predicate.ShipmentCharges) predicate.AccessorialCharge {
+	return predicate.AccessorialCharge(func(s *sql.Selector) {
+		step := newShipmentChargesStep()
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	})
+}
+
 // And groups predicates with the AND operator between them.
 func And(predicates ...predicate.AccessorialCharge) predicate.AccessorialCharge {
 	return predicate.AccessorialCharge(sql.AndPredicates(predicates...))

@@ -13,6 +13,7 @@ import (
 	"entgo.io/ent/schema/field"
 	"github.com/emoss08/trenova/ent/predicate"
 	"github.com/emoss08/trenova/ent/shipment"
+	"github.com/emoss08/trenova/ent/shipmentcharges"
 	"github.com/emoss08/trenova/ent/shipmentcomment"
 	"github.com/emoss08/trenova/ent/user"
 	"github.com/emoss08/trenova/ent/userfavorite"
@@ -283,18 +284,33 @@ func (uu *UserUpdate) AddShipments(s ...*Shipment) *UserUpdate {
 }
 
 // AddShipmentCommentIDs adds the "shipment_comments" edge to the ShipmentComment entity by IDs.
-func (uu *UserUpdate) AddShipmentCommentIDs(ids ...int) *UserUpdate {
+func (uu *UserUpdate) AddShipmentCommentIDs(ids ...uuid.UUID) *UserUpdate {
 	uu.mutation.AddShipmentCommentIDs(ids...)
 	return uu
 }
 
 // AddShipmentComments adds the "shipment_comments" edges to the ShipmentComment entity.
 func (uu *UserUpdate) AddShipmentComments(s ...*ShipmentComment) *UserUpdate {
-	ids := make([]int, len(s))
+	ids := make([]uuid.UUID, len(s))
 	for i := range s {
 		ids[i] = s[i].ID
 	}
 	return uu.AddShipmentCommentIDs(ids...)
+}
+
+// AddShipmentChargeIDs adds the "shipment_charges" edge to the ShipmentCharges entity by IDs.
+func (uu *UserUpdate) AddShipmentChargeIDs(ids ...uuid.UUID) *UserUpdate {
+	uu.mutation.AddShipmentChargeIDs(ids...)
+	return uu
+}
+
+// AddShipmentCharges adds the "shipment_charges" edges to the ShipmentCharges entity.
+func (uu *UserUpdate) AddShipmentCharges(s ...*ShipmentCharges) *UserUpdate {
+	ids := make([]uuid.UUID, len(s))
+	for i := range s {
+		ids[i] = s[i].ID
+	}
+	return uu.AddShipmentChargeIDs(ids...)
 }
 
 // Mutation returns the UserMutation object of the builder.
@@ -351,18 +367,39 @@ func (uu *UserUpdate) ClearShipmentComments() *UserUpdate {
 }
 
 // RemoveShipmentCommentIDs removes the "shipment_comments" edge to ShipmentComment entities by IDs.
-func (uu *UserUpdate) RemoveShipmentCommentIDs(ids ...int) *UserUpdate {
+func (uu *UserUpdate) RemoveShipmentCommentIDs(ids ...uuid.UUID) *UserUpdate {
 	uu.mutation.RemoveShipmentCommentIDs(ids...)
 	return uu
 }
 
 // RemoveShipmentComments removes "shipment_comments" edges to ShipmentComment entities.
 func (uu *UserUpdate) RemoveShipmentComments(s ...*ShipmentComment) *UserUpdate {
-	ids := make([]int, len(s))
+	ids := make([]uuid.UUID, len(s))
 	for i := range s {
 		ids[i] = s[i].ID
 	}
 	return uu.RemoveShipmentCommentIDs(ids...)
+}
+
+// ClearShipmentCharges clears all "shipment_charges" edges to the ShipmentCharges entity.
+func (uu *UserUpdate) ClearShipmentCharges() *UserUpdate {
+	uu.mutation.ClearShipmentCharges()
+	return uu
+}
+
+// RemoveShipmentChargeIDs removes the "shipment_charges" edge to ShipmentCharges entities by IDs.
+func (uu *UserUpdate) RemoveShipmentChargeIDs(ids ...uuid.UUID) *UserUpdate {
+	uu.mutation.RemoveShipmentChargeIDs(ids...)
+	return uu
+}
+
+// RemoveShipmentCharges removes "shipment_charges" edges to ShipmentCharges entities.
+func (uu *UserUpdate) RemoveShipmentCharges(s ...*ShipmentCharges) *UserUpdate {
+	ids := make([]uuid.UUID, len(s))
+	for i := range s {
+		ids[i] = s[i].ID
+	}
+	return uu.RemoveShipmentChargeIDs(ids...)
 }
 
 // Save executes the query and returns the number of nodes affected by the update operation.
@@ -615,7 +652,7 @@ func (uu *UserUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Columns: []string{user.ShipmentCommentsColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(shipmentcomment.FieldID, field.TypeInt),
+				IDSpec: sqlgraph.NewFieldSpec(shipmentcomment.FieldID, field.TypeUUID),
 			},
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
@@ -628,7 +665,7 @@ func (uu *UserUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Columns: []string{user.ShipmentCommentsColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(shipmentcomment.FieldID, field.TypeInt),
+				IDSpec: sqlgraph.NewFieldSpec(shipmentcomment.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {
@@ -644,7 +681,52 @@ func (uu *UserUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Columns: []string{user.ShipmentCommentsColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(shipmentcomment.FieldID, field.TypeInt),
+				IDSpec: sqlgraph.NewFieldSpec(shipmentcomment.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if uu.mutation.ShipmentChargesCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.ShipmentChargesTable,
+			Columns: []string{user.ShipmentChargesColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(shipmentcharges.FieldID, field.TypeUUID),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := uu.mutation.RemovedShipmentChargesIDs(); len(nodes) > 0 && !uu.mutation.ShipmentChargesCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.ShipmentChargesTable,
+			Columns: []string{user.ShipmentChargesColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(shipmentcharges.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := uu.mutation.ShipmentChargesIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.ShipmentChargesTable,
+			Columns: []string{user.ShipmentChargesColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(shipmentcharges.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {
@@ -924,18 +1006,33 @@ func (uuo *UserUpdateOne) AddShipments(s ...*Shipment) *UserUpdateOne {
 }
 
 // AddShipmentCommentIDs adds the "shipment_comments" edge to the ShipmentComment entity by IDs.
-func (uuo *UserUpdateOne) AddShipmentCommentIDs(ids ...int) *UserUpdateOne {
+func (uuo *UserUpdateOne) AddShipmentCommentIDs(ids ...uuid.UUID) *UserUpdateOne {
 	uuo.mutation.AddShipmentCommentIDs(ids...)
 	return uuo
 }
 
 // AddShipmentComments adds the "shipment_comments" edges to the ShipmentComment entity.
 func (uuo *UserUpdateOne) AddShipmentComments(s ...*ShipmentComment) *UserUpdateOne {
-	ids := make([]int, len(s))
+	ids := make([]uuid.UUID, len(s))
 	for i := range s {
 		ids[i] = s[i].ID
 	}
 	return uuo.AddShipmentCommentIDs(ids...)
+}
+
+// AddShipmentChargeIDs adds the "shipment_charges" edge to the ShipmentCharges entity by IDs.
+func (uuo *UserUpdateOne) AddShipmentChargeIDs(ids ...uuid.UUID) *UserUpdateOne {
+	uuo.mutation.AddShipmentChargeIDs(ids...)
+	return uuo
+}
+
+// AddShipmentCharges adds the "shipment_charges" edges to the ShipmentCharges entity.
+func (uuo *UserUpdateOne) AddShipmentCharges(s ...*ShipmentCharges) *UserUpdateOne {
+	ids := make([]uuid.UUID, len(s))
+	for i := range s {
+		ids[i] = s[i].ID
+	}
+	return uuo.AddShipmentChargeIDs(ids...)
 }
 
 // Mutation returns the UserMutation object of the builder.
@@ -992,18 +1089,39 @@ func (uuo *UserUpdateOne) ClearShipmentComments() *UserUpdateOne {
 }
 
 // RemoveShipmentCommentIDs removes the "shipment_comments" edge to ShipmentComment entities by IDs.
-func (uuo *UserUpdateOne) RemoveShipmentCommentIDs(ids ...int) *UserUpdateOne {
+func (uuo *UserUpdateOne) RemoveShipmentCommentIDs(ids ...uuid.UUID) *UserUpdateOne {
 	uuo.mutation.RemoveShipmentCommentIDs(ids...)
 	return uuo
 }
 
 // RemoveShipmentComments removes "shipment_comments" edges to ShipmentComment entities.
 func (uuo *UserUpdateOne) RemoveShipmentComments(s ...*ShipmentComment) *UserUpdateOne {
-	ids := make([]int, len(s))
+	ids := make([]uuid.UUID, len(s))
 	for i := range s {
 		ids[i] = s[i].ID
 	}
 	return uuo.RemoveShipmentCommentIDs(ids...)
+}
+
+// ClearShipmentCharges clears all "shipment_charges" edges to the ShipmentCharges entity.
+func (uuo *UserUpdateOne) ClearShipmentCharges() *UserUpdateOne {
+	uuo.mutation.ClearShipmentCharges()
+	return uuo
+}
+
+// RemoveShipmentChargeIDs removes the "shipment_charges" edge to ShipmentCharges entities by IDs.
+func (uuo *UserUpdateOne) RemoveShipmentChargeIDs(ids ...uuid.UUID) *UserUpdateOne {
+	uuo.mutation.RemoveShipmentChargeIDs(ids...)
+	return uuo
+}
+
+// RemoveShipmentCharges removes "shipment_charges" edges to ShipmentCharges entities.
+func (uuo *UserUpdateOne) RemoveShipmentCharges(s ...*ShipmentCharges) *UserUpdateOne {
+	ids := make([]uuid.UUID, len(s))
+	for i := range s {
+		ids[i] = s[i].ID
+	}
+	return uuo.RemoveShipmentChargeIDs(ids...)
 }
 
 // Where appends a list predicates to the UserUpdate builder.
@@ -1286,7 +1404,7 @@ func (uuo *UserUpdateOne) sqlSave(ctx context.Context) (_node *User, err error) 
 			Columns: []string{user.ShipmentCommentsColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(shipmentcomment.FieldID, field.TypeInt),
+				IDSpec: sqlgraph.NewFieldSpec(shipmentcomment.FieldID, field.TypeUUID),
 			},
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
@@ -1299,7 +1417,7 @@ func (uuo *UserUpdateOne) sqlSave(ctx context.Context) (_node *User, err error) 
 			Columns: []string{user.ShipmentCommentsColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(shipmentcomment.FieldID, field.TypeInt),
+				IDSpec: sqlgraph.NewFieldSpec(shipmentcomment.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {
@@ -1315,7 +1433,52 @@ func (uuo *UserUpdateOne) sqlSave(ctx context.Context) (_node *User, err error) 
 			Columns: []string{user.ShipmentCommentsColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(shipmentcomment.FieldID, field.TypeInt),
+				IDSpec: sqlgraph.NewFieldSpec(shipmentcomment.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if uuo.mutation.ShipmentChargesCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.ShipmentChargesTable,
+			Columns: []string{user.ShipmentChargesColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(shipmentcharges.FieldID, field.TypeUUID),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := uuo.mutation.RemovedShipmentChargesIDs(); len(nodes) > 0 && !uuo.mutation.ShipmentChargesCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.ShipmentChargesTable,
+			Columns: []string{user.ShipmentChargesColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(shipmentcharges.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := uuo.mutation.ShipmentChargesIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.ShipmentChargesTable,
+			Columns: []string{user.ShipmentChargesColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(shipmentcharges.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {

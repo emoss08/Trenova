@@ -52,6 +52,8 @@ type Tx struct {
 	FeatureFlag *FeatureFlagClient
 	// FleetCode is the client for interacting with the FleetCode builders.
 	FleetCode *FleetCodeClient
+	// FormulaTemplate is the client for interacting with the FormulaTemplate builders.
+	FormulaTemplate *FormulaTemplateClient
 	// GeneralLedgerAccount is the client for interacting with the GeneralLedgerAccount builders.
 	GeneralLedgerAccount *GeneralLedgerAccountClient
 	// GoogleApi is the client for interacting with the GoogleApi builders.
@@ -88,8 +90,12 @@ type Tx struct {
 	Session *SessionClient
 	// Shipment is the client for interacting with the Shipment builders.
 	Shipment *ShipmentClient
+	// ShipmentCharges is the client for interacting with the ShipmentCharges builders.
+	ShipmentCharges *ShipmentChargesClient
 	// ShipmentComment is the client for interacting with the ShipmentComment builders.
 	ShipmentComment *ShipmentCommentClient
+	// ShipmentCommodity is the client for interacting with the ShipmentCommodity builders.
+	ShipmentCommodity *ShipmentCommodityClient
 	// ShipmentControl is the client for interacting with the ShipmentControl builders.
 	ShipmentControl *ShipmentControlClient
 	// ShipmentDocumentation is the client for interacting with the ShipmentDocumentation builders.
@@ -268,6 +274,7 @@ func (tx *Tx) init() {
 	tx.FeasibilityToolControl = NewFeasibilityToolControlClient(tx.config)
 	tx.FeatureFlag = NewFeatureFlagClient(tx.config)
 	tx.FleetCode = NewFleetCodeClient(tx.config)
+	tx.FormulaTemplate = NewFormulaTemplateClient(tx.config)
 	tx.GeneralLedgerAccount = NewGeneralLedgerAccountClient(tx.config)
 	tx.GoogleApi = NewGoogleApiClient(tx.config)
 	tx.HazardousMaterial = NewHazardousMaterialClient(tx.config)
@@ -286,7 +293,9 @@ func (tx *Tx) init() {
 	tx.ServiceType = NewServiceTypeClient(tx.config)
 	tx.Session = NewSessionClient(tx.config)
 	tx.Shipment = NewShipmentClient(tx.config)
+	tx.ShipmentCharges = NewShipmentChargesClient(tx.config)
 	tx.ShipmentComment = NewShipmentCommentClient(tx.config)
+	tx.ShipmentCommodity = NewShipmentCommodityClient(tx.config)
 	tx.ShipmentControl = NewShipmentControlClient(tx.config)
 	tx.ShipmentDocumentation = NewShipmentDocumentationClient(tx.config)
 	tx.ShipmentType = NewShipmentTypeClient(tx.config)

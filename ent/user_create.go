@@ -13,6 +13,7 @@ import (
 	"github.com/emoss08/trenova/ent/businessunit"
 	"github.com/emoss08/trenova/ent/organization"
 	"github.com/emoss08/trenova/ent/shipment"
+	"github.com/emoss08/trenova/ent/shipmentcharges"
 	"github.com/emoss08/trenova/ent/shipmentcomment"
 	"github.com/emoss08/trenova/ent/user"
 	"github.com/emoss08/trenova/ent/userfavorite"
@@ -271,18 +272,33 @@ func (uc *UserCreate) AddShipments(s ...*Shipment) *UserCreate {
 }
 
 // AddShipmentCommentIDs adds the "shipment_comments" edge to the ShipmentComment entity by IDs.
-func (uc *UserCreate) AddShipmentCommentIDs(ids ...int) *UserCreate {
+func (uc *UserCreate) AddShipmentCommentIDs(ids ...uuid.UUID) *UserCreate {
 	uc.mutation.AddShipmentCommentIDs(ids...)
 	return uc
 }
 
 // AddShipmentComments adds the "shipment_comments" edges to the ShipmentComment entity.
 func (uc *UserCreate) AddShipmentComments(s ...*ShipmentComment) *UserCreate {
-	ids := make([]int, len(s))
+	ids := make([]uuid.UUID, len(s))
 	for i := range s {
 		ids[i] = s[i].ID
 	}
 	return uc.AddShipmentCommentIDs(ids...)
+}
+
+// AddShipmentChargeIDs adds the "shipment_charges" edge to the ShipmentCharges entity by IDs.
+func (uc *UserCreate) AddShipmentChargeIDs(ids ...uuid.UUID) *UserCreate {
+	uc.mutation.AddShipmentChargeIDs(ids...)
+	return uc
+}
+
+// AddShipmentCharges adds the "shipment_charges" edges to the ShipmentCharges entity.
+func (uc *UserCreate) AddShipmentCharges(s ...*ShipmentCharges) *UserCreate {
+	ids := make([]uuid.UUID, len(s))
+	for i := range s {
+		ids[i] = s[i].ID
+	}
+	return uc.AddShipmentChargeIDs(ids...)
 }
 
 // Mutation returns the UserMutation object of the builder.
@@ -600,7 +616,23 @@ func (uc *UserCreate) createSpec() (*User, *sqlgraph.CreateSpec) {
 			Columns: []string{user.ShipmentCommentsColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(shipmentcomment.FieldID, field.TypeInt),
+				IDSpec: sqlgraph.NewFieldSpec(shipmentcomment.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges = append(_spec.Edges, edge)
+	}
+	if nodes := uc.mutation.ShipmentChargesIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.ShipmentChargesTable,
+			Columns: []string{user.ShipmentChargesColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(shipmentcharges.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {

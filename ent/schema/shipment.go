@@ -92,10 +92,18 @@ func (Shipment) Fields() []ent.Field {
 			StructTag(`json:"mileage" validate:"omitempty"`),
 		field.Float("other_charge_amount").
 			Positive().
+			SchemaType(map[string]string{
+				dialect.MySQL:    "decimal(19,4)",
+				dialect.Postgres: "numeric(19,4)",
+			}).
 			Optional().
 			StructTag(`json:"otherChargeAmount" validate:"omitempty"`),
 		field.Float("freight_charge_amount").
 			Positive().
+			SchemaType(map[string]string{
+				dialect.MySQL:    "decimal(19,4)",
+				dialect.Postgres: "numeric(19,4)",
+			}).
 			Optional().
 			StructTag(`json:"freightChargeAmount" validate:"omitempty"`),
 		field.Enum("rating_method").
@@ -106,10 +114,18 @@ func (Shipment) Fields() []ent.Field {
 			StructTag(`json:"customerId" validate:"required"`),
 		field.Float("pieces").
 			Positive().
+			SchemaType(map[string]string{
+				dialect.MySQL:    "decimal(10,2)",
+				dialect.Postgres: "numeric(10,2)",
+			}).
 			Optional().
 			StructTag(`json:"pieces" validate:"omitempty"`),
 		field.Float("weight").
 			Positive().
+			SchemaType(map[string]string{
+				dialect.MySQL:    "decimal(10,2)",
+				dialect.Postgres: "numeric(10,2)",
+			}).
 			Optional().
 			StructTag(`json:"weight" validate:"omitempty"`),
 		field.Bool("ready_to_bill").
@@ -144,6 +160,10 @@ func (Shipment) Fields() []ent.Field {
 			StructTag(`json:"transferredToBillingDate" validate:"omitempty"`),
 		field.Float("total_charge_amount").
 			Positive().
+			SchemaType(map[string]string{
+				dialect.MySQL:    "decimal(19,4)",
+				dialect.Postgres: "numeric(19,4)",
+			}).
 			Optional().
 			StructTag(`json:"totalChargeAmount" validate:"omitempty"`),
 		field.UUID("trailer_type_id", uuid.UUID{}).
@@ -184,6 +204,10 @@ func (Shipment) Fields() []ent.Field {
 			StructTag(`json:"autoRated" validate:"omitempty"`),
 		field.String("current_suffix").
 			Optional().
+			SchemaType(map[string]string{
+				dialect.Postgres: "VARCHAR(2)",
+				dialect.SQLite:   "VARCHAR(2)",
+			}).
 			StructTag(`json:"currentSuffix" validate:"omitempty"`),
 		field.Enum("entry_method").
 			Values("Manual", "EDI", "Web", "Mobile", "API").
@@ -264,6 +288,18 @@ func (Shipment) Edges() []ent.Edge {
 			Unique().
 			Annotations(entsql.OnDelete(entsql.Cascade)).
 			StructTag(`json:"tractorType"`),
+		edge.To("shipment_documentation", ShipmentDocumentation.Type).
+			Annotations(entsql.OnDelete(entsql.Cascade)).
+			StructTag(`json:"shipmentDocumentation"`),
+		edge.To("shipment_comments", ShipmentComment.Type).
+			Annotations(entsql.OnDelete(entsql.Cascade)).
+			StructTag(`json:"shipmentComments"`),
+		edge.To("shipment_charges", ShipmentCharges.Type).
+			Annotations(entsql.OnDelete(entsql.Cascade)).
+			StructTag(`json:"shipmentCharges"`),
+		edge.To("shipment_commodities", ShipmentCommodity.Type).
+			Annotations(entsql.OnDelete(entsql.Cascade)).
+			StructTag(`json:"shipmentCommodities"`),
 		edge.From("created_by_user", User.Type).
 			Ref("shipments").
 			Field("created_by").
@@ -277,12 +313,6 @@ func (Shipment) Edges() []ent.Edge {
 			Required().
 			Annotations(entsql.OnDelete(entsql.Cascade)).
 			StructTag(`json:"customer"`),
-		edge.To("shipment_documentation", ShipmentDocumentation.Type).
-			Annotations(entsql.OnDelete(entsql.Cascade)).
-			StructTag(`json:"shipmentDocumentation"`),
-		edge.To("shipment_comments", ShipmentComment.Type).
-			Annotations(entsql.OnDelete(entsql.Cascade)).
-			StructTag(`json:"shipmentComments"`),
 	}
 }
 
