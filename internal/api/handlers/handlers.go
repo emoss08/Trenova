@@ -22,6 +22,11 @@ func AttachAllRoutes(s *api.Server, api fiber.Router) {
 	accountingControl.Get("/", GetAccountingControl(s))
 	accountingControl.Put("/:accountingControlID", UpdateAccountingControlByID(s))
 
+	// Register the handlers for the dispatch control
+	dispatchControl := api.Group("/dispatch-control")
+	dispatchControl.Get("/", GetDispatchControl(s))
+	dispatchControl.Put("/:dispatchControlID", UpdateDispatchControl(s))
+
 	// Register the handlers for the billing control.
 	billingControl := api.Group("/billing-control")
 	billingControl.Get("/", GetBillingControl(s))

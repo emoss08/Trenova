@@ -18,7 +18,7 @@ type AccountingControlService struct {
 	Logger *zerolog.Logger
 }
 
-// NewAccountingControlService creates a new accessorial charge service.
+// NewAccountingControlService creates a new accounting control service.
 func NewAccountingControlService(s *api.Server) *AccountingControlService {
 	return &AccountingControlService{
 		Client: s.Client,
