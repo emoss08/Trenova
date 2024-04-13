@@ -13,6 +13,8 @@ import (
 )
 
 // GetAccessorialCharges is a handler that returns a list of accessorial charges.
+//
+// GET /accessorial-charges
 func GetAccessorialCharges(s *api.Server) fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		offset, limit, err := util.PaginationParams(c)
@@ -64,6 +66,8 @@ func GetAccessorialCharges(s *api.Server) fiber.Handler {
 }
 
 // CreateAccessorialCharge is a handler that creates a new accessorial charge.
+//
+// POST /accessorial-charges
 func CreateAccessorialCharge(s *api.Server) fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		newEntity := new(ent.AccessorialCharge)
@@ -113,6 +117,8 @@ func CreateAccessorialCharge(s *api.Server) fiber.Handler {
 }
 
 // UpdateAccessorialCharge is a handler that updates an accessorial charge.
+//
+// PUT /accessorial-charges/:accessorialChargeID
 func UpdateAccessorialCharge(s *api.Server) fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		accessorialChargeID := c.Params("accessorialChargeID")

@@ -51,6 +51,7 @@ func Init(s *api.Server) {
 	// Register the authentication routes.
 	auth := apiV1.Group("/auth")
 	auth.Post("/login", handlers.AuthenticateUser(s))
+	auth.Post("/logout", handlers.LogoutUser(s))
 
 	if s.Config.Fiber.EnableHelmetMiddleware {
 		apiV1.Use(helmet.New())

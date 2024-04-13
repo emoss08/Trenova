@@ -11,6 +11,8 @@ import (
 )
 
 // GetAccountingControl is a handler that returns the accounting control for an organization.
+//
+// GET /accounting-control
 func GetAccountingControl(s *api.Server) fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		orgID, ok := c.Locals(util.CTXOrganizationID).(uuid.UUID)
@@ -60,7 +62,7 @@ func UpdateAccountingControlByID(s *api.Server) fiber.Handler {
 
 		data := new(ent.AccountingControl)
 
-		if err := c.BodyParser(data); err != nil {
+		if err := util.ParseBodyAndValidate(c, data); err != nil {
 			return c.Status(fiber.StatusBadRequest).JSON(types.ValidationErrorResponse{
 				Type: "invalidRequest",
 				Errors: []types.ValidationErrorDetail{
@@ -68,19 +70,6 @@ func UpdateAccountingControlByID(s *api.Server) fiber.Handler {
 						Code:   "invalidRequest",
 						Detail: err.Error(),
 						Attr:   "request body",
-					},
-				},
-			})
-		}
-
-		if _, err := uuid.Parse(accountingControlID); err != nil {
-			return c.Status(fiber.StatusBadRequest).JSON(types.ValidationErrorResponse{
-				Type: "invalidRequest",
-				Errors: []types.ValidationErrorDetail{
-					{
-						Code:   "invalidRequest",
-						Detail: "Accounting Control ID must be a valid UUID",
-						Attr:   "accountingControlID",
 					},
 				},
 			})

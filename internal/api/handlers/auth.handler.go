@@ -11,6 +11,13 @@ import (
 )
 
 // AuthenticateUser authenticates a user and sets the session values.
+//
+// POST /auth
+//
+//	{
+//	  "username": "user",
+//	  "password": "password"
+//	}
 func AuthenticateUser(s *api.Server) fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		var loginRequest struct {
@@ -84,5 +91,42 @@ func AuthenticateUser(s *api.Server) fiber.Handler {
 		}
 
 		return c.JSON(user)
+	}
+}
+
+// LogoutUser logs out the user and clears the session.
+func LogoutUser(s *api.Server) fiber.Handler {
+	return func(c *fiber.Ctx) error {
+		sess, err := s.Session.Get(c)
+		if err != nil {
+			s.Logger.Error().Err(err).Msg("Error getting session")
+			return c.Status(fiber.StatusInternalServerError).JSON(types.ValidationErrorResponse{
+				Type: "internalServerError",
+				Errors: []types.ValidationErrorDetail{
+					{
+						Code:   "internalServerError",
+						Detail: "Internal server error",
+						Attr:   "session",
+					},
+				},
+			})
+		}
+
+		// Clear the session
+		if err = sess.Destroy(); err != nil {
+			s.Logger.Error().Err(err).Msg("Error destroying session")
+			return c.Status(fiber.StatusInternalServerError).JSON(types.ValidationErrorResponse{
+				Type: "internalServerError",
+				Errors: []types.ValidationErrorDetail{
+					{
+						Code:   "internalServerError",
+						Detail: "Internal server error",
+						Attr:   "session",
+					},
+				},
+			})
+		}
+
+		return c.SendStatus(fiber.StatusNoContent)
 	}
 }
