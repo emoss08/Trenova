@@ -41,7 +41,7 @@ func GetAccountingControl(s *api.Server) fiber.Handler {
 	}
 }
 
-// UpdateAccountingControl is a handler that updates the accounting control for an organization.
+// UpdateAccountingControlByID is a handler that updates the accounting control for an organization.
 //
 // PUT /accounting-control/:accountingControlID
 func UpdateAccountingControlByID(s *api.Server) fiber.Handler {

@@ -25,12 +25,22 @@ func AttachAllRoutes(s *api.Server, api fiber.Router) {
 	// Register the handlers for the dispatch control
 	dispatchControl := api.Group("/dispatch-control")
 	dispatchControl.Get("/", GetDispatchControl(s))
-	dispatchControl.Put("/:dispatchControlID", UpdateDispatchControl(s))
+	dispatchControl.Put("/:dispatchControlID", UpdateDispatchControlByID(s))
+
+	// Register the handlers for the shipment control.
+	shipmentControl := api.Group("/shipment-control")
+	shipmentControl.Get("/", GetShipmentControl(s))
+	shipmentControl.Put("/:shipmentControlID", UpdateShipmentControlByID(s))
 
 	// Register the handlers for the billing control.
 	billingControl := api.Group("/billing-control")
 	billingControl.Get("/", GetBillingControl(s))
 	billingControl.Put("/:billingControlID", UpdateBillingControl(s))
+
+	// Register the handlers for the invoice control.
+	invoiceControl := api.Group("/invoice-control")
+	invoiceControl.Get("/", GetInvoiceControl(s))
+	invoiceControl.Put("/:invoiceControlID", UpdateInvoiceControlByID(s))
 
 	// Register the handlers for the user.
 	users := api.Group("/users")
