@@ -266,7 +266,9 @@ func (sc *StopCreate) Mutation() *StopMutation {
 
 // Save creates the Stop in the database.
 func (sc *StopCreate) Save(ctx context.Context) (*Stop, error) {
-	sc.defaults()
+	if err := sc.defaults(); err != nil {
+		return nil, err
+	}
 	return withHooks(ctx, sc.sqlSave, sc.mutation, sc.hooks)
 }
 
@@ -293,12 +295,18 @@ func (sc *StopCreate) ExecX(ctx context.Context) {
 }
 
 // defaults sets the default values of the builder before save.
-func (sc *StopCreate) defaults() {
+func (sc *StopCreate) defaults() error {
 	if _, ok := sc.mutation.CreatedAt(); !ok {
+		if stop.DefaultCreatedAt == nil {
+			return fmt.Errorf("ent: uninitialized stop.DefaultCreatedAt (forgotten import ent/runtime?)")
+		}
 		v := stop.DefaultCreatedAt()
 		sc.mutation.SetCreatedAt(v)
 	}
 	if _, ok := sc.mutation.UpdatedAt(); !ok {
+		if stop.DefaultUpdatedAt == nil {
+			return fmt.Errorf("ent: uninitialized stop.DefaultUpdatedAt (forgotten import ent/runtime?)")
+		}
 		v := stop.DefaultUpdatedAt()
 		sc.mutation.SetUpdatedAt(v)
 	}
@@ -315,9 +323,13 @@ func (sc *StopCreate) defaults() {
 		sc.mutation.SetSequence(v)
 	}
 	if _, ok := sc.mutation.ID(); !ok {
+		if stop.DefaultID == nil {
+			return fmt.Errorf("ent: uninitialized stop.DefaultID (forgotten import ent/runtime?)")
+		}
 		v := stop.DefaultID()
 		sc.mutation.SetID(v)
 	}
+	return nil
 }
 
 // check runs all checks and user-defined validators on the builder.

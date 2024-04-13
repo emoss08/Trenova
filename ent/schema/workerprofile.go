@@ -10,7 +10,7 @@ import (
 	"entgo.io/ent/schema/field"
 	gen "github.com/emoss08/trenova/ent"
 	"github.com/emoss08/trenova/ent/hook"
-	tools "github.com/emoss08/trenova/util"
+	"github.com/emoss08/trenova/internal/util"
 	"github.com/google/uuid"
 
 	"github.com/jackc/pgx/v5/pgtype"
@@ -147,7 +147,7 @@ func (WorkerProfile) Hooks() []ent.Hook {
 						_, hazmatExpirationExists := m.HazmatExpirationDate()
 
 						if !hazmatExpirationExists {
-							return nil, tools.NewValidationError("Hazmat Expiration date is required for this endorsement. Please try again.",
+							return nil, util.NewValidationError("Hazmat Expiration date is required for this endorsement. Please try again.",
 								"invalidEndorsement",
 								"hazmatExpirationDate")
 						}

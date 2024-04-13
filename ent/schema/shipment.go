@@ -15,9 +15,9 @@ import (
 	gen "github.com/emoss08/trenova/ent"
 	"github.com/emoss08/trenova/ent/hook"
 	"github.com/emoss08/trenova/ent/shipment"
-	cf "github.com/emoss08/trenova/util/control"
-	su "github.com/emoss08/trenova/util/shipment"
-	"github.com/emoss08/trenova/util/types"
+	cf "github.com/emoss08/trenova/internal/util/control"
+	su "github.com/emoss08/trenova/internal/util/shipment"
+	"github.com/emoss08/trenova/internal/util/types"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgtype"
 )

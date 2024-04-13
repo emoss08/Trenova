@@ -10,7 +10,7 @@ import (
 	"entgo.io/ent/schema/field"
 	gen "github.com/emoss08/trenova/ent"
 	"github.com/emoss08/trenova/ent/hook"
-	tools "github.com/emoss08/trenova/util"
+	"github.com/emoss08/trenova/internal/util"
 	"github.com/google/uuid"
 	"github.com/rotisserie/eris"
 
@@ -173,7 +173,7 @@ func (Trailer) Hooks() []ent.Hook {
 
 					// If the equipment class is not equal to `Trailer` return an error.
 					if et.EquipmentClass != "Trailer" {
-						return nil, tools.NewValidationError("Cannot assign a non-trailer equipment type to a trailer. Please try again.",
+						return nil, util.NewValidationError("Cannot assign a non-trailer equipment type to a trailer. Please try again.",
 							"invalidEquipmentType",
 							"equipmentTypeId")
 					}

@@ -9294,7 +9294,8 @@ func (c *StopClient) QueryShipmentMove(s *Stop) *ShipmentMoveQuery {
 
 // Hooks returns the client hooks.
 func (c *StopClient) Hooks() []Hook {
-	return c.hooks.Stop
+	hooks := c.hooks.Stop
+	return append(hooks[:len(hooks):len(hooks)], stop.Hooks[:]...)
 }
 
 // Interceptors returns the client interceptors.

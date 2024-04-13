@@ -43,7 +43,7 @@ export const useVerifyToken = () => {
     }
 
     if (!user.id && !userId) {
-      console.error("No user id found. Skipping token verification.");
+      console.log("No user id found. Skipping token verification.");
       setInitializationComplete(true);
       setIsAuthenticated(false);
       setLoading(false);

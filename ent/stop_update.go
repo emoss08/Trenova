@@ -287,7 +287,9 @@ func (su *StopUpdate) Mutation() *StopMutation {
 
 // Save executes the query and returns the number of nodes affected by the update operation.
 func (su *StopUpdate) Save(ctx context.Context) (int, error) {
-	su.defaults()
+	if err := su.defaults(); err != nil {
+		return 0, err
+	}
 	return withHooks(ctx, su.sqlSave, su.mutation, su.hooks)
 }
 
@@ -314,11 +316,15 @@ func (su *StopUpdate) ExecX(ctx context.Context) {
 }
 
 // defaults sets the default values of the builder before save.
-func (su *StopUpdate) defaults() {
+func (su *StopUpdate) defaults() error {
 	if _, ok := su.mutation.UpdatedAt(); !ok {
+		if stop.UpdateDefaultUpdatedAt == nil {
+			return fmt.Errorf("ent: uninitialized stop.UpdateDefaultUpdatedAt (forgotten import ent/runtime?)")
+		}
 		v := stop.UpdateDefaultUpdatedAt()
 		su.mutation.SetUpdatedAt(v)
 	}
+	return nil
 }
 
 // check runs all checks and user-defined validators on the builder.
@@ -745,7 +751,9 @@ func (suo *StopUpdateOne) Select(field string, fields ...string) *StopUpdateOne 
 
 // Save executes the query and returns the updated Stop entity.
 func (suo *StopUpdateOne) Save(ctx context.Context) (*Stop, error) {
-	suo.defaults()
+	if err := suo.defaults(); err != nil {
+		return nil, err
+	}
 	return withHooks(ctx, suo.sqlSave, suo.mutation, suo.hooks)
 }
 
@@ -772,11 +780,15 @@ func (suo *StopUpdateOne) ExecX(ctx context.Context) {
 }
 
 // defaults sets the default values of the builder before save.
-func (suo *StopUpdateOne) defaults() {
+func (suo *StopUpdateOne) defaults() error {
 	if _, ok := suo.mutation.UpdatedAt(); !ok {
+		if stop.UpdateDefaultUpdatedAt == nil {
+			return fmt.Errorf("ent: uninitialized stop.UpdateDefaultUpdatedAt (forgotten import ent/runtime?)")
+		}
 		v := stop.UpdateDefaultUpdatedAt()
 		suo.mutation.SetUpdatedAt(v)
 	}
+	return nil
 }
 
 // check runs all checks and user-defined validators on the builder.

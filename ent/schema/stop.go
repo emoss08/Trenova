@@ -10,8 +10,8 @@ import (
 	"entgo.io/ent/schema/field"
 	gen "github.com/emoss08/trenova/ent"
 	"github.com/emoss08/trenova/ent/hook"
-	st "github.com/emoss08/trenova/util/stop"
-	"github.com/emoss08/trenova/util/types"
+	st "github.com/emoss08/trenova/internal/util/stop"
+	"github.com/emoss08/trenova/internal/util/types"
 	"github.com/google/uuid"
 )
 

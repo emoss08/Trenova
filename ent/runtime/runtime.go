@@ -2027,6 +2027,8 @@ func init() {
 	// shipmenttype.DefaultID holds the default value on creation for the id field.
 	shipmenttype.DefaultID = shipmenttypeDescID.Default.(func() uuid.UUID)
 	stopMixin := schema.Stop{}.Mixin()
+	stopHooks := schema.Stop{}.Hooks()
+	stop.Hooks[0] = stopHooks[0]
 	stopMixinFields0 := stopMixin[0].Fields()
 	_ = stopMixinFields0
 	stopFields := schema.Stop{}.Fields()

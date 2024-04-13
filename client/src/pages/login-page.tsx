@@ -161,6 +161,7 @@ function UserAuthForm() {
         <Button
           className="my-2 w-full"
           isLoading={isSubmitting}
+          disabled={isSubmitting}
           loadingText="Logging In..."
         >
           Continue

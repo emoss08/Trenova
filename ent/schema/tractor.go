@@ -11,7 +11,7 @@ import (
 	gen "github.com/emoss08/trenova/ent"
 	"github.com/emoss08/trenova/ent/hook"
 	"github.com/emoss08/trenova/ent/worker"
-	tools "github.com/emoss08/trenova/util"
+	"github.com/emoss08/trenova/internal/util"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgtype"
 )
@@ -164,7 +164,7 @@ func (Tractor) Hooks() []ent.Hook {
 					secondaryWorkerID, secondaryWorkerIDExists := m.SecondaryWorkerID()
 
 					if primaryWorkerIDExists && secondaryWorkerIDExists && primaryWorkerID == secondaryWorkerID {
-						return nil, tools.NewValidationError("The primary and secondary workers cannot be the same. Please try again.",
+						return nil, util.NewValidationError("The primary and secondary workers cannot be the same. Please try again.",
 							"invalidWorkers",
 							"primaryWorkerId")
 					}
@@ -187,7 +187,7 @@ func (Tractor) Hooks() []ent.Hook {
 					_, leasedDateExists := m.LeasedDate()
 
 					if leasedExists && leased && !leasedDateExists {
-						return nil, tools.NewValidationError("The leased date must be set if the tractor is leased. Please try again.",
+						return nil, util.NewValidationError("The leased date must be set if the tractor is leased. Please try again.",
 							"invalidLeasedDate",
 							"leasedDate")
 					}
@@ -207,7 +207,7 @@ func (Tractor) Hooks() []ent.Hook {
 					// Get the fleet code of the tractor.
 					fleetCodeID, fleetCodeIDExists := m.FleetCodeID()
 					if !fleetCodeIDExists {
-						return nil, tools.NewValidationError("The tractor must have a fleet code. Please try again.",
+						return nil, util.NewValidationError("The tractor must have a fleet code. Please try again.",
 							"invalidFleetCode",
 							"fleetCodeId")
 					}
@@ -215,7 +215,7 @@ func (Tractor) Hooks() []ent.Hook {
 					// Get the primary worker
 					primaryWorkerID, primaryWorkerIDExists := m.PrimaryWorkerID()
 					if !primaryWorkerIDExists {
-						return nil, tools.NewValidationError("The tractor must have a primary worker. Please try again.",
+						return nil, util.NewValidationError("The tractor must have a primary worker. Please try again.",
 							"invalidPrimaryWorker",
 							"primaryWorkerId")
 					}
@@ -228,7 +228,7 @@ func (Tractor) Hooks() []ent.Hook {
 
 					// Ensure the primary worker and tractor have the same fleet code.
 					if primaryWorkerFleetCode.ID != fleetCodeID {
-						return nil, tools.NewValidationError("The primary worker and tractor must have the same fleet code. Please try again.",
+						return nil, util.NewValidationError("The primary worker and tractor must have the same fleet code. Please try again.",
 							"invalidFleetCode",
 							"fleetCodeId")
 					}
