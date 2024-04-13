@@ -17,17 +17,17 @@ import (
 )
 
 func main() {
-	config := config.DefaultServiceConfigFromEnv()
+	serverConfig := config.DefaultServiceConfigFromEnv()
 
 	zerolog.TimeFieldFormat = time.RFC3339Nano
-	zerolog.SetGlobalLevel(config.Logger.Level)
-	if config.Logger.PrettyPrintConsole {
+	zerolog.SetGlobalLevel(serverConfig.Logger.Level)
+	if serverConfig.Logger.PrettyPrintConsole {
 		log.Logger = log.Output(zerolog.NewConsoleWriter(func(w *zerolog.ConsoleWriter) {
 			w.TimeFormat = "15:04:05"
 		}))
 	}
 
-	s := api.NewServer(config)
+	s := api.NewServer(serverConfig)
 
 	if err := s.InitClient(context.Background()); err != nil {
 		log.Fatal().Err(err).Msg("Failed to initialize entity client")

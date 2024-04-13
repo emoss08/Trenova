@@ -29,7 +29,7 @@ func GetUserOrganization(s *api.Server) fiber.Handler {
 			)
 		}
 
-		user, err := services.NewOrganizationOps(s).GetUserOrganization(c.Context(), buID, orgID)
+		user, err := services.NewOrganizationOps(s).GetUserOrganization(c.UserContext(), buID, orgID)
 		if err != nil {
 			errorResponse := util.CreateDBErrorResponse(err)
 			return c.Status(fiber.StatusInternalServerError).JSON(errorResponse)

@@ -26,7 +26,7 @@ import {
   GoogleAPI,
   Organization,
   OrganizationFeatureFlag,
-  Topic,
+  Topic
 } from "@/types/organization";
 import { RouteControl } from "@/types/route";
 import { ShipmentControl } from "@/types/shipment";
@@ -36,7 +36,7 @@ import { ShipmentControl } from "@/types/shipment";
  * @returns A promise that resolves to the organization's details.
  */
 export async function getUserOrganizationDetails(): Promise<Organization> {
-  const response = await axios.get("/organization/me/");
+  const response = await axios.get("/organizations/me/");
   return response.data;
 }
 

@@ -3,19 +3,12 @@ package router
 import (
 	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/api/middleware"
+	"github.com/gofiber/fiber/v2/middleware/healthcheck"
 
 	"github.com/emoss08/trenova/internal/api"
 	"github.com/emoss08/trenova/internal/api/handlers"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cors"
-	"github.com/gofiber/fiber/v2/middleware/csrf"
-	"github.com/gofiber/fiber/v2/middleware/etag"
-	"github.com/gofiber/fiber/v2/middleware/healthcheck"
-	"github.com/gofiber/fiber/v2/middleware/helmet"
-	"github.com/gofiber/fiber/v2/middleware/idempotency"
-	"github.com/gofiber/fiber/v2/middleware/logger"
-	"github.com/gofiber/fiber/v2/middleware/recover"
-	"github.com/gofiber/fiber/v2/middleware/requestid"
 	"github.com/rs/zerolog/log"
 )
 
@@ -24,24 +17,25 @@ func Init(s *api.Server) {
 	s.Fiber = fiber.New(fiber.Config{
 		JSONEncoder: sonic.Marshal,
 		JSONDecoder: sonic.Unmarshal,
-		Prefork:     true, // TODO: SET THIS BASED ON A ENV VAR
+		// Prefork:     true, // TODO: SET THIS BASED ON A ENV VAR
 	})
 
 	apiV1 := s.Fiber.Group("/api")
 
-	// Register the middleware that is globally applied before authentication.
-	if s.Config.Fiber.EnableLoggerMiddleware {
-		s.Fiber.Use(logger.New())
-	} else {
-		log.Warn().Msg("Logger middleware is disabled. This is not recommended.")
-	}
+	// // Register the middleware that is globally applied before authentication.
+	// if s.Config.Fiber.EnableLoggerMiddleware {
+	// 	s.Fiber.Use(logger.New())
+	// } else {
+	// 	log.Warn().Msg("Logger middleware is disabled. This is not recommended.")
+	// }
 
 	if s.Config.Fiber.EnableCORSMiddleware {
 		s.Fiber.Use(cors.New(
 			cors.Config{
-				AllowOrigins:     "http://localhost:5173, https://localhost:5173",
+				AllowOrigins:     "https://localhost:5173, http://localhost:5173",
 				AllowHeaders:     "Authorization, Origin, Content-Type, Accept, X-CSRF-Token, X-Idempotency-Key",
 				AllowMethods:     "GET, POST, PUT, DELETE, OPTIONS",
+				ExposeHeaders:    "Authorization, Origin, Content-Type, Accept, X-CSRF-Token, X-Idempotency-Key",
 				AllowCredentials: true,
 				MaxAge:           300,
 			}))
@@ -54,35 +48,35 @@ func Init(s *api.Server) {
 	auth.Post("/login", handlers.AuthenticateUser(s))
 
 	// Apply the middleware that is globally applied after authentication.
-	if s.Config.Fiber.EnableCSRFMiddleware {
-		apiV1.Use(csrf.New())
-	} else {
-		log.Warn().Msg("CSRF middleware is disabled. This is not recommended.")
-	}
+	//if s.Config.Fiber.EnableCSRFMiddleware {
+	//	apiV1.Use(csrf.New())
+	//} else {
+	//	log.Warn().Msg("CSRF middleware is disabled. This is not recommended.")
+	//}
 
-	if s.Config.Fiber.EnableHelmetMiddleware {
-		apiV1.Use(helmet.New())
-	} else {
-		log.Warn().Msg("Helmet middleware is disabled. This is not recommended.")
-	}
+	// if s.Config.Fiber.EnableHelmetMiddleware {
+	// 	apiV1.Use(helmet.New())
+	// } else {
+	// 	log.Warn().Msg("Helmet middleware is disabled. This is not recommended.")
+	// }
 
-	if s.Config.Fiber.EnableRequestIDMiddleware {
-		s.Fiber.Use(requestid.New())
-	} else {
-		log.Warn().Msg("RequestID middleware is disabled. This is not recommended.")
-	}
+	// if s.Config.Fiber.EnableRequestIDMiddleware {
+	// 	s.Fiber.Use(requestid.New())
+	// } else {
+	// 	log.Warn().Msg("RequestID middleware is disabled. This is not recommended.")
+	// }
 
-	if s.Config.Fiber.EnableETagMiddleware {
-		s.Fiber.Use(etag.New())
-	} else {
-		log.Warn().Msg("ETag middleware is disabled. This is not recommended.")
-	}
+	// if s.Config.Fiber.EnableETagMiddleware {
+	// 	s.Fiber.Use(etag.New())
+	// } else {
+	// 	log.Warn().Msg("ETag middleware is disabled. This is not recommended.")
+	// }
 
-	if s.Config.Fiber.EnableIdempotencyMiddleware {
-		apiV1.Use(idempotency.New())
-	} else {
-		log.Warn().Msg("Idempotency middleware is disabled. This is not recommended.")
-	}
+	// if s.Config.Fiber.EnableIdempotencyMiddleware {
+	// 	apiV1.Use(idempotency.New())
+	// } else {
+	// 	log.Warn().Msg("Idempotency middleware is disabled. This is not recommended.")
+	// }
 
 	if s.Config.Fiber.EnableSessionMiddleware {
 		apiV1.Use(middleware.New(s))
@@ -90,7 +84,7 @@ func Init(s *api.Server) {
 		log.Warn().Msg("Session middleware is disabled. This is not recommended.")
 	}
 
-	s.Fiber.Use(recover.New())
+	// s.Fiber.Use(recover.New())
 
 	// Health check route.
 	s.Fiber.Use(healthcheck.New(healthcheck.Config{

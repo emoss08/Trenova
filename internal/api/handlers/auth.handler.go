@@ -48,7 +48,7 @@ func AuthenticateUser(s *api.Server) fiber.Handler {
 
 		// Authenticate the user
 		user, err := services.NewAuthenticationService(s).
-			AuthenticateUser(c.Context(), loginRequest.Username, loginRequest.Password)
+			AuthenticateUser(c.UserContext(), loginRequest.Username, loginRequest.Password)
 		if err != nil {
 			return c.Status(fiber.StatusUnauthorized).JSON(types.ValidationErrorResponse{
 				Type: "unauthorized",

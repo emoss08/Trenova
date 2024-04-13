@@ -3,11 +3,11 @@ package util
 import (
 	"context"
 	"errors"
+	"fmt"
 	"log"
 	"net/http"
 
 	"github.com/emoss08/trenova/ent"
-	"github.com/emoss08/trenova/internal/util/logger"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/session"
 	"github.com/rotisserie/eris"
@@ -17,7 +17,7 @@ import (
 
 func ParseBody(c *fiber.Ctx, body any) error {
 	if err := c.BodyParser(body); err != nil {
-		return eris.Wrap(err, "Error parsing request body")
+		return fiber.ErrBadRequest
 	}
 
 	return nil
@@ -36,7 +36,6 @@ func init() {
 // ParseBodyAndValidate parses the request body into the given struct and validates it using the given validator.
 // If the body is invalid, it writes a 400 response with the validation error.
 func ParseBodyAndValidate(c *fiber.Ctx, body any) error {
-	logging := logger.GetLogger()
 	if err := ParseBody(c, body); err != nil {
 		return err
 	}
@@ -47,12 +46,7 @@ func ParseBodyAndValidate(c *fiber.Ctx, body any) error {
 		case errors.As(err, &validationErr):
 			return c.Status(http.StatusBadRequest).JSON(validationErr)
 		default:
-			genericErr := c.Status(http.StatusInternalServerError).JSON(fiber.Map{"error": "Internal server error"})
-			if genericErr != nil {
-				wrappedErr := eris.Wrap(genericErr, "Error encoding generic error response")
-				logging.WithError(wrappedErr).Error("Error encoding generic error response")
-			}
-			return err
+			return c.Status(http.StatusInternalServerError).JSON(fiber.Map{"error": "Internal server error"})
 		}
 	}
 
@@ -106,6 +100,7 @@ func WithTx(ctx context.Context, client *ent.Client, fn func(tx *ent.Tx) error) 
 				wrappedErr := eris.Wrap(rollbackErr, "Failed to rollback transaction")
 				log.Printf("Failed to rollback transaction: %v", wrappedErr)
 			}
+			fmt.Printf("Panic occurred: %v", v)
 			panic(v)
 		}
 	}()

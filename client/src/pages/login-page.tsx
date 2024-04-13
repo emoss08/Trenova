@@ -76,7 +76,7 @@ function UserAuthForm() {
 
   const fetchUserDetails = async () => {
     try {
-      const response = await axios.get("/me/", {
+      const response = await axios.get("/users/me/", {
         withCredentials: true,
       });
 

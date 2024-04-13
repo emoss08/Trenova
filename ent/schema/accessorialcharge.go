@@ -51,7 +51,6 @@ func (AccessorialCharge) Fields() []ent.Field {
 				dialect.MySQL:    "decimal(19,4)",
 				dialect.Postgres: "numeric(19,4)",
 			}).
-			Default(0.0).
 			StructTag(`json:"amount" validate:"required,gt=0"`),
 	}
 }
@@ -67,6 +66,6 @@ func (AccessorialCharge) Mixin() []ent.Mixin {
 func (AccessorialCharge) Edges() []ent.Edge {
 	return []ent.Edge{
 		edge.To("shipment_charges", ShipmentCharges.Type).
-			StructTag(`json:"shipmentCharges,omitempty"`),
+			StructTag(`json:"shipmentCharges" validate:"omitempty"`),
 	}
 }

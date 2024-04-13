@@ -2,7 +2,7 @@ package services
 
 import (
 	"context"
-
+	"errors"
 	"github.com/emoss08/trenova/internal/api"
 	"github.com/emoss08/trenova/internal/util"
 	"github.com/rs/zerolog"
@@ -57,38 +57,8 @@ func (r *AccessorialChargeService) GetAccessorialCharges(ctx context.Context, li
 }
 
 // CreateAccessorialCharge creates a new accessorial charge.
-func (r *AccessorialChargeService) CreateAccessorialCharge(ctx context.Context, newEntity ent.AccessorialCharge) (*ent.AccessorialCharge, error) {
-	// Begin a new transaction
-	tx, err := r.Client.Tx(ctx)
-	if err != nil {
-		wrappedErr := eris.Wrap(err, "failed to start transaction")
-		r.Logger.Err(wrappedErr)
-		return nil, wrappedErr
-	}
-
-	// Ensure the transaction is either committed or rolled back
-	defer func() {
-		if v := recover(); v != nil {
-			if rollbackErr := tx.Rollback(); rollbackErr != nil {
-				wrappedErr := eris.Wrap(rollbackErr, "failed to rollback transaction")
-				r.Logger.Err(wrappedErr)
-			}
-			panic(v)
-		}
-		if err != nil {
-			if rollbackErr := tx.Rollback(); rollbackErr != nil {
-				wrappedErr := eris.Wrap(err, "failed to rollback transaction")
-				r.Logger.Err(wrappedErr)
-			}
-		} else {
-			if commitErr := tx.Commit(); commitErr != nil {
-				wrappedErr := eris.Wrap(err, "failed to commit transaction")
-				r.Logger.Err(wrappedErr)
-			}
-		}
-	}()
-
-	createdEntity, err := tx.AccessorialCharge.Create().
+func (r *AccessorialChargeService) CreateAccessorialCharge(ctx context.Context, newEntity *ent.AccessorialCharge) (*ent.AccessorialCharge, error) {
+	createdEntity, err := r.Client.AccessorialCharge.Create().
 		SetOrganizationID(newEntity.OrganizationID).
 		SetBusinessUnitID(newEntity.BusinessUnitID).
 		SetStatus(newEntity.Status).
@@ -100,6 +70,33 @@ func (r *AccessorialChargeService) CreateAccessorialCharge(ctx context.Context, 
 		Save(ctx)
 	if err != nil {
 		return nil, eris.Wrap(err, "failed to create accessorial charge")
+
+	}
+
+	return createdEntity, nil
+}
+
+func createAccessorialChargeEntity(
+	ctx context.Context, tx *ent.Tx, entity *ent.AccessorialCharge,
+) (*ent.AccessorialCharge, error) {
+	if tx == nil {
+		return nil, eris.Wrap(errors.New("transaction is nil"), "failed to create accessorial charge")
+	}
+	if entity == nil {
+		return nil, eris.Wrap(errors.New("entity is nil"), "failed to create accessorial charge")
+	}
+	createdEntity, err := tx.AccessorialCharge.Create().
+		SetOrganizationID(entity.OrganizationID).
+		SetBusinessUnitID(entity.BusinessUnitID).
+		SetStatus(entity.Status).
+		SetCode(entity.Code).
+		SetDescription(entity.Description).
+		SetIsDetention(entity.IsDetention).
+		SetMethod(entity.Method).
+		SetAmount(entity.Amount).
+		Save(ctx)
+	if err != nil {
+		return nil, eris.Wrap(err, "failed to create accessorial charge")
 	}
 
 	return createdEntity, nil
@@ -107,41 +104,27 @@ func (r *AccessorialChargeService) CreateAccessorialCharge(ctx context.Context, 
 
 // UpdateAccessorialCharge updates a accessorial charge.
 func (r *AccessorialChargeService) UpdateAccessorialCharge(ctx context.Context, entity ent.AccessorialCharge) (*ent.AccessorialCharge, error) {
-	// Begin a new transaction
-	tx, err := r.Client.Tx(ctx)
+	var updatedEntity *ent.AccessorialCharge
+
+	err := util.WithTx(ctx, r.Client, func(tx *ent.Tx) error {
+		var err error
+		updatedEntity, err = r.updateAccessorialChargeEntity(ctx, tx, entity)
+		return err
+	})
+
 	if err != nil {
-		wrappedErr := eris.Wrap(err, "failed to start transaction")
-		r.Logger.Err(wrappedErr)
-		return nil, wrappedErr
+		return nil, err
 	}
 
-	// Ensure the transaction is either committed or rolled back
-	defer func() {
-		if v := recover(); v != nil {
-			if rollbackErr := tx.Rollback(); rollbackErr != nil {
-				wrappedErr := eris.Wrap(rollbackErr, "failed to rollback transaction")
-				r.Logger.Err(wrappedErr)
-			}
-			panic(v)
-		}
-		if err != nil {
-			if rollbackErr := tx.Rollback(); rollbackErr != nil {
-				wrappedErr := eris.Wrap(err, "failed to rollback transaction")
-				r.Logger.Err(wrappedErr)
-			}
-		} else {
-			if commitErr := tx.Commit(); commitErr != nil {
-				wrappedErr := eris.Wrap(err, "failed to commit transaction")
-				r.Logger.Err(wrappedErr)
-			}
-		}
-	}()
+	return updatedEntity, nil
+}
 
+func (r *AccessorialChargeService) updateAccessorialChargeEntity(
+	ctx context.Context, tx *ent.Tx, entity ent.AccessorialCharge,
+) (*ent.AccessorialCharge, error) {
 	current, err := tx.AccessorialCharge.Get(ctx, entity.ID)
 	if err != nil {
-		wrappedErr := eris.Wrap(err, "failed to retrieve requested entity")
-		r.Logger.Err(wrappedErr)
-		return nil, wrappedErr
+		return nil, eris.Wrap(err, "failed to retrieve requested entity")
 	}
 
 	// Check if the version matches.
@@ -169,7 +152,3 @@ func (r *AccessorialChargeService) UpdateAccessorialCharge(ctx context.Context, 
 
 	return updatedEntity, nil
 }
-
-func (r *AccessorialChargeService) updateAccessorialChargeEntity(
-	ctx context.Context,
-)

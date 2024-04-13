@@ -5,9 +5,9 @@ import (
 	"database/sql"
 	"encoding/gob"
 	"errors"
-	"fmt"
-	"github.com/gofiber/storage/redis/v2"
 	"time"
+
+	"github.com/gofiber/storage/redis/v2"
 
 	"entgo.io/ent/dialect"
 	"github.com/gofiber/fiber/v2/middleware/session"
@@ -52,23 +52,20 @@ func (s *Server) RegisterGob() {
 func (s *Server) InitClient(ctx context.Context) error {
 	db, err := sql.Open("pgx", "postgresql://postgres:postgres@localhost:5432/trenova_go_db?sslmode=disable")
 	if err != nil {
-		fmt.Printf("Failed to open database connection: %v\n", err)
-		return err // Return immediately if connection fails
+		log.Fatal().Err(err).Msg("Failed to open database connection")
 	}
-
-	// Ping the database to check if the connection is working.
-	if err := db.PingContext(ctx); err != nil {
-		fmt.Printf("Failed to ping database: %v\n", err)
-		return err
-	}
-
 	db.SetMaxIdleConns(10)
 	db.SetMaxOpenConns(100)
 	db.SetConnMaxLifetime(time.Hour)
+	db.SetConnMaxIdleTime(time.Minute * 30)
 
 	// Create an ent.Driver from `db`.
 	drv := entsql.OpenDB(dialect.Postgres, db)
 	client := ent.NewClient(ent.Driver(drv))
+
+	if err = db.PingContext(ctx); err != nil {
+		log.Fatal().Err(err).Msg("Failed to ping database")
+	}
 
 	s.Client = client
 

@@ -1,6 +1,8 @@
 package handlers
 
 import (
+	"log"
+
 	"github.com/emoss08/trenova/ent"
 	"github.com/emoss08/trenova/internal/api"
 	"github.com/emoss08/trenova/internal/api/services"
@@ -43,7 +45,7 @@ func GetAccessorialCharges(s *api.Server) fiber.Handler {
 			})
 		}
 
-		accessorialCharges, count, err := services.NewAccessorialChargeService(s).GetAccessorialCharges(c.Context(), limit, offset, orgID, buID)
+		entities, count, err := services.NewAccessorialChargeService(s).GetAccessorialCharges(c.UserContext(), limit, offset, orgID, buID)
 		if err != nil {
 			errorResponse := util.CreateDBErrorResponse(err)
 			return c.Status(fiber.StatusInternalServerError).JSON(errorResponse)
@@ -53,7 +55,7 @@ func GetAccessorialCharges(s *api.Server) fiber.Handler {
 		prevURL := util.GetPrevPageURL(c, limit, offset)
 
 		return c.Status(fiber.StatusOK).JSON(types.HTTPResponse{
-			Results:  accessorialCharges,
+			Results:  entities,
 			Count:    count,
 			Next:     nextURL,
 			Previous: prevURL,
@@ -64,11 +66,12 @@ func GetAccessorialCharges(s *api.Server) fiber.Handler {
 // CreateAccessorialCharge is a handler that creates a new accessorial charge.
 func CreateAccessorialCharge(s *api.Server) fiber.Handler {
 	return func(c *fiber.Ctx) error {
-		var newAccessorialCharge ent.AccessorialCharge
+		newEntity := new(ent.AccessorialCharge)
 
 		orgID, ok := c.Locals(util.CTXOrganizationID).(uuid.UUID)
 		buID, buOK := c.Locals(util.CTXBusinessUnitID).(uuid.UUID)
 
+		log.Printf("orgID: %v, buID: %v", orgID, buID)
 		if !ok || !buOK {
 			return c.Status(fiber.StatusInternalServerError).JSON(types.ValidationErrorResponse{
 				Type: "internalError",
@@ -82,10 +85,10 @@ func CreateAccessorialCharge(s *api.Server) fiber.Handler {
 			})
 		}
 
-		newAccessorialCharge.BusinessUnitID = buID
-		newAccessorialCharge.OrganizationID = orgID
+		newEntity.BusinessUnitID = buID
+		newEntity.OrganizationID = orgID
 
-		if err := c.BodyParser(&newAccessorialCharge); err != nil {
+		if err := util.ParseBodyAndValidate(c, newEntity); err != nil {
 			return c.Status(fiber.StatusBadRequest).JSON(types.ValidationErrorResponse{
 				Type: "invalidRequest",
 				Errors: []types.ValidationErrorDetail{
@@ -97,19 +100,23 @@ func CreateAccessorialCharge(s *api.Server) fiber.Handler {
 				},
 			})
 		}
+		log.Printf("Preparing to save newEntity with data: %+v", newEntity)
 
-		createAccessorialCharge, err := services.NewAccessorialChargeService(s).CreateAccessorialCharge(c.Context(), newAccessorialCharge)
+		createAccessorialCharge, err := services.NewAccessorialChargeService(s).
+			CreateAccessorialCharge(c.UserContext(), newEntity)
 		if err != nil {
 			errorResponse := util.CreateDBErrorResponse(err)
 			return c.Status(fiber.StatusInternalServerError).JSON(errorResponse)
 		}
 
+		log.Printf("createAccessorialCharge: %v", createAccessorialCharge)
+
 		return c.Status(fiber.StatusCreated).JSON(createAccessorialCharge)
 	}
 }
 
-// GetAccessorialCharge is a handler that returns a single accessorial charge.
-func UpdateAccessorialcharge(s *api.Server) fiber.Handler {
+// UpdateAccessorialCharge is a handler that updates an accessorial charge.
+func UpdateAccessorialCharge(s *api.Server) fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		accessorialChargeID := c.Params("accessorialChargeID")
 		if accessorialChargeID == "" {
@@ -141,12 +148,13 @@ func UpdateAccessorialcharge(s *api.Server) fiber.Handler {
 		}
 
 		updatedEntity.ID = uuid.MustParse(accessorialChargeID)
-		accessorialCharge, err := services.NewAccessorialChargeService(s).UpdateAccessorialCharge(c.Context(), updatedEntity)
+
+		entity, err := services.NewAccessorialChargeService(s).UpdateAccessorialCharge(c.UserContext(), updatedEntity)
 		if err != nil {
 			errorResponse := util.CreateDBErrorResponse(err)
 			return c.Status(fiber.StatusInternalServerError).JSON(errorResponse)
 		}
 
-		return c.Status(fiber.StatusOK).JSON(accessorialCharge)
+		return c.Status(fiber.StatusOK).JSON(entity)
 	}
 }

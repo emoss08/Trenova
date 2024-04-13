@@ -28,7 +28,7 @@ func LogFromContext(ctx context.Context) *zerolog.Logger {
 // LogFromFiberContext returns a request-specific zerolog instance using the fiber.Ctx of the request.
 // The returned logger will have the request ID as well as some other value predefined.
 func LogFromFiberContext(c *fiber.Ctx) *zerolog.Logger {
-	return LogFromContext(c.Context())
+	return LogFromContext(c.UserContext())
 }
 
 func LogLevelFromString(s string) zerolog.Level {
