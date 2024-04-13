@@ -95,12 +95,11 @@ func CreateAccessorialCharge(s *api.Server) fiber.Handler {
 					{
 						Code:   "invalidRequest",
 						Detail: err.Error(),
-						Attr:   "request body",
+						Attr:   "body",
 					},
 				},
 			})
 		}
-		log.Printf("Preparing to save newEntity with data: %+v", newEntity)
 
 		createAccessorialCharge, err := services.NewAccessorialChargeService(s).
 			CreateAccessorialCharge(c.UserContext(), newEntity)
@@ -108,8 +107,6 @@ func CreateAccessorialCharge(s *api.Server) fiber.Handler {
 			errorResponse := util.CreateDBErrorResponse(err)
 			return c.Status(fiber.StatusInternalServerError).JSON(errorResponse)
 		}
-
-		log.Printf("createAccessorialCharge: %v", createAccessorialCharge)
 
 		return c.Status(fiber.StatusCreated).JSON(createAccessorialCharge)
 	}
@@ -132,7 +129,7 @@ func UpdateAccessorialCharge(s *api.Server) fiber.Handler {
 			})
 		}
 
-		var updatedEntity ent.AccessorialCharge
+		updatedEntity := new(ent.AccessorialCharge)
 
 		if err := c.BodyParser(&updatedEntity); err != nil {
 			return c.Status(fiber.StatusBadRequest).JSON(types.ValidationErrorResponse{

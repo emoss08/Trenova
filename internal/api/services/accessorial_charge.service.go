@@ -103,7 +103,7 @@ func createAccessorialChargeEntity(
 }
 
 // UpdateAccessorialCharge updates a accessorial charge.
-func (r *AccessorialChargeService) UpdateAccessorialCharge(ctx context.Context, entity ent.AccessorialCharge) (*ent.AccessorialCharge, error) {
+func (r *AccessorialChargeService) UpdateAccessorialCharge(ctx context.Context, entity *ent.AccessorialCharge) (*ent.AccessorialCharge, error) {
 	var updatedEntity *ent.AccessorialCharge
 
 	err := util.WithTx(ctx, r.Client, func(tx *ent.Tx) error {
@@ -119,7 +119,7 @@ func (r *AccessorialChargeService) UpdateAccessorialCharge(ctx context.Context, 
 }
 
 func (r *AccessorialChargeService) updateAccessorialChargeEntity(
-	ctx context.Context, tx *ent.Tx, entity ent.AccessorialCharge,
+	ctx context.Context, tx *ent.Tx, entity *ent.AccessorialCharge,
 ) (*ent.AccessorialCharge, error) {
 	current, err := tx.AccessorialCharge.Get(ctx, entity.ID)
 	if err != nil {

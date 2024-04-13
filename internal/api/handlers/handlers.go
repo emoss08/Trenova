@@ -25,4 +25,10 @@ func AttachAllRoutes(s *api.Server, api fiber.Router) {
 	// Register the handlers for the user.
 	users := api.Group("/users")
 	users.Get("/me", GetAuthenticatedUser(s))
+
+	// Register the handlers for the user favorites.
+	userFavorites := api.Group("/user-favorites")
+	userFavorites.Get("/", GetUserFavorites(s))
+	userFavorites.Post("/", AddUserFavorite(s))
+	userFavorites.Delete("/", RemoveUserFavorite(s))
 }

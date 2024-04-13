@@ -17,7 +17,6 @@ type FiberServer struct {
 	BaseURL                        string
 	EnableLoggerMiddleware         bool
 	EnableCORSMiddleware           bool
-	EnableCSRFMiddleware           bool
 	EnableHelmetMiddleware         bool
 	EnableIdempotencyMiddleware    bool
 	EnableRequestIDMiddleware      bool
@@ -84,7 +83,6 @@ func DefaultServiceConfigFromEnv() Server {
 			EnableLoggerMiddleware:         util.GetEnvAsBool("SERVER_FIBER_ENABLE_LOGGER_MIDDLEWARE", true),
 			EnableCORSMiddleware:           util.GetEnvAsBool("SERVER_FIBER_ENABLE_CORS_MIDDLEWARE", true),
 			EnableRequestIDMiddleware:      util.GetEnvAsBool("SERVER_FIBER_ENABLE_REQUEST_ID_MIDDLEWARE", true),
-			EnableCSRFMiddleware:           util.GetEnvAsBool("SERVER_FIBER_ENABLE_CSRF_MIDDLEWARE", true),
 			EnableHelmetMiddleware:         util.GetEnvAsBool("SERVER_FIBER_ENABLE_HELMET_MIDDLEWARE", true),
 			EnableIdempotencyMiddleware:    util.GetEnvAsBool("SERVER_FIBER_ENABLE_IDEMPOTENCY_MIDDLEWARE", true),
 			EnableETagMiddleware:           util.GetEnvAsBool("SERVER_FIBER_ENABLE_ETAG_MIDDLEWARE", true),

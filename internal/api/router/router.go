@@ -3,7 +3,6 @@ package router
 import (
 	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/api/middleware"
-	"github.com/gofiber/fiber/v2/middleware/csrf"
 	"github.com/gofiber/fiber/v2/middleware/etag"
 	"github.com/gofiber/fiber/v2/middleware/healthcheck"
 	"github.com/gofiber/fiber/v2/middleware/helmet"
@@ -52,13 +51,6 @@ func Init(s *api.Server) {
 	// Register the authentication routes.
 	auth := apiV1.Group("/auth")
 	auth.Post("/login", handlers.AuthenticateUser(s))
-
-	// Apply the middleware that is globally applied after authentication.
-	if s.Config.Fiber.EnableCSRFMiddleware {
-		apiV1.Use(csrf.New())
-	} else {
-		log.Warn().Msg("CSRF middleware is disabled. This is not recommended.")
-	}
 
 	if s.Config.Fiber.EnableHelmetMiddleware {
 		apiV1.Use(helmet.New())
