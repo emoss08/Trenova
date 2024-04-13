@@ -2,8 +2,6 @@ package services
 
 import (
 	"context"
-	"errors"
-	"fmt"
 
 	"github.com/emoss08/trenova/internal/api"
 	"github.com/emoss08/trenova/internal/ent"
@@ -46,21 +44,6 @@ func (r *AccountingControlService) GetAccountingControl(ctx context.Context, org
 // UpdateAccountingControl updates the accounting control settings for an organization.
 func (r *AccountingControlService) UpdateAccountingControl(ctx context.Context, ac *ent.AccountingControl) (*ent.AccountingControl, error) {
 	updatedEntity := new(ent.AccountingControl)
-
-	if ac == nil {
-		return nil, errors.New("accounting control is nil")
-	}
-
-	if r.Client == nil {
-		return nil, errors.New("client is nil")
-	}
-
-	if r.Logger == nil {
-		return nil, errors.New("logger is nil")
-	}
-
-	fmt.Printf("Accounting Control %+v", ac)
-
 	err := util.WithTx(ctx, r.Client, func(tx *ent.Tx) error {
 		var err error
 		updatedEntity, err = r.updateAccountingControl(ctx, tx, ac)
@@ -77,7 +60,9 @@ func (r *AccountingControlService) UpdateAccountingControl(ctx context.Context, 
 	return updatedEntity, nil
 }
 
-func (r *AccountingControlService) updateAccountingControl(ctx context.Context, tx *ent.Tx, ac *ent.AccountingControl) (*ent.AccountingControl, error) {
+func (r *AccountingControlService) updateAccountingControl(
+	ctx context.Context, tx *ent.Tx, ac *ent.AccountingControl,
+) (*ent.AccountingControl, error) {
 	updateOp := tx.AccountingControl.UpdateOneID(ac.ID).
 		SetRecThreshold(ac.RecThreshold).
 		SetRecThresholdAction(ac.RecThresholdAction).

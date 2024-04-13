@@ -10,10 +10,10 @@ import (
 	"github.com/google/uuid"
 )
 
-// GetAccountingControl is a handler that returns the accounting control for an organization.
+// GetBillingControl is a handler that returns the billing control for an organization.
 //
-// GET /accounting-control
-func GetAccountingControl(s *api.Server) fiber.Handler {
+// GET /billing-control
+func GetBillingControl(s *api.Server) fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		orgID, ok := c.Locals(util.CTXOrganizationID).(uuid.UUID)
 		buID, buOK := c.Locals(util.CTXBusinessUnitID).(uuid.UUID)
@@ -31,7 +31,7 @@ func GetAccountingControl(s *api.Server) fiber.Handler {
 			})
 		}
 
-		entity, err := services.NewAccountingControlService(s).GetAccountingControl(c.UserContext(), orgID, buID)
+		entity, err := services.NewBillingControlService(s).GetBillingControl(c.UserContext(), orgID, buID)
 		if err != nil {
 			errorResponse := util.CreateDBErrorResponse(err)
 			return c.Status(fiber.StatusInternalServerError).JSON(errorResponse)
@@ -41,27 +41,23 @@ func GetAccountingControl(s *api.Server) fiber.Handler {
 	}
 }
 
-// UpdateAccountingControl is a handler that updates the accounting control for an organization.
-//
-// PUT /accounting-control/:accountingControlID
-func UpdateAccountingControlByID(s *api.Server) fiber.Handler {
+func UpdateBillingControl(s *api.Server) fiber.Handler {
 	return func(c *fiber.Ctx) error {
-		accountingControlID := c.Params("accountingControlID")
-		if accountingControlID == "" {
+		billingControlID := c.Params("billingControlID")
+		if billingControlID == "" {
 			return c.Status(fiber.StatusBadRequest).JSON(types.ValidationErrorResponse{
 				Type: "invalidRequest",
 				Errors: []types.ValidationErrorDetail{
 					{
 						Code:   "invalidRequest",
-						Detail: "Accounting Control ID is required",
-						Attr:   "accountingControlID",
+						Detail: "Billing Control ID is required",
+						Attr:   "billingControlID",
 					},
 				},
 			})
 		}
 
-		data := new(ent.AccountingControl)
-
+		data := new(ent.BillingControl)
 		if err := util.ParseBodyAndValidate(c, data); err != nil {
 			return c.Status(fiber.StatusBadRequest).JSON(types.ValidationErrorResponse{
 				Type: "invalidRequest",
@@ -75,9 +71,9 @@ func UpdateAccountingControlByID(s *api.Server) fiber.Handler {
 			})
 		}
 
-		data.ID = uuid.MustParse(accountingControlID)
+		data.ID = uuid.MustParse(billingControlID)
 
-		updatedEntity, err := services.NewAccountingControlService(s).UpdateAccountingControl(c.UserContext(), data)
+		updatedEntity, err := services.NewBillingControlService(s).UpdateBillingControl(c.UserContext(), data)
 		if err != nil {
 			errorResponse := util.CreateDBErrorResponse(err)
 			return c.Status(fiber.StatusInternalServerError).JSON(errorResponse)

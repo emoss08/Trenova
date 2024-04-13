@@ -17,10 +17,15 @@ func AttachAllRoutes(s *api.Server, api fiber.Router) {
 	organizations := api.Group("/organizations")
 	organizations.Get("/me", GetUserOrganization(s))
 
-	// Register the handlers for the organization
+	// Register the handlers for the accounting control.
 	accountingControl := api.Group("/accounting-control")
 	accountingControl.Get("/", GetAccountingControl(s))
 	accountingControl.Put("/:accountingControlID", UpdateAccountingControlByID(s))
+
+	// Register the handlers for the billing control.
+	billingControl := api.Group("/billing-control")
+	billingControl.Get("/", GetBillingControl(s))
+	billingControl.Put("/:billingControlID", UpdateBillingControl(s))
 
 	// Register the handlers for the user.
 	users := api.Group("/users")

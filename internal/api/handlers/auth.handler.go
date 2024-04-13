@@ -95,6 +95,8 @@ func AuthenticateUser(s *api.Server) fiber.Handler {
 }
 
 // LogoutUser logs out the user and clears the session.
+//
+// POST /auth/logout
 func LogoutUser(s *api.Server) fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		sess, err := s.Session.Get(c)

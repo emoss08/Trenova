@@ -1,7 +1,16 @@
 package schema
 
 import (
+	"context"
+	"crypto/rand"
+	"encoding/binary"
+	"fmt"
+	gen "github.com/emoss08/trenova/internal/ent"
+	"github.com/emoss08/trenova/internal/ent/hook"
 	"github.com/google/uuid"
+	"log"
+	"strings"
+	"time"
 
 	"entgo.io/ent"
 	"entgo.io/ent/dialect"
@@ -105,56 +114,55 @@ func (Customer) Edges() []ent.Edge {
 	}
 }
 
-//
-//// Hooks for the Customer.
-//func (Customer) Hooks() []ent.Hook {
-//	return []ent.Hook{
-//		hook.On(
-//			func(next ent.Mutator) ent.Mutator {
-//				return hook.CustomerFunc(func(ctx context.Context, m *gen.CustomerMutation) (ent.Value, error) {
-//					if m.Op().Is(ent.OpCreate) {
-//						if _, exists := m.Field("code"); !exists {
-//							name, nameExists := m.Field("name")
-//
-//							if nameExists {
-//								// Generate a customer code based on the name and current time
-//								code := generateCustomerCode(name.(string), time.Now())
-//								m.SetCode(code)
-//							}
-//						}
-//					}
-//					return next.Mutate(ctx, m)
-//				})
-//			},
-//			ent.OpCreate,
-//		),
-//	}
-//}
-//
-//// generateCustomerCode generates a customer code based on the name and current time using crypto/rand for randomness.
-//func generateCustomerCode(name string, createdAt time.Time) string {
-//	var initials string
-//	parts := strings.Fields(strings.ToUpper(name))
-//	if len(parts) > 0 {
-//		initials = string(parts[0][0])
-//	}
-//	if len(parts) > 1 {
-//		initials += string(parts[len(parts)-1][0])
-//	}
-//
-//	for len(initials) < 2 {
-//		initials += "X"
-//	}
-//
-//	var randSeq uint32
-//	if err := binary.Read(rand.Reader, binary.LittleEndian, &randSeq); err != nil {
-//		log.Printf("Error generating random sequence: %v\n", err)
-//		return ""
-//	}
-//	randomSequence := randSeq % 100
-//
-//	year, day := createdAt.Year(), createdAt.YearDay()
-//	dateCode := fmt.Sprintf("%03d%d", day, year%10)
-//
-//	return fmt.Sprintf("%s%02d%s", initials, randomSequence, dateCode)
-//}
+// Hooks for the Customer.
+func (Customer) Hooks() []ent.Hook {
+	return []ent.Hook{
+		hook.On(
+			func(next ent.Mutator) ent.Mutator {
+				return hook.CustomerFunc(func(ctx context.Context, m *gen.CustomerMutation) (ent.Value, error) {
+					if m.Op().Is(ent.OpCreate) {
+						if _, exists := m.Field("code"); !exists {
+							name, nameExists := m.Field("name")
+
+							if nameExists {
+								// Generate a customer code based on the name and current time
+								code := generateCustomerCode(name.(string), time.Now())
+								m.SetCode(code)
+							}
+						}
+					}
+					return next.Mutate(ctx, m)
+				})
+			},
+			ent.OpCreate,
+		),
+	}
+}
+
+// generateCustomerCode generates a customer code based on the name and current time using crypto/rand for randomness.
+func generateCustomerCode(name string, createdAt time.Time) string {
+	var initials string
+	parts := strings.Fields(strings.ToUpper(name))
+	if len(parts) > 0 {
+		initials = string(parts[0][0])
+	}
+	if len(parts) > 1 {
+		initials += string(parts[len(parts)-1][0])
+	}
+
+	for len(initials) < 2 {
+		initials += "X"
+	}
+
+	var randSeq uint32
+	if err := binary.Read(rand.Reader, binary.LittleEndian, &randSeq); err != nil {
+		log.Printf("Error generating random sequence: %v\n", err)
+		return ""
+	}
+	randomSequence := randSeq % 100
+
+	year, day := createdAt.Year(), createdAt.YearDay()
+	dateCode := fmt.Sprintf("%03d%d", day, year%10)
+
+	return fmt.Sprintf("%s%02d%s", initials, randomSequence, dateCode)
+}
