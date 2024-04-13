@@ -3,9 +3,9 @@ package handlers
 import (
 	"log"
 
-	"github.com/emoss08/trenova/ent"
 	"github.com/emoss08/trenova/internal/api"
 	"github.com/emoss08/trenova/internal/api/services"
+	"github.com/emoss08/trenova/internal/ent"
 	"github.com/emoss08/trenova/internal/util"
 	"github.com/emoss08/trenova/internal/util/types"
 	"github.com/gofiber/fiber/v2"

@@ -9,7 +9,7 @@ import (
 
 	"github.com/asaskevich/govalidator"
 	"github.com/bytedance/sonic"
-	"github.com/emoss08/trenova/ent"
+	"github.com/emoss08/trenova/internal/ent"
 	"github.com/emoss08/trenova/internal/util/types"
 	"github.com/go-playground/locales/en"
 	ut "github.com/go-playground/universal-translator"

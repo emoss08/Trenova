@@ -7,7 +7,7 @@ import (
 	"log"
 	"net/http"
 
-	"github.com/emoss08/trenova/ent"
+	"github.com/emoss08/trenova/internal/ent"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/session"
 	"github.com/rotisserie/eris"

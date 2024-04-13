@@ -3,9 +3,9 @@ package stop
 import (
 	"context"
 
-	"github.com/emoss08/trenova/ent"
-	"github.com/emoss08/trenova/ent/shipmentmove"
-	"github.com/emoss08/trenova/ent/stop"
+	"github.com/emoss08/trenova/internal/ent"
+	"github.com/emoss08/trenova/internal/ent/shipmentmove"
+	"github.com/emoss08/trenova/internal/ent/stop"
 	"github.com/google/uuid"
 )
 

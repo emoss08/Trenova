@@ -1,17 +1,18 @@
 package test
 
 import (
-	"github.com/emoss08/trenova/ent"
-	"github.com/emoss08/trenova/ent/enttest"
+	"testing"
+
 	"github.com/emoss08/trenova/internal/api"
 	"github.com/emoss08/trenova/internal/api/router"
 	"github.com/emoss08/trenova/internal/config"
+	"github.com/emoss08/trenova/internal/ent"
+	"github.com/emoss08/trenova/internal/ent/enttest"
 	"github.com/emoss08/trenova/internal/util"
 	"github.com/gofiber/fiber/v2/middleware/session"
 	"github.com/google/uuid"
 	_ "github.com/mattn/go-sqlite3"
 	"github.com/valyala/fasthttp"
-	"testing"
 )
 
 // WithTestServer returns a fully configured server (using the default server config).

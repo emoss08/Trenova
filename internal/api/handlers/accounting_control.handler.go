@@ -1,11 +1,9 @@
 package handlers
 
 import (
-	"log"
-
-	"github.com/emoss08/trenova/ent"
 	"github.com/emoss08/trenova/internal/api"
 	"github.com/emoss08/trenova/internal/api/services"
+	"github.com/emoss08/trenova/internal/ent"
 	"github.com/emoss08/trenova/internal/util"
 	"github.com/emoss08/trenova/internal/util/types"
 	"github.com/gofiber/fiber/v2"
@@ -90,21 +88,7 @@ func UpdateAccountingControlByID(s *api.Server) fiber.Handler {
 
 		data.ID = uuid.MustParse(accountingControlID)
 
-		log.Printf("Accounting Control Data: %+v", data)
-
-		updatedAccountingControl, err := s.Client.AccountingControl.UpdateOneID(data.ID).
-			SetRecThreshold(data.RecThreshold).
-			SetRecThresholdAction(data.RecThresholdAction).
-			SetAutoCreateJournalEntries(data.AutoCreateJournalEntries).
-			SetJournalEntryCriteria(data.JournalEntryCriteria).
-			SetRestrictManualJournalEntries(data.RestrictManualJournalEntries).
-			SetRequireJournalEntryApproval(data.RequireJournalEntryApproval).
-			SetEnableRecNotifications(data.EnableRecNotifications).
-			SetHaltOnPendingRec(data.HaltOnPendingRec).
-			SetNillableCriticalProcesses(data.CriticalProcesses).
-			SetNillableDefaultRevAccountID(data.DefaultRevAccountID).
-			SetNillableDefaultExpAccountID(data.DefaultExpAccountID).
-			Save(c.UserContext())
+		updatedAccountingControl, err := services.NewAccountingControlService(s).UpdateAccountingControl(c.UserContext(), data)
 		if err != nil {
 			errorResponse := util.CreateDBErrorResponse(err)
 			return c.Status(fiber.StatusInternalServerError).JSON(errorResponse)

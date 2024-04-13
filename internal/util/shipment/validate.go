@@ -4,9 +4,9 @@ import (
 	"context"
 	"errors"
 
-	gen "github.com/emoss08/trenova/ent"
-	"github.com/emoss08/trenova/ent/equipmenttype"
-	"github.com/emoss08/trenova/ent/shipment"
+	gen "github.com/emoss08/trenova/internal/ent"
+	"github.com/emoss08/trenova/internal/ent/equipmenttype"
+	"github.com/emoss08/trenova/internal/ent/shipment"
 	"github.com/emoss08/trenova/internal/util/types"
 	"github.com/google/uuid"
 )

@@ -5,10 +5,10 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/emoss08/trenova/ent"
-	"github.com/emoss08/trenova/ent/accountingcontrol"
-	"github.com/emoss08/trenova/ent/organization"
 	"github.com/emoss08/trenova/internal/api"
+	"github.com/emoss08/trenova/internal/ent"
+	"github.com/emoss08/trenova/internal/ent/accountingcontrol"
+	"github.com/emoss08/trenova/internal/ent/organization"
 	"github.com/emoss08/trenova/internal/util"
 	"github.com/google/uuid"
 	"github.com/rs/zerolog"
@@ -87,7 +87,7 @@ func (r *AccountingControlService) updateAccountingControl(ctx context.Context, 
 		SetRequireJournalEntryApproval(ac.RequireJournalEntryApproval).
 		SetEnableRecNotifications(ac.EnableRecNotifications).
 		SetHaltOnPendingRec(ac.HaltOnPendingRec).
-		SetNillableCriticalProcesses(ac.CriticalProcesses).
+		SetCriticalProcesses(ac.CriticalProcesses).
 		SetNillableDefaultRevAccountID(ac.DefaultRevAccountID).
 		SetNillableDefaultExpAccountID(ac.DefaultExpAccountID)
 

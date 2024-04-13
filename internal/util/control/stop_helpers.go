@@ -3,11 +3,11 @@ package control
 import (
 	"context"
 
-	"github.com/emoss08/trenova/ent"
-	"github.com/emoss08/trenova/ent/billingcontrol"
-	"github.com/emoss08/trenova/ent/dispatchcontrol"
-	"github.com/emoss08/trenova/ent/organization"
-	"github.com/emoss08/trenova/ent/shipmentcontrol"
+	"github.com/emoss08/trenova/internal/ent"
+	"github.com/emoss08/trenova/internal/ent/billingcontrol"
+	"github.com/emoss08/trenova/internal/ent/dispatchcontrol"
+	"github.com/emoss08/trenova/internal/ent/organization"
+	"github.com/emoss08/trenova/internal/ent/shipmentcontrol"
 	"github.com/google/uuid"
 )
 

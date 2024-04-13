@@ -3,7 +3,7 @@ package shipment
 import (
 	"context"
 
-	gen "github.com/emoss08/trenova/ent"
+	gen "github.com/emoss08/trenova/internal/ent"
 )
 
 func HandleVoidedShipment(

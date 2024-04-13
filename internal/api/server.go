@@ -13,8 +13,8 @@ import (
 	"github.com/gofiber/fiber/v2/middleware/session"
 
 	entsql "entgo.io/ent/dialect/sql"
-	"github.com/emoss08/trenova/ent"
 	"github.com/emoss08/trenova/internal/config"
+	"github.com/emoss08/trenova/internal/ent"
 	"github.com/gofiber/fiber/v2"
 	"github.com/google/uuid"
 	_ "github.com/jackc/pgx/v5/stdlib"

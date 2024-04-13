@@ -3,13 +3,14 @@ package services
 import (
 	"context"
 	"errors"
+
 	"github.com/emoss08/trenova/internal/api"
 	"github.com/emoss08/trenova/internal/util"
 	"github.com/rs/zerolog"
 
-	"github.com/emoss08/trenova/ent"
-	"github.com/emoss08/trenova/ent/accessorialcharge"
-	"github.com/emoss08/trenova/ent/organization"
+	"github.com/emoss08/trenova/internal/ent"
+	"github.com/emoss08/trenova/internal/ent/accessorialcharge"
+	"github.com/emoss08/trenova/internal/ent/organization"
 	"github.com/google/uuid"
 	"github.com/rotisserie/eris"
 )
@@ -70,7 +71,6 @@ func (r *AccessorialChargeService) CreateAccessorialCharge(ctx context.Context, 
 		Save(ctx)
 	if err != nil {
 		return nil, eris.Wrap(err, "failed to create accessorial charge")
-
 	}
 
 	return createdEntity, nil
@@ -111,7 +111,6 @@ func (r *AccessorialChargeService) UpdateAccessorialCharge(ctx context.Context, 
 		updatedEntity, err = r.updateAccessorialChargeEntity(ctx, tx, entity)
 		return err
 	})
-
 	if err != nil {
 		return nil, err
 	}

@@ -1,7 +1,7 @@
 package stop
 
 import (
-	"github.com/emoss08/trenova/ent"
+	"github.com/emoss08/trenova/internal/ent"
 	"github.com/emoss08/trenova/internal/util/types"
 )
 

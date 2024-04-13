@@ -1,2 +1,0 @@
--- Modify "email_controls" table
-ALTER TABLE "email_controls" ADD COLUMN "billing_email_profile_id" uuid NULL, ADD COLUMN "rate_expirtation_email_profile_id" uuid NULL, ADD CONSTRAINT "email_controls_email_profiles_billing_email_profile" FOREIGN KEY ("billing_email_profile_id") REFERENCES "email_profiles" ("id") ON UPDATE NO ACTION ON DELETE CASCADE, ADD CONSTRAINT "email_controls_email_profiles_rate_email_profile" FOREIGN KEY ("rate_expirtation_email_profile_id") REFERENCES "email_profiles" ("id") ON UPDATE NO ACTION ON DELETE CASCADE;

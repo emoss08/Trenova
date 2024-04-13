@@ -9,6 +9,8 @@ import (
 	"syscall"
 	"time"
 
+	_ "github.com/emoss08/trenova/internal/ent/runtime"
+
 	"github.com/emoss08/trenova/internal/api"
 	"github.com/emoss08/trenova/internal/api/router"
 	"github.com/emoss08/trenova/internal/config"

@@ -55,7 +55,7 @@ export const useVerifyToken = () => {
       setLoading(true);
 
       try {
-        const response = await axios.get("me/", {
+        const response = await axios.get("users/me/", {
           withCredentials: true,
         });
         if (response.status === 200) {

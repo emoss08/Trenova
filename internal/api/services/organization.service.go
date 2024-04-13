@@ -3,9 +3,9 @@ package services
 import (
 	"context"
 
-	"github.com/emoss08/trenova/ent"
-	"github.com/emoss08/trenova/ent/businessunit"
-	"github.com/emoss08/trenova/ent/organization"
+	"github.com/emoss08/trenova/internal/ent"
+	"github.com/emoss08/trenova/internal/ent/businessunit"
+	"github.com/emoss08/trenova/internal/ent/organization"
 	"github.com/emoss08/trenova/internal/api"
 	"github.com/google/uuid"
 	"github.com/rs/zerolog"
