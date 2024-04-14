@@ -25,11 +25,11 @@ type RouteControl struct {
 	// UpdatedAt holds the value of the "updated_at" field.
 	UpdatedAt time.Time `json:"updatedAt" validate:"omitempty"`
 	// DistanceMethod holds the value of the "distance_method" field.
-	DistanceMethod routecontrol.DistanceMethod `json:"distanceMethod"`
+	DistanceMethod routecontrol.DistanceMethod `json:"distanceMethod" validate:"required,oneof=Trenova Google"`
 	// MileageUnit holds the value of the "mileage_unit" field.
-	MileageUnit routecontrol.MileageUnit `json:"mileageUnit"`
+	MileageUnit routecontrol.MileageUnit `json:"mileageUnit" validate:"required,oneof=Metric Imperial"`
 	// GenerateRoutes holds the value of the "generate_routes" field.
-	GenerateRoutes bool `json:"generateRoutes"`
+	GenerateRoutes bool `json:"generateRoutes" validate:"omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
 	// The values are being populated by the RouteControlQuery when eager-loading is set.
 	Edges            RouteControlEdges `json:"edges"`

@@ -2107,7 +2107,8 @@ func (c *CustomerClient) QueryShipments(cu *Customer) *ShipmentQuery {
 
 // Hooks returns the client hooks.
 func (c *CustomerClient) Hooks() []Hook {
-	return c.hooks.Customer
+	hooks := c.hooks.Customer
+	return append(hooks[:len(hooks):len(hooks)], customer.Hooks[:]...)
 }
 
 // Interceptors returns the client interceptors.

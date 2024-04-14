@@ -96,13 +96,13 @@ var (
 // DistanceMethod defines the type for the "distance_method" enum field.
 type DistanceMethod string
 
-// DistanceMethodT is the default value of the DistanceMethod enum.
-const DefaultDistanceMethod = DistanceMethodT
+// DistanceMethodTrenova is the default value of the DistanceMethod enum.
+const DefaultDistanceMethod = DistanceMethodTrenova
 
 // DistanceMethod values.
 const (
-	DistanceMethodT DistanceMethod = "T"
-	DistanceMethodG DistanceMethod = "G"
+	DistanceMethodTrenova DistanceMethod = "Trenova"
+	DistanceMethodGoogle  DistanceMethod = "Google"
 )
 
 func (dm DistanceMethod) String() string {
@@ -112,7 +112,7 @@ func (dm DistanceMethod) String() string {
 // DistanceMethodValidator is a validator for the "distance_method" field enum values. It is called by the builders before save.
 func DistanceMethodValidator(dm DistanceMethod) error {
 	switch dm {
-	case DistanceMethodT, DistanceMethodG:
+	case DistanceMethodTrenova, DistanceMethodGoogle:
 		return nil
 	default:
 		return fmt.Errorf("routecontrol: invalid enum value for distance_method field: %q", dm)
@@ -122,13 +122,13 @@ func DistanceMethodValidator(dm DistanceMethod) error {
 // MileageUnit defines the type for the "mileage_unit" enum field.
 type MileageUnit string
 
-// MileageUnitM is the default value of the MileageUnit enum.
-const DefaultMileageUnit = MileageUnitM
+// MileageUnitMetric is the default value of the MileageUnit enum.
+const DefaultMileageUnit = MileageUnitMetric
 
 // MileageUnit values.
 const (
-	MileageUnitM MileageUnit = "M"
-	MileageUnitI MileageUnit = "I"
+	MileageUnitMetric   MileageUnit = "Metric"
+	MileageUnitImperial MileageUnit = "Imperial"
 )
 
 func (mu MileageUnit) String() string {
@@ -138,7 +138,7 @@ func (mu MileageUnit) String() string {
 // MileageUnitValidator is a validator for the "mileage_unit" field enum values. It is called by the builders before save.
 func MileageUnitValidator(mu MileageUnit) error {
 	switch mu {
-	case MileageUnitM, MileageUnitI:
+	case MileageUnitMetric, MileageUnitImperial:
 		return nil
 	default:
 		return fmt.Errorf("routecontrol: invalid enum value for mileage_unit field: %q", mu)

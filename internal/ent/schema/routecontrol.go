@@ -23,7 +23,7 @@ func (RouteControl) Fields() []ent.Field {
 				dialect.Postgres: "VARCHAR(8)",
 				dialect.SQLite:   "VARCHAR(8)",
 			}).
-			StructTag(`json:"distanceMethod"`),
+			StructTag(`json:"distanceMethod" validate:"required,oneof=Trenova Google"`),
 		field.Enum("mileage_unit").
 			Values("Metric", "Imperial").
 			Default("Metric").
@@ -31,7 +31,7 @@ func (RouteControl) Fields() []ent.Field {
 				dialect.Postgres: "VARCHAR(9)",
 				dialect.SQLite:   "VARCHAR(9)",
 			}).
-			StructTag(`json:"mileageUnit"`),
+			StructTag(`json:"mileageUnit" validate:"required,oneof=Metric Imperial"`),
 		field.Bool("generate_routes").
 			Default(false).
 			StructTag(`json:"generateRoutes" validate:"omitempty"`),

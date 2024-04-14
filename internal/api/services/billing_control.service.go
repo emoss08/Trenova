@@ -13,13 +13,13 @@ import (
 	"github.com/rs/zerolog"
 )
 
-// BillingControlService is the service for accounting control settings.
+// BillingControlService is the service for billing control settings.
 type BillingControlService struct {
 	Client *ent.Client
 	Logger *zerolog.Logger
 }
 
-// NewBillingControlService creates a new accessorial charge service.
+// NewBillingControlService creates a new billing control service.
 func NewBillingControlService(s *api.Server) *BillingControlService {
 	return &BillingControlService{
 		Client: s.Client,
@@ -43,7 +43,6 @@ func (r *BillingControlService) GetBillingControl(ctx context.Context, orgID, bu
 }
 
 // UpdateBillingControl updates the billing control settings for an organization.
-// TODO: Wrap this in the withTX function.
 func (r *BillingControlService) UpdateBillingControl(ctx context.Context, bc *ent.BillingControl) (*ent.BillingControl, error) {
 	updatedEntity := new(ent.BillingControl)
 

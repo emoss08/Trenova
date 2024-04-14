@@ -259,7 +259,9 @@ func (cu *CustomerUpdate) RemoveShipments(s ...*Shipment) *CustomerUpdate {
 
 // Save executes the query and returns the number of nodes affected by the update operation.
 func (cu *CustomerUpdate) Save(ctx context.Context) (int, error) {
-	cu.defaults()
+	if err := cu.defaults(); err != nil {
+		return 0, err
+	}
 	return withHooks(ctx, cu.sqlSave, cu.mutation, cu.hooks)
 }
 
@@ -286,11 +288,15 @@ func (cu *CustomerUpdate) ExecX(ctx context.Context) {
 }
 
 // defaults sets the default values of the builder before save.
-func (cu *CustomerUpdate) defaults() {
+func (cu *CustomerUpdate) defaults() error {
 	if _, ok := cu.mutation.UpdatedAt(); !ok {
+		if customer.UpdateDefaultUpdatedAt == nil {
+			return fmt.Errorf("ent: uninitialized customer.UpdateDefaultUpdatedAt (forgotten import ent/runtime?)")
+		}
 		v := customer.UpdateDefaultUpdatedAt()
 		cu.mutation.SetUpdatedAt(v)
 	}
+	return nil
 }
 
 // check runs all checks and user-defined validators on the builder.
@@ -735,7 +741,9 @@ func (cuo *CustomerUpdateOne) Select(field string, fields ...string) *CustomerUp
 
 // Save executes the query and returns the updated Customer entity.
 func (cuo *CustomerUpdateOne) Save(ctx context.Context) (*Customer, error) {
-	cuo.defaults()
+	if err := cuo.defaults(); err != nil {
+		return nil, err
+	}
 	return withHooks(ctx, cuo.sqlSave, cuo.mutation, cuo.hooks)
 }
 
@@ -762,11 +770,15 @@ func (cuo *CustomerUpdateOne) ExecX(ctx context.Context) {
 }
 
 // defaults sets the default values of the builder before save.
-func (cuo *CustomerUpdateOne) defaults() {
+func (cuo *CustomerUpdateOne) defaults() error {
 	if _, ok := cuo.mutation.UpdatedAt(); !ok {
+		if customer.UpdateDefaultUpdatedAt == nil {
+			return fmt.Errorf("ent: uninitialized customer.UpdateDefaultUpdatedAt (forgotten import ent/runtime?)")
+		}
 		v := customer.UpdateDefaultUpdatedAt()
 		cuo.mutation.SetUpdatedAt(v)
 	}
+	return nil
 }
 
 // check runs all checks and user-defined validators on the builder.

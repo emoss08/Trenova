@@ -411,6 +411,8 @@ func init() {
 	// commodity.DefaultID holds the default value on creation for the id field.
 	commodity.DefaultID = commodityDescID.Default.(func() uuid.UUID)
 	customerMixin := schema.Customer{}.Mixin()
+	customerHooks := schema.Customer{}.Hooks()
+	customer.Hooks[0] = customerHooks[0]
 	customerMixinFields0 := customerMixin[0].Fields()
 	_ = customerMixinFields0
 	customerFields := schema.Customer{}.Fields()

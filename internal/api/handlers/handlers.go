@@ -47,6 +47,16 @@ func AttachAllRoutes(s *api.Server, api fiber.Router) {
 	routeControl.Get("/", GetRouteControl(s))
 	routeControl.Put("/:routeControlID", UpdateRouteControlByID(s))
 
+	// Register the handlers for the feasibility tool control.
+	feasibilityToolControl := api.Group("/feasibility-tool-control")
+	feasibilityToolControl.Get("/", GetFeasibilityToolControl(s))
+	feasibilityToolControl.Put("/:feasibilityToolControlID", UpdateFeasibilityToolControl(s))
+
+	// Register the handlers the email control.
+	emailControl := api.Group("/email-control")
+	emailControl.Get("/", GetEmailControl(s))
+	emailControl.Put("/:emailControlID", UpdateEmailControl(s))
+
 	// Register the handlers for the user.
 	users := api.Group("/users")
 	users.Get("/me", GetAuthenticatedUser(s))

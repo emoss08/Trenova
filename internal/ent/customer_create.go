@@ -222,7 +222,9 @@ func (cc *CustomerCreate) Mutation() *CustomerMutation {
 
 // Save creates the Customer in the database.
 func (cc *CustomerCreate) Save(ctx context.Context) (*Customer, error) {
-	cc.defaults()
+	if err := cc.defaults(); err != nil {
+		return nil, err
+	}
 	return withHooks(ctx, cc.sqlSave, cc.mutation, cc.hooks)
 }
 
@@ -249,12 +251,18 @@ func (cc *CustomerCreate) ExecX(ctx context.Context) {
 }
 
 // defaults sets the default values of the builder before save.
-func (cc *CustomerCreate) defaults() {
+func (cc *CustomerCreate) defaults() error {
 	if _, ok := cc.mutation.CreatedAt(); !ok {
+		if customer.DefaultCreatedAt == nil {
+			return fmt.Errorf("ent: uninitialized customer.DefaultCreatedAt (forgotten import ent/runtime?)")
+		}
 		v := customer.DefaultCreatedAt()
 		cc.mutation.SetCreatedAt(v)
 	}
 	if _, ok := cc.mutation.UpdatedAt(); !ok {
+		if customer.DefaultUpdatedAt == nil {
+			return fmt.Errorf("ent: uninitialized customer.DefaultUpdatedAt (forgotten import ent/runtime?)")
+		}
 		v := customer.DefaultUpdatedAt()
 		cc.mutation.SetUpdatedAt(v)
 	}
@@ -275,9 +283,13 @@ func (cc *CustomerCreate) defaults() {
 		cc.mutation.SetAutoMarkReadyToBill(v)
 	}
 	if _, ok := cc.mutation.ID(); !ok {
+		if customer.DefaultID == nil {
+			return fmt.Errorf("ent: uninitialized customer.DefaultID (forgotten import ent/runtime?)")
+		}
 		v := customer.DefaultID()
 		cc.mutation.SetID(v)
 	}
+	return nil
 }
 
 // check runs all checks and user-defined validators on the builder.
