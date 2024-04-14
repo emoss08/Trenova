@@ -42,7 +42,9 @@ func (r *AccountingControlService) GetAccountingControl(ctx context.Context, org
 }
 
 // UpdateAccountingControl updates the accounting control settings for an organization.
-func (r *AccountingControlService) UpdateAccountingControl(ctx context.Context, ac *ent.AccountingControl) (*ent.AccountingControl, error) {
+func (r *AccountingControlService) UpdateAccountingControl(
+	ctx context.Context, ac *ent.AccountingControl,
+) (*ent.AccountingControl, error) {
 	updatedEntity := new(ent.AccountingControl)
 	err := util.WithTx(ctx, r.Client, func(tx *ent.Tx) error {
 		var err error

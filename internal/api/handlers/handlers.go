@@ -66,4 +66,10 @@ func AttachAllRoutes(s *api.Server, api fiber.Router) {
 	userFavorites.Get("/", GetUserFavorites(s))
 	userFavorites.Post("/", AddUserFavorite(s))
 	userFavorites.Delete("/", RemoveUserFavorite(s))
+
+	// Register the handlers for the hazardous material segregation rules.
+	hazardousMaterialSegregations := api.Group("/hazardous-material-segregations")
+	hazardousMaterialSegregations.Get("/", GetHazmatSegregationRules(s))
+	hazardousMaterialSegregations.Post("/", CreateHazmatSegregationRule(s))
+	hazardousMaterialSegregations.Put("/:hazmatSegRuleID", UpdateHazmatSegregationRules(s))
 }

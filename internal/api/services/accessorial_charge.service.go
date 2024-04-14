@@ -2,7 +2,6 @@ package services
 
 import (
 	"context"
-	"errors"
 
 	"github.com/emoss08/trenova/internal/api"
 	"github.com/emoss08/trenova/internal/util"
@@ -79,12 +78,6 @@ func (r *AccessorialChargeService) CreateAccessorialCharge(ctx context.Context, 
 func createAccessorialChargeEntity(
 	ctx context.Context, tx *ent.Tx, entity *ent.AccessorialCharge,
 ) (*ent.AccessorialCharge, error) {
-	if tx == nil {
-		return nil, eris.Wrap(errors.New("transaction is nil"), "failed to create accessorial charge")
-	}
-	if entity == nil {
-		return nil, eris.Wrap(errors.New("entity is nil"), "failed to create accessorial charge")
-	}
 	createdEntity, err := tx.AccessorialCharge.Create().
 		SetOrganizationID(entity.OrganizationID).
 		SetBusinessUnitID(entity.BusinessUnitID).
