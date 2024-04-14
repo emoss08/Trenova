@@ -42,6 +42,11 @@ func AttachAllRoutes(s *api.Server, api fiber.Router) {
 	invoiceControl.Get("/", GetInvoiceControl(s))
 	invoiceControl.Put("/:invoiceControlID", UpdateInvoiceControlByID(s))
 
+	// Register the handlers for the route control.
+	routeControl := api.Group("/route-control")
+	routeControl.Get("/", GetRouteControl(s))
+	routeControl.Put("/:routeControlID", UpdateRouteControlByID(s))
+
 	// Register the handlers for the user.
 	users := api.Group("/users")
 	users.Get("/me", GetAuthenticatedUser(s))

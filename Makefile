@@ -39,14 +39,14 @@ migrate-create: ## Create a new migration. Usage: make migrate-create MIGRATION_
 		$(error MIGRATION_NAME is undefined. Usage: make migrate-create MIGRATION_NAME=migration_name)
 	endif
 	atlas migrate diff ${MIGRATION_NAME} \
-              --dir "file://ent/migrate/migrations" \
-              --to "ent://ent/schema" \
+              --dir "file://internal/ent/migrate/migrations" \
+              --to "ent://internal/ent/schema" \
               --dev-url "docker://postgres/15/test?search_path=public"
 
 migrate-lint: ## Lint migrations.
 	atlas migrate lint \
             --dev-url="docker://postgres/15/test?search_path=public" \
-            --dir="file://ent/migrate/migrations" \
+            --dir="file://internal/ent/migrate/migrations" \
             --latest=1
 
 migrate-hash: ## Generate a hash for migrations.
@@ -54,7 +54,7 @@ migrate-hash: ## Generate a hash for migrations.
 
 migrate-status: ## Show migration status.
 	atlas migrate status \
-	--dir "file://ent/migrate/migrations" \
+	--dir "file://internal/ent/migrate/migrations" \
 	--url "postgresql://postgres:postgres@localhost:5432/trenova_go_db?sslmode=disable"
 
 migrate-custom: ## Create a custom migration. Usage: make migrate-custom MIGRATION_NAME=<name>
@@ -62,11 +62,11 @@ migrate-custom: ## Create a custom migration. Usage: make migrate-custom MIGRATI
 		$(error MIGRATION_NAME is undefined. Usage: make migrate-custom MIGRATION_NAME=migration_name)
 	endif
 	atlas migrate new ${MIGRATION_NAME} \
-      --dir "file://ent/migrate/migrations"
+      --dir "file://internal/ent/migrate/migrations"
 
 migrate: ## Apply migrations.
 	atlas migrate apply \
-  --dir "file://ent/migrate/migrations" \
+  --dir "file://internal/ent/migrate/migrations" \
   --url "postgresql://postgres:postgres@localhost:5432/trenova_go_db?sslmode=disable"
 
 describe-schema: ## Describe the ENT schema.

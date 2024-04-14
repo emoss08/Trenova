@@ -17,24 +17,24 @@ type RouteControl struct {
 func (RouteControl) Fields() []ent.Field {
 	return []ent.Field{
 		field.Enum("distance_method").
-			Values("T", "G").
-			Default("T").
+			Values("Trenova", "Google").
+			Default("Trenova").
 			SchemaType(map[string]string{
-				dialect.Postgres: "VARCHAR(1)",
-				dialect.SQLite:   "VARCHAR(1)",
+				dialect.Postgres: "VARCHAR(8)",
+				dialect.SQLite:   "VARCHAR(8)",
 			}).
 			StructTag(`json:"distanceMethod"`),
 		field.Enum("mileage_unit").
-			Values("M", "I").
-			Default("M").
+			Values("Metric", "Imperial").
+			Default("Metric").
 			SchemaType(map[string]string{
-				dialect.Postgres: "VARCHAR(1)",
-				dialect.SQLite:   "VARCHAR(1)",
+				dialect.Postgres: "VARCHAR(9)",
+				dialect.SQLite:   "VARCHAR(9)",
 			}).
 			StructTag(`json:"mileageUnit"`),
 		field.Bool("generate_routes").
 			Default(false).
-			StructTag(`json:"generateRoutes"`),
+			StructTag(`json:"generateRoutes" validate:"omitempty"`),
 	}
 }
 

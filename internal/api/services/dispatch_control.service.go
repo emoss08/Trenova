@@ -12,7 +12,7 @@ import (
 	"github.com/google/uuid"
 )
 
-// DispatchControlService is the service for disptach control settings.
+// DispatchControlService is the service for dispatch control settings.
 type DispatchControlService struct {
 	Client *ent.Client
 	Logger *zerolog.Logger

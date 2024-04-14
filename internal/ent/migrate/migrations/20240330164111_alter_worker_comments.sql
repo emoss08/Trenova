@@ -1,0 +1,2 @@
+-- Modify "worker_comments" table
+ALTER TABLE "worker_comments" ADD COLUMN "comment" text NOT NULL, ADD COLUMN "entered_by" uuid NOT NULL, ADD COLUMN "worker_id" uuid NOT NULL, ADD COLUMN "comment_type_id" uuid NOT NULL, ADD CONSTRAINT "worker_comments_comment_types_comment_type" FOREIGN KEY ("comment_type_id") REFERENCES "comment_types" ("id") ON UPDATE NO ACTION ON DELETE CASCADE, ADD CONSTRAINT "worker_comments_workers_worker_comments" FOREIGN KEY ("worker_id") REFERENCES "workers" ("id") ON UPDATE NO ACTION ON DELETE NO ACTION;
