@@ -3,11 +3,15 @@ package router
 import (
 	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/api/middleware"
+	"github.com/gofiber/fiber/v2/middleware/compress"
+	"github.com/gofiber/fiber/v2/middleware/encryptcookie"
 	"github.com/gofiber/fiber/v2/middleware/etag"
 	"github.com/gofiber/fiber/v2/middleware/healthcheck"
 	"github.com/gofiber/fiber/v2/middleware/helmet"
 	"github.com/gofiber/fiber/v2/middleware/idempotency"
 	"github.com/gofiber/fiber/v2/middleware/logger"
+	"github.com/gofiber/fiber/v2/middleware/monitor"
+	"github.com/gofiber/fiber/v2/middleware/recover"
 	"github.com/gofiber/fiber/v2/middleware/requestid"
 
 	"github.com/emoss08/trenova/internal/api"
@@ -34,6 +38,47 @@ func Init(s *api.Server) {
 		log.Warn().Msg("Logger middleware is disabled. This is not recommended.")
 	}
 
+	if s.Config.Fiber.EnableMonitorMiddleware {
+		// Provide a minimal configuration
+		s.Fiber.Get(s.Config.Monitor.Path, monitor.New(
+			monitor.Config{
+				Title: "Trenova API Metrics",
+			},
+		))
+	}
+
+	if s.Config.Fiber.EnableHelmetMiddleware {
+		apiV1.Use(helmet.New())
+	} else {
+		log.Warn().Msg("Helmet middleware is disabled. This is not recommended.")
+	}
+
+	if s.Config.Fiber.EnableRequestIDMiddleware {
+		s.Fiber.Use(requestid.New())
+	} else {
+		log.Warn().Msg("RequestID middleware is disabled. This is not recommended.")
+	}
+
+	if s.Config.Fiber.EnableRecoverMiddleware {
+		s.Fiber.Use(recover.New())
+	} else {
+		log.Warn().Msg("Recover middleware is disabled. This is not recommended.")
+	}
+
+	if s.Config.Fiber.EnableCompressMiddleware {
+		// Initialize default config
+		s.Fiber.Use(compress.New())
+	} else {
+		log.Warn().Msg("Compress middleware is disabled. This is not recommended.")
+	}
+
+	if s.Config.Fiber.EnableEncryptCookieMiddleware {
+		// Provide a minimal configuration
+		s.Fiber.Use(encryptcookie.New(encryptcookie.Config{
+			Key: s.Config.Cookie.Key,
+		}))
+	}
+
 	if s.Config.Fiber.EnableCORSMiddleware {
 		s.Fiber.Use(cors.New(
 			cors.Config{
@@ -53,18 +98,6 @@ func Init(s *api.Server) {
 	auth.Post("/login", handlers.AuthenticateUser(s))
 	auth.Post("/logout", handlers.LogoutUser(s))
 
-	if s.Config.Fiber.EnableHelmetMiddleware {
-		apiV1.Use(helmet.New())
-	} else {
-		log.Warn().Msg("Helmet middleware is disabled. This is not recommended.")
-	}
-
-	if s.Config.Fiber.EnableRequestIDMiddleware {
-		s.Fiber.Use(requestid.New())
-	} else {
-		log.Warn().Msg("RequestID middleware is disabled. This is not recommended.")
-	}
-
 	if s.Config.Fiber.EnableETagMiddleware {
 		s.Fiber.Use(etag.New())
 	} else {
@@ -82,8 +115,6 @@ func Init(s *api.Server) {
 	} else {
 		log.Warn().Msg("Session middleware is disabled. This is not recommended.")
 	}
-
-	// s.Fiber.Use(recover.New())
 
 	// Health check route.
 	s.Fiber.Use(healthcheck.New(healthcheck.Config{

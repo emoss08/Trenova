@@ -45,6 +45,8 @@ type FleetCode struct {
 	MileageGoal float64 `json:"mileageGoal" validate:"omitempty"`
 	// ManagerID holds the value of the "manager_id" field.
 	ManagerID *uuid.UUID `json:"managerId" validate:"omitempty"`
+	// Color holds the value of the "color" field.
+	Color string `json:"color" validate:"omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
 	// The values are being populated by the FleetCodeQuery when eager-loading is set.
 	Edges        FleetCodeEdges `json:"edges"`
@@ -108,7 +110,7 @@ func (*FleetCode) scanValues(columns []string) ([]any, error) {
 			values[i] = new(sql.NullFloat64)
 		case fleetcode.FieldVersion:
 			values[i] = new(sql.NullInt64)
-		case fleetcode.FieldStatus, fleetcode.FieldCode, fleetcode.FieldDescription:
+		case fleetcode.FieldStatus, fleetcode.FieldCode, fleetcode.FieldDescription, fleetcode.FieldColor:
 			values[i] = new(sql.NullString)
 		case fleetcode.FieldCreatedAt, fleetcode.FieldUpdatedAt:
 			values[i] = new(sql.NullTime)
@@ -208,6 +210,12 @@ func (fc *FleetCode) assignValues(columns []string, values []any) error {
 				fc.ManagerID = new(uuid.UUID)
 				*fc.ManagerID = *value.S.(*uuid.UUID)
 			}
+		case fleetcode.FieldColor:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field color", values[i])
+			} else if value.Valid {
+				fc.Color = value.String
+			}
 		default:
 			fc.selectValues.Set(columns[i], values[i])
 		}
@@ -296,6 +304,9 @@ func (fc *FleetCode) String() string {
 		builder.WriteString("manager_id=")
 		builder.WriteString(fmt.Sprintf("%v", *v))
 	}
+	builder.WriteString(", ")
+	builder.WriteString("color=")
+	builder.WriteString(fc.Color)
 	builder.WriteByte(')')
 	return builder.String()
 }

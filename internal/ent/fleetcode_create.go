@@ -168,6 +168,20 @@ func (fcc *FleetCodeCreate) SetNillableManagerID(u *uuid.UUID) *FleetCodeCreate 
 	return fcc
 }
 
+// SetColor sets the "color" field.
+func (fcc *FleetCodeCreate) SetColor(s string) *FleetCodeCreate {
+	fcc.mutation.SetColor(s)
+	return fcc
+}
+
+// SetNillableColor sets the "color" field if the given value is not nil.
+func (fcc *FleetCodeCreate) SetNillableColor(s *string) *FleetCodeCreate {
+	if s != nil {
+		fcc.SetColor(*s)
+	}
+	return fcc
+}
+
 // SetID sets the "id" field.
 func (fcc *FleetCodeCreate) SetID(u uuid.UUID) *FleetCodeCreate {
 	fcc.mutation.SetID(u)
@@ -363,6 +377,10 @@ func (fcc *FleetCodeCreate) createSpec() (*FleetCode, *sqlgraph.CreateSpec) {
 	if value, ok := fcc.mutation.MileageGoal(); ok {
 		_spec.SetField(fleetcode.FieldMileageGoal, field.TypeFloat64, value)
 		_node.MileageGoal = value
+	}
+	if value, ok := fcc.mutation.Color(); ok {
+		_spec.SetField(fleetcode.FieldColor, field.TypeString, value)
+		_node.Color = value
 	}
 	if nodes := fcc.mutation.BusinessUnitIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{

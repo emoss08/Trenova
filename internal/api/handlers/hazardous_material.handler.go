@@ -10,10 +10,10 @@ import (
 	"github.com/google/uuid"
 )
 
-// GetEquipmentTypes is a handler that returns a list of equipment types.
+// GetHazardousMaterials is a handler that returns a list of hazardous materialss.
 //
-// GET /equipment-types
-func GetEquipmentTypes(s *api.Server) fiber.Handler {
+// GET /hazardous-materials
+func GetHazardousMaterials(s *api.Server) fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		offset, limit, err := util.PaginationParams(c)
 		if err != nil {
@@ -45,8 +45,8 @@ func GetEquipmentTypes(s *api.Server) fiber.Handler {
 			})
 		}
 
-		entities, count, err := services.NewEquipmentTypeService(s).
-			GetEquipmentTypes(c.UserContext(), limit, offset, orgID, buID)
+		entities, count, err := services.NewHazardousMaterialService(s).
+			GetHazardousMaterials(c.UserContext(), limit, offset, orgID, buID)
 		if err != nil {
 			errorResponse := util.CreateDBErrorResponse(err)
 			return c.Status(fiber.StatusInternalServerError).JSON(errorResponse)
@@ -64,12 +64,12 @@ func GetEquipmentTypes(s *api.Server) fiber.Handler {
 	}
 }
 
-// CreateEquipmentType is a handler that creates a new equipment type.
+// CreateHazardousMaterial is a handler that creates a new hazardous materials.
 //
-// POST /equipment-types
-func CreateEquipmentType(s *api.Server) fiber.Handler {
+// POST /hazardous-materials
+func CreateHazardousMaterial(s *api.Server) fiber.Handler {
 	return func(c *fiber.Ctx) error {
-		newEntity := new(ent.EquipmentType)
+		newEntity := new(ent.HazardousMaterial)
 
 		orgID, ok := c.Locals(util.CTXOrganizationID).(uuid.UUID)
 		buID, buOK := c.Locals(util.CTXBusinessUnitID).(uuid.UUID)
@@ -103,8 +103,8 @@ func CreateEquipmentType(s *api.Server) fiber.Handler {
 			})
 		}
 
-		entity, err := services.NewEquipmentTypeService(s).
-			CreateEquipmentType(c.UserContext(), newEntity)
+		entity, err := services.NewHazardousMaterialService(s).
+			CreateHazardousMaterial(c.UserContext(), newEntity)
 		if err != nil {
 			errorResponse := util.CreateDBErrorResponse(err)
 			return c.Status(fiber.StatusInternalServerError).JSON(errorResponse)
@@ -114,26 +114,26 @@ func CreateEquipmentType(s *api.Server) fiber.Handler {
 	}
 }
 
-// UpdateEquipmentType is a handler that updates an equipment type.
+// UpdateHazardousMaterial is a handler that updates an hazardous materials.
 //
-// PUT /equipment-types/:equipmentTypeID
-func UpdateEquipmentType(s *api.Server) fiber.Handler {
+// PUT /hazardous-materials/:hazmatID
+func UpdateHazardousMaterial(s *api.Server) fiber.Handler {
 	return func(c *fiber.Ctx) error {
-		equipmentTypeID := c.Params("equipmentTypeID")
-		if equipmentTypeID == "" {
+		hazmatID := c.Params("hazmatID")
+		if hazmatID == "" {
 			return c.Status(fiber.StatusBadRequest).JSON(types.ValidationErrorResponse{
 				Type: "invalidRequest",
 				Errors: []types.ValidationErrorDetail{
 					{
 						Code:   "invalidRequest",
-						Detail: "Equipment Type ID is required",
-						Attr:   "equipmentTypeID",
+						Detail: "hazardous materials ID is required",
+						Attr:   "hazmatID",
 					},
 				},
 			})
 		}
 
-		updatedEntity := new(ent.EquipmentType)
+		updatedEntity := new(ent.HazardousMaterial)
 
 		if err := util.ParseBodyAndValidate(c, updatedEntity); err != nil {
 			return c.Status(fiber.StatusBadRequest).JSON(types.ValidationErrorResponse{
@@ -148,10 +148,10 @@ func UpdateEquipmentType(s *api.Server) fiber.Handler {
 			})
 		}
 
-		updatedEntity.ID = uuid.MustParse(equipmentTypeID)
+		updatedEntity.ID = uuid.MustParse(hazmatID)
 
-		entity, err := services.NewEquipmentTypeService(s).
-			UpdateEquipmentType(c.UserContext(), updatedEntity)
+		entity, err := services.NewHazardousMaterialService(s).
+			UpdateHazardousMaterial(c.UserContext(), updatedEntity)
 		if err != nil {
 			errorResponse := util.CreateDBErrorResponse(err)
 			return c.Status(fiber.StatusInternalServerError).JSON(errorResponse)

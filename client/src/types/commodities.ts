@@ -31,13 +31,12 @@ export interface HazardousMaterial extends BaseModel {
   hazardClass: HazardousClassChoiceProps;
   packingGroup?: PackingGroupChoiceProps;
   ergNumber?: string;
-  additionalCost?: string;
   properShippingName?: string;
 }
 
 export type HazardousMaterialFormValues = Omit<
   HazardousMaterial,
-  "id" | "organizationId" | "createdAt" | "updatedAt"
+  "id" | "organizationId" | "createdAt" | "updatedAt" | "version"
 >;
 
 export interface Commodity extends BaseModel {
@@ -54,5 +53,5 @@ export interface Commodity extends BaseModel {
 
 export type CommodityFormValues = Omit<
   Commodity,
-  "id" | "createdAt" | "updatedAt" | "organizationId"
+  "id" | "createdAt" | "updatedAt" | "organizationId" | "version"
 >;

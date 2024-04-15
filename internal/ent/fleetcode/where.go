@@ -111,6 +111,11 @@ func ManagerID(v uuid.UUID) predicate.FleetCode {
 	return predicate.FleetCode(sql.FieldEQ(FieldManagerID, v))
 }
 
+// Color applies equality check predicate on the "color" field. It's identical to ColorEQ.
+func Color(v string) predicate.FleetCode {
+	return predicate.FleetCode(sql.FieldEQ(FieldColor, v))
+}
+
 // BusinessUnitIDEQ applies the EQ predicate on the "business_unit_id" field.
 func BusinessUnitIDEQ(v uuid.UUID) predicate.FleetCode {
 	return predicate.FleetCode(sql.FieldEQ(FieldBusinessUnitID, v))
@@ -609,6 +614,81 @@ func ManagerIDIsNil() predicate.FleetCode {
 // ManagerIDNotNil applies the NotNil predicate on the "manager_id" field.
 func ManagerIDNotNil() predicate.FleetCode {
 	return predicate.FleetCode(sql.FieldNotNull(FieldManagerID))
+}
+
+// ColorEQ applies the EQ predicate on the "color" field.
+func ColorEQ(v string) predicate.FleetCode {
+	return predicate.FleetCode(sql.FieldEQ(FieldColor, v))
+}
+
+// ColorNEQ applies the NEQ predicate on the "color" field.
+func ColorNEQ(v string) predicate.FleetCode {
+	return predicate.FleetCode(sql.FieldNEQ(FieldColor, v))
+}
+
+// ColorIn applies the In predicate on the "color" field.
+func ColorIn(vs ...string) predicate.FleetCode {
+	return predicate.FleetCode(sql.FieldIn(FieldColor, vs...))
+}
+
+// ColorNotIn applies the NotIn predicate on the "color" field.
+func ColorNotIn(vs ...string) predicate.FleetCode {
+	return predicate.FleetCode(sql.FieldNotIn(FieldColor, vs...))
+}
+
+// ColorGT applies the GT predicate on the "color" field.
+func ColorGT(v string) predicate.FleetCode {
+	return predicate.FleetCode(sql.FieldGT(FieldColor, v))
+}
+
+// ColorGTE applies the GTE predicate on the "color" field.
+func ColorGTE(v string) predicate.FleetCode {
+	return predicate.FleetCode(sql.FieldGTE(FieldColor, v))
+}
+
+// ColorLT applies the LT predicate on the "color" field.
+func ColorLT(v string) predicate.FleetCode {
+	return predicate.FleetCode(sql.FieldLT(FieldColor, v))
+}
+
+// ColorLTE applies the LTE predicate on the "color" field.
+func ColorLTE(v string) predicate.FleetCode {
+	return predicate.FleetCode(sql.FieldLTE(FieldColor, v))
+}
+
+// ColorContains applies the Contains predicate on the "color" field.
+func ColorContains(v string) predicate.FleetCode {
+	return predicate.FleetCode(sql.FieldContains(FieldColor, v))
+}
+
+// ColorHasPrefix applies the HasPrefix predicate on the "color" field.
+func ColorHasPrefix(v string) predicate.FleetCode {
+	return predicate.FleetCode(sql.FieldHasPrefix(FieldColor, v))
+}
+
+// ColorHasSuffix applies the HasSuffix predicate on the "color" field.
+func ColorHasSuffix(v string) predicate.FleetCode {
+	return predicate.FleetCode(sql.FieldHasSuffix(FieldColor, v))
+}
+
+// ColorIsNil applies the IsNil predicate on the "color" field.
+func ColorIsNil() predicate.FleetCode {
+	return predicate.FleetCode(sql.FieldIsNull(FieldColor))
+}
+
+// ColorNotNil applies the NotNil predicate on the "color" field.
+func ColorNotNil() predicate.FleetCode {
+	return predicate.FleetCode(sql.FieldNotNull(FieldColor))
+}
+
+// ColorEqualFold applies the EqualFold predicate on the "color" field.
+func ColorEqualFold(v string) predicate.FleetCode {
+	return predicate.FleetCode(sql.FieldEqualFold(FieldColor, v))
+}
+
+// ColorContainsFold applies the ContainsFold predicate on the "color" field.
+func ColorContainsFold(v string) predicate.FleetCode {
+	return predicate.FleetCode(sql.FieldContainsFold(FieldColor, v))
 }
 
 // HasBusinessUnit applies the HasEdge predicate on the "business_unit" edge.

@@ -21109,6 +21109,7 @@ type FleetCodeMutation struct {
 	adddeadhead_goal     *float64
 	mileage_goal         *float64
 	addmileage_goal      *float64
+	color                *string
 	clearedFields        map[string]struct{}
 	business_unit        *uuid.UUID
 	clearedbusiness_unit bool
@@ -21805,6 +21806,55 @@ func (m *FleetCodeMutation) ResetManagerID() {
 	delete(m.clearedFields, fleetcode.FieldManagerID)
 }
 
+// SetColor sets the "color" field.
+func (m *FleetCodeMutation) SetColor(s string) {
+	m.color = &s
+}
+
+// Color returns the value of the "color" field in the mutation.
+func (m *FleetCodeMutation) Color() (r string, exists bool) {
+	v := m.color
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldColor returns the old "color" field's value of the FleetCode entity.
+// If the FleetCode object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *FleetCodeMutation) OldColor(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldColor is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldColor requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldColor: %w", err)
+	}
+	return oldValue.Color, nil
+}
+
+// ClearColor clears the value of the "color" field.
+func (m *FleetCodeMutation) ClearColor() {
+	m.color = nil
+	m.clearedFields[fleetcode.FieldColor] = struct{}{}
+}
+
+// ColorCleared returns if the "color" field was cleared in this mutation.
+func (m *FleetCodeMutation) ColorCleared() bool {
+	_, ok := m.clearedFields[fleetcode.FieldColor]
+	return ok
+}
+
+// ResetColor resets all changes to the "color" field.
+func (m *FleetCodeMutation) ResetColor() {
+	m.color = nil
+	delete(m.clearedFields, fleetcode.FieldColor)
+}
+
 // ClearBusinessUnit clears the "business_unit" edge to the BusinessUnit entity.
 func (m *FleetCodeMutation) ClearBusinessUnit() {
 	m.clearedbusiness_unit = true
@@ -21920,7 +21970,7 @@ func (m *FleetCodeMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *FleetCodeMutation) Fields() []string {
-	fields := make([]string, 0, 12)
+	fields := make([]string, 0, 13)
 	if m.business_unit != nil {
 		fields = append(fields, fleetcode.FieldBusinessUnitID)
 	}
@@ -21957,6 +22007,9 @@ func (m *FleetCodeMutation) Fields() []string {
 	if m.manager != nil {
 		fields = append(fields, fleetcode.FieldManagerID)
 	}
+	if m.color != nil {
+		fields = append(fields, fleetcode.FieldColor)
+	}
 	return fields
 }
 
@@ -21989,6 +22042,8 @@ func (m *FleetCodeMutation) Field(name string) (ent.Value, bool) {
 		return m.MileageGoal()
 	case fleetcode.FieldManagerID:
 		return m.ManagerID()
+	case fleetcode.FieldColor:
+		return m.Color()
 	}
 	return nil, false
 }
@@ -22022,6 +22077,8 @@ func (m *FleetCodeMutation) OldField(ctx context.Context, name string) (ent.Valu
 		return m.OldMileageGoal(ctx)
 	case fleetcode.FieldManagerID:
 		return m.OldManagerID(ctx)
+	case fleetcode.FieldColor:
+		return m.OldColor(ctx)
 	}
 	return nil, fmt.Errorf("unknown FleetCode field %s", name)
 }
@@ -22114,6 +22171,13 @@ func (m *FleetCodeMutation) SetField(name string, value ent.Value) error {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetManagerID(v)
+		return nil
+	case fleetcode.FieldColor:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetColor(v)
 		return nil
 	}
 	return fmt.Errorf("unknown FleetCode field %s", name)
@@ -22211,6 +22275,9 @@ func (m *FleetCodeMutation) ClearedFields() []string {
 	if m.FieldCleared(fleetcode.FieldManagerID) {
 		fields = append(fields, fleetcode.FieldManagerID)
 	}
+	if m.FieldCleared(fleetcode.FieldColor) {
+		fields = append(fields, fleetcode.FieldColor)
+	}
 	return fields
 }
 
@@ -22239,6 +22306,9 @@ func (m *FleetCodeMutation) ClearField(name string) error {
 		return nil
 	case fleetcode.FieldManagerID:
 		m.ClearManagerID()
+		return nil
+	case fleetcode.FieldColor:
+		m.ClearColor()
 		return nil
 	}
 	return fmt.Errorf("unknown FleetCode nullable field %s", name)
@@ -22283,6 +22353,9 @@ func (m *FleetCodeMutation) ResetField(name string) error {
 		return nil
 	case fleetcode.FieldManagerID:
 		m.ResetManagerID()
+		return nil
+	case fleetcode.FieldColor:
+		m.ResetColor()
 		return nil
 	}
 	return fmt.Errorf("unknown FleetCode field %s", name)

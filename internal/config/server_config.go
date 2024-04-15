@@ -22,6 +22,10 @@ type FiberServer struct {
 	EnableRequestIDMiddleware      bool
 	EnableETagMiddleware           bool
 	EnableSessionMiddleware        bool
+	EnableCompressMiddleware       bool
+	EnableRecoverMiddleware        bool
+	EnableEncryptCookieMiddleware  bool
+	EnableMonitorMiddleware        bool
 }
 
 type RedisServer struct {
@@ -48,6 +52,14 @@ type KafkaServer struct {
 	Broker string
 }
 
+type EncryptCookie struct {
+	Key string
+}
+
+type Monitor struct {
+	Path string
+}
+
 type Server struct {
 	Database     Database
 	Fiber        FiberServer
@@ -55,6 +67,8 @@ type Server struct {
 	Redis        RedisServer
 	SessionStore *session.Store
 	Kafka        KafkaServer
+	Cookie       EncryptCookie
+	Monitor      Monitor
 }
 
 // DefaultServiceConfigFromEnv returns the server config as parsed from environment variables
@@ -92,6 +106,10 @@ func DefaultServiceConfigFromEnv() Server {
 			EnableIdempotencyMiddleware:    util.GetEnvAsBool("SERVER_FIBER_ENABLE_IDEMPOTENCY_MIDDLEWARE", true),
 			EnableETagMiddleware:           util.GetEnvAsBool("SERVER_FIBER_ENABLE_ETAG_MIDDLEWARE", true),
 			EnableSessionMiddleware:        util.GetEnvAsBool("SERVER_FIBER_ENABLE_SESSION_MIDDLEWARE", true),
+			EnableCompressMiddleware:       util.GetEnvAsBool("SERVER_FIBER_ENABLE_COMPRESS_MIDDLEWARE", true),
+			EnableRecoverMiddleware:        util.GetEnvAsBool("SERVER_FIBER_ENABLE_RECOVER_MIDDLEWARE", true),
+			EnableEncryptCookieMiddleware:  util.GetEnvAsBool("SERVER_FIBER_ENABLE_ENCRYPT_COOKIE_MIDDLEWARE", true),
+			EnableMonitorMiddleware:        util.GetEnvAsBool("SERVER_FIBER_ENABLE_MONITOR_MIDDLEWARE", false),
 		},
 		Logger: LoggerServer{
 			Level:              util.LogLevelFromString(util.GetEnv("SERVER_LOGGER_LEVEL", zerolog.DebugLevel.String())),
@@ -113,6 +131,12 @@ func DefaultServiceConfigFromEnv() Server {
 		},
 		Kafka: KafkaServer{
 			Broker: util.GetEnv("SERVER_KAFKA_BROKER", "localhost:9094"),
+		},
+		Cookie: EncryptCookie{
+			Key: util.GetEnv("SERVER_COOKIE_KEY", "octxhyEw4TS8RjK8ahe0M1ti9StS+xqFvk+iFS7d3qk="), // NOTE: this value is only used in development
+		},
+		Monitor: Monitor{
+			Path: util.GetEnv("SERVER_METRICS_PATH", "/metrics"),
 		},
 	}
 }

@@ -102,8 +102,8 @@ export const accountingControlSchema: ObjectSchema<AccountingControlFormValues> 
     requireJournalEntryApproval: boolean().required(
       "Require Journal Entry Approval must be yes or no",
     ),
-    defaultRevenueAccountId: string().notRequired(),
-    defaultExpenseAccountId: string().notRequired(),
+    defaultRevAccountId: string().notRequired(),
+    defaultExpAccountId: string().notRequired(),
     enableRecNotifications: boolean().required(
       "Enable Reconciliation Notifications must be yes or no",
     ),
@@ -117,5 +117,5 @@ export const accountingControlSchema: ObjectSchema<AccountingControlFormValues> 
     haltOnPendingRec: boolean().required(
       "Halt on Pending Reconciliation must be yes or no",
     ),
-    criticalProcesses: string().notRequired(),
+    criticalProcesses: string(),
   });

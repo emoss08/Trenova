@@ -207,6 +207,26 @@ func (fcu *FleetCodeUpdate) ClearManagerID() *FleetCodeUpdate {
 	return fcu
 }
 
+// SetColor sets the "color" field.
+func (fcu *FleetCodeUpdate) SetColor(s string) *FleetCodeUpdate {
+	fcu.mutation.SetColor(s)
+	return fcu
+}
+
+// SetNillableColor sets the "color" field if the given value is not nil.
+func (fcu *FleetCodeUpdate) SetNillableColor(s *string) *FleetCodeUpdate {
+	if s != nil {
+		fcu.SetColor(*s)
+	}
+	return fcu
+}
+
+// ClearColor clears the value of the "color" field.
+func (fcu *FleetCodeUpdate) ClearColor() *FleetCodeUpdate {
+	fcu.mutation.ClearColor()
+	return fcu
+}
+
 // SetManager sets the "manager" edge to the User entity.
 func (fcu *FleetCodeUpdate) SetManager(u *User) *FleetCodeUpdate {
 	return fcu.SetManagerID(u.ID)
@@ -345,6 +365,12 @@ func (fcu *FleetCodeUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	}
 	if fcu.mutation.MileageGoalCleared() {
 		_spec.ClearField(fleetcode.FieldMileageGoal, field.TypeFloat64)
+	}
+	if value, ok := fcu.mutation.Color(); ok {
+		_spec.SetField(fleetcode.FieldColor, field.TypeString, value)
+	}
+	if fcu.mutation.ColorCleared() {
+		_spec.ClearField(fleetcode.FieldColor, field.TypeString)
 	}
 	if fcu.mutation.ManagerCleared() {
 		edge := &sqlgraph.EdgeSpec{
@@ -573,6 +599,26 @@ func (fcuo *FleetCodeUpdateOne) ClearManagerID() *FleetCodeUpdateOne {
 	return fcuo
 }
 
+// SetColor sets the "color" field.
+func (fcuo *FleetCodeUpdateOne) SetColor(s string) *FleetCodeUpdateOne {
+	fcuo.mutation.SetColor(s)
+	return fcuo
+}
+
+// SetNillableColor sets the "color" field if the given value is not nil.
+func (fcuo *FleetCodeUpdateOne) SetNillableColor(s *string) *FleetCodeUpdateOne {
+	if s != nil {
+		fcuo.SetColor(*s)
+	}
+	return fcuo
+}
+
+// ClearColor clears the value of the "color" field.
+func (fcuo *FleetCodeUpdateOne) ClearColor() *FleetCodeUpdateOne {
+	fcuo.mutation.ClearColor()
+	return fcuo
+}
+
 // SetManager sets the "manager" edge to the User entity.
 func (fcuo *FleetCodeUpdateOne) SetManager(u *User) *FleetCodeUpdateOne {
 	return fcuo.SetManagerID(u.ID)
@@ -741,6 +787,12 @@ func (fcuo *FleetCodeUpdateOne) sqlSave(ctx context.Context) (_node *FleetCode, 
 	}
 	if fcuo.mutation.MileageGoalCleared() {
 		_spec.ClearField(fleetcode.FieldMileageGoal, field.TypeFloat64)
+	}
+	if value, ok := fcuo.mutation.Color(); ok {
+		_spec.SetField(fleetcode.FieldColor, field.TypeString, value)
+	}
+	if fcuo.mutation.ColorCleared() {
+		_spec.ClearField(fleetcode.FieldColor, field.TypeString)
 	}
 	if fcuo.mutation.ManagerCleared() {
 		edge := &sqlgraph.EdgeSpec{

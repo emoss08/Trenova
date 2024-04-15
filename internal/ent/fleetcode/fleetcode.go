@@ -40,6 +40,8 @@ const (
 	FieldMileageGoal = "mileage_goal"
 	// FieldManagerID holds the string denoting the manager_id field in the database.
 	FieldManagerID = "manager_id"
+	// FieldColor holds the string denoting the color field in the database.
+	FieldColor = "color"
 	// EdgeBusinessUnit holds the string denoting the business_unit edge name in mutations.
 	EdgeBusinessUnit = "business_unit"
 	// EdgeOrganization holds the string denoting the organization edge name in mutations.
@@ -86,6 +88,7 @@ var Columns = []string{
 	FieldDeadheadGoal,
 	FieldMileageGoal,
 	FieldManagerID,
+	FieldColor,
 }
 
 // ValidColumn reports if the column name is valid (part of the table columns).
@@ -205,6 +208,11 @@ func ByMileageGoal(opts ...sql.OrderTermOption) OrderOption {
 // ByManagerID orders the results by the manager_id field.
 func ByManagerID(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldManagerID, opts...).ToFunc()
+}
+
+// ByColor orders the results by the color field.
+func ByColor(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldColor, opts...).ToFunc()
 }
 
 // ByBusinessUnitField orders the results by business_unit field.

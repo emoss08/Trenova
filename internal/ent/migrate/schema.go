@@ -714,6 +714,7 @@ var (
 		{Name: "revenue_goal", Type: field.TypeFloat64, Nullable: true, SchemaType: map[string]string{"mysql": "decimal(10,2)", "postgres": "numeric(10,2)"}},
 		{Name: "deadhead_goal", Type: field.TypeFloat64, Nullable: true, SchemaType: map[string]string{"mysql": "decimal(10,2)", "postgres": "numeric(10,2)"}},
 		{Name: "mileage_goal", Type: field.TypeFloat64, Nullable: true, SchemaType: map[string]string{"mysql": "decimal(10,2)", "postgres": "numeric(10,2)"}},
+		{Name: "color", Type: field.TypeString, Nullable: true},
 		{Name: "business_unit_id", Type: field.TypeUUID},
 		{Name: "organization_id", Type: field.TypeUUID},
 		{Name: "manager_id", Type: field.TypeUUID, Nullable: true},
@@ -726,19 +727,19 @@ var (
 		ForeignKeys: []*schema.ForeignKey{
 			{
 				Symbol:     "fleet_codes_business_units_business_unit",
-				Columns:    []*schema.Column{FleetCodesColumns[10]},
+				Columns:    []*schema.Column{FleetCodesColumns[11]},
 				RefColumns: []*schema.Column{BusinessUnitsColumns[0]},
 				OnDelete:   schema.Cascade,
 			},
 			{
 				Symbol:     "fleet_codes_organizations_organization",
-				Columns:    []*schema.Column{FleetCodesColumns[11]},
+				Columns:    []*schema.Column{FleetCodesColumns[12]},
 				RefColumns: []*schema.Column{OrganizationsColumns[0]},
 				OnDelete:   schema.Cascade,
 			},
 			{
 				Symbol:     "fleet_codes_users_manager",
-				Columns:    []*schema.Column{FleetCodesColumns[12]},
+				Columns:    []*schema.Column{FleetCodesColumns[13]},
 				RefColumns: []*schema.Column{UsersColumns[0]},
 				OnDelete:   schema.SetNull,
 			},

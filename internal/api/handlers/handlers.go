@@ -151,4 +151,40 @@ func AttachAllRoutes(s *api.Server, api fiber.Router) {
 	equipmentManufacturersAPI.Get("/", GetEquipmentManufacturers(s))
 	equipmentManufacturersAPI.Post("/", CreateEquipmentManufacturer(s))
 	equipmentManufacturersAPI.Put("/:equipmentManuID", UpdateEquipmentManufacturer(s))
+
+	// Register the handlers for the equipment type.
+	equipmentTypesAPI := api.Group("/equipment-types")
+	equipmentTypesAPI.Get("/", GetEquipmentTypes(s))
+	equipmentTypesAPI.Post("/", CreateEquipmentType(s))
+	equipmentTypesAPI.Put("/:equipmentTypeID", UpdateEquipmentType(s))
+
+	// Register the handlers for the fleet code.
+	fleetCodesAPI := api.Group("/fleet-codes")
+	fleetCodesAPI.Get("/", GetFleetCodes(s))
+	fleetCodesAPI.Post("/", CreateFleetCode(s))
+	fleetCodesAPI.Put("/:fleetCodeID", UpdateFleetCode(s))
+
+	// Register the handlers for the general ledger account.
+	generalLedgerAccountsAPI := api.Group("/general-ledger-accounts")
+	generalLedgerAccountsAPI.Get("/", GetGeneralLedgerAccounts(s))
+	generalLedgerAccountsAPI.Post("/", CreateGeneralLedgerAccount(s))
+	generalLedgerAccountsAPI.Put("/:glAccountID", UpdateGeneralLedgerAccount(s))
+
+	// Register the handlers for the tag.
+	tagsAPI := api.Group("/tags")
+	tagsAPI.Get("/", GetTags(s))
+	tagsAPI.Post("/", CreateTag(s))
+	tagsAPI.Put("/:tagID", UpdateTag(s))
+
+	// Register the handlers for the hazardous material.
+	hazardousMaterialsAPI := api.Group("/hazardous-materials")
+	hazardousMaterialsAPI.Get("/", GetHazardousMaterials(s))
+	hazardousMaterialsAPI.Post("/", CreateHazardousMaterial(s))
+	hazardousMaterialsAPI.Put("/:hazmatID", UpdateHazardousMaterial(s))
+
+	// Register the handlers for the location.
+	locationsAPI := api.Group("/locations")
+	locationsAPI.Get("/", GetLocations(s))
+	locationsAPI.Post("/", CreateLocation(s))
+	locationsAPI.Put("/:locationID", UpdateLocation(s))
 }

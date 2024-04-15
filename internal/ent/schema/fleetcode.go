@@ -52,6 +52,9 @@ func (FleetCode) Fields() []ent.Field {
 			Optional().
 			Nillable().
 			StructTag(`json:"managerId" validate:"omitempty"`),
+		field.String("color").
+			Optional().
+			StructTag(`json:"color" validate:"omitempty"`),
 	}
 }
 

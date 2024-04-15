@@ -3,7 +3,6 @@ package util
 import (
 	"context"
 	"errors"
-	"fmt"
 	"log"
 	"net/http"
 
@@ -86,7 +85,9 @@ func getSessionUUID(sess *session.Session, key string) (uuid.UUID, bool) {
 	return uuid.Nil, false
 }
 
+// WithTx executes the given function within a transaction.
 func WithTx(ctx context.Context, client *ent.Client, fn func(tx *ent.Tx) error) error {
+	// TODO(WOLFRED): Change logging to zerolog. We could use the one from the server.Logger.
 	tx, err := client.Tx(ctx)
 	if err != nil {
 		wrappedErr := eris.Wrap(err, "Failed to start transaction")
@@ -100,7 +101,6 @@ func WithTx(ctx context.Context, client *ent.Client, fn func(tx *ent.Tx) error) 
 				wrappedErr := eris.Wrap(rollbackErr, "Failed to rollback transaction")
 				log.Printf("Failed to rollback transaction: %v", wrappedErr)
 			}
-			fmt.Printf("Panic occurred: %v", v)
 			panic(v)
 		}
 	}()

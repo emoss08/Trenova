@@ -116,6 +116,7 @@ export const fleetCodeSchema: ObjectSchema<FleetCodeFormValues> =
     mileageGoal: number().transform((value) =>
       Number.isNaN(value) ? undefined : value,
     ),
+    color: string(),
     managerId: string().nullable(),
   });
 
