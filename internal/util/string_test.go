@@ -3,8 +3,9 @@ package util_test
 import (
 	"encoding/base64"
 	"encoding/hex"
-	"github.com/emoss08/trenova/internal/util"
 	"testing"
+
+	"github.com/emoss08/trenova/internal/util"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -45,7 +46,7 @@ func TestGenerateRandom(t *testing.T) {
 	require.NoError(t, err)
 	assert.Len(t, randString, 19)
 	for _, r := range randString {
-		assert.True(t, (r >= '0' && r <= '9'))
+		assert.True(t, r >= '0' && r <= '9')
 	}
 
 	_, err = util.GenerateRandomString(1, nil, "")
