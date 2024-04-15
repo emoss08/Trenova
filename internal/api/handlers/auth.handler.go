@@ -10,22 +10,29 @@ import (
 	"github.com/gofiber/fiber/v2"
 )
 
+type AuthenticationHandler struct {
+	Server  *api.Server
+	Service *services.AuthenticationService
+}
+
+func NewAuthenticationHandler(s *api.Server) *AuthenticationHandler {
+	return &AuthenticationHandler{
+		Server:  s,
+		Service: services.NewAuthenticationService(s),
+	}
+}
+
 // AuthenticateUser authenticates a user and sets the session values.
 //
 // POST /auth
-//
-//	{
-//	  "username": "user",
-//	  "password": "password"
-//	}
-func AuthenticateUser(s *api.Server) fiber.Handler {
+func (h *AuthenticationHandler) AuthenticateUser() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		var loginRequest struct {
 			Username string `json:"username" validate:"required"`
 			Password string `json:"password" validate:"required"`
 		}
 
-		sess, err := s.Session.Get(c)
+		sess, err := h.Server.Session.Get(c)
 		if err != nil {
 			log.Printf("Error getting session: %v", err)
 			return c.Status(fiber.StatusInternalServerError).JSON(types.ValidationErrorResponse{
@@ -54,7 +61,7 @@ func AuthenticateUser(s *api.Server) fiber.Handler {
 		}
 
 		// Authenticate the user
-		user, err := services.NewAuthenticationService(s).
+		user, err := h.Service.
 			AuthenticateUser(c.UserContext(), loginRequest.Username, loginRequest.Password)
 		if err != nil {
 			return c.Status(fiber.StatusUnauthorized).JSON(types.ValidationErrorResponse{
@@ -87,7 +94,7 @@ func AuthenticateUser(s *api.Server) fiber.Handler {
 		// Save the session.
 		if err = sess.Save(); err != nil {
 			log.Printf("Error saving session: %v", err)
-			s.Logger.Panic().Msg("Failed to save session")
+			h.Server.Logger.Panic().Msg("Failed to save session")
 		}
 
 		return c.JSON(user)
@@ -97,11 +104,11 @@ func AuthenticateUser(s *api.Server) fiber.Handler {
 // LogoutUser logs out the user and clears the session.
 //
 // POST /auth/logout
-func LogoutUser(s *api.Server) fiber.Handler {
+func (h *AuthenticationHandler) LogoutUser() fiber.Handler {
 	return func(c *fiber.Ctx) error {
-		sess, err := s.Session.Get(c)
+		sess, err := h.Server.Session.Get(c)
 		if err != nil {
-			s.Logger.Error().Err(err).Msg("Error getting session")
+			h.Server.Logger.Error().Err(err).Msg("Error getting session")
 			return c.Status(fiber.StatusInternalServerError).JSON(types.ValidationErrorResponse{
 				Type: "internalServerError",
 				Errors: []types.ValidationErrorDetail{
@@ -116,7 +123,7 @@ func LogoutUser(s *api.Server) fiber.Handler {
 
 		// Clear the session
 		if err = sess.Destroy(); err != nil {
-			s.Logger.Error().Err(err).Msg("Error destroying session")
+			h.Server.Logger.Error().Err(err).Msg("Error destroying session")
 			return c.Status(fiber.StatusInternalServerError).JSON(types.ValidationErrorResponse{
 				Type: "internalServerError",
 				Errors: []types.ValidationErrorDetail{

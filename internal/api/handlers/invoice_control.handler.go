@@ -10,10 +10,22 @@ import (
 	"github.com/google/uuid"
 )
 
+type InvoiceControlHandler struct {
+	Server  *api.Server
+	Service *services.InvoiceControlService
+}
+
+func NewInvoiceControlHandler(s *api.Server) *InvoiceControlHandler {
+	return &InvoiceControlHandler{
+		Server:  s,
+		Service: services.NewInvoiceControlService(s),
+	}
+}
+
 // GetInvoiceControl is a handler that returns the invoice control for an organization.
 //
 // GET /invoice-control
-func GetInvoiceControl(s *api.Server) fiber.Handler {
+func (h *InvoiceControlHandler) GetInvoiceControl() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		orgID, ok := c.Locals(util.CTXOrganizationID).(uuid.UUID)
 		buID, buOK := c.Locals(util.CTXBusinessUnitID).(uuid.UUID)
@@ -31,7 +43,7 @@ func GetInvoiceControl(s *api.Server) fiber.Handler {
 			})
 		}
 
-		entity, err := services.NewInvoiceControlService(s).GetInvoiceControl(c.UserContext(), orgID, buID)
+		entity, err := h.Service.GetInvoiceControl(c.UserContext(), orgID, buID)
 		if err != nil {
 			errorResponse := util.CreateDBErrorResponse(err)
 			return c.Status(fiber.StatusInternalServerError).JSON(errorResponse)
@@ -44,7 +56,7 @@ func GetInvoiceControl(s *api.Server) fiber.Handler {
 // UpdateInvoiceControlByID is a handler that updates the accounting control for an organization.
 //
 // PUT /accounting-control/:invoiceControlID
-func UpdateInvoiceControlByID(s *api.Server) fiber.Handler {
+func (h *InvoiceControlHandler) UpdateInvoiceControlByID() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		invoiceControlID := c.Params("invoiceControlID")
 		if invoiceControlID == "" {
@@ -77,7 +89,7 @@ func UpdateInvoiceControlByID(s *api.Server) fiber.Handler {
 
 		data.ID = uuid.MustParse(invoiceControlID)
 
-		updatedEntity, err := services.NewInvoiceControlService(s).UpdateInvoiceControl(c.UserContext(), data)
+		updatedEntity, err := h.Service.UpdateInvoiceControl(c.UserContext(), data)
 		if err != nil {
 			errorResponse := util.CreateDBErrorResponse(err)
 			return c.Status(fiber.StatusInternalServerError).JSON(errorResponse)

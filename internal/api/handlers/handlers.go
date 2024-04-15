@@ -1,5 +1,3 @@
-// CODE GENERATED. DO NOT EDIT!
-
 package handlers
 
 import (
@@ -11,232 +9,232 @@ import (
 func AttachAllRoutes(s *api.Server, api fiber.Router) {
 	// Register the handlers for the accessorial charges.
 	accessorialChargesAPI := api.Group("/accessorial-charges")
-	accessorialChargesAPI.Get("/", GetAccessorialCharges(s))
-	accessorialChargesAPI.Post("/", CreateAccessorialCharge(s))
-	accessorialChargesAPI.Put("/:accessorialChargeID", UpdateAccessorialCharge(s))
+	accessorialChargesAPI.Get("/", NewAccessorialChargeHandler(s).GetAccessorialCharges())
+	accessorialChargesAPI.Post("/", NewAccessorialChargeHandler(s).CreateAccessorialCharge())
+	accessorialChargesAPI.Put("/:accessorialChargeID", NewAccessorialChargeHandler(s).UpdateAccessorialCharge())
 
 	// Register the handlers for the organization
 	organizationsAPI := api.Group("/organizations")
-	organizationsAPI.Get("/me", GetUserOrganization(s))
+	organizationsAPI.Get("/me", NewOrganizationHandler(s).GetUserOrganization())
 
 	// Register the handlers for the accounting control.
 	accountingControlAPI := api.Group("/accounting-control")
-	accountingControlAPI.Get("/", GetAccountingControl(s))
-	accountingControlAPI.Put("/:accountingControlID", UpdateAccountingControlByID(s))
+	accountingControlAPI.Get("/", NewAccountingControlHandler(s).GetAccountingControl())
+	accountingControlAPI.Put("/:accountingControlID", NewAccountingControlHandler(s).UpdateAccountingControlByID())
 
 	// Register the handlers for the dispatch control
 	dispatchControlAPI := api.Group("/dispatch-control")
-	dispatchControlAPI.Get("/", GetDispatchControl(s))
-	dispatchControlAPI.Put("/:dispatchControlID", UpdateDispatchControlByID(s))
+	dispatchControlAPI.Get("/", NewDispatchControlHandler(s).GetDispatchControl())
+	dispatchControlAPI.Put("/:dispatchControlID", NewDispatchControlHandler(s).UpdateDispatchControlByID())
 
 	// Register the handlers for the shipment control.
 	shipmentControlAPI := api.Group("/shipment-control")
-	shipmentControlAPI.Get("/", GetShipmentControl(s))
-	shipmentControlAPI.Put("/:shipmentControlID", UpdateShipmentControlByID(s))
+	shipmentControlAPI.Get("/", NewShipmentControlHandler(s).GetShipmentControl())
+	shipmentControlAPI.Put("/:shipmentControlID", NewShipmentControlHandler(s).UpdateShipmentControlByID())
 
 	// Register the handlers for the billing control.
 	billingControlAPI := api.Group("/billing-control")
-	billingControlAPI.Get("/", GetBillingControl(s))
-	billingControlAPI.Put("/:billingControlID", UpdateBillingControl(s))
+	billingControlAPI.Get("/", NewBillingControlHandler(s).GetBillingControl())
+	billingControlAPI.Put("/:billingControlID", NewBillingControlHandler(s).UpdateBillingControl())
 
 	// Register the handlers for the invoice control.
 	invoiceControlAPI := api.Group("/invoice-control")
-	invoiceControlAPI.Get("/", GetInvoiceControl(s))
-	invoiceControlAPI.Put("/:invoiceControlID", UpdateInvoiceControlByID(s))
+	invoiceControlAPI.Get("/", NewInvoiceControlHandler(s).GetInvoiceControl())
+	invoiceControlAPI.Put("/:invoiceControlID", NewInvoiceControlHandler(s).UpdateInvoiceControlByID())
 
 	// Register the handlers for the route control.
 	routeControlAPI := api.Group("/route-control")
-	routeControlAPI.Get("/", GetRouteControl(s))
-	routeControlAPI.Put("/:routeControlID", UpdateRouteControlByID(s))
+	routeControlAPI.Get("/", NewRouteControlHandler(s).GetRouteControl())
+	routeControlAPI.Put("/:routeControlID", NewRouteControlHandler(s).UpdateRouteControlByID())
 
 	// Register the handlers for the feasibility tool control.
 	feasibilityToolControlAPI := api.Group("/feasibility-tool-control")
-	feasibilityToolControlAPI.Get("/", GetFeasibilityToolControl(s))
-	feasibilityToolControlAPI.Put("/:feasibilityToolControlID", UpdateFeasibilityToolControl(s))
+	feasibilityToolControlAPI.Get("/", NewFeasibilityToolControlHandler(s).GetFeasibilityToolControl())
+	feasibilityToolControlAPI.Put("/:feasibilityToolControlID", NewFeasibilityToolControlHandler(s).UpdateFeasibilityToolControl())
 
 	// Register the handlers the email control.
 	emailControlAPI := api.Group("/email-control")
-	emailControlAPI.Get("/", GetEmailControl(s))
-	emailControlAPI.Put("/:emailControlID", UpdateEmailControl(s))
+	emailControlAPI.Get("/", NewEmailControlHandler(s).GetEmailControl())
+	emailControlAPI.Put("/:emailControlID", NewEmailControlHandler(s).UpdateEmailControl())
 
 	// Register the handlers for the user.
 	usersAPI := api.Group("/users")
-	usersAPI.Get("/me", GetAuthenticatedUser(s))
+	usersAPI.Get("/me", NewUserHandler(s).GetAuthenticatedUser())
 
 	// Register the handlers for the user favorites.
 	userFavoritesAPI := api.Group("/user-favorites")
-	userFavoritesAPI.Get("/", GetUserFavorites(s))
-	userFavoritesAPI.Post("/", AddUserFavorite(s))
-	userFavoritesAPI.Delete("/", RemoveUserFavorite(s))
+	userFavoritesAPI.Get("/", NewUserFavoriteHandler(s).GetUserFavorites())
+	userFavoritesAPI.Post("/", NewUserFavoriteHandler(s).AddUserFavorite())
+	userFavoritesAPI.Delete("/", NewUserFavoriteHandler(s).RemoveUserFavorite())
 
 	// Register the handlers for the hazardous material segregation rules.
 	hazardousMaterialSegregationsAPI := api.Group("/hazardous-material-segregations")
-	hazardousMaterialSegregationsAPI.Get("/", GetHazmatSegregationRules(s))
-	hazardousMaterialSegregationsAPI.Post("/", CreateHazmatSegregationRule(s))
-	hazardousMaterialSegregationsAPI.Put("/:hazmatSegRuleID", UpdateHazmatSegregationRules(s))
+	hazardousMaterialSegregationsAPI.Get("/", NewHazardousMaterialSegregationHandler(s).GetHazmatSegregationRules())
+	hazardousMaterialSegregationsAPI.Post("/", NewHazardousMaterialSegregationHandler(s).CreateHazmatSegregationRule())
+	hazardousMaterialSegregationsAPI.Put("/:hazmatSegRuleID", NewHazardousMaterialSegregationHandler(s).UpdateHazmatSegregationRules())
 
 	// Register the handlers for the email profiles.
 	emailProfilesAPI := api.Group("/email-profiles")
-	emailProfilesAPI.Get("/", GetEmailProfiles(s))
-	emailProfilesAPI.Post("/", CreateEmailProfile(s))
-	emailProfilesAPI.Put("/:emailProfileID", UpdateEmailProfile(s))
+	emailProfilesAPI.Get("/", NewEmailProfileHandler(s).GetEmailProfiles())
+	emailProfilesAPI.Post("/", NewEmailProfileHandler(s).CreateEmailProfile())
+	emailProfilesAPI.Put("/:emailProfileID", NewEmailProfileHandler(s).UpdateEmailProfile())
 
 	// Register the handlers for the table change alerts.
 	tableChangeAlertsAPI := api.Group("/table-change-alerts")
-	tableChangeAlertsAPI.Get("/", GetTableChangeAlerts(s))
-	tableChangeAlertsAPI.Post("/", CreateTableChangeAlert(s))
-	tableChangeAlertsAPI.Put("/:tableChangeAlertID", UpdateTableChangeAlert(s))
-	tableChangeAlertsAPI.Get("/table-names", GetTableNames(s))
-	tableChangeAlertsAPI.Get("/topic-names", GetTopicNames(s))
+	tableChangeAlertsAPI.Get("/", NewTableChangeAlertHandler(s).GetTableChangeAlerts())
+	tableChangeAlertsAPI.Post("/", NewTableChangeAlertHandler(s).CreateTableChangeAlert())
+	tableChangeAlertsAPI.Put("/:tableChangeAlertID", NewTableChangeAlertHandler(s).UpdateTableChangeAlert())
+	tableChangeAlertsAPI.Get("/table-names", NewTableChangeAlertHandler(s).GetTableNames())
+	tableChangeAlertsAPI.Get("/topic-names", NewTableChangeAlertHandler(s).GetTopicNames())
 
-	// Register the handlers for the google api.
+	// Register the handlers for the Google api.
 	googleAPI := api.Group("/google-api")
-	googleAPI.Get("/", GetGoogleAPI(s))
-	googleAPI.Put("/:googleAPIID", UpdateGoogleAPI(s))
+	googleAPI.Get("/", NewGoogleAPIHandler(s).GetGoogleAPI())
+	googleAPI.Put("/:googleAPIID", NewGoogleAPIHandler(s).UpdateGoogleAPI())
 
 	// Register the handlers for the revenue code.
 	revenueCodesAPI := api.Group("/revenue-codes")
-	revenueCodesAPI.Get("/", GetRevenueCodes(s))
-	revenueCodesAPI.Post("/", CreateRevenueCode(s))
-	revenueCodesAPI.Put("/:revenueCodeID", UpdateRevenueCode(s))
+	revenueCodesAPI.Get("/", NewRevenueCodeHandler(s).GetRevenueCodes())
+	revenueCodesAPI.Post("/", NewRevenueCodeHandler(s).CreateRevenueCode())
+	revenueCodesAPI.Put("/:revenueCodeID", NewRevenueCodeHandler(s).UpdateRevenueCode())
 
 	// Register the handlers for the worker.
 	workersAPI := api.Group("/workers")
-	workersAPI.Get("/", GetWorkers(s))
-	workersAPI.Post("/", CreateWorker(s))
-	workersAPI.Put("/:workerID", UpdateWorker(s))
+	workersAPI.Get("/", NewWorkerHandler(s).GetWorkers())
+	workersAPI.Post("/", NewWorkerHandler(s).CreateWorker())
+	workersAPI.Put("/:workerID", NewWorkerHandler(s).UpdateWorker())
 
 	// Register the handlers for the charge type.
 	chargeTypesAPI := api.Group("/charge-types")
-	chargeTypesAPI.Get("/", GetChargeTypes(s))
-	chargeTypesAPI.Post("/", CreateChargeType(s))
-	chargeTypesAPI.Put("/:chargeTypeID", UpdateChargeType(s))
+	chargeTypesAPI.Get("/", NewChargeTypeHandler(s).GetChargeTypes())
+	chargeTypesAPI.Post("/", NewChargeTypeHandler(s).CreateChargeType())
+	chargeTypesAPI.Put("/:chargeTypeID", NewChargeTypeHandler(s).UpdateChargeType())
 
 	// Register the handlers for the comment type.
 	commentTypesAPI := api.Group("/comment-types")
-	commentTypesAPI.Get("/", GetCommentTypes(s))
-	commentTypesAPI.Post("/", CreateCommentType(s))
-	commentTypesAPI.Put("/:commentTypeID", UpdateCommentType(s))
+	commentTypesAPI.Get("/", NewCommentTypeService(s).GetCommentTypes())
+	commentTypesAPI.Post("/", NewCommentTypeService(s).CreateCommentType())
+	commentTypesAPI.Put("/:commentTypeID", NewCommentTypeService(s).UpdateCommentType())
 
 	// Register the handlers for the commodity.
 	commoditiesAPI := api.Group("/commodities")
-	commoditiesAPI.Get("/", GetCommodities(s))
-	commoditiesAPI.Post("/", CreateCommodity(s))
-	commoditiesAPI.Put("/:commodityID", UpdateCommodity(s))
+	commoditiesAPI.Get("/", NewCommodityHandler(s).GetCommodities())
+	commoditiesAPI.Post("/", NewCommodityHandler(s).CreateCommodity())
+	commoditiesAPI.Put("/:commodityID", NewCommodityHandler(s).UpdateCommodity())
 
 	// Register the handlers for the customer.
 	customersAPI := api.Group("/customers")
-	customersAPI.Get("/", GetCustomers(s))
-	customersAPI.Post("/", CreateCustomer(s))
-	customersAPI.Put("/:customerID", UpdateCustomer(s))
+	customersAPI.Get("/", NewCustomerHandler(s).GetCustomers())
+	customersAPI.Post("/", NewCustomerHandler(s).CreateCustomer())
+	customersAPI.Put("/:customerID", NewCustomerHandler(s).UpdateCustomer())
 
 	// Register the handlers for the delay code.
 	delayCodesAPI := api.Group("/delay-codes")
-	delayCodesAPI.Get("/", GetDelayCodes(s))
-	delayCodesAPI.Post("/", CreateDelayCode(s))
-	delayCodesAPI.Put("/:delayCodeID", UpdateDelayCode(s))
+	delayCodesAPI.Get("/", NewDelayCodeHandler(s).GetDelayCodes())
+	delayCodesAPI.Post("/", NewDelayCodeHandler(s).CreateDelayCode())
+	delayCodesAPI.Put("/:delayCodeID", NewDelayCodeHandler(s).UpdateDelayCode())
 
 	// Register the handlers for the division code.
 	divisionCodesAPI := api.Group("/division-codes")
-	divisionCodesAPI.Get("/", GetDivisionCodes(s))
-	divisionCodesAPI.Post("/", CreateDivisionCode(s))
-	divisionCodesAPI.Put("/:divisionCodeID", UpdateDivisionCode(s))
+	divisionCodesAPI.Get("/", NewDivisionCodeHandler(s).GetDivisionCodes())
+	divisionCodesAPI.Post("/", NewDivisionCodeHandler(s).CreateDivisionCode())
+	divisionCodesAPI.Put("/:divisionCodeID", NewDivisionCodeHandler(s).UpdateDivisionCode())
 
 	// Register the handlers for the document classification.
 	documentClassificationsAPI := api.Group("/document-classifications")
-	documentClassificationsAPI.Get("/", GetDocumentClassifications(s))
-	documentClassificationsAPI.Post("/", CreateDocumentClassification(s))
-	documentClassificationsAPI.Put("/:documentClassID", UpdateDocumentClassification(s))
+	documentClassificationsAPI.Get("/", NewDocumentClassificationHandler(s).GetDocumentClassifications())
+	documentClassificationsAPI.Post("/", NewDocumentClassificationHandler(s).CreateDocumentClassification())
+	documentClassificationsAPI.Put("/:documentClassID", NewDocumentClassificationHandler(s).UpdateDocumentClassification())
 
 	// Register the handlers for the equipment manufacturer.
 	equipmentManufacturersAPI := api.Group("/equipment-manufacturers")
-	equipmentManufacturersAPI.Get("/", GetEquipmentManufacturers(s))
-	equipmentManufacturersAPI.Post("/", CreateEquipmentManufacturer(s))
-	equipmentManufacturersAPI.Put("/:equipmentManuID", UpdateEquipmentManufacturer(s))
+	equipmentManufacturersAPI.Get("/", NewEquipmentManufacturerHandler(s).GetEquipmentManufacturers())
+	equipmentManufacturersAPI.Post("/", NewEquipmentManufacturerHandler(s).CreateEquipmentManufacturer())
+	equipmentManufacturersAPI.Put("/:equipmentManuID", NewEquipmentManufacturerHandler(s).UpdateEquipmentManufacturer())
 
 	// Register the handlers for the equipment type.
 	equipmentTypesAPI := api.Group("/equipment-types")
-	equipmentTypesAPI.Get("/", GetEquipmentTypes(s))
-	equipmentTypesAPI.Post("/", CreateEquipmentType(s))
-	equipmentTypesAPI.Put("/:equipmentTypeID", UpdateEquipmentType(s))
+	equipmentTypesAPI.Get("/", NewEquipmentTypeHandler(s).GetEquipmentTypes())
+	equipmentTypesAPI.Post("/", NewEquipmentTypeHandler(s).CreateEquipmentType())
+	equipmentTypesAPI.Put("/:equipmentTypeID", NewEquipmentTypeHandler(s).UpdateEquipmentType())
 
 	// Register the handlers for the fleet code.
 	fleetCodesAPI := api.Group("/fleet-codes")
-	fleetCodesAPI.Get("/", GetFleetCodes(s))
-	fleetCodesAPI.Post("/", CreateFleetCode(s))
-	fleetCodesAPI.Put("/:fleetCodeID", UpdateFleetCode(s))
+	fleetCodesAPI.Get("/", NewFleetCodeHandler(s).GetFleetCodes())
+	fleetCodesAPI.Post("/", NewFleetCodeHandler(s).CreateFleetCode())
+	fleetCodesAPI.Put("/:fleetCodeID", NewFleetCodeHandler(s).UpdateFleetCode())
 
 	// Register the handlers for the general ledger account.
 	generalLedgerAccountsAPI := api.Group("/general-ledger-accounts")
-	generalLedgerAccountsAPI.Get("/", GetGeneralLedgerAccounts(s))
-	generalLedgerAccountsAPI.Post("/", CreateGeneralLedgerAccount(s))
-	generalLedgerAccountsAPI.Put("/:glAccountID", UpdateGeneralLedgerAccount(s))
+	generalLedgerAccountsAPI.Get("/", NewGeneralLedgerAccountHandler(s).GetGeneralLedgerAccounts())
+	generalLedgerAccountsAPI.Post("/", NewGeneralLedgerAccountHandler(s).CreateGeneralLedgerAccount())
+	generalLedgerAccountsAPI.Put("/:glAccountID", NewGeneralLedgerAccountHandler(s).UpdateGeneralLedgerAccount())
 
 	// Register the handlers for the tag.
 	tagsAPI := api.Group("/tags")
-	tagsAPI.Get("/", GetTags(s))
-	tagsAPI.Post("/", CreateTag(s))
-	tagsAPI.Put("/:tagID", UpdateTag(s))
+	tagsAPI.Get("/", NewTagHandler(s).GetTags())
+	tagsAPI.Post("/", NewTagHandler(s).CreateTag())
+	tagsAPI.Put("/:tagID", NewTagHandler(s).UpdateTag())
 
 	// Register the handlers for the hazardous material.
 	hazardousMaterialsAPI := api.Group("/hazardous-materials")
-	hazardousMaterialsAPI.Get("/", GetHazardousMaterials(s))
-	hazardousMaterialsAPI.Post("/", CreateHazardousMaterial(s))
-	hazardousMaterialsAPI.Put("/:hazmatID", UpdateHazardousMaterial(s))
+	hazardousMaterialsAPI.Get("/", NewHazardousMaterialHandler(s).GetHazardousMaterials())
+	hazardousMaterialsAPI.Post("/", NewHazardousMaterialHandler(s).CreateHazardousMaterial())
+	hazardousMaterialsAPI.Put("/:hazmatID", NewHazardousMaterialHandler(s).UpdateHazardousMaterial())
 
 	// Register the handlers for the location.
 	locationsAPI := api.Group("/locations")
-	locationsAPI.Get("/", GetLocations(s))
-	locationsAPI.Post("/", CreateLocation(s))
-	locationsAPI.Put("/:locationID", UpdateLocation(s))
+	locationsAPI.Get("/", NewLocationHandler(s).GetLocations())
+	locationsAPI.Post("/", NewLocationHandler(s).CreateLocation())
+	locationsAPI.Put("/:locationID", NewLocationHandler(s).UpdateLocation())
 
 	// Register the handlers for the location categories.
 	locationCategoriesAPI := api.Group("/location-categories")
-	locationCategoriesAPI.Get("/", GetLocationCategories(s))
-	locationCategoriesAPI.Post("/", CreateLocationCategory(s))
-	locationCategoriesAPI.Put("/:locationCategoryID", UpdateLocationCategory(s))
+	locationCategoriesAPI.Get("/", NewLocationCategoryHandler(s).GetLocationCategories())
+	locationCategoriesAPI.Post("/", NewLocationCategoryHandler(s).CreateLocationCategory())
+	locationCategoriesAPI.Put("/:locationCategoryID", NewLocationCategoryHandler(s).UpdateLocationCategory())
 
 	// Register the handlers for the feature flags.
 	featureFlagsAPI := api.Group("/feature-flags")
-	featureFlagsAPI.Get("/", GetFeatureFlags(s))
+	featureFlagsAPI.Get("/", NewFeatureFlagHandler(s).GetFeatureFlags())
 
 	// Register the handlers for the qualifier codes.
 	qualifierCodesAPI := api.Group("/qualifier-codes")
-	qualifierCodesAPI.Get("/", GetQualifierCodes(s))
-	qualifierCodesAPI.Post("/", CreateQualifierCode(s))
-	qualifierCodesAPI.Put("/:qualifierCodeID", UpdateQualifierCode(s))
+	qualifierCodesAPI.Get("/", NewQualifierCodeHandler(s).GetQualifierCodes())
+	qualifierCodesAPI.Post("/", NewQualifierCodeHandler(s).CreateQualifierCode())
+	qualifierCodesAPI.Put("/:qualifierCodeID", NewQualifierCodeHandler(s).UpdateQualifierCode())
 
 	// Register the handlers for the reason codes.
 	reasonCodesAPI := api.Group("/reason-codes")
-	reasonCodesAPI.Get("/", GetReasonCodes(s))
-	reasonCodesAPI.Post("/", CreateReasonCode(s))
-	reasonCodesAPI.Put("/:reasonCodeID", UpdateReasonCode(s))
+	reasonCodesAPI.Get("/", NewReasonCodeHandler(s).GetReasonCodes())
+	reasonCodesAPI.Post("/", NewReasonCodeHandler(s).CreateReasonCode())
+	reasonCodesAPI.Put("/:reasonCodeID", NewReasonCodeHandler(s).UpdateReasonCode())
 
 	// Register the handlers for the service types.
 	serviceTypesAPI := api.Group("/service-types")
-	serviceTypesAPI.Get("/", GetServiceTypes(s))
-	serviceTypesAPI.Post("/", CreateServiceType(s))
-	serviceTypesAPI.Put("/:serviceTypeID", UpdateServiceType(s))
+	serviceTypesAPI.Get("/", NewServiceTypeHandler(s).GetServiceTypes())
+	serviceTypesAPI.Post("/", NewServiceTypeHandler(s).CreateServiceType())
+	serviceTypesAPI.Put("/:serviceTypeID", NewServiceTypeHandler(s).UpdateServiceType())
 
 	// Register the handlers for the shipment types.
 	shipmentTypesAPI := api.Group("/shipment-types")
-	shipmentTypesAPI.Get("/", GetShipmentTypes(s))
-	shipmentTypesAPI.Post("/", CreateShipmentType(s))
-	shipmentTypesAPI.Put("/:shipmentTypeID", UpdateShipmentType(s))
+	shipmentTypesAPI.Get("/", NewShipmentTypeHandler(s).GetShipmentTypes())
+	shipmentTypesAPI.Post("/", NewShipmentTypeHandler(s).CreateShipmentType())
+	shipmentTypesAPI.Put("/:shipmentTypeID", NewShipmentTypeHandler(s).UpdateShipmentType())
 
-	// Register the handlers for the us states.
+	// Register the handlers for the US states.
 	usStatesAPI := api.Group("/us-states")
-	usStatesAPI.Get("/", GetUSStates(s))
+	usStatesAPI.Get("/", NewUSStateHandler(s).GetUSStates())
 
 	// Register the handlers for the tractors.
 	tractorsAPI := api.Group("/tractors")
-	tractorsAPI.Get("/", GetTractors(s))
-	tractorsAPI.Post("/", CreateTractor(s))
-	tractorsAPI.Put("/:tractorID", UpdateTractor(s))
+	tractorsAPI.Get("/", NewTractorHandler(s).GetTractors())
+	tractorsAPI.Post("/", NewTractorHandler(s).CreateTractor())
+	tractorsAPI.Put("/:tractorID", NewTractorHandler(s).UpdateTractor())
 
 	// Register the handlers for the trailers.
 	trailersAPI := api.Group("/trailers")
-	trailersAPI.Get("/", GetTrailers(s))
-	trailersAPI.Post("/", CreateTrailer(s))
-	trailersAPI.Put("/:trailerID", UpdateTrailer(s))
+	trailersAPI.Get("/", NewTrailerHandler(s).GetTrailers())
+	trailersAPI.Post("/", NewTrailerHandler(s).CreateTrailer())
+	trailersAPI.Put("/:trailerID", NewTrailerHandler(s).UpdateTrailer())
 }

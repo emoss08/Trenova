@@ -14,6 +14,18 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+type GeneralLedgerAccountHandler struct {
+	Server  *api.Server
+	Service *services.GeneralLedgerAccountService
+}
+
+func NewGeneralLedgerAccountHandler(s *api.Server) *GeneralLedgerAccountHandler {
+	return &GeneralLedgerAccountHandler{
+		Server:  s,
+		Service: services.NewGeneralLedgerAccountService(s),
+	}
+}
+
 type GeneralLedgerAccountResponse struct {
 	ID             uuid.UUID                        `json:"id,omitempty"`
 	BusinessUnitID uuid.UUID                        `json:"businessUnitId"`
@@ -41,7 +53,7 @@ type GeneralLedgerAccountResponse struct {
 // GetGeneralLedgerAccounts is a handler that returns a list of general ledger accounts.
 //
 // GET /general-ledger-accounts
-func GetGeneralLedgerAccounts(s *api.Server) fiber.Handler {
+func (h *GeneralLedgerAccountHandler) GetGeneralLedgerAccounts() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		// TODO(Wolfred): This needs to take in a query parameter for the status of the GL accounts
 
@@ -75,8 +87,7 @@ func GetGeneralLedgerAccounts(s *api.Server) fiber.Handler {
 			})
 		}
 
-		entities, count, err := services.NewGeneralLedgerAccountService(s).
-			GetGeneralLedgerAccounts(c.UserContext(), limit, offset, orgID, buID)
+		entities, count, err := h.Service.GetGeneralLedgerAccounts(c.UserContext(), limit, offset, orgID, buID)
 		if err != nil {
 			errorResponse := util.CreateDBErrorResponse(err)
 			return c.Status(fiber.StatusInternalServerError).JSON(errorResponse)
@@ -129,7 +140,7 @@ func GetGeneralLedgerAccounts(s *api.Server) fiber.Handler {
 // CreateGeneralLedgerAccount is a handler that creates a new general ledger account.
 //
 // POST /general-ledger-accounts
-func CreateGeneralLedgerAccount(s *api.Server) fiber.Handler {
+func (h *GeneralLedgerAccountHandler) CreateGeneralLedgerAccount() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		newEntity := new(services.GeneralLedgerAccountRequest)
 
@@ -165,8 +176,7 @@ func CreateGeneralLedgerAccount(s *api.Server) fiber.Handler {
 			})
 		}
 
-		entity, err := services.NewGeneralLedgerAccountService(s).
-			CreateGeneralLedgerAccount(c.UserContext(), newEntity)
+		entity, err := h.Service.CreateGeneralLedgerAccount(c.UserContext(), newEntity)
 		if err != nil {
 			errorResponse := util.CreateDBErrorResponse(err)
 			return c.Status(fiber.StatusInternalServerError).JSON(errorResponse)
@@ -176,10 +186,10 @@ func CreateGeneralLedgerAccount(s *api.Server) fiber.Handler {
 	}
 }
 
-// UpdateGeneralLedgerAccount is a handler that updates an general ledger account.
+// UpdateGeneralLedgerAccount is a handler that updates a general ledger account.
 //
 // PUT /general-ledger-accounts/:glAccountID
-func UpdateGeneralLedgerAccount(s *api.Server) fiber.Handler {
+func (h *GeneralLedgerAccountHandler) UpdateGeneralLedgerAccount() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		glAccountID := c.Params("glAccountID")
 		if glAccountID == "" {
@@ -212,8 +222,7 @@ func UpdateGeneralLedgerAccount(s *api.Server) fiber.Handler {
 
 		updatedEntity.ID = uuid.MustParse(glAccountID)
 
-		entity, err := services.NewGeneralLedgerAccountService(s).
-			UpdateGeneralLedgerAccount(c.UserContext(), updatedEntity)
+		entity, err := h.Service.UpdateGeneralLedgerAccount(c.UserContext(), updatedEntity)
 		if err != nil {
 			errorResponse := util.CreateDBErrorResponse(err)
 			return c.Status(fiber.StatusInternalServerError).JSON(errorResponse)

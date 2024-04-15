@@ -10,10 +10,22 @@ import (
 	"github.com/google/uuid"
 )
 
+type CommentTypeService struct {
+	Server  *api.Server
+	Service *services.CommentTypeService
+}
+
+func NewCommentTypeService(s *api.Server) *CommentTypeService {
+	return &CommentTypeService{
+		Server:  s,
+		Service: services.NewCommentTypeService(s),
+	}
+}
+
 // GetCommentTypes is a handler that returns a list of comment types.
 //
 // GET /comment-types
-func GetCommentTypes(s *api.Server) fiber.Handler {
+func (h *CommentTypeService) GetCommentTypes() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		offset, limit, err := util.PaginationParams(c)
 		if err != nil {
@@ -45,8 +57,7 @@ func GetCommentTypes(s *api.Server) fiber.Handler {
 			})
 		}
 
-		entities, count, err := services.NewCommentTypeService(s).
-			GetCommentTypes(c.UserContext(), limit, offset, orgID, buID)
+		entities, count, err := h.Service.GetCommentTypes(c.UserContext(), limit, offset, orgID, buID)
 		if err != nil {
 			errorResponse := util.CreateDBErrorResponse(err)
 			return c.Status(fiber.StatusInternalServerError).JSON(errorResponse)
@@ -67,7 +78,7 @@ func GetCommentTypes(s *api.Server) fiber.Handler {
 // CreateCommentType is a handler that creates a new comment type.
 //
 // POST /comment-types
-func CreateCommentType(s *api.Server) fiber.Handler {
+func (h *CommentTypeService) CreateCommentType() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		newEntity := new(ent.CommentType)
 
@@ -103,8 +114,7 @@ func CreateCommentType(s *api.Server) fiber.Handler {
 			})
 		}
 
-		entity, err := services.NewCommentTypeService(s).
-			CreateCommentType(c.UserContext(), newEntity)
+		entity, err := h.Service.CreateCommentType(c.UserContext(), newEntity)
 		if err != nil {
 			errorResponse := util.CreateDBErrorResponse(err)
 			return c.Status(fiber.StatusInternalServerError).JSON(errorResponse)
@@ -114,10 +124,10 @@ func CreateCommentType(s *api.Server) fiber.Handler {
 	}
 }
 
-// UpdateCommentType is a handler that updates an comment type.
+// UpdateCommentType is a handler that updates a comment type.
 //
 // PUT /comment-types/:commentTypeID
-func UpdateCommentType(s *api.Server) fiber.Handler {
+func (h *CommentTypeService) UpdateCommentType() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		commentTypeID := c.Params("commentTypeID")
 		if commentTypeID == "" {
@@ -150,8 +160,7 @@ func UpdateCommentType(s *api.Server) fiber.Handler {
 
 		updatedEntity.ID = uuid.MustParse(commentTypeID)
 
-		entity, err := services.NewCommentTypeService(s).
-			UpdateCommentType(c.UserContext(), updatedEntity)
+		entity, err := h.Service.UpdateCommentType(c.UserContext(), updatedEntity)
 		if err != nil {
 			errorResponse := util.CreateDBErrorResponse(err)
 			return c.Status(fiber.StatusInternalServerError).JSON(errorResponse)

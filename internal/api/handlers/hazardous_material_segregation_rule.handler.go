@@ -12,10 +12,22 @@ import (
 	"github.com/google/uuid"
 )
 
+type HazardousMaterialSegregationHandler struct {
+	Server  *api.Server
+	Service *services.HazardousMaterialSegregationService
+}
+
+func NewHazardousMaterialSegregationHandler(s *api.Server) *HazardousMaterialSegregationHandler {
+	return &HazardousMaterialSegregationHandler{
+		Server:  s,
+		Service: services.NewHazardousMaterialSegregationService(s),
+	}
+}
+
 // GetHazmatSegregationRules is a handler that returns a list of hazardous material segregation rules.
 //
 // GET /hazardous-material-segregations
-func GetHazmatSegregationRules(s *api.Server) fiber.Handler {
+func (h *HazardousMaterialSegregationHandler) GetHazmatSegregationRules() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		offset, limit, err := util.PaginationParams(c)
 		if err != nil {
@@ -47,8 +59,7 @@ func GetHazmatSegregationRules(s *api.Server) fiber.Handler {
 			})
 		}
 
-		entities, count, err := services.NewHazardousMaterialSegregationService(s).
-			GetHazmatSegregationRules(c.UserContext(), limit, offset, orgID, buID)
+		entities, count, err := h.Service.GetHazmatSegregationRules(c.UserContext(), limit, offset, orgID, buID)
 		if err != nil {
 			errorResponse := util.CreateDBErrorResponse(err)
 			return c.Status(fiber.StatusInternalServerError).JSON(errorResponse)
@@ -69,7 +80,7 @@ func GetHazmatSegregationRules(s *api.Server) fiber.Handler {
 // CreateHazmatSegregationRule is a handler that creates a new hazardous material segregation rules.
 //
 // POST /hazardous-material-segregations
-func CreateHazmatSegregationRule(s *api.Server) fiber.Handler {
+func (h *HazardousMaterialSegregationHandler) CreateHazmatSegregationRule() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		newEntity := new(ent.HazardousMaterialSegregation)
 
@@ -106,8 +117,7 @@ func CreateHazmatSegregationRule(s *api.Server) fiber.Handler {
 			})
 		}
 
-		entity, err := services.NewHazardousMaterialSegregationService(s).
-			CreateHazmatSegregationRule(c.UserContext(), newEntity)
+		entity, err := h.Service.CreateHazmatSegregationRule(c.UserContext(), newEntity)
 		if err != nil {
 			errorResponse := util.CreateDBErrorResponse(err)
 			return c.Status(fiber.StatusInternalServerError).JSON(errorResponse)
@@ -117,10 +127,10 @@ func CreateHazmatSegregationRule(s *api.Server) fiber.Handler {
 	}
 }
 
-// UpdateHazmatSegregationRules is a handler that updates an hazardous material segregation rules.
+// UpdateHazmatSegregationRules is a handler that updates a hazardous material segregation rules.
 //
 // PUT /hazardous-material-segregations/:hazmatSegRuleID
-func UpdateHazmatSegregationRules(s *api.Server) fiber.Handler {
+func (h *HazardousMaterialSegregationHandler) UpdateHazmatSegregationRules() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		hazmatSegRuleID := c.Params("hazmatSegRuleID")
 		if hazmatSegRuleID == "" {
@@ -153,8 +163,7 @@ func UpdateHazmatSegregationRules(s *api.Server) fiber.Handler {
 
 		updatedEntity.ID = uuid.MustParse(hazmatSegRuleID)
 
-		entity, err := services.NewHazardousMaterialSegregationService(s).
-			UpdateHazmatSegregationRule(c.UserContext(), updatedEntity)
+		entity, err := h.Service.UpdateHazmatSegregationRule(c.UserContext(), updatedEntity)
 		if err != nil {
 			errorResponse := util.CreateDBErrorResponse(err)
 			return c.Status(fiber.StatusInternalServerError).JSON(errorResponse)

@@ -10,10 +10,22 @@ import (
 	"github.com/google/uuid"
 )
 
+type RevenueCodeHandler struct {
+	Server  *api.Server
+	Service *services.RevenueCodeService
+}
+
+func NewRevenueCodeHandler(s *api.Server) *RevenueCodeHandler {
+	return &RevenueCodeHandler{
+		Server:  s,
+		Service: services.NewRevenueCodeService(s),
+	}
+}
+
 // GetRevenueCodes is a handler that returns a list of revenue codes.
 //
 // GET /revenue-codes
-func GetRevenueCodes(s *api.Server) fiber.Handler {
+func (h *RevenueCodeHandler) GetRevenueCodes() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		offset, limit, err := util.PaginationParams(c)
 		if err != nil {
@@ -45,8 +57,7 @@ func GetRevenueCodes(s *api.Server) fiber.Handler {
 			})
 		}
 
-		entities, count, err := services.NewRevenueCodeService(s).
-			GetRevenueCodes(c.UserContext(), limit, offset, orgID, buID)
+		entities, count, err := h.Service.GetRevenueCodes(c.UserContext(), limit, offset, orgID, buID)
 		if err != nil {
 			errorResponse := util.CreateDBErrorResponse(err)
 			return c.Status(fiber.StatusInternalServerError).JSON(errorResponse)
@@ -67,7 +78,7 @@ func GetRevenueCodes(s *api.Server) fiber.Handler {
 // CreateRevenueCode is a handler that creates a revenue code.
 //
 // POST /revenue-codes
-func CreateRevenueCode(s *api.Server) fiber.Handler {
+func (h *RevenueCodeHandler) CreateRevenueCode() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		newEntity := new(ent.RevenueCode)
 
@@ -103,8 +114,7 @@ func CreateRevenueCode(s *api.Server) fiber.Handler {
 			})
 		}
 
-		entity, err := services.NewRevenueCodeService(s).
-			CreateRevenueCode(c.UserContext(), newEntity)
+		entity, err := h.Service.CreateRevenueCode(c.UserContext(), newEntity)
 		if err != nil {
 			errorResponse := util.CreateDBErrorResponse(err)
 			return c.Status(fiber.StatusInternalServerError).JSON(errorResponse)
@@ -117,7 +127,7 @@ func CreateRevenueCode(s *api.Server) fiber.Handler {
 // UpdateRevenueCode is a handler that updates a revenue code.
 //
 // PUT /revenue-codes/:revenueCodeID
-func UpdateRevenueCode(s *api.Server) fiber.Handler {
+func (h *RevenueCodeHandler) UpdateRevenueCode() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		revenueCodeID := c.Params("revenueCodeID")
 		if revenueCodeID == "" {
@@ -150,8 +160,7 @@ func UpdateRevenueCode(s *api.Server) fiber.Handler {
 
 		updatedEntity.ID = uuid.MustParse(revenueCodeID)
 
-		entity, err := services.NewRevenueCodeService(s).
-			UpdateRevenueCode(c.UserContext(), updatedEntity)
+		entity, err := h.Service.UpdateRevenueCode(c.UserContext(), updatedEntity)
 		if err != nil {
 			errorResponse := util.CreateDBErrorResponse(err)
 			return c.Status(fiber.StatusInternalServerError).JSON(errorResponse)

@@ -10,10 +10,22 @@ import (
 	"github.com/google/uuid"
 )
 
+type CommodityHandler struct {
+	Server  *api.Server
+	Service *services.CommodityService
+}
+
+func NewCommodityHandler(s *api.Server) *CommodityHandler {
+	return &CommodityHandler{
+		Server:  s,
+		Service: services.NewCommodityService(s),
+	}
+}
+
 // GetCommodities is a handler that returns a list of commodities.
 //
 // GET /commodities
-func GetCommodities(s *api.Server) fiber.Handler {
+func (h *CommodityHandler) GetCommodities() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		offset, limit, err := util.PaginationParams(c)
 		if err != nil {
@@ -45,8 +57,7 @@ func GetCommodities(s *api.Server) fiber.Handler {
 			})
 		}
 
-		entities, count, err := services.NewCommodityService(s).
-			GetCommodities(c.UserContext(), limit, offset, orgID, buID)
+		entities, count, err := h.Service.GetCommodities(c.UserContext(), limit, offset, orgID, buID)
 		if err != nil {
 			errorResponse := util.CreateDBErrorResponse(err)
 			return c.Status(fiber.StatusInternalServerError).JSON(errorResponse)
@@ -67,7 +78,7 @@ func GetCommodities(s *api.Server) fiber.Handler {
 // CreateCommodity is a handler that creates a new commodity.
 //
 // POST /commodities
-func CreateCommodity(s *api.Server) fiber.Handler {
+func (h *CommodityHandler) CreateCommodity() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		newEntity := new(ent.Commodity)
 
@@ -103,8 +114,7 @@ func CreateCommodity(s *api.Server) fiber.Handler {
 			})
 		}
 
-		entity, err := services.NewCommodityService(s).
-			CreateCommodity(c.UserContext(), newEntity)
+		entity, err := h.Service.CreateCommodity(c.UserContext(), newEntity)
 		if err != nil {
 			errorResponse := util.CreateDBErrorResponse(err)
 			return c.Status(fiber.StatusInternalServerError).JSON(errorResponse)
@@ -114,10 +124,10 @@ func CreateCommodity(s *api.Server) fiber.Handler {
 	}
 }
 
-// UpdateCommodity is a handler that updates an commodity.
+// UpdateCommodity is a handler that updates a commodity.
 //
 // PUT /commodities/:commodityID
-func UpdateCommodity(s *api.Server) fiber.Handler {
+func (h *CommodityHandler) UpdateCommodity() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		commodityID := c.Params("commodityID")
 		if commodityID == "" {
@@ -150,8 +160,7 @@ func UpdateCommodity(s *api.Server) fiber.Handler {
 
 		updatedEntity.ID = uuid.MustParse(commodityID)
 
-		entity, err := services.NewCommodityService(s).
-			UpdateCommodity(c.UserContext(), updatedEntity)
+		entity, err := h.Service.UpdateCommodity(c.UserContext(), updatedEntity)
 		if err != nil {
 			errorResponse := util.CreateDBErrorResponse(err)
 			return c.Status(fiber.StatusInternalServerError).JSON(errorResponse)

@@ -10,10 +10,22 @@ import (
 	"github.com/google/uuid"
 )
 
+type FeasibilityToolControlHandler struct {
+	Server  *api.Server
+	Service *services.FeasibilityToolControlService
+}
+
+func NewFeasibilityToolControlHandler(s *api.Server) *FeasibilityToolControlHandler {
+	return &FeasibilityToolControlHandler{
+		Server:  s,
+		Service: services.NewFeasibilityToolControlService(s),
+	}
+}
+
 // GetFeasibilityToolControl is a handler that returns the feasibility tool control for an organization.
 //
 // GET /billing-control
-func GetFeasibilityToolControl(s *api.Server) fiber.Handler {
+func (h *FeasibilityToolControlHandler) GetFeasibilityToolControl() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		orgID, ok := c.Locals(util.CTXOrganizationID).(uuid.UUID)
 		buID, buOK := c.Locals(util.CTXBusinessUnitID).(uuid.UUID)
@@ -31,7 +43,7 @@ func GetFeasibilityToolControl(s *api.Server) fiber.Handler {
 			})
 		}
 
-		entity, err := services.NewFeasibilityToolControlService(s).GetFeasibilityToolControl(c.UserContext(), orgID, buID)
+		entity, err := h.Service.GetFeasibilityToolControl(c.UserContext(), orgID, buID)
 		if err != nil {
 			errorResponse := util.CreateDBErrorResponse(err)
 			return c.Status(fiber.StatusInternalServerError).JSON(errorResponse)
@@ -41,7 +53,7 @@ func GetFeasibilityToolControl(s *api.Server) fiber.Handler {
 	}
 }
 
-func UpdateFeasibilityToolControl(s *api.Server) fiber.Handler {
+func (h *FeasibilityToolControlHandler) UpdateFeasibilityToolControl() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		feasibilityToolControlID := c.Params("feasibilityToolControlID")
 		if feasibilityToolControlID == "" {
@@ -74,7 +86,7 @@ func UpdateFeasibilityToolControl(s *api.Server) fiber.Handler {
 
 		data.ID = uuid.MustParse(feasibilityToolControlID)
 
-		updatedEntity, err := services.NewFeasibilityToolControlService(s).UpdateFeasibilityToolControl(c.UserContext(), data)
+		updatedEntity, err := h.Service.UpdateFeasibilityToolControl(c.UserContext(), data)
 		if err != nil {
 			errorResponse := util.CreateDBErrorResponse(err)
 			return c.Status(fiber.StatusInternalServerError).JSON(errorResponse)

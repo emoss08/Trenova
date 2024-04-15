@@ -10,10 +10,22 @@ import (
 	"github.com/google/uuid"
 )
 
+type DelayCodeHandler struct {
+	Server  *api.Server
+	Service *services.DelayCodeService
+}
+
+func NewDelayCodeHandler(s *api.Server) *DelayCodeHandler {
+	return &DelayCodeHandler{
+		Server:  s,
+		Service: services.NewDelayCodeService(s),
+	}
+}
+
 // GetDelayCodes is a handler that returns a list of delay codes.
 //
 // GET /delay-codes
-func GetDelayCodes(s *api.Server) fiber.Handler {
+func (h *DelayCodeHandler) GetDelayCodes() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		offset, limit, err := util.PaginationParams(c)
 		if err != nil {
@@ -45,8 +57,7 @@ func GetDelayCodes(s *api.Server) fiber.Handler {
 			})
 		}
 
-		entities, count, err := services.NewDelayCodeService(s).
-			GetDelayCodes(c.UserContext(), limit, offset, orgID, buID)
+		entities, count, err := h.Service.GetDelayCodes(c.UserContext(), limit, offset, orgID, buID)
 		if err != nil {
 			errorResponse := util.CreateDBErrorResponse(err)
 			return c.Status(fiber.StatusInternalServerError).JSON(errorResponse)
@@ -67,7 +78,7 @@ func GetDelayCodes(s *api.Server) fiber.Handler {
 // CreateDelayCode is a handler that creates a new delay code.
 //
 // POST /delay-codes
-func CreateDelayCode(s *api.Server) fiber.Handler {
+func (h *DelayCodeHandler) CreateDelayCode() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		newEntity := new(ent.DelayCode)
 
@@ -103,8 +114,7 @@ func CreateDelayCode(s *api.Server) fiber.Handler {
 			})
 		}
 
-		entity, err := services.NewDelayCodeService(s).
-			CreateDelayCode(c.UserContext(), newEntity)
+		entity, err := h.Service.CreateDelayCode(c.UserContext(), newEntity)
 		if err != nil {
 			errorResponse := util.CreateDBErrorResponse(err)
 			return c.Status(fiber.StatusInternalServerError).JSON(errorResponse)
@@ -114,10 +124,10 @@ func CreateDelayCode(s *api.Server) fiber.Handler {
 	}
 }
 
-// UpdateDelayCode is a handler that updates an delay code.
+// UpdateDelayCode is a handler that updates a delay code.
 //
 // PUT /delay-codes/:delayCodeID
-func UpdateDelayCode(s *api.Server) fiber.Handler {
+func (h *DelayCodeHandler) UpdateDelayCode() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		delayCodeID := c.Params("delayCodeID")
 		if delayCodeID == "" {
@@ -150,8 +160,7 @@ func UpdateDelayCode(s *api.Server) fiber.Handler {
 
 		updatedEntity.ID = uuid.MustParse(delayCodeID)
 
-		entity, err := services.NewDelayCodeService(s).
-			UpdateDelayCode(c.UserContext(), updatedEntity)
+		entity, err := h.Service.UpdateDelayCode(c.UserContext(), updatedEntity)
 		if err != nil {
 			errorResponse := util.CreateDBErrorResponse(err)
 			return c.Status(fiber.StatusInternalServerError).JSON(errorResponse)

@@ -9,10 +9,22 @@ import (
 	"github.com/google/uuid"
 )
 
+type FeatureFlagHandler struct {
+	Server  *api.Server
+	Service *services.FeatureFlagService
+}
+
+func NewFeatureFlagHandler(s *api.Server) *FeatureFlagHandler {
+	return &FeatureFlagHandler{
+		Server:  s,
+		Service: services.NewFeatureFlagService(s),
+	}
+}
+
 // GetFeatureFlags is a handler that returns a list of feature flags.
 //
 // GET /feature-flags
-func GetFeatureFlags(s *api.Server) fiber.Handler {
+func (h *FeatureFlagHandler) GetFeatureFlags() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		offset, limit, err := util.PaginationParams(c)
 		if err != nil {
@@ -44,8 +56,7 @@ func GetFeatureFlags(s *api.Server) fiber.Handler {
 			})
 		}
 
-		entities, count, err := services.NewFeatureFlagService(s).
-			GetFeatureFlags(c.UserContext(), limit, offset, orgID, buID)
+		entities, count, err := h.Service.GetFeatureFlags(c.UserContext(), limit, offset, orgID, buID)
 		if err != nil {
 			errorResponse := util.CreateDBErrorResponse(err)
 			return c.Status(fiber.StatusInternalServerError).JSON(errorResponse)

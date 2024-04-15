@@ -10,10 +10,22 @@ import (
 	"github.com/google/uuid"
 )
 
+type TrailerHandler struct {
+	Server  *api.Server
+	Service *services.TrailerService
+}
+
+func NewTrailerHandler(s *api.Server) *TrailerHandler {
+	return &TrailerHandler{
+		Server:  s,
+		Service: services.NewTrailerService(s),
+	}
+}
+
 // GetTrailers is a handler that returns a list of trailers.
 //
 // GET /trailers
-func GetTrailers(s *api.Server) fiber.Handler {
+func (h *TrailerHandler) GetTrailers() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		offset, limit, err := util.PaginationParams(c)
 		if err != nil {
@@ -45,8 +57,7 @@ func GetTrailers(s *api.Server) fiber.Handler {
 			})
 		}
 
-		entities, count, err := services.NewTrailerService(s).
-			GetTrailers(c.UserContext(), limit, offset, orgID, buID)
+		entities, count, err := h.Service.GetTrailers(c.UserContext(), limit, offset, orgID, buID)
 		if err != nil {
 			errorResponse := util.CreateDBErrorResponse(err)
 			return c.Status(fiber.StatusInternalServerError).JSON(errorResponse)
@@ -67,7 +78,7 @@ func GetTrailers(s *api.Server) fiber.Handler {
 // CreateTrailer is a handler that creates a new trailer.
 //
 // POST /trailers
-func CreateTrailer(s *api.Server) fiber.Handler {
+func (h *TrailerHandler) CreateTrailer() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		newEntity := new(ent.Trailer)
 
@@ -103,8 +114,7 @@ func CreateTrailer(s *api.Server) fiber.Handler {
 			})
 		}
 
-		entity, err := services.NewTrailerService(s).
-			CreateTrailer(c.UserContext(), newEntity)
+		entity, err := h.Service.CreateTrailer(c.UserContext(), newEntity)
 		if err != nil {
 			errorResponse := util.CreateDBErrorResponse(err)
 			return c.Status(fiber.StatusInternalServerError).JSON(errorResponse)
@@ -114,10 +124,10 @@ func CreateTrailer(s *api.Server) fiber.Handler {
 	}
 }
 
-// UpdateTrailer is a handler that updates an trailer.
+// UpdateTrailer is a handler that updates a trailer.
 //
 // PUT /trailers/:trailerID
-func UpdateTrailer(s *api.Server) fiber.Handler {
+func (h *TrailerHandler) UpdateTrailer() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		trailerID := c.Params("trailerID")
 		if trailerID == "" {
@@ -150,8 +160,7 @@ func UpdateTrailer(s *api.Server) fiber.Handler {
 
 		updatedEntity.ID = uuid.MustParse(trailerID)
 
-		entity, err := services.NewTrailerService(s).
-			UpdateTrailer(c.UserContext(), updatedEntity)
+		entity, err := h.Service.UpdateTrailer(c.UserContext(), updatedEntity)
 		if err != nil {
 			errorResponse := util.CreateDBErrorResponse(err)
 			return c.Status(fiber.StatusInternalServerError).JSON(errorResponse)

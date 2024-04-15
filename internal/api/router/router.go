@@ -95,8 +95,8 @@ func Init(s *api.Server) {
 
 	// Register the authentication routes.
 	auth := apiV1.Group("/auth")
-	auth.Post("/login", handlers.AuthenticateUser(s))
-	auth.Post("/logout", handlers.LogoutUser(s))
+	auth.Post("/login", handlers.NewAuthenticationHandler(s).AuthenticateUser())
+	auth.Post("/logout", handlers.NewAuthenticationHandler(s).LogoutUser())
 
 	if s.Config.Fiber.EnableETagMiddleware {
 		s.Fiber.Use(etag.New())
