@@ -31,7 +31,7 @@ jobs:
         uses: golangci/golangci-lint-action@v4
         with:
           version: latest
-          args: --timeout 5m
+          args: --timeout=5m --config=.golangci.yml
 
   build-and-test:
     needs: lint  # This job waits for the 'lint' job to complete
