@@ -7,7 +7,7 @@ on:
   # Run on PRs where something changed under the `ent/` directory.
   pull_request:
     paths:
-      - 'ent/*'
+      - 'internal/ent/*'
 jobs:
   ent:
     runs-on: ubuntu-latest

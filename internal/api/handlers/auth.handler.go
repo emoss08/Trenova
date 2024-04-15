@@ -82,9 +82,9 @@ func (h *AuthenticationHandler) AuthenticateUser() fiber.Handler {
 		}
 
 		// Set the session values
-		sess.Set(util.CTXUserID, user.ID)
-		sess.Set(util.CTXOrganizationID, user.OrganizationID)
-		sess.Set(util.CTXBusinessUnitID, user.BusinessUnitID)
+		sess.Set(string(util.CTXUserID), user.ID)
+		sess.Set(string(util.CTXOrganizationID), user.OrganizationID)
+		sess.Set(string(util.CTXBusinessUnitID), user.BusinessUnitID)
 
 		// Set in context
 		c.Locals(util.CTXUserID, user.ID)

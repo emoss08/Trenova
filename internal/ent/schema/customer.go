@@ -5,12 +5,13 @@ import (
 	"crypto/rand"
 	"encoding/binary"
 	"fmt"
-	gen "github.com/emoss08/trenova/internal/ent"
-	"github.com/emoss08/trenova/internal/ent/hook"
-	"github.com/google/uuid"
 	"log"
 	"strings"
 	"time"
+
+	gen "github.com/emoss08/trenova/internal/ent"
+	"github.com/emoss08/trenova/internal/ent/hook"
+	"github.com/google/uuid"
 
 	"entgo.io/ent"
 	"entgo.io/ent/dialect"

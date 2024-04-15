@@ -53,6 +53,7 @@ func GenerateRandomHexString(n int) (string, error) {
 	return hex.EncodeToString(b), nil
 }
 
+// CharRange defines the type for character ranges
 type CharRange int
 
 const (
@@ -61,62 +62,62 @@ const (
 	CharRangeAlphaUpperCase
 )
 
-// GenerateRandomString returns a string with n random bytes securely generated using the system's
-// default CSPRNG. The characters within the generated string will either be part of one ore more supplied
-// range of characters, or based on characters in the extra string supplied.
-//
-// An error will be returned if reading from the secure random number generator fails, at which point
-// the returned result should be discarded and not used any further.
 func GenerateRandomString(n int, ranges []CharRange, extra string) (string, error) {
-	var str strings.Builder
-
 	if len(ranges) == 0 && len(extra) == 0 {
-		return "", errors.New("Random string can only be created if set of characters or extra string characters supplied")
+		return "", errors.New("random string can only be created if set of characters or extra string characters supplied")
 	}
 
-	validateFn := func(c byte) bool {
-		// IndexByte(string, byte) is basically Contains(string, string) without casting
+	validateFn := makeValidator(ranges, extra)
+	return buildString(validateFn, n)
+}
+
+// makeValidator creates a function to validate if a byte is within the allowed character sets.
+func makeValidator(ranges []CharRange, extra string) func(byte) bool {
+	return func(c byte) bool {
 		if strings.IndexByte(extra, c) >= 0 {
 			return true
 		}
-
 		for _, r := range ranges {
-			switch r {
-			case CharRangeNumeric:
-				if c >= '0' && c <= '9' {
-					return true
-				}
-			case CharRangeAlphaLowerCase:
-				if c >= 'a' && c <= 'z' {
-					return true
-				}
-			case CharRangeAlphaUpperCase:
-				if c >= 'A' && c <= 'Z' {
-					return true
-				}
+			if isInRange(r, c) {
+				return true
 			}
 		}
-
 		return false
 	}
+}
 
+// isInRange checks if a given byte is within a specified character range.
+func isInRange(r CharRange, c byte) bool {
+	switch r {
+	case CharRangeNumeric:
+		return c >= '0' && c <= '9'
+	case CharRangeAlphaLowerCase:
+		return c >= 'a' && c <= 'z'
+	case CharRangeAlphaUpperCase:
+		return c >= 'A' && c <= 'Z'
+	default:
+		return false
+	}
+}
+
+// buildString builds the final string from random bytes that pass the validation function.
+// It ensures the string meets the required length by repeatedly generating random bytes if necessary.
+func buildString(validateFn func(byte) bool, n int) (string, error) {
+	var str strings.Builder
 	for str.Len() < n {
-
-		buf, err := GenerateRandomBytes(n)
+		buf, err := GenerateRandomBytes(n - str.Len()) // Generate only as many bytes as are needed
 		if err != nil {
 			return "", err
 		}
-
 		for _, b := range buf {
 			if validateFn(b) {
 				str.WriteByte(b)
 			}
-			if str.Len() >= n {
+			if str.Len() == n {
 				break
 			}
 		}
 	}
-
 	return str.String(), nil
 }
 
