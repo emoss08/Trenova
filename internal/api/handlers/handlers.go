@@ -6,7 +6,7 @@ import (
 )
 
 // AttachAllRoutes attaches all the routes to the Fiber instance.
-func AttachAllRoutes(s *api.Server, api fiber.Router) {
+func AttachAllRoutes(s *api.Server, api fiber.Router) { //nolint:funlen // This function is responsible for setting up all the routes.
 	// Register the handlers for the accessorial charges.
 	accessorialChargesAPI := api.Group("/accessorial-charges")
 	accessorialChargesAPI.Get("/", NewAccessorialChargeHandler(s).GetAccessorialCharges())
