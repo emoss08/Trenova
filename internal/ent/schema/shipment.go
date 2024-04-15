@@ -28,7 +28,7 @@ type Shipment struct {
 }
 
 // Fields of the Shipment.
-func (Shipment) Fields() []ent.Field {
+func (Shipment) Fields() []ent.Field { //nolint:funlen // This is a schema definition.
 	return []ent.Field{
 		field.String("pro_number").
 			NotEmpty().
@@ -325,70 +325,89 @@ func (Shipment) Edges() []ent.Edge {
 	}
 }
 
-// Hooks of the Shipment.
+// Hooks for the Shipment.
 func (Shipment) Hooks() []ent.Hook {
 	return []ent.Hook{
-		hook.On(
-			func(next ent.Mutator) ent.Mutator {
-				return hook.ShipmentFunc(func(ctx context.Context, m *gen.ShipmentMutation) (ent.Value, error) {
-					if m.Op().Is(ent.OpCreate) {
-						// Generate the pro number.
-						proNumber, err := generateProNumber(ctx, m, m.Client())
-						if err != nil {
-							return nil, err
-						}
-						m.SetProNumber(proNumber)
-					}
-
-					if m.Op().Is(ent.OpUpdate) {
-						// Handle voided shipment.
-						if err := su.HandleVoidedShipment(ctx, m, m.Client()); err != nil {
-							return nil, err
-						}
-					}
-
-					// Get shipment control.
-					orgID, _ := m.OrganizationID()
-					buID, _ := m.BusinessUnitID()
-
-					// Get the client.
-					client := m.Client()
-
-					// Get shipment control.
-					shipmentControl, err := cf.GetShipmentControlByOrganization(ctx, client, orgID, buID)
-					if err != nil {
-						return nil, err
-					}
-
-					// Get billing control.
-					billingControl, err := cf.GetBillingControlByOrganization(ctx, client, orgID, buID)
-					if err != nil {
-						return nil, err
-					}
-
-					// Get the dispatch control.
-					dispatchControl, err := cf.GetDispatchControlByOrganization(ctx, client, orgID, buID)
-					if err != nil {
-						return nil, err
-					}
-
-					// Validate the shipment.
-					validationErrs, err := su.ValidateShipment(ctx, m, shipmentControl, billingControl, dispatchControl)
-					if err != nil {
-						return nil, err
-					}
-
-					if len(validationErrs) > 0 {
-						return nil, &types.ValidationErrorResponse{
-							Type:   "validationError",
-							Errors: validationErrs,
-						}
-					}
-
-					return next.Mutate(ctx, m)
-				})
-			}, ent.OpCreate|ent.OpUpdate|ent.OpUpdateOne),
+		hook.On(ShipmentHook, ent.OpCreate|ent.OpUpdate|ent.OpUpdateOne),
 	}
+}
+
+// handleCreateShipment handles the creation of a shipment including generating a pro number.
+func handleCreateShipment(ctx context.Context, m *gen.ShipmentMutation, client *gen.Client) error {
+	proNumber, err := generateProNumber(ctx, m, client)
+	if err != nil {
+		return err
+	}
+	m.SetProNumber(proNumber)
+	return nil
+}
+
+// handleUpdateShipment handles updates to a shipment, including voiding the shipment.
+func handleUpdateShipment(ctx context.Context, m *gen.ShipmentMutation, client *gen.Client) error {
+	return su.HandleVoidedShipment(ctx, m, client)
+}
+
+// validateShipmentControl validates various controls related to a shipment.
+func validateShipmentControl(ctx context.Context, m *gen.ShipmentMutation, client *gen.Client) error {
+	orgID, _ := m.OrganizationID()
+	buID, _ := m.BusinessUnitID()
+
+	shipmentControl, err := cf.GetShipmentControlByOrganization(ctx, client, orgID, buID)
+	if err != nil {
+		return err
+	}
+
+	billingControl, err := cf.GetBillingControlByOrganization(ctx, client, orgID, buID)
+	if err != nil {
+		return err
+	}
+
+	dispatchControl, err := cf.GetDispatchControlByOrganization(ctx, client, orgID, buID)
+	if err != nil {
+		return err
+	}
+
+	validationErrs, err := su.ValidateShipment(ctx, m, shipmentControl, billingControl, dispatchControl)
+	if err != nil {
+		return err
+	}
+
+	if len(validationErrs) > 0 {
+		return &types.ValidationErrorResponse{
+			Type:   "validationError",
+			Errors: validationErrs,
+		}
+	}
+	return nil
+}
+
+// ShipmentHook main hook for processing shipments.
+func ShipmentHook(next ent.Mutator) ent.Mutator {
+	return hook.ShipmentFunc(func(ctx context.Context, m *gen.ShipmentMutation) (ent.Value, error) {
+		client := m.Client()
+		var err error
+
+		if m.Op().Is(ent.OpCreate) {
+			err = handleCreateShipment(ctx, m, client)
+			if err != nil {
+				return nil, err
+			}
+		}
+
+		if m.Op().Is(ent.OpUpdate) {
+			err = handleUpdateShipment(ctx, m, client)
+			if err != nil {
+				return nil, err
+			}
+		}
+
+		err = validateShipmentControl(ctx, m, client)
+		if err != nil {
+			return nil, err
+		}
+
+		return next.Mutate(ctx, m)
+	})
 }
 
 // generateProNumber facilitates the generation of a pro number for a shipment.

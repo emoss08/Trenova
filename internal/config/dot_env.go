@@ -61,7 +61,7 @@ func DotEnvLoad(absolutePathToEnvFile string, setEnvFn envSetter) error {
 	}
 
 	for key, value := range envs {
-		if err := setEnvFn(key, value); err != nil {
+		if err = setEnvFn(key, value); err != nil {
 			return err
 		}
 	}

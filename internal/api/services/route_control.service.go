@@ -59,7 +59,6 @@ func (r *RouteControlService) UpdateRouteControl(ctx context.Context, rc *ent.Ro
 	}
 
 	return updatedEntity, nil
-
 }
 
 func (r *RouteControlService) updateRouteControl(

@@ -5,6 +5,7 @@ import (
 	"errors"
 	"log"
 	"net/http"
+	"sync"
 
 	"github.com/emoss08/trenova/internal/ent"
 	"github.com/gofiber/fiber/v2"
@@ -13,34 +14,39 @@ import (
 	"github.com/google/uuid"
 )
 
+var (
+	validatorInstance *Validator
+	once              sync.Once
+)
+
+// GetValidatorInstance safely initializes Validator instance only once
+func GetValidatorInstance() *Validator {
+	once.Do(func() {
+		var err error
+		validatorInstance, err = NewValidator()
+		if err != nil {
+			log.Fatalf("Failed to initialize validator: %v", err)
+		}
+	})
+	return validatorInstance
+}
+
 func ParseBody(c *fiber.Ctx, body any) error {
 	if err := c.BodyParser(body); err != nil {
 		return fiber.ErrBadRequest
 	}
-
 	return nil
 }
 
-var validatorInstance *Validator
-
-func init() {
-	var err error
-	validatorInstance, err = NewValidator()
-	if err != nil {
-		log.Fatalf("Failed to initialize validator: %v", err)
-	}
-}
-
 // ParseBodyAndValidate parses the request body into the given struct and validates it using the given validator.
-// If the body is invalid, it writes a 400 response with the validation error.
 func ParseBodyAndValidate(c *fiber.Ctx, body any) error {
 	if err := ParseBody(c, body); err != nil {
 		return err
 	}
 
-	if err := validatorInstance.Validate(body); err != nil {
+	validator := GetValidatorInstance()
+	if err := validator.Validate(body); err != nil {
 		var validationErr *ValidationError
-
 		switch {
 		case errors.As(err, &validationErr):
 			return c.Status(http.StatusBadRequest).JSON(validationErr)
@@ -54,17 +60,17 @@ func ParseBodyAndValidate(c *fiber.Ctx, body any) error {
 // GetSessionDetails retrieves user ID, organization ID, and business unit ID from the session.
 func GetSessionDetails(sess *session.Session) (uuid.UUID, uuid.UUID, uuid.UUID, bool) {
 	// Safely attempt to retrieve and type assert each UUID from the session
-	userID, ok := getSessionUUID(sess, CTXUserID)
+	userID, ok := getSessionUUID(sess, string(CTXUserID))
 	if !ok {
 		return uuid.Nil, uuid.Nil, uuid.Nil, false
 	}
 
-	orgID, ok := getSessionUUID(sess, CTXOrganizationID)
+	orgID, ok := getSessionUUID(sess, string(CTXOrganizationID))
 	if !ok {
 		return uuid.Nil, uuid.Nil, uuid.Nil, false
 	}
 
-	buID, ok := getSessionUUID(sess, CTXBusinessUnitID)
+	buID, ok := getSessionUUID(sess, string(CTXBusinessUnitID))
 	if !ok {
 		return uuid.Nil, uuid.Nil, uuid.Nil, false
 	}

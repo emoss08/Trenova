@@ -8,7 +8,7 @@ import (
 )
 
 // GoogleApi holds the schema definition for the GoogleApi entity.
-type GoogleApi struct {
+type GoogleApi struct { //nolint:stylecheck,revive // This is the name used in the ent generation command.
 	ent.Schema
 }
 

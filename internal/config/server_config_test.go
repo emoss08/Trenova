@@ -9,7 +9,7 @@ import (
 
 func TestPrintServiceEnv(t *testing.T) {
 	config := config.DefaultServiceConfigFromEnv()
-	_, err := json.MarshalIndent(config, "", "  ")
+	_, err := json.MarshalIndent(config, "", "  ") //nolint:musttag // this is only used in tests
 	if err != nil {
 		t.Fatal(err)
 	}

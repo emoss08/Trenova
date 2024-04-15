@@ -2,31 +2,17 @@ package util
 
 import (
 	"context"
-	"errors"
 )
+
+type contextKey string
 
 const (
-	CTXKeyRequestID     string = "request_id"
-	CTXKeyDisableLogger string = "disable_logger"
-	CTXOrganizationID   string = "organizationID"
-	CTXBusinessUnitID   string = "businessUnitID"
-	CTXUserID           string = "userID"
+	CTXKeyRequestID     contextKey = "request_id"
+	CTXKeyDisableLogger contextKey = "disable_logger"
+	CTXOrganizationID   contextKey = "organizationID"
+	CTXBusinessUnitID   contextKey = "businessUnitID"
+	CTXUserID           contextKey = "userID"
 )
-
-// RequestIDFromContext returns the ID of the (HTTP) request, returning an error if it is not present.
-func RequestIDFromContext(ctx context.Context) (string, error) {
-	val := ctx.Value(CTXKeyRequestID)
-	if val == nil {
-		return "", errors.New("No request ID present in context")
-	}
-
-	id, ok := val.(string)
-	if !ok {
-		return "", errors.New("Request ID in context is not a string")
-	}
-
-	return id, nil
-}
 
 // ShouldDisableLogger checks whether the logger instance should be disabled for the provided context.
 // `util.LogFromContext` will use this function to check whether it should return a default logger if
