@@ -9,13 +9,15 @@ import (
 	"github.com/emoss08/trenova/internal/ent"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/session"
-	"github.com/rotisserie/eris"
 
 	"github.com/google/uuid"
 )
 
 func ParseBody(c *fiber.Ctx, body any) error {
 	if err := c.BodyParser(body); err != nil {
+		log.Printf("Error type: %T", err)
+		log.Printf("Error: %v", err)
+
 		return fiber.ErrBadRequest
 	}
 
@@ -36,11 +38,15 @@ func init() {
 // If the body is invalid, it writes a 400 response with the validation error.
 func ParseBodyAndValidate(c *fiber.Ctx, body any) error {
 	if err := ParseBody(c, body); err != nil {
+		log.Printf("Error type2: %T", err)
+		log.Printf("Error: %v", err)
 		return err
 	}
 
 	if err := validatorInstance.Validate(body); err != nil {
 		var validationErr *ValidationError
+		log.Printf("Error type: %T", err)
+
 		switch {
 		case errors.As(err, &validationErr):
 			return c.Status(http.StatusBadRequest).JSON(validationErr)
@@ -48,7 +54,6 @@ func ParseBodyAndValidate(c *fiber.Ctx, body any) error {
 			return c.Status(http.StatusInternalServerError).JSON(fiber.Map{"error": "Internal server error"})
 		}
 	}
-
 	return nil
 }
 
@@ -90,16 +95,14 @@ func WithTx(ctx context.Context, client *ent.Client, fn func(tx *ent.Tx) error) 
 	// TODO(WOLFRED): Change logging to zerolog. We could use the one from the server.Logger.
 	tx, err := client.Tx(ctx)
 	if err != nil {
-		wrappedErr := eris.Wrap(err, "Failed to start transaction")
-		return wrappedErr
+		return err
 	}
 
 	// Ensure the transaction is either committed or rolled back
 	defer func() {
 		if v := recover(); v != nil {
 			if rollbackErr := tx.Rollback(); rollbackErr != nil {
-				wrappedErr := eris.Wrap(rollbackErr, "Failed to rollback transaction")
-				log.Printf("Failed to rollback transaction: %v", wrappedErr)
+				log.Printf("Failed to rollback transaction: %v", err)
 			}
 			panic(v)
 		}
@@ -107,13 +110,11 @@ func WithTx(ctx context.Context, client *ent.Client, fn func(tx *ent.Tx) error) 
 
 	if err = fn(tx); err != nil {
 		if rollbackErr := tx.Rollback(); rollbackErr != nil {
-			err = eris.Wrap(err, "Failed to rollback transaction")
 			log.Printf("Failed to rollback transaction: %v", err)
 		}
 		return err
 	}
 	if err = tx.Commit(); err != nil {
-		err = eris.Wrap(err, "Failed to commit transaction")
 		log.Printf("Failed to commit transaction: %v", err)
 		return err
 	}

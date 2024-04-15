@@ -11,7 +11,6 @@ import (
 	"github.com/emoss08/trenova/internal/ent/accessorialcharge"
 	"github.com/emoss08/trenova/internal/ent/organization"
 	"github.com/google/uuid"
-	"github.com/rotisserie/eris"
 )
 
 type AccessorialChargeService struct {
@@ -92,7 +91,7 @@ func (r *AccessorialChargeService) createAccessorialChargeEntity(
 		SetAmount(entity.Amount).
 		Save(ctx)
 	if err != nil {
-		return nil, eris.Wrap(err, "failed to create accessorial charge")
+		return nil, err
 	}
 
 	return createdEntity, nil
@@ -119,7 +118,7 @@ func (r *AccessorialChargeService) updateAccessorialChargeEntity(
 ) (*ent.AccessorialCharge, error) {
 	current, err := tx.AccessorialCharge.Get(ctx, entity.ID)
 	if err != nil {
-		return nil, eris.Wrap(err, "failed to retrieve requested entity")
+		return nil, err
 	}
 
 	// Check if the version matches.
@@ -142,7 +141,7 @@ func (r *AccessorialChargeService) updateAccessorialChargeEntity(
 	// Execute the update operation
 	updatedEntity, err := updateOp.Save(ctx)
 	if err != nil {
-		return nil, eris.Wrap(err, "failed to update entity")
+		return nil, err
 	}
 
 	return updatedEntity, nil

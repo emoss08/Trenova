@@ -9,7 +9,6 @@ import (
 	"github.com/emoss08/trenova/internal/ent/organization"
 	"github.com/emoss08/trenova/internal/util"
 	"github.com/google/uuid"
-	"github.com/rotisserie/eris"
 	"github.com/rs/zerolog"
 )
 
@@ -77,7 +76,7 @@ func (r *GoogleAPIService) updateGoogleAPIEntity(
 
 	updatedEntity, err := updateOp.Save(ctx)
 	if err != nil {
-		return nil, eris.Wrap(err, "failed to update entity")
+		return nil, err
 	}
 
 	return updatedEntity, nil

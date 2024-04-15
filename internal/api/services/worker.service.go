@@ -10,7 +10,6 @@ import (
 	"github.com/emoss08/trenova/internal/ent/workercomment"
 	"github.com/emoss08/trenova/internal/ent/workercontact"
 	"github.com/emoss08/trenova/internal/util"
-	"github.com/rotisserie/eris"
 	"github.com/rs/zerolog"
 
 	"github.com/google/uuid"
@@ -185,8 +184,7 @@ func (r *WorkerService) createWorkerComments(
 			SetUserID(comment.UserID).
 			Save(ctx)
 		if err != nil {
-			wrappedErr := eris.Wrap(err, "failed to create worker comment")
-			return wrappedErr
+			return err
 		}
 	}
 
@@ -206,8 +204,7 @@ func (r *WorkerService) createWorkerContacts(
 			SetIsPrimary(contact.IsPrimary).
 			Save(ctx)
 		if err != nil {
-			wrappedErr := eris.Wrap(err, "failed to create worker contact")
-			return wrappedErr
+			return err
 		}
 	}
 
@@ -251,7 +248,7 @@ func (r *WorkerService) updateWorkerEntity(
 ) (*ent.Worker, error) {
 	current, err := tx.Worker.Get(ctx, entity.ID)
 	if err != nil {
-		return nil, eris.Wrap(err, "failed to retrieve requested entity")
+		return nil, err
 	}
 
 	if current.Version != entity.Version {
@@ -289,7 +286,7 @@ func (r *WorkerService) updateWorkerEntity(
 	// Execute the update operation
 	updatedEntity, err := updateOp.Save(ctx)
 	if err != nil {
-		return nil, eris.Wrap(err, "failed to update entity")
+		return nil, err
 	}
 
 	return updatedEntity, nil
@@ -300,7 +297,7 @@ func (r *WorkerService) updateWorkerProfileEntity(
 ) (*ent.WorkerProfile, error) {
 	current, err := tx.WorkerProfile.Get(ctx, entity.Profile.ID)
 	if err != nil {
-		return nil, eris.Wrap(err, "failed to retrieve requested entity")
+		return nil, err
 	}
 
 	if current.Version != entity.Version {
@@ -334,7 +331,7 @@ func (r *WorkerService) syncComments(
 		workercomment.HasWorkerWith(worker.IDEQ(entity.ID)),
 	).All(ctx)
 	if err != nil {
-		return eris.Wrap(err, "failed to fetch existing comments")
+		return err
 	}
 
 	// Delete unmatched comments
@@ -359,8 +356,7 @@ func (r *WorkerService) deleteUnmatchedComments(
 	for _, existingComment := range existingComments {
 		if !commentPresnet[existingComment.ID] {
 			if err := tx.WorkerComment.DeleteOneID(existingComment.ID).Exec(ctx); err != nil {
-				wrappedErr := eris.Wrap(err, "failed to delete worker comment")
-				return wrappedErr
+				return err
 			}
 		}
 	}
@@ -377,8 +373,7 @@ func (r *WorkerService) updateOrCreateComments(ctx context.Context, tx *ent.Tx, 
 				SetUserID(comment.UserID).
 				SetVersion(comment.Version + 1). // Increment the version
 				Save(ctx); err != nil {
-				wrappedErr := eris.Wrap(err, "failed to update worker comment")
-				return wrappedErr
+				return err
 			}
 		} else {
 			if _, err := tx.WorkerComment.Create().
@@ -389,8 +384,7 @@ func (r *WorkerService) updateOrCreateComments(ctx context.Context, tx *ent.Tx, 
 				SetUserID(comment.UserID).
 				SetComment(comment.Comment).
 				Save(ctx); err != nil {
-				wrappedErr := eris.Wrap(err, "failed to create worker comment")
-				return wrappedErr
+				return err
 			}
 		}
 	}
@@ -405,7 +399,7 @@ func (r *WorkerService) syncContacts(
 		workercontact.HasWorkerWith(worker.IDEQ(entity.ID)),
 	).All(ctx)
 	if err != nil {
-		return eris.Wrap(err, "failed to featch existing worker contacts")
+		return err
 	}
 
 	// Delete unmatched contacts
@@ -430,8 +424,7 @@ func (r *WorkerService) deleteUnmatchedContacts(
 	for _, existingContact := range existingContacts {
 		if !contactPresent[existingContact.ID] {
 			if err := tx.WorkerContact.DeleteOneID(existingContact.ID).Exec(ctx); err != nil {
-				wrappedErr := eris.Wrap(err, "failed to delete worker contact")
-				return wrappedErr
+				return err
 			}
 		}
 	}
@@ -451,8 +444,7 @@ func (r *WorkerService) updateOrCreateContacts(
 				SetRelationship(contact.Relationship).
 				SetIsPrimary(contact.IsPrimary).
 				Save(ctx); err != nil {
-				wrappedErr := eris.Wrap(err, "failed to update worker contact")
-				return wrappedErr
+				return err
 			}
 		} else {
 			if _, err := tx.WorkerContact.Create().
@@ -465,8 +457,7 @@ func (r *WorkerService) updateOrCreateContacts(
 				SetRelationship(contact.Relationship).
 				SetIsPrimary(contact.IsPrimary).
 				Save(ctx); err != nil {
-				wrappedErr := eris.Wrap(err, "failed to create worker contact")
-				return wrappedErr
+				return err
 			}
 		}
 	}

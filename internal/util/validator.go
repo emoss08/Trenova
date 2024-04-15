@@ -54,8 +54,12 @@ func NewValidationError(message, code, attr string) *ValidationError {
 
 // IsValidationError checks if the provided error is a ValidationError.
 func IsValidationError(err error) bool {
-	_, ok := err.(*ValidationError)
-	return ok
+	if err == nil {
+		return false
+	}
+
+	var e *ValidationError
+	return errors.As(err, &e)
 }
 
 func NewValidator() (*Validator, error) {
@@ -156,6 +160,9 @@ var fieldErrorRegex = regexp.MustCompile(`field "(.+?)\.(.+?)": (.+)`)
 func CreateDBErrorResponse(err error) types.ValidationErrorResponse {
 	var details []types.ValidationErrorDetail
 
+	// Log the error type
+	log.Printf("Error type: %T", err)
+
 	switch {
 	case ent.IsValidationError(err):
 		matches := fieldErrorRegex.FindStringSubmatch(err.Error())
@@ -169,9 +176,12 @@ func CreateDBErrorResponse(err error) types.ValidationErrorResponse {
 			})
 		}
 	case IsValidationError(err):
-		if validationError, ok := err.(*ValidationError); ok {
-			return validationError.Response
+		validationErr, ok := err.(*ValidationError)
+		if !ok {
+			// Handle the error here
+			return types.ValidationErrorResponse{} // Or any other appropriate action
 		}
+		return validationErr.Response
 	default:
 		detail := "An unexpected error occurred"
 		if err != nil {

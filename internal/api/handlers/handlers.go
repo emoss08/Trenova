@@ -227,4 +227,16 @@ func AttachAllRoutes(s *api.Server, api fiber.Router) {
 	// Register the handlers for the us states.
 	usStatesAPI := api.Group("/us-states")
 	usStatesAPI.Get("/", GetUSStates(s))
+
+	// Register the handlers for the tractors.
+	tractorsAPI := api.Group("/tractors")
+	tractorsAPI.Get("/", GetTractors(s))
+	tractorsAPI.Post("/", CreateTractor(s))
+	tractorsAPI.Put("/:tractorID", UpdateTractor(s))
+
+	// Register the handlers for the trailers.
+	trailersAPI := api.Group("/trailers")
+	trailersAPI.Get("/", GetTrailers(s))
+	trailersAPI.Post("/", CreateTrailer(s))
+	trailersAPI.Put("/:trailerID", UpdateTrailer(s))
 }

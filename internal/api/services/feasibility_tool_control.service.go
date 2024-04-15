@@ -8,7 +8,6 @@ import (
 	"github.com/emoss08/trenova/internal/ent/feasibilitytoolcontrol"
 	"github.com/emoss08/trenova/internal/ent/organization"
 	"github.com/emoss08/trenova/internal/util"
-	"github.com/rotisserie/eris"
 	"github.com/rs/zerolog"
 
 	"github.com/google/uuid"
@@ -78,7 +77,7 @@ func (r *FeasibilityToolControlService) updateFeasibilityToolControlEntity(
 
 	updateEntity, err := updateOp.Save(ctx)
 	if err != nil {
-		return nil, eris.Wrap(err, "failed to update feasibility tool control entity")
+		return nil, err
 	}
 
 	return updateEntity, nil

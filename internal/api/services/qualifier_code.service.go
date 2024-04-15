@@ -11,7 +11,6 @@ import (
 	"github.com/emoss08/trenova/internal/ent/organization"
 	"github.com/emoss08/trenova/internal/ent/qualifiercode"
 	"github.com/google/uuid"
-	"github.com/rotisserie/eris"
 )
 
 type QualifierCodeService struct {
@@ -91,7 +90,7 @@ func (r *QualifierCodeService) createQualifierCode(
 		SetDescription(entity.Description).
 		Save(ctx)
 	if err != nil {
-		return nil, eris.Wrap(err, "failed to create entity")
+		return nil, err
 	}
 
 	return createdEntity, nil
@@ -120,7 +119,7 @@ func (r *QualifierCodeService) updateQualifierCodeEntity(
 ) (*ent.QualifierCode, error) {
 	current, err := tx.QualifierCode.Get(ctx, entity.ID)
 	if err != nil {
-		return nil, eris.Wrap(err, "failed to retrieve requested entity")
+		return nil, err
 	}
 
 	// Check if the version matches.
@@ -140,7 +139,7 @@ func (r *QualifierCodeService) updateQualifierCodeEntity(
 	// Execute the update operation
 	updatedEntity, err := updateOp.Save(ctx)
 	if err != nil {
-		return nil, eris.Wrap(err, "failed to update entity")
+		return nil, err
 	}
 
 	return updatedEntity, nil

@@ -11,7 +11,6 @@ import (
 	"github.com/emoss08/trenova/internal/ent/fleetcode"
 	"github.com/emoss08/trenova/internal/ent/organization"
 	"github.com/google/uuid"
-	"github.com/rotisserie/eris"
 )
 
 type FleetCodeService struct {
@@ -96,7 +95,7 @@ func (r *FleetCodeService) createFleetCodeEntity(
 		SetNillableManagerID(entity.ManagerID).
 		Save(ctx)
 	if err != nil {
-		return nil, eris.Wrap(err, "failed to create entity")
+		return nil, err
 	}
 
 	return createdEntity, nil
@@ -125,7 +124,7 @@ func (r *FleetCodeService) updateFleetCodeEntity(
 ) (*ent.FleetCode, error) {
 	current, err := tx.FleetCode.Get(ctx, entity.ID)
 	if err != nil {
-		return nil, eris.Wrap(err, "failed to retrieve requested entity")
+		return nil, err
 	}
 
 	// Check if the version matches.
@@ -150,7 +149,7 @@ func (r *FleetCodeService) updateFleetCodeEntity(
 	// Execute the update operation
 	updatedEntity, err := updateOp.Save(ctx)
 	if err != nil {
-		return nil, eris.Wrap(err, "failed to update entity")
+		return nil, err
 	}
 
 	return updatedEntity, nil

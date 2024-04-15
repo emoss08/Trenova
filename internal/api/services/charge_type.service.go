@@ -9,7 +9,6 @@ import (
 	"github.com/emoss08/trenova/internal/ent/organization"
 	"github.com/emoss08/trenova/internal/util"
 	"github.com/google/uuid"
-	"github.com/rotisserie/eris"
 	"github.com/rs/zerolog"
 )
 
@@ -91,7 +90,7 @@ func (r *ChargeTypeService) createCreateTypeEntity(
 		SetDescription(entity.Description).
 		Save(ctx)
 	if err != nil {
-		return nil, eris.Wrap(err, "failed to create email profile")
+		return nil, err
 	}
 
 	return createdEntity, nil
@@ -120,7 +119,7 @@ func (r *ChargeTypeService) updateChargeTypeEntity(
 ) (*ent.ChargeType, error) {
 	current, err := tx.ChargeType.Get(ctx, entity.ID)
 	if err != nil {
-		return nil, eris.Wrap(err, "failed to retrieve requested entity")
+		return nil, err
 	}
 
 	// Check if the version matches.

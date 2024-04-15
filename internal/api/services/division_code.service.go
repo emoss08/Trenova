@@ -11,7 +11,6 @@ import (
 	"github.com/emoss08/trenova/internal/ent/divisioncode"
 	"github.com/emoss08/trenova/internal/ent/organization"
 	"github.com/google/uuid"
-	"github.com/rotisserie/eris"
 )
 
 type DivisionCodeService struct {
@@ -92,7 +91,7 @@ func (r *DivisionCodeService) createDivisionCodeEntity(
 		SetNillableExpenseAccountID(entity.ExpenseAccountID).
 		Save(ctx)
 	if err != nil {
-		return nil, eris.Wrap(err, "failed to create entity")
+		return nil, err
 	}
 
 	return createdEntity, nil
@@ -119,7 +118,7 @@ func (r *DivisionCodeService) updateDivisionCodeEntity(
 ) (*ent.DivisionCode, error) {
 	current, err := tx.DivisionCode.Get(ctx, entity.ID)
 	if err != nil {
-		return nil, eris.Wrap(err, "failed to retrieve requested entity")
+		return nil, err
 	}
 
 	// Check if the version matches.
@@ -142,7 +141,7 @@ func (r *DivisionCodeService) updateDivisionCodeEntity(
 	// Execute the update operation
 	updatedEntity, err := updateOp.Save(ctx)
 	if err != nil {
-		return nil, eris.Wrap(err, "failed to update entity")
+		return nil, err
 	}
 
 	return updatedEntity, nil

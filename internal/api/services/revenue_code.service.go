@@ -9,7 +9,6 @@ import (
 	"github.com/emoss08/trenova/internal/ent/revenuecode"
 	"github.com/emoss08/trenova/internal/util"
 	"github.com/google/uuid"
-	"github.com/rotisserie/eris"
 	"github.com/rs/zerolog"
 )
 
@@ -97,7 +96,7 @@ func (r *RevenueCodeService) createRevenueCodeEntity(
 		SetNillableRevenueAccountID(entity.RevenueAccountID).
 		Save(ctx)
 	if err != nil {
-		return nil, eris.Wrap(err, "failed to create email profile")
+		return nil, err
 	}
 
 	return createdEntity, nil
@@ -126,7 +125,7 @@ func (r *RevenueCodeService) updateRevenueCodeEntity(
 ) (*ent.RevenueCode, error) {
 	current, err := tx.RevenueCode.Get(ctx, entity.ID)
 	if err != nil {
-		return nil, eris.Wrap(err, "failed to retrieve requested entity")
+		return nil, err
 	}
 
 	// Check if the version matches.

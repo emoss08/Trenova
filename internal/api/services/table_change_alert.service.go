@@ -10,7 +10,6 @@ import (
 	"github.com/emoss08/trenova/internal/ent/organization"
 	"github.com/emoss08/trenova/internal/ent/tablechangealert"
 	"github.com/emoss08/trenova/internal/util"
-	"github.com/rotisserie/eris"
 	"github.com/rs/zerolog"
 
 	"github.com/google/uuid"
@@ -107,7 +106,7 @@ func (r *TableChangeAlertService) createTableChangeAlertEntity(
 		SetExpirationDate(entity.ExpirationDate).
 		Save(ctx)
 	if err != nil {
-		return nil, eris.Wrap(err, "failed to create email profile")
+		return nil, err
 	}
 
 	return createdEntity, nil
@@ -136,7 +135,7 @@ func (r *TableChangeAlertService) updateTableChangeAlertEntity(
 ) (*ent.TableChangeAlert, error) {
 	current, err := tx.TableChangeAlert.Get(ctx, entity.ID)
 	if err != nil {
-		return nil, eris.Wrap(err, "failed to retrieve requested entity")
+		return nil, err
 	}
 
 	// Check if the version matches.

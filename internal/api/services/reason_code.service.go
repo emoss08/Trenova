@@ -11,7 +11,6 @@ import (
 	"github.com/emoss08/trenova/internal/ent/organization"
 	"github.com/emoss08/trenova/internal/ent/reasoncode"
 	"github.com/google/uuid"
-	"github.com/rotisserie/eris"
 )
 
 type ReasonCodeService struct {
@@ -92,7 +91,7 @@ func (r *ReasonCodeService) createReasonCodeEntity(
 		SetDescription(entity.Description).
 		Save(ctx)
 	if err != nil {
-		return nil, eris.Wrap(err, "failed to create entity")
+		return nil, err
 	}
 
 	return createdEntity, nil
@@ -121,7 +120,7 @@ func (r *ReasonCodeService) updateReasonCodeEntity(
 ) (*ent.ReasonCode, error) {
 	current, err := tx.ReasonCode.Get(ctx, entity.ID)
 	if err != nil {
-		return nil, eris.Wrap(err, "failed to retrieve requested entity")
+		return nil, err
 	}
 
 	// Check if the version matches.
@@ -142,7 +141,7 @@ func (r *ReasonCodeService) updateReasonCodeEntity(
 	// Execute the update operation
 	updatedEntity, err := updateOp.Save(ctx)
 	if err != nil {
-		return nil, eris.Wrap(err, "failed to update entity")
+		return nil, err
 	}
 
 	return updatedEntity, nil

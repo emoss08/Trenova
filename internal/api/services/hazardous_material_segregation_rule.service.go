@@ -8,7 +8,6 @@ import (
 	"github.com/emoss08/trenova/internal/ent/hazardousmaterialsegregation"
 	"github.com/emoss08/trenova/internal/ent/organization"
 	"github.com/emoss08/trenova/internal/util"
-	"github.com/rotisserie/eris"
 	"github.com/rs/zerolog"
 
 	"github.com/google/uuid"
@@ -91,7 +90,7 @@ func (r *HazardousMaterialSegregationService) createHazmatSegregationRuleEntity(
 		SetSegregationType(entity.SegregationType).
 		Save(ctx)
 	if err != nil {
-		return nil, eris.Wrap(err, "failed to create hazardous material segregation")
+		return nil, err
 	}
 
 	return createdEntity, nil
@@ -131,7 +130,7 @@ func (r *HazardousMaterialSegregationService) updateHazmatSegregationRuleEntity(
 	// Execute the update operation
 	updatedEntity, err := updateOp.Save(ctx)
 	if err != nil {
-		return nil, eris.Wrap(err, "failed to update entity")
+		return nil, err
 	}
 
 	return updatedEntity, nil

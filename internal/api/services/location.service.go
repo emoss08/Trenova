@@ -12,7 +12,6 @@ import (
 	"github.com/emoss08/trenova/internal/ent/locationcontact"
 	"github.com/emoss08/trenova/internal/ent/organization"
 	"github.com/emoss08/trenova/internal/util"
-	"github.com/rotisserie/eris"
 	"github.com/rs/zerolog"
 
 	"github.com/google/uuid"
@@ -167,8 +166,7 @@ func (r *LocationService) createLocationComments(
 			SetCommentTypeID(comment.CommentTypeID).
 			Save(ctx)
 		if err != nil {
-			wrappedError := eris.Wrap(err, "failed to create location comment")
-			return wrappedError
+			return err
 		}
 	}
 
@@ -204,7 +202,7 @@ func (r *LocationService) updateLocationEntity(
 ) (*ent.Location, error) {
 	current, err := tx.Location.Get(ctx, entity.ID)
 	if err != nil {
-		return nil, eris.Wrap(err, "failed to retrieve requested entity")
+		return nil, err
 	}
 
 	if current.Version != entity.Version {
@@ -234,7 +232,7 @@ func (r *LocationService) syncComments(
 		locationcomment.HasLocationWith(location.IDEQ(entity.ID)),
 	).All(ctx)
 	if err != nil {
-		return eris.Wrap(err, "failed to fetch existing comments")
+		return err
 	}
 
 	// Delete unmatched comments
@@ -259,8 +257,7 @@ func (r *LocationService) deleteUnmatchedComments(
 	for _, existingComment := range existingComments {
 		if !commentPresent[existingComment.ID] {
 			if err := tx.LocationComment.DeleteOneID(existingComment.ID).Exec(ctx); err != nil {
-				wrappedErr := eris.Wrap(err, "failed to delete comment")
-				return wrappedErr
+				return err
 			}
 		}
 	}
@@ -276,8 +273,7 @@ func (r *LocationService) updateOrCreateComments(ctx context.Context, tx *ent.Tx
 				SetUserID(comment.UserID).
 				SetCommentTypeID(comment.CommentTypeID).
 				Save(ctx); err != nil {
-				wrappedErr := eris.Wrap(err, "failed to update comment")
-				return wrappedErr
+				return err
 			}
 		} else {
 			if _, err := tx.LocationComment.Create().
@@ -288,8 +284,7 @@ func (r *LocationService) updateOrCreateComments(ctx context.Context, tx *ent.Tx
 				SetUserID(comment.UserID).
 				SetCommentTypeID(comment.CommentTypeID).
 				Save(ctx); err != nil {
-				wrappedErr := eris.Wrap(err, "failed to create comment")
-				return wrappedErr
+				return err
 			}
 		}
 	}
@@ -311,8 +306,7 @@ func (r *LocationService) createLocationContacts(
 			SetPhoneNumber(contact.PhoneNumber).
 			Save(ctx)
 		if err != nil {
-			wrappedError := eris.Wrap(err, "failed to create contact")
-			return wrappedError
+			return err
 		}
 	}
 
@@ -326,7 +320,7 @@ func (r *LocationService) syncContacts(
 		locationcontact.HasLocationWith(location.IDEQ(entity.ID)),
 	).All(ctx)
 	if err != nil {
-		return eris.Wrap(err, "failed to fetch existing contacts")
+		return err
 	}
 
 	// Delete unmatched contacts
@@ -351,8 +345,7 @@ func (r *LocationService) deleteUnmatchedContacts(
 	for _, existingContact := range existingContacts {
 		if !contactPresent[existingContact.ID] {
 			if err := tx.LocationComment.DeleteOneID(existingContact.ID).Exec(ctx); err != nil {
-				wrappedErr := eris.Wrap(err, "failed to delete contact")
-				return wrappedErr
+				return err
 			}
 		}
 	}
@@ -368,8 +361,7 @@ func (r *LocationService) updateOrCreateContacts(ctx context.Context, tx *ent.Tx
 				SetEmailAddress(contact.EmailAddress).
 				SetPhoneNumber(contact.PhoneNumber).
 				Save(ctx); err != nil {
-				wrappedErr := eris.Wrap(err, "failed to update contact")
-				return wrappedErr
+				return err
 			}
 		} else {
 			if _, err := tx.LocationContact.Create().
@@ -380,8 +372,7 @@ func (r *LocationService) updateOrCreateContacts(ctx context.Context, tx *ent.Tx
 				SetEmailAddress(contact.EmailAddress).
 				SetPhoneNumber(contact.PhoneNumber).
 				Save(ctx); err != nil {
-				wrappedErr := eris.Wrap(err, "failed to create contact")
-				return wrappedErr
+				return err
 			}
 		}
 	}

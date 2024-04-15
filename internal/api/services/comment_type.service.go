@@ -11,7 +11,6 @@ import (
 	"github.com/emoss08/trenova/internal/ent/commenttype"
 	"github.com/emoss08/trenova/internal/ent/organization"
 	"github.com/google/uuid"
-	"github.com/rotisserie/eris"
 )
 
 type CommentTypeService struct {
@@ -90,7 +89,7 @@ func (r *CommentTypeService) createCommentTypeEntity(
 		SetDescription(entity.Description).
 		Save(ctx)
 	if err != nil {
-		return nil, eris.Wrap(err, "failed to create comment type")
+		return nil, err
 	}
 
 	return createdEntity, nil
@@ -117,7 +116,7 @@ func (r *CommentTypeService) updateCommentTypeEntity(
 ) (*ent.CommentType, error) {
 	current, err := tx.CommentType.Get(ctx, entity.ID)
 	if err != nil {
-		return nil, eris.Wrap(err, "failed to retrieve requested entity")
+		return nil, err
 	}
 
 	// Check if the version matches.
@@ -138,7 +137,7 @@ func (r *CommentTypeService) updateCommentTypeEntity(
 	// Execute the update operation
 	updatedEntity, err := updateOp.Save(ctx)
 	if err != nil {
-		return nil, eris.Wrap(err, "failed to update entity")
+		return nil, err
 	}
 
 	return updatedEntity, nil

@@ -10,7 +10,6 @@ import (
 	"github.com/emoss08/trenova/internal/util"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgtype"
-	"github.com/rotisserie/eris"
 	"github.com/rs/zerolog"
 )
 
@@ -135,7 +134,7 @@ func (r *GeneralLedgerAccountService) createGeneralLedgerAccountEntity(
 			AddTagIDs(entity.TagIDs...).
 			SaveX(ctx)
 		if updateErr != nil {
-			return nil, eris.Wrap(err, "failed to create entity")
+			return nil, err
 		}
 	}
 
@@ -165,7 +164,7 @@ func (r *GeneralLedgerAccountService) updateGeneralLedgerAccountEntity(
 ) (*ent.GeneralLedgerAccount, error) {
 	current, err := tx.GeneralLedgerAccount.Get(ctx, entity.ID) // Get the current entity.
 	if err != nil {
-		return nil, eris.Wrap(err, "failed to retrieve requested entity")
+		return nil, err
 	}
 
 	// Check if the version matches.
@@ -205,7 +204,7 @@ func (r *GeneralLedgerAccountService) updateGeneralLedgerAccountEntity(
 	// Execute the update operation
 	updatedEntity, err := updateOp.Save(ctx)
 	if err != nil {
-		return nil, eris.Wrap(err, "failed to update entity")
+		return nil, err
 	}
 
 	return updatedEntity, nil

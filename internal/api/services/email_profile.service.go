@@ -9,7 +9,6 @@ import (
 	"github.com/emoss08/trenova/internal/ent/organization"
 	"github.com/emoss08/trenova/internal/util"
 	"github.com/google/uuid"
-	"github.com/rotisserie/eris"
 	"github.com/rs/zerolog"
 )
 
@@ -96,7 +95,7 @@ func (r *EmailProfileService) createEmailProfileEntity(
 		SetIsDefault(entity.IsDefault).
 		Save(ctx)
 	if err != nil {
-		return nil, eris.Wrap(err, "failed to create email profile")
+		return nil, err
 	}
 
 	return createdEntity, nil
@@ -125,7 +124,7 @@ func (r *EmailProfileService) updateEmailProfileEntity(
 ) (*ent.EmailProfile, error) {
 	current, err := tx.EmailProfile.Get(ctx, entity.ID)
 	if err != nil {
-		return nil, eris.Wrap(err, "failed to retrieve requested entity")
+		return nil, err
 	}
 
 	// Check if the version matches.
@@ -150,7 +149,7 @@ func (r *EmailProfileService) updateEmailProfileEntity(
 	// Execute the update operation
 	updatedEntity, err := updateOp.Save(ctx)
 	if err != nil {
-		return nil, eris.Wrap(err, "failed to update email profile")
+		return nil, err
 	}
 
 	return updatedEntity, nil

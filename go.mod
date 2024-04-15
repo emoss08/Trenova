@@ -3,7 +3,6 @@ module github.com/emoss08/trenova
 go 1.22
 
 require (
-	ariga.io/atlas v0.20.0
 	entgo.io/ent v0.13.1
 	github.com/99designs/gqlgen v0.17.45
 	github.com/asaskevich/govalidator v0.0.0-20230301143203-a9d515a09cc2
@@ -14,13 +13,13 @@ require (
 	github.com/gofiber/storage/redis/v2 v2.0.3
 	github.com/mattn/go-sqlite3 v1.14.22
 	github.com/nyaruka/phonenumbers v1.3.4
-	github.com/rotisserie/eris v0.5.4
 	github.com/stretchr/testify v1.9.0
 	github.com/subosito/gotenv v1.6.0
 	github.com/valyala/fasthttp v1.52.0
 )
 
 require (
+	ariga.io/atlas v0.20.0 // indirect
 	github.com/agext/levenshtein v1.2.3 // indirect
 	github.com/agnivade/levenshtein v1.1.1 // indirect
 	github.com/andybalholm/brotli v1.1.0 // indirect

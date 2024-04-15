@@ -108,7 +108,7 @@ export interface Trailer extends BaseModel {
   fleetCodeId: string;
   stateId?: string | null;
   licensePlateNumber?: string;
-  lastInspectionDate?: string;
+  lastInspectionDate?: string | null;
   registrationNumber?: string;
   registrationStateId?: string | null;
   registrationExpirationDate?: string | null;

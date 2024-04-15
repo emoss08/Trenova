@@ -11,7 +11,6 @@ import (
 	"github.com/emoss08/trenova/internal/ent/hazardousmaterial"
 	"github.com/emoss08/trenova/internal/ent/organization"
 	"github.com/google/uuid"
-	"github.com/rotisserie/eris"
 )
 
 type HazardousMaterialService struct {
@@ -95,7 +94,7 @@ func (r *HazardousMaterialService) createHazardousMaterialEntity(
 		SetProperShippingName(entity.ProperShippingName).
 		Save(ctx)
 	if err != nil {
-		return nil, eris.Wrap(err, "failed to create entity")
+		return nil, err
 	}
 
 	return createdEntity, nil
@@ -124,7 +123,7 @@ func (r *HazardousMaterialService) updateHazardousMaterialEntity(
 ) (*ent.HazardousMaterial, error) {
 	current, err := tx.HazardousMaterial.Get(ctx, entity.ID)
 	if err != nil {
-		return nil, eris.Wrap(err, "failed to retrieve requested entity")
+		return nil, err
 	}
 
 	// Check if the version matches.
@@ -148,7 +147,7 @@ func (r *HazardousMaterialService) updateHazardousMaterialEntity(
 	// Execute the update operation
 	updatedEntity, err := updateOp.Save(ctx)
 	if err != nil {
-		return nil, eris.Wrap(err, "failed to update entity")
+		return nil, err
 	}
 
 	return updatedEntity, nil

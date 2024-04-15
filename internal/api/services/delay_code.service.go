@@ -11,7 +11,6 @@ import (
 	"github.com/emoss08/trenova/internal/ent/delaycode"
 	"github.com/emoss08/trenova/internal/ent/organization"
 	"github.com/google/uuid"
-	"github.com/rotisserie/eris"
 )
 
 type DelayCodeService struct {
@@ -91,7 +90,7 @@ func (r *DelayCodeService) createDelayCodeEntity(
 		SetColor(entity.Color).
 		Save(ctx)
 	if err != nil {
-		return nil, eris.Wrap(err, "failed to create entity")
+		return nil, err
 	}
 
 	return createdEntity, nil
@@ -118,7 +117,7 @@ func (r *DelayCodeService) updateDelayCodeEntity(
 ) (*ent.DelayCode, error) {
 	current, err := tx.DelayCode.Get(ctx, entity.ID)
 	if err != nil {
-		return nil, eris.Wrap(err, "failed to retrieve requested entity")
+		return nil, err
 	}
 
 	// Check if the version matches.
@@ -140,7 +139,7 @@ func (r *DelayCodeService) updateDelayCodeEntity(
 	// Execute the update operation
 	updatedEntity, err := updateOp.Save(ctx)
 	if err != nil {
-		return nil, eris.Wrap(err, "failed to update entity")
+		return nil, err
 	}
 
 	return updatedEntity, nil

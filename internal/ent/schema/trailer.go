@@ -12,7 +12,6 @@ import (
 	"github.com/emoss08/trenova/internal/ent/hook"
 	"github.com/emoss08/trenova/internal/util"
 	"github.com/google/uuid"
-	"github.com/rotisserie/eris"
 
 	"github.com/jackc/pgx/v5/pgtype"
 )
@@ -168,7 +167,7 @@ func (Trailer) Hooks() []ent.Hook {
 					// Get the equipment type.
 					et, err := m.Client().EquipmentType.Get(ctx, equipmentType)
 					if err != nil {
-						return nil, eris.Wrap(err, "failed to get equipment type")
+						return nil, err
 					}
 
 					// If the equipment class is not equal to `Trailer` return an error.
