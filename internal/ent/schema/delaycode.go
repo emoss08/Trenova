@@ -24,10 +24,10 @@ func (DelayCode) Fields() []ent.Field {
 			StructTag(`json:"status" validate:"required,oneof=A I"`),
 		field.String("code").
 			NotEmpty().
-			MaxLen(4).
+			MaxLen(20).
 			SchemaType(map[string]string{
-				dialect.Postgres: "VARCHAR(4)",
-				dialect.SQLite:   "VARCHAR(4)",
+				dialect.Postgres: "VARCHAR(20)",
+				dialect.SQLite:   "VARCHAR(20)",
 			}).
 			StructTag(`json:"code" validate:"required,max=4"`),
 		field.Text("description").
@@ -36,6 +36,9 @@ func (DelayCode) Fields() []ent.Field {
 		field.Bool("f_carrier_or_driver").
 			Optional().
 			StructTag(`json:"fCarrierOrDriver" validate:"omitempty"`),
+		field.String("color").
+			Optional().
+			StructTag(`json:"color" validate:"omitempty"`),
 	}
 }
 

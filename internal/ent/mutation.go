@@ -9959,6 +9959,7 @@ type DelayCodeMutation struct {
 	code                 *string
 	description          *string
 	f_carrier_or_driver  *bool
+	color                *string
 	clearedFields        map[string]struct{}
 	business_unit        *uuid.UUID
 	clearedbusiness_unit bool
@@ -10443,6 +10444,55 @@ func (m *DelayCodeMutation) ResetFCarrierOrDriver() {
 	delete(m.clearedFields, delaycode.FieldFCarrierOrDriver)
 }
 
+// SetColor sets the "color" field.
+func (m *DelayCodeMutation) SetColor(s string) {
+	m.color = &s
+}
+
+// Color returns the value of the "color" field in the mutation.
+func (m *DelayCodeMutation) Color() (r string, exists bool) {
+	v := m.color
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldColor returns the old "color" field's value of the DelayCode entity.
+// If the DelayCode object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *DelayCodeMutation) OldColor(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldColor is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldColor requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldColor: %w", err)
+	}
+	return oldValue.Color, nil
+}
+
+// ClearColor clears the value of the "color" field.
+func (m *DelayCodeMutation) ClearColor() {
+	m.color = nil
+	m.clearedFields[delaycode.FieldColor] = struct{}{}
+}
+
+// ColorCleared returns if the "color" field was cleared in this mutation.
+func (m *DelayCodeMutation) ColorCleared() bool {
+	_, ok := m.clearedFields[delaycode.FieldColor]
+	return ok
+}
+
+// ResetColor resets all changes to the "color" field.
+func (m *DelayCodeMutation) ResetColor() {
+	m.color = nil
+	delete(m.clearedFields, delaycode.FieldColor)
+}
+
 // ClearBusinessUnit clears the "business_unit" edge to the BusinessUnit entity.
 func (m *DelayCodeMutation) ClearBusinessUnit() {
 	m.clearedbusiness_unit = true
@@ -10531,7 +10581,7 @@ func (m *DelayCodeMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *DelayCodeMutation) Fields() []string {
-	fields := make([]string, 0, 9)
+	fields := make([]string, 0, 10)
 	if m.business_unit != nil {
 		fields = append(fields, delaycode.FieldBusinessUnitID)
 	}
@@ -10559,6 +10609,9 @@ func (m *DelayCodeMutation) Fields() []string {
 	if m.f_carrier_or_driver != nil {
 		fields = append(fields, delaycode.FieldFCarrierOrDriver)
 	}
+	if m.color != nil {
+		fields = append(fields, delaycode.FieldColor)
+	}
 	return fields
 }
 
@@ -10585,6 +10638,8 @@ func (m *DelayCodeMutation) Field(name string) (ent.Value, bool) {
 		return m.Description()
 	case delaycode.FieldFCarrierOrDriver:
 		return m.FCarrierOrDriver()
+	case delaycode.FieldColor:
+		return m.Color()
 	}
 	return nil, false
 }
@@ -10612,6 +10667,8 @@ func (m *DelayCodeMutation) OldField(ctx context.Context, name string) (ent.Valu
 		return m.OldDescription(ctx)
 	case delaycode.FieldFCarrierOrDriver:
 		return m.OldFCarrierOrDriver(ctx)
+	case delaycode.FieldColor:
+		return m.OldColor(ctx)
 	}
 	return nil, fmt.Errorf("unknown DelayCode field %s", name)
 }
@@ -10684,6 +10741,13 @@ func (m *DelayCodeMutation) SetField(name string, value ent.Value) error {
 		}
 		m.SetFCarrierOrDriver(v)
 		return nil
+	case delaycode.FieldColor:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetColor(v)
+		return nil
 	}
 	return fmt.Errorf("unknown DelayCode field %s", name)
 }
@@ -10735,6 +10799,9 @@ func (m *DelayCodeMutation) ClearedFields() []string {
 	if m.FieldCleared(delaycode.FieldFCarrierOrDriver) {
 		fields = append(fields, delaycode.FieldFCarrierOrDriver)
 	}
+	if m.FieldCleared(delaycode.FieldColor) {
+		fields = append(fields, delaycode.FieldColor)
+	}
 	return fields
 }
 
@@ -10754,6 +10821,9 @@ func (m *DelayCodeMutation) ClearField(name string) error {
 		return nil
 	case delaycode.FieldFCarrierOrDriver:
 		m.ClearFCarrierOrDriver()
+		return nil
+	case delaycode.FieldColor:
+		m.ClearColor()
 		return nil
 	}
 	return fmt.Errorf("unknown DelayCode nullable field %s", name)
@@ -10789,6 +10859,9 @@ func (m *DelayCodeMutation) ResetField(name string) error {
 		return nil
 	case delaycode.FieldFCarrierOrDriver:
 		m.ResetFCarrierOrDriver()
+		return nil
+	case delaycode.FieldColor:
+		m.ResetColor()
 		return nil
 	}
 	return fmt.Errorf("unknown DelayCode field %s", name)

@@ -115,4 +115,22 @@ func AttachAllRoutes(s *api.Server, api fiber.Router) {
 	commentTypesAPI.Get("/", GetCommentTypes(s))
 	commentTypesAPI.Post("/", CreateCommentType(s))
 	commentTypesAPI.Put("/:commentTypeID", UpdateCommentType(s))
+
+	// Register the handlers for the commodity.
+	commoditiesAPI := api.Group("/commodities")
+	commoditiesAPI.Get("/", GetCommodities(s))
+	commoditiesAPI.Post("/", CreateCommodity(s))
+	commoditiesAPI.Put("/:commodityID", UpdateCommodity(s))
+
+	// Register the handlers for the customer.
+	customersAPI := api.Group("/customers")
+	customersAPI.Get("/", GetCustomers(s))
+	customersAPI.Post("/", CreateCustomer(s))
+	customersAPI.Put("/:customerID", UpdateCustomer(s))
+
+	// Register the handlers for the delay code.
+	delayCodesAPI := api.Group("/delay-codes")
+	delayCodesAPI.Get("/", GetDelayCodes(s))
+	delayCodesAPI.Post("/", CreateDelayCode(s))
+	delayCodesAPI.Put("/:delayCodeID", UpdateDelayCode(s))
 }

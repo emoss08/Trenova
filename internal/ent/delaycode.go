@@ -38,6 +38,8 @@ type DelayCode struct {
 	Description string `json:"description" validate:"omitempty"`
 	// FCarrierOrDriver holds the value of the "f_carrier_or_driver" field.
 	FCarrierOrDriver bool `json:"fCarrierOrDriver" validate:"omitempty"`
+	// Color holds the value of the "color" field.
+	Color string `json:"color" validate:"omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
 	// The values are being populated by the DelayCodeQuery when eager-loading is set.
 	Edges        DelayCodeEdges `json:"edges"`
@@ -86,7 +88,7 @@ func (*DelayCode) scanValues(columns []string) ([]any, error) {
 			values[i] = new(sql.NullBool)
 		case delaycode.FieldVersion:
 			values[i] = new(sql.NullInt64)
-		case delaycode.FieldStatus, delaycode.FieldCode, delaycode.FieldDescription:
+		case delaycode.FieldStatus, delaycode.FieldCode, delaycode.FieldDescription, delaycode.FieldColor:
 			values[i] = new(sql.NullString)
 		case delaycode.FieldCreatedAt, delaycode.FieldUpdatedAt:
 			values[i] = new(sql.NullTime)
@@ -167,6 +169,12 @@ func (dc *DelayCode) assignValues(columns []string, values []any) error {
 			} else if value.Valid {
 				dc.FCarrierOrDriver = value.Bool
 			}
+		case delaycode.FieldColor:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field color", values[i])
+			} else if value.Valid {
+				dc.Color = value.String
+			}
 		default:
 			dc.selectValues.Set(columns[i], values[i])
 		}
@@ -239,6 +247,9 @@ func (dc *DelayCode) String() string {
 	builder.WriteString(", ")
 	builder.WriteString("f_carrier_or_driver=")
 	builder.WriteString(fmt.Sprintf("%v", dc.FCarrierOrDriver))
+	builder.WriteString(", ")
+	builder.WriteString("color=")
+	builder.WriteString(dc.Color)
 	builder.WriteByte(')')
 	return builder.String()
 }

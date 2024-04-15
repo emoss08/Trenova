@@ -34,6 +34,8 @@ const (
 	FieldDescription = "description"
 	// FieldFCarrierOrDriver holds the string denoting the f_carrier_or_driver field in the database.
 	FieldFCarrierOrDriver = "f_carrier_or_driver"
+	// FieldColor holds the string denoting the color field in the database.
+	FieldColor = "color"
 	// EdgeBusinessUnit holds the string denoting the business_unit edge name in mutations.
 	EdgeBusinessUnit = "business_unit"
 	// EdgeOrganization holds the string denoting the organization edge name in mutations.
@@ -68,6 +70,7 @@ var Columns = []string{
 	FieldCode,
 	FieldDescription,
 	FieldFCarrierOrDriver,
+	FieldColor,
 }
 
 // ValidColumn reports if the column name is valid (part of the table columns).
@@ -172,6 +175,11 @@ func ByDescription(opts ...sql.OrderTermOption) OrderOption {
 // ByFCarrierOrDriver orders the results by the f_carrier_or_driver field.
 func ByFCarrierOrDriver(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldFCarrierOrDriver, opts...).ToFunc()
+}
+
+// ByColor orders the results by the color field.
+func ByColor(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldColor, opts...).ToFunc()
 }
 
 // ByBusinessUnitField orders the results by business_unit field.

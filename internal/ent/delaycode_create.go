@@ -125,6 +125,20 @@ func (dcc *DelayCodeCreate) SetNillableFCarrierOrDriver(b *bool) *DelayCodeCreat
 	return dcc
 }
 
+// SetColor sets the "color" field.
+func (dcc *DelayCodeCreate) SetColor(s string) *DelayCodeCreate {
+	dcc.mutation.SetColor(s)
+	return dcc
+}
+
+// SetNillableColor sets the "color" field if the given value is not nil.
+func (dcc *DelayCodeCreate) SetNillableColor(s *string) *DelayCodeCreate {
+	if s != nil {
+		dcc.SetColor(*s)
+	}
+	return dcc
+}
+
 // SetID sets the "id" field.
 func (dcc *DelayCodeCreate) SetID(u uuid.UUID) *DelayCodeCreate {
 	dcc.mutation.SetID(u)
@@ -307,6 +321,10 @@ func (dcc *DelayCodeCreate) createSpec() (*DelayCode, *sqlgraph.CreateSpec) {
 	if value, ok := dcc.mutation.FCarrierOrDriver(); ok {
 		_spec.SetField(delaycode.FieldFCarrierOrDriver, field.TypeBool, value)
 		_node.FCarrierOrDriver = value
+	}
+	if value, ok := dcc.mutation.Color(); ok {
+		_spec.SetField(delaycode.FieldColor, field.TypeString, value)
+		_node.Color = value
 	}
 	if nodes := dcc.mutation.BusinessUnitIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{

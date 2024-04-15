@@ -124,6 +124,26 @@ func (dcu *DelayCodeUpdate) ClearFCarrierOrDriver() *DelayCodeUpdate {
 	return dcu
 }
 
+// SetColor sets the "color" field.
+func (dcu *DelayCodeUpdate) SetColor(s string) *DelayCodeUpdate {
+	dcu.mutation.SetColor(s)
+	return dcu
+}
+
+// SetNillableColor sets the "color" field if the given value is not nil.
+func (dcu *DelayCodeUpdate) SetNillableColor(s *string) *DelayCodeUpdate {
+	if s != nil {
+		dcu.SetColor(*s)
+	}
+	return dcu
+}
+
+// ClearColor clears the value of the "color" field.
+func (dcu *DelayCodeUpdate) ClearColor() *DelayCodeUpdate {
+	dcu.mutation.ClearColor()
+	return dcu
+}
+
 // Mutation returns the DelayCodeMutation object of the builder.
 func (dcu *DelayCodeUpdate) Mutation() *DelayCodeMutation {
 	return dcu.mutation
@@ -230,6 +250,12 @@ func (dcu *DelayCodeUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	}
 	if dcu.mutation.FCarrierOrDriverCleared() {
 		_spec.ClearField(delaycode.FieldFCarrierOrDriver, field.TypeBool)
+	}
+	if value, ok := dcu.mutation.Color(); ok {
+		_spec.SetField(delaycode.FieldColor, field.TypeString, value)
+	}
+	if dcu.mutation.ColorCleared() {
+		_spec.ClearField(delaycode.FieldColor, field.TypeString)
 	}
 	_spec.AddModifiers(dcu.modifiers...)
 	if n, err = sqlgraph.UpdateNodes(ctx, dcu.driver, _spec); err != nil {
@@ -345,6 +371,26 @@ func (dcuo *DelayCodeUpdateOne) SetNillableFCarrierOrDriver(b *bool) *DelayCodeU
 // ClearFCarrierOrDriver clears the value of the "f_carrier_or_driver" field.
 func (dcuo *DelayCodeUpdateOne) ClearFCarrierOrDriver() *DelayCodeUpdateOne {
 	dcuo.mutation.ClearFCarrierOrDriver()
+	return dcuo
+}
+
+// SetColor sets the "color" field.
+func (dcuo *DelayCodeUpdateOne) SetColor(s string) *DelayCodeUpdateOne {
+	dcuo.mutation.SetColor(s)
+	return dcuo
+}
+
+// SetNillableColor sets the "color" field if the given value is not nil.
+func (dcuo *DelayCodeUpdateOne) SetNillableColor(s *string) *DelayCodeUpdateOne {
+	if s != nil {
+		dcuo.SetColor(*s)
+	}
+	return dcuo
+}
+
+// ClearColor clears the value of the "color" field.
+func (dcuo *DelayCodeUpdateOne) ClearColor() *DelayCodeUpdateOne {
+	dcuo.mutation.ClearColor()
 	return dcuo
 }
 
@@ -484,6 +530,12 @@ func (dcuo *DelayCodeUpdateOne) sqlSave(ctx context.Context) (_node *DelayCode, 
 	}
 	if dcuo.mutation.FCarrierOrDriverCleared() {
 		_spec.ClearField(delaycode.FieldFCarrierOrDriver, field.TypeBool)
+	}
+	if value, ok := dcuo.mutation.Color(); ok {
+		_spec.SetField(delaycode.FieldColor, field.TypeString, value)
+	}
+	if dcuo.mutation.ColorCleared() {
+		_spec.ClearField(delaycode.FieldColor, field.TypeString)
 	}
 	_spec.AddModifiers(dcuo.modifiers...)
 	_node = &DelayCode{config: dcuo.config}

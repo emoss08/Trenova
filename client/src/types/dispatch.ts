@@ -57,6 +57,7 @@ export interface DelayCode extends BaseModel {
   code: string;
   description: string;
   fCarrierOrDriver: boolean;
+  color?: string;
 }
 
 export type DelayCodeFormValues = Omit<

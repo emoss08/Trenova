@@ -341,9 +341,10 @@ var (
 		{Name: "updated_at", Type: field.TypeTime},
 		{Name: "version", Type: field.TypeInt, Default: 1},
 		{Name: "status", Type: field.TypeEnum, Enums: []string{"A", "I"}, Default: "A", SchemaType: map[string]string{"postgres": "VARCHAR(1)", "sqlite3": "VARCHAR(1)"}},
-		{Name: "code", Type: field.TypeString, Size: 4, SchemaType: map[string]string{"postgres": "VARCHAR(4)", "sqlite3": "VARCHAR(4)"}},
+		{Name: "code", Type: field.TypeString, Size: 20, SchemaType: map[string]string{"postgres": "VARCHAR(20)", "sqlite3": "VARCHAR(20)"}},
 		{Name: "description", Type: field.TypeString, Nullable: true, Size: 2147483647},
 		{Name: "f_carrier_or_driver", Type: field.TypeBool, Nullable: true},
+		{Name: "color", Type: field.TypeString, Nullable: true},
 		{Name: "business_unit_id", Type: field.TypeUUID},
 		{Name: "organization_id", Type: field.TypeUUID},
 	}
@@ -355,13 +356,13 @@ var (
 		ForeignKeys: []*schema.ForeignKey{
 			{
 				Symbol:     "delay_codes_business_units_business_unit",
-				Columns:    []*schema.Column{DelayCodesColumns[8]},
+				Columns:    []*schema.Column{DelayCodesColumns[9]},
 				RefColumns: []*schema.Column{BusinessUnitsColumns[0]},
 				OnDelete:   schema.Cascade,
 			},
 			{
 				Symbol:     "delay_codes_organizations_organization",
-				Columns:    []*schema.Column{DelayCodesColumns[9]},
+				Columns:    []*schema.Column{DelayCodesColumns[10]},
 				RefColumns: []*schema.Column{OrganizationsColumns[0]},
 				OnDelete:   schema.Cascade,
 			},

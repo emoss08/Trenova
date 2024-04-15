@@ -11,6 +11,7 @@ import { type TableSheetProps } from "@/types/tables";
 import { yupResolver } from "@hookform/resolvers/yup";
 import React from "react";
 import { Control, useForm } from "react-hook-form";
+import { GradientPicker } from "./common/fields/color-field";
 import {
   Credenza,
   CredenzaBody,
@@ -54,7 +55,7 @@ export function DelayCodeForm({
             type="text"
             placeholder="Code"
             description="Unique Code for the Delay Code"
-            maxLength={4}
+            maxLength={20}
           />
         </FormControl>
         <FormControl className="col-span-full">
@@ -67,12 +68,20 @@ export function DelayCodeForm({
             description="Description of the Delay Code"
           />
         </FormControl>
-        <FormControl className="col-span-full">
+        <FormControl className="col-span-full min-h-0">
           <CheckboxInput
             control={control}
             label="Fault of Carrier or Driver?"
             name="fCarrierOrDriver"
             description="Indicates if the delay is the fault of the carrier or driver."
+          />
+        </FormControl>
+        <FormControl className="col-span-full">
+          <GradientPicker
+            name="color"
+            label="Color"
+            description="Color Code of the Delay Code"
+            control={control}
           />
         </FormControl>
       </FormGroup>
@@ -90,6 +99,7 @@ export function DelayCodeDialog({ onOpenChange, open }: TableSheetProps) {
       code: "",
       description: "",
       fCarrierOrDriver: false,
+      color: "",
     },
   });
 

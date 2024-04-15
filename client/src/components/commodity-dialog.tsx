@@ -121,7 +121,7 @@ export function CommodityForm({
             isClearable
           />
         </FormControl>
-        <FormControl>
+        <FormControl className="col-span-full">
           <SelectInput
             name="unitOfMeasure"
             control={control}
