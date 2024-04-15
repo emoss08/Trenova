@@ -15,9 +15,6 @@ import (
 
 func ParseBody(c *fiber.Ctx, body any) error {
 	if err := c.BodyParser(body); err != nil {
-		log.Printf("Error type: %T", err)
-		log.Printf("Error: %v", err)
-
 		return fiber.ErrBadRequest
 	}
 
@@ -38,14 +35,11 @@ func init() {
 // If the body is invalid, it writes a 400 response with the validation error.
 func ParseBodyAndValidate(c *fiber.Ctx, body any) error {
 	if err := ParseBody(c, body); err != nil {
-		log.Printf("Error type2: %T", err)
-		log.Printf("Error: %v", err)
 		return err
 	}
 
 	if err := validatorInstance.Validate(body); err != nil {
 		var validationErr *ValidationError
-		log.Printf("Error type: %T", err)
 
 		switch {
 		case errors.As(err, &validationErr):

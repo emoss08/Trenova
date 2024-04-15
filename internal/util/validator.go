@@ -2,7 +2,6 @@ package util
 
 import (
 	"errors"
-	"log"
 	"reflect"
 	"regexp"
 	"strings"
@@ -52,7 +51,7 @@ func NewValidationError(message, code, attr string) *ValidationError {
 	}
 }
 
-// IsValidationError checks if the provided error is a ValidationError.
+// IsValidationError checks if the provided error is a ValidationError using errors.As for proper error unwrapping.
 func IsValidationError(err error) bool {
 	if err == nil {
 		return false
@@ -90,8 +89,6 @@ func (v *Validator) Validate(payload any) error {
 	if err == nil {
 		return nil
 	}
-
-	log.Printf("Validation error: %v", err)
 
 	var valError []types.ValidationErrorDetail
 	var validationErrors validator.ValidationErrors
@@ -160,11 +157,10 @@ var fieldErrorRegex = regexp.MustCompile(`field "(.+?)\.(.+?)": (.+)`)
 func CreateDBErrorResponse(err error) types.ValidationErrorResponse {
 	var details []types.ValidationErrorDetail
 
-	// Log the error type
-	log.Printf("Error type: %T", err)
-
 	switch {
+	// Handle validation errors from ent
 	case ent.IsValidationError(err):
+		// Regex to extract field information
 		matches := fieldErrorRegex.FindStringSubmatch(err.Error())
 		if len(matches) >= 4 {
 			field := toCamelCase(matches[2]) // Apply camel casing to the field name.
@@ -175,22 +171,30 @@ func CreateDBErrorResponse(err error) types.ValidationErrorResponse {
 				Attr:   field,
 			})
 		}
+
+	// Handle custom ValidationError
 	case IsValidationError(err):
-		validationErr, ok := err.(*ValidationError)
-		if !ok {
-			// Handle the error here
-			return types.ValidationErrorResponse{} // Or any other appropriate action
+		var vErr *ValidationError
+		if errors.As(err, &vErr) {
+			return vErr.Response
 		}
-		return validationErr.Response
+		detail := "Failed to cast to ValidationError despite passing IsValidationError check"
+		details = append(details, types.ValidationErrorDetail{
+			Code:   "typeAssertionError",
+			Detail: detail,
+			Attr:   "internalError",
+		})
+
+	// Handle other generic errors
 	default:
 		detail := "An unexpected error occurred"
 		if err != nil {
 			detail = err.Error()
 		}
 		details = append(details, types.ValidationErrorDetail{
-			Code:   "databaseError",
+			Code:   "unknownError",
 			Detail: detail,
-			Attr:   "databaseError",
+			Attr:   "general",
 		})
 	}
 

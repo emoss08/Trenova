@@ -1,6 +1,9 @@
 package types
 
-import "fmt"
+import (
+	"fmt"
+	"strings"
+)
 
 type HTTPResponse struct {
 	Count    int    `json:"count"`
@@ -15,12 +18,16 @@ type ValidationErrorDetail struct {
 	Attr   string `json:"attr"`
 }
 
-type ValidationErrorResponse struct {
+type ValidationErrorResponse struct { //nolint:errname // JSON structure
 	Type   string                  `json:"type"`
 	Errors []ValidationErrorDetail `json:"errors"`
 }
 
-// Error implements error.
+// Error implements error interface for ValidationErrorResponse.
 func (v *ValidationErrorResponse) Error() string {
-	return fmt.Sprintf("validation error: %s", v.Errors)
+	errs := make([]string, len(v.Errors))
+	for i, e := range v.Errors {
+		errs[i] = fmt.Sprintf("%s: %s (attribute: %s)", e.Code, e.Detail, e.Attr)
+	}
+	return fmt.Sprintf("validation error: [%s]", strings.Join(errs, ", "))
 }
