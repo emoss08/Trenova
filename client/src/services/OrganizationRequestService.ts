@@ -26,7 +26,7 @@ import {
   GoogleAPI,
   Organization,
   OrganizationFeatureFlag,
-  Topic
+  Topic,
 } from "@/types/organization";
 import { RouteControl } from "@/types/route";
 import { ShipmentControl } from "@/types/shipment";
@@ -124,7 +124,7 @@ export async function getDepots(): Promise<Depot[]> {
  * @returns A promise that resolves to an array of feature flags.
  */
 export async function getFeatureFlags(): Promise<OrganizationFeatureFlag[]> {
-  const response = await axios.get("/organization-feature-flags/");
+  const response = await axios.get("/feature-flags/");
   return response.data.results;
 }
 

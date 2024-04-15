@@ -1,3 +1,5 @@
+// CODE GENERATED. DO NOT EDIT!
+
 package handlers
 
 import (
@@ -187,4 +189,32 @@ func AttachAllRoutes(s *api.Server, api fiber.Router) {
 	locationsAPI.Get("/", GetLocations(s))
 	locationsAPI.Post("/", CreateLocation(s))
 	locationsAPI.Put("/:locationID", UpdateLocation(s))
+
+	// Register the handlers for the location categories.
+	locationCategoriesAPI := api.Group("/location-categories")
+	locationCategoriesAPI.Get("/", GetLocationCategories(s))
+	locationCategoriesAPI.Post("/", CreateLocationCategory(s))
+	locationCategoriesAPI.Put("/:locationCategoryID", UpdateLocationCategory(s))
+
+	// Register the handlers for the feature flags.
+	featureFlagsAPI := api.Group("/feature-flags")
+	featureFlagsAPI.Get("/", GetFeatureFlags(s))
+
+	// Register the handlers for the qualifier codes.
+	qualifierCodesAPI := api.Group("/qualifier-codes")
+	qualifierCodesAPI.Get("/", GetQualifierCodes(s))
+	qualifierCodesAPI.Post("/", CreateQualifierCode(s))
+	qualifierCodesAPI.Put("/:qualifierCodeID", UpdateQualifierCode(s))
+
+	// Register the handlers for the reason codes.
+	reasonCodesAPI := api.Group("/reason-codes")
+	reasonCodesAPI.Get("/", GetReasonCodes(s))
+	reasonCodesAPI.Post("/", CreateReasonCode(s))
+	reasonCodesAPI.Put("/:reasonCodeID", UpdateReasonCode(s))
+
+	// Register the handlers for the service types.
+	serviceTypesAPI := api.Group("/service-types")
+	serviceTypesAPI.Get("/", GetServiceTypes(s))
+	serviceTypesAPI.Post("/", CreateServiceType(s))
+	serviceTypesAPI.Put("/:serviceTypeID", UpdateServiceType(s))
 }

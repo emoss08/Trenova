@@ -58,7 +58,7 @@ func (r *HazardousMaterialService) GetHazardousMaterials(
 	return entities, entityCount, nil
 }
 
-// CreateHazardousMaterial creates a new tag.
+// CreateHazardousMaterial creates a new hazardous material.
 func (r *HazardousMaterialService) CreateHazardousMaterial(
 	ctx context.Context, entity *ent.HazardousMaterial,
 ) (*ent.HazardousMaterial, error) {
