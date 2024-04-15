@@ -10,10 +10,22 @@ import (
 	"github.com/google/uuid"
 )
 
+type AccessorialChargeHandler struct {
+	Server  *api.Server
+	Service *services.AccessorialChargeService
+}
+
+func NewAccessorialChargeHandler(s *api.Server) *AccessorialChargeHandler {
+	return &AccessorialChargeHandler{
+		Server:  s,
+		Service: services.NewAccessorialChargeService(s),
+	}
+}
+
 // GetAccessorialCharges is a handler that returns a list of accessorial charges.
 //
 // GET /accessorial-charges
-func GetAccessorialCharges(s *api.Server) fiber.Handler {
+func (h *AccessorialChargeHandler) GetAccessorialCharges() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		offset, limit, err := util.PaginationParams(c)
 		if err != nil {
@@ -45,7 +57,7 @@ func GetAccessorialCharges(s *api.Server) fiber.Handler {
 			})
 		}
 
-		entities, count, err := services.NewAccessorialChargeService(s).GetAccessorialCharges(c.UserContext(), limit, offset, orgID, buID)
+		entities, count, err := h.Service.GetAccessorialCharges(c.UserContext(), limit, offset, orgID, buID)
 		if err != nil {
 			errorResponse := util.CreateDBErrorResponse(err)
 			return c.Status(fiber.StatusInternalServerError).JSON(errorResponse)
@@ -66,7 +78,7 @@ func GetAccessorialCharges(s *api.Server) fiber.Handler {
 // CreateAccessorialCharge is a handler that creates a new accessorial charge.
 //
 // POST /accessorial-charges
-func CreateAccessorialCharge(s *api.Server) fiber.Handler {
+func (h *AccessorialChargeHandler) CreateAccessorialCharge() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		newEntity := new(ent.AccessorialCharge)
 
@@ -102,7 +114,7 @@ func CreateAccessorialCharge(s *api.Server) fiber.Handler {
 			})
 		}
 
-		entity, err := services.NewAccessorialChargeService(s).
+		entity, err := h.Service.
 			CreateAccessorialCharge(c.UserContext(), newEntity)
 		if err != nil {
 			errorResponse := util.CreateDBErrorResponse(err)
@@ -116,7 +128,7 @@ func CreateAccessorialCharge(s *api.Server) fiber.Handler {
 // UpdateAccessorialCharge is a handler that updates an accessorial charge.
 //
 // PUT /accessorial-charges/:accessorialChargeID
-func UpdateAccessorialCharge(s *api.Server) fiber.Handler {
+func (h *AccessorialChargeHandler) UpdateAccessorialCharge() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		accessorialChargeID := c.Params("accessorialChargeID")
 		if accessorialChargeID == "" {
@@ -149,7 +161,7 @@ func UpdateAccessorialCharge(s *api.Server) fiber.Handler {
 
 		updatedEntity.ID = uuid.MustParse(accessorialChargeID)
 
-		entity, err := services.NewAccessorialChargeService(s).UpdateAccessorialCharge(c.UserContext(), updatedEntity)
+		entity, err := h.Service.UpdateAccessorialCharge(c.UserContext(), updatedEntity)
 		if err != nil {
 			errorResponse := util.CreateDBErrorResponse(err)
 			return c.Status(fiber.StatusInternalServerError).JSON(errorResponse)

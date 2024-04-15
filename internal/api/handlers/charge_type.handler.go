@@ -10,10 +10,22 @@ import (
 	"github.com/google/uuid"
 )
 
+type ChargeTypeHandler struct {
+	Server  *api.Server
+	Service *services.ChargeTypeService
+}
+
+func NewChargeTypeHandler(s *api.Server) *ChargeTypeHandler {
+	return &ChargeTypeHandler{
+		Server:  s,
+		Service: services.NewChargeTypeService(s),
+	}
+}
+
 // GetChargeTypes is a handler that returns a list of charge types.
 //
 // GET /charge-types
-func GetChargeTypes(s *api.Server) fiber.Handler {
+func (h *ChargeTypeHandler) GetChargeTypes() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		offset, limit, err := util.PaginationParams(c)
 		if err != nil {
@@ -45,8 +57,7 @@ func GetChargeTypes(s *api.Server) fiber.Handler {
 			})
 		}
 
-		entities, count, err := services.NewChargeTypeService(s).
-			GetChargeTypes(c.UserContext(), limit, offset, orgID, buID)
+		entities, count, err := h.Service.GetChargeTypes(c.UserContext(), limit, offset, orgID, buID)
 		if err != nil {
 			errorResponse := util.CreateDBErrorResponse(err)
 			return c.Status(fiber.StatusInternalServerError).JSON(errorResponse)
@@ -67,7 +78,7 @@ func GetChargeTypes(s *api.Server) fiber.Handler {
 // CreateChargeType is a handler that creates a charge type.
 //
 // POST /charge-types
-func CreateChargeType(s *api.Server) fiber.Handler {
+func (h *ChargeTypeHandler) CreateChargeType() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		newEntity := new(ent.ChargeType)
 
@@ -103,8 +114,7 @@ func CreateChargeType(s *api.Server) fiber.Handler {
 			})
 		}
 
-		entity, err := services.NewChargeTypeService(s).
-			CreateChargeType(c.UserContext(), newEntity)
+		entity, err := h.Service.CreateChargeType(c.UserContext(), newEntity)
 		if err != nil {
 			errorResponse := util.CreateDBErrorResponse(err)
 			return c.Status(fiber.StatusInternalServerError).JSON(errorResponse)
@@ -117,7 +127,7 @@ func CreateChargeType(s *api.Server) fiber.Handler {
 // UpdateChargeType is a handler that updates a charge type.
 //
 // PUT /charge-types/:chargeTypeID
-func UpdateChargeType(s *api.Server) fiber.Handler {
+func (h *ChargeTypeHandler) UpdateChargeType() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		chargeTypeID := c.Params("chargeTypeID")
 		if chargeTypeID == "" {
@@ -150,8 +160,7 @@ func UpdateChargeType(s *api.Server) fiber.Handler {
 
 		updatedEntity.ID = uuid.MustParse(chargeTypeID)
 
-		entity, err := services.NewChargeTypeService(s).
-			UpdateChargeType(c.UserContext(), updatedEntity)
+		entity, err := h.Service.UpdateChargeType(c.UserContext(), updatedEntity)
 		if err != nil {
 			errorResponse := util.CreateDBErrorResponse(err)
 			return c.Status(fiber.StatusInternalServerError).JSON(errorResponse)

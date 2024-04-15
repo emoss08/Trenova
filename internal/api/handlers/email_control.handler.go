@@ -10,10 +10,22 @@ import (
 	"github.com/google/uuid"
 )
 
+type EmailControlHandler struct {
+	Server  *api.Server
+	Service *services.EmailControlService
+}
+
+func NewEmailControlHandler(s *api.Server) *EmailControlHandler {
+	return &EmailControlHandler{
+		Server:  s,
+		Service: services.NewEmailControlService(s),
+	}
+}
+
 // GetEmailControl is a handler that returns the billing control for an organization.
 //
 // GET /billing-control
-func GetEmailControl(s *api.Server) fiber.Handler {
+func (h *EmailControlHandler) GetEmailControl() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		orgID, ok := c.Locals(util.CTXOrganizationID).(uuid.UUID)
 		buID, buOK := c.Locals(util.CTXBusinessUnitID).(uuid.UUID)
@@ -31,7 +43,7 @@ func GetEmailControl(s *api.Server) fiber.Handler {
 			})
 		}
 
-		entity, err := services.NewEmailControlService(s).GetEmailControl(c.UserContext(), orgID, buID)
+		entity, err := h.Service.GetEmailControl(c.UserContext(), orgID, buID)
 		if err != nil {
 			errorResponse := util.CreateDBErrorResponse(err)
 			return c.Status(fiber.StatusInternalServerError).JSON(errorResponse)
@@ -41,7 +53,7 @@ func GetEmailControl(s *api.Server) fiber.Handler {
 	}
 }
 
-func UpdateEmailControl(s *api.Server) fiber.Handler {
+func (h *EmailControlHandler) UpdateEmailControl() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		emailControlID := c.Params("emailControlID")
 		if emailControlID == "" {
@@ -73,7 +85,7 @@ func UpdateEmailControl(s *api.Server) fiber.Handler {
 
 		data.ID = uuid.MustParse(emailControlID)
 
-		updatedEntity, err := services.NewEmailControlService(s).UpdateEmailControl(c.UserContext(), data)
+		updatedEntity, err := h.Service.UpdateEmailControl(c.UserContext(), data)
 		if err != nil {
 			errorResponse := util.CreateDBErrorResponse(err)
 			return c.Status(fiber.StatusInternalServerError).JSON(errorResponse)

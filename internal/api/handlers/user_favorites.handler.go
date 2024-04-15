@@ -10,8 +10,20 @@ import (
 	"github.com/google/uuid"
 )
 
+type UserFavoriteHandler struct {
+	Server  *api.Server
+	Service *services.UserFavoriteService
+}
+
+func NewUserFavoriteHandler(s *api.Server) *UserFavoriteHandler {
+	return &UserFavoriteHandler{
+		Server:  s,
+		Service: services.NewUserFavoriteService(s),
+	}
+}
+
 // GetUserFavorites returns the user's favorite pages.
-func GetUserFavorites(s *api.Server) fiber.Handler {
+func (h *UserFavoriteHandler) GetUserFavorites() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		userID, ok := c.Locals(util.CTXUserID).(uuid.UUID)
 
@@ -28,7 +40,7 @@ func GetUserFavorites(s *api.Server) fiber.Handler {
 			})
 		}
 
-		favorites, count, err := services.NewUserFavoriteService(s).GetUserFavorites(c.UserContext(), userID)
+		favorites, count, err := h.Service.GetUserFavorites(c.UserContext(), userID)
 		if err != nil {
 			errorResponse := util.CreateDBErrorResponse(err)
 			return c.Status(fiber.StatusInternalServerError).JSON(errorResponse)
@@ -42,7 +54,7 @@ func GetUserFavorites(s *api.Server) fiber.Handler {
 }
 
 // AddUserFavorite adds a page to the user's favorites.
-func AddUserFavorite(s *api.Server) fiber.Handler {
+func (h *UserFavoriteHandler) AddUserFavorite() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		userFav := new(ent.UserFavorite)
 
@@ -78,7 +90,7 @@ func AddUserFavorite(s *api.Server) fiber.Handler {
 		userFav.OrganizationID = orgID
 		userFav.BusinessUnitID = buID
 
-		createdEntity, err := services.NewUserFavoriteService(s).AddUserFavorite(c.UserContext(), userFav)
+		createdEntity, err := h.Service.AddUserFavorite(c.UserContext(), userFav)
 		if err != nil {
 			errorResponse := util.CreateDBErrorResponse(err)
 			return c.Status(fiber.StatusInternalServerError).JSON(errorResponse)
@@ -89,7 +101,7 @@ func AddUserFavorite(s *api.Server) fiber.Handler {
 }
 
 // RemoveUserFavorite deletes a user favorite.
-func RemoveUserFavorite(s *api.Server) fiber.Handler {
+func (h *UserFavoriteHandler) RemoveUserFavorite() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		userFav := new(ent.UserFavorite)
 
@@ -106,7 +118,7 @@ func RemoveUserFavorite(s *api.Server) fiber.Handler {
 			})
 		}
 
-		if err := services.NewUserFavoriteService(s).RemoveUserFavorite(c.UserContext(), userFav.UserID, userFav.PageLink); err != nil {
+		if err := h.Service.RemoveUserFavorite(c.UserContext(), userFav.UserID, userFav.PageLink); err != nil {
 			errorResponse := util.CreateDBErrorResponse(err)
 			return c.Status(fiber.StatusInternalServerError).JSON(errorResponse)
 		}

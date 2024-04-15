@@ -10,10 +10,23 @@ import (
 	"github.com/google/uuid"
 )
 
+type AccountingControlHandler struct {
+	Server  *api.Server
+	Service *services.AccountingControlService
+}
+
+// NewAccountingControlHandler returns a new AccountingControlHandler.
+func NewAccountingControlHandler(s *api.Server) *AccountingControlHandler {
+	return &AccountingControlHandler{
+		Server:  s,
+		Service: services.NewAccountingControlService(s),
+	}
+}
+
 // GetAccountingControl is a handler that returns the accounting control for an organization.
 //
 // GET /accounting-control
-func GetAccountingControl(s *api.Server) fiber.Handler {
+func (h *AccountingControlHandler) GetAccountingControl() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		orgID, ok := c.Locals(util.CTXOrganizationID).(uuid.UUID)
 		buID, buOK := c.Locals(util.CTXBusinessUnitID).(uuid.UUID)
@@ -31,7 +44,7 @@ func GetAccountingControl(s *api.Server) fiber.Handler {
 			})
 		}
 
-		entity, err := services.NewAccountingControlService(s).GetAccountingControl(c.UserContext(), orgID, buID)
+		entity, err := h.Service.GetAccountingControl(c.UserContext(), orgID, buID)
 		if err != nil {
 			errorResponse := util.CreateDBErrorResponse(err)
 			return c.Status(fiber.StatusInternalServerError).JSON(errorResponse)
@@ -44,7 +57,7 @@ func GetAccountingControl(s *api.Server) fiber.Handler {
 // UpdateAccountingControlByID is a handler that updates the accounting control for an organization.
 //
 // PUT /accounting-control/:accountingControlID
-func UpdateAccountingControlByID(s *api.Server) fiber.Handler {
+func (h *AccountingControlHandler) UpdateAccountingControlByID() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		accountingControlID := c.Params("accountingControlID")
 		if accountingControlID == "" {
@@ -77,7 +90,7 @@ func UpdateAccountingControlByID(s *api.Server) fiber.Handler {
 
 		data.ID = uuid.MustParse(accountingControlID)
 
-		updatedEntity, err := services.NewAccountingControlService(s).UpdateAccountingControl(c.UserContext(), data)
+		updatedEntity, err := h.Service.UpdateAccountingControl(c.UserContext(), data)
 		if err != nil {
 			errorResponse := util.CreateDBErrorResponse(err)
 			return c.Status(fiber.StatusInternalServerError).JSON(errorResponse)

@@ -10,10 +10,22 @@ import (
 	"github.com/google/uuid"
 )
 
+type EmailProfileHandler struct {
+	Server  *api.Server
+	Service *services.EmailProfileService
+}
+
+func NewEmailProfileHandler(s *api.Server) *EmailProfileHandler {
+	return &EmailProfileHandler{
+		Server:  s,
+		Service: services.NewEmailProfileService(s),
+	}
+}
+
 // GetEmailProfiles is a handler that returns a list of email profiles.
 //
 // GET /email-profiles
-func GetEmailProfiles(s *api.Server) fiber.Handler {
+func (h *EmailProfileHandler) GetEmailProfiles() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		offset, limit, err := util.PaginationParams(c)
 		if err != nil {
@@ -45,8 +57,7 @@ func GetEmailProfiles(s *api.Server) fiber.Handler {
 			})
 		}
 
-		entities, count, err := services.NewEmailProfileService(s).
-			GetEmailProfiles(c.UserContext(), limit, offset, orgID, buID)
+		entities, count, err := h.Service.GetEmailProfiles(c.UserContext(), limit, offset, orgID, buID)
 		if err != nil {
 			errorResponse := util.CreateDBErrorResponse(err)
 			return c.Status(fiber.StatusInternalServerError).JSON(errorResponse)
@@ -67,7 +78,7 @@ func GetEmailProfiles(s *api.Server) fiber.Handler {
 // CreateEmailProfile is a handler that creates a new email profile.
 //
 // POST /email-profile
-func CreateEmailProfile(s *api.Server) fiber.Handler {
+func (h *EmailProfileHandler) CreateEmailProfile() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		newEntity := new(ent.EmailProfile)
 
@@ -103,8 +114,7 @@ func CreateEmailProfile(s *api.Server) fiber.Handler {
 			})
 		}
 
-		entity, err := services.NewEmailProfileService(s).
-			CreateEmailProfile(c.UserContext(), newEntity)
+		entity, err := h.Service.CreateEmailProfile(c.UserContext(), newEntity)
 		if err != nil {
 			errorResponse := util.CreateDBErrorResponse(err)
 			return c.Status(fiber.StatusInternalServerError).JSON(errorResponse)
@@ -117,7 +127,7 @@ func CreateEmailProfile(s *api.Server) fiber.Handler {
 // UpdateEmailProfile is a handler that updates an email profile.
 //
 // PUT /email-profile/:emailProfileID
-func UpdateEmailProfile(s *api.Server) fiber.Handler {
+func (h *EmailProfileHandler) UpdateEmailProfile() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		emailProfileID := c.Params("emailProfileID")
 		if emailProfileID == "" {
@@ -150,8 +160,7 @@ func UpdateEmailProfile(s *api.Server) fiber.Handler {
 
 		updatedEntity.ID = uuid.MustParse(emailProfileID)
 
-		entity, err := services.NewEmailProfileService(s).
-			UpdateEmailProfile(c.UserContext(), updatedEntity)
+		entity, err := h.Service.UpdateEmailProfile(c.UserContext(), updatedEntity)
 		if err != nil {
 			errorResponse := util.CreateDBErrorResponse(err)
 			return c.Status(fiber.StatusInternalServerError).JSON(errorResponse)

@@ -10,10 +10,22 @@ import (
 	"github.com/google/uuid"
 )
 
+type BillingControlHandler struct {
+	Server  *api.Server
+	Service *services.BillingControlService
+}
+
+func NewBillingControlHandler(s *api.Server) *BillingControlHandler {
+	return &BillingControlHandler{
+		Server:  s,
+		Service: services.NewBillingControlService(s),
+	}
+}
+
 // GetBillingControl is a handler that returns the billing control for an organization.
 //
 // GET /billing-control
-func GetBillingControl(s *api.Server) fiber.Handler {
+func (h *BillingControlHandler) GetBillingControl() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		orgID, ok := c.Locals(util.CTXOrganizationID).(uuid.UUID)
 		buID, buOK := c.Locals(util.CTXBusinessUnitID).(uuid.UUID)
@@ -31,7 +43,7 @@ func GetBillingControl(s *api.Server) fiber.Handler {
 			})
 		}
 
-		entity, err := services.NewBillingControlService(s).GetBillingControl(c.UserContext(), orgID, buID)
+		entity, err := h.Service.GetBillingControl(c.UserContext(), orgID, buID)
 		if err != nil {
 			errorResponse := util.CreateDBErrorResponse(err)
 			return c.Status(fiber.StatusInternalServerError).JSON(errorResponse)
@@ -41,7 +53,7 @@ func GetBillingControl(s *api.Server) fiber.Handler {
 	}
 }
 
-func UpdateBillingControl(s *api.Server) fiber.Handler {
+func (h *BillingControlHandler) UpdateBillingControl() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		billingControlID := c.Params("billingControlID")
 		if billingControlID == "" {
@@ -73,7 +85,7 @@ func UpdateBillingControl(s *api.Server) fiber.Handler {
 
 		data.ID = uuid.MustParse(billingControlID)
 
-		updatedEntity, err := services.NewBillingControlService(s).UpdateBillingControl(c.UserContext(), data)
+		updatedEntity, err := h.Service.UpdateBillingControl(c.UserContext(), data)
 		if err != nil {
 			errorResponse := util.CreateDBErrorResponse(err)
 			return c.Status(fiber.StatusInternalServerError).JSON(errorResponse)

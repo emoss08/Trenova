@@ -10,10 +10,22 @@ import (
 	"github.com/google/uuid"
 )
 
+type ReasonCodeHandler struct {
+	Server  *api.Server
+	Service *services.ReasonCodeService
+}
+
+func NewReasonCodeHandler(s *api.Server) *ReasonCodeHandler {
+	return &ReasonCodeHandler{
+		Server:  s,
+		Service: services.NewReasonCodeService(s),
+	}
+}
+
 // GetReasonCodes is a handler that returns a list of reason codes.
 //
 // GET /reason-codes
-func GetReasonCodes(s *api.Server) fiber.Handler {
+func (h *ReasonCodeHandler) GetReasonCodes() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		offset, limit, err := util.PaginationParams(c)
 		if err != nil {
@@ -45,8 +57,7 @@ func GetReasonCodes(s *api.Server) fiber.Handler {
 			})
 		}
 
-		entities, count, err := services.NewReasonCodeService(s).
-			GetReasonCodes(c.UserContext(), limit, offset, orgID, buID)
+		entities, count, err := h.Service.GetReasonCodes(c.UserContext(), limit, offset, orgID, buID)
 		if err != nil {
 			errorResponse := util.CreateDBErrorResponse(err)
 			return c.Status(fiber.StatusInternalServerError).JSON(errorResponse)
@@ -67,7 +78,7 @@ func GetReasonCodes(s *api.Server) fiber.Handler {
 // CreateReasonCode is a handler that creates a new reason code.
 //
 // POST /reason-codes
-func CreateReasonCode(s *api.Server) fiber.Handler {
+func (h *ReasonCodeHandler) CreateReasonCode() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		newEntity := new(ent.ReasonCode)
 
@@ -103,8 +114,7 @@ func CreateReasonCode(s *api.Server) fiber.Handler {
 			})
 		}
 
-		entity, err := services.NewReasonCodeService(s).
-			CreateReasonCode(c.UserContext(), newEntity)
+		entity, err := h.Service.CreateReasonCode(c.UserContext(), newEntity)
 		if err != nil {
 			errorResponse := util.CreateDBErrorResponse(err)
 			return c.Status(fiber.StatusInternalServerError).JSON(errorResponse)
@@ -114,10 +124,10 @@ func CreateReasonCode(s *api.Server) fiber.Handler {
 	}
 }
 
-// UpdateReasonCode is a handler that updates an reason code.
+// UpdateReasonCode is a handler that updates a reason code.
 //
 // PUT /reason-codes/:reasonCodeID
-func UpdateReasonCode(s *api.Server) fiber.Handler {
+func (h *ReasonCodeHandler) UpdateReasonCode() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		reasonCodeID := c.Params("reasonCodeID")
 		if reasonCodeID == "" {
@@ -150,8 +160,7 @@ func UpdateReasonCode(s *api.Server) fiber.Handler {
 
 		updatedEntity.ID = uuid.MustParse(reasonCodeID)
 
-		entity, err := services.NewReasonCodeService(s).
-			UpdateReasonCode(c.UserContext(), updatedEntity)
+		entity, err := h.Service.UpdateReasonCode(c.UserContext(), updatedEntity)
 		if err != nil {
 			errorResponse := util.CreateDBErrorResponse(err)
 			return c.Status(fiber.StatusInternalServerError).JSON(errorResponse)

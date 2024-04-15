@@ -10,10 +10,22 @@ import (
 	"github.com/google/uuid"
 )
 
-// GetGoogleAPI is a handler that returns the google api settings for an organization.
+type GoogleAPIHandler struct {
+	Server  *api.Server
+	Service *services.GoogleAPIService
+}
+
+func NewGoogleAPIHandler(s *api.Server) *GoogleAPIHandler {
+	return &GoogleAPIHandler{
+		Server:  s,
+		Service: services.NewGoogleAPIService(s),
+	}
+}
+
+// GetGoogleAPI is a handler that returns the Google api settings for an organization.
 //
 // GET /google-api
-func GetGoogleAPI(s *api.Server) fiber.Handler {
+func (h *GoogleAPIHandler) GetGoogleAPI() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		orgID, ok := c.Locals(util.CTXOrganizationID).(uuid.UUID)
 		buID, buOK := c.Locals(util.CTXBusinessUnitID).(uuid.UUID)
@@ -31,7 +43,7 @@ func GetGoogleAPI(s *api.Server) fiber.Handler {
 			})
 		}
 
-		entity, err := services.NewGoogleAPIService(s).GetGoogleAPI(c.UserContext(), orgID, buID)
+		entity, err := h.Service.GetGoogleAPI(c.UserContext(), orgID, buID)
 		if err != nil {
 			errorResponse := util.CreateDBErrorResponse(err)
 			return c.Status(fiber.StatusInternalServerError).JSON(errorResponse)
@@ -41,7 +53,7 @@ func GetGoogleAPI(s *api.Server) fiber.Handler {
 	}
 }
 
-func UpdateGoogleAPI(s *api.Server) fiber.Handler {
+func (h *GoogleAPIHandler) UpdateGoogleAPI() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		googleAPIID := c.Params("googleAPIID")
 		if googleAPIID == "" {
@@ -73,7 +85,7 @@ func UpdateGoogleAPI(s *api.Server) fiber.Handler {
 
 		data.ID = uuid.MustParse(googleAPIID)
 
-		updatedEntity, err := services.NewGoogleAPIService(s).UpdateGoogleAPI(c.UserContext(), data)
+		updatedEntity, err := h.Service.UpdateGoogleAPI(c.UserContext(), data)
 		if err != nil {
 			errorResponse := util.CreateDBErrorResponse(err)
 			return c.Status(fiber.StatusInternalServerError).JSON(errorResponse)

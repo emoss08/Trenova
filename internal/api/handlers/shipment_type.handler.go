@@ -10,10 +10,22 @@ import (
 	"github.com/google/uuid"
 )
 
+type ShipmentTypeHandler struct {
+	Server  *api.Server
+	Service *services.ShipmentTypeService
+}
+
+func NewShipmentTypeHandler(s *api.Server) *ShipmentTypeHandler {
+	return &ShipmentTypeHandler{
+		Server:  s,
+		Service: services.NewShipmentTypeService(s),
+	}
+}
+
 // GetShipmentTypes is a handler that returns a list of service types.
 //
 // GET /shipment-types
-func GetShipmentTypes(s *api.Server) fiber.Handler {
+func (h *ShipmentTypeHandler) GetShipmentTypes() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		offset, limit, err := util.PaginationParams(c)
 		if err != nil {
@@ -45,8 +57,7 @@ func GetShipmentTypes(s *api.Server) fiber.Handler {
 			})
 		}
 
-		entities, count, err := services.NewShipmentTypeService(s).
-			GetShipmentTypes(c.UserContext(), limit, offset, orgID, buID)
+		entities, count, err := h.Service.GetShipmentTypes(c.UserContext(), limit, offset, orgID, buID)
 		if err != nil {
 			errorResponse := util.CreateDBErrorResponse(err)
 			return c.Status(fiber.StatusInternalServerError).JSON(errorResponse)
@@ -67,7 +78,7 @@ func GetShipmentTypes(s *api.Server) fiber.Handler {
 // CreateShipmentType is a handler that creates a new service type.
 //
 // POST /shipment-types
-func CreateShipmentType(s *api.Server) fiber.Handler {
+func (h *ShipmentTypeHandler) CreateShipmentType() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		newEntity := new(ent.ShipmentType)
 
@@ -103,8 +114,7 @@ func CreateShipmentType(s *api.Server) fiber.Handler {
 			})
 		}
 
-		entity, err := services.NewShipmentTypeService(s).
-			CreateShipmentType(c.UserContext(), newEntity)
+		entity, err := h.Service.CreateShipmentType(c.UserContext(), newEntity)
 		if err != nil {
 			errorResponse := util.CreateDBErrorResponse(err)
 			return c.Status(fiber.StatusInternalServerError).JSON(errorResponse)
@@ -114,10 +124,10 @@ func CreateShipmentType(s *api.Server) fiber.Handler {
 	}
 }
 
-// UpdateShipmentType is a handler that updates an service type.
+// UpdateShipmentType is a handler that updates a service type.
 //
 // PUT /shipment-types/:shipmentTypeID
-func UpdateShipmentType(s *api.Server) fiber.Handler {
+func (h *ShipmentTypeHandler) UpdateShipmentType() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		shipmentTypeID := c.Params("shipmentTypeID")
 		if shipmentTypeID == "" {
@@ -150,8 +160,7 @@ func UpdateShipmentType(s *api.Server) fiber.Handler {
 
 		updatedEntity.ID = uuid.MustParse(shipmentTypeID)
 
-		entity, err := services.NewShipmentTypeService(s).
-			UpdateShipmentType(c.UserContext(), updatedEntity)
+		entity, err := h.Service.UpdateShipmentType(c.UserContext(), updatedEntity)
 		if err != nil {
 			errorResponse := util.CreateDBErrorResponse(err)
 			return c.Status(fiber.StatusInternalServerError).JSON(errorResponse)

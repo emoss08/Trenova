@@ -10,10 +10,22 @@ import (
 	"github.com/google/uuid"
 )
 
+type DispatchControlHandler struct {
+	Server  *api.Server
+	Service *services.DispatchControlService
+}
+
+func NewDispatchControlHandler(s *api.Server) *DispatchControlHandler {
+	return &DispatchControlHandler{
+		Server:  s,
+		Service: services.NewDispatchControlService(s),
+	}
+}
+
 // GetDispatchControl is a handler that returns the dispatch control for an organization.
 //
 // GET /dispatch-control
-func GetDispatchControl(s *api.Server) fiber.Handler {
+func (h *DispatchControlHandler) GetDispatchControl() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		orgID, ok := c.Locals(util.CTXOrganizationID).(uuid.UUID)
 		buID, buOK := c.Locals(util.CTXBusinessUnitID).(uuid.UUID)
@@ -31,7 +43,7 @@ func GetDispatchControl(s *api.Server) fiber.Handler {
 			})
 		}
 
-		entity, err := services.NewDispatchControlService(s).GetDispatchControl(c.UserContext(), orgID, buID)
+		entity, err := h.Service.GetDispatchControl(c.UserContext(), orgID, buID)
 		if err != nil {
 			errorResponse := util.CreateDBErrorResponse(err)
 			return c.Status(fiber.StatusInternalServerError).JSON(errorResponse)
@@ -44,7 +56,7 @@ func GetDispatchControl(s *api.Server) fiber.Handler {
 // UpdateDispatchControlByID is a handler that updates the dispatch control for an organization.
 //
 // PUT /dispatch-control/:dispatchControlID
-func UpdateDispatchControlByID(s *api.Server) fiber.Handler {
+func (h *DispatchControlHandler) UpdateDispatchControlByID() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		dispatchControlID := c.Params("dispatchControlID")
 		if dispatchControlID == "" {
@@ -77,7 +89,7 @@ func UpdateDispatchControlByID(s *api.Server) fiber.Handler {
 
 		data.ID = uuid.MustParse(dispatchControlID)
 
-		updatedEntity, err := services.NewDispatchControlService(s).UpdateDispatchControl(c.UserContext(), data)
+		updatedEntity, err := h.Service.UpdateDispatchControl(c.UserContext(), data)
 		if err != nil {
 			errorResponse := util.CreateDBErrorResponse(err)
 			return c.Status(fiber.StatusInternalServerError).JSON(errorResponse)

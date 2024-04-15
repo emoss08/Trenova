@@ -10,10 +10,22 @@ import (
 	"github.com/google/uuid"
 )
 
+type TractorHandler struct {
+	Server  *api.Server
+	Service *services.TractorService
+}
+
+func NewTractorHandler(s *api.Server) *TractorHandler {
+	return &TractorHandler{
+		Server:  s,
+		Service: services.NewTractorService(s),
+	}
+}
+
 // GetTractors is a handler that returns a list of tractors.
 //
 // GET /tractors
-func GetTractors(s *api.Server) fiber.Handler {
+func (h *TractorHandler) GetTractors() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		offset, limit, err := util.PaginationParams(c)
 		if err != nil {
@@ -45,8 +57,7 @@ func GetTractors(s *api.Server) fiber.Handler {
 			})
 		}
 
-		entities, count, err := services.NewTractorService(s).
-			GetTractors(c.UserContext(), limit, offset, orgID, buID)
+		entities, count, err := h.Service.GetTractors(c.UserContext(), limit, offset, orgID, buID)
 		if err != nil {
 			errorResponse := util.CreateDBErrorResponse(err)
 			return c.Status(fiber.StatusInternalServerError).JSON(errorResponse)
@@ -67,7 +78,7 @@ func GetTractors(s *api.Server) fiber.Handler {
 // CreateTractor is a handler that creates a new tractor.
 //
 // POST /tractors
-func CreateTractor(s *api.Server) fiber.Handler {
+func (h *TractorHandler) CreateTractor() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		newEntity := new(ent.Tractor)
 
@@ -103,8 +114,7 @@ func CreateTractor(s *api.Server) fiber.Handler {
 			})
 		}
 
-		entity, err := services.NewTractorService(s).
-			CreateTractor(c.UserContext(), newEntity)
+		entity, err := h.Service.CreateTractor(c.UserContext(), newEntity)
 		if err != nil {
 			errorResponse := util.CreateDBErrorResponse(err)
 			return c.Status(fiber.StatusInternalServerError).JSON(errorResponse)
@@ -114,10 +124,10 @@ func CreateTractor(s *api.Server) fiber.Handler {
 	}
 }
 
-// UpdateTractor is a handler that updates an tractor.
+// UpdateTractor is a handler that updates a tractor.
 //
 // PUT /tractors/:tractorID
-func UpdateTractor(s *api.Server) fiber.Handler {
+func (h *TractorHandler) UpdateTractor() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		tractorID := c.Params("tractorID")
 		if tractorID == "" {
@@ -150,8 +160,7 @@ func UpdateTractor(s *api.Server) fiber.Handler {
 
 		updatedEntity.ID = uuid.MustParse(tractorID)
 
-		entity, err := services.NewTractorService(s).
-			UpdateTractor(c.UserContext(), updatedEntity)
+		entity, err := h.Service.UpdateTractor(c.UserContext(), updatedEntity)
 		if err != nil {
 			errorResponse := util.CreateDBErrorResponse(err)
 			return c.Status(fiber.StatusInternalServerError).JSON(errorResponse)

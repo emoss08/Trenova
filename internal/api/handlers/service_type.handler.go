@@ -10,10 +10,22 @@ import (
 	"github.com/google/uuid"
 )
 
+type ServiceTypeHandler struct {
+	Server  *api.Server
+	Service *services.ServiceTypeService
+}
+
+func NewServiceTypeHandler(s *api.Server) *ServiceTypeHandler {
+	return &ServiceTypeHandler{
+		Server:  s,
+		Service: services.NewServiceTypeService(s),
+	}
+}
+
 // GetServiceTypes is a handler that returns a list of service types.
 //
 // GET /service-types
-func GetServiceTypes(s *api.Server) fiber.Handler {
+func (h *ServiceTypeHandler) GetServiceTypes() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		offset, limit, err := util.PaginationParams(c)
 		if err != nil {
@@ -45,8 +57,7 @@ func GetServiceTypes(s *api.Server) fiber.Handler {
 			})
 		}
 
-		entities, count, err := services.NewServiceTypeService(s).
-			GetServiceTypes(c.UserContext(), limit, offset, orgID, buID)
+		entities, count, err := h.Service.GetServiceTypes(c.UserContext(), limit, offset, orgID, buID)
 		if err != nil {
 			errorResponse := util.CreateDBErrorResponse(err)
 			return c.Status(fiber.StatusInternalServerError).JSON(errorResponse)
@@ -67,7 +78,7 @@ func GetServiceTypes(s *api.Server) fiber.Handler {
 // CreateServiceType is a handler that creates a new service type.
 //
 // POST /service-types
-func CreateServiceType(s *api.Server) fiber.Handler {
+func (h *ServiceTypeHandler) CreateServiceType() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		newEntity := new(ent.ServiceType)
 
@@ -103,8 +114,7 @@ func CreateServiceType(s *api.Server) fiber.Handler {
 			})
 		}
 
-		entity, err := services.NewServiceTypeService(s).
-			CreateServiceType(c.UserContext(), newEntity)
+		entity, err := h.Service.CreateServiceType(c.UserContext(), newEntity)
 		if err != nil {
 			errorResponse := util.CreateDBErrorResponse(err)
 			return c.Status(fiber.StatusInternalServerError).JSON(errorResponse)
@@ -114,10 +124,10 @@ func CreateServiceType(s *api.Server) fiber.Handler {
 	}
 }
 
-// UpdateServiceType is a handler that updates an service type.
+// UpdateServiceType is a handler that updates a service type.
 //
 // PUT /service-types/:serviceTypeID
-func UpdateServiceType(s *api.Server) fiber.Handler {
+func (h *ServiceTypeHandler) UpdateServiceType() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		serviceTypeID := c.Params("serviceTypeID")
 		if serviceTypeID == "" {
@@ -150,8 +160,7 @@ func UpdateServiceType(s *api.Server) fiber.Handler {
 
 		updatedEntity.ID = uuid.MustParse(serviceTypeID)
 
-		entity, err := services.NewServiceTypeService(s).
-			UpdateServiceType(c.UserContext(), updatedEntity)
+		entity, err := h.Service.UpdateServiceType(c.UserContext(), updatedEntity)
 		if err != nil {
 			errorResponse := util.CreateDBErrorResponse(err)
 			return c.Status(fiber.StatusInternalServerError).JSON(errorResponse)

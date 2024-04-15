@@ -10,10 +10,22 @@ import (
 	"github.com/google/uuid"
 )
 
+type DocumentClassificationHandler struct {
+	Server  *api.Server
+	Service *services.DocumentClassificationService
+}
+
+func NewDocumentClassificationHandler(s *api.Server) *DocumentClassificationHandler {
+	return &DocumentClassificationHandler{
+		Server:  s,
+		Service: services.NewDocumentClassificationService(s),
+	}
+}
+
 // GetDocumentClassifications is a handler that returns a list of document classifications.
 //
 // GET /document-classifications
-func GetDocumentClassifications(s *api.Server) fiber.Handler {
+func (h *DocumentClassificationHandler) GetDocumentClassifications() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		offset, limit, err := util.PaginationParams(c)
 		if err != nil {
@@ -45,8 +57,7 @@ func GetDocumentClassifications(s *api.Server) fiber.Handler {
 			})
 		}
 
-		entities, count, err := services.NewDocumentClassificationService(s).
-			GetDocumentClassifications(c.UserContext(), limit, offset, orgID, buID)
+		entities, count, err := h.Service.GetDocumentClassifications(c.UserContext(), limit, offset, orgID, buID)
 		if err != nil {
 			errorResponse := util.CreateDBErrorResponse(err)
 			return c.Status(fiber.StatusInternalServerError).JSON(errorResponse)
@@ -67,7 +78,7 @@ func GetDocumentClassifications(s *api.Server) fiber.Handler {
 // CreateDocumentClassification is a handler that creates a new document classification.
 //
 // POST /document-classifications
-func CreateDocumentClassification(s *api.Server) fiber.Handler {
+func (h *DocumentClassificationHandler) CreateDocumentClassification() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		newEntity := new(ent.DocumentClassification)
 
@@ -103,8 +114,7 @@ func CreateDocumentClassification(s *api.Server) fiber.Handler {
 			})
 		}
 
-		entity, err := services.NewDocumentClassificationService(s).
-			CreateDocumentClassification(c.UserContext(), newEntity)
+		entity, err := h.Service.CreateDocumentClassification(c.UserContext(), newEntity)
 		if err != nil {
 			errorResponse := util.CreateDBErrorResponse(err)
 			return c.Status(fiber.StatusInternalServerError).JSON(errorResponse)
@@ -114,10 +124,10 @@ func CreateDocumentClassification(s *api.Server) fiber.Handler {
 	}
 }
 
-// UpdateDocumentClassification is a handler that updates an document classification.
+// UpdateDocumentClassification is a handler that updates a document classification.
 //
 // PUT /document-classifications/:documentClassID
-func UpdateDocumentClassification(s *api.Server) fiber.Handler {
+func (h *DocumentClassificationHandler) UpdateDocumentClassification() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		documentClassID := c.Params("documentClassID")
 		if documentClassID == "" {
@@ -150,8 +160,7 @@ func UpdateDocumentClassification(s *api.Server) fiber.Handler {
 
 		updatedEntity.ID = uuid.MustParse(documentClassID)
 
-		entity, err := services.NewDocumentClassificationService(s).
-			UpdateDocumentClassification(c.UserContext(), updatedEntity)
+		entity, err := h.Service.UpdateDocumentClassification(c.UserContext(), updatedEntity)
 		if err != nil {
 			errorResponse := util.CreateDBErrorResponse(err)
 			return c.Status(fiber.StatusInternalServerError).JSON(errorResponse)

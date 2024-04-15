@@ -10,10 +10,22 @@ import (
 	"github.com/google/uuid"
 )
 
+type DivisionCodeHandler struct {
+	Server  *api.Server
+	Service *services.DivisionCodeService
+}
+
+func NewDivisionCodeHandler(s *api.Server) *DivisionCodeHandler {
+	return &DivisionCodeHandler{
+		Server:  s,
+		Service: services.NewDivisionCodeService(s),
+	}
+}
+
 // GetDivisionCodes is a handler that returns a list of division codes.
 //
 // GET /division-codes
-func GetDivisionCodes(s *api.Server) fiber.Handler {
+func (h *DivisionCodeHandler) GetDivisionCodes() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		offset, limit, err := util.PaginationParams(c)
 		if err != nil {
@@ -45,8 +57,7 @@ func GetDivisionCodes(s *api.Server) fiber.Handler {
 			})
 		}
 
-		entities, count, err := services.NewDivisionCodeService(s).
-			GetDivisionCodes(c.UserContext(), limit, offset, orgID, buID)
+		entities, count, err := h.Service.GetDivisionCodes(c.UserContext(), limit, offset, orgID, buID)
 		if err != nil {
 			errorResponse := util.CreateDBErrorResponse(err)
 			return c.Status(fiber.StatusInternalServerError).JSON(errorResponse)
@@ -67,7 +78,7 @@ func GetDivisionCodes(s *api.Server) fiber.Handler {
 // CreateDivisionCode is a handler that creates a new division code.
 //
 // POST /division-codes
-func CreateDivisionCode(s *api.Server) fiber.Handler {
+func (h *DivisionCodeHandler) CreateDivisionCode() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		newEntity := new(ent.DivisionCode)
 
@@ -103,8 +114,7 @@ func CreateDivisionCode(s *api.Server) fiber.Handler {
 			})
 		}
 
-		entity, err := services.NewDivisionCodeService(s).
-			CreateDivisionCode(c.UserContext(), newEntity)
+		entity, err := h.Service.CreateDivisionCode(c.UserContext(), newEntity)
 		if err != nil {
 			errorResponse := util.CreateDBErrorResponse(err)
 			return c.Status(fiber.StatusInternalServerError).JSON(errorResponse)
@@ -114,10 +124,10 @@ func CreateDivisionCode(s *api.Server) fiber.Handler {
 	}
 }
 
-// UpdateDivisionCode is a handler that updates an division code.
+// UpdateDivisionCode is a handler that updates a division code.
 //
 // PUT /division-codes/:divisionCodeID
-func UpdateDivisionCode(s *api.Server) fiber.Handler {
+func (h *DivisionCodeHandler) UpdateDivisionCode() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		divisionCodeID := c.Params("divisionCodeID")
 		if divisionCodeID == "" {
@@ -150,8 +160,7 @@ func UpdateDivisionCode(s *api.Server) fiber.Handler {
 
 		updatedEntity.ID = uuid.MustParse(divisionCodeID)
 
-		entity, err := services.NewDivisionCodeService(s).
-			UpdateDivisionCode(c.UserContext(), updatedEntity)
+		entity, err := h.Service.UpdateDivisionCode(c.UserContext(), updatedEntity)
 		if err != nil {
 			errorResponse := util.CreateDBErrorResponse(err)
 			return c.Status(fiber.StatusInternalServerError).JSON(errorResponse)

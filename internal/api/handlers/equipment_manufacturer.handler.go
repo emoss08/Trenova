@@ -10,10 +10,22 @@ import (
 	"github.com/google/uuid"
 )
 
+type EquipmentManufacturerHandler struct {
+	Server  *api.Server
+	Service *services.EquipmentManufacturerService
+}
+
+func NewEquipmentManufacturerHandler(s *api.Server) *EquipmentManufacturerHandler {
+	return &EquipmentManufacturerHandler{
+		Server:  s,
+		Service: services.NewEquipmentManufacturerService(s),
+	}
+}
+
 // GetEquipmentManufacturers is a handler that returns a list of equipment manufacturers.
 //
 // GET /equipment-manufacturers
-func GetEquipmentManufacturers(s *api.Server) fiber.Handler {
+func (h *EquipmentManufacturerHandler) GetEquipmentManufacturers() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		offset, limit, err := util.PaginationParams(c)
 		if err != nil {
@@ -45,8 +57,7 @@ func GetEquipmentManufacturers(s *api.Server) fiber.Handler {
 			})
 		}
 
-		entities, count, err := services.NewEquipmentManufacturerService(s).
-			GetEquipmentManufacturers(c.UserContext(), limit, offset, orgID, buID)
+		entities, count, err := h.Service.GetEquipmentManufacturers(c.UserContext(), limit, offset, orgID, buID)
 		if err != nil {
 			errorResponse := util.CreateDBErrorResponse(err)
 			return c.Status(fiber.StatusInternalServerError).JSON(errorResponse)
@@ -67,7 +78,7 @@ func GetEquipmentManufacturers(s *api.Server) fiber.Handler {
 // CreateEquipmentManufacturer is a handler that creates a new equipment manufacturer.
 //
 // POST /equipment-manufacturers
-func CreateEquipmentManufacturer(s *api.Server) fiber.Handler {
+func (h *EquipmentManufacturerHandler) CreateEquipmentManufacturer() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		newEntity := new(ent.EquipmentManufactuer)
 
@@ -103,8 +114,7 @@ func CreateEquipmentManufacturer(s *api.Server) fiber.Handler {
 			})
 		}
 
-		entity, err := services.NewEquipmentManufacturerService(s).
-			CreateEquipmentManufacturer(c.UserContext(), newEntity)
+		entity, err := h.Service.CreateEquipmentManufacturer(c.UserContext(), newEntity)
 		if err != nil {
 			errorResponse := util.CreateDBErrorResponse(err)
 			return c.Status(fiber.StatusInternalServerError).JSON(errorResponse)
@@ -117,7 +127,7 @@ func CreateEquipmentManufacturer(s *api.Server) fiber.Handler {
 // UpdateEquipmentManufacturer is a handler that updates an equipment manufacturer.
 //
 // PUT /equipment-manufacturers/:equipmentManuID
-func UpdateEquipmentManufacturer(s *api.Server) fiber.Handler {
+func (h *EquipmentManufacturerHandler) UpdateEquipmentManufacturer() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		equipmentManuID := c.Params("equipmentManuID")
 		if equipmentManuID == "" {
@@ -150,8 +160,7 @@ func UpdateEquipmentManufacturer(s *api.Server) fiber.Handler {
 
 		updatedEntity.ID = uuid.MustParse(equipmentManuID)
 
-		entity, err := services.NewEquipmentManufacturerService(s).
-			UpdateEquipmentManufacturer(c.UserContext(), updatedEntity)
+		entity, err := h.Service.UpdateEquipmentManufacturer(c.UserContext(), updatedEntity)
 		if err != nil {
 			errorResponse := util.CreateDBErrorResponse(err)
 			return c.Status(fiber.StatusInternalServerError).JSON(errorResponse)

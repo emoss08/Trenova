@@ -19,7 +19,7 @@ import (
 	kfk "github.com/emoss08/trenova/internal/util/kafka"
 	"github.com/gofiber/fiber/v2"
 	"github.com/google/uuid"
-	_ "github.com/jackc/pgx/v5/stdlib"
+	_ "github.com/jackc/pgx/v5/stdlib" // pgx driver
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 )
@@ -31,6 +31,7 @@ type Server struct {
 	Logger  *zerolog.Logger
 	Session *session.Store
 	Kafka   *kfk.Client
+	Router  fiber.Router
 }
 
 func NewServer(config config.Server) *Server {
@@ -41,6 +42,7 @@ func NewServer(config config.Server) *Server {
 		Logger:  nil,
 		Session: nil,
 		Kafka:   nil,
+		Router:  nil,
 	}
 
 	return s
