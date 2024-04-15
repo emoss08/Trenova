@@ -1,4 +1,4 @@
-package viewer //nolint:goimports // Path: viewer/viewer.go
+package viewer
 
 import (
 	"context"

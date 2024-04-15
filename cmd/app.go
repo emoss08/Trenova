@@ -1,4 +1,4 @@
-package main //nolint:goimports // Path: cmd/app.go
+package main
 
 import (
 	"context"
