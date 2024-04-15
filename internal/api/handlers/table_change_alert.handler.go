@@ -10,10 +10,10 @@ import (
 	"github.com/google/uuid"
 )
 
-// GetAccessorialCharges is a handler that returns a list of accessorial charges.
+// GetTableChangeAlerts is a handler that returns a list of table change alerts.
 //
-// GET /accessorial-charges
-func GetAccessorialCharges(s *api.Server) fiber.Handler {
+// GET /table-change-alerts
+func GetTableChangeAlerts(s *api.Server) fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		offset, limit, err := util.PaginationParams(c)
 		if err != nil {
@@ -45,7 +45,8 @@ func GetAccessorialCharges(s *api.Server) fiber.Handler {
 			})
 		}
 
-		entities, count, err := services.NewAccessorialChargeService(s).GetAccessorialCharges(c.UserContext(), limit, offset, orgID, buID)
+		entities, count, err := services.NewTableChangeAlertService(s).
+			GetTableChangeAlerts(c.UserContext(), limit, offset, orgID, buID)
 		if err != nil {
 			errorResponse := util.CreateDBErrorResponse(err)
 			return c.Status(fiber.StatusInternalServerError).JSON(errorResponse)
@@ -63,12 +64,12 @@ func GetAccessorialCharges(s *api.Server) fiber.Handler {
 	}
 }
 
-// CreateAccessorialCharge is a handler that creates a new accessorial charge.
+// CreateTableChangeAlert is a handler that creates a table change alert.
 //
-// POST /accessorial-charges
-func CreateAccessorialCharge(s *api.Server) fiber.Handler {
+// POST /table-change-alerts
+func CreateTableChangeAlert(s *api.Server) fiber.Handler {
 	return func(c *fiber.Ctx) error {
-		newEntity := new(ent.AccessorialCharge)
+		newEntity := new(ent.TableChangeAlert)
 
 		orgID, ok := c.Locals(util.CTXOrganizationID).(uuid.UUID)
 		buID, buOK := c.Locals(util.CTXBusinessUnitID).(uuid.UUID)
@@ -102,8 +103,8 @@ func CreateAccessorialCharge(s *api.Server) fiber.Handler {
 			})
 		}
 
-		entity, err := services.NewAccessorialChargeService(s).
-			CreateAccessorialCharge(c.UserContext(), newEntity)
+		entity, err := services.NewTableChangeAlertService(s).
+			CreateTableChangeAlert(c.UserContext(), newEntity)
 		if err != nil {
 			errorResponse := util.CreateDBErrorResponse(err)
 			return c.Status(fiber.StatusInternalServerError).JSON(errorResponse)
@@ -113,26 +114,26 @@ func CreateAccessorialCharge(s *api.Server) fiber.Handler {
 	}
 }
 
-// UpdateAccessorialCharge is a handler that updates an accessorial charge.
+// UpdateTableChangeAlert is a handler that updates a table change alert.
 //
-// PUT /accessorial-charges/:accessorialChargeID
-func UpdateAccessorialCharge(s *api.Server) fiber.Handler {
+// PUT /table-change-alerts/:tableChangeAlertID
+func UpdateTableChangeAlert(s *api.Server) fiber.Handler {
 	return func(c *fiber.Ctx) error {
-		accessorialChargeID := c.Params("accessorialChargeID")
-		if accessorialChargeID == "" {
+		tableChangeAlertID := c.Params("tableChangeAlertID")
+		if tableChangeAlertID == "" {
 			return c.Status(fiber.StatusBadRequest).JSON(types.ValidationErrorResponse{
 				Type: "invalidRequest",
 				Errors: []types.ValidationErrorDetail{
 					{
 						Code:   "invalidRequest",
-						Detail: "Accessorial Charge ID is required",
-						Attr:   "accessorialChargeID",
+						Detail: "Email Profile ID is required",
+						Attr:   "tableChangeAlertID",
 					},
 				},
 			})
 		}
 
-		updatedEntity := new(ent.AccessorialCharge)
+		updatedEntity := new(ent.TableChangeAlert)
 
 		if err := util.ParseBodyAndValidate(c, updatedEntity); err != nil {
 			return c.Status(fiber.StatusBadRequest).JSON(types.ValidationErrorResponse{
@@ -147,14 +148,45 @@ func UpdateAccessorialCharge(s *api.Server) fiber.Handler {
 			})
 		}
 
-		updatedEntity.ID = uuid.MustParse(accessorialChargeID)
+		updatedEntity.ID = uuid.MustParse(tableChangeAlertID)
 
-		entity, err := services.NewAccessorialChargeService(s).UpdateAccessorialCharge(c.UserContext(), updatedEntity)
+		entity, err := services.NewTableChangeAlertService(s).
+			UpdateTableChangeAlert(c.UserContext(), updatedEntity)
 		if err != nil {
 			errorResponse := util.CreateDBErrorResponse(err)
 			return c.Status(fiber.StatusInternalServerError).JSON(errorResponse)
 		}
 
 		return c.Status(fiber.StatusOK).JSON(entity)
+	}
+}
+
+func GetTableNames(s *api.Server) fiber.Handler {
+	return func(c *fiber.Ctx) error {
+		entities, count, err := services.NewTableChangeAlertService(s).GetTableNames(c.UserContext())
+		if err != nil {
+			errorResponse := util.CreateDBErrorResponse(err)
+			return c.Status(fiber.StatusInternalServerError).JSON(errorResponse)
+		}
+
+		return c.Status(fiber.StatusOK).JSON(types.HTTPResponse{
+			Results: entities,
+			Count:   count,
+		})
+	}
+}
+
+func GetTopicNames(s *api.Server) fiber.Handler {
+	return func(c *fiber.Ctx) error {
+		entities, count, err := services.NewTableChangeAlertService(s).GetTopicNames()
+		if err != nil {
+			errorResponse := util.CreateDBErrorResponse(err)
+			return c.Status(fiber.StatusInternalServerError).JSON(errorResponse)
+		}
+
+		return c.Status(fiber.StatusOK).JSON(types.HTTPResponse{
+			Results: entities,
+			Count:   count,
+		})
 	}
 }

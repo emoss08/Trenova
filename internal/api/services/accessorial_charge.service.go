@@ -57,25 +57,28 @@ func (r *AccessorialChargeService) GetAccessorialCharges(ctx context.Context, li
 }
 
 // CreateAccessorialCharge creates a new accessorial charge.
-func (r *AccessorialChargeService) CreateAccessorialCharge(ctx context.Context, newEntity *ent.AccessorialCharge) (*ent.AccessorialCharge, error) {
-	createdEntity, err := r.Client.AccessorialCharge.Create().
-		SetOrganizationID(newEntity.OrganizationID).
-		SetBusinessUnitID(newEntity.BusinessUnitID).
-		SetStatus(newEntity.Status).
-		SetCode(newEntity.Code).
-		SetDescription(newEntity.Description).
-		SetIsDetention(newEntity.IsDetention).
-		SetMethod(newEntity.Method).
-		SetAmount(newEntity.Amount).
-		Save(ctx)
+func (r *AccessorialChargeService) CreateAccessorialCharge(
+	ctx context.Context, entity *ent.AccessorialCharge,
+) (*ent.AccessorialCharge, error) {
+	updatedEntity := new(ent.AccessorialCharge)
+
+	err := util.WithTx(ctx, r.Client, func(tx *ent.Tx) error {
+		var err error
+		updatedEntity, err = r.createAccessorialChargeEntity(ctx, tx, entity)
+		if err != nil {
+			return err
+		}
+
+		return nil
+	})
 	if err != nil {
-		return nil, eris.Wrap(err, "failed to create accessorial charge")
+		return nil, err
 	}
 
-	return createdEntity, nil
+	return updatedEntity, nil
 }
 
-func createAccessorialChargeEntity(
+func (r *AccessorialChargeService) createAccessorialChargeEntity(
 	ctx context.Context, tx *ent.Tx, entity *ent.AccessorialCharge,
 ) (*ent.AccessorialCharge, error) {
 	createdEntity, err := tx.AccessorialCharge.Create().
@@ -97,7 +100,7 @@ func createAccessorialChargeEntity(
 
 // UpdateAccessorialCharge updates a accessorial charge.
 func (r *AccessorialChargeService) UpdateAccessorialCharge(ctx context.Context, entity *ent.AccessorialCharge) (*ent.AccessorialCharge, error) {
-	var updatedEntity *ent.AccessorialCharge
+	updatedEntity := new(ent.AccessorialCharge)
 
 	err := util.WithTx(ctx, r.Client, func(tx *ent.Tx) error {
 		var err error

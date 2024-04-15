@@ -138,7 +138,7 @@ func UpdateHazmatSegregationRules(s *api.Server) fiber.Handler {
 
 		updatedEntity := new(ent.HazardousMaterialSegregation)
 
-		if err := c.BodyParser(&updatedEntity); err != nil {
+		if err := util.ParseBodyAndValidate(c, updatedEntity); err != nil {
 			return c.Status(fiber.StatusBadRequest).JSON(types.ValidationErrorResponse{
 				Type: "invalidRequest",
 				Errors: []types.ValidationErrorDetail{

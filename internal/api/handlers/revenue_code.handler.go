@@ -10,10 +10,10 @@ import (
 	"github.com/google/uuid"
 )
 
-// GetAccessorialCharges is a handler that returns a list of accessorial charges.
+// GetRevenueCodes is a handler that returns a list of revenue codes.
 //
-// GET /accessorial-charges
-func GetAccessorialCharges(s *api.Server) fiber.Handler {
+// GET /revenue-codes
+func GetRevenueCodes(s *api.Server) fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		offset, limit, err := util.PaginationParams(c)
 		if err != nil {
@@ -45,7 +45,8 @@ func GetAccessorialCharges(s *api.Server) fiber.Handler {
 			})
 		}
 
-		entities, count, err := services.NewAccessorialChargeService(s).GetAccessorialCharges(c.UserContext(), limit, offset, orgID, buID)
+		entities, count, err := services.NewRevenueCodeService(s).
+			GetRevenueCodes(c.UserContext(), limit, offset, orgID, buID)
 		if err != nil {
 			errorResponse := util.CreateDBErrorResponse(err)
 			return c.Status(fiber.StatusInternalServerError).JSON(errorResponse)
@@ -63,12 +64,12 @@ func GetAccessorialCharges(s *api.Server) fiber.Handler {
 	}
 }
 
-// CreateAccessorialCharge is a handler that creates a new accessorial charge.
+// CreateRevenueCode is a handler that creates a revenue code.
 //
-// POST /accessorial-charges
-func CreateAccessorialCharge(s *api.Server) fiber.Handler {
+// POST /revenue-codes
+func CreateRevenueCode(s *api.Server) fiber.Handler {
 	return func(c *fiber.Ctx) error {
-		newEntity := new(ent.AccessorialCharge)
+		newEntity := new(ent.RevenueCode)
 
 		orgID, ok := c.Locals(util.CTXOrganizationID).(uuid.UUID)
 		buID, buOK := c.Locals(util.CTXBusinessUnitID).(uuid.UUID)
@@ -102,8 +103,8 @@ func CreateAccessorialCharge(s *api.Server) fiber.Handler {
 			})
 		}
 
-		entity, err := services.NewAccessorialChargeService(s).
-			CreateAccessorialCharge(c.UserContext(), newEntity)
+		entity, err := services.NewRevenueCodeService(s).
+			CreateRevenueCode(c.UserContext(), newEntity)
 		if err != nil {
 			errorResponse := util.CreateDBErrorResponse(err)
 			return c.Status(fiber.StatusInternalServerError).JSON(errorResponse)
@@ -113,26 +114,26 @@ func CreateAccessorialCharge(s *api.Server) fiber.Handler {
 	}
 }
 
-// UpdateAccessorialCharge is a handler that updates an accessorial charge.
+// UpdateRevenueCode is a handler that updates a revenue code.
 //
-// PUT /accessorial-charges/:accessorialChargeID
-func UpdateAccessorialCharge(s *api.Server) fiber.Handler {
+// PUT /revenue-codes/:revenueCodeID
+func UpdateRevenueCode(s *api.Server) fiber.Handler {
 	return func(c *fiber.Ctx) error {
-		accessorialChargeID := c.Params("accessorialChargeID")
-		if accessorialChargeID == "" {
+		revenueCodeID := c.Params("revenueCodeID")
+		if revenueCodeID == "" {
 			return c.Status(fiber.StatusBadRequest).JSON(types.ValidationErrorResponse{
 				Type: "invalidRequest",
 				Errors: []types.ValidationErrorDetail{
 					{
 						Code:   "invalidRequest",
-						Detail: "Accessorial Charge ID is required",
-						Attr:   "accessorialChargeID",
+						Detail: "Email Profile ID is required",
+						Attr:   "revenueCodeID",
 					},
 				},
 			})
 		}
 
-		updatedEntity := new(ent.AccessorialCharge)
+		updatedEntity := new(ent.RevenueCode)
 
 		if err := util.ParseBodyAndValidate(c, updatedEntity); err != nil {
 			return c.Status(fiber.StatusBadRequest).JSON(types.ValidationErrorResponse{
@@ -147,9 +148,10 @@ func UpdateAccessorialCharge(s *api.Server) fiber.Handler {
 			})
 		}
 
-		updatedEntity.ID = uuid.MustParse(accessorialChargeID)
+		updatedEntity.ID = uuid.MustParse(revenueCodeID)
 
-		entity, err := services.NewAccessorialChargeService(s).UpdateAccessorialCharge(c.UserContext(), updatedEntity)
+		entity, err := services.NewRevenueCodeService(s).
+			UpdateRevenueCode(c.UserContext(), updatedEntity)
 		if err != nil {
 			errorResponse := util.CreateDBErrorResponse(err)
 			return c.Status(fiber.StatusInternalServerError).JSON(errorResponse)

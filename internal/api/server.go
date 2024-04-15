@@ -7,6 +7,7 @@ import (
 	"errors"
 	"time"
 
+	"github.com/confluentinc/confluent-kafka-go/v2/kafka"
 	"github.com/gofiber/storage/redis/v2"
 
 	"entgo.io/ent/dialect"
@@ -15,6 +16,7 @@ import (
 	entsql "entgo.io/ent/dialect/sql"
 	"github.com/emoss08/trenova/internal/config"
 	"github.com/emoss08/trenova/internal/ent"
+	kfk "github.com/emoss08/trenova/internal/util/kafka"
 	"github.com/gofiber/fiber/v2"
 	"github.com/google/uuid"
 	_ "github.com/jackc/pgx/v5/stdlib"
@@ -28,13 +30,17 @@ type Server struct {
 	Fiber   *fiber.App
 	Logger  *zerolog.Logger
 	Session *session.Store
+	Kafka   *kfk.Client
 }
 
 func NewServer(config config.Server) *Server {
 	s := &Server{
-		Config: config,
-		Client: nil,
-		Fiber:  nil,
+		Config:  config,
+		Client:  nil,
+		Fiber:   nil,
+		Logger:  nil,
+		Session: nil,
+		Kafka:   nil,
 	}
 
 	return s
@@ -68,6 +74,18 @@ func (s *Server) InitClient(ctx context.Context) error {
 	}
 
 	s.Client = client
+
+	return nil
+}
+
+func (s *Server) InitKafkaClient() error {
+	kafkaConfig := &kafka.ConfigMap{
+		"bootstrap.servers": s.Config.Kafka.Broker,
+	}
+
+	client := kfk.NewKafkaClient(kafkaConfig)
+
+	s.Kafka = client
 
 	return nil
 }

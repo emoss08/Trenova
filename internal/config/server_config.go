@@ -44,12 +44,17 @@ type LoggerServer struct {
 	PrettyPrintConsole bool
 }
 
+type KafkaServer struct {
+	Broker string
+}
+
 type Server struct {
 	Database     Database
 	Fiber        FiberServer
 	Logger       LoggerServer
 	Redis        RedisServer
 	SessionStore *session.Store
+	Kafka        KafkaServer
 }
 
 // DefaultServiceConfigFromEnv returns the server config as parsed from environment variables
@@ -105,6 +110,9 @@ func DefaultServiceConfigFromEnv() Server {
 			Username: util.GetEnv("SERVER_REDIS_USER", ""),
 			Password: util.GetEnv("SERVER_REDIS_PASSWORD", ""),
 			Database: util.GetEnvAsInt("SERVER_REDIS_DB", 0),
+		},
+		Kafka: KafkaServer{
+			Broker: util.GetEnv("SERVER_KAFKA_BROKER", "localhost:9094"),
 		},
 	}
 }

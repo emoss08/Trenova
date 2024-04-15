@@ -43,6 +43,10 @@ func main() {
 		log.Fatal().Err(err).Msg("Failed to initialize logger")
 	}
 
+	if err := s.InitKafkaClient(); err != nil {
+		log.Fatal().Err(err).Msg("Failed to initialize Kafka client")
+	}
+
 	router.Init(s)
 
 	go func() {

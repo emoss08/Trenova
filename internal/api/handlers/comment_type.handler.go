@@ -10,10 +10,10 @@ import (
 	"github.com/google/uuid"
 )
 
-// GetAccessorialCharges is a handler that returns a list of accessorial charges.
+// GetCommentTypes is a handler that returns a list of comment types.
 //
-// GET /accessorial-charges
-func GetAccessorialCharges(s *api.Server) fiber.Handler {
+// GET /comment-types
+func GetCommentTypes(s *api.Server) fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		offset, limit, err := util.PaginationParams(c)
 		if err != nil {
@@ -45,7 +45,8 @@ func GetAccessorialCharges(s *api.Server) fiber.Handler {
 			})
 		}
 
-		entities, count, err := services.NewAccessorialChargeService(s).GetAccessorialCharges(c.UserContext(), limit, offset, orgID, buID)
+		entities, count, err := services.NewCommentTypeService(s).
+			GetCommentTypes(c.UserContext(), limit, offset, orgID, buID)
 		if err != nil {
 			errorResponse := util.CreateDBErrorResponse(err)
 			return c.Status(fiber.StatusInternalServerError).JSON(errorResponse)
@@ -63,12 +64,12 @@ func GetAccessorialCharges(s *api.Server) fiber.Handler {
 	}
 }
 
-// CreateAccessorialCharge is a handler that creates a new accessorial charge.
+// CreateCommentType is a handler that creates a new comment type.
 //
-// POST /accessorial-charges
-func CreateAccessorialCharge(s *api.Server) fiber.Handler {
+// POST /comment-types
+func CreateCommentType(s *api.Server) fiber.Handler {
 	return func(c *fiber.Ctx) error {
-		newEntity := new(ent.AccessorialCharge)
+		newEntity := new(ent.CommentType)
 
 		orgID, ok := c.Locals(util.CTXOrganizationID).(uuid.UUID)
 		buID, buOK := c.Locals(util.CTXBusinessUnitID).(uuid.UUID)
@@ -102,8 +103,8 @@ func CreateAccessorialCharge(s *api.Server) fiber.Handler {
 			})
 		}
 
-		entity, err := services.NewAccessorialChargeService(s).
-			CreateAccessorialCharge(c.UserContext(), newEntity)
+		entity, err := services.NewCommentTypeService(s).
+			CreateCommentType(c.UserContext(), newEntity)
 		if err != nil {
 			errorResponse := util.CreateDBErrorResponse(err)
 			return c.Status(fiber.StatusInternalServerError).JSON(errorResponse)
@@ -113,26 +114,26 @@ func CreateAccessorialCharge(s *api.Server) fiber.Handler {
 	}
 }
 
-// UpdateAccessorialCharge is a handler that updates an accessorial charge.
+// UpdateCommentType is a handler that updates an comment type.
 //
-// PUT /accessorial-charges/:accessorialChargeID
-func UpdateAccessorialCharge(s *api.Server) fiber.Handler {
+// PUT /comment-types/:commentTypeID
+func UpdateCommentType(s *api.Server) fiber.Handler {
 	return func(c *fiber.Ctx) error {
-		accessorialChargeID := c.Params("accessorialChargeID")
-		if accessorialChargeID == "" {
+		commentTypeID := c.Params("commentTypeID")
+		if commentTypeID == "" {
 			return c.Status(fiber.StatusBadRequest).JSON(types.ValidationErrorResponse{
 				Type: "invalidRequest",
 				Errors: []types.ValidationErrorDetail{
 					{
 						Code:   "invalidRequest",
-						Detail: "Accessorial Charge ID is required",
-						Attr:   "accessorialChargeID",
+						Detail: "Comment Type ID is required",
+						Attr:   "commentTypeID",
 					},
 				},
 			})
 		}
 
-		updatedEntity := new(ent.AccessorialCharge)
+		updatedEntity := new(ent.CommentType)
 
 		if err := util.ParseBodyAndValidate(c, updatedEntity); err != nil {
 			return c.Status(fiber.StatusBadRequest).JSON(types.ValidationErrorResponse{
@@ -147,9 +148,10 @@ func UpdateAccessorialCharge(s *api.Server) fiber.Handler {
 			})
 		}
 
-		updatedEntity.ID = uuid.MustParse(accessorialChargeID)
+		updatedEntity.ID = uuid.MustParse(commentTypeID)
 
-		entity, err := services.NewAccessorialChargeService(s).UpdateAccessorialCharge(c.UserContext(), updatedEntity)
+		entity, err := services.NewCommentTypeService(s).
+			UpdateCommentType(c.UserContext(), updatedEntity)
 		if err != nil {
 			errorResponse := util.CreateDBErrorResponse(err)
 			return c.Status(fiber.StatusInternalServerError).JSON(errorResponse)

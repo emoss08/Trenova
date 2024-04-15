@@ -14,13 +14,13 @@ import (
 	"github.com/google/uuid"
 )
 
-// FeasibilityToolControlService is the service for accounting control settings.
+// FeasibilityToolControlService is the service for feasibility tool control settings.
 type FeasibilityToolControlService struct {
 	Client *ent.Client
 	Logger *zerolog.Logger
 }
 
-// NewFeasibilityToolControlService creates a new accounting control service.
+// NewFeasibilityToolControlService creates a new feasibility tool control service.
 func NewFeasibilityToolControlService(s *api.Server) *FeasibilityToolControlService {
 	return &FeasibilityToolControlService{
 		Client: s.Client,

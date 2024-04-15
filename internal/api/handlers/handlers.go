@@ -7,69 +7,112 @@ import (
 
 // AttachAllRoutes attaches all the routes to the Fiber instance.
 func AttachAllRoutes(s *api.Server, api fiber.Router) {
-	// Accessorial Charge Routers
-	accessorialCharges := api.Group("/accessorial-charges")
-	accessorialCharges.Get("/", GetAccessorialCharges(s))
-	accessorialCharges.Post("/", CreateAccessorialCharge(s))
-	accessorialCharges.Put("/:accessorialChargeID", UpdateAccessorialCharge(s))
+	// Register the handlers for the accessorial charges.
+	accessorialChargesAPI := api.Group("/accessorial-charges")
+	accessorialChargesAPI.Get("/", GetAccessorialCharges(s))
+	accessorialChargesAPI.Post("/", CreateAccessorialCharge(s))
+	accessorialChargesAPI.Put("/:accessorialChargeID", UpdateAccessorialCharge(s))
 
 	// Register the handlers for the organization
-	organizations := api.Group("/organizations")
-	organizations.Get("/me", GetUserOrganization(s))
+	organizationsAPI := api.Group("/organizations")
+	organizationsAPI.Get("/me", GetUserOrganization(s))
 
 	// Register the handlers for the accounting control.
-	accountingControl := api.Group("/accounting-control")
-	accountingControl.Get("/", GetAccountingControl(s))
-	accountingControl.Put("/:accountingControlID", UpdateAccountingControlByID(s))
+	accountingControlAPI := api.Group("/accounting-control")
+	accountingControlAPI.Get("/", GetAccountingControl(s))
+	accountingControlAPI.Put("/:accountingControlID", UpdateAccountingControlByID(s))
 
 	// Register the handlers for the dispatch control
-	dispatchControl := api.Group("/dispatch-control")
-	dispatchControl.Get("/", GetDispatchControl(s))
-	dispatchControl.Put("/:dispatchControlID", UpdateDispatchControlByID(s))
+	dispatchControlAPI := api.Group("/dispatch-control")
+	dispatchControlAPI.Get("/", GetDispatchControl(s))
+	dispatchControlAPI.Put("/:dispatchControlID", UpdateDispatchControlByID(s))
 
 	// Register the handlers for the shipment control.
-	shipmentControl := api.Group("/shipment-control")
-	shipmentControl.Get("/", GetShipmentControl(s))
-	shipmentControl.Put("/:shipmentControlID", UpdateShipmentControlByID(s))
+	shipmentControlAPI := api.Group("/shipment-control")
+	shipmentControlAPI.Get("/", GetShipmentControl(s))
+	shipmentControlAPI.Put("/:shipmentControlID", UpdateShipmentControlByID(s))
 
 	// Register the handlers for the billing control.
-	billingControl := api.Group("/billing-control")
-	billingControl.Get("/", GetBillingControl(s))
-	billingControl.Put("/:billingControlID", UpdateBillingControl(s))
+	billingControlAPI := api.Group("/billing-control")
+	billingControlAPI.Get("/", GetBillingControl(s))
+	billingControlAPI.Put("/:billingControlID", UpdateBillingControl(s))
 
 	// Register the handlers for the invoice control.
-	invoiceControl := api.Group("/invoice-control")
-	invoiceControl.Get("/", GetInvoiceControl(s))
-	invoiceControl.Put("/:invoiceControlID", UpdateInvoiceControlByID(s))
+	invoiceControlAPI := api.Group("/invoice-control")
+	invoiceControlAPI.Get("/", GetInvoiceControl(s))
+	invoiceControlAPI.Put("/:invoiceControlID", UpdateInvoiceControlByID(s))
 
 	// Register the handlers for the route control.
-	routeControl := api.Group("/route-control")
-	routeControl.Get("/", GetRouteControl(s))
-	routeControl.Put("/:routeControlID", UpdateRouteControlByID(s))
+	routeControlAPI := api.Group("/route-control")
+	routeControlAPI.Get("/", GetRouteControl(s))
+	routeControlAPI.Put("/:routeControlID", UpdateRouteControlByID(s))
 
 	// Register the handlers for the feasibility tool control.
-	feasibilityToolControl := api.Group("/feasibility-tool-control")
-	feasibilityToolControl.Get("/", GetFeasibilityToolControl(s))
-	feasibilityToolControl.Put("/:feasibilityToolControlID", UpdateFeasibilityToolControl(s))
+	feasibilityToolControlAPI := api.Group("/feasibility-tool-control")
+	feasibilityToolControlAPI.Get("/", GetFeasibilityToolControl(s))
+	feasibilityToolControlAPI.Put("/:feasibilityToolControlID", UpdateFeasibilityToolControl(s))
 
 	// Register the handlers the email control.
-	emailControl := api.Group("/email-control")
-	emailControl.Get("/", GetEmailControl(s))
-	emailControl.Put("/:emailControlID", UpdateEmailControl(s))
+	emailControlAPI := api.Group("/email-control")
+	emailControlAPI.Get("/", GetEmailControl(s))
+	emailControlAPI.Put("/:emailControlID", UpdateEmailControl(s))
 
 	// Register the handlers for the user.
-	users := api.Group("/users")
-	users.Get("/me", GetAuthenticatedUser(s))
+	usersAPI := api.Group("/users")
+	usersAPI.Get("/me", GetAuthenticatedUser(s))
 
 	// Register the handlers for the user favorites.
-	userFavorites := api.Group("/user-favorites")
-	userFavorites.Get("/", GetUserFavorites(s))
-	userFavorites.Post("/", AddUserFavorite(s))
-	userFavorites.Delete("/", RemoveUserFavorite(s))
+	userFavoritesAPI := api.Group("/user-favorites")
+	userFavoritesAPI.Get("/", GetUserFavorites(s))
+	userFavoritesAPI.Post("/", AddUserFavorite(s))
+	userFavoritesAPI.Delete("/", RemoveUserFavorite(s))
 
 	// Register the handlers for the hazardous material segregation rules.
-	hazardousMaterialSegregations := api.Group("/hazardous-material-segregations")
-	hazardousMaterialSegregations.Get("/", GetHazmatSegregationRules(s))
-	hazardousMaterialSegregations.Post("/", CreateHazmatSegregationRule(s))
-	hazardousMaterialSegregations.Put("/:hazmatSegRuleID", UpdateHazmatSegregationRules(s))
+	hazardousMaterialSegregationsAPI := api.Group("/hazardous-material-segregations")
+	hazardousMaterialSegregationsAPI.Get("/", GetHazmatSegregationRules(s))
+	hazardousMaterialSegregationsAPI.Post("/", CreateHazmatSegregationRule(s))
+	hazardousMaterialSegregationsAPI.Put("/:hazmatSegRuleID", UpdateHazmatSegregationRules(s))
+
+	// Register the handlers for the email profiles.
+	emailProfilesAPI := api.Group("/email-profiles")
+	emailProfilesAPI.Get("/", GetEmailProfiles(s))
+	emailProfilesAPI.Post("/", CreateEmailProfile(s))
+	emailProfilesAPI.Put("/:emailProfileID", UpdateEmailProfile(s))
+
+	// Register the handlers for the table change alerts.
+	tableChangeAlertsAPI := api.Group("/table-change-alerts")
+	tableChangeAlertsAPI.Get("/", GetTableChangeAlerts(s))
+	tableChangeAlertsAPI.Post("/", CreateTableChangeAlert(s))
+	tableChangeAlertsAPI.Put("/:tableChangeAlertID", UpdateTableChangeAlert(s))
+	tableChangeAlertsAPI.Get("/table-names", GetTableNames(s))
+	tableChangeAlertsAPI.Get("/topic-names", GetTopicNames(s))
+
+	// Register the handlers for the google api.
+	googleAPI := api.Group("/google-api")
+	googleAPI.Get("/", GetGoogleAPI(s))
+	googleAPI.Put("/:googleAPIID", UpdateGoogleAPI(s))
+
+	// Register the handlers for the revenue code.
+	revenueCodesAPI := api.Group("/revenue-codes")
+	revenueCodesAPI.Get("/", GetRevenueCodes(s))
+	revenueCodesAPI.Post("/", CreateRevenueCode(s))
+	revenueCodesAPI.Put("/:revenueCodeID", UpdateRevenueCode(s))
+
+	// Register the handlers for the worker.
+	workersAPI := api.Group("/workers")
+	workersAPI.Get("/", GetWorkers(s))
+	workersAPI.Post("/", CreateWorker(s))
+	workersAPI.Put("/:workerID", UpdateWorker(s))
+
+	// Register the handlers for the charge type.
+	chargeTypesAPI := api.Group("/charge-types")
+	chargeTypesAPI.Get("/", GetChargeTypes(s))
+	chargeTypesAPI.Post("/", CreateChargeType(s))
+	chargeTypesAPI.Put("/:chargeTypeID", UpdateChargeType(s))
+
+	// Register the handlers for the comment type.
+	commentTypesAPI := api.Group("/comment-types")
+	commentTypesAPI.Get("/", GetCommentTypes(s))
+	commentTypesAPI.Post("/", CreateCommentType(s))
+	commentTypesAPI.Put("/:commentTypeID", UpdateCommentType(s))
 }
