@@ -58,10 +58,26 @@ const columns: ColumnDef<FleetCode>[] = [
     },
   },
   {
+    id: "code",
     accessorKey: "code",
     header: ({ column }) => (
       <DataTableColumnHeader column={column} title="Code" />
     ),
+    cell: ({ row }) => {
+      if (row.original.color) {
+        return (
+          <div className="text-foreground flex items-center space-x-2 text-sm font-medium">
+            <div
+              className={"mx-2 size-2 rounded-xl"}
+              style={{ backgroundColor: row.original.color }}
+            />
+            {row.original.code}
+          </div>
+        );
+      } else {
+        return row.original.code;
+      }
+    },
   },
   {
     accessorKey: "description",

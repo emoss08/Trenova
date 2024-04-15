@@ -14,6 +14,7 @@ import { type TableSheetProps } from "@/types/tables";
 import { yupResolver } from "@hookform/resolvers/yup";
 import React from "react";
 import { Control, useForm } from "react-hook-form";
+import { GradientPicker } from "./common/fields/color-field";
 import {
   Credenza,
   CredenzaBody,
@@ -112,6 +113,14 @@ export function FleetCodeForm({
             isClearable
           />
         </FormControl>
+        <FormControl className="col-span-full min-h-0">
+          <GradientPicker
+            name="color"
+            label="Color"
+            description="Color Code of the Fleet Code"
+            control={control}
+          />
+        </FormControl>
       </FormGroup>
     </Form>
   );
@@ -128,6 +137,7 @@ export function FleetCodeDialog({ onOpenChange, open }: TableSheetProps) {
       revenueGoal: undefined,
       deadheadGoal: undefined,
       mileageGoal: undefined,
+      color: "",
       managerId: "",
     },
   });

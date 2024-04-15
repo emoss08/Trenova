@@ -57,6 +57,7 @@ export interface DelayCode extends BaseModel {
   code: string;
   description: string;
   fCarrierOrDriver: boolean;
+  color?: string;
 }
 
 export type DelayCodeFormValues = Omit<
@@ -77,6 +78,7 @@ export interface FleetCode extends BaseModel {
   revenueGoal?: number;
   deadheadGoal?: number;
   mileageGoal?: number;
+  color?: string;
   managerId?: string | null;
 }
 

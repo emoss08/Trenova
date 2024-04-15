@@ -92,11 +92,12 @@ export const delayCodeSchema: ObjectSchema<DelayCodeFormValues> =
     status: string<StatusChoiceProps>().required("Status is required"),
     code: string()
       .required("Name is required")
-      .max(4, "Code cannot be more than 4 characters"),
+      .max(20, "Code cannot be more than 20 characters"),
     description: string()
       .required("Description is required")
       .max(100, "Description cannot be more than 100 characters"),
     fCarrierOrDriver: boolean().required("Carrier or Driver is required"),
+    color: string(),
   });
 
 export const fleetCodeSchema: ObjectSchema<FleetCodeFormValues> =
@@ -115,6 +116,7 @@ export const fleetCodeSchema: ObjectSchema<FleetCodeFormValues> =
     mileageGoal: number().transform((value) =>
       Number.isNaN(value) ? undefined : value,
     ),
+    color: string(),
     managerId: string().nullable(),
   });
 

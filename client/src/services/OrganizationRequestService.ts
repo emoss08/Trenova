@@ -36,7 +36,7 @@ import { ShipmentControl } from "@/types/shipment";
  * @returns A promise that resolves to the organization's details.
  */
 export async function getUserOrganizationDetails(): Promise<Organization> {
-  const response = await axios.get("/organization/me/");
+  const response = await axios.get("/organizations/me/");
   return response.data;
 }
 
@@ -124,7 +124,7 @@ export async function getDepots(): Promise<Depot[]> {
  * @returns A promise that resolves to an array of feature flags.
  */
 export async function getFeatureFlags(): Promise<OrganizationFeatureFlag[]> {
-  const response = await axios.get("/organization-feature-flags/");
+  const response = await axios.get("/feature-flags/");
   return response.data.results;
 }
 

@@ -76,7 +76,7 @@ function UserAuthForm() {
 
   const fetchUserDetails = async () => {
     try {
-      const response = await axios.get("/me/", {
+      const response = await axios.get("/users/me/", {
         withCredentials: true,
       });
 
@@ -161,6 +161,7 @@ function UserAuthForm() {
         <Button
           className="my-2 w-full"
           isLoading={isSubmitting}
+          disabled={isSubmitting}
           loadingText="Logging In..."
         >
           Continue
