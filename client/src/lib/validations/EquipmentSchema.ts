@@ -100,7 +100,7 @@ export const trailerSchema: ObjectSchema<TrailerFormValues> =
     fleetCodeId: Yup.string().required("Fleet code is required"),
     stateId: Yup.string().nullable(),
     licensePlateNumber: Yup.string(),
-    lastInspectionDate: Yup.string(),
+    lastInspectionDate: Yup.string().nullable(),
     registrationNumber: Yup.string(),
     registrationStateId: Yup.string().nullable(),
     registrationExpirationDate: Yup.string().nullable(),

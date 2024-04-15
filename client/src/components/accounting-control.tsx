@@ -64,23 +64,7 @@ function AccountingControlForm({
   const { control, handleSubmit, reset } = useForm<AccountingControlFormValues>(
     {
       resolver: yupResolver(accountingControlSchema),
-      defaultValues: {
-        autoCreateJournalEntries: accountingControl.autoCreateJournalEntries,
-        journalEntryCriteria: accountingControl.journalEntryCriteria,
-        restrictManualJournalEntries:
-          accountingControl.restrictManualJournalEntries,
-        requireJournalEntryApproval:
-          accountingControl.requireJournalEntryApproval,
-        defaultExpAccountId: accountingControl.defaultExpAccountId,
-        defaultRevAccountId: accountingControl.defaultRevAccountId,
-        enableRecNotifications: accountingControl.enableRecNotifications,
-        reconciliationNotificationRecipients:
-          accountingControl.reconciliationNotificationRecipients,
-        recThreshold: accountingControl.recThreshold,
-        recThresholdAction: accountingControl.recThresholdAction,
-        haltOnPendingRec: accountingControl.haltOnPendingRec,
-        criticalProcesses: accountingControl.criticalProcesses,
-      },
+      defaultValues: accountingControl,
     },
   );
 

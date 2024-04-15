@@ -3,7 +3,7 @@ package viewer
 import (
 	"context"
 
-	"github.com/emoss08/trenova/ent"
+	"github.com/emoss08/trenova/internal/ent"
 )
 
 // Role for viewer actions.

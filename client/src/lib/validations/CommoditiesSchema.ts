@@ -39,7 +39,6 @@ export const hazardousMaterialSchema: ObjectSchema<HazardousMaterialFormValues> 
     packingGroup: Yup.string<PackingGroupChoiceProps>(),
     ergNumber: Yup.string<UnitOfMeasureChoiceProps>(),
     properShippingName: Yup.string(),
-    additionalCost: Yup.string(),
   });
 
 export const commoditySchema: ObjectSchema<CommodityFormValues> =

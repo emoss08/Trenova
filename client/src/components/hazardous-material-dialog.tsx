@@ -34,6 +34,7 @@ export function HazardousMaterialForm({
 }) {
   const { t } = useTranslation(["pages.hazardousmaterial", "common"]);
 
+  // TODO(WOLFRED): This needs a scrollarea for smaller screens.
   return (
     <Form>
       <FormGroup className="grid gap-6 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-2">
@@ -94,7 +95,7 @@ export function HazardousMaterialForm({
             isClearable={false}
           />
         </FormControl>
-        <FormControl>
+        <FormControl className="col-span-full">
           <InputField
             control={control}
             name="ergNumber"
@@ -104,18 +105,6 @@ export function HazardousMaterialForm({
             type="text"
             placeholder={t("fields.ergNumber.placeholder")}
             description={t("fields.ergNumber.description")}
-          />
-        </FormControl>
-        <FormControl>
-          <InputField
-            control={control}
-            name="additionalCost"
-            label={t("fields.additionalCost.label")}
-            autoCapitalize="none"
-            autoCorrect="off"
-            type="text"
-            placeholder={t("fields.additionalCost.placeholder")}
-            description={t("fields.additionalCost.description")}
           />
         </FormControl>
         <FormControl className="col-span-full">
@@ -149,7 +138,6 @@ export function HazardousMaterialDialog({
       hazardClass: undefined,
       packingGroup: undefined,
       ergNumber: undefined,
-      additionalCost: undefined,
       properShippingName: undefined,
     },
   });

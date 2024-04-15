@@ -122,7 +122,7 @@ export interface AccountingControl extends BaseModel {
   recThreshold: number;
   recThresholdAction: ThresholdActionChoiceType;
   haltOnPendingRec: boolean;
-  criticalProcesses?: string | null;
+  criticalProcesses?: string;
 }
 
 export type AccountingControlFormValues = Omit<

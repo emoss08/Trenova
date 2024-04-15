@@ -44,7 +44,7 @@ export type API_ENDPOINTS =
   | "/shipment-types/"
   | "/me/favorites/"
   | "/users/"
-  | "me"
+  | "/users/me/"
   | "/job_titles/"
   | "/groups/"
   | "/permissions/"
@@ -117,7 +117,7 @@ export type API_ENDPOINTS =
   | "/hazardous-material-segregations/"
   | "/finance-transactions/"
   | "/reconciliation-queue/"
-  | "/organization/me/"
+  | "/organizations/me/"
   | "/accounting-control/";
 
 // HTTP Status Codes Ripped from Django Rest Framework

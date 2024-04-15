@@ -128,3 +128,8 @@ CREATE UNIQUE INDEX unq_trailer_code_organization_id ON trailers (LOWER(code), o
 DROP INDEX IF EXISTS worker_code_organization_id CASCADE;
 
 CREATE UNIQUE INDEX unq_worker_code_organization_id ON workers (LOWER(code), organization_id);
+
+-- Add a new index for the `commodities` table
+DROP INDEX IF EXISTS commodity_code_organization_id CASCADE;
+
+CREATE UNIQUE INDEX unq_commodity_code_organization_id ON commodities (LOWER(name), organization_id);

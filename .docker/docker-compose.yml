@@ -42,6 +42,8 @@ services:
       - "shared_preload_libraries=pg_stat_statements"
       - "-c"
       - "pg_stat_statements.track=all"
+      - "-c"
+      - "log_statement=all"
     restart: always
 
   connect:

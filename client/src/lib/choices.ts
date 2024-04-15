@@ -203,11 +203,11 @@ export const routeDistanceUnitChoices = [
 ] satisfies ReadonlyArray<IChoiceProps<RouteDistanceUnitProps>>;
 
 /** Type for Distance Method Choices */
-export type DistanceMethodChoiceProps = "G" | "T";
+export type DistanceMethodChoiceProps = "Google" | "Trenova";
 
 export const distanceMethodChoices = [
-  { value: "G", label: "Google" },
-  { value: "T", label: "Trenova" },
+  { value: "Google", label: "Google" },
+  { value: "Trenova", label: "Trenova" },
 ] satisfies ReadonlyArray<IChoiceProps<DistanceMethodChoiceProps>>;
 
 /** Type for Email Protocol Choices */

@@ -114,13 +114,57 @@ const DocumentClassPage = lazy(
 const AdminPage = lazy(() => import("../pages/admin/Dashboard"));
 
 export type RouteObjectWithPermission = RouteObject & {
+  /**
+   * The unique key of the route
+   * This is used to identify the route in the menu
+   */
   key?: string;
+
+  /**
+   * The title of the route
+   * This is displayed in the menu
+   */
   title: string;
+
+  /**
+   * The group to which the route belongs
+   * This is used to group the routes in the menu
+   * If not provided, the route is displayed in the main menu.
+   */
   group: string;
+
+  /**
+   * The sub-menu to which the route belongs
+   * This is used to group the routes in the menu
+   * If not provided, the route is displayed in the main menu.
+   */
   subMenu?: string;
+
+  /**
+   * The path of the route
+   * This is used to match the route with the current URL
+   */
   path: string;
+
+  /**
+   * The component to render when the route is active
+   * This is a lazy-loaded component
+   * @see https://reactjs.org/docs/code-splitting.html
+   */
   description?: string;
+
+  /**
+   * If true, the route is not displayed in the menu
+   * This is useful for routes that are only accessible via a link or a button
+   * or for routes that are not meant to be accessed directly.
+   */
   excludeFromMenu?: boolean;
+
+  /**
+   * The permission required to access the route
+   * If not provided, the route is accessible to all authenticated users
+   * If the route is public, the permission is ignored
+   */
   permission?: string;
 
   /**
@@ -395,7 +439,7 @@ export const routes: RouteObjectWithPermission[] = [
     isPublic: false,
   },
   {
-    title: "Shipment Type",
+    title: "Shipment Types",
     group: "Shipment Management",
     subMenu: "configuration files",
     path: "/shipment-management/shipment-types/",
@@ -405,7 +449,7 @@ export const routes: RouteObjectWithPermission[] = [
     isPublic: false,
   },
   {
-    title: "Reason Code",
+    title: "Reason Codes",
     group: "Shipment Management",
     subMenu: "configuration files",
     path: "/shipment-management/reason-codes/",
@@ -416,7 +460,7 @@ export const routes: RouteObjectWithPermission[] = [
   },
   // Stop Pages
   {
-    title: "Qualifier Code",
+    title: "Qualifier Codes",
     group: "Shipment Management",
     subMenu: "configuration files",
     path: "/shipment-management/qualifier-codes/",

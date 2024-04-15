@@ -43,7 +43,7 @@ export const useVerifyToken = () => {
     }
 
     if (!user.id && !userId) {
-      console.error("No user id found. Skipping token verification.");
+      console.log("No user id found. Skipping token verification.");
       setInitializationComplete(true);
       setIsAuthenticated(false);
       setLoading(false);
@@ -55,7 +55,7 @@ export const useVerifyToken = () => {
       setLoading(true);
 
       try {
-        const response = await axios.get("me/", {
+        const response = await axios.get("users/me/", {
           withCredentials: true,
         });
         if (response.status === 200) {
