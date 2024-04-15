@@ -10,10 +10,10 @@ import (
 	"github.com/google/uuid"
 )
 
-// GetDelayCodes is a handler that returns a list of delay codes.
+// GetEquipmentManufacturers is a handler that returns a list of equipment manufacturers.
 //
-// GET /delay-codes
-func GetDelayCodes(s *api.Server) fiber.Handler {
+// GET /equipment-manufacturers
+func GetEquipmentManufacturers(s *api.Server) fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		offset, limit, err := util.PaginationParams(c)
 		if err != nil {
@@ -45,8 +45,8 @@ func GetDelayCodes(s *api.Server) fiber.Handler {
 			})
 		}
 
-		entities, count, err := services.NewDelayCodeService(s).
-			GetDelayCodes(c.UserContext(), limit, offset, orgID, buID)
+		entities, count, err := services.NewEquipmentManufacturerService(s).
+			GetEquipmentManufacturers(c.UserContext(), limit, offset, orgID, buID)
 		if err != nil {
 			errorResponse := util.CreateDBErrorResponse(err)
 			return c.Status(fiber.StatusInternalServerError).JSON(errorResponse)
@@ -64,12 +64,12 @@ func GetDelayCodes(s *api.Server) fiber.Handler {
 	}
 }
 
-// CreateDelayCode is a handler that creates a new delay code.
+// CreateEquipmentManufacturer is a handler that creates a new equipment manufacturer.
 //
-// POST /delay-codes
-func CreateDelayCode(s *api.Server) fiber.Handler {
+// POST /equipment-manufacturers
+func CreateEquipmentManufacturer(s *api.Server) fiber.Handler {
 	return func(c *fiber.Ctx) error {
-		newEntity := new(ent.DelayCode)
+		newEntity := new(ent.EquipmentManufactuer)
 
 		orgID, ok := c.Locals(util.CTXOrganizationID).(uuid.UUID)
 		buID, buOK := c.Locals(util.CTXBusinessUnitID).(uuid.UUID)
@@ -103,8 +103,8 @@ func CreateDelayCode(s *api.Server) fiber.Handler {
 			})
 		}
 
-		entity, err := services.NewDelayCodeService(s).
-			CreateDelayCode(c.UserContext(), newEntity)
+		entity, err := services.NewEquipmentManufacturerService(s).
+			CreateEquipmentManufacturer(c.UserContext(), newEntity)
 		if err != nil {
 			errorResponse := util.CreateDBErrorResponse(err)
 			return c.Status(fiber.StatusInternalServerError).JSON(errorResponse)
@@ -114,26 +114,26 @@ func CreateDelayCode(s *api.Server) fiber.Handler {
 	}
 }
 
-// UpdateDelayCode is a handler that updates an delay code.
+// UpdateEquipmentManufacturer is a handler that updates an equipment manufacturer.
 //
-// PUT /delay-codes/:delayCodeID
-func UpdateDelayCode(s *api.Server) fiber.Handler {
+// PUT /equipment-manufacturers/:equipmentManuID
+func UpdateEquipmentManufacturer(s *api.Server) fiber.Handler {
 	return func(c *fiber.Ctx) error {
-		delayCodeID := c.Params("delayCodeID")
-		if delayCodeID == "" {
+		equipmentManuID := c.Params("equipmentManuID")
+		if equipmentManuID == "" {
 			return c.Status(fiber.StatusBadRequest).JSON(types.ValidationErrorResponse{
 				Type: "invalidRequest",
 				Errors: []types.ValidationErrorDetail{
 					{
 						Code:   "invalidRequest",
-						Detail: "Delay Code ID is required",
-						Attr:   "delayCodeID",
+						Detail: "Equipment Manufacturer ID is required",
+						Attr:   "equipmentManuID",
 					},
 				},
 			})
 		}
 
-		updatedEntity := new(ent.DelayCode)
+		updatedEntity := new(ent.EquipmentManufactuer)
 
 		if err := util.ParseBodyAndValidate(c, updatedEntity); err != nil {
 			return c.Status(fiber.StatusBadRequest).JSON(types.ValidationErrorResponse{
@@ -148,10 +148,10 @@ func UpdateDelayCode(s *api.Server) fiber.Handler {
 			})
 		}
 
-		updatedEntity.ID = uuid.MustParse(delayCodeID)
+		updatedEntity.ID = uuid.MustParse(equipmentManuID)
 
-		entity, err := services.NewDelayCodeService(s).
-			UpdateDelayCode(c.UserContext(), updatedEntity)
+		entity, err := services.NewEquipmentManufacturerService(s).
+			UpdateEquipmentManufacturer(c.UserContext(), updatedEntity)
 		if err != nil {
 			errorResponse := util.CreateDBErrorResponse(err)
 			return c.Status(fiber.StatusInternalServerError).JSON(errorResponse)

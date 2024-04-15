@@ -133,4 +133,22 @@ func AttachAllRoutes(s *api.Server, api fiber.Router) {
 	delayCodesAPI.Get("/", GetDelayCodes(s))
 	delayCodesAPI.Post("/", CreateDelayCode(s))
 	delayCodesAPI.Put("/:delayCodeID", UpdateDelayCode(s))
+
+	// Register the handlers for the division code.
+	divisionCodesAPI := api.Group("/division-codes")
+	divisionCodesAPI.Get("/", GetDivisionCodes(s))
+	divisionCodesAPI.Post("/", CreateDivisionCode(s))
+	divisionCodesAPI.Put("/:divisionCodeID", UpdateDivisionCode(s))
+
+	// Register the handlers for the document classification.
+	documentClassificationsAPI := api.Group("/document-classifications")
+	documentClassificationsAPI.Get("/", GetDocumentClassifications(s))
+	documentClassificationsAPI.Post("/", CreateDocumentClassification(s))
+	documentClassificationsAPI.Put("/:documentClassID", UpdateDocumentClassification(s))
+
+	// Register the handlers for the equipment manufacturer.
+	equipmentManufacturersAPI := api.Group("/equipment-manufacturers")
+	equipmentManufacturersAPI.Get("/", GetEquipmentManufacturers(s))
+	equipmentManufacturersAPI.Post("/", CreateEquipmentManufacturer(s))
+	equipmentManufacturersAPI.Put("/:equipmentManuID", UpdateEquipmentManufacturer(s))
 }

@@ -10,10 +10,10 @@ import (
 	"github.com/google/uuid"
 )
 
-// GetDelayCodes is a handler that returns a list of delay codes.
+// GetDocumentClassifications is a handler that returns a list of document classifications.
 //
-// GET /delay-codes
-func GetDelayCodes(s *api.Server) fiber.Handler {
+// GET /document-classifications
+func GetDocumentClassifications(s *api.Server) fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		offset, limit, err := util.PaginationParams(c)
 		if err != nil {
@@ -45,8 +45,8 @@ func GetDelayCodes(s *api.Server) fiber.Handler {
 			})
 		}
 
-		entities, count, err := services.NewDelayCodeService(s).
-			GetDelayCodes(c.UserContext(), limit, offset, orgID, buID)
+		entities, count, err := services.NewDocumentClassificationService(s).
+			GetDocumentClassifications(c.UserContext(), limit, offset, orgID, buID)
 		if err != nil {
 			errorResponse := util.CreateDBErrorResponse(err)
 			return c.Status(fiber.StatusInternalServerError).JSON(errorResponse)
@@ -64,12 +64,12 @@ func GetDelayCodes(s *api.Server) fiber.Handler {
 	}
 }
 
-// CreateDelayCode is a handler that creates a new delay code.
+// CreateDocumentClassification is a handler that creates a new document classification.
 //
-// POST /delay-codes
-func CreateDelayCode(s *api.Server) fiber.Handler {
+// POST /document-classifications
+func CreateDocumentClassification(s *api.Server) fiber.Handler {
 	return func(c *fiber.Ctx) error {
-		newEntity := new(ent.DelayCode)
+		newEntity := new(ent.DocumentClassification)
 
 		orgID, ok := c.Locals(util.CTXOrganizationID).(uuid.UUID)
 		buID, buOK := c.Locals(util.CTXBusinessUnitID).(uuid.UUID)
@@ -103,8 +103,8 @@ func CreateDelayCode(s *api.Server) fiber.Handler {
 			})
 		}
 
-		entity, err := services.NewDelayCodeService(s).
-			CreateDelayCode(c.UserContext(), newEntity)
+		entity, err := services.NewDocumentClassificationService(s).
+			CreateDocumentClassification(c.UserContext(), newEntity)
 		if err != nil {
 			errorResponse := util.CreateDBErrorResponse(err)
 			return c.Status(fiber.StatusInternalServerError).JSON(errorResponse)
@@ -114,26 +114,26 @@ func CreateDelayCode(s *api.Server) fiber.Handler {
 	}
 }
 
-// UpdateDelayCode is a handler that updates an delay code.
+// UpdateDocumentClassification is a handler that updates an document classification.
 //
-// PUT /delay-codes/:delayCodeID
-func UpdateDelayCode(s *api.Server) fiber.Handler {
+// PUT /document-classifications/:documentClassID
+func UpdateDocumentClassification(s *api.Server) fiber.Handler {
 	return func(c *fiber.Ctx) error {
-		delayCodeID := c.Params("delayCodeID")
-		if delayCodeID == "" {
+		documentClassID := c.Params("documentClassID")
+		if documentClassID == "" {
 			return c.Status(fiber.StatusBadRequest).JSON(types.ValidationErrorResponse{
 				Type: "invalidRequest",
 				Errors: []types.ValidationErrorDetail{
 					{
 						Code:   "invalidRequest",
-						Detail: "Delay Code ID is required",
-						Attr:   "delayCodeID",
+						Detail: "Document Classification ID is required",
+						Attr:   "documentClassID",
 					},
 				},
 			})
 		}
 
-		updatedEntity := new(ent.DelayCode)
+		updatedEntity := new(ent.DocumentClassification)
 
 		if err := util.ParseBodyAndValidate(c, updatedEntity); err != nil {
 			return c.Status(fiber.StatusBadRequest).JSON(types.ValidationErrorResponse{
@@ -148,10 +148,10 @@ func UpdateDelayCode(s *api.Server) fiber.Handler {
 			})
 		}
 
-		updatedEntity.ID = uuid.MustParse(delayCodeID)
+		updatedEntity.ID = uuid.MustParse(documentClassID)
 
-		entity, err := services.NewDelayCodeService(s).
-			UpdateDelayCode(c.UserContext(), updatedEntity)
+		entity, err := services.NewDocumentClassificationService(s).
+			UpdateDocumentClassification(c.UserContext(), updatedEntity)
 		if err != nil {
 			errorResponse := util.CreateDBErrorResponse(err)
 			return c.Status(fiber.StatusInternalServerError).JSON(errorResponse)
