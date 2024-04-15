@@ -111,6 +111,20 @@ func (stc *ShipmentTypeCreate) SetNillableDescription(s *string) *ShipmentTypeCr
 	return stc
 }
 
+// SetColor sets the "color" field.
+func (stc *ShipmentTypeCreate) SetColor(s string) *ShipmentTypeCreate {
+	stc.mutation.SetColor(s)
+	return stc
+}
+
+// SetNillableColor sets the "color" field if the given value is not nil.
+func (stc *ShipmentTypeCreate) SetNillableColor(s *string) *ShipmentTypeCreate {
+	if s != nil {
+		stc.SetColor(*s)
+	}
+	return stc
+}
+
 // SetID sets the "id" field.
 func (stc *ShipmentTypeCreate) SetID(u uuid.UUID) *ShipmentTypeCreate {
 	stc.mutation.SetID(u)
@@ -289,6 +303,10 @@ func (stc *ShipmentTypeCreate) createSpec() (*ShipmentType, *sqlgraph.CreateSpec
 	if value, ok := stc.mutation.Description(); ok {
 		_spec.SetField(shipmenttype.FieldDescription, field.TypeString, value)
 		_node.Description = value
+	}
+	if value, ok := stc.mutation.Color(); ok {
+		_spec.SetField(shipmenttype.FieldColor, field.TypeString, value)
+		_node.Color = value
 	}
 	if nodes := stc.mutation.BusinessUnitIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{

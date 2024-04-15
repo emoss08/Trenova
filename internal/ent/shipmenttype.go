@@ -36,6 +36,8 @@ type ShipmentType struct {
 	Code string `json:"code" validate:"required,max=10"`
 	// Description holds the value of the "description" field.
 	Description string `json:"description" validate:"omitempty"`
+	// Color holds the value of the "color" field.
+	Color string `json:"color" validate:"omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
 	// The values are being populated by the ShipmentTypeQuery when eager-loading is set.
 	Edges        ShipmentTypeEdges `json:"edges"`
@@ -82,7 +84,7 @@ func (*ShipmentType) scanValues(columns []string) ([]any, error) {
 		switch columns[i] {
 		case shipmenttype.FieldVersion:
 			values[i] = new(sql.NullInt64)
-		case shipmenttype.FieldStatus, shipmenttype.FieldCode, shipmenttype.FieldDescription:
+		case shipmenttype.FieldStatus, shipmenttype.FieldCode, shipmenttype.FieldDescription, shipmenttype.FieldColor:
 			values[i] = new(sql.NullString)
 		case shipmenttype.FieldCreatedAt, shipmenttype.FieldUpdatedAt:
 			values[i] = new(sql.NullTime)
@@ -157,6 +159,12 @@ func (st *ShipmentType) assignValues(columns []string, values []any) error {
 			} else if value.Valid {
 				st.Description = value.String
 			}
+		case shipmenttype.FieldColor:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field color", values[i])
+			} else if value.Valid {
+				st.Color = value.String
+			}
 		default:
 			st.selectValues.Set(columns[i], values[i])
 		}
@@ -226,6 +234,9 @@ func (st *ShipmentType) String() string {
 	builder.WriteString(", ")
 	builder.WriteString("description=")
 	builder.WriteString(st.Description)
+	builder.WriteString(", ")
+	builder.WriteString("color=")
+	builder.WriteString(st.Color)
 	builder.WriteByte(')')
 	return builder.String()
 }

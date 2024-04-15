@@ -66,7 +66,7 @@ export const serviceTypeSchema: ObjectSchema<ServiceTypeFormValues> =
     code: string()
       .max(10, "Code must be at most 10 characters")
       .required("Code is required"),
-    description: string().notRequired(),
+    description: string().optional(),
   });
 
 export const reasonCodeSchema: ObjectSchema<ReasonCodeFormValues> =
@@ -119,7 +119,8 @@ export const shipmentTypeSchema: ObjectSchema<ShipmentTypeFormValues> =
     code: string()
       .max(10, "Name must be at most 100 characters")
       .required("Code is required"),
-    description: string().notRequired(),
+    description: string().optional(),
+    color: string().optional(),
   });
 
 export function useShipmentForm({ user }: { user: User }) {

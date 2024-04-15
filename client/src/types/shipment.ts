@@ -44,31 +44,32 @@ export interface ShipmentControl extends BaseModel {
 
 export type ShipmentControlFormValues = Omit<
   ShipmentControl,
-  "id" | "organizationId" | "createdAt" | "updatedAt"
+  "id" | "organizationId" | "createdAt" | "updatedAt" | "version"
 >;
 
 export interface ShipmentType extends BaseModel {
   id: string;
   status: StatusChoiceProps;
   code: string;
-  description?: string | null;
+  description?: string;
+  color?: string;
 }
 
 export type ShipmentTypeFormValues = Omit<
   ShipmentType,
-  "id" | "organizationId" | "createdAt" | "updatedAt"
+  "id" | "organizationId" | "createdAt" | "updatedAt" | "version"
 >;
 
 export interface ServiceType extends BaseModel {
   id: string;
   status: StatusChoiceProps;
   code: string;
-  description?: string | null;
+  description?: string;
 }
 
 export type ServiceTypeFormValues = Omit<
   ServiceType,
-  "id" | "organizationId" | "createdAt" | "updatedAt"
+  "id" | "organizationId" | "createdAt" | "updatedAt" | "version"
 >;
 
 export interface ReasonCode extends BaseModel {
@@ -81,7 +82,7 @@ export interface ReasonCode extends BaseModel {
 
 export type ReasonCodeFormValues = Omit<
   ReasonCode,
-  "id" | "organizationId" | "createdAt" | "updatedAt"
+  "id" | "organizationId" | "createdAt" | "updatedAt" | "version"
 >;
 
 export interface Shipment extends BaseModel {
@@ -145,6 +146,7 @@ export type ShipmentFormValues = Omit<
   | "currentSuffix"
   | "created"
   | "modified"
+  | "version"
 >;
 
 export type ShipmentSearchForm = {
@@ -158,7 +160,7 @@ export interface FormulaTemplate extends BaseModel {
   formulaText: string;
   description?: string;
   templateType: string;
-  customer?: string | null;
+  customer?: string;
   shipmentType?: string | null;
   autoApply: boolean;
 }
@@ -179,5 +181,5 @@ export interface HazardousMaterialSegregationRule extends BaseModel {
 
 export type HazardousMaterialSegregationRuleFormValues = Omit<
   HazardousMaterialSegregationRule,
-  "id" | "organizationId" | "createdAt" | "updatedAt"
+  "id" | "organizationId" | "createdAt" | "updatedAt" | "version"
 >;

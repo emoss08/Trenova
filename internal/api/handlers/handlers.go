@@ -217,4 +217,14 @@ func AttachAllRoutes(s *api.Server, api fiber.Router) {
 	serviceTypesAPI.Get("/", GetServiceTypes(s))
 	serviceTypesAPI.Post("/", CreateServiceType(s))
 	serviceTypesAPI.Put("/:serviceTypeID", UpdateServiceType(s))
+
+	// Register the handlers for the shipment types.
+	shipmentTypesAPI := api.Group("/shipment-types")
+	shipmentTypesAPI.Get("/", GetShipmentTypes(s))
+	shipmentTypesAPI.Post("/", CreateShipmentType(s))
+	shipmentTypesAPI.Put("/:shipmentTypeID", UpdateShipmentType(s))
+
+	// Register the handlers for the us states.
+	usStatesAPI := api.Group("/us-states")
+	usStatesAPI.Get("/", GetUSStates(s))
 }

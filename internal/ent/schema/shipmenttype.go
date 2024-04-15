@@ -33,6 +33,9 @@ func (ShipmentType) Fields() []ent.Field {
 		field.Text("description").
 			Optional().
 			StructTag(`json:"description" validate:"omitempty"`),
+		field.String("color").
+			Optional().
+			StructTag(`json:"color" validate:"omitempty"`),
 	}
 }
 

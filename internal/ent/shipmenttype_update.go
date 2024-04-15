@@ -104,6 +104,26 @@ func (stu *ShipmentTypeUpdate) ClearDescription() *ShipmentTypeUpdate {
 	return stu
 }
 
+// SetColor sets the "color" field.
+func (stu *ShipmentTypeUpdate) SetColor(s string) *ShipmentTypeUpdate {
+	stu.mutation.SetColor(s)
+	return stu
+}
+
+// SetNillableColor sets the "color" field if the given value is not nil.
+func (stu *ShipmentTypeUpdate) SetNillableColor(s *string) *ShipmentTypeUpdate {
+	if s != nil {
+		stu.SetColor(*s)
+	}
+	return stu
+}
+
+// ClearColor clears the value of the "color" field.
+func (stu *ShipmentTypeUpdate) ClearColor() *ShipmentTypeUpdate {
+	stu.mutation.ClearColor()
+	return stu
+}
+
 // Mutation returns the ShipmentTypeMutation object of the builder.
 func (stu *ShipmentTypeUpdate) Mutation() *ShipmentTypeMutation {
 	return stu.mutation
@@ -205,6 +225,12 @@ func (stu *ShipmentTypeUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	if stu.mutation.DescriptionCleared() {
 		_spec.ClearField(shipmenttype.FieldDescription, field.TypeString)
 	}
+	if value, ok := stu.mutation.Color(); ok {
+		_spec.SetField(shipmenttype.FieldColor, field.TypeString, value)
+	}
+	if stu.mutation.ColorCleared() {
+		_spec.ClearField(shipmenttype.FieldColor, field.TypeString)
+	}
 	_spec.AddModifiers(stu.modifiers...)
 	if n, err = sqlgraph.UpdateNodes(ctx, stu.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
@@ -299,6 +325,26 @@ func (stuo *ShipmentTypeUpdateOne) SetNillableDescription(s *string) *ShipmentTy
 // ClearDescription clears the value of the "description" field.
 func (stuo *ShipmentTypeUpdateOne) ClearDescription() *ShipmentTypeUpdateOne {
 	stuo.mutation.ClearDescription()
+	return stuo
+}
+
+// SetColor sets the "color" field.
+func (stuo *ShipmentTypeUpdateOne) SetColor(s string) *ShipmentTypeUpdateOne {
+	stuo.mutation.SetColor(s)
+	return stuo
+}
+
+// SetNillableColor sets the "color" field if the given value is not nil.
+func (stuo *ShipmentTypeUpdateOne) SetNillableColor(s *string) *ShipmentTypeUpdateOne {
+	if s != nil {
+		stuo.SetColor(*s)
+	}
+	return stuo
+}
+
+// ClearColor clears the value of the "color" field.
+func (stuo *ShipmentTypeUpdateOne) ClearColor() *ShipmentTypeUpdateOne {
+	stuo.mutation.ClearColor()
 	return stuo
 }
 
@@ -432,6 +478,12 @@ func (stuo *ShipmentTypeUpdateOne) sqlSave(ctx context.Context) (_node *Shipment
 	}
 	if stuo.mutation.DescriptionCleared() {
 		_spec.ClearField(shipmenttype.FieldDescription, field.TypeString)
+	}
+	if value, ok := stuo.mutation.Color(); ok {
+		_spec.SetField(shipmenttype.FieldColor, field.TypeString, value)
+	}
+	if stuo.mutation.ColorCleared() {
+		_spec.ClearField(shipmenttype.FieldColor, field.TypeString)
 	}
 	_spec.AddModifiers(stuo.modifiers...)
 	_node = &ShipmentType{config: stuo.config}
