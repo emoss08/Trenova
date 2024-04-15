@@ -1,3 +1,3 @@
-package trenova //nolint:goimports // Path: generate.go
+package trenova
 
 //go:generate go run -mod=mod ./internal/ent/entc.go
