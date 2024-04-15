@@ -9,11 +9,6 @@ on:
 jobs:
   build-and-test:
     runs-on: ubuntu-latest
-    
-    strategy:
-      matrix:
-        go-version: 1.22
-    
     steps:
       - name: Check Out Code
         uses: actions/checkout@v4
@@ -21,8 +16,8 @@ jobs:
       - name: Set up Go
         uses: actions/setup-go@v5
         with:
-          go-version: ${{ matrix.go-version }}
-          cache: false  # Enabling default cache for Go
+          go-version: 1.22
+          cache: false
 
       - name: Lint with golangci-lint
         uses: golangci/golangci-lint-action@v4
@@ -34,6 +29,3 @@ jobs:
 
       - name: Test
         run: go test -v ./...
-
-# Note: This configuration file uses a matrix strategy for Go versions.
-# It sets up caching for Go modules to speed up builds and uses the latest versions of actions.
