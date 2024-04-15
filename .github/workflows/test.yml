@@ -22,7 +22,7 @@ jobs:
         uses: actions/setup-go@v5
         with:
           go-version: ${{ matrix.go-version }}
-          cache: true  # Enabling default cache for Go
+          cache: false  # Enabling default cache for Go
 
       - name: Lint with golangci-lint
         uses: golangci/golangci-lint-action@v4
