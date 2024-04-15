@@ -39,10 +39,22 @@ type LocationResponse struct {
 	Edges              ent.LocationEdges     `json:"edges"`
 }
 
+type LocationHandler struct {
+	Server  *api.Server
+	Service *services.LocationService
+}
+
+func NewLocationHandler(s *api.Server) *LocationHandler {
+	return &LocationHandler{
+		Server:  s,
+		Service: services.NewLocationService(s),
+	}
+}
+
 // GetLocations is a handler that returns a list of locations.
 //
 // GET /locations
-func GetLocations(s *api.Server) fiber.Handler {
+func (h *LocationHandler) GetLocations() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		offset, limit, err := util.PaginationParams(c)
 		if err != nil {
@@ -74,8 +86,7 @@ func GetLocations(s *api.Server) fiber.Handler {
 			})
 		}
 
-		entities, count, err := services.NewLocationService(s).
-			GetLocations(c.UserContext(), limit, offset, orgID, buID)
+		entities, count, err := h.Service.GetLocations(c.UserContext(), limit, offset, orgID, buID)
 		if err != nil {
 			errorResponse := util.CreateDBErrorResponse(err)
 			return c.Status(fiber.StatusInternalServerError).JSON(errorResponse)
@@ -85,44 +96,44 @@ func GetLocations(s *api.Server) fiber.Handler {
 		prevURL := util.GetPrevPageURL(c, limit, offset)
 
 		responses := make([]LocationResponse, len(entities))
-		for i, location := range entities {
+		for i, loc := range entities {
 			// Directly assign the comments from the location object
-			comments := make([]ent.LocationComment, len(location.Edges.Comments))
-			for j, comment := range location.Edges.Comments {
+			comments := make([]ent.LocationComment, len(loc.Edges.Comments))
+			for j, comment := range loc.Edges.Comments {
 				comments[j] = *comment
 			}
 
 			// Directly assign the comments form the location objects
-			contacts := make([]ent.LocationContact, len(location.Edges.Contacts))
-			for k, contact := range location.Edges.Contacts {
+			contacts := make([]ent.LocationContact, len(loc.Edges.Contacts))
+			for k, contact := range loc.Edges.Contacts {
 				contacts[k] = *contact
 			}
 
 			// Response for the location
 			responses[i] = LocationResponse{
-				ID:                 location.ID,
-				BusinessUnitID:     location.BusinessUnitID,
-				OrganizationID:     location.OrganizationID,
-				CreatedAt:          location.CreatedAt,
-				UpdatedAt:          location.UpdatedAt,
-				Version:            location.Version,
-				Status:             location.Status,
-				Code:               location.Code,
-				LocationCategoryID: location.LocationCategoryID,
-				Name:               location.Name,
-				Description:        location.Description,
-				AddressLine1:       location.AddressLine1,
-				AddressLine2:       location.AddressLine2,
-				City:               location.City,
-				StateID:            location.StateID,
-				PostalCode:         location.PostalCode,
-				Longitude:          location.Longitude,
-				Latitude:           location.Latitude,
-				PlaceID:            location.PlaceID,
-				IsGeocoded:         location.IsGeocoded,
+				ID:                 loc.ID,
+				BusinessUnitID:     loc.BusinessUnitID,
+				OrganizationID:     loc.OrganizationID,
+				CreatedAt:          loc.CreatedAt,
+				UpdatedAt:          loc.UpdatedAt,
+				Version:            loc.Version,
+				Status:             loc.Status,
+				Code:               loc.Code,
+				LocationCategoryID: loc.LocationCategoryID,
+				Name:               loc.Name,
+				Description:        loc.Description,
+				AddressLine1:       loc.AddressLine1,
+				AddressLine2:       loc.AddressLine2,
+				City:               loc.City,
+				StateID:            loc.StateID,
+				PostalCode:         loc.PostalCode,
+				Longitude:          loc.Longitude,
+				Latitude:           loc.Latitude,
+				PlaceID:            loc.PlaceID,
+				IsGeocoded:         loc.IsGeocoded,
 				Comments:           comments,
 				Contacts:           contacts,
-				Edges:              location.Edges,
+				Edges:              loc.Edges,
 			}
 		}
 
@@ -138,7 +149,7 @@ func GetLocations(s *api.Server) fiber.Handler {
 // CreateLocation is a handler that creates a new location.
 //
 // POST /locations
-func CreateLocation(s *api.Server) fiber.Handler {
+func (h *LocationHandler) CreateLocation() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		newEntity := new(services.LocationRequest)
 
@@ -174,8 +185,7 @@ func CreateLocation(s *api.Server) fiber.Handler {
 			})
 		}
 
-		entity, err := services.NewLocationService(s).
-			CreateLocation(c.UserContext(), newEntity)
+		entity, err := h.Service.CreateLocation(c.UserContext(), newEntity)
 		if err != nil {
 			errorResponse := util.CreateDBErrorResponse(err)
 			return c.Status(fiber.StatusInternalServerError).JSON(errorResponse)
@@ -185,10 +195,10 @@ func CreateLocation(s *api.Server) fiber.Handler {
 	}
 }
 
-// UpdateLocation is a handler that updates an location.
+// UpdateLocation is a handler that updates a location.
 //
 // PUT /locations/:locationID
-func UpdateLocation(s *api.Server) fiber.Handler {
+func (h *LocationHandler) UpdateLocation() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		locationID := c.Params("locationID")
 		if locationID == "" {
@@ -221,8 +231,7 @@ func UpdateLocation(s *api.Server) fiber.Handler {
 
 		updatedEntity.ID = uuid.MustParse(locationID)
 
-		entity, err := services.NewLocationService(s).
-			UpdateLocation(c.UserContext(), updatedEntity)
+		entity, err := h.Service.UpdateLocation(c.UserContext(), updatedEntity)
 		if err != nil {
 			errorResponse := util.CreateDBErrorResponse(err)
 			return c.Status(fiber.StatusInternalServerError).JSON(errorResponse)

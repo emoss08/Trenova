@@ -9,7 +9,19 @@ import (
 	"github.com/google/uuid"
 )
 
-func GetAuthenticatedUser(s *api.Server) fiber.Handler {
+type UserHandler struct {
+	Server  *api.Server
+	Service *services.UserService
+}
+
+func NewUserHandler(s *api.Server) *UserHandler {
+	return &UserHandler{
+		Server:  s,
+		Service: services.NewUserService(s),
+	}
+}
+
+func (h *UserHandler) GetAuthenticatedUser() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		userID, ok := c.Locals(util.CTXUserID).(uuid.UUID)
 
@@ -26,10 +38,10 @@ func GetAuthenticatedUser(s *api.Server) fiber.Handler {
 			})
 		}
 
-		user, err := services.NewUserService(s).GetAuthenticatedUser(c.UserContext(), userID)
+		user, err := h.Service.GetAuthenticatedUser(c.UserContext(), userID)
 		if err != nil {
-			errorRsponse := util.CreateDBErrorResponse(err)
-			return c.Status(fiber.StatusInternalServerError).JSON(errorRsponse)
+			errResp := util.CreateDBErrorResponse(err)
+			return c.Status(fiber.StatusInternalServerError).JSON(errResp)
 		}
 
 		return c.Status(fiber.StatusOK).JSON(user)

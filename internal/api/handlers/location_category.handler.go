@@ -10,10 +10,22 @@ import (
 	"github.com/google/uuid"
 )
 
+type LocationCategoryHandler struct {
+	Server  *api.Server
+	Service *services.LocationCategoryService
+}
+
+func NewLocationCategoryHandler(s *api.Server) *LocationCategoryHandler {
+	return &LocationCategoryHandler{
+		Server:  s,
+		Service: services.NewLocationCategoryService(s),
+	}
+}
+
 // GetLocationCategories is a handler that returns a list of location categories.
 //
 // GET /location-categories
-func GetLocationCategories(s *api.Server) fiber.Handler {
+func (h *LocationCategoryHandler) GetLocationCategories() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		offset, limit, err := util.PaginationParams(c)
 		if err != nil {
@@ -45,8 +57,7 @@ func GetLocationCategories(s *api.Server) fiber.Handler {
 			})
 		}
 
-		entities, count, err := services.NewLocationCategoryService(s).
-			GetLocationCategories(c.UserContext(), limit, offset, orgID, buID)
+		entities, count, err := h.Service.GetLocationCategories(c.UserContext(), limit, offset, orgID, buID)
 		if err != nil {
 			errorResponse := util.CreateDBErrorResponse(err)
 			return c.Status(fiber.StatusInternalServerError).JSON(errorResponse)
@@ -67,7 +78,7 @@ func GetLocationCategories(s *api.Server) fiber.Handler {
 // CreateLocationCategory is a handler that creates a new location cateogry.
 //
 // POST /location-categories
-func CreateLocationCategory(s *api.Server) fiber.Handler {
+func (h *LocationCategoryHandler) CreateLocationCategory() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		newEntity := new(ent.LocationCategory)
 
@@ -103,8 +114,7 @@ func CreateLocationCategory(s *api.Server) fiber.Handler {
 			})
 		}
 
-		entity, err := services.NewLocationCategoryService(s).
-			CreateLocationCategory(c.UserContext(), newEntity)
+		entity, err := h.Service.CreateLocationCategory(c.UserContext(), newEntity)
 		if err != nil {
 			errorResponse := util.CreateDBErrorResponse(err)
 			return c.Status(fiber.StatusInternalServerError).JSON(errorResponse)
@@ -114,10 +124,10 @@ func CreateLocationCategory(s *api.Server) fiber.Handler {
 	}
 }
 
-// UpdateLocationCategory is a handler that updates an location cateogry.
+// UpdateLocationCategory is a handler that updates a location category.
 //
 // PUT /location-categories/:locationCategoryID
-func UpdateLocationCategory(s *api.Server) fiber.Handler {
+func (h *LocationCategoryHandler) UpdateLocationCategory() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		locationCategoryID := c.Params("locationCategoryID")
 		if locationCategoryID == "" {
@@ -150,8 +160,7 @@ func UpdateLocationCategory(s *api.Server) fiber.Handler {
 
 		updatedEntity.ID = uuid.MustParse(locationCategoryID)
 
-		entity, err := services.NewLocationCategoryService(s).
-			UpdateLocationCategory(c.UserContext(), updatedEntity)
+		entity, err := h.Service.UpdateLocationCategory(c.UserContext(), updatedEntity)
 		if err != nil {
 			errorResponse := util.CreateDBErrorResponse(err)
 			return c.Status(fiber.StatusInternalServerError).JSON(errorResponse)

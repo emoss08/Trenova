@@ -10,10 +10,22 @@ import (
 	"github.com/google/uuid"
 )
 
+type FleetCodeHandler struct {
+	Server  *api.Server
+	Service *services.FleetCodeService
+}
+
+func NewFleetCodeHandler(s *api.Server) *FleetCodeHandler {
+	return &FleetCodeHandler{
+		Server:  s,
+		Service: services.NewFleetCodeService(s),
+	}
+}
+
 // GetFleetCodes is a handler that returns a list of fleet codes.
 //
 // GET /fleet-codes
-func GetFleetCodes(s *api.Server) fiber.Handler {
+func (h *FleetCodeHandler) GetFleetCodes() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		offset, limit, err := util.PaginationParams(c)
 		if err != nil {
@@ -45,8 +57,7 @@ func GetFleetCodes(s *api.Server) fiber.Handler {
 			})
 		}
 
-		entities, count, err := services.NewFleetCodeService(s).
-			GetFleetCodes(c.UserContext(), limit, offset, orgID, buID)
+		entities, count, err := h.Service.GetFleetCodes(c.UserContext(), limit, offset, orgID, buID)
 		if err != nil {
 			errorResponse := util.CreateDBErrorResponse(err)
 			return c.Status(fiber.StatusInternalServerError).JSON(errorResponse)
@@ -67,7 +78,7 @@ func GetFleetCodes(s *api.Server) fiber.Handler {
 // CreateFleetCode is a handler that creates a new fleet code.
 //
 // POST /fleet-codes
-func CreateFleetCode(s *api.Server) fiber.Handler {
+func (h *FleetCodeHandler) CreateFleetCode() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		newEntity := new(ent.FleetCode)
 
@@ -103,8 +114,7 @@ func CreateFleetCode(s *api.Server) fiber.Handler {
 			})
 		}
 
-		entity, err := services.NewFleetCodeService(s).
-			CreateFleetCode(c.UserContext(), newEntity)
+		entity, err := h.Service.CreateFleetCode(c.UserContext(), newEntity)
 		if err != nil {
 			errorResponse := util.CreateDBErrorResponse(err)
 			return c.Status(fiber.StatusInternalServerError).JSON(errorResponse)
@@ -114,10 +124,10 @@ func CreateFleetCode(s *api.Server) fiber.Handler {
 	}
 }
 
-// UpdateFleetCode is a handler that updates an fleet code.
+// UpdateFleetCode is a handler that updates a fleet code.
 //
 // PUT /fleet-codes/:fleetCodeID
-func UpdateFleetCode(s *api.Server) fiber.Handler {
+func (h *FleetCodeHandler) UpdateFleetCode() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		fleetCodeID := c.Params("fleetCodeID")
 		if fleetCodeID == "" {
@@ -150,8 +160,7 @@ func UpdateFleetCode(s *api.Server) fiber.Handler {
 
 		updatedEntity.ID = uuid.MustParse(fleetCodeID)
 
-		entity, err := services.NewFleetCodeService(s).
-			UpdateFleetCode(c.UserContext(), updatedEntity)
+		entity, err := h.Service.UpdateFleetCode(c.UserContext(), updatedEntity)
 		if err != nil {
 			errorResponse := util.CreateDBErrorResponse(err)
 			return c.Status(fiber.StatusInternalServerError).JSON(errorResponse)

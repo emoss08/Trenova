@@ -10,10 +10,22 @@ import (
 	"github.com/google/uuid"
 )
 
+type ShipmentControlHandler struct {
+	Server  *api.Server
+	Service *services.ShipmentControlService
+}
+
+func NewShipmentControlHandler(s *api.Server) *ShipmentControlHandler {
+	return &ShipmentControlHandler{
+		Server:  s,
+		Service: services.NewShipmentControlService(s),
+	}
+}
+
 // GetShipmentControl is a handler that returns the shipment control for an organization.
 //
 // GET /shipment-control
-func GetShipmentControl(s *api.Server) fiber.Handler {
+func (h *ShipmentControlHandler) GetShipmentControl() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		orgID, ok := c.Locals(util.CTXOrganizationID).(uuid.UUID)
 		buID, buOK := c.Locals(util.CTXBusinessUnitID).(uuid.UUID)
@@ -31,7 +43,7 @@ func GetShipmentControl(s *api.Server) fiber.Handler {
 			})
 		}
 
-		entity, err := services.NewShipmentControlService(s).GetShipmentControl(c.UserContext(), orgID, buID)
+		entity, err := h.Service.GetShipmentControl(c.UserContext(), orgID, buID)
 		if err != nil {
 			errorResponse := util.CreateDBErrorResponse(err)
 			return c.Status(fiber.StatusInternalServerError).JSON(errorResponse)
@@ -45,7 +57,7 @@ func GetShipmentControl(s *api.Server) fiber.Handler {
 // UpdateShipmentControlByID is a handler that updates the shipment control for an organization.
 //
 // PUT /shipment-control/:shipmentControlID
-func UpdateShipmentControlByID(s *api.Server) fiber.Handler {
+func (h *ShipmentControlHandler) UpdateShipmentControlByID() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		shipmentControlID := c.Params("shipmentControlID")
 		if shipmentControlID == "" {
@@ -78,7 +90,7 @@ func UpdateShipmentControlByID(s *api.Server) fiber.Handler {
 
 		data.ID = uuid.MustParse(shipmentControlID)
 
-		updatedEntity, err := services.NewShipmentControlService(s).UpdateShipmentControl(c.UserContext(), data)
+		updatedEntity, err := h.Service.UpdateShipmentControl(c.UserContext(), data)
 		if err != nil {
 			errorResponse := util.CreateDBErrorResponse(err)
 			return c.Status(fiber.StatusInternalServerError).JSON(errorResponse)

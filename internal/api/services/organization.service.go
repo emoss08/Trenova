@@ -3,22 +3,22 @@ package services
 import (
 	"context"
 
+	"github.com/emoss08/trenova/internal/api"
 	"github.com/emoss08/trenova/internal/ent"
 	"github.com/emoss08/trenova/internal/ent/businessunit"
 	"github.com/emoss08/trenova/internal/ent/organization"
-	"github.com/emoss08/trenova/internal/api"
 	"github.com/google/uuid"
 	"github.com/rs/zerolog"
 )
 
-// OrganizationOps is the service for organization.
+// OrganizationService OrganizationOps is the service for organization.
 type OrganizationService struct {
 	Client *ent.Client
 	Logger *zerolog.Logger
 }
 
-// NewOrganizationOps creates a new organization service.
-func NewOrganizationOps(s *api.Server) *OrganizationService {
+// NewOrganizationService NewOrganizationOps creates a new organization service.
+func NewOrganizationService(s *api.Server) *OrganizationService {
 	return &OrganizationService{
 		Client: s.Client,
 		Logger: s.Logger,

@@ -9,8 +9,20 @@ import (
 	"github.com/google/uuid"
 )
 
+type OrganizationHandler struct {
+	Server  *api.Server
+	Service *services.OrganizationService
+}
+
+func NewOrganizationHandler(s *api.Server) *OrganizationHandler {
+	return &OrganizationHandler{
+		Server:  s,
+		Service: services.NewOrganizationService(s),
+	}
+}
+
 // GetUserOrganization is a handler that returns the organization of the currently authenticated user.
-func GetUserOrganization(s *api.Server) fiber.Handler {
+func (h *OrganizationHandler) GetUserOrganization() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		buID, buOK := c.Locals(util.CTXBusinessUnitID).(uuid.UUID)
 		orgID, orgOK := c.Locals(util.CTXOrganizationID).(uuid.UUID)
@@ -29,7 +41,7 @@ func GetUserOrganization(s *api.Server) fiber.Handler {
 			)
 		}
 
-		user, err := services.NewOrganizationOps(s).GetUserOrganization(c.UserContext(), buID, orgID)
+		user, err := h.Service.GetUserOrganization(c.UserContext(), buID, orgID)
 		if err != nil {
 			errorResponse := util.CreateDBErrorResponse(err)
 			return c.Status(fiber.StatusInternalServerError).JSON(errorResponse)

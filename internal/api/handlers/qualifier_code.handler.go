@@ -10,10 +10,22 @@ import (
 	"github.com/google/uuid"
 )
 
+type QualifierCodeHandler struct {
+	Server  *api.Server
+	Service *services.QualifierCodeService
+}
+
+func NewQualifierCodeHandler(s *api.Server) *QualifierCodeHandler {
+	return &QualifierCodeHandler{
+		Server:  s,
+		Service: services.NewQualifierCodeService(s),
+	}
+}
+
 // GetQualifierCodes is a handler that returns a list of qualifier codes.
 //
 // GET /qualifier-codes
-func GetQualifierCodes(s *api.Server) fiber.Handler {
+func (h *QualifierCodeHandler) GetQualifierCodes() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		offset, limit, err := util.PaginationParams(c)
 		if err != nil {
@@ -45,8 +57,7 @@ func GetQualifierCodes(s *api.Server) fiber.Handler {
 			})
 		}
 
-		entities, count, err := services.NewQualifierCodeService(s).
-			GetQualifierCodes(c.UserContext(), limit, offset, orgID, buID)
+		entities, count, err := h.Service.GetQualifierCodes(c.UserContext(), limit, offset, orgID, buID)
 		if err != nil {
 			errorResponse := util.CreateDBErrorResponse(err)
 			return c.Status(fiber.StatusInternalServerError).JSON(errorResponse)
@@ -67,7 +78,7 @@ func GetQualifierCodes(s *api.Server) fiber.Handler {
 // CreateQualifierCode is a handler that creates a new qualifier code.
 //
 // POST /qualifier-codes
-func CreateQualifierCode(s *api.Server) fiber.Handler {
+func (h *QualifierCodeHandler) CreateQualifierCode() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		newEntity := new(ent.QualifierCode)
 
@@ -103,8 +114,7 @@ func CreateQualifierCode(s *api.Server) fiber.Handler {
 			})
 		}
 
-		entity, err := services.NewQualifierCodeService(s).
-			CreateQualifierCode(c.UserContext(), newEntity)
+		entity, err := h.Service.CreateQualifierCode(c.UserContext(), newEntity)
 		if err != nil {
 			errorResponse := util.CreateDBErrorResponse(err)
 			return c.Status(fiber.StatusInternalServerError).JSON(errorResponse)
@@ -117,7 +127,7 @@ func CreateQualifierCode(s *api.Server) fiber.Handler {
 // UpdateQualifierCode is a handler that updates an qualifier code.
 //
 // PUT /qualifier-codes/:qualifierCodeID
-func UpdateQualifierCode(s *api.Server) fiber.Handler {
+func (h *QualifierCodeHandler) UpdateQualifierCode() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		qualifierCodeID := c.Params("qualifierCodeID")
 		if qualifierCodeID == "" {
@@ -150,8 +160,7 @@ func UpdateQualifierCode(s *api.Server) fiber.Handler {
 
 		updatedEntity.ID = uuid.MustParse(qualifierCodeID)
 
-		entity, err := services.NewQualifierCodeService(s).
-			UpdateQualifierCode(c.UserContext(), updatedEntity)
+		entity, err := h.Service.UpdateQualifierCode(c.UserContext(), updatedEntity)
 		if err != nil {
 			errorResponse := util.CreateDBErrorResponse(err)
 			return c.Status(fiber.StatusInternalServerError).JSON(errorResponse)

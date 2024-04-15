@@ -10,10 +10,22 @@ import (
 	"github.com/google/uuid"
 )
 
+type TagHandler struct {
+	Server  *api.Server
+	Service *services.TagService
+}
+
+func NewTagHandler(s *api.Server) *TagHandler {
+	return &TagHandler{
+		Server:  s,
+		Service: services.NewTagService(s),
+	}
+}
+
 // GetTags is a handler that returns a list of tags.
 //
 // GET /tags
-func GetTags(s *api.Server) fiber.Handler {
+func (h *TagHandler) GetTags() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		offset, limit, err := util.PaginationParams(c)
 		if err != nil {
@@ -45,8 +57,7 @@ func GetTags(s *api.Server) fiber.Handler {
 			})
 		}
 
-		entities, count, err := services.NewTagService(s).
-			GetTags(c.UserContext(), limit, offset, orgID, buID)
+		entities, count, err := h.Service.GetTags(c.UserContext(), limit, offset, orgID, buID)
 		if err != nil {
 			errorResponse := util.CreateDBErrorResponse(err)
 			return c.Status(fiber.StatusInternalServerError).JSON(errorResponse)
@@ -67,7 +78,7 @@ func GetTags(s *api.Server) fiber.Handler {
 // CreateTag is a handler that creates a new tag.
 //
 // POST /tags
-func CreateTag(s *api.Server) fiber.Handler {
+func (h *TagHandler) CreateTag() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		newEntity := new(ent.Tag)
 
@@ -103,8 +114,7 @@ func CreateTag(s *api.Server) fiber.Handler {
 			})
 		}
 
-		entity, err := services.NewTagService(s).
-			CreateTag(c.UserContext(), newEntity)
+		entity, err := h.Service.CreateTag(c.UserContext(), newEntity)
 		if err != nil {
 			errorResponse := util.CreateDBErrorResponse(err)
 			return c.Status(fiber.StatusInternalServerError).JSON(errorResponse)
@@ -117,7 +127,7 @@ func CreateTag(s *api.Server) fiber.Handler {
 // UpdateTag is a handler that updates an tag.
 //
 // PUT /tags/:tagID
-func UpdateTag(s *api.Server) fiber.Handler {
+func (h *TagHandler) UpdateTag() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		tagID := c.Params("tagID")
 		if tagID == "" {
@@ -150,8 +160,7 @@ func UpdateTag(s *api.Server) fiber.Handler {
 
 		updatedEntity.ID = uuid.MustParse(tagID)
 
-		entity, err := services.NewTagService(s).
-			UpdateTag(c.UserContext(), updatedEntity)
+		entity, err := h.Service.UpdateTag(c.UserContext(), updatedEntity)
 		if err != nil {
 			errorResponse := util.CreateDBErrorResponse(err)
 			return c.Status(fiber.StatusInternalServerError).JSON(errorResponse)

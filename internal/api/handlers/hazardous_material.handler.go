@@ -10,10 +10,22 @@ import (
 	"github.com/google/uuid"
 )
 
-// GetHazardousMaterials is a handler that returns a list of hazardous materialss.
+type HazardousMaterialHandler struct {
+	Server  *api.Server
+	Service *services.HazardousMaterialService
+}
+
+func NewHazardousMaterialHandler(s *api.Server) *HazardousMaterialHandler {
+	return &HazardousMaterialHandler{
+		Server:  s,
+		Service: services.NewHazardousMaterialService(s),
+	}
+}
+
+// GetHazardousMaterials is a handler that returns a list of hazardous materials.
 //
 // GET /hazardous-materials
-func GetHazardousMaterials(s *api.Server) fiber.Handler {
+func (h *HazardousMaterialHandler) GetHazardousMaterials() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		offset, limit, err := util.PaginationParams(c)
 		if err != nil {
@@ -45,8 +57,7 @@ func GetHazardousMaterials(s *api.Server) fiber.Handler {
 			})
 		}
 
-		entities, count, err := services.NewHazardousMaterialService(s).
-			GetHazardousMaterials(c.UserContext(), limit, offset, orgID, buID)
+		entities, count, err := h.Service.GetHazardousMaterials(c.UserContext(), limit, offset, orgID, buID)
 		if err != nil {
 			errorResponse := util.CreateDBErrorResponse(err)
 			return c.Status(fiber.StatusInternalServerError).JSON(errorResponse)
@@ -67,7 +78,7 @@ func GetHazardousMaterials(s *api.Server) fiber.Handler {
 // CreateHazardousMaterial is a handler that creates a new hazardous materials.
 //
 // POST /hazardous-materials
-func CreateHazardousMaterial(s *api.Server) fiber.Handler {
+func (h *HazardousMaterialHandler) CreateHazardousMaterial() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		newEntity := new(ent.HazardousMaterial)
 
@@ -103,8 +114,7 @@ func CreateHazardousMaterial(s *api.Server) fiber.Handler {
 			})
 		}
 
-		entity, err := services.NewHazardousMaterialService(s).
-			CreateHazardousMaterial(c.UserContext(), newEntity)
+		entity, err := h.Service.CreateHazardousMaterial(c.UserContext(), newEntity)
 		if err != nil {
 			errorResponse := util.CreateDBErrorResponse(err)
 			return c.Status(fiber.StatusInternalServerError).JSON(errorResponse)
@@ -114,10 +124,10 @@ func CreateHazardousMaterial(s *api.Server) fiber.Handler {
 	}
 }
 
-// UpdateHazardousMaterial is a handler that updates an hazardous materials.
+// UpdateHazardousMaterial is a handler that updates a hazardous materials.
 //
 // PUT /hazardous-materials/:hazmatID
-func UpdateHazardousMaterial(s *api.Server) fiber.Handler {
+func (h *HazardousMaterialHandler) UpdateHazardousMaterial() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		hazmatID := c.Params("hazmatID")
 		if hazmatID == "" {
@@ -150,8 +160,7 @@ func UpdateHazardousMaterial(s *api.Server) fiber.Handler {
 
 		updatedEntity.ID = uuid.MustParse(hazmatID)
 
-		entity, err := services.NewHazardousMaterialService(s).
-			UpdateHazardousMaterial(c.UserContext(), updatedEntity)
+		entity, err := h.Service.UpdateHazardousMaterial(c.UserContext(), updatedEntity)
 		if err != nil {
 			errorResponse := util.CreateDBErrorResponse(err)
 			return c.Status(fiber.StatusInternalServerError).JSON(errorResponse)

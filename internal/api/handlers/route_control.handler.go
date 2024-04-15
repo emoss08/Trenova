@@ -10,10 +10,22 @@ import (
 	"github.com/google/uuid"
 )
 
+type RouteControlHandler struct {
+	Server  *api.Server
+	Service *services.RouteControlService
+}
+
+func NewRouteControlHandler(s *api.Server) *RouteControlHandler {
+	return &RouteControlHandler{
+		Server:  s,
+		Service: services.NewRouteControlService(s),
+	}
+}
+
 // GetRouteControl is a handler that returns the route control for an organization.
 //
 // GET /route-control
-func GetRouteControl(s *api.Server) fiber.Handler {
+func (h *RouteControlHandler) GetRouteControl() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		orgID, ok := c.Locals(util.CTXOrganizationID).(uuid.UUID)
 		buID, buOK := c.Locals(util.CTXBusinessUnitID).(uuid.UUID)
@@ -31,7 +43,7 @@ func GetRouteControl(s *api.Server) fiber.Handler {
 			})
 		}
 
-		entity, err := services.NewRouteControlService(s).GetRouteControl(c.UserContext(), orgID, buID)
+		entity, err := h.Service.GetRouteControl(c.UserContext(), orgID, buID)
 		if err != nil {
 			errorResponse := util.CreateDBErrorResponse(err)
 			return c.Status(fiber.StatusInternalServerError).JSON(errorResponse)
@@ -44,7 +56,7 @@ func GetRouteControl(s *api.Server) fiber.Handler {
 // UpdateRouteControlByID is a handler that updates the route control for an organization.
 //
 // PUT /route-control/:routeControlID
-func UpdateRouteControlByID(s *api.Server) fiber.Handler {
+func (h *RouteControlHandler) UpdateRouteControlByID() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		routeControlID := c.Params("routeControlID")
 		if routeControlID == "" {
@@ -77,7 +89,7 @@ func UpdateRouteControlByID(s *api.Server) fiber.Handler {
 
 		data.ID = uuid.MustParse(routeControlID)
 
-		updatedEntity, err := services.NewRouteControlService(s).UpdateRouteControl(c.UserContext(), data)
+		updatedEntity, err := h.Service.UpdateRouteControl(c.UserContext(), data)
 		if err != nil {
 			errorResponse := util.CreateDBErrorResponse(err)
 			return c.Status(fiber.StatusInternalServerError).JSON(errorResponse)

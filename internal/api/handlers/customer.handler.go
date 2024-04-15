@@ -10,13 +10,25 @@ import (
 	"github.com/google/uuid"
 )
 
+type CustomerHandler struct {
+	Server  *api.Server
+	Service *services.CustomerService
+}
+
+func NewCustomerHandler(s *api.Server) *CustomerHandler {
+	return &CustomerHandler{
+		Server:  s,
+		Service: services.NewCustomerService(s),
+	}
+}
+
 // TODO: This is incomplete we need to add customer email & rule profile, delivery slots,
 // contact and detention policy
 
 // GetCustomers is a handler that returns a list of customers.
 //
 // GET /customers
-func GetCustomers(s *api.Server) fiber.Handler {
+func (h *CustomerHandler) GetCustomers() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		offset, limit, err := util.PaginationParams(c)
 		if err != nil {
@@ -48,8 +60,7 @@ func GetCustomers(s *api.Server) fiber.Handler {
 			})
 		}
 
-		entities, count, err := services.NewCustomerService(s).
-			GetCustomers(c.UserContext(), limit, offset, orgID, buID)
+		entities, count, err := h.Service.GetCustomers(c.UserContext(), limit, offset, orgID, buID)
 		if err != nil {
 			errorResponse := util.CreateDBErrorResponse(err)
 			return c.Status(fiber.StatusInternalServerError).JSON(errorResponse)
@@ -70,7 +81,7 @@ func GetCustomers(s *api.Server) fiber.Handler {
 // CreateCustomer is a handler that creates a new customer.
 //
 // POST /customers
-func CreateCustomer(s *api.Server) fiber.Handler {
+func (h *CustomerHandler) CreateCustomer() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		newEntity := new(ent.Customer)
 
@@ -106,8 +117,7 @@ func CreateCustomer(s *api.Server) fiber.Handler {
 			})
 		}
 
-		entity, err := services.NewCustomerService(s).
-			CreateCustomer(c.UserContext(), newEntity)
+		entity, err := h.Service.CreateCustomer(c.UserContext(), newEntity)
 		if err != nil {
 			errorResponse := util.CreateDBErrorResponse(err)
 			return c.Status(fiber.StatusInternalServerError).JSON(errorResponse)
@@ -117,10 +127,10 @@ func CreateCustomer(s *api.Server) fiber.Handler {
 	}
 }
 
-// UpdateCustomer is a handler that updates an customer.
+// UpdateCustomer is a handler that updates a customer.
 //
 // PUT /customers/:customerID
-func UpdateCustomer(s *api.Server) fiber.Handler {
+func (h *CustomerHandler) UpdateCustomer() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		customerID := c.Params("customerID")
 		if customerID == "" {
@@ -153,8 +163,7 @@ func UpdateCustomer(s *api.Server) fiber.Handler {
 
 		updatedEntity.ID = uuid.MustParse(customerID)
 
-		entity, err := services.NewCustomerService(s).
-			UpdateCustomer(c.UserContext(), updatedEntity)
+		entity, err := h.Service.UpdateCustomer(c.UserContext(), updatedEntity)
 		if err != nil {
 			errorResponse := util.CreateDBErrorResponse(err)
 			return c.Status(fiber.StatusInternalServerError).JSON(errorResponse)

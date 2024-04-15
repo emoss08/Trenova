@@ -10,10 +10,22 @@ import (
 	"github.com/google/uuid"
 )
 
+type EquipmentTypeHandler struct {
+	Server  *api.Server
+	Service *services.EquipmentTypeService
+}
+
+func NewEquipmentTypeHandler(s *api.Server) *EquipmentTypeHandler {
+	return &EquipmentTypeHandler{
+		Server:  s,
+		Service: services.NewEquipmentTypeService(s),
+	}
+}
+
 // GetEquipmentTypes is a handler that returns a list of equipment types.
 //
 // GET /equipment-types
-func GetEquipmentTypes(s *api.Server) fiber.Handler {
+func (h *EquipmentTypeHandler) GetEquipmentTypes() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		offset, limit, err := util.PaginationParams(c)
 		if err != nil {
@@ -45,8 +57,7 @@ func GetEquipmentTypes(s *api.Server) fiber.Handler {
 			})
 		}
 
-		entities, count, err := services.NewEquipmentTypeService(s).
-			GetEquipmentTypes(c.UserContext(), limit, offset, orgID, buID)
+		entities, count, err := h.Service.GetEquipmentTypes(c.UserContext(), limit, offset, orgID, buID)
 		if err != nil {
 			errorResponse := util.CreateDBErrorResponse(err)
 			return c.Status(fiber.StatusInternalServerError).JSON(errorResponse)
@@ -67,7 +78,7 @@ func GetEquipmentTypes(s *api.Server) fiber.Handler {
 // CreateEquipmentType is a handler that creates a new equipment type.
 //
 // POST /equipment-types
-func CreateEquipmentType(s *api.Server) fiber.Handler {
+func (h *EquipmentTypeHandler) CreateEquipmentType() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		newEntity := new(ent.EquipmentType)
 
@@ -103,8 +114,7 @@ func CreateEquipmentType(s *api.Server) fiber.Handler {
 			})
 		}
 
-		entity, err := services.NewEquipmentTypeService(s).
-			CreateEquipmentType(c.UserContext(), newEntity)
+		entity, err := h.Service.CreateEquipmentType(c.UserContext(), newEntity)
 		if err != nil {
 			errorResponse := util.CreateDBErrorResponse(err)
 			return c.Status(fiber.StatusInternalServerError).JSON(errorResponse)
@@ -117,7 +127,7 @@ func CreateEquipmentType(s *api.Server) fiber.Handler {
 // UpdateEquipmentType is a handler that updates an equipment type.
 //
 // PUT /equipment-types/:equipmentTypeID
-func UpdateEquipmentType(s *api.Server) fiber.Handler {
+func (h *EquipmentTypeHandler) UpdateEquipmentType() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		equipmentTypeID := c.Params("equipmentTypeID")
 		if equipmentTypeID == "" {
@@ -150,8 +160,7 @@ func UpdateEquipmentType(s *api.Server) fiber.Handler {
 
 		updatedEntity.ID = uuid.MustParse(equipmentTypeID)
 
-		entity, err := services.NewEquipmentTypeService(s).
-			UpdateEquipmentType(c.UserContext(), updatedEntity)
+		entity, err := h.Service.UpdateEquipmentType(c.UserContext(), updatedEntity)
 		if err != nil {
 			errorResponse := util.CreateDBErrorResponse(err)
 			return c.Status(fiber.StatusInternalServerError).JSON(errorResponse)
