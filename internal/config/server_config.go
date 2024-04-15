@@ -61,14 +61,14 @@ type Monitor struct {
 }
 
 type Server struct {
-	Database     Database
-	Fiber        FiberServer
-	Logger       LoggerServer
-	Redis        RedisServer
-	SessionStore *session.Store
-	Kafka        KafkaServer
-	Cookie       EncryptCookie
-	Monitor      Monitor
+	Database     Database       `json:"database"`
+	Fiber        FiberServer    `json:"fiber"`
+	Logger       LoggerServer   `json:"logger"`
+	Redis        RedisServer    `json:"redis"`
+	SessionStore *session.Store `json:"-"`
+	Kafka        KafkaServer    `json:"kafka"`
+	Cookie       EncryptCookie  `json:"cookie"`
+	Monitor      Monitor        `json:"monitor"`
 }
 
 // DefaultServiceConfigFromEnv returns the server config as parsed from environment variables

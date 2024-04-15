@@ -11,7 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/util"
 	"github.com/gofiber/fiber/v2/middleware/session"
 	"github.com/google/uuid"
-	_ "github.com/mattn/go-sqlite3"
+	_ "github.com/mattn/go-sqlite3" // required for ent to work with sqlite
 	"github.com/valyala/fasthttp"
 )
 
@@ -64,11 +64,11 @@ func execClosureNewTestServer(t *testing.T, config config.Server, client *ent.Cl
 	}
 
 	// Set the session in the context
-	sess.Set(util.CTXUserID, uuid.New())
-	sess.Set(util.CTXOrganizationID, uuid.New())
-	sess.Set(util.CTXBusinessUnitID, uuid.New())
+	sess.Set(string(util.CTXUserID), uuid.New())
+	sess.Set(string(util.CTXOrganizationID), uuid.New())
+	sess.Set(string(util.CTXBusinessUnitID), uuid.New())
 
-	if err := sess.Save(); err != nil {
+	if err = sess.Save(); err != nil {
 		t.Fatalf("failed to save session: %v", err)
 	}
 
@@ -80,10 +80,7 @@ func execClosureNewTestServer(t *testing.T, config config.Server, client *ent.Cl
 	closure(s)
 
 	// fiber is managed and should close automatically after running the test
-	if err := s.Fiber.Shutdown(); err != nil {
+	if err = s.Fiber.Shutdown(); err != nil {
 		t.Fatalf("failed to shutdown server: %v", err)
 	}
-
-	// disallow any further refs to managed object after running the test
-	s = nil
 }

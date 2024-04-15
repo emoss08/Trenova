@@ -80,65 +80,52 @@ func (RevenueCode) Edges() []ent.Edge {
 // Hooks for the RevenueCode.
 func (RevenueCode) Hooks() []ent.Hook {
 	return []ent.Hook{
-		hook.On(
-			func(next ent.Mutator) ent.Mutator {
-				// Hook to ensure that the expense account has an account type of "Expense".
-				return hook.RevenueCodeFunc(func(ctx context.Context, m *gen.RevenueCodeMutation) (ent.Value, error) {
-					// If the expense account is not being set, no need to check.
-					if !m.Op().Is(ent.OpCreate) && !m.Op().Is(ent.OpUpdate) && !m.Op().Is(ent.OpUpdateOne) {
-						log.Println("Not a create or update operation")
-						return next.Mutate(ctx, m)
-					}
-
-					// If the expense account is being set, ensure it is an expense account.
-					expenseAccountID, expenseAccountIDExists := m.ExpenseAccountID()
-					if expenseAccountIDExists {
-						// Get the expense account.
-						expenseAccount, err := m.Client().GeneralLedgerAccount.Get(ctx, expenseAccountID)
-						if err != nil {
-							return nil, err
-						}
-
-						// Ensure the expense account is an expense account.
-						if expenseAccount.AccountType != generalledgeraccount.AccountTypeExpense {
-							return nil, util.NewValidationError("The expense account must be an expense account",
-								"invalidExpenseAccount",
-								"expenseAccountId")
-						}
-					}
-
-					return next.Mutate(ctx, m)
-				})
-			}, ent.OpCreate|ent.OpUpdateOne|ent.OpUpdate),
-
-		// The same hook ,but for the revenue account.
-		hook.On(
-			func(next ent.Mutator) ent.Mutator {
-				return hook.RevenueCodeFunc(func(ctx context.Context, m *gen.RevenueCodeMutation) (ent.Value, error) {
-					// If the revenue account is not being set, no need to check.
-					if !m.Op().Is(ent.OpCreate) && !m.Op().Is(ent.OpUpdate) && !m.Op().Is(ent.OpUpdateOne) {
-						return next.Mutate(ctx, m)
-					}
-
-					// If the revenue account is being set, ensure it is a revenue account.
-					revenueAccountID, revenueAccountIDExists := m.RevenueAccountID()
-					if revenueAccountIDExists {
-						// Get the revenue account.
-						revenueAccount, err := m.Client().GeneralLedgerAccount.Get(ctx, revenueAccountID)
-						if err != nil {
-							return nil, err
-						}
-
-						// Ensure the revenue account is a revenue account.
-						if revenueAccount.AccountType != generalledgeraccount.AccountTypeRevenue {
-							return nil, util.NewValidationError("The revenue account must be a revenue account",
-								"invalidRevenueAccount",
-								"revenueAccountId")
-						}
-					}
-
-					return next.Mutate(ctx, m)
-				})
-			}, ent.OpCreate|ent.OpUpdateOne|ent.OpUpdate),
+		hook.On(ensureExpenseAccountType, ent.OpCreate|ent.OpUpdateOne|ent.OpUpdate),
+		hook.On(ensureRevenueAccountType, ent.OpCreate|ent.OpUpdateOne|ent.OpUpdate),
 	}
+}
+
+// ensureExpenseAccountType checks that the expense account has an "Expense" type.
+func ensureExpenseAccountType(next ent.Mutator) ent.Mutator {
+	return hook.RevenueCodeFunc(func(ctx context.Context, m *gen.RevenueCodeMutation) (ent.Value, error) {
+		if !m.Op().Is(ent.OpCreate) && !m.Op().Is(ent.OpUpdate) && !m.Op().Is(ent.OpUpdateOne) {
+			log.Println("Operation is not create or update, no check needed")
+			return next.Mutate(ctx, m)
+		}
+
+		expenseAccountID, exists := m.ExpenseAccountID()
+		if exists {
+			expenseAccount, err := m.Client().GeneralLedgerAccount.Get(ctx, expenseAccountID)
+			if err != nil {
+				return nil, err
+			}
+			if expenseAccount.AccountType != generalledgeraccount.AccountTypeExpense {
+				return nil, util.NewValidationError("The expense account must be an expense account",
+					"invalidExpenseAccount", "expenseAccountId")
+			}
+		}
+		return next.Mutate(ctx, m)
+	})
+}
+
+// ensureRevenueAccountType checks that the revenue account has a "Revenue" type.
+func ensureRevenueAccountType(next ent.Mutator) ent.Mutator {
+	return hook.RevenueCodeFunc(func(ctx context.Context, m *gen.RevenueCodeMutation) (ent.Value, error) {
+		if !m.Op().Is(ent.OpCreate) && !m.Op().Is(ent.OpUpdate) && !m.Op().Is(ent.OpUpdateOne) {
+			return next.Mutate(ctx, m)
+		}
+
+		revenueAccountID, exists := m.RevenueAccountID()
+		if exists {
+			revenueAccount, err := m.Client().GeneralLedgerAccount.Get(ctx, revenueAccountID)
+			if err != nil {
+				return nil, err
+			}
+			if revenueAccount.AccountType != generalledgeraccount.AccountTypeRevenue {
+				return nil, util.NewValidationError("The revenue account must be a revenue account",
+					"invalidRevenueAccount", "revenueAccountId")
+			}
+		}
+		return next.Mutate(ctx, m)
+	})
 }

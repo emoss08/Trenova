@@ -151,90 +151,75 @@ func (Tractor) Edges() []ent.Edge {
 // Hooks for the Tractor.
 func (Tractor) Hooks() []ent.Hook {
 	return []ent.Hook{
-		hook.On(
-			func(next ent.Mutator) ent.Mutator {
-				// Hook to ensure the primary and seconaary workers are not the same.
-				return hook.TractorFunc(func(ctx context.Context, m *gen.TractorMutation) (ent.Value, error) {
-					if !m.Op().Is(ent.OpCreate) && !m.Op().Is(ent.OpUpdate) && !m.Op().Is(ent.OpUpdateOne) {
-						return next.Mutate(ctx, m)
-					}
-
-					// If the primary and secondary workers are the same, return an error.
-					primaryWorkerID, primaryWorkerIDExists := m.PrimaryWorkerID()
-					secondaryWorkerID, secondaryWorkerIDExists := m.SecondaryWorkerID()
-
-					if primaryWorkerIDExists && secondaryWorkerIDExists && primaryWorkerID == secondaryWorkerID {
-						return nil, util.NewValidationError("The primary and secondary workers cannot be the same. Please try again.",
-							"invalidWorkers",
-							"primaryWorkerId")
-					}
-
-					return next.Mutate(ctx, m)
-				})
-			}, ent.OpCreate|ent.OpUpdate|ent.OpUpdateOne),
-
-		// Hook to ensure that the leased date is set if the tractor is leased.
-		hook.On(
-			func(next ent.Mutator) ent.Mutator {
-				return hook.TractorFunc(func(ctx context.Context, m *gen.TractorMutation) (ent.Value, error) {
-					// If the tractor is not leased, no need to check.
-					if !m.Op().Is(ent.OpCreate) && !m.Op().Is(ent.OpUpdate) && !m.Op().Is(ent.OpUpdateOne) {
-						return next.Mutate(ctx, m)
-					}
-
-					// If the tractor is leased, ensure the leased date is set.
-					leased, leasedExists := m.Leased()
-					_, leasedDateExists := m.LeasedDate()
-
-					if leasedExists && leased && !leasedDateExists {
-						return nil, util.NewValidationError("The leased date must be set if the tractor is leased. Please try again.",
-							"invalidLeasedDate",
-							"leasedDate")
-					}
-
-					return next.Mutate(ctx, m)
-				})
-			}, ent.OpCreate|ent.OpUpdate|ent.OpUpdateOne),
-
-		// Hook that validates the primary worker and tractor have the same fleet code.
-		hook.On(
-			func(next ent.Mutator) ent.Mutator {
-				return hook.TractorFunc(func(ctx context.Context, m *gen.TractorMutation) (ent.Value, error) {
-					if !m.Op().Is(ent.OpCreate) && !m.Op().Is(ent.OpUpdate) && !m.Op().Is(ent.OpUpdateOne) {
-						return next.Mutate(ctx, m)
-					}
-
-					// Get the fleet code of the tractor.
-					fleetCodeID, fleetCodeIDExists := m.FleetCodeID()
-					if !fleetCodeIDExists {
-						return nil, util.NewValidationError("The tractor must have a fleet code. Please try again.",
-							"invalidFleetCode",
-							"fleetCodeId")
-					}
-
-					// Get the primary worker
-					primaryWorkerID, primaryWorkerIDExists := m.PrimaryWorkerID()
-					if !primaryWorkerIDExists {
-						return nil, util.NewValidationError("The tractor must have a primary worker. Please try again.",
-							"invalidPrimaryWorker",
-							"primaryWorkerId")
-					}
-
-					// Get the primary worker fleet code if it doesn't exist then mutate.
-					primaryWorkerFleetCode, err := m.Client().Worker.Query().Where(worker.IDEQ(primaryWorkerID)).QueryFleetCode().Only(ctx)
-					if err != nil {
-						return next.Mutate(ctx, m)
-					}
-
-					// Ensure the primary worker and tractor have the same fleet code.
-					if primaryWorkerFleetCode.ID != fleetCodeID {
-						return nil, util.NewValidationError("The primary worker and tractor must have the same fleet code. Please try again.",
-							"invalidFleetCode",
-							"fleetCodeId")
-					}
-
-					return next.Mutate(ctx, m)
-				})
-			}, ent.OpCreate|ent.OpUpdate|ent.OpUpdateOne),
+		hook.On(workerDifferentiationHook, ent.OpCreate|ent.OpUpdate|ent.OpUpdateOne),
+		hook.On(leasedDateVerificationHook, ent.OpCreate|ent.OpUpdate|ent.OpUpdateOne),
+		hook.On(fleetCodeConsistencyHook, ent.OpCreate|ent.OpUpdate|ent.OpUpdateOne),
 	}
+}
+
+// workerDifferentiationHook ensures that the primary and secondary workers are not the same.
+func workerDifferentiationHook(next ent.Mutator) ent.Mutator {
+	return hook.TractorFunc(func(ctx context.Context, m *gen.TractorMutation) (ent.Value, error) {
+		if !m.Op().Is(ent.OpCreate) && !m.Op().Is(ent.OpUpdate) && !m.Op().Is(ent.OpUpdateOne) {
+			return next.Mutate(ctx, m)
+		}
+
+		primaryWorkerID, primaryWorkerIDExists := m.PrimaryWorkerID()
+		secondaryWorkerID, secondaryWorkerIDExists := m.SecondaryWorkerID()
+
+		if primaryWorkerIDExists && secondaryWorkerIDExists && primaryWorkerID == secondaryWorkerID {
+			return nil, util.NewValidationError("The primary and secondary workers cannot be the same. Please try again.",
+				"invalidWorkers", "primaryWorkerId")
+		}
+
+		return next.Mutate(ctx, m)
+	})
+}
+
+// leasedDateVerificationHook ensures that the leased date is set if the tractor is leased.
+func leasedDateVerificationHook(next ent.Mutator) ent.Mutator {
+	return hook.TractorFunc(func(ctx context.Context, m *gen.TractorMutation) (ent.Value, error) {
+		if !m.Op().Is(ent.OpCreate) && !m.Op().Is(ent.OpUpdate) && !m.Op().Is(ent.OpUpdateOne) {
+			return next.Mutate(ctx, m)
+		}
+
+		leased, leasedExists := m.Leased()
+		_, leasedDateExists := m.LeasedDate()
+
+		if leasedExists && leased && !leasedDateExists {
+			return nil, util.NewValidationError("The leased date must be set if the tractor is leased. Please try again.",
+				"invalidLeasedDate", "leasedDate")
+		}
+
+		return next.Mutate(ctx, m)
+	})
+}
+
+// fleetCodeConsistencyHook validates that the primary worker and tractor have the same fleet code.
+func fleetCodeConsistencyHook(next ent.Mutator) ent.Mutator {
+	return hook.TractorFunc(func(ctx context.Context, m *gen.TractorMutation) (ent.Value, error) {
+		if !m.Op().Is(ent.OpCreate) && !m.Op().Is(ent.OpUpdate) && !m.Op().Is(ent.OpUpdateOne) {
+			return next.Mutate(ctx, m)
+		}
+
+		fleetCodeID, fleetCodeIDExists := m.FleetCodeID()
+		primaryWorkerID, primaryWorkerIDExists := m.PrimaryWorkerID()
+
+		if !fleetCodeIDExists || !primaryWorkerIDExists {
+			return nil, util.NewValidationError("Both tractor and primary worker must have valid fleet codes. Please try again.",
+				"invalidFleetCode", "fleetCodeId")
+		}
+
+		primaryWorkerFleetCode, err := m.Client().Worker.Query().Where(worker.IDEQ(primaryWorkerID)).QueryFleetCode().Only(ctx)
+		if err != nil {
+			return next.Mutate(ctx, m)
+		}
+
+		if primaryWorkerFleetCode.ID != fleetCodeID {
+			return nil, util.NewValidationError("The primary worker and tractor must have the same fleet code. Please try again.",
+				"invalidFleetCode", "fleetCodeId")
+		}
+
+		return next.Mutate(ctx, m)
+	})
 }

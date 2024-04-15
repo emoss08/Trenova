@@ -50,7 +50,6 @@ func (h *ShipmentControlHandler) GetShipmentControl() fiber.Handler {
 		}
 
 		return c.Status(fiber.StatusOK).JSON(entity)
-
 	}
 }
 

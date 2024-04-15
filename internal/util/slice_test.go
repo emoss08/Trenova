@@ -1,8 +1,9 @@
 package util_test
 
 import (
-	"github.com/emoss08/trenova/internal/util"
 	"testing"
+
+	"github.com/emoss08/trenova/internal/util"
 
 	"github.com/stretchr/testify/assert"
 )
