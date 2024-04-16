@@ -28,6 +28,9 @@ type ColumnValue struct {
 	Value string `json:"value"`
 }
 
+// GetColumnsByTableName returns the column names for a given table name.
+//
+// This function is used to retrieve the column names for a given table name. It will exclude any columns
 func (r *ReportService) GetColumnsByTableName(ctx context.Context, tableName string) ([]ColumnValue, int, error) {
 	columns := make([]ColumnValue, 0)
 	excludedTableNames := map[string]bool{
@@ -70,6 +73,10 @@ func (r *ReportService) GetColumnsByTableName(ctx context.Context, tableName str
 	return columns, len(columns), nil
 }
 
+// getColumnsNames returns the column names for a given table name.
+//
+// This function is used to retrieve the column names for a given table name. It will exclude any columns
+// that are in the excludedColumns map and any tables that are in the excludedTableNames map.
 func (r *ReportService) getColumnsNames(
 	ctx context.Context, tx *ent.Tx, tableName string,
 	excludedTableNames map[string]bool, excludedColumns map[string]bool,

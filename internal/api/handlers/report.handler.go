@@ -20,6 +20,7 @@ func NewReportHandler(s *api.Server) *ReportHandler {
 	}
 }
 
+// GetColumnNames returns the column names for a given table name.
 func (h *ReportHandler) GetColumnNames() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		tableName := c.Query("tableName")
