@@ -50,9 +50,9 @@ type LoggerServer struct {
 }
 
 type MinioServer struct {
-	Endpoint  string
-	AccessKey string
-	SecretKey string
+	Endpoint  string `json:"-"`
+	AccessKey string `json:"-"`
+	SecretKey string `json:"-"`
 	UseSSL    bool
 }
 
