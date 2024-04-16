@@ -19,6 +19,7 @@ import (
 	"github.com/emoss08/trenova/internal/ent/shipmentcomment"
 	"github.com/emoss08/trenova/internal/ent/user"
 	"github.com/emoss08/trenova/internal/ent/userfavorite"
+	"github.com/emoss08/trenova/internal/ent/usernotification"
 	"github.com/emoss08/trenova/internal/ent/userreport"
 	"github.com/google/uuid"
 )
@@ -26,23 +27,25 @@ import (
 // UserQuery is the builder for querying User entities.
 type UserQuery struct {
 	config
-	ctx                       *QueryContext
-	order                     []user.OrderOption
-	inters                    []Interceptor
-	predicates                []predicate.User
-	withBusinessUnit          *BusinessUnitQuery
-	withOrganization          *OrganizationQuery
-	withUserFavorites         *UserFavoriteQuery
-	withShipments             *ShipmentQuery
-	withShipmentComments      *ShipmentCommentQuery
-	withShipmentCharges       *ShipmentChargesQuery
-	withReports               *UserReportQuery
-	modifiers                 []func(*sql.Selector)
-	withNamedUserFavorites    map[string]*UserFavoriteQuery
-	withNamedShipments        map[string]*ShipmentQuery
-	withNamedShipmentComments map[string]*ShipmentCommentQuery
-	withNamedShipmentCharges  map[string]*ShipmentChargesQuery
-	withNamedReports          map[string]*UserReportQuery
+	ctx                        *QueryContext
+	order                      []user.OrderOption
+	inters                     []Interceptor
+	predicates                 []predicate.User
+	withBusinessUnit           *BusinessUnitQuery
+	withOrganization           *OrganizationQuery
+	withUserFavorites          *UserFavoriteQuery
+	withUserNotifications      *UserNotificationQuery
+	withShipments              *ShipmentQuery
+	withShipmentComments       *ShipmentCommentQuery
+	withShipmentCharges        *ShipmentChargesQuery
+	withReports                *UserReportQuery
+	modifiers                  []func(*sql.Selector)
+	withNamedUserFavorites     map[string]*UserFavoriteQuery
+	withNamedUserNotifications map[string]*UserNotificationQuery
+	withNamedShipments         map[string]*ShipmentQuery
+	withNamedShipmentComments  map[string]*ShipmentCommentQuery
+	withNamedShipmentCharges   map[string]*ShipmentChargesQuery
+	withNamedReports           map[string]*UserReportQuery
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
 	path func(context.Context) (*sql.Selector, error)
@@ -138,6 +141,28 @@ func (uq *UserQuery) QueryUserFavorites() *UserFavoriteQuery {
 			sqlgraph.From(user.Table, user.FieldID, selector),
 			sqlgraph.To(userfavorite.Table, userfavorite.FieldID),
 			sqlgraph.Edge(sqlgraph.O2M, false, user.UserFavoritesTable, user.UserFavoritesColumn),
+		)
+		fromU = sqlgraph.SetNeighbors(uq.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
+}
+
+// QueryUserNotifications chains the current query on the "user_notifications" edge.
+func (uq *UserQuery) QueryUserNotifications() *UserNotificationQuery {
+	query := (&UserNotificationClient{config: uq.config}).Query()
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := uq.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := uq.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(user.Table, user.FieldID, selector),
+			sqlgraph.To(usernotification.Table, usernotification.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, user.UserNotificationsTable, user.UserNotificationsColumn),
 		)
 		fromU = sqlgraph.SetNeighbors(uq.driver.Dialect(), step)
 		return fromU, nil
@@ -420,18 +445,19 @@ func (uq *UserQuery) Clone() *UserQuery {
 		return nil
 	}
 	return &UserQuery{
-		config:               uq.config,
-		ctx:                  uq.ctx.Clone(),
-		order:                append([]user.OrderOption{}, uq.order...),
-		inters:               append([]Interceptor{}, uq.inters...),
-		predicates:           append([]predicate.User{}, uq.predicates...),
-		withBusinessUnit:     uq.withBusinessUnit.Clone(),
-		withOrganization:     uq.withOrganization.Clone(),
-		withUserFavorites:    uq.withUserFavorites.Clone(),
-		withShipments:        uq.withShipments.Clone(),
-		withShipmentComments: uq.withShipmentComments.Clone(),
-		withShipmentCharges:  uq.withShipmentCharges.Clone(),
-		withReports:          uq.withReports.Clone(),
+		config:                uq.config,
+		ctx:                   uq.ctx.Clone(),
+		order:                 append([]user.OrderOption{}, uq.order...),
+		inters:                append([]Interceptor{}, uq.inters...),
+		predicates:            append([]predicate.User{}, uq.predicates...),
+		withBusinessUnit:      uq.withBusinessUnit.Clone(),
+		withOrganization:      uq.withOrganization.Clone(),
+		withUserFavorites:     uq.withUserFavorites.Clone(),
+		withUserNotifications: uq.withUserNotifications.Clone(),
+		withShipments:         uq.withShipments.Clone(),
+		withShipmentComments:  uq.withShipmentComments.Clone(),
+		withShipmentCharges:   uq.withShipmentCharges.Clone(),
+		withReports:           uq.withReports.Clone(),
 		// clone intermediate query.
 		sql:  uq.sql.Clone(),
 		path: uq.path,
@@ -468,6 +494,17 @@ func (uq *UserQuery) WithUserFavorites(opts ...func(*UserFavoriteQuery)) *UserQu
 		opt(query)
 	}
 	uq.withUserFavorites = query
+	return uq
+}
+
+// WithUserNotifications tells the query-builder to eager-load the nodes that are connected to
+// the "user_notifications" edge. The optional arguments are used to configure the query builder of the edge.
+func (uq *UserQuery) WithUserNotifications(opts ...func(*UserNotificationQuery)) *UserQuery {
+	query := (&UserNotificationClient{config: uq.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	uq.withUserNotifications = query
 	return uq
 }
 
@@ -593,10 +630,11 @@ func (uq *UserQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*User, e
 	var (
 		nodes       = []*User{}
 		_spec       = uq.querySpec()
-		loadedTypes = [7]bool{
+		loadedTypes = [8]bool{
 			uq.withBusinessUnit != nil,
 			uq.withOrganization != nil,
 			uq.withUserFavorites != nil,
+			uq.withUserNotifications != nil,
 			uq.withShipments != nil,
 			uq.withShipmentComments != nil,
 			uq.withShipmentCharges != nil,
@@ -643,6 +681,13 @@ func (uq *UserQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*User, e
 			return nil, err
 		}
 	}
+	if query := uq.withUserNotifications; query != nil {
+		if err := uq.loadUserNotifications(ctx, query, nodes,
+			func(n *User) { n.Edges.UserNotifications = []*UserNotification{} },
+			func(n *User, e *UserNotification) { n.Edges.UserNotifications = append(n.Edges.UserNotifications, e) }); err != nil {
+			return nil, err
+		}
+	}
 	if query := uq.withShipments; query != nil {
 		if err := uq.loadShipments(ctx, query, nodes,
 			func(n *User) { n.Edges.Shipments = []*Shipment{} },
@@ -675,6 +720,13 @@ func (uq *UserQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*User, e
 		if err := uq.loadUserFavorites(ctx, query, nodes,
 			func(n *User) { n.appendNamedUserFavorites(name) },
 			func(n *User, e *UserFavorite) { n.appendNamedUserFavorites(name, e) }); err != nil {
+			return nil, err
+		}
+	}
+	for name, query := range uq.withNamedUserNotifications {
+		if err := uq.loadUserNotifications(ctx, query, nodes,
+			func(n *User) { n.appendNamedUserNotifications(name) },
+			func(n *User, e *UserNotification) { n.appendNamedUserNotifications(name, e) }); err != nil {
 			return nil, err
 		}
 	}
@@ -782,6 +834,36 @@ func (uq *UserQuery) loadUserFavorites(ctx context.Context, query *UserFavoriteQ
 	}
 	query.Where(predicate.UserFavorite(func(s *sql.Selector) {
 		s.Where(sql.InValues(s.C(user.UserFavoritesColumn), fks...))
+	}))
+	neighbors, err := query.All(ctx)
+	if err != nil {
+		return err
+	}
+	for _, n := range neighbors {
+		fk := n.UserID
+		node, ok := nodeids[fk]
+		if !ok {
+			return fmt.Errorf(`unexpected referenced foreign-key "user_id" returned %v for node %v`, fk, n.ID)
+		}
+		assign(node, n)
+	}
+	return nil
+}
+func (uq *UserQuery) loadUserNotifications(ctx context.Context, query *UserNotificationQuery, nodes []*User, init func(*User), assign func(*User, *UserNotification)) error {
+	fks := make([]driver.Value, 0, len(nodes))
+	nodeids := make(map[uuid.UUID]*User)
+	for i := range nodes {
+		fks = append(fks, nodes[i].ID)
+		nodeids[nodes[i].ID] = nodes[i]
+		if init != nil {
+			init(nodes[i])
+		}
+	}
+	if len(query.ctx.Fields) > 0 {
+		query.ctx.AppendFieldOnce(usernotification.FieldUserID)
+	}
+	query.Where(predicate.UserNotification(func(s *sql.Selector) {
+		s.Where(sql.InValues(s.C(user.UserNotificationsColumn), fks...))
 	}))
 	neighbors, err := query.All(ctx)
 	if err != nil {
@@ -1031,6 +1113,20 @@ func (uq *UserQuery) WithNamedUserFavorites(name string, opts ...func(*UserFavor
 		uq.withNamedUserFavorites = make(map[string]*UserFavoriteQuery)
 	}
 	uq.withNamedUserFavorites[name] = query
+	return uq
+}
+
+// WithNamedUserNotifications tells the query-builder to eager-load the nodes that are connected to the "user_notifications"
+// edge with the given name. The optional arguments are used to configure the query builder of the edge.
+func (uq *UserQuery) WithNamedUserNotifications(name string, opts ...func(*UserNotificationQuery)) *UserQuery {
+	query := (&UserNotificationClient{config: uq.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	if uq.withNamedUserNotifications == nil {
+		uq.withNamedUserNotifications = make(map[string]*UserNotificationQuery)
+	}
+	uq.withNamedUserNotifications[name] = query
 	return uq
 }
 

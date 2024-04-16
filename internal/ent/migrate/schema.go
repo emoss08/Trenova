@@ -2294,6 +2294,46 @@ var (
 			},
 		},
 	}
+	// UserNotificationsColumns holds the columns for the "user_notifications" table.
+	UserNotificationsColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeUUID},
+		{Name: "created_at", Type: field.TypeTime},
+		{Name: "updated_at", Type: field.TypeTime},
+		{Name: "version", Type: field.TypeInt, Default: 1},
+		{Name: "is_read", Type: field.TypeBool, Default: false},
+		{Name: "title", Type: field.TypeString},
+		{Name: "description", Type: field.TypeString, Size: 2147483647},
+		{Name: "action_url", Type: field.TypeString, Nullable: true},
+		{Name: "user_id", Type: field.TypeUUID},
+		{Name: "business_unit_id", Type: field.TypeUUID},
+		{Name: "organization_id", Type: field.TypeUUID},
+	}
+	// UserNotificationsTable holds the schema information for the "user_notifications" table.
+	UserNotificationsTable = &schema.Table{
+		Name:       "user_notifications",
+		Columns:    UserNotificationsColumns,
+		PrimaryKey: []*schema.Column{UserNotificationsColumns[0]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "user_notifications_users_user_notifications",
+				Columns:    []*schema.Column{UserNotificationsColumns[8]},
+				RefColumns: []*schema.Column{UsersColumns[0]},
+				OnDelete:   schema.NoAction,
+			},
+			{
+				Symbol:     "user_notifications_business_units_business_unit",
+				Columns:    []*schema.Column{UserNotificationsColumns[9]},
+				RefColumns: []*schema.Column{BusinessUnitsColumns[0]},
+				OnDelete:   schema.Cascade,
+			},
+			{
+				Symbol:     "user_notifications_organizations_organization",
+				Columns:    []*schema.Column{UserNotificationsColumns[10]},
+				RefColumns: []*schema.Column{OrganizationsColumns[0]},
+				OnDelete:   schema.Cascade,
+			},
+		},
+	}
 	// UserReportsColumns holds the columns for the "user_reports" table.
 	UserReportsColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeUUID},
@@ -2626,6 +2666,7 @@ var (
 		UsStatesTable,
 		UsersTable,
 		UserFavoritesTable,
+		UserNotificationsTable,
 		UserReportsTable,
 		WorkersTable,
 		WorkerCommentsTable,
@@ -2794,6 +2835,9 @@ func init() {
 	UserFavoritesTable.ForeignKeys[0].RefTable = UsersTable
 	UserFavoritesTable.ForeignKeys[1].RefTable = BusinessUnitsTable
 	UserFavoritesTable.ForeignKeys[2].RefTable = OrganizationsTable
+	UserNotificationsTable.ForeignKeys[0].RefTable = UsersTable
+	UserNotificationsTable.ForeignKeys[1].RefTable = BusinessUnitsTable
+	UserNotificationsTable.ForeignKeys[2].RefTable = OrganizationsTable
 	UserReportsTable.ForeignKeys[0].RefTable = UsersTable
 	UserReportsTable.ForeignKeys[1].RefTable = BusinessUnitsTable
 	UserReportsTable.ForeignKeys[2].RefTable = OrganizationsTable

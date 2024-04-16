@@ -69,6 +69,7 @@ import (
 	"github.com/emoss08/trenova/internal/ent/trailer"
 	"github.com/emoss08/trenova/internal/ent/user"
 	"github.com/emoss08/trenova/internal/ent/userfavorite"
+	"github.com/emoss08/trenova/internal/ent/usernotification"
 	"github.com/emoss08/trenova/internal/ent/userreport"
 	"github.com/emoss08/trenova/internal/ent/usstate"
 	"github.com/emoss08/trenova/internal/ent/worker"
@@ -192,6 +193,8 @@ type Client struct {
 	User *UserClient
 	// UserFavorite is the client for interacting with the UserFavorite builders.
 	UserFavorite *UserFavoriteClient
+	// UserNotification is the client for interacting with the UserNotification builders.
+	UserNotification *UserNotificationClient
 	// UserReport is the client for interacting with the UserReport builders.
 	UserReport *UserReportClient
 	// Worker is the client for interacting with the Worker builders.
@@ -267,6 +270,7 @@ func (c *Client) init() {
 	c.UsState = NewUsStateClient(c.config)
 	c.User = NewUserClient(c.config)
 	c.UserFavorite = NewUserFavoriteClient(c.config)
+	c.UserNotification = NewUserNotificationClient(c.config)
 	c.UserReport = NewUserReportClient(c.config)
 	c.Worker = NewWorkerClient(c.config)
 	c.WorkerComment = NewWorkerCommentClient(c.config)
@@ -418,6 +422,7 @@ func (c *Client) Tx(ctx context.Context) (*Tx, error) {
 		UsState:                      NewUsStateClient(cfg),
 		User:                         NewUserClient(cfg),
 		UserFavorite:                 NewUserFavoriteClient(cfg),
+		UserNotification:             NewUserNotificationClient(cfg),
 		UserReport:                   NewUserReportClient(cfg),
 		Worker:                       NewWorkerClient(cfg),
 		WorkerComment:                NewWorkerCommentClient(cfg),
@@ -496,6 +501,7 @@ func (c *Client) BeginTx(ctx context.Context, opts *sql.TxOptions) (*Tx, error) 
 		UsState:                      NewUsStateClient(cfg),
 		User:                         NewUserClient(cfg),
 		UserFavorite:                 NewUserFavoriteClient(cfg),
+		UserNotification:             NewUserNotificationClient(cfg),
 		UserReport:                   NewUserReportClient(cfg),
 		Worker:                       NewWorkerClient(cfg),
 		WorkerComment:                NewWorkerCommentClient(cfg),
@@ -543,8 +549,8 @@ func (c *Client) Use(hooks ...Hook) {
 		c.ShipmentComment, c.ShipmentCommodity, c.ShipmentControl,
 		c.ShipmentDocumentation, c.ShipmentMove, c.ShipmentType, c.Stop,
 		c.TableChangeAlert, c.Tag, c.Tractor, c.Trailer, c.UsState, c.User,
-		c.UserFavorite, c.UserReport, c.Worker, c.WorkerComment, c.WorkerContact,
-		c.WorkerProfile,
+		c.UserFavorite, c.UserNotification, c.UserReport, c.Worker, c.WorkerComment,
+		c.WorkerContact, c.WorkerProfile,
 	} {
 		n.Use(hooks...)
 	}
@@ -567,8 +573,8 @@ func (c *Client) Intercept(interceptors ...Interceptor) {
 		c.ShipmentComment, c.ShipmentCommodity, c.ShipmentControl,
 		c.ShipmentDocumentation, c.ShipmentMove, c.ShipmentType, c.Stop,
 		c.TableChangeAlert, c.Tag, c.Tractor, c.Trailer, c.UsState, c.User,
-		c.UserFavorite, c.UserReport, c.Worker, c.WorkerComment, c.WorkerContact,
-		c.WorkerProfile,
+		c.UserFavorite, c.UserNotification, c.UserReport, c.Worker, c.WorkerComment,
+		c.WorkerContact, c.WorkerProfile,
 	} {
 		n.Intercept(interceptors...)
 	}
@@ -685,6 +691,8 @@ func (c *Client) Mutate(ctx context.Context, m Mutation) (Value, error) {
 		return c.User.mutate(ctx, m)
 	case *UserFavoriteMutation:
 		return c.UserFavorite.mutate(ctx, m)
+	case *UserNotificationMutation:
+		return c.UserNotification.mutate(ctx, m)
 	case *UserReportMutation:
 		return c.UserReport.mutate(ctx, m)
 	case *WorkerMutation:
@@ -10645,6 +10653,22 @@ func (c *UserClient) QueryUserFavorites(u *User) *UserFavoriteQuery {
 	return query
 }
 
+// QueryUserNotifications queries the user_notifications edge of a User.
+func (c *UserClient) QueryUserNotifications(u *User) *UserNotificationQuery {
+	query := (&UserNotificationClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := u.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(user.Table, user.FieldID, id),
+			sqlgraph.To(usernotification.Table, usernotification.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, user.UserNotificationsTable, user.UserNotificationsColumn),
+		)
+		fromV = sqlgraph.Neighbors(u.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
 // QueryShipments queries the shipments edge of a User.
 func (c *UserClient) QueryShipments(u *User) *ShipmentQuery {
 	query := (&ShipmentClient{config: c.config}).Query()
@@ -10912,6 +10936,187 @@ func (c *UserFavoriteClient) mutate(ctx context.Context, m *UserFavoriteMutation
 		return (&UserFavoriteDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
 	default:
 		return nil, fmt.Errorf("ent: unknown UserFavorite mutation op: %q", m.Op())
+	}
+}
+
+// UserNotificationClient is a client for the UserNotification schema.
+type UserNotificationClient struct {
+	config
+}
+
+// NewUserNotificationClient returns a client for the UserNotification from the given config.
+func NewUserNotificationClient(c config) *UserNotificationClient {
+	return &UserNotificationClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `usernotification.Hooks(f(g(h())))`.
+func (c *UserNotificationClient) Use(hooks ...Hook) {
+	c.hooks.UserNotification = append(c.hooks.UserNotification, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `usernotification.Intercept(f(g(h())))`.
+func (c *UserNotificationClient) Intercept(interceptors ...Interceptor) {
+	c.inters.UserNotification = append(c.inters.UserNotification, interceptors...)
+}
+
+// Create returns a builder for creating a UserNotification entity.
+func (c *UserNotificationClient) Create() *UserNotificationCreate {
+	mutation := newUserNotificationMutation(c.config, OpCreate)
+	return &UserNotificationCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of UserNotification entities.
+func (c *UserNotificationClient) CreateBulk(builders ...*UserNotificationCreate) *UserNotificationCreateBulk {
+	return &UserNotificationCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *UserNotificationClient) MapCreateBulk(slice any, setFunc func(*UserNotificationCreate, int)) *UserNotificationCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &UserNotificationCreateBulk{err: fmt.Errorf("calling to UserNotificationClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*UserNotificationCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &UserNotificationCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for UserNotification.
+func (c *UserNotificationClient) Update() *UserNotificationUpdate {
+	mutation := newUserNotificationMutation(c.config, OpUpdate)
+	return &UserNotificationUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *UserNotificationClient) UpdateOne(un *UserNotification) *UserNotificationUpdateOne {
+	mutation := newUserNotificationMutation(c.config, OpUpdateOne, withUserNotification(un))
+	return &UserNotificationUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *UserNotificationClient) UpdateOneID(id uuid.UUID) *UserNotificationUpdateOne {
+	mutation := newUserNotificationMutation(c.config, OpUpdateOne, withUserNotificationID(id))
+	return &UserNotificationUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for UserNotification.
+func (c *UserNotificationClient) Delete() *UserNotificationDelete {
+	mutation := newUserNotificationMutation(c.config, OpDelete)
+	return &UserNotificationDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *UserNotificationClient) DeleteOne(un *UserNotification) *UserNotificationDeleteOne {
+	return c.DeleteOneID(un.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *UserNotificationClient) DeleteOneID(id uuid.UUID) *UserNotificationDeleteOne {
+	builder := c.Delete().Where(usernotification.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &UserNotificationDeleteOne{builder}
+}
+
+// Query returns a query builder for UserNotification.
+func (c *UserNotificationClient) Query() *UserNotificationQuery {
+	return &UserNotificationQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeUserNotification},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a UserNotification entity by its id.
+func (c *UserNotificationClient) Get(ctx context.Context, id uuid.UUID) (*UserNotification, error) {
+	return c.Query().Where(usernotification.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *UserNotificationClient) GetX(ctx context.Context, id uuid.UUID) *UserNotification {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// QueryBusinessUnit queries the business_unit edge of a UserNotification.
+func (c *UserNotificationClient) QueryBusinessUnit(un *UserNotification) *BusinessUnitQuery {
+	query := (&BusinessUnitClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := un.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(usernotification.Table, usernotification.FieldID, id),
+			sqlgraph.To(businessunit.Table, businessunit.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, false, usernotification.BusinessUnitTable, usernotification.BusinessUnitColumn),
+		)
+		fromV = sqlgraph.Neighbors(un.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryOrganization queries the organization edge of a UserNotification.
+func (c *UserNotificationClient) QueryOrganization(un *UserNotification) *OrganizationQuery {
+	query := (&OrganizationClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := un.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(usernotification.Table, usernotification.FieldID, id),
+			sqlgraph.To(organization.Table, organization.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, false, usernotification.OrganizationTable, usernotification.OrganizationColumn),
+		)
+		fromV = sqlgraph.Neighbors(un.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryUser queries the user edge of a UserNotification.
+func (c *UserNotificationClient) QueryUser(un *UserNotification) *UserQuery {
+	query := (&UserClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := un.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(usernotification.Table, usernotification.FieldID, id),
+			sqlgraph.To(user.Table, user.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, usernotification.UserTable, usernotification.UserColumn),
+		)
+		fromV = sqlgraph.Neighbors(un.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// Hooks returns the client hooks.
+func (c *UserNotificationClient) Hooks() []Hook {
+	return c.hooks.UserNotification
+}
+
+// Interceptors returns the client interceptors.
+func (c *UserNotificationClient) Interceptors() []Interceptor {
+	return c.inters.UserNotification
+}
+
+func (c *UserNotificationClient) mutate(ctx context.Context, m *UserNotificationMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&UserNotificationCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&UserNotificationUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&UserNotificationUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&UserNotificationDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown UserNotification mutation op: %q", m.Op())
 	}
 }
 
@@ -11994,8 +12199,8 @@ type (
 		QualifierCode, ReasonCode, RevenueCode, RouteControl, ServiceType, Session,
 		Shipment, ShipmentCharges, ShipmentComment, ShipmentCommodity, ShipmentControl,
 		ShipmentDocumentation, ShipmentMove, ShipmentType, Stop, TableChangeAlert, Tag,
-		Tractor, Trailer, UsState, User, UserFavorite, UserReport, Worker,
-		WorkerComment, WorkerContact, WorkerProfile []ent.Hook
+		Tractor, Trailer, UsState, User, UserFavorite, UserNotification, UserReport,
+		Worker, WorkerComment, WorkerContact, WorkerProfile []ent.Hook
 	}
 	inters struct {
 		AccessorialCharge, AccountingControl, BillingControl, BusinessUnit, ChargeType,
@@ -12008,8 +12213,8 @@ type (
 		QualifierCode, ReasonCode, RevenueCode, RouteControl, ServiceType, Session,
 		Shipment, ShipmentCharges, ShipmentComment, ShipmentCommodity, ShipmentControl,
 		ShipmentDocumentation, ShipmentMove, ShipmentType, Stop, TableChangeAlert, Tag,
-		Tractor, Trailer, UsState, User, UserFavorite, UserReport, Worker,
-		WorkerComment, WorkerContact, WorkerProfile []ent.Interceptor
+		Tractor, Trailer, UsState, User, UserFavorite, UserNotification, UserReport,
+		Worker, WorkerComment, WorkerContact, WorkerProfile []ent.Interceptor
 	}
 )
 

@@ -68,6 +68,8 @@ type UserEdges struct {
 	Organization *Organization `json:"organization,omitempty"`
 	// UserFavorites holds the value of the user_favorites edge.
 	UserFavorites []*UserFavorite `json:"user_favorites,omitempty"`
+	// UserNotifications holds the value of the user_notifications edge.
+	UserNotifications []*UserNotification `json:"user_notifications,omitempty"`
 	// Shipments holds the value of the shipments edge.
 	Shipments []*Shipment `json:"shipments,omitempty"`
 	// ShipmentComments holds the value of the shipment_comments edge.
@@ -78,12 +80,13 @@ type UserEdges struct {
 	Reports []*UserReport `json:"reports,omitempty"`
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
-	loadedTypes           [7]bool
-	namedUserFavorites    map[string][]*UserFavorite
-	namedShipments        map[string][]*Shipment
-	namedShipmentComments map[string][]*ShipmentComment
-	namedShipmentCharges  map[string][]*ShipmentCharges
-	namedReports          map[string][]*UserReport
+	loadedTypes            [8]bool
+	namedUserFavorites     map[string][]*UserFavorite
+	namedUserNotifications map[string][]*UserNotification
+	namedShipments         map[string][]*Shipment
+	namedShipmentComments  map[string][]*ShipmentComment
+	namedShipmentCharges   map[string][]*ShipmentCharges
+	namedReports           map[string][]*UserReport
 }
 
 // BusinessUnitOrErr returns the BusinessUnit value or an error if the edge
@@ -117,10 +120,19 @@ func (e UserEdges) UserFavoritesOrErr() ([]*UserFavorite, error) {
 	return nil, &NotLoadedError{edge: "user_favorites"}
 }
 
+// UserNotificationsOrErr returns the UserNotifications value or an error if the edge
+// was not loaded in eager-loading.
+func (e UserEdges) UserNotificationsOrErr() ([]*UserNotification, error) {
+	if e.loadedTypes[3] {
+		return e.UserNotifications, nil
+	}
+	return nil, &NotLoadedError{edge: "user_notifications"}
+}
+
 // ShipmentsOrErr returns the Shipments value or an error if the edge
 // was not loaded in eager-loading.
 func (e UserEdges) ShipmentsOrErr() ([]*Shipment, error) {
-	if e.loadedTypes[3] {
+	if e.loadedTypes[4] {
 		return e.Shipments, nil
 	}
 	return nil, &NotLoadedError{edge: "shipments"}
@@ -129,7 +141,7 @@ func (e UserEdges) ShipmentsOrErr() ([]*Shipment, error) {
 // ShipmentCommentsOrErr returns the ShipmentComments value or an error if the edge
 // was not loaded in eager-loading.
 func (e UserEdges) ShipmentCommentsOrErr() ([]*ShipmentComment, error) {
-	if e.loadedTypes[4] {
+	if e.loadedTypes[5] {
 		return e.ShipmentComments, nil
 	}
 	return nil, &NotLoadedError{edge: "shipment_comments"}
@@ -138,7 +150,7 @@ func (e UserEdges) ShipmentCommentsOrErr() ([]*ShipmentComment, error) {
 // ShipmentChargesOrErr returns the ShipmentCharges value or an error if the edge
 // was not loaded in eager-loading.
 func (e UserEdges) ShipmentChargesOrErr() ([]*ShipmentCharges, error) {
-	if e.loadedTypes[5] {
+	if e.loadedTypes[6] {
 		return e.ShipmentCharges, nil
 	}
 	return nil, &NotLoadedError{edge: "shipment_charges"}
@@ -147,7 +159,7 @@ func (e UserEdges) ShipmentChargesOrErr() ([]*ShipmentCharges, error) {
 // ReportsOrErr returns the Reports value or an error if the edge
 // was not loaded in eager-loading.
 func (e UserEdges) ReportsOrErr() ([]*UserReport, error) {
-	if e.loadedTypes[6] {
+	if e.loadedTypes[7] {
 		return e.Reports, nil
 	}
 	return nil, &NotLoadedError{edge: "reports"}
@@ -320,6 +332,11 @@ func (u *User) QueryUserFavorites() *UserFavoriteQuery {
 	return NewUserClient(u.config).QueryUserFavorites(u)
 }
 
+// QueryUserNotifications queries the "user_notifications" edge of the User entity.
+func (u *User) QueryUserNotifications() *UserNotificationQuery {
+	return NewUserClient(u.config).QueryUserNotifications(u)
+}
+
 // QueryShipments queries the "shipments" edge of the User entity.
 func (u *User) QueryShipments() *ShipmentQuery {
 	return NewUserClient(u.config).QueryShipments(u)
@@ -439,6 +456,30 @@ func (u *User) appendNamedUserFavorites(name string, edges ...*UserFavorite) {
 		u.Edges.namedUserFavorites[name] = []*UserFavorite{}
 	} else {
 		u.Edges.namedUserFavorites[name] = append(u.Edges.namedUserFavorites[name], edges...)
+	}
+}
+
+// NamedUserNotifications returns the UserNotifications named value or an error if the edge was not
+// loaded in eager-loading with this name.
+func (u *User) NamedUserNotifications(name string) ([]*UserNotification, error) {
+	if u.Edges.namedUserNotifications == nil {
+		return nil, &NotLoadedError{edge: name}
+	}
+	nodes, ok := u.Edges.namedUserNotifications[name]
+	if !ok {
+		return nil, &NotLoadedError{edge: name}
+	}
+	return nodes, nil
+}
+
+func (u *User) appendNamedUserNotifications(name string, edges ...*UserNotification) {
+	if u.Edges.namedUserNotifications == nil {
+		u.Edges.namedUserNotifications = make(map[string][]*UserNotification)
+	}
+	if len(edges) == 0 {
+		u.Edges.namedUserNotifications[name] = []*UserNotification{}
+	} else {
+		u.Edges.namedUserNotifications[name] = append(u.Edges.namedUserNotifications[name], edges...)
 	}
 }
 

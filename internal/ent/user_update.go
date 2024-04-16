@@ -17,6 +17,7 @@ import (
 	"github.com/emoss08/trenova/internal/ent/shipmentcomment"
 	"github.com/emoss08/trenova/internal/ent/user"
 	"github.com/emoss08/trenova/internal/ent/userfavorite"
+	"github.com/emoss08/trenova/internal/ent/usernotification"
 	"github.com/emoss08/trenova/internal/ent/userreport"
 	"github.com/google/uuid"
 )
@@ -269,6 +270,21 @@ func (uu *UserUpdate) AddUserFavorites(u ...*UserFavorite) *UserUpdate {
 	return uu.AddUserFavoriteIDs(ids...)
 }
 
+// AddUserNotificationIDs adds the "user_notifications" edge to the UserNotification entity by IDs.
+func (uu *UserUpdate) AddUserNotificationIDs(ids ...uuid.UUID) *UserUpdate {
+	uu.mutation.AddUserNotificationIDs(ids...)
+	return uu
+}
+
+// AddUserNotifications adds the "user_notifications" edges to the UserNotification entity.
+func (uu *UserUpdate) AddUserNotifications(u ...*UserNotification) *UserUpdate {
+	ids := make([]uuid.UUID, len(u))
+	for i := range u {
+		ids[i] = u[i].ID
+	}
+	return uu.AddUserNotificationIDs(ids...)
+}
+
 // AddShipmentIDs adds the "shipments" edge to the Shipment entity by IDs.
 func (uu *UserUpdate) AddShipmentIDs(ids ...uuid.UUID) *UserUpdate {
 	uu.mutation.AddShipmentIDs(ids...)
@@ -353,6 +369,27 @@ func (uu *UserUpdate) RemoveUserFavorites(u ...*UserFavorite) *UserUpdate {
 		ids[i] = u[i].ID
 	}
 	return uu.RemoveUserFavoriteIDs(ids...)
+}
+
+// ClearUserNotifications clears all "user_notifications" edges to the UserNotification entity.
+func (uu *UserUpdate) ClearUserNotifications() *UserUpdate {
+	uu.mutation.ClearUserNotifications()
+	return uu
+}
+
+// RemoveUserNotificationIDs removes the "user_notifications" edge to UserNotification entities by IDs.
+func (uu *UserUpdate) RemoveUserNotificationIDs(ids ...uuid.UUID) *UserUpdate {
+	uu.mutation.RemoveUserNotificationIDs(ids...)
+	return uu
+}
+
+// RemoveUserNotifications removes "user_notifications" edges to UserNotification entities.
+func (uu *UserUpdate) RemoveUserNotifications(u ...*UserNotification) *UserUpdate {
+	ids := make([]uuid.UUID, len(u))
+	for i := range u {
+		ids[i] = u[i].ID
+	}
+	return uu.RemoveUserNotificationIDs(ids...)
 }
 
 // ClearShipments clears all "shipments" edges to the Shipment entity.
@@ -629,6 +666,51 @@ func (uu *UserUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(userfavorite.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if uu.mutation.UserNotificationsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.UserNotificationsTable,
+			Columns: []string{user.UserNotificationsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(usernotification.FieldID, field.TypeUUID),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := uu.mutation.RemovedUserNotificationsIDs(); len(nodes) > 0 && !uu.mutation.UserNotificationsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.UserNotificationsTable,
+			Columns: []string{user.UserNotificationsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(usernotification.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := uu.mutation.UserNotificationsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.UserNotificationsTable,
+			Columns: []string{user.UserNotificationsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(usernotification.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {
@@ -1072,6 +1154,21 @@ func (uuo *UserUpdateOne) AddUserFavorites(u ...*UserFavorite) *UserUpdateOne {
 	return uuo.AddUserFavoriteIDs(ids...)
 }
 
+// AddUserNotificationIDs adds the "user_notifications" edge to the UserNotification entity by IDs.
+func (uuo *UserUpdateOne) AddUserNotificationIDs(ids ...uuid.UUID) *UserUpdateOne {
+	uuo.mutation.AddUserNotificationIDs(ids...)
+	return uuo
+}
+
+// AddUserNotifications adds the "user_notifications" edges to the UserNotification entity.
+func (uuo *UserUpdateOne) AddUserNotifications(u ...*UserNotification) *UserUpdateOne {
+	ids := make([]uuid.UUID, len(u))
+	for i := range u {
+		ids[i] = u[i].ID
+	}
+	return uuo.AddUserNotificationIDs(ids...)
+}
+
 // AddShipmentIDs adds the "shipments" edge to the Shipment entity by IDs.
 func (uuo *UserUpdateOne) AddShipmentIDs(ids ...uuid.UUID) *UserUpdateOne {
 	uuo.mutation.AddShipmentIDs(ids...)
@@ -1156,6 +1253,27 @@ func (uuo *UserUpdateOne) RemoveUserFavorites(u ...*UserFavorite) *UserUpdateOne
 		ids[i] = u[i].ID
 	}
 	return uuo.RemoveUserFavoriteIDs(ids...)
+}
+
+// ClearUserNotifications clears all "user_notifications" edges to the UserNotification entity.
+func (uuo *UserUpdateOne) ClearUserNotifications() *UserUpdateOne {
+	uuo.mutation.ClearUserNotifications()
+	return uuo
+}
+
+// RemoveUserNotificationIDs removes the "user_notifications" edge to UserNotification entities by IDs.
+func (uuo *UserUpdateOne) RemoveUserNotificationIDs(ids ...uuid.UUID) *UserUpdateOne {
+	uuo.mutation.RemoveUserNotificationIDs(ids...)
+	return uuo
+}
+
+// RemoveUserNotifications removes "user_notifications" edges to UserNotification entities.
+func (uuo *UserUpdateOne) RemoveUserNotifications(u ...*UserNotification) *UserUpdateOne {
+	ids := make([]uuid.UUID, len(u))
+	for i := range u {
+		ids[i] = u[i].ID
+	}
+	return uuo.RemoveUserNotificationIDs(ids...)
 }
 
 // ClearShipments clears all "shipments" edges to the Shipment entity.
@@ -1462,6 +1580,51 @@ func (uuo *UserUpdateOne) sqlSave(ctx context.Context) (_node *User, err error) 
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(userfavorite.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if uuo.mutation.UserNotificationsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.UserNotificationsTable,
+			Columns: []string{user.UserNotificationsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(usernotification.FieldID, field.TypeUUID),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := uuo.mutation.RemovedUserNotificationsIDs(); len(nodes) > 0 && !uuo.mutation.UserNotificationsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.UserNotificationsTable,
+			Columns: []string{user.UserNotificationsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(usernotification.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := uuo.mutation.UserNotificationsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.UserNotificationsTable,
+			Columns: []string{user.UserNotificationsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(usernotification.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {

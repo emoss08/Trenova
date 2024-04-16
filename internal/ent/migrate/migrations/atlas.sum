@@ -1,4 +1,4 @@
-h1:13WzWwONLILNojVmGB0KTlu7u4NzDnKztvKGBPMSmYU=
+h1:nxGNNNzpypEs1I+mT/lz6Q1ACV2r62i7d6ZVAICIQYI=
 20240313025838_initial.sql h1:N+sMBFboPzdPjBPJyl3TnsOYuBhcNCYJVfD59poBsCg=
 20240313035153_initial.sql h1:Faw2tkcPtqCI/2+wMQFfLMjsqT4KndrU+TqP/LXnbcs=
 20240313040335_organization_business_unit.sql h1:Y2peskCUmdFkEjnuDYFFQpe8IaVgXBh0j9zCx8hw+QM=
@@ -126,3 +126,4 @@ h1:13WzWwONLILNojVmGB0KTlu7u4NzDnKztvKGBPMSmYU=
 20240415014935_update_fleet_code.sql h1:EBUnaQiLMfBeCxFsI5Z9WDlxRKjnWsHlKX6B7BCoqcc=
 20240415045357_update_shipment_type.sql h1:L5B4wYq6vt45iMaYww67nYz97QpUlvJOZBHvsAVjzIQ=
 20240416015222_add_user_reports.sql h1:uoHEXm7XOAIW0duF4OvJa77ETBrhXkU37zV8LYPHE9U=
+20240416155339_add_user_notifications.sql h1:buwB0rcQJLkBunYLmV0mgWuaKb8dPBTECSVlUIhw/Dc=

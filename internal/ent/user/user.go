@@ -56,6 +56,8 @@ const (
 	EdgeOrganization = "organization"
 	// EdgeUserFavorites holds the string denoting the user_favorites edge name in mutations.
 	EdgeUserFavorites = "user_favorites"
+	// EdgeUserNotifications holds the string denoting the user_notifications edge name in mutations.
+	EdgeUserNotifications = "user_notifications"
 	// EdgeShipments holds the string denoting the shipments edge name in mutations.
 	EdgeShipments = "shipments"
 	// EdgeShipmentComments holds the string denoting the shipment_comments edge name in mutations.
@@ -87,6 +89,13 @@ const (
 	UserFavoritesInverseTable = "user_favorites"
 	// UserFavoritesColumn is the table column denoting the user_favorites relation/edge.
 	UserFavoritesColumn = "user_id"
+	// UserNotificationsTable is the table that holds the user_notifications relation/edge.
+	UserNotificationsTable = "user_notifications"
+	// UserNotificationsInverseTable is the table name for the UserNotification entity.
+	// It exists in this package in order to avoid circular dependency with the "usernotification" package.
+	UserNotificationsInverseTable = "user_notifications"
+	// UserNotificationsColumn is the table column denoting the user_notifications relation/edge.
+	UserNotificationsColumn = "user_id"
 	// ShipmentsTable is the table that holds the shipments relation/edge.
 	ShipmentsTable = "shipments"
 	// ShipmentsInverseTable is the table name for the Shipment entity.
@@ -349,6 +358,20 @@ func ByUserFavorites(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
 	}
 }
 
+// ByUserNotificationsCount orders the results by user_notifications count.
+func ByUserNotificationsCount(opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborsCount(s, newUserNotificationsStep(), opts...)
+	}
+}
+
+// ByUserNotifications orders the results by user_notifications terms.
+func ByUserNotifications(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newUserNotificationsStep(), append([]sql.OrderTerm{term}, terms...)...)
+	}
+}
+
 // ByShipmentsCount orders the results by shipments count.
 func ByShipmentsCount(opts ...sql.OrderTermOption) OrderOption {
 	return func(s *sql.Selector) {
@@ -423,6 +446,13 @@ func newUserFavoritesStep() *sqlgraph.Step {
 		sqlgraph.From(Table, FieldID),
 		sqlgraph.To(UserFavoritesInverseTable, FieldID),
 		sqlgraph.Edge(sqlgraph.O2M, false, UserFavoritesTable, UserFavoritesColumn),
+	)
+}
+func newUserNotificationsStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(UserNotificationsInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.O2M, false, UserNotificationsTable, UserNotificationsColumn),
 	)
 }
 func newShipmentsStep() *sqlgraph.Step {

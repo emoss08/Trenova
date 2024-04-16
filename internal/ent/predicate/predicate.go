@@ -168,6 +168,9 @@ type User func(*sql.Selector)
 // UserFavorite is the predicate function for userfavorite builders.
 type UserFavorite func(*sql.Selector)
 
+// UserNotification is the predicate function for usernotification builders.
+type UserNotification func(*sql.Selector)
+
 // UserReport is the predicate function for userreport builders.
 type UserReport func(*sql.Selector)
 

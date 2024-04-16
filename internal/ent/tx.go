@@ -122,6 +122,8 @@ type Tx struct {
 	User *UserClient
 	// UserFavorite is the client for interacting with the UserFavorite builders.
 	UserFavorite *UserFavoriteClient
+	// UserNotification is the client for interacting with the UserNotification builders.
+	UserNotification *UserNotificationClient
 	// UserReport is the client for interacting with the UserReport builders.
 	UserReport *UserReportClient
 	// Worker is the client for interacting with the Worker builders.
@@ -317,6 +319,7 @@ func (tx *Tx) init() {
 	tx.UsState = NewUsStateClient(tx.config)
 	tx.User = NewUserClient(tx.config)
 	tx.UserFavorite = NewUserFavoriteClient(tx.config)
+	tx.UserNotification = NewUserNotificationClient(tx.config)
 	tx.UserReport = NewUserReportClient(tx.config)
 	tx.Worker = NewWorkerClient(tx.config)
 	tx.WorkerComment = NewWorkerCommentClient(tx.config)

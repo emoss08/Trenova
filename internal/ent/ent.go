@@ -65,6 +65,7 @@ import (
 	"github.com/emoss08/trenova/internal/ent/trailer"
 	"github.com/emoss08/trenova/internal/ent/user"
 	"github.com/emoss08/trenova/internal/ent/userfavorite"
+	"github.com/emoss08/trenova/internal/ent/usernotification"
 	"github.com/emoss08/trenova/internal/ent/userreport"
 	"github.com/emoss08/trenova/internal/ent/usstate"
 	"github.com/emoss08/trenova/internal/ent/worker"
@@ -185,6 +186,7 @@ func checkColumn(table, column string) error {
 			usstate.Table:                      usstate.ValidColumn,
 			user.Table:                         user.ValidColumn,
 			userfavorite.Table:                 userfavorite.ValidColumn,
+			usernotification.Table:             usernotification.ValidColumn,
 			userreport.Table:                   userreport.ValidColumn,
 			worker.Table:                       worker.ValidColumn,
 			workercomment.Table:                workercomment.ValidColumn,
