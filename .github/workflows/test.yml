@@ -34,7 +34,7 @@ jobs:
   #         args: --timeout=5m --config=.golangci.yml
 
   build-and-test:
-    needs: lint  # This job waits for the 'lint' job to complete
+    # needs: lint  # This job waits for the 'lint' job to complete
     runs-on: ubuntu-latest
     steps:
       - name: Check Out Code
