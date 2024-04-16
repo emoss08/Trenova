@@ -17,6 +17,7 @@ import (
 	"github.com/emoss08/trenova/internal/ent/shipmentcomment"
 	"github.com/emoss08/trenova/internal/ent/user"
 	"github.com/emoss08/trenova/internal/ent/userfavorite"
+	"github.com/emoss08/trenova/internal/ent/userreport"
 	"github.com/google/uuid"
 )
 
@@ -299,6 +300,21 @@ func (uc *UserCreate) AddShipmentCharges(s ...*ShipmentCharges) *UserCreate {
 		ids[i] = s[i].ID
 	}
 	return uc.AddShipmentChargeIDs(ids...)
+}
+
+// AddReportIDs adds the "reports" edge to the UserReport entity by IDs.
+func (uc *UserCreate) AddReportIDs(ids ...uuid.UUID) *UserCreate {
+	uc.mutation.AddReportIDs(ids...)
+	return uc
+}
+
+// AddReports adds the "reports" edges to the UserReport entity.
+func (uc *UserCreate) AddReports(u ...*UserReport) *UserCreate {
+	ids := make([]uuid.UUID, len(u))
+	for i := range u {
+		ids[i] = u[i].ID
+	}
+	return uc.AddReportIDs(ids...)
 }
 
 // Mutation returns the UserMutation object of the builder.
@@ -633,6 +649,22 @@ func (uc *UserCreate) createSpec() (*User, *sqlgraph.CreateSpec) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(shipmentcharges.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges = append(_spec.Edges, edge)
+	}
+	if nodes := uc.mutation.ReportsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.ReportsTable,
+			Columns: []string{user.ReportsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(userreport.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {

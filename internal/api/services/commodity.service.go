@@ -42,6 +42,7 @@ func (r *CommodityService) GetCommodities(ctx context.Context, limit, offset int
 	entities, err := r.Client.Commodity.Query().
 		Limit(limit).
 		Offset(offset).
+		WithHazardousMaterial().
 		Where(
 			commodity.HasOrganizationWith(
 				organization.IDEQ(orgID),

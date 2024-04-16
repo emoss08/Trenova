@@ -81,7 +81,7 @@ export default function LocationCategories() {
       columns={columns}
       link="/location-categories/"
       name="Location Category"
-      exportModelName="LocationCategory"
+      exportModelName="location_categories"
       filterColumn="name"
       TableSheet={LocationCategoryDialog}
       TableEditSheet={LocationCategoryEditDialog}

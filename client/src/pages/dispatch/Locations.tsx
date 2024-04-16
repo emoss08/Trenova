@@ -107,7 +107,7 @@ export default function Locations() {
       columns={columns}
       link="/locations/"
       name="Locations"
-      exportModelName="Location"
+      exportModelName="locations"
       filterColumn="name"
       tableFacetedFilters={filters}
       TableSheet={LocationTableSheet}

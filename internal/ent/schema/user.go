@@ -73,6 +73,7 @@ func (User) Edges() []ent.Edge {
 		edge.To("shipments", Shipment.Type),
 		edge.To("shipment_comments", ShipmentComment.Type),
 		edge.To("shipment_charges", ShipmentCharges.Type),
+		edge.To("reports", UserReport.Type),
 	}
 }
 

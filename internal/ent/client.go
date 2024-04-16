@@ -24,6 +24,7 @@ import (
 	"github.com/emoss08/trenova/internal/ent/commenttype"
 	"github.com/emoss08/trenova/internal/ent/commodity"
 	"github.com/emoss08/trenova/internal/ent/customer"
+	"github.com/emoss08/trenova/internal/ent/customreport"
 	"github.com/emoss08/trenova/internal/ent/delaycode"
 	"github.com/emoss08/trenova/internal/ent/dispatchcontrol"
 	"github.com/emoss08/trenova/internal/ent/divisioncode"
@@ -68,6 +69,7 @@ import (
 	"github.com/emoss08/trenova/internal/ent/trailer"
 	"github.com/emoss08/trenova/internal/ent/user"
 	"github.com/emoss08/trenova/internal/ent/userfavorite"
+	"github.com/emoss08/trenova/internal/ent/userreport"
 	"github.com/emoss08/trenova/internal/ent/usstate"
 	"github.com/emoss08/trenova/internal/ent/worker"
 	"github.com/emoss08/trenova/internal/ent/workercomment"
@@ -96,6 +98,8 @@ type Client struct {
 	CommentType *CommentTypeClient
 	// Commodity is the client for interacting with the Commodity builders.
 	Commodity *CommodityClient
+	// CustomReport is the client for interacting with the CustomReport builders.
+	CustomReport *CustomReportClient
 	// Customer is the client for interacting with the Customer builders.
 	Customer *CustomerClient
 	// DelayCode is the client for interacting with the DelayCode builders.
@@ -188,6 +192,8 @@ type Client struct {
 	User *UserClient
 	// UserFavorite is the client for interacting with the UserFavorite builders.
 	UserFavorite *UserFavoriteClient
+	// UserReport is the client for interacting with the UserReport builders.
+	UserReport *UserReportClient
 	// Worker is the client for interacting with the Worker builders.
 	Worker *WorkerClient
 	// WorkerComment is the client for interacting with the WorkerComment builders.
@@ -214,6 +220,7 @@ func (c *Client) init() {
 	c.ChargeType = NewChargeTypeClient(c.config)
 	c.CommentType = NewCommentTypeClient(c.config)
 	c.Commodity = NewCommodityClient(c.config)
+	c.CustomReport = NewCustomReportClient(c.config)
 	c.Customer = NewCustomerClient(c.config)
 	c.DelayCode = NewDelayCodeClient(c.config)
 	c.DispatchControl = NewDispatchControlClient(c.config)
@@ -260,6 +267,7 @@ func (c *Client) init() {
 	c.UsState = NewUsStateClient(c.config)
 	c.User = NewUserClient(c.config)
 	c.UserFavorite = NewUserFavoriteClient(c.config)
+	c.UserReport = NewUserReportClient(c.config)
 	c.Worker = NewWorkerClient(c.config)
 	c.WorkerComment = NewWorkerCommentClient(c.config)
 	c.WorkerContact = NewWorkerContactClient(c.config)
@@ -363,6 +371,7 @@ func (c *Client) Tx(ctx context.Context) (*Tx, error) {
 		ChargeType:                   NewChargeTypeClient(cfg),
 		CommentType:                  NewCommentTypeClient(cfg),
 		Commodity:                    NewCommodityClient(cfg),
+		CustomReport:                 NewCustomReportClient(cfg),
 		Customer:                     NewCustomerClient(cfg),
 		DelayCode:                    NewDelayCodeClient(cfg),
 		DispatchControl:              NewDispatchControlClient(cfg),
@@ -409,6 +418,7 @@ func (c *Client) Tx(ctx context.Context) (*Tx, error) {
 		UsState:                      NewUsStateClient(cfg),
 		User:                         NewUserClient(cfg),
 		UserFavorite:                 NewUserFavoriteClient(cfg),
+		UserReport:                   NewUserReportClient(cfg),
 		Worker:                       NewWorkerClient(cfg),
 		WorkerComment:                NewWorkerCommentClient(cfg),
 		WorkerContact:                NewWorkerContactClient(cfg),
@@ -439,6 +449,7 @@ func (c *Client) BeginTx(ctx context.Context, opts *sql.TxOptions) (*Tx, error) 
 		ChargeType:                   NewChargeTypeClient(cfg),
 		CommentType:                  NewCommentTypeClient(cfg),
 		Commodity:                    NewCommodityClient(cfg),
+		CustomReport:                 NewCustomReportClient(cfg),
 		Customer:                     NewCustomerClient(cfg),
 		DelayCode:                    NewDelayCodeClient(cfg),
 		DispatchControl:              NewDispatchControlClient(cfg),
@@ -485,6 +496,7 @@ func (c *Client) BeginTx(ctx context.Context, opts *sql.TxOptions) (*Tx, error) 
 		UsState:                      NewUsStateClient(cfg),
 		User:                         NewUserClient(cfg),
 		UserFavorite:                 NewUserFavoriteClient(cfg),
+		UserReport:                   NewUserReportClient(cfg),
 		Worker:                       NewWorkerClient(cfg),
 		WorkerComment:                NewWorkerCommentClient(cfg),
 		WorkerContact:                NewWorkerContactClient(cfg),
@@ -519,9 +531,9 @@ func (c *Client) Close() error {
 func (c *Client) Use(hooks ...Hook) {
 	for _, n := range []interface{ Use(...Hook) }{
 		c.AccessorialCharge, c.AccountingControl, c.BillingControl, c.BusinessUnit,
-		c.ChargeType, c.CommentType, c.Commodity, c.Customer, c.DelayCode,
-		c.DispatchControl, c.DivisionCode, c.DocumentClassification, c.EmailControl,
-		c.EmailProfile, c.EquipmentManufactuer, c.EquipmentType,
+		c.ChargeType, c.CommentType, c.Commodity, c.CustomReport, c.Customer,
+		c.DelayCode, c.DispatchControl, c.DivisionCode, c.DocumentClassification,
+		c.EmailControl, c.EmailProfile, c.EquipmentManufactuer, c.EquipmentType,
 		c.FeasibilityToolControl, c.FeatureFlag, c.FleetCode, c.FormulaTemplate,
 		c.GeneralLedgerAccount, c.GoogleApi, c.HazardousMaterial,
 		c.HazardousMaterialSegregation, c.InvoiceControl, c.Location,
@@ -531,7 +543,8 @@ func (c *Client) Use(hooks ...Hook) {
 		c.ShipmentComment, c.ShipmentCommodity, c.ShipmentControl,
 		c.ShipmentDocumentation, c.ShipmentMove, c.ShipmentType, c.Stop,
 		c.TableChangeAlert, c.Tag, c.Tractor, c.Trailer, c.UsState, c.User,
-		c.UserFavorite, c.Worker, c.WorkerComment, c.WorkerContact, c.WorkerProfile,
+		c.UserFavorite, c.UserReport, c.Worker, c.WorkerComment, c.WorkerContact,
+		c.WorkerProfile,
 	} {
 		n.Use(hooks...)
 	}
@@ -542,9 +555,9 @@ func (c *Client) Use(hooks ...Hook) {
 func (c *Client) Intercept(interceptors ...Interceptor) {
 	for _, n := range []interface{ Intercept(...Interceptor) }{
 		c.AccessorialCharge, c.AccountingControl, c.BillingControl, c.BusinessUnit,
-		c.ChargeType, c.CommentType, c.Commodity, c.Customer, c.DelayCode,
-		c.DispatchControl, c.DivisionCode, c.DocumentClassification, c.EmailControl,
-		c.EmailProfile, c.EquipmentManufactuer, c.EquipmentType,
+		c.ChargeType, c.CommentType, c.Commodity, c.CustomReport, c.Customer,
+		c.DelayCode, c.DispatchControl, c.DivisionCode, c.DocumentClassification,
+		c.EmailControl, c.EmailProfile, c.EquipmentManufactuer, c.EquipmentType,
 		c.FeasibilityToolControl, c.FeatureFlag, c.FleetCode, c.FormulaTemplate,
 		c.GeneralLedgerAccount, c.GoogleApi, c.HazardousMaterial,
 		c.HazardousMaterialSegregation, c.InvoiceControl, c.Location,
@@ -554,7 +567,8 @@ func (c *Client) Intercept(interceptors ...Interceptor) {
 		c.ShipmentComment, c.ShipmentCommodity, c.ShipmentControl,
 		c.ShipmentDocumentation, c.ShipmentMove, c.ShipmentType, c.Stop,
 		c.TableChangeAlert, c.Tag, c.Tractor, c.Trailer, c.UsState, c.User,
-		c.UserFavorite, c.Worker, c.WorkerComment, c.WorkerContact, c.WorkerProfile,
+		c.UserFavorite, c.UserReport, c.Worker, c.WorkerComment, c.WorkerContact,
+		c.WorkerProfile,
 	} {
 		n.Intercept(interceptors...)
 	}
@@ -577,6 +591,8 @@ func (c *Client) Mutate(ctx context.Context, m Mutation) (Value, error) {
 		return c.CommentType.mutate(ctx, m)
 	case *CommodityMutation:
 		return c.Commodity.mutate(ctx, m)
+	case *CustomReportMutation:
+		return c.CustomReport.mutate(ctx, m)
 	case *CustomerMutation:
 		return c.Customer.mutate(ctx, m)
 	case *DelayCodeMutation:
@@ -669,6 +685,8 @@ func (c *Client) Mutate(ctx context.Context, m Mutation) (Value, error) {
 		return c.User.mutate(ctx, m)
 	case *UserFavoriteMutation:
 		return c.UserFavorite.mutate(ctx, m)
+	case *UserReportMutation:
+		return c.UserReport.mutate(ctx, m)
 	case *WorkerMutation:
 		return c.Worker.mutate(ctx, m)
 	case *WorkerCommentMutation:
@@ -1930,6 +1948,171 @@ func (c *CommodityClient) mutate(ctx context.Context, m *CommodityMutation) (Val
 		return (&CommodityDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
 	default:
 		return nil, fmt.Errorf("ent: unknown Commodity mutation op: %q", m.Op())
+	}
+}
+
+// CustomReportClient is a client for the CustomReport schema.
+type CustomReportClient struct {
+	config
+}
+
+// NewCustomReportClient returns a client for the CustomReport from the given config.
+func NewCustomReportClient(c config) *CustomReportClient {
+	return &CustomReportClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `customreport.Hooks(f(g(h())))`.
+func (c *CustomReportClient) Use(hooks ...Hook) {
+	c.hooks.CustomReport = append(c.hooks.CustomReport, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `customreport.Intercept(f(g(h())))`.
+func (c *CustomReportClient) Intercept(interceptors ...Interceptor) {
+	c.inters.CustomReport = append(c.inters.CustomReport, interceptors...)
+}
+
+// Create returns a builder for creating a CustomReport entity.
+func (c *CustomReportClient) Create() *CustomReportCreate {
+	mutation := newCustomReportMutation(c.config, OpCreate)
+	return &CustomReportCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of CustomReport entities.
+func (c *CustomReportClient) CreateBulk(builders ...*CustomReportCreate) *CustomReportCreateBulk {
+	return &CustomReportCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *CustomReportClient) MapCreateBulk(slice any, setFunc func(*CustomReportCreate, int)) *CustomReportCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &CustomReportCreateBulk{err: fmt.Errorf("calling to CustomReportClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*CustomReportCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &CustomReportCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for CustomReport.
+func (c *CustomReportClient) Update() *CustomReportUpdate {
+	mutation := newCustomReportMutation(c.config, OpUpdate)
+	return &CustomReportUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *CustomReportClient) UpdateOne(cr *CustomReport) *CustomReportUpdateOne {
+	mutation := newCustomReportMutation(c.config, OpUpdateOne, withCustomReport(cr))
+	return &CustomReportUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *CustomReportClient) UpdateOneID(id uuid.UUID) *CustomReportUpdateOne {
+	mutation := newCustomReportMutation(c.config, OpUpdateOne, withCustomReportID(id))
+	return &CustomReportUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for CustomReport.
+func (c *CustomReportClient) Delete() *CustomReportDelete {
+	mutation := newCustomReportMutation(c.config, OpDelete)
+	return &CustomReportDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *CustomReportClient) DeleteOne(cr *CustomReport) *CustomReportDeleteOne {
+	return c.DeleteOneID(cr.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *CustomReportClient) DeleteOneID(id uuid.UUID) *CustomReportDeleteOne {
+	builder := c.Delete().Where(customreport.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &CustomReportDeleteOne{builder}
+}
+
+// Query returns a query builder for CustomReport.
+func (c *CustomReportClient) Query() *CustomReportQuery {
+	return &CustomReportQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeCustomReport},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a CustomReport entity by its id.
+func (c *CustomReportClient) Get(ctx context.Context, id uuid.UUID) (*CustomReport, error) {
+	return c.Query().Where(customreport.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *CustomReportClient) GetX(ctx context.Context, id uuid.UUID) *CustomReport {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// QueryBusinessUnit queries the business_unit edge of a CustomReport.
+func (c *CustomReportClient) QueryBusinessUnit(cr *CustomReport) *BusinessUnitQuery {
+	query := (&BusinessUnitClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := cr.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(customreport.Table, customreport.FieldID, id),
+			sqlgraph.To(businessunit.Table, businessunit.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, false, customreport.BusinessUnitTable, customreport.BusinessUnitColumn),
+		)
+		fromV = sqlgraph.Neighbors(cr.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryOrganization queries the organization edge of a CustomReport.
+func (c *CustomReportClient) QueryOrganization(cr *CustomReport) *OrganizationQuery {
+	query := (&OrganizationClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := cr.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(customreport.Table, customreport.FieldID, id),
+			sqlgraph.To(organization.Table, organization.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, false, customreport.OrganizationTable, customreport.OrganizationColumn),
+		)
+		fromV = sqlgraph.Neighbors(cr.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// Hooks returns the client hooks.
+func (c *CustomReportClient) Hooks() []Hook {
+	return c.hooks.CustomReport
+}
+
+// Interceptors returns the client interceptors.
+func (c *CustomReportClient) Interceptors() []Interceptor {
+	return c.inters.CustomReport
+}
+
+func (c *CustomReportClient) mutate(ctx context.Context, m *CustomReportMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&CustomReportCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&CustomReportUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&CustomReportUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&CustomReportDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown CustomReport mutation op: %q", m.Op())
 	}
 }
 
@@ -10510,6 +10693,22 @@ func (c *UserClient) QueryShipmentCharges(u *User) *ShipmentChargesQuery {
 	return query
 }
 
+// QueryReports queries the reports edge of a User.
+func (c *UserClient) QueryReports(u *User) *UserReportQuery {
+	query := (&UserReportClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := u.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(user.Table, user.FieldID, id),
+			sqlgraph.To(userreport.Table, userreport.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, user.ReportsTable, user.ReportsColumn),
+		)
+		fromV = sqlgraph.Neighbors(u.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
 // Hooks returns the client hooks.
 func (c *UserClient) Hooks() []Hook {
 	return c.hooks.User
@@ -10713,6 +10912,187 @@ func (c *UserFavoriteClient) mutate(ctx context.Context, m *UserFavoriteMutation
 		return (&UserFavoriteDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
 	default:
 		return nil, fmt.Errorf("ent: unknown UserFavorite mutation op: %q", m.Op())
+	}
+}
+
+// UserReportClient is a client for the UserReport schema.
+type UserReportClient struct {
+	config
+}
+
+// NewUserReportClient returns a client for the UserReport from the given config.
+func NewUserReportClient(c config) *UserReportClient {
+	return &UserReportClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `userreport.Hooks(f(g(h())))`.
+func (c *UserReportClient) Use(hooks ...Hook) {
+	c.hooks.UserReport = append(c.hooks.UserReport, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `userreport.Intercept(f(g(h())))`.
+func (c *UserReportClient) Intercept(interceptors ...Interceptor) {
+	c.inters.UserReport = append(c.inters.UserReport, interceptors...)
+}
+
+// Create returns a builder for creating a UserReport entity.
+func (c *UserReportClient) Create() *UserReportCreate {
+	mutation := newUserReportMutation(c.config, OpCreate)
+	return &UserReportCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of UserReport entities.
+func (c *UserReportClient) CreateBulk(builders ...*UserReportCreate) *UserReportCreateBulk {
+	return &UserReportCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *UserReportClient) MapCreateBulk(slice any, setFunc func(*UserReportCreate, int)) *UserReportCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &UserReportCreateBulk{err: fmt.Errorf("calling to UserReportClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*UserReportCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &UserReportCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for UserReport.
+func (c *UserReportClient) Update() *UserReportUpdate {
+	mutation := newUserReportMutation(c.config, OpUpdate)
+	return &UserReportUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *UserReportClient) UpdateOne(ur *UserReport) *UserReportUpdateOne {
+	mutation := newUserReportMutation(c.config, OpUpdateOne, withUserReport(ur))
+	return &UserReportUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *UserReportClient) UpdateOneID(id uuid.UUID) *UserReportUpdateOne {
+	mutation := newUserReportMutation(c.config, OpUpdateOne, withUserReportID(id))
+	return &UserReportUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for UserReport.
+func (c *UserReportClient) Delete() *UserReportDelete {
+	mutation := newUserReportMutation(c.config, OpDelete)
+	return &UserReportDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *UserReportClient) DeleteOne(ur *UserReport) *UserReportDeleteOne {
+	return c.DeleteOneID(ur.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *UserReportClient) DeleteOneID(id uuid.UUID) *UserReportDeleteOne {
+	builder := c.Delete().Where(userreport.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &UserReportDeleteOne{builder}
+}
+
+// Query returns a query builder for UserReport.
+func (c *UserReportClient) Query() *UserReportQuery {
+	return &UserReportQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeUserReport},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a UserReport entity by its id.
+func (c *UserReportClient) Get(ctx context.Context, id uuid.UUID) (*UserReport, error) {
+	return c.Query().Where(userreport.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *UserReportClient) GetX(ctx context.Context, id uuid.UUID) *UserReport {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// QueryBusinessUnit queries the business_unit edge of a UserReport.
+func (c *UserReportClient) QueryBusinessUnit(ur *UserReport) *BusinessUnitQuery {
+	query := (&BusinessUnitClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := ur.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(userreport.Table, userreport.FieldID, id),
+			sqlgraph.To(businessunit.Table, businessunit.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, false, userreport.BusinessUnitTable, userreport.BusinessUnitColumn),
+		)
+		fromV = sqlgraph.Neighbors(ur.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryOrganization queries the organization edge of a UserReport.
+func (c *UserReportClient) QueryOrganization(ur *UserReport) *OrganizationQuery {
+	query := (&OrganizationClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := ur.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(userreport.Table, userreport.FieldID, id),
+			sqlgraph.To(organization.Table, organization.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, false, userreport.OrganizationTable, userreport.OrganizationColumn),
+		)
+		fromV = sqlgraph.Neighbors(ur.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryUser queries the user edge of a UserReport.
+func (c *UserReportClient) QueryUser(ur *UserReport) *UserQuery {
+	query := (&UserClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := ur.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(userreport.Table, userreport.FieldID, id),
+			sqlgraph.To(user.Table, user.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, userreport.UserTable, userreport.UserColumn),
+		)
+		fromV = sqlgraph.Neighbors(ur.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// Hooks returns the client hooks.
+func (c *UserReportClient) Hooks() []Hook {
+	return c.hooks.UserReport
+}
+
+// Interceptors returns the client interceptors.
+func (c *UserReportClient) Interceptors() []Interceptor {
+	return c.inters.UserReport
+}
+
+func (c *UserReportClient) mutate(ctx context.Context, m *UserReportMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&UserReportCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&UserReportUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&UserReportUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&UserReportDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown UserReport mutation op: %q", m.Op())
 	}
 }
 
@@ -11605,31 +11985,31 @@ func (c *WorkerProfileClient) mutate(ctx context.Context, m *WorkerProfileMutati
 type (
 	hooks struct {
 		AccessorialCharge, AccountingControl, BillingControl, BusinessUnit, ChargeType,
-		CommentType, Commodity, Customer, DelayCode, DispatchControl, DivisionCode,
-		DocumentClassification, EmailControl, EmailProfile, EquipmentManufactuer,
-		EquipmentType, FeasibilityToolControl, FeatureFlag, FleetCode, FormulaTemplate,
-		GeneralLedgerAccount, GoogleApi, HazardousMaterial,
+		CommentType, Commodity, CustomReport, Customer, DelayCode, DispatchControl,
+		DivisionCode, DocumentClassification, EmailControl, EmailProfile,
+		EquipmentManufactuer, EquipmentType, FeasibilityToolControl, FeatureFlag,
+		FleetCode, FormulaTemplate, GeneralLedgerAccount, GoogleApi, HazardousMaterial,
 		HazardousMaterialSegregation, InvoiceControl, Location, LocationCategory,
 		LocationComment, LocationContact, Organization, OrganizationFeatureFlag,
 		QualifierCode, ReasonCode, RevenueCode, RouteControl, ServiceType, Session,
 		Shipment, ShipmentCharges, ShipmentComment, ShipmentCommodity, ShipmentControl,
 		ShipmentDocumentation, ShipmentMove, ShipmentType, Stop, TableChangeAlert, Tag,
-		Tractor, Trailer, UsState, User, UserFavorite, Worker, WorkerComment,
-		WorkerContact, WorkerProfile []ent.Hook
+		Tractor, Trailer, UsState, User, UserFavorite, UserReport, Worker,
+		WorkerComment, WorkerContact, WorkerProfile []ent.Hook
 	}
 	inters struct {
 		AccessorialCharge, AccountingControl, BillingControl, BusinessUnit, ChargeType,
-		CommentType, Commodity, Customer, DelayCode, DispatchControl, DivisionCode,
-		DocumentClassification, EmailControl, EmailProfile, EquipmentManufactuer,
-		EquipmentType, FeasibilityToolControl, FeatureFlag, FleetCode, FormulaTemplate,
-		GeneralLedgerAccount, GoogleApi, HazardousMaterial,
+		CommentType, Commodity, CustomReport, Customer, DelayCode, DispatchControl,
+		DivisionCode, DocumentClassification, EmailControl, EmailProfile,
+		EquipmentManufactuer, EquipmentType, FeasibilityToolControl, FeatureFlag,
+		FleetCode, FormulaTemplate, GeneralLedgerAccount, GoogleApi, HazardousMaterial,
 		HazardousMaterialSegregation, InvoiceControl, Location, LocationCategory,
 		LocationComment, LocationContact, Organization, OrganizationFeatureFlag,
 		QualifierCode, ReasonCode, RevenueCode, RouteControl, ServiceType, Session,
 		Shipment, ShipmentCharges, ShipmentComment, ShipmentCommodity, ShipmentControl,
 		ShipmentDocumentation, ShipmentMove, ShipmentType, Stop, TableChangeAlert, Tag,
-		Tractor, Trailer, UsState, User, UserFavorite, Worker, WorkerComment,
-		WorkerContact, WorkerProfile []ent.Interceptor
+		Tractor, Trailer, UsState, User, UserFavorite, UserReport, Worker,
+		WorkerComment, WorkerContact, WorkerProfile []ent.Interceptor
 	}
 )
 

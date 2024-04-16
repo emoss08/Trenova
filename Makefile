@@ -32,7 +32,7 @@ new-entity: ## Create a new entity. Usage: make new-entity ENTITY_NAME=<name>
 	ifndef ENTITY_NAME
 		$(error ENTITY_NAME is undefined. Usage: make new-entity ENTITY_NAME=entity_name)
 	endif
-	go run -mod=mod entgo.io/ent/cmd/ent new ${ENTITY_NAME}
+	go run -mod=mod entgo.io/ent/cmd/ent new --target ./internal/ent/schema/ new ${ENTITY_NAME}
 
 migrate-create: ## Create a new migration. Usage: make migrate-create MIGRATION_NAME=<name>
 	ifndef MIGRATION_NAME

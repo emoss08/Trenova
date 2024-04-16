@@ -278,6 +278,30 @@ func (f CommodityMutationRuleFunc) EvalMutation(ctx context.Context, m ent.Mutat
 	return Denyf("ent/privacy: unexpected mutation type %T, expect *ent.CommodityMutation", m)
 }
 
+// The CustomReportQueryRuleFunc type is an adapter to allow the use of ordinary
+// functions as a query rule.
+type CustomReportQueryRuleFunc func(context.Context, *ent.CustomReportQuery) error
+
+// EvalQuery return f(ctx, q).
+func (f CustomReportQueryRuleFunc) EvalQuery(ctx context.Context, q ent.Query) error {
+	if q, ok := q.(*ent.CustomReportQuery); ok {
+		return f(ctx, q)
+	}
+	return Denyf("ent/privacy: unexpected query type %T, expect *ent.CustomReportQuery", q)
+}
+
+// The CustomReportMutationRuleFunc type is an adapter to allow the use of ordinary
+// functions as a mutation rule.
+type CustomReportMutationRuleFunc func(context.Context, *ent.CustomReportMutation) error
+
+// EvalMutation calls f(ctx, m).
+func (f CustomReportMutationRuleFunc) EvalMutation(ctx context.Context, m ent.Mutation) error {
+	if m, ok := m.(*ent.CustomReportMutation); ok {
+		return f(ctx, m)
+	}
+	return Denyf("ent/privacy: unexpected mutation type %T, expect *ent.CustomReportMutation", m)
+}
+
 // The CustomerQueryRuleFunc type is an adapter to allow the use of ordinary
 // functions as a query rule.
 type CustomerQueryRuleFunc func(context.Context, *ent.CustomerQuery) error
@@ -1380,6 +1404,30 @@ func (f UserFavoriteMutationRuleFunc) EvalMutation(ctx context.Context, m ent.Mu
 		return f(ctx, m)
 	}
 	return Denyf("ent/privacy: unexpected mutation type %T, expect *ent.UserFavoriteMutation", m)
+}
+
+// The UserReportQueryRuleFunc type is an adapter to allow the use of ordinary
+// functions as a query rule.
+type UserReportQueryRuleFunc func(context.Context, *ent.UserReportQuery) error
+
+// EvalQuery return f(ctx, q).
+func (f UserReportQueryRuleFunc) EvalQuery(ctx context.Context, q ent.Query) error {
+	if q, ok := q.(*ent.UserReportQuery); ok {
+		return f(ctx, q)
+	}
+	return Denyf("ent/privacy: unexpected query type %T, expect *ent.UserReportQuery", q)
+}
+
+// The UserReportMutationRuleFunc type is an adapter to allow the use of ordinary
+// functions as a mutation rule.
+type UserReportMutationRuleFunc func(context.Context, *ent.UserReportMutation) error
+
+// EvalMutation calls f(ctx, m).
+func (f UserReportMutationRuleFunc) EvalMutation(ctx context.Context, m ent.Mutation) error {
+	if m, ok := m.(*ent.UserReportMutation); ok {
+		return f(ctx, m)
+	}
+	return Denyf("ent/privacy: unexpected mutation type %T, expect *ent.UserReportMutation", m)
 }
 
 // The WorkerQueryRuleFunc type is an adapter to allow the use of ordinary

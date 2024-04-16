@@ -93,6 +93,18 @@ func (f CommodityFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, e
 	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.CommodityMutation", m)
 }
 
+// The CustomReportFunc type is an adapter to allow the use of ordinary
+// function as CustomReport mutator.
+type CustomReportFunc func(context.Context, *ent.CustomReportMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f CustomReportFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.CustomReportMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.CustomReportMutation", m)
+}
+
 // The CustomerFunc type is an adapter to allow the use of ordinary
 // function as Customer mutator.
 type CustomerFunc func(context.Context, *ent.CustomerMutation) (ent.Value, error)
@@ -643,6 +655,18 @@ func (f UserFavoriteFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value
 		return f(ctx, mv)
 	}
 	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.UserFavoriteMutation", m)
+}
+
+// The UserReportFunc type is an adapter to allow the use of ordinary
+// function as UserReport mutator.
+type UserReportFunc func(context.Context, *ent.UserReportMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f UserReportFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.UserReportMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.UserReportMutation", m)
 }
 
 // The WorkerFunc type is an adapter to allow the use of ordinary

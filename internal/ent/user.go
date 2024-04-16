@@ -74,13 +74,16 @@ type UserEdges struct {
 	ShipmentComments []*ShipmentComment `json:"shipment_comments,omitempty"`
 	// ShipmentCharges holds the value of the shipment_charges edge.
 	ShipmentCharges []*ShipmentCharges `json:"shipment_charges,omitempty"`
+	// Reports holds the value of the reports edge.
+	Reports []*UserReport `json:"reports,omitempty"`
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
-	loadedTypes           [6]bool
+	loadedTypes           [7]bool
 	namedUserFavorites    map[string][]*UserFavorite
 	namedShipments        map[string][]*Shipment
 	namedShipmentComments map[string][]*ShipmentComment
 	namedShipmentCharges  map[string][]*ShipmentCharges
+	namedReports          map[string][]*UserReport
 }
 
 // BusinessUnitOrErr returns the BusinessUnit value or an error if the edge
@@ -139,6 +142,15 @@ func (e UserEdges) ShipmentChargesOrErr() ([]*ShipmentCharges, error) {
 		return e.ShipmentCharges, nil
 	}
 	return nil, &NotLoadedError{edge: "shipment_charges"}
+}
+
+// ReportsOrErr returns the Reports value or an error if the edge
+// was not loaded in eager-loading.
+func (e UserEdges) ReportsOrErr() ([]*UserReport, error) {
+	if e.loadedTypes[6] {
+		return e.Reports, nil
+	}
+	return nil, &NotLoadedError{edge: "reports"}
 }
 
 // scanValues returns the types for scanning values from sql.Rows.
@@ -323,6 +335,11 @@ func (u *User) QueryShipmentCharges() *ShipmentChargesQuery {
 	return NewUserClient(u.config).QueryShipmentCharges(u)
 }
 
+// QueryReports queries the "reports" edge of the User entity.
+func (u *User) QueryReports() *UserReportQuery {
+	return NewUserClient(u.config).QueryReports(u)
+}
+
 // Update returns a builder for updating this User.
 // Note that you need to call User.Unwrap() before calling this method if this User
 // was returned from a transaction, and the transaction was committed or rolled back.
@@ -494,6 +511,30 @@ func (u *User) appendNamedShipmentCharges(name string, edges ...*ShipmentCharges
 		u.Edges.namedShipmentCharges[name] = []*ShipmentCharges{}
 	} else {
 		u.Edges.namedShipmentCharges[name] = append(u.Edges.namedShipmentCharges[name], edges...)
+	}
+}
+
+// NamedReports returns the Reports named value or an error if the edge was not
+// loaded in eager-loading with this name.
+func (u *User) NamedReports(name string) ([]*UserReport, error) {
+	if u.Edges.namedReports == nil {
+		return nil, &NotLoadedError{edge: name}
+	}
+	nodes, ok := u.Edges.namedReports[name]
+	if !ok {
+		return nil, &NotLoadedError{edge: name}
+	}
+	return nodes, nil
+}
+
+func (u *User) appendNamedReports(name string, edges ...*UserReport) {
+	if u.Edges.namedReports == nil {
+		u.Edges.namedReports = make(map[string][]*UserReport)
+	}
+	if len(edges) == 0 {
+		u.Edges.namedReports[name] = []*UserReport{}
+	} else {
+		u.Edges.namedReports[name] = append(u.Edges.namedReports[name], edges...)
 	}
 }
 

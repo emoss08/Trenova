@@ -27,6 +27,9 @@ type CommentType func(*sql.Selector)
 // Commodity is the predicate function for commodity builders.
 type Commodity func(*sql.Selector)
 
+// CustomReport is the predicate function for customreport builders.
+type CustomReport func(*sql.Selector)
+
 // Customer is the predicate function for customer builders.
 type Customer func(*sql.Selector)
 
@@ -164,6 +167,9 @@ type User func(*sql.Selector)
 
 // UserFavorite is the predicate function for userfavorite builders.
 type UserFavorite func(*sql.Selector)
+
+// UserReport is the predicate function for userreport builders.
+type UserReport func(*sql.Selector)
 
 // Worker is the predicate function for worker builders.
 type Worker func(*sql.Selector)

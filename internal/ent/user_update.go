@@ -17,6 +17,7 @@ import (
 	"github.com/emoss08/trenova/internal/ent/shipmentcomment"
 	"github.com/emoss08/trenova/internal/ent/user"
 	"github.com/emoss08/trenova/internal/ent/userfavorite"
+	"github.com/emoss08/trenova/internal/ent/userreport"
 	"github.com/google/uuid"
 )
 
@@ -313,6 +314,21 @@ func (uu *UserUpdate) AddShipmentCharges(s ...*ShipmentCharges) *UserUpdate {
 	return uu.AddShipmentChargeIDs(ids...)
 }
 
+// AddReportIDs adds the "reports" edge to the UserReport entity by IDs.
+func (uu *UserUpdate) AddReportIDs(ids ...uuid.UUID) *UserUpdate {
+	uu.mutation.AddReportIDs(ids...)
+	return uu
+}
+
+// AddReports adds the "reports" edges to the UserReport entity.
+func (uu *UserUpdate) AddReports(u ...*UserReport) *UserUpdate {
+	ids := make([]uuid.UUID, len(u))
+	for i := range u {
+		ids[i] = u[i].ID
+	}
+	return uu.AddReportIDs(ids...)
+}
+
 // Mutation returns the UserMutation object of the builder.
 func (uu *UserUpdate) Mutation() *UserMutation {
 	return uu.mutation
@@ -400,6 +416,27 @@ func (uu *UserUpdate) RemoveShipmentCharges(s ...*ShipmentCharges) *UserUpdate {
 		ids[i] = s[i].ID
 	}
 	return uu.RemoveShipmentChargeIDs(ids...)
+}
+
+// ClearReports clears all "reports" edges to the UserReport entity.
+func (uu *UserUpdate) ClearReports() *UserUpdate {
+	uu.mutation.ClearReports()
+	return uu
+}
+
+// RemoveReportIDs removes the "reports" edge to UserReport entities by IDs.
+func (uu *UserUpdate) RemoveReportIDs(ids ...uuid.UUID) *UserUpdate {
+	uu.mutation.RemoveReportIDs(ids...)
+	return uu
+}
+
+// RemoveReports removes "reports" edges to UserReport entities.
+func (uu *UserUpdate) RemoveReports(u ...*UserReport) *UserUpdate {
+	ids := make([]uuid.UUID, len(u))
+	for i := range u {
+		ids[i] = u[i].ID
+	}
+	return uu.RemoveReportIDs(ids...)
 }
 
 // Save executes the query and returns the number of nodes affected by the update operation.
@@ -734,6 +771,51 @@ func (uu *UserUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
+	if uu.mutation.ReportsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.ReportsTable,
+			Columns: []string{user.ReportsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(userreport.FieldID, field.TypeUUID),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := uu.mutation.RemovedReportsIDs(); len(nodes) > 0 && !uu.mutation.ReportsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.ReportsTable,
+			Columns: []string{user.ReportsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(userreport.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := uu.mutation.ReportsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.ReportsTable,
+			Columns: []string{user.ReportsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(userreport.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
 	_spec.AddModifiers(uu.modifiers...)
 	if n, err = sqlgraph.UpdateNodes(ctx, uu.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
@@ -1035,6 +1117,21 @@ func (uuo *UserUpdateOne) AddShipmentCharges(s ...*ShipmentCharges) *UserUpdateO
 	return uuo.AddShipmentChargeIDs(ids...)
 }
 
+// AddReportIDs adds the "reports" edge to the UserReport entity by IDs.
+func (uuo *UserUpdateOne) AddReportIDs(ids ...uuid.UUID) *UserUpdateOne {
+	uuo.mutation.AddReportIDs(ids...)
+	return uuo
+}
+
+// AddReports adds the "reports" edges to the UserReport entity.
+func (uuo *UserUpdateOne) AddReports(u ...*UserReport) *UserUpdateOne {
+	ids := make([]uuid.UUID, len(u))
+	for i := range u {
+		ids[i] = u[i].ID
+	}
+	return uuo.AddReportIDs(ids...)
+}
+
 // Mutation returns the UserMutation object of the builder.
 func (uuo *UserUpdateOne) Mutation() *UserMutation {
 	return uuo.mutation
@@ -1122,6 +1219,27 @@ func (uuo *UserUpdateOne) RemoveShipmentCharges(s ...*ShipmentCharges) *UserUpda
 		ids[i] = s[i].ID
 	}
 	return uuo.RemoveShipmentChargeIDs(ids...)
+}
+
+// ClearReports clears all "reports" edges to the UserReport entity.
+func (uuo *UserUpdateOne) ClearReports() *UserUpdateOne {
+	uuo.mutation.ClearReports()
+	return uuo
+}
+
+// RemoveReportIDs removes the "reports" edge to UserReport entities by IDs.
+func (uuo *UserUpdateOne) RemoveReportIDs(ids ...uuid.UUID) *UserUpdateOne {
+	uuo.mutation.RemoveReportIDs(ids...)
+	return uuo
+}
+
+// RemoveReports removes "reports" edges to UserReport entities.
+func (uuo *UserUpdateOne) RemoveReports(u ...*UserReport) *UserUpdateOne {
+	ids := make([]uuid.UUID, len(u))
+	for i := range u {
+		ids[i] = u[i].ID
+	}
+	return uuo.RemoveReportIDs(ids...)
 }
 
 // Where appends a list predicates to the UserUpdate builder.
@@ -1479,6 +1597,51 @@ func (uuo *UserUpdateOne) sqlSave(ctx context.Context) (_node *User, err error) 
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(shipmentcharges.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if uuo.mutation.ReportsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.ReportsTable,
+			Columns: []string{user.ReportsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(userreport.FieldID, field.TypeUUID),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := uuo.mutation.RemovedReportsIDs(); len(nodes) > 0 && !uuo.mutation.ReportsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.ReportsTable,
+			Columns: []string{user.ReportsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(userreport.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := uuo.mutation.ReportsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.ReportsTable,
+			Columns: []string{user.ReportsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(userreport.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {

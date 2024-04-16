@@ -109,7 +109,7 @@ export type API_ENDPOINTS =
   | "/table-columns/"
   | "/transfer-to-billing/"
   | "/untransfer-invoice/"
-  | "/get-columns/"
+  | "reports/column-names"
   | "/generate-report/"
   | "/users/notifications/"
   | "/billing/shipments-ready/"

@@ -20,6 +20,7 @@ import (
 	"github.com/emoss08/trenova/internal/ent/commenttype"
 	"github.com/emoss08/trenova/internal/ent/commodity"
 	"github.com/emoss08/trenova/internal/ent/customer"
+	"github.com/emoss08/trenova/internal/ent/customreport"
 	"github.com/emoss08/trenova/internal/ent/delaycode"
 	"github.com/emoss08/trenova/internal/ent/dispatchcontrol"
 	"github.com/emoss08/trenova/internal/ent/divisioncode"
@@ -64,6 +65,7 @@ import (
 	"github.com/emoss08/trenova/internal/ent/trailer"
 	"github.com/emoss08/trenova/internal/ent/user"
 	"github.com/emoss08/trenova/internal/ent/userfavorite"
+	"github.com/emoss08/trenova/internal/ent/userreport"
 	"github.com/emoss08/trenova/internal/ent/usstate"
 	"github.com/emoss08/trenova/internal/ent/worker"
 	"github.com/emoss08/trenova/internal/ent/workercomment"
@@ -136,6 +138,7 @@ func checkColumn(table, column string) error {
 			chargetype.Table:                   chargetype.ValidColumn,
 			commenttype.Table:                  commenttype.ValidColumn,
 			commodity.Table:                    commodity.ValidColumn,
+			customreport.Table:                 customreport.ValidColumn,
 			customer.Table:                     customer.ValidColumn,
 			delaycode.Table:                    delaycode.ValidColumn,
 			dispatchcontrol.Table:              dispatchcontrol.ValidColumn,
@@ -182,6 +185,7 @@ func checkColumn(table, column string) error {
 			usstate.Table:                      usstate.ValidColumn,
 			user.Table:                         user.ValidColumn,
 			userfavorite.Table:                 userfavorite.ValidColumn,
+			userreport.Table:                   userreport.ValidColumn,
 			worker.Table:                       worker.ValidColumn,
 			workercomment.Table:                workercomment.ValidColumn,
 			workercontact.Table:                workercontact.ValidColumn,
