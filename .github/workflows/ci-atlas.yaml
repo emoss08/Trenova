@@ -5,10 +5,10 @@ on:
       - master
     paths:
       - .github/workflows/ci-atlas.yaml
-      - 'internal/ent/migrate/*'
+      - 'internal/ent/migrate/migrations/*'
   pull_request:
     paths:
-      - 'internal/ent/migrate/*'
+      - 'internal/ent/migrate/migrations/*'
 # Permissions to write comments on the pull request.
 permissions:
   contents: read
@@ -40,7 +40,7 @@ jobs:
           cloud-token: ${{ secrets.ATLAS_CLOUD_TOKEN }}
       - uses: ariga/atlas-action/migrate/lint@v1
         with:
-          dir: 'file://internal/ent/migrate'
+          dir: 'file://internal/ent/migrate/migrations'
           dev-url: 'postgres://postgres:pass@localhost:5432/dev?search_path=public&sslmode=disable'
           dir-name: 'trenova'
         env:
@@ -48,6 +48,6 @@ jobs:
       - uses: ariga/atlas-action/migrate/push@v1
         if: github.ref == 'refs/heads/master'
         with:
-          dir: 'file://internal/ent/migrate'
+          dir: 'file://internal/ent/migrate/migrations'
           dev-url: 'postgres://postgres:pass@localhost:5432/dev?search_path=public&sslmode=disable'
           dir-name: 'trenova'
