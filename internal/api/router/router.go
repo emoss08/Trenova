@@ -1,4 +1,4 @@
-package router //nolint: cyclop // This package is responsible for setting up the router and registering all the routes.
+package router //nolint:cyclop // This package is responsible for setting up the router and registering all the routes.
 
 import (
 	"github.com/bytedance/sonic"
