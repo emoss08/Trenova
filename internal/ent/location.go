@@ -32,7 +32,7 @@ type Location struct {
 	UpdatedAt time.Time `json:"updatedAt" validate:"omitempty"`
 	// The current version of this entity.
 	Version int `json:"version" validate:"omitempty"`
-	// Status holds the value of the "status" field.
+	// Current status of the location.
 	Status location.Status `json:"status" validate:"required,oneof=A I"`
 	// Unique code for the location.
 	Code string `json:"code" validate:"required,max=10"`
