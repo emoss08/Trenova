@@ -121,10 +121,17 @@ func (r *ReportService) getColumnsNames(
 		return nil, 0, nil // Return empty if the table is in the excluded list
 	}
 
-	query := `SELECT column_name 
-	FROM information_schema.columns 
-	WHERE table_schema = 'public' 
-	AND table_name = $1`
+	query := `SELECT 
+		column_name 
+	FROM 
+		information_schema.columns 
+	WHERE 
+		table_schema = 'public' 
+	AND
+		table_name = $1
+  	ORDER BY 
+		ordinal_position DESC;
+	`
 
 	rows, err := tx.QueryContext(ctx, query, tableName)
 	if err != nil {

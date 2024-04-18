@@ -242,4 +242,8 @@ func AttachAllRoutes(s *api.Server, api fiber.Router) { //nolint:funlen // This 
 	reportsAPI := api.Group("/reports")
 	reportsAPI.Get("/column-names", NewReportHandler(s).GetColumnNames())
 	reportsAPI.Post("/generate", NewReportHandler(s).GenerateReport())
+
+	// Register the handlers for the user notifications.
+	userNotificationsAPI := api.Group("/user-notifications")
+	userNotificationsAPI.Get("/", NewUserNotificationHandler(s).GetUserNotifications())
 }

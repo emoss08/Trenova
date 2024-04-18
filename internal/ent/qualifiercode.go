@@ -24,11 +24,11 @@ type QualifierCode struct {
 	BusinessUnitID uuid.UUID `json:"businessUnitId"`
 	// OrganizationID holds the value of the "organization_id" field.
 	OrganizationID uuid.UUID `json:"organizationId"`
-	// CreatedAt holds the value of the "created_at" field.
+	// The time that this entity was created.
 	CreatedAt time.Time `json:"createdAt" validate:"omitempty"`
-	// UpdatedAt holds the value of the "updated_at" field.
+	// The last time that this entity was updated.
 	UpdatedAt time.Time `json:"updatedAt" validate:"omitempty"`
-	// Version holds the value of the "version" field.
+	// The current version of this entity.
 	Version int `json:"version" validate:"omitempty"`
 	// Status holds the value of the "status" field.
 	Status qualifiercode.Status `json:"status" validate:"required,oneof=A I"`

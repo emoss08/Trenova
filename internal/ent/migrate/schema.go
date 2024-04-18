@@ -719,8 +719,8 @@ var (
 	// FeatureFlagsColumns holds the columns for the "feature_flags" table.
 	FeatureFlagsColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeUUID},
-		{Name: "created_at", Type: field.TypeTime},
-		{Name: "updated_at", Type: field.TypeTime},
+		{Name: "created_at", Type: field.TypeTime, Comment: "The time that this entity was created."},
+		{Name: "updated_at", Type: field.TypeTime, Comment: "The last time that this entity was updated."},
 		{Name: "name", Type: field.TypeString},
 		{Name: "code", Type: field.TypeString, Unique: true, Size: 30, SchemaType: map[string]string{"postgres": "VARCHAR(30)", "sqlite3": "VARCHAR(30)"}},
 		{Name: "beta", Type: field.TypeBool, Default: false},
@@ -1446,9 +1446,9 @@ var (
 	// ShipmentsColumns holds the columns for the "shipments" table.
 	ShipmentsColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeUUID},
-		{Name: "created_at", Type: field.TypeTime},
-		{Name: "updated_at", Type: field.TypeTime},
-		{Name: "version", Type: field.TypeInt, Default: 1},
+		{Name: "created_at", Type: field.TypeTime, Comment: "The time that this entity was created."},
+		{Name: "updated_at", Type: field.TypeTime, Comment: "The last time that this entity was updated."},
+		{Name: "version", Type: field.TypeInt, Comment: "The current version of this entity.", Default: 1},
 		{Name: "pro_number", Type: field.TypeString, Size: 20, SchemaType: map[string]string{"postgres": "VARCHAR(20)", "sqlite3": "VARCHAR(20)"}},
 		{Name: "status", Type: field.TypeEnum, Enums: []string{"New", "InProgress", "Completed", "Hold", "Billed", "Voided"}, Default: "New"},
 		{Name: "origin_address_line", Type: field.TypeString, Nullable: true},

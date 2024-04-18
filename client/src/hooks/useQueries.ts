@@ -657,11 +657,11 @@ export function useEmailControl() {
  * Get UserNotifications for notification menu
  * @param userId - user id
  */
-export function useNotifications(userId: string) {
+export function useNotifications(userId: string, markAsRead: boolean = false) {
   const { data: notificationsData, isLoading: notificationsLoading } = useQuery(
     {
-      queryKey: ["userNotifications", userId],
-      queryFn: async () => getUserNotifications(),
+      queryKey: ["userNotifications", userId, markAsRead],
+      queryFn: async () => getUserNotifications(markAsRead),
     },
   );
 

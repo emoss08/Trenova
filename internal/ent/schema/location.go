@@ -20,23 +20,29 @@ func (Location) Fields() []ent.Field {
 		field.Enum("status").
 			Values("A", "I").
 			Default("A").
+			Comment("Current status of the location.").
 			StructTag(`json:"status" validate:"required,oneof=A I"`),
 		field.String("code").
 			NotEmpty().
 			MaxLen(10).
+			Comment("Unique code for the location.").
 			StructTag(`json:"code" validate:"required,max=10"`),
 		field.UUID("location_category_id", uuid.UUID{}).
 			Optional().
 			Nillable().
+			Comment("Location category ID.").
 			StructTag(`json:"locationCategoryId" validate:"omitempty"`),
 		field.String("name").
 			NotEmpty().
+			Comment("Name of the location.").
 			StructTag(`json:"name" validate:"required"`),
 		field.Text("description").
 			Optional().
+			Comment("Description of the location.").
 			StructTag(`json:"description" validate:"omitempty"`),
 		field.String("address_line_1").
 			NotEmpty().
+			Comment("Adress Line 1 of the location.").
 			MaxLen(150).
 			SchemaType(map[string]string{
 				dialect.Postgres: "VARCHAR(150)",
@@ -46,6 +52,7 @@ func (Location) Fields() []ent.Field {
 		field.String("address_line_2").
 			Optional().
 			MaxLen(150).
+			Comment("Adress Line 2 of the location.").
 			SchemaType(map[string]string{
 				dialect.Postgres: "VARCHAR(150)",
 				dialect.SQLite:   "VARCHAR(150)",
@@ -54,16 +61,19 @@ func (Location) Fields() []ent.Field {
 		field.String("city").
 			NotEmpty().
 			MaxLen(150).
+			Comment("City of the location.").
 			SchemaType(map[string]string{
 				dialect.Postgres: "VARCHAR(150)",
 				dialect.SQLite:   "VARCHAR(150)",
 			}).
 			StructTag(`json:"city" validate:"required,max=150"`),
 		field.UUID("state_id", uuid.UUID{}).
+			Comment("State ID.").
 			StructTag(`json:"stateId" validate:"omitempty,uuid"`),
 		field.String("postal_code").
 			NotEmpty().
 			MaxLen(10).
+			Comment("Postal code of the location.").
 			SchemaType(map[string]string{
 				dialect.Postgres: "VARCHAR(10)",
 				dialect.SQLite:   "VARCHAR(10)",
@@ -71,12 +81,15 @@ func (Location) Fields() []ent.Field {
 			StructTag(`json:"postalCode" validate:"required,max=10"`),
 		field.Float("longitude").
 			Optional().
+			Comment("Longitude of the location.").
 			StructTag(`json:"longitude" validate:"omitempty"`),
 		field.Float("latitude").
 			Optional().
+			Comment("Latitude of the location.").
 			StructTag(`json:"latitude" validate:"omitempty"`),
 		field.String("place_id").
 			Optional().
+			Comment("Place ID from Google Maps API.").
 			MaxLen(255).
 			SchemaType(map[string]string{
 				dialect.Postgres: "VARCHAR(255)",
@@ -85,6 +98,7 @@ func (Location) Fields() []ent.Field {
 			Comment("Place ID from Google Maps API.").
 			StructTag(`json:"placeId" validate:"omitempty,max=255"`),
 		field.Bool("is_geocoded").
+			Comment("Is the location geocoded?").
 			Default(false).
 			StructTag(`json:"isGeocoded"`),
 	}
