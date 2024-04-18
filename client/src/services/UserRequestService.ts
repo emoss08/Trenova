@@ -54,10 +54,13 @@ export async function getUserReports(): Promise<UserReportResponse> {
  * Fetches the current user's notifications from the server.
  * @returns A promise that resolves to the user's notifications.
  */
-export async function getUserNotifications(): Promise<UserNotification> {
-  const response = await axios.get("/users/notifications/?max=10", {
+export async function getUserNotifications(
+  markAsRead: boolean,
+): Promise<UserNotification> {
+  const response = await axios.get("/user-notifications/", {
     params: {
-      max: 10,
+      maxAmount: 10,
+      markAsRead: markAsRead,
     },
   });
   return response.data;

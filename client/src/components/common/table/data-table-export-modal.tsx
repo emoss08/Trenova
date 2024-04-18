@@ -149,7 +149,10 @@ function TableExportModalBody({
           () => (
             <div className="flex flex-col space-y-1">
               <span className="font-semibold">Success</span>
-              <span className="text-xs">{response.data.results}</span>
+              <span className="text-xs">
+                Export job has been sent. You will receive a notification once
+                it's ready.
+              </span>
             </div>
           ),
           {

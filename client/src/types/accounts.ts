@@ -93,26 +93,12 @@ export type UserReportResponse = {
 
 export type Notification = {
   id: number;
-  level: string;
-  recipient: string;
-  unread: boolean;
-  actorContentType: number;
-  actorObjectId: string;
-  verb: string;
+  userID: string;
+  isRead: boolean;
+  title: string;
   description: string;
-  targetContentType: number;
-  targetObjectId: string;
-  target_object_id: string;
-  actionObjectContentType: number;
-  actionObjectObjectId: string;
-  timestamp: string;
-  public: boolean;
-  deleted: boolean;
-  emailed: boolean;
-  data: string;
-  slug: number;
-  actor: string;
-  actionObject: string;
+  actionUrl: string;
+  createdAt: string;
 };
 
 export type UserNotification = {
