@@ -241,4 +241,5 @@ func AttachAllRoutes(s *api.Server, api fiber.Router) { //nolint:funlen // This 
 	// Register the handlers for the reports.
 	reportsAPI := api.Group("/reports")
 	reportsAPI.Get("/column-names", NewReportHandler(s).GetColumnNames())
+	reportsAPI.Post("/generate", NewReportHandler(s).GenerateReport())
 }

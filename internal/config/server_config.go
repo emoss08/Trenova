@@ -28,6 +28,10 @@ type FiberServer struct {
 	EnableMonitorMiddleware        bool
 }
 
+type Integration struct {
+	GenerateReportEndpoint string
+}
+
 type RedisServer struct {
 	Host     string
 	Port     int
@@ -78,6 +82,7 @@ type Server struct {
 	Cookie       EncryptCookie  `json:"cookie"`
 	Monitor      Monitor        `json:"monitor"`
 	Minio        MinioServer    `json:"minio"`
+	Integration  Integration    `json:"integration_server"`
 }
 
 // DefaultServiceConfigFromEnv returns the server config as parsed from environment variables
@@ -153,6 +158,9 @@ func DefaultServiceConfigFromEnv() Server {
 			AccessKey: util.GetEnv("SERVER_MINIO_ACCESS_KEY", "minio"),
 			SecretKey: util.GetEnv("SERVER_MINIO_SECRET_KEY", "minio123"),
 			UseSSL:    util.GetEnvAsBool("SERVER_MINIO_USE_SSL", false),
+		},
+		Integration: Integration{
+			GenerateReportEndpoint: util.GetEnv("SERVER_INTEGRATION_GENERATE_REPORT_ENDPOINT", "http://localhost:8000/generate-report/"),
 		},
 	}
 }

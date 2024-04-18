@@ -3,16 +3,56 @@ package services
 import (
 	"context"
 	"strings"
+	"time"
 
 	"github.com/emoss08/trenova/internal/api"
+	"github.com/emoss08/trenova/internal/config"
 	"github.com/emoss08/trenova/internal/ent"
 	"github.com/emoss08/trenova/internal/util"
+	"github.com/google/uuid"
+	"github.com/imroc/req/v3"
 	"github.com/rs/zerolog"
 )
+
+type ColumnValue struct {
+	Label string `json:"label"`
+	Value string `json:"value"`
+}
+
+type FileFormat string
+
+const (
+	CSV  FileFormat = "csv"
+	XLS  FileFormat = "xls"
+	XLSX FileFormat = "xlsx"
+	PDF  FileFormat = "pdf"
+)
+
+type DeliveryMethod string
+
+const (
+	Email DeliveryMethod = "email"
+	S3    DeliveryMethod = "s3"
+	Minio DeliveryMethod = "minio"
+	Kafka DeliveryMethod = "kafka"
+	Redis DeliveryMethod = "redis"
+)
+
+type GenerateReportRequest struct {
+	TableName      string         `json:"tableName"`
+	Columns        []string       `json:"columns"`
+	FileFormat     FileFormat     `json:"fileFormat"`
+	DeliveryMethod DeliveryMethod `json:"deliveryMethod"`
+}
+
+type GenerateReportResponse struct {
+	ReportURL string `json:"report_url"`
+}
 
 type ReportService struct {
 	Client *ent.Client
 	Logger *zerolog.Logger
+	Config *config.Server
 }
 
 // NewReportService creates a new report service.
@@ -20,12 +60,8 @@ func NewReportService(s *api.Server) *ReportService {
 	return &ReportService{
 		Client: s.Client,
 		Logger: s.Logger,
+		Config: &s.Config,
 	}
-}
-
-type ColumnValue struct {
-	Label string `json:"label"`
-	Value string `json:"value"`
 }
 
 // GetColumnsByTableName returns the column names for a given table name.
@@ -116,4 +152,59 @@ func (r *ReportService) getColumnsNames(
 	}
 
 	return columns, len(columns), nil
+}
+
+func (r *ReportService) GenerateReport(
+	ctx context.Context, payload GenerateReportRequest, userID, orgID, buID uuid.UUID,
+) (GenerateReportResponse, error) {
+	client := req.C().
+		SetTimeout(10 * time.Second)
+
+	var result GenerateReportResponse
+
+	resp, err := client.R().
+		SetBody(&payload).
+		SetSuccessResult(&result).
+		Post(r.Config.Integration.GenerateReportEndpoint)
+	if err != nil {
+		return GenerateReportResponse{}, err
+	}
+
+	if resp.IsErrorState() {
+		return GenerateReportResponse{}, nil
+	}
+
+	if resp.IsSuccessState() {
+		err = util.WithTx(ctx, r.Client, func(tx *ent.Tx) error {
+			err = r.addReportToUser(ctx, tx, userID, orgID, buID, result.ReportURL)
+			if err != nil {
+				return err
+			}
+
+			return nil
+		})
+		if err != nil {
+			return GenerateReportResponse{}, err
+		}
+
+		return result, nil
+	}
+
+	return GenerateReportResponse{}, nil
+}
+
+func (r *ReportService) addReportToUser(
+	ctx context.Context, tx *ent.Tx, userID, orgID, buID uuid.UUID, reportURL string,
+) error {
+	_, err := tx.UserReport.Create().
+		SetOrganizationID(orgID).
+		SetBusinessUnitID(buID).
+		SetUserID(userID).
+		SetReportURL(reportURL).
+		Save(ctx)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }

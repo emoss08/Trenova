@@ -21,6 +21,7 @@ import {
   RadioGroupItem,
 } from "@/components/common/fields/radio-group";
 import { SelectInput } from "@/components/common/fields/select-input";
+import { TextareaField } from "@/components/common/fields/textarea";
 import { Button } from "@/components/ui/button";
 import { ComponentLoader } from "@/components/ui/component-loader";
 import { Dialog, DialogContent, DialogHeader } from "@/components/ui/dialog";
@@ -38,8 +39,10 @@ import { StoreType } from "@/lib/useGlobalStore";
 import { ExportModelSchema } from "@/lib/validations/GenericSchema";
 import { getColumns } from "@/services/ReportRequestService";
 import { TableStoreProps, useTableStore as store } from "@/stores/TableStore";
+import { IChoiceProps } from "@/types";
 import { DeliveryMethodChoices, TExportModelFormValues } from "@/types/forms";
 import { faEllipsisVertical } from "@fortawesome/pro-duotone-svg-icons";
+import { faDownload, faEnvelope } from "@fortawesome/pro-regular-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { yupResolver } from "@hookform/resolvers/yup";
 import { DialogTitle } from "@radix-ui/react-dialog";
@@ -47,9 +50,6 @@ import { useQuery } from "@tanstack/react-query";
 import React, { useEffect } from "react";
 import { Controller, useForm } from "react-hook-form";
 import toast from "react-hot-toast";
-import { IChoiceProps } from "@/types";
-import { faDownload, faEnvelope } from "@fortawesome/pro-regular-svg-icons";
-import { TextareaField } from "@/components/common/fields/textarea";
 
 interface Props {
   store: StoreType<TableStoreProps>;
@@ -135,8 +135,8 @@ function TableExportModalBody({
     setLoading(true);
 
     try {
-      const response = await axios.post("generate_report/", {
-        modelName: modelName as string,
+      const response = await axios.post("reports/generate/", {
+        tableName: modelName as string,
         fileFormat: values.fileFormat,
         columns: values.columns,
         deliveryMethod: values.deliveryMethod,
@@ -267,7 +267,7 @@ function TableExportModalBody({
             </RadioGroup>
           )}
         />
-        <p className="mt-1 text-xs text-foreground/70">
+        <p className="text-foreground/70 mt-1 text-xs">
           Select a format to export (CSV, Excel, or PDF).
         </p>
       </div>
