@@ -31,7 +31,7 @@ func NewUserNotificationService(s *api.Server) *UserNotificationService {
 func (r *UserNotificationService) GetUserNotifications(
 	ctx context.Context, limit int, userID, buID, orgID uuid.UUID,
 ) ([]*ent.UserNotification, int, error) {
-	entityCount, countErr := r.Client.Debug().UserNotification.Query().Where(
+	entityCount, countErr := r.Client.UserNotification.Query().Where(
 		usernotification.HasOrganizationWith(
 			organization.IDEQ(orgID),
 			organization.BusinessUnitIDEQ(buID),

@@ -53,6 +53,7 @@ type ReportService struct {
 	Client *ent.Client
 	Logger *zerolog.Logger
 	Config *config.Server
+	Server *api.Server
 }
 
 // NewReportService creates a new report service.
@@ -61,6 +62,7 @@ func NewReportService(s *api.Server) *ReportService {
 		Client: s.Client,
 		Logger: s.Logger,
 		Config: &s.Config,
+		Server: s,
 	}
 }
 
@@ -183,7 +185,14 @@ func (r *ReportService) GenerateReport(
 
 	if resp.IsSuccessState() {
 		err = util.WithTx(ctx, r.Client, func(tx *ent.Tx) error {
+			message := Message{
+				Type:     "success",
+				Content:  "Report job completed successfully. Check your inbox for the requested report.",
+				ClientID: userID.String(),
+			}
+
 			err = r.addReportToUser(ctx, tx, userID, orgID, buID, result.ReportURL)
+			NewWebsocketService(r.Server).NotifyClient(userID.String(), message)
 			if err != nil {
 				return err
 			}

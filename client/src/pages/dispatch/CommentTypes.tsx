@@ -114,7 +114,7 @@ export default function CommentTypes() {
       columns={columns}
       link="/comment-types/"
       name="Comment Types"
-      exportModelName="CommentType"
+      exportModelName="comment_types"
       filterColumn="name"
       tableFacetedFilters={filters}
       TableSheet={CommentTypeDialog}

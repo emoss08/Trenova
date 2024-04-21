@@ -16,6 +16,7 @@ import (
 type CommentTypeService struct {
 	Client *ent.Client
 	Logger *zerolog.Logger
+	Server *api.Server
 }
 
 // NewCommentTypeService creates a new comment type service.
@@ -23,6 +24,7 @@ func NewCommentTypeService(s *api.Server) *CommentTypeService {
 	return &CommentTypeService{
 		Client: s.Client,
 		Logger: s.Logger,
+		Server: s,
 	}
 }
 

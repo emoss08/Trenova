@@ -33,7 +33,8 @@ import {
 } from "@/components/ui/tooltip";
 import { useNotifications } from "@/hooks/useQueries";
 import axios from "@/lib/axiosConfig";
-import { TOAST_STYLE } from "@/lib/constants";
+import { TOAST_STYLE, WEB_SOCKET_URL } from "@/lib/constants";
+import { createWebsocketManager } from "@/lib/websockets";
 import { useUserStore } from "@/stores/AuthStore";
 import { useHeaderStore } from "@/stores/HeaderStore";
 import { UserNotification } from "@/types/accounts";
@@ -144,6 +145,7 @@ export function NotificationMenu() {
     useState<boolean>(false);
   const { id: userId } = useUserStore.get("user");
   const { notificationsData, notificationsLoading } = useNotifications(userId);
+  const webSocketManager = createWebsocketManager();
 
   const markedAndInvalidate = async () => {
     await axios.get("/user-notifications/?markAsRead=true");
@@ -175,6 +177,47 @@ export function NotificationMenu() {
 
     setNotificationMenuOpen(false);
   };
+
+  React.useEffect(() => {
+    webSocketManager.connect("notifications", `${WEB_SOCKET_URL}/${userId}`, {
+      onOpen: () => console.info("Connected to notifications websocket"),
+      onMessage: (event: MessageEvent) => {
+        const data = JSON.parse(event.data);
+        queryClient
+          .invalidateQueries({
+            queryKey: ["userNotifications", userId],
+          })
+          .then(() => {
+            toast.success(
+              () => (
+                <div className="flex flex-col space-y-1">
+                  <span>New Report Available!</span>
+                  <span className="text-xs">{data.content}</span>
+                </div>
+              ),
+              {
+                duration: 4000,
+                id: "notification-toast",
+                style: TOAST_STYLE,
+                ariaProps: {
+                  role: "status",
+                  "aria-live": "polite",
+                },
+              },
+            );
+          });
+      },
+      onClose: (event: CloseEvent) => console.info(event),
+    });
+
+    if (!userId) {
+      return;
+    }
+
+    return () => {
+      webSocketManager.disconnect("notifications");
+    };
+  }, [userId]);
 
   React.useEffect(() => {
     if (

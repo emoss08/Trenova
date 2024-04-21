@@ -3,6 +3,7 @@ package router //nolint:cyclop // This package is responsible for setting up the
 import (
 	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/api/middleware"
+	"github.com/gofiber/contrib/websocket"
 	"github.com/gofiber/fiber/v2/middleware/compress"
 	"github.com/gofiber/fiber/v2/middleware/encryptcookie"
 	"github.com/gofiber/fiber/v2/middleware/etag"
@@ -37,6 +38,10 @@ func Init(s *api.Server) {
 	} else {
 		log.Warn().Msg("Logger middleware is disabled. This is not recommended.")
 	}
+
+	// You need to wrap your websocket handler with the websocket.New middleware to handle the upgrade and store the connection.
+	s.Fiber.Use("/ws", handlers.NewWebsocketHandler(s).HandleConnection)
+	s.Fiber.Get("/ws/:id", websocket.New(handlers.NewWebsocketHandler(s).HandleWebsocketConnection))
 
 	if s.Config.Fiber.EnableMonitorMiddleware {
 		// Provide a minimal configuration
@@ -85,7 +90,6 @@ func Init(s *api.Server) {
 				AllowOrigins:     "https://localhost:5173, http://localhost:5173",
 				AllowHeaders:     "Authorization, Origin, Content-Type, Accept, X-CSRF-Token, X-Idempotency-Key",
 				AllowMethods:     "GET, POST, PUT, DELETE, OPTIONS",
-				ExposeHeaders:    "Authorization, Origin, Content-Type, Accept, X-CSRF-Token, X-Idempotency-Key",
 				AllowCredentials: true,
 				MaxAge:           300,
 			}))
