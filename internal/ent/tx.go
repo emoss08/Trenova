@@ -28,6 +28,8 @@ type Tx struct {
 	CommentType *CommentTypeClient
 	// Commodity is the client for interacting with the Commodity builders.
 	Commodity *CommodityClient
+	// CustomReport is the client for interacting with the CustomReport builders.
+	CustomReport *CustomReportClient
 	// Customer is the client for interacting with the Customer builders.
 	Customer *CustomerClient
 	// DelayCode is the client for interacting with the DelayCode builders.
@@ -120,6 +122,10 @@ type Tx struct {
 	User *UserClient
 	// UserFavorite is the client for interacting with the UserFavorite builders.
 	UserFavorite *UserFavoriteClient
+	// UserNotification is the client for interacting with the UserNotification builders.
+	UserNotification *UserNotificationClient
+	// UserReport is the client for interacting with the UserReport builders.
+	UserReport *UserReportClient
 	// Worker is the client for interacting with the Worker builders.
 	Worker *WorkerClient
 	// WorkerComment is the client for interacting with the WorkerComment builders.
@@ -266,6 +272,7 @@ func (tx *Tx) init() {
 	tx.ChargeType = NewChargeTypeClient(tx.config)
 	tx.CommentType = NewCommentTypeClient(tx.config)
 	tx.Commodity = NewCommodityClient(tx.config)
+	tx.CustomReport = NewCustomReportClient(tx.config)
 	tx.Customer = NewCustomerClient(tx.config)
 	tx.DelayCode = NewDelayCodeClient(tx.config)
 	tx.DispatchControl = NewDispatchControlClient(tx.config)
@@ -312,6 +319,8 @@ func (tx *Tx) init() {
 	tx.UsState = NewUsStateClient(tx.config)
 	tx.User = NewUserClient(tx.config)
 	tx.UserFavorite = NewUserFavoriteClient(tx.config)
+	tx.UserNotification = NewUserNotificationClient(tx.config)
+	tx.UserReport = NewUserReportClient(tx.config)
 	tx.Worker = NewWorkerClient(tx.config)
 	tx.WorkerComment = NewWorkerCommentClient(tx.config)
 	tx.WorkerContact = NewWorkerContactClient(tx.config)

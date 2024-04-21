@@ -22,6 +22,7 @@ import { truncateText } from "@/lib/utils";
 import { Notification, UserNotification } from "@/types/accounts";
 import { faInbox } from "@fortawesome/pro-duotone-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { Link } from "react-router-dom";
 
 export function Notifications({
   notification,
@@ -38,10 +39,10 @@ export function Notifications({
     return (
       <div className="flex h-80 w-full items-center justify-center p-4">
         <div className="flex flex-col items-center justify-center gap-y-3">
-          <div className="flex size-10 items-center justify-center rounded-full bg-accent">
+          <div className="bg-accent flex size-10 items-center justify-center rounded-full">
             <FontAwesomeIcon icon={faInbox} className="text-muted-foreground" />
           </div>
-          <p className="select-none text-center text-sm text-muted-foreground">
+          <p className="text-muted-foreground select-none text-center text-sm">
             No new notifications
           </p>
         </div>
@@ -51,28 +52,30 @@ export function Notifications({
 
   const notificationItems = notification?.unreadList.map(
     (notification: Notification) => {
-      const humanReadableTime = formatTimestamp(notification.timestamp);
+      const humanReadableTime = formatTimestamp(notification.createdAt);
 
       return (
-        <div
-          key={notification.id}
-          className="group flex cursor-pointer flex-col space-y-2 rounded-md border-b border-accent px-4 py-2 hover:bg-accent/80"
-        >
-          <div className="flex items-center justify-between">
-            <p className="text-sm font-semibold leading-none">
-              {truncateText(notification.verb, 25)}
+        <Link to={notification.actionUrl} key={notification.id}>
+          <div
+            key={notification.id}
+            className="border-accent hover:bg-accent/80 group flex cursor-pointer flex-col space-y-2 rounded-md border-b px-4 py-2"
+          >
+            <div className="flex items-center justify-between">
+              <p className="text-sm font-semibold leading-none">
+                {truncateText(notification.title, 25)}
+              </p>
+              <Badge
+                withDot={false}
+                className="bg-accent text-accent-foreground group-hover:bg-accent-foreground group-hover:text-accent select-none p-0.5 text-xs"
+              >
+                {humanReadableTime}
+              </Badge>
+            </div>
+            <p className="text-muted-foreground text-xs">
+              {notification.description}
             </p>
-            <Badge
-              withDot={false}
-              className="select-none bg-accent p-0.5 text-xs text-accent-foreground group-hover:bg-accent-foreground group-hover:text-accent"
-            >
-              {humanReadableTime}
-            </Badge>
           </div>
-          <p className="text-xs text-muted-foreground">
-            {notification.description}
-          </p>
-        </div>
+        </Link>
       );
     },
   );

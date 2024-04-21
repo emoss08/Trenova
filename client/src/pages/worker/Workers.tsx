@@ -67,7 +67,7 @@ export default function WorkerPage() {
       columns={columns}
       link="/workers/"
       name="Worker"
-      exportModelName="Worker"
+      exportModelName="workers"
       filterColumn="name"
       TableSheet={CommodityDialog}
       TableEditSheet={WorkerEditDialog}

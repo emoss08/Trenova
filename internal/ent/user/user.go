@@ -56,12 +56,16 @@ const (
 	EdgeOrganization = "organization"
 	// EdgeUserFavorites holds the string denoting the user_favorites edge name in mutations.
 	EdgeUserFavorites = "user_favorites"
+	// EdgeUserNotifications holds the string denoting the user_notifications edge name in mutations.
+	EdgeUserNotifications = "user_notifications"
 	// EdgeShipments holds the string denoting the shipments edge name in mutations.
 	EdgeShipments = "shipments"
 	// EdgeShipmentComments holds the string denoting the shipment_comments edge name in mutations.
 	EdgeShipmentComments = "shipment_comments"
 	// EdgeShipmentCharges holds the string denoting the shipment_charges edge name in mutations.
 	EdgeShipmentCharges = "shipment_charges"
+	// EdgeReports holds the string denoting the reports edge name in mutations.
+	EdgeReports = "reports"
 	// Table holds the table name of the user in the database.
 	Table = "users"
 	// BusinessUnitTable is the table that holds the business_unit relation/edge.
@@ -85,6 +89,13 @@ const (
 	UserFavoritesInverseTable = "user_favorites"
 	// UserFavoritesColumn is the table column denoting the user_favorites relation/edge.
 	UserFavoritesColumn = "user_id"
+	// UserNotificationsTable is the table that holds the user_notifications relation/edge.
+	UserNotificationsTable = "user_notifications"
+	// UserNotificationsInverseTable is the table name for the UserNotification entity.
+	// It exists in this package in order to avoid circular dependency with the "usernotification" package.
+	UserNotificationsInverseTable = "user_notifications"
+	// UserNotificationsColumn is the table column denoting the user_notifications relation/edge.
+	UserNotificationsColumn = "user_id"
 	// ShipmentsTable is the table that holds the shipments relation/edge.
 	ShipmentsTable = "shipments"
 	// ShipmentsInverseTable is the table name for the Shipment entity.
@@ -106,6 +117,13 @@ const (
 	ShipmentChargesInverseTable = "shipment_charges"
 	// ShipmentChargesColumn is the table column denoting the shipment_charges relation/edge.
 	ShipmentChargesColumn = "created_by"
+	// ReportsTable is the table that holds the reports relation/edge.
+	ReportsTable = "user_reports"
+	// ReportsInverseTable is the table name for the UserReport entity.
+	// It exists in this package in order to avoid circular dependency with the "userreport" package.
+	ReportsInverseTable = "user_reports"
+	// ReportsColumn is the table column denoting the reports relation/edge.
+	ReportsColumn = "user_id"
 )
 
 // Columns holds all SQL columns for user fields.
@@ -340,6 +358,20 @@ func ByUserFavorites(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
 	}
 }
 
+// ByUserNotificationsCount orders the results by user_notifications count.
+func ByUserNotificationsCount(opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborsCount(s, newUserNotificationsStep(), opts...)
+	}
+}
+
+// ByUserNotifications orders the results by user_notifications terms.
+func ByUserNotifications(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newUserNotificationsStep(), append([]sql.OrderTerm{term}, terms...)...)
+	}
+}
+
 // ByShipmentsCount orders the results by shipments count.
 func ByShipmentsCount(opts ...sql.OrderTermOption) OrderOption {
 	return func(s *sql.Selector) {
@@ -381,6 +413,20 @@ func ByShipmentCharges(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
 		sqlgraph.OrderByNeighborTerms(s, newShipmentChargesStep(), append([]sql.OrderTerm{term}, terms...)...)
 	}
 }
+
+// ByReportsCount orders the results by reports count.
+func ByReportsCount(opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborsCount(s, newReportsStep(), opts...)
+	}
+}
+
+// ByReports orders the results by reports terms.
+func ByReports(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newReportsStep(), append([]sql.OrderTerm{term}, terms...)...)
+	}
+}
 func newBusinessUnitStep() *sqlgraph.Step {
 	return sqlgraph.NewStep(
 		sqlgraph.From(Table, FieldID),
@@ -402,6 +448,13 @@ func newUserFavoritesStep() *sqlgraph.Step {
 		sqlgraph.Edge(sqlgraph.O2M, false, UserFavoritesTable, UserFavoritesColumn),
 	)
 }
+func newUserNotificationsStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(UserNotificationsInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.O2M, false, UserNotificationsTable, UserNotificationsColumn),
+	)
+}
 func newShipmentsStep() *sqlgraph.Step {
 	return sqlgraph.NewStep(
 		sqlgraph.From(Table, FieldID),
@@ -421,5 +474,12 @@ func newShipmentChargesStep() *sqlgraph.Step {
 		sqlgraph.From(Table, FieldID),
 		sqlgraph.To(ShipmentChargesInverseTable, FieldID),
 		sqlgraph.Edge(sqlgraph.O2M, false, ShipmentChargesTable, ShipmentChargesColumn),
+	)
+}
+func newReportsStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(ReportsInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.O2M, false, ReportsTable, ReportsColumn),
 	)
 }

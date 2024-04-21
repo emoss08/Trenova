@@ -28,12 +28,17 @@ type FiberServer struct {
 	EnableMonitorMiddleware        bool
 }
 
+type Integration struct {
+	GenerateReportEndpoint string
+}
+
 type RedisServer struct {
 	Host     string
 	Port     int
 	Username string
 	Password string `json:"-"`
 	Database int
+	Addr     string
 }
 
 type LoggerServer struct {
@@ -46,6 +51,13 @@ type LoggerServer struct {
 	LogResponseHeader  bool
 	LogCaller          bool
 	PrettyPrintConsole bool
+}
+
+type MinioServer struct {
+	Endpoint  string `json:"-"`
+	AccessKey string `json:"-"`
+	SecretKey string `json:"-"`
+	UseSSL    bool
 }
 
 type KafkaServer struct {
@@ -61,7 +73,7 @@ type Monitor struct {
 }
 
 type Server struct {
-	Database     Database       `json:"database"`
+	DB           Database       `json:"database"`
 	Fiber        FiberServer    `json:"fiber"`
 	Logger       LoggerServer   `json:"logger"`
 	Redis        RedisServer    `json:"redis"`
@@ -69,6 +81,8 @@ type Server struct {
 	Kafka        KafkaServer    `json:"kafka"`
 	Cookie       EncryptCookie  `json:"cookie"`
 	Monitor      Monitor        `json:"monitor"`
+	Minio        MinioServer    `json:"minio"`
+	Integration  Integration    `json:"integration_server"`
 }
 
 // DefaultServiceConfigFromEnv returns the server config as parsed from environment variables
@@ -82,7 +96,7 @@ func DefaultServiceConfigFromEnv() Server {
 	}
 
 	return Server{
-		Database: Database{
+		DB: Database{
 			Host:     util.GetEnv("SERVER_DB_HOST", "localhost"),
 			Port:     util.GetEnvAsInt("SERVER_DB_PORT", 5432),
 			Database: util.GetEnv("SERVER_DB_NAME", "trenova_go_db"),
@@ -128,6 +142,7 @@ func DefaultServiceConfigFromEnv() Server {
 			Username: util.GetEnv("SERVER_REDIS_USER", ""),
 			Password: util.GetEnv("SERVER_REDIS_PASSWORD", ""),
 			Database: util.GetEnvAsInt("SERVER_REDIS_DB", 0),
+			Addr:     util.GetEnv("SERVER_REDIS_ADDR", "localhost:6379"),
 		},
 		Kafka: KafkaServer{
 			Broker: util.GetEnv("SERVER_KAFKA_BROKER", "localhost:9094"),
@@ -137,6 +152,15 @@ func DefaultServiceConfigFromEnv() Server {
 		},
 		Monitor: Monitor{
 			Path: util.GetEnv("SERVER_METRICS_PATH", "/metrics"),
+		},
+		Minio: MinioServer{
+			Endpoint:  util.GetEnv("SERVER_MINIO_ENDPOINT", "localhost:9000"),
+			AccessKey: util.GetEnv("SERVER_MINIO_ACCESS_KEY", "minio"),
+			SecretKey: util.GetEnv("SERVER_MINIO_SECRET_KEY", "minio123"),
+			UseSSL:    util.GetEnvAsBool("SERVER_MINIO_USE_SSL", false),
+		},
+		Integration: Integration{
+			GenerateReportEndpoint: util.GetEnv("SERVER_INTEGRATION_GENERATE_REPORT_ENDPOINT", "http://localhost:8000/generate-report/"),
 		},
 	}
 }

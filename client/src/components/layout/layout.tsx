@@ -28,6 +28,7 @@ import { useLocation } from "react-router-dom";
 import { Breadcrumb } from "./breadcrumb";
 import { OrganizationLogo } from "./logo";
 import { NavMenu } from "./navbar";
+import { NotificationMenu } from "./notification_menu/notification-menu";
 
 /**
  * Layout component that provides a common structure for protected pages.
@@ -55,7 +56,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
             <NavMenu />
             <div className="flex items-center gap-x-4">
               <SiteSearchInput />
-              {/* <NotificationMenu /> */}
+              <NotificationMenu />
               <div className="border-muted-foreground/40 h-7 border-l" />
               {user && <UserAvatarMenu user={user} />}
             </div>

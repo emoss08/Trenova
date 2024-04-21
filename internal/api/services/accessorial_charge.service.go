@@ -27,7 +27,9 @@ func NewAccessorialChargeService(s *api.Server) *AccessorialChargeService {
 }
 
 // GetAccessorialCharges gets the accessorial charges for an organization.
-func (r *AccessorialChargeService) GetAccessorialCharges(ctx context.Context, limit, offset int, orgID, buID uuid.UUID) ([]*ent.AccessorialCharge, int, error) {
+func (r *AccessorialChargeService) GetAccessorialCharges(
+	ctx context.Context, limit, offset int, orgID, buID uuid.UUID,
+) ([]*ent.AccessorialCharge, int, error) {
 	entityCount, countErr := r.Client.AccessorialCharge.Query().Where(
 		accessorialcharge.HasOrganizationWith(
 			organization.IDEQ(orgID),
@@ -59,11 +61,11 @@ func (r *AccessorialChargeService) GetAccessorialCharges(ctx context.Context, li
 func (r *AccessorialChargeService) CreateAccessorialCharge(
 	ctx context.Context, entity *ent.AccessorialCharge,
 ) (*ent.AccessorialCharge, error) {
-	updatedEntity := new(ent.AccessorialCharge)
+	newEntity := new(ent.AccessorialCharge)
 
 	err := util.WithTx(ctx, r.Client, func(tx *ent.Tx) error {
 		var err error
-		updatedEntity, err = r.createAccessorialChargeEntity(ctx, tx, entity)
+		newEntity, err = r.createAccessorialChargeEntity(ctx, tx, entity)
 		if err != nil {
 			return err
 		}
@@ -74,7 +76,7 @@ func (r *AccessorialChargeService) CreateAccessorialCharge(
 		return nil, err
 	}
 
-	return updatedEntity, nil
+	return newEntity, nil
 }
 
 func (r *AccessorialChargeService) createAccessorialChargeEntity(

@@ -29,6 +29,7 @@ func (r *AuthenticationService) AuthenticateUser(ctx context.Context, username, 
 		Where(user.UsernameEQ(username)).
 		Only(ctx)
 	if err != nil {
+		r.Logger.Error().Err(err).Msg("Failed to query user")
 		return nil, err
 	}
 

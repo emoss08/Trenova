@@ -33,11 +33,7 @@ import {
 } from "@/components/ui/tooltip";
 import { useNotifications } from "@/hooks/useQueries";
 import axios from "@/lib/axiosConfig";
-import {
-  ENABLE_WEBSOCKETS,
-  TOAST_STYLE,
-  WEB_SOCKET_URL,
-} from "@/lib/constants";
+import { TOAST_STYLE, WEB_SOCKET_URL } from "@/lib/constants";
 import { createWebsocketManager } from "@/lib/websockets";
 import { useUserStore } from "@/stores/AuthStore";
 import { useHeaderStore } from "@/stores/HeaderStore";
@@ -47,53 +43,6 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { useQueryClient } from "@tanstack/react-query";
 import React, { useState } from "react";
 import toast from "react-hot-toast";
-
-const webSocketManager = createWebsocketManager();
-
-let intervalId: number | undefined;
-
-const reconnect = () => {
-  if (intervalId) {
-    clearInterval(intervalId);
-  }
-
-  intervalId = setInterval(() => {
-    webSocketManager.connect(
-      "notifications",
-      `${WEB_SOCKET_URL}/notifications/`,
-      {
-        onOpen: () => {
-          toast.success(
-            () => (
-              <div className="flex flex-col space-y-1">
-                <span className="font-semibold">Connection re-established</span>
-                <span className="text-xs">
-                  Connection to the server has been re-established.
-                </span>
-              </div>
-            ),
-            {
-              duration: 4000,
-              id: "connection-closed",
-              style: TOAST_STYLE,
-              ariaProps: {
-                role: "status",
-                "aria-live": "polite",
-              },
-            },
-          );
-          clearInterval(intervalId); // Clear the interval once connected
-        },
-      },
-    );
-  }, 1000);
-
-  return () => {
-    if (intervalId) {
-      clearInterval(intervalId);
-    }
-  };
-};
 
 function NotificationButton({
   userHasNotifications,
@@ -188,6 +137,7 @@ function NotificationContent({
 }
 
 export function NotificationMenu() {
+  const queryClient = useQueryClient();
   const [notificationsMenuOpen, setNotificationMenuOpen] = useHeaderStore.use(
     "notificationMenuOpen",
   );
@@ -195,10 +145,10 @@ export function NotificationMenu() {
     useState<boolean>(false);
   const { id: userId } = useUserStore.get("user");
   const { notificationsData, notificationsLoading } = useNotifications(userId);
-  const queryClient = useQueryClient();
+  const webSocketManager = createWebsocketManager();
 
   const markedAndInvalidate = async () => {
-    await axios.get("/users/notifications/?mark_as_read=true");
+    await axios.get("/user-notifications/?markAsRead=true");
     await queryClient.invalidateQueries({
       queryKey: ["userNotifications", userId],
     });
@@ -228,83 +178,46 @@ export function NotificationMenu() {
     setNotificationMenuOpen(false);
   };
 
-  // React useEffect to connect to the websocket
   React.useEffect(() => {
-    if (ENABLE_WEBSOCKETS && userId) {
-      webSocketManager.connect(
-        "notifications",
-        `${WEB_SOCKET_URL}/notifications/`,
-        {
-          onOpen: () => console.info("Notifications Websocket Connected"),
-          onMessage: (event: MessageEvent) => {
-            const data = JSON.parse(event.data);
-            queryClient
-              .invalidateQueries({
-                queryKey: ["userNotifications", userId],
-              })
-              .then(() => {
-                toast.success(
-                  () => (
-                    <div className="flex flex-col space-y-1">
-                      <span className="font-semibold">{data.event}</span>
-                      <span className="text-xs">{data.description}</span>
-                    </div>
-                  ),
-                  {
-                    duration: 4000,
-                    id: "notification-toast",
-                    style: TOAST_STYLE,
-                    ariaProps: {
-                      role: "status",
-                      "aria-live": "polite",
-                    },
-                  },
-                );
-              });
-          },
-
-          onClose: (event: CloseEvent) => {
-            if (event.wasClean) {
-              console.info(
-                `Notifications Websocket Connection Closed Cleanly: ${event.code} ${event.reason}`,
-              );
-            } else {
-              toast.loading(
-                () => (
-                  <div className="flex flex-col space-y-1">
-                    <span className="font-semibold">Connection Closed</span>
-                    <span className="text-xs">
-                      Websocket Connection died. We will attempt to reconnect
-                      shortly.
-                    </span>
-                  </div>
-                ),
-                {
-                  id: "connection-closed",
-                  style: TOAST_STYLE,
-                  ariaProps: {
-                    role: "status",
-                    "aria-live": "polite",
-                  },
+    webSocketManager.connect("notifications", `${WEB_SOCKET_URL}/${userId}`, {
+      onOpen: () => console.info("Connected to notifications websocket"),
+      onMessage: (event: MessageEvent) => {
+        const data = JSON.parse(event.data);
+        queryClient
+          .invalidateQueries({
+            queryKey: ["userNotifications", userId],
+          })
+          .then(() => {
+            toast.success(
+              () => (
+                <div className="flex flex-col space-y-1">
+                  <span>New Report Available!</span>
+                  <span className="text-xs">{data.content}</span>
+                </div>
+              ),
+              {
+                duration: 4000,
+                id: "notification-toast",
+                style: TOAST_STYLE,
+                ariaProps: {
+                  role: "status",
+                  "aria-live": "polite",
                 },
-              );
+              },
+            );
+          });
+      },
+      onClose: (event: CloseEvent) => console.info(event),
+    });
 
-              reconnect();
-            }
-          },
-        },
-      );
-    } else {
-      console.info("Notifications Websocket Disabled");
+    if (!userId) {
+      return;
     }
 
     return () => {
-      // only cleanup if the websocket is enabled
-      if (ENABLE_WEBSOCKETS && webSocketManager.has("notifications")) {
-        webSocketManager.disconnect("notifications");
-      }
+      webSocketManager.disconnect("notifications");
     };
-  }, [userId, queryClient]);
+  }, [userId]);
 
   React.useEffect(() => {
     if (

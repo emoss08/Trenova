@@ -6,6 +6,9 @@ import (
 	"encoding/hex"
 	"errors"
 	"strings"
+
+	"golang.org/x/text/cases"
+	"golang.org/x/text/language"
 )
 
 // GenerateRandomBytes returns n random bytes securely generated using the system's default CSPRNG.
@@ -124,4 +127,12 @@ func buildString(validateFn func(byte) bool, n int) (string, error) {
 // Lowercases a string and trims whitespace from the beginning and end of the string
 func ToUsernameFormat(s string) string {
 	return strings.TrimSpace(strings.ToLower(s))
+}
+
+// Title converts a string to title case
+func ToTitleFormat(s string) string {
+	caser := cases.Title(language.AmericanEnglish)
+	title := caser.String(s)
+
+	return title
 }

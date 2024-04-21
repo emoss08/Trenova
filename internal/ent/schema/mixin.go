@@ -5,6 +5,7 @@ import (
 
 	"entgo.io/ent"
 	"entgo.io/ent/dialect/entsql"
+	"entgo.io/ent/schema"
 	"entgo.io/ent/schema/edge"
 	"entgo.io/ent/schema/field"
 	"entgo.io/ent/schema/mixin"
@@ -24,10 +25,12 @@ func (DefaultMixin) Fields() []ent.Field {
 		field.Time("created_at").
 			Immutable().
 			Default(time.Now).
+			Comment("The time that this entity was created.").
 			StructTag(`json:"createdAt" validate:"omitempty"`),
 		field.Time("updated_at").
 			Default(time.Now).
 			UpdateDefault(time.Now).
+			Comment("The last time that this entity was updated.").
 			StructTag(`json:"updatedAt" validate:"omitempty"`),
 	}
 }
@@ -52,14 +55,17 @@ func (BaseMixin) Fields() []ent.Field {
 			Immutable(),
 		field.Time("created_at").
 			Immutable().
+			Comment("The time that this entity was created.").
 			Default(time.Now).
 			StructTag(`json:"createdAt" validate:"omitempty"`),
 		field.Time("updated_at").
 			Default(time.Now).
+			Comment("The last time that this entity was updated.").
 			UpdateDefault(time.Now).
 			StructTag(`json:"updatedAt" validate:"omitempty"`),
 		field.Int("version").
 			Default(1).
+			Comment("The current version of this entity.").
 			StructTag(`json:"version" validate:"omitempty"`),
 	}
 }
@@ -79,5 +85,11 @@ func (BaseMixin) Edges() []ent.Edge {
 			Unique().
 			Required().
 			Immutable(),
+	}
+}
+
+func (BaseMixin) Annotations() []schema.Annotation {
+	return []schema.Annotation{
+		entsql.WithComments(true),
 	}
 }

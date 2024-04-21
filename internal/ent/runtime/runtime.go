@@ -13,6 +13,7 @@ import (
 	"github.com/emoss08/trenova/internal/ent/commenttype"
 	"github.com/emoss08/trenova/internal/ent/commodity"
 	"github.com/emoss08/trenova/internal/ent/customer"
+	"github.com/emoss08/trenova/internal/ent/customreport"
 	"github.com/emoss08/trenova/internal/ent/delaycode"
 	"github.com/emoss08/trenova/internal/ent/dispatchcontrol"
 	"github.com/emoss08/trenova/internal/ent/divisioncode"
@@ -58,6 +59,8 @@ import (
 	"github.com/emoss08/trenova/internal/ent/trailer"
 	"github.com/emoss08/trenova/internal/ent/user"
 	"github.com/emoss08/trenova/internal/ent/userfavorite"
+	"github.com/emoss08/trenova/internal/ent/usernotification"
+	"github.com/emoss08/trenova/internal/ent/userreport"
 	"github.com/emoss08/trenova/internal/ent/usstate"
 	"github.com/emoss08/trenova/internal/ent/worker"
 	"github.com/emoss08/trenova/internal/ent/workercomment"
@@ -410,6 +413,33 @@ func init() {
 	commodityDescID := commodityMixinFields0[0].Descriptor()
 	// commodity.DefaultID holds the default value on creation for the id field.
 	commodity.DefaultID = commodityDescID.Default.(func() uuid.UUID)
+	customreportMixin := schema.CustomReport{}.Mixin()
+	customreportMixinFields0 := customreportMixin[0].Fields()
+	_ = customreportMixinFields0
+	customreportFields := schema.CustomReport{}.Fields()
+	_ = customreportFields
+	// customreportDescCreatedAt is the schema descriptor for created_at field.
+	customreportDescCreatedAt := customreportMixinFields0[3].Descriptor()
+	// customreport.DefaultCreatedAt holds the default value on creation for the created_at field.
+	customreport.DefaultCreatedAt = customreportDescCreatedAt.Default.(func() time.Time)
+	// customreportDescUpdatedAt is the schema descriptor for updated_at field.
+	customreportDescUpdatedAt := customreportMixinFields0[4].Descriptor()
+	// customreport.DefaultUpdatedAt holds the default value on creation for the updated_at field.
+	customreport.DefaultUpdatedAt = customreportDescUpdatedAt.Default.(func() time.Time)
+	// customreport.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
+	customreport.UpdateDefaultUpdatedAt = customreportDescUpdatedAt.UpdateDefault.(func() time.Time)
+	// customreportDescVersion is the schema descriptor for version field.
+	customreportDescVersion := customreportMixinFields0[5].Descriptor()
+	// customreport.DefaultVersion holds the default value on creation for the version field.
+	customreport.DefaultVersion = customreportDescVersion.Default.(int)
+	// customreportDescName is the schema descriptor for name field.
+	customreportDescName := customreportFields[0].Descriptor()
+	// customreport.NameValidator is a validator for the "name" field. It is called by the builders before save.
+	customreport.NameValidator = customreportDescName.Validators[0].(func(string) error)
+	// customreportDescID is the schema descriptor for id field.
+	customreportDescID := customreportMixinFields0[0].Descriptor()
+	// customreport.DefaultID holds the default value on creation for the id field.
+	customreport.DefaultID = customreportDescID.Default.(func() uuid.UUID)
 	customerMixin := schema.Customer{}.Mixin()
 	customerHooks := schema.Customer{}.Hooks()
 	customer.Hooks[0] = customerHooks[0]
@@ -2372,6 +2402,68 @@ func init() {
 	userfavoriteDescID := userfavoriteMixinFields0[0].Descriptor()
 	// userfavorite.DefaultID holds the default value on creation for the id field.
 	userfavorite.DefaultID = userfavoriteDescID.Default.(func() uuid.UUID)
+	usernotificationMixin := schema.UserNotification{}.Mixin()
+	usernotificationMixinFields0 := usernotificationMixin[0].Fields()
+	_ = usernotificationMixinFields0
+	usernotificationFields := schema.UserNotification{}.Fields()
+	_ = usernotificationFields
+	// usernotificationDescCreatedAt is the schema descriptor for created_at field.
+	usernotificationDescCreatedAt := usernotificationMixinFields0[3].Descriptor()
+	// usernotification.DefaultCreatedAt holds the default value on creation for the created_at field.
+	usernotification.DefaultCreatedAt = usernotificationDescCreatedAt.Default.(func() time.Time)
+	// usernotificationDescUpdatedAt is the schema descriptor for updated_at field.
+	usernotificationDescUpdatedAt := usernotificationMixinFields0[4].Descriptor()
+	// usernotification.DefaultUpdatedAt holds the default value on creation for the updated_at field.
+	usernotification.DefaultUpdatedAt = usernotificationDescUpdatedAt.Default.(func() time.Time)
+	// usernotification.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
+	usernotification.UpdateDefaultUpdatedAt = usernotificationDescUpdatedAt.UpdateDefault.(func() time.Time)
+	// usernotificationDescVersion is the schema descriptor for version field.
+	usernotificationDescVersion := usernotificationMixinFields0[5].Descriptor()
+	// usernotification.DefaultVersion holds the default value on creation for the version field.
+	usernotification.DefaultVersion = usernotificationDescVersion.Default.(int)
+	// usernotificationDescIsRead is the schema descriptor for is_read field.
+	usernotificationDescIsRead := usernotificationFields[1].Descriptor()
+	// usernotification.DefaultIsRead holds the default value on creation for the is_read field.
+	usernotification.DefaultIsRead = usernotificationDescIsRead.Default.(bool)
+	// usernotificationDescTitle is the schema descriptor for title field.
+	usernotificationDescTitle := usernotificationFields[2].Descriptor()
+	// usernotification.TitleValidator is a validator for the "title" field. It is called by the builders before save.
+	usernotification.TitleValidator = usernotificationDescTitle.Validators[0].(func(string) error)
+	// usernotificationDescDescription is the schema descriptor for description field.
+	usernotificationDescDescription := usernotificationFields[3].Descriptor()
+	// usernotification.DescriptionValidator is a validator for the "description" field. It is called by the builders before save.
+	usernotification.DescriptionValidator = usernotificationDescDescription.Validators[0].(func(string) error)
+	// usernotificationDescID is the schema descriptor for id field.
+	usernotificationDescID := usernotificationMixinFields0[0].Descriptor()
+	// usernotification.DefaultID holds the default value on creation for the id field.
+	usernotification.DefaultID = usernotificationDescID.Default.(func() uuid.UUID)
+	userreportMixin := schema.UserReport{}.Mixin()
+	userreportMixinFields0 := userreportMixin[0].Fields()
+	_ = userreportMixinFields0
+	userreportFields := schema.UserReport{}.Fields()
+	_ = userreportFields
+	// userreportDescCreatedAt is the schema descriptor for created_at field.
+	userreportDescCreatedAt := userreportMixinFields0[3].Descriptor()
+	// userreport.DefaultCreatedAt holds the default value on creation for the created_at field.
+	userreport.DefaultCreatedAt = userreportDescCreatedAt.Default.(func() time.Time)
+	// userreportDescUpdatedAt is the schema descriptor for updated_at field.
+	userreportDescUpdatedAt := userreportMixinFields0[4].Descriptor()
+	// userreport.DefaultUpdatedAt holds the default value on creation for the updated_at field.
+	userreport.DefaultUpdatedAt = userreportDescUpdatedAt.Default.(func() time.Time)
+	// userreport.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
+	userreport.UpdateDefaultUpdatedAt = userreportDescUpdatedAt.UpdateDefault.(func() time.Time)
+	// userreportDescVersion is the schema descriptor for version field.
+	userreportDescVersion := userreportMixinFields0[5].Descriptor()
+	// userreport.DefaultVersion holds the default value on creation for the version field.
+	userreport.DefaultVersion = userreportDescVersion.Default.(int)
+	// userreportDescReportURL is the schema descriptor for report_url field.
+	userreportDescReportURL := userreportFields[0].Descriptor()
+	// userreport.ReportURLValidator is a validator for the "report_url" field. It is called by the builders before save.
+	userreport.ReportURLValidator = userreportDescReportURL.Validators[0].(func(string) error)
+	// userreportDescID is the schema descriptor for id field.
+	userreportDescID := userreportMixinFields0[0].Descriptor()
+	// userreport.DefaultID holds the default value on creation for the id field.
+	userreport.DefaultID = userreportDescID.Default.(func() uuid.UUID)
 	workerMixin := schema.Worker{}.Mixin()
 	workerMixinFields0 := workerMixin[0].Fields()
 	_ = workerMixinFields0

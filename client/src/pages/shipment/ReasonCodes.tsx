@@ -89,7 +89,7 @@ export default function ReasonCodes() {
       columns={columns}
       link="/reason-codes/"
       name="Reason Codes"
-      exportModelName="ReasonCode"
+      exportModelName="reason_codes"
       filterColumn="code"
       tableFacetedFilters={filters}
       TableSheet={ReasonCodeDialog}

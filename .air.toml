@@ -2,9 +2,9 @@
 root = "."
 tmp_dir = "tmp"
 [build]
-  cmd = "go build -o ./tmp/main cmd/app.go"
-  bin = "./tmp/main"
-  delay = 1000 # ms
-  exclude_dir = ["assets", "tmp", "vendor", "client"]
-  include_ext = ["go", "tpl", "tmpl", "html"]
-  exclude_regex = ["_test\\.go"]
+cmd = "go build -o ./tmp/main cmd/app.go"
+bin = "./tmp/main"
+delay = 1000                                                    # ms
+exclude_dir = ["assets", "tmp", "vendor", "client", "services"]
+include_ext = ["go", "tpl", "tmpl", "html"]
+exclude_regex = ["_test\\.go"]

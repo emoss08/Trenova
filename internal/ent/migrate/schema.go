@@ -12,9 +12,9 @@ var (
 	// AccessorialChargesColumns holds the columns for the "accessorial_charges" table.
 	AccessorialChargesColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeUUID},
-		{Name: "created_at", Type: field.TypeTime},
-		{Name: "updated_at", Type: field.TypeTime},
-		{Name: "version", Type: field.TypeInt, Default: 1},
+		{Name: "created_at", Type: field.TypeTime, Comment: "The time that this entity was created."},
+		{Name: "updated_at", Type: field.TypeTime, Comment: "The last time that this entity was updated."},
+		{Name: "version", Type: field.TypeInt, Comment: "The current version of this entity.", Default: 1},
 		{Name: "status", Type: field.TypeEnum, Enums: []string{"A", "I"}, Default: "A", SchemaType: map[string]string{"postgres": "VARCHAR(1)", "sqlite3": "VARCHAR(1)"}},
 		{Name: "code", Type: field.TypeString, Size: 4, SchemaType: map[string]string{"postgres": "VARCHAR(4)", "sqlite3": "VARCHAR(4)"}},
 		{Name: "description", Type: field.TypeString, Nullable: true, Size: 2147483647},
@@ -184,9 +184,9 @@ var (
 	// ChargeTypesColumns holds the columns for the "charge_types" table.
 	ChargeTypesColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeUUID},
-		{Name: "created_at", Type: field.TypeTime},
-		{Name: "updated_at", Type: field.TypeTime},
-		{Name: "version", Type: field.TypeInt, Default: 1},
+		{Name: "created_at", Type: field.TypeTime, Comment: "The time that this entity was created."},
+		{Name: "updated_at", Type: field.TypeTime, Comment: "The last time that this entity was updated."},
+		{Name: "version", Type: field.TypeInt, Comment: "The current version of this entity.", Default: 1},
 		{Name: "status", Type: field.TypeEnum, Enums: []string{"A", "I"}, Default: "A", SchemaType: map[string]string{"postgres": "VARCHAR(1)", "sqlite3": "VARCHAR(1)"}},
 		{Name: "name", Type: field.TypeString, Size: 50, SchemaType: map[string]string{"postgres": "VARCHAR(50)", "sqlite3": "VARCHAR(50)"}},
 		{Name: "description", Type: field.TypeString, Nullable: true, Size: 2147483647},
@@ -216,9 +216,9 @@ var (
 	// CommentTypesColumns holds the columns for the "comment_types" table.
 	CommentTypesColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeUUID},
-		{Name: "created_at", Type: field.TypeTime},
-		{Name: "updated_at", Type: field.TypeTime},
-		{Name: "version", Type: field.TypeInt, Default: 1},
+		{Name: "created_at", Type: field.TypeTime, Comment: "The time that this entity was created."},
+		{Name: "updated_at", Type: field.TypeTime, Comment: "The last time that this entity was updated."},
+		{Name: "version", Type: field.TypeInt, Comment: "The current version of this entity.", Default: 1},
 		{Name: "status", Type: field.TypeEnum, Enums: []string{"A", "I"}, Default: "A", SchemaType: map[string]string{"postgres": "VARCHAR(1)", "sqlite3": "VARCHAR(1)"}},
 		{Name: "name", Type: field.TypeString, Size: 10, SchemaType: map[string]string{"postgres": "VARCHAR(10)", "sqlite3": "VARCHAR(10)"}},
 		{Name: "severity", Type: field.TypeEnum, Enums: []string{"High", "Medium", "Low"}, Default: "Low", SchemaType: map[string]string{"postgres": "VARCHAR(6)", "sqlite3": "VARCHAR(6)"}},
@@ -249,9 +249,9 @@ var (
 	// CommoditiesColumns holds the columns for the "commodities" table.
 	CommoditiesColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeUUID},
-		{Name: "created_at", Type: field.TypeTime},
-		{Name: "updated_at", Type: field.TypeTime},
-		{Name: "version", Type: field.TypeInt, Default: 1},
+		{Name: "created_at", Type: field.TypeTime, Comment: "The time that this entity was created."},
+		{Name: "updated_at", Type: field.TypeTime, Comment: "The last time that this entity was updated."},
+		{Name: "version", Type: field.TypeInt, Comment: "The current version of this entity.", Default: 1},
 		{Name: "status", Type: field.TypeEnum, Enums: []string{"A", "I"}, Default: "A", SchemaType: map[string]string{"postgres": "VARCHAR(1)", "sqlite3": "VARCHAR(1)"}},
 		{Name: "name", Type: field.TypeString, Size: 100, SchemaType: map[string]string{"postgres": "VARCHAR(100)", "sqlite3": "VARCHAR(100)"}},
 		{Name: "is_hazmat", Type: field.TypeBool, Default: false},
@@ -289,12 +289,44 @@ var (
 			},
 		},
 	}
+	// CustomReportsColumns holds the columns for the "custom_reports" table.
+	CustomReportsColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeUUID},
+		{Name: "created_at", Type: field.TypeTime, Comment: "The time that this entity was created."},
+		{Name: "updated_at", Type: field.TypeTime, Comment: "The last time that this entity was updated."},
+		{Name: "version", Type: field.TypeInt, Comment: "The current version of this entity.", Default: 1},
+		{Name: "name", Type: field.TypeString},
+		{Name: "description", Type: field.TypeString, Nullable: true},
+		{Name: "table", Type: field.TypeString, Nullable: true},
+		{Name: "business_unit_id", Type: field.TypeUUID},
+		{Name: "organization_id", Type: field.TypeUUID},
+	}
+	// CustomReportsTable holds the schema information for the "custom_reports" table.
+	CustomReportsTable = &schema.Table{
+		Name:       "custom_reports",
+		Columns:    CustomReportsColumns,
+		PrimaryKey: []*schema.Column{CustomReportsColumns[0]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "custom_reports_business_units_business_unit",
+				Columns:    []*schema.Column{CustomReportsColumns[7]},
+				RefColumns: []*schema.Column{BusinessUnitsColumns[0]},
+				OnDelete:   schema.Cascade,
+			},
+			{
+				Symbol:     "custom_reports_organizations_organization",
+				Columns:    []*schema.Column{CustomReportsColumns[8]},
+				RefColumns: []*schema.Column{OrganizationsColumns[0]},
+				OnDelete:   schema.Cascade,
+			},
+		},
+	}
 	// CustomersColumns holds the columns for the "customers" table.
 	CustomersColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeUUID},
-		{Name: "created_at", Type: field.TypeTime},
-		{Name: "updated_at", Type: field.TypeTime},
-		{Name: "version", Type: field.TypeInt, Default: 1},
+		{Name: "created_at", Type: field.TypeTime, Comment: "The time that this entity was created."},
+		{Name: "updated_at", Type: field.TypeTime, Comment: "The last time that this entity was updated."},
+		{Name: "version", Type: field.TypeInt, Comment: "The current version of this entity.", Default: 1},
 		{Name: "status", Type: field.TypeEnum, Enums: []string{"A", "I"}, Default: "A", SchemaType: map[string]string{"postgres": "VARCHAR(1)", "sqlite3": "VARCHAR(1)"}},
 		{Name: "code", Type: field.TypeString, Size: 10, SchemaType: map[string]string{"postgres": "VARCHAR(10)", "sqlite3": "VARCHAR(10)"}},
 		{Name: "name", Type: field.TypeString, Size: 150, SchemaType: map[string]string{"postgres": "VARCHAR(150)", "sqlite3": "VARCHAR(150)"}},
@@ -337,9 +369,9 @@ var (
 	// DelayCodesColumns holds the columns for the "delay_codes" table.
 	DelayCodesColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeUUID},
-		{Name: "created_at", Type: field.TypeTime},
-		{Name: "updated_at", Type: field.TypeTime},
-		{Name: "version", Type: field.TypeInt, Default: 1},
+		{Name: "created_at", Type: field.TypeTime, Comment: "The time that this entity was created."},
+		{Name: "updated_at", Type: field.TypeTime, Comment: "The last time that this entity was updated."},
+		{Name: "version", Type: field.TypeInt, Comment: "The current version of this entity.", Default: 1},
 		{Name: "status", Type: field.TypeEnum, Enums: []string{"A", "I"}, Default: "A", SchemaType: map[string]string{"postgres": "VARCHAR(1)", "sqlite3": "VARCHAR(1)"}},
 		{Name: "code", Type: field.TypeString, Size: 20, SchemaType: map[string]string{"postgres": "VARCHAR(20)", "sqlite3": "VARCHAR(20)"}},
 		{Name: "description", Type: field.TypeString, Nullable: true, Size: 2147483647},
@@ -411,9 +443,9 @@ var (
 	// DivisionCodesColumns holds the columns for the "division_codes" table.
 	DivisionCodesColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeUUID},
-		{Name: "created_at", Type: field.TypeTime},
-		{Name: "updated_at", Type: field.TypeTime},
-		{Name: "version", Type: field.TypeInt, Default: 1},
+		{Name: "created_at", Type: field.TypeTime, Comment: "The time that this entity was created."},
+		{Name: "updated_at", Type: field.TypeTime, Comment: "The last time that this entity was updated."},
+		{Name: "version", Type: field.TypeInt, Comment: "The current version of this entity.", Default: 1},
 		{Name: "status", Type: field.TypeEnum, Enums: []string{"A", "I"}, Default: "A", SchemaType: map[string]string{"postgres": "VARCHAR(1)", "sqlite3": "VARCHAR(1)"}},
 		{Name: "code", Type: field.TypeString, Size: 4, SchemaType: map[string]string{"postgres": "VARCHAR(4)", "sqlite3": "VARCHAR(4)"}},
 		{Name: "description", Type: field.TypeString, Size: 2147483647},
@@ -464,9 +496,9 @@ var (
 	// DocumentClassificationsColumns holds the columns for the "document_classifications" table.
 	DocumentClassificationsColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeUUID},
-		{Name: "created_at", Type: field.TypeTime},
-		{Name: "updated_at", Type: field.TypeTime},
-		{Name: "version", Type: field.TypeInt, Default: 1},
+		{Name: "created_at", Type: field.TypeTime, Comment: "The time that this entity was created."},
+		{Name: "updated_at", Type: field.TypeTime, Comment: "The last time that this entity was updated."},
+		{Name: "version", Type: field.TypeInt, Comment: "The current version of this entity.", Default: 1},
 		{Name: "status", Type: field.TypeEnum, Enums: []string{"A", "I"}, Default: "A", SchemaType: map[string]string{"postgres": "VARCHAR(1)", "sqlite3": "VARCHAR(1)"}},
 		{Name: "code", Type: field.TypeString, Size: 10, SchemaType: map[string]string{"postgres": "VARCHAR(10)", "sqlite3": "VARCHAR(10)"}},
 		{Name: "description", Type: field.TypeString, Nullable: true, Size: 2147483647},
@@ -539,9 +571,9 @@ var (
 	// EmailProfilesColumns holds the columns for the "email_profiles" table.
 	EmailProfilesColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeUUID},
-		{Name: "created_at", Type: field.TypeTime},
-		{Name: "updated_at", Type: field.TypeTime},
-		{Name: "version", Type: field.TypeInt, Default: 1},
+		{Name: "created_at", Type: field.TypeTime, Comment: "The time that this entity was created."},
+		{Name: "updated_at", Type: field.TypeTime, Comment: "The last time that this entity was updated."},
+		{Name: "version", Type: field.TypeInt, Comment: "The current version of this entity.", Default: 1},
 		{Name: "name", Type: field.TypeString, Size: 150, SchemaType: map[string]string{"postgres": "VARCHAR(150)", "sqlite3": "VARCHAR(150)"}},
 		{Name: "email", Type: field.TypeString},
 		{Name: "protocol", Type: field.TypeEnum, Nullable: true, Enums: []string{"TLS", "SSL", "UNENCRYPTED"}, SchemaType: map[string]string{"postgres": "VARCHAR(11)", "sqlite3": "VARCHAR(11)"}},
@@ -576,9 +608,9 @@ var (
 	// EquipmentManufactuersColumns holds the columns for the "equipment_manufactuers" table.
 	EquipmentManufactuersColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeUUID},
-		{Name: "created_at", Type: field.TypeTime},
-		{Name: "updated_at", Type: field.TypeTime},
-		{Name: "version", Type: field.TypeInt, Default: 1},
+		{Name: "created_at", Type: field.TypeTime, Comment: "The time that this entity was created."},
+		{Name: "updated_at", Type: field.TypeTime, Comment: "The last time that this entity was updated."},
+		{Name: "version", Type: field.TypeInt, Comment: "The current version of this entity.", Default: 1},
 		{Name: "status", Type: field.TypeEnum, Enums: []string{"A", "I"}, Default: "A", SchemaType: map[string]string{"postgres": "VARCHAR(1)", "sqlite3": "VARCHAR(1)"}},
 		{Name: "name", Type: field.TypeString},
 		{Name: "description", Type: field.TypeString, Nullable: true, Size: 2147483647},
@@ -608,9 +640,9 @@ var (
 	// EquipmentTypesColumns holds the columns for the "equipment_types" table.
 	EquipmentTypesColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeUUID},
-		{Name: "created_at", Type: field.TypeTime},
-		{Name: "updated_at", Type: field.TypeTime},
-		{Name: "version", Type: field.TypeInt, Default: 1},
+		{Name: "created_at", Type: field.TypeTime, Comment: "The time that this entity was created."},
+		{Name: "updated_at", Type: field.TypeTime, Comment: "The last time that this entity was updated."},
+		{Name: "version", Type: field.TypeInt, Comment: "The current version of this entity.", Default: 1},
 		{Name: "status", Type: field.TypeEnum, Enums: []string{"A", "I"}, Default: "A"},
 		{Name: "code", Type: field.TypeString, Size: 10, SchemaType: map[string]string{"postgres": "VARCHAR(10)", "sqlite3": "VARCHAR(10)"}},
 		{Name: "description", Type: field.TypeString, Nullable: true, Size: 2147483647},
@@ -687,8 +719,8 @@ var (
 	// FeatureFlagsColumns holds the columns for the "feature_flags" table.
 	FeatureFlagsColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeUUID},
-		{Name: "created_at", Type: field.TypeTime},
-		{Name: "updated_at", Type: field.TypeTime},
+		{Name: "created_at", Type: field.TypeTime, Comment: "The time that this entity was created."},
+		{Name: "updated_at", Type: field.TypeTime, Comment: "The last time that this entity was updated."},
 		{Name: "name", Type: field.TypeString},
 		{Name: "code", Type: field.TypeString, Unique: true, Size: 30, SchemaType: map[string]string{"postgres": "VARCHAR(30)", "sqlite3": "VARCHAR(30)"}},
 		{Name: "beta", Type: field.TypeBool, Default: false},
@@ -705,9 +737,9 @@ var (
 	// FleetCodesColumns holds the columns for the "fleet_codes" table.
 	FleetCodesColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeUUID},
-		{Name: "created_at", Type: field.TypeTime},
-		{Name: "updated_at", Type: field.TypeTime},
-		{Name: "version", Type: field.TypeInt, Default: 1},
+		{Name: "created_at", Type: field.TypeTime, Comment: "The time that this entity was created."},
+		{Name: "updated_at", Type: field.TypeTime, Comment: "The last time that this entity was updated."},
+		{Name: "version", Type: field.TypeInt, Comment: "The current version of this entity.", Default: 1},
 		{Name: "status", Type: field.TypeEnum, Enums: []string{"A", "I"}, Default: "A"},
 		{Name: "code", Type: field.TypeString, Size: 10},
 		{Name: "description", Type: field.TypeString, Nullable: true, Size: 2147483647},
@@ -748,9 +780,9 @@ var (
 	// FormulaTemplatesColumns holds the columns for the "formula_templates" table.
 	FormulaTemplatesColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeUUID},
-		{Name: "created_at", Type: field.TypeTime},
-		{Name: "updated_at", Type: field.TypeTime},
-		{Name: "version", Type: field.TypeInt, Default: 1},
+		{Name: "created_at", Type: field.TypeTime, Comment: "The time that this entity was created."},
+		{Name: "updated_at", Type: field.TypeTime, Comment: "The last time that this entity was updated."},
+		{Name: "version", Type: field.TypeInt, Comment: "The current version of this entity.", Default: 1},
 		{Name: "name", Type: field.TypeString},
 		{Name: "formula_text", Type: field.TypeString, Size: 2147483647},
 		{Name: "description", Type: field.TypeString, Nullable: true, Size: 2147483647},
@@ -796,9 +828,9 @@ var (
 	// GeneralLedgerAccountsColumns holds the columns for the "general_ledger_accounts" table.
 	GeneralLedgerAccountsColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeUUID},
-		{Name: "created_at", Type: field.TypeTime},
-		{Name: "updated_at", Type: field.TypeTime},
-		{Name: "version", Type: field.TypeInt, Default: 1},
+		{Name: "created_at", Type: field.TypeTime, Comment: "The time that this entity was created."},
+		{Name: "updated_at", Type: field.TypeTime, Comment: "The last time that this entity was updated."},
+		{Name: "version", Type: field.TypeInt, Comment: "The current version of this entity.", Default: 1},
 		{Name: "status", Type: field.TypeEnum, Enums: []string{"A", "I"}, Default: "A", SchemaType: map[string]string{"postgres": "VARCHAR(1)", "sqlite3": "VARCHAR(1)"}},
 		{Name: "account_number", Type: field.TypeString, Size: 7, SchemaType: map[string]string{"postgres": "VARCHAR(7)", "sqlite3": "VARCHAR(7)"}},
 		{Name: "account_type", Type: field.TypeEnum, Enums: []string{"Asset", "Liability", "Equity", "Revenue", "Expense"}, SchemaType: map[string]string{"postgres": "VARCHAR(9)", "sqlite3": "VARCHAR(9)"}},
@@ -872,9 +904,9 @@ var (
 	// HazardousMaterialsColumns holds the columns for the "hazardous_materials" table.
 	HazardousMaterialsColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeUUID},
-		{Name: "created_at", Type: field.TypeTime},
-		{Name: "updated_at", Type: field.TypeTime},
-		{Name: "version", Type: field.TypeInt, Default: 1},
+		{Name: "created_at", Type: field.TypeTime, Comment: "The time that this entity was created."},
+		{Name: "updated_at", Type: field.TypeTime, Comment: "The last time that this entity was updated."},
+		{Name: "version", Type: field.TypeInt, Comment: "The current version of this entity.", Default: 1},
 		{Name: "status", Type: field.TypeEnum, Enums: []string{"A", "I"}, Default: "A"},
 		{Name: "name", Type: field.TypeString, Size: 100, SchemaType: map[string]string{"postgres": "VARCHAR(100)", "sqlite3": "VARCHAR(100)"}},
 		{Name: "hazard_class", Type: field.TypeEnum, Enums: []string{"HazardClass1And1", "HazardClass1And2", "HazardClass1And3", "HazardClass1And4", "HazardClass1And5", "HazardClass1And6", "HazardClass2And1", "HazardClass2And2", "HazardClass2And3", "HazardClass3", "HazardClass4And1", "HazardClass4And2", "HazardClass4And3", "HazardClass5And1", "HazardClass5And2", "HazardClass6And1", "HazardClass6And2", "HazardClass7", "HazardClass8", "HazardClass9"}, Default: "HazardClass1And1", SchemaType: map[string]string{"postgres": "VARCHAR(16)", "sqlite3": "VARCHAR(16)"}},
@@ -908,9 +940,9 @@ var (
 	// HazardousMaterialSegregationsColumns holds the columns for the "hazardous_material_segregations" table.
 	HazardousMaterialSegregationsColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeUUID},
-		{Name: "created_at", Type: field.TypeTime},
-		{Name: "updated_at", Type: field.TypeTime},
-		{Name: "version", Type: field.TypeInt, Default: 1},
+		{Name: "created_at", Type: field.TypeTime, Comment: "The time that this entity was created."},
+		{Name: "updated_at", Type: field.TypeTime, Comment: "The last time that this entity was updated."},
+		{Name: "version", Type: field.TypeInt, Comment: "The current version of this entity.", Default: 1},
 		{Name: "class_a", Type: field.TypeEnum, Enums: []string{"HazardClass1And1", "HazardClass1And2", "HazardClass1And3", "HazardClass1And4", "HazardClass1And5", "HazardClass1And6", "HazardClass2And1", "HazardClass2And2", "HazardClass2And3", "HazardClass3", "HazardClass4And1", "HazardClass4And2", "HazardClass4And3", "HazardClass5And1", "HazardClass5And2", "HazardClass6And1", "HazardClass6And2", "HazardClass7", "HazardClass8", "HazardClass9"}, Default: "HazardClass1And1", SchemaType: map[string]string{"postgres": "VARCHAR(16)", "sqlite3": "VARCHAR(16)"}},
 		{Name: "class_b", Type: field.TypeEnum, Enums: []string{"HazardClass1And1", "HazardClass1And2", "HazardClass1And3", "HazardClass1And4", "HazardClass1And5", "HazardClass1And6", "HazardClass2And1", "HazardClass2And2", "HazardClass2And3", "HazardClass3", "HazardClass4And1", "HazardClass4And2", "HazardClass4And3", "HazardClass5And1", "HazardClass5And2", "HazardClass6And1", "HazardClass6And2", "HazardClass7", "HazardClass8", "HazardClass9"}, Default: "HazardClass1And1", SchemaType: map[string]string{"postgres": "VARCHAR(16)", "sqlite3": "VARCHAR(16)"}},
 		{Name: "segregation_type", Type: field.TypeEnum, Enums: []string{"NotAllowed", "AllowedWithConditions"}, Default: "NotAllowed", SchemaType: map[string]string{"postgres": "VARCHAR(21)", "sqlite3": "VARCHAR(21)"}},
@@ -986,25 +1018,25 @@ var (
 	// LocationsColumns holds the columns for the "locations" table.
 	LocationsColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeUUID},
-		{Name: "created_at", Type: field.TypeTime},
-		{Name: "updated_at", Type: field.TypeTime},
-		{Name: "version", Type: field.TypeInt, Default: 1},
-		{Name: "status", Type: field.TypeEnum, Enums: []string{"A", "I"}, Default: "A"},
-		{Name: "code", Type: field.TypeString, Size: 10},
-		{Name: "name", Type: field.TypeString},
-		{Name: "description", Type: field.TypeString, Nullable: true, Size: 2147483647},
-		{Name: "address_line_1", Type: field.TypeString, Size: 150, SchemaType: map[string]string{"postgres": "VARCHAR(150)", "sqlite3": "VARCHAR(150)"}},
-		{Name: "address_line_2", Type: field.TypeString, Nullable: true, Size: 150, SchemaType: map[string]string{"postgres": "VARCHAR(150)", "sqlite3": "VARCHAR(150)"}},
-		{Name: "city", Type: field.TypeString, Size: 150, SchemaType: map[string]string{"postgres": "VARCHAR(150)", "sqlite3": "VARCHAR(150)"}},
-		{Name: "postal_code", Type: field.TypeString, Size: 10, SchemaType: map[string]string{"postgres": "VARCHAR(10)", "sqlite3": "VARCHAR(10)"}},
-		{Name: "longitude", Type: field.TypeFloat64, Nullable: true},
-		{Name: "latitude", Type: field.TypeFloat64, Nullable: true},
-		{Name: "place_id", Type: field.TypeString, Nullable: true, Size: 255, SchemaType: map[string]string{"postgres": "VARCHAR(255)", "sqlite3": "VARCHAR(255)"}},
-		{Name: "is_geocoded", Type: field.TypeBool, Default: false},
+		{Name: "created_at", Type: field.TypeTime, Comment: "The time that this entity was created."},
+		{Name: "updated_at", Type: field.TypeTime, Comment: "The last time that this entity was updated."},
+		{Name: "version", Type: field.TypeInt, Comment: "The current version of this entity.", Default: 1},
+		{Name: "status", Type: field.TypeEnum, Comment: "Current status of the location.", Enums: []string{"A", "I"}, Default: "A"},
+		{Name: "code", Type: field.TypeString, Size: 10, Comment: "Unique code for the location."},
+		{Name: "name", Type: field.TypeString, Comment: "Name of the location."},
+		{Name: "description", Type: field.TypeString, Nullable: true, Size: 2147483647, Comment: "Description of the location."},
+		{Name: "address_line_1", Type: field.TypeString, Size: 150, Comment: "Adress Line 1 of the location.", SchemaType: map[string]string{"postgres": "VARCHAR(150)", "sqlite3": "VARCHAR(150)"}},
+		{Name: "address_line_2", Type: field.TypeString, Nullable: true, Size: 150, Comment: "Adress Line 2 of the location.", SchemaType: map[string]string{"postgres": "VARCHAR(150)", "sqlite3": "VARCHAR(150)"}},
+		{Name: "city", Type: field.TypeString, Size: 150, Comment: "City of the location.", SchemaType: map[string]string{"postgres": "VARCHAR(150)", "sqlite3": "VARCHAR(150)"}},
+		{Name: "postal_code", Type: field.TypeString, Size: 10, Comment: "Postal code of the location.", SchemaType: map[string]string{"postgres": "VARCHAR(10)", "sqlite3": "VARCHAR(10)"}},
+		{Name: "longitude", Type: field.TypeFloat64, Nullable: true, Comment: "Longitude of the location."},
+		{Name: "latitude", Type: field.TypeFloat64, Nullable: true, Comment: "Latitude of the location."},
+		{Name: "place_id", Type: field.TypeString, Nullable: true, Size: 255, Comment: "Place ID from Google Maps API.", SchemaType: map[string]string{"postgres": "VARCHAR(255)", "sqlite3": "VARCHAR(255)"}},
+		{Name: "is_geocoded", Type: field.TypeBool, Comment: "Is the location geocoded?", Default: false},
 		{Name: "business_unit_id", Type: field.TypeUUID},
 		{Name: "organization_id", Type: field.TypeUUID},
-		{Name: "location_category_id", Type: field.TypeUUID, Nullable: true},
-		{Name: "state_id", Type: field.TypeUUID},
+		{Name: "location_category_id", Type: field.TypeUUID, Nullable: true, Comment: "Location category ID."},
+		{Name: "state_id", Type: field.TypeUUID, Comment: "State ID."},
 	}
 	// LocationsTable holds the schema information for the "locations" table.
 	LocationsTable = &schema.Table{
@@ -1041,9 +1073,9 @@ var (
 	// LocationCategoriesColumns holds the columns for the "location_categories" table.
 	LocationCategoriesColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeUUID},
-		{Name: "created_at", Type: field.TypeTime},
-		{Name: "updated_at", Type: field.TypeTime},
-		{Name: "version", Type: field.TypeInt, Default: 1},
+		{Name: "created_at", Type: field.TypeTime, Comment: "The time that this entity was created."},
+		{Name: "updated_at", Type: field.TypeTime, Comment: "The last time that this entity was updated."},
+		{Name: "version", Type: field.TypeInt, Comment: "The current version of this entity.", Default: 1},
 		{Name: "name", Type: field.TypeString, Size: 100, SchemaType: map[string]string{"postgres": "VARCHAR(100)", "sqlite3": "VARCHAR(100)"}},
 		{Name: "description", Type: field.TypeString, Nullable: true, Size: 2147483647},
 		{Name: "color", Type: field.TypeString, Nullable: true},
@@ -1073,9 +1105,9 @@ var (
 	// LocationCommentsColumns holds the columns for the "location_comments" table.
 	LocationCommentsColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeUUID},
-		{Name: "created_at", Type: field.TypeTime},
-		{Name: "updated_at", Type: field.TypeTime},
-		{Name: "version", Type: field.TypeInt, Default: 1},
+		{Name: "created_at", Type: field.TypeTime, Comment: "The time that this entity was created."},
+		{Name: "updated_at", Type: field.TypeTime, Comment: "The last time that this entity was updated."},
+		{Name: "version", Type: field.TypeInt, Comment: "The current version of this entity.", Default: 1},
 		{Name: "comment", Type: field.TypeString, Size: 2147483647},
 		{Name: "location_id", Type: field.TypeUUID},
 		{Name: "business_unit_id", Type: field.TypeUUID},
@@ -1124,9 +1156,9 @@ var (
 	// LocationContactsColumns holds the columns for the "location_contacts" table.
 	LocationContactsColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeUUID},
-		{Name: "created_at", Type: field.TypeTime},
-		{Name: "updated_at", Type: field.TypeTime},
-		{Name: "version", Type: field.TypeInt, Default: 1},
+		{Name: "created_at", Type: field.TypeTime, Comment: "The time that this entity was created."},
+		{Name: "updated_at", Type: field.TypeTime, Comment: "The last time that this entity was updated."},
+		{Name: "version", Type: field.TypeInt, Comment: "The current version of this entity.", Default: 1},
 		{Name: "name", Type: field.TypeString},
 		{Name: "email_address", Type: field.TypeString, Nullable: true},
 		{Name: "phone_number", Type: field.TypeString, Nullable: true, Size: 15, SchemaType: map[string]string{"postgres": "VARCHAR(15)", "sqlite3": "VARCHAR(15)"}},
@@ -1226,9 +1258,9 @@ var (
 	// QualifierCodesColumns holds the columns for the "qualifier_codes" table.
 	QualifierCodesColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeUUID},
-		{Name: "created_at", Type: field.TypeTime},
-		{Name: "updated_at", Type: field.TypeTime},
-		{Name: "version", Type: field.TypeInt, Default: 1},
+		{Name: "created_at", Type: field.TypeTime, Comment: "The time that this entity was created."},
+		{Name: "updated_at", Type: field.TypeTime, Comment: "The last time that this entity was updated."},
+		{Name: "version", Type: field.TypeInt, Comment: "The current version of this entity.", Default: 1},
 		{Name: "status", Type: field.TypeEnum, Enums: []string{"A", "I"}, Default: "A", SchemaType: map[string]string{"postgres": "VARCHAR(1)", "sqlite3": "VARCHAR(1)"}},
 		{Name: "code", Type: field.TypeString, Size: 10, SchemaType: map[string]string{"postgres": "VARCHAR(10)", "sqlite3": "VARCHAR(10)"}},
 		{Name: "description", Type: field.TypeString, Size: 2147483647},
@@ -1258,9 +1290,9 @@ var (
 	// ReasonCodesColumns holds the columns for the "reason_codes" table.
 	ReasonCodesColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeUUID},
-		{Name: "created_at", Type: field.TypeTime},
-		{Name: "updated_at", Type: field.TypeTime},
-		{Name: "version", Type: field.TypeInt, Default: 1},
+		{Name: "created_at", Type: field.TypeTime, Comment: "The time that this entity was created."},
+		{Name: "updated_at", Type: field.TypeTime, Comment: "The last time that this entity was updated."},
+		{Name: "version", Type: field.TypeInt, Comment: "The current version of this entity.", Default: 1},
 		{Name: "status", Type: field.TypeEnum, Enums: []string{"A", "I"}, Default: "A", SchemaType: map[string]string{"postgres": "VARCHAR(1)", "sqlite3": "VARCHAR(1)"}},
 		{Name: "code", Type: field.TypeString, Size: 10, SchemaType: map[string]string{"postgres": "VARCHAR(10)", "sqlite3": "VARCHAR(10)"}},
 		{Name: "code_type", Type: field.TypeEnum, Enums: []string{"Voided", "Cancelled"}},
@@ -1291,9 +1323,9 @@ var (
 	// RevenueCodesColumns holds the columns for the "revenue_codes" table.
 	RevenueCodesColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeUUID},
-		{Name: "created_at", Type: field.TypeTime},
-		{Name: "updated_at", Type: field.TypeTime},
-		{Name: "version", Type: field.TypeInt, Default: 1},
+		{Name: "created_at", Type: field.TypeTime, Comment: "The time that this entity was created."},
+		{Name: "updated_at", Type: field.TypeTime, Comment: "The last time that this entity was updated."},
+		{Name: "version", Type: field.TypeInt, Comment: "The current version of this entity.", Default: 1},
 		{Name: "status", Type: field.TypeEnum, Enums: []string{"A", "I"}, Default: "A", SchemaType: map[string]string{"postgres": "VARCHAR(1)", "sqlite3": "VARCHAR(1)"}},
 		{Name: "code", Type: field.TypeString, Size: 4, SchemaType: map[string]string{"postgres": "VARCHAR(4)", "sqlite3": "VARCHAR(4)"}},
 		{Name: "description", Type: field.TypeString, Size: 2147483647},
@@ -1368,9 +1400,9 @@ var (
 	// ServiceTypesColumns holds the columns for the "service_types" table.
 	ServiceTypesColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeUUID},
-		{Name: "created_at", Type: field.TypeTime},
-		{Name: "updated_at", Type: field.TypeTime},
-		{Name: "version", Type: field.TypeInt, Default: 1},
+		{Name: "created_at", Type: field.TypeTime, Comment: "The time that this entity was created."},
+		{Name: "updated_at", Type: field.TypeTime, Comment: "The last time that this entity was updated."},
+		{Name: "version", Type: field.TypeInt, Comment: "The current version of this entity.", Default: 1},
 		{Name: "status", Type: field.TypeEnum, Enums: []string{"A", "I"}, Default: "A"},
 		{Name: "code", Type: field.TypeString, Size: 10, SchemaType: map[string]string{"postgres": "VARCHAR(10)", "sqlite3": "VARCHAR(10)"}},
 		{Name: "description", Type: field.TypeString, Nullable: true, Size: 2147483647},
@@ -1414,9 +1446,9 @@ var (
 	// ShipmentsColumns holds the columns for the "shipments" table.
 	ShipmentsColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeUUID},
-		{Name: "created_at", Type: field.TypeTime},
-		{Name: "updated_at", Type: field.TypeTime},
-		{Name: "version", Type: field.TypeInt, Default: 1},
+		{Name: "created_at", Type: field.TypeTime, Comment: "The time that this entity was created."},
+		{Name: "updated_at", Type: field.TypeTime, Comment: "The last time that this entity was updated."},
+		{Name: "version", Type: field.TypeInt, Comment: "The current version of this entity.", Default: 1},
 		{Name: "pro_number", Type: field.TypeString, Size: 20, SchemaType: map[string]string{"postgres": "VARCHAR(20)", "sqlite3": "VARCHAR(20)"}},
 		{Name: "status", Type: field.TypeEnum, Enums: []string{"New", "InProgress", "Completed", "Hold", "Billed", "Voided"}, Default: "New"},
 		{Name: "origin_address_line", Type: field.TypeString, Nullable: true},
@@ -1561,9 +1593,9 @@ var (
 	// ShipmentChargesColumns holds the columns for the "shipment_charges" table.
 	ShipmentChargesColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeUUID},
-		{Name: "created_at", Type: field.TypeTime},
-		{Name: "updated_at", Type: field.TypeTime},
-		{Name: "version", Type: field.TypeInt, Default: 1},
+		{Name: "created_at", Type: field.TypeTime, Comment: "The time that this entity was created."},
+		{Name: "updated_at", Type: field.TypeTime, Comment: "The last time that this entity was updated."},
+		{Name: "version", Type: field.TypeInt, Comment: "The current version of this entity.", Default: 1},
 		{Name: "description", Type: field.TypeString, Size: 2147483647},
 		{Name: "charge_amount", Type: field.TypeFloat64, SchemaType: map[string]string{"mysql": "decimal(19,4)", "postgres": "numeric(19,4)"}},
 		{Name: "units", Type: field.TypeInt},
@@ -1615,9 +1647,9 @@ var (
 	// ShipmentCommentsColumns holds the columns for the "shipment_comments" table.
 	ShipmentCommentsColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeUUID},
-		{Name: "created_at", Type: field.TypeTime},
-		{Name: "updated_at", Type: field.TypeTime},
-		{Name: "version", Type: field.TypeInt, Default: 1},
+		{Name: "created_at", Type: field.TypeTime, Comment: "The time that this entity was created."},
+		{Name: "updated_at", Type: field.TypeTime, Comment: "The last time that this entity was updated."},
+		{Name: "version", Type: field.TypeInt, Comment: "The current version of this entity.", Default: 1},
 		{Name: "comment", Type: field.TypeString, Size: 2147483647},
 		{Name: "comment_type_id", Type: field.TypeUUID},
 		{Name: "shipment_id", Type: field.TypeUUID},
@@ -1666,9 +1698,9 @@ var (
 	// ShipmentCommoditiesColumns holds the columns for the "shipment_commodities" table.
 	ShipmentCommoditiesColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeUUID},
-		{Name: "created_at", Type: field.TypeTime},
-		{Name: "updated_at", Type: field.TypeTime},
-		{Name: "version", Type: field.TypeInt, Default: 1},
+		{Name: "created_at", Type: field.TypeTime, Comment: "The time that this entity was created."},
+		{Name: "updated_at", Type: field.TypeTime, Comment: "The last time that this entity was updated."},
+		{Name: "version", Type: field.TypeInt, Comment: "The current version of this entity.", Default: 1},
 		{Name: "commodity_id", Type: field.TypeUUID},
 		{Name: "hazardous_material_id", Type: field.TypeUUID},
 		{Name: "sub_total", Type: field.TypeFloat64, SchemaType: map[string]string{"mysql": "decimal(10,2)", "postgres": "numeric(10,2)"}},
@@ -1746,9 +1778,9 @@ var (
 	// ShipmentDocumentationsColumns holds the columns for the "shipment_documentations" table.
 	ShipmentDocumentationsColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeUUID},
-		{Name: "created_at", Type: field.TypeTime},
-		{Name: "updated_at", Type: field.TypeTime},
-		{Name: "version", Type: field.TypeInt, Default: 1},
+		{Name: "created_at", Type: field.TypeTime, Comment: "The time that this entity was created."},
+		{Name: "updated_at", Type: field.TypeTime, Comment: "The last time that this entity was updated."},
+		{Name: "version", Type: field.TypeInt, Comment: "The current version of this entity.", Default: 1},
 		{Name: "document_url", Type: field.TypeString},
 		{Name: "document_classification_id", Type: field.TypeUUID},
 		{Name: "shipment_id", Type: field.TypeUUID},
@@ -1790,9 +1822,9 @@ var (
 	// ShipmentMovesColumns holds the columns for the "shipment_moves" table.
 	ShipmentMovesColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeUUID},
-		{Name: "created_at", Type: field.TypeTime},
-		{Name: "updated_at", Type: field.TypeTime},
-		{Name: "version", Type: field.TypeInt, Default: 1},
+		{Name: "created_at", Type: field.TypeTime, Comment: "The time that this entity was created."},
+		{Name: "updated_at", Type: field.TypeTime, Comment: "The last time that this entity was updated."},
+		{Name: "version", Type: field.TypeInt, Comment: "The current version of this entity.", Default: 1},
 		{Name: "reference_number", Type: field.TypeString, Unique: true, SchemaType: map[string]string{"postgres": "VARCHAR(10)", "sqlite3": "VARCHAR(10)"}},
 		{Name: "status", Type: field.TypeEnum, Enums: []string{"New", "InProgress", "Completed", "Voided"}, Default: "New"},
 		{Name: "is_loaded", Type: field.TypeBool, Default: false},
@@ -1857,9 +1889,9 @@ var (
 	// ShipmentTypesColumns holds the columns for the "shipment_types" table.
 	ShipmentTypesColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeUUID},
-		{Name: "created_at", Type: field.TypeTime},
-		{Name: "updated_at", Type: field.TypeTime},
-		{Name: "version", Type: field.TypeInt, Default: 1},
+		{Name: "created_at", Type: field.TypeTime, Comment: "The time that this entity was created."},
+		{Name: "updated_at", Type: field.TypeTime, Comment: "The last time that this entity was updated."},
+		{Name: "version", Type: field.TypeInt, Comment: "The current version of this entity.", Default: 1},
 		{Name: "status", Type: field.TypeEnum, Enums: []string{"A", "I"}, Default: "A", SchemaType: map[string]string{"postgres": "VARCHAR(1)", "sqlite3": "VARCHAR(1)"}},
 		{Name: "code", Type: field.TypeString, Size: 10, SchemaType: map[string]string{"postgres": "VARCHAR(10)", "sqlite3": "VARCHAR(10)"}},
 		{Name: "description", Type: field.TypeString, Nullable: true, Size: 2147483647},
@@ -1890,12 +1922,12 @@ var (
 	// StopsColumns holds the columns for the "stops" table.
 	StopsColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeUUID},
-		{Name: "created_at", Type: field.TypeTime},
-		{Name: "updated_at", Type: field.TypeTime},
-		{Name: "version", Type: field.TypeInt, Default: 1},
+		{Name: "created_at", Type: field.TypeTime, Comment: "The time that this entity was created."},
+		{Name: "updated_at", Type: field.TypeTime, Comment: "The last time that this entity was updated."},
+		{Name: "version", Type: field.TypeInt, Comment: "The current version of this entity.", Default: 1},
 		{Name: "status", Type: field.TypeEnum, Enums: []string{"New", "InProgress", "Completed", "Voided"}, Default: "New"},
 		{Name: "stop_type", Type: field.TypeEnum, Enums: []string{"Pickup", "SplitPickup", "SplitDrop", "Delivery", "DropOff"}},
-		{Name: "sequence", Type: field.TypeInt, Default: 1},
+		{Name: "sequence", Type: field.TypeInt, Comment: "Current sequence of the stop within the movement.", Default: 1},
 		{Name: "location_id", Type: field.TypeUUID, Nullable: true},
 		{Name: "pieces", Type: field.TypeFloat64, Nullable: true, SchemaType: map[string]string{"mysql": "decimal(10,2)", "postgres": "numeric(10,2)"}},
 		{Name: "weight", Type: field.TypeFloat64, Nullable: true, SchemaType: map[string]string{"mysql": "decimal(10,2)", "postgres": "numeric(10,2)"}},
@@ -1937,9 +1969,9 @@ var (
 	// TableChangeAlertsColumns holds the columns for the "table_change_alerts" table.
 	TableChangeAlertsColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeUUID},
-		{Name: "created_at", Type: field.TypeTime},
-		{Name: "updated_at", Type: field.TypeTime},
-		{Name: "version", Type: field.TypeInt, Default: 1},
+		{Name: "created_at", Type: field.TypeTime, Comment: "The time that this entity was created."},
+		{Name: "updated_at", Type: field.TypeTime, Comment: "The last time that this entity was updated."},
+		{Name: "version", Type: field.TypeInt, Comment: "The current version of this entity.", Default: 1},
 		{Name: "status", Type: field.TypeEnum, Enums: []string{"A", "I"}, Default: "A"},
 		{Name: "name", Type: field.TypeString, Size: 50, SchemaType: map[string]string{"postgres": "VARCHAR(50)", "sqlite3": "VARCHAR(50)"}},
 		{Name: "database_action", Type: field.TypeEnum, Enums: []string{"Insert", "Update", "Delete", "All"}, SchemaType: map[string]string{"postgres": "VARCHAR(6)", "sqlite3": "VARCHAR(6)"}},
@@ -1980,9 +2012,9 @@ var (
 	// TagsColumns holds the columns for the "tags" table.
 	TagsColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeUUID},
-		{Name: "created_at", Type: field.TypeTime},
-		{Name: "updated_at", Type: field.TypeTime},
-		{Name: "version", Type: field.TypeInt, Default: 1},
+		{Name: "created_at", Type: field.TypeTime, Comment: "The time that this entity was created."},
+		{Name: "updated_at", Type: field.TypeTime, Comment: "The last time that this entity was updated."},
+		{Name: "version", Type: field.TypeInt, Comment: "The current version of this entity.", Default: 1},
 		{Name: "name", Type: field.TypeString, Size: 50, SchemaType: map[string]string{"postgres": "VARCHAR(50)", "sqlite3": "VARCHAR(50)"}},
 		{Name: "description", Type: field.TypeString, Nullable: true, Size: 2147483647},
 		{Name: "color", Type: field.TypeString, Nullable: true},
@@ -2012,9 +2044,9 @@ var (
 	// TractorsColumns holds the columns for the "tractors" table.
 	TractorsColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeUUID},
-		{Name: "created_at", Type: field.TypeTime},
-		{Name: "updated_at", Type: field.TypeTime},
-		{Name: "version", Type: field.TypeInt, Default: 1},
+		{Name: "created_at", Type: field.TypeTime, Comment: "The time that this entity was created."},
+		{Name: "updated_at", Type: field.TypeTime, Comment: "The last time that this entity was updated."},
+		{Name: "version", Type: field.TypeInt, Comment: "The current version of this entity.", Default: 1},
 		{Name: "code", Type: field.TypeString, Size: 50, SchemaType: map[string]string{"postgres": "VARCHAR(50)", "sqlite3": "VARCHAR(50)"}},
 		{Name: "status", Type: field.TypeEnum, Enums: []string{"Available", "OutOfService", "AtMaintenance", "Sold", "Lost"}, Default: "Available", SchemaType: map[string]string{"postgres": "VARCHAR(13)", "sqlite3": "VARCHAR(13)"}},
 		{Name: "license_plate_number", Type: field.TypeString, Nullable: true, Size: 50, SchemaType: map[string]string{"postgres": "VARCHAR(50)", "sqlite3": "VARCHAR(50)"}},
@@ -2091,9 +2123,9 @@ var (
 	// TrailersColumns holds the columns for the "trailers" table.
 	TrailersColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeUUID},
-		{Name: "created_at", Type: field.TypeTime},
-		{Name: "updated_at", Type: field.TypeTime},
-		{Name: "version", Type: field.TypeInt, Default: 1},
+		{Name: "created_at", Type: field.TypeTime, Comment: "The time that this entity was created."},
+		{Name: "updated_at", Type: field.TypeTime, Comment: "The last time that this entity was updated."},
+		{Name: "version", Type: field.TypeInt, Comment: "The current version of this entity.", Default: 1},
 		{Name: "code", Type: field.TypeString, Size: 50, SchemaType: map[string]string{"postgres": "VARCHAR(50)", "sqlite3": "VARCHAR(50)"}},
 		{Name: "status", Type: field.TypeEnum, Enums: []string{"Available", "OutOfService", "AtMaintenance", "Sold", "Lost"}, Default: "Available", SchemaType: map[string]string{"postgres": "VARCHAR(13)", "sqlite3": "VARCHAR(13)"}},
 		{Name: "vin", Type: field.TypeString, Nullable: true, SchemaType: map[string]string{"postgres": "VARCHAR(17)", "sqlite3": "VARCHAR(17)"}},
@@ -2180,9 +2212,9 @@ var (
 	// UsersColumns holds the columns for the "users" table.
 	UsersColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeUUID},
-		{Name: "created_at", Type: field.TypeTime},
-		{Name: "updated_at", Type: field.TypeTime},
-		{Name: "version", Type: field.TypeInt, Default: 1},
+		{Name: "created_at", Type: field.TypeTime, Comment: "The time that this entity was created."},
+		{Name: "updated_at", Type: field.TypeTime, Comment: "The last time that this entity was updated."},
+		{Name: "version", Type: field.TypeInt, Comment: "The current version of this entity.", Default: 1},
 		{Name: "status", Type: field.TypeEnum, Enums: []string{"A", "I"}, Default: "A", SchemaType: map[string]string{"postgres": "VARCHAR(1)", "sqlite3": "VARCHAR(1)"}},
 		{Name: "name", Type: field.TypeString},
 		{Name: "username", Type: field.TypeString, Size: 30},
@@ -2228,9 +2260,9 @@ var (
 	// UserFavoritesColumns holds the columns for the "user_favorites" table.
 	UserFavoritesColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeUUID},
-		{Name: "created_at", Type: field.TypeTime},
-		{Name: "updated_at", Type: field.TypeTime},
-		{Name: "version", Type: field.TypeInt, Default: 1},
+		{Name: "created_at", Type: field.TypeTime, Comment: "The time that this entity was created."},
+		{Name: "updated_at", Type: field.TypeTime, Comment: "The last time that this entity was updated."},
+		{Name: "version", Type: field.TypeInt, Comment: "The current version of this entity.", Default: 1},
 		{Name: "page_link", Type: field.TypeString, Unique: true},
 		{Name: "user_id", Type: field.TypeUUID},
 		{Name: "business_unit_id", Type: field.TypeUUID},
@@ -2262,12 +2294,89 @@ var (
 			},
 		},
 	}
+	// UserNotificationsColumns holds the columns for the "user_notifications" table.
+	UserNotificationsColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeUUID},
+		{Name: "created_at", Type: field.TypeTime, Comment: "The time that this entity was created."},
+		{Name: "updated_at", Type: field.TypeTime, Comment: "The last time that this entity was updated."},
+		{Name: "version", Type: field.TypeInt, Comment: "The current version of this entity.", Default: 1},
+		{Name: "is_read", Type: field.TypeBool, Default: false},
+		{Name: "title", Type: field.TypeString},
+		{Name: "description", Type: field.TypeString, Size: 2147483647},
+		{Name: "action_url", Type: field.TypeString, Nullable: true, Comment: "URL to redirect the user to when the notification is clicked."},
+		{Name: "user_id", Type: field.TypeUUID},
+		{Name: "business_unit_id", Type: field.TypeUUID},
+		{Name: "organization_id", Type: field.TypeUUID},
+	}
+	// UserNotificationsTable holds the schema information for the "user_notifications" table.
+	UserNotificationsTable = &schema.Table{
+		Name:       "user_notifications",
+		Columns:    UserNotificationsColumns,
+		PrimaryKey: []*schema.Column{UserNotificationsColumns[0]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "user_notifications_users_user_notifications",
+				Columns:    []*schema.Column{UserNotificationsColumns[8]},
+				RefColumns: []*schema.Column{UsersColumns[0]},
+				OnDelete:   schema.NoAction,
+			},
+			{
+				Symbol:     "user_notifications_business_units_business_unit",
+				Columns:    []*schema.Column{UserNotificationsColumns[9]},
+				RefColumns: []*schema.Column{BusinessUnitsColumns[0]},
+				OnDelete:   schema.Cascade,
+			},
+			{
+				Symbol:     "user_notifications_organizations_organization",
+				Columns:    []*schema.Column{UserNotificationsColumns[10]},
+				RefColumns: []*schema.Column{OrganizationsColumns[0]},
+				OnDelete:   schema.Cascade,
+			},
+		},
+	}
+	// UserReportsColumns holds the columns for the "user_reports" table.
+	UserReportsColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeUUID},
+		{Name: "created_at", Type: field.TypeTime, Comment: "The time that this entity was created."},
+		{Name: "updated_at", Type: field.TypeTime, Comment: "The last time that this entity was updated."},
+		{Name: "version", Type: field.TypeInt, Comment: "The current version of this entity.", Default: 1},
+		{Name: "report_url", Type: field.TypeString},
+		{Name: "user_id", Type: field.TypeUUID},
+		{Name: "business_unit_id", Type: field.TypeUUID},
+		{Name: "organization_id", Type: field.TypeUUID},
+	}
+	// UserReportsTable holds the schema information for the "user_reports" table.
+	UserReportsTable = &schema.Table{
+		Name:       "user_reports",
+		Columns:    UserReportsColumns,
+		PrimaryKey: []*schema.Column{UserReportsColumns[0]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "user_reports_users_reports",
+				Columns:    []*schema.Column{UserReportsColumns[5]},
+				RefColumns: []*schema.Column{UsersColumns[0]},
+				OnDelete:   schema.NoAction,
+			},
+			{
+				Symbol:     "user_reports_business_units_business_unit",
+				Columns:    []*schema.Column{UserReportsColumns[6]},
+				RefColumns: []*schema.Column{BusinessUnitsColumns[0]},
+				OnDelete:   schema.Cascade,
+			},
+			{
+				Symbol:     "user_reports_organizations_organization",
+				Columns:    []*schema.Column{UserReportsColumns[7]},
+				RefColumns: []*schema.Column{OrganizationsColumns[0]},
+				OnDelete:   schema.Cascade,
+			},
+		},
+	}
 	// WorkersColumns holds the columns for the "workers" table.
 	WorkersColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeUUID},
-		{Name: "created_at", Type: field.TypeTime},
-		{Name: "updated_at", Type: field.TypeTime},
-		{Name: "version", Type: field.TypeInt, Default: 1},
+		{Name: "created_at", Type: field.TypeTime, Comment: "The time that this entity was created."},
+		{Name: "updated_at", Type: field.TypeTime, Comment: "The last time that this entity was updated."},
+		{Name: "version", Type: field.TypeInt, Comment: "The current version of this entity.", Default: 1},
 		{Name: "status", Type: field.TypeEnum, Enums: []string{"A", "I"}, Default: "A"},
 		{Name: "code", Type: field.TypeString, Size: 10, SchemaType: map[string]string{"postgres": "VARCHAR(10)", "sqlite3": "VARCHAR(10)"}},
 		{Name: "profile_picture_url", Type: field.TypeString, Nullable: true},
@@ -2332,9 +2441,9 @@ var (
 	// WorkerCommentsColumns holds the columns for the "worker_comments" table.
 	WorkerCommentsColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeUUID},
-		{Name: "created_at", Type: field.TypeTime},
-		{Name: "updated_at", Type: field.TypeTime},
-		{Name: "version", Type: field.TypeInt, Default: 1},
+		{Name: "created_at", Type: field.TypeTime, Comment: "The time that this entity was created."},
+		{Name: "updated_at", Type: field.TypeTime, Comment: "The last time that this entity was updated."},
+		{Name: "version", Type: field.TypeInt, Comment: "The current version of this entity.", Default: 1},
 		{Name: "comment", Type: field.TypeString, Size: 2147483647},
 		{Name: "worker_id", Type: field.TypeUUID},
 		{Name: "business_unit_id", Type: field.TypeUUID},
@@ -2383,9 +2492,9 @@ var (
 	// WorkerContactsColumns holds the columns for the "worker_contacts" table.
 	WorkerContactsColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeUUID},
-		{Name: "created_at", Type: field.TypeTime},
-		{Name: "updated_at", Type: field.TypeTime},
-		{Name: "version", Type: field.TypeInt, Default: 1},
+		{Name: "created_at", Type: field.TypeTime, Comment: "The time that this entity was created."},
+		{Name: "updated_at", Type: field.TypeTime, Comment: "The last time that this entity was updated."},
+		{Name: "version", Type: field.TypeInt, Comment: "The current version of this entity.", Default: 1},
 		{Name: "name", Type: field.TypeString},
 		{Name: "email", Type: field.TypeString},
 		{Name: "phone", Type: field.TypeString},
@@ -2424,9 +2533,9 @@ var (
 	// WorkerProfilesColumns holds the columns for the "worker_profiles" table.
 	WorkerProfilesColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeUUID},
-		{Name: "created_at", Type: field.TypeTime},
-		{Name: "updated_at", Type: field.TypeTime},
-		{Name: "version", Type: field.TypeInt, Default: 1},
+		{Name: "created_at", Type: field.TypeTime, Comment: "The time that this entity was created."},
+		{Name: "updated_at", Type: field.TypeTime, Comment: "The last time that this entity was updated."},
+		{Name: "version", Type: field.TypeInt, Comment: "The current version of this entity.", Default: 1},
 		{Name: "race", Type: field.TypeString, Nullable: true},
 		{Name: "sex", Type: field.TypeString, Nullable: true},
 		{Name: "date_of_birth", Type: field.TypeOther, Nullable: true, SchemaType: map[string]string{"postgres": "date", "sqlite3": "date"}},
@@ -2510,6 +2619,7 @@ var (
 		ChargeTypesTable,
 		CommentTypesTable,
 		CommoditiesTable,
+		CustomReportsTable,
 		CustomersTable,
 		DelayCodesTable,
 		DispatchControlsTable,
@@ -2556,6 +2666,8 @@ var (
 		UsStatesTable,
 		UsersTable,
 		UserFavoritesTable,
+		UserNotificationsTable,
+		UserReportsTable,
 		WorkersTable,
 		WorkerCommentsTable,
 		WorkerContactsTable,
@@ -2567,6 +2679,7 @@ var (
 func init() {
 	AccessorialChargesTable.ForeignKeys[0].RefTable = BusinessUnitsTable
 	AccessorialChargesTable.ForeignKeys[1].RefTable = OrganizationsTable
+	AccessorialChargesTable.Annotation = &entsql.Annotation{}
 	AccountingControlsTable.ForeignKeys[0].RefTable = BusinessUnitsTable
 	AccountingControlsTable.ForeignKeys[1].RefTable = GeneralLedgerAccountsTable
 	AccountingControlsTable.ForeignKeys[2].RefTable = GeneralLedgerAccountsTable
@@ -2576,16 +2689,24 @@ func init() {
 	BusinessUnitsTable.ForeignKeys[0].RefTable = BusinessUnitsTable
 	ChargeTypesTable.ForeignKeys[0].RefTable = BusinessUnitsTable
 	ChargeTypesTable.ForeignKeys[1].RefTable = OrganizationsTable
+	ChargeTypesTable.Annotation = &entsql.Annotation{}
 	CommentTypesTable.ForeignKeys[0].RefTable = BusinessUnitsTable
 	CommentTypesTable.ForeignKeys[1].RefTable = OrganizationsTable
+	CommentTypesTable.Annotation = &entsql.Annotation{}
 	CommoditiesTable.ForeignKeys[0].RefTable = BusinessUnitsTable
 	CommoditiesTable.ForeignKeys[1].RefTable = OrganizationsTable
 	CommoditiesTable.ForeignKeys[2].RefTable = HazardousMaterialsTable
+	CommoditiesTable.Annotation = &entsql.Annotation{}
+	CustomReportsTable.ForeignKeys[0].RefTable = BusinessUnitsTable
+	CustomReportsTable.ForeignKeys[1].RefTable = OrganizationsTable
+	CustomReportsTable.Annotation = &entsql.Annotation{}
 	CustomersTable.ForeignKeys[0].RefTable = BusinessUnitsTable
 	CustomersTable.ForeignKeys[1].RefTable = OrganizationsTable
 	CustomersTable.ForeignKeys[2].RefTable = UsStatesTable
+	CustomersTable.Annotation = &entsql.Annotation{}
 	DelayCodesTable.ForeignKeys[0].RefTable = BusinessUnitsTable
 	DelayCodesTable.ForeignKeys[1].RefTable = OrganizationsTable
+	DelayCodesTable.Annotation = &entsql.Annotation{}
 	DispatchControlsTable.ForeignKeys[0].RefTable = BusinessUnitsTable
 	DispatchControlsTable.ForeignKeys[1].RefTable = OrganizationsTable
 	DivisionCodesTable.ForeignKeys[0].RefTable = BusinessUnitsTable
@@ -2593,67 +2714,85 @@ func init() {
 	DivisionCodesTable.ForeignKeys[2].RefTable = GeneralLedgerAccountsTable
 	DivisionCodesTable.ForeignKeys[3].RefTable = GeneralLedgerAccountsTable
 	DivisionCodesTable.ForeignKeys[4].RefTable = GeneralLedgerAccountsTable
+	DivisionCodesTable.Annotation = &entsql.Annotation{}
 	DocumentClassificationsTable.ForeignKeys[0].RefTable = BusinessUnitsTable
 	DocumentClassificationsTable.ForeignKeys[1].RefTable = OrganizationsTable
+	DocumentClassificationsTable.Annotation = &entsql.Annotation{}
 	EmailControlsTable.ForeignKeys[0].RefTable = BusinessUnitsTable
 	EmailControlsTable.ForeignKeys[1].RefTable = EmailProfilesTable
 	EmailControlsTable.ForeignKeys[2].RefTable = EmailProfilesTable
 	EmailControlsTable.ForeignKeys[3].RefTable = OrganizationsTable
 	EmailProfilesTable.ForeignKeys[0].RefTable = BusinessUnitsTable
 	EmailProfilesTable.ForeignKeys[1].RefTable = OrganizationsTable
+	EmailProfilesTable.Annotation = &entsql.Annotation{}
 	EquipmentManufactuersTable.ForeignKeys[0].RefTable = BusinessUnitsTable
 	EquipmentManufactuersTable.ForeignKeys[1].RefTable = OrganizationsTable
+	EquipmentManufactuersTable.Annotation = &entsql.Annotation{}
 	EquipmentTypesTable.ForeignKeys[0].RefTable = BusinessUnitsTable
 	EquipmentTypesTable.ForeignKeys[1].RefTable = OrganizationsTable
+	EquipmentTypesTable.Annotation = &entsql.Annotation{}
 	FeasibilityToolControlsTable.ForeignKeys[0].RefTable = BusinessUnitsTable
 	FeasibilityToolControlsTable.ForeignKeys[1].RefTable = OrganizationsTable
 	FeatureFlagsTable.Annotation = &entsql.Annotation{}
 	FleetCodesTable.ForeignKeys[0].RefTable = BusinessUnitsTable
 	FleetCodesTable.ForeignKeys[1].RefTable = OrganizationsTable
 	FleetCodesTable.ForeignKeys[2].RefTable = UsersTable
+	FleetCodesTable.Annotation = &entsql.Annotation{}
 	FormulaTemplatesTable.ForeignKeys[0].RefTable = BusinessUnitsTable
 	FormulaTemplatesTable.ForeignKeys[1].RefTable = OrganizationsTable
 	FormulaTemplatesTable.ForeignKeys[2].RefTable = CustomersTable
 	FormulaTemplatesTable.ForeignKeys[3].RefTable = ShipmentTypesTable
+	FormulaTemplatesTable.Annotation = &entsql.Annotation{}
 	GeneralLedgerAccountsTable.ForeignKeys[0].RefTable = BusinessUnitsTable
 	GeneralLedgerAccountsTable.ForeignKeys[1].RefTable = OrganizationsTable
+	GeneralLedgerAccountsTable.Annotation = &entsql.Annotation{}
 	GoogleApisTable.ForeignKeys[0].RefTable = BusinessUnitsTable
 	GoogleApisTable.ForeignKeys[1].RefTable = OrganizationsTable
 	HazardousMaterialsTable.ForeignKeys[0].RefTable = BusinessUnitsTable
 	HazardousMaterialsTable.ForeignKeys[1].RefTable = OrganizationsTable
+	HazardousMaterialsTable.Annotation = &entsql.Annotation{}
 	HazardousMaterialSegregationsTable.ForeignKeys[0].RefTable = BusinessUnitsTable
 	HazardousMaterialSegregationsTable.ForeignKeys[1].RefTable = OrganizationsTable
+	HazardousMaterialSegregationsTable.Annotation = &entsql.Annotation{}
 	InvoiceControlsTable.ForeignKeys[0].RefTable = BusinessUnitsTable
 	InvoiceControlsTable.ForeignKeys[1].RefTable = OrganizationsTable
 	LocationsTable.ForeignKeys[0].RefTable = BusinessUnitsTable
 	LocationsTable.ForeignKeys[1].RefTable = OrganizationsTable
 	LocationsTable.ForeignKeys[2].RefTable = LocationCategoriesTable
 	LocationsTable.ForeignKeys[3].RefTable = UsStatesTable
+	LocationsTable.Annotation = &entsql.Annotation{}
 	LocationCategoriesTable.ForeignKeys[0].RefTable = BusinessUnitsTable
 	LocationCategoriesTable.ForeignKeys[1].RefTable = OrganizationsTable
+	LocationCategoriesTable.Annotation = &entsql.Annotation{}
 	LocationCommentsTable.ForeignKeys[0].RefTable = LocationsTable
 	LocationCommentsTable.ForeignKeys[1].RefTable = BusinessUnitsTable
 	LocationCommentsTable.ForeignKeys[2].RefTable = OrganizationsTable
 	LocationCommentsTable.ForeignKeys[3].RefTable = UsersTable
 	LocationCommentsTable.ForeignKeys[4].RefTable = CommentTypesTable
+	LocationCommentsTable.Annotation = &entsql.Annotation{}
 	LocationContactsTable.ForeignKeys[0].RefTable = LocationsTable
 	LocationContactsTable.ForeignKeys[1].RefTable = BusinessUnitsTable
 	LocationContactsTable.ForeignKeys[2].RefTable = OrganizationsTable
+	LocationContactsTable.Annotation = &entsql.Annotation{}
 	OrganizationsTable.ForeignKeys[0].RefTable = BusinessUnitsTable
 	OrganizationFeatureFlagsTable.ForeignKeys[0].RefTable = FeatureFlagsTable
 	OrganizationFeatureFlagsTable.ForeignKeys[1].RefTable = OrganizationsTable
 	QualifierCodesTable.ForeignKeys[0].RefTable = BusinessUnitsTable
 	QualifierCodesTable.ForeignKeys[1].RefTable = OrganizationsTable
+	QualifierCodesTable.Annotation = &entsql.Annotation{}
 	ReasonCodesTable.ForeignKeys[0].RefTable = BusinessUnitsTable
 	ReasonCodesTable.ForeignKeys[1].RefTable = OrganizationsTable
+	ReasonCodesTable.Annotation = &entsql.Annotation{}
 	RevenueCodesTable.ForeignKeys[0].RefTable = BusinessUnitsTable
 	RevenueCodesTable.ForeignKeys[1].RefTable = OrganizationsTable
 	RevenueCodesTable.ForeignKeys[2].RefTable = GeneralLedgerAccountsTable
 	RevenueCodesTable.ForeignKeys[3].RefTable = GeneralLedgerAccountsTable
+	RevenueCodesTable.Annotation = &entsql.Annotation{}
 	RouteControlsTable.ForeignKeys[0].RefTable = OrganizationsTable
 	RouteControlsTable.ForeignKeys[1].RefTable = BusinessUnitsTable
 	ServiceTypesTable.ForeignKeys[0].RefTable = BusinessUnitsTable
 	ServiceTypesTable.ForeignKeys[1].RefTable = OrganizationsTable
+	ServiceTypesTable.Annotation = &entsql.Annotation{}
 	ShipmentsTable.ForeignKeys[0].RefTable = CustomersTable
 	ShipmentsTable.ForeignKeys[1].RefTable = BusinessUnitsTable
 	ShipmentsTable.ForeignKeys[2].RefTable = OrganizationsTable
@@ -2671,20 +2810,24 @@ func init() {
 	ShipmentChargesTable.ForeignKeys[2].RefTable = BusinessUnitsTable
 	ShipmentChargesTable.ForeignKeys[3].RefTable = OrganizationsTable
 	ShipmentChargesTable.ForeignKeys[4].RefTable = UsersTable
+	ShipmentChargesTable.Annotation = &entsql.Annotation{}
 	ShipmentCommentsTable.ForeignKeys[0].RefTable = CommentTypesTable
 	ShipmentCommentsTable.ForeignKeys[1].RefTable = ShipmentsTable
 	ShipmentCommentsTable.ForeignKeys[2].RefTable = BusinessUnitsTable
 	ShipmentCommentsTable.ForeignKeys[3].RefTable = OrganizationsTable
 	ShipmentCommentsTable.ForeignKeys[4].RefTable = UsersTable
+	ShipmentCommentsTable.Annotation = &entsql.Annotation{}
 	ShipmentCommoditiesTable.ForeignKeys[0].RefTable = ShipmentsTable
 	ShipmentCommoditiesTable.ForeignKeys[1].RefTable = BusinessUnitsTable
 	ShipmentCommoditiesTable.ForeignKeys[2].RefTable = OrganizationsTable
+	ShipmentCommoditiesTable.Annotation = &entsql.Annotation{}
 	ShipmentControlsTable.ForeignKeys[0].RefTable = OrganizationsTable
 	ShipmentControlsTable.ForeignKeys[1].RefTable = BusinessUnitsTable
 	ShipmentDocumentationsTable.ForeignKeys[0].RefTable = DocumentClassificationsTable
 	ShipmentDocumentationsTable.ForeignKeys[1].RefTable = ShipmentsTable
 	ShipmentDocumentationsTable.ForeignKeys[2].RefTable = BusinessUnitsTable
 	ShipmentDocumentationsTable.ForeignKeys[3].RefTable = OrganizationsTable
+	ShipmentDocumentationsTable.Annotation = &entsql.Annotation{}
 	ShipmentMovesTable.ForeignKeys[0].RefTable = ShipmentsTable
 	ShipmentMovesTable.ForeignKeys[1].RefTable = BusinessUnitsTable
 	ShipmentMovesTable.ForeignKeys[2].RefTable = OrganizationsTable
@@ -2692,15 +2835,20 @@ func init() {
 	ShipmentMovesTable.ForeignKeys[4].RefTable = TractorsTable
 	ShipmentMovesTable.ForeignKeys[5].RefTable = WorkersTable
 	ShipmentMovesTable.ForeignKeys[6].RefTable = WorkersTable
+	ShipmentMovesTable.Annotation = &entsql.Annotation{}
 	ShipmentTypesTable.ForeignKeys[0].RefTable = BusinessUnitsTable
 	ShipmentTypesTable.ForeignKeys[1].RefTable = OrganizationsTable
+	ShipmentTypesTable.Annotation = &entsql.Annotation{}
 	StopsTable.ForeignKeys[0].RefTable = ShipmentMovesTable
 	StopsTable.ForeignKeys[1].RefTable = BusinessUnitsTable
 	StopsTable.ForeignKeys[2].RefTable = OrganizationsTable
+	StopsTable.Annotation = &entsql.Annotation{}
 	TableChangeAlertsTable.ForeignKeys[0].RefTable = BusinessUnitsTable
 	TableChangeAlertsTable.ForeignKeys[1].RefTable = OrganizationsTable
+	TableChangeAlertsTable.Annotation = &entsql.Annotation{}
 	TagsTable.ForeignKeys[0].RefTable = BusinessUnitsTable
 	TagsTable.ForeignKeys[1].RefTable = OrganizationsTable
+	TagsTable.Annotation = &entsql.Annotation{}
 	TractorsTable.ForeignKeys[0].RefTable = BusinessUnitsTable
 	TractorsTable.ForeignKeys[1].RefTable = OrganizationsTable
 	TractorsTable.ForeignKeys[2].RefTable = EquipmentTypesTable
@@ -2709,6 +2857,7 @@ func init() {
 	TractorsTable.ForeignKeys[5].RefTable = FleetCodesTable
 	TractorsTable.ForeignKeys[6].RefTable = WorkersTable
 	TractorsTable.ForeignKeys[7].RefTable = WorkersTable
+	TractorsTable.Annotation = &entsql.Annotation{}
 	TrailersTable.ForeignKeys[0].RefTable = BusinessUnitsTable
 	TrailersTable.ForeignKeys[1].RefTable = OrganizationsTable
 	TrailersTable.ForeignKeys[2].RefTable = EquipmentTypesTable
@@ -2716,28 +2865,43 @@ func init() {
 	TrailersTable.ForeignKeys[4].RefTable = UsStatesTable
 	TrailersTable.ForeignKeys[5].RefTable = UsStatesTable
 	TrailersTable.ForeignKeys[6].RefTable = FleetCodesTable
+	TrailersTable.Annotation = &entsql.Annotation{}
 	UsersTable.ForeignKeys[0].RefTable = BusinessUnitsTable
 	UsersTable.ForeignKeys[1].RefTable = OrganizationsTable
+	UsersTable.Annotation = &entsql.Annotation{}
 	UserFavoritesTable.ForeignKeys[0].RefTable = UsersTable
 	UserFavoritesTable.ForeignKeys[1].RefTable = BusinessUnitsTable
 	UserFavoritesTable.ForeignKeys[2].RefTable = OrganizationsTable
+	UserFavoritesTable.Annotation = &entsql.Annotation{}
+	UserNotificationsTable.ForeignKeys[0].RefTable = UsersTable
+	UserNotificationsTable.ForeignKeys[1].RefTable = BusinessUnitsTable
+	UserNotificationsTable.ForeignKeys[2].RefTable = OrganizationsTable
+	UserNotificationsTable.Annotation = &entsql.Annotation{}
+	UserReportsTable.ForeignKeys[0].RefTable = UsersTable
+	UserReportsTable.ForeignKeys[1].RefTable = BusinessUnitsTable
+	UserReportsTable.ForeignKeys[2].RefTable = OrganizationsTable
+	UserReportsTable.Annotation = &entsql.Annotation{}
 	WorkersTable.ForeignKeys[0].RefTable = BusinessUnitsTable
 	WorkersTable.ForeignKeys[1].RefTable = OrganizationsTable
 	WorkersTable.ForeignKeys[2].RefTable = UsStatesTable
 	WorkersTable.ForeignKeys[3].RefTable = FleetCodesTable
 	WorkersTable.ForeignKeys[4].RefTable = UsersTable
+	WorkersTable.Annotation = &entsql.Annotation{}
 	WorkerCommentsTable.ForeignKeys[0].RefTable = WorkersTable
 	WorkerCommentsTable.ForeignKeys[1].RefTable = BusinessUnitsTable
 	WorkerCommentsTable.ForeignKeys[2].RefTable = OrganizationsTable
 	WorkerCommentsTable.ForeignKeys[3].RefTable = CommentTypesTable
 	WorkerCommentsTable.ForeignKeys[4].RefTable = UsersTable
+	WorkerCommentsTable.Annotation = &entsql.Annotation{}
 	WorkerContactsTable.ForeignKeys[0].RefTable = WorkersTable
 	WorkerContactsTable.ForeignKeys[1].RefTable = BusinessUnitsTable
 	WorkerContactsTable.ForeignKeys[2].RefTable = OrganizationsTable
+	WorkerContactsTable.Annotation = &entsql.Annotation{}
 	WorkerProfilesTable.ForeignKeys[0].RefTable = WorkersTable
 	WorkerProfilesTable.ForeignKeys[1].RefTable = BusinessUnitsTable
 	WorkerProfilesTable.ForeignKeys[2].RefTable = OrganizationsTable
 	WorkerProfilesTable.ForeignKeys[3].RefTable = UsStatesTable
+	WorkerProfilesTable.Annotation = &entsql.Annotation{}
 	GeneralLedgerAccountTagsTable.ForeignKeys[0].RefTable = GeneralLedgerAccountsTable
 	GeneralLedgerAccountTagsTable.ForeignKeys[1].RefTable = TagsTable
 }

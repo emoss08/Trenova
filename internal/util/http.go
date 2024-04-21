@@ -5,6 +5,7 @@ import (
 	"errors"
 	"log"
 	"net/http"
+	"strconv"
 	"sync"
 
 	"github.com/emoss08/trenova/internal/ent"
@@ -120,4 +121,15 @@ func WithTx(ctx context.Context, client *ent.Client, fn func(tx *ent.Tx) error) 
 	}
 
 	return nil
+}
+
+func ConvertToInt(value string, defaultCount int) int {
+	if value == "" {
+		return defaultCount
+	}
+	count, err := strconv.Atoi(value)
+	if err != nil {
+		return defaultCount
+	}
+	return count
 }
