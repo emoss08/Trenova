@@ -252,7 +252,7 @@ type TopicName struct {
 }
 
 func (r *TableChangeAlertService) GetTopicNames() ([]TopicName, int, error) {
-	topics, err := r.Kafka.GetKafkaTopics()
+	topics, err := r.Kafka.GetTopics()
 	if err != nil {
 		return nil, 0, err
 	}

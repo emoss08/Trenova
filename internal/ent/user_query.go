@@ -19,27 +19,33 @@ import (
 	"github.com/emoss08/trenova/internal/ent/shipmentcomment"
 	"github.com/emoss08/trenova/internal/ent/user"
 	"github.com/emoss08/trenova/internal/ent/userfavorite"
+	"github.com/emoss08/trenova/internal/ent/usernotification"
+	"github.com/emoss08/trenova/internal/ent/userreport"
 	"github.com/google/uuid"
 )
 
 // UserQuery is the builder for querying User entities.
 type UserQuery struct {
 	config
-	ctx                       *QueryContext
-	order                     []user.OrderOption
-	inters                    []Interceptor
-	predicates                []predicate.User
-	withBusinessUnit          *BusinessUnitQuery
-	withOrganization          *OrganizationQuery
-	withUserFavorites         *UserFavoriteQuery
-	withShipments             *ShipmentQuery
-	withShipmentComments      *ShipmentCommentQuery
-	withShipmentCharges       *ShipmentChargesQuery
-	modifiers                 []func(*sql.Selector)
-	withNamedUserFavorites    map[string]*UserFavoriteQuery
-	withNamedShipments        map[string]*ShipmentQuery
-	withNamedShipmentComments map[string]*ShipmentCommentQuery
-	withNamedShipmentCharges  map[string]*ShipmentChargesQuery
+	ctx                        *QueryContext
+	order                      []user.OrderOption
+	inters                     []Interceptor
+	predicates                 []predicate.User
+	withBusinessUnit           *BusinessUnitQuery
+	withOrganization           *OrganizationQuery
+	withUserFavorites          *UserFavoriteQuery
+	withUserNotifications      *UserNotificationQuery
+	withShipments              *ShipmentQuery
+	withShipmentComments       *ShipmentCommentQuery
+	withShipmentCharges        *ShipmentChargesQuery
+	withReports                *UserReportQuery
+	modifiers                  []func(*sql.Selector)
+	withNamedUserFavorites     map[string]*UserFavoriteQuery
+	withNamedUserNotifications map[string]*UserNotificationQuery
+	withNamedShipments         map[string]*ShipmentQuery
+	withNamedShipmentComments  map[string]*ShipmentCommentQuery
+	withNamedShipmentCharges   map[string]*ShipmentChargesQuery
+	withNamedReports           map[string]*UserReportQuery
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
 	path func(context.Context) (*sql.Selector, error)
@@ -142,6 +148,28 @@ func (uq *UserQuery) QueryUserFavorites() *UserFavoriteQuery {
 	return query
 }
 
+// QueryUserNotifications chains the current query on the "user_notifications" edge.
+func (uq *UserQuery) QueryUserNotifications() *UserNotificationQuery {
+	query := (&UserNotificationClient{config: uq.config}).Query()
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := uq.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := uq.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(user.Table, user.FieldID, selector),
+			sqlgraph.To(usernotification.Table, usernotification.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, user.UserNotificationsTable, user.UserNotificationsColumn),
+		)
+		fromU = sqlgraph.SetNeighbors(uq.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
+}
+
 // QueryShipments chains the current query on the "shipments" edge.
 func (uq *UserQuery) QueryShipments() *ShipmentQuery {
 	query := (&ShipmentClient{config: uq.config}).Query()
@@ -201,6 +229,28 @@ func (uq *UserQuery) QueryShipmentCharges() *ShipmentChargesQuery {
 			sqlgraph.From(user.Table, user.FieldID, selector),
 			sqlgraph.To(shipmentcharges.Table, shipmentcharges.FieldID),
 			sqlgraph.Edge(sqlgraph.O2M, false, user.ShipmentChargesTable, user.ShipmentChargesColumn),
+		)
+		fromU = sqlgraph.SetNeighbors(uq.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
+}
+
+// QueryReports chains the current query on the "reports" edge.
+func (uq *UserQuery) QueryReports() *UserReportQuery {
+	query := (&UserReportClient{config: uq.config}).Query()
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := uq.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := uq.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(user.Table, user.FieldID, selector),
+			sqlgraph.To(userreport.Table, userreport.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, user.ReportsTable, user.ReportsColumn),
 		)
 		fromU = sqlgraph.SetNeighbors(uq.driver.Dialect(), step)
 		return fromU, nil
@@ -395,17 +445,19 @@ func (uq *UserQuery) Clone() *UserQuery {
 		return nil
 	}
 	return &UserQuery{
-		config:               uq.config,
-		ctx:                  uq.ctx.Clone(),
-		order:                append([]user.OrderOption{}, uq.order...),
-		inters:               append([]Interceptor{}, uq.inters...),
-		predicates:           append([]predicate.User{}, uq.predicates...),
-		withBusinessUnit:     uq.withBusinessUnit.Clone(),
-		withOrganization:     uq.withOrganization.Clone(),
-		withUserFavorites:    uq.withUserFavorites.Clone(),
-		withShipments:        uq.withShipments.Clone(),
-		withShipmentComments: uq.withShipmentComments.Clone(),
-		withShipmentCharges:  uq.withShipmentCharges.Clone(),
+		config:                uq.config,
+		ctx:                   uq.ctx.Clone(),
+		order:                 append([]user.OrderOption{}, uq.order...),
+		inters:                append([]Interceptor{}, uq.inters...),
+		predicates:            append([]predicate.User{}, uq.predicates...),
+		withBusinessUnit:      uq.withBusinessUnit.Clone(),
+		withOrganization:      uq.withOrganization.Clone(),
+		withUserFavorites:     uq.withUserFavorites.Clone(),
+		withUserNotifications: uq.withUserNotifications.Clone(),
+		withShipments:         uq.withShipments.Clone(),
+		withShipmentComments:  uq.withShipmentComments.Clone(),
+		withShipmentCharges:   uq.withShipmentCharges.Clone(),
+		withReports:           uq.withReports.Clone(),
 		// clone intermediate query.
 		sql:  uq.sql.Clone(),
 		path: uq.path,
@@ -445,6 +497,17 @@ func (uq *UserQuery) WithUserFavorites(opts ...func(*UserFavoriteQuery)) *UserQu
 	return uq
 }
 
+// WithUserNotifications tells the query-builder to eager-load the nodes that are connected to
+// the "user_notifications" edge. The optional arguments are used to configure the query builder of the edge.
+func (uq *UserQuery) WithUserNotifications(opts ...func(*UserNotificationQuery)) *UserQuery {
+	query := (&UserNotificationClient{config: uq.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	uq.withUserNotifications = query
+	return uq
+}
+
 // WithShipments tells the query-builder to eager-load the nodes that are connected to
 // the "shipments" edge. The optional arguments are used to configure the query builder of the edge.
 func (uq *UserQuery) WithShipments(opts ...func(*ShipmentQuery)) *UserQuery {
@@ -475,6 +538,17 @@ func (uq *UserQuery) WithShipmentCharges(opts ...func(*ShipmentChargesQuery)) *U
 		opt(query)
 	}
 	uq.withShipmentCharges = query
+	return uq
+}
+
+// WithReports tells the query-builder to eager-load the nodes that are connected to
+// the "reports" edge. The optional arguments are used to configure the query builder of the edge.
+func (uq *UserQuery) WithReports(opts ...func(*UserReportQuery)) *UserQuery {
+	query := (&UserReportClient{config: uq.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	uq.withReports = query
 	return uq
 }
 
@@ -556,13 +630,15 @@ func (uq *UserQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*User, e
 	var (
 		nodes       = []*User{}
 		_spec       = uq.querySpec()
-		loadedTypes = [6]bool{
+		loadedTypes = [8]bool{
 			uq.withBusinessUnit != nil,
 			uq.withOrganization != nil,
 			uq.withUserFavorites != nil,
+			uq.withUserNotifications != nil,
 			uq.withShipments != nil,
 			uq.withShipmentComments != nil,
 			uq.withShipmentCharges != nil,
+			uq.withReports != nil,
 		}
 	)
 	_spec.ScanValues = func(columns []string) ([]any, error) {
@@ -605,6 +681,13 @@ func (uq *UserQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*User, e
 			return nil, err
 		}
 	}
+	if query := uq.withUserNotifications; query != nil {
+		if err := uq.loadUserNotifications(ctx, query, nodes,
+			func(n *User) { n.Edges.UserNotifications = []*UserNotification{} },
+			func(n *User, e *UserNotification) { n.Edges.UserNotifications = append(n.Edges.UserNotifications, e) }); err != nil {
+			return nil, err
+		}
+	}
 	if query := uq.withShipments; query != nil {
 		if err := uq.loadShipments(ctx, query, nodes,
 			func(n *User) { n.Edges.Shipments = []*Shipment{} },
@@ -626,10 +709,24 @@ func (uq *UserQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*User, e
 			return nil, err
 		}
 	}
+	if query := uq.withReports; query != nil {
+		if err := uq.loadReports(ctx, query, nodes,
+			func(n *User) { n.Edges.Reports = []*UserReport{} },
+			func(n *User, e *UserReport) { n.Edges.Reports = append(n.Edges.Reports, e) }); err != nil {
+			return nil, err
+		}
+	}
 	for name, query := range uq.withNamedUserFavorites {
 		if err := uq.loadUserFavorites(ctx, query, nodes,
 			func(n *User) { n.appendNamedUserFavorites(name) },
 			func(n *User, e *UserFavorite) { n.appendNamedUserFavorites(name, e) }); err != nil {
+			return nil, err
+		}
+	}
+	for name, query := range uq.withNamedUserNotifications {
+		if err := uq.loadUserNotifications(ctx, query, nodes,
+			func(n *User) { n.appendNamedUserNotifications(name) },
+			func(n *User, e *UserNotification) { n.appendNamedUserNotifications(name, e) }); err != nil {
 			return nil, err
 		}
 	}
@@ -651,6 +748,13 @@ func (uq *UserQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*User, e
 		if err := uq.loadShipmentCharges(ctx, query, nodes,
 			func(n *User) { n.appendNamedShipmentCharges(name) },
 			func(n *User, e *ShipmentCharges) { n.appendNamedShipmentCharges(name, e) }); err != nil {
+			return nil, err
+		}
+	}
+	for name, query := range uq.withNamedReports {
+		if err := uq.loadReports(ctx, query, nodes,
+			func(n *User) { n.appendNamedReports(name) },
+			func(n *User, e *UserReport) { n.appendNamedReports(name, e) }); err != nil {
 			return nil, err
 		}
 	}
@@ -730,6 +834,36 @@ func (uq *UserQuery) loadUserFavorites(ctx context.Context, query *UserFavoriteQ
 	}
 	query.Where(predicate.UserFavorite(func(s *sql.Selector) {
 		s.Where(sql.InValues(s.C(user.UserFavoritesColumn), fks...))
+	}))
+	neighbors, err := query.All(ctx)
+	if err != nil {
+		return err
+	}
+	for _, n := range neighbors {
+		fk := n.UserID
+		node, ok := nodeids[fk]
+		if !ok {
+			return fmt.Errorf(`unexpected referenced foreign-key "user_id" returned %v for node %v`, fk, n.ID)
+		}
+		assign(node, n)
+	}
+	return nil
+}
+func (uq *UserQuery) loadUserNotifications(ctx context.Context, query *UserNotificationQuery, nodes []*User, init func(*User), assign func(*User, *UserNotification)) error {
+	fks := make([]driver.Value, 0, len(nodes))
+	nodeids := make(map[uuid.UUID]*User)
+	for i := range nodes {
+		fks = append(fks, nodes[i].ID)
+		nodeids[nodes[i].ID] = nodes[i]
+		if init != nil {
+			init(nodes[i])
+		}
+	}
+	if len(query.ctx.Fields) > 0 {
+		query.ctx.AppendFieldOnce(usernotification.FieldUserID)
+	}
+	query.Where(predicate.UserNotification(func(s *sql.Selector) {
+		s.Where(sql.InValues(s.C(user.UserNotificationsColumn), fks...))
 	}))
 	neighbors, err := query.All(ctx)
 	if err != nil {
@@ -833,6 +967,36 @@ func (uq *UserQuery) loadShipmentCharges(ctx context.Context, query *ShipmentCha
 		node, ok := nodeids[fk]
 		if !ok {
 			return fmt.Errorf(`unexpected referenced foreign-key "created_by" returned %v for node %v`, fk, n.ID)
+		}
+		assign(node, n)
+	}
+	return nil
+}
+func (uq *UserQuery) loadReports(ctx context.Context, query *UserReportQuery, nodes []*User, init func(*User), assign func(*User, *UserReport)) error {
+	fks := make([]driver.Value, 0, len(nodes))
+	nodeids := make(map[uuid.UUID]*User)
+	for i := range nodes {
+		fks = append(fks, nodes[i].ID)
+		nodeids[nodes[i].ID] = nodes[i]
+		if init != nil {
+			init(nodes[i])
+		}
+	}
+	if len(query.ctx.Fields) > 0 {
+		query.ctx.AppendFieldOnce(userreport.FieldUserID)
+	}
+	query.Where(predicate.UserReport(func(s *sql.Selector) {
+		s.Where(sql.InValues(s.C(user.ReportsColumn), fks...))
+	}))
+	neighbors, err := query.All(ctx)
+	if err != nil {
+		return err
+	}
+	for _, n := range neighbors {
+		fk := n.UserID
+		node, ok := nodeids[fk]
+		if !ok {
+			return fmt.Errorf(`unexpected referenced foreign-key "user_id" returned %v for node %v`, fk, n.ID)
 		}
 		assign(node, n)
 	}
@@ -952,6 +1116,20 @@ func (uq *UserQuery) WithNamedUserFavorites(name string, opts ...func(*UserFavor
 	return uq
 }
 
+// WithNamedUserNotifications tells the query-builder to eager-load the nodes that are connected to the "user_notifications"
+// edge with the given name. The optional arguments are used to configure the query builder of the edge.
+func (uq *UserQuery) WithNamedUserNotifications(name string, opts ...func(*UserNotificationQuery)) *UserQuery {
+	query := (&UserNotificationClient{config: uq.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	if uq.withNamedUserNotifications == nil {
+		uq.withNamedUserNotifications = make(map[string]*UserNotificationQuery)
+	}
+	uq.withNamedUserNotifications[name] = query
+	return uq
+}
+
 // WithNamedShipments tells the query-builder to eager-load the nodes that are connected to the "shipments"
 // edge with the given name. The optional arguments are used to configure the query builder of the edge.
 func (uq *UserQuery) WithNamedShipments(name string, opts ...func(*ShipmentQuery)) *UserQuery {
@@ -991,6 +1169,20 @@ func (uq *UserQuery) WithNamedShipmentCharges(name string, opts ...func(*Shipmen
 		uq.withNamedShipmentCharges = make(map[string]*ShipmentChargesQuery)
 	}
 	uq.withNamedShipmentCharges[name] = query
+	return uq
+}
+
+// WithNamedReports tells the query-builder to eager-load the nodes that are connected to the "reports"
+// edge with the given name. The optional arguments are used to configure the query builder of the edge.
+func (uq *UserQuery) WithNamedReports(name string, opts ...func(*UserReportQuery)) *UserQuery {
+	query := (&UserReportClient{config: uq.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	if uq.withNamedReports == nil {
+		uq.withNamedReports = make(map[string]*UserReportQuery)
+	}
+	uq.withNamedReports[name] = query
 	return uq
 }
 

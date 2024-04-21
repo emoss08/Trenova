@@ -19,9 +19,9 @@ type BusinessUnit struct {
 	config `json:"-" validate:"-"`
 	// ID of the ent.
 	ID uuid.UUID `json:"id,omitempty"`
-	// CreatedAt holds the value of the "created_at" field.
+	// The time that this entity was created.
 	CreatedAt time.Time `json:"createdAt" validate:"omitempty"`
-	// UpdatedAt holds the value of the "updated_at" field.
+	// The last time that this entity was updated.
 	UpdatedAt time.Time `json:"updatedAt" validate:"omitempty"`
 	// Status holds the value of the "status" field.
 	Status businessunit.Status `json:"status,omitempty"`

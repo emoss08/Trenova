@@ -61,8 +61,7 @@ func (h *AuthenticationHandler) AuthenticateUser() fiber.Handler {
 		}
 
 		// Authenticate the user
-		user, err := h.Service.
-			AuthenticateUser(c.UserContext(), loginRequest.Username, loginRequest.Password)
+		user, err := h.Service.AuthenticateUser(c.UserContext(), loginRequest.Username, loginRequest.Password)
 		if err != nil {
 			return c.Status(fiber.StatusUnauthorized).JSON(types.ValidationErrorResponse{
 				Type: "unauthorized",

@@ -70,9 +70,11 @@ func (User) Fields() []ent.Field {
 func (User) Edges() []ent.Edge {
 	return []ent.Edge{
 		edge.To("user_favorites", UserFavorite.Type),
+		edge.To("user_notifications", UserNotification.Type),
 		edge.To("shipments", Shipment.Type),
 		edge.To("shipment_comments", ShipmentComment.Type),
 		edge.To("shipment_charges", ShipmentCharges.Type),
+		edge.To("reports", UserReport.Type),
 	}
 }
 

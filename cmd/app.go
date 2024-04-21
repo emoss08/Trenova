@@ -19,6 +19,7 @@ import (
 )
 
 func main() {
+	ctx := context.Background()
 	serverConfig := config.DefaultServiceConfigFromEnv()
 
 	zerolog.TimeFieldFormat = time.RFC3339Nano
@@ -31,7 +32,7 @@ func main() {
 
 	s := api.NewServer(serverConfig)
 
-	if err := s.InitClient(context.Background()); err != nil {
+	if err := s.InitClient(ctx); err != nil {
 		log.Fatal().Err(err).Msg("Failed to initialize entity client")
 	}
 
@@ -45,6 +46,14 @@ func main() {
 
 	if err := s.InitKafkaClient(); err != nil {
 		log.Fatal().Err(err).Msg("Failed to initialize Kafka client")
+	}
+
+	if err := s.InitRedisClient(ctx); err != nil {
+		log.Fatal().Err(err).Msg("Failed to initialize Redis client")
+	}
+
+	if err := s.InitMinioClient(ctx); err != nil {
+		log.Fatal().Err(err).Msg("Failed to initialize Minio client")
 	}
 
 	router.Init(s)

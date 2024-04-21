@@ -26,39 +26,39 @@ type Location struct {
 	BusinessUnitID uuid.UUID `json:"businessUnitId"`
 	// OrganizationID holds the value of the "organization_id" field.
 	OrganizationID uuid.UUID `json:"organizationId"`
-	// CreatedAt holds the value of the "created_at" field.
+	// The time that this entity was created.
 	CreatedAt time.Time `json:"createdAt" validate:"omitempty"`
-	// UpdatedAt holds the value of the "updated_at" field.
+	// The last time that this entity was updated.
 	UpdatedAt time.Time `json:"updatedAt" validate:"omitempty"`
-	// Version holds the value of the "version" field.
+	// The current version of this entity.
 	Version int `json:"version" validate:"omitempty"`
-	// Status holds the value of the "status" field.
+	// Current status of the location.
 	Status location.Status `json:"status" validate:"required,oneof=A I"`
-	// Code holds the value of the "code" field.
+	// Unique code for the location.
 	Code string `json:"code" validate:"required,max=10"`
-	// LocationCategoryID holds the value of the "location_category_id" field.
+	// Location category ID.
 	LocationCategoryID *uuid.UUID `json:"locationCategoryId" validate:"omitempty"`
-	// Name holds the value of the "name" field.
+	// Name of the location.
 	Name string `json:"name" validate:"required"`
-	// Description holds the value of the "description" field.
+	// Description of the location.
 	Description string `json:"description" validate:"omitempty"`
-	// AddressLine1 holds the value of the "address_line_1" field.
+	// Adress Line 1 of the location.
 	AddressLine1 string `json:"addressLine1" validate:"required,max=150"`
-	// AddressLine2 holds the value of the "address_line_2" field.
+	// Adress Line 2 of the location.
 	AddressLine2 string `json:"addressLine2" validate:"omitempty,max=150"`
-	// City holds the value of the "city" field.
+	// City of the location.
 	City string `json:"city" validate:"required,max=150"`
-	// StateID holds the value of the "state_id" field.
+	// State ID.
 	StateID uuid.UUID `json:"stateId" validate:"omitempty,uuid"`
-	// PostalCode holds the value of the "postal_code" field.
+	// Postal code of the location.
 	PostalCode string `json:"postalCode" validate:"required,max=10"`
-	// Longitude holds the value of the "longitude" field.
+	// Longitude of the location.
 	Longitude float64 `json:"longitude" validate:"omitempty"`
-	// Latitude holds the value of the "latitude" field.
+	// Latitude of the location.
 	Latitude float64 `json:"latitude" validate:"omitempty"`
 	// Place ID from Google Maps API.
 	PlaceID string `json:"placeId" validate:"omitempty,max=255"`
-	// IsGeocoded holds the value of the "is_geocoded" field.
+	// Is the location geocoded?
 	IsGeocoded bool `json:"isGeocoded"`
 	// Edges holds the relations/edges for other nodes in the graph.
 	// The values are being populated by the LocationQuery when eager-loading is set.

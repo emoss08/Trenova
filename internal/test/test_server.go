@@ -39,9 +39,6 @@ func execClosureNewTestServer(t *testing.T, config config.Server, client *ent.Cl
 
 	s := api.NewServer(config)
 
-	// Register gob
-	s.RegisterGob()
-
 	// attach the already initialized db
 	s.Client = client
 	s.Session = session.New()

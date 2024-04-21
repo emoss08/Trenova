@@ -17,6 +17,8 @@ import (
 	"github.com/emoss08/trenova/internal/ent/shipmentcomment"
 	"github.com/emoss08/trenova/internal/ent/user"
 	"github.com/emoss08/trenova/internal/ent/userfavorite"
+	"github.com/emoss08/trenova/internal/ent/usernotification"
+	"github.com/emoss08/trenova/internal/ent/userreport"
 	"github.com/google/uuid"
 )
 
@@ -256,6 +258,21 @@ func (uc *UserCreate) AddUserFavorites(u ...*UserFavorite) *UserCreate {
 	return uc.AddUserFavoriteIDs(ids...)
 }
 
+// AddUserNotificationIDs adds the "user_notifications" edge to the UserNotification entity by IDs.
+func (uc *UserCreate) AddUserNotificationIDs(ids ...uuid.UUID) *UserCreate {
+	uc.mutation.AddUserNotificationIDs(ids...)
+	return uc
+}
+
+// AddUserNotifications adds the "user_notifications" edges to the UserNotification entity.
+func (uc *UserCreate) AddUserNotifications(u ...*UserNotification) *UserCreate {
+	ids := make([]uuid.UUID, len(u))
+	for i := range u {
+		ids[i] = u[i].ID
+	}
+	return uc.AddUserNotificationIDs(ids...)
+}
+
 // AddShipmentIDs adds the "shipments" edge to the Shipment entity by IDs.
 func (uc *UserCreate) AddShipmentIDs(ids ...uuid.UUID) *UserCreate {
 	uc.mutation.AddShipmentIDs(ids...)
@@ -299,6 +316,21 @@ func (uc *UserCreate) AddShipmentCharges(s ...*ShipmentCharges) *UserCreate {
 		ids[i] = s[i].ID
 	}
 	return uc.AddShipmentChargeIDs(ids...)
+}
+
+// AddReportIDs adds the "reports" edge to the UserReport entity by IDs.
+func (uc *UserCreate) AddReportIDs(ids ...uuid.UUID) *UserCreate {
+	uc.mutation.AddReportIDs(ids...)
+	return uc
+}
+
+// AddReports adds the "reports" edges to the UserReport entity.
+func (uc *UserCreate) AddReports(u ...*UserReport) *UserCreate {
+	ids := make([]uuid.UUID, len(u))
+	for i := range u {
+		ids[i] = u[i].ID
+	}
+	return uc.AddReportIDs(ids...)
 }
 
 // Mutation returns the UserMutation object of the builder.
@@ -592,6 +624,22 @@ func (uc *UserCreate) createSpec() (*User, *sqlgraph.CreateSpec) {
 		}
 		_spec.Edges = append(_spec.Edges, edge)
 	}
+	if nodes := uc.mutation.UserNotificationsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.UserNotificationsTable,
+			Columns: []string{user.UserNotificationsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(usernotification.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges = append(_spec.Edges, edge)
+	}
 	if nodes := uc.mutation.ShipmentsIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
@@ -633,6 +681,22 @@ func (uc *UserCreate) createSpec() (*User, *sqlgraph.CreateSpec) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(shipmentcharges.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges = append(_spec.Edges, edge)
+	}
+	if nodes := uc.mutation.ReportsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.ReportsTable,
+			Columns: []string{user.ReportsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(userreport.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {

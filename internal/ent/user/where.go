@@ -955,6 +955,29 @@ func HasUserFavoritesWith(preds ...predicate.UserFavorite) predicate.User {
 	})
 }
 
+// HasUserNotifications applies the HasEdge predicate on the "user_notifications" edge.
+func HasUserNotifications() predicate.User {
+	return predicate.User(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, UserNotificationsTable, UserNotificationsColumn),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasUserNotificationsWith applies the HasEdge predicate on the "user_notifications" edge with a given conditions (other predicates).
+func HasUserNotificationsWith(preds ...predicate.UserNotification) predicate.User {
+	return predicate.User(func(s *sql.Selector) {
+		step := newUserNotificationsStep()
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	})
+}
+
 // HasShipments applies the HasEdge predicate on the "shipments" edge.
 func HasShipments() predicate.User {
 	return predicate.User(func(s *sql.Selector) {
@@ -1016,6 +1039,29 @@ func HasShipmentCharges() predicate.User {
 func HasShipmentChargesWith(preds ...predicate.ShipmentCharges) predicate.User {
 	return predicate.User(func(s *sql.Selector) {
 		step := newShipmentChargesStep()
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	})
+}
+
+// HasReports applies the HasEdge predicate on the "reports" edge.
+func HasReports() predicate.User {
+	return predicate.User(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, ReportsTable, ReportsColumn),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasReportsWith applies the HasEdge predicate on the "reports" edge with a given conditions (other predicates).
+func HasReportsWith(preds ...predicate.UserReport) predicate.User {
+	return predicate.User(func(s *sql.Selector) {
+		step := newReportsStep()
 		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
 			for _, p := range preds {
 				p(s)
