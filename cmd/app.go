@@ -10,7 +10,6 @@ import (
 	"time"
 
 	_ "github.com/emoss08/trenova/internal/ent/runtime"
-	"github.com/emoss08/trenova/internal/util/routing"
 
 	"github.com/emoss08/trenova/internal/api"
 	"github.com/emoss08/trenova/internal/api/router"
@@ -58,10 +57,6 @@ func main() {
 	}
 
 	router.Init(s)
-
-	routing.NewDistanceCalculator(s).CalculateDistance(
-		ctx, []string{"New York, NY"}, []string{"Los Angeles, CA"}, "Google", "imperial", "AIzaSyCLHnuZFDZIH-qBFWr5MTFSJm_vO6PxoXo",
-	)
 
 	go func() {
 		if err := s.Start(); err != nil {
