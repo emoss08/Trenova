@@ -1,10 +1,12 @@
-// Credit: https://github.com/jftuga/geodist/blob/main/vincenty.go
+// Credit: https://github.com/jftuga/geodist/
 
 package routing
 
 import (
 	"errors"
 	"math"
+
+	"github.com/emoss08/trenova/internal/util"
 )
 
 const (
@@ -17,6 +19,20 @@ const (
 type Coord struct {
 	Lat float64 // Latitude in decimal degrees.
 	Lon float64 // Longitude in decimal degrees.
+}
+
+// String returns a string representation of the coordinate.
+//
+// Returns:
+//
+//	string - A string representation of the coordinate in the format "latitude,longitude".
+//
+// Example:
+//
+//	coord := Coord{Lat: 40.7128, Lon: -74.0060}
+//	fmt.Println(coord.String()) // Output: "40.7128,-74.006"
+func (c Coord) String() string {
+	return util.FloatToString(c.Lat) + "," + util.FloatToString(c.Lon)
 }
 
 // VincentyDistance calculates the distance between two geographic coordinates using the Vincenty formula.
