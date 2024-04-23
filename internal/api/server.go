@@ -30,7 +30,8 @@ import (
 	rdb "github.com/redis/go-redis/v9"
 )
 
-// Server holds all dependencies for the API server, including database, cache, and session clients.
+// Server represents the main server instance containing all essential components such as configuration, database, web server, logger,
+// session store, Kafka, Redis, and Minio clients.
 type Server struct {
 	Config  config.Server
 	Client  *ent.Client
@@ -42,7 +43,15 @@ type Server struct {
 	Minio   *minio.Client
 }
 
-// NewServer initializes a new Server instance with given configuration.
+// NewServer initializes a new Server with the specified configuration. It returns a pointer to the Server instance.
+//
+// Parameters:
+//
+//	cfg config.Server: Configuration settings for the server.
+//
+// Returns:
+//
+//	*Server: Pointer to the newly created Server instance.
 func NewServer(cfg config.Server) *Server {
 	return &Server{Config: cfg}
 }
@@ -58,12 +67,20 @@ func (s *Server) Ready() bool {
 		s.Minio != nil
 }
 
-// RegisterGobTypes registers necessary types with the gob package, needed for session management.
+// RegisterGobTypes registers necessary types with the gob package for session management, such as UUIDs.
 func (s *Server) RegisterGobTypes() {
 	gob.Register(uuid.UUID{})
 }
 
-// InitClient sets up the database client using the configured options.
+// InitClient establishes a database connection using the provided configuration and verifies it by pinging the database.
+//
+// Parameters:
+//
+//	ctx context.Context: Context for cancellation and deadlines.
+//
+// Returns:
+//
+//	error: Error if the database connection or ping fails, nil otherwise.
 func (s *Server) InitClient(ctx context.Context) error {
 	db, err := sql.Open("pgx", s.Config.DB.ConnectionString())
 	if err != nil {
@@ -87,14 +104,13 @@ func (s *Server) InitClient(ctx context.Context) error {
 	return nil
 }
 
-// InitKafkaClient initializes the Kafka client with the specified configuration.
 func (s *Server) InitKafkaClient() error {
 	config := kafka.ConfigMap{"bootstrap.servers": s.Config.Kafka.Broker}
-	s.Kafka = kfk.NewClient(&config)
+	s.Kafka = kfk.NewClient(&config, s.Logger)
 	return nil
 }
 
-// InitSessionStore configures the session storage using Redis.
+// InitSessionStore initializes the session store with Redis backend based on server's configuration.
 func (s *Server) InitSessionStore() error {
 	store := redis.New(redis.Config{
 		Host:     s.Config.Redis.Host,

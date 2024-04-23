@@ -80,11 +80,17 @@ type LocationEdges struct {
 	Comments []*LocationComment `json:"comments"`
 	// Contacts holds the value of the contacts edge.
 	Contacts []*LocationContact `json:"contacts"`
+	// OriginRouteLocations holds the value of the origin_route_locations edge.
+	OriginRouteLocations []*ShipmentRoute `json:"originLocations"`
+	// DestinationRouteLocations holds the value of the destination_route_locations edge.
+	DestinationRouteLocations []*ShipmentRoute `json:"originLocations"`
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
-	loadedTypes   [6]bool
-	namedComments map[string][]*LocationComment
-	namedContacts map[string][]*LocationContact
+	loadedTypes                    [8]bool
+	namedComments                  map[string][]*LocationComment
+	namedContacts                  map[string][]*LocationContact
+	namedOriginRouteLocations      map[string][]*ShipmentRoute
+	namedDestinationRouteLocations map[string][]*ShipmentRoute
 }
 
 // BusinessUnitOrErr returns the BusinessUnit value or an error if the edge
@@ -147,6 +153,24 @@ func (e LocationEdges) ContactsOrErr() ([]*LocationContact, error) {
 		return e.Contacts, nil
 	}
 	return nil, &NotLoadedError{edge: "contacts"}
+}
+
+// OriginRouteLocationsOrErr returns the OriginRouteLocations value or an error if the edge
+// was not loaded in eager-loading.
+func (e LocationEdges) OriginRouteLocationsOrErr() ([]*ShipmentRoute, error) {
+	if e.loadedTypes[6] {
+		return e.OriginRouteLocations, nil
+	}
+	return nil, &NotLoadedError{edge: "origin_route_locations"}
+}
+
+// DestinationRouteLocationsOrErr returns the DestinationRouteLocations value or an error if the edge
+// was not loaded in eager-loading.
+func (e LocationEdges) DestinationRouteLocationsOrErr() ([]*ShipmentRoute, error) {
+	if e.loadedTypes[7] {
+		return e.DestinationRouteLocations, nil
+	}
+	return nil, &NotLoadedError{edge: "destination_route_locations"}
 }
 
 // scanValues returns the types for scanning values from sql.Rows.
@@ -347,6 +371,16 @@ func (l *Location) QueryContacts() *LocationContactQuery {
 	return NewLocationClient(l.config).QueryContacts(l)
 }
 
+// QueryOriginRouteLocations queries the "origin_route_locations" edge of the Location entity.
+func (l *Location) QueryOriginRouteLocations() *ShipmentRouteQuery {
+	return NewLocationClient(l.config).QueryOriginRouteLocations(l)
+}
+
+// QueryDestinationRouteLocations queries the "destination_route_locations" edge of the Location entity.
+func (l *Location) QueryDestinationRouteLocations() *ShipmentRouteQuery {
+	return NewLocationClient(l.config).QueryDestinationRouteLocations(l)
+}
+
 // Update returns a builder for updating this Location.
 // Note that you need to call Location.Unwrap() before calling this method if this Location
 // was returned from a transaction, and the transaction was committed or rolled back.
@@ -477,6 +511,54 @@ func (l *Location) appendNamedContacts(name string, edges ...*LocationContact) {
 		l.Edges.namedContacts[name] = []*LocationContact{}
 	} else {
 		l.Edges.namedContacts[name] = append(l.Edges.namedContacts[name], edges...)
+	}
+}
+
+// NamedOriginRouteLocations returns the OriginRouteLocations named value or an error if the edge was not
+// loaded in eager-loading with this name.
+func (l *Location) NamedOriginRouteLocations(name string) ([]*ShipmentRoute, error) {
+	if l.Edges.namedOriginRouteLocations == nil {
+		return nil, &NotLoadedError{edge: name}
+	}
+	nodes, ok := l.Edges.namedOriginRouteLocations[name]
+	if !ok {
+		return nil, &NotLoadedError{edge: name}
+	}
+	return nodes, nil
+}
+
+func (l *Location) appendNamedOriginRouteLocations(name string, edges ...*ShipmentRoute) {
+	if l.Edges.namedOriginRouteLocations == nil {
+		l.Edges.namedOriginRouteLocations = make(map[string][]*ShipmentRoute)
+	}
+	if len(edges) == 0 {
+		l.Edges.namedOriginRouteLocations[name] = []*ShipmentRoute{}
+	} else {
+		l.Edges.namedOriginRouteLocations[name] = append(l.Edges.namedOriginRouteLocations[name], edges...)
+	}
+}
+
+// NamedDestinationRouteLocations returns the DestinationRouteLocations named value or an error if the edge was not
+// loaded in eager-loading with this name.
+func (l *Location) NamedDestinationRouteLocations(name string) ([]*ShipmentRoute, error) {
+	if l.Edges.namedDestinationRouteLocations == nil {
+		return nil, &NotLoadedError{edge: name}
+	}
+	nodes, ok := l.Edges.namedDestinationRouteLocations[name]
+	if !ok {
+		return nil, &NotLoadedError{edge: name}
+	}
+	return nodes, nil
+}
+
+func (l *Location) appendNamedDestinationRouteLocations(name string, edges ...*ShipmentRoute) {
+	if l.Edges.namedDestinationRouteLocations == nil {
+		l.Edges.namedDestinationRouteLocations = make(map[string][]*ShipmentRoute)
+	}
+	if len(edges) == 0 {
+		l.Edges.namedDestinationRouteLocations[name] = []*ShipmentRoute{}
+	} else {
+		l.Edges.namedDestinationRouteLocations[name] = append(l.Edges.namedDestinationRouteLocations[name], edges...)
 	}
 }
 

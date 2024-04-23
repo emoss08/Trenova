@@ -9,11 +9,21 @@ import (
 	"github.com/google/uuid"
 )
 
+// WorkerHandler is a struct that handles HTTP requests for worker resources.
 type WorkerHandler struct {
 	Server  *api.Server
 	Service *services.WorkerService
 }
 
+// NewWorkerHandler creates a new WorkerHandler with the given Server instance.
+//
+// Parameters:
+//
+//	s *api.Server: A pointer to an instance of api.Server which contains configuration and state needed by WorkerHandler.
+//
+// Returns:
+//
+//	*WorkerHandler: A pointer to the newly created WorkerHandler instance.
 func NewWorkerHandler(s *api.Server) *WorkerHandler {
 	return &WorkerHandler{
 		Server:  s,

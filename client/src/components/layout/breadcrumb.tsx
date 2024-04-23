@@ -1,23 +1,5 @@
-/*
- * COPYRIGHT(c) 2024 Trenova
- *
- * This file is part of Trenova.
- *
- * The Trenova software is licensed under the Business Source License 1.1. You are granted the right
- * to copy, modify, and redistribute the software, but only for non-production use or with a total
- * of less than three server instances. Starting from the Change Date (November 16, 2026), the
- * software will be made available under version 2 or later of the GNU General Public License.
- * If you use the software in violation of this license, your rights under the license will be
- * terminated automatically. The software is provided "as is," and the Licensor disclaims all
- * warranties and conditions. If you use this license's text or the "Business Source License" name
- * and trademark, you must comply with the Licensor's covenants, which include specifying the
- * Change License as the GPL Version 2.0 or a compatible license, specifying an Additional Use
- * Grant, and not modifying the license in any other way.
- */
-
 import { useUserFavorites } from "@/hooks/useQueries";
 import axios from "@/lib/axiosConfig";
-import { TOAST_STYLE } from "@/lib/constants";
 import { upperFirst } from "@/lib/utils";
 import { routes } from "@/routing/AppRoutes";
 import { useUserStore } from "@/stores/AuthStore";
@@ -30,8 +12,8 @@ import { QueryClient, useQueryClient } from "@tanstack/react-query";
 import { AxiosRequestConfig, AxiosResponse } from "axios";
 import { pathToRegexp } from "path-to-regexp";
 import { useCallback, useEffect, useMemo } from "react";
-import toast from "react-hot-toast";
 import { useLocation } from "react-router-dom";
+import { toast } from "sonner";
 import { Skeleton } from "../ui/skeleton";
 import {
   Tooltip,
@@ -58,7 +40,7 @@ async function manageFavorite(
   action: "add" | "remove",
   pageId: string,
   queryClient: QueryClient,
-): Promise<AxiosResponse> {
+) {
   const user = useUserStore.get("user");
 
   const method = action === "add" ? "post" : "delete";
@@ -70,22 +52,11 @@ async function manageFavorite(
     data,
   };
 
-  return toast.promise(
-    manageFavoriteRequest(axiosConfig, queryClient),
-    {
-      loading: "Updating favorites...",
-      success: "Favorites updated!",
-      error: "Error updating favorites.",
-    },
-    {
-      id: "theme-switcher",
-      style: TOAST_STYLE,
-      ariaProps: {
-        role: "status",
-        "aria-live": "polite",
-      },
-    },
-  );
+  toast.promise(manageFavoriteRequest(axiosConfig, queryClient), {
+    loading: "Updating favorites...",
+    success: "Favorites updated!",
+    error: "Error updating favorites.",
+  });
 }
 
 const useRouteMatching = (

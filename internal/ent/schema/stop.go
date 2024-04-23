@@ -10,7 +10,7 @@ import (
 	"entgo.io/ent/schema/field"
 	gen "github.com/emoss08/trenova/internal/ent"
 	"github.com/emoss08/trenova/internal/ent/hook"
-	st "github.com/emoss08/trenova/internal/util/stop"
+	models "github.com/emoss08/trenova/internal/models"
 	"github.com/emoss08/trenova/internal/util/types"
 	"github.com/google/uuid"
 )
@@ -103,13 +103,13 @@ func (Stop) Hooks() []ent.Hook {
 						return next.Mutate(ctx, m)
 					}
 
-					shipmentMove, err := st.GetShipmentMoveByStop(ctx, client, stopID)
+					shipmentMove, err := models.GetShipmentMoveByStop(ctx, client, stopID)
 					if err != nil {
 						return nil, err
 					}
 
 					// Validate the shipment.
-					validationErrs, err := st.ValidateStop(m, shipmentMove)
+					validationErrs, err := models.ValidateStop(m, shipmentMove)
 					if err != nil {
 						return nil, err
 					}

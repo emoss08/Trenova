@@ -16,6 +16,7 @@ import (
 	"github.com/emoss08/trenova/internal/ent/locationcomment"
 	"github.com/emoss08/trenova/internal/ent/locationcontact"
 	"github.com/emoss08/trenova/internal/ent/predicate"
+	"github.com/emoss08/trenova/internal/ent/shipmentroute"
 	"github.com/emoss08/trenova/internal/ent/usstate"
 	"github.com/google/uuid"
 )
@@ -347,6 +348,36 @@ func (lu *LocationUpdate) AddContacts(l ...*LocationContact) *LocationUpdate {
 	return lu.AddContactIDs(ids...)
 }
 
+// AddOriginRouteLocationIDs adds the "origin_route_locations" edge to the ShipmentRoute entity by IDs.
+func (lu *LocationUpdate) AddOriginRouteLocationIDs(ids ...uuid.UUID) *LocationUpdate {
+	lu.mutation.AddOriginRouteLocationIDs(ids...)
+	return lu
+}
+
+// AddOriginRouteLocations adds the "origin_route_locations" edges to the ShipmentRoute entity.
+func (lu *LocationUpdate) AddOriginRouteLocations(s ...*ShipmentRoute) *LocationUpdate {
+	ids := make([]uuid.UUID, len(s))
+	for i := range s {
+		ids[i] = s[i].ID
+	}
+	return lu.AddOriginRouteLocationIDs(ids...)
+}
+
+// AddDestinationRouteLocationIDs adds the "destination_route_locations" edge to the ShipmentRoute entity by IDs.
+func (lu *LocationUpdate) AddDestinationRouteLocationIDs(ids ...uuid.UUID) *LocationUpdate {
+	lu.mutation.AddDestinationRouteLocationIDs(ids...)
+	return lu
+}
+
+// AddDestinationRouteLocations adds the "destination_route_locations" edges to the ShipmentRoute entity.
+func (lu *LocationUpdate) AddDestinationRouteLocations(s ...*ShipmentRoute) *LocationUpdate {
+	ids := make([]uuid.UUID, len(s))
+	for i := range s {
+		ids[i] = s[i].ID
+	}
+	return lu.AddDestinationRouteLocationIDs(ids...)
+}
+
 // Mutation returns the LocationMutation object of the builder.
 func (lu *LocationUpdate) Mutation() *LocationMutation {
 	return lu.mutation
@@ -404,6 +435,48 @@ func (lu *LocationUpdate) RemoveContacts(l ...*LocationContact) *LocationUpdate 
 		ids[i] = l[i].ID
 	}
 	return lu.RemoveContactIDs(ids...)
+}
+
+// ClearOriginRouteLocations clears all "origin_route_locations" edges to the ShipmentRoute entity.
+func (lu *LocationUpdate) ClearOriginRouteLocations() *LocationUpdate {
+	lu.mutation.ClearOriginRouteLocations()
+	return lu
+}
+
+// RemoveOriginRouteLocationIDs removes the "origin_route_locations" edge to ShipmentRoute entities by IDs.
+func (lu *LocationUpdate) RemoveOriginRouteLocationIDs(ids ...uuid.UUID) *LocationUpdate {
+	lu.mutation.RemoveOriginRouteLocationIDs(ids...)
+	return lu
+}
+
+// RemoveOriginRouteLocations removes "origin_route_locations" edges to ShipmentRoute entities.
+func (lu *LocationUpdate) RemoveOriginRouteLocations(s ...*ShipmentRoute) *LocationUpdate {
+	ids := make([]uuid.UUID, len(s))
+	for i := range s {
+		ids[i] = s[i].ID
+	}
+	return lu.RemoveOriginRouteLocationIDs(ids...)
+}
+
+// ClearDestinationRouteLocations clears all "destination_route_locations" edges to the ShipmentRoute entity.
+func (lu *LocationUpdate) ClearDestinationRouteLocations() *LocationUpdate {
+	lu.mutation.ClearDestinationRouteLocations()
+	return lu
+}
+
+// RemoveDestinationRouteLocationIDs removes the "destination_route_locations" edge to ShipmentRoute entities by IDs.
+func (lu *LocationUpdate) RemoveDestinationRouteLocationIDs(ids ...uuid.UUID) *LocationUpdate {
+	lu.mutation.RemoveDestinationRouteLocationIDs(ids...)
+	return lu
+}
+
+// RemoveDestinationRouteLocations removes "destination_route_locations" edges to ShipmentRoute entities.
+func (lu *LocationUpdate) RemoveDestinationRouteLocations(s ...*ShipmentRoute) *LocationUpdate {
+	ids := make([]uuid.UUID, len(s))
+	for i := range s {
+		ids[i] = s[i].ID
+	}
+	return lu.RemoveDestinationRouteLocationIDs(ids...)
 }
 
 // Save executes the query and returns the number of nodes affected by the update operation.
@@ -721,6 +794,96 @@ func (lu *LocationUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(locationcontact.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if lu.mutation.OriginRouteLocationsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   location.OriginRouteLocationsTable,
+			Columns: []string{location.OriginRouteLocationsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(shipmentroute.FieldID, field.TypeUUID),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := lu.mutation.RemovedOriginRouteLocationsIDs(); len(nodes) > 0 && !lu.mutation.OriginRouteLocationsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   location.OriginRouteLocationsTable,
+			Columns: []string{location.OriginRouteLocationsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(shipmentroute.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := lu.mutation.OriginRouteLocationsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   location.OriginRouteLocationsTable,
+			Columns: []string{location.OriginRouteLocationsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(shipmentroute.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if lu.mutation.DestinationRouteLocationsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   location.DestinationRouteLocationsTable,
+			Columns: []string{location.DestinationRouteLocationsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(shipmentroute.FieldID, field.TypeUUID),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := lu.mutation.RemovedDestinationRouteLocationsIDs(); len(nodes) > 0 && !lu.mutation.DestinationRouteLocationsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   location.DestinationRouteLocationsTable,
+			Columns: []string{location.DestinationRouteLocationsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(shipmentroute.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := lu.mutation.DestinationRouteLocationsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   location.DestinationRouteLocationsTable,
+			Columns: []string{location.DestinationRouteLocationsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(shipmentroute.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {
@@ -1063,6 +1226,36 @@ func (luo *LocationUpdateOne) AddContacts(l ...*LocationContact) *LocationUpdate
 	return luo.AddContactIDs(ids...)
 }
 
+// AddOriginRouteLocationIDs adds the "origin_route_locations" edge to the ShipmentRoute entity by IDs.
+func (luo *LocationUpdateOne) AddOriginRouteLocationIDs(ids ...uuid.UUID) *LocationUpdateOne {
+	luo.mutation.AddOriginRouteLocationIDs(ids...)
+	return luo
+}
+
+// AddOriginRouteLocations adds the "origin_route_locations" edges to the ShipmentRoute entity.
+func (luo *LocationUpdateOne) AddOriginRouteLocations(s ...*ShipmentRoute) *LocationUpdateOne {
+	ids := make([]uuid.UUID, len(s))
+	for i := range s {
+		ids[i] = s[i].ID
+	}
+	return luo.AddOriginRouteLocationIDs(ids...)
+}
+
+// AddDestinationRouteLocationIDs adds the "destination_route_locations" edge to the ShipmentRoute entity by IDs.
+func (luo *LocationUpdateOne) AddDestinationRouteLocationIDs(ids ...uuid.UUID) *LocationUpdateOne {
+	luo.mutation.AddDestinationRouteLocationIDs(ids...)
+	return luo
+}
+
+// AddDestinationRouteLocations adds the "destination_route_locations" edges to the ShipmentRoute entity.
+func (luo *LocationUpdateOne) AddDestinationRouteLocations(s ...*ShipmentRoute) *LocationUpdateOne {
+	ids := make([]uuid.UUID, len(s))
+	for i := range s {
+		ids[i] = s[i].ID
+	}
+	return luo.AddDestinationRouteLocationIDs(ids...)
+}
+
 // Mutation returns the LocationMutation object of the builder.
 func (luo *LocationUpdateOne) Mutation() *LocationMutation {
 	return luo.mutation
@@ -1120,6 +1313,48 @@ func (luo *LocationUpdateOne) RemoveContacts(l ...*LocationContact) *LocationUpd
 		ids[i] = l[i].ID
 	}
 	return luo.RemoveContactIDs(ids...)
+}
+
+// ClearOriginRouteLocations clears all "origin_route_locations" edges to the ShipmentRoute entity.
+func (luo *LocationUpdateOne) ClearOriginRouteLocations() *LocationUpdateOne {
+	luo.mutation.ClearOriginRouteLocations()
+	return luo
+}
+
+// RemoveOriginRouteLocationIDs removes the "origin_route_locations" edge to ShipmentRoute entities by IDs.
+func (luo *LocationUpdateOne) RemoveOriginRouteLocationIDs(ids ...uuid.UUID) *LocationUpdateOne {
+	luo.mutation.RemoveOriginRouteLocationIDs(ids...)
+	return luo
+}
+
+// RemoveOriginRouteLocations removes "origin_route_locations" edges to ShipmentRoute entities.
+func (luo *LocationUpdateOne) RemoveOriginRouteLocations(s ...*ShipmentRoute) *LocationUpdateOne {
+	ids := make([]uuid.UUID, len(s))
+	for i := range s {
+		ids[i] = s[i].ID
+	}
+	return luo.RemoveOriginRouteLocationIDs(ids...)
+}
+
+// ClearDestinationRouteLocations clears all "destination_route_locations" edges to the ShipmentRoute entity.
+func (luo *LocationUpdateOne) ClearDestinationRouteLocations() *LocationUpdateOne {
+	luo.mutation.ClearDestinationRouteLocations()
+	return luo
+}
+
+// RemoveDestinationRouteLocationIDs removes the "destination_route_locations" edge to ShipmentRoute entities by IDs.
+func (luo *LocationUpdateOne) RemoveDestinationRouteLocationIDs(ids ...uuid.UUID) *LocationUpdateOne {
+	luo.mutation.RemoveDestinationRouteLocationIDs(ids...)
+	return luo
+}
+
+// RemoveDestinationRouteLocations removes "destination_route_locations" edges to ShipmentRoute entities.
+func (luo *LocationUpdateOne) RemoveDestinationRouteLocations(s ...*ShipmentRoute) *LocationUpdateOne {
+	ids := make([]uuid.UUID, len(s))
+	for i := range s {
+		ids[i] = s[i].ID
+	}
+	return luo.RemoveDestinationRouteLocationIDs(ids...)
 }
 
 // Where appends a list predicates to the LocationUpdate builder.
@@ -1467,6 +1702,96 @@ func (luo *LocationUpdateOne) sqlSave(ctx context.Context) (_node *Location, err
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(locationcontact.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if luo.mutation.OriginRouteLocationsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   location.OriginRouteLocationsTable,
+			Columns: []string{location.OriginRouteLocationsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(shipmentroute.FieldID, field.TypeUUID),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := luo.mutation.RemovedOriginRouteLocationsIDs(); len(nodes) > 0 && !luo.mutation.OriginRouteLocationsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   location.OriginRouteLocationsTable,
+			Columns: []string{location.OriginRouteLocationsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(shipmentroute.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := luo.mutation.OriginRouteLocationsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   location.OriginRouteLocationsTable,
+			Columns: []string{location.OriginRouteLocationsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(shipmentroute.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if luo.mutation.DestinationRouteLocationsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   location.DestinationRouteLocationsTable,
+			Columns: []string{location.DestinationRouteLocationsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(shipmentroute.FieldID, field.TypeUUID),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := luo.mutation.RemovedDestinationRouteLocationsIDs(); len(nodes) > 0 && !luo.mutation.DestinationRouteLocationsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   location.DestinationRouteLocationsTable,
+			Columns: []string{location.DestinationRouteLocationsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(shipmentroute.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := luo.mutation.DestinationRouteLocationsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   location.DestinationRouteLocationsTable,
+			Columns: []string{location.DestinationRouteLocationsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(shipmentroute.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {

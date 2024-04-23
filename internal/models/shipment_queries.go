@@ -1,4 +1,4 @@
-package shipment
+package models
 
 import (
 	"context"

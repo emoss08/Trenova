@@ -4,12 +4,12 @@ import (
 	"sync"
 
 	"github.com/bytedance/sonic"
-	"github.com/emoss08/trenova/internal/api"
 	"github.com/emoss08/trenova/internal/ent"
 	"github.com/gofiber/contrib/websocket"
 	"github.com/rs/zerolog"
 )
 
+// Message represents a message sent over the websocket connection.
 type Message struct {
 	Type     string `json:"type"`
 	Content  string `json:"content"`
@@ -23,19 +23,36 @@ var (
 	mu sync.Mutex
 )
 
+// WebsocketService is a struct that manages websocket connections and communication between clients.
 type WebsocketService struct {
 	Client *ent.Client
 	Logger *zerolog.Logger
 }
 
-// NewWebsocketService creates a new comment type service.
-func NewWebsocketService(s *api.Server) *WebsocketService {
+// NewWebsocketService creates a new websocket service.
+// It initializes the service with a client to interact with the database and a logger.
+//
+// Parameters:
+//
+//	client *ent.Client: A pointer to the client instance used to interact with the database.
+//	logger *zerolog.Logger: A pointer to a logger instance used for logging messages in the service.
+//
+// Returns:
+//
+//	*WebsocketService: A pointer to the newly created WebsocketService instance.
+func NewWebsocketService(client *ent.Client, logger *zerolog.Logger) *WebsocketService {
 	return &WebsocketService{
-		Client: s.Client,
-		Logger: s.Logger,
+		Client: client,
+		Logger: logger,
 	}
 }
 
+// RegisterClient registers a new client with the given ID and websocket connection.
+//
+// Parameters:
+//
+//	id string: The ID of the client to register.
+//	conn *websocket.Conn: The websocket connection object representing the connection with the client.
 func (ws *WebsocketService) RegisterClient(id string, conn *websocket.Conn) {
 	mu.Lock()
 	clients[id] = conn
@@ -43,6 +60,11 @@ func (ws *WebsocketService) RegisterClient(id string, conn *websocket.Conn) {
 	ws.Logger.Debug().Msgf("Client %s registered", id)
 }
 
+// UnregisterClient unregisters a client with the given ID.
+//
+// Parameters:
+//
+//	id string: The ID of the client to unregister.
 func (ws *WebsocketService) UnregisterClient(id string) {
 	mu.Lock()
 	if conn, ok := clients[id]; ok {
@@ -53,6 +75,12 @@ func (ws *WebsocketService) UnregisterClient(id string) {
 	ws.Logger.Debug().Msgf("Client %s unregistered", id)
 }
 
+// NotifyClient sends a message to a specific client.
+//
+// Parameters:
+//
+//	clientID string: The ID of the client to send the message to.
+//	message Message: The message to send to the client.
 func (ws *WebsocketService) NotifyClient(clientID string, message Message) {
 	mu.Lock()
 	conn, ok := clients[clientID]
@@ -70,7 +98,14 @@ func (ws *WebsocketService) NotifyClient(clientID string, message Message) {
 	}
 }
 
-// NotifyAllClients now excludes the sender to prevent echo loops.
+// NotifyAllClients sends a message to all connected clients except the sender.
+// This method is used to broadcast messages to all clients except the one that initiated the broadcast.
+// The senderID parameter is used to exclude the sender from receiving the message.
+//
+// Parameters:
+//
+//	msg Message: The message to broadcast to all clients.
+//	senderID string: The ID of the client that initiated the broadcast.
 func (ws *WebsocketService) NotifyAllClients(msg Message, senderID string) {
 	message, err := sonic.Marshal(msg)
 	if err != nil {

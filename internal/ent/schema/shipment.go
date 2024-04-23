@@ -15,8 +15,7 @@ import (
 	gen "github.com/emoss08/trenova/internal/ent"
 	"github.com/emoss08/trenova/internal/ent/hook"
 	"github.com/emoss08/trenova/internal/ent/shipment"
-	cf "github.com/emoss08/trenova/internal/util/control"
-	su "github.com/emoss08/trenova/internal/util/shipment"
+	models "github.com/emoss08/trenova/internal/models"
 	"github.com/emoss08/trenova/internal/util/types"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgtype"
@@ -344,7 +343,7 @@ func handleCreateShipment(ctx context.Context, m *gen.ShipmentMutation, client *
 
 // handleUpdateShipment handles updates to a shipment, including voiding the shipment.
 func handleUpdateShipment(ctx context.Context, m *gen.ShipmentMutation, client *gen.Client) error {
-	return su.HandleVoidedShipment(ctx, m, client)
+	return models.HandleVoidedShipment(ctx, m, client)
 }
 
 // validateShipmentControl validates various controls related to a shipment.
@@ -352,22 +351,22 @@ func validateShipmentControl(ctx context.Context, m *gen.ShipmentMutation, clien
 	orgID, _ := m.OrganizationID()
 	buID, _ := m.BusinessUnitID()
 
-	shipmentControl, err := cf.GetShipmentControlByOrganization(ctx, client, orgID, buID)
+	shipmentControl, err := models.GetShipmentControlByOrganization(ctx, client, orgID, buID)
 	if err != nil {
 		return err
 	}
 
-	billingControl, err := cf.GetBillingControlByOrganization(ctx, client, orgID, buID)
+	billingControl, err := models.GetBillingControlByOrganization(ctx, client, orgID, buID)
 	if err != nil {
 		return err
 	}
 
-	dispatchControl, err := cf.GetDispatchControlByOrganization(ctx, client, orgID, buID)
+	dispatchControl, err := models.GetDispatchControlByOrganization(ctx, client, orgID, buID)
 	if err != nil {
 		return err
 	}
 
-	validationErrs, err := su.ValidateShipment(ctx, m, shipmentControl, billingControl, dispatchControl)
+	validationErrs, err := models.ValidateShipment(ctx, m, shipmentControl, billingControl, dispatchControl)
 	if err != nil {
 		return err
 	}
