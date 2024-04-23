@@ -1372,7 +1372,7 @@ var (
 		{Name: "created_at", Type: field.TypeTime},
 		{Name: "updated_at", Type: field.TypeTime},
 		{Name: "distance_method", Type: field.TypeEnum, Enums: []string{"Trenova", "Google"}, Default: "Trenova", SchemaType: map[string]string{"postgres": "VARCHAR(8)", "sqlite3": "VARCHAR(8)"}},
-		{Name: "mileage_unit", Type: field.TypeEnum, Enums: []string{"UnitsMetric", "UnitsImperial"}, Default: "UnitsMetric", SchemaType: map[string]string{"postgres": "VARCHAR(9)", "sqlite3": "VARCHAR(9)"}},
+		{Name: "mileage_unit", Type: field.TypeEnum, Enums: []string{"UnitsMetric", "UnitsImperial"}, Default: "UnitsMetric", SchemaType: map[string]string{"postgres": "VARCHAR(14)", "sqlite3": "VARCHAR(14)"}},
 		{Name: "generate_routes", Type: field.TypeBool, Default: false},
 		{Name: "organization_id", Type: field.TypeUUID, Unique: true},
 		{Name: "business_unit_id", Type: field.TypeUUID},
