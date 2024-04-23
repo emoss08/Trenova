@@ -10,11 +10,13 @@ import (
 	"github.com/gofiber/fiber/v2"
 )
 
+// AuthenticationHandler is a struct that handles authentication-related requests.
 type AuthenticationHandler struct {
 	Server  *api.Server
 	Service *services.AuthenticationService
 }
 
+// NewAuthenticationHandler creates a new authentication handler.
 func NewAuthenticationHandler(s *api.Server) *AuthenticationHandler {
 	return &AuthenticationHandler{
 		Server:  s,
