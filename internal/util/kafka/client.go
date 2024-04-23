@@ -4,43 +4,64 @@ package kafka
 import (
 	"github.com/confluentinc/confluent-kafka-go/v2/kafka"
 	"github.com/pkg/errors"
+	"github.com/rs/zerolog"
 )
 
-// Client encapsulates a Kafka admin client.
+// Client encapsulates a Kafka admin and producer client.
 type Client struct {
-	Config *kafka.ConfigMap   // Config is the configuration map for the Kafka client.
-	Client *kafka.AdminClient // Client is the actual Kafka admin client.
+	Config   *kafka.ConfigMap   // Config is the configuration map for the Kafka client.
+	Admin    *kafka.AdminClient // Admin is the actual Kafka admin client.
+	Producer *kafka.Producer    // Producer is the Kafka producer for sending messages.
+	Logger   *zerolog.Logger    // Logger is the logger for the Kafka client.
 }
 
 // NewClient creates and initializes a new Kafka admin client using the specified configuration.
 // It returns the initialized client or panics if creation fails.
-func NewClient(config *kafka.ConfigMap) *Client {
-	kClient := &Client{Config: config}
-	kClient.initialize()
-	return kClient
-}
-
-// initialize sets up the Kafka admin client. This method panics if the client cannot be created.
-func (k *Client) initialize() {
-	client, err := kafka.NewAdminClient(k.Config)
-	if err != nil {
-		panic(errors.Wrap(err, "failed to create Kafka admin client"))
+func NewClient(config *kafka.ConfigMap, logger *zerolog.Logger) *Client {
+	// Adding default settings for producer performance
+	if err := config.SetKey("linger.ms", "5"); err != nil { // Delay in ms to allow messages to batch
+		logger.Warn().Err(err).Msg("failed to set producer configuration")
 	}
-	k.Client = client
+	if err := config.SetKey("batch.size", "16384"); err != nil { // Batch size in bytes
+		logger.Warn().Err(err).Msg("failed to set producer configuration")
+	}
+
+	client := &Client{Config: config, Logger: logger}
+	client.initialize()
+	return client
 }
 
-// Close terminates the connection to the Kafka broker. It does nothing if the client is nil.
+// initialize sets up the Kafka admin and producer clients. This method panics if the clients cannot be created.
+func (k *Client) initialize() {
+	admin, err := kafka.NewAdminClient(k.Config)
+	if err != nil {
+		k.Logger.Fatal().Err(err).Msg("failed to create Kafka admin client")
+	}
+	k.Admin = admin
+
+	producer, err := kafka.NewProducer(k.Config)
+	if err != nil {
+		k.Logger.Fatal().Err(err).Msg("failed to create Kafka producer")
+	}
+	k.Producer = producer
+}
+
+// Close terminates the connections to the Kafka broker. It closes both the admin and producer clients.
 func (k *Client) Close() {
-	if k.Client != nil {
-		k.Client.Close()
+	if k.Admin != nil {
+		k.Admin.Close()
+	}
+	if k.Producer != nil {
+		k.Producer.Close()
 	}
 }
 
 // GetTopics retrieves a list of all topics from the Kafka broker.
 // It returns a slice of topic names or an error if the operation fails.
 func (k *Client) GetTopics() ([]string, error) {
-	meta, err := k.Client.GetMetadata(nil, true, 5000) // 5000 is the timeout in milliseconds
+	meta, err := k.Admin.GetMetadata(nil, true, 5000) // 5000 is the timeout in milliseconds
 	if err != nil {
+		k.Logger.Error().Err(err).Msg("failed to get metadata from Kafka")
 		return nil, errors.Wrap(err, "failed to get metadata from Kafka")
 	}
 
@@ -49,4 +70,32 @@ func (k *Client) GetTopics() ([]string, error) {
 		topics = append(topics, topic)
 	}
 	return topics, nil
+}
+
+// SendMessage sends a message to the specified topic.
+// It returns an error if the message cannot be delivered.
+func (k *Client) SendMessage(topic, message string) error {
+	msg := &kafka.Message{
+		TopicPartition: kafka.TopicPartition{Topic: &topic, Partition: kafka.PartitionAny},
+		Value:          []byte(message),
+	}
+
+	// Produce message asynchronously
+	if err := k.Producer.Produce(msg, nil); err != nil {
+		return errors.Wrap(err, "failed to produce message") // nil passed for the delivery channel for asynchronous processing
+	}
+
+	go func() {
+		for e := range k.Producer.Events() {
+			if ev, ok := e.(*kafka.Message); ok {
+				if ev.TopicPartition.Error != nil {
+					k.Logger.Error().Err(ev.TopicPartition.Error).Msg("failed to deliver message")
+				} else {
+					k.Logger.Info().Msgf("delivered message to %v", ev.TopicPartition)
+				}
+			}
+		}
+	}()
+
+	return nil
 }
