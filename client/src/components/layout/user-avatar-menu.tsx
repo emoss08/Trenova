@@ -43,13 +43,12 @@ import {
 import { KeyCombo, Keys, ShortcutsProvider } from "@/components/ui/keyboard";
 import { useTheme } from "@/components/ui/theme-provider";
 import { useLogout } from "@/hooks/useLogout";
-import { TOAST_STYLE } from "@/lib/constants";
 import { type ThemeOptions } from "@/types";
 import { User } from "@/types/accounts";
 import { AvatarImage } from "@radix-ui/react-avatar";
 import React, { useState } from "react";
-import toast from "react-hot-toast";
 import { useNavigate } from "react-router-dom";
+import { toast } from "sonner";
 
 type UserAvatarProps = React.ComponentPropsWithoutRef<typeof Avatar> & {
   user: User;
@@ -169,53 +168,32 @@ function UserAvatarMenuContent({ user }: { user: User }) {
       setTheme(previousTheme);
 
       toast.success(
-        () => (
-          <div className="relative flex w-full items-center justify-between space-x-2 overflow-hidden rounded-md">
-            <div className="grid gap-1">
-              <span className="font-semibold">
-                Theme reverted to {previousTheme}
-              </span>
-              <span className="text-xs">Your theme change was undone.</span>
-            </div>
+        <div className="relative flex w-full items-center justify-between space-x-2 overflow-hidden rounded-md">
+          <div className="grid gap-1">
+            <span className="font-semibold">
+              Theme reverted to {previousTheme}
+            </span>
+            <span className="text-xs">Your theme change was undone.</span>
           </div>
-        ),
-        {
-          id: "theme-switcher",
-          style: TOAST_STYLE,
-          ariaProps: {
-            role: "status",
-            "aria-live": "polite",
-          },
-        },
+        </div>,
       );
     };
 
     toast(
-      () => (
-        <div className="relative flex w-full items-center justify-between space-x-2 overflow-hidden rounded-md">
-          <div className="grid gap-1">
-            <span className="font-semibold">
-              Theme changed to {selectedTheme}
-            </span>
-            <span className="text-xs">{formattedDate}</span>
-          </div>
-          <button
-            onClick={undoThemeChange}
-            className="hover:bg-secondary focus:ring-ring inline-flex h-8 shrink-0 items-center justify-center rounded-md border bg-transparent px-3 text-sm font-medium transition-colors focus:outline-none focus:ring-1 disabled:pointer-events-none disabled:opacity-50"
-          >
-            Undo
-          </button>
+      <div className="relative flex w-full items-center justify-between space-x-2 overflow-hidden rounded-md">
+        <div className="grid gap-1">
+          <span className="font-semibold">
+            Theme changed to {selectedTheme}
+          </span>
+          <span className="text-xs">{formattedDate}</span>
         </div>
-      ),
-      {
-        duration: 4000,
-        id: "theme-switcher",
-        style: TOAST_STYLE,
-        ariaProps: {
-          role: "status",
-          "aria-live": "polite",
-        },
-      },
+        <button
+          onClick={undoThemeChange}
+          className="hover:bg-secondary focus:ring-ring inline-flex h-8 shrink-0 items-center justify-center rounded-md border bg-transparent px-3 text-sm font-medium transition-colors focus:outline-none focus:ring-1 disabled:pointer-events-none disabled:opacity-50"
+        >
+          Undo
+        </button>
+      </div>,
     );
   };
 
