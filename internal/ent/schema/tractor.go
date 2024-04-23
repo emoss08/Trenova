@@ -31,6 +31,7 @@ func (Tractor) Fields() []ent.Field {
 				dialect.Postgres: "VARCHAR(50)",
 				dialect.SQLite:   "VARCHAR(50)",
 			}).
+			Comment("The unique code assigned to each tractor for identification purposes.").
 			StructTag(`json:"code" validate:"required,max=50"`),
 		field.Enum("status").
 			Values("Available", "OutOfService", "AtMaintenance", "Sold", "Lost").
@@ -39,10 +40,12 @@ func (Tractor) Fields() []ent.Field {
 				dialect.Postgres: "VARCHAR(13)",
 				dialect.SQLite:   "VARCHAR(13)",
 			}).
+			Comment("The operational status of the tractor, indicating availability, maintenance, or other conditions.").
 			StructTag(`json:"status" validate:"required,oneof=Available OutOfService AtMaintenance Sold Lost"`),
 		field.UUID("equipment_type_id", uuid.UUID{}).
 			Optional().
 			Unique().
+			Comment("Identifier for the type of equipment the tractor is classified under.").
 			StructTag(`json:"equipmentTypeId" validate:"required,uuid"`),
 		field.String("license_plate_number").
 			MaxLen(50).
@@ -51,6 +54,7 @@ func (Tractor) Fields() []ent.Field {
 				dialect.Postgres: "VARCHAR(50)",
 				dialect.SQLite:   "VARCHAR(50)",
 			}).
+			Comment("The license plate number of the tractor, used for legal identification on roads.").
 			StructTag(`json:"licensePlateNumber" validate:"omitempty,max=50"`),
 		field.String("vin").
 			// Match(regexp.MustCompile("^[0-9A-HJ-NPR-Z]{17}$")). // VIN regex.
@@ -59,10 +63,12 @@ func (Tractor) Fields() []ent.Field {
 				dialect.Postgres: "VARCHAR(17)",
 				dialect.SQLite:   "VARCHAR(17)",
 			}).
+			Comment("The Vehicle Identification Number, a unique code used to identify individual motor vehicles.").
 			StructTag(`json:"vin" validate:"omitempty,alphanum,len=17"`),
 		field.UUID("equipment_manufacturer_id", uuid.UUID{}).
 			Optional().
 			Nillable().
+			Comment("The UUID of the manufacturer of the tractor's equipment, linking to specific company details.").
 			StructTag(`json:"equipmentManufacturerId" validate:"omitempty,uuid"`),
 		field.String("model").
 			MaxLen(50).
@@ -71,18 +77,22 @@ func (Tractor) Fields() []ent.Field {
 				dialect.Postgres: "VARCHAR(50)",
 				dialect.SQLite:   "VARCHAR(50)",
 			}).
+			Comment("The model of the tractor, which indicates the design and technical specifications.").
 			StructTag(`json:"model" validate:"omitempty,max=50"`),
 		field.Int16("year").
 			Positive().
 			Nillable().
 			Optional().
+			Comment("The year the tractor was manufactured, reflecting its age and potentially its technology level.").
 			StructTag(`json:"year" validate:"omitempty,gt=0"`),
 		field.UUID("state_id", uuid.UUID{}).
 			Optional().
 			Nillable().
+			Comment("A UUID representing the state in which the tractor is registered, for jurisdiction purposes.").
 			StructTag(`json:"stateId" validate:"omitempty,uuid"`),
 		field.Bool("leased").
 			Default(false).
+			Comment("Indicates whether the tractor is currently leased or owned outright.").
 			StructTag(`json:"leased" validate:"omitempty"`),
 		field.Other("leased_date", &pgtype.Date{}).
 			Optional().
@@ -91,14 +101,18 @@ func (Tractor) Fields() []ent.Field {
 				dialect.Postgres: "date",
 				dialect.SQLite:   "date",
 			}).
+			Comment("The date on which the tractor was leased, if applicable.").
 			StructTag(`json:"leasedDate" validate:"omitempty"`),
 		field.UUID("primary_worker_id", uuid.UUID{}).
+			Comment("The primary worker assigned to operate the tractor, identified by UUID.").
 			StructTag(`json:"primaryWorkerId" validate:"omitempty,uuid"`),
 		field.UUID("secondary_worker_id", uuid.UUID{}).
 			Optional().
 			Nillable().
+			Comment("An optional secondary worker who can also operate the tractor, identified by UUID.").
 			StructTag(`json:"secondaryWorkerId" validate:"omitempty,uuid"`),
 		field.UUID("fleet_code_id", uuid.UUID{}).
+			Comment("A UUID linking the tractor to a specific fleet within an organization.").
 			StructTag(`json:"fleetCodeId" validate:"omitempty,uuid"`),
 	}
 }

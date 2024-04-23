@@ -36,33 +36,33 @@ type Tractor struct {
 	UpdatedAt time.Time `json:"updatedAt" validate:"omitempty"`
 	// The current version of this entity.
 	Version int `json:"version" validate:"omitempty"`
-	// Code holds the value of the "code" field.
+	// The unique code assigned to each tractor for identification purposes.
 	Code string `json:"code" validate:"required,max=50"`
-	// Status holds the value of the "status" field.
+	// The operational status of the tractor, indicating availability, maintenance, or other conditions.
 	Status tractor.Status `json:"status" validate:"required,oneof=Available OutOfService AtMaintenance Sold Lost"`
-	// EquipmentTypeID holds the value of the "equipment_type_id" field.
+	// Identifier for the type of equipment the tractor is classified under.
 	EquipmentTypeID uuid.UUID `json:"equipmentTypeId" validate:"required,uuid"`
-	// LicensePlateNumber holds the value of the "license_plate_number" field.
+	// The license plate number of the tractor, used for legal identification on roads.
 	LicensePlateNumber string `json:"licensePlateNumber" validate:"omitempty,max=50"`
-	// Vin holds the value of the "vin" field.
+	// The Vehicle Identification Number, a unique code used to identify individual motor vehicles.
 	Vin string `json:"vin" validate:"omitempty,alphanum,len=17"`
-	// EquipmentManufacturerID holds the value of the "equipment_manufacturer_id" field.
+	// The UUID of the manufacturer of the tractor's equipment, linking to specific company details.
 	EquipmentManufacturerID *uuid.UUID `json:"equipmentManufacturerId" validate:"omitempty,uuid"`
-	// Model holds the value of the "model" field.
+	// The model of the tractor, which indicates the design and technical specifications.
 	Model string `json:"model" validate:"omitempty,max=50"`
-	// Year holds the value of the "year" field.
+	// The year the tractor was manufactured, reflecting its age and potentially its technology level.
 	Year *int16 `json:"year" validate:"omitempty,gt=0"`
-	// StateID holds the value of the "state_id" field.
+	// A UUID representing the state in which the tractor is registered, for jurisdiction purposes.
 	StateID *uuid.UUID `json:"stateId" validate:"omitempty,uuid"`
-	// Leased holds the value of the "leased" field.
+	// Indicates whether the tractor is currently leased or owned outright.
 	Leased bool `json:"leased" validate:"omitempty"`
-	// LeasedDate holds the value of the "leased_date" field.
+	// The date on which the tractor was leased, if applicable.
 	LeasedDate *pgtype.Date `json:"leasedDate" validate:"omitempty"`
-	// PrimaryWorkerID holds the value of the "primary_worker_id" field.
+	// The primary worker assigned to operate the tractor, identified by UUID.
 	PrimaryWorkerID uuid.UUID `json:"primaryWorkerId" validate:"omitempty,uuid"`
-	// SecondaryWorkerID holds the value of the "secondary_worker_id" field.
+	// An optional secondary worker who can also operate the tractor, identified by UUID.
 	SecondaryWorkerID *uuid.UUID `json:"secondaryWorkerId" validate:"omitempty,uuid"`
-	// FleetCodeID holds the value of the "fleet_code_id" field.
+	// A UUID linking the tractor to a specific fleet within an organization.
 	FleetCodeID uuid.UUID `json:"fleetCodeId" validate:"omitempty,uuid"`
 	// Edges holds the relations/edges for other nodes in the graph.
 	// The values are being populated by the TractorQuery when eager-loading is set.

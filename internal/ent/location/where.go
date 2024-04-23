@@ -1174,6 +1174,52 @@ func HasContactsWith(preds ...predicate.LocationContact) predicate.Location {
 	})
 }
 
+// HasOriginRouteLocations applies the HasEdge predicate on the "origin_route_locations" edge.
+func HasOriginRouteLocations() predicate.Location {
+	return predicate.Location(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, OriginRouteLocationsTable, OriginRouteLocationsColumn),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasOriginRouteLocationsWith applies the HasEdge predicate on the "origin_route_locations" edge with a given conditions (other predicates).
+func HasOriginRouteLocationsWith(preds ...predicate.ShipmentRoute) predicate.Location {
+	return predicate.Location(func(s *sql.Selector) {
+		step := newOriginRouteLocationsStep()
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	})
+}
+
+// HasDestinationRouteLocations applies the HasEdge predicate on the "destination_route_locations" edge.
+func HasDestinationRouteLocations() predicate.Location {
+	return predicate.Location(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, DestinationRouteLocationsTable, DestinationRouteLocationsColumn),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasDestinationRouteLocationsWith applies the HasEdge predicate on the "destination_route_locations" edge with a given conditions (other predicates).
+func HasDestinationRouteLocationsWith(preds ...predicate.ShipmentRoute) predicate.Location {
+	return predicate.Location(func(s *sql.Selector) {
+		step := newDestinationRouteLocationsStep()
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	})
+}
+
 // And groups predicates with the AND operator between them.
 func And(predicates ...predicate.Location) predicate.Location {
 	return predicate.Location(sql.AndPredicates(predicates...))

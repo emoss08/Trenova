@@ -2,6 +2,7 @@ package services
 
 import (
 	"context"
+	"fmt"
 	"strings"
 	"time"
 
@@ -13,11 +14,6 @@ import (
 	"github.com/imroc/req/v3"
 	"github.com/rs/zerolog"
 )
-
-type ColumnValue struct {
-	Label string `json:"label"`
-	Value string `json:"value"`
-}
 
 type FileFormat string
 
@@ -64,6 +60,12 @@ func NewReportService(s *api.Server) *ReportService {
 		Config: &s.Config,
 		Server: s,
 	}
+}
+
+type ColumnValue struct {
+	Label       string `json:"label"`
+	Value       string `json:"value"`
+	Description string `json:"description"`
 }
 
 // GetColumnsByTableName returns the column names for a given table name.
@@ -120,20 +122,22 @@ func (r *ReportService) getColumnsNames(
 	excludedTableNames map[string]bool, excludedColumns map[string]bool,
 ) ([]ColumnValue, int, error) {
 	if excludedTableNames[tableName] {
-		return nil, 0, nil // Return empty if the table is in the excluded list
+		return nil, 0, fmt.Errorf("table %s is excluded", tableName)
 	}
 
-	query := `SELECT 
-		column_name 
-	FROM 
-		information_schema.columns 
-	WHERE 
-		table_schema = 'public' 
-	AND
-		table_name = $1
-  	ORDER BY 
-		ordinal_position DESC;
-	`
+	query := `SELECT
+                c.column_name,
+                COALESCE(pgd.description, 'No description available') AS description
+            FROM
+                information_schema.columns AS c
+            LEFT JOIN pg_catalog.pg_statio_all_tables AS st
+                ON c.table_schema = st.schemaname AND c.table_name = st.relname
+            LEFT JOIN pg_catalog.pg_description AS pgd
+                ON pgd.objoid = st.relid AND pgd.objsubid = c.ordinal_position
+            WHERE
+                c.table_schema = 'public' AND c.table_name = $1
+            ORDER BY
+                c.ordinal_position ASC;`
 
 	rows, err := tx.QueryContext(ctx, query, tableName)
 	if err != nil {
@@ -143,20 +147,21 @@ func (r *ReportService) getColumnsNames(
 
 	var columns []ColumnValue
 	for rows.Next() {
-		var columnName string
-		if err = rows.Scan(&columnName); err != nil {
+		var columnName, description string
+		if err = rows.Scan(&columnName, &description); err != nil {
 			return nil, 0, err
 		}
 
 		if excludedColumns[columnName] {
-			continue // Skip the loop iteration if column is to be excluded
+			continue // Skip excluded columns
 		}
 
-		formattedLabel := strings.ReplaceAll(util.ToTitleFormat(columnName), "_", " ")
+		formattedLabel := strings.ReplaceAll(util.ToTitleFormat(strings.ReplaceAll(columnName, "_", " ")), "_", " ")
 
 		columns = append(columns, ColumnValue{
-			Label: formattedLabel,
-			Value: columnName,
+			Label:       formattedLabel,
+			Value:       columnName,
+			Description: description,
 		})
 	}
 

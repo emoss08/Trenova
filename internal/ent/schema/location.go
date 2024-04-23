@@ -130,5 +130,11 @@ func (Location) Edges() []ent.Edge {
 		edge.To("contacts", LocationContact.Type).
 			StructTag(`json:"contacts"`).
 			Annotations(entsql.OnDelete(entsql.Cascade)),
+		edge.To("origin_route_locations", ShipmentRoute.Type).
+			StructTag(`json:"originLocations"`).
+			Annotations(entsql.OnDelete(entsql.Cascade)),
+		edge.To("destination_route_locations", ShipmentRoute.Type).
+			StructTag(`json:"originLocations"`).
+			Annotations(entsql.OnDelete(entsql.Cascade)),
 	}
 }
