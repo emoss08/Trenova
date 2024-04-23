@@ -1,27 +1,13 @@
-/*
- * COPYRIGHT(c) 2024 Trenova
- *
- * This file is part of Trenova.
- *
- * The Trenova software is licensed under the Business Source License 1.1. You are granted the right
- * to copy, modify, and redistribute the software, but only for non-production use or with a total
- * of less than three server instances. Starting from the Change Date (November 16, 2026), the
- * software will be made available under version 2 or later of the GNU General Public License.
- * If you use the software in violation of this license, your rights under the license will be
- * terminated automatically. The software is provided "as is," and the Licensor disclaims all
- * warranties and conditions. If you use this license's text or the "Business Source License" name
- * and trademark, you must comply with the Licensor's covenants, which include specifying the
- * Change License as the GPL Version 2.0 or a compatible license, specifying an Additional Use
- * Grant, and not modifying the license in any other way.
- */
-
 import { Checkbox } from "@/components/common/fields/checkbox";
 import { InputField, PasswordField } from "@/components/common/fields/input";
 import { Label } from "@/components/common/fields/label";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import axios from "@/lib/axiosConfig";
-import { userAuthSchema } from "@/lib/validations/AccountsSchema";
+import {
+  checkUserEmailSchema,
+  userAuthSchema,
+} from "@/lib/validations/AccountsSchema";
 import { useAuthStore, useUserStore } from "@/stores/AuthStore";
 import { yupResolver } from "@hookform/resolvers/yup";
 import { Image } from "@unpic/react";
@@ -30,12 +16,18 @@ import { useForm } from "react-hook-form";
 import { useNavigate } from "react-router-dom";
 
 import { InternalLink } from "@/components/ui/link";
+import { checkUserEmail } from "@/services/AccountRequestService";
 import { HTTP_200_OK } from "@/types/server";
+import { useMutation } from "@tanstack/react-query";
 import trenovaLogo from "../assets/images/logo.avif";
 
 type LoginFormValues = {
-  username: string;
+  emailAddress: string;
   password: string;
+};
+
+type CheckEmailValues = {
+  email: string;
 };
 
 function AuthFooter() {
@@ -56,7 +48,81 @@ function AuthFooter() {
   );
 }
 
-function UserAuthForm() {
+function CheckEmailForm({
+  onEmailVerified,
+}: {
+  onEmailVerified: (email: string) => void;
+}) {
+  const mutation = useMutation({
+    mutationFn: (values: CheckEmailValues) => {
+      return checkUserEmail(values.email);
+    },
+  });
+
+  const { control, handleSubmit, setError } = useForm<CheckEmailValues>({
+    resolver: yupResolver(checkUserEmailSchema),
+    defaultValues: {
+      email: "",
+    },
+  });
+
+  const onSubmit = async (values: CheckEmailValues) => {
+    try {
+      const data = await mutation.mutateAsync(values);
+      console.info(data);
+
+      if (data.exists) {
+        onEmailVerified(values.email);
+      } else {
+        setError("email", {
+          type: "not-found",
+          message: data.message,
+        });
+      }
+    } catch (error: any) {
+      if (error.response) {
+        const { data } = error.response;
+        setError("email", {
+          type: data.code,
+          message: data.detail,
+        });
+      }
+    } finally {
+      mutation.reset();
+    }
+  };
+
+  return (
+    <form onSubmit={handleSubmit(onSubmit)}>
+      <div className="mt-5 grid gap-4">
+        <div className="grid gap-1">
+          <InputField
+            name="email"
+            rules={{ required: true }}
+            control={control}
+            label="Email Address"
+            placeholder="Email Address"
+            autoCapitalize="none"
+            autoCorrect="off"
+            autoComplete="email"
+            type="email"
+          />
+        </div>
+
+        <Button
+          className="my-2 w-full"
+          isLoading={mutation.isPending}
+          disabled={mutation.isPending}
+          loadingText="Checking Email..."
+        >
+          Continue
+        </Button>
+      </div>
+    </form>
+  );
+}
+
+function UserAuthForm({ initialEmail }: { initialEmail: string }) {
   const [, setIsAuthenticated] = useAuthStore(
     (state: { isAuthenticated: boolean; setIsAuthenticated: any }) => [
       state.isAuthenticated,
@@ -69,7 +135,7 @@ function UserAuthForm() {
   const { control, handleSubmit, setError } = useForm<LoginFormValues>({
     resolver: yupResolver(userAuthSchema),
     defaultValues: {
-      username: "",
+      emailAddress: initialEmail,
       password: "",
     },
   });
@@ -94,10 +160,9 @@ function UserAuthForm() {
     setIsSubmitting(true);
     try {
       const response = await axios.post("auth/login/", {
-        username: values.username,
+        emailAddress: values.emailAddress,
         password: values.password,
       });
-
       if (response.status === HTTP_200_OK) {
         await fetchUserDetails();
         setIsAuthenticated(true);
@@ -123,14 +188,14 @@ function UserAuthForm() {
       <div className="mt-5 grid gap-4">
         <div className="grid gap-1">
           <InputField
-            name="username"
+            name="emailAddress"
             rules={{ required: true }}
             control={control}
-            label="Username"
-            placeholder="Username"
+            label="Email Address"
+            placeholder="Email Address"
             autoCapitalize="none"
             autoCorrect="off"
-            autoComplete="username"
+            autoComplete="emailAddress"
           />
         </div>
         <div className="relative grid gap-1">
@@ -179,6 +244,9 @@ export default function LoginPage() {
     ],
   );
 
+  const [showLoginForm, setShowLoginForm] = React.useState<boolean>(false);
+  const [verifiedEmail, setVerifiedEmail] = React.useState<string>("");
+
   const navigate = useNavigate();
   React.useEffect((): void => {
     if (isAuthenticated) {
@@ -208,7 +276,16 @@ export default function LoginPage() {
               Do not have an account yet?&nbsp;
               <InternalLink to="#">Create an Account</InternalLink>
             </span>
-            <UserAuthForm />
+            {showLoginForm ? (
+              <UserAuthForm initialEmail={verifiedEmail} />
+            ) : (
+              <CheckEmailForm
+                onEmailVerified={(email) => {
+                  setVerifiedEmail(email);
+                  setShowLoginForm(true);
+                }}
+              />
+            )}
           </CardContent>
         </Card>
       </div>

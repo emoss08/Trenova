@@ -15,10 +15,10 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import * as yup from "yup";
-import { JobTitleFormValues } from "@/types/accounts";
-import { StatusChoiceProps } from "@/types";
 import { JobFunctionChoiceProps } from "@/lib/choices";
+import { StatusChoiceProps } from "@/types";
+import { JobTitleFormValues } from "@/types/accounts";
+import * as yup from "yup";
 
 export const jobTitleSchema: yup.ObjectSchema<JobTitleFormValues> = yup
   .object()
@@ -37,8 +37,12 @@ export const jobTitleSchema: yup.ObjectSchema<JobTitleFormValues> = yup
  * @property password - A required string.
  */
 export const userAuthSchema = yup.object().shape({
-  username: yup.string().required("Username is required."),
+  emailAddress: yup.string().email().required("Email is required."),
   password: yup.string().required("Password is required."),
+});
+
+export const checkUserEmailSchema = yup.object().shape({
+  email: yup.string().email().required("Email is required."),
 });
 
 export const resetPasswordSchema: yup.ObjectSchema<{

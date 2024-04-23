@@ -101,6 +101,7 @@ func Init(s *api.Server) {
 	auth := apiV1.Group("/auth")
 	auth.Post("/login", handlers.NewAuthenticationHandler(s).AuthenticateUser())
 	auth.Post("/logout", handlers.NewAuthenticationHandler(s).LogoutUser())
+	auth.Post("/check-email", handlers.NewAuthenticationHandler(s).CheckEmail())
 
 	if s.Config.Fiber.EnableETagMiddleware {
 		s.Fiber.Use(etag.New())

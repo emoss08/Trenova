@@ -22,11 +22,41 @@ func NewAuthenticationService(s *api.Server) *AuthenticationService {
 	}
 }
 
-// AuthenticateUser returns back the user if the username and password are correct.
-func (r *AuthenticationService) AuthenticateUser(ctx context.Context, username, password string) (*ent.User, error) {
+type CheckEmailRequest struct {
+	EmailAddress string `json:"emailAddress"`
+}
+
+type CheckEmailResponse struct {
+	Exists        bool        `json:"exists"`
+	AccountStatus user.Status `json:"accountStatus"`
+	Message       string      `json:"message"`
+}
+
+func (r *AuthenticationService) CheckEmail(ctx context.Context, emailAddress string) (*CheckEmailResponse, error) {
 	u, err := r.Client.User.
 		Query().
-		Where(user.UsernameEQ(username)).
+		Where(user.EmailEQ(emailAddress)).
+		Only(ctx)
+	if err != nil {
+		r.Logger.Error().Err(err).Msg("Failed to query user")
+		return &CheckEmailResponse{
+			Exists:  false,
+			Message: "Email address does not exist!",
+		}, nil
+	}
+
+	return &CheckEmailResponse{
+		Exists:        true,
+		AccountStatus: u.Status,
+		Message:       "Email address exists",
+	}, nil
+}
+
+// AuthenticateUser returns back the user if the username and password are correct.
+func (r *AuthenticationService) AuthenticateUser(ctx context.Context, emailAddress, password string) (*ent.User, error) {
+	u, err := r.Client.User.
+		Query().
+		Where(user.EmailEQ(emailAddress)).
 		Only(ctx)
 	if err != nil {
 		r.Logger.Error().Err(err).Msg("Failed to query user")

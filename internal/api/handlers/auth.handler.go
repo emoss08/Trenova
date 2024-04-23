@@ -22,14 +22,47 @@ func NewAuthenticationHandler(s *api.Server) *AuthenticationHandler {
 	}
 }
 
+// CheckEmail checks if an email address exists in the database.
+//
+// POST /auth/check-email
+func (h *AuthenticationHandler) CheckEmail() fiber.Handler {
+	return func(c *fiber.Ctx) error {
+		var checkEmailRequest struct {
+			EmailAddress string `json:"emailAddress" validate:"required,email"`
+		}
+
+		if err := util.ParseBodyAndValidate(c, &checkEmailRequest); err != nil {
+			return err
+		}
+
+		// Check if the email exists
+		resp, err := h.Service.
+			CheckEmail(c.UserContext(), checkEmailRequest.EmailAddress)
+		if err != nil {
+			return c.Status(fiber.StatusInternalServerError).JSON(types.ValidationErrorResponse{
+				Type: "internalServerError",
+				Errors: []types.ValidationErrorDetail{
+					{
+						Code:   "internalServerError",
+						Detail: "Internal server error",
+						Attr:   "emailAddress",
+					},
+				},
+			})
+		}
+
+		return c.Status(fiber.StatusOK).JSON(resp)
+	}
+}
+
 // AuthenticateUser authenticates a user and sets the session values.
 //
 // POST /auth
 func (h *AuthenticationHandler) AuthenticateUser() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		var loginRequest struct {
-			Username string `json:"username" validate:"required"`
-			Password string `json:"password" validate:"required"`
+			EmailAddress string `json:"emailAddress" validate:"required"`
+			Password     string `json:"password" validate:"required"`
 		}
 
 		sess, err := h.Server.Session.Get(c)
@@ -61,19 +94,21 @@ func (h *AuthenticationHandler) AuthenticateUser() fiber.Handler {
 		}
 
 		// Authenticate the user
-		user, err := h.Service.AuthenticateUser(c.UserContext(), loginRequest.Username, loginRequest.Password)
+		user, err := h.Service.AuthenticateUser(
+			c.UserContext(), loginRequest.EmailAddress, loginRequest.Password,
+		)
 		if err != nil {
 			return c.Status(fiber.StatusUnauthorized).JSON(types.ValidationErrorResponse{
 				Type: "unauthorized",
 				Errors: []types.ValidationErrorDetail{
 					{
 						Code:   "authenticationError",
-						Detail: "Invalid username or password",
-						Attr:   "username",
+						Detail: "Invalid email address or password",
+						Attr:   "emailAddress",
 					},
 					{
 						Code:   "authenticationError",
-						Detail: "Invalid username or password",
+						Detail: "Invalid email address or password",
 						Attr:   "password",
 					},
 				},
