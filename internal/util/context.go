@@ -4,14 +4,13 @@ import (
 	"context"
 )
 
-type contextKey string
+type ContextKey string
 
 const (
-	CTXKeyRequestID     contextKey = "request_id"
-	CTXKeyDisableLogger contextKey = "disable_logger"
-	CTXOrganizationID   contextKey = "organizationID"
-	CTXBusinessUnitID   contextKey = "businessUnitID"
-	CTXUserID           contextKey = "userID"
+	CTXKeyDisableLogger = ContextKey("disableLogger")
+	CTXOrganizationID   = ContextKey("organizationID")
+	CTXBusinessUnitID   = ContextKey("businessUnitID")
+	CTXUserID           = ContextKey("userID")
 )
 
 // ShouldDisableLogger checks whether the logger instance should be disabled for the provided context.

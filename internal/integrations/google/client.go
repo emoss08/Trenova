@@ -53,7 +53,7 @@ func (gc *Client) GetClientForOrganization(apiKey string) (*maps.Client, error) 
 	return c, nil
 }
 
-// GeocodeLocation attempts to geocode a location described by address components and an API key.
+// ForwardGeocode attempts to forward geocode a location described by address components and an API key.
 // It logs and returns errors encountered during the geocoding process.
 //
 // Parameters:
@@ -66,7 +66,7 @@ func (gc *Client) GetClientForOrganization(apiKey string) (*maps.Client, error) 
 //
 //	[]maps.GeocodingResult: A slice of GeocodingResult containing geocoded information.
 //	error: An error object that indicates why the geocoding failed, nil if no error occurred.
-func (gc *Client) GeocodeLocation(
+func (gc *Client) ForwardGeocode(
 	ctx context.Context, addressLine1, city, state, zipCode, apiKey string,
 ) ([]maps.GeocodingResult, error) {
 	c, err := gc.GetClientForOrganization(apiKey)
@@ -107,10 +107,15 @@ func (gc *Client) GetDistanceMatrix(
 		gc.Logger.Error().Err(err).Msg("Error getting distance matrix")
 		return nil, err
 	}
+
+	// TODO(Wolfred): Add the ability to specify additional departure and arrival times. This will allow us to
+	// account for traffic conditions when calculating the distance matrix.
 	req := &maps.DistanceMatrixRequest{
 		Origins:      origins,
 		Destinations: destinations,
 		Units:        units,
+		Mode:         maps.TravelModeDriving,
+		Language:     "en",
 	}
 	distanceMatrixResponse, err := c.DistanceMatrix(ctx, req)
 	if err != nil {
