@@ -1,4 +1,4 @@
-package stop
+package models
 
 import (
 	"github.com/emoss08/trenova/internal/ent"

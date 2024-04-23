@@ -121,7 +121,7 @@ export default function CommodityPage() {
       columns={columns}
       link="/commodities/"
       name="Commodity"
-      exportModelName="Commodity"
+      exportModelName="commodities"
       filterColumn="name"
       tableFacetedFilters={filters}
       TableSheet={CommodityDialog}

@@ -5,6 +5,7 @@ import (
 	"encoding/base64"
 	"encoding/hex"
 	"errors"
+	"strconv"
 	"strings"
 
 	"golang.org/x/text/cases"
@@ -135,4 +136,9 @@ func ToTitleFormat(s string) string {
 	title := caser.String(s)
 
 	return title
+}
+
+// FloatToString converts a float64 to a string
+func FloatToString(f float64) string {
+	return strconv.FormatFloat(f, 'f', -1, 64)
 }

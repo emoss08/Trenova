@@ -18,6 +18,7 @@ import (
 	"github.com/emoss08/trenova/internal/ent/locationcontact"
 	"github.com/emoss08/trenova/internal/ent/organization"
 	"github.com/emoss08/trenova/internal/ent/predicate"
+	"github.com/emoss08/trenova/internal/ent/shipmentroute"
 	"github.com/emoss08/trenova/internal/ent/usstate"
 	"github.com/google/uuid"
 )
@@ -25,19 +26,23 @@ import (
 // LocationQuery is the builder for querying Location entities.
 type LocationQuery struct {
 	config
-	ctx                  *QueryContext
-	order                []location.OrderOption
-	inters               []Interceptor
-	predicates           []predicate.Location
-	withBusinessUnit     *BusinessUnitQuery
-	withOrganization     *OrganizationQuery
-	withLocationCategory *LocationCategoryQuery
-	withState            *UsStateQuery
-	withComments         *LocationCommentQuery
-	withContacts         *LocationContactQuery
-	modifiers            []func(*sql.Selector)
-	withNamedComments    map[string]*LocationCommentQuery
-	withNamedContacts    map[string]*LocationContactQuery
+	ctx                                *QueryContext
+	order                              []location.OrderOption
+	inters                             []Interceptor
+	predicates                         []predicate.Location
+	withBusinessUnit                   *BusinessUnitQuery
+	withOrganization                   *OrganizationQuery
+	withLocationCategory               *LocationCategoryQuery
+	withState                          *UsStateQuery
+	withComments                       *LocationCommentQuery
+	withContacts                       *LocationContactQuery
+	withOriginRouteLocations           *ShipmentRouteQuery
+	withDestinationRouteLocations      *ShipmentRouteQuery
+	modifiers                          []func(*sql.Selector)
+	withNamedComments                  map[string]*LocationCommentQuery
+	withNamedContacts                  map[string]*LocationContactQuery
+	withNamedOriginRouteLocations      map[string]*ShipmentRouteQuery
+	withNamedDestinationRouteLocations map[string]*ShipmentRouteQuery
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
 	path func(context.Context) (*sql.Selector, error)
@@ -199,6 +204,50 @@ func (lq *LocationQuery) QueryContacts() *LocationContactQuery {
 			sqlgraph.From(location.Table, location.FieldID, selector),
 			sqlgraph.To(locationcontact.Table, locationcontact.FieldID),
 			sqlgraph.Edge(sqlgraph.O2M, false, location.ContactsTable, location.ContactsColumn),
+		)
+		fromU = sqlgraph.SetNeighbors(lq.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
+}
+
+// QueryOriginRouteLocations chains the current query on the "origin_route_locations" edge.
+func (lq *LocationQuery) QueryOriginRouteLocations() *ShipmentRouteQuery {
+	query := (&ShipmentRouteClient{config: lq.config}).Query()
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := lq.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := lq.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(location.Table, location.FieldID, selector),
+			sqlgraph.To(shipmentroute.Table, shipmentroute.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, location.OriginRouteLocationsTable, location.OriginRouteLocationsColumn),
+		)
+		fromU = sqlgraph.SetNeighbors(lq.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
+}
+
+// QueryDestinationRouteLocations chains the current query on the "destination_route_locations" edge.
+func (lq *LocationQuery) QueryDestinationRouteLocations() *ShipmentRouteQuery {
+	query := (&ShipmentRouteClient{config: lq.config}).Query()
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := lq.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := lq.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(location.Table, location.FieldID, selector),
+			sqlgraph.To(shipmentroute.Table, shipmentroute.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, location.DestinationRouteLocationsTable, location.DestinationRouteLocationsColumn),
 		)
 		fromU = sqlgraph.SetNeighbors(lq.driver.Dialect(), step)
 		return fromU, nil
@@ -393,17 +442,19 @@ func (lq *LocationQuery) Clone() *LocationQuery {
 		return nil
 	}
 	return &LocationQuery{
-		config:               lq.config,
-		ctx:                  lq.ctx.Clone(),
-		order:                append([]location.OrderOption{}, lq.order...),
-		inters:               append([]Interceptor{}, lq.inters...),
-		predicates:           append([]predicate.Location{}, lq.predicates...),
-		withBusinessUnit:     lq.withBusinessUnit.Clone(),
-		withOrganization:     lq.withOrganization.Clone(),
-		withLocationCategory: lq.withLocationCategory.Clone(),
-		withState:            lq.withState.Clone(),
-		withComments:         lq.withComments.Clone(),
-		withContacts:         lq.withContacts.Clone(),
+		config:                        lq.config,
+		ctx:                           lq.ctx.Clone(),
+		order:                         append([]location.OrderOption{}, lq.order...),
+		inters:                        append([]Interceptor{}, lq.inters...),
+		predicates:                    append([]predicate.Location{}, lq.predicates...),
+		withBusinessUnit:              lq.withBusinessUnit.Clone(),
+		withOrganization:              lq.withOrganization.Clone(),
+		withLocationCategory:          lq.withLocationCategory.Clone(),
+		withState:                     lq.withState.Clone(),
+		withComments:                  lq.withComments.Clone(),
+		withContacts:                  lq.withContacts.Clone(),
+		withOriginRouteLocations:      lq.withOriginRouteLocations.Clone(),
+		withDestinationRouteLocations: lq.withDestinationRouteLocations.Clone(),
 		// clone intermediate query.
 		sql:  lq.sql.Clone(),
 		path: lq.path,
@@ -473,6 +524,28 @@ func (lq *LocationQuery) WithContacts(opts ...func(*LocationContactQuery)) *Loca
 		opt(query)
 	}
 	lq.withContacts = query
+	return lq
+}
+
+// WithOriginRouteLocations tells the query-builder to eager-load the nodes that are connected to
+// the "origin_route_locations" edge. The optional arguments are used to configure the query builder of the edge.
+func (lq *LocationQuery) WithOriginRouteLocations(opts ...func(*ShipmentRouteQuery)) *LocationQuery {
+	query := (&ShipmentRouteClient{config: lq.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	lq.withOriginRouteLocations = query
+	return lq
+}
+
+// WithDestinationRouteLocations tells the query-builder to eager-load the nodes that are connected to
+// the "destination_route_locations" edge. The optional arguments are used to configure the query builder of the edge.
+func (lq *LocationQuery) WithDestinationRouteLocations(opts ...func(*ShipmentRouteQuery)) *LocationQuery {
+	query := (&ShipmentRouteClient{config: lq.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	lq.withDestinationRouteLocations = query
 	return lq
 }
 
@@ -554,13 +627,15 @@ func (lq *LocationQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Loc
 	var (
 		nodes       = []*Location{}
 		_spec       = lq.querySpec()
-		loadedTypes = [6]bool{
+		loadedTypes = [8]bool{
 			lq.withBusinessUnit != nil,
 			lq.withOrganization != nil,
 			lq.withLocationCategory != nil,
 			lq.withState != nil,
 			lq.withComments != nil,
 			lq.withContacts != nil,
+			lq.withOriginRouteLocations != nil,
+			lq.withDestinationRouteLocations != nil,
 		}
 	)
 	_spec.ScanValues = func(columns []string) ([]any, error) {
@@ -622,6 +697,24 @@ func (lq *LocationQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Loc
 			return nil, err
 		}
 	}
+	if query := lq.withOriginRouteLocations; query != nil {
+		if err := lq.loadOriginRouteLocations(ctx, query, nodes,
+			func(n *Location) { n.Edges.OriginRouteLocations = []*ShipmentRoute{} },
+			func(n *Location, e *ShipmentRoute) {
+				n.Edges.OriginRouteLocations = append(n.Edges.OriginRouteLocations, e)
+			}); err != nil {
+			return nil, err
+		}
+	}
+	if query := lq.withDestinationRouteLocations; query != nil {
+		if err := lq.loadDestinationRouteLocations(ctx, query, nodes,
+			func(n *Location) { n.Edges.DestinationRouteLocations = []*ShipmentRoute{} },
+			func(n *Location, e *ShipmentRoute) {
+				n.Edges.DestinationRouteLocations = append(n.Edges.DestinationRouteLocations, e)
+			}); err != nil {
+			return nil, err
+		}
+	}
 	for name, query := range lq.withNamedComments {
 		if err := lq.loadComments(ctx, query, nodes,
 			func(n *Location) { n.appendNamedComments(name) },
@@ -633,6 +726,20 @@ func (lq *LocationQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Loc
 		if err := lq.loadContacts(ctx, query, nodes,
 			func(n *Location) { n.appendNamedContacts(name) },
 			func(n *Location, e *LocationContact) { n.appendNamedContacts(name, e) }); err != nil {
+			return nil, err
+		}
+	}
+	for name, query := range lq.withNamedOriginRouteLocations {
+		if err := lq.loadOriginRouteLocations(ctx, query, nodes,
+			func(n *Location) { n.appendNamedOriginRouteLocations(name) },
+			func(n *Location, e *ShipmentRoute) { n.appendNamedOriginRouteLocations(name, e) }); err != nil {
+			return nil, err
+		}
+	}
+	for name, query := range lq.withNamedDestinationRouteLocations {
+		if err := lq.loadDestinationRouteLocations(ctx, query, nodes,
+			func(n *Location) { n.appendNamedDestinationRouteLocations(name) },
+			func(n *Location, e *ShipmentRoute) { n.appendNamedDestinationRouteLocations(name, e) }); err != nil {
 			return nil, err
 		}
 	}
@@ -818,6 +925,66 @@ func (lq *LocationQuery) loadContacts(ctx context.Context, query *LocationContac
 	}
 	return nil
 }
+func (lq *LocationQuery) loadOriginRouteLocations(ctx context.Context, query *ShipmentRouteQuery, nodes []*Location, init func(*Location), assign func(*Location, *ShipmentRoute)) error {
+	fks := make([]driver.Value, 0, len(nodes))
+	nodeids := make(map[uuid.UUID]*Location)
+	for i := range nodes {
+		fks = append(fks, nodes[i].ID)
+		nodeids[nodes[i].ID] = nodes[i]
+		if init != nil {
+			init(nodes[i])
+		}
+	}
+	if len(query.ctx.Fields) > 0 {
+		query.ctx.AppendFieldOnce(shipmentroute.FieldOriginLocationID)
+	}
+	query.Where(predicate.ShipmentRoute(func(s *sql.Selector) {
+		s.Where(sql.InValues(s.C(location.OriginRouteLocationsColumn), fks...))
+	}))
+	neighbors, err := query.All(ctx)
+	if err != nil {
+		return err
+	}
+	for _, n := range neighbors {
+		fk := n.OriginLocationID
+		node, ok := nodeids[fk]
+		if !ok {
+			return fmt.Errorf(`unexpected referenced foreign-key "origin_location_id" returned %v for node %v`, fk, n.ID)
+		}
+		assign(node, n)
+	}
+	return nil
+}
+func (lq *LocationQuery) loadDestinationRouteLocations(ctx context.Context, query *ShipmentRouteQuery, nodes []*Location, init func(*Location), assign func(*Location, *ShipmentRoute)) error {
+	fks := make([]driver.Value, 0, len(nodes))
+	nodeids := make(map[uuid.UUID]*Location)
+	for i := range nodes {
+		fks = append(fks, nodes[i].ID)
+		nodeids[nodes[i].ID] = nodes[i]
+		if init != nil {
+			init(nodes[i])
+		}
+	}
+	if len(query.ctx.Fields) > 0 {
+		query.ctx.AppendFieldOnce(shipmentroute.FieldDestinationLocationID)
+	}
+	query.Where(predicate.ShipmentRoute(func(s *sql.Selector) {
+		s.Where(sql.InValues(s.C(location.DestinationRouteLocationsColumn), fks...))
+	}))
+	neighbors, err := query.All(ctx)
+	if err != nil {
+		return err
+	}
+	for _, n := range neighbors {
+		fk := n.DestinationLocationID
+		node, ok := nodeids[fk]
+		if !ok {
+			return fmt.Errorf(`unexpected referenced foreign-key "destination_location_id" returned %v for node %v`, fk, n.ID)
+		}
+		assign(node, n)
+	}
+	return nil
+}
 
 func (lq *LocationQuery) sqlCount(ctx context.Context) (int, error) {
 	_spec := lq.querySpec()
@@ -949,6 +1116,34 @@ func (lq *LocationQuery) WithNamedContacts(name string, opts ...func(*LocationCo
 		lq.withNamedContacts = make(map[string]*LocationContactQuery)
 	}
 	lq.withNamedContacts[name] = query
+	return lq
+}
+
+// WithNamedOriginRouteLocations tells the query-builder to eager-load the nodes that are connected to the "origin_route_locations"
+// edge with the given name. The optional arguments are used to configure the query builder of the edge.
+func (lq *LocationQuery) WithNamedOriginRouteLocations(name string, opts ...func(*ShipmentRouteQuery)) *LocationQuery {
+	query := (&ShipmentRouteClient{config: lq.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	if lq.withNamedOriginRouteLocations == nil {
+		lq.withNamedOriginRouteLocations = make(map[string]*ShipmentRouteQuery)
+	}
+	lq.withNamedOriginRouteLocations[name] = query
+	return lq
+}
+
+// WithNamedDestinationRouteLocations tells the query-builder to eager-load the nodes that are connected to the "destination_route_locations"
+// edge with the given name. The optional arguments are used to configure the query builder of the edge.
+func (lq *LocationQuery) WithNamedDestinationRouteLocations(name string, opts ...func(*ShipmentRouteQuery)) *LocationQuery {
+	query := (&ShipmentRouteClient{config: lq.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	if lq.withNamedDestinationRouteLocations == nil {
+		lq.withNamedDestinationRouteLocations = make(map[string]*ShipmentRouteQuery)
+	}
+	lq.withNamedDestinationRouteLocations[name] = query
 	return lq
 }
 

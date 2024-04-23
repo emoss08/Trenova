@@ -2,6 +2,7 @@ package services
 
 import (
 	"context"
+	"fmt"
 	"strings"
 	"time"
 
@@ -14,30 +15,27 @@ import (
 	"github.com/rs/zerolog"
 )
 
-type ColumnValue struct {
-	Label string `json:"label"`
-	Value string `json:"value"`
-}
-
+// FileFormat represents the format of the report file.
 type FileFormat string
 
-const (
-	CSV  FileFormat = "csv"
-	XLS  FileFormat = "xls"
-	XLSX FileFormat = "xlsx"
-	PDF  FileFormat = "pdf"
-)
-
+// DeliveryMethod represents the method of delivery for the report.
 type DeliveryMethod string
 
+// Constants for the file format of the report.
 const (
-	Email DeliveryMethod = "email"
-	S3    DeliveryMethod = "s3"
-	Minio DeliveryMethod = "minio"
-	Kafka DeliveryMethod = "kafka"
-	Redis DeliveryMethod = "redis"
+	CSV  = FileFormat("csv")
+	XLS  = FileFormat("xls")
+	XLSX = FileFormat("xlsx")
+	PDF  = FileFormat("pdf")
 )
 
+// Constants for the delivery method of the report.
+const (
+	Email = DeliveryMethod("email")
+	Local = DeliveryMethod("local")
+)
+
+// GenerateReportRequest represents the payload for generating a report.
 type GenerateReportRequest struct {
 	TableName      string         `json:"tableName"`
 	Columns        []string       `json:"columns"`
@@ -45,10 +43,12 @@ type GenerateReportRequest struct {
 	DeliveryMethod DeliveryMethod `json:"deliveryMethod"`
 }
 
+// GenerateReportResponse represents the response for generating a report.
 type GenerateReportResponse struct {
 	ReportURL string `json:"report_url"`
 }
 
+// ReportService represents the report service.
 type ReportService struct {
 	Client *ent.Client
 	Logger *zerolog.Logger
@@ -64,6 +64,12 @@ func NewReportService(s *api.Server) *ReportService {
 		Config: &s.Config,
 		Server: s,
 	}
+}
+
+type ColumnValue struct {
+	Label       string `json:"label"`
+	Value       string `json:"value"`
+	Description string `json:"description"`
 }
 
 // GetColumnsByTableName returns the column names for a given table name.
@@ -120,20 +126,22 @@ func (r *ReportService) getColumnsNames(
 	excludedTableNames map[string]bool, excludedColumns map[string]bool,
 ) ([]ColumnValue, int, error) {
 	if excludedTableNames[tableName] {
-		return nil, 0, nil // Return empty if the table is in the excluded list
+		return nil, 0, fmt.Errorf("table %s is excluded", tableName)
 	}
 
-	query := `SELECT 
-		column_name 
-	FROM 
-		information_schema.columns 
-	WHERE 
-		table_schema = 'public' 
-	AND
-		table_name = $1
-  	ORDER BY 
-		ordinal_position DESC;
-	`
+	query := `SELECT
+                c.column_name,
+                COALESCE(pgd.description, 'No description available') AS description
+            FROM
+                information_schema.columns AS c
+            LEFT JOIN pg_catalog.pg_statio_all_tables AS st
+                ON c.table_schema = st.schemaname AND c.table_name = st.relname
+            LEFT JOIN pg_catalog.pg_description AS pgd
+                ON pgd.objoid = st.relid AND pgd.objsubid = c.ordinal_position
+            WHERE
+                c.table_schema = 'public' AND c.table_name = $1
+            ORDER BY
+                c.ordinal_position ASC;`
 
 	rows, err := tx.QueryContext(ctx, query, tableName)
 	if err != nil {
@@ -143,26 +151,32 @@ func (r *ReportService) getColumnsNames(
 
 	var columns []ColumnValue
 	for rows.Next() {
-		var columnName string
-		if err = rows.Scan(&columnName); err != nil {
+		var columnName, description string
+		if err = rows.Scan(&columnName, &description); err != nil {
 			return nil, 0, err
 		}
 
 		if excludedColumns[columnName] {
-			continue // Skip the loop iteration if column is to be excluded
+			continue // Skip excluded columns
 		}
 
-		formattedLabel := strings.ReplaceAll(util.ToTitleFormat(columnName), "_", " ")
+		formattedLabel := strings.ReplaceAll(util.ToTitleFormat(strings.ReplaceAll(columnName, "_", " ")), "_", " ")
 
 		columns = append(columns, ColumnValue{
-			Label: formattedLabel,
-			Value: columnName,
+			Label:       formattedLabel,
+			Value:       columnName,
+			Description: description,
 		})
 	}
 
 	return columns, len(columns), nil
 }
 
+// GenerateReport creates a report based on the provided payload.
+//
+// This function is used to generate a report based on the provided payload. The report will be generated
+// based on the table name, columns, file format, and delivery method provided in the payload. The report
+// will be sent to the user via the delivery method specified in the payload.
 func (r *ReportService) GenerateReport(
 	ctx context.Context, payload GenerateReportRequest, userID, orgID, buID uuid.UUID,
 ) (GenerateReportResponse, error) {
@@ -192,10 +206,12 @@ func (r *ReportService) GenerateReport(
 			}
 
 			err = r.addReportToUser(ctx, tx, userID, orgID, buID, result.ReportURL)
-			NewWebsocketService(r.Server).NotifyClient(userID.String(), message)
 			if err != nil {
 				return err
 			}
+
+			// Notify the client that the report has been generated
+			NewWebsocketService(r.Client, r.Logger).NotifyClient(userID.String(), message)
 
 			return nil
 		})
@@ -209,6 +225,10 @@ func (r *ReportService) GenerateReport(
 	return GenerateReportResponse{}, nil
 }
 
+// addReportToUser adds the report URL to the user's report list.
+//
+// This function is used to add the report URL to the user's report list. The report URL is the URL where the
+// report can be downloaded from. The report URL is stored in the user_report table in the database.
 func (r *ReportService) addReportToUser(
 	ctx context.Context, tx *ent.Tx, userID, orgID, buID uuid.UUID, reportURL string,
 ) error {

@@ -141,6 +141,9 @@ type ShipmentDocumentation func(*sql.Selector)
 // ShipmentMove is the predicate function for shipmentmove builders.
 type ShipmentMove func(*sql.Selector)
 
+// ShipmentRoute is the predicate function for shipmentroute builders.
+type ShipmentRoute func(*sql.Selector)
+
 // ShipmentType is the predicate function for shipmenttype builders.
 type ShipmentType func(*sql.Selector)
 

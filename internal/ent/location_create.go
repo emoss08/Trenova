@@ -16,6 +16,7 @@ import (
 	"github.com/emoss08/trenova/internal/ent/locationcomment"
 	"github.com/emoss08/trenova/internal/ent/locationcontact"
 	"github.com/emoss08/trenova/internal/ent/organization"
+	"github.com/emoss08/trenova/internal/ent/shipmentroute"
 	"github.com/emoss08/trenova/internal/ent/usstate"
 	"github.com/google/uuid"
 )
@@ -291,6 +292,36 @@ func (lc *LocationCreate) AddContacts(l ...*LocationContact) *LocationCreate {
 		ids[i] = l[i].ID
 	}
 	return lc.AddContactIDs(ids...)
+}
+
+// AddOriginRouteLocationIDs adds the "origin_route_locations" edge to the ShipmentRoute entity by IDs.
+func (lc *LocationCreate) AddOriginRouteLocationIDs(ids ...uuid.UUID) *LocationCreate {
+	lc.mutation.AddOriginRouteLocationIDs(ids...)
+	return lc
+}
+
+// AddOriginRouteLocations adds the "origin_route_locations" edges to the ShipmentRoute entity.
+func (lc *LocationCreate) AddOriginRouteLocations(s ...*ShipmentRoute) *LocationCreate {
+	ids := make([]uuid.UUID, len(s))
+	for i := range s {
+		ids[i] = s[i].ID
+	}
+	return lc.AddOriginRouteLocationIDs(ids...)
+}
+
+// AddDestinationRouteLocationIDs adds the "destination_route_locations" edge to the ShipmentRoute entity by IDs.
+func (lc *LocationCreate) AddDestinationRouteLocationIDs(ids ...uuid.UUID) *LocationCreate {
+	lc.mutation.AddDestinationRouteLocationIDs(ids...)
+	return lc
+}
+
+// AddDestinationRouteLocations adds the "destination_route_locations" edges to the ShipmentRoute entity.
+func (lc *LocationCreate) AddDestinationRouteLocations(s ...*ShipmentRoute) *LocationCreate {
+	ids := make([]uuid.UUID, len(s))
+	for i := range s {
+		ids[i] = s[i].ID
+	}
+	return lc.AddDestinationRouteLocationIDs(ids...)
 }
 
 // Mutation returns the LocationMutation object of the builder.
@@ -632,6 +663,38 @@ func (lc *LocationCreate) createSpec() (*Location, *sqlgraph.CreateSpec) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(locationcontact.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges = append(_spec.Edges, edge)
+	}
+	if nodes := lc.mutation.OriginRouteLocationsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   location.OriginRouteLocationsTable,
+			Columns: []string{location.OriginRouteLocationsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(shipmentroute.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges = append(_spec.Edges, edge)
+	}
+	if nodes := lc.mutation.DestinationRouteLocationsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   location.DestinationRouteLocationsTable,
+			Columns: []string{location.DestinationRouteLocationsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(shipmentroute.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {

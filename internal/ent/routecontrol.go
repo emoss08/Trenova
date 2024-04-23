@@ -27,7 +27,7 @@ type RouteControl struct {
 	// DistanceMethod holds the value of the "distance_method" field.
 	DistanceMethod routecontrol.DistanceMethod `json:"distanceMethod" validate:"required,oneof=Trenova Google"`
 	// MileageUnit holds the value of the "mileage_unit" field.
-	MileageUnit routecontrol.MileageUnit `json:"mileageUnit" validate:"required,oneof=Metric Imperial"`
+	MileageUnit routecontrol.MileageUnit `json:"mileageUnit" validate:"required,oneof=UnitsMetric UnitsImperial"`
 	// GenerateRoutes holds the value of the "generate_routes" field.
 	GenerateRoutes bool `json:"generateRoutes" validate:"omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.

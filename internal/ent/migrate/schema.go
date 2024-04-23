@@ -1372,7 +1372,7 @@ var (
 		{Name: "created_at", Type: field.TypeTime},
 		{Name: "updated_at", Type: field.TypeTime},
 		{Name: "distance_method", Type: field.TypeEnum, Enums: []string{"Trenova", "Google"}, Default: "Trenova", SchemaType: map[string]string{"postgres": "VARCHAR(8)", "sqlite3": "VARCHAR(8)"}},
-		{Name: "mileage_unit", Type: field.TypeEnum, Enums: []string{"Metric", "Imperial"}, Default: "Metric", SchemaType: map[string]string{"postgres": "VARCHAR(9)", "sqlite3": "VARCHAR(9)"}},
+		{Name: "mileage_unit", Type: field.TypeEnum, Enums: []string{"UnitsMetric", "UnitsImperial"}, Default: "UnitsMetric", SchemaType: map[string]string{"postgres": "VARCHAR(14)", "sqlite3": "VARCHAR(14)"}},
 		{Name: "generate_routes", Type: field.TypeBool, Default: false},
 		{Name: "organization_id", Type: field.TypeUUID, Unique: true},
 		{Name: "business_unit_id", Type: field.TypeUUID},
@@ -1886,6 +1886,53 @@ var (
 			},
 		},
 	}
+	// ShipmentRoutesColumns holds the columns for the "shipment_routes" table.
+	ShipmentRoutesColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeUUID},
+		{Name: "created_at", Type: field.TypeTime, Comment: "The time that this entity was created."},
+		{Name: "updated_at", Type: field.TypeTime, Comment: "The last time that this entity was updated."},
+		{Name: "version", Type: field.TypeInt, Comment: "The current version of this entity.", Default: 1},
+		{Name: "mileage", Type: field.TypeFloat64},
+		{Name: "duration", Type: field.TypeInt, Nullable: true},
+		{Name: "distance_method", Type: field.TypeString, Nullable: true, Size: 50, SchemaType: map[string]string{"postgres": "VARCHAR(50)", "sqlite3": "VARCHAR(50)"}},
+		{Name: "auto_generated", Type: field.TypeBool, Default: false},
+		{Name: "origin_location_id", Type: field.TypeUUID},
+		{Name: "destination_location_id", Type: field.TypeUUID},
+		{Name: "business_unit_id", Type: field.TypeUUID},
+		{Name: "organization_id", Type: field.TypeUUID},
+	}
+	// ShipmentRoutesTable holds the schema information for the "shipment_routes" table.
+	ShipmentRoutesTable = &schema.Table{
+		Name:       "shipment_routes",
+		Columns:    ShipmentRoutesColumns,
+		PrimaryKey: []*schema.Column{ShipmentRoutesColumns[0]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "shipment_routes_locations_origin_route_locations",
+				Columns:    []*schema.Column{ShipmentRoutesColumns[8]},
+				RefColumns: []*schema.Column{LocationsColumns[0]},
+				OnDelete:   schema.Cascade,
+			},
+			{
+				Symbol:     "shipment_routes_locations_destination_route_locations",
+				Columns:    []*schema.Column{ShipmentRoutesColumns[9]},
+				RefColumns: []*schema.Column{LocationsColumns[0]},
+				OnDelete:   schema.Cascade,
+			},
+			{
+				Symbol:     "shipment_routes_business_units_business_unit",
+				Columns:    []*schema.Column{ShipmentRoutesColumns[10]},
+				RefColumns: []*schema.Column{BusinessUnitsColumns[0]},
+				OnDelete:   schema.Cascade,
+			},
+			{
+				Symbol:     "shipment_routes_organizations_organization",
+				Columns:    []*schema.Column{ShipmentRoutesColumns[11]},
+				RefColumns: []*schema.Column{OrganizationsColumns[0]},
+				OnDelete:   schema.Cascade,
+			},
+		},
+	}
 	// ShipmentTypesColumns holds the columns for the "shipment_types" table.
 	ShipmentTypesColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeUUID},
@@ -2047,22 +2094,22 @@ var (
 		{Name: "created_at", Type: field.TypeTime, Comment: "The time that this entity was created."},
 		{Name: "updated_at", Type: field.TypeTime, Comment: "The last time that this entity was updated."},
 		{Name: "version", Type: field.TypeInt, Comment: "The current version of this entity.", Default: 1},
-		{Name: "code", Type: field.TypeString, Size: 50, SchemaType: map[string]string{"postgres": "VARCHAR(50)", "sqlite3": "VARCHAR(50)"}},
-		{Name: "status", Type: field.TypeEnum, Enums: []string{"Available", "OutOfService", "AtMaintenance", "Sold", "Lost"}, Default: "Available", SchemaType: map[string]string{"postgres": "VARCHAR(13)", "sqlite3": "VARCHAR(13)"}},
-		{Name: "license_plate_number", Type: field.TypeString, Nullable: true, Size: 50, SchemaType: map[string]string{"postgres": "VARCHAR(50)", "sqlite3": "VARCHAR(50)"}},
-		{Name: "vin", Type: field.TypeString, Nullable: true, SchemaType: map[string]string{"postgres": "VARCHAR(17)", "sqlite3": "VARCHAR(17)"}},
-		{Name: "model", Type: field.TypeString, Nullable: true, Size: 50, SchemaType: map[string]string{"postgres": "VARCHAR(50)", "sqlite3": "VARCHAR(50)"}},
-		{Name: "year", Type: field.TypeInt16, Nullable: true},
-		{Name: "leased", Type: field.TypeBool, Default: false},
-		{Name: "leased_date", Type: field.TypeOther, Nullable: true, SchemaType: map[string]string{"postgres": "date", "sqlite3": "date"}},
+		{Name: "code", Type: field.TypeString, Size: 50, Comment: "The unique code assigned to each tractor for identification purposes.", SchemaType: map[string]string{"postgres": "VARCHAR(50)", "sqlite3": "VARCHAR(50)"}},
+		{Name: "status", Type: field.TypeEnum, Comment: "The operational status of the tractor, indicating availability, maintenance, or other conditions.", Enums: []string{"Available", "OutOfService", "AtMaintenance", "Sold", "Lost"}, Default: "Available", SchemaType: map[string]string{"postgres": "VARCHAR(13)", "sqlite3": "VARCHAR(13)"}},
+		{Name: "license_plate_number", Type: field.TypeString, Nullable: true, Size: 50, Comment: "The license plate number of the tractor, used for legal identification on roads.", SchemaType: map[string]string{"postgres": "VARCHAR(50)", "sqlite3": "VARCHAR(50)"}},
+		{Name: "vin", Type: field.TypeString, Nullable: true, Comment: "The Vehicle Identification Number, a unique code used to identify individual motor vehicles.", SchemaType: map[string]string{"postgres": "VARCHAR(17)", "sqlite3": "VARCHAR(17)"}},
+		{Name: "model", Type: field.TypeString, Nullable: true, Size: 50, Comment: "The model of the tractor, which indicates the design and technical specifications.", SchemaType: map[string]string{"postgres": "VARCHAR(50)", "sqlite3": "VARCHAR(50)"}},
+		{Name: "year", Type: field.TypeInt16, Nullable: true, Comment: "The year the tractor was manufactured, reflecting its age and potentially its technology level."},
+		{Name: "leased", Type: field.TypeBool, Comment: "Indicates whether the tractor is currently leased or owned outright.", Default: false},
+		{Name: "leased_date", Type: field.TypeOther, Nullable: true, Comment: "The date on which the tractor was leased, if applicable.", SchemaType: map[string]string{"postgres": "date", "sqlite3": "date"}},
 		{Name: "business_unit_id", Type: field.TypeUUID},
 		{Name: "organization_id", Type: field.TypeUUID},
-		{Name: "equipment_type_id", Type: field.TypeUUID, Nullable: true},
-		{Name: "equipment_manufacturer_id", Type: field.TypeUUID, Nullable: true},
-		{Name: "state_id", Type: field.TypeUUID, Nullable: true},
-		{Name: "fleet_code_id", Type: field.TypeUUID},
-		{Name: "primary_worker_id", Type: field.TypeUUID, Unique: true},
-		{Name: "secondary_worker_id", Type: field.TypeUUID, Unique: true, Nullable: true},
+		{Name: "equipment_type_id", Type: field.TypeUUID, Nullable: true, Comment: "Identifier for the type of equipment the tractor is classified under."},
+		{Name: "equipment_manufacturer_id", Type: field.TypeUUID, Nullable: true, Comment: "The UUID of the manufacturer of the tractor's equipment, linking to specific company details."},
+		{Name: "state_id", Type: field.TypeUUID, Nullable: true, Comment: "A UUID representing the state in which the tractor is registered, for jurisdiction purposes."},
+		{Name: "fleet_code_id", Type: field.TypeUUID, Comment: "A UUID linking the tractor to a specific fleet within an organization."},
+		{Name: "primary_worker_id", Type: field.TypeUUID, Unique: true, Comment: "The primary worker assigned to operate the tractor, identified by UUID."},
+		{Name: "secondary_worker_id", Type: field.TypeUUID, Unique: true, Nullable: true, Comment: "An optional secondary worker who can also operate the tractor, identified by UUID."},
 	}
 	// TractorsTable holds the schema information for the "tractors" table.
 	TractorsTable = &schema.Table{
@@ -2657,6 +2704,7 @@ var (
 		ShipmentControlsTable,
 		ShipmentDocumentationsTable,
 		ShipmentMovesTable,
+		ShipmentRoutesTable,
 		ShipmentTypesTable,
 		StopsTable,
 		TableChangeAlertsTable,
@@ -2836,6 +2884,11 @@ func init() {
 	ShipmentMovesTable.ForeignKeys[5].RefTable = WorkersTable
 	ShipmentMovesTable.ForeignKeys[6].RefTable = WorkersTable
 	ShipmentMovesTable.Annotation = &entsql.Annotation{}
+	ShipmentRoutesTable.ForeignKeys[0].RefTable = LocationsTable
+	ShipmentRoutesTable.ForeignKeys[1].RefTable = LocationsTable
+	ShipmentRoutesTable.ForeignKeys[2].RefTable = BusinessUnitsTable
+	ShipmentRoutesTable.ForeignKeys[3].RefTable = OrganizationsTable
+	ShipmentRoutesTable.Annotation = &entsql.Annotation{}
 	ShipmentTypesTable.ForeignKeys[0].RefTable = BusinessUnitsTable
 	ShipmentTypesTable.ForeignKeys[1].RefTable = OrganizationsTable
 	ShipmentTypesTable.Annotation = &entsql.Annotation{}

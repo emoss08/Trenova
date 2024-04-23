@@ -61,6 +61,7 @@ import (
 	"github.com/emoss08/trenova/internal/ent/shipmentcontrol"
 	"github.com/emoss08/trenova/internal/ent/shipmentdocumentation"
 	"github.com/emoss08/trenova/internal/ent/shipmentmove"
+	"github.com/emoss08/trenova/internal/ent/shipmentroute"
 	"github.com/emoss08/trenova/internal/ent/shipmenttype"
 	"github.com/emoss08/trenova/internal/ent/stop"
 	"github.com/emoss08/trenova/internal/ent/tablechangealert"
@@ -175,6 +176,8 @@ type Client struct {
 	ShipmentDocumentation *ShipmentDocumentationClient
 	// ShipmentMove is the client for interacting with the ShipmentMove builders.
 	ShipmentMove *ShipmentMoveClient
+	// ShipmentRoute is the client for interacting with the ShipmentRoute builders.
+	ShipmentRoute *ShipmentRouteClient
 	// ShipmentType is the client for interacting with the ShipmentType builders.
 	ShipmentType *ShipmentTypeClient
 	// Stop is the client for interacting with the Stop builders.
@@ -261,6 +264,7 @@ func (c *Client) init() {
 	c.ShipmentControl = NewShipmentControlClient(c.config)
 	c.ShipmentDocumentation = NewShipmentDocumentationClient(c.config)
 	c.ShipmentMove = NewShipmentMoveClient(c.config)
+	c.ShipmentRoute = NewShipmentRouteClient(c.config)
 	c.ShipmentType = NewShipmentTypeClient(c.config)
 	c.Stop = NewStopClient(c.config)
 	c.TableChangeAlert = NewTableChangeAlertClient(c.config)
@@ -413,6 +417,7 @@ func (c *Client) Tx(ctx context.Context) (*Tx, error) {
 		ShipmentControl:              NewShipmentControlClient(cfg),
 		ShipmentDocumentation:        NewShipmentDocumentationClient(cfg),
 		ShipmentMove:                 NewShipmentMoveClient(cfg),
+		ShipmentRoute:                NewShipmentRouteClient(cfg),
 		ShipmentType:                 NewShipmentTypeClient(cfg),
 		Stop:                         NewStopClient(cfg),
 		TableChangeAlert:             NewTableChangeAlertClient(cfg),
@@ -492,6 +497,7 @@ func (c *Client) BeginTx(ctx context.Context, opts *sql.TxOptions) (*Tx, error) 
 		ShipmentControl:              NewShipmentControlClient(cfg),
 		ShipmentDocumentation:        NewShipmentDocumentationClient(cfg),
 		ShipmentMove:                 NewShipmentMoveClient(cfg),
+		ShipmentRoute:                NewShipmentRouteClient(cfg),
 		ShipmentType:                 NewShipmentTypeClient(cfg),
 		Stop:                         NewStopClient(cfg),
 		TableChangeAlert:             NewTableChangeAlertClient(cfg),
@@ -547,8 +553,8 @@ func (c *Client) Use(hooks ...Hook) {
 		c.OrganizationFeatureFlag, c.QualifierCode, c.ReasonCode, c.RevenueCode,
 		c.RouteControl, c.ServiceType, c.Session, c.Shipment, c.ShipmentCharges,
 		c.ShipmentComment, c.ShipmentCommodity, c.ShipmentControl,
-		c.ShipmentDocumentation, c.ShipmentMove, c.ShipmentType, c.Stop,
-		c.TableChangeAlert, c.Tag, c.Tractor, c.Trailer, c.UsState, c.User,
+		c.ShipmentDocumentation, c.ShipmentMove, c.ShipmentRoute, c.ShipmentType,
+		c.Stop, c.TableChangeAlert, c.Tag, c.Tractor, c.Trailer, c.UsState, c.User,
 		c.UserFavorite, c.UserNotification, c.UserReport, c.Worker, c.WorkerComment,
 		c.WorkerContact, c.WorkerProfile,
 	} {
@@ -571,8 +577,8 @@ func (c *Client) Intercept(interceptors ...Interceptor) {
 		c.OrganizationFeatureFlag, c.QualifierCode, c.ReasonCode, c.RevenueCode,
 		c.RouteControl, c.ServiceType, c.Session, c.Shipment, c.ShipmentCharges,
 		c.ShipmentComment, c.ShipmentCommodity, c.ShipmentControl,
-		c.ShipmentDocumentation, c.ShipmentMove, c.ShipmentType, c.Stop,
-		c.TableChangeAlert, c.Tag, c.Tractor, c.Trailer, c.UsState, c.User,
+		c.ShipmentDocumentation, c.ShipmentMove, c.ShipmentRoute, c.ShipmentType,
+		c.Stop, c.TableChangeAlert, c.Tag, c.Tractor, c.Trailer, c.UsState, c.User,
 		c.UserFavorite, c.UserNotification, c.UserReport, c.Worker, c.WorkerComment,
 		c.WorkerContact, c.WorkerProfile,
 	} {
@@ -673,6 +679,8 @@ func (c *Client) Mutate(ctx context.Context, m Mutation) (Value, error) {
 		return c.ShipmentDocumentation.mutate(ctx, m)
 	case *ShipmentMoveMutation:
 		return c.ShipmentMove.mutate(ctx, m)
+	case *ShipmentRouteMutation:
+		return c.ShipmentRoute.mutate(ctx, m)
 	case *ShipmentTypeMutation:
 		return c.ShipmentType.mutate(ctx, m)
 	case *StopMutation:
@@ -5477,6 +5485,38 @@ func (c *LocationClient) QueryContacts(l *Location) *LocationContactQuery {
 	return query
 }
 
+// QueryOriginRouteLocations queries the origin_route_locations edge of a Location.
+func (c *LocationClient) QueryOriginRouteLocations(l *Location) *ShipmentRouteQuery {
+	query := (&ShipmentRouteClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := l.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(location.Table, location.FieldID, id),
+			sqlgraph.To(shipmentroute.Table, shipmentroute.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, location.OriginRouteLocationsTable, location.OriginRouteLocationsColumn),
+		)
+		fromV = sqlgraph.Neighbors(l.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryDestinationRouteLocations queries the destination_route_locations edge of a Location.
+func (c *LocationClient) QueryDestinationRouteLocations(l *Location) *ShipmentRouteQuery {
+	query := (&ShipmentRouteClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := l.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(location.Table, location.FieldID, id),
+			sqlgraph.To(shipmentroute.Table, shipmentroute.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, location.DestinationRouteLocationsTable, location.DestinationRouteLocationsColumn),
+		)
+		fromV = sqlgraph.Neighbors(l.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
 // Hooks returns the client hooks.
 func (c *LocationClient) Hooks() []Hook {
 	return c.hooks.Location
@@ -9162,6 +9202,203 @@ func (c *ShipmentMoveClient) mutate(ctx context.Context, m *ShipmentMoveMutation
 	}
 }
 
+// ShipmentRouteClient is a client for the ShipmentRoute schema.
+type ShipmentRouteClient struct {
+	config
+}
+
+// NewShipmentRouteClient returns a client for the ShipmentRoute from the given config.
+func NewShipmentRouteClient(c config) *ShipmentRouteClient {
+	return &ShipmentRouteClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `shipmentroute.Hooks(f(g(h())))`.
+func (c *ShipmentRouteClient) Use(hooks ...Hook) {
+	c.hooks.ShipmentRoute = append(c.hooks.ShipmentRoute, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `shipmentroute.Intercept(f(g(h())))`.
+func (c *ShipmentRouteClient) Intercept(interceptors ...Interceptor) {
+	c.inters.ShipmentRoute = append(c.inters.ShipmentRoute, interceptors...)
+}
+
+// Create returns a builder for creating a ShipmentRoute entity.
+func (c *ShipmentRouteClient) Create() *ShipmentRouteCreate {
+	mutation := newShipmentRouteMutation(c.config, OpCreate)
+	return &ShipmentRouteCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of ShipmentRoute entities.
+func (c *ShipmentRouteClient) CreateBulk(builders ...*ShipmentRouteCreate) *ShipmentRouteCreateBulk {
+	return &ShipmentRouteCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *ShipmentRouteClient) MapCreateBulk(slice any, setFunc func(*ShipmentRouteCreate, int)) *ShipmentRouteCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &ShipmentRouteCreateBulk{err: fmt.Errorf("calling to ShipmentRouteClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*ShipmentRouteCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &ShipmentRouteCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for ShipmentRoute.
+func (c *ShipmentRouteClient) Update() *ShipmentRouteUpdate {
+	mutation := newShipmentRouteMutation(c.config, OpUpdate)
+	return &ShipmentRouteUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *ShipmentRouteClient) UpdateOne(sr *ShipmentRoute) *ShipmentRouteUpdateOne {
+	mutation := newShipmentRouteMutation(c.config, OpUpdateOne, withShipmentRoute(sr))
+	return &ShipmentRouteUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *ShipmentRouteClient) UpdateOneID(id uuid.UUID) *ShipmentRouteUpdateOne {
+	mutation := newShipmentRouteMutation(c.config, OpUpdateOne, withShipmentRouteID(id))
+	return &ShipmentRouteUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for ShipmentRoute.
+func (c *ShipmentRouteClient) Delete() *ShipmentRouteDelete {
+	mutation := newShipmentRouteMutation(c.config, OpDelete)
+	return &ShipmentRouteDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *ShipmentRouteClient) DeleteOne(sr *ShipmentRoute) *ShipmentRouteDeleteOne {
+	return c.DeleteOneID(sr.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *ShipmentRouteClient) DeleteOneID(id uuid.UUID) *ShipmentRouteDeleteOne {
+	builder := c.Delete().Where(shipmentroute.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &ShipmentRouteDeleteOne{builder}
+}
+
+// Query returns a query builder for ShipmentRoute.
+func (c *ShipmentRouteClient) Query() *ShipmentRouteQuery {
+	return &ShipmentRouteQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeShipmentRoute},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a ShipmentRoute entity by its id.
+func (c *ShipmentRouteClient) Get(ctx context.Context, id uuid.UUID) (*ShipmentRoute, error) {
+	return c.Query().Where(shipmentroute.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *ShipmentRouteClient) GetX(ctx context.Context, id uuid.UUID) *ShipmentRoute {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// QueryBusinessUnit queries the business_unit edge of a ShipmentRoute.
+func (c *ShipmentRouteClient) QueryBusinessUnit(sr *ShipmentRoute) *BusinessUnitQuery {
+	query := (&BusinessUnitClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := sr.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(shipmentroute.Table, shipmentroute.FieldID, id),
+			sqlgraph.To(businessunit.Table, businessunit.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, false, shipmentroute.BusinessUnitTable, shipmentroute.BusinessUnitColumn),
+		)
+		fromV = sqlgraph.Neighbors(sr.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryOrganization queries the organization edge of a ShipmentRoute.
+func (c *ShipmentRouteClient) QueryOrganization(sr *ShipmentRoute) *OrganizationQuery {
+	query := (&OrganizationClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := sr.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(shipmentroute.Table, shipmentroute.FieldID, id),
+			sqlgraph.To(organization.Table, organization.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, false, shipmentroute.OrganizationTable, shipmentroute.OrganizationColumn),
+		)
+		fromV = sqlgraph.Neighbors(sr.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryOriginLocation queries the origin_location edge of a ShipmentRoute.
+func (c *ShipmentRouteClient) QueryOriginLocation(sr *ShipmentRoute) *LocationQuery {
+	query := (&LocationClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := sr.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(shipmentroute.Table, shipmentroute.FieldID, id),
+			sqlgraph.To(location.Table, location.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, shipmentroute.OriginLocationTable, shipmentroute.OriginLocationColumn),
+		)
+		fromV = sqlgraph.Neighbors(sr.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryDestinationLocation queries the destination_location edge of a ShipmentRoute.
+func (c *ShipmentRouteClient) QueryDestinationLocation(sr *ShipmentRoute) *LocationQuery {
+	query := (&LocationClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := sr.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(shipmentroute.Table, shipmentroute.FieldID, id),
+			sqlgraph.To(location.Table, location.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, shipmentroute.DestinationLocationTable, shipmentroute.DestinationLocationColumn),
+		)
+		fromV = sqlgraph.Neighbors(sr.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// Hooks returns the client hooks.
+func (c *ShipmentRouteClient) Hooks() []Hook {
+	return c.hooks.ShipmentRoute
+}
+
+// Interceptors returns the client interceptors.
+func (c *ShipmentRouteClient) Interceptors() []Interceptor {
+	return c.inters.ShipmentRoute
+}
+
+func (c *ShipmentRouteClient) mutate(ctx context.Context, m *ShipmentRouteMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&ShipmentRouteCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&ShipmentRouteUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&ShipmentRouteUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&ShipmentRouteDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown ShipmentRoute mutation op: %q", m.Op())
+	}
+}
+
 // ShipmentTypeClient is a client for the ShipmentType schema.
 type ShipmentTypeClient struct {
 	config
@@ -12198,9 +12435,10 @@ type (
 		LocationComment, LocationContact, Organization, OrganizationFeatureFlag,
 		QualifierCode, ReasonCode, RevenueCode, RouteControl, ServiceType, Session,
 		Shipment, ShipmentCharges, ShipmentComment, ShipmentCommodity, ShipmentControl,
-		ShipmentDocumentation, ShipmentMove, ShipmentType, Stop, TableChangeAlert, Tag,
-		Tractor, Trailer, UsState, User, UserFavorite, UserNotification, UserReport,
-		Worker, WorkerComment, WorkerContact, WorkerProfile []ent.Hook
+		ShipmentDocumentation, ShipmentMove, ShipmentRoute, ShipmentType, Stop,
+		TableChangeAlert, Tag, Tractor, Trailer, UsState, User, UserFavorite,
+		UserNotification, UserReport, Worker, WorkerComment, WorkerContact,
+		WorkerProfile []ent.Hook
 	}
 	inters struct {
 		AccessorialCharge, AccountingControl, BillingControl, BusinessUnit, ChargeType,
@@ -12212,9 +12450,10 @@ type (
 		LocationComment, LocationContact, Organization, OrganizationFeatureFlag,
 		QualifierCode, ReasonCode, RevenueCode, RouteControl, ServiceType, Session,
 		Shipment, ShipmentCharges, ShipmentComment, ShipmentCommodity, ShipmentControl,
-		ShipmentDocumentation, ShipmentMove, ShipmentType, Stop, TableChangeAlert, Tag,
-		Tractor, Trailer, UsState, User, UserFavorite, UserNotification, UserReport,
-		Worker, WorkerComment, WorkerContact, WorkerProfile []ent.Interceptor
+		ShipmentDocumentation, ShipmentMove, ShipmentRoute, ShipmentType, Stop,
+		TableChangeAlert, Tag, Tractor, Trailer, UsState, User, UserFavorite,
+		UserNotification, UserReport, Worker, WorkerComment, WorkerContact,
+		WorkerProfile []ent.Interceptor
 	}
 )
 

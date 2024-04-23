@@ -33,7 +33,7 @@ import {
 } from "@/components/ui/tooltip";
 import { useNotifications } from "@/hooks/useQueries";
 import axios from "@/lib/axiosConfig";
-import { TOAST_STYLE, WEB_SOCKET_URL } from "@/lib/constants";
+import { WEB_SOCKET_URL } from "@/lib/constants";
 import { createWebsocketManager } from "@/lib/websockets";
 import { useUserStore } from "@/stores/AuthStore";
 import { useHeaderStore } from "@/stores/HeaderStore";
@@ -42,7 +42,7 @@ import { faBell } from "@fortawesome/pro-duotone-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { useQueryClient } from "@tanstack/react-query";
 import React, { useState } from "react";
-import toast from "react-hot-toast";
+import { toast } from "sonner";
 
 function NotificationButton({
   userHasNotifications,
@@ -158,22 +158,11 @@ export function NotificationMenu() {
     const sendNotificationRequest = markedAndInvalidate();
 
     // Fire Toast
-    await toast.promise(
-      sendNotificationRequest,
-      {
-        loading: "Marking all notifications as read",
-        success: "All notifications marked as read",
-        error: "Failed to mark all notifications as read",
-      },
-      {
-        id: "notification-toast",
-        style: TOAST_STYLE,
-        ariaProps: {
-          role: "status",
-          "aria-live": "polite",
-        },
-      },
-    );
+    toast.promise(sendNotificationRequest, {
+      loading: "Marking all notifications as read",
+      success: "All notifications marked as read",
+      error: "Failed to mark all notifications as read",
+    });
 
     setNotificationMenuOpen(false);
   };
@@ -189,21 +178,10 @@ export function NotificationMenu() {
           })
           .then(() => {
             toast.success(
-              () => (
-                <div className="flex flex-col space-y-1">
-                  <span>New Report Available!</span>
-                  <span className="text-xs">{data.content}</span>
-                </div>
-              ),
-              {
-                duration: 4000,
-                id: "notification-toast",
-                style: TOAST_STYLE,
-                ariaProps: {
-                  role: "status",
-                  "aria-live": "polite",
-                },
-              },
+              <div className="flex flex-col space-y-1">
+                <span className="font-semibold">New Report Available!</span>
+                <span className="text-xs">{data.content}</span>
+              </div>,
             );
           });
       },

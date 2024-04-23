@@ -122,13 +122,13 @@ func DistanceMethodValidator(dm DistanceMethod) error {
 // MileageUnit defines the type for the "mileage_unit" enum field.
 type MileageUnit string
 
-// MileageUnitMetric is the default value of the MileageUnit enum.
-const DefaultMileageUnit = MileageUnitMetric
+// MileageUnitUnitsMetric is the default value of the MileageUnit enum.
+const DefaultMileageUnit = MileageUnitUnitsMetric
 
 // MileageUnit values.
 const (
-	MileageUnitMetric   MileageUnit = "Metric"
-	MileageUnitImperial MileageUnit = "Imperial"
+	MileageUnitUnitsMetric   MileageUnit = "UnitsMetric"
+	MileageUnitUnitsImperial MileageUnit = "UnitsImperial"
 )
 
 func (mu MileageUnit) String() string {
@@ -138,7 +138,7 @@ func (mu MileageUnit) String() string {
 // MileageUnitValidator is a validator for the "mileage_unit" field enum values. It is called by the builders before save.
 func MileageUnitValidator(mu MileageUnit) error {
 	switch mu {
-	case MileageUnitMetric, MileageUnitImperial:
+	case MileageUnitUnitsMetric, MileageUnitUnitsImperial:
 		return nil
 	default:
 		return fmt.Errorf("routecontrol: invalid enum value for mileage_unit field: %q", mu)

@@ -1,27 +1,7 @@
-/*
- * COPYRIGHT(c) 2024 Trenova
- *
- * This file is part of Trenova.
- *
- * The Trenova software is licensed under the Business Source License 1.1. You are granted the right
- * to copy, modify, and redistribute the software, but only for non-production use or with a total
- * of less than three server instances. Starting from the Change Date (November 16, 2026), the
- * software will be made available under version 2 or later of the GNU General Public License.
- * If you use the software in violation of this license, your rights under the license will be
- * terminated automatically. The software is provided "as is," and the Licensor disclaims all
- * warranties and conditions. If you use this license's text or the "Business Source License" name
- * and trademark, you must comply with the Licensor's covenants, which include specifying the
- * Change License as the GPL Version 2.0 or a compatible license, specifying an Additional Use
- * Grant, and not modifying the license in any other way.
- */
-
 import axios from "@/lib/axiosConfig";
-import { TOAST_STYLE } from "@/lib/constants";
 import { useTableStore } from "@/stores/TableStore";
 import type { QueryKeys, QueryKeyWithParams } from "@/types";
 import { type APIError } from "@/types/server";
-import { faX } from "@fortawesome/pro-solid-svg-icons";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   QueryClient,
   useMutation,
@@ -29,7 +9,7 @@ import {
 } from "@tanstack/react-query";
 import { type AxiosResponse } from "axios";
 import type { Control, FieldValues, Path, UseFormReset } from "react-hook-form";
-import toast from "react-hot-toast";
+import { toast } from "sonner";
 
 type DataProp = Record<string, unknown> | FormData;
 type MutationOptions = {
@@ -135,32 +115,7 @@ async function handleSuccess<T extends FieldValues>(
   reset?: UseFormReset<T>,
 ) {
   const notifySuccess = () => {
-    toast.success(
-      () => (
-        <div className="flex items-start justify-between">
-          <div className="flex flex-col space-y-1">
-            <span className="font-semibold">Success!</span>
-            <span className="text-xs">{options.successMessage}</span>
-          </div>
-          <button
-            onClick={() => toast.dismiss("notification-toast")}
-            aria-label="Close"
-            className="-mt-2 ml-4"
-          >
-            <FontAwesomeIcon icon={faX} className="size-2.5" />
-          </button>
-        </div>
-      ),
-      {
-        duration: 4000,
-        id: "notification-toast",
-        style: TOAST_STYLE,
-        ariaProps: {
-          role: "status",
-          "aria-live": "polite",
-        },
-      },
-    );
+    toast.success(options.successMessage);
   };
 
   // Invalidate the queries that are passed in
@@ -218,21 +173,10 @@ async function handleError<T extends FieldValues>(
 
 function showErrorNotification(errorMessage?: string) {
   toast.error(
-    () => (
-      <div className="flex flex-col space-y-1">
-        <span className="font-semibold">Uh Oh! Something went wrong.</span>
-        <span className="text-xs">{errorMessage}</span>
-      </div>
-    ),
-    {
-      duration: 4000,
-      id: "notification-toast",
-      style: TOAST_STYLE,
-      ariaProps: {
-        role: "status",
-        "aria-live": "polite",
-      },
-    },
+    <div className="flex flex-col space-y-1">
+      <span className="font-semibold">Uh Oh! Something went wrong.</span>
+      <span className="text-xs">{errorMessage}</span>
+    </div>,
   );
 }
 

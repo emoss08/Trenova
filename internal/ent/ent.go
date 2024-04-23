@@ -57,6 +57,7 @@ import (
 	"github.com/emoss08/trenova/internal/ent/shipmentcontrol"
 	"github.com/emoss08/trenova/internal/ent/shipmentdocumentation"
 	"github.com/emoss08/trenova/internal/ent/shipmentmove"
+	"github.com/emoss08/trenova/internal/ent/shipmentroute"
 	"github.com/emoss08/trenova/internal/ent/shipmenttype"
 	"github.com/emoss08/trenova/internal/ent/stop"
 	"github.com/emoss08/trenova/internal/ent/tablechangealert"
@@ -177,6 +178,7 @@ func checkColumn(table, column string) error {
 			shipmentcontrol.Table:              shipmentcontrol.ValidColumn,
 			shipmentdocumentation.Table:        shipmentdocumentation.ValidColumn,
 			shipmentmove.Table:                 shipmentmove.ValidColumn,
+			shipmentroute.Table:                shipmentroute.ValidColumn,
 			shipmenttype.Table:                 shipmenttype.ValidColumn,
 			stop.Table:                         stop.ValidColumn,
 			tablechangealert.Table:             tablechangealert.ValidColumn,

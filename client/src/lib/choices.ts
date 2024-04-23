@@ -195,11 +195,11 @@ export const routeModelChoices = [
 ] satisfies ReadonlyArray<IChoiceProps<RouteModelChoiceProps>>;
 
 /** Type for Route Distance Unit Choices */
-export type RouteDistanceUnitProps = "Metric" | "Imperial";
+export type RouteDistanceUnitProps = "UnitsMetric" | "UnitsImperial";
 
 export const routeDistanceUnitChoices = [
-  { value: "Metric", label: "Metric" },
-  { value: "Imperial", label: "Imperial" },
+  { value: "UnitsMetric", label: "Metric" },
+  { value: "UnitsImperial", label: "Imperial" },
 ] satisfies ReadonlyArray<IChoiceProps<RouteDistanceUnitProps>>;
 
 /** Type for Distance Method Choices */

@@ -1190,6 +1190,30 @@ func (f ShipmentMoveMutationRuleFunc) EvalMutation(ctx context.Context, m ent.Mu
 	return Denyf("ent/privacy: unexpected mutation type %T, expect *ent.ShipmentMoveMutation", m)
 }
 
+// The ShipmentRouteQueryRuleFunc type is an adapter to allow the use of ordinary
+// functions as a query rule.
+type ShipmentRouteQueryRuleFunc func(context.Context, *ent.ShipmentRouteQuery) error
+
+// EvalQuery return f(ctx, q).
+func (f ShipmentRouteQueryRuleFunc) EvalQuery(ctx context.Context, q ent.Query) error {
+	if q, ok := q.(*ent.ShipmentRouteQuery); ok {
+		return f(ctx, q)
+	}
+	return Denyf("ent/privacy: unexpected query type %T, expect *ent.ShipmentRouteQuery", q)
+}
+
+// The ShipmentRouteMutationRuleFunc type is an adapter to allow the use of ordinary
+// functions as a mutation rule.
+type ShipmentRouteMutationRuleFunc func(context.Context, *ent.ShipmentRouteMutation) error
+
+// EvalMutation calls f(ctx, m).
+func (f ShipmentRouteMutationRuleFunc) EvalMutation(ctx context.Context, m ent.Mutation) error {
+	if m, ok := m.(*ent.ShipmentRouteMutation); ok {
+		return f(ctx, m)
+	}
+	return Denyf("ent/privacy: unexpected mutation type %T, expect *ent.ShipmentRouteMutation", m)
+}
+
 // The ShipmentTypeQueryRuleFunc type is an adapter to allow the use of ordinary
 // functions as a query rule.
 type ShipmentTypeQueryRuleFunc func(context.Context, *ent.ShipmentTypeQuery) error

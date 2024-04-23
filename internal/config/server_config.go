@@ -123,7 +123,7 @@ func DefaultServiceConfigFromEnv() Server {
 			EnableCompressMiddleware:       util.GetEnvAsBool("SERVER_FIBER_ENABLE_COMPRESS_MIDDLEWARE", true),
 			EnableRecoverMiddleware:        util.GetEnvAsBool("SERVER_FIBER_ENABLE_RECOVER_MIDDLEWARE", true),
 			EnableEncryptCookieMiddleware:  util.GetEnvAsBool("SERVER_FIBER_ENABLE_ENCRYPT_COOKIE_MIDDLEWARE", true),
-			EnableMonitorMiddleware:        util.GetEnvAsBool("SERVER_FIBER_ENABLE_MONITOR_MIDDLEWARE", false),
+			EnableMonitorMiddleware:        util.GetEnvAsBool("SERVER_FIBER_ENABLE_MONITOR_MIDDLEWARE", true),
 		},
 		Logger: LoggerServer{
 			Level:              util.LogLevelFromString(util.GetEnv("SERVER_LOGGER_LEVEL", zerolog.DebugLevel.String())),

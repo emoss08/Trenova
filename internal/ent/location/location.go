@@ -66,6 +66,10 @@ const (
 	EdgeComments = "comments"
 	// EdgeContacts holds the string denoting the contacts edge name in mutations.
 	EdgeContacts = "contacts"
+	// EdgeOriginRouteLocations holds the string denoting the origin_route_locations edge name in mutations.
+	EdgeOriginRouteLocations = "origin_route_locations"
+	// EdgeDestinationRouteLocations holds the string denoting the destination_route_locations edge name in mutations.
+	EdgeDestinationRouteLocations = "destination_route_locations"
 	// Table holds the table name of the location in the database.
 	Table = "locations"
 	// BusinessUnitTable is the table that holds the business_unit relation/edge.
@@ -110,6 +114,20 @@ const (
 	ContactsInverseTable = "location_contacts"
 	// ContactsColumn is the table column denoting the contacts relation/edge.
 	ContactsColumn = "location_id"
+	// OriginRouteLocationsTable is the table that holds the origin_route_locations relation/edge.
+	OriginRouteLocationsTable = "shipment_routes"
+	// OriginRouteLocationsInverseTable is the table name for the ShipmentRoute entity.
+	// It exists in this package in order to avoid circular dependency with the "shipmentroute" package.
+	OriginRouteLocationsInverseTable = "shipment_routes"
+	// OriginRouteLocationsColumn is the table column denoting the origin_route_locations relation/edge.
+	OriginRouteLocationsColumn = "origin_location_id"
+	// DestinationRouteLocationsTable is the table that holds the destination_route_locations relation/edge.
+	DestinationRouteLocationsTable = "shipment_routes"
+	// DestinationRouteLocationsInverseTable is the table name for the ShipmentRoute entity.
+	// It exists in this package in order to avoid circular dependency with the "shipmentroute" package.
+	DestinationRouteLocationsInverseTable = "shipment_routes"
+	// DestinationRouteLocationsColumn is the table column denoting the destination_route_locations relation/edge.
+	DestinationRouteLocationsColumn = "destination_location_id"
 )
 
 // Columns holds all SQL columns for location fields.
@@ -359,6 +377,34 @@ func ByContacts(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
 		sqlgraph.OrderByNeighborTerms(s, newContactsStep(), append([]sql.OrderTerm{term}, terms...)...)
 	}
 }
+
+// ByOriginRouteLocationsCount orders the results by origin_route_locations count.
+func ByOriginRouteLocationsCount(opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborsCount(s, newOriginRouteLocationsStep(), opts...)
+	}
+}
+
+// ByOriginRouteLocations orders the results by origin_route_locations terms.
+func ByOriginRouteLocations(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newOriginRouteLocationsStep(), append([]sql.OrderTerm{term}, terms...)...)
+	}
+}
+
+// ByDestinationRouteLocationsCount orders the results by destination_route_locations count.
+func ByDestinationRouteLocationsCount(opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborsCount(s, newDestinationRouteLocationsStep(), opts...)
+	}
+}
+
+// ByDestinationRouteLocations orders the results by destination_route_locations terms.
+func ByDestinationRouteLocations(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newDestinationRouteLocationsStep(), append([]sql.OrderTerm{term}, terms...)...)
+	}
+}
 func newBusinessUnitStep() *sqlgraph.Step {
 	return sqlgraph.NewStep(
 		sqlgraph.From(Table, FieldID),
@@ -399,5 +445,19 @@ func newContactsStep() *sqlgraph.Step {
 		sqlgraph.From(Table, FieldID),
 		sqlgraph.To(ContactsInverseTable, FieldID),
 		sqlgraph.Edge(sqlgraph.O2M, false, ContactsTable, ContactsColumn),
+	)
+}
+func newOriginRouteLocationsStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(OriginRouteLocationsInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.O2M, false, OriginRouteLocationsTable, OriginRouteLocationsColumn),
+	)
+}
+func newDestinationRouteLocationsStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(DestinationRouteLocationsInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.O2M, false, DestinationRouteLocationsTable, DestinationRouteLocationsColumn),
 	)
 }

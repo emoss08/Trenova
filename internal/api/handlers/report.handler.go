@@ -103,7 +103,6 @@ func (h *ReportHandler) GenerateReport() fiber.Handler {
 		_, err = services.NewUserNotificationService(h.Server).CreateUserNotification(
 			c.UserContext(), orgID, buID, userID, "New Report is available", "Sucessfully Generated Report. Click here to download", entity.ReportURL,
 		)
-
 		if err != nil {
 			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Error{
 				Code:    fiber.StatusInternalServerError,

@@ -1,0 +1,8 @@
+-- Create "shipment_routes" table
+CREATE TABLE "shipment_routes" ("id" uuid NOT NULL, "created_at" timestamptz NOT NULL, "updated_at" timestamptz NOT NULL, "version" bigint NOT NULL DEFAULT 1, "mileage" double precision NOT NULL, "duration" bigint NULL, "distance_method" character varying(50) NULL, "auto_generated" boolean NOT NULL DEFAULT false, "origin_location_id" uuid NOT NULL, "destination_location_id" uuid NOT NULL, "business_unit_id" uuid NOT NULL, "organization_id" uuid NOT NULL, PRIMARY KEY ("id"), CONSTRAINT "shipment_routes_business_units_business_unit" FOREIGN KEY ("business_unit_id") REFERENCES "business_units" ("id") ON UPDATE NO ACTION ON DELETE CASCADE, CONSTRAINT "shipment_routes_locations_destination_route_locations" FOREIGN KEY ("destination_location_id") REFERENCES "locations" ("id") ON UPDATE NO ACTION ON DELETE CASCADE, CONSTRAINT "shipment_routes_locations_origin_route_locations" FOREIGN KEY ("origin_location_id") REFERENCES "locations" ("id") ON UPDATE NO ACTION ON DELETE CASCADE, CONSTRAINT "shipment_routes_organizations_organization" FOREIGN KEY ("organization_id") REFERENCES "organizations" ("id") ON UPDATE NO ACTION ON DELETE CASCADE);
+-- Set comment to column: "created_at" on table: "shipment_routes"
+COMMENT ON COLUMN "shipment_routes" ."created_at" IS 'The time that this entity was created.';
+-- Set comment to column: "updated_at" on table: "shipment_routes"
+COMMENT ON COLUMN "shipment_routes" ."updated_at" IS 'The last time that this entity was updated.';
+-- Set comment to column: "version" on table: "shipment_routes"
+COMMENT ON COLUMN "shipment_routes" ."version" IS 'The current version of this entity.';
