@@ -90,7 +90,7 @@ func (s *Server) InitClient(ctx context.Context) error {
 // InitKafkaClient initializes the Kafka client with the specified configuration.
 func (s *Server) InitKafkaClient() error {
 	config := kafka.ConfigMap{"bootstrap.servers": s.Config.Kafka.Broker}
-	s.Kafka = kfk.NewClient(&config)
+	s.Kafka = kfk.NewClient(&config, s.Logger)
 	return nil
 }
 

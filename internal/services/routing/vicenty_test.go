@@ -3,7 +3,7 @@ package routing_test
 import (
 	"testing"
 
-	"github.com/emoss08/trenova/internal/util/routing"
+	"github.com/emoss08/trenova/internal/services/routing"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
