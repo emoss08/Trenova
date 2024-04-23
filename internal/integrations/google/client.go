@@ -7,7 +7,6 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/emoss08/trenova/internal/api"
 	"github.com/rs/zerolog"
 	"googlemaps.github.io/maps"
 )
@@ -27,9 +26,9 @@ type Client struct {
 // Returns:
 //
 //	*Client: A pointer to the newly created Client instance.
-func NewClient(s *api.Server) *Client {
+func NewClient(logger *zerolog.Logger) *Client {
 	return &Client{
-		Logger: s.Logger,
+		Logger: logger,
 	}
 }
 

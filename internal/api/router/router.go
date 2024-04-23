@@ -23,6 +23,11 @@ import (
 )
 
 // Init initializes the Fiber instance and registers all the routes.
+// It also registers the middleware that is globally applied before authentication.
+//
+// Parameters:
+//
+//	s *api.Server: A pointer to an instance of api.Server which contains configuration and state needed by the router.
 func Init(s *api.Server) {
 	s.Fiber = fiber.New(fiber.Config{
 		JSONEncoder: sonic.Marshal,
@@ -40,8 +45,8 @@ func Init(s *api.Server) {
 	}
 
 	// You need to wrap your websocket handler with the websocket.New middleware to handle the upgrade and store the connection.
-	s.Fiber.Use("/ws", handlers.NewWebsocketHandler(s).HandleConnection)
-	s.Fiber.Get("/ws/:id", websocket.New(handlers.NewWebsocketHandler(s).HandleWebsocketConnection))
+	s.Fiber.Use("/ws", handlers.NewWebsocketHandler(s.Logger, s.Client).HandleConnection)
+	s.Fiber.Get("/ws/:id", websocket.New(handlers.NewWebsocketHandler(s.Logger, s.Client).HandleWebsocketConnection))
 
 	if s.Config.Fiber.EnableMonitorMiddleware {
 		// Provide a minimal configuration

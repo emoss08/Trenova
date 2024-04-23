@@ -5,9 +5,9 @@ import (
 	"context"
 	"log"
 
-	"github.com/emoss08/trenova/internal/api"
 	"github.com/emoss08/trenova/internal/ent/routecontrol"
 	"github.com/emoss08/trenova/internal/integrations/google"
+	"github.com/rs/zerolog"
 	"googlemaps.github.io/maps"
 )
 
@@ -18,13 +18,13 @@ type DistanceCalculator interface {
 
 // DistanceCalculatorImpl implements the DistanceCalculator interface using various methods.
 type DistanceCalculatorImpl struct {
-	Server *api.Server
+	Logger *zerolog.Logger
 }
 
 // NewDistanceCalculator creates a new instance of DistanceCalculatorImpl.
-func NewDistanceCalculator(server *api.Server) *DistanceCalculatorImpl {
+func NewDistanceCalculator(logger *zerolog.Logger) *DistanceCalculatorImpl {
 	return &DistanceCalculatorImpl{
-		Server: server,
+		Logger: logger,
 	}
 }
 
@@ -47,9 +47,9 @@ func (dc *DistanceCalculatorImpl) CalculateDistance(
 func (dc *DistanceCalculatorImpl) calculateDistanceMatrix(
 	ctx context.Context, origins, destinations []string, units maps.Units, apiKey string,
 ) {
-	resp, err := google.NewClient(dc.Server).GetDistanceMatrix(ctx, origins, destinations, units, apiKey)
+	resp, err := google.NewClient(dc.Logger).GetDistanceMatrix(ctx, origins, destinations, units, apiKey)
 	if err != nil {
-		dc.Server.Logger.Error().Err(err).Msg("Failed to calculate distance using Google Maps API")
+		dc.Logger.Error().Err(err).Msg("Failed to calculate distance using Google Maps API")
 		return
 	}
 
@@ -68,7 +68,7 @@ func (dc *DistanceCalculatorImpl) calculateVincentyDistance(
 ) {
 	miles, kilometers, err := VincentyDistance(p1, p2)
 	if err != nil {
-		dc.Server.Logger.Error().Err(err).Msg("Failed to calculate distance using Vincenty formula")
+		dc.Logger.Error().Err(err).Msg("Failed to calculate distance using Vincenty formula")
 		return
 	}
 	log.Printf("Distance: %.2f miles, %.2f kilometers", miles, kilometers)

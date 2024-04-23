@@ -15,25 +15,27 @@ import (
 	"github.com/rs/zerolog"
 )
 
+// FileFormat represents the format of the report file.
 type FileFormat string
 
-const (
-	CSV  FileFormat = "csv"
-	XLS  FileFormat = "xls"
-	XLSX FileFormat = "xlsx"
-	PDF  FileFormat = "pdf"
-)
-
+// DeliveryMethod represents the method of delivery for the report.
 type DeliveryMethod string
 
+// Constants for the file format of the report.
 const (
-	Email DeliveryMethod = "email"
-	S3    DeliveryMethod = "s3"
-	Minio DeliveryMethod = "minio"
-	Kafka DeliveryMethod = "kafka"
-	Redis DeliveryMethod = "redis"
+	CSV  = FileFormat("csv")
+	XLS  = FileFormat("xls")
+	XLSX = FileFormat("xlsx")
+	PDF  = FileFormat("pdf")
 )
 
+// Constants for the delivery method of the report.
+const (
+	Email = DeliveryMethod("email")
+	Local = DeliveryMethod("local")
+)
+
+// GenerateReportRequest represents the payload for generating a report.
 type GenerateReportRequest struct {
 	TableName      string         `json:"tableName"`
 	Columns        []string       `json:"columns"`
@@ -41,10 +43,12 @@ type GenerateReportRequest struct {
 	DeliveryMethod DeliveryMethod `json:"deliveryMethod"`
 }
 
+// GenerateReportResponse represents the response for generating a report.
 type GenerateReportResponse struct {
 	ReportURL string `json:"report_url"`
 }
 
+// ReportService represents the report service.
 type ReportService struct {
 	Client *ent.Client
 	Logger *zerolog.Logger
@@ -168,6 +172,11 @@ func (r *ReportService) getColumnsNames(
 	return columns, len(columns), nil
 }
 
+// GenerateReport creates a report based on the provided payload.
+//
+// This function is used to generate a report based on the provided payload. The report will be generated
+// based on the table name, columns, file format, and delivery method provided in the payload. The report
+// will be sent to the user via the delivery method specified in the payload.
 func (r *ReportService) GenerateReport(
 	ctx context.Context, payload GenerateReportRequest, userID, orgID, buID uuid.UUID,
 ) (GenerateReportResponse, error) {
@@ -197,10 +206,12 @@ func (r *ReportService) GenerateReport(
 			}
 
 			err = r.addReportToUser(ctx, tx, userID, orgID, buID, result.ReportURL)
-			NewWebsocketService(r.Server).NotifyClient(userID.String(), message)
 			if err != nil {
 				return err
 			}
+
+			// Notify the client that the report has been generated
+			NewWebsocketService(r.Client, r.Logger).NotifyClient(userID.String(), message)
 
 			return nil
 		})
@@ -214,6 +225,10 @@ func (r *ReportService) GenerateReport(
 	return GenerateReportResponse{}, nil
 }
 
+// addReportToUser adds the report URL to the user's report list.
+//
+// This function is used to add the report URL to the user's report list. The report URL is the URL where the
+// report can be downloaded from. The report URL is stored in the user_report table in the database.
 func (r *ReportService) addReportToUser(
 	ctx context.Context, tx *ent.Tx, userID, orgID, buID uuid.UUID, reportURL string,
 ) error {
