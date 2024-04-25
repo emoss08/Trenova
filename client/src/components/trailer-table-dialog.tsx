@@ -131,7 +131,7 @@ export function TrailerForm({
             isLoading={isEquipManuLoading}
             placeholder="Select Manufacturer"
             description="Select the manufacturer of the trailer, to categorize it based on its functionality and usage."
-            isClearable={false}
+            isClearable
             hasPopoutWindow
             popoutLink="/equipment/equipment-manufacturers/"
             popoutLinkLabel="Equipment Manufacturer"
@@ -207,6 +207,7 @@ export function TrailerForm({
             options={selectUSStates}
             isFetchError={isStateError}
             isLoading={isStatesLoading}
+            isClearable
             placeholder="Select License Plate State"
             description="Select the state of registration of the trailer's license plate."
           />
