@@ -78,12 +78,18 @@ type Tx struct {
 	Organization *OrganizationClient
 	// OrganizationFeatureFlag is the client for interacting with the OrganizationFeatureFlag builders.
 	OrganizationFeatureFlag *OrganizationFeatureFlagClient
+	// Permission is the client for interacting with the Permission builders.
+	Permission *PermissionClient
 	// QualifierCode is the client for interacting with the QualifierCode builders.
 	QualifierCode *QualifierCodeClient
 	// ReasonCode is the client for interacting with the ReasonCode builders.
 	ReasonCode *ReasonCodeClient
+	// Resource is the client for interacting with the Resource builders.
+	Resource *ResourceClient
 	// RevenueCode is the client for interacting with the RevenueCode builders.
 	RevenueCode *RevenueCodeClient
+	// Role is the client for interacting with the Role builders.
+	Role *RoleClient
 	// RouteControl is the client for interacting with the RouteControl builders.
 	RouteControl *RouteControlClient
 	// ServiceType is the client for interacting with the ServiceType builders.
@@ -299,9 +305,12 @@ func (tx *Tx) init() {
 	tx.LocationContact = NewLocationContactClient(tx.config)
 	tx.Organization = NewOrganizationClient(tx.config)
 	tx.OrganizationFeatureFlag = NewOrganizationFeatureFlagClient(tx.config)
+	tx.Permission = NewPermissionClient(tx.config)
 	tx.QualifierCode = NewQualifierCodeClient(tx.config)
 	tx.ReasonCode = NewReasonCodeClient(tx.config)
+	tx.Resource = NewResourceClient(tx.config)
 	tx.RevenueCode = NewRevenueCodeClient(tx.config)
+	tx.Role = NewRoleClient(tx.config)
 	tx.RouteControl = NewRouteControlClient(tx.config)
 	tx.ServiceType = NewServiceTypeClient(tx.config)
 	tx.Session = NewSessionClient(tx.config)

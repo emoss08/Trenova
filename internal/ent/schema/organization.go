@@ -106,3 +106,11 @@ func (Organization) Mixin() []ent.Mixin {
 		DefaultMixin{},
 	}
 }
+
+// func (Organization) Policy() ent.Policy {
+// 	return privacy.Policy{
+// 		Mutation: privacy.MutationPolicy{
+// 			rule
+// 		},
+// 	}
+// }

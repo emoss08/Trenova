@@ -25,12 +25,12 @@ func (CommentType) Fields() []ent.Field {
 			StructTag(`json:"status" validate:"required,oneof=A I"`),
 		field.String("name").
 			NotEmpty().
-			MaxLen(10).
+			MaxLen(20).
 			SchemaType(map[string]string{
-				dialect.Postgres: "VARCHAR(10)",
-				dialect.SQLite:   "VARCHAR(10)",
+				dialect.Postgres: "VARCHAR(20)",
+				dialect.SQLite:   "VARCHAR(20)",
 			}).
-			StructTag(`json:"name" validate:"required,max=10"`),
+			StructTag(`json:"name" validate:"required,max=20"`),
 		field.Enum("severity").
 			Values("High", "Medium", "Low").
 			Default("Low").
