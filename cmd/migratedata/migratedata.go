@@ -354,6 +354,10 @@ func SeedAdminAccount(
 	// If not, create the admin account
 	case ent.IsNotFound(err):
 		hashedPassword, err := bcrypt.GenerateFromPassword([]byte("admin"), bcrypt.DefaultCost)
+		adminRole, err := client.Role.Query().Where(role.NameEQ("Admin")).Only(ctx)
+		if err != nil {
+			log.Panicf("Failed querying admin role: %v", err)
+		}
 		_, err = client.User.
 			Create().
 			SetUsername("admin").
@@ -364,6 +368,7 @@ func SeedAdminAccount(
 			SetBusinessUnit(bu).
 			SetIsAdmin(true).
 			SetIsSuperAdmin(true).
+			AddRoles(adminRole).
 			Save(ctx)
 
 		// Print out the admin account credentials
@@ -647,7 +652,7 @@ func SeedResources(
 				SetType("DelayCode").
 				SetDescription("Represents delay codes in the system."),
 			client.Resource.Create().
-				SetType("DisptachControl").
+				SetType("DispatchControl").
 				SetDescription("Represents dispatch controls in the system."),
 			client.Resource.Create().
 				SetType("DivisionCode").

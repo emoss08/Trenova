@@ -34,7 +34,7 @@ export function useCustomMutation<T extends FieldValues>(
     mutationFn: (data: DataProp) =>
       executeApiMethod(options.method, options.path, data),
     onSuccess: () => handleSuccess(options, queryClient, reset),
-    onError: (error: Error) => handleError(error, options, control),
+    onError: (error: Error) => handleError(error, control),
     onSettled: onMutationSettled,
   });
 }
@@ -152,9 +152,13 @@ async function handleSuccess<T extends FieldValues>(
   reset?.();
 }
 
+interface ErrorResponse {
+  type: "validationError" | "databaseError" | "invalidRequest";
+  errors: any;
+}
+
 async function handleError<T extends FieldValues>(
   error: any,
-  options: MutationOptions,
   control: Control<T>,
 ) {
   if (!error.response) {
@@ -163,11 +167,26 @@ async function handleError<T extends FieldValues>(
     return;
   }
 
-  const { data } = error?.response || {};
-  if (data?.type === "validationError") {
-    handleValidationErrors(data.errors, control);
-  } else if (data?.type === "databaseError") {
-    handleDatabaseErrors(data.errors, control);
+  const { data } = error.response as { data?: ErrorResponse };
+
+  if (!data) {
+    console.error("[Trenova] Error without data", error);
+    showErrorNotification("An unknown error occurred.");
+    return;
+  }
+
+  switch (data.type) {
+    case "validationError":
+      handleValidationErrors(data.errors, control);
+      break;
+    case "databaseError":
+    case "invalidRequest": // Combined case for both types of errors
+      handleInvalidRequest(data.errors, control);
+      break;
+    default:
+      console.error("[Trenova] Unhandled error type", data);
+      showErrorNotification("An unhandled error type occurred.");
+      break;
   }
 }
 
@@ -211,7 +230,7 @@ function handleValidationErrors<T extends FieldValues>(
  * @param {APIError[]} errors - Array of errors from the API.
  * @param {Control<T>} control - React Hook Form control object.
  */
-function handleDatabaseErrors<T extends FieldValues>(
+function handleInvalidRequest<T extends FieldValues>(
   errors: APIError[],
   control: Control<T>,
 ) {
@@ -223,6 +242,7 @@ function handleDatabaseErrors<T extends FieldValues>(
 
     // Show appropriate notification based on the error attribute
     if (attr === "nonFieldErrors" || attr === "databaseError") {
+      console.log(detail);
       showErrorNotification(detail);
     } else {
       showErrorNotification("Please fix the errors and try again.");

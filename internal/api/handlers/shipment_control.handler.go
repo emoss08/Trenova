@@ -11,14 +11,16 @@ import (
 )
 
 type ShipmentControlHandler struct {
-	Server  *api.Server
-	Service *services.ShipmentControlService
+	Server            *api.Server
+	Service           *services.ShipmentControlService
+	PermissionService *services.PermissionService
 }
 
 func NewShipmentControlHandler(s *api.Server) *ShipmentControlHandler {
 	return &ShipmentControlHandler{
-		Server:  s,
-		Service: services.NewShipmentControlService(s),
+		Server:            s,
+		Service:           services.NewShipmentControlService(s),
+		PermissionService: services.NewPermissionService(s),
 	}
 }
 
@@ -40,6 +42,15 @@ func (h *ShipmentControlHandler) GetShipmentControl() fiber.Handler {
 						Attr:   "orgID, buID",
 					},
 				},
+			})
+		}
+
+		// Check if the user has the required permission
+		err := h.PermissionService.CheckUserPermission(c, "read_shipmentcontrol")
+		if err != nil {
+			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+				"error":   "Unauthorized",
+				"message": "You do not have the required permission to access this resource",
 			})
 		}
 
@@ -69,6 +80,15 @@ func (h *ShipmentControlHandler) UpdateShipmentControlByID() fiber.Handler {
 						Attr:   "shipmentControlID",
 					},
 				},
+			})
+		}
+
+		// Check if the user has the required permission
+		err := h.PermissionService.CheckUserPermission(c, "update_shipmentcontrol")
+		if err != nil {
+			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+				"error":   "Unauthorized",
+				"message": "You do not have the required permission to access this resource",
 			})
 		}
 

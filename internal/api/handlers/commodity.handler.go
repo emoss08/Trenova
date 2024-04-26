@@ -11,14 +11,16 @@ import (
 )
 
 type CommodityHandler struct {
-	Server  *api.Server
-	Service *services.CommodityService
+	Server            *api.Server
+	Service           *services.CommodityService
+	PermissionService *services.PermissionService
 }
 
 func NewCommodityHandler(s *api.Server) *CommodityHandler {
 	return &CommodityHandler{
-		Server:  s,
-		Service: services.NewCommodityService(s),
+		Server:            s,
+		Service:           services.NewCommodityService(s),
+		PermissionService: services.NewPermissionService(s),
 	}
 }
 
@@ -27,20 +29,6 @@ func NewCommodityHandler(s *api.Server) *CommodityHandler {
 // GET /commodities
 func (h *CommodityHandler) GetCommodities() fiber.Handler {
 	return func(c *fiber.Ctx) error {
-		offset, limit, err := util.PaginationParams(c)
-		if err != nil {
-			return c.Status(fiber.StatusBadRequest).JSON(types.ValidationErrorResponse{
-				Type: "invalidRequest",
-				Errors: []types.ValidationErrorDetail{
-					{
-						Code:   "invalidRequest",
-						Detail: err.Error(),
-						Attr:   "offset, limit",
-					},
-				},
-			})
-		}
-
 		orgID, ok := c.Locals(util.CTXOrganizationID).(uuid.UUID)
 		buID, buOK := c.Locals(util.CTXBusinessUnitID).(uuid.UUID)
 
@@ -57,7 +45,31 @@ func (h *CommodityHandler) GetCommodities() fiber.Handler {
 			})
 		}
 
-		entities, count, err := h.Service.GetCommodities(c.UserContext(), limit, offset, orgID, buID)
+		// Check if the user has the required permission
+		err := h.PermissionService.CheckUserPermission(c, "read_commodity")
+		if err != nil {
+			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+				"error":   "Unauthorized",
+				"message": "You do not have the required permission to access this resource",
+			})
+		}
+
+		offset, limit, err := util.PaginationParams(c)
+		if err != nil {
+			return c.Status(fiber.StatusBadRequest).JSON(types.ValidationErrorResponse{
+				Type: "invalidRequest",
+				Errors: []types.ValidationErrorDetail{
+					{
+						Code:   "invalidRequest",
+						Detail: err.Error(),
+						Attr:   "offset, limit",
+					},
+				},
+			})
+		}
+
+		entities, count, err := h.Service.
+			GetCommodities(c.UserContext(), limit, offset, orgID, buID)
 		if err != nil {
 			errorResponse := util.CreateDBErrorResponse(err)
 			return c.Status(fiber.StatusInternalServerError).JSON(errorResponse)
@@ -98,20 +110,20 @@ func (h *CommodityHandler) CreateCommodity() fiber.Handler {
 			})
 		}
 
+		// Check if the user has the required permission
+		err := h.PermissionService.CheckUserPermission(c, "create_commodity")
+		if err != nil {
+			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+				"error":   "Unauthorized",
+				"message": "You do not have the required permission to access this resource",
+			})
+		}
+
 		newEntity.BusinessUnitID = buID
 		newEntity.OrganizationID = orgID
 
 		if err := util.ParseBodyAndValidate(c, newEntity); err != nil {
-			return c.Status(fiber.StatusBadRequest).JSON(types.ValidationErrorResponse{
-				Type: "invalidRequest",
-				Errors: []types.ValidationErrorDetail{
-					{
-						Code:   "invalidRequest",
-						Detail: err.Error(),
-						Attr:   "body",
-					},
-				},
-			})
+			return err
 		}
 
 		entity, err := h.Service.CreateCommodity(c.UserContext(), newEntity)
@@ -143,19 +155,25 @@ func (h *CommodityHandler) UpdateCommodity() fiber.Handler {
 			})
 		}
 
-		updatedEntity := new(ent.Commodity)
-
-		if err := util.ParseBodyAndValidate(c, updatedEntity); err != nil {
-			return c.Status(fiber.StatusBadRequest).JSON(types.ValidationErrorResponse{
+		// Check if the user has the required permission
+		err := h.PermissionService.CheckUserPermission(c, "update_commodity")
+		if err != nil {
+			return c.Status(fiber.StatusUnauthorized).JSON(types.ValidationErrorResponse{
 				Type: "invalidRequest",
 				Errors: []types.ValidationErrorDetail{
 					{
-						Code:   "invalidRequest",
-						Detail: err.Error(),
-						Attr:   "request body",
+						Code:   "unauthorized",
+						Detail: "You do not have the required permission to access this resource",
+						Attr:   "nonFieldErrors",
 					},
 				},
 			})
+		}
+
+		updatedEntity := new(ent.Commodity)
+
+		if err := util.ParseBodyAndValidate(c, updatedEntity); err != nil {
+			return err
 		}
 
 		updatedEntity.ID = uuid.MustParse(commodityID)

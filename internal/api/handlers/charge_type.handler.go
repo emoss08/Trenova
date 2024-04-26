@@ -11,14 +11,16 @@ import (
 )
 
 type ChargeTypeHandler struct {
-	Server  *api.Server
-	Service *services.ChargeTypeService
+	Server            *api.Server
+	Service           *services.ChargeTypeService
+	PermissionService *services.PermissionService
 }
 
 func NewChargeTypeHandler(s *api.Server) *ChargeTypeHandler {
 	return &ChargeTypeHandler{
-		Server:  s,
-		Service: services.NewChargeTypeService(s),
+		Server:            s,
+		Service:           services.NewChargeTypeService(s),
+		PermissionService: services.NewPermissionService(s),
 	}
 }
 
@@ -27,20 +29,6 @@ func NewChargeTypeHandler(s *api.Server) *ChargeTypeHandler {
 // GET /charge-types
 func (h *ChargeTypeHandler) GetChargeTypes() fiber.Handler {
 	return func(c *fiber.Ctx) error {
-		offset, limit, err := util.PaginationParams(c)
-		if err != nil {
-			return c.Status(fiber.StatusBadRequest).JSON(types.ValidationErrorResponse{
-				Type: "invalidRequest",
-				Errors: []types.ValidationErrorDetail{
-					{
-						Code:   "invalidRequest",
-						Detail: err.Error(),
-						Attr:   "offset, limit",
-					},
-				},
-			})
-		}
-
 		orgID, ok := c.Locals(util.CTXOrganizationID).(uuid.UUID)
 		buID, buOK := c.Locals(util.CTXBusinessUnitID).(uuid.UUID)
 
@@ -52,6 +40,29 @@ func (h *ChargeTypeHandler) GetChargeTypes() fiber.Handler {
 						Code:   "internalError",
 						Detail: "Organization ID or Business Unit ID not found in the request context",
 						Attr:   "orgID, buID",
+					},
+				},
+			})
+		}
+
+		// Check if the user has the required permission
+		err := h.PermissionService.CheckUserPermission(c, "read_chargetype")
+		if err != nil {
+			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+				"error":   "Unauthorized",
+				"message": "You do not have the required permission to access this resource",
+			})
+		}
+
+		offset, limit, err := util.PaginationParams(c)
+		if err != nil {
+			return c.Status(fiber.StatusBadRequest).JSON(types.ValidationErrorResponse{
+				Type: "invalidRequest",
+				Errors: []types.ValidationErrorDetail{
+					{
+						Code:   "invalidRequest",
+						Detail: err.Error(),
+						Attr:   "offset, limit",
 					},
 				},
 			})
@@ -98,20 +109,20 @@ func (h *ChargeTypeHandler) CreateChargeType() fiber.Handler {
 			})
 		}
 
+		// Check if the user has the required permission
+		err := h.PermissionService.CheckUserPermission(c, "create_chargetype")
+		if err != nil {
+			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+				"error":   "Unauthorized",
+				"message": "You do not have the required permission to access this resource",
+			})
+		}
+
 		newEntity.BusinessUnitID = buID
 		newEntity.OrganizationID = orgID
 
 		if err := util.ParseBodyAndValidate(c, newEntity); err != nil {
-			return c.Status(fiber.StatusBadRequest).JSON(types.ValidationErrorResponse{
-				Type: "invalidRequest",
-				Errors: []types.ValidationErrorDetail{
-					{
-						Code:   "invalidRequest",
-						Detail: err.Error(),
-						Attr:   "body",
-					},
-				},
-			})
+			return err
 		}
 
 		entity, err := h.Service.CreateChargeType(c.UserContext(), newEntity)
@@ -143,19 +154,19 @@ func (h *ChargeTypeHandler) UpdateChargeType() fiber.Handler {
 			})
 		}
 
+		// Check if the user has the required permission
+		err := h.PermissionService.CheckUserPermission(c, "update_chargetype")
+		if err != nil {
+			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+				"error":   "Unauthorized",
+				"message": "You do not have the required permission to access this resource",
+			})
+		}
+
 		updatedEntity := new(ent.ChargeType)
 
 		if err := util.ParseBodyAndValidate(c, updatedEntity); err != nil {
-			return c.Status(fiber.StatusBadRequest).JSON(types.ValidationErrorResponse{
-				Type: "invalidRequest",
-				Errors: []types.ValidationErrorDetail{
-					{
-						Code:   "invalidRequest",
-						Detail: err.Error(),
-						Attr:   "request body",
-					},
-				},
-			})
+			return err
 		}
 
 		updatedEntity.ID = uuid.MustParse(chargeTypeID)

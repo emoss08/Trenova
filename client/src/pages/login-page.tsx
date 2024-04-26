@@ -171,11 +171,8 @@ function UserAuthForm({ initialEmail }: { initialEmail: string }) {
       if (error.response) {
         const { data } = error.response;
         data.errors.forEach((error: any) => {
-          console.log("ERROR", error);
-          setError(error.attr, {
-            type: error.code,
-            message: error.detail,
-          });
+          console.log(`[Trenova ${error.code}]: ${error.detail}`);
+          setError(error.attr, { type: error.code, message: error.detail });
         });
       }
     } finally {

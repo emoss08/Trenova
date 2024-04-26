@@ -11,14 +11,16 @@ import (
 )
 
 type TrailerHandler struct {
-	Server  *api.Server
-	Service *services.TrailerService
+	Server            *api.Server
+	Service           *services.TrailerService
+	PermissionService *services.PermissionService
 }
 
 func NewTrailerHandler(s *api.Server) *TrailerHandler {
 	return &TrailerHandler{
-		Server:  s,
-		Service: services.NewTrailerService(s),
+		Server:            s,
+		Service:           services.NewTrailerService(s),
+		PermissionService: services.NewPermissionService(s),
 	}
 }
 
@@ -27,20 +29,6 @@ func NewTrailerHandler(s *api.Server) *TrailerHandler {
 // GET /trailers
 func (h *TrailerHandler) GetTrailers() fiber.Handler {
 	return func(c *fiber.Ctx) error {
-		offset, limit, err := util.PaginationParams(c)
-		if err != nil {
-			return c.Status(fiber.StatusBadRequest).JSON(types.ValidationErrorResponse{
-				Type: "invalidRequest",
-				Errors: []types.ValidationErrorDetail{
-					{
-						Code:   "invalidRequest",
-						Detail: err.Error(),
-						Attr:   "offset, limit",
-					},
-				},
-			})
-		}
-
 		orgID, ok := c.Locals(util.CTXOrganizationID).(uuid.UUID)
 		buID, buOK := c.Locals(util.CTXBusinessUnitID).(uuid.UUID)
 
@@ -52,6 +40,29 @@ func (h *TrailerHandler) GetTrailers() fiber.Handler {
 						Code:   "internalError",
 						Detail: "Organization ID or Business Unit ID not found in the request context",
 						Attr:   "orgID, buID",
+					},
+				},
+			})
+		}
+
+		// Check if the user has the required permission
+		err := h.PermissionService.CheckUserPermission(c, "read_trailer")
+		if err != nil {
+			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+				"error":   "Unauthorized",
+				"message": "You do not have the required permission to access this resource",
+			})
+		}
+
+		offset, limit, err := util.PaginationParams(c)
+		if err != nil {
+			return c.Status(fiber.StatusBadRequest).JSON(types.ValidationErrorResponse{
+				Type: "invalidRequest",
+				Errors: []types.ValidationErrorDetail{
+					{
+						Code:   "invalidRequest",
+						Detail: err.Error(),
+						Attr:   "offset, limit",
 					},
 				},
 			})
@@ -98,6 +109,15 @@ func (h *TrailerHandler) CreateTrailer() fiber.Handler {
 			})
 		}
 
+		// Check if the user has the required permission
+		err := h.PermissionService.CheckUserPermission(c, "create_trailer")
+		if err != nil {
+			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+				"error":   "Unauthorized",
+				"message": "You do not have the required permission to access this resource",
+			})
+		}
+
 		newEntity.BusinessUnitID = buID
 		newEntity.OrganizationID = orgID
 
@@ -140,6 +160,15 @@ func (h *TrailerHandler) UpdateTrailer() fiber.Handler {
 						Attr:   "trailerID",
 					},
 				},
+			})
+		}
+
+		// Check if the user has the required permission
+		err := h.PermissionService.CheckUserPermission(c, "update_trailer")
+		if err != nil {
+			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+				"error":   "Unauthorized",
+				"message": "You do not have the required permission to access this resource",
 			})
 		}
 

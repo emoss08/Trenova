@@ -11,15 +11,17 @@ import (
 )
 
 type AccountingControlHandler struct {
-	Server  *api.Server
-	Service *services.AccountingControlService
+	Server            *api.Server
+	Service           *services.AccountingControlService
+	PermissionService *services.PermissionService
 }
 
 // NewAccountingControlHandler returns a new AccountingControlHandler.
 func NewAccountingControlHandler(s *api.Server) *AccountingControlHandler {
 	return &AccountingControlHandler{
-		Server:  s,
-		Service: services.NewAccountingControlService(s),
+		Server:            s,
+		Service:           services.NewAccountingControlService(s),
+		PermissionService: services.NewPermissionService(s),
 	}
 }
 
@@ -44,7 +46,17 @@ func (h *AccountingControlHandler) GetAccountingControl() fiber.Handler {
 			})
 		}
 
-		entity, err := h.Service.GetAccountingControl(c.UserContext(), orgID, buID)
+		// Check if the user has the required permission
+		err := h.PermissionService.CheckUserPermission(c, "read_accountingcontrol")
+		if err != nil {
+			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+				"error":   "Unauthorized",
+				"message": "You do not have the required permission to access this resource",
+			})
+		}
+
+		entity, err := h.Service.
+			GetAccountingControl(c.UserContext(), orgID, buID)
 		if err != nil {
 			errorResponse := util.CreateDBErrorResponse(err)
 			return c.Status(fiber.StatusInternalServerError).JSON(errorResponse)
@@ -73,19 +85,19 @@ func (h *AccountingControlHandler) UpdateAccountingControlByID() fiber.Handler {
 			})
 		}
 
+		// Check if the user has the required permission
+		err := h.PermissionService.CheckUserPermission(c, "update_accountingcontrol")
+		if err != nil {
+			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+				"error":   "Unauthorized",
+				"message": "You do not have the required permission to access this resource",
+			})
+		}
+
 		data := new(ent.AccountingControl)
 
 		if err := util.ParseBodyAndValidate(c, data); err != nil {
-			return c.Status(fiber.StatusBadRequest).JSON(types.ValidationErrorResponse{
-				Type: "invalidRequest",
-				Errors: []types.ValidationErrorDetail{
-					{
-						Code:   "invalidRequest",
-						Detail: err.Error(),
-						Attr:   "request body",
-					},
-				},
-			})
+			return err
 		}
 
 		data.ID = uuid.MustParse(accountingControlID)

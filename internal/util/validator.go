@@ -171,8 +171,8 @@ func CreateDBErrorResponse(err error) types.ValidationErrorResponse {
 				Attr:   field,
 			})
 		}
-
 	// Handle custom ValidationError
+
 	case IsValidationError(err):
 		var vErr *ValidationError
 		if errors.As(err, &vErr) {

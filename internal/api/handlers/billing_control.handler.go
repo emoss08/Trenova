@@ -11,14 +11,16 @@ import (
 )
 
 type BillingControlHandler struct {
-	Server  *api.Server
-	Service *services.BillingControlService
+	Server            *api.Server
+	Service           *services.BillingControlService
+	PermissionService *services.PermissionService
 }
 
 func NewBillingControlHandler(s *api.Server) *BillingControlHandler {
 	return &BillingControlHandler{
-		Server:  s,
-		Service: services.NewBillingControlService(s),
+		Server:            s,
+		Service:           services.NewBillingControlService(s),
+		PermissionService: services.NewPermissionService(s),
 	}
 }
 
@@ -40,6 +42,15 @@ func (h *BillingControlHandler) GetBillingControl() fiber.Handler {
 						Attr:   "orgID, buID",
 					},
 				},
+			})
+		}
+
+		// Check if the user has the required permission
+		err := h.PermissionService.CheckUserPermission(c, "read_billingcontrol")
+		if err != nil {
+			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+				"error":   "Unauthorized",
+				"message": "You do not have the required permission to access this resource",
 			})
 		}
 
@@ -69,7 +80,17 @@ func (h *BillingControlHandler) UpdateBillingControl() fiber.Handler {
 			})
 		}
 
+		// Check if the user has the required permission
+		err := h.PermissionService.CheckUserPermission(c, "update_billingcontrol")
+		if err != nil {
+			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+				"error":   "Unauthorized",
+				"message": "You do not have the required permission to access this resource",
+			})
+		}
+
 		data := new(ent.BillingControl)
+
 		if err := util.ParseBodyAndValidate(c, data); err != nil {
 			return c.Status(fiber.StatusBadRequest).JSON(types.ValidationErrorResponse{
 				Type: "invalidRequest",

@@ -28,6 +28,9 @@ func NewUserService(s *api.Server) *UserService {
 func (r *UserService) GetAuthenticatedUser(ctx context.Context, userID uuid.UUID) (*ent.User, error) {
 	u, err := r.Client.User.
 		Query().
+		WithRoles(func(q *ent.RoleQuery) {
+			q.WithPermissions()
+		}).
 		Where(user.IDEQ(userID)).
 		Only(ctx)
 	if err != nil {
