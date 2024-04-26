@@ -23,10 +23,12 @@ func (Permission) Fields() []ent.Field {
 			Optional(),
 		field.String("name_humanized").
 			Comment("Name of the permission in human readable format.").
-			Optional(),
+			Optional().
+			StructTag(`json:"nameHumanized"`),
 		field.UUID("resource_id", uuid.UUID{}).
 			Unique().
-			Immutable(),
+			Immutable().
+			StructTag(`json:"resourceId"`),
 	}
 }
 
