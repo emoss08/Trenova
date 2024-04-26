@@ -38,9 +38,9 @@ type Permission struct {
 	// Action holds the value of the "action" field.
 	Action string `json:"action,omitempty"`
 	// Name of the permission in human readable format.
-	NameHumanized string `json:"name_humanized,omitempty"`
+	NameHumanized string `json:"nameHumanized"`
 	// ResourceID holds the value of the "resource_id" field.
-	ResourceID uuid.UUID `json:"resource_id,omitempty"`
+	ResourceID uuid.UUID `json:"resourceId"`
 	// Edges holds the relations/edges for other nodes in the graph.
 	// The values are being populated by the PermissionQuery when eager-loading is set.
 	Edges        PermissionEdges `json:"edges"`
