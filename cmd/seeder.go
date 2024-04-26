@@ -1,6 +1,3 @@
-/*
-Copyright © 2024 NAME HERE <EMAIL ADDRESS>
-*/
 package cmd
 
 import (
@@ -40,7 +37,7 @@ func seedCmdFunc(_ *cobra.Command, _ []string) {
 		return
 	}
 
-	fmt.Println("Successfully applied fixtures.\n")
+	fmt.Print("fixtures applied successfully\n")
 }
 
 func initClient() (*ent.Client, error) {
