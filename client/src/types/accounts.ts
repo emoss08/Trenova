@@ -1,20 +1,28 @@
 import { JobFunctionChoiceProps, TimezoneChoices } from "@/lib/choices";
 import { StatusChoiceProps } from "@/types/index";
+import { BaseModel } from "./organization";
+
+interface UserRole extends BaseModel {
+  name: string;
+  description: string;
+  edges: {
+    permissions: UserPermission[];
+  };
+}
+
+export interface UserPermission extends BaseModel {
+  name: string;
+  description: string;
+  action: string;
+  nameHumanized: string;
+  resourceId: string;
+}
 
 export type UserFavorite = {
   id: string;
   userID: string;
   created: string;
   pageLink: string;
-};
-
-/**
- * MinimalUser is similar to the User type ,but does provide all the fields.
- */
-export type MinimalUser = {
-  id: string;
-  username: string;
-  email: string;
 };
 
 export type User = {
@@ -24,14 +32,17 @@ export type User = {
   username: string;
   name: string;
   email: string;
-  dateJoined: string;
   isSuperAdmin: boolean;
   isAdmin: boolean;
   status: StatusChoiceProps;
   timezone: TimezoneChoices;
-  PhoneNumber?: string;
-  userPermissions?: string[];
-  profilePicUrl: string;
+  phoneNumber?: string;
+  profilePicUrl?: string;
+  thumbnailUrl?: string;
+  lastLogin?: string | null;
+  edges: {
+    roles?: UserRole[];
+  };
 };
 
 export type UserFormValues = {
