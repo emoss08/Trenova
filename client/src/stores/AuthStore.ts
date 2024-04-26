@@ -85,12 +85,13 @@ export const useUserStore = createGlobalStore<UserStoreState>({
     email: "",
     isAdmin: false,
     status: "I",
-    userPermissions: [],
     timezone: "AmericaNewYork",
-    dateJoined: "",
     businessUnitId: "",
     name: "",
     profilePicUrl: "",
     isSuperAdmin: false,
+    edges: {
+      roles: [],
+    },
   },
 });
