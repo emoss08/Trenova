@@ -78,7 +78,7 @@ export default function ReasonCodes() {
       tableFacetedFilters={filters}
       TableSheet={ReasonCodeDialog}
       TableEditSheet={ReasonCodeEditDialog}
-      addPermissionName="create_reasoncode"
+      addPermissionName="reasoncode.add"
     />
   );
 }

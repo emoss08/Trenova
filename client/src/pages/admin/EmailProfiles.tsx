@@ -78,7 +78,7 @@ export default function EmailProfiles() {
         filterColumn="name"
         TableSheet={EmailProfileDialog}
         TableEditSheet={EmailProfileTableEditDialog}
-        addPermissionName="create_emailprofile"
+        addPermissionName="emailprofile.add"
       />
     </AdminLayout>
   );

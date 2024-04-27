@@ -78,7 +78,7 @@ export default function ServiceTypes() {
       tableFacetedFilters={filters}
       TableSheet={ServiceTypeDialog}
       TableEditSheet={ServiceTypeEditDialog}
-      addPermissionName="create_servicetype"
+      addPermissionName="servicetype.add"
     />
   );
 }

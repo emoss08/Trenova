@@ -84,7 +84,7 @@ export default function GLAccounts() {
       TableEditSheet={GeneralLedgerAccountTableEditSheet}
       renderSubComponent={renderSubComponent}
       getRowCanExpand={() => true}
-      addPermissionName="create_generalledgeraccount"
+      addPermissionName="generalledgeraccount.add"
     />
   );
 }

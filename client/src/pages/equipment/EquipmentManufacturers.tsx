@@ -69,7 +69,7 @@ const filters: FilterConfig<EquipmentManufacturer>[] = [
 export default function EquipmentManufacturers() {
   return (
     <DataTable
-      addPermissionName="create_equipmentmanufacturer"
+      addPermissionName="equipmentmanufacturer.add"
       queryKey="equipment-manufacturer-table-data"
       columns={columns}
       link="/equipment-manufacturers/"

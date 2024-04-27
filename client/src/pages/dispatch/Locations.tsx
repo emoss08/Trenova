@@ -113,7 +113,7 @@ export default function Locations() {
       TableSheet={LocationTableSheet}
       TableEditSheet={LocationTableEditSheet}
       getRowCanExpand={() => true}
-      addPermissionName="create_location"
+      addPermissionName="location.add"
     />
   );
 }

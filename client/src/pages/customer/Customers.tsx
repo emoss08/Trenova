@@ -81,7 +81,7 @@ export default function Customers() {
       getRowCanExpand={() => true}
       TableSheet={CustomerTableSheet}
       TableEditSheet={CustomerTableEditSheet}
-      addPermissionName="create_customer"
+      addPermissionName="customer.add"
     />
   );
 }

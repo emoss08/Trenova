@@ -109,7 +109,7 @@ export default function CommodityPage() {
       tableFacetedFilters={filters}
       TableSheet={CommodityDialog}
       TableEditSheet={CommodityEditDialog}
-      addPermissionName="create_commodity"
+      addPermissionName="commodity.add"
     />
   );
 }

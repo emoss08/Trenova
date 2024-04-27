@@ -79,7 +79,7 @@ export default function QualifierCodes() {
       tableFacetedFilters={filters}
       TableSheet={QualifierCodeDialog}
       TableEditSheet={QualifierCodeEditDialog}
-      addPermissionName="create_qualifiercode"
+      addPermissionName="qualifiercode.add"
     />
   );
 }

@@ -92,7 +92,7 @@ export default function HazardousMaterialSegregation() {
         tableFacetedFilters={filters}
         TableSheet={HazmatSegRulesDialog}
         TableEditSheet={HazardousMaterialEditDialog}
-        addPermissionName="create_hazardousmaterialsegregation"
+        addPermissionName="hazardousmaterialsegregation.add"
       />
     </AdminLayout>
   );

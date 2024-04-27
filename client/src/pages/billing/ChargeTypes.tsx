@@ -73,7 +73,7 @@ export default function ChargeTypes() {
       tableFacetedFilters={filters}
       TableSheet={ChargeTypeDialog}
       TableEditSheet={ChargeTypeEditSheet}
-      addPermissionName="create_chargetype"
+      addPermissionName="chargetype.add"
     />
   );
 }

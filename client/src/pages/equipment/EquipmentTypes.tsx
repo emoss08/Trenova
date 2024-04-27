@@ -107,7 +107,7 @@ export default function EquipmentTypes() {
       tableFacetedFilters={filters}
       TableSheet={EquipTypeDialog}
       TableEditSheet={EquipTypeEditSheet}
-      addPermissionName="create_equipmenttype"
+      addPermissionName="equipmenttype.add"
     />
   );
 }

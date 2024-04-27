@@ -67,7 +67,7 @@ const filters: FilterConfig<DivisionCode>[] = [
 export default function DivisionCodes() {
   return (
     <DataTable
-      addPermissionName="add_divisioncode"
+      addPermissionName="divisioncode.add"
       queryKey="division-code-table-data"
       columns={columns}
       link="/division-codes/"

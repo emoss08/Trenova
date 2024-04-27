@@ -80,7 +80,7 @@ export default function FleetCodes() {
       filterColumn="code"
       TableSheet={FleetCodeDialog}
       TableEditSheet={FleetCodeEditDialog}
-      addPermissionName="create_fleetcode"
+      addPermissionName="fleetcode.add"
     />
   );
 }

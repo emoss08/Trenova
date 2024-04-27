@@ -150,7 +150,7 @@ export default function TableChangeAlerts() {
         tableFacetedFilters={filters}
         TableSheet={TableChangeAlertSheet}
         TableEditSheet={TableChangeAlertEditSheet}
-        addPermissionName="create_tablechangealert"
+        addPermissionName="tablechangealert.add"
       />
     </AdminLayout>
   );

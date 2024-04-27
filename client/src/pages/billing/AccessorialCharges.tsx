@@ -125,7 +125,7 @@ export default function AccessorialCharges() {
       tableFacetedFilters={filters}
       TableSheet={ACDialog}
       TableEditSheet={AccessorialChargeTableEditDialog}
-      addPermissionName="create_accessorialcharge"
+      addPermissionName="accessorialcharge.add"
     />
   );
 }

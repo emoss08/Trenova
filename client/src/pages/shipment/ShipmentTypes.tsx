@@ -82,7 +82,7 @@ const filters: FilterConfig<ShipmentType>[] = [
 export default function ServiceTypes() {
   return (
     <DataTable
-      addPermissionName="create_shipmenttype"
+      addPermissionName="shipmenttype.add"
       queryKey="shipment-type-table-data"
       columns={columns}
       link="/shipment-types/"

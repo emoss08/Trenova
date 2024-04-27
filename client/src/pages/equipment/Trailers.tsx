@@ -107,7 +107,7 @@ export default function TrailerPage() {
       tableFacetedFilters={filters}
       TableSheet={TrailerDialog}
       TableEditSheet={TrailerEditDialog}
-      addPermissionName="create_trailer"
+      addPermissionName="trailer.add"
     />
   );
 }

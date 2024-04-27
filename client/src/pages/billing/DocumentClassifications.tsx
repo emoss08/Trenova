@@ -77,7 +77,7 @@ export default function DocumentClassificationPage() {
       filterColumn="name"
       TableSheet={DocumentClassDialog}
       TableEditSheet={DocumentClassEditDialog}
-      addPermissionName="create_documentclassification"
+      addPermissionName="documentclassification.add"
     />
   );
 }

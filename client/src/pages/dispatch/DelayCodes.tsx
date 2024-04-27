@@ -119,7 +119,7 @@ export default function DelayCodes() {
       tableFacetedFilters={filters}
       TableSheet={DelayCodeDialog}
       TableEditSheet={DelayCodeEditDialog}
-      addPermissionName="create_delaycode"
+      addPermissionName="delaycode.add"
     />
   );
 }

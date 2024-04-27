@@ -92,7 +92,7 @@ const filters: FilterConfig<CommentType>[] = [
 export default function CommentTypes() {
   return (
     <DataTable
-      addPermissionName="create_commenttype"
+      addPermissionName="commenttype.add"
       queryKey="comment-types-table-data"
       columns={columns}
       link="/comment-types/"

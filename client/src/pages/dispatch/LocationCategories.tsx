@@ -68,7 +68,7 @@ export default function LocationCategories() {
       filterColumn="name"
       TableSheet={LocationCategoryDialog}
       TableEditSheet={LocationCategoryEditDialog}
-      addPermissionName="create_locationcategory"
+      addPermissionName="locationcategory.add"
     />
   );
 }
