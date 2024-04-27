@@ -9,24 +9,22 @@ import (
 	"github.com/google/uuid"
 )
 
-type FeatureFlagHandler struct {
-	Server            *api.Server
-	Service           *services.FeatureFlagService
-	PermissionService *services.PermissionService
+type PermissionHandler struct {
+	Server  *api.Server
+	Service *services.PermissionService
 }
 
-func NewFeatureFlagHandler(s *api.Server) *FeatureFlagHandler {
-	return &FeatureFlagHandler{
-		Server:            s,
-		Service:           services.NewFeatureFlagService(s),
-		PermissionService: services.NewPermissionService(s),
+func NewPermissionHandler(s *api.Server) *PermissionHandler {
+	return &PermissionHandler{
+		Server:  s,
+		Service: services.NewPermissionService(s),
 	}
 }
 
-// GetFeatureFlags is a handler that returns a list of feature flags.
+// GetPermissions is a handler that returns a list of permissions.
 //
-// GET /feature-flags
-func (h *FeatureFlagHandler) GetFeatureFlags() fiber.Handler {
+// GET /permissions
+func (h *PermissionHandler) GetPermissions() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		orgID, ok := c.Locals(util.CTXOrganizationID).(uuid.UUID)
 		buID, buOK := c.Locals(util.CTXBusinessUnitID).(uuid.UUID)
@@ -45,7 +43,7 @@ func (h *FeatureFlagHandler) GetFeatureFlags() fiber.Handler {
 		}
 
 		// Check if the user has the required permission
-		err := h.PermissionService.CheckUserPermission(c, "featureflag.view")
+		err := h.Service.CheckUserPermission(c, "permission.view")
 		if err != nil {
 			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
 				"error":   "Unauthorized",
@@ -67,7 +65,7 @@ func (h *FeatureFlagHandler) GetFeatureFlags() fiber.Handler {
 			})
 		}
 
-		entities, count, err := h.Service.GetFeatureFlags(c.UserContext(), limit, offset, orgID, buID)
+		entities, count, err := h.Service.GetPermissions(c.UserContext(), limit, offset, orgID, buID)
 		if err != nil {
 			errorResponse := util.CreateDBErrorResponse(err)
 			return c.Status(fiber.StatusInternalServerError).JSON(errorResponse)

@@ -47,7 +47,7 @@ func (h *AccountingControlHandler) GetAccountingControl() fiber.Handler {
 		}
 
 		// Check if the user has the required permission
-		err := h.PermissionService.CheckUserPermission(c, "read_accountingcontrol")
+		err := h.PermissionService.CheckUserPermission(c, "accountingcontrol.view")
 		if err != nil {
 			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
 				"error":   "Unauthorized",
@@ -86,7 +86,7 @@ func (h *AccountingControlHandler) UpdateAccountingControlByID() fiber.Handler {
 		}
 
 		// Check if the user has the required permission
-		err := h.PermissionService.CheckUserPermission(c, "update_accountingcontrol")
+		err := h.PermissionService.CheckUserPermission(c, "accountingcontrol.edit")
 		if err != nil {
 			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
 				"error":   "Unauthorized",

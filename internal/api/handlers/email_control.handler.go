@@ -46,7 +46,7 @@ func (h *EmailControlHandler) GetEmailControl() fiber.Handler {
 		}
 
 		// Check if the user has the required permission
-		err := h.PermissionService.CheckUserPermission(c, "read_emailcontrol")
+		err := h.PermissionService.CheckUserPermission(c, "emailcontrol.view")
 		if err != nil {
 			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
 				"error":   "Unauthorized",
@@ -81,7 +81,7 @@ func (h *EmailControlHandler) UpdateEmailControl() fiber.Handler {
 		}
 
 		// Check if the user has the required permission
-		err := h.PermissionService.CheckUserPermission(c, "update_emailcontrol")
+		err := h.PermissionService.CheckUserPermission(c, "emailcontrol.edit")
 		if err != nil {
 			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
 				"error":   "Unauthorized",

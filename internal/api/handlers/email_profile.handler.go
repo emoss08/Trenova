@@ -46,7 +46,7 @@ func (h *EmailProfileHandler) GetEmailProfiles() fiber.Handler {
 		}
 
 		// Check if the user has the required permission
-		err := h.PermissionService.CheckUserPermission(c, "read_emailprofile")
+		err := h.PermissionService.CheckUserPermission(c, "emailprofile.view")
 		if err != nil {
 			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
 				"error":   "Unauthorized",
@@ -110,7 +110,7 @@ func (h *EmailProfileHandler) CreateEmailProfile() fiber.Handler {
 		}
 
 		// Check if the user has the required permission
-		err := h.PermissionService.CheckUserPermission(c, "create_emailprofile")
+		err := h.PermissionService.CheckUserPermission(c, "emailprofile.add")
 		if err != nil {
 			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
 				"error":   "Unauthorized",
@@ -155,7 +155,7 @@ func (h *EmailProfileHandler) UpdateEmailProfile() fiber.Handler {
 		}
 
 		// Check if the user has the required permission
-		err := h.PermissionService.CheckUserPermission(c, "update_emailprofile")
+		err := h.PermissionService.CheckUserPermission(c, "emailprofile.edit")
 		if err != nil {
 			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
 				"error":   "Unauthorized",

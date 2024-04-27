@@ -46,7 +46,7 @@ func (h *ChargeTypeHandler) GetChargeTypes() fiber.Handler {
 		}
 
 		// Check if the user has the required permission
-		err := h.PermissionService.CheckUserPermission(c, "read_chargetype")
+		err := h.PermissionService.CheckUserPermission(c, "chargetype.view")
 		if err != nil {
 			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
 				"error":   "Unauthorized",
@@ -110,7 +110,7 @@ func (h *ChargeTypeHandler) CreateChargeType() fiber.Handler {
 		}
 
 		// Check if the user has the required permission
-		err := h.PermissionService.CheckUserPermission(c, "create_chargetype")
+		err := h.PermissionService.CheckUserPermission(c, "chargetype.add")
 		if err != nil {
 			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
 				"error":   "Unauthorized",
@@ -155,7 +155,7 @@ func (h *ChargeTypeHandler) UpdateChargeType() fiber.Handler {
 		}
 
 		// Check if the user has the required permission
-		err := h.PermissionService.CheckUserPermission(c, "update_chargetype")
+		err := h.PermissionService.CheckUserPermission(c, "chargetype.edit")
 		if err != nil {
 			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
 				"error":   "Unauthorized",

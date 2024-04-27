@@ -46,7 +46,7 @@ func (h *FleetCodeHandler) GetFleetCodes() fiber.Handler {
 		}
 
 		// Check if the user has the required permission
-		err := h.PermissionService.CheckUserPermission(c, "read_fleetcode")
+		err := h.PermissionService.CheckUserPermission(c, "fleetcode.view")
 		if err != nil {
 			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
 				"error":   "Unauthorized",
@@ -110,7 +110,7 @@ func (h *FleetCodeHandler) CreateFleetCode() fiber.Handler {
 		}
 
 		// Check if the user has the required permission
-		err := h.PermissionService.CheckUserPermission(c, "create_fleetcode")
+		err := h.PermissionService.CheckUserPermission(c, "fleetcode.add")
 		if err != nil {
 			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
 				"error":   "Unauthorized",
@@ -155,7 +155,7 @@ func (h *FleetCodeHandler) UpdateFleetCode() fiber.Handler {
 		}
 
 		// Check if the user has the required permission
-		err := h.PermissionService.CheckUserPermission(c, "update_fleetcode")
+		err := h.PermissionService.CheckUserPermission(c, "fleetcode.edit")
 		if err != nil {
 			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
 				"error":   "Unauthorized",

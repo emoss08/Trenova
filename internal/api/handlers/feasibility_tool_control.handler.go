@@ -46,7 +46,7 @@ func (h *FeasibilityToolControlHandler) GetFeasibilityToolControl() fiber.Handle
 		}
 
 		// Check if the user has the required permission
-		err := h.PermissionService.CheckUserPermission(c, "read_feasibilitytoolcontrol")
+		err := h.PermissionService.CheckUserPermission(c, "feasibilitytoolcontrol.view")
 		if err != nil {
 			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
 				"error":   "Unauthorized",
@@ -81,7 +81,7 @@ func (h *FeasibilityToolControlHandler) UpdateFeasibilityToolControl() fiber.Han
 		}
 
 		// Check if the user has the required permission
-		err := h.PermissionService.CheckUserPermission(c, "update_feasibilitytoolcontrol")
+		err := h.PermissionService.CheckUserPermission(c, "feasibilitytoolcontrol.edit")
 		if err != nil {
 			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
 				"error":   "Unauthorized",

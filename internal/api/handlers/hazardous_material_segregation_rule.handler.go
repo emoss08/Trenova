@@ -48,7 +48,7 @@ func (h *HazardousMaterialSegregationHandler) GetHazmatSegregationRules() fiber.
 		}
 
 		// Check if the user has the required permission
-		err := h.PermissionService.CheckUserPermission(c, "read_hazardousmaterialsegregation")
+		err := h.PermissionService.CheckUserPermission(c, "hazardousmaterialsegregation.view")
 		if err != nil {
 			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
 				"error":   "Unauthorized",
@@ -113,7 +113,7 @@ func (h *HazardousMaterialSegregationHandler) CreateHazmatSegregationRule() fibe
 		}
 
 		// Check if the user has the required permission
-		err := h.PermissionService.CheckUserPermission(c, "create_hazardousmaterialsegregation")
+		err := h.PermissionService.CheckUserPermission(c, "hazardousmaterialsegregation.add")
 		if err != nil {
 			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
 				"error":   "Unauthorized",
@@ -158,7 +158,7 @@ func (h *HazardousMaterialSegregationHandler) UpdateHazmatSegregationRules() fib
 		}
 
 		// Check if the user has the required permission
-		err := h.PermissionService.CheckUserPermission(c, "update_hazardousmaterialsegregation")
+		err := h.PermissionService.CheckUserPermission(c, "hazardousmaterialsegregation.edit")
 		if err != nil {
 			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
 				"error":   "Unauthorized",

@@ -46,7 +46,7 @@ func (h *DivisionCodeHandler) GetDivisionCodes() fiber.Handler {
 		}
 
 		// Check if the user has the required permission
-		err := h.PermissionService.CheckUserPermission(c, "read_divisioncode")
+		err := h.PermissionService.CheckUserPermission(c, "divisioncode.view")
 		if err != nil {
 			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
 				"error":   "Unauthorized",
@@ -110,7 +110,7 @@ func (h *DivisionCodeHandler) CreateDivisionCode() fiber.Handler {
 		}
 
 		// Check if the user has the required permission
-		err := h.PermissionService.CheckUserPermission(c, "create_divisioncode")
+		err := h.PermissionService.CheckUserPermission(c, "divisioncode.add")
 		if err != nil {
 			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
 				"error":   "Unauthorized",
@@ -155,7 +155,7 @@ func (h *DivisionCodeHandler) UpdateDivisionCode() fiber.Handler {
 		}
 
 		// Check if the user has the required permission
-		err := h.PermissionService.CheckUserPermission(c, "update_divisioncode")
+		err := h.PermissionService.CheckUserPermission(c, "divisioncode.edit")
 		if err != nil {
 			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
 				"error":   "Unauthorized",

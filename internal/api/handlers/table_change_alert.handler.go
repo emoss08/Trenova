@@ -46,7 +46,7 @@ func (h *TableChangeAlertHandler) GetTableChangeAlerts() fiber.Handler {
 		}
 
 		// Check if the user has the required permission
-		err := h.PermissionService.CheckUserPermission(c, "read_tablechangealert")
+		err := h.PermissionService.CheckUserPermission(c, "tablechangealert.view")
 		if err != nil {
 			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
 				"error":   "Unauthorized",
@@ -110,7 +110,7 @@ func (h *TableChangeAlertHandler) CreateTableChangeAlert() fiber.Handler {
 		}
 
 		// Check if the user has the required permission
-		err := h.PermissionService.CheckUserPermission(c, "create_tablechangealert")
+		err := h.PermissionService.CheckUserPermission(c, "tablechangealert.add")
 		if err != nil {
 			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
 				"error":   "Unauthorized",
@@ -164,7 +164,7 @@ func (h *TableChangeAlertHandler) UpdateTableChangeAlert() fiber.Handler {
 		}
 
 		// Check if the user has the required permission
-		err := h.PermissionService.CheckUserPermission(c, "update_tablechangealert")
+		err := h.PermissionService.CheckUserPermission(c, "tablechangealert.edit")
 		if err != nil {
 			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
 				"error":   "Unauthorized",

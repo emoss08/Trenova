@@ -46,7 +46,7 @@ func (h *CommentTypeService) GetCommentTypes() fiber.Handler {
 		}
 
 		// Check if the user has the required permission
-		err := h.PermissionService.CheckUserPermission(c, "read_commenttype")
+		err := h.PermissionService.CheckUserPermission(c, "commenttype.view")
 		if err != nil {
 			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
 				"error":   "Unauthorized",
@@ -110,7 +110,7 @@ func (h *CommentTypeService) CreateCommentType() fiber.Handler {
 		}
 
 		// Check if the user has the required permission
-		err := h.PermissionService.CheckUserPermission(c, "create_commenttype")
+		err := h.PermissionService.CheckUserPermission(c, "commenttype.add")
 		if err != nil {
 			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
 				"error":   "Unauthorized",
@@ -155,7 +155,7 @@ func (h *CommentTypeService) UpdateCommentType() fiber.Handler {
 		}
 
 		// Check if the user has the required permission
-		err := h.PermissionService.CheckUserPermission(c, "update_commenttype")
+		err := h.PermissionService.CheckUserPermission(c, "commenttype.edit")
 		if err != nil {
 			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
 				"error":   "Unauthorized",

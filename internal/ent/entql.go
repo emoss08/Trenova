@@ -860,16 +860,17 @@ var schemaGraph = func() *sqlgraph.Schema {
 		},
 		Type: "Permission",
 		Fields: map[string]*sqlgraph.FieldSpec{
-			permission.FieldBusinessUnitID: {Type: field.TypeUUID, Column: permission.FieldBusinessUnitID},
-			permission.FieldOrganizationID: {Type: field.TypeUUID, Column: permission.FieldOrganizationID},
-			permission.FieldCreatedAt:      {Type: field.TypeTime, Column: permission.FieldCreatedAt},
-			permission.FieldUpdatedAt:      {Type: field.TypeTime, Column: permission.FieldUpdatedAt},
-			permission.FieldVersion:        {Type: field.TypeInt, Column: permission.FieldVersion},
-			permission.FieldName:           {Type: field.TypeString, Column: permission.FieldName},
-			permission.FieldDescription:    {Type: field.TypeString, Column: permission.FieldDescription},
-			permission.FieldAction:         {Type: field.TypeString, Column: permission.FieldAction},
-			permission.FieldNameHumanized:  {Type: field.TypeString, Column: permission.FieldNameHumanized},
-			permission.FieldResourceID:     {Type: field.TypeUUID, Column: permission.FieldResourceID},
+			permission.FieldBusinessUnitID:   {Type: field.TypeUUID, Column: permission.FieldBusinessUnitID},
+			permission.FieldOrganizationID:   {Type: field.TypeUUID, Column: permission.FieldOrganizationID},
+			permission.FieldCreatedAt:        {Type: field.TypeTime, Column: permission.FieldCreatedAt},
+			permission.FieldUpdatedAt:        {Type: field.TypeTime, Column: permission.FieldUpdatedAt},
+			permission.FieldVersion:          {Type: field.TypeInt, Column: permission.FieldVersion},
+			permission.FieldCodename:         {Type: field.TypeString, Column: permission.FieldCodename},
+			permission.FieldAction:           {Type: field.TypeString, Column: permission.FieldAction},
+			permission.FieldLabel:            {Type: field.TypeString, Column: permission.FieldLabel},
+			permission.FieldReadDescription:  {Type: field.TypeString, Column: permission.FieldReadDescription},
+			permission.FieldWriteDescription: {Type: field.TypeString, Column: permission.FieldWriteDescription},
+			permission.FieldResourceID:       {Type: field.TypeUUID, Column: permission.FieldResourceID},
 		},
 	}
 	graph.Nodes[33] = &sqlgraph.Node{
@@ -8999,14 +9000,9 @@ func (f *PermissionFilter) WhereVersion(p entql.IntP) {
 	f.Where(p.Field(permission.FieldVersion))
 }
 
-// WhereName applies the entql string predicate on the name field.
-func (f *PermissionFilter) WhereName(p entql.StringP) {
-	f.Where(p.Field(permission.FieldName))
-}
-
-// WhereDescription applies the entql string predicate on the description field.
-func (f *PermissionFilter) WhereDescription(p entql.StringP) {
-	f.Where(p.Field(permission.FieldDescription))
+// WhereCodename applies the entql string predicate on the codename field.
+func (f *PermissionFilter) WhereCodename(p entql.StringP) {
+	f.Where(p.Field(permission.FieldCodename))
 }
 
 // WhereAction applies the entql string predicate on the action field.
@@ -9014,9 +9010,19 @@ func (f *PermissionFilter) WhereAction(p entql.StringP) {
 	f.Where(p.Field(permission.FieldAction))
 }
 
-// WhereNameHumanized applies the entql string predicate on the name_humanized field.
-func (f *PermissionFilter) WhereNameHumanized(p entql.StringP) {
-	f.Where(p.Field(permission.FieldNameHumanized))
+// WhereLabel applies the entql string predicate on the label field.
+func (f *PermissionFilter) WhereLabel(p entql.StringP) {
+	f.Where(p.Field(permission.FieldLabel))
+}
+
+// WhereReadDescription applies the entql string predicate on the read_description field.
+func (f *PermissionFilter) WhereReadDescription(p entql.StringP) {
+	f.Where(p.Field(permission.FieldReadDescription))
+}
+
+// WhereWriteDescription applies the entql string predicate on the write_description field.
+func (f *PermissionFilter) WhereWriteDescription(p entql.StringP) {
+	f.Where(p.Field(permission.FieldWriteDescription))
 }
 
 // WhereResourceID applies the entql [16]byte predicate on the resource_id field.

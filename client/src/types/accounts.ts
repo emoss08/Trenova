@@ -11,10 +11,12 @@ interface UserRole extends BaseModel {
 }
 
 export interface UserPermission extends BaseModel {
-  name: string;
+  codename: string;
   description: string;
   action: string;
-  nameHumanized: string;
+  label: string;
+  readDescription?: string;
+  writeDescription?: string;
   resourceId: string;
 }
 

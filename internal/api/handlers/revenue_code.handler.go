@@ -46,7 +46,7 @@ func (h *RevenueCodeHandler) GetRevenueCodes() fiber.Handler {
 		}
 
 		// Check if the user has the required permission
-		err := h.PermissionService.CheckUserPermission(c, "read_revenuecode")
+		err := h.PermissionService.CheckUserPermission(c, "revenuecode.view")
 		if err != nil {
 			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
 				"error":   "Unauthorized",
@@ -110,7 +110,7 @@ func (h *RevenueCodeHandler) CreateRevenueCode() fiber.Handler {
 		}
 
 		// Check if the user has the required permission
-		err := h.PermissionService.CheckUserPermission(c, "create_revenuecode")
+		err := h.PermissionService.CheckUserPermission(c, "revenuecode.add")
 		if err != nil {
 			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
 				"error":   "Unauthorized",
@@ -155,7 +155,7 @@ func (h *RevenueCodeHandler) UpdateRevenueCode() fiber.Handler {
 		}
 
 		// Check if the user has the required permission
-		err := h.PermissionService.CheckUserPermission(c, "update_revenuecode")
+		err := h.PermissionService.CheckUserPermission(c, "revenuecode.edit")
 		if err != nil {
 			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
 				"error":   "Unauthorized",

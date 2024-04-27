@@ -46,7 +46,7 @@ func (h *ShipmentTypeHandler) GetShipmentTypes() fiber.Handler {
 		}
 
 		// Check if the user has the required permission
-		err := h.PermissionService.CheckUserPermission(c, "read_shipmenttype")
+		err := h.PermissionService.CheckUserPermission(c, "shipmenttype.view")
 		if err != nil {
 			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
 				"error":   "Unauthorized",
@@ -110,7 +110,7 @@ func (h *ShipmentTypeHandler) CreateShipmentType() fiber.Handler {
 		}
 
 		// Check if the user has the required permission
-		err := h.PermissionService.CheckUserPermission(c, "create_shipmenttype")
+		err := h.PermissionService.CheckUserPermission(c, "shipmenttype.add")
 		if err != nil {
 			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
 				"error":   "Unauthorized",
@@ -164,7 +164,7 @@ func (h *ShipmentTypeHandler) UpdateShipmentType() fiber.Handler {
 		}
 
 		// Check if the user has the required permission
-		err := h.PermissionService.CheckUserPermission(c, "update_shipmenttype")
+		err := h.PermissionService.CheckUserPermission(c, "shipmenttype.edit")
 		if err != nil {
 			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
 				"error":   "Unauthorized",

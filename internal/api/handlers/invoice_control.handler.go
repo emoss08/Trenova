@@ -46,7 +46,7 @@ func (h *InvoiceControlHandler) GetInvoiceControl() fiber.Handler {
 		}
 
 		// Check if the user has the required permission
-		err := h.PermissionService.CheckUserPermission(c, "read_invoicecontrol")
+		err := h.PermissionService.CheckUserPermission(c, "invoicecontrol.view")
 		if err != nil {
 			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
 				"error":   "Unauthorized",
@@ -84,7 +84,7 @@ func (h *InvoiceControlHandler) UpdateInvoiceControlByID() fiber.Handler {
 		}
 
 		// Check if the user has the required permission
-		err := h.PermissionService.CheckUserPermission(c, "update_invoicecontrol")
+		err := h.PermissionService.CheckUserPermission(c, "invoicecontrol.edit")
 		if err != nil {
 			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
 				"error":   "Unauthorized",

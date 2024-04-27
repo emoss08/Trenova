@@ -46,7 +46,7 @@ func (h *GoogleAPIHandler) GetGoogleAPI() fiber.Handler {
 		}
 
 		// Check if the user has the required permission
-		err := h.PermissionService.CheckUserPermission(c, "read_googleapi")
+		err := h.PermissionService.CheckUserPermission(c, "googleapi.view")
 		if err != nil {
 			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
 				"error":   "Unauthorized",
@@ -81,7 +81,7 @@ func (h *GoogleAPIHandler) UpdateGoogleAPI() fiber.Handler {
 		}
 
 		// Check if the user has the required permission
-		err := h.PermissionService.CheckUserPermission(c, "update_googleapi")
+		err := h.PermissionService.CheckUserPermission(c, "googleapi.edit")
 		if err != nil {
 			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
 				"error":   "Unauthorized",

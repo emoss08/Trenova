@@ -46,7 +46,7 @@ func (h *ReasonCodeHandler) GetReasonCodes() fiber.Handler {
 		}
 
 		// Check if the user has the required permission
-		err := h.PermissionService.CheckUserPermission(c, "read_reasoncode")
+		err := h.PermissionService.CheckUserPermission(c, "reasoncode.view")
 		if err != nil {
 			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
 				"error":   "Unauthorized",
@@ -110,7 +110,7 @@ func (h *ReasonCodeHandler) CreateReasonCode() fiber.Handler {
 		}
 
 		// Check if the user has the required permission
-		err := h.PermissionService.CheckUserPermission(c, "create_reasoncode")
+		err := h.PermissionService.CheckUserPermission(c, "reasoncode.add")
 		if err != nil {
 			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
 				"error":   "Unauthorized",
@@ -155,7 +155,7 @@ func (h *ReasonCodeHandler) UpdateReasonCode() fiber.Handler {
 		}
 
 		// Check if the user has the required permission
-		err := h.PermissionService.CheckUserPermission(c, "update_reasoncode")
+		err := h.PermissionService.CheckUserPermission(c, "reasoncode.edit")
 		if err != nil {
 			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
 				"error":   "Unauthorized",

@@ -46,7 +46,7 @@ func (h *DocumentClassificationHandler) GetDocumentClassifications() fiber.Handl
 		}
 
 		// Check if the user has the required permission
-		err := h.PermissionService.CheckUserPermission(c, "read_documentclassification")
+		err := h.PermissionService.CheckUserPermission(c, "documentclassification.view")
 		if err != nil {
 			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
 				"error":   "Unauthorized",
@@ -110,7 +110,7 @@ func (h *DocumentClassificationHandler) CreateDocumentClassification() fiber.Han
 		}
 
 		// Check if the user has the required permission
-		err := h.PermissionService.CheckUserPermission(c, "create_documentclassification")
+		err := h.PermissionService.CheckUserPermission(c, "documentclassification.add")
 		if err != nil {
 			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
 				"error":   "Unauthorized",
@@ -155,7 +155,7 @@ func (h *DocumentClassificationHandler) UpdateDocumentClassification() fiber.Han
 		}
 
 		// Check if the user has the required permission
-		err := h.PermissionService.CheckUserPermission(c, "update_documentclassification")
+		err := h.PermissionService.CheckUserPermission(c, "documentclassification.edit")
 		if err != nil {
 			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
 				"error":   "Unauthorized",

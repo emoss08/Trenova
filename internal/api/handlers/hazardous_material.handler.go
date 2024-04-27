@@ -46,7 +46,7 @@ func (h *HazardousMaterialHandler) GetHazardousMaterials() fiber.Handler {
 		}
 
 		// Check if the user has the required permission
-		err := h.PermissionService.CheckUserPermission(c, "read_hazardousmaterial")
+		err := h.PermissionService.CheckUserPermission(c, "hazardousmaterial.view")
 		if err != nil {
 			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
 				"error":   "Unauthorized",
@@ -110,7 +110,7 @@ func (h *HazardousMaterialHandler) CreateHazardousMaterial() fiber.Handler {
 		}
 
 		// Check if the user has the required permission
-		err := h.PermissionService.CheckUserPermission(c, "create_hazardousmaterial")
+		err := h.PermissionService.CheckUserPermission(c, "hazardousmaterial.add")
 		if err != nil {
 			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
 				"error":   "Unauthorized",
@@ -155,7 +155,7 @@ func (h *HazardousMaterialHandler) UpdateHazardousMaterial() fiber.Handler {
 		}
 
 		// Check if the user has the required permission
-		err := h.PermissionService.CheckUserPermission(c, "update_hazardousmaterial")
+		err := h.PermissionService.CheckUserPermission(c, "hazardousmaterial.edit")
 		if err != nil {
 			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
 				"error":   "Unauthorized",

@@ -75,7 +75,7 @@ func (h *GeneralLedgerAccountHandler) GetGeneralLedgerAccounts() fiber.Handler {
 		}
 
 		// Check if the user has the required permission
-		err := h.PermissionService.CheckUserPermission(c, "read_generalledgeraccount")
+		err := h.PermissionService.CheckUserPermission(c, "generalledgeraccount.view")
 		if err != nil {
 			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
 				"error":   "Unauthorized",
@@ -171,7 +171,7 @@ func (h *GeneralLedgerAccountHandler) CreateGeneralLedgerAccount() fiber.Handler
 		}
 
 		// Check if the user has the required permission
-		err := h.PermissionService.CheckUserPermission(c, "create_generalledgeraccount")
+		err := h.PermissionService.CheckUserPermission(c, "generalledgeraccount.add")
 		if err != nil {
 			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
 				"error":   "Unauthorized",
@@ -216,7 +216,7 @@ func (h *GeneralLedgerAccountHandler) UpdateGeneralLedgerAccount() fiber.Handler
 		}
 
 		// Check if the user has the required permission
-		err := h.PermissionService.CheckUserPermission(c, "update_generalledgeraccount")
+		err := h.PermissionService.CheckUserPermission(c, "generalledgeraccount.edit")
 		if err != nil {
 			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
 				"error":   "Unauthorized",

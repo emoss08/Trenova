@@ -46,7 +46,7 @@ func (h *LocationCategoryHandler) GetLocationCategories() fiber.Handler {
 		}
 
 		// Check if the user has the required permission
-		err := h.PermissionService.CheckUserPermission(c, "read_locationcategory")
+		err := h.PermissionService.CheckUserPermission(c, "locationcategory.view")
 		if err != nil {
 			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
 				"error":   "Unauthorized",
@@ -110,7 +110,7 @@ func (h *LocationCategoryHandler) CreateLocationCategory() fiber.Handler {
 		}
 
 		// Check if the user has the required permission
-		err := h.PermissionService.CheckUserPermission(c, "create_locationcategory")
+		err := h.PermissionService.CheckUserPermission(c, "locationcategory.add")
 		if err != nil {
 			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
 				"error":   "Unauthorized",
@@ -155,7 +155,7 @@ func (h *LocationCategoryHandler) UpdateLocationCategory() fiber.Handler {
 		}
 
 		// Check if the user has the required permission
-		err := h.PermissionService.CheckUserPermission(c, "update_locationcategory")
+		err := h.PermissionService.CheckUserPermission(c, "locationcategory.edit")
 		if err != nil {
 			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
 				"error":   "Unauthorized",

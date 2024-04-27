@@ -79,23 +79,9 @@ func (pc *PermissionCreate) SetNillableVersion(i *int) *PermissionCreate {
 	return pc
 }
 
-// SetName sets the "name" field.
-func (pc *PermissionCreate) SetName(s string) *PermissionCreate {
-	pc.mutation.SetName(s)
-	return pc
-}
-
-// SetDescription sets the "description" field.
-func (pc *PermissionCreate) SetDescription(s string) *PermissionCreate {
-	pc.mutation.SetDescription(s)
-	return pc
-}
-
-// SetNillableDescription sets the "description" field if the given value is not nil.
-func (pc *PermissionCreate) SetNillableDescription(s *string) *PermissionCreate {
-	if s != nil {
-		pc.SetDescription(*s)
-	}
+// SetCodename sets the "codename" field.
+func (pc *PermissionCreate) SetCodename(s string) *PermissionCreate {
+	pc.mutation.SetCodename(s)
 	return pc
 }
 
@@ -113,16 +99,44 @@ func (pc *PermissionCreate) SetNillableAction(s *string) *PermissionCreate {
 	return pc
 }
 
-// SetNameHumanized sets the "name_humanized" field.
-func (pc *PermissionCreate) SetNameHumanized(s string) *PermissionCreate {
-	pc.mutation.SetNameHumanized(s)
+// SetLabel sets the "label" field.
+func (pc *PermissionCreate) SetLabel(s string) *PermissionCreate {
+	pc.mutation.SetLabel(s)
 	return pc
 }
 
-// SetNillableNameHumanized sets the "name_humanized" field if the given value is not nil.
-func (pc *PermissionCreate) SetNillableNameHumanized(s *string) *PermissionCreate {
+// SetNillableLabel sets the "label" field if the given value is not nil.
+func (pc *PermissionCreate) SetNillableLabel(s *string) *PermissionCreate {
 	if s != nil {
-		pc.SetNameHumanized(*s)
+		pc.SetLabel(*s)
+	}
+	return pc
+}
+
+// SetReadDescription sets the "read_description" field.
+func (pc *PermissionCreate) SetReadDescription(s string) *PermissionCreate {
+	pc.mutation.SetReadDescription(s)
+	return pc
+}
+
+// SetNillableReadDescription sets the "read_description" field if the given value is not nil.
+func (pc *PermissionCreate) SetNillableReadDescription(s *string) *PermissionCreate {
+	if s != nil {
+		pc.SetReadDescription(*s)
+	}
+	return pc
+}
+
+// SetWriteDescription sets the "write_description" field.
+func (pc *PermissionCreate) SetWriteDescription(s string) *PermissionCreate {
+	pc.mutation.SetWriteDescription(s)
+	return pc
+}
+
+// SetNillableWriteDescription sets the "write_description" field if the given value is not nil.
+func (pc *PermissionCreate) SetNillableWriteDescription(s *string) *PermissionCreate {
+	if s != nil {
+		pc.SetWriteDescription(*s)
 	}
 	return pc
 }
@@ -247,12 +261,12 @@ func (pc *PermissionCreate) check() error {
 	if _, ok := pc.mutation.Version(); !ok {
 		return &ValidationError{Name: "version", err: errors.New(`ent: missing required field "Permission.version"`)}
 	}
-	if _, ok := pc.mutation.Name(); !ok {
-		return &ValidationError{Name: "name", err: errors.New(`ent: missing required field "Permission.name"`)}
+	if _, ok := pc.mutation.Codename(); !ok {
+		return &ValidationError{Name: "codename", err: errors.New(`ent: missing required field "Permission.codename"`)}
 	}
-	if v, ok := pc.mutation.Name(); ok {
-		if err := permission.NameValidator(v); err != nil {
-			return &ValidationError{Name: "name", err: fmt.Errorf(`ent: validator failed for field "Permission.name": %w`, err)}
+	if v, ok := pc.mutation.Codename(); ok {
+		if err := permission.CodenameValidator(v); err != nil {
+			return &ValidationError{Name: "codename", err: fmt.Errorf(`ent: validator failed for field "Permission.codename": %w`, err)}
 		}
 	}
 	if _, ok := pc.mutation.ResourceID(); !ok {
@@ -314,21 +328,25 @@ func (pc *PermissionCreate) createSpec() (*Permission, *sqlgraph.CreateSpec) {
 		_spec.SetField(permission.FieldVersion, field.TypeInt, value)
 		_node.Version = value
 	}
-	if value, ok := pc.mutation.Name(); ok {
-		_spec.SetField(permission.FieldName, field.TypeString, value)
-		_node.Name = value
-	}
-	if value, ok := pc.mutation.Description(); ok {
-		_spec.SetField(permission.FieldDescription, field.TypeString, value)
-		_node.Description = value
+	if value, ok := pc.mutation.Codename(); ok {
+		_spec.SetField(permission.FieldCodename, field.TypeString, value)
+		_node.Codename = value
 	}
 	if value, ok := pc.mutation.Action(); ok {
 		_spec.SetField(permission.FieldAction, field.TypeString, value)
 		_node.Action = value
 	}
-	if value, ok := pc.mutation.NameHumanized(); ok {
-		_spec.SetField(permission.FieldNameHumanized, field.TypeString, value)
-		_node.NameHumanized = value
+	if value, ok := pc.mutation.Label(); ok {
+		_spec.SetField(permission.FieldLabel, field.TypeString, value)
+		_node.Label = value
+	}
+	if value, ok := pc.mutation.ReadDescription(); ok {
+		_spec.SetField(permission.FieldReadDescription, field.TypeString, value)
+		_node.ReadDescription = value
+	}
+	if value, ok := pc.mutation.WriteDescription(); ok {
+		_spec.SetField(permission.FieldWriteDescription, field.TypeString, value)
+		_node.WriteDescription = value
 	}
 	if nodes := pc.mutation.BusinessUnitIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{

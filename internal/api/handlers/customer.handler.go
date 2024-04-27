@@ -49,7 +49,7 @@ func (h *CustomerHandler) GetCustomers() fiber.Handler {
 		}
 
 		// Check if the user has the required permission
-		err := h.PermissionService.CheckUserPermission(c, "read_customer")
+		err := h.PermissionService.CheckUserPermission(c, "customer.view")
 		if err != nil {
 			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
 				"error":   "Unauthorized",
@@ -113,7 +113,7 @@ func (h *CustomerHandler) CreateCustomer() fiber.Handler {
 		}
 
 		// Check if the user has the required permission
-		err := h.PermissionService.CheckUserPermission(c, "create_customer")
+		err := h.PermissionService.CheckUserPermission(c, "customer.add")
 		if err != nil {
 			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
 				"error":   "Unauthorized",
@@ -158,7 +158,7 @@ func (h *CustomerHandler) UpdateCustomer() fiber.Handler {
 		}
 
 		// Check if the user has the required permission
-		err := h.PermissionService.CheckUserPermission(c, "update_customer")
+		err := h.PermissionService.CheckUserPermission(c, "customer.edit")
 		if err != nil {
 			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
 				"error":   "Unauthorized",

@@ -46,7 +46,7 @@ func (h *EquipmentManufacturerHandler) GetEquipmentManufacturers() fiber.Handler
 		}
 
 		// Check if the user has the required permission
-		err := h.PermissionService.CheckUserPermission(c, "read_equipmentmanufacturer")
+		err := h.PermissionService.CheckUserPermission(c, "equipmentmanufacturer.view")
 		if err != nil {
 			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
 				"error":   "Unauthorized",
@@ -110,7 +110,7 @@ func (h *EquipmentManufacturerHandler) CreateEquipmentManufacturer() fiber.Handl
 		}
 
 		// Check if the user has the required permission
-		err := h.PermissionService.CheckUserPermission(c, "create_equipmentmanufacturer")
+		err := h.PermissionService.CheckUserPermission(c, "equipmentmanufacturer.add")
 		if err != nil {
 			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
 				"error":   "Unauthorized",
@@ -155,7 +155,7 @@ func (h *EquipmentManufacturerHandler) UpdateEquipmentManufacturer() fiber.Handl
 		}
 
 		// Check if the user has the required permission
-		err := h.PermissionService.CheckUserPermission(c, "update_equipmentmanufacturer")
+		err := h.PermissionService.CheckUserPermission(c, "equipmentmanufacturer.edit")
 		if err != nil {
 			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
 				"error":   "Unauthorized",

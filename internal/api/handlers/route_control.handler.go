@@ -46,7 +46,7 @@ func (h *RouteControlHandler) GetRouteControl() fiber.Handler {
 		}
 
 		// Check if the user has the required permission
-		err := h.PermissionService.CheckUserPermission(c, "read_routecontrol")
+		err := h.PermissionService.CheckUserPermission(c, "routecontrol.view")
 		if err != nil {
 			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
 				"error":   "Unauthorized",
@@ -84,7 +84,7 @@ func (h *RouteControlHandler) UpdateRouteControlByID() fiber.Handler {
 		}
 
 		// Check if the user has the required permission
-		err := h.PermissionService.CheckUserPermission(c, "update_routecontrol")
+		err := h.PermissionService.CheckUserPermission(c, "routecontrol.edit")
 		if err != nil {
 			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
 				"error":   "Unauthorized",

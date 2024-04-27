@@ -46,7 +46,7 @@ func (h *AccessorialChargeHandler) GetAccessorialCharges() fiber.Handler {
 		}
 
 		// Check if the user has the required permission
-		err := h.PermissionService.CheckUserPermission(c, "read_accessorialcharge")
+		err := h.PermissionService.CheckUserPermission(c, "accessorialcharge.view")
 		if err != nil {
 			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
 				"error":   "Unauthorized",
@@ -110,7 +110,7 @@ func (h *AccessorialChargeHandler) CreateAccessorialCharge() fiber.Handler {
 		}
 
 		// Check if the user has the required permission
-		err := h.PermissionService.CheckUserPermission(c, "create_accessorialcharge")
+		err := h.PermissionService.CheckUserPermission(c, "accessorialcharge.add")
 		if err != nil {
 			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
 				"error":   "Unauthorized",
@@ -156,7 +156,7 @@ func (h *AccessorialChargeHandler) UpdateAccessorialCharge() fiber.Handler {
 		}
 
 		// Check if the user has the required permission
-		err := h.PermissionService.CheckUserPermission(c, "update_accessorialcharge")
+		err := h.PermissionService.CheckUserPermission(c, "accessorialcharge.edit")
 		if err != nil {
 			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
 				"error":   "Unauthorized",

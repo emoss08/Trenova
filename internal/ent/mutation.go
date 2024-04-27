@@ -37479,10 +37479,11 @@ type PermissionMutation struct {
 	updated_at           *time.Time
 	version              *int
 	addversion           *int
-	name                 *string
-	description          *string
+	codename             *string
 	action               *string
-	name_humanized       *string
+	label                *string
+	read_description     *string
+	write_description    *string
 	clearedFields        map[string]struct{}
 	business_unit        *uuid.UUID
 	clearedbusiness_unit bool
@@ -37802,89 +37803,40 @@ func (m *PermissionMutation) ResetVersion() {
 	m.addversion = nil
 }
 
-// SetName sets the "name" field.
-func (m *PermissionMutation) SetName(s string) {
-	m.name = &s
+// SetCodename sets the "codename" field.
+func (m *PermissionMutation) SetCodename(s string) {
+	m.codename = &s
 }
 
-// Name returns the value of the "name" field in the mutation.
-func (m *PermissionMutation) Name() (r string, exists bool) {
-	v := m.name
+// Codename returns the value of the "codename" field in the mutation.
+func (m *PermissionMutation) Codename() (r string, exists bool) {
+	v := m.codename
 	if v == nil {
 		return
 	}
 	return *v, true
 }
 
-// OldName returns the old "name" field's value of the Permission entity.
+// OldCodename returns the old "codename" field's value of the Permission entity.
 // If the Permission object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *PermissionMutation) OldName(ctx context.Context) (v string, err error) {
+func (m *PermissionMutation) OldCodename(ctx context.Context) (v string, err error) {
 	if !m.op.Is(OpUpdateOne) {
-		return v, errors.New("OldName is only allowed on UpdateOne operations")
+		return v, errors.New("OldCodename is only allowed on UpdateOne operations")
 	}
 	if m.id == nil || m.oldValue == nil {
-		return v, errors.New("OldName requires an ID field in the mutation")
+		return v, errors.New("OldCodename requires an ID field in the mutation")
 	}
 	oldValue, err := m.oldValue(ctx)
 	if err != nil {
-		return v, fmt.Errorf("querying old value for OldName: %w", err)
+		return v, fmt.Errorf("querying old value for OldCodename: %w", err)
 	}
-	return oldValue.Name, nil
+	return oldValue.Codename, nil
 }
 
-// ResetName resets all changes to the "name" field.
-func (m *PermissionMutation) ResetName() {
-	m.name = nil
-}
-
-// SetDescription sets the "description" field.
-func (m *PermissionMutation) SetDescription(s string) {
-	m.description = &s
-}
-
-// Description returns the value of the "description" field in the mutation.
-func (m *PermissionMutation) Description() (r string, exists bool) {
-	v := m.description
-	if v == nil {
-		return
-	}
-	return *v, true
-}
-
-// OldDescription returns the old "description" field's value of the Permission entity.
-// If the Permission object wasn't provided to the builder, the object is fetched from the database.
-// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *PermissionMutation) OldDescription(ctx context.Context) (v string, err error) {
-	if !m.op.Is(OpUpdateOne) {
-		return v, errors.New("OldDescription is only allowed on UpdateOne operations")
-	}
-	if m.id == nil || m.oldValue == nil {
-		return v, errors.New("OldDescription requires an ID field in the mutation")
-	}
-	oldValue, err := m.oldValue(ctx)
-	if err != nil {
-		return v, fmt.Errorf("querying old value for OldDescription: %w", err)
-	}
-	return oldValue.Description, nil
-}
-
-// ClearDescription clears the value of the "description" field.
-func (m *PermissionMutation) ClearDescription() {
-	m.description = nil
-	m.clearedFields[permission.FieldDescription] = struct{}{}
-}
-
-// DescriptionCleared returns if the "description" field was cleared in this mutation.
-func (m *PermissionMutation) DescriptionCleared() bool {
-	_, ok := m.clearedFields[permission.FieldDescription]
-	return ok
-}
-
-// ResetDescription resets all changes to the "description" field.
-func (m *PermissionMutation) ResetDescription() {
-	m.description = nil
-	delete(m.clearedFields, permission.FieldDescription)
+// ResetCodename resets all changes to the "codename" field.
+func (m *PermissionMutation) ResetCodename() {
+	m.codename = nil
 }
 
 // SetAction sets the "action" field.
@@ -37936,53 +37888,151 @@ func (m *PermissionMutation) ResetAction() {
 	delete(m.clearedFields, permission.FieldAction)
 }
 
-// SetNameHumanized sets the "name_humanized" field.
-func (m *PermissionMutation) SetNameHumanized(s string) {
-	m.name_humanized = &s
+// SetLabel sets the "label" field.
+func (m *PermissionMutation) SetLabel(s string) {
+	m.label = &s
 }
 
-// NameHumanized returns the value of the "name_humanized" field in the mutation.
-func (m *PermissionMutation) NameHumanized() (r string, exists bool) {
-	v := m.name_humanized
+// Label returns the value of the "label" field in the mutation.
+func (m *PermissionMutation) Label() (r string, exists bool) {
+	v := m.label
 	if v == nil {
 		return
 	}
 	return *v, true
 }
 
-// OldNameHumanized returns the old "name_humanized" field's value of the Permission entity.
+// OldLabel returns the old "label" field's value of the Permission entity.
 // If the Permission object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *PermissionMutation) OldNameHumanized(ctx context.Context) (v string, err error) {
+func (m *PermissionMutation) OldLabel(ctx context.Context) (v string, err error) {
 	if !m.op.Is(OpUpdateOne) {
-		return v, errors.New("OldNameHumanized is only allowed on UpdateOne operations")
+		return v, errors.New("OldLabel is only allowed on UpdateOne operations")
 	}
 	if m.id == nil || m.oldValue == nil {
-		return v, errors.New("OldNameHumanized requires an ID field in the mutation")
+		return v, errors.New("OldLabel requires an ID field in the mutation")
 	}
 	oldValue, err := m.oldValue(ctx)
 	if err != nil {
-		return v, fmt.Errorf("querying old value for OldNameHumanized: %w", err)
+		return v, fmt.Errorf("querying old value for OldLabel: %w", err)
 	}
-	return oldValue.NameHumanized, nil
+	return oldValue.Label, nil
 }
 
-// ClearNameHumanized clears the value of the "name_humanized" field.
-func (m *PermissionMutation) ClearNameHumanized() {
-	m.name_humanized = nil
-	m.clearedFields[permission.FieldNameHumanized] = struct{}{}
+// ClearLabel clears the value of the "label" field.
+func (m *PermissionMutation) ClearLabel() {
+	m.label = nil
+	m.clearedFields[permission.FieldLabel] = struct{}{}
 }
 
-// NameHumanizedCleared returns if the "name_humanized" field was cleared in this mutation.
-func (m *PermissionMutation) NameHumanizedCleared() bool {
-	_, ok := m.clearedFields[permission.FieldNameHumanized]
+// LabelCleared returns if the "label" field was cleared in this mutation.
+func (m *PermissionMutation) LabelCleared() bool {
+	_, ok := m.clearedFields[permission.FieldLabel]
 	return ok
 }
 
-// ResetNameHumanized resets all changes to the "name_humanized" field.
-func (m *PermissionMutation) ResetNameHumanized() {
-	m.name_humanized = nil
-	delete(m.clearedFields, permission.FieldNameHumanized)
+// ResetLabel resets all changes to the "label" field.
+func (m *PermissionMutation) ResetLabel() {
+	m.label = nil
+	delete(m.clearedFields, permission.FieldLabel)
+}
+
+// SetReadDescription sets the "read_description" field.
+func (m *PermissionMutation) SetReadDescription(s string) {
+	m.read_description = &s
+}
+
+// ReadDescription returns the value of the "read_description" field in the mutation.
+func (m *PermissionMutation) ReadDescription() (r string, exists bool) {
+	v := m.read_description
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldReadDescription returns the old "read_description" field's value of the Permission entity.
+// If the Permission object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *PermissionMutation) OldReadDescription(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldReadDescription is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldReadDescription requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldReadDescription: %w", err)
+	}
+	return oldValue.ReadDescription, nil
+}
+
+// ClearReadDescription clears the value of the "read_description" field.
+func (m *PermissionMutation) ClearReadDescription() {
+	m.read_description = nil
+	m.clearedFields[permission.FieldReadDescription] = struct{}{}
+}
+
+// ReadDescriptionCleared returns if the "read_description" field was cleared in this mutation.
+func (m *PermissionMutation) ReadDescriptionCleared() bool {
+	_, ok := m.clearedFields[permission.FieldReadDescription]
+	return ok
+}
+
+// ResetReadDescription resets all changes to the "read_description" field.
+func (m *PermissionMutation) ResetReadDescription() {
+	m.read_description = nil
+	delete(m.clearedFields, permission.FieldReadDescription)
+}
+
+// SetWriteDescription sets the "write_description" field.
+func (m *PermissionMutation) SetWriteDescription(s string) {
+	m.write_description = &s
+}
+
+// WriteDescription returns the value of the "write_description" field in the mutation.
+func (m *PermissionMutation) WriteDescription() (r string, exists bool) {
+	v := m.write_description
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldWriteDescription returns the old "write_description" field's value of the Permission entity.
+// If the Permission object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *PermissionMutation) OldWriteDescription(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldWriteDescription is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldWriteDescription requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldWriteDescription: %w", err)
+	}
+	return oldValue.WriteDescription, nil
+}
+
+// ClearWriteDescription clears the value of the "write_description" field.
+func (m *PermissionMutation) ClearWriteDescription() {
+	m.write_description = nil
+	m.clearedFields[permission.FieldWriteDescription] = struct{}{}
+}
+
+// WriteDescriptionCleared returns if the "write_description" field was cleared in this mutation.
+func (m *PermissionMutation) WriteDescriptionCleared() bool {
+	_, ok := m.clearedFields[permission.FieldWriteDescription]
+	return ok
+}
+
+// ResetWriteDescription resets all changes to the "write_description" field.
+func (m *PermissionMutation) ResetWriteDescription() {
+	m.write_description = nil
+	delete(m.clearedFields, permission.FieldWriteDescription)
 }
 
 // SetResourceID sets the "resource_id" field.
@@ -38190,7 +38240,7 @@ func (m *PermissionMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *PermissionMutation) Fields() []string {
-	fields := make([]string, 0, 10)
+	fields := make([]string, 0, 11)
 	if m.business_unit != nil {
 		fields = append(fields, permission.FieldBusinessUnitID)
 	}
@@ -38206,17 +38256,20 @@ func (m *PermissionMutation) Fields() []string {
 	if m.version != nil {
 		fields = append(fields, permission.FieldVersion)
 	}
-	if m.name != nil {
-		fields = append(fields, permission.FieldName)
-	}
-	if m.description != nil {
-		fields = append(fields, permission.FieldDescription)
+	if m.codename != nil {
+		fields = append(fields, permission.FieldCodename)
 	}
 	if m.action != nil {
 		fields = append(fields, permission.FieldAction)
 	}
-	if m.name_humanized != nil {
-		fields = append(fields, permission.FieldNameHumanized)
+	if m.label != nil {
+		fields = append(fields, permission.FieldLabel)
+	}
+	if m.read_description != nil {
+		fields = append(fields, permission.FieldReadDescription)
+	}
+	if m.write_description != nil {
+		fields = append(fields, permission.FieldWriteDescription)
 	}
 	if m.resource != nil {
 		fields = append(fields, permission.FieldResourceID)
@@ -38239,14 +38292,16 @@ func (m *PermissionMutation) Field(name string) (ent.Value, bool) {
 		return m.UpdatedAt()
 	case permission.FieldVersion:
 		return m.Version()
-	case permission.FieldName:
-		return m.Name()
-	case permission.FieldDescription:
-		return m.Description()
+	case permission.FieldCodename:
+		return m.Codename()
 	case permission.FieldAction:
 		return m.Action()
-	case permission.FieldNameHumanized:
-		return m.NameHumanized()
+	case permission.FieldLabel:
+		return m.Label()
+	case permission.FieldReadDescription:
+		return m.ReadDescription()
+	case permission.FieldWriteDescription:
+		return m.WriteDescription()
 	case permission.FieldResourceID:
 		return m.ResourceID()
 	}
@@ -38268,14 +38323,16 @@ func (m *PermissionMutation) OldField(ctx context.Context, name string) (ent.Val
 		return m.OldUpdatedAt(ctx)
 	case permission.FieldVersion:
 		return m.OldVersion(ctx)
-	case permission.FieldName:
-		return m.OldName(ctx)
-	case permission.FieldDescription:
-		return m.OldDescription(ctx)
+	case permission.FieldCodename:
+		return m.OldCodename(ctx)
 	case permission.FieldAction:
 		return m.OldAction(ctx)
-	case permission.FieldNameHumanized:
-		return m.OldNameHumanized(ctx)
+	case permission.FieldLabel:
+		return m.OldLabel(ctx)
+	case permission.FieldReadDescription:
+		return m.OldReadDescription(ctx)
+	case permission.FieldWriteDescription:
+		return m.OldWriteDescription(ctx)
 	case permission.FieldResourceID:
 		return m.OldResourceID(ctx)
 	}
@@ -38322,19 +38379,12 @@ func (m *PermissionMutation) SetField(name string, value ent.Value) error {
 		}
 		m.SetVersion(v)
 		return nil
-	case permission.FieldName:
+	case permission.FieldCodename:
 		v, ok := value.(string)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
-		m.SetName(v)
-		return nil
-	case permission.FieldDescription:
-		v, ok := value.(string)
-		if !ok {
-			return fmt.Errorf("unexpected type %T for field %s", value, name)
-		}
-		m.SetDescription(v)
+		m.SetCodename(v)
 		return nil
 	case permission.FieldAction:
 		v, ok := value.(string)
@@ -38343,12 +38393,26 @@ func (m *PermissionMutation) SetField(name string, value ent.Value) error {
 		}
 		m.SetAction(v)
 		return nil
-	case permission.FieldNameHumanized:
+	case permission.FieldLabel:
 		v, ok := value.(string)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
-		m.SetNameHumanized(v)
+		m.SetLabel(v)
+		return nil
+	case permission.FieldReadDescription:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetReadDescription(v)
+		return nil
+	case permission.FieldWriteDescription:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetWriteDescription(v)
 		return nil
 	case permission.FieldResourceID:
 		v, ok := value.(uuid.UUID)
@@ -38402,14 +38466,17 @@ func (m *PermissionMutation) AddField(name string, value ent.Value) error {
 // mutation.
 func (m *PermissionMutation) ClearedFields() []string {
 	var fields []string
-	if m.FieldCleared(permission.FieldDescription) {
-		fields = append(fields, permission.FieldDescription)
-	}
 	if m.FieldCleared(permission.FieldAction) {
 		fields = append(fields, permission.FieldAction)
 	}
-	if m.FieldCleared(permission.FieldNameHumanized) {
-		fields = append(fields, permission.FieldNameHumanized)
+	if m.FieldCleared(permission.FieldLabel) {
+		fields = append(fields, permission.FieldLabel)
+	}
+	if m.FieldCleared(permission.FieldReadDescription) {
+		fields = append(fields, permission.FieldReadDescription)
+	}
+	if m.FieldCleared(permission.FieldWriteDescription) {
+		fields = append(fields, permission.FieldWriteDescription)
 	}
 	return fields
 }
@@ -38425,14 +38492,17 @@ func (m *PermissionMutation) FieldCleared(name string) bool {
 // error if the field is not defined in the schema.
 func (m *PermissionMutation) ClearField(name string) error {
 	switch name {
-	case permission.FieldDescription:
-		m.ClearDescription()
-		return nil
 	case permission.FieldAction:
 		m.ClearAction()
 		return nil
-	case permission.FieldNameHumanized:
-		m.ClearNameHumanized()
+	case permission.FieldLabel:
+		m.ClearLabel()
+		return nil
+	case permission.FieldReadDescription:
+		m.ClearReadDescription()
+		return nil
+	case permission.FieldWriteDescription:
+		m.ClearWriteDescription()
 		return nil
 	}
 	return fmt.Errorf("unknown Permission nullable field %s", name)
@@ -38457,17 +38527,20 @@ func (m *PermissionMutation) ResetField(name string) error {
 	case permission.FieldVersion:
 		m.ResetVersion()
 		return nil
-	case permission.FieldName:
-		m.ResetName()
-		return nil
-	case permission.FieldDescription:
-		m.ResetDescription()
+	case permission.FieldCodename:
+		m.ResetCodename()
 		return nil
 	case permission.FieldAction:
 		m.ResetAction()
 		return nil
-	case permission.FieldNameHumanized:
-		m.ResetNameHumanized()
+	case permission.FieldLabel:
+		m.ResetLabel()
+		return nil
+	case permission.FieldReadDescription:
+		m.ResetReadDescription()
+		return nil
+	case permission.FieldWriteDescription:
+		m.ResetWriteDescription()
 		return nil
 	case permission.FieldResourceID:
 		m.ResetResourceID()

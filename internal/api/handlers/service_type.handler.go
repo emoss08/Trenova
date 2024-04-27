@@ -46,7 +46,7 @@ func (h *ServiceTypeHandler) GetServiceTypes() fiber.Handler {
 		}
 
 		// Check if the user has the required permission
-		err := h.PermissionService.CheckUserPermission(c, "read_servicetype")
+		err := h.PermissionService.CheckUserPermission(c, "servicetype.view")
 		if err != nil {
 			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
 				"error":   "Unauthorized",
@@ -110,7 +110,7 @@ func (h *ServiceTypeHandler) CreateServiceType() fiber.Handler {
 		}
 
 		// Check if the user has the required permission
-		err := h.PermissionService.CheckUserPermission(c, "create_servicetype")
+		err := h.PermissionService.CheckUserPermission(c, "servicetype.add")
 		if err != nil {
 			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
 				"error":   "Unauthorized",
@@ -155,7 +155,7 @@ func (h *ServiceTypeHandler) UpdateServiceType() fiber.Handler {
 		}
 
 		// Check if the user has the required permission
-		err := h.PermissionService.CheckUserPermission(c, "update_servicetype")
+		err := h.PermissionService.CheckUserPermission(c, "servicetype.edit")
 		if err != nil {
 			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
 				"error":   "Unauthorized",

@@ -46,7 +46,7 @@ func (h *DelayCodeHandler) GetDelayCodes() fiber.Handler {
 		}
 
 		// Check if the user has the required permission
-		err := h.PermissionService.CheckUserPermission(c, "read_delaycode")
+		err := h.PermissionService.CheckUserPermission(c, "delaycode.view")
 		if err != nil {
 			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
 				"error":   "Unauthorized",
@@ -110,7 +110,7 @@ func (h *DelayCodeHandler) CreateDelayCode() fiber.Handler {
 		}
 
 		// Check if the user has the required permission
-		err := h.PermissionService.CheckUserPermission(c, "create_delaycode")
+		err := h.PermissionService.CheckUserPermission(c, "delaycode.add")
 		if err != nil {
 			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
 				"error":   "Unauthorized",
@@ -155,7 +155,7 @@ func (h *DelayCodeHandler) UpdateDelayCode() fiber.Handler {
 		}
 
 		// Check if the user has the required permission
-		err := h.PermissionService.CheckUserPermission(c, "update_delaycode")
+		err := h.PermissionService.CheckUserPermission(c, "delaycode.edit")
 		if err != nil {
 			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
 				"error":   "Unauthorized",

@@ -46,7 +46,7 @@ func (h *DispatchControlHandler) GetDispatchControl() fiber.Handler {
 		}
 
 		// Check if the user has the required permission
-		err := h.PermissionService.CheckUserPermission(c, "read_dispatchcontrol")
+		err := h.PermissionService.CheckUserPermission(c, "dispatchcontrol.add")
 		if err != nil {
 			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
 				"error":   "Unauthorized",
@@ -84,7 +84,7 @@ func (h *DispatchControlHandler) UpdateDispatchControlByID() fiber.Handler {
 		}
 
 		// Check if the user has the required permission
-		err := h.PermissionService.CheckUserPermission(c, "create_dispatchcontrol")
+		err := h.PermissionService.CheckUserPermission(c, "dispatchcontrol.edit")
 		if err != nil {
 			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
 				"error":   "Unauthorized",

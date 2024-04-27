@@ -25,14 +25,16 @@ const (
 	FieldUpdatedAt = "updated_at"
 	// FieldVersion holds the string denoting the version field in the database.
 	FieldVersion = "version"
-	// FieldName holds the string denoting the name field in the database.
-	FieldName = "name"
-	// FieldDescription holds the string denoting the description field in the database.
-	FieldDescription = "description"
+	// FieldCodename holds the string denoting the codename field in the database.
+	FieldCodename = "codename"
 	// FieldAction holds the string denoting the action field in the database.
 	FieldAction = "action"
-	// FieldNameHumanized holds the string denoting the name_humanized field in the database.
-	FieldNameHumanized = "name_humanized"
+	// FieldLabel holds the string denoting the label field in the database.
+	FieldLabel = "label"
+	// FieldReadDescription holds the string denoting the read_description field in the database.
+	FieldReadDescription = "read_description"
+	// FieldWriteDescription holds the string denoting the write_description field in the database.
+	FieldWriteDescription = "write_description"
 	// FieldResourceID holds the string denoting the resource_id field in the database.
 	FieldResourceID = "resource_id"
 	// EdgeBusinessUnit holds the string denoting the business_unit edge name in mutations.
@@ -81,10 +83,11 @@ var Columns = []string{
 	FieldCreatedAt,
 	FieldUpdatedAt,
 	FieldVersion,
-	FieldName,
-	FieldDescription,
+	FieldCodename,
 	FieldAction,
-	FieldNameHumanized,
+	FieldLabel,
+	FieldReadDescription,
+	FieldWriteDescription,
 	FieldResourceID,
 }
 
@@ -113,8 +116,8 @@ var (
 	UpdateDefaultUpdatedAt func() time.Time
 	// DefaultVersion holds the default value on creation for the "version" field.
 	DefaultVersion int
-	// NameValidator is a validator for the "name" field. It is called by the builders before save.
-	NameValidator func(string) error
+	// CodenameValidator is a validator for the "codename" field. It is called by the builders before save.
+	CodenameValidator func(string) error
 	// DefaultID holds the default value on creation for the "id" field.
 	DefaultID func() uuid.UUID
 )
@@ -152,14 +155,9 @@ func ByVersion(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldVersion, opts...).ToFunc()
 }
 
-// ByName orders the results by the name field.
-func ByName(opts ...sql.OrderTermOption) OrderOption {
-	return sql.OrderByField(FieldName, opts...).ToFunc()
-}
-
-// ByDescription orders the results by the description field.
-func ByDescription(opts ...sql.OrderTermOption) OrderOption {
-	return sql.OrderByField(FieldDescription, opts...).ToFunc()
+// ByCodename orders the results by the codename field.
+func ByCodename(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldCodename, opts...).ToFunc()
 }
 
 // ByAction orders the results by the action field.
@@ -167,9 +165,19 @@ func ByAction(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldAction, opts...).ToFunc()
 }
 
-// ByNameHumanized orders the results by the name_humanized field.
-func ByNameHumanized(opts ...sql.OrderTermOption) OrderOption {
-	return sql.OrderByField(FieldNameHumanized, opts...).ToFunc()
+// ByLabel orders the results by the label field.
+func ByLabel(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldLabel, opts...).ToFunc()
+}
+
+// ByReadDescription orders the results by the read_description field.
+func ByReadDescription(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldReadDescription, opts...).ToFunc()
+}
+
+// ByWriteDescription orders the results by the write_description field.
+func ByWriteDescription(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldWriteDescription, opts...).ToFunc()
 }
 
 // ByResourceID orders the results by the resource_id field.

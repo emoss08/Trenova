@@ -46,7 +46,7 @@ func (h *TrailerHandler) GetTrailers() fiber.Handler {
 		}
 
 		// Check if the user has the required permission
-		err := h.PermissionService.CheckUserPermission(c, "read_trailer")
+		err := h.PermissionService.CheckUserPermission(c, "trailer.view")
 		if err != nil {
 			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
 				"error":   "Unauthorized",
@@ -110,7 +110,7 @@ func (h *TrailerHandler) CreateTrailer() fiber.Handler {
 		}
 
 		// Check if the user has the required permission
-		err := h.PermissionService.CheckUserPermission(c, "create_trailer")
+		err := h.PermissionService.CheckUserPermission(c, "trailer.add")
 		if err != nil {
 			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
 				"error":   "Unauthorized",
@@ -164,7 +164,7 @@ func (h *TrailerHandler) UpdateTrailer() fiber.Handler {
 		}
 
 		// Check if the user has the required permission
-		err := h.PermissionService.CheckUserPermission(c, "update_trailer")
+		err := h.PermissionService.CheckUserPermission(c, "trailer.edit")
 		if err != nil {
 			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
 				"error":   "Unauthorized",

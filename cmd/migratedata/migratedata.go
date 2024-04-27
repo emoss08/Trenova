@@ -19,7 +19,6 @@ import (
 	"github.com/emoss08/trenova/internal/ent/role"
 	"github.com/emoss08/trenova/internal/ent/tractor"
 	"github.com/emoss08/trenova/internal/ent/user"
-	"github.com/emoss08/trenova/internal/util"
 	"github.com/fatih/color"
 	"golang.org/x/crypto/bcrypt"
 )
@@ -822,44 +821,60 @@ func SeedResources(
 func SeedPermissions(
 	ctx context.Context, client *ent.Client, org *ent.Organization, bu *ent.BusinessUnit,
 ) error {
-	// Check if the permissions already exists
+	// Check if the permissions already exist
 	etCount, err := client.Permission.Query().Count(ctx)
+	if err != nil {
+		log.Panic("Failed checking existing permissions")
+		return err
+	}
 
-	// If not, create the permissions
 	if etCount == 0 {
-		log.Println("Adding default permissions for each resource...")
+		log.Println("Adding base permissions...")
 
 		resources, err := client.Resource.Query().All(ctx)
 		if err != nil {
-			log.Panicf("Failed querying resources: %v", err)
+			log.Panic("Failed querying resources")
 			return err
 		}
 
-		actions := []string{"create", "read", "update", "delete"}
+		// Detailed permissions for each action
+		actions := []struct {
+			action           string
+			readDescription  string
+			writeDescription string
+		}{
+			{"view", "Can view all", "Can view all"},
+			{"add", "Can view all", "Can add, edit, and delete"},
+			{"edit", "Can view all", "Can add, edit, and delete"},
+			{"delete", "Can view all", "Can add, edit, and delete"},
+		}
 
 		for _, resource := range resources {
-			resrouceTypeLower := strings.ToLower(resource.Type)
+			resourceTypeLower := strings.ToLower(resource.Type)
 			for _, action := range actions {
-				permissionName := fmt.Sprintf("%s_%s", action, resrouceTypeLower)
+				// Format codename, label, and descriptions
+				codename := fmt.Sprintf("%s.%s", resourceTypeLower, action.action)
+				label := fmt.Sprintf("%s %s", strings.Title(action.action), resource.Type)
+				readDescription := fmt.Sprintf("%s %s.", action.readDescription, resource.Type)
+				writeDescription := fmt.Sprintf("%s %s.", action.writeDescription, resource.Type)
+
+				// Create the permission
 				_, err = client.Permission.Create().
 					SetBusinessUnit(bu).
 					SetOrganization(org).
-					SetName(permissionName).
+					SetCodename(codename).
 					SetResource(resource).
-					SetAction(action).
-					SetNameHumanized(fmt.Sprintf("%s %s", util.ToTitleFormat(action), resource.Type)).
-					SetDescription(fmt.Sprintf("Permission to %s %s", action, resource.Type)).
+					SetAction(action.action).
+					SetLabel(label).
+					SetReadDescription(readDescription).
+					SetWriteDescription(writeDescription).
 					Save(ctx)
 				if err != nil {
-					log.Panicf("Failed creating permission: %v", err)
+					log.Panic("Failed creating permission: %v", err)
 					return err
 				}
 			}
 		}
-	}
-	if err != nil {
-		log.Panicf("Failed creating permissions: %v", err)
-		return err
 	}
 
 	return nil
@@ -911,6 +926,10 @@ func SeedRoles(
 	_, err = adminRole.Update().
 		AddPermissions(permissions...).
 		Save(ctx)
+	if err != nil {
+		log.Panicf("Failed adding permissions to admin role: %v", err)
+		return err
+	}
 
 	return nil
 }

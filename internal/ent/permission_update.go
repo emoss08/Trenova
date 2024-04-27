@@ -58,37 +58,17 @@ func (pu *PermissionUpdate) AddVersion(i int) *PermissionUpdate {
 	return pu
 }
 
-// SetName sets the "name" field.
-func (pu *PermissionUpdate) SetName(s string) *PermissionUpdate {
-	pu.mutation.SetName(s)
+// SetCodename sets the "codename" field.
+func (pu *PermissionUpdate) SetCodename(s string) *PermissionUpdate {
+	pu.mutation.SetCodename(s)
 	return pu
 }
 
-// SetNillableName sets the "name" field if the given value is not nil.
-func (pu *PermissionUpdate) SetNillableName(s *string) *PermissionUpdate {
+// SetNillableCodename sets the "codename" field if the given value is not nil.
+func (pu *PermissionUpdate) SetNillableCodename(s *string) *PermissionUpdate {
 	if s != nil {
-		pu.SetName(*s)
+		pu.SetCodename(*s)
 	}
-	return pu
-}
-
-// SetDescription sets the "description" field.
-func (pu *PermissionUpdate) SetDescription(s string) *PermissionUpdate {
-	pu.mutation.SetDescription(s)
-	return pu
-}
-
-// SetNillableDescription sets the "description" field if the given value is not nil.
-func (pu *PermissionUpdate) SetNillableDescription(s *string) *PermissionUpdate {
-	if s != nil {
-		pu.SetDescription(*s)
-	}
-	return pu
-}
-
-// ClearDescription clears the value of the "description" field.
-func (pu *PermissionUpdate) ClearDescription() *PermissionUpdate {
-	pu.mutation.ClearDescription()
 	return pu
 }
 
@@ -112,23 +92,63 @@ func (pu *PermissionUpdate) ClearAction() *PermissionUpdate {
 	return pu
 }
 
-// SetNameHumanized sets the "name_humanized" field.
-func (pu *PermissionUpdate) SetNameHumanized(s string) *PermissionUpdate {
-	pu.mutation.SetNameHumanized(s)
+// SetLabel sets the "label" field.
+func (pu *PermissionUpdate) SetLabel(s string) *PermissionUpdate {
+	pu.mutation.SetLabel(s)
 	return pu
 }
 
-// SetNillableNameHumanized sets the "name_humanized" field if the given value is not nil.
-func (pu *PermissionUpdate) SetNillableNameHumanized(s *string) *PermissionUpdate {
+// SetNillableLabel sets the "label" field if the given value is not nil.
+func (pu *PermissionUpdate) SetNillableLabel(s *string) *PermissionUpdate {
 	if s != nil {
-		pu.SetNameHumanized(*s)
+		pu.SetLabel(*s)
 	}
 	return pu
 }
 
-// ClearNameHumanized clears the value of the "name_humanized" field.
-func (pu *PermissionUpdate) ClearNameHumanized() *PermissionUpdate {
-	pu.mutation.ClearNameHumanized()
+// ClearLabel clears the value of the "label" field.
+func (pu *PermissionUpdate) ClearLabel() *PermissionUpdate {
+	pu.mutation.ClearLabel()
+	return pu
+}
+
+// SetReadDescription sets the "read_description" field.
+func (pu *PermissionUpdate) SetReadDescription(s string) *PermissionUpdate {
+	pu.mutation.SetReadDescription(s)
+	return pu
+}
+
+// SetNillableReadDescription sets the "read_description" field if the given value is not nil.
+func (pu *PermissionUpdate) SetNillableReadDescription(s *string) *PermissionUpdate {
+	if s != nil {
+		pu.SetReadDescription(*s)
+	}
+	return pu
+}
+
+// ClearReadDescription clears the value of the "read_description" field.
+func (pu *PermissionUpdate) ClearReadDescription() *PermissionUpdate {
+	pu.mutation.ClearReadDescription()
+	return pu
+}
+
+// SetWriteDescription sets the "write_description" field.
+func (pu *PermissionUpdate) SetWriteDescription(s string) *PermissionUpdate {
+	pu.mutation.SetWriteDescription(s)
+	return pu
+}
+
+// SetNillableWriteDescription sets the "write_description" field if the given value is not nil.
+func (pu *PermissionUpdate) SetNillableWriteDescription(s *string) *PermissionUpdate {
+	if s != nil {
+		pu.SetWriteDescription(*s)
+	}
+	return pu
+}
+
+// ClearWriteDescription clears the value of the "write_description" field.
+func (pu *PermissionUpdate) ClearWriteDescription() *PermissionUpdate {
+	pu.mutation.ClearWriteDescription()
 	return pu
 }
 
@@ -211,9 +231,9 @@ func (pu *PermissionUpdate) defaults() {
 
 // check runs all checks and user-defined validators on the builder.
 func (pu *PermissionUpdate) check() error {
-	if v, ok := pu.mutation.Name(); ok {
-		if err := permission.NameValidator(v); err != nil {
-			return &ValidationError{Name: "name", err: fmt.Errorf(`ent: validator failed for field "Permission.name": %w`, err)}
+	if v, ok := pu.mutation.Codename(); ok {
+		if err := permission.CodenameValidator(v); err != nil {
+			return &ValidationError{Name: "codename", err: fmt.Errorf(`ent: validator failed for field "Permission.codename": %w`, err)}
 		}
 	}
 	if _, ok := pu.mutation.BusinessUnitID(); pu.mutation.BusinessUnitCleared() && !ok {
@@ -255,14 +275,8 @@ func (pu *PermissionUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	if value, ok := pu.mutation.AddedVersion(); ok {
 		_spec.AddField(permission.FieldVersion, field.TypeInt, value)
 	}
-	if value, ok := pu.mutation.Name(); ok {
-		_spec.SetField(permission.FieldName, field.TypeString, value)
-	}
-	if value, ok := pu.mutation.Description(); ok {
-		_spec.SetField(permission.FieldDescription, field.TypeString, value)
-	}
-	if pu.mutation.DescriptionCleared() {
-		_spec.ClearField(permission.FieldDescription, field.TypeString)
+	if value, ok := pu.mutation.Codename(); ok {
+		_spec.SetField(permission.FieldCodename, field.TypeString, value)
 	}
 	if value, ok := pu.mutation.Action(); ok {
 		_spec.SetField(permission.FieldAction, field.TypeString, value)
@@ -270,11 +284,23 @@ func (pu *PermissionUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	if pu.mutation.ActionCleared() {
 		_spec.ClearField(permission.FieldAction, field.TypeString)
 	}
-	if value, ok := pu.mutation.NameHumanized(); ok {
-		_spec.SetField(permission.FieldNameHumanized, field.TypeString, value)
+	if value, ok := pu.mutation.Label(); ok {
+		_spec.SetField(permission.FieldLabel, field.TypeString, value)
 	}
-	if pu.mutation.NameHumanizedCleared() {
-		_spec.ClearField(permission.FieldNameHumanized, field.TypeString)
+	if pu.mutation.LabelCleared() {
+		_spec.ClearField(permission.FieldLabel, field.TypeString)
+	}
+	if value, ok := pu.mutation.ReadDescription(); ok {
+		_spec.SetField(permission.FieldReadDescription, field.TypeString, value)
+	}
+	if pu.mutation.ReadDescriptionCleared() {
+		_spec.ClearField(permission.FieldReadDescription, field.TypeString)
+	}
+	if value, ok := pu.mutation.WriteDescription(); ok {
+		_spec.SetField(permission.FieldWriteDescription, field.TypeString, value)
+	}
+	if pu.mutation.WriteDescriptionCleared() {
+		_spec.ClearField(permission.FieldWriteDescription, field.TypeString)
 	}
 	if pu.mutation.RolesCleared() {
 		edge := &sqlgraph.EdgeSpec{
@@ -370,37 +396,17 @@ func (puo *PermissionUpdateOne) AddVersion(i int) *PermissionUpdateOne {
 	return puo
 }
 
-// SetName sets the "name" field.
-func (puo *PermissionUpdateOne) SetName(s string) *PermissionUpdateOne {
-	puo.mutation.SetName(s)
+// SetCodename sets the "codename" field.
+func (puo *PermissionUpdateOne) SetCodename(s string) *PermissionUpdateOne {
+	puo.mutation.SetCodename(s)
 	return puo
 }
 
-// SetNillableName sets the "name" field if the given value is not nil.
-func (puo *PermissionUpdateOne) SetNillableName(s *string) *PermissionUpdateOne {
+// SetNillableCodename sets the "codename" field if the given value is not nil.
+func (puo *PermissionUpdateOne) SetNillableCodename(s *string) *PermissionUpdateOne {
 	if s != nil {
-		puo.SetName(*s)
+		puo.SetCodename(*s)
 	}
-	return puo
-}
-
-// SetDescription sets the "description" field.
-func (puo *PermissionUpdateOne) SetDescription(s string) *PermissionUpdateOne {
-	puo.mutation.SetDescription(s)
-	return puo
-}
-
-// SetNillableDescription sets the "description" field if the given value is not nil.
-func (puo *PermissionUpdateOne) SetNillableDescription(s *string) *PermissionUpdateOne {
-	if s != nil {
-		puo.SetDescription(*s)
-	}
-	return puo
-}
-
-// ClearDescription clears the value of the "description" field.
-func (puo *PermissionUpdateOne) ClearDescription() *PermissionUpdateOne {
-	puo.mutation.ClearDescription()
 	return puo
 }
 
@@ -424,23 +430,63 @@ func (puo *PermissionUpdateOne) ClearAction() *PermissionUpdateOne {
 	return puo
 }
 
-// SetNameHumanized sets the "name_humanized" field.
-func (puo *PermissionUpdateOne) SetNameHumanized(s string) *PermissionUpdateOne {
-	puo.mutation.SetNameHumanized(s)
+// SetLabel sets the "label" field.
+func (puo *PermissionUpdateOne) SetLabel(s string) *PermissionUpdateOne {
+	puo.mutation.SetLabel(s)
 	return puo
 }
 
-// SetNillableNameHumanized sets the "name_humanized" field if the given value is not nil.
-func (puo *PermissionUpdateOne) SetNillableNameHumanized(s *string) *PermissionUpdateOne {
+// SetNillableLabel sets the "label" field if the given value is not nil.
+func (puo *PermissionUpdateOne) SetNillableLabel(s *string) *PermissionUpdateOne {
 	if s != nil {
-		puo.SetNameHumanized(*s)
+		puo.SetLabel(*s)
 	}
 	return puo
 }
 
-// ClearNameHumanized clears the value of the "name_humanized" field.
-func (puo *PermissionUpdateOne) ClearNameHumanized() *PermissionUpdateOne {
-	puo.mutation.ClearNameHumanized()
+// ClearLabel clears the value of the "label" field.
+func (puo *PermissionUpdateOne) ClearLabel() *PermissionUpdateOne {
+	puo.mutation.ClearLabel()
+	return puo
+}
+
+// SetReadDescription sets the "read_description" field.
+func (puo *PermissionUpdateOne) SetReadDescription(s string) *PermissionUpdateOne {
+	puo.mutation.SetReadDescription(s)
+	return puo
+}
+
+// SetNillableReadDescription sets the "read_description" field if the given value is not nil.
+func (puo *PermissionUpdateOne) SetNillableReadDescription(s *string) *PermissionUpdateOne {
+	if s != nil {
+		puo.SetReadDescription(*s)
+	}
+	return puo
+}
+
+// ClearReadDescription clears the value of the "read_description" field.
+func (puo *PermissionUpdateOne) ClearReadDescription() *PermissionUpdateOne {
+	puo.mutation.ClearReadDescription()
+	return puo
+}
+
+// SetWriteDescription sets the "write_description" field.
+func (puo *PermissionUpdateOne) SetWriteDescription(s string) *PermissionUpdateOne {
+	puo.mutation.SetWriteDescription(s)
+	return puo
+}
+
+// SetNillableWriteDescription sets the "write_description" field if the given value is not nil.
+func (puo *PermissionUpdateOne) SetNillableWriteDescription(s *string) *PermissionUpdateOne {
+	if s != nil {
+		puo.SetWriteDescription(*s)
+	}
+	return puo
+}
+
+// ClearWriteDescription clears the value of the "write_description" field.
+func (puo *PermissionUpdateOne) ClearWriteDescription() *PermissionUpdateOne {
+	puo.mutation.ClearWriteDescription()
 	return puo
 }
 
@@ -536,9 +582,9 @@ func (puo *PermissionUpdateOne) defaults() {
 
 // check runs all checks and user-defined validators on the builder.
 func (puo *PermissionUpdateOne) check() error {
-	if v, ok := puo.mutation.Name(); ok {
-		if err := permission.NameValidator(v); err != nil {
-			return &ValidationError{Name: "name", err: fmt.Errorf(`ent: validator failed for field "Permission.name": %w`, err)}
+	if v, ok := puo.mutation.Codename(); ok {
+		if err := permission.CodenameValidator(v); err != nil {
+			return &ValidationError{Name: "codename", err: fmt.Errorf(`ent: validator failed for field "Permission.codename": %w`, err)}
 		}
 	}
 	if _, ok := puo.mutation.BusinessUnitID(); puo.mutation.BusinessUnitCleared() && !ok {
@@ -597,14 +643,8 @@ func (puo *PermissionUpdateOne) sqlSave(ctx context.Context) (_node *Permission,
 	if value, ok := puo.mutation.AddedVersion(); ok {
 		_spec.AddField(permission.FieldVersion, field.TypeInt, value)
 	}
-	if value, ok := puo.mutation.Name(); ok {
-		_spec.SetField(permission.FieldName, field.TypeString, value)
-	}
-	if value, ok := puo.mutation.Description(); ok {
-		_spec.SetField(permission.FieldDescription, field.TypeString, value)
-	}
-	if puo.mutation.DescriptionCleared() {
-		_spec.ClearField(permission.FieldDescription, field.TypeString)
+	if value, ok := puo.mutation.Codename(); ok {
+		_spec.SetField(permission.FieldCodename, field.TypeString, value)
 	}
 	if value, ok := puo.mutation.Action(); ok {
 		_spec.SetField(permission.FieldAction, field.TypeString, value)
@@ -612,11 +652,23 @@ func (puo *PermissionUpdateOne) sqlSave(ctx context.Context) (_node *Permission,
 	if puo.mutation.ActionCleared() {
 		_spec.ClearField(permission.FieldAction, field.TypeString)
 	}
-	if value, ok := puo.mutation.NameHumanized(); ok {
-		_spec.SetField(permission.FieldNameHumanized, field.TypeString, value)
+	if value, ok := puo.mutation.Label(); ok {
+		_spec.SetField(permission.FieldLabel, field.TypeString, value)
 	}
-	if puo.mutation.NameHumanizedCleared() {
-		_spec.ClearField(permission.FieldNameHumanized, field.TypeString)
+	if puo.mutation.LabelCleared() {
+		_spec.ClearField(permission.FieldLabel, field.TypeString)
+	}
+	if value, ok := puo.mutation.ReadDescription(); ok {
+		_spec.SetField(permission.FieldReadDescription, field.TypeString, value)
+	}
+	if puo.mutation.ReadDescriptionCleared() {
+		_spec.ClearField(permission.FieldReadDescription, field.TypeString)
+	}
+	if value, ok := puo.mutation.WriteDescription(); ok {
+		_spec.SetField(permission.FieldWriteDescription, field.TypeString, value)
+	}
+	if puo.mutation.WriteDescriptionCleared() {
+		_spec.ClearField(permission.FieldWriteDescription, field.TypeString)
 	}
 	if puo.mutation.RolesCleared() {
 		edge := &sqlgraph.EdgeSpec{

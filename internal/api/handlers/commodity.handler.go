@@ -46,7 +46,7 @@ func (h *CommodityHandler) GetCommodities() fiber.Handler {
 		}
 
 		// Check if the user has the required permission
-		err := h.PermissionService.CheckUserPermission(c, "read_commodity")
+		err := h.PermissionService.CheckUserPermission(c, "commodity.view")
 		if err != nil {
 			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
 				"error":   "Unauthorized",
@@ -111,7 +111,7 @@ func (h *CommodityHandler) CreateCommodity() fiber.Handler {
 		}
 
 		// Check if the user has the required permission
-		err := h.PermissionService.CheckUserPermission(c, "create_commodity")
+		err := h.PermissionService.CheckUserPermission(c, "commodity.add")
 		if err != nil {
 			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
 				"error":   "Unauthorized",
@@ -156,7 +156,7 @@ func (h *CommodityHandler) UpdateCommodity() fiber.Handler {
 		}
 
 		// Check if the user has the required permission
-		err := h.PermissionService.CheckUserPermission(c, "update_commodity")
+		err := h.PermissionService.CheckUserPermission(c, "commodity.add")
 		if err != nil {
 			return c.Status(fiber.StatusUnauthorized).JSON(types.ValidationErrorResponse{
 				Type: "invalidRequest",

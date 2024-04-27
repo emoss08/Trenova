@@ -6,6 +6,8 @@ import (
 
 	"github.com/emoss08/trenova/internal/api"
 	"github.com/emoss08/trenova/internal/ent"
+	"github.com/emoss08/trenova/internal/ent/organization"
+	"github.com/emoss08/trenova/internal/ent/permission"
 	ps "github.com/emoss08/trenova/internal/ent/permission"
 	"github.com/emoss08/trenova/internal/ent/user"
 	"github.com/emoss08/trenova/internal/util"
@@ -34,7 +36,7 @@ func (s *PermissionService) hasPermission(ctx context.Context, userID uuid.UUID,
 		Where(user.IDEQ(userID)).
 		WithRoles(func(q *ent.RoleQuery) {
 			q.WithPermissions(func(pq *ent.PermissionQuery) {
-				pq.Where(ps.NameEQ(permission))
+				pq.Where(ps.Codename(permission))
 			})
 		}).Only(ctx)
 	if err != nil {
@@ -42,10 +44,15 @@ func (s *PermissionService) hasPermission(ctx context.Context, userID uuid.UUID,
 		return false, fmt.Errorf("failed to query user: %w", err)
 	}
 
+	// If the user is admin, return true
+	if user.IsAdmin || user.IsSuperAdmin {
+		return true, nil
+	}
+
 	// Check if the user has the requested permission
 	for _, role := range user.Edges.Roles {
 		for _, perm := range role.Edges.Permissions {
-			if perm.Name == permission {
+			if perm.Codename == permission {
 				return true, nil
 			}
 		}
@@ -72,4 +79,36 @@ func (s *PermissionService) CheckUserPermission(c *fiber.Ctx, permission string)
 	}
 
 	return err
+}
+
+// GetPermissions gets the permissions for an organization.
+func (s *PermissionService) GetPermissions(
+	ctx context.Context, limit, offset int, orgID, buID uuid.UUID,
+) ([]*ent.Permission, int, error) {
+	entityCount, countErr := s.Client.Permission.Query().Where(
+		permission.HasOrganizationWith(
+			organization.IDEQ(orgID),
+			organization.BusinessUnitIDEQ(buID),
+		),
+	).Count(ctx)
+
+	if countErr != nil {
+		return nil, 0, countErr
+	}
+
+	entities, err := s.Client.Permission.Query().
+		Limit(limit).
+		Offset(offset).
+		WithRoles().
+		Where(
+			permission.HasOrganizationWith(
+				organization.IDEQ(orgID),
+				organization.BusinessUnitIDEQ(buID),
+			),
+		).All(ctx)
+	if err != nil {
+		return nil, 0, err
+	}
+
+	return entities, entityCount, nil
 }

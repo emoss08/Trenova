@@ -31,14 +31,16 @@ type Permission struct {
 	UpdatedAt time.Time `json:"updatedAt" validate:"omitempty"`
 	// The current version of this entity.
 	Version int `json:"version" validate:"omitempty"`
-	// Name holds the value of the "name" field.
-	Name string `json:"name,omitempty"`
-	// Description holds the value of the "description" field.
-	Description string `json:"description,omitempty"`
+	// Codename holds the value of the "codename" field.
+	Codename string `json:"codename,omitempty"`
 	// Action holds the value of the "action" field.
 	Action string `json:"action,omitempty"`
-	// Name of the permission in human readable format.
-	NameHumanized string `json:"nameHumanized"`
+	// Label holds the value of the "label" field.
+	Label string `json:"label"`
+	// ReadDescription holds the value of the "read_description" field.
+	ReadDescription string `json:"readDescription"`
+	// WriteDescription holds the value of the "write_description" field.
+	WriteDescription string `json:"writeDescription"`
 	// ResourceID holds the value of the "resource_id" field.
 	ResourceID uuid.UUID `json:"resourceId"`
 	// Edges holds the relations/edges for other nodes in the graph.
@@ -112,7 +114,7 @@ func (*Permission) scanValues(columns []string) ([]any, error) {
 		switch columns[i] {
 		case permission.FieldVersion:
 			values[i] = new(sql.NullInt64)
-		case permission.FieldName, permission.FieldDescription, permission.FieldAction, permission.FieldNameHumanized:
+		case permission.FieldCodename, permission.FieldAction, permission.FieldLabel, permission.FieldReadDescription, permission.FieldWriteDescription:
 			values[i] = new(sql.NullString)
 		case permission.FieldCreatedAt, permission.FieldUpdatedAt:
 			values[i] = new(sql.NullTime)
@@ -169,17 +171,11 @@ func (pe *Permission) assignValues(columns []string, values []any) error {
 			} else if value.Valid {
 				pe.Version = int(value.Int64)
 			}
-		case permission.FieldName:
+		case permission.FieldCodename:
 			if value, ok := values[i].(*sql.NullString); !ok {
-				return fmt.Errorf("unexpected type %T for field name", values[i])
+				return fmt.Errorf("unexpected type %T for field codename", values[i])
 			} else if value.Valid {
-				pe.Name = value.String
-			}
-		case permission.FieldDescription:
-			if value, ok := values[i].(*sql.NullString); !ok {
-				return fmt.Errorf("unexpected type %T for field description", values[i])
-			} else if value.Valid {
-				pe.Description = value.String
+				pe.Codename = value.String
 			}
 		case permission.FieldAction:
 			if value, ok := values[i].(*sql.NullString); !ok {
@@ -187,11 +183,23 @@ func (pe *Permission) assignValues(columns []string, values []any) error {
 			} else if value.Valid {
 				pe.Action = value.String
 			}
-		case permission.FieldNameHumanized:
+		case permission.FieldLabel:
 			if value, ok := values[i].(*sql.NullString); !ok {
-				return fmt.Errorf("unexpected type %T for field name_humanized", values[i])
+				return fmt.Errorf("unexpected type %T for field label", values[i])
 			} else if value.Valid {
-				pe.NameHumanized = value.String
+				pe.Label = value.String
+			}
+		case permission.FieldReadDescription:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field read_description", values[i])
+			} else if value.Valid {
+				pe.ReadDescription = value.String
+			}
+		case permission.FieldWriteDescription:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field write_description", values[i])
+			} else if value.Valid {
+				pe.WriteDescription = value.String
 			}
 		case permission.FieldResourceID:
 			if value, ok := values[i].(*uuid.UUID); !ok {
@@ -270,17 +278,20 @@ func (pe *Permission) String() string {
 	builder.WriteString("version=")
 	builder.WriteString(fmt.Sprintf("%v", pe.Version))
 	builder.WriteString(", ")
-	builder.WriteString("name=")
-	builder.WriteString(pe.Name)
-	builder.WriteString(", ")
-	builder.WriteString("description=")
-	builder.WriteString(pe.Description)
+	builder.WriteString("codename=")
+	builder.WriteString(pe.Codename)
 	builder.WriteString(", ")
 	builder.WriteString("action=")
 	builder.WriteString(pe.Action)
 	builder.WriteString(", ")
-	builder.WriteString("name_humanized=")
-	builder.WriteString(pe.NameHumanized)
+	builder.WriteString("label=")
+	builder.WriteString(pe.Label)
+	builder.WriteString(", ")
+	builder.WriteString("read_description=")
+	builder.WriteString(pe.ReadDescription)
+	builder.WriteString(", ")
+	builder.WriteString("write_description=")
+	builder.WriteString(pe.WriteDescription)
 	builder.WriteString(", ")
 	builder.WriteString("resource_id=")
 	builder.WriteString(fmt.Sprintf("%v", pe.ResourceID))

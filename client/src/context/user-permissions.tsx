@@ -24,7 +24,7 @@ export const UserPermissionsProvider: React.FC<{
     user?.edges.roles
       ?.map((role) => role.edges.permissions)
       .flat()
-      .map((permission) => permission.name) ?? [];
+      .map((permission) => permission.codename) ?? [];
 
   const userHasPermission = useMemo(
     () => (permission: string) => isAdmin || permissions.includes(permission),

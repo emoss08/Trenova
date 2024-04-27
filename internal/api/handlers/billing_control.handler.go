@@ -46,7 +46,7 @@ func (h *BillingControlHandler) GetBillingControl() fiber.Handler {
 		}
 
 		// Check if the user has the required permission
-		err := h.PermissionService.CheckUserPermission(c, "read_billingcontrol")
+		err := h.PermissionService.CheckUserPermission(c, "billingcontrol.view")
 		if err != nil {
 			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
 				"error":   "Unauthorized",
@@ -81,7 +81,7 @@ func (h *BillingControlHandler) UpdateBillingControl() fiber.Handler {
 		}
 
 		// Check if the user has the required permission
-		err := h.PermissionService.CheckUserPermission(c, "update_billingcontrol")
+		err := h.PermissionService.CheckUserPermission(c, "billingcontrol.edit")
 		if err != nil {
 			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
 				"error":   "Unauthorized",
@@ -92,16 +92,7 @@ func (h *BillingControlHandler) UpdateBillingControl() fiber.Handler {
 		data := new(ent.BillingControl)
 
 		if err := util.ParseBodyAndValidate(c, data); err != nil {
-			return c.Status(fiber.StatusBadRequest).JSON(types.ValidationErrorResponse{
-				Type: "invalidRequest",
-				Errors: []types.ValidationErrorDetail{
-					{
-						Code:   "invalidRequest",
-						Detail: err.Error(),
-						Attr:   "request body",
-					},
-				},
-			})
+			return err
 		}
 
 		data.ID = uuid.MustParse(billingControlID)

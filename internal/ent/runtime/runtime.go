@@ -1529,10 +1529,10 @@ func init() {
 	permissionDescVersion := permissionMixinFields0[5].Descriptor()
 	// permission.DefaultVersion holds the default value on creation for the version field.
 	permission.DefaultVersion = permissionDescVersion.Default.(int)
-	// permissionDescName is the schema descriptor for name field.
-	permissionDescName := permissionFields[0].Descriptor()
-	// permission.NameValidator is a validator for the "name" field. It is called by the builders before save.
-	permission.NameValidator = permissionDescName.Validators[0].(func(string) error)
+	// permissionDescCodename is the schema descriptor for codename field.
+	permissionDescCodename := permissionFields[0].Descriptor()
+	// permission.CodenameValidator is a validator for the "codename" field. It is called by the builders before save.
+	permission.CodenameValidator = permissionDescCodename.Validators[0].(func(string) error)
 	// permissionDescID is the schema descriptor for id field.
 	permissionDescID := permissionMixinFields0[0].Descriptor()
 	// permission.DefaultID holds the default value on creation for the id field.

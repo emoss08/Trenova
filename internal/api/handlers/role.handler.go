@@ -10,24 +10,24 @@ import (
 	"github.com/google/uuid"
 )
 
-type TractorHandler struct {
+type RoleHandler struct {
 	Server            *api.Server
-	Service           *services.TractorService
+	Service           *services.RoleService
 	PermissionService *services.PermissionService
 }
 
-func NewTractorHandler(s *api.Server) *TractorHandler {
-	return &TractorHandler{
+func NewRoleHandler(s *api.Server) *RoleHandler {
+	return &RoleHandler{
 		Server:            s,
-		Service:           services.NewTractorService(s),
+		Service:           services.NewRoleService(s),
 		PermissionService: services.NewPermissionService(s),
 	}
 }
 
-// GetTractors is a handler that returns a list of tractors.
+// GetRoles is a handler that returns a list of roles.
 //
-// GET /tractors
-func (h *TractorHandler) GetTractors() fiber.Handler {
+// GET /roles
+func (h *RoleHandler) GetRoles() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		orgID, ok := c.Locals(util.CTXOrganizationID).(uuid.UUID)
 		buID, buOK := c.Locals(util.CTXBusinessUnitID).(uuid.UUID)
@@ -46,7 +46,7 @@ func (h *TractorHandler) GetTractors() fiber.Handler {
 		}
 
 		// Check if the user has the required permission
-		err := h.PermissionService.CheckUserPermission(c, "tractor.view")
+		err := h.PermissionService.CheckUserPermission(c, "role.view")
 		if err != nil {
 			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
 				"error":   "Unauthorized",
@@ -68,7 +68,7 @@ func (h *TractorHandler) GetTractors() fiber.Handler {
 			})
 		}
 
-		entities, count, err := h.Service.GetTractors(c.UserContext(), limit, offset, orgID, buID)
+		entities, count, err := h.Service.GetRoles(c.UserContext(), limit, offset, orgID, buID)
 		if err != nil {
 			errorResponse := util.CreateDBErrorResponse(err)
 			return c.Status(fiber.StatusInternalServerError).JSON(errorResponse)
@@ -86,12 +86,12 @@ func (h *TractorHandler) GetTractors() fiber.Handler {
 	}
 }
 
-// CreateTractor is a handler that creates a new tractor.
+// CreateRole is a handler that creates a charge type.
 //
-// POST /tractors
-func (h *TractorHandler) CreateTractor() fiber.Handler {
+// POST /charge-types
+func (h *RoleHandler) CreateRole() fiber.Handler {
 	return func(c *fiber.Ctx) error {
-		newEntity := new(ent.Tractor)
+		newEntity := new(ent.Role)
 
 		orgID, ok := c.Locals(util.CTXOrganizationID).(uuid.UUID)
 		buID, buOK := c.Locals(util.CTXBusinessUnitID).(uuid.UUID)
@@ -110,7 +110,7 @@ func (h *TractorHandler) CreateTractor() fiber.Handler {
 		}
 
 		// Check if the user has the required permission
-		err := h.PermissionService.CheckUserPermission(c, "tractor.add")
+		err := h.PermissionService.CheckUserPermission(c, "role.create")
 		if err != nil {
 			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
 				"error":   "Unauthorized",
@@ -122,19 +122,10 @@ func (h *TractorHandler) CreateTractor() fiber.Handler {
 		newEntity.OrganizationID = orgID
 
 		if err := util.ParseBodyAndValidate(c, newEntity); err != nil {
-			return c.Status(fiber.StatusBadRequest).JSON(types.ValidationErrorResponse{
-				Type: "invalidRequest",
-				Errors: []types.ValidationErrorDetail{
-					{
-						Code:   "invalidRequest",
-						Detail: err.Error(),
-						Attr:   "body",
-					},
-				},
-			})
+			return err
 		}
 
-		entity, err := h.Service.CreateTractor(c.UserContext(), newEntity)
+		entity, err := h.Service.CreateRole(c.UserContext(), newEntity)
 		if err != nil {
 			errorResponse := util.CreateDBErrorResponse(err)
 			return c.Status(fiber.StatusInternalServerError).JSON(errorResponse)
@@ -144,27 +135,27 @@ func (h *TractorHandler) CreateTractor() fiber.Handler {
 	}
 }
 
-// UpdateTractor is a handler that updates a tractor.
+// UpdateRole is a handler that updates a role.
 //
-// PUT /tractors/:tractorID
-func (h *TractorHandler) UpdateTractor() fiber.Handler {
+// PUT /roles/:roleID
+func (h *RoleHandler) UpdateRole() fiber.Handler {
 	return func(c *fiber.Ctx) error {
-		tractorID := c.Params("tractorID")
-		if tractorID == "" {
+		roleID := c.Params("roleID")
+		if roleID == "" {
 			return c.Status(fiber.StatusBadRequest).JSON(types.ValidationErrorResponse{
 				Type: "invalidRequest",
 				Errors: []types.ValidationErrorDetail{
 					{
 						Code:   "invalidRequest",
-						Detail: "tractor ID is required",
-						Attr:   "tractorID",
+						Detail: "Email Profile ID is required",
+						Attr:   "roleID",
 					},
 				},
 			})
 		}
 
 		// Check if the user has the required permission
-		err := h.PermissionService.CheckUserPermission(c, "tractor.edit")
+		err := h.PermissionService.CheckUserPermission(c, "role.edit")
 		if err != nil {
 			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
 				"error":   "Unauthorized",
@@ -172,24 +163,15 @@ func (h *TractorHandler) UpdateTractor() fiber.Handler {
 			})
 		}
 
-		updatedEntity := new(ent.Tractor)
+		updatedEntity := new(ent.Role)
 
 		if err := util.ParseBodyAndValidate(c, updatedEntity); err != nil {
-			return c.Status(fiber.StatusBadRequest).JSON(types.ValidationErrorResponse{
-				Type: "invalidRequest",
-				Errors: []types.ValidationErrorDetail{
-					{
-						Code:   "invalidRequest",
-						Detail: err.Error(),
-						Attr:   "request body",
-					},
-				},
-			})
+			return err
 		}
 
-		updatedEntity.ID = uuid.MustParse(tractorID)
+		updatedEntity.ID = uuid.MustParse(roleID)
 
-		entity, err := h.Service.UpdateTractor(c.UserContext(), updatedEntity)
+		entity, err := h.Service.UpdateRole(c.UserContext(), updatedEntity)
 		if err != nil {
 			errorResponse := util.CreateDBErrorResponse(err)
 			return c.Status(fiber.StatusInternalServerError).JSON(errorResponse)

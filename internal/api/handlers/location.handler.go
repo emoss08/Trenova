@@ -75,7 +75,7 @@ func (h *LocationHandler) GetLocations() fiber.Handler {
 		}
 
 		// Check if the user has the required permission
-		err := h.PermissionService.CheckUserPermission(c, "read_location")
+		err := h.PermissionService.CheckUserPermission(c, "location.view")
 		if err != nil {
 			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
 				"error":   "Unauthorized",
@@ -181,7 +181,7 @@ func (h *LocationHandler) CreateLocation() fiber.Handler {
 		}
 
 		// Check if the user has the required permission
-		err := h.PermissionService.CheckUserPermission(c, "create_location")
+		err := h.PermissionService.CheckUserPermission(c, "location.add")
 		if err != nil {
 			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
 				"error":   "Unauthorized",
@@ -226,7 +226,7 @@ func (h *LocationHandler) UpdateLocation() fiber.Handler {
 		}
 
 		// Check if the user has the required permission
-		err := h.PermissionService.CheckUserPermission(c, "update_location")
+		err := h.PermissionService.CheckUserPermission(c, "location.edit")
 		if err != nil {
 			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
 				"error":   "Unauthorized",

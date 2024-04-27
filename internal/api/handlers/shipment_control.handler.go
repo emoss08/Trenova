@@ -46,7 +46,7 @@ func (h *ShipmentControlHandler) GetShipmentControl() fiber.Handler {
 		}
 
 		// Check if the user has the required permission
-		err := h.PermissionService.CheckUserPermission(c, "read_shipmentcontrol")
+		err := h.PermissionService.CheckUserPermission(c, "shipmentcontrol.view")
 		if err != nil {
 			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
 				"error":   "Unauthorized",
@@ -84,7 +84,7 @@ func (h *ShipmentControlHandler) UpdateShipmentControlByID() fiber.Handler {
 		}
 
 		// Check if the user has the required permission
-		err := h.PermissionService.CheckUserPermission(c, "update_shipmentcontrol")
+		err := h.PermissionService.CheckUserPermission(c, "shipmentcontrol.edit")
 		if err != nil {
 			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
 				"error":   "Unauthorized",

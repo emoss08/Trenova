@@ -246,4 +246,14 @@ func AttachAllRoutes(s *api.Server, api fiber.Router) { //nolint:funlen // This 
 	// Register the handlers for the user notifications.
 	userNotificationsAPI := api.Group("/user-notifications")
 	userNotificationsAPI.Get("/", NewUserNotificationHandler(s).GetUserNotifications())
+
+	// Register the handlers the permissions.
+	permissionsAPI := api.Group("/permissions")
+	permissionsAPI.Get("/", NewPermissionHandler(s).GetPermissions())
+
+	// Register the handlers for the roles.
+	rolesAPI := api.Group("/roles")
+	rolesAPI.Get("/", NewRoleHandler(s).GetRoles())
+	rolesAPI.Post("/", NewRoleHandler(s).CreateRole())
+	rolesAPI.Put("/:roleID", NewRoleHandler(s).UpdateRole())
 }

@@ -15,16 +15,19 @@ type Permission struct {
 // Fields of the Permission.
 func (Permission) Fields() []ent.Field {
 	return []ent.Field{
-		field.String("name").
+		field.String("codename").
 			NotEmpty(),
-		field.String("description").
-			Optional(),
 		field.String("action").
 			Optional(),
-		field.String("name_humanized").
-			Comment("Name of the permission in human readable format.").
+		field.String("label").
 			Optional().
-			StructTag(`json:"nameHumanized"`),
+			StructTag(`json:"label"`),
+		field.String("read_description").
+			Optional().
+			StructTag(`json:"readDescription"`),
+		field.String("write_description").
+			Optional().
+			StructTag(`json:"writeDescription"`),
 		field.UUID("resource_id", uuid.UUID{}).
 			Unique().
 			Immutable().
