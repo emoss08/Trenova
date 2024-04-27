@@ -112,7 +112,7 @@ export default function TractorPage() {
       tableFacetedFilters={filters}
       TableSheet={TractorDialog}
       TableEditSheet={TractorTableEditSheet}
-      addPermissionName="add_tractor"
+      addPermissionName="create_tractor"
     />
   );
 }

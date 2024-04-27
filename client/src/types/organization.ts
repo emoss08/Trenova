@@ -15,7 +15,7 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import {
+import type {
   DatabaseActionChoicesProps,
   EmailProtocolChoiceProps,
   RouteDistanceUnitProps,
@@ -23,7 +23,7 @@ import {
   SourceChoicesProps,
   TimezoneChoices,
 } from "@/lib/choices";
-import { StatusChoiceProps } from "@/types/index";
+import { type StatusChoiceProps } from "@/types/index";
 
 export type Organization = {
   id: string;
@@ -106,7 +106,6 @@ export type FeatureFlag = {
   name: string;
   code: string;
   description: string;
-  enabled: boolean;
   beta: boolean;
   preview: string;
 };

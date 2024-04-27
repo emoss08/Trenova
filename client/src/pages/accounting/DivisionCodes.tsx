@@ -72,7 +72,7 @@ export default function DivisionCodes() {
       columns={columns}
       link="/division-codes/"
       name="Division Code"
-      exportModelName="DivisionCode"
+      exportModelName="division_codes"
       filterColumn="code"
       tableFacetedFilters={filters}
       TableSheet={DivisionCodeDialog}

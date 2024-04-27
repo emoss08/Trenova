@@ -1,6 +1,6 @@
-import { JobFunctionChoiceProps, TimezoneChoices } from "@/lib/choices";
-import { StatusChoiceProps } from "@/types/index";
-import { BaseModel } from "./organization";
+import type { JobFunctionChoiceProps, TimezoneChoices } from "@/lib/choices";
+import { type StatusChoiceProps } from "@/types/index";
+import { type BaseModel } from "./organization";
 
 interface UserRole extends BaseModel {
   name: string;

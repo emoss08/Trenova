@@ -1,13 +1,13 @@
-import {
+import type {
   CodeTypeProps,
   HazardousClassChoiceProps,
   SegregationTypeChoiceProps,
   ShipmentEntryMethodChoices,
   ShipmentStatusChoiceProps,
 } from "@/lib/choices";
-import { StatusChoiceProps } from "@/types/index";
-import { BaseModel } from "./organization";
-import { StopFormValues } from "./stop";
+import { type StatusChoiceProps } from "@/types/index";
+import { type BaseModel } from "./organization";
+import { type StopFormValues } from "./stop";
 
 export interface ShipmentControl extends BaseModel {
   id: string;

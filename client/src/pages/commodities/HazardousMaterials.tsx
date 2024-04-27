@@ -99,7 +99,7 @@ export default function HazardousMaterials() {
       tableFacetedFilters={filters}
       TableSheet={HazardousMaterialDialog}
       TableEditSheet={HazardousMaterialEditDialog}
-      addPermissionName="add_hazardousmaterial"
+      addPermissionName="create_hazardousmaterial"
     />
   );
 }

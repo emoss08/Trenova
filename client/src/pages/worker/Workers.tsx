@@ -71,7 +71,7 @@ export default function WorkerPage() {
       filterColumn="name"
       TableSheet={CommodityDialog}
       TableEditSheet={WorkerEditDialog}
-      addPermissionName="add_worker"
+      addPermissionName="create_worker"
     />
   );
 }

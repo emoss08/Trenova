@@ -14,6 +14,7 @@ import (
 	"github.com/emoss08/trenova/internal/ent/equipmenttype"
 	"github.com/emoss08/trenova/internal/ent/generalledgeraccount"
 	"github.com/emoss08/trenova/internal/ent/organization"
+	"github.com/emoss08/trenova/internal/ent/organizationfeatureflag"
 	"github.com/emoss08/trenova/internal/ent/revenuecode"
 	"github.com/emoss08/trenova/internal/ent/role"
 	"github.com/emoss08/trenova/internal/ent/tractor"
@@ -910,6 +911,93 @@ func SeedRoles(
 	_, err = adminRole.Update().
 		AddPermissions(permissions...).
 		Save(ctx)
+
+	return nil
+}
+
+func SeedFeatureFlags(
+	ctx context.Context, client *ent.Client, org *ent.Organization,
+) error {
+	// Check if the feature flags already exist in the system.
+	etCount, err := client.FeatureFlag.Query().Count(ctx)
+
+	// If not, create the default feature flags
+	if etCount == 0 {
+		log.Println("Adding feature flags...")
+
+		err = client.FeatureFlag.CreateBulk(
+			client.FeatureFlag.Create().
+				SetName("Color Accessibility Options").
+				SetCode("ENABLE_COLOR_BLIND_MODE").
+				SetBeta(true).
+				SetDescription("This flag enables Color Blind Mode, offering users a choice of color vision deficiency simulations to adapt the application's color scheme for better readability and visual comfort. Modes include Tritanopia, Protanopia, Deuteranopia, Deuteranomaly, and Protanomaly. This inclusivity-focused feature is designed to cater to users with various color vision impairments, ensuring a more accessible and user-friendly experience."),
+			client.FeatureFlag.Create().
+				SetName("Shipment Map View").
+				SetCode("ENABLE_SHIP_MAP_VIEW").
+				SetBeta(true).
+				SetDescription("Activating this flag introduces a novel shipment map view in the shipment management interface. It provides a visual representation of workers and orders, along with interactive functionalities like drag-and-drop assignment of workers to orders. This feature enhances the user's operational efficiency by offering a more intuitive and interactive way to manage shipments."),
+			client.FeatureFlag.Create().
+				SetName("Beam").
+				SetCode("ENABLE_BEAM").
+				SetBeta(true).
+				SetDescription("Activating this flag will enable the Beam feature, which allows users to utilize Trenova's very own LLM (Large Language Model). "),
+			client.FeatureFlag.Create().
+				SetName("Billing Client").
+				SetCode("ENABLE_BILLING_CLIENT").
+				SetBeta(true).
+				SetDescription("This feature flag enables the Billing Client, which allows users to manage their billing information and payment methods."),
+			client.FeatureFlag.Create().
+				SetName("Pricing Tool").
+				SetCode("ENABLE_PRICING_TOOL").
+				SetBeta(true).
+				SetDescription("This feature flag enables the Pricing Tool, which allows users to manage their pricing information."),
+			client.FeatureFlag.Create().
+				SetName("Worker Feasibility Tool").
+				SetCode("ENABLE_WORKER_FEAS_TOOL").
+				SetBeta(true).
+				SetDescription("This feature flag enables the Worker Feasibility Tool, which allows users to manage their worker feasibility information."),
+			client.FeatureFlag.Create().
+				SetName("Document Studio").
+				SetCode("ENABLE_DOC_STUDIO").
+				SetBeta(true).
+				SetDescription("This feature flag enables the Document Studio, which allows users to manage their document templates. "),
+		).Exec(ctx)
+	}
+	if err != nil {
+		log.Panicf("Failed creating feature flags: %v", err)
+		return err
+	}
+
+	// for each feature flag create an organization feature flag
+	featureFlags, err := client.FeatureFlag.Query().All(ctx)
+	if err != nil {
+		log.Panicf("Failed querying feature flags: %v", err)
+		return err
+	}
+
+	// Check if the organization already has feature flags
+	ofCount, err := client.OrganizationFeatureFlag.Query().Where(organizationfeatureflag.HasOrganizationWith(organization.ID(org.ID))).Count(ctx)
+	if err != nil {
+		log.Panicf("Failed querying organization feature flags: %v", err)
+		return err
+	}
+
+	if ofCount > 0 {
+		log.Println("Organization already has feature flags")
+		return nil
+	}
+
+	for _, featureFlag := range featureFlags {
+		_, err = client.OrganizationFeatureFlag.Create().
+			SetOrganization(org).
+			SetFeatureFlag(featureFlag).
+			SetIsEnabled(true).
+			Save(ctx)
+		if err != nil {
+			log.Panicf("Failed creating organization feature flag: %v", err)
+			return err
+		}
+	}
 
 	return nil
 }

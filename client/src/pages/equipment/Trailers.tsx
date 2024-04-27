@@ -102,12 +102,12 @@ export default function TrailerPage() {
       columns={columns}
       link="/trailers/"
       name="Trailer"
-      exportModelName="Trailer"
+      exportModelName="trailers"
       filterColumn="code"
       tableFacetedFilters={filters}
       TableSheet={TrailerDialog}
       TableEditSheet={TrailerEditDialog}
-      addPermissionName="add_trailer"
+      addPermissionName="create_trailer"
     />
   );
 }

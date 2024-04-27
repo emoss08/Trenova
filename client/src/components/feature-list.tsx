@@ -1,33 +1,36 @@
 import { useFeatureFlags } from "@/hooks/useQueries";
-import { FeatureFlag, OrganizationFeatureFlag } from "@/types/organization";
-import { faCircleInfo } from "@fortawesome/pro-duotone-svg-icons";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { OrganizationFeatureFlag } from "@/types/organization";
 import DOMPurify from "dompurify";
 import { Label } from "./common/fields/label";
-import { Alert, AlertDescription, AlertTitle } from "./ui/alert";
 import { Badge } from "./ui/badge";
 import { ScrollArea } from "./ui/scroll-area";
 import { Switch } from "./ui/switch";
 
-function FeatureFlagRow({ featureFlag }: { featureFlag: FeatureFlag }) {
+function FeatureFlagRow({
+  featureFlag,
+}: {
+  featureFlag: OrganizationFeatureFlag;
+}) {
   const sanitizedDescription = DOMPurify.sanitize(
-    featureFlag.description || "No description",
+    featureFlag.edges.featureFlag.description,
   );
+
+  const flag = featureFlag.edges.featureFlag;
 
   return (
     <li
-      key={featureFlag.code}
+      key={flag.code}
       className="bg-card text-card-foreground flex flex-col overflow-hidden rounded-lg border text-center"
     >
       <div className="flex flex-1 flex-col p-8">
         <div className="flex flex-1 flex-col items-center justify-center">
           <h3 className="text-foreground text-2xl font-semibold">
-            {featureFlag.name}
+            {flag.name}
           </h3>
           <div className="mt-2 flex">
-            {featureFlag.beta ? (
+            {flag.beta ? (
               <Badge className="mr-2" variant="info">
-                {featureFlag.beta ? "Beta" : "Released"}
+                {flag.beta ? "Beta" : "Released"}
               </Badge>
             ) : (
               <Badge className="mr-2" variant="active">
@@ -47,9 +50,9 @@ function FeatureFlagRow({ featureFlag }: { featureFlag: FeatureFlag }) {
       </div>
       <div className="flex items-center justify-between border-t px-4 py-2">
         <div className="flex items-center gap-x-2">
-          <Switch defaultChecked={featureFlag.enabled} id="enable" />
+          <Switch defaultChecked={featureFlag.isEnabled} id="enable" />
           <Label htmlFor="enable">
-            {featureFlag.enabled ? "Disable" : "Enable"} Feature
+            {featureFlag.isEnabled ? "Disable" : "Enable"} Feature
           </Label>
         </div>
         <div>
@@ -66,30 +69,17 @@ export default function FeatureList() {
   const { featureFlagsData } = useFeatureFlags();
 
   return (
-    <>
-      <Alert className="mb-5">
-        <FontAwesomeIcon icon={faCircleInfo} className="size-4" />
-        <AlertTitle>Information!</AlertTitle>
-        <AlertDescription>
-          All features marked{" "}
-          <u className="font-bold underline decoration-blue-600">Paid Only</u>{" "}
-          are only available to non-paid users during the beta phase. Once the
-          beta phase is over, these features will be available to paid users
-          only.
-        </AlertDescription>
-      </Alert>
-      <ul
-        role="list"
-        className="mb-5 grid grid-cols-1 gap-6 lg:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4"
-      >
-        {(featureFlagsData as OrganizationFeatureFlag[]) &&
-          (featureFlagsData as OrganizationFeatureFlag[]).map((featureFlag) => (
-            <FeatureFlagRow
-              key={featureFlag.edges.featureFlag.code}
-              featureFlag={featureFlag.edges.featureFlag}
-            />
-          ))}
-      </ul>
-    </>
+    <ul
+      role="list"
+      className="mb-5 grid grid-cols-1 gap-6 lg:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4"
+    >
+      {(featureFlagsData as OrganizationFeatureFlag[]) &&
+        (featureFlagsData as OrganizationFeatureFlag[]).map((featureFlag) => (
+          <FeatureFlagRow
+            key={featureFlag.edges.featureFlag.code}
+            featureFlag={featureFlag}
+          />
+        ))}
+    </ul>
   );
 }

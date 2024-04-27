@@ -95,6 +95,11 @@ func applyFixtures() error {
 		return err
 	}
 
+	// Seed the feature flags for the created organization.
+	if err = migratedata.SeedFeatureFlags(ctx, client, org); err != nil {
+		return err
+	}
+
 	if err = migratedata.SeedAccountingControl(ctx, client, org, bu); err != nil {
 		return err
 	}
