@@ -54,6 +54,7 @@ import {
   validateBOLNumber,
 } from "@/services/ShipmentRequestService";
 import {
+  getAuthenticatedUser,
   getUserDetails,
   getUserNotifications,
   getUsers,
@@ -921,4 +922,13 @@ export function useValidateBOLNumber(bol_number: string) {
   });
 
   return { data, isError, isLoading };
+}
+
+export function useAuthenticatedUser() {
+  const { data, isError, isLoading, isSuccess, isFetched } = useQuery({
+    queryKey: ["currentUser"],
+    queryFn: async () => getAuthenticatedUser(),
+  });
+
+  return { data, isError, isLoading, isSuccess, isFetched };
 }

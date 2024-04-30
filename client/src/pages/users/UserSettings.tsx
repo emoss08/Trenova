@@ -1,5 +1,5 @@
 import SettingsLayout from "@/components/user-settings/layout";
-import { useUserStore } from "@/stores/AuthStore";
+import { useAuthenticatedUser } from "@/hooks/useQueries";
 import { User } from "@/types/accounts";
 import { lazy } from "react";
 
@@ -8,11 +8,11 @@ const UserProfilePage = lazy(
 );
 
 export default function UserSettings() {
-  const userData = useUserStore.get("user");
+  const { data } = useAuthenticatedUser();
 
   return (
     <SettingsLayout>
-      {userData && <UserProfilePage user={userData as User} />}
+      {data && <UserProfilePage user={data as User} />}
     </SettingsLayout>
   );
 }

@@ -101,6 +101,7 @@ export type QueryKey =
   | "qualifierCodes"
   | "worker-table-data"
   | "workers"
+  | "currentUser"
   | "validateBOLNumber";
 
 export type QueryKeys = [QueryKey];

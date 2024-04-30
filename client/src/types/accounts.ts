@@ -27,10 +27,8 @@ export type UserFavorite = {
   pageLink: string;
 };
 
-export type User = {
+export interface User extends BaseModel {
   id: string;
-  businessUnitId: string;
-  organizationId: string;
   username: string;
   name: string;
   email: string;
@@ -45,16 +43,20 @@ export type User = {
   edges: {
     roles?: UserRole[];
   };
-};
+}
 
-export type UserFormValues = {
-  organization: string;
-  username: string;
-  department?: string;
-  email: string;
-  isSuperAdmin: boolean;
-};
-
+export type UserFormValues = Omit<
+  User,
+  | "organizationId"
+  | "createdAt"
+  | "updatedAt"
+  | "id"
+  | "version"
+  | "edges"
+  | "lastLogin"
+  | "profilePicUrl"
+  | "thumbnailUrl"
+>;
 export type JobTitle = {
   id: string;
   organization: string;

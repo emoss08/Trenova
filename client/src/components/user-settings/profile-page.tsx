@@ -1,45 +1,85 @@
-/*
- * COPYRIGHT(c) 2024 Trenova
- *
- * This file is part of Trenova.
- *
- * The Trenova software is licensed under the Business Source License 1.1. You are granted the right
- * to copy, modify, and redistribute the software, but only for non-production use or with a total
- * of less than three server instances. Starting from the Change Date (November 16, 2026), the
- * software will be made available under version 2 or later of the GNU General Public License.
- * If you use the software in violation of this license, your rights under the license will be
- * terminated automatically. The software is provided "as is," and the Licensor disclaims all
- * warranties and conditions. If you use this license's text or the "Business Source License" name
- * and trademark, you must comply with the Licensor's covenants, which include specifying the
- * Change License as the GPL Version 2.0 or a compatible license, specifying an Additional Use
- * Grant, and not modifying the license in any other way.
- */
-
 import { InternalLink } from "@/components/ui/link";
 import { useCustomMutation } from "@/hooks/useCustomMutation";
 import { timezoneChoices, TimezoneChoices } from "@/lib/choices";
-import { type QueryKeyWithParams } from "@/types";
-import { User } from "@/types/accounts";
+import { postUserProfilePicture } from "@/services/UserRequestService";
+import { useUserStore } from "@/stores/AuthStore";
+import { QueryKeys, StatusChoiceProps } from "@/types";
+import { User, UserFormValues } from "@/types/accounts";
 import { yupResolver } from "@hookform/resolvers/yup";
+import { useQueryClient } from "@tanstack/react-query";
+import { Image } from "@unpic/react";
 import React from "react";
 import { useForm } from "react-hook-form";
+import { toast } from "sonner";
 import * as yup from "yup";
-import { InputField } from "../common/fields/input";
+import { InputField, PasswordField } from "../common/fields/input";
 import { SelectInput } from "../common/fields/select-input";
 import { Button } from "../ui/button";
 import { Separator } from "../ui/separator";
 
-function PersonalInformation({ user }: { user: User }) {
-  const [isSubmitting, setIsSubmitting] = React.useState<boolean>(false);
-  const avatarSrc = `https://avatar.vercel.sh/${user.email}`;
+function AvatarUploader() {
+  const fileInputRef = React.useRef<HTMLInputElement>(null);
+  const [, setUserDetails] = useUserStore.use("user");
+  const queryClient = useQueryClient();
 
-  type UserSettingFormValues = {
-    email: string;
-    timezone: TimezoneChoices;
-    name: string;
+  // Handle file change event
+  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const files = event.target.files;
+    if (files && files.length > 0) {
+      const file = files[0];
+      toast.promise(postUserProfilePicture(file), {
+        loading: "Uploading your profile picture...",
+        success: (data) => {
+          setUserDetails((prev) => ({
+            ...prev,
+            profilePicUrl: data.profilePicUrl,
+          }));
+          queryClient.invalidateQueries({
+            queryKey: ["currentUser"] as QueryKeys,
+          });
+          return "Profile picture uploaded successfully.";
+        },
+        error: "Failed to upload profile picture.",
+      });
+    }
   };
 
-  const schema: yup.ObjectSchema<UserSettingFormValues> = yup.object().shape({
+  // Function to trigger file input
+  const handleClick = () => {
+    if (fileInputRef.current) {
+      // Check if the ref is not null
+      fileInputRef.current.click();
+    }
+  };
+
+  return (
+    <div>
+      <Button size="sm" type="button" onClick={handleClick}>
+        Change Avatar
+      </Button>
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept=".jpg, .gif, .png"
+        style={{ display: "none" }}
+        onChange={handleFileChange}
+      />
+      <p className="text-muted-foreground mt-2 text-xs leading-5">
+        JPG, GIF or PNG. Max size 1MB.
+      </p>
+    </div>
+  );
+}
+
+function PersonalInformation({ user }: { user: User }) {
+  const avatarSrc = `https://avatar.vercel.sh/${user.email}`;
+
+  const schema: yup.ObjectSchema<UserFormValues> = yup.object().shape({
+    status: yup
+      .string<StatusChoiceProps>()
+      .required("Please select your status"),
+    username: yup.string().required("Please enter your username"),
+    name: yup.string().required("Please enter your full name"),
     email: yup
       .string()
       .email("Please enter a valid email address")
@@ -47,39 +87,36 @@ function PersonalInformation({ user }: { user: User }) {
     timezone: yup
       .string<TimezoneChoices>()
       .required("Please select your timezone"),
-    name: yup.string().required("Please enter your last name"),
+    isAdmin: yup.boolean().required("Please select your role"),
+    isSuperAdmin: yup.boolean().required("Please select your role"),
+    phoneNumber: yup.string().optional(),
   });
 
-  const { handleSubmit, control, reset } = useForm<UserSettingFormValues>({
+  const { handleSubmit, control, reset } = useForm<UserFormValues>({
     resolver: yupResolver(schema),
-    defaultValues: {
-      email: user.email,
-      timezone: user.timezone,
-      name: user.name,
-    },
+    defaultValues: user,
   });
 
-  const mutation = useCustomMutation<UserSettingFormValues>(
-    control,
-    {
-      method: "PATCH",
-      path: `/users/${user.id}/`,
-      successMessage: "User profile updated successfully.",
-      queryKeysToInvalidate: ["users", user.id] as QueryKeyWithParams<
-        "users",
-        [string]
-      >,
-      closeModal: true,
-      errorMessage: "Failed to update user profile.",
-    },
-    () => setIsSubmitting(false),
-  );
+  const mutation = useCustomMutation<UserFormValues>(control, {
+    method: "PUT",
+    path: `/users/${user.id}/`,
+    successMessage: "User profile updated successfully.",
+    queryKeysToInvalidate: ["users"],
+    additionalInvalidateQueries: ["currentUser"],
+    closeModal: false,
+    errorMessage: "Failed to update user profile.",
+  });
 
-  const onSubmit = (values: UserSettingFormValues) => {
-    setIsSubmitting(true);
+  const onSubmit = (values: UserFormValues) => {
     reset(values);
     mutation.mutate(values);
   };
+
+  React.useEffect(() => {
+    if (mutation.isSuccess) {
+      reset(user);
+    }
+  }, [mutation.isSuccess, reset, user]);
 
   return (
     <>
@@ -110,19 +147,15 @@ function PersonalInformation({ user }: { user: User }) {
         <form className="md:col-span-2" onSubmit={handleSubmit(onSubmit)}>
           <div className="grid grid-cols-1 gap-x-6 gap-y-8 sm:max-w-xl sm:grid-cols-6">
             <div className="col-span-full flex items-center gap-x-8">
-              <img
-                src={avatarSrc}
+              <Image
+                src={user?.profilePicUrl || avatarSrc}
+                layout="constrained"
                 alt="User Avatar"
                 className="bg-muted-foreground size-24 flex-none rounded-lg object-cover"
+                width={96}
+                height={96}
               />
-              <div>
-                <Button size="sm" type="button">
-                  Change Avatar
-                </Button>
-                <p className="text-muted-foreground mt-2 text-xs leading-5">
-                  JPG, GIF or PNG. 1MB max.
-                </p>
-              </div>
+              <AvatarUploader />
             </div>
 
             <div className="sm:col-span-full">
@@ -160,7 +193,7 @@ function PersonalInformation({ user }: { user: User }) {
             </div>
           </div>
           <div className="mt-8 flex">
-            <Button type="submit" isLoading={isSubmitting}>
+            <Button type="submit" isLoading={mutation.isPending}>
               Save Changes
             </Button>
           </div>
@@ -191,12 +224,30 @@ function ChangePasswordForm() {
         .required("Please confirm your new password"),
     });
 
-  const { handleSubmit, control } = useForm<ChangePasswordFormValues>({
+  const { handleSubmit, control, reset } = useForm<ChangePasswordFormValues>({
     resolver: yupResolver(schema),
+    defaultValues: {
+      oldPassword: "",
+      newPassword: "",
+      confirmPassword: "",
+    },
   });
+
+  const mutation = useCustomMutation<ChangePasswordFormValues>(
+    control,
+    {
+      method: "POST",
+      path: "/users/change-password",
+      successMessage: "Password updated successfully.",
+      errorMessage: "Failed to update password.",
+    },
+    () => setIsSubmitting(false),
+    reset,
+  );
 
   const onSubmit = (values: ChangePasswordFormValues) => {
     setIsSubmitting(true);
+    mutation.mutate(values);
   };
 
   return (
@@ -213,7 +264,7 @@ function ChangePasswordForm() {
       <form className="md:col-span-2" onSubmit={handleSubmit(onSubmit)}>
         <div className="grid grid-cols-1 gap-x-6 gap-y-8 sm:max-w-xl sm:grid-cols-6">
           <div className="col-span-full">
-            <InputField
+            <PasswordField
               control={control}
               type="password"
               name="oldPassword"
@@ -225,7 +276,7 @@ function ChangePasswordForm() {
           </div>
 
           <div className="col-span-full">
-            <InputField
+            <PasswordField
               control={control}
               type="password"
               name="newPassword"
@@ -237,7 +288,7 @@ function ChangePasswordForm() {
           </div>
 
           <div className="col-span-full">
-            <InputField
+            <PasswordField
               control={control}
               type="password"
               name="confirmPassword"

@@ -48,3 +48,29 @@ export async function getUserNotifications(
   });
   return response.data;
 }
+
+/**
+ * Posts a user profile picture to the server.
+ * @param profilePicture Profile picture to be uploaded
+ * @returns A promise that resolves to the user's details.
+ */
+export async function postUserProfilePicture(
+  profilePicture: File,
+): Promise<User> {
+  const formData = new FormData();
+  formData.append("profilePicture", profilePicture);
+  const response = await axios.post("users/profile-picture/", formData, {
+    headers: {
+      "Content-Type": "multipart/form-data",
+    },
+  });
+
+  return response.data;
+}
+
+export async function getAuthenticatedUser(): Promise<User> {
+  const response = await axios.get("/users/me/", {
+    withCredentials: true,
+  });
+  return response.data;
+}
