@@ -73,7 +73,7 @@ const filters: FilterConfig<HazardousMaterial>[] = [
 export default function HazardousMaterials() {
   return (
     <DataTable
-      queryKey="hazardous-material-table-data"
+      queryKey="hazardousMaterials"
       columns={columns}
       link="/hazardous-materials/"
       name="Hazardous Material"

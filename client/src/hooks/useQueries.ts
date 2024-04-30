@@ -899,7 +899,7 @@ export function useServiceTypes() {
     isError: isServiceTypeError,
     isLoading: isServiceTypeLoading,
   } = useQuery({
-    queryKey: ["serviceTypes"],
+    queryKey: ["serviceTypes"] as QueryKeys,
     queryFn: async () => getServiceTypes(),
   });
 
@@ -926,7 +926,7 @@ export function useValidateBOLNumber(bol_number: string) {
 
 export function useAuthenticatedUser() {
   const { data, isError, isLoading, isSuccess, isFetched } = useQuery({
-    queryKey: ["currentUser"],
+    queryKey: ["authenticatedUser"] as QueryKeys,
     queryFn: async () => getAuthenticatedUser(),
   });
 

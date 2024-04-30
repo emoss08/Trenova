@@ -116,7 +116,7 @@ const filters: FilterConfig<AccessorialCharge>[] = [
 export default function AccessorialCharges() {
   return (
     <DataTable
-      queryKey="accessorial-charges-table-data"
+      queryKey="accessorialCharges"
       columns={columns}
       link="/accessorial-charges/"
       name="Accessorial Charge"

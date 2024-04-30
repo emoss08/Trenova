@@ -60,7 +60,7 @@ const columns: ColumnDef<LocationCategory>[] = [
 export default function LocationCategories() {
   return (
     <DataTable
-      queryKey="location-categories-table-data"
+      queryKey="locationCategories"
       columns={columns}
       link="/location-categories/"
       name="Location Category"

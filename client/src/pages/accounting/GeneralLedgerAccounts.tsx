@@ -73,7 +73,7 @@ const filters: FilterConfig<GeneralLedgerAccount>[] = [
 export default function GLAccounts() {
   return (
     <DataTable
-      queryKey="gl-account-table-data"
+      queryKey="glAccounts"
       columns={columns}
       link="/general-ledger-accounts/"
       name="Gl Account"

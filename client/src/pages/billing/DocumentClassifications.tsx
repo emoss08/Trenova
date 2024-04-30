@@ -69,7 +69,7 @@ const columns: ColumnDef<DocumentClassification>[] = [
 export default function DocumentClassificationPage() {
   return (
     <DataTable
-      queryKey="document-classification-table-data"
+      queryKey="documentClassifications"
       columns={columns}
       link="/document-classifications/"
       name="Document Class."

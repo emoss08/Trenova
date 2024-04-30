@@ -98,7 +98,7 @@ const filters: FilterConfig<EquipmentType>[] = [
 export default function EquipmentTypes() {
   return (
     <DataTable
-      queryKey="equipment-type-table-data"
+      queryKey="equipmentTypes"
       columns={columns}
       link="/equipment-types/"
       name="Equip. Types"

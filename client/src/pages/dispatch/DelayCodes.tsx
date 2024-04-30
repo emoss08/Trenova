@@ -110,7 +110,7 @@ const filters: FilterConfig<DelayCode>[] = [
 export default function DelayCodes() {
   return (
     <DataTable
-      queryKey="delay-code-table-data"
+      queryKey="delayCodes"
       columns={columns}
       link="/delay-codes/"
       name="Delay Code"

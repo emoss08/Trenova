@@ -93,7 +93,7 @@ export default function CommentTypes() {
   return (
     <DataTable
       addPermissionName="commenttype.add"
-      queryKey="comment-types-table-data"
+      queryKey="commentTypes"
       columns={columns}
       link="/comment-types/"
       name="Comment Types"

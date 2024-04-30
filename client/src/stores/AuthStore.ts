@@ -69,10 +69,12 @@ export const useUserStore = createGlobalStore<UserStoreState>({
     isAdmin: false,
     status: "I",
     timezone: "AmericaNewYork",
-    businessUnitId: "",
     name: "",
     profilePicUrl: "",
     isSuperAdmin: false,
+    version: 0,
+    createdAt: "",
+    updatedAt: "",
     edges: {
       roles: [],
     },

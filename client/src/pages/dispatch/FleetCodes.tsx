@@ -72,7 +72,7 @@ const columns: ColumnDef<FleetCode>[] = [
 export default function FleetCodes() {
   return (
     <DataTable
-      queryKey="fleet-code-table-data"
+      queryKey="fleetCodes"
       columns={columns}
       link="/fleet-codes/"
       name="Fleet Codes"

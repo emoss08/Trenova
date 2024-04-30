@@ -64,7 +64,7 @@ const filters: FilterConfig<ChargeType>[] = [
 export default function ChargeTypes() {
   return (
     <DataTable
-      queryKey="charge-type-table-data"
+      queryKey="chargeTypes"
       columns={columns}
       link="/charge-types/"
       name="Charge Type"

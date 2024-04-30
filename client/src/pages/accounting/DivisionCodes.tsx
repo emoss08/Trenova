@@ -68,7 +68,7 @@ export default function DivisionCodes() {
   return (
     <DataTable
       addPermissionName="divisioncode.add"
-      queryKey="division-code-table-data"
+      queryKey="divisionCodes"
       columns={columns}
       link="/division-codes/"
       name="Division Code"

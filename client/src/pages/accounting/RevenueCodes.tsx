@@ -67,7 +67,7 @@ export default function RevenueCodes() {
   return (
     <DataTable
       addPermissionName="revenuecode.add"
-      queryKey="revenue-code-table-data"
+      queryKey="revenueCodes"
       columns={columns}
       link="/revenue-codes/"
       name="Revenue Code"

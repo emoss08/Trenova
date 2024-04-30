@@ -100,7 +100,7 @@ const filters: FilterConfig<Commodity>[] = [
 export default function CommodityPage() {
   return (
     <DataTable
-      queryKey="commodity-table-data"
+      queryKey="commodities"
       columns={columns}
       link="/commodities/"
       name="Commodity"

@@ -70,7 +70,7 @@ const filters: FilterConfig<QualifierCode>[] = [
 export default function QualifierCodes() {
   return (
     <DataTable
-      queryKey="qualifier-code-table-data"
+      queryKey="qualifierCodes"
       columns={columns}
       link="/qualifier-codes/"
       name="Qualifier Codes"

@@ -83,7 +83,7 @@ export default function HazardousMaterialSegregation() {
   return (
     <AdminLayout>
       <DataTable
-        queryKey="hazardous-material-segregation-table-data"
+        queryKey="hazardousMaterialsSegregations"
         columns={columns}
         link="/hazardous-material-segregations/"
         name="Hazmat Seg. Rules"

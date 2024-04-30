@@ -70,7 +70,7 @@ export default function EmailProfiles() {
   return (
     <AdminLayout>
       <DataTable
-        queryKey="email-profile-table-data"
+        queryKey="emailProfiles"
         columns={columns}
         link="/email-profiles/"
         name="Email Profile"

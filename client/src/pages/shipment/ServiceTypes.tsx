@@ -69,7 +69,7 @@ const filters: FilterConfig<ServiceType>[] = [
 export default function ServiceTypes() {
   return (
     <DataTable
-      queryKey="service-type-table-data"
+      queryKey="chargeTypes"
       columns={columns}
       link="/service-types/"
       name="Service Types"

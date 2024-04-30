@@ -98,7 +98,7 @@ const filters: FilterConfig<Trailer>[] = [
 export default function TrailerPage() {
   return (
     <DataTable
-      queryKey="trailer-table-data"
+      queryKey="trailers"
       columns={columns}
       link="/trailers/"
       name="Trailer"

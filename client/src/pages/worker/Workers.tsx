@@ -63,7 +63,7 @@ const columns: ColumnDef<Worker>[] = [
 export default function WorkerPage() {
   return (
     <DataTable
-      queryKey="worker-table-data"
+      queryKey="workers"
       columns={columns}
       link="/workers/"
       name="Worker"

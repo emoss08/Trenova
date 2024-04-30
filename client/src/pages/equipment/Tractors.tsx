@@ -103,7 +103,7 @@ const filters: FilterConfig<Tractor>[] = [
 export default function TractorPage() {
   return (
     <DataTable
-      queryKey="trailer-table-data"
+      queryKey="tractors"
       columns={columns}
       link="/tractors/"
       name="Tractor"

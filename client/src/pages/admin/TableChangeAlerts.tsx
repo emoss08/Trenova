@@ -141,7 +141,7 @@ export default function TableChangeAlerts() {
   return (
     <AdminLayout>
       <DataTable
-        queryKey="table-change-alert-data"
+        queryKey="tableChangeAlerts"
         columns={columns}
         link="/table-change-alerts/"
         name="Table Change Alert"

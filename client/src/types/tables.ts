@@ -1,6 +1,6 @@
 import type { Column, ColumnDef, Row, Table } from "@tanstack/react-table";
 import React from "react";
-import { type QueryKeys } from "./index";
+import type { QueryKeys, ValuesOf } from "./index";
 import { type API_ENDPOINTS } from "./server";
 
 export interface DataTableFacetedFilterProps<TData, TValue> {
@@ -60,7 +60,7 @@ export type DataTableProps<K> = {
    * @type QueryKeys | string
    * @example queryKey="commodities"
    */
-  queryKey: QueryKeys | string;
+  queryKey: ValuesOf<QueryKeys>;
 
   tableFacetedFilters?: FilterConfig<K>[];
   filterColumn: string;

@@ -69,7 +69,7 @@ const filters: FilterConfig<ReasonCode>[] = [
 export default function ReasonCodes() {
   return (
     <DataTable
-      queryKey="reason-code-table-data"
+      queryKey="reasonCodes"
       columns={columns}
       link="/reason-codes/"
       name="Reason Codes"

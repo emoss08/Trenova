@@ -70,7 +70,7 @@ export default function EquipmentManufacturers() {
   return (
     <DataTable
       addPermissionName="equipmentmanufacturer.add"
-      queryKey="equipment-manufacturer-table-data"
+      queryKey="equipmentManufacturers"
       columns={columns}
       link="/equipment-manufacturers/"
       name="Equip. Manufacturers"

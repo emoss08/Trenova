@@ -49,7 +49,7 @@ export default function RoleManagement() {
   return (
     <AdminLayout>
       <DataTable
-        queryKey="roles-table-data"
+        queryKey="userRoles"
         columns={columns}
         link="/roles/"
         name="Role"

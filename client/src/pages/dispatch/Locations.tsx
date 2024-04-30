@@ -103,7 +103,7 @@ const filters: FilterConfig<Location>[] = [
 export default function Locations() {
   return (
     <DataTable
-      queryKey="locations-table-data"
+      queryKey="locations"
       columns={columns}
       link="/locations/"
       name="Locations"

@@ -71,7 +71,7 @@ const columns: ColumnDef<Customer>[] = [
 export default function Customers() {
   return (
     <DataTable
-      queryKey="customers-table-data"
+      queryKey="customers"
       columns={columns}
       link="/customers/"
       name="Customers"
