@@ -44,7 +44,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
           </div>
         </header>
       )}
-      <main className="flex-1 px-6 sm:px-6 md:px-12 xl:px-20">
+      <main className="max-w-screen-3xl mx-auto w-full flex-1 px-6 sm:px-6 md:px-12 xl:px-20">
         <Breadcrumb />
         <SiteSearch />
         {children}

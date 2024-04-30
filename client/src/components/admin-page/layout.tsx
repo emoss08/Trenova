@@ -153,7 +153,7 @@ const links: SidebarLink[] = [
     disabled: true,
   },
   {
-    href: "#",
+    href: "/admin/roles/",
     title: "Roles",
     icon: (
       <FontAwesomeIcon
@@ -162,7 +162,7 @@ const links: SidebarLink[] = [
       />
     ),
     group: "User Management",
-    disabled: true,
+    disabled: false,
   },
   {
     href: "#",
