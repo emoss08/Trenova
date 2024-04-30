@@ -101,8 +101,8 @@ services:
     volumes:
       - minio_data:/data
     ports:
-      - 9000:9000
-      - 9001:9001
+      - 9000:9000 # API
+      - 9001:9001 # Console
 
 volumes:
   redis_data: {}
