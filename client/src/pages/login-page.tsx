@@ -69,7 +69,14 @@ function CheckEmailForm({
   const onSubmit = async (values: CheckEmailValues) => {
     try {
       const data = await mutation.mutateAsync(values);
-      console.info(data);
+
+      if (data.accountStatus === "I") {
+        setError("email", {
+          type: "inactive",
+          message: "Your account is inactive. Please contact support.",
+        });
+        return;
+      }
 
       if (data.exists) {
         onEmailVerified(values.email);
@@ -131,7 +138,6 @@ function UserAuthForm({ initialEmail }: { initialEmail: string }) {
   );
   const [, setUserDetails] = useUserStore.use("user");
   const [isSubmitting, setIsSubmitting] = React.useState<boolean>(false);
-
   const { control, handleSubmit, setError } = useForm<LoginFormValues>({
     resolver: yupResolver(userAuthSchema),
     defaultValues: {
