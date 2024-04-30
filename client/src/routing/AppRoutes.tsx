@@ -57,6 +57,7 @@ const TableChangeAlertPage = lazy(
   () => import("../pages/admin/TableChangeAlerts"),
 );
 const DataRetentionPage = lazy(() => import("../pages/admin/DataRetention"));
+const RoleManagementPage = lazy(() => import("../pages/admin/Roles"));
 
 // Commodity Pages
 const CommodityPage = lazy(() => import("../pages/commodities/Commodities"));
@@ -586,6 +587,15 @@ export const routes: RouteObjectWithPermission[] = [
     description: "Hazardous Material Seg. Rules",
     element: <HazardousMaterialSegregationPage />,
     permission: "hazardousmaterialsegregation.view",
+    isPublic: false,
+  },
+  {
+    title: "Role Management",
+    group: "Administration",
+    path: "/admin/roles/",
+    description: "Role Management",
+    element: <RoleManagementPage />,
+    permission: "role.view",
     isPublic: false,
   },
   // Error Page
