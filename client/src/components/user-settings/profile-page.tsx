@@ -1,9 +1,9 @@
 import { InternalLink } from "@/components/ui/link";
 import { useCustomMutation } from "@/hooks/useCustomMutation";
-import { timezoneChoices, TimezoneChoices } from "@/lib/choices";
+import { timezoneChoices, type TimezoneChoices } from "@/lib/choices";
 import { postUserProfilePicture } from "@/services/UserRequestService";
 import { useUserStore } from "@/stores/AuthStore";
-import { QueryKeys, StatusChoiceProps } from "@/types";
+import type { QueryKeys, StatusChoiceProps } from "@/types";
 import { User, UserFormValues } from "@/types/accounts";
 import { yupResolver } from "@hookform/resolvers/yup";
 import { useQueryClient } from "@tanstack/react-query";
@@ -102,13 +102,13 @@ function PersonalInformation({ user }: { user: User }) {
     path: `/users/${user.id}/`,
     successMessage: "User profile updated successfully.",
     queryKeysToInvalidate: ["users"],
-    additionalInvalidateQueries: ["currentUser"],
+    additionalInvalidateQueries: ["authenticatedUser"],
     closeModal: false,
     errorMessage: "Failed to update user profile.",
   });
 
   const onSubmit = (values: UserFormValues) => {
-    reset(values);
+    useUserStore.set("user", values as User);
     mutation.mutate(values);
   };
 
