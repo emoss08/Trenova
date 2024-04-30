@@ -25,6 +25,13 @@ func NewAccountingControlHandler(s *api.Server) *AccountingControlHandler {
 	}
 }
 
+// RegisterRoutes registers the routes for the AccountingControlHandler.
+func (h *AccountingControlHandler) RegisterRoutes(r fiber.Router) {
+	accountingControlAPI := r.Group("/accounting-control")
+	accountingControlAPI.Get("/", h.GetAccountingControl())
+	accountingControlAPI.Put("/:accountingControlID", h.UpdateAccountingControlByID())
+}
+
 // GetAccountingControl is a handler that returns the accounting control for an organization.
 //
 // GET /accounting-control

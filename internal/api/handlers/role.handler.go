@@ -1,6 +1,8 @@
 package handlers
 
 import (
+	"time"
+
 	"github.com/emoss08/trenova/internal/api"
 	"github.com/emoss08/trenova/internal/api/services"
 	"github.com/emoss08/trenova/internal/ent"
@@ -22,6 +24,27 @@ func NewRoleHandler(s *api.Server) *RoleHandler {
 		Service:           services.NewRoleService(s),
 		PermissionService: services.NewPermissionService(s),
 	}
+}
+
+// RegisterRoutes registers the routes for the RoleHandler.
+func (h *RoleHandler) RegisterRoutes(r fiber.Router) {
+	rolesAPI := r.Group("/roles")
+	rolesAPI.Get("/", h.GetRoles())
+	rolesAPI.Post("/", h.CreateRole())
+	rolesAPI.Put("/:roleID", h.UpdateRole())
+}
+
+// RoleResponse is the response payload for the role entity.
+type RoleResponse struct {
+	ID             uuid.UUID         `json:"id,omitempty"`
+	BusinessUnitID uuid.UUID         `json:"businessUnitId"`
+	OrganizationID uuid.UUID         `json:"organizationId"`
+	CreatedAt      time.Time         `json:"createdAt"`
+	UpdatedAt      time.Time         `json:"updatedAt"`
+	Version        int               `json:"version"`
+	Name           string            `json:"name,omitempty"`
+	Description    string            `json:"description,omitempty"`
+	Permissions    []*ent.Permission `json:"permissions,omitempty"`
 }
 
 // GetRoles is a handler that returns a list of roles.
@@ -77,8 +100,23 @@ func (h *RoleHandler) GetRoles() fiber.Handler {
 		nextURL := util.GetNextPageURL(c, limit, offset, count)
 		prevURL := util.GetPrevPageURL(c, limit, offset)
 
+		response := make([]RoleResponse, len(entities))
+		for i, role := range entities {
+			response[i] = RoleResponse{
+				ID:             role.ID,
+				BusinessUnitID: role.BusinessUnitID,
+				OrganizationID: role.OrganizationID,
+				CreatedAt:      role.CreatedAt,
+				UpdatedAt:      role.UpdatedAt,
+				Version:        role.Version,
+				Name:           role.Name,
+				Description:    role.Description,
+				Permissions:    role.Edges.Permissions,
+			}
+		}
+
 		return c.Status(fiber.StatusOK).JSON(types.HTTPResponse{
-			Results:  entities,
+			Results:  response,
 			Count:    count,
 			Next:     nextURL,
 			Previous: prevURL,

@@ -24,6 +24,14 @@ func NewEmailProfileHandler(s *api.Server) *EmailProfileHandler {
 	}
 }
 
+// RegisterRoutes registers the routes for the EmailProfileHandler.
+func (h *EmailProfileHandler) RegisterRoutes(r fiber.Router) {
+	emailProfileAPI := r.Group("/email-profiles")
+	emailProfileAPI.Get("/", h.GetEmailProfiles())
+	emailProfileAPI.Post("/", h.CreateEmailProfile())
+	emailProfileAPI.Put("/:emailProfileID", h.UpdateEmailProfile())
+}
+
 // GetEmailProfiles is a handler that returns a list of email profiles.
 //
 // GET /email-profiles

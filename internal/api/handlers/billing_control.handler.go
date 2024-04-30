@@ -24,6 +24,13 @@ func NewBillingControlHandler(s *api.Server) *BillingControlHandler {
 	}
 }
 
+// RegisterRoutes registers the routes for the BillingControlHandler.
+func (h *BillingControlHandler) RegisterRoutes(r fiber.Router) {
+	billingControlAPI := r.Group("/billing-control")
+	billingControlAPI.Get("/", h.GetBillingControl())
+	billingControlAPI.Put("/:billingControlID", h.UpdateBillingControl())
+}
+
 // GetBillingControl is a handler that returns the billing control for an organization.
 //
 // GET /billing-control

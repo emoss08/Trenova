@@ -24,6 +24,14 @@ func NewCustomerHandler(s *api.Server) *CustomerHandler {
 	}
 }
 
+// RegisterRoutes registers the routes for the CustomerHandler.
+func (h *CustomerHandler) RegisterRoutes(r fiber.Router) {
+	customersAPI := r.Group("/customers")
+	customersAPI.Get("/", h.GetCustomers())
+	customersAPI.Post("/", h.CreateCustomer())
+	customersAPI.Put("/:customerID", h.UpdateCustomer())
+}
+
 // TODO: This is incomplete we need to add customer email & rule profile, delivery slots,
 // contact and detention policy
 

@@ -24,6 +24,13 @@ func NewInvoiceControlHandler(s *api.Server) *InvoiceControlHandler {
 	}
 }
 
+// RegisterRoutes registers the routes for the InvoiceControlHandler.
+func (h *InvoiceControlHandler) RegisterRoutes(r fiber.Router) {
+	invoiceControlAPI := r.Group("/invoice-control")
+	invoiceControlAPI.Get("/", h.GetInvoiceControl())
+	invoiceControlAPI.Put("/:invoiceControlID", h.UpdateInvoiceControlByID())
+}
+
 // GetInvoiceControl is a handler that returns the invoice control for an organization.
 //
 // GET /invoice-control

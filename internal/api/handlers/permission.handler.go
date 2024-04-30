@@ -21,6 +21,12 @@ func NewPermissionHandler(s *api.Server) *PermissionHandler {
 	}
 }
 
+// RegisterRoutes registers the routes for the PermissionHandler.
+func (h *PermissionHandler) RegisterRoutes(r fiber.Router) {
+	permissionsAPI := r.Group("/permissions")
+	permissionsAPI.Get("/", h.GetPermissions())
+}
+
 // GetPermissions is a handler that returns a list of permissions.
 //
 // GET /permissions

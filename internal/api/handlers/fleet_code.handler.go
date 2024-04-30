@@ -24,6 +24,14 @@ func NewFleetCodeHandler(s *api.Server) *FleetCodeHandler {
 	}
 }
 
+// RegisterRoutes registers the routes for the FleetCodeHandler.
+func (h *FleetCodeHandler) RegisterRoutes(r fiber.Router) {
+	fleetCodeAPI := r.Group("/fleet-codes")
+	fleetCodeAPI.Get("/", h.GetFleetCodes())
+	fleetCodeAPI.Post("/", h.CreateFleetCode())
+	fleetCodeAPI.Put("/:fleetCodeID", h.UpdateFleetCode())
+}
+
 // GetFleetCodes is a handler that returns a list of fleet codes.
 //
 // GET /fleet-codes

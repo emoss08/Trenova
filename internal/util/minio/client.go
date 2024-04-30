@@ -2,7 +2,12 @@
 package minio
 
 import (
+	"bytes"
 	"context"
+	"fmt"
+	"log"
+	"net/url"
+	"time"
 
 	"github.com/minio/minio-go/v7"
 	"github.com/pkg/errors"
@@ -59,11 +64,52 @@ func (c *Client) CreateBucket(ctx context.Context, bucketName, location string) 
 // UploadMedia uploads a file to the specified bucket and object name.
 //
 // It returns UploadInfo or an error if the upload fails.
-func (c *Client) UploadMedia(ctx context.Context, bucketName, filePath, objectName string) (minio.UploadInfo, error) {
-	contentType := "application/octet-stream"
+func (c *Client) UploadMedia(ctx context.Context, bucketName, filePath, objectName, contentType string) (minio.UploadInfo, error) {
+	// Check if the bucket exists, if not then create it
+	if err := c.CreateBucket(ctx, bucketName, "us-east-1"); err != nil {
+		return minio.UploadInfo{}, errors.Wrap(err, "failed to create bucket")
+	}
+
 	ui, err := c.client.FPutObject(ctx, bucketName, objectName, filePath, minio.PutObjectOptions{ContentType: contentType})
 	if err != nil {
 		return minio.UploadInfo{}, errors.Wrap(err, "upload failed")
 	}
 	return ui, nil
+}
+
+func (c *Client) SaveFile(ctx context.Context, bucketName, objectName, contentType string, fileData []byte) (string, error) {
+	// Check if the bucket exists, if not then create it
+	if err := c.CreateBucket(ctx, bucketName, "us-east-1"); err != nil {
+		log.Printf("Failed to create bucketname %s to %s\n", objectName, bucketName)
+		return "", errors.Wrap(err, "failed to create bucket")
+	}
+
+	_, err := c.client.PutObject(
+		ctx,
+		bucketName,
+		objectName,
+		bytes.NewReader(fileData),
+		int64(len(fileData)),
+		minio.PutObjectOptions{ContentType: contentType},
+	)
+	if err != nil {
+		log.Printf("Failed to upload %s to %s\n", objectName, bucketName)
+		return "", errors.Wrap(err, "upload failed")
+	}
+
+	// Generate a public URL
+	fileURL := fmt.Sprintf("http://%s/%s/%s", c.endpoint, bucketName, objectName)
+	return fileURL, nil
+}
+
+func (c *Client) GetPresignedURL(ctx context.Context, bucketName, objectName string, expiry int64) (string, error) {
+	reqParams := make(url.Values)
+	reqParams.Set("response-content-disposition", "attachment; filename=\""+objectName+"\"")
+	reqParams.Set("response-content-type", "application/octet-stream")
+
+	presignedURL, err := c.client.PresignedGetObject(ctx, bucketName, objectName, time.Duration(expiry)*time.Second, reqParams)
+	if err != nil {
+		return "", errors.Wrap(err, "failed to get presigned URL")
+	}
+	return presignedURL.String(), nil
 }

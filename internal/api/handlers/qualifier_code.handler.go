@@ -24,6 +24,14 @@ func NewQualifierCodeHandler(s *api.Server) *QualifierCodeHandler {
 	}
 }
 
+// RegisterRoutes registers the routes for the QualifierCodeHandler.
+func (h *QualifierCodeHandler) RegisterRoutes(r fiber.Router) {
+	qualifierCodeAPI := r.Group("/qualifier-codes")
+	qualifierCodeAPI.Get("/", h.GetQualifierCodes())
+	qualifierCodeAPI.Post("/", h.CreateQualifierCode())
+	qualifierCodeAPI.Put("/:qualifierCodeID", h.UpdateQualifierCode())
+}
+
 // GetQualifierCodes is a handler that returns a list of qualifier codes.
 //
 // GET /qualifier-codes

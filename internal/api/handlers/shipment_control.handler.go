@@ -24,6 +24,13 @@ func NewShipmentControlHandler(s *api.Server) *ShipmentControlHandler {
 	}
 }
 
+// RegisterRoutes registers the routes for the ShipmentControlHandler.
+func (h *ShipmentControlHandler) RegisterRoutes(r fiber.Router) {
+	shipmentControlAPI := r.Group("/shipment-control")
+	shipmentControlAPI.Get("/", h.GetShipmentControl())
+	shipmentControlAPI.Put("/:shipmentControlID", h.UpdateShipmentControlByID())
+}
+
 // GetShipmentControl is a handler that returns the shipment control for an organization.
 //
 // GET /shipment-control

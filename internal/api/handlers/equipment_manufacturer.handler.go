@@ -24,6 +24,14 @@ func NewEquipmentManufacturerHandler(s *api.Server) *EquipmentManufacturerHandle
 	}
 }
 
+// RegisterRoutes registers the routes for the EquipmentManufacturerHandler.
+func (h *EquipmentManufacturerHandler) RegisterRoutes(r fiber.Router) {
+	equipmentManufacturerAPI := r.Group("/equipment-manufacturers")
+	equipmentManufacturerAPI.Get("/", h.GetEquipmentManufacturers())
+	equipmentManufacturerAPI.Post("/", h.CreateEquipmentManufacturer())
+	equipmentManufacturerAPI.Put("/:equipmentManuID", h.UpdateEquipmentManufacturer())
+}
+
 // GetEquipmentManufacturers is a handler that returns a list of equipment manufacturers.
 //
 // GET /equipment-manufacturers

@@ -24,6 +24,13 @@ func NewEmailControlHandler(s *api.Server) *EmailControlHandler {
 	}
 }
 
+// RegisterRoutes registers the routes for the EmailControlHandler.
+func (h *EmailControlHandler) RegisterRoutes(r fiber.Router) {
+	emailControlAPI := r.Group("/email-control")
+	emailControlAPI.Get("/", h.GetEmailControl())
+	emailControlAPI.Put("/:emailControlID", h.UpdateEmailControl())
+}
+
 // GetEmailControl is a handler that returns the billing control for an organization.
 //
 // GET /billing-control

@@ -112,3 +112,19 @@ func (s *PermissionService) GetPermissions(
 
 	return entities, entityCount, nil
 }
+
+// Check if the user has the required permissions or if the user is updating their own profile
+func (s *PermissionService) CheckOwnershipPermission(c *fiber.Ctx, permission string, userID string) error {
+	uid, ok := c.Locals(util.CTXUserID).(uuid.UUID)
+	if !ok {
+		return errors.New("user ID not found in the request context")
+	}
+
+	// Check if the user is updating their own profile
+	if uid.String() != userID {
+		// if the user is not updating their own profile, check if the user has the required permission
+		return s.CheckUserPermission(c, permission)
+	}
+
+	return nil
+}

@@ -33,6 +33,14 @@ func NewWorkerHandler(s *api.Server) *WorkerHandler {
 	}
 }
 
+// RegisterRoutes registers the routes for the WorkerHandler.
+func (h *WorkerHandler) RegisterRoutes(r fiber.Router) {
+	workersAPI := r.Group("/workers")
+	workersAPI.Get("/", h.GetWorkers())
+	workersAPI.Post("/", h.CreateWorker())
+	workersAPI.Put("/:workerID", h.UpdateWorker())
+}
+
 // GetWorkers is a handler that returns a list of workers.
 //
 // GET /workers
@@ -165,7 +173,7 @@ func (h *WorkerHandler) UpdateWorker() fiber.Handler {
 				Errors: []types.ValidationErrorDetail{
 					{
 						Code:   "invalidRequest",
-						Detail: "Email Profile ID is required",
+						Detail: "Worker ID is required",
 						Attr:   "workerID",
 					},
 				},

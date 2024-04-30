@@ -24,6 +24,14 @@ func NewTagHandler(s *api.Server) *TagHandler {
 	}
 }
 
+// RegisterRoutes registers the routes for the TagHandler.
+func (h *TagHandler) RegisterRoutes(r fiber.Router) {
+	tagAPI := r.Group("/tags")
+	tagAPI.Get("/", h.GetTags())
+	tagAPI.Post("/", h.CreateTag())
+	tagAPI.Put("/:tagID", h.UpdateTag())
+}
+
 // GetTags is a handler that returns a list of tags.
 //
 // GET /tags

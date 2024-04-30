@@ -41,6 +41,8 @@ type GenerateReportRequest struct {
 	Columns        []string       `json:"columns"`
 	FileFormat     FileFormat     `json:"fileFormat"`
 	DeliveryMethod DeliveryMethod `json:"deliveryMethod"`
+	OrganizationID uuid.UUID      `json:"organizationId"`
+	BusinessUnitID uuid.UUID      `json:"businessUnitId"`
 }
 
 // GenerateReportResponse represents the response for generating a report.

@@ -24,6 +24,14 @@ func NewCommentTypeService(s *api.Server) *CommentTypeService {
 	}
 }
 
+// RegisterRoutes registers the routes for the CommentTypeService.
+func (h *CommentTypeService) RegisterRoutes(r fiber.Router) {
+	commentTypeAPI := r.Group("/comment-types")
+	commentTypeAPI.Get("/", h.GetCommentTypes())
+	commentTypeAPI.Post("/", h.CreateCommentType())
+	commentTypeAPI.Put("/:commentTypeID", h.UpdateCommentType())
+}
+
 // GetCommentTypes is a handler that returns a list of comment types.
 //
 // GET /comment-types

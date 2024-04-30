@@ -24,6 +24,14 @@ func NewDocumentClassificationHandler(s *api.Server) *DocumentClassificationHand
 	}
 }
 
+// RegisterRoutes registers the routes for the DocumentClassificationHandler.
+func (h *DocumentClassificationHandler) RegisterRoutes(r fiber.Router) {
+	documentClassificationAPI := r.Group("/document-classifications")
+	documentClassificationAPI.Get("/", h.GetDocumentClassifications())
+	documentClassificationAPI.Post("/", h.CreateDocumentClassification())
+	documentClassificationAPI.Put("/:documentClassID", h.UpdateDocumentClassification())
+}
+
 // GetDocumentClassifications is a handler that returns a list of document classifications.
 //
 // GET /document-classifications

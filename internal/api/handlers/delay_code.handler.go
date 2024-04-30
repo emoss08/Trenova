@@ -24,6 +24,14 @@ func NewDelayCodeHandler(s *api.Server) *DelayCodeHandler {
 	}
 }
 
+// RegisterRoutes registers the routes for the DelayCodeHandler.
+func (h *DelayCodeHandler) RegisterRoutes(r fiber.Router) {
+	delayCodeAPI := r.Group("/delay-codes")
+	delayCodeAPI.Get("/", h.GetDelayCodes())
+	delayCodeAPI.Post("/", h.CreateDelayCode())
+	delayCodeAPI.Put("/:delayCodeID", h.UpdateDelayCode())
+}
+
 // GetDelayCodes is a handler that returns a list of delay codes.
 //
 // GET /delay-codes

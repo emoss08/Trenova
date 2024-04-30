@@ -24,6 +24,16 @@ func NewTableChangeAlertHandler(s *api.Server) *TableChangeAlertHandler {
 	}
 }
 
+// RegisterRoutes registers the routes for the TableChangeAlertHandler.
+func (h *TableChangeAlertHandler) RegisterRoutes(r fiber.Router) {
+	tableChangeAlertAPI := r.Group("/table-change-alerts")
+	tableChangeAlertAPI.Get("/", h.GetTableChangeAlerts())
+	tableChangeAlertAPI.Post("/", h.CreateTableChangeAlert())
+	tableChangeAlertAPI.Put("/:tableChangeAlertID", h.UpdateTableChangeAlert())
+	tableChangeAlertAPI.Get("/table-names", h.GetTableNames())
+	tableChangeAlertAPI.Get("/topic-names", h.GetTopicNames())
+}
+
 // GetTableChangeAlerts is a handler that returns a list of table change alerts.
 //
 // GET /table-change-alerts

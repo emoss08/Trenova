@@ -28,6 +28,14 @@ func NewGeneralLedgerAccountHandler(s *api.Server) *GeneralLedgerAccountHandler 
 	}
 }
 
+// RegisterRoutes registers the routes for the GeneralLedgerAccountHandler.
+func (h *GeneralLedgerAccountHandler) RegisterRoutes(r fiber.Router) {
+	glAccountAPI := r.Group("/general-ledger-accounts")
+	glAccountAPI.Get("/", h.GetGeneralLedgerAccounts())
+	glAccountAPI.Post("/", h.CreateGeneralLedgerAccount())
+	glAccountAPI.Put("/:glAccountID", h.UpdateGeneralLedgerAccount())
+}
+
 type GeneralLedgerAccountResponse struct {
 	ID             uuid.UUID                        `json:"id,omitempty"`
 	BusinessUnitID uuid.UUID                        `json:"businessUnitId"`

@@ -24,6 +24,14 @@ func NewReasonCodeHandler(s *api.Server) *ReasonCodeHandler {
 	}
 }
 
+// RegisterRoutes registers the routes for the ReasonCodeHandler.
+func (h *ReasonCodeHandler) RegisterRoutes(r fiber.Router) {
+	reasonCodeAPI := r.Group("/reason-codes")
+	reasonCodeAPI.Get("/", h.GetReasonCodes())
+	reasonCodeAPI.Post("/", h.CreateReasonCode())
+	reasonCodeAPI.Put("/:reasonCodeID", h.UpdateReasonCode())
+}
+
 // GetReasonCodes is a handler that returns a list of reason codes.
 //
 // GET /reason-codes

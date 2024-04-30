@@ -24,6 +24,13 @@ func NewGoogleAPIHandler(s *api.Server) *GoogleAPIHandler {
 	}
 }
 
+// RegisterRoutes registers the routes for the GoogleAPIHandler.
+func (h *GoogleAPIHandler) RegisterRoutes(r fiber.Router) {
+	googleAPI := r.Group("/google-api")
+	googleAPI.Get("/", h.GetGoogleAPI())
+	googleAPI.Put("/:googleAPIID", h.UpdateGoogleAPI())
+}
+
 // GetGoogleAPI is a handler that returns the Google api settings for an organization.
 //
 // GET /google-api

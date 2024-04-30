@@ -24,6 +24,13 @@ func NewDispatchControlHandler(s *api.Server) *DispatchControlHandler {
 	}
 }
 
+// RegisterRoutes registers the routes for the DispatchControlHandler.
+func (h *DispatchControlHandler) RegisterRoutes(r fiber.Router) {
+	dispatchControlAPI := r.Group("/dispatch-control")
+	dispatchControlAPI.Get("/", h.GetDispatchControl())
+	dispatchControlAPI.Put("/:dispatchControlID", h.UpdateDispatchControlByID())
+}
+
 // GetDispatchControl is a handler that returns the dispatch control for an organization.
 //
 // GET /dispatch-control

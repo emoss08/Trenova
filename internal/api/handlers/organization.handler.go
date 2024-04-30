@@ -21,6 +21,11 @@ func NewOrganizationHandler(s *api.Server) *OrganizationHandler {
 	}
 }
 
+func (h *OrganizationHandler) RegisterRoutes(r fiber.Router) {
+	organizationAPI := r.Group("/organizations")
+	organizationAPI.Get("/me", h.GetUserOrganization())
+}
+
 // GetUserOrganization is a handler that returns the organization of the currently authenticated user.
 func (h *OrganizationHandler) GetUserOrganization() fiber.Handler {
 	return func(c *fiber.Ctx) error {

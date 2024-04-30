@@ -23,6 +23,12 @@ func NewFeatureFlagHandler(s *api.Server) *FeatureFlagHandler {
 	}
 }
 
+// RegisterRoutes registers the routes for the FeatureFlagHandler.
+func (h *FeatureFlagHandler) RegisterRoutes(r fiber.Router) {
+	featureFlagAPI := r.Group("/feature-flags")
+	featureFlagAPI.Get("/", h.GetFeatureFlags())
+}
+
 // GetFeatureFlags is a handler that returns a list of feature flags.
 //
 // GET /feature-flags

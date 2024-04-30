@@ -24,6 +24,14 @@ func NewShipmentTypeHandler(s *api.Server) *ShipmentTypeHandler {
 	}
 }
 
+// RegisterRoutes registers the routes for the ShipmentTypeHandler.
+func (h *ShipmentTypeHandler) RegisterRoutes(r fiber.Router) {
+	shipmentTypeAPI := r.Group("/shipment-types")
+	shipmentTypeAPI.Get("/", h.GetShipmentTypes())
+	shipmentTypeAPI.Post("/", h.CreateShipmentType())
+	shipmentTypeAPI.Put("/:shipmentTypeID", h.UpdateShipmentType())
+}
+
 // GetShipmentTypes is a handler that returns a list of service types.
 //
 // GET /shipment-types

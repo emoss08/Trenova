@@ -24,6 +24,13 @@ func NewFeasibilityToolControlHandler(s *api.Server) *FeasibilityToolControlHand
 	}
 }
 
+// RegisterRoutes registers the routes for the FeasibilityToolControlHandler.
+func (h *FeasibilityToolControlHandler) RegisterRoutes(r fiber.Router) {
+	feasibilityToolControlAPI := r.Group("/feasibility-tool-control")
+	feasibilityToolControlAPI.Get("/", h.GetFeasibilityToolControl())
+	feasibilityToolControlAPI.Put("/:feasibilityToolControlID", h.UpdateFeasibilityToolControl())
+}
+
 // GetFeasibilityToolControl is a handler that returns the feasibility tool control for an organization.
 //
 // GET /billing-control

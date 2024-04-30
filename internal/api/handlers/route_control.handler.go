@@ -24,6 +24,13 @@ func NewRouteControlHandler(s *api.Server) *RouteControlHandler {
 	}
 }
 
+// RegisterRoutes registers the routes for the RouteControlHandler.
+func (h *RouteControlHandler) RegisterRoutes(r fiber.Router) {
+	routeControlAPI := r.Group("/route-control")
+	routeControlAPI.Get("/", h.GetRouteControl())
+	routeControlAPI.Put("/:routeControlID", h.UpdateRouteControlByID())
+}
+
 // GetRouteControl is a handler that returns the route control for an organization.
 //
 // GET /route-control

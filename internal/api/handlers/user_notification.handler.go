@@ -27,6 +27,12 @@ type UserNotificationResponse struct {
 	UnreadList  []*ent.UserNotification `json:"unreadList"`
 }
 
+// RegisterRoutes registers the routes for the UserNotificationHandler.
+func (h *UserNotificationHandler) RegisterRoutes(r fiber.Router) {
+	userNotificationAPI := r.Group("/user-notifications")
+	userNotificationAPI.Get("/", h.GetUserNotifications())
+}
+
 func (h *UserNotificationHandler) GetUserNotifications() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		orgID, ok := c.Locals(util.CTXOrganizationID).(uuid.UUID)

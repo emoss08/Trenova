@@ -26,6 +26,14 @@ func NewHazardousMaterialSegregationHandler(s *api.Server) *HazardousMaterialSeg
 	}
 }
 
+// RegisterRoutes registers the routes for the HazardousMaterialSegregationHandler.
+func (h *HazardousMaterialSegregationHandler) RegisterRoutes(r fiber.Router) {
+	hazmatSegregationAPI := r.Group("/hazardous-material-segregations")
+	hazmatSegregationAPI.Get("/", h.GetHazmatSegregationRules())
+	hazmatSegregationAPI.Post("/", h.CreateHazmatSegregationRule())
+	hazmatSegregationAPI.Put("/:hazmatSegRuleID", h.UpdateHazmatSegregationRules())
+}
+
 // GetHazmatSegregationRules is a handler that returns a list of hazardous material segregation rules.
 //
 // GET /hazardous-material-segregations

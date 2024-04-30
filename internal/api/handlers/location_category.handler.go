@@ -24,6 +24,14 @@ func NewLocationCategoryHandler(s *api.Server) *LocationCategoryHandler {
 	}
 }
 
+// RegisterRoutes registers the routes for the LocationCategoryHandler.
+func (h *LocationCategoryHandler) RegisterRoutes(r fiber.Router) {
+	locationCategoryAPI := r.Group("/location-categories")
+	locationCategoryAPI.Get("/", h.GetLocationCategories())
+	locationCategoryAPI.Post("/", h.CreateLocationCategory())
+	locationCategoryAPI.Put("/:locationCategoryID", h.UpdateLocationCategory())
+}
+
 // GetLocationCategories is a handler that returns a list of location categories.
 //
 // GET /location-categories

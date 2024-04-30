@@ -24,6 +24,14 @@ func NewChargeTypeHandler(s *api.Server) *ChargeTypeHandler {
 	}
 }
 
+// RegisterRoutes registers the routes for the ChargeTypeHandler.
+func (h *ChargeTypeHandler) RegisterRoutes(r fiber.Router) {
+	chargeTypeAPI := r.Group("/charge-types")
+	chargeTypeAPI.Get("/", h.GetChargeTypes())
+	chargeTypeAPI.Post("/", h.CreateChargeType())
+	chargeTypeAPI.Put("/:chargeTypeID", h.UpdateChargeType())
+}
+
 // GetChargeTypes is a handler that returns a list of charge types.
 //
 // GET /charge-types

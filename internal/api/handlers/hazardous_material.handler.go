@@ -24,6 +24,14 @@ func NewHazardousMaterialHandler(s *api.Server) *HazardousMaterialHandler {
 	}
 }
 
+// RegisterRoutes registers the routes for the HazardousMaterialHandler.
+func (h *HazardousMaterialHandler) RegisterRoutes(r fiber.Router) {
+	hazmatAPI := r.Group("/hazardous-materials")
+	hazmatAPI.Get("/", h.GetHazardousMaterials())
+	hazmatAPI.Post("/", h.CreateHazardousMaterial())
+	hazmatAPI.Put("/:hazmatID", h.UpdateHazardousMaterial())
+}
+
 // GetHazardousMaterials is a handler that returns a list of hazardous materials.
 //
 // GET /hazardous-materials

@@ -24,6 +24,14 @@ func NewCommodityHandler(s *api.Server) *CommodityHandler {
 	}
 }
 
+// RegisterRoutes registers the routes for the CommodityHandler.
+func (h *CommodityHandler) RegisterRoutes(r fiber.Router) {
+	commoditiesAPI := r.Group("/commodities")
+	commoditiesAPI.Get("/", h.GetCommodities())
+	commoditiesAPI.Post("/", h.CreateCommodity())
+	commoditiesAPI.Put("/:commodityID", h.UpdateCommodity())
+}
+
 // GetCommodities is a handler that returns a list of commodities.
 //
 // GET /commodities

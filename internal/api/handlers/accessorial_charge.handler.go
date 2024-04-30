@@ -24,6 +24,13 @@ func NewAccessorialChargeHandler(s *api.Server) *AccessorialChargeHandler {
 	}
 }
 
+func (h *AccessorialChargeHandler) RegisterRoutes(r fiber.Router) {
+	accessorialChargeAPI := r.Group("/accessorial-charges")
+	accessorialChargeAPI.Get("", h.GetAccessorialCharges())
+	accessorialChargeAPI.Post("", h.CreateAccessorialCharge())
+	accessorialChargeAPI.Put("/:accessorialChargeID", h.UpdateAccessorialCharge())
+}
+
 // GetAccessorialCharges is a handler that returns a list of accessorial charges.
 //
 // GET /accessorial-charges

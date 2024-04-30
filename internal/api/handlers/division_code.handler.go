@@ -24,6 +24,14 @@ func NewDivisionCodeHandler(s *api.Server) *DivisionCodeHandler {
 	}
 }
 
+// RegisterRoutes registers the routes for the DivisionCodeHandler.
+func (h *DivisionCodeHandler) RegisterRoutes(r fiber.Router) {
+	divisionCodeAPI := r.Group("/division-codes")
+	divisionCodeAPI.Get("/", h.GetDivisionCodes())
+	divisionCodeAPI.Post("/", h.CreateDivisionCode())
+	divisionCodeAPI.Put("/:divisionCodeID", h.UpdateDivisionCode())
+}
+
 // GetDivisionCodes is a handler that returns a list of division codes.
 //
 // GET /division-codes

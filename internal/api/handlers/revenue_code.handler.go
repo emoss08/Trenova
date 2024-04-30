@@ -24,6 +24,14 @@ func NewRevenueCodeHandler(s *api.Server) *RevenueCodeHandler {
 	}
 }
 
+// RegisterRoutes registers the routes for the RevenueCodeHandler.
+func (h *RevenueCodeHandler) RegisterRoutes(r fiber.Router) {
+	revenueCodeAPI := r.Group("/revenue-codes")
+	revenueCodeAPI.Get("/", h.GetRevenueCodes())
+	revenueCodeAPI.Post("/", h.CreateRevenueCode())
+	revenueCodeAPI.Put("/:revenueCodeID", h.UpdateRevenueCode())
+}
+
 // GetRevenueCodes is a handler that returns a list of revenue codes.
 //
 // GET /revenue-codes

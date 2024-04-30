@@ -24,6 +24,14 @@ func NewTrailerHandler(s *api.Server) *TrailerHandler {
 	}
 }
 
+// RegisterRoutes registers the routes for the TrailerHandler.
+func (h *TrailerHandler) RegisterRoutes(r fiber.Router) {
+	trailerAPI := r.Group("/trailers")
+	trailerAPI.Get("/", h.GetTrailers())
+	trailerAPI.Post("/", h.CreateTrailer())
+	trailerAPI.Put("/:trailerID", h.UpdateTrailer())
+}
+
 // GetTrailers is a handler that returns a list of trailers.
 //
 // GET /trailers

@@ -21,6 +21,13 @@ func NewReportHandler(s *api.Server) *ReportHandler {
 	}
 }
 
+// RegisterRoutes registers the routes for the ReportHandler.
+func (h *ReportHandler) RegisterRoutes(r fiber.Router) {
+	reportAPI := r.Group("/reports")
+	reportAPI.Get("/columns", h.GetColumnNames())
+	reportAPI.Post("/generate", h.GenerateReport())
+}
+
 // GetColumnNames returns the column names for a given table name.
 func (h *ReportHandler) GetColumnNames() fiber.Handler {
 	return func(c *fiber.Ctx) error {
@@ -84,6 +91,9 @@ func (h *ReportHandler) GenerateReport() fiber.Handler {
 				},
 			})
 		}
+
+		request.BusinessUnitID = buID
+		request.OrganizationID = orgID
 
 		entity, err := h.Service.
 			GenerateReport(c.UserContext(), request, userID, orgID, buID)

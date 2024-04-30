@@ -24,6 +24,14 @@ func NewTractorHandler(s *api.Server) *TractorHandler {
 	}
 }
 
+// RegisterRoutes registers the routes for the TractorHandler.
+func (h *TractorHandler) RegisterRoutes(r fiber.Router) {
+	tractorAPI := r.Group("/tractors")
+	tractorAPI.Get("/", h.GetTractors())
+	tractorAPI.Post("/", h.CreateTractor())
+	tractorAPI.Put("/:tractorID", h.UpdateTractor())
+}
+
 // GetTractors is a handler that returns a list of tractors.
 //
 // GET /tractors

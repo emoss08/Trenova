@@ -53,6 +53,14 @@ func NewLocationHandler(s *api.Server) *LocationHandler {
 	}
 }
 
+// RegisterRoutes registers the location routes to the fiber app.
+func (h *LocationHandler) RegisterRoutes(r fiber.Router) {
+	locations := r.Group("/locations")
+	locations.Get("/", h.GetLocations())
+	locations.Post("/", h.CreateLocation())
+	locations.Put("/:locationID", h.UpdateLocation())
+}
+
 // GetLocations is a handler that returns a list of locations.
 //
 // GET /locations

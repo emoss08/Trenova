@@ -24,6 +24,14 @@ func NewServiceTypeHandler(s *api.Server) *ServiceTypeHandler {
 	}
 }
 
+// RegisterRoutes registers the routes for the ServiceTypeHandler.
+func (h *ServiceTypeHandler) RegisterRoutes(r fiber.Router) {
+	serviceTypeAPI := r.Group("/service-types")
+	serviceTypeAPI.Get("/", h.GetServiceTypes())
+	serviceTypeAPI.Post("/", h.CreateServiceType())
+	serviceTypeAPI.Put("/:serviceTypeID", h.UpdateServiceType())
+}
+
 // GetServiceTypes is a handler that returns a list of service types.
 //
 // GET /service-types

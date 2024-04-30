@@ -24,6 +24,14 @@ func NewEquipmentTypeHandler(s *api.Server) *EquipmentTypeHandler {
 	}
 }
 
+// RegisterRoutes registers the routes for the EquipmentTypeHandler.
+func (h *EquipmentTypeHandler) RegisterRoutes(r fiber.Router) {
+	equipmentTypeAPI := r.Group("/equipment-types")
+	equipmentTypeAPI.Get("/", h.GetEquipmentTypes())
+	equipmentTypeAPI.Post("/", h.CreateEquipmentType())
+	equipmentTypeAPI.Put("/:equipmentTypeID", h.UpdateEquipmentType())
+}
+
 // GetEquipmentTypes is a handler that returns a list of equipment types.
 //
 // GET /equipment-types
