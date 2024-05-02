@@ -163,13 +163,14 @@ function TableExportModalBody({
           }
         });
       }
+
       toast.error(
         <div className="flex flex-col space-y-1">
           <span className="font-semibold">
-            {error.response.data.error || "Error"}
+            {error.response.data.code || "Error"}
           </span>
           <span className="text-xs">
-            {error.response.data.detail ||
+            {error.response.data.message ||
               "An error occurred, check the form and try again."}
           </span>
         </div>,
