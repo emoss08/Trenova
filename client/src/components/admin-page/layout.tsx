@@ -26,7 +26,7 @@ import {
 import { faTriangleExclamation } from "@fortawesome/pro-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import React, { Suspense } from "react";
-import { Skeleton } from "../ui/skeleton";
+import { ComponentLoader } from "../ui/component-loader";
 import { SidebarNav } from "../user-settings/sidebar-nav";
 
 const links: SidebarLink[] = [
@@ -319,7 +319,7 @@ export default function AdminLayout({
       <SidebarNav links={links} />
       <div className="relative lg:gap-10">
         <div className="mx-auto min-w-0">
-          <Suspense fallback={<Skeleton className="size-full" />}>
+          <Suspense fallback={<ComponentLoader className="h-[60vh]" />}>
             {children}
           </Suspense>
         </div>
