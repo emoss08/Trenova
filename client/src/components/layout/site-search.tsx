@@ -4,12 +4,14 @@ import { upperFirst } from "@/lib/utils";
 import { RouteObjectWithPermission, routes } from "@/routing/AppRoutes";
 import { useHeaderStore } from "@/stores/HeaderStore";
 import { type UserFavorite } from "@/types/accounts";
+import { faSearch } from "@fortawesome/pro-duotone-svg-icons";
 import { faCommand } from "@fortawesome/pro-regular-svg-icons";
 import { faCircleExclamation } from "@fortawesome/pro-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { MagnifyingGlassIcon } from "@radix-ui/react-icons";
 import React from "react";
 import { useNavigate } from "react-router-dom";
+import { Button } from "../ui/button";
 import {
   CommandDialog,
   CommandEmpty,
@@ -40,6 +42,30 @@ const prepareRouteGroups = (routeList: typeof routes) => {
   );
 };
 
+export function SearchButton() {
+  return (
+    <TooltipProvider delayDuration={100}>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <Button
+            size="icon"
+            variant="outline"
+            aria-label="Open site search"
+            aria-expanded={useHeaderStore.get("searchDialogOpen")}
+            onClick={() => useHeaderStore.set("searchDialogOpen", true)}
+            className="border-muted-foreground/40 hover:border-muted-foreground/80 relative flex size-8 xl:hidden"
+          >
+            <FontAwesomeIcon icon={faSearch} className="size-5" />
+          </Button>
+        </TooltipTrigger>
+        <TooltipContent side="bottom" sideOffset={5}>
+          <span>Site Search</span>
+        </TooltipContent>
+      </Tooltip>
+    </TooltipProvider>
+  );
+}
+
 export function SiteSearchInput() {
   return (
     <TooltipProvider delayDuration={100}>
@@ -49,7 +75,7 @@ export function SiteSearchInput() {
             aria-label="Open site search"
             aria-expanded={useHeaderStore.get("searchDialogOpen")}
             onClick={() => useHeaderStore.set("searchDialogOpen", true)}
-            className="border-muted-foreground/20 hover:border-muted-foreground/80 hover:bg-accent group hidden h-8 w-[250px] items-center justify-between rounded-md border px-3 py-2 text-sm lg:flex"
+            className="border-muted-foreground/20 hover:border-muted-foreground/80 hover:bg-accent group hidden h-8 w-[250px] items-center justify-between rounded-md border px-3 py-2 text-sm xl:flex" // Adjusted for responsiveness
           >
             <div className="flex items-center">
               <MagnifyingGlassIcon className="text-muted-foreground group-hover:text-foreground mr-2 size-5" />

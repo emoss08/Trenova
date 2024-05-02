@@ -218,7 +218,7 @@ export function NavMenu() {
         menuPosition={menuPosition}
         className={cn(
           menuOpen ? "block" : "hidden",
-          "md:flex",
+          "xl:flex",
           "md:space-x-8",
           "lg:space-x-12",
           "xl:space-x-16",

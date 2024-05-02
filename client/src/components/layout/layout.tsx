@@ -1,5 +1,9 @@
 import { CookieConsent } from "@/components/layout/cookie-consent";
-import { SiteSearch, SiteSearchInput } from "@/components/layout/site-search";
+import {
+  SearchButton,
+  SiteSearch,
+  SiteSearchInput,
+} from "@/components/layout/site-search";
 import OrganizationSwitcher from "@/components/layout/team-switcher";
 import { RainbowTopBar } from "@/components/layout/topbar";
 import { UserAvatarMenu } from "@/components/layout/user-avatar-menu";
@@ -37,6 +41,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
             <NavMenu />
             <div className="flex items-center gap-x-4">
               <SiteSearchInput />
+              <SearchButton />
               <NotificationMenu />
               <div className="border-muted-foreground/40 h-7 border-l" />
               {user && <UserAvatarMenu user={user} />}
