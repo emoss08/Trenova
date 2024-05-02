@@ -37,10 +37,10 @@ const (
 
 // GenerateReportRequest represents the payload for generating a report.
 type GenerateReportRequest struct {
-	TableName      string         `json:"tableName"`
-	Columns        []string       `json:"columns"`
-	FileFormat     FileFormat     `json:"fileFormat"`
-	DeliveryMethod DeliveryMethod `json:"deliveryMethod"`
+	TableName      string         `json:"tableName" validate:"required"`
+	Columns        []string       `json:"columns" validate:"required"`
+	FileFormat     FileFormat     `json:"fileFormat" validate:"required"`
+	DeliveryMethod DeliveryMethod `json:"deliveryMethod" validate:"required"`
 	OrganizationID uuid.UUID      `json:"organizationId"`
 	BusinessUnitID uuid.UUID      `json:"businessUnitId"`
 }

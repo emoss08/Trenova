@@ -24,7 +24,7 @@ func NewReportHandler(s *api.Server) *ReportHandler {
 // RegisterRoutes registers the routes for the ReportHandler.
 func (h *ReportHandler) RegisterRoutes(r fiber.Router) {
 	reportAPI := r.Group("/reports")
-	reportAPI.Get("/columns", h.GetColumnNames())
+	reportAPI.Get("/column-names", h.GetColumnNames())
 	reportAPI.Post("/generate", h.GenerateReport())
 }
 
@@ -63,16 +63,8 @@ func (h *ReportHandler) GenerateReport() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		var request services.GenerateReportRequest
 
-		if err := c.BodyParser(&request); err != nil {
-			return c.Status(fiber.StatusBadRequest).JSON(types.ValidationErrorResponse{
-				Type: "invalidRequest",
-				Errors: []types.ValidationErrorDetail{
-					{
-						Code:   "invalidRequest",
-						Detail: "request body is invalid",
-					},
-				},
-			})
+		if err := util.ParseBodyAndValidate(c, &request); err != nil {
+			return err
 		}
 
 		orgID, ok := c.Locals(util.CTXOrganizationID).(uuid.UUID)
@@ -98,14 +90,10 @@ func (h *ReportHandler) GenerateReport() fiber.Handler {
 		entity, err := h.Service.
 			GenerateReport(c.UserContext(), request, userID, orgID, buID)
 		if err != nil {
-			return c.Status(fiber.StatusInternalServerError).JSON(types.ValidationErrorResponse{
-				Type: "internalError",
-				Errors: []types.ValidationErrorDetail{
-					{
-						Code:   "internalError",
-						Detail: err.Error(),
-					},
-				},
+			h.Server.Logger.Err(err).Msg("Failed to generate report")
+			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Error{
+				Code:    fiber.StatusInternalServerError,
+				Message: err.Error(),
 			})
 		}
 
