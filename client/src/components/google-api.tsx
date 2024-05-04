@@ -70,12 +70,10 @@ function GoogleApiForm({ googleApi }: { googleApi: GoogleAPIType }) {
   const { t } = useTranslation(["admin.googleapi", "common"]);
   const [isSubmitting, setIsSubmitting] = React.useState<boolean>(false);
 
-  const { control, handleSubmit, reset, watch } = useForm<GoogleAPIFormValues>({
+  const { control, handleSubmit, reset } = useForm<GoogleAPIFormValues>({
     resolver: yupResolver(googleAPISchema),
     defaultValues: googleApi,
   });
-
-  console.info("watch add location", watch("addLocation"));
 
   const mutation = useCustomMutation<GoogleAPIFormValues>(
     control,

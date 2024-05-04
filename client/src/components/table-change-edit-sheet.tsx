@@ -55,9 +55,6 @@ function TableChangeEditForm({
       defaultValues: tableChangeAlert,
     });
 
-  console.info("tableName value", watch("tableName"));
-  console.info("topicName value", watch("topicName"));
-
   useEffect(() => {
     const subscription = watch((value, { name }) => {
       if (name === "source" && value.source === "Database") {
