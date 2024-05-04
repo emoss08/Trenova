@@ -182,7 +182,9 @@ export function PasswordField<T extends FieldValues>({
   const [showPassword, setShowPassword] = React.useState(false);
 
   const togglePasswordVisibility = () => {
-    setShowPassword(!showPassword);
+    setShowPassword((prevState) => {
+      return !prevState;
+    });
   };
 
   return (
