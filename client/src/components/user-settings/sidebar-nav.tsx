@@ -1,5 +1,6 @@
 import { cn } from "@/lib/utils";
 import { type SidebarLink } from "@/types/sidebar-nav";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { debounce } from "lodash-es";
 import React, { useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
@@ -81,5 +82,63 @@ export function SidebarNav({ className, links, ...props }: SidebarNavProps) {
         </nav>
       </ScrollArea>
     </aside>
+  );
+}
+
+type LinkGroup = {
+  key: string;
+  href: string;
+  title: string;
+  component: React.ReactNode;
+  icon: any;
+};
+
+type LinkGroupProps = {
+  title: string;
+  links: LinkGroup[];
+};
+
+export function ModalAsideMenu({
+  heading,
+  linkGroups,
+  activeTab,
+  setActiveTab,
+}: {
+  heading: string;
+  linkGroups: LinkGroupProps[];
+  activeTab: string;
+  setActiveTab: (tabId: string) => void;
+}) {
+  return (
+    <div className="transition-spacing fixed top-14 z-30 -ml-2 hidden size-full h-[600px] shrink-0 duration-500 md:sticky md:block">
+      <ScrollArea className="bg-card text-card-foreground size-full border-r">
+        <h2 className="pb-4 text-base">{heading}</h2>
+        {linkGroups.map((group) => (
+          <div key={group.title}>
+            <h3 className="text-muted-foreground px-2 py-1 text-xs font-semibold uppercase">
+              {group.title}
+            </h3>
+            <nav className="space-y-1">
+              {group.links.map((link) => (
+                <Link
+                  key={link.key}
+                  to={link.href}
+                  className={cn(
+                    buttonVariants({ variant: "ghost" }),
+                    "group justify-start flex items-center space-x-2 mr-2 p-2 rounded-lg transition-colors",
+                    "hover:bg-muted",
+                    { "bg-muted text-primary": activeTab === link.key },
+                  )}
+                  onClick={() => setActiveTab(link.key)}
+                >
+                  <FontAwesomeIcon icon={link.icon} className="size-4" />
+                  <span>{link.title}</span>
+                </Link>
+              ))}
+            </nav>
+          </div>
+        ))}
+      </ScrollArea>
+    </div>
   );
 }

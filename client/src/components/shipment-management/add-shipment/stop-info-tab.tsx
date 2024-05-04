@@ -73,7 +73,7 @@ export default function StopInfoTab() {
             (loc) => loc.id === selectedLocationId,
           );
           if (location) {
-            const newAddressLine = `${location.addressLine1}, ${location.city}, ${location.state} ${location.zipCode}`;
+            const newAddressLine = `${location.addressLine1}, ${location.city}, ${location.stateId} ${location.postalCode}`;
             setValue(`stops.${stopIndex}.addressLine`, newAddressLine, {
               shouldDirty: true,
             });
