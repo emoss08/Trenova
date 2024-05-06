@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { useCustomMutation } from "@/hooks/useCustomMutation";
-import { formatDate } from "@/lib/date";
+import { formatToUserTimezone } from "@/lib/date";
 import { reasonCodeSchema } from "@/lib/validations/ShipmentSchema";
 import { useTableStore } from "@/stores/TableStore";
 import type {
@@ -81,7 +81,7 @@ export function ReasonCodeEditDialog({ onOpenChange, open }: TableSheetProps) {
         </CredenzaHeader>
         <CredenzaDescription>
           Last updated on&nbsp;
-          {reasonCode && formatDate(reasonCode.updatedAt)}
+          {reasonCode && formatToUserTimezone(reasonCode.updatedAt)}
         </CredenzaDescription>
         {reasonCode && <ReasonCodeEditForm reasonCode={reasonCode} />}
       </CredenzaContent>

@@ -312,18 +312,6 @@ func (r *UserService) UpdateUser(ctx context.Context, entity *ent.User) (*ent.Us
 //   - *ent.User: Updated user entity with the new profile information.
 //   - error: Error object if an error occurs during the database update operation.
 func (r *UserService) updateUserEntity(ctx context.Context, tx *ent.Tx, entity *ent.User) (*ent.User, error) {
-	current, err := tx.User.Get(ctx, entity.ID)
-	if err != nil {
-		r.Logger.Error().Err(err).Msg("Failed to get user")
-		return nil, err
-	}
-
-	if current.Version != entity.Version {
-		return nil, util.NewValidationError("This record has been updated by another user. Please refresh and try again",
-			"syncError",
-			"name")
-	}
-
 	// Start building the update operation
 	updateOp := tx.User.UpdateOneID(entity.ID).
 		SetStatus(entity.Status).

@@ -1,5 +1,5 @@
 import { useCustomMutation } from "@/hooks/useCustomMutation";
-import { formatDate } from "@/lib/date";
+import { formatToUserTimezone } from "@/lib/date";
 import { fleetCodeSchema } from "@/lib/validations/DispatchSchema";
 import { useTableStore } from "@/stores/TableStore";
 import type {
@@ -92,7 +92,7 @@ export function FleetCodeEditDialog({
         </CredenzaHeader>
         <CredenzaDescription>
           Last updated on&nbsp;
-          {fleetCode && formatDate(fleetCode.updatedAt)}
+          {fleetCode && formatToUserTimezone(fleetCode.updatedAt)}
         </CredenzaDescription>
         {fleetCode && <FleetCodeEditForm fleetCode={fleetCode} open={open} />}
       </CredenzaContent>

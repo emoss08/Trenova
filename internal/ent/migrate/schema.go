@@ -2353,7 +2353,7 @@ var (
 		{Name: "username", Type: field.TypeString, Size: 30},
 		{Name: "password", Type: field.TypeString, Size: 100},
 		{Name: "email", Type: field.TypeString},
-		{Name: "timezone", Type: field.TypeEnum, Enums: []string{"AmericaLosAngeles", "AmericaDenver", "AmericaChicago", "AmericaNewYork"}, Default: "AmericaLosAngeles", SchemaType: map[string]string{"postgres": "VARCHAR(17)", "sqlite3": "VARCHAR(17)"}},
+		{Name: "timezone", Type: field.TypeString, SchemaType: map[string]string{"postgres": "VARCHAR(20)", "sqlite3": "VARCHAR(20)"}},
 		{Name: "profile_pic_url", Type: field.TypeString, Nullable: true},
 		{Name: "thumbnail_url", Type: field.TypeString, Nullable: true},
 		{Name: "phone_number", Type: field.TypeString, Nullable: true},

@@ -1,7 +1,7 @@
 import { CommentTypeForm } from "@/components/comment-type-table-dialog";
 import { Button } from "@/components/ui/button";
 import { useCustomMutation } from "@/hooks/useCustomMutation";
-import { formatDate } from "@/lib/date";
+import { formatToUserTimezone } from "@/lib/date";
 import { commentTypeSchema } from "@/lib/validations/DispatchSchema";
 import { useTableStore } from "@/stores/TableStore";
 import type {
@@ -78,7 +78,8 @@ export function CommentTypeEditSheet({ onOpenChange, open }: TableSheetProps) {
           <CredenzaTitle>{commentType && commentType.name}</CredenzaTitle>
         </CredenzaHeader>
         <CredenzaDescription>
-          Last updated on {commentType && formatDate(commentType.updatedAt)}
+          Last updated on{" "}
+          {commentType && formatToUserTimezone(commentType.updatedAt)}
         </CredenzaDescription>
         {commentType && <CommentTypeEditForm commentType={commentType} />}
       </CredenzaContent>

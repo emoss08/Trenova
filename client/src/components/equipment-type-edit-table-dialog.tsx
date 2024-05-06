@@ -25,7 +25,7 @@ import {
   SheetTitle,
 } from "@/components/ui/sheet";
 import { useCustomMutation } from "@/hooks/useCustomMutation";
-import { formatDate } from "@/lib/date";
+import { formatToUserTimezone } from "@/lib/date";
 import { cn } from "@/lib/utils";
 import { equipmentTypeSchema } from "@/lib/validations/EquipmentSchema";
 import { useTableStore } from "@/stores/TableStore";
@@ -105,7 +105,8 @@ export function EquipTypeEditSheet({ onOpenChange, open }: TableSheetProps) {
         <SheetHeader>
           <SheetTitle>{equipType && equipType.code}</SheetTitle>
           <SheetDescription>
-            Last updated on {equipType && formatDate(equipType.updatedAt)}
+            Last updated on{" "}
+            {equipType && formatToUserTimezone(equipType.updatedAt)}
           </SheetDescription>
         </SheetHeader>
         {equipType && (

@@ -67600,7 +67600,7 @@ type UserMutation struct {
 	username                  *string
 	password                  *string
 	email                     *string
-	timezone                  *user.Timezone
+	timezone                  *string
 	profile_pic_url           *string
 	thumbnail_url             *string
 	phone_number              *string
@@ -68123,12 +68123,12 @@ func (m *UserMutation) ResetEmail() {
 }
 
 // SetTimezone sets the "timezone" field.
-func (m *UserMutation) SetTimezone(u user.Timezone) {
-	m.timezone = &u
+func (m *UserMutation) SetTimezone(s string) {
+	m.timezone = &s
 }
 
 // Timezone returns the value of the "timezone" field in the mutation.
-func (m *UserMutation) Timezone() (r user.Timezone, exists bool) {
+func (m *UserMutation) Timezone() (r string, exists bool) {
 	v := m.timezone
 	if v == nil {
 		return
@@ -68139,7 +68139,7 @@ func (m *UserMutation) Timezone() (r user.Timezone, exists bool) {
 // OldTimezone returns the old "timezone" field's value of the User entity.
 // If the User object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *UserMutation) OldTimezone(ctx context.Context) (v user.Timezone, err error) {
+func (m *UserMutation) OldTimezone(ctx context.Context) (v string, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldTimezone is only allowed on UpdateOne operations")
 	}
@@ -69109,7 +69109,7 @@ func (m *UserMutation) SetField(name string, value ent.Value) error {
 		m.SetEmail(v)
 		return nil
 	case user.FieldTimezone:
-		v, ok := value.(user.Timezone)
+		v, ok := value.(string)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}

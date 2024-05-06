@@ -1,9 +1,9 @@
+import { useUserStore } from "@/stores/AuthStore";
 import {
   differenceInDays,
   differenceInHours,
   differenceInMinutes,
   differenceInSeconds,
-  format,
   formatDistanceToNow,
   parseISO,
 } from "date-fns";
@@ -13,9 +13,22 @@ import {
  * @param date - The date string to format.
  * @returns A string representing the date in "yyyy/MM/dd HH:mm" format.
  */
-export function formatDate(date: string): string {
+export function formatToUserTimezone(date: string): string {
+  // Get the user timezone from state
+  const user = useUserStore.get("user");
+
+  // Parse the date string into a Date object.
   const parsedDate = parseISO(date);
-  return format(parsedDate, "yyyy-MM-dd HH:mm");
+
+  // Format the date into the desired format.
+  return parsedDate.toLocaleString("en-US", {
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    timeZone: user.timezone,
+  });
 }
 
 /**

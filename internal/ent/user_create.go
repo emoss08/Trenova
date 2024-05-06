@@ -123,16 +123,8 @@ func (uc *UserCreate) SetEmail(s string) *UserCreate {
 }
 
 // SetTimezone sets the "timezone" field.
-func (uc *UserCreate) SetTimezone(u user.Timezone) *UserCreate {
-	uc.mutation.SetTimezone(u)
-	return uc
-}
-
-// SetNillableTimezone sets the "timezone" field if the given value is not nil.
-func (uc *UserCreate) SetNillableTimezone(u *user.Timezone) *UserCreate {
-	if u != nil {
-		uc.SetTimezone(*u)
-	}
+func (uc *UserCreate) SetTimezone(s string) *UserCreate {
+	uc.mutation.SetTimezone(s)
 	return uc
 }
 
@@ -400,10 +392,6 @@ func (uc *UserCreate) defaults() {
 		v := user.DefaultStatus
 		uc.mutation.SetStatus(v)
 	}
-	if _, ok := uc.mutation.Timezone(); !ok {
-		v := user.DefaultTimezone
-		uc.mutation.SetTimezone(v)
-	}
 	if _, ok := uc.mutation.IsAdmin(); !ok {
 		v := user.DefaultIsAdmin
 		uc.mutation.SetIsAdmin(v)
@@ -477,11 +465,6 @@ func (uc *UserCreate) check() error {
 	}
 	if _, ok := uc.mutation.Timezone(); !ok {
 		return &ValidationError{Name: "timezone", err: errors.New(`ent: missing required field "User.timezone"`)}
-	}
-	if v, ok := uc.mutation.Timezone(); ok {
-		if err := user.TimezoneValidator(v); err != nil {
-			return &ValidationError{Name: "timezone", err: fmt.Errorf(`ent: validator failed for field "User.timezone": %w`, err)}
-		}
 	}
 	if _, ok := uc.mutation.IsAdmin(); !ok {
 		return &ValidationError{Name: "is_admin", err: errors.New(`ent: missing required field "User.is_admin"`)}
@@ -563,7 +546,7 @@ func (uc *UserCreate) createSpec() (*User, *sqlgraph.CreateSpec) {
 		_node.Email = value
 	}
 	if value, ok := uc.mutation.Timezone(); ok {
-		_spec.SetField(user.FieldTimezone, field.TypeEnum, value)
+		_spec.SetField(user.FieldTimezone, field.TypeString, value)
 		_node.Timezone = value
 	}
 	if value, ok := uc.mutation.ProfilePicURL(); ok {

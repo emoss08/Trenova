@@ -28,7 +28,7 @@ import {
 } from "@/components/ui/sheet";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useCustomMutation } from "@/hooks/useCustomMutation";
-import { formatDate } from "@/lib/date";
+import { formatToUserTimezone } from "@/lib/date";
 import { cn } from "@/lib/utils";
 import { LocationSchema } from "@/lib/validations/LocationSchema";
 import { useTableStore } from "@/stores/TableStore";
@@ -144,7 +144,8 @@ export function LocationTableEditSheet({
         <SheetHeader>
           <SheetTitle>{location && location.name}</SheetTitle>
           <SheetDescription>
-            Last updated on {location && formatDate(location.updatedAt)}
+            Last updated on{" "}
+            {location && formatToUserTimezone(location.updatedAt)}
           </SheetDescription>
         </SheetHeader>
         {location && (

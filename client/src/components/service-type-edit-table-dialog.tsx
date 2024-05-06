@@ -1,7 +1,7 @@
 import { ServiceTypeForm } from "@/components/service-type-table-dialog";
 import { Button } from "@/components/ui/button";
 import { useCustomMutation } from "@/hooks/useCustomMutation";
-import { formatDate } from "@/lib/date";
+import { formatToUserTimezone } from "@/lib/date";
 import { serviceTypeSchema } from "@/lib/validations/ShipmentSchema";
 import { useTableStore } from "@/stores/TableStore";
 import type {
@@ -81,7 +81,7 @@ export function ServiceTypeEditDialog({ onOpenChange, open }: TableSheetProps) {
         </CredenzaHeader>
         <CredenzaDescription>
           Last updated on&nbsp;
-          {serviceType && formatDate(serviceType.updatedAt)}
+          {serviceType && formatToUserTimezone(serviceType.updatedAt)}
         </CredenzaDescription>
         {serviceType && <ServiceTypeEditForm serviceType={serviceType} />}
       </CredenzaContent>

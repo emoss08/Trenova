@@ -25,7 +25,7 @@ import {
   SheetTitle,
 } from "@/components/ui/sheet";
 import { useCustomMutation } from "@/hooks/useCustomMutation";
-import { formatDate } from "@/lib/date";
+import { formatToUserTimezone } from "@/lib/date";
 import { cn } from "@/lib/utils";
 import { glAccountSchema } from "@/lib/validations/AccountingSchema";
 import { useTableStore } from "@/stores/TableStore";
@@ -119,7 +119,8 @@ export function GeneralLedgerAccountTableEditSheet({
         <SheetHeader>
           <SheetTitle>{glAccount && glAccount.accountNumber}</SheetTitle>
           <SheetDescription>
-            Last updated on {glAccount && formatDate(glAccount.updatedAt)}
+            Last updated on{" "}
+            {glAccount && formatToUserTimezone(glAccount.updatedAt)}
           </SheetDescription>
         </SheetHeader>
         {glAccount && (

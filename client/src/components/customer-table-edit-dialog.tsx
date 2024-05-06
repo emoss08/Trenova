@@ -25,7 +25,7 @@ import {
   SheetTitle,
 } from "@/components/ui/sheet";
 import { useCustomMutation } from "@/hooks/useCustomMutation";
-import { formatDate } from "@/lib/date";
+import { formatToUserTimezone } from "@/lib/date";
 import { cn } from "@/lib/utils";
 import { customerSchema } from "@/lib/validations/CustomerSchema";
 import { useTableStore } from "@/stores/TableStore";
@@ -118,7 +118,8 @@ export function CustomerTableEditSheet({
         <SheetHeader>
           <SheetTitle>{customer && customer.name}</SheetTitle>
           <SheetDescription>
-            Last updated on {customer && formatDate(customer.updatedAt)}
+            Last updated on{" "}
+            {customer && formatToUserTimezone(customer.updatedAt)}
           </SheetDescription>
         </SheetHeader>
         {customer && (

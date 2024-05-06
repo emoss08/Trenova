@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { useCustomMutation } from "@/hooks/useCustomMutation";
-import { formatDate } from "@/lib/date";
+import { formatToUserTimezone } from "@/lib/date";
 import { LocationCategorySchema as formSchema } from "@/lib/validations/LocationSchema";
 import { useTableStore } from "@/stores/TableStore";
 import type {
@@ -95,7 +95,7 @@ export function LocationCategoryEditDialog({
         </CredenzaHeader>
         <CredenzaDescription>
           Last updated on&nbsp;
-          {locationCategory && formatDate(locationCategory.updatedAt)}
+          {locationCategory && formatToUserTimezone(locationCategory.updatedAt)}
         </CredenzaDescription>
         {locationCategory && <LCEditForm locationCategory={locationCategory} />}
       </CredenzaContent>

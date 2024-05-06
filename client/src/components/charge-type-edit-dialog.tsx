@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { useCustomMutation } from "@/hooks/useCustomMutation";
-import { formatDate } from "@/lib/date";
+import { formatToUserTimezone } from "@/lib/date";
 import { chargeTypeSchema } from "@/lib/validations/BillingSchema";
 import { useTableStore } from "@/stores/TableStore";
 import type {
@@ -78,7 +78,8 @@ export function ChargeTypeEditSheet({ onOpenChange, open }: TableSheetProps) {
           <CredenzaTitle>{chargeType && chargeType.name}</CredenzaTitle>
         </CredenzaHeader>
         <CredenzaDescription>
-          Last updated on {chargeType && formatDate(chargeType.updatedAt)}
+          Last updated on{" "}
+          {chargeType && formatToUserTimezone(chargeType.updatedAt)}
         </CredenzaDescription>
         {chargeType && <ChargeTypeEditForm chargeType={chargeType} />}
       </CredenzaContent>

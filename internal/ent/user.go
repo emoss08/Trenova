@@ -41,13 +41,13 @@ type User struct {
 	// Email holds the value of the "email" field.
 	Email string `json:"email,omitempty"`
 	// Timezone holds the value of the "timezone" field.
-	Timezone user.Timezone `json:"timezone,omitempty"`
+	Timezone string `json:"timezone" validate:"required,timezone"`
 	// ProfilePicURL holds the value of the "profile_pic_url" field.
 	ProfilePicURL string `json:"profilePicUrl"`
 	// ThumbnailURL holds the value of the "thumbnail_url" field.
 	ThumbnailURL string `json:"thumbnailUrl"`
 	// PhoneNumber holds the value of the "phone_number" field.
-	PhoneNumber string `json:"phoneNumber"`
+	PhoneNumber string `json:"phoneNumber" validate:"omitempty,phoneNum"`
 	// IsAdmin holds the value of the "is_admin" field.
 	IsAdmin bool `json:"isAdmin"`
 	// IsSuperAdmin holds the value of the "is_super_admin" field.
@@ -277,7 +277,7 @@ func (u *User) assignValues(columns []string, values []any) error {
 			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field timezone", values[i])
 			} else if value.Valid {
-				u.Timezone = user.Timezone(value.String)
+				u.Timezone = value.String
 			}
 		case user.FieldProfilePicURL:
 			if value, ok := values[i].(*sql.NullString); !ok {
@@ -427,7 +427,7 @@ func (u *User) String() string {
 	builder.WriteString(u.Email)
 	builder.WriteString(", ")
 	builder.WriteString("timezone=")
-	builder.WriteString(fmt.Sprintf("%v", u.Timezone))
+	builder.WriteString(u.Timezone)
 	builder.WriteString(", ")
 	builder.WriteString("profile_pic_url=")
 	builder.WriteString(u.ProfilePicURL)

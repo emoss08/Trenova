@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { useCustomMutation } from "@/hooks/useCustomMutation";
-import { formatDate } from "@/lib/date";
+import { formatToUserTimezone } from "@/lib/date";
 import { hazardousMaterialSchema } from "@/lib/validations/CommoditiesSchema";
 import { useTableStore } from "@/stores/TableStore";
 import type {
@@ -95,7 +95,8 @@ export function HazardousMaterialEditDialog({
         </CredenzaHeader>
         <CredenzaDescription>
           Last updated on&nbsp;
-          {hazardousMaterial && formatDate(hazardousMaterial.updatedAt)}
+          {hazardousMaterial &&
+            formatToUserTimezone(hazardousMaterial.updatedAt)}
         </CredenzaDescription>
         {hazardousMaterial && (
           <HazardousMaterialEditForm hazardousMaterial={hazardousMaterial} />

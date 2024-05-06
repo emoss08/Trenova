@@ -8,7 +8,7 @@ import {
   SheetTitle,
 } from "@/components/ui/sheet";
 import { useCustomMutation } from "@/hooks/useCustomMutation";
-import { formatDate } from "@/lib/date";
+import { formatToUserTimezone } from "@/lib/date";
 import { cleanObject, cn } from "@/lib/utils";
 import { useTableStore } from "@/stores/TableStore";
 import { type TableSheetProps } from "@/types/tables";
@@ -89,7 +89,7 @@ export function WorkerEditDialog({ onOpenChange, open }: TableSheetProps) {
         <SheetHeader>
           <SheetTitle>{worker && worker.code}</SheetTitle>
           <SheetDescription>
-            Last updated on {worker && formatDate(worker.updatedAt)}
+            Last updated on {worker && formatToUserTimezone(worker.updatedAt)}
           </SheetDescription>
         </SheetHeader>
         {worker && (

@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { useCustomMutation } from "@/hooks/useCustomMutation";
-import { formatDate } from "@/lib/date";
+import { formatToUserTimezone } from "@/lib/date";
 import { qualifierCodeSchema } from "@/lib/validations/StopSchema";
 import { useTableStore } from "@/stores/TableStore";
 import type {
@@ -88,7 +88,7 @@ export function QualifierCodeEditDialog({
         </CredenzaHeader>
         <CredenzaDescription>
           Last updated on&nbsp;
-          {qualifierCode && formatDate(qualifierCode.createdAt)}
+          {qualifierCode && formatToUserTimezone(qualifierCode.updatedAt)}
         </CredenzaDescription>
         {qualifierCode && (
           <QualifierCodeEditForm qualifierCode={qualifierCode} />

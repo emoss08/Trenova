@@ -1,4 +1,5 @@
-import type { JobFunctionChoiceProps, TimezoneChoices } from "@/lib/choices";
+import type { JobFunctionChoiceProps } from "@/lib/choices";
+import { TimezoneChoices } from "@/lib/timezone";
 import { type StatusChoiceProps } from "@/types/index";
 import { type BaseModel } from "./organization";
 

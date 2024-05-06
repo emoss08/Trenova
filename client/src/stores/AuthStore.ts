@@ -80,3 +80,20 @@ export const useUserStore = createGlobalStore<UserStoreState>({
     },
   },
 });
+
+type TimezoneState = {
+  timezone: string;
+  setTimezone: (timezone: string) => void;
+};
+
+// Store timezone information in cookie
+export const createTimezoneStore = (set: SetState<TimezoneState>) => ({
+  timezone: "AmericaNewYork",
+  setTimezone: (timezone: string) => set({ timezone }),
+});
+
+export const useTimezoneStore = create<TimezoneState>(
+  persist(createTimezoneStore, {
+    name: "Trenova-timezone-storage",
+  }) as StateCreator<TimezoneState>,
+);

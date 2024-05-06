@@ -870,7 +870,6 @@ func SeedPermissions(
 					SetWriteDescription(writeDescription).
 					Save(ctx)
 				if err != nil {
-					log.Panic("Failed creating permission: %v", err)
 					return err
 				}
 			}

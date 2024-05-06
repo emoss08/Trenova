@@ -3,7 +3,7 @@ import { SelectInput } from "@/components/common/fields/select-input";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { useCustomMutation } from "@/hooks/useCustomMutation";
-import { timezoneChoices } from "@/lib/choices";
+import { TIMEZONES } from "@/lib/timezone";
 import { organizationSchema } from "@/lib/validations/OrganizationSchema";
 import type {
   Organization,
@@ -57,16 +57,16 @@ function OrganizationForm({ organization }: { organization: Organization }) {
     <>
       <div className="grid grid-cols-1 gap-8 md:grid-cols-3">
         <div className="px-4 sm:px-0">
-          <h2 className="text-foreground text-base font-semibold leading-7">
+          <h2 className="text-base font-semibold leading-7 text-foreground">
             {t("organizationDetails")}
           </h2>
-          <p className="text-muted-foreground mt-1 text-sm leading-6">
+          <p className="mt-1 text-sm leading-6 text-muted-foreground">
             {t("organizationDetailsDescription")}
           </p>
         </div>
 
         <form
-          className="border-border bg-card m-4 border sm:rounded-xl md:col-span-2"
+          className="m-4 border border-border bg-card sm:rounded-xl md:col-span-2"
           onSubmit={handleSubmit(onSubmit)}
         >
           <div className="px-4 py-6 sm:p-8">
@@ -88,7 +88,7 @@ function OrganizationForm({ organization }: { organization: Organization }) {
                   >
                     {t("fields.logo.placeholder")}
                   </Button>
-                  <p className="text-muted-foreground mt-2 text-xs leading-5">
+                  <p className="mt-2 text-xs leading-5 text-muted-foreground">
                     {t("fields.logo.description")}
                   </p>
                 </div>
@@ -144,7 +144,7 @@ function OrganizationForm({ organization }: { organization: Organization }) {
                 <SelectInput
                   name="timezone"
                   control={control}
-                  options={timezoneChoices}
+                  options={TIMEZONES}
                   rules={{ required: true }}
                   label={t("fields.timezone.label")}
                   placeholder={t("fields.timezone.placeholder")}
@@ -153,7 +153,7 @@ function OrganizationForm({ organization }: { organization: Organization }) {
               </div>
             </div>
           </div>
-          <div className="border-border flex items-center justify-end gap-x-4 border-t p-4 sm:px-8">
+          <div className="flex items-center justify-end gap-x-4 border-t border-border p-4 sm:px-8">
             <Button
               onClick={(e) => {
                 e.preventDefault();

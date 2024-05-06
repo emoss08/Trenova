@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { useCustomMutation } from "@/hooks/useCustomMutation";
-import { formatDate } from "@/lib/date";
+import { formatToUserTimezone } from "@/lib/date";
 import { emailProfileSchema } from "@/lib/validations/OrganizationSchema";
 import { useTableStore } from "@/stores/TableStore";
 import type {
@@ -93,7 +93,7 @@ export function EmailProfileTableEditDialog({
         </CredenzaHeader>
         <CredenzaDescription>
           Last updated on&nbsp;
-          {emailProfile && formatDate(emailProfile.createdAt)}
+          {emailProfile && formatToUserTimezone(emailProfile.updatedAt)}
         </CredenzaDescription>
         {emailProfile && <EmailProfileEditForm emailProfile={emailProfile} />}
       </CredenzaContent>

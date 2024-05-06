@@ -222,34 +222,6 @@ func StatusValidator(s Status) error {
 	}
 }
 
-// Timezone defines the type for the "timezone" enum field.
-type Timezone string
-
-// TimezoneAmericaLosAngeles is the default value of the Timezone enum.
-const DefaultTimezone = TimezoneAmericaLosAngeles
-
-// Timezone values.
-const (
-	TimezoneAmericaLosAngeles Timezone = "AmericaLosAngeles"
-	TimezoneAmericaDenver     Timezone = "AmericaDenver"
-	TimezoneAmericaChicago    Timezone = "AmericaChicago"
-	TimezoneAmericaNewYork    Timezone = "AmericaNewYork"
-)
-
-func (t Timezone) String() string {
-	return string(t)
-}
-
-// TimezoneValidator is a validator for the "timezone" field enum values. It is called by the builders before save.
-func TimezoneValidator(t Timezone) error {
-	switch t {
-	case TimezoneAmericaLosAngeles, TimezoneAmericaDenver, TimezoneAmericaChicago, TimezoneAmericaNewYork:
-		return nil
-	default:
-		return fmt.Errorf("user: invalid enum value for timezone field: %q", t)
-	}
-}
-
 // OrderOption defines the ordering options for the User queries.
 type OrderOption func(*sql.Selector)
 

@@ -25,7 +25,7 @@ import {
   SheetTitle,
 } from "@/components/ui/sheet";
 import { useCustomMutation } from "@/hooks/useCustomMutation";
-import { formatDate } from "@/lib/date";
+import { formatToUserTimezone } from "@/lib/date";
 import { cn } from "@/lib/utils";
 import { tableChangeAlertSchema } from "@/lib/validations/OrganizationSchema";
 import { useTableStore } from "@/stores/TableStore";
@@ -126,7 +126,8 @@ export function TableChangeAlertEditSheet({
           <SheetTitle>{tableChangeAlert && tableChangeAlert.name}</SheetTitle>
           <SheetDescription>
             Last updated on{" "}
-            {tableChangeAlert && formatDate(tableChangeAlert.updatedAt)}
+            {tableChangeAlert &&
+              formatToUserTimezone(tableChangeAlert.updatedAt)}
           </SheetDescription>
         </SheetHeader>
         {tableChangeAlert && (

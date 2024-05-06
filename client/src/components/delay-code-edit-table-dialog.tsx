@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { useCustomMutation } from "@/hooks/useCustomMutation";
-import { formatDate } from "@/lib/date";
+import { formatToUserTimezone } from "@/lib/date";
 import { delayCodeSchema } from "@/lib/validations/DispatchSchema";
 import { useTableStore } from "@/stores/TableStore";
 import type { DelayCode, DelayCodeFormValues } from "@/types/dispatch";
@@ -84,7 +84,7 @@ export function DelayCodeEditDialog({
         </CredenzaHeader>
         <CredenzaDescription>
           Last updated on&nbsp;
-          {delayCode && formatDate(delayCode.updatedAt)}
+          {delayCode && formatToUserTimezone(delayCode.updatedAt)}
         </CredenzaDescription>
         {delayCode && <DelayCodeEditForm delayCode={delayCode} />}
       </CredenzaContent>

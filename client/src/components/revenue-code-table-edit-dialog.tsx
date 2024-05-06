@@ -1,7 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { useCustomMutation } from "@/hooks/useCustomMutation";
 import { useGLAccounts } from "@/hooks/useQueries";
-import { formatDate } from "@/lib/date";
+import { formatToUserTimezone } from "@/lib/date";
 import { revenueCodeSchema } from "@/lib/validations/AccountingSchema";
 import { useTableStore } from "@/stores/TableStore";
 import type {
@@ -101,7 +101,7 @@ export function RevenueCodeTableEditDialog({
         </CredenzaHeader>
         <CredenzaDescription>
           Last updated on&nbsp;
-          {revenueCode && formatDate(revenueCode.updatedAt)}
+          {revenueCode && formatToUserTimezone(revenueCode.updatedAt)}
         </CredenzaDescription>
         {revenueCode && <RCEditForm revenueCode={revenueCode} open={open} />}
       </CredenzaContent>

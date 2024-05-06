@@ -1,0 +1,46 @@
+[
+    {
+        "label": "-10:00 Hawaii Time - Honolulu",
+        "value": "Pacific/Honolulu"
+    },
+    {
+        "label": "-09:00 Alaska Time - Anchorage, Fairbanks",
+        "value": "America/Anchorage"
+    },
+    {
+        "label": "-08:00 Pacific Time - Los Angeles, San Diego, San Jose, San Francisco",
+        "value": "America/Los_Angeles"
+    },
+    {
+        "label": "-08:00 Pacific Time - Seattle, Portland",
+        "value": "America/Los_Angeles"
+    },
+    {
+        "label": "-07:00 Mountain Time - Denver, El Paso, Albuquerque, Colorado Springs",
+        "value": "America/Denver"
+    },
+    {
+        "label": "-07:00 Mountain Time - Phoenix, Tucson, Mesa, Chandler",
+        "value": "America/Phoenix"
+    },
+    {
+        "label": "-07:00 Mountain Time - Boise",
+        "value": "America/Boise"
+    },
+    {
+        "label": "-06:00 Central Time - Chicago, Houston, San Antonio, Dallas",
+        "value": "America/Chicago"
+    },
+    {
+        "label": "-06:00 Central Time - Minneapolis, St. Paul, Omaha, Kansas City",
+        "value": "America/Chicago"
+    },
+    {
+        "label": "-05:00 Eastern Time - New York City, Brooklyn, Queens, Philadelphia",
+        "value": "America/New_York"
+    },
+    {
+        "label": "-05:00 Eastern Time - Miami, Atlanta, Boston, Washington D.C.",
+        "value": "America/New_York"
+    }
+]

@@ -1,7 +1,7 @@
 import { CommodityForm } from "@/components/commodity-dialog";
 import { Button } from "@/components/ui/button";
 import { useCustomMutation } from "@/hooks/useCustomMutation";
-import { formatDate } from "@/lib/date";
+import { formatToUserTimezone } from "@/lib/date";
 import { commoditySchema } from "@/lib/validations/CommoditiesSchema";
 import { useTableStore } from "@/stores/TableStore";
 import type { Commodity, CommodityFormValues } from "@/types/commodities";
@@ -103,7 +103,7 @@ export function CommodityEditDialog({
         </CredenzaHeader>
         <CredenzaDescription>
           Last updated on&nbsp;
-          {commodity && formatDate(commodity.createdAt)}
+          {commodity && formatToUserTimezone(commodity.createdAt)}
         </CredenzaDescription>
         {commodity && <CommodityEditForm commodity={commodity} open={open} />}
       </CredenzaContent>

@@ -1,7 +1,7 @@
 import { ACForm } from "@/components/accessorial-charge-table-dialog";
 import { Button } from "@/components/ui/button";
 import { useCustomMutation } from "@/hooks/useCustomMutation";
-import { formatDate } from "@/lib/date";
+import { formatToUserTimezone } from "@/lib/date";
 import { accessorialChargeSchema } from "@/lib/validations/BillingSchema";
 import { useTableStore } from "@/stores/TableStore";
 import type {
@@ -93,7 +93,8 @@ export function AccessorialChargeTableEditDialog({
         </CredenzaHeader>
         <CredenzaDescription>
           Last updated on&nbsp;
-          {accessorialCharge && formatDate(accessorialCharge.updatedAt)}
+          {accessorialCharge &&
+            formatToUserTimezone(accessorialCharge.updatedAt)}
         </CredenzaDescription>
         {accessorialCharge && (
           <ACEditForm accessorialCharge={accessorialCharge} />

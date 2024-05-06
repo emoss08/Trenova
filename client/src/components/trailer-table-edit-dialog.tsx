@@ -8,7 +8,7 @@ import {
   SheetTitle,
 } from "@/components/ui/sheet";
 import { useCustomMutation } from "@/hooks/useCustomMutation";
-import { formatDate } from "@/lib/date";
+import { formatToUserTimezone } from "@/lib/date";
 import { cleanObject, cn } from "@/lib/utils";
 import { trailerSchema } from "@/lib/validations/EquipmentSchema";
 import { useTableStore } from "@/stores/TableStore";
@@ -95,7 +95,7 @@ export function TrailerEditDialog({ onOpenChange, open }: TableSheetProps) {
         <SheetHeader>
           <SheetTitle>{trailer && trailer.code}</SheetTitle>
           <SheetDescription>
-            Last updated on {trailer && formatDate(trailer.updatedAt)}
+            Last updated on {trailer && formatToUserTimezone(trailer.updatedAt)}
           </SheetDescription>
         </SheetHeader>
         {trailer && (

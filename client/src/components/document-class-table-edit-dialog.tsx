@@ -16,7 +16,7 @@
  */
 
 import { useCustomMutation } from "@/hooks/useCustomMutation";
-import { formatDate } from "@/lib/date";
+import { formatToUserTimezone } from "@/lib/date";
 import { documentClassSchema } from "@/lib/validations/BillingSchema";
 import { useTableStore } from "@/stores/TableStore";
 import type {
@@ -105,7 +105,8 @@ export function DocumentClassEditDialog({
           <CredenzaTitle>{documentClass && documentClass.code} </CredenzaTitle>
         </CredenzaHeader>
         <CredenzaDescription>
-          Last updated on {documentClass && formatDate(documentClass.updatedAt)}
+          Last updated on{" "}
+          {documentClass && formatToUserTimezone(documentClass.updatedAt)}
         </CredenzaDescription>
         {documentClass && (
           <DocumentClassEditForm documentClass={documentClass} />

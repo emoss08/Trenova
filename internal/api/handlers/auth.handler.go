@@ -99,20 +99,6 @@ func (h *AuthenticationHandler) AuthenticateUser() fiber.Handler {
 		user, err := h.Service.AuthenticateUser(
 			c.UserContext(), loginRequest.EmailAddress, loginRequest.Password,
 		)
-
-		if user.Status == "I" {
-			return c.Status(fiber.StatusUnauthorized).JSON(types.ValidationErrorResponse{
-				Type: "unauthorized",
-				Errors: []types.ValidationErrorDetail{
-					{
-						Code:   "authenticationError",
-						Detail: "User is no longer active. Please contact support.",
-						Attr:   "emailAddress",
-					},
-				},
-			})
-		}
-
 		if err != nil {
 			return c.Status(fiber.StatusUnauthorized).JSON(types.ValidationErrorResponse{
 				Type: "unauthorized",
@@ -126,6 +112,19 @@ func (h *AuthenticationHandler) AuthenticateUser() fiber.Handler {
 						Code:   "authenticationError",
 						Detail: "Invalid email address or password",
 						Attr:   "password",
+					},
+				},
+			})
+		}
+
+		if user.Status == "I" {
+			return c.Status(fiber.StatusUnauthorized).JSON(types.ValidationErrorResponse{
+				Type: "unauthorized",
+				Errors: []types.ValidationErrorDetail{
+					{
+						Code:   "authenticationError",
+						Detail: "User is no longer active. Please contact support.",
+						Attr:   "emailAddress",
 					},
 				},
 			})

@@ -33,17 +33,12 @@ func (User) Fields() []ent.Field {
 			Sensitive(),
 		field.String("email").
 			NotEmpty(),
-		field.Enum("timezone").
-			Values(
-				"AmericaLosAngeles",
-				"AmericaDenver",
-				"AmericaChicago",
-				"AmericaNewYork").
+		field.String("timezone").
 			SchemaType(map[string]string{
-				dialect.Postgres: "VARCHAR(17)",
-				dialect.SQLite:   "VARCHAR(17)",
+				dialect.Postgres: "VARCHAR(20)",
+				dialect.SQLite:   "VARCHAR(20)",
 			}).
-			Default("AmericaLosAngeles"),
+			StructTag(`json:"timezone" validate:"required,timezone"`),
 		field.String("profile_pic_url").
 			Optional().
 			StructTag(`json:"profilePicUrl"`),
@@ -52,7 +47,7 @@ func (User) Fields() []ent.Field {
 			StructTag(`json:"thumbnailUrl"`),
 		field.String("phone_number").
 			Optional().
-			StructTag(`json:"phoneNumber"`),
+			StructTag(`json:"phoneNumber" validate:"omitempty,phoneNum"`),
 		field.Bool("is_admin").
 			Default(false).
 			StructTag(`json:"isAdmin"`),

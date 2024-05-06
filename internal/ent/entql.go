@@ -1468,7 +1468,7 @@ var schemaGraph = func() *sqlgraph.Schema {
 			user.FieldUsername:       {Type: field.TypeString, Column: user.FieldUsername},
 			user.FieldPassword:       {Type: field.TypeString, Column: user.FieldPassword},
 			user.FieldEmail:          {Type: field.TypeString, Column: user.FieldEmail},
-			user.FieldTimezone:       {Type: field.TypeEnum, Column: user.FieldTimezone},
+			user.FieldTimezone:       {Type: field.TypeString, Column: user.FieldTimezone},
 			user.FieldProfilePicURL:  {Type: field.TypeString, Column: user.FieldProfilePicURL},
 			user.FieldThumbnailURL:   {Type: field.TypeString, Column: user.FieldThumbnailURL},
 			user.FieldPhoneNumber:    {Type: field.TypeString, Column: user.FieldPhoneNumber},

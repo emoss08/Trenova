@@ -2,7 +2,7 @@ import { HazmatSegRulesForm } from "@/components/hazmat-seg-rules-table-dialog";
 import { Button } from "@/components/ui/button";
 import { DialogFooter } from "@/components/ui/dialog";
 import { useCustomMutation } from "@/hooks/useCustomMutation";
-import { formatDate } from "@/lib/date";
+import { formatToUserTimezone } from "@/lib/date";
 import { useHazmatSegRulesForm } from "@/lib/validations/ShipmentSchema";
 import { useTableStore } from "@/stores/TableStore";
 import type {
@@ -80,7 +80,7 @@ export function HazardousMaterialEditDialog({
         </CredenzaHeader>
         <CredenzaDescription>
           Last updated on&nbsp;
-          {formatDate(hazmatRule.updatedAt)}
+          {formatToUserTimezone(hazmatRule.updatedAt)}
         </CredenzaDescription>
         <HazmatRuleEditForm hazmatRule={hazmatRule} />
       </CredenzaContent>

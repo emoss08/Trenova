@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { useCustomMutation } from "@/hooks/useCustomMutation";
-import { formatDate } from "@/lib/date";
+import { formatToUserTimezone } from "@/lib/date";
 import { shipmentTypeSchema } from "@/lib/validations/ShipmentSchema";
 import { useTableStore } from "@/stores/TableStore";
 import type {
@@ -91,7 +91,7 @@ export function ShipmentTypeEditDialog({
         </CredenzaHeader>
         <CredenzaDescription>
           Last updated on&nbsp;
-          {shipmentType && formatDate(shipmentType.updatedAt)}
+          {shipmentType && formatToUserTimezone(shipmentType.updatedAt)}
         </CredenzaDescription>
         {shipmentType && <ShipmentTypeEditForm shipmentType={shipmentType} />}
       </CredenzaContent>

@@ -135,15 +135,15 @@ func (uu *UserUpdate) SetNillableEmail(s *string) *UserUpdate {
 }
 
 // SetTimezone sets the "timezone" field.
-func (uu *UserUpdate) SetTimezone(u user.Timezone) *UserUpdate {
-	uu.mutation.SetTimezone(u)
+func (uu *UserUpdate) SetTimezone(s string) *UserUpdate {
+	uu.mutation.SetTimezone(s)
 	return uu
 }
 
 // SetNillableTimezone sets the "timezone" field if the given value is not nil.
-func (uu *UserUpdate) SetNillableTimezone(u *user.Timezone) *UserUpdate {
-	if u != nil {
-		uu.SetTimezone(*u)
+func (uu *UserUpdate) SetNillableTimezone(s *string) *UserUpdate {
+	if s != nil {
+		uu.SetTimezone(*s)
 	}
 	return uu
 }
@@ -576,11 +576,6 @@ func (uu *UserUpdate) check() error {
 			return &ValidationError{Name: "email", err: fmt.Errorf(`ent: validator failed for field "User.email": %w`, err)}
 		}
 	}
-	if v, ok := uu.mutation.Timezone(); ok {
-		if err := user.TimezoneValidator(v); err != nil {
-			return &ValidationError{Name: "timezone", err: fmt.Errorf(`ent: validator failed for field "User.timezone": %w`, err)}
-		}
-	}
 	if _, ok := uu.mutation.BusinessUnitID(); uu.mutation.BusinessUnitCleared() && !ok {
 		return errors.New(`ent: clearing a required unique edge "User.business_unit"`)
 	}
@@ -633,7 +628,7 @@ func (uu *UserUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		_spec.SetField(user.FieldEmail, field.TypeString, value)
 	}
 	if value, ok := uu.mutation.Timezone(); ok {
-		_spec.SetField(user.FieldTimezone, field.TypeEnum, value)
+		_spec.SetField(user.FieldTimezone, field.TypeString, value)
 	}
 	if value, ok := uu.mutation.ProfilePicURL(); ok {
 		_spec.SetField(user.FieldProfilePicURL, field.TypeString, value)
@@ -1100,15 +1095,15 @@ func (uuo *UserUpdateOne) SetNillableEmail(s *string) *UserUpdateOne {
 }
 
 // SetTimezone sets the "timezone" field.
-func (uuo *UserUpdateOne) SetTimezone(u user.Timezone) *UserUpdateOne {
-	uuo.mutation.SetTimezone(u)
+func (uuo *UserUpdateOne) SetTimezone(s string) *UserUpdateOne {
+	uuo.mutation.SetTimezone(s)
 	return uuo
 }
 
 // SetNillableTimezone sets the "timezone" field if the given value is not nil.
-func (uuo *UserUpdateOne) SetNillableTimezone(u *user.Timezone) *UserUpdateOne {
-	if u != nil {
-		uuo.SetTimezone(*u)
+func (uuo *UserUpdateOne) SetNillableTimezone(s *string) *UserUpdateOne {
+	if s != nil {
+		uuo.SetTimezone(*s)
 	}
 	return uuo
 }
@@ -1554,11 +1549,6 @@ func (uuo *UserUpdateOne) check() error {
 			return &ValidationError{Name: "email", err: fmt.Errorf(`ent: validator failed for field "User.email": %w`, err)}
 		}
 	}
-	if v, ok := uuo.mutation.Timezone(); ok {
-		if err := user.TimezoneValidator(v); err != nil {
-			return &ValidationError{Name: "timezone", err: fmt.Errorf(`ent: validator failed for field "User.timezone": %w`, err)}
-		}
-	}
 	if _, ok := uuo.mutation.BusinessUnitID(); uuo.mutation.BusinessUnitCleared() && !ok {
 		return errors.New(`ent: clearing a required unique edge "User.business_unit"`)
 	}
@@ -1628,7 +1618,7 @@ func (uuo *UserUpdateOne) sqlSave(ctx context.Context) (_node *User, err error) 
 		_spec.SetField(user.FieldEmail, field.TypeString, value)
 	}
 	if value, ok := uuo.mutation.Timezone(); ok {
-		_spec.SetField(user.FieldTimezone, field.TypeEnum, value)
+		_spec.SetField(user.FieldTimezone, field.TypeString, value)
 	}
 	if value, ok := uuo.mutation.ProfilePicURL(); ok {
 		_spec.SetField(user.FieldProfilePicURL, field.TypeString, value)

@@ -1,7 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { useCustomMutation } from "@/hooks/useCustomMutation";
 import { useGLAccounts } from "@/hooks/useQueries";
-import { formatDate } from "@/lib/date";
+import { formatToUserTimezone } from "@/lib/date";
 import { divisionCodeSchema } from "@/lib/validations/AccountingSchema";
 import { useTableStore } from "@/stores/TableStore";
 import type {
@@ -99,7 +99,7 @@ export function DivisionCodeEditDialog({
         </CredenzaHeader>
         <CredenzaDescription>
           Last updated on&nbsp;
-          {divisionCode && formatDate(divisionCode.updatedAt)}
+          {divisionCode && formatToUserTimezone(divisionCode.updatedAt)}
         </CredenzaDescription>
         {divisionCode && <DCEditForm divisionCode={divisionCode} open={open} />}
       </CredenzaContent>

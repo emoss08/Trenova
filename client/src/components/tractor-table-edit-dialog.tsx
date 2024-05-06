@@ -16,7 +16,7 @@
  */
 
 import { useCustomMutation } from "@/hooks/useCustomMutation";
-import { formatDate } from "@/lib/date";
+import { formatToUserTimezone } from "@/lib/date";
 import { cn } from "@/lib/utils";
 import { tractorSchema } from "@/lib/validations/EquipmentSchema";
 import { useTableStore } from "@/stores/TableStore";
@@ -113,7 +113,7 @@ export function TractorTableEditSheet({ onOpenChange, open }: TableSheetProps) {
         <SheetHeader>
           <SheetTitle>{tractor && tractor.code}</SheetTitle>
           <SheetDescription>
-            Last updated on {tractor && formatDate(tractor.updatedAt)}
+            Last updated on {tractor && formatToUserTimezone(tractor.updatedAt)}
           </SheetDescription>
         </SheetHeader>
         {tractor && (

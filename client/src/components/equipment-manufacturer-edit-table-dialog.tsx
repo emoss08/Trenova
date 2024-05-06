@@ -4,7 +4,7 @@ import React from "react";
 import { useForm } from "react-hook-form";
 
 import { Button } from "@/components/ui/button";
-import { formatDate } from "@/lib/date";
+import { formatToUserTimezone } from "@/lib/date";
 import { equipManufacturerSchema } from "@/lib/validations/EquipmentSchema";
 import { useTableStore } from "@/stores/TableStore";
 import {
@@ -88,7 +88,8 @@ export function EquipMenuEditDialog({ onOpenChange, open }: TableSheetProps) {
         </CredenzaHeader>
         <CredenzaDescription>
           Last updated on{" "}
-          {equipManufacturer && formatDate(equipManufacturer.updatedAt)}
+          {equipManufacturer &&
+            formatToUserTimezone(equipManufacturer.updatedAt)}
         </CredenzaDescription>
         {equipManufacturer && (
           <EquipManuEditForm equipManufacturer={equipManufacturer} />

@@ -1,10 +1,11 @@
 import { useCustomMutation } from "@/hooks/useCustomMutation";
-import { timezoneChoices, type TimezoneChoices } from "@/lib/choices";
+import { TIMEZONES, TimezoneChoices } from "@/lib/timezone";
 import { postUserProfilePicture } from "@/services/UserRequestService";
 import { useUserStore } from "@/stores/AuthStore";
 import type { QueryKeys, StatusChoiceProps } from "@/types";
 import type { User, UserFormValues } from "@/types/accounts";
 import { faUpload } from "@fortawesome/pro-duotone-svg-icons";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { yupResolver } from "@hookform/resolvers/yup";
 import { useQueryClient } from "@tanstack/react-query";
 import { Image } from "@unpic/react";
@@ -53,15 +54,8 @@ function AvatarUploader() {
 
   return (
     <div>
-      <Button
-        icon={faUpload}
-        iconPlacement="left"
-        variant="expandIcon"
-        className="mr-2"
-        size="sm"
-        type="button"
-        onClick={handleClick}
-      >
+      <Button className="mr-2" size="sm" type="button" onClick={handleClick}>
+        <FontAwesomeIcon icon={faUpload} className="mr-2" />
         Change Avatar
       </Button>
       <Button size="sm" type="button" variant="outline">
@@ -75,7 +69,7 @@ function AvatarUploader() {
           style={{ display: "none" }}
           onChange={handleFileChange}
         />
-        <p className="text-muted-foreground mt-2 text-xs leading-5">
+        <p className="mt-2 text-xs leading-5 text-muted-foreground">
           JPG, GIF or PNG. Max size 1MB.
         </p>
       </div>
@@ -136,7 +130,7 @@ export default function PersonalInformation({ user }: { user: User }) {
         <h2 className="shrink-0 text-sm" id="personal-information">
           Personal Information
         </h2>
-        <p className="text-muted-foreground text-xs">
+        <p className="text-xs text-muted-foreground">
           Update your personal information to keep your profile up-to-date.
         </p>
       </div>
@@ -147,7 +141,7 @@ export default function PersonalInformation({ user }: { user: User }) {
               src={user?.profilePicUrl || avatarSrc}
               layout="constrained"
               alt="User Avatar"
-              className="bg-muted-foreground size-24 flex-none rounded-lg object-cover"
+              className="size-24 flex-none rounded-lg bg-muted-foreground object-cover"
               width={96}
               height={96}
             />
@@ -177,7 +171,7 @@ export default function PersonalInformation({ user }: { user: User }) {
             <SelectInput
               name="timezone"
               control={control}
-              options={timezoneChoices}
+              options={TIMEZONES}
               rules={{ required: true }}
               label="Timezone"
               placeholder="Timezone"
@@ -185,7 +179,10 @@ export default function PersonalInformation({ user }: { user: User }) {
             />
           </div>
         </div>
-        <div className="mt-8 flex">
+        <div className="mt-8 flex justify-end gap-x-2 border-border">
+          <Button variant="outline" type="button">
+            Cancel
+          </Button>
           <Button type="submit" isLoading={mutation.isPending}>
             Save Changes
           </Button>
