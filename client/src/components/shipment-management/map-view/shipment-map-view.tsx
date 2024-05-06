@@ -140,7 +140,7 @@ export function ShipmentMapView() {
             placeholder="Search Shipments..."
             className="pl-10 shadow-md"
             icon={
-              <MagnifyingGlassIcon className="text-muted-foreground size-4" />
+              <MagnifyingGlassIcon className="size-4 text-muted-foreground" />
             }
           />
         </div>

@@ -53,7 +53,7 @@ export function SearchButton() {
             aria-label="Open site search"
             aria-expanded={useHeaderStore.get("searchDialogOpen")}
             onClick={() => useHeaderStore.set("searchDialogOpen", true)}
-            className="border-muted-foreground/40 hover:border-muted-foreground/80 relative flex size-8 xl:hidden"
+            className="relative flex size-8 border-muted-foreground/40 hover:border-muted-foreground/80 xl:hidden"
           >
             <FontAwesomeIcon icon={faSearch} className="size-5" />
           </Button>
@@ -75,13 +75,13 @@ export function SiteSearchInput() {
             aria-label="Open site search"
             aria-expanded={useHeaderStore.get("searchDialogOpen")}
             onClick={() => useHeaderStore.set("searchDialogOpen", true)}
-            className="border-muted-foreground/20 hover:border-muted-foreground/80 hover:bg-accent group hidden h-8 w-[250px] items-center justify-between rounded-md border px-3 py-2 text-sm xl:flex" // Adjusted for responsiveness
+            className="group hidden h-8 w-[250px] items-center justify-between rounded-md border border-muted-foreground/20 px-3 py-2 text-sm hover:border-muted-foreground/80 hover:bg-accent xl:flex" // Adjusted for responsiveness
           >
             <div className="flex items-center">
-              <MagnifyingGlassIcon className="text-muted-foreground group-hover:text-foreground mr-2 size-5" />
+              <MagnifyingGlassIcon className="mr-2 size-5 text-muted-foreground group-hover:text-foreground" />
               <span className="text-muted-foreground">Search...</span>
             </div>
-            <kbd className="border-border bg-background text-foreground pointer-events-none inline-flex h-5 select-none items-center gap-x-1 rounded border px-1.5 font-mono text-[10px] font-medium opacity-100">
+            <kbd className="pointer-events-none inline-flex h-5 select-none items-center gap-x-1 rounded border border-border bg-background px-1.5 font-mono text-[10px] font-medium text-foreground opacity-100">
               <FontAwesomeIcon icon={faCommand} className="mb-0.5" />
               <span className="text-xs">K</span>
             </kbd>
@@ -197,12 +197,12 @@ export function SiteSearch() {
             <CommandEmpty key="empty">
               <FontAwesomeIcon
                 icon={faCircleExclamation}
-                className="text-accent-foreground mx-auto size-6"
+                className="mx-auto size-6 text-accent-foreground"
               />
-              <p className="text-accent-foreground mt-4 font-semibold">
+              <p className="mt-4 font-semibold text-accent-foreground">
                 No results found
               </p>
-              <p className="text-muted-foreground mt-2">
+              <p className="mt-2 text-muted-foreground">
                 No pages found for this search term. Please try again.
               </p>
             </CommandEmpty>
@@ -227,7 +227,7 @@ export function SiteSearch() {
           </React.Fragment>
         ))}
       </CommandList>
-      <div className="bg-background sticky flex justify-center space-x-1 border-t py-2">
+      <div className="sticky flex justify-center space-x-1 border-t bg-background py-2">
         <span className="text-xs">&#8593;</span>
         <span className="text-xs">&#8595;</span>
         <p className="pr-2 text-xs">to navigate</p>

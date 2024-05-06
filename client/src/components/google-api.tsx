@@ -96,7 +96,7 @@ function GoogleApiForm({ googleApi }: { googleApi: GoogleAPIType }) {
 
   return (
     <form
-      className="border-border bg-card m-4 border sm:rounded-xl md:col-span-2"
+      className="m-4 border border-border bg-card sm:rounded-xl md:col-span-2"
       onSubmit={handleSubmit(onSubmit)}
     >
       <div className="px-4 py-6 sm:p-8">
@@ -160,7 +160,7 @@ function GoogleApiForm({ googleApi }: { googleApi: GoogleAPIType }) {
           </div>
         </div>
       </div>
-      <div className="border-muted flex items-center justify-end gap-x-4 border-t p-4 sm:px-8">
+      <div className="flex items-center justify-end gap-x-4 border-t border-muted p-4 sm:px-8">
         <Button
           onClick={(e) => {
             e.preventDefault();
@@ -187,19 +187,19 @@ export default function GoogleApi() {
   return (
     <div className="grid grid-cols-1 gap-8 md:grid-cols-3">
       <div className="px-4 sm:px-0">
-        <h2 className="text-foreground text-base font-semibold leading-7">
+        <h2 className="text-base font-semibold leading-7 text-foreground">
           {t("title")}
         </h2>
-        <p className="text-muted-foreground mt-1 text-sm leading-6">
+        <p className="mt-1 text-sm leading-6 text-muted-foreground">
           {t("subTitle")}
         </p>
       </div>
       {isLoading ? (
-        <div className="bg-background ring-muted m-4 ring-1 sm:rounded-xl md:col-span-2">
+        <div className="m-4 bg-background ring-1 ring-muted sm:rounded-xl md:col-span-2">
           <Skeleton className="h-screen w-full" />
         </div>
       ) : isError ? (
-        <div className="bg-background ring-muted m-4 p-8 ring-1 sm:rounded-xl md:col-span-2">
+        <div className="m-4 bg-background p-8 ring-1 ring-muted sm:rounded-xl md:col-span-2">
           <ErrorLoadingData message="Failed to load Google API control." />
         </div>
       ) : (

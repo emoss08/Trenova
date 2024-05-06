@@ -18,7 +18,6 @@ import { useForm } from "react-hook-form";
 
 function WorkerEditForm({
   worker,
-  open,
   onOpenChange,
 }: {
   worker: Worker;

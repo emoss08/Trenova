@@ -10,7 +10,7 @@ export default function UserPreferences() {
           <h2 className="shrink-0 text-sm" id="personal-information">
             Preferences
           </h2>
-          <p className="text-muted-foreground text-xs">
+          <p className="text-xs text-muted-foreground">
             Adjust your interface settings to suit your individual needs.
           </p>
         </div>

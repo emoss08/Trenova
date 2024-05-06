@@ -51,7 +51,7 @@ export function SidebarNav({ className, links, ...props }: SidebarNavProps) {
         isScrolled ? "pt-10" : "",
       )}
     >
-      <ScrollArea className="bg-card text-card-foreground size-full rounded-lg border p-3">
+      <ScrollArea className="size-full rounded-lg border bg-card p-3 text-card-foreground">
         <nav className={cn("lg:flex-col lg:space-y-2", className)} {...props}>
           {Object.entries(groupedLinks).map(([group, groupLinks]) => (
             <div key={group} className="space-y-2">
@@ -110,12 +110,12 @@ export function ModalAsideMenu({
   setActiveTab: (tabId: string) => void;
 }) {
   return (
-    <div className="transition-spacing fixed top-14 z-30 -ml-2 hidden size-full h-[600px] shrink-0 duration-500 md:sticky md:block">
-      <ScrollArea className="bg-card text-card-foreground size-full border-r">
+    <div className="fixed top-14 z-30 -ml-2 hidden size-full h-[600px] shrink-0 transition-spacing duration-500 md:sticky md:block">
+      <ScrollArea className="size-full border-r bg-card text-card-foreground">
         <h2 className="pb-4 text-base">{heading}</h2>
         {linkGroups.map((group) => (
           <div key={group.title}>
-            <h3 className="text-muted-foreground px-2 py-1 text-xs font-semibold uppercase">
+            <h3 className="px-2 py-1 text-xs font-semibold uppercase text-muted-foreground">
               {group.title}
             </h3>
             <nav className="space-y-1">

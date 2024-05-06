@@ -20,7 +20,7 @@ export function OrganizationLogo() {
   return (
     <span className="max-w-[200px] truncate">
       <Link
-        className="text-accent-foreground text-xl font-semibold"
+        className="text-xl font-semibold text-accent-foreground"
         to="/"
         title={userOrganizationData?.name}
       >
@@ -41,7 +41,7 @@ export function OrganizationNameLogo() {
   return (
     <span className="max-w-[200px] truncate">
       <Link
-        className="text-accent-foreground text-xl font-bold"
+        className="text-xl font-bold text-accent-foreground"
         to="/"
         title={userOrganizationData?.name}
       >

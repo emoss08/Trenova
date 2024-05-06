@@ -77,7 +77,7 @@ export default function ChangePasswordForm() {
         <h2 className="text-sm" id="personal-information">
           Change Password
         </h2>
-        <p className="text-muted-foreground text-xs">
+        <p className="text-xs text-muted-foreground">
           Update your password to keep your account secure.
         </p>
       </div>
@@ -130,10 +130,10 @@ export default function ChangePasswordForm() {
           <h3 className=" mb-2 text-base font-semibold">
             Password Recommendations
           </h3>
-          <p className="text-muted-foreground mb-2 text-xs font-normal">
+          <p className="mb-2 text-xs font-normal text-muted-foreground">
             Please follow this guide for a strong password:
           </p>
-          <ul className="text-muted-foreground ml-8 list-disc space-y-1 text-xs">
+          <ul className="ml-8 list-disc space-y-1 text-xs text-muted-foreground">
             <ul className="list-disc space-y-1 text-xs">
               <li
                 className={`${

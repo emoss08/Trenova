@@ -82,7 +82,7 @@ const SubMenu = React.memo(
       {links.map((subLink) => (
         <li
           key={subLink.key}
-          className="hover:bg-muted focus:bg-muted select-none rounded-md p-2"
+          className="select-none rounded-md p-2 hover:bg-muted focus:bg-muted"
         >
           <Link
             to={subLink.link || "#"}
@@ -109,7 +109,7 @@ const MenuItem = React.memo(
     }
 
     return (
-      <li className="hover:bg-accent focus:bg-accent select-none rounded-md p-2">
+      <li className="select-none rounded-md p-2 hover:bg-accent focus:bg-accent">
         <Link
           to={item.link || "#"}
           onClick={onLinkClick}
@@ -148,7 +148,7 @@ const LinksComponent = ({
         return (
           <li
             key={linkItem.key}
-            className="hover:bg-accent focus:bg-accent select-none rounded-md p-2"
+            className="select-none rounded-md p-2 hover:bg-accent focus:bg-accent"
           >
             <Link
               to={linkItem.link || "#"}
@@ -167,7 +167,7 @@ const LinksComponent = ({
           <li key={linkItem.key} className="space-y-2">
             <div
               onClick={() => handleToggleSubMenu(linkItem.key)}
-              className="hover:bg-accent focus:bg-accent flex cursor-pointer select-none items-center justify-between rounded-md p-2 text-sm leading-6"
+              className="flex cursor-pointer select-none items-center justify-between rounded-md p-2 text-sm leading-6 hover:bg-accent focus:bg-accent"
             >
               <div className="flex">
                 <div className="pr-2">{linkItem.icon}</div>
@@ -211,7 +211,7 @@ function AsideMenu({
   onLinkClick: () => void;
 }) {
   return (
-    <div className="bg-card mt-5 overflow-hidden sm:rounded-md">
+    <div className="mt-5 overflow-hidden bg-card sm:rounded-md">
       <ul>
         {menuItems.map((item) => (
           <MenuItem key={item.menuKey} item={item} onLinkClick={onLinkClick} />
@@ -278,7 +278,7 @@ export function AsideMenuSheet() {
         <Button
           size="icon"
           variant="outline"
-          className="border-muted-foreground/40 hover:border-muted-foreground/80 flex size-9"
+          className="flex size-9 border-muted-foreground/40 hover:border-muted-foreground/80"
         >
           <FontAwesomeIcon icon={faBars} className="size-5" />
         </Button>
@@ -287,7 +287,7 @@ export function AsideMenuSheet() {
         <SheetHeader>
           <SheetTitle>
             <OrganizationLogo />
-            <div className="border-muted-foreground/40 mt-2 border-b" />
+            <div className="mt-2 border-b border-muted-foreground/40" />
           </SheetTitle>
         </SheetHeader>
         <AsideMenu menuItems={menuItems} onLinkClick={toggleMenu} />

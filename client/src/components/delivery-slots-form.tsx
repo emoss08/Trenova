@@ -68,7 +68,7 @@ function DeliverySlotItem({
   return (
     <div
       key={field.id}
-      className="border-border mb-4 grid grid-cols-2 gap-2 rounded-md border p-2"
+      className="mb-4 grid grid-cols-2 gap-2 rounded-md border border-border p-2"
     >
       <div className="flex w-full max-w-sm flex-col justify-between gap-0.5">
         <div className="min-h-[4em]">
@@ -200,12 +200,12 @@ export function DeliverySlotForm({ open }: { open: boolean }) {
           <div className="mt-44 flex grow flex-col items-center justify-center">
             <FontAwesomeIcon
               icon={faRoadCircleXmark}
-              className="text-foreground size-10"
+              className="size-10 text-foreground"
             />
-            <h3 className="mt-4 text-lg font-semibold">
+            <h3 className="text-lg mt-4 font-semibold">
               No Delivery Slot added
             </h3>
-            <p className="text-muted-foreground mb-4 mt-2 text-sm">
+            <p className="mb-4 mt-2 text-sm text-muted-foreground">
               You have not added any delivery slots. Add one below.
             </p>
             <Button type="button" size="sm" onClick={handleAddSlot}>

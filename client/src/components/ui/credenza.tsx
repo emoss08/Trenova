@@ -144,6 +144,5 @@ export {
   CredenzaFooter,
   CredenzaHeader,
   CredenzaTitle,
-  CredenzaTrigger
+  CredenzaTrigger,
 };
-

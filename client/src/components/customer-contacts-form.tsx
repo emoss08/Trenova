@@ -72,7 +72,7 @@ export function CustomerContactForm() {
               {fields.map((field, index) => (
                 <div
                   key={field.id}
-                  className="border-border my-4 grid grid-cols-2 gap-2 rounded-md border p-2"
+                  className="my-4 grid grid-cols-2 gap-2 rounded-md border border-border p-2"
                 >
                   <div className="flex w-full max-w-sm flex-col justify-between gap-0.5">
                     <div className="min-h-[4em]">
@@ -176,10 +176,10 @@ export function CustomerContactForm() {
           <div className="mt-44 flex grow flex-col items-center justify-center">
             <FontAwesomeIcon
               icon={faPerson}
-              className="text-foreground size-10"
+              className="size-10 text-foreground"
             />
-            <h3 className="mt-4 text-lg font-semibold">No Contacts added</h3>
-            <p className="text-muted-foreground mb-4 mt-2 text-sm">
+            <h3 className="text-lg mt-4 font-semibold">No Contacts added</h3>
+            <p className="mb-4 mt-2 text-sm text-muted-foreground">
               You have not added any contacts. Add one below.
             </p>
             <Button type="button" size="sm" onClick={handleAddContact}>

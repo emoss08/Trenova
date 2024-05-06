@@ -28,14 +28,14 @@ export function Layout({ children }: { children: React.ReactNode }) {
   useQueryInvalidationListener();
 
   return (
-    <div className="bg-background relative flex min-h-screen flex-col" id="app">
+    <div className="relative flex min-h-screen flex-col bg-background" id="app">
       {!hideHeader && (
-        <header className="border-border/40 bg-background/95 supports-[backdrop-filter]:bg-background/60 sticky top-0 z-50 w-full border-b backdrop-blur">
+        <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
           <RainbowTopBar />
           <div className="flex h-14 w-full items-center justify-between px-4">
             <div className="flex items-center gap-x-4">
               <OrganizationLogo />
-              <div className="border-muted-foreground/40 h-7 border-l" />
+              <div className="h-7 border-l border-muted-foreground/40" />
               <OrganizationSwitcher />
             </div>
             <NavMenu />
@@ -43,13 +43,13 @@ export function Layout({ children }: { children: React.ReactNode }) {
               <SiteSearchInput />
               <SearchButton />
               <NotificationMenu />
-              <div className="border-muted-foreground/40 h-7 border-l" />
+              <div className="h-7 border-l border-muted-foreground/40" />
               {user && <UserAvatarMenu user={user} />}
             </div>
           </div>
         </header>
       )}
-      <main className="max-w-screen-3xl mx-auto w-full flex-1 px-6 sm:px-6 md:px-12 xl:px-20">
+      <main className="mx-auto w-full max-w-screen-3xl flex-1 px-6 sm:px-6 md:px-12 xl:px-20">
         <Breadcrumb />
         <SiteSearch />
         {children}

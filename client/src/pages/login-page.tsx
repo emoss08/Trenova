@@ -32,7 +32,7 @@ type CheckEmailValues = {
 
 function AuthFooter() {
   return (
-    <footer className="text-muted-foreground absolute bottom-10 w-full text-center">
+    <footer className="absolute bottom-10 w-full text-center text-muted-foreground">
       <div className="flex items-center justify-center gap-2">
         <p className="text-xs">&copy; 2024 Trenova. All rights reserved.</p>
         <span className="text-xs">|</span>
