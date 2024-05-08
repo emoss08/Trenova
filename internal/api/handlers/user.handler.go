@@ -148,7 +148,7 @@ func (h *UserHandler) UpdateUser() fiber.Handler {
 		}
 
 		// Check if the user has the required permissions or if the user is updating their own profile
-		err := h.PermissionService.CheckOwnershipPermission(c, "user.update", userID)
+		err := h.PermissionService.CheckOwnershipPermission(c, "user.edit", userID)
 		if err != nil {
 			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
 				"error":   "Unauthorized",

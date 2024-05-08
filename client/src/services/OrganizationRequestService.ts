@@ -139,3 +139,20 @@ export async function getTopicNames(): Promise<Topic[]> {
   const response = await axios.get("/table-change-alerts/topic-names/");
   return response.data.results;
 }
+
+/**
+ * Posts a user profile picture to the server.
+ * @param profilePicture Profile picture to be uploaded
+ * @returns A promise that resolves to the user's details.
+ */
+export async function postOrganizationLogo(logo: File): Promise<Organization> {
+  const formData = new FormData();
+  formData.append("logo", logo);
+  const response = await axios.post("organizations/logo", formData, {
+    headers: {
+      "Content-Type": "multipart/form-data",
+    },
+  });
+
+  return response.data;
+}

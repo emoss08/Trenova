@@ -6,8 +6,6 @@ import (
 	"context"
 	"fmt"
 	"log"
-	"net/url"
-	"time"
 
 	"github.com/minio/minio-go/v7"
 	"github.com/pkg/errors"
@@ -100,16 +98,4 @@ func (c *Client) SaveFile(ctx context.Context, bucketName, objectName, contentTy
 	// Generate a public URL
 	fileURL := fmt.Sprintf("http://%s/%s/%s", c.endpoint, bucketName, objectName)
 	return fileURL, nil
-}
-
-func (c *Client) GetPresignedURL(ctx context.Context, bucketName, objectName string, expiry int64) (string, error) {
-	reqParams := make(url.Values)
-	reqParams.Set("response-content-disposition", "attachment; filename=\""+objectName+"\"")
-	reqParams.Set("response-content-type", "application/octet-stream")
-
-	presignedURL, err := c.client.PresignedGetObject(ctx, bucketName, objectName, time.Duration(expiry)*time.Second, reqParams)
-	if err != nil {
-		return "", errors.Wrap(err, "failed to get presigned URL")
-	}
-	return presignedURL.String(), nil
 }

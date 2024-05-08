@@ -102,6 +102,7 @@ export type API_ENDPOINTS =
   | "/reconciliation-queue/"
   | "/organizations/me/"
   | "/roles/"
+  | "/analytics/new-shipment-count/"
   | "/accounting-control/";
 
 // HTTP Status Codes Ripped from Django Rest Framework

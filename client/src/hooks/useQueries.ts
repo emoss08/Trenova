@@ -5,6 +5,7 @@ import {
   getRevenueCodes,
   getTags,
 } from "@/services/AccountingRequestService";
+import { getDailyShipmentCounts } from "@/services/AnalyticRequestService";
 import {
   getAccessorialCharges,
   getDocumentClassifications,
@@ -928,6 +929,18 @@ export function useAuthenticatedUser() {
   const { data, isError, isLoading, isSuccess, isFetched } = useQuery({
     queryKey: ["authenticatedUser"] as QueryKeys,
     queryFn: async () => getAuthenticatedUser(),
+  });
+
+  return { data, isError, isLoading, isSuccess, isFetched };
+}
+
+export function useAnalytics(startDate: string, endDate: string) {
+  const { data, isError, isLoading, isSuccess, isFetched } = useQuery({
+    queryKey: ["dailyShipmentCounts", startDate, endDate] as QueryKeyWithParams<
+      "dailyShipmentCounts",
+      [string, string]
+    >,
+    queryFn: async () => getDailyShipmentCounts(startDate, endDate),
   });
 
   return { data, isError, isLoading, isSuccess, isFetched };

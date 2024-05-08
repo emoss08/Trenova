@@ -1202,7 +1202,7 @@ var (
 		{Name: "dot_number", Type: field.TypeString, Size: 12, SchemaType: map[string]string{"postgres": "VARCHAR(12)", "sqlite3": "VARCHAR(12)"}},
 		{Name: "logo_url", Type: field.TypeString, Nullable: true},
 		{Name: "org_type", Type: field.TypeEnum, Enums: []string{"A", "B", "X"}, Default: "A", SchemaType: map[string]string{"postgres": "VARCHAR(1)", "sqlite3": "VARCHAR(1)"}},
-		{Name: "timezone", Type: field.TypeEnum, Enums: []string{"AmericaLosAngeles", "AmericaDenver", "AmericaChicago", "AmericaNewYork"}, Default: "AmericaLosAngeles", SchemaType: map[string]string{"postgres": "VARCHAR(17)", "sqlite3": "VARCHAR(17)"}},
+		{Name: "timezone", Type: field.TypeString, SchemaType: map[string]string{"postgres": "VARCHAR(20)", "sqlite3": "VARCHAR(20)"}},
 		{Name: "business_unit_id", Type: field.TypeUUID},
 	}
 	// OrganizationsTable holds the schema information for the "organizations" table.
@@ -2520,6 +2520,7 @@ var (
 		{Name: "address_line_2", Type: field.TypeString, Nullable: true, Size: 150, SchemaType: map[string]string{"postgres": "VARCHAR(150)", "sqlite3": "VARCHAR(150)"}},
 		{Name: "city", Type: field.TypeString, Nullable: true, Size: 150, SchemaType: map[string]string{"postgres": "VARCHAR(150)", "sqlite3": "VARCHAR(150)"}},
 		{Name: "postal_code", Type: field.TypeString, Nullable: true, Size: 10, SchemaType: map[string]string{"postgres": "VARCHAR(10)", "sqlite3": "VARCHAR(10)"}},
+		{Name: "external_id", Type: field.TypeString, Nullable: true, Comment: "External ID usually from HOS integration."},
 		{Name: "business_unit_id", Type: field.TypeUUID},
 		{Name: "organization_id", Type: field.TypeUUID},
 		{Name: "state_id", Type: field.TypeUUID, Nullable: true},
@@ -2534,31 +2535,31 @@ var (
 		ForeignKeys: []*schema.ForeignKey{
 			{
 				Symbol:     "workers_business_units_business_unit",
-				Columns:    []*schema.Column{WorkersColumns[14]},
+				Columns:    []*schema.Column{WorkersColumns[15]},
 				RefColumns: []*schema.Column{BusinessUnitsColumns[0]},
 				OnDelete:   schema.Cascade,
 			},
 			{
 				Symbol:     "workers_organizations_organization",
-				Columns:    []*schema.Column{WorkersColumns[15]},
+				Columns:    []*schema.Column{WorkersColumns[16]},
 				RefColumns: []*schema.Column{OrganizationsColumns[0]},
 				OnDelete:   schema.Cascade,
 			},
 			{
 				Symbol:     "workers_us_states_state",
-				Columns:    []*schema.Column{WorkersColumns[16]},
+				Columns:    []*schema.Column{WorkersColumns[17]},
 				RefColumns: []*schema.Column{UsStatesColumns[0]},
 				OnDelete:   schema.Cascade,
 			},
 			{
 				Symbol:     "workers_fleet_codes_fleet_code",
-				Columns:    []*schema.Column{WorkersColumns[17]},
+				Columns:    []*schema.Column{WorkersColumns[18]},
 				RefColumns: []*schema.Column{FleetCodesColumns[0]},
 				OnDelete:   schema.Cascade,
 			},
 			{
 				Symbol:     "workers_users_manager",
-				Columns:    []*schema.Column{WorkersColumns[18]},
+				Columns:    []*schema.Column{WorkersColumns[19]},
 				RefColumns: []*schema.Column{UsersColumns[0]},
 				OnDelete:   schema.Cascade,
 			},

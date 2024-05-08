@@ -3,9 +3,7 @@ package services
 import (
 	"context"
 	"errors"
-	"io"
 	"mime/multipart"
-	"path/filepath"
 
 	"github.com/emoss08/trenova/internal/api"
 	"github.com/emoss08/trenova/internal/util"
@@ -27,9 +25,10 @@ import (
 //   - Logger: A *zerolog.Logger object used for logging messages in the service.
 //   - Minio: A *minio.Client object for handling file uploads to Minio storage.
 type UserService struct {
-	Client *ent.Client
-	Logger *zerolog.Logger
-	Minio  *minio.Client
+	Client      *ent.Client
+	Logger      *zerolog.Logger
+	Minio       *minio.Client
+	FileService *util.FileService
 }
 
 // NewUserService initializes a new instance of UserService with the provided dependencies.
@@ -48,9 +47,10 @@ type UserService struct {
 //	userService := NewUserService(server)
 func NewUserService(s *api.Server) *UserService {
 	return &UserService{
-		Client: s.Client,
-		Logger: s.Logger,
-		Minio:  s.Minio,
+		Client:      s.Client,
+		Logger:      s.Logger,
+		Minio:       s.Minio,
+		FileService: util.NewFileService(s.Logger),
 	}
 }
 
@@ -102,21 +102,22 @@ func (r *UserService) GetAuthenticatedUser(ctx context.Context, userID uuid.UUID
 func (r *UserService) UploadProfilePicture(ctx context.Context, profilePicture *multipart.FileHeader, userID uuid.UUID) (*ent.User, error) {
 	// Check if the user exists
 	if err := r.checkUserExistence(ctx, userID); err != nil {
+		r.Logger.Error().Err(err).Msg("Failed to read file data")
 		return nil, err
 	}
 
-	fileData, err := r.readFileData(profilePicture)
+	fileData, err := r.FileService.ReadFileData(profilePicture)
 	if err != nil {
 		return nil, err
 	}
 
-	objectName, err := r.renameProfilePicture(profilePicture, userID)
+	objectName, err := r.FileService.RenameFile(profilePicture, userID)
 	if err != nil {
 		r.Logger.Error().Err(err).Msg("Failed to rename profile picture")
 		return nil, err
 	}
 
-	user, err := r.uploadAndSetProfileURL(ctx, userID, objectName, profilePicture.Header.Get("Content-Type"), fileData)
+	user, err := r.uploadAndSetProfilePicURL(ctx, userID, objectName, profilePicture.Header.Get("Content-Type"), fileData)
 	if err != nil {
 		return nil, err
 	}
@@ -148,29 +149,6 @@ func (r *UserService) checkUserExistence(ctx context.Context, userID uuid.UUID) 
 	return nil
 }
 
-// readFileData opens and reads the data from a provided multipart file header representing an uploaded file.
-//
-// Parameters:
-//   - profilePicture: The file header containing metadata about the multipart uploaded file.
-//
-// Returns:
-//   - []byte: Byte slice containing the read file data.
-//   - error: Error object if an error occurs during file opening or reading.
-//
-// Errors:
-//   - file opening errors: If the file cannot be opened.
-//   - file reading errors: If reading the file data fails.
-func (r *UserService) readFileData(profilePicture *multipart.FileHeader) ([]byte, error) {
-	file, err := profilePicture.Open()
-	if err != nil {
-		r.Logger.Error().Err(err).Msg("Failed to open profile picture file")
-		return nil, err
-	}
-	defer file.Close()
-
-	return io.ReadAll(file)
-}
-
 // uploadAndSetProfileURL uploads file data to Minio and updates the user's profile with the new image URL.
 //
 // Parameters:
@@ -187,7 +165,9 @@ func (r *UserService) readFileData(profilePicture *multipart.FileHeader) ([]byte
 // Errors:
 //   - file upload errors: If uploading the file to Minio fails.
 //   - database update errors: If updating the user's profile in the database fails.
-func (r *UserService) uploadAndSetProfileURL(ctx context.Context, userID uuid.UUID, objectName, contentType string, fileData []byte) (*ent.User, error) {
+func (r *UserService) uploadAndSetProfilePicURL(
+	ctx context.Context, userID uuid.UUID, objectName, contentType string, fileData []byte,
+) (*ent.User, error) {
 	ui, err := r.Minio.SaveFile(ctx, "user-profile-pics", objectName, contentType, fileData)
 	if err != nil {
 		r.Logger.Error().Err(err).Msg("Failed to upload profile picture")
@@ -200,33 +180,6 @@ func (r *UserService) uploadAndSetProfileURL(ctx context.Context, userID uuid.UU
 		return nil, err
 	}
 	return user, err
-}
-
-// renameProfilePicture generates a new, unique object name for a user's profile picture based on a random UUID.
-//
-// Parameters:
-//   - profilePicture: The file header of the profile picture to be renamed.
-//   - userID: UUID of the user whose profile picture is being renamed.
-//
-// Returns:
-//   - string: The new object name incorporating the user's UUID and a random filename.
-//   - error: Error object if generating a random filename fails.
-//
-// Errors:
-//   - random filename generation errors: If generating the UUID fails.
-func (r *UserService) renameProfilePicture(profilePicture *multipart.FileHeader, userID uuid.UUID) (string, error) {
-	randomFilename, err := uuid.NewRandom()
-	if err != nil {
-		r.Logger.Error().Err(err).Msg("Failed to generate random filename")
-		return "", err
-	}
-
-	fileExt := filepath.Ext(profilePicture.Filename)
-	if fileExt == "" {
-		return "", errors.New("failed to get file extension")
-	}
-
-	return userID.String() + "/" + randomFilename.String() + fileExt, nil
 }
 
 // ChangePassword updates a user's password in the database after verifying the old password.
@@ -273,8 +226,7 @@ func (r *UserService) ChangePassword(ctx context.Context, userID uuid.UUID, oldP
 	return nil
 }
 
-// UpdateUser updates a user's profile information in the database. It first retrieves the current user entity,
-// checks if the version has changed, and then updates the user's profile with the new information.
+// UpdateUser updates a user's profile information in the database.
 //
 // Parameters:
 //   - ctx: Context used for the operation, which may include deadlines or cancellation signals.
@@ -300,8 +252,7 @@ func (r *UserService) UpdateUser(ctx context.Context, entity *ent.User) (*ent.Us
 	return updatedEntity, err
 }
 
-// updateUserEntity updates a user's profile information in the database within a transaction. It first retrieves the
-// current user entity, checks if the version has changed, and then updates the user's profile with the new information.
+// updateUserEntity updates a user's profile information in the database within a transaction.
 //
 // Parameters:
 //   - ctx: Context used for the operation, which may include deadlines or cancellation signals.

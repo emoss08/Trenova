@@ -1,5 +1,10 @@
+import { Button } from "@/components/ui/button";
+import { faUpload } from "@fortawesome/pro-duotone-svg-icons";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import * as AvatarPrimitive from "@radix-ui/react-avatar";
 import * as React from "react";
+import { useRef } from "react";
+import { toast } from "sonner";
 
 import { cn } from "@/lib/utils";
 
@@ -46,3 +51,60 @@ const AvatarFallback = React.forwardRef<
 AvatarFallback.displayName = AvatarPrimitive.Fallback.displayName;
 
 export { Avatar, AvatarFallback, AvatarImage };
+
+export function ImageUploader({
+  callback,
+  successCallback,
+  iconText = "Change Avatar",
+}: {
+  callback: (file: File) => Promise<any>;
+  successCallback: (data: any) => string;
+  iconText?: string;
+}) {
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Handle file change event
+  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const files = event.target.files;
+    if (files && files.length > 0) {
+      const file = files[0];
+      toast.promise(callback(file), {
+        loading: "Uploading your image...",
+        success: successCallback,
+        error: "Failed to upload image.",
+      });
+    }
+  };
+
+  // Function to trigger file input
+  const handleClick = () => {
+    if (fileInputRef.current) {
+      // Check if the ref is not null
+      fileInputRef.current.click();
+    }
+  };
+
+  return (
+    <div>
+      <Button className="mr-2" size="sm" type="button" onClick={handleClick}>
+        <FontAwesomeIcon icon={faUpload} className="mr-2" />
+        {iconText}
+      </Button>
+      <Button size="sm" type="button" variant="outline">
+        Remove
+      </Button>
+      <div className="flex gap-x-2">
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept=".jpg, .gif, .png, .webp"
+          style={{ display: "none" }}
+          onChange={handleFileChange}
+        />
+        <p className="text-muted-foreground mt-2 text-xs leading-5">
+          JPG, GIF, WEBP or PNG. Max size 1MB.
+        </p>
+      </div>
+    </div>
+  );
+}

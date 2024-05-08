@@ -9,9 +9,9 @@ import {
 } from "date-fns";
 
 /**
- * Formats the given date string into the format "yyyy/MM/dd HH:mm".
+ * Formats the given date string into the user's timezone.
  * @param date - The date string to format.
- * @returns A string representing the date in "yyyy/MM/dd HH:mm" format.
+ * @returns A string representing the date in the user's timezone.
  */
 export function formatToUserTimezone(date: string): string {
   // Get the user timezone from state
@@ -32,13 +32,48 @@ export function formatToUserTimezone(date: string): string {
 }
 
 /**
- * Converts the given date string into a human-readable format relative to the current time.
- * @param date - The date string to convert.
- * @returns A string representing the date in a human-readable format relative to the current time.
+ * Formats the given date string into a human-readable format relative to now.
+ * @param date - The date string to format.
+ * @returns A string representing the date relative to now.
  */
-export function formatDateToHumanReadable(date: string): string {
-  const parsedDate = parseISO(date);
-  return formatDistanceToNow(parsedDate, { addSuffix: true });
+export function formatDateRelativeToNow(date: string): string {
+  const user = useUserStore.get("user");
+  const parsedDate = parseISO(date).toLocaleString("en-US", {
+    timeZone: user.timezone,
+  });
+
+  return formatDistanceToNow(parseISO(parsedDate), { addSuffix: true });
+}
+
+// Gets today's date in YYYY-MM-DD format
+export function getTodayDate() {
+  const date = new Date();
+  date.setUTCHours(0, 0, 0, 0); // Set to midnight UTC
+  return date.toISOString();
+}
+
+// Gets the date N days ago from today in YYYY-MM-DD format
+export function getDateNDaysAgo(days: number) {
+  const date = new Date();
+  date.setUTCHours(0, 0, 0, 0); // Set to midnight UTC
+  date.setUTCDate(date.getUTCDate() - days);
+  return date.toISOString();
+}
+
+// Converts ISO string into a date string in the format "M/DD"
+// Example: "2021-05-01T00:00:00.000Z" -> "May 1"
+export function getMonthDayString(date: string) {
+  return parseISO(date).toLocaleString("en-US", {
+    month: "short",
+    day: "numeric",
+  });
+}
+
+// takes two dates and get the days between them
+export function getDaysBetweenDates(date1: string, date2: string) {
+  const startDate = parseISO(date1);
+  const endDate = parseISO(date2);
+  return differenceInDays(endDate, startDate);
 }
 
 /**

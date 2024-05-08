@@ -35295,7 +35295,7 @@ type OrganizationMutation struct {
 	dot_number                       *string
 	logo_url                         *string
 	org_type                         *organization.OrgType
-	timezone                         *organization.Timezone
+	timezone                         *string
 	clearedFields                    map[string]struct{}
 	business_unit                    *uuid.UUID
 	clearedbusiness_unit             bool
@@ -35734,12 +35734,12 @@ func (m *OrganizationMutation) ResetOrgType() {
 }
 
 // SetTimezone sets the "timezone" field.
-func (m *OrganizationMutation) SetTimezone(o organization.Timezone) {
-	m.timezone = &o
+func (m *OrganizationMutation) SetTimezone(s string) {
+	m.timezone = &s
 }
 
 // Timezone returns the value of the "timezone" field in the mutation.
-func (m *OrganizationMutation) Timezone() (r organization.Timezone, exists bool) {
+func (m *OrganizationMutation) Timezone() (r string, exists bool) {
 	v := m.timezone
 	if v == nil {
 		return
@@ -35750,7 +35750,7 @@ func (m *OrganizationMutation) Timezone() (r organization.Timezone, exists bool)
 // OldTimezone returns the old "timezone" field's value of the Organization entity.
 // If the Organization object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *OrganizationMutation) OldTimezone(ctx context.Context) (v organization.Timezone, err error) {
+func (m *OrganizationMutation) OldTimezone(ctx context.Context) (v string, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldTimezone is only allowed on UpdateOne operations")
 	}
@@ -36436,7 +36436,7 @@ func (m *OrganizationMutation) SetField(name string, value ent.Value) error {
 		m.SetOrgType(v)
 		return nil
 	case organization.FieldTimezone:
-		v, ok := value.(organization.Timezone)
+		v, ok := value.(string)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
@@ -72297,6 +72297,7 @@ type WorkerMutation struct {
 	address_line_2           *string
 	city                     *string
 	postal_code              *string
+	external_id              *string
 	clearedFields            map[string]struct{}
 	business_unit            *uuid.UUID
 	clearedbusiness_unit     bool
@@ -73201,6 +73202,55 @@ func (m *WorkerMutation) ResetManagerID() {
 	delete(m.clearedFields, worker.FieldManagerID)
 }
 
+// SetExternalID sets the "external_id" field.
+func (m *WorkerMutation) SetExternalID(s string) {
+	m.external_id = &s
+}
+
+// ExternalID returns the value of the "external_id" field in the mutation.
+func (m *WorkerMutation) ExternalID() (r string, exists bool) {
+	v := m.external_id
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldExternalID returns the old "external_id" field's value of the Worker entity.
+// If the Worker object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *WorkerMutation) OldExternalID(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldExternalID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldExternalID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldExternalID: %w", err)
+	}
+	return oldValue.ExternalID, nil
+}
+
+// ClearExternalID clears the value of the "external_id" field.
+func (m *WorkerMutation) ClearExternalID() {
+	m.external_id = nil
+	m.clearedFields[worker.FieldExternalID] = struct{}{}
+}
+
+// ExternalIDCleared returns if the "external_id" field was cleared in this mutation.
+func (m *WorkerMutation) ExternalIDCleared() bool {
+	_, ok := m.clearedFields[worker.FieldExternalID]
+	return ok
+}
+
+// ResetExternalID resets all changes to the "external_id" field.
+func (m *WorkerMutation) ResetExternalID() {
+	m.external_id = nil
+	delete(m.clearedFields, worker.FieldExternalID)
+}
+
 // ClearBusinessUnit clears the "business_unit" edge to the BusinessUnit entity.
 func (m *WorkerMutation) ClearBusinessUnit() {
 	m.clearedbusiness_unit = true
@@ -73595,7 +73645,7 @@ func (m *WorkerMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *WorkerMutation) Fields() []string {
-	fields := make([]string, 0, 18)
+	fields := make([]string, 0, 19)
 	if m.business_unit != nil {
 		fields = append(fields, worker.FieldBusinessUnitID)
 	}
@@ -73650,6 +73700,9 @@ func (m *WorkerMutation) Fields() []string {
 	if m.manager != nil {
 		fields = append(fields, worker.FieldManagerID)
 	}
+	if m.external_id != nil {
+		fields = append(fields, worker.FieldExternalID)
+	}
 	return fields
 }
 
@@ -73694,6 +73747,8 @@ func (m *WorkerMutation) Field(name string) (ent.Value, bool) {
 		return m.FleetCodeID()
 	case worker.FieldManagerID:
 		return m.ManagerID()
+	case worker.FieldExternalID:
+		return m.ExternalID()
 	}
 	return nil, false
 }
@@ -73739,6 +73794,8 @@ func (m *WorkerMutation) OldField(ctx context.Context, name string) (ent.Value, 
 		return m.OldFleetCodeID(ctx)
 	case worker.FieldManagerID:
 		return m.OldManagerID(ctx)
+	case worker.FieldExternalID:
+		return m.OldExternalID(ctx)
 	}
 	return nil, fmt.Errorf("unknown Worker field %s", name)
 }
@@ -73874,6 +73931,13 @@ func (m *WorkerMutation) SetField(name string, value ent.Value) error {
 		}
 		m.SetManagerID(v)
 		return nil
+	case worker.FieldExternalID:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetExternalID(v)
+		return nil
 	}
 	return fmt.Errorf("unknown Worker field %s", name)
 }
@@ -73943,6 +74007,9 @@ func (m *WorkerMutation) ClearedFields() []string {
 	if m.FieldCleared(worker.FieldManagerID) {
 		fields = append(fields, worker.FieldManagerID)
 	}
+	if m.FieldCleared(worker.FieldExternalID) {
+		fields = append(fields, worker.FieldExternalID)
+	}
 	return fields
 }
 
@@ -73980,6 +74047,9 @@ func (m *WorkerMutation) ClearField(name string) error {
 		return nil
 	case worker.FieldManagerID:
 		m.ClearManagerID()
+		return nil
+	case worker.FieldExternalID:
+		m.ClearExternalID()
 		return nil
 	}
 	return fmt.Errorf("unknown Worker nullable field %s", name)
@@ -74042,6 +74112,9 @@ func (m *WorkerMutation) ResetField(name string) error {
 		return nil
 	case worker.FieldManagerID:
 		m.ResetManagerID()
+		return nil
+	case worker.FieldExternalID:
+		m.ResetExternalID()
 		return nil
 	}
 	return fmt.Errorf("unknown Worker field %s", name)

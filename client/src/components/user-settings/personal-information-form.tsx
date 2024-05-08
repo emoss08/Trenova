@@ -4,81 +4,21 @@ import { postUserProfilePicture } from "@/services/UserRequestService";
 import { useUserStore } from "@/stores/AuthStore";
 import type { QueryKeys, StatusChoiceProps } from "@/types";
 import type { User, UserFormValues } from "@/types/accounts";
-import { faUpload } from "@fortawesome/pro-duotone-svg-icons";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { yupResolver } from "@hookform/resolvers/yup";
 import { useQueryClient } from "@tanstack/react-query";
 import { Image } from "@unpic/react";
-import { useEffect, useRef } from "react";
+import { useEffect } from "react";
 import { useForm } from "react-hook-form";
-import { toast } from "sonner";
 import * as yup from "yup";
 import { InputField } from "../common/fields/input";
 import { SelectInput } from "../common/fields/select-input";
+import { ImageUploader } from "../ui/avatar";
 import { Button } from "../ui/button";
-
-function AvatarUploader() {
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  const [, setUserDetails] = useUserStore.use("user");
-  const queryClient = useQueryClient();
-
-  // Handle file change event
-  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const files = event.target.files;
-    if (files && files.length > 0) {
-      const file = files[0];
-      toast.promise(postUserProfilePicture(file), {
-        loading: "Uploading your profile picture...",
-        success: (data) => {
-          setUserDetails((prev) => ({
-            ...prev,
-            profilePicUrl: data.profilePicUrl,
-          }));
-          queryClient.invalidateQueries({
-            queryKey: ["currentUser"] as QueryKeys,
-          });
-          return "Profile picture uploaded successfully.";
-        },
-        error: "Failed to upload profile picture.",
-      });
-    }
-  };
-
-  // Function to trigger file input
-  const handleClick = () => {
-    if (fileInputRef.current) {
-      // Check if the ref is not null
-      fileInputRef.current.click();
-    }
-  };
-
-  return (
-    <div>
-      <Button className="mr-2" size="sm" type="button" onClick={handleClick}>
-        <FontAwesomeIcon icon={faUpload} className="mr-2" />
-        Change Avatar
-      </Button>
-      <Button size="sm" type="button" variant="outline">
-        Remove
-      </Button>
-      <div className="flex gap-x-2">
-        <input
-          ref={fileInputRef}
-          type="file"
-          accept=".jpg, .gif, .png"
-          style={{ display: "none" }}
-          onChange={handleFileChange}
-        />
-        <p className="mt-2 text-xs leading-5 text-muted-foreground">
-          JPG, GIF or PNG. Max size 1MB.
-        </p>
-      </div>
-    </div>
-  );
-}
 
 export default function PersonalInformation({ user }: { user: User }) {
   const avatarSrc = `https://avatar.vercel.sh/${user.email}`;
+  const [, setUserDetails] = useUserStore.use("user");
+  const queryClient = useQueryClient();
 
   const schema: yup.ObjectSchema<UserFormValues> = yup.object().shape({
     status: yup
@@ -130,7 +70,7 @@ export default function PersonalInformation({ user }: { user: User }) {
         <h2 className="shrink-0 text-sm" id="personal-information">
           Personal Information
         </h2>
-        <p className="text-xs text-muted-foreground">
+        <p className="text-muted-foreground text-xs">
           Update your personal information to keep your profile up-to-date.
         </p>
       </div>
@@ -141,11 +81,23 @@ export default function PersonalInformation({ user }: { user: User }) {
               src={user?.profilePicUrl || avatarSrc}
               layout="constrained"
               alt="User Avatar"
-              className="size-24 flex-none rounded-lg bg-muted-foreground object-cover"
+              className="bg-muted-foreground size-24 flex-none rounded-lg object-cover"
               width={96}
               height={96}
             />
-            <AvatarUploader />
+            <ImageUploader
+              callback={postUserProfilePicture}
+              successCallback={(data: any) => {
+                setUserDetails((prev) => ({
+                  ...prev,
+                  profilePicUrl: data.profilePicUrl,
+                }));
+                queryClient.invalidateQueries({
+                  queryKey: ["currentUser"] as QueryKeys,
+                });
+                return "Profile picture uploaded successfully.";
+              }}
+            />
           </div>
           <div className="sm:col-span-full">
             <InputField
@@ -179,7 +131,7 @@ export default function PersonalInformation({ user }: { user: User }) {
             />
           </div>
         </div>
-        <div className="mt-8 flex justify-end gap-x-2 border-border">
+        <div className="border-border mt-8 flex justify-end gap-x-2">
           <Button variant="outline" type="button">
             Cancel
           </Button>

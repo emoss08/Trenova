@@ -139,15 +139,15 @@ func (ou *OrganizationUpdate) SetNillableOrgType(ot *organization.OrgType) *Orga
 }
 
 // SetTimezone sets the "timezone" field.
-func (ou *OrganizationUpdate) SetTimezone(o organization.Timezone) *OrganizationUpdate {
-	ou.mutation.SetTimezone(o)
+func (ou *OrganizationUpdate) SetTimezone(s string) *OrganizationUpdate {
+	ou.mutation.SetTimezone(s)
 	return ou
 }
 
 // SetNillableTimezone sets the "timezone" field if the given value is not nil.
-func (ou *OrganizationUpdate) SetNillableTimezone(o *organization.Timezone) *OrganizationUpdate {
-	if o != nil {
-		ou.SetTimezone(*o)
+func (ou *OrganizationUpdate) SetNillableTimezone(s *string) *OrganizationUpdate {
+	if s != nil {
+		ou.SetTimezone(*s)
 	}
 	return ou
 }
@@ -523,11 +523,6 @@ func (ou *OrganizationUpdate) check() error {
 			return &ValidationError{Name: "org_type", err: fmt.Errorf(`ent: validator failed for field "Organization.org_type": %w`, err)}
 		}
 	}
-	if v, ok := ou.mutation.Timezone(); ok {
-		if err := organization.TimezoneValidator(v); err != nil {
-			return &ValidationError{Name: "timezone", err: fmt.Errorf(`ent: validator failed for field "Organization.timezone": %w`, err)}
-		}
-	}
 	if _, ok := ou.mutation.BusinessUnitID(); ou.mutation.BusinessUnitCleared() && !ok {
 		return errors.New(`ent: clearing a required unique edge "Organization.business_unit"`)
 	}
@@ -574,7 +569,7 @@ func (ou *OrganizationUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		_spec.SetField(organization.FieldOrgType, field.TypeEnum, value)
 	}
 	if value, ok := ou.mutation.Timezone(); ok {
-		_spec.SetField(organization.FieldTimezone, field.TypeEnum, value)
+		_spec.SetField(organization.FieldTimezone, field.TypeString, value)
 	}
 	if ou.mutation.BusinessUnitCleared() {
 		edge := &sqlgraph.EdgeSpec{
@@ -1075,15 +1070,15 @@ func (ouo *OrganizationUpdateOne) SetNillableOrgType(ot *organization.OrgType) *
 }
 
 // SetTimezone sets the "timezone" field.
-func (ouo *OrganizationUpdateOne) SetTimezone(o organization.Timezone) *OrganizationUpdateOne {
-	ouo.mutation.SetTimezone(o)
+func (ouo *OrganizationUpdateOne) SetTimezone(s string) *OrganizationUpdateOne {
+	ouo.mutation.SetTimezone(s)
 	return ouo
 }
 
 // SetNillableTimezone sets the "timezone" field if the given value is not nil.
-func (ouo *OrganizationUpdateOne) SetNillableTimezone(o *organization.Timezone) *OrganizationUpdateOne {
-	if o != nil {
-		ouo.SetTimezone(*o)
+func (ouo *OrganizationUpdateOne) SetNillableTimezone(s *string) *OrganizationUpdateOne {
+	if s != nil {
+		ouo.SetTimezone(*s)
 	}
 	return ouo
 }
@@ -1472,11 +1467,6 @@ func (ouo *OrganizationUpdateOne) check() error {
 			return &ValidationError{Name: "org_type", err: fmt.Errorf(`ent: validator failed for field "Organization.org_type": %w`, err)}
 		}
 	}
-	if v, ok := ouo.mutation.Timezone(); ok {
-		if err := organization.TimezoneValidator(v); err != nil {
-			return &ValidationError{Name: "timezone", err: fmt.Errorf(`ent: validator failed for field "Organization.timezone": %w`, err)}
-		}
-	}
 	if _, ok := ouo.mutation.BusinessUnitID(); ouo.mutation.BusinessUnitCleared() && !ok {
 		return errors.New(`ent: clearing a required unique edge "Organization.business_unit"`)
 	}
@@ -1540,7 +1530,7 @@ func (ouo *OrganizationUpdateOne) sqlSave(ctx context.Context) (_node *Organizat
 		_spec.SetField(organization.FieldOrgType, field.TypeEnum, value)
 	}
 	if value, ok := ouo.mutation.Timezone(); ok {
-		_spec.SetField(organization.FieldTimezone, field.TypeEnum, value)
+		_spec.SetField(organization.FieldTimezone, field.TypeString, value)
 	}
 	if ouo.mutation.BusinessUnitCleared() {
 		edge := &sqlgraph.EdgeSpec{

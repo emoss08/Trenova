@@ -828,7 +828,7 @@ var schemaGraph = func() *sqlgraph.Schema {
 			organization.FieldDotNumber:      {Type: field.TypeString, Column: organization.FieldDotNumber},
 			organization.FieldLogoURL:        {Type: field.TypeString, Column: organization.FieldLogoURL},
 			organization.FieldOrgType:        {Type: field.TypeEnum, Column: organization.FieldOrgType},
-			organization.FieldTimezone:       {Type: field.TypeEnum, Column: organization.FieldTimezone},
+			organization.FieldTimezone:       {Type: field.TypeString, Column: organization.FieldTimezone},
 		},
 	}
 	graph.Nodes[31] = &sqlgraph.Node{
@@ -1569,6 +1569,7 @@ var schemaGraph = func() *sqlgraph.Schema {
 			worker.FieldStateID:           {Type: field.TypeUUID, Column: worker.FieldStateID},
 			worker.FieldFleetCodeID:       {Type: field.TypeUUID, Column: worker.FieldFleetCodeID},
 			worker.FieldManagerID:         {Type: field.TypeUUID, Column: worker.FieldManagerID},
+			worker.FieldExternalID:        {Type: field.TypeString, Column: worker.FieldExternalID},
 		},
 	}
 	graph.Nodes[61] = &sqlgraph.Node{
@@ -13372,6 +13373,11 @@ func (f *WorkerFilter) WhereFleetCodeID(p entql.ValueP) {
 // WhereManagerID applies the entql [16]byte predicate on the manager_id field.
 func (f *WorkerFilter) WhereManagerID(p entql.ValueP) {
 	f.Where(p.Field(worker.FieldManagerID))
+}
+
+// WhereExternalID applies the entql string predicate on the external_id field.
+func (f *WorkerFilter) WhereExternalID(p entql.StringP) {
+	f.Where(p.Field(worker.FieldExternalID))
 }
 
 // WhereHasBusinessUnit applies a predicate to check if query has an edge business_unit.

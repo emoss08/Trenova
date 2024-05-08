@@ -6,6 +6,18 @@ import (
 	gen "github.com/emoss08/trenova/internal/ent"
 )
 
+// HandleVoidedShipment voide the shipment and reset the order.
+// If the shipment is voided then reset the order and mark the status as voided.
+//
+// Parameters:
+//
+//	ctx context.Context: The context object representing the incoming request.
+//	m *gen.ShipmentMutation: The shipment mutation object representing the shipment to be voided.
+//	client *gen.Client: The client object used to interact with the database.
+//
+// Returns:
+//
+//	error: An error if the shipment could not be voided, nil otherwise.
 func HandleVoidedShipment(
 	ctx context.Context, m *gen.ShipmentMutation, client *gen.Client,
 ) error {

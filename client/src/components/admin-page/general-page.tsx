@@ -1,28 +1,31 @@
 import { InputField } from "@/components/common/fields/input";
 import { SelectInput } from "@/components/common/fields/select-input";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { useCustomMutation } from "@/hooks/useCustomMutation";
 import { TIMEZONES } from "@/lib/timezone";
 import { organizationSchema } from "@/lib/validations/OrganizationSchema";
+import { postOrganizationLogo } from "@/services/OrganizationRequestService";
+import { QueryKeys } from "@/types";
 import type {
   Organization,
   OrganizationFormValues,
 } from "@/types/organization";
 import { yupResolver } from "@hookform/resolvers/yup";
+import { useQueryClient } from "@tanstack/react-query";
 import React from "react";
 import { useForm } from "react-hook-form";
 import { useTranslation } from "react-i18next";
+import {
+  Avatar,
+  AvatarFallback,
+  AvatarImage,
+  ImageUploader,
+} from "../ui/avatar";
 
 function OrganizationForm({ organization }: { organization: Organization }) {
   const [isSubmitting, setIsSubmitting] = React.useState<boolean>(false);
   const { t } = useTranslation(["admin.generalpage", "common"]);
-
-  // const {
-  //   selectUSStates,
-  //   isLoading: isStatesLoading,
-  //   isError: isStateError,
-  // } = useUSStates();
+  const queryClient = useQueryClient();
 
   const { control, handleSubmit, reset } = useForm<OrganizationFormValues>({
     resolver: yupResolver(organizationSchema),
@@ -39,7 +42,7 @@ function OrganizationForm({ organization }: { organization: Organization }) {
     control,
     {
       method: "PUT",
-      path: "/organization/",
+      path: `/organizations/${organization.id}`,
       successMessage: t("formSuccessMessage"),
       queryKeysToInvalidate: ["userOrganization"],
       errorMessage: t("formErrorMessage"),
@@ -57,16 +60,16 @@ function OrganizationForm({ organization }: { organization: Organization }) {
     <>
       <div className="grid grid-cols-1 gap-8 md:grid-cols-3">
         <div className="px-4 sm:px-0">
-          <h2 className="text-base font-semibold leading-7 text-foreground">
+          <h2 className="text-foreground text-base font-semibold leading-7">
             {t("organizationDetails")}
           </h2>
-          <p className="mt-1 text-sm leading-6 text-muted-foreground">
+          <p className="text-muted-foreground mt-1 text-sm leading-6">
             {t("organizationDetailsDescription")}
           </p>
         </div>
 
         <form
-          className="m-4 border border-border bg-card sm:rounded-xl md:col-span-2"
+          className="border-border bg-card m-4 border sm:rounded-xl md:col-span-2"
           onSubmit={handleSubmit(onSubmit)}
         >
           <div className="px-4 py-6 sm:p-8">
@@ -78,20 +81,16 @@ function OrganizationForm({ organization }: { organization: Organization }) {
                     {organization.scacCode}
                   </AvatarFallback>
                 </Avatar>
-                <div>
-                  <Button
-                    size="sm"
-                    type="button"
-                    onClick={(e) => {
-                      e.preventDefault();
-                    }}
-                  >
-                    {t("fields.logo.placeholder")}
-                  </Button>
-                  <p className="mt-2 text-xs leading-5 text-muted-foreground">
-                    {t("fields.logo.description")}
-                  </p>
-                </div>
+                <ImageUploader
+                  iconText="Change Logo"
+                  callback={postOrganizationLogo}
+                  successCallback={() => {
+                    queryClient.invalidateQueries({
+                      queryKey: ["userOrganization"] as QueryKeys,
+                    });
+                    return "Logo uploaded successfully.";
+                  }}
+                />
               </div>
               <div className="col-span-full">
                 <InputField
@@ -140,7 +139,7 @@ function OrganizationForm({ organization }: { organization: Organization }) {
                 />
               </div>
 
-              <div className="col-span-3">
+              <div className="col-span-full">
                 <SelectInput
                   name="timezone"
                   control={control}
@@ -153,7 +152,7 @@ function OrganizationForm({ organization }: { organization: Organization }) {
               </div>
             </div>
           </div>
-          <div className="flex items-center justify-end gap-x-4 border-t border-border p-4 sm:px-8">
+          <div className="border-border flex items-center justify-end gap-x-4 border-t p-4 sm:px-8">
             <Button
               onClick={(e) => {
                 e.preventDefault();
