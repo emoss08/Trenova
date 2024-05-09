@@ -974,6 +974,7 @@ var schemaGraph = func() *sqlgraph.Schema {
 			role.FieldVersion:        {Type: field.TypeInt, Column: role.FieldVersion},
 			role.FieldName:           {Type: field.TypeString, Column: role.FieldName},
 			role.FieldDescription:    {Type: field.TypeString, Column: role.FieldDescription},
+			role.FieldColor:          {Type: field.TypeString, Column: role.FieldColor},
 		},
 	}
 	graph.Nodes[38] = &sqlgraph.Node{
@@ -9601,6 +9602,11 @@ func (f *RoleFilter) WhereName(p entql.StringP) {
 // WhereDescription applies the entql string predicate on the description field.
 func (f *RoleFilter) WhereDescription(p entql.StringP) {
 	f.Where(p.Field(role.FieldDescription))
+}
+
+// WhereColor applies the entql string predicate on the color field.
+func (f *RoleFilter) WhereColor(p entql.StringP) {
+	f.Where(p.Field(role.FieldColor))
 }
 
 // WhereHasBusinessUnit applies a predicate to check if query has an edge business_unit.

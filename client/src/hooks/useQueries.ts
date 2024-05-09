@@ -934,7 +934,7 @@ export function useAuthenticatedUser() {
   return { data, isError, isLoading, isSuccess, isFetched };
 }
 
-export function useAnalytics(startDate: string, endDate: string) {
+export function useDailyShipmentCounts(startDate: string, endDate: string) {
   const { data, isError, isLoading, isSuccess, isFetched } = useQuery({
     queryKey: ["dailyShipmentCounts", startDate, endDate] as QueryKeyWithParams<
       "dailyShipmentCounts",
@@ -943,5 +943,16 @@ export function useAnalytics(startDate: string, endDate: string) {
     queryFn: async () => getDailyShipmentCounts(startDate, endDate),
   });
 
-  return { data, isError, isLoading, isSuccess, isFetched };
+  const formattedData = [
+    {
+      id: "total-shipments",
+      data:
+        data?.results?.map((item) => ({
+          x: item.day,
+          y: item.value,
+        })) ?? [],
+    },
+  ];
+
+  return { formattedData, data, isError, isLoading, isSuccess, isFetched };
 }

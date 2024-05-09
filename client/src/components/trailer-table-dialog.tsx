@@ -25,7 +25,6 @@ import {
 } from "@/types/equipment";
 import { type TableSheetProps } from "@/types/tables";
 import { yupResolver } from "@hookform/resolvers/yup";
-import { useState } from "react";
 import { useForm, type Control } from "react-hook-form";
 import { Form, FormControl, FormGroup } from "./ui/form";
 import { Separator } from "./ui/separator";
@@ -243,9 +242,7 @@ export function TrailerForm({
 }
 
 export function TrailerDialog({ onOpenChange, open }: TableSheetProps) {
-  const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
-
-  const { control, reset, handleSubmit } = useForm<FormValues>({
+  const { control, handleSubmit } = useForm<FormValues>({
     resolver: yupResolver(trailerSchema),
     defaultValues: {
       code: "",
@@ -265,25 +262,16 @@ export function TrailerDialog({ onOpenChange, open }: TableSheetProps) {
     },
   });
 
-  const mutation = useCustomMutation<FormValues>(
-    control,
-    {
-      method: "POST",
-      path: "/trailers/",
-      successMessage: "Trailer created successfully.",
-      queryKeysToInvalidate: ["trailer-table-data"],
-      additionalInvalidateQueries: ["trailers"],
-      closeModal: true,
-      errorMessage: "Failed to create new trailer.",
-    },
-    () => setIsSubmitting(false),
-    reset,
-  );
+  const mutation = useCustomMutation<FormValues>(control, {
+    method: "POST",
+    path: "/trailers/",
+    successMessage: "Trailer created successfully.",
+    queryKeysToInvalidate: "trailers",
+    closeModal: true,
+    errorMessage: "Failed to create new trailer.",
+  });
 
-  const onSubmit = (values: FormValues) => {
-    setIsSubmitting(true);
-    mutation.mutate(values);
-  };
+  const onSubmit = (values: FormValues) => mutation.mutate(values);
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
@@ -308,7 +296,11 @@ export function TrailerDialog({ onOpenChange, open }: TableSheetProps) {
             >
               Cancel
             </Button>
-            <Button type="submit" isLoading={isSubmitting} className="w-full">
+            <Button
+              type="submit"
+              isLoading={mutation.isPending}
+              className="w-full"
+            >
               Save
             </Button>
           </SheetFooter>

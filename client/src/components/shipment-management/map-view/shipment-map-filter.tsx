@@ -55,7 +55,7 @@ function Filter({ title, options, loading }: FilterOptions) {
   return (
     <Popover>
       <PopoverTrigger asChild>
-        <div className="flex items-center space-x-0.5 text-sm text-muted-foreground hover:cursor-pointer hover:text-foreground">
+        <div className="text-muted-foreground hover:text-foreground flex items-center space-x-0.5 text-sm hover:cursor-pointer">
           <span className="truncate">{title}</span>
           <FontAwesomeIcon icon={faChevronDown} className="size-2" />
         </div>

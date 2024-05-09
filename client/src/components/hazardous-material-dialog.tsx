@@ -12,7 +12,6 @@ import { hazardousMaterialSchema } from "@/lib/validations/CommoditiesSchema";
 import { type HazardousMaterialFormValues as FormValues } from "@/types/commodities";
 import { type TableSheetProps } from "@/types/tables";
 import { yupResolver } from "@hookform/resolvers/yup";
-import React from "react";
 import { Control, useForm } from "react-hook-form";
 import { useTranslation } from "react-i18next";
 import {
@@ -34,7 +33,6 @@ export function HazardousMaterialForm({
 }) {
   const { t } = useTranslation(["pages.hazardousmaterial", "common"]);
 
-  // TODO(WOLFRED): This needs a scrollarea for smaller screens.
   return (
     <Form>
       <FormGroup className="grid gap-6 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-2">
@@ -127,9 +125,7 @@ export function HazardousMaterialDialog({
 }: TableSheetProps) {
   const { t } = useTranslation(["pages.hazardousmaterial", "common"]);
 
-  const [isSubmitting, setIsSubmitting] = React.useState<boolean>(false);
-
-  const { control, reset, handleSubmit } = useForm<FormValues>({
+  const { control, handleSubmit } = useForm<FormValues>({
     resolver: yupResolver(hazardousMaterialSchema),
     defaultValues: {
       status: "A",
@@ -142,24 +138,16 @@ export function HazardousMaterialDialog({
     },
   });
 
-  const mutation = useCustomMutation<FormValues>(
-    control,
-    {
-      method: "POST",
-      path: "/hazardous-materials/",
-      successMessage: t("formSuccessMessage"),
-      queryKeysToInvalidate: ["hazardous-material-table-data"],
-      closeModal: true,
-      errorMessage: t("formErrorMessage"),
-    },
-    () => setIsSubmitting(false),
-    reset,
-  );
+  const mutation = useCustomMutation<FormValues>(control, {
+    method: "POST",
+    path: "/hazardous-materials/",
+    successMessage: t("formSuccessMessage"),
+    queryKeysToInvalidate: ["hazardous-material-table-data"],
+    closeModal: true,
+    errorMessage: t("formErrorMessage"),
+  });
 
-  const onSubmit = (values: FormValues) => {
-    setIsSubmitting(true);
-    mutation.mutate(values);
-  };
+  const onSubmit = (values: FormValues) => mutation.mutate(values);
 
   return (
     <Credenza open={open} onOpenChange={onOpenChange}>
@@ -177,7 +165,7 @@ export function HazardousMaterialDialog({
                   Cancel
                 </Button>
               </CredenzaClose>
-              <Button type="submit" isLoading={isSubmitting}>
+              <Button type="submit" isLoading={mutation.isPending}>
                 Save Changes
               </Button>
             </CredenzaFooter>

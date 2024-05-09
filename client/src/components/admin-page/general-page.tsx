@@ -12,7 +12,6 @@ import type {
 } from "@/types/organization";
 import { yupResolver } from "@hookform/resolvers/yup";
 import { useQueryClient } from "@tanstack/react-query";
-import React from "react";
 import { useForm } from "react-hook-form";
 import { useTranslation } from "react-i18next";
 import {
@@ -23,7 +22,6 @@ import {
 } from "../ui/avatar";
 
 function OrganizationForm({ organization }: { organization: Organization }) {
-  const [isSubmitting, setIsSubmitting] = React.useState<boolean>(false);
   const { t } = useTranslation(["admin.generalpage", "common"]);
   const queryClient = useQueryClient();
 
@@ -38,20 +36,15 @@ function OrganizationForm({ organization }: { organization: Organization }) {
     },
   });
 
-  const mutation = useCustomMutation<OrganizationFormValues>(
-    control,
-    {
-      method: "PUT",
-      path: `/organizations/${organization.id}`,
-      successMessage: t("formSuccessMessage"),
-      queryKeysToInvalidate: ["userOrganization"],
-      errorMessage: t("formErrorMessage"),
-    },
-    () => setIsSubmitting(false),
-  );
+  const mutation = useCustomMutation<OrganizationFormValues>(control, {
+    method: "PUT",
+    path: `/organizations/${organization.id}`,
+    successMessage: t("formSuccessMessage"),
+    queryKeysToInvalidate: "userOrganization",
+    errorMessage: t("formErrorMessage"),
+  });
 
   const onSubmit = (values: OrganizationFormValues) => {
-    setIsSubmitting(true);
     mutation.mutate(values);
     reset(values);
   };
@@ -159,11 +152,11 @@ function OrganizationForm({ organization }: { organization: Organization }) {
               }}
               type="button"
               variant="outline"
-              disabled={isSubmitting}
+              disabled={mutation.isPending}
             >
               {t("buttons.cancel", { ns: "common" })}
             </Button>
-            <Button type="submit" isLoading={isSubmitting}>
+            <Button type="submit" isLoading={mutation.isPending}>
               {t("buttons.save", { ns: "common" })}
             </Button>
           </div>

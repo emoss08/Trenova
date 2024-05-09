@@ -6,7 +6,9 @@ import (
 
 	"github.com/emoss08/trenova/internal/api"
 	"github.com/emoss08/trenova/internal/ent"
+	"github.com/emoss08/trenova/internal/ent/organization"
 	"github.com/emoss08/trenova/internal/ent/shipment"
+	"github.com/google/uuid"
 	"github.com/rs/zerolog"
 )
 
@@ -41,7 +43,9 @@ func NewAnalyticService(s *api.Server) *AnalyticService {
 // Returns:
 //   - []map[string]any: A slice of maps with day and count of new shipments for each day.
 //   - error: An error if the query fails.
-func (r *AnalyticService) GetDailyShipmentCounts(ctx context.Context, startDate, endDate time.Time) ([]map[string]any, error) {
+func (r *AnalyticService) GetDailyShipmentCounts(
+	ctx context.Context, startDate, endDate time.Time, orgID, buID uuid.UUID,
+) ([]map[string]any, int, error) {
 	// Define a struct to match the expected query output
 	type Result struct {
 		CreatedAt time.Time `json:"created_at"` // Ensure this matches the column name in the query
@@ -49,18 +53,31 @@ func (r *AnalyticService) GetDailyShipmentCounts(ctx context.Context, startDate,
 	}
 
 	var shipments []Result
-	if err := r.Client.Debug().Shipment.
+
+	query := r.Client.Shipment.
 		Query().
 		Where(
 			shipment.StatusEQ("New"),
 			shipment.CreatedAtGTE(startDate),
 			shipment.CreatedAtLTE(endDate),
-		).
+			shipment.HasOrganizationWith(
+				organization.IDEQ(orgID),
+				organization.BusinessUnitIDEQ(buID),
+			),
+		)
+
+	count, err := query.Count(ctx)
+	if err != nil {
+		r.Logger.Error().Err(err).Msg("Error getting daily shipment counts")
+		return nil, 0, err
+	}
+
+	if err := query.
 		GroupBy(shipment.FieldCreatedAt).
 		Aggregate(ent.Count()).
 		Scan(ctx, &shipments); err != nil {
 		r.Logger.Error().Err(err).Msg("Error getting daily shipment counts")
-		return nil, err
+		return nil, 0, err
 	}
 
 	// Process results into the desired format
@@ -72,5 +89,5 @@ func (r *AnalyticService) GetDailyShipmentCounts(ctx context.Context, startDate,
 		})
 	}
 
-	return results, nil
+	return results, count, nil
 }

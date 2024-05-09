@@ -80,6 +80,7 @@ export type QueryKey =
   | "workers"
   | "currentUser"
   | "dailyShipmentCounts"
+  | "shipmentCountByStatus"
   | "validateBOLNumber";
 
 export type QueryKeys = [QueryKey];

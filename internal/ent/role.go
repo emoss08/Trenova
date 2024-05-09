@@ -31,9 +31,11 @@ type Role struct {
 	// The current version of this entity.
 	Version int `json:"version" validate:"omitempty"`
 	// Name holds the value of the "name" field.
-	Name string `json:"name,omitempty"`
+	Name string `json:"name" validate:"required,max=50"`
 	// Description holds the value of the "description" field.
-	Description string `json:"description,omitempty"`
+	Description string `json:"description" validate:"omitempty"`
+	// Color holds the value of the "color" field.
+	Color string `json:"color" validate:"omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
 	// The values are being populated by the RoleQuery when eager-loading is set.
 	Edges        RoleEdges `json:"edges"`
@@ -104,7 +106,7 @@ func (*Role) scanValues(columns []string) ([]any, error) {
 		switch columns[i] {
 		case role.FieldVersion:
 			values[i] = new(sql.NullInt64)
-		case role.FieldName, role.FieldDescription:
+		case role.FieldName, role.FieldDescription, role.FieldColor:
 			values[i] = new(sql.NullString)
 		case role.FieldCreatedAt, role.FieldUpdatedAt:
 			values[i] = new(sql.NullTime)
@@ -172,6 +174,12 @@ func (r *Role) assignValues(columns []string, values []any) error {
 				return fmt.Errorf("unexpected type %T for field description", values[i])
 			} else if value.Valid {
 				r.Description = value.String
+			}
+		case role.FieldColor:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field color", values[i])
+			} else if value.Valid {
+				r.Color = value.String
 			}
 		default:
 			r.selectValues.Set(columns[i], values[i])
@@ -249,6 +257,9 @@ func (r *Role) String() string {
 	builder.WriteString(", ")
 	builder.WriteString("description=")
 	builder.WriteString(r.Description)
+	builder.WriteString(", ")
+	builder.WriteString("color=")
+	builder.WriteString(r.Color)
 	builder.WriteByte(')')
 	return builder.String()
 }

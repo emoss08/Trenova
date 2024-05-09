@@ -10,7 +10,6 @@ import { type TChoiceProps } from "@/types";
 import { type DivisionCodeFormValues as FormValues } from "@/types/accounting";
 import { type TableSheetProps } from "@/types/tables";
 import { yupResolver } from "@hookform/resolvers/yup";
-import React from "react";
 import { Control, useForm } from "react-hook-form";
 import {
   Credenza,
@@ -129,8 +128,7 @@ export function DCForm({
 }
 
 export function DivisionCodeDialog({ onOpenChange, open }: TableSheetProps) {
-  const [isSubmitting, setIsSubmitting] = React.useState<boolean>(false);
-  const { control, reset, handleSubmit } = useForm<FormValues>({
+  const { control, handleSubmit } = useForm<FormValues>({
     resolver: yupResolver(divisionCodeSchema),
     defaultValues: {
       status: "A",
@@ -142,22 +140,16 @@ export function DivisionCodeDialog({ onOpenChange, open }: TableSheetProps) {
     },
   });
 
-  const mutation = useCustomMutation<FormValues>(
-    control,
-    {
-      method: "POST",
-      path: "/division-codes/",
-      successMessage: "Division Code created successfully.",
-      queryKeysToInvalidate: ["division-code-table-data"],
-      closeModal: true,
-      errorMessage: "Failed to create new division code.",
-    },
-    () => setIsSubmitting(false),
-    reset,
-  );
+  const mutation = useCustomMutation<FormValues>(control, {
+    method: "POST",
+    path: "/division-codes/",
+    successMessage: "Division Code created successfully.",
+    queryKeysToInvalidate: ["division-code-table-data"],
+    closeModal: true,
+    errorMessage: "Failed to create new division code.",
+  });
 
   const onSubmit = (values: FormValues) => {
-    setIsSubmitting(true);
     mutation.mutate(values);
   };
 
@@ -186,7 +178,7 @@ export function DivisionCodeDialog({ onOpenChange, open }: TableSheetProps) {
                   Cancel
                 </Button>
               </CredenzaClose>
-              <Button type="submit" isLoading={isSubmitting}>
+              <Button type="submit" isLoading={mutation.isPending}>
                 Save Changes
               </Button>
             </CredenzaFooter>

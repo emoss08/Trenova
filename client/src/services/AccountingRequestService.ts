@@ -12,7 +12,7 @@ import {
  * @returns A promise that resolves to an array of division codes.
  */
 export async function getDivisionCodes(): Promise<DivisionCode[]> {
-  const response = await axios.get("/division_codes/", {
+  const response = await axios.get("/division-codes/", {
     params: {
       status: "A",
     },
@@ -26,7 +26,7 @@ export async function getDivisionCodes(): Promise<DivisionCode[]> {
  * @returns A promise that resolves to the division code's details.
  */
 export async function getDivisionCodeDetail(id: string): Promise<DivisionCode> {
-  const response = await axios.get(`/division_codes/${id}/`);
+  const response = await axios.get(`/division-codes/${id}/`);
   return response.data;
 }
 
@@ -44,7 +44,7 @@ export async function getGLAccounts(): Promise<GeneralLedgerAccount[]> {
 }
 
 export async function getRevenueCodes(): Promise<RevenueCode[]> {
-  const response = await axios.get("/revenue_codes/");
+  const response = await axios.get("/revenue-codes/");
   return response.data.results;
 }
 

@@ -5,7 +5,6 @@ import { hazardousClassChoices } from "@/lib/choices";
 import { useHazmatSegRulesForm } from "@/lib/validations/ShipmentSchema";
 import { type HazardousMaterialSegregationRuleFormValues as FormValues } from "@/types/shipment";
 import { type TableSheetProps } from "@/types/tables";
-import React from "react";
 import { FormProvider, useFormContext } from "react-hook-form";
 import {
   Credenza,
@@ -76,29 +75,19 @@ export function HazmatSegRulesForm() {
 }
 
 export function HazmatSegRulesDialog({ onOpenChange, open }: TableSheetProps) {
-  const [isSubmitting, setIsSubmitting] = React.useState<boolean>(false);
   const { hazmatSegRulesForm } = useHazmatSegRulesForm();
-  const { control, reset, handleSubmit } = hazmatSegRulesForm;
+  const { control, handleSubmit } = hazmatSegRulesForm;
 
-  const mutation = useCustomMutation<FormValues>(
-    control,
-    {
-      method: "POST",
-      path: "/hazardous-material-segregations/",
-      successMessage:
-        "Hazardous material segregation rule created successfully.",
-      queryKeysToInvalidate: ["hazardous-material-segregation-table-data"],
-      closeModal: true,
-      errorMessage: "Failed to create hazardous material segregation rule.",
-    },
-    () => setIsSubmitting(false),
-    reset,
-  );
+  const mutation = useCustomMutation<FormValues>(control, {
+    method: "POST",
+    path: "/hazardous-material-segregations/",
+    successMessage: "Hazardous material segregation rule created successfully.",
+    queryKeysToInvalidate: ["hazardous-material-segregation-table-data"],
+    closeModal: true,
+    errorMessage: "Failed to create hazardous material segregation rule.",
+  });
 
-  const onSubmit = (values: FormValues) => {
-    setIsSubmitting(true);
-    mutation.mutate(values);
-  };
+  const onSubmit = (values: FormValues) => mutation.mutate(values);
 
   return (
     <Credenza open={open} onOpenChange={onOpenChange}>
@@ -120,7 +109,7 @@ export function HazmatSegRulesDialog({ onOpenChange, open }: TableSheetProps) {
                     Cancel
                   </Button>
                 </CredenzaClose>
-                <Button type="submit" isLoading={isSubmitting}>
+                <Button type="submit" isLoading={mutation.isPending}>
                   Save Changes
                 </Button>
               </CredenzaFooter>

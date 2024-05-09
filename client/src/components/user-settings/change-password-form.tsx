@@ -1,6 +1,5 @@
 import { useCustomMutation } from "@/hooks/useCustomMutation";
 import { yupResolver } from "@hookform/resolvers/yup";
-import { useState } from "react";
 import { useForm } from "react-hook-form";
 import * as yup from "yup";
 import { PasswordField } from "../common/fields/input";
@@ -22,7 +21,6 @@ const checkPasswordRequirements = (password: string) => {
   };
 };
 export default function ChangePasswordForm() {
-  const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   type ChangePasswordFormValues = {
     oldPassword: string;
     newPassword: string;
@@ -42,34 +40,26 @@ export default function ChangePasswordForm() {
         .required("Please confirm your new password"),
     });
 
-  const { handleSubmit, control, reset, watch } =
-    useForm<ChangePasswordFormValues>({
-      resolver: yupResolver(schema),
-      defaultValues: {
-        oldPassword: "",
-        newPassword: "",
-        confirmPassword: "",
-      },
-    });
+  const { handleSubmit, control, watch } = useForm<ChangePasswordFormValues>({
+    resolver: yupResolver(schema),
+    defaultValues: {
+      oldPassword: "",
+      newPassword: "",
+      confirmPassword: "",
+    },
+  });
 
   const passwordRequirements = checkPasswordRequirements(watch("newPassword"));
 
-  const mutation = useCustomMutation<ChangePasswordFormValues>(
-    control,
-    {
-      method: "POST",
-      path: "/users/change-password",
-      successMessage: "Password updated successfully.",
-      errorMessage: "Failed to update password.",
-    },
-    () => setIsSubmitting(false),
-    reset,
-  );
+  const mutation = useCustomMutation<ChangePasswordFormValues>(control, {
+    method: "POST",
+    path: "/users/change-password",
+    successMessage: "Password updated successfully.",
+    errorMessage: "Failed to update password.",
+  });
 
-  const onSubmit = (values: ChangePasswordFormValues) => {
-    setIsSubmitting(true);
+  const onSubmit = (values: ChangePasswordFormValues) =>
     mutation.mutate(values);
-  };
 
   return (
     <>
@@ -77,7 +67,7 @@ export default function ChangePasswordForm() {
         <h2 className="text-sm" id="personal-information">
           Change Password
         </h2>
-        <p className="text-xs text-muted-foreground">
+        <p className="text-muted-foreground text-xs">
           Update your password to keep your account secure.
         </p>
       </div>
@@ -121,7 +111,7 @@ export default function ChangePasswordForm() {
             </div>
           </div>
           <div className="mt-8 flex">
-            <Button type="submit" isLoading={isSubmitting}>
+            <Button type="submit" isLoading={mutation.isPending}>
               Update Password
             </Button>
           </div>
@@ -130,10 +120,10 @@ export default function ChangePasswordForm() {
           <h3 className=" mb-2 text-base font-semibold">
             Password Recommendations
           </h3>
-          <p className="mb-2 text-xs font-normal text-muted-foreground">
+          <p className="text-muted-foreground mb-2 text-xs font-normal">
             Please follow this guide for a strong password:
           </p>
-          <ul className="ml-8 list-disc space-y-1 text-xs text-muted-foreground">
+          <ul className="text-muted-foreground ml-8 list-disc space-y-1 text-xs">
             <ul className="list-disc space-y-1 text-xs">
               <li
                 className={`${

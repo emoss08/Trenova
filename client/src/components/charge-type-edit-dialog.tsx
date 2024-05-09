@@ -9,9 +9,9 @@ import type {
 } from "@/types/billing";
 import { type TableSheetProps } from "@/types/tables";
 import { yupResolver } from "@hookform/resolvers/yup";
-import React from "react";
 import { useForm } from "react-hook-form";
 import { ChargeTypeForm } from "./charge-type-dialog";
+import { Badge } from "./ui/badge";
 import {
   Credenza,
   CredenzaBody,
@@ -24,29 +24,23 @@ import {
 } from "./ui/credenza";
 
 function ChargeTypeEditForm({ chargeType }: { chargeType: ChargeType }) {
-  const [isSubmitting, setIsSubmitting] = React.useState<boolean>(false);
   const { control, reset, handleSubmit } = useForm<FormValues>({
     resolver: yupResolver(chargeTypeSchema),
     defaultValues: chargeType,
   });
 
-  const mutation = useCustomMutation<FormValues>(
-    control,
-    {
-      method: "PUT",
-      path: `/charge-types/${chargeType.id}/`,
-      successMessage: "Charge Type updated successfully.",
-      queryKeysToInvalidate: ["charge-type-table-data"],
-      closeModal: true,
-      errorMessage: "Failed to create update charge type.",
-    },
-    () => setIsSubmitting(false),
-    reset,
-  );
+  const mutation = useCustomMutation<FormValues>(control, {
+    method: "PUT",
+    path: `/charge-types/${chargeType.id}/`,
+    successMessage: "Charge Type updated successfully.",
+    queryKeysToInvalidate: ["charge-type-table-data"],
+    closeModal: true,
+    errorMessage: "Failed to create update charge type.",
+  });
 
   const onSubmit = (values: FormValues) => {
-    setIsSubmitting(true);
     mutation.mutate(values);
+    reset(values);
   };
 
   return (
@@ -59,7 +53,7 @@ function ChargeTypeEditForm({ chargeType }: { chargeType: ChargeType }) {
               Cancel
             </Button>
           </CredenzaClose>
-          <Button type="submit" isLoading={isSubmitting}>
+          <Button type="submit" isLoading={mutation.isPending}>
             Save Changes
           </Button>
         </CredenzaFooter>
@@ -71,17 +65,23 @@ function ChargeTypeEditForm({ chargeType }: { chargeType: ChargeType }) {
 export function ChargeTypeEditSheet({ onOpenChange, open }: TableSheetProps) {
   const [chargeType] = useTableStore.use("currentRecord") as ChargeType[];
 
+  if (!chargeType) return null;
+
   return (
     <Credenza open={open} onOpenChange={onOpenChange}>
       <CredenzaContent>
         <CredenzaHeader>
-          <CredenzaTitle>{chargeType && chargeType.name}</CredenzaTitle>
+          <CredenzaTitle className="flex">
+            <span>{chargeType.name}</span>
+            <Badge className="ml-5" variant="purple">
+              {chargeType.id}
+            </Badge>
+          </CredenzaTitle>
         </CredenzaHeader>
         <CredenzaDescription>
-          Last updated on{" "}
-          {chargeType && formatToUserTimezone(chargeType.updatedAt)}
+          Last updated on {formatToUserTimezone(chargeType.updatedAt)}
         </CredenzaDescription>
-        {chargeType && <ChargeTypeEditForm chargeType={chargeType} />}
+        <ChargeTypeEditForm chargeType={chargeType} />
       </CredenzaContent>
     </Credenza>
   );

@@ -26,15 +26,15 @@ func NewAccessorialChargeHandler(s *api.Server) *AccessorialChargeHandler {
 
 func (h *AccessorialChargeHandler) RegisterRoutes(r fiber.Router) {
 	accessorialChargeAPI := r.Group("/accessorial-charges")
-	accessorialChargeAPI.Get("", h.GetAccessorialCharges())
-	accessorialChargeAPI.Post("", h.CreateAccessorialCharge())
-	accessorialChargeAPI.Put("/:accessorialChargeID", h.UpdateAccessorialCharge())
+	accessorialChargeAPI.Get("", h.getAccessorialCharges())
+	accessorialChargeAPI.Post("", h.createAccessorialCharge())
+	accessorialChargeAPI.Put("/:accessorialChargeID", h.updateAccessorialCharge())
 }
 
-// GetAccessorialCharges is a handler that returns a list of accessorial charges.
+// getAccessorialCharges is a handler that returns a list of accessorial charges.
 //
 // GET /accessorial-charges
-func (h *AccessorialChargeHandler) GetAccessorialCharges() fiber.Handler {
+func (h *AccessorialChargeHandler) getAccessorialCharges() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		orgID, ok := c.Locals(util.CTXOrganizationID).(uuid.UUID)
 		buID, buOK := c.Locals(util.CTXBusinessUnitID).(uuid.UUID)
@@ -93,10 +93,10 @@ func (h *AccessorialChargeHandler) GetAccessorialCharges() fiber.Handler {
 	}
 }
 
-// CreateAccessorialCharge is a handler that creates a new accessorial charge.
+// createAccessorialCharge is a handler that creates a new accessorial charge.
 //
 // POST /accessorial-charges
-func (h *AccessorialChargeHandler) CreateAccessorialCharge() fiber.Handler {
+func (h *AccessorialChargeHandler) createAccessorialCharge() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		newEntity := new(ent.AccessorialCharge)
 
@@ -128,7 +128,7 @@ func (h *AccessorialChargeHandler) CreateAccessorialCharge() fiber.Handler {
 		newEntity.BusinessUnitID = buID
 		newEntity.OrganizationID = orgID
 
-		if err := util.ParseBodyAndValidate(c, newEntity); err != nil {
+		if err = util.ParseBodyAndValidate(c, newEntity); err != nil {
 			return err
 		}
 
@@ -143,10 +143,10 @@ func (h *AccessorialChargeHandler) CreateAccessorialCharge() fiber.Handler {
 	}
 }
 
-// UpdateAccessorialCharge is a handler that updates an accessorial charge.
+// updateAccessorialCharge is a handler that updates an accessorial charge.
 //
 // PUT /accessorial-charges/:accessorialChargeID
-func (h *AccessorialChargeHandler) UpdateAccessorialCharge() fiber.Handler {
+func (h *AccessorialChargeHandler) updateAccessorialCharge() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		accessorialChargeID := c.Params("accessorialChargeID")
 		if accessorialChargeID == "" {
@@ -173,7 +173,7 @@ func (h *AccessorialChargeHandler) UpdateAccessorialCharge() fiber.Handler {
 
 		updatedEntity := new(ent.AccessorialCharge)
 
-		if err := util.ParseBodyAndValidate(c, updatedEntity); err != nil {
+		if err = util.ParseBodyAndValidate(c, updatedEntity); err != nil {
 			return err
 		}
 

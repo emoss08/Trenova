@@ -8,9 +8,9 @@ import type {
   HazardousMaterial,
 } from "@/types/commodities";
 import { yupResolver } from "@hookform/resolvers/yup";
-import React from "react";
 import { useForm } from "react-hook-form";
 import { HazardousMaterialForm } from "./hazardous-material-dialog";
+import { Badge } from "./ui/badge";
 import {
   Credenza,
   CredenzaBody,
@@ -27,31 +27,21 @@ function HazardousMaterialEditForm({
 }: {
   hazardousMaterial: HazardousMaterial;
 }) {
-  const [isSubmitting, setIsSubmitting] = React.useState<boolean>(false);
-
-  const { control, reset, handleSubmit } = useForm<FormValues>({
+  const { control, handleSubmit } = useForm<FormValues>({
     resolver: yupResolver(hazardousMaterialSchema),
     defaultValues: hazardousMaterial,
   });
 
-  const mutation = useCustomMutation<FormValues>(
-    control,
-    {
-      method: "PUT",
-      path: `/hazardous-materials/${hazardousMaterial.id}/`,
-      successMessage: "Hazardous Material updated successfully.",
-      queryKeysToInvalidate: ["hazardous-material-table-data"],
-      closeModal: true,
-      errorMessage: "Failed to update Hazardous Material.",
-    },
-    () => setIsSubmitting(false),
-    reset,
-  );
+  const mutation = useCustomMutation<FormValues>(control, {
+    method: "PUT",
+    path: `/hazardous-materials/${hazardousMaterial.id}/`,
+    successMessage: "Hazardous Material updated successfully.",
+    queryKeysToInvalidate: ["hazardous-material-table-data"],
+    closeModal: true,
+    errorMessage: "Failed to update Hazardous Material.",
+  });
 
-  const onSubmit = (values: FormValues) => {
-    setIsSubmitting(true);
-    mutation.mutate(values);
-  };
+  const onSubmit = (values: FormValues) => mutation.mutate(values);
 
   return (
     <CredenzaBody>
@@ -63,7 +53,7 @@ function HazardousMaterialEditForm({
               Cancel
             </Button>
           </CredenzaClose>
-          <Button type="submit" isLoading={isSubmitting}>
+          <Button type="submit" isLoading={mutation.isPending}>
             Save Changes
           </Button>
         </CredenzaFooter>
@@ -89,18 +79,17 @@ export function HazardousMaterialEditDialog({
     <Credenza open={open} onOpenChange={onOpenChange}>
       <CredenzaContent>
         <CredenzaHeader>
-          <CredenzaTitle>
-            {hazardousMaterial && hazardousMaterial.name}
+          <CredenzaTitle className="flex">
+            <span>{hazardousMaterial.name}</span>
+            <Badge className="ml-5" variant="purple">
+              {hazardousMaterial.id}
+            </Badge>
           </CredenzaTitle>
         </CredenzaHeader>
         <CredenzaDescription>
-          Last updated on&nbsp;
-          {hazardousMaterial &&
-            formatToUserTimezone(hazardousMaterial.updatedAt)}
+          Last updated on {formatToUserTimezone(hazardousMaterial.updatedAt)}
         </CredenzaDescription>
-        {hazardousMaterial && (
-          <HazardousMaterialEditForm hazardousMaterial={hazardousMaterial} />
-        )}
+        <HazardousMaterialEditForm hazardousMaterial={hazardousMaterial} />
       </CredenzaContent>
     </Credenza>
   );

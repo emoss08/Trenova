@@ -1,6 +1,6 @@
 import axios from "@/lib/axiosConfig";
 import { useTableStore } from "@/stores/TableStore";
-import type { QueryKeys, QueryKeyWithParams } from "@/types";
+import type { QueryKeys, ValuesOf } from "@/types";
 import { type APIError } from "@/types/server";
 import {
   QueryClient,
@@ -8,7 +8,7 @@ import {
   useQueryClient,
 } from "@tanstack/react-query";
 import { type AxiosResponse } from "axios";
-import type { Control, FieldValues, Path, UseFormReset } from "react-hook-form";
+import type { Control, FieldValues, Path } from "react-hook-form";
 import { toast } from "sonner";
 
 type DataProp = Record<string, unknown> | FormData;
@@ -16,26 +16,22 @@ type MutationOptions = {
   path: string;
   successMessage: string;
   errorMessage?: string;
-  queryKeysToInvalidate?: QueryKeys | QueryKeyWithParams<any, any>;
+  queryKeysToInvalidate?: ValuesOf<QueryKeys>;
   closeModal?: boolean;
   method: "POST" | "PUT" | "PATCH" | "DELETE";
-  additionalInvalidateQueries?: QueryKeys;
 };
 
 export function useCustomMutation<T extends FieldValues>(
   control: Control<T>,
   options: MutationOptions,
-  onMutationSettled?: () => void,
-  reset?: UseFormReset<T>,
 ) {
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: (data: DataProp) =>
       executeApiMethod(options.method, options.path, data),
-    onSuccess: () => handleSuccess(options, queryClient, reset),
+    onSuccess: () => handleSuccess(options, queryClient),
     onError: (error: Error) => handleError(error, control),
-    onSettled: onMutationSettled,
   });
 }
 
@@ -109,10 +105,9 @@ function sendFileData(
 
 const broadcastChannel = new BroadcastChannel("query-invalidation");
 
-async function handleSuccess<T extends FieldValues>(
+async function handleSuccess(
   options: MutationOptions,
   queryClient: QueryClient,
-  reset?: UseFormReset<T>,
 ) {
   const notifySuccess = () => {
     toast.success(options.successMessage);
@@ -137,9 +132,13 @@ async function handleSuccess<T extends FieldValues>(
     }
   };
 
-  // Invalidate the queries that are passed in
-  await invalidateQueries(options.queryKeysToInvalidate).then(notifySuccess);
-  await invalidateQueries(options.additionalInvalidateQueries);
+  if (options.queryKeysToInvalidate) {
+    await invalidateQueries([options.queryKeysToInvalidate]).then(
+      notifySuccess,
+    );
+  } else {
+    notifySuccess();
+  }
 
   // Close the sheet depending on the method. If the sheet is not open, this will do nothing.
   const sheetKey = options.method === "POST" ? "sheetOpen" : "editSheetOpen";
@@ -147,9 +146,6 @@ async function handleSuccess<T extends FieldValues>(
   if (options.closeModal) {
     useTableStore.set(sheetKey, false);
   }
-
-  // Reset the form if `reset` is passed
-  reset?.();
 }
 
 interface ErrorResponse {

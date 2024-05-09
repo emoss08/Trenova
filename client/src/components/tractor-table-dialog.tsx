@@ -26,7 +26,6 @@ import {
 } from "@/types/equipment";
 import { TableSheetProps } from "@/types/tables";
 import { yupResolver } from "@hookform/resolvers/yup";
-import { useState } from "react";
 import { useForm, type Control } from "react-hook-form";
 import { DatepickerField } from "./common/fields/date-picker";
 import { Form, FormControl, FormGroup } from "./ui/form";
@@ -259,9 +258,7 @@ export function TractorForm({
 }
 
 export function TractorDialog({ onOpenChange, open }: TableSheetProps) {
-  const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
-
-  const { control, reset, handleSubmit } = useForm<FormValues>({
+  const { control, handleSubmit } = useForm<FormValues>({
     resolver: yupResolver(tractorSchema),
     defaultValues: {
       status: "Available",
@@ -281,25 +278,17 @@ export function TractorDialog({ onOpenChange, open }: TableSheetProps) {
     },
   });
 
-  const mutation = useCustomMutation<FormValues>(
-    control,
-    {
-      method: "POST",
-      path: "/tractors/",
-      successMessage: "Tractor created successfully.",
-      queryKeysToInvalidate: ["tractor-table-data"],
-      additionalInvalidateQueries: ["tractors"],
-      closeModal: true,
-      errorMessage: "Failed to create new tractor.",
-    },
-    () => setIsSubmitting(false),
-    reset,
-  );
+  const mutation = useCustomMutation<FormValues>(control, {
+    method: "POST",
+    path: "/tractors/",
+    successMessage: "Tractor created successfully.",
+    queryKeysToInvalidate: "tractors",
+    closeModal: true,
+    errorMessage: "Failed to create new tractor.",
+  });
 
   const onSubmit = (values: FormValues) => {
     const cleanedValues = cleanObject(values);
-
-    setIsSubmitting(true);
     mutation.mutate(cleanedValues);
   };
 
@@ -326,7 +315,11 @@ export function TractorDialog({ onOpenChange, open }: TableSheetProps) {
             >
               Cancel
             </Button>
-            <Button type="submit" isLoading={isSubmitting} className="w-full">
+            <Button
+              type="submit"
+              isLoading={mutation.isPending}
+              className="w-full"
+            >
               Save
             </Button>
           </SheetFooter>

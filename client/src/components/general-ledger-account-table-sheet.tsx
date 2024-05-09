@@ -229,9 +229,7 @@ export function GeneralLedgerAccountTableSheet({
   onOpenChange,
   open,
 }: TableSheetProps) {
-  const [isSubmitting, setIsSubmitting] = React.useState<boolean>(false);
-
-  const { handleSubmit, control, getValues, setValue, reset } =
+  const { handleSubmit, control, getValues, setValue } =
     useForm<GLAccountFormValues>({
       resolver: yupResolver(glAccountSchema),
       defaultValues: {
@@ -251,25 +249,16 @@ export function GeneralLedgerAccountTableSheet({
       },
     });
 
-  const mutation = useCustomMutation<GLAccountFormValues>(
-    control,
-    {
-      method: "POST",
-      path: "/general-ledger-accounts/",
-      successMessage: "General Ledger Account created successfully.",
-      queryKeysToInvalidate: ["gl-account-table-data"],
-      additionalInvalidateQueries: ["glAccounts"],
-      closeModal: true,
-      errorMessage: "Failed to create new general ledger account.",
-    },
-    () => setIsSubmitting(false),
-    reset,
-  );
+  const mutation = useCustomMutation<GLAccountFormValues>(control, {
+    method: "POST",
+    path: "/general-ledger-accounts/",
+    successMessage: "General Ledger Account created successfully.",
+    queryKeysToInvalidate: ["glAccounts"],
+    closeModal: true,
+    errorMessage: "Failed to create new general ledger account.",
+  });
 
-  const onSubmit = (values: GLAccountFormValues) => {
-    setIsSubmitting(true);
-    mutation.mutate(values);
-  };
+  const onSubmit = (values: GLAccountFormValues) => mutation.mutate(values);
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
@@ -299,7 +288,11 @@ export function GeneralLedgerAccountTableSheet({
             >
               Cancel
             </Button>
-            <Button type="submit" isLoading={isSubmitting} className="w-full">
+            <Button
+              type="submit"
+              isLoading={mutation.isPending}
+              className="w-full"
+            >
               Save
             </Button>
           </SheetFooter>

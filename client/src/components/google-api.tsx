@@ -16,7 +16,6 @@ import type {
 import { faCircleInfo } from "@fortawesome/pro-duotone-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { yupResolver } from "@hookform/resolvers/yup";
-import React from "react";
 import { useForm } from "react-hook-form";
 import { Trans, useTranslation } from "react-i18next";
 import { ExternalLink } from "./ui/link";
@@ -68,35 +67,28 @@ function GoogleAPIAlert() {
 
 function GoogleApiForm({ googleApi }: { googleApi: GoogleAPIType }) {
   const { t } = useTranslation(["admin.googleapi", "common"]);
-  const [isSubmitting, setIsSubmitting] = React.useState<boolean>(false);
 
   const { control, handleSubmit, reset } = useForm<GoogleAPIFormValues>({
     resolver: yupResolver(googleAPISchema),
     defaultValues: googleApi,
   });
 
-  const mutation = useCustomMutation<GoogleAPIFormValues>(
-    control,
-    {
-      method: "PUT",
-      path: `/google-api/${googleApi.id}`, // Does not require an ID
-      successMessage: t("formSuccessMessage"),
-      queryKeysToInvalidate: ["googleAPI"],
-      errorMessage: t("formErrorMessage"),
-    },
-    () => setIsSubmitting(false),
-    reset,
-  );
+  const mutation = useCustomMutation<GoogleAPIFormValues>(control, {
+    method: "PUT",
+    path: `/google-api/${googleApi.id}`, // Does not require an ID
+    successMessage: t("formSuccessMessage"),
+    queryKeysToInvalidate: ["googleAPI"],
+    errorMessage: t("formErrorMessage"),
+  });
 
   const onSubmit = (values: GoogleAPIFormValues) => {
-    setIsSubmitting(true);
     mutation.mutate(values);
     reset(values);
   };
 
   return (
     <form
-      className="m-4 border border-border bg-card sm:rounded-xl md:col-span-2"
+      className="border-border bg-card m-4 border sm:rounded-xl md:col-span-2"
       onSubmit={handleSubmit(onSubmit)}
     >
       <div className="px-4 py-6 sm:p-8">
@@ -160,7 +152,7 @@ function GoogleApiForm({ googleApi }: { googleApi: GoogleAPIType }) {
           </div>
         </div>
       </div>
-      <div className="flex items-center justify-end gap-x-4 border-t border-muted p-4 sm:px-8">
+      <div className="border-muted flex items-center justify-end gap-x-4 border-t p-4 sm:px-8">
         <Button
           onClick={(e) => {
             e.preventDefault();
@@ -168,11 +160,11 @@ function GoogleApiForm({ googleApi }: { googleApi: GoogleAPIType }) {
           }}
           type="button"
           variant="ghost"
-          disabled={isSubmitting}
+          disabled={mutation.isPending}
         >
           {t("buttons.cancel", { ns: "common" })}
         </Button>
-        <Button type="submit" isLoading={isSubmitting}>
+        <Button type="submit" isLoading={mutation.isPending}>
           {t("buttons.save", { ns: "common" })}
         </Button>
       </div>
@@ -187,19 +179,19 @@ export default function GoogleApi() {
   return (
     <div className="grid grid-cols-1 gap-8 md:grid-cols-3">
       <div className="px-4 sm:px-0">
-        <h2 className="text-base font-semibold leading-7 text-foreground">
+        <h2 className="text-foreground text-base font-semibold leading-7">
           {t("title")}
         </h2>
-        <p className="mt-1 text-sm leading-6 text-muted-foreground">
+        <p className="text-muted-foreground mt-1 text-sm leading-6">
           {t("subTitle")}
         </p>
       </div>
       {isLoading ? (
-        <div className="m-4 bg-background ring-1 ring-muted sm:rounded-xl md:col-span-2">
+        <div className="bg-background ring-muted m-4 ring-1 sm:rounded-xl md:col-span-2">
           <Skeleton className="h-screen w-full" />
         </div>
       ) : isError ? (
-        <div className="m-4 bg-background p-8 ring-1 ring-muted sm:rounded-xl md:col-span-2">
+        <div className="bg-background ring-muted m-4 p-8 ring-1 sm:rounded-xl md:col-span-2">
           <ErrorLoadingData message="Failed to load Google API control." />
         </div>
       ) : (

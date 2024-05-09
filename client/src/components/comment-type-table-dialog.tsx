@@ -9,7 +9,6 @@ import { commentTypeSchema } from "@/lib/validations/DispatchSchema";
 import { type CommentTypeFormValues as FormValues } from "@/types/dispatch";
 import { type TableSheetProps } from "@/types/tables";
 import { yupResolver } from "@hookform/resolvers/yup";
-import React from "react";
 import { Control, useForm } from "react-hook-form";
 import {
   Credenza,
@@ -81,9 +80,7 @@ export function CommentTypeForm({ control }: { control: Control<FormValues> }) {
 }
 
 export function CommentTypeDialog({ onOpenChange, open }: TableSheetProps) {
-  const [isSubmitting, setIsSubmitting] = React.useState<boolean>(false);
-
-  const { control, reset, handleSubmit } = useForm<FormValues>({
+  const { control, handleSubmit } = useForm<FormValues>({
     resolver: yupResolver(commentTypeSchema),
     defaultValues: {
       status: "A",
@@ -93,22 +90,16 @@ export function CommentTypeDialog({ onOpenChange, open }: TableSheetProps) {
     },
   });
 
-  const mutation = useCustomMutation<FormValues>(
-    control,
-    {
-      method: "POST",
-      path: "/comment-types/",
-      successMessage: "Comment Type created successfully.",
-      queryKeysToInvalidate: ["comment-types-table-data"],
-      closeModal: true,
-      errorMessage: "Failed to create new comment type.",
-    },
-    () => setIsSubmitting(false),
-    reset,
-  );
+  const mutation = useCustomMutation<FormValues>(control, {
+    method: "POST",
+    path: "/comment-types/",
+    successMessage: "Comment Type created successfully.",
+    queryKeysToInvalidate: ["comment-types-table-data"],
+    closeModal: true,
+    errorMessage: "Failed to create new comment type.",
+  });
 
   const onSubmit = (values: FormValues) => {
-    setIsSubmitting(true);
     mutation.mutate(values);
   };
 
@@ -130,7 +121,7 @@ export function CommentTypeDialog({ onOpenChange, open }: TableSheetProps) {
                   Cancel
                 </Button>
               </CredenzaClose>
-              <Button type="submit" isLoading={isSubmitting}>
+              <Button type="submit" isLoading={mutation.isPending}>
                 Save Changes
               </Button>
             </CredenzaFooter>

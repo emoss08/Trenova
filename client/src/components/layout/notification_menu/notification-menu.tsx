@@ -1,20 +1,3 @@
-/*
- * COPYRIGHT(c) 2024 Trenova
- *
- * This file is part of Trenova.
- *
- * The Trenova software is licensed under the Business Source License 1.1. You are granted the right
- * to copy, modify, and redistribute the software, but only for non-production use or with a total
- * of less than three server instances. Starting from the Change Date (November 16, 2026), the
- * software will be made available under version 2 or later of the GNU General Public License.
- * If you use the software in violation of this license, your rights under the license will be
- * terminated automatically. The software is provided "as is," and the Licensor disclaims all
- * warranties and conditions. If you use this license's text or the "Business Source License" name
- * and trademark, you must comply with the Licensor's covenants, which include specifying the
- * Change License as the GPL Version 2.0 or a compatible license, specifying an Additional Use
- * Grant, and not modifying the license in any other way.
- */
-
 import { Notifications } from "@/components/layout/notification_menu/notification";
 import { Button } from "@/components/ui/button";
 import { InternalLink } from "@/components/ui/link";
@@ -38,8 +21,7 @@ import { createWebsocketManager } from "@/lib/websockets";
 import { useUserStore } from "@/stores/AuthStore";
 import { useHeaderStore } from "@/stores/HeaderStore";
 import { UserNotification } from "@/types/accounts";
-import { faBell } from "@fortawesome/pro-duotone-svg-icons";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { BellIcon } from "@radix-ui/react-icons";
 import { useQueryClient } from "@tanstack/react-query";
 import React, { useState } from "react";
 import { toast } from "sonner";
@@ -59,14 +41,14 @@ function NotificationButton({
             size="icon"
             variant="outline"
             aria-expanded={open}
-            className="relative size-8 border-muted-foreground/40 hover:border-muted-foreground/80"
+            className="border-muted-foreground/40 hover:border-muted-foreground/80 group relative size-8"
           >
-            <FontAwesomeIcon icon={faBell} className="size-5" />
+            <BellIcon className="text-muted-foreground group-hover:text-foreground size-5" />
             <span className="sr-only">Notifications</span>
             {userHasNotifications && (
               <span className="absolute -right-1 -top-1 flex size-2.5">
                 <span className="absolute inline-flex size-full animate-ping rounded-full bg-green-400 opacity-100"></span>
-                <span className="relative inline-flex size-2.5 rounded-full bg-green-600 ring-1 ring-background"></span>
+                <span className="ring-background relative inline-flex size-2.5 rounded-full bg-green-600 ring-1"></span>
               </span>
             )}
           </Button>
@@ -93,16 +75,16 @@ function NotificationContent({
   return (
     <>
       {notificationsLoading ? (
-        <div className="flex flex-col space-y-2 border-b border-accent px-4 py-2">
+        <div className="border-accent flex flex-col space-y-2 border-b px-4 py-2">
           <div className="flex items-center justify-between">
             <h4 className="font-medium leading-none">
               <Skeleton className="h-4 w-20" />
             </h4>
-            <span className="text-xs text-muted-foreground">
+            <span className="text-muted-foreground text-xs">
               <Skeleton className="h-4 w-20" />
             </span>
           </div>
-          <p className="text-sm text-muted-foreground">
+          <p className="text-muted-foreground text-sm">
             <Skeleton className="h-4 w-20" />
           </p>
         </div>
@@ -222,7 +204,7 @@ export function NotificationMenu() {
         </span>
       </PopoverTrigger>
       <PopoverContent
-        className="w-80 bg-popover p-3"
+        className="bg-popover w-80 p-3"
         sideOffset={10}
         alignOffset={-40}
         align="end"

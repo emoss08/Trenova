@@ -18,9 +18,9 @@ import type {
 } from "@/types/equipment";
 import { type TableSheetProps } from "@/types/tables";
 import { yupResolver } from "@hookform/resolvers/yup";
-import React from "react";
 import { useForm } from "react-hook-form";
 import { TrailerForm } from "./trailer-table-dialog";
+import { Badge } from "./ui/badge";
 
 function TrailerEditForm({
   trailer,
@@ -31,31 +31,22 @@ function TrailerEditForm({
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }) {
-  const [isSubmitting, setIsSubmitting] = React.useState<boolean>(false);
-
   const { control, handleSubmit } = useForm<FormValues>({
     resolver: yupResolver(trailerSchema),
     defaultValues: trailer,
   });
 
-  const mutation = useCustomMutation<FormValues>(
-    control,
-    {
-      method: "PUT",
-      path: `/trailers/${trailer.id}/`,
-      successMessage: "Trailer updated successfully.",
-      queryKeysToInvalidate: ["trailer-table-data"],
-      additionalInvalidateQueries: ["trailers"],
-      closeModal: true,
-      errorMessage: "Failed to update trailers.",
-    },
-    () => setIsSubmitting(false),
-  );
+  const mutation = useCustomMutation<FormValues>(control, {
+    method: "PUT",
+    path: `/trailers/${trailer.id}/`,
+    successMessage: "Trailer updated successfully.",
+    queryKeysToInvalidate: "trailers",
+    closeModal: true,
+    errorMessage: "Failed to update trailers.",
+  });
 
   const onSubmit = (values: FormValues) => {
     const cleanedValues = cleanObject(values);
-
-    setIsSubmitting(true);
     mutation.mutate(cleanedValues);
   };
 
@@ -74,7 +65,7 @@ function TrailerEditForm({
         >
           Cancel
         </Button>
-        <Button type="submit" isLoading={isSubmitting} className="w-full">
+        <Button type="submit" isLoading={mutation.isPending} className="w-full">
           Save Changes
         </Button>
       </SheetFooter>
@@ -93,18 +84,21 @@ export function TrailerEditDialog({ onOpenChange, open }: TableSheetProps) {
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent className={cn("w-full xl:w-1/2")}>
         <SheetHeader>
-          <SheetTitle>{trailer && trailer.code}</SheetTitle>
+          <SheetTitle className="flex">
+            <span>{trailer.code}</span>
+            <Badge className="ml-5" variant="purple">
+              {trailer.id}
+            </Badge>
+          </SheetTitle>
           <SheetDescription>
-            Last updated on {trailer && formatToUserTimezone(trailer.updatedAt)}
+            Last updated on {formatToUserTimezone(trailer.updatedAt)}
           </SheetDescription>
         </SheetHeader>
-        {trailer && (
-          <TrailerEditForm
-            trailer={trailer}
-            open={open}
-            onOpenChange={onOpenChange}
-          />
-        )}
+        <TrailerEditForm
+          trailer={trailer}
+          open={open}
+          onOpenChange={onOpenChange}
+        />
       </SheetContent>
     </Sheet>
   );

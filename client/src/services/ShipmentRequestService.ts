@@ -67,7 +67,7 @@ export async function getNextProNumber(): Promise<string> {
  * @returns A promise that resolves to a FormulaTemplate object.
  */
 export async function getFormulaTemplates(): Promise<FormulaTemplate[]> {
-  const response = await axios.get("/formula_templates/");
+  const response = await axios.get("/formula-templates/");
   return response.data.results;
 }
 
@@ -76,7 +76,7 @@ export async function getFormulaTemplates(): Promise<FormulaTemplate[]> {
  * @returns A promise that resolves to a ServiceType object.
  */
 export async function getServiceTypes(): Promise<ServiceType[]> {
-  const response = await axios.get("/service_types/");
+  const response = await axios.get("/service-types/");
   return response.data.results;
 }
 
@@ -101,7 +101,7 @@ export async function validateBOLNumber(
  * @returns A promise that resolves to an array of shipment types.
  */
 export async function getShipmentTypes(): Promise<ReadonlyArray<ShipmentType>> {
-  const response = await axios.get("/shipment_types/");
+  const response = await axios.get("/shipment-types/");
   return response.data.results;
 }
 
@@ -113,6 +113,6 @@ export async function getShipmentTypes(): Promise<ReadonlyArray<ShipmentType>> {
 export async function getHazardousSegregationRules(): Promise<
   ReadonlyArray<HazardousMaterialSegregationRule>
 > {
-  const response = await axios.get("/hazardous_material_segregation_rules/");
+  const response = await axios.get("/hazardous-material-segregations/");
   return response.data.results;
 }

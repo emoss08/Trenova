@@ -47,7 +47,7 @@ const columns: ColumnDef<DocumentClassification>[] = [
     cell: ({ row }) => {
       if (row.original.color) {
         return (
-          <div className="flex items-center space-x-2 text-sm font-medium text-foreground">
+          <div className="text-foreground flex items-center space-x-2 text-sm font-medium">
             <div
               className={"mx-2 size-2 rounded-xl"}
               style={{ backgroundColor: row.original.color }}
@@ -74,7 +74,7 @@ export default function DocumentClassificationPage() {
       link="/document-classifications/"
       name="Document Class."
       exportModelName="document_classifications"
-      filterColumn="name"
+      filterColumn="code"
       TableSheet={DocumentClassDialog}
       TableEditSheet={DocumentClassEditDialog}
       addPermissionName="documentclassification.add"

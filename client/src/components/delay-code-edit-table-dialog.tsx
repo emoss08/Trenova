@@ -5,9 +5,9 @@ import { delayCodeSchema } from "@/lib/validations/DispatchSchema";
 import { useTableStore } from "@/stores/TableStore";
 import type { DelayCode, DelayCodeFormValues } from "@/types/dispatch";
 import { yupResolver } from "@hookform/resolvers/yup";
-import React from "react";
 import { useForm } from "react-hook-form";
 import { DelayCodeForm } from "./delay-code-table-dialog";
+import { Badge } from "./ui/badge";
 import {
   Credenza,
   CredenzaBody,
@@ -20,29 +20,21 @@ import {
 } from "./ui/credenza";
 
 function DelayCodeEditForm({ delayCode }: { delayCode: DelayCode }) {
-  const [isSubmitting, setIsSubmitting] = React.useState<boolean>();
-
-  const { control, reset, handleSubmit } = useForm<DelayCodeFormValues>({
+  const { control, handleSubmit } = useForm<DelayCodeFormValues>({
     resolver: yupResolver(delayCodeSchema),
     defaultValues: delayCode,
   });
 
-  const mutation = useCustomMutation<DelayCodeFormValues>(
-    control,
-    {
-      method: "PUT",
-      path: `/delay-codes/${delayCode.id}/`,
-      successMessage: "Delay Code updated successfully.",
-      queryKeysToInvalidate: ["delay-code-table-data"],
-      closeModal: true,
-      errorMessage: "Failed to update new delay code.",
-    },
-    () => setIsSubmitting(false),
-    reset,
-  );
+  const mutation = useCustomMutation<DelayCodeFormValues>(control, {
+    method: "PUT",
+    path: `/delay-codes/${delayCode.id}/`,
+    successMessage: "Delay Code updated successfully.",
+    queryKeysToInvalidate: ["delay-code-table-data"],
+    closeModal: true,
+    errorMessage: "Failed to update new delay code.",
+  });
 
   const onSubmit = (values: DelayCodeFormValues) => {
-    setIsSubmitting(true);
     mutation.mutate(values);
   };
 
@@ -56,7 +48,7 @@ function DelayCodeEditForm({ delayCode }: { delayCode: DelayCode }) {
               Cancel
             </Button>
           </CredenzaClose>
-          <Button type="submit" isLoading={isSubmitting}>
+          <Button type="submit" isLoading={mutation.isPending}>
             Save Changes
           </Button>
         </CredenzaFooter>
@@ -80,13 +72,17 @@ export function DelayCodeEditDialog({
     <Credenza open={open} onOpenChange={onOpenChange}>
       <CredenzaContent>
         <CredenzaHeader>
-          <CredenzaTitle>{delayCode && delayCode.code}</CredenzaTitle>
+          <CredenzaTitle className="flex">
+            <span>{delayCode.code}</span>
+            <Badge className="ml-5" variant="purple">
+              {delayCode.id}
+            </Badge>
+          </CredenzaTitle>
         </CredenzaHeader>
         <CredenzaDescription>
-          Last updated on&nbsp;
-          {delayCode && formatToUserTimezone(delayCode.updatedAt)}
+          Last updated on {formatToUserTimezone(delayCode.updatedAt)}
         </CredenzaDescription>
-        {delayCode && <DelayCodeEditForm delayCode={delayCode} />}
+        <DelayCodeEditForm delayCode={delayCode} />
       </CredenzaContent>
     </Credenza>
   );

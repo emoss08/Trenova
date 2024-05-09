@@ -38,7 +38,6 @@ import { tableChangeAlertSchema } from "@/lib/validations/OrganizationSchema";
 import { type TableChangeAlertFormValues as FormValues } from "@/types/organization";
 import { type TableSheetProps } from "@/types/tables";
 import { yupResolver } from "@hookform/resolvers/yup";
-import { useState } from "react";
 import { UseFormWatch, useForm, type Control } from "react-hook-form";
 import { useTranslation } from "react-i18next";
 import { InputField } from "./common/fields/input";
@@ -221,9 +220,8 @@ export function TableChangeAlertForm({
 
 export function TableChangeAlertSheet({ onOpenChange, open }: TableSheetProps) {
   const { t } = useTranslation(["admin.tablechangealert", "common"]);
-  const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
 
-  const { control, reset, handleSubmit, watch } = useForm<FormValues>({
+  const { control, handleSubmit, watch } = useForm<FormValues>({
     resolver: yupResolver(tableChangeAlertSchema),
     defaultValues: {
       status: "A",
@@ -242,24 +240,16 @@ export function TableChangeAlertSheet({ onOpenChange, open }: TableSheetProps) {
     },
   });
 
-  const mutation = useCustomMutation<FormValues>(
-    control,
-    {
-      method: "POST",
-      path: "/table-change-alerts/",
-      successMessage: t("formMessages.postSuccess"),
-      queryKeysToInvalidate: ["table-change-alert-data"],
-      closeModal: true,
-      errorMessage: t("formMessages.postError"),
-    },
-    () => setIsSubmitting(false),
-  );
+  const mutation = useCustomMutation<FormValues>(control, {
+    method: "POST",
+    path: "/table-change-alerts/",
+    successMessage: t("formMessages.postSuccess"),
+    queryKeysToInvalidate: "tableChangeAlerts",
+    closeModal: true,
+    errorMessage: t("formMessages.postError"),
+  });
 
-  const onSubmit = (values: FormValues) => {
-    setIsSubmitting(true);
-    mutation.mutate(values);
-    reset(values);
-  };
+  const onSubmit = (values: FormValues) => mutation.mutate(values);
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
@@ -282,7 +272,11 @@ export function TableChangeAlertSheet({ onOpenChange, open }: TableSheetProps) {
             >
               {t("buttons.cancel", { ns: "common" })}
             </Button>
-            <Button type="submit" isLoading={isSubmitting} className="w-full">
+            <Button
+              type="submit"
+              isLoading={mutation.isPending}
+              className="w-full"
+            >
               {t("buttons.save", { ns: "common" })}
             </Button>
           </SheetFooter>

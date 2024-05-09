@@ -42163,6 +42163,7 @@ type RoleMutation struct {
 	addversion           *int
 	name                 *string
 	description          *string
+	color                *string
 	clearedFields        map[string]struct{}
 	business_unit        *uuid.UUID
 	clearedbusiness_unit bool
@@ -42568,6 +42569,55 @@ func (m *RoleMutation) ResetDescription() {
 	delete(m.clearedFields, role.FieldDescription)
 }
 
+// SetColor sets the "color" field.
+func (m *RoleMutation) SetColor(s string) {
+	m.color = &s
+}
+
+// Color returns the value of the "color" field in the mutation.
+func (m *RoleMutation) Color() (r string, exists bool) {
+	v := m.color
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldColor returns the old "color" field's value of the Role entity.
+// If the Role object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *RoleMutation) OldColor(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldColor is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldColor requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldColor: %w", err)
+	}
+	return oldValue.Color, nil
+}
+
+// ClearColor clears the value of the "color" field.
+func (m *RoleMutation) ClearColor() {
+	m.color = nil
+	m.clearedFields[role.FieldColor] = struct{}{}
+}
+
+// ColorCleared returns if the "color" field was cleared in this mutation.
+func (m *RoleMutation) ColorCleared() bool {
+	_, ok := m.clearedFields[role.FieldColor]
+	return ok
+}
+
+// ResetColor resets all changes to the "color" field.
+func (m *RoleMutation) ResetColor() {
+	m.color = nil
+	delete(m.clearedFields, role.FieldColor)
+}
+
 // ClearBusinessUnit clears the "business_unit" edge to the BusinessUnit entity.
 func (m *RoleMutation) ClearBusinessUnit() {
 	m.clearedbusiness_unit = true
@@ -42764,7 +42814,7 @@ func (m *RoleMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *RoleMutation) Fields() []string {
-	fields := make([]string, 0, 7)
+	fields := make([]string, 0, 8)
 	if m.business_unit != nil {
 		fields = append(fields, role.FieldBusinessUnitID)
 	}
@@ -42785,6 +42835,9 @@ func (m *RoleMutation) Fields() []string {
 	}
 	if m.description != nil {
 		fields = append(fields, role.FieldDescription)
+	}
+	if m.color != nil {
+		fields = append(fields, role.FieldColor)
 	}
 	return fields
 }
@@ -42808,6 +42861,8 @@ func (m *RoleMutation) Field(name string) (ent.Value, bool) {
 		return m.Name()
 	case role.FieldDescription:
 		return m.Description()
+	case role.FieldColor:
+		return m.Color()
 	}
 	return nil, false
 }
@@ -42831,6 +42886,8 @@ func (m *RoleMutation) OldField(ctx context.Context, name string) (ent.Value, er
 		return m.OldName(ctx)
 	case role.FieldDescription:
 		return m.OldDescription(ctx)
+	case role.FieldColor:
+		return m.OldColor(ctx)
 	}
 	return nil, fmt.Errorf("unknown Role field %s", name)
 }
@@ -42889,6 +42946,13 @@ func (m *RoleMutation) SetField(name string, value ent.Value) error {
 		}
 		m.SetDescription(v)
 		return nil
+	case role.FieldColor:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetColor(v)
+		return nil
 	}
 	return fmt.Errorf("unknown Role field %s", name)
 }
@@ -42937,6 +43001,9 @@ func (m *RoleMutation) ClearedFields() []string {
 	if m.FieldCleared(role.FieldDescription) {
 		fields = append(fields, role.FieldDescription)
 	}
+	if m.FieldCleared(role.FieldColor) {
+		fields = append(fields, role.FieldColor)
+	}
 	return fields
 }
 
@@ -42953,6 +43020,9 @@ func (m *RoleMutation) ClearField(name string) error {
 	switch name {
 	case role.FieldDescription:
 		m.ClearDescription()
+		return nil
+	case role.FieldColor:
+		m.ClearColor()
 		return nil
 	}
 	return fmt.Errorf("unknown Role nullable field %s", name)
@@ -42982,6 +43052,9 @@ func (m *RoleMutation) ResetField(name string) error {
 		return nil
 	case role.FieldDescription:
 		m.ResetDescription()
+		return nil
+	case role.FieldColor:
+		m.ResetColor()
 		return nil
 	}
 	return fmt.Errorf("unknown Role field %s", name)

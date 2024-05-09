@@ -13,7 +13,7 @@ import { commoditySchema } from "@/lib/validations/CommoditiesSchema";
 import { type CommodityFormValues as FormValues } from "@/types/commodities";
 import { type TableSheetProps } from "@/types/tables";
 import { yupResolver } from "@hookform/resolvers/yup";
-import React, { useEffect } from "react";
+import { useEffect } from "react";
 import { Control, useForm } from "react-hook-form";
 import {
   Credenza,
@@ -138,23 +138,19 @@ export function CommodityForm({
 }
 
 export function CommodityDialog({ onOpenChange, open }: TableSheetProps) {
-  const [isSubmitting, setIsSubmitting] = React.useState<boolean>(false);
-
-  const { control, reset, handleSubmit, watch, setValue } = useForm<FormValues>(
-    {
-      resolver: yupResolver(commoditySchema),
-      defaultValues: {
-        status: "A",
-        name: "",
-        description: undefined,
-        minTemp: undefined,
-        maxTemp: undefined,
-        unitOfMeasure: undefined,
-        hazardousMaterialId: null,
-        isHazmat: false,
-      },
+  const { control, handleSubmit, watch, setValue } = useForm<FormValues>({
+    resolver: yupResolver(commoditySchema),
+    defaultValues: {
+      status: "A",
+      name: "",
+      description: undefined,
+      minTemp: undefined,
+      maxTemp: undefined,
+      unitOfMeasure: undefined,
+      hazardousMaterialId: null,
+      isHazmat: false,
     },
-  );
+  });
 
   useEffect(() => {
     const subscription = watch((value, { name }) => {
@@ -168,22 +164,16 @@ export function CommodityDialog({ onOpenChange, open }: TableSheetProps) {
     return () => subscription.unsubscribe();
   }, [watch, setValue]);
 
-  const mutation = useCustomMutation<FormValues>(
-    control,
-    {
-      method: "POST",
-      path: "/commodities/",
-      successMessage: "Commodity created successfully.",
-      queryKeysToInvalidate: ["commodity-table-data"],
-      closeModal: true,
-      errorMessage: "Failed to create new commodity.",
-    },
-    () => setIsSubmitting(false),
-    reset,
-  );
+  const mutation = useCustomMutation<FormValues>(control, {
+    method: "POST",
+    path: "/commodities/",
+    successMessage: "Commodity created successfully.",
+    queryKeysToInvalidate: ["commodity-table-data"],
+    closeModal: true,
+    errorMessage: "Failed to create new commodity.",
+  });
 
   const onSubmit = (values: FormValues) => {
-    setIsSubmitting(true);
     mutation.mutate(values);
   };
 
@@ -205,7 +195,7 @@ export function CommodityDialog({ onOpenChange, open }: TableSheetProps) {
                   Cancel
                 </Button>
               </CredenzaClose>
-              <Button type="submit" isLoading={isSubmitting}>
+              <Button type="submit" isLoading={mutation.isPending}>
                 Save Changes
               </Button>
             </CredenzaFooter>

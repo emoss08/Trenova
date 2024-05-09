@@ -23,12 +23,11 @@ import { getColumns } from "@/services/ReportRequestService";
 import { TableStoreProps, useTableStore as store } from "@/stores/TableStore";
 import { IChoiceProps } from "@/types";
 import { DeliveryMethodChoices, TExportModelFormValues } from "@/types/forms";
-import { faEllipsisVertical } from "@fortawesome/pro-duotone-svg-icons";
 import { faDownload, faEnvelope } from "@fortawesome/pro-regular-svg-icons";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { yupResolver } from "@hookform/resolvers/yup";
 import { DialogTitle } from "@radix-ui/react-dialog";
 import { useQuery } from "@tanstack/react-query";
+import { EllipsisVerticalIcon } from "lucide-react";
 import React, { useEffect } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { toast } from "sonner";
@@ -236,7 +235,7 @@ function TableExportModalBody({
             </RadioGroup>
           )}
         />
-        <p className="mt-1 text-xs text-foreground/70">
+        <p className="text-foreground/70 mt-1 text-xs">
           Select a format to export (CSV, Excel, or PDF).
         </p>
       </div>
@@ -300,10 +299,7 @@ export function DataTableImportExportOption() {
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <Button size="sm" variant="outline" className="h-8 lg:flex">
-            <FontAwesomeIcon
-              icon={faEllipsisVertical}
-              className="mr-1 size-4"
-            />
+            <EllipsisVerticalIcon className="mr-1 mt-0.5 size-4" />
             Options
           </Button>
         </DropdownMenuTrigger>

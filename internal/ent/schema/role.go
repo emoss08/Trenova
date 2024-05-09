@@ -15,9 +15,15 @@ type Role struct {
 func (Role) Fields() []ent.Field {
 	return []ent.Field{
 		field.String("name").
-			NotEmpty(),
+			NotEmpty().
+			MaxLen(50).
+			StructTag(`json:"name" validate:"required,max=50"`),
 		field.String("description").
-			Optional(),
+			Optional().
+			StructTag(`json:"description" validate:"omitempty"`),
+		field.String("color").
+			Optional().
+			StructTag(`json:"color" validate:"omitempty"`),
 	}
 }
 

@@ -93,6 +93,26 @@ func (ru *RoleUpdate) ClearDescription() *RoleUpdate {
 	return ru
 }
 
+// SetColor sets the "color" field.
+func (ru *RoleUpdate) SetColor(s string) *RoleUpdate {
+	ru.mutation.SetColor(s)
+	return ru
+}
+
+// SetNillableColor sets the "color" field if the given value is not nil.
+func (ru *RoleUpdate) SetNillableColor(s *string) *RoleUpdate {
+	if s != nil {
+		ru.SetColor(*s)
+	}
+	return ru
+}
+
+// ClearColor clears the value of the "color" field.
+func (ru *RoleUpdate) ClearColor() *RoleUpdate {
+	ru.mutation.ClearColor()
+	return ru
+}
+
 // AddPermissionIDs adds the "permissions" edge to the Permission entity by IDs.
 func (ru *RoleUpdate) AddPermissionIDs(ids ...uuid.UUID) *RoleUpdate {
 	ru.mutation.AddPermissionIDs(ids...)
@@ -257,6 +277,12 @@ func (ru *RoleUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	}
 	if ru.mutation.DescriptionCleared() {
 		_spec.ClearField(role.FieldDescription, field.TypeString)
+	}
+	if value, ok := ru.mutation.Color(); ok {
+		_spec.SetField(role.FieldColor, field.TypeString, value)
+	}
+	if ru.mutation.ColorCleared() {
+		_spec.ClearField(role.FieldColor, field.TypeString)
 	}
 	if ru.mutation.PermissionsCleared() {
 		edge := &sqlgraph.EdgeSpec{
@@ -428,6 +454,26 @@ func (ruo *RoleUpdateOne) SetNillableDescription(s *string) *RoleUpdateOne {
 // ClearDescription clears the value of the "description" field.
 func (ruo *RoleUpdateOne) ClearDescription() *RoleUpdateOne {
 	ruo.mutation.ClearDescription()
+	return ruo
+}
+
+// SetColor sets the "color" field.
+func (ruo *RoleUpdateOne) SetColor(s string) *RoleUpdateOne {
+	ruo.mutation.SetColor(s)
+	return ruo
+}
+
+// SetNillableColor sets the "color" field if the given value is not nil.
+func (ruo *RoleUpdateOne) SetNillableColor(s *string) *RoleUpdateOne {
+	if s != nil {
+		ruo.SetColor(*s)
+	}
+	return ruo
+}
+
+// ClearColor clears the value of the "color" field.
+func (ruo *RoleUpdateOne) ClearColor() *RoleUpdateOne {
+	ruo.mutation.ClearColor()
 	return ruo
 }
 
@@ -625,6 +671,12 @@ func (ruo *RoleUpdateOne) sqlSave(ctx context.Context) (_node *Role, err error) 
 	}
 	if ruo.mutation.DescriptionCleared() {
 		_spec.ClearField(role.FieldDescription, field.TypeString)
+	}
+	if value, ok := ruo.mutation.Color(); ok {
+		_spec.SetField(role.FieldColor, field.TypeString, value)
+	}
+	if ruo.mutation.ColorCleared() {
+		_spec.ClearField(role.FieldColor, field.TypeString)
 	}
 	if ruo.mutation.PermissionsCleared() {
 		edge := &sqlgraph.EdgeSpec{

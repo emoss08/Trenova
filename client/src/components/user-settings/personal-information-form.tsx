@@ -47,8 +47,7 @@ export default function PersonalInformation({ user }: { user: User }) {
     method: "PUT",
     path: `/users/${user.id}/`,
     successMessage: "User profile updated successfully.",
-    queryKeysToInvalidate: ["users"],
-    additionalInvalidateQueries: ["authenticatedUser"],
+    queryKeysToInvalidate: "authenticatedUser",
     closeModal: false,
     errorMessage: "Failed to update user profile.",
   });

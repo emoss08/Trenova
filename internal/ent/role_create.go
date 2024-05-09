@@ -99,6 +99,20 @@ func (rc *RoleCreate) SetNillableDescription(s *string) *RoleCreate {
 	return rc
 }
 
+// SetColor sets the "color" field.
+func (rc *RoleCreate) SetColor(s string) *RoleCreate {
+	rc.mutation.SetColor(s)
+	return rc
+}
+
+// SetNillableColor sets the "color" field if the given value is not nil.
+func (rc *RoleCreate) SetNillableColor(s *string) *RoleCreate {
+	if s != nil {
+		rc.SetColor(*s)
+	}
+	return rc
+}
+
 // SetID sets the "id" field.
 func (rc *RoleCreate) SetID(u uuid.UUID) *RoleCreate {
 	rc.mutation.SetID(u)
@@ -291,6 +305,10 @@ func (rc *RoleCreate) createSpec() (*Role, *sqlgraph.CreateSpec) {
 	if value, ok := rc.mutation.Description(); ok {
 		_spec.SetField(role.FieldDescription, field.TypeString, value)
 		_node.Description = value
+	}
+	if value, ok := rc.mutation.Color(); ok {
+		_spec.SetField(role.FieldColor, field.TypeString, value)
+		_node.Color = value
 	}
 	if nodes := rc.mutation.BusinessUnitIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{

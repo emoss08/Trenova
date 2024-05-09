@@ -1,6 +1,8 @@
+import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { ComponentLoader } from "@/components/ui/component-loader";
-import { useAnalytics } from "@/hooks/useQueries";
+import { useTheme } from "@/components/ui/theme-provider";
+import { useDailyShipmentCounts } from "@/hooks/useQueries";
 import {
   getDateNDaysAgo,
   getDaysBetweenDates,
@@ -8,8 +10,7 @@ import {
   getTodayDate,
 } from "@/lib/date";
 import { Point, ResponsiveLine } from "@nivo/line";
-import { Button } from "../ui/button";
-import { useTheme } from "../ui/theme-provider";
+import { useMemo } from "react";
 
 function LineChartTooltip({ point }: { point: Point }) {
   return (
@@ -56,7 +57,7 @@ function LineChart({ data }: { data: any }) {
         theme={{
           crosshair: {
             line: {
-              stroke: theme === "dark" ? "#fff" : "#000", // Change crosshair line color based on theme
+              stroke: theme === "dark" ? "#fff" : "#000",
             },
           },
         }}
@@ -75,43 +76,24 @@ export default function DailyShipmentCounts() {
   const startDate = getDateNDaysAgo(7);
   const endDate = getTodayDate();
 
-  const { isLoading, isError } = useAnalytics(startDate, endDate);
+  const { formattedData, data, isLoading, isError } = useDailyShipmentCounts(
+    startDate,
+    endDate,
+  );
 
-  const data = [
-    {
-      id: "total-shipments",
-      data: [
-        {
-          x: "May 1st",
-          y: 218,
-        },
-        {
-          x: "May 2nd",
-          y: 95,
-        },
-        {
-          x: "May 3rd",
-          y: 10,
-        },
-        {
-          x: "May 4th",
-          y: 125,
-        },
-        {
-          x: "May 5th",
-          y: 244,
-        },
-        {
-          x: "May 6th",
-          y: 126,
-        },
-        {
-          x: "May 7th",
-          y: 212,
-        },
-      ],
-    },
-  ];
+  // Check if there is actual data to display in the chart
+  const hasChartData = useMemo(
+    () => formattedData[0]?.data.length > 0,
+    [formattedData],
+  );
+
+  // Compute the display message for dates
+  const dateDisplay = useMemo(() => {
+    return `${getDaysBetweenDates(
+      startDate,
+      endDate,
+    )} days (${getMonthDayString(startDate)} - ${getMonthDayString(endDate)})`;
+  }, [startDate, endDate]);
 
   if (isError) {
     return (
@@ -128,7 +110,7 @@ export default function DailyShipmentCounts() {
   }
 
   return (
-    <Card className="relative col-span-2">
+    <Card className="relative col-span-4 lg:col-span-2">
       {isLoading ? (
         <ComponentLoader className="h-[40vh]" />
       ) : (
@@ -136,10 +118,9 @@ export default function DailyShipmentCounts() {
           <div className="border-border flex items-start justify-between border-b border-dashed p-4">
             <div>
               <div className="flex items-center">
-                <p className="text-2xl font-bold">100</p>
+                <p className="text-2xl font-bold">{data?.count}</p>
                 <span className="text-muted-foreground ml-2 text-xs font-normal">
-                  Last {getDaysBetweenDates(startDate, endDate)} days (
-                  {getMonthDayString(startDate)} - {getMonthDayString(endDate)})
+                  {dateDisplay}
                 </span>
               </div>
               <h2 className="text-muted-foreground font-semibold">
@@ -154,7 +135,15 @@ export default function DailyShipmentCounts() {
               Filter
             </Button>
           </div>
-          <LineChart data={data} />
+          {hasChartData ? (
+            <LineChart data={formattedData} />
+          ) : (
+            <div className="flex h-[30vh] items-center justify-center">
+              <p className="text-muted-foreground">
+                No data available for the selected range
+              </p>
+            </div>
+          )}
         </CardContent>
       )}
     </Card>

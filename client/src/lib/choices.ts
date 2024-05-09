@@ -344,6 +344,14 @@ export const hazardousClassChoices = [
   },
 ] satisfies ReadonlyArray<IChoiceProps<HazardousClassChoiceProps>>;
 
+export function getHazardousClassLabel(
+  value: HazardousClassChoiceProps,
+): string {
+  return (
+    hazardousClassChoices.find((choice) => choice.value === value)?.label ?? ""
+  );
+}
+
 /* Transaction Type Choice Type */
 export type TransactionTypeChoiceType = "REVENUE" | "EXPENSE";
 export const transactionTypeChoices = [

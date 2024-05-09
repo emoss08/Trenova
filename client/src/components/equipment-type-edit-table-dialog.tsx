@@ -1,20 +1,3 @@
-/*
- * COPYRIGHT(c) 2024 Trenova
- *
- * This file is part of Trenova.
- *
- * The Trenova software is licensed under the Business Source License 1.1. You are granted the right
- * to copy, modify, and redistribute the software, but only for non-production use or with a total
- * of less than three server instances. Starting from the Change Date (November 16, 2026), the
- * software will be made available under version 2 or later of the GNU General Public License.
- * If you use the software in violation of this license, your rights under the license will be
- * terminated automatically. The software is provided "as is," and the Licensor disclaims all
- * warranties and conditions. If you use this license's text or the "Business Source License" name
- * and trademark, you must comply with the Licensor's covenants, which include specifying the
- * Change License as the GPL Version 2.0 or a compatible license, specifying an Additional Use
- * Grant, and not modifying the license in any other way.
- */
-
 import { Button } from "@/components/ui/button";
 import {
   Sheet,
@@ -35,9 +18,9 @@ import type {
 } from "@/types/equipment";
 import { type TableSheetProps } from "@/types/tables";
 import { yupResolver } from "@hookform/resolvers/yup";
-import React from "react";
 import { useForm } from "react-hook-form";
 import { EquipTypeForm } from "./equipment-type-table-dialog";
+import { Badge } from "./ui/badge";
 
 function EquipTypeEditForm({
   equipType,
@@ -46,28 +29,21 @@ function EquipTypeEditForm({
   equipType: EquipmentType;
   onOpenChange: (open: boolean) => void;
 }) {
-  const [isSubmitting, setIsSubmitting] = React.useState<boolean>(false);
-
   const { handleSubmit, control } = useForm<FormValues>({
     resolver: yupResolver(equipmentTypeSchema),
     defaultValues: equipType,
   });
 
-  const mutation = useCustomMutation<FormValues>(
-    control,
-    {
-      method: "PUT",
-      path: `/equipment-types/${equipType.id}/`,
-      successMessage: "Equipment Type updated successfully.",
-      queryKeysToInvalidate: ["equipment-type-table-data"],
-      closeModal: true,
-      errorMessage: "Failed to update equip. type.",
-    },
-    () => setIsSubmitting(false),
-  );
+  const mutation = useCustomMutation<FormValues>(control, {
+    method: "PUT",
+    path: `/equipment-types/${equipType.id}/`,
+    successMessage: "Equipment Type updated successfully.",
+    queryKeysToInvalidate: ["equipment-type-table-data"],
+    closeModal: true,
+    errorMessage: "Failed to update equip. type.",
+  });
 
   const onSubmit = (values: FormValues) => {
-    setIsSubmitting(true);
     mutation.mutate(values);
   };
 
@@ -86,7 +62,7 @@ function EquipTypeEditForm({
         >
           Cancel
         </Button>
-        <Button type="submit" isLoading={isSubmitting} className="w-full">
+        <Button type="submit" isLoading={mutation.isPending} className="w-full">
           Save Changes
         </Button>
       </SheetFooter>
@@ -103,18 +79,17 @@ export function EquipTypeEditSheet({ onOpenChange, open }: TableSheetProps) {
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent className={cn("w-full xl:w-1/2")}>
         <SheetHeader>
-          <SheetTitle>{equipType && equipType.code}</SheetTitle>
+          <SheetTitle className="flex">
+            <span>{equipType.code}</span>
+            <Badge className="ml-5" variant="purple">
+              {equipType.id}
+            </Badge>
+          </SheetTitle>
           <SheetDescription>
-            Last updated on{" "}
-            {equipType && formatToUserTimezone(equipType.updatedAt)}
+            Last updated on {formatToUserTimezone(equipType.updatedAt)}
           </SheetDescription>
         </SheetHeader>
-        {equipType && (
-          <EquipTypeEditForm
-            equipType={equipType}
-            onOpenChange={onOpenChange}
-          />
-        )}
+        <EquipTypeEditForm equipType={equipType} onOpenChange={onOpenChange} />
       </SheetContent>
     </Sheet>
   );

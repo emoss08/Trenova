@@ -1,20 +1,3 @@
-/*
- * COPYRIGHT(c) 2024 Trenova
- *
- * This file is part of Trenova.
- *
- * The Trenova software is licensed under the Business Source License 1.1. You are granted the right
- * to copy, modify, and redistribute the software, but only for non-production use or with a total
- * of less than three server instances. Starting from the Change Date (November 16, 2026), the
- * software will be made available under version 2 or later of the GNU General Public License.
- * If you use the software in violation of this license, your rights under the license will be
- * terminated automatically. The software is provided "as is," and the Licensor disclaims all
- * warranties and conditions. If you use this license's text or the "Business Source License" name
- * and trademark, you must comply with the Licensor's covenants, which include specifying the
- * Change License as the GPL Version 2.0 or a compatible license, specifying an Additional Use
- * Grant, and not modifying the license in any other way.
- */
-
 import { CheckboxInput } from "@/components/common/fields/checkbox";
 import { InputField } from "@/components/common/fields/input";
 import { SelectInput } from "@/components/common/fields/select-input";
@@ -37,7 +20,6 @@ import type {
   AccountingControl as AccountingControlType,
 } from "@/types/accounting";
 import { yupResolver } from "@hookform/resolvers/yup";
-import React from "react";
 import { useForm } from "react-hook-form";
 import { useTranslation } from "react-i18next";
 import { ErrorLoadingData } from "./common/table/data-table-components";
@@ -47,7 +29,6 @@ function AccountingControlForm({
 }: {
   accountingControl: AccountingControlType;
 }) {
-  const [isSubmitting, setIsSubmitting] = React.useState<boolean>(false);
   const { t } = useTranslation(["admin.accountingcontrol", "common"]);
 
   const {
@@ -68,29 +49,22 @@ function AccountingControlForm({
     },
   );
 
-  const mutation = useCustomMutation<AccountingControlFormValues>(
-    control,
-    {
-      method: "PUT",
-      path: `/accounting-control/${accountingControl.id}/`,
-      successMessage: t("formSuccessMessage"),
-      queryKeysToInvalidate: ["accountingControl"],
-      errorMessage: t("formErrorMessage"),
-    },
-    () => setIsSubmitting(false),
-    reset,
-  );
+  const mutation = useCustomMutation<AccountingControlFormValues>(control, {
+    method: "PUT",
+    path: `/accounting-control/${accountingControl.id}/`,
+    successMessage: t("formSuccessMessage"),
+    queryKeysToInvalidate: ["accountingControl"],
+    errorMessage: t("formErrorMessage"),
+  });
 
   const onSubmit = (values: AccountingControlFormValues) => {
-    setIsSubmitting(true);
     mutation.mutate(values);
-
     reset(values);
   };
 
   return (
     <form
-      className="m-4 border border-border bg-card sm:rounded-xl md:col-span-2"
+      className="border-border bg-card m-4 border sm:rounded-xl md:col-span-2"
       onSubmit={handleSubmit(onSubmit)}
     >
       <div className="px-4 py-6 sm:p-8">
@@ -237,7 +211,7 @@ function AccountingControlForm({
           </div>
         </div>
       </div>
-      <div className="flex items-center justify-end gap-x-4 border-t border-border p-4 sm:px-8">
+      <div className="border-border flex items-center justify-end gap-x-4 border-t p-4 sm:px-8">
         <Button
           onClick={(e) => {
             e.preventDefault();
@@ -245,11 +219,11 @@ function AccountingControlForm({
           }}
           type="button"
           variant="outline"
-          disabled={isSubmitting}
+          disabled={mutation.isPending}
         >
           {t("buttons.cancel", { ns: "common" })}
         </Button>
-        <Button type="submit" isLoading={isSubmitting}>
+        <Button type="submit" isLoading={mutation.isPending}>
           {t("buttons.save", { ns: "common" })}
         </Button>
       </div>
@@ -264,19 +238,19 @@ export default function AccountingControl() {
   return (
     <div className="grid grid-cols-1 gap-8 md:grid-cols-3">
       <div className="px-4 sm:px-0">
-        <h2 className="text-base font-semibold leading-7 text-foreground">
+        <h2 className="text-foreground text-base font-semibold leading-7">
           {t("title")}
         </h2>
-        <p className="mt-1 text-sm leading-6 text-muted-foreground">
+        <p className="text-muted-foreground mt-1 text-sm leading-6">
           {t("subTitle")}
         </p>
       </div>
       {isLoading ? (
-        <div className="m-4 bg-background ring-1 ring-muted sm:rounded-xl md:col-span-2">
+        <div className="bg-background ring-muted m-4 ring-1 sm:rounded-xl md:col-span-2">
           <Skeleton className="h-screen w-full" />
         </div>
       ) : isError ? (
-        <div className="m-4 bg-background p-8 ring-1 ring-muted sm:rounded-xl md:col-span-2">
+        <div className="bg-background ring-muted m-4 p-8 ring-1 sm:rounded-xl md:col-span-2">
           <ErrorLoadingData />
         </div>
       ) : (

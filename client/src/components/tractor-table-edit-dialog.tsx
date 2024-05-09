@@ -1,20 +1,3 @@
-/*
- * COPYRIGHT(c) 2024 Trenova
- *
- * This file is part of Trenova.
- *
- * The Trenova software is licensed under the Business Source License 1.1. You are granted the right
- * to copy, modify, and redistribute the software, but only for non-production use or with a total
- * of less than three server instances. Starting from the Change Date (November 16, 2026), the
- * software will be made available under version 2 or later of the GNU General Public License.
- * If you use the software in violation of this license, your rights under the license will be
- * terminated automatically. The software is provided "as is," and the Licensor disclaims all
- * warranties and conditions. If you use this license's text or the "Business Source License" name
- * and trademark, you must comply with the Licensor's covenants, which include specifying the
- * Change License as the GPL Version 2.0 or a compatible license, specifying an Additional Use
- * Grant, and not modifying the license in any other way.
- */
-
 import { useCustomMutation } from "@/hooks/useCustomMutation";
 import { formatToUserTimezone } from "@/lib/date";
 import { cn } from "@/lib/utils";
@@ -26,9 +9,9 @@ import type {
 } from "@/types/equipment";
 import { type TableSheetProps } from "@/types/tables";
 import { yupResolver } from "@hookform/resolvers/yup";
-import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { TractorForm } from "./tractor-table-dialog";
+import { Badge } from "./ui/badge";
 import { Button } from "./ui/button";
 import {
   Sheet,
@@ -48,36 +31,23 @@ export function TractorEditForm({
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }) {
-  const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
-
-  if (!tractor) return null;
-
-  const { control, reset, handleSubmit, formState } = useForm<FormValues>({
+  const { control, handleSubmit, formState } = useForm<FormValues>({
     resolver: yupResolver(tractorSchema),
     defaultValues: tractor,
   });
 
   console.info("form errors", formState.errors);
 
-  const mutation = useCustomMutation<FormValues>(
-    control,
-    {
-      method: "PUT",
-      path: `/tractors/${tractor.id}/`,
-      successMessage: "Tractor updated successfully.",
-      queryKeysToInvalidate: ["tractor-table-data"],
-      additionalInvalidateQueries: ["tractors"],
-      closeModal: true,
-      errorMessage: "Failed to update existing tractor.",
-    },
-    () => setIsSubmitting(false),
-    reset,
-  );
+  const mutation = useCustomMutation<FormValues>(control, {
+    method: "PUT",
+    path: `/tractors/${tractor.id}/`,
+    successMessage: "Tractor updated successfully.",
+    queryKeysToInvalidate: "tractors",
+    closeModal: true,
+    errorMessage: "Failed to update existing tractor.",
+  });
 
-  function onSubmit(values: FormValues) {
-    setIsSubmitting(true);
-    mutation.mutate(values);
-  }
+  const onSubmit = (values: FormValues) => mutation.mutate(values);
 
   return (
     <form
@@ -94,7 +64,7 @@ export function TractorEditForm({
         >
           Cancel
         </Button>
-        <Button type="submit" isLoading={isSubmitting} className="w-full">
+        <Button type="submit" isLoading={mutation.isPending} className="w-full">
           Save
         </Button>
       </SheetFooter>
@@ -111,18 +81,21 @@ export function TractorTableEditSheet({ onOpenChange, open }: TableSheetProps) {
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent className={cn("w-full xl:w-1/2")}>
         <SheetHeader>
-          <SheetTitle>{tractor && tractor.code}</SheetTitle>
+          <SheetTitle className="flex">
+            <span>{tractor.code}</span>
+            <Badge className="ml-5" variant="purple">
+              {tractor.id}
+            </Badge>
+          </SheetTitle>
           <SheetDescription>
-            Last updated on {tractor && formatToUserTimezone(tractor.updatedAt)}
+            Last updated on {formatToUserTimezone(tractor.updatedAt)}
           </SheetDescription>
         </SheetHeader>
-        {tractor && (
-          <TractorEditForm
-            tractor={tractor}
-            open={open}
-            onOpenChange={onOpenChange}
-          />
-        )}
+        <TractorEditForm
+          tractor={tractor}
+          open={open}
+          onOpenChange={onOpenChange}
+        />
       </SheetContent>
     </Sheet>
   );

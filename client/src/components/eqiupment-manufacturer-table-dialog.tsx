@@ -8,7 +8,6 @@ import { equipManufacturerSchema } from "@/lib/validations/EquipmentSchema";
 import { type EquipmentManufacturerFormValues as FormValues } from "@/types/equipment";
 import { type TableSheetProps } from "@/types/tables";
 import { yupResolver } from "@hookform/resolvers/yup";
-import React from "react";
 import { Control, useForm } from "react-hook-form";
 import {
   Credenza,
@@ -69,9 +68,7 @@ export function EquipManuForm({ control }: { control: Control<FormValues> }) {
 }
 
 export function EquipManuDialog({ onOpenChange, open }: TableSheetProps) {
-  const [isSubmitting, setIsSubmitting] = React.useState<boolean>(false);
-
-  const { control, reset, handleSubmit } = useForm<FormValues>({
+  const { control, handleSubmit } = useForm<FormValues>({
     resolver: yupResolver(equipManufacturerSchema),
     defaultValues: {
       status: "A",
@@ -80,22 +77,16 @@ export function EquipManuDialog({ onOpenChange, open }: TableSheetProps) {
     },
   });
 
-  const mutation = useCustomMutation<FormValues>(
-    control,
-    {
-      method: "POST",
-      path: "/equipment-manufacturers/",
-      successMessage: "Equip. Manufacturer created successfully.",
-      queryKeysToInvalidate: ["equipment-manufacturer-table-data"],
-      closeModal: true,
-      errorMessage: "Failed to create new equip. manufacturer.",
-    },
-    () => setIsSubmitting(false),
-    reset,
-  );
+  const mutation = useCustomMutation<FormValues>(control, {
+    method: "POST",
+    path: "/equipment-manufacturers/",
+    successMessage: "Equip. Manufacturer created successfully.",
+    queryKeysToInvalidate: ["equipment-manufacturer-table-data"],
+    closeModal: true,
+    errorMessage: "Failed to create new equip. manufacturer.",
+  });
 
   const onSubmit = (values: FormValues) => {
-    setIsSubmitting(true);
     mutation.mutate(values);
   };
 
@@ -117,7 +108,7 @@ export function EquipManuDialog({ onOpenChange, open }: TableSheetProps) {
                   Cancel
                 </Button>
               </CredenzaClose>
-              <Button type="submit" isLoading={isSubmitting}>
+              <Button type="submit" isLoading={mutation.isPending}>
                 Save Changes
               </Button>
             </CredenzaFooter>

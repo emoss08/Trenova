@@ -7,7 +7,6 @@ import { LocationCategorySchema as formSchema } from "@/lib/validations/Location
 import { type LocationCategoryFormValues as FormValues } from "@/types/location";
 import { type TableSheetProps } from "@/types/tables";
 import { yupResolver } from "@hookform/resolvers/yup";
-import React from "react";
 import { Control, useForm } from "react-hook-form";
 import {
   Credenza,
@@ -63,8 +62,7 @@ export function LocationCategoryDialog({
   onOpenChange,
   open,
 }: TableSheetProps) {
-  const [isSubmitting, setIsSubmitting] = React.useState<boolean>(false);
-  const { control, reset, handleSubmit } = useForm<FormValues>({
+  const { control, handleSubmit } = useForm<FormValues>({
     resolver: yupResolver(formSchema),
     defaultValues: {
       name: "",
@@ -73,23 +71,16 @@ export function LocationCategoryDialog({
     },
   });
 
-  const mutation = useCustomMutation<FormValues>(
-    control,
-    {
-      method: "POST",
-      path: "/location-categories/",
-      successMessage: "Location Category created successfully.",
-      queryKeysToInvalidate: ["location-categories-table-data"],
-      additionalInvalidateQueries: ["locationCategories"],
-      closeModal: true,
-      errorMessage: "Failed to create new location category.",
-    },
-    () => setIsSubmitting(false),
-    reset,
-  );
+  const mutation = useCustomMutation<FormValues>(control, {
+    method: "POST",
+    path: "/location-categories/",
+    successMessage: "Location Category created successfully.",
+    queryKeysToInvalidate: "locationCategories",
+    closeModal: true,
+    errorMessage: "Failed to create new location category.",
+  });
 
   const onSubmit = (values: FormValues) => {
-    setIsSubmitting(true);
     mutation.mutate(values);
   };
 
@@ -111,7 +102,7 @@ export function LocationCategoryDialog({
                   Cancel
                 </Button>
               </CredenzaClose>
-              <Button type="submit" isLoading={isSubmitting}>
+              <Button type="submit" isLoading={mutation.isPending}>
                 Save Changes
               </Button>
             </CredenzaFooter>

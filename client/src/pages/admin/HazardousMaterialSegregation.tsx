@@ -5,7 +5,11 @@ import { DataTableColumnHeader } from "@/components/common/table/data-table-colu
 import { HazardousMaterialEditDialog } from "@/components/hazmat-seg-rules-edit-dialog";
 import { HazmatSegRulesDialog } from "@/components/hazmat-seg-rules-table-dialog";
 import { Badge } from "@/components/ui/badge";
-import { segregationTypeChoices } from "@/lib/choices";
+import {
+  getHazardousClassLabel,
+  hazardousClassChoices,
+  segregationTypeChoices,
+} from "@/lib/choices";
 import { type HazardousMaterialSegregationRule } from "@/types/shipment";
 import { type FilterConfig } from "@/types/tables";
 import { type ColumnDef } from "@tanstack/react-table";
@@ -46,6 +50,7 @@ const columns: ColumnDef<HazardousMaterialSegregationRule>[] = [
     header: ({ column }) => (
       <DataTableColumnHeader column={column} title="Class A" />
     ),
+    cell: ({ row }) => getHazardousClassLabel(row.original.classA),
     filterFn: (row, id, value) => {
       return value.includes(row.getValue(id));
     },
@@ -55,6 +60,7 @@ const columns: ColumnDef<HazardousMaterialSegregationRule>[] = [
     header: ({ column }) => (
       <DataTableColumnHeader column={column} title="Class B" />
     ),
+    cell: ({ row }) => getHazardousClassLabel(row.original.classB),
     filterFn: (row, id, value) => {
       return value.includes(row.getValue(id));
     },
@@ -76,6 +82,16 @@ const filters: FilterConfig<HazardousMaterialSegregationRule>[] = [
     columnName: "segregationType",
     title: "Segregation Type",
     options: segregationTypeChoices,
+  },
+  {
+    columnName: "classA",
+    title: "Class A",
+    options: hazardousClassChoices,
+  },
+  {
+    columnName: "classB",
+    title: "Class B",
+    options: hazardousClassChoices,
   },
 ];
 

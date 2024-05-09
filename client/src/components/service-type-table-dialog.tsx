@@ -8,7 +8,6 @@ import { serviceTypeSchema } from "@/lib/validations/ShipmentSchema";
 import { type ServiceTypeFormValues as FormValues } from "@/types/shipment";
 import { type TableSheetProps } from "@/types/tables";
 import { yupResolver } from "@hookform/resolvers/yup";
-import React from "react";
 import { Control, useForm } from "react-hook-form";
 import {
   Credenza,
@@ -68,9 +67,7 @@ export function ServiceTypeForm({ control }: { control: Control<FormValues> }) {
 }
 
 export function ServiceTypeDialog({ onOpenChange, open }: TableSheetProps) {
-  const [isSubmitting, setIsSubmitting] = React.useState<boolean>(false);
-
-  const { control, reset, handleSubmit } = useForm<FormValues>({
+  const { control, handleSubmit } = useForm<FormValues>({
     resolver: yupResolver(serviceTypeSchema),
     defaultValues: {
       status: "A",
@@ -79,25 +76,16 @@ export function ServiceTypeDialog({ onOpenChange, open }: TableSheetProps) {
     },
   });
 
-  const mutation = useCustomMutation<FormValues>(
-    control,
-    {
-      method: "POST",
-      path: "/service-types/",
-      successMessage: "Service Type created successfully.",
-      queryKeysToInvalidate: ["service-type-table-data"],
-      closeModal: true,
-      errorMessage: "Failed to create new service type.",
-    },
-    () => setIsSubmitting(false),
-    reset,
-  );
+  const mutation = useCustomMutation<FormValues>(control, {
+    method: "POST",
+    path: "/service-types/",
+    successMessage: "Service Type created successfully.",
+    queryKeysToInvalidate: "serviceTypes",
+    closeModal: true,
+    errorMessage: "Failed to create new service type.",
+  });
 
-  const onSubmit = (values: FormValues) => {
-    setIsSubmitting(true);
-    mutation.mutate(values);
-  };
-
+  const onSubmit = (values: FormValues) => mutation.mutate(values);
   return (
     <Credenza open={open} onOpenChange={onOpenChange}>
       <CredenzaContent>
@@ -116,7 +104,7 @@ export function ServiceTypeDialog({ onOpenChange, open }: TableSheetProps) {
                   Cancel
                 </Button>
               </CredenzaClose>
-              <Button type="submit" isLoading={isSubmitting}>
+              <Button type="submit" isLoading={mutation.isPending}>
                 Save Changes
               </Button>
             </CredenzaFooter>

@@ -6,8 +6,9 @@ import { commoditySchema } from "@/lib/validations/CommoditiesSchema";
 import { useTableStore } from "@/stores/TableStore";
 import type { Commodity, CommodityFormValues } from "@/types/commodities";
 import { yupResolver } from "@hookform/resolvers/yup";
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { useForm } from "react-hook-form";
+import { Badge } from "./ui/badge";
 import {
   Credenza,
   CredenzaBody,
@@ -26,32 +27,22 @@ function CommodityEditForm({
   commodity: Commodity;
   open: boolean;
 }) {
-  const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
-
-  const { control, reset, handleSubmit, watch, setValue } =
+  const { control, handleSubmit, watch, setValue } =
     useForm<CommodityFormValues>({
       resolver: yupResolver(commoditySchema),
       defaultValues: commodity,
     });
 
-  const mutation = useCustomMutation<CommodityFormValues>(
-    control,
-    {
-      method: "PUT",
-      path: `/commodities/${commodity.id}/`,
-      successMessage: "Commodity updated successfully.",
-      queryKeysToInvalidate: ["commodity-table-data"],
-      closeModal: true,
-      errorMessage: "Failed to update commodity.",
-    },
-    () => setIsSubmitting(false),
-    reset,
-  );
+  const mutation = useCustomMutation<CommodityFormValues>(control, {
+    method: "PUT",
+    path: `/commodities/${commodity.id}/`,
+    successMessage: "Commodity updated successfully.",
+    queryKeysToInvalidate: "commodities",
+    closeModal: true,
+    errorMessage: "Failed to update commodity.",
+  });
 
-  const onSubmit = (values: CommodityFormValues) => {
-    setIsSubmitting(true);
-    mutation.mutate(values);
-  };
+  const onSubmit = (values: CommodityFormValues) => mutation.mutate(values);
 
   useEffect(() => {
     const subscription = watch((value, { name }) => {
@@ -75,7 +66,7 @@ function CommodityEditForm({
               Cancel
             </Button>
           </CredenzaClose>
-          <Button type="submit" isLoading={isSubmitting}>
+          <Button type="submit" isLoading={mutation.isPending}>
             Save Changes
           </Button>
         </CredenzaFooter>
@@ -99,13 +90,18 @@ export function CommodityEditDialog({
     <Credenza open={open} onOpenChange={onOpenChange}>
       <CredenzaContent>
         <CredenzaHeader>
-          <CredenzaTitle>{commodity && commodity.name} </CredenzaTitle>
+          <CredenzaTitle className="flex">
+            <span>{commodity.name}</span>
+            <Badge className="ml-5" variant="purple">
+              {commodity.id}
+            </Badge>
+          </CredenzaTitle>
         </CredenzaHeader>
         <CredenzaDescription>
           Last updated on&nbsp;
-          {commodity && formatToUserTimezone(commodity.createdAt)}
+          {formatToUserTimezone(commodity.updatedAt)}
         </CredenzaDescription>
-        {commodity && <CommodityEditForm commodity={commodity} open={open} />}
+        <CommodityEditForm commodity={commodity} open={open} />
       </CredenzaContent>
     </Credenza>
   );

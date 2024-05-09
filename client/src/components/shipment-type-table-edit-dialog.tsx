@@ -9,9 +9,9 @@ import type {
 } from "@/types/shipment";
 import { type TableSheetProps } from "@/types/tables";
 import { yupResolver } from "@hookform/resolvers/yup";
-import React from "react";
 import { useForm } from "react-hook-form";
 import { ShipmentTypeForm } from "./shipment-type-table-dialog";
+import { Badge } from "./ui/badge";
 import {
   Credenza,
   CredenzaBody,
@@ -28,30 +28,21 @@ function ShipmentTypeEditForm({
 }: {
   shipmentType: ShipmentType;
 }) {
-  const [isSubmitting, setIsSubmitting] = React.useState<boolean>(false);
-
   const { control, handleSubmit } = useForm<FormValues>({
     resolver: yupResolver(shipmentTypeSchema),
     defaultValues: shipmentType,
   });
 
-  const mutation = useCustomMutation<FormValues>(
-    control,
-    {
-      method: "PUT",
-      path: `/shipment-types/${shipmentType.id}/`,
-      successMessage: "Shipment Type updated successfully.",
-      queryKeysToInvalidate: ["shipment-type-table-data"],
-      closeModal: true,
-      errorMessage: "Failed to update shipment type.",
-    },
-    () => setIsSubmitting(false),
-  );
+  const mutation = useCustomMutation<FormValues>(control, {
+    method: "PUT",
+    path: `/shipment-types/${shipmentType.id}/`,
+    successMessage: "Shipment Type updated successfully.",
+    queryKeysToInvalidate: "shipmentTypes",
+    closeModal: true,
+    errorMessage: "Failed to update shipment type.",
+  });
 
-  const onSubmit = (values: FormValues) => {
-    setIsSubmitting(true);
-    mutation.mutate(values);
-  };
+  const onSubmit = (values: FormValues) => mutation.mutate(values);
 
   return (
     <CredenzaBody>
@@ -66,7 +57,7 @@ function ShipmentTypeEditForm({
               Cancel
             </Button>
           </CredenzaClose>
-          <Button type="submit" isLoading={isSubmitting}>
+          <Button type="submit" isLoading={mutation.isPending}>
             Save Changes
           </Button>
         </CredenzaFooter>
@@ -87,13 +78,17 @@ export function ShipmentTypeEditDialog({
     <Credenza open={open} onOpenChange={onOpenChange}>
       <CredenzaContent>
         <CredenzaHeader>
-          <CredenzaTitle>{shipmentType && shipmentType.code} </CredenzaTitle>
+          <CredenzaTitle className="flex">
+            <span>{shipmentType.code}</span>
+            <Badge className="ml-5" variant="purple">
+              {shipmentType.id}
+            </Badge>
+          </CredenzaTitle>
         </CredenzaHeader>
         <CredenzaDescription>
-          Last updated on&nbsp;
-          {shipmentType && formatToUserTimezone(shipmentType.updatedAt)}
+          Last updated on {formatToUserTimezone(shipmentType.updatedAt)}
         </CredenzaDescription>
-        {shipmentType && <ShipmentTypeEditForm shipmentType={shipmentType} />}
+        <ShipmentTypeEditForm shipmentType={shipmentType} />
       </CredenzaContent>
     </Credenza>
   );

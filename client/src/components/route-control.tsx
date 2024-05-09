@@ -11,7 +11,6 @@ import type {
   RouteControl as RouteControlType,
 } from "@/types/route";
 import { yupResolver } from "@hookform/resolvers/yup";
-import React from "react";
 import { useForm } from "react-hook-form";
 import { ErrorLoadingData } from "./common/table/data-table-components";
 
@@ -20,35 +19,27 @@ function RouteControlForm({
 }: {
   routeControl: RouteControlType;
 }) {
-  const [isSubmitting, setIsSubmitting] = React.useState<boolean>(false);
-
   const { control, handleSubmit, reset } = useForm<RouteControlFormValues>({
     resolver: yupResolver(routeControlSchema),
     defaultValues: routeControl,
   });
 
-  const mutation = useCustomMutation<RouteControlFormValues>(
-    control,
-    {
-      method: "PUT",
-      path: `/route-control/${routeControl.id}/`,
-      successMessage: "Route Control updated successfully.",
-      queryKeysToInvalidate: ["routeControl"],
-      errorMessage: "Failed to update route control.",
-    },
-    () => setIsSubmitting(false),
-    reset,
-  );
+  const mutation = useCustomMutation<RouteControlFormValues>(control, {
+    method: "PUT",
+    path: `/route-control/${routeControl.id}/`,
+    successMessage: "Route Control updated successfully.",
+    queryKeysToInvalidate: "routeControl",
+    errorMessage: "Failed to update route control.",
+  });
 
   const onSubmit = (values: RouteControlFormValues) => {
-    setIsSubmitting(true);
     mutation.mutate(values);
     reset(values);
   };
 
   return (
     <form
-      className="m-4 border border-border bg-card sm:rounded-xl md:col-span-2"
+      className="border-border bg-card m-4 border sm:rounded-xl md:col-span-2"
       onSubmit={handleSubmit(onSubmit)}
     >
       <div className="px-4 py-6 sm:p-8">
@@ -86,7 +77,7 @@ function RouteControlForm({
           </div>
         </div>
       </div>
-      <div className="flex items-center justify-end gap-x-4 border-t border-muted p-4 sm:px-8">
+      <div className="border-muted flex items-center justify-end gap-x-4 border-t p-4 sm:px-8">
         <Button
           onClick={(e) => {
             e.preventDefault();
@@ -94,11 +85,11 @@ function RouteControlForm({
           }}
           type="button"
           variant="outline"
-          disabled={isSubmitting}
+          disabled={mutation.isPending}
         >
           Cancel
         </Button>
-        <Button type="submit" isLoading={isSubmitting}>
+        <Button type="submit" isLoading={mutation.isPending}>
           Save
         </Button>
       </div>
@@ -112,10 +103,10 @@ export default function RouteControl() {
   return (
     <div className="grid grid-cols-1 gap-8 md:grid-cols-3">
       <div className="px-4 sm:px-0">
-        <h2 className="text-base font-semibold leading-7 text-foreground">
+        <h2 className="text-foreground text-base font-semibold leading-7">
           Route Control
         </h2>
-        <p className="mt-1 text-sm leading-6 text-muted-foreground">
+        <p className="text-muted-foreground mt-1 text-sm leading-6">
           Streamline your route planning and management with our Routing
           Optimization Panel. This module is engineered to enhance efficiency
           and precision in route selection, ensuring optimal pathing and
@@ -123,11 +114,11 @@ export default function RouteControl() {
         </p>
       </div>
       {isLoading ? (
-        <div className="m-4 bg-background ring-1 ring-muted sm:rounded-xl md:col-span-2">
+        <div className="bg-background ring-muted m-4 ring-1 sm:rounded-xl md:col-span-2">
           <Skeleton className="h-screen w-full" />
         </div>
       ) : isError ? (
-        <div className="m-4 bg-background p-8 ring-1 ring-muted sm:rounded-xl md:col-span-2">
+        <div className="bg-background ring-muted m-4 p-8 ring-1 sm:rounded-xl md:col-span-2">
           <ErrorLoadingData />
         </div>
       ) : (

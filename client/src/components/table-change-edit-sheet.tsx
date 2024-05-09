@@ -1,20 +1,3 @@
-/*
- * COPYRIGHT(c) 2024 Trenova
- *
- * This file is part of Trenova.
- *
- * The Trenova software is licensed under the Business Source License 1.1. You are granted the right
- * to copy, modify, and redistribute the software, but only for non-production use or with a total
- * of less than three server instances. Starting from the Change Date (November 16, 2026), the
- * software will be made available under version 2 or later of the GNU General Public License.
- * If you use the software in violation of this license, your rights under the license will be
- * terminated automatically. The software is provided "as is," and the Licensor disclaims all
- * warranties and conditions. If you use this license's text or the "Business Source License" name
- * and trademark, you must comply with the Licensor's covenants, which include specifying the
- * Change License as the GPL Version 2.0 or a compatible license, specifying an Additional Use
- * Grant, and not modifying the license in any other way.
- */
-
 import { Button } from "@/components/ui/button";
 import {
   Sheet,
@@ -35,9 +18,10 @@ import type {
 } from "@/types/organization";
 import { type TableSheetProps } from "@/types/tables";
 import { yupResolver } from "@hookform/resolvers/yup";
-import React, { useEffect } from "react";
+import { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { TableChangeAlertForm } from "./table-change-sheet";
+import { Badge } from "./ui/badge";
 function TableChangeEditForm({
   tableChangeAlert,
   open,
@@ -47,9 +31,7 @@ function TableChangeEditForm({
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }) {
-  const [isSubmitting, setIsSubmitting] = React.useState<boolean>(false);
-
-  const { handleSubmit, control, reset, watch, setValue } =
+  const { handleSubmit, control, watch, setValue } =
     useForm<TableChangeAlertFormValues>({
       resolver: yupResolver(tableChangeAlertSchema),
       defaultValues: tableChangeAlert,
@@ -67,24 +49,17 @@ function TableChangeEditForm({
     return () => subscription.unsubscribe();
   }, [watch]);
 
-  const mutation = useCustomMutation<TableChangeAlertFormValues>(
-    control,
-    {
-      method: "PUT",
-      path: `/table-change-alerts/${tableChangeAlert.id}/`,
-      successMessage: "Table Change Alert updated successfully.",
-      queryKeysToInvalidate: ["table-change-alert-data"],
-      closeModal: true,
-      errorMessage: "Failed to update table change alert.",
-    },
-    () => setIsSubmitting(false),
-  );
+  const mutation = useCustomMutation<TableChangeAlertFormValues>(control, {
+    method: "PUT",
+    path: `/table-change-alerts/${tableChangeAlert.id}/`,
+    successMessage: "Table Change Alert updated successfully.",
+    queryKeysToInvalidate: "tableChangeAlerts",
+    closeModal: true,
+    errorMessage: "Failed to update table change alert.",
+  });
 
-  const onSubmit = (values: TableChangeAlertFormValues) => {
-    setIsSubmitting(true);
+  const onSubmit = (values: TableChangeAlertFormValues) =>
     mutation.mutate(values);
-    reset(values);
-  };
 
   return (
     <form
@@ -101,7 +76,7 @@ function TableChangeEditForm({
         >
           Cancel
         </Button>
-        <Button type="submit" isLoading={isSubmitting} className="w-full">
+        <Button type="submit" isLoading={mutation.isPending} className="w-full">
           Save Changes
         </Button>
       </SheetFooter>
@@ -123,20 +98,21 @@ export function TableChangeAlertEditSheet({
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent className={cn("w-full xl:w-[700px]")}>
         <SheetHeader>
-          <SheetTitle>{tableChangeAlert && tableChangeAlert.name}</SheetTitle>
+          <SheetTitle className="flex">
+            <span>{tableChangeAlert.name}</span>
+            <Badge className="ml-5" variant="purple">
+              {tableChangeAlert.id}
+            </Badge>
+          </SheetTitle>
           <SheetDescription>
-            Last updated on{" "}
-            {tableChangeAlert &&
-              formatToUserTimezone(tableChangeAlert.updatedAt)}
+            Last updated on {formatToUserTimezone(tableChangeAlert.updatedAt)}
           </SheetDescription>
         </SheetHeader>
-        {tableChangeAlert && (
-          <TableChangeEditForm
-            tableChangeAlert={tableChangeAlert}
-            open={open}
-            onOpenChange={onOpenChange}
-          />
-        )}
+        <TableChangeEditForm
+          tableChangeAlert={tableChangeAlert}
+          open={open}
+          onOpenChange={onOpenChange}
+        />
       </SheetContent>
     </Sheet>
   );

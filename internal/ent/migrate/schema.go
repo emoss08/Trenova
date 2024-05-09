@@ -1427,8 +1427,9 @@ var (
 		{Name: "created_at", Type: field.TypeTime, Comment: "The time that this entity was created."},
 		{Name: "updated_at", Type: field.TypeTime, Comment: "The last time that this entity was updated."},
 		{Name: "version", Type: field.TypeInt, Comment: "The current version of this entity.", Default: 1},
-		{Name: "name", Type: field.TypeString},
+		{Name: "name", Type: field.TypeString, Size: 50},
 		{Name: "description", Type: field.TypeString, Nullable: true},
+		{Name: "color", Type: field.TypeString, Nullable: true},
 		{Name: "business_unit_id", Type: field.TypeUUID},
 		{Name: "organization_id", Type: field.TypeUUID},
 	}
@@ -1440,13 +1441,13 @@ var (
 		ForeignKeys: []*schema.ForeignKey{
 			{
 				Symbol:     "roles_business_units_business_unit",
-				Columns:    []*schema.Column{RolesColumns[6]},
+				Columns:    []*schema.Column{RolesColumns[7]},
 				RefColumns: []*schema.Column{BusinessUnitsColumns[0]},
 				OnDelete:   schema.Cascade,
 			},
 			{
 				Symbol:     "roles_organizations_organization",
-				Columns:    []*schema.Column{RolesColumns[7]},
+				Columns:    []*schema.Column{RolesColumns[8]},
 				RefColumns: []*schema.Column{OrganizationsColumns[0]},
 				OnDelete:   schema.Cascade,
 			},

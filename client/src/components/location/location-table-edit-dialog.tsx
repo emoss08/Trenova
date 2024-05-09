@@ -38,7 +38,6 @@ import type {
 } from "@/types/location";
 import { type TableSheetProps } from "@/types/tables";
 import { yupResolver } from "@hookform/resolvers/yup";
-import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { LocationCommentForm } from "./location-comments-form";
 
@@ -51,31 +50,21 @@ export function LocationEditForm({
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }) {
-  const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
-
-  const { control, reset, handleSubmit } = useForm<FormValues>({
+  const { control, handleSubmit } = useForm<FormValues>({
     resolver: yupResolver(LocationSchema),
     defaultValues: location,
   });
 
-  const mutation = useCustomMutation<FormValues>(
-    control,
-    {
-      method: "PUT",
-      path: `/locations/${location.id}/`,
-      successMessage: "Location updated successfully.",
-      queryKeysToInvalidate: ["locations-table-data"],
-      additionalInvalidateQueries: ["locations"],
-      closeModal: true,
-      errorMessage: "Failed to update new location.",
-    },
-    () => setIsSubmitting(false),
-    reset,
-  );
+  const mutation = useCustomMutation<FormValues>(control, {
+    method: "PUT",
+    path: `/locations/${location.id}/`,
+    successMessage: "Location updated successfully.",
+    queryKeysToInvalidate: "locations",
+    closeModal: true,
+    errorMessage: "Failed to update new location.",
+  });
 
   const onSubmit = (values: FormValues) => {
-    setIsSubmitting(true);
-
     // For each comment append the location id value
     values.comments = values.comments ?? [];
     values.comments = values.comments.map((comment) => ({
@@ -124,7 +113,7 @@ export function LocationEditForm({
         >
           Cancel
         </Button>
-        <Button type="submit" isLoading={isSubmitting} className="w-full">
+        <Button type="submit" isLoading={mutation.isPending} className="w-full">
           Save
         </Button>
       </SheetFooter>
