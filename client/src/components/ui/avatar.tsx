@@ -1,12 +1,11 @@
 import { Button } from "@/components/ui/button";
-import { faUpload } from "@fortawesome/pro-duotone-svg-icons";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import * as AvatarPrimitive from "@radix-ui/react-avatar";
 import * as React from "react";
 import { useRef } from "react";
 import { toast } from "sonner";
 
 import { cn } from "@/lib/utils";
+import { UploadIcon } from "@radix-ui/react-icons";
 
 const Avatar = React.forwardRef<
   React.ElementRef<typeof AvatarPrimitive.Root>,
@@ -87,7 +86,7 @@ export function ImageUploader({
   return (
     <div>
       <Button className="mr-2" size="sm" type="button" onClick={handleClick}>
-        <FontAwesomeIcon icon={faUpload} className="mr-2" />
+        <UploadIcon className="mr-2 size-4" />
         {iconText}
       </Button>
       <Button size="sm" type="button" variant="outline">

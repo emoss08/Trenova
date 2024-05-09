@@ -9,7 +9,6 @@ import (
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"github.com/google/uuid"
-	"github.com/jackc/pgx/v5/pgtype"
 )
 
 const (
@@ -43,8 +42,6 @@ const (
 	FieldBalance = "balance"
 	// FieldInterestRate holds the string denoting the interest_rate field in the database.
 	FieldInterestRate = "interest_rate"
-	// FieldDateOpened holds the string denoting the date_opened field in the database.
-	FieldDateOpened = "date_opened"
 	// FieldDateClosed holds the string denoting the date_closed field in the database.
 	FieldDateClosed = "date_closed"
 	// FieldNotes holds the string denoting the notes field in the database.
@@ -98,7 +95,6 @@ var Columns = []string{
 	FieldAccountClass,
 	FieldBalance,
 	FieldInterestRate,
-	FieldDateOpened,
 	FieldDateClosed,
 	FieldNotes,
 	FieldIsTaxRelevant,
@@ -132,8 +128,6 @@ var (
 	DefaultVersion int
 	// AccountNumberValidator is a validator for the "account_number" field. It is called by the builders before save.
 	AccountNumberValidator func(string) error
-	// DefaultDateOpened holds the default value on creation for the "date_opened" field.
-	DefaultDateOpened *pgtype.Date
 	// DefaultIsTaxRelevant holds the default value on creation for the "is_tax_relevant" field.
 	DefaultIsTaxRelevant bool
 	// DefaultIsReconciled holds the default value on creation for the "is_reconciled" field.
@@ -265,11 +259,6 @@ func ByBalance(opts ...sql.OrderTermOption) OrderOption {
 // ByInterestRate orders the results by the interest_rate field.
 func ByInterestRate(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldInterestRate, opts...).ToFunc()
-}
-
-// ByDateOpened orders the results by the date_opened field.
-func ByDateOpened(opts ...sql.OrderTermOption) OrderOption {
-	return sql.OrderByField(FieldDateOpened, opts...).ToFunc()
 }
 
 // ByDateClosed orders the results by the date_closed field.

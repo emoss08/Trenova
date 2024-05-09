@@ -71,7 +71,6 @@ import (
 	"github.com/emoss08/trenova/internal/ent/workercontact"
 	"github.com/emoss08/trenova/internal/ent/workerprofile"
 	"github.com/google/uuid"
-	"github.com/jackc/pgx/v5/pgtype"
 )
 
 // The init function reads all schema descriptors with runtime code
@@ -1076,16 +1075,12 @@ func init() {
 			return nil
 		}
 	}()
-	// generalledgeraccountDescDateOpened is the schema descriptor for date_opened field.
-	generalledgeraccountDescDateOpened := generalledgeraccountFields[8].Descriptor()
-	// generalledgeraccount.DefaultDateOpened holds the default value on creation for the date_opened field.
-	generalledgeraccount.DefaultDateOpened = generalledgeraccountDescDateOpened.Default.(*pgtype.Date)
 	// generalledgeraccountDescIsTaxRelevant is the schema descriptor for is_tax_relevant field.
-	generalledgeraccountDescIsTaxRelevant := generalledgeraccountFields[11].Descriptor()
+	generalledgeraccountDescIsTaxRelevant := generalledgeraccountFields[10].Descriptor()
 	// generalledgeraccount.DefaultIsTaxRelevant holds the default value on creation for the is_tax_relevant field.
 	generalledgeraccount.DefaultIsTaxRelevant = generalledgeraccountDescIsTaxRelevant.Default.(bool)
 	// generalledgeraccountDescIsReconciled is the schema descriptor for is_reconciled field.
-	generalledgeraccountDescIsReconciled := generalledgeraccountFields[12].Descriptor()
+	generalledgeraccountDescIsReconciled := generalledgeraccountFields[11].Descriptor()
 	// generalledgeraccount.DefaultIsReconciled holds the default value on creation for the is_reconciled field.
 	generalledgeraccount.DefaultIsReconciled = generalledgeraccountDescIsReconciled.Default.(bool)
 	// generalledgeraccountDescID is the schema descriptor for id field.

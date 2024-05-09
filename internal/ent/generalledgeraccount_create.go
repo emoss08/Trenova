@@ -175,12 +175,6 @@ func (glac *GeneralLedgerAccountCreate) SetNillableInterestRate(f *float64) *Gen
 	return glac
 }
 
-// SetDateOpened sets the "date_opened" field.
-func (glac *GeneralLedgerAccountCreate) SetDateOpened(pg *pgtype.Date) *GeneralLedgerAccountCreate {
-	glac.mutation.SetDateOpened(pg)
-	return glac
-}
-
 // SetDateClosed sets the "date_closed" field.
 func (glac *GeneralLedgerAccountCreate) SetDateClosed(pg *pgtype.Date) *GeneralLedgerAccountCreate {
 	glac.mutation.SetDateClosed(pg)
@@ -319,10 +313,6 @@ func (glac *GeneralLedgerAccountCreate) defaults() {
 		v := generalledgeraccount.DefaultStatus
 		glac.mutation.SetStatus(v)
 	}
-	if _, ok := glac.mutation.DateOpened(); !ok {
-		v := generalledgeraccount.DefaultDateOpened
-		glac.mutation.SetDateOpened(v)
-	}
 	if _, ok := glac.mutation.IsTaxRelevant(); !ok {
 		v := generalledgeraccount.DefaultIsTaxRelevant
 		glac.mutation.SetIsTaxRelevant(v)
@@ -377,9 +367,6 @@ func (glac *GeneralLedgerAccountCreate) check() error {
 		if err := generalledgeraccount.AccountTypeValidator(v); err != nil {
 			return &ValidationError{Name: "account_type", err: fmt.Errorf(`ent: validator failed for field "GeneralLedgerAccount.account_type": %w`, err)}
 		}
-	}
-	if _, ok := glac.mutation.DateOpened(); !ok {
-		return &ValidationError{Name: "date_opened", err: errors.New(`ent: missing required field "GeneralLedgerAccount.date_opened"`)}
 	}
 	if _, ok := glac.mutation.IsTaxRelevant(); !ok {
 		return &ValidationError{Name: "is_tax_relevant", err: errors.New(`ent: missing required field "GeneralLedgerAccount.is_tax_relevant"`)}
@@ -471,10 +458,6 @@ func (glac *GeneralLedgerAccountCreate) createSpec() (*GeneralLedgerAccount, *sq
 	if value, ok := glac.mutation.InterestRate(); ok {
 		_spec.SetField(generalledgeraccount.FieldInterestRate, field.TypeFloat64, value)
 		_node.InterestRate = value
-	}
-	if value, ok := glac.mutation.DateOpened(); ok {
-		_spec.SetField(generalledgeraccount.FieldDateOpened, field.TypeOther, value)
-		_node.DateOpened = value
 	}
 	if value, ok := glac.mutation.DateClosed(); ok {
 		_spec.SetField(generalledgeraccount.FieldDateClosed, field.TypeOther, value)

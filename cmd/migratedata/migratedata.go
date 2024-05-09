@@ -63,7 +63,9 @@ func SeedOrganization(
 			Create().
 			SetName("Trenova Transporation").
 			SetScacCode("TREN").
+			SetDotNumber("123456").
 			SetBusinessUnit(bu).
+			SetTimezone("America/New_York").
 			Save(ctx)
 		if err != nil {
 			log.Panicf("Failed creating organization: %v", err)
@@ -368,6 +370,7 @@ func SeedAdminAccount(
 			SetBusinessUnit(bu).
 			SetIsAdmin(true).
 			SetIsSuperAdmin(true).
+			SetTimezone("America/New_York").
 			AddRoles(adminRole).
 			Save(ctx)
 
@@ -407,6 +410,7 @@ func SeedNormalAccount(
 			SetOrganization(org).
 			SetBusinessUnit(bu).
 			SetIsAdmin(false).
+			SetTimezone("America/New_York").
 			SetIsSuperAdmin(false).
 			Save(ctx)
 

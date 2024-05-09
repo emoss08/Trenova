@@ -24606,7 +24606,6 @@ type GeneralLedgerAccountMutation struct {
 	addbalance           *float64
 	interest_rate        *float64
 	addinterest_rate     *float64
-	date_opened          **pgtype.Date
 	date_closed          **pgtype.Date
 	notes                *string
 	is_tax_relevant      *bool
@@ -25323,42 +25322,6 @@ func (m *GeneralLedgerAccountMutation) ResetInterestRate() {
 	delete(m.clearedFields, generalledgeraccount.FieldInterestRate)
 }
 
-// SetDateOpened sets the "date_opened" field.
-func (m *GeneralLedgerAccountMutation) SetDateOpened(pg *pgtype.Date) {
-	m.date_opened = &pg
-}
-
-// DateOpened returns the value of the "date_opened" field in the mutation.
-func (m *GeneralLedgerAccountMutation) DateOpened() (r *pgtype.Date, exists bool) {
-	v := m.date_opened
-	if v == nil {
-		return
-	}
-	return *v, true
-}
-
-// OldDateOpened returns the old "date_opened" field's value of the GeneralLedgerAccount entity.
-// If the GeneralLedgerAccount object wasn't provided to the builder, the object is fetched from the database.
-// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *GeneralLedgerAccountMutation) OldDateOpened(ctx context.Context) (v *pgtype.Date, err error) {
-	if !m.op.Is(OpUpdateOne) {
-		return v, errors.New("OldDateOpened is only allowed on UpdateOne operations")
-	}
-	if m.id == nil || m.oldValue == nil {
-		return v, errors.New("OldDateOpened requires an ID field in the mutation")
-	}
-	oldValue, err := m.oldValue(ctx)
-	if err != nil {
-		return v, fmt.Errorf("querying old value for OldDateOpened: %w", err)
-	}
-	return oldValue.DateOpened, nil
-}
-
-// ResetDateOpened resets all changes to the "date_opened" field.
-func (m *GeneralLedgerAccountMutation) ResetDateOpened() {
-	m.date_opened = nil
-}
-
 // SetDateClosed sets the "date_closed" field.
 func (m *GeneralLedgerAccountMutation) SetDateClosed(pg *pgtype.Date) {
 	m.date_closed = &pg
@@ -25671,7 +25634,7 @@ func (m *GeneralLedgerAccountMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *GeneralLedgerAccountMutation) Fields() []string {
-	fields := make([]string, 0, 18)
+	fields := make([]string, 0, 17)
 	if m.business_unit != nil {
 		fields = append(fields, generalledgeraccount.FieldBusinessUnitID)
 	}
@@ -25710,9 +25673,6 @@ func (m *GeneralLedgerAccountMutation) Fields() []string {
 	}
 	if m.interest_rate != nil {
 		fields = append(fields, generalledgeraccount.FieldInterestRate)
-	}
-	if m.date_opened != nil {
-		fields = append(fields, generalledgeraccount.FieldDateOpened)
 	}
 	if m.date_closed != nil {
 		fields = append(fields, generalledgeraccount.FieldDateClosed)
@@ -25760,8 +25720,6 @@ func (m *GeneralLedgerAccountMutation) Field(name string) (ent.Value, bool) {
 		return m.Balance()
 	case generalledgeraccount.FieldInterestRate:
 		return m.InterestRate()
-	case generalledgeraccount.FieldDateOpened:
-		return m.DateOpened()
 	case generalledgeraccount.FieldDateClosed:
 		return m.DateClosed()
 	case generalledgeraccount.FieldNotes:
@@ -25805,8 +25763,6 @@ func (m *GeneralLedgerAccountMutation) OldField(ctx context.Context, name string
 		return m.OldBalance(ctx)
 	case generalledgeraccount.FieldInterestRate:
 		return m.OldInterestRate(ctx)
-	case generalledgeraccount.FieldDateOpened:
-		return m.OldDateOpened(ctx)
 	case generalledgeraccount.FieldDateClosed:
 		return m.OldDateClosed(ctx)
 	case generalledgeraccount.FieldNotes:
@@ -25914,13 +25870,6 @@ func (m *GeneralLedgerAccountMutation) SetField(name string, value ent.Value) er
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetInterestRate(v)
-		return nil
-	case generalledgeraccount.FieldDateOpened:
-		v, ok := value.(*pgtype.Date)
-		if !ok {
-			return fmt.Errorf("unexpected type %T for field %s", value, name)
-		}
-		m.SetDateOpened(v)
 		return nil
 	case generalledgeraccount.FieldDateClosed:
 		v, ok := value.(*pgtype.Date)
@@ -26121,9 +26070,6 @@ func (m *GeneralLedgerAccountMutation) ResetField(name string) error {
 		return nil
 	case generalledgeraccount.FieldInterestRate:
 		m.ResetInterestRate()
-		return nil
-	case generalledgeraccount.FieldDateOpened:
-		m.ResetDateOpened()
 		return nil
 	case generalledgeraccount.FieldDateClosed:
 		m.ResetDateClosed()

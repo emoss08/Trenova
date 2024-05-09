@@ -612,7 +612,6 @@ var schemaGraph = func() *sqlgraph.Schema {
 			generalledgeraccount.FieldAccountClass:   {Type: field.TypeString, Column: generalledgeraccount.FieldAccountClass},
 			generalledgeraccount.FieldBalance:        {Type: field.TypeFloat64, Column: generalledgeraccount.FieldBalance},
 			generalledgeraccount.FieldInterestRate:   {Type: field.TypeFloat64, Column: generalledgeraccount.FieldInterestRate},
-			generalledgeraccount.FieldDateOpened:     {Type: field.TypeOther, Column: generalledgeraccount.FieldDateOpened},
 			generalledgeraccount.FieldDateClosed:     {Type: field.TypeOther, Column: generalledgeraccount.FieldDateClosed},
 			generalledgeraccount.FieldNotes:          {Type: field.TypeString, Column: generalledgeraccount.FieldNotes},
 			generalledgeraccount.FieldIsTaxRelevant:  {Type: field.TypeBool, Column: generalledgeraccount.FieldIsTaxRelevant},
@@ -7408,11 +7407,6 @@ func (f *GeneralLedgerAccountFilter) WhereBalance(p entql.Float64P) {
 // WhereInterestRate applies the entql float64 predicate on the interest_rate field.
 func (f *GeneralLedgerAccountFilter) WhereInterestRate(p entql.Float64P) {
 	f.Where(p.Field(generalledgeraccount.FieldInterestRate))
-}
-
-// WhereDateOpened applies the entql other predicate on the date_opened field.
-func (f *GeneralLedgerAccountFilter) WhereDateOpened(p entql.OtherP) {
-	f.Where(p.Field(generalledgeraccount.FieldDateOpened))
 }
 
 // WhereDateClosed applies the entql other predicate on the date_closed field.

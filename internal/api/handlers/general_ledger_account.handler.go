@@ -133,7 +133,6 @@ func (h *GeneralLedgerAccountHandler) GetGeneralLedgerAccounts() fiber.Handler {
 				AccountClass:   account.AccountClass,
 				Balance:        account.Balance,
 				InterestRate:   account.InterestRate,
-				DateOpened:     account.DateOpened,
 				DateClosed:     account.DateClosed,
 				Notes:          account.Notes,
 				IsTaxRelevant:  account.IsTaxRelevant,

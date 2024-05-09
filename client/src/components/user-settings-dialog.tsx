@@ -7,7 +7,7 @@ import { type ServiceTypeFormValues as FormValues } from "@/types/shipment";
 import { Control } from "react-hook-form";
 import { Credenza, CredenzaBody, CredenzaContent } from "./ui/credenza";
 import { Form, FormControl, FormGroup } from "./ui/form";
-import UserProfilePage from "./user-settings/profile-page";
+import UserProfile from "./user-settings/profile-page";
 
 export function ServiceTypeForm({ control }: { control: Control<FormValues> }) {
   return (
@@ -69,7 +69,7 @@ export function UserSettingsDialog({
     <Credenza open={open} onOpenChange={onOpenChange}>
       <CredenzaContent className="max-w-[1000px]">
         <CredenzaBody>
-          <UserProfilePage user={user} />
+          <UserProfile user={user} />
         </CredenzaBody>
       </CredenzaContent>
     </Credenza>

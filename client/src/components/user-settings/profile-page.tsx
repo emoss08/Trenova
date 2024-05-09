@@ -1,16 +1,8 @@
 import { User } from "@/types/accounts";
-import {
-  faBellRing,
-  faRightLeft,
-  faSatelliteDish,
-  faShieldHalved,
-  faStarHalf,
-  faUser,
-  faUserGear,
-} from "@fortawesome/pro-duotone-svg-icons";
 import { Suspense, lazy, useState } from "react";
 import { ComponentLoader } from "../ui/component-loader";
 import { ModalAsideMenu } from "./sidebar-nav";
+import { LinkGroupProps } from "@/types/sidebar-nav";
 
 const PreferenceComponent = lazy(
   () => import("@/components/user-settings/user-preferences"),
@@ -24,10 +16,10 @@ const ChangePasswordForm = lazy(
   () => import("@/components/user-settings/change-password-form"),
 );
 
-export default function UserProfilePage({ user }: { user: User }) {
+export default function UserProfileF({ user }: { user: User }) {
   const [activeTab, setActiveTab] = useState("personal-information");
 
-  const linkGroups = [
+  const linkGroups: LinkGroupProps[] = [
     {
       title: "Account Settings",
       links: [
@@ -36,14 +28,12 @@ export default function UserProfilePage({ user }: { user: User }) {
           href: "#personal-information",
           title: "Personal Information",
           component: <PersonalInformation user={user} />,
-          icon: faUser,
         },
         {
           key: "change-password",
           href: "#change-password",
           title: "Change Password",
           component: <ChangePasswordForm />,
-          icon: faUserGear,
         },
       ],
     },
@@ -55,14 +45,12 @@ export default function UserProfilePage({ user }: { user: User }) {
           href: "#preferences",
           title: "Preferences",
           component: <PreferenceComponent />,
-          icon: faStarHalf,
         },
         {
           key: "notifications",
           href: "#notifications",
           title: "Notifications",
           component: <div>Coming soon</div>,
-          icon: faBellRing,
         },
       ],
     },
@@ -74,14 +62,12 @@ export default function UserProfilePage({ user }: { user: User }) {
           href: "#api-keys",
           title: "API Keys",
           component: <div>Coming soon</div>,
-          icon: faRightLeft,
         },
         {
           key: "connections",
           href: "#connections",
           title: "Connections",
           component: <div>Coming soon</div>,
-          icon: faSatelliteDish,
         },
       ],
     },
@@ -93,7 +79,6 @@ export default function UserProfilePage({ user }: { user: User }) {
           href: "#privacy",
           title: "Privacy",
           component: <div>Coming soon</div>,
-          icon: faShieldHalved,
         },
       ],
     },

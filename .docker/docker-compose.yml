@@ -44,7 +44,11 @@ services:
       - "pg_stat_statements.track=all"
       - "-c"
       - "log_statement=all"
+      - "-c"
+      - "max_replication_slots=1"
     restart: always
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
 
   connect:
     image: debezium/connect:latest
@@ -103,8 +107,76 @@ services:
     ports:
       - 9000:9000 # API
       - 9001:9001 # Console
+    restart: always
+
+  trenova-elasticsearch:
+    image: elasticsearch:7.16.1
+    container_name: es
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+      nofile:
+        soft: 65536
+        hard: 65536
+    cap_add:
+      - IPC_LOCK
+    ports:
+      - "9200:9200"
+      - "9300:9300"
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "curl --silent --fail localhost:9200/_cluster/health || exit 1"
+        ]
+      interval: 10s
+      timeout: 10s
+      retries: 3
+    environment:
+      - CLI_JAVA_OPTS=-Xms2g -Xmx2g
+      - bootstrap.memory_lock=true
+      - discovery.type=single-node
+      - xpack.security.enabled=false
+    volumes:
+      - ./data:/usr/share/opensearch/data
+    restart: always
+
+  trenova-logstash:
+    image: logstash:7.16.1
+    container_name: log
+    environment:
+      discovery.seed_hosts: trenova-logstash
+      LS_JAVA_OPTS: "-Xms512m -Xmx512m"
+      ELASTICSEARCH_HOSTS: '["http://trenova-elasticsearch:9200"]'
+    volumes:
+      - ./logstash/pipeline/logstash-nginx.config:/usr/share/logstash/pipeline/logstash-nginx.config
+      - ./logstash/nginx.log:/home/nginx.log
+    ports:
+      - "5000:5000/tcp"
+      - "5000:5000/udp"
+      - "5044:5044"
+      - "9600:9600"
+    depends_on:
+      - trenova-elasticsearch
+    restart: always
+    command: logstash -f /usr/share/logstash/pipeline/logstash-nginx.config
+
+  trenova-kibana:
+    image: kibana:7.16.1
+    container_name: trenova-kibana
+    environment:
+      - ELASTICSEARCH_HOSTS=http://trenova-elasticsearch:9200
+      - xpack.reporting.encryptionKey="S79seX07b2Y3997NUf9n7Zu6G4abykKWcjl1AsEV7aanaVlbdsJEOohX1/cwgjFU"
+    ports:
+      - "5601:5601"
+    depends_on:
+      - trenova-elasticsearch
+    restart: always
 
 volumes:
+  postgres_data: {}
   redis_data: {}
   kafka_data: {}
   minio_data:
+  elastic_data: {}

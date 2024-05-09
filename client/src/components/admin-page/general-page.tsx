@@ -27,13 +27,7 @@ function OrganizationForm({ organization }: { organization: Organization }) {
 
   const { control, handleSubmit, reset } = useForm<OrganizationFormValues>({
     resolver: yupResolver(organizationSchema),
-    defaultValues: {
-      name: organization.name,
-      orgType: organization.orgType,
-      scacCode: organization.scacCode,
-      dotNumber: organization?.dotNumber || undefined,
-      timezone: organization.timezone,
-    },
+    defaultValues: organization,
   });
 
   const mutation = useCustomMutation<OrganizationFormValues>(control, {

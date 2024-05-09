@@ -3,7 +3,7 @@ package cmd
 import (
 	"context"
 	"database/sql"
-	"fmt"
+	"log"
 	"time"
 
 	"entgo.io/ent/dialect"
@@ -33,11 +33,11 @@ func init() {
 
 func seedCmdFunc(_ *cobra.Command, _ []string) {
 	if err := applyFixtures(); err != nil {
-		fmt.Errorf("failed to apply fixtures: %v\n", err)
+		log.Fatalf("failed to apply fixtures: %v", err)
 		return
 	}
 
-	fmt.Print("fixtures applied successfully\n")
+	log.Print("fixtures applied successfully\n")
 }
 
 func initClient() (*ent.Client, error) {
@@ -45,7 +45,7 @@ func initClient() (*ent.Client, error) {
 	// Initialize the new db connection
 	db, err := sql.Open("pgx", config.DB.ConnectionString())
 	if err != nil {
-		fmt.Printf("failed opening connection to postgres: %v\n", err)
+		log.Printf("failed opening connection to postgres: %v\n", err)
 		return nil, err
 	}
 

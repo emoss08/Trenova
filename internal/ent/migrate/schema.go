@@ -839,7 +839,6 @@ var (
 		{Name: "account_class", Type: field.TypeString, Nullable: true},
 		{Name: "balance", Type: field.TypeFloat64, Nullable: true},
 		{Name: "interest_rate", Type: field.TypeFloat64, Nullable: true},
-		{Name: "date_opened", Type: field.TypeOther, SchemaType: map[string]string{"postgres": "date", "sqlite3": "date"}},
 		{Name: "date_closed", Type: field.TypeOther, Nullable: true, SchemaType: map[string]string{"postgres": "date", "sqlite3": "date"}},
 		{Name: "notes", Type: field.TypeString, Nullable: true},
 		{Name: "is_tax_relevant", Type: field.TypeBool, Default: false},
@@ -855,13 +854,13 @@ var (
 		ForeignKeys: []*schema.ForeignKey{
 			{
 				Symbol:     "general_ledger_accounts_business_units_business_unit",
-				Columns:    []*schema.Column{GeneralLedgerAccountsColumns[17]},
+				Columns:    []*schema.Column{GeneralLedgerAccountsColumns[16]},
 				RefColumns: []*schema.Column{BusinessUnitsColumns[0]},
 				OnDelete:   schema.Cascade,
 			},
 			{
 				Symbol:     "general_ledger_accounts_organizations_organization",
-				Columns:    []*schema.Column{GeneralLedgerAccountsColumns[18]},
+				Columns:    []*schema.Column{GeneralLedgerAccountsColumns[17]},
 				RefColumns: []*schema.Column{OrganizationsColumns[0]},
 				OnDelete:   schema.Cascade,
 			},
