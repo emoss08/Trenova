@@ -220,7 +220,7 @@ var (
 		{Name: "updated_at", Type: field.TypeTime, Comment: "The last time that this entity was updated."},
 		{Name: "version", Type: field.TypeInt, Comment: "The current version of this entity.", Default: 1},
 		{Name: "status", Type: field.TypeEnum, Enums: []string{"A", "I"}, Default: "A", SchemaType: map[string]string{"postgres": "VARCHAR(1)", "sqlite3": "VARCHAR(1)"}},
-		{Name: "name", Type: field.TypeString, Size: 10, SchemaType: map[string]string{"postgres": "VARCHAR(10)", "sqlite3": "VARCHAR(10)"}},
+		{Name: "name", Type: field.TypeString, Size: 20, SchemaType: map[string]string{"postgres": "VARCHAR(20)", "sqlite3": "VARCHAR(20)"}},
 		{Name: "severity", Type: field.TypeEnum, Enums: []string{"High", "Medium", "Low"}, Default: "Low", SchemaType: map[string]string{"postgres": "VARCHAR(6)", "sqlite3": "VARCHAR(6)"}},
 		{Name: "description", Type: field.TypeString, Nullable: true, Size: 2147483647},
 		{Name: "business_unit_id", Type: field.TypeUUID},
@@ -839,7 +839,6 @@ var (
 		{Name: "account_class", Type: field.TypeString, Nullable: true},
 		{Name: "balance", Type: field.TypeFloat64, Nullable: true},
 		{Name: "interest_rate", Type: field.TypeFloat64, Nullable: true},
-		{Name: "date_opened", Type: field.TypeOther, SchemaType: map[string]string{"postgres": "date", "sqlite3": "date"}},
 		{Name: "date_closed", Type: field.TypeOther, Nullable: true, SchemaType: map[string]string{"postgres": "date", "sqlite3": "date"}},
 		{Name: "notes", Type: field.TypeString, Nullable: true},
 		{Name: "is_tax_relevant", Type: field.TypeBool, Default: false},
@@ -855,13 +854,13 @@ var (
 		ForeignKeys: []*schema.ForeignKey{
 			{
 				Symbol:     "general_ledger_accounts_business_units_business_unit",
-				Columns:    []*schema.Column{GeneralLedgerAccountsColumns[17]},
+				Columns:    []*schema.Column{GeneralLedgerAccountsColumns[16]},
 				RefColumns: []*schema.Column{BusinessUnitsColumns[0]},
 				OnDelete:   schema.Cascade,
 			},
 			{
 				Symbol:     "general_ledger_accounts_organizations_organization",
-				Columns:    []*schema.Column{GeneralLedgerAccountsColumns[18]},
+				Columns:    []*schema.Column{GeneralLedgerAccountsColumns[17]},
 				RefColumns: []*schema.Column{OrganizationsColumns[0]},
 				OnDelete:   schema.Cascade,
 			},
@@ -1202,7 +1201,7 @@ var (
 		{Name: "dot_number", Type: field.TypeString, Size: 12, SchemaType: map[string]string{"postgres": "VARCHAR(12)", "sqlite3": "VARCHAR(12)"}},
 		{Name: "logo_url", Type: field.TypeString, Nullable: true},
 		{Name: "org_type", Type: field.TypeEnum, Enums: []string{"A", "B", "X"}, Default: "A", SchemaType: map[string]string{"postgres": "VARCHAR(1)", "sqlite3": "VARCHAR(1)"}},
-		{Name: "timezone", Type: field.TypeEnum, Enums: []string{"AmericaLosAngeles", "AmericaDenver", "AmericaChicago", "AmericaNewYork"}, Default: "AmericaLosAngeles", SchemaType: map[string]string{"postgres": "VARCHAR(17)", "sqlite3": "VARCHAR(17)"}},
+		{Name: "timezone", Type: field.TypeString, SchemaType: map[string]string{"postgres": "VARCHAR(20)", "sqlite3": "VARCHAR(20)"}},
 		{Name: "business_unit_id", Type: field.TypeUUID},
 	}
 	// OrganizationsTable holds the schema information for the "organizations" table.
@@ -1252,6 +1251,47 @@ var (
 				Name:    "organizationfeatureflag_organization_id_feature_flag_id",
 				Unique:  true,
 				Columns: []*schema.Column{OrganizationFeatureFlagsColumns[5], OrganizationFeatureFlagsColumns[4]},
+			},
+		},
+	}
+	// PermissionsColumns holds the columns for the "permissions" table.
+	PermissionsColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeUUID},
+		{Name: "created_at", Type: field.TypeTime, Comment: "The time that this entity was created."},
+		{Name: "updated_at", Type: field.TypeTime, Comment: "The last time that this entity was updated."},
+		{Name: "version", Type: field.TypeInt, Comment: "The current version of this entity.", Default: 1},
+		{Name: "codename", Type: field.TypeString},
+		{Name: "action", Type: field.TypeString, Nullable: true},
+		{Name: "label", Type: field.TypeString, Nullable: true},
+		{Name: "read_description", Type: field.TypeString, Nullable: true},
+		{Name: "write_description", Type: field.TypeString, Nullable: true},
+		{Name: "business_unit_id", Type: field.TypeUUID},
+		{Name: "organization_id", Type: field.TypeUUID},
+		{Name: "resource_id", Type: field.TypeUUID},
+	}
+	// PermissionsTable holds the schema information for the "permissions" table.
+	PermissionsTable = &schema.Table{
+		Name:       "permissions",
+		Columns:    PermissionsColumns,
+		PrimaryKey: []*schema.Column{PermissionsColumns[0]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "permissions_business_units_business_unit",
+				Columns:    []*schema.Column{PermissionsColumns[9]},
+				RefColumns: []*schema.Column{BusinessUnitsColumns[0]},
+				OnDelete:   schema.Cascade,
+			},
+			{
+				Symbol:     "permissions_organizations_organization",
+				Columns:    []*schema.Column{PermissionsColumns[10]},
+				RefColumns: []*schema.Column{OrganizationsColumns[0]},
+				OnDelete:   schema.Cascade,
+			},
+			{
+				Symbol:     "permissions_resources_permissions",
+				Columns:    []*schema.Column{PermissionsColumns[11]},
+				RefColumns: []*schema.Column{ResourcesColumns[0]},
+				OnDelete:   schema.NoAction,
 			},
 		},
 	}
@@ -1320,6 +1360,20 @@ var (
 			},
 		},
 	}
+	// ResourcesColumns holds the columns for the "resources" table.
+	ResourcesColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeUUID},
+		{Name: "created_at", Type: field.TypeTime},
+		{Name: "updated_at", Type: field.TypeTime},
+		{Name: "type", Type: field.TypeString, Unique: true},
+		{Name: "description", Type: field.TypeString, Nullable: true},
+	}
+	// ResourcesTable holds the schema information for the "resources" table.
+	ResourcesTable = &schema.Table{
+		Name:       "resources",
+		Columns:    ResourcesColumns,
+		PrimaryKey: []*schema.Column{ResourcesColumns[0]},
+	}
 	// RevenueCodesColumns holds the columns for the "revenue_codes" table.
 	RevenueCodesColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeUUID},
@@ -1362,6 +1416,38 @@ var (
 				Symbol:     "revenue_codes_general_ledger_accounts_revenue_account",
 				Columns:    []*schema.Column{RevenueCodesColumns[10]},
 				RefColumns: []*schema.Column{GeneralLedgerAccountsColumns[0]},
+				OnDelete:   schema.Cascade,
+			},
+		},
+	}
+	// RolesColumns holds the columns for the "roles" table.
+	RolesColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeUUID},
+		{Name: "created_at", Type: field.TypeTime, Comment: "The time that this entity was created."},
+		{Name: "updated_at", Type: field.TypeTime, Comment: "The last time that this entity was updated."},
+		{Name: "version", Type: field.TypeInt, Comment: "The current version of this entity.", Default: 1},
+		{Name: "name", Type: field.TypeString, Size: 50},
+		{Name: "description", Type: field.TypeString, Nullable: true},
+		{Name: "color", Type: field.TypeString, Nullable: true},
+		{Name: "business_unit_id", Type: field.TypeUUID},
+		{Name: "organization_id", Type: field.TypeUUID},
+	}
+	// RolesTable holds the schema information for the "roles" table.
+	RolesTable = &schema.Table{
+		Name:       "roles",
+		Columns:    RolesColumns,
+		PrimaryKey: []*schema.Column{RolesColumns[0]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "roles_business_units_business_unit",
+				Columns:    []*schema.Column{RolesColumns[7]},
+				RefColumns: []*schema.Column{BusinessUnitsColumns[0]},
+				OnDelete:   schema.Cascade,
+			},
+			{
+				Symbol:     "roles_organizations_organization",
+				Columns:    []*schema.Column{RolesColumns[8]},
+				RefColumns: []*schema.Column{OrganizationsColumns[0]},
 				OnDelete:   schema.Cascade,
 			},
 		},
@@ -2267,7 +2353,7 @@ var (
 		{Name: "username", Type: field.TypeString, Size: 30},
 		{Name: "password", Type: field.TypeString, Size: 100},
 		{Name: "email", Type: field.TypeString},
-		{Name: "timezone", Type: field.TypeEnum, Enums: []string{"AmericaLosAngeles", "AmericaDenver", "AmericaChicago", "AmericaNewYork"}, Default: "AmericaLosAngeles", SchemaType: map[string]string{"postgres": "VARCHAR(17)", "sqlite3": "VARCHAR(17)"}},
+		{Name: "timezone", Type: field.TypeString, SchemaType: map[string]string{"postgres": "VARCHAR(20)", "sqlite3": "VARCHAR(20)"}},
 		{Name: "profile_pic_url", Type: field.TypeString, Nullable: true},
 		{Name: "thumbnail_url", Type: field.TypeString, Nullable: true},
 		{Name: "phone_number", Type: field.TypeString, Nullable: true},
@@ -2434,6 +2520,7 @@ var (
 		{Name: "address_line_2", Type: field.TypeString, Nullable: true, Size: 150, SchemaType: map[string]string{"postgres": "VARCHAR(150)", "sqlite3": "VARCHAR(150)"}},
 		{Name: "city", Type: field.TypeString, Nullable: true, Size: 150, SchemaType: map[string]string{"postgres": "VARCHAR(150)", "sqlite3": "VARCHAR(150)"}},
 		{Name: "postal_code", Type: field.TypeString, Nullable: true, Size: 10, SchemaType: map[string]string{"postgres": "VARCHAR(10)", "sqlite3": "VARCHAR(10)"}},
+		{Name: "external_id", Type: field.TypeString, Nullable: true, Comment: "External ID usually from HOS integration."},
 		{Name: "business_unit_id", Type: field.TypeUUID},
 		{Name: "organization_id", Type: field.TypeUUID},
 		{Name: "state_id", Type: field.TypeUUID, Nullable: true},
@@ -2448,31 +2535,31 @@ var (
 		ForeignKeys: []*schema.ForeignKey{
 			{
 				Symbol:     "workers_business_units_business_unit",
-				Columns:    []*schema.Column{WorkersColumns[14]},
+				Columns:    []*schema.Column{WorkersColumns[15]},
 				RefColumns: []*schema.Column{BusinessUnitsColumns[0]},
 				OnDelete:   schema.Cascade,
 			},
 			{
 				Symbol:     "workers_organizations_organization",
-				Columns:    []*schema.Column{WorkersColumns[15]},
+				Columns:    []*schema.Column{WorkersColumns[16]},
 				RefColumns: []*schema.Column{OrganizationsColumns[0]},
 				OnDelete:   schema.Cascade,
 			},
 			{
 				Symbol:     "workers_us_states_state",
-				Columns:    []*schema.Column{WorkersColumns[16]},
+				Columns:    []*schema.Column{WorkersColumns[17]},
 				RefColumns: []*schema.Column{UsStatesColumns[0]},
 				OnDelete:   schema.Cascade,
 			},
 			{
 				Symbol:     "workers_fleet_codes_fleet_code",
-				Columns:    []*schema.Column{WorkersColumns[17]},
+				Columns:    []*schema.Column{WorkersColumns[18]},
 				RefColumns: []*schema.Column{FleetCodesColumns[0]},
 				OnDelete:   schema.Cascade,
 			},
 			{
 				Symbol:     "workers_users_manager",
-				Columns:    []*schema.Column{WorkersColumns[18]},
+				Columns:    []*schema.Column{WorkersColumns[19]},
 				RefColumns: []*schema.Column{UsersColumns[0]},
 				OnDelete:   schema.Cascade,
 			},
@@ -2657,6 +2744,56 @@ var (
 			},
 		},
 	}
+	// RolePermissionsColumns holds the columns for the "role_permissions" table.
+	RolePermissionsColumns = []*schema.Column{
+		{Name: "role_id", Type: field.TypeUUID},
+		{Name: "permission_id", Type: field.TypeUUID},
+	}
+	// RolePermissionsTable holds the schema information for the "role_permissions" table.
+	RolePermissionsTable = &schema.Table{
+		Name:       "role_permissions",
+		Columns:    RolePermissionsColumns,
+		PrimaryKey: []*schema.Column{RolePermissionsColumns[0], RolePermissionsColumns[1]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "role_permissions_role_id",
+				Columns:    []*schema.Column{RolePermissionsColumns[0]},
+				RefColumns: []*schema.Column{RolesColumns[0]},
+				OnDelete:   schema.Cascade,
+			},
+			{
+				Symbol:     "role_permissions_permission_id",
+				Columns:    []*schema.Column{RolePermissionsColumns[1]},
+				RefColumns: []*schema.Column{PermissionsColumns[0]},
+				OnDelete:   schema.Cascade,
+			},
+		},
+	}
+	// RoleUsersColumns holds the columns for the "role_users" table.
+	RoleUsersColumns = []*schema.Column{
+		{Name: "role_id", Type: field.TypeUUID},
+		{Name: "user_id", Type: field.TypeUUID},
+	}
+	// RoleUsersTable holds the schema information for the "role_users" table.
+	RoleUsersTable = &schema.Table{
+		Name:       "role_users",
+		Columns:    RoleUsersColumns,
+		PrimaryKey: []*schema.Column{RoleUsersColumns[0], RoleUsersColumns[1]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "role_users_role_id",
+				Columns:    []*schema.Column{RoleUsersColumns[0]},
+				RefColumns: []*schema.Column{RolesColumns[0]},
+				OnDelete:   schema.Cascade,
+			},
+			{
+				Symbol:     "role_users_user_id",
+				Columns:    []*schema.Column{RoleUsersColumns[1]},
+				RefColumns: []*schema.Column{UsersColumns[0]},
+				OnDelete:   schema.Cascade,
+			},
+		},
+	}
 	// Tables holds all the tables in the schema.
 	Tables = []*schema.Table{
 		AccessorialChargesTable,
@@ -2691,9 +2828,12 @@ var (
 		LocationContactsTable,
 		OrganizationsTable,
 		OrganizationFeatureFlagsTable,
+		PermissionsTable,
 		QualifierCodesTable,
 		ReasonCodesTable,
+		ResourcesTable,
 		RevenueCodesTable,
+		RolesTable,
 		RouteControlsTable,
 		ServiceTypesTable,
 		SessionsTable,
@@ -2721,6 +2861,8 @@ var (
 		WorkerContactsTable,
 		WorkerProfilesTable,
 		GeneralLedgerAccountTagsTable,
+		RolePermissionsTable,
+		RoleUsersTable,
 	}
 )
 
@@ -2825,6 +2967,10 @@ func init() {
 	OrganizationsTable.ForeignKeys[0].RefTable = BusinessUnitsTable
 	OrganizationFeatureFlagsTable.ForeignKeys[0].RefTable = FeatureFlagsTable
 	OrganizationFeatureFlagsTable.ForeignKeys[1].RefTable = OrganizationsTable
+	PermissionsTable.ForeignKeys[0].RefTable = BusinessUnitsTable
+	PermissionsTable.ForeignKeys[1].RefTable = OrganizationsTable
+	PermissionsTable.ForeignKeys[2].RefTable = ResourcesTable
+	PermissionsTable.Annotation = &entsql.Annotation{}
 	QualifierCodesTable.ForeignKeys[0].RefTable = BusinessUnitsTable
 	QualifierCodesTable.ForeignKeys[1].RefTable = OrganizationsTable
 	QualifierCodesTable.Annotation = &entsql.Annotation{}
@@ -2836,6 +2982,9 @@ func init() {
 	RevenueCodesTable.ForeignKeys[2].RefTable = GeneralLedgerAccountsTable
 	RevenueCodesTable.ForeignKeys[3].RefTable = GeneralLedgerAccountsTable
 	RevenueCodesTable.Annotation = &entsql.Annotation{}
+	RolesTable.ForeignKeys[0].RefTable = BusinessUnitsTable
+	RolesTable.ForeignKeys[1].RefTable = OrganizationsTable
+	RolesTable.Annotation = &entsql.Annotation{}
 	RouteControlsTable.ForeignKeys[0].RefTable = OrganizationsTable
 	RouteControlsTable.ForeignKeys[1].RefTable = BusinessUnitsTable
 	ServiceTypesTable.ForeignKeys[0].RefTable = BusinessUnitsTable
@@ -2957,4 +3106,8 @@ func init() {
 	WorkerProfilesTable.Annotation = &entsql.Annotation{}
 	GeneralLedgerAccountTagsTable.ForeignKeys[0].RefTable = GeneralLedgerAccountsTable
 	GeneralLedgerAccountTagsTable.ForeignKeys[1].RefTable = TagsTable
+	RolePermissionsTable.ForeignKeys[0].RefTable = RolesTable
+	RolePermissionsTable.ForeignKeys[1].RefTable = PermissionsTable
+	RoleUsersTable.ForeignKeys[0].RefTable = RolesTable
+	RoleUsersTable.ForeignKeys[1].RefTable = UsersTable
 }

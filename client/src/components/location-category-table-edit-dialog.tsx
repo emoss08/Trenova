@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { useCustomMutation } from "@/hooks/useCustomMutation";
-import { formatDate } from "@/lib/date";
+import { formatToUserTimezone } from "@/lib/date";
 import { LocationCategorySchema as formSchema } from "@/lib/validations/LocationSchema";
 import { useTableStore } from "@/stores/TableStore";
 import type {
@@ -8,9 +8,9 @@ import type {
   LocationCategory,
 } from "@/types/location";
 import { yupResolver } from "@hookform/resolvers/yup";
-import React from "react";
 import { useForm } from "react-hook-form";
 import { LCForm } from "./location-category-table-dialog";
+import { Badge } from "./ui/badge";
 import {
   Credenza,
   CredenzaBody,
@@ -27,31 +27,21 @@ export function LCEditForm({
 }: {
   locationCategory: LocationCategory;
 }) {
-  const [isSubmitting, setIsSubmitting] = React.useState<boolean>(false);
-  const { control, reset, handleSubmit } = useForm<FormValues>({
+  const { control, handleSubmit } = useForm<FormValues>({
     resolver: yupResolver(formSchema),
     defaultValues: locationCategory,
   });
 
-  const mutation = useCustomMutation<FormValues>(
-    control,
-    {
-      method: "PUT",
-      path: `/location-categories/${locationCategory.id}/`,
-      successMessage: "Location Category updated successfully.",
-      queryKeysToInvalidate: ["location-categories-table-data"],
-      additionalInvalidateQueries: ["locationCategories"],
-      closeModal: true,
-      errorMessage: "Failed to update location category.",
-    },
-    () => setIsSubmitting(false),
-    reset,
-  );
+  const mutation = useCustomMutation<FormValues>(control, {
+    method: "PUT",
+    path: `/location-categories/${locationCategory.id}/`,
+    successMessage: "Location Category updated successfully.",
+    queryKeysToInvalidate: "locationCategories",
+    closeModal: true,
+    errorMessage: "Failed to update location category.",
+  });
 
-  const onSubmit = (values: FormValues) => {
-    setIsSubmitting(true);
-    mutation.mutate(values);
-  };
+  const onSubmit = (values: FormValues) => mutation.mutate(values);
 
   return (
     <CredenzaBody>
@@ -63,7 +53,7 @@ export function LCEditForm({
               Cancel
             </Button>
           </CredenzaClose>
-          <Button type="submit" isLoading={isSubmitting}>
+          <Button type="submit" isLoading={mutation.isPending}>
             Save Changes
           </Button>
         </CredenzaFooter>
@@ -89,15 +79,17 @@ export function LocationCategoryEditDialog({
     <Credenza open={open} onOpenChange={onOpenChange}>
       <CredenzaContent>
         <CredenzaHeader>
-          <CredenzaTitle>
-            {locationCategory && locationCategory.name}
+          <CredenzaTitle className="flex">
+            <span>{locationCategory.name}</span>
+            <Badge className="ml-5" variant="purple">
+              {locationCategory.id}
+            </Badge>
           </CredenzaTitle>
         </CredenzaHeader>
         <CredenzaDescription>
-          Last updated on&nbsp;
-          {locationCategory && formatDate(locationCategory.updatedAt)}
+          Last updated on {formatToUserTimezone(locationCategory.updatedAt)}
         </CredenzaDescription>
-        {locationCategory && <LCEditForm locationCategory={locationCategory} />}
+        <LCEditForm locationCategory={locationCategory} />
       </CredenzaContent>
     </Credenza>
   );

@@ -1,20 +1,3 @@
-/*
- * COPYRIGHT(c) 2024 Trenova
- *
- * This file is part of Trenova.
- *
- * The Trenova software is licensed under the Business Source License 1.1. You are granted the right
- * to copy, modify, and redistribute the software, but only for non-production use or with a total
- * of less than three server instances. Starting from the Change Date (November 16, 2026), the
- * software will be made available under version 2 or later of the GNU General Public License.
- * If you use the software in violation of this license, your rights under the license will be
- * terminated automatically. The software is provided "as is," and the Licensor disclaims all
- * warranties and conditions. If you use this license's text or the "Business Source License" name
- * and trademark, you must comply with the Licensor's covenants, which include specifying the
- * Change License as the GPL Version 2.0 or a compatible license, specifying an Additional Use
- * Grant, and not modifying the license in any other way.
- */
-
 import { Button } from "@/components/ui/button";
 import { useCustomMutation } from "@/hooks/useCustomMutation";
 import { cleanObject } from "@/lib/utils";
@@ -90,7 +73,6 @@ const tabs: Record<string, ShipmentPageTab> = {
 
 export default function AddShipment() {
   const [activeTab, setActiveTab] = useState<string>("general");
-  const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const [user] = useUserStore.use("user");
 
   const { shipmentForm, isShipmentControlLoading, shipmentControlData } =
@@ -100,28 +82,21 @@ export default function AddShipment() {
     return <ComponentLoader className="h-[60vh]" />;
   }
 
-  const { control, reset, handleSubmit } = shipmentForm;
+  const { control, handleSubmit } = shipmentForm;
 
   // TODO(WOLFRED): use react-hook-form-persist to persist form data in session storage until form is submitted
 
   // Mutation
-  const mutation = useCustomMutation<ShipmentFormValues>(
-    control,
-    {
-      method: "POST",
-      path: "/shipments/",
-      successMessage: "Shipment created successfully.",
-      queryKeysToInvalidate: ["shipments"],
-      closeModal: true,
-      errorMessage: "Failed to create new shipment.",
-    },
-    () => setIsSubmitting(false),
-    reset,
-  );
+  const mutation = useCustomMutation<ShipmentFormValues>(control, {
+    method: "POST",
+    path: "/shipments/",
+    successMessage: "Shipment created successfully.",
+    queryKeysToInvalidate: "shipments",
+    closeModal: true,
+    errorMessage: "Failed to create new shipment.",
+  });
 
   const onSubmit = (values: ShipmentFormValues) => {
-    setIsSubmitting(true);
-
     const cleanedValues = cleanObject(values);
     mutation.mutate(cleanedValues);
   };
@@ -148,7 +123,7 @@ export default function AddShipment() {
               <Button disabled type="button" variant="outline">
                 Save & Add Another
               </Button>
-              <Button type="submit" isLoading={isSubmitting}>
+              <Button type="submit" isLoading={mutation.isPending}>
                 Save
               </Button>
             </div>

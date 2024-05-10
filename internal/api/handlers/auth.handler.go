@@ -117,6 +117,19 @@ func (h *AuthenticationHandler) AuthenticateUser() fiber.Handler {
 			})
 		}
 
+		if user.Status == "I" {
+			return c.Status(fiber.StatusUnauthorized).JSON(types.ValidationErrorResponse{
+				Type: "unauthorized",
+				Errors: []types.ValidationErrorDetail{
+					{
+						Code:   "authenticationError",
+						Detail: "User is no longer active. Please contact support.",
+						Attr:   "emailAddress",
+					},
+				},
+			})
+		}
+
 		// Set the session values
 		sess.Set(string(util.CTXUserID), user.ID)
 		sess.Set(string(util.CTXOrganizationID), user.OrganizationID)

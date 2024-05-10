@@ -37,9 +37,12 @@ import (
 	"github.com/emoss08/trenova/internal/ent/locationcontact"
 	"github.com/emoss08/trenova/internal/ent/organization"
 	"github.com/emoss08/trenova/internal/ent/organizationfeatureflag"
+	"github.com/emoss08/trenova/internal/ent/permission"
 	"github.com/emoss08/trenova/internal/ent/qualifiercode"
 	"github.com/emoss08/trenova/internal/ent/reasoncode"
+	"github.com/emoss08/trenova/internal/ent/resource"
 	"github.com/emoss08/trenova/internal/ent/revenuecode"
+	"github.com/emoss08/trenova/internal/ent/role"
 	"github.com/emoss08/trenova/internal/ent/routecontrol"
 	"github.com/emoss08/trenova/internal/ent/schema"
 	"github.com/emoss08/trenova/internal/ent/servicetype"
@@ -68,7 +71,6 @@ import (
 	"github.com/emoss08/trenova/internal/ent/workercontact"
 	"github.com/emoss08/trenova/internal/ent/workerprofile"
 	"github.com/google/uuid"
-	"github.com/jackc/pgx/v5/pgtype"
 )
 
 // The init function reads all schema descriptors with runtime code
@@ -1073,16 +1075,12 @@ func init() {
 			return nil
 		}
 	}()
-	// generalledgeraccountDescDateOpened is the schema descriptor for date_opened field.
-	generalledgeraccountDescDateOpened := generalledgeraccountFields[8].Descriptor()
-	// generalledgeraccount.DefaultDateOpened holds the default value on creation for the date_opened field.
-	generalledgeraccount.DefaultDateOpened = generalledgeraccountDescDateOpened.Default.(*pgtype.Date)
 	// generalledgeraccountDescIsTaxRelevant is the schema descriptor for is_tax_relevant field.
-	generalledgeraccountDescIsTaxRelevant := generalledgeraccountFields[11].Descriptor()
+	generalledgeraccountDescIsTaxRelevant := generalledgeraccountFields[10].Descriptor()
 	// generalledgeraccount.DefaultIsTaxRelevant holds the default value on creation for the is_tax_relevant field.
 	generalledgeraccount.DefaultIsTaxRelevant = generalledgeraccountDescIsTaxRelevant.Default.(bool)
 	// generalledgeraccountDescIsReconciled is the schema descriptor for is_reconciled field.
-	generalledgeraccountDescIsReconciled := generalledgeraccountFields[12].Descriptor()
+	generalledgeraccountDescIsReconciled := generalledgeraccountFields[11].Descriptor()
 	// generalledgeraccount.DefaultIsReconciled holds the default value on creation for the is_reconciled field.
 	generalledgeraccount.DefaultIsReconciled = generalledgeraccountDescIsReconciled.Default.(bool)
 	// generalledgeraccountDescID is the schema descriptor for id field.
@@ -1507,6 +1505,33 @@ func init() {
 	organizationfeatureflagDescID := organizationfeatureflagMixinFields0[0].Descriptor()
 	// organizationfeatureflag.DefaultID holds the default value on creation for the id field.
 	organizationfeatureflag.DefaultID = organizationfeatureflagDescID.Default.(func() uuid.UUID)
+	permissionMixin := schema.Permission{}.Mixin()
+	permissionMixinFields0 := permissionMixin[0].Fields()
+	_ = permissionMixinFields0
+	permissionFields := schema.Permission{}.Fields()
+	_ = permissionFields
+	// permissionDescCreatedAt is the schema descriptor for created_at field.
+	permissionDescCreatedAt := permissionMixinFields0[3].Descriptor()
+	// permission.DefaultCreatedAt holds the default value on creation for the created_at field.
+	permission.DefaultCreatedAt = permissionDescCreatedAt.Default.(func() time.Time)
+	// permissionDescUpdatedAt is the schema descriptor for updated_at field.
+	permissionDescUpdatedAt := permissionMixinFields0[4].Descriptor()
+	// permission.DefaultUpdatedAt holds the default value on creation for the updated_at field.
+	permission.DefaultUpdatedAt = permissionDescUpdatedAt.Default.(func() time.Time)
+	// permission.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
+	permission.UpdateDefaultUpdatedAt = permissionDescUpdatedAt.UpdateDefault.(func() time.Time)
+	// permissionDescVersion is the schema descriptor for version field.
+	permissionDescVersion := permissionMixinFields0[5].Descriptor()
+	// permission.DefaultVersion holds the default value on creation for the version field.
+	permission.DefaultVersion = permissionDescVersion.Default.(int)
+	// permissionDescCodename is the schema descriptor for codename field.
+	permissionDescCodename := permissionFields[0].Descriptor()
+	// permission.CodenameValidator is a validator for the "codename" field. It is called by the builders before save.
+	permission.CodenameValidator = permissionDescCodename.Validators[0].(func(string) error)
+	// permissionDescID is the schema descriptor for id field.
+	permissionDescID := permissionMixinFields0[0].Descriptor()
+	// permission.DefaultID holds the default value on creation for the id field.
+	permission.DefaultID = permissionDescID.Default.(func() uuid.UUID)
 	qualifiercodeMixin := schema.QualifierCode{}.Mixin()
 	qualifiercodeMixinFields0 := qualifiercodeMixin[0].Fields()
 	_ = qualifiercodeMixinFields0
@@ -1579,6 +1604,29 @@ func init() {
 	reasoncodeDescID := reasoncodeMixinFields0[0].Descriptor()
 	// reasoncode.DefaultID holds the default value on creation for the id field.
 	reasoncode.DefaultID = reasoncodeDescID.Default.(func() uuid.UUID)
+	resourceMixin := schema.Resource{}.Mixin()
+	resourceMixinFields0 := resourceMixin[0].Fields()
+	_ = resourceMixinFields0
+	resourceFields := schema.Resource{}.Fields()
+	_ = resourceFields
+	// resourceDescCreatedAt is the schema descriptor for created_at field.
+	resourceDescCreatedAt := resourceMixinFields0[1].Descriptor()
+	// resource.DefaultCreatedAt holds the default value on creation for the created_at field.
+	resource.DefaultCreatedAt = resourceDescCreatedAt.Default.(func() time.Time)
+	// resourceDescUpdatedAt is the schema descriptor for updated_at field.
+	resourceDescUpdatedAt := resourceMixinFields0[2].Descriptor()
+	// resource.DefaultUpdatedAt holds the default value on creation for the updated_at field.
+	resource.DefaultUpdatedAt = resourceDescUpdatedAt.Default.(func() time.Time)
+	// resource.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
+	resource.UpdateDefaultUpdatedAt = resourceDescUpdatedAt.UpdateDefault.(func() time.Time)
+	// resourceDescType is the schema descriptor for type field.
+	resourceDescType := resourceFields[0].Descriptor()
+	// resource.TypeValidator is a validator for the "type" field. It is called by the builders before save.
+	resource.TypeValidator = resourceDescType.Validators[0].(func(string) error)
+	// resourceDescID is the schema descriptor for id field.
+	resourceDescID := resourceMixinFields0[0].Descriptor()
+	// resource.DefaultID holds the default value on creation for the id field.
+	resource.DefaultID = resourceDescID.Default.(func() uuid.UUID)
 	revenuecodeMixin := schema.RevenueCode{}.Mixin()
 	revenuecodeHooks := schema.RevenueCode{}.Hooks()
 	revenuecode.Hooks[0] = revenuecodeHooks[0]
@@ -1627,6 +1675,47 @@ func init() {
 	revenuecodeDescID := revenuecodeMixinFields0[0].Descriptor()
 	// revenuecode.DefaultID holds the default value on creation for the id field.
 	revenuecode.DefaultID = revenuecodeDescID.Default.(func() uuid.UUID)
+	roleMixin := schema.Role{}.Mixin()
+	roleMixinFields0 := roleMixin[0].Fields()
+	_ = roleMixinFields0
+	roleFields := schema.Role{}.Fields()
+	_ = roleFields
+	// roleDescCreatedAt is the schema descriptor for created_at field.
+	roleDescCreatedAt := roleMixinFields0[3].Descriptor()
+	// role.DefaultCreatedAt holds the default value on creation for the created_at field.
+	role.DefaultCreatedAt = roleDescCreatedAt.Default.(func() time.Time)
+	// roleDescUpdatedAt is the schema descriptor for updated_at field.
+	roleDescUpdatedAt := roleMixinFields0[4].Descriptor()
+	// role.DefaultUpdatedAt holds the default value on creation for the updated_at field.
+	role.DefaultUpdatedAt = roleDescUpdatedAt.Default.(func() time.Time)
+	// role.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
+	role.UpdateDefaultUpdatedAt = roleDescUpdatedAt.UpdateDefault.(func() time.Time)
+	// roleDescVersion is the schema descriptor for version field.
+	roleDescVersion := roleMixinFields0[5].Descriptor()
+	// role.DefaultVersion holds the default value on creation for the version field.
+	role.DefaultVersion = roleDescVersion.Default.(int)
+	// roleDescName is the schema descriptor for name field.
+	roleDescName := roleFields[0].Descriptor()
+	// role.NameValidator is a validator for the "name" field. It is called by the builders before save.
+	role.NameValidator = func() func(string) error {
+		validators := roleDescName.Validators
+		fns := [...]func(string) error{
+			validators[0].(func(string) error),
+			validators[1].(func(string) error),
+		}
+		return func(name string) error {
+			for _, fn := range fns {
+				if err := fn(name); err != nil {
+					return err
+				}
+			}
+			return nil
+		}
+	}()
+	// roleDescID is the schema descriptor for id field.
+	roleDescID := roleMixinFields0[0].Descriptor()
+	// role.DefaultID holds the default value on creation for the id field.
+	role.DefaultID = roleDescID.Default.(func() uuid.UUID)
 	routecontrolMixin := schema.RouteControl{}.Mixin()
 	routecontrolMixinFields0 := routecontrolMixin[0].Fields()
 	_ = routecontrolMixinFields0

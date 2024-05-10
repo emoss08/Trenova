@@ -11,15 +11,25 @@ import (
 )
 
 type DelayCodeHandler struct {
-	Server  *api.Server
-	Service *services.DelayCodeService
+	Server            *api.Server
+	Service           *services.DelayCodeService
+	PermissionService *services.PermissionService
 }
 
 func NewDelayCodeHandler(s *api.Server) *DelayCodeHandler {
 	return &DelayCodeHandler{
-		Server:  s,
-		Service: services.NewDelayCodeService(s),
+		Server:            s,
+		Service:           services.NewDelayCodeService(s),
+		PermissionService: services.NewPermissionService(s),
 	}
+}
+
+// RegisterRoutes registers the routes for the DelayCodeHandler.
+func (h *DelayCodeHandler) RegisterRoutes(r fiber.Router) {
+	delayCodeAPI := r.Group("/delay-codes")
+	delayCodeAPI.Get("/", h.GetDelayCodes())
+	delayCodeAPI.Post("/", h.CreateDelayCode())
+	delayCodeAPI.Put("/:delayCodeID", h.UpdateDelayCode())
 }
 
 // GetDelayCodes is a handler that returns a list of delay codes.
@@ -27,20 +37,6 @@ func NewDelayCodeHandler(s *api.Server) *DelayCodeHandler {
 // GET /delay-codes
 func (h *DelayCodeHandler) GetDelayCodes() fiber.Handler {
 	return func(c *fiber.Ctx) error {
-		offset, limit, err := util.PaginationParams(c)
-		if err != nil {
-			return c.Status(fiber.StatusBadRequest).JSON(types.ValidationErrorResponse{
-				Type: "invalidRequest",
-				Errors: []types.ValidationErrorDetail{
-					{
-						Code:   "invalidRequest",
-						Detail: err.Error(),
-						Attr:   "offset, limit",
-					},
-				},
-			})
-		}
-
 		orgID, ok := c.Locals(util.CTXOrganizationID).(uuid.UUID)
 		buID, buOK := c.Locals(util.CTXBusinessUnitID).(uuid.UUID)
 
@@ -52,6 +48,29 @@ func (h *DelayCodeHandler) GetDelayCodes() fiber.Handler {
 						Code:   "internalError",
 						Detail: "Organization ID or Business Unit ID not found in the request context",
 						Attr:   "orgID, buID",
+					},
+				},
+			})
+		}
+
+		// Check if the user has the required permission
+		err := h.PermissionService.CheckUserPermission(c, "delaycode.view")
+		if err != nil {
+			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+				"error":   "Unauthorized",
+				"message": "You do not have the required permission to access this resource",
+			})
+		}
+
+		offset, limit, err := util.PaginationParams(c)
+		if err != nil {
+			return c.Status(fiber.StatusBadRequest).JSON(types.ValidationErrorResponse{
+				Type: "invalidRequest",
+				Errors: []types.ValidationErrorDetail{
+					{
+						Code:   "invalidRequest",
+						Detail: err.Error(),
+						Attr:   "offset, limit",
 					},
 				},
 			})
@@ -98,20 +117,20 @@ func (h *DelayCodeHandler) CreateDelayCode() fiber.Handler {
 			})
 		}
 
+		// Check if the user has the required permission
+		err := h.PermissionService.CheckUserPermission(c, "delaycode.add")
+		if err != nil {
+			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+				"error":   "Unauthorized",
+				"message": "You do not have the required permission to access this resource",
+			})
+		}
+
 		newEntity.BusinessUnitID = buID
 		newEntity.OrganizationID = orgID
 
 		if err := util.ParseBodyAndValidate(c, newEntity); err != nil {
-			return c.Status(fiber.StatusBadRequest).JSON(types.ValidationErrorResponse{
-				Type: "invalidRequest",
-				Errors: []types.ValidationErrorDetail{
-					{
-						Code:   "invalidRequest",
-						Detail: err.Error(),
-						Attr:   "body",
-					},
-				},
-			})
+			return err
 		}
 
 		entity, err := h.Service.CreateDelayCode(c.UserContext(), newEntity)
@@ -143,19 +162,19 @@ func (h *DelayCodeHandler) UpdateDelayCode() fiber.Handler {
 			})
 		}
 
+		// Check if the user has the required permission
+		err := h.PermissionService.CheckUserPermission(c, "delaycode.edit")
+		if err != nil {
+			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+				"error":   "Unauthorized",
+				"message": "You do not have the required permission to access this resource",
+			})
+		}
+
 		updatedEntity := new(ent.DelayCode)
 
 		if err := util.ParseBodyAndValidate(c, updatedEntity); err != nil {
-			return c.Status(fiber.StatusBadRequest).JSON(types.ValidationErrorResponse{
-				Type: "invalidRequest",
-				Errors: []types.ValidationErrorDetail{
-					{
-						Code:   "invalidRequest",
-						Detail: err.Error(),
-						Attr:   "request body",
-					},
-				},
-			})
+			return err
 		}
 
 		updatedEntity.ID = uuid.MustParse(delayCodeID)

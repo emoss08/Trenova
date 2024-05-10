@@ -1,6 +1,6 @@
 import axios from "@/lib/axiosConfig";
 import { useTableStore } from "@/stores/TableStore";
-import type { QueryKeys, QueryKeyWithParams } from "@/types";
+import type { QueryKeys, ValuesOf } from "@/types";
 import { type APIError } from "@/types/server";
 import {
   QueryClient,
@@ -8,7 +8,7 @@ import {
   useQueryClient,
 } from "@tanstack/react-query";
 import { type AxiosResponse } from "axios";
-import type { Control, FieldValues, Path, UseFormReset } from "react-hook-form";
+import type { Control, FieldValues, Path } from "react-hook-form";
 import { toast } from "sonner";
 
 type DataProp = Record<string, unknown> | FormData;
@@ -16,26 +16,22 @@ type MutationOptions = {
   path: string;
   successMessage: string;
   errorMessage?: string;
-  queryKeysToInvalidate?: QueryKeys | QueryKeyWithParams<any, any>;
+  queryKeysToInvalidate?: ValuesOf<QueryKeys>;
   closeModal?: boolean;
   method: "POST" | "PUT" | "PATCH" | "DELETE";
-  additionalInvalidateQueries?: QueryKeys;
 };
 
 export function useCustomMutation<T extends FieldValues>(
   control: Control<T>,
   options: MutationOptions,
-  onMutationSettled?: () => void,
-  reset?: UseFormReset<T>,
 ) {
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: (data: DataProp) =>
       executeApiMethod(options.method, options.path, data),
-    onSuccess: () => handleSuccess(options, queryClient, reset),
-    onError: (error: Error) => handleError(error, options, control),
-    onSettled: onMutationSettled,
+    onSuccess: () => handleSuccess(options, queryClient),
+    onError: (error: Error) => handleError(error, control),
   });
 }
 
@@ -109,10 +105,9 @@ function sendFileData(
 
 const broadcastChannel = new BroadcastChannel("query-invalidation");
 
-async function handleSuccess<T extends FieldValues>(
+async function handleSuccess(
   options: MutationOptions,
   queryClient: QueryClient,
-  reset?: UseFormReset<T>,
 ) {
   const notifySuccess = () => {
     toast.success(options.successMessage);
@@ -137,9 +132,13 @@ async function handleSuccess<T extends FieldValues>(
     }
   };
 
-  // Invalidate the queries that are passed in
-  await invalidateQueries(options.queryKeysToInvalidate).then(notifySuccess);
-  await invalidateQueries(options.additionalInvalidateQueries);
+  if (options.queryKeysToInvalidate) {
+    await invalidateQueries([options.queryKeysToInvalidate]).then(
+      notifySuccess,
+    );
+  } else {
+    notifySuccess();
+  }
 
   // Close the sheet depending on the method. If the sheet is not open, this will do nothing.
   const sheetKey = options.method === "POST" ? "sheetOpen" : "editSheetOpen";
@@ -147,14 +146,15 @@ async function handleSuccess<T extends FieldValues>(
   if (options.closeModal) {
     useTableStore.set(sheetKey, false);
   }
+}
 
-  // Reset the form if `reset` is passed
-  reset?.();
+interface ErrorResponse {
+  type: "validationError" | "databaseError" | "invalidRequest";
+  errors: any;
 }
 
 async function handleError<T extends FieldValues>(
   error: any,
-  options: MutationOptions,
   control: Control<T>,
 ) {
   if (!error.response) {
@@ -163,11 +163,26 @@ async function handleError<T extends FieldValues>(
     return;
   }
 
-  const { data } = error?.response || {};
-  if (data?.type === "validationError") {
-    handleValidationErrors(data.errors, control);
-  } else if (data?.type === "databaseError") {
-    handleDatabaseErrors(data.errors, control);
+  const { data } = error.response as { data?: ErrorResponse };
+
+  if (!data) {
+    console.error("[Trenova] Error without data", error);
+    showErrorNotification("An unknown error occurred.");
+    return;
+  }
+
+  switch (data.type) {
+    case "validationError":
+      handleValidationErrors(data.errors, control);
+      break;
+    case "databaseError":
+    case "invalidRequest": // Combined case for both types of errors
+      handleInvalidRequest(data.errors, control);
+      break;
+    default:
+      console.error("[Trenova] Unhandled error type", data);
+      showErrorNotification("An unhandled error type occurred.");
+      break;
   }
 }
 
@@ -211,7 +226,7 @@ function handleValidationErrors<T extends FieldValues>(
  * @param {APIError[]} errors - Array of errors from the API.
  * @param {Control<T>} control - React Hook Form control object.
  */
-function handleDatabaseErrors<T extends FieldValues>(
+function handleInvalidRequest<T extends FieldValues>(
   errors: APIError[],
   control: Control<T>,
 ) {
@@ -223,6 +238,7 @@ function handleDatabaseErrors<T extends FieldValues>(
 
     // Show appropriate notification based on the error attribute
     if (attr === "nonFieldErrors" || attr === "databaseError") {
+      console.log(detail);
       showErrorNotification(detail);
     } else {
       showErrorNotification("Please fix the errors and try again.");

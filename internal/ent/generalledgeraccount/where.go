@@ -112,11 +112,6 @@ func InterestRate(v float64) predicate.GeneralLedgerAccount {
 	return predicate.GeneralLedgerAccount(sql.FieldEQ(FieldInterestRate, v))
 }
 
-// DateOpened applies equality check predicate on the "date_opened" field. It's identical to DateOpenedEQ.
-func DateOpened(v *pgtype.Date) predicate.GeneralLedgerAccount {
-	return predicate.GeneralLedgerAccount(sql.FieldEQ(FieldDateOpened, v))
-}
-
 // DateClosed applies equality check predicate on the "date_closed" field. It's identical to DateClosedEQ.
 func DateClosed(v *pgtype.Date) predicate.GeneralLedgerAccount {
 	return predicate.GeneralLedgerAccount(sql.FieldEQ(FieldDateClosed, v))
@@ -725,46 +720,6 @@ func InterestRateIsNil() predicate.GeneralLedgerAccount {
 // InterestRateNotNil applies the NotNil predicate on the "interest_rate" field.
 func InterestRateNotNil() predicate.GeneralLedgerAccount {
 	return predicate.GeneralLedgerAccount(sql.FieldNotNull(FieldInterestRate))
-}
-
-// DateOpenedEQ applies the EQ predicate on the "date_opened" field.
-func DateOpenedEQ(v *pgtype.Date) predicate.GeneralLedgerAccount {
-	return predicate.GeneralLedgerAccount(sql.FieldEQ(FieldDateOpened, v))
-}
-
-// DateOpenedNEQ applies the NEQ predicate on the "date_opened" field.
-func DateOpenedNEQ(v *pgtype.Date) predicate.GeneralLedgerAccount {
-	return predicate.GeneralLedgerAccount(sql.FieldNEQ(FieldDateOpened, v))
-}
-
-// DateOpenedIn applies the In predicate on the "date_opened" field.
-func DateOpenedIn(vs ...*pgtype.Date) predicate.GeneralLedgerAccount {
-	return predicate.GeneralLedgerAccount(sql.FieldIn(FieldDateOpened, vs...))
-}
-
-// DateOpenedNotIn applies the NotIn predicate on the "date_opened" field.
-func DateOpenedNotIn(vs ...*pgtype.Date) predicate.GeneralLedgerAccount {
-	return predicate.GeneralLedgerAccount(sql.FieldNotIn(FieldDateOpened, vs...))
-}
-
-// DateOpenedGT applies the GT predicate on the "date_opened" field.
-func DateOpenedGT(v *pgtype.Date) predicate.GeneralLedgerAccount {
-	return predicate.GeneralLedgerAccount(sql.FieldGT(FieldDateOpened, v))
-}
-
-// DateOpenedGTE applies the GTE predicate on the "date_opened" field.
-func DateOpenedGTE(v *pgtype.Date) predicate.GeneralLedgerAccount {
-	return predicate.GeneralLedgerAccount(sql.FieldGTE(FieldDateOpened, v))
-}
-
-// DateOpenedLT applies the LT predicate on the "date_opened" field.
-func DateOpenedLT(v *pgtype.Date) predicate.GeneralLedgerAccount {
-	return predicate.GeneralLedgerAccount(sql.FieldLT(FieldDateOpened, v))
-}
-
-// DateOpenedLTE applies the LTE predicate on the "date_opened" field.
-func DateOpenedLTE(v *pgtype.Date) predicate.GeneralLedgerAccount {
-	return predicate.GeneralLedgerAccount(sql.FieldLTE(FieldDateOpened, v))
 }
 
 // DateClosedEQ applies the EQ predicate on the "date_closed" field.

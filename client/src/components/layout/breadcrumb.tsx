@@ -5,9 +5,7 @@ import { routes } from "@/routing/AppRoutes";
 import { useUserStore } from "@/stores/AuthStore";
 import { useBreadcrumbStore } from "@/stores/BreadcrumbStore";
 import { UserFavorite } from "@/types/accounts";
-import { faStar } from "@fortawesome/pro-regular-svg-icons";
-import { faStar as faStarFilled } from "@fortawesome/pro-solid-svg-icons";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { StarFilledIcon, StarIcon } from "@radix-ui/react-icons";
 import { QueryClient, useQueryClient } from "@tanstack/react-query";
 import { AxiosRequestConfig, AxiosResponse } from "axios";
 import { pathToRegexp } from "path-to-regexp";
@@ -109,12 +107,17 @@ function FavoriteIcon({
     <TooltipProvider delayDuration={100}>
       <Tooltip>
         <TooltipTrigger asChild>
-          <FontAwesomeIcon
-            icon={isFavorite ? faStarFilled : faStar}
-            title="Favorite"
-            className="mx-1.5 mb-0.5 size-4 cursor-pointer text-center text-orange-400 transition-colors hover:text-orange-300"
-            onClick={onFavoriteToggle.bind(null, !isFavorite)}
-          />
+          {isFavorite ? (
+            <StarFilledIcon
+              onClick={onFavoriteToggle.bind(null, !isFavorite)}
+              className="mx-2 mt-1 size-4 cursor-pointer text-center text-orange-400 transition-colors hover:text-orange-300"
+            />
+          ) : (
+            <StarIcon
+              onClick={onFavoriteToggle.bind(null, !isFavorite)}
+              className="mx-2 mt-1 size-4 cursor-pointer text-center text-orange-400 transition-colors hover:text-orange-300"
+            />
+          )}
         </TooltipTrigger>
         <TooltipContent side="right" sideOffset={10} className="font-normal">
           {isFavorite ? "Remove from favorites" : "Add to favorites"}
@@ -202,7 +205,7 @@ export function Breadcrumb() {
   return (
     <div className="pb-4 pt-5 md:py-4">
       <div>
-        <h2 className="mt-10 scroll-m-20 pb-2 text-xl font-semibold tracking-tight transition-colors first:mt-0">
+        <h2 className=" mt-10 flex scroll-m-20 items-center pb-2 text-xl font-semibold tracking-tight transition-colors first:mt-0">
           {currentRoute.title}
           <FavoriteIcon
             isFavorite={isFavorite}

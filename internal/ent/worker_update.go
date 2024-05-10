@@ -294,6 +294,26 @@ func (wu *WorkerUpdate) ClearManagerID() *WorkerUpdate {
 	return wu
 }
 
+// SetExternalID sets the "external_id" field.
+func (wu *WorkerUpdate) SetExternalID(s string) *WorkerUpdate {
+	wu.mutation.SetExternalID(s)
+	return wu
+}
+
+// SetNillableExternalID sets the "external_id" field if the given value is not nil.
+func (wu *WorkerUpdate) SetNillableExternalID(s *string) *WorkerUpdate {
+	if s != nil {
+		wu.SetExternalID(*s)
+	}
+	return wu
+}
+
+// ClearExternalID clears the value of the "external_id" field.
+func (wu *WorkerUpdate) ClearExternalID() *WorkerUpdate {
+	wu.mutation.ClearExternalID()
+	return wu
+}
+
 // SetState sets the "state" edge to the UsState entity.
 func (wu *WorkerUpdate) SetState(u *UsState) *WorkerUpdate {
 	return wu.SetStateID(u.ID)
@@ -642,6 +662,12 @@ func (wu *WorkerUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	}
 	if wu.mutation.PostalCodeCleared() {
 		_spec.ClearField(worker.FieldPostalCode, field.TypeString)
+	}
+	if value, ok := wu.mutation.ExternalID(); ok {
+		_spec.SetField(worker.FieldExternalID, field.TypeString, value)
+	}
+	if wu.mutation.ExternalIDCleared() {
+		_spec.ClearField(worker.FieldExternalID, field.TypeString)
 	}
 	if wu.mutation.StateCleared() {
 		edge := &sqlgraph.EdgeSpec{
@@ -1186,6 +1212,26 @@ func (wuo *WorkerUpdateOne) ClearManagerID() *WorkerUpdateOne {
 	return wuo
 }
 
+// SetExternalID sets the "external_id" field.
+func (wuo *WorkerUpdateOne) SetExternalID(s string) *WorkerUpdateOne {
+	wuo.mutation.SetExternalID(s)
+	return wuo
+}
+
+// SetNillableExternalID sets the "external_id" field if the given value is not nil.
+func (wuo *WorkerUpdateOne) SetNillableExternalID(s *string) *WorkerUpdateOne {
+	if s != nil {
+		wuo.SetExternalID(*s)
+	}
+	return wuo
+}
+
+// ClearExternalID clears the value of the "external_id" field.
+func (wuo *WorkerUpdateOne) ClearExternalID() *WorkerUpdateOne {
+	wuo.mutation.ClearExternalID()
+	return wuo
+}
+
 // SetState sets the "state" edge to the UsState entity.
 func (wuo *WorkerUpdateOne) SetState(u *UsState) *WorkerUpdateOne {
 	return wuo.SetStateID(u.ID)
@@ -1564,6 +1610,12 @@ func (wuo *WorkerUpdateOne) sqlSave(ctx context.Context) (_node *Worker, err err
 	}
 	if wuo.mutation.PostalCodeCleared() {
 		_spec.ClearField(worker.FieldPostalCode, field.TypeString)
+	}
+	if value, ok := wuo.mutation.ExternalID(); ok {
+		_spec.SetField(worker.FieldExternalID, field.TypeString, value)
+	}
+	if wuo.mutation.ExternalIDCleared() {
+		_spec.ClearField(worker.FieldExternalID, field.TypeString)
 	}
 	if wuo.mutation.StateCleared() {
 		edge := &sqlgraph.EdgeSpec{

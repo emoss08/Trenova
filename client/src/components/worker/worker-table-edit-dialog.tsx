@@ -8,48 +8,38 @@ import {
   SheetTitle,
 } from "@/components/ui/sheet";
 import { useCustomMutation } from "@/hooks/useCustomMutation";
-import { formatDate } from "@/lib/date";
+import { formatToUserTimezone } from "@/lib/date";
 import { cleanObject, cn } from "@/lib/utils";
 import { useTableStore } from "@/stores/TableStore";
 import { type TableSheetProps } from "@/types/tables";
 import type { WorkerFormValues as FormValues, Worker } from "@/types/worker";
-import React from "react";
 import { useForm } from "react-hook-form";
 
 function WorkerEditForm({
   worker,
-  open,
   onOpenChange,
 }: {
   worker: Worker;
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }) {
-  const [isSubmitting, setIsSubmitting] = React.useState<boolean>(false);
-
   const { control, handleSubmit } = useForm<FormValues>({
     // resolver: yupResolver(trailerSchema),
     defaultValues: worker,
   });
 
-  const mutation = useCustomMutation<FormValues>(
-    control,
-    {
-      method: "PUT",
-      path: `/worker/${worker.id}/`,
-      successMessage: "Trailer updated successfully.",
-      queryKeysToInvalidate: ["trailer-table-data"],
-      additionalInvalidateQueries: ["trailers"],
-      closeModal: true,
-      errorMessage: "Failed to update trailers.",
-    },
-    () => setIsSubmitting(false),
-  );
+  const mutation = useCustomMutation<FormValues>(control, {
+    method: "PUT",
+    path: `/worker/${worker.id}/`,
+    successMessage: "Worker updated successfully.",
+    queryKeysToInvalidate: "workers",
+    closeModal: true,
+    errorMessage: "Failed to update worker.",
+  });
 
   const onSubmit = (values: FormValues) => {
     const cleanedValues = cleanObject(values);
 
-    setIsSubmitting(true);
     mutation.mutate(cleanedValues);
   };
 
@@ -68,7 +58,7 @@ function WorkerEditForm({
         >
           Cancel
         </Button>
-        <Button type="submit" isLoading={isSubmitting} className="w-full">
+        <Button type="submit" isLoading={mutation.isPending} className="w-full">
           Save Changes
         </Button>
       </SheetFooter>
@@ -89,7 +79,7 @@ export function WorkerEditDialog({ onOpenChange, open }: TableSheetProps) {
         <SheetHeader>
           <SheetTitle>{worker && worker.code}</SheetTitle>
           <SheetDescription>
-            Last updated on {worker && formatDate(worker.updatedAt)}
+            Last updated on {worker && formatToUserTimezone(worker.updatedAt)}
           </SheetDescription>
         </SheetHeader>
         {worker && (

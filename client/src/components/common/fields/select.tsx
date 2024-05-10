@@ -1,23 +1,7 @@
-/*
- * COPYRIGHT(c) 2024 Trenova
- *
- * This file is part of Trenova.
- *
- * The Trenova software is licensed under the Business Source License 1.1. You are granted the right
- * to copy, modify, and redistribute the software, but only for non-production use or with a total
- * of less than three server instances. Starting from the Change Date (November 16, 2026), the
- * software will be made available under version 2 or later of the GNU General Public License.
- * If you use the software in violation of this license, your rights under the license will be
- * terminated automatically. The software is provided "as is," and the Licensor disclaims all
- * warranties and conditions. If you use this license's text or the "Business Source License" name
- * and trademark, you must comply with the Licensor's covenants, which include specifying the
- * Change License as the GPL Version 2.0 or a compatible license, specifying an Additional Use
- * Grant, and not modifying the license in any other way.
- */
 import { cn } from "@/lib/utils";
-import { faCheck, faChevronDown } from "@fortawesome/pro-solid-svg-icons";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { CheckIcon } from "@radix-ui/react-icons";
 import * as SelectPrimitive from "@radix-ui/react-select";
+import { ChevronDownIcon } from "lucide-react";
 import * as React from "react";
 
 const Select = SelectPrimitive.Root;
@@ -40,7 +24,7 @@ const SelectTrigger = React.forwardRef<
   >
     {children}
     <SelectPrimitive.Icon asChild>
-      <FontAwesomeIcon icon={faChevronDown} className="size-2 opacity-50" />
+      <ChevronDownIcon className="size-2 opacity-50" />
     </SelectPrimitive.Icon>
   </SelectPrimitive.Trigger>
 ));
@@ -102,7 +86,7 @@ const SelectItem = React.forwardRef<
   >
     <span className="absolute left-2 flex size-3.5 items-center justify-center">
       <SelectPrimitive.ItemIndicator>
-        <FontAwesomeIcon icon={faCheck} className="size-4" />
+        <CheckIcon className="size-4" />
       </SelectPrimitive.ItemIndicator>
     </span>
 
@@ -131,5 +115,6 @@ export {
   SelectLabel,
   SelectSeparator,
   SelectTrigger,
-  SelectValue,
+  SelectValue
 };
+

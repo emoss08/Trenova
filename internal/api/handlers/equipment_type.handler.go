@@ -11,15 +11,25 @@ import (
 )
 
 type EquipmentTypeHandler struct {
-	Server  *api.Server
-	Service *services.EquipmentTypeService
+	Server            *api.Server
+	Service           *services.EquipmentTypeService
+	PermissionService *services.PermissionService
 }
 
 func NewEquipmentTypeHandler(s *api.Server) *EquipmentTypeHandler {
 	return &EquipmentTypeHandler{
-		Server:  s,
-		Service: services.NewEquipmentTypeService(s),
+		Server:            s,
+		Service:           services.NewEquipmentTypeService(s),
+		PermissionService: services.NewPermissionService(s),
 	}
+}
+
+// RegisterRoutes registers the routes for the EquipmentTypeHandler.
+func (h *EquipmentTypeHandler) RegisterRoutes(r fiber.Router) {
+	equipmentTypeAPI := r.Group("/equipment-types")
+	equipmentTypeAPI.Get("/", h.GetEquipmentTypes())
+	equipmentTypeAPI.Post("/", h.CreateEquipmentType())
+	equipmentTypeAPI.Put("/:equipmentTypeID", h.UpdateEquipmentType())
 }
 
 // GetEquipmentTypes is a handler that returns a list of equipment types.
@@ -27,20 +37,6 @@ func NewEquipmentTypeHandler(s *api.Server) *EquipmentTypeHandler {
 // GET /equipment-types
 func (h *EquipmentTypeHandler) GetEquipmentTypes() fiber.Handler {
 	return func(c *fiber.Ctx) error {
-		offset, limit, err := util.PaginationParams(c)
-		if err != nil {
-			return c.Status(fiber.StatusBadRequest).JSON(types.ValidationErrorResponse{
-				Type: "invalidRequest",
-				Errors: []types.ValidationErrorDetail{
-					{
-						Code:   "invalidRequest",
-						Detail: err.Error(),
-						Attr:   "offset, limit",
-					},
-				},
-			})
-		}
-
 		orgID, ok := c.Locals(util.CTXOrganizationID).(uuid.UUID)
 		buID, buOK := c.Locals(util.CTXBusinessUnitID).(uuid.UUID)
 
@@ -52,6 +48,29 @@ func (h *EquipmentTypeHandler) GetEquipmentTypes() fiber.Handler {
 						Code:   "internalError",
 						Detail: "Organization ID or Business Unit ID not found in the request context",
 						Attr:   "orgID, buID",
+					},
+				},
+			})
+		}
+
+		// Check if the user has the required permission
+		err := h.PermissionService.CheckUserPermission(c, "equipmenttype.view")
+		if err != nil {
+			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+				"error":   "Unauthorized",
+				"message": "You do not have the required permission to access this resource",
+			})
+		}
+
+		offset, limit, err := util.PaginationParams(c)
+		if err != nil {
+			return c.Status(fiber.StatusBadRequest).JSON(types.ValidationErrorResponse{
+				Type: "invalidRequest",
+				Errors: []types.ValidationErrorDetail{
+					{
+						Code:   "invalidRequest",
+						Detail: err.Error(),
+						Attr:   "offset, limit",
 					},
 				},
 			})
@@ -98,20 +117,20 @@ func (h *EquipmentTypeHandler) CreateEquipmentType() fiber.Handler {
 			})
 		}
 
+		// Check if the user has the required permission
+		err := h.PermissionService.CheckUserPermission(c, "equipmenttype.add")
+		if err != nil {
+			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+				"error":   "Unauthorized",
+				"message": "You do not have the required permission to access this resource",
+			})
+		}
+
 		newEntity.BusinessUnitID = buID
 		newEntity.OrganizationID = orgID
 
 		if err := util.ParseBodyAndValidate(c, newEntity); err != nil {
-			return c.Status(fiber.StatusBadRequest).JSON(types.ValidationErrorResponse{
-				Type: "invalidRequest",
-				Errors: []types.ValidationErrorDetail{
-					{
-						Code:   "invalidRequest",
-						Detail: err.Error(),
-						Attr:   "body",
-					},
-				},
-			})
+			return err
 		}
 
 		entity, err := h.Service.CreateEquipmentType(c.UserContext(), newEntity)
@@ -143,19 +162,19 @@ func (h *EquipmentTypeHandler) UpdateEquipmentType() fiber.Handler {
 			})
 		}
 
+		// Check if the user has the required permission
+		err := h.PermissionService.CheckUserPermission(c, "equipmenttype.edit")
+		if err != nil {
+			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+				"error":   "Unauthorized",
+				"message": "You do not have the required permission to access this resource",
+			})
+		}
+
 		updatedEntity := new(ent.EquipmentType)
 
 		if err := util.ParseBodyAndValidate(c, updatedEntity); err != nil {
-			return c.Status(fiber.StatusBadRequest).JSON(types.ValidationErrorResponse{
-				Type: "invalidRequest",
-				Errors: []types.ValidationErrorDetail{
-					{
-						Code:   "invalidRequest",
-						Detail: err.Error(),
-						Attr:   "request body",
-					},
-				},
-			})
+			return err
 		}
 
 		updatedEntity.ID = uuid.MustParse(equipmentTypeID)

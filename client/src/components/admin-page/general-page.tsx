@@ -1,71 +1,44 @@
-/*
- * COPYRIGHT(c) 2024 Trenova
- *
- * This file is part of Trenova.
- *
- * The Trenova software is licensed under the Business Source License 1.1. You are granted the right
- * to copy, modify, and redistribute the software, but only for non-production use or with a total
- * of less than three server instances. Starting from the Change Date (November 16, 2026), the
- * software will be made available under version 2 or later of the GNU General Public License.
- * If you use the software in violation of this license, your rights under the license will be
- * terminated automatically. The software is provided "as is," and the Licensor disclaims all
- * warranties and conditions. If you use this license's text or the "Business Source License" name
- * and trademark, you must comply with the Licensor's covenants, which include specifying the
- * Change License as the GPL Version 2.0 or a compatible license, specifying an Additional Use
- * Grant, and not modifying the license in any other way.
- */
-
 import { InputField } from "@/components/common/fields/input";
 import { SelectInput } from "@/components/common/fields/select-input";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { useCustomMutation } from "@/hooks/useCustomMutation";
-import { timezoneChoices } from "@/lib/choices";
+import { TIMEZONES } from "@/lib/timezone";
 import { organizationSchema } from "@/lib/validations/OrganizationSchema";
+import { postOrganizationLogo } from "@/services/OrganizationRequestService";
+import { QueryKeys } from "@/types";
 import type {
   Organization,
   OrganizationFormValues,
 } from "@/types/organization";
 import { yupResolver } from "@hookform/resolvers/yup";
-import React from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { useTranslation } from "react-i18next";
+import {
+  Avatar,
+  AvatarFallback,
+  AvatarImage,
+  ImageUploader,
+} from "../ui/avatar";
 
 function OrganizationForm({ organization }: { organization: Organization }) {
-  const [isSubmitting, setIsSubmitting] = React.useState<boolean>(false);
   const { t } = useTranslation(["admin.generalpage", "common"]);
-
-  // const {
-  //   selectUSStates,
-  //   isLoading: isStatesLoading,
-  //   isError: isStateError,
-  // } = useUSStates();
+  const queryClient = useQueryClient();
 
   const { control, handleSubmit, reset } = useForm<OrganizationFormValues>({
     resolver: yupResolver(organizationSchema),
-    defaultValues: {
-      name: organization.name,
-      orgType: organization.orgType,
-      scacCode: organization.scacCode,
-      dotNumber: organization?.dotNumber || undefined,
-      timezone: organization.timezone,
-    },
+    defaultValues: organization,
   });
 
-  const mutation = useCustomMutation<OrganizationFormValues>(
-    control,
-    {
-      method: "PUT",
-      path: "/organization/",
-      successMessage: t("formSuccessMessage"),
-      queryKeysToInvalidate: ["userOrganization"],
-      errorMessage: t("formErrorMessage"),
-    },
-    () => setIsSubmitting(false),
-  );
+  const mutation = useCustomMutation<OrganizationFormValues>(control, {
+    method: "PUT",
+    path: `/organizations/${organization.id}`,
+    successMessage: t("formSuccessMessage"),
+    queryKeysToInvalidate: "userOrganization",
+    errorMessage: t("formErrorMessage"),
+  });
 
   const onSubmit = (values: OrganizationFormValues) => {
-    setIsSubmitting(true);
     mutation.mutate(values);
     reset(values);
   };
@@ -95,20 +68,16 @@ function OrganizationForm({ organization }: { organization: Organization }) {
                     {organization.scacCode}
                   </AvatarFallback>
                 </Avatar>
-                <div>
-                  <Button
-                    size="sm"
-                    type="button"
-                    onClick={(e) => {
-                      e.preventDefault();
-                    }}
-                  >
-                    {t("fields.logo.placeholder")}
-                  </Button>
-                  <p className="text-muted-foreground mt-2 text-xs leading-5">
-                    {t("fields.logo.description")}
-                  </p>
-                </div>
+                <ImageUploader
+                  iconText="Change Logo"
+                  callback={postOrganizationLogo}
+                  successCallback={() => {
+                    queryClient.invalidateQueries({
+                      queryKey: ["userOrganization"] as QueryKeys,
+                    });
+                    return "Logo uploaded successfully.";
+                  }}
+                />
               </div>
               <div className="col-span-full">
                 <InputField
@@ -157,11 +126,11 @@ function OrganizationForm({ organization }: { organization: Organization }) {
                 />
               </div>
 
-              <div className="col-span-3">
+              <div className="col-span-full">
                 <SelectInput
                   name="timezone"
                   control={control}
-                  options={timezoneChoices}
+                  options={TIMEZONES}
                   rules={{ required: true }}
                   label={t("fields.timezone.label")}
                   placeholder={t("fields.timezone.placeholder")}
@@ -177,11 +146,11 @@ function OrganizationForm({ organization }: { organization: Organization }) {
               }}
               type="button"
               variant="outline"
-              disabled={isSubmitting}
+              disabled={mutation.isPending}
             >
               {t("buttons.cancel", { ns: "common" })}
             </Button>
-            <Button type="submit" isLoading={isSubmitting}>
+            <Button type="submit" isLoading={mutation.isPending}>
               {t("buttons.save", { ns: "common" })}
             </Button>
           </div>

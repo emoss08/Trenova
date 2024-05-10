@@ -10,7 +10,6 @@ import { type AccessorialChargeFormValues as FormValues } from "@/types/billing"
 import { type TableSheetProps } from "@/types/tables";
 import { fuelMethodChoices } from "@/utils/apps/billing";
 import { yupResolver } from "@hookform/resolvers/yup";
-import React from "react";
 import { Control, useForm } from "react-hook-form";
 import {
   Credenza,
@@ -101,9 +100,7 @@ export function ACForm({ control }: { control: Control<FormValues> }) {
 }
 
 export function ACDialog({ onOpenChange, open }: TableSheetProps) {
-  const [isSubmitting, setIsSubmitting] = React.useState<boolean>(false);
-
-  const { control, reset, handleSubmit } = useForm<FormValues>({
+  const { control, handleSubmit } = useForm<FormValues>({
     resolver: yupResolver(accessorialChargeSchema),
     defaultValues: {
       status: "A",
@@ -115,22 +112,16 @@ export function ACDialog({ onOpenChange, open }: TableSheetProps) {
     },
   });
 
-  const mutation = useCustomMutation<FormValues>(
-    control,
-    {
-      method: "POST",
-      path: "/accessorial-charges/",
-      successMessage: "Accesorial Charge created successfully.",
-      queryKeysToInvalidate: ["accessorial-charges-table-data"],
-      closeModal: true,
-      errorMessage: "Failed to create new accesorial charge.",
-    },
-    () => setIsSubmitting(false),
-    reset,
-  );
+  const mutation = useCustomMutation<FormValues>(control, {
+    method: "POST",
+    path: "/accessorial-charges/",
+    successMessage: "Accesorial Charge created successfully.",
+    queryKeysToInvalidate: ["accessorial-charges-table-data"],
+    closeModal: true,
+    errorMessage: "Failed to create new accesorial charge.",
+  });
 
   const onSubmit = (values: FormValues) => {
-    setIsSubmitting(true);
     mutation.mutate(values);
   };
 
@@ -154,7 +145,7 @@ export function ACDialog({ onOpenChange, open }: TableSheetProps) {
                   Cancel
                 </Button>
               </CredenzaClose>
-              <Button type="submit" isLoading={isSubmitting}>
+              <Button type="submit" isLoading={mutation.isPending}>
                 Save Changes
               </Button>
             </CredenzaFooter>

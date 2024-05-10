@@ -11,7 +11,6 @@ import type {
   RouteControl as RouteControlType,
 } from "@/types/route";
 import { yupResolver } from "@hookform/resolvers/yup";
-import React from "react";
 import { useForm } from "react-hook-form";
 import { ErrorLoadingData } from "./common/table/data-table-components";
 
@@ -20,28 +19,20 @@ function RouteControlForm({
 }: {
   routeControl: RouteControlType;
 }) {
-  const [isSubmitting, setIsSubmitting] = React.useState<boolean>(false);
-
   const { control, handleSubmit, reset } = useForm<RouteControlFormValues>({
     resolver: yupResolver(routeControlSchema),
     defaultValues: routeControl,
   });
 
-  const mutation = useCustomMutation<RouteControlFormValues>(
-    control,
-    {
-      method: "PUT",
-      path: `/route-control/${routeControl.id}/`,
-      successMessage: "Route Control updated successfully.",
-      queryKeysToInvalidate: ["routeControl"],
-      errorMessage: "Failed to update route control.",
-    },
-    () => setIsSubmitting(false),
-    reset,
-  );
+  const mutation = useCustomMutation<RouteControlFormValues>(control, {
+    method: "PUT",
+    path: `/route-control/${routeControl.id}/`,
+    successMessage: "Route Control updated successfully.",
+    queryKeysToInvalidate: "routeControl",
+    errorMessage: "Failed to update route control.",
+  });
 
   const onSubmit = (values: RouteControlFormValues) => {
-    setIsSubmitting(true);
     mutation.mutate(values);
     reset(values);
   };
@@ -94,11 +85,11 @@ function RouteControlForm({
           }}
           type="button"
           variant="outline"
-          disabled={isSubmitting}
+          disabled={mutation.isPending}
         >
           Cancel
         </Button>
-        <Button type="submit" isLoading={isSubmitting}>
+        <Button type="submit" isLoading={mutation.isPending}>
           Save
         </Button>
       </div>

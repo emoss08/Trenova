@@ -52,19 +52,19 @@ export function CookieConsent() {
   // TODO: Add a way to set cookies based on user preferences
 
   return isCookieConsentGiven ? null : (
-    <section className="border-border bg-background fixed bottom-16 left-12 mx-auto max-w-md rounded-2xl border p-4">
-      <h2 className="text-foreground font-semibold">🍪 We use cookies!</h2>
+    <section className="fixed bottom-16 left-12 mx-auto max-w-md rounded-2xl border border-border bg-background p-4">
+      <h2 className="font-semibold text-foreground">🍪 We use cookies!</h2>
       <span className="absolute right-5 top-5 flex size-3">
         <span className="absolute inline-flex size-full animate-ping rounded-full bg-orange-400 opacity-100"></span>
-        <span className="ring-background relative inline-flex size-3 rounded-full bg-orange-600 ring-1"></span>
+        <span className="relative inline-flex size-3 rounded-full bg-orange-600 ring-1 ring-background"></span>
       </span>
-      <p className="text-foreground mt-4 text-xs">
+      <p className="mt-4 text-xs text-foreground">
         Hi, this website uses essential cookies to ensure its proper operation
         and tracking cookies to understand how you interact with it. The latter
         will be set only after consent.{" "}
         <InternalLink to="#">Let me choose</InternalLink>.
       </p>
-      <p className="text-muted-foreground mt-3 text-xs">
+      <p className="mt-3 text-xs text-muted-foreground">
         Closing this modal default settings will be saved.
       </p>
 

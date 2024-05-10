@@ -93,3 +93,14 @@ func (BaseMixin) Annotations() []schema.Annotation {
 		entsql.WithComments(true),
 	}
 }
+
+// func (BaseMixin) Policy() ent.Policy {
+// 	return privacy.Policy{
+// 		Query: privacy.QueryPolicy{
+// 			rule.AllowIfAdmin(),
+// 		},
+// 		Mutation: privacy.MutationPolicy{
+// 			rule.DenyIfNoViewer(),
+// 		},
+// 	}
+// }

@@ -30,7 +30,6 @@ import type {
   DispatchControl as DispatchControlType,
 } from "@/types/dispatch";
 import { yupResolver } from "@hookform/resolvers/yup";
-import React from "react";
 import { useForm } from "react-hook-form";
 import { useTranslation } from "react-i18next";
 
@@ -39,7 +38,6 @@ function DispatchControlForm({
 }: {
   dispatchControl: DispatchControlType;
 }) {
-  const [isSubmitting, setIsSubmitting] = React.useState<boolean>(false);
   const { t } = useTranslation(["admin.dispatchcontrol", "common"]);
 
   const { control, handleSubmit, reset } = useForm<DispatchControlFormValues>({
@@ -47,22 +45,16 @@ function DispatchControlForm({
     defaultValues: dispatchControl,
   });
 
-  const mutation = useCustomMutation<DispatchControlFormValues>(
-    control,
-    {
-      method: "PUT",
-      path: `/dispatch-control/${dispatchControl.id}/`,
-      successMessage: t("formSuccessMessage"),
-      queryKeysToInvalidate: ["dispatchControl"],
-      errorMessage: t("formErrorMessage"),
-    },
-    () => setIsSubmitting(false),
-  );
+  const mutation = useCustomMutation<DispatchControlFormValues>(control, {
+    method: "PUT",
+    path: `/dispatch-control/${dispatchControl.id}/`,
+    successMessage: t("formSuccessMessage"),
+    queryKeysToInvalidate: ["dispatchControl"],
+    errorMessage: t("formErrorMessage"),
+  });
 
   const onSubmit = (values: DispatchControlFormValues) => {
-    setIsSubmitting(true);
     mutation.mutate(values);
-
     reset(values);
   };
 
@@ -191,11 +183,11 @@ function DispatchControlForm({
           }}
           type="button"
           variant="outline"
-          disabled={isSubmitting}
+          disabled={mutation.isPending}
         >
           {t("buttons.cancel", { ns: "common" })}
         </Button>
-        <Button type="submit" isLoading={isSubmitting}>
+        <Button type="submit" isLoading={mutation.isPending}>
           {t("buttons.save", { ns: "common" })}
         </Button>
       </div>

@@ -242,6 +242,20 @@ func (wc *WorkerCreate) SetNillableManagerID(u *uuid.UUID) *WorkerCreate {
 	return wc
 }
 
+// SetExternalID sets the "external_id" field.
+func (wc *WorkerCreate) SetExternalID(s string) *WorkerCreate {
+	wc.mutation.SetExternalID(s)
+	return wc
+}
+
+// SetNillableExternalID sets the "external_id" field if the given value is not nil.
+func (wc *WorkerCreate) SetNillableExternalID(s *string) *WorkerCreate {
+	if s != nil {
+		wc.SetExternalID(*s)
+	}
+	return wc
+}
+
 // SetID sets the "id" field.
 func (wc *WorkerCreate) SetID(u uuid.UUID) *WorkerCreate {
 	wc.mutation.SetID(u)
@@ -598,6 +612,10 @@ func (wc *WorkerCreate) createSpec() (*Worker, *sqlgraph.CreateSpec) {
 	if value, ok := wc.mutation.PostalCode(); ok {
 		_spec.SetField(worker.FieldPostalCode, field.TypeString, value)
 		_node.PostalCode = value
+	}
+	if value, ok := wc.mutation.ExternalID(); ok {
+		_spec.SetField(worker.FieldExternalID, field.TypeString, value)
+		_node.ExternalID = value
 	}
 	if nodes := wc.mutation.BusinessUnitIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{

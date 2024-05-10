@@ -8,7 +8,6 @@ import { qualifierCodeSchema } from "@/lib/validations/StopSchema";
 import { type QualifierCodeFormValues as FormValues } from "@/types/stop";
 import { type TableSheetProps } from "@/types/tables";
 import { yupResolver } from "@hookform/resolvers/yup";
-import React from "react";
 import { Control, useForm } from "react-hook-form";
 import {
   Credenza,
@@ -73,9 +72,7 @@ export function QualifierCodeForm({
 }
 
 export function QualifierCodeDialog({ onOpenChange, open }: TableSheetProps) {
-  const [isSubmitting, setIsSubmitting] = React.useState<boolean>(false);
-
-  const { control, reset, handleSubmit } = useForm<FormValues>({
+  const { control, handleSubmit } = useForm<FormValues>({
     resolver: yupResolver(qualifierCodeSchema),
     defaultValues: {
       status: "A",
@@ -84,24 +81,16 @@ export function QualifierCodeDialog({ onOpenChange, open }: TableSheetProps) {
     },
   });
 
-  const mutation = useCustomMutation<FormValues>(
-    control,
-    {
-      method: "POST",
-      path: "/qualifier-codes/",
-      successMessage: "Qualifier Code created successfully.",
-      queryKeysToInvalidate: ["qualifier-code-table-data"],
-      closeModal: true,
-      errorMessage: "Failed to create new qualifier code.",
-    },
-    () => setIsSubmitting(false),
-    reset,
-  );
+  const mutation = useCustomMutation<FormValues>(control, {
+    method: "POST",
+    path: "/qualifier-codes/",
+    successMessage: "Qualifier Code created successfully.",
+    queryKeysToInvalidate: "qualifierCodes",
+    closeModal: true,
+    errorMessage: "Failed to create new qualifier code.",
+  });
 
-  const onSubmit = (values: FormValues) => {
-    setIsSubmitting(true);
-    mutation.mutate(values);
-  };
+  const onSubmit = (values: FormValues) => mutation.mutate(values);
 
   return (
     <Credenza open={open} onOpenChange={onOpenChange}>
@@ -121,7 +110,7 @@ export function QualifierCodeDialog({ onOpenChange, open }: TableSheetProps) {
                   Cancel
                 </Button>
               </CredenzaClose>
-              <Button type="submit" isLoading={isSubmitting}>
+              <Button type="submit" isLoading={mutation.isPending}>
                 Save Changes
               </Button>
             </CredenzaFooter>

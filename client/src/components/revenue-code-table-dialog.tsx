@@ -9,7 +9,6 @@ import { TChoiceProps } from "@/types";
 import { type RevenueCodeFormValues as FormValues } from "@/types/accounting";
 import { type TableSheetProps } from "@/types/tables";
 import { yupResolver } from "@hookform/resolvers/yup";
-import React from "react";
 import { Control, useForm } from "react-hook-form";
 import { TextareaField } from "./common/fields/textarea";
 import {
@@ -111,9 +110,7 @@ export function RCForm({
 }
 
 export function RevenueCodeDialog({ onOpenChange, open }: TableSheetProps) {
-  const [isSubmitting, setIsSubmitting] = React.useState<boolean>(false);
-
-  const { control, reset, handleSubmit } = useForm<FormValues>({
+  const { control, handleSubmit } = useForm<FormValues>({
     resolver: yupResolver(revenueCodeSchema),
     defaultValues: {
       status: "A",
@@ -124,25 +121,16 @@ export function RevenueCodeDialog({ onOpenChange, open }: TableSheetProps) {
     },
   });
 
-  const mutation = useCustomMutation<FormValues>(
-    control,
-    {
-      method: "POST",
-      path: "/revenue-codes/",
-      successMessage: "Revenue Code created successfully.",
-      queryKeysToInvalidate: ["revenue-code-table-data"],
-      additionalInvalidateQueries: ["revenueCodes"],
-      closeModal: true,
-      errorMessage: "Failed to create new revenue code.",
-    },
-    () => setIsSubmitting(false),
-    reset,
-  );
+  const mutation = useCustomMutation<FormValues>(control, {
+    method: "POST",
+    path: "/revenue-codes/",
+    successMessage: "Revenue Code created successfully.",
+    queryKeysToInvalidate: "revenueCodes",
+    closeModal: true,
+    errorMessage: "Failed to create new revenue code.",
+  });
 
-  const onSubmit = (values: FormValues) => {
-    setIsSubmitting(true);
-    mutation.mutate(values);
-  };
+  const onSubmit = (values: FormValues) => mutation.mutate(values);
 
   const { selectGLAccounts, isLoading, isError } = useGLAccounts(open);
 
@@ -169,7 +157,7 @@ export function RevenueCodeDialog({ onOpenChange, open }: TableSheetProps) {
                   Cancel
                 </Button>
               </CredenzaClose>
-              <Button type="submit" isLoading={isSubmitting}>
+              <Button type="submit" isLoading={mutation.isPending}>
                 Save Changes
               </Button>
             </CredenzaFooter>

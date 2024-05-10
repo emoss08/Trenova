@@ -30,7 +30,6 @@ import type {
   InvoiceControl as InvoiceControlType,
 } from "@/types/invoicing";
 import { yupResolver } from "@hookform/resolvers/yup";
-import React from "react";
 import { useForm } from "react-hook-form";
 import { useTranslation } from "react-i18next";
 import { TextareaField } from "./common/fields/textarea";
@@ -40,7 +39,6 @@ function InvoiceControlForm({
 }: {
   invoiceControl: InvoiceControlType;
 }) {
-  const [isSubmitting, setIsSubmitting] = React.useState<boolean>(false);
   const { t } = useTranslation(["admin.invoicecontrol", "common"]);
 
   const { control, handleSubmit, reset } = useForm<InvoiceControlFormValues>({
@@ -60,21 +58,15 @@ function InvoiceControlForm({
     },
   });
 
-  const mutation = useCustomMutation<InvoiceControlFormValues>(
-    control,
-    {
-      method: "PUT",
-      path: `/invoice-control/${invoiceControl.id}/`,
-      successMessage: t("formSuccessMessage"),
-      queryKeysToInvalidate: ["invoiceControl"],
-      errorMessage: t("formErrorMessage"),
-    },
-    () => setIsSubmitting(false),
-    reset,
-  );
+  const mutation = useCustomMutation<InvoiceControlFormValues>(control, {
+    method: "PUT",
+    path: `/invoice-control/${invoiceControl.id}/`,
+    successMessage: t("formSuccessMessage"),
+    queryKeysToInvalidate: ["invoiceControl"],
+    errorMessage: t("formErrorMessage"),
+  });
 
   const onSubmit = (values: InvoiceControlFormValues) => {
-    setIsSubmitting(true);
     mutation.mutate(values);
     reset(values);
   };
@@ -200,11 +192,11 @@ function InvoiceControlForm({
           }}
           type="button"
           variant="outline"
-          disabled={isSubmitting}
+          disabled={mutation.isPending}
         >
           {t("buttons.cancel", { ns: "common" })}
         </Button>
-        <Button type="submit" isLoading={isSubmitting}>
+        <Button type="submit" isLoading={mutation.isPending}>
           {t("buttons.save", { ns: "common" })}
         </Button>
       </div>

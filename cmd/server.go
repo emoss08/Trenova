@@ -1,4 +1,4 @@
-package main
+package cmd
 
 import (
 	"context"
@@ -9,16 +9,32 @@ import (
 	"syscall"
 	"time"
 
-	_ "github.com/emoss08/trenova/internal/ent/runtime"
-
 	"github.com/emoss08/trenova/internal/api"
 	"github.com/emoss08/trenova/internal/api/router"
 	"github.com/emoss08/trenova/internal/config"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
+	"github.com/spf13/cobra"
 )
 
-func main() {
+var serverCmd = &cobra.Command{
+	Use:   "server",
+	Short: "Starts the Trenova Server",
+	Long: `Starts the stateless RESTful JSON server
+	
+	
+	Requires configuration throguh ENV
+	and a fully migrated PostgreSQL database.`,
+	Run: func(cmd *cobra.Command, args []string) {
+		runServer()
+	},
+}
+
+func init() {
+	rootCmd.AddCommand(serverCmd)
+}
+
+func runServer() {
 	ctx := context.Background()
 	serverConfig := config.DefaultServiceConfigFromEnv()
 

@@ -5,6 +5,7 @@ import {
   getRevenueCodes,
   getTags,
 } from "@/services/AccountingRequestService";
+import { getDailyShipmentCounts } from "@/services/AnalyticRequestService";
 import {
   getAccessorialCharges,
   getDocumentClassifications,
@@ -54,6 +55,7 @@ import {
   validateBOLNumber,
 } from "@/services/ShipmentRequestService";
 import {
+  getAuthenticatedUser,
   getUserDetails,
   getUserNotifications,
   getUsers,
@@ -898,7 +900,7 @@ export function useServiceTypes() {
     isError: isServiceTypeError,
     isLoading: isServiceTypeLoading,
   } = useQuery({
-    queryKey: ["serviceTypes"],
+    queryKey: ["serviceTypes"] as QueryKeys,
     queryFn: async () => getServiceTypes(),
   });
 
@@ -921,4 +923,36 @@ export function useValidateBOLNumber(bol_number: string) {
   });
 
   return { data, isError, isLoading };
+}
+
+export function useAuthenticatedUser() {
+  const { data, isError, isLoading, isSuccess, isFetched } = useQuery({
+    queryKey: ["authenticatedUser"] as QueryKeys,
+    queryFn: async () => getAuthenticatedUser(),
+  });
+
+  return { data, isError, isLoading, isSuccess, isFetched };
+}
+
+export function useDailyShipmentCounts(startDate: string, endDate: string) {
+  const { data, isError, isLoading, isSuccess, isFetched } = useQuery({
+    queryKey: ["dailyShipmentCounts", startDate, endDate] as QueryKeyWithParams<
+      "dailyShipmentCounts",
+      [string, string]
+    >,
+    queryFn: async () => getDailyShipmentCounts(startDate, endDate),
+  });
+
+  const formattedData = [
+    {
+      id: "total-shipments",
+      data:
+        data?.results?.map((item) => ({
+          x: item.day,
+          y: item.value,
+        })) ?? [],
+    },
+  ];
+
+  return { formattedData, data, isError, isLoading, isSuccess, isFetched };
 }

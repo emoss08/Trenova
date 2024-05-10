@@ -1,7 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { useCustomMutation } from "@/hooks/useCustomMutation";
 import { useGLAccounts } from "@/hooks/useQueries";
-import { formatDate } from "@/lib/date";
+import { formatToUserTimezone } from "@/lib/date";
 import { revenueCodeSchema } from "@/lib/validations/AccountingSchema";
 import { useTableStore } from "@/stores/TableStore";
 import type {
@@ -9,9 +9,9 @@ import type {
   RevenueCode,
 } from "@/types/accounting";
 import { yupResolver } from "@hookform/resolvers/yup";
-import React from "react";
 import { useForm } from "react-hook-form";
 import { RCForm } from "./revenue-code-table-dialog";
+import { Badge } from "./ui/badge";
 import {
   Credenza,
   CredenzaBody,
@@ -30,34 +30,23 @@ function RCEditForm({
   revenueCode: RevenueCode;
   open: boolean;
 }) {
-  const [isSubmitting, setIsSubmitting] = React.useState<boolean>(false);
   const { selectGLAccounts, isLoading, isError } = useGLAccounts(open);
 
-  const { handleSubmit, control, reset } = useForm<FormValues>({
+  const { handleSubmit, control } = useForm<FormValues>({
     resolver: yupResolver(revenueCodeSchema),
     defaultValues: revenueCode,
   });
 
-  const mutation = useCustomMutation<FormValues>(
-    control,
-    {
-      method: "PUT",
-      path: `/revenue-codes/${revenueCode.id}/`,
-      successMessage: "Revenue Code updated successfully.",
-      queryKeysToInvalidate: ["revenue-code-table-data"],
-      additionalInvalidateQueries: ["revenueCodes"],
-      closeModal: true,
-      errorMessage: "Failed to update revenue code.",
-    },
-    () => setIsSubmitting(false),
-    reset,
-  );
+  const mutation = useCustomMutation<FormValues>(control, {
+    method: "PUT",
+    path: `/revenue-codes/${revenueCode.id}/`,
+    successMessage: "Revenue Code updated successfully.",
+    queryKeysToInvalidate: "revenueCodes",
+    closeModal: true,
+    errorMessage: "Failed to update revenue code.",
+  });
 
-  const onSubmit = (values: FormValues) => {
-    console.info("Submitting", values);
-    setIsSubmitting(true);
-    mutation.mutate(values);
-  };
+  const onSubmit = (values: FormValues) => mutation.mutate(values);
 
   return (
     <CredenzaBody>
@@ -74,7 +63,7 @@ function RCEditForm({
               Cancel
             </Button>
           </CredenzaClose>
-          <Button type="submit" isLoading={isSubmitting}>
+          <Button type="submit" isLoading={mutation.isPending}>
             Save Changes
           </Button>
         </CredenzaFooter>
@@ -91,19 +80,24 @@ export function RevenueCodeTableEditDialog({
   onOpenChange: (open: boolean) => void;
 }) {
   const [revenueCode] = useTableStore.use("currentRecord") as RevenueCode[];
+
   if (!revenueCode) return null;
 
   return (
     <Credenza open={open} onOpenChange={onOpenChange}>
       <CredenzaContent>
         <CredenzaHeader>
-          <CredenzaTitle>{revenueCode.code}</CredenzaTitle>
+          <CredenzaTitle className="flex">
+            <span>{revenueCode.code}</span>
+            <Badge className="ml-5" variant="purple">
+              {revenueCode.id}
+            </Badge>
+          </CredenzaTitle>
         </CredenzaHeader>
         <CredenzaDescription>
-          Last updated on&nbsp;
-          {revenueCode && formatDate(revenueCode.updatedAt)}
+          Last updated on {formatToUserTimezone(revenueCode.updatedAt)}
         </CredenzaDescription>
-        {revenueCode && <RCEditForm revenueCode={revenueCode} open={open} />}
+        <RCEditForm revenueCode={revenueCode} open={open} />
       </CredenzaContent>
     </Credenza>
   );

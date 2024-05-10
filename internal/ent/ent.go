@@ -44,9 +44,12 @@ import (
 	"github.com/emoss08/trenova/internal/ent/locationcontact"
 	"github.com/emoss08/trenova/internal/ent/organization"
 	"github.com/emoss08/trenova/internal/ent/organizationfeatureflag"
+	"github.com/emoss08/trenova/internal/ent/permission"
 	"github.com/emoss08/trenova/internal/ent/qualifiercode"
 	"github.com/emoss08/trenova/internal/ent/reasoncode"
+	"github.com/emoss08/trenova/internal/ent/resource"
 	"github.com/emoss08/trenova/internal/ent/revenuecode"
+	"github.com/emoss08/trenova/internal/ent/role"
 	"github.com/emoss08/trenova/internal/ent/routecontrol"
 	"github.com/emoss08/trenova/internal/ent/servicetype"
 	"github.com/emoss08/trenova/internal/ent/session"
@@ -165,9 +168,12 @@ func checkColumn(table, column string) error {
 			locationcontact.Table:              locationcontact.ValidColumn,
 			organization.Table:                 organization.ValidColumn,
 			organizationfeatureflag.Table:      organizationfeatureflag.ValidColumn,
+			permission.Table:                   permission.ValidColumn,
 			qualifiercode.Table:                qualifiercode.ValidColumn,
 			reasoncode.Table:                   reasoncode.ValidColumn,
+			resource.Table:                     resource.ValidColumn,
 			revenuecode.Table:                  revenuecode.ValidColumn,
+			role.Table:                         role.ValidColumn,
 			routecontrol.Table:                 routecontrol.ValidColumn,
 			servicetype.Table:                  servicetype.ValidColumn,
 			session.Table:                      session.ValidColumn,

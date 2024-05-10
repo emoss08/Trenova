@@ -1,34 +1,14 @@
-/*
- * COPYRIGHT(c) 2024 Trenova
- *
- * This file is part of Trenova.
- *
- * The Trenova software is licensed under the Business Source License 1.1. You are granted the right
- * to copy, modify, and redistribute the software, but only for non-production use or with a total
- * of less than three server instances. Starting from the Change Date (November 16, 2026), the
- * software will be made available under version 2 or later of the GNU General Public License.
- * If you use the software in violation of this license, your rights under the license will be
- * terminated automatically. The software is provided "as is," and the Licensor disclaims all
- * warranties and conditions. If you use this license's text or the "Business Source License" name
- * and trademark, you must comply with the Licensor's covenants, which include specifying the
- * Change License as the GPL Version 2.0 or a compatible license, specifying an Additional Use
- * Grant, and not modifying the license in any other way.
- */
-
-import {
-  Control,
-  useFieldArray,
-  UseFieldArrayRemove,
-  useFormContext,
-} from "react-hook-form";
-
 import { useLocations } from "@/hooks/useQueries";
 import { DayOfWeekChoices } from "@/lib/choices";
 import { CustomerFormValues } from "@/types/customer";
-import { faRoadCircleXmark } from "@fortawesome/pro-duotone-svg-icons";
-import { faInfo } from "@fortawesome/pro-regular-svg-icons";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { PlusIcon } from "@radix-ui/react-icons";
+import { InfoIcon, XIcon } from "lucide-react";
+import {
+  Control,
+  UseFieldArrayRemove,
+  useFieldArray,
+  useFormContext,
+} from "react-hook-form";
 import { TimeField } from "./common/fields/input";
 import { SelectInput } from "./common/fields/select-input";
 import { Alert, AlertDescription, AlertTitle } from "./ui/alert";
@@ -38,7 +18,7 @@ import { ScrollArea } from "./ui/scroll-area";
 function DeliverySlotAlert() {
   return (
     <Alert className="my-2">
-      <FontAwesomeIcon icon={faInfo} className="size-4" />
+      <InfoIcon className="size-4" />
       <AlertTitle>Information!</AlertTitle>
       <AlertDescription>
         Delivery slots are used to define the time slots for delivery. You can
@@ -198,10 +178,7 @@ export function DeliverySlotForm({ open }: { open: boolean }) {
           </>
         ) : (
           <div className="mt-44 flex grow flex-col items-center justify-center">
-            <FontAwesomeIcon
-              icon={faRoadCircleXmark}
-              className="text-foreground size-10"
-            />
+            <XIcon className="text-foreground size-10" />
             <h3 className="mt-4 text-lg font-semibold">
               No Delivery Slot added
             </h3>

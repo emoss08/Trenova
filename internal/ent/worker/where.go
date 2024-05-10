@@ -136,6 +136,11 @@ func ManagerID(v uuid.UUID) predicate.Worker {
 	return predicate.Worker(sql.FieldEQ(FieldManagerID, v))
 }
 
+// ExternalID applies equality check predicate on the "external_id" field. It's identical to ExternalIDEQ.
+func ExternalID(v string) predicate.Worker {
+	return predicate.Worker(sql.FieldEQ(FieldExternalID, v))
+}
+
 // BusinessUnitIDEQ applies the EQ predicate on the "business_unit_id" field.
 func BusinessUnitIDEQ(v uuid.UUID) predicate.Worker {
 	return predicate.Worker(sql.FieldEQ(FieldBusinessUnitID, v))
@@ -994,6 +999,81 @@ func ManagerIDIsNil() predicate.Worker {
 // ManagerIDNotNil applies the NotNil predicate on the "manager_id" field.
 func ManagerIDNotNil() predicate.Worker {
 	return predicate.Worker(sql.FieldNotNull(FieldManagerID))
+}
+
+// ExternalIDEQ applies the EQ predicate on the "external_id" field.
+func ExternalIDEQ(v string) predicate.Worker {
+	return predicate.Worker(sql.FieldEQ(FieldExternalID, v))
+}
+
+// ExternalIDNEQ applies the NEQ predicate on the "external_id" field.
+func ExternalIDNEQ(v string) predicate.Worker {
+	return predicate.Worker(sql.FieldNEQ(FieldExternalID, v))
+}
+
+// ExternalIDIn applies the In predicate on the "external_id" field.
+func ExternalIDIn(vs ...string) predicate.Worker {
+	return predicate.Worker(sql.FieldIn(FieldExternalID, vs...))
+}
+
+// ExternalIDNotIn applies the NotIn predicate on the "external_id" field.
+func ExternalIDNotIn(vs ...string) predicate.Worker {
+	return predicate.Worker(sql.FieldNotIn(FieldExternalID, vs...))
+}
+
+// ExternalIDGT applies the GT predicate on the "external_id" field.
+func ExternalIDGT(v string) predicate.Worker {
+	return predicate.Worker(sql.FieldGT(FieldExternalID, v))
+}
+
+// ExternalIDGTE applies the GTE predicate on the "external_id" field.
+func ExternalIDGTE(v string) predicate.Worker {
+	return predicate.Worker(sql.FieldGTE(FieldExternalID, v))
+}
+
+// ExternalIDLT applies the LT predicate on the "external_id" field.
+func ExternalIDLT(v string) predicate.Worker {
+	return predicate.Worker(sql.FieldLT(FieldExternalID, v))
+}
+
+// ExternalIDLTE applies the LTE predicate on the "external_id" field.
+func ExternalIDLTE(v string) predicate.Worker {
+	return predicate.Worker(sql.FieldLTE(FieldExternalID, v))
+}
+
+// ExternalIDContains applies the Contains predicate on the "external_id" field.
+func ExternalIDContains(v string) predicate.Worker {
+	return predicate.Worker(sql.FieldContains(FieldExternalID, v))
+}
+
+// ExternalIDHasPrefix applies the HasPrefix predicate on the "external_id" field.
+func ExternalIDHasPrefix(v string) predicate.Worker {
+	return predicate.Worker(sql.FieldHasPrefix(FieldExternalID, v))
+}
+
+// ExternalIDHasSuffix applies the HasSuffix predicate on the "external_id" field.
+func ExternalIDHasSuffix(v string) predicate.Worker {
+	return predicate.Worker(sql.FieldHasSuffix(FieldExternalID, v))
+}
+
+// ExternalIDIsNil applies the IsNil predicate on the "external_id" field.
+func ExternalIDIsNil() predicate.Worker {
+	return predicate.Worker(sql.FieldIsNull(FieldExternalID))
+}
+
+// ExternalIDNotNil applies the NotNil predicate on the "external_id" field.
+func ExternalIDNotNil() predicate.Worker {
+	return predicate.Worker(sql.FieldNotNull(FieldExternalID))
+}
+
+// ExternalIDEqualFold applies the EqualFold predicate on the "external_id" field.
+func ExternalIDEqualFold(v string) predicate.Worker {
+	return predicate.Worker(sql.FieldEqualFold(FieldExternalID, v))
+}
+
+// ExternalIDContainsFold applies the ContainsFold predicate on the "external_id" field.
+func ExternalIDContainsFold(v string) predicate.Worker {
+	return predicate.Worker(sql.FieldContainsFold(FieldExternalID, v))
 }
 
 // HasBusinessUnit applies the HasEdge predicate on the "business_unit" edge.

@@ -22,7 +22,7 @@ export function ColorBlindSwitcher() {
   return (
     <div className="space-y-1">
       <Label>Color Blind</Label>
-      <p className="text-muted-foreground text-[0.8rem]">
+      <p className="text-[0.8rem] text-muted-foreground">
         Select a color blind mode to enhance readability.
       </p>
       <div className="grid max-w-xl grid-cols-3 gap-8 pt-2">
@@ -30,19 +30,19 @@ export function ColorBlindSwitcher() {
           <label className="border-primary text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
             <Button
               type="button"
-              className="border-primary text-primary focus-visible:ring-ring sr-only aspect-square size-4 rounded-full border shadow focus:outline-none focus-visible:ring-1 disabled:cursor-not-allowed disabled:opacity-50"
+              className="sr-only aspect-square size-4 rounded-full border border-primary text-primary shadow focus:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
             />
-            <div className="border-muted bg-popover hover:bg-accent hover:text-accent-foreground items-center rounded-md border-2 p-1">
-              <div className="bg-background space-y-2 rounded-sm p-2">
-                <div className="bg-muted-foreground/20 space-y-2 rounded-md p-2 shadow-sm">
+            <div className="items-center rounded-md border-2 border-muted bg-popover p-1 hover:bg-accent hover:text-accent-foreground">
+              <div className="space-y-2 rounded-sm bg-background p-2">
+                <div className="space-y-2 rounded-md bg-muted-foreground/20 p-2 shadow-sm">
                   <div className="h-2 w-[80px] rounded-lg bg-orange-400"></div>
                   <div className="h-2 w-[100px] rounded-lg bg-orange-400"></div>
                 </div>
-                <div className="bg-muted-foreground/20 flex items-center space-x-2 rounded-md p-2 shadow-sm">
+                <div className="flex items-center space-x-2 rounded-md bg-muted-foreground/20 p-2 shadow-sm">
                   <div className="size-4 rounded-full bg-orange-400"></div>
                   <div className="h-2 w-[100px] rounded-lg bg-orange-400"></div>
                 </div>
-                <div className="bg-muted-foreground/20 flex items-center space-x-2 rounded-md p-2 shadow-sm">
+                <div className="flex items-center space-x-2 rounded-md bg-muted-foreground/20 p-2 shadow-sm">
                   <div className="size-4 rounded-full bg-orange-400"></div>
                   <div className="h-2 w-[100px] rounded-lg bg-orange-400"></div>
                 </div>
@@ -58,19 +58,19 @@ export function ColorBlindSwitcher() {
           <label className="border-primary text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
             <Button
               type="button"
-              className="border-primary text-primary focus-visible:ring-ring sr-only aspect-square size-4 rounded-full border shadow focus:outline-none focus-visible:ring-1 disabled:cursor-not-allowed disabled:opacity-50"
+              className="sr-only aspect-square size-4 rounded-full border border-primary text-primary shadow focus:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
             />
-            <div className="border-muted bg-popover hover:bg-accent hover:text-accent-foreground items-center rounded-md border-2 p-1">
-              <div className="bg-background space-y-2 rounded-sm p-2">
-                <div className="bg-muted-foreground/20 space-y-2 rounded-md p-2 shadow-sm">
+            <div className="items-center rounded-md border-2 border-muted bg-popover p-1 hover:bg-accent hover:text-accent-foreground">
+              <div className="space-y-2 rounded-sm bg-background p-2">
+                <div className="space-y-2 rounded-md bg-muted-foreground/20 p-2 shadow-sm">
                   <div className="h-2 w-[80px] rounded-lg bg-red-400"></div>
                   <div className="h-2 w-[100px] rounded-lg bg-red-400"></div>
                 </div>
-                <div className="bg-muted-foreground/20 flex items-center space-x-2 rounded-md p-2 shadow-sm">
+                <div className="flex items-center space-x-2 rounded-md bg-muted-foreground/20 p-2 shadow-sm">
                   <div className="size-4 rounded-full bg-red-400"></div>
                   <div className="h-2 w-[100px] rounded-lg bg-red-400"></div>
                 </div>
-                <div className="bg-muted-foreground/20 flex items-center space-x-2 rounded-md p-2 shadow-sm">
+                <div className="flex items-center space-x-2 rounded-md bg-muted-foreground/20 p-2 shadow-sm">
                   <div className="size-4 rounded-full bg-red-400"></div>
                   <div className="h-2 w-[100px] rounded-lg bg-red-400"></div>
                 </div>
@@ -86,19 +86,19 @@ export function ColorBlindSwitcher() {
           <label className="border-primary text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
             <Button
               type="button"
-              className="border-primary text-primary focus-visible:ring-ring sr-only aspect-square size-4 rounded-full border shadow focus:outline-none focus-visible:ring-1 disabled:cursor-not-allowed disabled:opacity-50"
+              className="sr-only aspect-square size-4 rounded-full border border-primary text-primary shadow focus:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
             />
-            <div className="border-muted bg-popover hover:bg-accent hover:text-accent-foreground items-center rounded-md border-2 p-1">
-              <div className="bg-background space-y-2 rounded-sm p-2">
-                <div className="bg-muted-foreground/20 space-y-2 rounded-md p-2 shadow-sm">
+            <div className="items-center rounded-md border-2 border-muted bg-popover p-1 hover:bg-accent hover:text-accent-foreground">
+              <div className="space-y-2 rounded-sm bg-background p-2">
+                <div className="space-y-2 rounded-md bg-muted-foreground/20 p-2 shadow-sm">
                   <div className="h-2 w-[80px] rounded-lg bg-yellow-400"></div>
                   <div className="h-2 w-[100px] rounded-lg bg-yellow-400"></div>
                 </div>
-                <div className="bg-muted-foreground/20 flex items-center space-x-2 rounded-md p-2 shadow-sm">
+                <div className="flex items-center space-x-2 rounded-md bg-muted-foreground/20 p-2 shadow-sm">
                   <div className="size-4 rounded-full bg-yellow-400"></div>
                   <div className="h-2 w-[100px] rounded-lg bg-yellow-400"></div>
                 </div>
-                <div className="bg-muted-foreground/20 flex items-center space-x-2 rounded-md p-2 shadow-sm">
+                <div className="flex items-center space-x-2 rounded-md bg-muted-foreground/20 p-2 shadow-sm">
                   <div className="size-4 rounded-full bg-yellow-400"></div>
                   <div className="h-2 w-[100px] rounded-lg bg-yellow-400"></div>
                 </div>
@@ -114,19 +114,19 @@ export function ColorBlindSwitcher() {
           <label className="border-primary text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
             <Button
               type="button"
-              className="border-primary text-primary focus-visible:ring-ring sr-only aspect-square size-4 rounded-full border shadow focus:outline-none focus-visible:ring-1 disabled:cursor-not-allowed disabled:opacity-50"
+              className="sr-only aspect-square size-4 rounded-full border border-primary text-primary shadow focus:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
             />
-            <div className="border-muted bg-popover hover:bg-accent hover:text-accent-foreground items-center rounded-md border-2 p-1">
-              <div className="bg-background space-y-2 rounded-sm p-2">
-                <div className="bg-foreground/10 space-y-2 rounded-md p-2 shadow-sm">
+            <div className="items-center rounded-md border-2 border-muted bg-popover p-1 hover:bg-accent hover:text-accent-foreground">
+              <div className="space-y-2 rounded-sm bg-background p-2">
+                <div className="space-y-2 rounded-md bg-foreground/10 p-2 shadow-sm">
                   <div className="h-2 w-[80px] rounded-lg bg-green-400"></div>
                   <div className="h-2 w-[100px] rounded-lg bg-green-400"></div>
                 </div>
-                <div className="bg-foreground/10 flex items-center space-x-2 rounded-md p-2 shadow-sm">
+                <div className="flex items-center space-x-2 rounded-md bg-foreground/10 p-2 shadow-sm">
                   <div className="size-4 rounded-full bg-green-400"></div>
                   <div className="h-2 w-[100px] rounded-lg bg-green-400"></div>
                 </div>
-                <div className="bg-foreground/10 flex items-center space-x-2 rounded-md p-2 shadow-sm">
+                <div className="flex items-center space-x-2 rounded-md bg-foreground/10 p-2 shadow-sm">
                   <div className="size-4 rounded-full bg-green-400"></div>
                   <div className="h-2 w-[100px] rounded-lg bg-green-400"></div>
                 </div>

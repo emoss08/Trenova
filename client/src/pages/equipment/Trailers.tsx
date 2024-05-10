@@ -63,7 +63,7 @@ const columns: ColumnDef<Trailer>[] = [
     cell: ({ row }) => {
       if (row.original.edges?.equipmentType?.color) {
         return (
-          <div className="text-foreground flex items-center space-x-2 text-sm font-medium">
+          <div className="flex items-center space-x-2 text-sm font-medium text-foreground">
             <div
               className={"mx-2 size-2 rounded-xl"}
               style={{
@@ -98,16 +98,16 @@ const filters: FilterConfig<Trailer>[] = [
 export default function TrailerPage() {
   return (
     <DataTable
-      queryKey="trailer-table-data"
+      queryKey="trailers"
       columns={columns}
       link="/trailers/"
       name="Trailer"
-      exportModelName="Trailer"
+      exportModelName="trailers"
       filterColumn="code"
       tableFacetedFilters={filters}
       TableSheet={TrailerDialog}
       TableEditSheet={TrailerEditDialog}
-      addPermissionName="add_trailer"
+      addPermissionName="trailer.add"
     />
   );
 }

@@ -11,15 +11,25 @@ import (
 )
 
 type ShipmentTypeHandler struct {
-	Server  *api.Server
-	Service *services.ShipmentTypeService
+	Server            *api.Server
+	Service           *services.ShipmentTypeService
+	PermissionService *services.PermissionService
 }
 
 func NewShipmentTypeHandler(s *api.Server) *ShipmentTypeHandler {
 	return &ShipmentTypeHandler{
-		Server:  s,
-		Service: services.NewShipmentTypeService(s),
+		Server:            s,
+		Service:           services.NewShipmentTypeService(s),
+		PermissionService: services.NewPermissionService(s),
 	}
+}
+
+// RegisterRoutes registers the routes for the ShipmentTypeHandler.
+func (h *ShipmentTypeHandler) RegisterRoutes(r fiber.Router) {
+	shipmentTypeAPI := r.Group("/shipment-types")
+	shipmentTypeAPI.Get("/", h.GetShipmentTypes())
+	shipmentTypeAPI.Post("/", h.CreateShipmentType())
+	shipmentTypeAPI.Put("/:shipmentTypeID", h.UpdateShipmentType())
 }
 
 // GetShipmentTypes is a handler that returns a list of service types.
@@ -27,20 +37,6 @@ func NewShipmentTypeHandler(s *api.Server) *ShipmentTypeHandler {
 // GET /shipment-types
 func (h *ShipmentTypeHandler) GetShipmentTypes() fiber.Handler {
 	return func(c *fiber.Ctx) error {
-		offset, limit, err := util.PaginationParams(c)
-		if err != nil {
-			return c.Status(fiber.StatusBadRequest).JSON(types.ValidationErrorResponse{
-				Type: "invalidRequest",
-				Errors: []types.ValidationErrorDetail{
-					{
-						Code:   "invalidRequest",
-						Detail: err.Error(),
-						Attr:   "offset, limit",
-					},
-				},
-			})
-		}
-
 		orgID, ok := c.Locals(util.CTXOrganizationID).(uuid.UUID)
 		buID, buOK := c.Locals(util.CTXBusinessUnitID).(uuid.UUID)
 
@@ -52,6 +48,29 @@ func (h *ShipmentTypeHandler) GetShipmentTypes() fiber.Handler {
 						Code:   "internalError",
 						Detail: "Organization ID or Business Unit ID not found in the request context",
 						Attr:   "orgID, buID",
+					},
+				},
+			})
+		}
+
+		// Check if the user has the required permission
+		err := h.PermissionService.CheckUserPermission(c, "shipmenttype.view")
+		if err != nil {
+			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+				"error":   "Unauthorized",
+				"message": "You do not have the required permission to access this resource",
+			})
+		}
+
+		offset, limit, err := util.PaginationParams(c)
+		if err != nil {
+			return c.Status(fiber.StatusBadRequest).JSON(types.ValidationErrorResponse{
+				Type: "invalidRequest",
+				Errors: []types.ValidationErrorDetail{
+					{
+						Code:   "invalidRequest",
+						Detail: err.Error(),
+						Attr:   "offset, limit",
 					},
 				},
 			})
@@ -98,6 +117,15 @@ func (h *ShipmentTypeHandler) CreateShipmentType() fiber.Handler {
 			})
 		}
 
+		// Check if the user has the required permission
+		err := h.PermissionService.CheckUserPermission(c, "shipmenttype.add")
+		if err != nil {
+			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+				"error":   "Unauthorized",
+				"message": "You do not have the required permission to access this resource",
+			})
+		}
+
 		newEntity.BusinessUnitID = buID
 		newEntity.OrganizationID = orgID
 
@@ -140,6 +168,15 @@ func (h *ShipmentTypeHandler) UpdateShipmentType() fiber.Handler {
 						Attr:   "shipmentTypeID",
 					},
 				},
+			})
+		}
+
+		// Check if the user has the required permission
+		err := h.PermissionService.CheckUserPermission(c, "shipmenttype.edit")
+		if err != nil {
+			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+				"error":   "Unauthorized",
+				"message": "You do not have the required permission to access this resource",
 			})
 		}
 

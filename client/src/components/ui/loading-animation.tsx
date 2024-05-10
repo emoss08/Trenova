@@ -19,7 +19,7 @@ import { cn } from "@/lib/utils";
 import { cva } from "class-variance-authority";
 
 const AnimationVariants = cva(
-  "direction-alternate bg-primary-foreground size-1 animate-pulse rounded-full duration-700",
+  "size-1 animate-pulse rounded-full bg-primary-foreground duration-700 direction-alternate",
   {
     variants: {
       size: {

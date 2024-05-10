@@ -91,6 +91,11 @@ func LogoURL(v string) predicate.Organization {
 	return predicate.Organization(sql.FieldEQ(FieldLogoURL, v))
 }
 
+// Timezone applies equality check predicate on the "timezone" field. It's identical to TimezoneEQ.
+func Timezone(v string) predicate.Organization {
+	return predicate.Organization(sql.FieldEQ(FieldTimezone, v))
+}
+
 // CreatedAtEQ applies the EQ predicate on the "created_at" field.
 func CreatedAtEQ(v time.Time) predicate.Organization {
 	return predicate.Organization(sql.FieldEQ(FieldCreatedAt, v))
@@ -482,23 +487,68 @@ func OrgTypeNotIn(vs ...OrgType) predicate.Organization {
 }
 
 // TimezoneEQ applies the EQ predicate on the "timezone" field.
-func TimezoneEQ(v Timezone) predicate.Organization {
+func TimezoneEQ(v string) predicate.Organization {
 	return predicate.Organization(sql.FieldEQ(FieldTimezone, v))
 }
 
 // TimezoneNEQ applies the NEQ predicate on the "timezone" field.
-func TimezoneNEQ(v Timezone) predicate.Organization {
+func TimezoneNEQ(v string) predicate.Organization {
 	return predicate.Organization(sql.FieldNEQ(FieldTimezone, v))
 }
 
 // TimezoneIn applies the In predicate on the "timezone" field.
-func TimezoneIn(vs ...Timezone) predicate.Organization {
+func TimezoneIn(vs ...string) predicate.Organization {
 	return predicate.Organization(sql.FieldIn(FieldTimezone, vs...))
 }
 
 // TimezoneNotIn applies the NotIn predicate on the "timezone" field.
-func TimezoneNotIn(vs ...Timezone) predicate.Organization {
+func TimezoneNotIn(vs ...string) predicate.Organization {
 	return predicate.Organization(sql.FieldNotIn(FieldTimezone, vs...))
+}
+
+// TimezoneGT applies the GT predicate on the "timezone" field.
+func TimezoneGT(v string) predicate.Organization {
+	return predicate.Organization(sql.FieldGT(FieldTimezone, v))
+}
+
+// TimezoneGTE applies the GTE predicate on the "timezone" field.
+func TimezoneGTE(v string) predicate.Organization {
+	return predicate.Organization(sql.FieldGTE(FieldTimezone, v))
+}
+
+// TimezoneLT applies the LT predicate on the "timezone" field.
+func TimezoneLT(v string) predicate.Organization {
+	return predicate.Organization(sql.FieldLT(FieldTimezone, v))
+}
+
+// TimezoneLTE applies the LTE predicate on the "timezone" field.
+func TimezoneLTE(v string) predicate.Organization {
+	return predicate.Organization(sql.FieldLTE(FieldTimezone, v))
+}
+
+// TimezoneContains applies the Contains predicate on the "timezone" field.
+func TimezoneContains(v string) predicate.Organization {
+	return predicate.Organization(sql.FieldContains(FieldTimezone, v))
+}
+
+// TimezoneHasPrefix applies the HasPrefix predicate on the "timezone" field.
+func TimezoneHasPrefix(v string) predicate.Organization {
+	return predicate.Organization(sql.FieldHasPrefix(FieldTimezone, v))
+}
+
+// TimezoneHasSuffix applies the HasSuffix predicate on the "timezone" field.
+func TimezoneHasSuffix(v string) predicate.Organization {
+	return predicate.Organization(sql.FieldHasSuffix(FieldTimezone, v))
+}
+
+// TimezoneEqualFold applies the EqualFold predicate on the "timezone" field.
+func TimezoneEqualFold(v string) predicate.Organization {
+	return predicate.Organization(sql.FieldEqualFold(FieldTimezone, v))
+}
+
+// TimezoneContainsFold applies the ContainsFold predicate on the "timezone" field.
+func TimezoneContainsFold(v string) predicate.Organization {
+	return predicate.Organization(sql.FieldContainsFold(FieldTimezone, v))
 }
 
 // HasBusinessUnit applies the HasEdge predicate on the "business_unit" edge.

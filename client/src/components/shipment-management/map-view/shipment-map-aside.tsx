@@ -140,7 +140,7 @@ export function ShipmentMapAside() {
   }
 
   return (
-    <aside className="border-border bg-card w-96 rounded-md border p-4">
+    <aside className="w-96 rounded-md border border-border bg-card p-4">
       {isLoading ? (
         <WorkerListSkeleton />
       ) : (
@@ -151,7 +151,7 @@ export function ShipmentMapAside() {
             control={control}
             placeholder="Search Workers..."
             icon={
-              <MagnifyingGlassIcon className="text-muted-foreground size-4" />
+              <MagnifyingGlassIcon className="size-4 text-muted-foreground" />
             }
           />
           {/* Worker Sort Options */}

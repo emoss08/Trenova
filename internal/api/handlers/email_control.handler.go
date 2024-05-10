@@ -11,15 +11,24 @@ import (
 )
 
 type EmailControlHandler struct {
-	Server  *api.Server
-	Service *services.EmailControlService
+	Server            *api.Server
+	Service           *services.EmailControlService
+	PermissionService *services.PermissionService
 }
 
 func NewEmailControlHandler(s *api.Server) *EmailControlHandler {
 	return &EmailControlHandler{
-		Server:  s,
-		Service: services.NewEmailControlService(s),
+		Server:            s,
+		Service:           services.NewEmailControlService(s),
+		PermissionService: services.NewPermissionService(s),
 	}
+}
+
+// RegisterRoutes registers the routes for the EmailControlHandler.
+func (h *EmailControlHandler) RegisterRoutes(r fiber.Router) {
+	emailControlAPI := r.Group("/email-control")
+	emailControlAPI.Get("/", h.GetEmailControl())
+	emailControlAPI.Put("/:emailControlID", h.UpdateEmailControl())
 }
 
 // GetEmailControl is a handler that returns the billing control for an organization.
@@ -40,6 +49,15 @@ func (h *EmailControlHandler) GetEmailControl() fiber.Handler {
 						Attr:   "orgID, buID",
 					},
 				},
+			})
+		}
+
+		// Check if the user has the required permission
+		err := h.PermissionService.CheckUserPermission(c, "emailcontrol.view")
+		if err != nil {
+			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+				"error":   "Unauthorized",
+				"message": "You do not have the required permission to access this resource",
 			})
 		}
 
@@ -69,18 +87,19 @@ func (h *EmailControlHandler) UpdateEmailControl() fiber.Handler {
 			})
 		}
 
-		data := new(ent.EmailControl)
-		if err := util.ParseBodyAndValidate(c, data); err != nil {
-			return c.Status(fiber.StatusBadRequest).JSON(types.ValidationErrorResponse{
-				Type: "invalidRequest",
-				Errors: []types.ValidationErrorDetail{
-					{
-						Code:   "invalidRequest",
-						Detail: err.Error(),
-						Attr:   "request body",
-					},
-				},
+		// Check if the user has the required permission
+		err := h.PermissionService.CheckUserPermission(c, "emailcontrol.edit")
+		if err != nil {
+			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+				"error":   "Unauthorized",
+				"message": "You do not have the required permission to access this resource",
 			})
+		}
+
+		data := new(ent.EmailControl)
+
+		if err := util.ParseBodyAndValidate(c, data); err != nil {
+			return err
 		}
 
 		data.ID = uuid.MustParse(emailControlID)

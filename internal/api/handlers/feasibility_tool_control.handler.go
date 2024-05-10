@@ -11,15 +11,24 @@ import (
 )
 
 type FeasibilityToolControlHandler struct {
-	Server  *api.Server
-	Service *services.FeasibilityToolControlService
+	Server            *api.Server
+	Service           *services.FeasibilityToolControlService
+	PermissionService *services.PermissionService
 }
 
 func NewFeasibilityToolControlHandler(s *api.Server) *FeasibilityToolControlHandler {
 	return &FeasibilityToolControlHandler{
-		Server:  s,
-		Service: services.NewFeasibilityToolControlService(s),
+		Server:            s,
+		Service:           services.NewFeasibilityToolControlService(s),
+		PermissionService: services.NewPermissionService(s),
 	}
+}
+
+// RegisterRoutes registers the routes for the FeasibilityToolControlHandler.
+func (h *FeasibilityToolControlHandler) RegisterRoutes(r fiber.Router) {
+	feasibilityToolControlAPI := r.Group("/feasibility-tool-control")
+	feasibilityToolControlAPI.Get("/", h.GetFeasibilityToolControl())
+	feasibilityToolControlAPI.Put("/:feasibilityToolControlID", h.UpdateFeasibilityToolControl())
 }
 
 // GetFeasibilityToolControl is a handler that returns the feasibility tool control for an organization.
@@ -40,6 +49,15 @@ func (h *FeasibilityToolControlHandler) GetFeasibilityToolControl() fiber.Handle
 						Attr:   "orgID, buID",
 					},
 				},
+			})
+		}
+
+		// Check if the user has the required permission
+		err := h.PermissionService.CheckUserPermission(c, "feasibilitytoolcontrol.view")
+		if err != nil {
+			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+				"error":   "Unauthorized",
+				"message": "You do not have the required permission to access this resource",
 			})
 		}
 
@@ -69,19 +87,19 @@ func (h *FeasibilityToolControlHandler) UpdateFeasibilityToolControl() fiber.Han
 			})
 		}
 
+		// Check if the user has the required permission
+		err := h.PermissionService.CheckUserPermission(c, "feasibilitytoolcontrol.edit")
+		if err != nil {
+			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+				"error":   "Unauthorized",
+				"message": "You do not have the required permission to access this resource",
+			})
+		}
+
 		data := new(ent.FeasibilityToolControl)
 
 		if err := util.ParseBodyAndValidate(c, data); err != nil {
-			return c.Status(fiber.StatusBadRequest).JSON(types.ValidationErrorResponse{
-				Type: "invalidRequest",
-				Errors: []types.ValidationErrorDetail{
-					{
-						Code:   "invalidRequest",
-						Detail: err.Error(),
-						Attr:   "request body",
-					},
-				},
-			})
+			return err
 		}
 
 		data.ID = uuid.MustParse(feasibilityToolControlID)

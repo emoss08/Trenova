@@ -41,13 +41,13 @@ type User struct {
 	// Email holds the value of the "email" field.
 	Email string `json:"email,omitempty"`
 	// Timezone holds the value of the "timezone" field.
-	Timezone user.Timezone `json:"timezone,omitempty"`
+	Timezone string `json:"timezone" validate:"required,timezone"`
 	// ProfilePicURL holds the value of the "profile_pic_url" field.
 	ProfilePicURL string `json:"profilePicUrl"`
 	// ThumbnailURL holds the value of the "thumbnail_url" field.
 	ThumbnailURL string `json:"thumbnailUrl"`
 	// PhoneNumber holds the value of the "phone_number" field.
-	PhoneNumber string `json:"phoneNumber"`
+	PhoneNumber string `json:"phoneNumber" validate:"omitempty,phoneNum"`
 	// IsAdmin holds the value of the "is_admin" field.
 	IsAdmin bool `json:"isAdmin"`
 	// IsSuperAdmin holds the value of the "is_super_admin" field.
@@ -78,15 +78,18 @@ type UserEdges struct {
 	ShipmentCharges []*ShipmentCharges `json:"shipment_charges,omitempty"`
 	// Reports holds the value of the reports edge.
 	Reports []*UserReport `json:"reports,omitempty"`
+	// Roles holds the value of the roles edge.
+	Roles []*Role `json:"roles,omitempty"`
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
-	loadedTypes            [8]bool
+	loadedTypes            [9]bool
 	namedUserFavorites     map[string][]*UserFavorite
 	namedUserNotifications map[string][]*UserNotification
 	namedShipments         map[string][]*Shipment
 	namedShipmentComments  map[string][]*ShipmentComment
 	namedShipmentCharges   map[string][]*ShipmentCharges
 	namedReports           map[string][]*UserReport
+	namedRoles             map[string][]*Role
 }
 
 // BusinessUnitOrErr returns the BusinessUnit value or an error if the edge
@@ -163,6 +166,15 @@ func (e UserEdges) ReportsOrErr() ([]*UserReport, error) {
 		return e.Reports, nil
 	}
 	return nil, &NotLoadedError{edge: "reports"}
+}
+
+// RolesOrErr returns the Roles value or an error if the edge
+// was not loaded in eager-loading.
+func (e UserEdges) RolesOrErr() ([]*Role, error) {
+	if e.loadedTypes[8] {
+		return e.Roles, nil
+	}
+	return nil, &NotLoadedError{edge: "roles"}
 }
 
 // scanValues returns the types for scanning values from sql.Rows.
@@ -265,7 +277,7 @@ func (u *User) assignValues(columns []string, values []any) error {
 			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field timezone", values[i])
 			} else if value.Valid {
-				u.Timezone = user.Timezone(value.String)
+				u.Timezone = value.String
 			}
 		case user.FieldProfilePicURL:
 			if value, ok := values[i].(*sql.NullString); !ok {
@@ -357,6 +369,11 @@ func (u *User) QueryReports() *UserReportQuery {
 	return NewUserClient(u.config).QueryReports(u)
 }
 
+// QueryRoles queries the "roles" edge of the User entity.
+func (u *User) QueryRoles() *RoleQuery {
+	return NewUserClient(u.config).QueryRoles(u)
+}
+
 // Update returns a builder for updating this User.
 // Note that you need to call User.Unwrap() before calling this method if this User
 // was returned from a transaction, and the transaction was committed or rolled back.
@@ -410,7 +427,7 @@ func (u *User) String() string {
 	builder.WriteString(u.Email)
 	builder.WriteString(", ")
 	builder.WriteString("timezone=")
-	builder.WriteString(fmt.Sprintf("%v", u.Timezone))
+	builder.WriteString(u.Timezone)
 	builder.WriteString(", ")
 	builder.WriteString("profile_pic_url=")
 	builder.WriteString(u.ProfilePicURL)
@@ -576,6 +593,30 @@ func (u *User) appendNamedReports(name string, edges ...*UserReport) {
 		u.Edges.namedReports[name] = []*UserReport{}
 	} else {
 		u.Edges.namedReports[name] = append(u.Edges.namedReports[name], edges...)
+	}
+}
+
+// NamedRoles returns the Roles named value or an error if the edge was not
+// loaded in eager-loading with this name.
+func (u *User) NamedRoles(name string) ([]*Role, error) {
+	if u.Edges.namedRoles == nil {
+		return nil, &NotLoadedError{edge: name}
+	}
+	nodes, ok := u.Edges.namedRoles[name]
+	if !ok {
+		return nil, &NotLoadedError{edge: name}
+	}
+	return nodes, nil
+}
+
+func (u *User) appendNamedRoles(name string, edges ...*Role) {
+	if u.Edges.namedRoles == nil {
+		u.Edges.namedRoles = make(map[string][]*Role)
+	}
+	if len(edges) == 0 {
+		u.Edges.namedRoles[name] = []*Role{}
+	} else {
+		u.Edges.namedRoles[name] = append(u.Edges.namedRoles[name], edges...)
 	}
 }
 

@@ -11,15 +11,24 @@ import (
 )
 
 type RouteControlHandler struct {
-	Server  *api.Server
-	Service *services.RouteControlService
+	Server            *api.Server
+	Service           *services.RouteControlService
+	PermissionService *services.PermissionService
 }
 
 func NewRouteControlHandler(s *api.Server) *RouteControlHandler {
 	return &RouteControlHandler{
-		Server:  s,
-		Service: services.NewRouteControlService(s),
+		Server:            s,
+		Service:           services.NewRouteControlService(s),
+		PermissionService: services.NewPermissionService(s),
 	}
+}
+
+// RegisterRoutes registers the routes for the RouteControlHandler.
+func (h *RouteControlHandler) RegisterRoutes(r fiber.Router) {
+	routeControlAPI := r.Group("/route-control")
+	routeControlAPI.Get("/", h.GetRouteControl())
+	routeControlAPI.Put("/:routeControlID", h.UpdateRouteControlByID())
 }
 
 // GetRouteControl is a handler that returns the route control for an organization.
@@ -40,6 +49,15 @@ func (h *RouteControlHandler) GetRouteControl() fiber.Handler {
 						Attr:   "orgID, buID",
 					},
 				},
+			})
+		}
+
+		// Check if the user has the required permission
+		err := h.PermissionService.CheckUserPermission(c, "routecontrol.view")
+		if err != nil {
+			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+				"error":   "Unauthorized",
+				"message": "You do not have the required permission to access this resource",
 			})
 		}
 
@@ -72,19 +90,19 @@ func (h *RouteControlHandler) UpdateRouteControlByID() fiber.Handler {
 			})
 		}
 
+		// Check if the user has the required permission
+		err := h.PermissionService.CheckUserPermission(c, "routecontrol.edit")
+		if err != nil {
+			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+				"error":   "Unauthorized",
+				"message": "You do not have the required permission to access this resource",
+			})
+		}
+
 		data := new(ent.RouteControl)
 
 		if err := util.ParseBodyAndValidate(c, data); err != nil {
-			return c.Status(fiber.StatusBadRequest).JSON(types.ValidationErrorResponse{
-				Type: "invalidRequest",
-				Errors: []types.ValidationErrorDetail{
-					{
-						Code:   "invalidRequest",
-						Detail: err.Error(),
-						Attr:   "body",
-					},
-				},
-			})
+			return err
 		}
 
 		data.ID = uuid.MustParse(routeControlID)

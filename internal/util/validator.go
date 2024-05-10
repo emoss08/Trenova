@@ -5,6 +5,7 @@ import (
 	"reflect"
 	"regexp"
 	"strings"
+	"time"
 
 	"github.com/asaskevich/govalidator"
 	"github.com/bytedance/sonic"
@@ -79,7 +80,9 @@ func NewValidator() (*Validator, error) {
 		return name
 	})
 
-	registerCustomValidations(validate)
+	if err = registerCustomValidations(validate); err != nil {
+		return nil, err
+	}
 
 	return &Validator{validate: validate, trans: trans}, nil
 }
@@ -118,15 +121,21 @@ func (v *Validator) Validate(payload any) error {
 	}
 }
 
-func registerCustomValidations(v *validator.Validate) {
+func registerCustomValidations(v *validator.Validate) error {
 	err := v.RegisterValidation("commaSeparatedEmails", validateCommaSeparatedEmails)
 	if err != nil {
-		return
+		return err
 	}
 	phoneNumErr := v.RegisterValidation("phoneNum", validatePhoneNumber)
 	if phoneNumErr != nil {
-		return
+		return phoneNumErr
 	}
+	timezoneErr := v.RegisterValidation("timezone", validateTimezone)
+	if timezoneErr != nil {
+		return timezoneErr
+	}
+
+	return nil
 }
 
 func validateCommaSeparatedEmails(fl validator.FieldLevel) bool {
@@ -150,6 +159,11 @@ func validatePhoneNumber(fl validator.FieldLevel) bool {
 	return phonenumbers.IsValidNumber(num)
 }
 
+func validateTimezone(fl validator.FieldLevel) bool {
+	_, err := time.LoadLocation(fl.Field().String())
+	return err == nil
+}
+
 // preCompile the regular expression to avoid repeated compilation.
 var fieldErrorRegex = regexp.MustCompile(`field "(.+?)\.(.+?)": (.+)`)
 
@@ -171,8 +185,8 @@ func CreateDBErrorResponse(err error) types.ValidationErrorResponse {
 				Attr:   field,
 			})
 		}
-
 	// Handle custom ValidationError
+
 	case IsValidationError(err):
 		var vErr *ValidationError
 		if errors.As(err, &vErr) {

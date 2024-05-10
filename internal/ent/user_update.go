@@ -12,6 +12,7 @@ import (
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
 	"github.com/emoss08/trenova/internal/ent/predicate"
+	"github.com/emoss08/trenova/internal/ent/role"
 	"github.com/emoss08/trenova/internal/ent/shipment"
 	"github.com/emoss08/trenova/internal/ent/shipmentcharges"
 	"github.com/emoss08/trenova/internal/ent/shipmentcomment"
@@ -134,15 +135,15 @@ func (uu *UserUpdate) SetNillableEmail(s *string) *UserUpdate {
 }
 
 // SetTimezone sets the "timezone" field.
-func (uu *UserUpdate) SetTimezone(u user.Timezone) *UserUpdate {
-	uu.mutation.SetTimezone(u)
+func (uu *UserUpdate) SetTimezone(s string) *UserUpdate {
+	uu.mutation.SetTimezone(s)
 	return uu
 }
 
 // SetNillableTimezone sets the "timezone" field if the given value is not nil.
-func (uu *UserUpdate) SetNillableTimezone(u *user.Timezone) *UserUpdate {
-	if u != nil {
-		uu.SetTimezone(*u)
+func (uu *UserUpdate) SetNillableTimezone(s *string) *UserUpdate {
+	if s != nil {
+		uu.SetTimezone(*s)
 	}
 	return uu
 }
@@ -345,6 +346,21 @@ func (uu *UserUpdate) AddReports(u ...*UserReport) *UserUpdate {
 	return uu.AddReportIDs(ids...)
 }
 
+// AddRoleIDs adds the "roles" edge to the Role entity by IDs.
+func (uu *UserUpdate) AddRoleIDs(ids ...uuid.UUID) *UserUpdate {
+	uu.mutation.AddRoleIDs(ids...)
+	return uu
+}
+
+// AddRoles adds the "roles" edges to the Role entity.
+func (uu *UserUpdate) AddRoles(r ...*Role) *UserUpdate {
+	ids := make([]uuid.UUID, len(r))
+	for i := range r {
+		ids[i] = r[i].ID
+	}
+	return uu.AddRoleIDs(ids...)
+}
+
 // Mutation returns the UserMutation object of the builder.
 func (uu *UserUpdate) Mutation() *UserMutation {
 	return uu.mutation
@@ -476,6 +492,27 @@ func (uu *UserUpdate) RemoveReports(u ...*UserReport) *UserUpdate {
 	return uu.RemoveReportIDs(ids...)
 }
 
+// ClearRoles clears all "roles" edges to the Role entity.
+func (uu *UserUpdate) ClearRoles() *UserUpdate {
+	uu.mutation.ClearRoles()
+	return uu
+}
+
+// RemoveRoleIDs removes the "roles" edge to Role entities by IDs.
+func (uu *UserUpdate) RemoveRoleIDs(ids ...uuid.UUID) *UserUpdate {
+	uu.mutation.RemoveRoleIDs(ids...)
+	return uu
+}
+
+// RemoveRoles removes "roles" edges to Role entities.
+func (uu *UserUpdate) RemoveRoles(r ...*Role) *UserUpdate {
+	ids := make([]uuid.UUID, len(r))
+	for i := range r {
+		ids[i] = r[i].ID
+	}
+	return uu.RemoveRoleIDs(ids...)
+}
+
 // Save executes the query and returns the number of nodes affected by the update operation.
 func (uu *UserUpdate) Save(ctx context.Context) (int, error) {
 	uu.defaults()
@@ -539,11 +576,6 @@ func (uu *UserUpdate) check() error {
 			return &ValidationError{Name: "email", err: fmt.Errorf(`ent: validator failed for field "User.email": %w`, err)}
 		}
 	}
-	if v, ok := uu.mutation.Timezone(); ok {
-		if err := user.TimezoneValidator(v); err != nil {
-			return &ValidationError{Name: "timezone", err: fmt.Errorf(`ent: validator failed for field "User.timezone": %w`, err)}
-		}
-	}
 	if _, ok := uu.mutation.BusinessUnitID(); uu.mutation.BusinessUnitCleared() && !ok {
 		return errors.New(`ent: clearing a required unique edge "User.business_unit"`)
 	}
@@ -596,7 +628,7 @@ func (uu *UserUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		_spec.SetField(user.FieldEmail, field.TypeString, value)
 	}
 	if value, ok := uu.mutation.Timezone(); ok {
-		_spec.SetField(user.FieldTimezone, field.TypeEnum, value)
+		_spec.SetField(user.FieldTimezone, field.TypeString, value)
 	}
 	if value, ok := uu.mutation.ProfilePicURL(); ok {
 		_spec.SetField(user.FieldProfilePicURL, field.TypeString, value)
@@ -898,6 +930,51 @@ func (uu *UserUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
+	if uu.mutation.RolesCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: true,
+			Table:   user.RolesTable,
+			Columns: user.RolesPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(role.FieldID, field.TypeUUID),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := uu.mutation.RemovedRolesIDs(); len(nodes) > 0 && !uu.mutation.RolesCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: true,
+			Table:   user.RolesTable,
+			Columns: user.RolesPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(role.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := uu.mutation.RolesIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: true,
+			Table:   user.RolesTable,
+			Columns: user.RolesPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(role.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
 	_spec.AddModifiers(uu.modifiers...)
 	if n, err = sqlgraph.UpdateNodes(ctx, uu.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
@@ -1018,15 +1095,15 @@ func (uuo *UserUpdateOne) SetNillableEmail(s *string) *UserUpdateOne {
 }
 
 // SetTimezone sets the "timezone" field.
-func (uuo *UserUpdateOne) SetTimezone(u user.Timezone) *UserUpdateOne {
-	uuo.mutation.SetTimezone(u)
+func (uuo *UserUpdateOne) SetTimezone(s string) *UserUpdateOne {
+	uuo.mutation.SetTimezone(s)
 	return uuo
 }
 
 // SetNillableTimezone sets the "timezone" field if the given value is not nil.
-func (uuo *UserUpdateOne) SetNillableTimezone(u *user.Timezone) *UserUpdateOne {
-	if u != nil {
-		uuo.SetTimezone(*u)
+func (uuo *UserUpdateOne) SetNillableTimezone(s *string) *UserUpdateOne {
+	if s != nil {
+		uuo.SetTimezone(*s)
 	}
 	return uuo
 }
@@ -1229,6 +1306,21 @@ func (uuo *UserUpdateOne) AddReports(u ...*UserReport) *UserUpdateOne {
 	return uuo.AddReportIDs(ids...)
 }
 
+// AddRoleIDs adds the "roles" edge to the Role entity by IDs.
+func (uuo *UserUpdateOne) AddRoleIDs(ids ...uuid.UUID) *UserUpdateOne {
+	uuo.mutation.AddRoleIDs(ids...)
+	return uuo
+}
+
+// AddRoles adds the "roles" edges to the Role entity.
+func (uuo *UserUpdateOne) AddRoles(r ...*Role) *UserUpdateOne {
+	ids := make([]uuid.UUID, len(r))
+	for i := range r {
+		ids[i] = r[i].ID
+	}
+	return uuo.AddRoleIDs(ids...)
+}
+
 // Mutation returns the UserMutation object of the builder.
 func (uuo *UserUpdateOne) Mutation() *UserMutation {
 	return uuo.mutation
@@ -1360,6 +1452,27 @@ func (uuo *UserUpdateOne) RemoveReports(u ...*UserReport) *UserUpdateOne {
 	return uuo.RemoveReportIDs(ids...)
 }
 
+// ClearRoles clears all "roles" edges to the Role entity.
+func (uuo *UserUpdateOne) ClearRoles() *UserUpdateOne {
+	uuo.mutation.ClearRoles()
+	return uuo
+}
+
+// RemoveRoleIDs removes the "roles" edge to Role entities by IDs.
+func (uuo *UserUpdateOne) RemoveRoleIDs(ids ...uuid.UUID) *UserUpdateOne {
+	uuo.mutation.RemoveRoleIDs(ids...)
+	return uuo
+}
+
+// RemoveRoles removes "roles" edges to Role entities.
+func (uuo *UserUpdateOne) RemoveRoles(r ...*Role) *UserUpdateOne {
+	ids := make([]uuid.UUID, len(r))
+	for i := range r {
+		ids[i] = r[i].ID
+	}
+	return uuo.RemoveRoleIDs(ids...)
+}
+
 // Where appends a list predicates to the UserUpdate builder.
 func (uuo *UserUpdateOne) Where(ps ...predicate.User) *UserUpdateOne {
 	uuo.mutation.Where(ps...)
@@ -1436,11 +1549,6 @@ func (uuo *UserUpdateOne) check() error {
 			return &ValidationError{Name: "email", err: fmt.Errorf(`ent: validator failed for field "User.email": %w`, err)}
 		}
 	}
-	if v, ok := uuo.mutation.Timezone(); ok {
-		if err := user.TimezoneValidator(v); err != nil {
-			return &ValidationError{Name: "timezone", err: fmt.Errorf(`ent: validator failed for field "User.timezone": %w`, err)}
-		}
-	}
 	if _, ok := uuo.mutation.BusinessUnitID(); uuo.mutation.BusinessUnitCleared() && !ok {
 		return errors.New(`ent: clearing a required unique edge "User.business_unit"`)
 	}
@@ -1510,7 +1618,7 @@ func (uuo *UserUpdateOne) sqlSave(ctx context.Context) (_node *User, err error) 
 		_spec.SetField(user.FieldEmail, field.TypeString, value)
 	}
 	if value, ok := uuo.mutation.Timezone(); ok {
-		_spec.SetField(user.FieldTimezone, field.TypeEnum, value)
+		_spec.SetField(user.FieldTimezone, field.TypeString, value)
 	}
 	if value, ok := uuo.mutation.ProfilePicURL(); ok {
 		_spec.SetField(user.FieldProfilePicURL, field.TypeString, value)
@@ -1805,6 +1913,51 @@ func (uuo *UserUpdateOne) sqlSave(ctx context.Context) (_node *User, err error) 
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(userreport.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if uuo.mutation.RolesCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: true,
+			Table:   user.RolesTable,
+			Columns: user.RolesPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(role.FieldID, field.TypeUUID),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := uuo.mutation.RemovedRolesIDs(); len(nodes) > 0 && !uuo.mutation.RolesCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: true,
+			Table:   user.RolesTable,
+			Columns: user.RolesPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(role.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := uuo.mutation.RolesIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: true,
+			Table:   user.RolesTable,
+			Columns: user.RolesPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(role.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {

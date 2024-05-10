@@ -102,14 +102,23 @@ type Organization func(*sql.Selector)
 // OrganizationFeatureFlag is the predicate function for organizationfeatureflag builders.
 type OrganizationFeatureFlag func(*sql.Selector)
 
+// Permission is the predicate function for permission builders.
+type Permission func(*sql.Selector)
+
 // QualifierCode is the predicate function for qualifiercode builders.
 type QualifierCode func(*sql.Selector)
 
 // ReasonCode is the predicate function for reasoncode builders.
 type ReasonCode func(*sql.Selector)
 
+// Resource is the predicate function for resource builders.
+type Resource func(*sql.Selector)
+
 // RevenueCode is the predicate function for revenuecode builders.
 type RevenueCode func(*sql.Selector)
+
+// Role is the predicate function for role builders.
+type Role func(*sql.Selector)
 
 // RouteControl is the predicate function for routecontrol builders.
 type RouteControl func(*sql.Selector)

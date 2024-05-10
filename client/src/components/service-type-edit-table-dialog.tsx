@@ -1,7 +1,7 @@
 import { ServiceTypeForm } from "@/components/service-type-table-dialog";
 import { Button } from "@/components/ui/button";
 import { useCustomMutation } from "@/hooks/useCustomMutation";
-import { formatDate } from "@/lib/date";
+import { formatToUserTimezone } from "@/lib/date";
 import { serviceTypeSchema } from "@/lib/validations/ShipmentSchema";
 import { useTableStore } from "@/stores/TableStore";
 import type {
@@ -10,8 +10,8 @@ import type {
 } from "@/types/shipment";
 import { type TableSheetProps } from "@/types/tables";
 import { yupResolver } from "@hookform/resolvers/yup";
-import React from "react";
 import { useForm } from "react-hook-form";
+import { Badge } from "./ui/badge";
 import {
   Credenza,
   CredenzaBody,
@@ -24,30 +24,21 @@ import {
 } from "./ui/credenza";
 
 function ServiceTypeEditForm({ serviceType }: { serviceType: ServiceType }) {
-  const [isSubmitting, setIsSubmitting] = React.useState<boolean>(false);
-
   const { control, handleSubmit } = useForm<FormValues>({
     resolver: yupResolver(serviceTypeSchema),
     defaultValues: serviceType,
   });
 
-  const mutation = useCustomMutation<FormValues>(
-    control,
-    {
-      method: "PUT",
-      path: `/service-types/${serviceType.id}/`,
-      successMessage: "Service Type updated successfully.",
-      queryKeysToInvalidate: ["service-type-table-data"],
-      closeModal: true,
-      errorMessage: "Failed to update service type.",
-    },
-    () => setIsSubmitting(false),
-  );
+  const mutation = useCustomMutation<FormValues>(control, {
+    method: "PUT",
+    path: `/service-types/${serviceType.id}/`,
+    successMessage: "Service Type updated successfully.",
+    queryKeysToInvalidate: "serviceTypes",
+    closeModal: true,
+    errorMessage: "Failed to update service type.",
+  });
 
-  const onSubmit = (values: FormValues) => {
-    setIsSubmitting(true);
-    mutation.mutate(values);
-  };
+  const onSubmit = (values: FormValues) => mutation.mutate(values);
 
   return (
     <CredenzaBody>
@@ -59,7 +50,7 @@ function ServiceTypeEditForm({ serviceType }: { serviceType: ServiceType }) {
               Cancel
             </Button>
           </CredenzaClose>
-          <Button type="submit" isLoading={isSubmitting}>
+          <Button type="submit" isLoading={mutation.isPending}>
             Save Changes
           </Button>
         </CredenzaFooter>
@@ -77,13 +68,17 @@ export function ServiceTypeEditDialog({ onOpenChange, open }: TableSheetProps) {
     <Credenza open={open} onOpenChange={onOpenChange}>
       <CredenzaContent>
         <CredenzaHeader>
-          <CredenzaTitle>{serviceType && serviceType.code}</CredenzaTitle>
+          <CredenzaTitle className="flex">
+            <span>{serviceType.code}</span>
+            <Badge className="ml-5" variant="purple">
+              {serviceType.id}
+            </Badge>
+          </CredenzaTitle>
         </CredenzaHeader>
         <CredenzaDescription>
-          Last updated on&nbsp;
-          {serviceType && formatDate(serviceType.updatedAt)}
+          Last updated on {formatToUserTimezone(serviceType.updatedAt)}
         </CredenzaDescription>
-        {serviceType && <ServiceTypeEditForm serviceType={serviceType} />}
+        <ServiceTypeEditForm serviceType={serviceType} />
       </CredenzaContent>
     </Credenza>
   );

@@ -1,19 +1,3 @@
-/*
- * COPYRIGHT(c) 2024 Trenova
- *
- * This file is part of Trenova.
- *
- * The Trenova software is licensed under the Business Source License 1.1. You are granted the right
- * to copy, modify, and redistribute the software, but only for non-production use or with a total
- * of less than three server instances. Starting from the Change Date (November 16, 2026), the
- * software will be made available under version 2 or later of the GNU General Public License.
- * If you use the software in violation of this license, your rights under the license will be
- * terminated automatically. The software is provided "as is," and the Licensor disclaims all
- * warranties and conditions. If you use this license's text or the "Business Source License" name
- * and trademark, you must comply with the Licensor's covenants, which include specifying the
- * Change License as the GPL Version 2.0 or a compatible license, specifying an Additional Use
- * Grant, and not modifying the license in any other way.
- */
 import { DatepickerField } from "@/components/common/fields/date-picker";
 import { InputField } from "@/components/common/fields/input";
 import { SelectInput } from "@/components/common/fields/select-input";
@@ -41,7 +25,6 @@ import {
 } from "@/types/equipment";
 import { type TableSheetProps } from "@/types/tables";
 import { yupResolver } from "@hookform/resolvers/yup";
-import { useState } from "react";
 import { useForm, type Control } from "react-hook-form";
 import { Form, FormControl, FormGroup } from "./ui/form";
 import { Separator } from "./ui/separator";
@@ -131,7 +114,7 @@ export function TrailerForm({
             isLoading={isEquipManuLoading}
             placeholder="Select Manufacturer"
             description="Select the manufacturer of the trailer, to categorize it based on its functionality and usage."
-            isClearable={false}
+            isClearable
             hasPopoutWindow
             popoutLink="/equipment/equipment-manufacturers/"
             popoutLinkLabel="Equipment Manufacturer"
@@ -207,6 +190,7 @@ export function TrailerForm({
             options={selectUSStates}
             isFetchError={isStateError}
             isLoading={isStatesLoading}
+            isClearable
             placeholder="Select License Plate State"
             description="Select the state of registration of the trailer's license plate."
           />
@@ -258,9 +242,7 @@ export function TrailerForm({
 }
 
 export function TrailerDialog({ onOpenChange, open }: TableSheetProps) {
-  const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
-
-  const { control, reset, handleSubmit } = useForm<FormValues>({
+  const { control, handleSubmit } = useForm<FormValues>({
     resolver: yupResolver(trailerSchema),
     defaultValues: {
       code: "",
@@ -280,25 +262,16 @@ export function TrailerDialog({ onOpenChange, open }: TableSheetProps) {
     },
   });
 
-  const mutation = useCustomMutation<FormValues>(
-    control,
-    {
-      method: "POST",
-      path: "/trailers/",
-      successMessage: "Trailer created successfully.",
-      queryKeysToInvalidate: ["trailer-table-data"],
-      additionalInvalidateQueries: ["trailers"],
-      closeModal: true,
-      errorMessage: "Failed to create new trailer.",
-    },
-    () => setIsSubmitting(false),
-    reset,
-  );
+  const mutation = useCustomMutation<FormValues>(control, {
+    method: "POST",
+    path: "/trailers/",
+    successMessage: "Trailer created successfully.",
+    queryKeysToInvalidate: "trailers",
+    closeModal: true,
+    errorMessage: "Failed to create new trailer.",
+  });
 
-  const onSubmit = (values: FormValues) => {
-    setIsSubmitting(true);
-    mutation.mutate(values);
-  };
+  const onSubmit = (values: FormValues) => mutation.mutate(values);
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
@@ -323,7 +296,11 @@ export function TrailerDialog({ onOpenChange, open }: TableSheetProps) {
             >
               Cancel
             </Button>
-            <Button type="submit" isLoading={isSubmitting} className="w-full">
+            <Button
+              type="submit"
+              isLoading={mutation.isPending}
+              className="w-full"
+            >
               Save
             </Button>
           </SheetFooter>

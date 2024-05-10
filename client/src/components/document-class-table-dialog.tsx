@@ -8,7 +8,6 @@ import { documentClassSchema } from "@/lib/validations/BillingSchema";
 import { type DocumentClassificationFormValues as FormValues } from "@/types/billing";
 import { type TableSheetProps } from "@/types/tables";
 import { yupResolver } from "@hookform/resolvers/yup";
-import React from "react";
 import { Control, useForm } from "react-hook-form";
 import { GradientPicker } from "./common/fields/color-field";
 import { SelectInput } from "./common/fields/select-input";
@@ -77,9 +76,7 @@ export function DocumentClassForm({
 }
 
 export function DocumentClassDialog({ onOpenChange, open }: TableSheetProps) {
-  const [isSubmitting, setIsSubmitting] = React.useState<boolean>(false);
-
-  const { control, reset, handleSubmit } = useForm<FormValues>({
+  const { control, handleSubmit } = useForm<FormValues>({
     resolver: yupResolver(documentClassSchema),
     defaultValues: {
       status: "A",
@@ -89,22 +86,16 @@ export function DocumentClassDialog({ onOpenChange, open }: TableSheetProps) {
     },
   });
 
-  const mutation = useCustomMutation<FormValues>(
-    control,
-    {
-      method: "POST",
-      path: "/document-classifications/",
-      successMessage: "Document Classification created successfully.",
-      queryKeysToInvalidate: ["document-classification-table-data"],
-      closeModal: true,
-      errorMessage: "Failed to create new document classification.",
-    },
-    () => setIsSubmitting(false),
-    reset,
-  );
+  const mutation = useCustomMutation<FormValues>(control, {
+    method: "POST",
+    path: "/document-classifications/",
+    successMessage: "Document Classification created successfully.",
+    queryKeysToInvalidate: ["document-classification-table-data"],
+    closeModal: true,
+    errorMessage: "Failed to create new document classification.",
+  });
 
   const onSubmit = (values: FormValues) => {
-    setIsSubmitting(true);
     mutation.mutate(values);
   };
 
@@ -127,7 +118,7 @@ export function DocumentClassDialog({ onOpenChange, open }: TableSheetProps) {
                   Cancel
                 </Button>
               </CredenzaClose>
-              <Button type="submit" isLoading={isSubmitting}>
+              <Button type="submit" isLoading={mutation.isPending}>
                 Save Changes
               </Button>
             </CredenzaFooter>

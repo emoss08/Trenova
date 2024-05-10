@@ -54,7 +54,7 @@ type TableChangeAlert struct {
 	// ListenerName holds the value of the "listener_name" field.
 	ListenerName string `json:"listenerName"`
 	// EmailRecipients holds the value of the "email_recipients" field.
-	EmailRecipients string `json:"emailRecipients"`
+	EmailRecipients string `json:"emailRecipients" validate:"omitempty,commaSeparatedEmails"`
 	// EffectiveDate holds the value of the "effective_date" field.
 	EffectiveDate *pgtype.Date `json:"effectiveDate"`
 	// ExpirationDate holds the value of the "expiration_date" field.

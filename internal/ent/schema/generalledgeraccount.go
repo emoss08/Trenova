@@ -2,7 +2,6 @@ package schema
 
 import (
 	"regexp"
-	"time"
 
 	"entgo.io/ent"
 	"entgo.io/ent/dialect"
@@ -61,20 +60,6 @@ func (GeneralLedgerAccount) Fields() []ent.Field {
 		field.Float("interest_rate").
 			Optional().
 			StructTag(`json:"interestRate" validate:"omitempty"`),
-		field.Other("date_opened", &pgtype.Date{}).
-			Immutable().
-			Default(
-				func() *pgtype.Date {
-					today := pgtype.Date{}
-					today.Time = time.Now()
-					return &today
-				}(),
-			).
-			SchemaType(map[string]string{
-				dialect.Postgres: "date",
-				dialect.SQLite:   "date",
-			}).
-			StructTag(`json:"dateOpened" validate:"omitempty"`),
 		field.Other("date_closed", &pgtype.Date{}).
 			Optional().
 			Nillable().

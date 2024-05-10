@@ -1,20 +1,3 @@
-/*
- * COPYRIGHT(c) 2024 Trenova
- *
- * This file is part of Trenova.
- *
- * The Trenova software is licensed under the Business Source License 1.1. You are granted the right
- * to copy, modify, and redistribute the software, but only for non-production use or with a total
- * of less than three server instances. Starting from the Change Date (November 16, 2026), the
- * software will be made available under version 2 or later of the GNU General Public License.
- * If you use the software in violation of this license, your rights under the license will be
- * terminated automatically. The software is provided "as is," and the Licensor disclaims all
- * warranties and conditions. If you use this license's text or the "Business Source License" name
- * and trademark, you must comply with the Licensor's covenants, which include specifying the
- * Change License as the GPL Version 2.0 or a compatible license, specifying an Additional Use
- * Grant, and not modifying the license in any other way.
- */
-
 import { CheckboxInput } from "@/components/common/fields/checkbox";
 import { PasswordField } from "@/components/common/fields/input";
 import { SelectInput } from "@/components/common/fields/select-input";
@@ -30,10 +13,8 @@ import type {
   GoogleAPIFormValues,
   GoogleAPI as GoogleAPIType,
 } from "@/types/organization";
-import { faCircleInfo } from "@fortawesome/pro-duotone-svg-icons";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { yupResolver } from "@hookform/resolvers/yup";
-import React from "react";
+import { InfoCircledIcon } from "@radix-ui/react-icons";
 import { useForm } from "react-hook-form";
 import { Trans, useTranslation } from "react-i18next";
 import { ExternalLink } from "./ui/link";
@@ -43,7 +24,7 @@ function GoogleAPIAlert() {
 
   return (
     <Alert className="mb-5">
-      <FontAwesomeIcon icon={faCircleInfo} />
+      <InfoCircledIcon />
       <AlertTitle>{t("alert.title")}</AlertTitle>
       <AlertDescription>
         <ul className="list-disc">
@@ -85,30 +66,21 @@ function GoogleAPIAlert() {
 
 function GoogleApiForm({ googleApi }: { googleApi: GoogleAPIType }) {
   const { t } = useTranslation(["admin.googleapi", "common"]);
-  const [isSubmitting, setIsSubmitting] = React.useState<boolean>(false);
 
-  const { control, handleSubmit, reset, watch } = useForm<GoogleAPIFormValues>({
+  const { control, handleSubmit, reset } = useForm<GoogleAPIFormValues>({
     resolver: yupResolver(googleAPISchema),
     defaultValues: googleApi,
   });
 
-  console.info("watch add location", watch("addLocation"));
-
-  const mutation = useCustomMutation<GoogleAPIFormValues>(
-    control,
-    {
-      method: "PUT",
-      path: `/google-api/${googleApi.id}`, // Does not require an ID
-      successMessage: t("formSuccessMessage"),
-      queryKeysToInvalidate: ["googleAPI"],
-      errorMessage: t("formErrorMessage"),
-    },
-    () => setIsSubmitting(false),
-    reset,
-  );
+  const mutation = useCustomMutation<GoogleAPIFormValues>(control, {
+    method: "PUT",
+    path: `/google-api/${googleApi.id}`, // Does not require an ID
+    successMessage: t("formSuccessMessage"),
+    queryKeysToInvalidate: "googleAPI",
+    errorMessage: t("formErrorMessage"),
+  });
 
   const onSubmit = (values: GoogleAPIFormValues) => {
-    setIsSubmitting(true);
     mutation.mutate(values);
     reset(values);
   };
@@ -187,11 +159,11 @@ function GoogleApiForm({ googleApi }: { googleApi: GoogleAPIType }) {
           }}
           type="button"
           variant="ghost"
-          disabled={isSubmitting}
+          disabled={mutation.isPending}
         >
           {t("buttons.cancel", { ns: "common" })}
         </Button>
-        <Button type="submit" isLoading={isSubmitting}>
+        <Button type="submit" isLoading={mutation.isPending}>
           {t("buttons.save", { ns: "common" })}
         </Button>
       </div>

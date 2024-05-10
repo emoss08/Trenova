@@ -11,15 +11,25 @@ import (
 )
 
 type DivisionCodeHandler struct {
-	Server  *api.Server
-	Service *services.DivisionCodeService
+	Server            *api.Server
+	Service           *services.DivisionCodeService
+	PermissionService *services.PermissionService
 }
 
 func NewDivisionCodeHandler(s *api.Server) *DivisionCodeHandler {
 	return &DivisionCodeHandler{
-		Server:  s,
-		Service: services.NewDivisionCodeService(s),
+		Server:            s,
+		Service:           services.NewDivisionCodeService(s),
+		PermissionService: services.NewPermissionService(s),
 	}
+}
+
+// RegisterRoutes registers the routes for the DivisionCodeHandler.
+func (h *DivisionCodeHandler) RegisterRoutes(r fiber.Router) {
+	divisionCodeAPI := r.Group("/division-codes")
+	divisionCodeAPI.Get("/", h.GetDivisionCodes())
+	divisionCodeAPI.Post("/", h.CreateDivisionCode())
+	divisionCodeAPI.Put("/:divisionCodeID", h.UpdateDivisionCode())
 }
 
 // GetDivisionCodes is a handler that returns a list of division codes.
@@ -27,20 +37,6 @@ func NewDivisionCodeHandler(s *api.Server) *DivisionCodeHandler {
 // GET /division-codes
 func (h *DivisionCodeHandler) GetDivisionCodes() fiber.Handler {
 	return func(c *fiber.Ctx) error {
-		offset, limit, err := util.PaginationParams(c)
-		if err != nil {
-			return c.Status(fiber.StatusBadRequest).JSON(types.ValidationErrorResponse{
-				Type: "invalidRequest",
-				Errors: []types.ValidationErrorDetail{
-					{
-						Code:   "invalidRequest",
-						Detail: err.Error(),
-						Attr:   "offset, limit",
-					},
-				},
-			})
-		}
-
 		orgID, ok := c.Locals(util.CTXOrganizationID).(uuid.UUID)
 		buID, buOK := c.Locals(util.CTXBusinessUnitID).(uuid.UUID)
 
@@ -52,6 +48,29 @@ func (h *DivisionCodeHandler) GetDivisionCodes() fiber.Handler {
 						Code:   "internalError",
 						Detail: "Organization ID or Business Unit ID not found in the request context",
 						Attr:   "orgID, buID",
+					},
+				},
+			})
+		}
+
+		// Check if the user has the required permission
+		err := h.PermissionService.CheckUserPermission(c, "divisioncode.view")
+		if err != nil {
+			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+				"error":   "Unauthorized",
+				"message": "You do not have the required permission to access this resource",
+			})
+		}
+
+		offset, limit, err := util.PaginationParams(c)
+		if err != nil {
+			return c.Status(fiber.StatusBadRequest).JSON(types.ValidationErrorResponse{
+				Type: "invalidRequest",
+				Errors: []types.ValidationErrorDetail{
+					{
+						Code:   "invalidRequest",
+						Detail: err.Error(),
+						Attr:   "offset, limit",
 					},
 				},
 			})
@@ -98,20 +117,20 @@ func (h *DivisionCodeHandler) CreateDivisionCode() fiber.Handler {
 			})
 		}
 
+		// Check if the user has the required permission
+		err := h.PermissionService.CheckUserPermission(c, "divisioncode.add")
+		if err != nil {
+			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+				"error":   "Unauthorized",
+				"message": "You do not have the required permission to access this resource",
+			})
+		}
+
 		newEntity.BusinessUnitID = buID
 		newEntity.OrganizationID = orgID
 
 		if err := util.ParseBodyAndValidate(c, newEntity); err != nil {
-			return c.Status(fiber.StatusBadRequest).JSON(types.ValidationErrorResponse{
-				Type: "invalidRequest",
-				Errors: []types.ValidationErrorDetail{
-					{
-						Code:   "invalidRequest",
-						Detail: err.Error(),
-						Attr:   "body",
-					},
-				},
-			})
+			return err
 		}
 
 		entity, err := h.Service.CreateDivisionCode(c.UserContext(), newEntity)
@@ -143,19 +162,19 @@ func (h *DivisionCodeHandler) UpdateDivisionCode() fiber.Handler {
 			})
 		}
 
+		// Check if the user has the required permission
+		err := h.PermissionService.CheckUserPermission(c, "divisioncode.edit")
+		if err != nil {
+			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+				"error":   "Unauthorized",
+				"message": "You do not have the required permission to access this resource",
+			})
+		}
+
 		updatedEntity := new(ent.DivisionCode)
 
 		if err := util.ParseBodyAndValidate(c, updatedEntity); err != nil {
-			return c.Status(fiber.StatusBadRequest).JSON(types.ValidationErrorResponse{
-				Type: "invalidRequest",
-				Errors: []types.ValidationErrorDetail{
-					{
-						Code:   "invalidRequest",
-						Detail: err.Error(),
-						Attr:   "request body",
-					},
-				},
-			})
+			return err
 		}
 
 		updatedEntity.ID = uuid.MustParse(divisionCodeID)

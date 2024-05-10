@@ -67,12 +67,12 @@ const filters: FilterConfig<DivisionCode>[] = [
 export default function DivisionCodes() {
   return (
     <DataTable
-      addPermissionName="add_divisioncode"
-      queryKey="division-code-table-data"
+      addPermissionName="divisioncode.add"
+      queryKey="divisionCodes"
       columns={columns}
       link="/division-codes/"
       name="Division Code"
-      exportModelName="DivisionCode"
+      exportModelName="division_codes"
       filterColumn="code"
       tableFacetedFilters={filters}
       TableSheet={DivisionCodeDialog}
