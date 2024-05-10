@@ -4,10 +4,8 @@ import { upperFirst } from "@/lib/utils";
 import { RouteObjectWithPermission, routes } from "@/routing/AppRoutes";
 import { useHeaderStore } from "@/stores/HeaderStore";
 import { type UserFavorite } from "@/types/accounts";
-import { faCommand } from "@fortawesome/pro-regular-svg-icons";
-import { faCircleExclamation } from "@fortawesome/pro-solid-svg-icons";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { MagnifyingGlassIcon } from "@radix-ui/react-icons";
+import { AlertCircleIcon, CommandIcon } from "lucide-react";
 import React from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "../ui/button";
@@ -81,7 +79,7 @@ export function SiteSearchInput() {
               <span className="text-muted-foreground">Search...</span>
             </div>
             <kbd className="border-border bg-background text-foreground pointer-events-none inline-flex h-5 select-none items-center gap-x-1 rounded border px-1.5 font-mono text-[10px] font-medium opacity-100">
-              <FontAwesomeIcon icon={faCommand} className="mb-0.5" />
+              <CommandIcon className="size-3" />
               <span className="text-xs">K</span>
             </kbd>
           </button>
@@ -194,10 +192,7 @@ export function SiteSearch() {
         {Object.keys(filteredGroups).length === 0 &&
           favoriteCommands.length === 0 && (
             <CommandEmpty key="empty">
-              <FontAwesomeIcon
-                icon={faCircleExclamation}
-                className="text-accent-foreground mx-auto size-6"
-              />
+              <AlertCircleIcon className="text-accent-foreground mx-auto size-6" />
               <p className="text-accent-foreground mt-4 font-semibold">
                 No results found
               </p>

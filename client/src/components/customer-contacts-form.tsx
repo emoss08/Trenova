@@ -1,29 +1,10 @@
-/*
- * COPYRIGHT(c) 2024 Trenova
- *
- * This file is part of Trenova.
- *
- * The Trenova software is licensed under the Business Source License 1.1. You are granted the right
- * to copy, modify, and redistribute the software, but only for non-production use or with a total
- * of less than three server instances. Starting from the Change Date (November 16, 2026), the
- * software will be made available under version 2 or later of the GNU General Public License.
- * If you use the software in violation of this license, your rights under the license will be
- * terminated automatically. The software is provided "as is," and the Licensor disclaims all
- * warranties and conditions. If you use this license's text or the "Business Source License" name
- * and trademark, you must comply with the Licensor's covenants, which include specifying the
- * Change License as the GPL Version 2.0 or a compatible license, specifying an Additional Use
- * Grant, and not modifying the license in any other way.
- */
-
 import { useFieldArray, useFormContext } from "react-hook-form";
 
 import { InputField } from "@/components/common/fields/input";
 import { SelectInput } from "@/components/common/fields/select-input";
 import { statusChoices } from "@/lib/choices";
 import { type CustomerFormValues as FormValues } from "@/types/customer";
-import { faPerson } from "@fortawesome/pro-duotone-svg-icons";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { PlusIcon } from "@radix-ui/react-icons";
+import { PersonIcon, PlusIcon } from "@radix-ui/react-icons";
 import { useEffect, useState } from "react";
 import { CheckboxInput } from "./common/fields/checkbox";
 import { Button } from "./ui/button";
@@ -72,7 +53,7 @@ export function CustomerContactForm() {
               {fields.map((field, index) => (
                 <div
                   key={field.id}
-                  className="my-4 grid grid-cols-2 gap-2 rounded-md border border-border p-2"
+                  className="border-border my-4 grid grid-cols-2 gap-2 rounded-md border p-2"
                 >
                   <div className="flex w-full max-w-sm flex-col justify-between gap-0.5">
                     <div className="min-h-[4em]">
@@ -174,12 +155,9 @@ export function CustomerContactForm() {
           </>
         ) : (
           <div className="mt-44 flex grow flex-col items-center justify-center">
-            <FontAwesomeIcon
-              icon={faPerson}
-              className="size-10 text-foreground"
-            />
-            <h3 className="text-lg mt-4 font-semibold">No Contacts added</h3>
-            <p className="mb-4 mt-2 text-sm text-muted-foreground">
+            <PersonIcon className="text-foreground size-10" />
+            <h3 className="mt-4 text-lg font-semibold">No Contacts added</h3>
+            <p className="text-muted-foreground mb-4 mt-2 text-sm">
               You have not added any contacts. Add one below.
             </p>
             <Button type="button" size="sm" onClick={handleAddContact}>

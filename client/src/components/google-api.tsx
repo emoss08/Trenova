@@ -13,9 +13,8 @@ import type {
   GoogleAPIFormValues,
   GoogleAPI as GoogleAPIType,
 } from "@/types/organization";
-import { faCircleInfo } from "@fortawesome/pro-duotone-svg-icons";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { yupResolver } from "@hookform/resolvers/yup";
+import { InfoCircledIcon } from "@radix-ui/react-icons";
 import { useForm } from "react-hook-form";
 import { Trans, useTranslation } from "react-i18next";
 import { ExternalLink } from "./ui/link";
@@ -25,7 +24,7 @@ function GoogleAPIAlert() {
 
   return (
     <Alert className="mb-5">
-      <FontAwesomeIcon icon={faCircleInfo} />
+      <InfoCircledIcon />
       <AlertTitle>{t("alert.title")}</AlertTitle>
       <AlertDescription>
         <ul className="list-disc">
@@ -77,7 +76,7 @@ function GoogleApiForm({ googleApi }: { googleApi: GoogleAPIType }) {
     method: "PUT",
     path: `/google-api/${googleApi.id}`, // Does not require an ID
     successMessage: t("formSuccessMessage"),
-    queryKeysToInvalidate: ["googleAPI"],
+    queryKeysToInvalidate: "googleAPI",
     errorMessage: t("formErrorMessage"),
   });
 

@@ -1,7 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { faEye, faEyeSlash } from "@fortawesome/pro-regular-svg-icons";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { EyeIcon, EyeOffIcon } from "lucide-react";
 import * as React from "react";
 import {
   Controller,
@@ -227,9 +226,9 @@ export function PasswordField<T extends FieldValues>({
               onClick={togglePasswordVisibility}
             >
               {showPassword ? (
-                <FontAwesomeIcon icon={faEyeSlash} className="size-4" />
+                <EyeOffIcon className="size-4" />
               ) : (
-                <FontAwesomeIcon icon={faEye} className="size-4" />
+                <EyeIcon className="size-4" />
               )}
             </Button>
           )}
