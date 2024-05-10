@@ -77,6 +77,7 @@ function GoogleApiForm({ googleApi }: { googleApi: GoogleAPIType }) {
     path: `/google-api/${googleApi.id}`, // Does not require an ID
     successMessage: t("formSuccessMessage"),
     queryKeysToInvalidate: "googleAPI",
+    reset,
     errorMessage: t("formErrorMessage"),
   });
 

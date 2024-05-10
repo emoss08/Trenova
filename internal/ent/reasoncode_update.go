@@ -125,7 +125,9 @@ func (rcu *ReasonCodeUpdate) Mutation() *ReasonCodeMutation {
 
 // Save executes the query and returns the number of nodes affected by the update operation.
 func (rcu *ReasonCodeUpdate) Save(ctx context.Context) (int, error) {
-	rcu.defaults()
+	if err := rcu.defaults(); err != nil {
+		return 0, err
+	}
 	return withHooks(ctx, rcu.sqlSave, rcu.mutation, rcu.hooks)
 }
 
@@ -152,11 +154,15 @@ func (rcu *ReasonCodeUpdate) ExecX(ctx context.Context) {
 }
 
 // defaults sets the default values of the builder before save.
-func (rcu *ReasonCodeUpdate) defaults() {
+func (rcu *ReasonCodeUpdate) defaults() error {
 	if _, ok := rcu.mutation.UpdatedAt(); !ok {
+		if reasoncode.UpdateDefaultUpdatedAt == nil {
+			return fmt.Errorf("ent: uninitialized reasoncode.UpdateDefaultUpdatedAt (forgotten import ent/runtime?)")
+		}
 		v := reasoncode.UpdateDefaultUpdatedAt()
 		rcu.mutation.SetUpdatedAt(v)
 	}
+	return nil
 }
 
 // check runs all checks and user-defined validators on the builder.
@@ -358,7 +364,9 @@ func (rcuo *ReasonCodeUpdateOne) Select(field string, fields ...string) *ReasonC
 
 // Save executes the query and returns the updated ReasonCode entity.
 func (rcuo *ReasonCodeUpdateOne) Save(ctx context.Context) (*ReasonCode, error) {
-	rcuo.defaults()
+	if err := rcuo.defaults(); err != nil {
+		return nil, err
+	}
 	return withHooks(ctx, rcuo.sqlSave, rcuo.mutation, rcuo.hooks)
 }
 
@@ -385,11 +393,15 @@ func (rcuo *ReasonCodeUpdateOne) ExecX(ctx context.Context) {
 }
 
 // defaults sets the default values of the builder before save.
-func (rcuo *ReasonCodeUpdateOne) defaults() {
+func (rcuo *ReasonCodeUpdateOne) defaults() error {
 	if _, ok := rcuo.mutation.UpdatedAt(); !ok {
+		if reasoncode.UpdateDefaultUpdatedAt == nil {
+			return fmt.Errorf("ent: uninitialized reasoncode.UpdateDefaultUpdatedAt (forgotten import ent/runtime?)")
+		}
 		v := reasoncode.UpdateDefaultUpdatedAt()
 		rcuo.mutation.SetUpdatedAt(v)
 	}
+	return nil
 }
 
 // check runs all checks and user-defined validators on the builder.

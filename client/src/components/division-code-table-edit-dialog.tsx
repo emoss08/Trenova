@@ -31,7 +31,7 @@ export function DCEditForm({
   divisionCode: DivisionCode;
   open: boolean;
 }) {
-  const { control, handleSubmit } = useForm<FormValues>({
+  const { control, reset, handleSubmit } = useForm<FormValues>({
     resolver: yupResolver(divisionCodeSchema),
     defaultValues: divisionCode,
   });
@@ -42,6 +42,7 @@ export function DCEditForm({
     successMessage: "Division Code updated successfully.",
     queryKeysToInvalidate: "divisionCodes",
     closeModal: true,
+    reset,
     errorMessage: "Failed to update division code.",
   });
 

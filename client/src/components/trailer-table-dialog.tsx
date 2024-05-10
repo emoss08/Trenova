@@ -242,7 +242,7 @@ export function TrailerForm({
 }
 
 export function TrailerDialog({ onOpenChange, open }: TableSheetProps) {
-  const { control, handleSubmit } = useForm<FormValues>({
+  const { control, reset, handleSubmit } = useForm<FormValues>({
     resolver: yupResolver(trailerSchema),
     defaultValues: {
       code: "",
@@ -268,6 +268,7 @@ export function TrailerDialog({ onOpenChange, open }: TableSheetProps) {
     successMessage: "Trailer created successfully.",
     queryKeysToInvalidate: "trailers",
     closeModal: true,
+    reset,
     errorMessage: "Failed to create new trailer.",
   });
 

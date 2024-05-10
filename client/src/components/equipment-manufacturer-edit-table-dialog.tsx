@@ -29,7 +29,7 @@ function EquipManuEditForm({
 }: {
   equipManufacturer: EquipmentManufacturer;
 }) {
-  const { control, handleSubmit } = useForm<FormValues>({
+  const { control, reset, handleSubmit } = useForm<FormValues>({
     resolver: yupResolver(equipManufacturerSchema),
     defaultValues: equipManufacturer,
   });
@@ -38,8 +38,9 @@ function EquipManuEditForm({
     method: "PUT",
     path: `/equipment-manufacturers/${equipManufacturer.id}/`,
     successMessage: "Equip. Manufacturer updated successfully.",
-    queryKeysToInvalidate: ["equipment-manufacturer-table-data"],
+    queryKeysToInvalidate: "equipmentManufacturers",
     closeModal: true,
+    reset,
     errorMessage: "Failed to create update equip. manufacturer.",
   });
 

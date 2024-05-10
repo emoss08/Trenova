@@ -1,5 +1,5 @@
 import { Badge } from "@/components/ui/badge";
-import { Skeleton } from "@/components/ui/skeleton";
+import { ComponentLoader } from "@/components/ui/component-loader";
 import { formatTimestamp } from "@/lib/date";
 import { truncateText } from "@/lib/utils";
 import { Notification, UserNotification } from "@/types/accounts";
@@ -14,7 +14,7 @@ export function Notifications({
   notificationLoading: boolean;
 }) {
   if (notificationLoading) {
-    return <Skeleton className="h-80" />;
+    return <ComponentLoader className="h-80" />;
   }
 
   if (!notification || notification.unreadList.length === 0) {

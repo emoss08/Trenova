@@ -7119,7 +7119,8 @@ func (c *ReasonCodeClient) QueryOrganization(rc *ReasonCode) *OrganizationQuery 
 
 // Hooks returns the client hooks.
 func (c *ReasonCodeClient) Hooks() []Hook {
-	return c.hooks.ReasonCode
+	hooks := c.hooks.ReasonCode
+	return append(hooks[:len(hooks):len(hooks)], reasoncode.Hooks[:]...)
 }
 
 // Interceptors returns the client interceptors.

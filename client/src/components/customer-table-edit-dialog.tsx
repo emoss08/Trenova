@@ -38,14 +38,15 @@ export function CustomerEditForm({
     defaultValues: customer,
   });
 
-  const { control, handleSubmit } = customerForm;
+  const { control, reset, handleSubmit } = customerForm;
 
   const mutation = useCustomMutation<FormValues>(control, {
     method: "PUT",
     path: `/customers/${customer.id}/`,
     successMessage: "Customer updated successfully.",
-    queryKeysToInvalidate: ["customers-table-data"],
+    queryKeysToInvalidate: "customers",
     closeModal: true,
+    reset,
     errorMessage: "Failed to update existing customer.",
   });
 

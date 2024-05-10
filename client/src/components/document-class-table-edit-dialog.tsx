@@ -29,7 +29,7 @@ function DocumentClassEditForm({
 }: {
   documentClass: DocumentClassification;
 }) {
-  const { control, handleSubmit } = useForm<FormValues>({
+  const { control, reset, handleSubmit } = useForm<FormValues>({
     resolver: yupResolver(documentClassSchema),
     defaultValues: documentClass,
   });
@@ -40,6 +40,7 @@ function DocumentClassEditForm({
     successMessage: "Document Classification updated successfully.",
     queryKeysToInvalidate: "documentClassifications",
     closeModal: true,
+    reset,
     errorMessage: "Failed to update document classification.",
   });
 

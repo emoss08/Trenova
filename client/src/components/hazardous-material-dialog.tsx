@@ -125,7 +125,7 @@ export function HazardousMaterialDialog({
 }: TableSheetProps) {
   const { t } = useTranslation(["pages.hazardousmaterial", "common"]);
 
-  const { control, handleSubmit } = useForm<FormValues>({
+  const { control, reset, handleSubmit } = useForm<FormValues>({
     resolver: yupResolver(hazardousMaterialSchema),
     defaultValues: {
       status: "A",
@@ -142,8 +142,9 @@ export function HazardousMaterialDialog({
     method: "POST",
     path: "/hazardous-materials/",
     successMessage: t("formSuccessMessage"),
-    queryKeysToInvalidate: ["hazardous-material-table-data"],
+    queryKeysToInvalidate: "hazardousMaterials",
     closeModal: true,
+    reset,
     errorMessage: t("formErrorMessage"),
   });
 

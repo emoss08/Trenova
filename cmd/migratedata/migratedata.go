@@ -397,6 +397,7 @@ func SeedNormalAccount(
 ) error {
 	// Check if the normal account exists
 	_, err := client.User.Query().Where(user.UsernameEQ("normie")).Only(ctx)
+
 	switch {
 	// If not, create the normal account
 	case ent.IsNotFound(err):

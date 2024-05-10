@@ -31,7 +31,7 @@ function TableChangeEditForm({
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }) {
-  const { handleSubmit, control, watch, setValue } =
+  const { handleSubmit, reset, control, watch, setValue } =
     useForm<TableChangeAlertFormValues>({
       resolver: yupResolver(tableChangeAlertSchema),
       defaultValues: tableChangeAlert,
@@ -55,6 +55,7 @@ function TableChangeEditForm({
     successMessage: "Table Change Alert updated successfully.",
     queryKeysToInvalidate: "tableChangeAlerts",
     closeModal: true,
+    reset,
     errorMessage: "Failed to update table change alert.",
   });
 

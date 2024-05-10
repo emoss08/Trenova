@@ -31,7 +31,7 @@ function TrailerEditForm({
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }) {
-  const { control, handleSubmit } = useForm<FormValues>({
+  const { control, reset, handleSubmit } = useForm<FormValues>({
     resolver: yupResolver(trailerSchema),
     defaultValues: trailer,
   });
@@ -42,6 +42,7 @@ function TrailerEditForm({
     successMessage: "Trailer updated successfully.",
     queryKeysToInvalidate: "trailers",
     closeModal: true,
+    reset,
     errorMessage: "Failed to update trailers.",
   });
 

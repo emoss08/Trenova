@@ -82,7 +82,7 @@ export function HazmatSegRulesDialog({ onOpenChange, open }: TableSheetProps) {
     method: "POST",
     path: "/hazardous-material-segregations/",
     successMessage: "Hazardous material segregation rule created successfully.",
-    queryKeysToInvalidate: ["hazardous-material-segregation-table-data"],
+    queryKeysToInvalidate: "hazardousMaterialsSegregations",
     closeModal: true,
     errorMessage: "Failed to create hazardous material segregation rule.",
   });

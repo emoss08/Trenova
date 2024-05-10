@@ -20,7 +20,7 @@ import {
 } from "./ui/credenza";
 
 function DelayCodeEditForm({ delayCode }: { delayCode: DelayCode }) {
-  const { control, handleSubmit } = useForm<DelayCodeFormValues>({
+  const { control, reset, handleSubmit } = useForm<DelayCodeFormValues>({
     resolver: yupResolver(delayCodeSchema),
     defaultValues: delayCode,
   });
@@ -29,8 +29,9 @@ function DelayCodeEditForm({ delayCode }: { delayCode: DelayCode }) {
     method: "PUT",
     path: `/delay-codes/${delayCode.id}/`,
     successMessage: "Delay Code updated successfully.",
-    queryKeysToInvalidate: ["delay-code-table-data"],
+    queryKeysToInvalidate: "delayCodes",
     closeModal: true,
+    reset,
     errorMessage: "Failed to update new delay code.",
   });
 

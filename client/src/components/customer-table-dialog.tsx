@@ -94,14 +94,15 @@ export function CustomerTableSheet({ onOpenChange, open }: TableSheetProps) {
     },
   });
 
-  const { control, handleSubmit } = customerForm;
+  const { control, reset, handleSubmit } = customerForm;
 
   const mutation = useCustomMutation<FormValues>(control, {
     method: "POST",
     path: "/customers/",
     successMessage: "Customer created successfully.",
-    queryKeysToInvalidate: ["customers-table-data"],
+    queryKeysToInvalidate: "customers",
     closeModal: true,
+    reset,
     errorMessage: "Failed to create new customer.",
   });
 

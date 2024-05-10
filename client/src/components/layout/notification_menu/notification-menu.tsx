@@ -1,5 +1,6 @@
 import { Notifications } from "@/components/layout/notification_menu/notification";
 import { Button } from "@/components/ui/button";
+import { ComponentLoader } from "@/components/ui/component-loader";
 import { InternalLink } from "@/components/ui/link";
 import {
   Popover,
@@ -7,7 +8,6 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Skeleton } from "@/components/ui/skeleton";
 import {
   Tooltip,
   TooltipContent,
@@ -72,30 +72,18 @@ function NotificationContent({
   userHasNotifications: boolean;
   readAllNotifications: () => void;
 }) {
+  if (notificationsLoading) {
+    return <ComponentLoader className="h-80" />;
+  }
+
   return (
     <>
-      {notificationsLoading ? (
-        <div className="border-accent flex flex-col space-y-2 border-b px-4 py-2">
-          <div className="flex items-center justify-between">
-            <h4 className="font-medium leading-none">
-              <Skeleton className="h-4 w-20" />
-            </h4>
-            <span className="text-muted-foreground text-xs">
-              <Skeleton className="h-4 w-20" />
-            </span>
-          </div>
-          <p className="text-muted-foreground text-sm">
-            <Skeleton className="h-4 w-20" />
-          </p>
-        </div>
-      ) : (
-        <ScrollArea className="h-80 w-full">
-          <Notifications
-            notification={notificationsData as UserNotification}
-            notificationLoading={notificationsLoading}
-          />
-        </ScrollArea>
-      )}
+      <ScrollArea className="h-80 w-full">
+        <Notifications
+          notification={notificationsData as UserNotification}
+          notificationLoading={notificationsLoading}
+        />
+      </ScrollArea>
       {!userHasNotifications && (
         <div className="select-none items-center justify-center border-t pt-2 text-center text-xs">
           Know when you have new notifications by enabling text notifications in

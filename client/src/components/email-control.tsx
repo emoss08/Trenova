@@ -28,7 +28,8 @@ function EmailControlForm({
     method: "PUT",
     path: `/email-control/${emailControl.id}/`,
     successMessage: "Email Control updated successfully.",
-    queryKeysToInvalidate: ["emailControl"],
+    queryKeysToInvalidate: "emailControl",
+    reset,
     errorMessage: "Failed to update email control.",
   });
 

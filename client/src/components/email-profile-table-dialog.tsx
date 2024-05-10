@@ -128,7 +128,7 @@ export function EmailProfileForm({
 export function EmailProfileDialog({ onOpenChange, open }: TableSheetProps) {
   const { t } = useTranslation(["admin.emailprofile", "common"]);
 
-  const { control, handleSubmit } = useForm<FormValues>({
+  const { control, reset, handleSubmit } = useForm<FormValues>({
     resolver: yupResolver(emailProfileSchema),
     defaultValues: {
       name: "",
@@ -146,8 +146,9 @@ export function EmailProfileDialog({ onOpenChange, open }: TableSheetProps) {
     method: "POST",
     path: "/email-profiles/",
     successMessage: t("formMessages.postSuccess"),
-    queryKeysToInvalidate: ["email-profile-table-data"],
+    queryKeysToInvalidate: "emailProfiles",
     closeModal: true,
+    reset,
     errorMessage: t("formMessages.postError"),
   });
 

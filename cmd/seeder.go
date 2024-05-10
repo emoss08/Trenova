@@ -108,6 +108,14 @@ func applyFixtures() error {
 		return err
 	}
 
+	if err = migratedata.SeedDispatchControl(ctx, client, org, bu); err != nil {
+		return err
+	}
+
+	if err = migratedata.SeedShipmentControl(ctx, client, org, bu); err != nil {
+		return err
+	}
+
 	if err = migratedata.SeedInvoiceControl(ctx, client, org, bu); err != nil {
 		return err
 	}

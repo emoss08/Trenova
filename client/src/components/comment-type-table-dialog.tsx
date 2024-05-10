@@ -80,7 +80,7 @@ export function CommentTypeForm({ control }: { control: Control<FormValues> }) {
 }
 
 export function CommentTypeDialog({ onOpenChange, open }: TableSheetProps) {
-  const { control, handleSubmit } = useForm<FormValues>({
+  const { control, reset, handleSubmit } = useForm<FormValues>({
     resolver: yupResolver(commentTypeSchema),
     defaultValues: {
       status: "A",
@@ -94,8 +94,9 @@ export function CommentTypeDialog({ onOpenChange, open }: TableSheetProps) {
     method: "POST",
     path: "/comment-types/",
     successMessage: "Comment Type created successfully.",
-    queryKeysToInvalidate: ["comment-types-table-data"],
+    queryKeysToInvalidate: "commentTypes",
     closeModal: true,
+    reset,
     errorMessage: "Failed to create new comment type.",
   });
 

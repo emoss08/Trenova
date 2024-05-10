@@ -148,7 +148,9 @@ func (rcc *ReasonCodeCreate) Mutation() *ReasonCodeMutation {
 
 // Save creates the ReasonCode in the database.
 func (rcc *ReasonCodeCreate) Save(ctx context.Context) (*ReasonCode, error) {
-	rcc.defaults()
+	if err := rcc.defaults(); err != nil {
+		return nil, err
+	}
 	return withHooks(ctx, rcc.sqlSave, rcc.mutation, rcc.hooks)
 }
 
@@ -175,12 +177,18 @@ func (rcc *ReasonCodeCreate) ExecX(ctx context.Context) {
 }
 
 // defaults sets the default values of the builder before save.
-func (rcc *ReasonCodeCreate) defaults() {
+func (rcc *ReasonCodeCreate) defaults() error {
 	if _, ok := rcc.mutation.CreatedAt(); !ok {
+		if reasoncode.DefaultCreatedAt == nil {
+			return fmt.Errorf("ent: uninitialized reasoncode.DefaultCreatedAt (forgotten import ent/runtime?)")
+		}
 		v := reasoncode.DefaultCreatedAt()
 		rcc.mutation.SetCreatedAt(v)
 	}
 	if _, ok := rcc.mutation.UpdatedAt(); !ok {
+		if reasoncode.DefaultUpdatedAt == nil {
+			return fmt.Errorf("ent: uninitialized reasoncode.DefaultUpdatedAt (forgotten import ent/runtime?)")
+		}
 		v := reasoncode.DefaultUpdatedAt()
 		rcc.mutation.SetUpdatedAt(v)
 	}
@@ -193,9 +201,13 @@ func (rcc *ReasonCodeCreate) defaults() {
 		rcc.mutation.SetStatus(v)
 	}
 	if _, ok := rcc.mutation.ID(); !ok {
+		if reasoncode.DefaultID == nil {
+			return fmt.Errorf("ent: uninitialized reasoncode.DefaultID (forgotten import ent/runtime?)")
+		}
 		v := reasoncode.DefaultID()
 		rcc.mutation.SetID(v)
 	}
+	return nil
 }
 
 // check runs all checks and user-defined validators on the builder.

@@ -68,7 +68,7 @@ export function EquipManuForm({ control }: { control: Control<FormValues> }) {
 }
 
 export function EquipManuDialog({ onOpenChange, open }: TableSheetProps) {
-  const { control, handleSubmit } = useForm<FormValues>({
+  const { control, reset, handleSubmit } = useForm<FormValues>({
     resolver: yupResolver(equipManufacturerSchema),
     defaultValues: {
       status: "A",
@@ -81,8 +81,9 @@ export function EquipManuDialog({ onOpenChange, open }: TableSheetProps) {
     method: "POST",
     path: "/equipment-manufacturers/",
     successMessage: "Equip. Manufacturer created successfully.",
-    queryKeysToInvalidate: ["equipment-manufacturer-table-data"],
+    queryKeysToInvalidate: "equipmentManufacturers",
     closeModal: true,
+    reset,
     errorMessage: "Failed to create new equip. manufacturer.",
   });
 
