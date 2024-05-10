@@ -145,7 +145,7 @@ func DefaultServiceConfigFromEnv() Server {
 			Addr:     util.GetEnv("SERVER_REDIS_ADDR", "localhost:6379"),
 		},
 		Kafka: KafkaServer{
-			Broker: util.GetEnv("SERVER_KAFKA_BROKER", "localhost:9094"),
+			Broker: util.GetEnv("SERVER_KAFKA_BROKER", "localhost:9092"),
 		},
 		Cookie: EncryptCookie{
 			Key: util.GetEnv("SERVER_COOKIE_KEY", "octxhyEw4TS8RjK8ahe0M1ti9StS+xqFvk+iFS7d3qk="), // NOTE: this value is only used in development

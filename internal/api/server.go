@@ -107,6 +107,7 @@ func (s *Server) InitClient(ctx context.Context) error {
 func (s *Server) InitKafkaClient() error {
 	config := kafka.ConfigMap{"bootstrap.servers": s.Config.Kafka.Broker}
 	s.Kafka = kfk.NewClient(&config, s.Logger)
+
 	return nil
 }
 
