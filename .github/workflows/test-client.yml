@@ -14,6 +14,11 @@ permissions:
 jobs:
   build-and-test:
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        shell: bash
+        # Change into the client directory
+        working-directory: ./client
     steps:
       - name: Check Out Code
         uses: actions/checkout@v4
@@ -22,10 +27,6 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 21
-
-      - name: Change to Client Directory
-        run: |
-          cd ./client
 
       - name: Install Dependencies
         run: npm install
