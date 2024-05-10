@@ -24,7 +24,8 @@ jobs:
           node-version: 21
 
       - name: Change to Client Directory
-        run: cd client
+        run: |
+          cd ./client
 
       - name: Install Dependencies
         run: npm install
