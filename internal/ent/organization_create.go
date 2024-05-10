@@ -114,16 +114,8 @@ func (oc *OrganizationCreate) SetNillableOrgType(ot *organization.OrgType) *Orga
 }
 
 // SetTimezone sets the "timezone" field.
-func (oc *OrganizationCreate) SetTimezone(o organization.Timezone) *OrganizationCreate {
-	oc.mutation.SetTimezone(o)
-	return oc
-}
-
-// SetNillableTimezone sets the "timezone" field if the given value is not nil.
-func (oc *OrganizationCreate) SetNillableTimezone(o *organization.Timezone) *OrganizationCreate {
-	if o != nil {
-		oc.SetTimezone(*o)
-	}
+func (oc *OrganizationCreate) SetTimezone(s string) *OrganizationCreate {
+	oc.mutation.SetTimezone(s)
 	return oc
 }
 
@@ -394,10 +386,6 @@ func (oc *OrganizationCreate) defaults() {
 		v := organization.DefaultOrgType
 		oc.mutation.SetOrgType(v)
 	}
-	if _, ok := oc.mutation.Timezone(); !ok {
-		v := organization.DefaultTimezone
-		oc.mutation.SetTimezone(v)
-	}
 	if _, ok := oc.mutation.ID(); !ok {
 		v := organization.DefaultID()
 		oc.mutation.SetID(v)
@@ -449,11 +437,6 @@ func (oc *OrganizationCreate) check() error {
 	}
 	if _, ok := oc.mutation.Timezone(); !ok {
 		return &ValidationError{Name: "timezone", err: errors.New(`ent: missing required field "Organization.timezone"`)}
-	}
-	if v, ok := oc.mutation.Timezone(); ok {
-		if err := organization.TimezoneValidator(v); err != nil {
-			return &ValidationError{Name: "timezone", err: fmt.Errorf(`ent: validator failed for field "Organization.timezone": %w`, err)}
-		}
 	}
 	if _, ok := oc.mutation.BusinessUnitID(); !ok {
 		return &ValidationError{Name: "business_unit", err: errors.New(`ent: missing required edge "Organization.business_unit"`)}
@@ -522,7 +505,7 @@ func (oc *OrganizationCreate) createSpec() (*Organization, *sqlgraph.CreateSpec)
 		_node.OrgType = value
 	}
 	if value, ok := oc.mutation.Timezone(); ok {
-		_spec.SetField(organization.FieldTimezone, field.TypeEnum, value)
+		_spec.SetField(organization.FieldTimezone, field.TypeString, value)
 		_node.Timezone = value
 	}
 	if nodes := oc.mutation.BusinessUnitIDs(); len(nodes) > 0 {

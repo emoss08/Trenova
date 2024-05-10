@@ -11,15 +11,24 @@ import (
 )
 
 type BillingControlHandler struct {
-	Server  *api.Server
-	Service *services.BillingControlService
+	Server            *api.Server
+	Service           *services.BillingControlService
+	PermissionService *services.PermissionService
 }
 
 func NewBillingControlHandler(s *api.Server) *BillingControlHandler {
 	return &BillingControlHandler{
-		Server:  s,
-		Service: services.NewBillingControlService(s),
+		Server:            s,
+		Service:           services.NewBillingControlService(s),
+		PermissionService: services.NewPermissionService(s),
 	}
+}
+
+// RegisterRoutes registers the routes for the BillingControlHandler.
+func (h *BillingControlHandler) RegisterRoutes(r fiber.Router) {
+	billingControlAPI := r.Group("/billing-control")
+	billingControlAPI.Get("/", h.GetBillingControl())
+	billingControlAPI.Put("/:billingControlID", h.UpdateBillingControl())
 }
 
 // GetBillingControl is a handler that returns the billing control for an organization.
@@ -40,6 +49,15 @@ func (h *BillingControlHandler) GetBillingControl() fiber.Handler {
 						Attr:   "orgID, buID",
 					},
 				},
+			})
+		}
+
+		// Check if the user has the required permission
+		err := h.PermissionService.CheckUserPermission(c, "billingcontrol.view")
+		if err != nil {
+			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+				"error":   "Unauthorized",
+				"message": "You do not have the required permission to access this resource",
 			})
 		}
 
@@ -69,18 +87,19 @@ func (h *BillingControlHandler) UpdateBillingControl() fiber.Handler {
 			})
 		}
 
-		data := new(ent.BillingControl)
-		if err := util.ParseBodyAndValidate(c, data); err != nil {
-			return c.Status(fiber.StatusBadRequest).JSON(types.ValidationErrorResponse{
-				Type: "invalidRequest",
-				Errors: []types.ValidationErrorDetail{
-					{
-						Code:   "invalidRequest",
-						Detail: err.Error(),
-						Attr:   "request body",
-					},
-				},
+		// Check if the user has the required permission
+		err := h.PermissionService.CheckUserPermission(c, "billingcontrol.edit")
+		if err != nil {
+			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+				"error":   "Unauthorized",
+				"message": "You do not have the required permission to access this resource",
 			})
+		}
+
+		data := new(ent.BillingControl)
+
+		if err := util.ParseBodyAndValidate(c, data); err != nil {
+			return err
 		}
 
 		data.ID = uuid.MustParse(billingControlID)

@@ -20,6 +20,12 @@ func NewUSStateHandler(s *api.Server) *USStateHandler {
 	}
 }
 
+// RegisterRoutes registers the routes for the USStateHandler.
+func (h *USStateHandler) RegisterRoutes(r fiber.Router) {
+	usStateAPI := r.Group("/us-states")
+	usStateAPI.Get("/", h.GetUSStates())
+}
+
 // GetUSStates is a handler that returns a list of states in the US.
 //
 // GET /us-states

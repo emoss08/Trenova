@@ -58,7 +58,7 @@ const columns: ColumnDef<Tractor>[] = [
     cell: ({ row }) => {
       if (row.original.edges?.equipmentType?.color) {
         return (
-          <div className="text-foreground flex items-center space-x-2 text-sm font-medium">
+          <div className="flex items-center space-x-2 text-sm font-medium text-foreground">
             <div
               className={"mx-2 size-2 rounded-xl"}
               style={{
@@ -103,7 +103,7 @@ const filters: FilterConfig<Tractor>[] = [
 export default function TractorPage() {
   return (
     <DataTable
-      queryKey="trailer-table-data"
+      queryKey="tractors"
       columns={columns}
       link="/tractors/"
       name="Tractor"
@@ -112,7 +112,7 @@ export default function TractorPage() {
       tableFacetedFilters={filters}
       TableSheet={TractorDialog}
       TableEditSheet={TractorTableEditSheet}
-      addPermissionName="add_tractor"
+      addPermissionName="tractor.add"
     />
   );
 }

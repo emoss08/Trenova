@@ -1,31 +1,14 @@
-/*
- * COPYRIGHT(c) 2024 Trenova
- *
- * This file is part of Trenova.
- *
- * The Trenova software is licensed under the Business Source License 1.1. You are granted the right
- * to copy, modify, and redistribute the software, but only for non-production use or with a total
- * of less than three server instances. Starting from the Change Date (November 16, 2026), the
- * software will be made available under version 2 or later of the GNU General Public License.
- * If you use the software in violation of this license, your rights under the license will be
- * terminated automatically. The software is provided "as is," and the Licensor disclaims all
- * warranties and conditions. If you use this license's text or the "Business Source License" name
- * and trademark, you must comply with the Licensor's covenants, which include specifying the
- * Change License as the GPL Version 2.0 or a compatible license, specifying an Additional Use
- * Grant, and not modifying the license in any other way.
- */
 import { useUserPermissions } from "@/context/user-permissions";
 import { useUserFavorites } from "@/hooks/useQueries";
 import { upperFirst } from "@/lib/utils";
 import { RouteObjectWithPermission, routes } from "@/routing/AppRoutes";
 import { useHeaderStore } from "@/stores/HeaderStore";
 import { type UserFavorite } from "@/types/accounts";
-import { faCommand } from "@fortawesome/pro-regular-svg-icons";
-import { faCircleExclamation } from "@fortawesome/pro-solid-svg-icons";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { MagnifyingGlassIcon } from "@radix-ui/react-icons";
+import { AlertCircleIcon, CommandIcon } from "lucide-react";
 import React from "react";
 import { useNavigate } from "react-router-dom";
+import { Button } from "../ui/button";
 import {
   CommandDialog,
   CommandEmpty,
@@ -56,6 +39,30 @@ const prepareRouteGroups = (routeList: typeof routes) => {
   );
 };
 
+export function SearchButton() {
+  return (
+    <TooltipProvider delayDuration={100}>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <Button
+            size="icon"
+            variant="outline"
+            aria-label="Open site search"
+            aria-expanded={useHeaderStore.get("searchDialogOpen")}
+            onClick={() => useHeaderStore.set("searchDialogOpen", true)}
+            className="border-muted-foreground/40 hover:border-muted-foreground/80 group relative flex size-8 xl:hidden"
+          >
+            <MagnifyingGlassIcon className="text-muted-foreground group-hover:text-foreground size-5" />
+          </Button>
+        </TooltipTrigger>
+        <TooltipContent side="bottom" sideOffset={5}>
+          <span>Site Search</span>
+        </TooltipContent>
+      </Tooltip>
+    </TooltipProvider>
+  );
+}
+
 export function SiteSearchInput() {
   return (
     <TooltipProvider delayDuration={100}>
@@ -65,14 +72,14 @@ export function SiteSearchInput() {
             aria-label="Open site search"
             aria-expanded={useHeaderStore.get("searchDialogOpen")}
             onClick={() => useHeaderStore.set("searchDialogOpen", true)}
-            className="border-muted-foreground/20 bg-secondary hover:border-muted-foreground/80 hover:bg-accent group hidden h-8 w-[250px] items-center justify-between rounded-md border px-3 py-2 text-sm lg:flex"
+            className="border-muted-foreground/20 hover:border-muted-foreground/80 hover:bg-accent group hidden h-8 w-[250px] items-center justify-between rounded-md border px-3 py-2 text-sm xl:flex" // Adjusted for responsiveness
           >
             <div className="flex items-center">
               <MagnifyingGlassIcon className="text-muted-foreground group-hover:text-foreground mr-2 size-5" />
               <span className="text-muted-foreground">Search...</span>
             </div>
             <kbd className="border-border bg-background text-foreground pointer-events-none inline-flex h-5 select-none items-center gap-x-1 rounded border px-1.5 font-mono text-[10px] font-medium opacity-100">
-              <FontAwesomeIcon icon={faCommand} className="mb-0.5" />
+              <CommandIcon className="size-3" />
               <span className="text-xs">K</span>
             </kbd>
           </button>
@@ -185,10 +192,7 @@ export function SiteSearch() {
         {Object.keys(filteredGroups).length === 0 &&
           favoriteCommands.length === 0 && (
             <CommandEmpty key="empty">
-              <FontAwesomeIcon
-                icon={faCircleExclamation}
-                className="text-accent-foreground mx-auto size-6"
-              />
+              <AlertCircleIcon className="text-accent-foreground mx-auto size-6" />
               <p className="text-accent-foreground mt-4 font-semibold">
                 No results found
               </p>

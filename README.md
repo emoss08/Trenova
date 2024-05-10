@@ -9,8 +9,7 @@ in the transportation and logistics sector.**
 
 [**View Application Change Announcements**](https://github.com/emoss08/Trenova/blob/main/docs/update-announcement.md)
 
-[**Discover Trenova Beam: Revolutionizing Logistics with Specialized LLM Technology
-**](https://github.com/emoss08/Trenova/blob/main/beam.md)
+[**Discover Trenova Beam: Revolutionizing Logistics with Specialized LLM Technology**](https://github.com/emoss08/Trenova/blob/main/beam.md)
 </div>
 
 ### Disclaimers:

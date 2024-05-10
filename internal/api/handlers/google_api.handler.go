@@ -11,15 +11,24 @@ import (
 )
 
 type GoogleAPIHandler struct {
-	Server  *api.Server
-	Service *services.GoogleAPIService
+	Server            *api.Server
+	Service           *services.GoogleAPIService
+	PermissionService *services.PermissionService
 }
 
 func NewGoogleAPIHandler(s *api.Server) *GoogleAPIHandler {
 	return &GoogleAPIHandler{
-		Server:  s,
-		Service: services.NewGoogleAPIService(s),
+		Server:            s,
+		Service:           services.NewGoogleAPIService(s),
+		PermissionService: services.NewPermissionService(s),
 	}
+}
+
+// RegisterRoutes registers the routes for the GoogleAPIHandler.
+func (h *GoogleAPIHandler) RegisterRoutes(r fiber.Router) {
+	googleAPI := r.Group("/google-api")
+	googleAPI.Get("/", h.GetGoogleAPI())
+	googleAPI.Put("/:googleAPIID", h.UpdateGoogleAPI())
 }
 
 // GetGoogleAPI is a handler that returns the Google api settings for an organization.
@@ -40,6 +49,15 @@ func (h *GoogleAPIHandler) GetGoogleAPI() fiber.Handler {
 						Attr:   "orgID, buID",
 					},
 				},
+			})
+		}
+
+		// Check if the user has the required permission
+		err := h.PermissionService.CheckUserPermission(c, "googleapi.view")
+		if err != nil {
+			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+				"error":   "Unauthorized",
+				"message": "You do not have the required permission to access this resource",
 			})
 		}
 
@@ -69,18 +87,18 @@ func (h *GoogleAPIHandler) UpdateGoogleAPI() fiber.Handler {
 			})
 		}
 
+		// Check if the user has the required permission
+		err := h.PermissionService.CheckUserPermission(c, "googleapi.edit")
+		if err != nil {
+			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+				"error":   "Unauthorized",
+				"message": "You do not have the required permission to access this resource",
+			})
+		}
+
 		data := new(ent.GoogleApi)
 		if err := util.ParseBodyAndValidate(c, data); err != nil {
-			return c.Status(fiber.StatusBadRequest).JSON(types.ValidationErrorResponse{
-				Type: "invalidRequest",
-				Errors: []types.ValidationErrorDetail{
-					{
-						Code:   "invalidRequest",
-						Detail: err.Error(),
-						Attr:   "request body",
-					},
-				},
-			})
+			return err
 		}
 
 		data.ID = uuid.MustParse(googleAPIID)

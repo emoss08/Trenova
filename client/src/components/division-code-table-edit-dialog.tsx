@@ -1,7 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { useCustomMutation } from "@/hooks/useCustomMutation";
 import { useGLAccounts } from "@/hooks/useQueries";
-import { formatDate } from "@/lib/date";
+import { formatToUserTimezone } from "@/lib/date";
 import { divisionCodeSchema } from "@/lib/validations/AccountingSchema";
 import { useTableStore } from "@/stores/TableStore";
 import type {
@@ -10,9 +10,9 @@ import type {
 } from "@/types/accounting";
 import { type TableSheetProps } from "@/types/tables";
 import { yupResolver } from "@hookform/resolvers/yup";
-import React from "react";
 import { useForm } from "react-hook-form";
 import { DCForm } from "./division-code-table-dialog";
+import { Badge } from "./ui/badge";
 import {
   Credenza,
   CredenzaBody,
@@ -31,32 +31,21 @@ export function DCEditForm({
   divisionCode: DivisionCode;
   open: boolean;
 }) {
-  const [isSubmitting, setIsSubmitting] = React.useState<boolean>(false);
-
-  const { control, reset, handleSubmit } = useForm<FormValues>({
+  const { control, handleSubmit } = useForm<FormValues>({
     resolver: yupResolver(divisionCodeSchema),
     defaultValues: divisionCode,
   });
 
-  const mutation = useCustomMutation<FormValues>(
-    control,
-    {
-      method: "PUT",
-      path: `/division-codes/${divisionCode.id}/`,
-      successMessage: "Division Code updated successfully.",
-      queryKeysToInvalidate: ["division-code-table-data"],
-      closeModal: true,
-      errorMessage: "Failed to update division code.",
-    },
-    () => setIsSubmitting(false),
-    reset,
-  );
+  const mutation = useCustomMutation<FormValues>(control, {
+    method: "PUT",
+    path: `/division-codes/${divisionCode.id}/`,
+    successMessage: "Division Code updated successfully.",
+    queryKeysToInvalidate: "divisionCodes",
+    closeModal: true,
+    errorMessage: "Failed to update division code.",
+  });
 
-  const onSubmit = (values: FormValues) => {
-    setIsSubmitting(true);
-    mutation.mutate(values);
-  };
-
+  const onSubmit = (values: FormValues) => mutation.mutate(values);
   const { selectGLAccounts, isLoading, isError } = useGLAccounts(open);
 
   return (
@@ -74,7 +63,7 @@ export function DCEditForm({
               Cancel
             </Button>
           </CredenzaClose>
-          <Button type="submit" isLoading={isSubmitting}>
+          <Button type="submit" isLoading={mutation.isPending}>
             Save Changes
           </Button>
         </CredenzaFooter>
@@ -95,13 +84,17 @@ export function DivisionCodeEditDialog({
     <Credenza open={open} onOpenChange={onOpenChange}>
       <CredenzaContent>
         <CredenzaHeader>
-          <CredenzaTitle>{divisionCode && divisionCode.code}</CredenzaTitle>
+          <CredenzaTitle className="flex">
+            <span>{divisionCode.code}</span>
+            <Badge className="ml-5" variant="purple">
+              {divisionCode.id}
+            </Badge>
+          </CredenzaTitle>
         </CredenzaHeader>
         <CredenzaDescription>
-          Last updated on&nbsp;
-          {divisionCode && formatDate(divisionCode.updatedAt)}
+          Last updated on {formatToUserTimezone(divisionCode.updatedAt)}
         </CredenzaDescription>
-        {divisionCode && <DCEditForm divisionCode={divisionCode} open={open} />}
+        <DCEditForm divisionCode={divisionCode} open={open} />
       </CredenzaContent>
     </Credenza>
   );

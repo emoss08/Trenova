@@ -16,14 +16,11 @@ import { LocationSchema } from "@/lib/validations/LocationSchema";
 import { type LocationFormValues as FormValues } from "@/types/location";
 import { type TableSheetProps } from "@/types/tables";
 import { yupResolver } from "@hookform/resolvers/yup";
-import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { LocationCommentForm } from "./location-comments-form";
 
 export function LocationTableSheet({ onOpenChange, open }: TableSheetProps) {
-  const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
-
-  const { control, reset, handleSubmit } = useForm<FormValues>({
+  const { control, handleSubmit } = useForm<FormValues>({
     resolver: yupResolver(LocationSchema),
     defaultValues: {
       status: "A",
@@ -39,25 +36,16 @@ export function LocationTableSheet({ onOpenChange, open }: TableSheetProps) {
     },
   });
 
-  const mutation = useCustomMutation<FormValues>(
-    control,
-    {
-      method: "POST",
-      path: "/locations/",
-      successMessage: "Location created successfully.",
-      queryKeysToInvalidate: ["locations-table-data"],
-      additionalInvalidateQueries: ["locations"],
-      closeModal: true,
-      errorMessage: "Failed to create new location.",
-    },
-    () => setIsSubmitting(false),
-    reset,
-  );
+  const mutation = useCustomMutation<FormValues>(control, {
+    method: "POST",
+    path: "/locations/",
+    successMessage: "Location created successfully.",
+    queryKeysToInvalidate: "locations",
+    closeModal: true,
+    errorMessage: "Failed to create new location.",
+  });
 
-  const onSubmit = (values: FormValues) => {
-    setIsSubmitting(true);
-    mutation.mutate(values);
-  };
+  const onSubmit = (values: FormValues) => mutation.mutate(values);
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
@@ -97,7 +85,11 @@ export function LocationTableSheet({ onOpenChange, open }: TableSheetProps) {
             >
               Cancel
             </Button>
-            <Button type="submit" isLoading={isSubmitting} className="w-full">
+            <Button
+              type="submit"
+              isLoading={mutation.isPending}
+              className="w-full"
+            >
               Save
             </Button>
           </SheetFooter>

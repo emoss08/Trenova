@@ -49,13 +49,12 @@ func (Organization) Fields() []ent.Field {
 				dialect.SQLite:   "VARCHAR(1)",
 			}).
 			StructTag(`json:"orgType"`),
-		field.Enum("timezone").
-			Values("AmericaLosAngeles", "AmericaDenver", "AmericaChicago", "AmericaNewYork").
+		field.String("timezone").
 			SchemaType(map[string]string{
-				dialect.Postgres: "VARCHAR(17)",
-				dialect.SQLite:   "VARCHAR(17)",
+				dialect.Postgres: "VARCHAR(20)",
+				dialect.SQLite:   "VARCHAR(20)",
 			}).
-			Default("AmericaLosAngeles"),
+			StructTag(`json:"timezone" validate:"required,timezone"`),
 	}
 }
 
@@ -106,3 +105,11 @@ func (Organization) Mixin() []ent.Mixin {
 		DefaultMixin{},
 	}
 }
+
+// func (Organization) Policy() ent.Policy {
+// 	return privacy.Policy{
+// 		Mutation: privacy.MutationPolicy{
+// 			rule
+// 		},
+// 	}
+// }

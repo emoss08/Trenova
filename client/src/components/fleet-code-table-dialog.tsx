@@ -12,7 +12,6 @@ import { fleetCodeSchema } from "@/lib/validations/DispatchSchema";
 import { type FleetCodeFormValues as FormValues } from "@/types/dispatch";
 import { type TableSheetProps } from "@/types/tables";
 import { yupResolver } from "@hookform/resolvers/yup";
-import React from "react";
 import { Control, useForm } from "react-hook-form";
 import { GradientPicker } from "./common/fields/color-field";
 import {
@@ -127,8 +126,7 @@ export function FleetCodeForm({
 }
 
 export function FleetCodeDialog({ onOpenChange, open }: TableSheetProps) {
-  const [isSubmitting, setIsSubmitting] = React.useState<boolean>(false);
-  const { control, reset, handleSubmit } = useForm<FormValues>({
+  const { control, handleSubmit } = useForm<FormValues>({
     resolver: yupResolver(fleetCodeSchema),
     defaultValues: {
       status: "A",
@@ -142,24 +140,17 @@ export function FleetCodeDialog({ onOpenChange, open }: TableSheetProps) {
     },
   });
 
-  const mutation = useCustomMutation<FormValues>(
-    control,
-    {
-      method: "POST",
-      path: "/fleet-codes/",
-      successMessage: "Fleet Code created successfully.",
-      queryKeysToInvalidate: ["fleet-code-table-data"],
-      closeModal: true,
-      errorMessage: "Failed to create new fleet code.",
-    },
-    () => setIsSubmitting(false),
-    reset,
-  );
+  const mutation = useCustomMutation<FormValues>(control, {
+    method: "POST",
+    path: "/fleet-codes/",
+    successMessage: "Fleet Code created successfully.",
+    queryKeysToInvalidate: ["fleet-code-table-data"],
+    closeModal: true,
+    errorMessage: "Failed to create new fleet code.",
+  });
 
   const onSubmit = (values: FormValues) => {
     const cleanedValues = cleanObject(values);
-
-    setIsSubmitting(true);
     mutation.mutate(cleanedValues);
   };
 
@@ -181,7 +172,7 @@ export function FleetCodeDialog({ onOpenChange, open }: TableSheetProps) {
                   Cancel
                 </Button>
               </CredenzaClose>
-              <Button type="submit" isLoading={isSubmitting}>
+              <Button type="submit" isLoading={mutation.isPending}>
                 Save Changes
               </Button>
             </CredenzaFooter>

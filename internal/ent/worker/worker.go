@@ -52,6 +52,8 @@ const (
 	FieldFleetCodeID = "fleet_code_id"
 	// FieldManagerID holds the string denoting the manager_id field in the database.
 	FieldManagerID = "manager_id"
+	// FieldExternalID holds the string denoting the external_id field in the database.
+	FieldExternalID = "external_id"
 	// EdgeBusinessUnit holds the string denoting the business_unit edge name in mutations.
 	EdgeBusinessUnit = "business_unit"
 	// EdgeOrganization holds the string denoting the organization edge name in mutations.
@@ -167,6 +169,7 @@ var Columns = []string{
 	FieldStateID,
 	FieldFleetCodeID,
 	FieldManagerID,
+	FieldExternalID,
 }
 
 // ValidColumn reports if the column name is valid (part of the table columns).
@@ -354,6 +357,11 @@ func ByFleetCodeID(opts ...sql.OrderTermOption) OrderOption {
 // ByManagerID orders the results by the manager_id field.
 func ByManagerID(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldManagerID, opts...).ToFunc()
+}
+
+// ByExternalID orders the results by the external_id field.
+func ByExternalID(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldExternalID, opts...).ToFunc()
 }
 
 // ByBusinessUnitField orders the results by business_unit field.

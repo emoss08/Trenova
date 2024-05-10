@@ -45,7 +45,7 @@ type Organization struct {
 	// OrgType holds the value of the "org_type" field.
 	OrgType organization.OrgType `json:"orgType"`
 	// Timezone holds the value of the "timezone" field.
-	Timezone organization.Timezone `json:"timezone,omitempty"`
+	Timezone string `json:"timezone" validate:"required,timezone"`
 	// Edges holds the relations/edges for other nodes in the graph.
 	// The values are being populated by the OrganizationQuery when eager-loading is set.
 	Edges        OrganizationEdges `json:"edges"`
@@ -297,7 +297,7 @@ func (o *Organization) assignValues(columns []string, values []any) error {
 			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field timezone", values[i])
 			} else if value.Valid {
-				o.Timezone = organization.Timezone(value.String)
+				o.Timezone = value.String
 			}
 		default:
 			o.selectValues.Set(columns[i], values[i])
@@ -420,7 +420,7 @@ func (o *Organization) String() string {
 	builder.WriteString(fmt.Sprintf("%v", o.OrgType))
 	builder.WriteString(", ")
 	builder.WriteString("timezone=")
-	builder.WriteString(fmt.Sprintf("%v", o.Timezone))
+	builder.WriteString(o.Timezone)
 	builder.WriteByte(')')
 	return builder.String()
 }

@@ -1,5 +1,25 @@
-import { JobFunctionChoiceProps, TimezoneChoices } from "@/lib/choices";
-import { StatusChoiceProps } from "@/types/index";
+import type { JobFunctionChoiceProps } from "@/lib/choices";
+import { TimezoneChoices } from "@/lib/timezone";
+import { type StatusChoiceProps } from "@/types/index";
+import { type BaseModel } from "./organization";
+
+interface UserRole extends BaseModel {
+  name: string;
+  description: string;
+  edges: {
+    permissions: UserPermission[];
+  };
+}
+
+export interface UserPermission extends BaseModel {
+  codename: string;
+  description: string;
+  action: string;
+  label: string;
+  readDescription?: string;
+  writeDescription?: string;
+  resourceId: string;
+}
 
 export type UserFavorite = {
   id: string;
@@ -8,40 +28,36 @@ export type UserFavorite = {
   pageLink: string;
 };
 
-/**
- * MinimalUser is similar to the User type ,but does provide all the fields.
- */
-export type MinimalUser = {
+export interface User extends BaseModel {
   id: string;
-  username: string;
-  email: string;
-};
-
-export type User = {
-  id: string;
-  businessUnitId: string;
-  organizationId: string;
   username: string;
   name: string;
   email: string;
-  dateJoined: string;
   isSuperAdmin: boolean;
   isAdmin: boolean;
   status: StatusChoiceProps;
   timezone: TimezoneChoices;
-  PhoneNumber?: string;
-  userPermissions?: string[];
-  profilePicUrl: string;
-};
+  phoneNumber?: string;
+  profilePicUrl?: string;
+  thumbnailUrl?: string;
+  lastLogin?: string | null;
+  edges: {
+    roles?: UserRole[];
+  };
+}
 
-export type UserFormValues = {
-  organization: string;
-  username: string;
-  department?: string;
-  email: string;
-  isSuperAdmin: boolean;
-};
-
+export type UserFormValues = Omit<
+  User,
+  | "organizationId"
+  | "createdAt"
+  | "updatedAt"
+  | "id"
+  | "version"
+  | "edges"
+  | "lastLogin"
+  | "profilePicUrl"
+  | "thumbnailUrl"
+>;
 export type JobTitle = {
   id: string;
   organization: string;

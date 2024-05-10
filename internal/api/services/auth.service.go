@@ -6,8 +6,8 @@ import (
 	"github.com/emoss08/trenova/internal/api"
 	"github.com/emoss08/trenova/internal/ent"
 	"github.com/emoss08/trenova/internal/ent/user"
+	ps "github.com/emoss08/trenova/internal/util/password"
 	"github.com/rs/zerolog"
-	"golang.org/x/crypto/bcrypt"
 )
 
 type AuthenticationService struct {
@@ -63,9 +63,9 @@ func (r *AuthenticationService) AuthenticateUser(ctx context.Context, emailAddre
 		return nil, err
 	}
 
-	// Compare the provided password with the stored hash
-	err = bcrypt.CompareHashAndPassword([]byte(u.Password), []byte(password))
-	if err != nil {
+	// Check if the old password matches the user's current password
+	if err = ps.Verify(u.Password, password); err != nil {
+		r.Logger.Error().Err(err).Msg("Failed to verify password")
 		return nil, err
 	}
 

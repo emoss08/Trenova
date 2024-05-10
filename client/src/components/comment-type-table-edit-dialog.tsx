@@ -1,7 +1,7 @@
 import { CommentTypeForm } from "@/components/comment-type-table-dialog";
 import { Button } from "@/components/ui/button";
 import { useCustomMutation } from "@/hooks/useCustomMutation";
-import { formatDate } from "@/lib/date";
+import { formatToUserTimezone } from "@/lib/date";
 import { commentTypeSchema } from "@/lib/validations/DispatchSchema";
 import { useTableStore } from "@/stores/TableStore";
 import type {
@@ -10,8 +10,8 @@ import type {
 } from "@/types/dispatch";
 import { type TableSheetProps } from "@/types/tables";
 import { yupResolver } from "@hookform/resolvers/yup";
-import React from "react";
 import { useForm } from "react-hook-form";
+import { Badge } from "./ui/badge";
 import {
   Credenza,
   CredenzaBody,
@@ -24,28 +24,21 @@ import {
 } from "./ui/credenza";
 
 function CommentTypeEditForm({ commentType }: { commentType: CommentType }) {
-  const [isSubmitting, setIsSubmitting] = React.useState<boolean>(false);
-  const { control, reset, handleSubmit } = useForm<FormValues>({
+  const { control, handleSubmit } = useForm<FormValues>({
     resolver: yupResolver(commentTypeSchema),
     defaultValues: commentType,
   });
 
-  const mutation = useCustomMutation<FormValues>(
-    control,
-    {
-      method: "PUT",
-      path: `/comment-types/${commentType.id}/`,
-      successMessage: "Comment Type updated successfully.",
-      queryKeysToInvalidate: ["comment-types-table-data"],
-      closeModal: true,
-      errorMessage: "Failed to create update charge type.",
-    },
-    () => setIsSubmitting(false),
-    reset,
-  );
+  const mutation = useCustomMutation<FormValues>(control, {
+    method: "PUT",
+    path: `/comment-types/${commentType.id}/`,
+    successMessage: "Comment Type updated successfully.",
+    queryKeysToInvalidate: ["comment-types-table-data"],
+    closeModal: true,
+    errorMessage: "Failed to create update charge type.",
+  });
 
   const onSubmit = (values: FormValues) => {
-    setIsSubmitting(true);
     mutation.mutate(values);
   };
 
@@ -59,7 +52,7 @@ function CommentTypeEditForm({ commentType }: { commentType: CommentType }) {
               Cancel
             </Button>
           </CredenzaClose>
-          <Button type="submit" isLoading={isSubmitting}>
+          <Button type="submit" isLoading={mutation.isPending}>
             Save Changes
           </Button>
         </CredenzaFooter>
@@ -71,16 +64,23 @@ function CommentTypeEditForm({ commentType }: { commentType: CommentType }) {
 export function CommentTypeEditSheet({ onOpenChange, open }: TableSheetProps) {
   const [commentType] = useTableStore.use("currentRecord") as CommentType[];
 
+  if (!commentType) return null;
+
   return (
     <Credenza open={open} onOpenChange={onOpenChange}>
       <CredenzaContent>
         <CredenzaHeader>
-          <CredenzaTitle>{commentType && commentType.name}</CredenzaTitle>
+          <CredenzaTitle className="flex">
+            <span>{commentType.name}</span>
+            <Badge className="ml-5" variant="purple">
+              {commentType.id}
+            </Badge>
+          </CredenzaTitle>
         </CredenzaHeader>
         <CredenzaDescription>
-          Last updated on {commentType && formatDate(commentType.updatedAt)}
+          Last updated on {formatToUserTimezone(commentType.updatedAt)}
         </CredenzaDescription>
-        {commentType && <CommentTypeEditForm commentType={commentType} />}
+        <CommentTypeEditForm commentType={commentType} />
       </CredenzaContent>
     </Credenza>
   );

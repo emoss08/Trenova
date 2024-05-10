@@ -47,8 +47,6 @@ type GeneralLedgerAccount struct {
 	Balance float64 `json:"balance" validate:"omitempty"`
 	// InterestRate holds the value of the "interest_rate" field.
 	InterestRate float64 `json:"interestRate" validate:"omitempty"`
-	// DateOpened holds the value of the "date_opened" field.
-	DateOpened *pgtype.Date `json:"dateOpened" validate:"omitempty"`
 	// DateClosed holds the value of the "date_closed" field.
 	DateClosed *pgtype.Date `json:"dateClosed" validate:"omitempty"`
 	// Notes holds the value of the "notes" field.
@@ -115,8 +113,6 @@ func (*GeneralLedgerAccount) scanValues(columns []string) ([]any, error) {
 		switch columns[i] {
 		case generalledgeraccount.FieldDateClosed:
 			values[i] = &sql.NullScanner{S: new(pgtype.Date)}
-		case generalledgeraccount.FieldDateOpened:
-			values[i] = new(pgtype.Date)
 		case generalledgeraccount.FieldIsTaxRelevant, generalledgeraccount.FieldIsReconciled:
 			values[i] = new(sql.NullBool)
 		case generalledgeraccount.FieldBalance, generalledgeraccount.FieldInterestRate:
@@ -227,12 +223,6 @@ func (gla *GeneralLedgerAccount) assignValues(columns []string, values []any) er
 				return fmt.Errorf("unexpected type %T for field interest_rate", values[i])
 			} else if value.Valid {
 				gla.InterestRate = value.Float64
-			}
-		case generalledgeraccount.FieldDateOpened:
-			if value, ok := values[i].(*pgtype.Date); !ok {
-				return fmt.Errorf("unexpected type %T for field date_opened", values[i])
-			} else if value != nil {
-				gla.DateOpened = value
 			}
 		case generalledgeraccount.FieldDateClosed:
 			if value, ok := values[i].(*sql.NullScanner); !ok {
@@ -347,9 +337,6 @@ func (gla *GeneralLedgerAccount) String() string {
 	builder.WriteString(", ")
 	builder.WriteString("interest_rate=")
 	builder.WriteString(fmt.Sprintf("%v", gla.InterestRate))
-	builder.WriteString(", ")
-	builder.WriteString("date_opened=")
-	builder.WriteString(fmt.Sprintf("%v", gla.DateOpened))
 	builder.WriteString(", ")
 	if v := gla.DateClosed; v != nil {
 		builder.WriteString("date_closed=")

@@ -79,7 +79,7 @@ func (TableChangeAlert) Fields() []ent.Field {
 		// TODO(Wolfred): turn `email_receipients` into a relationship with the User entity
 		field.Text("email_recipients").
 			Optional().
-			StructTag(`json:"emailRecipients"`),
+			StructTag(`json:"emailRecipients" validate:"omitempty,commaSeparatedEmails"`),
 		field.Other("effective_date", &pgtype.Date{}).
 			Optional().
 			Nillable().

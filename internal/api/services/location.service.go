@@ -42,8 +42,8 @@ type LocationRequest struct {
 }
 
 type LocationUpdateRequest struct {
-	ID uuid.UUID `json:"id,omitempty"`
 	LocationRequest
+	ID uuid.UUID `json:"id,omitempty"`
 }
 
 type LocationService struct {

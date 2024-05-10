@@ -1,269 +1,108 @@
-/*
- * COPYRIGHT(c) 2024 Trenova
- *
- * This file is part of Trenova.
- *
- * The Trenova software is licensed under the Business Source License 1.1. You are granted the right
- * to copy, modify, and redistribute the software, but only for non-production use or with a total
- * of less than three server instances. Starting from the Change Date (November 16, 2026), the
- * software will be made available under version 2 or later of the GNU General Public License.
- * If you use the software in violation of this license, your rights under the license will be
- * terminated automatically. The software is provided "as is," and the Licensor disclaims all
- * warranties and conditions. If you use this license's text or the "Business Source License" name
- * and trademark, you must comply with the Licensor's covenants, which include specifying the
- * Change License as the GPL Version 2.0 or a compatible license, specifying an Additional Use
- * Grant, and not modifying the license in any other way.
- */
-
-import { InternalLink } from "@/components/ui/link";
-import { useCustomMutation } from "@/hooks/useCustomMutation";
-import { timezoneChoices, TimezoneChoices } from "@/lib/choices";
-import { type QueryKeyWithParams } from "@/types";
 import { User } from "@/types/accounts";
-import { yupResolver } from "@hookform/resolvers/yup";
-import React from "react";
-import { useForm } from "react-hook-form";
-import * as yup from "yup";
-import { InputField } from "../common/fields/input";
-import { SelectInput } from "../common/fields/select-input";
-import { Button } from "../ui/button";
-import { Separator } from "../ui/separator";
+import { Suspense, lazy, useState } from "react";
+import { ComponentLoader } from "../ui/component-loader";
+import { ModalAsideMenu } from "./sidebar-nav";
+import { LinkGroupProps } from "@/types/sidebar-nav";
 
-function PersonalInformation({ user }: { user: User }) {
-  const [isSubmitting, setIsSubmitting] = React.useState<boolean>(false);
-  const avatarSrc = `https://avatar.vercel.sh/${user.email}`;
+const PreferenceComponent = lazy(
+  () => import("@/components/user-settings/user-preferences"),
+);
 
-  type UserSettingFormValues = {
-    email: string;
-    timezone: TimezoneChoices;
-    name: string;
-  };
+const PersonalInformation = lazy(
+  () => import("@/components/user-settings/personal-information-form"),
+);
 
-  const schema: yup.ObjectSchema<UserSettingFormValues> = yup.object().shape({
-    email: yup
-      .string()
-      .email("Please enter a valid email address")
-      .required("Please enter your email address"),
-    timezone: yup
-      .string<TimezoneChoices>()
-      .required("Please select your timezone"),
-    name: yup.string().required("Please enter your last name"),
-  });
+const ChangePasswordForm = lazy(
+  () => import("@/components/user-settings/change-password-form"),
+);
 
-  const { handleSubmit, control, reset } = useForm<UserSettingFormValues>({
-    resolver: yupResolver(schema),
-    defaultValues: {
-      email: user.email,
-      timezone: user.timezone,
-      name: user.name,
-    },
-  });
+export default function UserProfileF({ user }: { user: User }) {
+  const [activeTab, setActiveTab] = useState("personal-information");
 
-  const mutation = useCustomMutation<UserSettingFormValues>(
-    control,
+  const linkGroups: LinkGroupProps[] = [
     {
-      method: "PATCH",
-      path: `/users/${user.id}/`,
-      successMessage: "User profile updated successfully.",
-      queryKeysToInvalidate: ["users", user.id] as QueryKeyWithParams<
-        "users",
-        [string]
-      >,
-      closeModal: true,
-      errorMessage: "Failed to update user profile.",
+      title: "Account Settings",
+      links: [
+        {
+          key: "personal-information",
+          href: "#personal-information",
+          title: "Personal Information",
+          component: <PersonalInformation user={user} />,
+        },
+        {
+          key: "change-password",
+          href: "#change-password",
+          title: "Change Password",
+          component: <ChangePasswordForm />,
+        },
+      ],
     },
-    () => setIsSubmitting(false),
-  );
+    {
+      title: "Preferences",
+      links: [
+        {
+          key: "preferences",
+          href: "#preferences",
+          title: "Preferences",
+          component: <PreferenceComponent />,
+        },
+        {
+          key: "notifications",
+          href: "#notifications",
+          title: "Notifications",
+          component: <div>Coming soon</div>,
+        },
+      ],
+    },
+    {
+      title: "API and Connections",
+      links: [
+        {
+          key: "api-keys",
+          href: "#api-keys",
+          title: "API Keys",
+          component: <div>Coming soon</div>,
+        },
+        {
+          key: "connections",
+          href: "#connections",
+          title: "Connections",
+          component: <div>Coming soon</div>,
+        },
+      ],
+    },
+    {
+      title: "Privacy and Security",
+      links: [
+        {
+          key: "privacy",
+          href: "#privacy",
+          title: "Privacy",
+          component: <div>Coming soon</div>,
+        },
+      ],
+    },
+  ];
 
-  const onSubmit = (values: UserSettingFormValues) => {
-    setIsSubmitting(true);
-    reset(values);
-    mutation.mutate(values);
-  };
-
-  return (
-    <>
-      <div className="space-y-3">
-        <div>
-          <h1 className="text-foreground text-2xl font-semibold">
-            Manage Your User Profile
-          </h1>
-          <p className="text-muted-foreground text-sm">
-            Update your personal information here. Rest assured, your privacy is
-            our priority. For more details, read our{" "}
-            <InternalLink to="#">Privacy Policy</InternalLink>.
-          </p>
-        </div>
-        <Separator />
-      </div>
-      <div className="mt-6 grid max-w-7xl grid-cols-1 gap-x-8 gap-y-10 px-4 md:grid-cols-3">
-        <div>
-          <h2 className="text-foreground text-base font-semibold leading-7">
-            Personal Information
-          </h2>
-          <p className="text-muted-foreground mt-1 text-sm leading-6">
-            Provide accurate personal details to ensure seamless communication
-            and service delivery.
-          </p>
-        </div>
-
-        <form className="md:col-span-2" onSubmit={handleSubmit(onSubmit)}>
-          <div className="grid grid-cols-1 gap-x-6 gap-y-8 sm:max-w-xl sm:grid-cols-6">
-            <div className="col-span-full flex items-center gap-x-8">
-              <img
-                src={avatarSrc}
-                alt="User Avatar"
-                className="bg-muted-foreground size-24 flex-none rounded-lg object-cover"
-              />
-              <div>
-                <Button size="sm" type="button">
-                  Change Avatar
-                </Button>
-                <p className="text-muted-foreground mt-2 text-xs leading-5">
-                  JPG, GIF or PNG. 1MB max.
-                </p>
-              </div>
-            </div>
-
-            <div className="sm:col-span-full">
-              <InputField
-                control={control}
-                name="name"
-                label="Full Name"
-                rules={{ required: true }}
-                placeholder="First Name"
-                description="Your first name as it should appear in your profile and communications."
-              />
-            </div>
-
-            <div className="col-span-full">
-              <InputField
-                control={control}
-                name="email"
-                label="Email Address"
-                rules={{ required: true }}
-                placeholder="Email Address"
-                description="Your primary email address for account notifications and correspondence."
-              />
-            </div>
-
-            <div className="col-span-full">
-              <SelectInput
-                name="timezone"
-                control={control}
-                options={timezoneChoices}
-                rules={{ required: true }}
-                label="Timezone"
-                placeholder="Timezone"
-                description="Select the timezone that corresponds to your primary location. This helps in scheduling and localizing interactions."
-              />
-            </div>
-          </div>
-          <div className="mt-8 flex">
-            <Button type="submit" isLoading={isSubmitting}>
-              Save Changes
-            </Button>
-          </div>
-        </form>
-      </div>
-    </>
-  );
-}
-
-function ChangePasswordForm() {
-  const [isSubmitting, setIsSubmitting] = React.useState<boolean>(false);
-  type ChangePasswordFormValues = {
-    oldPassword: string;
-    newPassword: string;
-    confirmPassword: string;
-  };
-
-  const schema: yup.ObjectSchema<ChangePasswordFormValues> = yup
-    .object()
-    .shape({
-      oldPassword: yup
-        .string()
-        .required("Please enter your current password to continue"),
-      newPassword: yup.string().required("Please enter a new password"),
-      confirmPassword: yup
-        .string()
-        .oneOf([yup.ref("newPassword"), undefined], "Passwords must match")
-        .required("Please confirm your new password"),
-    });
-
-  const { handleSubmit, control } = useForm<ChangePasswordFormValues>({
-    resolver: yupResolver(schema),
-  });
-
-  const onSubmit = (values: ChangePasswordFormValues) => {
-    setIsSubmitting(true);
-  };
+  const activeComponent = linkGroups
+    .flatMap((group) => group.links)
+    .find((link) => link.key === activeTab)?.component;
 
   return (
-    <div className="grid max-w-7xl grid-cols-1 gap-x-8 gap-y-10 px-4 py-16 sm:px-6 md:grid-cols-3 lg:px-8">
-      <div>
-        <h2 className="text-foreground text-base font-semibold leading-7">
-          Change password
-        </h2>
-        <p className="text-muted-foreground mt-1 text-sm leading-6">
-          Update your password associated with your account.
-        </p>
-      </div>
-
-      <form className="md:col-span-2" onSubmit={handleSubmit(onSubmit)}>
-        <div className="grid grid-cols-1 gap-x-6 gap-y-8 sm:max-w-xl sm:grid-cols-6">
-          <div className="col-span-full">
-            <InputField
-              control={control}
-              type="password"
-              name="oldPassword"
-              label="Current Password"
-              rules={{ required: true }}
-              placeholder="Current Password"
-              description="Enter the password you are currently using. This is required to verify your identity and secure your account."
-            />
-          </div>
-
-          <div className="col-span-full">
-            <InputField
-              control={control}
-              type="password"
-              name="newPassword"
-              label="New Password"
-              rules={{ required: true }}
-              placeholder="New Password"
-              description="Create a new password that you haven't previously used. Ensure it is strong and secure, ideally a mix of letters, numbers, and special characters."
-            />
-          </div>
-
-          <div className="col-span-full">
-            <InputField
-              control={control}
-              type="password"
-              name="confirmPassword"
-              label="Confirm Password"
-              rules={{ required: true }}
-              placeholder="Confirm Password"
-              description="Re-enter your new password to confirm it. This helps ensure that you haven't mistyped your new password."
-            />
-          </div>
+    <div className="flex-1 items-start md:grid md:grid-cols-[220px_minmax(0,1fr)] md:gap-6 lg:grid-cols-[240px_minmax(0,1fr)] lg:gap-10">
+      <ModalAsideMenu
+        heading="Settings"
+        linkGroups={linkGroups}
+        activeTab={activeTab}
+        setActiveTab={setActiveTab}
+      />
+      <main className="relative max-h-[600px] lg:gap-10">
+        <div className="mx-auto min-w-0">
+          <Suspense fallback={<ComponentLoader className="h-[30vh]" />}>
+            {activeComponent}
+          </Suspense>
         </div>
-
-        <div className="mt-8 flex">
-          <Button type="submit" isLoading={isSubmitting}>
-            Change Password
-          </Button>
-        </div>
-      </form>
+      </main>
     </div>
-  );
-}
-
-export default function UserProfilePage({ user }: { user: User }) {
-  return (
-    <>
-      <PersonalInformation user={user} />
-      <ChangePasswordForm />
-    </>
   );
 }

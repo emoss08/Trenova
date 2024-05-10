@@ -15,7 +15,6 @@ import { useCustomerFormStore } from "@/stores/CustomerStore";
 import { type CustomerFormValues as FormValues } from "@/types/customer";
 import { type TableSheetProps } from "@/types/tables";
 import { yupResolver } from "@hookform/resolvers/yup";
-import { useState } from "react";
 import { FormProvider, useForm } from "react-hook-form";
 import { CustomerContactForm } from "./customer-contacts-form";
 import { CustomerEmailProfileForm } from "./customer-email-profile-form";
@@ -64,8 +63,6 @@ export function CustomerForm({ open }: { open: boolean }) {
 }
 
 export function CustomerTableSheet({ onOpenChange, open }: TableSheetProps) {
-  const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
-
   const customerForm = useForm<FormValues>({
     resolver: yupResolver(customerSchema),
     defaultValues: {
@@ -97,24 +94,18 @@ export function CustomerTableSheet({ onOpenChange, open }: TableSheetProps) {
     },
   });
 
-  const { control, handleSubmit, reset } = customerForm;
+  const { control, handleSubmit } = customerForm;
 
-  const mutation = useCustomMutation<FormValues>(
-    control,
-    {
-      method: "POST",
-      path: "/customers/",
-      successMessage: "Customer created successfully.",
-      queryKeysToInvalidate: ["customers-table-data"],
-      closeModal: true,
-      errorMessage: "Failed to create new customer.",
-    },
-    () => setIsSubmitting(false),
-    reset,
-  );
+  const mutation = useCustomMutation<FormValues>(control, {
+    method: "POST",
+    path: "/customers/",
+    successMessage: "Customer created successfully.",
+    queryKeysToInvalidate: ["customers-table-data"],
+    closeModal: true,
+    errorMessage: "Failed to create new customer.",
+  });
 
   function onSubmit(values: FormValues) {
-    setIsSubmitting(true);
     mutation.mutate(values);
   }
 
@@ -142,7 +133,11 @@ export function CustomerTableSheet({ onOpenChange, open }: TableSheetProps) {
               >
                 Cancel
               </Button>
-              <Button type="submit" isLoading={isSubmitting} className="w-full">
+              <Button
+                type="submit"
+                isLoading={mutation.isPending}
+                className="w-full"
+              >
                 Save
               </Button>
             </SheetFooter>

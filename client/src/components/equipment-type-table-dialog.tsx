@@ -35,7 +35,6 @@ import { equipmentTypeSchema } from "@/lib/validations/EquipmentSchema";
 import { type EquipmentTypeFormValues as FormValues } from "@/types/equipment";
 import { type TableSheetProps } from "@/types/tables";
 import { yupResolver } from "@hookform/resolvers/yup";
-import React from "react";
 import { Control, useForm } from "react-hook-form";
 import { CheckboxInput } from "./common/fields/checkbox";
 import { GradientPicker } from "./common/fields/color-field";
@@ -189,8 +188,7 @@ export function EquipTypeForm({ control }: { control: Control<FormValues> }) {
 }
 
 export function EquipTypeDialog({ onOpenChange, open }: TableSheetProps) {
-  const [isSubmitting, setIsSubmitting] = React.useState<boolean>(false);
-  const { control, reset, handleSubmit } = useForm<FormValues>({
+  const { control, handleSubmit } = useForm<FormValues>({
     resolver: yupResolver(equipmentTypeSchema),
     defaultValues: {
       status: "A",
@@ -210,22 +208,16 @@ export function EquipTypeDialog({ onOpenChange, open }: TableSheetProps) {
     },
   });
 
-  const mutation = useCustomMutation<FormValues>(
-    control,
-    {
-      method: "POST",
-      path: "/equipment-types/",
-      successMessage: "Equipment Type created successfully.",
-      queryKeysToInvalidate: ["equipment-type-table-data"],
-      closeModal: true,
-      errorMessage: "Failed to create new equip. type.",
-    },
-    () => setIsSubmitting(false),
-    reset,
-  );
+  const mutation = useCustomMutation<FormValues>(control, {
+    method: "POST",
+    path: "/equipment-types/",
+    successMessage: "Equipment Type created successfully.",
+    queryKeysToInvalidate: ["equipment-type-table-data"],
+    closeModal: true,
+    errorMessage: "Failed to create new equip. type.",
+  });
 
   const onSubmit = (values: FormValues) => {
-    setIsSubmitting(true);
     mutation.mutate(values);
   };
 
@@ -252,7 +244,11 @@ export function EquipTypeDialog({ onOpenChange, open }: TableSheetProps) {
             >
               Cancel
             </Button>
-            <Button type="submit" isLoading={isSubmitting} className="w-full">
+            <Button
+              type="submit"
+              isLoading={mutation.isPending}
+              className="w-full"
+            >
               Save
             </Button>
           </SheetFooter>

@@ -11,8 +11,9 @@ import (
 
 // WorkerHandler is a struct that handles HTTP requests for worker resources.
 type WorkerHandler struct {
-	Server  *api.Server
-	Service *services.WorkerService
+	Server            *api.Server
+	Service           *services.WorkerService
+	PermissionService *services.PermissionService
 }
 
 // NewWorkerHandler creates a new WorkerHandler with the given Server instance.
@@ -26,9 +27,18 @@ type WorkerHandler struct {
 //	*WorkerHandler: A pointer to the newly created WorkerHandler instance.
 func NewWorkerHandler(s *api.Server) *WorkerHandler {
 	return &WorkerHandler{
-		Server:  s,
-		Service: services.NewWorkerService(s),
+		Server:            s,
+		Service:           services.NewWorkerService(s),
+		PermissionService: services.NewPermissionService(s),
 	}
+}
+
+// RegisterRoutes registers the routes for the WorkerHandler.
+func (h *WorkerHandler) RegisterRoutes(r fiber.Router) {
+	workersAPI := r.Group("/workers")
+	workersAPI.Get("/", h.GetWorkers())
+	workersAPI.Post("/", h.CreateWorker())
+	workersAPI.Put("/:workerID", h.UpdateWorker())
 }
 
 // GetWorkers is a handler that returns a list of workers.
@@ -36,20 +46,6 @@ func NewWorkerHandler(s *api.Server) *WorkerHandler {
 // GET /workers
 func (h *WorkerHandler) GetWorkers() fiber.Handler {
 	return func(c *fiber.Ctx) error {
-		offset, limit, err := util.PaginationParams(c)
-		if err != nil {
-			return c.Status(fiber.StatusBadRequest).JSON(types.ValidationErrorResponse{
-				Type: "invalidRequest",
-				Errors: []types.ValidationErrorDetail{
-					{
-						Code:   "invalidRequest",
-						Detail: err.Error(),
-						Attr:   "offset, limit",
-					},
-				},
-			})
-		}
-
 		orgID, ok := c.Locals(util.CTXOrganizationID).(uuid.UUID)
 		buID, buOK := c.Locals(util.CTXBusinessUnitID).(uuid.UUID)
 
@@ -61,6 +57,29 @@ func (h *WorkerHandler) GetWorkers() fiber.Handler {
 						Code:   "internalError",
 						Detail: "Organization ID or Business Unit ID not found in the request context",
 						Attr:   "orgID, buID",
+					},
+				},
+			})
+		}
+
+		// Check if the user has the required permission
+		err := h.PermissionService.CheckUserPermission(c, "worker.view")
+		if err != nil {
+			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+				"error":   "Unauthorized",
+				"message": "You do not have the required permission to access this resource",
+			})
+		}
+
+		offset, limit, err := util.PaginationParams(c)
+		if err != nil {
+			return c.Status(fiber.StatusBadRequest).JSON(types.ValidationErrorResponse{
+				Type: "invalidRequest",
+				Errors: []types.ValidationErrorDetail{
+					{
+						Code:   "invalidRequest",
+						Detail: err.Error(),
+						Attr:   "offset, limit",
 					},
 				},
 			})
@@ -107,6 +126,15 @@ func (h *WorkerHandler) CreateWorker() fiber.Handler {
 			})
 		}
 
+		// Check if the user has the required permission
+		err := h.PermissionService.CheckUserPermission(c, "worker.add")
+		if err != nil {
+			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+				"error":   "Unauthorized",
+				"message": "You do not have the required permission to access this resource",
+			})
+		}
+
 		newEntity.BusinessUnitID = buID
 		newEntity.OrganizationID = orgID
 
@@ -145,10 +173,19 @@ func (h *WorkerHandler) UpdateWorker() fiber.Handler {
 				Errors: []types.ValidationErrorDetail{
 					{
 						Code:   "invalidRequest",
-						Detail: "Email Profile ID is required",
+						Detail: "Worker ID is required",
 						Attr:   "workerID",
 					},
 				},
+			})
+		}
+
+		// Check if the user has the required permission
+		err := h.PermissionService.CheckUserPermission(c, "worker.edit")
+		if err != nil {
+			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+				"error":   "Unauthorized",
+				"message": "You do not have the required permission to access this resource",
 			})
 		}
 

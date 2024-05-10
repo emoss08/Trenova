@@ -8,7 +8,6 @@ import { shipmentTypeSchema } from "@/lib/validations/ShipmentSchema";
 import { type ShipmentTypeFormValues as FormValues } from "@/types/shipment";
 import { type TableSheetProps } from "@/types/tables";
 import { yupResolver } from "@hookform/resolvers/yup";
-import React from "react";
 import { Control, useForm } from "react-hook-form";
 import { GradientPicker } from "./common/fields/color-field";
 import {
@@ -81,9 +80,7 @@ export function ShipmentTypeForm({
 }
 
 export function ShipmentTypeDialog({ onOpenChange, open }: TableSheetProps) {
-  const [isSubmitting, setIsSubmitting] = React.useState<boolean>(false);
-
-  const { control, reset, handleSubmit } = useForm<FormValues>({
+  const { control, handleSubmit } = useForm<FormValues>({
     resolver: yupResolver(shipmentTypeSchema),
     defaultValues: {
       status: "A",
@@ -93,24 +90,16 @@ export function ShipmentTypeDialog({ onOpenChange, open }: TableSheetProps) {
     },
   });
 
-  const mutation = useCustomMutation<FormValues>(
-    control,
-    {
-      method: "POST",
-      path: "/shipment-types/",
-      successMessage: "Shipment Type created successfully.",
-      queryKeysToInvalidate: ["shipment-type-table-data"],
-      closeModal: true,
-      errorMessage: "Failed to create new shipment type.",
-    },
-    () => setIsSubmitting(false),
-    reset,
-  );
+  const mutation = useCustomMutation<FormValues>(control, {
+    method: "POST",
+    path: "/shipment-types/",
+    successMessage: "Shipment Type created successfully.",
+    queryKeysToInvalidate: "shipmentTypes",
+    closeModal: true,
+    errorMessage: "Failed to create new shipment type.",
+  });
 
-  const onSubmit = (values: FormValues) => {
-    setIsSubmitting(true);
-    mutation.mutate(values);
-  };
+  const onSubmit = (values: FormValues) => mutation.mutate(values);
 
   return (
     <Credenza open={open} onOpenChange={onOpenChange}>
@@ -130,7 +119,7 @@ export function ShipmentTypeDialog({ onOpenChange, open }: TableSheetProps) {
                   Cancel
                 </Button>
               </CredenzaClose>
-              <Button type="submit" isLoading={isSubmitting}>
+              <Button type="submit" isLoading={mutation.isPending}>
                 Save Changes
               </Button>
             </CredenzaFooter>

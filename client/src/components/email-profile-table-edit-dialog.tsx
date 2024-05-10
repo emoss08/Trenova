@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { useCustomMutation } from "@/hooks/useCustomMutation";
-import { formatDate } from "@/lib/date";
+import { formatToUserTimezone } from "@/lib/date";
 import { emailProfileSchema } from "@/lib/validations/OrganizationSchema";
 import { useTableStore } from "@/stores/TableStore";
 import type {
@@ -8,9 +8,9 @@ import type {
   EmailProfileFormValues as FormValues,
 } from "@/types/organization";
 import { yupResolver } from "@hookform/resolvers/yup";
-import React from "react";
 import { useForm } from "react-hook-form";
 import { EmailProfileForm } from "./email-profile-table-dialog";
+import { Badge } from "./ui/badge";
 import {
   Credenza,
   CredenzaBody,
@@ -27,29 +27,21 @@ function EmailProfileEditForm({
 }: {
   emailProfile: EmailProfile;
 }) {
-  const [isSubmitting, setIsSubmitting] = React.useState<boolean>(false);
-
-  const { control, reset, handleSubmit } = useForm<FormValues>({
+  const { control, handleSubmit } = useForm<FormValues>({
     resolver: yupResolver(emailProfileSchema),
     defaultValues: emailProfile,
   });
 
-  const mutation = useCustomMutation<FormValues>(
-    control,
-    {
-      method: "PUT",
-      path: `/email-profiles/${emailProfile.id}/`,
-      successMessage: "Email Profile updated successfully.",
-      queryKeysToInvalidate: ["email-profile-table-data"],
-      closeModal: true,
-      errorMessage: "Failed to update email profile.",
-    },
-    () => setIsSubmitting(false),
-    reset,
-  );
+  const mutation = useCustomMutation<FormValues>(control, {
+    method: "PUT",
+    path: `/email-profiles/${emailProfile.id}/`,
+    successMessage: "Email Profile updated successfully.",
+    queryKeysToInvalidate: ["email-profile-table-data"],
+    closeModal: true,
+    errorMessage: "Failed to update email profile.",
+  });
 
   const onSubmit = (values: FormValues) => {
-    setIsSubmitting(true);
     mutation.mutate(values);
   };
 
@@ -63,7 +55,7 @@ function EmailProfileEditForm({
               Cancel
             </Button>
           </CredenzaClose>
-          <Button type="submit" isLoading={isSubmitting}>
+          <Button type="submit" isLoading={mutation.isPending}>
             Save Changes
           </Button>
         </CredenzaFooter>
@@ -81,21 +73,23 @@ export function EmailProfileTableEditDialog({
 }) {
   const [emailProfile] = useTableStore.use("currentRecord") as EmailProfile[];
 
-  if (!emailProfile) {
-    return null;
-  }
+  if (!emailProfile) return null;
 
   return (
     <Credenza open={open} onOpenChange={onOpenChange}>
       <CredenzaContent>
         <CredenzaHeader>
-          <CredenzaTitle>{emailProfile.name} </CredenzaTitle>
+          <CredenzaTitle className="flex">
+            <span>{emailProfile.name}</span>
+            <Badge className="ml-5" variant="purple">
+              {emailProfile.id}
+            </Badge>
+          </CredenzaTitle>
         </CredenzaHeader>
         <CredenzaDescription>
-          Last updated on&nbsp;
-          {emailProfile && formatDate(emailProfile.createdAt)}
+          Last updated on {formatToUserTimezone(emailProfile.updatedAt)}
         </CredenzaDescription>
-        {emailProfile && <EmailProfileEditForm emailProfile={emailProfile} />}
+        <EmailProfileEditForm emailProfile={emailProfile} />
       </CredenzaContent>
     </Credenza>
   );

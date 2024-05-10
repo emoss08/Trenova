@@ -11,15 +11,25 @@ import (
 )
 
 type CustomerHandler struct {
-	Server  *api.Server
-	Service *services.CustomerService
+	Server            *api.Server
+	Service           *services.CustomerService
+	PermissionService *services.PermissionService
 }
 
 func NewCustomerHandler(s *api.Server) *CustomerHandler {
 	return &CustomerHandler{
-		Server:  s,
-		Service: services.NewCustomerService(s),
+		Server:            s,
+		Service:           services.NewCustomerService(s),
+		PermissionService: services.NewPermissionService(s),
 	}
+}
+
+// RegisterRoutes registers the routes for the CustomerHandler.
+func (h *CustomerHandler) RegisterRoutes(r fiber.Router) {
+	customersAPI := r.Group("/customers")
+	customersAPI.Get("/", h.GetCustomers())
+	customersAPI.Post("/", h.CreateCustomer())
+	customersAPI.Put("/:customerID", h.UpdateCustomer())
 }
 
 // TODO: This is incomplete we need to add customer email & rule profile, delivery slots,
@@ -30,20 +40,6 @@ func NewCustomerHandler(s *api.Server) *CustomerHandler {
 // GET /customers
 func (h *CustomerHandler) GetCustomers() fiber.Handler {
 	return func(c *fiber.Ctx) error {
-		offset, limit, err := util.PaginationParams(c)
-		if err != nil {
-			return c.Status(fiber.StatusBadRequest).JSON(types.ValidationErrorResponse{
-				Type: "invalidRequest",
-				Errors: []types.ValidationErrorDetail{
-					{
-						Code:   "invalidRequest",
-						Detail: err.Error(),
-						Attr:   "offset, limit",
-					},
-				},
-			})
-		}
-
 		orgID, ok := c.Locals(util.CTXOrganizationID).(uuid.UUID)
 		buID, buOK := c.Locals(util.CTXBusinessUnitID).(uuid.UUID)
 
@@ -55,6 +51,29 @@ func (h *CustomerHandler) GetCustomers() fiber.Handler {
 						Code:   "internalError",
 						Detail: "Organization ID or Business Unit ID not found in the request context",
 						Attr:   "orgID, buID",
+					},
+				},
+			})
+		}
+
+		// Check if the user has the required permission
+		err := h.PermissionService.CheckUserPermission(c, "customer.view")
+		if err != nil {
+			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+				"error":   "Unauthorized",
+				"message": "You do not have the required permission to access this resource",
+			})
+		}
+
+		offset, limit, err := util.PaginationParams(c)
+		if err != nil {
+			return c.Status(fiber.StatusBadRequest).JSON(types.ValidationErrorResponse{
+				Type: "invalidRequest",
+				Errors: []types.ValidationErrorDetail{
+					{
+						Code:   "invalidRequest",
+						Detail: err.Error(),
+						Attr:   "offset, limit",
 					},
 				},
 			})
@@ -101,20 +120,20 @@ func (h *CustomerHandler) CreateCustomer() fiber.Handler {
 			})
 		}
 
+		// Check if the user has the required permission
+		err := h.PermissionService.CheckUserPermission(c, "customer.add")
+		if err != nil {
+			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+				"error":   "Unauthorized",
+				"message": "You do not have the required permission to access this resource",
+			})
+		}
+
 		newEntity.BusinessUnitID = buID
 		newEntity.OrganizationID = orgID
 
 		if err := util.ParseBodyAndValidate(c, newEntity); err != nil {
-			return c.Status(fiber.StatusBadRequest).JSON(types.ValidationErrorResponse{
-				Type: "invalidRequest",
-				Errors: []types.ValidationErrorDetail{
-					{
-						Code:   "invalidRequest",
-						Detail: err.Error(),
-						Attr:   "body",
-					},
-				},
-			})
+			return err
 		}
 
 		entity, err := h.Service.CreateCustomer(c.UserContext(), newEntity)
@@ -143,6 +162,15 @@ func (h *CustomerHandler) UpdateCustomer() fiber.Handler {
 						Attr:   "customerID",
 					},
 				},
+			})
+		}
+
+		// Check if the user has the required permission
+		err := h.PermissionService.CheckUserPermission(c, "customer.edit")
+		if err != nil {
+			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+				"error":   "Unauthorized",
+				"message": "You do not have the required permission to access this resource",
 			})
 		}
 

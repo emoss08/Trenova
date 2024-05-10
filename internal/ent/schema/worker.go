@@ -87,6 +87,10 @@ func (Worker) Fields() []ent.Field {
 			Optional().
 			Nillable().
 			StructTag(`json:"managerId" validate:"omitempty,uuid"`),
+		field.String("external_id").
+			Optional().
+			Comment("External ID usually from HOS integration.").
+			StructTag(`json:"externalId" validate:"omitempty"`),
 	}
 }
 

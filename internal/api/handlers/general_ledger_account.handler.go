@@ -15,15 +15,25 @@ import (
 )
 
 type GeneralLedgerAccountHandler struct {
-	Server  *api.Server
-	Service *services.GeneralLedgerAccountService
+	Server            *api.Server
+	Service           *services.GeneralLedgerAccountService
+	PermissionService *services.PermissionService
 }
 
 func NewGeneralLedgerAccountHandler(s *api.Server) *GeneralLedgerAccountHandler {
 	return &GeneralLedgerAccountHandler{
-		Server:  s,
-		Service: services.NewGeneralLedgerAccountService(s),
+		Server:            s,
+		Service:           services.NewGeneralLedgerAccountService(s),
+		PermissionService: services.NewPermissionService(s),
 	}
+}
+
+// RegisterRoutes registers the routes for the GeneralLedgerAccountHandler.
+func (h *GeneralLedgerAccountHandler) RegisterRoutes(r fiber.Router) {
+	glAccountAPI := r.Group("/general-ledger-accounts")
+	glAccountAPI.Get("/", h.GetGeneralLedgerAccounts())
+	glAccountAPI.Post("/", h.CreateGeneralLedgerAccount())
+	glAccountAPI.Put("/:glAccountID", h.UpdateGeneralLedgerAccount())
 }
 
 type GeneralLedgerAccountResponse struct {
@@ -56,21 +66,6 @@ type GeneralLedgerAccountResponse struct {
 func (h *GeneralLedgerAccountHandler) GetGeneralLedgerAccounts() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		// TODO(Wolfred): This needs to take in a query parameter for the status of the GL accounts
-
-		offset, limit, err := util.PaginationParams(c)
-		if err != nil {
-			return c.Status(fiber.StatusBadRequest).JSON(types.ValidationErrorResponse{
-				Type: "invalidRequest",
-				Errors: []types.ValidationErrorDetail{
-					{
-						Code:   "invalidRequest",
-						Detail: err.Error(),
-						Attr:   "offset, limit",
-					},
-				},
-			})
-		}
-
 		orgID, ok := c.Locals(util.CTXOrganizationID).(uuid.UUID)
 		buID, buOK := c.Locals(util.CTXBusinessUnitID).(uuid.UUID)
 
@@ -82,6 +77,29 @@ func (h *GeneralLedgerAccountHandler) GetGeneralLedgerAccounts() fiber.Handler {
 						Code:   "internalError",
 						Detail: "Organization ID or Business Unit ID not found in the request context",
 						Attr:   "orgID, buID",
+					},
+				},
+			})
+		}
+
+		// Check if the user has the required permission
+		err := h.PermissionService.CheckUserPermission(c, "generalledgeraccount.view")
+		if err != nil {
+			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+				"error":   "Unauthorized",
+				"message": "You do not have the required permission to access this resource",
+			})
+		}
+
+		offset, limit, err := util.PaginationParams(c)
+		if err != nil {
+			return c.Status(fiber.StatusBadRequest).JSON(types.ValidationErrorResponse{
+				Type: "invalidRequest",
+				Errors: []types.ValidationErrorDetail{
+					{
+						Code:   "invalidRequest",
+						Detail: err.Error(),
+						Attr:   "offset, limit",
 					},
 				},
 			})
@@ -115,7 +133,6 @@ func (h *GeneralLedgerAccountHandler) GetGeneralLedgerAccounts() fiber.Handler {
 				AccountClass:   account.AccountClass,
 				Balance:        account.Balance,
 				InterestRate:   account.InterestRate,
-				DateOpened:     account.DateOpened,
 				DateClosed:     account.DateClosed,
 				Notes:          account.Notes,
 				IsTaxRelevant:  account.IsTaxRelevant,
@@ -160,20 +177,20 @@ func (h *GeneralLedgerAccountHandler) CreateGeneralLedgerAccount() fiber.Handler
 			})
 		}
 
+		// Check if the user has the required permission
+		err := h.PermissionService.CheckUserPermission(c, "generalledgeraccount.add")
+		if err != nil {
+			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+				"error":   "Unauthorized",
+				"message": "You do not have the required permission to access this resource",
+			})
+		}
+
 		newEntity.BusinessUnitID = buID
 		newEntity.OrganizationID = orgID
 
 		if err := util.ParseBodyAndValidate(c, newEntity); err != nil {
-			return c.Status(fiber.StatusBadRequest).JSON(types.ValidationErrorResponse{
-				Type: "invalidRequest",
-				Errors: []types.ValidationErrorDetail{
-					{
-						Code:   "invalidRequest",
-						Detail: err.Error(),
-						Attr:   "body",
-					},
-				},
-			})
+			return err
 		}
 
 		entity, err := h.Service.CreateGeneralLedgerAccount(c.UserContext(), newEntity)
@@ -205,19 +222,19 @@ func (h *GeneralLedgerAccountHandler) UpdateGeneralLedgerAccount() fiber.Handler
 			})
 		}
 
+		// Check if the user has the required permission
+		err := h.PermissionService.CheckUserPermission(c, "generalledgeraccount.edit")
+		if err != nil {
+			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+				"error":   "Unauthorized",
+				"message": "You do not have the required permission to access this resource",
+			})
+		}
+
 		updatedEntity := new(services.GeneralLedgerAccountUpdateRequest)
 
 		if err := util.ParseBodyAndValidate(c, updatedEntity); err != nil {
-			return c.Status(fiber.StatusBadRequest).JSON(types.ValidationErrorResponse{
-				Type: "invalidRequest",
-				Errors: []types.ValidationErrorDetail{
-					{
-						Code:   "invalidRequest",
-						Detail: err.Error(),
-						Attr:   "request body",
-					},
-				},
-			})
+			return err
 		}
 
 		updatedEntity.ID = uuid.MustParse(glAccountID)

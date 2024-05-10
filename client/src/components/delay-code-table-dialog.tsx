@@ -9,7 +9,6 @@ import { delayCodeSchema } from "@/lib/validations/DispatchSchema";
 import { type DelayCodeFormValues } from "@/types/dispatch";
 import { type TableSheetProps } from "@/types/tables";
 import { yupResolver } from "@hookform/resolvers/yup";
-import React from "react";
 import { Control, useForm } from "react-hook-form";
 import { GradientPicker } from "./common/fields/color-field";
 import {
@@ -90,9 +89,7 @@ export function DelayCodeForm({
 }
 
 export function DelayCodeDialog({ onOpenChange, open }: TableSheetProps) {
-  const [isSubmitting, setIsSubmitting] = React.useState<boolean>(false);
-
-  const { control, reset, handleSubmit } = useForm<DelayCodeFormValues>({
+  const { control, handleSubmit } = useForm<DelayCodeFormValues>({
     resolver: yupResolver(delayCodeSchema),
     defaultValues: {
       status: "A",
@@ -103,22 +100,16 @@ export function DelayCodeDialog({ onOpenChange, open }: TableSheetProps) {
     },
   });
 
-  const mutation = useCustomMutation<DelayCodeFormValues>(
-    control,
-    {
-      method: "POST",
-      path: "/delay-codes/",
-      successMessage: "Delay Code created successfully.",
-      queryKeysToInvalidate: ["delay-code-table-data"],
-      closeModal: true,
-      errorMessage: "Failed to create new delay code.",
-    },
-    () => setIsSubmitting(false),
-    reset,
-  );
+  const mutation = useCustomMutation<DelayCodeFormValues>(control, {
+    method: "POST",
+    path: "/delay-codes/",
+    successMessage: "Delay Code created successfully.",
+    queryKeysToInvalidate: ["delay-code-table-data"],
+    closeModal: true,
+    errorMessage: "Failed to create new delay code.",
+  });
 
   const onSubmit = (values: DelayCodeFormValues) => {
-    setIsSubmitting(true);
     mutation.mutate(values);
   };
 
@@ -140,7 +131,7 @@ export function DelayCodeDialog({ onOpenChange, open }: TableSheetProps) {
                   Cancel
                 </Button>
               </CredenzaClose>
-              <Button type="submit" isLoading={isSubmitting}>
+              <Button type="submit" isLoading={mutation.isPending}>
                 Save Changes
               </Button>
             </CredenzaFooter>

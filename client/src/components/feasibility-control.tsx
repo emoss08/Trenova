@@ -28,7 +28,6 @@ import type {
   FeasibilityToolControl as FeasibilityToolControlType,
 } from "@/types/dispatch";
 import { yupResolver } from "@hookform/resolvers/yup";
-import React from "react";
 import { useForm } from "react-hook-form";
 import { ErrorLoadingData } from "./common/table/data-table-components";
 
@@ -37,8 +36,6 @@ function FeasibilityControlForm({
 }: {
   feasibilityControl: FeasibilityToolControlType;
 }) {
-  const [isSubmitting, setIsSubmitting] = React.useState<boolean>(false);
-
   const { control, handleSubmit, reset } =
     useForm<FeasibilityToolControlFormValues>({
       resolver: yupResolver(feasibilityControlSchema),
@@ -54,13 +51,10 @@ function FeasibilityControlForm({
       queryKeysToInvalidate: ["feasibilityControl"],
       errorMessage: "Failed to update feasibility control.",
     },
-    () => setIsSubmitting(false),
   );
 
   const onSubmit = (values: FeasibilityToolControlFormValues) => {
-    setIsSubmitting(true);
     mutation.mutate(values);
-
     reset(values);
   };
 
@@ -169,11 +163,11 @@ function FeasibilityControlForm({
           }}
           type="button"
           variant="outline"
-          disabled={isSubmitting}
+          disabled={mutation.isPending}
         >
           Cancel
         </Button>
-        <Button type="submit" isLoading={isSubmitting}>
+        <Button type="submit" isLoading={mutation.isPending}>
           Save
         </Button>
       </div>

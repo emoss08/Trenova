@@ -33,7 +33,7 @@ type CommentType struct {
 	// Status holds the value of the "status" field.
 	Status commenttype.Status `json:"status" validate:"required,oneof=A I"`
 	// Name holds the value of the "name" field.
-	Name string `json:"name" validate:"required,max=10"`
+	Name string `json:"name" validate:"required,max=20"`
 	// Severity holds the value of the "severity" field.
 	Severity commenttype.Severity `json:"severity" validate:"required,oneof=High Medium Low"`
 	// Description holds the value of the "description" field.

@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { useCustomMutation } from "@/hooks/useCustomMutation";
-import { formatDate } from "@/lib/date";
+import { formatToUserTimezone } from "@/lib/date";
 import { reasonCodeSchema } from "@/lib/validations/ShipmentSchema";
 import { useTableStore } from "@/stores/TableStore";
 import type {
@@ -9,9 +9,9 @@ import type {
 } from "@/types/shipment";
 import { type TableSheetProps } from "@/types/tables";
 import { yupResolver } from "@hookform/resolvers/yup";
-import React from "react";
 import { useForm } from "react-hook-form";
 import { ReasonCodeForm } from "./reason-code-table-dialog";
+import { Badge } from "./ui/badge";
 import {
   Credenza,
   CredenzaBody,
@@ -24,28 +24,21 @@ import {
 } from "./ui/credenza";
 
 function ReasonCodeEditForm({ reasonCode }: { reasonCode: ReasonCode }) {
-  const [isSubmitting, setIsSubmitting] = React.useState<boolean>(false);
-
   const { control, handleSubmit } = useForm<FormValues>({
     resolver: yupResolver(reasonCodeSchema),
     defaultValues: reasonCode,
   });
 
-  const mutation = useCustomMutation<FormValues>(
-    control,
-    {
-      method: "PUT",
-      path: `/reason-codes/${reasonCode.id}/`,
-      successMessage: "Reason Codes updated successfully.",
-      queryKeysToInvalidate: ["reason-code-table-data"],
-      closeModal: true,
-      errorMessage: "Failed to update reason codes.",
-    },
-    () => setIsSubmitting(false),
-  );
+  const mutation = useCustomMutation<FormValues>(control, {
+    method: "PUT",
+    path: `/reason-codes/${reasonCode.id}/`,
+    successMessage: "Reason Codes updated successfully.",
+    queryKeysToInvalidate: "reasonCodes",
+    closeModal: true,
+    errorMessage: "Failed to update reason codes.",
+  });
 
   const onSubmit = (values: FormValues) => {
-    setIsSubmitting(true);
     mutation.mutate(values);
   };
 
@@ -59,7 +52,7 @@ function ReasonCodeEditForm({ reasonCode }: { reasonCode: ReasonCode }) {
               Cancel
             </Button>
           </CredenzaClose>
-          <Button type="submit" isLoading={isSubmitting}>
+          <Button type="submit" isLoading={mutation.isPending}>
             Save Changes
           </Button>
         </CredenzaFooter>
@@ -77,13 +70,17 @@ export function ReasonCodeEditDialog({ onOpenChange, open }: TableSheetProps) {
     <Credenza open={open} onOpenChange={onOpenChange}>
       <CredenzaContent>
         <CredenzaHeader>
-          <CredenzaTitle>{reasonCode && reasonCode.code}</CredenzaTitle>
+          <CredenzaTitle className="flex">
+            <span>{reasonCode.code}</span>
+            <Badge className="ml-5" variant="purple">
+              {reasonCode.id}
+            </Badge>
+          </CredenzaTitle>
         </CredenzaHeader>
         <CredenzaDescription>
-          Last updated on&nbsp;
-          {reasonCode && formatDate(reasonCode.updatedAt)}
+          Last updated on {formatToUserTimezone(reasonCode.updatedAt)}
         </CredenzaDescription>
-        {reasonCode && <ReasonCodeEditForm reasonCode={reasonCode} />}
+        <ReasonCodeEditForm reasonCode={reasonCode} />
       </CredenzaContent>
     </Credenza>
   );

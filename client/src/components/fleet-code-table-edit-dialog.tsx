@@ -1,5 +1,5 @@
 import { useCustomMutation } from "@/hooks/useCustomMutation";
-import { formatDate } from "@/lib/date";
+import { formatToUserTimezone } from "@/lib/date";
 import { fleetCodeSchema } from "@/lib/validations/DispatchSchema";
 import { useTableStore } from "@/stores/TableStore";
 import type {
@@ -7,9 +7,9 @@ import type {
   FleetCodeFormValues as FormValues,
 } from "@/types/dispatch";
 import { yupResolver } from "@hookform/resolvers/yup";
-import React from "react";
 import { useForm } from "react-hook-form";
 import { FleetCodeForm } from "./fleet-code-table-dialog";
+import { Badge } from "./ui/badge";
 import { Button } from "./ui/button";
 import {
   Credenza,
@@ -29,28 +29,21 @@ function FleetCodeEditForm({
   fleetCode: FleetCode;
   open: boolean;
 }) {
-  const [isSubmitting, setIsSubmitting] = React.useState<boolean>(false);
-  const { control, reset, handleSubmit } = useForm<FormValues>({
+  const { control, handleSubmit } = useForm<FormValues>({
     resolver: yupResolver(fleetCodeSchema),
     defaultValues: fleetCode,
   });
 
-  const mutation = useCustomMutation<FormValues>(
-    control,
-    {
-      method: "PUT",
-      path: `/fleet-codes/${fleetCode.id}/`,
-      successMessage: "Fleet Code updated successfully.",
-      queryKeysToInvalidate: ["fleet-code-table-data"],
-      closeModal: true,
-      errorMessage: "Failed to update fleet code.",
-    },
-    () => setIsSubmitting(false),
-    reset,
-  );
+  const mutation = useCustomMutation<FormValues>(control, {
+    method: "PUT",
+    path: `/fleet-codes/${fleetCode.id}/`,
+    successMessage: "Fleet Code updated successfully.",
+    queryKeysToInvalidate: ["fleet-code-table-data"],
+    closeModal: true,
+    errorMessage: "Failed to update fleet code.",
+  });
 
   const onSubmit = (values: FormValues) => {
-    setIsSubmitting(true);
     mutation.mutate(values);
   };
 
@@ -64,7 +57,7 @@ function FleetCodeEditForm({
               Cancel
             </Button>
           </CredenzaClose>
-          <Button type="submit" isLoading={isSubmitting}>
+          <Button type="submit" isLoading={mutation.isPending}>
             Save Changes
           </Button>
         </CredenzaFooter>
@@ -88,13 +81,17 @@ export function FleetCodeEditDialog({
     <Credenza open={open} onOpenChange={onOpenChange}>
       <CredenzaContent>
         <CredenzaHeader>
-          <CredenzaTitle>{fleetCode && fleetCode.code} </CredenzaTitle>
+          <CredenzaTitle className="flex">
+            <span>{fleetCode.code}</span>
+            <Badge className="ml-5" variant="purple">
+              {fleetCode.id}
+            </Badge>
+          </CredenzaTitle>
         </CredenzaHeader>
         <CredenzaDescription>
-          Last updated on&nbsp;
-          {fleetCode && formatDate(fleetCode.updatedAt)}
+          Last updated on {formatToUserTimezone(fleetCode.updatedAt)}
         </CredenzaDescription>
-        {fleetCode && <FleetCodeEditForm fleetCode={fleetCode} open={open} />}
+        <FleetCodeEditForm fleetCode={fleetCode} open={open} />
       </CredenzaContent>
     </Credenza>
   );

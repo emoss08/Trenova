@@ -11,15 +11,27 @@ import (
 )
 
 type TableChangeAlertHandler struct {
-	Server  *api.Server
-	Service *services.TableChangeAlertService
+	Server            *api.Server
+	Service           *services.TableChangeAlertService
+	PermissionService *services.PermissionService
 }
 
 func NewTableChangeAlertHandler(s *api.Server) *TableChangeAlertHandler {
 	return &TableChangeAlertHandler{
-		Server:  s,
-		Service: services.NewTableChangeAlertService(s),
+		Server:            s,
+		Service:           services.NewTableChangeAlertService(s),
+		PermissionService: services.NewPermissionService(s),
 	}
+}
+
+// RegisterRoutes registers the routes for the TableChangeAlertHandler.
+func (h *TableChangeAlertHandler) RegisterRoutes(r fiber.Router) {
+	tableChangeAlertAPI := r.Group("/table-change-alerts")
+	tableChangeAlertAPI.Get("/", h.GetTableChangeAlerts())
+	tableChangeAlertAPI.Post("/", h.CreateTableChangeAlert())
+	tableChangeAlertAPI.Put("/:tableChangeAlertID", h.UpdateTableChangeAlert())
+	tableChangeAlertAPI.Get("/table-names", h.GetTableNames())
+	tableChangeAlertAPI.Get("/topic-names", h.GetTopicNames())
 }
 
 // GetTableChangeAlerts is a handler that returns a list of table change alerts.
@@ -27,20 +39,6 @@ func NewTableChangeAlertHandler(s *api.Server) *TableChangeAlertHandler {
 // GET /table-change-alerts
 func (h *TableChangeAlertHandler) GetTableChangeAlerts() fiber.Handler {
 	return func(c *fiber.Ctx) error {
-		offset, limit, err := util.PaginationParams(c)
-		if err != nil {
-			return c.Status(fiber.StatusBadRequest).JSON(types.ValidationErrorResponse{
-				Type: "invalidRequest",
-				Errors: []types.ValidationErrorDetail{
-					{
-						Code:   "invalidRequest",
-						Detail: err.Error(),
-						Attr:   "offset, limit",
-					},
-				},
-			})
-		}
-
 		orgID, ok := c.Locals(util.CTXOrganizationID).(uuid.UUID)
 		buID, buOK := c.Locals(util.CTXBusinessUnitID).(uuid.UUID)
 
@@ -52,6 +50,29 @@ func (h *TableChangeAlertHandler) GetTableChangeAlerts() fiber.Handler {
 						Code:   "internalError",
 						Detail: "Organization ID or Business Unit ID not found in the request context",
 						Attr:   "orgID, buID",
+					},
+				},
+			})
+		}
+
+		// Check if the user has the required permission
+		err := h.PermissionService.CheckUserPermission(c, "tablechangealert.view")
+		if err != nil {
+			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+				"error":   "Unauthorized",
+				"message": "You do not have the required permission to access this resource",
+			})
+		}
+
+		offset, limit, err := util.PaginationParams(c)
+		if err != nil {
+			return c.Status(fiber.StatusBadRequest).JSON(types.ValidationErrorResponse{
+				Type: "invalidRequest",
+				Errors: []types.ValidationErrorDetail{
+					{
+						Code:   "invalidRequest",
+						Detail: err.Error(),
+						Attr:   "offset, limit",
 					},
 				},
 			})
@@ -98,6 +119,15 @@ func (h *TableChangeAlertHandler) CreateTableChangeAlert() fiber.Handler {
 			})
 		}
 
+		// Check if the user has the required permission
+		err := h.PermissionService.CheckUserPermission(c, "tablechangealert.add")
+		if err != nil {
+			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+				"error":   "Unauthorized",
+				"message": "You do not have the required permission to access this resource",
+			})
+		}
+
 		newEntity.BusinessUnitID = buID
 		newEntity.OrganizationID = orgID
 
@@ -140,6 +170,15 @@ func (h *TableChangeAlertHandler) UpdateTableChangeAlert() fiber.Handler {
 						Attr:   "tableChangeAlertID",
 					},
 				},
+			})
+		}
+
+		// Check if the user has the required permission
+		err := h.PermissionService.CheckUserPermission(c, "tablechangealert.edit")
+		if err != nil {
+			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+				"error":   "Unauthorized",
+				"message": "You do not have the required permission to access this resource",
 			})
 		}
 

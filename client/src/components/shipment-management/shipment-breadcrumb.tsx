@@ -16,10 +16,10 @@
  */
 
 import { Button } from "@/components/ui/button";
+import { useUserPermissions } from "@/context/user-permissions";
 import { upperFirst } from "@/lib/utils";
 import { useShipmentStore } from "@/stores/ShipmentStore";
-import { faEllipsisVertical } from "@fortawesome/pro-duotone-svg-icons";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { EllipsisVerticalIcon } from "lucide-react";
 import React from "react";
 import { useNavigate } from "react-router-dom";
 import {
@@ -31,7 +31,6 @@ import {
   DropdownMenuShortcut,
   DropdownMenuTrigger,
 } from "../ui/dropdown-menu";
-import { useUserPermissions } from "@/context/user-permissions";
 
 function OptionsDropdown() {
   const [currentView, setCurrentView] = useShipmentStore.use("currentView");
@@ -64,10 +63,7 @@ function OptionsDropdown() {
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Button variant="outline" className="h-9 font-semibold lg:flex">
-          <FontAwesomeIcon
-            icon={faEllipsisVertical}
-            className="mr-1 mt-0.5 size-4"
-          />
+          <EllipsisVerticalIcon className="mr-1 mt-0.5 size-4" />
           Options
         </Button>
       </DropdownMenuTrigger>
@@ -99,7 +95,7 @@ export function ShipmentBreadcrumb() {
           Shipment Management
         </h2>
         <div className="flex items-center">
-          <a className="text-sm font-medium text-muted-foreground hover:text-muted-foreground/80">
+          <a className="text-muted-foreground hover:text-muted-foreground/80 text-sm font-medium">
             Shipment Management - Shipment Management
           </a>
         </div>

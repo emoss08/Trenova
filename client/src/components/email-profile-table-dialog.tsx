@@ -8,7 +8,6 @@ import { emailProfileSchema } from "@/lib/validations/OrganizationSchema";
 import { type EmailProfileFormValues as FormValues } from "@/types/organization";
 import { type TableSheetProps } from "@/types/tables";
 import { yupResolver } from "@hookform/resolvers/yup";
-import React from "react";
 import { Control, useForm } from "react-hook-form";
 import { useTranslation } from "react-i18next";
 import { CheckboxInput } from "./common/fields/checkbox";
@@ -129,8 +128,7 @@ export function EmailProfileForm({
 export function EmailProfileDialog({ onOpenChange, open }: TableSheetProps) {
   const { t } = useTranslation(["admin.emailprofile", "common"]);
 
-  const [isSubmitting, setIsSubmitting] = React.useState<boolean>(false);
-  const { control, reset, handleSubmit } = useForm<FormValues>({
+  const { control, handleSubmit } = useForm<FormValues>({
     resolver: yupResolver(emailProfileSchema),
     defaultValues: {
       name: "",
@@ -144,22 +142,16 @@ export function EmailProfileDialog({ onOpenChange, open }: TableSheetProps) {
     },
   });
 
-  const mutation = useCustomMutation<FormValues>(
-    control,
-    {
-      method: "POST",
-      path: "/email-profiles/",
-      successMessage: t("formMessages.postSuccess"),
-      queryKeysToInvalidate: ["email-profile-table-data"],
-      closeModal: true,
-      errorMessage: t("formMessages.postError"),
-    },
-    () => setIsSubmitting(false),
-    reset,
-  );
+  const mutation = useCustomMutation<FormValues>(control, {
+    method: "POST",
+    path: "/email-profiles/",
+    successMessage: t("formMessages.postSuccess"),
+    queryKeysToInvalidate: ["email-profile-table-data"],
+    closeModal: true,
+    errorMessage: t("formMessages.postError"),
+  });
 
   const onSubmit = (values: FormValues) => {
-    setIsSubmitting(true);
     mutation.mutate(values);
   };
 
@@ -179,7 +171,7 @@ export function EmailProfileDialog({ onOpenChange, open }: TableSheetProps) {
                   Cancel
                 </Button>
               </CredenzaClose>
-              <Button type="submit" isLoading={isSubmitting}>
+              <Button type="submit" isLoading={mutation.isPending}>
                 Save Changes
               </Button>
             </CredenzaFooter>

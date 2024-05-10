@@ -27,7 +27,6 @@ import type {
   ShipmentControl as ShipmentControlType,
 } from "@/types/shipment";
 import { yupResolver } from "@hookform/resolvers/yup";
-import React from "react";
 import { useForm } from "react-hook-form";
 import { useTranslation } from "react-i18next";
 
@@ -36,7 +35,6 @@ function ShipmentControlForm({
 }: {
   shipmentControl: ShipmentControlType;
 }) {
-  const [isSubmitting, setIsSubmitting] = React.useState<boolean>(false);
   const { t } = useTranslation(["admin.shipmentcontrol", "common"]); // Use the translation hook
 
   const { control, handleSubmit, reset } = useForm<ShipmentControlFormValues>({
@@ -57,21 +55,16 @@ function ShipmentControlForm({
     },
   });
 
-  const mutation = useCustomMutation<ShipmentControlFormValues>(
-    control,
-    {
-      method: "PUT",
-      path: `/shipment-control/${shipmentControl.id}/`,
-      successMessage: t("formSuccessMessage"),
-      queryKeysToInvalidate: ["shipmentControl"],
-      errorMessage: t("formErrorMessage"),
-    },
-    () => setIsSubmitting(false),
-  );
-  const onSubmit = (values: ShipmentControlFormValues) => {
-    setIsSubmitting(true);
-    mutation.mutate(values);
+  const mutation = useCustomMutation<ShipmentControlFormValues>(control, {
+    method: "PUT",
+    path: `/shipment-control/${shipmentControl.id}/`,
+    successMessage: t("formSuccessMessage"),
+    queryKeysToInvalidate: "shipmentControl",
+    errorMessage: t("formErrorMessage"),
+  });
 
+  const onSubmit = (values: ShipmentControlFormValues) => {
+    mutation.mutate(values);
     reset(values);
   };
 
@@ -188,11 +181,11 @@ function ShipmentControlForm({
           }}
           type="button"
           variant="ghost"
-          disabled={isSubmitting}
+          disabled={mutation.isPending}
         >
           {t("buttons.cancel", { ns: "common" })}
         </Button>
-        <Button type="submit" isLoading={isSubmitting}>
+        <Button type="submit" isLoading={mutation.isPending}>
           {t("buttons.save", { ns: "common" })}
         </Button>
       </div>

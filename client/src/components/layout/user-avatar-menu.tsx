@@ -1,20 +1,3 @@
-/*
- * COPYRIGHT(c) 2024 Trenova
- *
- * This file is part of Trenova.
- *
- * The Trenova software is licensed under the Business Source License 1.1. You are granted the right
- * to copy, modify, and redistribute the software, but only for non-production use or with a total
- * of less than three server instances. Starting from the Change Date (November 16, 2026), the
- * software will be made available under version 2 or later of the GNU General Public License.
- * If you use the software in violation of this license, your rights under the license will be
- * terminated automatically. The software is provided "as is," and the Licensor disclaims all
- * warranties and conditions. If you use this license's text or the "Business Source License" name
- * and trademark, you must comply with the Licensor's covenants, which include specifying the
- * Change License as the GPL Version 2.0 or a compatible license, specifying an Additional Use
- * Grant, and not modifying the license in any other way.
- */
-
 import {
   AlertDialog,
   AlertDialogAction,
@@ -49,6 +32,7 @@ import { AvatarImage } from "@radix-ui/react-avatar";
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
+import { UserSettingsDialog } from "../user-settings-dialog";
 
 type UserAvatarProps = React.ComponentPropsWithoutRef<typeof Avatar> & {
   user: User;
@@ -117,6 +101,8 @@ function UserAvatarMenuContent({ user }: { user: User }) {
   const [currentTheme, setCurrentTheme] = useState(theme);
   const [previousTheme, setPreviousTheme] = useState(theme);
   const [signOutDialogOpen, setSignOutDialogOpen] = useState(false);
+  const [settingsOpen, setSettingsOpen] = useState<boolean>(false);
+
   const navigate = useNavigate();
 
   React.useEffect(() => {
@@ -128,7 +114,7 @@ function UserAvatarMenuContent({ user }: { user: User }) {
 
       if (e.key === "b" && (e.metaKey || e.ctrlKey)) {
         e.preventDefault();
-        navigate("/account/settings/");
+        setSettingsOpen(true);
       }
     };
     document.addEventListener("keydown", down);
@@ -202,17 +188,22 @@ function UserAvatarMenuContent({ user }: { user: User }) {
       <DropdownMenuContent className="w-56" align="end">
         <DropdownMenuLabel className="font-normal">
           <div className="flex flex-col space-y-1">
-            <p className="truncate text-sm font-medium leading-none">
-              {user.name || user.username}
-            </p>
-            <p className="text-muted-foreground text-xs leading-none">
-              {user.email}
-            </p>
+            <div className="flex items-center space-x-2">
+              <UserAvatar user={user} />
+              <div>
+                <p className="truncate text-sm font-medium leading-none">
+                  {user.name || user.username}
+                </p>
+                <p className="text-muted-foreground text-xs leading-none">
+                  {user.email}
+                </p>
+              </div>
+            </div>
           </div>
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
         <DropdownMenuGroup>
-          <DropdownMenuItem onClick={() => navigate("/account/settings/")}>
+          <DropdownMenuItem onClick={() => setSettingsOpen(true)}>
             Account Settings
             <DropdownMenuShortcut>
               <ShortcutsProvider os="mac">
@@ -263,6 +254,13 @@ function UserAvatarMenuContent({ user }: { user: User }) {
         <SignOutDialog
           open={signOutDialogOpen}
           onClose={() => setSignOutDialogOpen(false)}
+        />
+      )}
+      {settingsOpen && (
+        <UserSettingsDialog
+          open={settingsOpen}
+          onOpenChange={() => setSettingsOpen(false)}
+          user={user}
         />
       )}
     </>

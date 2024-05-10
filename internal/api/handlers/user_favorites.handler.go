@@ -22,6 +22,14 @@ func NewUserFavoriteHandler(s *api.Server) *UserFavoriteHandler {
 	}
 }
 
+// RegisterRoutes registers the routes for the UserFavoriteHandler.
+func (h *UserFavoriteHandler) RegisterRoutes(r fiber.Router) {
+	userFavoritesAPI := r.Group("/user-favorites")
+	userFavoritesAPI.Get("/", h.GetUserFavorites())
+	userFavoritesAPI.Post("/", h.AddUserFavorite())
+	userFavoritesAPI.Delete("/", h.RemoveUserFavorite())
+}
+
 // GetUserFavorites returns the user's favorite pages.
 func (h *UserFavoriteHandler) GetUserFavorites() fiber.Handler {
 	return func(c *fiber.Ctx) error {

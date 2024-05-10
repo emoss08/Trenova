@@ -10,15 +10,23 @@ import (
 )
 
 type FeatureFlagHandler struct {
-	Server  *api.Server
-	Service *services.FeatureFlagService
+	Server            *api.Server
+	Service           *services.FeatureFlagService
+	PermissionService *services.PermissionService
 }
 
 func NewFeatureFlagHandler(s *api.Server) *FeatureFlagHandler {
 	return &FeatureFlagHandler{
-		Server:  s,
-		Service: services.NewFeatureFlagService(s),
+		Server:            s,
+		Service:           services.NewFeatureFlagService(s),
+		PermissionService: services.NewPermissionService(s),
 	}
+}
+
+// RegisterRoutes registers the routes for the FeatureFlagHandler.
+func (h *FeatureFlagHandler) RegisterRoutes(r fiber.Router) {
+	featureFlagAPI := r.Group("/feature-flags")
+	featureFlagAPI.Get("/", h.GetFeatureFlags())
 }
 
 // GetFeatureFlags is a handler that returns a list of feature flags.
@@ -26,20 +34,6 @@ func NewFeatureFlagHandler(s *api.Server) *FeatureFlagHandler {
 // GET /feature-flags
 func (h *FeatureFlagHandler) GetFeatureFlags() fiber.Handler {
 	return func(c *fiber.Ctx) error {
-		offset, limit, err := util.PaginationParams(c)
-		if err != nil {
-			return c.Status(fiber.StatusBadRequest).JSON(types.ValidationErrorResponse{
-				Type: "invalidRequest",
-				Errors: []types.ValidationErrorDetail{
-					{
-						Code:   "invalidRequest",
-						Detail: err.Error(),
-						Attr:   "offset, limit",
-					},
-				},
-			})
-		}
-
 		orgID, ok := c.Locals(util.CTXOrganizationID).(uuid.UUID)
 		buID, buOK := c.Locals(util.CTXBusinessUnitID).(uuid.UUID)
 
@@ -51,6 +45,29 @@ func (h *FeatureFlagHandler) GetFeatureFlags() fiber.Handler {
 						Code:   "internalError",
 						Detail: "Organization ID or Business Unit ID not found in the request context",
 						Attr:   "orgID, buID",
+					},
+				},
+			})
+		}
+
+		// Check if the user has the required permission
+		err := h.PermissionService.CheckUserPermission(c, "featureflag.view")
+		if err != nil {
+			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+				"error":   "Unauthorized",
+				"message": "You do not have the required permission to access this resource",
+			})
+		}
+
+		offset, limit, err := util.PaginationParams(c)
+		if err != nil {
+			return c.Status(fiber.StatusBadRequest).JSON(types.ValidationErrorResponse{
+				Type: "invalidRequest",
+				Errors: []types.ValidationErrorDetail{
+					{
+						Code:   "invalidRequest",
+						Detail: err.Error(),
+						Attr:   "offset, limit",
 					},
 				},
 			})

@@ -11,15 +11,25 @@ import (
 )
 
 type HazardousMaterialHandler struct {
-	Server  *api.Server
-	Service *services.HazardousMaterialService
+	Server            *api.Server
+	Service           *services.HazardousMaterialService
+	PermissionService *services.PermissionService
 }
 
 func NewHazardousMaterialHandler(s *api.Server) *HazardousMaterialHandler {
 	return &HazardousMaterialHandler{
-		Server:  s,
-		Service: services.NewHazardousMaterialService(s),
+		Server:            s,
+		Service:           services.NewHazardousMaterialService(s),
+		PermissionService: services.NewPermissionService(s),
 	}
+}
+
+// RegisterRoutes registers the routes for the HazardousMaterialHandler.
+func (h *HazardousMaterialHandler) RegisterRoutes(r fiber.Router) {
+	hazmatAPI := r.Group("/hazardous-materials")
+	hazmatAPI.Get("/", h.GetHazardousMaterials())
+	hazmatAPI.Post("/", h.CreateHazardousMaterial())
+	hazmatAPI.Put("/:hazmatID", h.UpdateHazardousMaterial())
 }
 
 // GetHazardousMaterials is a handler that returns a list of hazardous materials.
@@ -27,20 +37,6 @@ func NewHazardousMaterialHandler(s *api.Server) *HazardousMaterialHandler {
 // GET /hazardous-materials
 func (h *HazardousMaterialHandler) GetHazardousMaterials() fiber.Handler {
 	return func(c *fiber.Ctx) error {
-		offset, limit, err := util.PaginationParams(c)
-		if err != nil {
-			return c.Status(fiber.StatusBadRequest).JSON(types.ValidationErrorResponse{
-				Type: "invalidRequest",
-				Errors: []types.ValidationErrorDetail{
-					{
-						Code:   "invalidRequest",
-						Detail: err.Error(),
-						Attr:   "offset, limit",
-					},
-				},
-			})
-		}
-
 		orgID, ok := c.Locals(util.CTXOrganizationID).(uuid.UUID)
 		buID, buOK := c.Locals(util.CTXBusinessUnitID).(uuid.UUID)
 
@@ -52,6 +48,29 @@ func (h *HazardousMaterialHandler) GetHazardousMaterials() fiber.Handler {
 						Code:   "internalError",
 						Detail: "Organization ID or Business Unit ID not found in the request context",
 						Attr:   "orgID, buID",
+					},
+				},
+			})
+		}
+
+		// Check if the user has the required permission
+		err := h.PermissionService.CheckUserPermission(c, "hazardousmaterial.view")
+		if err != nil {
+			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+				"error":   "Unauthorized",
+				"message": "You do not have the required permission to access this resource",
+			})
+		}
+
+		offset, limit, err := util.PaginationParams(c)
+		if err != nil {
+			return c.Status(fiber.StatusBadRequest).JSON(types.ValidationErrorResponse{
+				Type: "invalidRequest",
+				Errors: []types.ValidationErrorDetail{
+					{
+						Code:   "invalidRequest",
+						Detail: err.Error(),
+						Attr:   "offset, limit",
 					},
 				},
 			})
@@ -98,20 +117,20 @@ func (h *HazardousMaterialHandler) CreateHazardousMaterial() fiber.Handler {
 			})
 		}
 
+		// Check if the user has the required permission
+		err := h.PermissionService.CheckUserPermission(c, "hazardousmaterial.add")
+		if err != nil {
+			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+				"error":   "Unauthorized",
+				"message": "You do not have the required permission to access this resource",
+			})
+		}
+
 		newEntity.BusinessUnitID = buID
 		newEntity.OrganizationID = orgID
 
 		if err := util.ParseBodyAndValidate(c, newEntity); err != nil {
-			return c.Status(fiber.StatusBadRequest).JSON(types.ValidationErrorResponse{
-				Type: "invalidRequest",
-				Errors: []types.ValidationErrorDetail{
-					{
-						Code:   "invalidRequest",
-						Detail: err.Error(),
-						Attr:   "body",
-					},
-				},
-			})
+			return err
 		}
 
 		entity, err := h.Service.CreateHazardousMaterial(c.UserContext(), newEntity)
@@ -143,19 +162,19 @@ func (h *HazardousMaterialHandler) UpdateHazardousMaterial() fiber.Handler {
 			})
 		}
 
+		// Check if the user has the required permission
+		err := h.PermissionService.CheckUserPermission(c, "hazardousmaterial.edit")
+		if err != nil {
+			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+				"error":   "Unauthorized",
+				"message": "You do not have the required permission to access this resource",
+			})
+		}
+
 		updatedEntity := new(ent.HazardousMaterial)
 
 		if err := util.ParseBodyAndValidate(c, updatedEntity); err != nil {
-			return c.Status(fiber.StatusBadRequest).JSON(types.ValidationErrorResponse{
-				Type: "invalidRequest",
-				Errors: []types.ValidationErrorDetail{
-					{
-						Code:   "invalidRequest",
-						Detail: err.Error(),
-						Attr:   "request body",
-					},
-				},
-			})
+			return err
 		}
 
 		updatedEntity.ID = uuid.MustParse(hazmatID)

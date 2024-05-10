@@ -8,7 +8,6 @@ import { chargeTypeSchema } from "@/lib/validations/BillingSchema";
 import { type ChargeTypeFormValues as FormValues } from "@/types/billing";
 import { type TableSheetProps } from "@/types/tables";
 import { yupResolver } from "@hookform/resolvers/yup";
-import React from "react";
 import { Control, useForm } from "react-hook-form";
 import {
   Credenza,
@@ -67,8 +66,6 @@ export function ChargeTypeForm({ control }: { control: Control<FormValues> }) {
 }
 
 export function ChargeTypeDialog({ onOpenChange, open }: TableSheetProps) {
-  const [isSubmitting, setIsSubmitting] = React.useState<boolean>(false);
-
   const { control, reset, handleSubmit } = useForm<FormValues>({
     resolver: yupResolver(chargeTypeSchema),
     defaultValues: {
@@ -78,23 +75,18 @@ export function ChargeTypeDialog({ onOpenChange, open }: TableSheetProps) {
     },
   });
 
-  const mutation = useCustomMutation<FormValues>(
-    control,
-    {
-      method: "POST",
-      path: "/charge-types/",
-      successMessage: "Charge Type created successfully.",
-      queryKeysToInvalidate: ["charge-type-table-data"],
-      closeModal: true,
-      errorMessage: "Failed to create new charge type.",
-    },
-    () => setIsSubmitting(false),
-    reset,
-  );
+  const mutation = useCustomMutation<FormValues>(control, {
+    method: "POST",
+    path: "/charge-types/",
+    successMessage: "Charge Type created successfully.",
+    queryKeysToInvalidate: ["charge-type-table-data"],
+    closeModal: true,
+    errorMessage: "Failed to create new charge type.",
+  });
 
   const onSubmit = (values: FormValues) => {
-    setIsSubmitting(true);
     mutation.mutate(values);
+    reset(values);
   };
 
   return (
@@ -115,7 +107,7 @@ export function ChargeTypeDialog({ onOpenChange, open }: TableSheetProps) {
                   Cancel
                 </Button>
               </CredenzaClose>
-              <Button type="submit" isLoading={isSubmitting}>
+              <Button type="submit" isLoading={mutation.isPending}>
                 Save Changes
               </Button>
             </CredenzaFooter>

@@ -1,24 +1,6 @@
-/*
- * COPYRIGHT(c) 2024 Trenova
- *
- * This file is part of Trenova.
- *
- * The Trenova software is licensed under the Business Source License 1.1. You are granted the right
- * to copy, modify, and redistribute the software, but only for non-production use or with a total
- * of less than three server instances. Starting from the Change Date (November 16, 2026), the
- * software will be made available under version 2 or later of the GNU General Public License.
- * If you use the software in violation of this license, your rights under the license will be
- * terminated automatically. The software is provided "as is," and the Licensor disclaims all
- * warranties and conditions. If you use this license's text or the "Business Source License" name
- * and trademark, you must comply with the Licensor's covenants, which include specifying the
- * Change License as the GPL Version 2.0 or a compatible license, specifying an Additional Use
- * Grant, and not modifying the license in any other way.
- */
-
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { faEye, faEyeSlash } from "@fortawesome/pro-regular-svg-icons";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { EyeIcon, EyeOffIcon } from "lucide-react";
 import * as React from "react";
 import {
   Controller,
@@ -88,7 +70,7 @@ export function InputField<T extends FieldValues>({
               className={cn(
                 icon && "pl-10",
                 fieldState.invalid &&
-                  "ring-1 ring-inset ring-red-500 placeholder:text-red-500 focus:ring-red-500",
+                  "ring-1 ring-inset ring-red-500 placeholder:text-red-500 focus:ring-red-500 bg-red-500 bg-opacity-20",
                 className,
               )}
               {...props}
@@ -129,7 +111,7 @@ export function FileField<T extends FieldValues>({
           className={cn(
             "pr-10",
             fieldState.invalid &&
-              "ring-1 ring-inset ring-red-500 placeholder:text-red-500 focus:ring-red-500",
+              "ring-1 ring-inset ring-red-500 placeholder:text-red-500 focus:ring-red-500 bg-red-500 bg-opacity-20",
             props.className,
           )}
           onChange={(e) => {
@@ -174,7 +156,7 @@ export function TimeField<T extends FieldValues>({
           step="1" // Include this to allow seconds in the format HH:MM:SS
           className={cn(
             fieldState.invalid &&
-              "ring-1 ring-inset ring-red-500 placeholder:text-red-500 focus:ring-red-500",
+              "ring-1 ring-inset ring-red-500 placeholder:text-red-500 focus:ring-red-500 bg-red-500 bg-opacity-20",
             props.className,
           )}
           {...field}
@@ -199,7 +181,9 @@ export function PasswordField<T extends FieldValues>({
   const [showPassword, setShowPassword] = React.useState(false);
 
   const togglePasswordVisibility = () => {
-    setShowPassword(!showPassword);
+    setShowPassword((prevState) => {
+      return !prevState;
+    });
   };
 
   return (
@@ -227,7 +211,7 @@ export function PasswordField<T extends FieldValues>({
             className={cn(
               icon && "pl-10",
               fieldState.invalid &&
-                "ring-1 ring-inset ring-red-500 placeholder:text-red-500 focus:ring-red-500",
+                "ring-1 ring-inset ring-red-500 placeholder:text-red-500 focus:ring-red-500 bg-red-500 bg-opacity-20",
               props.className,
             )}
             type={showPassword ? "text" : "password"}
@@ -242,9 +226,9 @@ export function PasswordField<T extends FieldValues>({
               onClick={togglePasswordVisibility}
             >
               {showPassword ? (
-                <FontAwesomeIcon icon={faEyeSlash} className="size-4" />
+                <EyeOffIcon className="size-4" />
               ) : (
-                <FontAwesomeIcon icon={faEye} className="size-4" />
+                <EyeIcon className="size-4" />
               )}
             </Button>
           )}

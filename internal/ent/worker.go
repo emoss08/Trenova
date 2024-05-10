@@ -61,6 +61,8 @@ type Worker struct {
 	FleetCodeID *uuid.UUID `json:"fleetCodeId" validate:"omitempty,uuid"`
 	// ManagerID holds the value of the "manager_id" field.
 	ManagerID *uuid.UUID `json:"managerId" validate:"omitempty,uuid"`
+	// External ID usually from HOS integration.
+	ExternalID string `json:"externalId" validate:"omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
 	// The values are being populated by the WorkerQuery when eager-loading is set.
 	Edges        WorkerEdges `json:"edges"`
@@ -211,7 +213,7 @@ func (*Worker) scanValues(columns []string) ([]any, error) {
 			values[i] = &sql.NullScanner{S: new(uuid.UUID)}
 		case worker.FieldVersion:
 			values[i] = new(sql.NullInt64)
-		case worker.FieldStatus, worker.FieldCode, worker.FieldProfilePictureURL, worker.FieldWorkerType, worker.FieldFirstName, worker.FieldLastName, worker.FieldAddressLine1, worker.FieldAddressLine2, worker.FieldCity, worker.FieldPostalCode:
+		case worker.FieldStatus, worker.FieldCode, worker.FieldProfilePictureURL, worker.FieldWorkerType, worker.FieldFirstName, worker.FieldLastName, worker.FieldAddressLine1, worker.FieldAddressLine2, worker.FieldCity, worker.FieldPostalCode, worker.FieldExternalID:
 			values[i] = new(sql.NullString)
 		case worker.FieldCreatedAt, worker.FieldUpdatedAt:
 			values[i] = new(sql.NullTime)
@@ -348,6 +350,12 @@ func (w *Worker) assignValues(columns []string, values []any) error {
 			} else if value.Valid {
 				w.ManagerID = new(uuid.UUID)
 				*w.ManagerID = *value.S.(*uuid.UUID)
+			}
+		case worker.FieldExternalID:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field external_id", values[i])
+			} else if value.Valid {
+				w.ExternalID = value.String
 			}
 		default:
 			w.selectValues.Set(columns[i], values[i])
@@ -494,6 +502,9 @@ func (w *Worker) String() string {
 		builder.WriteString("manager_id=")
 		builder.WriteString(fmt.Sprintf("%v", *v))
 	}
+	builder.WriteString(", ")
+	builder.WriteString("external_id=")
+	builder.WriteString(w.ExternalID)
 	builder.WriteByte(')')
 	return builder.String()
 }

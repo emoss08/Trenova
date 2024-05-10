@@ -11,36 +11,31 @@ import (
 )
 
 type AccessorialChargeHandler struct {
-	Server  *api.Server
-	Service *services.AccessorialChargeService
+	Server            *api.Server
+	Service           *services.AccessorialChargeService
+	PermissionService *services.PermissionService
 }
 
 func NewAccessorialChargeHandler(s *api.Server) *AccessorialChargeHandler {
 	return &AccessorialChargeHandler{
-		Server:  s,
-		Service: services.NewAccessorialChargeService(s),
+		Server:            s,
+		Service:           services.NewAccessorialChargeService(s),
+		PermissionService: services.NewPermissionService(s),
 	}
 }
 
-// GetAccessorialCharges is a handler that returns a list of accessorial charges.
+func (h *AccessorialChargeHandler) RegisterRoutes(r fiber.Router) {
+	accessorialChargeAPI := r.Group("/accessorial-charges")
+	accessorialChargeAPI.Get("", h.getAccessorialCharges())
+	accessorialChargeAPI.Post("", h.createAccessorialCharge())
+	accessorialChargeAPI.Put("/:accessorialChargeID", h.updateAccessorialCharge())
+}
+
+// getAccessorialCharges is a handler that returns a list of accessorial charges.
 //
 // GET /accessorial-charges
-func (h *AccessorialChargeHandler) GetAccessorialCharges() fiber.Handler {
+func (h *AccessorialChargeHandler) getAccessorialCharges() fiber.Handler {
 	return func(c *fiber.Ctx) error {
-		offset, limit, err := util.PaginationParams(c)
-		if err != nil {
-			return c.Status(fiber.StatusBadRequest).JSON(types.ValidationErrorResponse{
-				Type: "invalidRequest",
-				Errors: []types.ValidationErrorDetail{
-					{
-						Code:   "invalidRequest",
-						Detail: err.Error(),
-						Attr:   "offset, limit",
-					},
-				},
-			})
-		}
-
 		orgID, ok := c.Locals(util.CTXOrganizationID).(uuid.UUID)
 		buID, buOK := c.Locals(util.CTXBusinessUnitID).(uuid.UUID)
 
@@ -52,6 +47,29 @@ func (h *AccessorialChargeHandler) GetAccessorialCharges() fiber.Handler {
 						Code:   "internalError",
 						Detail: "Organization ID or Business Unit ID not found in the request context",
 						Attr:   "orgID, buID",
+					},
+				},
+			})
+		}
+
+		// Check if the user has the required permission
+		err := h.PermissionService.CheckUserPermission(c, "accessorialcharge.view")
+		if err != nil {
+			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+				"error":   "Unauthorized",
+				"message": "You do not have the required permission to access this resource",
+			})
+		}
+
+		offset, limit, err := util.PaginationParams(c)
+		if err != nil {
+			return c.Status(fiber.StatusBadRequest).JSON(types.ValidationErrorResponse{
+				Type: "invalidRequest",
+				Errors: []types.ValidationErrorDetail{
+					{
+						Code:   "invalidRequest",
+						Detail: err.Error(),
+						Attr:   "offset, limit",
 					},
 				},
 			})
@@ -75,10 +93,10 @@ func (h *AccessorialChargeHandler) GetAccessorialCharges() fiber.Handler {
 	}
 }
 
-// CreateAccessorialCharge is a handler that creates a new accessorial charge.
+// createAccessorialCharge is a handler that creates a new accessorial charge.
 //
 // POST /accessorial-charges
-func (h *AccessorialChargeHandler) CreateAccessorialCharge() fiber.Handler {
+func (h *AccessorialChargeHandler) createAccessorialCharge() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		newEntity := new(ent.AccessorialCharge)
 
@@ -98,10 +116,19 @@ func (h *AccessorialChargeHandler) CreateAccessorialCharge() fiber.Handler {
 			})
 		}
 
+		// Check if the user has the required permission
+		err := h.PermissionService.CheckUserPermission(c, "accessorialcharge.add")
+		if err != nil {
+			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+				"error":   "Unauthorized",
+				"message": "You do not have the required permission to access this resource",
+			})
+		}
+
 		newEntity.BusinessUnitID = buID
 		newEntity.OrganizationID = orgID
 
-		if err := util.ParseBodyAndValidate(c, newEntity); err != nil {
+		if err = util.ParseBodyAndValidate(c, newEntity); err != nil {
 			return err
 		}
 
@@ -116,10 +143,10 @@ func (h *AccessorialChargeHandler) CreateAccessorialCharge() fiber.Handler {
 	}
 }
 
-// UpdateAccessorialCharge is a handler that updates an accessorial charge.
+// updateAccessorialCharge is a handler that updates an accessorial charge.
 //
 // PUT /accessorial-charges/:accessorialChargeID
-func (h *AccessorialChargeHandler) UpdateAccessorialCharge() fiber.Handler {
+func (h *AccessorialChargeHandler) updateAccessorialCharge() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		accessorialChargeID := c.Params("accessorialChargeID")
 		if accessorialChargeID == "" {
@@ -135,9 +162,18 @@ func (h *AccessorialChargeHandler) UpdateAccessorialCharge() fiber.Handler {
 			})
 		}
 
+		// Check if the user has the required permission
+		err := h.PermissionService.CheckUserPermission(c, "accessorialcharge.edit")
+		if err != nil {
+			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+				"error":   "Unauthorized",
+				"message": "You do not have the required permission to access this resource",
+			})
+		}
+
 		updatedEntity := new(ent.AccessorialCharge)
 
-		if err := util.ParseBodyAndValidate(c, updatedEntity); err != nil {
+		if err = util.ParseBodyAndValidate(c, updatedEntity); err != nil {
 			return err
 		}
 

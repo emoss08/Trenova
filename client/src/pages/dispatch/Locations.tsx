@@ -60,7 +60,7 @@ const columns: ColumnDef<Location>[] = [
     cell: ({ row }) => {
       if (row.original.edges?.locationCategory?.color) {
         return (
-          <div className="text-foreground flex items-center space-x-2 text-sm font-medium">
+          <div className="flex items-center space-x-2 text-sm font-medium text-foreground">
             <div
               className={"mx-2 size-2 rounded-xl"}
               style={{
@@ -103,7 +103,7 @@ const filters: FilterConfig<Location>[] = [
 export default function Locations() {
   return (
     <DataTable
-      queryKey="locations-table-data"
+      queryKey="locations"
       columns={columns}
       link="/locations/"
       name="Locations"
@@ -113,7 +113,7 @@ export default function Locations() {
       TableSheet={LocationTableSheet}
       TableEditSheet={LocationTableEditSheet}
       getRowCanExpand={() => true}
-      addPermissionName="add_location"
+      addPermissionName="location.add"
     />
   );
 }
