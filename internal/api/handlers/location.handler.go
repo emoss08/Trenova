@@ -7,6 +7,8 @@ import (
 	"github.com/emoss08/trenova/internal/api/services"
 	"github.com/emoss08/trenova/internal/ent"
 	"github.com/emoss08/trenova/internal/ent/location"
+	"github.com/emoss08/trenova/internal/models"
+	"github.com/emoss08/trenova/internal/services/routing"
 	"github.com/emoss08/trenova/internal/util"
 	"github.com/emoss08/trenova/internal/util/types"
 	"github.com/gofiber/fiber/v2"
@@ -56,15 +58,16 @@ func NewLocationHandler(s *api.Server) *LocationHandler {
 // RegisterRoutes registers the location routes to the fiber app.
 func (h *LocationHandler) RegisterRoutes(r fiber.Router) {
 	locations := r.Group("/locations")
-	locations.Get("/", h.GetLocations())
-	locations.Post("/", h.CreateLocation())
-	locations.Put("/:locationID", h.UpdateLocation())
+	locations.Get("/", h.getLocations())
+	locations.Post("/", h.createLocation())
+	locations.Put("/:locationID", h.updateLocation())
+	locations.Get("/autocomplete", h.autoCompleteLocation())
 }
 
-// GetLocations is a handler that returns a list of locations.
+// getLocations is a handler that returns a list of locations.
 //
 // GET /locations
-func (h *LocationHandler) GetLocations() fiber.Handler {
+func (h *LocationHandler) getLocations() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		orgID, ok := c.Locals(util.CTXOrganizationID).(uuid.UUID)
 		buID, buOK := c.Locals(util.CTXBusinessUnitID).(uuid.UUID)
@@ -165,10 +168,10 @@ func (h *LocationHandler) GetLocations() fiber.Handler {
 	}
 }
 
-// CreateLocation is a handler that creates a new location.
+// createLocation is a handler that creates a new location.
 //
 // POST /locations
-func (h *LocationHandler) CreateLocation() fiber.Handler {
+func (h *LocationHandler) createLocation() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		newEntity := new(services.LocationRequest)
 
@@ -200,7 +203,7 @@ func (h *LocationHandler) CreateLocation() fiber.Handler {
 		newEntity.BusinessUnitID = buID
 		newEntity.OrganizationID = orgID
 
-		if err := util.ParseBodyAndValidate(c, newEntity); err != nil {
+		if err = util.ParseBodyAndValidate(c, newEntity); err != nil {
 			return err
 		}
 
@@ -214,10 +217,10 @@ func (h *LocationHandler) CreateLocation() fiber.Handler {
 	}
 }
 
-// UpdateLocation is a handler that updates a location.
+// updateLocation is a handler that updates a location.
 //
 // PUT /locations/:locationID
-func (h *LocationHandler) UpdateLocation() fiber.Handler {
+func (h *LocationHandler) updateLocation() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		locationID := c.Params("locationID")
 		if locationID == "" {
@@ -244,7 +247,7 @@ func (h *LocationHandler) UpdateLocation() fiber.Handler {
 
 		updatedEntity := new(services.LocationUpdateRequest)
 
-		if err := util.ParseBodyAndValidate(c, updatedEntity); err != nil {
+		if err = util.ParseBodyAndValidate(c, updatedEntity); err != nil {
 			return err
 		}
 
@@ -257,5 +260,41 @@ func (h *LocationHandler) UpdateLocation() fiber.Handler {
 		}
 
 		return c.Status(fiber.StatusOK).JSON(entity)
+	}
+}
+
+func (h *LocationHandler) autoCompleteLocation() fiber.Handler {
+	return func(c *fiber.Ctx) error {
+		orgID, ok := c.Locals(util.CTXOrganizationID).(uuid.UUID)
+		buID, buOK := c.Locals(util.CTXBusinessUnitID).(uuid.UUID)
+
+		if !ok || !buOK {
+			return c.Status(fiber.StatusInternalServerError).JSON(types.ValidationErrorResponse{
+				Type: "internalError",
+				Errors: []types.ValidationErrorDetail{
+					{
+						Code:   "internalError",
+						Detail: "Organization ID or Business Unit ID not found in the request context",
+						Attr:   "orgID, buID",
+					},
+				},
+			})
+		}
+
+		query := c.Query("query")
+		apiKey, err := models.GetGoogleAPIKeyForOrganization(c.UserContext(), h.Server.Client, orgID, buID)
+		if err != nil {
+			errorResponse := util.CreateDBErrorResponse(err)
+			return c.Status(fiber.StatusInternalServerError).JSON(errorResponse)
+		}
+
+		calc := routing.NewRoutingService(h.Server.Logger)
+		locations, err := calc.LocationAutoComplete(c.UserContext(), query, apiKey)
+		if err != nil {
+			errorResponse := util.CreateDBErrorResponse(err)
+			return c.Status(fiber.StatusInternalServerError).JSON(errorResponse)
+		}
+
+		return c.Status(fiber.StatusOK).JSON(locations)
 	}
 }

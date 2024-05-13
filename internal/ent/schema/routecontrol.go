@@ -17,13 +17,13 @@ type RouteControl struct {
 func (RouteControl) Fields() []ent.Field {
 	return []ent.Field{
 		field.Enum("distance_method").
-			Values("Trenova", "Google").
+			Values("Trenova", "Google", "PCMiler").
 			Default("Trenova").
 			SchemaType(map[string]string{
 				dialect.Postgres: "VARCHAR(8)",
 				dialect.SQLite:   "VARCHAR(8)",
 			}).
-			StructTag(`json:"distanceMethod" validate:"required,oneof=Trenova Google"`),
+			StructTag(`json:"distanceMethod" validate:"required,oneof=Trenova Google PCMiler"`),
 		field.Enum("mileage_unit").
 			Values("UnitsMetric", "UnitsImperial").
 			Default("UnitsMetric").

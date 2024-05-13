@@ -41,6 +41,8 @@ const (
 	EdgeOrganization = "organization"
 	// EdgeShipmentDocumentation holds the string denoting the shipment_documentation edge name in mutations.
 	EdgeShipmentDocumentation = "shipment_documentation"
+	// EdgeCustomerRuleProfile holds the string denoting the customer_rule_profile edge name in mutations.
+	EdgeCustomerRuleProfile = "customer_rule_profile"
 	// Table holds the table name of the documentclassification in the database.
 	Table = "document_classifications"
 	// BusinessUnitTable is the table that holds the business_unit relation/edge.
@@ -64,6 +66,13 @@ const (
 	ShipmentDocumentationInverseTable = "shipment_documentations"
 	// ShipmentDocumentationColumn is the table column denoting the shipment_documentation relation/edge.
 	ShipmentDocumentationColumn = "document_classification_id"
+	// CustomerRuleProfileTable is the table that holds the customer_rule_profile relation/edge.
+	CustomerRuleProfileTable = "document_classifications"
+	// CustomerRuleProfileInverseTable is the table name for the CustomerRuleProfile entity.
+	// It exists in this package in order to avoid circular dependency with the "customerruleprofile" package.
+	CustomerRuleProfileInverseTable = "customer_rule_profiles"
+	// CustomerRuleProfileColumn is the table column denoting the customer_rule_profile relation/edge.
+	CustomerRuleProfileColumn = "customer_rule_profile_document_classifications"
 )
 
 // Columns holds all SQL columns for documentclassification fields.
@@ -80,10 +89,21 @@ var Columns = []string{
 	FieldColor,
 }
 
+// ForeignKeys holds the SQL foreign-keys that are owned by the "document_classifications"
+// table and are not defined as standalone fields in the schema.
+var ForeignKeys = []string{
+	"customer_rule_profile_document_classifications",
+}
+
 // ValidColumn reports if the column name is valid (part of the table columns).
 func ValidColumn(column string) bool {
 	for i := range Columns {
 		if column == Columns[i] {
+			return true
+		}
+	}
+	for i := range ForeignKeys {
+		if column == ForeignKeys[i] {
 			return true
 		}
 	}
@@ -217,6 +237,13 @@ func ByShipmentDocumentation(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOp
 		sqlgraph.OrderByNeighborTerms(s, newShipmentDocumentationStep(), append([]sql.OrderTerm{term}, terms...)...)
 	}
 }
+
+// ByCustomerRuleProfileField orders the results by customer_rule_profile field.
+func ByCustomerRuleProfileField(field string, opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newCustomerRuleProfileStep(), sql.OrderByField(field, opts...))
+	}
+}
 func newBusinessUnitStep() *sqlgraph.Step {
 	return sqlgraph.NewStep(
 		sqlgraph.From(Table, FieldID),
@@ -236,5 +263,12 @@ func newShipmentDocumentationStep() *sqlgraph.Step {
 		sqlgraph.From(Table, FieldID),
 		sqlgraph.To(ShipmentDocumentationInverseTable, FieldID),
 		sqlgraph.Edge(sqlgraph.O2M, false, ShipmentDocumentationTable, ShipmentDocumentationColumn),
+	)
+}
+func newCustomerRuleProfileStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(CustomerRuleProfileInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.M2O, true, CustomerRuleProfileTable, CustomerRuleProfileColumn),
 	)
 }

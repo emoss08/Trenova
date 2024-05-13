@@ -38,7 +38,7 @@ type LocationContact struct {
 	// EmailAddress holds the value of the "email_address" field.
 	EmailAddress string `json:"emailAddress" validate:"omitempty,email"`
 	// PhoneNumber holds the value of the "phone_number" field.
-	PhoneNumber string `json:"phoneNumber" validate:"omitempty"`
+	PhoneNumber string `json:"phoneNumber" validate:"omitempty,phoneNum"`
 	// Edges holds the relations/edges for other nodes in the graph.
 	// The values are being populated by the LocationContactQuery when eager-loading is set.
 	Edges        LocationContactEdges `json:"edges"`

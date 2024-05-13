@@ -688,7 +688,7 @@ export function useUserOrganization() {
 /**
  * Get the Google API information for the organization
  */
-export function useGoogleAPI() {
+export function useGoogleAPI(open?: boolean) {
   const {
     data: googleAPIData,
     isLoading,
@@ -696,6 +696,7 @@ export function useGoogleAPI() {
   } = useQuery({
     queryKey: ["googleAPI"] as QueryKeys,
     queryFn: async () => getGoogleApiInformation(),
+    enabled: open,
   });
 
   return { googleAPIData, isLoading, isError };

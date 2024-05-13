@@ -1,56 +1,46 @@
-/*
- * COPYRIGHT(c) 2024 Trenova
- *
- * This file is part of Trenova.
- *
- * The Trenova software is licensed under the Business Source License 1.1. You are granted the right
- * to copy, modify, and redistribute the software, but only for non-production use or with a total
- * of less than three server instances. Starting from the Change Date (November 16, 2026), the
- * software will be made available under version 2 or later of the GNU General Public License.
- * If you use the software in violation of this license, your rights under the license will be
- * terminated automatically. The software is provided "as is," and the Licensor disclaims all
- * warranties and conditions. If you use this license's text or the "Business Source License" name
- * and trademark, you must comply with the Licensor's covenants, which include specifying the
- * Change License as the GPL Version 2.0 or a compatible license, specifying an Additional Use
- * Grant, and not modifying the license in any other way.
- */
-
-import { StatusChoiceProps } from "@/types";
+import type { StatusChoiceProps } from "@/types";
 import {
+  BillingCycleChoices,
   CustomerContactFormValues,
   CustomerEmailProfileFormValues,
   CustomerFormValues,
   CustomerRuleProfileFormValues,
   DeliverySlotFormValues,
+  EnumDayOfWeekChoices,
+  EnumEmailFormatChoices,
 } from "@/types/customer";
-import * as Yup from "yup";
-import { ObjectSchema } from "yup";
+import { array, boolean, mixed, object, string, type ObjectSchema } from "yup";
 
 /** Customer Email Profile Schema */
 export const customerEmailProfileSchema: ObjectSchema<CustomerEmailProfileFormValues> =
-  Yup.object().shape({
-    subject: Yup.string().max(100),
-    comment: Yup.string().max(100),
-    fromAddress: Yup.string(),
-    blindCopy: Yup.string(),
-    readReceipt: Yup.boolean().required(),
-    readReceiptTo: Yup.string(),
-    attachmentName: Yup.string(),
+  object().shape({
+    subject: string().max(100),
+    emailProfileId: string().nullable(),
+    emailRecipients: string().required("Email Recipients is required"),
+    attachmentName: string().optional(),
+    emailCcRecipients: string().optional(),
+    emailFormat: mixed<EnumEmailFormatChoices>()
+      .required("Email Format is required")
+      .oneOf(Object.values(EnumEmailFormatChoices)),
   });
 
 export const customerRuleProfileSchema: ObjectSchema<CustomerRuleProfileFormValues> =
-  Yup.object().shape({
-    name: Yup.string().required("Name is required"),
-    documentClass: Yup.array()
-      .of(Yup.string().required())
+  object().shape({
+    documentClass: array()
+      .of(string().required())
       .min(1, "At Least one document class is required.")
       .required("Document Class is required"),
+    billingCycle: mixed<BillingCycleChoices>()
+      .required("Billing Cycle is required")
+      .oneOf(Object.values(BillingCycleChoices)),
   });
 
-const deliverySlotSchema: Yup.ObjectSchema<DeliverySlotFormValues> =
-  Yup.object().shape({
-    dayOfWeek: Yup.number().required("Day of Week is required"),
-    startTime: Yup.string()
+const deliverySlotSchema: ObjectSchema<DeliverySlotFormValues> = object().shape(
+  {
+    dayOfWeek: mixed<EnumDayOfWeekChoices>()
+      .required("Day of Week is required")
+      .oneOf(Object.values(EnumDayOfWeekChoices)),
+    startTime: string()
       .required("Start Time is required")
       .test(
         "is-before-end-time",
@@ -78,7 +68,7 @@ const deliverySlotSchema: Yup.ObjectSchema<DeliverySlotFormValues> =
           return true;
         },
       ),
-    endTime: Yup.string()
+    endTime: string()
       .required("End Time is required")
       .test(
         "is-after-start-time",
@@ -106,38 +96,38 @@ const deliverySlotSchema: Yup.ObjectSchema<DeliverySlotFormValues> =
           return true;
         },
       ),
-    location: Yup.string().required("Location is required"),
-  });
+    locationId: string().required("Location is required"),
+  },
+);
+
 const customerContactSchema: ObjectSchema<CustomerContactFormValues> =
-  Yup.object().shape({
-    status: Yup.string<StatusChoiceProps>().required(),
-    name: Yup.string().required("Name is required"),
-    email: Yup.string().when("isPayableContact", {
+  object().shape({
+    status: string<StatusChoiceProps>().required(),
+    name: string().required("Name is required"),
+    email: string().when("isPayableContact", {
       is: true,
       then: (schema) => schema.required("Email is required"),
       otherwise: (schema) => schema.notRequired(),
     }),
-    title: Yup.string(),
-    phone: Yup.string(),
-    isPayableContact: Yup.boolean().required(),
+    title: string().optional(),
+    phoneNumber: string().optional(),
+    isPayableContact: boolean().required(),
   });
 
 /** Customer Schema */
-export const customerSchema: ObjectSchema<CustomerFormValues> =
-  Yup.object().shape({
-    status: Yup.string<StatusChoiceProps>().required("Status is required"),
-    code: Yup.string().required("Code is required"),
-    name: Yup.string().required("Name is required"),
-    addressLine1: Yup.string().required("Address Line 1 is required"),
-    addressLine2: Yup.string().notRequired(),
-    city: Yup.string().required("City is required"),
-    state: Yup.string().required("State is required"),
-    zipCode: Yup.string().required("Zip Code is required"),
-    hasCustomerPortal: Yup.boolean(),
-    autoMarkReadyToBill: Yup.boolean(),
-    advocate: Yup.string().notRequired(),
-    deliverySlots: Yup.array().of(deliverySlotSchema).notRequired(),
-    contacts: Yup.array().of(customerContactSchema).notRequired(),
-    ruleProfile: customerRuleProfileSchema.required(),
-    emailProfile: customerEmailProfileSchema.required(),
-  });
+export const customerSchema: ObjectSchema<CustomerFormValues> = object().shape({
+  status: string<StatusChoiceProps>().required("Status is required"),
+  code: string().optional(), // Code is generated on the server.
+  name: string().required("Name is required"),
+  addressLine1: string().required("Address Line 1 is required"),
+  addressLine2: string().optional(),
+  city: string().required("City is required"),
+  stateId: string().required("State is required"),
+  postalCode: string().required("Postal Code is required"),
+  hasCustomerPortal: boolean(),
+  autoMarkReadyToBill: boolean(),
+  ruleProfile: customerRuleProfileSchema,
+  emailProfile: customerEmailProfileSchema,
+  deliverySlots: array().of(deliverySlotSchema),
+  contacts: array().of(customerContactSchema),
+});

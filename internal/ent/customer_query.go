@@ -13,6 +13,11 @@ import (
 	"entgo.io/ent/schema/field"
 	"github.com/emoss08/trenova/internal/ent/businessunit"
 	"github.com/emoss08/trenova/internal/ent/customer"
+	"github.com/emoss08/trenova/internal/ent/customercontact"
+	"github.com/emoss08/trenova/internal/ent/customerdetentionpolicy"
+	"github.com/emoss08/trenova/internal/ent/customeremailprofile"
+	"github.com/emoss08/trenova/internal/ent/customerruleprofile"
+	"github.com/emoss08/trenova/internal/ent/deliveryslot"
 	"github.com/emoss08/trenova/internal/ent/organization"
 	"github.com/emoss08/trenova/internal/ent/predicate"
 	"github.com/emoss08/trenova/internal/ent/shipment"
@@ -23,16 +28,24 @@ import (
 // CustomerQuery is the builder for querying Customer entities.
 type CustomerQuery struct {
 	config
-	ctx                *QueryContext
-	order              []customer.OrderOption
-	inters             []Interceptor
-	predicates         []predicate.Customer
-	withBusinessUnit   *BusinessUnitQuery
-	withOrganization   *OrganizationQuery
-	withState          *UsStateQuery
-	withShipments      *ShipmentQuery
-	modifiers          []func(*sql.Selector)
-	withNamedShipments map[string]*ShipmentQuery
+	ctx                        *QueryContext
+	order                      []customer.OrderOption
+	inters                     []Interceptor
+	predicates                 []predicate.Customer
+	withBusinessUnit           *BusinessUnitQuery
+	withOrganization           *OrganizationQuery
+	withState                  *UsStateQuery
+	withShipments              *ShipmentQuery
+	withEmailProfile           *CustomerEmailProfileQuery
+	withRuleProfile            *CustomerRuleProfileQuery
+	withDetentionPolicies      *CustomerDetentionPolicyQuery
+	withContacts               *CustomerContactQuery
+	withDeliverySlots          *DeliverySlotQuery
+	modifiers                  []func(*sql.Selector)
+	withNamedShipments         map[string]*ShipmentQuery
+	withNamedDetentionPolicies map[string]*CustomerDetentionPolicyQuery
+	withNamedContacts          map[string]*CustomerContactQuery
+	withNamedDeliverySlots     map[string]*DeliverySlotQuery
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
 	path func(context.Context) (*sql.Selector, error)
@@ -150,6 +163,116 @@ func (cq *CustomerQuery) QueryShipments() *ShipmentQuery {
 			sqlgraph.From(customer.Table, customer.FieldID, selector),
 			sqlgraph.To(shipment.Table, shipment.FieldID),
 			sqlgraph.Edge(sqlgraph.O2M, false, customer.ShipmentsTable, customer.ShipmentsColumn),
+		)
+		fromU = sqlgraph.SetNeighbors(cq.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
+}
+
+// QueryEmailProfile chains the current query on the "email_profile" edge.
+func (cq *CustomerQuery) QueryEmailProfile() *CustomerEmailProfileQuery {
+	query := (&CustomerEmailProfileClient{config: cq.config}).Query()
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := cq.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := cq.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(customer.Table, customer.FieldID, selector),
+			sqlgraph.To(customeremailprofile.Table, customeremailprofile.FieldID),
+			sqlgraph.Edge(sqlgraph.O2O, false, customer.EmailProfileTable, customer.EmailProfileColumn),
+		)
+		fromU = sqlgraph.SetNeighbors(cq.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
+}
+
+// QueryRuleProfile chains the current query on the "rule_profile" edge.
+func (cq *CustomerQuery) QueryRuleProfile() *CustomerRuleProfileQuery {
+	query := (&CustomerRuleProfileClient{config: cq.config}).Query()
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := cq.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := cq.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(customer.Table, customer.FieldID, selector),
+			sqlgraph.To(customerruleprofile.Table, customerruleprofile.FieldID),
+			sqlgraph.Edge(sqlgraph.O2O, false, customer.RuleProfileTable, customer.RuleProfileColumn),
+		)
+		fromU = sqlgraph.SetNeighbors(cq.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
+}
+
+// QueryDetentionPolicies chains the current query on the "detention_policies" edge.
+func (cq *CustomerQuery) QueryDetentionPolicies() *CustomerDetentionPolicyQuery {
+	query := (&CustomerDetentionPolicyClient{config: cq.config}).Query()
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := cq.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := cq.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(customer.Table, customer.FieldID, selector),
+			sqlgraph.To(customerdetentionpolicy.Table, customerdetentionpolicy.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, customer.DetentionPoliciesTable, customer.DetentionPoliciesColumn),
+		)
+		fromU = sqlgraph.SetNeighbors(cq.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
+}
+
+// QueryContacts chains the current query on the "contacts" edge.
+func (cq *CustomerQuery) QueryContacts() *CustomerContactQuery {
+	query := (&CustomerContactClient{config: cq.config}).Query()
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := cq.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := cq.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(customer.Table, customer.FieldID, selector),
+			sqlgraph.To(customercontact.Table, customercontact.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, customer.ContactsTable, customer.ContactsColumn),
+		)
+		fromU = sqlgraph.SetNeighbors(cq.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
+}
+
+// QueryDeliverySlots chains the current query on the "delivery_slots" edge.
+func (cq *CustomerQuery) QueryDeliverySlots() *DeliverySlotQuery {
+	query := (&DeliverySlotClient{config: cq.config}).Query()
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := cq.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := cq.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(customer.Table, customer.FieldID, selector),
+			sqlgraph.To(deliveryslot.Table, deliveryslot.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, customer.DeliverySlotsTable, customer.DeliverySlotsColumn),
 		)
 		fromU = sqlgraph.SetNeighbors(cq.driver.Dialect(), step)
 		return fromU, nil
@@ -344,15 +467,20 @@ func (cq *CustomerQuery) Clone() *CustomerQuery {
 		return nil
 	}
 	return &CustomerQuery{
-		config:           cq.config,
-		ctx:              cq.ctx.Clone(),
-		order:            append([]customer.OrderOption{}, cq.order...),
-		inters:           append([]Interceptor{}, cq.inters...),
-		predicates:       append([]predicate.Customer{}, cq.predicates...),
-		withBusinessUnit: cq.withBusinessUnit.Clone(),
-		withOrganization: cq.withOrganization.Clone(),
-		withState:        cq.withState.Clone(),
-		withShipments:    cq.withShipments.Clone(),
+		config:                cq.config,
+		ctx:                   cq.ctx.Clone(),
+		order:                 append([]customer.OrderOption{}, cq.order...),
+		inters:                append([]Interceptor{}, cq.inters...),
+		predicates:            append([]predicate.Customer{}, cq.predicates...),
+		withBusinessUnit:      cq.withBusinessUnit.Clone(),
+		withOrganization:      cq.withOrganization.Clone(),
+		withState:             cq.withState.Clone(),
+		withShipments:         cq.withShipments.Clone(),
+		withEmailProfile:      cq.withEmailProfile.Clone(),
+		withRuleProfile:       cq.withRuleProfile.Clone(),
+		withDetentionPolicies: cq.withDetentionPolicies.Clone(),
+		withContacts:          cq.withContacts.Clone(),
+		withDeliverySlots:     cq.withDeliverySlots.Clone(),
 		// clone intermediate query.
 		sql:  cq.sql.Clone(),
 		path: cq.path,
@@ -400,6 +528,61 @@ func (cq *CustomerQuery) WithShipments(opts ...func(*ShipmentQuery)) *CustomerQu
 		opt(query)
 	}
 	cq.withShipments = query
+	return cq
+}
+
+// WithEmailProfile tells the query-builder to eager-load the nodes that are connected to
+// the "email_profile" edge. The optional arguments are used to configure the query builder of the edge.
+func (cq *CustomerQuery) WithEmailProfile(opts ...func(*CustomerEmailProfileQuery)) *CustomerQuery {
+	query := (&CustomerEmailProfileClient{config: cq.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	cq.withEmailProfile = query
+	return cq
+}
+
+// WithRuleProfile tells the query-builder to eager-load the nodes that are connected to
+// the "rule_profile" edge. The optional arguments are used to configure the query builder of the edge.
+func (cq *CustomerQuery) WithRuleProfile(opts ...func(*CustomerRuleProfileQuery)) *CustomerQuery {
+	query := (&CustomerRuleProfileClient{config: cq.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	cq.withRuleProfile = query
+	return cq
+}
+
+// WithDetentionPolicies tells the query-builder to eager-load the nodes that are connected to
+// the "detention_policies" edge. The optional arguments are used to configure the query builder of the edge.
+func (cq *CustomerQuery) WithDetentionPolicies(opts ...func(*CustomerDetentionPolicyQuery)) *CustomerQuery {
+	query := (&CustomerDetentionPolicyClient{config: cq.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	cq.withDetentionPolicies = query
+	return cq
+}
+
+// WithContacts tells the query-builder to eager-load the nodes that are connected to
+// the "contacts" edge. The optional arguments are used to configure the query builder of the edge.
+func (cq *CustomerQuery) WithContacts(opts ...func(*CustomerContactQuery)) *CustomerQuery {
+	query := (&CustomerContactClient{config: cq.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	cq.withContacts = query
+	return cq
+}
+
+// WithDeliverySlots tells the query-builder to eager-load the nodes that are connected to
+// the "delivery_slots" edge. The optional arguments are used to configure the query builder of the edge.
+func (cq *CustomerQuery) WithDeliverySlots(opts ...func(*DeliverySlotQuery)) *CustomerQuery {
+	query := (&DeliverySlotClient{config: cq.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	cq.withDeliverySlots = query
 	return cq
 }
 
@@ -481,11 +664,16 @@ func (cq *CustomerQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Cus
 	var (
 		nodes       = []*Customer{}
 		_spec       = cq.querySpec()
-		loadedTypes = [4]bool{
+		loadedTypes = [9]bool{
 			cq.withBusinessUnit != nil,
 			cq.withOrganization != nil,
 			cq.withState != nil,
 			cq.withShipments != nil,
+			cq.withEmailProfile != nil,
+			cq.withRuleProfile != nil,
+			cq.withDetentionPolicies != nil,
+			cq.withContacts != nil,
+			cq.withDeliverySlots != nil,
 		}
 	)
 	_spec.ScanValues = func(columns []string) ([]any, error) {
@@ -534,10 +722,66 @@ func (cq *CustomerQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Cus
 			return nil, err
 		}
 	}
+	if query := cq.withEmailProfile; query != nil {
+		if err := cq.loadEmailProfile(ctx, query, nodes, nil,
+			func(n *Customer, e *CustomerEmailProfile) { n.Edges.EmailProfile = e }); err != nil {
+			return nil, err
+		}
+	}
+	if query := cq.withRuleProfile; query != nil {
+		if err := cq.loadRuleProfile(ctx, query, nodes, nil,
+			func(n *Customer, e *CustomerRuleProfile) { n.Edges.RuleProfile = e }); err != nil {
+			return nil, err
+		}
+	}
+	if query := cq.withDetentionPolicies; query != nil {
+		if err := cq.loadDetentionPolicies(ctx, query, nodes,
+			func(n *Customer) { n.Edges.DetentionPolicies = []*CustomerDetentionPolicy{} },
+			func(n *Customer, e *CustomerDetentionPolicy) {
+				n.Edges.DetentionPolicies = append(n.Edges.DetentionPolicies, e)
+			}); err != nil {
+			return nil, err
+		}
+	}
+	if query := cq.withContacts; query != nil {
+		if err := cq.loadContacts(ctx, query, nodes,
+			func(n *Customer) { n.Edges.Contacts = []*CustomerContact{} },
+			func(n *Customer, e *CustomerContact) { n.Edges.Contacts = append(n.Edges.Contacts, e) }); err != nil {
+			return nil, err
+		}
+	}
+	if query := cq.withDeliverySlots; query != nil {
+		if err := cq.loadDeliverySlots(ctx, query, nodes,
+			func(n *Customer) { n.Edges.DeliverySlots = []*DeliverySlot{} },
+			func(n *Customer, e *DeliverySlot) { n.Edges.DeliverySlots = append(n.Edges.DeliverySlots, e) }); err != nil {
+			return nil, err
+		}
+	}
 	for name, query := range cq.withNamedShipments {
 		if err := cq.loadShipments(ctx, query, nodes,
 			func(n *Customer) { n.appendNamedShipments(name) },
 			func(n *Customer, e *Shipment) { n.appendNamedShipments(name, e) }); err != nil {
+			return nil, err
+		}
+	}
+	for name, query := range cq.withNamedDetentionPolicies {
+		if err := cq.loadDetentionPolicies(ctx, query, nodes,
+			func(n *Customer) { n.appendNamedDetentionPolicies(name) },
+			func(n *Customer, e *CustomerDetentionPolicy) { n.appendNamedDetentionPolicies(name, e) }); err != nil {
+			return nil, err
+		}
+	}
+	for name, query := range cq.withNamedContacts {
+		if err := cq.loadContacts(ctx, query, nodes,
+			func(n *Customer) { n.appendNamedContacts(name) },
+			func(n *Customer, e *CustomerContact) { n.appendNamedContacts(name, e) }); err != nil {
+			return nil, err
+		}
+	}
+	for name, query := range cq.withNamedDeliverySlots {
+		if err := cq.loadDeliverySlots(ctx, query, nodes,
+			func(n *Customer) { n.appendNamedDeliverySlots(name) },
+			func(n *Customer, e *DeliverySlot) { n.appendNamedDeliverySlots(name, e) }); err != nil {
 			return nil, err
 		}
 	}
@@ -646,6 +890,150 @@ func (cq *CustomerQuery) loadShipments(ctx context.Context, query *ShipmentQuery
 	}
 	query.Where(predicate.Shipment(func(s *sql.Selector) {
 		s.Where(sql.InValues(s.C(customer.ShipmentsColumn), fks...))
+	}))
+	neighbors, err := query.All(ctx)
+	if err != nil {
+		return err
+	}
+	for _, n := range neighbors {
+		fk := n.CustomerID
+		node, ok := nodeids[fk]
+		if !ok {
+			return fmt.Errorf(`unexpected referenced foreign-key "customer_id" returned %v for node %v`, fk, n.ID)
+		}
+		assign(node, n)
+	}
+	return nil
+}
+func (cq *CustomerQuery) loadEmailProfile(ctx context.Context, query *CustomerEmailProfileQuery, nodes []*Customer, init func(*Customer), assign func(*Customer, *CustomerEmailProfile)) error {
+	fks := make([]driver.Value, 0, len(nodes))
+	nodeids := make(map[uuid.UUID]*Customer)
+	for i := range nodes {
+		fks = append(fks, nodes[i].ID)
+		nodeids[nodes[i].ID] = nodes[i]
+	}
+	if len(query.ctx.Fields) > 0 {
+		query.ctx.AppendFieldOnce(customeremailprofile.FieldCustomerID)
+	}
+	query.Where(predicate.CustomerEmailProfile(func(s *sql.Selector) {
+		s.Where(sql.InValues(s.C(customer.EmailProfileColumn), fks...))
+	}))
+	neighbors, err := query.All(ctx)
+	if err != nil {
+		return err
+	}
+	for _, n := range neighbors {
+		fk := n.CustomerID
+		node, ok := nodeids[fk]
+		if !ok {
+			return fmt.Errorf(`unexpected referenced foreign-key "customer_id" returned %v for node %v`, fk, n.ID)
+		}
+		assign(node, n)
+	}
+	return nil
+}
+func (cq *CustomerQuery) loadRuleProfile(ctx context.Context, query *CustomerRuleProfileQuery, nodes []*Customer, init func(*Customer), assign func(*Customer, *CustomerRuleProfile)) error {
+	fks := make([]driver.Value, 0, len(nodes))
+	nodeids := make(map[uuid.UUID]*Customer)
+	for i := range nodes {
+		fks = append(fks, nodes[i].ID)
+		nodeids[nodes[i].ID] = nodes[i]
+	}
+	if len(query.ctx.Fields) > 0 {
+		query.ctx.AppendFieldOnce(customerruleprofile.FieldCustomerID)
+	}
+	query.Where(predicate.CustomerRuleProfile(func(s *sql.Selector) {
+		s.Where(sql.InValues(s.C(customer.RuleProfileColumn), fks...))
+	}))
+	neighbors, err := query.All(ctx)
+	if err != nil {
+		return err
+	}
+	for _, n := range neighbors {
+		fk := n.CustomerID
+		node, ok := nodeids[fk]
+		if !ok {
+			return fmt.Errorf(`unexpected referenced foreign-key "customer_id" returned %v for node %v`, fk, n.ID)
+		}
+		assign(node, n)
+	}
+	return nil
+}
+func (cq *CustomerQuery) loadDetentionPolicies(ctx context.Context, query *CustomerDetentionPolicyQuery, nodes []*Customer, init func(*Customer), assign func(*Customer, *CustomerDetentionPolicy)) error {
+	fks := make([]driver.Value, 0, len(nodes))
+	nodeids := make(map[uuid.UUID]*Customer)
+	for i := range nodes {
+		fks = append(fks, nodes[i].ID)
+		nodeids[nodes[i].ID] = nodes[i]
+		if init != nil {
+			init(nodes[i])
+		}
+	}
+	if len(query.ctx.Fields) > 0 {
+		query.ctx.AppendFieldOnce(customerdetentionpolicy.FieldCustomerID)
+	}
+	query.Where(predicate.CustomerDetentionPolicy(func(s *sql.Selector) {
+		s.Where(sql.InValues(s.C(customer.DetentionPoliciesColumn), fks...))
+	}))
+	neighbors, err := query.All(ctx)
+	if err != nil {
+		return err
+	}
+	for _, n := range neighbors {
+		fk := n.CustomerID
+		node, ok := nodeids[fk]
+		if !ok {
+			return fmt.Errorf(`unexpected referenced foreign-key "customer_id" returned %v for node %v`, fk, n.ID)
+		}
+		assign(node, n)
+	}
+	return nil
+}
+func (cq *CustomerQuery) loadContacts(ctx context.Context, query *CustomerContactQuery, nodes []*Customer, init func(*Customer), assign func(*Customer, *CustomerContact)) error {
+	fks := make([]driver.Value, 0, len(nodes))
+	nodeids := make(map[uuid.UUID]*Customer)
+	for i := range nodes {
+		fks = append(fks, nodes[i].ID)
+		nodeids[nodes[i].ID] = nodes[i]
+		if init != nil {
+			init(nodes[i])
+		}
+	}
+	if len(query.ctx.Fields) > 0 {
+		query.ctx.AppendFieldOnce(customercontact.FieldCustomerID)
+	}
+	query.Where(predicate.CustomerContact(func(s *sql.Selector) {
+		s.Where(sql.InValues(s.C(customer.ContactsColumn), fks...))
+	}))
+	neighbors, err := query.All(ctx)
+	if err != nil {
+		return err
+	}
+	for _, n := range neighbors {
+		fk := n.CustomerID
+		node, ok := nodeids[fk]
+		if !ok {
+			return fmt.Errorf(`unexpected referenced foreign-key "customer_id" returned %v for node %v`, fk, n.ID)
+		}
+		assign(node, n)
+	}
+	return nil
+}
+func (cq *CustomerQuery) loadDeliverySlots(ctx context.Context, query *DeliverySlotQuery, nodes []*Customer, init func(*Customer), assign func(*Customer, *DeliverySlot)) error {
+	fks := make([]driver.Value, 0, len(nodes))
+	nodeids := make(map[uuid.UUID]*Customer)
+	for i := range nodes {
+		fks = append(fks, nodes[i].ID)
+		nodeids[nodes[i].ID] = nodes[i]
+		if init != nil {
+			init(nodes[i])
+		}
+	}
+	if len(query.ctx.Fields) > 0 {
+		query.ctx.AppendFieldOnce(deliveryslot.FieldCustomerID)
+	}
+	query.Where(predicate.DeliverySlot(func(s *sql.Selector) {
+		s.Where(sql.InValues(s.C(customer.DeliverySlotsColumn), fks...))
 	}))
 	neighbors, err := query.All(ctx)
 	if err != nil {
@@ -775,6 +1163,48 @@ func (cq *CustomerQuery) WithNamedShipments(name string, opts ...func(*ShipmentQ
 		cq.withNamedShipments = make(map[string]*ShipmentQuery)
 	}
 	cq.withNamedShipments[name] = query
+	return cq
+}
+
+// WithNamedDetentionPolicies tells the query-builder to eager-load the nodes that are connected to the "detention_policies"
+// edge with the given name. The optional arguments are used to configure the query builder of the edge.
+func (cq *CustomerQuery) WithNamedDetentionPolicies(name string, opts ...func(*CustomerDetentionPolicyQuery)) *CustomerQuery {
+	query := (&CustomerDetentionPolicyClient{config: cq.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	if cq.withNamedDetentionPolicies == nil {
+		cq.withNamedDetentionPolicies = make(map[string]*CustomerDetentionPolicyQuery)
+	}
+	cq.withNamedDetentionPolicies[name] = query
+	return cq
+}
+
+// WithNamedContacts tells the query-builder to eager-load the nodes that are connected to the "contacts"
+// edge with the given name. The optional arguments are used to configure the query builder of the edge.
+func (cq *CustomerQuery) WithNamedContacts(name string, opts ...func(*CustomerContactQuery)) *CustomerQuery {
+	query := (&CustomerContactClient{config: cq.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	if cq.withNamedContacts == nil {
+		cq.withNamedContacts = make(map[string]*CustomerContactQuery)
+	}
+	cq.withNamedContacts[name] = query
+	return cq
+}
+
+// WithNamedDeliverySlots tells the query-builder to eager-load the nodes that are connected to the "delivery_slots"
+// edge with the given name. The optional arguments are used to configure the query builder of the edge.
+func (cq *CustomerQuery) WithNamedDeliverySlots(name string, opts ...func(*DeliverySlotQuery)) *CustomerQuery {
+	query := (&DeliverySlotClient{config: cq.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	if cq.withNamedDeliverySlots == nil {
+		cq.withNamedDeliverySlots = make(map[string]*DeliverySlotQuery)
+	}
+	cq.withNamedDeliverySlots[name] = query
 	return cq
 }
 

@@ -102,16 +102,7 @@ func (h *ShipmentControlHandler) UpdateShipmentControlByID() fiber.Handler {
 		data := new(ent.ShipmentControl)
 
 		if err := util.ParseBodyAndValidate(c, data); err != nil {
-			return c.Status(fiber.StatusBadRequest).JSON(types.ValidationErrorResponse{
-				Type: "invalidRequest",
-				Errors: []types.ValidationErrorDetail{
-					{
-						Code:   "invalidRequest",
-						Detail: err.Error(),
-						Attr:   "request body",
-					},
-				},
-			})
+			return err
 		}
 
 		data.ID = uuid.MustParse(shipmentControlID)

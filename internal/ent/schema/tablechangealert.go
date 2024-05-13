@@ -76,7 +76,6 @@ func (TableChangeAlert) Fields() []ent.Field {
 				dialect.SQLite:   "VARCHAR(50)",
 			}).
 			StructTag(`json:"listenerName"`),
-		// TODO(Wolfred): turn `email_receipients` into a relationship with the User entity
 		field.Text("email_recipients").
 			Optional().
 			StructTag(`json:"emailRecipients" validate:"omitempty,commaSeparatedEmails"`),

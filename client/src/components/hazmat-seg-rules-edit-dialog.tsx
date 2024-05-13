@@ -27,12 +27,15 @@ function HazmatRuleEditForm({
 }) {
   const { hazmatSegRulesForm } = useHazmatSegRulesForm(hazmatRule);
 
+  const { reset } = hazmatSegRulesForm;
+
   const mutation = useCustomMutation<FormValues>(hazmatSegRulesForm.control, {
     method: "PUT",
     path: `/hazardous-material-segregations/${hazmatRule.id}/`,
     successMessage: "Hazardous Material updated successfully.",
     queryKeysToInvalidate: "hazardousMaterialsSegregations",
     closeModal: true,
+    reset,
     errorMessage: "Failed to update Hazardous Material.",
   });
 

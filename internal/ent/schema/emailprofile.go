@@ -69,6 +69,11 @@ func (EmailProfile) Hooks() []ent.Hook {
 	}
 }
 
+// Edges of the EmailProfile.
+func (EmailProfile) Edges() []ent.Edge {
+	return nil
+}
+
 // emailProfileHook centralizes the logic for mutating email profiles.
 func emailProfileHook(next ent.Mutator) ent.Mutator {
 	return hook.EmailProfileFunc(func(ctx context.Context, m *gen.EmailProfileMutation) (ent.Value, error) {
@@ -145,9 +150,4 @@ func checkExistingDefaultProfile(ctx context.Context, m *gen.EmailProfileMutatio
 		return false, errors.New("cannot set multiple default email profiles for the same organization")
 	}
 	return true, nil
-}
-
-// Edges of the EmailProfile.
-func (EmailProfile) Edges() []ent.Edge {
-	return nil
 }

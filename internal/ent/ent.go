@@ -20,8 +20,13 @@ import (
 	"github.com/emoss08/trenova/internal/ent/commenttype"
 	"github.com/emoss08/trenova/internal/ent/commodity"
 	"github.com/emoss08/trenova/internal/ent/customer"
+	"github.com/emoss08/trenova/internal/ent/customercontact"
+	"github.com/emoss08/trenova/internal/ent/customerdetentionpolicy"
+	"github.com/emoss08/trenova/internal/ent/customeremailprofile"
+	"github.com/emoss08/trenova/internal/ent/customerruleprofile"
 	"github.com/emoss08/trenova/internal/ent/customreport"
 	"github.com/emoss08/trenova/internal/ent/delaycode"
+	"github.com/emoss08/trenova/internal/ent/deliveryslot"
 	"github.com/emoss08/trenova/internal/ent/dispatchcontrol"
 	"github.com/emoss08/trenova/internal/ent/divisioncode"
 	"github.com/emoss08/trenova/internal/ent/documentclassification"
@@ -145,7 +150,12 @@ func checkColumn(table, column string) error {
 			commodity.Table:                    commodity.ValidColumn,
 			customreport.Table:                 customreport.ValidColumn,
 			customer.Table:                     customer.ValidColumn,
+			customercontact.Table:              customercontact.ValidColumn,
+			customerdetentionpolicy.Table:      customerdetentionpolicy.ValidColumn,
+			customeremailprofile.Table:         customeremailprofile.ValidColumn,
+			customerruleprofile.Table:          customerruleprofile.ValidColumn,
 			delaycode.Table:                    delaycode.ValidColumn,
+			deliveryslot.Table:                 deliveryslot.ValidColumn,
 			dispatchcontrol.Table:              dispatchcontrol.ValidColumn,
 			divisioncode.Table:                 divisioncode.ValidColumn,
 			documentclassification.Table:       documentclassification.ValidColumn,

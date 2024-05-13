@@ -10,6 +10,7 @@ import (
 	"entgo.io/ent"
 	"entgo.io/ent/dialect/sql"
 	"github.com/emoss08/trenova/internal/ent/businessunit"
+	"github.com/emoss08/trenova/internal/ent/customerruleprofile"
 	"github.com/emoss08/trenova/internal/ent/documentclassification"
 	"github.com/emoss08/trenova/internal/ent/organization"
 	"github.com/google/uuid"
@@ -40,8 +41,9 @@ type DocumentClassification struct {
 	Color string `json:"color" validate:"omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
 	// The values are being populated by the DocumentClassificationQuery when eager-loading is set.
-	Edges        DocumentClassificationEdges `json:"edges"`
-	selectValues sql.SelectValues
+	Edges                                          DocumentClassificationEdges `json:"edges"`
+	customer_rule_profile_document_classifications *uuid.UUID
+	selectValues                                   sql.SelectValues
 }
 
 // DocumentClassificationEdges holds the relations/edges for other nodes in the graph.
@@ -52,9 +54,11 @@ type DocumentClassificationEdges struct {
 	Organization *Organization `json:"organization,omitempty"`
 	// ShipmentDocumentation holds the value of the shipment_documentation edge.
 	ShipmentDocumentation []*ShipmentDocumentation `json:"shipmentDocumentation,omitempty"`
+	// CustomerRuleProfile holds the value of the customer_rule_profile edge.
+	CustomerRuleProfile *CustomerRuleProfile `json:"customerRuleProfile,omitempty"`
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
-	loadedTypes                [3]bool
+	loadedTypes                [4]bool
 	namedShipmentDocumentation map[string][]*ShipmentDocumentation
 }
 
@@ -89,6 +93,17 @@ func (e DocumentClassificationEdges) ShipmentDocumentationOrErr() ([]*ShipmentDo
 	return nil, &NotLoadedError{edge: "shipment_documentation"}
 }
 
+// CustomerRuleProfileOrErr returns the CustomerRuleProfile value or an error if the edge
+// was not loaded in eager-loading, or loaded but was not found.
+func (e DocumentClassificationEdges) CustomerRuleProfileOrErr() (*CustomerRuleProfile, error) {
+	if e.CustomerRuleProfile != nil {
+		return e.CustomerRuleProfile, nil
+	} else if e.loadedTypes[3] {
+		return nil, &NotFoundError{label: customerruleprofile.Label}
+	}
+	return nil, &NotLoadedError{edge: "customer_rule_profile"}
+}
+
 // scanValues returns the types for scanning values from sql.Rows.
 func (*DocumentClassification) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
@@ -102,6 +117,8 @@ func (*DocumentClassification) scanValues(columns []string) ([]any, error) {
 			values[i] = new(sql.NullTime)
 		case documentclassification.FieldID, documentclassification.FieldBusinessUnitID, documentclassification.FieldOrganizationID:
 			values[i] = new(uuid.UUID)
+		case documentclassification.ForeignKeys[0]: // customer_rule_profile_document_classifications
+			values[i] = &sql.NullScanner{S: new(uuid.UUID)}
 		default:
 			values[i] = new(sql.UnknownType)
 		}
@@ -177,6 +194,13 @@ func (dc *DocumentClassification) assignValues(columns []string, values []any) e
 			} else if value.Valid {
 				dc.Color = value.String
 			}
+		case documentclassification.ForeignKeys[0]:
+			if value, ok := values[i].(*sql.NullScanner); !ok {
+				return fmt.Errorf("unexpected type %T for field customer_rule_profile_document_classifications", values[i])
+			} else if value.Valid {
+				dc.customer_rule_profile_document_classifications = new(uuid.UUID)
+				*dc.customer_rule_profile_document_classifications = *value.S.(*uuid.UUID)
+			}
 		default:
 			dc.selectValues.Set(columns[i], values[i])
 		}
@@ -203,6 +227,11 @@ func (dc *DocumentClassification) QueryOrganization() *OrganizationQuery {
 // QueryShipmentDocumentation queries the "shipment_documentation" edge of the DocumentClassification entity.
 func (dc *DocumentClassification) QueryShipmentDocumentation() *ShipmentDocumentationQuery {
 	return NewDocumentClassificationClient(dc.config).QueryShipmentDocumentation(dc)
+}
+
+// QueryCustomerRuleProfile queries the "customer_rule_profile" edge of the DocumentClassification entity.
+func (dc *DocumentClassification) QueryCustomerRuleProfile() *CustomerRuleProfileQuery {
+	return NewDocumentClassificationClient(dc.config).QueryCustomerRuleProfile(dc)
 }
 
 // Update returns a builder for updating this DocumentClassification.

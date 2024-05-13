@@ -56,6 +56,10 @@ func (DocumentClassification) Edges() []ent.Edge {
 	return []ent.Edge{
 		edge.To("shipment_documentation", ShipmentDocumentation.Type).
 			StructTag(`json:"shipmentDocumentation,omitempty"`),
+		edge.From("customer_rule_profile", CustomerRuleProfile.Type).
+			Ref("document_classifications").
+			Unique().
+			StructTag(`json:"customerRuleProfile,omitempty"`),
 	}
 }
 

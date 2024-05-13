@@ -67,30 +67,14 @@ export function CustomerTableSheet({ onOpenChange, open }: TableSheetProps) {
     resolver: yupResolver(customerSchema),
     defaultValues: {
       status: "A",
-      code: "",
       name: "",
       addressLine1: "",
       addressLine2: "",
       city: "",
-      state: "",
-      zipCode: "",
+      stateId: "",
+      postalCode: "",
       hasCustomerPortal: false,
       autoMarkReadyToBill: false,
-      deliverySlots: [],
-      contacts: [],
-      emailProfile: {
-        subject: "",
-        comment: "",
-        fromAddress: "",
-        blindCopy: "",
-        readReceipt: false,
-        readReceiptTo: "",
-        attachmentName: "",
-      },
-      ruleProfile: {
-        name: "",
-        documentClass: [],
-      },
     },
   });
 

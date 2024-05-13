@@ -42,6 +42,12 @@ func (r *CustomerService) GetCustomers(ctx context.Context, limit, offset int, o
 	entities, err := r.Client.Customer.Query().
 		Limit(limit).
 		Offset(offset).
+		WithContacts().
+		WithDeliverySlots().
+		WithDetentionPolicies().
+		WithEmailProfile().
+		WithRuleProfile().
+		WithState().
 		Where(
 			customer.HasOrganizationWith(
 				organization.IDEQ(orgID),

@@ -117,6 +117,54 @@ func (f CustomerFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, er
 	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.CustomerMutation", m)
 }
 
+// The CustomerContactFunc type is an adapter to allow the use of ordinary
+// function as CustomerContact mutator.
+type CustomerContactFunc func(context.Context, *ent.CustomerContactMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f CustomerContactFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.CustomerContactMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.CustomerContactMutation", m)
+}
+
+// The CustomerDetentionPolicyFunc type is an adapter to allow the use of ordinary
+// function as CustomerDetentionPolicy mutator.
+type CustomerDetentionPolicyFunc func(context.Context, *ent.CustomerDetentionPolicyMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f CustomerDetentionPolicyFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.CustomerDetentionPolicyMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.CustomerDetentionPolicyMutation", m)
+}
+
+// The CustomerEmailProfileFunc type is an adapter to allow the use of ordinary
+// function as CustomerEmailProfile mutator.
+type CustomerEmailProfileFunc func(context.Context, *ent.CustomerEmailProfileMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f CustomerEmailProfileFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.CustomerEmailProfileMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.CustomerEmailProfileMutation", m)
+}
+
+// The CustomerRuleProfileFunc type is an adapter to allow the use of ordinary
+// function as CustomerRuleProfile mutator.
+type CustomerRuleProfileFunc func(context.Context, *ent.CustomerRuleProfileMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f CustomerRuleProfileFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.CustomerRuleProfileMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.CustomerRuleProfileMutation", m)
+}
+
 // The DelayCodeFunc type is an adapter to allow the use of ordinary
 // function as DelayCode mutator.
 type DelayCodeFunc func(context.Context, *ent.DelayCodeMutation) (ent.Value, error)
@@ -127,6 +175,18 @@ func (f DelayCodeFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, e
 		return f(ctx, mv)
 	}
 	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.DelayCodeMutation", m)
+}
+
+// The DeliverySlotFunc type is an adapter to allow the use of ordinary
+// function as DeliverySlot mutator.
+type DeliverySlotFunc func(context.Context, *ent.DeliverySlotMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f DeliverySlotFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.DeliverySlotMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.DeliverySlotMutation", m)
 }
 
 // The DispatchControlFunc type is an adapter to allow the use of ordinary

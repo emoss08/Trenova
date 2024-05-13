@@ -39,6 +39,7 @@ func (Customer) Fields() []ent.Field {
 		field.String("code").
 			NotEmpty().
 			MaxLen(10).
+			Unique().
 			SchemaType(map[string]string{
 				dialect.Postgres: "VARCHAR(10)",
 				dialect.SQLite:   "VARCHAR(10)",
@@ -109,9 +110,22 @@ func (Customer) Edges() []ent.Edge {
 			Field("state_id").
 			Required().
 			StructTag(`json:"state"`).
+			Annotations(entsql.OnDelete(entsql.Restrict)).
+			Unique(),
+		edge.To("shipments", Shipment.Type).
+			Annotations(entsql.OnDelete(entsql.Restrict)),
+		edge.To("email_profile", CustomerEmailProfile.Type).
 			Annotations(entsql.OnDelete(entsql.Cascade)).
 			Unique(),
-		edge.To("shipments", Shipment.Type),
+		edge.To("rule_profile", CustomerRuleProfile.Type).
+			Annotations(entsql.OnDelete(entsql.Cascade)).
+			Unique(),
+		edge.To("detention_policies", CustomerDetentionPolicy.Type).
+			Annotations(entsql.OnDelete(entsql.Cascade)),
+		edge.To("contacts", CustomerContact.Type).
+			Annotations(entsql.OnDelete(entsql.Cascade)),
+		edge.To("delivery_slots", DeliverySlot.Type).
+			Annotations(entsql.OnDelete(entsql.Cascade)),
 	}
 }
 

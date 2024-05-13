@@ -328,7 +328,7 @@ var (
 		{Name: "updated_at", Type: field.TypeTime, Comment: "The last time that this entity was updated."},
 		{Name: "version", Type: field.TypeInt, Comment: "The current version of this entity.", Default: 1},
 		{Name: "status", Type: field.TypeEnum, Enums: []string{"A", "I"}, Default: "A", SchemaType: map[string]string{"postgres": "VARCHAR(1)", "sqlite3": "VARCHAR(1)"}},
-		{Name: "code", Type: field.TypeString, Size: 10, SchemaType: map[string]string{"postgres": "VARCHAR(10)", "sqlite3": "VARCHAR(10)"}},
+		{Name: "code", Type: field.TypeString, Unique: true, Size: 10, SchemaType: map[string]string{"postgres": "VARCHAR(10)", "sqlite3": "VARCHAR(10)"}},
 		{Name: "name", Type: field.TypeString, Size: 150, SchemaType: map[string]string{"postgres": "VARCHAR(150)", "sqlite3": "VARCHAR(150)"}},
 		{Name: "address_line_1", Type: field.TypeString, Size: 150, SchemaType: map[string]string{"postgres": "VARCHAR(150)", "sqlite3": "VARCHAR(150)"}},
 		{Name: "address_line_2", Type: field.TypeString, Nullable: true, Size: 150, SchemaType: map[string]string{"postgres": "VARCHAR(150)", "sqlite3": "VARCHAR(150)"}},
@@ -362,6 +362,207 @@ var (
 				Symbol:     "customers_us_states_state",
 				Columns:    []*schema.Column{CustomersColumns[15]},
 				RefColumns: []*schema.Column{UsStatesColumns[0]},
+				OnDelete:   schema.Restrict,
+			},
+		},
+	}
+	// CustomerContactsColumns holds the columns for the "customer_contacts" table.
+	CustomerContactsColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeUUID},
+		{Name: "created_at", Type: field.TypeTime, Comment: "The time that this entity was created."},
+		{Name: "updated_at", Type: field.TypeTime, Comment: "The last time that this entity was updated."},
+		{Name: "version", Type: field.TypeInt, Comment: "The current version of this entity.", Default: 1},
+		{Name: "name", Type: field.TypeString, Size: 150, SchemaType: map[string]string{"postgres": "VARCHAR(150)", "sqlite3": "VARCHAR(150)"}},
+		{Name: "email", Type: field.TypeString, Nullable: true, Size: 150, SchemaType: map[string]string{"postgres": "VARCHAR(150)", "sqlite3": "VARCHAR(150)"}},
+		{Name: "title", Type: field.TypeString, Nullable: true, Size: 100, SchemaType: map[string]string{"postgres": "VARCHAR(100)", "sqlite3": "VARCHAR(100)"}},
+		{Name: "phone_number", Type: field.TypeString, Nullable: true, Size: 15, SchemaType: map[string]string{"postgres": "VARCHAR(15)", "sqlite3": "VARCHAR(15)"}},
+		{Name: "is_payable_contact", Type: field.TypeBool, Default: false},
+		{Name: "customer_id", Type: field.TypeUUID},
+		{Name: "business_unit_id", Type: field.TypeUUID},
+		{Name: "organization_id", Type: field.TypeUUID},
+	}
+	// CustomerContactsTable holds the schema information for the "customer_contacts" table.
+	CustomerContactsTable = &schema.Table{
+		Name:       "customer_contacts",
+		Columns:    CustomerContactsColumns,
+		PrimaryKey: []*schema.Column{CustomerContactsColumns[0]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "customer_contacts_customers_contacts",
+				Columns:    []*schema.Column{CustomerContactsColumns[9]},
+				RefColumns: []*schema.Column{CustomersColumns[0]},
+				OnDelete:   schema.Cascade,
+			},
+			{
+				Symbol:     "customer_contacts_business_units_business_unit",
+				Columns:    []*schema.Column{CustomerContactsColumns[10]},
+				RefColumns: []*schema.Column{BusinessUnitsColumns[0]},
+				OnDelete:   schema.Cascade,
+			},
+			{
+				Symbol:     "customer_contacts_organizations_organization",
+				Columns:    []*schema.Column{CustomerContactsColumns[11]},
+				RefColumns: []*schema.Column{OrganizationsColumns[0]},
+				OnDelete:   schema.Cascade,
+			},
+		},
+	}
+	// CustomerDetentionPoliciesColumns holds the columns for the "customer_detention_policies" table.
+	CustomerDetentionPoliciesColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeUUID},
+		{Name: "created_at", Type: field.TypeTime, Comment: "The time that this entity was created."},
+		{Name: "updated_at", Type: field.TypeTime, Comment: "The last time that this entity was updated."},
+		{Name: "version", Type: field.TypeInt, Comment: "The current version of this entity.", Default: 1},
+		{Name: "status", Type: field.TypeEnum, Enums: []string{"A", "I"}, Default: "A", SchemaType: map[string]string{"postgres": "VARCHAR(1)", "sqlite3": "VARCHAR(1)"}},
+		{Name: "application_scope", Type: field.TypeEnum, Comment: "Specifies whether the policy applies to pickups, deliveries, or both.", Enums: []string{"PICKUP", "DELIVERY", "BOTH"}, Default: "PICKUP"},
+		{Name: "charge_free_time", Type: field.TypeInt, Nullable: true, Comment: "The threshold time (in minutes) for the start of detention charges. This represents the allowed free time before charges apply."},
+		{Name: "payment_free_time", Type: field.TypeInt, Nullable: true, Comment: "The time (in minutes) considered for calculating detention payments. This can differ from charge_free_time in certain scenarios."},
+		{Name: "late_arrival_policy", Type: field.TypeBool, Nullable: true, Comment: "Indicates whether the policy applies to late arrivals. True if detention charges apply to late arrivals.", Default: false},
+		{Name: "grace_period", Type: field.TypeInt, Nullable: true, Comment: "An additional time buffer (in minutes) provided before detention charges kick in, often used to accommodate slight delays."},
+		{Name: "units", Type: field.TypeInt, Nullable: true, Comment: "The number of units (e.g., pallets, containers) considered for detention charges."},
+		{Name: "amount", Type: field.TypeFloat64, SchemaType: map[string]string{"mysql": "decimal(19,4)", "postgres": "numeric(19,4)"}},
+		{Name: "notes", Type: field.TypeString, Nullable: true, Size: 2147483647, Comment: "Additional notes or comments about the detention policy."},
+		{Name: "effective_date", Type: field.TypeOther, Nullable: true, Comment: "The date when the detention policy becomes effective.", SchemaType: map[string]string{"postgres": "date", "sqlite3": "date"}},
+		{Name: "expiration_date", Type: field.TypeOther, Nullable: true, Comment: "The date when the detention policy expires.", SchemaType: map[string]string{"postgres": "date", "sqlite3": "date"}},
+		{Name: "customer_id", Type: field.TypeUUID},
+		{Name: "business_unit_id", Type: field.TypeUUID},
+		{Name: "organization_id", Type: field.TypeUUID},
+		{Name: "commodity_id", Type: field.TypeUUID, Nullable: true, Comment: "The type of commodity to which the detention policy applies. This helps in customizing policies for different commodities."},
+		{Name: "revenue_code_id", Type: field.TypeUUID, Nullable: true, Comment: "A unique code associated with the revenue generated from detention charges."},
+		{Name: "shipment_type_id", Type: field.TypeUUID, Nullable: true, Comment: "Type of shipment (e.g., Standard, Expedited) to which the detention policy is applicable."},
+		{Name: "accessorial_charge_id", Type: field.TypeUUID, Nullable: true, Comment: "The unique identifier for the accessorial charge associated with the detention policy."},
+	}
+	// CustomerDetentionPoliciesTable holds the schema information for the "customer_detention_policies" table.
+	CustomerDetentionPoliciesTable = &schema.Table{
+		Name:       "customer_detention_policies",
+		Columns:    CustomerDetentionPoliciesColumns,
+		PrimaryKey: []*schema.Column{CustomerDetentionPoliciesColumns[0]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "customer_detention_policies_customers_detention_policies",
+				Columns:    []*schema.Column{CustomerDetentionPoliciesColumns[15]},
+				RefColumns: []*schema.Column{CustomersColumns[0]},
+				OnDelete:   schema.Cascade,
+			},
+			{
+				Symbol:     "customer_detention_policies_business_units_business_unit",
+				Columns:    []*schema.Column{CustomerDetentionPoliciesColumns[16]},
+				RefColumns: []*schema.Column{BusinessUnitsColumns[0]},
+				OnDelete:   schema.Cascade,
+			},
+			{
+				Symbol:     "customer_detention_policies_organizations_organization",
+				Columns:    []*schema.Column{CustomerDetentionPoliciesColumns[17]},
+				RefColumns: []*schema.Column{OrganizationsColumns[0]},
+				OnDelete:   schema.Cascade,
+			},
+			{
+				Symbol:     "customer_detention_policies_commodities_commodity",
+				Columns:    []*schema.Column{CustomerDetentionPoliciesColumns[18]},
+				RefColumns: []*schema.Column{CommoditiesColumns[0]},
+				OnDelete:   schema.SetNull,
+			},
+			{
+				Symbol:     "customer_detention_policies_revenue_codes_revenue_code",
+				Columns:    []*schema.Column{CustomerDetentionPoliciesColumns[19]},
+				RefColumns: []*schema.Column{RevenueCodesColumns[0]},
+				OnDelete:   schema.SetNull,
+			},
+			{
+				Symbol:     "customer_detention_policies_shipment_types_shipment_type",
+				Columns:    []*schema.Column{CustomerDetentionPoliciesColumns[20]},
+				RefColumns: []*schema.Column{ShipmentTypesColumns[0]},
+				OnDelete:   schema.SetNull,
+			},
+			{
+				Symbol:     "customer_detention_policies_accessorial_charges_accessorial_charge",
+				Columns:    []*schema.Column{CustomerDetentionPoliciesColumns[21]},
+				RefColumns: []*schema.Column{AccessorialChargesColumns[0]},
+				OnDelete:   schema.SetNull,
+			},
+		},
+	}
+	// CustomerEmailProfilesColumns holds the columns for the "customer_email_profiles" table.
+	CustomerEmailProfilesColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeUUID},
+		{Name: "created_at", Type: field.TypeTime, Comment: "The time that this entity was created."},
+		{Name: "updated_at", Type: field.TypeTime, Comment: "The last time that this entity was updated."},
+		{Name: "version", Type: field.TypeInt, Comment: "The current version of this entity.", Default: 1},
+		{Name: "subject", Type: field.TypeString, Nullable: true, Size: 100, SchemaType: map[string]string{"postgres": "VARCHAR(100)", "sqlite3": "VARCHAR(100)"}},
+		{Name: "email_recipients", Type: field.TypeString, Size: 2147483647},
+		{Name: "email_cc_recipients", Type: field.TypeString, Nullable: true, Size: 2147483647},
+		{Name: "attachment_name", Type: field.TypeString, Nullable: true, Size: 2147483647},
+		{Name: "email_format", Type: field.TypeEnum, Enums: []string{"PLAIN", "HTML"}, Default: "PLAIN"},
+		{Name: "customer_id", Type: field.TypeUUID, Unique: true},
+		{Name: "business_unit_id", Type: field.TypeUUID},
+		{Name: "organization_id", Type: field.TypeUUID},
+		{Name: "email_profile_id", Type: field.TypeUUID, Nullable: true},
+	}
+	// CustomerEmailProfilesTable holds the schema information for the "customer_email_profiles" table.
+	CustomerEmailProfilesTable = &schema.Table{
+		Name:       "customer_email_profiles",
+		Columns:    CustomerEmailProfilesColumns,
+		PrimaryKey: []*schema.Column{CustomerEmailProfilesColumns[0]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "customer_email_profiles_customers_email_profile",
+				Columns:    []*schema.Column{CustomerEmailProfilesColumns[9]},
+				RefColumns: []*schema.Column{CustomersColumns[0]},
+				OnDelete:   schema.Cascade,
+			},
+			{
+				Symbol:     "customer_email_profiles_business_units_business_unit",
+				Columns:    []*schema.Column{CustomerEmailProfilesColumns[10]},
+				RefColumns: []*schema.Column{BusinessUnitsColumns[0]},
+				OnDelete:   schema.Cascade,
+			},
+			{
+				Symbol:     "customer_email_profiles_organizations_organization",
+				Columns:    []*schema.Column{CustomerEmailProfilesColumns[11]},
+				RefColumns: []*schema.Column{OrganizationsColumns[0]},
+				OnDelete:   schema.Cascade,
+			},
+			{
+				Symbol:     "customer_email_profiles_email_profiles_email_profile",
+				Columns:    []*schema.Column{CustomerEmailProfilesColumns[12]},
+				RefColumns: []*schema.Column{EmailProfilesColumns[0]},
+				OnDelete:   schema.SetNull,
+			},
+		},
+	}
+	// CustomerRuleProfilesColumns holds the columns for the "customer_rule_profiles" table.
+	CustomerRuleProfilesColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeUUID},
+		{Name: "created_at", Type: field.TypeTime, Comment: "The time that this entity was created."},
+		{Name: "updated_at", Type: field.TypeTime, Comment: "The last time that this entity was updated."},
+		{Name: "version", Type: field.TypeInt, Comment: "The current version of this entity.", Default: 1},
+		{Name: "billing_cycle", Type: field.TypeEnum, Enums: []string{"PER_SHIPMENT", "QUARTERLY", "MONTHLY", "ANNUALLY"}, Default: "PER_SHIPMENT"},
+		{Name: "customer_id", Type: field.TypeUUID, Unique: true},
+		{Name: "business_unit_id", Type: field.TypeUUID},
+		{Name: "organization_id", Type: field.TypeUUID},
+	}
+	// CustomerRuleProfilesTable holds the schema information for the "customer_rule_profiles" table.
+	CustomerRuleProfilesTable = &schema.Table{
+		Name:       "customer_rule_profiles",
+		Columns:    CustomerRuleProfilesColumns,
+		PrimaryKey: []*schema.Column{CustomerRuleProfilesColumns[0]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "customer_rule_profiles_customers_rule_profile",
+				Columns:    []*schema.Column{CustomerRuleProfilesColumns[5]},
+				RefColumns: []*schema.Column{CustomersColumns[0]},
+				OnDelete:   schema.Cascade,
+			},
+			{
+				Symbol:     "customer_rule_profiles_business_units_business_unit",
+				Columns:    []*schema.Column{CustomerRuleProfilesColumns[6]},
+				RefColumns: []*schema.Column{BusinessUnitsColumns[0]},
+				OnDelete:   schema.Cascade,
+			},
+			{
+				Symbol:     "customer_rule_profiles_organizations_organization",
+				Columns:    []*schema.Column{CustomerRuleProfilesColumns[7]},
+				RefColumns: []*schema.Column{OrganizationsColumns[0]},
 				OnDelete:   schema.Cascade,
 			},
 		},
@@ -396,6 +597,52 @@ var (
 				Symbol:     "delay_codes_organizations_organization",
 				Columns:    []*schema.Column{DelayCodesColumns[10]},
 				RefColumns: []*schema.Column{OrganizationsColumns[0]},
+				OnDelete:   schema.Cascade,
+			},
+		},
+	}
+	// DeliverySlotsColumns holds the columns for the "delivery_slots" table.
+	DeliverySlotsColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeUUID},
+		{Name: "created_at", Type: field.TypeTime, Comment: "The time that this entity was created."},
+		{Name: "updated_at", Type: field.TypeTime, Comment: "The last time that this entity was updated."},
+		{Name: "version", Type: field.TypeInt, Comment: "The current version of this entity.", Default: 1},
+		{Name: "day_of_week", Type: field.TypeEnum, Enums: []string{"SUNDAY", "MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY", "SATURDAY"}},
+		{Name: "start_time", Type: field.TypeOther, SchemaType: map[string]string{"postgres": "time", "sqlite3": "text"}},
+		{Name: "end_time", Type: field.TypeOther, SchemaType: map[string]string{"postgres": "time", "sqlite3": "text"}},
+		{Name: "customer_id", Type: field.TypeUUID},
+		{Name: "business_unit_id", Type: field.TypeUUID},
+		{Name: "organization_id", Type: field.TypeUUID},
+		{Name: "location_id", Type: field.TypeUUID},
+	}
+	// DeliverySlotsTable holds the schema information for the "delivery_slots" table.
+	DeliverySlotsTable = &schema.Table{
+		Name:       "delivery_slots",
+		Columns:    DeliverySlotsColumns,
+		PrimaryKey: []*schema.Column{DeliverySlotsColumns[0]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "delivery_slots_customers_delivery_slots",
+				Columns:    []*schema.Column{DeliverySlotsColumns[7]},
+				RefColumns: []*schema.Column{CustomersColumns[0]},
+				OnDelete:   schema.Cascade,
+			},
+			{
+				Symbol:     "delivery_slots_business_units_business_unit",
+				Columns:    []*schema.Column{DeliverySlotsColumns[8]},
+				RefColumns: []*schema.Column{BusinessUnitsColumns[0]},
+				OnDelete:   schema.Cascade,
+			},
+			{
+				Symbol:     "delivery_slots_organizations_organization",
+				Columns:    []*schema.Column{DeliverySlotsColumns[9]},
+				RefColumns: []*schema.Column{OrganizationsColumns[0]},
+				OnDelete:   schema.Cascade,
+			},
+			{
+				Symbol:     "delivery_slots_locations_location",
+				Columns:    []*schema.Column{DeliverySlotsColumns[10]},
+				RefColumns: []*schema.Column{LocationsColumns[0]},
 				OnDelete:   schema.Cascade,
 			},
 		},
@@ -503,6 +750,7 @@ var (
 		{Name: "code", Type: field.TypeString, Size: 10, SchemaType: map[string]string{"postgres": "VARCHAR(10)", "sqlite3": "VARCHAR(10)"}},
 		{Name: "description", Type: field.TypeString, Nullable: true, Size: 2147483647},
 		{Name: "color", Type: field.TypeString, Nullable: true},
+		{Name: "customer_rule_profile_document_classifications", Type: field.TypeUUID, Nullable: true},
 		{Name: "business_unit_id", Type: field.TypeUUID},
 		{Name: "organization_id", Type: field.TypeUUID},
 	}
@@ -513,14 +761,20 @@ var (
 		PrimaryKey: []*schema.Column{DocumentClassificationsColumns[0]},
 		ForeignKeys: []*schema.ForeignKey{
 			{
-				Symbol:     "document_classifications_business_units_business_unit",
+				Symbol:     "document_classifications_customer_rule_profiles_document_classifications",
 				Columns:    []*schema.Column{DocumentClassificationsColumns[8]},
+				RefColumns: []*schema.Column{CustomerRuleProfilesColumns[0]},
+				OnDelete:   schema.SetNull,
+			},
+			{
+				Symbol:     "document_classifications_business_units_business_unit",
+				Columns:    []*schema.Column{DocumentClassificationsColumns[9]},
 				RefColumns: []*schema.Column{BusinessUnitsColumns[0]},
 				OnDelete:   schema.Cascade,
 			},
 			{
 				Symbol:     "document_classifications_organizations_organization",
-				Columns:    []*schema.Column{DocumentClassificationsColumns[9]},
+				Columns:    []*schema.Column{DocumentClassificationsColumns[10]},
 				RefColumns: []*schema.Column{OrganizationsColumns[0]},
 				OnDelete:   schema.Cascade,
 			},
@@ -1457,7 +1711,7 @@ var (
 		{Name: "id", Type: field.TypeUUID},
 		{Name: "created_at", Type: field.TypeTime},
 		{Name: "updated_at", Type: field.TypeTime},
-		{Name: "distance_method", Type: field.TypeEnum, Enums: []string{"Trenova", "Google"}, Default: "Trenova", SchemaType: map[string]string{"postgres": "VARCHAR(8)", "sqlite3": "VARCHAR(8)"}},
+		{Name: "distance_method", Type: field.TypeEnum, Enums: []string{"Trenova", "Google", "PCMiler"}, Default: "Trenova", SchemaType: map[string]string{"postgres": "VARCHAR(8)", "sqlite3": "VARCHAR(8)"}},
 		{Name: "mileage_unit", Type: field.TypeEnum, Enums: []string{"UnitsMetric", "UnitsImperial"}, Default: "UnitsMetric", SchemaType: map[string]string{"postgres": "VARCHAR(14)", "sqlite3": "VARCHAR(14)"}},
 		{Name: "generate_routes", Type: field.TypeBool, Default: false},
 		{Name: "organization_id", Type: field.TypeUUID, Unique: true},
@@ -1590,7 +1844,7 @@ var (
 				Symbol:     "shipments_customers_shipments",
 				Columns:    []*schema.Column{ShipmentsColumns[36]},
 				RefColumns: []*schema.Column{CustomersColumns[0]},
-				OnDelete:   schema.NoAction,
+				OnDelete:   schema.Restrict,
 			},
 			{
 				Symbol:     "shipments_business_units_business_unit",
@@ -2805,7 +3059,12 @@ var (
 		CommoditiesTable,
 		CustomReportsTable,
 		CustomersTable,
+		CustomerContactsTable,
+		CustomerDetentionPoliciesTable,
+		CustomerEmailProfilesTable,
+		CustomerRuleProfilesTable,
 		DelayCodesTable,
+		DeliverySlotsTable,
 		DispatchControlsTable,
 		DivisionCodesTable,
 		DocumentClassificationsTable,
@@ -2894,9 +3153,38 @@ func init() {
 	CustomersTable.ForeignKeys[1].RefTable = OrganizationsTable
 	CustomersTable.ForeignKeys[2].RefTable = UsStatesTable
 	CustomersTable.Annotation = &entsql.Annotation{}
+	CustomerContactsTable.ForeignKeys[0].RefTable = CustomersTable
+	CustomerContactsTable.ForeignKeys[1].RefTable = BusinessUnitsTable
+	CustomerContactsTable.ForeignKeys[2].RefTable = OrganizationsTable
+	CustomerContactsTable.Annotation = &entsql.Annotation{}
+	CustomerDetentionPoliciesTable.ForeignKeys[0].RefTable = CustomersTable
+	CustomerDetentionPoliciesTable.ForeignKeys[1].RefTable = BusinessUnitsTable
+	CustomerDetentionPoliciesTable.ForeignKeys[2].RefTable = OrganizationsTable
+	CustomerDetentionPoliciesTable.ForeignKeys[3].RefTable = CommoditiesTable
+	CustomerDetentionPoliciesTable.ForeignKeys[4].RefTable = RevenueCodesTable
+	CustomerDetentionPoliciesTable.ForeignKeys[5].RefTable = ShipmentTypesTable
+	CustomerDetentionPoliciesTable.ForeignKeys[6].RefTable = AccessorialChargesTable
+	CustomerDetentionPoliciesTable.Annotation = &entsql.Annotation{}
+	CustomerEmailProfilesTable.ForeignKeys[0].RefTable = CustomersTable
+	CustomerEmailProfilesTable.ForeignKeys[1].RefTable = BusinessUnitsTable
+	CustomerEmailProfilesTable.ForeignKeys[2].RefTable = OrganizationsTable
+	CustomerEmailProfilesTable.ForeignKeys[3].RefTable = EmailProfilesTable
+	CustomerEmailProfilesTable.Annotation = &entsql.Annotation{}
+	CustomerRuleProfilesTable.ForeignKeys[0].RefTable = CustomersTable
+	CustomerRuleProfilesTable.ForeignKeys[1].RefTable = BusinessUnitsTable
+	CustomerRuleProfilesTable.ForeignKeys[2].RefTable = OrganizationsTable
+	CustomerRuleProfilesTable.Annotation = &entsql.Annotation{}
 	DelayCodesTable.ForeignKeys[0].RefTable = BusinessUnitsTable
 	DelayCodesTable.ForeignKeys[1].RefTable = OrganizationsTable
 	DelayCodesTable.Annotation = &entsql.Annotation{}
+	DeliverySlotsTable.ForeignKeys[0].RefTable = CustomersTable
+	DeliverySlotsTable.ForeignKeys[1].RefTable = BusinessUnitsTable
+	DeliverySlotsTable.ForeignKeys[2].RefTable = OrganizationsTable
+	DeliverySlotsTable.ForeignKeys[3].RefTable = LocationsTable
+	DeliverySlotsTable.Annotation = &entsql.Annotation{}
+	DeliverySlotsTable.Annotation.Checks = map[string]string{
+		"valid_start_time_end_time": "start_time < end_time",
+	}
 	DispatchControlsTable.ForeignKeys[0].RefTable = BusinessUnitsTable
 	DispatchControlsTable.ForeignKeys[1].RefTable = OrganizationsTable
 	DivisionCodesTable.ForeignKeys[0].RefTable = BusinessUnitsTable
@@ -2905,8 +3193,9 @@ func init() {
 	DivisionCodesTable.ForeignKeys[3].RefTable = GeneralLedgerAccountsTable
 	DivisionCodesTable.ForeignKeys[4].RefTable = GeneralLedgerAccountsTable
 	DivisionCodesTable.Annotation = &entsql.Annotation{}
-	DocumentClassificationsTable.ForeignKeys[0].RefTable = BusinessUnitsTable
-	DocumentClassificationsTable.ForeignKeys[1].RefTable = OrganizationsTable
+	DocumentClassificationsTable.ForeignKeys[0].RefTable = CustomerRuleProfilesTable
+	DocumentClassificationsTable.ForeignKeys[1].RefTable = BusinessUnitsTable
+	DocumentClassificationsTable.ForeignKeys[2].RefTable = OrganizationsTable
 	DocumentClassificationsTable.Annotation = &entsql.Annotation{}
 	EmailControlsTable.ForeignKeys[0].RefTable = BusinessUnitsTable
 	EmailControlsTable.ForeignKeys[1].RefTable = EmailProfilesTable

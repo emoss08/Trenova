@@ -16,7 +16,7 @@ const ChangePasswordForm = lazy(
   () => import("@/components/user-settings/change-password-form"),
 );
 
-export default function UserProfileF({ user }: { user: User }) {
+export default function UserProfile({ user }: { user: User }) {
   const [activeTab, setActiveTab] = useState("personal-information");
 
   const linkGroups: LinkGroupProps[] = [

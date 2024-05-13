@@ -560,6 +560,29 @@ func HasShipmentDocumentationWith(preds ...predicate.ShipmentDocumentation) pred
 	})
 }
 
+// HasCustomerRuleProfile applies the HasEdge predicate on the "customer_rule_profile" edge.
+func HasCustomerRuleProfile() predicate.DocumentClassification {
+	return predicate.DocumentClassification(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, CustomerRuleProfileTable, CustomerRuleProfileColumn),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasCustomerRuleProfileWith applies the HasEdge predicate on the "customer_rule_profile" edge with a given conditions (other predicates).
+func HasCustomerRuleProfileWith(preds ...predicate.CustomerRuleProfile) predicate.DocumentClassification {
+	return predicate.DocumentClassification(func(s *sql.Selector) {
+		step := newCustomerRuleProfileStep()
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	})
+}
+
 // And groups predicates with the AND operator between them.
 func And(predicates ...predicate.DocumentClassification) predicate.DocumentClassification {
 	return predicate.DocumentClassification(sql.AndPredicates(predicates...))

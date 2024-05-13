@@ -11,6 +11,8 @@ import (
 	"entgo.io/ent/dialect/sql"
 	"github.com/emoss08/trenova/internal/ent/businessunit"
 	"github.com/emoss08/trenova/internal/ent/customer"
+	"github.com/emoss08/trenova/internal/ent/customeremailprofile"
+	"github.com/emoss08/trenova/internal/ent/customerruleprofile"
 	"github.com/emoss08/trenova/internal/ent/organization"
 	"github.com/emoss08/trenova/internal/ent/usstate"
 	"github.com/google/uuid"
@@ -67,10 +69,23 @@ type CustomerEdges struct {
 	State *UsState `json:"state"`
 	// Shipments holds the value of the shipments edge.
 	Shipments []*Shipment `json:"shipments,omitempty"`
+	// EmailProfile holds the value of the email_profile edge.
+	EmailProfile *CustomerEmailProfile `json:"email_profile,omitempty"`
+	// RuleProfile holds the value of the rule_profile edge.
+	RuleProfile *CustomerRuleProfile `json:"rule_profile,omitempty"`
+	// DetentionPolicies holds the value of the detention_policies edge.
+	DetentionPolicies []*CustomerDetentionPolicy `json:"detention_policies,omitempty"`
+	// Contacts holds the value of the contacts edge.
+	Contacts []*CustomerContact `json:"contacts,omitempty"`
+	// DeliverySlots holds the value of the delivery_slots edge.
+	DeliverySlots []*DeliverySlot `json:"delivery_slots,omitempty"`
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
-	loadedTypes    [4]bool
-	namedShipments map[string][]*Shipment
+	loadedTypes            [9]bool
+	namedShipments         map[string][]*Shipment
+	namedDetentionPolicies map[string][]*CustomerDetentionPolicy
+	namedContacts          map[string][]*CustomerContact
+	namedDeliverySlots     map[string][]*DeliverySlot
 }
 
 // BusinessUnitOrErr returns the BusinessUnit value or an error if the edge
@@ -113,6 +128,55 @@ func (e CustomerEdges) ShipmentsOrErr() ([]*Shipment, error) {
 		return e.Shipments, nil
 	}
 	return nil, &NotLoadedError{edge: "shipments"}
+}
+
+// EmailProfileOrErr returns the EmailProfile value or an error if the edge
+// was not loaded in eager-loading, or loaded but was not found.
+func (e CustomerEdges) EmailProfileOrErr() (*CustomerEmailProfile, error) {
+	if e.EmailProfile != nil {
+		return e.EmailProfile, nil
+	} else if e.loadedTypes[4] {
+		return nil, &NotFoundError{label: customeremailprofile.Label}
+	}
+	return nil, &NotLoadedError{edge: "email_profile"}
+}
+
+// RuleProfileOrErr returns the RuleProfile value or an error if the edge
+// was not loaded in eager-loading, or loaded but was not found.
+func (e CustomerEdges) RuleProfileOrErr() (*CustomerRuleProfile, error) {
+	if e.RuleProfile != nil {
+		return e.RuleProfile, nil
+	} else if e.loadedTypes[5] {
+		return nil, &NotFoundError{label: customerruleprofile.Label}
+	}
+	return nil, &NotLoadedError{edge: "rule_profile"}
+}
+
+// DetentionPoliciesOrErr returns the DetentionPolicies value or an error if the edge
+// was not loaded in eager-loading.
+func (e CustomerEdges) DetentionPoliciesOrErr() ([]*CustomerDetentionPolicy, error) {
+	if e.loadedTypes[6] {
+		return e.DetentionPolicies, nil
+	}
+	return nil, &NotLoadedError{edge: "detention_policies"}
+}
+
+// ContactsOrErr returns the Contacts value or an error if the edge
+// was not loaded in eager-loading.
+func (e CustomerEdges) ContactsOrErr() ([]*CustomerContact, error) {
+	if e.loadedTypes[7] {
+		return e.Contacts, nil
+	}
+	return nil, &NotLoadedError{edge: "contacts"}
+}
+
+// DeliverySlotsOrErr returns the DeliverySlots value or an error if the edge
+// was not loaded in eager-loading.
+func (e CustomerEdges) DeliverySlotsOrErr() ([]*DeliverySlot, error) {
+	if e.loadedTypes[8] {
+		return e.DeliverySlots, nil
+	}
+	return nil, &NotLoadedError{edge: "delivery_slots"}
 }
 
 // scanValues returns the types for scanning values from sql.Rows.
@@ -274,6 +338,31 @@ func (c *Customer) QueryShipments() *ShipmentQuery {
 	return NewCustomerClient(c.config).QueryShipments(c)
 }
 
+// QueryEmailProfile queries the "email_profile" edge of the Customer entity.
+func (c *Customer) QueryEmailProfile() *CustomerEmailProfileQuery {
+	return NewCustomerClient(c.config).QueryEmailProfile(c)
+}
+
+// QueryRuleProfile queries the "rule_profile" edge of the Customer entity.
+func (c *Customer) QueryRuleProfile() *CustomerRuleProfileQuery {
+	return NewCustomerClient(c.config).QueryRuleProfile(c)
+}
+
+// QueryDetentionPolicies queries the "detention_policies" edge of the Customer entity.
+func (c *Customer) QueryDetentionPolicies() *CustomerDetentionPolicyQuery {
+	return NewCustomerClient(c.config).QueryDetentionPolicies(c)
+}
+
+// QueryContacts queries the "contacts" edge of the Customer entity.
+func (c *Customer) QueryContacts() *CustomerContactQuery {
+	return NewCustomerClient(c.config).QueryContacts(c)
+}
+
+// QueryDeliverySlots queries the "delivery_slots" edge of the Customer entity.
+func (c *Customer) QueryDeliverySlots() *DeliverySlotQuery {
+	return NewCustomerClient(c.config).QueryDeliverySlots(c)
+}
+
 // Update returns a builder for updating this Customer.
 // Note that you need to call Customer.Unwrap() before calling this method if this Customer
 // was returned from a transaction, and the transaction was committed or rolled back.
@@ -366,6 +455,78 @@ func (c *Customer) appendNamedShipments(name string, edges ...*Shipment) {
 		c.Edges.namedShipments[name] = []*Shipment{}
 	} else {
 		c.Edges.namedShipments[name] = append(c.Edges.namedShipments[name], edges...)
+	}
+}
+
+// NamedDetentionPolicies returns the DetentionPolicies named value or an error if the edge was not
+// loaded in eager-loading with this name.
+func (c *Customer) NamedDetentionPolicies(name string) ([]*CustomerDetentionPolicy, error) {
+	if c.Edges.namedDetentionPolicies == nil {
+		return nil, &NotLoadedError{edge: name}
+	}
+	nodes, ok := c.Edges.namedDetentionPolicies[name]
+	if !ok {
+		return nil, &NotLoadedError{edge: name}
+	}
+	return nodes, nil
+}
+
+func (c *Customer) appendNamedDetentionPolicies(name string, edges ...*CustomerDetentionPolicy) {
+	if c.Edges.namedDetentionPolicies == nil {
+		c.Edges.namedDetentionPolicies = make(map[string][]*CustomerDetentionPolicy)
+	}
+	if len(edges) == 0 {
+		c.Edges.namedDetentionPolicies[name] = []*CustomerDetentionPolicy{}
+	} else {
+		c.Edges.namedDetentionPolicies[name] = append(c.Edges.namedDetentionPolicies[name], edges...)
+	}
+}
+
+// NamedContacts returns the Contacts named value or an error if the edge was not
+// loaded in eager-loading with this name.
+func (c *Customer) NamedContacts(name string) ([]*CustomerContact, error) {
+	if c.Edges.namedContacts == nil {
+		return nil, &NotLoadedError{edge: name}
+	}
+	nodes, ok := c.Edges.namedContacts[name]
+	if !ok {
+		return nil, &NotLoadedError{edge: name}
+	}
+	return nodes, nil
+}
+
+func (c *Customer) appendNamedContacts(name string, edges ...*CustomerContact) {
+	if c.Edges.namedContacts == nil {
+		c.Edges.namedContacts = make(map[string][]*CustomerContact)
+	}
+	if len(edges) == 0 {
+		c.Edges.namedContacts[name] = []*CustomerContact{}
+	} else {
+		c.Edges.namedContacts[name] = append(c.Edges.namedContacts[name], edges...)
+	}
+}
+
+// NamedDeliverySlots returns the DeliverySlots named value or an error if the edge was not
+// loaded in eager-loading with this name.
+func (c *Customer) NamedDeliverySlots(name string) ([]*DeliverySlot, error) {
+	if c.Edges.namedDeliverySlots == nil {
+		return nil, &NotLoadedError{edge: name}
+	}
+	nodes, ok := c.Edges.namedDeliverySlots[name]
+	if !ok {
+		return nil, &NotLoadedError{edge: name}
+	}
+	return nodes, nil
+}
+
+func (c *Customer) appendNamedDeliverySlots(name string, edges ...*DeliverySlot) {
+	if c.Edges.namedDeliverySlots == nil {
+		c.Edges.namedDeliverySlots = make(map[string][]*DeliverySlot)
+	}
+	if len(edges) == 0 {
+		c.Edges.namedDeliverySlots[name] = []*DeliverySlot{}
+	} else {
+		c.Edges.namedDeliverySlots[name] = append(c.Edges.namedDeliverySlots[name], edges...)
 	}
 }
 

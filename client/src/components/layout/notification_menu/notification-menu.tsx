@@ -21,8 +21,8 @@ import { createWebsocketManager } from "@/lib/websockets";
 import { useUserStore } from "@/stores/AuthStore";
 import { useHeaderStore } from "@/stores/HeaderStore";
 import { UserNotification } from "@/types/accounts";
-import { BellIcon } from "@radix-ui/react-icons";
 import { useQueryClient } from "@tanstack/react-query";
+import { BellIcon } from "lucide-react";
 import React, { useState } from "react";
 import { toast } from "sonner";
 
@@ -43,7 +43,10 @@ function NotificationButton({
             aria-expanded={open}
             className="border-muted-foreground/40 hover:border-muted-foreground/80 group relative size-8"
           >
-            <BellIcon className="text-muted-foreground group-hover:text-foreground size-5" />
+            <BellIcon
+              strokeWidth="1.5"
+              className="text-muted-foreground group-hover:text-foreground size-5"
+            />
             <span className="sr-only">Notifications</span>
             {userHasNotifications && (
               <span className="absolute -right-1 -top-1 flex size-2.5">

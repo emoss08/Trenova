@@ -13,8 +13,13 @@ import (
 	"github.com/emoss08/trenova/internal/ent/commenttype"
 	"github.com/emoss08/trenova/internal/ent/commodity"
 	"github.com/emoss08/trenova/internal/ent/customer"
+	"github.com/emoss08/trenova/internal/ent/customercontact"
+	"github.com/emoss08/trenova/internal/ent/customerdetentionpolicy"
+	"github.com/emoss08/trenova/internal/ent/customeremailprofile"
+	"github.com/emoss08/trenova/internal/ent/customerruleprofile"
 	"github.com/emoss08/trenova/internal/ent/customreport"
 	"github.com/emoss08/trenova/internal/ent/delaycode"
+	"github.com/emoss08/trenova/internal/ent/deliveryslot"
 	"github.com/emoss08/trenova/internal/ent/dispatchcontrol"
 	"github.com/emoss08/trenova/internal/ent/divisioncode"
 	"github.com/emoss08/trenova/internal/ent/documentclassification"
@@ -570,6 +575,162 @@ func init() {
 	customerDescID := customerMixinFields0[0].Descriptor()
 	// customer.DefaultID holds the default value on creation for the id field.
 	customer.DefaultID = customerDescID.Default.(func() uuid.UUID)
+	customercontactMixin := schema.CustomerContact{}.Mixin()
+	customercontactHooks := schema.CustomerContact{}.Hooks()
+	customercontact.Hooks[0] = customercontactHooks[0]
+	customercontactMixinFields0 := customercontactMixin[0].Fields()
+	_ = customercontactMixinFields0
+	customercontactFields := schema.CustomerContact{}.Fields()
+	_ = customercontactFields
+	// customercontactDescCreatedAt is the schema descriptor for created_at field.
+	customercontactDescCreatedAt := customercontactMixinFields0[3].Descriptor()
+	// customercontact.DefaultCreatedAt holds the default value on creation for the created_at field.
+	customercontact.DefaultCreatedAt = customercontactDescCreatedAt.Default.(func() time.Time)
+	// customercontactDescUpdatedAt is the schema descriptor for updated_at field.
+	customercontactDescUpdatedAt := customercontactMixinFields0[4].Descriptor()
+	// customercontact.DefaultUpdatedAt holds the default value on creation for the updated_at field.
+	customercontact.DefaultUpdatedAt = customercontactDescUpdatedAt.Default.(func() time.Time)
+	// customercontact.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
+	customercontact.UpdateDefaultUpdatedAt = customercontactDescUpdatedAt.UpdateDefault.(func() time.Time)
+	// customercontactDescVersion is the schema descriptor for version field.
+	customercontactDescVersion := customercontactMixinFields0[5].Descriptor()
+	// customercontact.DefaultVersion holds the default value on creation for the version field.
+	customercontact.DefaultVersion = customercontactDescVersion.Default.(int)
+	// customercontactDescName is the schema descriptor for name field.
+	customercontactDescName := customercontactFields[1].Descriptor()
+	// customercontact.NameValidator is a validator for the "name" field. It is called by the builders before save.
+	customercontact.NameValidator = func() func(string) error {
+		validators := customercontactDescName.Validators
+		fns := [...]func(string) error{
+			validators[0].(func(string) error),
+			validators[1].(func(string) error),
+		}
+		return func(name string) error {
+			for _, fn := range fns {
+				if err := fn(name); err != nil {
+					return err
+				}
+			}
+			return nil
+		}
+	}()
+	// customercontactDescEmail is the schema descriptor for email field.
+	customercontactDescEmail := customercontactFields[2].Descriptor()
+	// customercontact.EmailValidator is a validator for the "email" field. It is called by the builders before save.
+	customercontact.EmailValidator = customercontactDescEmail.Validators[0].(func(string) error)
+	// customercontactDescTitle is the schema descriptor for title field.
+	customercontactDescTitle := customercontactFields[3].Descriptor()
+	// customercontact.TitleValidator is a validator for the "title" field. It is called by the builders before save.
+	customercontact.TitleValidator = customercontactDescTitle.Validators[0].(func(string) error)
+	// customercontactDescPhoneNumber is the schema descriptor for phone_number field.
+	customercontactDescPhoneNumber := customercontactFields[4].Descriptor()
+	// customercontact.PhoneNumberValidator is a validator for the "phone_number" field. It is called by the builders before save.
+	customercontact.PhoneNumberValidator = customercontactDescPhoneNumber.Validators[0].(func(string) error)
+	// customercontactDescIsPayableContact is the schema descriptor for is_payable_contact field.
+	customercontactDescIsPayableContact := customercontactFields[5].Descriptor()
+	// customercontact.DefaultIsPayableContact holds the default value on creation for the is_payable_contact field.
+	customercontact.DefaultIsPayableContact = customercontactDescIsPayableContact.Default.(bool)
+	// customercontactDescID is the schema descriptor for id field.
+	customercontactDescID := customercontactMixinFields0[0].Descriptor()
+	// customercontact.DefaultID holds the default value on creation for the id field.
+	customercontact.DefaultID = customercontactDescID.Default.(func() uuid.UUID)
+	customerdetentionpolicyMixin := schema.CustomerDetentionPolicy{}.Mixin()
+	customerdetentionpolicyMixinFields0 := customerdetentionpolicyMixin[0].Fields()
+	_ = customerdetentionpolicyMixinFields0
+	customerdetentionpolicyFields := schema.CustomerDetentionPolicy{}.Fields()
+	_ = customerdetentionpolicyFields
+	// customerdetentionpolicyDescCreatedAt is the schema descriptor for created_at field.
+	customerdetentionpolicyDescCreatedAt := customerdetentionpolicyMixinFields0[3].Descriptor()
+	// customerdetentionpolicy.DefaultCreatedAt holds the default value on creation for the created_at field.
+	customerdetentionpolicy.DefaultCreatedAt = customerdetentionpolicyDescCreatedAt.Default.(func() time.Time)
+	// customerdetentionpolicyDescUpdatedAt is the schema descriptor for updated_at field.
+	customerdetentionpolicyDescUpdatedAt := customerdetentionpolicyMixinFields0[4].Descriptor()
+	// customerdetentionpolicy.DefaultUpdatedAt holds the default value on creation for the updated_at field.
+	customerdetentionpolicy.DefaultUpdatedAt = customerdetentionpolicyDescUpdatedAt.Default.(func() time.Time)
+	// customerdetentionpolicy.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
+	customerdetentionpolicy.UpdateDefaultUpdatedAt = customerdetentionpolicyDescUpdatedAt.UpdateDefault.(func() time.Time)
+	// customerdetentionpolicyDescVersion is the schema descriptor for version field.
+	customerdetentionpolicyDescVersion := customerdetentionpolicyMixinFields0[5].Descriptor()
+	// customerdetentionpolicy.DefaultVersion holds the default value on creation for the version field.
+	customerdetentionpolicy.DefaultVersion = customerdetentionpolicyDescVersion.Default.(int)
+	// customerdetentionpolicyDescChargeFreeTime is the schema descriptor for charge_free_time field.
+	customerdetentionpolicyDescChargeFreeTime := customerdetentionpolicyFields[6].Descriptor()
+	// customerdetentionpolicy.ChargeFreeTimeValidator is a validator for the "charge_free_time" field. It is called by the builders before save.
+	customerdetentionpolicy.ChargeFreeTimeValidator = customerdetentionpolicyDescChargeFreeTime.Validators[0].(func(int) error)
+	// customerdetentionpolicyDescPaymentFreeTime is the schema descriptor for payment_free_time field.
+	customerdetentionpolicyDescPaymentFreeTime := customerdetentionpolicyFields[7].Descriptor()
+	// customerdetentionpolicy.PaymentFreeTimeValidator is a validator for the "payment_free_time" field. It is called by the builders before save.
+	customerdetentionpolicy.PaymentFreeTimeValidator = customerdetentionpolicyDescPaymentFreeTime.Validators[0].(func(int) error)
+	// customerdetentionpolicyDescLateArrivalPolicy is the schema descriptor for late_arrival_policy field.
+	customerdetentionpolicyDescLateArrivalPolicy := customerdetentionpolicyFields[8].Descriptor()
+	// customerdetentionpolicy.DefaultLateArrivalPolicy holds the default value on creation for the late_arrival_policy field.
+	customerdetentionpolicy.DefaultLateArrivalPolicy = customerdetentionpolicyDescLateArrivalPolicy.Default.(bool)
+	// customerdetentionpolicyDescGracePeriod is the schema descriptor for grace_period field.
+	customerdetentionpolicyDescGracePeriod := customerdetentionpolicyFields[9].Descriptor()
+	// customerdetentionpolicy.GracePeriodValidator is a validator for the "grace_period" field. It is called by the builders before save.
+	customerdetentionpolicy.GracePeriodValidator = customerdetentionpolicyDescGracePeriod.Validators[0].(func(int) error)
+	// customerdetentionpolicyDescUnits is the schema descriptor for units field.
+	customerdetentionpolicyDescUnits := customerdetentionpolicyFields[11].Descriptor()
+	// customerdetentionpolicy.UnitsValidator is a validator for the "units" field. It is called by the builders before save.
+	customerdetentionpolicy.UnitsValidator = customerdetentionpolicyDescUnits.Validators[0].(func(int) error)
+	// customerdetentionpolicyDescID is the schema descriptor for id field.
+	customerdetentionpolicyDescID := customerdetentionpolicyMixinFields0[0].Descriptor()
+	// customerdetentionpolicy.DefaultID holds the default value on creation for the id field.
+	customerdetentionpolicy.DefaultID = customerdetentionpolicyDescID.Default.(func() uuid.UUID)
+	customeremailprofileMixin := schema.CustomerEmailProfile{}.Mixin()
+	customeremailprofileMixinFields0 := customeremailprofileMixin[0].Fields()
+	_ = customeremailprofileMixinFields0
+	customeremailprofileFields := schema.CustomerEmailProfile{}.Fields()
+	_ = customeremailprofileFields
+	// customeremailprofileDescCreatedAt is the schema descriptor for created_at field.
+	customeremailprofileDescCreatedAt := customeremailprofileMixinFields0[3].Descriptor()
+	// customeremailprofile.DefaultCreatedAt holds the default value on creation for the created_at field.
+	customeremailprofile.DefaultCreatedAt = customeremailprofileDescCreatedAt.Default.(func() time.Time)
+	// customeremailprofileDescUpdatedAt is the schema descriptor for updated_at field.
+	customeremailprofileDescUpdatedAt := customeremailprofileMixinFields0[4].Descriptor()
+	// customeremailprofile.DefaultUpdatedAt holds the default value on creation for the updated_at field.
+	customeremailprofile.DefaultUpdatedAt = customeremailprofileDescUpdatedAt.Default.(func() time.Time)
+	// customeremailprofile.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
+	customeremailprofile.UpdateDefaultUpdatedAt = customeremailprofileDescUpdatedAt.UpdateDefault.(func() time.Time)
+	// customeremailprofileDescVersion is the schema descriptor for version field.
+	customeremailprofileDescVersion := customeremailprofileMixinFields0[5].Descriptor()
+	// customeremailprofile.DefaultVersion holds the default value on creation for the version field.
+	customeremailprofile.DefaultVersion = customeremailprofileDescVersion.Default.(int)
+	// customeremailprofileDescSubject is the schema descriptor for subject field.
+	customeremailprofileDescSubject := customeremailprofileFields[1].Descriptor()
+	// customeremailprofile.SubjectValidator is a validator for the "subject" field. It is called by the builders before save.
+	customeremailprofile.SubjectValidator = customeremailprofileDescSubject.Validators[0].(func(string) error)
+	// customeremailprofileDescEmailRecipients is the schema descriptor for email_recipients field.
+	customeremailprofileDescEmailRecipients := customeremailprofileFields[3].Descriptor()
+	// customeremailprofile.EmailRecipientsValidator is a validator for the "email_recipients" field. It is called by the builders before save.
+	customeremailprofile.EmailRecipientsValidator = customeremailprofileDescEmailRecipients.Validators[0].(func(string) error)
+	// customeremailprofileDescID is the schema descriptor for id field.
+	customeremailprofileDescID := customeremailprofileMixinFields0[0].Descriptor()
+	// customeremailprofile.DefaultID holds the default value on creation for the id field.
+	customeremailprofile.DefaultID = customeremailprofileDescID.Default.(func() uuid.UUID)
+	customerruleprofileMixin := schema.CustomerRuleProfile{}.Mixin()
+	customerruleprofileMixinFields0 := customerruleprofileMixin[0].Fields()
+	_ = customerruleprofileMixinFields0
+	customerruleprofileFields := schema.CustomerRuleProfile{}.Fields()
+	_ = customerruleprofileFields
+	// customerruleprofileDescCreatedAt is the schema descriptor for created_at field.
+	customerruleprofileDescCreatedAt := customerruleprofileMixinFields0[3].Descriptor()
+	// customerruleprofile.DefaultCreatedAt holds the default value on creation for the created_at field.
+	customerruleprofile.DefaultCreatedAt = customerruleprofileDescCreatedAt.Default.(func() time.Time)
+	// customerruleprofileDescUpdatedAt is the schema descriptor for updated_at field.
+	customerruleprofileDescUpdatedAt := customerruleprofileMixinFields0[4].Descriptor()
+	// customerruleprofile.DefaultUpdatedAt holds the default value on creation for the updated_at field.
+	customerruleprofile.DefaultUpdatedAt = customerruleprofileDescUpdatedAt.Default.(func() time.Time)
+	// customerruleprofile.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
+	customerruleprofile.UpdateDefaultUpdatedAt = customerruleprofileDescUpdatedAt.UpdateDefault.(func() time.Time)
+	// customerruleprofileDescVersion is the schema descriptor for version field.
+	customerruleprofileDescVersion := customerruleprofileMixinFields0[5].Descriptor()
+	// customerruleprofile.DefaultVersion holds the default value on creation for the version field.
+	customerruleprofile.DefaultVersion = customerruleprofileDescVersion.Default.(int)
+	// customerruleprofileDescID is the schema descriptor for id field.
+	customerruleprofileDescID := customerruleprofileMixinFields0[0].Descriptor()
+	// customerruleprofile.DefaultID holds the default value on creation for the id field.
+	customerruleprofile.DefaultID = customerruleprofileDescID.Default.(func() uuid.UUID)
 	delaycodeMixin := schema.DelayCode{}.Mixin()
 	delaycodeMixinFields0 := delaycodeMixin[0].Fields()
 	_ = delaycodeMixinFields0
@@ -611,6 +772,29 @@ func init() {
 	delaycodeDescID := delaycodeMixinFields0[0].Descriptor()
 	// delaycode.DefaultID holds the default value on creation for the id field.
 	delaycode.DefaultID = delaycodeDescID.Default.(func() uuid.UUID)
+	deliveryslotMixin := schema.DeliverySlot{}.Mixin()
+	deliveryslotMixinFields0 := deliveryslotMixin[0].Fields()
+	_ = deliveryslotMixinFields0
+	deliveryslotFields := schema.DeliverySlot{}.Fields()
+	_ = deliveryslotFields
+	// deliveryslotDescCreatedAt is the schema descriptor for created_at field.
+	deliveryslotDescCreatedAt := deliveryslotMixinFields0[3].Descriptor()
+	// deliveryslot.DefaultCreatedAt holds the default value on creation for the created_at field.
+	deliveryslot.DefaultCreatedAt = deliveryslotDescCreatedAt.Default.(func() time.Time)
+	// deliveryslotDescUpdatedAt is the schema descriptor for updated_at field.
+	deliveryslotDescUpdatedAt := deliveryslotMixinFields0[4].Descriptor()
+	// deliveryslot.DefaultUpdatedAt holds the default value on creation for the updated_at field.
+	deliveryslot.DefaultUpdatedAt = deliveryslotDescUpdatedAt.Default.(func() time.Time)
+	// deliveryslot.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
+	deliveryslot.UpdateDefaultUpdatedAt = deliveryslotDescUpdatedAt.UpdateDefault.(func() time.Time)
+	// deliveryslotDescVersion is the schema descriptor for version field.
+	deliveryslotDescVersion := deliveryslotMixinFields0[5].Descriptor()
+	// deliveryslot.DefaultVersion holds the default value on creation for the version field.
+	deliveryslot.DefaultVersion = deliveryslotDescVersion.Default.(int)
+	// deliveryslotDescID is the schema descriptor for id field.
+	deliveryslotDescID := deliveryslotMixinFields0[0].Descriptor()
+	// deliveryslot.DefaultID holds the default value on creation for the id field.
+	deliveryslot.DefaultID = deliveryslotDescID.Default.(func() uuid.UUID)
 	dispatchcontrolMixin := schema.DispatchControl{}.Mixin()
 	dispatchcontrolMixinFields0 := dispatchcontrolMixin[0].Fields()
 	_ = dispatchcontrolMixinFields0

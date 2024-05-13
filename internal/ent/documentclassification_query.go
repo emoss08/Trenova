@@ -12,6 +12,7 @@ import (
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
 	"github.com/emoss08/trenova/internal/ent/businessunit"
+	"github.com/emoss08/trenova/internal/ent/customerruleprofile"
 	"github.com/emoss08/trenova/internal/ent/documentclassification"
 	"github.com/emoss08/trenova/internal/ent/organization"
 	"github.com/emoss08/trenova/internal/ent/predicate"
@@ -29,6 +30,8 @@ type DocumentClassificationQuery struct {
 	withBusinessUnit               *BusinessUnitQuery
 	withOrganization               *OrganizationQuery
 	withShipmentDocumentation      *ShipmentDocumentationQuery
+	withCustomerRuleProfile        *CustomerRuleProfileQuery
+	withFKs                        bool
 	modifiers                      []func(*sql.Selector)
 	withNamedShipmentDocumentation map[string]*ShipmentDocumentationQuery
 	// intermediate query (i.e. traversal path).
@@ -126,6 +129,28 @@ func (dcq *DocumentClassificationQuery) QueryShipmentDocumentation() *ShipmentDo
 			sqlgraph.From(documentclassification.Table, documentclassification.FieldID, selector),
 			sqlgraph.To(shipmentdocumentation.Table, shipmentdocumentation.FieldID),
 			sqlgraph.Edge(sqlgraph.O2M, false, documentclassification.ShipmentDocumentationTable, documentclassification.ShipmentDocumentationColumn),
+		)
+		fromU = sqlgraph.SetNeighbors(dcq.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
+}
+
+// QueryCustomerRuleProfile chains the current query on the "customer_rule_profile" edge.
+func (dcq *DocumentClassificationQuery) QueryCustomerRuleProfile() *CustomerRuleProfileQuery {
+	query := (&CustomerRuleProfileClient{config: dcq.config}).Query()
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := dcq.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := dcq.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(documentclassification.Table, documentclassification.FieldID, selector),
+			sqlgraph.To(customerruleprofile.Table, customerruleprofile.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, documentclassification.CustomerRuleProfileTable, documentclassification.CustomerRuleProfileColumn),
 		)
 		fromU = sqlgraph.SetNeighbors(dcq.driver.Dialect(), step)
 		return fromU, nil
@@ -328,6 +353,7 @@ func (dcq *DocumentClassificationQuery) Clone() *DocumentClassificationQuery {
 		withBusinessUnit:          dcq.withBusinessUnit.Clone(),
 		withOrganization:          dcq.withOrganization.Clone(),
 		withShipmentDocumentation: dcq.withShipmentDocumentation.Clone(),
+		withCustomerRuleProfile:   dcq.withCustomerRuleProfile.Clone(),
 		// clone intermediate query.
 		sql:  dcq.sql.Clone(),
 		path: dcq.path,
@@ -364,6 +390,17 @@ func (dcq *DocumentClassificationQuery) WithShipmentDocumentation(opts ...func(*
 		opt(query)
 	}
 	dcq.withShipmentDocumentation = query
+	return dcq
+}
+
+// WithCustomerRuleProfile tells the query-builder to eager-load the nodes that are connected to
+// the "customer_rule_profile" edge. The optional arguments are used to configure the query builder of the edge.
+func (dcq *DocumentClassificationQuery) WithCustomerRuleProfile(opts ...func(*CustomerRuleProfileQuery)) *DocumentClassificationQuery {
+	query := (&CustomerRuleProfileClient{config: dcq.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	dcq.withCustomerRuleProfile = query
 	return dcq
 }
 
@@ -444,13 +481,21 @@ func (dcq *DocumentClassificationQuery) prepareQuery(ctx context.Context) error 
 func (dcq *DocumentClassificationQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*DocumentClassification, error) {
 	var (
 		nodes       = []*DocumentClassification{}
+		withFKs     = dcq.withFKs
 		_spec       = dcq.querySpec()
-		loadedTypes = [3]bool{
+		loadedTypes = [4]bool{
 			dcq.withBusinessUnit != nil,
 			dcq.withOrganization != nil,
 			dcq.withShipmentDocumentation != nil,
+			dcq.withCustomerRuleProfile != nil,
 		}
 	)
+	if dcq.withCustomerRuleProfile != nil {
+		withFKs = true
+	}
+	if withFKs {
+		_spec.Node.Columns = append(_spec.Node.Columns, documentclassification.ForeignKeys...)
+	}
 	_spec.ScanValues = func(columns []string) ([]any, error) {
 		return (*DocumentClassification).scanValues(nil, columns)
 	}
@@ -490,6 +535,12 @@ func (dcq *DocumentClassificationQuery) sqlAll(ctx context.Context, hooks ...que
 			func(n *DocumentClassification, e *ShipmentDocumentation) {
 				n.Edges.ShipmentDocumentation = append(n.Edges.ShipmentDocumentation, e)
 			}); err != nil {
+			return nil, err
+		}
+	}
+	if query := dcq.withCustomerRuleProfile; query != nil {
+		if err := dcq.loadCustomerRuleProfile(ctx, query, nodes, nil,
+			func(n *DocumentClassification, e *CustomerRuleProfile) { n.Edges.CustomerRuleProfile = e }); err != nil {
 			return nil, err
 		}
 	}
@@ -588,6 +639,38 @@ func (dcq *DocumentClassificationQuery) loadShipmentDocumentation(ctx context.Co
 			return fmt.Errorf(`unexpected referenced foreign-key "document_classification_id" returned %v for node %v`, fk, n.ID)
 		}
 		assign(node, n)
+	}
+	return nil
+}
+func (dcq *DocumentClassificationQuery) loadCustomerRuleProfile(ctx context.Context, query *CustomerRuleProfileQuery, nodes []*DocumentClassification, init func(*DocumentClassification), assign func(*DocumentClassification, *CustomerRuleProfile)) error {
+	ids := make([]uuid.UUID, 0, len(nodes))
+	nodeids := make(map[uuid.UUID][]*DocumentClassification)
+	for i := range nodes {
+		if nodes[i].customer_rule_profile_document_classifications == nil {
+			continue
+		}
+		fk := *nodes[i].customer_rule_profile_document_classifications
+		if _, ok := nodeids[fk]; !ok {
+			ids = append(ids, fk)
+		}
+		nodeids[fk] = append(nodeids[fk], nodes[i])
+	}
+	if len(ids) == 0 {
+		return nil
+	}
+	query.Where(customerruleprofile.IDIn(ids...))
+	neighbors, err := query.All(ctx)
+	if err != nil {
+		return err
+	}
+	for _, n := range neighbors {
+		nodes, ok := nodeids[n.ID]
+		if !ok {
+			return fmt.Errorf(`unexpected foreign-key "customer_rule_profile_document_classifications" returned %v`, n.ID)
+		}
+		for i := range nodes {
+			assign(nodes[i], n)
+		}
 	}
 	return nil
 }
