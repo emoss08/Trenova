@@ -6,6 +6,7 @@ import (
 	"entgo.io/ent/schema"
 	"entgo.io/ent/schema/edge"
 	"entgo.io/ent/schema/field"
+	"entgo.io/ent/schema/index"
 	"github.com/emoss08/trenova/internal/util/types"
 	"github.com/google/uuid"
 )
@@ -57,7 +58,15 @@ func (DeliverySlot) Edges() []ent.Edge {
 
 // Indexes of the DeliverySlot.
 func (DeliverySlot) Indexes() []ent.Index {
-	return nil
+	return []ent.Index{
+		index.Fields(
+			"customer_id",
+			"location_id",
+			"day_of_week",
+			"start_time",
+			"end_time").
+			Unique(),
+	}
 }
 
 // Annotations of the DeliverySlot.

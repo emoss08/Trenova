@@ -646,6 +646,13 @@ var (
 				OnDelete:   schema.Cascade,
 			},
 		},
+		Indexes: []*schema.Index{
+			{
+				Name:    "deliveryslot_customer_id_location_id_day_of_week_start_time_end_time",
+				Unique:  true,
+				Columns: []*schema.Column{DeliverySlotsColumns[7], DeliverySlotsColumns[10], DeliverySlotsColumns[4], DeliverySlotsColumns[5], DeliverySlotsColumns[6]},
+			},
+		},
 	}
 	// DispatchControlsColumns holds the columns for the "dispatch_controls" table.
 	DispatchControlsColumns = []*schema.Column{
