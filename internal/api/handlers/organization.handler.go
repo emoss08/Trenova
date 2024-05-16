@@ -30,6 +30,37 @@ func (h *OrganizationHandler) RegisterRoutes(r fiber.Router) {
 	organizationAPI.Post("/logo", h.UploadLogo())
 	organizationAPI.Put("/:orgID", h.UpdateOrganization())
 }
+// GetUserOrganization is a handler that returns the organization of the currently authenticated user.
+//
+// GET /organizations/me
+func (h *OrganizationHandler) GetUserOrganization() fiber.Handler {
+	return func(c *fiber.Ctx) error {
+		buID, buOK := c.Locals(util.CTXBusinessUnitID).(uuid.UUID)
+		orgID, orgOK := c.Locals(util.CTXOrganizationID).(uuid.UUID)
+
+		if !buOK || !orgOK {
+			return c.Status(fiber.StatusInternalServerError).JSON(types.ValidationErrorResponse{
+				Type: "internalServerError",
+				Errors: []types.ValidationErrorDetail{
+					{
+						Code:   "internalServerError",
+						Detail: "Internal server error",
+						Attr:   "session",
+					},
+				},
+			},
+			)
+		}
+
+		user, err := h.Service.GetUserOrganization(c.UserContext(), buID, orgID)
+		if err != nil {
+			errorResponse := util.CreateDBErrorResponse(err)
+			return c.Status(fiber.StatusInternalServerError).JSON(errorResponse)
+		}
+
+		return c.Status(fiber.StatusOK).JSON(user)
+	}
+}
 
 func (h *OrganizationHandler) UploadLogo() fiber.Handler {
 	return func(c *fiber.Ctx) error {
@@ -60,38 +91,6 @@ func (h *OrganizationHandler) UploadLogo() fiber.Handler {
 		}
 
 		return c.Status(fiber.StatusOK).JSON(entity)
-	}
-}
-
-// GetUserOrganization is a handler that returns the organization of the currently authenticated user.
-//
-// GET /organizations/me
-func (h *OrganizationHandler) GetUserOrganization() fiber.Handler {
-	return func(c *fiber.Ctx) error {
-		buID, buOK := c.Locals(util.CTXBusinessUnitID).(uuid.UUID)
-		orgID, orgOK := c.Locals(util.CTXOrganizationID).(uuid.UUID)
-
-		if !buOK || !orgOK {
-			return c.Status(fiber.StatusInternalServerError).JSON(types.ValidationErrorResponse{
-				Type: "internalServerError",
-				Errors: []types.ValidationErrorDetail{
-					{
-						Code:   "internalServerError",
-						Detail: "Internal server error",
-						Attr:   "session",
-					},
-				},
-			},
-			)
-		}
-
-		user, err := h.Service.GetUserOrganization(c.UserContext(), buID, orgID)
-		if err != nil {
-			errorResponse := util.CreateDBErrorResponse(err)
-			return c.Status(fiber.StatusInternalServerError).JSON(errorResponse)
-		}
-
-		return c.Status(fiber.StatusOK).JSON(user)
 	}
 }
 
