@@ -136,7 +136,7 @@ func (h *CustomerHandler) getCustomers() fiber.Handler {
 
 			// detentionPolocies := make([]ent.CustomerDetentionPolicies, len(customer.Edges.DetentionPolicies))
 			// for i, detentionPolicy := range customer.Edges.DetentionPolicies {
-			// 	detentionPolocies[i] = *detentionPolicy
+			// 	detentionPolocies[i] = *detentionPolocies
 			// }
 
 			responses[i] = CustomerResponse{
@@ -179,7 +179,7 @@ func (h *CustomerHandler) getCustomers() fiber.Handler {
 // POST /customers
 func (h *CustomerHandler) createCustomer() fiber.Handler {
 	return func(c *fiber.Ctx) error {
-		newEntity := new(ent.Customer)
+		newEntity := new(services.CustomerRequest)
 
 		orgID, ok := c.Locals(util.CTXOrganizationID).(uuid.UUID)
 		buID, buOK := c.Locals(util.CTXBusinessUnitID).(uuid.UUID)

@@ -133,6 +133,7 @@ func (r *CommodityService) updateCommodityEntity(
 
 	// Start building the update operation
 	updateOp := tx.Commodity.UpdateOneID(entity.ID).
+		SetOrganizationID(entity.OrganizationID).
 		SetStatus(entity.Status).
 		SetName(entity.Name).
 		SetDescription(entity.Description).

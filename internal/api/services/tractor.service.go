@@ -146,6 +146,7 @@ func (r *TractorService) updateTractorEntity(
 
 	// Start building the update operation
 	updateOp := tx.Tractor.UpdateOneID(entity.ID).
+		SetOrganizationID(entity.OrganizationID).
 		SetCode(entity.Code).
 		SetStatus(entity.Status).
 		SetEquipmentTypeID(entity.EquipmentTypeID).

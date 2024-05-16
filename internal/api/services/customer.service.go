@@ -201,6 +201,7 @@ func (r *CustomerService) updateCustomerEntity(
 
 	// Start building the update operation
 	updateOp := tx.Customer.UpdateOneID(entity.ID).
+		SetOrganizationID(entity.OrganizationID).
 		SetStatus(entity.Status).
 		SetCode(entity.Code).
 		SetName(entity.Name).

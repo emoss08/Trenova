@@ -136,6 +136,7 @@ func (r *EmailProfileService) updateEmailProfileEntity(
 
 	// Start building the update operation
 	updateOp := tx.EmailProfile.UpdateOneID(entity.ID).
+		SetOrganizationID(entity.OrganizationID).
 		SetName(entity.Name).
 		SetEmail(entity.Email).
 		SetProtocol(entity.Protocol).

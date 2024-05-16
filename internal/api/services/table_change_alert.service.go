@@ -147,6 +147,7 @@ func (r *TableChangeAlertService) updateTableChangeAlertEntity(
 
 	// Start building the update operation
 	updateOp := tx.TableChangeAlert.UpdateOneID(entity.ID).
+		SetOrganizationID(entity.OrganizationID).
 		SetStatus(entity.Status).
 		SetName(entity.Name).
 		SetDatabaseAction(entity.DatabaseAction).

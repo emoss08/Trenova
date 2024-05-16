@@ -130,6 +130,7 @@ func (r *CommentTypeService) updateCommentTypeEntity(
 
 	// Start building the update operation
 	updateOp := tx.CommentType.UpdateOneID(entity.ID).
+		SetOrganizationID(entity.OrganizationID).
 		SetStatus(entity.Status).
 		SetDescription(entity.Description).
 		SetName(entity.Name).

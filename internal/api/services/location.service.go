@@ -212,6 +212,7 @@ func (r *LocationService) updateLocationEntity(
 	}
 
 	return tx.Location.UpdateOneID(entity.ID).
+		SetOrganizationID(entity.OrganizationID).
 		SetCode(entity.Code).
 		SetStatus(entity.Status).
 		SetNillableLocationCategoryID(entity.LocationCategoryID).
