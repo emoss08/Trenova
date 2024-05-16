@@ -14,6 +14,7 @@ import (
 	"github.com/emoss08/trenova/internal/ent/commenttype"
 	"github.com/emoss08/trenova/internal/ent/location"
 	"github.com/emoss08/trenova/internal/ent/locationcomment"
+	"github.com/emoss08/trenova/internal/ent/organization"
 	"github.com/emoss08/trenova/internal/ent/predicate"
 	"github.com/emoss08/trenova/internal/ent/user"
 	"github.com/google/uuid"
@@ -30,6 +31,20 @@ type LocationCommentUpdate struct {
 // Where appends a list predicates to the LocationCommentUpdate builder.
 func (lcu *LocationCommentUpdate) Where(ps ...predicate.LocationComment) *LocationCommentUpdate {
 	lcu.mutation.Where(ps...)
+	return lcu
+}
+
+// SetOrganizationID sets the "organization_id" field.
+func (lcu *LocationCommentUpdate) SetOrganizationID(u uuid.UUID) *LocationCommentUpdate {
+	lcu.mutation.SetOrganizationID(u)
+	return lcu
+}
+
+// SetNillableOrganizationID sets the "organization_id" field if the given value is not nil.
+func (lcu *LocationCommentUpdate) SetNillableOrganizationID(u *uuid.UUID) *LocationCommentUpdate {
+	if u != nil {
+		lcu.SetOrganizationID(*u)
+	}
 	return lcu
 }
 
@@ -116,6 +131,11 @@ func (lcu *LocationCommentUpdate) SetNillableComment(s *string) *LocationComment
 	return lcu
 }
 
+// SetOrganization sets the "organization" edge to the Organization entity.
+func (lcu *LocationCommentUpdate) SetOrganization(o *Organization) *LocationCommentUpdate {
+	return lcu.SetOrganizationID(o.ID)
+}
+
 // SetLocation sets the "location" edge to the Location entity.
 func (lcu *LocationCommentUpdate) SetLocation(l *Location) *LocationCommentUpdate {
 	return lcu.SetLocationID(l.ID)
@@ -134,6 +154,12 @@ func (lcu *LocationCommentUpdate) SetCommentType(c *CommentType) *LocationCommen
 // Mutation returns the LocationCommentMutation object of the builder.
 func (lcu *LocationCommentUpdate) Mutation() *LocationCommentMutation {
 	return lcu.mutation
+}
+
+// ClearOrganization clears the "organization" edge to the Organization entity.
+func (lcu *LocationCommentUpdate) ClearOrganization() *LocationCommentUpdate {
+	lcu.mutation.ClearOrganization()
+	return lcu
 }
 
 // ClearLocation clears the "location" edge to the Location entity.
@@ -245,6 +271,35 @@ func (lcu *LocationCommentUpdate) sqlSave(ctx context.Context) (n int, err error
 	if value, ok := lcu.mutation.Comment(); ok {
 		_spec.SetField(locationcomment.FieldComment, field.TypeString, value)
 	}
+	if lcu.mutation.OrganizationCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   locationcomment.OrganizationTable,
+			Columns: []string{locationcomment.OrganizationColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(organization.FieldID, field.TypeUUID),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := lcu.mutation.OrganizationIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   locationcomment.OrganizationTable,
+			Columns: []string{locationcomment.OrganizationColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(organization.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
 	if lcu.mutation.LocationCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
@@ -354,6 +409,20 @@ type LocationCommentUpdateOne struct {
 	modifiers []func(*sql.UpdateBuilder)
 }
 
+// SetOrganizationID sets the "organization_id" field.
+func (lcuo *LocationCommentUpdateOne) SetOrganizationID(u uuid.UUID) *LocationCommentUpdateOne {
+	lcuo.mutation.SetOrganizationID(u)
+	return lcuo
+}
+
+// SetNillableOrganizationID sets the "organization_id" field if the given value is not nil.
+func (lcuo *LocationCommentUpdateOne) SetNillableOrganizationID(u *uuid.UUID) *LocationCommentUpdateOne {
+	if u != nil {
+		lcuo.SetOrganizationID(*u)
+	}
+	return lcuo
+}
+
 // SetUpdatedAt sets the "updated_at" field.
 func (lcuo *LocationCommentUpdateOne) SetUpdatedAt(t time.Time) *LocationCommentUpdateOne {
 	lcuo.mutation.SetUpdatedAt(t)
@@ -437,6 +506,11 @@ func (lcuo *LocationCommentUpdateOne) SetNillableComment(s *string) *LocationCom
 	return lcuo
 }
 
+// SetOrganization sets the "organization" edge to the Organization entity.
+func (lcuo *LocationCommentUpdateOne) SetOrganization(o *Organization) *LocationCommentUpdateOne {
+	return lcuo.SetOrganizationID(o.ID)
+}
+
 // SetLocation sets the "location" edge to the Location entity.
 func (lcuo *LocationCommentUpdateOne) SetLocation(l *Location) *LocationCommentUpdateOne {
 	return lcuo.SetLocationID(l.ID)
@@ -455,6 +529,12 @@ func (lcuo *LocationCommentUpdateOne) SetCommentType(c *CommentType) *LocationCo
 // Mutation returns the LocationCommentMutation object of the builder.
 func (lcuo *LocationCommentUpdateOne) Mutation() *LocationCommentMutation {
 	return lcuo.mutation
+}
+
+// ClearOrganization clears the "organization" edge to the Organization entity.
+func (lcuo *LocationCommentUpdateOne) ClearOrganization() *LocationCommentUpdateOne {
+	lcuo.mutation.ClearOrganization()
+	return lcuo
 }
 
 // ClearLocation clears the "location" edge to the Location entity.
@@ -595,6 +675,35 @@ func (lcuo *LocationCommentUpdateOne) sqlSave(ctx context.Context) (_node *Locat
 	}
 	if value, ok := lcuo.mutation.Comment(); ok {
 		_spec.SetField(locationcomment.FieldComment, field.TypeString, value)
+	}
+	if lcuo.mutation.OrganizationCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   locationcomment.OrganizationTable,
+			Columns: []string{locationcomment.OrganizationColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(organization.FieldID, field.TypeUUID),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := lcuo.mutation.OrganizationIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   locationcomment.OrganizationTable,
+			Columns: []string{locationcomment.OrganizationColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(organization.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
 	if lcuo.mutation.LocationCleared() {
 		edge := &sqlgraph.EdgeSpec{

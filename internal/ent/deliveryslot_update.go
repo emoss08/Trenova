@@ -13,6 +13,7 @@ import (
 	"entgo.io/ent/schema/field"
 	"github.com/emoss08/trenova/internal/ent/deliveryslot"
 	"github.com/emoss08/trenova/internal/ent/location"
+	"github.com/emoss08/trenova/internal/ent/organization"
 	"github.com/emoss08/trenova/internal/ent/predicate"
 	"github.com/emoss08/trenova/internal/util/types"
 	"github.com/google/uuid"
@@ -29,6 +30,20 @@ type DeliverySlotUpdate struct {
 // Where appends a list predicates to the DeliverySlotUpdate builder.
 func (dsu *DeliverySlotUpdate) Where(ps ...predicate.DeliverySlot) *DeliverySlotUpdate {
 	dsu.mutation.Where(ps...)
+	return dsu
+}
+
+// SetOrganizationID sets the "organization_id" field.
+func (dsu *DeliverySlotUpdate) SetOrganizationID(u uuid.UUID) *DeliverySlotUpdate {
+	dsu.mutation.SetOrganizationID(u)
+	return dsu
+}
+
+// SetNillableOrganizationID sets the "organization_id" field if the given value is not nil.
+func (dsu *DeliverySlotUpdate) SetNillableOrganizationID(u *uuid.UUID) *DeliverySlotUpdate {
+	if u != nil {
+		dsu.SetOrganizationID(*u)
+	}
 	return dsu
 }
 
@@ -99,6 +114,11 @@ func (dsu *DeliverySlotUpdate) SetEndTime(to *types.TimeOnly) *DeliverySlotUpdat
 	return dsu
 }
 
+// SetOrganization sets the "organization" edge to the Organization entity.
+func (dsu *DeliverySlotUpdate) SetOrganization(o *Organization) *DeliverySlotUpdate {
+	return dsu.SetOrganizationID(o.ID)
+}
+
 // SetLocation sets the "location" edge to the Location entity.
 func (dsu *DeliverySlotUpdate) SetLocation(l *Location) *DeliverySlotUpdate {
 	return dsu.SetLocationID(l.ID)
@@ -107,6 +127,12 @@ func (dsu *DeliverySlotUpdate) SetLocation(l *Location) *DeliverySlotUpdate {
 // Mutation returns the DeliverySlotMutation object of the builder.
 func (dsu *DeliverySlotUpdate) Mutation() *DeliverySlotMutation {
 	return dsu.mutation
+}
+
+// ClearOrganization clears the "organization" edge to the Organization entity.
+func (dsu *DeliverySlotUpdate) ClearOrganization() *DeliverySlotUpdate {
+	dsu.mutation.ClearOrganization()
+	return dsu
 }
 
 // ClearLocation clears the "location" edge to the Location entity.
@@ -209,6 +235,35 @@ func (dsu *DeliverySlotUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	if value, ok := dsu.mutation.EndTime(); ok {
 		_spec.SetField(deliveryslot.FieldEndTime, field.TypeOther, value)
 	}
+	if dsu.mutation.OrganizationCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   deliveryslot.OrganizationTable,
+			Columns: []string{deliveryslot.OrganizationColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(organization.FieldID, field.TypeUUID),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := dsu.mutation.OrganizationIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   deliveryslot.OrganizationTable,
+			Columns: []string{deliveryslot.OrganizationColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(organization.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
 	if dsu.mutation.LocationCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
@@ -258,6 +313,20 @@ type DeliverySlotUpdateOne struct {
 	hooks     []Hook
 	mutation  *DeliverySlotMutation
 	modifiers []func(*sql.UpdateBuilder)
+}
+
+// SetOrganizationID sets the "organization_id" field.
+func (dsuo *DeliverySlotUpdateOne) SetOrganizationID(u uuid.UUID) *DeliverySlotUpdateOne {
+	dsuo.mutation.SetOrganizationID(u)
+	return dsuo
+}
+
+// SetNillableOrganizationID sets the "organization_id" field if the given value is not nil.
+func (dsuo *DeliverySlotUpdateOne) SetNillableOrganizationID(u *uuid.UUID) *DeliverySlotUpdateOne {
+	if u != nil {
+		dsuo.SetOrganizationID(*u)
+	}
+	return dsuo
 }
 
 // SetUpdatedAt sets the "updated_at" field.
@@ -327,6 +396,11 @@ func (dsuo *DeliverySlotUpdateOne) SetEndTime(to *types.TimeOnly) *DeliverySlotU
 	return dsuo
 }
 
+// SetOrganization sets the "organization" edge to the Organization entity.
+func (dsuo *DeliverySlotUpdateOne) SetOrganization(o *Organization) *DeliverySlotUpdateOne {
+	return dsuo.SetOrganizationID(o.ID)
+}
+
 // SetLocation sets the "location" edge to the Location entity.
 func (dsuo *DeliverySlotUpdateOne) SetLocation(l *Location) *DeliverySlotUpdateOne {
 	return dsuo.SetLocationID(l.ID)
@@ -335,6 +409,12 @@ func (dsuo *DeliverySlotUpdateOne) SetLocation(l *Location) *DeliverySlotUpdateO
 // Mutation returns the DeliverySlotMutation object of the builder.
 func (dsuo *DeliverySlotUpdateOne) Mutation() *DeliverySlotMutation {
 	return dsuo.mutation
+}
+
+// ClearOrganization clears the "organization" edge to the Organization entity.
+func (dsuo *DeliverySlotUpdateOne) ClearOrganization() *DeliverySlotUpdateOne {
+	dsuo.mutation.ClearOrganization()
+	return dsuo
 }
 
 // ClearLocation clears the "location" edge to the Location entity.
@@ -466,6 +546,35 @@ func (dsuo *DeliverySlotUpdateOne) sqlSave(ctx context.Context) (_node *Delivery
 	}
 	if value, ok := dsuo.mutation.EndTime(); ok {
 		_spec.SetField(deliveryslot.FieldEndTime, field.TypeOther, value)
+	}
+	if dsuo.mutation.OrganizationCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   deliveryslot.OrganizationTable,
+			Columns: []string{deliveryslot.OrganizationColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(organization.FieldID, field.TypeUUID),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := dsuo.mutation.OrganizationIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   deliveryslot.OrganizationTable,
+			Columns: []string{deliveryslot.OrganizationColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(organization.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
 	if dsuo.mutation.LocationCleared() {
 		edge := &sqlgraph.EdgeSpec{

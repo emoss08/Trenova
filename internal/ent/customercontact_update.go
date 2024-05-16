@@ -12,7 +12,9 @@ import (
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
 	"github.com/emoss08/trenova/internal/ent/customercontact"
+	"github.com/emoss08/trenova/internal/ent/organization"
 	"github.com/emoss08/trenova/internal/ent/predicate"
+	"github.com/google/uuid"
 )
 
 // CustomerContactUpdate is the builder for updating CustomerContact entities.
@@ -26,6 +28,20 @@ type CustomerContactUpdate struct {
 // Where appends a list predicates to the CustomerContactUpdate builder.
 func (ccu *CustomerContactUpdate) Where(ps ...predicate.CustomerContact) *CustomerContactUpdate {
 	ccu.mutation.Where(ps...)
+	return ccu
+}
+
+// SetOrganizationID sets the "organization_id" field.
+func (ccu *CustomerContactUpdate) SetOrganizationID(u uuid.UUID) *CustomerContactUpdate {
+	ccu.mutation.SetOrganizationID(u)
+	return ccu
+}
+
+// SetNillableOrganizationID sets the "organization_id" field if the given value is not nil.
+func (ccu *CustomerContactUpdate) SetNillableOrganizationID(u *uuid.UUID) *CustomerContactUpdate {
+	if u != nil {
+		ccu.SetOrganizationID(*u)
+	}
 	return ccu
 }
 
@@ -144,9 +160,20 @@ func (ccu *CustomerContactUpdate) SetNillableIsPayableContact(b *bool) *Customer
 	return ccu
 }
 
+// SetOrganization sets the "organization" edge to the Organization entity.
+func (ccu *CustomerContactUpdate) SetOrganization(o *Organization) *CustomerContactUpdate {
+	return ccu.SetOrganizationID(o.ID)
+}
+
 // Mutation returns the CustomerContactMutation object of the builder.
 func (ccu *CustomerContactUpdate) Mutation() *CustomerContactMutation {
 	return ccu.mutation
+}
+
+// ClearOrganization clears the "organization" edge to the Organization entity.
+func (ccu *CustomerContactUpdate) ClearOrganization() *CustomerContactUpdate {
+	ccu.mutation.ClearOrganization()
+	return ccu
 }
 
 // Save executes the query and returns the number of nodes affected by the update operation.
@@ -276,6 +303,35 @@ func (ccu *CustomerContactUpdate) sqlSave(ctx context.Context) (n int, err error
 	if value, ok := ccu.mutation.IsPayableContact(); ok {
 		_spec.SetField(customercontact.FieldIsPayableContact, field.TypeBool, value)
 	}
+	if ccu.mutation.OrganizationCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   customercontact.OrganizationTable,
+			Columns: []string{customercontact.OrganizationColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(organization.FieldID, field.TypeUUID),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := ccu.mutation.OrganizationIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   customercontact.OrganizationTable,
+			Columns: []string{customercontact.OrganizationColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(organization.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
 	_spec.AddModifiers(ccu.modifiers...)
 	if n, err = sqlgraph.UpdateNodes(ctx, ccu.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
@@ -296,6 +352,20 @@ type CustomerContactUpdateOne struct {
 	hooks     []Hook
 	mutation  *CustomerContactMutation
 	modifiers []func(*sql.UpdateBuilder)
+}
+
+// SetOrganizationID sets the "organization_id" field.
+func (ccuo *CustomerContactUpdateOne) SetOrganizationID(u uuid.UUID) *CustomerContactUpdateOne {
+	ccuo.mutation.SetOrganizationID(u)
+	return ccuo
+}
+
+// SetNillableOrganizationID sets the "organization_id" field if the given value is not nil.
+func (ccuo *CustomerContactUpdateOne) SetNillableOrganizationID(u *uuid.UUID) *CustomerContactUpdateOne {
+	if u != nil {
+		ccuo.SetOrganizationID(*u)
+	}
+	return ccuo
 }
 
 // SetUpdatedAt sets the "updated_at" field.
@@ -413,9 +483,20 @@ func (ccuo *CustomerContactUpdateOne) SetNillableIsPayableContact(b *bool) *Cust
 	return ccuo
 }
 
+// SetOrganization sets the "organization" edge to the Organization entity.
+func (ccuo *CustomerContactUpdateOne) SetOrganization(o *Organization) *CustomerContactUpdateOne {
+	return ccuo.SetOrganizationID(o.ID)
+}
+
 // Mutation returns the CustomerContactMutation object of the builder.
 func (ccuo *CustomerContactUpdateOne) Mutation() *CustomerContactMutation {
 	return ccuo.mutation
+}
+
+// ClearOrganization clears the "organization" edge to the Organization entity.
+func (ccuo *CustomerContactUpdateOne) ClearOrganization() *CustomerContactUpdateOne {
+	ccuo.mutation.ClearOrganization()
+	return ccuo
 }
 
 // Where appends a list predicates to the CustomerContactUpdate builder.
@@ -574,6 +655,35 @@ func (ccuo *CustomerContactUpdateOne) sqlSave(ctx context.Context) (_node *Custo
 	}
 	if value, ok := ccuo.mutation.IsPayableContact(); ok {
 		_spec.SetField(customercontact.FieldIsPayableContact, field.TypeBool, value)
+	}
+	if ccuo.mutation.OrganizationCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   customercontact.OrganizationTable,
+			Columns: []string{customercontact.OrganizationColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(organization.FieldID, field.TypeUUID),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := ccuo.mutation.OrganizationIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   customercontact.OrganizationTable,
+			Columns: []string{customercontact.OrganizationColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(organization.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
 	_spec.AddModifiers(ccuo.modifiers...)
 	_node = &CustomerContact{config: ccuo.config}

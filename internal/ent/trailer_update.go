@@ -14,6 +14,7 @@ import (
 	"github.com/emoss08/trenova/internal/ent/equipmentmanufactuer"
 	"github.com/emoss08/trenova/internal/ent/equipmenttype"
 	"github.com/emoss08/trenova/internal/ent/fleetcode"
+	"github.com/emoss08/trenova/internal/ent/organization"
 	"github.com/emoss08/trenova/internal/ent/predicate"
 	"github.com/emoss08/trenova/internal/ent/trailer"
 	"github.com/emoss08/trenova/internal/ent/usstate"
@@ -32,6 +33,20 @@ type TrailerUpdate struct {
 // Where appends a list predicates to the TrailerUpdate builder.
 func (tu *TrailerUpdate) Where(ps ...predicate.Trailer) *TrailerUpdate {
 	tu.mutation.Where(ps...)
+	return tu
+}
+
+// SetOrganizationID sets the "organization_id" field.
+func (tu *TrailerUpdate) SetOrganizationID(u uuid.UUID) *TrailerUpdate {
+	tu.mutation.SetOrganizationID(u)
+	return tu
+}
+
+// SetNillableOrganizationID sets the "organization_id" field if the given value is not nil.
+func (tu *TrailerUpdate) SetNillableOrganizationID(u *uuid.UUID) *TrailerUpdate {
+	if u != nil {
+		tu.SetOrganizationID(*u)
+	}
 	return tu
 }
 
@@ -309,6 +324,11 @@ func (tu *TrailerUpdate) ClearRegistrationExpirationDate() *TrailerUpdate {
 	return tu
 }
 
+// SetOrganization sets the "organization" edge to the Organization entity.
+func (tu *TrailerUpdate) SetOrganization(o *Organization) *TrailerUpdate {
+	return tu.SetOrganizationID(o.ID)
+}
+
 // SetEquipmentType sets the "equipment_type" edge to the EquipmentType entity.
 func (tu *TrailerUpdate) SetEquipmentType(e *EquipmentType) *TrailerUpdate {
 	return tu.SetEquipmentTypeID(e.ID)
@@ -337,6 +357,12 @@ func (tu *TrailerUpdate) SetFleetCode(f *FleetCode) *TrailerUpdate {
 // Mutation returns the TrailerMutation object of the builder.
 func (tu *TrailerUpdate) Mutation() *TrailerMutation {
 	return tu.mutation
+}
+
+// ClearOrganization clears the "organization" edge to the Organization entity.
+func (tu *TrailerUpdate) ClearOrganization() *TrailerUpdate {
+	tu.mutation.ClearOrganization()
+	return tu
 }
 
 // ClearEquipmentType clears the "equipment_type" edge to the EquipmentType entity.
@@ -531,6 +557,35 @@ func (tu *TrailerUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	if tu.mutation.RegistrationExpirationDateCleared() {
 		_spec.ClearField(trailer.FieldRegistrationExpirationDate, field.TypeOther)
 	}
+	if tu.mutation.OrganizationCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   trailer.OrganizationTable,
+			Columns: []string{trailer.OrganizationColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(organization.FieldID, field.TypeUUID),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := tu.mutation.OrganizationIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   trailer.OrganizationTable,
+			Columns: []string{trailer.OrganizationColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(organization.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
 	if tu.mutation.EquipmentTypeCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
@@ -696,6 +751,20 @@ type TrailerUpdateOne struct {
 	hooks     []Hook
 	mutation  *TrailerMutation
 	modifiers []func(*sql.UpdateBuilder)
+}
+
+// SetOrganizationID sets the "organization_id" field.
+func (tuo *TrailerUpdateOne) SetOrganizationID(u uuid.UUID) *TrailerUpdateOne {
+	tuo.mutation.SetOrganizationID(u)
+	return tuo
+}
+
+// SetNillableOrganizationID sets the "organization_id" field if the given value is not nil.
+func (tuo *TrailerUpdateOne) SetNillableOrganizationID(u *uuid.UUID) *TrailerUpdateOne {
+	if u != nil {
+		tuo.SetOrganizationID(*u)
+	}
+	return tuo
 }
 
 // SetUpdatedAt sets the "updated_at" field.
@@ -972,6 +1041,11 @@ func (tuo *TrailerUpdateOne) ClearRegistrationExpirationDate() *TrailerUpdateOne
 	return tuo
 }
 
+// SetOrganization sets the "organization" edge to the Organization entity.
+func (tuo *TrailerUpdateOne) SetOrganization(o *Organization) *TrailerUpdateOne {
+	return tuo.SetOrganizationID(o.ID)
+}
+
 // SetEquipmentType sets the "equipment_type" edge to the EquipmentType entity.
 func (tuo *TrailerUpdateOne) SetEquipmentType(e *EquipmentType) *TrailerUpdateOne {
 	return tuo.SetEquipmentTypeID(e.ID)
@@ -1000,6 +1074,12 @@ func (tuo *TrailerUpdateOne) SetFleetCode(f *FleetCode) *TrailerUpdateOne {
 // Mutation returns the TrailerMutation object of the builder.
 func (tuo *TrailerUpdateOne) Mutation() *TrailerMutation {
 	return tuo.mutation
+}
+
+// ClearOrganization clears the "organization" edge to the Organization entity.
+func (tuo *TrailerUpdateOne) ClearOrganization() *TrailerUpdateOne {
+	tuo.mutation.ClearOrganization()
+	return tuo
 }
 
 // ClearEquipmentType clears the "equipment_type" edge to the EquipmentType entity.
@@ -1223,6 +1303,35 @@ func (tuo *TrailerUpdateOne) sqlSave(ctx context.Context) (_node *Trailer, err e
 	}
 	if tuo.mutation.RegistrationExpirationDateCleared() {
 		_spec.ClearField(trailer.FieldRegistrationExpirationDate, field.TypeOther)
+	}
+	if tuo.mutation.OrganizationCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   trailer.OrganizationTable,
+			Columns: []string{trailer.OrganizationColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(organization.FieldID, field.TypeUUID),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := tuo.mutation.OrganizationIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   trailer.OrganizationTable,
+			Columns: []string{trailer.OrganizationColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(organization.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
 	if tuo.mutation.EquipmentTypeCleared() {
 		edge := &sqlgraph.EdgeSpec{

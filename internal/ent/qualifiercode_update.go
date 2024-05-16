@@ -11,8 +11,10 @@ import (
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
+	"github.com/emoss08/trenova/internal/ent/organization"
 	"github.com/emoss08/trenova/internal/ent/predicate"
 	"github.com/emoss08/trenova/internal/ent/qualifiercode"
+	"github.com/google/uuid"
 )
 
 // QualifierCodeUpdate is the builder for updating QualifierCode entities.
@@ -26,6 +28,20 @@ type QualifierCodeUpdate struct {
 // Where appends a list predicates to the QualifierCodeUpdate builder.
 func (qcu *QualifierCodeUpdate) Where(ps ...predicate.QualifierCode) *QualifierCodeUpdate {
 	qcu.mutation.Where(ps...)
+	return qcu
+}
+
+// SetOrganizationID sets the "organization_id" field.
+func (qcu *QualifierCodeUpdate) SetOrganizationID(u uuid.UUID) *QualifierCodeUpdate {
+	qcu.mutation.SetOrganizationID(u)
+	return qcu
+}
+
+// SetNillableOrganizationID sets the "organization_id" field if the given value is not nil.
+func (qcu *QualifierCodeUpdate) SetNillableOrganizationID(u *uuid.UUID) *QualifierCodeUpdate {
+	if u != nil {
+		qcu.SetOrganizationID(*u)
+	}
 	return qcu
 }
 
@@ -98,9 +114,20 @@ func (qcu *QualifierCodeUpdate) SetNillableDescription(s *string) *QualifierCode
 	return qcu
 }
 
+// SetOrganization sets the "organization" edge to the Organization entity.
+func (qcu *QualifierCodeUpdate) SetOrganization(o *Organization) *QualifierCodeUpdate {
+	return qcu.SetOrganizationID(o.ID)
+}
+
 // Mutation returns the QualifierCodeMutation object of the builder.
 func (qcu *QualifierCodeUpdate) Mutation() *QualifierCodeMutation {
 	return qcu.mutation
+}
+
+// ClearOrganization clears the "organization" edge to the Organization entity.
+func (qcu *QualifierCodeUpdate) ClearOrganization() *QualifierCodeUpdate {
+	qcu.mutation.ClearOrganization()
+	return qcu
 }
 
 // Save executes the query and returns the number of nodes affected by the update operation.
@@ -201,6 +228,35 @@ func (qcu *QualifierCodeUpdate) sqlSave(ctx context.Context) (n int, err error) 
 	if value, ok := qcu.mutation.Description(); ok {
 		_spec.SetField(qualifiercode.FieldDescription, field.TypeString, value)
 	}
+	if qcu.mutation.OrganizationCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   qualifiercode.OrganizationTable,
+			Columns: []string{qualifiercode.OrganizationColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(organization.FieldID, field.TypeUUID),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := qcu.mutation.OrganizationIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   qualifiercode.OrganizationTable,
+			Columns: []string{qualifiercode.OrganizationColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(organization.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
 	_spec.AddModifiers(qcu.modifiers...)
 	if n, err = sqlgraph.UpdateNodes(ctx, qcu.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
@@ -221,6 +277,20 @@ type QualifierCodeUpdateOne struct {
 	hooks     []Hook
 	mutation  *QualifierCodeMutation
 	modifiers []func(*sql.UpdateBuilder)
+}
+
+// SetOrganizationID sets the "organization_id" field.
+func (qcuo *QualifierCodeUpdateOne) SetOrganizationID(u uuid.UUID) *QualifierCodeUpdateOne {
+	qcuo.mutation.SetOrganizationID(u)
+	return qcuo
+}
+
+// SetNillableOrganizationID sets the "organization_id" field if the given value is not nil.
+func (qcuo *QualifierCodeUpdateOne) SetNillableOrganizationID(u *uuid.UUID) *QualifierCodeUpdateOne {
+	if u != nil {
+		qcuo.SetOrganizationID(*u)
+	}
+	return qcuo
 }
 
 // SetUpdatedAt sets the "updated_at" field.
@@ -292,9 +362,20 @@ func (qcuo *QualifierCodeUpdateOne) SetNillableDescription(s *string) *Qualifier
 	return qcuo
 }
 
+// SetOrganization sets the "organization" edge to the Organization entity.
+func (qcuo *QualifierCodeUpdateOne) SetOrganization(o *Organization) *QualifierCodeUpdateOne {
+	return qcuo.SetOrganizationID(o.ID)
+}
+
 // Mutation returns the QualifierCodeMutation object of the builder.
 func (qcuo *QualifierCodeUpdateOne) Mutation() *QualifierCodeMutation {
 	return qcuo.mutation
+}
+
+// ClearOrganization clears the "organization" edge to the Organization entity.
+func (qcuo *QualifierCodeUpdateOne) ClearOrganization() *QualifierCodeUpdateOne {
+	qcuo.mutation.ClearOrganization()
+	return qcuo
 }
 
 // Where appends a list predicates to the QualifierCodeUpdate builder.
@@ -424,6 +505,35 @@ func (qcuo *QualifierCodeUpdateOne) sqlSave(ctx context.Context) (_node *Qualifi
 	}
 	if value, ok := qcuo.mutation.Description(); ok {
 		_spec.SetField(qualifiercode.FieldDescription, field.TypeString, value)
+	}
+	if qcuo.mutation.OrganizationCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   qualifiercode.OrganizationTable,
+			Columns: []string{qualifiercode.OrganizationColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(organization.FieldID, field.TypeUUID),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := qcuo.mutation.OrganizationIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   qualifiercode.OrganizationTable,
+			Columns: []string{qualifiercode.OrganizationColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(organization.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
 	_spec.AddModifiers(qcuo.modifiers...)
 	_node = &QualifierCode{config: qcuo.config}

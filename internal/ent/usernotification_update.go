@@ -11,8 +11,10 @@ import (
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
+	"github.com/emoss08/trenova/internal/ent/organization"
 	"github.com/emoss08/trenova/internal/ent/predicate"
 	"github.com/emoss08/trenova/internal/ent/usernotification"
+	"github.com/google/uuid"
 )
 
 // UserNotificationUpdate is the builder for updating UserNotification entities.
@@ -26,6 +28,20 @@ type UserNotificationUpdate struct {
 // Where appends a list predicates to the UserNotificationUpdate builder.
 func (unu *UserNotificationUpdate) Where(ps ...predicate.UserNotification) *UserNotificationUpdate {
 	unu.mutation.Where(ps...)
+	return unu
+}
+
+// SetOrganizationID sets the "organization_id" field.
+func (unu *UserNotificationUpdate) SetOrganizationID(u uuid.UUID) *UserNotificationUpdate {
+	unu.mutation.SetOrganizationID(u)
+	return unu
+}
+
+// SetNillableOrganizationID sets the "organization_id" field if the given value is not nil.
+func (unu *UserNotificationUpdate) SetNillableOrganizationID(u *uuid.UUID) *UserNotificationUpdate {
+	if u != nil {
+		unu.SetOrganizationID(*u)
+	}
 	return unu
 }
 
@@ -118,9 +134,20 @@ func (unu *UserNotificationUpdate) ClearActionURL() *UserNotificationUpdate {
 	return unu
 }
 
+// SetOrganization sets the "organization" edge to the Organization entity.
+func (unu *UserNotificationUpdate) SetOrganization(o *Organization) *UserNotificationUpdate {
+	return unu.SetOrganizationID(o.ID)
+}
+
 // Mutation returns the UserNotificationMutation object of the builder.
 func (unu *UserNotificationUpdate) Mutation() *UserNotificationMutation {
 	return unu.mutation
+}
+
+// ClearOrganization clears the "organization" edge to the Organization entity.
+func (unu *UserNotificationUpdate) ClearOrganization() *UserNotificationUpdate {
+	unu.mutation.ClearOrganization()
+	return unu
 }
 
 // Save executes the query and returns the number of nodes affected by the update operation.
@@ -225,6 +252,35 @@ func (unu *UserNotificationUpdate) sqlSave(ctx context.Context) (n int, err erro
 	if unu.mutation.ActionURLCleared() {
 		_spec.ClearField(usernotification.FieldActionURL, field.TypeString)
 	}
+	if unu.mutation.OrganizationCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   usernotification.OrganizationTable,
+			Columns: []string{usernotification.OrganizationColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(organization.FieldID, field.TypeUUID),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := unu.mutation.OrganizationIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   usernotification.OrganizationTable,
+			Columns: []string{usernotification.OrganizationColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(organization.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
 	_spec.AddModifiers(unu.modifiers...)
 	if n, err = sqlgraph.UpdateNodes(ctx, unu.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
@@ -245,6 +301,20 @@ type UserNotificationUpdateOne struct {
 	hooks     []Hook
 	mutation  *UserNotificationMutation
 	modifiers []func(*sql.UpdateBuilder)
+}
+
+// SetOrganizationID sets the "organization_id" field.
+func (unuo *UserNotificationUpdateOne) SetOrganizationID(u uuid.UUID) *UserNotificationUpdateOne {
+	unuo.mutation.SetOrganizationID(u)
+	return unuo
+}
+
+// SetNillableOrganizationID sets the "organization_id" field if the given value is not nil.
+func (unuo *UserNotificationUpdateOne) SetNillableOrganizationID(u *uuid.UUID) *UserNotificationUpdateOne {
+	if u != nil {
+		unuo.SetOrganizationID(*u)
+	}
+	return unuo
 }
 
 // SetUpdatedAt sets the "updated_at" field.
@@ -336,9 +406,20 @@ func (unuo *UserNotificationUpdateOne) ClearActionURL() *UserNotificationUpdateO
 	return unuo
 }
 
+// SetOrganization sets the "organization" edge to the Organization entity.
+func (unuo *UserNotificationUpdateOne) SetOrganization(o *Organization) *UserNotificationUpdateOne {
+	return unuo.SetOrganizationID(o.ID)
+}
+
 // Mutation returns the UserNotificationMutation object of the builder.
 func (unuo *UserNotificationUpdateOne) Mutation() *UserNotificationMutation {
 	return unuo.mutation
+}
+
+// ClearOrganization clears the "organization" edge to the Organization entity.
+func (unuo *UserNotificationUpdateOne) ClearOrganization() *UserNotificationUpdateOne {
+	unuo.mutation.ClearOrganization()
+	return unuo
 }
 
 // Where appends a list predicates to the UserNotificationUpdate builder.
@@ -472,6 +553,35 @@ func (unuo *UserNotificationUpdateOne) sqlSave(ctx context.Context) (_node *User
 	}
 	if unuo.mutation.ActionURLCleared() {
 		_spec.ClearField(usernotification.FieldActionURL, field.TypeString)
+	}
+	if unuo.mutation.OrganizationCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   usernotification.OrganizationTable,
+			Columns: []string{usernotification.OrganizationColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(organization.FieldID, field.TypeUUID),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := unuo.mutation.OrganizationIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   usernotification.OrganizationTable,
+			Columns: []string{usernotification.OrganizationColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(organization.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
 	_spec.AddModifiers(unuo.modifiers...)
 	_node = &UserNotification{config: unuo.config}

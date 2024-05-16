@@ -13,6 +13,7 @@ import (
 	"entgo.io/ent/schema/field"
 	"github.com/emoss08/trenova/internal/ent/commodity"
 	"github.com/emoss08/trenova/internal/ent/hazardousmaterial"
+	"github.com/emoss08/trenova/internal/ent/organization"
 	"github.com/emoss08/trenova/internal/ent/predicate"
 	"github.com/google/uuid"
 )
@@ -28,6 +29,20 @@ type CommodityUpdate struct {
 // Where appends a list predicates to the CommodityUpdate builder.
 func (cu *CommodityUpdate) Where(ps ...predicate.Commodity) *CommodityUpdate {
 	cu.mutation.Where(ps...)
+	return cu
+}
+
+// SetOrganizationID sets the "organization_id" field.
+func (cu *CommodityUpdate) SetOrganizationID(u uuid.UUID) *CommodityUpdate {
+	cu.mutation.SetOrganizationID(u)
+	return cu
+}
+
+// SetNillableOrganizationID sets the "organization_id" field if the given value is not nil.
+func (cu *CommodityUpdate) SetNillableOrganizationID(u *uuid.UUID) *CommodityUpdate {
+	if u != nil {
+		cu.SetOrganizationID(*u)
+	}
 	return cu
 }
 
@@ -214,6 +229,11 @@ func (cu *CommodityUpdate) ClearHazardousMaterialID() *CommodityUpdate {
 	return cu
 }
 
+// SetOrganization sets the "organization" edge to the Organization entity.
+func (cu *CommodityUpdate) SetOrganization(o *Organization) *CommodityUpdate {
+	return cu.SetOrganizationID(o.ID)
+}
+
 // SetHazardousMaterial sets the "hazardous_material" edge to the HazardousMaterial entity.
 func (cu *CommodityUpdate) SetHazardousMaterial(h *HazardousMaterial) *CommodityUpdate {
 	return cu.SetHazardousMaterialID(h.ID)
@@ -222,6 +242,12 @@ func (cu *CommodityUpdate) SetHazardousMaterial(h *HazardousMaterial) *Commodity
 // Mutation returns the CommodityMutation object of the builder.
 func (cu *CommodityUpdate) Mutation() *CommodityMutation {
 	return cu.mutation
+}
+
+// ClearOrganization clears the "organization" edge to the Organization entity.
+func (cu *CommodityUpdate) ClearOrganization() *CommodityUpdate {
+	cu.mutation.ClearOrganization()
+	return cu
 }
 
 // ClearHazardousMaterial clears the "hazardous_material" edge to the HazardousMaterial entity.
@@ -353,6 +379,35 @@ func (cu *CommodityUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	if cu.mutation.DescriptionCleared() {
 		_spec.ClearField(commodity.FieldDescription, field.TypeString)
 	}
+	if cu.mutation.OrganizationCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   commodity.OrganizationTable,
+			Columns: []string{commodity.OrganizationColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(organization.FieldID, field.TypeUUID),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := cu.mutation.OrganizationIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   commodity.OrganizationTable,
+			Columns: []string{commodity.OrganizationColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(organization.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
 	if cu.mutation.HazardousMaterialCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
@@ -402,6 +457,20 @@ type CommodityUpdateOne struct {
 	hooks     []Hook
 	mutation  *CommodityMutation
 	modifiers []func(*sql.UpdateBuilder)
+}
+
+// SetOrganizationID sets the "organization_id" field.
+func (cuo *CommodityUpdateOne) SetOrganizationID(u uuid.UUID) *CommodityUpdateOne {
+	cuo.mutation.SetOrganizationID(u)
+	return cuo
+}
+
+// SetNillableOrganizationID sets the "organization_id" field if the given value is not nil.
+func (cuo *CommodityUpdateOne) SetNillableOrganizationID(u *uuid.UUID) *CommodityUpdateOne {
+	if u != nil {
+		cuo.SetOrganizationID(*u)
+	}
+	return cuo
 }
 
 // SetUpdatedAt sets the "updated_at" field.
@@ -587,6 +656,11 @@ func (cuo *CommodityUpdateOne) ClearHazardousMaterialID() *CommodityUpdateOne {
 	return cuo
 }
 
+// SetOrganization sets the "organization" edge to the Organization entity.
+func (cuo *CommodityUpdateOne) SetOrganization(o *Organization) *CommodityUpdateOne {
+	return cuo.SetOrganizationID(o.ID)
+}
+
 // SetHazardousMaterial sets the "hazardous_material" edge to the HazardousMaterial entity.
 func (cuo *CommodityUpdateOne) SetHazardousMaterial(h *HazardousMaterial) *CommodityUpdateOne {
 	return cuo.SetHazardousMaterialID(h.ID)
@@ -595,6 +669,12 @@ func (cuo *CommodityUpdateOne) SetHazardousMaterial(h *HazardousMaterial) *Commo
 // Mutation returns the CommodityMutation object of the builder.
 func (cuo *CommodityUpdateOne) Mutation() *CommodityMutation {
 	return cuo.mutation
+}
+
+// ClearOrganization clears the "organization" edge to the Organization entity.
+func (cuo *CommodityUpdateOne) ClearOrganization() *CommodityUpdateOne {
+	cuo.mutation.ClearOrganization()
+	return cuo
 }
 
 // ClearHazardousMaterial clears the "hazardous_material" edge to the HazardousMaterial entity.
@@ -755,6 +835,35 @@ func (cuo *CommodityUpdateOne) sqlSave(ctx context.Context) (_node *Commodity, e
 	}
 	if cuo.mutation.DescriptionCleared() {
 		_spec.ClearField(commodity.FieldDescription, field.TypeString)
+	}
+	if cuo.mutation.OrganizationCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   commodity.OrganizationTable,
+			Columns: []string{commodity.OrganizationColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(organization.FieldID, field.TypeUUID),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := cuo.mutation.OrganizationIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   commodity.OrganizationTable,
+			Columns: []string{commodity.OrganizationColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(organization.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
 	if cuo.mutation.HazardousMaterialCleared() {
 		edge := &sqlgraph.EdgeSpec{

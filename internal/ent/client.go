@@ -6866,7 +6866,8 @@ func (c *LocationCategoryClient) QueryOrganization(lc *LocationCategory) *Organi
 
 // Hooks returns the client hooks.
 func (c *LocationCategoryClient) Hooks() []Hook {
-	return c.hooks.LocationCategory
+	hooks := c.hooks.LocationCategory
+	return append(hooks[:len(hooks):len(hooks)], locationcategory.Hooks[:]...)
 }
 
 // Interceptors returns the client interceptors.

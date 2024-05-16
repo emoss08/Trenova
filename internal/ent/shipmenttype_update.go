@@ -11,8 +11,10 @@ import (
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
+	"github.com/emoss08/trenova/internal/ent/organization"
 	"github.com/emoss08/trenova/internal/ent/predicate"
 	"github.com/emoss08/trenova/internal/ent/shipmenttype"
+	"github.com/google/uuid"
 )
 
 // ShipmentTypeUpdate is the builder for updating ShipmentType entities.
@@ -26,6 +28,20 @@ type ShipmentTypeUpdate struct {
 // Where appends a list predicates to the ShipmentTypeUpdate builder.
 func (stu *ShipmentTypeUpdate) Where(ps ...predicate.ShipmentType) *ShipmentTypeUpdate {
 	stu.mutation.Where(ps...)
+	return stu
+}
+
+// SetOrganizationID sets the "organization_id" field.
+func (stu *ShipmentTypeUpdate) SetOrganizationID(u uuid.UUID) *ShipmentTypeUpdate {
+	stu.mutation.SetOrganizationID(u)
+	return stu
+}
+
+// SetNillableOrganizationID sets the "organization_id" field if the given value is not nil.
+func (stu *ShipmentTypeUpdate) SetNillableOrganizationID(u *uuid.UUID) *ShipmentTypeUpdate {
+	if u != nil {
+		stu.SetOrganizationID(*u)
+	}
 	return stu
 }
 
@@ -124,9 +140,20 @@ func (stu *ShipmentTypeUpdate) ClearColor() *ShipmentTypeUpdate {
 	return stu
 }
 
+// SetOrganization sets the "organization" edge to the Organization entity.
+func (stu *ShipmentTypeUpdate) SetOrganization(o *Organization) *ShipmentTypeUpdate {
+	return stu.SetOrganizationID(o.ID)
+}
+
 // Mutation returns the ShipmentTypeMutation object of the builder.
 func (stu *ShipmentTypeUpdate) Mutation() *ShipmentTypeMutation {
 	return stu.mutation
+}
+
+// ClearOrganization clears the "organization" edge to the Organization entity.
+func (stu *ShipmentTypeUpdate) ClearOrganization() *ShipmentTypeUpdate {
+	stu.mutation.ClearOrganization()
+	return stu
 }
 
 // Save executes the query and returns the number of nodes affected by the update operation.
@@ -231,6 +258,35 @@ func (stu *ShipmentTypeUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	if stu.mutation.ColorCleared() {
 		_spec.ClearField(shipmenttype.FieldColor, field.TypeString)
 	}
+	if stu.mutation.OrganizationCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   shipmenttype.OrganizationTable,
+			Columns: []string{shipmenttype.OrganizationColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(organization.FieldID, field.TypeUUID),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := stu.mutation.OrganizationIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   shipmenttype.OrganizationTable,
+			Columns: []string{shipmenttype.OrganizationColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(organization.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
 	_spec.AddModifiers(stu.modifiers...)
 	if n, err = sqlgraph.UpdateNodes(ctx, stu.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
@@ -251,6 +307,20 @@ type ShipmentTypeUpdateOne struct {
 	hooks     []Hook
 	mutation  *ShipmentTypeMutation
 	modifiers []func(*sql.UpdateBuilder)
+}
+
+// SetOrganizationID sets the "organization_id" field.
+func (stuo *ShipmentTypeUpdateOne) SetOrganizationID(u uuid.UUID) *ShipmentTypeUpdateOne {
+	stuo.mutation.SetOrganizationID(u)
+	return stuo
+}
+
+// SetNillableOrganizationID sets the "organization_id" field if the given value is not nil.
+func (stuo *ShipmentTypeUpdateOne) SetNillableOrganizationID(u *uuid.UUID) *ShipmentTypeUpdateOne {
+	if u != nil {
+		stuo.SetOrganizationID(*u)
+	}
+	return stuo
 }
 
 // SetUpdatedAt sets the "updated_at" field.
@@ -348,9 +418,20 @@ func (stuo *ShipmentTypeUpdateOne) ClearColor() *ShipmentTypeUpdateOne {
 	return stuo
 }
 
+// SetOrganization sets the "organization" edge to the Organization entity.
+func (stuo *ShipmentTypeUpdateOne) SetOrganization(o *Organization) *ShipmentTypeUpdateOne {
+	return stuo.SetOrganizationID(o.ID)
+}
+
 // Mutation returns the ShipmentTypeMutation object of the builder.
 func (stuo *ShipmentTypeUpdateOne) Mutation() *ShipmentTypeMutation {
 	return stuo.mutation
+}
+
+// ClearOrganization clears the "organization" edge to the Organization entity.
+func (stuo *ShipmentTypeUpdateOne) ClearOrganization() *ShipmentTypeUpdateOne {
+	stuo.mutation.ClearOrganization()
+	return stuo
 }
 
 // Where appends a list predicates to the ShipmentTypeUpdate builder.
@@ -484,6 +565,35 @@ func (stuo *ShipmentTypeUpdateOne) sqlSave(ctx context.Context) (_node *Shipment
 	}
 	if stuo.mutation.ColorCleared() {
 		_spec.ClearField(shipmenttype.FieldColor, field.TypeString)
+	}
+	if stuo.mutation.OrganizationCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   shipmenttype.OrganizationTable,
+			Columns: []string{shipmenttype.OrganizationColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(organization.FieldID, field.TypeUUID),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := stuo.mutation.OrganizationIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   shipmenttype.OrganizationTable,
+			Columns: []string{shipmenttype.OrganizationColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(organization.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
 	_spec.AddModifiers(stuo.modifiers...)
 	_node = &ShipmentType{config: stuo.config}

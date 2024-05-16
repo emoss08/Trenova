@@ -14,6 +14,7 @@ import (
 	"github.com/emoss08/trenova/internal/ent/accessorialcharge"
 	"github.com/emoss08/trenova/internal/ent/commodity"
 	"github.com/emoss08/trenova/internal/ent/customerdetentionpolicy"
+	"github.com/emoss08/trenova/internal/ent/organization"
 	"github.com/emoss08/trenova/internal/ent/predicate"
 	"github.com/emoss08/trenova/internal/ent/revenuecode"
 	"github.com/emoss08/trenova/internal/ent/shipmenttype"
@@ -32,6 +33,20 @@ type CustomerDetentionPolicyUpdate struct {
 // Where appends a list predicates to the CustomerDetentionPolicyUpdate builder.
 func (cdpu *CustomerDetentionPolicyUpdate) Where(ps ...predicate.CustomerDetentionPolicy) *CustomerDetentionPolicyUpdate {
 	cdpu.mutation.Where(ps...)
+	return cdpu
+}
+
+// SetOrganizationID sets the "organization_id" field.
+func (cdpu *CustomerDetentionPolicyUpdate) SetOrganizationID(u uuid.UUID) *CustomerDetentionPolicyUpdate {
+	cdpu.mutation.SetOrganizationID(u)
+	return cdpu
+}
+
+// SetNillableOrganizationID sets the "organization_id" field if the given value is not nil.
+func (cdpu *CustomerDetentionPolicyUpdate) SetNillableOrganizationID(u *uuid.UUID) *CustomerDetentionPolicyUpdate {
+	if u != nil {
+		cdpu.SetOrganizationID(*u)
+	}
 	return cdpu
 }
 
@@ -363,6 +378,11 @@ func (cdpu *CustomerDetentionPolicyUpdate) ClearExpirationDate() *CustomerDetent
 	return cdpu
 }
 
+// SetOrganization sets the "organization" edge to the Organization entity.
+func (cdpu *CustomerDetentionPolicyUpdate) SetOrganization(o *Organization) *CustomerDetentionPolicyUpdate {
+	return cdpu.SetOrganizationID(o.ID)
+}
+
 // SetCommodity sets the "commodity" edge to the Commodity entity.
 func (cdpu *CustomerDetentionPolicyUpdate) SetCommodity(c *Commodity) *CustomerDetentionPolicyUpdate {
 	return cdpu.SetCommodityID(c.ID)
@@ -386,6 +406,12 @@ func (cdpu *CustomerDetentionPolicyUpdate) SetAccessorialCharge(a *AccessorialCh
 // Mutation returns the CustomerDetentionPolicyMutation object of the builder.
 func (cdpu *CustomerDetentionPolicyUpdate) Mutation() *CustomerDetentionPolicyMutation {
 	return cdpu.mutation
+}
+
+// ClearOrganization clears the "organization" edge to the Organization entity.
+func (cdpu *CustomerDetentionPolicyUpdate) ClearOrganization() *CustomerDetentionPolicyUpdate {
+	cdpu.mutation.ClearOrganization()
+	return cdpu
 }
 
 // ClearCommodity clears the "commodity" edge to the Commodity entity.
@@ -591,6 +617,35 @@ func (cdpu *CustomerDetentionPolicyUpdate) sqlSave(ctx context.Context) (n int, 
 	if cdpu.mutation.ExpirationDateCleared() {
 		_spec.ClearField(customerdetentionpolicy.FieldExpirationDate, field.TypeOther)
 	}
+	if cdpu.mutation.OrganizationCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   customerdetentionpolicy.OrganizationTable,
+			Columns: []string{customerdetentionpolicy.OrganizationColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(organization.FieldID, field.TypeUUID),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := cdpu.mutation.OrganizationIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   customerdetentionpolicy.OrganizationTable,
+			Columns: []string{customerdetentionpolicy.OrganizationColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(organization.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
 	if cdpu.mutation.CommodityCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
@@ -727,6 +782,20 @@ type CustomerDetentionPolicyUpdateOne struct {
 	hooks     []Hook
 	mutation  *CustomerDetentionPolicyMutation
 	modifiers []func(*sql.UpdateBuilder)
+}
+
+// SetOrganizationID sets the "organization_id" field.
+func (cdpuo *CustomerDetentionPolicyUpdateOne) SetOrganizationID(u uuid.UUID) *CustomerDetentionPolicyUpdateOne {
+	cdpuo.mutation.SetOrganizationID(u)
+	return cdpuo
+}
+
+// SetNillableOrganizationID sets the "organization_id" field if the given value is not nil.
+func (cdpuo *CustomerDetentionPolicyUpdateOne) SetNillableOrganizationID(u *uuid.UUID) *CustomerDetentionPolicyUpdateOne {
+	if u != nil {
+		cdpuo.SetOrganizationID(*u)
+	}
+	return cdpuo
 }
 
 // SetUpdatedAt sets the "updated_at" field.
@@ -1057,6 +1126,11 @@ func (cdpuo *CustomerDetentionPolicyUpdateOne) ClearExpirationDate() *CustomerDe
 	return cdpuo
 }
 
+// SetOrganization sets the "organization" edge to the Organization entity.
+func (cdpuo *CustomerDetentionPolicyUpdateOne) SetOrganization(o *Organization) *CustomerDetentionPolicyUpdateOne {
+	return cdpuo.SetOrganizationID(o.ID)
+}
+
 // SetCommodity sets the "commodity" edge to the Commodity entity.
 func (cdpuo *CustomerDetentionPolicyUpdateOne) SetCommodity(c *Commodity) *CustomerDetentionPolicyUpdateOne {
 	return cdpuo.SetCommodityID(c.ID)
@@ -1080,6 +1154,12 @@ func (cdpuo *CustomerDetentionPolicyUpdateOne) SetAccessorialCharge(a *Accessori
 // Mutation returns the CustomerDetentionPolicyMutation object of the builder.
 func (cdpuo *CustomerDetentionPolicyUpdateOne) Mutation() *CustomerDetentionPolicyMutation {
 	return cdpuo.mutation
+}
+
+// ClearOrganization clears the "organization" edge to the Organization entity.
+func (cdpuo *CustomerDetentionPolicyUpdateOne) ClearOrganization() *CustomerDetentionPolicyUpdateOne {
+	cdpuo.mutation.ClearOrganization()
+	return cdpuo
 }
 
 // ClearCommodity clears the "commodity" edge to the Commodity entity.
@@ -1314,6 +1394,35 @@ func (cdpuo *CustomerDetentionPolicyUpdateOne) sqlSave(ctx context.Context) (_no
 	}
 	if cdpuo.mutation.ExpirationDateCleared() {
 		_spec.ClearField(customerdetentionpolicy.FieldExpirationDate, field.TypeOther)
+	}
+	if cdpuo.mutation.OrganizationCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   customerdetentionpolicy.OrganizationTable,
+			Columns: []string{customerdetentionpolicy.OrganizationColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(organization.FieldID, field.TypeUUID),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := cdpuo.mutation.OrganizationIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   customerdetentionpolicy.OrganizationTable,
+			Columns: []string{customerdetentionpolicy.OrganizationColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(organization.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
 	if cdpuo.mutation.CommodityCleared() {
 		edge := &sqlgraph.EdgeSpec{

@@ -13,6 +13,7 @@ import (
 	"entgo.io/ent/schema/field"
 	"github.com/emoss08/trenova/internal/ent/customerruleprofile"
 	"github.com/emoss08/trenova/internal/ent/documentclassification"
+	"github.com/emoss08/trenova/internal/ent/organization"
 	"github.com/emoss08/trenova/internal/ent/predicate"
 	"github.com/google/uuid"
 )
@@ -28,6 +29,20 @@ type CustomerRuleProfileUpdate struct {
 // Where appends a list predicates to the CustomerRuleProfileUpdate builder.
 func (crpu *CustomerRuleProfileUpdate) Where(ps ...predicate.CustomerRuleProfile) *CustomerRuleProfileUpdate {
 	crpu.mutation.Where(ps...)
+	return crpu
+}
+
+// SetOrganizationID sets the "organization_id" field.
+func (crpu *CustomerRuleProfileUpdate) SetOrganizationID(u uuid.UUID) *CustomerRuleProfileUpdate {
+	crpu.mutation.SetOrganizationID(u)
+	return crpu
+}
+
+// SetNillableOrganizationID sets the "organization_id" field if the given value is not nil.
+func (crpu *CustomerRuleProfileUpdate) SetNillableOrganizationID(u *uuid.UUID) *CustomerRuleProfileUpdate {
+	if u != nil {
+		crpu.SetOrganizationID(*u)
+	}
 	return crpu
 }
 
@@ -72,6 +87,11 @@ func (crpu *CustomerRuleProfileUpdate) SetNillableBillingCycle(cc *customerrulep
 	return crpu
 }
 
+// SetOrganization sets the "organization" edge to the Organization entity.
+func (crpu *CustomerRuleProfileUpdate) SetOrganization(o *Organization) *CustomerRuleProfileUpdate {
+	return crpu.SetOrganizationID(o.ID)
+}
+
 // AddDocumentClassificationIDs adds the "document_classifications" edge to the DocumentClassification entity by IDs.
 func (crpu *CustomerRuleProfileUpdate) AddDocumentClassificationIDs(ids ...uuid.UUID) *CustomerRuleProfileUpdate {
 	crpu.mutation.AddDocumentClassificationIDs(ids...)
@@ -90,6 +110,12 @@ func (crpu *CustomerRuleProfileUpdate) AddDocumentClassifications(d ...*Document
 // Mutation returns the CustomerRuleProfileMutation object of the builder.
 func (crpu *CustomerRuleProfileUpdate) Mutation() *CustomerRuleProfileMutation {
 	return crpu.mutation
+}
+
+// ClearOrganization clears the "organization" edge to the Organization entity.
+func (crpu *CustomerRuleProfileUpdate) ClearOrganization() *CustomerRuleProfileUpdate {
+	crpu.mutation.ClearOrganization()
+	return crpu
 }
 
 // ClearDocumentClassifications clears all "document_classifications" edges to the DocumentClassification entity.
@@ -198,6 +224,35 @@ func (crpu *CustomerRuleProfileUpdate) sqlSave(ctx context.Context) (n int, err 
 	if value, ok := crpu.mutation.BillingCycle(); ok {
 		_spec.SetField(customerruleprofile.FieldBillingCycle, field.TypeEnum, value)
 	}
+	if crpu.mutation.OrganizationCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   customerruleprofile.OrganizationTable,
+			Columns: []string{customerruleprofile.OrganizationColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(organization.FieldID, field.TypeUUID),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := crpu.mutation.OrganizationIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   customerruleprofile.OrganizationTable,
+			Columns: []string{customerruleprofile.OrganizationColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(organization.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
 	if crpu.mutation.DocumentClassificationsCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
@@ -265,6 +320,20 @@ type CustomerRuleProfileUpdateOne struct {
 	modifiers []func(*sql.UpdateBuilder)
 }
 
+// SetOrganizationID sets the "organization_id" field.
+func (crpuo *CustomerRuleProfileUpdateOne) SetOrganizationID(u uuid.UUID) *CustomerRuleProfileUpdateOne {
+	crpuo.mutation.SetOrganizationID(u)
+	return crpuo
+}
+
+// SetNillableOrganizationID sets the "organization_id" field if the given value is not nil.
+func (crpuo *CustomerRuleProfileUpdateOne) SetNillableOrganizationID(u *uuid.UUID) *CustomerRuleProfileUpdateOne {
+	if u != nil {
+		crpuo.SetOrganizationID(*u)
+	}
+	return crpuo
+}
+
 // SetUpdatedAt sets the "updated_at" field.
 func (crpuo *CustomerRuleProfileUpdateOne) SetUpdatedAt(t time.Time) *CustomerRuleProfileUpdateOne {
 	crpuo.mutation.SetUpdatedAt(t)
@@ -306,6 +375,11 @@ func (crpuo *CustomerRuleProfileUpdateOne) SetNillableBillingCycle(cc *customerr
 	return crpuo
 }
 
+// SetOrganization sets the "organization" edge to the Organization entity.
+func (crpuo *CustomerRuleProfileUpdateOne) SetOrganization(o *Organization) *CustomerRuleProfileUpdateOne {
+	return crpuo.SetOrganizationID(o.ID)
+}
+
 // AddDocumentClassificationIDs adds the "document_classifications" edge to the DocumentClassification entity by IDs.
 func (crpuo *CustomerRuleProfileUpdateOne) AddDocumentClassificationIDs(ids ...uuid.UUID) *CustomerRuleProfileUpdateOne {
 	crpuo.mutation.AddDocumentClassificationIDs(ids...)
@@ -324,6 +398,12 @@ func (crpuo *CustomerRuleProfileUpdateOne) AddDocumentClassifications(d ...*Docu
 // Mutation returns the CustomerRuleProfileMutation object of the builder.
 func (crpuo *CustomerRuleProfileUpdateOne) Mutation() *CustomerRuleProfileMutation {
 	return crpuo.mutation
+}
+
+// ClearOrganization clears the "organization" edge to the Organization entity.
+func (crpuo *CustomerRuleProfileUpdateOne) ClearOrganization() *CustomerRuleProfileUpdateOne {
+	crpuo.mutation.ClearOrganization()
+	return crpuo
 }
 
 // ClearDocumentClassifications clears all "document_classifications" edges to the DocumentClassification entity.
@@ -461,6 +541,35 @@ func (crpuo *CustomerRuleProfileUpdateOne) sqlSave(ctx context.Context) (_node *
 	}
 	if value, ok := crpuo.mutation.BillingCycle(); ok {
 		_spec.SetField(customerruleprofile.FieldBillingCycle, field.TypeEnum, value)
+	}
+	if crpuo.mutation.OrganizationCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   customerruleprofile.OrganizationTable,
+			Columns: []string{customerruleprofile.OrganizationColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(organization.FieldID, field.TypeUUID),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := crpuo.mutation.OrganizationIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   customerruleprofile.OrganizationTable,
+			Columns: []string{customerruleprofile.OrganizationColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(organization.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
 	if crpuo.mutation.DocumentClassificationsCleared() {
 		edge := &sqlgraph.EdgeSpec{

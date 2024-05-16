@@ -1537,6 +1537,8 @@ func init() {
 	// location.DefaultID holds the default value on creation for the id field.
 	location.DefaultID = locationDescID.Default.(func() uuid.UUID)
 	locationcategoryMixin := schema.LocationCategory{}.Mixin()
+	locationcategoryHooks := schema.LocationCategory{}.Hooks()
+	locationcategory.Hooks[0] = locationcategoryHooks[0]
 	locationcategoryMixinFields0 := locationcategoryMixin[0].Fields()
 	_ = locationcategoryMixinFields0
 	locationcategoryFields := schema.LocationCategory{}.Fields()

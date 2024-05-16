@@ -13,6 +13,7 @@ import (
 	"entgo.io/ent/schema/field"
 	"github.com/emoss08/trenova/internal/ent/divisioncode"
 	"github.com/emoss08/trenova/internal/ent/generalledgeraccount"
+	"github.com/emoss08/trenova/internal/ent/organization"
 	"github.com/emoss08/trenova/internal/ent/predicate"
 	"github.com/google/uuid"
 )
@@ -28,6 +29,20 @@ type DivisionCodeUpdate struct {
 // Where appends a list predicates to the DivisionCodeUpdate builder.
 func (dcu *DivisionCodeUpdate) Where(ps ...predicate.DivisionCode) *DivisionCodeUpdate {
 	dcu.mutation.Where(ps...)
+	return dcu
+}
+
+// SetOrganizationID sets the "organization_id" field.
+func (dcu *DivisionCodeUpdate) SetOrganizationID(u uuid.UUID) *DivisionCodeUpdate {
+	dcu.mutation.SetOrganizationID(u)
+	return dcu
+}
+
+// SetNillableOrganizationID sets the "organization_id" field if the given value is not nil.
+func (dcu *DivisionCodeUpdate) SetNillableOrganizationID(u *uuid.UUID) *DivisionCodeUpdate {
+	if u != nil {
+		dcu.SetOrganizationID(*u)
+	}
 	return dcu
 }
 
@@ -160,6 +175,11 @@ func (dcu *DivisionCodeUpdate) ClearExpenseAccountID() *DivisionCodeUpdate {
 	return dcu
 }
 
+// SetOrganization sets the "organization" edge to the Organization entity.
+func (dcu *DivisionCodeUpdate) SetOrganization(o *Organization) *DivisionCodeUpdate {
+	return dcu.SetOrganizationID(o.ID)
+}
+
 // SetCashAccount sets the "cash_account" edge to the GeneralLedgerAccount entity.
 func (dcu *DivisionCodeUpdate) SetCashAccount(g *GeneralLedgerAccount) *DivisionCodeUpdate {
 	return dcu.SetCashAccountID(g.ID)
@@ -178,6 +198,12 @@ func (dcu *DivisionCodeUpdate) SetExpenseAccount(g *GeneralLedgerAccount) *Divis
 // Mutation returns the DivisionCodeMutation object of the builder.
 func (dcu *DivisionCodeUpdate) Mutation() *DivisionCodeMutation {
 	return dcu.mutation
+}
+
+// ClearOrganization clears the "organization" edge to the Organization entity.
+func (dcu *DivisionCodeUpdate) ClearOrganization() *DivisionCodeUpdate {
+	dcu.mutation.ClearOrganization()
+	return dcu
 }
 
 // ClearCashAccount clears the "cash_account" edge to the GeneralLedgerAccount entity.
@@ -296,6 +322,35 @@ func (dcu *DivisionCodeUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	if value, ok := dcu.mutation.Description(); ok {
 		_spec.SetField(divisioncode.FieldDescription, field.TypeString, value)
 	}
+	if dcu.mutation.OrganizationCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   divisioncode.OrganizationTable,
+			Columns: []string{divisioncode.OrganizationColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(organization.FieldID, field.TypeUUID),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := dcu.mutation.OrganizationIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   divisioncode.OrganizationTable,
+			Columns: []string{divisioncode.OrganizationColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(organization.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
 	if dcu.mutation.CashAccountCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
@@ -403,6 +458,20 @@ type DivisionCodeUpdateOne struct {
 	hooks     []Hook
 	mutation  *DivisionCodeMutation
 	modifiers []func(*sql.UpdateBuilder)
+}
+
+// SetOrganizationID sets the "organization_id" field.
+func (dcuo *DivisionCodeUpdateOne) SetOrganizationID(u uuid.UUID) *DivisionCodeUpdateOne {
+	dcuo.mutation.SetOrganizationID(u)
+	return dcuo
+}
+
+// SetNillableOrganizationID sets the "organization_id" field if the given value is not nil.
+func (dcuo *DivisionCodeUpdateOne) SetNillableOrganizationID(u *uuid.UUID) *DivisionCodeUpdateOne {
+	if u != nil {
+		dcuo.SetOrganizationID(*u)
+	}
+	return dcuo
 }
 
 // SetUpdatedAt sets the "updated_at" field.
@@ -534,6 +603,11 @@ func (dcuo *DivisionCodeUpdateOne) ClearExpenseAccountID() *DivisionCodeUpdateOn
 	return dcuo
 }
 
+// SetOrganization sets the "organization" edge to the Organization entity.
+func (dcuo *DivisionCodeUpdateOne) SetOrganization(o *Organization) *DivisionCodeUpdateOne {
+	return dcuo.SetOrganizationID(o.ID)
+}
+
 // SetCashAccount sets the "cash_account" edge to the GeneralLedgerAccount entity.
 func (dcuo *DivisionCodeUpdateOne) SetCashAccount(g *GeneralLedgerAccount) *DivisionCodeUpdateOne {
 	return dcuo.SetCashAccountID(g.ID)
@@ -552,6 +626,12 @@ func (dcuo *DivisionCodeUpdateOne) SetExpenseAccount(g *GeneralLedgerAccount) *D
 // Mutation returns the DivisionCodeMutation object of the builder.
 func (dcuo *DivisionCodeUpdateOne) Mutation() *DivisionCodeMutation {
 	return dcuo.mutation
+}
+
+// ClearOrganization clears the "organization" edge to the Organization entity.
+func (dcuo *DivisionCodeUpdateOne) ClearOrganization() *DivisionCodeUpdateOne {
+	dcuo.mutation.ClearOrganization()
+	return dcuo
 }
 
 // ClearCashAccount clears the "cash_account" edge to the GeneralLedgerAccount entity.
@@ -699,6 +779,35 @@ func (dcuo *DivisionCodeUpdateOne) sqlSave(ctx context.Context) (_node *Division
 	}
 	if value, ok := dcuo.mutation.Description(); ok {
 		_spec.SetField(divisioncode.FieldDescription, field.TypeString, value)
+	}
+	if dcuo.mutation.OrganizationCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   divisioncode.OrganizationTable,
+			Columns: []string{divisioncode.OrganizationColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(organization.FieldID, field.TypeUUID),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := dcuo.mutation.OrganizationIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   divisioncode.OrganizationTable,
+			Columns: []string{divisioncode.OrganizationColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(organization.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
 	if dcuo.mutation.CashAccountCleared() {
 		edge := &sqlgraph.EdgeSpec{

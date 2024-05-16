@@ -13,6 +13,7 @@ import (
 	"entgo.io/ent/schema/field"
 	"github.com/emoss08/trenova/internal/ent/customeremailprofile"
 	"github.com/emoss08/trenova/internal/ent/emailprofile"
+	"github.com/emoss08/trenova/internal/ent/organization"
 	"github.com/emoss08/trenova/internal/ent/predicate"
 	"github.com/google/uuid"
 )
@@ -28,6 +29,20 @@ type CustomerEmailProfileUpdate struct {
 // Where appends a list predicates to the CustomerEmailProfileUpdate builder.
 func (cepu *CustomerEmailProfileUpdate) Where(ps ...predicate.CustomerEmailProfile) *CustomerEmailProfileUpdate {
 	cepu.mutation.Where(ps...)
+	return cepu
+}
+
+// SetOrganizationID sets the "organization_id" field.
+func (cepu *CustomerEmailProfileUpdate) SetOrganizationID(u uuid.UUID) *CustomerEmailProfileUpdate {
+	cepu.mutation.SetOrganizationID(u)
+	return cepu
+}
+
+// SetNillableOrganizationID sets the "organization_id" field if the given value is not nil.
+func (cepu *CustomerEmailProfileUpdate) SetNillableOrganizationID(u *uuid.UUID) *CustomerEmailProfileUpdate {
+	if u != nil {
+		cepu.SetOrganizationID(*u)
+	}
 	return cepu
 }
 
@@ -166,6 +181,11 @@ func (cepu *CustomerEmailProfileUpdate) SetNillableEmailFormat(cf *customeremail
 	return cepu
 }
 
+// SetOrganization sets the "organization" edge to the Organization entity.
+func (cepu *CustomerEmailProfileUpdate) SetOrganization(o *Organization) *CustomerEmailProfileUpdate {
+	return cepu.SetOrganizationID(o.ID)
+}
+
 // SetEmailProfile sets the "email_profile" edge to the EmailProfile entity.
 func (cepu *CustomerEmailProfileUpdate) SetEmailProfile(e *EmailProfile) *CustomerEmailProfileUpdate {
 	return cepu.SetEmailProfileID(e.ID)
@@ -174,6 +194,12 @@ func (cepu *CustomerEmailProfileUpdate) SetEmailProfile(e *EmailProfile) *Custom
 // Mutation returns the CustomerEmailProfileMutation object of the builder.
 func (cepu *CustomerEmailProfileUpdate) Mutation() *CustomerEmailProfileMutation {
 	return cepu.mutation
+}
+
+// ClearOrganization clears the "organization" edge to the Organization entity.
+func (cepu *CustomerEmailProfileUpdate) ClearOrganization() *CustomerEmailProfileUpdate {
+	cepu.mutation.ClearOrganization()
+	return cepu
 }
 
 // ClearEmailProfile clears the "email_profile" edge to the EmailProfile entity.
@@ -298,6 +324,35 @@ func (cepu *CustomerEmailProfileUpdate) sqlSave(ctx context.Context) (n int, err
 	if value, ok := cepu.mutation.EmailFormat(); ok {
 		_spec.SetField(customeremailprofile.FieldEmailFormat, field.TypeEnum, value)
 	}
+	if cepu.mutation.OrganizationCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   customeremailprofile.OrganizationTable,
+			Columns: []string{customeremailprofile.OrganizationColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(organization.FieldID, field.TypeUUID),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := cepu.mutation.OrganizationIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   customeremailprofile.OrganizationTable,
+			Columns: []string{customeremailprofile.OrganizationColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(organization.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
 	if cepu.mutation.EmailProfileCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
@@ -347,6 +402,20 @@ type CustomerEmailProfileUpdateOne struct {
 	hooks     []Hook
 	mutation  *CustomerEmailProfileMutation
 	modifiers []func(*sql.UpdateBuilder)
+}
+
+// SetOrganizationID sets the "organization_id" field.
+func (cepuo *CustomerEmailProfileUpdateOne) SetOrganizationID(u uuid.UUID) *CustomerEmailProfileUpdateOne {
+	cepuo.mutation.SetOrganizationID(u)
+	return cepuo
+}
+
+// SetNillableOrganizationID sets the "organization_id" field if the given value is not nil.
+func (cepuo *CustomerEmailProfileUpdateOne) SetNillableOrganizationID(u *uuid.UUID) *CustomerEmailProfileUpdateOne {
+	if u != nil {
+		cepuo.SetOrganizationID(*u)
+	}
+	return cepuo
 }
 
 // SetUpdatedAt sets the "updated_at" field.
@@ -484,6 +553,11 @@ func (cepuo *CustomerEmailProfileUpdateOne) SetNillableEmailFormat(cf *customere
 	return cepuo
 }
 
+// SetOrganization sets the "organization" edge to the Organization entity.
+func (cepuo *CustomerEmailProfileUpdateOne) SetOrganization(o *Organization) *CustomerEmailProfileUpdateOne {
+	return cepuo.SetOrganizationID(o.ID)
+}
+
 // SetEmailProfile sets the "email_profile" edge to the EmailProfile entity.
 func (cepuo *CustomerEmailProfileUpdateOne) SetEmailProfile(e *EmailProfile) *CustomerEmailProfileUpdateOne {
 	return cepuo.SetEmailProfileID(e.ID)
@@ -492,6 +566,12 @@ func (cepuo *CustomerEmailProfileUpdateOne) SetEmailProfile(e *EmailProfile) *Cu
 // Mutation returns the CustomerEmailProfileMutation object of the builder.
 func (cepuo *CustomerEmailProfileUpdateOne) Mutation() *CustomerEmailProfileMutation {
 	return cepuo.mutation
+}
+
+// ClearOrganization clears the "organization" edge to the Organization entity.
+func (cepuo *CustomerEmailProfileUpdateOne) ClearOrganization() *CustomerEmailProfileUpdateOne {
+	cepuo.mutation.ClearOrganization()
+	return cepuo
 }
 
 // ClearEmailProfile clears the "email_profile" edge to the EmailProfile entity.
@@ -645,6 +725,35 @@ func (cepuo *CustomerEmailProfileUpdateOne) sqlSave(ctx context.Context) (_node 
 	}
 	if value, ok := cepuo.mutation.EmailFormat(); ok {
 		_spec.SetField(customeremailprofile.FieldEmailFormat, field.TypeEnum, value)
+	}
+	if cepuo.mutation.OrganizationCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   customeremailprofile.OrganizationTable,
+			Columns: []string{customeremailprofile.OrganizationColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(organization.FieldID, field.TypeUUID),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := cepuo.mutation.OrganizationIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   customeremailprofile.OrganizationTable,
+			Columns: []string{customeremailprofile.OrganizationColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(organization.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
 	if cepuo.mutation.EmailProfileCleared() {
 		edge := &sqlgraph.EdgeSpec{

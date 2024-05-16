@@ -12,6 +12,7 @@ import (
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
 	"github.com/emoss08/trenova/internal/ent/generalledgeraccount"
+	"github.com/emoss08/trenova/internal/ent/organization"
 	"github.com/emoss08/trenova/internal/ent/predicate"
 	"github.com/emoss08/trenova/internal/ent/tag"
 	"github.com/google/uuid"
@@ -29,6 +30,20 @@ type GeneralLedgerAccountUpdate struct {
 // Where appends a list predicates to the GeneralLedgerAccountUpdate builder.
 func (glau *GeneralLedgerAccountUpdate) Where(ps ...predicate.GeneralLedgerAccount) *GeneralLedgerAccountUpdate {
 	glau.mutation.Where(ps...)
+	return glau
+}
+
+// SetOrganizationID sets the "organization_id" field.
+func (glau *GeneralLedgerAccountUpdate) SetOrganizationID(u uuid.UUID) *GeneralLedgerAccountUpdate {
+	glau.mutation.SetOrganizationID(u)
+	return glau
+}
+
+// SetNillableOrganizationID sets the "organization_id" field if the given value is not nil.
+func (glau *GeneralLedgerAccountUpdate) SetNillableOrganizationID(u *uuid.UUID) *GeneralLedgerAccountUpdate {
+	if u != nil {
+		glau.SetOrganizationID(*u)
+	}
 	return glau
 }
 
@@ -275,6 +290,11 @@ func (glau *GeneralLedgerAccountUpdate) SetNillableIsReconciled(b *bool) *Genera
 	return glau
 }
 
+// SetOrganization sets the "organization" edge to the Organization entity.
+func (glau *GeneralLedgerAccountUpdate) SetOrganization(o *Organization) *GeneralLedgerAccountUpdate {
+	return glau.SetOrganizationID(o.ID)
+}
+
 // AddTagIDs adds the "tags" edge to the Tag entity by IDs.
 func (glau *GeneralLedgerAccountUpdate) AddTagIDs(ids ...uuid.UUID) *GeneralLedgerAccountUpdate {
 	glau.mutation.AddTagIDs(ids...)
@@ -293,6 +313,12 @@ func (glau *GeneralLedgerAccountUpdate) AddTags(t ...*Tag) *GeneralLedgerAccount
 // Mutation returns the GeneralLedgerAccountMutation object of the builder.
 func (glau *GeneralLedgerAccountUpdate) Mutation() *GeneralLedgerAccountMutation {
 	return glau.mutation
+}
+
+// ClearOrganization clears the "organization" edge to the Organization entity.
+func (glau *GeneralLedgerAccountUpdate) ClearOrganization() *GeneralLedgerAccountUpdate {
+	glau.mutation.ClearOrganization()
+	return glau
 }
 
 // ClearTags clears all "tags" edges to the Tag entity.
@@ -468,6 +494,35 @@ func (glau *GeneralLedgerAccountUpdate) sqlSave(ctx context.Context) (n int, err
 	if value, ok := glau.mutation.IsReconciled(); ok {
 		_spec.SetField(generalledgeraccount.FieldIsReconciled, field.TypeBool, value)
 	}
+	if glau.mutation.OrganizationCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   generalledgeraccount.OrganizationTable,
+			Columns: []string{generalledgeraccount.OrganizationColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(organization.FieldID, field.TypeUUID),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := glau.mutation.OrganizationIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   generalledgeraccount.OrganizationTable,
+			Columns: []string{generalledgeraccount.OrganizationColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(organization.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
 	if glau.mutation.TagsCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2M,
@@ -533,6 +588,20 @@ type GeneralLedgerAccountUpdateOne struct {
 	hooks     []Hook
 	mutation  *GeneralLedgerAccountMutation
 	modifiers []func(*sql.UpdateBuilder)
+}
+
+// SetOrganizationID sets the "organization_id" field.
+func (glauo *GeneralLedgerAccountUpdateOne) SetOrganizationID(u uuid.UUID) *GeneralLedgerAccountUpdateOne {
+	glauo.mutation.SetOrganizationID(u)
+	return glauo
+}
+
+// SetNillableOrganizationID sets the "organization_id" field if the given value is not nil.
+func (glauo *GeneralLedgerAccountUpdateOne) SetNillableOrganizationID(u *uuid.UUID) *GeneralLedgerAccountUpdateOne {
+	if u != nil {
+		glauo.SetOrganizationID(*u)
+	}
+	return glauo
 }
 
 // SetUpdatedAt sets the "updated_at" field.
@@ -778,6 +847,11 @@ func (glauo *GeneralLedgerAccountUpdateOne) SetNillableIsReconciled(b *bool) *Ge
 	return glauo
 }
 
+// SetOrganization sets the "organization" edge to the Organization entity.
+func (glauo *GeneralLedgerAccountUpdateOne) SetOrganization(o *Organization) *GeneralLedgerAccountUpdateOne {
+	return glauo.SetOrganizationID(o.ID)
+}
+
 // AddTagIDs adds the "tags" edge to the Tag entity by IDs.
 func (glauo *GeneralLedgerAccountUpdateOne) AddTagIDs(ids ...uuid.UUID) *GeneralLedgerAccountUpdateOne {
 	glauo.mutation.AddTagIDs(ids...)
@@ -796,6 +870,12 @@ func (glauo *GeneralLedgerAccountUpdateOne) AddTags(t ...*Tag) *GeneralLedgerAcc
 // Mutation returns the GeneralLedgerAccountMutation object of the builder.
 func (glauo *GeneralLedgerAccountUpdateOne) Mutation() *GeneralLedgerAccountMutation {
 	return glauo.mutation
+}
+
+// ClearOrganization clears the "organization" edge to the Organization entity.
+func (glauo *GeneralLedgerAccountUpdateOne) ClearOrganization() *GeneralLedgerAccountUpdateOne {
+	glauo.mutation.ClearOrganization()
+	return glauo
 }
 
 // ClearTags clears all "tags" edges to the Tag entity.
@@ -1000,6 +1080,35 @@ func (glauo *GeneralLedgerAccountUpdateOne) sqlSave(ctx context.Context) (_node 
 	}
 	if value, ok := glauo.mutation.IsReconciled(); ok {
 		_spec.SetField(generalledgeraccount.FieldIsReconciled, field.TypeBool, value)
+	}
+	if glauo.mutation.OrganizationCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   generalledgeraccount.OrganizationTable,
+			Columns: []string{generalledgeraccount.OrganizationColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(organization.FieldID, field.TypeUUID),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := glauo.mutation.OrganizationIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   generalledgeraccount.OrganizationTable,
+			Columns: []string{generalledgeraccount.OrganizationColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(organization.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
 	if glauo.mutation.TagsCleared() {
 		edge := &sqlgraph.EdgeSpec{

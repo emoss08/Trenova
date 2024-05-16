@@ -142,7 +142,9 @@ func (lcc *LocationCategoryCreate) Mutation() *LocationCategoryMutation {
 
 // Save creates the LocationCategory in the database.
 func (lcc *LocationCategoryCreate) Save(ctx context.Context) (*LocationCategory, error) {
-	lcc.defaults()
+	if err := lcc.defaults(); err != nil {
+		return nil, err
+	}
 	return withHooks(ctx, lcc.sqlSave, lcc.mutation, lcc.hooks)
 }
 
@@ -169,12 +171,18 @@ func (lcc *LocationCategoryCreate) ExecX(ctx context.Context) {
 }
 
 // defaults sets the default values of the builder before save.
-func (lcc *LocationCategoryCreate) defaults() {
+func (lcc *LocationCategoryCreate) defaults() error {
 	if _, ok := lcc.mutation.CreatedAt(); !ok {
+		if locationcategory.DefaultCreatedAt == nil {
+			return fmt.Errorf("ent: uninitialized locationcategory.DefaultCreatedAt (forgotten import ent/runtime?)")
+		}
 		v := locationcategory.DefaultCreatedAt()
 		lcc.mutation.SetCreatedAt(v)
 	}
 	if _, ok := lcc.mutation.UpdatedAt(); !ok {
+		if locationcategory.DefaultUpdatedAt == nil {
+			return fmt.Errorf("ent: uninitialized locationcategory.DefaultUpdatedAt (forgotten import ent/runtime?)")
+		}
 		v := locationcategory.DefaultUpdatedAt()
 		lcc.mutation.SetUpdatedAt(v)
 	}
@@ -183,9 +191,13 @@ func (lcc *LocationCategoryCreate) defaults() {
 		lcc.mutation.SetVersion(v)
 	}
 	if _, ok := lcc.mutation.ID(); !ok {
+		if locationcategory.DefaultID == nil {
+			return fmt.Errorf("ent: uninitialized locationcategory.DefaultID (forgotten import ent/runtime?)")
+		}
 		v := locationcategory.DefaultID()
 		lcc.mutation.SetID(v)
 	}
+	return nil
 }
 
 // check runs all checks and user-defined validators on the builder.

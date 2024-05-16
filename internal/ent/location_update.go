@@ -15,6 +15,7 @@ import (
 	"github.com/emoss08/trenova/internal/ent/locationcategory"
 	"github.com/emoss08/trenova/internal/ent/locationcomment"
 	"github.com/emoss08/trenova/internal/ent/locationcontact"
+	"github.com/emoss08/trenova/internal/ent/organization"
 	"github.com/emoss08/trenova/internal/ent/predicate"
 	"github.com/emoss08/trenova/internal/ent/shipmentroute"
 	"github.com/emoss08/trenova/internal/ent/usstate"
@@ -32,6 +33,20 @@ type LocationUpdate struct {
 // Where appends a list predicates to the LocationUpdate builder.
 func (lu *LocationUpdate) Where(ps ...predicate.Location) *LocationUpdate {
 	lu.mutation.Where(ps...)
+	return lu
+}
+
+// SetOrganizationID sets the "organization_id" field.
+func (lu *LocationUpdate) SetOrganizationID(u uuid.UUID) *LocationUpdate {
+	lu.mutation.SetOrganizationID(u)
+	return lu
+}
+
+// SetNillableOrganizationID sets the "organization_id" field if the given value is not nil.
+func (lu *LocationUpdate) SetNillableOrganizationID(u *uuid.UUID) *LocationUpdate {
+	if u != nil {
+		lu.SetOrganizationID(*u)
+	}
 	return lu
 }
 
@@ -308,6 +323,11 @@ func (lu *LocationUpdate) SetNillableIsGeocoded(b *bool) *LocationUpdate {
 	return lu
 }
 
+// SetOrganization sets the "organization" edge to the Organization entity.
+func (lu *LocationUpdate) SetOrganization(o *Organization) *LocationUpdate {
+	return lu.SetOrganizationID(o.ID)
+}
+
 // SetLocationCategory sets the "location_category" edge to the LocationCategory entity.
 func (lu *LocationUpdate) SetLocationCategory(l *LocationCategory) *LocationUpdate {
 	return lu.SetLocationCategoryID(l.ID)
@@ -381,6 +401,12 @@ func (lu *LocationUpdate) AddDestinationRouteLocations(s ...*ShipmentRoute) *Loc
 // Mutation returns the LocationMutation object of the builder.
 func (lu *LocationUpdate) Mutation() *LocationMutation {
 	return lu.mutation
+}
+
+// ClearOrganization clears the "organization" edge to the Organization entity.
+func (lu *LocationUpdate) ClearOrganization() *LocationUpdate {
+	lu.mutation.ClearOrganization()
+	return lu
 }
 
 // ClearLocationCategory clears the "location_category" edge to the LocationCategory entity.
@@ -653,6 +679,35 @@ func (lu *LocationUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	if value, ok := lu.mutation.IsGeocoded(); ok {
 		_spec.SetField(location.FieldIsGeocoded, field.TypeBool, value)
 	}
+	if lu.mutation.OrganizationCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   location.OrganizationTable,
+			Columns: []string{location.OrganizationColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(organization.FieldID, field.TypeUUID),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := lu.mutation.OrganizationIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   location.OrganizationTable,
+			Columns: []string{location.OrganizationColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(organization.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
 	if lu.mutation.LocationCategoryCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
@@ -911,6 +966,20 @@ type LocationUpdateOne struct {
 	hooks     []Hook
 	mutation  *LocationMutation
 	modifiers []func(*sql.UpdateBuilder)
+}
+
+// SetOrganizationID sets the "organization_id" field.
+func (luo *LocationUpdateOne) SetOrganizationID(u uuid.UUID) *LocationUpdateOne {
+	luo.mutation.SetOrganizationID(u)
+	return luo
+}
+
+// SetNillableOrganizationID sets the "organization_id" field if the given value is not nil.
+func (luo *LocationUpdateOne) SetNillableOrganizationID(u *uuid.UUID) *LocationUpdateOne {
+	if u != nil {
+		luo.SetOrganizationID(*u)
+	}
+	return luo
 }
 
 // SetUpdatedAt sets the "updated_at" field.
@@ -1186,6 +1255,11 @@ func (luo *LocationUpdateOne) SetNillableIsGeocoded(b *bool) *LocationUpdateOne 
 	return luo
 }
 
+// SetOrganization sets the "organization" edge to the Organization entity.
+func (luo *LocationUpdateOne) SetOrganization(o *Organization) *LocationUpdateOne {
+	return luo.SetOrganizationID(o.ID)
+}
+
 // SetLocationCategory sets the "location_category" edge to the LocationCategory entity.
 func (luo *LocationUpdateOne) SetLocationCategory(l *LocationCategory) *LocationUpdateOne {
 	return luo.SetLocationCategoryID(l.ID)
@@ -1259,6 +1333,12 @@ func (luo *LocationUpdateOne) AddDestinationRouteLocations(s ...*ShipmentRoute) 
 // Mutation returns the LocationMutation object of the builder.
 func (luo *LocationUpdateOne) Mutation() *LocationMutation {
 	return luo.mutation
+}
+
+// ClearOrganization clears the "organization" edge to the Organization entity.
+func (luo *LocationUpdateOne) ClearOrganization() *LocationUpdateOne {
+	luo.mutation.ClearOrganization()
+	return luo
 }
 
 // ClearLocationCategory clears the "location_category" edge to the LocationCategory entity.
@@ -1560,6 +1640,35 @@ func (luo *LocationUpdateOne) sqlSave(ctx context.Context) (_node *Location, err
 	}
 	if value, ok := luo.mutation.IsGeocoded(); ok {
 		_spec.SetField(location.FieldIsGeocoded, field.TypeBool, value)
+	}
+	if luo.mutation.OrganizationCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   location.OrganizationTable,
+			Columns: []string{location.OrganizationColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(organization.FieldID, field.TypeUUID),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := luo.mutation.OrganizationIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   location.OrganizationTable,
+			Columns: []string{location.OrganizationColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(organization.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
 	if luo.mutation.LocationCategoryCleared() {
 		edge := &sqlgraph.EdgeSpec{

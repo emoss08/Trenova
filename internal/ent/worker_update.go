@@ -12,6 +12,7 @@ import (
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
 	"github.com/emoss08/trenova/internal/ent/fleetcode"
+	"github.com/emoss08/trenova/internal/ent/organization"
 	"github.com/emoss08/trenova/internal/ent/predicate"
 	"github.com/emoss08/trenova/internal/ent/tractor"
 	"github.com/emoss08/trenova/internal/ent/user"
@@ -34,6 +35,20 @@ type WorkerUpdate struct {
 // Where appends a list predicates to the WorkerUpdate builder.
 func (wu *WorkerUpdate) Where(ps ...predicate.Worker) *WorkerUpdate {
 	wu.mutation.Where(ps...)
+	return wu
+}
+
+// SetOrganizationID sets the "organization_id" field.
+func (wu *WorkerUpdate) SetOrganizationID(u uuid.UUID) *WorkerUpdate {
+	wu.mutation.SetOrganizationID(u)
+	return wu
+}
+
+// SetNillableOrganizationID sets the "organization_id" field if the given value is not nil.
+func (wu *WorkerUpdate) SetNillableOrganizationID(u *uuid.UUID) *WorkerUpdate {
+	if u != nil {
+		wu.SetOrganizationID(*u)
+	}
 	return wu
 }
 
@@ -314,6 +329,11 @@ func (wu *WorkerUpdate) ClearExternalID() *WorkerUpdate {
 	return wu
 }
 
+// SetOrganization sets the "organization" edge to the Organization entity.
+func (wu *WorkerUpdate) SetOrganization(o *Organization) *WorkerUpdate {
+	return wu.SetOrganizationID(o.ID)
+}
+
 // SetState sets the "state" edge to the UsState entity.
 func (wu *WorkerUpdate) SetState(u *UsState) *WorkerUpdate {
 	return wu.SetStateID(u.ID)
@@ -419,6 +439,12 @@ func (wu *WorkerUpdate) AddWorkerContacts(w ...*WorkerContact) *WorkerUpdate {
 // Mutation returns the WorkerMutation object of the builder.
 func (wu *WorkerUpdate) Mutation() *WorkerMutation {
 	return wu.mutation
+}
+
+// ClearOrganization clears the "organization" edge to the Organization entity.
+func (wu *WorkerUpdate) ClearOrganization() *WorkerUpdate {
+	wu.mutation.ClearOrganization()
+	return wu
 }
 
 // ClearState clears the "state" edge to the UsState entity.
@@ -668,6 +694,35 @@ func (wu *WorkerUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	}
 	if wu.mutation.ExternalIDCleared() {
 		_spec.ClearField(worker.FieldExternalID, field.TypeString)
+	}
+	if wu.mutation.OrganizationCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   worker.OrganizationTable,
+			Columns: []string{worker.OrganizationColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(organization.FieldID, field.TypeUUID),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := wu.mutation.OrganizationIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   worker.OrganizationTable,
+			Columns: []string{worker.OrganizationColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(organization.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
 	if wu.mutation.StateCleared() {
 		edge := &sqlgraph.EdgeSpec{
@@ -955,6 +1010,20 @@ type WorkerUpdateOne struct {
 	modifiers []func(*sql.UpdateBuilder)
 }
 
+// SetOrganizationID sets the "organization_id" field.
+func (wuo *WorkerUpdateOne) SetOrganizationID(u uuid.UUID) *WorkerUpdateOne {
+	wuo.mutation.SetOrganizationID(u)
+	return wuo
+}
+
+// SetNillableOrganizationID sets the "organization_id" field if the given value is not nil.
+func (wuo *WorkerUpdateOne) SetNillableOrganizationID(u *uuid.UUID) *WorkerUpdateOne {
+	if u != nil {
+		wuo.SetOrganizationID(*u)
+	}
+	return wuo
+}
+
 // SetUpdatedAt sets the "updated_at" field.
 func (wuo *WorkerUpdateOne) SetUpdatedAt(t time.Time) *WorkerUpdateOne {
 	wuo.mutation.SetUpdatedAt(t)
@@ -1232,6 +1301,11 @@ func (wuo *WorkerUpdateOne) ClearExternalID() *WorkerUpdateOne {
 	return wuo
 }
 
+// SetOrganization sets the "organization" edge to the Organization entity.
+func (wuo *WorkerUpdateOne) SetOrganization(o *Organization) *WorkerUpdateOne {
+	return wuo.SetOrganizationID(o.ID)
+}
+
 // SetState sets the "state" edge to the UsState entity.
 func (wuo *WorkerUpdateOne) SetState(u *UsState) *WorkerUpdateOne {
 	return wuo.SetStateID(u.ID)
@@ -1337,6 +1411,12 @@ func (wuo *WorkerUpdateOne) AddWorkerContacts(w ...*WorkerContact) *WorkerUpdate
 // Mutation returns the WorkerMutation object of the builder.
 func (wuo *WorkerUpdateOne) Mutation() *WorkerMutation {
 	return wuo.mutation
+}
+
+// ClearOrganization clears the "organization" edge to the Organization entity.
+func (wuo *WorkerUpdateOne) ClearOrganization() *WorkerUpdateOne {
+	wuo.mutation.ClearOrganization()
+	return wuo
 }
 
 // ClearState clears the "state" edge to the UsState entity.
@@ -1616,6 +1696,35 @@ func (wuo *WorkerUpdateOne) sqlSave(ctx context.Context) (_node *Worker, err err
 	}
 	if wuo.mutation.ExternalIDCleared() {
 		_spec.ClearField(worker.FieldExternalID, field.TypeString)
+	}
+	if wuo.mutation.OrganizationCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   worker.OrganizationTable,
+			Columns: []string{worker.OrganizationColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(organization.FieldID, field.TypeUUID),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := wuo.mutation.OrganizationIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   worker.OrganizationTable,
+			Columns: []string{worker.OrganizationColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(organization.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
 	if wuo.mutation.StateCleared() {
 		edge := &sqlgraph.EdgeSpec{

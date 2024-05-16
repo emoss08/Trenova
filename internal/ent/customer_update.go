@@ -17,6 +17,7 @@ import (
 	"github.com/emoss08/trenova/internal/ent/customeremailprofile"
 	"github.com/emoss08/trenova/internal/ent/customerruleprofile"
 	"github.com/emoss08/trenova/internal/ent/deliveryslot"
+	"github.com/emoss08/trenova/internal/ent/organization"
 	"github.com/emoss08/trenova/internal/ent/predicate"
 	"github.com/emoss08/trenova/internal/ent/shipment"
 	"github.com/emoss08/trenova/internal/ent/usstate"
@@ -34,6 +35,20 @@ type CustomerUpdate struct {
 // Where appends a list predicates to the CustomerUpdate builder.
 func (cu *CustomerUpdate) Where(ps ...predicate.Customer) *CustomerUpdate {
 	cu.mutation.Where(ps...)
+	return cu
+}
+
+// SetOrganizationID sets the "organization_id" field.
+func (cu *CustomerUpdate) SetOrganizationID(u uuid.UUID) *CustomerUpdate {
+	cu.mutation.SetOrganizationID(u)
+	return cu
+}
+
+// SetNillableOrganizationID sets the "organization_id" field if the given value is not nil.
+func (cu *CustomerUpdate) SetNillableOrganizationID(u *uuid.UUID) *CustomerUpdate {
+	if u != nil {
+		cu.SetOrganizationID(*u)
+	}
 	return cu
 }
 
@@ -210,6 +225,11 @@ func (cu *CustomerUpdate) SetNillableAutoMarkReadyToBill(b *bool) *CustomerUpdat
 	return cu
 }
 
+// SetOrganization sets the "organization" edge to the Organization entity.
+func (cu *CustomerUpdate) SetOrganization(o *Organization) *CustomerUpdate {
+	return cu.SetOrganizationID(o.ID)
+}
+
 // SetState sets the "state" edge to the UsState entity.
 func (cu *CustomerUpdate) SetState(u *UsState) *CustomerUpdate {
 	return cu.SetStateID(u.ID)
@@ -316,6 +336,12 @@ func (cu *CustomerUpdate) AddDeliverySlots(d ...*DeliverySlot) *CustomerUpdate {
 // Mutation returns the CustomerMutation object of the builder.
 func (cu *CustomerUpdate) Mutation() *CustomerMutation {
 	return cu.mutation
+}
+
+// ClearOrganization clears the "organization" edge to the Organization entity.
+func (cu *CustomerUpdate) ClearOrganization() *CustomerUpdate {
+	cu.mutation.ClearOrganization()
+	return cu
 }
 
 // ClearState clears the "state" edge to the UsState entity.
@@ -567,6 +593,35 @@ func (cu *CustomerUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	}
 	if value, ok := cu.mutation.AutoMarkReadyToBill(); ok {
 		_spec.SetField(customer.FieldAutoMarkReadyToBill, field.TypeBool, value)
+	}
+	if cu.mutation.OrganizationCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   customer.OrganizationTable,
+			Columns: []string{customer.OrganizationColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(organization.FieldID, field.TypeUUID),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := cu.mutation.OrganizationIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   customer.OrganizationTable,
+			Columns: []string{customer.OrganizationColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(organization.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
 	if cu.mutation.StateCleared() {
 		edge := &sqlgraph.EdgeSpec{
@@ -857,6 +912,20 @@ type CustomerUpdateOne struct {
 	modifiers []func(*sql.UpdateBuilder)
 }
 
+// SetOrganizationID sets the "organization_id" field.
+func (cuo *CustomerUpdateOne) SetOrganizationID(u uuid.UUID) *CustomerUpdateOne {
+	cuo.mutation.SetOrganizationID(u)
+	return cuo
+}
+
+// SetNillableOrganizationID sets the "organization_id" field if the given value is not nil.
+func (cuo *CustomerUpdateOne) SetNillableOrganizationID(u *uuid.UUID) *CustomerUpdateOne {
+	if u != nil {
+		cuo.SetOrganizationID(*u)
+	}
+	return cuo
+}
+
 // SetUpdatedAt sets the "updated_at" field.
 func (cuo *CustomerUpdateOne) SetUpdatedAt(t time.Time) *CustomerUpdateOne {
 	cuo.mutation.SetUpdatedAt(t)
@@ -1030,6 +1099,11 @@ func (cuo *CustomerUpdateOne) SetNillableAutoMarkReadyToBill(b *bool) *CustomerU
 	return cuo
 }
 
+// SetOrganization sets the "organization" edge to the Organization entity.
+func (cuo *CustomerUpdateOne) SetOrganization(o *Organization) *CustomerUpdateOne {
+	return cuo.SetOrganizationID(o.ID)
+}
+
 // SetState sets the "state" edge to the UsState entity.
 func (cuo *CustomerUpdateOne) SetState(u *UsState) *CustomerUpdateOne {
 	return cuo.SetStateID(u.ID)
@@ -1136,6 +1210,12 @@ func (cuo *CustomerUpdateOne) AddDeliverySlots(d ...*DeliverySlot) *CustomerUpda
 // Mutation returns the CustomerMutation object of the builder.
 func (cuo *CustomerUpdateOne) Mutation() *CustomerMutation {
 	return cuo.mutation
+}
+
+// ClearOrganization clears the "organization" edge to the Organization entity.
+func (cuo *CustomerUpdateOne) ClearOrganization() *CustomerUpdateOne {
+	cuo.mutation.ClearOrganization()
+	return cuo
 }
 
 // ClearState clears the "state" edge to the UsState entity.
@@ -1417,6 +1497,35 @@ func (cuo *CustomerUpdateOne) sqlSave(ctx context.Context) (_node *Customer, err
 	}
 	if value, ok := cuo.mutation.AutoMarkReadyToBill(); ok {
 		_spec.SetField(customer.FieldAutoMarkReadyToBill, field.TypeBool, value)
+	}
+	if cuo.mutation.OrganizationCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   customer.OrganizationTable,
+			Columns: []string{customer.OrganizationColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(organization.FieldID, field.TypeUUID),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := cuo.mutation.OrganizationIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   customer.OrganizationTable,
+			Columns: []string{customer.OrganizationColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(organization.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
 	if cuo.mutation.StateCleared() {
 		edge := &sqlgraph.EdgeSpec{
