@@ -47,7 +47,7 @@ function TableChangeEditForm({
     });
 
     return () => subscription.unsubscribe();
-  }, [watch]);
+  }, [watch, setValue]);
 
   const mutation = useCustomMutation<TableChangeAlertFormValues>(control, {
     method: "PUT",
