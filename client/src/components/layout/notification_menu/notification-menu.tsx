@@ -8,6 +8,7 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Tooltip,
   TooltipContent,
@@ -25,6 +26,8 @@ import { useQueryClient } from "@tanstack/react-query";
 import { BellIcon } from "lucide-react";
 import React, { useState } from "react";
 import { toast } from "sonner";
+import { ArchiveMenuContent } from "./archive-menu";
+import { DownloadMenuContent } from "./download-menu";
 
 function NotificationButton({
   userHasNotifications,
@@ -119,6 +122,7 @@ export function NotificationMenu() {
   const { id: userId } = useUserStore.get("user");
   const { notificationsData, notificationsLoading } = useNotifications(userId);
   const webSocketManager = createWebsocketManager();
+  const [activeTab, setActiveTab] = useState<string>("inbox");
 
   const markedAndInvalidate = async () => {
     await axios.get("/user-notifications/?markAsRead=true");
@@ -168,7 +172,7 @@ export function NotificationMenu() {
     return () => {
       webSocketManager.disconnect("notifications");
     };
-  }, [userId]);
+  }, [queryClient, userId, webSocketManager]);
 
   React.useEffect(() => {
     if (
@@ -195,17 +199,43 @@ export function NotificationMenu() {
         </span>
       </PopoverTrigger>
       <PopoverContent
-        className="bg-popover w-80 p-3"
+        className="bg-popover w-96 p-2"
         sideOffset={10}
         alignOffset={-40}
         align="end"
       >
-        <NotificationContent
-          notificationsData={notificationsData as UserNotification}
-          notificationsLoading={notificationsLoading}
-          userHasNotifications={userHasNotifications}
-          readAllNotifications={readAllNotifications}
-        />
+        <Tabs
+          defaultValue="inbox"
+          value={activeTab}
+          className="w-full"
+          onValueChange={setActiveTab}
+        >
+          <TabsList>
+            <TabsTrigger
+              isNotification={userHasNotifications}
+              notificationCount={notificationsData?.unreadCount}
+              value="inbox"
+            >
+              Inbox
+            </TabsTrigger>
+            <TabsTrigger value="downloads">Downloads</TabsTrigger>
+            <TabsTrigger value="archive">Archive</TabsTrigger>
+          </TabsList>
+          <TabsContent value="inbox">
+            <NotificationContent
+              notificationsData={notificationsData as UserNotification}
+              notificationsLoading={notificationsLoading}
+              userHasNotifications={userHasNotifications}
+              readAllNotifications={readAllNotifications}
+            />
+          </TabsContent>
+          <TabsContent value="archive">
+            <ArchiveMenuContent />
+          </TabsContent>
+          <TabsContent value="downloads">
+            <DownloadMenuContent />
+          </TabsContent>
+        </Tabs>
       </PopoverContent>
     </Popover>
   );
