@@ -144,21 +144,21 @@ export function NavMenu() {
     [menuItemRefs],
   );
 
-  // Handle clicks outside the menu to close it
-  const handleClickOutside = (event: MouseEvent) => {
-    if (
-      navMenuRef.current &&
-      !navMenuRef.current.contains(event.target as Node)
-    ) {
-      setMenuOpen(undefined);
-    }
-  };
-
   // Add and remove click outside listener
   React.useEffect(() => {
+    // Handle clicks outside the menu to close it
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        navMenuRef.current &&
+        !navMenuRef.current.contains(event.target as Node)
+      ) {
+        setMenuOpen(undefined);
+      }
+    };
+
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
+  }, [setMenuOpen]);
 
   // Update menu position when menuOpen changes
   React.useEffect(() => {
@@ -168,7 +168,7 @@ export function NavMenu() {
       position.left -= 200; // Adjust the value as needed
       setMenuPosition(position);
     }
-  }, [menuOpen, calculatePosition]);
+  }, [menuOpen]);
 
   // Define menu items
   const menuItems: MenuData[] = [
