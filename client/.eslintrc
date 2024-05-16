@@ -7,12 +7,14 @@
     "plugin:import/typescript",
     "plugin:@tanstack/eslint-plugin-query/recommended",
     "plugin:tailwindcss/recommended",
+    "plugin:react-hooks/recommended",
     "plugin:prettier/recommended"
   ],
   "parser": "@typescript-eslint/parser",
   "plugins": [
     "@tanstack/query",
-    "@typescript-eslint"
+    "@typescript-eslint",
+    "react-refresh"
   ],
   "globals": {
     "document": true,
