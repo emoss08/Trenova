@@ -359,10 +359,10 @@ func SeedAdminAccount(
 	ctx context.Context, client *ent.Client, org *ent.Organization, bu *ent.BusinessUnit,
 ) error {
 	// Check if the admin account exists
-	_, err := client.User.Query().Where(user.UsernameEQ("admin")).Only(ctx)
+	exists, err := client.User.Query().Where(user.UsernameEQ("admin")).Exist(ctx)
 	switch {
 	// If not, create the admin account
-	case ent.IsNotFound(err):
+	case !exists:
 		hashedPassword, err := bcrypt.GenerateFromPassword([]byte("admin"), bcrypt.DefaultCost)
 		adminRole, err := client.Role.Query().Where(role.NameEQ("Admin")).Only(ctx)
 		if err != nil {
@@ -404,11 +404,14 @@ func SeedNormalAccount(
 	ctx context.Context, client *ent.Client, org *ent.Organization, bu *ent.BusinessUnit,
 ) error {
 	// Check if the normal account exists
-	_, err := client.User.Query().Where(user.UsernameEQ("normie")).Only(ctx)
+	exists, err := client.User.Query().Where(user.UsernameEQ("normie")).Exist(ctx)
+	if err != nil {
+		log.Panicf("Failed querying normal account: %v", err)
+	}
 
 	switch {
 	// If not, create the normal account
-	case ent.IsNotFound(err):
+	case !exists:
 		hashedPassword, err := bcrypt.GenerateFromPassword([]byte("user"), bcrypt.DefaultCost)
 		_, err = client.User.
 			Create().
