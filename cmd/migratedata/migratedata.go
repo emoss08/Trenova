@@ -25,6 +25,7 @@ import (
 	"github.com/emoss08/trenova/internal/ent/tractor"
 	"github.com/emoss08/trenova/internal/ent/user"
 	"github.com/emoss08/trenova/internal/ent/usstate"
+	"github.com/emoss08/trenova/internal/util"
 	"github.com/emoss08/trenova/internal/util/types"
 	"github.com/fatih/color"
 	"golang.org/x/crypto/bcrypt"
@@ -583,98 +584,154 @@ func SeedCustomers(ctx context.Context, client *ent.Client, org *ent.Organizatio
 		log.Panicf("Failed querying North Carolina: %v", err)
 	}
 
+	// Create a standard delivery slot
+	startTime := types.TimeOnly{Time: time.Date(0, 1, 1, 7, 0, 0, 0, time.UTC)}
+	endTime := types.TimeOnly{Time: time.Date(0, 1, 1, 17, 0, 0, 0, time.UTC)}
+
 	// If not, create the customers
 	if customerCount == 0 {
-		log.Println("Adding standard customers...")
-		// Create 1 customer with all relationships.
-		c, err := client.Customer.Create().
-			SetBusinessUnit(bu).
-			SetOrganization(org).
-			SetName("Trenova Software Solutions").
-			SetAddressLine1("1234 Main St").
-			SetCity("Atlanta").
-			SetState(nc).
-			SetPostalCode("30303").
-			Save(ctx)
-		if err != nil {
-			log.Panicf("Failed creating customer: %v", err)
-		}
+		err = util.WithTx(ctx, client, func(tx *ent.Tx) error {
+			log.Println("Adding standard customers...")
 
-		// Add email profile to the customer.
-		_, err = client.CustomerEmailProfile.Create().
-			SetBusinessUnit(bu).
-			SetOrganization(org).
-			SetCustomer(c).
-			SetEmailRecipients("admin@trenova.app,test@trenova.app").
-			Save(ctx)
-		if err != nil {
-			log.Panicf("Failed creating customer email profile: %v", err)
-		}
+			c, err := tx.Customer.Create().
+				SetBusinessUnit(bu).
+				SetOrganization(org).
+				SetName("Trenova Software Solutions").
+				SetAddressLine1("1234 Main St").
+				SetCity("Atlanta").
+				SetState(nc).
+				SetPostalCode("30303").
+				Save(ctx)
+			if err != nil {
+				log.Panicf("Failed creating customer: %v", err)
+			}
 
-		// Add rule profile to the customer.
-		_, err = client.CustomerRuleProfile.Create().
-			SetBusinessUnit(bu).
-			SetOrganization(org).
-			SetCustomer(c).
-			SetBillingCycle("PER_SHIPMENT").
-			Save(ctx)
-		if err != nil {
-			log.Panicf("Failed creating customer: %v", err)
-		}
-
-		// Add a contact to the customer.
-		_, err = client.CustomerContact.Create().
-			SetBusinessUnit(bu).
-			SetOrganization(org).
-			SetCustomer(c).
-			SetName("John Doe").
-			SetEmail("johndoe@customer.com").
-			Save(ctx)
-		if err != nil {
-			log.Panicf("Failed creating customer: %v", err)
-		}
-
-		// Add a location that can be applied to the delivey slot.
-		lc, err := client.Location.Create().
-			SetBusinessUnit(bu).
-			SetOrganization(org).
-			SetCode("TRNV").
-			SetName("Trenova Transportation").
-			SetAddressLine1("1234 Main St").
-			SetCity("Atlanta").
-			SetState(nc).
-			SetPostalCode("30303").
-			Save(ctx)
-		if err != nil {
-			log.Panicf("Failed creating location: %v", err)
-		}
-
-		startTime := types.TimeOnly{Time: time.Date(0, 1, 1, 7, 0, 0, 0, time.UTC)}
-		endTime := types.TimeOnly{Time: time.Date(0, 1, 1, 17, 0, 0, 0, time.UTC)}
-
-		err = client.DeliverySlot.CreateBulk(
-			client.DeliverySlot.Create().
+			// Add email profile to the customer.
+			_, err = tx.CustomerEmailProfile.Create().
 				SetBusinessUnit(bu).
 				SetOrganization(org).
 				SetCustomer(c).
-				SetLocation(lc).
-				SetDayOfWeek("MONDAY").
-				SetStartTime(&startTime).
-				SetEndTime(&endTime),
-		).Exec(ctx)
-		if err != nil {
-			log.Panicf("Failed creating delivery slot: %v", err)
-		}
+				SetEmailRecipients("admin@trenova.app,test@trenova.app").
+				Save(ctx)
+			if err != nil {
+				log.Panicf("Failed creating customer email profile: %v", err)
+			}
 
-		// Add customer detention policy
-		err = client.CustomerDetentionPolicy.Create().
-			SetBusinessUnit(bu).
-			SetOrganization(org).
-			SetCustomer(c).
-			SetAmount(50).
-			Exec(ctx)
+			// Add rule profile to the customer.
+			_, err = tx.CustomerRuleProfile.Create().
+				SetBusinessUnit(bu).
+				SetOrganization(org).
+				SetCustomer(c).
+				SetBillingCycle("PER_SHIPMENT").
+				Save(ctx)
+			if err != nil {
+				log.Panicf("Failed creating customer: %v", err)
+			}
+
+			// Add a contact to the customer.
+			_, err = tx.CustomerContact.Create().
+				SetBusinessUnit(bu).
+				SetOrganization(org).
+				SetCustomer(c).
+				SetName("John Doe").
+				SetEmail("johndoe@customer.com").
+				Save(ctx)
+			if err != nil {
+				log.Panicf("Failed creating customer: %v", err)
+			}
+
+			// Add a location that can be applied to the delivey slot.
+			lc, err := tx.Location.Create().
+				SetBusinessUnit(bu).
+				SetOrganization(org).
+				SetCode("TRNV").
+				SetName("Trenova Transportation").
+				SetAddressLine1("1234 Main St").
+				SetCity("Atlanta").
+				SetState(nc).
+				SetPostalCode("30303").
+				Save(ctx)
+			if err != nil {
+				log.Panicf("Failed creating location: %v", err)
+			}
+
+			err = tx.DeliverySlot.CreateBulk(
+				tx.DeliverySlot.Create().
+					SetBusinessUnit(bu).
+					SetOrganization(org).
+					SetCustomer(c).
+					SetLocation(lc).
+					SetDayOfWeek("SUNDAY").
+					SetStartTime(&startTime).
+					SetEndTime(&endTime),
+				tx.DeliverySlot.Create().
+					SetBusinessUnit(bu).
+					SetOrganization(org).
+					SetCustomer(c).
+					SetLocation(lc).
+					SetDayOfWeek("MONDAY").
+					SetStartTime(&startTime).
+					SetEndTime(&endTime),
+				tx.DeliverySlot.Create().
+					SetBusinessUnit(bu).
+					SetOrganization(org).
+					SetCustomer(c).
+					SetLocation(lc).
+					SetDayOfWeek("TUESDAY").
+					SetStartTime(&startTime).
+					SetEndTime(&endTime),
+				tx.DeliverySlot.Create().
+					SetBusinessUnit(bu).
+					SetOrganization(org).
+					SetCustomer(c).
+					SetLocation(lc).
+					SetDayOfWeek("WEDNESDAY").
+					SetStartTime(&startTime).
+					SetEndTime(&endTime),
+				tx.DeliverySlot.Create().
+					SetBusinessUnit(bu).
+					SetOrganization(org).
+					SetCustomer(c).
+					SetLocation(lc).
+					SetDayOfWeek("THURSDAY").
+					SetStartTime(&startTime).
+					SetEndTime(&endTime),
+				tx.DeliverySlot.Create().
+					SetBusinessUnit(bu).
+					SetOrganization(org).
+					SetCustomer(c).
+					SetLocation(lc).
+					SetDayOfWeek("FRIDAY").
+					SetStartTime(&startTime).
+					SetEndTime(&endTime),
+				tx.DeliverySlot.Create().
+					SetBusinessUnit(bu).
+					SetOrganization(org).
+					SetCustomer(c).
+					SetLocation(lc).
+					SetDayOfWeek("SATURDAY").
+					SetStartTime(&startTime).
+					SetEndTime(&endTime),
+			).Exec(ctx)
+			if err != nil {
+				log.Panicf("Failed creating delivery slot: %v", err)
+			}
+
+			// Add customer detention policy
+			err = tx.CustomerDetentionPolicy.Create().
+				SetBusinessUnit(bu).
+				SetOrganization(org).
+				SetCustomer(c).
+				SetAmount(50).
+				Exec(ctx)
+			if err != nil {
+				log.Panicf("Failed creating customer detention policy: %v", err)
+			}
+
+			return nil
+		})
 		if err != nil {
-			log.Panicf("Failed creating customer detention policy: %v", err)
+			log.Panicf("Failed creating customers: %v", err)
 		}
 	}
 
