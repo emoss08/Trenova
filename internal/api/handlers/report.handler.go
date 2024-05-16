@@ -28,7 +28,7 @@ func (h *ReportHandler) RegisterRoutes(r fiber.Router) {
 	reportAPI.Post("/generate", h.GenerateReport())
 }
 
-// GetColumnNames returns the column names for a given table name.
+// GetColumnNames returns the column names and relationships for a given table name.
 func (h *ReportHandler) GetColumnNames() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		tableName := c.Query("tableName")
@@ -44,16 +44,19 @@ func (h *ReportHandler) GetColumnNames() fiber.Handler {
 				},
 			})
 		}
-
-		columns, count, err := h.Service.GetColumnsByTableName(c.UserContext(), tableName)
+		columns, relationships, count, err := h.Service.GetColumnsByTableName(c.UserContext(), tableName)
 		if err != nil {
+			h.Server.Logger.Err(err).Msg("Failed to get columns by table name")
 			errorResponse := util.CreateDBErrorResponse(err)
 			return c.Status(fiber.StatusInternalServerError).JSON(errorResponse)
 		}
 
 		return c.Status(fiber.StatusOK).JSON(types.HTTPResponse{
-			Results: columns,
-			Count:   count,
+			Results: map[string]any{
+				"columns":       columns,
+				"relationships": relationships,
+			},
+			Count: count,
 		})
 	}
 }
@@ -87,21 +90,20 @@ func (h *ReportHandler) GenerateReport() fiber.Handler {
 		request.BusinessUnitID = buID
 		request.OrganizationID = orgID
 
-		entity, err := h.Service.
-			GenerateReport(c.UserContext(), request, userID, orgID, buID)
+		entity, err := h.Service.GenerateReport(c.UserContext(), request, userID, orgID, buID)
 		if err != nil {
 			h.Server.Logger.Err(err).Msg("Failed to generate report")
 			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Error{
 				Code:    fiber.StatusInternalServerError,
-				Message: err.Error(),
+				Message: "Failed to generate report. Don't worry, we're working on it!",
 			})
 		}
 
-		// Generate a notification for the user.
-		_, err = services.NewUserNotificationService(h.Server).CreateUserNotification(
+		err = services.NewUserNotificationService(h.Server).CreateUserNotification(
 			c.UserContext(), orgID, buID, userID, "New Report is available", "Sucessfully Generated Report. Click here to download", entity.ReportURL,
 		)
 		if err != nil {
+			h.Server.Logger.Err(err).Msg("Failed to create user notification")
 			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Error{
 				Code:    fiber.StatusInternalServerError,
 				Message: err.Error(),

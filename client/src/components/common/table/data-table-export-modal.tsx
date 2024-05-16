@@ -6,7 +6,6 @@ import {
 import { SelectInput } from "@/components/common/fields/select-input";
 import { TextareaField } from "@/components/common/fields/textarea";
 import { Button } from "@/components/ui/button";
-import { ComponentLoader } from "@/components/ui/component-loader";
 import { Dialog, DialogContent, DialogHeader } from "@/components/ui/dialog";
 import {
   DropdownMenu,
@@ -16,17 +15,16 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { useReportColumns } from "@/hooks/useQueries";
 import axios from "@/lib/axiosConfig";
 import { StoreType } from "@/lib/useGlobalStore";
 import { ExportModelSchema } from "@/lib/validations/GenericSchema";
-import { getColumns } from "@/services/ReportRequestService";
 import { TableStoreProps, useTableStore as store } from "@/stores/TableStore";
 import { IChoiceProps } from "@/types";
 import { DeliveryMethodChoices, TExportModelFormValues } from "@/types/forms";
 import { faDownload, faEnvelope } from "@fortawesome/pro-regular-svg-icons";
 import { yupResolver } from "@hookform/resolvers/yup";
 import { DialogTitle } from "@radix-ui/react-dialog";
-import { useQuery } from "@tanstack/react-query";
 import { EllipsisVerticalIcon } from "lucide-react";
 import React, { useEffect } from "react";
 import { Controller, useForm } from "react-hook-form";
@@ -67,13 +65,10 @@ function TableExportModalBody({
   const [loading, setLoading] = React.useState<boolean>(false);
   const [selectedColumns, setSelectedColumns] = React.useState<string[]>([]);
   const [showEmailField, setShowEmailField] = React.useState<boolean>(false);
-
-  const { data: columnsData, isLoading: isColumnsLoading } = useQuery({
-    queryKey: [`${modelName}-Columns`],
-    queryFn: () => getColumns(modelName as string),
-    enabled: showExportModal,
-    staleTime: Infinity,
-  });
+  const { groupedOptions, isError, isLoading } = useReportColumns(
+    modelName,
+    showExportModal,
+  );
 
   const { control, handleSubmit, reset, watch, setError } =
     useForm<TExportModelFormValues>({
@@ -107,20 +102,45 @@ function TableExportModalBody({
     return () => subscription.unsubscribe();
   }, [setSelectedColumns, watch]);
 
-  const selectColumnData = columnsData?.map((column: any) => ({
-    label: column.label,
-    value: column.value,
-    description: column.description,
-  }));
+  const processColumnsAndRelationships = (columns: string[]) => {
+    const mainColumns: any = [];
+    const relationships: any = {};
+
+    columns.forEach((column) => {
+      const parts = column.split(".");
+      if (parts.length === 1) {
+        // Main table column
+        mainColumns.push(column);
+      } else {
+        // Related table column
+        const [foreignKey, referencedTable, referencedColumn] = parts;
+        if (!relationships[foreignKey]) {
+          relationships[foreignKey] = {
+            foreignKey,
+            referencedTable,
+            columns: [],
+          };
+        }
+        relationships[foreignKey].columns.push(referencedColumn);
+      }
+    });
+
+    return { mainColumns, relationships: Object.values(relationships) };
+  };
 
   const submitForm = async (values: TExportModelFormValues) => {
     setLoading(true);
+
+    const { mainColumns, relationships } = processColumnsAndRelationships(
+      values.columns,
+    );
 
     try {
       const response = await axios.post("reports/generate/", {
         tableName: modelName as string,
         fileFormat: values.fileFormat,
-        columns: values.columns,
+        columns: mainColumns,
+        relationships: relationships,
         deliveryMethod: values.deliveryMethod,
         emailRecipients: values.emailRecipients,
       });
@@ -179,9 +199,7 @@ function TableExportModalBody({
     }
   };
 
-  return isColumnsLoading ? (
-    <ComponentLoader className="h-[20vh]" />
-  ) : (
+  return (
     <form onSubmit={handleSubmit(submitForm)}>
       <div className="mb-5">
         <SelectInput
@@ -189,8 +207,10 @@ function TableExportModalBody({
           hideSelectedOptions={true}
           control={control}
           rules={{ required: true }}
+          isLoading={isLoading}
+          isFetchError={isError}
           name="columns"
-          options={selectColumnData}
+          options={groupedOptions}
           label="Columns"
           placeholder="Select columns"
           description="A group of columns/fields that will be exported into your specified format."
@@ -207,7 +227,6 @@ function TableExportModalBody({
           description="Select a delivery method for the export. You can either download the file or receive it via email."
         />
       </div>
-
       <div className="mb-5">
         <Label className="required">Export Format</Label>
         <Controller

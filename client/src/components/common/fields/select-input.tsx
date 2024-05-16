@@ -13,6 +13,7 @@ import {
   ClearIndicator,
   DropdownIndicator,
   ErrorMessage,
+  Group,
   IndicatorSeparator,
   InputComponent,
   LoadingMessage,
@@ -146,6 +147,7 @@ export function SelectInput<T extends Record<string, unknown>>(
                 Input: InputComponent,
                 NoOptionsMessage: NoOptionsMessage,
                 SingleValue: SingleValueComponent,
+                Group: Group,
               }}
               classNames={{
                 control: ({ isFocused }) =>

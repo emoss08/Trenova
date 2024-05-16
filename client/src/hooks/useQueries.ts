@@ -1,3 +1,4 @@
+import { toTitleCase } from "@/lib/utils";
 import { getUserFavorites } from "@/services/AccountRequestService";
 import {
   getAccountingControl,
@@ -47,6 +48,7 @@ import {
   getTopicNames,
   getUserOrganizationDetails,
 } from "@/services/OrganizationRequestService";
+import { getColumns } from "@/services/ReportRequestService";
 import {
   getFormulaTemplates,
   getNextProNumber,
@@ -956,4 +958,44 @@ export function useDailyShipmentCounts(startDate: string, endDate: string) {
   ];
 
   return { formattedData, data, isError, isLoading, isSuccess, isFetched };
+}
+
+export function useReportColumns(modelName: string, show?: boolean) {
+  const { data, isError, isLoading, isFetched, isPending } = useQuery({
+    queryKey: ["reportColumns", modelName] as QueryKeyWithParams<
+      "reportColumns",
+      [string]
+    >,
+    enabled: show,
+    queryFn: async () => getColumns(modelName as string),
+    staleTime: 1000 * 60 * 60,
+  });
+
+  const selectColumnData = data?.columns?.map((column) => ({
+    label: column.label,
+    value: column.value,
+    description: column.description,
+  }));
+
+  const selectRelationshipGroupedOptions =
+    data?.relationships?.map((relationship) => {
+      const label = `${toTitleCase(relationship.foreignKey)} (${toTitleCase(
+        relationship.referencedTable,
+      )})`;
+      return {
+        label: label,
+        options: relationship.columns.map((column) => ({
+          label: column.label,
+          value: `${relationship.foreignKey}.${relationship.referencedTable}.${column.value}`,
+          description: column.description,
+        })),
+      };
+    }) ?? [];
+
+  const groupedOptions = [
+    { options: selectColumnData, label: "Columns" },
+    ...selectRelationshipGroupedOptions,
+  ];
+
+  return { groupedOptions, isError, isLoading, isFetched, isPending };
 }
