@@ -1,5 +1,6 @@
-h1:GrtKOhrW49dk3OIWvt44fjafkLOauMWwwYK50drKa/4=
+h1:a8fYaL0Mvnwq+HPAARGAcGhkbf2Jks0HzubJVd+koLY=
 20240513003130_initial_migration.sql h1:GHuWPJeDaBRE/FkZNBXAyY7meSAQVY0LJA+LD7gS0sc=
 20240513003852_fix_detention_policy_optional_relationships.sql h1:/Ddz2/KS1/kX+s038qzYOfZ/5c/z7JlDg4N66Mo2y20=
 20240513005920_cascade_detention_policy_on_delete.sql h1:AgGNV9B5dKl/btNj0SEWlExayTzAsxBUzvO3Vb1Rql4=
 20240515070549_add_indexes_to_delivery_slot.sql h1:5p73HvQ3wdbsYtitq+pGUXifgfZCA0bDRG+Uw6SWWl0=
+20240518182607_change_doc_class_relation_to_customer.sql h1:K5PFdH8Rl2/slGfATp2ioWDsikjYIKsSzQVp9LCfQJE=

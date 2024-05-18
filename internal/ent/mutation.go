@@ -21222,7 +21222,8 @@ type DocumentClassificationMutation struct {
 	shipment_documentation        map[uuid.UUID]struct{}
 	removedshipment_documentation map[uuid.UUID]struct{}
 	clearedshipment_documentation bool
-	customer_rule_profile         *uuid.UUID
+	customer_rule_profile         map[uuid.UUID]struct{}
+	removedcustomer_rule_profile  map[uuid.UUID]struct{}
 	clearedcustomer_rule_profile  bool
 	done                          bool
 	oldValue                      func(context.Context) (*DocumentClassification, error)
@@ -21811,9 +21812,14 @@ func (m *DocumentClassificationMutation) ResetShipmentDocumentation() {
 	m.removedshipment_documentation = nil
 }
 
-// SetCustomerRuleProfileID sets the "customer_rule_profile" edge to the CustomerRuleProfile entity by id.
-func (m *DocumentClassificationMutation) SetCustomerRuleProfileID(id uuid.UUID) {
-	m.customer_rule_profile = &id
+// AddCustomerRuleProfileIDs adds the "customer_rule_profile" edge to the CustomerRuleProfile entity by ids.
+func (m *DocumentClassificationMutation) AddCustomerRuleProfileIDs(ids ...uuid.UUID) {
+	if m.customer_rule_profile == nil {
+		m.customer_rule_profile = make(map[uuid.UUID]struct{})
+	}
+	for i := range ids {
+		m.customer_rule_profile[ids[i]] = struct{}{}
+	}
 }
 
 // ClearCustomerRuleProfile clears the "customer_rule_profile" edge to the CustomerRuleProfile entity.
@@ -21826,20 +21832,29 @@ func (m *DocumentClassificationMutation) CustomerRuleProfileCleared() bool {
 	return m.clearedcustomer_rule_profile
 }
 
-// CustomerRuleProfileID returns the "customer_rule_profile" edge ID in the mutation.
-func (m *DocumentClassificationMutation) CustomerRuleProfileID() (id uuid.UUID, exists bool) {
-	if m.customer_rule_profile != nil {
-		return *m.customer_rule_profile, true
+// RemoveCustomerRuleProfileIDs removes the "customer_rule_profile" edge to the CustomerRuleProfile entity by IDs.
+func (m *DocumentClassificationMutation) RemoveCustomerRuleProfileIDs(ids ...uuid.UUID) {
+	if m.removedcustomer_rule_profile == nil {
+		m.removedcustomer_rule_profile = make(map[uuid.UUID]struct{})
+	}
+	for i := range ids {
+		delete(m.customer_rule_profile, ids[i])
+		m.removedcustomer_rule_profile[ids[i]] = struct{}{}
+	}
+}
+
+// RemovedCustomerRuleProfile returns the removed IDs of the "customer_rule_profile" edge to the CustomerRuleProfile entity.
+func (m *DocumentClassificationMutation) RemovedCustomerRuleProfileIDs() (ids []uuid.UUID) {
+	for id := range m.removedcustomer_rule_profile {
+		ids = append(ids, id)
 	}
 	return
 }
 
 // CustomerRuleProfileIDs returns the "customer_rule_profile" edge IDs in the mutation.
-// Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
-// CustomerRuleProfileID instead. It exists only for internal usage by the builders.
 func (m *DocumentClassificationMutation) CustomerRuleProfileIDs() (ids []uuid.UUID) {
-	if id := m.customer_rule_profile; id != nil {
-		ids = append(ids, *id)
+	for id := range m.customer_rule_profile {
+		ids = append(ids, id)
 	}
 	return
 }
@@ -21848,6 +21863,7 @@ func (m *DocumentClassificationMutation) CustomerRuleProfileIDs() (ids []uuid.UU
 func (m *DocumentClassificationMutation) ResetCustomerRuleProfile() {
 	m.customer_rule_profile = nil
 	m.clearedcustomer_rule_profile = false
+	m.removedcustomer_rule_profile = nil
 }
 
 // Where appends a list predicates to the DocumentClassificationMutation builder.
@@ -22184,9 +22200,11 @@ func (m *DocumentClassificationMutation) AddedIDs(name string) []ent.Value {
 		}
 		return ids
 	case documentclassification.EdgeCustomerRuleProfile:
-		if id := m.customer_rule_profile; id != nil {
-			return []ent.Value{*id}
+		ids := make([]ent.Value, 0, len(m.customer_rule_profile))
+		for id := range m.customer_rule_profile {
+			ids = append(ids, id)
 		}
+		return ids
 	}
 	return nil
 }
@@ -22196,6 +22214,9 @@ func (m *DocumentClassificationMutation) RemovedEdges() []string {
 	edges := make([]string, 0, 4)
 	if m.removedshipment_documentation != nil {
 		edges = append(edges, documentclassification.EdgeShipmentDocumentation)
+	}
+	if m.removedcustomer_rule_profile != nil {
+		edges = append(edges, documentclassification.EdgeCustomerRuleProfile)
 	}
 	return edges
 }
@@ -22207,6 +22228,12 @@ func (m *DocumentClassificationMutation) RemovedIDs(name string) []ent.Value {
 	case documentclassification.EdgeShipmentDocumentation:
 		ids := make([]ent.Value, 0, len(m.removedshipment_documentation))
 		for id := range m.removedshipment_documentation {
+			ids = append(ids, id)
+		}
+		return ids
+	case documentclassification.EdgeCustomerRuleProfile:
+		ids := make([]ent.Value, 0, len(m.removedcustomer_rule_profile))
+		for id := range m.removedcustomer_rule_profile {
 			ids = append(ids, id)
 		}
 		return ids
@@ -22257,9 +22284,6 @@ func (m *DocumentClassificationMutation) ClearEdge(name string) error {
 		return nil
 	case documentclassification.EdgeOrganization:
 		m.ClearOrganization()
-		return nil
-	case documentclassification.EdgeCustomerRuleProfile:
-		m.ClearCustomerRuleProfile()
 		return nil
 	}
 	return fmt.Errorf("unknown DocumentClassification unique edge %s", name)

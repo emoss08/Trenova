@@ -78,6 +78,7 @@
     "tailwindcss-animate": "^1.0.7",
     "uuid": "^9.0.1",
     "vaul": "^0.9.1",
+    "libphonenumber-js": "^1.10.60",
     "vite": "^5.2.11",
     "yup": "^1.4.0",
     "zustand": "^4.5.2"

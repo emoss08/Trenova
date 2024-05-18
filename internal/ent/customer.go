@@ -36,7 +36,7 @@ type Customer struct {
 	// Status holds the value of the "status" field.
 	Status customer.Status `json:"status" validate:"required,oneof=A I"`
 	// Code holds the value of the "code" field.
-	Code string `json:"code" validate:"required,max=10"`
+	Code string `json:"code" validate:"omitempty"`
 	// Name holds the value of the "name" field.
 	Name string `json:"name" validate:"required,max=150"`
 	// AddressLine1 holds the value of the "address_line_1" field.

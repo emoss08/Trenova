@@ -53,15 +53,15 @@ func (LocationCategory) Mixin() []ent.Mixin {
 // Hooks for the LocationCategory.
 func (LocationCategory) Hooks() []ent.Hook {
 	return []ent.Hook{
-		hook.On(validateNameUniqueness, ent.OpCreate|ent.OpUpdate|ent.OpUpdateOne),
+		hook.On(LocationCategory{}.validateNameUniqueness, ent.OpCreate|ent.OpUpdate|ent.OpUpdateOne),
 	}
 }
 
 // validateNameUniqueness is a hook that validates the uniqueness of the name field.
-func validateNameUniqueness(next ent.Mutator) ent.Mutator {
+func (LocationCategory) validateNameUniqueness(next ent.Mutator) ent.Mutator {
 	return hook.LocationCategoryFunc(func(ctx context.Context, m *gen.LocationCategoryMutation) (ent.Value, error) {
 		name, nameExists := m.Name()
-		orgID, orgExists := m.OrganizationID() // Assuming you have OrganizationID field in your mutation
+		orgID, orgExists := m.OrganizationID()
 
 		if !nameExists || !orgExists {
 			return next.Mutate(ctx, m)

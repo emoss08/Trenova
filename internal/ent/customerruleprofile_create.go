@@ -341,10 +341,10 @@ func (crpc *CustomerRuleProfileCreate) createSpec() (*CustomerRuleProfile, *sqlg
 	}
 	if nodes := crpc.mutation.DocumentClassificationsIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.O2M,
+			Rel:     sqlgraph.M2M,
 			Inverse: false,
 			Table:   customerruleprofile.DocumentClassificationsTable,
-			Columns: []string{customerruleprofile.DocumentClassificationsColumn},
+			Columns: customerruleprofile.DocumentClassificationsPrimaryKey,
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(documentclassification.FieldID, field.TypeUUID),

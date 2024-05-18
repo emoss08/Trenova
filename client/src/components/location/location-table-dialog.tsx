@@ -62,7 +62,7 @@ export function LocationTableSheet({ onOpenChange, open }: TableSheetProps) {
           className="flex h-full flex-col overflow-y-auto"
         >
           <Tabs defaultValue="info" className="w-full flex-1">
-            <TabsList>
+            <TabsList className="mt-10">
               <TabsTrigger value="info">Information</TabsTrigger>
               <TabsTrigger value="comments">Comments</TabsTrigger>
               <TabsTrigger value="contacts">Contacts</TabsTrigger>

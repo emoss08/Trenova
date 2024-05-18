@@ -31,8 +31,6 @@ export function CustomerEditForm({
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }) {
-  if (!customer) return null;
-
   const customerForm = useForm<FormValues>({
     resolver: yupResolver(customerSchema),
     defaultValues: customer,
@@ -49,6 +47,8 @@ export function CustomerEditForm({
     reset,
     errorMessage: "Failed to update existing customer.",
   });
+
+  if (!customer) return null;
 
   function onSubmit(values: FormValues) {
     mutation.mutate(values);

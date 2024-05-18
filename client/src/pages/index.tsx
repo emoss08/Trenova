@@ -1,12 +1,16 @@
 import { Suspense, lazy } from "react";
 
+const NewShipmentCard = lazy(
+  () => import("../components/dashboard/cards/new-shipment-card"),
+);
+
 const DailyShipmentCounts = lazy(
   () => import("../components/dashboard/cards/daily-shipment-count-card"),
 );
 
-const NewShipmentCard = lazy(
-  () => import("../components/dashboard/cards/new-shipment-card"),
-);
+// const ShipmentScheduleCard = lazy(
+//   () => import("../components/dashboard/cards/shipment-schedule-card"),
+// );
 
 export default function Index() {
   return (
@@ -14,6 +18,7 @@ export default function Index() {
       <Suspense fallback={<div>Loading...</div>}>
         <NewShipmentCard />
         <DailyShipmentCounts />
+        {/* <ShipmentScheduleCard /> */}
       </Suspense>
     </div>
   );

@@ -5,12 +5,14 @@ import (
 
 	"github.com/emoss08/trenova/internal/api"
 	"github.com/emoss08/trenova/internal/api/services"
+	ltypes "github.com/emoss08/trenova/internal/api/services/types"
 	"github.com/emoss08/trenova/internal/ent"
 	"github.com/emoss08/trenova/internal/ent/location"
 	"github.com/emoss08/trenova/internal/models"
 	"github.com/emoss08/trenova/internal/services/routing"
 	"github.com/emoss08/trenova/internal/util"
 	"github.com/emoss08/trenova/internal/util/types"
+
 	"github.com/gofiber/fiber/v2"
 	"github.com/google/uuid"
 )
@@ -173,7 +175,7 @@ func (h *LocationHandler) getLocations() fiber.Handler {
 // POST /locations
 func (h *LocationHandler) createLocation() fiber.Handler {
 	return func(c *fiber.Ctx) error {
-		newEntity := new(services.LocationRequest)
+		newEntity := new(ltypes.LocationRequest)
 
 		orgID, ok := c.Locals(util.CTXOrganizationID).(uuid.UUID)
 		buID, buOK := c.Locals(util.CTXBusinessUnitID).(uuid.UUID)
@@ -245,7 +247,7 @@ func (h *LocationHandler) updateLocation() fiber.Handler {
 			})
 		}
 
-		updatedEntity := new(services.LocationUpdateRequest)
+		updatedEntity := new(ltypes.LocationUpdateRequest)
 
 		if err = util.ParseBodyAndValidate(c, updatedEntity); err != nil {
 			return err

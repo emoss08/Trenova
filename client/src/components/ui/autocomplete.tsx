@@ -104,6 +104,8 @@ export function LocationAutoComplete<T extends FieldValues>({
   const [debouncedInputValue, setDebouncedInputValue] =
     React.useState<string>("");
 
+  const { label, rules } = props;
+
   const handleInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const newValue = event.target.value;
     setInputValue(newValue);
@@ -138,16 +140,10 @@ export function LocationAutoComplete<T extends FieldValues>({
 
   return (
     <>
-      {props.label && (
-        <Label
-          className={cn(
-            "text-sm font-medium",
-            props.rules?.required && "required",
-          )}
-        >
-          {props.label}
-        </Label>
-      )}
+      <span className="space-x-1">
+        {label && <Label className="text-sm font-medium">{label}</Label>}
+        {rules?.required && <span className="text-red-500">*</span>}
+      </span>
       <div className="relative">
         {isSearchLoading && (
           <div className="pointer-events-none absolute right-2 mt-2.5 flex items-center pl-3">
@@ -171,14 +167,13 @@ export function LocationAutoComplete<T extends FieldValues>({
           <p className="text-foreground/70 text-xs">{props.description}</p>
         )}
       </div>
-      {showResults &&
-        completionAllowed && ( // Further control the display of results
-          <AutocompleteResults
-            searchResults={searchResults as GoogleAutoCompleteResult[]}
-            onSelectResult={onSelectResult}
-            ref={popoverRef}
-          />
-        )}
+      {showResults && completionAllowed && (
+        <AutocompleteResults
+          searchResults={searchResults as GoogleAutoCompleteResult[]}
+          onSelectResult={onSelectResult}
+          ref={popoverRef}
+        />
+      )}
     </>
   );
 }

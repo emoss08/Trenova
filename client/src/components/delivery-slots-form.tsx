@@ -38,7 +38,7 @@ function DeliverySlotItem({
   return (
     <FormGroup
       key={field.id}
-      className="border-foreground mb-4 grid grid-cols-2 gap-2 rounded-md border border-dashed p-4 lg:grid-cols-2"
+      className="border-border mb-4 grid grid-cols-2 gap-2 rounded-md border border-dashed p-4 lg:grid-cols-2"
     >
       <FormControl>
         <SelectInput

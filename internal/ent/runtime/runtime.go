@@ -908,6 +908,7 @@ func init() {
 	documentclassificationMixin := schema.DocumentClassification{}.Mixin()
 	documentclassificationHooks := schema.DocumentClassification{}.Hooks()
 	documentclassification.Hooks[0] = documentclassificationHooks[0]
+	documentclassification.Hooks[1] = documentclassificationHooks[1]
 	documentclassificationMixinFields0 := documentclassificationMixin[0].Fields()
 	_ = documentclassificationMixinFields0
 	documentclassificationFields := schema.DocumentClassification{}.Fields()

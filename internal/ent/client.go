@@ -3266,7 +3266,7 @@ func (c *CustomerRuleProfileClient) QueryDocumentClassifications(crp *CustomerRu
 		step := sqlgraph.NewStep(
 			sqlgraph.From(customerruleprofile.Table, customerruleprofile.FieldID, id),
 			sqlgraph.To(documentclassification.Table, documentclassification.FieldID),
-			sqlgraph.Edge(sqlgraph.O2M, false, customerruleprofile.DocumentClassificationsTable, customerruleprofile.DocumentClassificationsColumn),
+			sqlgraph.Edge(sqlgraph.M2M, false, customerruleprofile.DocumentClassificationsTable, customerruleprofile.DocumentClassificationsPrimaryKey...),
 		)
 		fromV = sqlgraph.Neighbors(crp.driver.Dialect(), step)
 		return fromV, nil
@@ -4203,7 +4203,7 @@ func (c *DocumentClassificationClient) QueryCustomerRuleProfile(dc *DocumentClas
 		step := sqlgraph.NewStep(
 			sqlgraph.From(documentclassification.Table, documentclassification.FieldID, id),
 			sqlgraph.To(customerruleprofile.Table, customerruleprofile.FieldID),
-			sqlgraph.Edge(sqlgraph.M2O, true, documentclassification.CustomerRuleProfileTable, documentclassification.CustomerRuleProfileColumn),
+			sqlgraph.Edge(sqlgraph.M2M, true, documentclassification.CustomerRuleProfileTable, documentclassification.CustomerRuleProfilePrimaryKey...),
 		)
 		fromV = sqlgraph.Neighbors(dc.driver.Dialect(), step)
 		return fromV, nil

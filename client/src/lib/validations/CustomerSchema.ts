@@ -1,11 +1,11 @@
 import type { StatusChoiceProps } from "@/types";
 import {
-  BillingCycleChoices,
   CustomerContactFormValues,
   CustomerEmailProfileFormValues,
   CustomerFormValues,
   CustomerRuleProfileFormValues,
   DeliverySlotFormValues,
+  EnumBillingCycleChoices,
   EnumDayOfWeekChoices,
   EnumEmailFormatChoices,
 } from "@/types/customer";
@@ -26,13 +26,13 @@ export const customerEmailProfileSchema: ObjectSchema<CustomerEmailProfileFormVa
 
 export const customerRuleProfileSchema: ObjectSchema<CustomerRuleProfileFormValues> =
   object().shape({
-    documentClass: array()
+    docClassIds: array()
       .of(string().required())
       .min(1, "At Least one document class is required.")
       .required("Document Class is required"),
-    billingCycle: mixed<BillingCycleChoices>()
+    billingCycle: mixed<EnumBillingCycleChoices>()
       .required("Billing Cycle is required")
-      .oneOf(Object.values(BillingCycleChoices)),
+      .oneOf(Object.values(EnumBillingCycleChoices)),
   });
 
 const deliverySlotSchema: ObjectSchema<DeliverySlotFormValues> = object().shape(
@@ -102,7 +102,6 @@ const deliverySlotSchema: ObjectSchema<DeliverySlotFormValues> = object().shape(
 
 const customerContactSchema: ObjectSchema<CustomerContactFormValues> =
   object().shape({
-    status: string<StatusChoiceProps>().required(),
     name: string().required("Name is required"),
     email: string().when("isPayableContact", {
       is: true,

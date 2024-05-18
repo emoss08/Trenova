@@ -66,13 +66,11 @@ const (
 	ShipmentDocumentationInverseTable = "shipment_documentations"
 	// ShipmentDocumentationColumn is the table column denoting the shipment_documentation relation/edge.
 	ShipmentDocumentationColumn = "document_classification_id"
-	// CustomerRuleProfileTable is the table that holds the customer_rule_profile relation/edge.
-	CustomerRuleProfileTable = "document_classifications"
+	// CustomerRuleProfileTable is the table that holds the customer_rule_profile relation/edge. The primary key declared below.
+	CustomerRuleProfileTable = "customer_rule_profile_document_classifications"
 	// CustomerRuleProfileInverseTable is the table name for the CustomerRuleProfile entity.
 	// It exists in this package in order to avoid circular dependency with the "customerruleprofile" package.
 	CustomerRuleProfileInverseTable = "customer_rule_profiles"
-	// CustomerRuleProfileColumn is the table column denoting the customer_rule_profile relation/edge.
-	CustomerRuleProfileColumn = "customer_rule_profile_document_classifications"
 )
 
 // Columns holds all SQL columns for documentclassification fields.
@@ -89,21 +87,16 @@ var Columns = []string{
 	FieldColor,
 }
 
-// ForeignKeys holds the SQL foreign-keys that are owned by the "document_classifications"
-// table and are not defined as standalone fields in the schema.
-var ForeignKeys = []string{
-	"customer_rule_profile_document_classifications",
-}
+var (
+	// CustomerRuleProfilePrimaryKey and CustomerRuleProfileColumn2 are the table columns denoting the
+	// primary key for the customer_rule_profile relation (M2M).
+	CustomerRuleProfilePrimaryKey = []string{"customer_rule_profile_id", "document_classification_id"}
+)
 
 // ValidColumn reports if the column name is valid (part of the table columns).
 func ValidColumn(column string) bool {
 	for i := range Columns {
 		if column == Columns[i] {
-			return true
-		}
-	}
-	for i := range ForeignKeys {
-		if column == ForeignKeys[i] {
 			return true
 		}
 	}
@@ -116,7 +109,7 @@ func ValidColumn(column string) bool {
 //
 //	import _ "github.com/emoss08/trenova/internal/ent/runtime"
 var (
-	Hooks [1]ent.Hook
+	Hooks [2]ent.Hook
 	// DefaultCreatedAt holds the default value on creation for the "created_at" field.
 	DefaultCreatedAt func() time.Time
 	// DefaultUpdatedAt holds the default value on creation for the "updated_at" field.
@@ -238,10 +231,17 @@ func ByShipmentDocumentation(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOp
 	}
 }
 
-// ByCustomerRuleProfileField orders the results by customer_rule_profile field.
-func ByCustomerRuleProfileField(field string, opts ...sql.OrderTermOption) OrderOption {
+// ByCustomerRuleProfileCount orders the results by customer_rule_profile count.
+func ByCustomerRuleProfileCount(opts ...sql.OrderTermOption) OrderOption {
 	return func(s *sql.Selector) {
-		sqlgraph.OrderByNeighborTerms(s, newCustomerRuleProfileStep(), sql.OrderByField(field, opts...))
+		sqlgraph.OrderByNeighborsCount(s, newCustomerRuleProfileStep(), opts...)
+	}
+}
+
+// ByCustomerRuleProfile orders the results by customer_rule_profile terms.
+func ByCustomerRuleProfile(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newCustomerRuleProfileStep(), append([]sql.OrderTerm{term}, terms...)...)
 	}
 }
 func newBusinessUnitStep() *sqlgraph.Step {
@@ -269,6 +269,6 @@ func newCustomerRuleProfileStep() *sqlgraph.Step {
 	return sqlgraph.NewStep(
 		sqlgraph.From(Table, FieldID),
 		sqlgraph.To(CustomerRuleProfileInverseTable, FieldID),
-		sqlgraph.Edge(sqlgraph.M2O, true, CustomerRuleProfileTable, CustomerRuleProfileColumn),
+		sqlgraph.Edge(sqlgraph.M2M, true, CustomerRuleProfileTable, CustomerRuleProfilePrimaryKey...),
 	)
 }

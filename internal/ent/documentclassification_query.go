@@ -31,9 +31,9 @@ type DocumentClassificationQuery struct {
 	withOrganization               *OrganizationQuery
 	withShipmentDocumentation      *ShipmentDocumentationQuery
 	withCustomerRuleProfile        *CustomerRuleProfileQuery
-	withFKs                        bool
 	modifiers                      []func(*sql.Selector)
 	withNamedShipmentDocumentation map[string]*ShipmentDocumentationQuery
+	withNamedCustomerRuleProfile   map[string]*CustomerRuleProfileQuery
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
 	path func(context.Context) (*sql.Selector, error)
@@ -150,7 +150,7 @@ func (dcq *DocumentClassificationQuery) QueryCustomerRuleProfile() *CustomerRule
 		step := sqlgraph.NewStep(
 			sqlgraph.From(documentclassification.Table, documentclassification.FieldID, selector),
 			sqlgraph.To(customerruleprofile.Table, customerruleprofile.FieldID),
-			sqlgraph.Edge(sqlgraph.M2O, true, documentclassification.CustomerRuleProfileTable, documentclassification.CustomerRuleProfileColumn),
+			sqlgraph.Edge(sqlgraph.M2M, true, documentclassification.CustomerRuleProfileTable, documentclassification.CustomerRuleProfilePrimaryKey...),
 		)
 		fromU = sqlgraph.SetNeighbors(dcq.driver.Dialect(), step)
 		return fromU, nil
@@ -481,7 +481,6 @@ func (dcq *DocumentClassificationQuery) prepareQuery(ctx context.Context) error 
 func (dcq *DocumentClassificationQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*DocumentClassification, error) {
 	var (
 		nodes       = []*DocumentClassification{}
-		withFKs     = dcq.withFKs
 		_spec       = dcq.querySpec()
 		loadedTypes = [4]bool{
 			dcq.withBusinessUnit != nil,
@@ -490,12 +489,6 @@ func (dcq *DocumentClassificationQuery) sqlAll(ctx context.Context, hooks ...que
 			dcq.withCustomerRuleProfile != nil,
 		}
 	)
-	if dcq.withCustomerRuleProfile != nil {
-		withFKs = true
-	}
-	if withFKs {
-		_spec.Node.Columns = append(_spec.Node.Columns, documentclassification.ForeignKeys...)
-	}
 	_spec.ScanValues = func(columns []string) ([]any, error) {
 		return (*DocumentClassification).scanValues(nil, columns)
 	}
@@ -539,8 +532,11 @@ func (dcq *DocumentClassificationQuery) sqlAll(ctx context.Context, hooks ...que
 		}
 	}
 	if query := dcq.withCustomerRuleProfile; query != nil {
-		if err := dcq.loadCustomerRuleProfile(ctx, query, nodes, nil,
-			func(n *DocumentClassification, e *CustomerRuleProfile) { n.Edges.CustomerRuleProfile = e }); err != nil {
+		if err := dcq.loadCustomerRuleProfile(ctx, query, nodes,
+			func(n *DocumentClassification) { n.Edges.CustomerRuleProfile = []*CustomerRuleProfile{} },
+			func(n *DocumentClassification, e *CustomerRuleProfile) {
+				n.Edges.CustomerRuleProfile = append(n.Edges.CustomerRuleProfile, e)
+			}); err != nil {
 			return nil, err
 		}
 	}
@@ -548,6 +544,13 @@ func (dcq *DocumentClassificationQuery) sqlAll(ctx context.Context, hooks ...que
 		if err := dcq.loadShipmentDocumentation(ctx, query, nodes,
 			func(n *DocumentClassification) { n.appendNamedShipmentDocumentation(name) },
 			func(n *DocumentClassification, e *ShipmentDocumentation) { n.appendNamedShipmentDocumentation(name, e) }); err != nil {
+			return nil, err
+		}
+	}
+	for name, query := range dcq.withNamedCustomerRuleProfile {
+		if err := dcq.loadCustomerRuleProfile(ctx, query, nodes,
+			func(n *DocumentClassification) { n.appendNamedCustomerRuleProfile(name) },
+			func(n *DocumentClassification, e *CustomerRuleProfile) { n.appendNamedCustomerRuleProfile(name, e) }); err != nil {
 			return nil, err
 		}
 	}
@@ -643,33 +646,62 @@ func (dcq *DocumentClassificationQuery) loadShipmentDocumentation(ctx context.Co
 	return nil
 }
 func (dcq *DocumentClassificationQuery) loadCustomerRuleProfile(ctx context.Context, query *CustomerRuleProfileQuery, nodes []*DocumentClassification, init func(*DocumentClassification), assign func(*DocumentClassification, *CustomerRuleProfile)) error {
-	ids := make([]uuid.UUID, 0, len(nodes))
-	nodeids := make(map[uuid.UUID][]*DocumentClassification)
-	for i := range nodes {
-		if nodes[i].customer_rule_profile_document_classifications == nil {
-			continue
+	edgeIDs := make([]driver.Value, len(nodes))
+	byID := make(map[uuid.UUID]*DocumentClassification)
+	nids := make(map[uuid.UUID]map[*DocumentClassification]struct{})
+	for i, node := range nodes {
+		edgeIDs[i] = node.ID
+		byID[node.ID] = node
+		if init != nil {
+			init(node)
 		}
-		fk := *nodes[i].customer_rule_profile_document_classifications
-		if _, ok := nodeids[fk]; !ok {
-			ids = append(ids, fk)
-		}
-		nodeids[fk] = append(nodeids[fk], nodes[i])
 	}
-	if len(ids) == 0 {
-		return nil
+	query.Where(func(s *sql.Selector) {
+		joinT := sql.Table(documentclassification.CustomerRuleProfileTable)
+		s.Join(joinT).On(s.C(customerruleprofile.FieldID), joinT.C(documentclassification.CustomerRuleProfilePrimaryKey[0]))
+		s.Where(sql.InValues(joinT.C(documentclassification.CustomerRuleProfilePrimaryKey[1]), edgeIDs...))
+		columns := s.SelectedColumns()
+		s.Select(joinT.C(documentclassification.CustomerRuleProfilePrimaryKey[1]))
+		s.AppendSelect(columns...)
+		s.SetDistinct(false)
+	})
+	if err := query.prepareQuery(ctx); err != nil {
+		return err
 	}
-	query.Where(customerruleprofile.IDIn(ids...))
-	neighbors, err := query.All(ctx)
+	qr := QuerierFunc(func(ctx context.Context, q Query) (Value, error) {
+		return query.sqlAll(ctx, func(_ context.Context, spec *sqlgraph.QuerySpec) {
+			assign := spec.Assign
+			values := spec.ScanValues
+			spec.ScanValues = func(columns []string) ([]any, error) {
+				values, err := values(columns[1:])
+				if err != nil {
+					return nil, err
+				}
+				return append([]any{new(uuid.UUID)}, values...), nil
+			}
+			spec.Assign = func(columns []string, values []any) error {
+				outValue := *values[0].(*uuid.UUID)
+				inValue := *values[1].(*uuid.UUID)
+				if nids[inValue] == nil {
+					nids[inValue] = map[*DocumentClassification]struct{}{byID[outValue]: {}}
+					return assign(columns[1:], values[1:])
+				}
+				nids[inValue][byID[outValue]] = struct{}{}
+				return nil
+			}
+		})
+	})
+	neighbors, err := withInterceptors[[]*CustomerRuleProfile](ctx, query, qr, query.inters)
 	if err != nil {
 		return err
 	}
 	for _, n := range neighbors {
-		nodes, ok := nodeids[n.ID]
+		nodes, ok := nids[n.ID]
 		if !ok {
-			return fmt.Errorf(`unexpected foreign-key "customer_rule_profile_document_classifications" returned %v`, n.ID)
+			return fmt.Errorf(`unexpected "customer_rule_profile" node returned %v`, n.ID)
 		}
-		for i := range nodes {
-			assign(nodes[i], n)
+		for kn := range nodes {
+			assign(kn, n)
 		}
 	}
 	return nil
@@ -785,6 +817,20 @@ func (dcq *DocumentClassificationQuery) WithNamedShipmentDocumentation(name stri
 		dcq.withNamedShipmentDocumentation = make(map[string]*ShipmentDocumentationQuery)
 	}
 	dcq.withNamedShipmentDocumentation[name] = query
+	return dcq
+}
+
+// WithNamedCustomerRuleProfile tells the query-builder to eager-load the nodes that are connected to the "customer_rule_profile"
+// edge with the given name. The optional arguments are used to configure the query builder of the edge.
+func (dcq *DocumentClassificationQuery) WithNamedCustomerRuleProfile(name string, opts ...func(*CustomerRuleProfileQuery)) *DocumentClassificationQuery {
+	query := (&CustomerRuleProfileClient{config: dcq.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	if dcq.withNamedCustomerRuleProfile == nil {
+		dcq.withNamedCustomerRuleProfile = make(map[string]*CustomerRuleProfileQuery)
+	}
+	dcq.withNamedCustomerRuleProfile[name] = query
 	return dcq
 }
 

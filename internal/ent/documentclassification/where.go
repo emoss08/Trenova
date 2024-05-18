@@ -565,7 +565,7 @@ func HasCustomerRuleProfile() predicate.DocumentClassification {
 	return predicate.DocumentClassification(func(s *sql.Selector) {
 		step := sqlgraph.NewStep(
 			sqlgraph.From(Table, FieldID),
-			sqlgraph.Edge(sqlgraph.M2O, true, CustomerRuleProfileTable, CustomerRuleProfileColumn),
+			sqlgraph.Edge(sqlgraph.M2M, true, CustomerRuleProfileTable, CustomerRuleProfilePrimaryKey...),
 		)
 		sqlgraph.HasNeighbors(s, step)
 	})

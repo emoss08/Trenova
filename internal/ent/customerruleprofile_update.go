@@ -255,10 +255,10 @@ func (crpu *CustomerRuleProfileUpdate) sqlSave(ctx context.Context) (n int, err 
 	}
 	if crpu.mutation.DocumentClassificationsCleared() {
 		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.O2M,
+			Rel:     sqlgraph.M2M,
 			Inverse: false,
 			Table:   customerruleprofile.DocumentClassificationsTable,
-			Columns: []string{customerruleprofile.DocumentClassificationsColumn},
+			Columns: customerruleprofile.DocumentClassificationsPrimaryKey,
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(documentclassification.FieldID, field.TypeUUID),
@@ -268,10 +268,10 @@ func (crpu *CustomerRuleProfileUpdate) sqlSave(ctx context.Context) (n int, err 
 	}
 	if nodes := crpu.mutation.RemovedDocumentClassificationsIDs(); len(nodes) > 0 && !crpu.mutation.DocumentClassificationsCleared() {
 		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.O2M,
+			Rel:     sqlgraph.M2M,
 			Inverse: false,
 			Table:   customerruleprofile.DocumentClassificationsTable,
-			Columns: []string{customerruleprofile.DocumentClassificationsColumn},
+			Columns: customerruleprofile.DocumentClassificationsPrimaryKey,
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(documentclassification.FieldID, field.TypeUUID),
@@ -284,10 +284,10 @@ func (crpu *CustomerRuleProfileUpdate) sqlSave(ctx context.Context) (n int, err 
 	}
 	if nodes := crpu.mutation.DocumentClassificationsIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.O2M,
+			Rel:     sqlgraph.M2M,
 			Inverse: false,
 			Table:   customerruleprofile.DocumentClassificationsTable,
-			Columns: []string{customerruleprofile.DocumentClassificationsColumn},
+			Columns: customerruleprofile.DocumentClassificationsPrimaryKey,
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(documentclassification.FieldID, field.TypeUUID),
@@ -573,10 +573,10 @@ func (crpuo *CustomerRuleProfileUpdateOne) sqlSave(ctx context.Context) (_node *
 	}
 	if crpuo.mutation.DocumentClassificationsCleared() {
 		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.O2M,
+			Rel:     sqlgraph.M2M,
 			Inverse: false,
 			Table:   customerruleprofile.DocumentClassificationsTable,
-			Columns: []string{customerruleprofile.DocumentClassificationsColumn},
+			Columns: customerruleprofile.DocumentClassificationsPrimaryKey,
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(documentclassification.FieldID, field.TypeUUID),
@@ -586,10 +586,10 @@ func (crpuo *CustomerRuleProfileUpdateOne) sqlSave(ctx context.Context) (_node *
 	}
 	if nodes := crpuo.mutation.RemovedDocumentClassificationsIDs(); len(nodes) > 0 && !crpuo.mutation.DocumentClassificationsCleared() {
 		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.O2M,
+			Rel:     sqlgraph.M2M,
 			Inverse: false,
 			Table:   customerruleprofile.DocumentClassificationsTable,
-			Columns: []string{customerruleprofile.DocumentClassificationsColumn},
+			Columns: customerruleprofile.DocumentClassificationsPrimaryKey,
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(documentclassification.FieldID, field.TypeUUID),
@@ -602,10 +602,10 @@ func (crpuo *CustomerRuleProfileUpdateOne) sqlSave(ctx context.Context) (_node *
 	}
 	if nodes := crpuo.mutation.DocumentClassificationsIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.O2M,
+			Rel:     sqlgraph.M2M,
 			Inverse: false,
 			Table:   customerruleprofile.DocumentClassificationsTable,
-			Columns: []string{customerruleprofile.DocumentClassificationsColumn},
+			Columns: customerruleprofile.DocumentClassificationsPrimaryKey,
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(documentclassification.FieldID, field.TypeUUID),

@@ -44,7 +44,7 @@ func (Customer) Fields() []ent.Field {
 				dialect.Postgres: "VARCHAR(10)",
 				dialect.SQLite:   "VARCHAR(10)",
 			}).
-			StructTag(`json:"code" validate:"required,max=10"`),
+			StructTag(`json:"code" validate:"omitempty"`),
 		field.String("name").
 			NotEmpty().
 			MaxLen(150).

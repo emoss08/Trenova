@@ -1,18 +1,32 @@
 import { IChoiceProps, type StatusChoiceProps } from "@/types/index";
 import { type BaseModel } from "./organization";
 
-export enum BillingCycleChoices {
+type BillingCycleChoices =
+  | "PER_SHIPMENT"
+  | "QUARTERLY"
+  | "MONTHLY"
+  | "ANNUALLY";
+
+export enum EnumBillingCycleChoices {
   PER_SHIPMENT = "PER_SHIPMENT",
   QUARTERLY = "QUARTERLY",
   MONTHLY = "MONTHLY",
   ANNUALLY = "ANNUALLY",
 }
 
+/** Returns the billing cycle choices as an array of objects */
+export const BillingCycleChoices = [
+  { value: "PER_SHIPMENT", label: "Per Shipment", color: "#ff75c3" },
+  { value: "QUARTERLY", label: "Quarterly", color: "#ff7f50" },
+  { value: "MONTHLY", label: "Monthly", color: "#ffa647" },
+  { value: "ANNUALLY", label: "Annually", color: "#dc143c" },
+] satisfies ReadonlyArray<IChoiceProps<BillingCycleChoices>>;
+
 /** Customer Rule Profile Type */
 interface CustomerRuleProfile extends BaseModel {
   customerId: string;
-  documentClass: string[];
-  billingCycle: BillingCycleChoices;
+  docClassIds: string[];
+  billingCycle: EnumBillingCycleChoices;
 }
 
 export type CustomerRuleProfileFormValues = Omit<

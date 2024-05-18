@@ -61,13 +61,11 @@ const (
 	CustomerInverseTable = "customers"
 	// CustomerColumn is the table column denoting the customer relation/edge.
 	CustomerColumn = "customer_id"
-	// DocumentClassificationsTable is the table that holds the document_classifications relation/edge.
-	DocumentClassificationsTable = "document_classifications"
+	// DocumentClassificationsTable is the table that holds the document_classifications relation/edge. The primary key declared below.
+	DocumentClassificationsTable = "customer_rule_profile_document_classifications"
 	// DocumentClassificationsInverseTable is the table name for the DocumentClassification entity.
 	// It exists in this package in order to avoid circular dependency with the "documentclassification" package.
 	DocumentClassificationsInverseTable = "document_classifications"
-	// DocumentClassificationsColumn is the table column denoting the document_classifications relation/edge.
-	DocumentClassificationsColumn = "customer_rule_profile_document_classifications"
 )
 
 // Columns holds all SQL columns for customerruleprofile fields.
@@ -81,6 +79,12 @@ var Columns = []string{
 	FieldCustomerID,
 	FieldBillingCycle,
 }
+
+var (
+	// DocumentClassificationsPrimaryKey and DocumentClassificationsColumn2 are the table columns denoting the
+	// primary key for the document_classifications relation (M2M).
+	DocumentClassificationsPrimaryKey = []string{"customer_rule_profile_id", "document_classification_id"}
+)
 
 // ValidColumn reports if the column name is valid (part of the table columns).
 func ValidColumn(column string) bool {
@@ -235,6 +239,6 @@ func newDocumentClassificationsStep() *sqlgraph.Step {
 	return sqlgraph.NewStep(
 		sqlgraph.From(Table, FieldID),
 		sqlgraph.To(DocumentClassificationsInverseTable, FieldID),
-		sqlgraph.Edge(sqlgraph.O2M, false, DocumentClassificationsTable, DocumentClassificationsColumn),
+		sqlgraph.Edge(sqlgraph.M2M, false, DocumentClassificationsTable, DocumentClassificationsPrimaryKey...),
 	)
 }

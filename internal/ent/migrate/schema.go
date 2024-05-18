@@ -757,7 +757,6 @@ var (
 		{Name: "code", Type: field.TypeString, Size: 10, SchemaType: map[string]string{"postgres": "VARCHAR(10)", "sqlite3": "VARCHAR(10)"}},
 		{Name: "description", Type: field.TypeString, Nullable: true, Size: 2147483647},
 		{Name: "color", Type: field.TypeString, Nullable: true},
-		{Name: "customer_rule_profile_document_classifications", Type: field.TypeUUID, Nullable: true},
 		{Name: "business_unit_id", Type: field.TypeUUID},
 		{Name: "organization_id", Type: field.TypeUUID},
 	}
@@ -768,20 +767,14 @@ var (
 		PrimaryKey: []*schema.Column{DocumentClassificationsColumns[0]},
 		ForeignKeys: []*schema.ForeignKey{
 			{
-				Symbol:     "document_classifications_customer_rule_profiles_document_classifications",
-				Columns:    []*schema.Column{DocumentClassificationsColumns[8]},
-				RefColumns: []*schema.Column{CustomerRuleProfilesColumns[0]},
-				OnDelete:   schema.SetNull,
-			},
-			{
 				Symbol:     "document_classifications_business_units_business_unit",
-				Columns:    []*schema.Column{DocumentClassificationsColumns[9]},
+				Columns:    []*schema.Column{DocumentClassificationsColumns[8]},
 				RefColumns: []*schema.Column{BusinessUnitsColumns[0]},
 				OnDelete:   schema.Cascade,
 			},
 			{
 				Symbol:     "document_classifications_organizations_organization",
-				Columns:    []*schema.Column{DocumentClassificationsColumns[10]},
+				Columns:    []*schema.Column{DocumentClassificationsColumns[9]},
 				RefColumns: []*schema.Column{OrganizationsColumns[0]},
 				OnDelete:   schema.Cascade,
 			},
@@ -2980,6 +2973,31 @@ var (
 			},
 		},
 	}
+	// CustomerRuleProfileDocumentClassificationsColumns holds the columns for the "customer_rule_profile_document_classifications" table.
+	CustomerRuleProfileDocumentClassificationsColumns = []*schema.Column{
+		{Name: "customer_rule_profile_id", Type: field.TypeUUID},
+		{Name: "document_classification_id", Type: field.TypeUUID},
+	}
+	// CustomerRuleProfileDocumentClassificationsTable holds the schema information for the "customer_rule_profile_document_classifications" table.
+	CustomerRuleProfileDocumentClassificationsTable = &schema.Table{
+		Name:       "customer_rule_profile_document_classifications",
+		Columns:    CustomerRuleProfileDocumentClassificationsColumns,
+		PrimaryKey: []*schema.Column{CustomerRuleProfileDocumentClassificationsColumns[0], CustomerRuleProfileDocumentClassificationsColumns[1]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "customer_rule_profile_document_classifications_customer_rule_profile_id",
+				Columns:    []*schema.Column{CustomerRuleProfileDocumentClassificationsColumns[0]},
+				RefColumns: []*schema.Column{CustomerRuleProfilesColumns[0]},
+				OnDelete:   schema.Cascade,
+			},
+			{
+				Symbol:     "customer_rule_profile_document_classifications_document_classification_id",
+				Columns:    []*schema.Column{CustomerRuleProfileDocumentClassificationsColumns[1]},
+				RefColumns: []*schema.Column{DocumentClassificationsColumns[0]},
+				OnDelete:   schema.Cascade,
+			},
+		},
+	}
 	// GeneralLedgerAccountTagsColumns holds the columns for the "general_ledger_account_tags" table.
 	GeneralLedgerAccountTagsColumns = []*schema.Column{
 		{Name: "general_ledger_account_id", Type: field.TypeUUID},
@@ -3126,6 +3144,7 @@ var (
 		WorkerCommentsTable,
 		WorkerContactsTable,
 		WorkerProfilesTable,
+		CustomerRuleProfileDocumentClassificationsTable,
 		GeneralLedgerAccountTagsTable,
 		RolePermissionsTable,
 		RoleUsersTable,
@@ -3200,9 +3219,8 @@ func init() {
 	DivisionCodesTable.ForeignKeys[3].RefTable = GeneralLedgerAccountsTable
 	DivisionCodesTable.ForeignKeys[4].RefTable = GeneralLedgerAccountsTable
 	DivisionCodesTable.Annotation = &entsql.Annotation{}
-	DocumentClassificationsTable.ForeignKeys[0].RefTable = CustomerRuleProfilesTable
-	DocumentClassificationsTable.ForeignKeys[1].RefTable = BusinessUnitsTable
-	DocumentClassificationsTable.ForeignKeys[2].RefTable = OrganizationsTable
+	DocumentClassificationsTable.ForeignKeys[0].RefTable = BusinessUnitsTable
+	DocumentClassificationsTable.ForeignKeys[1].RefTable = OrganizationsTable
 	DocumentClassificationsTable.Annotation = &entsql.Annotation{}
 	EmailControlsTable.ForeignKeys[0].RefTable = BusinessUnitsTable
 	EmailControlsTable.ForeignKeys[1].RefTable = EmailProfilesTable
@@ -3400,6 +3418,8 @@ func init() {
 	WorkerProfilesTable.ForeignKeys[2].RefTable = OrganizationsTable
 	WorkerProfilesTable.ForeignKeys[3].RefTable = UsStatesTable
 	WorkerProfilesTable.Annotation = &entsql.Annotation{}
+	CustomerRuleProfileDocumentClassificationsTable.ForeignKeys[0].RefTable = CustomerRuleProfilesTable
+	CustomerRuleProfileDocumentClassificationsTable.ForeignKeys[1].RefTable = DocumentClassificationsTable
 	GeneralLedgerAccountTagsTable.ForeignKeys[0].RefTable = GeneralLedgerAccountsTable
 	GeneralLedgerAccountTagsTable.ForeignKeys[1].RefTable = TagsTable
 	RolePermissionsTable.ForeignKeys[0].RefTable = RolesTable

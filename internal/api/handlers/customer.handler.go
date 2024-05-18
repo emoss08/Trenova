@@ -5,10 +5,13 @@ import (
 
 	"github.com/emoss08/trenova/internal/api"
 	"github.com/emoss08/trenova/internal/api/services"
+	ctypes "github.com/emoss08/trenova/internal/api/services/types"
 	"github.com/emoss08/trenova/internal/ent"
 	"github.com/emoss08/trenova/internal/ent/customer"
+	"github.com/emoss08/trenova/internal/ent/customerruleprofile"
 	"github.com/emoss08/trenova/internal/util"
 	"github.com/emoss08/trenova/internal/util/types"
+
 	"github.com/gofiber/fiber/v2"
 	"github.com/google/uuid"
 	"github.com/rs/zerolog"
@@ -30,29 +33,41 @@ func NewCustomerHandler(s *api.Server) *CustomerHandler {
 	}
 }
 
+type CustomerRuleProfileResponse struct {
+	ID             uuid.UUID                        `json:"id,omitempty"`
+	BusinessUnitID uuid.UUID                        `json:"businessUnitId"`
+	OrganizationID uuid.UUID                        `json:"organizationId"`
+	CreatedAt      time.Time                        `json:"createdAt" validate:"omitempty"`
+	UpdatedAt      time.Time                        `json:"updatedAt" validate:"omitempty"`
+	Version        int                              `json:"version" validate:"omitempty"`
+	CustomerID     uuid.UUID                        `json:"customer_id,omitempty"`
+	BillingCycle   customerruleprofile.BillingCycle `json:"billingCycle" validate:"required,oneof=PER_JOB QUARTERLY MONTHLY ANNUALLY"`
+	DocClassIDs    []uuid.UUID                      `json:"docClassIds,omitempty"`
+}
+
 type CustomerResponse struct {
 	ID                  uuid.UUID                       `json:"id,omitempty"`
 	BusinessUnitID      uuid.UUID                       `json:"businessUnitId"`
 	OrganizationID      uuid.UUID                       `json:"organizationId"`
-	CreatedAt           time.Time                       `json:"createdAt" validate:"omitempty"`
-	UpdatedAt           time.Time                       `json:"updatedAt" validate:"omitempty"`
-	Version             int                             `json:"version" validate:"omitempty"`
-	Status              customer.Status                 `json:"status" validate:"required,oneof=A I"`
-	Code                string                          `json:"code" validate:"required,max=10"`
-	Name                string                          `json:"name" validate:"required,max=150"`
-	AddressLine1        string                          `json:"addressLine1" validate:"required,max=150"`
-	AddressLine2        string                          `json:"addressLine2" validate:"omitempty,max=150"`
-	City                string                          `json:"city" validate:"required,max=150"`
-	StateID             uuid.UUID                       `json:"stateId" validate:"omitempty,uuid"`
-	PostalCode          string                          `json:"postalCode" validate:"required,max=10"`
-	HasCustomerPortal   bool                            `json:"hasCustomerPortal" validate:"omitempty"`
-	AutoMarkReadyToBill bool                            `json:"autoMarkReadyToBill" validate:"omitempty"`
-	EmailProfile        ent.CustomerEmailProfile        `json:"emailProfile" validate:"omitempty"`
-	RuleProfile         ent.CustomerRuleProfile         `json:"ruleProfile" validate:"omitempty"`
-	DeliverySlots       []ent.DeliverySlot              `json:"deliverySlots" validate:"omitempty"`
-	DetentionPolicies   []ent.CustomerDetentionPolicies `json:"detentionPolicies" validate:"omitempty"`
-	Contacts            []ent.CustomerContact           `json:"contacts" validate:"omitempty"`
-	Edges               ent.CustomerEdges               `json:"edges" validate:"omitempty"`
+	CreatedAt           time.Time                       `json:"createdAt"`
+	UpdatedAt           time.Time                       `json:"updatedAt"`
+	Version             int                             `json:"version"`
+	Status              customer.Status                 `json:"status"`
+	Code                string                          `json:"code"`
+	Name                string                          `json:"name"`
+	AddressLine1        string                          `json:"addressLine1"`
+	AddressLine2        string                          `json:"addressLine2"`
+	City                string                          `json:"city"`
+	StateID             uuid.UUID                       `json:"stateId"`
+	PostalCode          string                          `json:"postalCode"`
+	HasCustomerPortal   bool                            `json:"hasCustomerPortal"`
+	AutoMarkReadyToBill bool                            `json:"autoMarkReadyToBill"`
+	EmailProfile        ent.CustomerEmailProfile        `json:"emailProfile"`
+	RuleProfile         CustomerRuleProfileResponse     `json:"ruleProfile"`
+	DeliverySlots       []ent.DeliverySlot              `json:"deliverySlots"`
+	DetentionPolicies   []ent.CustomerDetentionPolicies `json:"detentionPolicies"`
+	Contacts            []ent.CustomerContact           `json:"contacts"`
+	Edges               ent.CustomerEdges               `json:"edges"`
 }
 
 // RegisterRoutes registers the routes for the CustomerHandler.
@@ -62,9 +77,6 @@ func (h *CustomerHandler) RegisterRoutes(r fiber.Router) {
 	customersAPI.Post("/", h.createCustomer())
 	customersAPI.Put("/:customerID", h.updateCustomer())
 }
-
-// TODO: This is incomplete we need to add customer email & rule profile, delivery slots,
-// contact and detention policy
 
 // getCustomers is a handler that returns a list of customers.
 //
@@ -139,6 +151,25 @@ func (h *CustomerHandler) getCustomers() fiber.Handler {
 			// 	detentionPolocies[i] = *detentionPolocies
 			// }
 
+			// Create the Rule Profile Response
+			// Get the document classification IDs for the Customer Rule Profile.
+			ruleProfileDocClassIDs := make([]uuid.UUID, len(customer.Edges.RuleProfile.Edges.DocumentClassifications))
+			for i, docClass := range customer.Edges.RuleProfile.Edges.DocumentClassifications {
+				ruleProfileDocClassIDs[i] = docClass.ID
+			}
+
+			ruleProfile := CustomerRuleProfileResponse{
+				ID:             customer.Edges.RuleProfile.ID,
+				BusinessUnitID: customer.Edges.RuleProfile.BusinessUnitID,
+				OrganizationID: customer.Edges.RuleProfile.OrganizationID,
+				CreatedAt:      customer.Edges.RuleProfile.CreatedAt,
+				UpdatedAt:      customer.Edges.RuleProfile.UpdatedAt,
+				Version:        customer.Edges.RuleProfile.Version,
+				CustomerID:     customer.Edges.RuleProfile.CustomerID,
+				BillingCycle:   customer.Edges.RuleProfile.BillingCycle,
+				DocClassIDs:    ruleProfileDocClassIDs,
+			}
+
 			responses[i] = CustomerResponse{
 				ID:                  customer.ID,
 				BusinessUnitID:      customer.BusinessUnitID,
@@ -157,7 +188,7 @@ func (h *CustomerHandler) getCustomers() fiber.Handler {
 				HasCustomerPortal:   customer.HasCustomerPortal,
 				AutoMarkReadyToBill: customer.AutoMarkReadyToBill,
 				EmailProfile:        *customer.Edges.EmailProfile,
-				RuleProfile:         *customer.Edges.RuleProfile,
+				RuleProfile:         ruleProfile,
 				DeliverySlots:       deliverySlots,
 				// DetentionPolicies:   detentionPolocies,
 				Contacts: contacts,
@@ -179,7 +210,7 @@ func (h *CustomerHandler) getCustomers() fiber.Handler {
 // POST /customers
 func (h *CustomerHandler) createCustomer() fiber.Handler {
 	return func(c *fiber.Ctx) error {
-		newEntity := new(services.CustomerRequest)
+		newEntity := new(ctypes.CustomerRequest)
 
 		orgID, ok := c.Locals(util.CTXOrganizationID).(uuid.UUID)
 		buID, buOK := c.Locals(util.CTXBusinessUnitID).(uuid.UUID)
@@ -251,7 +282,7 @@ func (h *CustomerHandler) updateCustomer() fiber.Handler {
 			})
 		}
 
-		updatedEntity := new(ent.Customer)
+		updatedEntity := new(ctypes.CustomerUpdateRequest)
 
 		if err = util.ParseBodyAndValidate(c, updatedEntity); err != nil {
 			return err

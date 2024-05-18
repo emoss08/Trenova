@@ -162,23 +162,19 @@ func (dcu *DocumentClassificationUpdate) AddShipmentDocumentation(s ...*Shipment
 	return dcu.AddShipmentDocumentationIDs(ids...)
 }
 
-// SetCustomerRuleProfileID sets the "customer_rule_profile" edge to the CustomerRuleProfile entity by ID.
-func (dcu *DocumentClassificationUpdate) SetCustomerRuleProfileID(id uuid.UUID) *DocumentClassificationUpdate {
-	dcu.mutation.SetCustomerRuleProfileID(id)
+// AddCustomerRuleProfileIDs adds the "customer_rule_profile" edge to the CustomerRuleProfile entity by IDs.
+func (dcu *DocumentClassificationUpdate) AddCustomerRuleProfileIDs(ids ...uuid.UUID) *DocumentClassificationUpdate {
+	dcu.mutation.AddCustomerRuleProfileIDs(ids...)
 	return dcu
 }
 
-// SetNillableCustomerRuleProfileID sets the "customer_rule_profile" edge to the CustomerRuleProfile entity by ID if the given value is not nil.
-func (dcu *DocumentClassificationUpdate) SetNillableCustomerRuleProfileID(id *uuid.UUID) *DocumentClassificationUpdate {
-	if id != nil {
-		dcu = dcu.SetCustomerRuleProfileID(*id)
+// AddCustomerRuleProfile adds the "customer_rule_profile" edges to the CustomerRuleProfile entity.
+func (dcu *DocumentClassificationUpdate) AddCustomerRuleProfile(c ...*CustomerRuleProfile) *DocumentClassificationUpdate {
+	ids := make([]uuid.UUID, len(c))
+	for i := range c {
+		ids[i] = c[i].ID
 	}
-	return dcu
-}
-
-// SetCustomerRuleProfile sets the "customer_rule_profile" edge to the CustomerRuleProfile entity.
-func (dcu *DocumentClassificationUpdate) SetCustomerRuleProfile(c *CustomerRuleProfile) *DocumentClassificationUpdate {
-	return dcu.SetCustomerRuleProfileID(c.ID)
+	return dcu.AddCustomerRuleProfileIDs(ids...)
 }
 
 // Mutation returns the DocumentClassificationMutation object of the builder.
@@ -213,10 +209,25 @@ func (dcu *DocumentClassificationUpdate) RemoveShipmentDocumentation(s ...*Shipm
 	return dcu.RemoveShipmentDocumentationIDs(ids...)
 }
 
-// ClearCustomerRuleProfile clears the "customer_rule_profile" edge to the CustomerRuleProfile entity.
+// ClearCustomerRuleProfile clears all "customer_rule_profile" edges to the CustomerRuleProfile entity.
 func (dcu *DocumentClassificationUpdate) ClearCustomerRuleProfile() *DocumentClassificationUpdate {
 	dcu.mutation.ClearCustomerRuleProfile()
 	return dcu
+}
+
+// RemoveCustomerRuleProfileIDs removes the "customer_rule_profile" edge to CustomerRuleProfile entities by IDs.
+func (dcu *DocumentClassificationUpdate) RemoveCustomerRuleProfileIDs(ids ...uuid.UUID) *DocumentClassificationUpdate {
+	dcu.mutation.RemoveCustomerRuleProfileIDs(ids...)
+	return dcu
+}
+
+// RemoveCustomerRuleProfile removes "customer_rule_profile" edges to CustomerRuleProfile entities.
+func (dcu *DocumentClassificationUpdate) RemoveCustomerRuleProfile(c ...*CustomerRuleProfile) *DocumentClassificationUpdate {
+	ids := make([]uuid.UUID, len(c))
+	for i := range c {
+		ids[i] = c[i].ID
+	}
+	return dcu.RemoveCustomerRuleProfileIDs(ids...)
 }
 
 // Save executes the query and returns the number of nodes affected by the update operation.
@@ -403,10 +414,10 @@ func (dcu *DocumentClassificationUpdate) sqlSave(ctx context.Context) (n int, er
 	}
 	if dcu.mutation.CustomerRuleProfileCleared() {
 		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2O,
+			Rel:     sqlgraph.M2M,
 			Inverse: true,
 			Table:   documentclassification.CustomerRuleProfileTable,
-			Columns: []string{documentclassification.CustomerRuleProfileColumn},
+			Columns: documentclassification.CustomerRuleProfilePrimaryKey,
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(customerruleprofile.FieldID, field.TypeUUID),
@@ -414,12 +425,28 @@ func (dcu *DocumentClassificationUpdate) sqlSave(ctx context.Context) (n int, er
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := dcu.mutation.CustomerRuleProfileIDs(); len(nodes) > 0 {
+	if nodes := dcu.mutation.RemovedCustomerRuleProfileIDs(); len(nodes) > 0 && !dcu.mutation.CustomerRuleProfileCleared() {
 		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2O,
+			Rel:     sqlgraph.M2M,
 			Inverse: true,
 			Table:   documentclassification.CustomerRuleProfileTable,
-			Columns: []string{documentclassification.CustomerRuleProfileColumn},
+			Columns: documentclassification.CustomerRuleProfilePrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(customerruleprofile.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := dcu.mutation.CustomerRuleProfileIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: true,
+			Table:   documentclassification.CustomerRuleProfileTable,
+			Columns: documentclassification.CustomerRuleProfilePrimaryKey,
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(customerruleprofile.FieldID, field.TypeUUID),
@@ -581,23 +608,19 @@ func (dcuo *DocumentClassificationUpdateOne) AddShipmentDocumentation(s ...*Ship
 	return dcuo.AddShipmentDocumentationIDs(ids...)
 }
 
-// SetCustomerRuleProfileID sets the "customer_rule_profile" edge to the CustomerRuleProfile entity by ID.
-func (dcuo *DocumentClassificationUpdateOne) SetCustomerRuleProfileID(id uuid.UUID) *DocumentClassificationUpdateOne {
-	dcuo.mutation.SetCustomerRuleProfileID(id)
+// AddCustomerRuleProfileIDs adds the "customer_rule_profile" edge to the CustomerRuleProfile entity by IDs.
+func (dcuo *DocumentClassificationUpdateOne) AddCustomerRuleProfileIDs(ids ...uuid.UUID) *DocumentClassificationUpdateOne {
+	dcuo.mutation.AddCustomerRuleProfileIDs(ids...)
 	return dcuo
 }
 
-// SetNillableCustomerRuleProfileID sets the "customer_rule_profile" edge to the CustomerRuleProfile entity by ID if the given value is not nil.
-func (dcuo *DocumentClassificationUpdateOne) SetNillableCustomerRuleProfileID(id *uuid.UUID) *DocumentClassificationUpdateOne {
-	if id != nil {
-		dcuo = dcuo.SetCustomerRuleProfileID(*id)
+// AddCustomerRuleProfile adds the "customer_rule_profile" edges to the CustomerRuleProfile entity.
+func (dcuo *DocumentClassificationUpdateOne) AddCustomerRuleProfile(c ...*CustomerRuleProfile) *DocumentClassificationUpdateOne {
+	ids := make([]uuid.UUID, len(c))
+	for i := range c {
+		ids[i] = c[i].ID
 	}
-	return dcuo
-}
-
-// SetCustomerRuleProfile sets the "customer_rule_profile" edge to the CustomerRuleProfile entity.
-func (dcuo *DocumentClassificationUpdateOne) SetCustomerRuleProfile(c *CustomerRuleProfile) *DocumentClassificationUpdateOne {
-	return dcuo.SetCustomerRuleProfileID(c.ID)
+	return dcuo.AddCustomerRuleProfileIDs(ids...)
 }
 
 // Mutation returns the DocumentClassificationMutation object of the builder.
@@ -632,10 +655,25 @@ func (dcuo *DocumentClassificationUpdateOne) RemoveShipmentDocumentation(s ...*S
 	return dcuo.RemoveShipmentDocumentationIDs(ids...)
 }
 
-// ClearCustomerRuleProfile clears the "customer_rule_profile" edge to the CustomerRuleProfile entity.
+// ClearCustomerRuleProfile clears all "customer_rule_profile" edges to the CustomerRuleProfile entity.
 func (dcuo *DocumentClassificationUpdateOne) ClearCustomerRuleProfile() *DocumentClassificationUpdateOne {
 	dcuo.mutation.ClearCustomerRuleProfile()
 	return dcuo
+}
+
+// RemoveCustomerRuleProfileIDs removes the "customer_rule_profile" edge to CustomerRuleProfile entities by IDs.
+func (dcuo *DocumentClassificationUpdateOne) RemoveCustomerRuleProfileIDs(ids ...uuid.UUID) *DocumentClassificationUpdateOne {
+	dcuo.mutation.RemoveCustomerRuleProfileIDs(ids...)
+	return dcuo
+}
+
+// RemoveCustomerRuleProfile removes "customer_rule_profile" edges to CustomerRuleProfile entities.
+func (dcuo *DocumentClassificationUpdateOne) RemoveCustomerRuleProfile(c ...*CustomerRuleProfile) *DocumentClassificationUpdateOne {
+	ids := make([]uuid.UUID, len(c))
+	for i := range c {
+		ids[i] = c[i].ID
+	}
+	return dcuo.RemoveCustomerRuleProfileIDs(ids...)
 }
 
 // Where appends a list predicates to the DocumentClassificationUpdate builder.
@@ -852,10 +890,10 @@ func (dcuo *DocumentClassificationUpdateOne) sqlSave(ctx context.Context) (_node
 	}
 	if dcuo.mutation.CustomerRuleProfileCleared() {
 		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2O,
+			Rel:     sqlgraph.M2M,
 			Inverse: true,
 			Table:   documentclassification.CustomerRuleProfileTable,
-			Columns: []string{documentclassification.CustomerRuleProfileColumn},
+			Columns: documentclassification.CustomerRuleProfilePrimaryKey,
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(customerruleprofile.FieldID, field.TypeUUID),
@@ -863,12 +901,28 @@ func (dcuo *DocumentClassificationUpdateOne) sqlSave(ctx context.Context) (_node
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := dcuo.mutation.CustomerRuleProfileIDs(); len(nodes) > 0 {
+	if nodes := dcuo.mutation.RemovedCustomerRuleProfileIDs(); len(nodes) > 0 && !dcuo.mutation.CustomerRuleProfileCleared() {
 		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2O,
+			Rel:     sqlgraph.M2M,
 			Inverse: true,
 			Table:   documentclassification.CustomerRuleProfileTable,
-			Columns: []string{documentclassification.CustomerRuleProfileColumn},
+			Columns: documentclassification.CustomerRuleProfilePrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(customerruleprofile.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := dcuo.mutation.CustomerRuleProfileIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: true,
+			Table:   documentclassification.CustomerRuleProfileTable,
+			Columns: documentclassification.CustomerRuleProfilePrimaryKey,
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(customerruleprofile.FieldID, field.TypeUUID),

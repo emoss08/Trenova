@@ -166,23 +166,19 @@ func (dcc *DocumentClassificationCreate) AddShipmentDocumentation(s ...*Shipment
 	return dcc.AddShipmentDocumentationIDs(ids...)
 }
 
-// SetCustomerRuleProfileID sets the "customer_rule_profile" edge to the CustomerRuleProfile entity by ID.
-func (dcc *DocumentClassificationCreate) SetCustomerRuleProfileID(id uuid.UUID) *DocumentClassificationCreate {
-	dcc.mutation.SetCustomerRuleProfileID(id)
+// AddCustomerRuleProfileIDs adds the "customer_rule_profile" edge to the CustomerRuleProfile entity by IDs.
+func (dcc *DocumentClassificationCreate) AddCustomerRuleProfileIDs(ids ...uuid.UUID) *DocumentClassificationCreate {
+	dcc.mutation.AddCustomerRuleProfileIDs(ids...)
 	return dcc
 }
 
-// SetNillableCustomerRuleProfileID sets the "customer_rule_profile" edge to the CustomerRuleProfile entity by ID if the given value is not nil.
-func (dcc *DocumentClassificationCreate) SetNillableCustomerRuleProfileID(id *uuid.UUID) *DocumentClassificationCreate {
-	if id != nil {
-		dcc = dcc.SetCustomerRuleProfileID(*id)
+// AddCustomerRuleProfile adds the "customer_rule_profile" edges to the CustomerRuleProfile entity.
+func (dcc *DocumentClassificationCreate) AddCustomerRuleProfile(c ...*CustomerRuleProfile) *DocumentClassificationCreate {
+	ids := make([]uuid.UUID, len(c))
+	for i := range c {
+		ids[i] = c[i].ID
 	}
-	return dcc
-}
-
-// SetCustomerRuleProfile sets the "customer_rule_profile" edge to the CustomerRuleProfile entity.
-func (dcc *DocumentClassificationCreate) SetCustomerRuleProfile(c *CustomerRuleProfile) *DocumentClassificationCreate {
-	return dcc.SetCustomerRuleProfileID(c.ID)
+	return dcc.AddCustomerRuleProfileIDs(ids...)
 }
 
 // Mutation returns the DocumentClassificationMutation object of the builder.
@@ -408,10 +404,10 @@ func (dcc *DocumentClassificationCreate) createSpec() (*DocumentClassification, 
 	}
 	if nodes := dcc.mutation.CustomerRuleProfileIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2O,
+			Rel:     sqlgraph.M2M,
 			Inverse: true,
 			Table:   documentclassification.CustomerRuleProfileTable,
-			Columns: []string{documentclassification.CustomerRuleProfileColumn},
+			Columns: documentclassification.CustomerRuleProfilePrimaryKey,
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(customerruleprofile.FieldID, field.TypeUUID),
@@ -420,7 +416,6 @@ func (dcc *DocumentClassificationCreate) createSpec() (*DocumentClassification, 
 		for _, k := range nodes {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
-		_node.customer_rule_profile_document_classifications = &nodes[0]
 		_spec.Edges = append(_spec.Edges, edge)
 	}
 	return _node, _spec

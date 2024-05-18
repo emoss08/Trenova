@@ -360,7 +360,7 @@ func HasDocumentClassifications() predicate.CustomerRuleProfile {
 	return predicate.CustomerRuleProfile(func(s *sql.Selector) {
 		step := sqlgraph.NewStep(
 			sqlgraph.From(Table, FieldID),
-			sqlgraph.Edge(sqlgraph.O2M, false, DocumentClassificationsTable, DocumentClassificationsColumn),
+			sqlgraph.Edge(sqlgraph.M2M, false, DocumentClassificationsTable, DocumentClassificationsPrimaryKey...),
 		)
 		sqlgraph.HasNeighbors(s, step)
 	})

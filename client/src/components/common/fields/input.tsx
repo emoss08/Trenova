@@ -138,18 +138,14 @@ export function TimeField<T extends FieldValues>({
 }: ExtendedInputProps & UseControllerProps<T>) {
   const { field, fieldState } = useController(props);
 
+  const { label, rules } = props;
+
   return (
     <>
-      {props.label && (
-        <Label
-          className={cn(
-            "text-sm font-medium",
-            props.rules?.required && "required",
-          )}
-        >
-          {props.label}
-        </Label>
-      )}
+      <span className="space-x-1">
+        {label && <Label className="text-sm font-medium">{label}</Label>}
+        {rules?.required && <span className="text-red-500">*</span>}
+      </span>
       <div className="relative">
         <Input
           type="time"

@@ -2360,10 +2360,10 @@ var schemaGraph = func() *sqlgraph.Schema {
 	graph.MustAddE(
 		"document_classifications",
 		&sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.O2M,
+			Rel:     sqlgraph.M2M,
 			Inverse: false,
 			Table:   customerruleprofile.DocumentClassificationsTable,
-			Columns: []string{customerruleprofile.DocumentClassificationsColumn},
+			Columns: customerruleprofile.DocumentClassificationsPrimaryKey,
 			Bidi:    false,
 		},
 		"CustomerRuleProfile",
@@ -2564,10 +2564,10 @@ var schemaGraph = func() *sqlgraph.Schema {
 	graph.MustAddE(
 		"customer_rule_profile",
 		&sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2O,
+			Rel:     sqlgraph.M2M,
 			Inverse: true,
 			Table:   documentclassification.CustomerRuleProfileTable,
-			Columns: []string{documentclassification.CustomerRuleProfileColumn},
+			Columns: documentclassification.CustomerRuleProfilePrimaryKey,
 			Bidi:    false,
 		},
 		"DocumentClassification",
