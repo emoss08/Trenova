@@ -36,15 +36,15 @@ func NewWorkerHandler(s *api.Server) *WorkerHandler {
 // RegisterRoutes registers the routes for the WorkerHandler.
 func (h *WorkerHandler) RegisterRoutes(r fiber.Router) {
 	workersAPI := r.Group("/workers")
-	workersAPI.Get("/", h.GetWorkers())
-	workersAPI.Post("/", h.CreateWorker())
-	workersAPI.Put("/:workerID", h.UpdateWorker())
+	workersAPI.Get("/", h.getWorkers())
+	workersAPI.Post("/", h.createWorker())
+	workersAPI.Put("/:workerID", h.updateWorker())
 }
 
-// GetWorkers is a handler that returns a list of workers.
+// getWorkers is a handler that returns a list of workers.
 //
 // GET /workers
-func (h *WorkerHandler) GetWorkers() fiber.Handler {
+func (h *WorkerHandler) getWorkers() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		orgID, ok := c.Locals(util.CTXOrganizationID).(uuid.UUID)
 		buID, buOK := c.Locals(util.CTXBusinessUnitID).(uuid.UUID)
@@ -103,10 +103,10 @@ func (h *WorkerHandler) GetWorkers() fiber.Handler {
 	}
 }
 
-// CreateWorker is a handler that creates a worker.
+// createWorker is a handler that creates a worker.
 //
 // POST /workers
-func (h *WorkerHandler) CreateWorker() fiber.Handler {
+func (h *WorkerHandler) createWorker() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		newEntity := new(services.WorkerRequest)
 
@@ -161,10 +161,10 @@ func (h *WorkerHandler) CreateWorker() fiber.Handler {
 	}
 }
 
-// UpdateWorker is a handler that updates a worker.
+// updateWorker is a handler that updates a worker.
 //
 // PUT /workers/:workerID
-func (h *WorkerHandler) UpdateWorker() fiber.Handler {
+func (h *WorkerHandler) updateWorker() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		workerID := c.Params("workerID")
 		if workerID == "" {

@@ -138,19 +138,21 @@ export function CommodityForm({
 }
 
 export function CommodityDialog({ onOpenChange, open }: TableSheetProps) {
-  const { control, handleSubmit, watch, setValue } = useForm<FormValues>({
-    resolver: yupResolver(commoditySchema),
-    defaultValues: {
-      status: "A",
-      name: "",
-      description: undefined,
-      minTemp: undefined,
-      maxTemp: undefined,
-      unitOfMeasure: undefined,
-      hazardousMaterialId: null,
-      isHazmat: false,
+  const { control, handleSubmit, watch, reset, setValue } = useForm<FormValues>(
+    {
+      resolver: yupResolver(commoditySchema),
+      defaultValues: {
+        status: "A",
+        name: "",
+        description: undefined,
+        minTemp: undefined,
+        maxTemp: undefined,
+        unitOfMeasure: undefined,
+        hazardousMaterialId: null,
+        isHazmat: false,
+      },
     },
-  });
+  );
 
   useEffect(() => {
     const subscription = watch((value, { name }) => {
@@ -168,8 +170,9 @@ export function CommodityDialog({ onOpenChange, open }: TableSheetProps) {
     method: "POST",
     path: "/commodities/",
     successMessage: "Commodity created successfully.",
-    queryKeysToInvalidate: ["commodity-table-data"],
+    queryKeysToInvalidate: "commodities",
     closeModal: true,
+    reset,
     errorMessage: "Failed to create new commodity.",
   });
 

@@ -11,6 +11,7 @@ import (
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
+	"github.com/emoss08/trenova/internal/ent/organization"
 	"github.com/emoss08/trenova/internal/ent/predicate"
 	"github.com/emoss08/trenova/internal/ent/stop"
 	"github.com/google/uuid"
@@ -27,6 +28,20 @@ type StopUpdate struct {
 // Where appends a list predicates to the StopUpdate builder.
 func (su *StopUpdate) Where(ps ...predicate.Stop) *StopUpdate {
 	su.mutation.Where(ps...)
+	return su
+}
+
+// SetOrganizationID sets the "organization_id" field.
+func (su *StopUpdate) SetOrganizationID(u uuid.UUID) *StopUpdate {
+	su.mutation.SetOrganizationID(u)
+	return su
+}
+
+// SetNillableOrganizationID sets the "organization_id" field if the given value is not nil.
+func (su *StopUpdate) SetNillableOrganizationID(u *uuid.UUID) *StopUpdate {
+	if u != nil {
+		su.SetOrganizationID(*u)
+	}
 	return su
 }
 
@@ -280,9 +295,20 @@ func (su *StopUpdate) ClearDepartureTime() *StopUpdate {
 	return su
 }
 
+// SetOrganization sets the "organization" edge to the Organization entity.
+func (su *StopUpdate) SetOrganization(o *Organization) *StopUpdate {
+	return su.SetOrganizationID(o.ID)
+}
+
 // Mutation returns the StopMutation object of the builder.
 func (su *StopUpdate) Mutation() *StopMutation {
 	return su.mutation
+}
+
+// ClearOrganization clears the "organization" edge to the Organization entity.
+func (su *StopUpdate) ClearOrganization() *StopUpdate {
+	su.mutation.ClearOrganization()
+	return su
 }
 
 // Save executes the query and returns the number of nodes affected by the update operation.
@@ -459,6 +485,35 @@ func (su *StopUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	if su.mutation.DepartureTimeCleared() {
 		_spec.ClearField(stop.FieldDepartureTime, field.TypeTime)
 	}
+	if su.mutation.OrganizationCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   stop.OrganizationTable,
+			Columns: []string{stop.OrganizationColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(organization.FieldID, field.TypeUUID),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := su.mutation.OrganizationIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   stop.OrganizationTable,
+			Columns: []string{stop.OrganizationColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(organization.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
 	_spec.AddModifiers(su.modifiers...)
 	if n, err = sqlgraph.UpdateNodes(ctx, su.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
@@ -479,6 +534,20 @@ type StopUpdateOne struct {
 	hooks     []Hook
 	mutation  *StopMutation
 	modifiers []func(*sql.UpdateBuilder)
+}
+
+// SetOrganizationID sets the "organization_id" field.
+func (suo *StopUpdateOne) SetOrganizationID(u uuid.UUID) *StopUpdateOne {
+	suo.mutation.SetOrganizationID(u)
+	return suo
+}
+
+// SetNillableOrganizationID sets the "organization_id" field if the given value is not nil.
+func (suo *StopUpdateOne) SetNillableOrganizationID(u *uuid.UUID) *StopUpdateOne {
+	if u != nil {
+		suo.SetOrganizationID(*u)
+	}
+	return suo
 }
 
 // SetUpdatedAt sets the "updated_at" field.
@@ -731,9 +800,20 @@ func (suo *StopUpdateOne) ClearDepartureTime() *StopUpdateOne {
 	return suo
 }
 
+// SetOrganization sets the "organization" edge to the Organization entity.
+func (suo *StopUpdateOne) SetOrganization(o *Organization) *StopUpdateOne {
+	return suo.SetOrganizationID(o.ID)
+}
+
 // Mutation returns the StopMutation object of the builder.
 func (suo *StopUpdateOne) Mutation() *StopMutation {
 	return suo.mutation
+}
+
+// ClearOrganization clears the "organization" edge to the Organization entity.
+func (suo *StopUpdateOne) ClearOrganization() *StopUpdateOne {
+	suo.mutation.ClearOrganization()
+	return suo
 }
 
 // Where appends a list predicates to the StopUpdate builder.
@@ -939,6 +1019,35 @@ func (suo *StopUpdateOne) sqlSave(ctx context.Context) (_node *Stop, err error) 
 	}
 	if suo.mutation.DepartureTimeCleared() {
 		_spec.ClearField(stop.FieldDepartureTime, field.TypeTime)
+	}
+	if suo.mutation.OrganizationCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   stop.OrganizationTable,
+			Columns: []string{stop.OrganizationColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(organization.FieldID, field.TypeUUID),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := suo.mutation.OrganizationIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   stop.OrganizationTable,
+			Columns: []string{stop.OrganizationColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(organization.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
 	_spec.AddModifiers(suo.modifiers...)
 	_node = &Stop{config: suo.config}

@@ -27,7 +27,7 @@ function ACEditForm({
 }: {
   accessorialCharge: AccessorialCharge;
 }) {
-  const { control, handleSubmit } = useForm<FormValues>({
+  const { control, handleSubmit, reset } = useForm<FormValues>({
     resolver: yupResolver(accessorialChargeSchema),
     defaultValues: accessorialCharge,
   });
@@ -36,8 +36,9 @@ function ACEditForm({
     method: "PUT",
     path: `/accessorial-charges/${accessorialCharge.id}/`,
     successMessage: "Accesorial Charge updated successfully.",
-    queryKeysToInvalidate: ["accessorial-charges-table-data"],
+    queryKeysToInvalidate: "accessorialCharges",
     closeModal: true,
+    reset,
     errorMessage: "Failed to update accesorial charge.",
   });
 

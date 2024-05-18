@@ -12,6 +12,7 @@ import (
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
 	"github.com/emoss08/trenova/internal/ent/location"
+	"github.com/emoss08/trenova/internal/ent/organization"
 	"github.com/emoss08/trenova/internal/ent/predicate"
 	"github.com/emoss08/trenova/internal/ent/shipmentroute"
 	"github.com/google/uuid"
@@ -28,6 +29,20 @@ type ShipmentRouteUpdate struct {
 // Where appends a list predicates to the ShipmentRouteUpdate builder.
 func (sru *ShipmentRouteUpdate) Where(ps ...predicate.ShipmentRoute) *ShipmentRouteUpdate {
 	sru.mutation.Where(ps...)
+	return sru
+}
+
+// SetOrganizationID sets the "organization_id" field.
+func (sru *ShipmentRouteUpdate) SetOrganizationID(u uuid.UUID) *ShipmentRouteUpdate {
+	sru.mutation.SetOrganizationID(u)
+	return sru
+}
+
+// SetNillableOrganizationID sets the "organization_id" field if the given value is not nil.
+func (sru *ShipmentRouteUpdate) SetNillableOrganizationID(u *uuid.UUID) *ShipmentRouteUpdate {
+	if u != nil {
+		sru.SetOrganizationID(*u)
+	}
 	return sru
 }
 
@@ -154,6 +169,11 @@ func (sru *ShipmentRouteUpdate) ClearDistanceMethod() *ShipmentRouteUpdate {
 	return sru
 }
 
+// SetOrganization sets the "organization" edge to the Organization entity.
+func (sru *ShipmentRouteUpdate) SetOrganization(o *Organization) *ShipmentRouteUpdate {
+	return sru.SetOrganizationID(o.ID)
+}
+
 // SetOriginLocation sets the "origin_location" edge to the Location entity.
 func (sru *ShipmentRouteUpdate) SetOriginLocation(l *Location) *ShipmentRouteUpdate {
 	return sru.SetOriginLocationID(l.ID)
@@ -167,6 +187,12 @@ func (sru *ShipmentRouteUpdate) SetDestinationLocation(l *Location) *ShipmentRou
 // Mutation returns the ShipmentRouteMutation object of the builder.
 func (sru *ShipmentRouteUpdate) Mutation() *ShipmentRouteMutation {
 	return sru.mutation
+}
+
+// ClearOrganization clears the "organization" edge to the Organization entity.
+func (sru *ShipmentRouteUpdate) ClearOrganization() *ShipmentRouteUpdate {
+	sru.mutation.ClearOrganization()
+	return sru
 }
 
 // ClearOriginLocation clears the "origin_location" edge to the Location entity.
@@ -297,6 +323,35 @@ func (sru *ShipmentRouteUpdate) sqlSave(ctx context.Context) (n int, err error) 
 	if sru.mutation.DistanceMethodCleared() {
 		_spec.ClearField(shipmentroute.FieldDistanceMethod, field.TypeString)
 	}
+	if sru.mutation.OrganizationCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   shipmentroute.OrganizationTable,
+			Columns: []string{shipmentroute.OrganizationColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(organization.FieldID, field.TypeUUID),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := sru.mutation.OrganizationIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   shipmentroute.OrganizationTable,
+			Columns: []string{shipmentroute.OrganizationColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(organization.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
 	if sru.mutation.OriginLocationCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
@@ -375,6 +430,20 @@ type ShipmentRouteUpdateOne struct {
 	hooks     []Hook
 	mutation  *ShipmentRouteMutation
 	modifiers []func(*sql.UpdateBuilder)
+}
+
+// SetOrganizationID sets the "organization_id" field.
+func (sruo *ShipmentRouteUpdateOne) SetOrganizationID(u uuid.UUID) *ShipmentRouteUpdateOne {
+	sruo.mutation.SetOrganizationID(u)
+	return sruo
+}
+
+// SetNillableOrganizationID sets the "organization_id" field if the given value is not nil.
+func (sruo *ShipmentRouteUpdateOne) SetNillableOrganizationID(u *uuid.UUID) *ShipmentRouteUpdateOne {
+	if u != nil {
+		sruo.SetOrganizationID(*u)
+	}
+	return sruo
 }
 
 // SetUpdatedAt sets the "updated_at" field.
@@ -500,6 +569,11 @@ func (sruo *ShipmentRouteUpdateOne) ClearDistanceMethod() *ShipmentRouteUpdateOn
 	return sruo
 }
 
+// SetOrganization sets the "organization" edge to the Organization entity.
+func (sruo *ShipmentRouteUpdateOne) SetOrganization(o *Organization) *ShipmentRouteUpdateOne {
+	return sruo.SetOrganizationID(o.ID)
+}
+
 // SetOriginLocation sets the "origin_location" edge to the Location entity.
 func (sruo *ShipmentRouteUpdateOne) SetOriginLocation(l *Location) *ShipmentRouteUpdateOne {
 	return sruo.SetOriginLocationID(l.ID)
@@ -513,6 +587,12 @@ func (sruo *ShipmentRouteUpdateOne) SetDestinationLocation(l *Location) *Shipmen
 // Mutation returns the ShipmentRouteMutation object of the builder.
 func (sruo *ShipmentRouteUpdateOne) Mutation() *ShipmentRouteMutation {
 	return sruo.mutation
+}
+
+// ClearOrganization clears the "organization" edge to the Organization entity.
+func (sruo *ShipmentRouteUpdateOne) ClearOrganization() *ShipmentRouteUpdateOne {
+	sruo.mutation.ClearOrganization()
+	return sruo
 }
 
 // ClearOriginLocation clears the "origin_location" edge to the Location entity.
@@ -672,6 +752,35 @@ func (sruo *ShipmentRouteUpdateOne) sqlSave(ctx context.Context) (_node *Shipmen
 	}
 	if sruo.mutation.DistanceMethodCleared() {
 		_spec.ClearField(shipmentroute.FieldDistanceMethod, field.TypeString)
+	}
+	if sruo.mutation.OrganizationCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   shipmentroute.OrganizationTable,
+			Columns: []string{shipmentroute.OrganizationColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(organization.FieldID, field.TypeUUID),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := sruo.mutation.OrganizationIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   shipmentroute.OrganizationTable,
+			Columns: []string{shipmentroute.OrganizationColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(organization.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
 	if sruo.mutation.OriginLocationCleared() {
 		edge := &sqlgraph.EdgeSpec{

@@ -1,0 +1,4 @@
+-- Modify "document_classifications" table
+ALTER TABLE "document_classifications" DROP COLUMN "customer_rule_profile_document_classifications";
+-- Create "customer_rule_profile_document_classifications" table
+CREATE TABLE "customer_rule_profile_document_classifications" ("customer_rule_profile_id" uuid NOT NULL, "document_classification_id" uuid NOT NULL, PRIMARY KEY ("customer_rule_profile_id", "document_classification_id"), CONSTRAINT "customer_rule_profile_document_classifications_customer_rule_pr" FOREIGN KEY ("customer_rule_profile_id") REFERENCES "customer_rule_profiles" ("id") ON UPDATE NO ACTION ON DELETE CASCADE, CONSTRAINT "customer_rule_profile_document_classifications_document_classif" FOREIGN KEY ("document_classification_id") REFERENCES "document_classifications" ("id") ON UPDATE NO ACTION ON DELETE CASCADE);

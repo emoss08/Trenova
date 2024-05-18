@@ -13,6 +13,7 @@ import (
 	"entgo.io/ent/schema/field"
 	"github.com/emoss08/trenova/internal/ent/customer"
 	"github.com/emoss08/trenova/internal/ent/formulatemplate"
+	"github.com/emoss08/trenova/internal/ent/organization"
 	"github.com/emoss08/trenova/internal/ent/predicate"
 	"github.com/emoss08/trenova/internal/ent/shipmenttype"
 	"github.com/google/uuid"
@@ -29,6 +30,20 @@ type FormulaTemplateUpdate struct {
 // Where appends a list predicates to the FormulaTemplateUpdate builder.
 func (ftu *FormulaTemplateUpdate) Where(ps ...predicate.FormulaTemplate) *FormulaTemplateUpdate {
 	ftu.mutation.Where(ps...)
+	return ftu
+}
+
+// SetOrganizationID sets the "organization_id" field.
+func (ftu *FormulaTemplateUpdate) SetOrganizationID(u uuid.UUID) *FormulaTemplateUpdate {
+	ftu.mutation.SetOrganizationID(u)
+	return ftu
+}
+
+// SetNillableOrganizationID sets the "organization_id" field if the given value is not nil.
+func (ftu *FormulaTemplateUpdate) SetNillableOrganizationID(u *uuid.UUID) *FormulaTemplateUpdate {
+	if u != nil {
+		ftu.SetOrganizationID(*u)
+	}
 	return ftu
 }
 
@@ -175,6 +190,11 @@ func (ftu *FormulaTemplateUpdate) SetNillableAutoApply(b *bool) *FormulaTemplate
 	return ftu
 }
 
+// SetOrganization sets the "organization" edge to the Organization entity.
+func (ftu *FormulaTemplateUpdate) SetOrganization(o *Organization) *FormulaTemplateUpdate {
+	return ftu.SetOrganizationID(o.ID)
+}
+
 // SetCustomer sets the "customer" edge to the Customer entity.
 func (ftu *FormulaTemplateUpdate) SetCustomer(c *Customer) *FormulaTemplateUpdate {
 	return ftu.SetCustomerID(c.ID)
@@ -188,6 +208,12 @@ func (ftu *FormulaTemplateUpdate) SetShipmentType(s *ShipmentType) *FormulaTempl
 // Mutation returns the FormulaTemplateMutation object of the builder.
 func (ftu *FormulaTemplateUpdate) Mutation() *FormulaTemplateMutation {
 	return ftu.mutation
+}
+
+// ClearOrganization clears the "organization" edge to the Organization entity.
+func (ftu *FormulaTemplateUpdate) ClearOrganization() *FormulaTemplateUpdate {
+	ftu.mutation.ClearOrganization()
+	return ftu
 }
 
 // ClearCustomer clears the "customer" edge to the Customer entity.
@@ -309,6 +335,35 @@ func (ftu *FormulaTemplateUpdate) sqlSave(ctx context.Context) (n int, err error
 	if value, ok := ftu.mutation.AutoApply(); ok {
 		_spec.SetField(formulatemplate.FieldAutoApply, field.TypeBool, value)
 	}
+	if ftu.mutation.OrganizationCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   formulatemplate.OrganizationTable,
+			Columns: []string{formulatemplate.OrganizationColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(organization.FieldID, field.TypeUUID),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := ftu.mutation.OrganizationIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   formulatemplate.OrganizationTable,
+			Columns: []string{formulatemplate.OrganizationColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(organization.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
 	if ftu.mutation.CustomerCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
@@ -387,6 +442,20 @@ type FormulaTemplateUpdateOne struct {
 	hooks     []Hook
 	mutation  *FormulaTemplateMutation
 	modifiers []func(*sql.UpdateBuilder)
+}
+
+// SetOrganizationID sets the "organization_id" field.
+func (ftuo *FormulaTemplateUpdateOne) SetOrganizationID(u uuid.UUID) *FormulaTemplateUpdateOne {
+	ftuo.mutation.SetOrganizationID(u)
+	return ftuo
+}
+
+// SetNillableOrganizationID sets the "organization_id" field if the given value is not nil.
+func (ftuo *FormulaTemplateUpdateOne) SetNillableOrganizationID(u *uuid.UUID) *FormulaTemplateUpdateOne {
+	if u != nil {
+		ftuo.SetOrganizationID(*u)
+	}
+	return ftuo
 }
 
 // SetUpdatedAt sets the "updated_at" field.
@@ -532,6 +601,11 @@ func (ftuo *FormulaTemplateUpdateOne) SetNillableAutoApply(b *bool) *FormulaTemp
 	return ftuo
 }
 
+// SetOrganization sets the "organization" edge to the Organization entity.
+func (ftuo *FormulaTemplateUpdateOne) SetOrganization(o *Organization) *FormulaTemplateUpdateOne {
+	return ftuo.SetOrganizationID(o.ID)
+}
+
 // SetCustomer sets the "customer" edge to the Customer entity.
 func (ftuo *FormulaTemplateUpdateOne) SetCustomer(c *Customer) *FormulaTemplateUpdateOne {
 	return ftuo.SetCustomerID(c.ID)
@@ -545,6 +619,12 @@ func (ftuo *FormulaTemplateUpdateOne) SetShipmentType(s *ShipmentType) *FormulaT
 // Mutation returns the FormulaTemplateMutation object of the builder.
 func (ftuo *FormulaTemplateUpdateOne) Mutation() *FormulaTemplateMutation {
 	return ftuo.mutation
+}
+
+// ClearOrganization clears the "organization" edge to the Organization entity.
+func (ftuo *FormulaTemplateUpdateOne) ClearOrganization() *FormulaTemplateUpdateOne {
+	ftuo.mutation.ClearOrganization()
+	return ftuo
 }
 
 // ClearCustomer clears the "customer" edge to the Customer entity.
@@ -695,6 +775,35 @@ func (ftuo *FormulaTemplateUpdateOne) sqlSave(ctx context.Context) (_node *Formu
 	}
 	if value, ok := ftuo.mutation.AutoApply(); ok {
 		_spec.SetField(formulatemplate.FieldAutoApply, field.TypeBool, value)
+	}
+	if ftuo.mutation.OrganizationCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   formulatemplate.OrganizationTable,
+			Columns: []string{formulatemplate.OrganizationColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(organization.FieldID, field.TypeUUID),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := ftuo.mutation.OrganizationIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   formulatemplate.OrganizationTable,
+			Columns: []string{formulatemplate.OrganizationColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(organization.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
 	if ftuo.mutation.CustomerCleared() {
 		edge := &sqlgraph.EdgeSpec{

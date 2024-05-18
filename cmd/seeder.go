@@ -95,6 +95,11 @@ func applyFixtures() error {
 		return err
 	}
 
+	// Seed the States in the US.
+	if err = migratedata.SeedUSStates(ctx, client); err != nil {
+		return err
+	}
+
 	// Seed the feature flags for the created organization.
 	if err = migratedata.SeedFeatureFlags(ctx, client, org); err != nil {
 		return err
@@ -108,11 +113,23 @@ func applyFixtures() error {
 		return err
 	}
 
+	if err = migratedata.SeedDispatchControl(ctx, client, org, bu); err != nil {
+		return err
+	}
+
+	if err = migratedata.SeedShipmentControl(ctx, client, org, bu); err != nil {
+		return err
+	}
+
 	if err = migratedata.SeedInvoiceControl(ctx, client, org, bu); err != nil {
 		return err
 	}
 
 	if err = migratedata.SeedRouteControl(ctx, client, org, bu); err != nil {
+		return err
+	}
+
+	if err = migratedata.SeedCustomers(ctx, client, org, bu); err != nil {
 		return err
 	}
 

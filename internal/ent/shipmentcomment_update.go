@@ -12,6 +12,7 @@ import (
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
 	"github.com/emoss08/trenova/internal/ent/commenttype"
+	"github.com/emoss08/trenova/internal/ent/organization"
 	"github.com/emoss08/trenova/internal/ent/predicate"
 	"github.com/emoss08/trenova/internal/ent/shipmentcomment"
 	"github.com/emoss08/trenova/internal/ent/user"
@@ -29,6 +30,20 @@ type ShipmentCommentUpdate struct {
 // Where appends a list predicates to the ShipmentCommentUpdate builder.
 func (scu *ShipmentCommentUpdate) Where(ps ...predicate.ShipmentComment) *ShipmentCommentUpdate {
 	scu.mutation.Where(ps...)
+	return scu
+}
+
+// SetOrganizationID sets the "organization_id" field.
+func (scu *ShipmentCommentUpdate) SetOrganizationID(u uuid.UUID) *ShipmentCommentUpdate {
+	scu.mutation.SetOrganizationID(u)
+	return scu
+}
+
+// SetNillableOrganizationID sets the "organization_id" field if the given value is not nil.
+func (scu *ShipmentCommentUpdate) SetNillableOrganizationID(u *uuid.UUID) *ShipmentCommentUpdate {
+	if u != nil {
+		scu.SetOrganizationID(*u)
+	}
 	return scu
 }
 
@@ -101,6 +116,11 @@ func (scu *ShipmentCommentUpdate) SetNillableCreatedBy(u *uuid.UUID) *ShipmentCo
 	return scu
 }
 
+// SetOrganization sets the "organization" edge to the Organization entity.
+func (scu *ShipmentCommentUpdate) SetOrganization(o *Organization) *ShipmentCommentUpdate {
+	return scu.SetOrganizationID(o.ID)
+}
+
 // SetCommentType sets the "comment_type" edge to the CommentType entity.
 func (scu *ShipmentCommentUpdate) SetCommentType(c *CommentType) *ShipmentCommentUpdate {
 	return scu.SetCommentTypeID(c.ID)
@@ -120,6 +140,12 @@ func (scu *ShipmentCommentUpdate) SetCreatedByUser(u *User) *ShipmentCommentUpda
 // Mutation returns the ShipmentCommentMutation object of the builder.
 func (scu *ShipmentCommentUpdate) Mutation() *ShipmentCommentMutation {
 	return scu.mutation
+}
+
+// ClearOrganization clears the "organization" edge to the Organization entity.
+func (scu *ShipmentCommentUpdate) ClearOrganization() *ShipmentCommentUpdate {
+	scu.mutation.ClearOrganization()
+	return scu
 }
 
 // ClearCommentType clears the "comment_type" edge to the CommentType entity.
@@ -225,6 +251,35 @@ func (scu *ShipmentCommentUpdate) sqlSave(ctx context.Context) (n int, err error
 	if value, ok := scu.mutation.Comment(); ok {
 		_spec.SetField(shipmentcomment.FieldComment, field.TypeString, value)
 	}
+	if scu.mutation.OrganizationCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   shipmentcomment.OrganizationTable,
+			Columns: []string{shipmentcomment.OrganizationColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(organization.FieldID, field.TypeUUID),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := scu.mutation.OrganizationIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   shipmentcomment.OrganizationTable,
+			Columns: []string{shipmentcomment.OrganizationColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(organization.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
 	if scu.mutation.CommentTypeCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
@@ -305,6 +360,20 @@ type ShipmentCommentUpdateOne struct {
 	modifiers []func(*sql.UpdateBuilder)
 }
 
+// SetOrganizationID sets the "organization_id" field.
+func (scuo *ShipmentCommentUpdateOne) SetOrganizationID(u uuid.UUID) *ShipmentCommentUpdateOne {
+	scuo.mutation.SetOrganizationID(u)
+	return scuo
+}
+
+// SetNillableOrganizationID sets the "organization_id" field if the given value is not nil.
+func (scuo *ShipmentCommentUpdateOne) SetNillableOrganizationID(u *uuid.UUID) *ShipmentCommentUpdateOne {
+	if u != nil {
+		scuo.SetOrganizationID(*u)
+	}
+	return scuo
+}
+
 // SetUpdatedAt sets the "updated_at" field.
 func (scuo *ShipmentCommentUpdateOne) SetUpdatedAt(t time.Time) *ShipmentCommentUpdateOne {
 	scuo.mutation.SetUpdatedAt(t)
@@ -374,6 +443,11 @@ func (scuo *ShipmentCommentUpdateOne) SetNillableCreatedBy(u *uuid.UUID) *Shipme
 	return scuo
 }
 
+// SetOrganization sets the "organization" edge to the Organization entity.
+func (scuo *ShipmentCommentUpdateOne) SetOrganization(o *Organization) *ShipmentCommentUpdateOne {
+	return scuo.SetOrganizationID(o.ID)
+}
+
 // SetCommentType sets the "comment_type" edge to the CommentType entity.
 func (scuo *ShipmentCommentUpdateOne) SetCommentType(c *CommentType) *ShipmentCommentUpdateOne {
 	return scuo.SetCommentTypeID(c.ID)
@@ -393,6 +467,12 @@ func (scuo *ShipmentCommentUpdateOne) SetCreatedByUser(u *User) *ShipmentComment
 // Mutation returns the ShipmentCommentMutation object of the builder.
 func (scuo *ShipmentCommentUpdateOne) Mutation() *ShipmentCommentMutation {
 	return scuo.mutation
+}
+
+// ClearOrganization clears the "organization" edge to the Organization entity.
+func (scuo *ShipmentCommentUpdateOne) ClearOrganization() *ShipmentCommentUpdateOne {
+	scuo.mutation.ClearOrganization()
+	return scuo
 }
 
 // ClearCommentType clears the "comment_type" edge to the CommentType entity.
@@ -527,6 +607,35 @@ func (scuo *ShipmentCommentUpdateOne) sqlSave(ctx context.Context) (_node *Shipm
 	}
 	if value, ok := scuo.mutation.Comment(); ok {
 		_spec.SetField(shipmentcomment.FieldComment, field.TypeString, value)
+	}
+	if scuo.mutation.OrganizationCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   shipmentcomment.OrganizationTable,
+			Columns: []string{shipmentcomment.OrganizationColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(organization.FieldID, field.TypeUUID),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := scuo.mutation.OrganizationIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   shipmentcomment.OrganizationTable,
+			Columns: []string{shipmentcomment.OrganizationColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(organization.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
 	if scuo.mutation.CommentTypeCleared() {
 		edge := &sqlgraph.EdgeSpec{

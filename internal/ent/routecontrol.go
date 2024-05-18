@@ -25,7 +25,7 @@ type RouteControl struct {
 	// The last time that this entity was updated.
 	UpdatedAt time.Time `json:"updatedAt" validate:"omitempty"`
 	// DistanceMethod holds the value of the "distance_method" field.
-	DistanceMethod routecontrol.DistanceMethod `json:"distanceMethod" validate:"required,oneof=Trenova Google"`
+	DistanceMethod routecontrol.DistanceMethod `json:"distanceMethod" validate:"required,oneof=Trenova Google PCMiler"`
 	// MileageUnit holds the value of the "mileage_unit" field.
 	MileageUnit routecontrol.MileageUnit `json:"mileageUnit" validate:"required,oneof=UnitsMetric UnitsImperial"`
 	// GenerateRoutes holds the value of the "generate_routes" field.

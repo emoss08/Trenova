@@ -4,27 +4,29 @@ import type { QueryKeys, ValuesOf } from "@/types";
 import { type APIError } from "@/types/server";
 import {
   QueryClient,
+  UseMutationResult,
   useMutation,
   useQueryClient,
 } from "@tanstack/react-query";
 import { type AxiosResponse } from "axios";
-import type { Control, FieldValues, Path } from "react-hook-form";
+import type { Control, FieldValues, Path, UseFormReset } from "react-hook-form";
 import { toast } from "sonner";
 
 type DataProp = Record<string, unknown> | FormData;
-type MutationOptions = {
+type MutationOptions<K extends FieldValues> = {
   path: string;
   successMessage: string;
   errorMessage?: string;
   queryKeysToInvalidate?: ValuesOf<QueryKeys>;
   closeModal?: boolean;
+  reset: UseFormReset<K>;
   method: "POST" | "PUT" | "PATCH" | "DELETE";
 };
 
 export function useCustomMutation<T extends FieldValues>(
   control: Control<T>,
-  options: MutationOptions,
-) {
+  options: MutationOptions<T>,
+): UseMutationResult<AxiosResponse, Error, DataProp> {
   const queryClient = useQueryClient();
 
   return useMutation({
@@ -35,8 +37,8 @@ export function useCustomMutation<T extends FieldValues>(
   });
 }
 
-async function executeApiMethod(
-  method: MutationOptions["method"],
+async function executeApiMethod<T extends FieldValues>(
+  method: MutationOptions<T>["method"],
   path: string,
   data: Record<string, unknown> | FormData,
 ): Promise<AxiosResponse> {
@@ -105,8 +107,8 @@ function sendFileData(
 
 const broadcastChannel = new BroadcastChannel("query-invalidation");
 
-async function handleSuccess(
-  options: MutationOptions,
+async function handleSuccess<T extends FieldValues>(
+  options: MutationOptions<T>,
   queryClient: QueryClient,
 ) {
   const notifySuccess = () => {
@@ -114,17 +116,21 @@ async function handleSuccess(
   };
 
   // Invalidate the queries that are passed in
-  const invalidateQueries = async (queries?: string[]) => {
+  const invalidateQueries = async (queries?: string) => {
     if (queries) {
       await queryClient.invalidateQueries({
-        queryKey: queries,
+        predicate: (query) =>
+          query.queryKey.some(
+            (keyPart) =>
+              typeof keyPart === "string" && keyPart.includes(queries),
+          ),
       });
 
       // Broadcast a message to other windows to invalidate the same queries
       try {
         broadcastChannel.postMessage({
           type: "invalidate",
-          queryKeys: queries,
+          queryKeys: [queries],
         });
       } catch (error) {
         console.error("[Trenova] BroadcastChannel not supported", error);
@@ -133,9 +139,7 @@ async function handleSuccess(
   };
 
   if (options.queryKeysToInvalidate) {
-    await invalidateQueries([options.queryKeysToInvalidate]).then(
-      notifySuccess,
-    );
+    await invalidateQueries(options.queryKeysToInvalidate).then(notifySuccess);
   } else {
     notifySuccess();
   }
@@ -146,6 +150,9 @@ async function handleSuccess(
   if (options.closeModal) {
     useTableStore.set(sheetKey, false);
   }
+
+  // reset the form if `reset` is passed
+  options.reset();
 }
 
 interface ErrorResponse {

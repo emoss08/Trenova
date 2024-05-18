@@ -33,8 +33,23 @@ type CustomReport func(*sql.Selector)
 // Customer is the predicate function for customer builders.
 type Customer func(*sql.Selector)
 
+// CustomerContact is the predicate function for customercontact builders.
+type CustomerContact func(*sql.Selector)
+
+// CustomerDetentionPolicy is the predicate function for customerdetentionpolicy builders.
+type CustomerDetentionPolicy func(*sql.Selector)
+
+// CustomerEmailProfile is the predicate function for customeremailprofile builders.
+type CustomerEmailProfile func(*sql.Selector)
+
+// CustomerRuleProfile is the predicate function for customerruleprofile builders.
+type CustomerRuleProfile func(*sql.Selector)
+
 // DelayCode is the predicate function for delaycode builders.
 type DelayCode func(*sql.Selector)
+
+// DeliverySlot is the predicate function for deliveryslot builders.
+type DeliverySlot func(*sql.Selector)
 
 // DispatchControl is the predicate function for dispatchcontrol builders.
 type DispatchControl func(*sql.Selector)

@@ -4,68 +4,111 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/api"
+	"github.com/emoss08/trenova/internal/api/services/types"
+	"github.com/emoss08/trenova/internal/models"
 	"github.com/emoss08/trenova/internal/util"
 	"github.com/rs/zerolog"
 
 	"github.com/emoss08/trenova/internal/ent"
-	"github.com/emoss08/trenova/internal/ent/customer"
-	"github.com/emoss08/trenova/internal/ent/organization"
 	"github.com/google/uuid"
 )
 
+// CustomerService provides methods for managing customers.
 type CustomerService struct {
-	Client *ent.Client
-	Logger *zerolog.Logger
+	Client       *ent.Client     // Client is the database client used for querying and mutating customer records.
+	Logger       *zerolog.Logger // Logger is used for logging messages.
+	QueryService *models.QueryService
 }
 
-// NewCustomerService creates a new customer service.
+// NewCustomerService creates a new CustomerService.
+// s is the server instance containing necessary dependencies.
+//
+// Parameters:
+//   - s *api.Server: A pointer to an instance of api.Server which contains configuration and state needed by
+//     CustomerService.
+//
+// Returns:
+//   - *CustomerService: A pointer to the newly created CustomerService instance.
 func NewCustomerService(s *api.Server) *CustomerService {
 	return &CustomerService{
 		Client: s.Client,
 		Logger: s.Logger,
+		QueryService: &models.QueryService{
+			Client: s.Client,
+			Logger: s.Logger,
+		},
 	}
 }
 
-// GetCustomers gets the customer for an organization.
+// GetCustomers retrieves a list of customers for a given organization and business unit.
+// It returns a slice of Customer entities, the total number of customer records, and an error object.
+//
+// Parameters:
+//   - ctx: Context which may contain deadlines, cancellation signals, and other request-scoped values.
+//   - limit int: The maximum number of records to return.
+//   - offset int: The number of records to skip before starting to return records.
+//   - orgID uuid.UUID: The identifier of the organization.
+//   - buID uuid.UUID: The identifier of the business unit.
+//
+// Returns:
+//   - []*ent.Customer: A slice of Customer entities.
+//   - int: The total number of customer records.
+//   - error: An error object that indicates why the retrieval failed, nil if no error occurred.
 func (r *CustomerService) GetCustomers(ctx context.Context, limit, offset int, orgID, buID uuid.UUID) ([]*ent.Customer, int, error) {
-	entityCount, countErr := r.Client.Customer.Query().Where(
-		customer.HasOrganizationWith(
-			organization.IDEQ(orgID),
-			organization.BusinessUnitIDEQ(buID),
-		),
-	).Count(ctx)
-
-	if countErr != nil {
-		return nil, 0, countErr
-	}
-
-	entities, err := r.Client.Customer.Query().
-		Limit(limit).
-		Offset(offset).
-		Where(
-			customer.HasOrganizationWith(
-				organization.IDEQ(orgID),
-				organization.BusinessUnitIDEQ(buID),
-			),
-		).All(ctx)
-	if err != nil {
-		return nil, 0, err
-	}
-
-	return entities, entityCount, nil
+	return r.QueryService.GetCustomers(ctx, limit, offset, orgID, buID)
 }
 
-// CreateCustomer creates a new customer.
+// CreateCustomer creates a new customer. It returns a pointer to the newly created Customer entity and an error object.
+//
+// Parameters:
+//
+//   - ctx: Context which may contain deadlines, cancellation signals, and other request-scoped values.
+//   - entity *CustomerRequest: The customer request containing the details of the customer to be created.
+//
+// Returns:
+//   - *ent.Customer: A pointer to the newly created Customer entity.
+//
+// Possible errors:
+//   - Error creating customer entity
 func (r *CustomerService) CreateCustomer(
-	ctx context.Context, entity *ent.Customer,
+	ctx context.Context, entity *types.CustomerRequest,
 ) (*ent.Customer, error) {
-	updatedEntity := new(ent.Customer)
+	createdEntity := new(ent.Customer)
 
 	err := util.WithTx(ctx, r.Client, func(tx *ent.Tx) error {
 		var err error
-		updatedEntity, err = r.createCustomerEntity(ctx, tx, entity)
+
+		createdEntity, err = r.QueryService.CreateCustomerEntity(ctx, tx, entity)
 		if err != nil {
 			return err
+		}
+
+		// Create the customer rule profile
+		if err = r.QueryService.CreateCustomerRuleProfileEntity(ctx, tx, createdEntity.ID, entity); err != nil {
+			r.Logger.Err(err).Msg("Error creating customer rule profile")
+			return err
+		}
+
+		// Create the email profile
+		if err = r.QueryService.CreateCustomerEmailProfileEntity(ctx, tx, createdEntity.ID, entity); err != nil {
+			r.Logger.Err(err).Msg("Error creating customer email profile")
+			return err
+		}
+
+		// If comments are provided, create them and associate them with the customer
+		if len(entity.Contacts) > 0 {
+			if err = r.QueryService.CreateCustomerContacts(ctx, tx, createdEntity.ID, entity); err != nil {
+				r.Logger.Err(err).Msg("Error creating customer contact")
+				return err
+			}
+		}
+
+		// if delivery slots are provided, create them and associate them with the customer
+		if len(entity.DeliverySlots) > 0 {
+			if err = r.QueryService.CreateDeliverySlots(ctx, tx, createdEntity.ID, entity); err != nil {
+				r.Logger.Err(err).Msg("Error creating delivery slots")
+				return err
+			}
 		}
 
 		return nil
@@ -74,80 +117,45 @@ func (r *CustomerService) CreateCustomer(
 		return nil, err
 	}
 
-	return updatedEntity, nil
-}
-
-func (r *CustomerService) createCustomerEntity(
-	ctx context.Context, tx *ent.Tx, entity *ent.Customer,
-) (*ent.Customer, error) {
-	createdEntity, err := tx.Customer.Create().
-		SetOrganizationID(entity.OrganizationID).
-		SetBusinessUnitID(entity.BusinessUnitID).
-		SetStatus(entity.Status).
-		SetCode(entity.Code).
-		SetName(entity.Name).
-		SetAddressLine1(entity.AddressLine1).
-		SetAddressLine2(entity.AddressLine2).
-		SetCity(entity.City).
-		SetStateID(entity.StateID).
-		SetPostalCode(entity.PostalCode).
-		SetHasCustomerPortal(entity.HasCustomerPortal).
-		SetAutoMarkReadyToBill(entity.AutoMarkReadyToBill).
-		Save(ctx)
-	if err != nil {
-		return nil, err
-	}
-
 	return createdEntity, nil
 }
 
 // UpdateCustomer updates a customer.
-func (r *CustomerService) UpdateCustomer(ctx context.Context, entity *ent.Customer) (*ent.Customer, error) {
+//
+// Parameters:
+//   - ctx: Context which may contain deadlines, cancellation signals, and other request-scoped values.
+//   - entity *CustomerUpdateRequest: The customer update request containing the details of the customer to be updated.
+//
+// Returns:
+//   - *ent.Customer: A pointer to the updated Customer entity.
+//   - error: An error object that indicates why the update failed, nil if no error occurred.
+func (r *CustomerService) UpdateCustomer(ctx context.Context, entity *types.CustomerUpdateRequest) (*ent.Customer, error) {
 	updatedEntity := new(ent.Customer)
 
 	err := util.WithTx(ctx, r.Client, func(tx *ent.Tx) error {
 		var err error
-		updatedEntity, err = r.updateCustomerEntity(ctx, tx, entity)
-		return err
+		updatedEntity, err = r.QueryService.UpdateCustomerEntity(ctx, tx, entity)
+		if err != nil {
+			return err
+		}
+
+		// Update the email profile
+		if err = r.QueryService.UpdateCustomerEmailProfileEntity(ctx, tx, entity); err != nil {
+			return err
+		}
+
+		// Update the rule profile
+		if err = r.QueryService.UpdateCustomerRuleProfileEntity(ctx, tx, entity); err != nil {
+			return err
+		}
+
+		// Sync delivery slots
+		if err = r.QueryService.SyncDeliverySlots(ctx, tx, entity, updatedEntity); err != nil {
+			return err
+		}
+
+		return r.QueryService.SyncCustomerContacts(ctx, tx, entity, updatedEntity)
 	})
-	if err != nil {
-		return nil, err
-	}
-
-	return updatedEntity, nil
-}
-
-func (r *CustomerService) updateCustomerEntity(
-	ctx context.Context, tx *ent.Tx, entity *ent.Customer,
-) (*ent.Customer, error) {
-	current, err := tx.Customer.Get(ctx, entity.ID)
-	if err != nil {
-		return nil, err
-	}
-
-	// Check if the version matches.
-	if current.Version != entity.Version {
-		return nil, util.NewValidationError("This record has been updated by another user. Please refresh and try again",
-			"syncError",
-			"code")
-	}
-
-	// Start building the update operation
-	updateOp := tx.Customer.UpdateOneID(entity.ID).
-		SetStatus(entity.Status).
-		SetCode(entity.Code).
-		SetName(entity.Name).
-		SetAddressLine1(entity.AddressLine1).
-		SetAddressLine2(entity.AddressLine2).
-		SetCity(entity.City).
-		SetStateID(entity.StateID).
-		SetPostalCode(entity.PostalCode).
-		SetHasCustomerPortal(entity.HasCustomerPortal).
-		SetAutoMarkReadyToBill(entity.AutoMarkReadyToBill).
-		SetVersion(entity.Version + 1) // Increment the version
-
-	// Execute the update operation
-	updatedEntity, err := updateOp.Save(ctx)
 	if err != nil {
 		return nil, err
 	}

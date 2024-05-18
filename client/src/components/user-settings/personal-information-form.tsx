@@ -49,6 +49,7 @@ export default function PersonalInformation({ user }: { user: User }) {
     successMessage: "User profile updated successfully.",
     queryKeysToInvalidate: "authenticatedUser",
     closeModal: false,
+    reset,
     errorMessage: "Failed to update user profile.",
   });
 

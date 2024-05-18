@@ -132,6 +132,7 @@ func (r *ShipmentTypeService) updateShipmentTypeEntity(
 
 	// Start building the update operation
 	updateOp := tx.ShipmentType.UpdateOneID(entity.ID).
+		SetOrganizationID(entity.OrganizationID).
 		SetStatus(entity.Status).
 		SetCode(entity.Code).
 		SetDescription(entity.Description).

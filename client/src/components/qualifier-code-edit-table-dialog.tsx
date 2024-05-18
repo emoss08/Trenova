@@ -28,7 +28,7 @@ function QualifierCodeEditForm({
 }: {
   qualifierCode: QualifierCode;
 }) {
-  const { control, handleSubmit } = useForm<FormValues>({
+  const { control, reset, handleSubmit } = useForm<FormValues>({
     resolver: yupResolver(qualifierCodeSchema),
     defaultValues: qualifierCode,
   });
@@ -39,6 +39,7 @@ function QualifierCodeEditForm({
     successMessage: "Qualifier Code updated successfully.",
     queryKeysToInvalidate: "qualifierCodes",
     closeModal: true,
+    reset,
     errorMessage: "Failed to update qualifier code",
   });
 

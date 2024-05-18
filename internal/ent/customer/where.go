@@ -838,6 +838,121 @@ func HasShipmentsWith(preds ...predicate.Shipment) predicate.Customer {
 	})
 }
 
+// HasEmailProfile applies the HasEdge predicate on the "email_profile" edge.
+func HasEmailProfile() predicate.Customer {
+	return predicate.Customer(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.Edge(sqlgraph.O2O, false, EmailProfileTable, EmailProfileColumn),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasEmailProfileWith applies the HasEdge predicate on the "email_profile" edge with a given conditions (other predicates).
+func HasEmailProfileWith(preds ...predicate.CustomerEmailProfile) predicate.Customer {
+	return predicate.Customer(func(s *sql.Selector) {
+		step := newEmailProfileStep()
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	})
+}
+
+// HasRuleProfile applies the HasEdge predicate on the "rule_profile" edge.
+func HasRuleProfile() predicate.Customer {
+	return predicate.Customer(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.Edge(sqlgraph.O2O, false, RuleProfileTable, RuleProfileColumn),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasRuleProfileWith applies the HasEdge predicate on the "rule_profile" edge with a given conditions (other predicates).
+func HasRuleProfileWith(preds ...predicate.CustomerRuleProfile) predicate.Customer {
+	return predicate.Customer(func(s *sql.Selector) {
+		step := newRuleProfileStep()
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	})
+}
+
+// HasDetentionPolicies applies the HasEdge predicate on the "detention_policies" edge.
+func HasDetentionPolicies() predicate.Customer {
+	return predicate.Customer(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, DetentionPoliciesTable, DetentionPoliciesColumn),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasDetentionPoliciesWith applies the HasEdge predicate on the "detention_policies" edge with a given conditions (other predicates).
+func HasDetentionPoliciesWith(preds ...predicate.CustomerDetentionPolicy) predicate.Customer {
+	return predicate.Customer(func(s *sql.Selector) {
+		step := newDetentionPoliciesStep()
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	})
+}
+
+// HasContacts applies the HasEdge predicate on the "contacts" edge.
+func HasContacts() predicate.Customer {
+	return predicate.Customer(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, ContactsTable, ContactsColumn),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasContactsWith applies the HasEdge predicate on the "contacts" edge with a given conditions (other predicates).
+func HasContactsWith(preds ...predicate.CustomerContact) predicate.Customer {
+	return predicate.Customer(func(s *sql.Selector) {
+		step := newContactsStep()
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	})
+}
+
+// HasDeliverySlots applies the HasEdge predicate on the "delivery_slots" edge.
+func HasDeliverySlots() predicate.Customer {
+	return predicate.Customer(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, DeliverySlotsTable, DeliverySlotsColumn),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasDeliverySlotsWith applies the HasEdge predicate on the "delivery_slots" edge with a given conditions (other predicates).
+func HasDeliverySlotsWith(preds ...predicate.DeliverySlot) predicate.Customer {
+	return predicate.Customer(func(s *sql.Selector) {
+		step := newDeliverySlotsStep()
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	})
+}
+
 // And groups predicates with the AND operator between them.
 func And(predicates ...predicate.Customer) predicate.Customer {
 	return predicate.Customer(sql.AndPredicates(predicates...))

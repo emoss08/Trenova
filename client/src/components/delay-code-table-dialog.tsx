@@ -89,7 +89,7 @@ export function DelayCodeForm({
 }
 
 export function DelayCodeDialog({ onOpenChange, open }: TableSheetProps) {
-  const { control, handleSubmit } = useForm<DelayCodeFormValues>({
+  const { control, reset, handleSubmit } = useForm<DelayCodeFormValues>({
     resolver: yupResolver(delayCodeSchema),
     defaultValues: {
       status: "A",
@@ -104,8 +104,9 @@ export function DelayCodeDialog({ onOpenChange, open }: TableSheetProps) {
     method: "POST",
     path: "/delay-codes/",
     successMessage: "Delay Code created successfully.",
-    queryKeysToInvalidate: ["delay-code-table-data"],
+    queryKeysToInvalidate: "delayCodes",
     closeModal: true,
+    reset,
     errorMessage: "Failed to create new delay code.",
   });
 

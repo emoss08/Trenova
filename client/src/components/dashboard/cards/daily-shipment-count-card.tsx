@@ -1,3 +1,4 @@
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { ComponentLoader } from "@/components/ui/component-loader";
@@ -9,6 +10,12 @@ import {
   getMonthDayString,
   getTodayDate,
 } from "@/lib/date";
+import { faChartSimple } from "@fortawesome/pro-duotone-svg-icons";
+import {
+  faArrowDownArrowUp,
+  faClock,
+} from "@fortawesome/pro-regular-svg-icons";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { Point, ResponsiveLine } from "@nivo/line";
 import { useMemo } from "react";
 
@@ -110,7 +117,7 @@ export default function DailyShipmentCounts() {
   }
 
   return (
-    <Card className="relative col-span-4 lg:col-span-2">
+    <Card className="c col-span-4 lg:col-span-2">
       {isLoading ? (
         <ComponentLoader className="h-[40vh]" />
       ) : (
@@ -118,7 +125,7 @@ export default function DailyShipmentCounts() {
           <div className="border-border flex items-start justify-between border-b border-dashed p-4">
             <div>
               <div className="flex items-center">
-                <p className="text-2xl font-bold">{data?.count}</p>
+                <p className="text-2xl font-bold">{data?.count || "--"}</p>
                 <span className="text-muted-foreground ml-2 text-xs font-normal">
                   {dateDisplay}
                 </span>
@@ -130,17 +137,34 @@ export default function DailyShipmentCounts() {
             <Button
               size="sm"
               variant="outline"
-              style={{ position: "absolute", top: 15, right: 15 }}
+              className="absolute right-52 top-4"
             >
-              Filter
+              <FontAwesomeIcon icon={faArrowDownArrowUp} className="mr-2" />
+              Sorted by
+              <Badge withDot={false} variant="purple" className="ml-2">
+                Created At
+              </Badge>
+            </Button>
+            <Button
+              size="sm"
+              variant="outline"
+              className="absolute right-4 top-4"
+            >
+              <FontAwesomeIcon icon={faClock} className="mr-2" />
+              Last
+              <Badge withDot={false} variant="info" className="ml-2">
+                Last 30 days
+              </Badge>
             </Button>
           </div>
           {hasChartData ? (
             <LineChart data={formattedData} />
           ) : (
-            <div className="flex h-[30vh] items-center justify-center">
+            <div className="flex h-[30vh] flex-col items-center justify-center">
+              <FontAwesomeIcon icon={faChartSimple} className="mb-2 text-2xl" />
+              <h3 className="text-foreground font-semibold">No data to show</h3>
               <p className="text-muted-foreground">
-                No data available for the selected range
+                May be due to lack of shipments.
               </p>
             </div>
           )}

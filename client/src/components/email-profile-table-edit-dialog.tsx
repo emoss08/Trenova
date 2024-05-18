@@ -27,7 +27,7 @@ function EmailProfileEditForm({
 }: {
   emailProfile: EmailProfile;
 }) {
-  const { control, handleSubmit } = useForm<FormValues>({
+  const { control, reset, handleSubmit } = useForm<FormValues>({
     resolver: yupResolver(emailProfileSchema),
     defaultValues: emailProfile,
   });
@@ -36,8 +36,9 @@ function EmailProfileEditForm({
     method: "PUT",
     path: `/email-profiles/${emailProfile.id}/`,
     successMessage: "Email Profile updated successfully.",
-    queryKeysToInvalidate: ["email-profile-table-data"],
+    queryKeysToInvalidate: "emailProfiles",
     closeModal: true,
+    reset,
     errorMessage: "Failed to update email profile.",
   });
 

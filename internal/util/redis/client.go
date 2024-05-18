@@ -8,6 +8,8 @@ import (
 	"github.com/redis/go-redis/v9"
 )
 
+const Nil = redis.Nil
+
 // Client represents a client to the Redis server.
 type Client struct {
 	config *redis.Options // config holds the configuration options for the client.
@@ -60,5 +62,10 @@ func (c *Client) Get(ctx context.Context, key string) (string, error) {
 // It returns an error if the operation fails.
 func (c *Client) Set(ctx context.Context, key string, value any, timeout time.Duration) error {
 	_, err := c.client.Set(ctx, key, value, timeout).Result()
+	return err
+}
+
+func (c *Client) Del(ctx context.Context, keys ...string) error {
+	_, err := c.client.Del(ctx, keys...).Result()
 	return err
 }

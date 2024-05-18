@@ -131,6 +131,7 @@ func (r *QualifierCodeService) updateQualifierCodeEntity(
 
 	// Start building the update operation
 	updateOp := tx.QualifierCode.UpdateOneID(entity.ID).
+		SetOrganizationID(entity.OrganizationID).
 		SetStatus(entity.Status).
 		SetCode(entity.Code).
 		SetDescription(entity.Description).

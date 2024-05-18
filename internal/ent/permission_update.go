@@ -11,6 +11,7 @@ import (
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
+	"github.com/emoss08/trenova/internal/ent/organization"
 	"github.com/emoss08/trenova/internal/ent/permission"
 	"github.com/emoss08/trenova/internal/ent/predicate"
 	"github.com/emoss08/trenova/internal/ent/role"
@@ -28,6 +29,20 @@ type PermissionUpdate struct {
 // Where appends a list predicates to the PermissionUpdate builder.
 func (pu *PermissionUpdate) Where(ps ...predicate.Permission) *PermissionUpdate {
 	pu.mutation.Where(ps...)
+	return pu
+}
+
+// SetOrganizationID sets the "organization_id" field.
+func (pu *PermissionUpdate) SetOrganizationID(u uuid.UUID) *PermissionUpdate {
+	pu.mutation.SetOrganizationID(u)
+	return pu
+}
+
+// SetNillableOrganizationID sets the "organization_id" field if the given value is not nil.
+func (pu *PermissionUpdate) SetNillableOrganizationID(u *uuid.UUID) *PermissionUpdate {
+	if u != nil {
+		pu.SetOrganizationID(*u)
+	}
 	return pu
 }
 
@@ -152,6 +167,11 @@ func (pu *PermissionUpdate) ClearWriteDescription() *PermissionUpdate {
 	return pu
 }
 
+// SetOrganization sets the "organization" edge to the Organization entity.
+func (pu *PermissionUpdate) SetOrganization(o *Organization) *PermissionUpdate {
+	return pu.SetOrganizationID(o.ID)
+}
+
 // AddRoleIDs adds the "roles" edge to the Role entity by IDs.
 func (pu *PermissionUpdate) AddRoleIDs(ids ...uuid.UUID) *PermissionUpdate {
 	pu.mutation.AddRoleIDs(ids...)
@@ -170,6 +190,12 @@ func (pu *PermissionUpdate) AddRoles(r ...*Role) *PermissionUpdate {
 // Mutation returns the PermissionMutation object of the builder.
 func (pu *PermissionUpdate) Mutation() *PermissionMutation {
 	return pu.mutation
+}
+
+// ClearOrganization clears the "organization" edge to the Organization entity.
+func (pu *PermissionUpdate) ClearOrganization() *PermissionUpdate {
+	pu.mutation.ClearOrganization()
+	return pu
 }
 
 // ClearRoles clears all "roles" edges to the Role entity.
@@ -302,6 +328,35 @@ func (pu *PermissionUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	if pu.mutation.WriteDescriptionCleared() {
 		_spec.ClearField(permission.FieldWriteDescription, field.TypeString)
 	}
+	if pu.mutation.OrganizationCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   permission.OrganizationTable,
+			Columns: []string{permission.OrganizationColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(organization.FieldID, field.TypeUUID),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := pu.mutation.OrganizationIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   permission.OrganizationTable,
+			Columns: []string{permission.OrganizationColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(organization.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
 	if pu.mutation.RolesCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2M,
@@ -367,6 +422,20 @@ type PermissionUpdateOne struct {
 	hooks     []Hook
 	mutation  *PermissionMutation
 	modifiers []func(*sql.UpdateBuilder)
+}
+
+// SetOrganizationID sets the "organization_id" field.
+func (puo *PermissionUpdateOne) SetOrganizationID(u uuid.UUID) *PermissionUpdateOne {
+	puo.mutation.SetOrganizationID(u)
+	return puo
+}
+
+// SetNillableOrganizationID sets the "organization_id" field if the given value is not nil.
+func (puo *PermissionUpdateOne) SetNillableOrganizationID(u *uuid.UUID) *PermissionUpdateOne {
+	if u != nil {
+		puo.SetOrganizationID(*u)
+	}
+	return puo
 }
 
 // SetUpdatedAt sets the "updated_at" field.
@@ -490,6 +559,11 @@ func (puo *PermissionUpdateOne) ClearWriteDescription() *PermissionUpdateOne {
 	return puo
 }
 
+// SetOrganization sets the "organization" edge to the Organization entity.
+func (puo *PermissionUpdateOne) SetOrganization(o *Organization) *PermissionUpdateOne {
+	return puo.SetOrganizationID(o.ID)
+}
+
 // AddRoleIDs adds the "roles" edge to the Role entity by IDs.
 func (puo *PermissionUpdateOne) AddRoleIDs(ids ...uuid.UUID) *PermissionUpdateOne {
 	puo.mutation.AddRoleIDs(ids...)
@@ -508,6 +582,12 @@ func (puo *PermissionUpdateOne) AddRoles(r ...*Role) *PermissionUpdateOne {
 // Mutation returns the PermissionMutation object of the builder.
 func (puo *PermissionUpdateOne) Mutation() *PermissionMutation {
 	return puo.mutation
+}
+
+// ClearOrganization clears the "organization" edge to the Organization entity.
+func (puo *PermissionUpdateOne) ClearOrganization() *PermissionUpdateOne {
+	puo.mutation.ClearOrganization()
+	return puo
 }
 
 // ClearRoles clears all "roles" edges to the Role entity.
@@ -669,6 +749,35 @@ func (puo *PermissionUpdateOne) sqlSave(ctx context.Context) (_node *Permission,
 	}
 	if puo.mutation.WriteDescriptionCleared() {
 		_spec.ClearField(permission.FieldWriteDescription, field.TypeString)
+	}
+	if puo.mutation.OrganizationCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   permission.OrganizationTable,
+			Columns: []string{permission.OrganizationColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(organization.FieldID, field.TypeUUID),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := puo.mutation.OrganizationIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   permission.OrganizationTable,
+			Columns: []string{permission.OrganizationColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(organization.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
 	if puo.mutation.RolesCleared() {
 		edge := &sqlgraph.EdgeSpec{

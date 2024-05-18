@@ -12,6 +12,11 @@ import (
 	"entgo.io/ent/schema/field"
 	"github.com/emoss08/trenova/internal/ent/businessunit"
 	"github.com/emoss08/trenova/internal/ent/customer"
+	"github.com/emoss08/trenova/internal/ent/customercontact"
+	"github.com/emoss08/trenova/internal/ent/customerdetentionpolicy"
+	"github.com/emoss08/trenova/internal/ent/customeremailprofile"
+	"github.com/emoss08/trenova/internal/ent/customerruleprofile"
+	"github.com/emoss08/trenova/internal/ent/deliveryslot"
 	"github.com/emoss08/trenova/internal/ent/organization"
 	"github.com/emoss08/trenova/internal/ent/shipment"
 	"github.com/emoss08/trenova/internal/ent/usstate"
@@ -213,6 +218,89 @@ func (cc *CustomerCreate) AddShipments(s ...*Shipment) *CustomerCreate {
 		ids[i] = s[i].ID
 	}
 	return cc.AddShipmentIDs(ids...)
+}
+
+// SetEmailProfileID sets the "email_profile" edge to the CustomerEmailProfile entity by ID.
+func (cc *CustomerCreate) SetEmailProfileID(id uuid.UUID) *CustomerCreate {
+	cc.mutation.SetEmailProfileID(id)
+	return cc
+}
+
+// SetNillableEmailProfileID sets the "email_profile" edge to the CustomerEmailProfile entity by ID if the given value is not nil.
+func (cc *CustomerCreate) SetNillableEmailProfileID(id *uuid.UUID) *CustomerCreate {
+	if id != nil {
+		cc = cc.SetEmailProfileID(*id)
+	}
+	return cc
+}
+
+// SetEmailProfile sets the "email_profile" edge to the CustomerEmailProfile entity.
+func (cc *CustomerCreate) SetEmailProfile(c *CustomerEmailProfile) *CustomerCreate {
+	return cc.SetEmailProfileID(c.ID)
+}
+
+// SetRuleProfileID sets the "rule_profile" edge to the CustomerRuleProfile entity by ID.
+func (cc *CustomerCreate) SetRuleProfileID(id uuid.UUID) *CustomerCreate {
+	cc.mutation.SetRuleProfileID(id)
+	return cc
+}
+
+// SetNillableRuleProfileID sets the "rule_profile" edge to the CustomerRuleProfile entity by ID if the given value is not nil.
+func (cc *CustomerCreate) SetNillableRuleProfileID(id *uuid.UUID) *CustomerCreate {
+	if id != nil {
+		cc = cc.SetRuleProfileID(*id)
+	}
+	return cc
+}
+
+// SetRuleProfile sets the "rule_profile" edge to the CustomerRuleProfile entity.
+func (cc *CustomerCreate) SetRuleProfile(c *CustomerRuleProfile) *CustomerCreate {
+	return cc.SetRuleProfileID(c.ID)
+}
+
+// AddDetentionPolicyIDs adds the "detention_policies" edge to the CustomerDetentionPolicy entity by IDs.
+func (cc *CustomerCreate) AddDetentionPolicyIDs(ids ...uuid.UUID) *CustomerCreate {
+	cc.mutation.AddDetentionPolicyIDs(ids...)
+	return cc
+}
+
+// AddDetentionPolicies adds the "detention_policies" edges to the CustomerDetentionPolicy entity.
+func (cc *CustomerCreate) AddDetentionPolicies(c ...*CustomerDetentionPolicy) *CustomerCreate {
+	ids := make([]uuid.UUID, len(c))
+	for i := range c {
+		ids[i] = c[i].ID
+	}
+	return cc.AddDetentionPolicyIDs(ids...)
+}
+
+// AddContactIDs adds the "contacts" edge to the CustomerContact entity by IDs.
+func (cc *CustomerCreate) AddContactIDs(ids ...uuid.UUID) *CustomerCreate {
+	cc.mutation.AddContactIDs(ids...)
+	return cc
+}
+
+// AddContacts adds the "contacts" edges to the CustomerContact entity.
+func (cc *CustomerCreate) AddContacts(c ...*CustomerContact) *CustomerCreate {
+	ids := make([]uuid.UUID, len(c))
+	for i := range c {
+		ids[i] = c[i].ID
+	}
+	return cc.AddContactIDs(ids...)
+}
+
+// AddDeliverySlotIDs adds the "delivery_slots" edge to the DeliverySlot entity by IDs.
+func (cc *CustomerCreate) AddDeliverySlotIDs(ids ...uuid.UUID) *CustomerCreate {
+	cc.mutation.AddDeliverySlotIDs(ids...)
+	return cc
+}
+
+// AddDeliverySlots adds the "delivery_slots" edges to the DeliverySlot entity.
+func (cc *CustomerCreate) AddDeliverySlots(d ...*DeliverySlot) *CustomerCreate {
+	ids := make([]uuid.UUID, len(d))
+	for i := range d {
+		ids[i] = d[i].ID
+	}
+	return cc.AddDeliverySlotIDs(ids...)
 }
 
 // Mutation returns the CustomerMutation object of the builder.
@@ -523,6 +611,86 @@ func (cc *CustomerCreate) createSpec() (*Customer, *sqlgraph.CreateSpec) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(shipment.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges = append(_spec.Edges, edge)
+	}
+	if nodes := cc.mutation.EmailProfileIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2O,
+			Inverse: false,
+			Table:   customer.EmailProfileTable,
+			Columns: []string{customer.EmailProfileColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(customeremailprofile.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges = append(_spec.Edges, edge)
+	}
+	if nodes := cc.mutation.RuleProfileIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2O,
+			Inverse: false,
+			Table:   customer.RuleProfileTable,
+			Columns: []string{customer.RuleProfileColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(customerruleprofile.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges = append(_spec.Edges, edge)
+	}
+	if nodes := cc.mutation.DetentionPoliciesIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   customer.DetentionPoliciesTable,
+			Columns: []string{customer.DetentionPoliciesColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(customerdetentionpolicy.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges = append(_spec.Edges, edge)
+	}
+	if nodes := cc.mutation.ContactsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   customer.ContactsTable,
+			Columns: []string{customer.ContactsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(customercontact.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges = append(_spec.Edges, edge)
+	}
+	if nodes := cc.mutation.DeliverySlotsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   customer.DeliverySlotsTable,
+			Columns: []string{customer.DeliverySlotsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(deliveryslot.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {

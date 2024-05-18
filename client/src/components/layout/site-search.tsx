@@ -4,10 +4,19 @@ import { upperFirst } from "@/lib/utils";
 import { RouteObjectWithPermission, routes } from "@/routing/AppRoutes";
 import { useHeaderStore } from "@/stores/HeaderStore";
 import { type UserFavorite } from "@/types/accounts";
-import { MagnifyingGlassIcon } from "@radix-ui/react-icons";
-import { AlertCircleIcon, CommandIcon } from "lucide-react";
+import { faPage, faStar } from "@fortawesome/pro-regular-svg-icons";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import {
+  LaptopIcon,
+  MagnifyingGlassIcon,
+  MoonIcon,
+  SunIcon,
+} from "@radix-ui/react-icons";
+import { VariantProps } from "class-variance-authority";
+import { AlertCircleIcon } from "lucide-react";
 import React from "react";
 import { useNavigate } from "react-router-dom";
+import { Badge, badgeVariants } from "../ui/badge";
 import { Button } from "../ui/button";
 import {
   CommandDialog,
@@ -18,6 +27,8 @@ import {
   CommandList,
   CommandSeparator,
 } from "../ui/command";
+import { KeyCombo, Keys, ShortcutsProvider } from "../ui/keyboard";
+import { useTheme } from "../ui/theme-provider";
 import {
   Tooltip,
   TooltipContent,
@@ -78,13 +89,14 @@ export function SiteSearchInput() {
               <MagnifyingGlassIcon className="text-muted-foreground group-hover:text-foreground mr-2 size-5" />
               <span className="text-muted-foreground">Search...</span>
             </div>
-            <kbd className="border-border bg-background text-foreground pointer-events-none inline-flex h-5 select-none items-center gap-x-1 rounded border px-1.5 font-mono text-[10px] font-medium opacity-100">
-              <CommandIcon className="size-3" />
-              <span className="text-xs">K</span>
-            </kbd>
+            <div className="pointer-events-none inline-flex select-none">
+              <ShortcutsProvider os="mac">
+                <KeyCombo keyNames={[Keys.Command, "K"]} />
+              </ShortcutsProvider>
+            </div>
           </button>
         </TooltipTrigger>
-        <TooltipContent side="bottom" sideOffset={5}>
+        <TooltipContent side="left" sideOffset={5}>
           <span>Site Search</span>
         </TooltipContent>
       </Tooltip>
@@ -98,17 +110,36 @@ export function SiteSearch() {
   const [open, setOpen] = useHeaderStore.use("searchDialogOpen");
   const [searchText, setSearchText] = React.useState<string>("");
   const { data: userFavorites } = useUserFavorites();
+  const { setTheme } = useTheme();
 
   React.useEffect(() => {
     const down = (e: KeyboardEvent) => {
-      if (e.key === "k" && (e.metaKey || e.ctrlKey)) {
+      if ((e.key === "k" && (e.metaKey || e.ctrlKey)) || e.key === "/") {
+        if (
+          (e.target instanceof HTMLElement && e.target.isContentEditable) ||
+          e.target instanceof HTMLInputElement ||
+          e.target instanceof HTMLTextAreaElement ||
+          e.target instanceof HTMLSelectElement
+        ) {
+          return;
+        }
+
         e.preventDefault();
         setOpen((open) => !open);
       }
     };
+
     document.addEventListener("keydown", down);
     return () => document.removeEventListener("keydown", down);
-  }, []);
+  }, [setOpen]);
+
+  const runCommand = React.useCallback(
+    (command: () => unknown) => {
+      setOpen(false);
+      command();
+    },
+    [setOpen],
+  );
 
   const favoritePaths = new Set(
     (userFavorites as unknown as UserFavorite[])?.map(
@@ -160,35 +191,52 @@ export function SiteSearch() {
     }
   };
 
+  type BadgeVariant = VariantProps<typeof badgeVariants>["variant"];
+
+  const groupVariants: Record<string, BadgeVariant>[] = [
+    { administration: "inactive" },
+    { main: "active" },
+    { billing: "purple" },
+    { accounting: "warning" },
+    { dispatch: "info" },
+    { equipment: "purple" },
+  ];
+
+  const mapGroupVariant = (group: string) => {
+    const variant = groupVariants.find((v) => v[group]);
+    return variant ? variant[group] : "default";
+  };
+
+  // Upper case the first letter of the group name
+  const upperFirstGroup = (group: string) => upperFirst(group);
+
   return (
     <CommandDialog open={open} onOpenChange={handleDialogOpenChange}>
       <CommandInput
-        placeholder="Search..."
+        placeholder="What do you need?"
         value={searchText}
         onValueChange={setSearchText}
       />
       <CommandList>
-        {/* Render favorite commands first */}
         {favoriteCommands.length > 0 && (
-          <React.Fragment key="favorites">
-            <CommandGroup heading="Favorites">
-              {favoriteCommands.map((cmd) => (
-                <CommandItem
-                  key={cmd.path + "-favorite-item"}
-                  onSelect={() => {
-                    navigate(cmd.path);
-                    setOpen(false);
-                  }}
-                  className="text-mono hover:cursor-pointer"
-                >
-                  {cmd.title}
-                </CommandItem>
-              ))}
-            </CommandGroup>
-            <CommandSeparator key="favorites-separator" />
-          </React.Fragment>
+          <CommandGroup heading="Favorites" key="favorites">
+            {favoriteCommands.map((cmd) => (
+              <CommandItem
+                key={cmd.path + "-favorite-item"}
+                onSelect={() => {
+                  runCommand(() => navigate(cmd.path as string));
+                }}
+              >
+                <FontAwesomeIcon icon={faStar} className="mr-2 size-4" />
+                {cmd.title}
+                <Badge variant={mapGroupVariant(cmd.group)} className="ml-auto">
+                  {upperFirstGroup(cmd.group)}
+                </Badge>
+              </CommandItem>
+            ))}
+          </CommandGroup>
         )}
-        {/* Render other groups */}
+        <CommandSeparator key="favorites-separator" />
         {Object.keys(filteredGroups).length === 0 &&
           favoriteCommands.length === 0 && (
             <CommandEmpty key="empty">
@@ -208,11 +256,10 @@ export function SiteSearch() {
                 <CommandItem
                   key={cmd.path + "-group-item"}
                   onSelect={() => {
-                    navigate(cmd.path);
-                    setOpen(false);
+                    runCommand(() => navigate(cmd.path as string));
                   }}
-                  className="text-mono hover:cursor-pointer"
                 >
+                  <FontAwesomeIcon icon={faPage} className="mr-2 size-4" />
                   {cmd.title}
                 </CommandItem>
               ))}
@@ -220,6 +267,21 @@ export function SiteSearch() {
             <CommandSeparator key={group + "-separator"} />
           </React.Fragment>
         ))}
+        <CommandSeparator />
+        <CommandGroup heading="Theme">
+          <CommandItem onSelect={() => runCommand(() => setTheme("light"))}>
+            <SunIcon className="mr-2 size-4" />
+            Light
+          </CommandItem>
+          <CommandItem onSelect={() => runCommand(() => setTheme("dark"))}>
+            <MoonIcon className="mr-2 size-4" />
+            Dark
+          </CommandItem>
+          <CommandItem onSelect={() => runCommand(() => setTheme("system"))}>
+            <LaptopIcon className="mr-2 size-4" />
+            System
+          </CommandItem>
+        </CommandGroup>
       </CommandList>
       <div className="bg-background sticky flex justify-center space-x-1 border-t py-2">
         <span className="text-xs">&#8593;</span>

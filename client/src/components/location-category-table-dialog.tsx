@@ -62,7 +62,7 @@ export function LocationCategoryDialog({
   onOpenChange,
   open,
 }: TableSheetProps) {
-  const { control, handleSubmit } = useForm<FormValues>({
+  const { control, reset, handleSubmit } = useForm<FormValues>({
     resolver: yupResolver(formSchema),
     defaultValues: {
       name: "",
@@ -77,6 +77,7 @@ export function LocationCategoryDialog({
     successMessage: "Location Category created successfully.",
     queryKeysToInvalidate: "locationCategories",
     closeModal: true,
+    reset,
     errorMessage: "Failed to create new location category.",
   });
 

@@ -10,6 +10,8 @@ import (
 	"entgo.io/ent/schema/field"
 	gen "github.com/emoss08/trenova/internal/ent"
 	"github.com/emoss08/trenova/internal/ent/hook"
+	"github.com/emoss08/trenova/internal/ent/organization"
+	"github.com/emoss08/trenova/internal/ent/tractor"
 	"github.com/emoss08/trenova/internal/ent/worker"
 	"github.com/emoss08/trenova/internal/util"
 	"github.com/google/uuid"
@@ -232,6 +234,39 @@ func fleetCodeConsistencyHook(next ent.Mutator) ent.Mutator {
 		if primaryWorkerFleetCode.ID != fleetCodeID {
 			return nil, util.NewValidationError("The primary worker and tractor must have the same fleet code. Please try again.",
 				"invalidFleetCode", "fleetCodeId")
+		}
+
+		return next.Mutate(ctx, m)
+	})
+}
+
+// validateTractorCodeHook validates the tractor code does not already exists within the table for a particular organization.
+func validateTractorCodeHook(next ent.Mutator) ent.Mutator {
+	return hook.TractorFunc(func(ctx context.Context, m *gen.TractorMutation) (ent.Value, error) {
+		if !m.Op().Is(ent.OpCreate) && !m.Op().Is(ent.OpUpdate) && !m.Op().Is(ent.OpUpdateOne) {
+			return next.Mutate(ctx, m)
+		}
+
+		code, codeExists := m.Code()
+		if !codeExists {
+			return next.Mutate(ctx, m)
+		}
+
+		orgID, orgIDExists := m.OrganizationID()
+		if !orgIDExists {
+			return nil, util.NewValidationError("Organization ID is required to validate tractor code.",
+				"invalidOrganizationID", "organizationId")
+		}
+
+		// Check if the code already exists in the table.
+		exists := m.Client().Tractor.Query().Where(
+			tractor.CodeEQ(code),
+			tractor.HasOrganizationWith(organization.IDEQ(orgID)),
+		).ExistX(ctx)
+
+		if exists {
+			return nil, util.NewValidationError("A tractor with the same code already exists. Please try again.",
+				"invalidCode", "code")
 		}
 
 		return next.Mutate(ctx, m)

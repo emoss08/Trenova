@@ -12,7 +12,9 @@ import (
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
 	"github.com/emoss08/trenova/internal/ent/chargetype"
+	"github.com/emoss08/trenova/internal/ent/organization"
 	"github.com/emoss08/trenova/internal/ent/predicate"
+	"github.com/google/uuid"
 )
 
 // ChargeTypeUpdate is the builder for updating ChargeType entities.
@@ -26,6 +28,20 @@ type ChargeTypeUpdate struct {
 // Where appends a list predicates to the ChargeTypeUpdate builder.
 func (ctu *ChargeTypeUpdate) Where(ps ...predicate.ChargeType) *ChargeTypeUpdate {
 	ctu.mutation.Where(ps...)
+	return ctu
+}
+
+// SetOrganizationID sets the "organization_id" field.
+func (ctu *ChargeTypeUpdate) SetOrganizationID(u uuid.UUID) *ChargeTypeUpdate {
+	ctu.mutation.SetOrganizationID(u)
+	return ctu
+}
+
+// SetNillableOrganizationID sets the "organization_id" field if the given value is not nil.
+func (ctu *ChargeTypeUpdate) SetNillableOrganizationID(u *uuid.UUID) *ChargeTypeUpdate {
+	if u != nil {
+		ctu.SetOrganizationID(*u)
+	}
 	return ctu
 }
 
@@ -104,9 +120,20 @@ func (ctu *ChargeTypeUpdate) ClearDescription() *ChargeTypeUpdate {
 	return ctu
 }
 
+// SetOrganization sets the "organization" edge to the Organization entity.
+func (ctu *ChargeTypeUpdate) SetOrganization(o *Organization) *ChargeTypeUpdate {
+	return ctu.SetOrganizationID(o.ID)
+}
+
 // Mutation returns the ChargeTypeMutation object of the builder.
 func (ctu *ChargeTypeUpdate) Mutation() *ChargeTypeMutation {
 	return ctu.mutation
+}
+
+// ClearOrganization clears the "organization" edge to the Organization entity.
+func (ctu *ChargeTypeUpdate) ClearOrganization() *ChargeTypeUpdate {
+	ctu.mutation.ClearOrganization()
+	return ctu
 }
 
 // Save executes the query and returns the number of nodes affected by the update operation.
@@ -205,6 +232,35 @@ func (ctu *ChargeTypeUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	if ctu.mutation.DescriptionCleared() {
 		_spec.ClearField(chargetype.FieldDescription, field.TypeString)
 	}
+	if ctu.mutation.OrganizationCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   chargetype.OrganizationTable,
+			Columns: []string{chargetype.OrganizationColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(organization.FieldID, field.TypeUUID),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := ctu.mutation.OrganizationIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   chargetype.OrganizationTable,
+			Columns: []string{chargetype.OrganizationColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(organization.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
 	_spec.AddModifiers(ctu.modifiers...)
 	if n, err = sqlgraph.UpdateNodes(ctx, ctu.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
@@ -225,6 +281,20 @@ type ChargeTypeUpdateOne struct {
 	hooks     []Hook
 	mutation  *ChargeTypeMutation
 	modifiers []func(*sql.UpdateBuilder)
+}
+
+// SetOrganizationID sets the "organization_id" field.
+func (ctuo *ChargeTypeUpdateOne) SetOrganizationID(u uuid.UUID) *ChargeTypeUpdateOne {
+	ctuo.mutation.SetOrganizationID(u)
+	return ctuo
+}
+
+// SetNillableOrganizationID sets the "organization_id" field if the given value is not nil.
+func (ctuo *ChargeTypeUpdateOne) SetNillableOrganizationID(u *uuid.UUID) *ChargeTypeUpdateOne {
+	if u != nil {
+		ctuo.SetOrganizationID(*u)
+	}
+	return ctuo
 }
 
 // SetUpdatedAt sets the "updated_at" field.
@@ -302,9 +372,20 @@ func (ctuo *ChargeTypeUpdateOne) ClearDescription() *ChargeTypeUpdateOne {
 	return ctuo
 }
 
+// SetOrganization sets the "organization" edge to the Organization entity.
+func (ctuo *ChargeTypeUpdateOne) SetOrganization(o *Organization) *ChargeTypeUpdateOne {
+	return ctuo.SetOrganizationID(o.ID)
+}
+
 // Mutation returns the ChargeTypeMutation object of the builder.
 func (ctuo *ChargeTypeUpdateOne) Mutation() *ChargeTypeMutation {
 	return ctuo.mutation
+}
+
+// ClearOrganization clears the "organization" edge to the Organization entity.
+func (ctuo *ChargeTypeUpdateOne) ClearOrganization() *ChargeTypeUpdateOne {
+	ctuo.mutation.ClearOrganization()
+	return ctuo
 }
 
 // Where appends a list predicates to the ChargeTypeUpdate builder.
@@ -432,6 +513,35 @@ func (ctuo *ChargeTypeUpdateOne) sqlSave(ctx context.Context) (_node *ChargeType
 	}
 	if ctuo.mutation.DescriptionCleared() {
 		_spec.ClearField(chargetype.FieldDescription, field.TypeString)
+	}
+	if ctuo.mutation.OrganizationCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   chargetype.OrganizationTable,
+			Columns: []string{chargetype.OrganizationColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(organization.FieldID, field.TypeUUID),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := ctuo.mutation.OrganizationIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   chargetype.OrganizationTable,
+			Columns: []string{chargetype.OrganizationColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(organization.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
 	_spec.AddModifiers(ctuo.modifiers...)
 	_node = &ChargeType{config: ctuo.config}

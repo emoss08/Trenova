@@ -1,13 +1,13 @@
 import { useFieldArray, useFormContext } from "react-hook-form";
 
 import { InputField } from "@/components/common/fields/input";
-import { SelectInput } from "@/components/common/fields/select-input";
-import { statusChoices } from "@/lib/choices";
 import { type CustomerFormValues as FormValues } from "@/types/customer";
 import { PersonIcon, PlusIcon } from "@radix-ui/react-icons";
 import { useEffect, useState } from "react";
 import { CheckboxInput } from "./common/fields/checkbox";
 import { Button } from "./ui/button";
+import { FormControl, FormGroup } from "./ui/form";
+import { PhoneInput } from "./ui/phone-input";
 import { ScrollArea } from "./ui/scroll-area";
 
 export function CustomerContactForm() {
@@ -21,11 +21,10 @@ export function CustomerContactForm() {
 
   const handleAddContact = () => {
     append({
-      status: "A",
       name: "",
       email: "",
       title: "",
-      phone: "",
+      phoneNumber: "",
       isPayableContact: false,
     });
   };
@@ -49,85 +48,59 @@ export function CustomerContactForm() {
       <div className="flex size-full flex-col">
         {fields.length > 0 ? (
           <>
-            <ScrollArea className="h-[65vh] p-4">
+            <ScrollArea className="h-[75vh] p-4">
               {fields.map((field, index) => (
-                <div
+                <FormGroup
                   key={field.id}
-                  className="border-border my-4 grid grid-cols-2 gap-2 rounded-md border p-2"
+                  className="border-border rounded-md border border-dashed p-4 lg:grid-cols-2"
                 >
-                  <div className="flex w-full max-w-sm flex-col justify-between gap-0.5">
-                    <div className="min-h-[4em]">
-                      <SelectInput
-                        name={`contacts.${index}.status`}
-                        rules={{ required: true }}
-                        control={control}
-                        label="Status"
-                        options={statusChoices}
-                        description="Select the current status of the customer contact's activity."
-                        placeholder="Select Status"
-                        isClearable={false}
-                        menuPlacement="bottom"
-                        menuPosition="fixed"
-                      />
-                    </div>
-                  </div>
-                  <div className="flex w-full max-w-sm flex-col justify-between gap-0.5">
-                    <div className="min-h-[4em]">
-                      <InputField
-                        rules={{ required: true }}
-                        control={control}
-                        name={`contacts.${index}.name`}
-                        description="Input the full name of the customer contact."
-                        label="Name"
-                        placeholder="Name"
-                      />
-                    </div>
-                  </div>
-                  <div className="flex w-full max-w-sm flex-col justify-between gap-0.5">
-                    <div className="min-h-[4em]">
-                      <InputField
-                        control={control}
-                        name={`contacts.${index}.title`}
-                        label="Title"
-                        placeholder="Title"
-                        description="Indicate the professional title of the customer contact."
-                      />
-                    </div>
-                  </div>
-                  <div className="flex w-full max-w-sm flex-col justify-between gap-0.5">
-                    <div className="min-h-[4em]">
-                      <InputField
-                        type="email"
-                        rules={{ required: emailRequired }}
-                        control={control}
-                        name={`contacts.${index}.email`}
-                        label="Email"
-                        placeholder="Email"
-                        description="Provide the customer contact's email address for correspondence."
-                      />
-                    </div>
-                  </div>
-                  <div className="flex w-full max-w-sm flex-col justify-between gap-0.5">
-                    <div className="min-h-[4em]">
-                      <InputField
-                        control={control}
-                        name={`contacts.${index}.phone`}
-                        label="Phone"
-                        placeholder="Phone"
-                        description="Input the customer contact's telephone number for direct communication."
-                      />
-                    </div>
-                  </div>
-                  <div className="mt-6 flex w-full max-w-sm flex-col justify-between gap-0.5">
-                    <div className="min-h-[4em]">
-                      <CheckboxInput
-                        control={control}
-                        name={`contacts.${index}.isPayableContact`}
-                        label="Is Payable Contact"
-                        description="Check if the contact is responsible for managing payments and invoices."
-                      />
-                    </div>
-                  </div>
+                  <FormControl>
+                    <InputField
+                      rules={{ required: true }}
+                      control={control}
+                      name={`contacts.${index}.name`}
+                      description="Input the full name of the customer contact."
+                      label="Name"
+                      placeholder="Name"
+                    />
+                  </FormControl>
+                  <FormControl>
+                    <InputField
+                      control={control}
+                      name={`contacts.${index}.title`}
+                      label="Title"
+                      placeholder="Title"
+                      description="Indicate the professional title of the customer contact."
+                    />
+                  </FormControl>
+                  <FormControl>
+                    <InputField
+                      type="email"
+                      rules={{ required: emailRequired }}
+                      control={control}
+                      name={`contacts.${index}.email`}
+                      label="Email"
+                      placeholder="Email"
+                      description="Provide the customer contact's email address for correspondence."
+                    />
+                  </FormControl>
+                  <FormControl>
+                    <PhoneInput
+                      control={control}
+                      name={`contacts.${index}.phoneNumber`}
+                      label="Phone"
+                      placeholder="Phone"
+                      description="Input the customer contact's telephone number for direct communication."
+                    />
+                  </FormControl>
+                  <FormControl>
+                    <CheckboxInput
+                      control={control}
+                      name={`contacts.${index}.isPayableContact`}
+                      label="Is Payable Contact"
+                      description="Check if the contact is responsible for managing payments and invoices."
+                    />
+                  </FormControl>
                   <div className="flex max-w-sm flex-col justify-between gap-1">
                     <div className="min-h-[4em]">
                       <Button
@@ -140,7 +113,7 @@ export function CustomerContactForm() {
                       </Button>
                     </div>
                   </div>
-                </div>
+                </FormGroup>
               ))}
             </ScrollArea>
             <Button

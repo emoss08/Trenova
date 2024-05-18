@@ -12,7 +12,9 @@ import (
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
 	"github.com/emoss08/trenova/internal/ent/delaycode"
+	"github.com/emoss08/trenova/internal/ent/organization"
 	"github.com/emoss08/trenova/internal/ent/predicate"
+	"github.com/google/uuid"
 )
 
 // DelayCodeUpdate is the builder for updating DelayCode entities.
@@ -26,6 +28,20 @@ type DelayCodeUpdate struct {
 // Where appends a list predicates to the DelayCodeUpdate builder.
 func (dcu *DelayCodeUpdate) Where(ps ...predicate.DelayCode) *DelayCodeUpdate {
 	dcu.mutation.Where(ps...)
+	return dcu
+}
+
+// SetOrganizationID sets the "organization_id" field.
+func (dcu *DelayCodeUpdate) SetOrganizationID(u uuid.UUID) *DelayCodeUpdate {
+	dcu.mutation.SetOrganizationID(u)
+	return dcu
+}
+
+// SetNillableOrganizationID sets the "organization_id" field if the given value is not nil.
+func (dcu *DelayCodeUpdate) SetNillableOrganizationID(u *uuid.UUID) *DelayCodeUpdate {
+	if u != nil {
+		dcu.SetOrganizationID(*u)
+	}
 	return dcu
 }
 
@@ -144,9 +160,20 @@ func (dcu *DelayCodeUpdate) ClearColor() *DelayCodeUpdate {
 	return dcu
 }
 
+// SetOrganization sets the "organization" edge to the Organization entity.
+func (dcu *DelayCodeUpdate) SetOrganization(o *Organization) *DelayCodeUpdate {
+	return dcu.SetOrganizationID(o.ID)
+}
+
 // Mutation returns the DelayCodeMutation object of the builder.
 func (dcu *DelayCodeUpdate) Mutation() *DelayCodeMutation {
 	return dcu.mutation
+}
+
+// ClearOrganization clears the "organization" edge to the Organization entity.
+func (dcu *DelayCodeUpdate) ClearOrganization() *DelayCodeUpdate {
+	dcu.mutation.ClearOrganization()
+	return dcu
 }
 
 // Save executes the query and returns the number of nodes affected by the update operation.
@@ -257,6 +284,35 @@ func (dcu *DelayCodeUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	if dcu.mutation.ColorCleared() {
 		_spec.ClearField(delaycode.FieldColor, field.TypeString)
 	}
+	if dcu.mutation.OrganizationCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   delaycode.OrganizationTable,
+			Columns: []string{delaycode.OrganizationColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(organization.FieldID, field.TypeUUID),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := dcu.mutation.OrganizationIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   delaycode.OrganizationTable,
+			Columns: []string{delaycode.OrganizationColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(organization.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
 	_spec.AddModifiers(dcu.modifiers...)
 	if n, err = sqlgraph.UpdateNodes(ctx, dcu.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
@@ -277,6 +333,20 @@ type DelayCodeUpdateOne struct {
 	hooks     []Hook
 	mutation  *DelayCodeMutation
 	modifiers []func(*sql.UpdateBuilder)
+}
+
+// SetOrganizationID sets the "organization_id" field.
+func (dcuo *DelayCodeUpdateOne) SetOrganizationID(u uuid.UUID) *DelayCodeUpdateOne {
+	dcuo.mutation.SetOrganizationID(u)
+	return dcuo
+}
+
+// SetNillableOrganizationID sets the "organization_id" field if the given value is not nil.
+func (dcuo *DelayCodeUpdateOne) SetNillableOrganizationID(u *uuid.UUID) *DelayCodeUpdateOne {
+	if u != nil {
+		dcuo.SetOrganizationID(*u)
+	}
+	return dcuo
 }
 
 // SetUpdatedAt sets the "updated_at" field.
@@ -394,9 +464,20 @@ func (dcuo *DelayCodeUpdateOne) ClearColor() *DelayCodeUpdateOne {
 	return dcuo
 }
 
+// SetOrganization sets the "organization" edge to the Organization entity.
+func (dcuo *DelayCodeUpdateOne) SetOrganization(o *Organization) *DelayCodeUpdateOne {
+	return dcuo.SetOrganizationID(o.ID)
+}
+
 // Mutation returns the DelayCodeMutation object of the builder.
 func (dcuo *DelayCodeUpdateOne) Mutation() *DelayCodeMutation {
 	return dcuo.mutation
+}
+
+// ClearOrganization clears the "organization" edge to the Organization entity.
+func (dcuo *DelayCodeUpdateOne) ClearOrganization() *DelayCodeUpdateOne {
+	dcuo.mutation.ClearOrganization()
+	return dcuo
 }
 
 // Where appends a list predicates to the DelayCodeUpdate builder.
@@ -536,6 +617,35 @@ func (dcuo *DelayCodeUpdateOne) sqlSave(ctx context.Context) (_node *DelayCode, 
 	}
 	if dcuo.mutation.ColorCleared() {
 		_spec.ClearField(delaycode.FieldColor, field.TypeString)
+	}
+	if dcuo.mutation.OrganizationCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   delaycode.OrganizationTable,
+			Columns: []string{delaycode.OrganizationColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(organization.FieldID, field.TypeUUID),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := dcuo.mutation.OrganizationIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   delaycode.OrganizationTable,
+			Columns: []string{delaycode.OrganizationColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(organization.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
 	_spec.AddModifiers(dcuo.modifiers...)
 	_node = &DelayCode{config: dcuo.config}

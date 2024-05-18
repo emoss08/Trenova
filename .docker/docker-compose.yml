@@ -26,17 +26,14 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
 
-  pgadmin:
+  pg-admin:
     image: dpage/pgadmin4
     container_name: trenova-pgadmin
-    depends_on:
-      - db
     ports:
-      - "5051:80"
+      - "5050:80"
     environment:
-      PGADMIN_DEFAULT_EMAIL: pgadmin4@pgadmin.org
+      PGADMIN_DEFAULT_EMAIL: root@pgadmin.com
       PGADMIN_DEFAULT_PASSWORD: root
-    restart: always
 
   trenova_redis_stack:
     image: redis/redis-stack:latest

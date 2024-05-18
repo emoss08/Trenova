@@ -90,12 +90,10 @@ export function SidebarNav({ className, links, ...props }: SidebarNavProps) {
 }
 
 export function ModalAsideMenu({
-  heading,
   linkGroups,
   activeTab,
   setActiveTab,
 }: {
-  heading: string;
   linkGroups: LinkGroupProps[];
   activeTab: string;
   setActiveTab: (tabId: string) => void;
@@ -103,7 +101,6 @@ export function ModalAsideMenu({
   return (
     <nav className="transition-spacing fixed top-14 z-30 -ml-2 hidden size-full h-[600px] shrink-0 duration-500 md:sticky md:block">
       <ScrollArea className="bg-card text-card-foreground size-full border-r">
-        <h2 className="pb-4 text-base">{heading}</h2>
         {linkGroups.map((group, index, array) => (
           <div key={group.title}>
             <h3 className="text-muted-foreground select-none text-sm font-semibold uppercase">

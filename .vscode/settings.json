@@ -18,7 +18,7 @@
         "editorBracketHighlight.foreground3": "#b6b6b6",
         "editorBracketHighlight.unexpectedBracket.foreground": "#afafaf",
     },
-    "editor.fontFamily": "'Dank Mono'",
+    "editor.fontFamily": "'JetBrainsMono Nerd Font'",
     "diffEditor.codeLens": true,
     "tooltitude.codeAction.runDebug": false,
     "tooltitude.codeLens.packImports": false,
@@ -30,5 +30,7 @@
     "tooltitude.unusedImportsEnabled": true,
     "tooltitude.unusedWritesEnabled": false,
     "tooltitude.updateImportsOnRename": false,
-    "tooltitude.codeAction.navigate": false
+    "tooltitude.codeAction.navigate": false,
+    "glassit.alpha": 250,
+    "editor.fontSize": 13
 }

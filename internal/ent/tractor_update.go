@@ -14,6 +14,7 @@ import (
 	"github.com/emoss08/trenova/internal/ent/equipmentmanufactuer"
 	"github.com/emoss08/trenova/internal/ent/equipmenttype"
 	"github.com/emoss08/trenova/internal/ent/fleetcode"
+	"github.com/emoss08/trenova/internal/ent/organization"
 	"github.com/emoss08/trenova/internal/ent/predicate"
 	"github.com/emoss08/trenova/internal/ent/tractor"
 	"github.com/emoss08/trenova/internal/ent/usstate"
@@ -33,6 +34,20 @@ type TractorUpdate struct {
 // Where appends a list predicates to the TractorUpdate builder.
 func (tu *TractorUpdate) Where(ps ...predicate.Tractor) *TractorUpdate {
 	tu.mutation.Where(ps...)
+	return tu
+}
+
+// SetOrganizationID sets the "organization_id" field.
+func (tu *TractorUpdate) SetOrganizationID(u uuid.UUID) *TractorUpdate {
+	tu.mutation.SetOrganizationID(u)
+	return tu
+}
+
+// SetNillableOrganizationID sets the "organization_id" field if the given value is not nil.
+func (tu *TractorUpdate) SetNillableOrganizationID(u *uuid.UUID) *TractorUpdate {
+	if u != nil {
+		tu.SetOrganizationID(*u)
+	}
 	return tu
 }
 
@@ -312,6 +327,11 @@ func (tu *TractorUpdate) SetNillableFleetCodeID(u *uuid.UUID) *TractorUpdate {
 	return tu
 }
 
+// SetOrganization sets the "organization" edge to the Organization entity.
+func (tu *TractorUpdate) SetOrganization(o *Organization) *TractorUpdate {
+	return tu.SetOrganizationID(o.ID)
+}
+
 // SetEquipmentType sets the "equipment_type" edge to the EquipmentType entity.
 func (tu *TractorUpdate) SetEquipmentType(e *EquipmentType) *TractorUpdate {
 	return tu.SetEquipmentTypeID(e.ID)
@@ -345,6 +365,12 @@ func (tu *TractorUpdate) SetFleetCode(f *FleetCode) *TractorUpdate {
 // Mutation returns the TractorMutation object of the builder.
 func (tu *TractorUpdate) Mutation() *TractorMutation {
 	return tu.mutation
+}
+
+// ClearOrganization clears the "organization" edge to the Organization entity.
+func (tu *TractorUpdate) ClearOrganization() *TractorUpdate {
+	tu.mutation.ClearOrganization()
+	return tu
 }
 
 // ClearEquipmentType clears the "equipment_type" edge to the EquipmentType entity.
@@ -535,6 +561,35 @@ func (tu *TractorUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	}
 	if tu.mutation.LeasedDateCleared() {
 		_spec.ClearField(tractor.FieldLeasedDate, field.TypeOther)
+	}
+	if tu.mutation.OrganizationCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   tractor.OrganizationTable,
+			Columns: []string{tractor.OrganizationColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(organization.FieldID, field.TypeUUID),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := tu.mutation.OrganizationIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   tractor.OrganizationTable,
+			Columns: []string{tractor.OrganizationColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(organization.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
 	if tu.mutation.EquipmentTypeCleared() {
 		edge := &sqlgraph.EdgeSpec{
@@ -730,6 +785,20 @@ type TractorUpdateOne struct {
 	hooks     []Hook
 	mutation  *TractorMutation
 	modifiers []func(*sql.UpdateBuilder)
+}
+
+// SetOrganizationID sets the "organization_id" field.
+func (tuo *TractorUpdateOne) SetOrganizationID(u uuid.UUID) *TractorUpdateOne {
+	tuo.mutation.SetOrganizationID(u)
+	return tuo
+}
+
+// SetNillableOrganizationID sets the "organization_id" field if the given value is not nil.
+func (tuo *TractorUpdateOne) SetNillableOrganizationID(u *uuid.UUID) *TractorUpdateOne {
+	if u != nil {
+		tuo.SetOrganizationID(*u)
+	}
+	return tuo
 }
 
 // SetUpdatedAt sets the "updated_at" field.
@@ -1008,6 +1077,11 @@ func (tuo *TractorUpdateOne) SetNillableFleetCodeID(u *uuid.UUID) *TractorUpdate
 	return tuo
 }
 
+// SetOrganization sets the "organization" edge to the Organization entity.
+func (tuo *TractorUpdateOne) SetOrganization(o *Organization) *TractorUpdateOne {
+	return tuo.SetOrganizationID(o.ID)
+}
+
 // SetEquipmentType sets the "equipment_type" edge to the EquipmentType entity.
 func (tuo *TractorUpdateOne) SetEquipmentType(e *EquipmentType) *TractorUpdateOne {
 	return tuo.SetEquipmentTypeID(e.ID)
@@ -1041,6 +1115,12 @@ func (tuo *TractorUpdateOne) SetFleetCode(f *FleetCode) *TractorUpdateOne {
 // Mutation returns the TractorMutation object of the builder.
 func (tuo *TractorUpdateOne) Mutation() *TractorMutation {
 	return tuo.mutation
+}
+
+// ClearOrganization clears the "organization" edge to the Organization entity.
+func (tuo *TractorUpdateOne) ClearOrganization() *TractorUpdateOne {
+	tuo.mutation.ClearOrganization()
+	return tuo
 }
 
 // ClearEquipmentType clears the "equipment_type" edge to the EquipmentType entity.
@@ -1261,6 +1341,35 @@ func (tuo *TractorUpdateOne) sqlSave(ctx context.Context) (_node *Tractor, err e
 	}
 	if tuo.mutation.LeasedDateCleared() {
 		_spec.ClearField(tractor.FieldLeasedDate, field.TypeOther)
+	}
+	if tuo.mutation.OrganizationCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   tractor.OrganizationTable,
+			Columns: []string{tractor.OrganizationColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(organization.FieldID, field.TypeUUID),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := tuo.mutation.OrganizationIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   tractor.OrganizationTable,
+			Columns: []string{tractor.OrganizationColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(organization.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
 	if tuo.mutation.EquipmentTypeCleared() {
 		edge := &sqlgraph.EdgeSpec{

@@ -1,9 +1,14 @@
 package schema
 
 import (
+	"context"
+	"strings"
+
 	"entgo.io/ent"
 	"entgo.io/ent/dialect"
 	"entgo.io/ent/schema/field"
+	gen "github.com/emoss08/trenova/internal/ent"
+	"github.com/emoss08/trenova/internal/ent/hook"
 )
 
 // ReasonCode holds the schema definition for the ReasonCode entity.
@@ -48,4 +53,23 @@ func (ReasonCode) Mixin() []ent.Mixin {
 // Edges of the ReasonCode.
 func (ReasonCode) Edges() []ent.Edge {
 	return nil
+}
+
+// Hooks for the ReasonCode.
+func (ReasonCode) Hooks() []ent.Hook {
+	return []ent.Hook{
+		hook.On(uppercaseCode, ent.OpCreate|ent.OpUpdate|ent.OpUpdateOne),
+	}
+}
+
+func uppercaseCode(next ent.Mutator) ent.Mutator {
+	return hook.ReasonCodeFunc(func(ctx context.Context, m *gen.ReasonCodeMutation) (ent.Value, error) {
+		code, exists := m.Code()
+		if exists {
+			// Ensure the code is always uppercase.
+			m.SetCode(strings.ToUpper(code))
+		}
+
+		return next.Mutate(ctx, m)
+	})
 }

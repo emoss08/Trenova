@@ -58,7 +58,7 @@ const columns: ColumnDef<Tractor>[] = [
     cell: ({ row }) => {
       if (row.original.edges?.equipmentType?.color) {
         return (
-          <div className="flex items-center space-x-2 text-sm font-medium text-foreground">
+          <div className="text-foreground flex items-center space-x-2 text-sm font-medium">
             <div
               className={"mx-2 size-2 rounded-xl"}
               style={{

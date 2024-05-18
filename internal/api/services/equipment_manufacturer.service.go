@@ -130,8 +130,8 @@ func (r *EquipmentManufacturerService) updateEquipmentManufacturerEntity(
 	}
 
 	// Start building the update operation
-	updateOp := tx.EquipmentManufactuer.
-		UpdateOneID(entity.ID).
+	updateOp := tx.EquipmentManufactuer.UpdateOneID(entity.ID).
+		SetOrganizationID(entity.OrganizationID).
 		SetStatus(entity.Status).
 		SetName(entity.Name).
 		SetDescription(entity.Description).

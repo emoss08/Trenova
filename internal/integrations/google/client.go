@@ -123,3 +123,33 @@ func (gc *Client) GetDistanceMatrix(
 	}
 	return distanceMatrixResponse, nil
 }
+
+// AutocompleteLocation returns a list of suggested locations based on the input query.
+// It logs and returns errors encountered during the autocomplete process.
+//
+// Parameters:
+//
+//	ctx context.Context: The context to control cancellation and deadlines.
+//	query string: The input query to be autocompleted.
+//	apiKey string: API key for the tenant, used for authorization with Google Maps API.
+//
+// Returns:
+//
+//	*maps.AutocompleteResponse: A pointer to AutocompleteResponse containing the suggested locations.
+//	error: An error object that indicates why the autocomplete failed, nil if no error occurred.
+func (gc *Client) AutocompleteLocation(
+	ctx context.Context, req *maps.QueryAutocompleteRequest, apiKey string,
+) (maps.AutocompleteResponse, error) {
+	c, err := gc.GetClientForOrganization(apiKey)
+	if err != nil {
+		gc.Logger.Error().Err(err).Msg("Error autocompleting location")
+		return maps.AutocompleteResponse{}, err
+	}
+
+	autocompleteResponse, err := c.QueryAutocomplete(ctx, req)
+	if err != nil {
+		gc.Logger.Error().Err(err).Msg("Error autocompleting location")
+		return maps.AutocompleteResponse{}, err
+	}
+	return autocompleteResponse, nil
+}

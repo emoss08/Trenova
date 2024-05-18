@@ -132,6 +132,7 @@ func (r *ReasonCodeService) updateReasonCodeEntity(
 
 	// Start building the update operation
 	updateOp := tx.ReasonCode.UpdateOneID(entity.ID).
+		SetOrganizationID(entity.OrganizationID).
 		SetStatus(entity.Status).
 		SetCode(entity.Code).
 		SetCodeType(entity.CodeType).

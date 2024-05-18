@@ -33,8 +33,9 @@ function ChargeTypeEditForm({ chargeType }: { chargeType: ChargeType }) {
     method: "PUT",
     path: `/charge-types/${chargeType.id}/`,
     successMessage: "Charge Type updated successfully.",
-    queryKeysToInvalidate: ["charge-type-table-data"],
+    queryKeysToInvalidate: "chargeTypes",
     closeModal: true,
+    reset,
     errorMessage: "Failed to create update charge type.",
   });
 

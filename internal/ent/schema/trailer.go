@@ -44,7 +44,6 @@ func (Trailer) Fields() []ent.Field {
 			Unique().
 			StructTag(`json:"equipmentTypeId" validate:"required,uuid"`),
 		field.String("vin").
-			// Match(regexp.MustCompile("^[0-9A-HJ-NPR-Z]{17}$")). // VIN regex.
 			Optional().
 			SchemaType(map[string]string{
 				dialect.Postgres: "VARCHAR(17)",
@@ -147,6 +146,7 @@ func (Trailer) Edges() []ent.Edge {
 	}
 }
 
+// Hooks of the Trailer.
 func (Trailer) Hooks() []ent.Hook {
 	return []ent.Hook{
 		hook.On(
@@ -157,7 +157,6 @@ func (Trailer) Hooks() []ent.Hook {
 						return next.Mutate(ctx, m)
 					}
 
-					// Get the equipment type.
 					equipmentType, exists := m.EquipmentTypeID()
 					// If the equipment type ID does not exist just mutate.
 					if !exists {
@@ -173,7 +172,7 @@ func (Trailer) Hooks() []ent.Hook {
 					// If the equipment class is not equal to `Trailer` return an error.
 					if et.EquipmentClass != "Trailer" {
 						return nil, util.NewValidationError("Cannot assign a non-trailer equipment type to a trailer. Please try again.",
-							"invalidEquipmentType",
+							"invalid",
 							"equipmentTypeId")
 					}
 

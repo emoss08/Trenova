@@ -11,6 +11,7 @@ import (
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
+	"github.com/emoss08/trenova/internal/ent/organization"
 	"github.com/emoss08/trenova/internal/ent/predicate"
 	"github.com/emoss08/trenova/internal/ent/role"
 	"github.com/emoss08/trenova/internal/ent/shipment"
@@ -34,6 +35,20 @@ type UserUpdate struct {
 // Where appends a list predicates to the UserUpdate builder.
 func (uu *UserUpdate) Where(ps ...predicate.User) *UserUpdate {
 	uu.mutation.Where(ps...)
+	return uu
+}
+
+// SetOrganizationID sets the "organization_id" field.
+func (uu *UserUpdate) SetOrganizationID(u uuid.UUID) *UserUpdate {
+	uu.mutation.SetOrganizationID(u)
+	return uu
+}
+
+// SetNillableOrganizationID sets the "organization_id" field if the given value is not nil.
+func (uu *UserUpdate) SetNillableOrganizationID(u *uuid.UUID) *UserUpdate {
+	if u != nil {
+		uu.SetOrganizationID(*u)
+	}
 	return uu
 }
 
@@ -256,6 +271,11 @@ func (uu *UserUpdate) ClearLastLogin() *UserUpdate {
 	return uu
 }
 
+// SetOrganization sets the "organization" edge to the Organization entity.
+func (uu *UserUpdate) SetOrganization(o *Organization) *UserUpdate {
+	return uu.SetOrganizationID(o.ID)
+}
+
 // AddUserFavoriteIDs adds the "user_favorites" edge to the UserFavorite entity by IDs.
 func (uu *UserUpdate) AddUserFavoriteIDs(ids ...uuid.UUID) *UserUpdate {
 	uu.mutation.AddUserFavoriteIDs(ids...)
@@ -364,6 +384,12 @@ func (uu *UserUpdate) AddRoles(r ...*Role) *UserUpdate {
 // Mutation returns the UserMutation object of the builder.
 func (uu *UserUpdate) Mutation() *UserMutation {
 	return uu.mutation
+}
+
+// ClearOrganization clears the "organization" edge to the Organization entity.
+func (uu *UserUpdate) ClearOrganization() *UserUpdate {
+	uu.mutation.ClearOrganization()
+	return uu
 }
 
 // ClearUserFavorites clears all "user_favorites" edges to the UserFavorite entity.
@@ -659,6 +685,35 @@ func (uu *UserUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	}
 	if uu.mutation.LastLoginCleared() {
 		_spec.ClearField(user.FieldLastLogin, field.TypeTime)
+	}
+	if uu.mutation.OrganizationCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   user.OrganizationTable,
+			Columns: []string{user.OrganizationColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(organization.FieldID, field.TypeUUID),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := uu.mutation.OrganizationIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   user.OrganizationTable,
+			Columns: []string{user.OrganizationColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(organization.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
 	if uu.mutation.UserFavoritesCleared() {
 		edge := &sqlgraph.EdgeSpec{
@@ -997,6 +1052,20 @@ type UserUpdateOne struct {
 	modifiers []func(*sql.UpdateBuilder)
 }
 
+// SetOrganizationID sets the "organization_id" field.
+func (uuo *UserUpdateOne) SetOrganizationID(u uuid.UUID) *UserUpdateOne {
+	uuo.mutation.SetOrganizationID(u)
+	return uuo
+}
+
+// SetNillableOrganizationID sets the "organization_id" field if the given value is not nil.
+func (uuo *UserUpdateOne) SetNillableOrganizationID(u *uuid.UUID) *UserUpdateOne {
+	if u != nil {
+		uuo.SetOrganizationID(*u)
+	}
+	return uuo
+}
+
 // SetUpdatedAt sets the "updated_at" field.
 func (uuo *UserUpdateOne) SetUpdatedAt(t time.Time) *UserUpdateOne {
 	uuo.mutation.SetUpdatedAt(t)
@@ -1216,6 +1285,11 @@ func (uuo *UserUpdateOne) ClearLastLogin() *UserUpdateOne {
 	return uuo
 }
 
+// SetOrganization sets the "organization" edge to the Organization entity.
+func (uuo *UserUpdateOne) SetOrganization(o *Organization) *UserUpdateOne {
+	return uuo.SetOrganizationID(o.ID)
+}
+
 // AddUserFavoriteIDs adds the "user_favorites" edge to the UserFavorite entity by IDs.
 func (uuo *UserUpdateOne) AddUserFavoriteIDs(ids ...uuid.UUID) *UserUpdateOne {
 	uuo.mutation.AddUserFavoriteIDs(ids...)
@@ -1324,6 +1398,12 @@ func (uuo *UserUpdateOne) AddRoles(r ...*Role) *UserUpdateOne {
 // Mutation returns the UserMutation object of the builder.
 func (uuo *UserUpdateOne) Mutation() *UserMutation {
 	return uuo.mutation
+}
+
+// ClearOrganization clears the "organization" edge to the Organization entity.
+func (uuo *UserUpdateOne) ClearOrganization() *UserUpdateOne {
+	uuo.mutation.ClearOrganization()
+	return uuo
 }
 
 // ClearUserFavorites clears all "user_favorites" edges to the UserFavorite entity.
@@ -1649,6 +1729,35 @@ func (uuo *UserUpdateOne) sqlSave(ctx context.Context) (_node *User, err error) 
 	}
 	if uuo.mutation.LastLoginCleared() {
 		_spec.ClearField(user.FieldLastLogin, field.TypeTime)
+	}
+	if uuo.mutation.OrganizationCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   user.OrganizationTable,
+			Columns: []string{user.OrganizationColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(organization.FieldID, field.TypeUUID),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := uuo.mutation.OrganizationIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   user.OrganizationTable,
+			Columns: []string{user.OrganizationColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(organization.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
 	if uuo.mutation.UserFavoritesCleared() {
 		edge := &sqlgraph.EdgeSpec{

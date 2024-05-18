@@ -11,8 +11,10 @@ import (
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
+	"github.com/emoss08/trenova/internal/ent/organization"
 	"github.com/emoss08/trenova/internal/ent/predicate"
 	"github.com/emoss08/trenova/internal/ent/reasoncode"
+	"github.com/google/uuid"
 )
 
 // ReasonCodeUpdate is the builder for updating ReasonCode entities.
@@ -26,6 +28,20 @@ type ReasonCodeUpdate struct {
 // Where appends a list predicates to the ReasonCodeUpdate builder.
 func (rcu *ReasonCodeUpdate) Where(ps ...predicate.ReasonCode) *ReasonCodeUpdate {
 	rcu.mutation.Where(ps...)
+	return rcu
+}
+
+// SetOrganizationID sets the "organization_id" field.
+func (rcu *ReasonCodeUpdate) SetOrganizationID(u uuid.UUID) *ReasonCodeUpdate {
+	rcu.mutation.SetOrganizationID(u)
+	return rcu
+}
+
+// SetNillableOrganizationID sets the "organization_id" field if the given value is not nil.
+func (rcu *ReasonCodeUpdate) SetNillableOrganizationID(u *uuid.UUID) *ReasonCodeUpdate {
+	if u != nil {
+		rcu.SetOrganizationID(*u)
+	}
 	return rcu
 }
 
@@ -118,14 +134,27 @@ func (rcu *ReasonCodeUpdate) ClearDescription() *ReasonCodeUpdate {
 	return rcu
 }
 
+// SetOrganization sets the "organization" edge to the Organization entity.
+func (rcu *ReasonCodeUpdate) SetOrganization(o *Organization) *ReasonCodeUpdate {
+	return rcu.SetOrganizationID(o.ID)
+}
+
 // Mutation returns the ReasonCodeMutation object of the builder.
 func (rcu *ReasonCodeUpdate) Mutation() *ReasonCodeMutation {
 	return rcu.mutation
 }
 
+// ClearOrganization clears the "organization" edge to the Organization entity.
+func (rcu *ReasonCodeUpdate) ClearOrganization() *ReasonCodeUpdate {
+	rcu.mutation.ClearOrganization()
+	return rcu
+}
+
 // Save executes the query and returns the number of nodes affected by the update operation.
 func (rcu *ReasonCodeUpdate) Save(ctx context.Context) (int, error) {
-	rcu.defaults()
+	if err := rcu.defaults(); err != nil {
+		return 0, err
+	}
 	return withHooks(ctx, rcu.sqlSave, rcu.mutation, rcu.hooks)
 }
 
@@ -152,11 +181,15 @@ func (rcu *ReasonCodeUpdate) ExecX(ctx context.Context) {
 }
 
 // defaults sets the default values of the builder before save.
-func (rcu *ReasonCodeUpdate) defaults() {
+func (rcu *ReasonCodeUpdate) defaults() error {
 	if _, ok := rcu.mutation.UpdatedAt(); !ok {
+		if reasoncode.UpdateDefaultUpdatedAt == nil {
+			return fmt.Errorf("ent: uninitialized reasoncode.UpdateDefaultUpdatedAt (forgotten import ent/runtime?)")
+		}
 		v := reasoncode.UpdateDefaultUpdatedAt()
 		rcu.mutation.SetUpdatedAt(v)
 	}
+	return nil
 }
 
 // check runs all checks and user-defined validators on the builder.
@@ -227,6 +260,35 @@ func (rcu *ReasonCodeUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	if rcu.mutation.DescriptionCleared() {
 		_spec.ClearField(reasoncode.FieldDescription, field.TypeString)
 	}
+	if rcu.mutation.OrganizationCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   reasoncode.OrganizationTable,
+			Columns: []string{reasoncode.OrganizationColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(organization.FieldID, field.TypeUUID),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := rcu.mutation.OrganizationIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   reasoncode.OrganizationTable,
+			Columns: []string{reasoncode.OrganizationColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(organization.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
 	_spec.AddModifiers(rcu.modifiers...)
 	if n, err = sqlgraph.UpdateNodes(ctx, rcu.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
@@ -247,6 +309,20 @@ type ReasonCodeUpdateOne struct {
 	hooks     []Hook
 	mutation  *ReasonCodeMutation
 	modifiers []func(*sql.UpdateBuilder)
+}
+
+// SetOrganizationID sets the "organization_id" field.
+func (rcuo *ReasonCodeUpdateOne) SetOrganizationID(u uuid.UUID) *ReasonCodeUpdateOne {
+	rcuo.mutation.SetOrganizationID(u)
+	return rcuo
+}
+
+// SetNillableOrganizationID sets the "organization_id" field if the given value is not nil.
+func (rcuo *ReasonCodeUpdateOne) SetNillableOrganizationID(u *uuid.UUID) *ReasonCodeUpdateOne {
+	if u != nil {
+		rcuo.SetOrganizationID(*u)
+	}
+	return rcuo
 }
 
 // SetUpdatedAt sets the "updated_at" field.
@@ -338,9 +414,20 @@ func (rcuo *ReasonCodeUpdateOne) ClearDescription() *ReasonCodeUpdateOne {
 	return rcuo
 }
 
+// SetOrganization sets the "organization" edge to the Organization entity.
+func (rcuo *ReasonCodeUpdateOne) SetOrganization(o *Organization) *ReasonCodeUpdateOne {
+	return rcuo.SetOrganizationID(o.ID)
+}
+
 // Mutation returns the ReasonCodeMutation object of the builder.
 func (rcuo *ReasonCodeUpdateOne) Mutation() *ReasonCodeMutation {
 	return rcuo.mutation
+}
+
+// ClearOrganization clears the "organization" edge to the Organization entity.
+func (rcuo *ReasonCodeUpdateOne) ClearOrganization() *ReasonCodeUpdateOne {
+	rcuo.mutation.ClearOrganization()
+	return rcuo
 }
 
 // Where appends a list predicates to the ReasonCodeUpdate builder.
@@ -358,7 +445,9 @@ func (rcuo *ReasonCodeUpdateOne) Select(field string, fields ...string) *ReasonC
 
 // Save executes the query and returns the updated ReasonCode entity.
 func (rcuo *ReasonCodeUpdateOne) Save(ctx context.Context) (*ReasonCode, error) {
-	rcuo.defaults()
+	if err := rcuo.defaults(); err != nil {
+		return nil, err
+	}
 	return withHooks(ctx, rcuo.sqlSave, rcuo.mutation, rcuo.hooks)
 }
 
@@ -385,11 +474,15 @@ func (rcuo *ReasonCodeUpdateOne) ExecX(ctx context.Context) {
 }
 
 // defaults sets the default values of the builder before save.
-func (rcuo *ReasonCodeUpdateOne) defaults() {
+func (rcuo *ReasonCodeUpdateOne) defaults() error {
 	if _, ok := rcuo.mutation.UpdatedAt(); !ok {
+		if reasoncode.UpdateDefaultUpdatedAt == nil {
+			return fmt.Errorf("ent: uninitialized reasoncode.UpdateDefaultUpdatedAt (forgotten import ent/runtime?)")
+		}
 		v := reasoncode.UpdateDefaultUpdatedAt()
 		rcuo.mutation.SetUpdatedAt(v)
 	}
+	return nil
 }
 
 // check runs all checks and user-defined validators on the builder.
@@ -476,6 +569,35 @@ func (rcuo *ReasonCodeUpdateOne) sqlSave(ctx context.Context) (_node *ReasonCode
 	}
 	if rcuo.mutation.DescriptionCleared() {
 		_spec.ClearField(reasoncode.FieldDescription, field.TypeString)
+	}
+	if rcuo.mutation.OrganizationCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   reasoncode.OrganizationTable,
+			Columns: []string{reasoncode.OrganizationColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(organization.FieldID, field.TypeUUID),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := rcuo.mutation.OrganizationIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   reasoncode.OrganizationTable,
+			Columns: []string{reasoncode.OrganizationColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(organization.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
 	_spec.AddModifiers(rcuo.modifiers...)
 	_node = &ReasonCode{config: rcuo.config}

@@ -131,6 +131,7 @@ func (r *ServiceTypeService) updateServiceTypeEntity(
 
 	// Start building the update operation
 	updateOp := tx.ServiceType.UpdateOneID(entity.ID).
+		SetOrganizationID(entity.OrganizationID).
 		SetStatus(entity.Status).
 		SetCode(entity.Code).
 		SetDescription(entity.Description).

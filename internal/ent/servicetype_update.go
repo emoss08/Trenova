@@ -11,8 +11,10 @@ import (
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
+	"github.com/emoss08/trenova/internal/ent/organization"
 	"github.com/emoss08/trenova/internal/ent/predicate"
 	"github.com/emoss08/trenova/internal/ent/servicetype"
+	"github.com/google/uuid"
 )
 
 // ServiceTypeUpdate is the builder for updating ServiceType entities.
@@ -26,6 +28,20 @@ type ServiceTypeUpdate struct {
 // Where appends a list predicates to the ServiceTypeUpdate builder.
 func (stu *ServiceTypeUpdate) Where(ps ...predicate.ServiceType) *ServiceTypeUpdate {
 	stu.mutation.Where(ps...)
+	return stu
+}
+
+// SetOrganizationID sets the "organization_id" field.
+func (stu *ServiceTypeUpdate) SetOrganizationID(u uuid.UUID) *ServiceTypeUpdate {
+	stu.mutation.SetOrganizationID(u)
+	return stu
+}
+
+// SetNillableOrganizationID sets the "organization_id" field if the given value is not nil.
+func (stu *ServiceTypeUpdate) SetNillableOrganizationID(u *uuid.UUID) *ServiceTypeUpdate {
+	if u != nil {
+		stu.SetOrganizationID(*u)
+	}
 	return stu
 }
 
@@ -104,9 +120,20 @@ func (stu *ServiceTypeUpdate) ClearDescription() *ServiceTypeUpdate {
 	return stu
 }
 
+// SetOrganization sets the "organization" edge to the Organization entity.
+func (stu *ServiceTypeUpdate) SetOrganization(o *Organization) *ServiceTypeUpdate {
+	return stu.SetOrganizationID(o.ID)
+}
+
 // Mutation returns the ServiceTypeMutation object of the builder.
 func (stu *ServiceTypeUpdate) Mutation() *ServiceTypeMutation {
 	return stu.mutation
+}
+
+// ClearOrganization clears the "organization" edge to the Organization entity.
+func (stu *ServiceTypeUpdate) ClearOrganization() *ServiceTypeUpdate {
+	stu.mutation.ClearOrganization()
+	return stu
 }
 
 // Save executes the query and returns the number of nodes affected by the update operation.
@@ -205,6 +232,35 @@ func (stu *ServiceTypeUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	if stu.mutation.DescriptionCleared() {
 		_spec.ClearField(servicetype.FieldDescription, field.TypeString)
 	}
+	if stu.mutation.OrganizationCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   servicetype.OrganizationTable,
+			Columns: []string{servicetype.OrganizationColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(organization.FieldID, field.TypeUUID),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := stu.mutation.OrganizationIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   servicetype.OrganizationTable,
+			Columns: []string{servicetype.OrganizationColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(organization.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
 	_spec.AddModifiers(stu.modifiers...)
 	if n, err = sqlgraph.UpdateNodes(ctx, stu.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
@@ -225,6 +281,20 @@ type ServiceTypeUpdateOne struct {
 	hooks     []Hook
 	mutation  *ServiceTypeMutation
 	modifiers []func(*sql.UpdateBuilder)
+}
+
+// SetOrganizationID sets the "organization_id" field.
+func (stuo *ServiceTypeUpdateOne) SetOrganizationID(u uuid.UUID) *ServiceTypeUpdateOne {
+	stuo.mutation.SetOrganizationID(u)
+	return stuo
+}
+
+// SetNillableOrganizationID sets the "organization_id" field if the given value is not nil.
+func (stuo *ServiceTypeUpdateOne) SetNillableOrganizationID(u *uuid.UUID) *ServiceTypeUpdateOne {
+	if u != nil {
+		stuo.SetOrganizationID(*u)
+	}
+	return stuo
 }
 
 // SetUpdatedAt sets the "updated_at" field.
@@ -302,9 +372,20 @@ func (stuo *ServiceTypeUpdateOne) ClearDescription() *ServiceTypeUpdateOne {
 	return stuo
 }
 
+// SetOrganization sets the "organization" edge to the Organization entity.
+func (stuo *ServiceTypeUpdateOne) SetOrganization(o *Organization) *ServiceTypeUpdateOne {
+	return stuo.SetOrganizationID(o.ID)
+}
+
 // Mutation returns the ServiceTypeMutation object of the builder.
 func (stuo *ServiceTypeUpdateOne) Mutation() *ServiceTypeMutation {
 	return stuo.mutation
+}
+
+// ClearOrganization clears the "organization" edge to the Organization entity.
+func (stuo *ServiceTypeUpdateOne) ClearOrganization() *ServiceTypeUpdateOne {
+	stuo.mutation.ClearOrganization()
+	return stuo
 }
 
 // Where appends a list predicates to the ServiceTypeUpdate builder.
@@ -432,6 +513,35 @@ func (stuo *ServiceTypeUpdateOne) sqlSave(ctx context.Context) (_node *ServiceTy
 	}
 	if stuo.mutation.DescriptionCleared() {
 		_spec.ClearField(servicetype.FieldDescription, field.TypeString)
+	}
+	if stuo.mutation.OrganizationCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   servicetype.OrganizationTable,
+			Columns: []string{servicetype.OrganizationColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(organization.FieldID, field.TypeUUID),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := stuo.mutation.OrganizationIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   servicetype.OrganizationTable,
+			Columns: []string{servicetype.OrganizationColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(organization.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
 	_spec.AddModifiers(stuo.modifiers...)
 	_node = &ServiceType{config: stuo.config}

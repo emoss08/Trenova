@@ -131,6 +131,7 @@ func (r *LocationCategoryService) updateLocationCategoryEntity(
 
 	// Start building the update operation
 	updateOp := tx.LocationCategory.UpdateOneID(entity.ID).
+		SetOrganizationID(entity.OrganizationID).
 		SetName(entity.Name).
 		SetDescription(entity.Description).
 		SetColor(entity.Color).

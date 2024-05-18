@@ -131,6 +131,7 @@ func (r *TagService) updateTagEntity(
 
 	// Start building the update operation
 	updateOp := tx.Tag.UpdateOneID(entity.ID).
+		SetOrganizationID(entity.OrganizationID).
 		SetName(entity.Name).
 		SetDescription(entity.Description).
 		SetColor(entity.Color).

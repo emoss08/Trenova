@@ -1,5 +1,6 @@
 import { Notifications } from "@/components/layout/notification_menu/notification";
 import { Button } from "@/components/ui/button";
+import { ComponentLoader } from "@/components/ui/component-loader";
 import { InternalLink } from "@/components/ui/link";
 import {
   Popover,
@@ -7,7 +8,7 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Skeleton } from "@/components/ui/skeleton";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Tooltip,
   TooltipContent,
@@ -21,10 +22,12 @@ import { createWebsocketManager } from "@/lib/websockets";
 import { useUserStore } from "@/stores/AuthStore";
 import { useHeaderStore } from "@/stores/HeaderStore";
 import { UserNotification } from "@/types/accounts";
-import { BellIcon } from "@radix-ui/react-icons";
 import { useQueryClient } from "@tanstack/react-query";
+import { BellIcon } from "lucide-react";
 import React, { useState } from "react";
 import { toast } from "sonner";
+import { ArchiveMenuContent } from "./archive-menu";
+import { DownloadMenuContent } from "./download-menu";
 
 function NotificationButton({
   userHasNotifications,
@@ -43,7 +46,10 @@ function NotificationButton({
             aria-expanded={open}
             className="border-muted-foreground/40 hover:border-muted-foreground/80 group relative size-8"
           >
-            <BellIcon className="text-muted-foreground group-hover:text-foreground size-5" />
+            <BellIcon
+              strokeWidth="1.5"
+              className="text-muted-foreground group-hover:text-foreground size-5"
+            />
             <span className="sr-only">Notifications</span>
             {userHasNotifications && (
               <span className="absolute -right-1 -top-1 flex size-2.5">
@@ -72,30 +78,18 @@ function NotificationContent({
   userHasNotifications: boolean;
   readAllNotifications: () => void;
 }) {
+  if (notificationsLoading) {
+    return <ComponentLoader className="h-80" />;
+  }
+
   return (
     <>
-      {notificationsLoading ? (
-        <div className="border-accent flex flex-col space-y-2 border-b px-4 py-2">
-          <div className="flex items-center justify-between">
-            <h4 className="font-medium leading-none">
-              <Skeleton className="h-4 w-20" />
-            </h4>
-            <span className="text-muted-foreground text-xs">
-              <Skeleton className="h-4 w-20" />
-            </span>
-          </div>
-          <p className="text-muted-foreground text-sm">
-            <Skeleton className="h-4 w-20" />
-          </p>
-        </div>
-      ) : (
-        <ScrollArea className="h-80 w-full">
-          <Notifications
-            notification={notificationsData as UserNotification}
-            notificationLoading={notificationsLoading}
-          />
-        </ScrollArea>
-      )}
+      <ScrollArea className="h-80 w-full">
+        <Notifications
+          notification={notificationsData as UserNotification}
+          notificationLoading={notificationsLoading}
+        />
+      </ScrollArea>
       {!userHasNotifications && (
         <div className="select-none items-center justify-center border-t pt-2 text-center text-xs">
           Know when you have new notifications by enabling text notifications in
@@ -128,6 +122,7 @@ export function NotificationMenu() {
   const { id: userId } = useUserStore.get("user");
   const { notificationsData, notificationsLoading } = useNotifications(userId);
   const webSocketManager = createWebsocketManager();
+  const [activeTab, setActiveTab] = useState<string>("inbox");
 
   const markedAndInvalidate = async () => {
     await axios.get("/user-notifications/?markAsRead=true");
@@ -177,7 +172,7 @@ export function NotificationMenu() {
     return () => {
       webSocketManager.disconnect("notifications");
     };
-  }, [userId]);
+  }, [queryClient, userId, webSocketManager]);
 
   React.useEffect(() => {
     if (
@@ -204,17 +199,43 @@ export function NotificationMenu() {
         </span>
       </PopoverTrigger>
       <PopoverContent
-        className="bg-popover w-80 p-3"
+        className="bg-popover w-96 p-2"
         sideOffset={10}
         alignOffset={-40}
         align="end"
       >
-        <NotificationContent
-          notificationsData={notificationsData as UserNotification}
-          notificationsLoading={notificationsLoading}
-          userHasNotifications={userHasNotifications}
-          readAllNotifications={readAllNotifications}
-        />
+        <Tabs
+          defaultValue="inbox"
+          value={activeTab}
+          className="w-full"
+          onValueChange={setActiveTab}
+        >
+          <TabsList>
+            <TabsTrigger
+              isNotification={userHasNotifications}
+              notificationCount={notificationsData?.unreadCount}
+              value="inbox"
+            >
+              Inbox
+            </TabsTrigger>
+            <TabsTrigger value="downloads">Downloads</TabsTrigger>
+            <TabsTrigger value="archive">Archive</TabsTrigger>
+          </TabsList>
+          <TabsContent value="inbox">
+            <NotificationContent
+              notificationsData={notificationsData as UserNotification}
+              notificationsLoading={notificationsLoading}
+              userHasNotifications={userHasNotifications}
+              readAllNotifications={readAllNotifications}
+            />
+          </TabsContent>
+          <TabsContent value="archive">
+            <ArchiveMenuContent />
+          </TabsContent>
+          <TabsContent value="downloads">
+            <DownloadMenuContent />
+          </TabsContent>
+        </Tabs>
       </PopoverContent>
     </Popover>
   );

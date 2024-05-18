@@ -11,6 +11,7 @@ import (
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
+	"github.com/emoss08/trenova/internal/ent/organization"
 	"github.com/emoss08/trenova/internal/ent/predicate"
 	"github.com/emoss08/trenova/internal/ent/shipmentmove"
 	"github.com/emoss08/trenova/internal/ent/stop"
@@ -30,6 +31,20 @@ type ShipmentMoveUpdate struct {
 // Where appends a list predicates to the ShipmentMoveUpdate builder.
 func (smu *ShipmentMoveUpdate) Where(ps ...predicate.ShipmentMove) *ShipmentMoveUpdate {
 	smu.mutation.Where(ps...)
+	return smu
+}
+
+// SetOrganizationID sets the "organization_id" field.
+func (smu *ShipmentMoveUpdate) SetOrganizationID(u uuid.UUID) *ShipmentMoveUpdate {
+	smu.mutation.SetOrganizationID(u)
+	return smu
+}
+
+// SetNillableOrganizationID sets the "organization_id" field if the given value is not nil.
+func (smu *ShipmentMoveUpdate) SetNillableOrganizationID(u *uuid.UUID) *ShipmentMoveUpdate {
+	if u != nil {
+		smu.SetOrganizationID(*u)
+	}
 	return smu
 }
 
@@ -168,6 +183,11 @@ func (smu *ShipmentMoveUpdate) ClearSecondaryWorkerID() *ShipmentMoveUpdate {
 	return smu
 }
 
+// SetOrganization sets the "organization" edge to the Organization entity.
+func (smu *ShipmentMoveUpdate) SetOrganization(o *Organization) *ShipmentMoveUpdate {
+	return smu.SetOrganizationID(o.ID)
+}
+
 // SetTractor sets the "tractor" edge to the Tractor entity.
 func (smu *ShipmentMoveUpdate) SetTractor(t *Tractor) *ShipmentMoveUpdate {
 	return smu.SetTractorID(t.ID)
@@ -206,6 +226,12 @@ func (smu *ShipmentMoveUpdate) AddMoveStops(s ...*Stop) *ShipmentMoveUpdate {
 // Mutation returns the ShipmentMoveMutation object of the builder.
 func (smu *ShipmentMoveUpdate) Mutation() *ShipmentMoveMutation {
 	return smu.mutation
+}
+
+// ClearOrganization clears the "organization" edge to the Organization entity.
+func (smu *ShipmentMoveUpdate) ClearOrganization() *ShipmentMoveUpdate {
+	smu.mutation.ClearOrganization()
+	return smu
 }
 
 // ClearTractor clears the "tractor" edge to the Tractor entity.
@@ -340,6 +366,35 @@ func (smu *ShipmentMoveUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	}
 	if value, ok := smu.mutation.IsLoaded(); ok {
 		_spec.SetField(shipmentmove.FieldIsLoaded, field.TypeBool, value)
+	}
+	if smu.mutation.OrganizationCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   shipmentmove.OrganizationTable,
+			Columns: []string{shipmentmove.OrganizationColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(organization.FieldID, field.TypeUUID),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := smu.mutation.OrganizationIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   shipmentmove.OrganizationTable,
+			Columns: []string{shipmentmove.OrganizationColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(organization.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
 	if smu.mutation.TractorCleared() {
 		edge := &sqlgraph.EdgeSpec{
@@ -524,6 +579,20 @@ type ShipmentMoveUpdateOne struct {
 	modifiers []func(*sql.UpdateBuilder)
 }
 
+// SetOrganizationID sets the "organization_id" field.
+func (smuo *ShipmentMoveUpdateOne) SetOrganizationID(u uuid.UUID) *ShipmentMoveUpdateOne {
+	smuo.mutation.SetOrganizationID(u)
+	return smuo
+}
+
+// SetNillableOrganizationID sets the "organization_id" field if the given value is not nil.
+func (smuo *ShipmentMoveUpdateOne) SetNillableOrganizationID(u *uuid.UUID) *ShipmentMoveUpdateOne {
+	if u != nil {
+		smuo.SetOrganizationID(*u)
+	}
+	return smuo
+}
+
 // SetUpdatedAt sets the "updated_at" field.
 func (smuo *ShipmentMoveUpdateOne) SetUpdatedAt(t time.Time) *ShipmentMoveUpdateOne {
 	smuo.mutation.SetUpdatedAt(t)
@@ -659,6 +728,11 @@ func (smuo *ShipmentMoveUpdateOne) ClearSecondaryWorkerID() *ShipmentMoveUpdateO
 	return smuo
 }
 
+// SetOrganization sets the "organization" edge to the Organization entity.
+func (smuo *ShipmentMoveUpdateOne) SetOrganization(o *Organization) *ShipmentMoveUpdateOne {
+	return smuo.SetOrganizationID(o.ID)
+}
+
 // SetTractor sets the "tractor" edge to the Tractor entity.
 func (smuo *ShipmentMoveUpdateOne) SetTractor(t *Tractor) *ShipmentMoveUpdateOne {
 	return smuo.SetTractorID(t.ID)
@@ -697,6 +771,12 @@ func (smuo *ShipmentMoveUpdateOne) AddMoveStops(s ...*Stop) *ShipmentMoveUpdateO
 // Mutation returns the ShipmentMoveMutation object of the builder.
 func (smuo *ShipmentMoveUpdateOne) Mutation() *ShipmentMoveMutation {
 	return smuo.mutation
+}
+
+// ClearOrganization clears the "organization" edge to the Organization entity.
+func (smuo *ShipmentMoveUpdateOne) ClearOrganization() *ShipmentMoveUpdateOne {
+	smuo.mutation.ClearOrganization()
+	return smuo
 }
 
 // ClearTractor clears the "tractor" edge to the Tractor entity.
@@ -861,6 +941,35 @@ func (smuo *ShipmentMoveUpdateOne) sqlSave(ctx context.Context) (_node *Shipment
 	}
 	if value, ok := smuo.mutation.IsLoaded(); ok {
 		_spec.SetField(shipmentmove.FieldIsLoaded, field.TypeBool, value)
+	}
+	if smuo.mutation.OrganizationCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   shipmentmove.OrganizationTable,
+			Columns: []string{shipmentmove.OrganizationColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(organization.FieldID, field.TypeUUID),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := smuo.mutation.OrganizationIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   shipmentmove.OrganizationTable,
+			Columns: []string{shipmentmove.OrganizationColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(organization.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
 	if smuo.mutation.TractorCleared() {
 		edge := &sqlgraph.EdgeSpec{

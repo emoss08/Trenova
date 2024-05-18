@@ -31,7 +31,7 @@ function GLEditForm({
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }) {
-  const { handleSubmit, control, getValues, setValue } =
+  const { handleSubmit, reset, control, getValues, setValue } =
     useForm<GLAccountFormValues>({
       resolver: yupResolver(glAccountSchema),
       defaultValues: glAccount,
@@ -41,8 +41,9 @@ function GLEditForm({
     method: "PUT",
     path: `/general-ledger-accounts/${glAccount.id}/`,
     successMessage: "General Ledger Account updated successfully.",
-    queryKeysToInvalidate: ["glAccounts"],
+    queryKeysToInvalidate: "glAccounts",
     closeModal: true,
+    reset,
     errorMessage: "Failed to update general ledger account.",
   });
 

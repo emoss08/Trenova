@@ -129,6 +129,7 @@ func (r *DelayCodeService) updateDelayCodeEntity(
 
 	// Start building the update operation
 	updateOp := tx.DelayCode.UpdateOneID(entity.ID).
+		SetOrganizationID(entity.OrganizationID).
 		SetStatus(entity.Status).
 		SetCode(entity.Code).
 		SetDescription(entity.Description).

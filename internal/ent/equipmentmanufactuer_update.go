@@ -12,7 +12,9 @@ import (
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
 	"github.com/emoss08/trenova/internal/ent/equipmentmanufactuer"
+	"github.com/emoss08/trenova/internal/ent/organization"
 	"github.com/emoss08/trenova/internal/ent/predicate"
+	"github.com/google/uuid"
 )
 
 // EquipmentManufactuerUpdate is the builder for updating EquipmentManufactuer entities.
@@ -26,6 +28,20 @@ type EquipmentManufactuerUpdate struct {
 // Where appends a list predicates to the EquipmentManufactuerUpdate builder.
 func (emu *EquipmentManufactuerUpdate) Where(ps ...predicate.EquipmentManufactuer) *EquipmentManufactuerUpdate {
 	emu.mutation.Where(ps...)
+	return emu
+}
+
+// SetOrganizationID sets the "organization_id" field.
+func (emu *EquipmentManufactuerUpdate) SetOrganizationID(u uuid.UUID) *EquipmentManufactuerUpdate {
+	emu.mutation.SetOrganizationID(u)
+	return emu
+}
+
+// SetNillableOrganizationID sets the "organization_id" field if the given value is not nil.
+func (emu *EquipmentManufactuerUpdate) SetNillableOrganizationID(u *uuid.UUID) *EquipmentManufactuerUpdate {
+	if u != nil {
+		emu.SetOrganizationID(*u)
+	}
 	return emu
 }
 
@@ -104,9 +120,20 @@ func (emu *EquipmentManufactuerUpdate) ClearDescription() *EquipmentManufactuerU
 	return emu
 }
 
+// SetOrganization sets the "organization" edge to the Organization entity.
+func (emu *EquipmentManufactuerUpdate) SetOrganization(o *Organization) *EquipmentManufactuerUpdate {
+	return emu.SetOrganizationID(o.ID)
+}
+
 // Mutation returns the EquipmentManufactuerMutation object of the builder.
 func (emu *EquipmentManufactuerUpdate) Mutation() *EquipmentManufactuerMutation {
 	return emu.mutation
+}
+
+// ClearOrganization clears the "organization" edge to the Organization entity.
+func (emu *EquipmentManufactuerUpdate) ClearOrganization() *EquipmentManufactuerUpdate {
+	emu.mutation.ClearOrganization()
+	return emu
 }
 
 // Save executes the query and returns the number of nodes affected by the update operation.
@@ -205,6 +232,35 @@ func (emu *EquipmentManufactuerUpdate) sqlSave(ctx context.Context) (n int, err 
 	if emu.mutation.DescriptionCleared() {
 		_spec.ClearField(equipmentmanufactuer.FieldDescription, field.TypeString)
 	}
+	if emu.mutation.OrganizationCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   equipmentmanufactuer.OrganizationTable,
+			Columns: []string{equipmentmanufactuer.OrganizationColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(organization.FieldID, field.TypeUUID),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := emu.mutation.OrganizationIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   equipmentmanufactuer.OrganizationTable,
+			Columns: []string{equipmentmanufactuer.OrganizationColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(organization.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
 	_spec.AddModifiers(emu.modifiers...)
 	if n, err = sqlgraph.UpdateNodes(ctx, emu.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
@@ -225,6 +281,20 @@ type EquipmentManufactuerUpdateOne struct {
 	hooks     []Hook
 	mutation  *EquipmentManufactuerMutation
 	modifiers []func(*sql.UpdateBuilder)
+}
+
+// SetOrganizationID sets the "organization_id" field.
+func (emuo *EquipmentManufactuerUpdateOne) SetOrganizationID(u uuid.UUID) *EquipmentManufactuerUpdateOne {
+	emuo.mutation.SetOrganizationID(u)
+	return emuo
+}
+
+// SetNillableOrganizationID sets the "organization_id" field if the given value is not nil.
+func (emuo *EquipmentManufactuerUpdateOne) SetNillableOrganizationID(u *uuid.UUID) *EquipmentManufactuerUpdateOne {
+	if u != nil {
+		emuo.SetOrganizationID(*u)
+	}
+	return emuo
 }
 
 // SetUpdatedAt sets the "updated_at" field.
@@ -302,9 +372,20 @@ func (emuo *EquipmentManufactuerUpdateOne) ClearDescription() *EquipmentManufact
 	return emuo
 }
 
+// SetOrganization sets the "organization" edge to the Organization entity.
+func (emuo *EquipmentManufactuerUpdateOne) SetOrganization(o *Organization) *EquipmentManufactuerUpdateOne {
+	return emuo.SetOrganizationID(o.ID)
+}
+
 // Mutation returns the EquipmentManufactuerMutation object of the builder.
 func (emuo *EquipmentManufactuerUpdateOne) Mutation() *EquipmentManufactuerMutation {
 	return emuo.mutation
+}
+
+// ClearOrganization clears the "organization" edge to the Organization entity.
+func (emuo *EquipmentManufactuerUpdateOne) ClearOrganization() *EquipmentManufactuerUpdateOne {
+	emuo.mutation.ClearOrganization()
+	return emuo
 }
 
 // Where appends a list predicates to the EquipmentManufactuerUpdate builder.
@@ -432,6 +513,35 @@ func (emuo *EquipmentManufactuerUpdateOne) sqlSave(ctx context.Context) (_node *
 	}
 	if emuo.mutation.DescriptionCleared() {
 		_spec.ClearField(equipmentmanufactuer.FieldDescription, field.TypeString)
+	}
+	if emuo.mutation.OrganizationCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   equipmentmanufactuer.OrganizationTable,
+			Columns: []string{equipmentmanufactuer.OrganizationColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(organization.FieldID, field.TypeUUID),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := emuo.mutation.OrganizationIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   equipmentmanufactuer.OrganizationTable,
+			Columns: []string{equipmentmanufactuer.OrganizationColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(organization.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
 	_spec.AddModifiers(emuo.modifiers...)
 	_node = &EquipmentManufactuer{config: emuo.config}

@@ -38,7 +38,7 @@ export function DocumentClassForm({
             label="Status"
             options={statusChoices}
             placeholder="Select Status"
-            description="Status of the Delay code"
+            description="Status of the Document Classification."
             isClearable={false}
           />
         </FormControl>
@@ -66,7 +66,7 @@ export function DocumentClassForm({
           <GradientPicker
             name="color"
             label="Color"
-            description="Color Code of the Location Category"
+            description="Color Code of the Document Classification"
             control={control}
           />
         </FormControl>
@@ -76,7 +76,7 @@ export function DocumentClassForm({
 }
 
 export function DocumentClassDialog({ onOpenChange, open }: TableSheetProps) {
-  const { control, handleSubmit } = useForm<FormValues>({
+  const { control, reset, handleSubmit } = useForm<FormValues>({
     resolver: yupResolver(documentClassSchema),
     defaultValues: {
       status: "A",
@@ -90,8 +90,9 @@ export function DocumentClassDialog({ onOpenChange, open }: TableSheetProps) {
     method: "POST",
     path: "/document-classifications/",
     successMessage: "Document Classification created successfully.",
-    queryKeysToInvalidate: ["document-classification-table-data"],
+    queryKeysToInvalidate: "documentClassifications",
     closeModal: true,
+    reset,
     errorMessage: "Failed to create new document classification.",
   });
 

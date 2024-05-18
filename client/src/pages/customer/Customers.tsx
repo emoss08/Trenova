@@ -1,25 +1,31 @@
+import { Checkbox } from "@/components/common/fields/checkbox";
 import { DataTable } from "@/components/common/table/data-table";
 import { DataTableColumnHeader } from "@/components/common/table/data-table-column-header";
 import { StatusBadge } from "@/components/common/table/data-table-components";
-import { DataTableColumnExpand } from "@/components/common/table/data-table-expand";
 import { CustomerTableSheet } from "@/components/customer-table-dialog";
 import { CustomerTableEditSheet } from "@/components/customer-table-edit-dialog";
-import { CustomerTableSub } from "@/components/customer-table-sub";
 import { type Customer } from "@/types/customer";
-import type { ColumnDef, Row } from "@tanstack/react-table";
-
-const renderSubComponent = ({ row }: { row: Row<Customer> }) => {
-  return <CustomerTableSub row={row} />;
-};
+import type { ColumnDef } from "@tanstack/react-table";
 
 const columns: ColumnDef<Customer>[] = [
   {
-    id: "expander",
-    footer: (props) => props.column.id,
-    header: () => null,
-    cell: ({ row }) => {
-      return <DataTableColumnExpand row={row} />;
-    },
+    id: "select",
+    header: ({ table }) => (
+      <Checkbox
+        checked={table.getIsAllPageRowsSelected()}
+        onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
+        aria-label="Select all"
+        className="translate-y-[2px]"
+      />
+    ),
+    cell: ({ row }) => (
+      <Checkbox
+        checked={row.getIsSelected()}
+        onCheckedChange={(value) => row.toggleSelected(!!value)}
+        aria-label="Select row"
+        className="translate-y-[2px]"
+      />
+    ),
     enableSorting: false,
     enableHiding: false,
   },
@@ -29,9 +35,6 @@ const columns: ColumnDef<Customer>[] = [
       <DataTableColumnHeader column={column} title="Status" />
     ),
     cell: ({ row }) => <StatusBadge status={row.original.status} />,
-    filterFn: (row, id, value) => {
-      return value.includes(row.getValue(id));
-    },
   },
   {
     accessorKey: "code",
@@ -77,8 +80,6 @@ export default function Customers() {
       name="Customers"
       exportModelName="customers"
       filterColumn="code"
-      renderSubComponent={renderSubComponent}
-      getRowCanExpand={() => true}
       TableSheet={CustomerTableSheet}
       TableEditSheet={CustomerTableEditSheet}
       addPermissionName="customer.add"

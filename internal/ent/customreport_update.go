@@ -12,7 +12,9 @@ import (
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
 	"github.com/emoss08/trenova/internal/ent/customreport"
+	"github.com/emoss08/trenova/internal/ent/organization"
 	"github.com/emoss08/trenova/internal/ent/predicate"
+	"github.com/google/uuid"
 )
 
 // CustomReportUpdate is the builder for updating CustomReport entities.
@@ -26,6 +28,20 @@ type CustomReportUpdate struct {
 // Where appends a list predicates to the CustomReportUpdate builder.
 func (cru *CustomReportUpdate) Where(ps ...predicate.CustomReport) *CustomReportUpdate {
 	cru.mutation.Where(ps...)
+	return cru
+}
+
+// SetOrganizationID sets the "organization_id" field.
+func (cru *CustomReportUpdate) SetOrganizationID(u uuid.UUID) *CustomReportUpdate {
+	cru.mutation.SetOrganizationID(u)
+	return cru
+}
+
+// SetNillableOrganizationID sets the "organization_id" field if the given value is not nil.
+func (cru *CustomReportUpdate) SetNillableOrganizationID(u *uuid.UUID) *CustomReportUpdate {
+	if u != nil {
+		cru.SetOrganizationID(*u)
+	}
 	return cru
 }
 
@@ -110,9 +126,20 @@ func (cru *CustomReportUpdate) ClearTable() *CustomReportUpdate {
 	return cru
 }
 
+// SetOrganization sets the "organization" edge to the Organization entity.
+func (cru *CustomReportUpdate) SetOrganization(o *Organization) *CustomReportUpdate {
+	return cru.SetOrganizationID(o.ID)
+}
+
 // Mutation returns the CustomReportMutation object of the builder.
 func (cru *CustomReportUpdate) Mutation() *CustomReportMutation {
 	return cru.mutation
+}
+
+// ClearOrganization clears the "organization" edge to the Organization entity.
+func (cru *CustomReportUpdate) ClearOrganization() *CustomReportUpdate {
+	cru.mutation.ClearOrganization()
+	return cru
 }
 
 // Save executes the query and returns the number of nodes affected by the update operation.
@@ -209,6 +236,35 @@ func (cru *CustomReportUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	if cru.mutation.TableCleared() {
 		_spec.ClearField(customreport.FieldTable, field.TypeString)
 	}
+	if cru.mutation.OrganizationCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   customreport.OrganizationTable,
+			Columns: []string{customreport.OrganizationColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(organization.FieldID, field.TypeUUID),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := cru.mutation.OrganizationIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   customreport.OrganizationTable,
+			Columns: []string{customreport.OrganizationColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(organization.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
 	_spec.AddModifiers(cru.modifiers...)
 	if n, err = sqlgraph.UpdateNodes(ctx, cru.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
@@ -229,6 +285,20 @@ type CustomReportUpdateOne struct {
 	hooks     []Hook
 	mutation  *CustomReportMutation
 	modifiers []func(*sql.UpdateBuilder)
+}
+
+// SetOrganizationID sets the "organization_id" field.
+func (cruo *CustomReportUpdateOne) SetOrganizationID(u uuid.UUID) *CustomReportUpdateOne {
+	cruo.mutation.SetOrganizationID(u)
+	return cruo
+}
+
+// SetNillableOrganizationID sets the "organization_id" field if the given value is not nil.
+func (cruo *CustomReportUpdateOne) SetNillableOrganizationID(u *uuid.UUID) *CustomReportUpdateOne {
+	if u != nil {
+		cruo.SetOrganizationID(*u)
+	}
+	return cruo
 }
 
 // SetUpdatedAt sets the "updated_at" field.
@@ -312,9 +382,20 @@ func (cruo *CustomReportUpdateOne) ClearTable() *CustomReportUpdateOne {
 	return cruo
 }
 
+// SetOrganization sets the "organization" edge to the Organization entity.
+func (cruo *CustomReportUpdateOne) SetOrganization(o *Organization) *CustomReportUpdateOne {
+	return cruo.SetOrganizationID(o.ID)
+}
+
 // Mutation returns the CustomReportMutation object of the builder.
 func (cruo *CustomReportUpdateOne) Mutation() *CustomReportMutation {
 	return cruo.mutation
+}
+
+// ClearOrganization clears the "organization" edge to the Organization entity.
+func (cruo *CustomReportUpdateOne) ClearOrganization() *CustomReportUpdateOne {
+	cruo.mutation.ClearOrganization()
+	return cruo
 }
 
 // Where appends a list predicates to the CustomReportUpdate builder.
@@ -440,6 +521,35 @@ func (cruo *CustomReportUpdateOne) sqlSave(ctx context.Context) (_node *CustomRe
 	}
 	if cruo.mutation.TableCleared() {
 		_spec.ClearField(customreport.FieldTable, field.TypeString)
+	}
+	if cruo.mutation.OrganizationCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   customreport.OrganizationTable,
+			Columns: []string{customreport.OrganizationColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(organization.FieldID, field.TypeUUID),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := cruo.mutation.OrganizationIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   customreport.OrganizationTable,
+			Columns: []string{customreport.OrganizationColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(organization.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
 	_spec.AddModifiers(cruo.modifiers...)
 	_node = &CustomReport{config: cruo.config}

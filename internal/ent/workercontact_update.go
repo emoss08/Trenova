@@ -11,6 +11,7 @@ import (
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
+	"github.com/emoss08/trenova/internal/ent/organization"
 	"github.com/emoss08/trenova/internal/ent/predicate"
 	"github.com/emoss08/trenova/internal/ent/worker"
 	"github.com/emoss08/trenova/internal/ent/workercontact"
@@ -28,6 +29,20 @@ type WorkerContactUpdate struct {
 // Where appends a list predicates to the WorkerContactUpdate builder.
 func (wcu *WorkerContactUpdate) Where(ps ...predicate.WorkerContact) *WorkerContactUpdate {
 	wcu.mutation.Where(ps...)
+	return wcu
+}
+
+// SetOrganizationID sets the "organization_id" field.
+func (wcu *WorkerContactUpdate) SetOrganizationID(u uuid.UUID) *WorkerContactUpdate {
+	wcu.mutation.SetOrganizationID(u)
+	return wcu
+}
+
+// SetNillableOrganizationID sets the "organization_id" field if the given value is not nil.
+func (wcu *WorkerContactUpdate) SetNillableOrganizationID(u *uuid.UUID) *WorkerContactUpdate {
+	if u != nil {
+		wcu.SetOrganizationID(*u)
+	}
 	return wcu
 }
 
@@ -148,6 +163,11 @@ func (wcu *WorkerContactUpdate) SetNillableIsPrimary(b *bool) *WorkerContactUpda
 	return wcu
 }
 
+// SetOrganization sets the "organization" edge to the Organization entity.
+func (wcu *WorkerContactUpdate) SetOrganization(o *Organization) *WorkerContactUpdate {
+	return wcu.SetOrganizationID(o.ID)
+}
+
 // SetWorker sets the "worker" edge to the Worker entity.
 func (wcu *WorkerContactUpdate) SetWorker(w *Worker) *WorkerContactUpdate {
 	return wcu.SetWorkerID(w.ID)
@@ -156,6 +176,12 @@ func (wcu *WorkerContactUpdate) SetWorker(w *Worker) *WorkerContactUpdate {
 // Mutation returns the WorkerContactMutation object of the builder.
 func (wcu *WorkerContactUpdate) Mutation() *WorkerContactMutation {
 	return wcu.mutation
+}
+
+// ClearOrganization clears the "organization" edge to the Organization entity.
+func (wcu *WorkerContactUpdate) ClearOrganization() *WorkerContactUpdate {
+	wcu.mutation.ClearOrganization()
+	return wcu
 }
 
 // ClearWorker clears the "worker" edge to the Worker entity.
@@ -274,6 +300,35 @@ func (wcu *WorkerContactUpdate) sqlSave(ctx context.Context) (n int, err error) 
 	if value, ok := wcu.mutation.IsPrimary(); ok {
 		_spec.SetField(workercontact.FieldIsPrimary, field.TypeBool, value)
 	}
+	if wcu.mutation.OrganizationCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   workercontact.OrganizationTable,
+			Columns: []string{workercontact.OrganizationColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(organization.FieldID, field.TypeUUID),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := wcu.mutation.OrganizationIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   workercontact.OrganizationTable,
+			Columns: []string{workercontact.OrganizationColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(organization.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
 	if wcu.mutation.WorkerCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
@@ -323,6 +378,20 @@ type WorkerContactUpdateOne struct {
 	hooks     []Hook
 	mutation  *WorkerContactMutation
 	modifiers []func(*sql.UpdateBuilder)
+}
+
+// SetOrganizationID sets the "organization_id" field.
+func (wcuo *WorkerContactUpdateOne) SetOrganizationID(u uuid.UUID) *WorkerContactUpdateOne {
+	wcuo.mutation.SetOrganizationID(u)
+	return wcuo
+}
+
+// SetNillableOrganizationID sets the "organization_id" field if the given value is not nil.
+func (wcuo *WorkerContactUpdateOne) SetNillableOrganizationID(u *uuid.UUID) *WorkerContactUpdateOne {
+	if u != nil {
+		wcuo.SetOrganizationID(*u)
+	}
+	return wcuo
 }
 
 // SetUpdatedAt sets the "updated_at" field.
@@ -442,6 +511,11 @@ func (wcuo *WorkerContactUpdateOne) SetNillableIsPrimary(b *bool) *WorkerContact
 	return wcuo
 }
 
+// SetOrganization sets the "organization" edge to the Organization entity.
+func (wcuo *WorkerContactUpdateOne) SetOrganization(o *Organization) *WorkerContactUpdateOne {
+	return wcuo.SetOrganizationID(o.ID)
+}
+
 // SetWorker sets the "worker" edge to the Worker entity.
 func (wcuo *WorkerContactUpdateOne) SetWorker(w *Worker) *WorkerContactUpdateOne {
 	return wcuo.SetWorkerID(w.ID)
@@ -450,6 +524,12 @@ func (wcuo *WorkerContactUpdateOne) SetWorker(w *Worker) *WorkerContactUpdateOne
 // Mutation returns the WorkerContactMutation object of the builder.
 func (wcuo *WorkerContactUpdateOne) Mutation() *WorkerContactMutation {
 	return wcuo.mutation
+}
+
+// ClearOrganization clears the "organization" edge to the Organization entity.
+func (wcuo *WorkerContactUpdateOne) ClearOrganization() *WorkerContactUpdateOne {
+	wcuo.mutation.ClearOrganization()
+	return wcuo
 }
 
 // ClearWorker clears the "worker" edge to the Worker entity.
@@ -597,6 +677,35 @@ func (wcuo *WorkerContactUpdateOne) sqlSave(ctx context.Context) (_node *WorkerC
 	}
 	if value, ok := wcuo.mutation.IsPrimary(); ok {
 		_spec.SetField(workercontact.FieldIsPrimary, field.TypeBool, value)
+	}
+	if wcuo.mutation.OrganizationCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   workercontact.OrganizationTable,
+			Columns: []string{workercontact.OrganizationColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(organization.FieldID, field.TypeUUID),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := wcuo.mutation.OrganizationIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   workercontact.OrganizationTable,
+			Columns: []string{workercontact.OrganizationColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(organization.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
 	if wcuo.mutation.WorkerCleared() {
 		edge := &sqlgraph.EdgeSpec{

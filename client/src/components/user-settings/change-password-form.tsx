@@ -40,14 +40,15 @@ export default function ChangePasswordForm() {
         .required("Please confirm your new password"),
     });
 
-  const { handleSubmit, control, watch } = useForm<ChangePasswordFormValues>({
-    resolver: yupResolver(schema),
-    defaultValues: {
-      oldPassword: "",
-      newPassword: "",
-      confirmPassword: "",
-    },
-  });
+  const { handleSubmit, control, reset, watch } =
+    useForm<ChangePasswordFormValues>({
+      resolver: yupResolver(schema),
+      defaultValues: {
+        oldPassword: "",
+        newPassword: "",
+        confirmPassword: "",
+      },
+    });
 
   const passwordRequirements = checkPasswordRequirements(watch("newPassword"));
 
@@ -55,6 +56,7 @@ export default function ChangePasswordForm() {
     method: "POST",
     path: "/users/change-password",
     successMessage: "Password updated successfully.",
+    reset,
     errorMessage: "Failed to update password.",
   });
 

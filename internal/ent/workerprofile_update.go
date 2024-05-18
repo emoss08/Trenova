@@ -11,6 +11,7 @@ import (
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
+	"github.com/emoss08/trenova/internal/ent/organization"
 	"github.com/emoss08/trenova/internal/ent/predicate"
 	"github.com/emoss08/trenova/internal/ent/usstate"
 	"github.com/emoss08/trenova/internal/ent/workerprofile"
@@ -29,6 +30,20 @@ type WorkerProfileUpdate struct {
 // Where appends a list predicates to the WorkerProfileUpdate builder.
 func (wpu *WorkerProfileUpdate) Where(ps ...predicate.WorkerProfile) *WorkerProfileUpdate {
 	wpu.mutation.Where(ps...)
+	return wpu
+}
+
+// SetOrganizationID sets the "organization_id" field.
+func (wpu *WorkerProfileUpdate) SetOrganizationID(u uuid.UUID) *WorkerProfileUpdate {
+	wpu.mutation.SetOrganizationID(u)
+	return wpu
+}
+
+// SetNillableOrganizationID sets the "organization_id" field if the given value is not nil.
+func (wpu *WorkerProfileUpdate) SetNillableOrganizationID(u *uuid.UUID) *WorkerProfileUpdate {
+	if u != nil {
+		wpu.SetOrganizationID(*u)
+	}
 	return wpu
 }
 
@@ -243,6 +258,11 @@ func (wpu *WorkerProfileUpdate) ClearMvrDueDate() *WorkerProfileUpdate {
 	return wpu
 }
 
+// SetOrganization sets the "organization" edge to the Organization entity.
+func (wpu *WorkerProfileUpdate) SetOrganization(o *Organization) *WorkerProfileUpdate {
+	return wpu.SetOrganizationID(o.ID)
+}
+
 // SetStateID sets the "state" edge to the UsState entity by ID.
 func (wpu *WorkerProfileUpdate) SetStateID(id uuid.UUID) *WorkerProfileUpdate {
 	wpu.mutation.SetStateID(id)
@@ -257,6 +277,12 @@ func (wpu *WorkerProfileUpdate) SetState(u *UsState) *WorkerProfileUpdate {
 // Mutation returns the WorkerProfileMutation object of the builder.
 func (wpu *WorkerProfileUpdate) Mutation() *WorkerProfileMutation {
 	return wpu.mutation
+}
+
+// ClearOrganization clears the "organization" edge to the Organization entity.
+func (wpu *WorkerProfileUpdate) ClearOrganization() *WorkerProfileUpdate {
+	wpu.mutation.ClearOrganization()
+	return wpu
 }
 
 // ClearState clears the "state" edge to the UsState entity.
@@ -430,6 +456,35 @@ func (wpu *WorkerProfileUpdate) sqlSave(ctx context.Context) (n int, err error) 
 	if wpu.mutation.MvrDueDateCleared() {
 		_spec.ClearField(workerprofile.FieldMvrDueDate, field.TypeOther)
 	}
+	if wpu.mutation.OrganizationCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   workerprofile.OrganizationTable,
+			Columns: []string{workerprofile.OrganizationColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(organization.FieldID, field.TypeUUID),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := wpu.mutation.OrganizationIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   workerprofile.OrganizationTable,
+			Columns: []string{workerprofile.OrganizationColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(organization.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
 	if wpu.mutation.StateCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
@@ -479,6 +534,20 @@ type WorkerProfileUpdateOne struct {
 	hooks     []Hook
 	mutation  *WorkerProfileMutation
 	modifiers []func(*sql.UpdateBuilder)
+}
+
+// SetOrganizationID sets the "organization_id" field.
+func (wpuo *WorkerProfileUpdateOne) SetOrganizationID(u uuid.UUID) *WorkerProfileUpdateOne {
+	wpuo.mutation.SetOrganizationID(u)
+	return wpuo
+}
+
+// SetNillableOrganizationID sets the "organization_id" field if the given value is not nil.
+func (wpuo *WorkerProfileUpdateOne) SetNillableOrganizationID(u *uuid.UUID) *WorkerProfileUpdateOne {
+	if u != nil {
+		wpuo.SetOrganizationID(*u)
+	}
+	return wpuo
 }
 
 // SetUpdatedAt sets the "updated_at" field.
@@ -692,6 +761,11 @@ func (wpuo *WorkerProfileUpdateOne) ClearMvrDueDate() *WorkerProfileUpdateOne {
 	return wpuo
 }
 
+// SetOrganization sets the "organization" edge to the Organization entity.
+func (wpuo *WorkerProfileUpdateOne) SetOrganization(o *Organization) *WorkerProfileUpdateOne {
+	return wpuo.SetOrganizationID(o.ID)
+}
+
 // SetStateID sets the "state" edge to the UsState entity by ID.
 func (wpuo *WorkerProfileUpdateOne) SetStateID(id uuid.UUID) *WorkerProfileUpdateOne {
 	wpuo.mutation.SetStateID(id)
@@ -706,6 +780,12 @@ func (wpuo *WorkerProfileUpdateOne) SetState(u *UsState) *WorkerProfileUpdateOne
 // Mutation returns the WorkerProfileMutation object of the builder.
 func (wpuo *WorkerProfileUpdateOne) Mutation() *WorkerProfileMutation {
 	return wpuo.mutation
+}
+
+// ClearOrganization clears the "organization" edge to the Organization entity.
+func (wpuo *WorkerProfileUpdateOne) ClearOrganization() *WorkerProfileUpdateOne {
+	wpuo.mutation.ClearOrganization()
+	return wpuo
 }
 
 // ClearState clears the "state" edge to the UsState entity.
@@ -908,6 +988,35 @@ func (wpuo *WorkerProfileUpdateOne) sqlSave(ctx context.Context) (_node *WorkerP
 	}
 	if wpuo.mutation.MvrDueDateCleared() {
 		_spec.ClearField(workerprofile.FieldMvrDueDate, field.TypeOther)
+	}
+	if wpuo.mutation.OrganizationCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   workerprofile.OrganizationTable,
+			Columns: []string{workerprofile.OrganizationColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(organization.FieldID, field.TypeUUID),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := wpuo.mutation.OrganizationIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   workerprofile.OrganizationTable,
+			Columns: []string{workerprofile.OrganizationColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(organization.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
 	if wpuo.mutation.StateCleared() {
 		edge := &sqlgraph.EdgeSpec{

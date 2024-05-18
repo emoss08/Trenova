@@ -122,6 +122,7 @@ func (r *HazardousMaterialSegregationService) updateHazmatSegregationRuleEntity(
 ) (*ent.HazardousMaterialSegregation, error) {
 	// Start building the update operation
 	updateOp := tx.HazardousMaterialSegregation.UpdateOneID(entity.ID).
+		SetOrganizationID(entity.OrganizationID).
 		SetClassA(entity.ClassA).
 		SetClassB(entity.ClassB).
 		SetSegregationType(entity.SegregationType).

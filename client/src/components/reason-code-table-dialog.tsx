@@ -79,7 +79,7 @@ export function ReasonCodeForm({ control }: { control: Control<FormValues> }) {
 }
 
 export function ReasonCodeDialog({ onOpenChange, open }: TableSheetProps) {
-  const { control, handleSubmit } = useForm<FormValues>({
+  const { control, handleSubmit, reset } = useForm<FormValues>({
     resolver: yupResolver(reasonCodeSchema),
     defaultValues: {
       status: "A",
@@ -95,10 +95,15 @@ export function ReasonCodeDialog({ onOpenChange, open }: TableSheetProps) {
     successMessage: "Reason Codes created successfully.",
     queryKeysToInvalidate: "reasonCodes",
     closeModal: true,
+    reset,
     errorMessage: "Failed to create new reason code.",
   });
 
-  const onSubmit = (values: FormValues) => mutation.mutate(values);
+  const onSubmit = (values: FormValues) => {
+    mutation.mutate(values);
+    reset();
+  };
+
   return (
     <Credenza open={open} onOpenChange={onOpenChange}>
       <CredenzaContent>

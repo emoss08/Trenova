@@ -12,7 +12,9 @@ import (
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
 	"github.com/emoss08/trenova/internal/ent/hazardousmaterial"
+	"github.com/emoss08/trenova/internal/ent/organization"
 	"github.com/emoss08/trenova/internal/ent/predicate"
+	"github.com/google/uuid"
 )
 
 // HazardousMaterialUpdate is the builder for updating HazardousMaterial entities.
@@ -26,6 +28,20 @@ type HazardousMaterialUpdate struct {
 // Where appends a list predicates to the HazardousMaterialUpdate builder.
 func (hmu *HazardousMaterialUpdate) Where(ps ...predicate.HazardousMaterial) *HazardousMaterialUpdate {
 	hmu.mutation.Where(ps...)
+	return hmu
+}
+
+// SetOrganizationID sets the "organization_id" field.
+func (hmu *HazardousMaterialUpdate) SetOrganizationID(u uuid.UUID) *HazardousMaterialUpdate {
+	hmu.mutation.SetOrganizationID(u)
+	return hmu
+}
+
+// SetNillableOrganizationID sets the "organization_id" field if the given value is not nil.
+func (hmu *HazardousMaterialUpdate) SetNillableOrganizationID(u *uuid.UUID) *HazardousMaterialUpdate {
+	if u != nil {
+		hmu.SetOrganizationID(*u)
+	}
 	return hmu
 }
 
@@ -178,9 +194,20 @@ func (hmu *HazardousMaterialUpdate) ClearProperShippingName() *HazardousMaterial
 	return hmu
 }
 
+// SetOrganization sets the "organization" edge to the Organization entity.
+func (hmu *HazardousMaterialUpdate) SetOrganization(o *Organization) *HazardousMaterialUpdate {
+	return hmu.SetOrganizationID(o.ID)
+}
+
 // Mutation returns the HazardousMaterialMutation object of the builder.
 func (hmu *HazardousMaterialUpdate) Mutation() *HazardousMaterialMutation {
 	return hmu.mutation
+}
+
+// ClearOrganization clears the "organization" edge to the Organization entity.
+func (hmu *HazardousMaterialUpdate) ClearOrganization() *HazardousMaterialUpdate {
+	hmu.mutation.ClearOrganization()
+	return hmu
 }
 
 // Save executes the query and returns the number of nodes affected by the update operation.
@@ -305,6 +332,35 @@ func (hmu *HazardousMaterialUpdate) sqlSave(ctx context.Context) (n int, err err
 	if hmu.mutation.ProperShippingNameCleared() {
 		_spec.ClearField(hazardousmaterial.FieldProperShippingName, field.TypeString)
 	}
+	if hmu.mutation.OrganizationCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   hazardousmaterial.OrganizationTable,
+			Columns: []string{hazardousmaterial.OrganizationColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(organization.FieldID, field.TypeUUID),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := hmu.mutation.OrganizationIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   hazardousmaterial.OrganizationTable,
+			Columns: []string{hazardousmaterial.OrganizationColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(organization.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
 	_spec.AddModifiers(hmu.modifiers...)
 	if n, err = sqlgraph.UpdateNodes(ctx, hmu.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
@@ -325,6 +381,20 @@ type HazardousMaterialUpdateOne struct {
 	hooks     []Hook
 	mutation  *HazardousMaterialMutation
 	modifiers []func(*sql.UpdateBuilder)
+}
+
+// SetOrganizationID sets the "organization_id" field.
+func (hmuo *HazardousMaterialUpdateOne) SetOrganizationID(u uuid.UUID) *HazardousMaterialUpdateOne {
+	hmuo.mutation.SetOrganizationID(u)
+	return hmuo
+}
+
+// SetNillableOrganizationID sets the "organization_id" field if the given value is not nil.
+func (hmuo *HazardousMaterialUpdateOne) SetNillableOrganizationID(u *uuid.UUID) *HazardousMaterialUpdateOne {
+	if u != nil {
+		hmuo.SetOrganizationID(*u)
+	}
+	return hmuo
 }
 
 // SetUpdatedAt sets the "updated_at" field.
@@ -476,9 +546,20 @@ func (hmuo *HazardousMaterialUpdateOne) ClearProperShippingName() *HazardousMate
 	return hmuo
 }
 
+// SetOrganization sets the "organization" edge to the Organization entity.
+func (hmuo *HazardousMaterialUpdateOne) SetOrganization(o *Organization) *HazardousMaterialUpdateOne {
+	return hmuo.SetOrganizationID(o.ID)
+}
+
 // Mutation returns the HazardousMaterialMutation object of the builder.
 func (hmuo *HazardousMaterialUpdateOne) Mutation() *HazardousMaterialMutation {
 	return hmuo.mutation
+}
+
+// ClearOrganization clears the "organization" edge to the Organization entity.
+func (hmuo *HazardousMaterialUpdateOne) ClearOrganization() *HazardousMaterialUpdateOne {
+	hmuo.mutation.ClearOrganization()
+	return hmuo
 }
 
 // Where appends a list predicates to the HazardousMaterialUpdate builder.
@@ -632,6 +713,35 @@ func (hmuo *HazardousMaterialUpdateOne) sqlSave(ctx context.Context) (_node *Haz
 	}
 	if hmuo.mutation.ProperShippingNameCleared() {
 		_spec.ClearField(hazardousmaterial.FieldProperShippingName, field.TypeString)
+	}
+	if hmuo.mutation.OrganizationCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   hazardousmaterial.OrganizationTable,
+			Columns: []string{hazardousmaterial.OrganizationColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(organization.FieldID, field.TypeUUID),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := hmuo.mutation.OrganizationIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   hazardousmaterial.OrganizationTable,
+			Columns: []string{hazardousmaterial.OrganizationColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(organization.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
 	_spec.AddModifiers(hmuo.modifiers...)
 	_node = &HazardousMaterial{config: hmuo.config}

@@ -11,6 +11,7 @@ import (
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
+	"github.com/emoss08/trenova/internal/ent/organization"
 	"github.com/emoss08/trenova/internal/ent/predicate"
 	"github.com/emoss08/trenova/internal/ent/shipmentcommodity"
 	"github.com/google/uuid"
@@ -27,6 +28,20 @@ type ShipmentCommodityUpdate struct {
 // Where appends a list predicates to the ShipmentCommodityUpdate builder.
 func (scu *ShipmentCommodityUpdate) Where(ps ...predicate.ShipmentCommodity) *ShipmentCommodityUpdate {
 	scu.mutation.Where(ps...)
+	return scu
+}
+
+// SetOrganizationID sets the "organization_id" field.
+func (scu *ShipmentCommodityUpdate) SetOrganizationID(u uuid.UUID) *ShipmentCommodityUpdate {
+	scu.mutation.SetOrganizationID(u)
+	return scu
+}
+
+// SetNillableOrganizationID sets the "organization_id" field if the given value is not nil.
+func (scu *ShipmentCommodityUpdate) SetNillableOrganizationID(u *uuid.UUID) *ShipmentCommodityUpdate {
+	if u != nil {
+		scu.SetOrganizationID(*u)
+	}
 	return scu
 }
 
@@ -120,9 +135,20 @@ func (scu *ShipmentCommodityUpdate) SetNillablePlacardNeeded(b *bool) *ShipmentC
 	return scu
 }
 
+// SetOrganization sets the "organization" edge to the Organization entity.
+func (scu *ShipmentCommodityUpdate) SetOrganization(o *Organization) *ShipmentCommodityUpdate {
+	return scu.SetOrganizationID(o.ID)
+}
+
 // Mutation returns the ShipmentCommodityMutation object of the builder.
 func (scu *ShipmentCommodityUpdate) Mutation() *ShipmentCommodityMutation {
 	return scu.mutation
+}
+
+// ClearOrganization clears the "organization" edge to the Organization entity.
+func (scu *ShipmentCommodityUpdate) ClearOrganization() *ShipmentCommodityUpdate {
+	scu.mutation.ClearOrganization()
+	return scu
 }
 
 // Save executes the query and returns the number of nodes affected by the update operation.
@@ -222,6 +248,35 @@ func (scu *ShipmentCommodityUpdate) sqlSave(ctx context.Context) (n int, err err
 	if value, ok := scu.mutation.PlacardNeeded(); ok {
 		_spec.SetField(shipmentcommodity.FieldPlacardNeeded, field.TypeBool, value)
 	}
+	if scu.mutation.OrganizationCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   shipmentcommodity.OrganizationTable,
+			Columns: []string{shipmentcommodity.OrganizationColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(organization.FieldID, field.TypeUUID),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := scu.mutation.OrganizationIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   shipmentcommodity.OrganizationTable,
+			Columns: []string{shipmentcommodity.OrganizationColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(organization.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
 	_spec.AddModifiers(scu.modifiers...)
 	if n, err = sqlgraph.UpdateNodes(ctx, scu.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
@@ -242,6 +297,20 @@ type ShipmentCommodityUpdateOne struct {
 	hooks     []Hook
 	mutation  *ShipmentCommodityMutation
 	modifiers []func(*sql.UpdateBuilder)
+}
+
+// SetOrganizationID sets the "organization_id" field.
+func (scuo *ShipmentCommodityUpdateOne) SetOrganizationID(u uuid.UUID) *ShipmentCommodityUpdateOne {
+	scuo.mutation.SetOrganizationID(u)
+	return scuo
+}
+
+// SetNillableOrganizationID sets the "organization_id" field if the given value is not nil.
+func (scuo *ShipmentCommodityUpdateOne) SetNillableOrganizationID(u *uuid.UUID) *ShipmentCommodityUpdateOne {
+	if u != nil {
+		scuo.SetOrganizationID(*u)
+	}
+	return scuo
 }
 
 // SetUpdatedAt sets the "updated_at" field.
@@ -334,9 +403,20 @@ func (scuo *ShipmentCommodityUpdateOne) SetNillablePlacardNeeded(b *bool) *Shipm
 	return scuo
 }
 
+// SetOrganization sets the "organization" edge to the Organization entity.
+func (scuo *ShipmentCommodityUpdateOne) SetOrganization(o *Organization) *ShipmentCommodityUpdateOne {
+	return scuo.SetOrganizationID(o.ID)
+}
+
 // Mutation returns the ShipmentCommodityMutation object of the builder.
 func (scuo *ShipmentCommodityUpdateOne) Mutation() *ShipmentCommodityMutation {
 	return scuo.mutation
+}
+
+// ClearOrganization clears the "organization" edge to the Organization entity.
+func (scuo *ShipmentCommodityUpdateOne) ClearOrganization() *ShipmentCommodityUpdateOne {
+	scuo.mutation.ClearOrganization()
+	return scuo
 }
 
 // Where appends a list predicates to the ShipmentCommodityUpdate builder.
@@ -465,6 +545,35 @@ func (scuo *ShipmentCommodityUpdateOne) sqlSave(ctx context.Context) (_node *Shi
 	}
 	if value, ok := scuo.mutation.PlacardNeeded(); ok {
 		_spec.SetField(shipmentcommodity.FieldPlacardNeeded, field.TypeBool, value)
+	}
+	if scuo.mutation.OrganizationCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   shipmentcommodity.OrganizationTable,
+			Columns: []string{shipmentcommodity.OrganizationColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(organization.FieldID, field.TypeUUID),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := scuo.mutation.OrganizationIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   shipmentcommodity.OrganizationTable,
+			Columns: []string{shipmentcommodity.OrganizationColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(organization.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
 	_spec.AddModifiers(scuo.modifiers...)
 	_node = &ShipmentCommodity{config: scuo.config}

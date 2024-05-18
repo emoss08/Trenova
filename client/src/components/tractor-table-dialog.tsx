@@ -258,7 +258,7 @@ export function TractorForm({
 }
 
 export function TractorDialog({ onOpenChange, open }: TableSheetProps) {
-  const { control, handleSubmit } = useForm<FormValues>({
+  const { control, reset, handleSubmit } = useForm<FormValues>({
     resolver: yupResolver(tractorSchema),
     defaultValues: {
       status: "Available",
@@ -284,6 +284,7 @@ export function TractorDialog({ onOpenChange, open }: TableSheetProps) {
     successMessage: "Tractor created successfully.",
     queryKeysToInvalidate: "tractors",
     closeModal: true,
+    reset,
     errorMessage: "Failed to create new tractor.",
   });
 
