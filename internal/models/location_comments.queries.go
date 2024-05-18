@@ -79,33 +79,42 @@ func (r *QueryService) deleteUnmatchedLocationComments(
 // Returns:
 //   - error: An error object that indicates why the update or creation failed, nil if no error occurred.
 func (r *QueryService) updateOrCreateLocationComments(ctx context.Context, tx *ent.Tx, entity *types.LocationUpdateRequest) error {
+	// Builders for new comments
+	builders := make([]*ent.LocationCommentCreate, 0, len(entity.Comments))
+
 	for _, comment := range entity.Comments {
 		if comment.ID != uuid.Nil {
-			if _, err := tx.LocationComment.UpdateOneID(comment.ID).
+			if err := tx.LocationComment.UpdateOneID(comment.ID).
 				SetComment(comment.Comment).
 				SetUserID(comment.UserID).
 				SetCommentTypeID(comment.CommentTypeID).
-				Save(ctx); err != nil {
+				Exec(ctx); err != nil {
 				return err
 			}
 		} else {
-			if _, err := tx.LocationComment.Create().
+			builder := tx.LocationComment.Create().
 				SetLocationID(entity.ID).
 				SetComment(comment.Comment).
 				SetBusinessUnitID(entity.BusinessUnitID).
 				SetOrganizationID(entity.OrganizationID).
 				SetUserID(comment.UserID).
-				SetCommentTypeID(comment.CommentTypeID).
-				Save(ctx); err != nil {
-				return err
-			}
+				SetCommentTypeID(comment.CommentTypeID)
+			builders = append(builders, builder)
+		}
+	}
+
+	// Create new comments in bulk
+	if len(builders) > 0 {
+		if err := tx.LocationComment.CreateBulk(builders...).Exec(ctx); err != nil {
+			r.Logger.Err(err).Msg("Error creating location comments")
+			return err
 		}
 	}
 
 	return nil
 }
 
-// CreateLocationComments creates location comment.
+// CreateLocationComments creates location comments in bulk.
 //
 // Parameters:
 //
@@ -117,18 +126,23 @@ func (r *QueryService) updateOrCreateLocationComments(ctx context.Context, tx *e
 // Returns:
 //   - error: An error object that indicates why the creation failed, nil if no error occurred.
 func (r *QueryService) CreateLocationComments(ctx context.Context, tx *ent.Tx, locationID uuid.UUID, entity *types.LocationRequest) error {
+	builders := make([]*ent.LocationCommentCreate, 0, len(entity.Comments))
+
 	for _, comment := range entity.Comments {
-		if err := tx.LocationComment.Create().
+		builder := tx.LocationComment.Create().
 			SetLocationID(locationID).
 			SetComment(comment.Comment).
 			SetBusinessUnitID(entity.BusinessUnitID).
 			SetOrganizationID(entity.OrganizationID).
 			SetUserID(comment.UserID).
-			SetCommentTypeID(comment.CommentTypeID).
-			Exec(ctx); err != nil {
-			r.Logger.Err(err).Msg("Error creating location comment")
-			return err
-		}
+			SetCommentTypeID(comment.CommentTypeID)
+		builders = append(builders, builder)
 	}
+
+	if err := tx.LocationComment.CreateBulk(builders...).Exec(ctx); err != nil {
+		r.Logger.Err(err).Msg("Error creating location comments")
+		return err
+	}
+
 	return nil
 }

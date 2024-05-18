@@ -11,7 +11,7 @@ import (
 	"github.com/google/uuid"
 )
 
-func GetShipmentControlByOrganization(
+func (r *QueryService) GetShipmentControlByOrganization(
 	ctx context.Context, client *ent.Client, organizationID, businessUnitID uuid.UUID,
 ) (*ent.ShipmentControl, error) {
 	shipmentControl, err := client.ShipmentControl.Query().
@@ -28,7 +28,7 @@ func GetShipmentControlByOrganization(
 	return shipmentControl, nil
 }
 
-func GetBillingControlByOrganization(
+func (r *QueryService) GetBillingControlByOrganization(
 	ctx context.Context, client *ent.Client, organizationID, businessUnitID uuid.UUID,
 ) (*ent.BillingControl, error) {
 	billingControl, err := client.BillingControl.Query().
@@ -45,7 +45,7 @@ func GetBillingControlByOrganization(
 	return billingControl, nil
 }
 
-func GetDispatchControlByOrganization(
+func (r *QueryService) GetDispatchControlByOrganization(
 	ctx context.Context, client *ent.Client, organizationID, businessUnitID uuid.UUID,
 ) (*ent.DispatchControl, error) {
 	dispatchControl, err := client.DispatchControl.Query().
