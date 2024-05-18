@@ -8,6 +8,7 @@ import OrganizationSwitcher from "@/components/layout/team-switcher";
 import { RainbowTopBar } from "@/components/layout/topbar";
 import { UserAvatarMenu } from "@/components/layout/user-avatar-menu";
 import { useQueryInvalidationListener } from "@/hooks/useBroadcast";
+import { useNotificationListener } from "@/hooks/useNotification";
 import { useUserStore } from "@/stores/AuthStore";
 import React from "react";
 import { useLocation } from "react-router-dom";
@@ -26,6 +27,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
   const queryParams = new URLSearchParams(location.search);
   const hideHeader = queryParams.get("hideHeader") === "true";
   useQueryInvalidationListener();
+  useNotificationListener();
 
   return (
     <div className="bg-background relative flex min-h-screen flex-col" id="app">

@@ -73,8 +73,7 @@ func (r *UserNotificationService) CreateUserNotification(
 	ctx context.Context, orgID, buID, userID uuid.UUID, title, description, actionURL string,
 ) error {
 	err := util.WithTx(ctx, r.Client, func(tx *ent.Tx) error {
-		var err error
-		err = r.createUserNotificationEntity(ctx, tx, orgID, buID, userID, title, description, actionURL)
+		err := r.createUserNotificationEntity(ctx, tx, orgID, buID, userID, title, description, actionURL)
 		if err != nil {
 			return err
 		}
@@ -109,8 +108,7 @@ func (r *UserNotificationService) createUserNotificationEntity(
 func (r *UserNotificationService) MarkNotificationsAsRead(
 	ctx context.Context, orgID, buID, userID uuid.UUID,
 ) error {
-	log.Printf("Marking notifications as read for user %s in organization %s", userID, orgID)
-	asRead, err := r.Client.UserNotification.Update().
+	err := r.Client.UserNotification.Update().
 		Where(
 			usernotification.HasOrganizationWith(
 				organization.IDEQ(orgID),
@@ -120,13 +118,11 @@ func (r *UserNotificationService) MarkNotificationsAsRead(
 				user.IDEQ(userID),
 			),
 		).SetIsRead(true).
-		Save(ctx)
+		Exec(ctx)
 	if err != nil {
 		log.Printf("Failed to delete user notifications: %v", err)
 		return err
 	}
-
-	log.Printf("Marked %d notifications as read", asRead)
 
 	return nil
 }

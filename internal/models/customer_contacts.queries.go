@@ -99,8 +99,7 @@ func (r *QueryService) CreateCustomerContacts(ctx context.Context, tx *ent.Tx, c
 		builders = append(builders, builder)
 	}
 
-	err := tx.CustomerContact.CreateBulk(builders...).Exec(ctx)
-	if err != nil {
+	if err := tx.CustomerContact.CreateBulk(builders...).Exec(ctx); err != nil {
 		r.Logger.Err(err).Msg("Error creating customer contacts")
 		return err
 	}
@@ -124,14 +123,13 @@ func (r *QueryService) updateOrCreateCustomerContacts(ctx context.Context, tx *e
 	// Update existing contacts
 	for _, contact := range entity.Contacts {
 		if contact.ID != uuid.Nil {
-			err := tx.CustomerContact.UpdateOneID(contact.ID).
+			if err := tx.CustomerContact.UpdateOneID(contact.ID).
 				SetName(contact.Name).
 				SetEmail(contact.Email).
 				SetTitle(contact.Title).
 				SetPhoneNumber(contact.PhoneNumber).
 				SetIsPayableContact(contact.IsPayableContact).
-				Exec(ctx)
-			if err != nil {
+				Exec(ctx); err != nil {
 				r.Logger.Err(err).Msg("Error updating customer contact")
 				return err
 			}
@@ -151,8 +149,7 @@ func (r *QueryService) updateOrCreateCustomerContacts(ctx context.Context, tx *e
 
 	// Create new contacts in bulk
 	if len(newContactBuilders) > 0 {
-		err := tx.CustomerContact.CreateBulk(newContactBuilders...).Exec(ctx)
-		if err != nil {
+		if err := tx.CustomerContact.CreateBulk(newContactBuilders...).Exec(ctx); err != nil {
 			r.Logger.Err(err).Msg("Error creating customer contacts in bulk")
 			return err
 		}

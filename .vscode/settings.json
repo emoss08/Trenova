@@ -32,5 +32,5 @@
     "tooltitude.updateImportsOnRename": false,
     "tooltitude.codeAction.navigate": false,
     "glassit.alpha": 250,
-    "editor.fontSize": 13
+    "editor.fontSize": 15
 }

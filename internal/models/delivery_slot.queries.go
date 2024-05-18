@@ -54,19 +54,23 @@ func (r *QueryService) SyncDeliverySlots(
 func (r *QueryService) CreateDeliverySlots(
 	ctx context.Context, tx *ent.Tx, customerID uuid.UUID, entity *types.CustomerRequest,
 ) error {
+	builders := make([]*ent.DeliverySlotCreate, 0, len(entity.DeliverySlots))
+
 	for _, slot := range entity.DeliverySlots {
-		err := tx.DeliverySlot.Create().
+		builder := tx.DeliverySlot.Create().
 			SetCustomerID(customerID).
 			SetBusinessUnitID(entity.BusinessUnitID).
 			SetOrganizationID(entity.OrganizationID).
 			SetDayOfWeek(slot.DayOfWeek).
 			SetStartTime(slot.StartTime).
-			SetEndTime(slot.EndTime).
-			Exec(ctx)
-		if err != nil {
-			r.Logger.Err(err).Msg("Error creating delivery slot")
-			return err
-		}
+			SetEndTime(slot.EndTime)
+		builders = append(builders, builder)
+	}
+
+	err := tx.DeliverySlot.CreateBulk(builders...).Exec(ctx)
+	if err != nil {
+		r.Logger.Err(err).Msg("Error creating delivery slots")
+		return err
 	}
 
 	return nil
@@ -82,6 +86,9 @@ func (r *QueryService) CreateDeliverySlots(
 // Returns:
 //   - error: An error object that indicates why the update or creation failed, nil if no error occurred.
 func (r *QueryService) updateOrCreateDeliverySlots(ctx context.Context, tx *ent.Tx, entity *types.CustomerUpdateRequest) error {
+	// Builders for new delivery slots
+	builders := make([]*ent.DeliverySlotCreate, 0, len(entity.DeliverySlots))
+
 	for _, slot := range entity.DeliverySlots {
 		if slot.ID != uuid.Nil {
 			if err := tx.DeliverySlot.UpdateOneID(slot.ID).
@@ -93,18 +100,24 @@ func (r *QueryService) updateOrCreateDeliverySlots(ctx context.Context, tx *ent.
 				return err
 			}
 		} else {
-			if err := tx.DeliverySlot.Create().
+			builder := tx.DeliverySlot.Create().
 				SetBusinessUnitID(entity.BusinessUnitID).
 				SetOrganizationID(entity.OrganizationID).
 				SetCustomerID(entity.ID).
 				SetLocationID(slot.LocationID).
 				SetDayOfWeek(slot.DayOfWeek).
 				SetStartTime(slot.StartTime).
-				SetEndTime(slot.EndTime).
-				Exec(ctx); err != nil {
-				r.Logger.Err(err).Msg("Error creating delivery slot")
-				return err
-			}
+				SetEndTime(slot.EndTime)
+			builders = append(builders, builder)
+		}
+	}
+
+	// Create new delivery slots in bulk.
+	if len(builders) > 0 {
+		err := tx.DeliverySlot.CreateBulk(builders...).Exec(ctx)
+		if err != nil {
+			r.Logger.Err(err).Msg("Error creating delivery slots")
+			return err
 		}
 	}
 

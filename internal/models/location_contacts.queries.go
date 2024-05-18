@@ -11,18 +11,22 @@ import (
 )
 
 func (r *QueryService) CreateLocationContacts(ctx context.Context, tx *ent.Tx, locationID uuid.UUID, entity *types.LocationRequest) error {
+	builders := make([]*ent.LocationContactCreate, 0, len(entity.Contacts))
+
 	for _, contact := range entity.Contacts {
-		if err := tx.LocationContact.Create().
+		builder := tx.LocationContact.Create().
 			SetLocationID(locationID).
 			SetBusinessUnitID(entity.BusinessUnitID).
 			SetOrganizationID(entity.OrganizationID).
 			SetName(contact.Name).
 			SetEmailAddress(contact.EmailAddress).
-			SetPhoneNumber(contact.PhoneNumber).
-			Exec(ctx); err != nil {
-			r.Logger.Err(err).Msg("Error creating location contact")
-			return err
-		}
+			SetPhoneNumber(contact.PhoneNumber)
+		builders = append(builders, builder)
+	}
+
+	if err := tx.LocationContact.CreateBulk(builders...).Exec(ctx); err != nil {
+		r.Logger.Err(err).Msg("Error creating location contacts")
+		return err
 	}
 
 	return nil
@@ -99,26 +103,35 @@ func (r *QueryService) deleteUnmatchedLocationContacts(
 // Returns:
 //   - error: An error object that indicates why the update or creation failed, nil if no error occurred.
 func (r *QueryService) updateOrCreateLocationContacts(ctx context.Context, tx *ent.Tx, entity *types.LocationUpdateRequest) error {
+	// Builders for new contacts
+	builders := make([]*ent.LocationContactCreate, 0, len(entity.Contacts))
+
 	for _, contact := range entity.Contacts {
 		if contact.ID != uuid.Nil {
-			if _, err := tx.LocationContact.UpdateOneID(contact.ID).
+			if err := tx.LocationContact.UpdateOneID(contact.ID).
 				SetName(contact.Name).
 				SetEmailAddress(contact.EmailAddress).
 				SetPhoneNumber(contact.PhoneNumber).
-				Save(ctx); err != nil {
+				Exec(ctx); err != nil {
 				return err
 			}
 		} else {
-			if _, err := tx.LocationContact.Create().
+			builder := tx.LocationContact.Create().
 				SetLocationID(entity.ID).
 				SetBusinessUnitID(entity.BusinessUnitID).
 				SetOrganizationID(entity.OrganizationID).
 				SetName(contact.Name).
 				SetEmailAddress(contact.EmailAddress).
-				SetPhoneNumber(contact.PhoneNumber).
-				Save(ctx); err != nil {
-				return err
-			}
+				SetPhoneNumber(contact.PhoneNumber)
+			builders = append(builders, builder)
+		}
+	}
+
+	// Create new contacts in bulk.
+	if len(builders) > 0 {
+		if err := tx.LocationContact.CreateBulk(builders...).Exec(ctx); err != nil {
+			r.Logger.Err(err).Msg("Error creating location contacts")
+			return err
 		}
 	}
 
