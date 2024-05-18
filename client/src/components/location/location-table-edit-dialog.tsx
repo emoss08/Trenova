@@ -9,7 +9,6 @@ import {
   SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useCustomMutation } from "@/hooks/useCustomMutation";
 import { formatToUserTimezone } from "@/lib/date";
 import { cn } from "@/lib/utils";
@@ -22,6 +21,8 @@ import type {
 import { type TableSheetProps } from "@/types/tables";
 import { yupResolver } from "@hookform/resolvers/yup";
 import { useForm } from "react-hook-form";
+import { Badge } from "../ui/badge";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "../ui/new/new-tabs";
 import { LocationCommentForm } from "./location-comments-form";
 
 export function LocationEditForm({
@@ -72,9 +73,9 @@ export function LocationEditForm({
       onSubmit={handleSubmit(onSubmit)}
       className="flex h-full flex-col overflow-y-auto"
     >
-      <Tabs defaultValue="info" className="w-full flex-1">
-        <TabsList>
-          <TabsTrigger value="info">Information</TabsTrigger>
+      <Tabs defaultValue="info" className="mt-10 w-full flex-1">
+        <TabsList className="mx-auto space-x-4">
+          <TabsTrigger value="info">General Information</TabsTrigger>
           <TabsTrigger value="comments">Comments</TabsTrigger>
           <TabsTrigger value="contacts">Contacts</TabsTrigger>
         </TabsList>
@@ -111,23 +112,27 @@ export function LocationTableEditSheet({
 }: TableSheetProps) {
   const [location] = useTableStore.use("currentRecord") as Location[];
 
+  if (!location) return null;
+
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent className={cn("w-full xl:w-1/2")}>
         <SheetHeader>
-          <SheetTitle>{location && location.name}</SheetTitle>
+          <SheetTitle>
+            <span>{location.name}</span>
+            <Badge className="ml-5" variant="purple">
+              {location.id}
+            </Badge>
+          </SheetTitle>
           <SheetDescription>
-            Last updated on{" "}
-            {location && formatToUserTimezone(location.updatedAt)}
+            Last updated on {formatToUserTimezone(location.updatedAt)}
           </SheetDescription>
         </SheetHeader>
-        {location && (
-          <LocationEditForm
-            location={location}
-            open={open}
-            onOpenChange={onOpenChange}
-          />
-        )}
+        <LocationEditForm
+          location={location}
+          open={open}
+          onOpenChange={onOpenChange}
+        />
       </SheetContent>
     </Sheet>
   );

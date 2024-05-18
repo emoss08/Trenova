@@ -283,7 +283,7 @@ export function useCustomers(show?: boolean) {
   const selectCustomersData =
     (data as Customer[])?.map((item: Customer) => ({
       value: item.id,
-      label: item.name,
+      label: `${item.code} - ${item.name}`,
     })) || [];
 
   return { selectCustomersData, isLoading, isError, isFetched };

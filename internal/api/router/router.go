@@ -92,7 +92,7 @@ func Init(s *api.Server) {
 	if s.Config.Fiber.EnableCORSMiddleware {
 		s.Fiber.Use(cors.New(
 			cors.Config{
-				AllowOrigins:     "https://localhost:5173, http://localhost:5173",
+				AllowOrigins:     "https://localhost:5173, http://localhost:5173, https://localhost:4173, http://localhost:4173",
 				AllowHeaders:     "Authorization, Origin, Content-Type, Accept, X-CSRF-Token, X-Idempotency-Key",
 				AllowMethods:     "GET, POST, PUT, DELETE, OPTIONS",
 				AllowCredentials: true,

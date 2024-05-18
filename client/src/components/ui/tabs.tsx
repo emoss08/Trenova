@@ -53,7 +53,8 @@ const TabsTrigger = React.forwardRef<
       className={cn(
         "relative inline-flex flex-1 items-center justify-center whitespace-nowrap px-3 py-1.5 text-sm text-foreground font-medium transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50",
         "data-[state=active]:border-b-4 data-[state=active]:border-white data-[state=active]:-mb-2 data-[state=active]:z-10",
-        "data-[state=inactive]:border-b-2 data-[state=inactive]:border-transparent data-[state=inactive]:text-muted-foreground data-[state=inactive]:-mb-1.5 data-[state=active]:z-10",
+        "data-[state=inactive]:border-b-2 data-[state=inactive]:text-muted-foreground data-[state=inactive]:-mb-1.5 data-[state=active]:z-10",
+        " data-[state=inactive]:hover:border-b-4 data-[state=inactive]:hover:border-white data-[state=inactive]:hover:-mb-2 data-[state=inactive]:hover:text-foreground",
         isError
           ? "data-[state=inactive]:border-red-500 data-[state=active]:border-red-500"
           : "border-transparent",
