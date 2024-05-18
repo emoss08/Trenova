@@ -31,12 +31,35 @@ func NewLocationService(s *api.Server) *LocationService {
 	}
 }
 
+// GetLocations retrieves a list of locations for a given organization and business unit.
+// It returns a slice of Location entities, the total number of location records, and an error object.
+//
+// Parameters:
+//   - ctx: Context which may contain deadlines, cancellation signals, and other request-scoped values.
+//   - limit int: The maximum number of records to return.
+//   - offset int: The number of records to skip before starting to return records.
+//   - orgID uuid.UUID: The identifier of the organization.
+//   - buID uuid.UUID: The identifier of the business unit.
+//
+// Returns:
+//   - []*ent.Location: A slice of Location entities.
+//   - int: The total number of location records.
+//   - error: An error object that indicates why the retrieval failed, nil if no error occurred.
 func (r *LocationService) GetLocations(
 	ctx context.Context, limit, offset int, orgID, buID uuid.UUID,
 ) ([]*ent.Location, int, error) {
 	return r.QueryService.GetLocations(ctx, limit, offset, orgID, buID)
 }
 
+// CreateLocation creates a new location entity.
+//
+// Parameters:
+//   - ctx: Context which may contain deadlines, cancellation signals, and other request-scoped values.
+//   - newEntity *LocationRequest: The location request containing the details of the location to be created.
+//
+// Returns:
+//   - *ent.Location: A pointer to the created Location entity.
+//   - error: An error object that indicates why the creation failed, nil if no error occurred.
 func (r *LocationService) CreateLocation(ctx context.Context, newEntity *types.LocationRequest) (*ent.Location, error) {
 	var createdEntity *ent.Location
 
@@ -70,6 +93,15 @@ func (r *LocationService) CreateLocation(ctx context.Context, newEntity *types.L
 	return createdEntity, nil
 }
 
+// UpdateLocation updates a location entity.
+//
+// Parameters:
+//   - ctx: Context which may contain deadlines, cancellation signals, and other request-scoped values.
+//   - entity *LocationUpdateRequest: The location update request containing the details of the location to be updated.
+//
+// Returns:
+//   - *ent.Location: A pointer to the updated Location entity.
+//   - error: An error object that indicates why the update failed, nil if no error occurred.
 func (r *LocationService) UpdateLocation(ctx context.Context, entity *types.LocationUpdateRequest) (*ent.Location, error) {
 	var updatedEntity *ent.Location
 
@@ -84,7 +116,7 @@ func (r *LocationService) UpdateLocation(ctx context.Context, entity *types.Loca
 			return err
 		}
 
-		return r.QueryService.SyncLocationComments(ctx, tx, entity, updatedEntity)
+		return r.QueryService.SyncLocationContacts(ctx, tx, entity, updatedEntity)
 	})
 	if err != nil {
 		return nil, err

@@ -19,6 +19,7 @@ import (
 	"github.com/emoss08/trenova/internal/util/types"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgtype"
+	"github.com/rs/zerolog"
 )
 
 // Shipment holds the schema definition for the Shipment entity.
@@ -348,20 +349,24 @@ func handleUpdateShipment(ctx context.Context, m *gen.ShipmentMutation, client *
 
 // validateShipmentControl validates various controls related to a shipment.
 func validateShipmentControl(ctx context.Context, m *gen.ShipmentMutation, client *gen.Client) error {
+	// Initialize the query service.
+	queryService := models.QueryService{Client: client, Logger: &zerolog.Logger{}}
+
+	// Get the organization and business unit IDs from the mutation.
 	orgID, _ := m.OrganizationID()
 	buID, _ := m.BusinessUnitID()
 
-	shipmentControl, err := models.GetShipmentControlByOrganization(ctx, client, orgID, buID)
+	shipmentControl, err := queryService.GetShipmentControlByOrganization(ctx, client, orgID, buID)
 	if err != nil {
 		return err
 	}
 
-	billingControl, err := models.GetBillingControlByOrganization(ctx, client, orgID, buID)
+	billingControl, err := queryService.GetBillingControlByOrganization(ctx, client, orgID, buID)
 	if err != nil {
 		return err
 	}
 
-	dispatchControl, err := models.GetDispatchControlByOrganization(ctx, client, orgID, buID)
+	dispatchControl, err := queryService.GetDispatchControlByOrganization(ctx, client, orgID, buID)
 	if err != nil {
 		return err
 	}
