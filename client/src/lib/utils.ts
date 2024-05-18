@@ -283,3 +283,10 @@ export const toTitleCase = (value: string) => {
     .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
     .join(" ");
 };
+
+export const focusRing = [
+  // base
+  "outline outline-offset-2 outline-0 focus-visible:outline-2",
+  // outline color
+  "outline-blue-500 dark:outline-blue-500",
+];

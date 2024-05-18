@@ -9,7 +9,6 @@ import {
   SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useCustomMutation } from "@/hooks/useCustomMutation";
 import { cn } from "@/lib/utils";
 import { LocationSchema } from "@/lib/validations/LocationSchema";
@@ -17,6 +16,7 @@ import { type LocationFormValues as FormValues } from "@/types/location";
 import { type TableSheetProps } from "@/types/tables";
 import { yupResolver } from "@hookform/resolvers/yup";
 import { useForm } from "react-hook-form";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "../ui/new/new-tabs";
 import { LocationCommentForm } from "./location-comments-form";
 
 export function LocationTableSheet({ onOpenChange, open }: TableSheetProps) {
@@ -61,9 +61,9 @@ export function LocationTableSheet({ onOpenChange, open }: TableSheetProps) {
           onSubmit={handleSubmit(onSubmit)}
           className="flex h-full flex-col overflow-y-auto"
         >
-          <Tabs defaultValue="info" className="w-full flex-1">
-            <TabsList className="mt-10">
-              <TabsTrigger value="info">Information</TabsTrigger>
+          <Tabs defaultValue="info" className="mt-10 w-full flex-1">
+            <TabsList className="mx-auto space-x-4">
+              <TabsTrigger value="info">General Information</TabsTrigger>
               <TabsTrigger value="comments">Comments</TabsTrigger>
               <TabsTrigger value="contacts">Contacts</TabsTrigger>
             </TabsList>
