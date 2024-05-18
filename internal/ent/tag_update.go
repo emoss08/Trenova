@@ -12,6 +12,7 @@ import (
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
 	"github.com/emoss08/trenova/internal/ent/generalledgeraccount"
+	"github.com/emoss08/trenova/internal/ent/organization"
 	"github.com/emoss08/trenova/internal/ent/predicate"
 	"github.com/emoss08/trenova/internal/ent/tag"
 	"github.com/google/uuid"
@@ -28,6 +29,20 @@ type TagUpdate struct {
 // Where appends a list predicates to the TagUpdate builder.
 func (tu *TagUpdate) Where(ps ...predicate.Tag) *TagUpdate {
 	tu.mutation.Where(ps...)
+	return tu
+}
+
+// SetOrganizationID sets the "organization_id" field.
+func (tu *TagUpdate) SetOrganizationID(u uuid.UUID) *TagUpdate {
+	tu.mutation.SetOrganizationID(u)
+	return tu
+}
+
+// SetNillableOrganizationID sets the "organization_id" field if the given value is not nil.
+func (tu *TagUpdate) SetNillableOrganizationID(u *uuid.UUID) *TagUpdate {
+	if u != nil {
+		tu.SetOrganizationID(*u)
+	}
 	return tu
 }
 
@@ -112,6 +127,11 @@ func (tu *TagUpdate) ClearColor() *TagUpdate {
 	return tu
 }
 
+// SetOrganization sets the "organization" edge to the Organization entity.
+func (tu *TagUpdate) SetOrganization(o *Organization) *TagUpdate {
+	return tu.SetOrganizationID(o.ID)
+}
+
 // AddGeneralLedgerAccountIDs adds the "general_ledger_account" edge to the GeneralLedgerAccount entity by IDs.
 func (tu *TagUpdate) AddGeneralLedgerAccountIDs(ids ...uuid.UUID) *TagUpdate {
 	tu.mutation.AddGeneralLedgerAccountIDs(ids...)
@@ -130,6 +150,12 @@ func (tu *TagUpdate) AddGeneralLedgerAccount(g ...*GeneralLedgerAccount) *TagUpd
 // Mutation returns the TagMutation object of the builder.
 func (tu *TagUpdate) Mutation() *TagMutation {
 	return tu.mutation
+}
+
+// ClearOrganization clears the "organization" edge to the Organization entity.
+func (tu *TagUpdate) ClearOrganization() *TagUpdate {
+	tu.mutation.ClearOrganization()
+	return tu
 }
 
 // ClearGeneralLedgerAccount clears all "general_ledger_account" edges to the GeneralLedgerAccount entity.
@@ -247,6 +273,35 @@ func (tu *TagUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	if tu.mutation.ColorCleared() {
 		_spec.ClearField(tag.FieldColor, field.TypeString)
 	}
+	if tu.mutation.OrganizationCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   tag.OrganizationTable,
+			Columns: []string{tag.OrganizationColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(organization.FieldID, field.TypeUUID),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := tu.mutation.OrganizationIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   tag.OrganizationTable,
+			Columns: []string{tag.OrganizationColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(organization.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
 	if tu.mutation.GeneralLedgerAccountCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2M,
@@ -312,6 +367,20 @@ type TagUpdateOne struct {
 	hooks     []Hook
 	mutation  *TagMutation
 	modifiers []func(*sql.UpdateBuilder)
+}
+
+// SetOrganizationID sets the "organization_id" field.
+func (tuo *TagUpdateOne) SetOrganizationID(u uuid.UUID) *TagUpdateOne {
+	tuo.mutation.SetOrganizationID(u)
+	return tuo
+}
+
+// SetNillableOrganizationID sets the "organization_id" field if the given value is not nil.
+func (tuo *TagUpdateOne) SetNillableOrganizationID(u *uuid.UUID) *TagUpdateOne {
+	if u != nil {
+		tuo.SetOrganizationID(*u)
+	}
+	return tuo
 }
 
 // SetUpdatedAt sets the "updated_at" field.
@@ -395,6 +464,11 @@ func (tuo *TagUpdateOne) ClearColor() *TagUpdateOne {
 	return tuo
 }
 
+// SetOrganization sets the "organization" edge to the Organization entity.
+func (tuo *TagUpdateOne) SetOrganization(o *Organization) *TagUpdateOne {
+	return tuo.SetOrganizationID(o.ID)
+}
+
 // AddGeneralLedgerAccountIDs adds the "general_ledger_account" edge to the GeneralLedgerAccount entity by IDs.
 func (tuo *TagUpdateOne) AddGeneralLedgerAccountIDs(ids ...uuid.UUID) *TagUpdateOne {
 	tuo.mutation.AddGeneralLedgerAccountIDs(ids...)
@@ -413,6 +487,12 @@ func (tuo *TagUpdateOne) AddGeneralLedgerAccount(g ...*GeneralLedgerAccount) *Ta
 // Mutation returns the TagMutation object of the builder.
 func (tuo *TagUpdateOne) Mutation() *TagMutation {
 	return tuo.mutation
+}
+
+// ClearOrganization clears the "organization" edge to the Organization entity.
+func (tuo *TagUpdateOne) ClearOrganization() *TagUpdateOne {
+	tuo.mutation.ClearOrganization()
+	return tuo
 }
 
 // ClearGeneralLedgerAccount clears all "general_ledger_account" edges to the GeneralLedgerAccount entity.
@@ -559,6 +639,35 @@ func (tuo *TagUpdateOne) sqlSave(ctx context.Context) (_node *Tag, err error) {
 	}
 	if tuo.mutation.ColorCleared() {
 		_spec.ClearField(tag.FieldColor, field.TypeString)
+	}
+	if tuo.mutation.OrganizationCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   tag.OrganizationTable,
+			Columns: []string{tag.OrganizationColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(organization.FieldID, field.TypeUUID),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := tuo.mutation.OrganizationIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   tag.OrganizationTable,
+			Columns: []string{tag.OrganizationColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(organization.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
 	if tuo.mutation.GeneralLedgerAccountCleared() {
 		edge := &sqlgraph.EdgeSpec{

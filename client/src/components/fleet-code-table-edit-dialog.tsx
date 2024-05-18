@@ -29,7 +29,7 @@ function FleetCodeEditForm({
   fleetCode: FleetCode;
   open: boolean;
 }) {
-  const { control, handleSubmit } = useForm<FormValues>({
+  const { control, reset, handleSubmit } = useForm<FormValues>({
     resolver: yupResolver(fleetCodeSchema),
     defaultValues: fleetCode,
   });
@@ -38,8 +38,9 @@ function FleetCodeEditForm({
     method: "PUT",
     path: `/fleet-codes/${fleetCode.id}/`,
     successMessage: "Fleet Code updated successfully.",
-    queryKeysToInvalidate: ["fleet-code-table-data"],
+    queryKeysToInvalidate: "fleetCodes",
     closeModal: true,
+    reset,
     errorMessage: "Failed to update fleet code.",
   });
 

@@ -44,8 +44,8 @@ func ParseBodyAndValidate(c *fiber.Ctx, body any) error {
 	if err := ParseBody(c, body); err != nil {
 		return err
 	}
-
 	validator := GetValidatorInstance()
+
 	if err := validator.Validate(body); err != nil {
 		var validationErr *ValidationError
 		switch {

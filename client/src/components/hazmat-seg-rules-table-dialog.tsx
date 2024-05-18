@@ -76,14 +76,15 @@ export function HazmatSegRulesForm() {
 
 export function HazmatSegRulesDialog({ onOpenChange, open }: TableSheetProps) {
   const { hazmatSegRulesForm } = useHazmatSegRulesForm();
-  const { control, handleSubmit } = hazmatSegRulesForm;
+  const { control, handleSubmit, reset } = hazmatSegRulesForm;
 
   const mutation = useCustomMutation<FormValues>(control, {
     method: "POST",
     path: "/hazardous-material-segregations/",
     successMessage: "Hazardous material segregation rule created successfully.",
-    queryKeysToInvalidate: ["hazardous-material-segregation-table-data"],
+    queryKeysToInvalidate: "hazardousMaterialsSegregations",
     closeModal: true,
+    reset,
     errorMessage: "Failed to create hazardous material segregation rule.",
   });
 

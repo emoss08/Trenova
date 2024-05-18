@@ -24,7 +24,7 @@ import {
 } from "./ui/credenza";
 
 function ReasonCodeEditForm({ reasonCode }: { reasonCode: ReasonCode }) {
-  const { control, handleSubmit } = useForm<FormValues>({
+  const { control, reset, handleSubmit } = useForm<FormValues>({
     resolver: yupResolver(reasonCodeSchema),
     defaultValues: reasonCode,
   });
@@ -35,6 +35,7 @@ function ReasonCodeEditForm({ reasonCode }: { reasonCode: ReasonCode }) {
     successMessage: "Reason Codes updated successfully.",
     queryKeysToInvalidate: "reasonCodes",
     closeModal: true,
+    reset,
     errorMessage: "Failed to update reason codes.",
   });
 

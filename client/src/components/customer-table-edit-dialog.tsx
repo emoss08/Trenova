@@ -31,23 +31,24 @@ export function CustomerEditForm({
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }) {
-  if (!customer) return null;
-
   const customerForm = useForm<FormValues>({
     resolver: yupResolver(customerSchema),
     defaultValues: customer,
   });
 
-  const { control, handleSubmit } = customerForm;
+  const { control, reset, handleSubmit } = customerForm;
 
   const mutation = useCustomMutation<FormValues>(control, {
     method: "PUT",
     path: `/customers/${customer.id}/`,
     successMessage: "Customer updated successfully.",
-    queryKeysToInvalidate: ["customers-table-data"],
+    queryKeysToInvalidate: "customers",
     closeModal: true,
+    reset,
     errorMessage: "Failed to update existing customer.",
   });
+
+  if (!customer) return null;
 
   function onSubmit(values: FormValues) {
     mutation.mutate(values);

@@ -35,14 +35,21 @@ const (
 	Local = DeliveryMethod("local")
 )
 
+type RelationshipRequest struct {
+	ForeignKey      string   `json:"foreignKey" validate:"omitempty"`
+	ReferencedTable string   `json:"referencedTable" validate:"omitempty"`
+	Columns         []string `json:"columns" validate:"omitempty"`
+}
+
 // GenerateReportRequest represents the payload for generating a report.
 type GenerateReportRequest struct {
-	TableName      string         `json:"tableName" validate:"required"`
-	Columns        []string       `json:"columns" validate:"required"`
-	FileFormat     FileFormat     `json:"fileFormat" validate:"required"`
-	DeliveryMethod DeliveryMethod `json:"deliveryMethod" validate:"required"`
-	OrganizationID uuid.UUID      `json:"organizationId"`
-	BusinessUnitID uuid.UUID      `json:"businessUnitId"`
+	TableName      string                `json:"tableName" validate:"required"`
+	Columns        []string              `json:"columns" validate:"required"`
+	Relationships  []RelationshipRequest `json:"relationships" validate:"omitempty"`
+	FileFormat     FileFormat            `json:"fileFormat" validate:"required"`
+	DeliveryMethod DeliveryMethod        `json:"deliveryMethod" validate:"required"`
+	OrganizationID uuid.UUID             `json:"organizationId"`
+	BusinessUnitID uuid.UUID             `json:"businessUnitId"`
 }
 
 // GenerateReportResponse represents the response for generating a report.
@@ -74,11 +81,18 @@ type ColumnValue struct {
 	Description string `json:"description"`
 }
 
-// GetColumnsByTableName returns the column names for a given table name.
+// Relationship represents a foreign key relationship between tables.
+type Relationship struct {
+	ForeignKey       string        `json:"foreignKey"`
+	ReferencedTable  string        `json:"referencedTable"`
+	ReferencedColumn string        `json:"referencedColumn"`
+	Columns          []ColumnValue `json:"columns"`
+}
+
+// GetColumnsByTableName returns the column names and relationships for a given table name.
 //
-// This function is used to retrieve the column names for a given table name. It will exclude any columns
-func (r *ReportService) GetColumnsByTableName(ctx context.Context, tableName string) ([]ColumnValue, int, error) {
-	columns := make([]ColumnValue, 0)
+// This function is used to retrieve the column names and relationships for a given table name. It will exclude any columns
+func (r *ReportService) GetColumnsByTableName(ctx context.Context, tableName string) ([]ColumnValue, []Relationship, int, error) {
 	excludedTableNames := map[string]bool{
 		"table_change_alerts":       true,
 		"shipment_controls":         true,
@@ -88,7 +102,6 @@ func (r *ReportService) GetColumnsByTableName(ctx context.Context, tableName str
 		"business_units":            true,
 		"feasibility_tool_controls": true,
 		"users":                     true,
-		"general_ledger_accounts":   true,
 		"user_favorites":            true,
 		"us_states":                 true,
 		"invoice_controls":          true,
@@ -104,19 +117,119 @@ func (r *ReportService) GetColumnsByTableName(ctx context.Context, tableName str
 		"organization_id":  true,
 	}
 
-	err := util.WithTx(ctx, r.Client, func(tx *ent.Tx) error {
-		var err error
-		columns, _, err = r.getColumnsNames(ctx, tx, tableName, excludedTableNames, excludedColumns)
-		if err != nil {
-			return err
-		}
-		return nil
-	})
+	columns, relationships, _, err := r.getColumnsAndRelationships(ctx, tableName, excludedTableNames, excludedColumns)
 	if err != nil {
-		return nil, 0, err
+		return nil, nil, 0, err
 	}
 
-	return columns, len(columns), nil
+	return columns, relationships, len(columns), nil
+}
+
+// getColumnsAndRelationships returns the column names for a given table name and the relationships between the tables.
+//
+// This function is used to retrieve the column names for a given table name and identify relationships (foreign keys) between the tables.
+// It will exclude any columns that are in the excludedColumns map and any tables that are in the excludedTableNames map.
+func (r *ReportService) getColumnsAndRelationships(
+	ctx context.Context, tableName string,
+	excludedTableNames map[string]bool, excludedColumns map[string]bool,
+) ([]ColumnValue, []Relationship, int, error) {
+	if excludedTableNames[tableName] {
+		return nil, nil, 0, fmt.Errorf("table %s is excluded", tableName)
+	}
+
+	columnsQuery := `SELECT
+						c.column_name,
+						COALESCE(pgd.description, 'No description available') AS description
+					FROM
+						information_schema.columns AS c
+					LEFT JOIN pg_catalog.pg_statio_all_tables AS st
+						ON c.table_schema = st.schemaname AND c.table_name = st.relname
+					LEFT JOIN pg_catalog.pg_description AS pgd
+						ON pgd.objoid = st.relid AND pgd.objsubid = c.ordinal_position
+					WHERE
+						c.table_schema = 'public' AND c.table_name = $1
+					ORDER BY
+						c.ordinal_position ASC;`
+
+	rows, err := r.Client.QueryContext(ctx, columnsQuery, tableName)
+	if err != nil {
+		return nil, nil, 0, err
+	}
+	defer rows.Close()
+
+	var columns []ColumnValue
+	for rows.Next() {
+		var columnName, description string
+		if err = rows.Scan(&columnName, &description); err != nil {
+			return nil, nil, 0, err
+		}
+
+		if excludedColumns[columnName] {
+			continue // Skip excluded columns
+		}
+
+		formattedLabel := strings.ReplaceAll(util.ToTitleFormat(strings.ReplaceAll(columnName, "_", " ")), "_", " ")
+
+		columns = append(columns, ColumnValue{
+			Label:       formattedLabel,
+			Value:       columnName,
+			Description: description,
+		})
+	}
+
+	relationshipsQuery := `SELECT
+								kcu.column_name AS foreign_key,
+								ccu.table_name AS referenced_table,
+								ccu.column_name AS referenced_column
+							FROM
+								information_schema.table_constraints AS tc
+							JOIN
+								information_schema.key_column_usage AS kcu
+							ON
+								tc.constraint_name = kcu.constraint_name
+								AND tc.table_schema = kcu.table_schema
+							JOIN
+								information_schema.constraint_column_usage AS ccu
+							ON
+								ccu.constraint_name = tc.constraint_name
+								AND ccu.table_schema = tc.table_schema
+							WHERE
+								tc.constraint_type = 'FOREIGN KEY' AND tc.table_name = $1`
+
+	relRows, err := r.Client.QueryContext(ctx, relationshipsQuery, tableName)
+	if err != nil {
+		return nil, nil, 0, err
+	}
+	defer relRows.Close()
+
+	var relationships []Relationship
+	for relRows.Next() {
+		var foreignKey, referencedTable, referencedColumn string
+		if err = relRows.Scan(&foreignKey, &referencedTable, &referencedColumn); err != nil {
+			return nil, nil, 0, err
+		}
+
+		// Exclude relationships to certain tables
+		if excludedTableNames[referencedTable] {
+			continue
+		}
+
+		// Get columns and descriptions for the referenced table
+		refColumns, _, cErr := r.getColumnsNames(ctx, referencedTable, excludedTableNames, excludedColumns)
+		if cErr != nil {
+			r.Logger.Err(cErr).Msg("Failed to get columns for referenced table")
+			return nil, nil, 0, cErr
+		}
+
+		relationships = append(relationships, Relationship{
+			ForeignKey:       foreignKey,
+			ReferencedTable:  referencedTable,
+			ReferencedColumn: referencedColumn,
+			Columns:          refColumns,
+		})
+	}
+
+	return columns, relationships, len(columns), nil
 }
 
 // getColumnsNames returns the column names for a given table name.
@@ -124,7 +237,7 @@ func (r *ReportService) GetColumnsByTableName(ctx context.Context, tableName str
 // This function is used to retrieve the column names for a given table name. It will exclude any columns
 // that are in the excludedColumns map and any tables that are in the excludedTableNames map.
 func (r *ReportService) getColumnsNames(
-	ctx context.Context, tx *ent.Tx, tableName string,
+	ctx context.Context, tableName string,
 	excludedTableNames map[string]bool, excludedColumns map[string]bool,
 ) ([]ColumnValue, int, error) {
 	if excludedTableNames[tableName] {
@@ -145,8 +258,9 @@ func (r *ReportService) getColumnsNames(
             ORDER BY
                 c.ordinal_position ASC;`
 
-	rows, err := tx.QueryContext(ctx, query, tableName)
+	rows, err := r.Client.QueryContext(ctx, query, tableName)
 	if err != nil {
+		r.Logger.Err(err).Msg("Failed to query columns")
 		return nil, 0, err
 	}
 	defer rows.Close()
@@ -155,6 +269,7 @@ func (r *ReportService) getColumnsNames(
 	for rows.Next() {
 		var columnName, description string
 		if err = rows.Scan(&columnName, &description); err != nil {
+			r.Logger.Err(err).Msg("Failed to scan columns")
 			return nil, 0, err
 		}
 

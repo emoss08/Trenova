@@ -13,6 +13,7 @@ import (
 	"entgo.io/ent/schema/field"
 	"github.com/emoss08/trenova/internal/ent/location"
 	"github.com/emoss08/trenova/internal/ent/locationcontact"
+	"github.com/emoss08/trenova/internal/ent/organization"
 	"github.com/emoss08/trenova/internal/ent/predicate"
 	"github.com/google/uuid"
 )
@@ -28,6 +29,20 @@ type LocationContactUpdate struct {
 // Where appends a list predicates to the LocationContactUpdate builder.
 func (lcu *LocationContactUpdate) Where(ps ...predicate.LocationContact) *LocationContactUpdate {
 	lcu.mutation.Where(ps...)
+	return lcu
+}
+
+// SetOrganizationID sets the "organization_id" field.
+func (lcu *LocationContactUpdate) SetOrganizationID(u uuid.UUID) *LocationContactUpdate {
+	lcu.mutation.SetOrganizationID(u)
+	return lcu
+}
+
+// SetNillableOrganizationID sets the "organization_id" field if the given value is not nil.
+func (lcu *LocationContactUpdate) SetNillableOrganizationID(u *uuid.UUID) *LocationContactUpdate {
+	if u != nil {
+		lcu.SetOrganizationID(*u)
+	}
 	return lcu
 }
 
@@ -126,6 +141,11 @@ func (lcu *LocationContactUpdate) ClearPhoneNumber() *LocationContactUpdate {
 	return lcu
 }
 
+// SetOrganization sets the "organization" edge to the Organization entity.
+func (lcu *LocationContactUpdate) SetOrganization(o *Organization) *LocationContactUpdate {
+	return lcu.SetOrganizationID(o.ID)
+}
+
 // SetLocation sets the "location" edge to the Location entity.
 func (lcu *LocationContactUpdate) SetLocation(l *Location) *LocationContactUpdate {
 	return lcu.SetLocationID(l.ID)
@@ -134,6 +154,12 @@ func (lcu *LocationContactUpdate) SetLocation(l *Location) *LocationContactUpdat
 // Mutation returns the LocationContactMutation object of the builder.
 func (lcu *LocationContactUpdate) Mutation() *LocationContactMutation {
 	return lcu.mutation
+}
+
+// ClearOrganization clears the "organization" edge to the Organization entity.
+func (lcu *LocationContactUpdate) ClearOrganization() *LocationContactUpdate {
+	lcu.mutation.ClearOrganization()
+	return lcu
 }
 
 // ClearLocation clears the "location" edge to the Location entity.
@@ -244,6 +270,35 @@ func (lcu *LocationContactUpdate) sqlSave(ctx context.Context) (n int, err error
 	if lcu.mutation.PhoneNumberCleared() {
 		_spec.ClearField(locationcontact.FieldPhoneNumber, field.TypeString)
 	}
+	if lcu.mutation.OrganizationCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   locationcontact.OrganizationTable,
+			Columns: []string{locationcontact.OrganizationColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(organization.FieldID, field.TypeUUID),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := lcu.mutation.OrganizationIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   locationcontact.OrganizationTable,
+			Columns: []string{locationcontact.OrganizationColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(organization.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
 	if lcu.mutation.LocationCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
@@ -293,6 +348,20 @@ type LocationContactUpdateOne struct {
 	hooks     []Hook
 	mutation  *LocationContactMutation
 	modifiers []func(*sql.UpdateBuilder)
+}
+
+// SetOrganizationID sets the "organization_id" field.
+func (lcuo *LocationContactUpdateOne) SetOrganizationID(u uuid.UUID) *LocationContactUpdateOne {
+	lcuo.mutation.SetOrganizationID(u)
+	return lcuo
+}
+
+// SetNillableOrganizationID sets the "organization_id" field if the given value is not nil.
+func (lcuo *LocationContactUpdateOne) SetNillableOrganizationID(u *uuid.UUID) *LocationContactUpdateOne {
+	if u != nil {
+		lcuo.SetOrganizationID(*u)
+	}
+	return lcuo
 }
 
 // SetUpdatedAt sets the "updated_at" field.
@@ -390,6 +459,11 @@ func (lcuo *LocationContactUpdateOne) ClearPhoneNumber() *LocationContactUpdateO
 	return lcuo
 }
 
+// SetOrganization sets the "organization" edge to the Organization entity.
+func (lcuo *LocationContactUpdateOne) SetOrganization(o *Organization) *LocationContactUpdateOne {
+	return lcuo.SetOrganizationID(o.ID)
+}
+
 // SetLocation sets the "location" edge to the Location entity.
 func (lcuo *LocationContactUpdateOne) SetLocation(l *Location) *LocationContactUpdateOne {
 	return lcuo.SetLocationID(l.ID)
@@ -398,6 +472,12 @@ func (lcuo *LocationContactUpdateOne) SetLocation(l *Location) *LocationContactU
 // Mutation returns the LocationContactMutation object of the builder.
 func (lcuo *LocationContactUpdateOne) Mutation() *LocationContactMutation {
 	return lcuo.mutation
+}
+
+// ClearOrganization clears the "organization" edge to the Organization entity.
+func (lcuo *LocationContactUpdateOne) ClearOrganization() *LocationContactUpdateOne {
+	lcuo.mutation.ClearOrganization()
+	return lcuo
 }
 
 // ClearLocation clears the "location" edge to the Location entity.
@@ -537,6 +617,35 @@ func (lcuo *LocationContactUpdateOne) sqlSave(ctx context.Context) (_node *Locat
 	}
 	if lcuo.mutation.PhoneNumberCleared() {
 		_spec.ClearField(locationcontact.FieldPhoneNumber, field.TypeString)
+	}
+	if lcuo.mutation.OrganizationCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   locationcontact.OrganizationTable,
+			Columns: []string{locationcontact.OrganizationColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(organization.FieldID, field.TypeUUID),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := lcuo.mutation.OrganizationIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   locationcontact.OrganizationTable,
+			Columns: []string{locationcontact.OrganizationColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(organization.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
 	if lcuo.mutation.LocationCleared() {
 		edge := &sqlgraph.EdgeSpec{

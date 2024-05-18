@@ -55,6 +55,16 @@ const (
 	EdgeState = "state"
 	// EdgeShipments holds the string denoting the shipments edge name in mutations.
 	EdgeShipments = "shipments"
+	// EdgeEmailProfile holds the string denoting the email_profile edge name in mutations.
+	EdgeEmailProfile = "email_profile"
+	// EdgeRuleProfile holds the string denoting the rule_profile edge name in mutations.
+	EdgeRuleProfile = "rule_profile"
+	// EdgeDetentionPolicies holds the string denoting the detention_policies edge name in mutations.
+	EdgeDetentionPolicies = "detention_policies"
+	// EdgeContacts holds the string denoting the contacts edge name in mutations.
+	EdgeContacts = "contacts"
+	// EdgeDeliverySlots holds the string denoting the delivery_slots edge name in mutations.
+	EdgeDeliverySlots = "delivery_slots"
 	// Table holds the table name of the customer in the database.
 	Table = "customers"
 	// BusinessUnitTable is the table that holds the business_unit relation/edge.
@@ -85,6 +95,41 @@ const (
 	ShipmentsInverseTable = "shipments"
 	// ShipmentsColumn is the table column denoting the shipments relation/edge.
 	ShipmentsColumn = "customer_id"
+	// EmailProfileTable is the table that holds the email_profile relation/edge.
+	EmailProfileTable = "customer_email_profiles"
+	// EmailProfileInverseTable is the table name for the CustomerEmailProfile entity.
+	// It exists in this package in order to avoid circular dependency with the "customeremailprofile" package.
+	EmailProfileInverseTable = "customer_email_profiles"
+	// EmailProfileColumn is the table column denoting the email_profile relation/edge.
+	EmailProfileColumn = "customer_id"
+	// RuleProfileTable is the table that holds the rule_profile relation/edge.
+	RuleProfileTable = "customer_rule_profiles"
+	// RuleProfileInverseTable is the table name for the CustomerRuleProfile entity.
+	// It exists in this package in order to avoid circular dependency with the "customerruleprofile" package.
+	RuleProfileInverseTable = "customer_rule_profiles"
+	// RuleProfileColumn is the table column denoting the rule_profile relation/edge.
+	RuleProfileColumn = "customer_id"
+	// DetentionPoliciesTable is the table that holds the detention_policies relation/edge.
+	DetentionPoliciesTable = "customer_detention_policies"
+	// DetentionPoliciesInverseTable is the table name for the CustomerDetentionPolicy entity.
+	// It exists in this package in order to avoid circular dependency with the "customerdetentionpolicy" package.
+	DetentionPoliciesInverseTable = "customer_detention_policies"
+	// DetentionPoliciesColumn is the table column denoting the detention_policies relation/edge.
+	DetentionPoliciesColumn = "customer_id"
+	// ContactsTable is the table that holds the contacts relation/edge.
+	ContactsTable = "customer_contacts"
+	// ContactsInverseTable is the table name for the CustomerContact entity.
+	// It exists in this package in order to avoid circular dependency with the "customercontact" package.
+	ContactsInverseTable = "customer_contacts"
+	// ContactsColumn is the table column denoting the contacts relation/edge.
+	ContactsColumn = "customer_id"
+	// DeliverySlotsTable is the table that holds the delivery_slots relation/edge.
+	DeliverySlotsTable = "delivery_slots"
+	// DeliverySlotsInverseTable is the table name for the DeliverySlot entity.
+	// It exists in this package in order to avoid circular dependency with the "deliveryslot" package.
+	DeliverySlotsInverseTable = "delivery_slots"
+	// DeliverySlotsColumn is the table column denoting the delivery_slots relation/edge.
+	DeliverySlotsColumn = "customer_id"
 )
 
 // Columns holds all SQL columns for customer fields.
@@ -295,6 +340,62 @@ func ByShipments(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
 		sqlgraph.OrderByNeighborTerms(s, newShipmentsStep(), append([]sql.OrderTerm{term}, terms...)...)
 	}
 }
+
+// ByEmailProfileField orders the results by email_profile field.
+func ByEmailProfileField(field string, opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newEmailProfileStep(), sql.OrderByField(field, opts...))
+	}
+}
+
+// ByRuleProfileField orders the results by rule_profile field.
+func ByRuleProfileField(field string, opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newRuleProfileStep(), sql.OrderByField(field, opts...))
+	}
+}
+
+// ByDetentionPoliciesCount orders the results by detention_policies count.
+func ByDetentionPoliciesCount(opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborsCount(s, newDetentionPoliciesStep(), opts...)
+	}
+}
+
+// ByDetentionPolicies orders the results by detention_policies terms.
+func ByDetentionPolicies(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newDetentionPoliciesStep(), append([]sql.OrderTerm{term}, terms...)...)
+	}
+}
+
+// ByContactsCount orders the results by contacts count.
+func ByContactsCount(opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborsCount(s, newContactsStep(), opts...)
+	}
+}
+
+// ByContacts orders the results by contacts terms.
+func ByContacts(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newContactsStep(), append([]sql.OrderTerm{term}, terms...)...)
+	}
+}
+
+// ByDeliverySlotsCount orders the results by delivery_slots count.
+func ByDeliverySlotsCount(opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborsCount(s, newDeliverySlotsStep(), opts...)
+	}
+}
+
+// ByDeliverySlots orders the results by delivery_slots terms.
+func ByDeliverySlots(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newDeliverySlotsStep(), append([]sql.OrderTerm{term}, terms...)...)
+	}
+}
 func newBusinessUnitStep() *sqlgraph.Step {
 	return sqlgraph.NewStep(
 		sqlgraph.From(Table, FieldID),
@@ -321,5 +422,40 @@ func newShipmentsStep() *sqlgraph.Step {
 		sqlgraph.From(Table, FieldID),
 		sqlgraph.To(ShipmentsInverseTable, FieldID),
 		sqlgraph.Edge(sqlgraph.O2M, false, ShipmentsTable, ShipmentsColumn),
+	)
+}
+func newEmailProfileStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(EmailProfileInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.O2O, false, EmailProfileTable, EmailProfileColumn),
+	)
+}
+func newRuleProfileStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(RuleProfileInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.O2O, false, RuleProfileTable, RuleProfileColumn),
+	)
+}
+func newDetentionPoliciesStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(DetentionPoliciesInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.O2M, false, DetentionPoliciesTable, DetentionPoliciesColumn),
+	)
+}
+func newContactsStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(ContactsInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.O2M, false, ContactsTable, ContactsColumn),
+	)
+}
+func newDeliverySlotsStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(DeliverySlotsInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.O2M, false, DeliverySlotsTable, DeliverySlotsColumn),
 	)
 }

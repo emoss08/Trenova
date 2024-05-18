@@ -20,7 +20,7 @@ import { useForm } from "react-hook-form";
 import { LocationCommentForm } from "./location-comments-form";
 
 export function LocationTableSheet({ onOpenChange, open }: TableSheetProps) {
-  const { control, handleSubmit } = useForm<FormValues>({
+  const { control, handleSubmit, reset } = useForm<FormValues>({
     resolver: yupResolver(LocationSchema),
     defaultValues: {
       status: "A",
@@ -42,6 +42,7 @@ export function LocationTableSheet({ onOpenChange, open }: TableSheetProps) {
     successMessage: "Location created successfully.",
     queryKeysToInvalidate: "locations",
     closeModal: true,
+    reset,
     errorMessage: "Failed to create new location.",
   });
 
@@ -61,7 +62,7 @@ export function LocationTableSheet({ onOpenChange, open }: TableSheetProps) {
           className="flex h-full flex-col overflow-y-auto"
         >
           <Tabs defaultValue="info" className="w-full flex-1">
-            <TabsList>
+            <TabsList className="mt-10">
               <TabsTrigger value="info">Information</TabsTrigger>
               <TabsTrigger value="comments">Comments</TabsTrigger>
               <TabsTrigger value="contacts">Contacts</TabsTrigger>

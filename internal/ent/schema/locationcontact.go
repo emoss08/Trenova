@@ -32,7 +32,7 @@ func (LocationContact) Fields() []ent.Field {
 				dialect.Postgres: "VARCHAR(15)",
 				dialect.SQLite:   "VARCHAR(15)",
 			}).
-			StructTag(`json:"phoneNumber" validate:"omitempty"`),
+			StructTag(`json:"phoneNumber" validate:"omitempty,phoneNum"`),
 	}
 }
 

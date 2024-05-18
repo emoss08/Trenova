@@ -32,7 +32,7 @@ function RCEditForm({
 }) {
   const { selectGLAccounts, isLoading, isError } = useGLAccounts(open);
 
-  const { handleSubmit, control } = useForm<FormValues>({
+  const { handleSubmit, reset, control } = useForm<FormValues>({
     resolver: yupResolver(revenueCodeSchema),
     defaultValues: revenueCode,
   });
@@ -43,6 +43,7 @@ function RCEditForm({
     successMessage: "Revenue Code updated successfully.",
     queryKeysToInvalidate: "revenueCodes",
     closeModal: true,
+    reset,
     errorMessage: "Failed to update revenue code.",
   });
 

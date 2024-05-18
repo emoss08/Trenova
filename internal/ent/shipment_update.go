@@ -14,6 +14,7 @@ import (
 	"github.com/emoss08/trenova/internal/ent/customer"
 	"github.com/emoss08/trenova/internal/ent/equipmenttype"
 	"github.com/emoss08/trenova/internal/ent/location"
+	"github.com/emoss08/trenova/internal/ent/organization"
 	"github.com/emoss08/trenova/internal/ent/predicate"
 	"github.com/emoss08/trenova/internal/ent/servicetype"
 	"github.com/emoss08/trenova/internal/ent/shipment"
@@ -39,6 +40,20 @@ type ShipmentUpdate struct {
 // Where appends a list predicates to the ShipmentUpdate builder.
 func (su *ShipmentUpdate) Where(ps ...predicate.Shipment) *ShipmentUpdate {
 	su.mutation.Where(ps...)
+	return su
+}
+
+// SetOrganizationID sets the "organization_id" field.
+func (su *ShipmentUpdate) SetOrganizationID(u uuid.UUID) *ShipmentUpdate {
+	su.mutation.SetOrganizationID(u)
+	return su
+}
+
+// SetNillableOrganizationID sets the "organization_id" field if the given value is not nil.
+func (su *ShipmentUpdate) SetNillableOrganizationID(u *uuid.UUID) *ShipmentUpdate {
+	if u != nil {
+		su.SetOrganizationID(*u)
+	}
 	return su
 }
 
@@ -856,6 +871,11 @@ func (su *ShipmentUpdate) SetNillableIsHazardous(b *bool) *ShipmentUpdate {
 	return su
 }
 
+// SetOrganization sets the "organization" edge to the Organization entity.
+func (su *ShipmentUpdate) SetOrganization(o *Organization) *ShipmentUpdate {
+	return su.SetOrganizationID(o.ID)
+}
+
 // SetShipmentType sets the "shipment_type" edge to the ShipmentType entity.
 func (su *ShipmentUpdate) SetShipmentType(s *ShipmentType) *ShipmentUpdate {
 	return su.SetShipmentTypeID(s.ID)
@@ -993,6 +1013,12 @@ func (su *ShipmentUpdate) AddShipmentMoves(s ...*ShipmentMove) *ShipmentUpdate {
 // Mutation returns the ShipmentMutation object of the builder.
 func (su *ShipmentUpdate) Mutation() *ShipmentMutation {
 	return su.mutation
+}
+
+// ClearOrganization clears the "organization" edge to the Organization entity.
+func (su *ShipmentUpdate) ClearOrganization() *ShipmentUpdate {
+	su.mutation.ClearOrganization()
+	return su
 }
 
 // ClearShipmentType clears the "shipment_type" edge to the ShipmentType entity.
@@ -1488,6 +1514,35 @@ func (su *ShipmentUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	}
 	if value, ok := su.mutation.IsHazardous(); ok {
 		_spec.SetField(shipment.FieldIsHazardous, field.TypeBool, value)
+	}
+	if su.mutation.OrganizationCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   shipment.OrganizationTable,
+			Columns: []string{shipment.OrganizationColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(organization.FieldID, field.TypeUUID),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := su.mutation.OrganizationIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   shipment.OrganizationTable,
+			Columns: []string{shipment.OrganizationColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(organization.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
 	if su.mutation.ShipmentTypeCleared() {
 		edge := &sqlgraph.EdgeSpec{
@@ -1995,6 +2050,20 @@ type ShipmentUpdateOne struct {
 	hooks     []Hook
 	mutation  *ShipmentMutation
 	modifiers []func(*sql.UpdateBuilder)
+}
+
+// SetOrganizationID sets the "organization_id" field.
+func (suo *ShipmentUpdateOne) SetOrganizationID(u uuid.UUID) *ShipmentUpdateOne {
+	suo.mutation.SetOrganizationID(u)
+	return suo
+}
+
+// SetNillableOrganizationID sets the "organization_id" field if the given value is not nil.
+func (suo *ShipmentUpdateOne) SetNillableOrganizationID(u *uuid.UUID) *ShipmentUpdateOne {
+	if u != nil {
+		suo.SetOrganizationID(*u)
+	}
+	return suo
 }
 
 // SetUpdatedAt sets the "updated_at" field.
@@ -2811,6 +2880,11 @@ func (suo *ShipmentUpdateOne) SetNillableIsHazardous(b *bool) *ShipmentUpdateOne
 	return suo
 }
 
+// SetOrganization sets the "organization" edge to the Organization entity.
+func (suo *ShipmentUpdateOne) SetOrganization(o *Organization) *ShipmentUpdateOne {
+	return suo.SetOrganizationID(o.ID)
+}
+
 // SetShipmentType sets the "shipment_type" edge to the ShipmentType entity.
 func (suo *ShipmentUpdateOne) SetShipmentType(s *ShipmentType) *ShipmentUpdateOne {
 	return suo.SetShipmentTypeID(s.ID)
@@ -2948,6 +3022,12 @@ func (suo *ShipmentUpdateOne) AddShipmentMoves(s ...*ShipmentMove) *ShipmentUpda
 // Mutation returns the ShipmentMutation object of the builder.
 func (suo *ShipmentUpdateOne) Mutation() *ShipmentMutation {
 	return suo.mutation
+}
+
+// ClearOrganization clears the "organization" edge to the Organization entity.
+func (suo *ShipmentUpdateOne) ClearOrganization() *ShipmentUpdateOne {
+	suo.mutation.ClearOrganization()
+	return suo
 }
 
 // ClearShipmentType clears the "shipment_type" edge to the ShipmentType entity.
@@ -3473,6 +3553,35 @@ func (suo *ShipmentUpdateOne) sqlSave(ctx context.Context) (_node *Shipment, err
 	}
 	if value, ok := suo.mutation.IsHazardous(); ok {
 		_spec.SetField(shipment.FieldIsHazardous, field.TypeBool, value)
+	}
+	if suo.mutation.OrganizationCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   shipment.OrganizationTable,
+			Columns: []string{shipment.OrganizationColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(organization.FieldID, field.TypeUUID),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := suo.mutation.OrganizationIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   shipment.OrganizationTable,
+			Columns: []string{shipment.OrganizationColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(organization.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
 	if suo.mutation.ShipmentTypeCleared() {
 		edge := &sqlgraph.EdgeSpec{

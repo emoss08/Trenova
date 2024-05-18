@@ -29,6 +29,7 @@ function RouteControlForm({
     path: `/route-control/${routeControl.id}/`,
     successMessage: "Route Control updated successfully.",
     queryKeysToInvalidate: "routeControl",
+    reset,
     errorMessage: "Failed to update route control.",
   });
 

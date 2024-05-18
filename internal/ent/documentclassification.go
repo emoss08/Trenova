@@ -52,10 +52,13 @@ type DocumentClassificationEdges struct {
 	Organization *Organization `json:"organization,omitempty"`
 	// ShipmentDocumentation holds the value of the shipment_documentation edge.
 	ShipmentDocumentation []*ShipmentDocumentation `json:"shipmentDocumentation,omitempty"`
+	// CustomerRuleProfile holds the value of the customer_rule_profile edge.
+	CustomerRuleProfile []*CustomerRuleProfile `json:"customer_rule_profile,omitempty"`
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
-	loadedTypes                [3]bool
+	loadedTypes                [4]bool
 	namedShipmentDocumentation map[string][]*ShipmentDocumentation
+	namedCustomerRuleProfile   map[string][]*CustomerRuleProfile
 }
 
 // BusinessUnitOrErr returns the BusinessUnit value or an error if the edge
@@ -87,6 +90,15 @@ func (e DocumentClassificationEdges) ShipmentDocumentationOrErr() ([]*ShipmentDo
 		return e.ShipmentDocumentation, nil
 	}
 	return nil, &NotLoadedError{edge: "shipment_documentation"}
+}
+
+// CustomerRuleProfileOrErr returns the CustomerRuleProfile value or an error if the edge
+// was not loaded in eager-loading.
+func (e DocumentClassificationEdges) CustomerRuleProfileOrErr() ([]*CustomerRuleProfile, error) {
+	if e.loadedTypes[3] {
+		return e.CustomerRuleProfile, nil
+	}
+	return nil, &NotLoadedError{edge: "customer_rule_profile"}
 }
 
 // scanValues returns the types for scanning values from sql.Rows.
@@ -205,6 +217,11 @@ func (dc *DocumentClassification) QueryShipmentDocumentation() *ShipmentDocument
 	return NewDocumentClassificationClient(dc.config).QueryShipmentDocumentation(dc)
 }
 
+// QueryCustomerRuleProfile queries the "customer_rule_profile" edge of the DocumentClassification entity.
+func (dc *DocumentClassification) QueryCustomerRuleProfile() *CustomerRuleProfileQuery {
+	return NewDocumentClassificationClient(dc.config).QueryCustomerRuleProfile(dc)
+}
+
 // Update returns a builder for updating this DocumentClassification.
 // Note that you need to call DocumentClassification.Unwrap() before calling this method if this DocumentClassification
 // was returned from a transaction, and the transaction was committed or rolled back.
@@ -279,6 +296,30 @@ func (dc *DocumentClassification) appendNamedShipmentDocumentation(name string, 
 		dc.Edges.namedShipmentDocumentation[name] = []*ShipmentDocumentation{}
 	} else {
 		dc.Edges.namedShipmentDocumentation[name] = append(dc.Edges.namedShipmentDocumentation[name], edges...)
+	}
+}
+
+// NamedCustomerRuleProfile returns the CustomerRuleProfile named value or an error if the edge was not
+// loaded in eager-loading with this name.
+func (dc *DocumentClassification) NamedCustomerRuleProfile(name string) ([]*CustomerRuleProfile, error) {
+	if dc.Edges.namedCustomerRuleProfile == nil {
+		return nil, &NotLoadedError{edge: name}
+	}
+	nodes, ok := dc.Edges.namedCustomerRuleProfile[name]
+	if !ok {
+		return nil, &NotLoadedError{edge: name}
+	}
+	return nodes, nil
+}
+
+func (dc *DocumentClassification) appendNamedCustomerRuleProfile(name string, edges ...*CustomerRuleProfile) {
+	if dc.Edges.namedCustomerRuleProfile == nil {
+		dc.Edges.namedCustomerRuleProfile = make(map[string][]*CustomerRuleProfile)
+	}
+	if len(edges) == 0 {
+		dc.Edges.namedCustomerRuleProfile[name] = []*CustomerRuleProfile{}
+	} else {
+		dc.Edges.namedCustomerRuleProfile[name] = append(dc.Edges.namedCustomerRuleProfile[name], edges...)
 	}
 }
 

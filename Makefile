@@ -50,7 +50,7 @@ migrate-lint: ## Lint migrations.
             --latest=1
 
 migrate-hash: ## Generate a hash for migrations.
-	atlas migrate hash --dir file://ent/migrate/migrations
+	atlas migrate hash --dir file://internal/ent/migrate/migrations
 
 migrate-status: ## Show migration status.
 	atlas migrate status \

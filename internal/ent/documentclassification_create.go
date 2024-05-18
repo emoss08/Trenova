@@ -11,6 +11,7 @@ import (
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
 	"github.com/emoss08/trenova/internal/ent/businessunit"
+	"github.com/emoss08/trenova/internal/ent/customerruleprofile"
 	"github.com/emoss08/trenova/internal/ent/documentclassification"
 	"github.com/emoss08/trenova/internal/ent/organization"
 	"github.com/emoss08/trenova/internal/ent/shipmentdocumentation"
@@ -163,6 +164,21 @@ func (dcc *DocumentClassificationCreate) AddShipmentDocumentation(s ...*Shipment
 		ids[i] = s[i].ID
 	}
 	return dcc.AddShipmentDocumentationIDs(ids...)
+}
+
+// AddCustomerRuleProfileIDs adds the "customer_rule_profile" edge to the CustomerRuleProfile entity by IDs.
+func (dcc *DocumentClassificationCreate) AddCustomerRuleProfileIDs(ids ...uuid.UUID) *DocumentClassificationCreate {
+	dcc.mutation.AddCustomerRuleProfileIDs(ids...)
+	return dcc
+}
+
+// AddCustomerRuleProfile adds the "customer_rule_profile" edges to the CustomerRuleProfile entity.
+func (dcc *DocumentClassificationCreate) AddCustomerRuleProfile(c ...*CustomerRuleProfile) *DocumentClassificationCreate {
+	ids := make([]uuid.UUID, len(c))
+	for i := range c {
+		ids[i] = c[i].ID
+	}
+	return dcc.AddCustomerRuleProfileIDs(ids...)
 }
 
 // Mutation returns the DocumentClassificationMutation object of the builder.
@@ -379,6 +395,22 @@ func (dcc *DocumentClassificationCreate) createSpec() (*DocumentClassification, 
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(shipmentdocumentation.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges = append(_spec.Edges, edge)
+	}
+	if nodes := dcc.mutation.CustomerRuleProfileIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: true,
+			Table:   documentclassification.CustomerRuleProfileTable,
+			Columns: documentclassification.CustomerRuleProfilePrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(customerruleprofile.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {

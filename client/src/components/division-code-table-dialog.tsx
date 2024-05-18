@@ -128,7 +128,7 @@ export function DCForm({
 }
 
 export function DivisionCodeDialog({ onOpenChange, open }: TableSheetProps) {
-  const { control, handleSubmit } = useForm<FormValues>({
+  const { control, reset, handleSubmit } = useForm<FormValues>({
     resolver: yupResolver(divisionCodeSchema),
     defaultValues: {
       status: "A",
@@ -144,8 +144,9 @@ export function DivisionCodeDialog({ onOpenChange, open }: TableSheetProps) {
     method: "POST",
     path: "/division-codes/",
     successMessage: "Division Code created successfully.",
-    queryKeysToInvalidate: ["division-code-table-data"],
+    queryKeysToInvalidate: "divisionCodes",
     closeModal: true,
+    reset,
     errorMessage: "Failed to create new division code.",
   });
 

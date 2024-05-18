@@ -27,7 +27,7 @@ export function LCEditForm({
 }: {
   locationCategory: LocationCategory;
 }) {
-  const { control, handleSubmit } = useForm<FormValues>({
+  const { control, reset, handleSubmit } = useForm<FormValues>({
     resolver: yupResolver(formSchema),
     defaultValues: locationCategory,
   });
@@ -38,6 +38,7 @@ export function LCEditForm({
     successMessage: "Location Category updated successfully.",
     queryKeysToInvalidate: "locationCategories",
     closeModal: true,
+    reset,
     errorMessage: "Failed to update location category.",
   });
 

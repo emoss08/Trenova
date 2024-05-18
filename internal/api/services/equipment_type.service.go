@@ -142,6 +142,7 @@ func (r *EquipmentTypeService) updateEquipmentTypeEntity(
 
 	// Start building the update operation
 	updateOp := tx.EquipmentType.UpdateOneID(entity.ID).
+		SetOrganizationID(entity.OrganizationID).
 		SetStatus(entity.Status).
 		SetCode(entity.Code).
 		SetDescription(entity.Description).

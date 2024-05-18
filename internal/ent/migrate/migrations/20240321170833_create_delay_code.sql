@@ -1,4 +1,0 @@
--- Create "delay_codes" table
-CREATE TABLE "delay_codes" ("id" uuid NOT NULL, "created_at" timestamptz NOT NULL, "updated_at" timestamptz NOT NULL, "status" character varying NOT NULL DEFAULT 'A', "code" character varying NOT NULL, "description" text NULL, "f_carrier_or_driver" boolean NULL, "business_unit_id" uuid NOT NULL, "organization_id" uuid NOT NULL, PRIMARY KEY ("id"), CONSTRAINT "delay_codes_business_units_business_unit" FOREIGN KEY ("business_unit_id") REFERENCES "business_units" ("id") ON UPDATE NO ACTION ON DELETE CASCADE, CONSTRAINT "delay_codes_organizations_organization" FOREIGN KEY ("organization_id") REFERENCES "organizations" ("id") ON UPDATE NO ACTION ON DELETE CASCADE);
--- Create index "delaycode_code_organization_id" to table: "delay_codes"
-CREATE UNIQUE INDEX "delaycode_code_organization_id" ON "delay_codes" ("code", "organization_id");

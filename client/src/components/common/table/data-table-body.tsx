@@ -27,13 +27,13 @@ export function DataTableBody<K extends Record<string, any>>({
         table.getRowModel().rows.map((row) => (
           <Fragment key={row.id}>
             <TableRow
-              data-state={row.getIsSelected() && "selected"}
-              className={row.getIsExpanded() ? "bg-accent" : ""}
+              data-state={row.getIsSelected() ? "selected" : undefined}
+              className={cn(row.getIsExpanded() ? "bg-accent" : "")}
             >
               {row.getVisibleCells().map((cell) => (
                 <TableCell
                   key={cell.id}
-                  className={cn("cursor-pointer")}
+                  className="cursor-pointer"
                   onDoubleClick={() => {
                     setCurrentRecord(row.original);
                     setEditDrawerOpen(true);

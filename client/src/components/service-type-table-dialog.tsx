@@ -67,7 +67,7 @@ export function ServiceTypeForm({ control }: { control: Control<FormValues> }) {
 }
 
 export function ServiceTypeDialog({ onOpenChange, open }: TableSheetProps) {
-  const { control, handleSubmit } = useForm<FormValues>({
+  const { control, reset, handleSubmit } = useForm<FormValues>({
     resolver: yupResolver(serviceTypeSchema),
     defaultValues: {
       status: "A",
@@ -82,6 +82,7 @@ export function ServiceTypeDialog({ onOpenChange, open }: TableSheetProps) {
     successMessage: "Service Type created successfully.",
     queryKeysToInvalidate: "serviceTypes",
     closeModal: true,
+    reset,
     errorMessage: "Failed to create new service type.",
   });
 

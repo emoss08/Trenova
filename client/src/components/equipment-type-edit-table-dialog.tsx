@@ -29,7 +29,7 @@ function EquipTypeEditForm({
   equipType: EquipmentType;
   onOpenChange: (open: boolean) => void;
 }) {
-  const { handleSubmit, control } = useForm<FormValues>({
+  const { handleSubmit, reset, control } = useForm<FormValues>({
     resolver: yupResolver(equipmentTypeSchema),
     defaultValues: equipType,
   });
@@ -38,8 +38,9 @@ function EquipTypeEditForm({
     method: "PUT",
     path: `/equipment-types/${equipType.id}/`,
     successMessage: "Equipment Type updated successfully.",
-    queryKeysToInvalidate: ["equipment-type-table-data"],
+    queryKeysToInvalidate: "equipmentTypes",
     closeModal: true,
+    reset,
     errorMessage: "Failed to update equip. type.",
   });
 

@@ -12,6 +12,7 @@ import (
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
 	"github.com/emoss08/trenova/internal/ent/documentclassification"
+	"github.com/emoss08/trenova/internal/ent/organization"
 	"github.com/emoss08/trenova/internal/ent/predicate"
 	"github.com/emoss08/trenova/internal/ent/shipmentdocumentation"
 	"github.com/google/uuid"
@@ -28,6 +29,20 @@ type ShipmentDocumentationUpdate struct {
 // Where appends a list predicates to the ShipmentDocumentationUpdate builder.
 func (sdu *ShipmentDocumentationUpdate) Where(ps ...predicate.ShipmentDocumentation) *ShipmentDocumentationUpdate {
 	sdu.mutation.Where(ps...)
+	return sdu
+}
+
+// SetOrganizationID sets the "organization_id" field.
+func (sdu *ShipmentDocumentationUpdate) SetOrganizationID(u uuid.UUID) *ShipmentDocumentationUpdate {
+	sdu.mutation.SetOrganizationID(u)
+	return sdu
+}
+
+// SetNillableOrganizationID sets the "organization_id" field if the given value is not nil.
+func (sdu *ShipmentDocumentationUpdate) SetNillableOrganizationID(u *uuid.UUID) *ShipmentDocumentationUpdate {
+	if u != nil {
+		sdu.SetOrganizationID(*u)
+	}
 	return sdu
 }
 
@@ -86,6 +101,11 @@ func (sdu *ShipmentDocumentationUpdate) SetNillableDocumentClassificationID(u *u
 	return sdu
 }
 
+// SetOrganization sets the "organization" edge to the Organization entity.
+func (sdu *ShipmentDocumentationUpdate) SetOrganization(o *Organization) *ShipmentDocumentationUpdate {
+	return sdu.SetOrganizationID(o.ID)
+}
+
 // SetDocumentClassification sets the "document_classification" edge to the DocumentClassification entity.
 func (sdu *ShipmentDocumentationUpdate) SetDocumentClassification(d *DocumentClassification) *ShipmentDocumentationUpdate {
 	return sdu.SetDocumentClassificationID(d.ID)
@@ -94,6 +114,12 @@ func (sdu *ShipmentDocumentationUpdate) SetDocumentClassification(d *DocumentCla
 // Mutation returns the ShipmentDocumentationMutation object of the builder.
 func (sdu *ShipmentDocumentationUpdate) Mutation() *ShipmentDocumentationMutation {
 	return sdu.mutation
+}
+
+// ClearOrganization clears the "organization" edge to the Organization entity.
+func (sdu *ShipmentDocumentationUpdate) ClearOrganization() *ShipmentDocumentationUpdate {
+	sdu.mutation.ClearOrganization()
+	return sdu
 }
 
 // ClearDocumentClassification clears the "document_classification" edge to the DocumentClassification entity.
@@ -190,6 +216,35 @@ func (sdu *ShipmentDocumentationUpdate) sqlSave(ctx context.Context) (n int, err
 	if value, ok := sdu.mutation.DocumentURL(); ok {
 		_spec.SetField(shipmentdocumentation.FieldDocumentURL, field.TypeString, value)
 	}
+	if sdu.mutation.OrganizationCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   shipmentdocumentation.OrganizationTable,
+			Columns: []string{shipmentdocumentation.OrganizationColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(organization.FieldID, field.TypeUUID),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := sdu.mutation.OrganizationIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   shipmentdocumentation.OrganizationTable,
+			Columns: []string{shipmentdocumentation.OrganizationColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(organization.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
 	if sdu.mutation.DocumentClassificationCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
@@ -239,6 +294,20 @@ type ShipmentDocumentationUpdateOne struct {
 	hooks     []Hook
 	mutation  *ShipmentDocumentationMutation
 	modifiers []func(*sql.UpdateBuilder)
+}
+
+// SetOrganizationID sets the "organization_id" field.
+func (sduo *ShipmentDocumentationUpdateOne) SetOrganizationID(u uuid.UUID) *ShipmentDocumentationUpdateOne {
+	sduo.mutation.SetOrganizationID(u)
+	return sduo
+}
+
+// SetNillableOrganizationID sets the "organization_id" field if the given value is not nil.
+func (sduo *ShipmentDocumentationUpdateOne) SetNillableOrganizationID(u *uuid.UUID) *ShipmentDocumentationUpdateOne {
+	if u != nil {
+		sduo.SetOrganizationID(*u)
+	}
+	return sduo
 }
 
 // SetUpdatedAt sets the "updated_at" field.
@@ -296,6 +365,11 @@ func (sduo *ShipmentDocumentationUpdateOne) SetNillableDocumentClassificationID(
 	return sduo
 }
 
+// SetOrganization sets the "organization" edge to the Organization entity.
+func (sduo *ShipmentDocumentationUpdateOne) SetOrganization(o *Organization) *ShipmentDocumentationUpdateOne {
+	return sduo.SetOrganizationID(o.ID)
+}
+
 // SetDocumentClassification sets the "document_classification" edge to the DocumentClassification entity.
 func (sduo *ShipmentDocumentationUpdateOne) SetDocumentClassification(d *DocumentClassification) *ShipmentDocumentationUpdateOne {
 	return sduo.SetDocumentClassificationID(d.ID)
@@ -304,6 +378,12 @@ func (sduo *ShipmentDocumentationUpdateOne) SetDocumentClassification(d *Documen
 // Mutation returns the ShipmentDocumentationMutation object of the builder.
 func (sduo *ShipmentDocumentationUpdateOne) Mutation() *ShipmentDocumentationMutation {
 	return sduo.mutation
+}
+
+// ClearOrganization clears the "organization" edge to the Organization entity.
+func (sduo *ShipmentDocumentationUpdateOne) ClearOrganization() *ShipmentDocumentationUpdateOne {
+	sduo.mutation.ClearOrganization()
+	return sduo
 }
 
 // ClearDocumentClassification clears the "document_classification" edge to the DocumentClassification entity.
@@ -429,6 +509,35 @@ func (sduo *ShipmentDocumentationUpdateOne) sqlSave(ctx context.Context) (_node 
 	}
 	if value, ok := sduo.mutation.DocumentURL(); ok {
 		_spec.SetField(shipmentdocumentation.FieldDocumentURL, field.TypeString, value)
+	}
+	if sduo.mutation.OrganizationCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   shipmentdocumentation.OrganizationTable,
+			Columns: []string{shipmentdocumentation.OrganizationColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(organization.FieldID, field.TypeUUID),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := sduo.mutation.OrganizationIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   shipmentdocumentation.OrganizationTable,
+			Columns: []string{shipmentdocumentation.OrganizationColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(organization.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
 	if sduo.mutation.DocumentClassificationCleared() {
 		edge := &sqlgraph.EdgeSpec{

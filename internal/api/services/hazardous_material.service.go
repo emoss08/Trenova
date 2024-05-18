@@ -135,6 +135,7 @@ func (r *HazardousMaterialService) updateHazardousMaterialEntity(
 
 	// Start building the update operation
 	updateOp := tx.HazardousMaterial.UpdateOneID(entity.ID).
+		SetOrganizationID(entity.OrganizationID).
 		SetStatus(entity.Status).
 		SetName(entity.Name).
 		SetHazardClass(entity.HazardClass).

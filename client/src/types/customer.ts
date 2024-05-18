@@ -1,131 +1,164 @@
-import { type StatusChoiceProps } from "@/types/index";
+import { IChoiceProps, type StatusChoiceProps } from "@/types/index";
 import { type BaseModel } from "./organization";
+
+type BillingCycleChoices =
+  | "PER_SHIPMENT"
+  | "QUARTERLY"
+  | "MONTHLY"
+  | "ANNUALLY";
+
+export enum EnumBillingCycleChoices {
+  PER_SHIPMENT = "PER_SHIPMENT",
+  QUARTERLY = "QUARTERLY",
+  MONTHLY = "MONTHLY",
+  ANNUALLY = "ANNUALLY",
+}
+
+/** Returns the billing cycle choices as an array of objects */
+export const BillingCycleChoices = [
+  { value: "PER_SHIPMENT", label: "Per Shipment", color: "#ff75c3" },
+  { value: "QUARTERLY", label: "Quarterly", color: "#ff7f50" },
+  { value: "MONTHLY", label: "Monthly", color: "#ffa647" },
+  { value: "ANNUALLY", label: "Annually", color: "#dc143c" },
+] satisfies ReadonlyArray<IChoiceProps<BillingCycleChoices>>;
+
+/** Customer Rule Profile Type */
+interface CustomerRuleProfile extends BaseModel {
+  customerId: string;
+  docClassIds: string[];
+  billingCycle: EnumBillingCycleChoices;
+}
+
+export type CustomerRuleProfileFormValues = Omit<
+  CustomerRuleProfile,
+  | "id"
+  | "customerId"
+  | "businessUnitId"
+  | "organizationId"
+  | "version"
+  | "createdAt"
+  | "updatedAt"
+>;
+
+type EmailFormatChoices = "HTML" | "PLAIN";
+
+export enum EnumEmailFormatChoices {
+  HTML = "HTML",
+  PLAIN = "PLAIN",
+}
+
+/**
+ * Returns yes and no choices as boolean for a select input
+ * @returns An array of yes and no choices as boolean.
+ */
+export const EmailFormatChoices = [
+  { value: "HTML", label: "HTML", color: "#9c25eb" },
+  { value: "PLAIN", label: "PLAIN", color: "#2563eb" },
+] satisfies ReadonlyArray<IChoiceProps<EmailFormatChoices>>;
+
+/** Customer Email Profile Type */
+interface CustomerEmailProfile extends BaseModel {
+  customerId: string;
+  subject?: string;
+  emailProfileId?: string | null;
+  emailRecipients: string;
+  attachmentName?: string;
+  emailCcRecipients?: string;
+  emailFormat: EnumEmailFormatChoices;
+}
+
+export type CustomerEmailProfileFormValues = Omit<
+  CustomerEmailProfile,
+  | "id"
+  | "customerId"
+  | "businessUnitId"
+  | "organizationId"
+  | "version"
+  | "createdAt"
+  | "updatedAt"
+>;
+
+export enum EnumDayOfWeekChoices {
+  SUNDAY = "SUNDAY",
+  MONDAY = "MONDAY",
+  TUESDAY = "TUESDAY",
+  WEDNESDAY = "WEDNESDAY",
+  THURSDAY = "THURSDAY",
+  FRIDAY = "FRIDAY",
+  SATURDAY = "SATURDAY",
+}
+
+export const DayOfWeekChoices = [
+  { value: "SUNDAY", label: "Sunday", color: "#ff75c3" },
+  { value: "MONDAY", label: "Monday", color: "#ff7f50" },
+  { value: "TUESDAY", label: "Tuesday", color: "#ffa647" },
+  { value: "WEDNESDAY", label: "Wednesday", color: "#dc143c" },
+  { value: "THURSDAY", label: "Thursday", color: "#4682b4" },
+  { value: "FRIDAY", label: "Friday", color: "#6a5acd" },
+  { value: "SATURDAY", label: "Saturday", color: "#9c25eb" },
+];
+
+interface DeliverySlot extends BaseModel {
+  customerId: string;
+  locationId: string;
+  dayOfWeek: EnumDayOfWeekChoices;
+  startTime: string;
+  endTime: string;
+}
+
+export type DeliverySlotFormValues = Omit<
+  DeliverySlot,
+  | "id"
+  | "customerId"
+  | "businessUnitId"
+  | "organizationId"
+  | "version"
+  | "createdAt"
+  | "updatedAt"
+>;
+
+interface CustomerContact extends BaseModel {
+  id: string;
+  customerId: string;
+  name: string;
+  email?: string;
+  title?: string;
+  phoneNumber?: string;
+  isPayableContact: boolean;
+}
+
+export type CustomerContactFormValues = Omit<
+  CustomerContact,
+  | "id"
+  | "customerId"
+  | "businessUnitId"
+  | "organizationId"
+  | "version"
+  | "createdAt"
+  | "updatedAt"
+>;
 
 /** Customer Type */
 export interface Customer extends BaseModel {
   id: string;
   status: StatusChoiceProps;
-  code: string;
+
+  code?: string;
   name: string;
-  addressLine1?: string;
+  addressLine1: string;
   addressLine2?: string;
-  city?: string;
-  zipCode?: string;
-  state?: string;
+  city: string;
+  postalCode: string;
+  stateId: string;
   hasCustomerPortal?: boolean;
   autoMarkReadyToBill?: boolean;
-  created: string;
-  modified: string;
-  advocate?: string;
-  advocateFullName?: string;
-  lastBillDate?: string;
-  lastShipDate?: string;
-  totalShipments?: number;
-  deliverySlots?: DeliverySlot[];
-  contacts?: CustomerContact[];
-  emailProfile?: CustomerEmailProfile;
-  ruleProfile?: CustomerRuleProfile;
+  ruleProfile?: CustomerRuleProfileFormValues;
+  emailProfile?: CustomerEmailProfileFormValues;
+  deliverySlots?: DeliverySlotFormValues[];
+  contacts?: CustomerContactFormValues[];
 }
 
 export type CustomerFormValues = Omit<
   Customer,
-  | "id"
-  | "organizationId"
-  | "createdAt"
-  | "updatedAt"
-  | "advocateFullName"
-  | "lastBillDate"
-  | "lastShipDate"
-  | "deliverySlots"
-  | "emailProfile"
-  | "ruleProfile"
-  | "contacts"
-  | "totalShipments"
-> & {
-  deliverySlots?: DeliverySlotFormValues[] | null;
-  contacts?: CustomerContactFormValues[] | null;
-  emailProfile: CustomerEmailProfileFormValues;
-  ruleProfile: CustomerRuleProfileFormValues;
-};
-
-/** Customer Rule Profile Type */
-export type CustomerRuleProfile = {
-  id: string;
-  organization: string;
-  businessUnit: string;
-  name: string;
-  customer: string;
-  documentClass: string[];
-  created: string;
-  modified: string;
-};
-
-export type CustomerRuleProfileFormValues = Omit<
-  CustomerRuleProfile,
-  "id" | "customer" | "businessUnit" | "organization" | "created" | "modified"
->;
-
-/** Customer Email Profile Type */
-export type CustomerEmailProfile = {
-  id: string;
-  organization: string;
-  businessUnit: string;
-  subject?: string;
-  comment?: string;
-  customer: string;
-  fromAddress?: string;
-  blindCopy?: string;
-  readReceipt: boolean;
-  readReceiptTo?: string;
-  attachmentName?: string;
-};
-
-export type CustomerEmailProfileFormValues = Omit<
-  CustomerEmailProfile,
-  "id" | "customer" | "businessUnit" | "organization"
->;
-
-export type DeliverySlot = {
-  id: string;
-  organization: string;
-  businessUnit: string;
-  customer: string;
-  dayOfWeek: number;
-  startTime: string;
-  endTime: string;
-  location: string;
-  locationName: string;
-  created: string;
-  modified: string;
-};
-
-export type DeliverySlotFormValues = Omit<
-  DeliverySlot,
-  | "id"
-  | "organization"
-  | "businessUnit"
-  | "customer"
-  | "locationName"
-  | "created"
-  | "modified"
->;
-
-type CustomerContact = {
-  id: string;
-  organization: string;
-  businessUnit: string;
-  customer: string;
-  status: StatusChoiceProps;
-  name: string;
-  email?: string;
-  title?: string;
-  phone?: string;
-  isPayableContact: boolean;
-  created: string;
-  modified: string;
-};
-
-export type CustomerContactFormValues = Omit<
-  CustomerContact,
-  "id" | "organization" | "businessUnit" | "customer" | "created" | "modified"
+  "id" | "organizationId" | "version" | "createdAt" | "updatedAt"
 >;

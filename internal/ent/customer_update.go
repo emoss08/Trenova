@@ -12,6 +12,12 @@ import (
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
 	"github.com/emoss08/trenova/internal/ent/customer"
+	"github.com/emoss08/trenova/internal/ent/customercontact"
+	"github.com/emoss08/trenova/internal/ent/customerdetentionpolicy"
+	"github.com/emoss08/trenova/internal/ent/customeremailprofile"
+	"github.com/emoss08/trenova/internal/ent/customerruleprofile"
+	"github.com/emoss08/trenova/internal/ent/deliveryslot"
+	"github.com/emoss08/trenova/internal/ent/organization"
 	"github.com/emoss08/trenova/internal/ent/predicate"
 	"github.com/emoss08/trenova/internal/ent/shipment"
 	"github.com/emoss08/trenova/internal/ent/usstate"
@@ -29,6 +35,20 @@ type CustomerUpdate struct {
 // Where appends a list predicates to the CustomerUpdate builder.
 func (cu *CustomerUpdate) Where(ps ...predicate.Customer) *CustomerUpdate {
 	cu.mutation.Where(ps...)
+	return cu
+}
+
+// SetOrganizationID sets the "organization_id" field.
+func (cu *CustomerUpdate) SetOrganizationID(u uuid.UUID) *CustomerUpdate {
+	cu.mutation.SetOrganizationID(u)
+	return cu
+}
+
+// SetNillableOrganizationID sets the "organization_id" field if the given value is not nil.
+func (cu *CustomerUpdate) SetNillableOrganizationID(u *uuid.UUID) *CustomerUpdate {
+	if u != nil {
+		cu.SetOrganizationID(*u)
+	}
 	return cu
 }
 
@@ -205,6 +225,11 @@ func (cu *CustomerUpdate) SetNillableAutoMarkReadyToBill(b *bool) *CustomerUpdat
 	return cu
 }
 
+// SetOrganization sets the "organization" edge to the Organization entity.
+func (cu *CustomerUpdate) SetOrganization(o *Organization) *CustomerUpdate {
+	return cu.SetOrganizationID(o.ID)
+}
+
 // SetState sets the "state" edge to the UsState entity.
 func (cu *CustomerUpdate) SetState(u *UsState) *CustomerUpdate {
 	return cu.SetStateID(u.ID)
@@ -225,9 +250,98 @@ func (cu *CustomerUpdate) AddShipments(s ...*Shipment) *CustomerUpdate {
 	return cu.AddShipmentIDs(ids...)
 }
 
+// SetEmailProfileID sets the "email_profile" edge to the CustomerEmailProfile entity by ID.
+func (cu *CustomerUpdate) SetEmailProfileID(id uuid.UUID) *CustomerUpdate {
+	cu.mutation.SetEmailProfileID(id)
+	return cu
+}
+
+// SetNillableEmailProfileID sets the "email_profile" edge to the CustomerEmailProfile entity by ID if the given value is not nil.
+func (cu *CustomerUpdate) SetNillableEmailProfileID(id *uuid.UUID) *CustomerUpdate {
+	if id != nil {
+		cu = cu.SetEmailProfileID(*id)
+	}
+	return cu
+}
+
+// SetEmailProfile sets the "email_profile" edge to the CustomerEmailProfile entity.
+func (cu *CustomerUpdate) SetEmailProfile(c *CustomerEmailProfile) *CustomerUpdate {
+	return cu.SetEmailProfileID(c.ID)
+}
+
+// SetRuleProfileID sets the "rule_profile" edge to the CustomerRuleProfile entity by ID.
+func (cu *CustomerUpdate) SetRuleProfileID(id uuid.UUID) *CustomerUpdate {
+	cu.mutation.SetRuleProfileID(id)
+	return cu
+}
+
+// SetNillableRuleProfileID sets the "rule_profile" edge to the CustomerRuleProfile entity by ID if the given value is not nil.
+func (cu *CustomerUpdate) SetNillableRuleProfileID(id *uuid.UUID) *CustomerUpdate {
+	if id != nil {
+		cu = cu.SetRuleProfileID(*id)
+	}
+	return cu
+}
+
+// SetRuleProfile sets the "rule_profile" edge to the CustomerRuleProfile entity.
+func (cu *CustomerUpdate) SetRuleProfile(c *CustomerRuleProfile) *CustomerUpdate {
+	return cu.SetRuleProfileID(c.ID)
+}
+
+// AddDetentionPolicyIDs adds the "detention_policies" edge to the CustomerDetentionPolicy entity by IDs.
+func (cu *CustomerUpdate) AddDetentionPolicyIDs(ids ...uuid.UUID) *CustomerUpdate {
+	cu.mutation.AddDetentionPolicyIDs(ids...)
+	return cu
+}
+
+// AddDetentionPolicies adds the "detention_policies" edges to the CustomerDetentionPolicy entity.
+func (cu *CustomerUpdate) AddDetentionPolicies(c ...*CustomerDetentionPolicy) *CustomerUpdate {
+	ids := make([]uuid.UUID, len(c))
+	for i := range c {
+		ids[i] = c[i].ID
+	}
+	return cu.AddDetentionPolicyIDs(ids...)
+}
+
+// AddContactIDs adds the "contacts" edge to the CustomerContact entity by IDs.
+func (cu *CustomerUpdate) AddContactIDs(ids ...uuid.UUID) *CustomerUpdate {
+	cu.mutation.AddContactIDs(ids...)
+	return cu
+}
+
+// AddContacts adds the "contacts" edges to the CustomerContact entity.
+func (cu *CustomerUpdate) AddContacts(c ...*CustomerContact) *CustomerUpdate {
+	ids := make([]uuid.UUID, len(c))
+	for i := range c {
+		ids[i] = c[i].ID
+	}
+	return cu.AddContactIDs(ids...)
+}
+
+// AddDeliverySlotIDs adds the "delivery_slots" edge to the DeliverySlot entity by IDs.
+func (cu *CustomerUpdate) AddDeliverySlotIDs(ids ...uuid.UUID) *CustomerUpdate {
+	cu.mutation.AddDeliverySlotIDs(ids...)
+	return cu
+}
+
+// AddDeliverySlots adds the "delivery_slots" edges to the DeliverySlot entity.
+func (cu *CustomerUpdate) AddDeliverySlots(d ...*DeliverySlot) *CustomerUpdate {
+	ids := make([]uuid.UUID, len(d))
+	for i := range d {
+		ids[i] = d[i].ID
+	}
+	return cu.AddDeliverySlotIDs(ids...)
+}
+
 // Mutation returns the CustomerMutation object of the builder.
 func (cu *CustomerUpdate) Mutation() *CustomerMutation {
 	return cu.mutation
+}
+
+// ClearOrganization clears the "organization" edge to the Organization entity.
+func (cu *CustomerUpdate) ClearOrganization() *CustomerUpdate {
+	cu.mutation.ClearOrganization()
+	return cu
 }
 
 // ClearState clears the "state" edge to the UsState entity.
@@ -255,6 +369,81 @@ func (cu *CustomerUpdate) RemoveShipments(s ...*Shipment) *CustomerUpdate {
 		ids[i] = s[i].ID
 	}
 	return cu.RemoveShipmentIDs(ids...)
+}
+
+// ClearEmailProfile clears the "email_profile" edge to the CustomerEmailProfile entity.
+func (cu *CustomerUpdate) ClearEmailProfile() *CustomerUpdate {
+	cu.mutation.ClearEmailProfile()
+	return cu
+}
+
+// ClearRuleProfile clears the "rule_profile" edge to the CustomerRuleProfile entity.
+func (cu *CustomerUpdate) ClearRuleProfile() *CustomerUpdate {
+	cu.mutation.ClearRuleProfile()
+	return cu
+}
+
+// ClearDetentionPolicies clears all "detention_policies" edges to the CustomerDetentionPolicy entity.
+func (cu *CustomerUpdate) ClearDetentionPolicies() *CustomerUpdate {
+	cu.mutation.ClearDetentionPolicies()
+	return cu
+}
+
+// RemoveDetentionPolicyIDs removes the "detention_policies" edge to CustomerDetentionPolicy entities by IDs.
+func (cu *CustomerUpdate) RemoveDetentionPolicyIDs(ids ...uuid.UUID) *CustomerUpdate {
+	cu.mutation.RemoveDetentionPolicyIDs(ids...)
+	return cu
+}
+
+// RemoveDetentionPolicies removes "detention_policies" edges to CustomerDetentionPolicy entities.
+func (cu *CustomerUpdate) RemoveDetentionPolicies(c ...*CustomerDetentionPolicy) *CustomerUpdate {
+	ids := make([]uuid.UUID, len(c))
+	for i := range c {
+		ids[i] = c[i].ID
+	}
+	return cu.RemoveDetentionPolicyIDs(ids...)
+}
+
+// ClearContacts clears all "contacts" edges to the CustomerContact entity.
+func (cu *CustomerUpdate) ClearContacts() *CustomerUpdate {
+	cu.mutation.ClearContacts()
+	return cu
+}
+
+// RemoveContactIDs removes the "contacts" edge to CustomerContact entities by IDs.
+func (cu *CustomerUpdate) RemoveContactIDs(ids ...uuid.UUID) *CustomerUpdate {
+	cu.mutation.RemoveContactIDs(ids...)
+	return cu
+}
+
+// RemoveContacts removes "contacts" edges to CustomerContact entities.
+func (cu *CustomerUpdate) RemoveContacts(c ...*CustomerContact) *CustomerUpdate {
+	ids := make([]uuid.UUID, len(c))
+	for i := range c {
+		ids[i] = c[i].ID
+	}
+	return cu.RemoveContactIDs(ids...)
+}
+
+// ClearDeliverySlots clears all "delivery_slots" edges to the DeliverySlot entity.
+func (cu *CustomerUpdate) ClearDeliverySlots() *CustomerUpdate {
+	cu.mutation.ClearDeliverySlots()
+	return cu
+}
+
+// RemoveDeliverySlotIDs removes the "delivery_slots" edge to DeliverySlot entities by IDs.
+func (cu *CustomerUpdate) RemoveDeliverySlotIDs(ids ...uuid.UUID) *CustomerUpdate {
+	cu.mutation.RemoveDeliverySlotIDs(ids...)
+	return cu
+}
+
+// RemoveDeliverySlots removes "delivery_slots" edges to DeliverySlot entities.
+func (cu *CustomerUpdate) RemoveDeliverySlots(d ...*DeliverySlot) *CustomerUpdate {
+	ids := make([]uuid.UUID, len(d))
+	for i := range d {
+		ids[i] = d[i].ID
+	}
+	return cu.RemoveDeliverySlotIDs(ids...)
 }
 
 // Save executes the query and returns the number of nodes affected by the update operation.
@@ -405,6 +594,35 @@ func (cu *CustomerUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	if value, ok := cu.mutation.AutoMarkReadyToBill(); ok {
 		_spec.SetField(customer.FieldAutoMarkReadyToBill, field.TypeBool, value)
 	}
+	if cu.mutation.OrganizationCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   customer.OrganizationTable,
+			Columns: []string{customer.OrganizationColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(organization.FieldID, field.TypeUUID),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := cu.mutation.OrganizationIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   customer.OrganizationTable,
+			Columns: []string{customer.OrganizationColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(organization.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
 	if cu.mutation.StateCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
@@ -479,6 +697,199 @@ func (cu *CustomerUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
+	if cu.mutation.EmailProfileCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2O,
+			Inverse: false,
+			Table:   customer.EmailProfileTable,
+			Columns: []string{customer.EmailProfileColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(customeremailprofile.FieldID, field.TypeUUID),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := cu.mutation.EmailProfileIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2O,
+			Inverse: false,
+			Table:   customer.EmailProfileTable,
+			Columns: []string{customer.EmailProfileColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(customeremailprofile.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if cu.mutation.RuleProfileCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2O,
+			Inverse: false,
+			Table:   customer.RuleProfileTable,
+			Columns: []string{customer.RuleProfileColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(customerruleprofile.FieldID, field.TypeUUID),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := cu.mutation.RuleProfileIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2O,
+			Inverse: false,
+			Table:   customer.RuleProfileTable,
+			Columns: []string{customer.RuleProfileColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(customerruleprofile.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if cu.mutation.DetentionPoliciesCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   customer.DetentionPoliciesTable,
+			Columns: []string{customer.DetentionPoliciesColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(customerdetentionpolicy.FieldID, field.TypeUUID),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := cu.mutation.RemovedDetentionPoliciesIDs(); len(nodes) > 0 && !cu.mutation.DetentionPoliciesCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   customer.DetentionPoliciesTable,
+			Columns: []string{customer.DetentionPoliciesColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(customerdetentionpolicy.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := cu.mutation.DetentionPoliciesIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   customer.DetentionPoliciesTable,
+			Columns: []string{customer.DetentionPoliciesColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(customerdetentionpolicy.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if cu.mutation.ContactsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   customer.ContactsTable,
+			Columns: []string{customer.ContactsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(customercontact.FieldID, field.TypeUUID),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := cu.mutation.RemovedContactsIDs(); len(nodes) > 0 && !cu.mutation.ContactsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   customer.ContactsTable,
+			Columns: []string{customer.ContactsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(customercontact.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := cu.mutation.ContactsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   customer.ContactsTable,
+			Columns: []string{customer.ContactsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(customercontact.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if cu.mutation.DeliverySlotsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   customer.DeliverySlotsTable,
+			Columns: []string{customer.DeliverySlotsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(deliveryslot.FieldID, field.TypeUUID),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := cu.mutation.RemovedDeliverySlotsIDs(); len(nodes) > 0 && !cu.mutation.DeliverySlotsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   customer.DeliverySlotsTable,
+			Columns: []string{customer.DeliverySlotsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(deliveryslot.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := cu.mutation.DeliverySlotsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   customer.DeliverySlotsTable,
+			Columns: []string{customer.DeliverySlotsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(deliveryslot.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
 	_spec.AddModifiers(cu.modifiers...)
 	if n, err = sqlgraph.UpdateNodes(ctx, cu.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
@@ -499,6 +910,20 @@ type CustomerUpdateOne struct {
 	hooks     []Hook
 	mutation  *CustomerMutation
 	modifiers []func(*sql.UpdateBuilder)
+}
+
+// SetOrganizationID sets the "organization_id" field.
+func (cuo *CustomerUpdateOne) SetOrganizationID(u uuid.UUID) *CustomerUpdateOne {
+	cuo.mutation.SetOrganizationID(u)
+	return cuo
+}
+
+// SetNillableOrganizationID sets the "organization_id" field if the given value is not nil.
+func (cuo *CustomerUpdateOne) SetNillableOrganizationID(u *uuid.UUID) *CustomerUpdateOne {
+	if u != nil {
+		cuo.SetOrganizationID(*u)
+	}
+	return cuo
 }
 
 // SetUpdatedAt sets the "updated_at" field.
@@ -674,6 +1099,11 @@ func (cuo *CustomerUpdateOne) SetNillableAutoMarkReadyToBill(b *bool) *CustomerU
 	return cuo
 }
 
+// SetOrganization sets the "organization" edge to the Organization entity.
+func (cuo *CustomerUpdateOne) SetOrganization(o *Organization) *CustomerUpdateOne {
+	return cuo.SetOrganizationID(o.ID)
+}
+
 // SetState sets the "state" edge to the UsState entity.
 func (cuo *CustomerUpdateOne) SetState(u *UsState) *CustomerUpdateOne {
 	return cuo.SetStateID(u.ID)
@@ -694,9 +1124,98 @@ func (cuo *CustomerUpdateOne) AddShipments(s ...*Shipment) *CustomerUpdateOne {
 	return cuo.AddShipmentIDs(ids...)
 }
 
+// SetEmailProfileID sets the "email_profile" edge to the CustomerEmailProfile entity by ID.
+func (cuo *CustomerUpdateOne) SetEmailProfileID(id uuid.UUID) *CustomerUpdateOne {
+	cuo.mutation.SetEmailProfileID(id)
+	return cuo
+}
+
+// SetNillableEmailProfileID sets the "email_profile" edge to the CustomerEmailProfile entity by ID if the given value is not nil.
+func (cuo *CustomerUpdateOne) SetNillableEmailProfileID(id *uuid.UUID) *CustomerUpdateOne {
+	if id != nil {
+		cuo = cuo.SetEmailProfileID(*id)
+	}
+	return cuo
+}
+
+// SetEmailProfile sets the "email_profile" edge to the CustomerEmailProfile entity.
+func (cuo *CustomerUpdateOne) SetEmailProfile(c *CustomerEmailProfile) *CustomerUpdateOne {
+	return cuo.SetEmailProfileID(c.ID)
+}
+
+// SetRuleProfileID sets the "rule_profile" edge to the CustomerRuleProfile entity by ID.
+func (cuo *CustomerUpdateOne) SetRuleProfileID(id uuid.UUID) *CustomerUpdateOne {
+	cuo.mutation.SetRuleProfileID(id)
+	return cuo
+}
+
+// SetNillableRuleProfileID sets the "rule_profile" edge to the CustomerRuleProfile entity by ID if the given value is not nil.
+func (cuo *CustomerUpdateOne) SetNillableRuleProfileID(id *uuid.UUID) *CustomerUpdateOne {
+	if id != nil {
+		cuo = cuo.SetRuleProfileID(*id)
+	}
+	return cuo
+}
+
+// SetRuleProfile sets the "rule_profile" edge to the CustomerRuleProfile entity.
+func (cuo *CustomerUpdateOne) SetRuleProfile(c *CustomerRuleProfile) *CustomerUpdateOne {
+	return cuo.SetRuleProfileID(c.ID)
+}
+
+// AddDetentionPolicyIDs adds the "detention_policies" edge to the CustomerDetentionPolicy entity by IDs.
+func (cuo *CustomerUpdateOne) AddDetentionPolicyIDs(ids ...uuid.UUID) *CustomerUpdateOne {
+	cuo.mutation.AddDetentionPolicyIDs(ids...)
+	return cuo
+}
+
+// AddDetentionPolicies adds the "detention_policies" edges to the CustomerDetentionPolicy entity.
+func (cuo *CustomerUpdateOne) AddDetentionPolicies(c ...*CustomerDetentionPolicy) *CustomerUpdateOne {
+	ids := make([]uuid.UUID, len(c))
+	for i := range c {
+		ids[i] = c[i].ID
+	}
+	return cuo.AddDetentionPolicyIDs(ids...)
+}
+
+// AddContactIDs adds the "contacts" edge to the CustomerContact entity by IDs.
+func (cuo *CustomerUpdateOne) AddContactIDs(ids ...uuid.UUID) *CustomerUpdateOne {
+	cuo.mutation.AddContactIDs(ids...)
+	return cuo
+}
+
+// AddContacts adds the "contacts" edges to the CustomerContact entity.
+func (cuo *CustomerUpdateOne) AddContacts(c ...*CustomerContact) *CustomerUpdateOne {
+	ids := make([]uuid.UUID, len(c))
+	for i := range c {
+		ids[i] = c[i].ID
+	}
+	return cuo.AddContactIDs(ids...)
+}
+
+// AddDeliverySlotIDs adds the "delivery_slots" edge to the DeliverySlot entity by IDs.
+func (cuo *CustomerUpdateOne) AddDeliverySlotIDs(ids ...uuid.UUID) *CustomerUpdateOne {
+	cuo.mutation.AddDeliverySlotIDs(ids...)
+	return cuo
+}
+
+// AddDeliverySlots adds the "delivery_slots" edges to the DeliverySlot entity.
+func (cuo *CustomerUpdateOne) AddDeliverySlots(d ...*DeliverySlot) *CustomerUpdateOne {
+	ids := make([]uuid.UUID, len(d))
+	for i := range d {
+		ids[i] = d[i].ID
+	}
+	return cuo.AddDeliverySlotIDs(ids...)
+}
+
 // Mutation returns the CustomerMutation object of the builder.
 func (cuo *CustomerUpdateOne) Mutation() *CustomerMutation {
 	return cuo.mutation
+}
+
+// ClearOrganization clears the "organization" edge to the Organization entity.
+func (cuo *CustomerUpdateOne) ClearOrganization() *CustomerUpdateOne {
+	cuo.mutation.ClearOrganization()
+	return cuo
 }
 
 // ClearState clears the "state" edge to the UsState entity.
@@ -724,6 +1243,81 @@ func (cuo *CustomerUpdateOne) RemoveShipments(s ...*Shipment) *CustomerUpdateOne
 		ids[i] = s[i].ID
 	}
 	return cuo.RemoveShipmentIDs(ids...)
+}
+
+// ClearEmailProfile clears the "email_profile" edge to the CustomerEmailProfile entity.
+func (cuo *CustomerUpdateOne) ClearEmailProfile() *CustomerUpdateOne {
+	cuo.mutation.ClearEmailProfile()
+	return cuo
+}
+
+// ClearRuleProfile clears the "rule_profile" edge to the CustomerRuleProfile entity.
+func (cuo *CustomerUpdateOne) ClearRuleProfile() *CustomerUpdateOne {
+	cuo.mutation.ClearRuleProfile()
+	return cuo
+}
+
+// ClearDetentionPolicies clears all "detention_policies" edges to the CustomerDetentionPolicy entity.
+func (cuo *CustomerUpdateOne) ClearDetentionPolicies() *CustomerUpdateOne {
+	cuo.mutation.ClearDetentionPolicies()
+	return cuo
+}
+
+// RemoveDetentionPolicyIDs removes the "detention_policies" edge to CustomerDetentionPolicy entities by IDs.
+func (cuo *CustomerUpdateOne) RemoveDetentionPolicyIDs(ids ...uuid.UUID) *CustomerUpdateOne {
+	cuo.mutation.RemoveDetentionPolicyIDs(ids...)
+	return cuo
+}
+
+// RemoveDetentionPolicies removes "detention_policies" edges to CustomerDetentionPolicy entities.
+func (cuo *CustomerUpdateOne) RemoveDetentionPolicies(c ...*CustomerDetentionPolicy) *CustomerUpdateOne {
+	ids := make([]uuid.UUID, len(c))
+	for i := range c {
+		ids[i] = c[i].ID
+	}
+	return cuo.RemoveDetentionPolicyIDs(ids...)
+}
+
+// ClearContacts clears all "contacts" edges to the CustomerContact entity.
+func (cuo *CustomerUpdateOne) ClearContacts() *CustomerUpdateOne {
+	cuo.mutation.ClearContacts()
+	return cuo
+}
+
+// RemoveContactIDs removes the "contacts" edge to CustomerContact entities by IDs.
+func (cuo *CustomerUpdateOne) RemoveContactIDs(ids ...uuid.UUID) *CustomerUpdateOne {
+	cuo.mutation.RemoveContactIDs(ids...)
+	return cuo
+}
+
+// RemoveContacts removes "contacts" edges to CustomerContact entities.
+func (cuo *CustomerUpdateOne) RemoveContacts(c ...*CustomerContact) *CustomerUpdateOne {
+	ids := make([]uuid.UUID, len(c))
+	for i := range c {
+		ids[i] = c[i].ID
+	}
+	return cuo.RemoveContactIDs(ids...)
+}
+
+// ClearDeliverySlots clears all "delivery_slots" edges to the DeliverySlot entity.
+func (cuo *CustomerUpdateOne) ClearDeliverySlots() *CustomerUpdateOne {
+	cuo.mutation.ClearDeliverySlots()
+	return cuo
+}
+
+// RemoveDeliverySlotIDs removes the "delivery_slots" edge to DeliverySlot entities by IDs.
+func (cuo *CustomerUpdateOne) RemoveDeliverySlotIDs(ids ...uuid.UUID) *CustomerUpdateOne {
+	cuo.mutation.RemoveDeliverySlotIDs(ids...)
+	return cuo
+}
+
+// RemoveDeliverySlots removes "delivery_slots" edges to DeliverySlot entities.
+func (cuo *CustomerUpdateOne) RemoveDeliverySlots(d ...*DeliverySlot) *CustomerUpdateOne {
+	ids := make([]uuid.UUID, len(d))
+	for i := range d {
+		ids[i] = d[i].ID
+	}
+	return cuo.RemoveDeliverySlotIDs(ids...)
 }
 
 // Where appends a list predicates to the CustomerUpdate builder.
@@ -904,6 +1498,35 @@ func (cuo *CustomerUpdateOne) sqlSave(ctx context.Context) (_node *Customer, err
 	if value, ok := cuo.mutation.AutoMarkReadyToBill(); ok {
 		_spec.SetField(customer.FieldAutoMarkReadyToBill, field.TypeBool, value)
 	}
+	if cuo.mutation.OrganizationCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   customer.OrganizationTable,
+			Columns: []string{customer.OrganizationColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(organization.FieldID, field.TypeUUID),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := cuo.mutation.OrganizationIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   customer.OrganizationTable,
+			Columns: []string{customer.OrganizationColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(organization.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
 	if cuo.mutation.StateCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
@@ -971,6 +1594,199 @@ func (cuo *CustomerUpdateOne) sqlSave(ctx context.Context) (_node *Customer, err
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(shipment.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if cuo.mutation.EmailProfileCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2O,
+			Inverse: false,
+			Table:   customer.EmailProfileTable,
+			Columns: []string{customer.EmailProfileColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(customeremailprofile.FieldID, field.TypeUUID),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := cuo.mutation.EmailProfileIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2O,
+			Inverse: false,
+			Table:   customer.EmailProfileTable,
+			Columns: []string{customer.EmailProfileColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(customeremailprofile.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if cuo.mutation.RuleProfileCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2O,
+			Inverse: false,
+			Table:   customer.RuleProfileTable,
+			Columns: []string{customer.RuleProfileColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(customerruleprofile.FieldID, field.TypeUUID),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := cuo.mutation.RuleProfileIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2O,
+			Inverse: false,
+			Table:   customer.RuleProfileTable,
+			Columns: []string{customer.RuleProfileColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(customerruleprofile.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if cuo.mutation.DetentionPoliciesCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   customer.DetentionPoliciesTable,
+			Columns: []string{customer.DetentionPoliciesColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(customerdetentionpolicy.FieldID, field.TypeUUID),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := cuo.mutation.RemovedDetentionPoliciesIDs(); len(nodes) > 0 && !cuo.mutation.DetentionPoliciesCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   customer.DetentionPoliciesTable,
+			Columns: []string{customer.DetentionPoliciesColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(customerdetentionpolicy.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := cuo.mutation.DetentionPoliciesIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   customer.DetentionPoliciesTable,
+			Columns: []string{customer.DetentionPoliciesColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(customerdetentionpolicy.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if cuo.mutation.ContactsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   customer.ContactsTable,
+			Columns: []string{customer.ContactsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(customercontact.FieldID, field.TypeUUID),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := cuo.mutation.RemovedContactsIDs(); len(nodes) > 0 && !cuo.mutation.ContactsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   customer.ContactsTable,
+			Columns: []string{customer.ContactsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(customercontact.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := cuo.mutation.ContactsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   customer.ContactsTable,
+			Columns: []string{customer.ContactsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(customercontact.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if cuo.mutation.DeliverySlotsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   customer.DeliverySlotsTable,
+			Columns: []string{customer.DeliverySlotsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(deliveryslot.FieldID, field.TypeUUID),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := cuo.mutation.RemovedDeliverySlotsIDs(); len(nodes) > 0 && !cuo.mutation.DeliverySlotsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   customer.DeliverySlotsTable,
+			Columns: []string{customer.DeliverySlotsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(deliveryslot.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := cuo.mutation.DeliverySlotsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   customer.DeliverySlotsTable,
+			Columns: []string{customer.DeliverySlotsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(deliveryslot.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {

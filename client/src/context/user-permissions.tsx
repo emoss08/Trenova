@@ -8,38 +8,40 @@ export type UserPermissionsContextType = {
   userHasPermission: (permission: string) => boolean;
 };
 
-const UserPermissionsContext =
+export const UserPermissionsContext =
   React.createContext<UserPermissionsContextType | null>(null);
 
-export const UserPermissionsProvider: React.FC<{
+export const UserPermissionsProvider = ({
+  children,
+}: {
   children: React.ReactNode;
-}> = ({ children }) => {
+}) => {
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
   const user = useUserStore.get("user");
 
-  // User is admin or is super admin
   const isAdmin = user?.isAdmin || user?.isSuperAdmin;
-  // User can have multiple roles. We need to get the name of each permission
-  const permissions =
-    user?.edges.roles
-      ?.map((role) => role.edges.permissions)
-      .flat()
-      .map((permission) => permission.codename) ?? [];
 
-  const userHasPermission = useMemo(
-    () => (permission: string) => isAdmin || permissions.includes(permission),
-    [isAdmin, permissions],
+  // User is admin or is super admin
+  const permissions = useMemo(
+    () =>
+      user?.edges.roles
+        ?.map((role) => role.edges.permissions)
+        .flat()
+        .map((permission) => permission.codename) ?? [],
+    [user],
   );
 
-  const contextValue = useMemo(
-    () => ({
+  const contextValue = useMemo(() => {
+    const userHasPermission = (permission: string) =>
+      isAdmin || permissions.includes(permission);
+
+    return {
       isAuthenticated,
       isAdmin,
       permissions,
       userHasPermission,
-    }),
-    [isAuthenticated, isAdmin, permissions, userHasPermission],
-  );
+    };
+  }, [isAuthenticated, isAdmin, permissions]);
 
   return (
     <UserPermissionsContext.Provider value={contextValue}>

@@ -41,7 +41,8 @@ function BillingControlForm({
     method: "PUT",
     path: `/billing-control/${billingControl.id}/`,
     successMessage: t("formSuccessMessage"),
-    queryKeysToInvalidate: ["billingControl"],
+    queryKeysToInvalidate: "billingControl",
+    reset,
     errorMessage: t("formErrorMessage"),
   });
 

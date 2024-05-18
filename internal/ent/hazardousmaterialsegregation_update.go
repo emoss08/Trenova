@@ -12,7 +12,9 @@ import (
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
 	"github.com/emoss08/trenova/internal/ent/hazardousmaterialsegregation"
+	"github.com/emoss08/trenova/internal/ent/organization"
 	"github.com/emoss08/trenova/internal/ent/predicate"
+	"github.com/google/uuid"
 )
 
 // HazardousMaterialSegregationUpdate is the builder for updating HazardousMaterialSegregation entities.
@@ -26,6 +28,20 @@ type HazardousMaterialSegregationUpdate struct {
 // Where appends a list predicates to the HazardousMaterialSegregationUpdate builder.
 func (hmsu *HazardousMaterialSegregationUpdate) Where(ps ...predicate.HazardousMaterialSegregation) *HazardousMaterialSegregationUpdate {
 	hmsu.mutation.Where(ps...)
+	return hmsu
+}
+
+// SetOrganizationID sets the "organization_id" field.
+func (hmsu *HazardousMaterialSegregationUpdate) SetOrganizationID(u uuid.UUID) *HazardousMaterialSegregationUpdate {
+	hmsu.mutation.SetOrganizationID(u)
+	return hmsu
+}
+
+// SetNillableOrganizationID sets the "organization_id" field if the given value is not nil.
+func (hmsu *HazardousMaterialSegregationUpdate) SetNillableOrganizationID(u *uuid.UUID) *HazardousMaterialSegregationUpdate {
+	if u != nil {
+		hmsu.SetOrganizationID(*u)
+	}
 	return hmsu
 }
 
@@ -98,9 +114,20 @@ func (hmsu *HazardousMaterialSegregationUpdate) SetNillableSegregationType(ht *h
 	return hmsu
 }
 
+// SetOrganization sets the "organization" edge to the Organization entity.
+func (hmsu *HazardousMaterialSegregationUpdate) SetOrganization(o *Organization) *HazardousMaterialSegregationUpdate {
+	return hmsu.SetOrganizationID(o.ID)
+}
+
 // Mutation returns the HazardousMaterialSegregationMutation object of the builder.
 func (hmsu *HazardousMaterialSegregationUpdate) Mutation() *HazardousMaterialSegregationMutation {
 	return hmsu.mutation
+}
+
+// ClearOrganization clears the "organization" edge to the Organization entity.
+func (hmsu *HazardousMaterialSegregationUpdate) ClearOrganization() *HazardousMaterialSegregationUpdate {
+	hmsu.mutation.ClearOrganization()
+	return hmsu
 }
 
 // Save executes the query and returns the number of nodes affected by the update operation.
@@ -201,6 +228,35 @@ func (hmsu *HazardousMaterialSegregationUpdate) sqlSave(ctx context.Context) (n 
 	if value, ok := hmsu.mutation.SegregationType(); ok {
 		_spec.SetField(hazardousmaterialsegregation.FieldSegregationType, field.TypeEnum, value)
 	}
+	if hmsu.mutation.OrganizationCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   hazardousmaterialsegregation.OrganizationTable,
+			Columns: []string{hazardousmaterialsegregation.OrganizationColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(organization.FieldID, field.TypeUUID),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := hmsu.mutation.OrganizationIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   hazardousmaterialsegregation.OrganizationTable,
+			Columns: []string{hazardousmaterialsegregation.OrganizationColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(organization.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
 	_spec.AddModifiers(hmsu.modifiers...)
 	if n, err = sqlgraph.UpdateNodes(ctx, hmsu.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
@@ -221,6 +277,20 @@ type HazardousMaterialSegregationUpdateOne struct {
 	hooks     []Hook
 	mutation  *HazardousMaterialSegregationMutation
 	modifiers []func(*sql.UpdateBuilder)
+}
+
+// SetOrganizationID sets the "organization_id" field.
+func (hmsuo *HazardousMaterialSegregationUpdateOne) SetOrganizationID(u uuid.UUID) *HazardousMaterialSegregationUpdateOne {
+	hmsuo.mutation.SetOrganizationID(u)
+	return hmsuo
+}
+
+// SetNillableOrganizationID sets the "organization_id" field if the given value is not nil.
+func (hmsuo *HazardousMaterialSegregationUpdateOne) SetNillableOrganizationID(u *uuid.UUID) *HazardousMaterialSegregationUpdateOne {
+	if u != nil {
+		hmsuo.SetOrganizationID(*u)
+	}
+	return hmsuo
 }
 
 // SetUpdatedAt sets the "updated_at" field.
@@ -292,9 +362,20 @@ func (hmsuo *HazardousMaterialSegregationUpdateOne) SetNillableSegregationType(h
 	return hmsuo
 }
 
+// SetOrganization sets the "organization" edge to the Organization entity.
+func (hmsuo *HazardousMaterialSegregationUpdateOne) SetOrganization(o *Organization) *HazardousMaterialSegregationUpdateOne {
+	return hmsuo.SetOrganizationID(o.ID)
+}
+
 // Mutation returns the HazardousMaterialSegregationMutation object of the builder.
 func (hmsuo *HazardousMaterialSegregationUpdateOne) Mutation() *HazardousMaterialSegregationMutation {
 	return hmsuo.mutation
+}
+
+// ClearOrganization clears the "organization" edge to the Organization entity.
+func (hmsuo *HazardousMaterialSegregationUpdateOne) ClearOrganization() *HazardousMaterialSegregationUpdateOne {
+	hmsuo.mutation.ClearOrganization()
+	return hmsuo
 }
 
 // Where appends a list predicates to the HazardousMaterialSegregationUpdate builder.
@@ -424,6 +505,35 @@ func (hmsuo *HazardousMaterialSegregationUpdateOne) sqlSave(ctx context.Context)
 	}
 	if value, ok := hmsuo.mutation.SegregationType(); ok {
 		_spec.SetField(hazardousmaterialsegregation.FieldSegregationType, field.TypeEnum, value)
+	}
+	if hmsuo.mutation.OrganizationCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   hazardousmaterialsegregation.OrganizationTable,
+			Columns: []string{hazardousmaterialsegregation.OrganizationColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(organization.FieldID, field.TypeUUID),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := hmsuo.mutation.OrganizationIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   hazardousmaterialsegregation.OrganizationTable,
+			Columns: []string{hazardousmaterialsegregation.OrganizationColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(organization.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
 	_spec.AddModifiers(hmsuo.modifiers...)
 	_node = &HazardousMaterialSegregation{config: hmsuo.config}

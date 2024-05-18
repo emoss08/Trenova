@@ -100,7 +100,7 @@ export function ACForm({ control }: { control: Control<FormValues> }) {
 }
 
 export function ACDialog({ onOpenChange, open }: TableSheetProps) {
-  const { control, handleSubmit } = useForm<FormValues>({
+  const { control, handleSubmit, reset } = useForm<FormValues>({
     resolver: yupResolver(accessorialChargeSchema),
     defaultValues: {
       status: "A",
@@ -116,8 +116,9 @@ export function ACDialog({ onOpenChange, open }: TableSheetProps) {
     method: "POST",
     path: "/accessorial-charges/",
     successMessage: "Accesorial Charge created successfully.",
-    queryKeysToInvalidate: ["accessorial-charges-table-data"],
+    queryKeysToInvalidate: "accessorialCharges",
     closeModal: true,
+    reset,
     errorMessage: "Failed to create new accesorial charge.",
   });
 

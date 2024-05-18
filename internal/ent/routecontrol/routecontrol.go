@@ -103,6 +103,7 @@ const DefaultDistanceMethod = DistanceMethodTrenova
 const (
 	DistanceMethodTrenova DistanceMethod = "Trenova"
 	DistanceMethodGoogle  DistanceMethod = "Google"
+	DistanceMethodPCMiler DistanceMethod = "PCMiler"
 )
 
 func (dm DistanceMethod) String() string {
@@ -112,7 +113,7 @@ func (dm DistanceMethod) String() string {
 // DistanceMethodValidator is a validator for the "distance_method" field enum values. It is called by the builders before save.
 func DistanceMethodValidator(dm DistanceMethod) error {
 	switch dm {
-	case DistanceMethodTrenova, DistanceMethodGoogle:
+	case DistanceMethodTrenova, DistanceMethodGoogle, DistanceMethodPCMiler:
 		return nil
 	default:
 		return fmt.Errorf("routecontrol: invalid enum value for distance_method field: %q", dm)

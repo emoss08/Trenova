@@ -126,7 +126,7 @@ export function FleetCodeForm({
 }
 
 export function FleetCodeDialog({ onOpenChange, open }: TableSheetProps) {
-  const { control, handleSubmit } = useForm<FormValues>({
+  const { control, reset, handleSubmit } = useForm<FormValues>({
     resolver: yupResolver(fleetCodeSchema),
     defaultValues: {
       status: "A",
@@ -144,8 +144,9 @@ export function FleetCodeDialog({ onOpenChange, open }: TableSheetProps) {
     method: "POST",
     path: "/fleet-codes/",
     successMessage: "Fleet Code created successfully.",
-    queryKeysToInvalidate: ["fleet-code-table-data"],
+    queryKeysToInvalidate: "fleetCodes",
     closeModal: true,
+    reset,
     errorMessage: "Failed to create new fleet code.",
   });
 

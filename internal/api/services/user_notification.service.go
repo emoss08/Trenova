@@ -71,11 +71,10 @@ func (r *UserNotificationService) GetUserNotifications(
 
 func (r *UserNotificationService) CreateUserNotification(
 	ctx context.Context, orgID, buID, userID uuid.UUID, title, description, actionURL string,
-) (*ent.UserNotification, error) {
-	newEntity := new(ent.UserNotification)
+) error {
 	err := util.WithTx(ctx, r.Client, func(tx *ent.Tx) error {
 		var err error
-		newEntity, err = r.createUserNotificationEntity(ctx, tx, orgID, buID, userID, title, description, actionURL)
+		err = r.createUserNotificationEntity(ctx, tx, orgID, buID, userID, title, description, actionURL)
 		if err != nil {
 			return err
 		}
@@ -83,28 +82,28 @@ func (r *UserNotificationService) CreateUserNotification(
 		return nil
 	})
 	if err != nil {
-		return nil, err
+		return err
 	}
 
-	return newEntity, nil
+	return nil
 }
 
 func (r *UserNotificationService) createUserNotificationEntity(
 	ctx context.Context, tx *ent.Tx, orgID, buID, userID uuid.UUID, title, description, actionURL string,
-) (*ent.UserNotification, error) {
-	createdEntity, err := tx.UserNotification.Create().
+) error {
+	err := tx.UserNotification.Create().
 		SetOrganizationID(orgID).
 		SetBusinessUnitID(buID).
 		SetUserID(userID).
 		SetDescription(description).
 		SetActionURL(actionURL).
 		SetTitle(title).
-		Save(ctx)
+		Exec(ctx)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
-	return createdEntity, nil
+	return nil
 }
 
 func (r *UserNotificationService) MarkNotificationsAsRead(

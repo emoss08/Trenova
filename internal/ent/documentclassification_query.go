@@ -12,6 +12,7 @@ import (
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
 	"github.com/emoss08/trenova/internal/ent/businessunit"
+	"github.com/emoss08/trenova/internal/ent/customerruleprofile"
 	"github.com/emoss08/trenova/internal/ent/documentclassification"
 	"github.com/emoss08/trenova/internal/ent/organization"
 	"github.com/emoss08/trenova/internal/ent/predicate"
@@ -29,8 +30,10 @@ type DocumentClassificationQuery struct {
 	withBusinessUnit               *BusinessUnitQuery
 	withOrganization               *OrganizationQuery
 	withShipmentDocumentation      *ShipmentDocumentationQuery
+	withCustomerRuleProfile        *CustomerRuleProfileQuery
 	modifiers                      []func(*sql.Selector)
 	withNamedShipmentDocumentation map[string]*ShipmentDocumentationQuery
+	withNamedCustomerRuleProfile   map[string]*CustomerRuleProfileQuery
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
 	path func(context.Context) (*sql.Selector, error)
@@ -126,6 +129,28 @@ func (dcq *DocumentClassificationQuery) QueryShipmentDocumentation() *ShipmentDo
 			sqlgraph.From(documentclassification.Table, documentclassification.FieldID, selector),
 			sqlgraph.To(shipmentdocumentation.Table, shipmentdocumentation.FieldID),
 			sqlgraph.Edge(sqlgraph.O2M, false, documentclassification.ShipmentDocumentationTable, documentclassification.ShipmentDocumentationColumn),
+		)
+		fromU = sqlgraph.SetNeighbors(dcq.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
+}
+
+// QueryCustomerRuleProfile chains the current query on the "customer_rule_profile" edge.
+func (dcq *DocumentClassificationQuery) QueryCustomerRuleProfile() *CustomerRuleProfileQuery {
+	query := (&CustomerRuleProfileClient{config: dcq.config}).Query()
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := dcq.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := dcq.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(documentclassification.Table, documentclassification.FieldID, selector),
+			sqlgraph.To(customerruleprofile.Table, customerruleprofile.FieldID),
+			sqlgraph.Edge(sqlgraph.M2M, true, documentclassification.CustomerRuleProfileTable, documentclassification.CustomerRuleProfilePrimaryKey...),
 		)
 		fromU = sqlgraph.SetNeighbors(dcq.driver.Dialect(), step)
 		return fromU, nil
@@ -328,6 +353,7 @@ func (dcq *DocumentClassificationQuery) Clone() *DocumentClassificationQuery {
 		withBusinessUnit:          dcq.withBusinessUnit.Clone(),
 		withOrganization:          dcq.withOrganization.Clone(),
 		withShipmentDocumentation: dcq.withShipmentDocumentation.Clone(),
+		withCustomerRuleProfile:   dcq.withCustomerRuleProfile.Clone(),
 		// clone intermediate query.
 		sql:  dcq.sql.Clone(),
 		path: dcq.path,
@@ -364,6 +390,17 @@ func (dcq *DocumentClassificationQuery) WithShipmentDocumentation(opts ...func(*
 		opt(query)
 	}
 	dcq.withShipmentDocumentation = query
+	return dcq
+}
+
+// WithCustomerRuleProfile tells the query-builder to eager-load the nodes that are connected to
+// the "customer_rule_profile" edge. The optional arguments are used to configure the query builder of the edge.
+func (dcq *DocumentClassificationQuery) WithCustomerRuleProfile(opts ...func(*CustomerRuleProfileQuery)) *DocumentClassificationQuery {
+	query := (&CustomerRuleProfileClient{config: dcq.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	dcq.withCustomerRuleProfile = query
 	return dcq
 }
 
@@ -445,10 +482,11 @@ func (dcq *DocumentClassificationQuery) sqlAll(ctx context.Context, hooks ...que
 	var (
 		nodes       = []*DocumentClassification{}
 		_spec       = dcq.querySpec()
-		loadedTypes = [3]bool{
+		loadedTypes = [4]bool{
 			dcq.withBusinessUnit != nil,
 			dcq.withOrganization != nil,
 			dcq.withShipmentDocumentation != nil,
+			dcq.withCustomerRuleProfile != nil,
 		}
 	)
 	_spec.ScanValues = func(columns []string) ([]any, error) {
@@ -493,10 +531,26 @@ func (dcq *DocumentClassificationQuery) sqlAll(ctx context.Context, hooks ...que
 			return nil, err
 		}
 	}
+	if query := dcq.withCustomerRuleProfile; query != nil {
+		if err := dcq.loadCustomerRuleProfile(ctx, query, nodes,
+			func(n *DocumentClassification) { n.Edges.CustomerRuleProfile = []*CustomerRuleProfile{} },
+			func(n *DocumentClassification, e *CustomerRuleProfile) {
+				n.Edges.CustomerRuleProfile = append(n.Edges.CustomerRuleProfile, e)
+			}); err != nil {
+			return nil, err
+		}
+	}
 	for name, query := range dcq.withNamedShipmentDocumentation {
 		if err := dcq.loadShipmentDocumentation(ctx, query, nodes,
 			func(n *DocumentClassification) { n.appendNamedShipmentDocumentation(name) },
 			func(n *DocumentClassification, e *ShipmentDocumentation) { n.appendNamedShipmentDocumentation(name, e) }); err != nil {
+			return nil, err
+		}
+	}
+	for name, query := range dcq.withNamedCustomerRuleProfile {
+		if err := dcq.loadCustomerRuleProfile(ctx, query, nodes,
+			func(n *DocumentClassification) { n.appendNamedCustomerRuleProfile(name) },
+			func(n *DocumentClassification, e *CustomerRuleProfile) { n.appendNamedCustomerRuleProfile(name, e) }); err != nil {
 			return nil, err
 		}
 	}
@@ -588,6 +642,67 @@ func (dcq *DocumentClassificationQuery) loadShipmentDocumentation(ctx context.Co
 			return fmt.Errorf(`unexpected referenced foreign-key "document_classification_id" returned %v for node %v`, fk, n.ID)
 		}
 		assign(node, n)
+	}
+	return nil
+}
+func (dcq *DocumentClassificationQuery) loadCustomerRuleProfile(ctx context.Context, query *CustomerRuleProfileQuery, nodes []*DocumentClassification, init func(*DocumentClassification), assign func(*DocumentClassification, *CustomerRuleProfile)) error {
+	edgeIDs := make([]driver.Value, len(nodes))
+	byID := make(map[uuid.UUID]*DocumentClassification)
+	nids := make(map[uuid.UUID]map[*DocumentClassification]struct{})
+	for i, node := range nodes {
+		edgeIDs[i] = node.ID
+		byID[node.ID] = node
+		if init != nil {
+			init(node)
+		}
+	}
+	query.Where(func(s *sql.Selector) {
+		joinT := sql.Table(documentclassification.CustomerRuleProfileTable)
+		s.Join(joinT).On(s.C(customerruleprofile.FieldID), joinT.C(documentclassification.CustomerRuleProfilePrimaryKey[0]))
+		s.Where(sql.InValues(joinT.C(documentclassification.CustomerRuleProfilePrimaryKey[1]), edgeIDs...))
+		columns := s.SelectedColumns()
+		s.Select(joinT.C(documentclassification.CustomerRuleProfilePrimaryKey[1]))
+		s.AppendSelect(columns...)
+		s.SetDistinct(false)
+	})
+	if err := query.prepareQuery(ctx); err != nil {
+		return err
+	}
+	qr := QuerierFunc(func(ctx context.Context, q Query) (Value, error) {
+		return query.sqlAll(ctx, func(_ context.Context, spec *sqlgraph.QuerySpec) {
+			assign := spec.Assign
+			values := spec.ScanValues
+			spec.ScanValues = func(columns []string) ([]any, error) {
+				values, err := values(columns[1:])
+				if err != nil {
+					return nil, err
+				}
+				return append([]any{new(uuid.UUID)}, values...), nil
+			}
+			spec.Assign = func(columns []string, values []any) error {
+				outValue := *values[0].(*uuid.UUID)
+				inValue := *values[1].(*uuid.UUID)
+				if nids[inValue] == nil {
+					nids[inValue] = map[*DocumentClassification]struct{}{byID[outValue]: {}}
+					return assign(columns[1:], values[1:])
+				}
+				nids[inValue][byID[outValue]] = struct{}{}
+				return nil
+			}
+		})
+	})
+	neighbors, err := withInterceptors[[]*CustomerRuleProfile](ctx, query, qr, query.inters)
+	if err != nil {
+		return err
+	}
+	for _, n := range neighbors {
+		nodes, ok := nids[n.ID]
+		if !ok {
+			return fmt.Errorf(`unexpected "customer_rule_profile" node returned %v`, n.ID)
+		}
+		for kn := range nodes {
+			assign(kn, n)
+		}
 	}
 	return nil
 }
@@ -702,6 +817,20 @@ func (dcq *DocumentClassificationQuery) WithNamedShipmentDocumentation(name stri
 		dcq.withNamedShipmentDocumentation = make(map[string]*ShipmentDocumentationQuery)
 	}
 	dcq.withNamedShipmentDocumentation[name] = query
+	return dcq
+}
+
+// WithNamedCustomerRuleProfile tells the query-builder to eager-load the nodes that are connected to the "customer_rule_profile"
+// edge with the given name. The optional arguments are used to configure the query builder of the edge.
+func (dcq *DocumentClassificationQuery) WithNamedCustomerRuleProfile(name string, opts ...func(*CustomerRuleProfileQuery)) *DocumentClassificationQuery {
+	query := (&CustomerRuleProfileClient{config: dcq.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	if dcq.withNamedCustomerRuleProfile == nil {
+		dcq.withNamedCustomerRuleProfile = make(map[string]*CustomerRuleProfileQuery)
+	}
+	dcq.withNamedCustomerRuleProfile[name] = query
 	return dcq
 }
 

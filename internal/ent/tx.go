@@ -32,8 +32,18 @@ type Tx struct {
 	CustomReport *CustomReportClient
 	// Customer is the client for interacting with the Customer builders.
 	Customer *CustomerClient
+	// CustomerContact is the client for interacting with the CustomerContact builders.
+	CustomerContact *CustomerContactClient
+	// CustomerDetentionPolicy is the client for interacting with the CustomerDetentionPolicy builders.
+	CustomerDetentionPolicy *CustomerDetentionPolicyClient
+	// CustomerEmailProfile is the client for interacting with the CustomerEmailProfile builders.
+	CustomerEmailProfile *CustomerEmailProfileClient
+	// CustomerRuleProfile is the client for interacting with the CustomerRuleProfile builders.
+	CustomerRuleProfile *CustomerRuleProfileClient
 	// DelayCode is the client for interacting with the DelayCode builders.
 	DelayCode *DelayCodeClient
+	// DeliverySlot is the client for interacting with the DeliverySlot builders.
+	DeliverySlot *DeliverySlotClient
 	// DispatchControl is the client for interacting with the DispatchControl builders.
 	DispatchControl *DispatchControlClient
 	// DivisionCode is the client for interacting with the DivisionCode builders.
@@ -282,7 +292,12 @@ func (tx *Tx) init() {
 	tx.Commodity = NewCommodityClient(tx.config)
 	tx.CustomReport = NewCustomReportClient(tx.config)
 	tx.Customer = NewCustomerClient(tx.config)
+	tx.CustomerContact = NewCustomerContactClient(tx.config)
+	tx.CustomerDetentionPolicy = NewCustomerDetentionPolicyClient(tx.config)
+	tx.CustomerEmailProfile = NewCustomerEmailProfileClient(tx.config)
+	tx.CustomerRuleProfile = NewCustomerRuleProfileClient(tx.config)
 	tx.DelayCode = NewDelayCodeClient(tx.config)
+	tx.DeliverySlot = NewDeliverySlotClient(tx.config)
 	tx.DispatchControl = NewDispatchControlClient(tx.config)
 	tx.DivisionCode = NewDivisionCodeClient(tx.config)
 	tx.DocumentClassification = NewDocumentClassificationClient(tx.config)

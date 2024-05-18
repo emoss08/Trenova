@@ -12,6 +12,7 @@ import (
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
 	"github.com/emoss08/trenova/internal/ent/fleetcode"
+	"github.com/emoss08/trenova/internal/ent/organization"
 	"github.com/emoss08/trenova/internal/ent/predicate"
 	"github.com/emoss08/trenova/internal/ent/user"
 	"github.com/google/uuid"
@@ -28,6 +29,20 @@ type FleetCodeUpdate struct {
 // Where appends a list predicates to the FleetCodeUpdate builder.
 func (fcu *FleetCodeUpdate) Where(ps ...predicate.FleetCode) *FleetCodeUpdate {
 	fcu.mutation.Where(ps...)
+	return fcu
+}
+
+// SetOrganizationID sets the "organization_id" field.
+func (fcu *FleetCodeUpdate) SetOrganizationID(u uuid.UUID) *FleetCodeUpdate {
+	fcu.mutation.SetOrganizationID(u)
+	return fcu
+}
+
+// SetNillableOrganizationID sets the "organization_id" field if the given value is not nil.
+func (fcu *FleetCodeUpdate) SetNillableOrganizationID(u *uuid.UUID) *FleetCodeUpdate {
+	if u != nil {
+		fcu.SetOrganizationID(*u)
+	}
 	return fcu
 }
 
@@ -227,6 +242,11 @@ func (fcu *FleetCodeUpdate) ClearColor() *FleetCodeUpdate {
 	return fcu
 }
 
+// SetOrganization sets the "organization" edge to the Organization entity.
+func (fcu *FleetCodeUpdate) SetOrganization(o *Organization) *FleetCodeUpdate {
+	return fcu.SetOrganizationID(o.ID)
+}
+
 // SetManager sets the "manager" edge to the User entity.
 func (fcu *FleetCodeUpdate) SetManager(u *User) *FleetCodeUpdate {
 	return fcu.SetManagerID(u.ID)
@@ -235,6 +255,12 @@ func (fcu *FleetCodeUpdate) SetManager(u *User) *FleetCodeUpdate {
 // Mutation returns the FleetCodeMutation object of the builder.
 func (fcu *FleetCodeUpdate) Mutation() *FleetCodeMutation {
 	return fcu.mutation
+}
+
+// ClearOrganization clears the "organization" edge to the Organization entity.
+func (fcu *FleetCodeUpdate) ClearOrganization() *FleetCodeUpdate {
+	fcu.mutation.ClearOrganization()
+	return fcu
 }
 
 // ClearManager clears the "manager" edge to the User entity.
@@ -372,6 +398,35 @@ func (fcu *FleetCodeUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	if fcu.mutation.ColorCleared() {
 		_spec.ClearField(fleetcode.FieldColor, field.TypeString)
 	}
+	if fcu.mutation.OrganizationCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   fleetcode.OrganizationTable,
+			Columns: []string{fleetcode.OrganizationColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(organization.FieldID, field.TypeUUID),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := fcu.mutation.OrganizationIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   fleetcode.OrganizationTable,
+			Columns: []string{fleetcode.OrganizationColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(organization.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
 	if fcu.mutation.ManagerCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
@@ -421,6 +476,20 @@ type FleetCodeUpdateOne struct {
 	hooks     []Hook
 	mutation  *FleetCodeMutation
 	modifiers []func(*sql.UpdateBuilder)
+}
+
+// SetOrganizationID sets the "organization_id" field.
+func (fcuo *FleetCodeUpdateOne) SetOrganizationID(u uuid.UUID) *FleetCodeUpdateOne {
+	fcuo.mutation.SetOrganizationID(u)
+	return fcuo
+}
+
+// SetNillableOrganizationID sets the "organization_id" field if the given value is not nil.
+func (fcuo *FleetCodeUpdateOne) SetNillableOrganizationID(u *uuid.UUID) *FleetCodeUpdateOne {
+	if u != nil {
+		fcuo.SetOrganizationID(*u)
+	}
+	return fcuo
 }
 
 // SetUpdatedAt sets the "updated_at" field.
@@ -619,6 +688,11 @@ func (fcuo *FleetCodeUpdateOne) ClearColor() *FleetCodeUpdateOne {
 	return fcuo
 }
 
+// SetOrganization sets the "organization" edge to the Organization entity.
+func (fcuo *FleetCodeUpdateOne) SetOrganization(o *Organization) *FleetCodeUpdateOne {
+	return fcuo.SetOrganizationID(o.ID)
+}
+
 // SetManager sets the "manager" edge to the User entity.
 func (fcuo *FleetCodeUpdateOne) SetManager(u *User) *FleetCodeUpdateOne {
 	return fcuo.SetManagerID(u.ID)
@@ -627,6 +701,12 @@ func (fcuo *FleetCodeUpdateOne) SetManager(u *User) *FleetCodeUpdateOne {
 // Mutation returns the FleetCodeMutation object of the builder.
 func (fcuo *FleetCodeUpdateOne) Mutation() *FleetCodeMutation {
 	return fcuo.mutation
+}
+
+// ClearOrganization clears the "organization" edge to the Organization entity.
+func (fcuo *FleetCodeUpdateOne) ClearOrganization() *FleetCodeUpdateOne {
+	fcuo.mutation.ClearOrganization()
+	return fcuo
 }
 
 // ClearManager clears the "manager" edge to the User entity.
@@ -793,6 +873,35 @@ func (fcuo *FleetCodeUpdateOne) sqlSave(ctx context.Context) (_node *FleetCode, 
 	}
 	if fcuo.mutation.ColorCleared() {
 		_spec.ClearField(fleetcode.FieldColor, field.TypeString)
+	}
+	if fcuo.mutation.OrganizationCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   fleetcode.OrganizationTable,
+			Columns: []string{fleetcode.OrganizationColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(organization.FieldID, field.TypeUUID),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := fcuo.mutation.OrganizationIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   fleetcode.OrganizationTable,
+			Columns: []string{fleetcode.OrganizationColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(organization.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
 	if fcuo.mutation.ManagerCleared() {
 		edge := &sqlgraph.EdgeSpec{

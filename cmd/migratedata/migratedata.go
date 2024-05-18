@@ -1,15 +1,20 @@
 package migratedata
 
 import (
+	"bytes"
 	"context"
+	"encoding/json"
 	"fmt"
 	"log"
+	"net/http"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/emoss08/trenova/internal/ent"
 	"github.com/emoss08/trenova/internal/ent/businessunit"
 	"github.com/emoss08/trenova/internal/ent/commenttype"
+	"github.com/emoss08/trenova/internal/ent/customer"
 	"github.com/emoss08/trenova/internal/ent/equipmentmanufactuer"
 	"github.com/emoss08/trenova/internal/ent/equipmenttype"
 	"github.com/emoss08/trenova/internal/ent/generalledgeraccount"
@@ -19,6 +24,9 @@ import (
 	"github.com/emoss08/trenova/internal/ent/role"
 	"github.com/emoss08/trenova/internal/ent/tractor"
 	"github.com/emoss08/trenova/internal/ent/user"
+	"github.com/emoss08/trenova/internal/ent/usstate"
+	"github.com/emoss08/trenova/internal/util"
+	"github.com/emoss08/trenova/internal/util/types"
 	"github.com/fatih/color"
 	"golang.org/x/crypto/bcrypt"
 )
@@ -351,10 +359,10 @@ func SeedAdminAccount(
 	ctx context.Context, client *ent.Client, org *ent.Organization, bu *ent.BusinessUnit,
 ) error {
 	// Check if the admin account exists
-	_, err := client.User.Query().Where(user.UsernameEQ("admin")).Only(ctx)
+	exists, err := client.User.Query().Where(user.UsernameEQ("admin")).Exist(ctx)
 	switch {
 	// If not, create the admin account
-	case ent.IsNotFound(err):
+	case !exists:
 		hashedPassword, err := bcrypt.GenerateFromPassword([]byte("admin"), bcrypt.DefaultCost)
 		adminRole, err := client.Role.Query().Where(role.NameEQ("Admin")).Only(ctx)
 		if err != nil {
@@ -396,10 +404,14 @@ func SeedNormalAccount(
 	ctx context.Context, client *ent.Client, org *ent.Organization, bu *ent.BusinessUnit,
 ) error {
 	// Check if the normal account exists
-	_, err := client.User.Query().Where(user.UsernameEQ("normie")).Only(ctx)
+	exists, err := client.User.Query().Where(user.UsernameEQ("normie")).Exist(ctx)
+	if err != nil {
+		log.Panicf("Failed querying normal account: %v", err)
+	}
+
 	switch {
 	// If not, create the normal account
-	case ent.IsNotFound(err):
+	case !exists:
 		hashedPassword, err := bcrypt.GenerateFromPassword([]byte("user"), bcrypt.DefaultCost)
 		_, err = client.User.
 			Create().
@@ -553,6 +565,180 @@ func SeedTractors(
 	}
 
 	return err
+}
+
+func SeedCustomers(ctx context.Context, client *ent.Client, org *ent.Organization, bu *ent.BusinessUnit) error {
+	// Check if the organization already has customers
+	customerCount, err := client.Customer.Query().
+		Where(
+			customer.HasOrganizationWith(organization.ID(org.ID)),
+		).Count(ctx)
+	if err != nil {
+		log.Panicf("Failed querying customers: %v", err)
+	}
+
+	nc, err := client.UsState.
+		Query().
+		Where(
+			usstate.NameEQ("North Carolina"),
+		).
+		Only(ctx)
+	if err != nil {
+		log.Panicf("Failed querying North Carolina: %v", err)
+	}
+
+	// Create a standard delivery slot
+	startTime := types.TimeOnly{Time: time.Date(0, 1, 1, 7, 0, 0, 0, time.UTC)}
+	endTime := types.TimeOnly{Time: time.Date(0, 1, 1, 17, 0, 0, 0, time.UTC)}
+
+	// If not, create the customers
+	if customerCount == 0 {
+		err = util.WithTx(ctx, client, func(tx *ent.Tx) error {
+			log.Println("Adding standard customers...")
+
+			c, err := tx.Customer.Create().
+				SetBusinessUnit(bu).
+				SetOrganization(org).
+				SetName("Trenova Software Solutions").
+				SetAddressLine1("1234 Main St").
+				SetCity("Atlanta").
+				SetState(nc).
+				SetPostalCode("30303").
+				Save(ctx)
+			if err != nil {
+				log.Panicf("Failed creating customer: %v", err)
+			}
+
+			// Add email profile to the customer.
+			_, err = tx.CustomerEmailProfile.Create().
+				SetBusinessUnit(bu).
+				SetOrganization(org).
+				SetCustomer(c).
+				SetEmailRecipients("admin@trenova.app,test@trenova.app").
+				Save(ctx)
+			if err != nil {
+				log.Panicf("Failed creating customer email profile: %v", err)
+			}
+
+			// Add rule profile to the customer.
+			_, err = tx.CustomerRuleProfile.Create().
+				SetBusinessUnit(bu).
+				SetOrganization(org).
+				SetCustomer(c).
+				SetBillingCycle("PER_SHIPMENT").
+				Save(ctx)
+			if err != nil {
+				log.Panicf("Failed creating customer: %v", err)
+			}
+
+			// Add a contact to the customer.
+			_, err = tx.CustomerContact.Create().
+				SetBusinessUnit(bu).
+				SetOrganization(org).
+				SetCustomer(c).
+				SetName("John Doe").
+				SetEmail("johndoe@customer.com").
+				Save(ctx)
+			if err != nil {
+				log.Panicf("Failed creating customer: %v", err)
+			}
+
+			// Add a location that can be applied to the delivey slot.
+			lc, err := tx.Location.Create().
+				SetBusinessUnit(bu).
+				SetOrganization(org).
+				SetCode("TRNV").
+				SetName("Trenova Transportation").
+				SetAddressLine1("1234 Main St").
+				SetCity("Atlanta").
+				SetState(nc).
+				SetPostalCode("30303").
+				Save(ctx)
+			if err != nil {
+				log.Panicf("Failed creating location: %v", err)
+			}
+
+			err = tx.DeliverySlot.CreateBulk(
+				tx.DeliverySlot.Create().
+					SetBusinessUnit(bu).
+					SetOrganization(org).
+					SetCustomer(c).
+					SetLocation(lc).
+					SetDayOfWeek("SUNDAY").
+					SetStartTime(&startTime).
+					SetEndTime(&endTime),
+				tx.DeliverySlot.Create().
+					SetBusinessUnit(bu).
+					SetOrganization(org).
+					SetCustomer(c).
+					SetLocation(lc).
+					SetDayOfWeek("MONDAY").
+					SetStartTime(&startTime).
+					SetEndTime(&endTime),
+				tx.DeliverySlot.Create().
+					SetBusinessUnit(bu).
+					SetOrganization(org).
+					SetCustomer(c).
+					SetLocation(lc).
+					SetDayOfWeek("TUESDAY").
+					SetStartTime(&startTime).
+					SetEndTime(&endTime),
+				tx.DeliverySlot.Create().
+					SetBusinessUnit(bu).
+					SetOrganization(org).
+					SetCustomer(c).
+					SetLocation(lc).
+					SetDayOfWeek("WEDNESDAY").
+					SetStartTime(&startTime).
+					SetEndTime(&endTime),
+				tx.DeliverySlot.Create().
+					SetBusinessUnit(bu).
+					SetOrganization(org).
+					SetCustomer(c).
+					SetLocation(lc).
+					SetDayOfWeek("THURSDAY").
+					SetStartTime(&startTime).
+					SetEndTime(&endTime),
+				tx.DeliverySlot.Create().
+					SetBusinessUnit(bu).
+					SetOrganization(org).
+					SetCustomer(c).
+					SetLocation(lc).
+					SetDayOfWeek("FRIDAY").
+					SetStartTime(&startTime).
+					SetEndTime(&endTime),
+				tx.DeliverySlot.Create().
+					SetBusinessUnit(bu).
+					SetOrganization(org).
+					SetCustomer(c).
+					SetLocation(lc).
+					SetDayOfWeek("SATURDAY").
+					SetStartTime(&startTime).
+					SetEndTime(&endTime),
+			).Exec(ctx)
+			if err != nil {
+				log.Panicf("Failed creating delivery slot: %v", err)
+			}
+
+			// Add customer detention policy
+			err = tx.CustomerDetentionPolicy.Create().
+				SetBusinessUnit(bu).
+				SetOrganization(org).
+				SetCustomer(c).
+				SetAmount(50).
+				Exec(ctx)
+			if err != nil {
+				log.Panicf("Failed creating customer detention policy: %v", err)
+			}
+
+			return nil
+		})
+		if err != nil {
+			log.Panicf("Failed creating customers: %v", err)
+		}
+	}
+
+	return nil
 }
 
 func SeedCommentTypes(
@@ -883,6 +1069,63 @@ func SeedPermissions(
 	return nil
 }
 
+func SeedUSStates(ctx context.Context, client *ent.Client) error {
+	type stateData struct {
+		Data struct {
+			Name   string `json:"name"`
+			Iso3   string `json:"iso3"`
+			States []struct {
+				Name      string `json:"name"`
+				StateCode string `json:"state_code"`
+			} `json:"states"`
+		} `json:"data"`
+	}
+
+	url := "https://countriesnow.space/api/v0.1/countries/states"
+	jsonData := map[string]string{"country": "United States"}
+	jsonValue, _ := json.Marshal(jsonData)
+
+	request, _ := http.NewRequestWithContext(ctx, http.MethodPost, url, bytes.NewBuffer(jsonValue))
+	request.Header.Set("Content-Type", "application/json")
+
+	clientHTTP := &http.Client{}
+	response, err := clientHTTP.Do(request)
+	if err != nil {
+		log.Printf("The HTTP request failed with error %s\n", err)
+	}
+	defer response.Body.Close()
+
+	var data stateData
+	if decodeErr := json.NewDecoder(response.Body).Decode(&data); decodeErr != nil {
+		log.Printf("Error parsing the response data: %s\n", decodeErr)
+	}
+
+	for _, state := range data.Data.States {
+		exists, stateErr := client.UsState.Query().Where(usstate.Abbreviation(state.StateCode)).Exist(ctx)
+		if stateErr != nil {
+			log.Printf("Error checking for state existence: %s\n", stateErr)
+			continue
+		}
+
+		if !exists {
+			_, saveErr := client.UsState.
+				Create().
+				SetName(state.Name).
+				SetAbbreviation(state.StateCode).
+				SetCountryName(data.Data.Name).
+				SetCountryIso3(data.Data.Iso3).
+				Save(ctx)
+			if saveErr != nil {
+				log.Printf("Failed to create state: %s\n", saveErr)
+				continue
+			}
+			log.Printf("State %s added\n", state.Name)
+		}
+	}
+
+	return nil
+}
+
 func SeedRoles(
 	ctx context.Context, client *ent.Client, org *ent.Organization, bu *ent.BusinessUnit,
 ) error {
@@ -952,12 +1195,21 @@ func SeedFeatureFlags(
 				SetName("Color Accessibility Options").
 				SetCode("ENABLE_COLOR_BLIND_MODE").
 				SetBeta(true).
-				SetDescription("This flag enables Color Blind Mode, offering users a choice of color vision deficiency simulations to adapt the application's color scheme for better readability and visual comfort. Modes include Tritanopia, Protanopia, Deuteranopia, Deuteranomaly, and Protanomaly. This inclusivity-focused feature is designed to cater to users with various color vision impairments, ensuring a more accessible and user-friendly experience."),
+				SetDescription(`
+				This flag enables Color Blind Mode, offering users a choice of color vision deficiency simulations to adapt
+				the application's color scheme for better readability and visual comfort. 
+				Modes include Tritanopia, Protanopia, Deuteranopia, Deuteranomaly, and Protanomaly.
+				This inclusivity-focused feature is designed to cater to users with various color vision impairments, ensuring 
+				a more accessible and user-friendly experience.`),
 			client.FeatureFlag.Create().
 				SetName("Shipment Map View").
 				SetCode("ENABLE_SHIP_MAP_VIEW").
 				SetBeta(true).
-				SetDescription("Activating this flag introduces a novel shipment map view in the shipment management interface. It provides a visual representation of workers and orders, along with interactive functionalities like drag-and-drop assignment of workers to orders. This feature enhances the user's operational efficiency by offering a more intuitive and interactive way to manage shipments."),
+				SetDescription(`
+				Activating this flag introduces a novel shipment map view in the shipment management interface. 
+				It provides a visual representation of workers and orders, along with interactive functionalities like drag-and-drop assignment of 
+				workers to orders. This feature enhances the user's operational efficiency by offering a more intuitive
+				and interactive way to manage shipments.`),
 			client.FeatureFlag.Create().
 				SetName("Beam").
 				SetCode("ENABLE_BEAM").
@@ -1005,7 +1257,6 @@ func SeedFeatureFlags(
 	}
 
 	if ofCount > 0 {
-		log.Println("Organization already has feature flags")
 		return nil
 	}
 

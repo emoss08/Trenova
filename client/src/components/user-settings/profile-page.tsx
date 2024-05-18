@@ -1,8 +1,8 @@
 import { User } from "@/types/accounts";
+import { LinkGroupProps } from "@/types/sidebar-nav";
 import { Suspense, lazy, useState } from "react";
 import { ComponentLoader } from "../ui/component-loader";
 import { ModalAsideMenu } from "./sidebar-nav";
-import { LinkGroupProps } from "@/types/sidebar-nav";
 
 const PreferenceComponent = lazy(
   () => import("@/components/user-settings/user-preferences"),
@@ -16,7 +16,7 @@ const ChangePasswordForm = lazy(
   () => import("@/components/user-settings/change-password-form"),
 );
 
-export default function UserProfileF({ user }: { user: User }) {
+export default function UserProfile({ user }: { user: User }) {
   const [activeTab, setActiveTab] = useState("personal-information");
 
   const linkGroups: LinkGroupProps[] = [
@@ -91,7 +91,6 @@ export default function UserProfileF({ user }: { user: User }) {
   return (
     <div className="flex-1 items-start md:grid md:grid-cols-[220px_minmax(0,1fr)] md:gap-6 lg:grid-cols-[240px_minmax(0,1fr)] lg:gap-10">
       <ModalAsideMenu
-        heading="Settings"
         linkGroups={linkGroups}
         activeTab={activeTab}
         setActiveTab={setActiveTab}

@@ -229,7 +229,7 @@ export function GeneralLedgerAccountTableSheet({
   onOpenChange,
   open,
 }: TableSheetProps) {
-  const { handleSubmit, control, getValues, setValue } =
+  const { handleSubmit, reset, control, getValues, setValue } =
     useForm<GLAccountFormValues>({
       resolver: yupResolver(glAccountSchema),
       defaultValues: {
@@ -253,8 +253,9 @@ export function GeneralLedgerAccountTableSheet({
     method: "POST",
     path: "/general-ledger-accounts/",
     successMessage: "General Ledger Account created successfully.",
-    queryKeysToInvalidate: ["glAccounts"],
+    queryKeysToInvalidate: "glAccounts",
     closeModal: true,
+    reset,
     errorMessage: "Failed to create new general ledger account.",
   });
 

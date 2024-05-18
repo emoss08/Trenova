@@ -132,6 +132,7 @@ func (r *AccessorialChargeService) updateAccessorialChargeEntity(
 
 	// Start building the update operation
 	updateOp := tx.AccessorialCharge.UpdateOneID(entity.ID).
+		SetOrganizationID(entity.OrganizationID).
 		SetStatus(entity.Status).
 		SetCode(entity.Code).
 		SetDescription(entity.Description).

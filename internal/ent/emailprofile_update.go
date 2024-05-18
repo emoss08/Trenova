@@ -12,7 +12,9 @@ import (
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
 	"github.com/emoss08/trenova/internal/ent/emailprofile"
+	"github.com/emoss08/trenova/internal/ent/organization"
 	"github.com/emoss08/trenova/internal/ent/predicate"
+	"github.com/google/uuid"
 )
 
 // EmailProfileUpdate is the builder for updating EmailProfile entities.
@@ -26,6 +28,20 @@ type EmailProfileUpdate struct {
 // Where appends a list predicates to the EmailProfileUpdate builder.
 func (epu *EmailProfileUpdate) Where(ps ...predicate.EmailProfile) *EmailProfileUpdate {
 	epu.mutation.Where(ps...)
+	return epu
+}
+
+// SetOrganizationID sets the "organization_id" field.
+func (epu *EmailProfileUpdate) SetOrganizationID(u uuid.UUID) *EmailProfileUpdate {
+	epu.mutation.SetOrganizationID(u)
+	return epu
+}
+
+// SetNillableOrganizationID sets the "organization_id" field if the given value is not nil.
+func (epu *EmailProfileUpdate) SetNillableOrganizationID(u *uuid.UUID) *EmailProfileUpdate {
+	if u != nil {
+		epu.SetOrganizationID(*u)
+	}
 	return epu
 }
 
@@ -205,9 +221,20 @@ func (epu *EmailProfileUpdate) SetNillableIsDefault(b *bool) *EmailProfileUpdate
 	return epu
 }
 
+// SetOrganization sets the "organization" edge to the Organization entity.
+func (epu *EmailProfileUpdate) SetOrganization(o *Organization) *EmailProfileUpdate {
+	return epu.SetOrganizationID(o.ID)
+}
+
 // Mutation returns the EmailProfileMutation object of the builder.
 func (epu *EmailProfileUpdate) Mutation() *EmailProfileMutation {
 	return epu.mutation
+}
+
+// ClearOrganization clears the "organization" edge to the Organization entity.
+func (epu *EmailProfileUpdate) ClearOrganization() *EmailProfileUpdate {
+	epu.mutation.ClearOrganization()
+	return epu
 }
 
 // Save executes the query and returns the number of nodes affected by the update operation.
@@ -347,6 +374,35 @@ func (epu *EmailProfileUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	if value, ok := epu.mutation.IsDefault(); ok {
 		_spec.SetField(emailprofile.FieldIsDefault, field.TypeBool, value)
 	}
+	if epu.mutation.OrganizationCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   emailprofile.OrganizationTable,
+			Columns: []string{emailprofile.OrganizationColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(organization.FieldID, field.TypeUUID),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := epu.mutation.OrganizationIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   emailprofile.OrganizationTable,
+			Columns: []string{emailprofile.OrganizationColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(organization.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
 	_spec.AddModifiers(epu.modifiers...)
 	if n, err = sqlgraph.UpdateNodes(ctx, epu.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
@@ -367,6 +423,20 @@ type EmailProfileUpdateOne struct {
 	hooks     []Hook
 	mutation  *EmailProfileMutation
 	modifiers []func(*sql.UpdateBuilder)
+}
+
+// SetOrganizationID sets the "organization_id" field.
+func (epuo *EmailProfileUpdateOne) SetOrganizationID(u uuid.UUID) *EmailProfileUpdateOne {
+	epuo.mutation.SetOrganizationID(u)
+	return epuo
+}
+
+// SetNillableOrganizationID sets the "organization_id" field if the given value is not nil.
+func (epuo *EmailProfileUpdateOne) SetNillableOrganizationID(u *uuid.UUID) *EmailProfileUpdateOne {
+	if u != nil {
+		epuo.SetOrganizationID(*u)
+	}
+	return epuo
 }
 
 // SetUpdatedAt sets the "updated_at" field.
@@ -545,9 +615,20 @@ func (epuo *EmailProfileUpdateOne) SetNillableIsDefault(b *bool) *EmailProfileUp
 	return epuo
 }
 
+// SetOrganization sets the "organization" edge to the Organization entity.
+func (epuo *EmailProfileUpdateOne) SetOrganization(o *Organization) *EmailProfileUpdateOne {
+	return epuo.SetOrganizationID(o.ID)
+}
+
 // Mutation returns the EmailProfileMutation object of the builder.
 func (epuo *EmailProfileUpdateOne) Mutation() *EmailProfileMutation {
 	return epuo.mutation
+}
+
+// ClearOrganization clears the "organization" edge to the Organization entity.
+func (epuo *EmailProfileUpdateOne) ClearOrganization() *EmailProfileUpdateOne {
+	epuo.mutation.ClearOrganization()
+	return epuo
 }
 
 // Where appends a list predicates to the EmailProfileUpdate builder.
@@ -716,6 +797,35 @@ func (epuo *EmailProfileUpdateOne) sqlSave(ctx context.Context) (_node *EmailPro
 	}
 	if value, ok := epuo.mutation.IsDefault(); ok {
 		_spec.SetField(emailprofile.FieldIsDefault, field.TypeBool, value)
+	}
+	if epuo.mutation.OrganizationCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   emailprofile.OrganizationTable,
+			Columns: []string{emailprofile.OrganizationColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(organization.FieldID, field.TypeUUID),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := epuo.mutation.OrganizationIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   emailprofile.OrganizationTable,
+			Columns: []string{emailprofile.OrganizationColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(organization.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
 	_spec.AddModifiers(epuo.modifiers...)
 	_node = &EmailProfile{config: epuo.config}

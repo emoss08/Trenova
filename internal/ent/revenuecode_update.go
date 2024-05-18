@@ -12,6 +12,7 @@ import (
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
 	"github.com/emoss08/trenova/internal/ent/generalledgeraccount"
+	"github.com/emoss08/trenova/internal/ent/organization"
 	"github.com/emoss08/trenova/internal/ent/predicate"
 	"github.com/emoss08/trenova/internal/ent/revenuecode"
 	"github.com/google/uuid"
@@ -28,6 +29,20 @@ type RevenueCodeUpdate struct {
 // Where appends a list predicates to the RevenueCodeUpdate builder.
 func (rcu *RevenueCodeUpdate) Where(ps ...predicate.RevenueCode) *RevenueCodeUpdate {
 	rcu.mutation.Where(ps...)
+	return rcu
+}
+
+// SetOrganizationID sets the "organization_id" field.
+func (rcu *RevenueCodeUpdate) SetOrganizationID(u uuid.UUID) *RevenueCodeUpdate {
+	rcu.mutation.SetOrganizationID(u)
+	return rcu
+}
+
+// SetNillableOrganizationID sets the "organization_id" field if the given value is not nil.
+func (rcu *RevenueCodeUpdate) SetNillableOrganizationID(u *uuid.UUID) *RevenueCodeUpdate {
+	if u != nil {
+		rcu.SetOrganizationID(*u)
+	}
 	return rcu
 }
 
@@ -140,6 +155,11 @@ func (rcu *RevenueCodeUpdate) ClearRevenueAccountID() *RevenueCodeUpdate {
 	return rcu
 }
 
+// SetOrganization sets the "organization" edge to the Organization entity.
+func (rcu *RevenueCodeUpdate) SetOrganization(o *Organization) *RevenueCodeUpdate {
+	return rcu.SetOrganizationID(o.ID)
+}
+
 // SetExpenseAccount sets the "expense_account" edge to the GeneralLedgerAccount entity.
 func (rcu *RevenueCodeUpdate) SetExpenseAccount(g *GeneralLedgerAccount) *RevenueCodeUpdate {
 	return rcu.SetExpenseAccountID(g.ID)
@@ -153,6 +173,12 @@ func (rcu *RevenueCodeUpdate) SetRevenueAccount(g *GeneralLedgerAccount) *Revenu
 // Mutation returns the RevenueCodeMutation object of the builder.
 func (rcu *RevenueCodeUpdate) Mutation() *RevenueCodeMutation {
 	return rcu.mutation
+}
+
+// ClearOrganization clears the "organization" edge to the Organization entity.
+func (rcu *RevenueCodeUpdate) ClearOrganization() *RevenueCodeUpdate {
+	rcu.mutation.ClearOrganization()
+	return rcu
 }
 
 // ClearExpenseAccount clears the "expense_account" edge to the GeneralLedgerAccount entity.
@@ -271,6 +297,35 @@ func (rcu *RevenueCodeUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	if value, ok := rcu.mutation.Description(); ok {
 		_spec.SetField(revenuecode.FieldDescription, field.TypeString, value)
 	}
+	if rcu.mutation.OrganizationCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   revenuecode.OrganizationTable,
+			Columns: []string{revenuecode.OrganizationColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(organization.FieldID, field.TypeUUID),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := rcu.mutation.OrganizationIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   revenuecode.OrganizationTable,
+			Columns: []string{revenuecode.OrganizationColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(organization.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
 	if rcu.mutation.ExpenseAccountCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
@@ -349,6 +404,20 @@ type RevenueCodeUpdateOne struct {
 	hooks     []Hook
 	mutation  *RevenueCodeMutation
 	modifiers []func(*sql.UpdateBuilder)
+}
+
+// SetOrganizationID sets the "organization_id" field.
+func (rcuo *RevenueCodeUpdateOne) SetOrganizationID(u uuid.UUID) *RevenueCodeUpdateOne {
+	rcuo.mutation.SetOrganizationID(u)
+	return rcuo
+}
+
+// SetNillableOrganizationID sets the "organization_id" field if the given value is not nil.
+func (rcuo *RevenueCodeUpdateOne) SetNillableOrganizationID(u *uuid.UUID) *RevenueCodeUpdateOne {
+	if u != nil {
+		rcuo.SetOrganizationID(*u)
+	}
+	return rcuo
 }
 
 // SetUpdatedAt sets the "updated_at" field.
@@ -460,6 +529,11 @@ func (rcuo *RevenueCodeUpdateOne) ClearRevenueAccountID() *RevenueCodeUpdateOne 
 	return rcuo
 }
 
+// SetOrganization sets the "organization" edge to the Organization entity.
+func (rcuo *RevenueCodeUpdateOne) SetOrganization(o *Organization) *RevenueCodeUpdateOne {
+	return rcuo.SetOrganizationID(o.ID)
+}
+
 // SetExpenseAccount sets the "expense_account" edge to the GeneralLedgerAccount entity.
 func (rcuo *RevenueCodeUpdateOne) SetExpenseAccount(g *GeneralLedgerAccount) *RevenueCodeUpdateOne {
 	return rcuo.SetExpenseAccountID(g.ID)
@@ -473,6 +547,12 @@ func (rcuo *RevenueCodeUpdateOne) SetRevenueAccount(g *GeneralLedgerAccount) *Re
 // Mutation returns the RevenueCodeMutation object of the builder.
 func (rcuo *RevenueCodeUpdateOne) Mutation() *RevenueCodeMutation {
 	return rcuo.mutation
+}
+
+// ClearOrganization clears the "organization" edge to the Organization entity.
+func (rcuo *RevenueCodeUpdateOne) ClearOrganization() *RevenueCodeUpdateOne {
+	rcuo.mutation.ClearOrganization()
+	return rcuo
 }
 
 // ClearExpenseAccount clears the "expense_account" edge to the GeneralLedgerAccount entity.
@@ -620,6 +700,35 @@ func (rcuo *RevenueCodeUpdateOne) sqlSave(ctx context.Context) (_node *RevenueCo
 	}
 	if value, ok := rcuo.mutation.Description(); ok {
 		_spec.SetField(revenuecode.FieldDescription, field.TypeString, value)
+	}
+	if rcuo.mutation.OrganizationCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   revenuecode.OrganizationTable,
+			Columns: []string{revenuecode.OrganizationColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(organization.FieldID, field.TypeUUID),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := rcuo.mutation.OrganizationIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   revenuecode.OrganizationTable,
+			Columns: []string{revenuecode.OrganizationColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(organization.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
 	if rcuo.mutation.ExpenseAccountCleared() {
 		edge := &sqlgraph.EdgeSpec{

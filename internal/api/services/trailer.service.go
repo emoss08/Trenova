@@ -147,6 +147,7 @@ func (r *TrailerService) updateTrailerEntity(
 
 	// Start building the update operation
 	updateOp := tx.Trailer.UpdateOneID(entity.ID).
+		SetOrganizationID(entity.OrganizationID).
 		SetCode(entity.Code).
 		SetStatus(entity.Status).
 		SetEquipmentTypeID(entity.EquipmentTypeID).

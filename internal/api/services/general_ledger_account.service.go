@@ -175,8 +175,8 @@ func (r *GeneralLedgerAccountService) updateGeneralLedgerAccountEntity(
 	}
 
 	// Start building the update operation
-	updateOp := tx.GeneralLedgerAccount.
-		UpdateOneID(entity.ID).
+	updateOp := tx.GeneralLedgerAccount.UpdateOneID(entity.ID).
+		SetOrganizationID(entity.OrganizationID).
 		SetStatus(entity.Status).
 		SetAccountNumber(entity.AccountNumber).
 		SetAccountType(entity.AccountType).

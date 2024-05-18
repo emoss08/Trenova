@@ -11,6 +11,7 @@ import {
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
   DropdownMenu,
+  DropdownMenuCheckboxItem,
   DropdownMenuContent,
   DropdownMenuGroup,
   DropdownMenuItem,
@@ -77,11 +78,7 @@ const UserAvatar = React.forwardRef<HTMLDivElement, UserAvatarProps>(
       user.profilePicUrl || `https://avatar.vercel.sh/${user.email}`;
 
     return (
-      <div
-        className="flex select-none items-center hover:cursor-pointer"
-        ref={ref}
-        {...props}
-      >
+      <div className="flex select-none items-center" ref={ref} {...props}>
         <Avatar className="m-auto inline-block">
           <AvatarImage
             src={avatarSrc}
@@ -207,7 +204,7 @@ function UserAvatarMenuContent({ user }: { user: User }) {
             Account Settings
             <DropdownMenuShortcut>
               <ShortcutsProvider os="mac">
-                <KeyCombo keyNames={[Keys.Control, "B"]} />
+                <KeyCombo keyNames={[Keys.Command, "B"]} />
               </ShortcutsProvider>
             </DropdownMenuShortcut>
           </DropdownMenuItem>
@@ -215,7 +212,7 @@ function UserAvatarMenuContent({ user }: { user: User }) {
             Inbox
             <DropdownMenuShortcut>
               <ShortcutsProvider os="mac">
-                <KeyCombo keyNames={[Keys.Control, "H"]} />
+                <KeyCombo keyNames={[Keys.Command, "H"]} />
               </ShortcutsProvider>
             </DropdownMenuShortcut>
           </DropdownMenuItem>
@@ -224,19 +221,28 @@ function UserAvatarMenuContent({ user }: { user: User }) {
           <DropdownMenuSubTrigger>Switch Theme</DropdownMenuSubTrigger>
           <DropdownMenuPortal>
             <DropdownMenuSubContent sideOffset={10}>
-              <DropdownMenuItem onClick={() => switchTheme("light")}>
+              <DropdownMenuCheckboxItem
+                checked={currentTheme === "light"}
+                onCheckedChange={() => switchTheme("light")}
+              >
                 Light
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => switchTheme("dark")}>
+              </DropdownMenuCheckboxItem>
+              <DropdownMenuCheckboxItem
+                checked={currentTheme === "dark"}
+                onCheckedChange={() => switchTheme("dark")}
+              >
                 Dark
-              </DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={() => switchTheme("system")}>
+              </DropdownMenuCheckboxItem>
+              <DropdownMenuCheckboxItem
+                checked={currentTheme === "system"}
+                onCheckedChange={() => switchTheme("system")}
+              >
                 System
-              </DropdownMenuItem>
+              </DropdownMenuCheckboxItem>
             </DropdownMenuSubContent>
           </DropdownMenuPortal>
         </DropdownMenuSub>
+        <DropdownMenuSeparator />
         <DropdownMenuItem onClick={toggleRainbowAnimation}>
           {isRainbowAnimationActive ? "Turn off" : "Turn on"} rainbow
         </DropdownMenuItem>
@@ -245,7 +251,7 @@ function UserAvatarMenuContent({ user }: { user: User }) {
           Log out
           <DropdownMenuShortcut>
             <ShortcutsProvider os="mac">
-              <KeyCombo keyNames={[Keys.Control, "Q"]} />
+              <KeyCombo keyNames={[Keys.Command, "Q"]} />
             </ShortcutsProvider>
           </DropdownMenuShortcut>
         </DropdownMenuItem>

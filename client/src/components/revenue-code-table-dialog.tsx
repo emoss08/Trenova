@@ -110,7 +110,7 @@ export function RCForm({
 }
 
 export function RevenueCodeDialog({ onOpenChange, open }: TableSheetProps) {
-  const { control, handleSubmit } = useForm<FormValues>({
+  const { control, reset, handleSubmit } = useForm<FormValues>({
     resolver: yupResolver(revenueCodeSchema),
     defaultValues: {
       status: "A",
@@ -127,6 +127,7 @@ export function RevenueCodeDialog({ onOpenChange, open }: TableSheetProps) {
     successMessage: "Revenue Code created successfully.",
     queryKeysToInvalidate: "revenueCodes",
     closeModal: true,
+    reset,
     errorMessage: "Failed to create new revenue code.",
   });
 
@@ -138,10 +139,10 @@ export function RevenueCodeDialog({ onOpenChange, open }: TableSheetProps) {
     <Credenza open={open} onOpenChange={onOpenChange}>
       <CredenzaContent>
         <CredenzaHeader>
-          <CredenzaTitle>Create New Location Category</CredenzaTitle>
+          <CredenzaTitle>Create New Revenue Code</CredenzaTitle>
         </CredenzaHeader>
         <CredenzaDescription>
-          Please fill out the form below to create a new Location Category.
+          Please fill out the form below to create a new Revenue Code.
         </CredenzaDescription>
         <CredenzaBody>
           <form onSubmit={handleSubmit(onSubmit)}>

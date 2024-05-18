@@ -24,7 +24,7 @@ import {
 } from "./ui/credenza";
 
 function ServiceTypeEditForm({ serviceType }: { serviceType: ServiceType }) {
-  const { control, handleSubmit } = useForm<FormValues>({
+  const { control, reset, handleSubmit } = useForm<FormValues>({
     resolver: yupResolver(serviceTypeSchema),
     defaultValues: serviceType,
   });
@@ -35,6 +35,7 @@ function ServiceTypeEditForm({ serviceType }: { serviceType: ServiceType }) {
     successMessage: "Service Type updated successfully.",
     queryKeysToInvalidate: "serviceTypes",
     closeModal: true,
+    reset,
     errorMessage: "Failed to update service type.",
   });
 

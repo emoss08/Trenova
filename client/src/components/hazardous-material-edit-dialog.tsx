@@ -27,7 +27,7 @@ function HazardousMaterialEditForm({
 }: {
   hazardousMaterial: HazardousMaterial;
 }) {
-  const { control, handleSubmit } = useForm<FormValues>({
+  const { control, reset, handleSubmit } = useForm<FormValues>({
     resolver: yupResolver(hazardousMaterialSchema),
     defaultValues: hazardousMaterial,
   });
@@ -36,8 +36,9 @@ function HazardousMaterialEditForm({
     method: "PUT",
     path: `/hazardous-materials/${hazardousMaterial.id}/`,
     successMessage: "Hazardous Material updated successfully.",
-    queryKeysToInvalidate: ["hazardous-material-table-data"],
+    queryKeysToInvalidate: "hazardousMaterials",
     closeModal: true,
+    reset,
     errorMessage: "Failed to update Hazardous Material.",
   });
 

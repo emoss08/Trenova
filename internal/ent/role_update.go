@@ -11,6 +11,7 @@ import (
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
+	"github.com/emoss08/trenova/internal/ent/organization"
 	"github.com/emoss08/trenova/internal/ent/permission"
 	"github.com/emoss08/trenova/internal/ent/predicate"
 	"github.com/emoss08/trenova/internal/ent/role"
@@ -29,6 +30,20 @@ type RoleUpdate struct {
 // Where appends a list predicates to the RoleUpdate builder.
 func (ru *RoleUpdate) Where(ps ...predicate.Role) *RoleUpdate {
 	ru.mutation.Where(ps...)
+	return ru
+}
+
+// SetOrganizationID sets the "organization_id" field.
+func (ru *RoleUpdate) SetOrganizationID(u uuid.UUID) *RoleUpdate {
+	ru.mutation.SetOrganizationID(u)
+	return ru
+}
+
+// SetNillableOrganizationID sets the "organization_id" field if the given value is not nil.
+func (ru *RoleUpdate) SetNillableOrganizationID(u *uuid.UUID) *RoleUpdate {
+	if u != nil {
+		ru.SetOrganizationID(*u)
+	}
 	return ru
 }
 
@@ -113,6 +128,11 @@ func (ru *RoleUpdate) ClearColor() *RoleUpdate {
 	return ru
 }
 
+// SetOrganization sets the "organization" edge to the Organization entity.
+func (ru *RoleUpdate) SetOrganization(o *Organization) *RoleUpdate {
+	return ru.SetOrganizationID(o.ID)
+}
+
 // AddPermissionIDs adds the "permissions" edge to the Permission entity by IDs.
 func (ru *RoleUpdate) AddPermissionIDs(ids ...uuid.UUID) *RoleUpdate {
 	ru.mutation.AddPermissionIDs(ids...)
@@ -146,6 +166,12 @@ func (ru *RoleUpdate) AddUsers(u ...*User) *RoleUpdate {
 // Mutation returns the RoleMutation object of the builder.
 func (ru *RoleUpdate) Mutation() *RoleMutation {
 	return ru.mutation
+}
+
+// ClearOrganization clears the "organization" edge to the Organization entity.
+func (ru *RoleUpdate) ClearOrganization() *RoleUpdate {
+	ru.mutation.ClearOrganization()
+	return ru
 }
 
 // ClearPermissions clears all "permissions" edges to the Permission entity.
@@ -284,6 +310,35 @@ func (ru *RoleUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	if ru.mutation.ColorCleared() {
 		_spec.ClearField(role.FieldColor, field.TypeString)
 	}
+	if ru.mutation.OrganizationCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   role.OrganizationTable,
+			Columns: []string{role.OrganizationColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(organization.FieldID, field.TypeUUID),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := ru.mutation.OrganizationIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   role.OrganizationTable,
+			Columns: []string{role.OrganizationColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(organization.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
 	if ru.mutation.PermissionsCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2M,
@@ -396,6 +451,20 @@ type RoleUpdateOne struct {
 	modifiers []func(*sql.UpdateBuilder)
 }
 
+// SetOrganizationID sets the "organization_id" field.
+func (ruo *RoleUpdateOne) SetOrganizationID(u uuid.UUID) *RoleUpdateOne {
+	ruo.mutation.SetOrganizationID(u)
+	return ruo
+}
+
+// SetNillableOrganizationID sets the "organization_id" field if the given value is not nil.
+func (ruo *RoleUpdateOne) SetNillableOrganizationID(u *uuid.UUID) *RoleUpdateOne {
+	if u != nil {
+		ruo.SetOrganizationID(*u)
+	}
+	return ruo
+}
+
 // SetUpdatedAt sets the "updated_at" field.
 func (ruo *RoleUpdateOne) SetUpdatedAt(t time.Time) *RoleUpdateOne {
 	ruo.mutation.SetUpdatedAt(t)
@@ -477,6 +546,11 @@ func (ruo *RoleUpdateOne) ClearColor() *RoleUpdateOne {
 	return ruo
 }
 
+// SetOrganization sets the "organization" edge to the Organization entity.
+func (ruo *RoleUpdateOne) SetOrganization(o *Organization) *RoleUpdateOne {
+	return ruo.SetOrganizationID(o.ID)
+}
+
 // AddPermissionIDs adds the "permissions" edge to the Permission entity by IDs.
 func (ruo *RoleUpdateOne) AddPermissionIDs(ids ...uuid.UUID) *RoleUpdateOne {
 	ruo.mutation.AddPermissionIDs(ids...)
@@ -510,6 +584,12 @@ func (ruo *RoleUpdateOne) AddUsers(u ...*User) *RoleUpdateOne {
 // Mutation returns the RoleMutation object of the builder.
 func (ruo *RoleUpdateOne) Mutation() *RoleMutation {
 	return ruo.mutation
+}
+
+// ClearOrganization clears the "organization" edge to the Organization entity.
+func (ruo *RoleUpdateOne) ClearOrganization() *RoleUpdateOne {
+	ruo.mutation.ClearOrganization()
+	return ruo
 }
 
 // ClearPermissions clears all "permissions" edges to the Permission entity.
@@ -677,6 +757,35 @@ func (ruo *RoleUpdateOne) sqlSave(ctx context.Context) (_node *Role, err error) 
 	}
 	if ruo.mutation.ColorCleared() {
 		_spec.ClearField(role.FieldColor, field.TypeString)
+	}
+	if ruo.mutation.OrganizationCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   role.OrganizationTable,
+			Columns: []string{role.OrganizationColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(organization.FieldID, field.TypeUUID),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := ruo.mutation.OrganizationIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   role.OrganizationTable,
+			Columns: []string{role.OrganizationColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(organization.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
 	if ruo.mutation.PermissionsCleared() {
 		edge := &sqlgraph.EdgeSpec{

@@ -31,12 +31,10 @@ export function TractorEditForm({
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }) {
-  const { control, handleSubmit, formState } = useForm<FormValues>({
+  const { control, reset, handleSubmit } = useForm<FormValues>({
     resolver: yupResolver(tractorSchema),
     defaultValues: tractor,
   });
-
-  console.info("form errors", formState.errors);
 
   const mutation = useCustomMutation<FormValues>(control, {
     method: "PUT",
@@ -44,6 +42,7 @@ export function TractorEditForm({
     successMessage: "Tractor updated successfully.",
     queryKeysToInvalidate: "tractors",
     closeModal: true,
+    reset,
     errorMessage: "Failed to update existing tractor.",
   });
 

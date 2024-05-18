@@ -12,7 +12,9 @@ import (
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
 	"github.com/emoss08/trenova/internal/ent/equipmenttype"
+	"github.com/emoss08/trenova/internal/ent/organization"
 	"github.com/emoss08/trenova/internal/ent/predicate"
+	"github.com/google/uuid"
 )
 
 // EquipmentTypeUpdate is the builder for updating EquipmentType entities.
@@ -26,6 +28,20 @@ type EquipmentTypeUpdate struct {
 // Where appends a list predicates to the EquipmentTypeUpdate builder.
 func (etu *EquipmentTypeUpdate) Where(ps ...predicate.EquipmentType) *EquipmentTypeUpdate {
 	etu.mutation.Where(ps...)
+	return etu
+}
+
+// SetOrganizationID sets the "organization_id" field.
+func (etu *EquipmentTypeUpdate) SetOrganizationID(u uuid.UUID) *EquipmentTypeUpdate {
+	etu.mutation.SetOrganizationID(u)
+	return etu
+}
+
+// SetNillableOrganizationID sets the "organization_id" field if the given value is not nil.
+func (etu *EquipmentTypeUpdate) SetNillableOrganizationID(u *uuid.UUID) *EquipmentTypeUpdate {
+	if u != nil {
+		etu.SetOrganizationID(*u)
+	}
 	return etu
 }
 
@@ -368,9 +384,20 @@ func (etu *EquipmentTypeUpdate) ClearColor() *EquipmentTypeUpdate {
 	return etu
 }
 
+// SetOrganization sets the "organization" edge to the Organization entity.
+func (etu *EquipmentTypeUpdate) SetOrganization(o *Organization) *EquipmentTypeUpdate {
+	return etu.SetOrganizationID(o.ID)
+}
+
 // Mutation returns the EquipmentTypeMutation object of the builder.
 func (etu *EquipmentTypeUpdate) Mutation() *EquipmentTypeMutation {
 	return etu.mutation
+}
+
+// ClearOrganization clears the "organization" edge to the Organization entity.
+func (etu *EquipmentTypeUpdate) ClearOrganization() *EquipmentTypeUpdate {
+	etu.mutation.ClearOrganization()
+	return etu
 }
 
 // Save executes the query and returns the number of nodes affected by the update operation.
@@ -558,6 +585,35 @@ func (etu *EquipmentTypeUpdate) sqlSave(ctx context.Context) (n int, err error) 
 	if etu.mutation.ColorCleared() {
 		_spec.ClearField(equipmenttype.FieldColor, field.TypeString)
 	}
+	if etu.mutation.OrganizationCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   equipmenttype.OrganizationTable,
+			Columns: []string{equipmenttype.OrganizationColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(organization.FieldID, field.TypeUUID),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := etu.mutation.OrganizationIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   equipmenttype.OrganizationTable,
+			Columns: []string{equipmenttype.OrganizationColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(organization.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
 	_spec.AddModifiers(etu.modifiers...)
 	if n, err = sqlgraph.UpdateNodes(ctx, etu.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
@@ -578,6 +634,20 @@ type EquipmentTypeUpdateOne struct {
 	hooks     []Hook
 	mutation  *EquipmentTypeMutation
 	modifiers []func(*sql.UpdateBuilder)
+}
+
+// SetOrganizationID sets the "organization_id" field.
+func (etuo *EquipmentTypeUpdateOne) SetOrganizationID(u uuid.UUID) *EquipmentTypeUpdateOne {
+	etuo.mutation.SetOrganizationID(u)
+	return etuo
+}
+
+// SetNillableOrganizationID sets the "organization_id" field if the given value is not nil.
+func (etuo *EquipmentTypeUpdateOne) SetNillableOrganizationID(u *uuid.UUID) *EquipmentTypeUpdateOne {
+	if u != nil {
+		etuo.SetOrganizationID(*u)
+	}
+	return etuo
 }
 
 // SetUpdatedAt sets the "updated_at" field.
@@ -919,9 +989,20 @@ func (etuo *EquipmentTypeUpdateOne) ClearColor() *EquipmentTypeUpdateOne {
 	return etuo
 }
 
+// SetOrganization sets the "organization" edge to the Organization entity.
+func (etuo *EquipmentTypeUpdateOne) SetOrganization(o *Organization) *EquipmentTypeUpdateOne {
+	return etuo.SetOrganizationID(o.ID)
+}
+
 // Mutation returns the EquipmentTypeMutation object of the builder.
 func (etuo *EquipmentTypeUpdateOne) Mutation() *EquipmentTypeMutation {
 	return etuo.mutation
+}
+
+// ClearOrganization clears the "organization" edge to the Organization entity.
+func (etuo *EquipmentTypeUpdateOne) ClearOrganization() *EquipmentTypeUpdateOne {
+	etuo.mutation.ClearOrganization()
+	return etuo
 }
 
 // Where appends a list predicates to the EquipmentTypeUpdate builder.
@@ -1138,6 +1219,35 @@ func (etuo *EquipmentTypeUpdateOne) sqlSave(ctx context.Context) (_node *Equipme
 	}
 	if etuo.mutation.ColorCleared() {
 		_spec.ClearField(equipmenttype.FieldColor, field.TypeString)
+	}
+	if etuo.mutation.OrganizationCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   equipmenttype.OrganizationTable,
+			Columns: []string{equipmenttype.OrganizationColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(organization.FieldID, field.TypeUUID),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := etuo.mutation.OrganizationIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   equipmenttype.OrganizationTable,
+			Columns: []string{equipmenttype.OrganizationColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(organization.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
 	_spec.AddModifiers(etuo.modifiers...)
 	_node = &EquipmentType{config: etuo.config}

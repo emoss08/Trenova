@@ -51,8 +51,7 @@ func (BaseMixin) Fields() []ent.Field {
 			StructTag(`json:"businessUnitId"`).
 			Immutable(),
 		field.UUID("organization_id", uuid.UUID{}).
-			StructTag(`json:"organizationId"`).
-			Immutable(),
+			StructTag(`json:"organizationId"`),
 		field.Time("created_at").
 			Immutable().
 			Comment("The time that this entity was created.").
@@ -83,8 +82,7 @@ func (BaseMixin) Edges() []ent.Edge {
 			Field("organization_id").
 			Annotations(entsql.OnDelete(entsql.Cascade)).
 			Unique().
-			Required().
-			Immutable(),
+			Required(),
 	}
 }
 
@@ -93,14 +91,3 @@ func (BaseMixin) Annotations() []schema.Annotation {
 		entsql.WithComments(true),
 	}
 }
-
-// func (BaseMixin) Policy() ent.Policy {
-// 	return privacy.Policy{
-// 		Query: privacy.QueryPolicy{
-// 			rule.AllowIfAdmin(),
-// 		},
-// 		Mutation: privacy.MutationPolicy{
-// 			rule.DenyIfNoViewer(),
-// 		},
-// 	}
-// }

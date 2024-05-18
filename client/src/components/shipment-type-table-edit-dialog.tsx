@@ -28,7 +28,7 @@ function ShipmentTypeEditForm({
 }: {
   shipmentType: ShipmentType;
 }) {
-  const { control, handleSubmit } = useForm<FormValues>({
+  const { control, reset, handleSubmit } = useForm<FormValues>({
     resolver: yupResolver(shipmentTypeSchema),
     defaultValues: shipmentType,
   });
@@ -39,6 +39,7 @@ function ShipmentTypeEditForm({
     successMessage: "Shipment Type updated successfully.",
     queryKeysToInvalidate: "shipmentTypes",
     closeModal: true,
+    reset,
     errorMessage: "Failed to update shipment type.",
   });
 

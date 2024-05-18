@@ -12,6 +12,7 @@ import (
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
 	"github.com/emoss08/trenova/internal/ent/accessorialcharge"
+	"github.com/emoss08/trenova/internal/ent/organization"
 	"github.com/emoss08/trenova/internal/ent/predicate"
 	"github.com/emoss08/trenova/internal/ent/shipmentcharges"
 	"github.com/google/uuid"
@@ -28,6 +29,20 @@ type AccessorialChargeUpdate struct {
 // Where appends a list predicates to the AccessorialChargeUpdate builder.
 func (acu *AccessorialChargeUpdate) Where(ps ...predicate.AccessorialCharge) *AccessorialChargeUpdate {
 	acu.mutation.Where(ps...)
+	return acu
+}
+
+// SetOrganizationID sets the "organization_id" field.
+func (acu *AccessorialChargeUpdate) SetOrganizationID(u uuid.UUID) *AccessorialChargeUpdate {
+	acu.mutation.SetOrganizationID(u)
+	return acu
+}
+
+// SetNillableOrganizationID sets the "organization_id" field if the given value is not nil.
+func (acu *AccessorialChargeUpdate) SetNillableOrganizationID(u *uuid.UUID) *AccessorialChargeUpdate {
+	if u != nil {
+		acu.SetOrganizationID(*u)
+	}
 	return acu
 }
 
@@ -155,6 +170,11 @@ func (acu *AccessorialChargeUpdate) AddAmount(f float64) *AccessorialChargeUpdat
 	return acu
 }
 
+// SetOrganization sets the "organization" edge to the Organization entity.
+func (acu *AccessorialChargeUpdate) SetOrganization(o *Organization) *AccessorialChargeUpdate {
+	return acu.SetOrganizationID(o.ID)
+}
+
 // AddShipmentChargeIDs adds the "shipment_charges" edge to the ShipmentCharges entity by IDs.
 func (acu *AccessorialChargeUpdate) AddShipmentChargeIDs(ids ...uuid.UUID) *AccessorialChargeUpdate {
 	acu.mutation.AddShipmentChargeIDs(ids...)
@@ -173,6 +193,12 @@ func (acu *AccessorialChargeUpdate) AddShipmentCharges(s ...*ShipmentCharges) *A
 // Mutation returns the AccessorialChargeMutation object of the builder.
 func (acu *AccessorialChargeUpdate) Mutation() *AccessorialChargeMutation {
 	return acu.mutation
+}
+
+// ClearOrganization clears the "organization" edge to the Organization entity.
+func (acu *AccessorialChargeUpdate) ClearOrganization() *AccessorialChargeUpdate {
+	acu.mutation.ClearOrganization()
+	return acu
 }
 
 // ClearShipmentCharges clears all "shipment_charges" edges to the ShipmentCharges entity.
@@ -309,6 +335,35 @@ func (acu *AccessorialChargeUpdate) sqlSave(ctx context.Context) (n int, err err
 	if value, ok := acu.mutation.AddedAmount(); ok {
 		_spec.AddField(accessorialcharge.FieldAmount, field.TypeFloat64, value)
 	}
+	if acu.mutation.OrganizationCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   accessorialcharge.OrganizationTable,
+			Columns: []string{accessorialcharge.OrganizationColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(organization.FieldID, field.TypeUUID),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := acu.mutation.OrganizationIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   accessorialcharge.OrganizationTable,
+			Columns: []string{accessorialcharge.OrganizationColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(organization.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
 	if acu.mutation.ShipmentChargesCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
@@ -374,6 +429,20 @@ type AccessorialChargeUpdateOne struct {
 	hooks     []Hook
 	mutation  *AccessorialChargeMutation
 	modifiers []func(*sql.UpdateBuilder)
+}
+
+// SetOrganizationID sets the "organization_id" field.
+func (acuo *AccessorialChargeUpdateOne) SetOrganizationID(u uuid.UUID) *AccessorialChargeUpdateOne {
+	acuo.mutation.SetOrganizationID(u)
+	return acuo
+}
+
+// SetNillableOrganizationID sets the "organization_id" field if the given value is not nil.
+func (acuo *AccessorialChargeUpdateOne) SetNillableOrganizationID(u *uuid.UUID) *AccessorialChargeUpdateOne {
+	if u != nil {
+		acuo.SetOrganizationID(*u)
+	}
+	return acuo
 }
 
 // SetUpdatedAt sets the "updated_at" field.
@@ -500,6 +569,11 @@ func (acuo *AccessorialChargeUpdateOne) AddAmount(f float64) *AccessorialChargeU
 	return acuo
 }
 
+// SetOrganization sets the "organization" edge to the Organization entity.
+func (acuo *AccessorialChargeUpdateOne) SetOrganization(o *Organization) *AccessorialChargeUpdateOne {
+	return acuo.SetOrganizationID(o.ID)
+}
+
 // AddShipmentChargeIDs adds the "shipment_charges" edge to the ShipmentCharges entity by IDs.
 func (acuo *AccessorialChargeUpdateOne) AddShipmentChargeIDs(ids ...uuid.UUID) *AccessorialChargeUpdateOne {
 	acuo.mutation.AddShipmentChargeIDs(ids...)
@@ -518,6 +592,12 @@ func (acuo *AccessorialChargeUpdateOne) AddShipmentCharges(s ...*ShipmentCharges
 // Mutation returns the AccessorialChargeMutation object of the builder.
 func (acuo *AccessorialChargeUpdateOne) Mutation() *AccessorialChargeMutation {
 	return acuo.mutation
+}
+
+// ClearOrganization clears the "organization" edge to the Organization entity.
+func (acuo *AccessorialChargeUpdateOne) ClearOrganization() *AccessorialChargeUpdateOne {
+	acuo.mutation.ClearOrganization()
+	return acuo
 }
 
 // ClearShipmentCharges clears all "shipment_charges" edges to the ShipmentCharges entity.
@@ -683,6 +763,35 @@ func (acuo *AccessorialChargeUpdateOne) sqlSave(ctx context.Context) (_node *Acc
 	}
 	if value, ok := acuo.mutation.AddedAmount(); ok {
 		_spec.AddField(accessorialcharge.FieldAmount, field.TypeFloat64, value)
+	}
+	if acuo.mutation.OrganizationCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   accessorialcharge.OrganizationTable,
+			Columns: []string{accessorialcharge.OrganizationColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(organization.FieldID, field.TypeUUID),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := acuo.mutation.OrganizationIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   accessorialcharge.OrganizationTable,
+			Columns: []string{accessorialcharge.OrganizationColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(organization.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
 	if acuo.mutation.ShipmentChargesCleared() {
 		edge := &sqlgraph.EdgeSpec{

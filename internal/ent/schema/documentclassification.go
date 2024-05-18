@@ -2,6 +2,7 @@ package schema
 
 import (
 	"context"
+	"fmt"
 	"strings"
 
 	"entgo.io/ent"
@@ -10,6 +11,8 @@ import (
 	"entgo.io/ent/schema/field"
 	gen "github.com/emoss08/trenova/internal/ent"
 	"github.com/emoss08/trenova/internal/ent/hook"
+	"github.com/emoss08/trenova/internal/util"
+	"github.com/pkg/errors"
 )
 
 // DocumentClassification holds the schema definition for the DocumentClassification entity.
@@ -56,12 +59,15 @@ func (DocumentClassification) Edges() []ent.Edge {
 	return []ent.Edge{
 		edge.To("shipment_documentation", ShipmentDocumentation.Type).
 			StructTag(`json:"shipmentDocumentation,omitempty"`),
+		edge.From("customer_rule_profile", CustomerRuleProfile.Type).
+			Ref("document_classifications"),
 	}
 }
 
 // Hooks for the DocumentClassification.
 func (DocumentClassification) Hooks() []ent.Hook {
 	return []ent.Hook{
+		hook.On(DocumentClassification{}.validateNameUniqueness, ent.OpCreate|ent.OpUpdate|ent.OpUpdateOne),
 		hook.On(
 			func(next ent.Mutator) ent.Mutator {
 				return hook.DocumentClassificationFunc(func(ctx context.Context, m *gen.DocumentClassificationMutation) (ent.Value, error) {
@@ -77,4 +83,36 @@ func (DocumentClassification) Hooks() []ent.Hook {
 				})
 			}, ent.OpCreate|ent.OpUpdate|ent.OpUpdateOne),
 	}
+}
+
+// validateNameUniqueness is a hook that validates the uniqueness of the name field.
+func (DocumentClassification) validateNameUniqueness(next ent.Mutator) ent.Mutator {
+	return hook.DocumentClassificationFunc(func(ctx context.Context, m *gen.DocumentClassificationMutation) (ent.Value, error) {
+		code, codeExists := m.Code()
+		orgID, orgExists := m.OrganizationID()
+
+		if !codeExists || !orgExists {
+			return next.Mutate(ctx, m)
+		}
+
+		// Get the current record ID to exclude it from the uniqueness check.
+		id, idExists := m.ID()
+
+		conditions := map[string]string{
+			"code":            code,
+			"organization_id": fmt.Sprint(orgID),
+		}
+
+		excludeID := ""
+		if idExists {
+			excludeID = fmt.Sprint(id)
+		}
+
+		err := util.ValidateUniqueness(ctx, m.Client(), "document_classifications", "code", conditions, excludeID)
+		if err != nil {
+			return nil, errors.Wrap(err, "failed to validate uniqueness of name within organization")
+		}
+
+		return next.Mutate(ctx, m)
+	})
 }

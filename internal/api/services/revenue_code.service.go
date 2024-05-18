@@ -137,6 +137,7 @@ func (r *RevenueCodeService) updateRevenueCodeEntity(
 
 	// Start building the update operation
 	updateOp := tx.RevenueCode.UpdateOneID(entity.ID).
+		SetOrganizationID(entity.OrganizationID).
 		SetStatus(entity.Status).
 		SetCode(entity.Code).
 		SetDescription(entity.Description).

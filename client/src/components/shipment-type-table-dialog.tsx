@@ -80,7 +80,7 @@ export function ShipmentTypeForm({
 }
 
 export function ShipmentTypeDialog({ onOpenChange, open }: TableSheetProps) {
-  const { control, handleSubmit } = useForm<FormValues>({
+  const { control, reset, handleSubmit } = useForm<FormValues>({
     resolver: yupResolver(shipmentTypeSchema),
     defaultValues: {
       status: "A",
@@ -96,6 +96,7 @@ export function ShipmentTypeDialog({ onOpenChange, open }: TableSheetProps) {
     successMessage: "Shipment Type created successfully.",
     queryKeysToInvalidate: "shipmentTypes",
     closeModal: true,
+    reset,
     errorMessage: "Failed to create new shipment type.",
   });
 

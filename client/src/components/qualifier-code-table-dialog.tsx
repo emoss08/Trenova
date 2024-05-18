@@ -72,7 +72,7 @@ export function QualifierCodeForm({
 }
 
 export function QualifierCodeDialog({ onOpenChange, open }: TableSheetProps) {
-  const { control, handleSubmit } = useForm<FormValues>({
+  const { control, reset, handleSubmit } = useForm<FormValues>({
     resolver: yupResolver(qualifierCodeSchema),
     defaultValues: {
       status: "A",
@@ -87,6 +87,7 @@ export function QualifierCodeDialog({ onOpenChange, open }: TableSheetProps) {
     successMessage: "Qualifier Code created successfully.",
     queryKeysToInvalidate: "qualifierCodes",
     closeModal: true,
+    reset,
     errorMessage: "Failed to create new qualifier code.",
   });
 

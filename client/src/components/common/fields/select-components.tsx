@@ -12,6 +12,7 @@ import {
   components,
   DropdownIndicatorProps,
   GroupBase,
+  GroupProps,
   IndicatorSeparatorProps,
   InputProps,
   MenuListProps,
@@ -98,7 +99,7 @@ export function Option({ ...props }: OptionProps) {
         <div className="flex flex-1 flex-col justify-center overflow-hidden">
           <span className="truncate">{label}</span>
           {data.description && (
-            <span className="truncate text-xs text-foreground/70">
+            <span className="text-foreground/70 truncate text-xs">
               {data.description}
             </span>
           )}
@@ -242,7 +243,7 @@ export function LoadingMessage({ children, ...props }: NoticeProps) {
   return (
     <components.LoadingMessage {...props}>
       <div className="my-1 flex flex-col items-center justify-center">
-        <p className="text-xs text-accent-foreground">
+        <p className="text-accent-foreground text-xs">
           {children || "Loading..."}
         </p>
       </div>
@@ -273,7 +274,7 @@ export function NoOptionsMessage({
   return (
     <components.NoOptionsMessage {...props}>
       <div className="my-1 flex flex-col items-center justify-center">
-        <p className="p-2 text-xs text-accent-foreground">{children}</p>
+        <p className="text-accent-foreground p-2 text-xs">{children}</p>
         {popoutLink && hasPopoutWindow && (
           <AddNewButton
             label={props.selectProps?.popoutLinkLabel as string}
@@ -282,6 +283,17 @@ export function NoOptionsMessage({
         )}
       </div>
     </components.NoOptionsMessage>
+  );
+}
+
+export function Group({ ...props }: GroupProps) {
+  return (
+    <div>
+      <div className="text-muted-foreground px-3 pt-1 text-xs">
+        {props.label}
+      </div>
+      {props.children}
+    </div>
   );
 }
 
@@ -441,7 +453,7 @@ function AddNewButton({
 
   return (
     <Button
-      className="flex w-full items-center justify-between rounded-sm bg-transparent py-3.5 pl-3 text-xs font-normal text-foreground shadow-none hover:bg-accent hover:text-foreground/90"
+      className="text-foreground hover:bg-accent hover:text-foreground/90 flex w-full items-center justify-between rounded-sm bg-transparent py-3.5 pl-3 text-xs font-normal shadow-none"
       size="xs"
       onClick={(event) => handleClick(event)}
     >

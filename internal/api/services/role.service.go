@@ -58,14 +58,14 @@ func (s *RoleService) GetRoles(
 }
 
 // CreateRole creates a new role.
-func (r *RoleService) CreateRole(
+func (s *RoleService) CreateRole(
 	ctx context.Context, entity *ent.Role,
 ) (*ent.Role, error) {
 	updatedEntity := new(ent.Role)
 
-	err := util.WithTx(ctx, r.Client, func(tx *ent.Tx) error {
+	err := util.WithTx(ctx, s.Client, func(tx *ent.Tx) error {
 		var err error
-		updatedEntity, err = r.createRoleEntity(ctx, tx, entity)
+		updatedEntity, err = s.createRoleEntity(ctx, tx, entity)
 		if err != nil {
 			return err
 		}
@@ -79,7 +79,7 @@ func (r *RoleService) CreateRole(
 	return updatedEntity, nil
 }
 
-func (r *RoleService) createRoleEntity(
+func (s *RoleService) createRoleEntity(
 	ctx context.Context, tx *ent.Tx, entity *ent.Role,
 ) (*ent.Role, error) {
 	createdEntity, err := tx.Role.Create().
@@ -96,14 +96,14 @@ func (r *RoleService) createRoleEntity(
 }
 
 // UpdateRole updates a charge type.
-func (r *RoleService) UpdateRole(
+func (s *RoleService) UpdateRole(
 	ctx context.Context, entity *ent.Role,
 ) (*ent.Role, error) {
 	updatedEntity := new(ent.Role)
 
-	err := util.WithTx(ctx, r.Client, func(tx *ent.Tx) error {
+	err := util.WithTx(ctx, s.Client, func(tx *ent.Tx) error {
 		var err error
-		updatedEntity, err = r.updateRoleEntity(ctx, tx, entity)
+		updatedEntity, err = s.updateRoleEntity(ctx, tx, entity)
 		return err
 	})
 	if err != nil {
@@ -113,7 +113,7 @@ func (r *RoleService) UpdateRole(
 	return updatedEntity, nil
 }
 
-func (r *RoleService) updateRoleEntity(
+func (s *RoleService) updateRoleEntity(
 	ctx context.Context, tx *ent.Tx, entity *ent.Role,
 ) (*ent.Role, error) {
 	current, err := tx.Role.Get(ctx, entity.ID)

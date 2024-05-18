@@ -79,8 +79,9 @@ export function ChargeTypeDialog({ onOpenChange, open }: TableSheetProps) {
     method: "POST",
     path: "/charge-types/",
     successMessage: "Charge Type created successfully.",
-    queryKeysToInvalidate: ["charge-type-table-data"],
+    queryKeysToInvalidate: "chargeTypes",
     closeModal: true,
+    reset,
     errorMessage: "Failed to create new charge type.",
   });
 

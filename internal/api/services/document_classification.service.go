@@ -131,8 +131,8 @@ func (r *DocumentClassificationService) updateDocumentClassificationEntity(
 	}
 
 	// Start building the update operation
-	updateOp := tx.DocumentClassification.
-		UpdateOneID(entity.ID).
+	updateOp := tx.DocumentClassification.UpdateOneID(entity.ID).
+		SetOrganizationID(entity.OrganizationID).
 		SetCode(entity.Code).
 		SetDescription(entity.Description).
 		SetStatus(entity.Status).

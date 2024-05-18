@@ -11,8 +11,10 @@ import (
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
+	"github.com/emoss08/trenova/internal/ent/organization"
 	"github.com/emoss08/trenova/internal/ent/predicate"
 	"github.com/emoss08/trenova/internal/ent/userreport"
+	"github.com/google/uuid"
 )
 
 // UserReportUpdate is the builder for updating UserReport entities.
@@ -26,6 +28,20 @@ type UserReportUpdate struct {
 // Where appends a list predicates to the UserReportUpdate builder.
 func (uru *UserReportUpdate) Where(ps ...predicate.UserReport) *UserReportUpdate {
 	uru.mutation.Where(ps...)
+	return uru
+}
+
+// SetOrganizationID sets the "organization_id" field.
+func (uru *UserReportUpdate) SetOrganizationID(u uuid.UUID) *UserReportUpdate {
+	uru.mutation.SetOrganizationID(u)
+	return uru
+}
+
+// SetNillableOrganizationID sets the "organization_id" field if the given value is not nil.
+func (uru *UserReportUpdate) SetNillableOrganizationID(u *uuid.UUID) *UserReportUpdate {
+	if u != nil {
+		uru.SetOrganizationID(*u)
+	}
 	return uru
 }
 
@@ -70,9 +86,20 @@ func (uru *UserReportUpdate) SetNillableReportURL(s *string) *UserReportUpdate {
 	return uru
 }
 
+// SetOrganization sets the "organization" edge to the Organization entity.
+func (uru *UserReportUpdate) SetOrganization(o *Organization) *UserReportUpdate {
+	return uru.SetOrganizationID(o.ID)
+}
+
 // Mutation returns the UserReportMutation object of the builder.
 func (uru *UserReportUpdate) Mutation() *UserReportMutation {
 	return uru.mutation
+}
+
+// ClearOrganization clears the "organization" edge to the Organization entity.
+func (uru *UserReportUpdate) ClearOrganization() *UserReportUpdate {
+	uru.mutation.ClearOrganization()
+	return uru
 }
 
 // Save executes the query and returns the number of nodes affected by the update operation.
@@ -160,6 +187,35 @@ func (uru *UserReportUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	if value, ok := uru.mutation.ReportURL(); ok {
 		_spec.SetField(userreport.FieldReportURL, field.TypeString, value)
 	}
+	if uru.mutation.OrganizationCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   userreport.OrganizationTable,
+			Columns: []string{userreport.OrganizationColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(organization.FieldID, field.TypeUUID),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := uru.mutation.OrganizationIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   userreport.OrganizationTable,
+			Columns: []string{userreport.OrganizationColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(organization.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
 	_spec.AddModifiers(uru.modifiers...)
 	if n, err = sqlgraph.UpdateNodes(ctx, uru.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
@@ -180,6 +236,20 @@ type UserReportUpdateOne struct {
 	hooks     []Hook
 	mutation  *UserReportMutation
 	modifiers []func(*sql.UpdateBuilder)
+}
+
+// SetOrganizationID sets the "organization_id" field.
+func (uruo *UserReportUpdateOne) SetOrganizationID(u uuid.UUID) *UserReportUpdateOne {
+	uruo.mutation.SetOrganizationID(u)
+	return uruo
+}
+
+// SetNillableOrganizationID sets the "organization_id" field if the given value is not nil.
+func (uruo *UserReportUpdateOne) SetNillableOrganizationID(u *uuid.UUID) *UserReportUpdateOne {
+	if u != nil {
+		uruo.SetOrganizationID(*u)
+	}
+	return uruo
 }
 
 // SetUpdatedAt sets the "updated_at" field.
@@ -223,9 +293,20 @@ func (uruo *UserReportUpdateOne) SetNillableReportURL(s *string) *UserReportUpda
 	return uruo
 }
 
+// SetOrganization sets the "organization" edge to the Organization entity.
+func (uruo *UserReportUpdateOne) SetOrganization(o *Organization) *UserReportUpdateOne {
+	return uruo.SetOrganizationID(o.ID)
+}
+
 // Mutation returns the UserReportMutation object of the builder.
 func (uruo *UserReportUpdateOne) Mutation() *UserReportMutation {
 	return uruo.mutation
+}
+
+// ClearOrganization clears the "organization" edge to the Organization entity.
+func (uruo *UserReportUpdateOne) ClearOrganization() *UserReportUpdateOne {
+	uruo.mutation.ClearOrganization()
+	return uruo
 }
 
 // Where appends a list predicates to the UserReportUpdate builder.
@@ -342,6 +423,35 @@ func (uruo *UserReportUpdateOne) sqlSave(ctx context.Context) (_node *UserReport
 	}
 	if value, ok := uruo.mutation.ReportURL(); ok {
 		_spec.SetField(userreport.FieldReportURL, field.TypeString, value)
+	}
+	if uruo.mutation.OrganizationCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   userreport.OrganizationTable,
+			Columns: []string{userreport.OrganizationColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(organization.FieldID, field.TypeUUID),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := uruo.mutation.OrganizationIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   userreport.OrganizationTable,
+			Columns: []string{userreport.OrganizationColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(organization.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
 	_spec.AddModifiers(uruo.modifiers...)
 	_node = &UserReport{config: uruo.config}

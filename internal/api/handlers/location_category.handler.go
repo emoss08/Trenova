@@ -27,15 +27,15 @@ func NewLocationCategoryHandler(s *api.Server) *LocationCategoryHandler {
 // RegisterRoutes registers the routes for the LocationCategoryHandler.
 func (h *LocationCategoryHandler) RegisterRoutes(r fiber.Router) {
 	locationCategoryAPI := r.Group("/location-categories")
-	locationCategoryAPI.Get("/", h.GetLocationCategories())
-	locationCategoryAPI.Post("/", h.CreateLocationCategory())
-	locationCategoryAPI.Put("/:locationCategoryID", h.UpdateLocationCategory())
+	locationCategoryAPI.Get("/", h.getLocationCategories())
+	locationCategoryAPI.Post("/", h.createLocationCategory())
+	locationCategoryAPI.Put("/:locationCategoryID", h.updateLocationCategory())
 }
 
-// GetLocationCategories is a handler that returns a list of location categories.
+// getLocationCategories is a handler that returns a list of location categories.
 //
 // GET /location-categories
-func (h *LocationCategoryHandler) GetLocationCategories() fiber.Handler {
+func (h *LocationCategoryHandler) getLocationCategories() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		orgID, ok := c.Locals(util.CTXOrganizationID).(uuid.UUID)
 		buID, buOK := c.Locals(util.CTXBusinessUnitID).(uuid.UUID)
@@ -94,10 +94,10 @@ func (h *LocationCategoryHandler) GetLocationCategories() fiber.Handler {
 	}
 }
 
-// CreateLocationCategory is a handler that creates a new location cateogry.
+// createLocationCategory is a handler that creates a new location cateogry.
 //
 // POST /location-categories
-func (h *LocationCategoryHandler) CreateLocationCategory() fiber.Handler {
+func (h *LocationCategoryHandler) createLocationCategory() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		newEntity := new(ent.LocationCategory)
 
@@ -129,7 +129,7 @@ func (h *LocationCategoryHandler) CreateLocationCategory() fiber.Handler {
 		newEntity.BusinessUnitID = buID
 		newEntity.OrganizationID = orgID
 
-		if err := util.ParseBodyAndValidate(c, newEntity); err != nil {
+		if err = util.ParseBodyAndValidate(c, newEntity); err != nil {
 			return err
 		}
 
@@ -143,10 +143,10 @@ func (h *LocationCategoryHandler) CreateLocationCategory() fiber.Handler {
 	}
 }
 
-// UpdateLocationCategory is a handler that updates a location category.
+// updateLocationCategory is a handler that updates a location category.
 //
 // PUT /location-categories/:locationCategoryID
-func (h *LocationCategoryHandler) UpdateLocationCategory() fiber.Handler {
+func (h *LocationCategoryHandler) updateLocationCategory() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		locationCategoryID := c.Params("locationCategoryID")
 		if locationCategoryID == "" {
@@ -173,7 +173,7 @@ func (h *LocationCategoryHandler) UpdateLocationCategory() fiber.Handler {
 
 		updatedEntity := new(ent.LocationCategory)
 
-		if err := util.ParseBodyAndValidate(c, updatedEntity); err != nil {
+		if err = util.ParseBodyAndValidate(c, updatedEntity); err != nil {
 			return err
 		}
 

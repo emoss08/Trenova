@@ -265,6 +265,7 @@ func (r *UserService) UpdateUser(ctx context.Context, entity *ent.User) (*ent.Us
 func (r *UserService) updateUserEntity(ctx context.Context, tx *ent.Tx, entity *ent.User) (*ent.User, error) {
 	// Start building the update operation
 	updateOp := tx.User.UpdateOneID(entity.ID).
+		SetOrganizationID(entity.OrganizationID).
 		SetStatus(entity.Status).
 		SetName(entity.Name).
 		SetEmail(entity.Email).

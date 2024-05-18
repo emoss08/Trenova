@@ -136,6 +136,7 @@ func (r *FleetCodeService) updateFleetCodeEntity(
 
 	// Start building the update operation
 	updateOp := tx.FleetCode.UpdateOneID(entity.ID).
+		SetOrganizationID(entity.OrganizationID).
 		SetStatus(entity.Status).
 		SetCode(entity.Code).
 		SetDescription(entity.Description).

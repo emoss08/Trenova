@@ -27,7 +27,7 @@ function CommodityEditForm({
   commodity: Commodity;
   open: boolean;
 }) {
-  const { control, handleSubmit, watch, setValue } =
+  const { control, handleSubmit, watch, reset, setValue } =
     useForm<CommodityFormValues>({
       resolver: yupResolver(commoditySchema),
       defaultValues: commodity,
@@ -39,6 +39,7 @@ function CommodityEditForm({
     successMessage: "Commodity updated successfully.",
     queryKeysToInvalidate: "commodities",
     closeModal: true,
+    reset,
     errorMessage: "Failed to update commodity.",
   });
 

@@ -1,4 +1,4 @@
-import { lazy } from "react";
+import React, { lazy } from "react";
 import { RouteObject } from "react-router-dom";
 
 const HomePage = lazy(() => import("../pages"));
@@ -151,6 +151,11 @@ export type RouteObjectWithPermission = RouteObject & {
    * If true, the route is accessible without authentication
    */
   isPublic: boolean;
+
+  /**
+   * Icon to display in the menu
+   */
+  icon?: React.ComponentType;
 };
 
 export const routes: RouteObjectWithPermission[] = [
@@ -435,7 +440,7 @@ export const routes: RouteObjectWithPermission[] = [
   // Admin Pages
   {
     title: "Dashboard",
-    group: "Administration",
+    group: "administration",
     path: "/admin/dashboard/",
     description: "Admin Dashboard",
     element: <AdminPage />,
@@ -444,7 +449,7 @@ export const routes: RouteObjectWithPermission[] = [
   },
   {
     title: "Feature Management",
-    group: "Administration",
+    group: "administration",
     path: "/admin/feature-management/",
     description: "Feature Flag Management",
     element: <FeatureManagementPage />,
@@ -453,7 +458,7 @@ export const routes: RouteObjectWithPermission[] = [
   },
   {
     title: "Accounting Control",
-    group: "Administration",
+    group: "administration",
     path: "/admin/accounting-controls/",
     description: "Accounting Controls",
     element: <AccountingControlPage />,
@@ -462,7 +467,7 @@ export const routes: RouteObjectWithPermission[] = [
   },
   {
     title: "Billing Control",
-    group: "Administration",
+    group: "administration",
     path: "/admin/billing-controls/",
     description: "Billing Controls",
     element: <BillingControlPage />,
@@ -471,7 +476,7 @@ export const routes: RouteObjectWithPermission[] = [
   },
   {
     title: "Invoice Control",
-    group: "Administration",
+    group: "administration",
     path: "/admin/invoice-controls/",
     description: "Invoice Controls",
     element: <InvoiceControlPage />,
@@ -480,7 +485,7 @@ export const routes: RouteObjectWithPermission[] = [
   },
   {
     title: "Dispatch Control",
-    group: "Administration",
+    group: "administration",
     path: "/admin/dispatch-controls/",
     description: "Dispatch Controls",
     element: <DispatchControlPage />,
@@ -489,7 +494,7 @@ export const routes: RouteObjectWithPermission[] = [
   },
   {
     title: "Shipment Control",
-    group: "Administration",
+    group: "administration",
     path: "/admin/shipment-controls/",
     description: "Shipment Controls",
     element: <ShipmentControlPage />,
@@ -498,7 +503,7 @@ export const routes: RouteObjectWithPermission[] = [
   },
   {
     title: "Route Control",
-    group: "Administration",
+    group: "administration",
     path: "/admin/route-controls/",
     description: "Route Controls",
     element: <RouteControlPage />,
@@ -507,7 +512,7 @@ export const routes: RouteObjectWithPermission[] = [
   },
   {
     title: "Feasibility Control",
-    group: "Administration",
+    group: "administration",
     path: "/admin/feasibility-controls/",
     description: "Feasibility Controls",
     element: <FeasibilityControlPage />,
@@ -516,7 +521,7 @@ export const routes: RouteObjectWithPermission[] = [
   },
   {
     title: "Email Control",
-    group: "Administration",
+    group: "administration",
     path: "/admin/email-controls/",
     description: "Email Controls",
     element: <EmailControlPage />,
@@ -525,7 +530,7 @@ export const routes: RouteObjectWithPermission[] = [
   },
   {
     title: "Email Profiles",
-    group: "Administration",
+    group: "administration",
     path: "/admin/email-profiles/",
     description: "Email Profiles",
     element: <EmailProfilePage />,
@@ -534,7 +539,7 @@ export const routes: RouteObjectWithPermission[] = [
   },
   {
     title: "Google API",
-    group: "Administration",
+    group: "administration",
     path: "/admin/google-api/",
     description: "Google API",
     element: <GoogleAPIPage />,
@@ -543,7 +548,7 @@ export const routes: RouteObjectWithPermission[] = [
   },
   {
     title: "Table Change Alerts",
-    group: "Administration",
+    group: "administration",
     path: "/admin/table-change-alerts/",
     description: "Table Change Alerts",
     element: <TableChangeAlertPage />,
@@ -552,7 +557,7 @@ export const routes: RouteObjectWithPermission[] = [
   },
   {
     title: "Data Retention",
-    group: "Administration",
+    group: "administration",
     path: "/admin/data-retention/",
     description: "Data Retention",
     element: <DataRetentionPage />,
@@ -561,7 +566,7 @@ export const routes: RouteObjectWithPermission[] = [
   },
   {
     title: "Hazardous Material Seg. Rules",
-    group: "Administration",
+    group: "administration",
     path: "/admin/hazardous-rules/",
     description: "Hazardous Material Seg. Rules",
     element: <HazardousMaterialSegregationPage />,
@@ -570,7 +575,7 @@ export const routes: RouteObjectWithPermission[] = [
   },
   {
     title: "Role Management",
-    group: "Administration",
+    group: "administration",
     path: "/admin/roles/",
     description: "Role Management",
     element: <RoleManagementPage />,

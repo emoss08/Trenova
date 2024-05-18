@@ -130,6 +130,7 @@ func (r *DivisionCodeService) updateDivisionCodeEntity(
 
 	// Start building the update operation
 	updateOp := tx.DivisionCode.UpdateOneID(entity.ID).
+		SetOrganizationID(entity.OrganizationID).
 		SetStatus(entity.Status).
 		SetCode(entity.Code).
 		SetDescription(entity.Description).

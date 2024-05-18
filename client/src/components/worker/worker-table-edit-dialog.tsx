@@ -23,7 +23,7 @@ function WorkerEditForm({
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }) {
-  const { control, handleSubmit } = useForm<FormValues>({
+  const { control, handleSubmit, reset } = useForm<FormValues>({
     // resolver: yupResolver(trailerSchema),
     defaultValues: worker,
   });
@@ -34,12 +34,12 @@ function WorkerEditForm({
     successMessage: "Worker updated successfully.",
     queryKeysToInvalidate: "workers",
     closeModal: true,
+    reset,
     errorMessage: "Failed to update worker.",
   });
 
   const onSubmit = (values: FormValues) => {
     const cleanedValues = cleanObject(values);
-
     mutation.mutate(cleanedValues);
   };
 
@@ -69,26 +69,22 @@ function WorkerEditForm({
 export function WorkerEditDialog({ onOpenChange, open }: TableSheetProps) {
   const [worker] = useTableStore.use("currentRecord") as Worker[];
 
-  if (!worker) {
-    return null;
-  }
+  if (!worker) return null;
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent className={cn("w-full xl:w-1/2")}>
         <SheetHeader>
-          <SheetTitle>{worker && worker.code}</SheetTitle>
+          <SheetTitle>{worker.code}</SheetTitle>
           <SheetDescription>
-            Last updated on {worker && formatToUserTimezone(worker.updatedAt)}
+            Last updated on {formatToUserTimezone(worker.updatedAt)}
           </SheetDescription>
         </SheetHeader>
-        {worker && (
-          <WorkerEditForm
-            worker={worker}
-            open={open}
-            onOpenChange={onOpenChange}
-          />
-        )}
+        <WorkerEditForm
+          worker={worker}
+          open={open}
+          onOpenChange={onOpenChange}
+        />
       </SheetContent>
     </Sheet>
   );

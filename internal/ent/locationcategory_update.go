@@ -12,7 +12,9 @@ import (
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
 	"github.com/emoss08/trenova/internal/ent/locationcategory"
+	"github.com/emoss08/trenova/internal/ent/organization"
 	"github.com/emoss08/trenova/internal/ent/predicate"
+	"github.com/google/uuid"
 )
 
 // LocationCategoryUpdate is the builder for updating LocationCategory entities.
@@ -26,6 +28,20 @@ type LocationCategoryUpdate struct {
 // Where appends a list predicates to the LocationCategoryUpdate builder.
 func (lcu *LocationCategoryUpdate) Where(ps ...predicate.LocationCategory) *LocationCategoryUpdate {
 	lcu.mutation.Where(ps...)
+	return lcu
+}
+
+// SetOrganizationID sets the "organization_id" field.
+func (lcu *LocationCategoryUpdate) SetOrganizationID(u uuid.UUID) *LocationCategoryUpdate {
+	lcu.mutation.SetOrganizationID(u)
+	return lcu
+}
+
+// SetNillableOrganizationID sets the "organization_id" field if the given value is not nil.
+func (lcu *LocationCategoryUpdate) SetNillableOrganizationID(u *uuid.UUID) *LocationCategoryUpdate {
+	if u != nil {
+		lcu.SetOrganizationID(*u)
+	}
 	return lcu
 }
 
@@ -110,14 +126,27 @@ func (lcu *LocationCategoryUpdate) ClearColor() *LocationCategoryUpdate {
 	return lcu
 }
 
+// SetOrganization sets the "organization" edge to the Organization entity.
+func (lcu *LocationCategoryUpdate) SetOrganization(o *Organization) *LocationCategoryUpdate {
+	return lcu.SetOrganizationID(o.ID)
+}
+
 // Mutation returns the LocationCategoryMutation object of the builder.
 func (lcu *LocationCategoryUpdate) Mutation() *LocationCategoryMutation {
 	return lcu.mutation
 }
 
+// ClearOrganization clears the "organization" edge to the Organization entity.
+func (lcu *LocationCategoryUpdate) ClearOrganization() *LocationCategoryUpdate {
+	lcu.mutation.ClearOrganization()
+	return lcu
+}
+
 // Save executes the query and returns the number of nodes affected by the update operation.
 func (lcu *LocationCategoryUpdate) Save(ctx context.Context) (int, error) {
-	lcu.defaults()
+	if err := lcu.defaults(); err != nil {
+		return 0, err
+	}
 	return withHooks(ctx, lcu.sqlSave, lcu.mutation, lcu.hooks)
 }
 
@@ -144,11 +173,15 @@ func (lcu *LocationCategoryUpdate) ExecX(ctx context.Context) {
 }
 
 // defaults sets the default values of the builder before save.
-func (lcu *LocationCategoryUpdate) defaults() {
+func (lcu *LocationCategoryUpdate) defaults() error {
 	if _, ok := lcu.mutation.UpdatedAt(); !ok {
+		if locationcategory.UpdateDefaultUpdatedAt == nil {
+			return fmt.Errorf("ent: uninitialized locationcategory.UpdateDefaultUpdatedAt (forgotten import ent/runtime?)")
+		}
 		v := locationcategory.UpdateDefaultUpdatedAt()
 		lcu.mutation.SetUpdatedAt(v)
 	}
+	return nil
 }
 
 // check runs all checks and user-defined validators on the builder.
@@ -209,6 +242,35 @@ func (lcu *LocationCategoryUpdate) sqlSave(ctx context.Context) (n int, err erro
 	if lcu.mutation.ColorCleared() {
 		_spec.ClearField(locationcategory.FieldColor, field.TypeString)
 	}
+	if lcu.mutation.OrganizationCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   locationcategory.OrganizationTable,
+			Columns: []string{locationcategory.OrganizationColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(organization.FieldID, field.TypeUUID),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := lcu.mutation.OrganizationIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   locationcategory.OrganizationTable,
+			Columns: []string{locationcategory.OrganizationColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(organization.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
 	_spec.AddModifiers(lcu.modifiers...)
 	if n, err = sqlgraph.UpdateNodes(ctx, lcu.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
@@ -229,6 +291,20 @@ type LocationCategoryUpdateOne struct {
 	hooks     []Hook
 	mutation  *LocationCategoryMutation
 	modifiers []func(*sql.UpdateBuilder)
+}
+
+// SetOrganizationID sets the "organization_id" field.
+func (lcuo *LocationCategoryUpdateOne) SetOrganizationID(u uuid.UUID) *LocationCategoryUpdateOne {
+	lcuo.mutation.SetOrganizationID(u)
+	return lcuo
+}
+
+// SetNillableOrganizationID sets the "organization_id" field if the given value is not nil.
+func (lcuo *LocationCategoryUpdateOne) SetNillableOrganizationID(u *uuid.UUID) *LocationCategoryUpdateOne {
+	if u != nil {
+		lcuo.SetOrganizationID(*u)
+	}
+	return lcuo
 }
 
 // SetUpdatedAt sets the "updated_at" field.
@@ -312,9 +388,20 @@ func (lcuo *LocationCategoryUpdateOne) ClearColor() *LocationCategoryUpdateOne {
 	return lcuo
 }
 
+// SetOrganization sets the "organization" edge to the Organization entity.
+func (lcuo *LocationCategoryUpdateOne) SetOrganization(o *Organization) *LocationCategoryUpdateOne {
+	return lcuo.SetOrganizationID(o.ID)
+}
+
 // Mutation returns the LocationCategoryMutation object of the builder.
 func (lcuo *LocationCategoryUpdateOne) Mutation() *LocationCategoryMutation {
 	return lcuo.mutation
+}
+
+// ClearOrganization clears the "organization" edge to the Organization entity.
+func (lcuo *LocationCategoryUpdateOne) ClearOrganization() *LocationCategoryUpdateOne {
+	lcuo.mutation.ClearOrganization()
+	return lcuo
 }
 
 // Where appends a list predicates to the LocationCategoryUpdate builder.
@@ -332,7 +419,9 @@ func (lcuo *LocationCategoryUpdateOne) Select(field string, fields ...string) *L
 
 // Save executes the query and returns the updated LocationCategory entity.
 func (lcuo *LocationCategoryUpdateOne) Save(ctx context.Context) (*LocationCategory, error) {
-	lcuo.defaults()
+	if err := lcuo.defaults(); err != nil {
+		return nil, err
+	}
 	return withHooks(ctx, lcuo.sqlSave, lcuo.mutation, lcuo.hooks)
 }
 
@@ -359,11 +448,15 @@ func (lcuo *LocationCategoryUpdateOne) ExecX(ctx context.Context) {
 }
 
 // defaults sets the default values of the builder before save.
-func (lcuo *LocationCategoryUpdateOne) defaults() {
+func (lcuo *LocationCategoryUpdateOne) defaults() error {
 	if _, ok := lcuo.mutation.UpdatedAt(); !ok {
+		if locationcategory.UpdateDefaultUpdatedAt == nil {
+			return fmt.Errorf("ent: uninitialized locationcategory.UpdateDefaultUpdatedAt (forgotten import ent/runtime?)")
+		}
 		v := locationcategory.UpdateDefaultUpdatedAt()
 		lcuo.mutation.SetUpdatedAt(v)
 	}
+	return nil
 }
 
 // check runs all checks and user-defined validators on the builder.
@@ -440,6 +533,35 @@ func (lcuo *LocationCategoryUpdateOne) sqlSave(ctx context.Context) (_node *Loca
 	}
 	if lcuo.mutation.ColorCleared() {
 		_spec.ClearField(locationcategory.FieldColor, field.TypeString)
+	}
+	if lcuo.mutation.OrganizationCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   locationcategory.OrganizationTable,
+			Columns: []string{locationcategory.OrganizationColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(organization.FieldID, field.TypeUUID),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := lcuo.mutation.OrganizationIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   locationcategory.OrganizationTable,
+			Columns: []string{locationcategory.OrganizationColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(organization.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
 	_spec.AddModifiers(lcuo.modifiers...)
 	_node = &LocationCategory{config: lcuo.config}

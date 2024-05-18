@@ -79,6 +79,7 @@ export type QueryKey =
   | "qualifierCodes"
   | "workers"
   | "currentUser"
+  | "reportColumns"
   | "dailyShipmentCounts"
   | "shipmentCountByStatus"
   | "validateBOLNumber";

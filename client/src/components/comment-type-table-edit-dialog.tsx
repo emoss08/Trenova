@@ -24,7 +24,7 @@ import {
 } from "./ui/credenza";
 
 function CommentTypeEditForm({ commentType }: { commentType: CommentType }) {
-  const { control, handleSubmit } = useForm<FormValues>({
+  const { control, reset, handleSubmit } = useForm<FormValues>({
     resolver: yupResolver(commentTypeSchema),
     defaultValues: commentType,
   });
@@ -33,8 +33,9 @@ function CommentTypeEditForm({ commentType }: { commentType: CommentType }) {
     method: "PUT",
     path: `/comment-types/${commentType.id}/`,
     successMessage: "Comment Type updated successfully.",
-    queryKeysToInvalidate: ["comment-types-table-data"],
+    queryKeysToInvalidate: "commentTypes",
     closeModal: true,
+    reset,
     errorMessage: "Failed to create update charge type.",
   });
 
