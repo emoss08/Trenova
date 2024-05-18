@@ -2,7 +2,7 @@ import react from "@vitejs/plugin-react-swc";
 import million from "million/compiler";
 import path from "path";
 import { visualizer } from "rollup-plugin-visualizer";
-import { defineConfig, loadEnv, type PluginOption } from "vite";
+import { defineConfig, loadEnv, PluginOption } from "vite";
 import { VitePWA } from "vite-plugin-pwa";
 
 export default defineConfig(({ mode }) => {
@@ -25,7 +25,7 @@ export default defineConfig(({ mode }) => {
         open: true,
         gzipSize: true,
         brotliSize: true,
-      }) as PluginOption,
+      }) as unknown as PluginOption,
       ...(mode === "test"
         ? []
         : [

@@ -7,7 +7,6 @@ import {
   SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useCustomMutation } from "@/hooks/useCustomMutation";
 import { cn } from "@/lib/utils";
 import { customerSchema } from "@/lib/validations/CustomerSchema";
@@ -21,6 +20,7 @@ import { CustomerEmailProfileForm } from "./customer-email-profile-form";
 import { CustomerInfoForm } from "./customer-info-form";
 import { CustomerRuleProfileForm } from "./customer-rule-profile-form";
 import { DeliverySlotForm } from "./delivery-slots-form";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "./ui/new/new-tabs";
 
 export function CustomerForm({ open }: { open: boolean }) {
   const [activeTab, setActiveTab] = useCustomerFormStore.use("activeTab");
@@ -29,11 +29,11 @@ export function CustomerForm({ open }: { open: boolean }) {
     <Tabs
       defaultValue="info"
       value={activeTab}
-      className="w-full flex-1"
+      className="mt-10 w-full flex-1"
       onValueChange={setActiveTab}
     >
-      <TabsList>
-        <TabsTrigger value="info">Information</TabsTrigger>
+      <TabsList className="mx-auto space-x-4">
+        <TabsTrigger value="info">General Information</TabsTrigger>
         <TabsTrigger value="emailProfile">Email Profile</TabsTrigger>
         <TabsTrigger value="ruleProfile">Rule Profile</TabsTrigger>
         <TabsTrigger value="deliverySlots">Delivery Slots</TabsTrigger>
