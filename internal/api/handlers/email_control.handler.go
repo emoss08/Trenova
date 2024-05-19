@@ -11,14 +11,12 @@ import (
 )
 
 type EmailControlHandler struct {
-	Server            *api.Server
 	Service           *services.EmailControlService
 	PermissionService *services.PermissionService
 }
 
 func NewEmailControlHandler(s *api.Server) *EmailControlHandler {
 	return &EmailControlHandler{
-		Server:            s,
 		Service:           services.NewEmailControlService(s),
 		PermissionService: services.NewPermissionService(s),
 	}

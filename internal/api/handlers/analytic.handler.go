@@ -12,13 +12,11 @@ import (
 )
 
 type AnalyticHandler struct {
-	Server  *api.Server
 	Service *services.AnalyticService
 }
 
 func NewAnalyticHandler(s *api.Server) *AnalyticHandler {
 	return &AnalyticHandler{
-		Server:  s,
 		Service: services.NewAnalyticService(s),
 	}
 }

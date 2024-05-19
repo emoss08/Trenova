@@ -10,13 +10,11 @@ import (
 )
 
 type PermissionHandler struct {
-	Server  *api.Server
 	Service *services.PermissionService
 }
 
 func NewPermissionHandler(s *api.Server) *PermissionHandler {
 	return &PermissionHandler{
-		Server:  s,
 		Service: services.NewPermissionService(s),
 	}
 }

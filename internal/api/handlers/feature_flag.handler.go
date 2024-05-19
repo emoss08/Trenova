@@ -10,14 +10,12 @@ import (
 )
 
 type FeatureFlagHandler struct {
-	Server            *api.Server
 	Service           *services.FeatureFlagService
 	PermissionService *services.PermissionService
 }
 
 func NewFeatureFlagHandler(s *api.Server) *FeatureFlagHandler {
 	return &FeatureFlagHandler{
-		Server:            s,
 		Service:           services.NewFeatureFlagService(s),
 		PermissionService: services.NewPermissionService(s),
 	}

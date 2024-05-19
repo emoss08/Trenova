@@ -119,6 +119,7 @@ func (r *ReportService) GetColumnsByTableName(ctx context.Context, tableName str
 
 	columns, relationships, _, err := r.getColumnsAndRelationships(ctx, tableName, excludedTableNames, excludedColumns)
 	if err != nil {
+		r.Logger.Err(err).Msg("Failed to get columns and relationships")
 		return nil, nil, 0, err
 	}
 

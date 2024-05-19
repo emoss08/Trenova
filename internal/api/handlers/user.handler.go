@@ -11,14 +11,12 @@ import (
 )
 
 type UserHandler struct {
-	Server            *api.Server
 	Service           *services.UserService
 	PermissionService *services.PermissionService
 }
 
 func NewUserHandler(s *api.Server) *UserHandler {
 	return &UserHandler{
-		Server:            s,
 		Service:           services.NewUserService(s),
 		PermissionService: services.NewPermissionService(s),
 	}

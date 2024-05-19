@@ -11,14 +11,12 @@ import (
 )
 
 type CommentTypeService struct {
-	Server            *api.Server
 	Service           *services.CommentTypeService
 	PermissionService *services.PermissionService
 }
 
 func NewCommentTypeService(s *api.Server) *CommentTypeService {
 	return &CommentTypeService{
-		Server:            s,
 		Service:           services.NewCommentTypeService(s),
 		PermissionService: services.NewPermissionService(s),
 	}

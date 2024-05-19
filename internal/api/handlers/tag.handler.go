@@ -11,14 +11,12 @@ import (
 )
 
 type TagHandler struct {
-	Server            *api.Server
 	Service           *services.TagService
 	PermissionService *services.PermissionService
 }
 
 func NewTagHandler(s *api.Server) *TagHandler {
 	return &TagHandler{
-		Server:            s,
 		Service:           services.NewTagService(s),
 		PermissionService: services.NewPermissionService(s),
 	}

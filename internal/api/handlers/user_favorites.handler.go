@@ -11,13 +11,11 @@ import (
 )
 
 type UserFavoriteHandler struct {
-	Server  *api.Server
 	Service *services.UserFavoriteService
 }
 
 func NewUserFavoriteHandler(s *api.Server) *UserFavoriteHandler {
 	return &UserFavoriteHandler{
-		Server:  s,
 		Service: services.NewUserFavoriteService(s),
 	}
 }

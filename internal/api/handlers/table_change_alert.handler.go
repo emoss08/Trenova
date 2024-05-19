@@ -11,14 +11,12 @@ import (
 )
 
 type TableChangeAlertHandler struct {
-	Server            *api.Server
 	Service           *services.TableChangeAlertService
 	PermissionService *services.PermissionService
 }
 
 func NewTableChangeAlertHandler(s *api.Server) *TableChangeAlertHandler {
 	return &TableChangeAlertHandler{
-		Server:            s,
 		Service:           services.NewTableChangeAlertService(s),
 		PermissionService: services.NewPermissionService(s),
 	}

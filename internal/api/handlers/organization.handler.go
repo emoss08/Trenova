@@ -11,14 +11,12 @@ import (
 )
 
 type OrganizationHandler struct {
-	Server            *api.Server
 	Service           *services.OrganizationService
 	PermissionService *services.PermissionService
 }
 
 func NewOrganizationHandler(s *api.Server) *OrganizationHandler {
 	return &OrganizationHandler{
-		Server:            s,
 		Service:           services.NewOrganizationService(s),
 		PermissionService: services.NewPermissionService(s),
 	}
@@ -30,6 +28,7 @@ func (h *OrganizationHandler) RegisterRoutes(r fiber.Router) {
 	organizationAPI.Post("/logo", h.UploadLogo())
 	organizationAPI.Put("/:orgID", h.UpdateOrganization())
 }
+
 // GetUserOrganization is a handler that returns the organization of the currently authenticated user.
 //
 // GET /organizations/me

@@ -11,13 +11,11 @@ import (
 )
 
 type UserNotificationHandler struct {
-	Server  *api.Server
 	Service *services.UserNotificationService
 }
 
 func NewUserNotificationHandler(s *api.Server) *UserNotificationHandler {
 	return &UserNotificationHandler{
-		Server:  s,
 		Service: services.NewUserNotificationService(s),
 	}
 }

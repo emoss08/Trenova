@@ -11,7 +11,6 @@ import (
 )
 
 type AccountingControlHandler struct {
-	Server            *api.Server
 	Service           *services.AccountingControlService
 	PermissionService *services.PermissionService
 }
@@ -19,7 +18,6 @@ type AccountingControlHandler struct {
 // NewAccountingControlHandler returns a new AccountingControlHandler.
 func NewAccountingControlHandler(s *api.Server) *AccountingControlHandler {
 	return &AccountingControlHandler{
-		Server:            s,
 		Service:           services.NewAccountingControlService(s),
 		PermissionService: services.NewPermissionService(s),
 	}

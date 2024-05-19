@@ -15,14 +15,12 @@ import (
 )
 
 type GeneralLedgerAccountHandler struct {
-	Server            *api.Server
 	Service           *services.GeneralLedgerAccountService
 	PermissionService *services.PermissionService
 }
 
 func NewGeneralLedgerAccountHandler(s *api.Server) *GeneralLedgerAccountHandler {
 	return &GeneralLedgerAccountHandler{
-		Server:            s,
 		Service:           services.NewGeneralLedgerAccountService(s),
 		PermissionService: services.NewPermissionService(s),
 	}

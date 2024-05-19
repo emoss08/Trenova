@@ -11,14 +11,12 @@ import (
 )
 
 type LocationCategoryHandler struct {
-	Server            *api.Server
 	Service           *services.LocationCategoryService
 	PermissionService *services.PermissionService
 }
 
 func NewLocationCategoryHandler(s *api.Server) *LocationCategoryHandler {
 	return &LocationCategoryHandler{
-		Server:            s,
 		Service:           services.NewLocationCategoryService(s),
 		PermissionService: services.NewPermissionService(s),
 	}

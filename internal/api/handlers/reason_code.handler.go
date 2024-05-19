@@ -11,14 +11,12 @@ import (
 )
 
 type ReasonCodeHandler struct {
-	Server            *api.Server
 	Service           *services.ReasonCodeService
 	PermissionService *services.PermissionService
 }
 
 func NewReasonCodeHandler(s *api.Server) *ReasonCodeHandler {
 	return &ReasonCodeHandler{
-		Server:            s,
 		Service:           services.NewReasonCodeService(s),
 		PermissionService: services.NewPermissionService(s),
 	}

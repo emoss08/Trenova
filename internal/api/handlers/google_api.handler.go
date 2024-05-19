@@ -11,14 +11,12 @@ import (
 )
 
 type GoogleAPIHandler struct {
-	Server            *api.Server
 	Service           *services.GoogleAPIService
 	PermissionService *services.PermissionService
 }
 
 func NewGoogleAPIHandler(s *api.Server) *GoogleAPIHandler {
 	return &GoogleAPIHandler{
-		Server:            s,
 		Service:           services.NewGoogleAPIService(s),
 		PermissionService: services.NewPermissionService(s),
 	}
