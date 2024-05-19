@@ -78,7 +78,11 @@ const UserAvatar = React.forwardRef<HTMLDivElement, UserAvatarProps>(
       user.profilePicUrl || `https://avatar.vercel.sh/${user.email}`;
 
     return (
-      <div className="flex select-none items-center" ref={ref} {...props}>
+      <div
+        className="flex select-none items-center hover:cursor-pointer"
+        ref={ref}
+        {...props}
+      >
         <Avatar className="m-auto inline-block">
           <AvatarImage
             src={avatarSrc}
