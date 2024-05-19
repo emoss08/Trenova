@@ -11,14 +11,12 @@ import (
 )
 
 type TrailerHandler struct {
-	Server            *api.Server
 	Service           *services.TrailerService
 	PermissionService *services.PermissionService
 }
 
 func NewTrailerHandler(s *api.Server) *TrailerHandler {
 	return &TrailerHandler{
-		Server:            s,
 		Service:           services.NewTrailerService(s),
 		PermissionService: services.NewPermissionService(s),
 	}

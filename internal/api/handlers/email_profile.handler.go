@@ -11,14 +11,12 @@ import (
 )
 
 type EmailProfileHandler struct {
-	Server            *api.Server
 	Service           *services.EmailProfileService
 	PermissionService *services.PermissionService
 }
 
 func NewEmailProfileHandler(s *api.Server) *EmailProfileHandler {
 	return &EmailProfileHandler{
-		Server:            s,
 		Service:           services.NewEmailProfileService(s),
 		PermissionService: services.NewPermissionService(s),
 	}

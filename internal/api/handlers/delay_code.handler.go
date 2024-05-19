@@ -11,14 +11,12 @@ import (
 )
 
 type DelayCodeHandler struct {
-	Server            *api.Server
 	Service           *services.DelayCodeService
 	PermissionService *services.PermissionService
 }
 
 func NewDelayCodeHandler(s *api.Server) *DelayCodeHandler {
 	return &DelayCodeHandler{
-		Server:            s,
 		Service:           services.NewDelayCodeService(s),
 		PermissionService: services.NewPermissionService(s),
 	}

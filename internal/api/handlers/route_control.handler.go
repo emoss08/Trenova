@@ -11,14 +11,12 @@ import (
 )
 
 type RouteControlHandler struct {
-	Server            *api.Server
 	Service           *services.RouteControlService
 	PermissionService *services.PermissionService
 }
 
 func NewRouteControlHandler(s *api.Server) *RouteControlHandler {
 	return &RouteControlHandler{
-		Server:            s,
 		Service:           services.NewRouteControlService(s),
 		PermissionService: services.NewPermissionService(s),
 	}

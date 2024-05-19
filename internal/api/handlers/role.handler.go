@@ -13,14 +13,12 @@ import (
 )
 
 type RoleHandler struct {
-	Server            *api.Server
 	Service           *services.RoleService
 	PermissionService *services.PermissionService
 }
 
 func NewRoleHandler(s *api.Server) *RoleHandler {
 	return &RoleHandler{
-		Server:            s,
 		Service:           services.NewRoleService(s),
 		PermissionService: services.NewPermissionService(s),
 	}

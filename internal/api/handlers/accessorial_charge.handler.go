@@ -11,14 +11,12 @@ import (
 )
 
 type AccessorialChargeHandler struct {
-	Server            *api.Server
 	Service           *services.AccessorialChargeService
 	PermissionService *services.PermissionService
 }
 
 func NewAccessorialChargeHandler(s *api.Server) *AccessorialChargeHandler {
 	return &AccessorialChargeHandler{
-		Server:            s,
 		Service:           services.NewAccessorialChargeService(s),
 		PermissionService: services.NewPermissionService(s),
 	}

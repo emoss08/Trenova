@@ -11,14 +11,12 @@ import (
 )
 
 type InvoiceControlHandler struct {
-	Server            *api.Server
 	Service           *services.InvoiceControlService
 	PermissionService *services.PermissionService
 }
 
 func NewInvoiceControlHandler(s *api.Server) *InvoiceControlHandler {
 	return &InvoiceControlHandler{
-		Server:            s,
 		Service:           services.NewInvoiceControlService(s),
 		PermissionService: services.NewPermissionService(s),
 	}

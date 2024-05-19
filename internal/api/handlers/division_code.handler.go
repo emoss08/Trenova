@@ -11,14 +11,12 @@ import (
 )
 
 type DivisionCodeHandler struct {
-	Server            *api.Server
 	Service           *services.DivisionCodeService
 	PermissionService *services.PermissionService
 }
 
 func NewDivisionCodeHandler(s *api.Server) *DivisionCodeHandler {
 	return &DivisionCodeHandler{
-		Server:            s,
 		Service:           services.NewDivisionCodeService(s),
 		PermissionService: services.NewPermissionService(s),
 	}

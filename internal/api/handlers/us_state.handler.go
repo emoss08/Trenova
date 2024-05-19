@@ -9,13 +9,11 @@ import (
 )
 
 type USStateHandler struct {
-	Server  *api.Server
 	Service *services.USStateService
 }
 
 func NewUSStateHandler(s *api.Server) *USStateHandler {
 	return &USStateHandler{
-		Server:  s,
 		Service: services.NewUSStateService(s),
 	}
 }

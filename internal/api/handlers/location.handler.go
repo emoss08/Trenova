@@ -44,14 +44,12 @@ type LocationResponse struct {
 }
 
 type LocationHandler struct {
-	Server            *api.Server
 	Service           *services.LocationService
 	PermissionService *services.PermissionService
 }
 
 func NewLocationHandler(s *api.Server) *LocationHandler {
 	return &LocationHandler{
-		Server:            s,
 		Service:           services.NewLocationService(s),
 		PermissionService: services.NewPermissionService(s),
 	}

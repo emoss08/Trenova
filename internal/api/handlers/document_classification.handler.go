@@ -11,14 +11,12 @@ import (
 )
 
 type DocumentClassificationHandler struct {
-	Server            *api.Server
 	Service           *services.DocumentClassificationService
 	PermissionService *services.PermissionService
 }
 
 func NewDocumentClassificationHandler(s *api.Server) *DocumentClassificationHandler {
 	return &DocumentClassificationHandler{
-		Server:            s,
 		Service:           services.NewDocumentClassificationService(s),
 		PermissionService: services.NewPermissionService(s),
 	}
