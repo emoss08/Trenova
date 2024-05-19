@@ -46,12 +46,16 @@ type LocationResponse struct {
 type LocationHandler struct {
 	Service           *services.LocationService
 	PermissionService *services.PermissionService
+	RoutingService    *routing.RoutingServiceImpl
+	QueryService      *models.QueryService
 }
 
 func NewLocationHandler(s *api.Server) *LocationHandler {
 	return &LocationHandler{
 		Service:           services.NewLocationService(s),
 		PermissionService: services.NewPermissionService(s),
+		RoutingService:    routing.NewRoutingService(s.Logger),
+		QueryService:      models.NewQueryService(s.Client, s.Logger),
 	}
 }
 
@@ -282,14 +286,13 @@ func (h *LocationHandler) autoCompleteLocation() fiber.Handler {
 		}
 
 		query := c.Query("query")
-		apiKey, err := models.GetGoogleAPIKeyForOrganization(c.UserContext(), h.Server.Client, orgID, buID)
+		apiKey, err := h.QueryService.GetGoogleAPIKeyForOrganization(c.UserContext(), orgID, buID)
 		if err != nil {
 			errorResponse := util.CreateDBErrorResponse(err)
 			return c.Status(fiber.StatusInternalServerError).JSON(errorResponse)
 		}
 
-		calc := routing.NewRoutingService(h.Server.Logger)
-		locations, err := calc.LocationAutoComplete(c.UserContext(), query, apiKey)
+		locations, err := h.RoutingService.LocationAutoComplete(c.UserContext(), query, apiKey)
 		if err != nil {
 			errorResponse := util.CreateDBErrorResponse(err)
 			return c.Status(fiber.StatusInternalServerError).JSON(errorResponse)

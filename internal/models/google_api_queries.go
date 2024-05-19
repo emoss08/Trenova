@@ -4,16 +4,23 @@ import (
 	"context"
 	"errors"
 
-	"github.com/emoss08/trenova/internal/ent"
 	"github.com/emoss08/trenova/internal/ent/googleapi"
 	"github.com/emoss08/trenova/internal/ent/organization"
 	"github.com/google/uuid"
 )
 
-func GetGoogleAPIKeyForOrganization(
-	ctx context.Context, client *ent.Client, orgID, buID uuid.UUID,
-) (string, error) {
-	googleAPI, err := client.GoogleApi.Query().
+// Get Google API key for an organization and business unit.
+//
+// Parameters:
+//   - ctx: Context which may contain deadlines, cancellation signals, and other request-scoped values.
+//   - orgID uuid.UUID: The identifier of the organization.
+//   - buID uuid.UUID: The identifier of the business unit.
+//
+// Returns:
+//   - string: The Google API key.
+//   - error: An error object that indicates why the retrieval failed, nil if no error occurred.
+func (r *QueryService) GetGoogleAPIKeyForOrganization(ctx context.Context, orgID, buID uuid.UUID) (string, error) {
+	googleAPI, err := r.Client.GoogleApi.Query().
 		Where(
 			googleapi.HasOrganizationWith(
 				organization.IDEQ(orgID),
