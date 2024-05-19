@@ -36,7 +36,7 @@ export const ProtectedLink: React.FC<
 
   return (
     <ListItem
-      key={label}
+      key={`${label}-${link}`}
       title={label}
       to={link}
       onClick={(event) => {
@@ -67,7 +67,7 @@ const SingleLink: React.FC<{
 
   return (
     <ProtectedLink
-      key={subItem.label}
+      key={`${subItem.label}-${subItem.link}`}
       link={subItem.link}
       label={subItem.label}
       description={subItem.description}
