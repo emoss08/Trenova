@@ -9,10 +9,9 @@ import (
 	"github.com/google/uuid"
 )
 
-// Get Google API key for an organization and business unit.
 //
 // Parameters:
-//   - ctx: Context which may contain deadlines, cancellation signals, and other request-scoped values.
+//   - ctx context.Context: Context which may contain deadlines, cancellation signals, and other request-scoped values.
 //   - orgID uuid.UUID: The identifier of the organization.
 //   - buID uuid.UUID: The identifier of the business unit.
 //
