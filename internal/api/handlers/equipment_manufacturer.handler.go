@@ -11,14 +11,12 @@ import (
 )
 
 type EquipmentManufacturerHandler struct {
-	Server            *api.Server
 	Service           *services.EquipmentManufacturerService
 	PermissionService *services.PermissionService
 }
 
 func NewEquipmentManufacturerHandler(s *api.Server) *EquipmentManufacturerHandler {
 	return &EquipmentManufacturerHandler{
-		Server:            s,
 		Service:           services.NewEquipmentManufacturerService(s),
 		PermissionService: services.NewPermissionService(s),
 	}

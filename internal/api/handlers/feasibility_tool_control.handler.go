@@ -11,14 +11,12 @@ import (
 )
 
 type FeasibilityToolControlHandler struct {
-	Server            *api.Server
 	Service           *services.FeasibilityToolControlService
 	PermissionService *services.PermissionService
 }
 
 func NewFeasibilityToolControlHandler(s *api.Server) *FeasibilityToolControlHandler {
 	return &FeasibilityToolControlHandler{
-		Server:            s,
 		Service:           services.NewFeasibilityToolControlService(s),
 		PermissionService: services.NewPermissionService(s),
 	}

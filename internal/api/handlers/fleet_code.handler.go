@@ -11,14 +11,12 @@ import (
 )
 
 type FleetCodeHandler struct {
-	Server            *api.Server
 	Service           *services.FleetCodeService
 	PermissionService *services.PermissionService
 }
 
 func NewFleetCodeHandler(s *api.Server) *FleetCodeHandler {
 	return &FleetCodeHandler{
-		Server:            s,
 		Service:           services.NewFleetCodeService(s),
 		PermissionService: services.NewPermissionService(s),
 	}

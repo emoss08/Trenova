@@ -11,14 +11,12 @@ import (
 )
 
 type HazardousMaterialHandler struct {
-	Server            *api.Server
 	Service           *services.HazardousMaterialService
 	PermissionService *services.PermissionService
 }
 
 func NewHazardousMaterialHandler(s *api.Server) *HazardousMaterialHandler {
 	return &HazardousMaterialHandler{
-		Server:            s,
 		Service:           services.NewHazardousMaterialService(s),
 		PermissionService: services.NewPermissionService(s),
 	}

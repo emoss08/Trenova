@@ -11,7 +11,6 @@ import (
 
 // WorkerHandler is a struct that handles HTTP requests for worker resources.
 type WorkerHandler struct {
-	Server            *api.Server
 	Service           *services.WorkerService
 	PermissionService *services.PermissionService
 }
@@ -27,7 +26,6 @@ type WorkerHandler struct {
 //	*WorkerHandler: A pointer to the newly created WorkerHandler instance.
 func NewWorkerHandler(s *api.Server) *WorkerHandler {
 	return &WorkerHandler{
-		Server:            s,
 		Service:           services.NewWorkerService(s),
 		PermissionService: services.NewPermissionService(s),
 	}

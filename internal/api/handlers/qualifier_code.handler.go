@@ -11,14 +11,12 @@ import (
 )
 
 type QualifierCodeHandler struct {
-	Server            *api.Server
 	Service           *services.QualifierCodeService
 	PermissionService *services.PermissionService
 }
 
 func NewQualifierCodeHandler(s *api.Server) *QualifierCodeHandler {
 	return &QualifierCodeHandler{
-		Server:            s,
 		Service:           services.NewQualifierCodeService(s),
 		PermissionService: services.NewPermissionService(s),
 	}

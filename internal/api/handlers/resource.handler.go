@@ -13,14 +13,12 @@ import (
 )
 
 type ResourceHandler struct {
-	Server            *api.Server
 	Service           *services.ResourceService
 	PermissionService *services.PermissionService
 }
 
 func NewResourceHandler(s *api.Server) *ResourceHandler {
 	return &ResourceHandler{
-		Server:  s,
 		Service: services.NewResourceService(s),
 	}
 }

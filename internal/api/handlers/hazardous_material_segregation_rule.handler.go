@@ -13,14 +13,12 @@ import (
 )
 
 type HazardousMaterialSegregationHandler struct {
-	Server            *api.Server
 	Service           *services.HazardousMaterialSegregationService
 	PermissionService *services.PermissionService
 }
 
 func NewHazardousMaterialSegregationHandler(s *api.Server) *HazardousMaterialSegregationHandler {
 	return &HazardousMaterialSegregationHandler{
-		Server:            s,
 		Service:           services.NewHazardousMaterialSegregationService(s),
 		PermissionService: services.NewPermissionService(s),
 	}

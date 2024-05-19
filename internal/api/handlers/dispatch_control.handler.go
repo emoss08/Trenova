@@ -11,14 +11,12 @@ import (
 )
 
 type DispatchControlHandler struct {
-	Server            *api.Server
 	Service           *services.DispatchControlService
 	PermissionService *services.PermissionService
 }
 
 func NewDispatchControlHandler(s *api.Server) *DispatchControlHandler {
 	return &DispatchControlHandler{
-		Server:            s,
 		Service:           services.NewDispatchControlService(s),
 		PermissionService: services.NewPermissionService(s),
 	}

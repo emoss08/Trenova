@@ -11,14 +11,12 @@ import (
 )
 
 type ChargeTypeHandler struct {
-	Server            *api.Server
 	Service           *services.ChargeTypeService
 	PermissionService *services.PermissionService
 }
 
 func NewChargeTypeHandler(s *api.Server) *ChargeTypeHandler {
 	return &ChargeTypeHandler{
-		Server:            s,
 		Service:           services.NewChargeTypeService(s),
 		PermissionService: services.NewPermissionService(s),
 	}

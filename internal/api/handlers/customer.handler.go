@@ -18,7 +18,6 @@ import (
 )
 
 type CustomerHandler struct {
-	Server            *api.Server
 	Logger            *zerolog.Logger
 	Service           *services.CustomerService
 	PermissionService *services.PermissionService
@@ -26,7 +25,6 @@ type CustomerHandler struct {
 
 func NewCustomerHandler(s *api.Server) *CustomerHandler {
 	return &CustomerHandler{
-		Server:            s,
 		Logger:            s.Logger,
 		Service:           services.NewCustomerService(s),
 		PermissionService: services.NewPermissionService(s),

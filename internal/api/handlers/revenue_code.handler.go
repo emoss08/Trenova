@@ -11,14 +11,12 @@ import (
 )
 
 type RevenueCodeHandler struct {
-	Server            *api.Server
 	Service           *services.RevenueCodeService
 	PermissionService *services.PermissionService
 }
 
 func NewRevenueCodeHandler(s *api.Server) *RevenueCodeHandler {
 	return &RevenueCodeHandler{
-		Server:            s,
 		Service:           services.NewRevenueCodeService(s),
 		PermissionService: services.NewPermissionService(s),
 	}

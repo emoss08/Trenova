@@ -11,14 +11,12 @@ import (
 )
 
 type CommodityHandler struct {
-	Server            *api.Server
 	Service           *services.CommodityService
 	PermissionService *services.PermissionService
 }
 
 func NewCommodityHandler(s *api.Server) *CommodityHandler {
 	return &CommodityHandler{
-		Server:            s,
 		Service:           services.NewCommodityService(s),
 		PermissionService: services.NewPermissionService(s),
 	}
