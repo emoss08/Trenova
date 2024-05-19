@@ -90,6 +90,7 @@ export const createGlobalStore = <State extends object>(
       // ) as unknown as State[K];
 
       const result = store((state) => state[key], equalityFn || Object.is);
+      // eslint-disable-next-line react-hooks/rules-of-hooks
       const keySetter = useCallback(
         (value: SetStateAction<State[K]>) => setter(key, value),
         [key],
