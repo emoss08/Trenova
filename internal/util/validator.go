@@ -62,6 +62,15 @@ func IsValidationError(err error) bool {
 	return errors.As(err, &e)
 }
 
+func IsValidationErrorResponse(err error) bool {
+	if err == nil {
+		return false
+	}
+
+	var e *types.ValidationErrorResponse
+	return errors.As(err, &e)
+}
+
 func NewValidator() (*Validator, error) {
 	english := en.New()
 	uni := ut.New(english, english)
@@ -193,6 +202,18 @@ func CreateDBErrorResponse(err error) types.ValidationErrorResponse {
 			return vErr.Response
 		}
 		detail := "Failed to cast to ValidationError despite passing IsValidationError check"
+		details = append(details, types.ValidationErrorDetail{
+			Code:   "typeAssertionError",
+			Detail: detail,
+			Attr:   "internalError",
+		})
+
+	case IsValidationErrorResponse(err):
+		var vErr *types.ValidationErrorResponse
+		if errors.As(err, &vErr) {
+			return *vErr
+		}
+		detail := "Failed to cast to ValidationErrorResponse despite passing IsValidationErrorResponse check"
 		details = append(details, types.ValidationErrorDetail{
 			Code:   "typeAssertionError",
 			Detail: detail,

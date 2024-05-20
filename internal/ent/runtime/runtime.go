@@ -2412,6 +2412,7 @@ func init() {
 	tablechangealertMixin := schema.TableChangeAlert{}.Mixin()
 	tablechangealertHooks := schema.TableChangeAlert{}.Hooks()
 	tablechangealert.Hooks[0] = tablechangealertHooks[0]
+	tablechangealert.Hooks[1] = tablechangealertHooks[1]
 	tablechangealertMixinFields0 := tablechangealertMixin[0].Fields()
 	_ = tablechangealertMixinFields0
 	tablechangealertFields := schema.TableChangeAlert{}.Fields()

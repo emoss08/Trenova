@@ -325,11 +325,15 @@ func (r *ReportService) GenerateReport(
 
 			err = r.addReportToUser(ctx, tx, userID, orgID, buID, result.ReportURL)
 			if err != nil {
+				r.Logger.Err(err).Msg("Failed to add report to user")
 				return err
 			}
 
-			// Notify the client that the report has been generated
-			NewWebsocketService(r.Client, r.Logger).NotifyClient(userID.String(), message)
+			// Send the Notify client message in goroutine
+			go func() {
+				// Notify the client that the report has been generated
+				NewWebsocketService(r.Client, r.Logger).NotifyClient(userID.String(), message)
+			}()
 
 			return nil
 		})
@@ -350,15 +354,10 @@ func (r *ReportService) GenerateReport(
 func (r *ReportService) addReportToUser(
 	ctx context.Context, tx *ent.Tx, userID, orgID, buID uuid.UUID, reportURL string,
 ) error {
-	_, err := tx.UserReport.Create().
+	return tx.UserReport.Create().
 		SetOrganizationID(orgID).
 		SetBusinessUnitID(buID).
 		SetUserID(userID).
 		SetReportURL(reportURL).
-		Save(ctx)
-	if err != nil {
-		return err
-	}
-
-	return nil
+		Exec(ctx)
 }

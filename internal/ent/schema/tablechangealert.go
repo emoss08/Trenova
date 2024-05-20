@@ -1,13 +1,12 @@
 package schema
 
 import (
-	"context"
-
 	"entgo.io/ent"
 	"entgo.io/ent/dialect"
 	"entgo.io/ent/schema/field"
-	gen "github.com/emoss08/trenova/internal/ent"
 	"github.com/emoss08/trenova/internal/ent/hook"
+	"github.com/emoss08/trenova/internal/util/mutators"
+	"github.com/emoss08/trenova/internal/util/validators"
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
@@ -113,20 +112,7 @@ func (TableChangeAlert) Edges() []ent.Edge {
 // Hooks for the TableChangeAlert.
 func (TableChangeAlert) Hooks() []ent.Hook {
 	return []ent.Hook{
-		hook.On(
-			func(next ent.Mutator) ent.Mutator {
-				return hook.TableChangeAlertFunc(func(ctx context.Context, m *gen.TableChangeAlertMutation) (ent.Value, error) {
-					source, exists := m.Source()
-					// If the source is Database, clear the topic name and vice versa
-					if exists && source == "Database" {
-						m.SetTopicName("")
-					} else if exists && source == "Kafka" {
-						m.SetTableName("")
-					}
-					return next.Mutate(ctx, m)
-				})
-			},
-			ent.OpCreate|ent.OpUpdate|ent.OpUpdateOne,
-		),
+		hook.On(validators.ValidateTableChangeAlerts, ent.OpCreate|ent.OpUpdate|ent.OpUpdateOne),
+		hook.On(mutators.MutateTableChangeAlerts, ent.OpCreate|ent.OpUpdate|ent.OpUpdateOne),
 	}
 }
