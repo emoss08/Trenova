@@ -175,25 +175,8 @@ func (e *ConditionalStructureError) Error() string {
 	return e.Message
 }
 
-// TableChangeAlertCondition represents a condition in the table change alert.
-type TableChangeAlertCondition struct {
-	ID        int    `json:"id"`
-	Column    string `json:"column"`
-	Operation string `json:"operation"`
-	Value     any    `json:"value"`
-	DataType  string `json:"dataType"`
-}
-
-// TableChangeAlertConditionalLogic represents the conditional logic for a table change alert.
-type TableChangeAlertConditionalLogic struct {
-	Name        string                      `json:"name"`
-	Description string                      `json:"description"`
-	TableName   string                      `json:"tableName"`
-	Conditions  []TableChangeAlertCondition `json:"conditions"`
-}
-
 // validateConditionalLogic validates the structure and content of conditional logic.
-func ValidateConditionalLogic(data TableChangeAlertConditionalLogic) error {
+func ValidateConditionalLogic(data types.TableChangeAlertConditionalLogic) error {
 	requiredKeys := []string{"name", "description", "tableName", "conditions"}
 
 	// Convert struct to map for dynamic key validation
@@ -247,7 +230,7 @@ func ValidateConditionalLogic(data TableChangeAlertConditionalLogic) error {
 	return nil
 }
 
-func validateOperationValue(condition TableChangeAlertCondition) error {
+func validateOperationValue(condition types.TableChangeAlertCondition) error {
 	switch condition.Operation {
 	case "in", "not_in":
 		if _, ok := condition.Value.([]interface{}); !ok {
@@ -285,7 +268,7 @@ func isValidDataType(dataType string) bool {
 }
 
 // validateModelFieldsExist validates that the specified fields exist in the model.
-func ValidateModelFieldsExist(data TableChangeAlertConditionalLogic, modelFields []string) error {
+func ValidateModelFieldsExist(data types.TableChangeAlertConditionalLogic, modelFields []string) error {
 	excludedFields := []string{"id", "organization_id", "business_unit_id"}
 
 	for _, condition := range data.Conditions {

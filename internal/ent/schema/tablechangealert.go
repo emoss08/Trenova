@@ -6,6 +6,7 @@ import (
 	"entgo.io/ent/schema/field"
 	"github.com/emoss08/trenova/internal/ent/hook"
 	"github.com/emoss08/trenova/internal/util/mutators"
+	"github.com/emoss08/trenova/internal/util/types"
 	"github.com/emoss08/trenova/internal/util/validators"
 	"github.com/jackc/pgx/v5/pgtype"
 )

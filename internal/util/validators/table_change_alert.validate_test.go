@@ -3,16 +3,17 @@ package validators_test
 import (
 	"testing"
 
+	"github.com/emoss08/trenova/internal/util/types"
 	"github.com/emoss08/trenova/internal/util/validators"
 	"github.com/stretchr/testify/require"
 )
 
 func TestValidateConditionalLogic_Valid(t *testing.T) {
-	data := validators.TableChangeAlertConditionalLogic{
+	data := types.TableChangeAlertConditionalLogic{
 		Name:        "Example Logic",
 		Description: "This is an example",
 		TableName:   "example_table",
-		Conditions: []validators.TableChangeAlertCondition{
+		Conditions: []types.TableChangeAlertCondition{
 			{
 				ID:        1,
 				Column:    "example_column",
@@ -28,10 +29,10 @@ func TestValidateConditionalLogic_Valid(t *testing.T) {
 }
 
 func TestValidateConditionalLogic_MissingRequiredKey_Name(t *testing.T) {
-	data := validators.TableChangeAlertConditionalLogic{
+	data := types.TableChangeAlertConditionalLogic{
 		Description: "This is an example",
 		TableName:   "example_table",
-		Conditions: []validators.TableChangeAlertCondition{
+		Conditions: []types.TableChangeAlertCondition{
 			{
 				ID:        1,
 				Column:    "example_column",
@@ -48,11 +49,11 @@ func TestValidateConditionalLogic_MissingRequiredKey_Name(t *testing.T) {
 }
 
 func TestValidateConditionalLogic_InvalidOperation(t *testing.T) {
-	data := validators.TableChangeAlertConditionalLogic{
+	data := types.TableChangeAlertConditionalLogic{
 		Name:        "Example Logic",
 		Description: "This is an example",
 		TableName:   "example_table",
-		Conditions: []validators.TableChangeAlertCondition{
+		Conditions: []types.TableChangeAlertCondition{
 			{
 				ID:        1,
 				Column:    "example_column",
@@ -69,11 +70,11 @@ func TestValidateConditionalLogic_InvalidOperation(t *testing.T) {
 }
 
 func TestValidateConditionalLogic_InvalidDataType(t *testing.T) {
-	data := validators.TableChangeAlertConditionalLogic{
+	data := types.TableChangeAlertConditionalLogic{
 		Name:        "Example Logic",
 		Description: "This is an example",
 		TableName:   "example_table",
-		Conditions: []validators.TableChangeAlertCondition{
+		Conditions: []types.TableChangeAlertCondition{
 			{
 				ID:        1,
 				Column:    "example_column",
@@ -90,11 +91,11 @@ func TestValidateConditionalLogic_InvalidDataType(t *testing.T) {
 }
 
 func TestValidateConditionalLogic_OperationInExpectsList(t *testing.T) {
-	data := validators.TableChangeAlertConditionalLogic{
+	data := types.TableChangeAlertConditionalLogic{
 		Name:        "Example Logic",
 		Description: "This is an example",
 		TableName:   "example_table",
-		Conditions: []validators.TableChangeAlertCondition{
+		Conditions: []types.TableChangeAlertCondition{
 			{
 				ID:        1,
 				Column:    "example_column",
@@ -111,11 +112,11 @@ func TestValidateConditionalLogic_OperationInExpectsList(t *testing.T) {
 }
 
 func TestValidateConditionalLogic_OperationIsNullShouldNotHaveValue(t *testing.T) {
-	data := validators.TableChangeAlertConditionalLogic{
+	data := types.TableChangeAlertConditionalLogic{
 		Name:        "Example Logic",
 		Description: "This is an example",
 		TableName:   "example_table",
-		Conditions: []validators.TableChangeAlertCondition{
+		Conditions: []types.TableChangeAlertCondition{
 			{
 				ID:        1,
 				Column:    "example_column",
@@ -132,11 +133,11 @@ func TestValidateConditionalLogic_OperationIsNullShouldNotHaveValue(t *testing.T
 }
 
 func TestValidateConditionalLogic_OperationContainsExpectsString(t *testing.T) {
-	data := validators.TableChangeAlertConditionalLogic{
+	data := types.TableChangeAlertConditionalLogic{
 		Name:        "Example Logic",
 		Description: "This is an example",
 		TableName:   "example_table",
-		Conditions: []validators.TableChangeAlertCondition{
+		Conditions: []types.TableChangeAlertCondition{
 			{
 				ID:        1,
 				Column:    "example_column",
@@ -153,11 +154,11 @@ func TestValidateConditionalLogic_OperationContainsExpectsString(t *testing.T) {
 }
 
 func TestValidateModelFieldsExist_Valid(t *testing.T) {
-	data := validators.TableChangeAlertConditionalLogic{
+	data := types.TableChangeAlertConditionalLogic{
 		Name:        "Example Logic",
 		Description: "This is an example",
 		TableName:   "example_table",
-		Conditions: []validators.TableChangeAlertCondition{
+		Conditions: []types.TableChangeAlertCondition{
 			{
 				ID:        1,
 				Column:    "example_column",
@@ -175,11 +176,11 @@ func TestValidateModelFieldsExist_Valid(t *testing.T) {
 }
 
 func TestValidateModelFieldsExist_FieldDoesNotExist(t *testing.T) {
-	data := validators.TableChangeAlertConditionalLogic{
+	data := types.TableChangeAlertConditionalLogic{
 		Name:        "Example Logic",
 		Description: "This is an example",
 		TableName:   "example_table",
-		Conditions: []validators.TableChangeAlertCondition{
+		Conditions: []types.TableChangeAlertCondition{
 			{
 				ID:        1,
 				Column:    "nonexistent_column",
@@ -198,11 +199,11 @@ func TestValidateModelFieldsExist_FieldDoesNotExist(t *testing.T) {
 }
 
 func TestValidateModelFieldsExist_FieldNotAllowed(t *testing.T) {
-	data := validators.TableChangeAlertConditionalLogic{
+	data := types.TableChangeAlertConditionalLogic{
 		Name:        "Example Logic",
 		Description: "This is an example",
 		TableName:   "example_table",
-		Conditions: []validators.TableChangeAlertCondition{
+		Conditions: []types.TableChangeAlertCondition{
 			{
 				ID:        1,
 				Column:    "organization_id",
