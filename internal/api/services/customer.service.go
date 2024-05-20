@@ -15,9 +15,9 @@ import (
 
 // CustomerService provides methods for managing customers.
 type CustomerService struct {
-	Client       *ent.Client     // Client is the database client used for querying and mutating customer records.
-	Logger       *zerolog.Logger // Logger is used for logging messages.
-	QueryService *models.QueryService
+	Client       *ent.Client          // Client is the database client used for querying and mutating customer records.
+	Logger       *zerolog.Logger      // Logger is used for logging messages.
+	QueryService *models.QueryService // QueryService provides methods for querying the database.
 }
 
 // NewCustomerService creates a new CustomerService.

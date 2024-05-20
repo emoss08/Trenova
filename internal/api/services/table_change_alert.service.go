@@ -3,6 +3,7 @@ package services
 import (
 	"context"
 
+	"github.com/emoss08/trenova/internal/api/services/types"
 	kfk "github.com/emoss08/trenova/internal/util/kafka"
 
 	"github.com/emoss08/trenova/internal/api"
@@ -173,13 +174,8 @@ func (r *TableChangeAlertService) updateTableChangeAlertEntity(
 	return updatedEntity, nil
 }
 
-type TableName struct {
-	Value string `json:"value"`
-	Label string `json:"label"`
-}
-
-func (r *TableChangeAlertService) GetTableNames(ctx context.Context) ([]TableName, int, error) {
-	tableNames := make([]TableName, 0)
+func (r *TableChangeAlertService) GetTableNames(ctx context.Context) ([]types.TableName, int, error) {
+	tableNames := make([]types.TableName, 0)
 	var count int
 	excludedTableNames := map[string]bool{
 		"table_change_alerts":       true,
@@ -218,7 +214,7 @@ func (r *TableChangeAlertService) GetTableNames(ctx context.Context) ([]TableNam
 
 func (r *TableChangeAlertService) getTableNames(
 	ctx context.Context, tx *ent.Tx, excludedTableNames map[string]bool,
-) ([]TableName, int, error) {
+) ([]types.TableName, int, error) {
 	query := "SELECT table_name FROM information_schema.tables WHERE table_schema = 'public' AND table_type = 'BASE TABLE'"
 	rows, err := tx.QueryContext(ctx, query)
 	if err != nil {
@@ -226,7 +222,7 @@ func (r *TableChangeAlertService) getTableNames(
 	}
 	defer rows.Close()
 
-	var tableNames []TableName
+	var tableNames []types.TableName
 	var tableCount int
 	for rows.Next() {
 		var tableName string
@@ -234,7 +230,7 @@ func (r *TableChangeAlertService) getTableNames(
 			return nil, 0, scanErr
 		}
 
-		tableNames = append(tableNames, TableName{Value: tableName, Label: tableName})
+		tableNames = append(tableNames, types.TableName{Value: tableName, Label: tableName})
 		if _, excluded := excludedTableNames[tableName]; !excluded {
 			tableCount++
 		}
@@ -247,20 +243,15 @@ func (r *TableChangeAlertService) getTableNames(
 	return tableNames, tableCount, nil
 }
 
-type TopicName struct {
-	Value string `json:"value"`
-	Label string `json:"label"`
-}
-
-func (r *TableChangeAlertService) GetTopicNames() ([]TopicName, int, error) {
+func (r *TableChangeAlertService) GetTopicNames() ([]types.TopicName, int, error) {
 	topics, err := r.Kafka.GetTopics()
 	if err != nil {
 		return nil, 0, err
 	}
 
-	topicNames := make([]TopicName, 0, len(topics))
+	topicNames := make([]types.TopicName, 0, len(topics))
 	for _, topic := range topics {
-		topicNames = append(topicNames, TopicName{
+		topicNames = append(topicNames, types.TopicName{
 			Value: topic,
 			Label: topic,
 		})
