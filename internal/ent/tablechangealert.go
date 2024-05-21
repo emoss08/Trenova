@@ -3,6 +3,7 @@
 package ent
 
 import (
+	"encoding/json"
 	"fmt"
 	"strings"
 	"time"
@@ -59,6 +60,8 @@ type TableChangeAlert struct {
 	EffectiveDate *pgtype.Date `json:"effectiveDate"`
 	// ExpirationDate holds the value of the "expiration_date" field.
 	ExpirationDate *pgtype.Date `json:"expirationDate"`
+	// ConditionalLogic holds the value of the "conditional_logic" field.
+	ConditionalLogic map[string]interface{} `json:"conditionalLogic"`
 	// Edges holds the relations/edges for other nodes in the graph.
 	// The values are being populated by the TableChangeAlertQuery when eager-loading is set.
 	Edges        TableChangeAlertEdges `json:"edges"`
@@ -105,6 +108,8 @@ func (*TableChangeAlert) scanValues(columns []string) ([]any, error) {
 		switch columns[i] {
 		case tablechangealert.FieldEffectiveDate, tablechangealert.FieldExpirationDate:
 			values[i] = &sql.NullScanner{S: new(pgtype.Date)}
+		case tablechangealert.FieldConditionalLogic:
+			values[i] = new([]byte)
 		case tablechangealert.FieldVersion:
 			values[i] = new(sql.NullInt64)
 		case tablechangealert.FieldStatus, tablechangealert.FieldName, tablechangealert.FieldDatabaseAction, tablechangealert.FieldSource, tablechangealert.FieldTableName, tablechangealert.FieldTopicName, tablechangealert.FieldDescription, tablechangealert.FieldCustomSubject, tablechangealert.FieldFunctionName, tablechangealert.FieldTriggerName, tablechangealert.FieldListenerName, tablechangealert.FieldEmailRecipients:
@@ -248,6 +253,14 @@ func (tca *TableChangeAlert) assignValues(columns []string, values []any) error 
 			} else if value.Valid {
 				tca.ExpirationDate = value.S.(*pgtype.Date)
 			}
+		case tablechangealert.FieldConditionalLogic:
+			if value, ok := values[i].(*[]byte); !ok {
+				return fmt.Errorf("unexpected type %T for field conditional_logic", values[i])
+			} else if value != nil && len(*value) > 0 {
+				if err := json.Unmarshal(*value, &tca.ConditionalLogic); err != nil {
+					return fmt.Errorf("unmarshal field conditional_logic: %w", err)
+				}
+			}
 		default:
 			tca.selectValues.Set(columns[i], values[i])
 		}
@@ -354,6 +367,9 @@ func (tca *TableChangeAlert) String() string {
 		builder.WriteString("expiration_date=")
 		builder.WriteString(fmt.Sprintf("%v", *v))
 	}
+	builder.WriteString(", ")
+	builder.WriteString("conditional_logic=")
+	builder.WriteString(fmt.Sprintf("%v", tca.ConditionalLogic))
 	builder.WriteByte(')')
 	return builder.String()
 }

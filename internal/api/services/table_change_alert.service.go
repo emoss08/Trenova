@@ -230,8 +230,8 @@ func (r *TableChangeAlertService) getTableNames(
 			return nil, 0, scanErr
 		}
 
-		tableNames = append(tableNames, types.TableName{Value: tableName, Label: tableName})
 		if _, excluded := excludedTableNames[tableName]; !excluded {
+			tableNames = append(tableNames, types.TableName{Value: tableName, Label: tableName})
 			tableCount++
 		}
 	}

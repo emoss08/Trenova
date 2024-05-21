@@ -1,13 +1,15 @@
 package schema
 
 import (
+	"context"
+
 	"entgo.io/ent"
 	"entgo.io/ent/dialect"
 	"entgo.io/ent/schema/field"
+	gen "github.com/emoss08/trenova/internal/ent"
 	"github.com/emoss08/trenova/internal/ent/hook"
 	"github.com/emoss08/trenova/internal/util/mutators"
-	"github.com/emoss08/trenova/internal/util/types"
-	"github.com/emoss08/trenova/internal/util/validators"
+	"github.com/emoss08/trenova/internal/validators"
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
@@ -95,6 +97,9 @@ func (TableChangeAlert) Fields() []ent.Field {
 				dialect.SQLite:   "date",
 			}).
 			StructTag(`json:"expirationDate"`),
+		field.JSON("conditional_logic", map[string]any{}).
+			Optional().
+			StructTag(`json:"conditionalLogic"`),
 	}
 }
 
@@ -115,5 +120,21 @@ func (TableChangeAlert) Hooks() []ent.Hook {
 	return []ent.Hook{
 		hook.On(validators.ValidateTableChangeAlerts, ent.OpCreate|ent.OpUpdate|ent.OpUpdateOne),
 		hook.On(mutators.MutateTableChangeAlerts, ent.OpCreate|ent.OpUpdate|ent.OpUpdateOne),
+		hook.On(
+			func(next ent.Mutator) ent.Mutator {
+				return hook.TableChangeAlertFunc(func(ctx context.Context, m *gen.TableChangeAlertMutation) (ent.Value, error) {
+					conLogic, exists := m.ConditionalLogic()
+					if !exists {
+						return next.Mutate(ctx, m)
+					}
+
+					// if conditional logic is provided, ensure that it is validated.
+					if err := validators.ValidateConditionalLogic(conLogic); err != nil {
+						return nil, err
+					}
+
+					return next.Mutate(ctx, m)
+				})
+			}, ent.OpCreate|ent.OpUpdate|ent.OpUpdateOne),
 	}
 }

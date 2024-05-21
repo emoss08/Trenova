@@ -142,3 +142,11 @@ func ToTitleFormat(s string) string {
 func FloatToString(f float64) string {
 	return strconv.FormatFloat(f, 'f', -1, 64)
 }
+
+func TruncateName(name string, maxLength int) string {
+	if len(name) > maxLength {
+		return name[:maxLength]
+	}
+
+	return name
+}

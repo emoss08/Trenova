@@ -22,6 +22,7 @@ import (
 	"github.com/emoss08/trenova/internal/ent/organizationfeatureflag"
 	"github.com/emoss08/trenova/internal/ent/revenuecode"
 	"github.com/emoss08/trenova/internal/ent/role"
+	"github.com/emoss08/trenova/internal/ent/tablechangealert"
 	"github.com/emoss08/trenova/internal/ent/tractor"
 	"github.com/emoss08/trenova/internal/ent/user"
 	"github.com/emoss08/trenova/internal/ent/usstate"
@@ -1273,4 +1274,31 @@ func SeedFeatureFlags(
 	}
 
 	return nil
+}
+
+func SeedTableChangeAlerts(
+	ctx context.Context, client *ent.Client, org *ent.Organization, bu *ent.BusinessUnit,
+) error {
+	// Check if the organization already has table change alerts
+	etCount, err := client.TableChangeAlert.Query().
+		Where(
+			tablechangealert.HasOrganizationWith(organization.ID(org.ID)),
+		).Count(ctx)
+
+	// If not, create the equipment types
+	if etCount == 0 {
+		err = client.TableChangeAlert.Create().
+			SetBusinessUnit(bu).
+			SetOrganization(org).
+			SetStatus("A").
+			SetName("Customer Created").
+			SetDatabaseAction(tablechangealert.DatabaseActionInsert).
+			SetSource("Database").
+			SetTableName("customers").
+			SetDescription("Table change alert that alerts if a customer is created").
+			SetCustomSubject("Customer Created").
+			SetFunctionName("createCustomer").
+			Exec(ctx)
+	}
+	return err
 }

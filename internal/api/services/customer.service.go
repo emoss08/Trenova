@@ -5,7 +5,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/api"
 	"github.com/emoss08/trenova/internal/api/services/types"
-	"github.com/emoss08/trenova/internal/models"
+	"github.com/emoss08/trenova/internal/queries"
 	"github.com/emoss08/trenova/internal/util"
 	"github.com/rs/zerolog"
 
@@ -15,9 +15,9 @@ import (
 
 // CustomerService provides methods for managing customers.
 type CustomerService struct {
-	Client       *ent.Client          // Client is the database client used for querying and mutating customer records.
-	Logger       *zerolog.Logger      // Logger is used for logging messages.
-	QueryService *models.QueryService // QueryService provides methods for querying the database.
+	Client       *ent.Client           // Client is the database client used for querying and mutating customer records.
+	Logger       *zerolog.Logger       // Logger is used for logging messages.
+	QueryService *queries.QueryService // QueryService provides methods for querying the database.
 }
 
 // NewCustomerService creates a new CustomerService.
@@ -33,7 +33,7 @@ func NewCustomerService(s *api.Server) *CustomerService {
 	return &CustomerService{
 		Client: s.Client,
 		Logger: s.Logger,
-		QueryService: &models.QueryService{
+		QueryService: &queries.QueryService{
 			Client: s.Client,
 			Logger: s.Logger,
 		},

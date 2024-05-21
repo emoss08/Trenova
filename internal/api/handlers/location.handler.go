@@ -8,7 +8,7 @@ import (
 	ltypes "github.com/emoss08/trenova/internal/api/services/types"
 	"github.com/emoss08/trenova/internal/ent"
 	"github.com/emoss08/trenova/internal/ent/location"
-	"github.com/emoss08/trenova/internal/models"
+	"github.com/emoss08/trenova/internal/queries"
 	"github.com/emoss08/trenova/internal/services/routing"
 	"github.com/emoss08/trenova/internal/util"
 	"github.com/emoss08/trenova/internal/util/types"
@@ -47,7 +47,7 @@ type LocationHandler struct {
 	Service           *services.LocationService
 	PermissionService *services.PermissionService
 	RoutingService    *routing.RoutingServiceImpl
-	QueryService      *models.QueryService
+	QueryService      *queries.QueryService
 }
 
 func NewLocationHandler(s *api.Server) *LocationHandler {
@@ -55,7 +55,7 @@ func NewLocationHandler(s *api.Server) *LocationHandler {
 		Service:           services.NewLocationService(s),
 		PermissionService: services.NewPermissionService(s),
 		RoutingService:    routing.NewRoutingService(s.Logger),
-		QueryService:      models.NewQueryService(s.Client, s.Logger),
+		QueryService:      queries.NewQueryService(s.Client, s.Logger),
 	}
 }
 

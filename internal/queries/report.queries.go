@@ -1,4 +1,4 @@
-package models
+package queries
 
 import (
 	"context"
@@ -40,6 +40,7 @@ func (r *QueryService) GetColumnsAndRelationships(
 	ctx context.Context, tableName string, excludedTableNames map[string]bool, excludedColumns map[string]bool,
 ) ([]types.ColumnValue, []types.Relationship, int, error) {
 	if excludedTableNames[tableName] {
+		r.Logger.Warn().Msgf("Table %s is excluded", tableName)
 		return nil, nil, 0, fmt.Errorf("table %s is excluded", tableName)
 	}
 
@@ -59,6 +60,7 @@ func (r *QueryService) GetColumnsAndRelationships(
 
 	rows, err := r.Client.QueryContext(ctx, columnsQuery, tableName)
 	if err != nil {
+		r.Logger.Err(err).Msg("Failed to query columns")
 		return nil, nil, 0, err
 	}
 	defer rows.Close()
@@ -67,6 +69,7 @@ func (r *QueryService) GetColumnsAndRelationships(
 	for rows.Next() {
 		var columnName, description string
 		if err = rows.Scan(&columnName, &description); err != nil {
+			r.Logger.Err(err).Msg("Failed to scan columns")
 			return nil, nil, 0, err
 		}
 
@@ -104,6 +107,7 @@ func (r *QueryService) GetColumnsAndRelationships(
 
 	relRows, err := r.Client.QueryContext(ctx, relationshipsQuery, tableName)
 	if err != nil {
+		r.Logger.Err(err).Msg("Failed to query relationships")
 		return nil, nil, 0, err
 	}
 	defer relRows.Close()
@@ -112,6 +116,7 @@ func (r *QueryService) GetColumnsAndRelationships(
 	for relRows.Next() {
 		var foreignKey, referencedTable, referencedColumn string
 		if err = relRows.Scan(&foreignKey, &referencedTable, &referencedColumn); err != nil {
+			r.Logger.Err(err).Msg("Failed to scan relationships")
 			return nil, nil, 0, err
 		}
 
@@ -134,6 +139,8 @@ func (r *QueryService) GetColumnsAndRelationships(
 			Columns:          refColumns,
 		})
 	}
+
+	r.Logger.Info().Msgf("Found %d columns and %d relationships for table %s", len(columns), len(relationships), tableName)
 
 	return columns, relationships, len(columns), nil
 }

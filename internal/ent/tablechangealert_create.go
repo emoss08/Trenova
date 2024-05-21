@@ -234,6 +234,12 @@ func (tcac *TableChangeAlertCreate) SetExpirationDate(pg *pgtype.Date) *TableCha
 	return tcac
 }
 
+// SetConditionalLogic sets the "conditional_logic" field.
+func (tcac *TableChangeAlertCreate) SetConditionalLogic(m map[string]interface{}) *TableChangeAlertCreate {
+	tcac.mutation.SetConditionalLogic(m)
+	return tcac
+}
+
 // SetID sets the "id" field.
 func (tcac *TableChangeAlertCreate) SetID(u uuid.UUID) *TableChangeAlertCreate {
 	tcac.mutation.SetID(u)
@@ -499,6 +505,10 @@ func (tcac *TableChangeAlertCreate) createSpec() (*TableChangeAlert, *sqlgraph.C
 	if value, ok := tcac.mutation.ExpirationDate(); ok {
 		_spec.SetField(tablechangealert.FieldExpirationDate, field.TypeOther, value)
 		_node.ExpirationDate = value
+	}
+	if value, ok := tcac.mutation.ConditionalLogic(); ok {
+		_spec.SetField(tablechangealert.FieldConditionalLogic, field.TypeJSON, value)
+		_node.ConditionalLogic = value
 	}
 	if nodes := tcac.mutation.BusinessUnitIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{

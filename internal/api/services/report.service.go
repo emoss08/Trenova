@@ -8,7 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/services/types"
 	"github.com/emoss08/trenova/internal/config"
 	"github.com/emoss08/trenova/internal/ent"
-	"github.com/emoss08/trenova/internal/models"
+	"github.com/emoss08/trenova/internal/queries"
 	"github.com/emoss08/trenova/internal/util"
 	"github.com/google/uuid"
 	"github.com/imroc/req/v3"
@@ -20,7 +20,7 @@ type ReportService struct {
 	Client       *ent.Client
 	Logger       *zerolog.Logger
 	Config       *config.Server
-	QueryService *models.QueryService // QueryService provides methods for querying the database.
+	QueryService *queries.QueryService // QueryService provides methods for querying the database.
 }
 
 // NewReportService creates a new report service.
@@ -29,6 +29,10 @@ func NewReportService(s *api.Server) *ReportService {
 		Client: s.Client,
 		Logger: s.Logger,
 		Config: &s.Config,
+		QueryService: &queries.QueryService{
+			Client: s.Client,
+			Logger: s.Logger,
+		},
 	}
 }
 

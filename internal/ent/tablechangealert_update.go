@@ -313,6 +313,18 @@ func (tcau *TableChangeAlertUpdate) ClearExpirationDate() *TableChangeAlertUpdat
 	return tcau
 }
 
+// SetConditionalLogic sets the "conditional_logic" field.
+func (tcau *TableChangeAlertUpdate) SetConditionalLogic(m map[string]interface{}) *TableChangeAlertUpdate {
+	tcau.mutation.SetConditionalLogic(m)
+	return tcau
+}
+
+// ClearConditionalLogic clears the value of the "conditional_logic" field.
+func (tcau *TableChangeAlertUpdate) ClearConditionalLogic() *TableChangeAlertUpdate {
+	tcau.mutation.ClearConditionalLogic()
+	return tcau
+}
+
 // SetOrganization sets the "organization" edge to the Organization entity.
 func (tcau *TableChangeAlertUpdate) SetOrganization(o *Organization) *TableChangeAlertUpdate {
 	return tcau.SetOrganizationID(o.ID)
@@ -515,6 +527,12 @@ func (tcau *TableChangeAlertUpdate) sqlSave(ctx context.Context) (n int, err err
 	}
 	if tcau.mutation.ExpirationDateCleared() {
 		_spec.ClearField(tablechangealert.FieldExpirationDate, field.TypeOther)
+	}
+	if value, ok := tcau.mutation.ConditionalLogic(); ok {
+		_spec.SetField(tablechangealert.FieldConditionalLogic, field.TypeJSON, value)
+	}
+	if tcau.mutation.ConditionalLogicCleared() {
+		_spec.ClearField(tablechangealert.FieldConditionalLogic, field.TypeJSON)
 	}
 	if tcau.mutation.OrganizationCleared() {
 		edge := &sqlgraph.EdgeSpec{
@@ -848,6 +866,18 @@ func (tcauo *TableChangeAlertUpdateOne) ClearExpirationDate() *TableChangeAlertU
 	return tcauo
 }
 
+// SetConditionalLogic sets the "conditional_logic" field.
+func (tcauo *TableChangeAlertUpdateOne) SetConditionalLogic(m map[string]interface{}) *TableChangeAlertUpdateOne {
+	tcauo.mutation.SetConditionalLogic(m)
+	return tcauo
+}
+
+// ClearConditionalLogic clears the value of the "conditional_logic" field.
+func (tcauo *TableChangeAlertUpdateOne) ClearConditionalLogic() *TableChangeAlertUpdateOne {
+	tcauo.mutation.ClearConditionalLogic()
+	return tcauo
+}
+
 // SetOrganization sets the "organization" edge to the Organization entity.
 func (tcauo *TableChangeAlertUpdateOne) SetOrganization(o *Organization) *TableChangeAlertUpdateOne {
 	return tcauo.SetOrganizationID(o.ID)
@@ -1080,6 +1110,12 @@ func (tcauo *TableChangeAlertUpdateOne) sqlSave(ctx context.Context) (_node *Tab
 	}
 	if tcauo.mutation.ExpirationDateCleared() {
 		_spec.ClearField(tablechangealert.FieldExpirationDate, field.TypeOther)
+	}
+	if value, ok := tcauo.mutation.ConditionalLogic(); ok {
+		_spec.SetField(tablechangealert.FieldConditionalLogic, field.TypeJSON, value)
+	}
+	if tcauo.mutation.ConditionalLogicCleared() {
+		_spec.ClearField(tablechangealert.FieldConditionalLogic, field.TypeJSON)
 	}
 	if tcauo.mutation.OrganizationCleared() {
 		edge := &sqlgraph.EdgeSpec{

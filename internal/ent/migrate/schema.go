@@ -2373,6 +2373,7 @@ var (
 		{Name: "email_recipients", Type: field.TypeString, Nullable: true, Size: 2147483647},
 		{Name: "effective_date", Type: field.TypeOther, Nullable: true, SchemaType: map[string]string{"postgres": "date", "sqlite3": "date"}},
 		{Name: "expiration_date", Type: field.TypeOther, Nullable: true, SchemaType: map[string]string{"postgres": "date", "sqlite3": "date"}},
+		{Name: "conditional_logic", Type: field.TypeJSON, Nullable: true},
 		{Name: "business_unit_id", Type: field.TypeUUID},
 		{Name: "organization_id", Type: field.TypeUUID},
 	}
@@ -2384,13 +2385,13 @@ var (
 		ForeignKeys: []*schema.ForeignKey{
 			{
 				Symbol:     "table_change_alerts_business_units_business_unit",
-				Columns:    []*schema.Column{TableChangeAlertsColumns[18]},
+				Columns:    []*schema.Column{TableChangeAlertsColumns[19]},
 				RefColumns: []*schema.Column{BusinessUnitsColumns[0]},
 				OnDelete:   schema.Cascade,
 			},
 			{
 				Symbol:     "table_change_alerts_organizations_organization",
-				Columns:    []*schema.Column{TableChangeAlertsColumns[19]},
+				Columns:    []*schema.Column{TableChangeAlertsColumns[20]},
 				RefColumns: []*schema.Column{OrganizationsColumns[0]},
 				OnDelete:   schema.Cascade,
 			},

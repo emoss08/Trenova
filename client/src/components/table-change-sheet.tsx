@@ -19,13 +19,20 @@ import {
 import { cn } from "@/lib/utils";
 import { tableChangeAlertSchema } from "@/lib/validations/OrganizationSchema";
 import { type TableChangeAlertFormValues as FormValues } from "@/types/organization";
-import { type TableSheetProps } from "@/types/tables";
+import { TableSheetProps } from "@/types/tables";
 import { yupResolver } from "@hookform/resolvers/yup";
-import { UseFormWatch, useForm, type Control } from "react-hook-form";
+import { useState } from "react";
+import {
+  FormProvider,
+  UseFormWatch,
+  useForm,
+  type Control,
+} from "react-hook-form";
 import { useTranslation } from "react-i18next";
 import { InputField } from "./common/fields/input";
 import { SelectInput } from "./common/fields/select-input";
-import { Form, FormControl, FormGroup } from "./ui/form";
+import { FormControl, FormGroup } from "./ui/form";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "./ui/new/new-tabs";
 
 function SourceField({
   sourceChoice,
@@ -74,137 +81,163 @@ function SourceField({
 }
 
 export function TableChangeAlertForm({
-  control,
   open,
+  control,
   watch,
 }: {
-  control: Control<FormValues>;
   open: boolean;
+  control: Control<FormValues>;
   watch: UseFormWatch<FormValues>;
 }) {
   const { t } = useTranslation("admin.tablechangealert");
+  // const { control, watch } = useFormContext<FormValues>();
 
   const sourceChoice = watch("source");
 
   const { selectEmailProfile, isError, isLoading } = useEmailProfiles(open);
 
   return (
-    <Form>
-      <FormGroup className="lg:grid-cols-2">
-        <FormControl>
-          <SelectInput
-            name="status"
-            rules={{ required: true }}
-            control={control}
-            options={statusChoices}
-            isClearable={false}
-            label={t("fields.status.label")}
-            placeholder={t("fields.status.placeholder")}
-            description={t("fields.status.description")}
-          />
-        </FormControl>
-        <FormControl>
-          <InputField
-            name="name"
-            rules={{ required: true }}
-            control={control}
-            label={t("fields.name.label")}
-            placeholder={t("fields.name.placeholder")}
-            description={t("fields.name.description")}
-          />
-        </FormControl>
-        <FormControl>
-          <SelectInput
-            name="databaseAction"
-            rules={{ required: true }}
-            options={databaseActionChoices}
-            control={control}
-            label={t("fields.databaseAction.label")}
-            placeholder={t("fields.databaseAction.placeholder")}
-            description={t("fields.databaseAction.description")}
-          />
-        </FormControl>
-        <FormControl>
-          <SelectInput
-            name="source"
-            rules={{ required: true }}
-            options={sourceChoices}
-            control={control}
-            label={t("fields.source.label")}
-            placeholder={t("fields.source.placeholder")}
-            description={t("fields.source.description")}
-          />
-        </FormControl>
-      </FormGroup>
-      <FormGroup className="md:grid-cols-1 lg:grid-cols-1">
-        <SourceField sourceChoice={sourceChoice} control={control} />
-        <FormControl>
-          <TextareaField
-            name="description"
-            control={control}
-            label={t("fields.description.label")}
-            placeholder={t("fields.description.placeholder")}
-            description={t("fields.description.description")}
-          />
-        </FormControl>
-      </FormGroup>
-      <FormGroup className="lg:grid-cols-2 xl:grid-cols-2">
-        <FormControl>
-          <SelectInput
-            name="emailProfile"
-            options={selectEmailProfile}
-            isFetchError={isError}
-            isLoading={isLoading}
-            control={control}
-            label={t("fields.emailProfile.label")}
-            placeholder={t("fields.emailProfile.placeholder")}
-            description={t("fields.emailProfile.description")}
-            hasPopoutWindow
-            popoutLink="/admin/email-profiles/"
-            isClearable
-            popoutLinkLabel="Email Profile"
-          />
-        </FormControl>
-        <FormControl>
-          <InputField
-            name="emailRecipients"
-            rules={{ required: true }}
-            control={control}
-            label={t("fields.emailRecipients.label")}
-            placeholder={t("fields.emailRecipients.placeholder")}
-            description={t("fields.emailRecipients.description")}
-          />
-        </FormControl>
-        <FormControl>
-          <DatepickerField
-            name="effectiveDate"
-            control={control}
-            label={t("fields.effectiveDate.label")}
-            placeholder={t("fields.effectiveDate.placeholder")}
-            description={t("fields.effectiveDate.description")}
-          />
-        </FormControl>
-        <FormControl>
-          <DatepickerField
-            name="expirationDate"
-            control={control}
-            label={t("fields.expirationDate.label")}
-            placeholder={t("fields.expirationDate.placeholder")}
-            description={t("fields.expirationDate.description")}
-          />
-        </FormControl>
-      </FormGroup>
-      <Button type="button" size="sm">
-        Add Conditional Logic
-      </Button>
-    </Form>
+    <FormGroup className="lg:grid-cols-2">
+      <FormControl>
+        <SelectInput
+          name="status"
+          rules={{ required: true }}
+          control={control}
+          options={statusChoices}
+          isClearable={false}
+          label={t("fields.status.label")}
+          placeholder={t("fields.status.placeholder")}
+          description={t("fields.status.description")}
+        />
+      </FormControl>
+      <FormControl>
+        <InputField
+          name="name"
+          rules={{ required: true }}
+          control={control}
+          label={t("fields.name.label")}
+          placeholder={t("fields.name.placeholder")}
+          description={t("fields.name.description")}
+        />
+      </FormControl>
+      <FormControl>
+        <SelectInput
+          name="databaseAction"
+          rules={{ required: true }}
+          options={databaseActionChoices}
+          control={control}
+          label={t("fields.databaseAction.label")}
+          placeholder={t("fields.databaseAction.placeholder")}
+          description={t("fields.databaseAction.description")}
+        />
+      </FormControl>
+      <FormControl>
+        <SelectInput
+          name="source"
+          rules={{ required: true }}
+          options={sourceChoices}
+          control={control}
+          label={t("fields.source.label")}
+          placeholder={t("fields.source.placeholder")}
+          description={t("fields.source.description")}
+        />
+      </FormControl>
+      <SourceField sourceChoice={sourceChoice} control={control} />
+      <FormControl>
+        <TextareaField
+          name="description"
+          control={control}
+          label={t("fields.description.label")}
+          placeholder={t("fields.description.placeholder")}
+          description={t("fields.description.description")}
+        />
+      </FormControl>
+      <FormControl>
+        <SelectInput
+          name="emailProfile"
+          options={selectEmailProfile}
+          isFetchError={isError}
+          isLoading={isLoading}
+          control={control}
+          label={t("fields.emailProfile.label")}
+          placeholder={t("fields.emailProfile.placeholder")}
+          description={t("fields.emailProfile.description")}
+          hasPopoutWindow
+          popoutLink="/admin/email-profiles/"
+          isClearable
+          popoutLinkLabel="Email Profile"
+        />
+      </FormControl>
+      <FormControl>
+        <InputField
+          name="emailRecipients"
+          rules={{ required: true }}
+          control={control}
+          label={t("fields.emailRecipients.label")}
+          placeholder={t("fields.emailRecipients.placeholder")}
+          description={t("fields.emailRecipients.description")}
+        />
+      </FormControl>
+      <FormControl>
+        <DatepickerField
+          name="effectiveDate"
+          control={control}
+          label={t("fields.effectiveDate.label")}
+          placeholder={t("fields.effectiveDate.placeholder")}
+          description={t("fields.effectiveDate.description")}
+        />
+      </FormControl>
+      <FormControl>
+        <DatepickerField
+          name="expirationDate"
+          control={control}
+          label={t("fields.expirationDate.label")}
+          placeholder={t("fields.expirationDate.placeholder")}
+          description={t("fields.expirationDate.description")}
+        />
+      </FormControl>
+    </FormGroup>
+  );
+}
+
+function TableChangeAlertBody({
+  open,
+  control,
+  watch,
+}: {
+  open: boolean;
+  control: Control<FormValues>;
+  watch: UseFormWatch<FormValues>;
+}) {
+  const [activeTab, setActiveTab] = useState<string>("info");
+
+  return (
+    <Tabs
+      defaultValue="info"
+      value={activeTab}
+      className="mt-10 w-full flex-1"
+      onValueChange={setActiveTab}
+    >
+      <TabsList className="mx-auto space-x-4">
+        <TabsTrigger value="info">General Information</TabsTrigger>
+        <TabsTrigger value="conditionalLogic">Conditional Logic</TabsTrigger>
+      </TabsList>
+      <TabsContent value="info">
+        <TableChangeAlertForm open={open} control={control} watch={watch} />
+      </TabsContent>
+      <TabsContent value="conditionalLogic">
+        <div>
+          <p>Coming Soon...</p>
+        </div>
+      </TabsContent>
+    </Tabs>
   );
 }
 
 export function TableChangeAlertSheet({ onOpenChange, open }: TableSheetProps) {
   const { t } = useTranslation(["admin.tablechangealert", "common"]);
 
-  const { control, reset, handleSubmit, watch } = useForm<FormValues>({
+  const tableChangeAlertForm = useForm<FormValues>({
     resolver: yupResolver(tableChangeAlertSchema),
     defaultValues: {
       status: "A",
@@ -222,6 +255,8 @@ export function TableChangeAlertSheet({ onOpenChange, open }: TableSheetProps) {
       expirationDate: null,
     },
   });
+
+  const { control, reset, handleSubmit, watch } = tableChangeAlertForm;
 
   const mutation = useCustomMutation<FormValues>(control, {
     method: "POST",
@@ -242,29 +277,31 @@ export function TableChangeAlertSheet({ onOpenChange, open }: TableSheetProps) {
           <SheetTitle>{t("title")}</SheetTitle>
           <SheetDescription>{t("subTitle")}</SheetDescription>
         </SheetHeader>
-        <form
-          onSubmit={handleSubmit(onSubmit)}
-          className="flex h-full flex-col overflow-y-auto"
-        >
-          <TableChangeAlertForm control={control} open={open} watch={watch} />
-          <SheetFooter className="mb-12">
-            <Button
-              type="reset"
-              variant="secondary"
-              onClick={() => onOpenChange(false)}
-              className="w-full"
-            >
-              {t("buttons.cancel", { ns: "common" })}
-            </Button>
-            <Button
-              type="submit"
-              isLoading={mutation.isPending}
-              className="w-full"
-            >
-              {t("buttons.save", { ns: "common" })}
-            </Button>
-          </SheetFooter>
-        </form>
+        <FormProvider {...tableChangeAlertForm}>
+          <form
+            onSubmit={handleSubmit(onSubmit)}
+            className="flex h-full flex-col overflow-y-auto"
+          >
+            <TableChangeAlertBody open={open} watch={watch} control={control} />
+            <SheetFooter className="mb-12">
+              <Button
+                type="reset"
+                variant="secondary"
+                onClick={() => onOpenChange(false)}
+                className="w-full"
+              >
+                {t("buttons.cancel", { ns: "common" })}
+              </Button>
+              <Button
+                type="submit"
+                isLoading={mutation.isPending}
+                className="w-full"
+              >
+                {t("buttons.save", { ns: "common" })}
+              </Button>
+            </SheetFooter>
+          </form>
+        </FormProvider>
       </SheetContent>
     </Sheet>
   );

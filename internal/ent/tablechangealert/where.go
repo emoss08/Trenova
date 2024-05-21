@@ -1122,6 +1122,16 @@ func ExpirationDateNotNil() predicate.TableChangeAlert {
 	return predicate.TableChangeAlert(sql.FieldNotNull(FieldExpirationDate))
 }
 
+// ConditionalLogicIsNil applies the IsNil predicate on the "conditional_logic" field.
+func ConditionalLogicIsNil() predicate.TableChangeAlert {
+	return predicate.TableChangeAlert(sql.FieldIsNull(FieldConditionalLogic))
+}
+
+// ConditionalLogicNotNil applies the NotNil predicate on the "conditional_logic" field.
+func ConditionalLogicNotNil() predicate.TableChangeAlert {
+	return predicate.TableChangeAlert(sql.FieldNotNull(FieldConditionalLogic))
+}
+
 // HasBusinessUnit applies the HasEdge predicate on the "business_unit" edge.
 func HasBusinessUnit() predicate.TableChangeAlert {
 	return predicate.TableChangeAlert(func(s *sql.Selector) {

@@ -3,6 +3,7 @@ package validators
 import (
 	"context"
 	"fmt"
+	"reflect"
 
 	"github.com/emoss08/trenova/internal/ent"
 	"github.com/emoss08/trenova/internal/ent/hook"
@@ -142,27 +143,6 @@ func validateDatabaseActionForKafkaSource(ctx context.Context, next ent.Mutator,
 	return next.Mutate(ctx, m)
 }
 
-// Constants for available operations
-var AvailableOperations = []string{
-	"eq", "ne", "gt", "gte", "lt", "lte", "contains", "icontains", "in", "not_in", "isnull", "not_isnull",
-}
-
-// Operation mappings
-var OperationMapping = map[string]string{
-	"eq":         "=",
-	"ne":         "<>",
-	"gt":         ">",
-	"gte":        ">=",
-	"lt":         "<",
-	"lte":        "<=",
-	"contains":   "LIKE",
-	"icontains":  "ILIKE",
-	"in":         "IN",
-	"not_in":     "NOT IN",
-	"isnull":     "IS NULL",
-	"not_isnull": "IS NOT NULL",
-}
-
 var validDataTypes = []string{
 	"string", "int", "float64", "bool", "[]string", "[]int", "[]float64",
 }
@@ -175,54 +155,50 @@ func (e *ConditionalStructureError) Error() string {
 	return e.Message
 }
 
-// validateConditionalLogic validates the structure and content of conditional logic.
-func ValidateConditionalLogic(data types.TableChangeAlertConditionalLogic) error {
+// ValidateConditionalLogic validates the structure and content of conditional logic.
+func ValidateConditionalLogic(data map[string]any) error {
 	requiredKeys := []string{"name", "description", "tableName", "conditions"}
 
-	// Convert struct to map for dynamic key validation
-	dataMap := map[string]any{
-		"name":        data.Name,
-		"description": data.Description,
-		"tableName":   data.TableName,
-		"conditions":  data.Conditions,
-	}
-
 	// Check if required keys are present
-	if err := validateRequiredKeys(dataMap, requiredKeys); err != nil {
+	if err := validateRequiredKeys(data, requiredKeys); err != nil {
 		return err
 	}
 
-	for _, condition := range data.Conditions {
-		conditionMap := map[string]interface{}{
-			"id":        condition.ID,
-			"column":    condition.Column,
-			"operation": condition.Operation,
-			"value":     condition.Value,
-			"dataType":  condition.DataType,
+	conditions, ok := data["conditions"].([]any)
+	if !ok {
+		errMsg := "Conditions should be a list"
+		return &ConditionalStructureError{Message: errMsg}
+	}
+
+	for _, condition := range conditions {
+		conditionMap, ok := condition.(map[string]any)
+		if !ok {
+			errMsg := "Each condition should be a map"
+			return &ConditionalStructureError{Message: errMsg}
 		}
 
 		conditionRequiredKeys := []string{"id", "column", "operation", "value", "dataType"}
 
 		// Check if all required keys are present in each condition
 		if err := validateRequiredKeys(conditionMap, conditionRequiredKeys); err != nil {
-			errMsg := fmt.Sprintf("Condition is missing required key in condition ID %d: %v", condition.ID, err)
+			errMsg := fmt.Sprintf("Condition is missing required key: %v", err)
 			return &ConditionalStructureError{Message: errMsg}
 		}
 
 		// Check if the operation is valid
-		if !util.ContainsString(AvailableOperations, condition.Operation) {
-			errMsg := fmt.Sprintf("Invalid operation '%s' in condition ID %d", condition.Operation, condition.ID)
+		if !ContainsOperation(types.AvailableOperations, types.Operation(conditionMap["operation"].(string))) {
+			errMsg := fmt.Sprintf("Invalid operation '%s' in condition", conditionMap["operation"])
 			return &ConditionalStructureError{Message: errMsg}
 		}
 
 		// Check if the data type is valid
-		if !isValidDataType(condition.DataType) {
-			errMsg := fmt.Sprintf("Invalid data type '%s' in condition ID %d", condition.DataType, condition.ID)
+		if !isValidDataType(conditionMap["dataType"].(string)) {
+			errMsg := fmt.Sprintf("Invalid data type '%s' in condition", conditionMap["dataType"])
 			return &ConditionalStructureError{Message: errMsg}
 		}
 
 		// Additional checks for specific operations
-		if err := validateOperationValue(condition); err != nil {
+		if err := validateOperationValue(conditionMap); err != nil {
 			return err
 		}
 	}
@@ -230,22 +206,19 @@ func ValidateConditionalLogic(data types.TableChangeAlertConditionalLogic) error
 	return nil
 }
 
-func validateOperationValue(condition types.TableChangeAlertCondition) error {
-	switch condition.Operation {
-	case "in", "not_in":
-		if _, ok := condition.Value.([]interface{}); !ok {
-			errMsg := fmt.Sprintf("Operation 'in' expects a list value in condition ID %d", condition.ID)
-			return &ConditionalStructureError{Message: errMsg}
+func validateOperationValue(conditionMap map[string]any) error {
+	switch conditionMap["operation"] {
+	case "IN", "NOT_IN":
+		if reflect.TypeOf(conditionMap["value"]).Kind() != reflect.Slice {
+			return &ConditionalStructureError{Message: "Operation 'in' expects a list value"}
 		}
-	case "isnull", "not_isnull":
-		if condition.Value != nil {
-			errMsg := fmt.Sprintf("Operation 'isnull or not_isnull' should not have a value in condition ID %d", condition.ID)
-			return &ConditionalStructureError{Message: errMsg}
+	case "IS_NULL", "IS_NOT_NULL":
+		if conditionMap["value"] != nil {
+			return &ConditionalStructureError{Message: "Operation 'isnull or not_isnull' should not have a value"}
 		}
-	case "contains", "icontains":
-		if _, ok := condition.Value.(string); !ok {
-			errMsg := fmt.Sprintf("Operation 'contains or icontains' expects a string value in condition ID %d", condition.ID)
-			return &ConditionalStructureError{Message: errMsg}
+	case "CONTAINS", "ICONTAINS":
+		if _, ok := conditionMap["value"].(string); !ok {
+			return &ConditionalStructureError{Message: "Operation 'contains or icontains' expects a string value"}
 		}
 	}
 	return nil
@@ -268,19 +241,38 @@ func isValidDataType(dataType string) bool {
 }
 
 // validateModelFieldsExist validates that the specified fields exist in the model.
-func ValidateModelFieldsExist(data types.TableChangeAlertConditionalLogic, modelFields []string) error {
+func ValidateModelFieldsExist(data map[string]any, modelFields []string) error {
+	conditions, ok := data["conditions"].([]any)
+	if !ok {
+		errMsg := "Conditions should be a list"
+		return &ConditionalStructureError{Message: errMsg}
+	}
+
 	excludedFields := []string{"id", "organization_id", "business_unit_id"}
 
-	for _, condition := range data.Conditions {
-		if !util.ContainsString(modelFields, condition.Column) {
-			errMsg := fmt.Sprintf("Conditional Field '%s' does not exist on table '%s'", condition.Column, data.TableName)
+	for _, condition := range conditions {
+		conditionMap, ok := condition.(map[string]any)
+		column, ok := conditionMap["column"].(string)
+		if !ok {
+			errMsg := "Invalid column type in condition"
 			return &ConditionalStructureError{Message: errMsg}
 		}
-		if util.ContainsString(excludedFields, condition.Column) {
-			errMsg := fmt.Sprintf("Conditional Field '%s' is not allowed for table '%s'", condition.Column, data.TableName)
+
+		if !util.ContainsString(modelFields, column) {
+			errMsg := fmt.Sprintf("Conditional Field '%s' does not exist", column)
+			return &ConditionalStructureError{Message: errMsg}
+		}
+		if util.ContainsString(excludedFields, column) {
+			errMsg := fmt.Sprintf("Conditional Field '%s' is not allowed", column)
 			return &ConditionalStructureError{Message: errMsg}
 		}
 	}
 
 	return nil
+}
+
+// ContainsOperation checks whether the given map contains the operation provided.
+func ContainsOperation(operations map[types.Operation]struct{}, operation types.Operation) bool {
+	_, exists := operations[operation]
+	return exists
 }

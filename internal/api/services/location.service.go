@@ -6,7 +6,7 @@ import (
 	"github.com/emoss08/trenova/internal/api"
 	"github.com/emoss08/trenova/internal/api/services/types"
 	"github.com/emoss08/trenova/internal/ent"
-	"github.com/emoss08/trenova/internal/models"
+	"github.com/emoss08/trenova/internal/queries"
 	"github.com/emoss08/trenova/internal/util"
 	"github.com/rs/zerolog"
 
@@ -16,7 +16,7 @@ import (
 type LocationService struct {
 	Client       *ent.Client
 	Logger       *zerolog.Logger
-	QueryService *models.QueryService
+	QueryService *queries.QueryService
 }
 
 // NewLocationService creates a new location service.
@@ -24,7 +24,7 @@ func NewLocationService(s *api.Server) *LocationService {
 	return &LocationService{
 		Client: s.Client,
 		Logger: s.Logger,
-		QueryService: &models.QueryService{
+		QueryService: &queries.QueryService{
 			Client: s.Client,
 			Logger: s.Logger,
 		},

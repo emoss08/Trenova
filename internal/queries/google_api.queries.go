@@ -1,4 +1,4 @@
-package models
+package queries
 
 import (
 	"context"
@@ -9,7 +9,6 @@ import (
 	"github.com/google/uuid"
 )
 
-//
 // Parameters:
 //   - ctx context.Context: Context which may contain deadlines, cancellation signals, and other request-scoped values.
 //   - orgID uuid.UUID: The identifier of the organization.

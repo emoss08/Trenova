@@ -55,6 +55,8 @@ const (
 	FieldEffectiveDate = "effective_date"
 	// FieldExpirationDate holds the string denoting the expiration_date field in the database.
 	FieldExpirationDate = "expiration_date"
+	// FieldConditionalLogic holds the string denoting the conditional_logic field in the database.
+	FieldConditionalLogic = "conditional_logic"
 	// EdgeBusinessUnit holds the string denoting the business_unit edge name in mutations.
 	EdgeBusinessUnit = "business_unit"
 	// EdgeOrganization holds the string denoting the organization edge name in mutations.
@@ -99,6 +101,7 @@ var Columns = []string{
 	FieldEmailRecipients,
 	FieldEffectiveDate,
 	FieldExpirationDate,
+	FieldConditionalLogic,
 }
 
 // ValidColumn reports if the column name is valid (part of the table columns).
