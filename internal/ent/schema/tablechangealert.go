@@ -8,7 +8,6 @@ import (
 	"entgo.io/ent/schema/field"
 	gen "github.com/emoss08/trenova/internal/ent"
 	"github.com/emoss08/trenova/internal/ent/hook"
-	"github.com/emoss08/trenova/internal/util/mutators"
 	"github.com/emoss08/trenova/internal/validators"
 	"github.com/jackc/pgx/v5/pgtype"
 )
@@ -39,12 +38,6 @@ func (TableChangeAlert) Fields() []ent.Field {
 				dialect.SQLite:   "VARCHAR(6)",
 			}).
 			StructTag(`json:"databaseAction" validate:"required,oneof=Insert Update Delete All"`),
-		field.Enum("source").
-			Values("Kafka", "Database").
-			StructTag(`json:"source" validate:"required,oneof=Kafka Database"`),
-		field.String("table_name").
-			Optional().
-			StructTag(`json:"tableName" validate:"max=255,required_if=source Database"`),
 		field.String("topic_name").
 			Optional().
 			StructTag(`json:"topicName" validate:"max=255,required_if=source Kafka"`),
@@ -119,7 +112,6 @@ func (TableChangeAlert) Edges() []ent.Edge {
 func (TableChangeAlert) Hooks() []ent.Hook {
 	return []ent.Hook{
 		hook.On(validators.ValidateTableChangeAlerts, ent.OpCreate|ent.OpUpdate|ent.OpUpdateOne),
-		hook.On(mutators.MutateTableChangeAlerts, ent.OpCreate|ent.OpUpdate|ent.OpUpdateOne),
 		hook.On(
 			func(next ent.Mutator) ent.Mutator {
 				return hook.TableChangeAlertFunc(func(ctx context.Context, m *gen.TableChangeAlertMutation) (ent.Value, error) {

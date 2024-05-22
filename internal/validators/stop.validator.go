@@ -1,4 +1,4 @@
-package models
+package validators
 
 import (
 	"github.com/emoss08/trenova/internal/ent"

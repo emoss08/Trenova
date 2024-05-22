@@ -38,10 +38,6 @@ type TableChangeAlert struct {
 	Name string `json:"name" validate:"required,max=50"`
 	// DatabaseAction holds the value of the "database_action" field.
 	DatabaseAction tablechangealert.DatabaseAction `json:"databaseAction" validate:"required,oneof=Insert Update Delete All"`
-	// Source holds the value of the "source" field.
-	Source tablechangealert.Source `json:"source" validate:"required,oneof=Kafka Database"`
-	// TableName holds the value of the "table_name" field.
-	TableName string `json:"tableName" validate:"max=255,required_if=source Database"`
 	// TopicName holds the value of the "topic_name" field.
 	TopicName string `json:"topicName" validate:"max=255,required_if=source Kafka"`
 	// Description holds the value of the "description" field.
@@ -112,7 +108,7 @@ func (*TableChangeAlert) scanValues(columns []string) ([]any, error) {
 			values[i] = new([]byte)
 		case tablechangealert.FieldVersion:
 			values[i] = new(sql.NullInt64)
-		case tablechangealert.FieldStatus, tablechangealert.FieldName, tablechangealert.FieldDatabaseAction, tablechangealert.FieldSource, tablechangealert.FieldTableName, tablechangealert.FieldTopicName, tablechangealert.FieldDescription, tablechangealert.FieldCustomSubject, tablechangealert.FieldFunctionName, tablechangealert.FieldTriggerName, tablechangealert.FieldListenerName, tablechangealert.FieldEmailRecipients:
+		case tablechangealert.FieldStatus, tablechangealert.FieldName, tablechangealert.FieldDatabaseAction, tablechangealert.FieldTopicName, tablechangealert.FieldDescription, tablechangealert.FieldCustomSubject, tablechangealert.FieldFunctionName, tablechangealert.FieldTriggerName, tablechangealert.FieldListenerName, tablechangealert.FieldEmailRecipients:
 			values[i] = new(sql.NullString)
 		case tablechangealert.FieldCreatedAt, tablechangealert.FieldUpdatedAt:
 			values[i] = new(sql.NullTime)
@@ -186,18 +182,6 @@ func (tca *TableChangeAlert) assignValues(columns []string, values []any) error 
 				return fmt.Errorf("unexpected type %T for field database_action", values[i])
 			} else if value.Valid {
 				tca.DatabaseAction = tablechangealert.DatabaseAction(value.String)
-			}
-		case tablechangealert.FieldSource:
-			if value, ok := values[i].(*sql.NullString); !ok {
-				return fmt.Errorf("unexpected type %T for field source", values[i])
-			} else if value.Valid {
-				tca.Source = tablechangealert.Source(value.String)
-			}
-		case tablechangealert.FieldTableName:
-			if value, ok := values[i].(*sql.NullString); !ok {
-				return fmt.Errorf("unexpected type %T for field table_name", values[i])
-			} else if value.Valid {
-				tca.TableName = value.String
 			}
 		case tablechangealert.FieldTopicName:
 			if value, ok := values[i].(*sql.NullString); !ok {
@@ -330,12 +314,6 @@ func (tca *TableChangeAlert) String() string {
 	builder.WriteString(", ")
 	builder.WriteString("database_action=")
 	builder.WriteString(fmt.Sprintf("%v", tca.DatabaseAction))
-	builder.WriteString(", ")
-	builder.WriteString("source=")
-	builder.WriteString(fmt.Sprintf("%v", tca.Source))
-	builder.WriteString(", ")
-	builder.WriteString("table_name=")
-	builder.WriteString(tca.TableName)
 	builder.WriteString(", ")
 	builder.WriteString("topic_name=")
 	builder.WriteString(tca.TopicName)

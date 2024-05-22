@@ -3,7 +3,6 @@ import {
   EmailProtocolChoiceProps,
   RouteDistanceUnitProps,
   RouteModelChoiceProps,
-  SourceChoicesProps,
   TimezoneChoices,
 } from "@/lib/choices";
 import { StatusChoiceProps } from "@/types";
@@ -35,9 +34,7 @@ export const tableChangeAlertSchema: ObjectSchema<TableChangeAlertFormValues> =
     databaseAction: string<DatabaseActionChoicesProps>().required(
       "Database Action is required.",
     ),
-    source: string<SourceChoicesProps>().required("Source is required."),
-    tableName: string(),
-    topicName: string(),
+    topicName: string().required("Topic Name is required."),
     description: string(),
     emailProfile: string(),
     emailRecipients: string().required("Email Recipients is required."),

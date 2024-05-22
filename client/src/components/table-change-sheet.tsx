@@ -10,89 +10,35 @@ import {
   SheetTitle,
 } from "@/components/ui/sheet";
 import { useCustomMutation } from "@/hooks/useCustomMutation";
-import { useEmailProfiles, useTableNames, useTopics } from "@/hooks/useQueries";
-import {
-  databaseActionChoices,
-  sourceChoices,
-  statusChoices,
-} from "@/lib/choices";
+import { useEmailProfiles, useTopics } from "@/hooks/useQueries";
+import { databaseActionChoices, statusChoices } from "@/lib/choices";
 import { cn } from "@/lib/utils";
 import { tableChangeAlertSchema } from "@/lib/validations/OrganizationSchema";
 import { type TableChangeAlertFormValues as FormValues } from "@/types/organization";
 import { TableSheetProps } from "@/types/tables";
 import { yupResolver } from "@hookform/resolvers/yup";
 import { useState } from "react";
-import {
-  FormProvider,
-  UseFormWatch,
-  useForm,
-  type Control,
-} from "react-hook-form";
+import { FormProvider, useForm, type Control } from "react-hook-form";
 import { useTranslation } from "react-i18next";
 import { InputField } from "./common/fields/input";
 import { SelectInput } from "./common/fields/select-input";
 import { FormControl, FormGroup } from "./ui/form";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "./ui/new/new-tabs";
 
-function SourceField({
-  sourceChoice,
+export function TableChangeAlertForm({
+  open,
   control,
 }: {
-  sourceChoice: string;
+  open: boolean;
   control: Control<FormValues>;
 }) {
   const { t } = useTranslation("admin.tablechangealert");
-  const { selectTableNames, isError, isLoading } = useTableNames();
+  // const { control, watch } = useFormContext<FormValues>();
   const {
     selectTopics,
     isError: isTopicError,
     isLoading: isTopicsLoading,
   } = useTopics();
-
-  return sourceChoice === "Kafka" ? (
-    <FormControl>
-      <SelectInput
-        name="topicName"
-        rules={{ required: true }}
-        options={selectTopics}
-        isLoading={isTopicsLoading}
-        isFetchError={isTopicError}
-        control={control}
-        label={t("fields.topic.label")}
-        placeholder={t("fields.topic.placeholder")}
-        description={t("fields.topic.description")}
-      />
-    </FormControl>
-  ) : (
-    <FormControl>
-      <SelectInput
-        name="tableName"
-        rules={{ required: true }}
-        options={selectTableNames}
-        isLoading={isLoading}
-        isFetchError={isError}
-        control={control}
-        label={t("fields.table.label")}
-        placeholder={t("fields.table.placeholder")}
-        description={t("fields.table.description")}
-      />
-    </FormControl>
-  );
-}
-
-export function TableChangeAlertForm({
-  open,
-  control,
-  watch,
-}: {
-  open: boolean;
-  control: Control<FormValues>;
-  watch: UseFormWatch<FormValues>;
-}) {
-  const { t } = useTranslation("admin.tablechangealert");
-  // const { control, watch } = useFormContext<FormValues>();
-
-  const sourceChoice = watch("source");
 
   const { selectEmailProfile, isError, isLoading } = useEmailProfiles(open);
 
@@ -133,17 +79,18 @@ export function TableChangeAlertForm({
       </FormControl>
       <FormControl>
         <SelectInput
-          name="source"
+          name="topicName"
           rules={{ required: true }}
-          options={sourceChoices}
+          options={selectTopics}
+          isLoading={isTopicsLoading}
+          isFetchError={isTopicError}
           control={control}
-          label={t("fields.source.label")}
-          placeholder={t("fields.source.placeholder")}
-          description={t("fields.source.description")}
+          label={t("fields.topic.label")}
+          placeholder={t("fields.topic.placeholder")}
+          description={t("fields.topic.description")}
         />
       </FormControl>
-      <SourceField sourceChoice={sourceChoice} control={control} />
-      <FormControl>
+      <FormControl className="col-span-full">
         <TextareaField
           name="description"
           control={control}
@@ -203,11 +150,9 @@ export function TableChangeAlertForm({
 function TableChangeAlertBody({
   open,
   control,
-  watch,
 }: {
   open: boolean;
   control: Control<FormValues>;
-  watch: UseFormWatch<FormValues>;
 }) {
   const [activeTab, setActiveTab] = useState<string>("info");
 
@@ -223,7 +168,7 @@ function TableChangeAlertBody({
         <TabsTrigger value="conditionalLogic">Conditional Logic</TabsTrigger>
       </TabsList>
       <TabsContent value="info">
-        <TableChangeAlertForm open={open} control={control} watch={watch} />
+        <TableChangeAlertForm open={open} control={control} />
       </TabsContent>
       <TabsContent value="conditionalLogic">
         <div>
@@ -243,8 +188,6 @@ export function TableChangeAlertSheet({ onOpenChange, open }: TableSheetProps) {
       status: "A",
       name: "",
       databaseAction: "Insert",
-      tableName: "",
-      source: "Database",
       topicName: "",
       description: "",
       emailProfile: "",
@@ -256,7 +199,7 @@ export function TableChangeAlertSheet({ onOpenChange, open }: TableSheetProps) {
     },
   });
 
-  const { control, reset, handleSubmit, watch } = tableChangeAlertForm;
+  const { control, reset, handleSubmit } = tableChangeAlertForm;
 
   const mutation = useCustomMutation<FormValues>(control, {
     method: "POST",
@@ -282,7 +225,7 @@ export function TableChangeAlertSheet({ onOpenChange, open }: TableSheetProps) {
             onSubmit={handleSubmit(onSubmit)}
             className="flex h-full flex-col overflow-y-auto"
           >
-            <TableChangeAlertBody open={open} watch={watch} control={control} />
+            <TableChangeAlertBody open={open} control={control} />
             <SheetFooter className="mb-12">
               <Button
                 type="reset"

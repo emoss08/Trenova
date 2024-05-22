@@ -6,31 +6,25 @@ import (
 	"log"
 
 	"github.com/emoss08/trenova/internal/ent/routecontrol"
-	"github.com/emoss08/trenova/internal/integrations/google"
+	"github.com/emoss08/trenova/internal/platform/services/google"
 	"github.com/rs/zerolog"
 	"googlemaps.github.io/maps"
 )
 
-// RoutingService defines an interface for calculating distances between two points.
-type RoutingService interface {
-	CalculateDistance(ctx context.Context, point1, point2 Coord, method routecontrol.DistanceMethod, units maps.Units, apiKey string)
-	LocationAutoComplete(ctx context.Context, query, apiKey string) ([]map[string]any, error)
-}
-
-// RoutingServiceImpl implements the RoutingService interface using various methods.
-type RoutingServiceImpl struct {
+// RoutingService implements the RoutingService interface using various methods.
+type RoutingService struct {
 	Logger *zerolog.Logger
 }
 
-// NewRoutingService creates a new instance of RoutingServiceImpl.
-func NewRoutingService(logger *zerolog.Logger) *RoutingServiceImpl {
-	return &RoutingServiceImpl{
+// NewRoutingService creates a new instance of RoutingService.
+func NewRoutingService(logger *zerolog.Logger) *RoutingService {
+	return &RoutingService{
 		Logger: logger,
 	}
 }
 
 // CalculateDistance calculates the distance between two points using the specified method and units.
-func (dc *RoutingServiceImpl) CalculateDistance(
+func (dc *RoutingService) CalculateDistance(
 	ctx context.Context, origins, destinations Coord, method routecontrol.DistanceMethod, units maps.Units, apiKey string,
 ) {
 	switch method {
@@ -45,7 +39,7 @@ func (dc *RoutingServiceImpl) CalculateDistance(
 }
 
 // calculateDistanceMatrix calculates the distance and duration using Google Maps API.
-func (dc *RoutingServiceImpl) calculateDistanceMatrix(
+func (dc *RoutingService) calculateDistanceMatrix(
 	ctx context.Context, origins, destinations []string, units maps.Units, apiKey string,
 ) {
 	resp, err := google.NewClient(dc.Logger).GetDistanceMatrix(ctx, origins, destinations, units, apiKey)
@@ -64,7 +58,7 @@ func (dc *RoutingServiceImpl) calculateDistanceMatrix(
 }
 
 // calculateVincentyDistance calculates the distance using the Vincenty formula.
-func (dc *RoutingServiceImpl) calculateVincentyDistance(
+func (dc *RoutingService) calculateVincentyDistance(
 	p1, p2 Coord,
 ) {
 	miles, kilometers, err := VincentyDistance(p1, p2)
@@ -76,7 +70,7 @@ func (dc *RoutingServiceImpl) calculateVincentyDistance(
 }
 
 // LocationAutoComplete provides an interface for location auto-completion
-func (dc *RoutingServiceImpl) LocationAutoComplete(ctx context.Context, query, apiKey string) ([]map[string]any, error) {
+func (dc *RoutingService) LocationAutoComplete(ctx context.Context, query, apiKey string) ([]map[string]any, error) {
 	client, err := google.NewClient(dc.Logger).GetClientForOrganization(apiKey)
 	if err != nil {
 		dc.Logger.Printf("Error creating Google Maps client: %v", err)

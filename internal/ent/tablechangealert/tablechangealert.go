@@ -33,10 +33,6 @@ const (
 	FieldName = "name"
 	// FieldDatabaseAction holds the string denoting the database_action field in the database.
 	FieldDatabaseAction = "database_action"
-	// FieldSource holds the string denoting the source field in the database.
-	FieldSource = "source"
-	// FieldTableName holds the string denoting the table_name field in the database.
-	FieldTableName = "table_name"
 	// FieldTopicName holds the string denoting the topic_name field in the database.
 	FieldTopicName = "topic_name"
 	// FieldDescription holds the string denoting the description field in the database.
@@ -90,8 +86,6 @@ var Columns = []string{
 	FieldStatus,
 	FieldName,
 	FieldDatabaseAction,
-	FieldSource,
-	FieldTableName,
 	FieldTopicName,
 	FieldDescription,
 	FieldCustomSubject,
@@ -192,29 +186,6 @@ func DatabaseActionValidator(da DatabaseAction) error {
 	}
 }
 
-// Source defines the type for the "source" enum field.
-type Source string
-
-// Source values.
-const (
-	SourceKafka    Source = "Kafka"
-	SourceDatabase Source = "Database"
-)
-
-func (s Source) String() string {
-	return string(s)
-}
-
-// SourceValidator is a validator for the "source" field enum values. It is called by the builders before save.
-func SourceValidator(s Source) error {
-	switch s {
-	case SourceKafka, SourceDatabase:
-		return nil
-	default:
-		return fmt.Errorf("tablechangealert: invalid enum value for source field: %q", s)
-	}
-}
-
 // OrderOption defines the ordering options for the TableChangeAlert queries.
 type OrderOption func(*sql.Selector)
 
@@ -261,16 +232,6 @@ func ByName(opts ...sql.OrderTermOption) OrderOption {
 // ByDatabaseAction orders the results by the database_action field.
 func ByDatabaseAction(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldDatabaseAction, opts...).ToFunc()
-}
-
-// BySource orders the results by the source field.
-func BySource(opts ...sql.OrderTermOption) OrderOption {
-	return sql.OrderByField(FieldSource, opts...).ToFunc()
-}
-
-// ByTableName orders the results by the table_name field.
-func ByTableName(opts ...sql.OrderTermOption) OrderOption {
-	return sql.OrderByField(FieldTableName, opts...).ToFunc()
 }
 
 // ByTopicName orders the results by the topic_name field.

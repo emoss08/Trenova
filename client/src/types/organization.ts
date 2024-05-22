@@ -3,7 +3,6 @@ import type {
   EmailProtocolChoiceProps,
   RouteDistanceUnitProps,
   RouteModelChoiceProps,
-  SourceChoicesProps,
   TimezoneChoices,
 } from "@/lib/choices";
 import { type StatusChoiceProps } from "@/types/index";
@@ -25,9 +24,7 @@ export interface TableChangeAlert extends BaseModel {
   status: StatusChoiceProps;
   name: string;
   databaseAction: DatabaseActionChoicesProps;
-  tableName?: string;
-  source: SourceChoicesProps;
-  topicName?: string;
+  topicName: string;
   description?: string;
   emailProfile?: string;
   emailRecipients: string;

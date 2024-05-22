@@ -8,8 +8,8 @@ import (
 	ltypes "github.com/emoss08/trenova/internal/api/services/types"
 	"github.com/emoss08/trenova/internal/ent"
 	"github.com/emoss08/trenova/internal/ent/location"
+	"github.com/emoss08/trenova/internal/platform/services/routing"
 	"github.com/emoss08/trenova/internal/queries"
-	"github.com/emoss08/trenova/internal/services/routing"
 	"github.com/emoss08/trenova/internal/util"
 	"github.com/emoss08/trenova/internal/util/types"
 
@@ -46,7 +46,7 @@ type LocationResponse struct {
 type LocationHandler struct {
 	Service           *services.LocationService
 	PermissionService *services.PermissionService
-	RoutingService    *routing.RoutingServiceImpl
+	RoutingService    *routing.RoutingService
 	QueryService      *queries.QueryService
 }
 

@@ -1461,8 +1461,6 @@ var schemaGraph = func() *sqlgraph.Schema {
 			tablechangealert.FieldStatus:           {Type: field.TypeEnum, Column: tablechangealert.FieldStatus},
 			tablechangealert.FieldName:             {Type: field.TypeString, Column: tablechangealert.FieldName},
 			tablechangealert.FieldDatabaseAction:   {Type: field.TypeEnum, Column: tablechangealert.FieldDatabaseAction},
-			tablechangealert.FieldSource:           {Type: field.TypeEnum, Column: tablechangealert.FieldSource},
-			tablechangealert.FieldTableName:        {Type: field.TypeString, Column: tablechangealert.FieldTableName},
 			tablechangealert.FieldTopicName:        {Type: field.TypeString, Column: tablechangealert.FieldTopicName},
 			tablechangealert.FieldDescription:      {Type: field.TypeString, Column: tablechangealert.FieldDescription},
 			tablechangealert.FieldCustomSubject:    {Type: field.TypeString, Column: tablechangealert.FieldCustomSubject},
@@ -13236,16 +13234,6 @@ func (f *TableChangeAlertFilter) WhereName(p entql.StringP) {
 // WhereDatabaseAction applies the entql string predicate on the database_action field.
 func (f *TableChangeAlertFilter) WhereDatabaseAction(p entql.StringP) {
 	f.Where(p.Field(tablechangealert.FieldDatabaseAction))
-}
-
-// WhereSource applies the entql string predicate on the source field.
-func (f *TableChangeAlertFilter) WhereSource(p entql.StringP) {
-	f.Where(p.Field(tablechangealert.FieldSource))
-}
-
-// WhereTableName applies the entql string predicate on the table_name field.
-func (f *TableChangeAlertFilter) WhereTableName(p entql.StringP) {
-	f.Where(p.Field(tablechangealert.FieldTableName))
 }
 
 // WhereTopicName applies the entql string predicate on the topic_name field.

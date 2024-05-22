@@ -15,9 +15,9 @@ import (
 	gen "github.com/emoss08/trenova/internal/ent"
 	"github.com/emoss08/trenova/internal/ent/hook"
 	"github.com/emoss08/trenova/internal/ent/shipment"
-	models "github.com/emoss08/trenova/internal/models"
 	"github.com/emoss08/trenova/internal/queries"
 	"github.com/emoss08/trenova/internal/util/types"
+	"github.com/emoss08/trenova/internal/validators"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/rs/zerolog"
@@ -372,7 +372,7 @@ func validateShipmentControl(ctx context.Context, m *gen.ShipmentMutation, clien
 		return err
 	}
 
-	validationErrs, err := models.ValidateShipment(ctx, m, shipmentControl, billingControl, dispatchControl)
+	validationErrs, err := validators.ValidateShipment(ctx, m, shipmentControl, billingControl, dispatchControl)
 	if err != nil {
 		return err
 	}

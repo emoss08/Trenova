@@ -94,8 +94,6 @@ func (r *TableChangeAlertService) createTableChangeAlertEntity(
 		SetStatus(entity.Status).
 		SetName(entity.Name).
 		SetDatabaseAction(entity.DatabaseAction).
-		SetSource(entity.Source).
-		SetTableName(entity.TableName).
 		SetTopicName(entity.TopicName).
 		SetDescription(entity.Description).
 		SetCustomSubject(entity.CustomSubject).
@@ -152,8 +150,6 @@ func (r *TableChangeAlertService) updateTableChangeAlertEntity(
 		SetStatus(entity.Status).
 		SetName(entity.Name).
 		SetDatabaseAction(entity.DatabaseAction).
-		SetSource(entity.Source).
-		SetTableName(entity.TableName).
 		SetTopicName(entity.TopicName).
 		SetDescription(entity.Description).
 		SetCustomSubject(entity.CustomSubject).

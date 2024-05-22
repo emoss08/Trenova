@@ -104,26 +104,6 @@ func (tcac *TableChangeAlertCreate) SetDatabaseAction(ta tablechangealert.Databa
 	return tcac
 }
 
-// SetSource sets the "source" field.
-func (tcac *TableChangeAlertCreate) SetSource(t tablechangealert.Source) *TableChangeAlertCreate {
-	tcac.mutation.SetSource(t)
-	return tcac
-}
-
-// SetTableName sets the "table_name" field.
-func (tcac *TableChangeAlertCreate) SetTableName(s string) *TableChangeAlertCreate {
-	tcac.mutation.SetTableName(s)
-	return tcac
-}
-
-// SetNillableTableName sets the "table_name" field if the given value is not nil.
-func (tcac *TableChangeAlertCreate) SetNillableTableName(s *string) *TableChangeAlertCreate {
-	if s != nil {
-		tcac.SetTableName(*s)
-	}
-	return tcac
-}
-
 // SetTopicName sets the "topic_name" field.
 func (tcac *TableChangeAlertCreate) SetTopicName(s string) *TableChangeAlertCreate {
 	tcac.mutation.SetTopicName(s)
@@ -374,14 +354,6 @@ func (tcac *TableChangeAlertCreate) check() error {
 			return &ValidationError{Name: "database_action", err: fmt.Errorf(`ent: validator failed for field "TableChangeAlert.database_action": %w`, err)}
 		}
 	}
-	if _, ok := tcac.mutation.Source(); !ok {
-		return &ValidationError{Name: "source", err: errors.New(`ent: missing required field "TableChangeAlert.source"`)}
-	}
-	if v, ok := tcac.mutation.Source(); ok {
-		if err := tablechangealert.SourceValidator(v); err != nil {
-			return &ValidationError{Name: "source", err: fmt.Errorf(`ent: validator failed for field "TableChangeAlert.source": %w`, err)}
-		}
-	}
 	if v, ok := tcac.mutation.FunctionName(); ok {
 		if err := tablechangealert.FunctionNameValidator(v); err != nil {
 			return &ValidationError{Name: "function_name", err: fmt.Errorf(`ent: validator failed for field "TableChangeAlert.function_name": %w`, err)}
@@ -461,14 +433,6 @@ func (tcac *TableChangeAlertCreate) createSpec() (*TableChangeAlert, *sqlgraph.C
 	if value, ok := tcac.mutation.DatabaseAction(); ok {
 		_spec.SetField(tablechangealert.FieldDatabaseAction, field.TypeEnum, value)
 		_node.DatabaseAction = value
-	}
-	if value, ok := tcac.mutation.Source(); ok {
-		_spec.SetField(tablechangealert.FieldSource, field.TypeEnum, value)
-		_node.Source = value
-	}
-	if value, ok := tcac.mutation.TableName(); ok {
-		_spec.SetField(tablechangealert.FieldTableName, field.TypeString, value)
-		_node.TableName = value
 	}
 	if value, ok := tcac.mutation.TopicName(); ok {
 		_spec.SetField(tablechangealert.FieldTopicName, field.TypeString, value)
