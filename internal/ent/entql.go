@@ -1453,25 +1453,24 @@ var schemaGraph = func() *sqlgraph.Schema {
 		},
 		Type: "TableChangeAlert",
 		Fields: map[string]*sqlgraph.FieldSpec{
-			tablechangealert.FieldBusinessUnitID:  {Type: field.TypeUUID, Column: tablechangealert.FieldBusinessUnitID},
-			tablechangealert.FieldOrganizationID:  {Type: field.TypeUUID, Column: tablechangealert.FieldOrganizationID},
-			tablechangealert.FieldCreatedAt:       {Type: field.TypeTime, Column: tablechangealert.FieldCreatedAt},
-			tablechangealert.FieldUpdatedAt:       {Type: field.TypeTime, Column: tablechangealert.FieldUpdatedAt},
-			tablechangealert.FieldVersion:         {Type: field.TypeInt, Column: tablechangealert.FieldVersion},
-			tablechangealert.FieldStatus:          {Type: field.TypeEnum, Column: tablechangealert.FieldStatus},
-			tablechangealert.FieldName:            {Type: field.TypeString, Column: tablechangealert.FieldName},
-			tablechangealert.FieldDatabaseAction:  {Type: field.TypeEnum, Column: tablechangealert.FieldDatabaseAction},
-			tablechangealert.FieldSource:          {Type: field.TypeEnum, Column: tablechangealert.FieldSource},
-			tablechangealert.FieldTableName:       {Type: field.TypeString, Column: tablechangealert.FieldTableName},
-			tablechangealert.FieldTopicName:       {Type: field.TypeString, Column: tablechangealert.FieldTopicName},
-			tablechangealert.FieldDescription:     {Type: field.TypeString, Column: tablechangealert.FieldDescription},
-			tablechangealert.FieldCustomSubject:   {Type: field.TypeString, Column: tablechangealert.FieldCustomSubject},
-			tablechangealert.FieldFunctionName:    {Type: field.TypeString, Column: tablechangealert.FieldFunctionName},
-			tablechangealert.FieldTriggerName:     {Type: field.TypeString, Column: tablechangealert.FieldTriggerName},
-			tablechangealert.FieldListenerName:    {Type: field.TypeString, Column: tablechangealert.FieldListenerName},
-			tablechangealert.FieldEmailRecipients: {Type: field.TypeString, Column: tablechangealert.FieldEmailRecipients},
-			tablechangealert.FieldEffectiveDate:   {Type: field.TypeOther, Column: tablechangealert.FieldEffectiveDate},
-			tablechangealert.FieldExpirationDate:  {Type: field.TypeOther, Column: tablechangealert.FieldExpirationDate},
+			tablechangealert.FieldBusinessUnitID:   {Type: field.TypeUUID, Column: tablechangealert.FieldBusinessUnitID},
+			tablechangealert.FieldOrganizationID:   {Type: field.TypeUUID, Column: tablechangealert.FieldOrganizationID},
+			tablechangealert.FieldCreatedAt:        {Type: field.TypeTime, Column: tablechangealert.FieldCreatedAt},
+			tablechangealert.FieldUpdatedAt:        {Type: field.TypeTime, Column: tablechangealert.FieldUpdatedAt},
+			tablechangealert.FieldVersion:          {Type: field.TypeInt, Column: tablechangealert.FieldVersion},
+			tablechangealert.FieldStatus:           {Type: field.TypeEnum, Column: tablechangealert.FieldStatus},
+			tablechangealert.FieldName:             {Type: field.TypeString, Column: tablechangealert.FieldName},
+			tablechangealert.FieldDatabaseAction:   {Type: field.TypeEnum, Column: tablechangealert.FieldDatabaseAction},
+			tablechangealert.FieldTopicName:        {Type: field.TypeString, Column: tablechangealert.FieldTopicName},
+			tablechangealert.FieldDescription:      {Type: field.TypeString, Column: tablechangealert.FieldDescription},
+			tablechangealert.FieldCustomSubject:    {Type: field.TypeString, Column: tablechangealert.FieldCustomSubject},
+			tablechangealert.FieldFunctionName:     {Type: field.TypeString, Column: tablechangealert.FieldFunctionName},
+			tablechangealert.FieldTriggerName:      {Type: field.TypeString, Column: tablechangealert.FieldTriggerName},
+			tablechangealert.FieldListenerName:     {Type: field.TypeString, Column: tablechangealert.FieldListenerName},
+			tablechangealert.FieldEmailRecipients:  {Type: field.TypeString, Column: tablechangealert.FieldEmailRecipients},
+			tablechangealert.FieldEffectiveDate:    {Type: field.TypeOther, Column: tablechangealert.FieldEffectiveDate},
+			tablechangealert.FieldExpirationDate:   {Type: field.TypeOther, Column: tablechangealert.FieldExpirationDate},
+			tablechangealert.FieldConditionalLogic: {Type: field.TypeJSON, Column: tablechangealert.FieldConditionalLogic},
 		},
 	}
 	graph.Nodes[57] = &sqlgraph.Node{
@@ -13237,16 +13236,6 @@ func (f *TableChangeAlertFilter) WhereDatabaseAction(p entql.StringP) {
 	f.Where(p.Field(tablechangealert.FieldDatabaseAction))
 }
 
-// WhereSource applies the entql string predicate on the source field.
-func (f *TableChangeAlertFilter) WhereSource(p entql.StringP) {
-	f.Where(p.Field(tablechangealert.FieldSource))
-}
-
-// WhereTableName applies the entql string predicate on the table_name field.
-func (f *TableChangeAlertFilter) WhereTableName(p entql.StringP) {
-	f.Where(p.Field(tablechangealert.FieldTableName))
-}
-
 // WhereTopicName applies the entql string predicate on the topic_name field.
 func (f *TableChangeAlertFilter) WhereTopicName(p entql.StringP) {
 	f.Where(p.Field(tablechangealert.FieldTopicName))
@@ -13290,6 +13279,11 @@ func (f *TableChangeAlertFilter) WhereEffectiveDate(p entql.OtherP) {
 // WhereExpirationDate applies the entql other predicate on the expiration_date field.
 func (f *TableChangeAlertFilter) WhereExpirationDate(p entql.OtherP) {
 	f.Where(p.Field(tablechangealert.FieldExpirationDate))
+}
+
+// WhereConditionalLogic applies the entql json.RawMessage predicate on the conditional_logic field.
+func (f *TableChangeAlertFilter) WhereConditionalLogic(p entql.BytesP) {
+	f.Where(p.Field(tablechangealert.FieldConditionalLogic))
 }
 
 // WhereHasBusinessUnit applies a predicate to check if query has an edge business_unit.

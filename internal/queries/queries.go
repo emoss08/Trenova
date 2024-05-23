@@ -1,6 +1,8 @@
-package models
+package queries
 
 import (
+	"fmt"
+
 	"github.com/emoss08/trenova/internal/ent"
 	"github.com/rs/zerolog"
 )
@@ -15,4 +17,8 @@ func NewQueryService(c *ent.Client, l *zerolog.Logger) *QueryService {
 		Client: c,
 		Logger: l,
 	}
+}
+
+func QuoteName(name string) string {
+	return fmt.Sprintf(`"%s"`, name)
 }

@@ -115,40 +115,6 @@ func (tcau *TableChangeAlertUpdate) SetNillableDatabaseAction(ta *tablechangeale
 	return tcau
 }
 
-// SetSource sets the "source" field.
-func (tcau *TableChangeAlertUpdate) SetSource(t tablechangealert.Source) *TableChangeAlertUpdate {
-	tcau.mutation.SetSource(t)
-	return tcau
-}
-
-// SetNillableSource sets the "source" field if the given value is not nil.
-func (tcau *TableChangeAlertUpdate) SetNillableSource(t *tablechangealert.Source) *TableChangeAlertUpdate {
-	if t != nil {
-		tcau.SetSource(*t)
-	}
-	return tcau
-}
-
-// SetTableName sets the "table_name" field.
-func (tcau *TableChangeAlertUpdate) SetTableName(s string) *TableChangeAlertUpdate {
-	tcau.mutation.SetTableName(s)
-	return tcau
-}
-
-// SetNillableTableName sets the "table_name" field if the given value is not nil.
-func (tcau *TableChangeAlertUpdate) SetNillableTableName(s *string) *TableChangeAlertUpdate {
-	if s != nil {
-		tcau.SetTableName(*s)
-	}
-	return tcau
-}
-
-// ClearTableName clears the value of the "table_name" field.
-func (tcau *TableChangeAlertUpdate) ClearTableName() *TableChangeAlertUpdate {
-	tcau.mutation.ClearTableName()
-	return tcau
-}
-
 // SetTopicName sets the "topic_name" field.
 func (tcau *TableChangeAlertUpdate) SetTopicName(s string) *TableChangeAlertUpdate {
 	tcau.mutation.SetTopicName(s)
@@ -313,6 +279,18 @@ func (tcau *TableChangeAlertUpdate) ClearExpirationDate() *TableChangeAlertUpdat
 	return tcau
 }
 
+// SetConditionalLogic sets the "conditional_logic" field.
+func (tcau *TableChangeAlertUpdate) SetConditionalLogic(m map[string]interface{}) *TableChangeAlertUpdate {
+	tcau.mutation.SetConditionalLogic(m)
+	return tcau
+}
+
+// ClearConditionalLogic clears the value of the "conditional_logic" field.
+func (tcau *TableChangeAlertUpdate) ClearConditionalLogic() *TableChangeAlertUpdate {
+	tcau.mutation.ClearConditionalLogic()
+	return tcau
+}
+
 // SetOrganization sets the "organization" edge to the Organization entity.
 func (tcau *TableChangeAlertUpdate) SetOrganization(o *Organization) *TableChangeAlertUpdate {
 	return tcau.SetOrganizationID(o.ID)
@@ -388,11 +366,6 @@ func (tcau *TableChangeAlertUpdate) check() error {
 			return &ValidationError{Name: "database_action", err: fmt.Errorf(`ent: validator failed for field "TableChangeAlert.database_action": %w`, err)}
 		}
 	}
-	if v, ok := tcau.mutation.Source(); ok {
-		if err := tablechangealert.SourceValidator(v); err != nil {
-			return &ValidationError{Name: "source", err: fmt.Errorf(`ent: validator failed for field "TableChangeAlert.source": %w`, err)}
-		}
-	}
 	if v, ok := tcau.mutation.FunctionName(); ok {
 		if err := tablechangealert.FunctionNameValidator(v); err != nil {
 			return &ValidationError{Name: "function_name", err: fmt.Errorf(`ent: validator failed for field "TableChangeAlert.function_name": %w`, err)}
@@ -453,15 +426,6 @@ func (tcau *TableChangeAlertUpdate) sqlSave(ctx context.Context) (n int, err err
 	if value, ok := tcau.mutation.DatabaseAction(); ok {
 		_spec.SetField(tablechangealert.FieldDatabaseAction, field.TypeEnum, value)
 	}
-	if value, ok := tcau.mutation.Source(); ok {
-		_spec.SetField(tablechangealert.FieldSource, field.TypeEnum, value)
-	}
-	if value, ok := tcau.mutation.TableName(); ok {
-		_spec.SetField(tablechangealert.FieldTableName, field.TypeString, value)
-	}
-	if tcau.mutation.TableNameCleared() {
-		_spec.ClearField(tablechangealert.FieldTableName, field.TypeString)
-	}
 	if value, ok := tcau.mutation.TopicName(); ok {
 		_spec.SetField(tablechangealert.FieldTopicName, field.TypeString, value)
 	}
@@ -515,6 +479,12 @@ func (tcau *TableChangeAlertUpdate) sqlSave(ctx context.Context) (n int, err err
 	}
 	if tcau.mutation.ExpirationDateCleared() {
 		_spec.ClearField(tablechangealert.FieldExpirationDate, field.TypeOther)
+	}
+	if value, ok := tcau.mutation.ConditionalLogic(); ok {
+		_spec.SetField(tablechangealert.FieldConditionalLogic, field.TypeJSON, value)
+	}
+	if tcau.mutation.ConditionalLogicCleared() {
+		_spec.ClearField(tablechangealert.FieldConditionalLogic, field.TypeJSON)
 	}
 	if tcau.mutation.OrganizationCleared() {
 		edge := &sqlgraph.EdgeSpec{
@@ -647,40 +617,6 @@ func (tcauo *TableChangeAlertUpdateOne) SetNillableDatabaseAction(ta *tablechang
 	if ta != nil {
 		tcauo.SetDatabaseAction(*ta)
 	}
-	return tcauo
-}
-
-// SetSource sets the "source" field.
-func (tcauo *TableChangeAlertUpdateOne) SetSource(t tablechangealert.Source) *TableChangeAlertUpdateOne {
-	tcauo.mutation.SetSource(t)
-	return tcauo
-}
-
-// SetNillableSource sets the "source" field if the given value is not nil.
-func (tcauo *TableChangeAlertUpdateOne) SetNillableSource(t *tablechangealert.Source) *TableChangeAlertUpdateOne {
-	if t != nil {
-		tcauo.SetSource(*t)
-	}
-	return tcauo
-}
-
-// SetTableName sets the "table_name" field.
-func (tcauo *TableChangeAlertUpdateOne) SetTableName(s string) *TableChangeAlertUpdateOne {
-	tcauo.mutation.SetTableName(s)
-	return tcauo
-}
-
-// SetNillableTableName sets the "table_name" field if the given value is not nil.
-func (tcauo *TableChangeAlertUpdateOne) SetNillableTableName(s *string) *TableChangeAlertUpdateOne {
-	if s != nil {
-		tcauo.SetTableName(*s)
-	}
-	return tcauo
-}
-
-// ClearTableName clears the value of the "table_name" field.
-func (tcauo *TableChangeAlertUpdateOne) ClearTableName() *TableChangeAlertUpdateOne {
-	tcauo.mutation.ClearTableName()
 	return tcauo
 }
 
@@ -848,6 +784,18 @@ func (tcauo *TableChangeAlertUpdateOne) ClearExpirationDate() *TableChangeAlertU
 	return tcauo
 }
 
+// SetConditionalLogic sets the "conditional_logic" field.
+func (tcauo *TableChangeAlertUpdateOne) SetConditionalLogic(m map[string]interface{}) *TableChangeAlertUpdateOne {
+	tcauo.mutation.SetConditionalLogic(m)
+	return tcauo
+}
+
+// ClearConditionalLogic clears the value of the "conditional_logic" field.
+func (tcauo *TableChangeAlertUpdateOne) ClearConditionalLogic() *TableChangeAlertUpdateOne {
+	tcauo.mutation.ClearConditionalLogic()
+	return tcauo
+}
+
 // SetOrganization sets the "organization" edge to the Organization entity.
 func (tcauo *TableChangeAlertUpdateOne) SetOrganization(o *Organization) *TableChangeAlertUpdateOne {
 	return tcauo.SetOrganizationID(o.ID)
@@ -936,11 +884,6 @@ func (tcauo *TableChangeAlertUpdateOne) check() error {
 			return &ValidationError{Name: "database_action", err: fmt.Errorf(`ent: validator failed for field "TableChangeAlert.database_action": %w`, err)}
 		}
 	}
-	if v, ok := tcauo.mutation.Source(); ok {
-		if err := tablechangealert.SourceValidator(v); err != nil {
-			return &ValidationError{Name: "source", err: fmt.Errorf(`ent: validator failed for field "TableChangeAlert.source": %w`, err)}
-		}
-	}
 	if v, ok := tcauo.mutation.FunctionName(); ok {
 		if err := tablechangealert.FunctionNameValidator(v); err != nil {
 			return &ValidationError{Name: "function_name", err: fmt.Errorf(`ent: validator failed for field "TableChangeAlert.function_name": %w`, err)}
@@ -1018,15 +961,6 @@ func (tcauo *TableChangeAlertUpdateOne) sqlSave(ctx context.Context) (_node *Tab
 	if value, ok := tcauo.mutation.DatabaseAction(); ok {
 		_spec.SetField(tablechangealert.FieldDatabaseAction, field.TypeEnum, value)
 	}
-	if value, ok := tcauo.mutation.Source(); ok {
-		_spec.SetField(tablechangealert.FieldSource, field.TypeEnum, value)
-	}
-	if value, ok := tcauo.mutation.TableName(); ok {
-		_spec.SetField(tablechangealert.FieldTableName, field.TypeString, value)
-	}
-	if tcauo.mutation.TableNameCleared() {
-		_spec.ClearField(tablechangealert.FieldTableName, field.TypeString)
-	}
 	if value, ok := tcauo.mutation.TopicName(); ok {
 		_spec.SetField(tablechangealert.FieldTopicName, field.TypeString, value)
 	}
@@ -1080,6 +1014,12 @@ func (tcauo *TableChangeAlertUpdateOne) sqlSave(ctx context.Context) (_node *Tab
 	}
 	if tcauo.mutation.ExpirationDateCleared() {
 		_spec.ClearField(tablechangealert.FieldExpirationDate, field.TypeOther)
+	}
+	if value, ok := tcauo.mutation.ConditionalLogic(); ok {
+		_spec.SetField(tablechangealert.FieldConditionalLogic, field.TypeJSON, value)
+	}
+	if tcauo.mutation.ConditionalLogicCleared() {
+		_spec.ClearField(tablechangealert.FieldConditionalLogic, field.TypeJSON)
 	}
 	if tcauo.mutation.OrganizationCleared() {
 		edge := &sqlgraph.EdgeSpec{

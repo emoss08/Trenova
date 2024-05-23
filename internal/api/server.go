@@ -134,6 +134,14 @@ func (s *Server) InitLogger() error {
 		}))
 	}
 
+	if s.Config.Logger.LogRequestBody {
+		logger = logger.With().Str("requestBody", "body").Logger()
+	}
+
+	if s.Config.Logger.LogRequestHeader {
+		logger = logger.With().Str("requestHeader", "header").Logger()
+	}
+
 	s.Logger = &logger
 
 	return nil

@@ -176,10 +176,11 @@ export const routeDistanceUnitChoices = [
 ] satisfies ReadonlyArray<IChoiceProps<RouteDistanceUnitProps>>;
 
 /** Type for Distance Method Choices */
-export type DistanceMethodChoiceProps = "Google" | "Trenova";
+export type DistanceMethodChoiceProps = "Google" | "Trenova" | "PCMiler";
 
 export const distanceMethodChoices = [
   { value: "Google", label: "Google" },
+  { value: "PCMiler", label: "PCMiler" },
   { value: "Trenova", label: "Trenova" },
 ] satisfies ReadonlyArray<IChoiceProps<DistanceMethodChoiceProps>>;
 
