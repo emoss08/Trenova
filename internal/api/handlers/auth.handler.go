@@ -1,18 +1,22 @@
 package handlers
 
 import (
-	"log"
+	"time"
 
 	"github.com/emoss08/trenova/internal/api"
+	"github.com/emoss08/trenova/internal/api/middleware"
 	"github.com/emoss08/trenova/internal/api/services"
 	"github.com/emoss08/trenova/internal/util"
 	"github.com/emoss08/trenova/internal/util/types"
 	"github.com/gofiber/fiber/v2"
+	"github.com/golang-jwt/jwt/v5"
+	"github.com/rs/zerolog"
 )
 
 // AuthenticationHandler is a struct that handles authentication-related requests.
 type AuthenticationHandler struct {
 	Server  *api.Server
+	Logger  *zerolog.Logger
 	Service *services.AuthenticationService
 }
 
@@ -20,6 +24,7 @@ type AuthenticationHandler struct {
 func NewAuthenticationHandler(s *api.Server) *AuthenticationHandler {
 	return &AuthenticationHandler{
 		Server:  s,
+		Logger:  s.Logger,
 		Service: services.NewAuthenticationService(s),
 	}
 }
@@ -67,22 +72,7 @@ func (h *AuthenticationHandler) AuthenticateUser() fiber.Handler {
 			Password     string `json:"password" validate:"required"`
 		}
 
-		sess, err := h.Server.Session.Get(c)
-		if err != nil {
-			log.Printf("Error getting session: %v", err)
-			return c.Status(fiber.StatusInternalServerError).JSON(types.ValidationErrorResponse{
-				Type: "internalServerError",
-				Errors: []types.ValidationErrorDetail{
-					{
-						Code:   "internalServerError",
-						Detail: "Internal server error",
-						Attr:   "session",
-					},
-				},
-			})
-		}
-
-		if err = c.BodyParser(&loginRequest); err != nil {
+		if err := c.BodyParser(&loginRequest); err != nil {
 			return c.Status(fiber.StatusBadRequest).JSON(types.ValidationErrorResponse{
 				Type: "badRequest",
 				Errors: []types.ValidationErrorDetail{
@@ -130,23 +120,41 @@ func (h *AuthenticationHandler) AuthenticateUser() fiber.Handler {
 			})
 		}
 
-		// Set the session values
-		sess.Set(string(util.CTXUserID), user.ID)
-		sess.Set(string(util.CTXOrganizationID), user.OrganizationID)
-		sess.Set(string(util.CTXBusinessUnitID), user.BusinessUnitID)
-
-		// Set in context
-		c.Locals(util.CTXUserID, user.ID)
-		c.Locals(util.CTXOrganizationID, user.OrganizationID)
-		c.Locals(util.CTXBusinessUnitID, user.BusinessUnitID)
-
-		// Save the session.
-		if err = sess.Save(); err != nil {
-			log.Printf("Error saving session: %v", err)
-			h.Server.Logger.Panic().Msg("Failed to save session")
+		claims := jwt.MapClaims{
+			"userID":         user.ID,
+			"organizationID": user.OrganizationID,
+			"businessUnitID": user.BusinessUnitID,
+			"exp":            time.Now().Add(time.Hour * 72).Unix(),
 		}
 
-		return c.JSON(user)
+		token := jwt.NewWithClaims(jwt.SigningMethodRS256, claims)
+
+		privateKey, _, err := middleware.LoadKeys()
+		if err != nil {
+			h.Logger.Error().Err(err).Msg("Error loading keys")
+		}
+
+		t, err := token.SignedString(privateKey)
+		if err != nil {
+			h.Logger.Error().Err(err).Msg("Error signing token")
+			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Error{
+				Code:    fiber.StatusInternalServerError,
+				Message: "Internal server error",
+			})
+		}
+
+		c.Cookie(&fiber.Cookie{
+			Name:     "trenova-token",
+			Value:    t,
+			Expires:  time.Now().Add(time.Hour * 72),
+			SameSite: "Lax",
+			// HTTPOnly: true,
+			// Secure:   true,
+		})
+
+		return c.JSON(fiber.Map{
+			"token": t,
+		})
 	}
 }
 

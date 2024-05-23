@@ -6,12 +6,15 @@ import (
 	"database/sql"
 	"encoding/gob"
 	"errors"
+	"os"
 	"time"
 
 	"github.com/confluentinc/confluent-kafka-go/v2/kafka"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/session"
 	"github.com/gofiber/storage/redis/v2"
+	"github.com/golang-jwt/jwt/v5"
+
 	"github.com/google/uuid"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
@@ -126,7 +129,7 @@ func (s *Server) InitSessionStore() error {
 
 // InitLogger initializes the logger based on the configuration.
 func (s *Server) InitLogger() error {
-	logger := zerolog.New(log.Logger)
+	logger := zerolog.New(log.Logger).With().Timestamp().Logger()
 
 	if s.Config.Logger.PrettyPrintConsole {
 		logger = log.Output(zerolog.NewConsoleWriter(func(w *zerolog.ConsoleWriter) {
@@ -158,6 +161,31 @@ func (s *Server) InitRedisClient(ctx context.Context) error {
 		return err
 	}
 	s.Redis = client
+	return nil
+}
+
+func (s *Server) LoadRSAKeys() error {
+	privateKeyData, err := os.ReadFile("private_key.pem")
+	if err != nil {
+		return err
+	}
+	privateKey, err := jwt.ParseRSAPrivateKeyFromPEM(privateKeyData)
+	if err != nil {
+		return err
+	}
+
+	publicKeyData, err := os.ReadFile("public_key.pem")
+	if err != nil {
+		return err
+	}
+	publicKey, err := jwt.ParseRSAPublicKeyFromPEM(publicKeyData)
+	if err != nil {
+		return err
+	}
+
+	s.Config.AuthServer.PrivateKey = privateKey
+	s.Config.AuthServer.PublicKey = publicKey
+
 	return nil
 }
 
