@@ -19,3 +19,4 @@ client/.npmrc
 server/test.edi
 .env
 tmp
+*.pem

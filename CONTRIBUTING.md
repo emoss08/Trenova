@@ -45,6 +45,10 @@ We are committed to maintaining a welcoming and inclusive community at Trenova. 
    - Run `curl -L https://releases.conduktor.io/console -o docker-compose.yml && docker compose up` in the `.docker` directory to start Conduktor.
    - Access Conduktor at `localhost:8080`.
 
+5. **Generate RSA Keys**:
+   - Run `openssl genpkey -algorithm RSA -out private_key.pem -pkeyopt rsa_keygen_bits:2048` in the `trenova` directory.
+   - Run `openssl genpkey -algorithm RSA -out private_key.pem -pkeyopt rsa_keygen_bits:2048` in the `trenova` directory.
+
 ### Understanding the Project
 
 - Explore the tech stack, including Django, Django REST Framework, and React.

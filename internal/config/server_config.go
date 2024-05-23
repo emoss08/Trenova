@@ -1,6 +1,7 @@
 package config
 
 import (
+	"crypto/rsa"
 	"os"
 	"path/filepath"
 	"time"
@@ -30,6 +31,11 @@ type FiberServer struct {
 
 type Integration struct {
 	GenerateReportEndpoint string
+}
+
+type AuthServer struct {
+	PrivateKey *rsa.PrivateKey
+	PublicKey  *rsa.PublicKey
 }
 
 type RedisServer struct {
@@ -83,6 +89,7 @@ type Server struct {
 	Monitor      Monitor        `json:"monitor"`
 	Minio        MinioServer    `json:"minio"`
 	Integration  Integration    `json:"integration_server"`
+	AuthServer   AuthServer     `json:"auth_server"`
 }
 
 // DefaultServiceConfigFromEnv returns the server config as parsed from environment variables
