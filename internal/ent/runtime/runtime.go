@@ -2412,6 +2412,7 @@ func init() {
 	tablechangealertMixin := schema.TableChangeAlert{}.Mixin()
 	tablechangealertHooks := schema.TableChangeAlert{}.Hooks()
 	tablechangealert.Hooks[0] = tablechangealertHooks[0]
+	tablechangealert.Hooks[1] = tablechangealertHooks[1]
 	tablechangealertMixinFields0 := tablechangealertMixin[0].Fields()
 	_ = tablechangealertMixinFields0
 	tablechangealertFields := schema.TableChangeAlert{}.Fields()
@@ -2435,15 +2436,15 @@ func init() {
 	// tablechangealert.NameValidator is a validator for the "name" field. It is called by the builders before save.
 	tablechangealert.NameValidator = tablechangealertDescName.Validators[0].(func(string) error)
 	// tablechangealertDescFunctionName is the schema descriptor for function_name field.
-	tablechangealertDescFunctionName := tablechangealertFields[8].Descriptor()
+	tablechangealertDescFunctionName := tablechangealertFields[6].Descriptor()
 	// tablechangealert.FunctionNameValidator is a validator for the "function_name" field. It is called by the builders before save.
 	tablechangealert.FunctionNameValidator = tablechangealertDescFunctionName.Validators[0].(func(string) error)
 	// tablechangealertDescTriggerName is the schema descriptor for trigger_name field.
-	tablechangealertDescTriggerName := tablechangealertFields[9].Descriptor()
+	tablechangealertDescTriggerName := tablechangealertFields[7].Descriptor()
 	// tablechangealert.TriggerNameValidator is a validator for the "trigger_name" field. It is called by the builders before save.
 	tablechangealert.TriggerNameValidator = tablechangealertDescTriggerName.Validators[0].(func(string) error)
 	// tablechangealertDescListenerName is the schema descriptor for listener_name field.
-	tablechangealertDescListenerName := tablechangealertFields[10].Descriptor()
+	tablechangealertDescListenerName := tablechangealertFields[8].Descriptor()
 	// tablechangealert.ListenerNameValidator is a validator for the "listener_name" field. It is called by the builders before save.
 	tablechangealert.ListenerNameValidator = tablechangealertDescListenerName.Validators[0].(func(string) error)
 	// tablechangealertDescID is the schema descriptor for id field.

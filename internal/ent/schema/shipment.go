@@ -15,8 +15,9 @@ import (
 	gen "github.com/emoss08/trenova/internal/ent"
 	"github.com/emoss08/trenova/internal/ent/hook"
 	"github.com/emoss08/trenova/internal/ent/shipment"
-	models "github.com/emoss08/trenova/internal/models"
+	"github.com/emoss08/trenova/internal/queries"
 	"github.com/emoss08/trenova/internal/util/types"
+	"github.com/emoss08/trenova/internal/validators"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/rs/zerolog"
@@ -344,13 +345,13 @@ func handleCreateShipment(ctx context.Context, m *gen.ShipmentMutation, client *
 
 // handleUpdateShipment handles updates to a shipment, including voiding the shipment.
 func handleUpdateShipment(ctx context.Context, m *gen.ShipmentMutation, client *gen.Client) error {
-	return models.HandleVoidedShipment(ctx, m, client)
+	return queries.HandleVoidedShipment(ctx, m, client)
 }
 
 // validateShipmentControl validates various controls related to a shipment.
 func validateShipmentControl(ctx context.Context, m *gen.ShipmentMutation, client *gen.Client) error {
 	// Initialize the query service.
-	queryService := models.QueryService{Client: client, Logger: &zerolog.Logger{}}
+	queryService := queries.QueryService{Client: client, Logger: &zerolog.Logger{}}
 
 	// Get the organization and business unit IDs from the mutation.
 	orgID, _ := m.OrganizationID()
@@ -371,7 +372,7 @@ func validateShipmentControl(ctx context.Context, m *gen.ShipmentMutation, clien
 		return err
 	}
 
-	validationErrs, err := models.ValidateShipment(ctx, m, shipmentControl, billingControl, dispatchControl)
+	validationErrs, err := validators.ValidateShipment(ctx, m, shipmentControl, billingControl, dispatchControl)
 	if err != nil {
 		return err
 	}

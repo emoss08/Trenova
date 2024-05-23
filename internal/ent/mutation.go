@@ -67544,8 +67544,6 @@ type TableChangeAlertMutation struct {
 	status               *tablechangealert.Status
 	name                 *string
 	database_action      *tablechangealert.DatabaseAction
-	source               *tablechangealert.Source
-	table_name           *string
 	topic_name           *string
 	description          *string
 	custom_subject       *string
@@ -67555,6 +67553,7 @@ type TableChangeAlertMutation struct {
 	email_recipients     *string
 	effective_date       **pgtype.Date
 	expiration_date      **pgtype.Date
+	conditional_logic    *map[string]interface{}
 	clearedFields        map[string]struct{}
 	business_unit        *uuid.UUID
 	clearedbusiness_unit bool
@@ -67975,91 +67974,6 @@ func (m *TableChangeAlertMutation) OldDatabaseAction(ctx context.Context) (v tab
 // ResetDatabaseAction resets all changes to the "database_action" field.
 func (m *TableChangeAlertMutation) ResetDatabaseAction() {
 	m.database_action = nil
-}
-
-// SetSource sets the "source" field.
-func (m *TableChangeAlertMutation) SetSource(t tablechangealert.Source) {
-	m.source = &t
-}
-
-// Source returns the value of the "source" field in the mutation.
-func (m *TableChangeAlertMutation) Source() (r tablechangealert.Source, exists bool) {
-	v := m.source
-	if v == nil {
-		return
-	}
-	return *v, true
-}
-
-// OldSource returns the old "source" field's value of the TableChangeAlert entity.
-// If the TableChangeAlert object wasn't provided to the builder, the object is fetched from the database.
-// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *TableChangeAlertMutation) OldSource(ctx context.Context) (v tablechangealert.Source, err error) {
-	if !m.op.Is(OpUpdateOne) {
-		return v, errors.New("OldSource is only allowed on UpdateOne operations")
-	}
-	if m.id == nil || m.oldValue == nil {
-		return v, errors.New("OldSource requires an ID field in the mutation")
-	}
-	oldValue, err := m.oldValue(ctx)
-	if err != nil {
-		return v, fmt.Errorf("querying old value for OldSource: %w", err)
-	}
-	return oldValue.Source, nil
-}
-
-// ResetSource resets all changes to the "source" field.
-func (m *TableChangeAlertMutation) ResetSource() {
-	m.source = nil
-}
-
-// SetTableName sets the "table_name" field.
-func (m *TableChangeAlertMutation) SetTableName(s string) {
-	m.table_name = &s
-}
-
-// TableName returns the value of the "table_name" field in the mutation.
-func (m *TableChangeAlertMutation) TableName() (r string, exists bool) {
-	v := m.table_name
-	if v == nil {
-		return
-	}
-	return *v, true
-}
-
-// OldTableName returns the old "table_name" field's value of the TableChangeAlert entity.
-// If the TableChangeAlert object wasn't provided to the builder, the object is fetched from the database.
-// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *TableChangeAlertMutation) OldTableName(ctx context.Context) (v string, err error) {
-	if !m.op.Is(OpUpdateOne) {
-		return v, errors.New("OldTableName is only allowed on UpdateOne operations")
-	}
-	if m.id == nil || m.oldValue == nil {
-		return v, errors.New("OldTableName requires an ID field in the mutation")
-	}
-	oldValue, err := m.oldValue(ctx)
-	if err != nil {
-		return v, fmt.Errorf("querying old value for OldTableName: %w", err)
-	}
-	return oldValue.TableName, nil
-}
-
-// ClearTableName clears the value of the "table_name" field.
-func (m *TableChangeAlertMutation) ClearTableName() {
-	m.table_name = nil
-	m.clearedFields[tablechangealert.FieldTableName] = struct{}{}
-}
-
-// TableNameCleared returns if the "table_name" field was cleared in this mutation.
-func (m *TableChangeAlertMutation) TableNameCleared() bool {
-	_, ok := m.clearedFields[tablechangealert.FieldTableName]
-	return ok
-}
-
-// ResetTableName resets all changes to the "table_name" field.
-func (m *TableChangeAlertMutation) ResetTableName() {
-	m.table_name = nil
-	delete(m.clearedFields, tablechangealert.FieldTableName)
 }
 
 // SetTopicName sets the "topic_name" field.
@@ -68503,6 +68417,55 @@ func (m *TableChangeAlertMutation) ResetExpirationDate() {
 	delete(m.clearedFields, tablechangealert.FieldExpirationDate)
 }
 
+// SetConditionalLogic sets the "conditional_logic" field.
+func (m *TableChangeAlertMutation) SetConditionalLogic(value map[string]interface{}) {
+	m.conditional_logic = &value
+}
+
+// ConditionalLogic returns the value of the "conditional_logic" field in the mutation.
+func (m *TableChangeAlertMutation) ConditionalLogic() (r map[string]interface{}, exists bool) {
+	v := m.conditional_logic
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldConditionalLogic returns the old "conditional_logic" field's value of the TableChangeAlert entity.
+// If the TableChangeAlert object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *TableChangeAlertMutation) OldConditionalLogic(ctx context.Context) (v map[string]interface{}, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldConditionalLogic is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldConditionalLogic requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldConditionalLogic: %w", err)
+	}
+	return oldValue.ConditionalLogic, nil
+}
+
+// ClearConditionalLogic clears the value of the "conditional_logic" field.
+func (m *TableChangeAlertMutation) ClearConditionalLogic() {
+	m.conditional_logic = nil
+	m.clearedFields[tablechangealert.FieldConditionalLogic] = struct{}{}
+}
+
+// ConditionalLogicCleared returns if the "conditional_logic" field was cleared in this mutation.
+func (m *TableChangeAlertMutation) ConditionalLogicCleared() bool {
+	_, ok := m.clearedFields[tablechangealert.FieldConditionalLogic]
+	return ok
+}
+
+// ResetConditionalLogic resets all changes to the "conditional_logic" field.
+func (m *TableChangeAlertMutation) ResetConditionalLogic() {
+	m.conditional_logic = nil
+	delete(m.clearedFields, tablechangealert.FieldConditionalLogic)
+}
+
 // ClearBusinessUnit clears the "business_unit" edge to the BusinessUnit entity.
 func (m *TableChangeAlertMutation) ClearBusinessUnit() {
 	m.clearedbusiness_unit = true
@@ -68591,7 +68554,7 @@ func (m *TableChangeAlertMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *TableChangeAlertMutation) Fields() []string {
-	fields := make([]string, 0, 19)
+	fields := make([]string, 0, 18)
 	if m.business_unit != nil {
 		fields = append(fields, tablechangealert.FieldBusinessUnitID)
 	}
@@ -68615,12 +68578,6 @@ func (m *TableChangeAlertMutation) Fields() []string {
 	}
 	if m.database_action != nil {
 		fields = append(fields, tablechangealert.FieldDatabaseAction)
-	}
-	if m.source != nil {
-		fields = append(fields, tablechangealert.FieldSource)
-	}
-	if m.table_name != nil {
-		fields = append(fields, tablechangealert.FieldTableName)
 	}
 	if m.topic_name != nil {
 		fields = append(fields, tablechangealert.FieldTopicName)
@@ -68649,6 +68606,9 @@ func (m *TableChangeAlertMutation) Fields() []string {
 	if m.expiration_date != nil {
 		fields = append(fields, tablechangealert.FieldExpirationDate)
 	}
+	if m.conditional_logic != nil {
+		fields = append(fields, tablechangealert.FieldConditionalLogic)
+	}
 	return fields
 }
 
@@ -68673,10 +68633,6 @@ func (m *TableChangeAlertMutation) Field(name string) (ent.Value, bool) {
 		return m.Name()
 	case tablechangealert.FieldDatabaseAction:
 		return m.DatabaseAction()
-	case tablechangealert.FieldSource:
-		return m.Source()
-	case tablechangealert.FieldTableName:
-		return m.TableName()
 	case tablechangealert.FieldTopicName:
 		return m.TopicName()
 	case tablechangealert.FieldDescription:
@@ -68695,6 +68651,8 @@ func (m *TableChangeAlertMutation) Field(name string) (ent.Value, bool) {
 		return m.EffectiveDate()
 	case tablechangealert.FieldExpirationDate:
 		return m.ExpirationDate()
+	case tablechangealert.FieldConditionalLogic:
+		return m.ConditionalLogic()
 	}
 	return nil, false
 }
@@ -68720,10 +68678,6 @@ func (m *TableChangeAlertMutation) OldField(ctx context.Context, name string) (e
 		return m.OldName(ctx)
 	case tablechangealert.FieldDatabaseAction:
 		return m.OldDatabaseAction(ctx)
-	case tablechangealert.FieldSource:
-		return m.OldSource(ctx)
-	case tablechangealert.FieldTableName:
-		return m.OldTableName(ctx)
 	case tablechangealert.FieldTopicName:
 		return m.OldTopicName(ctx)
 	case tablechangealert.FieldDescription:
@@ -68742,6 +68696,8 @@ func (m *TableChangeAlertMutation) OldField(ctx context.Context, name string) (e
 		return m.OldEffectiveDate(ctx)
 	case tablechangealert.FieldExpirationDate:
 		return m.OldExpirationDate(ctx)
+	case tablechangealert.FieldConditionalLogic:
+		return m.OldConditionalLogic(ctx)
 	}
 	return nil, fmt.Errorf("unknown TableChangeAlert field %s", name)
 }
@@ -68807,20 +68763,6 @@ func (m *TableChangeAlertMutation) SetField(name string, value ent.Value) error 
 		}
 		m.SetDatabaseAction(v)
 		return nil
-	case tablechangealert.FieldSource:
-		v, ok := value.(tablechangealert.Source)
-		if !ok {
-			return fmt.Errorf("unexpected type %T for field %s", value, name)
-		}
-		m.SetSource(v)
-		return nil
-	case tablechangealert.FieldTableName:
-		v, ok := value.(string)
-		if !ok {
-			return fmt.Errorf("unexpected type %T for field %s", value, name)
-		}
-		m.SetTableName(v)
-		return nil
 	case tablechangealert.FieldTopicName:
 		v, ok := value.(string)
 		if !ok {
@@ -68884,6 +68826,13 @@ func (m *TableChangeAlertMutation) SetField(name string, value ent.Value) error 
 		}
 		m.SetExpirationDate(v)
 		return nil
+	case tablechangealert.FieldConditionalLogic:
+		v, ok := value.(map[string]interface{})
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetConditionalLogic(v)
+		return nil
 	}
 	return fmt.Errorf("unknown TableChangeAlert field %s", name)
 }
@@ -68929,9 +68878,6 @@ func (m *TableChangeAlertMutation) AddField(name string, value ent.Value) error 
 // mutation.
 func (m *TableChangeAlertMutation) ClearedFields() []string {
 	var fields []string
-	if m.FieldCleared(tablechangealert.FieldTableName) {
-		fields = append(fields, tablechangealert.FieldTableName)
-	}
 	if m.FieldCleared(tablechangealert.FieldTopicName) {
 		fields = append(fields, tablechangealert.FieldTopicName)
 	}
@@ -68959,6 +68905,9 @@ func (m *TableChangeAlertMutation) ClearedFields() []string {
 	if m.FieldCleared(tablechangealert.FieldExpirationDate) {
 		fields = append(fields, tablechangealert.FieldExpirationDate)
 	}
+	if m.FieldCleared(tablechangealert.FieldConditionalLogic) {
+		fields = append(fields, tablechangealert.FieldConditionalLogic)
+	}
 	return fields
 }
 
@@ -68973,9 +68922,6 @@ func (m *TableChangeAlertMutation) FieldCleared(name string) bool {
 // error if the field is not defined in the schema.
 func (m *TableChangeAlertMutation) ClearField(name string) error {
 	switch name {
-	case tablechangealert.FieldTableName:
-		m.ClearTableName()
-		return nil
 	case tablechangealert.FieldTopicName:
 		m.ClearTopicName()
 		return nil
@@ -69002,6 +68948,9 @@ func (m *TableChangeAlertMutation) ClearField(name string) error {
 		return nil
 	case tablechangealert.FieldExpirationDate:
 		m.ClearExpirationDate()
+		return nil
+	case tablechangealert.FieldConditionalLogic:
+		m.ClearConditionalLogic()
 		return nil
 	}
 	return fmt.Errorf("unknown TableChangeAlert nullable field %s", name)
@@ -69035,12 +68984,6 @@ func (m *TableChangeAlertMutation) ResetField(name string) error {
 	case tablechangealert.FieldDatabaseAction:
 		m.ResetDatabaseAction()
 		return nil
-	case tablechangealert.FieldSource:
-		m.ResetSource()
-		return nil
-	case tablechangealert.FieldTableName:
-		m.ResetTableName()
-		return nil
 	case tablechangealert.FieldTopicName:
 		m.ResetTopicName()
 		return nil
@@ -69067,6 +69010,9 @@ func (m *TableChangeAlertMutation) ResetField(name string) error {
 		return nil
 	case tablechangealert.FieldExpirationDate:
 		m.ResetExpirationDate()
+		return nil
+	case tablechangealert.FieldConditionalLogic:
+		m.ResetConditionalLogic()
 		return nil
 	}
 	return fmt.Errorf("unknown TableChangeAlert field %s", name)

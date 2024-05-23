@@ -35,6 +35,7 @@ function OrganizationForm({ organization }: { organization: Organization }) {
     path: `/organizations/${organization.id}`,
     successMessage: t("formSuccessMessage"),
     queryKeysToInvalidate: "userOrganization",
+    reset,
     errorMessage: t("formErrorMessage"),
   });
 

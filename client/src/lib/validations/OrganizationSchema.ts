@@ -1,26 +1,8 @@
-/*
- * COPYRIGHT(c) 2024 Trenova
- *
- * This file is part of Trenova.
- *
- * The Trenova software is licensed under the Business Source License 1.1. You are granted the right
- * to copy, modify, and redistribute the software, but only for non-production use or with a total
- * of less than three server instances. Starting from the Change Date (November 16, 2026), the
- * software will be made available under version 2 or later of the GNU General Public License.
- * If you use the software in violation of this license, your rights under the license will be
- * terminated automatically. The software is provided "as is," and the Licensor disclaims all
- * warranties and conditions. If you use this license's text or the "Business Source License" name
- * and trademark, you must comply with the Licensor's covenants, which include specifying the
- * Change License as the GPL Version 2.0 or a compatible license, specifying an Additional Use
- * Grant, and not modifying the license in any other way.
- */
-
 import {
   DatabaseActionChoicesProps,
   EmailProtocolChoiceProps,
   RouteDistanceUnitProps,
   RouteModelChoiceProps,
-  SourceChoicesProps,
   TimezoneChoices,
 } from "@/lib/choices";
 import { StatusChoiceProps } from "@/types";
@@ -31,38 +13,35 @@ import {
   OrganizationFormValues,
   TableChangeAlertFormValues,
 } from "@/types/organization";
-import * as Yup from "yup";
-import { ObjectSchema } from "yup";
+import { ObjectSchema, boolean, number, object, string } from "yup";
 
-// TODO(Wolfred): Remove import * as Yup and just import what is needed from yup.
+// TODO(Wolfred): Remove import * as Yup and just import what is needed from
 
 export const organizationSchema: ObjectSchema<OrganizationFormValues> =
-  Yup.object().shape({
-    name: Yup.string().required("Name is required."),
-    scacCode: Yup.string().required("SCAC Code is required."),
-    dotNumber: Yup.string().required("DOT Number is required."),
-    orgType: Yup.string().required("Organization Type is required."),
-    timezone: Yup.string<TimezoneChoices>().required("Timezone is required."),
-    logoUrl: Yup.string().notRequired(),
+  object().shape({
+    name: string().required("Name is required."),
+    scacCode: string().required("SCAC Code is required."),
+    dotNumber: string().required("DOT Number is required."),
+    orgType: string().required("Organization Type is required."),
+    timezone: string<TimezoneChoices>().required("Timezone is required."),
+    logoUrl: string().notRequired(),
   });
 
 export const tableChangeAlertSchema: ObjectSchema<TableChangeAlertFormValues> =
-  Yup.object().shape({
-    status: Yup.string<StatusChoiceProps>().required("Status is required."),
-    name: Yup.string().required("Name is required."),
-    databaseAction: Yup.string<DatabaseActionChoicesProps>().required(
+  object().shape({
+    status: string<StatusChoiceProps>().required("Status is required."),
+    name: string().required("Name is required."),
+    databaseAction: string<DatabaseActionChoicesProps>().required(
       "Database Action is required.",
     ),
-    source: Yup.string<SourceChoicesProps>().required("Source is required."),
-    table: Yup.string(),
-    topic: Yup.string(),
-    description: Yup.string(),
-    emailProfile: Yup.string(),
-    emailRecipients: Yup.string().required("Email Recipients is required."),
-    conditionalLogic: Yup.object(),
-    customSubject: Yup.string(),
-    effectiveDate: Yup.string().nullable().notRequired(),
-    expirationDate: Yup.string()
+    topicName: string().required("Topic Name is required."),
+    description: string(),
+    emailProfile: string(),
+    emailRecipients: string().required("Email Recipients is required."),
+    conditionalLogic: object().nullable(),
+    customSubject: string(),
+    effectiveDate: string().nullable().notRequired(),
+    expirationDate: string()
       .notRequired()
       .nullable()
       .when("effectiveDate", {
@@ -85,35 +64,35 @@ export const tableChangeAlertSchema: ObjectSchema<TableChangeAlertFormValues> =
   });
 
 export const emailControlSchema: ObjectSchema<EmailControlFormValues> =
-  Yup.object().shape({
-    billingEmailProfileId: Yup.string().notRequired(),
-    rateExpirtationEmailProfileId: Yup.string().notRequired(),
+  object().shape({
+    billingEmailProfileId: string().notRequired(),
+    rateExpirtationEmailProfileId: string().notRequired(),
   });
 
 export const emailProfileSchema: ObjectSchema<EmailProfileFormValues> =
-  Yup.object().shape({
-    name: Yup.string().required("Name is required."),
-    email: Yup.string().required("Email is required."),
-    protocol: Yup.string<EmailProtocolChoiceProps>().notRequired(),
-    host: Yup.string().notRequired(),
-    port: Yup.number().notRequired(),
-    username: Yup.string().notRequired(),
-    password: Yup.string().notRequired(),
-    isDefault: Yup.boolean().required("Default Profile is required."),
+  object().shape({
+    name: string().required("Name is required."),
+    email: string().required("Email is required."),
+    protocol: string<EmailProtocolChoiceProps>().notRequired(),
+    host: string().notRequired(),
+    port: number().notRequired(),
+    username: string().notRequired(),
+    password: string().notRequired(),
+    isDefault: boolean().required("Default Profile is required."),
   });
 
 export const googleAPISchema: ObjectSchema<GoogleAPIFormValues> =
-  Yup.object().shape({
-    apiKey: Yup.string().required("API Key is required."),
-    mileageUnit: Yup.string<RouteDistanceUnitProps>().required(
+  object().shape({
+    apiKey: string().required("API Key is required."),
+    mileageUnit: string<RouteDistanceUnitProps>().required(
       "Mileage Unit is required.",
     ),
-    trafficModel: Yup.string<RouteModelChoiceProps>().required(
+    trafficModel: string<RouteModelChoiceProps>().required(
       "Traffic Model is required.",
     ),
-    addCustomerLocation: Yup.boolean().required(
+    addCustomerLocation: boolean().required(
       "Add Customer Location is required.",
     ),
-    addLocation: Yup.boolean().required("Add Location is required."),
-    autoGeocode: Yup.boolean().required("Auto Geocode is required."),
+    addLocation: boolean().required("Add Location is required."),
+    autoGeocode: boolean().required("Auto Geocode is required."),
   });

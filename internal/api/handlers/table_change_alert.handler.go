@@ -25,17 +25,17 @@ func NewTableChangeAlertHandler(s *api.Server) *TableChangeAlertHandler {
 // RegisterRoutes registers the routes for the TableChangeAlertHandler.
 func (h *TableChangeAlertHandler) RegisterRoutes(r fiber.Router) {
 	tableChangeAlertAPI := r.Group("/table-change-alerts")
-	tableChangeAlertAPI.Get("/", h.GetTableChangeAlerts())
-	tableChangeAlertAPI.Post("/", h.CreateTableChangeAlert())
-	tableChangeAlertAPI.Put("/:tableChangeAlertID", h.UpdateTableChangeAlert())
-	tableChangeAlertAPI.Get("/table-names", h.GetTableNames())
-	tableChangeAlertAPI.Get("/topic-names", h.GetTopicNames())
+	tableChangeAlertAPI.Get("/", h.getTableChangeAlerts())
+	tableChangeAlertAPI.Post("/", h.createTableChangeAlert())
+	tableChangeAlertAPI.Put("/:tableChangeAlertID", h.updateTableChangeAlert())
+	tableChangeAlertAPI.Get("/table-names", h.getTableNames())
+	tableChangeAlertAPI.Get("/topic-names", h.getTopicNames())
 }
 
-// GetTableChangeAlerts is a handler that returns a list of table change alerts.
+// getTableChangeAlerts is a handler that returns a list of table change alerts.
 //
 // GET /table-change-alerts
-func (h *TableChangeAlertHandler) GetTableChangeAlerts() fiber.Handler {
+func (h *TableChangeAlertHandler) getTableChangeAlerts() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		orgID, ok := c.Locals(util.CTXOrganizationID).(uuid.UUID)
 		buID, buOK := c.Locals(util.CTXBusinessUnitID).(uuid.UUID)
@@ -94,10 +94,10 @@ func (h *TableChangeAlertHandler) GetTableChangeAlerts() fiber.Handler {
 	}
 }
 
-// CreateTableChangeAlert is a handler that creates a table change alert.
+// createTableChangeAlert is a handler that creates a table change alert.
 //
 // POST /table-change-alerts
-func (h *TableChangeAlertHandler) CreateTableChangeAlert() fiber.Handler {
+func (h *TableChangeAlertHandler) createTableChangeAlert() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		newEntity := new(ent.TableChangeAlert)
 
@@ -129,33 +129,24 @@ func (h *TableChangeAlertHandler) CreateTableChangeAlert() fiber.Handler {
 		newEntity.BusinessUnitID = buID
 		newEntity.OrganizationID = orgID
 
-		if err := util.ParseBodyAndValidate(c, newEntity); err != nil {
-			return c.Status(fiber.StatusBadRequest).JSON(types.ValidationErrorResponse{
-				Type: "invalidRequest",
-				Errors: []types.ValidationErrorDetail{
-					{
-						Code:   "invalidRequest",
-						Detail: err.Error(),
-						Attr:   "body",
-					},
-				},
-			})
+		if err = util.ParseBodyAndValidate(c, newEntity); err != nil {
+			return err
 		}
 
 		entity, err := h.Service.CreateTableChangeAlert(c.UserContext(), newEntity)
 		if err != nil {
 			errorResponse := util.CreateDBErrorResponse(err)
-			return c.Status(fiber.StatusInternalServerError).JSON(errorResponse)
+			return c.Status(fiber.StatusBadRequest).JSON(errorResponse)
 		}
 
 		return c.Status(fiber.StatusCreated).JSON(entity)
 	}
 }
 
-// UpdateTableChangeAlert is a handler that updates a table change alert.
+// updateTableChangeAlert is a handler that updates a table change alert.
 //
 // PUT /table-change-alerts/:tableChangeAlertID
-func (h *TableChangeAlertHandler) UpdateTableChangeAlert() fiber.Handler {
+func (h *TableChangeAlertHandler) updateTableChangeAlert() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		tableChangeAlertID := c.Params("tableChangeAlertID")
 		if tableChangeAlertID == "" {
@@ -182,17 +173,8 @@ func (h *TableChangeAlertHandler) UpdateTableChangeAlert() fiber.Handler {
 
 		updatedEntity := new(ent.TableChangeAlert)
 
-		if err := util.ParseBodyAndValidate(c, updatedEntity); err != nil {
-			return c.Status(fiber.StatusBadRequest).JSON(types.ValidationErrorResponse{
-				Type: "invalidRequest",
-				Errors: []types.ValidationErrorDetail{
-					{
-						Code:   "invalidRequest",
-						Detail: err.Error(),
-						Attr:   "request body",
-					},
-				},
-			})
+		if err = util.ParseBodyAndValidate(c, updatedEntity); err != nil {
+			return err
 		}
 
 		updatedEntity.ID = uuid.MustParse(tableChangeAlertID)
@@ -200,14 +182,14 @@ func (h *TableChangeAlertHandler) UpdateTableChangeAlert() fiber.Handler {
 		entity, err := h.Service.UpdateTableChangeAlert(c.UserContext(), updatedEntity)
 		if err != nil {
 			errorResponse := util.CreateDBErrorResponse(err)
-			return c.Status(fiber.StatusInternalServerError).JSON(errorResponse)
+			return c.Status(fiber.StatusBadRequest).JSON(errorResponse)
 		}
 
 		return c.Status(fiber.StatusOK).JSON(entity)
 	}
 }
 
-func (h *TableChangeAlertHandler) GetTableNames() fiber.Handler {
+func (h *TableChangeAlertHandler) getTableNames() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		entities, count, err := h.Service.GetTableNames(c.UserContext())
 		if err != nil {
@@ -222,7 +204,7 @@ func (h *TableChangeAlertHandler) GetTableNames() fiber.Handler {
 	}
 }
 
-func (h *TableChangeAlertHandler) GetTopicNames() fiber.Handler {
+func (h *TableChangeAlertHandler) getTopicNames() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		entities, count, err := h.Service.GetTopicNames()
 		if err != nil {

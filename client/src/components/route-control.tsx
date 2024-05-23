@@ -67,7 +67,6 @@ function RouteControlForm({
               description="Select the unit of measurement for mileage, such as miles or kilometers."
             />
           </div>
-
           <div className="col-span-full">
             <CheckboxInput
               name="generateRoutes"

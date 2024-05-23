@@ -24,15 +24,15 @@ func NewOrganizationHandler(s *api.Server) *OrganizationHandler {
 
 func (h *OrganizationHandler) RegisterRoutes(r fiber.Router) {
 	organizationAPI := r.Group("/organizations")
-	organizationAPI.Get("/me", h.GetUserOrganization())
-	organizationAPI.Post("/logo", h.UploadLogo())
-	organizationAPI.Put("/:orgID", h.UpdateOrganization())
+	organizationAPI.Get("/me", h.getUserOrganization())
+	organizationAPI.Post("/upload-logo", h.uploadOrganizationLogo())
+	organizationAPI.Put("/:orgID", h.updateOrganization())
 }
 
-// GetUserOrganization is a handler that returns the organization of the currently authenticated user.
+// getUserOrganization is a handler that returns the organization of the currently authenticated user.
 //
 // GET /organizations/me
-func (h *OrganizationHandler) GetUserOrganization() fiber.Handler {
+func (h *OrganizationHandler) getUserOrganization() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		buID, buOK := c.Locals(util.CTXBusinessUnitID).(uuid.UUID)
 		orgID, orgOK := c.Locals(util.CTXOrganizationID).(uuid.UUID)
@@ -61,7 +61,7 @@ func (h *OrganizationHandler) GetUserOrganization() fiber.Handler {
 	}
 }
 
-func (h *OrganizationHandler) UploadLogo() fiber.Handler {
+func (h *OrganizationHandler) uploadOrganizationLogo() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		orgID, ok := c.Locals(util.CTXOrganizationID).(uuid.UUID)
 		if !ok {
@@ -93,7 +93,7 @@ func (h *OrganizationHandler) UploadLogo() fiber.Handler {
 	}
 }
 
-func (h *OrganizationHandler) UpdateOrganization() fiber.Handler {
+func (h *OrganizationHandler) updateOrganization() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		orgID := c.Params("orgID")
 		if orgID == "" {

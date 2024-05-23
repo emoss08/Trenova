@@ -148,7 +148,7 @@ export async function getTopicNames(): Promise<Topic[]> {
 export async function postOrganizationLogo(logo: File): Promise<Organization> {
   const formData = new FormData();
   formData.append("logo", logo);
-  const response = await axios.post("organizations/logo", formData, {
+  const response = await axios.post("organizations/upload-logo", formData, {
     headers: {
       "Content-Type": "multipart/form-data",
     },

@@ -31,7 +31,7 @@ function TableChangeEditForm({
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }) {
-  const { handleSubmit, reset, control, watch, setValue } =
+  const { handleSubmit, reset, control, watch, setValue, formState } =
     useForm<TableChangeAlertFormValues>({
       resolver: yupResolver(tableChangeAlertSchema),
       defaultValues: tableChangeAlert,
@@ -48,6 +48,8 @@ function TableChangeEditForm({
 
     return () => subscription.unsubscribe();
   }, [watch, setValue]);
+
+  console.info("Table Change Alert errors", formState.errors);
 
   const mutation = useCustomMutation<TableChangeAlertFormValues>(control, {
     method: "PUT",

@@ -16,7 +16,7 @@ import (
 // a map where keys represent column names and values represent the corresponding values to
 // be checked. The constructed query uses parameterized arguments to prevent SQL injection.
 //
-// Args:
+// Parameters:
 //
 //	ctx (context.Context): The context for controlling the query lifetime.
 //	client (*gen.Client): The database client used for executing the query.

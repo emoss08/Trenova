@@ -3,6 +3,7 @@
 package ent
 
 import (
+	"encoding/json"
 	"fmt"
 	"strings"
 	"time"
@@ -37,10 +38,6 @@ type TableChangeAlert struct {
 	Name string `json:"name" validate:"required,max=50"`
 	// DatabaseAction holds the value of the "database_action" field.
 	DatabaseAction tablechangealert.DatabaseAction `json:"databaseAction" validate:"required,oneof=Insert Update Delete All"`
-	// Source holds the value of the "source" field.
-	Source tablechangealert.Source `json:"source" validate:"required,oneof=Kafka Database"`
-	// TableName holds the value of the "table_name" field.
-	TableName string `json:"tableName" validate:"max=255,required_if=source Database"`
 	// TopicName holds the value of the "topic_name" field.
 	TopicName string `json:"topicName" validate:"max=255,required_if=source Kafka"`
 	// Description holds the value of the "description" field.
@@ -59,6 +56,8 @@ type TableChangeAlert struct {
 	EffectiveDate *pgtype.Date `json:"effectiveDate"`
 	// ExpirationDate holds the value of the "expiration_date" field.
 	ExpirationDate *pgtype.Date `json:"expirationDate"`
+	// ConditionalLogic holds the value of the "conditional_logic" field.
+	ConditionalLogic map[string]interface{} `json:"conditionalLogic"`
 	// Edges holds the relations/edges for other nodes in the graph.
 	// The values are being populated by the TableChangeAlertQuery when eager-loading is set.
 	Edges        TableChangeAlertEdges `json:"edges"`
@@ -105,9 +104,11 @@ func (*TableChangeAlert) scanValues(columns []string) ([]any, error) {
 		switch columns[i] {
 		case tablechangealert.FieldEffectiveDate, tablechangealert.FieldExpirationDate:
 			values[i] = &sql.NullScanner{S: new(pgtype.Date)}
+		case tablechangealert.FieldConditionalLogic:
+			values[i] = new([]byte)
 		case tablechangealert.FieldVersion:
 			values[i] = new(sql.NullInt64)
-		case tablechangealert.FieldStatus, tablechangealert.FieldName, tablechangealert.FieldDatabaseAction, tablechangealert.FieldSource, tablechangealert.FieldTableName, tablechangealert.FieldTopicName, tablechangealert.FieldDescription, tablechangealert.FieldCustomSubject, tablechangealert.FieldFunctionName, tablechangealert.FieldTriggerName, tablechangealert.FieldListenerName, tablechangealert.FieldEmailRecipients:
+		case tablechangealert.FieldStatus, tablechangealert.FieldName, tablechangealert.FieldDatabaseAction, tablechangealert.FieldTopicName, tablechangealert.FieldDescription, tablechangealert.FieldCustomSubject, tablechangealert.FieldFunctionName, tablechangealert.FieldTriggerName, tablechangealert.FieldListenerName, tablechangealert.FieldEmailRecipients:
 			values[i] = new(sql.NullString)
 		case tablechangealert.FieldCreatedAt, tablechangealert.FieldUpdatedAt:
 			values[i] = new(sql.NullTime)
@@ -182,18 +183,6 @@ func (tca *TableChangeAlert) assignValues(columns []string, values []any) error 
 			} else if value.Valid {
 				tca.DatabaseAction = tablechangealert.DatabaseAction(value.String)
 			}
-		case tablechangealert.FieldSource:
-			if value, ok := values[i].(*sql.NullString); !ok {
-				return fmt.Errorf("unexpected type %T for field source", values[i])
-			} else if value.Valid {
-				tca.Source = tablechangealert.Source(value.String)
-			}
-		case tablechangealert.FieldTableName:
-			if value, ok := values[i].(*sql.NullString); !ok {
-				return fmt.Errorf("unexpected type %T for field table_name", values[i])
-			} else if value.Valid {
-				tca.TableName = value.String
-			}
 		case tablechangealert.FieldTopicName:
 			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field topic_name", values[i])
@@ -247,6 +236,14 @@ func (tca *TableChangeAlert) assignValues(columns []string, values []any) error 
 				return fmt.Errorf("unexpected type %T for field expiration_date", values[i])
 			} else if value.Valid {
 				tca.ExpirationDate = value.S.(*pgtype.Date)
+			}
+		case tablechangealert.FieldConditionalLogic:
+			if value, ok := values[i].(*[]byte); !ok {
+				return fmt.Errorf("unexpected type %T for field conditional_logic", values[i])
+			} else if value != nil && len(*value) > 0 {
+				if err := json.Unmarshal(*value, &tca.ConditionalLogic); err != nil {
+					return fmt.Errorf("unmarshal field conditional_logic: %w", err)
+				}
 			}
 		default:
 			tca.selectValues.Set(columns[i], values[i])
@@ -318,12 +315,6 @@ func (tca *TableChangeAlert) String() string {
 	builder.WriteString("database_action=")
 	builder.WriteString(fmt.Sprintf("%v", tca.DatabaseAction))
 	builder.WriteString(", ")
-	builder.WriteString("source=")
-	builder.WriteString(fmt.Sprintf("%v", tca.Source))
-	builder.WriteString(", ")
-	builder.WriteString("table_name=")
-	builder.WriteString(tca.TableName)
-	builder.WriteString(", ")
 	builder.WriteString("topic_name=")
 	builder.WriteString(tca.TopicName)
 	builder.WriteString(", ")
@@ -354,6 +345,9 @@ func (tca *TableChangeAlert) String() string {
 		builder.WriteString("expiration_date=")
 		builder.WriteString(fmt.Sprintf("%v", *v))
 	}
+	builder.WriteString(", ")
+	builder.WriteString("conditional_logic=")
+	builder.WriteString(fmt.Sprintf("%v", tca.ConditionalLogic))
 	builder.WriteByte(')')
 	return builder.String()
 }

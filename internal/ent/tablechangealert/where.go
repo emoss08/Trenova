@@ -87,11 +87,6 @@ func Name(v string) predicate.TableChangeAlert {
 	return predicate.TableChangeAlert(sql.FieldEQ(FieldName, v))
 }
 
-// TableName applies equality check predicate on the "table_name" field. It's identical to TableNameEQ.
-func TableName(v string) predicate.TableChangeAlert {
-	return predicate.TableChangeAlert(sql.FieldEQ(FieldTableName, v))
-}
-
 // TopicName applies equality check predicate on the "topic_name" field. It's identical to TopicNameEQ.
 func TopicName(v string) predicate.TableChangeAlert {
 	return predicate.TableChangeAlert(sql.FieldEQ(FieldTopicName, v))
@@ -400,101 +395,6 @@ func DatabaseActionIn(vs ...DatabaseAction) predicate.TableChangeAlert {
 // DatabaseActionNotIn applies the NotIn predicate on the "database_action" field.
 func DatabaseActionNotIn(vs ...DatabaseAction) predicate.TableChangeAlert {
 	return predicate.TableChangeAlert(sql.FieldNotIn(FieldDatabaseAction, vs...))
-}
-
-// SourceEQ applies the EQ predicate on the "source" field.
-func SourceEQ(v Source) predicate.TableChangeAlert {
-	return predicate.TableChangeAlert(sql.FieldEQ(FieldSource, v))
-}
-
-// SourceNEQ applies the NEQ predicate on the "source" field.
-func SourceNEQ(v Source) predicate.TableChangeAlert {
-	return predicate.TableChangeAlert(sql.FieldNEQ(FieldSource, v))
-}
-
-// SourceIn applies the In predicate on the "source" field.
-func SourceIn(vs ...Source) predicate.TableChangeAlert {
-	return predicate.TableChangeAlert(sql.FieldIn(FieldSource, vs...))
-}
-
-// SourceNotIn applies the NotIn predicate on the "source" field.
-func SourceNotIn(vs ...Source) predicate.TableChangeAlert {
-	return predicate.TableChangeAlert(sql.FieldNotIn(FieldSource, vs...))
-}
-
-// TableNameEQ applies the EQ predicate on the "table_name" field.
-func TableNameEQ(v string) predicate.TableChangeAlert {
-	return predicate.TableChangeAlert(sql.FieldEQ(FieldTableName, v))
-}
-
-// TableNameNEQ applies the NEQ predicate on the "table_name" field.
-func TableNameNEQ(v string) predicate.TableChangeAlert {
-	return predicate.TableChangeAlert(sql.FieldNEQ(FieldTableName, v))
-}
-
-// TableNameIn applies the In predicate on the "table_name" field.
-func TableNameIn(vs ...string) predicate.TableChangeAlert {
-	return predicate.TableChangeAlert(sql.FieldIn(FieldTableName, vs...))
-}
-
-// TableNameNotIn applies the NotIn predicate on the "table_name" field.
-func TableNameNotIn(vs ...string) predicate.TableChangeAlert {
-	return predicate.TableChangeAlert(sql.FieldNotIn(FieldTableName, vs...))
-}
-
-// TableNameGT applies the GT predicate on the "table_name" field.
-func TableNameGT(v string) predicate.TableChangeAlert {
-	return predicate.TableChangeAlert(sql.FieldGT(FieldTableName, v))
-}
-
-// TableNameGTE applies the GTE predicate on the "table_name" field.
-func TableNameGTE(v string) predicate.TableChangeAlert {
-	return predicate.TableChangeAlert(sql.FieldGTE(FieldTableName, v))
-}
-
-// TableNameLT applies the LT predicate on the "table_name" field.
-func TableNameLT(v string) predicate.TableChangeAlert {
-	return predicate.TableChangeAlert(sql.FieldLT(FieldTableName, v))
-}
-
-// TableNameLTE applies the LTE predicate on the "table_name" field.
-func TableNameLTE(v string) predicate.TableChangeAlert {
-	return predicate.TableChangeAlert(sql.FieldLTE(FieldTableName, v))
-}
-
-// TableNameContains applies the Contains predicate on the "table_name" field.
-func TableNameContains(v string) predicate.TableChangeAlert {
-	return predicate.TableChangeAlert(sql.FieldContains(FieldTableName, v))
-}
-
-// TableNameHasPrefix applies the HasPrefix predicate on the "table_name" field.
-func TableNameHasPrefix(v string) predicate.TableChangeAlert {
-	return predicate.TableChangeAlert(sql.FieldHasPrefix(FieldTableName, v))
-}
-
-// TableNameHasSuffix applies the HasSuffix predicate on the "table_name" field.
-func TableNameHasSuffix(v string) predicate.TableChangeAlert {
-	return predicate.TableChangeAlert(sql.FieldHasSuffix(FieldTableName, v))
-}
-
-// TableNameIsNil applies the IsNil predicate on the "table_name" field.
-func TableNameIsNil() predicate.TableChangeAlert {
-	return predicate.TableChangeAlert(sql.FieldIsNull(FieldTableName))
-}
-
-// TableNameNotNil applies the NotNil predicate on the "table_name" field.
-func TableNameNotNil() predicate.TableChangeAlert {
-	return predicate.TableChangeAlert(sql.FieldNotNull(FieldTableName))
-}
-
-// TableNameEqualFold applies the EqualFold predicate on the "table_name" field.
-func TableNameEqualFold(v string) predicate.TableChangeAlert {
-	return predicate.TableChangeAlert(sql.FieldEqualFold(FieldTableName, v))
-}
-
-// TableNameContainsFold applies the ContainsFold predicate on the "table_name" field.
-func TableNameContainsFold(v string) predicate.TableChangeAlert {
-	return predicate.TableChangeAlert(sql.FieldContainsFold(FieldTableName, v))
 }
 
 // TopicNameEQ applies the EQ predicate on the "topic_name" field.
@@ -1120,6 +1020,16 @@ func ExpirationDateIsNil() predicate.TableChangeAlert {
 // ExpirationDateNotNil applies the NotNil predicate on the "expiration_date" field.
 func ExpirationDateNotNil() predicate.TableChangeAlert {
 	return predicate.TableChangeAlert(sql.FieldNotNull(FieldExpirationDate))
+}
+
+// ConditionalLogicIsNil applies the IsNil predicate on the "conditional_logic" field.
+func ConditionalLogicIsNil() predicate.TableChangeAlert {
+	return predicate.TableChangeAlert(sql.FieldIsNull(FieldConditionalLogic))
+}
+
+// ConditionalLogicNotNil applies the NotNil predicate on the "conditional_logic" field.
+func ConditionalLogicNotNil() predicate.TableChangeAlert {
+	return predicate.TableChangeAlert(sql.FieldNotNull(FieldConditionalLogic))
 }
 
 // HasBusinessUnit applies the HasEdge predicate on the "business_unit" edge.

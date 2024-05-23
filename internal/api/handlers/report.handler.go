@@ -3,7 +3,9 @@ package handlers
 import (
 	"github.com/emoss08/trenova/internal/api"
 	"github.com/emoss08/trenova/internal/api/services"
+	rtypes "github.com/emoss08/trenova/internal/api/services/types"
 	"github.com/emoss08/trenova/internal/util"
+
 	"github.com/emoss08/trenova/internal/util/types"
 	"github.com/gofiber/fiber/v2"
 	"github.com/google/uuid"
@@ -64,7 +66,7 @@ func (h *ReportHandler) GetColumnNames() fiber.Handler {
 // GenerateReport generates a report based on the request.
 func (h *ReportHandler) GenerateReport() fiber.Handler {
 	return func(c *fiber.Ctx) error {
-		var request services.GenerateReportRequest
+		var request rtypes.GenerateReportRequest
 
 		if err := util.ParseBodyAndValidate(c, &request); err != nil {
 			return err

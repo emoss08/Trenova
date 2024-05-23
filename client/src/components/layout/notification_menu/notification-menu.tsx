@@ -174,10 +174,10 @@ export function NotificationMenu() {
         <Tabs
           defaultValue="inbox"
           value={activeTab}
-          className="w-full"
+          className="w-full flex-1"
           onValueChange={setActiveTab}
         >
-          <TabsList>
+          <TabsList className="mx-auto space-x-4">
             <TabsTrigger
               isNotification={userHasNotifications}
               notificationCount={notificationsData?.unreadCount}

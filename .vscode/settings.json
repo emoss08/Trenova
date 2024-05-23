@@ -18,7 +18,7 @@
         "editorBracketHighlight.foreground3": "#b6b6b6",
         "editorBracketHighlight.unexpectedBracket.foreground": "#afafaf",
     },
-    "editor.fontFamily": "'JetBrainsMono Nerd Font'",
+    "editor.fontFamily": "CaskaydiaCove Nerd Font",
     "diffEditor.codeLens": true,
     "tooltitude.codeAction.runDebug": false,
     "tooltitude.codeLens.packImports": false,

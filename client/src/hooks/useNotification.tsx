@@ -32,7 +32,8 @@ export function useNotificationListener() {
             );
           });
       },
-      onClose: (event: CloseEvent) => console.info(event),
+      onClose: (event: CloseEvent) =>
+        console.info(`Websocket closed: ${event.reason}`),
     });
 
     return () => {
