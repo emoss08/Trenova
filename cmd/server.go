@@ -48,6 +48,10 @@ func runServer() {
 
 	s := api.NewServer(serverConfig)
 
+	if err := s.LoadRSAKeys(); err != nil {
+		log.Fatal().Err(err).Msg("Failed to load RSA keys")
+	}
+
 	if err := s.InitClient(ctx); err != nil {
 		log.Fatal().Err(err).Msg("Failed to initialize entity client")
 	}

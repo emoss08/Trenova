@@ -11,6 +11,7 @@ require (
 	github.com/gofiber/contrib/websocket v1.3.1
 	github.com/gofiber/fiber/v2 v2.52.4
 	github.com/gofiber/storage/redis/v2 v2.0.3
+	github.com/golang-jwt/jwt/v5 v5.2.1
 	github.com/imroc/req/v3 v3.43.3
 	github.com/mattn/go-sqlite3 v1.14.22
 	github.com/nyaruka/phonenumbers v1.3.4
@@ -19,13 +20,14 @@ require (
 	github.com/spf13/cobra v1.8.0
 	github.com/stretchr/testify v1.9.0
 	github.com/subosito/gotenv v1.6.0
-	github.com/valyala/fasthttp v1.52.0
+	github.com/valyala/fasthttp v1.53.0
 	googlemaps.github.io/maps v1.7.0
 )
 
 require (
 	ariga.io/atlas v0.22.0 // indirect
 	github.com/99designs/gqlgen v0.17.45 // indirect
+	github.com/MicahParks/keyfunc/v2 v2.1.0 // indirect
 	github.com/agext/levenshtein v1.2.3 // indirect
 	github.com/agnivade/levenshtein v1.1.1 // indirect
 	github.com/andybalholm/brotli v1.1.0 // indirect
@@ -101,6 +103,8 @@ require (
 	github.com/confluentinc/confluent-kafka-go/v2 v2.3.0
 	github.com/fatih/color v1.16.0
 	github.com/go-playground/validator/v10 v10.20.0
+	github.com/gofiber/contrib/fiberzerolog v1.0.1
+	github.com/gofiber/contrib/jwt v1.0.9
 	github.com/google/uuid v1.6.0
 	github.com/jackc/pgx/v5 v5.5.5
 	github.com/minio/minio-go/v7 v7.0.70

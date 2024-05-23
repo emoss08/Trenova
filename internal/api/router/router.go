@@ -2,23 +2,22 @@ package router //nolint:cyclop // This package is responsible for setting up the
 
 import (
 	"github.com/bytedance/sonic"
+	"github.com/emoss08/trenova/internal/api"
+	"github.com/emoss08/trenova/internal/api/handlers"
 	"github.com/emoss08/trenova/internal/api/middleware"
+	"github.com/gofiber/contrib/fiberzerolog"
 	"github.com/gofiber/contrib/websocket"
+	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/compress"
+	"github.com/gofiber/fiber/v2/middleware/cors"
 	"github.com/gofiber/fiber/v2/middleware/encryptcookie"
 	"github.com/gofiber/fiber/v2/middleware/etag"
 	"github.com/gofiber/fiber/v2/middleware/healthcheck"
 	"github.com/gofiber/fiber/v2/middleware/helmet"
 	"github.com/gofiber/fiber/v2/middleware/idempotency"
-	"github.com/gofiber/fiber/v2/middleware/logger"
 	"github.com/gofiber/fiber/v2/middleware/monitor"
 	"github.com/gofiber/fiber/v2/middleware/recover"
 	"github.com/gofiber/fiber/v2/middleware/requestid"
-
-	"github.com/emoss08/trenova/internal/api"
-	"github.com/emoss08/trenova/internal/api/handlers"
-	"github.com/gofiber/fiber/v2"
-	"github.com/gofiber/fiber/v2/middleware/cors"
 	"github.com/rs/zerolog/log"
 )
 
@@ -39,7 +38,9 @@ func Init(s *api.Server) {
 
 	// Register the middleware that is globally applied before authentication.
 	if s.Config.Fiber.EnableLoggerMiddleware {
-		s.Fiber.Use(logger.New())
+		s.Fiber.Use(fiberzerolog.New(fiberzerolog.Config{
+			Logger: s.Logger,
+		}))
 	} else {
 		log.Warn().Msg("Logger middleware is disabled. This is not recommended.")
 	}
@@ -120,11 +121,8 @@ func Init(s *api.Server) {
 		log.Warn().Msg("Idempotency middleware is disabled. This is not recommended.")
 	}
 
-	if s.Config.Fiber.EnableSessionMiddleware {
-		apiV1.Use(middleware.New(s))
-	} else {
-		log.Warn().Msg("Session middleware is disabled. This is not recommended.")
-	}
+	// Initialize the JWT middleware.
+	apiV1.Use(middleware.InitJWT(s))
 
 	// Health check route.
 	s.Fiber.Use(healthcheck.New(healthcheck.Config{
