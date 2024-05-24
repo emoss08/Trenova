@@ -1,6 +1,7 @@
 import type {
-  DatabaseActionChoicesProps,
   EmailProtocolChoiceProps,
+  EnumDatabaseAction,
+  EnumDeliveryMethod,
   RouteDistanceUnitProps,
   RouteModelChoiceProps,
   TimezoneChoices,
@@ -19,16 +20,18 @@ export type Organization = {
 
 export type OrganizationFormValues = Omit<Organization, "id">;
 
+// type DeliveryMethod = "Email" | "Api" | "Local" | "Sms";
+
 export interface TableChangeAlert extends BaseModel {
   id: string;
   status: StatusChoiceProps;
   name: string;
-  databaseAction: DatabaseActionChoicesProps;
+  databaseAction: EnumDatabaseAction;
   topicName: string;
+  deliveryMethod: EnumDeliveryMethod;
   description?: string;
-  emailProfile?: string;
-  emailRecipients: string;
-  conditionalLogic?: object | null;
+  emailRecipients?: string;
+  // conditionalLogic?: object | null;
   customSubject?: string;
   effectiveDate?: string | null;
   expirationDate?: string | null;

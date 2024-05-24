@@ -7,6 +7,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/ent"
 	"github.com/emoss08/trenova/internal/ent/hook"
+	"github.com/emoss08/trenova/internal/ent/tablechangealert"
 	"github.com/emoss08/trenova/internal/util"
 	"github.com/emoss08/trenova/internal/util/types"
 )
@@ -39,6 +40,9 @@ func ValidateTableChangeAlerts(next ent.Mutator) ent.Mutator {
 	return hook.TableChangeAlertFunc(func(ctx context.Context, m *ent.TableChangeAlertMutation) (ent.Value, error) {
 		var errs []types.ValidationErrorDetail
 
+		// Validate the delivery method
+		validateEmailDeliveryMethod(m, &errs)
+
 		if len(errs) > 0 {
 			return nil, &types.ValidationErrorResponse{
 				Type:   "validationError",
@@ -48,6 +52,44 @@ func ValidateTableChangeAlerts(next ent.Mutator) ent.Mutator {
 
 		return next.Mutate(ctx, m)
 	})
+}
+
+func validateEmailDeliveryMethod(m *ent.TableChangeAlertMutation, validationErrors *[]types.ValidationErrorDetail) {
+	deliveryMethod, exists := m.DeliveryMethod()
+	_, cexists := m.CustomSubject()
+	_, eexists := m.EmailRecipients()
+
+	if !exists {
+		*validationErrors = append(*validationErrors, types.ValidationErrorDetail{
+			Attr:   "deliveryMethod",
+			Detail: "Delivery method is required. Please try again.",
+			Code:   "invalid",
+		})
+	}
+
+	if deliveryMethod != tablechangealert.DeliveryMethodEmail && cexists {
+		*validationErrors = append(*validationErrors, types.ValidationErrorDetail{
+			Attr:   "customSubject",
+			Detail: "Custom subject is only allowed for `Email` delivery method. Please try again.",
+			Code:   "invalid",
+		})
+	}
+
+	if deliveryMethod != tablechangealert.DeliveryMethodEmail && eexists {
+		*validationErrors = append(*validationErrors, types.ValidationErrorDetail{
+			Attr:   "emailRecipients",
+			Detail: "Email recipients are only allowed for `Email` delivery method. Please try again.",
+			Code:   "invalid",
+		})
+	}
+
+	if deliveryMethod == tablechangealert.DeliveryMethodEmail && !eexists {
+		*validationErrors = append(*validationErrors, types.ValidationErrorDetail{
+			Attr:   "emailRecipients",
+			Detail: "Email recipients are required for `Email` delivery method. Please try again.",
+			Code:   "invalid",
+		})
+	}
 }
 
 // ValidateConditionalLogic validates the conditional logic provided in the TableChangeAlertMutation.
@@ -63,7 +105,7 @@ func ValidateTableChangeAlerts(next ent.Mutator) ent.Mutator {
 //
 //	error: An error if the conditional logic is invalid.
 func ValidateConditionalLogic(data map[string]any) error {
-	requiredKeys := []string{"name", "description", "tableName", "conditions"}
+	requiredKeys := []string{"name", "description", "topic", "conditions"}
 
 	// Check if required keys are present
 	if err := validateRequiredKeys(data, requiredKeys); err != nil {

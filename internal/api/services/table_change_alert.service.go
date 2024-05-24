@@ -97,6 +97,7 @@ func (r *TableChangeAlertService) createTableChangeAlertEntity(
 		SetTopicName(entity.TopicName).
 		SetDescription(entity.Description).
 		SetCustomSubject(entity.CustomSubject).
+		SetDeliveryMethod(entity.DeliveryMethod).
 		SetEmailRecipients(entity.EmailRecipients).
 		SetEffectiveDate(entity.EffectiveDate).
 		SetExpirationDate(entity.ExpirationDate).
@@ -148,6 +149,7 @@ func (r *TableChangeAlertService) updateTableChangeAlertEntity(
 		SetName(entity.Name).
 		SetDatabaseAction(entity.DatabaseAction).
 		SetTopicName(entity.TopicName).
+		SetDeliveryMethod(entity.DeliveryMethod).
 		SetDescription(entity.Description).
 		SetCustomSubject(entity.CustomSubject).
 		SetEmailRecipients(entity.EmailRecipients).

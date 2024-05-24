@@ -1125,7 +1125,7 @@ var (
 		{Name: "id", Type: field.TypeUUID},
 		{Name: "created_at", Type: field.TypeTime},
 		{Name: "updated_at", Type: field.TypeTime},
-		{Name: "api_key", Type: field.TypeString, Unique: true},
+		{Name: "api_key", Type: field.TypeString},
 		{Name: "mileage_unit", Type: field.TypeEnum, Enums: []string{"Imperial", "Metric"}, Default: "Imperial"},
 		{Name: "add_customer_location", Type: field.TypeBool, Default: false},
 		{Name: "auto_geocode", Type: field.TypeBool, Default: false},
@@ -2365,6 +2365,7 @@ var (
 		{Name: "topic_name", Type: field.TypeString, Nullable: true},
 		{Name: "description", Type: field.TypeString, Nullable: true, Size: 2147483647},
 		{Name: "custom_subject", Type: field.TypeString, Nullable: true},
+		{Name: "delivery_method", Type: field.TypeEnum, Enums: []string{"Email", "Local", "Api", "Sms"}, Default: "Email", SchemaType: map[string]string{"postgres": "VARCHAR(5)", "sqlite3": "VARCHAR(5)"}},
 		{Name: "email_recipients", Type: field.TypeString, Nullable: true, Size: 2147483647},
 		{Name: "effective_date", Type: field.TypeOther, Nullable: true, SchemaType: map[string]string{"postgres": "date", "sqlite3": "date"}},
 		{Name: "expiration_date", Type: field.TypeOther, Nullable: true, SchemaType: map[string]string{"postgres": "date", "sqlite3": "date"}},
@@ -2380,13 +2381,13 @@ var (
 		ForeignKeys: []*schema.ForeignKey{
 			{
 				Symbol:     "table_change_alerts_business_units_business_unit",
-				Columns:    []*schema.Column{TableChangeAlertsColumns[14]},
+				Columns:    []*schema.Column{TableChangeAlertsColumns[15]},
 				RefColumns: []*schema.Column{BusinessUnitsColumns[0]},
 				OnDelete:   schema.Cascade,
 			},
 			{
 				Symbol:     "table_change_alerts_organizations_organization",
-				Columns:    []*schema.Column{TableChangeAlertsColumns[15]},
+				Columns:    []*schema.Column{TableChangeAlertsColumns[16]},
 				RefColumns: []*schema.Column{OrganizationsColumns[0]},
 				OnDelete:   schema.Cascade,
 			},

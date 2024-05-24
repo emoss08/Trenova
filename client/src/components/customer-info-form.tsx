@@ -38,9 +38,6 @@ export function CustomerInfoForm({ open }: { open: boolean }) {
             name="code"
             label="Code"
             readOnly
-            autoCapitalize="none"
-            autoCorrect="off"
-            type="text"
             placeholder="Code"
             description="Unique identifier for the customer."
             maxLength={10}
@@ -54,8 +51,6 @@ export function CustomerInfoForm({ open }: { open: boolean }) {
             rules={{ required: true }}
             name="name"
             label="Name"
-            autoCapitalize="none"
-            autoCorrect="off"
             placeholder="Name"
             description="Specify the official name of the customer."
           />

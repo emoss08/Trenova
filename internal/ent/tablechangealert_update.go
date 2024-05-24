@@ -175,6 +175,20 @@ func (tcau *TableChangeAlertUpdate) ClearCustomSubject() *TableChangeAlertUpdate
 	return tcau
 }
 
+// SetDeliveryMethod sets the "delivery_method" field.
+func (tcau *TableChangeAlertUpdate) SetDeliveryMethod(tm tablechangealert.DeliveryMethod) *TableChangeAlertUpdate {
+	tcau.mutation.SetDeliveryMethod(tm)
+	return tcau
+}
+
+// SetNillableDeliveryMethod sets the "delivery_method" field if the given value is not nil.
+func (tcau *TableChangeAlertUpdate) SetNillableDeliveryMethod(tm *tablechangealert.DeliveryMethod) *TableChangeAlertUpdate {
+	if tm != nil {
+		tcau.SetDeliveryMethod(*tm)
+	}
+	return tcau
+}
+
 // SetEmailRecipients sets the "email_recipients" field.
 func (tcau *TableChangeAlertUpdate) SetEmailRecipients(s string) *TableChangeAlertUpdate {
 	tcau.mutation.SetEmailRecipients(s)
@@ -306,6 +320,11 @@ func (tcau *TableChangeAlertUpdate) check() error {
 			return &ValidationError{Name: "database_action", err: fmt.Errorf(`ent: validator failed for field "TableChangeAlert.database_action": %w`, err)}
 		}
 	}
+	if v, ok := tcau.mutation.DeliveryMethod(); ok {
+		if err := tablechangealert.DeliveryMethodValidator(v); err != nil {
+			return &ValidationError{Name: "delivery_method", err: fmt.Errorf(`ent: validator failed for field "TableChangeAlert.delivery_method": %w`, err)}
+		}
+	}
 	if _, ok := tcau.mutation.BusinessUnitID(); tcau.mutation.BusinessUnitCleared() && !ok {
 		return errors.New(`ent: clearing a required unique edge "TableChangeAlert.business_unit"`)
 	}
@@ -368,6 +387,9 @@ func (tcau *TableChangeAlertUpdate) sqlSave(ctx context.Context) (n int, err err
 	}
 	if tcau.mutation.CustomSubjectCleared() {
 		_spec.ClearField(tablechangealert.FieldCustomSubject, field.TypeString)
+	}
+	if value, ok := tcau.mutation.DeliveryMethod(); ok {
+		_spec.SetField(tablechangealert.FieldDeliveryMethod, field.TypeEnum, value)
 	}
 	if value, ok := tcau.mutation.EmailRecipients(); ok {
 		_spec.SetField(tablechangealert.FieldEmailRecipients, field.TypeString, value)
@@ -587,6 +609,20 @@ func (tcauo *TableChangeAlertUpdateOne) ClearCustomSubject() *TableChangeAlertUp
 	return tcauo
 }
 
+// SetDeliveryMethod sets the "delivery_method" field.
+func (tcauo *TableChangeAlertUpdateOne) SetDeliveryMethod(tm tablechangealert.DeliveryMethod) *TableChangeAlertUpdateOne {
+	tcauo.mutation.SetDeliveryMethod(tm)
+	return tcauo
+}
+
+// SetNillableDeliveryMethod sets the "delivery_method" field if the given value is not nil.
+func (tcauo *TableChangeAlertUpdateOne) SetNillableDeliveryMethod(tm *tablechangealert.DeliveryMethod) *TableChangeAlertUpdateOne {
+	if tm != nil {
+		tcauo.SetDeliveryMethod(*tm)
+	}
+	return tcauo
+}
+
 // SetEmailRecipients sets the "email_recipients" field.
 func (tcauo *TableChangeAlertUpdateOne) SetEmailRecipients(s string) *TableChangeAlertUpdateOne {
 	tcauo.mutation.SetEmailRecipients(s)
@@ -731,6 +767,11 @@ func (tcauo *TableChangeAlertUpdateOne) check() error {
 			return &ValidationError{Name: "database_action", err: fmt.Errorf(`ent: validator failed for field "TableChangeAlert.database_action": %w`, err)}
 		}
 	}
+	if v, ok := tcauo.mutation.DeliveryMethod(); ok {
+		if err := tablechangealert.DeliveryMethodValidator(v); err != nil {
+			return &ValidationError{Name: "delivery_method", err: fmt.Errorf(`ent: validator failed for field "TableChangeAlert.delivery_method": %w`, err)}
+		}
+	}
 	if _, ok := tcauo.mutation.BusinessUnitID(); tcauo.mutation.BusinessUnitCleared() && !ok {
 		return errors.New(`ent: clearing a required unique edge "TableChangeAlert.business_unit"`)
 	}
@@ -810,6 +851,9 @@ func (tcauo *TableChangeAlertUpdateOne) sqlSave(ctx context.Context) (_node *Tab
 	}
 	if tcauo.mutation.CustomSubjectCleared() {
 		_spec.ClearField(tablechangealert.FieldCustomSubject, field.TypeString)
+	}
+	if value, ok := tcauo.mutation.DeliveryMethod(); ok {
+		_spec.SetField(tablechangealert.FieldDeliveryMethod, field.TypeEnum, value)
 	}
 	if value, ok := tcauo.mutation.EmailRecipients(); ok {
 		_spec.SetField(tablechangealert.FieldEmailRecipients, field.TypeString, value)

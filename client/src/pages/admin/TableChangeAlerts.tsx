@@ -6,11 +6,11 @@ import {
   DataTableTooltipColumnHeader,
 } from "@/components/common/table/data-table-column-header";
 import { StatusBadge } from "@/components/common/table/data-table-components";
-import { TableChangeAlertEditSheet } from "@/components/table-change-edit-sheet";
-import { TableChangeAlertSheet } from "@/components/table-change-sheet";
+import { TableChangeAlertEditSheet } from "@/components/table-change-alerts/table-change-edit-sheet";
+import { TableChangeAlertSheet } from "@/components/table-change-alerts/table-change-sheet";
 import {
   databaseActionChoices,
-  sourceChoices,
+  deliveryMethodChoices,
   tableStatusChoices,
 } from "@/lib/choices";
 import { type TableChangeAlert } from "@/types/organization";
@@ -79,7 +79,7 @@ const columns: ColumnDef<TableChangeAlert>[] = [
     },
     cell: ({ row }) => {
       return (
-        <div className="flex items-center space-x-2 text-sm font-medium text-foreground">
+        <div className="text-foreground flex items-center space-x-2 text-sm font-medium">
           <div
             className={"mx-2 size-2 rounded-xl"}
             style={{
@@ -92,20 +92,24 @@ const columns: ColumnDef<TableChangeAlert>[] = [
     },
   },
   {
-    accessorKey: "source",
-    header: "Source",
+    accessorKey: "deliveryMethod",
+    header: "Delivery Method",
     filterFn: (row, id, value) => {
       return value.includes(row.getValue(id));
     },
-  },
-  {
-    accessorKey: "tableName",
-    header: () => (
-      <DataTableTooltipColumnHeader
-        title="Table Name"
-        tooltip="Table is the name of the table that will be monitored for changes."
-      />
-    ),
+    cell: ({ row }) => {
+      return (
+        <div className="text-foreground flex items-center space-x-2 text-sm font-medium uppercase">
+          <div
+            className={"mx-2 size-2 rounded-xl"}
+            style={{
+              backgroundColor: actionColor(row.original.deliveryMethod),
+            }}
+          />
+          {row.original.deliveryMethod}
+        </div>
+      );
+    },
   },
   {
     accessorKey: "topicName",
@@ -129,11 +133,10 @@ const filters: FilterConfig<TableChangeAlert>[] = [
     title: "Database Action",
     options: databaseActionChoices,
   },
-
   {
-    columnName: "source",
-    title: "Source",
-    options: sourceChoices,
+    columnName: "deliveryMethod",
+    title: "Delivery Method",
+    options: deliveryMethodChoices,
   },
 ];
 

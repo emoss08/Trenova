@@ -607,6 +607,26 @@ func CustomSubjectContainsFold(v string) predicate.TableChangeAlert {
 	return predicate.TableChangeAlert(sql.FieldContainsFold(FieldCustomSubject, v))
 }
 
+// DeliveryMethodEQ applies the EQ predicate on the "delivery_method" field.
+func DeliveryMethodEQ(v DeliveryMethod) predicate.TableChangeAlert {
+	return predicate.TableChangeAlert(sql.FieldEQ(FieldDeliveryMethod, v))
+}
+
+// DeliveryMethodNEQ applies the NEQ predicate on the "delivery_method" field.
+func DeliveryMethodNEQ(v DeliveryMethod) predicate.TableChangeAlert {
+	return predicate.TableChangeAlert(sql.FieldNEQ(FieldDeliveryMethod, v))
+}
+
+// DeliveryMethodIn applies the In predicate on the "delivery_method" field.
+func DeliveryMethodIn(vs ...DeliveryMethod) predicate.TableChangeAlert {
+	return predicate.TableChangeAlert(sql.FieldIn(FieldDeliveryMethod, vs...))
+}
+
+// DeliveryMethodNotIn applies the NotIn predicate on the "delivery_method" field.
+func DeliveryMethodNotIn(vs ...DeliveryMethod) predicate.TableChangeAlert {
+	return predicate.TableChangeAlert(sql.FieldNotIn(FieldDeliveryMethod, vs...))
+}
+
 // EmailRecipientsEQ applies the EQ predicate on the "email_recipients" field.
 func EmailRecipientsEQ(v string) predicate.TableChangeAlert {
 	return predicate.TableChangeAlert(sql.FieldEQ(FieldEmailRecipients, v))

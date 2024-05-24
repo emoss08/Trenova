@@ -467,7 +467,32 @@ export const booleanStatusChoices: ReadonlyArray<IChoiceProps<boolean>> = [
   { value: false, label: "Inactive" },
 ];
 
+/* Type for Delivery Method */
+export enum EnumDeliveryMethod {
+  Email = "Email",
+  Api = "Api",
+  Local = "Local",
+  Sms = "Sms",
+}
+
+type DeliveryMethodChoicesProps = "Email" | "Api" | "Local" | "Sms";
+
+export const deliveryMethodChoices = [
+  { value: "Email", label: "Email", color: "#2563eb" },
+  { value: "Api", label: "API", color: "#15803d" },
+  { value: "Local", label: "Local", color: "#9c25eb" },
+  { value: "Sms", label: "SMS", color: "#b91c1c" },
+] satisfies ReadonlyArray<IChoiceProps<DeliveryMethodChoicesProps>>;
+
 /* Type for Database Actions */
+
+export enum EnumDatabaseAction {
+  Insert = "Insert",
+  Update = "Update",
+  Delete = "Delete",
+  All = "All",
+}
+
 export type DatabaseActionChoicesProps = "Insert" | "Update" | "Delete" | "All";
 
 export const databaseActionChoices = [

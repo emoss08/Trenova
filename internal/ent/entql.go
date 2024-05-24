@@ -1464,6 +1464,7 @@ var schemaGraph = func() *sqlgraph.Schema {
 			tablechangealert.FieldTopicName:        {Type: field.TypeString, Column: tablechangealert.FieldTopicName},
 			tablechangealert.FieldDescription:      {Type: field.TypeString, Column: tablechangealert.FieldDescription},
 			tablechangealert.FieldCustomSubject:    {Type: field.TypeString, Column: tablechangealert.FieldCustomSubject},
+			tablechangealert.FieldDeliveryMethod:   {Type: field.TypeEnum, Column: tablechangealert.FieldDeliveryMethod},
 			tablechangealert.FieldEmailRecipients:  {Type: field.TypeString, Column: tablechangealert.FieldEmailRecipients},
 			tablechangealert.FieldEffectiveDate:    {Type: field.TypeOther, Column: tablechangealert.FieldEffectiveDate},
 			tablechangealert.FieldExpirationDate:   {Type: field.TypeOther, Column: tablechangealert.FieldExpirationDate},
@@ -13246,6 +13247,11 @@ func (f *TableChangeAlertFilter) WhereDescription(p entql.StringP) {
 // WhereCustomSubject applies the entql string predicate on the custom_subject field.
 func (f *TableChangeAlertFilter) WhereCustomSubject(p entql.StringP) {
 	f.Where(p.Field(tablechangealert.FieldCustomSubject))
+}
+
+// WhereDeliveryMethod applies the entql string predicate on the delivery_method field.
+func (f *TableChangeAlertFilter) WhereDeliveryMethod(p entql.StringP) {
+	f.Where(p.Field(tablechangealert.FieldDeliveryMethod))
 }
 
 // WhereEmailRecipients applies the entql string predicate on the email_recipients field.
