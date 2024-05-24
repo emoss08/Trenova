@@ -1295,7 +1295,6 @@ func SeedTableChangeAlerts(
 			SetDatabaseAction(tablechangealert.DatabaseActionInsert).
 			SetDescription("Table change alert that alerts if a customer is created").
 			SetCustomSubject("Customer Created").
-			SetFunctionName("createCustomer").
 			Exec(ctx)
 	}
 	return err

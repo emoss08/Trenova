@@ -1464,9 +1464,6 @@ var schemaGraph = func() *sqlgraph.Schema {
 			tablechangealert.FieldTopicName:        {Type: field.TypeString, Column: tablechangealert.FieldTopicName},
 			tablechangealert.FieldDescription:      {Type: field.TypeString, Column: tablechangealert.FieldDescription},
 			tablechangealert.FieldCustomSubject:    {Type: field.TypeString, Column: tablechangealert.FieldCustomSubject},
-			tablechangealert.FieldFunctionName:     {Type: field.TypeString, Column: tablechangealert.FieldFunctionName},
-			tablechangealert.FieldTriggerName:      {Type: field.TypeString, Column: tablechangealert.FieldTriggerName},
-			tablechangealert.FieldListenerName:     {Type: field.TypeString, Column: tablechangealert.FieldListenerName},
 			tablechangealert.FieldEmailRecipients:  {Type: field.TypeString, Column: tablechangealert.FieldEmailRecipients},
 			tablechangealert.FieldEffectiveDate:    {Type: field.TypeOther, Column: tablechangealert.FieldEffectiveDate},
 			tablechangealert.FieldExpirationDate:   {Type: field.TypeOther, Column: tablechangealert.FieldExpirationDate},
@@ -13249,21 +13246,6 @@ func (f *TableChangeAlertFilter) WhereDescription(p entql.StringP) {
 // WhereCustomSubject applies the entql string predicate on the custom_subject field.
 func (f *TableChangeAlertFilter) WhereCustomSubject(p entql.StringP) {
 	f.Where(p.Field(tablechangealert.FieldCustomSubject))
-}
-
-// WhereFunctionName applies the entql string predicate on the function_name field.
-func (f *TableChangeAlertFilter) WhereFunctionName(p entql.StringP) {
-	f.Where(p.Field(tablechangealert.FieldFunctionName))
-}
-
-// WhereTriggerName applies the entql string predicate on the trigger_name field.
-func (f *TableChangeAlertFilter) WhereTriggerName(p entql.StringP) {
-	f.Where(p.Field(tablechangealert.FieldTriggerName))
-}
-
-// WhereListenerName applies the entql string predicate on the listener_name field.
-func (f *TableChangeAlertFilter) WhereListenerName(p entql.StringP) {
-	f.Where(p.Field(tablechangealert.FieldListenerName))
 }
 
 // WhereEmailRecipients applies the entql string predicate on the email_recipients field.

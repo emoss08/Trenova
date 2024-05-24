@@ -175,66 +175,6 @@ func (tcau *TableChangeAlertUpdate) ClearCustomSubject() *TableChangeAlertUpdate
 	return tcau
 }
 
-// SetFunctionName sets the "function_name" field.
-func (tcau *TableChangeAlertUpdate) SetFunctionName(s string) *TableChangeAlertUpdate {
-	tcau.mutation.SetFunctionName(s)
-	return tcau
-}
-
-// SetNillableFunctionName sets the "function_name" field if the given value is not nil.
-func (tcau *TableChangeAlertUpdate) SetNillableFunctionName(s *string) *TableChangeAlertUpdate {
-	if s != nil {
-		tcau.SetFunctionName(*s)
-	}
-	return tcau
-}
-
-// ClearFunctionName clears the value of the "function_name" field.
-func (tcau *TableChangeAlertUpdate) ClearFunctionName() *TableChangeAlertUpdate {
-	tcau.mutation.ClearFunctionName()
-	return tcau
-}
-
-// SetTriggerName sets the "trigger_name" field.
-func (tcau *TableChangeAlertUpdate) SetTriggerName(s string) *TableChangeAlertUpdate {
-	tcau.mutation.SetTriggerName(s)
-	return tcau
-}
-
-// SetNillableTriggerName sets the "trigger_name" field if the given value is not nil.
-func (tcau *TableChangeAlertUpdate) SetNillableTriggerName(s *string) *TableChangeAlertUpdate {
-	if s != nil {
-		tcau.SetTriggerName(*s)
-	}
-	return tcau
-}
-
-// ClearTriggerName clears the value of the "trigger_name" field.
-func (tcau *TableChangeAlertUpdate) ClearTriggerName() *TableChangeAlertUpdate {
-	tcau.mutation.ClearTriggerName()
-	return tcau
-}
-
-// SetListenerName sets the "listener_name" field.
-func (tcau *TableChangeAlertUpdate) SetListenerName(s string) *TableChangeAlertUpdate {
-	tcau.mutation.SetListenerName(s)
-	return tcau
-}
-
-// SetNillableListenerName sets the "listener_name" field if the given value is not nil.
-func (tcau *TableChangeAlertUpdate) SetNillableListenerName(s *string) *TableChangeAlertUpdate {
-	if s != nil {
-		tcau.SetListenerName(*s)
-	}
-	return tcau
-}
-
-// ClearListenerName clears the value of the "listener_name" field.
-func (tcau *TableChangeAlertUpdate) ClearListenerName() *TableChangeAlertUpdate {
-	tcau.mutation.ClearListenerName()
-	return tcau
-}
-
 // SetEmailRecipients sets the "email_recipients" field.
 func (tcau *TableChangeAlertUpdate) SetEmailRecipients(s string) *TableChangeAlertUpdate {
 	tcau.mutation.SetEmailRecipients(s)
@@ -366,21 +306,6 @@ func (tcau *TableChangeAlertUpdate) check() error {
 			return &ValidationError{Name: "database_action", err: fmt.Errorf(`ent: validator failed for field "TableChangeAlert.database_action": %w`, err)}
 		}
 	}
-	if v, ok := tcau.mutation.FunctionName(); ok {
-		if err := tablechangealert.FunctionNameValidator(v); err != nil {
-			return &ValidationError{Name: "function_name", err: fmt.Errorf(`ent: validator failed for field "TableChangeAlert.function_name": %w`, err)}
-		}
-	}
-	if v, ok := tcau.mutation.TriggerName(); ok {
-		if err := tablechangealert.TriggerNameValidator(v); err != nil {
-			return &ValidationError{Name: "trigger_name", err: fmt.Errorf(`ent: validator failed for field "TableChangeAlert.trigger_name": %w`, err)}
-		}
-	}
-	if v, ok := tcau.mutation.ListenerName(); ok {
-		if err := tablechangealert.ListenerNameValidator(v); err != nil {
-			return &ValidationError{Name: "listener_name", err: fmt.Errorf(`ent: validator failed for field "TableChangeAlert.listener_name": %w`, err)}
-		}
-	}
 	if _, ok := tcau.mutation.BusinessUnitID(); tcau.mutation.BusinessUnitCleared() && !ok {
 		return errors.New(`ent: clearing a required unique edge "TableChangeAlert.business_unit"`)
 	}
@@ -443,24 +368,6 @@ func (tcau *TableChangeAlertUpdate) sqlSave(ctx context.Context) (n int, err err
 	}
 	if tcau.mutation.CustomSubjectCleared() {
 		_spec.ClearField(tablechangealert.FieldCustomSubject, field.TypeString)
-	}
-	if value, ok := tcau.mutation.FunctionName(); ok {
-		_spec.SetField(tablechangealert.FieldFunctionName, field.TypeString, value)
-	}
-	if tcau.mutation.FunctionNameCleared() {
-		_spec.ClearField(tablechangealert.FieldFunctionName, field.TypeString)
-	}
-	if value, ok := tcau.mutation.TriggerName(); ok {
-		_spec.SetField(tablechangealert.FieldTriggerName, field.TypeString, value)
-	}
-	if tcau.mutation.TriggerNameCleared() {
-		_spec.ClearField(tablechangealert.FieldTriggerName, field.TypeString)
-	}
-	if value, ok := tcau.mutation.ListenerName(); ok {
-		_spec.SetField(tablechangealert.FieldListenerName, field.TypeString, value)
-	}
-	if tcau.mutation.ListenerNameCleared() {
-		_spec.ClearField(tablechangealert.FieldListenerName, field.TypeString)
 	}
 	if value, ok := tcau.mutation.EmailRecipients(); ok {
 		_spec.SetField(tablechangealert.FieldEmailRecipients, field.TypeString, value)
@@ -680,66 +587,6 @@ func (tcauo *TableChangeAlertUpdateOne) ClearCustomSubject() *TableChangeAlertUp
 	return tcauo
 }
 
-// SetFunctionName sets the "function_name" field.
-func (tcauo *TableChangeAlertUpdateOne) SetFunctionName(s string) *TableChangeAlertUpdateOne {
-	tcauo.mutation.SetFunctionName(s)
-	return tcauo
-}
-
-// SetNillableFunctionName sets the "function_name" field if the given value is not nil.
-func (tcauo *TableChangeAlertUpdateOne) SetNillableFunctionName(s *string) *TableChangeAlertUpdateOne {
-	if s != nil {
-		tcauo.SetFunctionName(*s)
-	}
-	return tcauo
-}
-
-// ClearFunctionName clears the value of the "function_name" field.
-func (tcauo *TableChangeAlertUpdateOne) ClearFunctionName() *TableChangeAlertUpdateOne {
-	tcauo.mutation.ClearFunctionName()
-	return tcauo
-}
-
-// SetTriggerName sets the "trigger_name" field.
-func (tcauo *TableChangeAlertUpdateOne) SetTriggerName(s string) *TableChangeAlertUpdateOne {
-	tcauo.mutation.SetTriggerName(s)
-	return tcauo
-}
-
-// SetNillableTriggerName sets the "trigger_name" field if the given value is not nil.
-func (tcauo *TableChangeAlertUpdateOne) SetNillableTriggerName(s *string) *TableChangeAlertUpdateOne {
-	if s != nil {
-		tcauo.SetTriggerName(*s)
-	}
-	return tcauo
-}
-
-// ClearTriggerName clears the value of the "trigger_name" field.
-func (tcauo *TableChangeAlertUpdateOne) ClearTriggerName() *TableChangeAlertUpdateOne {
-	tcauo.mutation.ClearTriggerName()
-	return tcauo
-}
-
-// SetListenerName sets the "listener_name" field.
-func (tcauo *TableChangeAlertUpdateOne) SetListenerName(s string) *TableChangeAlertUpdateOne {
-	tcauo.mutation.SetListenerName(s)
-	return tcauo
-}
-
-// SetNillableListenerName sets the "listener_name" field if the given value is not nil.
-func (tcauo *TableChangeAlertUpdateOne) SetNillableListenerName(s *string) *TableChangeAlertUpdateOne {
-	if s != nil {
-		tcauo.SetListenerName(*s)
-	}
-	return tcauo
-}
-
-// ClearListenerName clears the value of the "listener_name" field.
-func (tcauo *TableChangeAlertUpdateOne) ClearListenerName() *TableChangeAlertUpdateOne {
-	tcauo.mutation.ClearListenerName()
-	return tcauo
-}
-
 // SetEmailRecipients sets the "email_recipients" field.
 func (tcauo *TableChangeAlertUpdateOne) SetEmailRecipients(s string) *TableChangeAlertUpdateOne {
 	tcauo.mutation.SetEmailRecipients(s)
@@ -884,21 +731,6 @@ func (tcauo *TableChangeAlertUpdateOne) check() error {
 			return &ValidationError{Name: "database_action", err: fmt.Errorf(`ent: validator failed for field "TableChangeAlert.database_action": %w`, err)}
 		}
 	}
-	if v, ok := tcauo.mutation.FunctionName(); ok {
-		if err := tablechangealert.FunctionNameValidator(v); err != nil {
-			return &ValidationError{Name: "function_name", err: fmt.Errorf(`ent: validator failed for field "TableChangeAlert.function_name": %w`, err)}
-		}
-	}
-	if v, ok := tcauo.mutation.TriggerName(); ok {
-		if err := tablechangealert.TriggerNameValidator(v); err != nil {
-			return &ValidationError{Name: "trigger_name", err: fmt.Errorf(`ent: validator failed for field "TableChangeAlert.trigger_name": %w`, err)}
-		}
-	}
-	if v, ok := tcauo.mutation.ListenerName(); ok {
-		if err := tablechangealert.ListenerNameValidator(v); err != nil {
-			return &ValidationError{Name: "listener_name", err: fmt.Errorf(`ent: validator failed for field "TableChangeAlert.listener_name": %w`, err)}
-		}
-	}
 	if _, ok := tcauo.mutation.BusinessUnitID(); tcauo.mutation.BusinessUnitCleared() && !ok {
 		return errors.New(`ent: clearing a required unique edge "TableChangeAlert.business_unit"`)
 	}
@@ -978,24 +810,6 @@ func (tcauo *TableChangeAlertUpdateOne) sqlSave(ctx context.Context) (_node *Tab
 	}
 	if tcauo.mutation.CustomSubjectCleared() {
 		_spec.ClearField(tablechangealert.FieldCustomSubject, field.TypeString)
-	}
-	if value, ok := tcauo.mutation.FunctionName(); ok {
-		_spec.SetField(tablechangealert.FieldFunctionName, field.TypeString, value)
-	}
-	if tcauo.mutation.FunctionNameCleared() {
-		_spec.ClearField(tablechangealert.FieldFunctionName, field.TypeString)
-	}
-	if value, ok := tcauo.mutation.TriggerName(); ok {
-		_spec.SetField(tablechangealert.FieldTriggerName, field.TypeString, value)
-	}
-	if tcauo.mutation.TriggerNameCleared() {
-		_spec.ClearField(tablechangealert.FieldTriggerName, field.TypeString)
-	}
-	if value, ok := tcauo.mutation.ListenerName(); ok {
-		_spec.SetField(tablechangealert.FieldListenerName, field.TypeString, value)
-	}
-	if tcauo.mutation.ListenerNameCleared() {
-		_spec.ClearField(tablechangealert.FieldListenerName, field.TypeString)
 	}
 	if value, ok := tcauo.mutation.EmailRecipients(); ok {
 		_spec.SetField(tablechangealert.FieldEmailRecipients, field.TypeString, value)

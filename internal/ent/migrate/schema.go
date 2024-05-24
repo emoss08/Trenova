@@ -2365,9 +2365,6 @@ var (
 		{Name: "topic_name", Type: field.TypeString, Nullable: true},
 		{Name: "description", Type: field.TypeString, Nullable: true, Size: 2147483647},
 		{Name: "custom_subject", Type: field.TypeString, Nullable: true},
-		{Name: "function_name", Type: field.TypeString, Nullable: true, Size: 50, SchemaType: map[string]string{"postgres": "VARCHAR(50)", "sqlite3": "VARCHAR(50)"}},
-		{Name: "trigger_name", Type: field.TypeString, Nullable: true, Size: 50, SchemaType: map[string]string{"postgres": "VARCHAR(50)", "sqlite3": "VARCHAR(50)"}},
-		{Name: "listener_name", Type: field.TypeString, Nullable: true, Size: 50, SchemaType: map[string]string{"postgres": "VARCHAR(50)", "sqlite3": "VARCHAR(50)"}},
 		{Name: "email_recipients", Type: field.TypeString, Nullable: true, Size: 2147483647},
 		{Name: "effective_date", Type: field.TypeOther, Nullable: true, SchemaType: map[string]string{"postgres": "date", "sqlite3": "date"}},
 		{Name: "expiration_date", Type: field.TypeOther, Nullable: true, SchemaType: map[string]string{"postgres": "date", "sqlite3": "date"}},
@@ -2383,13 +2380,13 @@ var (
 		ForeignKeys: []*schema.ForeignKey{
 			{
 				Symbol:     "table_change_alerts_business_units_business_unit",
-				Columns:    []*schema.Column{TableChangeAlertsColumns[17]},
+				Columns:    []*schema.Column{TableChangeAlertsColumns[14]},
 				RefColumns: []*schema.Column{BusinessUnitsColumns[0]},
 				OnDelete:   schema.Cascade,
 			},
 			{
 				Symbol:     "table_change_alerts_organizations_organization",
-				Columns:    []*schema.Column{TableChangeAlertsColumns[18]},
+				Columns:    []*schema.Column{TableChangeAlertsColumns[15]},
 				RefColumns: []*schema.Column{OrganizationsColumns[0]},
 				OnDelete:   schema.Cascade,
 			},
