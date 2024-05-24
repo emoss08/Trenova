@@ -39,6 +39,8 @@ const (
 	FieldDescription = "description"
 	// FieldCustomSubject holds the string denoting the custom_subject field in the database.
 	FieldCustomSubject = "custom_subject"
+	// FieldDeliveryMethod holds the string denoting the delivery_method field in the database.
+	FieldDeliveryMethod = "delivery_method"
 	// FieldEmailRecipients holds the string denoting the email_recipients field in the database.
 	FieldEmailRecipients = "email_recipients"
 	// FieldEffectiveDate holds the string denoting the effective_date field in the database.
@@ -83,6 +85,7 @@ var Columns = []string{
 	FieldTopicName,
 	FieldDescription,
 	FieldCustomSubject,
+	FieldDeliveryMethod,
 	FieldEmailRecipients,
 	FieldEffectiveDate,
 	FieldExpirationDate,
@@ -171,6 +174,34 @@ func DatabaseActionValidator(da DatabaseAction) error {
 	}
 }
 
+// DeliveryMethod defines the type for the "delivery_method" enum field.
+type DeliveryMethod string
+
+// DeliveryMethodEmail is the default value of the DeliveryMethod enum.
+const DefaultDeliveryMethod = DeliveryMethodEmail
+
+// DeliveryMethod values.
+const (
+	DeliveryMethodEmail DeliveryMethod = "Email"
+	DeliveryMethodLocal DeliveryMethod = "Local"
+	DeliveryMethodApi   DeliveryMethod = "Api"
+	DeliveryMethodSms   DeliveryMethod = "Sms"
+)
+
+func (dm DeliveryMethod) String() string {
+	return string(dm)
+}
+
+// DeliveryMethodValidator is a validator for the "delivery_method" field enum values. It is called by the builders before save.
+func DeliveryMethodValidator(dm DeliveryMethod) error {
+	switch dm {
+	case DeliveryMethodEmail, DeliveryMethodLocal, DeliveryMethodApi, DeliveryMethodSms:
+		return nil
+	default:
+		return fmt.Errorf("tablechangealert: invalid enum value for delivery_method field: %q", dm)
+	}
+}
+
 // OrderOption defines the ordering options for the TableChangeAlert queries.
 type OrderOption func(*sql.Selector)
 
@@ -232,6 +263,11 @@ func ByDescription(opts ...sql.OrderTermOption) OrderOption {
 // ByCustomSubject orders the results by the custom_subject field.
 func ByCustomSubject(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldCustomSubject, opts...).ToFunc()
+}
+
+// ByDeliveryMethod orders the results by the delivery_method field.
+func ByDeliveryMethod(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldDeliveryMethod, opts...).ToFunc()
 }
 
 // ByEmailRecipients orders the results by the email_recipients field.

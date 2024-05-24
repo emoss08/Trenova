@@ -23,20 +23,20 @@
             "label": "Database Action",
             "description": "Specifies the type of database operation that triggers the alert."
         },
-        "source": {
-            "placeholder": "Source",
-            "label": "Source",
-            "description": "Identifies the origin or the data source for the table change alert, such as a specific database or data stream."
-        },
         "topic": {
             "placeholder": "Topic",
             "label": "Topic",
             "description": "Defines the main subject or the table name associated with the alert. This field usually aligns with the specific table being monitored."
         },
-        "table": {
-            "placeholder": "Table",
-            "label": "Table",
-            "description": "The exact name of the database table to which the alert is attached. Changes in this table trigger the alert."
+        "customSubject": {
+            "placeholder": "Custom Subject",
+            "label": "Custom Subject",
+            "description": "A custom subject line for the alert email. This field allows for a more descriptive and informative subject line."
+        },
+        "deliveryMethod": {
+            "placeholder": "Delivery Method",
+            "label": "Delivery Method",
+            "description": "Specifies the method used to deliver the alert, such as email or SMS."
         },
         "description": {
             "placeholder": "Description",

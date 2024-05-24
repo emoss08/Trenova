@@ -39,13 +39,15 @@ type TableChangeAlert struct {
 	// DatabaseAction holds the value of the "database_action" field.
 	DatabaseAction tablechangealert.DatabaseAction `json:"databaseAction" validate:"required,oneof=Insert Update Delete All"`
 	// TopicName holds the value of the "topic_name" field.
-	TopicName string `json:"topicName" validate:"max=255,required_if=source Kafka"`
+	TopicName string `json:"topicName" validate:"max=255"`
 	// Description holds the value of the "description" field.
 	Description string `json:"description"`
 	// CustomSubject holds the value of the "custom_subject" field.
-	CustomSubject string `json:"customSubject"`
+	CustomSubject string `json:"customSubject" validate:"omitempty,max=255"`
+	// DeliveryMethod holds the value of the "delivery_method" field.
+	DeliveryMethod tablechangealert.DeliveryMethod `json:"deliveryMethod" validate:"required,oneof=Email Local Api Sms"`
 	// EmailRecipients holds the value of the "email_recipients" field.
-	EmailRecipients string `json:"emailRecipients" validate:"omitempty,commaSeparatedEmails"`
+	EmailRecipients string `json:"emailRecipients" validate:"omitempty,commaSeparatedEmails,required_if=DeliveryMethod Email"`
 	// EffectiveDate holds the value of the "effective_date" field.
 	EffectiveDate *pgtype.Date `json:"effectiveDate"`
 	// ExpirationDate holds the value of the "expiration_date" field.
@@ -102,7 +104,7 @@ func (*TableChangeAlert) scanValues(columns []string) ([]any, error) {
 			values[i] = new([]byte)
 		case tablechangealert.FieldVersion:
 			values[i] = new(sql.NullInt64)
-		case tablechangealert.FieldStatus, tablechangealert.FieldName, tablechangealert.FieldDatabaseAction, tablechangealert.FieldTopicName, tablechangealert.FieldDescription, tablechangealert.FieldCustomSubject, tablechangealert.FieldEmailRecipients:
+		case tablechangealert.FieldStatus, tablechangealert.FieldName, tablechangealert.FieldDatabaseAction, tablechangealert.FieldTopicName, tablechangealert.FieldDescription, tablechangealert.FieldCustomSubject, tablechangealert.FieldDeliveryMethod, tablechangealert.FieldEmailRecipients:
 			values[i] = new(sql.NullString)
 		case tablechangealert.FieldCreatedAt, tablechangealert.FieldUpdatedAt:
 			values[i] = new(sql.NullTime)
@@ -194,6 +196,12 @@ func (tca *TableChangeAlert) assignValues(columns []string, values []any) error 
 				return fmt.Errorf("unexpected type %T for field custom_subject", values[i])
 			} else if value.Valid {
 				tca.CustomSubject = value.String
+			}
+		case tablechangealert.FieldDeliveryMethod:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field delivery_method", values[i])
+			} else if value.Valid {
+				tca.DeliveryMethod = tablechangealert.DeliveryMethod(value.String)
 			}
 		case tablechangealert.FieldEmailRecipients:
 			if value, ok := values[i].(*sql.NullString); !ok {
@@ -299,6 +307,9 @@ func (tca *TableChangeAlert) String() string {
 	builder.WriteString(", ")
 	builder.WriteString("custom_subject=")
 	builder.WriteString(tca.CustomSubject)
+	builder.WriteString(", ")
+	builder.WriteString("delivery_method=")
+	builder.WriteString(fmt.Sprintf("%v", tca.DeliveryMethod))
 	builder.WriteString(", ")
 	builder.WriteString("email_recipients=")
 	builder.WriteString(tca.EmailRecipients)

@@ -7,7 +7,9 @@ import (
 	"entgo.io/ent/dialect"
 	"entgo.io/ent/schema/field"
 	gen "github.com/emoss08/trenova/internal/ent"
+
 	"github.com/emoss08/trenova/internal/ent/hook"
+
 	"github.com/emoss08/trenova/internal/validators"
 	"github.com/jackc/pgx/v5/pgtype"
 )
@@ -40,16 +42,25 @@ func (TableChangeAlert) Fields() []ent.Field {
 			StructTag(`json:"databaseAction" validate:"required,oneof=Insert Update Delete All"`),
 		field.String("topic_name").
 			Optional().
-			StructTag(`json:"topicName" validate:"max=255,required_if=source Kafka"`),
+			StructTag(`json:"topicName" validate:"max=255"`),
 		field.Text("description").
 			Optional().
 			StructTag(`json:"description"`),
 		field.String("custom_subject").
 			Optional().
-			StructTag(`json:"customSubject"`),
+			StructTag(`json:"customSubject" validate:"omitempty,max=255"`),
+		field.Enum("delivery_method").
+			Values("Email", "Local", "Api", "Sms").
+			Default("Email").
+			SchemaType(map[string]string{
+				dialect.Postgres: "VARCHAR(5)",
+				dialect.SQLite:   "VARCHAR(5)",
+			}).
+			StructTag(`json:"deliveryMethod" validate:"required,oneof=Email Local Api Sms"`),
 		field.Text("email_recipients").
 			Optional().
-			StructTag(`json:"emailRecipients" validate:"omitempty,commaSeparatedEmails"`),
+			StructTag(`json:"emailRecipients" validate:"omitempty,commaSeparatedEmails,required_if=DeliveryMethod Email"`),
+		// TODO(Wolfred): Add relationship to the External API entity.
 		field.Other("effective_date", &pgtype.Date{}).
 			Optional().
 			Nillable().
@@ -58,6 +69,7 @@ func (TableChangeAlert) Fields() []ent.Field {
 				dialect.SQLite:   "date",
 			}).
 			StructTag(`json:"effectiveDate"`),
+
 		field.Other("expiration_date", &pgtype.Date{}).
 			Optional().
 			Nillable().
@@ -91,15 +103,17 @@ func (TableChangeAlert) Hooks() []ent.Hook {
 		hook.On(
 			func(next ent.Mutator) ent.Mutator {
 				return hook.TableChangeAlertFunc(func(ctx context.Context, m *gen.TableChangeAlertMutation) (ent.Value, error) {
-					conLogic, exists := m.ConditionalLogic()
-					if !exists {
-						return next.Mutate(ctx, m)
-					}
+					// conLogic, exists := m.ConditionalLogic()
+					// if !exists {
+					// 	return next.Mutate(ctx, m)
+					// }
 
-					// if conditional logic is provided, ensure that it is validated.
-					if err := validators.ValidateConditionalLogic(conLogic); err != nil {
-						return nil, err
-					}
+					// // if conditional logic is provided, ensure that it is validated.
+					// if err := validators.ValidateConditionalLogic(conLogic); err != nil {
+					// 	return nil, err
+					// }
+
+					validators.ValidateTableChangeAlerts(next)
 
 					return next.Mutate(ctx, m)
 				})
