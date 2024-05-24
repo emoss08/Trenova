@@ -119,8 +119,7 @@ func (s *Server) InitSessionStore() error {
 	store := redis.New(redis.Config{
 		Host:     s.Config.Redis.Host,
 		Port:     s.Config.Redis.Port,
-		Username: s.Config.Redis.Username,
-		Password: s.Config.Redis.Password,
+		Username: s.Config.Redis.Username,		Password: s.Config.Redis.Password,
 		Database: s.Config.Redis.Database,
 	})
 	s.Session = session.New(session.Config{KeyLookup: "cookie:trenova_session_id", Storage: store})

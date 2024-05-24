@@ -47,30 +47,6 @@ func (TableChangeAlert) Fields() []ent.Field {
 		field.String("custom_subject").
 			Optional().
 			StructTag(`json:"customSubject"`),
-		field.String("function_name").
-			Optional().
-			MaxLen(50).
-			SchemaType(map[string]string{
-				dialect.Postgres: "VARCHAR(50)",
-				dialect.SQLite:   "VARCHAR(50)",
-			}).
-			StructTag(`json:"functionName"`),
-		field.String("trigger_name").
-			Optional().
-			MaxLen(50).
-			SchemaType(map[string]string{
-				dialect.Postgres: "VARCHAR(50)",
-				dialect.SQLite:   "VARCHAR(50)",
-			}).
-			StructTag(`json:"triggerName"`),
-		field.String("listener_name").
-			Optional().
-			MaxLen(50).
-			SchemaType(map[string]string{
-				dialect.Postgres: "VARCHAR(50)",
-				dialect.SQLite:   "VARCHAR(50)",
-			}).
-			StructTag(`json:"listenerName"`),
 		field.Text("email_recipients").
 			Optional().
 			StructTag(`json:"emailRecipients" validate:"omitempty,commaSeparatedEmails"`),
