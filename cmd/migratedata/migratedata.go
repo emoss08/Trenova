@@ -35,14 +35,14 @@ import (
 // SeedBusinessUnits add the initial business units to the database.
 func SeedBusinessUnits(ctx context.Context, client *ent.Client) (*ent.BusinessUnit, error) {
 	// Check if the business unit already exists.
-	bu, err := client.BusinessUnit.Query().Where(businessunit.NameEQ("Trenova Transportation")).Only(ctx)
+	bu, err := client.BusinessUnit.Query().Where(businessunit.NameEQ("Trenova Logistics")).Only(ctx)
 	switch {
 	// If not, create the business unit
 	case ent.IsNotFound(err):
 		bu, err = client.BusinessUnit.
 			Create().
-			SetName("Trenova Transportation").
-			SetEntityKey("TREN").
+			SetName("Trenova Logistics").
+			SetEntityKey("TRLS").
 			SetPhoneNumber("123-456-7890").
 			SetAddress("1234 Main St").
 			Save(ctx)
@@ -62,16 +62,16 @@ func SeedOrganization(
 ) (*ent.Organization, error) {
 	// Check if the organization already exists.
 	org, err := client.Organization.Query().Where(organization.And(
-		organization.NameEQ("Trenova Transporation"),
-		organization.ScacCodeEQ("TREN"),
+		organization.NameEQ("Trenova Logistics"),
+		organization.ScacCodeEQ("TRLS"),
 	)).Only(ctx)
 	switch {
 	// If not, create the organization
 	case ent.IsNotFound(err):
 		org, err = client.Organization.
 			Create().
-			SetName("Trenova Transporation").
-			SetScacCode("TREN").
+			SetName("Trenova Logistics").
+			SetScacCode("TRLS").
 			SetDotNumber("123456").
 			SetBusinessUnit(bu).
 			SetTimezone("America/New_York").
@@ -360,7 +360,7 @@ func SeedAdminAccount(
 	ctx context.Context, client *ent.Client, org *ent.Organization, bu *ent.BusinessUnit,
 ) error {
 	// Check if the admin account exists
-	exists, err := client.User.Query().Where(user.UsernameEQ("admin")).Exist(ctx)
+	exists, err := client.User.Query().Where(user.UsernameEQ("nadmin")).Exist(ctx)
 	switch {
 	// If not, create the admin account
 	case !exists:
@@ -371,9 +371,9 @@ func SeedAdminAccount(
 		}
 		_, err = client.User.
 			Create().
-			SetUsername("admin").
+			SetUsername("nadmin").
 			SetPassword(string(hashedPassword)).
-			SetEmail("admin@trenova.app").
+			SetEmail("nadmin@trenova.app").
 			SetName("System Administrator").
 			SetOrganization(org).
 			SetBusinessUnit(bu).
@@ -387,7 +387,7 @@ func SeedAdminAccount(
 		color.Yellow("✅ Admin account created successfully")
 		color.Yellow("-----------------------------")
 		color.Yellow("Admin account credentials:")
-		color.Yellow("Email: admin@trenova.app")
+		color.Yellow("Email: nadmin@trenova.app")
 		color.Yellow("Password: admin")
 		color.Yellow("-----------------------------")
 
