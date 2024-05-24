@@ -17,7 +17,6 @@ func (GoogleApi) Fields() []ent.Field {
 	return []ent.Field{
 		field.String("api_key").
 			NotEmpty().
-			Unique().
 			StructTag(`json:"apiKey" validate:"required"`),
 		field.Enum("mileage_unit").
 			Values("Imperial", "Metric").

@@ -8,17 +8,20 @@ import (
 	"github.com/emoss08/trenova/internal/util/types"
 	"github.com/gofiber/fiber/v2"
 	"github.com/google/uuid"
+	"github.com/rs/zerolog"
 )
 
 type TableChangeAlertHandler struct {
 	Service           *services.TableChangeAlertService
 	PermissionService *services.PermissionService
+	Logger            *zerolog.Logger
 }
 
 func NewTableChangeAlertHandler(s *api.Server) *TableChangeAlertHandler {
 	return &TableChangeAlertHandler{
 		Service:           services.NewTableChangeAlertService(s),
 		PermissionService: services.NewPermissionService(s),
+		Logger:            s.Logger,
 	}
 }
 

@@ -146,7 +146,7 @@ func (h *AuthenticationHandler) AuthenticateUser() fiber.Handler {
 		c.Cookie(&fiber.Cookie{
 			Name:     "trenova-token",
 			Value:    t,
-			Expires:  time.Now().Add(time.Hour * 72),
+			Expires:  time.Now().Add(time.Hour * 72), // 3 days
 			SameSite: "Lax",
 			// HTTPOnly: true,
 			// Secure:   true,
@@ -163,35 +163,20 @@ func (h *AuthenticationHandler) AuthenticateUser() fiber.Handler {
 // POST /auth/logout
 func (h *AuthenticationHandler) LogoutUser() fiber.Handler {
 	return func(c *fiber.Ctx) error {
-		sess, err := h.Server.Session.Get(c)
-		if err != nil {
-			h.Server.Logger.Error().Err(err).Msg("Error getting session")
-			return c.Status(fiber.StatusInternalServerError).JSON(types.ValidationErrorResponse{
-				Type: "internalServerError",
-				Errors: []types.ValidationErrorDetail{
-					{
-						Code:   "internalServerError",
-						Detail: "Internal server error",
-						Attr:   "session",
-					},
-				},
-			})
-		}
+		// Clear the user from context
+		c.Locals(util.CTXOrganizationID, nil)
+		c.Locals(util.CTXBusinessUnitID, nil)
+		c.Locals(util.CTXUserID, nil)
 
-		// Clear the session
-		if err = sess.Destroy(); err != nil {
-			h.Server.Logger.Error().Err(err).Msg("Error destroying session")
-			return c.Status(fiber.StatusInternalServerError).JSON(types.ValidationErrorResponse{
-				Type: "internalServerError",
-				Errors: []types.ValidationErrorDetail{
-					{
-						Code:   "internalServerError",
-						Detail: "Internal server error",
-						Attr:   "session",
-					},
-				},
-			})
-		}
+		// Expire the cookie
+		c.Cookie(&fiber.Cookie{
+			Name:     "trenova-token",
+			Value:    "",
+			Expires:  time.Now().Add(-time.Hour),
+			SameSite: "Lax",
+			// HTTPOnly: true,
+			// Secure:   true,
+		})
 
 		return c.SendStatus(fiber.StatusNoContent)
 	}
