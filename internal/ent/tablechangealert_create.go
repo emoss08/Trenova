@@ -146,48 +146,6 @@ func (tcac *TableChangeAlertCreate) SetNillableCustomSubject(s *string) *TableCh
 	return tcac
 }
 
-// SetFunctionName sets the "function_name" field.
-func (tcac *TableChangeAlertCreate) SetFunctionName(s string) *TableChangeAlertCreate {
-	tcac.mutation.SetFunctionName(s)
-	return tcac
-}
-
-// SetNillableFunctionName sets the "function_name" field if the given value is not nil.
-func (tcac *TableChangeAlertCreate) SetNillableFunctionName(s *string) *TableChangeAlertCreate {
-	if s != nil {
-		tcac.SetFunctionName(*s)
-	}
-	return tcac
-}
-
-// SetTriggerName sets the "trigger_name" field.
-func (tcac *TableChangeAlertCreate) SetTriggerName(s string) *TableChangeAlertCreate {
-	tcac.mutation.SetTriggerName(s)
-	return tcac
-}
-
-// SetNillableTriggerName sets the "trigger_name" field if the given value is not nil.
-func (tcac *TableChangeAlertCreate) SetNillableTriggerName(s *string) *TableChangeAlertCreate {
-	if s != nil {
-		tcac.SetTriggerName(*s)
-	}
-	return tcac
-}
-
-// SetListenerName sets the "listener_name" field.
-func (tcac *TableChangeAlertCreate) SetListenerName(s string) *TableChangeAlertCreate {
-	tcac.mutation.SetListenerName(s)
-	return tcac
-}
-
-// SetNillableListenerName sets the "listener_name" field if the given value is not nil.
-func (tcac *TableChangeAlertCreate) SetNillableListenerName(s *string) *TableChangeAlertCreate {
-	if s != nil {
-		tcac.SetListenerName(*s)
-	}
-	return tcac
-}
-
 // SetEmailRecipients sets the "email_recipients" field.
 func (tcac *TableChangeAlertCreate) SetEmailRecipients(s string) *TableChangeAlertCreate {
 	tcac.mutation.SetEmailRecipients(s)
@@ -354,21 +312,6 @@ func (tcac *TableChangeAlertCreate) check() error {
 			return &ValidationError{Name: "database_action", err: fmt.Errorf(`ent: validator failed for field "TableChangeAlert.database_action": %w`, err)}
 		}
 	}
-	if v, ok := tcac.mutation.FunctionName(); ok {
-		if err := tablechangealert.FunctionNameValidator(v); err != nil {
-			return &ValidationError{Name: "function_name", err: fmt.Errorf(`ent: validator failed for field "TableChangeAlert.function_name": %w`, err)}
-		}
-	}
-	if v, ok := tcac.mutation.TriggerName(); ok {
-		if err := tablechangealert.TriggerNameValidator(v); err != nil {
-			return &ValidationError{Name: "trigger_name", err: fmt.Errorf(`ent: validator failed for field "TableChangeAlert.trigger_name": %w`, err)}
-		}
-	}
-	if v, ok := tcac.mutation.ListenerName(); ok {
-		if err := tablechangealert.ListenerNameValidator(v); err != nil {
-			return &ValidationError{Name: "listener_name", err: fmt.Errorf(`ent: validator failed for field "TableChangeAlert.listener_name": %w`, err)}
-		}
-	}
 	if _, ok := tcac.mutation.BusinessUnitID(); !ok {
 		return &ValidationError{Name: "business_unit", err: errors.New(`ent: missing required edge "TableChangeAlert.business_unit"`)}
 	}
@@ -445,18 +388,6 @@ func (tcac *TableChangeAlertCreate) createSpec() (*TableChangeAlert, *sqlgraph.C
 	if value, ok := tcac.mutation.CustomSubject(); ok {
 		_spec.SetField(tablechangealert.FieldCustomSubject, field.TypeString, value)
 		_node.CustomSubject = value
-	}
-	if value, ok := tcac.mutation.FunctionName(); ok {
-		_spec.SetField(tablechangealert.FieldFunctionName, field.TypeString, value)
-		_node.FunctionName = value
-	}
-	if value, ok := tcac.mutation.TriggerName(); ok {
-		_spec.SetField(tablechangealert.FieldTriggerName, field.TypeString, value)
-		_node.TriggerName = value
-	}
-	if value, ok := tcac.mutation.ListenerName(); ok {
-		_spec.SetField(tablechangealert.FieldListenerName, field.TypeString, value)
-		_node.ListenerName = value
 	}
 	if value, ok := tcac.mutation.EmailRecipients(); ok {
 		_spec.SetField(tablechangealert.FieldEmailRecipients, field.TypeString, value)

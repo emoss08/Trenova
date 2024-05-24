@@ -67547,9 +67547,6 @@ type TableChangeAlertMutation struct {
 	topic_name           *string
 	description          *string
 	custom_subject       *string
-	function_name        *string
-	trigger_name         *string
-	listener_name        *string
 	email_recipients     *string
 	effective_date       **pgtype.Date
 	expiration_date      **pgtype.Date
@@ -68123,153 +68120,6 @@ func (m *TableChangeAlertMutation) ResetCustomSubject() {
 	delete(m.clearedFields, tablechangealert.FieldCustomSubject)
 }
 
-// SetFunctionName sets the "function_name" field.
-func (m *TableChangeAlertMutation) SetFunctionName(s string) {
-	m.function_name = &s
-}
-
-// FunctionName returns the value of the "function_name" field in the mutation.
-func (m *TableChangeAlertMutation) FunctionName() (r string, exists bool) {
-	v := m.function_name
-	if v == nil {
-		return
-	}
-	return *v, true
-}
-
-// OldFunctionName returns the old "function_name" field's value of the TableChangeAlert entity.
-// If the TableChangeAlert object wasn't provided to the builder, the object is fetched from the database.
-// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *TableChangeAlertMutation) OldFunctionName(ctx context.Context) (v string, err error) {
-	if !m.op.Is(OpUpdateOne) {
-		return v, errors.New("OldFunctionName is only allowed on UpdateOne operations")
-	}
-	if m.id == nil || m.oldValue == nil {
-		return v, errors.New("OldFunctionName requires an ID field in the mutation")
-	}
-	oldValue, err := m.oldValue(ctx)
-	if err != nil {
-		return v, fmt.Errorf("querying old value for OldFunctionName: %w", err)
-	}
-	return oldValue.FunctionName, nil
-}
-
-// ClearFunctionName clears the value of the "function_name" field.
-func (m *TableChangeAlertMutation) ClearFunctionName() {
-	m.function_name = nil
-	m.clearedFields[tablechangealert.FieldFunctionName] = struct{}{}
-}
-
-// FunctionNameCleared returns if the "function_name" field was cleared in this mutation.
-func (m *TableChangeAlertMutation) FunctionNameCleared() bool {
-	_, ok := m.clearedFields[tablechangealert.FieldFunctionName]
-	return ok
-}
-
-// ResetFunctionName resets all changes to the "function_name" field.
-func (m *TableChangeAlertMutation) ResetFunctionName() {
-	m.function_name = nil
-	delete(m.clearedFields, tablechangealert.FieldFunctionName)
-}
-
-// SetTriggerName sets the "trigger_name" field.
-func (m *TableChangeAlertMutation) SetTriggerName(s string) {
-	m.trigger_name = &s
-}
-
-// TriggerName returns the value of the "trigger_name" field in the mutation.
-func (m *TableChangeAlertMutation) TriggerName() (r string, exists bool) {
-	v := m.trigger_name
-	if v == nil {
-		return
-	}
-	return *v, true
-}
-
-// OldTriggerName returns the old "trigger_name" field's value of the TableChangeAlert entity.
-// If the TableChangeAlert object wasn't provided to the builder, the object is fetched from the database.
-// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *TableChangeAlertMutation) OldTriggerName(ctx context.Context) (v string, err error) {
-	if !m.op.Is(OpUpdateOne) {
-		return v, errors.New("OldTriggerName is only allowed on UpdateOne operations")
-	}
-	if m.id == nil || m.oldValue == nil {
-		return v, errors.New("OldTriggerName requires an ID field in the mutation")
-	}
-	oldValue, err := m.oldValue(ctx)
-	if err != nil {
-		return v, fmt.Errorf("querying old value for OldTriggerName: %w", err)
-	}
-	return oldValue.TriggerName, nil
-}
-
-// ClearTriggerName clears the value of the "trigger_name" field.
-func (m *TableChangeAlertMutation) ClearTriggerName() {
-	m.trigger_name = nil
-	m.clearedFields[tablechangealert.FieldTriggerName] = struct{}{}
-}
-
-// TriggerNameCleared returns if the "trigger_name" field was cleared in this mutation.
-func (m *TableChangeAlertMutation) TriggerNameCleared() bool {
-	_, ok := m.clearedFields[tablechangealert.FieldTriggerName]
-	return ok
-}
-
-// ResetTriggerName resets all changes to the "trigger_name" field.
-func (m *TableChangeAlertMutation) ResetTriggerName() {
-	m.trigger_name = nil
-	delete(m.clearedFields, tablechangealert.FieldTriggerName)
-}
-
-// SetListenerName sets the "listener_name" field.
-func (m *TableChangeAlertMutation) SetListenerName(s string) {
-	m.listener_name = &s
-}
-
-// ListenerName returns the value of the "listener_name" field in the mutation.
-func (m *TableChangeAlertMutation) ListenerName() (r string, exists bool) {
-	v := m.listener_name
-	if v == nil {
-		return
-	}
-	return *v, true
-}
-
-// OldListenerName returns the old "listener_name" field's value of the TableChangeAlert entity.
-// If the TableChangeAlert object wasn't provided to the builder, the object is fetched from the database.
-// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *TableChangeAlertMutation) OldListenerName(ctx context.Context) (v string, err error) {
-	if !m.op.Is(OpUpdateOne) {
-		return v, errors.New("OldListenerName is only allowed on UpdateOne operations")
-	}
-	if m.id == nil || m.oldValue == nil {
-		return v, errors.New("OldListenerName requires an ID field in the mutation")
-	}
-	oldValue, err := m.oldValue(ctx)
-	if err != nil {
-		return v, fmt.Errorf("querying old value for OldListenerName: %w", err)
-	}
-	return oldValue.ListenerName, nil
-}
-
-// ClearListenerName clears the value of the "listener_name" field.
-func (m *TableChangeAlertMutation) ClearListenerName() {
-	m.listener_name = nil
-	m.clearedFields[tablechangealert.FieldListenerName] = struct{}{}
-}
-
-// ListenerNameCleared returns if the "listener_name" field was cleared in this mutation.
-func (m *TableChangeAlertMutation) ListenerNameCleared() bool {
-	_, ok := m.clearedFields[tablechangealert.FieldListenerName]
-	return ok
-}
-
-// ResetListenerName resets all changes to the "listener_name" field.
-func (m *TableChangeAlertMutation) ResetListenerName() {
-	m.listener_name = nil
-	delete(m.clearedFields, tablechangealert.FieldListenerName)
-}
-
 // SetEmailRecipients sets the "email_recipients" field.
 func (m *TableChangeAlertMutation) SetEmailRecipients(s string) {
 	m.email_recipients = &s
@@ -68554,7 +68404,7 @@ func (m *TableChangeAlertMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *TableChangeAlertMutation) Fields() []string {
-	fields := make([]string, 0, 18)
+	fields := make([]string, 0, 15)
 	if m.business_unit != nil {
 		fields = append(fields, tablechangealert.FieldBusinessUnitID)
 	}
@@ -68587,15 +68437,6 @@ func (m *TableChangeAlertMutation) Fields() []string {
 	}
 	if m.custom_subject != nil {
 		fields = append(fields, tablechangealert.FieldCustomSubject)
-	}
-	if m.function_name != nil {
-		fields = append(fields, tablechangealert.FieldFunctionName)
-	}
-	if m.trigger_name != nil {
-		fields = append(fields, tablechangealert.FieldTriggerName)
-	}
-	if m.listener_name != nil {
-		fields = append(fields, tablechangealert.FieldListenerName)
 	}
 	if m.email_recipients != nil {
 		fields = append(fields, tablechangealert.FieldEmailRecipients)
@@ -68639,12 +68480,6 @@ func (m *TableChangeAlertMutation) Field(name string) (ent.Value, bool) {
 		return m.Description()
 	case tablechangealert.FieldCustomSubject:
 		return m.CustomSubject()
-	case tablechangealert.FieldFunctionName:
-		return m.FunctionName()
-	case tablechangealert.FieldTriggerName:
-		return m.TriggerName()
-	case tablechangealert.FieldListenerName:
-		return m.ListenerName()
 	case tablechangealert.FieldEmailRecipients:
 		return m.EmailRecipients()
 	case tablechangealert.FieldEffectiveDate:
@@ -68684,12 +68519,6 @@ func (m *TableChangeAlertMutation) OldField(ctx context.Context, name string) (e
 		return m.OldDescription(ctx)
 	case tablechangealert.FieldCustomSubject:
 		return m.OldCustomSubject(ctx)
-	case tablechangealert.FieldFunctionName:
-		return m.OldFunctionName(ctx)
-	case tablechangealert.FieldTriggerName:
-		return m.OldTriggerName(ctx)
-	case tablechangealert.FieldListenerName:
-		return m.OldListenerName(ctx)
 	case tablechangealert.FieldEmailRecipients:
 		return m.OldEmailRecipients(ctx)
 	case tablechangealert.FieldEffectiveDate:
@@ -68784,27 +68613,6 @@ func (m *TableChangeAlertMutation) SetField(name string, value ent.Value) error 
 		}
 		m.SetCustomSubject(v)
 		return nil
-	case tablechangealert.FieldFunctionName:
-		v, ok := value.(string)
-		if !ok {
-			return fmt.Errorf("unexpected type %T for field %s", value, name)
-		}
-		m.SetFunctionName(v)
-		return nil
-	case tablechangealert.FieldTriggerName:
-		v, ok := value.(string)
-		if !ok {
-			return fmt.Errorf("unexpected type %T for field %s", value, name)
-		}
-		m.SetTriggerName(v)
-		return nil
-	case tablechangealert.FieldListenerName:
-		v, ok := value.(string)
-		if !ok {
-			return fmt.Errorf("unexpected type %T for field %s", value, name)
-		}
-		m.SetListenerName(v)
-		return nil
 	case tablechangealert.FieldEmailRecipients:
 		v, ok := value.(string)
 		if !ok {
@@ -68887,15 +68695,6 @@ func (m *TableChangeAlertMutation) ClearedFields() []string {
 	if m.FieldCleared(tablechangealert.FieldCustomSubject) {
 		fields = append(fields, tablechangealert.FieldCustomSubject)
 	}
-	if m.FieldCleared(tablechangealert.FieldFunctionName) {
-		fields = append(fields, tablechangealert.FieldFunctionName)
-	}
-	if m.FieldCleared(tablechangealert.FieldTriggerName) {
-		fields = append(fields, tablechangealert.FieldTriggerName)
-	}
-	if m.FieldCleared(tablechangealert.FieldListenerName) {
-		fields = append(fields, tablechangealert.FieldListenerName)
-	}
 	if m.FieldCleared(tablechangealert.FieldEmailRecipients) {
 		fields = append(fields, tablechangealert.FieldEmailRecipients)
 	}
@@ -68930,15 +68729,6 @@ func (m *TableChangeAlertMutation) ClearField(name string) error {
 		return nil
 	case tablechangealert.FieldCustomSubject:
 		m.ClearCustomSubject()
-		return nil
-	case tablechangealert.FieldFunctionName:
-		m.ClearFunctionName()
-		return nil
-	case tablechangealert.FieldTriggerName:
-		m.ClearTriggerName()
-		return nil
-	case tablechangealert.FieldListenerName:
-		m.ClearListenerName()
 		return nil
 	case tablechangealert.FieldEmailRecipients:
 		m.ClearEmailRecipients()
@@ -68992,15 +68782,6 @@ func (m *TableChangeAlertMutation) ResetField(name string) error {
 		return nil
 	case tablechangealert.FieldCustomSubject:
 		m.ResetCustomSubject()
-		return nil
-	case tablechangealert.FieldFunctionName:
-		m.ResetFunctionName()
-		return nil
-	case tablechangealert.FieldTriggerName:
-		m.ResetTriggerName()
-		return nil
-	case tablechangealert.FieldListenerName:
-		m.ResetListenerName()
 		return nil
 	case tablechangealert.FieldEmailRecipients:
 		m.ResetEmailRecipients()

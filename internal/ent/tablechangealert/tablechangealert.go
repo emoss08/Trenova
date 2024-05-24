@@ -39,12 +39,6 @@ const (
 	FieldDescription = "description"
 	// FieldCustomSubject holds the string denoting the custom_subject field in the database.
 	FieldCustomSubject = "custom_subject"
-	// FieldFunctionName holds the string denoting the function_name field in the database.
-	FieldFunctionName = "function_name"
-	// FieldTriggerName holds the string denoting the trigger_name field in the database.
-	FieldTriggerName = "trigger_name"
-	// FieldListenerName holds the string denoting the listener_name field in the database.
-	FieldListenerName = "listener_name"
 	// FieldEmailRecipients holds the string denoting the email_recipients field in the database.
 	FieldEmailRecipients = "email_recipients"
 	// FieldEffectiveDate holds the string denoting the effective_date field in the database.
@@ -89,9 +83,6 @@ var Columns = []string{
 	FieldTopicName,
 	FieldDescription,
 	FieldCustomSubject,
-	FieldFunctionName,
-	FieldTriggerName,
-	FieldListenerName,
 	FieldEmailRecipients,
 	FieldEffectiveDate,
 	FieldExpirationDate,
@@ -125,12 +116,6 @@ var (
 	DefaultVersion int
 	// NameValidator is a validator for the "name" field. It is called by the builders before save.
 	NameValidator func(string) error
-	// FunctionNameValidator is a validator for the "function_name" field. It is called by the builders before save.
-	FunctionNameValidator func(string) error
-	// TriggerNameValidator is a validator for the "trigger_name" field. It is called by the builders before save.
-	TriggerNameValidator func(string) error
-	// ListenerNameValidator is a validator for the "listener_name" field. It is called by the builders before save.
-	ListenerNameValidator func(string) error
 	// DefaultID holds the default value on creation for the "id" field.
 	DefaultID func() uuid.UUID
 )
@@ -247,21 +232,6 @@ func ByDescription(opts ...sql.OrderTermOption) OrderOption {
 // ByCustomSubject orders the results by the custom_subject field.
 func ByCustomSubject(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldCustomSubject, opts...).ToFunc()
-}
-
-// ByFunctionName orders the results by the function_name field.
-func ByFunctionName(opts ...sql.OrderTermOption) OrderOption {
-	return sql.OrderByField(FieldFunctionName, opts...).ToFunc()
-}
-
-// ByTriggerName orders the results by the trigger_name field.
-func ByTriggerName(opts ...sql.OrderTermOption) OrderOption {
-	return sql.OrderByField(FieldTriggerName, opts...).ToFunc()
-}
-
-// ByListenerName orders the results by the listener_name field.
-func ByListenerName(opts ...sql.OrderTermOption) OrderOption {
-	return sql.OrderByField(FieldListenerName, opts...).ToFunc()
 }
 
 // ByEmailRecipients orders the results by the email_recipients field.

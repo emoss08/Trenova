@@ -97,9 +97,6 @@ func (r *TableChangeAlertService) createTableChangeAlertEntity(
 		SetTopicName(entity.TopicName).
 		SetDescription(entity.Description).
 		SetCustomSubject(entity.CustomSubject).
-		SetFunctionName(entity.FunctionName).
-		SetTriggerName(entity.TriggerName).
-		SetListenerName(entity.ListenerName).
 		SetEmailRecipients(entity.EmailRecipients).
 		SetEffectiveDate(entity.EffectiveDate).
 		SetExpirationDate(entity.ExpirationDate).
@@ -153,9 +150,6 @@ func (r *TableChangeAlertService) updateTableChangeAlertEntity(
 		SetTopicName(entity.TopicName).
 		SetDescription(entity.Description).
 		SetCustomSubject(entity.CustomSubject).
-		SetFunctionName(entity.FunctionName).
-		SetTriggerName(entity.TriggerName).
-		SetListenerName(entity.ListenerName).
 		SetEmailRecipients(entity.EmailRecipients).
 		SetEffectiveDate(entity.EffectiveDate).
 		SetExpirationDate(entity.ExpirationDate).

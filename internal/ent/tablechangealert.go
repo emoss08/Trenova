@@ -44,12 +44,6 @@ type TableChangeAlert struct {
 	Description string `json:"description"`
 	// CustomSubject holds the value of the "custom_subject" field.
 	CustomSubject string `json:"customSubject"`
-	// FunctionName holds the value of the "function_name" field.
-	FunctionName string `json:"functionName"`
-	// TriggerName holds the value of the "trigger_name" field.
-	TriggerName string `json:"triggerName"`
-	// ListenerName holds the value of the "listener_name" field.
-	ListenerName string `json:"listenerName"`
 	// EmailRecipients holds the value of the "email_recipients" field.
 	EmailRecipients string `json:"emailRecipients" validate:"omitempty,commaSeparatedEmails"`
 	// EffectiveDate holds the value of the "effective_date" field.
@@ -108,7 +102,7 @@ func (*TableChangeAlert) scanValues(columns []string) ([]any, error) {
 			values[i] = new([]byte)
 		case tablechangealert.FieldVersion:
 			values[i] = new(sql.NullInt64)
-		case tablechangealert.FieldStatus, tablechangealert.FieldName, tablechangealert.FieldDatabaseAction, tablechangealert.FieldTopicName, tablechangealert.FieldDescription, tablechangealert.FieldCustomSubject, tablechangealert.FieldFunctionName, tablechangealert.FieldTriggerName, tablechangealert.FieldListenerName, tablechangealert.FieldEmailRecipients:
+		case tablechangealert.FieldStatus, tablechangealert.FieldName, tablechangealert.FieldDatabaseAction, tablechangealert.FieldTopicName, tablechangealert.FieldDescription, tablechangealert.FieldCustomSubject, tablechangealert.FieldEmailRecipients:
 			values[i] = new(sql.NullString)
 		case tablechangealert.FieldCreatedAt, tablechangealert.FieldUpdatedAt:
 			values[i] = new(sql.NullTime)
@@ -200,24 +194,6 @@ func (tca *TableChangeAlert) assignValues(columns []string, values []any) error 
 				return fmt.Errorf("unexpected type %T for field custom_subject", values[i])
 			} else if value.Valid {
 				tca.CustomSubject = value.String
-			}
-		case tablechangealert.FieldFunctionName:
-			if value, ok := values[i].(*sql.NullString); !ok {
-				return fmt.Errorf("unexpected type %T for field function_name", values[i])
-			} else if value.Valid {
-				tca.FunctionName = value.String
-			}
-		case tablechangealert.FieldTriggerName:
-			if value, ok := values[i].(*sql.NullString); !ok {
-				return fmt.Errorf("unexpected type %T for field trigger_name", values[i])
-			} else if value.Valid {
-				tca.TriggerName = value.String
-			}
-		case tablechangealert.FieldListenerName:
-			if value, ok := values[i].(*sql.NullString); !ok {
-				return fmt.Errorf("unexpected type %T for field listener_name", values[i])
-			} else if value.Valid {
-				tca.ListenerName = value.String
 			}
 		case tablechangealert.FieldEmailRecipients:
 			if value, ok := values[i].(*sql.NullString); !ok {
@@ -323,15 +299,6 @@ func (tca *TableChangeAlert) String() string {
 	builder.WriteString(", ")
 	builder.WriteString("custom_subject=")
 	builder.WriteString(tca.CustomSubject)
-	builder.WriteString(", ")
-	builder.WriteString("function_name=")
-	builder.WriteString(tca.FunctionName)
-	builder.WriteString(", ")
-	builder.WriteString("trigger_name=")
-	builder.WriteString(tca.TriggerName)
-	builder.WriteString(", ")
-	builder.WriteString("listener_name=")
-	builder.WriteString(tca.ListenerName)
 	builder.WriteString(", ")
 	builder.WriteString("email_recipients=")
 	builder.WriteString(tca.EmailRecipients)
