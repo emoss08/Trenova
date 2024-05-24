@@ -120,8 +120,6 @@ func (h *AuthenticationHandler) AuthenticateUser() fiber.Handler {
 			})
 		}
 
-		h.Logger.Debug().Msgf("Organization ID: %s, Business Unit ID: %s", user.OrganizationID, user.BusinessUnitID)
-
 		claims := jwt.MapClaims{
 			"userID":         user.ID,
 			"organizationID": user.OrganizationID,

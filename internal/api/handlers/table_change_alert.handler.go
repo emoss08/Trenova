@@ -43,8 +43,6 @@ func (h *TableChangeAlertHandler) getTableChangeAlerts() fiber.Handler {
 		orgID, ok := c.Locals(util.CTXOrganizationID).(uuid.UUID)
 		buID, buOK := c.Locals(util.CTXBusinessUnitID).(uuid.UUID)
 
-		h.Logger.Debug().Msgf("Organization ID: %s, Business Unit ID: %s", orgID, buID)
-
 		if !ok || !buOK {
 			return c.Status(fiber.StatusInternalServerError).JSON(types.ValidationErrorResponse{
 				Type: "internalError",
