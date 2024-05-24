@@ -8,10 +8,10 @@ import (
 )
 
 func TestValidateConditionalLogic_Valid(t *testing.T) {
-	data := map[string]interface{}{
+	data := map[string]any{
 		"name":        "Example Logic",
 		"description": "This is an example",
-		"tableName":   "example_table",
+		"topic":       "example_topic",
 		"conditions": []any{
 			map[string]any{
 				"id":        1,
@@ -30,12 +30,12 @@ func TestValidateConditionalLogic_Valid(t *testing.T) {
 func TestValidateConditionalLogic_MissingRequiredKey_Name(t *testing.T) {
 	data := map[string]any{
 		"description": "This is an example",
-		"tableName":   "example_table",
+		"topic":       "example_topic",
 		"conditions": []any{
 			map[string]any{
 				"id":        1,
 				"column":    "example_column",
-				"operation": "eq",
+				"operation": "EQUALS",
 				"value":     "example_value",
 				"dataType":  "string",
 			},
@@ -51,7 +51,7 @@ func TestValidateConditionalLogic_InvalidOperation(t *testing.T) {
 	data := map[string]any{
 		"name":        "Example Logic",
 		"description": "This is an example",
-		"tableName":   "example_table",
+		"topic":       "example_topic",
 		"conditions": []any{
 			map[string]any{
 				"id":        1,
@@ -72,7 +72,7 @@ func TestValidateConditionalLogic_InvalidDataType(t *testing.T) {
 	data := map[string]any{
 		"name":        "Example Logic",
 		"description": "This is an example",
-		"tableName":   "example_table",
+		"topic":       "example_topic",
 		"conditions": []any{
 			map[string]any{
 				"id":        1,
@@ -93,7 +93,7 @@ func TestValidateConditionalLogic_OperationInExpectsList(t *testing.T) {
 	data := map[string]any{
 		"name":        "Example Logic",
 		"description": "This is an example",
-		"tableName":   "example_table",
+		"topic":       "example_topic",
 		"conditions": []any{
 			map[string]any{
 				"id":        1,
@@ -114,7 +114,7 @@ func TestValidateConditionalLogic_OperationIsNullShouldNotHaveValue(t *testing.T
 	data := map[string]any{
 		"name":        "Example Logic",
 		"description": "This is an example",
-		"tableName":   "example_table",
+		"topic":       "example_topic",
 		"conditions": []any{
 			map[string]any{
 				"id":        1,
@@ -135,7 +135,7 @@ func TestValidateConditionalLogic_OperationContainsExpectsString(t *testing.T) {
 	data := map[string]any{
 		"name":        "Example Logic",
 		"description": "This is an example",
-		"tableName":   "example_table",
+		"topic":       "example_topic",
 		"conditions": []any{
 			map[string]any{
 				"id":        1,
@@ -156,7 +156,7 @@ func TestValidateModelFieldsExist_Valid(t *testing.T) {
 	data := map[string]any{
 		"name":        "Example Logic",
 		"description": "This is an example",
-		"tableName":   "example_table",
+		"topic":       "example_topic",
 		"conditions": []any{
 			map[string]any{
 				"id":        1,
@@ -178,7 +178,7 @@ func TestValidateModelFieldsExist_FieldDoesNotExist(t *testing.T) {
 	data := map[string]any{
 		"name":        "Example Logic",
 		"description": "This is an example",
-		"tableName":   "example_table",
+		"topic":       "example_topic",
 		"conditions": []any{
 			map[string]any{
 				"id":        1,
@@ -201,7 +201,7 @@ func TestValidateModelFieldsExist_FieldNotAllowed(t *testing.T) {
 	data := map[string]any{
 		"name":        "Example Logic",
 		"description": "This is an example",
-		"tableName":   "example_table",
+		"topic":       "example_topic",
 		"conditions": []any{
 			map[string]any{
 				"id":        1,

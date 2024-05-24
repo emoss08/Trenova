@@ -32,12 +32,12 @@ export function CustomerRuleProfileForm({ open }: { open: boolean }) {
           control={control}
           isMulti
           rules={{ required: true }}
-          label="Document Classification"
+          label="Required Documents"
           options={selectDocumentClassData}
           isFetchError={isDocumentClassError}
           isLoading={isDocumentClassLoading}
-          placeholder="Select Document Classification"
-          description="Select the state or region for the customer."
+          placeholder="Select Required Document Class."
+          description="Specify the document classes that are required for this customer."
           hasPopoutWindow
           popoutLink="/billing/document-classes/"
           popoutLinkLabel="Document Classification"

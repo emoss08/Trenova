@@ -18,36 +18,35 @@ import type {
 } from "@/types/organization";
 import { type TableSheetProps } from "@/types/tables";
 import { yupResolver } from "@hookform/resolvers/yup";
-import { useEffect } from "react";
 import { useForm } from "react-hook-form";
-import { TableChangeAlertForm } from "./table-change-sheet";
-import { Badge } from "./ui/badge";
+import { Badge } from "../ui/badge";
+import { TableChangeAlertBody } from "./table-change-sheet";
+
 function TableChangeEditForm({
   tableChangeAlert,
-  open,
   onOpenChange,
 }: {
   tableChangeAlert: TableChangeAlert;
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }) {
-  const { handleSubmit, reset, control, watch, setValue, formState } =
+  const { handleSubmit, reset, control, formState } =
     useForm<TableChangeAlertFormValues>({
       resolver: yupResolver(tableChangeAlertSchema),
       defaultValues: tableChangeAlert,
     });
 
-  useEffect(() => {
-    const subscription = watch((value, { name }) => {
-      if (name === "source" && value.source === "Database") {
-        setValue("topicName", undefined);
-      } else if (name === "source" && value.source === "Kafka") {
-        setValue("tableName", undefined);
-      }
-    });
+  // useEffect(() => {
+  //   const subscription = watch((value, { name }) => {
+  //     if (name === "source" && value.source === "Database") {
+  //       setValue("topicName", undefined);
+  //     } else if (name === "source" && value.source === "Kafka") {
+  //       setValue("tableName", undefined);
+  //     }
+  //   });
 
-    return () => subscription.unsubscribe();
-  }, [watch, setValue]);
+  //   return () => subscription.unsubscribe();
+  // }, [watch, setValue]);
 
   console.info("Table Change Alert errors", formState.errors);
 
@@ -69,7 +68,7 @@ function TableChangeEditForm({
       onSubmit={handleSubmit(onSubmit)}
       className="flex h-full flex-col overflow-y-auto"
     >
-      <TableChangeAlertForm control={control} open={open} watch={watch} />
+      <TableChangeAlertBody control={control} />
       <SheetFooter className="mb-12">
         <Button
           type="reset"

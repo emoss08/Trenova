@@ -1,21 +1,20 @@
 import {
-  DatabaseActionChoicesProps,
-  EmailProtocolChoiceProps,
-  RouteDistanceUnitProps,
-  RouteModelChoiceProps,
-  TimezoneChoices,
+  EnumDatabaseAction,
+  EnumDeliveryMethod,
+  type EmailProtocolChoiceProps,
+  type RouteDistanceUnitProps,
+  type RouteModelChoiceProps,
+  type TimezoneChoices,
 } from "@/lib/choices";
-import { StatusChoiceProps } from "@/types";
-import {
+import { type StatusChoiceProps } from "@/types";
+import type {
   EmailControlFormValues,
   EmailProfileFormValues,
   GoogleAPIFormValues,
   OrganizationFormValues,
   TableChangeAlertFormValues,
 } from "@/types/organization";
-import { ObjectSchema, boolean, number, object, string } from "yup";
-
-// TODO(Wolfred): Remove import * as Yup and just import what is needed from
+import { ObjectSchema, boolean, mixed, number, object, string } from "yup";
 
 export const organizationSchema: ObjectSchema<OrganizationFormValues> =
   object().shape({
@@ -31,16 +30,42 @@ export const tableChangeAlertSchema: ObjectSchema<TableChangeAlertFormValues> =
   object().shape({
     status: string<StatusChoiceProps>().required("Status is required."),
     name: string().required("Name is required."),
-    databaseAction: string<DatabaseActionChoicesProps>().required(
-      "Database Action is required.",
-    ),
+    databaseAction: mixed<EnumDatabaseAction>()
+      .required("Database Action is required.")
+      .oneOf(Object.values(EnumDatabaseAction)),
     topicName: string().required("Topic Name is required."),
     description: string(),
     emailProfile: string(),
-    emailRecipients: string().required("Email Recipients is required."),
-    conditionalLogic: object().nullable(),
-    customSubject: string(),
+    emailRecipients: string().test({
+      name: "emailRecipients",
+      message:
+        "Email Recipients are only allowed if Delivery Method is Email. Please try again.",
+      test: function (value) {
+        const { deliveryMethod } = this.parent;
+        if (deliveryMethod !== EnumDeliveryMethod.Email && value) {
+          return false;
+        }
+        return true;
+      },
+    }),
+    // conditionalLogic: object().nullable(),
+    // Do not allow customSubject if the delivery method is not Email
+    customSubject: string().test({
+      name: "customSubject",
+      message:
+        "Custom Subject is only allowed if Delivery Method is Email. Please try again.",
+      test: function (value) {
+        const { deliveryMethod } = this.parent;
+        if (deliveryMethod !== EnumDeliveryMethod.Email && value) {
+          return false;
+        }
+        return true;
+      },
+    }),
     effectiveDate: string().nullable().notRequired(),
+    deliveryMethod: mixed<EnumDeliveryMethod>()
+      .required("Delivery Method is required.")
+      .oneOf(Object.values(EnumDeliveryMethod)),
     expirationDate: string()
       .notRequired()
       .nullable()

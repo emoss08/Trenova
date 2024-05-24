@@ -10,26 +10,30 @@ import {
   SheetTitle,
 } from "@/components/ui/sheet";
 import { useCustomMutation } from "@/hooks/useCustomMutation";
-import { useEmailProfiles, useTopics } from "@/hooks/useQueries";
-import { databaseActionChoices, statusChoices } from "@/lib/choices";
+import { useTopics } from "@/hooks/useQueries";
+import {
+  EnumDatabaseAction,
+  EnumDeliveryMethod,
+  databaseActionChoices,
+  deliveryMethodChoices,
+  statusChoices,
+} from "@/lib/choices";
 import { cn } from "@/lib/utils";
 import { tableChangeAlertSchema } from "@/lib/validations/OrganizationSchema";
 import { type TableChangeAlertFormValues as FormValues } from "@/types/organization";
-import { TableSheetProps } from "@/types/tables";
+import { type TableSheetProps } from "@/types/tables";
 import { yupResolver } from "@hookform/resolvers/yup";
 import { useState } from "react";
 import { FormProvider, useForm, type Control } from "react-hook-form";
 import { useTranslation } from "react-i18next";
-import { InputField } from "./common/fields/input";
-import { SelectInput } from "./common/fields/select-input";
-import { FormControl, FormGroup } from "./ui/form";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "./ui/new/new-tabs";
+import { InputField } from "../common/fields/input";
+import { SelectInput } from "../common/fields/select-input";
+import { FormControl, FormGroup } from "../ui/form";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "../ui/new/new-tabs";
 
 export function TableChangeAlertForm({
-  open,
   control,
 }: {
-  open: boolean;
   control: Control<FormValues>;
 }) {
   const { t } = useTranslation("admin.tablechangealert");
@@ -40,7 +44,7 @@ export function TableChangeAlertForm({
     isLoading: isTopicsLoading,
   } = useTopics();
 
-  const { selectEmailProfile, isError, isLoading } = useEmailProfiles(open);
+  // const { selectEmailProfile, isError, isLoading } = useEmailProfiles(open);
 
   return (
     <FormGroup className="lg:grid-cols-2">
@@ -91,6 +95,17 @@ export function TableChangeAlertForm({
         />
       </FormControl>
       <FormControl className="col-span-full">
+        <SelectInput
+          name="deliveryMethod"
+          rules={{ required: true }}
+          options={deliveryMethodChoices}
+          control={control}
+          label={t("fields.deliveryMethod.label")}
+          placeholder={t("fields.deliveryMethod.placeholder")}
+          description={t("fields.deliveryMethod.description")}
+        />
+      </FormControl>
+      <FormControl className="col-span-full">
         <TextareaField
           name="description"
           control={control}
@@ -99,23 +114,16 @@ export function TableChangeAlertForm({
           description={t("fields.description.description")}
         />
       </FormControl>
-      <FormControl>
-        <SelectInput
-          name="emailProfile"
-          options={selectEmailProfile}
-          isFetchError={isError}
-          isLoading={isLoading}
+      <FormControl className="col-span-full">
+        <InputField
+          name="customSubject"
           control={control}
-          label={t("fields.emailProfile.label")}
-          placeholder={t("fields.emailProfile.placeholder")}
-          description={t("fields.emailProfile.description")}
-          hasPopoutWindow
-          popoutLink="/admin/email-profiles/"
-          isClearable
-          popoutLinkLabel="Email Profile"
+          label={t("fields.customSubject.label")}
+          placeholder={t("fields.customSubject.placeholder")}
+          description={t("fields.customSubject.description")}
         />
       </FormControl>
-      <FormControl>
+      <FormControl className="col-span-full">
         <InputField
           name="emailRecipients"
           rules={{ required: true }}
@@ -147,11 +155,9 @@ export function TableChangeAlertForm({
   );
 }
 
-function TableChangeAlertBody({
-  open,
+export function TableChangeAlertBody({
   control,
 }: {
-  open: boolean;
   control: Control<FormValues>;
 }) {
   const [activeTab, setActiveTab] = useState<string>("info");
@@ -168,7 +174,7 @@ function TableChangeAlertBody({
         <TabsTrigger value="conditionalLogic">Conditional Logic</TabsTrigger>
       </TabsList>
       <TabsContent value="info">
-        <TableChangeAlertForm open={open} control={control} />
+        <TableChangeAlertForm control={control} />
       </TabsContent>
       <TabsContent value="conditionalLogic">
         <div>
@@ -187,12 +193,12 @@ export function TableChangeAlertSheet({ onOpenChange, open }: TableSheetProps) {
     defaultValues: {
       status: "A",
       name: "",
-      databaseAction: "Insert",
+      databaseAction: EnumDatabaseAction.Insert,
       topicName: "",
       description: "",
-      emailProfile: "",
       emailRecipients: "",
-      conditionalLogic: {},
+      deliveryMethod: EnumDeliveryMethod.Email,
+      // conditionalLogic: {},
       customSubject: "",
       effectiveDate: null,
       expirationDate: null,
@@ -225,7 +231,7 @@ export function TableChangeAlertSheet({ onOpenChange, open }: TableSheetProps) {
             onSubmit={handleSubmit(onSubmit)}
             className="flex h-full flex-col overflow-y-auto"
           >
-            <TableChangeAlertBody open={open} control={control} />
+            <TableChangeAlertBody control={control} />
             <SheetFooter className="mb-12">
               <Button
                 type="reset"

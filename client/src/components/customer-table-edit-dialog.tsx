@@ -22,7 +22,7 @@ import { FormProvider, useForm } from "react-hook-form";
 import { CustomerForm } from "./customer-table-dialog";
 import { Badge } from "./ui/badge";
 
-export function CustomerEditForm({
+function CustomerEditForm({
   customer,
   open,
   onOpenChange,

@@ -146,6 +146,20 @@ func (tcac *TableChangeAlertCreate) SetNillableCustomSubject(s *string) *TableCh
 	return tcac
 }
 
+// SetDeliveryMethod sets the "delivery_method" field.
+func (tcac *TableChangeAlertCreate) SetDeliveryMethod(tm tablechangealert.DeliveryMethod) *TableChangeAlertCreate {
+	tcac.mutation.SetDeliveryMethod(tm)
+	return tcac
+}
+
+// SetNillableDeliveryMethod sets the "delivery_method" field if the given value is not nil.
+func (tcac *TableChangeAlertCreate) SetNillableDeliveryMethod(tm *tablechangealert.DeliveryMethod) *TableChangeAlertCreate {
+	if tm != nil {
+		tcac.SetDeliveryMethod(*tm)
+	}
+	return tcac
+}
+
 // SetEmailRecipients sets the "email_recipients" field.
 func (tcac *TableChangeAlertCreate) SetEmailRecipients(s string) *TableChangeAlertCreate {
 	tcac.mutation.SetEmailRecipients(s)
@@ -261,6 +275,10 @@ func (tcac *TableChangeAlertCreate) defaults() error {
 		v := tablechangealert.DefaultStatus
 		tcac.mutation.SetStatus(v)
 	}
+	if _, ok := tcac.mutation.DeliveryMethod(); !ok {
+		v := tablechangealert.DefaultDeliveryMethod
+		tcac.mutation.SetDeliveryMethod(v)
+	}
 	if _, ok := tcac.mutation.ID(); !ok {
 		if tablechangealert.DefaultID == nil {
 			return fmt.Errorf("ent: uninitialized tablechangealert.DefaultID (forgotten import ent/runtime?)")
@@ -310,6 +328,14 @@ func (tcac *TableChangeAlertCreate) check() error {
 	if v, ok := tcac.mutation.DatabaseAction(); ok {
 		if err := tablechangealert.DatabaseActionValidator(v); err != nil {
 			return &ValidationError{Name: "database_action", err: fmt.Errorf(`ent: validator failed for field "TableChangeAlert.database_action": %w`, err)}
+		}
+	}
+	if _, ok := tcac.mutation.DeliveryMethod(); !ok {
+		return &ValidationError{Name: "delivery_method", err: errors.New(`ent: missing required field "TableChangeAlert.delivery_method"`)}
+	}
+	if v, ok := tcac.mutation.DeliveryMethod(); ok {
+		if err := tablechangealert.DeliveryMethodValidator(v); err != nil {
+			return &ValidationError{Name: "delivery_method", err: fmt.Errorf(`ent: validator failed for field "TableChangeAlert.delivery_method": %w`, err)}
 		}
 	}
 	if _, ok := tcac.mutation.BusinessUnitID(); !ok {
@@ -388,6 +414,10 @@ func (tcac *TableChangeAlertCreate) createSpec() (*TableChangeAlert, *sqlgraph.C
 	if value, ok := tcac.mutation.CustomSubject(); ok {
 		_spec.SetField(tablechangealert.FieldCustomSubject, field.TypeString, value)
 		_node.CustomSubject = value
+	}
+	if value, ok := tcac.mutation.DeliveryMethod(); ok {
+		_spec.SetField(tablechangealert.FieldDeliveryMethod, field.TypeEnum, value)
+		_node.DeliveryMethod = value
 	}
 	if value, ok := tcac.mutation.EmailRecipients(); ok {
 		_spec.SetField(tablechangealert.FieldEmailRecipients, field.TypeString, value)

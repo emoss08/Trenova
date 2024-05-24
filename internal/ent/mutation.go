@@ -67547,6 +67547,7 @@ type TableChangeAlertMutation struct {
 	topic_name           *string
 	description          *string
 	custom_subject       *string
+	delivery_method      *tablechangealert.DeliveryMethod
 	email_recipients     *string
 	effective_date       **pgtype.Date
 	expiration_date      **pgtype.Date
@@ -68120,6 +68121,42 @@ func (m *TableChangeAlertMutation) ResetCustomSubject() {
 	delete(m.clearedFields, tablechangealert.FieldCustomSubject)
 }
 
+// SetDeliveryMethod sets the "delivery_method" field.
+func (m *TableChangeAlertMutation) SetDeliveryMethod(tm tablechangealert.DeliveryMethod) {
+	m.delivery_method = &tm
+}
+
+// DeliveryMethod returns the value of the "delivery_method" field in the mutation.
+func (m *TableChangeAlertMutation) DeliveryMethod() (r tablechangealert.DeliveryMethod, exists bool) {
+	v := m.delivery_method
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldDeliveryMethod returns the old "delivery_method" field's value of the TableChangeAlert entity.
+// If the TableChangeAlert object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *TableChangeAlertMutation) OldDeliveryMethod(ctx context.Context) (v tablechangealert.DeliveryMethod, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldDeliveryMethod is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldDeliveryMethod requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldDeliveryMethod: %w", err)
+	}
+	return oldValue.DeliveryMethod, nil
+}
+
+// ResetDeliveryMethod resets all changes to the "delivery_method" field.
+func (m *TableChangeAlertMutation) ResetDeliveryMethod() {
+	m.delivery_method = nil
+}
+
 // SetEmailRecipients sets the "email_recipients" field.
 func (m *TableChangeAlertMutation) SetEmailRecipients(s string) {
 	m.email_recipients = &s
@@ -68404,7 +68441,7 @@ func (m *TableChangeAlertMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *TableChangeAlertMutation) Fields() []string {
-	fields := make([]string, 0, 15)
+	fields := make([]string, 0, 16)
 	if m.business_unit != nil {
 		fields = append(fields, tablechangealert.FieldBusinessUnitID)
 	}
@@ -68437,6 +68474,9 @@ func (m *TableChangeAlertMutation) Fields() []string {
 	}
 	if m.custom_subject != nil {
 		fields = append(fields, tablechangealert.FieldCustomSubject)
+	}
+	if m.delivery_method != nil {
+		fields = append(fields, tablechangealert.FieldDeliveryMethod)
 	}
 	if m.email_recipients != nil {
 		fields = append(fields, tablechangealert.FieldEmailRecipients)
@@ -68480,6 +68520,8 @@ func (m *TableChangeAlertMutation) Field(name string) (ent.Value, bool) {
 		return m.Description()
 	case tablechangealert.FieldCustomSubject:
 		return m.CustomSubject()
+	case tablechangealert.FieldDeliveryMethod:
+		return m.DeliveryMethod()
 	case tablechangealert.FieldEmailRecipients:
 		return m.EmailRecipients()
 	case tablechangealert.FieldEffectiveDate:
@@ -68519,6 +68561,8 @@ func (m *TableChangeAlertMutation) OldField(ctx context.Context, name string) (e
 		return m.OldDescription(ctx)
 	case tablechangealert.FieldCustomSubject:
 		return m.OldCustomSubject(ctx)
+	case tablechangealert.FieldDeliveryMethod:
+		return m.OldDeliveryMethod(ctx)
 	case tablechangealert.FieldEmailRecipients:
 		return m.OldEmailRecipients(ctx)
 	case tablechangealert.FieldEffectiveDate:
@@ -68612,6 +68656,13 @@ func (m *TableChangeAlertMutation) SetField(name string, value ent.Value) error 
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetCustomSubject(v)
+		return nil
+	case tablechangealert.FieldDeliveryMethod:
+		v, ok := value.(tablechangealert.DeliveryMethod)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetDeliveryMethod(v)
 		return nil
 	case tablechangealert.FieldEmailRecipients:
 		v, ok := value.(string)
@@ -68782,6 +68833,9 @@ func (m *TableChangeAlertMutation) ResetField(name string) error {
 		return nil
 	case tablechangealert.FieldCustomSubject:
 		m.ResetCustomSubject()
+		return nil
+	case tablechangealert.FieldDeliveryMethod:
+		m.ResetDeliveryMethod()
 		return nil
 	case tablechangealert.FieldEmailRecipients:
 		m.ResetEmailRecipients()
