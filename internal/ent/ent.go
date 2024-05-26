@@ -51,6 +51,7 @@ import (
 	"github.com/emoss08/trenova/internal/ent/organizationfeatureflag"
 	"github.com/emoss08/trenova/internal/ent/permission"
 	"github.com/emoss08/trenova/internal/ent/qualifiercode"
+	"github.com/emoss08/trenova/internal/ent/rate"
 	"github.com/emoss08/trenova/internal/ent/reasoncode"
 	"github.com/emoss08/trenova/internal/ent/resource"
 	"github.com/emoss08/trenova/internal/ent/revenuecode"
@@ -180,6 +181,7 @@ func checkColumn(table, column string) error {
 			organizationfeatureflag.Table:      organizationfeatureflag.ValidColumn,
 			permission.Table:                   permission.ValidColumn,
 			qualifiercode.Table:                qualifiercode.ValidColumn,
+			rate.Table:                         rate.ValidColumn,
 			reasoncode.Table:                   reasoncode.ValidColumn,
 			resource.Table:                     resource.ValidColumn,
 			revenuecode.Table:                  revenuecode.ValidColumn,

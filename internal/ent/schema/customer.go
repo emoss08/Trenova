@@ -126,6 +126,7 @@ func (Customer) Edges() []ent.Edge {
 			Annotations(entsql.OnDelete(entsql.Cascade)),
 		edge.To("delivery_slots", DeliverySlot.Type).
 			Annotations(entsql.OnDelete(entsql.Cascade)),
+		edge.To("rates", Rate.Type),
 	}
 }
 

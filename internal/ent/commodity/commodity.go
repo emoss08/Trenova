@@ -48,6 +48,8 @@ const (
 	EdgeOrganization = "organization"
 	// EdgeHazardousMaterial holds the string denoting the hazardous_material edge name in mutations.
 	EdgeHazardousMaterial = "hazardous_material"
+	// EdgeRates holds the string denoting the rates edge name in mutations.
+	EdgeRates = "rates"
 	// Table holds the table name of the commodity in the database.
 	Table = "commodities"
 	// BusinessUnitTable is the table that holds the business_unit relation/edge.
@@ -71,6 +73,13 @@ const (
 	HazardousMaterialInverseTable = "hazardous_materials"
 	// HazardousMaterialColumn is the table column denoting the hazardous_material relation/edge.
 	HazardousMaterialColumn = "hazardous_material_id"
+	// RatesTable is the table that holds the rates relation/edge.
+	RatesTable = "rates"
+	// RatesInverseTable is the table name for the Rate entity.
+	// It exists in this package in order to avoid circular dependency with the "rate" package.
+	RatesInverseTable = "rates"
+	// RatesColumn is the table column denoting the rates relation/edge.
+	RatesColumn = "commodity_id"
 )
 
 // Columns holds all SQL columns for commodity fields.
@@ -237,6 +246,20 @@ func ByHazardousMaterialField(field string, opts ...sql.OrderTermOption) OrderOp
 		sqlgraph.OrderByNeighborTerms(s, newHazardousMaterialStep(), sql.OrderByField(field, opts...))
 	}
 }
+
+// ByRatesCount orders the results by rates count.
+func ByRatesCount(opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborsCount(s, newRatesStep(), opts...)
+	}
+}
+
+// ByRates orders the results by rates terms.
+func ByRates(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newRatesStep(), append([]sql.OrderTerm{term}, terms...)...)
+	}
+}
 func newBusinessUnitStep() *sqlgraph.Step {
 	return sqlgraph.NewStep(
 		sqlgraph.From(Table, FieldID),
@@ -256,5 +279,12 @@ func newHazardousMaterialStep() *sqlgraph.Step {
 		sqlgraph.From(Table, FieldID),
 		sqlgraph.To(HazardousMaterialInverseTable, FieldID),
 		sqlgraph.Edge(sqlgraph.M2O, false, HazardousMaterialTable, HazardousMaterialColumn),
+	)
+}
+func newRatesStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(RatesInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.O2M, false, RatesTable, RatesColumn),
 	)
 }

@@ -1047,6 +1047,30 @@ func (f QualifierCodeMutationRuleFunc) EvalMutation(ctx context.Context, m ent.M
 	return Denyf("ent/privacy: unexpected mutation type %T, expect *ent.QualifierCodeMutation", m)
 }
 
+// The RateQueryRuleFunc type is an adapter to allow the use of ordinary
+// functions as a query rule.
+type RateQueryRuleFunc func(context.Context, *ent.RateQuery) error
+
+// EvalQuery return f(ctx, q).
+func (f RateQueryRuleFunc) EvalQuery(ctx context.Context, q ent.Query) error {
+	if q, ok := q.(*ent.RateQuery); ok {
+		return f(ctx, q)
+	}
+	return Denyf("ent/privacy: unexpected query type %T, expect *ent.RateQuery", q)
+}
+
+// The RateMutationRuleFunc type is an adapter to allow the use of ordinary
+// functions as a mutation rule.
+type RateMutationRuleFunc func(context.Context, *ent.RateMutation) error
+
+// EvalMutation calls f(ctx, m).
+func (f RateMutationRuleFunc) EvalMutation(ctx context.Context, m ent.Mutation) error {
+	if m, ok := m.(*ent.RateMutation); ok {
+		return f(ctx, m)
+	}
+	return Denyf("ent/privacy: unexpected mutation type %T, expect *ent.RateMutation", m)
+}
+
 // The ReasonCodeQueryRuleFunc type is an adapter to allow the use of ordinary
 // functions as a query rule.
 type ReasonCodeQueryRuleFunc func(context.Context, *ent.ReasonCodeQuery) error
@@ -1880,6 +1904,8 @@ func queryFilter(q ent.Query) (Filter, error) {
 		return q.Filter(), nil
 	case *ent.QualifierCodeQuery:
 		return q.Filter(), nil
+	case *ent.RateQuery:
+		return q.Filter(), nil
 	case *ent.ReasonCodeQuery:
 		return q.Filter(), nil
 	case *ent.ResourceQuery:
@@ -2024,6 +2050,8 @@ func mutationFilter(m ent.Mutation) (Filter, error) {
 	case *ent.PermissionMutation:
 		return m.Filter(), nil
 	case *ent.QualifierCodeMutation:
+		return m.Filter(), nil
+	case *ent.RateMutation:
 		return m.Filter(), nil
 	case *ent.ReasonCodeMutation:
 		return m.Filter(), nil

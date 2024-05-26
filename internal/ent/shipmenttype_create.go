@@ -12,6 +12,7 @@ import (
 	"entgo.io/ent/schema/field"
 	"github.com/emoss08/trenova/internal/ent/businessunit"
 	"github.com/emoss08/trenova/internal/ent/organization"
+	"github.com/emoss08/trenova/internal/ent/rate"
 	"github.com/emoss08/trenova/internal/ent/shipmenttype"
 	"github.com/google/uuid"
 )
@@ -147,6 +148,21 @@ func (stc *ShipmentTypeCreate) SetBusinessUnit(b *BusinessUnit) *ShipmentTypeCre
 // SetOrganization sets the "organization" edge to the Organization entity.
 func (stc *ShipmentTypeCreate) SetOrganization(o *Organization) *ShipmentTypeCreate {
 	return stc.SetOrganizationID(o.ID)
+}
+
+// AddRateIDs adds the "rates" edge to the Rate entity by IDs.
+func (stc *ShipmentTypeCreate) AddRateIDs(ids ...uuid.UUID) *ShipmentTypeCreate {
+	stc.mutation.AddRateIDs(ids...)
+	return stc
+}
+
+// AddRates adds the "rates" edges to the Rate entity.
+func (stc *ShipmentTypeCreate) AddRates(r ...*Rate) *ShipmentTypeCreate {
+	ids := make([]uuid.UUID, len(r))
+	for i := range r {
+		ids[i] = r[i].ID
+	}
+	return stc.AddRateIDs(ids...)
 }
 
 // Mutation returns the ShipmentTypeMutation object of the builder.
@@ -340,6 +356,22 @@ func (stc *ShipmentTypeCreate) createSpec() (*ShipmentType, *sqlgraph.CreateSpec
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
 		_node.OrganizationID = nodes[0]
+		_spec.Edges = append(_spec.Edges, edge)
+	}
+	if nodes := stc.mutation.RatesIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   shipmenttype.RatesTable,
+			Columns: []string{shipmenttype.RatesColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(rate.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
 		_spec.Edges = append(_spec.Edges, edge)
 	}
 	return _node, _spec

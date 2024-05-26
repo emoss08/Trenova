@@ -1,4 +1,5 @@
 import { Button } from "@/components/ui/button";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { useLocations } from "@/hooks/useQueries";
 import { cn } from "@/lib/utils";
 import { Location } from "@/types/location";
@@ -8,7 +9,7 @@ import { DragDropContext, Droppable, DropResult } from "react-beautiful-dnd";
 import { useFieldArray, useFormContext } from "react-hook-form";
 import { StopCard } from "./cards/stop-card";
 
-export default function StopInfoTab() {
+export function StopInfoTab() {
   const { control, watch, setValue } = useFormContext<ShipmentFormValues>();
 
   const { fields, remove, move, insert } = useFieldArray({
@@ -69,7 +70,7 @@ export default function StopInfoTab() {
   }, [locations, setValue, watch]);
 
   return (
-    <>
+    <ScrollArea className="h-[80vh] p-4">
       <DragDropContext onDragEnd={handleDrag}>
         <ul>
           <Droppable droppableId="stops" direction="horizontal">
@@ -108,6 +109,6 @@ export default function StopInfoTab() {
           Add Stop
         </Button>
       </div>
-    </>
+    </ScrollArea>
   );
 }

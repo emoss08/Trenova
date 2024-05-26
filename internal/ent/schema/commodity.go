@@ -63,6 +63,7 @@ func (Commodity) Edges() []ent.Edge {
 			Annotations(entsql.OnDelete(entsql.Restrict)).
 			StructTag(`json:"hazardousMaterial"`).
 			Unique(),
+		edge.To("rates", Rate.Type),
 	}
 }
 

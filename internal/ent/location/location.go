@@ -70,6 +70,10 @@ const (
 	EdgeOriginRouteLocations = "origin_route_locations"
 	// EdgeDestinationRouteLocations holds the string denoting the destination_route_locations edge name in mutations.
 	EdgeDestinationRouteLocations = "destination_route_locations"
+	// EdgeRatesOrigin holds the string denoting the rates_origin edge name in mutations.
+	EdgeRatesOrigin = "rates_origin"
+	// EdgeRatesDestination holds the string denoting the rates_destination edge name in mutations.
+	EdgeRatesDestination = "rates_destination"
 	// Table holds the table name of the location in the database.
 	Table = "locations"
 	// BusinessUnitTable is the table that holds the business_unit relation/edge.
@@ -128,6 +132,20 @@ const (
 	DestinationRouteLocationsInverseTable = "shipment_routes"
 	// DestinationRouteLocationsColumn is the table column denoting the destination_route_locations relation/edge.
 	DestinationRouteLocationsColumn = "destination_location_id"
+	// RatesOriginTable is the table that holds the rates_origin relation/edge.
+	RatesOriginTable = "rates"
+	// RatesOriginInverseTable is the table name for the Rate entity.
+	// It exists in this package in order to avoid circular dependency with the "rate" package.
+	RatesOriginInverseTable = "rates"
+	// RatesOriginColumn is the table column denoting the rates_origin relation/edge.
+	RatesOriginColumn = "origin_location_id"
+	// RatesDestinationTable is the table that holds the rates_destination relation/edge.
+	RatesDestinationTable = "rates"
+	// RatesDestinationInverseTable is the table name for the Rate entity.
+	// It exists in this package in order to avoid circular dependency with the "rate" package.
+	RatesDestinationInverseTable = "rates"
+	// RatesDestinationColumn is the table column denoting the rates_destination relation/edge.
+	RatesDestinationColumn = "destination_location_id"
 )
 
 // Columns holds all SQL columns for location fields.
@@ -405,6 +423,34 @@ func ByDestinationRouteLocations(term sql.OrderTerm, terms ...sql.OrderTerm) Ord
 		sqlgraph.OrderByNeighborTerms(s, newDestinationRouteLocationsStep(), append([]sql.OrderTerm{term}, terms...)...)
 	}
 }
+
+// ByRatesOriginCount orders the results by rates_origin count.
+func ByRatesOriginCount(opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborsCount(s, newRatesOriginStep(), opts...)
+	}
+}
+
+// ByRatesOrigin orders the results by rates_origin terms.
+func ByRatesOrigin(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newRatesOriginStep(), append([]sql.OrderTerm{term}, terms...)...)
+	}
+}
+
+// ByRatesDestinationCount orders the results by rates_destination count.
+func ByRatesDestinationCount(opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborsCount(s, newRatesDestinationStep(), opts...)
+	}
+}
+
+// ByRatesDestination orders the results by rates_destination terms.
+func ByRatesDestination(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newRatesDestinationStep(), append([]sql.OrderTerm{term}, terms...)...)
+	}
+}
 func newBusinessUnitStep() *sqlgraph.Step {
 	return sqlgraph.NewStep(
 		sqlgraph.From(Table, FieldID),
@@ -459,5 +505,19 @@ func newDestinationRouteLocationsStep() *sqlgraph.Step {
 		sqlgraph.From(Table, FieldID),
 		sqlgraph.To(DestinationRouteLocationsInverseTable, FieldID),
 		sqlgraph.Edge(sqlgraph.O2M, false, DestinationRouteLocationsTable, DestinationRouteLocationsColumn),
+	)
+}
+func newRatesOriginStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(RatesOriginInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.O2M, false, RatesOriginTable, RatesOriginColumn),
+	)
+}
+func newRatesDestinationStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(RatesDestinationInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.O2M, false, RatesDestinationTable, RatesDestinationColumn),
 	)
 }

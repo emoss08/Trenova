@@ -18,6 +18,7 @@ import (
 	"github.com/emoss08/trenova/internal/ent/customerruleprofile"
 	"github.com/emoss08/trenova/internal/ent/deliveryslot"
 	"github.com/emoss08/trenova/internal/ent/organization"
+	"github.com/emoss08/trenova/internal/ent/rate"
 	"github.com/emoss08/trenova/internal/ent/shipment"
 	"github.com/emoss08/trenova/internal/ent/usstate"
 	"github.com/google/uuid"
@@ -301,6 +302,21 @@ func (cc *CustomerCreate) AddDeliverySlots(d ...*DeliverySlot) *CustomerCreate {
 		ids[i] = d[i].ID
 	}
 	return cc.AddDeliverySlotIDs(ids...)
+}
+
+// AddRateIDs adds the "rates" edge to the Rate entity by IDs.
+func (cc *CustomerCreate) AddRateIDs(ids ...uuid.UUID) *CustomerCreate {
+	cc.mutation.AddRateIDs(ids...)
+	return cc
+}
+
+// AddRates adds the "rates" edges to the Rate entity.
+func (cc *CustomerCreate) AddRates(r ...*Rate) *CustomerCreate {
+	ids := make([]uuid.UUID, len(r))
+	for i := range r {
+		ids[i] = r[i].ID
+	}
+	return cc.AddRateIDs(ids...)
 }
 
 // Mutation returns the CustomerMutation object of the builder.
@@ -691,6 +707,22 @@ func (cc *CustomerCreate) createSpec() (*Customer, *sqlgraph.CreateSpec) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(deliveryslot.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges = append(_spec.Edges, edge)
+	}
+	if nodes := cc.mutation.RatesIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   customer.RatesTable,
+			Columns: []string{customer.RatesColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(rate.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {

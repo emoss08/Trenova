@@ -953,6 +953,29 @@ func HasDeliverySlotsWith(preds ...predicate.DeliverySlot) predicate.Customer {
 	})
 }
 
+// HasRates applies the HasEdge predicate on the "rates" edge.
+func HasRates() predicate.Customer {
+	return predicate.Customer(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, RatesTable, RatesColumn),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasRatesWith applies the HasEdge predicate on the "rates" edge with a given conditions (other predicates).
+func HasRatesWith(preds ...predicate.Rate) predicate.Customer {
+	return predicate.Customer(func(s *sql.Selector) {
+		step := newRatesStep()
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	})
+}
+
 // And groups predicates with the AND operator between them.
 func And(predicates ...predicate.Customer) predicate.Customer {
 	return predicate.Customer(sql.AndPredicates(predicates...))

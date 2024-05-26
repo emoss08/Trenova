@@ -12,6 +12,7 @@ type ShipmentStore = {
   sendMessageDialogOpen: boolean;
   reviewLogDialogOpen: boolean;
   currentWorker?: Worker;
+  addShipmentDialogOpen: boolean;
 };
 
 export const useShipmentStore = createGlobalStore<ShipmentStore>({
@@ -20,6 +21,7 @@ export const useShipmentStore = createGlobalStore<ShipmentStore>({
   sendMessageDialogOpen: false,
   reviewLogDialogOpen: false,
   currentWorker: undefined,
+  addShipmentDialogOpen: false,
 });
 
 export type MapType = "roadmap" | "hybrid" | "terrain";

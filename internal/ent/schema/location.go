@@ -136,5 +136,7 @@ func (Location) Edges() []ent.Edge {
 		edge.To("destination_route_locations", ShipmentRoute.Type).
 			StructTag(`json:"originLocations"`).
 			Annotations(entsql.OnDelete(entsql.Cascade)),
+		edge.To("rates_origin", Rate.Type),
+		edge.To("rates_destination", Rate.Type),
 	}
 }

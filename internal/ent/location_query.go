@@ -18,6 +18,7 @@ import (
 	"github.com/emoss08/trenova/internal/ent/locationcontact"
 	"github.com/emoss08/trenova/internal/ent/organization"
 	"github.com/emoss08/trenova/internal/ent/predicate"
+	"github.com/emoss08/trenova/internal/ent/rate"
 	"github.com/emoss08/trenova/internal/ent/shipmentroute"
 	"github.com/emoss08/trenova/internal/ent/usstate"
 	"github.com/google/uuid"
@@ -38,11 +39,15 @@ type LocationQuery struct {
 	withContacts                       *LocationContactQuery
 	withOriginRouteLocations           *ShipmentRouteQuery
 	withDestinationRouteLocations      *ShipmentRouteQuery
+	withRatesOrigin                    *RateQuery
+	withRatesDestination               *RateQuery
 	modifiers                          []func(*sql.Selector)
 	withNamedComments                  map[string]*LocationCommentQuery
 	withNamedContacts                  map[string]*LocationContactQuery
 	withNamedOriginRouteLocations      map[string]*ShipmentRouteQuery
 	withNamedDestinationRouteLocations map[string]*ShipmentRouteQuery
+	withNamedRatesOrigin               map[string]*RateQuery
+	withNamedRatesDestination          map[string]*RateQuery
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
 	path func(context.Context) (*sql.Selector, error)
@@ -255,6 +260,50 @@ func (lq *LocationQuery) QueryDestinationRouteLocations() *ShipmentRouteQuery {
 	return query
 }
 
+// QueryRatesOrigin chains the current query on the "rates_origin" edge.
+func (lq *LocationQuery) QueryRatesOrigin() *RateQuery {
+	query := (&RateClient{config: lq.config}).Query()
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := lq.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := lq.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(location.Table, location.FieldID, selector),
+			sqlgraph.To(rate.Table, rate.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, location.RatesOriginTable, location.RatesOriginColumn),
+		)
+		fromU = sqlgraph.SetNeighbors(lq.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
+}
+
+// QueryRatesDestination chains the current query on the "rates_destination" edge.
+func (lq *LocationQuery) QueryRatesDestination() *RateQuery {
+	query := (&RateClient{config: lq.config}).Query()
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := lq.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := lq.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(location.Table, location.FieldID, selector),
+			sqlgraph.To(rate.Table, rate.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, location.RatesDestinationTable, location.RatesDestinationColumn),
+		)
+		fromU = sqlgraph.SetNeighbors(lq.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
+}
+
 // First returns the first Location entity from the query.
 // Returns a *NotFoundError when no Location was found.
 func (lq *LocationQuery) First(ctx context.Context) (*Location, error) {
@@ -455,6 +504,8 @@ func (lq *LocationQuery) Clone() *LocationQuery {
 		withContacts:                  lq.withContacts.Clone(),
 		withOriginRouteLocations:      lq.withOriginRouteLocations.Clone(),
 		withDestinationRouteLocations: lq.withDestinationRouteLocations.Clone(),
+		withRatesOrigin:               lq.withRatesOrigin.Clone(),
+		withRatesDestination:          lq.withRatesDestination.Clone(),
 		// clone intermediate query.
 		sql:  lq.sql.Clone(),
 		path: lq.path,
@@ -549,6 +600,28 @@ func (lq *LocationQuery) WithDestinationRouteLocations(opts ...func(*ShipmentRou
 	return lq
 }
 
+// WithRatesOrigin tells the query-builder to eager-load the nodes that are connected to
+// the "rates_origin" edge. The optional arguments are used to configure the query builder of the edge.
+func (lq *LocationQuery) WithRatesOrigin(opts ...func(*RateQuery)) *LocationQuery {
+	query := (&RateClient{config: lq.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	lq.withRatesOrigin = query
+	return lq
+}
+
+// WithRatesDestination tells the query-builder to eager-load the nodes that are connected to
+// the "rates_destination" edge. The optional arguments are used to configure the query builder of the edge.
+func (lq *LocationQuery) WithRatesDestination(opts ...func(*RateQuery)) *LocationQuery {
+	query := (&RateClient{config: lq.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	lq.withRatesDestination = query
+	return lq
+}
+
 // GroupBy is used to group vertices by one or more fields/columns.
 // It is often used with aggregate functions, like: count, max, mean, min, sum.
 //
@@ -627,7 +700,7 @@ func (lq *LocationQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Loc
 	var (
 		nodes       = []*Location{}
 		_spec       = lq.querySpec()
-		loadedTypes = [8]bool{
+		loadedTypes = [10]bool{
 			lq.withBusinessUnit != nil,
 			lq.withOrganization != nil,
 			lq.withLocationCategory != nil,
@@ -636,6 +709,8 @@ func (lq *LocationQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Loc
 			lq.withContacts != nil,
 			lq.withOriginRouteLocations != nil,
 			lq.withDestinationRouteLocations != nil,
+			lq.withRatesOrigin != nil,
+			lq.withRatesDestination != nil,
 		}
 	)
 	_spec.ScanValues = func(columns []string) ([]any, error) {
@@ -715,6 +790,20 @@ func (lq *LocationQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Loc
 			return nil, err
 		}
 	}
+	if query := lq.withRatesOrigin; query != nil {
+		if err := lq.loadRatesOrigin(ctx, query, nodes,
+			func(n *Location) { n.Edges.RatesOrigin = []*Rate{} },
+			func(n *Location, e *Rate) { n.Edges.RatesOrigin = append(n.Edges.RatesOrigin, e) }); err != nil {
+			return nil, err
+		}
+	}
+	if query := lq.withRatesDestination; query != nil {
+		if err := lq.loadRatesDestination(ctx, query, nodes,
+			func(n *Location) { n.Edges.RatesDestination = []*Rate{} },
+			func(n *Location, e *Rate) { n.Edges.RatesDestination = append(n.Edges.RatesDestination, e) }); err != nil {
+			return nil, err
+		}
+	}
 	for name, query := range lq.withNamedComments {
 		if err := lq.loadComments(ctx, query, nodes,
 			func(n *Location) { n.appendNamedComments(name) },
@@ -740,6 +829,20 @@ func (lq *LocationQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Loc
 		if err := lq.loadDestinationRouteLocations(ctx, query, nodes,
 			func(n *Location) { n.appendNamedDestinationRouteLocations(name) },
 			func(n *Location, e *ShipmentRoute) { n.appendNamedDestinationRouteLocations(name, e) }); err != nil {
+			return nil, err
+		}
+	}
+	for name, query := range lq.withNamedRatesOrigin {
+		if err := lq.loadRatesOrigin(ctx, query, nodes,
+			func(n *Location) { n.appendNamedRatesOrigin(name) },
+			func(n *Location, e *Rate) { n.appendNamedRatesOrigin(name, e) }); err != nil {
+			return nil, err
+		}
+	}
+	for name, query := range lq.withNamedRatesDestination {
+		if err := lq.loadRatesDestination(ctx, query, nodes,
+			func(n *Location) { n.appendNamedRatesDestination(name) },
+			func(n *Location, e *Rate) { n.appendNamedRatesDestination(name, e) }); err != nil {
 			return nil, err
 		}
 	}
@@ -985,6 +1088,72 @@ func (lq *LocationQuery) loadDestinationRouteLocations(ctx context.Context, quer
 	}
 	return nil
 }
+func (lq *LocationQuery) loadRatesOrigin(ctx context.Context, query *RateQuery, nodes []*Location, init func(*Location), assign func(*Location, *Rate)) error {
+	fks := make([]driver.Value, 0, len(nodes))
+	nodeids := make(map[uuid.UUID]*Location)
+	for i := range nodes {
+		fks = append(fks, nodes[i].ID)
+		nodeids[nodes[i].ID] = nodes[i]
+		if init != nil {
+			init(nodes[i])
+		}
+	}
+	if len(query.ctx.Fields) > 0 {
+		query.ctx.AppendFieldOnce(rate.FieldOriginLocationID)
+	}
+	query.Where(predicate.Rate(func(s *sql.Selector) {
+		s.Where(sql.InValues(s.C(location.RatesOriginColumn), fks...))
+	}))
+	neighbors, err := query.All(ctx)
+	if err != nil {
+		return err
+	}
+	for _, n := range neighbors {
+		fk := n.OriginLocationID
+		if fk == nil {
+			return fmt.Errorf(`foreign-key "origin_location_id" is nil for node %v`, n.ID)
+		}
+		node, ok := nodeids[*fk]
+		if !ok {
+			return fmt.Errorf(`unexpected referenced foreign-key "origin_location_id" returned %v for node %v`, *fk, n.ID)
+		}
+		assign(node, n)
+	}
+	return nil
+}
+func (lq *LocationQuery) loadRatesDestination(ctx context.Context, query *RateQuery, nodes []*Location, init func(*Location), assign func(*Location, *Rate)) error {
+	fks := make([]driver.Value, 0, len(nodes))
+	nodeids := make(map[uuid.UUID]*Location)
+	for i := range nodes {
+		fks = append(fks, nodes[i].ID)
+		nodeids[nodes[i].ID] = nodes[i]
+		if init != nil {
+			init(nodes[i])
+		}
+	}
+	if len(query.ctx.Fields) > 0 {
+		query.ctx.AppendFieldOnce(rate.FieldDestinationLocationID)
+	}
+	query.Where(predicate.Rate(func(s *sql.Selector) {
+		s.Where(sql.InValues(s.C(location.RatesDestinationColumn), fks...))
+	}))
+	neighbors, err := query.All(ctx)
+	if err != nil {
+		return err
+	}
+	for _, n := range neighbors {
+		fk := n.DestinationLocationID
+		if fk == nil {
+			return fmt.Errorf(`foreign-key "destination_location_id" is nil for node %v`, n.ID)
+		}
+		node, ok := nodeids[*fk]
+		if !ok {
+			return fmt.Errorf(`unexpected referenced foreign-key "destination_location_id" returned %v for node %v`, *fk, n.ID)
+		}
+		assign(node, n)
+	}
+	return nil
+}
 
 func (lq *LocationQuery) sqlCount(ctx context.Context) (int, error) {
 	_spec := lq.querySpec()
@@ -1144,6 +1313,34 @@ func (lq *LocationQuery) WithNamedDestinationRouteLocations(name string, opts ..
 		lq.withNamedDestinationRouteLocations = make(map[string]*ShipmentRouteQuery)
 	}
 	lq.withNamedDestinationRouteLocations[name] = query
+	return lq
+}
+
+// WithNamedRatesOrigin tells the query-builder to eager-load the nodes that are connected to the "rates_origin"
+// edge with the given name. The optional arguments are used to configure the query builder of the edge.
+func (lq *LocationQuery) WithNamedRatesOrigin(name string, opts ...func(*RateQuery)) *LocationQuery {
+	query := (&RateClient{config: lq.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	if lq.withNamedRatesOrigin == nil {
+		lq.withNamedRatesOrigin = make(map[string]*RateQuery)
+	}
+	lq.withNamedRatesOrigin[name] = query
+	return lq
+}
+
+// WithNamedRatesDestination tells the query-builder to eager-load the nodes that are connected to the "rates_destination"
+// edge with the given name. The optional arguments are used to configure the query builder of the edge.
+func (lq *LocationQuery) WithNamedRatesDestination(name string, opts ...func(*RateQuery)) *LocationQuery {
+	query := (&RateClient{config: lq.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	if lq.withNamedRatesDestination == nil {
+		lq.withNamedRatesDestination = make(map[string]*RateQuery)
+	}
+	lq.withNamedRatesDestination[name] = query
 	return lq
 }
 

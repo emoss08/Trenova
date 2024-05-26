@@ -13,7 +13,7 @@ import { useEffect } from "react";
 import { useFormContext } from "react-hook-form";
 import { useTranslation } from "react-i18next";
 
-export default function GeneralInformation({
+export function GeneralInformationCard({
   shipmentControlData,
   isShipmentControlLoading,
   proNumber,

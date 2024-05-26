@@ -1,3 +1,4 @@
-h1:C0b9ocIXJ872ox0qfWEG+k07YnU90IASRzvwHRsk7ZI=
-20240524191039_intitial_migration.sql h1:TWl7FDBy+WUxwhoFW1G9kx8o6/rCfV5QgQvej3du9Pw=
-20240524192948_add_conditional_logic_to_table_change_alerts.sql h1:srJKCjRDfU/E5faz/5BXMCe0hJQwlKR12lh1B7oVK3Q=
+h1:+k0iC8VZ/B6iDj/JfUOUI5R1nM44zmUDmpFRYG3BDTs=
+20240524191039_intitial_migration.sql h1:THKwq6sZBn+fESPtI0NqYIgjqUXa61lb/NAXOnuzQ+o=
+20240524192948_add_conditional_logic_to_table_change_alerts.sql h1:k+ck8K5qytj7D77ndgnPiAsngDqNsoxknST+njfsX6o=
+20240526211128_add_rate_entity.sql h1:8fcBDf2T4SiPf4KINp4V/uAtEE6jkCILkiZ5gtdDqzY=

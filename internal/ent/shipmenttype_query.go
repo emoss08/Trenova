@@ -4,6 +4,7 @@ package ent
 
 import (
 	"context"
+	"database/sql/driver"
 	"fmt"
 	"math"
 
@@ -13,6 +14,7 @@ import (
 	"github.com/emoss08/trenova/internal/ent/businessunit"
 	"github.com/emoss08/trenova/internal/ent/organization"
 	"github.com/emoss08/trenova/internal/ent/predicate"
+	"github.com/emoss08/trenova/internal/ent/rate"
 	"github.com/emoss08/trenova/internal/ent/shipmenttype"
 	"github.com/google/uuid"
 )
@@ -26,7 +28,9 @@ type ShipmentTypeQuery struct {
 	predicates       []predicate.ShipmentType
 	withBusinessUnit *BusinessUnitQuery
 	withOrganization *OrganizationQuery
+	withRates        *RateQuery
 	modifiers        []func(*sql.Selector)
+	withNamedRates   map[string]*RateQuery
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
 	path func(context.Context) (*sql.Selector, error)
@@ -100,6 +104,28 @@ func (stq *ShipmentTypeQuery) QueryOrganization() *OrganizationQuery {
 			sqlgraph.From(shipmenttype.Table, shipmenttype.FieldID, selector),
 			sqlgraph.To(organization.Table, organization.FieldID),
 			sqlgraph.Edge(sqlgraph.M2O, false, shipmenttype.OrganizationTable, shipmenttype.OrganizationColumn),
+		)
+		fromU = sqlgraph.SetNeighbors(stq.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
+}
+
+// QueryRates chains the current query on the "rates" edge.
+func (stq *ShipmentTypeQuery) QueryRates() *RateQuery {
+	query := (&RateClient{config: stq.config}).Query()
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := stq.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := stq.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(shipmenttype.Table, shipmenttype.FieldID, selector),
+			sqlgraph.To(rate.Table, rate.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, shipmenttype.RatesTable, shipmenttype.RatesColumn),
 		)
 		fromU = sqlgraph.SetNeighbors(stq.driver.Dialect(), step)
 		return fromU, nil
@@ -301,6 +327,7 @@ func (stq *ShipmentTypeQuery) Clone() *ShipmentTypeQuery {
 		predicates:       append([]predicate.ShipmentType{}, stq.predicates...),
 		withBusinessUnit: stq.withBusinessUnit.Clone(),
 		withOrganization: stq.withOrganization.Clone(),
+		withRates:        stq.withRates.Clone(),
 		// clone intermediate query.
 		sql:  stq.sql.Clone(),
 		path: stq.path,
@@ -326,6 +353,17 @@ func (stq *ShipmentTypeQuery) WithOrganization(opts ...func(*OrganizationQuery))
 		opt(query)
 	}
 	stq.withOrganization = query
+	return stq
+}
+
+// WithRates tells the query-builder to eager-load the nodes that are connected to
+// the "rates" edge. The optional arguments are used to configure the query builder of the edge.
+func (stq *ShipmentTypeQuery) WithRates(opts ...func(*RateQuery)) *ShipmentTypeQuery {
+	query := (&RateClient{config: stq.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	stq.withRates = query
 	return stq
 }
 
@@ -407,9 +445,10 @@ func (stq *ShipmentTypeQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([
 	var (
 		nodes       = []*ShipmentType{}
 		_spec       = stq.querySpec()
-		loadedTypes = [2]bool{
+		loadedTypes = [3]bool{
 			stq.withBusinessUnit != nil,
 			stq.withOrganization != nil,
+			stq.withRates != nil,
 		}
 	)
 	_spec.ScanValues = func(columns []string) ([]any, error) {
@@ -442,6 +481,20 @@ func (stq *ShipmentTypeQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([
 	if query := stq.withOrganization; query != nil {
 		if err := stq.loadOrganization(ctx, query, nodes, nil,
 			func(n *ShipmentType, e *Organization) { n.Edges.Organization = e }); err != nil {
+			return nil, err
+		}
+	}
+	if query := stq.withRates; query != nil {
+		if err := stq.loadRates(ctx, query, nodes,
+			func(n *ShipmentType) { n.Edges.Rates = []*Rate{} },
+			func(n *ShipmentType, e *Rate) { n.Edges.Rates = append(n.Edges.Rates, e) }); err != nil {
+			return nil, err
+		}
+	}
+	for name, query := range stq.withNamedRates {
+		if err := stq.loadRates(ctx, query, nodes,
+			func(n *ShipmentType) { n.appendNamedRates(name) },
+			func(n *ShipmentType, e *Rate) { n.appendNamedRates(name, e) }); err != nil {
 			return nil, err
 		}
 	}
@@ -503,6 +556,39 @@ func (stq *ShipmentTypeQuery) loadOrganization(ctx context.Context, query *Organ
 		for i := range nodes {
 			assign(nodes[i], n)
 		}
+	}
+	return nil
+}
+func (stq *ShipmentTypeQuery) loadRates(ctx context.Context, query *RateQuery, nodes []*ShipmentType, init func(*ShipmentType), assign func(*ShipmentType, *Rate)) error {
+	fks := make([]driver.Value, 0, len(nodes))
+	nodeids := make(map[uuid.UUID]*ShipmentType)
+	for i := range nodes {
+		fks = append(fks, nodes[i].ID)
+		nodeids[nodes[i].ID] = nodes[i]
+		if init != nil {
+			init(nodes[i])
+		}
+	}
+	if len(query.ctx.Fields) > 0 {
+		query.ctx.AppendFieldOnce(rate.FieldShipmentTypeID)
+	}
+	query.Where(predicate.Rate(func(s *sql.Selector) {
+		s.Where(sql.InValues(s.C(shipmenttype.RatesColumn), fks...))
+	}))
+	neighbors, err := query.All(ctx)
+	if err != nil {
+		return err
+	}
+	for _, n := range neighbors {
+		fk := n.ShipmentTypeID
+		if fk == nil {
+			return fmt.Errorf(`foreign-key "shipment_type_id" is nil for node %v`, n.ID)
+		}
+		node, ok := nodeids[*fk]
+		if !ok {
+			return fmt.Errorf(`unexpected referenced foreign-key "shipment_type_id" returned %v for node %v`, *fk, n.ID)
+		}
+		assign(node, n)
 	}
 	return nil
 }
@@ -604,6 +690,20 @@ func (stq *ShipmentTypeQuery) sqlQuery(ctx context.Context) *sql.Selector {
 func (stq *ShipmentTypeQuery) Modify(modifiers ...func(s *sql.Selector)) *ShipmentTypeSelect {
 	stq.modifiers = append(stq.modifiers, modifiers...)
 	return stq.Select()
+}
+
+// WithNamedRates tells the query-builder to eager-load the nodes that are connected to the "rates"
+// edge with the given name. The optional arguments are used to configure the query builder of the edge.
+func (stq *ShipmentTypeQuery) WithNamedRates(name string, opts ...func(*RateQuery)) *ShipmentTypeQuery {
+	query := (&RateClient{config: stq.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	if stq.withNamedRates == nil {
+		stq.withNamedRates = make(map[string]*RateQuery)
+	}
+	stq.withNamedRates[name] = query
+	return stq
 }
 
 // ShipmentTypeGroupBy is the group-by builder for ShipmentType entities.

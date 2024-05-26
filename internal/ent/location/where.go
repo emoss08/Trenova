@@ -1220,6 +1220,52 @@ func HasDestinationRouteLocationsWith(preds ...predicate.ShipmentRoute) predicat
 	})
 }
 
+// HasRatesOrigin applies the HasEdge predicate on the "rates_origin" edge.
+func HasRatesOrigin() predicate.Location {
+	return predicate.Location(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, RatesOriginTable, RatesOriginColumn),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasRatesOriginWith applies the HasEdge predicate on the "rates_origin" edge with a given conditions (other predicates).
+func HasRatesOriginWith(preds ...predicate.Rate) predicate.Location {
+	return predicate.Location(func(s *sql.Selector) {
+		step := newRatesOriginStep()
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	})
+}
+
+// HasRatesDestination applies the HasEdge predicate on the "rates_destination" edge.
+func HasRatesDestination() predicate.Location {
+	return predicate.Location(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, RatesDestinationTable, RatesDestinationColumn),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasRatesDestinationWith applies the HasEdge predicate on the "rates_destination" edge with a given conditions (other predicates).
+func HasRatesDestinationWith(preds ...predicate.Rate) predicate.Location {
+	return predicate.Location(func(s *sql.Selector) {
+		step := newRatesDestinationStep()
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	})
+}
+
 // And groups predicates with the AND operator between them.
 func And(predicates ...predicate.Location) predicate.Location {
 	return predicate.Location(sql.AndPredicates(predicates...))

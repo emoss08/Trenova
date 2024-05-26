@@ -44,6 +44,7 @@ import (
 	"github.com/emoss08/trenova/internal/ent/organizationfeatureflag"
 	"github.com/emoss08/trenova/internal/ent/permission"
 	"github.com/emoss08/trenova/internal/ent/qualifiercode"
+	"github.com/emoss08/trenova/internal/ent/rate"
 	"github.com/emoss08/trenova/internal/ent/reasoncode"
 	"github.com/emoss08/trenova/internal/ent/resource"
 	"github.com/emoss08/trenova/internal/ent/revenuecode"
@@ -1764,6 +1765,51 @@ func init() {
 	qualifiercodeDescID := qualifiercodeMixinFields0[0].Descriptor()
 	// qualifiercode.DefaultID holds the default value on creation for the id field.
 	qualifiercode.DefaultID = qualifiercodeDescID.Default.(func() uuid.UUID)
+	rateMixin := schema.Rate{}.Mixin()
+	rateMixinFields0 := rateMixin[0].Fields()
+	_ = rateMixinFields0
+	rateFields := schema.Rate{}.Fields()
+	_ = rateFields
+	// rateDescCreatedAt is the schema descriptor for created_at field.
+	rateDescCreatedAt := rateMixinFields0[3].Descriptor()
+	// rate.DefaultCreatedAt holds the default value on creation for the created_at field.
+	rate.DefaultCreatedAt = rateDescCreatedAt.Default.(func() time.Time)
+	// rateDescUpdatedAt is the schema descriptor for updated_at field.
+	rateDescUpdatedAt := rateMixinFields0[4].Descriptor()
+	// rate.DefaultUpdatedAt holds the default value on creation for the updated_at field.
+	rate.DefaultUpdatedAt = rateDescUpdatedAt.Default.(func() time.Time)
+	// rate.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
+	rate.UpdateDefaultUpdatedAt = rateDescUpdatedAt.UpdateDefault.(func() time.Time)
+	// rateDescVersion is the schema descriptor for version field.
+	rateDescVersion := rateMixinFields0[5].Descriptor()
+	// rate.DefaultVersion holds the default value on creation for the version field.
+	rate.DefaultVersion = rateDescVersion.Default.(int)
+	// rateDescRateNumber is the schema descriptor for rate_number field.
+	rateDescRateNumber := rateFields[1].Descriptor()
+	// rate.RateNumberValidator is a validator for the "rate_number" field. It is called by the builders before save.
+	rate.RateNumberValidator = func() func(string) error {
+		validators := rateDescRateNumber.Validators
+		fns := [...]func(string) error{
+			validators[0].(func(string) error),
+			validators[1].(func(string) error),
+		}
+		return func(rate_number string) error {
+			for _, fn := range fns {
+				if err := fn(rate_number); err != nil {
+					return err
+				}
+			}
+			return nil
+		}
+	}()
+	// rateDescRateAmount is the schema descriptor for rate_amount field.
+	rateDescRateAmount := rateFields[10].Descriptor()
+	// rate.RateAmountValidator is a validator for the "rate_amount" field. It is called by the builders before save.
+	rate.RateAmountValidator = rateDescRateAmount.Validators[0].(func(float64) error)
+	// rateDescID is the schema descriptor for id field.
+	rateDescID := rateMixinFields0[0].Descriptor()
+	// rate.DefaultID holds the default value on creation for the id field.
+	rate.DefaultID = rateDescID.Default.(func() uuid.UUID)
 	reasoncodeMixin := schema.ReasonCode{}.Mixin()
 	reasoncodeHooks := schema.ReasonCode{}.Hooks()
 	reasoncode.Hooks[0] = reasoncodeHooks[0]

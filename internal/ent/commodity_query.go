@@ -4,6 +4,7 @@ package ent
 
 import (
 	"context"
+	"database/sql/driver"
 	"fmt"
 	"math"
 
@@ -15,6 +16,7 @@ import (
 	"github.com/emoss08/trenova/internal/ent/hazardousmaterial"
 	"github.com/emoss08/trenova/internal/ent/organization"
 	"github.com/emoss08/trenova/internal/ent/predicate"
+	"github.com/emoss08/trenova/internal/ent/rate"
 	"github.com/google/uuid"
 )
 
@@ -28,7 +30,9 @@ type CommodityQuery struct {
 	withBusinessUnit      *BusinessUnitQuery
 	withOrganization      *OrganizationQuery
 	withHazardousMaterial *HazardousMaterialQuery
+	withRates             *RateQuery
 	modifiers             []func(*sql.Selector)
+	withNamedRates        map[string]*RateQuery
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
 	path func(context.Context) (*sql.Selector, error)
@@ -124,6 +128,28 @@ func (cq *CommodityQuery) QueryHazardousMaterial() *HazardousMaterialQuery {
 			sqlgraph.From(commodity.Table, commodity.FieldID, selector),
 			sqlgraph.To(hazardousmaterial.Table, hazardousmaterial.FieldID),
 			sqlgraph.Edge(sqlgraph.M2O, false, commodity.HazardousMaterialTable, commodity.HazardousMaterialColumn),
+		)
+		fromU = sqlgraph.SetNeighbors(cq.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
+}
+
+// QueryRates chains the current query on the "rates" edge.
+func (cq *CommodityQuery) QueryRates() *RateQuery {
+	query := (&RateClient{config: cq.config}).Query()
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := cq.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := cq.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(commodity.Table, commodity.FieldID, selector),
+			sqlgraph.To(rate.Table, rate.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, commodity.RatesTable, commodity.RatesColumn),
 		)
 		fromU = sqlgraph.SetNeighbors(cq.driver.Dialect(), step)
 		return fromU, nil
@@ -326,6 +352,7 @@ func (cq *CommodityQuery) Clone() *CommodityQuery {
 		withBusinessUnit:      cq.withBusinessUnit.Clone(),
 		withOrganization:      cq.withOrganization.Clone(),
 		withHazardousMaterial: cq.withHazardousMaterial.Clone(),
+		withRates:             cq.withRates.Clone(),
 		// clone intermediate query.
 		sql:  cq.sql.Clone(),
 		path: cq.path,
@@ -362,6 +389,17 @@ func (cq *CommodityQuery) WithHazardousMaterial(opts ...func(*HazardousMaterialQ
 		opt(query)
 	}
 	cq.withHazardousMaterial = query
+	return cq
+}
+
+// WithRates tells the query-builder to eager-load the nodes that are connected to
+// the "rates" edge. The optional arguments are used to configure the query builder of the edge.
+func (cq *CommodityQuery) WithRates(opts ...func(*RateQuery)) *CommodityQuery {
+	query := (&RateClient{config: cq.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	cq.withRates = query
 	return cq
 }
 
@@ -443,10 +481,11 @@ func (cq *CommodityQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Co
 	var (
 		nodes       = []*Commodity{}
 		_spec       = cq.querySpec()
-		loadedTypes = [3]bool{
+		loadedTypes = [4]bool{
 			cq.withBusinessUnit != nil,
 			cq.withOrganization != nil,
 			cq.withHazardousMaterial != nil,
+			cq.withRates != nil,
 		}
 	)
 	_spec.ScanValues = func(columns []string) ([]any, error) {
@@ -485,6 +524,20 @@ func (cq *CommodityQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Co
 	if query := cq.withHazardousMaterial; query != nil {
 		if err := cq.loadHazardousMaterial(ctx, query, nodes, nil,
 			func(n *Commodity, e *HazardousMaterial) { n.Edges.HazardousMaterial = e }); err != nil {
+			return nil, err
+		}
+	}
+	if query := cq.withRates; query != nil {
+		if err := cq.loadRates(ctx, query, nodes,
+			func(n *Commodity) { n.Edges.Rates = []*Rate{} },
+			func(n *Commodity, e *Rate) { n.Edges.Rates = append(n.Edges.Rates, e) }); err != nil {
+			return nil, err
+		}
+	}
+	for name, query := range cq.withNamedRates {
+		if err := cq.loadRates(ctx, query, nodes,
+			func(n *Commodity) { n.appendNamedRates(name) },
+			func(n *Commodity, e *Rate) { n.appendNamedRates(name, e) }); err != nil {
 			return nil, err
 		}
 	}
@@ -578,6 +631,39 @@ func (cq *CommodityQuery) loadHazardousMaterial(ctx context.Context, query *Haza
 		for i := range nodes {
 			assign(nodes[i], n)
 		}
+	}
+	return nil
+}
+func (cq *CommodityQuery) loadRates(ctx context.Context, query *RateQuery, nodes []*Commodity, init func(*Commodity), assign func(*Commodity, *Rate)) error {
+	fks := make([]driver.Value, 0, len(nodes))
+	nodeids := make(map[uuid.UUID]*Commodity)
+	for i := range nodes {
+		fks = append(fks, nodes[i].ID)
+		nodeids[nodes[i].ID] = nodes[i]
+		if init != nil {
+			init(nodes[i])
+		}
+	}
+	if len(query.ctx.Fields) > 0 {
+		query.ctx.AppendFieldOnce(rate.FieldCommodityID)
+	}
+	query.Where(predicate.Rate(func(s *sql.Selector) {
+		s.Where(sql.InValues(s.C(commodity.RatesColumn), fks...))
+	}))
+	neighbors, err := query.All(ctx)
+	if err != nil {
+		return err
+	}
+	for _, n := range neighbors {
+		fk := n.CommodityID
+		if fk == nil {
+			return fmt.Errorf(`foreign-key "commodity_id" is nil for node %v`, n.ID)
+		}
+		node, ok := nodeids[*fk]
+		if !ok {
+			return fmt.Errorf(`unexpected referenced foreign-key "commodity_id" returned %v for node %v`, *fk, n.ID)
+		}
+		assign(node, n)
 	}
 	return nil
 }
@@ -682,6 +768,20 @@ func (cq *CommodityQuery) sqlQuery(ctx context.Context) *sql.Selector {
 func (cq *CommodityQuery) Modify(modifiers ...func(s *sql.Selector)) *CommoditySelect {
 	cq.modifiers = append(cq.modifiers, modifiers...)
 	return cq.Select()
+}
+
+// WithNamedRates tells the query-builder to eager-load the nodes that are connected to the "rates"
+// edge with the given name. The optional arguments are used to configure the query builder of the edge.
+func (cq *CommodityQuery) WithNamedRates(name string, opts ...func(*RateQuery)) *CommodityQuery {
+	query := (&RateClient{config: cq.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	if cq.withNamedRates == nil {
+		cq.withNamedRates = make(map[string]*RateQuery)
+	}
+	cq.withNamedRates[name] = query
+	return cq
 }
 
 // CommodityGroupBy is the group-by builder for Commodity entities.

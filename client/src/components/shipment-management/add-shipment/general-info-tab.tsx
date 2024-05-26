@@ -1,35 +1,33 @@
-import { ComponentLoader } from "@/components/ui/component-loader";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { useNextProNumber, useShipmentControl } from "@/hooks/useQueries";
-import { Suspense, lazy } from "react";
+import { DispatchInformationCard } from "./cards/dispatch-info";
+import EquipmentInformationCard from "./cards/equipment-info";
+import { GeneralInformationCard } from "./cards/general-info";
+import { LocationInformationCard } from "./cards/location-info";
 
-const GeneralInfoCard = lazy(() => import("./cards/general-info"));
-const LocationInformation = lazy(() => import("./cards/location-info"));
-const EquipmentInformation = lazy(() => import("./cards/equipment-info"));
-const DispatchInformation = lazy(() => import("./cards/dispatch-detail"));
-
-export default function GeneralInfoTab() {
+export function GeneralInfoTab() {
   const { data, isLoading: isShipmentControlLoading } = useShipmentControl();
   const { proNumber, isProNumberLoading } = useNextProNumber();
 
   return (
-    <div className="grid grid-cols-1 gap-y-8">
-      <Suspense fallback={<ComponentLoader />}>
-        <GeneralInfoCard
+    <ScrollArea className="h-[80vh] p-4">
+      <div className="grid grid-cols-1 gap-y-8">
+        <GeneralInformationCard
           proNumber={proNumber as string}
           isProNumberLoading={isProNumberLoading}
           shipmentControlData={data}
           isShipmentControlLoading={isShipmentControlLoading}
         />
-        <LocationInformation
+        <LocationInformationCard
           shipmentControlData={data}
           isShipmentControlLoading={isShipmentControlLoading}
         />
-        <EquipmentInformation />
-        <DispatchInformation
+        <EquipmentInformationCard />
+        <DispatchInformationCard
           shipmentControlData={data}
           isShipmentControlLoading={isShipmentControlLoading}
         />
-      </Suspense>
-    </div>
+      </div>
+    </ScrollArea>
   );
 }

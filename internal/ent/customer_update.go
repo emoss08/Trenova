@@ -19,6 +19,7 @@ import (
 	"github.com/emoss08/trenova/internal/ent/deliveryslot"
 	"github.com/emoss08/trenova/internal/ent/organization"
 	"github.com/emoss08/trenova/internal/ent/predicate"
+	"github.com/emoss08/trenova/internal/ent/rate"
 	"github.com/emoss08/trenova/internal/ent/shipment"
 	"github.com/emoss08/trenova/internal/ent/usstate"
 	"github.com/google/uuid"
@@ -333,6 +334,21 @@ func (cu *CustomerUpdate) AddDeliverySlots(d ...*DeliverySlot) *CustomerUpdate {
 	return cu.AddDeliverySlotIDs(ids...)
 }
 
+// AddRateIDs adds the "rates" edge to the Rate entity by IDs.
+func (cu *CustomerUpdate) AddRateIDs(ids ...uuid.UUID) *CustomerUpdate {
+	cu.mutation.AddRateIDs(ids...)
+	return cu
+}
+
+// AddRates adds the "rates" edges to the Rate entity.
+func (cu *CustomerUpdate) AddRates(r ...*Rate) *CustomerUpdate {
+	ids := make([]uuid.UUID, len(r))
+	for i := range r {
+		ids[i] = r[i].ID
+	}
+	return cu.AddRateIDs(ids...)
+}
+
 // Mutation returns the CustomerMutation object of the builder.
 func (cu *CustomerUpdate) Mutation() *CustomerMutation {
 	return cu.mutation
@@ -444,6 +460,27 @@ func (cu *CustomerUpdate) RemoveDeliverySlots(d ...*DeliverySlot) *CustomerUpdat
 		ids[i] = d[i].ID
 	}
 	return cu.RemoveDeliverySlotIDs(ids...)
+}
+
+// ClearRates clears all "rates" edges to the Rate entity.
+func (cu *CustomerUpdate) ClearRates() *CustomerUpdate {
+	cu.mutation.ClearRates()
+	return cu
+}
+
+// RemoveRateIDs removes the "rates" edge to Rate entities by IDs.
+func (cu *CustomerUpdate) RemoveRateIDs(ids ...uuid.UUID) *CustomerUpdate {
+	cu.mutation.RemoveRateIDs(ids...)
+	return cu
+}
+
+// RemoveRates removes "rates" edges to Rate entities.
+func (cu *CustomerUpdate) RemoveRates(r ...*Rate) *CustomerUpdate {
+	ids := make([]uuid.UUID, len(r))
+	for i := range r {
+		ids[i] = r[i].ID
+	}
+	return cu.RemoveRateIDs(ids...)
 }
 
 // Save executes the query and returns the number of nodes affected by the update operation.
@@ -890,6 +927,51 @@ func (cu *CustomerUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
+	if cu.mutation.RatesCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   customer.RatesTable,
+			Columns: []string{customer.RatesColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(rate.FieldID, field.TypeUUID),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := cu.mutation.RemovedRatesIDs(); len(nodes) > 0 && !cu.mutation.RatesCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   customer.RatesTable,
+			Columns: []string{customer.RatesColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(rate.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := cu.mutation.RatesIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   customer.RatesTable,
+			Columns: []string{customer.RatesColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(rate.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
 	_spec.AddModifiers(cu.modifiers...)
 	if n, err = sqlgraph.UpdateNodes(ctx, cu.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
@@ -1207,6 +1289,21 @@ func (cuo *CustomerUpdateOne) AddDeliverySlots(d ...*DeliverySlot) *CustomerUpda
 	return cuo.AddDeliverySlotIDs(ids...)
 }
 
+// AddRateIDs adds the "rates" edge to the Rate entity by IDs.
+func (cuo *CustomerUpdateOne) AddRateIDs(ids ...uuid.UUID) *CustomerUpdateOne {
+	cuo.mutation.AddRateIDs(ids...)
+	return cuo
+}
+
+// AddRates adds the "rates" edges to the Rate entity.
+func (cuo *CustomerUpdateOne) AddRates(r ...*Rate) *CustomerUpdateOne {
+	ids := make([]uuid.UUID, len(r))
+	for i := range r {
+		ids[i] = r[i].ID
+	}
+	return cuo.AddRateIDs(ids...)
+}
+
 // Mutation returns the CustomerMutation object of the builder.
 func (cuo *CustomerUpdateOne) Mutation() *CustomerMutation {
 	return cuo.mutation
@@ -1318,6 +1415,27 @@ func (cuo *CustomerUpdateOne) RemoveDeliverySlots(d ...*DeliverySlot) *CustomerU
 		ids[i] = d[i].ID
 	}
 	return cuo.RemoveDeliverySlotIDs(ids...)
+}
+
+// ClearRates clears all "rates" edges to the Rate entity.
+func (cuo *CustomerUpdateOne) ClearRates() *CustomerUpdateOne {
+	cuo.mutation.ClearRates()
+	return cuo
+}
+
+// RemoveRateIDs removes the "rates" edge to Rate entities by IDs.
+func (cuo *CustomerUpdateOne) RemoveRateIDs(ids ...uuid.UUID) *CustomerUpdateOne {
+	cuo.mutation.RemoveRateIDs(ids...)
+	return cuo
+}
+
+// RemoveRates removes "rates" edges to Rate entities.
+func (cuo *CustomerUpdateOne) RemoveRates(r ...*Rate) *CustomerUpdateOne {
+	ids := make([]uuid.UUID, len(r))
+	for i := range r {
+		ids[i] = r[i].ID
+	}
+	return cuo.RemoveRateIDs(ids...)
 }
 
 // Where appends a list predicates to the CustomerUpdate builder.
@@ -1787,6 +1905,51 @@ func (cuo *CustomerUpdateOne) sqlSave(ctx context.Context) (_node *Customer, err
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(deliveryslot.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if cuo.mutation.RatesCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   customer.RatesTable,
+			Columns: []string{customer.RatesColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(rate.FieldID, field.TypeUUID),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := cuo.mutation.RemovedRatesIDs(); len(nodes) > 0 && !cuo.mutation.RatesCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   customer.RatesTable,
+			Columns: []string{customer.RatesColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(rate.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := cuo.mutation.RatesIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   customer.RatesTable,
+			Columns: []string{customer.RatesColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(rate.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {

@@ -720,6 +720,29 @@ func HasHazardousMaterialWith(preds ...predicate.HazardousMaterial) predicate.Co
 	})
 }
 
+// HasRates applies the HasEdge predicate on the "rates" edge.
+func HasRates() predicate.Commodity {
+	return predicate.Commodity(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, RatesTable, RatesColumn),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasRatesWith applies the HasEdge predicate on the "rates" edge with a given conditions (other predicates).
+func HasRatesWith(preds ...predicate.Rate) predicate.Commodity {
+	return predicate.Commodity(func(s *sql.Selector) {
+		step := newRatesStep()
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	})
+}
+
 // And groups predicates with the AND operator between them.
 func And(predicates ...predicate.Commodity) predicate.Commodity {
 	return predicate.Commodity(sql.AndPredicates(predicates...))

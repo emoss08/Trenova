@@ -17,6 +17,7 @@ import (
 	"github.com/emoss08/trenova/internal/ent/locationcontact"
 	"github.com/emoss08/trenova/internal/ent/organization"
 	"github.com/emoss08/trenova/internal/ent/predicate"
+	"github.com/emoss08/trenova/internal/ent/rate"
 	"github.com/emoss08/trenova/internal/ent/shipmentroute"
 	"github.com/emoss08/trenova/internal/ent/usstate"
 	"github.com/google/uuid"
@@ -398,6 +399,36 @@ func (lu *LocationUpdate) AddDestinationRouteLocations(s ...*ShipmentRoute) *Loc
 	return lu.AddDestinationRouteLocationIDs(ids...)
 }
 
+// AddRatesOriginIDs adds the "rates_origin" edge to the Rate entity by IDs.
+func (lu *LocationUpdate) AddRatesOriginIDs(ids ...uuid.UUID) *LocationUpdate {
+	lu.mutation.AddRatesOriginIDs(ids...)
+	return lu
+}
+
+// AddRatesOrigin adds the "rates_origin" edges to the Rate entity.
+func (lu *LocationUpdate) AddRatesOrigin(r ...*Rate) *LocationUpdate {
+	ids := make([]uuid.UUID, len(r))
+	for i := range r {
+		ids[i] = r[i].ID
+	}
+	return lu.AddRatesOriginIDs(ids...)
+}
+
+// AddRatesDestinationIDs adds the "rates_destination" edge to the Rate entity by IDs.
+func (lu *LocationUpdate) AddRatesDestinationIDs(ids ...uuid.UUID) *LocationUpdate {
+	lu.mutation.AddRatesDestinationIDs(ids...)
+	return lu
+}
+
+// AddRatesDestination adds the "rates_destination" edges to the Rate entity.
+func (lu *LocationUpdate) AddRatesDestination(r ...*Rate) *LocationUpdate {
+	ids := make([]uuid.UUID, len(r))
+	for i := range r {
+		ids[i] = r[i].ID
+	}
+	return lu.AddRatesDestinationIDs(ids...)
+}
+
 // Mutation returns the LocationMutation object of the builder.
 func (lu *LocationUpdate) Mutation() *LocationMutation {
 	return lu.mutation
@@ -503,6 +534,48 @@ func (lu *LocationUpdate) RemoveDestinationRouteLocations(s ...*ShipmentRoute) *
 		ids[i] = s[i].ID
 	}
 	return lu.RemoveDestinationRouteLocationIDs(ids...)
+}
+
+// ClearRatesOrigin clears all "rates_origin" edges to the Rate entity.
+func (lu *LocationUpdate) ClearRatesOrigin() *LocationUpdate {
+	lu.mutation.ClearRatesOrigin()
+	return lu
+}
+
+// RemoveRatesOriginIDs removes the "rates_origin" edge to Rate entities by IDs.
+func (lu *LocationUpdate) RemoveRatesOriginIDs(ids ...uuid.UUID) *LocationUpdate {
+	lu.mutation.RemoveRatesOriginIDs(ids...)
+	return lu
+}
+
+// RemoveRatesOrigin removes "rates_origin" edges to Rate entities.
+func (lu *LocationUpdate) RemoveRatesOrigin(r ...*Rate) *LocationUpdate {
+	ids := make([]uuid.UUID, len(r))
+	for i := range r {
+		ids[i] = r[i].ID
+	}
+	return lu.RemoveRatesOriginIDs(ids...)
+}
+
+// ClearRatesDestination clears all "rates_destination" edges to the Rate entity.
+func (lu *LocationUpdate) ClearRatesDestination() *LocationUpdate {
+	lu.mutation.ClearRatesDestination()
+	return lu
+}
+
+// RemoveRatesDestinationIDs removes the "rates_destination" edge to Rate entities by IDs.
+func (lu *LocationUpdate) RemoveRatesDestinationIDs(ids ...uuid.UUID) *LocationUpdate {
+	lu.mutation.RemoveRatesDestinationIDs(ids...)
+	return lu
+}
+
+// RemoveRatesDestination removes "rates_destination" edges to Rate entities.
+func (lu *LocationUpdate) RemoveRatesDestination(r ...*Rate) *LocationUpdate {
+	ids := make([]uuid.UUID, len(r))
+	for i := range r {
+		ids[i] = r[i].ID
+	}
+	return lu.RemoveRatesDestinationIDs(ids...)
 }
 
 // Save executes the query and returns the number of nodes affected by the update operation.
@@ -946,6 +1019,96 @@ func (lu *LocationUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
+	if lu.mutation.RatesOriginCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   location.RatesOriginTable,
+			Columns: []string{location.RatesOriginColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(rate.FieldID, field.TypeUUID),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := lu.mutation.RemovedRatesOriginIDs(); len(nodes) > 0 && !lu.mutation.RatesOriginCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   location.RatesOriginTable,
+			Columns: []string{location.RatesOriginColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(rate.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := lu.mutation.RatesOriginIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   location.RatesOriginTable,
+			Columns: []string{location.RatesOriginColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(rate.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if lu.mutation.RatesDestinationCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   location.RatesDestinationTable,
+			Columns: []string{location.RatesDestinationColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(rate.FieldID, field.TypeUUID),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := lu.mutation.RemovedRatesDestinationIDs(); len(nodes) > 0 && !lu.mutation.RatesDestinationCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   location.RatesDestinationTable,
+			Columns: []string{location.RatesDestinationColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(rate.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := lu.mutation.RatesDestinationIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   location.RatesDestinationTable,
+			Columns: []string{location.RatesDestinationColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(rate.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
 	_spec.AddModifiers(lu.modifiers...)
 	if n, err = sqlgraph.UpdateNodes(ctx, lu.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
@@ -1330,6 +1493,36 @@ func (luo *LocationUpdateOne) AddDestinationRouteLocations(s ...*ShipmentRoute) 
 	return luo.AddDestinationRouteLocationIDs(ids...)
 }
 
+// AddRatesOriginIDs adds the "rates_origin" edge to the Rate entity by IDs.
+func (luo *LocationUpdateOne) AddRatesOriginIDs(ids ...uuid.UUID) *LocationUpdateOne {
+	luo.mutation.AddRatesOriginIDs(ids...)
+	return luo
+}
+
+// AddRatesOrigin adds the "rates_origin" edges to the Rate entity.
+func (luo *LocationUpdateOne) AddRatesOrigin(r ...*Rate) *LocationUpdateOne {
+	ids := make([]uuid.UUID, len(r))
+	for i := range r {
+		ids[i] = r[i].ID
+	}
+	return luo.AddRatesOriginIDs(ids...)
+}
+
+// AddRatesDestinationIDs adds the "rates_destination" edge to the Rate entity by IDs.
+func (luo *LocationUpdateOne) AddRatesDestinationIDs(ids ...uuid.UUID) *LocationUpdateOne {
+	luo.mutation.AddRatesDestinationIDs(ids...)
+	return luo
+}
+
+// AddRatesDestination adds the "rates_destination" edges to the Rate entity.
+func (luo *LocationUpdateOne) AddRatesDestination(r ...*Rate) *LocationUpdateOne {
+	ids := make([]uuid.UUID, len(r))
+	for i := range r {
+		ids[i] = r[i].ID
+	}
+	return luo.AddRatesDestinationIDs(ids...)
+}
+
 // Mutation returns the LocationMutation object of the builder.
 func (luo *LocationUpdateOne) Mutation() *LocationMutation {
 	return luo.mutation
@@ -1435,6 +1628,48 @@ func (luo *LocationUpdateOne) RemoveDestinationRouteLocations(s ...*ShipmentRout
 		ids[i] = s[i].ID
 	}
 	return luo.RemoveDestinationRouteLocationIDs(ids...)
+}
+
+// ClearRatesOrigin clears all "rates_origin" edges to the Rate entity.
+func (luo *LocationUpdateOne) ClearRatesOrigin() *LocationUpdateOne {
+	luo.mutation.ClearRatesOrigin()
+	return luo
+}
+
+// RemoveRatesOriginIDs removes the "rates_origin" edge to Rate entities by IDs.
+func (luo *LocationUpdateOne) RemoveRatesOriginIDs(ids ...uuid.UUID) *LocationUpdateOne {
+	luo.mutation.RemoveRatesOriginIDs(ids...)
+	return luo
+}
+
+// RemoveRatesOrigin removes "rates_origin" edges to Rate entities.
+func (luo *LocationUpdateOne) RemoveRatesOrigin(r ...*Rate) *LocationUpdateOne {
+	ids := make([]uuid.UUID, len(r))
+	for i := range r {
+		ids[i] = r[i].ID
+	}
+	return luo.RemoveRatesOriginIDs(ids...)
+}
+
+// ClearRatesDestination clears all "rates_destination" edges to the Rate entity.
+func (luo *LocationUpdateOne) ClearRatesDestination() *LocationUpdateOne {
+	luo.mutation.ClearRatesDestination()
+	return luo
+}
+
+// RemoveRatesDestinationIDs removes the "rates_destination" edge to Rate entities by IDs.
+func (luo *LocationUpdateOne) RemoveRatesDestinationIDs(ids ...uuid.UUID) *LocationUpdateOne {
+	luo.mutation.RemoveRatesDestinationIDs(ids...)
+	return luo
+}
+
+// RemoveRatesDestination removes "rates_destination" edges to Rate entities.
+func (luo *LocationUpdateOne) RemoveRatesDestination(r ...*Rate) *LocationUpdateOne {
+	ids := make([]uuid.UUID, len(r))
+	for i := range r {
+		ids[i] = r[i].ID
+	}
+	return luo.RemoveRatesDestinationIDs(ids...)
 }
 
 // Where appends a list predicates to the LocationUpdate builder.
@@ -1901,6 +2136,96 @@ func (luo *LocationUpdateOne) sqlSave(ctx context.Context) (_node *Location, err
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(shipmentroute.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if luo.mutation.RatesOriginCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   location.RatesOriginTable,
+			Columns: []string{location.RatesOriginColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(rate.FieldID, field.TypeUUID),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := luo.mutation.RemovedRatesOriginIDs(); len(nodes) > 0 && !luo.mutation.RatesOriginCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   location.RatesOriginTable,
+			Columns: []string{location.RatesOriginColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(rate.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := luo.mutation.RatesOriginIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   location.RatesOriginTable,
+			Columns: []string{location.RatesOriginColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(rate.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if luo.mutation.RatesDestinationCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   location.RatesDestinationTable,
+			Columns: []string{location.RatesDestinationColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(rate.FieldID, field.TypeUUID),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := luo.mutation.RemovedRatesDestinationIDs(); len(nodes) > 0 && !luo.mutation.RatesDestinationCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   location.RatesDestinationTable,
+			Columns: []string{location.RatesDestinationColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(rate.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := luo.mutation.RatesDestinationIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   location.RatesDestinationTable,
+			Columns: []string{location.RatesDestinationColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(rate.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {

@@ -13,6 +13,7 @@ import (
 	"entgo.io/ent/schema/field"
 	"github.com/emoss08/trenova/internal/ent/organization"
 	"github.com/emoss08/trenova/internal/ent/predicate"
+	"github.com/emoss08/trenova/internal/ent/rate"
 	"github.com/emoss08/trenova/internal/ent/shipmenttype"
 	"github.com/google/uuid"
 )
@@ -145,6 +146,21 @@ func (stu *ShipmentTypeUpdate) SetOrganization(o *Organization) *ShipmentTypeUpd
 	return stu.SetOrganizationID(o.ID)
 }
 
+// AddRateIDs adds the "rates" edge to the Rate entity by IDs.
+func (stu *ShipmentTypeUpdate) AddRateIDs(ids ...uuid.UUID) *ShipmentTypeUpdate {
+	stu.mutation.AddRateIDs(ids...)
+	return stu
+}
+
+// AddRates adds the "rates" edges to the Rate entity.
+func (stu *ShipmentTypeUpdate) AddRates(r ...*Rate) *ShipmentTypeUpdate {
+	ids := make([]uuid.UUID, len(r))
+	for i := range r {
+		ids[i] = r[i].ID
+	}
+	return stu.AddRateIDs(ids...)
+}
+
 // Mutation returns the ShipmentTypeMutation object of the builder.
 func (stu *ShipmentTypeUpdate) Mutation() *ShipmentTypeMutation {
 	return stu.mutation
@@ -154,6 +170,27 @@ func (stu *ShipmentTypeUpdate) Mutation() *ShipmentTypeMutation {
 func (stu *ShipmentTypeUpdate) ClearOrganization() *ShipmentTypeUpdate {
 	stu.mutation.ClearOrganization()
 	return stu
+}
+
+// ClearRates clears all "rates" edges to the Rate entity.
+func (stu *ShipmentTypeUpdate) ClearRates() *ShipmentTypeUpdate {
+	stu.mutation.ClearRates()
+	return stu
+}
+
+// RemoveRateIDs removes the "rates" edge to Rate entities by IDs.
+func (stu *ShipmentTypeUpdate) RemoveRateIDs(ids ...uuid.UUID) *ShipmentTypeUpdate {
+	stu.mutation.RemoveRateIDs(ids...)
+	return stu
+}
+
+// RemoveRates removes "rates" edges to Rate entities.
+func (stu *ShipmentTypeUpdate) RemoveRates(r ...*Rate) *ShipmentTypeUpdate {
+	ids := make([]uuid.UUID, len(r))
+	for i := range r {
+		ids[i] = r[i].ID
+	}
+	return stu.RemoveRateIDs(ids...)
 }
 
 // Save executes the query and returns the number of nodes affected by the update operation.
@@ -280,6 +317,51 @@ func (stu *ShipmentTypeUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(organization.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if stu.mutation.RatesCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   shipmenttype.RatesTable,
+			Columns: []string{shipmenttype.RatesColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(rate.FieldID, field.TypeUUID),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := stu.mutation.RemovedRatesIDs(); len(nodes) > 0 && !stu.mutation.RatesCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   shipmenttype.RatesTable,
+			Columns: []string{shipmenttype.RatesColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(rate.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := stu.mutation.RatesIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   shipmenttype.RatesTable,
+			Columns: []string{shipmenttype.RatesColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(rate.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {
@@ -423,6 +505,21 @@ func (stuo *ShipmentTypeUpdateOne) SetOrganization(o *Organization) *ShipmentTyp
 	return stuo.SetOrganizationID(o.ID)
 }
 
+// AddRateIDs adds the "rates" edge to the Rate entity by IDs.
+func (stuo *ShipmentTypeUpdateOne) AddRateIDs(ids ...uuid.UUID) *ShipmentTypeUpdateOne {
+	stuo.mutation.AddRateIDs(ids...)
+	return stuo
+}
+
+// AddRates adds the "rates" edges to the Rate entity.
+func (stuo *ShipmentTypeUpdateOne) AddRates(r ...*Rate) *ShipmentTypeUpdateOne {
+	ids := make([]uuid.UUID, len(r))
+	for i := range r {
+		ids[i] = r[i].ID
+	}
+	return stuo.AddRateIDs(ids...)
+}
+
 // Mutation returns the ShipmentTypeMutation object of the builder.
 func (stuo *ShipmentTypeUpdateOne) Mutation() *ShipmentTypeMutation {
 	return stuo.mutation
@@ -432,6 +529,27 @@ func (stuo *ShipmentTypeUpdateOne) Mutation() *ShipmentTypeMutation {
 func (stuo *ShipmentTypeUpdateOne) ClearOrganization() *ShipmentTypeUpdateOne {
 	stuo.mutation.ClearOrganization()
 	return stuo
+}
+
+// ClearRates clears all "rates" edges to the Rate entity.
+func (stuo *ShipmentTypeUpdateOne) ClearRates() *ShipmentTypeUpdateOne {
+	stuo.mutation.ClearRates()
+	return stuo
+}
+
+// RemoveRateIDs removes the "rates" edge to Rate entities by IDs.
+func (stuo *ShipmentTypeUpdateOne) RemoveRateIDs(ids ...uuid.UUID) *ShipmentTypeUpdateOne {
+	stuo.mutation.RemoveRateIDs(ids...)
+	return stuo
+}
+
+// RemoveRates removes "rates" edges to Rate entities.
+func (stuo *ShipmentTypeUpdateOne) RemoveRates(r ...*Rate) *ShipmentTypeUpdateOne {
+	ids := make([]uuid.UUID, len(r))
+	for i := range r {
+		ids[i] = r[i].ID
+	}
+	return stuo.RemoveRateIDs(ids...)
 }
 
 // Where appends a list predicates to the ShipmentTypeUpdate builder.
@@ -588,6 +706,51 @@ func (stuo *ShipmentTypeUpdateOne) sqlSave(ctx context.Context) (_node *Shipment
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(organization.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if stuo.mutation.RatesCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   shipmenttype.RatesTable,
+			Columns: []string{shipmenttype.RatesColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(rate.FieldID, field.TypeUUID),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := stuo.mutation.RemovedRatesIDs(); len(nodes) > 0 && !stuo.mutation.RatesCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   shipmenttype.RatesTable,
+			Columns: []string{shipmenttype.RatesColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(rate.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := stuo.mutation.RatesIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   shipmenttype.RatesTable,
+			Columns: []string{shipmenttype.RatesColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(rate.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {

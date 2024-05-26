@@ -79,13 +79,16 @@ type CustomerEdges struct {
 	Contacts []*CustomerContact `json:"contacts,omitempty"`
 	// DeliverySlots holds the value of the delivery_slots edge.
 	DeliverySlots []*DeliverySlot `json:"delivery_slots,omitempty"`
+	// Rates holds the value of the rates edge.
+	Rates []*Rate `json:"rates,omitempty"`
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
-	loadedTypes            [9]bool
+	loadedTypes            [10]bool
 	namedShipments         map[string][]*Shipment
 	namedDetentionPolicies map[string][]*CustomerDetentionPolicy
 	namedContacts          map[string][]*CustomerContact
 	namedDeliverySlots     map[string][]*DeliverySlot
+	namedRates             map[string][]*Rate
 }
 
 // BusinessUnitOrErr returns the BusinessUnit value or an error if the edge
@@ -177,6 +180,15 @@ func (e CustomerEdges) DeliverySlotsOrErr() ([]*DeliverySlot, error) {
 		return e.DeliverySlots, nil
 	}
 	return nil, &NotLoadedError{edge: "delivery_slots"}
+}
+
+// RatesOrErr returns the Rates value or an error if the edge
+// was not loaded in eager-loading.
+func (e CustomerEdges) RatesOrErr() ([]*Rate, error) {
+	if e.loadedTypes[9] {
+		return e.Rates, nil
+	}
+	return nil, &NotLoadedError{edge: "rates"}
 }
 
 // scanValues returns the types for scanning values from sql.Rows.
@@ -363,6 +375,11 @@ func (c *Customer) QueryDeliverySlots() *DeliverySlotQuery {
 	return NewCustomerClient(c.config).QueryDeliverySlots(c)
 }
 
+// QueryRates queries the "rates" edge of the Customer entity.
+func (c *Customer) QueryRates() *RateQuery {
+	return NewCustomerClient(c.config).QueryRates(c)
+}
+
 // Update returns a builder for updating this Customer.
 // Note that you need to call Customer.Unwrap() before calling this method if this Customer
 // was returned from a transaction, and the transaction was committed or rolled back.
@@ -527,6 +544,30 @@ func (c *Customer) appendNamedDeliverySlots(name string, edges ...*DeliverySlot)
 		c.Edges.namedDeliverySlots[name] = []*DeliverySlot{}
 	} else {
 		c.Edges.namedDeliverySlots[name] = append(c.Edges.namedDeliverySlots[name], edges...)
+	}
+}
+
+// NamedRates returns the Rates named value or an error if the edge was not
+// loaded in eager-loading with this name.
+func (c *Customer) NamedRates(name string) ([]*Rate, error) {
+	if c.Edges.namedRates == nil {
+		return nil, &NotLoadedError{edge: name}
+	}
+	nodes, ok := c.Edges.namedRates[name]
+	if !ok {
+		return nil, &NotLoadedError{edge: name}
+	}
+	return nodes, nil
+}
+
+func (c *Customer) appendNamedRates(name string, edges ...*Rate) {
+	if c.Edges.namedRates == nil {
+		c.Edges.namedRates = make(map[string][]*Rate)
+	}
+	if len(edges) == 0 {
+		c.Edges.namedRates[name] = []*Rate{}
+	} else {
+		c.Edges.namedRates[name] = append(c.Edges.namedRates[name], edges...)
 	}
 }
 

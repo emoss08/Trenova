@@ -69,7 +69,6 @@ func (TableChangeAlert) Fields() []ent.Field {
 				dialect.SQLite:   "date",
 			}).
 			StructTag(`json:"effectiveDate"`),
-
 		field.Other("expiration_date", &pgtype.Date{}).
 			Optional().
 			Nillable().

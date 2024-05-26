@@ -61,9 +61,12 @@ type CommodityEdges struct {
 	Organization *Organization `json:"organization,omitempty"`
 	// HazardousMaterial holds the value of the hazardous_material edge.
 	HazardousMaterial *HazardousMaterial `json:"hazardousMaterial"`
+	// Rates holds the value of the rates edge.
+	Rates []*Rate `json:"rates,omitempty"`
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
-	loadedTypes [3]bool
+	loadedTypes [4]bool
+	namedRates  map[string][]*Rate
 }
 
 // BusinessUnitOrErr returns the BusinessUnit value or an error if the edge
@@ -97,6 +100,15 @@ func (e CommodityEdges) HazardousMaterialOrErr() (*HazardousMaterial, error) {
 		return nil, &NotFoundError{label: hazardousmaterial.Label}
 	}
 	return nil, &NotLoadedError{edge: "hazardous_material"}
+}
+
+// RatesOrErr returns the Rates value or an error if the edge
+// was not loaded in eager-loading.
+func (e CommodityEdges) RatesOrErr() ([]*Rate, error) {
+	if e.loadedTypes[3] {
+		return e.Rates, nil
+	}
+	return nil, &NotLoadedError{edge: "rates"}
 }
 
 // scanValues returns the types for scanning values from sql.Rows.
@@ -244,6 +256,11 @@ func (c *Commodity) QueryHazardousMaterial() *HazardousMaterialQuery {
 	return NewCommodityClient(c.config).QueryHazardousMaterial(c)
 }
 
+// QueryRates queries the "rates" edge of the Commodity entity.
+func (c *Commodity) QueryRates() *RateQuery {
+	return NewCommodityClient(c.config).QueryRates(c)
+}
+
 // Update returns a builder for updating this Commodity.
 // Note that you need to call Commodity.Unwrap() before calling this method if this Commodity
 // was returned from a transaction, and the transaction was committed or rolled back.
@@ -309,6 +326,30 @@ func (c *Commodity) String() string {
 	}
 	builder.WriteByte(')')
 	return builder.String()
+}
+
+// NamedRates returns the Rates named value or an error if the edge was not
+// loaded in eager-loading with this name.
+func (c *Commodity) NamedRates(name string) ([]*Rate, error) {
+	if c.Edges.namedRates == nil {
+		return nil, &NotLoadedError{edge: name}
+	}
+	nodes, ok := c.Edges.namedRates[name]
+	if !ok {
+		return nil, &NotLoadedError{edge: name}
+	}
+	return nodes, nil
+}
+
+func (c *Commodity) appendNamedRates(name string, edges ...*Rate) {
+	if c.Edges.namedRates == nil {
+		c.Edges.namedRates = make(map[string][]*Rate)
+	}
+	if len(edges) == 0 {
+		c.Edges.namedRates[name] = []*Rate{}
+	} else {
+		c.Edges.namedRates[name] = append(c.Edges.namedRates[name], edges...)
+	}
 }
 
 // Commodities is a parsable slice of Commodity.

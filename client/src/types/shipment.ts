@@ -120,15 +120,15 @@ export interface Shipment extends BaseModel {
 export type ShipmentFormValues = Omit<
   Shipment,
   | "id"
-  | "organization"
+  | "organizationId"
   | "billDate"
   | "shipDate"
   | "billed"
   | "transferredToBilling"
   | "billingTransferDate"
   | "currentSuffix"
-  | "created"
-  | "modified"
+  | "createdAt"
+  | "updatedAt"
   | "version"
 >;
 

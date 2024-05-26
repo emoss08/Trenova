@@ -212,7 +212,7 @@ export function StopCard({
                   <DropdownMenuItem disabled>Add Comment</DropdownMenuItem>
                   <DropdownMenuItem
                     onClick={() => openRemoveAlert(index)}
-                    className="text-destructive focus:bg-destructive/10 focus:text-destructive font-semibold"
+                    className="focus:bg-destructive/10 focus:text-destructive font-semibold text-red-500"
                     disabled={isDragDisabled}
                   >
                     Remove

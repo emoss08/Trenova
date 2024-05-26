@@ -15,6 +15,7 @@ import (
 	"github.com/emoss08/trenova/internal/ent/hazardousmaterial"
 	"github.com/emoss08/trenova/internal/ent/organization"
 	"github.com/emoss08/trenova/internal/ent/predicate"
+	"github.com/emoss08/trenova/internal/ent/rate"
 	"github.com/google/uuid"
 )
 
@@ -239,6 +240,21 @@ func (cu *CommodityUpdate) SetHazardousMaterial(h *HazardousMaterial) *Commodity
 	return cu.SetHazardousMaterialID(h.ID)
 }
 
+// AddRateIDs adds the "rates" edge to the Rate entity by IDs.
+func (cu *CommodityUpdate) AddRateIDs(ids ...uuid.UUID) *CommodityUpdate {
+	cu.mutation.AddRateIDs(ids...)
+	return cu
+}
+
+// AddRates adds the "rates" edges to the Rate entity.
+func (cu *CommodityUpdate) AddRates(r ...*Rate) *CommodityUpdate {
+	ids := make([]uuid.UUID, len(r))
+	for i := range r {
+		ids[i] = r[i].ID
+	}
+	return cu.AddRateIDs(ids...)
+}
+
 // Mutation returns the CommodityMutation object of the builder.
 func (cu *CommodityUpdate) Mutation() *CommodityMutation {
 	return cu.mutation
@@ -254,6 +270,27 @@ func (cu *CommodityUpdate) ClearOrganization() *CommodityUpdate {
 func (cu *CommodityUpdate) ClearHazardousMaterial() *CommodityUpdate {
 	cu.mutation.ClearHazardousMaterial()
 	return cu
+}
+
+// ClearRates clears all "rates" edges to the Rate entity.
+func (cu *CommodityUpdate) ClearRates() *CommodityUpdate {
+	cu.mutation.ClearRates()
+	return cu
+}
+
+// RemoveRateIDs removes the "rates" edge to Rate entities by IDs.
+func (cu *CommodityUpdate) RemoveRateIDs(ids ...uuid.UUID) *CommodityUpdate {
+	cu.mutation.RemoveRateIDs(ids...)
+	return cu
+}
+
+// RemoveRates removes "rates" edges to Rate entities.
+func (cu *CommodityUpdate) RemoveRates(r ...*Rate) *CommodityUpdate {
+	ids := make([]uuid.UUID, len(r))
+	for i := range r {
+		ids[i] = r[i].ID
+	}
+	return cu.RemoveRateIDs(ids...)
 }
 
 // Save executes the query and returns the number of nodes affected by the update operation.
@@ -430,6 +467,51 @@ func (cu *CommodityUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(hazardousmaterial.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if cu.mutation.RatesCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   commodity.RatesTable,
+			Columns: []string{commodity.RatesColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(rate.FieldID, field.TypeUUID),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := cu.mutation.RemovedRatesIDs(); len(nodes) > 0 && !cu.mutation.RatesCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   commodity.RatesTable,
+			Columns: []string{commodity.RatesColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(rate.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := cu.mutation.RatesIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   commodity.RatesTable,
+			Columns: []string{commodity.RatesColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(rate.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {
@@ -666,6 +748,21 @@ func (cuo *CommodityUpdateOne) SetHazardousMaterial(h *HazardousMaterial) *Commo
 	return cuo.SetHazardousMaterialID(h.ID)
 }
 
+// AddRateIDs adds the "rates" edge to the Rate entity by IDs.
+func (cuo *CommodityUpdateOne) AddRateIDs(ids ...uuid.UUID) *CommodityUpdateOne {
+	cuo.mutation.AddRateIDs(ids...)
+	return cuo
+}
+
+// AddRates adds the "rates" edges to the Rate entity.
+func (cuo *CommodityUpdateOne) AddRates(r ...*Rate) *CommodityUpdateOne {
+	ids := make([]uuid.UUID, len(r))
+	for i := range r {
+		ids[i] = r[i].ID
+	}
+	return cuo.AddRateIDs(ids...)
+}
+
 // Mutation returns the CommodityMutation object of the builder.
 func (cuo *CommodityUpdateOne) Mutation() *CommodityMutation {
 	return cuo.mutation
@@ -681,6 +778,27 @@ func (cuo *CommodityUpdateOne) ClearOrganization() *CommodityUpdateOne {
 func (cuo *CommodityUpdateOne) ClearHazardousMaterial() *CommodityUpdateOne {
 	cuo.mutation.ClearHazardousMaterial()
 	return cuo
+}
+
+// ClearRates clears all "rates" edges to the Rate entity.
+func (cuo *CommodityUpdateOne) ClearRates() *CommodityUpdateOne {
+	cuo.mutation.ClearRates()
+	return cuo
+}
+
+// RemoveRateIDs removes the "rates" edge to Rate entities by IDs.
+func (cuo *CommodityUpdateOne) RemoveRateIDs(ids ...uuid.UUID) *CommodityUpdateOne {
+	cuo.mutation.RemoveRateIDs(ids...)
+	return cuo
+}
+
+// RemoveRates removes "rates" edges to Rate entities.
+func (cuo *CommodityUpdateOne) RemoveRates(r ...*Rate) *CommodityUpdateOne {
+	ids := make([]uuid.UUID, len(r))
+	for i := range r {
+		ids[i] = r[i].ID
+	}
+	return cuo.RemoveRateIDs(ids...)
 }
 
 // Where appends a list predicates to the CommodityUpdate builder.
@@ -887,6 +1005,51 @@ func (cuo *CommodityUpdateOne) sqlSave(ctx context.Context) (_node *Commodity, e
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(hazardousmaterial.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if cuo.mutation.RatesCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   commodity.RatesTable,
+			Columns: []string{commodity.RatesColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(rate.FieldID, field.TypeUUID),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := cuo.mutation.RemovedRatesIDs(); len(nodes) > 0 && !cuo.mutation.RatesCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   commodity.RatesTable,
+			Columns: []string{commodity.RatesColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(rate.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := cuo.mutation.RatesIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   commodity.RatesTable,
+			Columns: []string{commodity.RatesColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(rate.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {

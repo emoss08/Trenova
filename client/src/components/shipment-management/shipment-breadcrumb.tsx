@@ -1,27 +1,9 @@
-/*
- * COPYRIGHT(c) 2024 Trenova
- *
- * This file is part of Trenova.
- *
- * The Trenova software is licensed under the Business Source License 1.1. You are granted the right
- * to copy, modify, and redistribute the software, but only for non-production use or with a total
- * of less than three server instances. Starting from the Change Date (November 16, 2026), the
- * software will be made available under version 2 or later of the GNU General Public License.
- * If you use the software in violation of this license, your rights under the license will be
- * terminated automatically. The software is provided "as is," and the Licensor disclaims all
- * warranties and conditions. If you use this license's text or the "Business Source License" name
- * and trademark, you must comply with the Licensor's covenants, which include specifying the
- * Change License as the GPL Version 2.0 or a compatible license, specifying an Additional Use
- * Grant, and not modifying the license in any other way.
- */
-
 import { Button } from "@/components/ui/button";
 import { useUserPermissions } from "@/context/user-permissions";
 import { upperFirst } from "@/lib/utils";
 import { useShipmentStore } from "@/stores/ShipmentStore";
 import { EllipsisVerticalIcon } from "lucide-react";
-import React from "react";
-import { useNavigate } from "react-router-dom";
+import { useCallback, useEffect } from "react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -31,19 +13,20 @@ import {
   DropdownMenuShortcut,
   DropdownMenuTrigger,
 } from "../ui/dropdown-menu";
+import { ShipmentSheet } from "./add-shipment-sheet";
 
 function OptionsDropdown() {
   const [currentView, setCurrentView] = useShipmentStore.use("currentView");
-  const toggleView = () => {
+  const toggleView = useCallback(() => {
     if (currentView === "list") {
       setCurrentView("map");
     } else {
       setCurrentView("list");
     }
-  };
+  }, [currentView, setCurrentView]);
 
   // Use Effect to switch the view based on keypress
-  React.useEffect(() => {
+  useEffect(() => {
     const down = (e: KeyboardEvent) => {
       if (e.key === "s" && (e.metaKey || e.ctrlKey)) {
         e.preventDefault();
@@ -54,7 +37,7 @@ function OptionsDropdown() {
     return () => document.removeEventListener("keydown", down);
   }, [toggleView]);
 
-  React.useEffect(() => {
+  useEffect(() => {
     // set the document title based on the current view
     document.title = `Shipment Management - ${upperFirst(currentView)} View`;
   });
@@ -85,8 +68,8 @@ function OptionsDropdown() {
 }
 
 export function ShipmentBreadcrumb() {
-  const navigate = useNavigate();
   const { userHasPermission } = useUserPermissions();
+  const [open, setOpen] = useShipmentStore.use("addShipmentDialogOpen");
 
   return (
     <div className="flex justify-between pb-4 pt-5 md:py-4">
@@ -102,15 +85,16 @@ export function ShipmentBreadcrumb() {
       </div>
       <div className="mt-3 flex">
         <OptionsDropdown />
-        {userHasPermission("add_shipment") ? (
+        {userHasPermission("shipment.add") ? (
           <Button
             size="sm"
             className="ml-3 h-9 font-semibold"
-            onClick={() => navigate("/shipment-management/new-shipment/")}
+            onClick={() => setOpen(true)}
           >
             Add New Shipment
           </Button>
         ) : null}
+        <ShipmentSheet open={open} onOpenChange={setOpen} />
       </div>
     </div>
   );

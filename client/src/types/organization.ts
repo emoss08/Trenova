@@ -6,7 +6,7 @@ import type {
   RouteModelChoiceProps,
   TimezoneChoices,
 } from "@/lib/choices";
-import { type StatusChoiceProps } from "@/types/index";
+import { type StatusChoiceProps } from ".";
 
 export type Organization = {
   id: string;

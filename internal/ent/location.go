@@ -84,13 +84,19 @@ type LocationEdges struct {
 	OriginRouteLocations []*ShipmentRoute `json:"originLocations"`
 	// DestinationRouteLocations holds the value of the destination_route_locations edge.
 	DestinationRouteLocations []*ShipmentRoute `json:"originLocations"`
+	// RatesOrigin holds the value of the rates_origin edge.
+	RatesOrigin []*Rate `json:"rates_origin,omitempty"`
+	// RatesDestination holds the value of the rates_destination edge.
+	RatesDestination []*Rate `json:"rates_destination,omitempty"`
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
-	loadedTypes                    [8]bool
+	loadedTypes                    [10]bool
 	namedComments                  map[string][]*LocationComment
 	namedContacts                  map[string][]*LocationContact
 	namedOriginRouteLocations      map[string][]*ShipmentRoute
 	namedDestinationRouteLocations map[string][]*ShipmentRoute
+	namedRatesOrigin               map[string][]*Rate
+	namedRatesDestination          map[string][]*Rate
 }
 
 // BusinessUnitOrErr returns the BusinessUnit value or an error if the edge
@@ -171,6 +177,24 @@ func (e LocationEdges) DestinationRouteLocationsOrErr() ([]*ShipmentRoute, error
 		return e.DestinationRouteLocations, nil
 	}
 	return nil, &NotLoadedError{edge: "destination_route_locations"}
+}
+
+// RatesOriginOrErr returns the RatesOrigin value or an error if the edge
+// was not loaded in eager-loading.
+func (e LocationEdges) RatesOriginOrErr() ([]*Rate, error) {
+	if e.loadedTypes[8] {
+		return e.RatesOrigin, nil
+	}
+	return nil, &NotLoadedError{edge: "rates_origin"}
+}
+
+// RatesDestinationOrErr returns the RatesDestination value or an error if the edge
+// was not loaded in eager-loading.
+func (e LocationEdges) RatesDestinationOrErr() ([]*Rate, error) {
+	if e.loadedTypes[9] {
+		return e.RatesDestination, nil
+	}
+	return nil, &NotLoadedError{edge: "rates_destination"}
 }
 
 // scanValues returns the types for scanning values from sql.Rows.
@@ -381,6 +405,16 @@ func (l *Location) QueryDestinationRouteLocations() *ShipmentRouteQuery {
 	return NewLocationClient(l.config).QueryDestinationRouteLocations(l)
 }
 
+// QueryRatesOrigin queries the "rates_origin" edge of the Location entity.
+func (l *Location) QueryRatesOrigin() *RateQuery {
+	return NewLocationClient(l.config).QueryRatesOrigin(l)
+}
+
+// QueryRatesDestination queries the "rates_destination" edge of the Location entity.
+func (l *Location) QueryRatesDestination() *RateQuery {
+	return NewLocationClient(l.config).QueryRatesDestination(l)
+}
+
 // Update returns a builder for updating this Location.
 // Note that you need to call Location.Unwrap() before calling this method if this Location
 // was returned from a transaction, and the transaction was committed or rolled back.
@@ -559,6 +593,54 @@ func (l *Location) appendNamedDestinationRouteLocations(name string, edges ...*S
 		l.Edges.namedDestinationRouteLocations[name] = []*ShipmentRoute{}
 	} else {
 		l.Edges.namedDestinationRouteLocations[name] = append(l.Edges.namedDestinationRouteLocations[name], edges...)
+	}
+}
+
+// NamedRatesOrigin returns the RatesOrigin named value or an error if the edge was not
+// loaded in eager-loading with this name.
+func (l *Location) NamedRatesOrigin(name string) ([]*Rate, error) {
+	if l.Edges.namedRatesOrigin == nil {
+		return nil, &NotLoadedError{edge: name}
+	}
+	nodes, ok := l.Edges.namedRatesOrigin[name]
+	if !ok {
+		return nil, &NotLoadedError{edge: name}
+	}
+	return nodes, nil
+}
+
+func (l *Location) appendNamedRatesOrigin(name string, edges ...*Rate) {
+	if l.Edges.namedRatesOrigin == nil {
+		l.Edges.namedRatesOrigin = make(map[string][]*Rate)
+	}
+	if len(edges) == 0 {
+		l.Edges.namedRatesOrigin[name] = []*Rate{}
+	} else {
+		l.Edges.namedRatesOrigin[name] = append(l.Edges.namedRatesOrigin[name], edges...)
+	}
+}
+
+// NamedRatesDestination returns the RatesDestination named value or an error if the edge was not
+// loaded in eager-loading with this name.
+func (l *Location) NamedRatesDestination(name string) ([]*Rate, error) {
+	if l.Edges.namedRatesDestination == nil {
+		return nil, &NotLoadedError{edge: name}
+	}
+	nodes, ok := l.Edges.namedRatesDestination[name]
+	if !ok {
+		return nil, &NotLoadedError{edge: name}
+	}
+	return nodes, nil
+}
+
+func (l *Location) appendNamedRatesDestination(name string, edges ...*Rate) {
+	if l.Edges.namedRatesDestination == nil {
+		l.Edges.namedRatesDestination = make(map[string][]*Rate)
+	}
+	if len(edges) == 0 {
+		l.Edges.namedRatesDestination[name] = []*Rate{}
+	} else {
+		l.Edges.namedRatesDestination[name] = append(l.Edges.namedRatesDestination[name], edges...)
 	}
 }
 

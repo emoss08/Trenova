@@ -14,6 +14,7 @@ import (
 	"github.com/emoss08/trenova/internal/ent/commodity"
 	"github.com/emoss08/trenova/internal/ent/hazardousmaterial"
 	"github.com/emoss08/trenova/internal/ent/organization"
+	"github.com/emoss08/trenova/internal/ent/rate"
 	"github.com/google/uuid"
 )
 
@@ -209,6 +210,21 @@ func (cc *CommodityCreate) SetOrganization(o *Organization) *CommodityCreate {
 // SetHazardousMaterial sets the "hazardous_material" edge to the HazardousMaterial entity.
 func (cc *CommodityCreate) SetHazardousMaterial(h *HazardousMaterial) *CommodityCreate {
 	return cc.SetHazardousMaterialID(h.ID)
+}
+
+// AddRateIDs adds the "rates" edge to the Rate entity by IDs.
+func (cc *CommodityCreate) AddRateIDs(ids ...uuid.UUID) *CommodityCreate {
+	cc.mutation.AddRateIDs(ids...)
+	return cc
+}
+
+// AddRates adds the "rates" edges to the Rate entity.
+func (cc *CommodityCreate) AddRates(r ...*Rate) *CommodityCreate {
+	ids := make([]uuid.UUID, len(r))
+	for i := range r {
+		ids[i] = r[i].ID
+	}
+	return cc.AddRateIDs(ids...)
 }
 
 // Mutation returns the CommodityMutation object of the builder.
@@ -438,6 +454,22 @@ func (cc *CommodityCreate) createSpec() (*Commodity, *sqlgraph.CreateSpec) {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
 		_node.HazardousMaterialID = &nodes[0]
+		_spec.Edges = append(_spec.Edges, edge)
+	}
+	if nodes := cc.mutation.RatesIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   commodity.RatesTable,
+			Columns: []string{commodity.RatesColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(rate.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
 		_spec.Edges = append(_spec.Edges, edge)
 	}
 	return _node, _spec

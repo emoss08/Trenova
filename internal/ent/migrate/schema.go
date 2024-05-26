@@ -1581,6 +1581,77 @@ var (
 			},
 		},
 	}
+	// RatesColumns holds the columns for the "rates" table.
+	RatesColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeUUID},
+		{Name: "created_at", Type: field.TypeTime, Comment: "The time that this entity was created."},
+		{Name: "updated_at", Type: field.TypeTime, Comment: "The last time that this entity was updated."},
+		{Name: "version", Type: field.TypeInt, Comment: "The current version of this entity.", Default: 1},
+		{Name: "status", Type: field.TypeEnum, Enums: []string{"A", "I"}, Default: "A", SchemaType: map[string]string{"postgres": "VARCHAR(1)", "sqlite3": "VARCHAR(1)"}},
+		{Name: "rate_number", Type: field.TypeString, Size: 10, SchemaType: map[string]string{"postgres": "VARCHAR(10)", "sqlite3": "VARCHAR(10)"}},
+		{Name: "effective_date", Type: field.TypeOther, Nullable: true, SchemaType: map[string]string{"postgres": "date", "sqlite3": "date"}},
+		{Name: "expiration_date", Type: field.TypeOther, Nullable: true, SchemaType: map[string]string{"postgres": "date", "sqlite3": "date"}},
+		{Name: "rating_method", Type: field.TypeEnum, Enums: []string{"FlatRate", "PerMile", "PerHundredWeight", "PerStop", "PerPound", "Other"}, Default: "FlatRate"},
+		{Name: "rate_amount", Type: field.TypeFloat64, SchemaType: map[string]string{"mysql": "decimal(19,4)", "postgres": "numeric(19,4)"}},
+		{Name: "comment", Type: field.TypeString, Nullable: true, Size: 2147483647},
+		{Name: "commodity_id", Type: field.TypeUUID, Nullable: true},
+		{Name: "customer_id", Type: field.TypeUUID},
+		{Name: "origin_location_id", Type: field.TypeUUID, Nullable: true},
+		{Name: "destination_location_id", Type: field.TypeUUID, Nullable: true},
+		{Name: "business_unit_id", Type: field.TypeUUID},
+		{Name: "organization_id", Type: field.TypeUUID},
+		{Name: "shipment_type_id", Type: field.TypeUUID, Nullable: true},
+	}
+	// RatesTable holds the schema information for the "rates" table.
+	RatesTable = &schema.Table{
+		Name:       "rates",
+		Columns:    RatesColumns,
+		PrimaryKey: []*schema.Column{RatesColumns[0]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "rates_commodities_rates",
+				Columns:    []*schema.Column{RatesColumns[11]},
+				RefColumns: []*schema.Column{CommoditiesColumns[0]},
+				OnDelete:   schema.SetNull,
+			},
+			{
+				Symbol:     "rates_customers_rates",
+				Columns:    []*schema.Column{RatesColumns[12]},
+				RefColumns: []*schema.Column{CustomersColumns[0]},
+				OnDelete:   schema.NoAction,
+			},
+			{
+				Symbol:     "rates_locations_rates_origin",
+				Columns:    []*schema.Column{RatesColumns[13]},
+				RefColumns: []*schema.Column{LocationsColumns[0]},
+				OnDelete:   schema.SetNull,
+			},
+			{
+				Symbol:     "rates_locations_rates_destination",
+				Columns:    []*schema.Column{RatesColumns[14]},
+				RefColumns: []*schema.Column{LocationsColumns[0]},
+				OnDelete:   schema.SetNull,
+			},
+			{
+				Symbol:     "rates_business_units_business_unit",
+				Columns:    []*schema.Column{RatesColumns[15]},
+				RefColumns: []*schema.Column{BusinessUnitsColumns[0]},
+				OnDelete:   schema.Cascade,
+			},
+			{
+				Symbol:     "rates_organizations_organization",
+				Columns:    []*schema.Column{RatesColumns[16]},
+				RefColumns: []*schema.Column{OrganizationsColumns[0]},
+				OnDelete:   schema.Cascade,
+			},
+			{
+				Symbol:     "rates_shipment_types_rates",
+				Columns:    []*schema.Column{RatesColumns[17]},
+				RefColumns: []*schema.Column{ShipmentTypesColumns[0]},
+				OnDelete:   schema.SetNull,
+			},
+		},
+	}
 	// ReasonCodesColumns holds the columns for the "reason_codes" table.
 	ReasonCodesColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeUUID},
@@ -3111,6 +3182,7 @@ var (
 		OrganizationFeatureFlagsTable,
 		PermissionsTable,
 		QualifierCodesTable,
+		RatesTable,
 		ReasonCodesTable,
 		ResourcesTable,
 		RevenueCodesTable,
@@ -3285,6 +3357,14 @@ func init() {
 	QualifierCodesTable.ForeignKeys[0].RefTable = BusinessUnitsTable
 	QualifierCodesTable.ForeignKeys[1].RefTable = OrganizationsTable
 	QualifierCodesTable.Annotation = &entsql.Annotation{}
+	RatesTable.ForeignKeys[0].RefTable = CommoditiesTable
+	RatesTable.ForeignKeys[1].RefTable = CustomersTable
+	RatesTable.ForeignKeys[2].RefTable = LocationsTable
+	RatesTable.ForeignKeys[3].RefTable = LocationsTable
+	RatesTable.ForeignKeys[4].RefTable = BusinessUnitsTable
+	RatesTable.ForeignKeys[5].RefTable = OrganizationsTable
+	RatesTable.ForeignKeys[6].RefTable = ShipmentTypesTable
+	RatesTable.Annotation = &entsql.Annotation{}
 	ReasonCodesTable.ForeignKeys[0].RefTable = BusinessUnitsTable
 	ReasonCodesTable.ForeignKeys[1].RefTable = OrganizationsTable
 	ReasonCodesTable.Annotation = &entsql.Annotation{}

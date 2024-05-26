@@ -92,6 +92,8 @@ type Tx struct {
 	Permission *PermissionClient
 	// QualifierCode is the client for interacting with the QualifierCode builders.
 	QualifierCode *QualifierCodeClient
+	// Rate is the client for interacting with the Rate builders.
+	Rate *RateClient
 	// ReasonCode is the client for interacting with the ReasonCode builders.
 	ReasonCode *ReasonCodeClient
 	// Resource is the client for interacting with the Resource builders.
@@ -322,6 +324,7 @@ func (tx *Tx) init() {
 	tx.OrganizationFeatureFlag = NewOrganizationFeatureFlagClient(tx.config)
 	tx.Permission = NewPermissionClient(tx.config)
 	tx.QualifierCode = NewQualifierCodeClient(tx.config)
+	tx.Rate = NewRateClient(tx.config)
 	tx.ReasonCode = NewReasonCodeClient(tx.config)
 	tx.Resource = NewResourceClient(tx.config)
 	tx.RevenueCode = NewRevenueCodeClient(tx.config)

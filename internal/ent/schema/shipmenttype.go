@@ -3,6 +3,7 @@ package schema
 import (
 	"entgo.io/ent"
 	"entgo.io/ent/dialect"
+	"entgo.io/ent/schema/edge"
 	"entgo.io/ent/schema/field"
 )
 
@@ -48,5 +49,7 @@ func (ShipmentType) Mixin() []ent.Mixin {
 
 // Edges of the ShipmentType.
 func (ShipmentType) Edges() []ent.Edge {
-	return nil
+	return []ent.Edge{
+		edge.To("rates", Rate.Type),
+	}
 }

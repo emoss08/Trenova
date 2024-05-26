@@ -55,6 +55,7 @@ import (
 	"github.com/emoss08/trenova/internal/ent/organizationfeatureflag"
 	"github.com/emoss08/trenova/internal/ent/permission"
 	"github.com/emoss08/trenova/internal/ent/qualifiercode"
+	"github.com/emoss08/trenova/internal/ent/rate"
 	"github.com/emoss08/trenova/internal/ent/reasoncode"
 	"github.com/emoss08/trenova/internal/ent/resource"
 	"github.com/emoss08/trenova/internal/ent/revenuecode"
@@ -172,6 +173,8 @@ type Client struct {
 	Permission *PermissionClient
 	// QualifierCode is the client for interacting with the QualifierCode builders.
 	QualifierCode *QualifierCodeClient
+	// Rate is the client for interacting with the Rate builders.
+	Rate *RateClient
 	// ReasonCode is the client for interacting with the ReasonCode builders.
 	ReasonCode *ReasonCodeClient
 	// Resource is the client for interacting with the Resource builders.
@@ -282,6 +285,7 @@ func (c *Client) init() {
 	c.OrganizationFeatureFlag = NewOrganizationFeatureFlagClient(c.config)
 	c.Permission = NewPermissionClient(c.config)
 	c.QualifierCode = NewQualifierCodeClient(c.config)
+	c.Rate = NewRateClient(c.config)
 	c.ReasonCode = NewReasonCodeClient(c.config)
 	c.Resource = NewResourceClient(c.config)
 	c.RevenueCode = NewRevenueCodeClient(c.config)
@@ -443,6 +447,7 @@ func (c *Client) Tx(ctx context.Context) (*Tx, error) {
 		OrganizationFeatureFlag:      NewOrganizationFeatureFlagClient(cfg),
 		Permission:                   NewPermissionClient(cfg),
 		QualifierCode:                NewQualifierCodeClient(cfg),
+		Rate:                         NewRateClient(cfg),
 		ReasonCode:                   NewReasonCodeClient(cfg),
 		Resource:                     NewResourceClient(cfg),
 		RevenueCode:                  NewRevenueCodeClient(cfg),
@@ -531,6 +536,7 @@ func (c *Client) BeginTx(ctx context.Context, opts *sql.TxOptions) (*Tx, error) 
 		OrganizationFeatureFlag:      NewOrganizationFeatureFlagClient(cfg),
 		Permission:                   NewPermissionClient(cfg),
 		QualifierCode:                NewQualifierCodeClient(cfg),
+		Rate:                         NewRateClient(cfg),
 		ReasonCode:                   NewReasonCodeClient(cfg),
 		Resource:                     NewResourceClient(cfg),
 		RevenueCode:                  NewRevenueCodeClient(cfg),
@@ -600,7 +606,7 @@ func (c *Client) Use(hooks ...Hook) {
 		c.GoogleApi, c.HazardousMaterial, c.HazardousMaterialSegregation,
 		c.InvoiceControl, c.Location, c.LocationCategory, c.LocationComment,
 		c.LocationContact, c.Organization, c.OrganizationFeatureFlag, c.Permission,
-		c.QualifierCode, c.ReasonCode, c.Resource, c.RevenueCode, c.Role,
+		c.QualifierCode, c.Rate, c.ReasonCode, c.Resource, c.RevenueCode, c.Role,
 		c.RouteControl, c.ServiceType, c.Session, c.Shipment, c.ShipmentCharges,
 		c.ShipmentComment, c.ShipmentCommodity, c.ShipmentControl,
 		c.ShipmentDocumentation, c.ShipmentMove, c.ShipmentRoute, c.ShipmentType,
@@ -626,7 +632,7 @@ func (c *Client) Intercept(interceptors ...Interceptor) {
 		c.GoogleApi, c.HazardousMaterial, c.HazardousMaterialSegregation,
 		c.InvoiceControl, c.Location, c.LocationCategory, c.LocationComment,
 		c.LocationContact, c.Organization, c.OrganizationFeatureFlag, c.Permission,
-		c.QualifierCode, c.ReasonCode, c.Resource, c.RevenueCode, c.Role,
+		c.QualifierCode, c.Rate, c.ReasonCode, c.Resource, c.RevenueCode, c.Role,
 		c.RouteControl, c.ServiceType, c.Session, c.Shipment, c.ShipmentCharges,
 		c.ShipmentComment, c.ShipmentCommodity, c.ShipmentControl,
 		c.ShipmentDocumentation, c.ShipmentMove, c.ShipmentRoute, c.ShipmentType,
@@ -719,6 +725,8 @@ func (c *Client) Mutate(ctx context.Context, m Mutation) (Value, error) {
 		return c.Permission.mutate(ctx, m)
 	case *QualifierCodeMutation:
 		return c.QualifierCode.mutate(ctx, m)
+	case *RateMutation:
+		return c.Rate.mutate(ctx, m)
 	case *ReasonCodeMutation:
 		return c.ReasonCode.mutate(ctx, m)
 	case *ResourceMutation:
@@ -2010,6 +2018,22 @@ func (c *CommodityClient) QueryHazardousMaterial(co *Commodity) *HazardousMateri
 	return query
 }
 
+// QueryRates queries the rates edge of a Commodity.
+func (c *CommodityClient) QueryRates(co *Commodity) *RateQuery {
+	query := (&RateClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := co.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(commodity.Table, commodity.FieldID, id),
+			sqlgraph.To(rate.Table, rate.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, commodity.RatesTable, commodity.RatesColumn),
+		)
+		fromV = sqlgraph.Neighbors(co.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
 // Hooks returns the client hooks.
 func (c *CommodityClient) Hooks() []Hook {
 	return c.hooks.Commodity
@@ -2445,6 +2469,22 @@ func (c *CustomerClient) QueryDeliverySlots(cu *Customer) *DeliverySlotQuery {
 			sqlgraph.From(customer.Table, customer.FieldID, id),
 			sqlgraph.To(deliveryslot.Table, deliveryslot.FieldID),
 			sqlgraph.Edge(sqlgraph.O2M, false, customer.DeliverySlotsTable, customer.DeliverySlotsColumn),
+		)
+		fromV = sqlgraph.Neighbors(cu.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryRates queries the rates edge of a Customer.
+func (c *CustomerClient) QueryRates(cu *Customer) *RateQuery {
+	query := (&RateClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := cu.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(customer.Table, customer.FieldID, id),
+			sqlgraph.To(rate.Table, rate.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, customer.RatesTable, customer.RatesColumn),
 		)
 		fromV = sqlgraph.Neighbors(cu.driver.Dialect(), step)
 		return fromV, nil
@@ -6699,6 +6739,38 @@ func (c *LocationClient) QueryDestinationRouteLocations(l *Location) *ShipmentRo
 	return query
 }
 
+// QueryRatesOrigin queries the rates_origin edge of a Location.
+func (c *LocationClient) QueryRatesOrigin(l *Location) *RateQuery {
+	query := (&RateClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := l.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(location.Table, location.FieldID, id),
+			sqlgraph.To(rate.Table, rate.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, location.RatesOriginTable, location.RatesOriginColumn),
+		)
+		fromV = sqlgraph.Neighbors(l.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryRatesDestination queries the rates_destination edge of a Location.
+func (c *LocationClient) QueryRatesDestination(l *Location) *RateQuery {
+	query := (&RateClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := l.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(location.Table, location.FieldID, id),
+			sqlgraph.To(rate.Table, rate.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, location.RatesDestinationTable, location.RatesDestinationColumn),
+		)
+		fromV = sqlgraph.Neighbors(l.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
 // Hooks returns the client hooks.
 func (c *LocationClient) Hooks() []Hook {
 	return c.hooks.Location
@@ -8133,6 +8205,251 @@ func (c *QualifierCodeClient) mutate(ctx context.Context, m *QualifierCodeMutati
 		return (&QualifierCodeDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
 	default:
 		return nil, fmt.Errorf("ent: unknown QualifierCode mutation op: %q", m.Op())
+	}
+}
+
+// RateClient is a client for the Rate schema.
+type RateClient struct {
+	config
+}
+
+// NewRateClient returns a client for the Rate from the given config.
+func NewRateClient(c config) *RateClient {
+	return &RateClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `rate.Hooks(f(g(h())))`.
+func (c *RateClient) Use(hooks ...Hook) {
+	c.hooks.Rate = append(c.hooks.Rate, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `rate.Intercept(f(g(h())))`.
+func (c *RateClient) Intercept(interceptors ...Interceptor) {
+	c.inters.Rate = append(c.inters.Rate, interceptors...)
+}
+
+// Create returns a builder for creating a Rate entity.
+func (c *RateClient) Create() *RateCreate {
+	mutation := newRateMutation(c.config, OpCreate)
+	return &RateCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of Rate entities.
+func (c *RateClient) CreateBulk(builders ...*RateCreate) *RateCreateBulk {
+	return &RateCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *RateClient) MapCreateBulk(slice any, setFunc func(*RateCreate, int)) *RateCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &RateCreateBulk{err: fmt.Errorf("calling to RateClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*RateCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &RateCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for Rate.
+func (c *RateClient) Update() *RateUpdate {
+	mutation := newRateMutation(c.config, OpUpdate)
+	return &RateUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *RateClient) UpdateOne(r *Rate) *RateUpdateOne {
+	mutation := newRateMutation(c.config, OpUpdateOne, withRate(r))
+	return &RateUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *RateClient) UpdateOneID(id uuid.UUID) *RateUpdateOne {
+	mutation := newRateMutation(c.config, OpUpdateOne, withRateID(id))
+	return &RateUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for Rate.
+func (c *RateClient) Delete() *RateDelete {
+	mutation := newRateMutation(c.config, OpDelete)
+	return &RateDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *RateClient) DeleteOne(r *Rate) *RateDeleteOne {
+	return c.DeleteOneID(r.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *RateClient) DeleteOneID(id uuid.UUID) *RateDeleteOne {
+	builder := c.Delete().Where(rate.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &RateDeleteOne{builder}
+}
+
+// Query returns a query builder for Rate.
+func (c *RateClient) Query() *RateQuery {
+	return &RateQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeRate},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a Rate entity by its id.
+func (c *RateClient) Get(ctx context.Context, id uuid.UUID) (*Rate, error) {
+	return c.Query().Where(rate.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *RateClient) GetX(ctx context.Context, id uuid.UUID) *Rate {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// QueryBusinessUnit queries the business_unit edge of a Rate.
+func (c *RateClient) QueryBusinessUnit(r *Rate) *BusinessUnitQuery {
+	query := (&BusinessUnitClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := r.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(rate.Table, rate.FieldID, id),
+			sqlgraph.To(businessunit.Table, businessunit.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, false, rate.BusinessUnitTable, rate.BusinessUnitColumn),
+		)
+		fromV = sqlgraph.Neighbors(r.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryOrganization queries the organization edge of a Rate.
+func (c *RateClient) QueryOrganization(r *Rate) *OrganizationQuery {
+	query := (&OrganizationClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := r.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(rate.Table, rate.FieldID, id),
+			sqlgraph.To(organization.Table, organization.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, false, rate.OrganizationTable, rate.OrganizationColumn),
+		)
+		fromV = sqlgraph.Neighbors(r.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryCustomer queries the customer edge of a Rate.
+func (c *RateClient) QueryCustomer(r *Rate) *CustomerQuery {
+	query := (&CustomerClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := r.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(rate.Table, rate.FieldID, id),
+			sqlgraph.To(customer.Table, customer.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, rate.CustomerTable, rate.CustomerColumn),
+		)
+		fromV = sqlgraph.Neighbors(r.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryCommodity queries the commodity edge of a Rate.
+func (c *RateClient) QueryCommodity(r *Rate) *CommodityQuery {
+	query := (&CommodityClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := r.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(rate.Table, rate.FieldID, id),
+			sqlgraph.To(commodity.Table, commodity.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, rate.CommodityTable, rate.CommodityColumn),
+		)
+		fromV = sqlgraph.Neighbors(r.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryShipmentType queries the shipment_type edge of a Rate.
+func (c *RateClient) QueryShipmentType(r *Rate) *ShipmentTypeQuery {
+	query := (&ShipmentTypeClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := r.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(rate.Table, rate.FieldID, id),
+			sqlgraph.To(shipmenttype.Table, shipmenttype.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, rate.ShipmentTypeTable, rate.ShipmentTypeColumn),
+		)
+		fromV = sqlgraph.Neighbors(r.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryOriginLocation queries the origin_location edge of a Rate.
+func (c *RateClient) QueryOriginLocation(r *Rate) *LocationQuery {
+	query := (&LocationClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := r.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(rate.Table, rate.FieldID, id),
+			sqlgraph.To(location.Table, location.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, rate.OriginLocationTable, rate.OriginLocationColumn),
+		)
+		fromV = sqlgraph.Neighbors(r.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryDestinationLocation queries the destination_location edge of a Rate.
+func (c *RateClient) QueryDestinationLocation(r *Rate) *LocationQuery {
+	query := (&LocationClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := r.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(rate.Table, rate.FieldID, id),
+			sqlgraph.To(location.Table, location.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, rate.DestinationLocationTable, rate.DestinationLocationColumn),
+		)
+		fromV = sqlgraph.Neighbors(r.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// Hooks returns the client hooks.
+func (c *RateClient) Hooks() []Hook {
+	return c.hooks.Rate
+}
+
+// Interceptors returns the client interceptors.
+func (c *RateClient) Interceptors() []Interceptor {
+	return c.inters.Rate
+}
+
+func (c *RateClient) mutate(ctx context.Context, m *RateMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&RateCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&RateUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&RateUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&RateDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown Rate mutation op: %q", m.Op())
 	}
 }
 
@@ -11266,6 +11583,22 @@ func (c *ShipmentTypeClient) QueryOrganization(st *ShipmentType) *OrganizationQu
 	return query
 }
 
+// QueryRates queries the rates edge of a ShipmentType.
+func (c *ShipmentTypeClient) QueryRates(st *ShipmentType) *RateQuery {
+	query := (&RateClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := st.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(shipmenttype.Table, shipmenttype.FieldID, id),
+			sqlgraph.To(rate.Table, rate.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, shipmenttype.RatesTable, shipmenttype.RatesColumn),
+		)
+		fromV = sqlgraph.Neighbors(st.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
 // Hooks returns the client hooks.
 func (c *ShipmentTypeClient) Hooks() []Hook {
 	return c.hooks.ShipmentType
@@ -14178,7 +14511,7 @@ type (
 		GeneralLedgerAccount, GoogleApi, HazardousMaterial,
 		HazardousMaterialSegregation, InvoiceControl, Location, LocationCategory,
 		LocationComment, LocationContact, Organization, OrganizationFeatureFlag,
-		Permission, QualifierCode, ReasonCode, Resource, RevenueCode, Role,
+		Permission, QualifierCode, Rate, ReasonCode, Resource, RevenueCode, Role,
 		RouteControl, ServiceType, Session, Shipment, ShipmentCharges, ShipmentComment,
 		ShipmentCommodity, ShipmentControl, ShipmentDocumentation, ShipmentMove,
 		ShipmentRoute, ShipmentType, Stop, TableChangeAlert, Tag, Tractor, Trailer,
@@ -14195,7 +14528,7 @@ type (
 		GeneralLedgerAccount, GoogleApi, HazardousMaterial,
 		HazardousMaterialSegregation, InvoiceControl, Location, LocationCategory,
 		LocationComment, LocationContact, Organization, OrganizationFeatureFlag,
-		Permission, QualifierCode, ReasonCode, Resource, RevenueCode, Role,
+		Permission, QualifierCode, Rate, ReasonCode, Resource, RevenueCode, Role,
 		RouteControl, ServiceType, Session, Shipment, ShipmentCharges, ShipmentComment,
 		ShipmentCommodity, ShipmentControl, ShipmentDocumentation, ShipmentMove,
 		ShipmentRoute, ShipmentType, Stop, TableChangeAlert, Tag, Tractor, Trailer,

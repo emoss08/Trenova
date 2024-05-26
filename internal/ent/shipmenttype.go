@@ -50,9 +50,12 @@ type ShipmentTypeEdges struct {
 	BusinessUnit *BusinessUnit `json:"business_unit,omitempty"`
 	// Organization holds the value of the organization edge.
 	Organization *Organization `json:"organization,omitempty"`
+	// Rates holds the value of the rates edge.
+	Rates []*Rate `json:"rates,omitempty"`
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
-	loadedTypes [2]bool
+	loadedTypes [3]bool
+	namedRates  map[string][]*Rate
 }
 
 // BusinessUnitOrErr returns the BusinessUnit value or an error if the edge
@@ -75,6 +78,15 @@ func (e ShipmentTypeEdges) OrganizationOrErr() (*Organization, error) {
 		return nil, &NotFoundError{label: organization.Label}
 	}
 	return nil, &NotLoadedError{edge: "organization"}
+}
+
+// RatesOrErr returns the Rates value or an error if the edge
+// was not loaded in eager-loading.
+func (e ShipmentTypeEdges) RatesOrErr() ([]*Rate, error) {
+	if e.loadedTypes[2] {
+		return e.Rates, nil
+	}
+	return nil, &NotLoadedError{edge: "rates"}
 }
 
 // scanValues returns the types for scanning values from sql.Rows.
@@ -188,6 +200,11 @@ func (st *ShipmentType) QueryOrganization() *OrganizationQuery {
 	return NewShipmentTypeClient(st.config).QueryOrganization(st)
 }
 
+// QueryRates queries the "rates" edge of the ShipmentType entity.
+func (st *ShipmentType) QueryRates() *RateQuery {
+	return NewShipmentTypeClient(st.config).QueryRates(st)
+}
+
 // Update returns a builder for updating this ShipmentType.
 // Note that you need to call ShipmentType.Unwrap() before calling this method if this ShipmentType
 // was returned from a transaction, and the transaction was committed or rolled back.
@@ -239,6 +256,30 @@ func (st *ShipmentType) String() string {
 	builder.WriteString(st.Color)
 	builder.WriteByte(')')
 	return builder.String()
+}
+
+// NamedRates returns the Rates named value or an error if the edge was not
+// loaded in eager-loading with this name.
+func (st *ShipmentType) NamedRates(name string) ([]*Rate, error) {
+	if st.Edges.namedRates == nil {
+		return nil, &NotLoadedError{edge: name}
+	}
+	nodes, ok := st.Edges.namedRates[name]
+	if !ok {
+		return nil, &NotLoadedError{edge: name}
+	}
+	return nodes, nil
+}
+
+func (st *ShipmentType) appendNamedRates(name string, edges ...*Rate) {
+	if st.Edges.namedRates == nil {
+		st.Edges.namedRates = make(map[string][]*Rate)
+	}
+	if len(edges) == 0 {
+		st.Edges.namedRates[name] = []*Rate{}
+	} else {
+		st.Edges.namedRates[name] = append(st.Edges.namedRates[name], edges...)
+	}
 }
 
 // ShipmentTypes is a parsable slice of ShipmentType.

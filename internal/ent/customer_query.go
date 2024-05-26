@@ -20,6 +20,7 @@ import (
 	"github.com/emoss08/trenova/internal/ent/deliveryslot"
 	"github.com/emoss08/trenova/internal/ent/organization"
 	"github.com/emoss08/trenova/internal/ent/predicate"
+	"github.com/emoss08/trenova/internal/ent/rate"
 	"github.com/emoss08/trenova/internal/ent/shipment"
 	"github.com/emoss08/trenova/internal/ent/usstate"
 	"github.com/google/uuid"
@@ -41,11 +42,13 @@ type CustomerQuery struct {
 	withDetentionPolicies      *CustomerDetentionPolicyQuery
 	withContacts               *CustomerContactQuery
 	withDeliverySlots          *DeliverySlotQuery
+	withRates                  *RateQuery
 	modifiers                  []func(*sql.Selector)
 	withNamedShipments         map[string]*ShipmentQuery
 	withNamedDetentionPolicies map[string]*CustomerDetentionPolicyQuery
 	withNamedContacts          map[string]*CustomerContactQuery
 	withNamedDeliverySlots     map[string]*DeliverySlotQuery
+	withNamedRates             map[string]*RateQuery
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
 	path func(context.Context) (*sql.Selector, error)
@@ -280,6 +283,28 @@ func (cq *CustomerQuery) QueryDeliverySlots() *DeliverySlotQuery {
 	return query
 }
 
+// QueryRates chains the current query on the "rates" edge.
+func (cq *CustomerQuery) QueryRates() *RateQuery {
+	query := (&RateClient{config: cq.config}).Query()
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := cq.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := cq.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(customer.Table, customer.FieldID, selector),
+			sqlgraph.To(rate.Table, rate.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, customer.RatesTable, customer.RatesColumn),
+		)
+		fromU = sqlgraph.SetNeighbors(cq.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
+}
+
 // First returns the first Customer entity from the query.
 // Returns a *NotFoundError when no Customer was found.
 func (cq *CustomerQuery) First(ctx context.Context) (*Customer, error) {
@@ -481,6 +506,7 @@ func (cq *CustomerQuery) Clone() *CustomerQuery {
 		withDetentionPolicies: cq.withDetentionPolicies.Clone(),
 		withContacts:          cq.withContacts.Clone(),
 		withDeliverySlots:     cq.withDeliverySlots.Clone(),
+		withRates:             cq.withRates.Clone(),
 		// clone intermediate query.
 		sql:  cq.sql.Clone(),
 		path: cq.path,
@@ -586,6 +612,17 @@ func (cq *CustomerQuery) WithDeliverySlots(opts ...func(*DeliverySlotQuery)) *Cu
 	return cq
 }
 
+// WithRates tells the query-builder to eager-load the nodes that are connected to
+// the "rates" edge. The optional arguments are used to configure the query builder of the edge.
+func (cq *CustomerQuery) WithRates(opts ...func(*RateQuery)) *CustomerQuery {
+	query := (&RateClient{config: cq.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	cq.withRates = query
+	return cq
+}
+
 // GroupBy is used to group vertices by one or more fields/columns.
 // It is often used with aggregate functions, like: count, max, mean, min, sum.
 //
@@ -664,7 +701,7 @@ func (cq *CustomerQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Cus
 	var (
 		nodes       = []*Customer{}
 		_spec       = cq.querySpec()
-		loadedTypes = [9]bool{
+		loadedTypes = [10]bool{
 			cq.withBusinessUnit != nil,
 			cq.withOrganization != nil,
 			cq.withState != nil,
@@ -674,6 +711,7 @@ func (cq *CustomerQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Cus
 			cq.withDetentionPolicies != nil,
 			cq.withContacts != nil,
 			cq.withDeliverySlots != nil,
+			cq.withRates != nil,
 		}
 	)
 	_spec.ScanValues = func(columns []string) ([]any, error) {
@@ -757,6 +795,13 @@ func (cq *CustomerQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Cus
 			return nil, err
 		}
 	}
+	if query := cq.withRates; query != nil {
+		if err := cq.loadRates(ctx, query, nodes,
+			func(n *Customer) { n.Edges.Rates = []*Rate{} },
+			func(n *Customer, e *Rate) { n.Edges.Rates = append(n.Edges.Rates, e) }); err != nil {
+			return nil, err
+		}
+	}
 	for name, query := range cq.withNamedShipments {
 		if err := cq.loadShipments(ctx, query, nodes,
 			func(n *Customer) { n.appendNamedShipments(name) },
@@ -782,6 +827,13 @@ func (cq *CustomerQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Cus
 		if err := cq.loadDeliverySlots(ctx, query, nodes,
 			func(n *Customer) { n.appendNamedDeliverySlots(name) },
 			func(n *Customer, e *DeliverySlot) { n.appendNamedDeliverySlots(name, e) }); err != nil {
+			return nil, err
+		}
+	}
+	for name, query := range cq.withNamedRates {
+		if err := cq.loadRates(ctx, query, nodes,
+			func(n *Customer) { n.appendNamedRates(name) },
+			func(n *Customer, e *Rate) { n.appendNamedRates(name, e) }); err != nil {
 			return nil, err
 		}
 	}
@@ -1049,6 +1101,36 @@ func (cq *CustomerQuery) loadDeliverySlots(ctx context.Context, query *DeliveryS
 	}
 	return nil
 }
+func (cq *CustomerQuery) loadRates(ctx context.Context, query *RateQuery, nodes []*Customer, init func(*Customer), assign func(*Customer, *Rate)) error {
+	fks := make([]driver.Value, 0, len(nodes))
+	nodeids := make(map[uuid.UUID]*Customer)
+	for i := range nodes {
+		fks = append(fks, nodes[i].ID)
+		nodeids[nodes[i].ID] = nodes[i]
+		if init != nil {
+			init(nodes[i])
+		}
+	}
+	if len(query.ctx.Fields) > 0 {
+		query.ctx.AppendFieldOnce(rate.FieldCustomerID)
+	}
+	query.Where(predicate.Rate(func(s *sql.Selector) {
+		s.Where(sql.InValues(s.C(customer.RatesColumn), fks...))
+	}))
+	neighbors, err := query.All(ctx)
+	if err != nil {
+		return err
+	}
+	for _, n := range neighbors {
+		fk := n.CustomerID
+		node, ok := nodeids[fk]
+		if !ok {
+			return fmt.Errorf(`unexpected referenced foreign-key "customer_id" returned %v for node %v`, fk, n.ID)
+		}
+		assign(node, n)
+	}
+	return nil
+}
 
 func (cq *CustomerQuery) sqlCount(ctx context.Context) (int, error) {
 	_spec := cq.querySpec()
@@ -1205,6 +1287,20 @@ func (cq *CustomerQuery) WithNamedDeliverySlots(name string, opts ...func(*Deliv
 		cq.withNamedDeliverySlots = make(map[string]*DeliverySlotQuery)
 	}
 	cq.withNamedDeliverySlots[name] = query
+	return cq
+}
+
+// WithNamedRates tells the query-builder to eager-load the nodes that are connected to the "rates"
+// edge with the given name. The optional arguments are used to configure the query builder of the edge.
+func (cq *CustomerQuery) WithNamedRates(name string, opts ...func(*RateQuery)) *CustomerQuery {
+	query := (&RateClient{config: cq.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	if cq.withNamedRates == nil {
+		cq.withNamedRates = make(map[string]*RateQuery)
+	}
+	cq.withNamedRates[name] = query
 	return cq
 }
 

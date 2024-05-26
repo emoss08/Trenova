@@ -14,7 +14,6 @@ const RevenueCodesPage = lazy(() => import("../pages/accounting/RevenueCodes"));
 const GLAccountsPage = lazy(
   () => import("../pages/accounting/GeneralLedgerAccounts"),
 );
-const AddShipmentPage = lazy(() => import("@/pages/shipment/AddShipment"));
 
 /* Admin Pages */
 const FeatureManagementPage = lazy(
@@ -365,15 +364,6 @@ export const routes: RouteObjectWithPermission[] = [
     description: "Shipment Management",
     element: <ShipmentManagementPage />,
     permission: "shipment.view",
-    isPublic: false,
-  },
-  {
-    title: "Add New Shipment",
-    group: "Shipment Management",
-    path: "/shipment-management/new-shipment",
-    description: "Add New Shipment",
-    element: <AddShipmentPage />,
-    permission: "shipment.add",
     isPublic: false,
   },
   {

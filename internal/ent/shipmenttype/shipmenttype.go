@@ -38,6 +38,8 @@ const (
 	EdgeBusinessUnit = "business_unit"
 	// EdgeOrganization holds the string denoting the organization edge name in mutations.
 	EdgeOrganization = "organization"
+	// EdgeRates holds the string denoting the rates edge name in mutations.
+	EdgeRates = "rates"
 	// Table holds the table name of the shipmenttype in the database.
 	Table = "shipment_types"
 	// BusinessUnitTable is the table that holds the business_unit relation/edge.
@@ -54,6 +56,13 @@ const (
 	OrganizationInverseTable = "organizations"
 	// OrganizationColumn is the table column denoting the organization relation/edge.
 	OrganizationColumn = "organization_id"
+	// RatesTable is the table that holds the rates relation/edge.
+	RatesTable = "rates"
+	// RatesInverseTable is the table name for the Rate entity.
+	// It exists in this package in order to avoid circular dependency with the "rate" package.
+	RatesInverseTable = "rates"
+	// RatesColumn is the table column denoting the rates relation/edge.
+	RatesColumn = "shipment_type_id"
 )
 
 // Columns holds all SQL columns for shipmenttype fields.
@@ -187,6 +196,20 @@ func ByOrganizationField(field string, opts ...sql.OrderTermOption) OrderOption 
 		sqlgraph.OrderByNeighborTerms(s, newOrganizationStep(), sql.OrderByField(field, opts...))
 	}
 }
+
+// ByRatesCount orders the results by rates count.
+func ByRatesCount(opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborsCount(s, newRatesStep(), opts...)
+	}
+}
+
+// ByRates orders the results by rates terms.
+func ByRates(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newRatesStep(), append([]sql.OrderTerm{term}, terms...)...)
+	}
+}
 func newBusinessUnitStep() *sqlgraph.Step {
 	return sqlgraph.NewStep(
 		sqlgraph.From(Table, FieldID),
@@ -199,5 +222,12 @@ func newOrganizationStep() *sqlgraph.Step {
 		sqlgraph.From(Table, FieldID),
 		sqlgraph.To(OrganizationInverseTable, FieldID),
 		sqlgraph.Edge(sqlgraph.M2O, false, OrganizationTable, OrganizationColumn),
+	)
+}
+func newRatesStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(RatesInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.O2M, false, RatesTable, RatesColumn),
 	)
 }
