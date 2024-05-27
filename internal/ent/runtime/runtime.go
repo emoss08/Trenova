@@ -1806,6 +1806,10 @@ func init() {
 	rateDescRateAmount := rateFields[10].Descriptor()
 	// rate.RateAmountValidator is a validator for the "rate_amount" field. It is called by the builders before save.
 	rate.RateAmountValidator = rateDescRateAmount.Validators[0].(func(float64) error)
+	// rateDescUsageCount is the schema descriptor for usage_count field.
+	rateDescUsageCount := rateFields[14].Descriptor()
+	// rate.DefaultUsageCount holds the default value on creation for the usage_count field.
+	rate.DefaultUsageCount = rateDescUsageCount.Default.(int)
 	// rateDescID is the schema descriptor for id field.
 	rateDescID := rateMixinFields0[0].Descriptor()
 	// rate.DefaultID holds the default value on creation for the id field.

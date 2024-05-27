@@ -71,6 +71,7 @@ const WorkerPage = lazy(() => import("../pages/worker/Workers"));
 const DelayCodePage = lazy(() => import("../pages/dispatch/DelayCodes"));
 const FleetCodePage = lazy(() => import("../pages/dispatch/FleetCodes"));
 const CommentTypePage = lazy(() => import("../pages/dispatch/CommentTypes"));
+const RateManagementPage = lazy(() => import("../pages/dispatch/Rates"));
 const ShipmentManagementPage = lazy(
   () => import("../pages/shipment/Shipments"),
 );
@@ -295,6 +296,15 @@ export const routes: RouteObjectWithPermission[] = [
     description: "Comment Types",
     element: <CommentTypePage />,
     permission: "commenttype.view",
+    isPublic: false,
+  },
+  {
+    title: "Rate Management",
+    group: "dispatch",
+    path: "/dispatch/rate-management/",
+    description: "Rate Management",
+    element: <RateManagementPage />,
+    permission: "rate.view",
     isPublic: false,
   },
   {

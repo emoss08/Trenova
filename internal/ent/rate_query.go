@@ -18,6 +18,7 @@ import (
 	"github.com/emoss08/trenova/internal/ent/predicate"
 	"github.com/emoss08/trenova/internal/ent/rate"
 	"github.com/emoss08/trenova/internal/ent/shipmenttype"
+	"github.com/emoss08/trenova/internal/ent/user"
 	"github.com/google/uuid"
 )
 
@@ -35,6 +36,7 @@ type RateQuery struct {
 	withShipmentType        *ShipmentTypeQuery
 	withOriginLocation      *LocationQuery
 	withDestinationLocation *LocationQuery
+	withApprovedBy          *UserQuery
 	modifiers               []func(*sql.Selector)
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
@@ -219,6 +221,28 @@ func (rq *RateQuery) QueryDestinationLocation() *LocationQuery {
 			sqlgraph.From(rate.Table, rate.FieldID, selector),
 			sqlgraph.To(location.Table, location.FieldID),
 			sqlgraph.Edge(sqlgraph.M2O, true, rate.DestinationLocationTable, rate.DestinationLocationColumn),
+		)
+		fromU = sqlgraph.SetNeighbors(rq.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
+}
+
+// QueryApprovedBy chains the current query on the "approved_by" edge.
+func (rq *RateQuery) QueryApprovedBy() *UserQuery {
+	query := (&UserClient{config: rq.config}).Query()
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := rq.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := rq.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(rate.Table, rate.FieldID, selector),
+			sqlgraph.To(user.Table, user.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, rate.ApprovedByTable, rate.ApprovedByColumn),
 		)
 		fromU = sqlgraph.SetNeighbors(rq.driver.Dialect(), step)
 		return fromU, nil
@@ -425,6 +449,7 @@ func (rq *RateQuery) Clone() *RateQuery {
 		withShipmentType:        rq.withShipmentType.Clone(),
 		withOriginLocation:      rq.withOriginLocation.Clone(),
 		withDestinationLocation: rq.withDestinationLocation.Clone(),
+		withApprovedBy:          rq.withApprovedBy.Clone(),
 		// clone intermediate query.
 		sql:  rq.sql.Clone(),
 		path: rq.path,
@@ -508,6 +533,17 @@ func (rq *RateQuery) WithDestinationLocation(opts ...func(*LocationQuery)) *Rate
 	return rq
 }
 
+// WithApprovedBy tells the query-builder to eager-load the nodes that are connected to
+// the "approved_by" edge. The optional arguments are used to configure the query builder of the edge.
+func (rq *RateQuery) WithApprovedBy(opts ...func(*UserQuery)) *RateQuery {
+	query := (&UserClient{config: rq.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	rq.withApprovedBy = query
+	return rq
+}
+
 // GroupBy is used to group vertices by one or more fields/columns.
 // It is often used with aggregate functions, like: count, max, mean, min, sum.
 //
@@ -586,7 +622,7 @@ func (rq *RateQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Rate, e
 	var (
 		nodes       = []*Rate{}
 		_spec       = rq.querySpec()
-		loadedTypes = [7]bool{
+		loadedTypes = [8]bool{
 			rq.withBusinessUnit != nil,
 			rq.withOrganization != nil,
 			rq.withCustomer != nil,
@@ -594,6 +630,7 @@ func (rq *RateQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Rate, e
 			rq.withShipmentType != nil,
 			rq.withOriginLocation != nil,
 			rq.withDestinationLocation != nil,
+			rq.withApprovedBy != nil,
 		}
 	)
 	_spec.ScanValues = func(columns []string) ([]any, error) {
@@ -656,6 +693,12 @@ func (rq *RateQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Rate, e
 	if query := rq.withDestinationLocation; query != nil {
 		if err := rq.loadDestinationLocation(ctx, query, nodes, nil,
 			func(n *Rate, e *Location) { n.Edges.DestinationLocation = e }); err != nil {
+			return nil, err
+		}
+	}
+	if query := rq.withApprovedBy; query != nil {
+		if err := rq.loadApprovedBy(ctx, query, nodes, nil,
+			func(n *Rate, e *User) { n.Edges.ApprovedBy = e }); err != nil {
 			return nil, err
 		}
 	}
@@ -877,6 +920,38 @@ func (rq *RateQuery) loadDestinationLocation(ctx context.Context, query *Locatio
 	}
 	return nil
 }
+func (rq *RateQuery) loadApprovedBy(ctx context.Context, query *UserQuery, nodes []*Rate, init func(*Rate), assign func(*Rate, *User)) error {
+	ids := make([]uuid.UUID, 0, len(nodes))
+	nodeids := make(map[uuid.UUID][]*Rate)
+	for i := range nodes {
+		if nodes[i].ApprovedByID == nil {
+			continue
+		}
+		fk := *nodes[i].ApprovedByID
+		if _, ok := nodeids[fk]; !ok {
+			ids = append(ids, fk)
+		}
+		nodeids[fk] = append(nodeids[fk], nodes[i])
+	}
+	if len(ids) == 0 {
+		return nil
+	}
+	query.Where(user.IDIn(ids...))
+	neighbors, err := query.All(ctx)
+	if err != nil {
+		return err
+	}
+	for _, n := range neighbors {
+		nodes, ok := nodeids[n.ID]
+		if !ok {
+			return fmt.Errorf(`unexpected foreign-key "approved_by_id" returned %v`, n.ID)
+		}
+		for i := range nodes {
+			assign(nodes[i], n)
+		}
+	}
+	return nil
+}
 
 func (rq *RateQuery) sqlCount(ctx context.Context) (int, error) {
 	_spec := rq.querySpec()
@@ -926,6 +1001,9 @@ func (rq *RateQuery) querySpec() *sqlgraph.QuerySpec {
 		}
 		if rq.withDestinationLocation != nil {
 			_spec.Node.AddColumnOnce(rate.FieldDestinationLocationID)
+		}
+		if rq.withApprovedBy != nil {
+			_spec.Node.AddColumnOnce(rate.FieldApprovedByID)
 		}
 	}
 	if ps := rq.predicates; len(ps) > 0 {

@@ -13,6 +13,7 @@ import (
 	"entgo.io/ent/schema/field"
 	"github.com/emoss08/trenova/internal/ent/organization"
 	"github.com/emoss08/trenova/internal/ent/predicate"
+	"github.com/emoss08/trenova/internal/ent/rate"
 	"github.com/emoss08/trenova/internal/ent/role"
 	"github.com/emoss08/trenova/internal/ent/shipment"
 	"github.com/emoss08/trenova/internal/ent/shipmentcharges"
@@ -381,6 +382,21 @@ func (uu *UserUpdate) AddRoles(r ...*Role) *UserUpdate {
 	return uu.AddRoleIDs(ids...)
 }
 
+// AddRatesApprovedIDs adds the "rates_approved" edge to the Rate entity by IDs.
+func (uu *UserUpdate) AddRatesApprovedIDs(ids ...uuid.UUID) *UserUpdate {
+	uu.mutation.AddRatesApprovedIDs(ids...)
+	return uu
+}
+
+// AddRatesApproved adds the "rates_approved" edges to the Rate entity.
+func (uu *UserUpdate) AddRatesApproved(r ...*Rate) *UserUpdate {
+	ids := make([]uuid.UUID, len(r))
+	for i := range r {
+		ids[i] = r[i].ID
+	}
+	return uu.AddRatesApprovedIDs(ids...)
+}
+
 // Mutation returns the UserMutation object of the builder.
 func (uu *UserUpdate) Mutation() *UserMutation {
 	return uu.mutation
@@ -537,6 +553,27 @@ func (uu *UserUpdate) RemoveRoles(r ...*Role) *UserUpdate {
 		ids[i] = r[i].ID
 	}
 	return uu.RemoveRoleIDs(ids...)
+}
+
+// ClearRatesApproved clears all "rates_approved" edges to the Rate entity.
+func (uu *UserUpdate) ClearRatesApproved() *UserUpdate {
+	uu.mutation.ClearRatesApproved()
+	return uu
+}
+
+// RemoveRatesApprovedIDs removes the "rates_approved" edge to Rate entities by IDs.
+func (uu *UserUpdate) RemoveRatesApprovedIDs(ids ...uuid.UUID) *UserUpdate {
+	uu.mutation.RemoveRatesApprovedIDs(ids...)
+	return uu
+}
+
+// RemoveRatesApproved removes "rates_approved" edges to Rate entities.
+func (uu *UserUpdate) RemoveRatesApproved(r ...*Rate) *UserUpdate {
+	ids := make([]uuid.UUID, len(r))
+	for i := range r {
+		ids[i] = r[i].ID
+	}
+	return uu.RemoveRatesApprovedIDs(ids...)
 }
 
 // Save executes the query and returns the number of nodes affected by the update operation.
@@ -1030,6 +1067,51 @@ func (uu *UserUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
+	if uu.mutation.RatesApprovedCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.RatesApprovedTable,
+			Columns: []string{user.RatesApprovedColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(rate.FieldID, field.TypeUUID),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := uu.mutation.RemovedRatesApprovedIDs(); len(nodes) > 0 && !uu.mutation.RatesApprovedCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.RatesApprovedTable,
+			Columns: []string{user.RatesApprovedColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(rate.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := uu.mutation.RatesApprovedIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.RatesApprovedTable,
+			Columns: []string{user.RatesApprovedColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(rate.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
 	_spec.AddModifiers(uu.modifiers...)
 	if n, err = sqlgraph.UpdateNodes(ctx, uu.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
@@ -1395,6 +1477,21 @@ func (uuo *UserUpdateOne) AddRoles(r ...*Role) *UserUpdateOne {
 	return uuo.AddRoleIDs(ids...)
 }
 
+// AddRatesApprovedIDs adds the "rates_approved" edge to the Rate entity by IDs.
+func (uuo *UserUpdateOne) AddRatesApprovedIDs(ids ...uuid.UUID) *UserUpdateOne {
+	uuo.mutation.AddRatesApprovedIDs(ids...)
+	return uuo
+}
+
+// AddRatesApproved adds the "rates_approved" edges to the Rate entity.
+func (uuo *UserUpdateOne) AddRatesApproved(r ...*Rate) *UserUpdateOne {
+	ids := make([]uuid.UUID, len(r))
+	for i := range r {
+		ids[i] = r[i].ID
+	}
+	return uuo.AddRatesApprovedIDs(ids...)
+}
+
 // Mutation returns the UserMutation object of the builder.
 func (uuo *UserUpdateOne) Mutation() *UserMutation {
 	return uuo.mutation
@@ -1551,6 +1648,27 @@ func (uuo *UserUpdateOne) RemoveRoles(r ...*Role) *UserUpdateOne {
 		ids[i] = r[i].ID
 	}
 	return uuo.RemoveRoleIDs(ids...)
+}
+
+// ClearRatesApproved clears all "rates_approved" edges to the Rate entity.
+func (uuo *UserUpdateOne) ClearRatesApproved() *UserUpdateOne {
+	uuo.mutation.ClearRatesApproved()
+	return uuo
+}
+
+// RemoveRatesApprovedIDs removes the "rates_approved" edge to Rate entities by IDs.
+func (uuo *UserUpdateOne) RemoveRatesApprovedIDs(ids ...uuid.UUID) *UserUpdateOne {
+	uuo.mutation.RemoveRatesApprovedIDs(ids...)
+	return uuo
+}
+
+// RemoveRatesApproved removes "rates_approved" edges to Rate entities.
+func (uuo *UserUpdateOne) RemoveRatesApproved(r ...*Rate) *UserUpdateOne {
+	ids := make([]uuid.UUID, len(r))
+	for i := range r {
+		ids[i] = r[i].ID
+	}
+	return uuo.RemoveRatesApprovedIDs(ids...)
 }
 
 // Where appends a list predicates to the UserUpdate builder.
@@ -2067,6 +2185,51 @@ func (uuo *UserUpdateOne) sqlSave(ctx context.Context) (_node *User, err error) 
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(role.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if uuo.mutation.RatesApprovedCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.RatesApprovedTable,
+			Columns: []string{user.RatesApprovedColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(rate.FieldID, field.TypeUUID),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := uuo.mutation.RemovedRatesApprovedIDs(); len(nodes) > 0 && !uuo.mutation.RatesApprovedCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.RatesApprovedTable,
+			Columns: []string{user.RatesApprovedColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(rate.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := uuo.mutation.RatesApprovedIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.RatesApprovedTable,
+			Columns: []string{user.RatesApprovedColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(rate.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {

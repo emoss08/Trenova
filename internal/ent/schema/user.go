@@ -72,6 +72,7 @@ func (User) Edges() []ent.Edge {
 		edge.To("reports", UserReport.Type),
 		edge.From("roles", Role.Type).
 			Ref("users"),
+		edge.To("rates_approved", Rate.Type),
 	}
 }
 

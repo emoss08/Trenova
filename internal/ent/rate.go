@@ -16,6 +16,7 @@ import (
 	"github.com/emoss08/trenova/internal/ent/organization"
 	"github.com/emoss08/trenova/internal/ent/rate"
 	"github.com/emoss08/trenova/internal/ent/shipmenttype"
+	"github.com/emoss08/trenova/internal/ent/user"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgtype"
 )
@@ -59,6 +60,16 @@ type Rate struct {
 	RateAmount float64 `json:"rateAmount" validate:"required"`
 	// Comment holds the value of the "comment" field.
 	Comment string `json:"comment" validate:"omitempty"`
+	// ApprovedByID holds the value of the "approved_by_id" field.
+	ApprovedByID *uuid.UUID `json:"approvedBy" validate:"omitempty"`
+	// ApprovedDate holds the value of the "approved_date" field.
+	ApprovedDate *pgtype.Date `json:"approvedDate"`
+	// UsageCount holds the value of the "usage_count" field.
+	UsageCount int `json:"usageCount" validate:"omitempty"`
+	// MinimumCharge holds the value of the "minimum_charge" field.
+	MinimumCharge *float64 `json:"minimumCharge" validate:"omitempty"`
+	// MaximumCharge holds the value of the "maximum_charge" field.
+	MaximumCharge *float64 `json:"maximumCharge" validate:"omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
 	// The values are being populated by the RateQuery when eager-loading is set.
 	Edges        RateEdges `json:"edges"`
@@ -81,9 +92,11 @@ type RateEdges struct {
 	OriginLocation *Location `json:"origin_location,omitempty"`
 	// DestinationLocation holds the value of the destination_location edge.
 	DestinationLocation *Location `json:"destination_location,omitempty"`
+	// ApprovedBy holds the value of the approved_by edge.
+	ApprovedBy *User `json:"approved_by,omitempty"`
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
-	loadedTypes [7]bool
+	loadedTypes [8]bool
 }
 
 // BusinessUnitOrErr returns the BusinessUnit value or an error if the edge
@@ -163,18 +176,29 @@ func (e RateEdges) DestinationLocationOrErr() (*Location, error) {
 	return nil, &NotLoadedError{edge: "destination_location"}
 }
 
+// ApprovedByOrErr returns the ApprovedBy value or an error if the edge
+// was not loaded in eager-loading, or loaded but was not found.
+func (e RateEdges) ApprovedByOrErr() (*User, error) {
+	if e.ApprovedBy != nil {
+		return e.ApprovedBy, nil
+	} else if e.loadedTypes[7] {
+		return nil, &NotFoundError{label: user.Label}
+	}
+	return nil, &NotLoadedError{edge: "approved_by"}
+}
+
 // scanValues returns the types for scanning values from sql.Rows.
 func (*Rate) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
 	for i := range columns {
 		switch columns[i] {
-		case rate.FieldEffectiveDate, rate.FieldExpirationDate:
+		case rate.FieldEffectiveDate, rate.FieldExpirationDate, rate.FieldApprovedDate:
 			values[i] = &sql.NullScanner{S: new(pgtype.Date)}
-		case rate.FieldCommodityID, rate.FieldShipmentTypeID, rate.FieldOriginLocationID, rate.FieldDestinationLocationID:
+		case rate.FieldCommodityID, rate.FieldShipmentTypeID, rate.FieldOriginLocationID, rate.FieldDestinationLocationID, rate.FieldApprovedByID:
 			values[i] = &sql.NullScanner{S: new(uuid.UUID)}
-		case rate.FieldRateAmount:
+		case rate.FieldRateAmount, rate.FieldMinimumCharge, rate.FieldMaximumCharge:
 			values[i] = new(sql.NullFloat64)
-		case rate.FieldVersion:
+		case rate.FieldVersion, rate.FieldUsageCount:
 			values[i] = new(sql.NullInt64)
 		case rate.FieldStatus, rate.FieldRateNumber, rate.FieldRatingMethod, rate.FieldComment:
 			values[i] = new(sql.NullString)
@@ -309,6 +333,39 @@ func (r *Rate) assignValues(columns []string, values []any) error {
 			} else if value.Valid {
 				r.Comment = value.String
 			}
+		case rate.FieldApprovedByID:
+			if value, ok := values[i].(*sql.NullScanner); !ok {
+				return fmt.Errorf("unexpected type %T for field approved_by_id", values[i])
+			} else if value.Valid {
+				r.ApprovedByID = new(uuid.UUID)
+				*r.ApprovedByID = *value.S.(*uuid.UUID)
+			}
+		case rate.FieldApprovedDate:
+			if value, ok := values[i].(*sql.NullScanner); !ok {
+				return fmt.Errorf("unexpected type %T for field approved_date", values[i])
+			} else if value.Valid {
+				r.ApprovedDate = value.S.(*pgtype.Date)
+			}
+		case rate.FieldUsageCount:
+			if value, ok := values[i].(*sql.NullInt64); !ok {
+				return fmt.Errorf("unexpected type %T for field usage_count", values[i])
+			} else if value.Valid {
+				r.UsageCount = int(value.Int64)
+			}
+		case rate.FieldMinimumCharge:
+			if value, ok := values[i].(*sql.NullFloat64); !ok {
+				return fmt.Errorf("unexpected type %T for field minimum_charge", values[i])
+			} else if value.Valid {
+				r.MinimumCharge = new(float64)
+				*r.MinimumCharge = value.Float64
+			}
+		case rate.FieldMaximumCharge:
+			if value, ok := values[i].(*sql.NullFloat64); !ok {
+				return fmt.Errorf("unexpected type %T for field maximum_charge", values[i])
+			} else if value.Valid {
+				r.MaximumCharge = new(float64)
+				*r.MaximumCharge = value.Float64
+			}
 		default:
 			r.selectValues.Set(columns[i], values[i])
 		}
@@ -355,6 +412,11 @@ func (r *Rate) QueryOriginLocation() *LocationQuery {
 // QueryDestinationLocation queries the "destination_location" edge of the Rate entity.
 func (r *Rate) QueryDestinationLocation() *LocationQuery {
 	return NewRateClient(r.config).QueryDestinationLocation(r)
+}
+
+// QueryApprovedBy queries the "approved_by" edge of the Rate entity.
+func (r *Rate) QueryApprovedBy() *UserQuery {
+	return NewRateClient(r.config).QueryApprovedBy(r)
 }
 
 // Update returns a builder for updating this Rate.
@@ -442,6 +504,29 @@ func (r *Rate) String() string {
 	builder.WriteString(", ")
 	builder.WriteString("comment=")
 	builder.WriteString(r.Comment)
+	builder.WriteString(", ")
+	if v := r.ApprovedByID; v != nil {
+		builder.WriteString("approved_by_id=")
+		builder.WriteString(fmt.Sprintf("%v", *v))
+	}
+	builder.WriteString(", ")
+	if v := r.ApprovedDate; v != nil {
+		builder.WriteString("approved_date=")
+		builder.WriteString(fmt.Sprintf("%v", *v))
+	}
+	builder.WriteString(", ")
+	builder.WriteString("usage_count=")
+	builder.WriteString(fmt.Sprintf("%v", r.UsageCount))
+	builder.WriteString(", ")
+	if v := r.MinimumCharge; v != nil {
+		builder.WriteString("minimum_charge=")
+		builder.WriteString(fmt.Sprintf("%v", *v))
+	}
+	builder.WriteString(", ")
+	if v := r.MaximumCharge; v != nil {
+		builder.WriteString("maximum_charge=")
+		builder.WriteString(fmt.Sprintf("%v", *v))
+	}
 	builder.WriteByte(')')
 	return builder.String()
 }

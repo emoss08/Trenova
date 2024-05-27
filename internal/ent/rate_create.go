@@ -17,6 +17,7 @@ import (
 	"github.com/emoss08/trenova/internal/ent/organization"
 	"github.com/emoss08/trenova/internal/ent/rate"
 	"github.com/emoss08/trenova/internal/ent/shipmenttype"
+	"github.com/emoss08/trenova/internal/ent/user"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgtype"
 )
@@ -210,6 +211,68 @@ func (rc *RateCreate) SetNillableComment(s *string) *RateCreate {
 	return rc
 }
 
+// SetApprovedByID sets the "approved_by_id" field.
+func (rc *RateCreate) SetApprovedByID(u uuid.UUID) *RateCreate {
+	rc.mutation.SetApprovedByID(u)
+	return rc
+}
+
+// SetNillableApprovedByID sets the "approved_by_id" field if the given value is not nil.
+func (rc *RateCreate) SetNillableApprovedByID(u *uuid.UUID) *RateCreate {
+	if u != nil {
+		rc.SetApprovedByID(*u)
+	}
+	return rc
+}
+
+// SetApprovedDate sets the "approved_date" field.
+func (rc *RateCreate) SetApprovedDate(pg *pgtype.Date) *RateCreate {
+	rc.mutation.SetApprovedDate(pg)
+	return rc
+}
+
+// SetUsageCount sets the "usage_count" field.
+func (rc *RateCreate) SetUsageCount(i int) *RateCreate {
+	rc.mutation.SetUsageCount(i)
+	return rc
+}
+
+// SetNillableUsageCount sets the "usage_count" field if the given value is not nil.
+func (rc *RateCreate) SetNillableUsageCount(i *int) *RateCreate {
+	if i != nil {
+		rc.SetUsageCount(*i)
+	}
+	return rc
+}
+
+// SetMinimumCharge sets the "minimum_charge" field.
+func (rc *RateCreate) SetMinimumCharge(f float64) *RateCreate {
+	rc.mutation.SetMinimumCharge(f)
+	return rc
+}
+
+// SetNillableMinimumCharge sets the "minimum_charge" field if the given value is not nil.
+func (rc *RateCreate) SetNillableMinimumCharge(f *float64) *RateCreate {
+	if f != nil {
+		rc.SetMinimumCharge(*f)
+	}
+	return rc
+}
+
+// SetMaximumCharge sets the "maximum_charge" field.
+func (rc *RateCreate) SetMaximumCharge(f float64) *RateCreate {
+	rc.mutation.SetMaximumCharge(f)
+	return rc
+}
+
+// SetNillableMaximumCharge sets the "maximum_charge" field if the given value is not nil.
+func (rc *RateCreate) SetNillableMaximumCharge(f *float64) *RateCreate {
+	if f != nil {
+		rc.SetMaximumCharge(*f)
+	}
+	return rc
+}
+
 // SetID sets the "id" field.
 func (rc *RateCreate) SetID(u uuid.UUID) *RateCreate {
 	rc.mutation.SetID(u)
@@ -257,6 +320,11 @@ func (rc *RateCreate) SetOriginLocation(l *Location) *RateCreate {
 // SetDestinationLocation sets the "destination_location" edge to the Location entity.
 func (rc *RateCreate) SetDestinationLocation(l *Location) *RateCreate {
 	return rc.SetDestinationLocationID(l.ID)
+}
+
+// SetApprovedBy sets the "approved_by" edge to the User entity.
+func (rc *RateCreate) SetApprovedBy(u *User) *RateCreate {
+	return rc.SetApprovedByID(u.ID)
 }
 
 // Mutation returns the RateMutation object of the builder.
@@ -313,6 +381,10 @@ func (rc *RateCreate) defaults() {
 	if _, ok := rc.mutation.RatingMethod(); !ok {
 		v := rate.DefaultRatingMethod
 		rc.mutation.SetRatingMethod(v)
+	}
+	if _, ok := rc.mutation.UsageCount(); !ok {
+		v := rate.DefaultUsageCount
+		rc.mutation.SetUsageCount(v)
 	}
 	if _, ok := rc.mutation.ID(); !ok {
 		v := rate.DefaultID()
@@ -456,6 +528,22 @@ func (rc *RateCreate) createSpec() (*Rate, *sqlgraph.CreateSpec) {
 		_spec.SetField(rate.FieldComment, field.TypeString, value)
 		_node.Comment = value
 	}
+	if value, ok := rc.mutation.ApprovedDate(); ok {
+		_spec.SetField(rate.FieldApprovedDate, field.TypeOther, value)
+		_node.ApprovedDate = value
+	}
+	if value, ok := rc.mutation.UsageCount(); ok {
+		_spec.SetField(rate.FieldUsageCount, field.TypeInt, value)
+		_node.UsageCount = value
+	}
+	if value, ok := rc.mutation.MinimumCharge(); ok {
+		_spec.SetField(rate.FieldMinimumCharge, field.TypeFloat64, value)
+		_node.MinimumCharge = &value
+	}
+	if value, ok := rc.mutation.MaximumCharge(); ok {
+		_spec.SetField(rate.FieldMaximumCharge, field.TypeFloat64, value)
+		_node.MaximumCharge = &value
+	}
 	if nodes := rc.mutation.BusinessUnitIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
@@ -573,6 +661,23 @@ func (rc *RateCreate) createSpec() (*Rate, *sqlgraph.CreateSpec) {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
 		_node.DestinationLocationID = &nodes[0]
+		_spec.Edges = append(_spec.Edges, edge)
+	}
+	if nodes := rc.mutation.ApprovedByIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   rate.ApprovedByTable,
+			Columns: []string{rate.ApprovedByColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(user.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_node.ApprovedByID = &nodes[0]
 		_spec.Edges = append(_spec.Edges, edge)
 	}
 	return _node, _spec

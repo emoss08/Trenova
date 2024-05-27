@@ -80,9 +80,11 @@ type UserEdges struct {
 	Reports []*UserReport `json:"reports,omitempty"`
 	// Roles holds the value of the roles edge.
 	Roles []*Role `json:"roles,omitempty"`
+	// RatesApproved holds the value of the rates_approved edge.
+	RatesApproved []*Rate `json:"rates_approved,omitempty"`
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
-	loadedTypes            [9]bool
+	loadedTypes            [10]bool
 	namedUserFavorites     map[string][]*UserFavorite
 	namedUserNotifications map[string][]*UserNotification
 	namedShipments         map[string][]*Shipment
@@ -90,6 +92,7 @@ type UserEdges struct {
 	namedShipmentCharges   map[string][]*ShipmentCharges
 	namedReports           map[string][]*UserReport
 	namedRoles             map[string][]*Role
+	namedRatesApproved     map[string][]*Rate
 }
 
 // BusinessUnitOrErr returns the BusinessUnit value or an error if the edge
@@ -175,6 +178,15 @@ func (e UserEdges) RolesOrErr() ([]*Role, error) {
 		return e.Roles, nil
 	}
 	return nil, &NotLoadedError{edge: "roles"}
+}
+
+// RatesApprovedOrErr returns the RatesApproved value or an error if the edge
+// was not loaded in eager-loading.
+func (e UserEdges) RatesApprovedOrErr() ([]*Rate, error) {
+	if e.loadedTypes[9] {
+		return e.RatesApproved, nil
+	}
+	return nil, &NotLoadedError{edge: "rates_approved"}
 }
 
 // scanValues returns the types for scanning values from sql.Rows.
@@ -372,6 +384,11 @@ func (u *User) QueryReports() *UserReportQuery {
 // QueryRoles queries the "roles" edge of the User entity.
 func (u *User) QueryRoles() *RoleQuery {
 	return NewUserClient(u.config).QueryRoles(u)
+}
+
+// QueryRatesApproved queries the "rates_approved" edge of the User entity.
+func (u *User) QueryRatesApproved() *RateQuery {
+	return NewUserClient(u.config).QueryRatesApproved(u)
 }
 
 // Update returns a builder for updating this User.
@@ -617,6 +634,30 @@ func (u *User) appendNamedRoles(name string, edges ...*Role) {
 		u.Edges.namedRoles[name] = []*Role{}
 	} else {
 		u.Edges.namedRoles[name] = append(u.Edges.namedRoles[name], edges...)
+	}
+}
+
+// NamedRatesApproved returns the RatesApproved named value or an error if the edge was not
+// loaded in eager-loading with this name.
+func (u *User) NamedRatesApproved(name string) ([]*Rate, error) {
+	if u.Edges.namedRatesApproved == nil {
+		return nil, &NotLoadedError{edge: name}
+	}
+	nodes, ok := u.Edges.namedRatesApproved[name]
+	if !ok {
+		return nil, &NotLoadedError{edge: name}
+	}
+	return nodes, nil
+}
+
+func (u *User) appendNamedRatesApproved(name string, edges ...*Rate) {
+	if u.Edges.namedRatesApproved == nil {
+		u.Edges.namedRatesApproved = make(map[string][]*Rate)
+	}
+	if len(edges) == 0 {
+		u.Edges.namedRatesApproved[name] = []*Rate{}
+	} else {
+		u.Edges.namedRatesApproved[name] = append(u.Edges.namedRatesApproved[name], edges...)
 	}
 }
 

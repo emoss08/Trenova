@@ -18,6 +18,7 @@ import (
 	"github.com/emoss08/trenova/internal/ent/predicate"
 	"github.com/emoss08/trenova/internal/ent/rate"
 	"github.com/emoss08/trenova/internal/ent/shipmenttype"
+	"github.com/emoss08/trenova/internal/ent/user"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgtype"
 )
@@ -264,6 +265,119 @@ func (ru *RateUpdate) ClearComment() *RateUpdate {
 	return ru
 }
 
+// SetApprovedByID sets the "approved_by_id" field.
+func (ru *RateUpdate) SetApprovedByID(u uuid.UUID) *RateUpdate {
+	ru.mutation.SetApprovedByID(u)
+	return ru
+}
+
+// SetNillableApprovedByID sets the "approved_by_id" field if the given value is not nil.
+func (ru *RateUpdate) SetNillableApprovedByID(u *uuid.UUID) *RateUpdate {
+	if u != nil {
+		ru.SetApprovedByID(*u)
+	}
+	return ru
+}
+
+// ClearApprovedByID clears the value of the "approved_by_id" field.
+func (ru *RateUpdate) ClearApprovedByID() *RateUpdate {
+	ru.mutation.ClearApprovedByID()
+	return ru
+}
+
+// SetApprovedDate sets the "approved_date" field.
+func (ru *RateUpdate) SetApprovedDate(pg *pgtype.Date) *RateUpdate {
+	ru.mutation.SetApprovedDate(pg)
+	return ru
+}
+
+// ClearApprovedDate clears the value of the "approved_date" field.
+func (ru *RateUpdate) ClearApprovedDate() *RateUpdate {
+	ru.mutation.ClearApprovedDate()
+	return ru
+}
+
+// SetUsageCount sets the "usage_count" field.
+func (ru *RateUpdate) SetUsageCount(i int) *RateUpdate {
+	ru.mutation.ResetUsageCount()
+	ru.mutation.SetUsageCount(i)
+	return ru
+}
+
+// SetNillableUsageCount sets the "usage_count" field if the given value is not nil.
+func (ru *RateUpdate) SetNillableUsageCount(i *int) *RateUpdate {
+	if i != nil {
+		ru.SetUsageCount(*i)
+	}
+	return ru
+}
+
+// AddUsageCount adds i to the "usage_count" field.
+func (ru *RateUpdate) AddUsageCount(i int) *RateUpdate {
+	ru.mutation.AddUsageCount(i)
+	return ru
+}
+
+// ClearUsageCount clears the value of the "usage_count" field.
+func (ru *RateUpdate) ClearUsageCount() *RateUpdate {
+	ru.mutation.ClearUsageCount()
+	return ru
+}
+
+// SetMinimumCharge sets the "minimum_charge" field.
+func (ru *RateUpdate) SetMinimumCharge(f float64) *RateUpdate {
+	ru.mutation.ResetMinimumCharge()
+	ru.mutation.SetMinimumCharge(f)
+	return ru
+}
+
+// SetNillableMinimumCharge sets the "minimum_charge" field if the given value is not nil.
+func (ru *RateUpdate) SetNillableMinimumCharge(f *float64) *RateUpdate {
+	if f != nil {
+		ru.SetMinimumCharge(*f)
+	}
+	return ru
+}
+
+// AddMinimumCharge adds f to the "minimum_charge" field.
+func (ru *RateUpdate) AddMinimumCharge(f float64) *RateUpdate {
+	ru.mutation.AddMinimumCharge(f)
+	return ru
+}
+
+// ClearMinimumCharge clears the value of the "minimum_charge" field.
+func (ru *RateUpdate) ClearMinimumCharge() *RateUpdate {
+	ru.mutation.ClearMinimumCharge()
+	return ru
+}
+
+// SetMaximumCharge sets the "maximum_charge" field.
+func (ru *RateUpdate) SetMaximumCharge(f float64) *RateUpdate {
+	ru.mutation.ResetMaximumCharge()
+	ru.mutation.SetMaximumCharge(f)
+	return ru
+}
+
+// SetNillableMaximumCharge sets the "maximum_charge" field if the given value is not nil.
+func (ru *RateUpdate) SetNillableMaximumCharge(f *float64) *RateUpdate {
+	if f != nil {
+		ru.SetMaximumCharge(*f)
+	}
+	return ru
+}
+
+// AddMaximumCharge adds f to the "maximum_charge" field.
+func (ru *RateUpdate) AddMaximumCharge(f float64) *RateUpdate {
+	ru.mutation.AddMaximumCharge(f)
+	return ru
+}
+
+// ClearMaximumCharge clears the value of the "maximum_charge" field.
+func (ru *RateUpdate) ClearMaximumCharge() *RateUpdate {
+	ru.mutation.ClearMaximumCharge()
+	return ru
+}
+
 // SetOrganization sets the "organization" edge to the Organization entity.
 func (ru *RateUpdate) SetOrganization(o *Organization) *RateUpdate {
 	return ru.SetOrganizationID(o.ID)
@@ -292,6 +406,11 @@ func (ru *RateUpdate) SetOriginLocation(l *Location) *RateUpdate {
 // SetDestinationLocation sets the "destination_location" edge to the Location entity.
 func (ru *RateUpdate) SetDestinationLocation(l *Location) *RateUpdate {
 	return ru.SetDestinationLocationID(l.ID)
+}
+
+// SetApprovedBy sets the "approved_by" edge to the User entity.
+func (ru *RateUpdate) SetApprovedBy(u *User) *RateUpdate {
+	return ru.SetApprovedByID(u.ID)
 }
 
 // Mutation returns the RateMutation object of the builder.
@@ -332,6 +451,12 @@ func (ru *RateUpdate) ClearOriginLocation() *RateUpdate {
 // ClearDestinationLocation clears the "destination_location" edge to the Location entity.
 func (ru *RateUpdate) ClearDestinationLocation() *RateUpdate {
 	ru.mutation.ClearDestinationLocation()
+	return ru
+}
+
+// ClearApprovedBy clears the "approved_by" edge to the User entity.
+func (ru *RateUpdate) ClearApprovedBy() *RateUpdate {
+	ru.mutation.ClearApprovedBy()
 	return ru
 }
 
@@ -456,6 +581,39 @@ func (ru *RateUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	}
 	if ru.mutation.CommentCleared() {
 		_spec.ClearField(rate.FieldComment, field.TypeString)
+	}
+	if value, ok := ru.mutation.ApprovedDate(); ok {
+		_spec.SetField(rate.FieldApprovedDate, field.TypeOther, value)
+	}
+	if ru.mutation.ApprovedDateCleared() {
+		_spec.ClearField(rate.FieldApprovedDate, field.TypeOther)
+	}
+	if value, ok := ru.mutation.UsageCount(); ok {
+		_spec.SetField(rate.FieldUsageCount, field.TypeInt, value)
+	}
+	if value, ok := ru.mutation.AddedUsageCount(); ok {
+		_spec.AddField(rate.FieldUsageCount, field.TypeInt, value)
+	}
+	if ru.mutation.UsageCountCleared() {
+		_spec.ClearField(rate.FieldUsageCount, field.TypeInt)
+	}
+	if value, ok := ru.mutation.MinimumCharge(); ok {
+		_spec.SetField(rate.FieldMinimumCharge, field.TypeFloat64, value)
+	}
+	if value, ok := ru.mutation.AddedMinimumCharge(); ok {
+		_spec.AddField(rate.FieldMinimumCharge, field.TypeFloat64, value)
+	}
+	if ru.mutation.MinimumChargeCleared() {
+		_spec.ClearField(rate.FieldMinimumCharge, field.TypeFloat64)
+	}
+	if value, ok := ru.mutation.MaximumCharge(); ok {
+		_spec.SetField(rate.FieldMaximumCharge, field.TypeFloat64, value)
+	}
+	if value, ok := ru.mutation.AddedMaximumCharge(); ok {
+		_spec.AddField(rate.FieldMaximumCharge, field.TypeFloat64, value)
+	}
+	if ru.mutation.MaximumChargeCleared() {
+		_spec.ClearField(rate.FieldMaximumCharge, field.TypeFloat64)
 	}
 	if ru.mutation.OrganizationCleared() {
 		edge := &sqlgraph.EdgeSpec{
@@ -624,6 +782,35 @@ func (ru *RateUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(location.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if ru.mutation.ApprovedByCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   rate.ApprovedByTable,
+			Columns: []string{rate.ApprovedByColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(user.FieldID, field.TypeUUID),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := ru.mutation.ApprovedByIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   rate.ApprovedByTable,
+			Columns: []string{rate.ApprovedByColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(user.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {
@@ -881,6 +1068,119 @@ func (ruo *RateUpdateOne) ClearComment() *RateUpdateOne {
 	return ruo
 }
 
+// SetApprovedByID sets the "approved_by_id" field.
+func (ruo *RateUpdateOne) SetApprovedByID(u uuid.UUID) *RateUpdateOne {
+	ruo.mutation.SetApprovedByID(u)
+	return ruo
+}
+
+// SetNillableApprovedByID sets the "approved_by_id" field if the given value is not nil.
+func (ruo *RateUpdateOne) SetNillableApprovedByID(u *uuid.UUID) *RateUpdateOne {
+	if u != nil {
+		ruo.SetApprovedByID(*u)
+	}
+	return ruo
+}
+
+// ClearApprovedByID clears the value of the "approved_by_id" field.
+func (ruo *RateUpdateOne) ClearApprovedByID() *RateUpdateOne {
+	ruo.mutation.ClearApprovedByID()
+	return ruo
+}
+
+// SetApprovedDate sets the "approved_date" field.
+func (ruo *RateUpdateOne) SetApprovedDate(pg *pgtype.Date) *RateUpdateOne {
+	ruo.mutation.SetApprovedDate(pg)
+	return ruo
+}
+
+// ClearApprovedDate clears the value of the "approved_date" field.
+func (ruo *RateUpdateOne) ClearApprovedDate() *RateUpdateOne {
+	ruo.mutation.ClearApprovedDate()
+	return ruo
+}
+
+// SetUsageCount sets the "usage_count" field.
+func (ruo *RateUpdateOne) SetUsageCount(i int) *RateUpdateOne {
+	ruo.mutation.ResetUsageCount()
+	ruo.mutation.SetUsageCount(i)
+	return ruo
+}
+
+// SetNillableUsageCount sets the "usage_count" field if the given value is not nil.
+func (ruo *RateUpdateOne) SetNillableUsageCount(i *int) *RateUpdateOne {
+	if i != nil {
+		ruo.SetUsageCount(*i)
+	}
+	return ruo
+}
+
+// AddUsageCount adds i to the "usage_count" field.
+func (ruo *RateUpdateOne) AddUsageCount(i int) *RateUpdateOne {
+	ruo.mutation.AddUsageCount(i)
+	return ruo
+}
+
+// ClearUsageCount clears the value of the "usage_count" field.
+func (ruo *RateUpdateOne) ClearUsageCount() *RateUpdateOne {
+	ruo.mutation.ClearUsageCount()
+	return ruo
+}
+
+// SetMinimumCharge sets the "minimum_charge" field.
+func (ruo *RateUpdateOne) SetMinimumCharge(f float64) *RateUpdateOne {
+	ruo.mutation.ResetMinimumCharge()
+	ruo.mutation.SetMinimumCharge(f)
+	return ruo
+}
+
+// SetNillableMinimumCharge sets the "minimum_charge" field if the given value is not nil.
+func (ruo *RateUpdateOne) SetNillableMinimumCharge(f *float64) *RateUpdateOne {
+	if f != nil {
+		ruo.SetMinimumCharge(*f)
+	}
+	return ruo
+}
+
+// AddMinimumCharge adds f to the "minimum_charge" field.
+func (ruo *RateUpdateOne) AddMinimumCharge(f float64) *RateUpdateOne {
+	ruo.mutation.AddMinimumCharge(f)
+	return ruo
+}
+
+// ClearMinimumCharge clears the value of the "minimum_charge" field.
+func (ruo *RateUpdateOne) ClearMinimumCharge() *RateUpdateOne {
+	ruo.mutation.ClearMinimumCharge()
+	return ruo
+}
+
+// SetMaximumCharge sets the "maximum_charge" field.
+func (ruo *RateUpdateOne) SetMaximumCharge(f float64) *RateUpdateOne {
+	ruo.mutation.ResetMaximumCharge()
+	ruo.mutation.SetMaximumCharge(f)
+	return ruo
+}
+
+// SetNillableMaximumCharge sets the "maximum_charge" field if the given value is not nil.
+func (ruo *RateUpdateOne) SetNillableMaximumCharge(f *float64) *RateUpdateOne {
+	if f != nil {
+		ruo.SetMaximumCharge(*f)
+	}
+	return ruo
+}
+
+// AddMaximumCharge adds f to the "maximum_charge" field.
+func (ruo *RateUpdateOne) AddMaximumCharge(f float64) *RateUpdateOne {
+	ruo.mutation.AddMaximumCharge(f)
+	return ruo
+}
+
+// ClearMaximumCharge clears the value of the "maximum_charge" field.
+func (ruo *RateUpdateOne) ClearMaximumCharge() *RateUpdateOne {
+	ruo.mutation.ClearMaximumCharge()
+	return ruo
+}
+
 // SetOrganization sets the "organization" edge to the Organization entity.
 func (ruo *RateUpdateOne) SetOrganization(o *Organization) *RateUpdateOne {
 	return ruo.SetOrganizationID(o.ID)
@@ -909,6 +1209,11 @@ func (ruo *RateUpdateOne) SetOriginLocation(l *Location) *RateUpdateOne {
 // SetDestinationLocation sets the "destination_location" edge to the Location entity.
 func (ruo *RateUpdateOne) SetDestinationLocation(l *Location) *RateUpdateOne {
 	return ruo.SetDestinationLocationID(l.ID)
+}
+
+// SetApprovedBy sets the "approved_by" edge to the User entity.
+func (ruo *RateUpdateOne) SetApprovedBy(u *User) *RateUpdateOne {
+	return ruo.SetApprovedByID(u.ID)
 }
 
 // Mutation returns the RateMutation object of the builder.
@@ -949,6 +1254,12 @@ func (ruo *RateUpdateOne) ClearOriginLocation() *RateUpdateOne {
 // ClearDestinationLocation clears the "destination_location" edge to the Location entity.
 func (ruo *RateUpdateOne) ClearDestinationLocation() *RateUpdateOne {
 	ruo.mutation.ClearDestinationLocation()
+	return ruo
+}
+
+// ClearApprovedBy clears the "approved_by" edge to the User entity.
+func (ruo *RateUpdateOne) ClearApprovedBy() *RateUpdateOne {
+	ruo.mutation.ClearApprovedBy()
 	return ruo
 }
 
@@ -1103,6 +1414,39 @@ func (ruo *RateUpdateOne) sqlSave(ctx context.Context) (_node *Rate, err error) 
 	}
 	if ruo.mutation.CommentCleared() {
 		_spec.ClearField(rate.FieldComment, field.TypeString)
+	}
+	if value, ok := ruo.mutation.ApprovedDate(); ok {
+		_spec.SetField(rate.FieldApprovedDate, field.TypeOther, value)
+	}
+	if ruo.mutation.ApprovedDateCleared() {
+		_spec.ClearField(rate.FieldApprovedDate, field.TypeOther)
+	}
+	if value, ok := ruo.mutation.UsageCount(); ok {
+		_spec.SetField(rate.FieldUsageCount, field.TypeInt, value)
+	}
+	if value, ok := ruo.mutation.AddedUsageCount(); ok {
+		_spec.AddField(rate.FieldUsageCount, field.TypeInt, value)
+	}
+	if ruo.mutation.UsageCountCleared() {
+		_spec.ClearField(rate.FieldUsageCount, field.TypeInt)
+	}
+	if value, ok := ruo.mutation.MinimumCharge(); ok {
+		_spec.SetField(rate.FieldMinimumCharge, field.TypeFloat64, value)
+	}
+	if value, ok := ruo.mutation.AddedMinimumCharge(); ok {
+		_spec.AddField(rate.FieldMinimumCharge, field.TypeFloat64, value)
+	}
+	if ruo.mutation.MinimumChargeCleared() {
+		_spec.ClearField(rate.FieldMinimumCharge, field.TypeFloat64)
+	}
+	if value, ok := ruo.mutation.MaximumCharge(); ok {
+		_spec.SetField(rate.FieldMaximumCharge, field.TypeFloat64, value)
+	}
+	if value, ok := ruo.mutation.AddedMaximumCharge(); ok {
+		_spec.AddField(rate.FieldMaximumCharge, field.TypeFloat64, value)
+	}
+	if ruo.mutation.MaximumChargeCleared() {
+		_spec.ClearField(rate.FieldMaximumCharge, field.TypeFloat64)
 	}
 	if ruo.mutation.OrganizationCleared() {
 		edge := &sqlgraph.EdgeSpec{
@@ -1271,6 +1615,35 @@ func (ruo *RateUpdateOne) sqlSave(ctx context.Context) (_node *Rate, err error) 
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(location.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if ruo.mutation.ApprovedByCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   rate.ApprovedByTable,
+			Columns: []string{rate.ApprovedByColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(user.FieldID, field.TypeUUID),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := ruo.mutation.ApprovedByIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   rate.ApprovedByTable,
+			Columns: []string{rate.ApprovedByColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(user.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {

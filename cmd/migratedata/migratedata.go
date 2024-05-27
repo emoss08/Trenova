@@ -20,6 +20,7 @@ import (
 	"github.com/emoss08/trenova/internal/ent/generalledgeraccount"
 	"github.com/emoss08/trenova/internal/ent/organization"
 	"github.com/emoss08/trenova/internal/ent/organizationfeatureflag"
+	"github.com/emoss08/trenova/internal/ent/resource"
 	"github.com/emoss08/trenova/internal/ent/revenuecode"
 	"github.com/emoss08/trenova/internal/ent/role"
 	"github.com/emoss08/trenova/internal/ent/tablechangealert"
@@ -801,209 +802,108 @@ func SeedCommentTypes(
 	return nil
 }
 
-func SeedResources(
-	ctx context.Context, client *ent.Client,
-) error {
-	// Check if the resources already exists
-	etCount, err := client.Resource.Query().Count(ctx)
-
-	// If not, create the resources
-	if etCount == 0 {
-		log.Println("Adding resources...")
-
-		err = client.Resource.CreateBulk(
-			client.Resource.Create().
-				SetType("AccessorialCharge").
-				SetDescription("Represents accessorial charges in the system."),
-			client.Resource.Create().
-				SetType("AccountingControl").
-				SetDescription("Represents accounting controls in the system."),
-			client.Resource.Create().
-				SetType("BillingControl").
-				SetDescription("Represents billing controls in the system."),
-			client.Resource.Create().
-				SetType("BusinessUnit").
-				SetDescription("Represents business units in the system."),
-			client.Resource.Create().
-				SetType("ChargeType").
-				SetDescription("Represents charge types in the system."),
-			client.Resource.Create().
-				SetType("CommentType").
-				SetDescription("Represents comment types in the system."),
-			client.Resource.Create().
-				SetType("Commodity").
-				SetDescription("Represents commodities in the system."),
-			client.Resource.Create().
-				SetType("Customer").
-				SetDescription("Represents customers in the system."),
-			client.Resource.Create().
-				SetType("CustomReport").
-				SetDescription("Represents custom reports in the system."),
-			client.Resource.Create().
-				SetType("DelayCode").
-				SetDescription("Represents delay codes in the system."),
-			client.Resource.Create().
-				SetType("DispatchControl").
-				SetDescription("Represents dispatch controls in the system."),
-			client.Resource.Create().
-				SetType("DivisionCode").
-				SetDescription("Represents division codes in the system."),
-			client.Resource.Create().
-				SetType("DocumentClassification").
-				SetDescription("Represents document classifications in the system."),
-			client.Resource.Create().
-				SetType("EmailControl").
-				SetDescription("Represents email controls in the system."),
-			client.Resource.Create().
-				SetType("EmailProfile").
-				SetDescription("Represents email profiles in the system."),
-			client.Resource.Create().
-				SetType("EquipmentManufacturer").
-				SetDescription("Represents equipment manufacturers in the system."),
-			client.Resource.Create().
-				SetType("EquipmentType").
-				SetDescription("Represents equipment types in the system."),
-			client.Resource.Create().
-				SetType("FeasibilityToolControl").
-				SetDescription("Represents feasibility tool controls in the system."),
-			client.Resource.Create().
-				SetType("FeatureFlag").
-				SetDescription("Represents feature flags in the system."),
-			client.Resource.Create().
-				SetType("FleetCode").
-				SetDescription("Represents fleet codes in the system."),
-			client.Resource.Create().
-				SetType("FormulaTemplate").
-				SetDescription("Represents formula templates in the system."),
-			client.Resource.Create().
-				SetType("GeneralLedgerAccount").
-				SetDescription("Represents general ledger accounts in the system."),
-			client.Resource.Create().
-				SetType("GoogleApi").
-				SetDescription("Represents google apis in the system."),
-			client.Resource.Create().
-				SetType("HazardousMaterial").
-				SetDescription("Represents hazardous materials in the system."),
-			client.Resource.Create().
-				SetType("HazardousMaterialSegregation").
-				SetDescription("Represents hazardous material segregations in the system."),
-			client.Resource.Create().
-				SetType("InvoiceControl").
-				SetDescription("Represents invoice controls in the system."),
-			client.Resource.Create().
-				SetType("Location").
-				SetDescription("Represents locations in the system."),
-			client.Resource.Create().
-				SetType("LocationCategory").
-				SetDescription("Represents location categories in the system."),
-			client.Resource.Create().
-				SetType("LocationComment").
-				SetDescription("Represents location comments in the system."),
-			client.Resource.Create().
-				SetType("LocationContacts").
-				SetDescription("Represents location contacts in the system."),
-			client.Resource.Create().
-				SetType("Organization").
-				SetDescription("Represents organizations in the system."),
-			client.Resource.Create().
-				SetType("OrganizationFeatureFlag").
-				SetDescription("Represents organization feature flags in the system."),
-			client.Resource.Create().
-				SetType("Permission").
-				SetDescription("Represents permissions in the system."),
-			client.Resource.Create().
-				SetType("QualifierCode").
-				SetDescription("Represents qualifier codes in the system."),
-			client.Resource.Create().
-				SetType("ReasonCode").
-				SetDescription("Represents reason codes in the system."),
-			client.Resource.Create().
-				SetType("RevenueCode").
-				SetDescription("Represents revenue codes in the system."),
-			client.Resource.Create().
-				SetType("Role").
-				SetDescription("Represents roles in the system."),
-			client.Resource.Create().
-				SetType("RouteControl").
-				SetDescription("Represents route controls in the system."),
-			client.Resource.Create().
-				SetType("ServiceType").
-				SetDescription("Represents service types in the system."),
-			client.Resource.Create().
-				SetType("Shipment").
-				SetDescription("Represents shipments in the system."),
-			client.Resource.Create().
-				SetType("ShipmentCharge").
-				SetDescription("Represents shipment charges in the system."),
-			client.Resource.Create().
-				SetType("ShipmentComment").
-				SetDescription("Represents shipment comment in the system."),
-			client.Resource.Create().
-				SetType("ShipmentCommodity").
-				SetDescription("Represents shipment commodities in the system."),
-			client.Resource.Create().
-				SetType("ShipmentControl").
-				SetDescription("Represents shipment controls in the system."),
-			client.Resource.Create().
-				SetType("ShipmentDocumentation").
-				SetDescription("Represents shipment documentations in the system."),
-			client.Resource.Create().
-				SetType("ShipmentMove").
-				SetDescription("Represents shipment moves in the system."),
-			client.Resource.Create().
-				SetType("ShipmentRoute").
-				SetDescription("Represents shipment routes in the system."),
-			client.Resource.Create().
-				SetType("ShipmentType").
-				SetDescription("Represents shipment types in the system."),
-			client.Resource.Create().
-				SetType("Stop").
-				SetDescription("Represents stops in the system."),
-			client.Resource.Create().
-				SetType("TableChangeAlert").
-				SetDescription("Represents table change alerts in the system."),
-			client.Resource.Create().
-				SetType("Tag").
-				SetDescription("Represents tags in the system."),
-			client.Resource.Create().
-				SetType("Tractor").
-				SetDescription("Represents tractors in the system."),
-			client.Resource.Create().
-				SetType("Trailer").
-				SetDescription("Represents trailers in the system."),
-			client.Resource.Create().
-				SetType("User").
-				SetDescription("Represents users in the system."),
-			client.Resource.Create().
-				SetType("UserFavorite").
-				SetDescription("Represents user favorites in the system."),
-			client.Resource.Create().
-				SetType("UserNotification").
-				SetDescription("Represents user notifications in the system."),
-			client.Resource.Create().
-				SetType("UserReport").
-				SetDescription("Represents user reports in the system."),
-			client.Resource.Create().
-				SetType("UsState").
-				SetDescription("Represents us states in the system."),
-			client.Resource.Create().
-				SetType("Worker").
-				SetDescription("Represents workers in the system."),
-			client.Resource.Create().
-				SetType("WorkerComment").
-				SetDescription("Represents worker comments in the system."),
-			client.Resource.Create().
-				SetType("WorkerContact").
-				SetDescription("Represents worker contacts in the system."),
-			client.Resource.Create().
-				SetType("WorkerProfile").
-				SetDescription("Represents worker profile in the system."),
-		).Exec(ctx)
+func SeedResources(ctx context.Context, client *ent.Client) error {
+	// Define the resources to be seeded
+	resources := []struct {
+		Type        string
+		Description string
+	}{
+		{"AccessorialCharge", "Represents accessorial charges in the system."},
+		{"AccountingControl", "Represents accounting controls in the system."},
+		{"BillingControl", "Represents billing controls in the system."},
+		{"BusinessUnit", "Represents business units in the system."},
+		{"ChargeType", "Represents charge types in the system."},
+		{"CommentType", "Represents comment types in the system."},
+		{"Commodity", "Represents commodities in the system."},
+		{"Customer", "Represents customers in the system."},
+		{"CustomReport", "Represents custom reports in the system."},
+		{"DelayCode", "Represents delay codes in the system."},
+		{"DispatchControl", "Represents dispatch controls in the system."},
+		{"DivisionCode", "Represents division codes in the system."},
+		{"DocumentClassification", "Represents document classifications in the system."},
+		{"EmailControl", "Represents email controls in the system."},
+		{"EmailProfile", "Represents email profiles in the system."},
+		{"EquipmentManufacturer", "Represents equipment manufacturers in the system."},
+		{"EquipmentType", "Represents equipment types in the system."},
+		{"FeasibilityToolControl", "Represents feasibility tool controls in the system."},
+		{"FeatureFlag", "Represents feature flags in the system."},
+		{"FleetCode", "Represents fleet codes in the system."},
+		{"FormulaTemplate", "Represents formula templates in the system."},
+		{"GeneralLedgerAccount", "Represents general ledger accounts in the system."},
+		{"GoogleApi", "Represents google apis in the system."},
+		{"HazardousMaterial", "Represents hazardous materials in the system."},
+		{"HazardousMaterialSegregation", "Represents hazardous material segregations in the system."},
+		{"InvoiceControl", "Represents invoice controls in the system."},
+		{"Location", "Represents locations in the system."},
+		{"LocationCategory", "Represents location categories in the system."},
+		{"LocationComment", "Represents location comments in the system."},
+		{"LocationContacts", "Represents location contacts in the system."},
+		{"Organization", "Represents organizations in the system."},
+		{"OrganizationFeatureFlag", "Represents organization feature flags in the system."},
+		{"Permission", "Represents permissions in the system."},
+		{"QualifierCode", "Represents qualifier codes in the system."},
+		{"ReasonCode", "Represents reason codes in the system."},
+		{"RevenueCode", "Represents revenue codes in the system."},
+		{"Role", "Represents roles in the system."},
+		{"RouteControl", "Represents route controls in the system."},
+		{"ServiceType", "Represents service types in the system."},
+		{"Shipment", "Represents shipments in the system."},
+		{"ShipmentCharge", "Represents shipment charges in the system."},
+		{"ShipmentComment", "Represents shipment comment in the system."},
+		{"ShipmentCommodity", "Represents shipment commodities in the system."},
+		{"ShipmentControl", "Represents shipment controls in the system."},
+		{"ShipmentDocumentation", "Represents shipment documentations in the system."},
+		{"ShipmentMove", "Represents shipment moves in the system."},
+		{"ShipmentRoute", "Represents shipment routes in the system."},
+		{"ShipmentType", "Represents shipment types in the system."},
+		{"Stop", "Represents stops in the system."},
+		{"TableChangeAlert", "Represents table change alerts in the system."},
+		{"Tag", "Represents tags in the system."},
+		{"Tractor", "Represents tractors in the system."},
+		{"Trailer", "Represents trailers in the system."},
+		{"User", "Represents users in the system."},
+		{"UserFavorite", "Represents user favorites in the system."},
+		{"UserNotification", "Represents user notifications in the system."},
+		{"UserReport", "Represents user reports in the system."},
+		{"UsState", "Represents us states in the system."},
+		{"Worker", "Represents workers in the system."},
+		{"WorkerComment", "Represents worker comments in the system."},
+		{"WorkerContact", "Represents worker contacts in the system."},
+		{"WorkerProfile", "Represents worker profile in the system."},
+		{"Rate", "Represents rates in the system."},
 	}
 
+	// Fetch existing resources from the database
+	existingResources, err := client.Resource.Query().All(ctx)
 	if err != nil {
-		log.Panicf("Failed creating resources: %v", err)
+		log.Panicf("Failed querying existing resources: %v", err)
 		return err
+	}
+
+	existingResourceMap := make(map[string]bool)
+	for _, resource := range existingResources {
+		existingResourceMap[resource.Type] = true
+	}
+
+	// Create resources that do not exist
+	var bulkCreate []*ent.ResourceCreate
+	for _, resource := range resources {
+		if !existingResourceMap[resource.Type] {
+			bulkCreate = append(bulkCreate, client.Resource.Create().
+				SetType(resource.Type).
+				SetDescription(resource.Description))
+		}
+	}
+
+	if len(bulkCreate) > 0 {
+		err = client.Resource.CreateBulk(bulkCreate...).Exec(ctx)
+		if err != nil {
+			log.Panicf("Failed creating resources: %v", err)
+			return err
+		}
+		log.Println("Resources added successfully.")
+	} else {
+		log.Println("No new resources to add.")
 	}
 
 	return nil
@@ -1012,58 +912,113 @@ func SeedResources(
 func SeedPermissions(
 	ctx context.Context, client *ent.Client, org *ent.Organization, bu *ent.BusinessUnit,
 ) error {
-	// Check if the permissions already exist
-	etCount, err := client.Permission.Query().Count(ctx)
+	// Fetch existing permissions
+	existingPermissions, err := client.Permission.Query().All(ctx)
 	if err != nil {
 		log.Panic("Failed checking existing permissions")
 		return err
 	}
 
-	if etCount == 0 {
-		log.Println("Adding base permissions...")
+	existingPermissionMap := make(map[string]bool)
+	for _, permission := range existingPermissions {
+		existingPermissionMap[permission.Codename] = true
+	}
 
-		resources, err := client.Resource.Query().All(ctx)
-		if err != nil {
-			log.Panic("Failed querying resources")
-			return err
-		}
+	log.Println("Adding base permissions...")
 
-		// Detailed permissions for each action
-		actions := []struct {
-			action           string
-			readDescription  string
-			writeDescription string
-		}{
-			{"view", "Can view all", "Can view all"},
-			{"add", "Can view all", "Can add, edit, and delete"},
-			{"edit", "Can view all", "Can add, edit, and delete"},
-			{"delete", "Can view all", "Can add, edit, and delete"},
-		}
+	resources, rerr := client.Resource.Query().All(ctx)
+	if rerr != nil {
+		log.Panic("Failed querying resources")
+		return rerr
+	}
 
-		for _, resource := range resources {
-			resourceTypeLower := strings.ToLower(resource.Type)
-			for _, action := range actions {
-				// Format codename, label, and descriptions
-				codename := fmt.Sprintf("%s.%s", resourceTypeLower, action.action)
-				label := fmt.Sprintf("%s %s", strings.Title(action.action), resource.Type)
-				readDescription := fmt.Sprintf("%s %s.", action.readDescription, resource.Type)
-				writeDescription := fmt.Sprintf("%s %s.", action.writeDescription, resource.Type)
+	// Detailed permissions for each action
+	actions := []struct {
+		action           string
+		readDescription  string
+		writeDescription string
+	}{
+		{"view", "Can view all", "Can view all"},
+		{"add", "Can view all", "Can add, edit, and delete"},
+		{"edit", "Can view all", "Can add, edit, and delete"},
+		{"delete", "Can view all", "Can add, edit, and delete"},
+	}
 
-				// Create the permission
-				_, err = client.Permission.Create().
-					SetBusinessUnit(bu).
-					SetOrganization(org).
-					SetCodename(codename).
-					SetResource(resource).
-					SetAction(action.action).
-					SetLabel(label).
-					SetReadDescription(readDescription).
-					SetWriteDescription(writeDescription).
-					Save(ctx)
-				if err != nil {
-					return err
-				}
+	for _, resource := range resources {
+		resourceTypeLower := strings.ToLower(resource.Type)
+		for _, action := range actions {
+			// Format codename, label, and descriptions
+			codename := fmt.Sprintf("%s.%s", resourceTypeLower, action.action)
+			if existingPermissionMap[codename] {
+				continue
 			}
+			label := fmt.Sprintf("%s %s", util.ToTitleFormat(action.action), resource.Type)
+			readDescription := fmt.Sprintf("%s %s.", action.readDescription, resource.Type)
+			writeDescription := fmt.Sprintf("%s %s.", action.writeDescription, resource.Type)
+
+			// Create the permission
+			_, err = client.Permission.Create().
+				SetBusinessUnit(bu).
+				SetOrganization(org).
+				SetCodename(codename).
+				SetResource(resource).
+				SetAction(action.action).
+				SetLabel(label).
+				SetReadDescription(readDescription).
+				SetWriteDescription(writeDescription).
+				Save(ctx)
+			if err != nil {
+				return err
+			}
+		}
+	}
+
+	log.Println("Adding custom permissions...")
+
+	// Define your custom permissions
+	customPermissions := []struct {
+		codename         string
+		resourceType     string
+		action           string
+		label            string
+		readDescription  string
+		writeDescription string
+	}{
+		{
+			codename:         "rate.approve_rates",
+			resourceType:     "Rate",
+			action:           "approval",
+			label:            "Approve Rates",
+			readDescription:  "Can view rates awaiting approval",
+			writeDescription: "Can approve customer rates.",
+		},
+	}
+
+	// Create custom permissions
+	for _, customPermission := range customPermissions {
+		if existingPermissionMap[customPermission.codename] {
+			continue
+		}
+
+		// Fetch the associated resource
+		resource, rserr := client.Resource.Query().Where(resource.TypeEQ(customPermission.resourceType)).Only(ctx)
+		if rserr != nil {
+			log.Panicf("Failed to find resource: %v", rserr)
+			return rserr
+		}
+
+		_, err = client.Permission.Create().
+			SetBusinessUnit(bu).
+			SetOrganization(org).
+			SetCodename(customPermission.codename).
+			SetResource(resource).
+			SetAction(customPermission.action).
+			SetLabel(customPermission.label).
+			SetReadDescription(customPermission.readDescription).
+			SetWriteDescription(customPermission.writeDescription).
+			Save(ctx)
+		if err != nil {
+			return err
 		}
 	}
 

@@ -1053,6 +1053,11 @@ var schemaGraph = func() *sqlgraph.Schema {
 			rate.FieldRatingMethod:          {Type: field.TypeEnum, Column: rate.FieldRatingMethod},
 			rate.FieldRateAmount:            {Type: field.TypeFloat64, Column: rate.FieldRateAmount},
 			rate.FieldComment:               {Type: field.TypeString, Column: rate.FieldComment},
+			rate.FieldApprovedByID:          {Type: field.TypeUUID, Column: rate.FieldApprovedByID},
+			rate.FieldApprovedDate:          {Type: field.TypeOther, Column: rate.FieldApprovedDate},
+			rate.FieldUsageCount:            {Type: field.TypeInt, Column: rate.FieldUsageCount},
+			rate.FieldMinimumCharge:         {Type: field.TypeFloat64, Column: rate.FieldMinimumCharge},
+			rate.FieldMaximumCharge:         {Type: field.TypeFloat64, Column: rate.FieldMaximumCharge},
 		},
 	}
 	graph.Nodes[40] = &sqlgraph.Node{
@@ -3562,6 +3567,18 @@ var schemaGraph = func() *sqlgraph.Schema {
 		"Location",
 	)
 	graph.MustAddE(
+		"approved_by",
+		&sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   rate.ApprovedByTable,
+			Columns: []string{rate.ApprovedByColumn},
+			Bidi:    false,
+		},
+		"Rate",
+		"User",
+	)
+	graph.MustAddE(
 		"business_unit",
 		&sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
@@ -4724,6 +4741,18 @@ var schemaGraph = func() *sqlgraph.Schema {
 		},
 		"User",
 		"Role",
+	)
+	graph.MustAddE(
+		"rates_approved",
+		&sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.RatesApprovedTable,
+			Columns: []string{user.RatesApprovedColumn},
+			Bidi:    false,
+		},
+		"User",
+		"Rate",
 	)
 	graph.MustAddE(
 		"business_unit",
@@ -10907,6 +10936,31 @@ func (f *RateFilter) WhereComment(p entql.StringP) {
 	f.Where(p.Field(rate.FieldComment))
 }
 
+// WhereApprovedByID applies the entql [16]byte predicate on the approved_by_id field.
+func (f *RateFilter) WhereApprovedByID(p entql.ValueP) {
+	f.Where(p.Field(rate.FieldApprovedByID))
+}
+
+// WhereApprovedDate applies the entql other predicate on the approved_date field.
+func (f *RateFilter) WhereApprovedDate(p entql.OtherP) {
+	f.Where(p.Field(rate.FieldApprovedDate))
+}
+
+// WhereUsageCount applies the entql int predicate on the usage_count field.
+func (f *RateFilter) WhereUsageCount(p entql.IntP) {
+	f.Where(p.Field(rate.FieldUsageCount))
+}
+
+// WhereMinimumCharge applies the entql float64 predicate on the minimum_charge field.
+func (f *RateFilter) WhereMinimumCharge(p entql.Float64P) {
+	f.Where(p.Field(rate.FieldMinimumCharge))
+}
+
+// WhereMaximumCharge applies the entql float64 predicate on the maximum_charge field.
+func (f *RateFilter) WhereMaximumCharge(p entql.Float64P) {
+	f.Where(p.Field(rate.FieldMaximumCharge))
+}
+
 // WhereHasBusinessUnit applies a predicate to check if query has an edge business_unit.
 func (f *RateFilter) WhereHasBusinessUnit() {
 	f.Where(entql.HasEdge("business_unit"))
@@ -10999,6 +11053,20 @@ func (f *RateFilter) WhereHasDestinationLocation() {
 // WhereHasDestinationLocationWith applies a predicate to check if query has an edge destination_location with a given conditions (other predicates).
 func (f *RateFilter) WhereHasDestinationLocationWith(preds ...predicate.Location) {
 	f.Where(entql.HasEdgeWith("destination_location", sqlgraph.WrapFunc(func(s *sql.Selector) {
+		for _, p := range preds {
+			p(s)
+		}
+	})))
+}
+
+// WhereHasApprovedBy applies a predicate to check if query has an edge approved_by.
+func (f *RateFilter) WhereHasApprovedBy() {
+	f.Where(entql.HasEdge("approved_by"))
+}
+
+// WhereHasApprovedByWith applies a predicate to check if query has an edge approved_by with a given conditions (other predicates).
+func (f *RateFilter) WhereHasApprovedByWith(preds ...predicate.User) {
+	f.Where(entql.HasEdgeWith("approved_by", sqlgraph.WrapFunc(func(s *sql.Selector) {
 		for _, p := range preds {
 			p(s)
 		}
@@ -14687,6 +14755,20 @@ func (f *UserFilter) WhereHasRoles() {
 // WhereHasRolesWith applies a predicate to check if query has an edge roles with a given conditions (other predicates).
 func (f *UserFilter) WhereHasRolesWith(preds ...predicate.Role) {
 	f.Where(entql.HasEdgeWith("roles", sqlgraph.WrapFunc(func(s *sql.Selector) {
+		for _, p := range preds {
+			p(s)
+		}
+	})))
+}
+
+// WhereHasRatesApproved applies a predicate to check if query has an edge rates_approved.
+func (f *UserFilter) WhereHasRatesApproved() {
+	f.Where(entql.HasEdge("rates_approved"))
+}
+
+// WhereHasRatesApprovedWith applies a predicate to check if query has an edge rates_approved with a given conditions (other predicates).
+func (f *UserFilter) WhereHasRatesApprovedWith(preds ...predicate.Rate) {
+	f.Where(entql.HasEdgeWith("rates_approved", sqlgraph.WrapFunc(func(s *sql.Selector) {
 		for _, p := range preds {
 			p(s)
 		}

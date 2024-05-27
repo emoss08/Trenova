@@ -1594,6 +1594,10 @@ var (
 		{Name: "rating_method", Type: field.TypeEnum, Enums: []string{"FlatRate", "PerMile", "PerHundredWeight", "PerStop", "PerPound", "Other"}, Default: "FlatRate"},
 		{Name: "rate_amount", Type: field.TypeFloat64, SchemaType: map[string]string{"mysql": "decimal(19,4)", "postgres": "numeric(19,4)"}},
 		{Name: "comment", Type: field.TypeString, Nullable: true, Size: 2147483647},
+		{Name: "approved_date", Type: field.TypeOther, Nullable: true, SchemaType: map[string]string{"postgres": "date", "sqlite3": "date"}},
+		{Name: "usage_count", Type: field.TypeInt, Nullable: true, Default: 0},
+		{Name: "minimum_charge", Type: field.TypeFloat64, Nullable: true, SchemaType: map[string]string{"mysql": "decimal(19,4)", "postgres": "numeric(19,4)"}},
+		{Name: "maximum_charge", Type: field.TypeFloat64, Nullable: true, SchemaType: map[string]string{"mysql": "decimal(19,4)", "postgres": "numeric(19,4)"}},
 		{Name: "commodity_id", Type: field.TypeUUID, Nullable: true},
 		{Name: "customer_id", Type: field.TypeUUID},
 		{Name: "origin_location_id", Type: field.TypeUUID, Nullable: true},
@@ -1601,6 +1605,7 @@ var (
 		{Name: "business_unit_id", Type: field.TypeUUID},
 		{Name: "organization_id", Type: field.TypeUUID},
 		{Name: "shipment_type_id", Type: field.TypeUUID, Nullable: true},
+		{Name: "approved_by_id", Type: field.TypeUUID, Nullable: true},
 	}
 	// RatesTable holds the schema information for the "rates" table.
 	RatesTable = &schema.Table{
@@ -1610,44 +1615,50 @@ var (
 		ForeignKeys: []*schema.ForeignKey{
 			{
 				Symbol:     "rates_commodities_rates",
-				Columns:    []*schema.Column{RatesColumns[11]},
+				Columns:    []*schema.Column{RatesColumns[15]},
 				RefColumns: []*schema.Column{CommoditiesColumns[0]},
 				OnDelete:   schema.SetNull,
 			},
 			{
 				Symbol:     "rates_customers_rates",
-				Columns:    []*schema.Column{RatesColumns[12]},
+				Columns:    []*schema.Column{RatesColumns[16]},
 				RefColumns: []*schema.Column{CustomersColumns[0]},
 				OnDelete:   schema.NoAction,
 			},
 			{
 				Symbol:     "rates_locations_rates_origin",
-				Columns:    []*schema.Column{RatesColumns[13]},
+				Columns:    []*schema.Column{RatesColumns[17]},
 				RefColumns: []*schema.Column{LocationsColumns[0]},
 				OnDelete:   schema.SetNull,
 			},
 			{
 				Symbol:     "rates_locations_rates_destination",
-				Columns:    []*schema.Column{RatesColumns[14]},
+				Columns:    []*schema.Column{RatesColumns[18]},
 				RefColumns: []*schema.Column{LocationsColumns[0]},
 				OnDelete:   schema.SetNull,
 			},
 			{
 				Symbol:     "rates_business_units_business_unit",
-				Columns:    []*schema.Column{RatesColumns[15]},
+				Columns:    []*schema.Column{RatesColumns[19]},
 				RefColumns: []*schema.Column{BusinessUnitsColumns[0]},
 				OnDelete:   schema.Cascade,
 			},
 			{
 				Symbol:     "rates_organizations_organization",
-				Columns:    []*schema.Column{RatesColumns[16]},
+				Columns:    []*schema.Column{RatesColumns[20]},
 				RefColumns: []*schema.Column{OrganizationsColumns[0]},
 				OnDelete:   schema.Cascade,
 			},
 			{
 				Symbol:     "rates_shipment_types_rates",
-				Columns:    []*schema.Column{RatesColumns[17]},
+				Columns:    []*schema.Column{RatesColumns[21]},
 				RefColumns: []*schema.Column{ShipmentTypesColumns[0]},
+				OnDelete:   schema.SetNull,
+			},
+			{
+				Symbol:     "rates_users_rates_approved",
+				Columns:    []*schema.Column{RatesColumns[22]},
+				RefColumns: []*schema.Column{UsersColumns[0]},
 				OnDelete:   schema.SetNull,
 			},
 		},
@@ -3364,6 +3375,7 @@ func init() {
 	RatesTable.ForeignKeys[4].RefTable = BusinessUnitsTable
 	RatesTable.ForeignKeys[5].RefTable = OrganizationsTable
 	RatesTable.ForeignKeys[6].RefTable = ShipmentTypesTable
+	RatesTable.ForeignKeys[7].RefTable = UsersTable
 	RatesTable.Annotation = &entsql.Annotation{}
 	ReasonCodesTable.ForeignKeys[0].RefTable = BusinessUnitsTable
 	ReasonCodesTable.ForeignKeys[1].RefTable = OrganizationsTable

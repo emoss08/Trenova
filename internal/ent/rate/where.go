@@ -132,6 +132,31 @@ func Comment(v string) predicate.Rate {
 	return predicate.Rate(sql.FieldEQ(FieldComment, v))
 }
 
+// ApprovedByID applies equality check predicate on the "approved_by_id" field. It's identical to ApprovedByIDEQ.
+func ApprovedByID(v uuid.UUID) predicate.Rate {
+	return predicate.Rate(sql.FieldEQ(FieldApprovedByID, v))
+}
+
+// ApprovedDate applies equality check predicate on the "approved_date" field. It's identical to ApprovedDateEQ.
+func ApprovedDate(v *pgtype.Date) predicate.Rate {
+	return predicate.Rate(sql.FieldEQ(FieldApprovedDate, v))
+}
+
+// UsageCount applies equality check predicate on the "usage_count" field. It's identical to UsageCountEQ.
+func UsageCount(v int) predicate.Rate {
+	return predicate.Rate(sql.FieldEQ(FieldUsageCount, v))
+}
+
+// MinimumCharge applies equality check predicate on the "minimum_charge" field. It's identical to MinimumChargeEQ.
+func MinimumCharge(v float64) predicate.Rate {
+	return predicate.Rate(sql.FieldEQ(FieldMinimumCharge, v))
+}
+
+// MaximumCharge applies equality check predicate on the "maximum_charge" field. It's identical to MaximumChargeEQ.
+func MaximumCharge(v float64) predicate.Rate {
+	return predicate.Rate(sql.FieldEQ(FieldMaximumCharge, v))
+}
+
 // BusinessUnitIDEQ applies the EQ predicate on the "business_unit_id" field.
 func BusinessUnitIDEQ(v uuid.UUID) predicate.Rate {
 	return predicate.Rate(sql.FieldEQ(FieldBusinessUnitID, v))
@@ -752,6 +777,236 @@ func CommentContainsFold(v string) predicate.Rate {
 	return predicate.Rate(sql.FieldContainsFold(FieldComment, v))
 }
 
+// ApprovedByIDEQ applies the EQ predicate on the "approved_by_id" field.
+func ApprovedByIDEQ(v uuid.UUID) predicate.Rate {
+	return predicate.Rate(sql.FieldEQ(FieldApprovedByID, v))
+}
+
+// ApprovedByIDNEQ applies the NEQ predicate on the "approved_by_id" field.
+func ApprovedByIDNEQ(v uuid.UUID) predicate.Rate {
+	return predicate.Rate(sql.FieldNEQ(FieldApprovedByID, v))
+}
+
+// ApprovedByIDIn applies the In predicate on the "approved_by_id" field.
+func ApprovedByIDIn(vs ...uuid.UUID) predicate.Rate {
+	return predicate.Rate(sql.FieldIn(FieldApprovedByID, vs...))
+}
+
+// ApprovedByIDNotIn applies the NotIn predicate on the "approved_by_id" field.
+func ApprovedByIDNotIn(vs ...uuid.UUID) predicate.Rate {
+	return predicate.Rate(sql.FieldNotIn(FieldApprovedByID, vs...))
+}
+
+// ApprovedByIDIsNil applies the IsNil predicate on the "approved_by_id" field.
+func ApprovedByIDIsNil() predicate.Rate {
+	return predicate.Rate(sql.FieldIsNull(FieldApprovedByID))
+}
+
+// ApprovedByIDNotNil applies the NotNil predicate on the "approved_by_id" field.
+func ApprovedByIDNotNil() predicate.Rate {
+	return predicate.Rate(sql.FieldNotNull(FieldApprovedByID))
+}
+
+// ApprovedDateEQ applies the EQ predicate on the "approved_date" field.
+func ApprovedDateEQ(v *pgtype.Date) predicate.Rate {
+	return predicate.Rate(sql.FieldEQ(FieldApprovedDate, v))
+}
+
+// ApprovedDateNEQ applies the NEQ predicate on the "approved_date" field.
+func ApprovedDateNEQ(v *pgtype.Date) predicate.Rate {
+	return predicate.Rate(sql.FieldNEQ(FieldApprovedDate, v))
+}
+
+// ApprovedDateIn applies the In predicate on the "approved_date" field.
+func ApprovedDateIn(vs ...*pgtype.Date) predicate.Rate {
+	return predicate.Rate(sql.FieldIn(FieldApprovedDate, vs...))
+}
+
+// ApprovedDateNotIn applies the NotIn predicate on the "approved_date" field.
+func ApprovedDateNotIn(vs ...*pgtype.Date) predicate.Rate {
+	return predicate.Rate(sql.FieldNotIn(FieldApprovedDate, vs...))
+}
+
+// ApprovedDateGT applies the GT predicate on the "approved_date" field.
+func ApprovedDateGT(v *pgtype.Date) predicate.Rate {
+	return predicate.Rate(sql.FieldGT(FieldApprovedDate, v))
+}
+
+// ApprovedDateGTE applies the GTE predicate on the "approved_date" field.
+func ApprovedDateGTE(v *pgtype.Date) predicate.Rate {
+	return predicate.Rate(sql.FieldGTE(FieldApprovedDate, v))
+}
+
+// ApprovedDateLT applies the LT predicate on the "approved_date" field.
+func ApprovedDateLT(v *pgtype.Date) predicate.Rate {
+	return predicate.Rate(sql.FieldLT(FieldApprovedDate, v))
+}
+
+// ApprovedDateLTE applies the LTE predicate on the "approved_date" field.
+func ApprovedDateLTE(v *pgtype.Date) predicate.Rate {
+	return predicate.Rate(sql.FieldLTE(FieldApprovedDate, v))
+}
+
+// ApprovedDateIsNil applies the IsNil predicate on the "approved_date" field.
+func ApprovedDateIsNil() predicate.Rate {
+	return predicate.Rate(sql.FieldIsNull(FieldApprovedDate))
+}
+
+// ApprovedDateNotNil applies the NotNil predicate on the "approved_date" field.
+func ApprovedDateNotNil() predicate.Rate {
+	return predicate.Rate(sql.FieldNotNull(FieldApprovedDate))
+}
+
+// UsageCountEQ applies the EQ predicate on the "usage_count" field.
+func UsageCountEQ(v int) predicate.Rate {
+	return predicate.Rate(sql.FieldEQ(FieldUsageCount, v))
+}
+
+// UsageCountNEQ applies the NEQ predicate on the "usage_count" field.
+func UsageCountNEQ(v int) predicate.Rate {
+	return predicate.Rate(sql.FieldNEQ(FieldUsageCount, v))
+}
+
+// UsageCountIn applies the In predicate on the "usage_count" field.
+func UsageCountIn(vs ...int) predicate.Rate {
+	return predicate.Rate(sql.FieldIn(FieldUsageCount, vs...))
+}
+
+// UsageCountNotIn applies the NotIn predicate on the "usage_count" field.
+func UsageCountNotIn(vs ...int) predicate.Rate {
+	return predicate.Rate(sql.FieldNotIn(FieldUsageCount, vs...))
+}
+
+// UsageCountGT applies the GT predicate on the "usage_count" field.
+func UsageCountGT(v int) predicate.Rate {
+	return predicate.Rate(sql.FieldGT(FieldUsageCount, v))
+}
+
+// UsageCountGTE applies the GTE predicate on the "usage_count" field.
+func UsageCountGTE(v int) predicate.Rate {
+	return predicate.Rate(sql.FieldGTE(FieldUsageCount, v))
+}
+
+// UsageCountLT applies the LT predicate on the "usage_count" field.
+func UsageCountLT(v int) predicate.Rate {
+	return predicate.Rate(sql.FieldLT(FieldUsageCount, v))
+}
+
+// UsageCountLTE applies the LTE predicate on the "usage_count" field.
+func UsageCountLTE(v int) predicate.Rate {
+	return predicate.Rate(sql.FieldLTE(FieldUsageCount, v))
+}
+
+// UsageCountIsNil applies the IsNil predicate on the "usage_count" field.
+func UsageCountIsNil() predicate.Rate {
+	return predicate.Rate(sql.FieldIsNull(FieldUsageCount))
+}
+
+// UsageCountNotNil applies the NotNil predicate on the "usage_count" field.
+func UsageCountNotNil() predicate.Rate {
+	return predicate.Rate(sql.FieldNotNull(FieldUsageCount))
+}
+
+// MinimumChargeEQ applies the EQ predicate on the "minimum_charge" field.
+func MinimumChargeEQ(v float64) predicate.Rate {
+	return predicate.Rate(sql.FieldEQ(FieldMinimumCharge, v))
+}
+
+// MinimumChargeNEQ applies the NEQ predicate on the "minimum_charge" field.
+func MinimumChargeNEQ(v float64) predicate.Rate {
+	return predicate.Rate(sql.FieldNEQ(FieldMinimumCharge, v))
+}
+
+// MinimumChargeIn applies the In predicate on the "minimum_charge" field.
+func MinimumChargeIn(vs ...float64) predicate.Rate {
+	return predicate.Rate(sql.FieldIn(FieldMinimumCharge, vs...))
+}
+
+// MinimumChargeNotIn applies the NotIn predicate on the "minimum_charge" field.
+func MinimumChargeNotIn(vs ...float64) predicate.Rate {
+	return predicate.Rate(sql.FieldNotIn(FieldMinimumCharge, vs...))
+}
+
+// MinimumChargeGT applies the GT predicate on the "minimum_charge" field.
+func MinimumChargeGT(v float64) predicate.Rate {
+	return predicate.Rate(sql.FieldGT(FieldMinimumCharge, v))
+}
+
+// MinimumChargeGTE applies the GTE predicate on the "minimum_charge" field.
+func MinimumChargeGTE(v float64) predicate.Rate {
+	return predicate.Rate(sql.FieldGTE(FieldMinimumCharge, v))
+}
+
+// MinimumChargeLT applies the LT predicate on the "minimum_charge" field.
+func MinimumChargeLT(v float64) predicate.Rate {
+	return predicate.Rate(sql.FieldLT(FieldMinimumCharge, v))
+}
+
+// MinimumChargeLTE applies the LTE predicate on the "minimum_charge" field.
+func MinimumChargeLTE(v float64) predicate.Rate {
+	return predicate.Rate(sql.FieldLTE(FieldMinimumCharge, v))
+}
+
+// MinimumChargeIsNil applies the IsNil predicate on the "minimum_charge" field.
+func MinimumChargeIsNil() predicate.Rate {
+	return predicate.Rate(sql.FieldIsNull(FieldMinimumCharge))
+}
+
+// MinimumChargeNotNil applies the NotNil predicate on the "minimum_charge" field.
+func MinimumChargeNotNil() predicate.Rate {
+	return predicate.Rate(sql.FieldNotNull(FieldMinimumCharge))
+}
+
+// MaximumChargeEQ applies the EQ predicate on the "maximum_charge" field.
+func MaximumChargeEQ(v float64) predicate.Rate {
+	return predicate.Rate(sql.FieldEQ(FieldMaximumCharge, v))
+}
+
+// MaximumChargeNEQ applies the NEQ predicate on the "maximum_charge" field.
+func MaximumChargeNEQ(v float64) predicate.Rate {
+	return predicate.Rate(sql.FieldNEQ(FieldMaximumCharge, v))
+}
+
+// MaximumChargeIn applies the In predicate on the "maximum_charge" field.
+func MaximumChargeIn(vs ...float64) predicate.Rate {
+	return predicate.Rate(sql.FieldIn(FieldMaximumCharge, vs...))
+}
+
+// MaximumChargeNotIn applies the NotIn predicate on the "maximum_charge" field.
+func MaximumChargeNotIn(vs ...float64) predicate.Rate {
+	return predicate.Rate(sql.FieldNotIn(FieldMaximumCharge, vs...))
+}
+
+// MaximumChargeGT applies the GT predicate on the "maximum_charge" field.
+func MaximumChargeGT(v float64) predicate.Rate {
+	return predicate.Rate(sql.FieldGT(FieldMaximumCharge, v))
+}
+
+// MaximumChargeGTE applies the GTE predicate on the "maximum_charge" field.
+func MaximumChargeGTE(v float64) predicate.Rate {
+	return predicate.Rate(sql.FieldGTE(FieldMaximumCharge, v))
+}
+
+// MaximumChargeLT applies the LT predicate on the "maximum_charge" field.
+func MaximumChargeLT(v float64) predicate.Rate {
+	return predicate.Rate(sql.FieldLT(FieldMaximumCharge, v))
+}
+
+// MaximumChargeLTE applies the LTE predicate on the "maximum_charge" field.
+func MaximumChargeLTE(v float64) predicate.Rate {
+	return predicate.Rate(sql.FieldLTE(FieldMaximumCharge, v))
+}
+
+// MaximumChargeIsNil applies the IsNil predicate on the "maximum_charge" field.
+func MaximumChargeIsNil() predicate.Rate {
+	return predicate.Rate(sql.FieldIsNull(FieldMaximumCharge))
+}
+
+// MaximumChargeNotNil applies the NotNil predicate on the "maximum_charge" field.
+func MaximumChargeNotNil() predicate.Rate {
+	return predicate.Rate(sql.FieldNotNull(FieldMaximumCharge))
+}
+
 // HasBusinessUnit applies the HasEdge predicate on the "business_unit" edge.
 func HasBusinessUnit() predicate.Rate {
 	return predicate.Rate(func(s *sql.Selector) {
@@ -905,6 +1160,29 @@ func HasDestinationLocation() predicate.Rate {
 func HasDestinationLocationWith(preds ...predicate.Location) predicate.Rate {
 	return predicate.Rate(func(s *sql.Selector) {
 		step := newDestinationLocationStep()
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	})
+}
+
+// HasApprovedBy applies the HasEdge predicate on the "approved_by" edge.
+func HasApprovedBy() predicate.Rate {
+	return predicate.Rate(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, ApprovedByTable, ApprovedByColumn),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasApprovedByWith applies the HasEdge predicate on the "approved_by" edge with a given conditions (other predicates).
+func HasApprovedByWith(preds ...predicate.User) predicate.Rate {
+	return predicate.Rate(func(s *sql.Selector) {
+		step := newApprovedByStep()
 		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
 			for _, p := range preds {
 				p(s)

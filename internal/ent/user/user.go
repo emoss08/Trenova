@@ -68,6 +68,8 @@ const (
 	EdgeReports = "reports"
 	// EdgeRoles holds the string denoting the roles edge name in mutations.
 	EdgeRoles = "roles"
+	// EdgeRatesApproved holds the string denoting the rates_approved edge name in mutations.
+	EdgeRatesApproved = "rates_approved"
 	// Table holds the table name of the user in the database.
 	Table = "users"
 	// BusinessUnitTable is the table that holds the business_unit relation/edge.
@@ -131,6 +133,13 @@ const (
 	// RolesInverseTable is the table name for the Role entity.
 	// It exists in this package in order to avoid circular dependency with the "role" package.
 	RolesInverseTable = "roles"
+	// RatesApprovedTable is the table that holds the rates_approved relation/edge.
+	RatesApprovedTable = "rates"
+	// RatesApprovedInverseTable is the table name for the Rate entity.
+	// It exists in this package in order to avoid circular dependency with the "rate" package.
+	RatesApprovedInverseTable = "rates"
+	// RatesApprovedColumn is the table column denoting the rates_approved relation/edge.
+	RatesApprovedColumn = "approved_by_id"
 )
 
 // Columns holds all SQL columns for user fields.
@@ -426,6 +435,20 @@ func ByRoles(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
 		sqlgraph.OrderByNeighborTerms(s, newRolesStep(), append([]sql.OrderTerm{term}, terms...)...)
 	}
 }
+
+// ByRatesApprovedCount orders the results by rates_approved count.
+func ByRatesApprovedCount(opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborsCount(s, newRatesApprovedStep(), opts...)
+	}
+}
+
+// ByRatesApproved orders the results by rates_approved terms.
+func ByRatesApproved(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newRatesApprovedStep(), append([]sql.OrderTerm{term}, terms...)...)
+	}
+}
 func newBusinessUnitStep() *sqlgraph.Step {
 	return sqlgraph.NewStep(
 		sqlgraph.From(Table, FieldID),
@@ -487,5 +510,12 @@ func newRolesStep() *sqlgraph.Step {
 		sqlgraph.From(Table, FieldID),
 		sqlgraph.To(RolesInverseTable, FieldID),
 		sqlgraph.Edge(sqlgraph.M2M, true, RolesTable, RolesPrimaryKey...),
+	)
+}
+func newRatesApprovedStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(RatesApprovedInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.O2M, false, RatesApprovedTable, RatesApprovedColumn),
 	)
 }

@@ -84,6 +84,38 @@ func (Rate) Fields() []ent.Field {
 		field.Text("comment").
 			Optional().
 			StructTag(`json:"comment" validate:"omitempty"`),
+		field.UUID("approved_by_id", uuid.UUID{}).
+			Optional().
+			Nillable().
+			StructTag(`json:"approvedBy" validate:"omitempty"`),
+		field.Other("approved_date", &pgtype.Date{}).
+			Optional().
+			Nillable().
+			SchemaType(map[string]string{
+				dialect.Postgres: "date",
+				dialect.SQLite:   "date",
+			}).
+			StructTag(`json:"approvedDate"`),
+		field.Int("usage_count").
+			Optional().
+			Default(0).
+			StructTag(`json:"usageCount" validate:"omitempty"`),
+		field.Float("minimum_charge").
+			Optional().
+			Nillable().
+			SchemaType(map[string]string{
+				dialect.MySQL:    "decimal(19,4)",
+				dialect.Postgres: "numeric(19,4)",
+			}).
+			StructTag(`json:"minimumCharge" validate:"omitempty"`),
+		field.Float("maximum_charge").
+			Optional().
+			Nillable().
+			SchemaType(map[string]string{
+				dialect.MySQL:    "decimal(19,4)",
+				dialect.Postgres: "numeric(19,4)",
+			}).
+			StructTag(`json:"maximumCharge" validate:"omitempty"`),
 	}
 }
 
@@ -121,6 +153,11 @@ func (Rate) Edges() []ent.Edge {
 		edge.From("destination_location", Location.Type).
 			Ref("rates_destination").
 			Field("destination_location_id").
+			Unique().
+			Annotations(entsql.OnDelete(entsql.Cascade)),
+		edge.From("approved_by", User.Type).
+			Ref("rates_approved").
+			Field("approved_by_id").
 			Unique().
 			Annotations(entsql.OnDelete(entsql.Cascade)),
 	}

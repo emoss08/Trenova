@@ -50,6 +50,16 @@ const (
 	FieldRateAmount = "rate_amount"
 	// FieldComment holds the string denoting the comment field in the database.
 	FieldComment = "comment"
+	// FieldApprovedByID holds the string denoting the approved_by_id field in the database.
+	FieldApprovedByID = "approved_by_id"
+	// FieldApprovedDate holds the string denoting the approved_date field in the database.
+	FieldApprovedDate = "approved_date"
+	// FieldUsageCount holds the string denoting the usage_count field in the database.
+	FieldUsageCount = "usage_count"
+	// FieldMinimumCharge holds the string denoting the minimum_charge field in the database.
+	FieldMinimumCharge = "minimum_charge"
+	// FieldMaximumCharge holds the string denoting the maximum_charge field in the database.
+	FieldMaximumCharge = "maximum_charge"
 	// EdgeBusinessUnit holds the string denoting the business_unit edge name in mutations.
 	EdgeBusinessUnit = "business_unit"
 	// EdgeOrganization holds the string denoting the organization edge name in mutations.
@@ -64,6 +74,8 @@ const (
 	EdgeOriginLocation = "origin_location"
 	// EdgeDestinationLocation holds the string denoting the destination_location edge name in mutations.
 	EdgeDestinationLocation = "destination_location"
+	// EdgeApprovedBy holds the string denoting the approved_by edge name in mutations.
+	EdgeApprovedBy = "approved_by"
 	// Table holds the table name of the rate in the database.
 	Table = "rates"
 	// BusinessUnitTable is the table that holds the business_unit relation/edge.
@@ -115,6 +127,13 @@ const (
 	DestinationLocationInverseTable = "locations"
 	// DestinationLocationColumn is the table column denoting the destination_location relation/edge.
 	DestinationLocationColumn = "destination_location_id"
+	// ApprovedByTable is the table that holds the approved_by relation/edge.
+	ApprovedByTable = "rates"
+	// ApprovedByInverseTable is the table name for the User entity.
+	// It exists in this package in order to avoid circular dependency with the "user" package.
+	ApprovedByInverseTable = "users"
+	// ApprovedByColumn is the table column denoting the approved_by relation/edge.
+	ApprovedByColumn = "approved_by_id"
 )
 
 // Columns holds all SQL columns for rate fields.
@@ -137,6 +156,11 @@ var Columns = []string{
 	FieldRatingMethod,
 	FieldRateAmount,
 	FieldComment,
+	FieldApprovedByID,
+	FieldApprovedDate,
+	FieldUsageCount,
+	FieldMinimumCharge,
+	FieldMaximumCharge,
 }
 
 // ValidColumn reports if the column name is valid (part of the table columns).
@@ -162,6 +186,8 @@ var (
 	RateNumberValidator func(string) error
 	// RateAmountValidator is a validator for the "rate_amount" field. It is called by the builders before save.
 	RateAmountValidator func(float64) error
+	// DefaultUsageCount holds the default value on creation for the "usage_count" field.
+	DefaultUsageCount int
 	// DefaultID holds the default value on creation for the "id" field.
 	DefaultID func() uuid.UUID
 )
@@ -315,6 +341,31 @@ func ByComment(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldComment, opts...).ToFunc()
 }
 
+// ByApprovedByID orders the results by the approved_by_id field.
+func ByApprovedByID(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldApprovedByID, opts...).ToFunc()
+}
+
+// ByApprovedDate orders the results by the approved_date field.
+func ByApprovedDate(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldApprovedDate, opts...).ToFunc()
+}
+
+// ByUsageCount orders the results by the usage_count field.
+func ByUsageCount(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldUsageCount, opts...).ToFunc()
+}
+
+// ByMinimumCharge orders the results by the minimum_charge field.
+func ByMinimumCharge(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldMinimumCharge, opts...).ToFunc()
+}
+
+// ByMaximumCharge orders the results by the maximum_charge field.
+func ByMaximumCharge(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldMaximumCharge, opts...).ToFunc()
+}
+
 // ByBusinessUnitField orders the results by business_unit field.
 func ByBusinessUnitField(field string, opts ...sql.OrderTermOption) OrderOption {
 	return func(s *sql.Selector) {
@@ -361,6 +412,13 @@ func ByOriginLocationField(field string, opts ...sql.OrderTermOption) OrderOptio
 func ByDestinationLocationField(field string, opts ...sql.OrderTermOption) OrderOption {
 	return func(s *sql.Selector) {
 		sqlgraph.OrderByNeighborTerms(s, newDestinationLocationStep(), sql.OrderByField(field, opts...))
+	}
+}
+
+// ByApprovedByField orders the results by approved_by field.
+func ByApprovedByField(field string, opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newApprovedByStep(), sql.OrderByField(field, opts...))
 	}
 }
 func newBusinessUnitStep() *sqlgraph.Step {
@@ -410,5 +468,12 @@ func newDestinationLocationStep() *sqlgraph.Step {
 		sqlgraph.From(Table, FieldID),
 		sqlgraph.To(DestinationLocationInverseTable, FieldID),
 		sqlgraph.Edge(sqlgraph.M2O, true, DestinationLocationTable, DestinationLocationColumn),
+	)
+}
+func newApprovedByStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(ApprovedByInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.M2O, true, ApprovedByTable, ApprovedByColumn),
 	)
 }

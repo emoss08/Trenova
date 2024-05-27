@@ -46788,6 +46788,13 @@ type RateMutation struct {
 	rate_amount                 *float64
 	addrate_amount              *float64
 	comment                     *string
+	approved_date               **pgtype.Date
+	usage_count                 *int
+	addusage_count              *int
+	minimum_charge              *float64
+	addminimum_charge           *float64
+	maximum_charge              *float64
+	addmaximum_charge           *float64
 	clearedFields               map[string]struct{}
 	business_unit               *uuid.UUID
 	clearedbusiness_unit        bool
@@ -46803,6 +46810,8 @@ type RateMutation struct {
 	clearedorigin_location      bool
 	destination_location        *uuid.UUID
 	cleareddestination_location bool
+	approved_by                 *uuid.UUID
+	clearedapproved_by          bool
 	done                        bool
 	oldValue                    func(context.Context) (*Rate, error)
 	predicates                  []predicate.Rate
@@ -47655,6 +47664,314 @@ func (m *RateMutation) ResetComment() {
 	delete(m.clearedFields, rate.FieldComment)
 }
 
+// SetApprovedByID sets the "approved_by_id" field.
+func (m *RateMutation) SetApprovedByID(u uuid.UUID) {
+	m.approved_by = &u
+}
+
+// ApprovedByID returns the value of the "approved_by_id" field in the mutation.
+func (m *RateMutation) ApprovedByID() (r uuid.UUID, exists bool) {
+	v := m.approved_by
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldApprovedByID returns the old "approved_by_id" field's value of the Rate entity.
+// If the Rate object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *RateMutation) OldApprovedByID(ctx context.Context) (v *uuid.UUID, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldApprovedByID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldApprovedByID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldApprovedByID: %w", err)
+	}
+	return oldValue.ApprovedByID, nil
+}
+
+// ClearApprovedByID clears the value of the "approved_by_id" field.
+func (m *RateMutation) ClearApprovedByID() {
+	m.approved_by = nil
+	m.clearedFields[rate.FieldApprovedByID] = struct{}{}
+}
+
+// ApprovedByIDCleared returns if the "approved_by_id" field was cleared in this mutation.
+func (m *RateMutation) ApprovedByIDCleared() bool {
+	_, ok := m.clearedFields[rate.FieldApprovedByID]
+	return ok
+}
+
+// ResetApprovedByID resets all changes to the "approved_by_id" field.
+func (m *RateMutation) ResetApprovedByID() {
+	m.approved_by = nil
+	delete(m.clearedFields, rate.FieldApprovedByID)
+}
+
+// SetApprovedDate sets the "approved_date" field.
+func (m *RateMutation) SetApprovedDate(pg *pgtype.Date) {
+	m.approved_date = &pg
+}
+
+// ApprovedDate returns the value of the "approved_date" field in the mutation.
+func (m *RateMutation) ApprovedDate() (r *pgtype.Date, exists bool) {
+	v := m.approved_date
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldApprovedDate returns the old "approved_date" field's value of the Rate entity.
+// If the Rate object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *RateMutation) OldApprovedDate(ctx context.Context) (v *pgtype.Date, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldApprovedDate is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldApprovedDate requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldApprovedDate: %w", err)
+	}
+	return oldValue.ApprovedDate, nil
+}
+
+// ClearApprovedDate clears the value of the "approved_date" field.
+func (m *RateMutation) ClearApprovedDate() {
+	m.approved_date = nil
+	m.clearedFields[rate.FieldApprovedDate] = struct{}{}
+}
+
+// ApprovedDateCleared returns if the "approved_date" field was cleared in this mutation.
+func (m *RateMutation) ApprovedDateCleared() bool {
+	_, ok := m.clearedFields[rate.FieldApprovedDate]
+	return ok
+}
+
+// ResetApprovedDate resets all changes to the "approved_date" field.
+func (m *RateMutation) ResetApprovedDate() {
+	m.approved_date = nil
+	delete(m.clearedFields, rate.FieldApprovedDate)
+}
+
+// SetUsageCount sets the "usage_count" field.
+func (m *RateMutation) SetUsageCount(i int) {
+	m.usage_count = &i
+	m.addusage_count = nil
+}
+
+// UsageCount returns the value of the "usage_count" field in the mutation.
+func (m *RateMutation) UsageCount() (r int, exists bool) {
+	v := m.usage_count
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldUsageCount returns the old "usage_count" field's value of the Rate entity.
+// If the Rate object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *RateMutation) OldUsageCount(ctx context.Context) (v int, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldUsageCount is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldUsageCount requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldUsageCount: %w", err)
+	}
+	return oldValue.UsageCount, nil
+}
+
+// AddUsageCount adds i to the "usage_count" field.
+func (m *RateMutation) AddUsageCount(i int) {
+	if m.addusage_count != nil {
+		*m.addusage_count += i
+	} else {
+		m.addusage_count = &i
+	}
+}
+
+// AddedUsageCount returns the value that was added to the "usage_count" field in this mutation.
+func (m *RateMutation) AddedUsageCount() (r int, exists bool) {
+	v := m.addusage_count
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ClearUsageCount clears the value of the "usage_count" field.
+func (m *RateMutation) ClearUsageCount() {
+	m.usage_count = nil
+	m.addusage_count = nil
+	m.clearedFields[rate.FieldUsageCount] = struct{}{}
+}
+
+// UsageCountCleared returns if the "usage_count" field was cleared in this mutation.
+func (m *RateMutation) UsageCountCleared() bool {
+	_, ok := m.clearedFields[rate.FieldUsageCount]
+	return ok
+}
+
+// ResetUsageCount resets all changes to the "usage_count" field.
+func (m *RateMutation) ResetUsageCount() {
+	m.usage_count = nil
+	m.addusage_count = nil
+	delete(m.clearedFields, rate.FieldUsageCount)
+}
+
+// SetMinimumCharge sets the "minimum_charge" field.
+func (m *RateMutation) SetMinimumCharge(f float64) {
+	m.minimum_charge = &f
+	m.addminimum_charge = nil
+}
+
+// MinimumCharge returns the value of the "minimum_charge" field in the mutation.
+func (m *RateMutation) MinimumCharge() (r float64, exists bool) {
+	v := m.minimum_charge
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldMinimumCharge returns the old "minimum_charge" field's value of the Rate entity.
+// If the Rate object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *RateMutation) OldMinimumCharge(ctx context.Context) (v *float64, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldMinimumCharge is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldMinimumCharge requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldMinimumCharge: %w", err)
+	}
+	return oldValue.MinimumCharge, nil
+}
+
+// AddMinimumCharge adds f to the "minimum_charge" field.
+func (m *RateMutation) AddMinimumCharge(f float64) {
+	if m.addminimum_charge != nil {
+		*m.addminimum_charge += f
+	} else {
+		m.addminimum_charge = &f
+	}
+}
+
+// AddedMinimumCharge returns the value that was added to the "minimum_charge" field in this mutation.
+func (m *RateMutation) AddedMinimumCharge() (r float64, exists bool) {
+	v := m.addminimum_charge
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ClearMinimumCharge clears the value of the "minimum_charge" field.
+func (m *RateMutation) ClearMinimumCharge() {
+	m.minimum_charge = nil
+	m.addminimum_charge = nil
+	m.clearedFields[rate.FieldMinimumCharge] = struct{}{}
+}
+
+// MinimumChargeCleared returns if the "minimum_charge" field was cleared in this mutation.
+func (m *RateMutation) MinimumChargeCleared() bool {
+	_, ok := m.clearedFields[rate.FieldMinimumCharge]
+	return ok
+}
+
+// ResetMinimumCharge resets all changes to the "minimum_charge" field.
+func (m *RateMutation) ResetMinimumCharge() {
+	m.minimum_charge = nil
+	m.addminimum_charge = nil
+	delete(m.clearedFields, rate.FieldMinimumCharge)
+}
+
+// SetMaximumCharge sets the "maximum_charge" field.
+func (m *RateMutation) SetMaximumCharge(f float64) {
+	m.maximum_charge = &f
+	m.addmaximum_charge = nil
+}
+
+// MaximumCharge returns the value of the "maximum_charge" field in the mutation.
+func (m *RateMutation) MaximumCharge() (r float64, exists bool) {
+	v := m.maximum_charge
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldMaximumCharge returns the old "maximum_charge" field's value of the Rate entity.
+// If the Rate object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *RateMutation) OldMaximumCharge(ctx context.Context) (v *float64, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldMaximumCharge is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldMaximumCharge requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldMaximumCharge: %w", err)
+	}
+	return oldValue.MaximumCharge, nil
+}
+
+// AddMaximumCharge adds f to the "maximum_charge" field.
+func (m *RateMutation) AddMaximumCharge(f float64) {
+	if m.addmaximum_charge != nil {
+		*m.addmaximum_charge += f
+	} else {
+		m.addmaximum_charge = &f
+	}
+}
+
+// AddedMaximumCharge returns the value that was added to the "maximum_charge" field in this mutation.
+func (m *RateMutation) AddedMaximumCharge() (r float64, exists bool) {
+	v := m.addmaximum_charge
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ClearMaximumCharge clears the value of the "maximum_charge" field.
+func (m *RateMutation) ClearMaximumCharge() {
+	m.maximum_charge = nil
+	m.addmaximum_charge = nil
+	m.clearedFields[rate.FieldMaximumCharge] = struct{}{}
+}
+
+// MaximumChargeCleared returns if the "maximum_charge" field was cleared in this mutation.
+func (m *RateMutation) MaximumChargeCleared() bool {
+	_, ok := m.clearedFields[rate.FieldMaximumCharge]
+	return ok
+}
+
+// ResetMaximumCharge resets all changes to the "maximum_charge" field.
+func (m *RateMutation) ResetMaximumCharge() {
+	m.maximum_charge = nil
+	m.addmaximum_charge = nil
+	delete(m.clearedFields, rate.FieldMaximumCharge)
+}
+
 // ClearBusinessUnit clears the "business_unit" edge to the BusinessUnit entity.
 func (m *RateMutation) ClearBusinessUnit() {
 	m.clearedbusiness_unit = true
@@ -47844,6 +48161,33 @@ func (m *RateMutation) ResetDestinationLocation() {
 	m.cleareddestination_location = false
 }
 
+// ClearApprovedBy clears the "approved_by" edge to the User entity.
+func (m *RateMutation) ClearApprovedBy() {
+	m.clearedapproved_by = true
+	m.clearedFields[rate.FieldApprovedByID] = struct{}{}
+}
+
+// ApprovedByCleared reports if the "approved_by" edge to the User entity was cleared.
+func (m *RateMutation) ApprovedByCleared() bool {
+	return m.ApprovedByIDCleared() || m.clearedapproved_by
+}
+
+// ApprovedByIDs returns the "approved_by" edge IDs in the mutation.
+// Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
+// ApprovedByID instead. It exists only for internal usage by the builders.
+func (m *RateMutation) ApprovedByIDs() (ids []uuid.UUID) {
+	if id := m.approved_by; id != nil {
+		ids = append(ids, *id)
+	}
+	return
+}
+
+// ResetApprovedBy resets all changes to the "approved_by" edge.
+func (m *RateMutation) ResetApprovedBy() {
+	m.approved_by = nil
+	m.clearedapproved_by = false
+}
+
 // Where appends a list predicates to the RateMutation builder.
 func (m *RateMutation) Where(ps ...predicate.Rate) {
 	m.predicates = append(m.predicates, ps...)
@@ -47878,7 +48222,7 @@ func (m *RateMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *RateMutation) Fields() []string {
-	fields := make([]string, 0, 17)
+	fields := make([]string, 0, 22)
 	if m.business_unit != nil {
 		fields = append(fields, rate.FieldBusinessUnitID)
 	}
@@ -47930,6 +48274,21 @@ func (m *RateMutation) Fields() []string {
 	if m.comment != nil {
 		fields = append(fields, rate.FieldComment)
 	}
+	if m.approved_by != nil {
+		fields = append(fields, rate.FieldApprovedByID)
+	}
+	if m.approved_date != nil {
+		fields = append(fields, rate.FieldApprovedDate)
+	}
+	if m.usage_count != nil {
+		fields = append(fields, rate.FieldUsageCount)
+	}
+	if m.minimum_charge != nil {
+		fields = append(fields, rate.FieldMinimumCharge)
+	}
+	if m.maximum_charge != nil {
+		fields = append(fields, rate.FieldMaximumCharge)
+	}
 	return fields
 }
 
@@ -47972,6 +48331,16 @@ func (m *RateMutation) Field(name string) (ent.Value, bool) {
 		return m.RateAmount()
 	case rate.FieldComment:
 		return m.Comment()
+	case rate.FieldApprovedByID:
+		return m.ApprovedByID()
+	case rate.FieldApprovedDate:
+		return m.ApprovedDate()
+	case rate.FieldUsageCount:
+		return m.UsageCount()
+	case rate.FieldMinimumCharge:
+		return m.MinimumCharge()
+	case rate.FieldMaximumCharge:
+		return m.MaximumCharge()
 	}
 	return nil, false
 }
@@ -48015,6 +48384,16 @@ func (m *RateMutation) OldField(ctx context.Context, name string) (ent.Value, er
 		return m.OldRateAmount(ctx)
 	case rate.FieldComment:
 		return m.OldComment(ctx)
+	case rate.FieldApprovedByID:
+		return m.OldApprovedByID(ctx)
+	case rate.FieldApprovedDate:
+		return m.OldApprovedDate(ctx)
+	case rate.FieldUsageCount:
+		return m.OldUsageCount(ctx)
+	case rate.FieldMinimumCharge:
+		return m.OldMinimumCharge(ctx)
+	case rate.FieldMaximumCharge:
+		return m.OldMaximumCharge(ctx)
 	}
 	return nil, fmt.Errorf("unknown Rate field %s", name)
 }
@@ -48143,6 +48522,41 @@ func (m *RateMutation) SetField(name string, value ent.Value) error {
 		}
 		m.SetComment(v)
 		return nil
+	case rate.FieldApprovedByID:
+		v, ok := value.(uuid.UUID)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetApprovedByID(v)
+		return nil
+	case rate.FieldApprovedDate:
+		v, ok := value.(*pgtype.Date)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetApprovedDate(v)
+		return nil
+	case rate.FieldUsageCount:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetUsageCount(v)
+		return nil
+	case rate.FieldMinimumCharge:
+		v, ok := value.(float64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetMinimumCharge(v)
+		return nil
+	case rate.FieldMaximumCharge:
+		v, ok := value.(float64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetMaximumCharge(v)
+		return nil
 	}
 	return fmt.Errorf("unknown Rate field %s", name)
 }
@@ -48157,6 +48571,15 @@ func (m *RateMutation) AddedFields() []string {
 	if m.addrate_amount != nil {
 		fields = append(fields, rate.FieldRateAmount)
 	}
+	if m.addusage_count != nil {
+		fields = append(fields, rate.FieldUsageCount)
+	}
+	if m.addminimum_charge != nil {
+		fields = append(fields, rate.FieldMinimumCharge)
+	}
+	if m.addmaximum_charge != nil {
+		fields = append(fields, rate.FieldMaximumCharge)
+	}
 	return fields
 }
 
@@ -48169,6 +48592,12 @@ func (m *RateMutation) AddedField(name string) (ent.Value, bool) {
 		return m.AddedVersion()
 	case rate.FieldRateAmount:
 		return m.AddedRateAmount()
+	case rate.FieldUsageCount:
+		return m.AddedUsageCount()
+	case rate.FieldMinimumCharge:
+		return m.AddedMinimumCharge()
+	case rate.FieldMaximumCharge:
+		return m.AddedMaximumCharge()
 	}
 	return nil, false
 }
@@ -48191,6 +48620,27 @@ func (m *RateMutation) AddField(name string, value ent.Value) error {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.AddRateAmount(v)
+		return nil
+	case rate.FieldUsageCount:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddUsageCount(v)
+		return nil
+	case rate.FieldMinimumCharge:
+		v, ok := value.(float64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddMinimumCharge(v)
+		return nil
+	case rate.FieldMaximumCharge:
+		v, ok := value.(float64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddMaximumCharge(v)
 		return nil
 	}
 	return fmt.Errorf("unknown Rate numeric field %s", name)
@@ -48220,6 +48670,21 @@ func (m *RateMutation) ClearedFields() []string {
 	}
 	if m.FieldCleared(rate.FieldComment) {
 		fields = append(fields, rate.FieldComment)
+	}
+	if m.FieldCleared(rate.FieldApprovedByID) {
+		fields = append(fields, rate.FieldApprovedByID)
+	}
+	if m.FieldCleared(rate.FieldApprovedDate) {
+		fields = append(fields, rate.FieldApprovedDate)
+	}
+	if m.FieldCleared(rate.FieldUsageCount) {
+		fields = append(fields, rate.FieldUsageCount)
+	}
+	if m.FieldCleared(rate.FieldMinimumCharge) {
+		fields = append(fields, rate.FieldMinimumCharge)
+	}
+	if m.FieldCleared(rate.FieldMaximumCharge) {
+		fields = append(fields, rate.FieldMaximumCharge)
 	}
 	return fields
 }
@@ -48255,6 +48720,21 @@ func (m *RateMutation) ClearField(name string) error {
 		return nil
 	case rate.FieldComment:
 		m.ClearComment()
+		return nil
+	case rate.FieldApprovedByID:
+		m.ClearApprovedByID()
+		return nil
+	case rate.FieldApprovedDate:
+		m.ClearApprovedDate()
+		return nil
+	case rate.FieldUsageCount:
+		m.ClearUsageCount()
+		return nil
+	case rate.FieldMinimumCharge:
+		m.ClearMinimumCharge()
+		return nil
+	case rate.FieldMaximumCharge:
+		m.ClearMaximumCharge()
 		return nil
 	}
 	return fmt.Errorf("unknown Rate nullable field %s", name)
@@ -48315,13 +48795,28 @@ func (m *RateMutation) ResetField(name string) error {
 	case rate.FieldComment:
 		m.ResetComment()
 		return nil
+	case rate.FieldApprovedByID:
+		m.ResetApprovedByID()
+		return nil
+	case rate.FieldApprovedDate:
+		m.ResetApprovedDate()
+		return nil
+	case rate.FieldUsageCount:
+		m.ResetUsageCount()
+		return nil
+	case rate.FieldMinimumCharge:
+		m.ResetMinimumCharge()
+		return nil
+	case rate.FieldMaximumCharge:
+		m.ResetMaximumCharge()
+		return nil
 	}
 	return fmt.Errorf("unknown Rate field %s", name)
 }
 
 // AddedEdges returns all edge names that were set/added in this mutation.
 func (m *RateMutation) AddedEdges() []string {
-	edges := make([]string, 0, 7)
+	edges := make([]string, 0, 8)
 	if m.business_unit != nil {
 		edges = append(edges, rate.EdgeBusinessUnit)
 	}
@@ -48342,6 +48837,9 @@ func (m *RateMutation) AddedEdges() []string {
 	}
 	if m.destination_location != nil {
 		edges = append(edges, rate.EdgeDestinationLocation)
+	}
+	if m.approved_by != nil {
+		edges = append(edges, rate.EdgeApprovedBy)
 	}
 	return edges
 }
@@ -48378,13 +48876,17 @@ func (m *RateMutation) AddedIDs(name string) []ent.Value {
 		if id := m.destination_location; id != nil {
 			return []ent.Value{*id}
 		}
+	case rate.EdgeApprovedBy:
+		if id := m.approved_by; id != nil {
+			return []ent.Value{*id}
+		}
 	}
 	return nil
 }
 
 // RemovedEdges returns all edge names that were removed in this mutation.
 func (m *RateMutation) RemovedEdges() []string {
-	edges := make([]string, 0, 7)
+	edges := make([]string, 0, 8)
 	return edges
 }
 
@@ -48396,7 +48898,7 @@ func (m *RateMutation) RemovedIDs(name string) []ent.Value {
 
 // ClearedEdges returns all edge names that were cleared in this mutation.
 func (m *RateMutation) ClearedEdges() []string {
-	edges := make([]string, 0, 7)
+	edges := make([]string, 0, 8)
 	if m.clearedbusiness_unit {
 		edges = append(edges, rate.EdgeBusinessUnit)
 	}
@@ -48417,6 +48919,9 @@ func (m *RateMutation) ClearedEdges() []string {
 	}
 	if m.cleareddestination_location {
 		edges = append(edges, rate.EdgeDestinationLocation)
+	}
+	if m.clearedapproved_by {
+		edges = append(edges, rate.EdgeApprovedBy)
 	}
 	return edges
 }
@@ -48439,6 +48944,8 @@ func (m *RateMutation) EdgeCleared(name string) bool {
 		return m.clearedorigin_location
 	case rate.EdgeDestinationLocation:
 		return m.cleareddestination_location
+	case rate.EdgeApprovedBy:
+		return m.clearedapproved_by
 	}
 	return false
 }
@@ -48468,6 +48975,9 @@ func (m *RateMutation) ClearEdge(name string) error {
 	case rate.EdgeDestinationLocation:
 		m.ClearDestinationLocation()
 		return nil
+	case rate.EdgeApprovedBy:
+		m.ClearApprovedBy()
+		return nil
 	}
 	return fmt.Errorf("unknown Rate unique edge %s", name)
 }
@@ -48496,6 +49006,9 @@ func (m *RateMutation) ResetEdge(name string) error {
 		return nil
 	case rate.EdgeDestinationLocation:
 		m.ResetDestinationLocation()
+		return nil
+	case rate.EdgeApprovedBy:
+		m.ResetApprovedBy()
 		return nil
 	}
 	return fmt.Errorf("unknown Rate edge %s", name)
@@ -76540,6 +77053,9 @@ type UserMutation struct {
 	roles                     map[uuid.UUID]struct{}
 	removedroles              map[uuid.UUID]struct{}
 	clearedroles              bool
+	rates_approved            map[uuid.UUID]struct{}
+	removedrates_approved     map[uuid.UUID]struct{}
+	clearedrates_approved     bool
 	done                      bool
 	oldValue                  func(context.Context) (*User, error)
 	predicates                []predicate.User
@@ -77765,6 +78281,60 @@ func (m *UserMutation) ResetRoles() {
 	m.removedroles = nil
 }
 
+// AddRatesApprovedIDs adds the "rates_approved" edge to the Rate entity by ids.
+func (m *UserMutation) AddRatesApprovedIDs(ids ...uuid.UUID) {
+	if m.rates_approved == nil {
+		m.rates_approved = make(map[uuid.UUID]struct{})
+	}
+	for i := range ids {
+		m.rates_approved[ids[i]] = struct{}{}
+	}
+}
+
+// ClearRatesApproved clears the "rates_approved" edge to the Rate entity.
+func (m *UserMutation) ClearRatesApproved() {
+	m.clearedrates_approved = true
+}
+
+// RatesApprovedCleared reports if the "rates_approved" edge to the Rate entity was cleared.
+func (m *UserMutation) RatesApprovedCleared() bool {
+	return m.clearedrates_approved
+}
+
+// RemoveRatesApprovedIDs removes the "rates_approved" edge to the Rate entity by IDs.
+func (m *UserMutation) RemoveRatesApprovedIDs(ids ...uuid.UUID) {
+	if m.removedrates_approved == nil {
+		m.removedrates_approved = make(map[uuid.UUID]struct{})
+	}
+	for i := range ids {
+		delete(m.rates_approved, ids[i])
+		m.removedrates_approved[ids[i]] = struct{}{}
+	}
+}
+
+// RemovedRatesApproved returns the removed IDs of the "rates_approved" edge to the Rate entity.
+func (m *UserMutation) RemovedRatesApprovedIDs() (ids []uuid.UUID) {
+	for id := range m.removedrates_approved {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// RatesApprovedIDs returns the "rates_approved" edge IDs in the mutation.
+func (m *UserMutation) RatesApprovedIDs() (ids []uuid.UUID) {
+	for id := range m.rates_approved {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// ResetRatesApproved resets all changes to the "rates_approved" edge.
+func (m *UserMutation) ResetRatesApproved() {
+	m.rates_approved = nil
+	m.clearedrates_approved = false
+	m.removedrates_approved = nil
+}
+
 // Where appends a list predicates to the UserMutation builder.
 func (m *UserMutation) Where(ps ...predicate.User) {
 	m.predicates = append(m.predicates, ps...)
@@ -78212,7 +78782,7 @@ func (m *UserMutation) ResetField(name string) error {
 
 // AddedEdges returns all edge names that were set/added in this mutation.
 func (m *UserMutation) AddedEdges() []string {
-	edges := make([]string, 0, 9)
+	edges := make([]string, 0, 10)
 	if m.business_unit != nil {
 		edges = append(edges, user.EdgeBusinessUnit)
 	}
@@ -78239,6 +78809,9 @@ func (m *UserMutation) AddedEdges() []string {
 	}
 	if m.roles != nil {
 		edges = append(edges, user.EdgeRoles)
+	}
+	if m.rates_approved != nil {
+		edges = append(edges, user.EdgeRatesApproved)
 	}
 	return edges
 }
@@ -78297,13 +78870,19 @@ func (m *UserMutation) AddedIDs(name string) []ent.Value {
 			ids = append(ids, id)
 		}
 		return ids
+	case user.EdgeRatesApproved:
+		ids := make([]ent.Value, 0, len(m.rates_approved))
+		for id := range m.rates_approved {
+			ids = append(ids, id)
+		}
+		return ids
 	}
 	return nil
 }
 
 // RemovedEdges returns all edge names that were removed in this mutation.
 func (m *UserMutation) RemovedEdges() []string {
-	edges := make([]string, 0, 9)
+	edges := make([]string, 0, 10)
 	if m.removeduser_favorites != nil {
 		edges = append(edges, user.EdgeUserFavorites)
 	}
@@ -78324,6 +78903,9 @@ func (m *UserMutation) RemovedEdges() []string {
 	}
 	if m.removedroles != nil {
 		edges = append(edges, user.EdgeRoles)
+	}
+	if m.removedrates_approved != nil {
+		edges = append(edges, user.EdgeRatesApproved)
 	}
 	return edges
 }
@@ -78374,13 +78956,19 @@ func (m *UserMutation) RemovedIDs(name string) []ent.Value {
 			ids = append(ids, id)
 		}
 		return ids
+	case user.EdgeRatesApproved:
+		ids := make([]ent.Value, 0, len(m.removedrates_approved))
+		for id := range m.removedrates_approved {
+			ids = append(ids, id)
+		}
+		return ids
 	}
 	return nil
 }
 
 // ClearedEdges returns all edge names that were cleared in this mutation.
 func (m *UserMutation) ClearedEdges() []string {
-	edges := make([]string, 0, 9)
+	edges := make([]string, 0, 10)
 	if m.clearedbusiness_unit {
 		edges = append(edges, user.EdgeBusinessUnit)
 	}
@@ -78408,6 +78996,9 @@ func (m *UserMutation) ClearedEdges() []string {
 	if m.clearedroles {
 		edges = append(edges, user.EdgeRoles)
 	}
+	if m.clearedrates_approved {
+		edges = append(edges, user.EdgeRatesApproved)
+	}
 	return edges
 }
 
@@ -78433,6 +79024,8 @@ func (m *UserMutation) EdgeCleared(name string) bool {
 		return m.clearedreports
 	case user.EdgeRoles:
 		return m.clearedroles
+	case user.EdgeRatesApproved:
+		return m.clearedrates_approved
 	}
 	return false
 }
@@ -78481,6 +79074,9 @@ func (m *UserMutation) ResetEdge(name string) error {
 		return nil
 	case user.EdgeRoles:
 		m.ResetRoles()
+		return nil
+	case user.EdgeRatesApproved:
+		m.ResetRatesApproved()
 		return nil
 	}
 	return fmt.Errorf("unknown User edge %s", name)

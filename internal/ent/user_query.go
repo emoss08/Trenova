@@ -14,6 +14,7 @@ import (
 	"github.com/emoss08/trenova/internal/ent/businessunit"
 	"github.com/emoss08/trenova/internal/ent/organization"
 	"github.com/emoss08/trenova/internal/ent/predicate"
+	"github.com/emoss08/trenova/internal/ent/rate"
 	"github.com/emoss08/trenova/internal/ent/role"
 	"github.com/emoss08/trenova/internal/ent/shipment"
 	"github.com/emoss08/trenova/internal/ent/shipmentcharges"
@@ -41,6 +42,7 @@ type UserQuery struct {
 	withShipmentCharges        *ShipmentChargesQuery
 	withReports                *UserReportQuery
 	withRoles                  *RoleQuery
+	withRatesApproved          *RateQuery
 	modifiers                  []func(*sql.Selector)
 	withNamedUserFavorites     map[string]*UserFavoriteQuery
 	withNamedUserNotifications map[string]*UserNotificationQuery
@@ -49,6 +51,7 @@ type UserQuery struct {
 	withNamedShipmentCharges   map[string]*ShipmentChargesQuery
 	withNamedReports           map[string]*UserReportQuery
 	withNamedRoles             map[string]*RoleQuery
+	withNamedRatesApproved     map[string]*RateQuery
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
 	path func(context.Context) (*sql.Selector, error)
@@ -283,6 +286,28 @@ func (uq *UserQuery) QueryRoles() *RoleQuery {
 	return query
 }
 
+// QueryRatesApproved chains the current query on the "rates_approved" edge.
+func (uq *UserQuery) QueryRatesApproved() *RateQuery {
+	query := (&RateClient{config: uq.config}).Query()
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := uq.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := uq.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(user.Table, user.FieldID, selector),
+			sqlgraph.To(rate.Table, rate.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, user.RatesApprovedTable, user.RatesApprovedColumn),
+		)
+		fromU = sqlgraph.SetNeighbors(uq.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
+}
+
 // First returns the first User entity from the query.
 // Returns a *NotFoundError when no User was found.
 func (uq *UserQuery) First(ctx context.Context) (*User, error) {
@@ -484,6 +509,7 @@ func (uq *UserQuery) Clone() *UserQuery {
 		withShipmentCharges:   uq.withShipmentCharges.Clone(),
 		withReports:           uq.withReports.Clone(),
 		withRoles:             uq.withRoles.Clone(),
+		withRatesApproved:     uq.withRatesApproved.Clone(),
 		// clone intermediate query.
 		sql:  uq.sql.Clone(),
 		path: uq.path,
@@ -589,6 +615,17 @@ func (uq *UserQuery) WithRoles(opts ...func(*RoleQuery)) *UserQuery {
 	return uq
 }
 
+// WithRatesApproved tells the query-builder to eager-load the nodes that are connected to
+// the "rates_approved" edge. The optional arguments are used to configure the query builder of the edge.
+func (uq *UserQuery) WithRatesApproved(opts ...func(*RateQuery)) *UserQuery {
+	query := (&RateClient{config: uq.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	uq.withRatesApproved = query
+	return uq
+}
+
 // GroupBy is used to group vertices by one or more fields/columns.
 // It is often used with aggregate functions, like: count, max, mean, min, sum.
 //
@@ -667,7 +704,7 @@ func (uq *UserQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*User, e
 	var (
 		nodes       = []*User{}
 		_spec       = uq.querySpec()
-		loadedTypes = [9]bool{
+		loadedTypes = [10]bool{
 			uq.withBusinessUnit != nil,
 			uq.withOrganization != nil,
 			uq.withUserFavorites != nil,
@@ -677,6 +714,7 @@ func (uq *UserQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*User, e
 			uq.withShipmentCharges != nil,
 			uq.withReports != nil,
 			uq.withRoles != nil,
+			uq.withRatesApproved != nil,
 		}
 	)
 	_spec.ScanValues = func(columns []string) ([]any, error) {
@@ -761,6 +799,13 @@ func (uq *UserQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*User, e
 			return nil, err
 		}
 	}
+	if query := uq.withRatesApproved; query != nil {
+		if err := uq.loadRatesApproved(ctx, query, nodes,
+			func(n *User) { n.Edges.RatesApproved = []*Rate{} },
+			func(n *User, e *Rate) { n.Edges.RatesApproved = append(n.Edges.RatesApproved, e) }); err != nil {
+			return nil, err
+		}
+	}
 	for name, query := range uq.withNamedUserFavorites {
 		if err := uq.loadUserFavorites(ctx, query, nodes,
 			func(n *User) { n.appendNamedUserFavorites(name) },
@@ -807,6 +852,13 @@ func (uq *UserQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*User, e
 		if err := uq.loadRoles(ctx, query, nodes,
 			func(n *User) { n.appendNamedRoles(name) },
 			func(n *User, e *Role) { n.appendNamedRoles(name, e) }); err != nil {
+			return nil, err
+		}
+	}
+	for name, query := range uq.withNamedRatesApproved {
+		if err := uq.loadRatesApproved(ctx, query, nodes,
+			func(n *User) { n.appendNamedRatesApproved(name) },
+			func(n *User, e *Rate) { n.appendNamedRatesApproved(name, e) }); err != nil {
 			return nil, err
 		}
 	}
@@ -1115,6 +1167,39 @@ func (uq *UserQuery) loadRoles(ctx context.Context, query *RoleQuery, nodes []*U
 	}
 	return nil
 }
+func (uq *UserQuery) loadRatesApproved(ctx context.Context, query *RateQuery, nodes []*User, init func(*User), assign func(*User, *Rate)) error {
+	fks := make([]driver.Value, 0, len(nodes))
+	nodeids := make(map[uuid.UUID]*User)
+	for i := range nodes {
+		fks = append(fks, nodes[i].ID)
+		nodeids[nodes[i].ID] = nodes[i]
+		if init != nil {
+			init(nodes[i])
+		}
+	}
+	if len(query.ctx.Fields) > 0 {
+		query.ctx.AppendFieldOnce(rate.FieldApprovedByID)
+	}
+	query.Where(predicate.Rate(func(s *sql.Selector) {
+		s.Where(sql.InValues(s.C(user.RatesApprovedColumn), fks...))
+	}))
+	neighbors, err := query.All(ctx)
+	if err != nil {
+		return err
+	}
+	for _, n := range neighbors {
+		fk := n.ApprovedByID
+		if fk == nil {
+			return fmt.Errorf(`foreign-key "approved_by_id" is nil for node %v`, n.ID)
+		}
+		node, ok := nodeids[*fk]
+		if !ok {
+			return fmt.Errorf(`unexpected referenced foreign-key "approved_by_id" returned %v for node %v`, *fk, n.ID)
+		}
+		assign(node, n)
+	}
+	return nil
+}
 
 func (uq *UserQuery) sqlCount(ctx context.Context) (int, error) {
 	_spec := uq.querySpec()
@@ -1310,6 +1395,20 @@ func (uq *UserQuery) WithNamedRoles(name string, opts ...func(*RoleQuery)) *User
 		uq.withNamedRoles = make(map[string]*RoleQuery)
 	}
 	uq.withNamedRoles[name] = query
+	return uq
+}
+
+// WithNamedRatesApproved tells the query-builder to eager-load the nodes that are connected to the "rates_approved"
+// edge with the given name. The optional arguments are used to configure the query builder of the edge.
+func (uq *UserQuery) WithNamedRatesApproved(name string, opts ...func(*RateQuery)) *UserQuery {
+	query := (&RateClient{config: uq.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	if uq.withNamedRatesApproved == nil {
+		uq.withNamedRatesApproved = make(map[string]*RateQuery)
+	}
+	uq.withNamedRatesApproved[name] = query
 	return uq
 }
 
