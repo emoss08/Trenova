@@ -6,10 +6,24 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/api/services/types"
+	"github.com/emoss08/trenova/internal/ent"
 	"github.com/emoss08/trenova/internal/util"
+	"github.com/rs/zerolog"
 )
 
-func (r *QueryService) GetTableColumnsNames(ctx context.Context, tableName string) ([]string, error) {
+type ReportQueryService struct {
+	Client *ent.Client
+	Logger *zerolog.Logger
+}
+
+func NewReportQueryService(c *ent.Client, l *zerolog.Logger) *ReportQueryService {
+	return &ReportQueryService{
+		Client: c,
+		Logger: l,
+	}
+}
+
+func (r *ReportQueryService) GetTableColumnsNames(ctx context.Context, tableName string) ([]string, error) {
 	query := "SELECT column_name FROM information_schema.columns WHERE table_name = $1"
 
 	row, err := r.Client.QueryContext(ctx, query, tableName)
@@ -36,7 +50,7 @@ func (r *QueryService) GetTableColumnsNames(ctx context.Context, tableName strin
 //
 // This function is used to retrieve the column names for a given table name and identify relationships (foreign keys) between the tables.
 // It will exclude any columns that are in the excludedColumns map and any tables that are in the excludedTableNames map.
-func (r *QueryService) GetColumnsAndRelationships(
+func (r *ReportQueryService) GetColumnsAndRelationships(
 	ctx context.Context, tableName string, excludedTableNames map[string]bool, excludedColumns map[string]bool,
 ) ([]types.ColumnValue, []types.Relationship, int, error) {
 	if excludedTableNames[tableName] {
@@ -149,7 +163,7 @@ func (r *QueryService) GetColumnsAndRelationships(
 //
 // This function is used to retrieve the column names for a given table name. It will exclude any columns
 // that are in the excludedColumns map and any tables that are in the excludedTableNames map.
-func (r *QueryService) getColumnsNames(
+func (r *ReportQueryService) getColumnsNames(
 	ctx context.Context, tableName string, excludedTableNames map[string]bool, excludedColumns map[string]bool,
 ) ([]types.ColumnValue, int, error) {
 	if excludedTableNames[tableName] {

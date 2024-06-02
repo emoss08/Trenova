@@ -13,6 +13,7 @@ import (
 	"entgo.io/ent/schema/field"
 	"github.com/emoss08/trenova/internal/ent/organization"
 	"github.com/emoss08/trenova/internal/ent/predicate"
+	"github.com/emoss08/trenova/internal/ent/schema/property"
 	"github.com/emoss08/trenova/internal/ent/tablechangealert"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgtype"
@@ -74,15 +75,15 @@ func (tcau *TableChangeAlertUpdate) AddVersion(i int) *TableChangeAlertUpdate {
 }
 
 // SetStatus sets the "status" field.
-func (tcau *TableChangeAlertUpdate) SetStatus(t tablechangealert.Status) *TableChangeAlertUpdate {
-	tcau.mutation.SetStatus(t)
+func (tcau *TableChangeAlertUpdate) SetStatus(pr property.Status) *TableChangeAlertUpdate {
+	tcau.mutation.SetStatus(pr)
 	return tcau
 }
 
 // SetNillableStatus sets the "status" field if the given value is not nil.
-func (tcau *TableChangeAlertUpdate) SetNillableStatus(t *tablechangealert.Status) *TableChangeAlertUpdate {
-	if t != nil {
-		tcau.SetStatus(*t)
+func (tcau *TableChangeAlertUpdate) SetNillableStatus(pr *property.Status) *TableChangeAlertUpdate {
+	if pr != nil {
+		tcau.SetStatus(*pr)
 	}
 	return tcau
 }
@@ -508,15 +509,15 @@ func (tcauo *TableChangeAlertUpdateOne) AddVersion(i int) *TableChangeAlertUpdat
 }
 
 // SetStatus sets the "status" field.
-func (tcauo *TableChangeAlertUpdateOne) SetStatus(t tablechangealert.Status) *TableChangeAlertUpdateOne {
-	tcauo.mutation.SetStatus(t)
+func (tcauo *TableChangeAlertUpdateOne) SetStatus(pr property.Status) *TableChangeAlertUpdateOne {
+	tcauo.mutation.SetStatus(pr)
 	return tcauo
 }
 
 // SetNillableStatus sets the "status" field if the given value is not nil.
-func (tcauo *TableChangeAlertUpdateOne) SetNillableStatus(t *tablechangealert.Status) *TableChangeAlertUpdateOne {
-	if t != nil {
-		tcauo.SetStatus(*t)
+func (tcauo *TableChangeAlertUpdateOne) SetNillableStatus(pr *property.Status) *TableChangeAlertUpdateOne {
+	if pr != nil {
+		tcauo.SetStatus(*pr)
 	}
 	return tcauo
 }

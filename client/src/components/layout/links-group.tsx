@@ -26,14 +26,14 @@ export const ListItem = React.forwardRef<
         ref={ref}
         to={to}
         className={cn(
-          "block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent/70 hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground",
+          "max-h-[100px] block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent/70 hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground",
           location.pathname === to && "bg-accent text-accent-foreground",
           className,
         )}
         {...props}
       >
         <div className="text-sm font-medium leading-none">{title}</div>
-        <p className="text-muted-foreground line-clamp-2 text-xs leading-snug">
+        <p className="text-muted-foreground line-clamp-3 text-xs leading-snug">
           {children}
         </p>
       </Link>

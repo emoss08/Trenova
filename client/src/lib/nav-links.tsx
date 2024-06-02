@@ -239,8 +239,8 @@ export const shipmentNavLinks = [
       {
         key: "shipmentManagement",
         label: "Shipment Management",
-        link: "/shipment-management/",
-        permission: "view_shipment",
+        link: "/shipments/shipment-management/",
+        permission: "shipment.view",
         description:
           "This module provides comprehensive tools for managing all aspects of shipments, including scheduling, tracking, and status updates. It's designed to streamline the shipment lifecycle from origin to destination, ensuring timely and efficient delivery.",
         icon: <FontAwesomeIcon icon={faTruck} className="size-4" />,
@@ -264,7 +264,7 @@ export const shipmentNavLinks = [
           {
             key: "shipmentTypes",
             label: "Shipment Types",
-            link: "/shipment-management/shipment-types/",
+            link: "/shipments/shipment-types/",
             permission: "view_shipmenttype",
             description:
               "Categorize shipments into distinct types for better management and tracking. This helps in tailoring operations to the specific requirements of different shipment categories.",
@@ -272,7 +272,7 @@ export const shipmentNavLinks = [
           {
             key: "serviceTypes",
             label: "Service Types",
-            link: "/shipment-management/service-types/",
+            link: "/shipments/service-types/",
             permission: "view_servicetype",
             description:
               "Define and manage various service types offered in the shipping process. Facilitates customized service offerings and helps in aligning services with customer needs.",
@@ -280,7 +280,7 @@ export const shipmentNavLinks = [
           {
             key: "qualifierCodes",
             label: "Qualifier Codes",
-            link: "/shipment-management/qualifier-codes/",
+            link: "/shipments/qualifier-codes/",
             permission: "view_qualifiercode",
             description:
               "Manage codes that qualify different aspects of shipments. These codes are crucial for detailed categorization and analysis of shipment attributes.",
@@ -288,7 +288,7 @@ export const shipmentNavLinks = [
           {
             key: "commodityCodes",
             label: "Commodity Codes",
-            link: "/shipment-management/commodity-codes/",
+            link: "/shipments/commodity-codes/",
             permission: "view_commodity",
             description:
               "Categorize shipments based on the type of commodities being transported. This classification system helps in streamlining shipment operations and optimizing routes.",
@@ -296,7 +296,7 @@ export const shipmentNavLinks = [
           {
             key: "hazardousMaterials",
             label: "Hazardous Materials",
-            link: "/shipment-management/hazardous-materials/",
+            link: "/shipments/hazardous-materials/",
             permission: "view_hazardousmaterial",
             description:
               "Manage and categorize shipments containing hazardous materials. This section includes detailed information and specific guidelines for handling hazardous materials.",
@@ -304,7 +304,7 @@ export const shipmentNavLinks = [
           {
             key: "reasonCodes",
             label: "Reason Codes",
-            link: "/shipment-management/reason-codes/",
+            link: "/shipments/reason-codes/",
             permission: "view_reasoncode",
             description:
               "Categorize and document different reasons related to shipment processes, such as delays or modifications. Essential for analyzing operational challenges and implementing improvements.",

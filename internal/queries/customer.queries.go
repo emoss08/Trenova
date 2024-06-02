@@ -83,7 +83,9 @@ func (r *QueryService) GetCustomers(ctx context.Context, limit, offset int, orgI
 // Returns:
 //   - *ent.Customer: A pointer to the newly created Customer entity.
 //   - error: An error object that indicates why the creation failed, nil if no error occurred.
-func (r *QueryService) CreateCustomerEntity(ctx context.Context, tx *ent.Tx, entity *types.CustomerRequest) (*ent.Customer, error) {
+func (r *QueryService) CreateCustomerEntity(
+	ctx context.Context, tx *ent.Tx, entity *types.CustomerRequest,
+) (*ent.Customer, error) {
 	createdEntity, err := tx.Customer.Create().
 		SetOrganizationID(entity.OrganizationID).
 		SetBusinessUnitID(entity.BusinessUnitID).

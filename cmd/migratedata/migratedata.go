@@ -20,6 +20,7 @@ import (
 	"github.com/emoss08/trenova/internal/ent/generalledgeraccount"
 	"github.com/emoss08/trenova/internal/ent/organization"
 	"github.com/emoss08/trenova/internal/ent/organizationfeatureflag"
+	"github.com/emoss08/trenova/internal/ent/rate"
 	"github.com/emoss08/trenova/internal/ent/resource"
 	"github.com/emoss08/trenova/internal/ent/revenuecode"
 	"github.com/emoss08/trenova/internal/ent/role"
@@ -1252,5 +1253,85 @@ func SeedTableChangeAlerts(
 			SetCustomSubject("Customer Created").
 			Exec(ctx)
 	}
+	return err
+}
+
+func SeedRates(ctx context.Context, client *ent.Client, org *ent.Organization, bu *ent.BusinessUnit) error {
+	// Check if the organization already has rates.
+	rateCount, err := client.Rate.Query().
+		Where(
+			rate.HasOrganizationWith(organization.ID(org.ID)),
+		).Count(ctx)
+
+	// if not, create the rates
+	if rateCount == 0 {
+		// Get the first customer in the organization
+		customer, cerr := client.Customer.Query().
+			Where(
+				customer.HasOrganizationWith(organization.ID(org.ID)),
+			).First(ctx)
+		if cerr != nil {
+			log.Panicf("Failed querying customer: %v", cerr)
+			return cerr
+		}
+
+		err = client.Rate.CreateBulk(
+			client.Rate.Create().
+				SetBusinessUnit(bu).
+				SetOrganization(org).
+				SetCustomer(customer).
+				SetRateAmount(100),
+			client.Rate.Create().
+				SetBusinessUnit(bu).
+				SetOrganization(org).
+				SetCustomer(customer).
+				SetRateAmount(100),
+			client.Rate.Create().
+				SetBusinessUnit(bu).
+				SetOrganization(org).
+				SetCustomer(customer).
+				SetRateAmount(100),
+			client.Rate.Create().
+				SetBusinessUnit(bu).
+				SetOrganization(org).
+				SetCustomer(customer).
+				SetRateAmount(100),
+			client.Rate.Create().
+				SetBusinessUnit(bu).
+				SetOrganization(org).
+				SetCustomer(customer).
+				SetRateAmount(100),
+			client.Rate.Create().
+				SetBusinessUnit(bu).
+				SetOrganization(org).
+				SetCustomer(customer).
+				SetRateAmount(100),
+			client.Rate.Create().
+				SetBusinessUnit(bu).
+				SetOrganization(org).
+				SetCustomer(customer).
+				SetRateAmount(100),
+			client.Rate.Create().
+				SetBusinessUnit(bu).
+				SetOrganization(org).
+				SetCustomer(customer).
+				SetRateAmount(100),
+			client.Rate.Create().
+				SetBusinessUnit(bu).
+				SetOrganization(org).
+				SetCustomer(customer).
+				SetRateAmount(100),
+			client.Rate.Create().
+				SetBusinessUnit(bu).
+				SetOrganization(org).
+				SetCustomer(customer).
+				SetRateAmount(100),
+		).Exec(ctx)
+		if err != nil {
+			log.Panicf("Failed creating rates: %v", err)
+			return err
+		}
+	}
+
 	return err
 }

@@ -12,6 +12,7 @@ import (
 	"entgo.io/ent/schema/field"
 	"github.com/emoss08/trenova/internal/ent/businessunit"
 	"github.com/emoss08/trenova/internal/ent/organization"
+	"github.com/emoss08/trenova/internal/ent/schema/property"
 	"github.com/emoss08/trenova/internal/ent/tablechangealert"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgtype"
@@ -79,15 +80,15 @@ func (tcac *TableChangeAlertCreate) SetNillableVersion(i *int) *TableChangeAlert
 }
 
 // SetStatus sets the "status" field.
-func (tcac *TableChangeAlertCreate) SetStatus(t tablechangealert.Status) *TableChangeAlertCreate {
-	tcac.mutation.SetStatus(t)
+func (tcac *TableChangeAlertCreate) SetStatus(pr property.Status) *TableChangeAlertCreate {
+	tcac.mutation.SetStatus(pr)
 	return tcac
 }
 
 // SetNillableStatus sets the "status" field if the given value is not nil.
-func (tcac *TableChangeAlertCreate) SetNillableStatus(t *tablechangealert.Status) *TableChangeAlertCreate {
-	if t != nil {
-		tcac.SetStatus(*t)
+func (tcac *TableChangeAlertCreate) SetNillableStatus(pr *property.Status) *TableChangeAlertCreate {
+	if pr != nil {
+		tcac.SetStatus(*pr)
 	}
 	return tcac
 }

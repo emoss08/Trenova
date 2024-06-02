@@ -5,6 +5,7 @@ import type {
   SeverityChoiceProps,
 } from "@/lib/choices";
 import { type StatusChoiceProps } from "@/types/index";
+import { Customer } from "./customer";
 import { type BaseModel } from "./organization";
 
 export interface DispatchControl extends BaseModel {
@@ -95,40 +96,28 @@ export type CommentTypeFormValues = Omit<
 
 export interface Rate extends BaseModel {
   id: string;
-  isActive: boolean;
+  status: StatusChoiceProps;
   rateNumber: string;
-  customer?: string | null;
+  customerId?: string | null;
   effectiveDate: string;
   expirationDate: string;
-  commodity?: string | null;
-  orderType?: string | null;
-  equipmentType?: string | null;
-  originLocation?: string | null;
-  destinationLocation?: string | null;
+  commodityId?: string | null;
+  shipmentTypeId?: string | null;
+  // equipmentType?: string | null;
+  originLocationId?: string | null;
+  destinationLocationId?: string | null;
   rateMethod: RatingMethodChoiceProps;
   rateAmount: number;
-  distanceOverride?: number | null;
   comments?: string | null;
-  rateBillingTables?: Array<RateBillingTable> | null;
+  approvedById?: string | null;
+  approvedDate?: string;
+  usage_count?: number;
+  minimumCharge?: number;
+  maximumCharge?: number;
+  edges?: {
+    customer: Customer;
+  };
 }
-
-export const rateFields: ReadonlyArray<keyof RateFormValues> = [
-  "isActive",
-  "rateNumber",
-  "customer",
-  "effectiveDate",
-  "expirationDate",
-  "effectiveDate",
-  "commodity",
-  "orderType",
-  "equipmentType",
-  "originLocation",
-  "destinationLocation",
-  "rateMethod",
-  "rateAmount",
-  "distanceOverride",
-  "comments",
-];
 
 export interface RateBillingTable extends BaseModel {
   id: string;

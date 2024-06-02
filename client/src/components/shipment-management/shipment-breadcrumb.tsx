@@ -4,6 +4,7 @@ import { upperFirst } from "@/lib/utils";
 import { useShipmentStore } from "@/stores/ShipmentStore";
 import { EllipsisVerticalIcon } from "lucide-react";
 import { useCallback, useEffect } from "react";
+import { FavoriteIcon } from "../layout/user-favorite";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -74,8 +75,9 @@ export function ShipmentBreadcrumb() {
   return (
     <div className="flex justify-between pb-4 pt-5 md:py-4">
       <div>
-        <h2 className="mt-10 scroll-m-20 pb-2 text-xl font-semibold tracking-tight transition-colors first:mt-0">
+        <h2 className="mt-10 flex scroll-m-20 items-center pb-2 text-xl font-semibold tracking-tight transition-colors first:mt-0">
           Shipment Management
+          <FavoriteIcon />
         </h2>
         <div className="flex items-center">
           <a className="text-muted-foreground hover:text-muted-foreground/80 text-sm font-medium">

@@ -109,7 +109,7 @@ export function GeneralInformationCard({
             placeholder={t("card.generalInfo.fields.shipmentType.placeholder")}
             description={t("card.generalInfo.fields.shipmentType.description")}
             hasPopoutWindow
-            popoutLink="/shipment-management/shipment-types/"
+            popoutLink="/shipments/shipment-types/"
             isClearable
             popoutLinkLabel="Shipment Type"
           />
@@ -124,7 +124,7 @@ export function GeneralInformationCard({
             label={t("card.generalInfo.fields.serviceType.label")}
             placeholder={t("card.generalInfo.fields.serviceType.placeholder")}
             description={t("card.generalInfo.fields.serviceType.description")}
-            popoutLink="/shipment-management/service-types/"
+            popoutLink="/shipments/service-types/"
             hasPopoutWindow
             popoutLinkLabel="Service Type"
           />

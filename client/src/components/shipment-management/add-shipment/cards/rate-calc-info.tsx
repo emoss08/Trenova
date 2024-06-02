@@ -33,8 +33,8 @@ export default function RateCalcInformation() {
   const ratingMethodValue = watch("rateMethod");
 
   return (
-    <div className="rounded-md border border-border bg-card">
-      <div className="flex justify-center rounded-t-md border-b border-border bg-background p-2">
+    <div className="border-border bg-card rounded-md border">
+      <div className="border-border bg-background flex justify-center rounded-t-md border-b p-2">
         <TitleWithTooltip
           title={t("card.rateCalcInfo.label")}
           tooltip={t("card.rateCalcInfo.description")}
@@ -99,7 +99,7 @@ export default function RateCalcInformation() {
               description={t(
                 "card.rateCalcInfo.fields.formulaTemplate.description",
               )}
-              popoutLink="/shipment-management/formula-templates/"
+              popoutLink="/shipments/formula-templates/"
               hasPopoutWindow
               popoutLinkLabel="Formula Template"
             />

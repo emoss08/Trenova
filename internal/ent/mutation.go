@@ -57,6 +57,7 @@ import (
 	"github.com/emoss08/trenova/internal/ent/revenuecode"
 	"github.com/emoss08/trenova/internal/ent/role"
 	"github.com/emoss08/trenova/internal/ent/routecontrol"
+	"github.com/emoss08/trenova/internal/ent/schema/property"
 	"github.com/emoss08/trenova/internal/ent/servicetype"
 	"github.com/emoss08/trenova/internal/ent/session"
 	"github.com/emoss08/trenova/internal/ent/shipment"
@@ -47850,7 +47851,7 @@ func (m *RateMutation) MinimumCharge() (r float64, exists bool) {
 // OldMinimumCharge returns the old "minimum_charge" field's value of the Rate entity.
 // If the Rate object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *RateMutation) OldMinimumCharge(ctx context.Context) (v *float64, err error) {
+func (m *RateMutation) OldMinimumCharge(ctx context.Context) (v float64, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldMinimumCharge is only allowed on UpdateOne operations")
 	}
@@ -47920,7 +47921,7 @@ func (m *RateMutation) MaximumCharge() (r float64, exists bool) {
 // OldMaximumCharge returns the old "maximum_charge" field's value of the Rate entity.
 // If the Rate object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *RateMutation) OldMaximumCharge(ctx context.Context) (v *float64, err error) {
+func (m *RateMutation) OldMaximumCharge(ctx context.Context) (v float64, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldMaximumCharge is only allowed on UpdateOne operations")
 	}
@@ -70206,7 +70207,7 @@ type TableChangeAlertMutation struct {
 	updated_at           *time.Time
 	version              *int
 	addversion           *int
-	status               *tablechangealert.Status
+	status               *property.Status
 	name                 *string
 	database_action      *tablechangealert.DatabaseAction
 	topic_name           *string
@@ -70532,12 +70533,12 @@ func (m *TableChangeAlertMutation) ResetVersion() {
 }
 
 // SetStatus sets the "status" field.
-func (m *TableChangeAlertMutation) SetStatus(t tablechangealert.Status) {
-	m.status = &t
+func (m *TableChangeAlertMutation) SetStatus(pr property.Status) {
+	m.status = &pr
 }
 
 // Status returns the value of the "status" field in the mutation.
-func (m *TableChangeAlertMutation) Status() (r tablechangealert.Status, exists bool) {
+func (m *TableChangeAlertMutation) Status() (r property.Status, exists bool) {
 	v := m.status
 	if v == nil {
 		return
@@ -70548,7 +70549,7 @@ func (m *TableChangeAlertMutation) Status() (r tablechangealert.Status, exists b
 // OldStatus returns the old "status" field's value of the TableChangeAlert entity.
 // If the TableChangeAlert object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *TableChangeAlertMutation) OldStatus(ctx context.Context) (v tablechangealert.Status, err error) {
+func (m *TableChangeAlertMutation) OldStatus(ctx context.Context) (v property.Status, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldStatus is only allowed on UpdateOne operations")
 	}
@@ -71281,7 +71282,7 @@ func (m *TableChangeAlertMutation) SetField(name string, value ent.Value) error 
 		m.SetVersion(v)
 		return nil
 	case tablechangealert.FieldStatus:
-		v, ok := value.(tablechangealert.Status)
+		v, ok := value.(property.Status)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}

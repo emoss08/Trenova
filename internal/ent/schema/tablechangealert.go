@@ -9,6 +9,7 @@ import (
 	gen "github.com/emoss08/trenova/internal/ent"
 
 	"github.com/emoss08/trenova/internal/ent/hook"
+	"github.com/emoss08/trenova/internal/ent/schema/property"
 
 	"github.com/emoss08/trenova/internal/validators"
 	"github.com/jackc/pgx/v5/pgtype"
@@ -23,8 +24,8 @@ type TableChangeAlert struct {
 func (TableChangeAlert) Fields() []ent.Field {
 	return []ent.Field{
 		field.Enum("status").
-			Values("A", "I").
-			Default("A").
+			GoType(property.Status("")).
+			Default(property.StatusActive.String()).
 			StructTag(`json:"status" validate:"required,oneof=A I"`),
 		field.String("name").
 			MaxLen(50).

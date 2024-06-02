@@ -14,7 +14,7 @@ import {
 } from "@radix-ui/react-icons";
 import { VariantProps } from "class-variance-authority";
 import { AlertCircleIcon } from "lucide-react";
-import React from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Badge, badgeVariants } from "../ui/badge";
 import { Button } from "../ui/button";
@@ -43,7 +43,6 @@ const prepareRouteGroups = (routeList: typeof routes) => {
         acc[route.group] = [];
       }
       acc[route.group].push(route);
-
       return acc;
     },
     {} as Record<string, typeof routes>,
@@ -103,16 +102,15 @@ export function SiteSearchInput() {
     </TooltipProvider>
   );
 }
-
 export function SiteSearch() {
   const navigate = useNavigate();
   const { isAuthenticated, userHasPermission } = useUserPermissions();
   const [open, setOpen] = useHeaderStore.use("searchDialogOpen");
-  const [searchText, setSearchText] = React.useState<string>("");
+  const [searchText, setSearchText] = useState<string>("");
   const { data: userFavorites } = useUserFavorites();
   const { setTheme } = useTheme();
 
-  React.useEffect(() => {
+  useEffect(() => {
     const down = (e: KeyboardEvent) => {
       if ((e.key === "k" && (e.metaKey || e.ctrlKey)) || e.key === "/") {
         if (
@@ -123,17 +121,15 @@ export function SiteSearch() {
         ) {
           return;
         }
-
         e.preventDefault();
         setOpen((open) => !open);
       }
     };
-
     document.addEventListener("keydown", down);
     return () => document.removeEventListener("keydown", down);
   }, [setOpen]);
 
-  const runCommand = React.useCallback(
+  const runCommand = useCallback(
     (command: () => unknown) => {
       setOpen(false);
       command();
@@ -154,7 +150,6 @@ export function SiteSearch() {
     return isAuthenticated;
   });
 
-  // Partitioning routes into favorite and other routes
   const favoriteRoutes = filteredRoutes.filter((route) =>
     favoritePaths.has(route.path),
   );
@@ -162,23 +157,22 @@ export function SiteSearch() {
     (route) => !favoritePaths.has(route.path),
   );
 
-  const groupedRoutes = prepareRouteGroups(otherRoutes); // Prepare groups only for non-favorite routes
+  const groupedRoutes = prepareRouteGroups(otherRoutes);
 
-  // Prepare favorite commands for rendering
-  const favoriteCommands = favoriteRoutes.filter((route) =>
-    route.title.toLowerCase().includes(searchText.toLowerCase()),
-  );
+  const filterRoutes = (routes: typeof filteredRoutes, searchText: string) => {
+    return routes.filter((route) =>
+      route.title.toLowerCase().includes(searchText.toLowerCase()),
+    );
+  };
+
+  const favoriteCommands = filterRoutes(favoriteRoutes, searchText);
 
   const filteredGroups = Object.entries(groupedRoutes).reduce(
     (acc, [group, groupRoutes]) => {
-      const filtered = groupRoutes.filter((route) =>
-        route.title.toLowerCase().includes(searchText.toLowerCase()),
-      );
-
+      const filtered = filterRoutes(groupRoutes, searchText);
       if (filtered.length) {
         acc[group] = filtered;
       }
-
       return acc;
     },
     {} as Record<string, RouteObjectWithPermission[]>,
@@ -207,15 +201,19 @@ export function SiteSearch() {
     return variant ? variant[group] : "default";
   };
 
-  // Upper case the first letter of the group name
   const upperFirstGroup = (group: string) => upperFirst(group);
+
+  const handleSearchChange = (value: string) => {
+    setSearchText(value);
+    console.info("Search value: ", value);
+  };
 
   return (
     <CommandDialog open={open} onOpenChange={handleDialogOpenChange}>
       <CommandInput
         placeholder="What do you need?"
         value={searchText}
-        onValueChange={setSearchText}
+        onValueChange={handleSearchChange}
       />
       <CommandList>
         {favoriteCommands.length > 0 && (

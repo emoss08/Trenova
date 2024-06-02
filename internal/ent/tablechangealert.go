@@ -12,6 +12,7 @@ import (
 	"entgo.io/ent/dialect/sql"
 	"github.com/emoss08/trenova/internal/ent/businessunit"
 	"github.com/emoss08/trenova/internal/ent/organization"
+	"github.com/emoss08/trenova/internal/ent/schema/property"
 	"github.com/emoss08/trenova/internal/ent/tablechangealert"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgtype"
@@ -33,7 +34,7 @@ type TableChangeAlert struct {
 	// The current version of this entity.
 	Version int `json:"version" validate:"omitempty"`
 	// Status holds the value of the "status" field.
-	Status tablechangealert.Status `json:"status" validate:"required,oneof=A I"`
+	Status property.Status `json:"status" validate:"required,oneof=A I"`
 	// Name holds the value of the "name" field.
 	Name string `json:"name" validate:"required,max=50"`
 	// DatabaseAction holds the value of the "database_action" field.
@@ -102,9 +103,11 @@ func (*TableChangeAlert) scanValues(columns []string) ([]any, error) {
 			values[i] = &sql.NullScanner{S: new(pgtype.Date)}
 		case tablechangealert.FieldConditionalLogic:
 			values[i] = new([]byte)
+		case tablechangealert.FieldStatus:
+			values[i] = new(property.Status)
 		case tablechangealert.FieldVersion:
 			values[i] = new(sql.NullInt64)
-		case tablechangealert.FieldStatus, tablechangealert.FieldName, tablechangealert.FieldDatabaseAction, tablechangealert.FieldTopicName, tablechangealert.FieldDescription, tablechangealert.FieldCustomSubject, tablechangealert.FieldDeliveryMethod, tablechangealert.FieldEmailRecipients:
+		case tablechangealert.FieldName, tablechangealert.FieldDatabaseAction, tablechangealert.FieldTopicName, tablechangealert.FieldDescription, tablechangealert.FieldCustomSubject, tablechangealert.FieldDeliveryMethod, tablechangealert.FieldEmailRecipients:
 			values[i] = new(sql.NullString)
 		case tablechangealert.FieldCreatedAt, tablechangealert.FieldUpdatedAt:
 			values[i] = new(sql.NullTime)
@@ -162,10 +165,10 @@ func (tca *TableChangeAlert) assignValues(columns []string, values []any) error 
 				tca.Version = int(value.Int64)
 			}
 		case tablechangealert.FieldStatus:
-			if value, ok := values[i].(*sql.NullString); !ok {
+			if value, ok := values[i].(*property.Status); !ok {
 				return fmt.Errorf("unexpected type %T for field status", values[i])
-			} else if value.Valid {
-				tca.Status = tablechangealert.Status(value.String)
+			} else if value != nil {
+				tca.Status = *value
 			}
 		case tablechangealert.FieldName:
 			if value, ok := values[i].(*sql.NullString); !ok {

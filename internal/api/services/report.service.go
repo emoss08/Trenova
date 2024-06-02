@@ -20,7 +20,7 @@ type ReportService struct {
 	Client       *ent.Client
 	Logger       *zerolog.Logger
 	Config       *config.Server
-	QueryService *queries.QueryService // QueryService provides methods for querying the database.
+	QueryService *queries.ReportQueryService // ReportQueryService provides methods for querying the database.
 }
 
 // NewReportService creates a new report service.
@@ -29,7 +29,7 @@ func NewReportService(s *api.Server) *ReportService {
 		Client: s.Client,
 		Logger: s.Logger,
 		Config: &s.Config,
-		QueryService: &queries.QueryService{
+		QueryService: &queries.ReportQueryService{
 			Client: s.Client,
 			Logger: s.Logger,
 		},

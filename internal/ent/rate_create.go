@@ -334,7 +334,9 @@ func (rc *RateCreate) Mutation() *RateMutation {
 
 // Save creates the Rate in the database.
 func (rc *RateCreate) Save(ctx context.Context) (*Rate, error) {
-	rc.defaults()
+	if err := rc.defaults(); err != nil {
+		return nil, err
+	}
 	return withHooks(ctx, rc.sqlSave, rc.mutation, rc.hooks)
 }
 
@@ -361,12 +363,18 @@ func (rc *RateCreate) ExecX(ctx context.Context) {
 }
 
 // defaults sets the default values of the builder before save.
-func (rc *RateCreate) defaults() {
+func (rc *RateCreate) defaults() error {
 	if _, ok := rc.mutation.CreatedAt(); !ok {
+		if rate.DefaultCreatedAt == nil {
+			return fmt.Errorf("ent: uninitialized rate.DefaultCreatedAt (forgotten import ent/runtime?)")
+		}
 		v := rate.DefaultCreatedAt()
 		rc.mutation.SetCreatedAt(v)
 	}
 	if _, ok := rc.mutation.UpdatedAt(); !ok {
+		if rate.DefaultUpdatedAt == nil {
+			return fmt.Errorf("ent: uninitialized rate.DefaultUpdatedAt (forgotten import ent/runtime?)")
+		}
 		v := rate.DefaultUpdatedAt()
 		rc.mutation.SetUpdatedAt(v)
 	}
@@ -387,9 +395,13 @@ func (rc *RateCreate) defaults() {
 		rc.mutation.SetUsageCount(v)
 	}
 	if _, ok := rc.mutation.ID(); !ok {
+		if rate.DefaultID == nil {
+			return fmt.Errorf("ent: uninitialized rate.DefaultID (forgotten import ent/runtime?)")
+		}
 		v := rate.DefaultID()
 		rc.mutation.SetID(v)
 	}
+	return nil
 }
 
 // check runs all checks and user-defined validators on the builder.
@@ -538,11 +550,11 @@ func (rc *RateCreate) createSpec() (*Rate, *sqlgraph.CreateSpec) {
 	}
 	if value, ok := rc.mutation.MinimumCharge(); ok {
 		_spec.SetField(rate.FieldMinimumCharge, field.TypeFloat64, value)
-		_node.MinimumCharge = &value
+		_node.MinimumCharge = value
 	}
 	if value, ok := rc.mutation.MaximumCharge(); ok {
 		_spec.SetField(rate.FieldMaximumCharge, field.TypeFloat64, value)
-		_node.MaximumCharge = &value
+		_node.MaximumCharge = value
 	}
 	if nodes := rc.mutation.BusinessUnitIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{

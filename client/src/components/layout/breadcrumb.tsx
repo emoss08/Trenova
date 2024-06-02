@@ -34,7 +34,6 @@ const useDocumentTitle = (currentRoute: any) => {
   }, [currentRoute]);
 };
 
-export { useDocumentTitle, useRouteMatching };
 export function Breadcrumb({ children }: { children?: React.ReactNode }) {
   const [currentRoute, setCurrentRoute] =
     useBreadcrumbStore.use("currentRoute");
@@ -44,16 +43,10 @@ export function Breadcrumb({ children }: { children?: React.ReactNode }) {
   useDocumentTitle(currentRoute);
 
   const isExcludedPath = useMemo(() => {
-    const excludedPaths = [
-      "/shipment-management",
-      "/dispatch/rate-management/",
-    ];
+    const excludedPaths = ["/shipments/shipment-management/"];
 
     return currentRoute && excludedPaths.includes(currentRoute.path);
   }, [currentRoute]);
-
-  console.info("isExcludedPath", isExcludedPath);
-  console.info("Current Route", currentRoute?.path);
 
   // Construct breadcrumb text
   const breadcrumbText = useMemo(() => {

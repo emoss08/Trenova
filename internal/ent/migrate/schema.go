@@ -1588,7 +1588,7 @@ var (
 		{Name: "updated_at", Type: field.TypeTime, Comment: "The last time that this entity was updated."},
 		{Name: "version", Type: field.TypeInt, Comment: "The current version of this entity.", Default: 1},
 		{Name: "status", Type: field.TypeEnum, Enums: []string{"A", "I"}, Default: "A", SchemaType: map[string]string{"postgres": "VARCHAR(1)", "sqlite3": "VARCHAR(1)"}},
-		{Name: "rate_number", Type: field.TypeString, Size: 10, SchemaType: map[string]string{"postgres": "VARCHAR(10)", "sqlite3": "VARCHAR(10)"}},
+		{Name: "rate_number", Type: field.TypeString, Size: 22, SchemaType: map[string]string{"postgres": "VARCHAR(22)", "sqlite3": "VARCHAR(22)"}},
 		{Name: "effective_date", Type: field.TypeOther, Nullable: true, SchemaType: map[string]string{"postgres": "date", "sqlite3": "date"}},
 		{Name: "expiration_date", Type: field.TypeOther, Nullable: true, SchemaType: map[string]string{"postgres": "date", "sqlite3": "date"}},
 		{Name: "rating_method", Type: field.TypeEnum, Enums: []string{"FlatRate", "PerMile", "PerHundredWeight", "PerStop", "PerPound", "Other"}, Default: "FlatRate"},

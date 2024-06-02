@@ -39,7 +39,7 @@ type Rate struct {
 	// Status holds the value of the "status" field.
 	Status rate.Status `json:"status" validate:"required,oneof=A I"`
 	// RateNumber holds the value of the "rate_number" field.
-	RateNumber string `json:"rate_number" validate:"omitempty"`
+	RateNumber string `json:"rateNumber" validate:"omitempty"`
 	// CustomerID holds the value of the "customer_id" field.
 	CustomerID uuid.UUID `json:"customerId" validate:"required"`
 	// EffectiveDate holds the value of the "effective_date" field.
@@ -61,15 +61,15 @@ type Rate struct {
 	// Comment holds the value of the "comment" field.
 	Comment string `json:"comment" validate:"omitempty"`
 	// ApprovedByID holds the value of the "approved_by_id" field.
-	ApprovedByID *uuid.UUID `json:"approvedBy" validate:"omitempty"`
+	ApprovedByID *uuid.UUID `json:"approvedById" validate:"omitempty"`
 	// ApprovedDate holds the value of the "approved_date" field.
 	ApprovedDate *pgtype.Date `json:"approvedDate"`
 	// UsageCount holds the value of the "usage_count" field.
 	UsageCount int `json:"usageCount" validate:"omitempty"`
 	// MinimumCharge holds the value of the "minimum_charge" field.
-	MinimumCharge *float64 `json:"minimumCharge" validate:"omitempty"`
+	MinimumCharge float64 `json:"minimumCharge" validate:"omitempty"`
 	// MaximumCharge holds the value of the "maximum_charge" field.
-	MaximumCharge *float64 `json:"maximumCharge" validate:"omitempty"`
+	MaximumCharge float64 `json:"maximumCharge" validate:"omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
 	// The values are being populated by the RateQuery when eager-loading is set.
 	Edges        RateEdges `json:"edges"`
@@ -356,15 +356,13 @@ func (r *Rate) assignValues(columns []string, values []any) error {
 			if value, ok := values[i].(*sql.NullFloat64); !ok {
 				return fmt.Errorf("unexpected type %T for field minimum_charge", values[i])
 			} else if value.Valid {
-				r.MinimumCharge = new(float64)
-				*r.MinimumCharge = value.Float64
+				r.MinimumCharge = value.Float64
 			}
 		case rate.FieldMaximumCharge:
 			if value, ok := values[i].(*sql.NullFloat64); !ok {
 				return fmt.Errorf("unexpected type %T for field maximum_charge", values[i])
 			} else if value.Valid {
-				r.MaximumCharge = new(float64)
-				*r.MaximumCharge = value.Float64
+				r.MaximumCharge = value.Float64
 			}
 		default:
 			r.selectValues.Set(columns[i], values[i])
@@ -518,15 +516,11 @@ func (r *Rate) String() string {
 	builder.WriteString("usage_count=")
 	builder.WriteString(fmt.Sprintf("%v", r.UsageCount))
 	builder.WriteString(", ")
-	if v := r.MinimumCharge; v != nil {
-		builder.WriteString("minimum_charge=")
-		builder.WriteString(fmt.Sprintf("%v", *v))
-	}
+	builder.WriteString("minimum_charge=")
+	builder.WriteString(fmt.Sprintf("%v", r.MinimumCharge))
 	builder.WriteString(", ")
-	if v := r.MaximumCharge; v != nil {
-		builder.WriteString("maximum_charge=")
-		builder.WriteString(fmt.Sprintf("%v", *v))
-	}
+	builder.WriteString("maximum_charge=")
+	builder.WriteString(fmt.Sprintf("%v", r.MaximumCharge))
 	builder.WriteByte(')')
 	return builder.String()
 }

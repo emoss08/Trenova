@@ -531,14 +531,20 @@ export const sourceChoices = [
 ] satisfies ReadonlyArray<IChoiceProps<SourceChoicesProps>>;
 
 /** Type for RatingMethodW for Shipment */
-export type RatingMethodChoiceProps = "F" | "PM" | "PS" | "PP" | "O";
+export type RatingMethodChoiceProps =
+  | "FlatRate"
+  | "PerMile"
+  | "PerHundredWeight"
+  | "PerStop"
+  | "PerPound"
+  | "Other";
 
 export const ratingMethodChoices = [
-  { value: "F", label: "Flat" },
-  { value: "PM", label: "Per Mile" },
-  { value: "PS", label: "Per Stop" },
-  { value: "PP", label: "Per Pound" },
-  { value: "O", label: "Other" },
+  { value: "FlatRate", label: "Flat" },
+  { value: "PerMile", label: "Per Mile" },
+  { value: "PerHundredWeight", label: "Per Stop" },
+  { value: "PerStop", label: "Per Pound" },
+  { value: "Other", label: "Other" },
 ] satisfies ReadonlyArray<IChoiceProps<RatingMethodChoiceProps>>;
 
 /** Type for Shipment Stop Choices */

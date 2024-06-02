@@ -117,7 +117,7 @@ export default function DailyShipmentCounts() {
   }
 
   return (
-    <Card className="c col-span-4 lg:col-span-2">
+    <Card className="col-span-4 lg:col-span-2">
       {isLoading ? (
         <ComponentLoader className="h-[40vh]" />
       ) : (
@@ -160,7 +160,7 @@ export default function DailyShipmentCounts() {
           {hasChartData ? (
             <LineChart data={formattedData} />
           ) : (
-            <div className="flex h-[30vh] flex-col items-center justify-center">
+            <div className="bg-muted/50 border-border m-5 flex h-[30vh] flex-col items-center justify-center rounded-md border">
               <FontAwesomeIcon icon={faChartSimple} className="mb-2 text-2xl" />
               <h3 className="text-foreground font-semibold">No data to show</h3>
               <p className="text-muted-foreground">

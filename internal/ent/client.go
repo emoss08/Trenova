@@ -8446,7 +8446,8 @@ func (c *RateClient) QueryApprovedBy(r *Rate) *UserQuery {
 
 // Hooks returns the client hooks.
 func (c *RateClient) Hooks() []Hook {
-	return c.hooks.Rate
+	hooks := c.hooks.Rate
+	return append(hooks[:len(hooks):len(hooks)], rate.Hooks[:]...)
 }
 
 // Interceptors returns the client interceptors.

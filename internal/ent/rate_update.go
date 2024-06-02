@@ -462,7 +462,9 @@ func (ru *RateUpdate) ClearApprovedBy() *RateUpdate {
 
 // Save executes the query and returns the number of nodes affected by the update operation.
 func (ru *RateUpdate) Save(ctx context.Context) (int, error) {
-	ru.defaults()
+	if err := ru.defaults(); err != nil {
+		return 0, err
+	}
 	return withHooks(ctx, ru.sqlSave, ru.mutation, ru.hooks)
 }
 
@@ -489,11 +491,15 @@ func (ru *RateUpdate) ExecX(ctx context.Context) {
 }
 
 // defaults sets the default values of the builder before save.
-func (ru *RateUpdate) defaults() {
+func (ru *RateUpdate) defaults() error {
 	if _, ok := ru.mutation.UpdatedAt(); !ok {
+		if rate.UpdateDefaultUpdatedAt == nil {
+			return fmt.Errorf("ent: uninitialized rate.UpdateDefaultUpdatedAt (forgotten import ent/runtime?)")
+		}
 		v := rate.UpdateDefaultUpdatedAt()
 		ru.mutation.SetUpdatedAt(v)
 	}
+	return nil
 }
 
 // check runs all checks and user-defined validators on the builder.
@@ -1278,7 +1284,9 @@ func (ruo *RateUpdateOne) Select(field string, fields ...string) *RateUpdateOne 
 
 // Save executes the query and returns the updated Rate entity.
 func (ruo *RateUpdateOne) Save(ctx context.Context) (*Rate, error) {
-	ruo.defaults()
+	if err := ruo.defaults(); err != nil {
+		return nil, err
+	}
 	return withHooks(ctx, ruo.sqlSave, ruo.mutation, ruo.hooks)
 }
 
@@ -1305,11 +1313,15 @@ func (ruo *RateUpdateOne) ExecX(ctx context.Context) {
 }
 
 // defaults sets the default values of the builder before save.
-func (ruo *RateUpdateOne) defaults() {
+func (ruo *RateUpdateOne) defaults() error {
 	if _, ok := ruo.mutation.UpdatedAt(); !ok {
+		if rate.UpdateDefaultUpdatedAt == nil {
+			return fmt.Errorf("ent: uninitialized rate.UpdateDefaultUpdatedAt (forgotten import ent/runtime?)")
+		}
 		v := rate.UpdateDefaultUpdatedAt()
 		ruo.mutation.SetUpdatedAt(v)
 	}
+	return nil
 }
 
 // check runs all checks and user-defined validators on the builder.

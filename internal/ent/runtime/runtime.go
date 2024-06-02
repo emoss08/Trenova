@@ -1766,6 +1766,8 @@ func init() {
 	// qualifiercode.DefaultID holds the default value on creation for the id field.
 	qualifiercode.DefaultID = qualifiercodeDescID.Default.(func() uuid.UUID)
 	rateMixin := schema.Rate{}.Mixin()
+	rateHooks := schema.Rate{}.Hooks()
+	rate.Hooks[0] = rateHooks[0]
 	rateMixinFields0 := rateMixin[0].Fields()
 	_ = rateMixinFields0
 	rateFields := schema.Rate{}.Fields()

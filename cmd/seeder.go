@@ -173,5 +173,9 @@ func applyFixtures() error {
 		return err
 	}
 
+	if err = migratedata.SeedRates(ctx, client, org, bu); err != nil {
+		return err
+	}
+
 	return nil
 }

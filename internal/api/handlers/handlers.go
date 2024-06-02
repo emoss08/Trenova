@@ -54,4 +54,5 @@ func AttachAllRoutes(s *api.Server, api fiber.Router) {
 	NewRoleHandler(s).RegisterRoutes(api)
 	NewResourceHandler(s).RegisterRoutes(api)
 	NewAnalyticHandler(s).RegisterRoutes(api)
+	NewRateHandler(s).RegisterRoutes(api)
 }

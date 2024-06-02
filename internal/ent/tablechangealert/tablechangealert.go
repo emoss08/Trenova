@@ -9,6 +9,7 @@ import (
 	"entgo.io/ent"
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
+	"github.com/emoss08/trenova/internal/ent/schema/property"
 	"github.com/google/uuid"
 )
 
@@ -123,26 +124,12 @@ var (
 	DefaultID func() uuid.UUID
 )
 
-// Status defines the type for the "status" enum field.
-type Status string
-
-// StatusA is the default value of the Status enum.
-const DefaultStatus = StatusA
-
-// Status values.
-const (
-	StatusA Status = "A"
-	StatusI Status = "I"
-)
-
-func (s Status) String() string {
-	return string(s)
-}
+const DefaultStatus property.Status = "A"
 
 // StatusValidator is a validator for the "status" field enum values. It is called by the builders before save.
-func StatusValidator(s Status) error {
-	switch s {
-	case StatusA, StatusI:
+func StatusValidator(s property.Status) error {
+	switch s.String() {
+	case "A", "I":
 		return nil
 	default:
 		return fmt.Errorf("tablechangealert: invalid enum value for status field: %q", s)

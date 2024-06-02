@@ -8,6 +8,7 @@ import (
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"github.com/emoss08/trenova/internal/ent/predicate"
+	"github.com/emoss08/trenova/internal/ent/schema/property"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgtype"
 )
@@ -278,22 +279,22 @@ func VersionLTE(v int) predicate.TableChangeAlert {
 }
 
 // StatusEQ applies the EQ predicate on the "status" field.
-func StatusEQ(v Status) predicate.TableChangeAlert {
+func StatusEQ(v property.Status) predicate.TableChangeAlert {
 	return predicate.TableChangeAlert(sql.FieldEQ(FieldStatus, v))
 }
 
 // StatusNEQ applies the NEQ predicate on the "status" field.
-func StatusNEQ(v Status) predicate.TableChangeAlert {
+func StatusNEQ(v property.Status) predicate.TableChangeAlert {
 	return predicate.TableChangeAlert(sql.FieldNEQ(FieldStatus, v))
 }
 
 // StatusIn applies the In predicate on the "status" field.
-func StatusIn(vs ...Status) predicate.TableChangeAlert {
+func StatusIn(vs ...property.Status) predicate.TableChangeAlert {
 	return predicate.TableChangeAlert(sql.FieldIn(FieldStatus, vs...))
 }
 
 // StatusNotIn applies the NotIn predicate on the "status" field.
-func StatusNotIn(vs ...Status) predicate.TableChangeAlert {
+func StatusNotIn(vs ...property.Status) predicate.TableChangeAlert {
 	return predicate.TableChangeAlert(sql.FieldNotIn(FieldStatus, vs...))
 }
 

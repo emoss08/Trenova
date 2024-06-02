@@ -106,7 +106,7 @@ export function CommodityForm({
             description="The Hazardous Material associated with the Commodity"
             isClearable
             hasPopoutWindow
-            popoutLink="/shipment-management/hazardous-materials/"
+            popoutLink="/shipments/hazardous-materials/"
             popoutLinkLabel="Hazardous Material"
           />
         </FormControl>

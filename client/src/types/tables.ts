@@ -71,6 +71,8 @@ export type DataTableProps<K> = {
   renderSubComponent?: (props: { row: Row<K> }) => React.ReactElement;
   extraSearchParams?: Record<string, any>;
   addPermissionName: string;
+  includeHeader?: boolean;
+  includeTopBar?: boolean;
 
   /**
    * The content to render in the floating bar on row selection, at the bottom of the table. When null, the floating bar is not rendered.
