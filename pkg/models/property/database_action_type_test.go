@@ -26,7 +26,7 @@ func TestDatabaseActionType_Value(t *testing.T) {
 }
 
 func TestDatabaseActionType_Scan(t *testing.T) {
-	var dba property.OrganizationType
+	var dba property.DatabaseAction
 
 	err := dba.Scan("Insert")
 	require.NoError(t, err)
