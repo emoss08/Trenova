@@ -140,14 +140,6 @@ func (s *Server) InitDB() *bun.DB {
 	return s.DB
 }
 
-// GetDB returns the database connection, initializing it if necessary.
-func (s *Server) GetDB() *bun.DB {
-	if s.DB == nil {
-		s.InitDB()
-	}
-	return s.DB
-}
-
 func (s *Server) InitCodeGenerationSystem(ctx context.Context) error {
 	s.CounterManager = gen.NewCounterManager()
 	s.CodeChecker = &gen.CodeChecker{DB: s.DB}

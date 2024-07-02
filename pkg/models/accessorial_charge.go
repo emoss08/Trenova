@@ -37,7 +37,7 @@ type AccessorialCharge struct {
 	CreatedAt      time.Time       `bun:",nullzero,notnull,default:current_timestamp" json:"createdAt"`
 	UpdatedAt      time.Time       `bun:",nullzero,notnull,default:current_timestamp" json:"updatedAt"`
 	ID             uuid.UUID       `bun:",pk,type:uuid,default:uuid_generate_v4()" json:"id"`
-	Status         property.Status `bun:"status,type:status" json:"status"`
+	Status         property.Status `bun:"status,type:status_enum,default:'Active'" json:"status"`
 	Code           string          `bun:"type:VARCHAR(10),notnull" json:"code" queryField:"true"`
 	Description    string          `bun:"type:TEXT" json:"description"`
 	IsDetention    bool            `bun:"is_detention,type:BOOLEAN,default:false" json:"isDetention"`
