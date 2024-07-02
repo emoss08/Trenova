@@ -1,173 +1,198 @@
 package handlers
 
 import (
-	"github.com/emoss08/trenova/internal/api"
+	"fmt"
+
 	"github.com/emoss08/trenova/internal/api/services"
-	"github.com/emoss08/trenova/internal/ent"
-	"github.com/emoss08/trenova/internal/util"
-	"github.com/emoss08/trenova/internal/util/types"
+	"github.com/emoss08/trenova/internal/server"
+	"github.com/emoss08/trenova/internal/types"
+	"github.com/emoss08/trenova/pkg/models"
+	"github.com/emoss08/trenova/pkg/utils"
+	validation "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/gofiber/fiber/v2"
 	"github.com/google/uuid"
+	"github.com/rs/zerolog"
 )
 
-type UserHandler struct {
-	Service           *services.UserService
-	PermissionService *services.PermissionService
+type ChangePasswordRequest struct {
+	OldPassword string `json:"oldPassword" validate:"required"`
+	NewPassword string `json:"newPassword" validate:"required"`
 }
 
-func NewUserHandler(s *api.Server) *UserHandler {
+func (cpr ChangePasswordRequest) Validate() error {
+	return validation.ValidateStruct(&cpr,
+		validation.Field(&cpr.OldPassword, validation.Required),
+		validation.Field(&cpr.NewPassword, validation.Required),
+	)
+}
+
+type UserHandler struct {
+	logger            *zerolog.Logger
+	service           *services.UserService
+	permissionService *services.PermissionService
+}
+
+func NewUserHandler(s *server.Server) *UserHandler {
 	return &UserHandler{
-		Service:           services.NewUserService(s),
-		PermissionService: services.NewPermissionService(s),
+		logger:            s.Logger,
+		service:           services.NewUserService(s),
+		permissionService: services.NewPermissionService(s),
 	}
 }
 
-func (h *UserHandler) RegisterRoutes(r fiber.Router) {
-	usersAPI := r.Group("/users")
-	usersAPI.Get("/me", h.GetAuthenticatedUser())
-	usersAPI.Post("/profile-picture", h.UploadProfilePicture())
-	usersAPI.Post("/change-password", h.ChangePassword())
-	usersAPI.Put("/:userID", h.UpdateUser())
+func (uh *UserHandler) RegisterRoutes(r fiber.Router) {
+	userAPI := r.Group("/users")
+	userAPI.Get("/me", uh.getAuthenticatedUser())
+	userAPI.Post("/upload-profile-picture", uh.uploadProfilePicture())
+	userAPI.Post("/change-password", uh.changePassword())
+	userAPI.Put("/:userID", uh.updateUser())
+	userAPI.Post("/clear-profile-pic", uh.clearProfilePic())
 }
 
-func (h *UserHandler) GetAuthenticatedUser() fiber.Handler {
+func (uh *UserHandler) getAuthenticatedUser() fiber.Handler {
 	return func(c *fiber.Ctx) error {
-		userID, ok := c.Locals(util.CTXUserID).(uuid.UUID)
+		userID, ok := c.Locals(utils.CTXUserID).(uuid.UUID)
 
 		if !ok {
-			return c.Status(fiber.StatusInternalServerError).JSON(types.ValidationErrorResponse{
-				Type: "internalError",
-				Errors: []types.ValidationErrorDetail{
-					{
-						Code:   "internalError",
-						Detail: "User ID not found in the request context",
-						Attr:   "userID",
-					},
-				},
+			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Error{
+				Code:    fiber.StatusInternalServerError,
+				Message: "User id not found in context",
 			})
 		}
 
-		user, err := h.Service.GetAuthenticatedUser(c.UserContext(), userID)
+		entity, err := uh.service.GetAuthenticatedUser(c.UserContext(), userID)
 		if err != nil {
-			errResp := util.CreateDBErrorResponse(err)
-			return c.Status(fiber.StatusInternalServerError).JSON(errResp)
+			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Error{
+				Code:    fiber.StatusInternalServerError,
+				Message: err.Error(),
+			})
+		}
+
+		return c.Status(fiber.StatusOK).JSON(entity)
+	}
+}
+
+func (uh *UserHandler) uploadProfilePicture() fiber.Handler {
+	return func(c *fiber.Ctx) error {
+		userID, ok := c.Locals(utils.CTXUserID).(uuid.UUID)
+		if !ok {
+			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Error{
+				Code:    fiber.StatusInternalServerError,
+				Message: "User id not found in context",
+			})
+		}
+
+		pic, err := c.FormFile("profilePicture")
+		if err != nil {
+			uh.logger.Error().Err(err).Msg("OrganizationHandler: Failed to get profile picture")
+			return c.Status(fiber.StatusBadRequest).JSON(fiber.Error{
+				Code:    fiber.StatusBadRequest,
+				Message: "Failed to get profile picture",
+			})
+		}
+
+		user, err := uh.service.UploadProfilePicture(c.UserContext(), pic, userID)
+		if err != nil {
+			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Error{
+				Code:    fiber.StatusInternalServerError,
+				Message: err.Error(),
+			})
 		}
 
 		return c.Status(fiber.StatusOK).JSON(user)
 	}
 }
 
-// UploadProfilePicture is a handler that uploads a profile picture for the authenticated user.
-//
-// POST /users/profile-picture
-func (h *UserHandler) UploadProfilePicture() fiber.Handler {
+func (uh *UserHandler) changePassword() fiber.Handler {
 	return func(c *fiber.Ctx) error {
-		userID, ok := c.Locals(util.CTXUserID).(uuid.UUID)
+		req := new(ChangePasswordRequest)
+
+		userID, ok := c.Locals(utils.CTXUserID).(uuid.UUID)
 		if !ok {
-			return c.Status(fiber.StatusInternalServerError).JSON(types.ValidationErrorResponse{
-				Type: "internalError",
-				Errors: []types.ValidationErrorDetail{
+			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Error{
+				Code:    fiber.StatusInternalServerError,
+				Message: "User id not found in context",
+			})
+		}
+
+		if err := utils.ParseBodyAndValidate(c, req); err != nil {
+			return c.Status(fiber.StatusBadRequest).JSON(err)
+		}
+
+		if err := uh.service.ChangePassword(c.UserContext(), userID, req.OldPassword, req.NewPassword); err != nil {
+			return c.Status(fiber.StatusBadRequest).JSON(types.ProblemDetail{
+				Type:     "invalid",
+				Title:    "Invalid Request",
+				Status:   fiber.StatusBadRequest,
+				Detail:   "Old password is incorrect",
+				Instance: fmt.Sprintf("%s/probs/validation-error", c.BaseURL()),
+				InvalidParams: []types.InvalidParam{
 					{
-						Code:   "internalError",
-						Detail: "User ID not found in the request context",
-						Attr:   "userID",
+						Name:   "oldPassword",
+						Reason: "Old password is incorrect",
 					},
 				},
 			})
 		}
 
-		// Handle the uploaded file
-		profilePicture, err := c.FormFile("profilePicture")
-		if err != nil {
-			return c.Status(fiber.StatusBadRequest).SendString("Failed to read profile picture from request")
-		}
-
-		entity, err := h.Service.UploadProfilePicture(c.UserContext(), profilePicture, userID)
-		if err != nil {
-			errorResponse := util.CreateDBErrorResponse(err)
-			return c.Status(fiber.StatusInternalServerError).JSON(errorResponse)
-		}
-
-		// Send success response
-		return c.Status(fiber.StatusOK).JSON(entity)
+		return c.SendStatus(fiber.StatusNoContent)
 	}
 }
 
-func (h *UserHandler) ChangePassword() fiber.Handler {
-	return func(c *fiber.Ctx) error {
-		var req struct {
-			OldPassword string `json:"oldPassword" validate:"required"`
-			NewPassword string `json:"newPassword" validate:"required,min=8"`
-		}
-
-		userID, ok := c.Locals(util.CTXUserID).(uuid.UUID)
-		if !ok {
-			return c.Status(fiber.StatusInternalServerError).JSON(types.ValidationErrorResponse{
-				Type: "internalError",
-				Errors: []types.ValidationErrorDetail{
-					{
-						Code:   "internalError",
-						Detail: "User ID not found in the request context",
-						Attr:   "userID",
-					},
-				},
-			})
-		}
-
-		// Parse the request body
-		if err := util.ParseBodyAndValidate(c, &req); err != nil {
-			return err
-		}
-
-		err := h.Service.ChangePassword(c.UserContext(), userID, req.OldPassword, req.NewPassword)
-		if err != nil {
-			errorResponse := util.CreateDBErrorResponse(err)
-			return c.Status(fiber.StatusInternalServerError).JSON(errorResponse)
-		}
-
-		return c.Status(fiber.StatusOK).SendString("Password changed successfully")
-	}
-}
-
-func (h *UserHandler) UpdateUser() fiber.Handler {
+func (uh *UserHandler) updateUser() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		userID := c.Params("userID")
 		if userID == "" {
-			return c.Status(fiber.StatusBadRequest).JSON(types.ValidationErrorResponse{
-				Type: "invalidRequest",
-				Errors: []types.ValidationErrorDetail{
-					{
-						Code:   "invalidRequest",
-						Detail: "User ID is required",
-						Attr:   "userID",
-					},
-				},
+			return c.Status(fiber.StatusBadRequest).JSON(fiber.Error{
+				Code:    fiber.StatusBadRequest,
+				Message: "User id is required",
 			})
 		}
 
-		// Check if the user has the required permissions or if the user is updating their own profile
-		err := h.PermissionService.CheckOwnershipPermission(c, "user.edit", userID)
-		if err != nil {
-			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
-				"error":   "Unauthorized",
-				"message": "You do not have the required permission to access this resource",
+		if err := uh.permissionService.CheckOwnershipPermission(c, models.PermissionUserAdd.String(), userID); err != nil {
+			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Error{
+				Code:    fiber.StatusUnauthorized,
+				Message: "You do not have permission to perform this action.",
 			})
 		}
 
-		updatedEntity := new(ent.User)
+		updatedEntity := new(models.User)
 
-		if err := util.ParseBodyAndValidate(c, updatedEntity); err != nil {
-			return err
+		if err := utils.ParseBodyAndValidate(c, updatedEntity); err != nil {
+			return c.Status(fiber.StatusBadRequest).JSON(err)
 		}
 
 		updatedEntity.ID = uuid.MustParse(userID)
 
-		entity, err := h.Service.UpdateUser(c.UserContext(), updatedEntity)
+		entity, err := uh.service.UpdateUser(c.UserContext(), updatedEntity)
 		if err != nil {
-			errorResponse := util.CreateDBErrorResponse(err)
-			return c.Status(fiber.StatusInternalServerError).JSON(errorResponse)
+			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Error{
+				Code:    fiber.StatusInternalServerError,
+				Message: err.Error(),
+			})
 		}
 
 		return c.Status(fiber.StatusOK).JSON(entity)
+	}
+}
+
+func (uh *UserHandler) clearProfilePic() fiber.Handler {
+	return func(c *fiber.Ctx) error {
+		userID, ok := c.Locals(utils.CTXUserID).(uuid.UUID)
+		if !ok {
+			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Error{
+				Code:    fiber.StatusInternalServerError,
+				Message: "User id not found in context",
+			})
+		}
+
+		if err := uh.service.ClearProfilePic(c.UserContext(), userID); err != nil {
+			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Error{
+				Code:    fiber.StatusInternalServerError,
+				Message: err.Error(),
+			})
+		}
+
+		return c.SendStatus(fiber.StatusNoContent)
 	}
 }

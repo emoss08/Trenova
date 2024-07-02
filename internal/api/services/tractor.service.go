@@ -2,177 +2,120 @@ package services
 
 import (
 	"context"
+	"fmt"
+	"strings"
 
-	"github.com/emoss08/trenova/internal/api"
-	"github.com/emoss08/trenova/internal/util"
-	"github.com/rs/zerolog"
-
-	"github.com/emoss08/trenova/internal/ent"
-	"github.com/emoss08/trenova/internal/ent/organization"
-	"github.com/emoss08/trenova/internal/ent/tractor"
+	"github.com/emoss08/trenova/internal/server"
+	"github.com/emoss08/trenova/pkg/models"
 	"github.com/google/uuid"
+	"github.com/rs/zerolog"
+	"github.com/uptrace/bun"
 )
 
+// TractorService handles business logic for Tractor
 type TractorService struct {
-	Client *ent.Client
-	Logger *zerolog.Logger
+	db     *bun.DB
+	logger *zerolog.Logger
 }
 
-// NewTractorService creates a new tractor service.
-func NewTractorService(s *api.Server) *TractorService {
+// NewTractorService creates a new instance of TractorService
+func NewTractorService(s *server.Server) *TractorService {
 	return &TractorService{
-		Client: s.Client,
-		Logger: s.Logger,
+		db:     s.DB,
+		logger: s.Logger,
 	}
 }
 
-// GetTractors gets the tractors for an organization.
-func (r *TractorService) GetTractors(
-	ctx context.Context, limit, offset int, orgID, buID uuid.UUID,
-) ([]*ent.Tractor, int, error) {
-	entityCount, countErr := r.Client.Tractor.Query().Where(
-		tractor.HasOrganizationWith(
-			organization.IDEQ(orgID),
-			organization.BusinessUnitIDEQ(buID),
-		),
-	).Count(ctx)
+// QueryFilter defines the filter parameters for querying Tractor
+type TractorQueryFilter struct {
+	Query          string
+	OrganizationID uuid.UUID
+	BusinessUnitID uuid.UUID
+	Limit          int
+	Offset         int
+}
 
-	if countErr != nil {
-		return nil, 0, countErr
+// filterQuery applies filters to the query
+func (s *TractorService) filterQuery(q *bun.SelectQuery, f *TractorQueryFilter) *bun.SelectQuery {
+	q = q.Where("tr.organization_id = ?", f.OrganizationID).
+		Where("tr.business_unit_id = ?", f.BusinessUnitID)
+
+	if f.Query != "" {
+		q = q.Where("tr.code = ? OR tr.code ILIKE ?", f.Query, "%"+strings.ToLower(f.Query)+"%")
 	}
 
-	entities, err := r.Client.Tractor.Query().
-		Limit(limit).
-		Offset(offset).
-		WithEquipmentType().
-		WithPrimaryWorker().
-		WithSecondaryWorker().
-		WithFleetCode().
-		Where(
-			tractor.HasOrganizationWith(
-				organization.IDEQ(orgID),
-				organization.BusinessUnitIDEQ(buID),
-			),
-		).All(ctx)
+	q = q.OrderExpr("CASE WHEN tr.code = ? THEN 0 ELSE 1 END", f.Query).
+		Order("tr.created_at DESC")
+
+	return q.Limit(f.Limit).Offset(f.Offset)
+}
+
+// GetAll retrieves all Tractor based on the provided filter
+func (s *TractorService) GetAll(ctx context.Context, filter *TractorQueryFilter) ([]*models.Tractor, int, error) {
+	var entities []*models.Tractor
+
+	q := s.db.NewSelect().
+		Model(&entities).Relation("PrimaryWorker")
+
+	q = s.filterQuery(q, filter)
+
+	count, err := q.ScanAndCount(ctx)
 	if err != nil {
-		return nil, 0, err
+		s.logger.Error().Err(err).Msg("Failed to fetch Tractor")
+		return nil, 0, fmt.Errorf("failed to fetch Tractor: %w", err)
 	}
 
-	return entities, entityCount, nil
+	return entities, count, nil
 }
 
-// CreateTractor creates a new tractor.
-func (r *TractorService) CreateTractor(
-	ctx context.Context, entity *ent.Tractor,
-) (*ent.Tractor, error) {
-	newEntity := new(ent.Tractor)
-
-	err := util.WithTx(ctx, r.Client, func(tx *ent.Tx) error {
-		var err error
-		newEntity, err = r.createTractorEntity(ctx, tx, entity)
-		if err != nil {
-			return err
-		}
-
-		return nil
-	})
+// Get retrieves a single Tractor by ID
+func (s *TractorService) Get(ctx context.Context, id, orgID, buID uuid.UUID) (*models.Tractor, error) {
+	entity := new(models.Tractor)
+	err := s.db.NewSelect().
+		Model(entity).
+		Where("tr.organization_id = ?", orgID).
+		Where("tr.business_unit_id = ?", buID).
+		Where("tr.id = ?", id).
+		Scan(ctx)
 	if err != nil {
-		return nil, err
+		s.logger.Error().Err(err).Msg("Failed to fetch Tractor")
+		return nil, fmt.Errorf("failed to fetch Tractor: %w", err)
 	}
 
-	return newEntity, nil
+	return entity, nil
 }
 
-func (r *TractorService) createTractorEntity(
-	ctx context.Context, tx *ent.Tx, entity *ent.Tractor,
-) (*ent.Tractor, error) {
-	createdEntity, err := tx.Tractor.Create().
-		SetOrganizationID(entity.OrganizationID).
-		SetBusinessUnitID(entity.BusinessUnitID).
-		SetCode(entity.Code).
-		SetStatus(entity.Status).
-		SetEquipmentTypeID(entity.EquipmentTypeID).
-		SetLicensePlateNumber(entity.LicensePlateNumber).
-		SetVin(entity.Vin).
-		SetNillableEquipmentManufacturerID(entity.EquipmentManufacturerID).
-		SetModel(entity.Model).
-		SetNillableYear(entity.Year).
-		SetNillableStateID(entity.StateID).
-		SetLeased(entity.Leased).
-		SetLeasedDate(entity.LeasedDate).
-		SetPrimaryWorkerID(entity.PrimaryWorkerID).
-		SetNillableSecondaryWorkerID(entity.SecondaryWorkerID).
-		SetFleetCodeID(entity.FleetCodeID).
-		Save(ctx)
-	if err != nil {
-		return nil, err
-	}
-
-	return createdEntity, nil
-}
-
-// UpdateTractor updates a tractor.
-func (r *TractorService) UpdateTractor(
-	ctx context.Context, entity *ent.Tractor,
-) (*ent.Tractor, error) {
-	updatedEntity := new(ent.Tractor)
-
-	err := util.WithTx(ctx, r.Client, func(tx *ent.Tx) error {
-		var err error
-		updatedEntity, err = r.updateTractorEntity(ctx, tx, entity)
+// Create creates a new Tractor
+func (s *TractorService) Create(ctx context.Context, entity *models.Tractor) (*models.Tractor, error) {
+	err := s.db.RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
+		_, err := tx.NewInsert().
+			Model(entity).
+			Returning("*").
+			Exec(ctx)
 		return err
 	})
 	if err != nil {
-		return nil, err
+		s.logger.Error().Err(err).Msg("Failed to create Tractor")
+		return nil, fmt.Errorf("failed to create Tractor: %w", err)
 	}
 
-	return updatedEntity, nil
+	return entity, nil
 }
 
-func (r *TractorService) updateTractorEntity(
-	ctx context.Context, tx *ent.Tx, entity *ent.Tractor,
-) (*ent.Tractor, error) {
-	current, err := tx.Tractor.Get(ctx, entity.ID)
+// UpdateOne updates an existing Tractor
+func (s *TractorService) UpdateOne(ctx context.Context, entity *models.Tractor) (*models.Tractor, error) {
+	err := s.db.RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
+		_, err := tx.NewUpdate().
+			Model(entity).
+			WherePK().
+			Returning("*").
+			Exec(ctx)
+		return err
+	})
 	if err != nil {
-		return nil, err
+		s.logger.Error().Err(err).Msg("Failed to update Tractor")
+		return nil, fmt.Errorf("failed to update Tractor: %w", err)
 	}
 
-	// Check if the version matches.
-	if current.Version != entity.Version {
-		return nil, util.NewValidationError("This record has been updated by another user. Please refresh and try again",
-			"syncError",
-			"code")
-	}
-
-	// Start building the update operation
-	updateOp := tx.Tractor.UpdateOneID(entity.ID).
-		SetOrganizationID(entity.OrganizationID).
-		SetCode(entity.Code).
-		SetStatus(entity.Status).
-		SetEquipmentTypeID(entity.EquipmentTypeID).
-		SetLicensePlateNumber(entity.LicensePlateNumber).
-		SetVin(entity.Vin).
-		SetNillableEquipmentManufacturerID(entity.EquipmentManufacturerID).
-		SetModel(entity.Model).
-		SetNillableYear(entity.Year).
-		SetNillableStateID(entity.StateID).
-		SetLeased(entity.Leased).
-		SetLeasedDate(entity.LeasedDate).
-		SetPrimaryWorkerID(entity.PrimaryWorkerID).
-		SetNillableSecondaryWorkerID(entity.SecondaryWorkerID).
-		SetFleetCodeID(entity.FleetCodeID).
-		SetVersion(entity.Version + 1) // Increment the version
-
-	// If the secondary worker ID is nil, clear the association.
-	if entity.SecondaryWorkerID == nil {
-		updateOp = updateOp.ClearSecondaryWorker()
-	}
-
-	// Execute the update operation
-	updatedEntity, err := updateOp.Save(ctx)
-	if err != nil {
-		return nil, err
-	}
-
-	return updatedEntity, nil
+	return entity, nil
 }

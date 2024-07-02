@@ -2,82 +2,28 @@ package middleware
 
 import (
 	"crypto/rsa"
-	"log"
+	"errors"
+	"fmt"
 	"os"
 
-	"github.com/emoss08/trenova/internal/api"
-	"github.com/emoss08/trenova/internal/util"
+	"github.com/emoss08/trenova/internal/server"
+	"github.com/emoss08/trenova/pkg/utils"
 	jwtware "github.com/gofiber/contrib/jwt"
 	"github.com/gofiber/fiber/v2"
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
 )
 
-// InitJWT initializes the JWT middleware with the given server configuration
-func InitJWT(s *api.Server) fiber.Handler {
+func Auth(s *server.Server) fiber.Handler {
 	return jwtware.New(jwtware.Config{
 		SigningKey: jwtware.SigningKey{
 			JWTAlg: jwtware.RS256,
-			Key:    s.Config.AuthServer.PublicKey,
+			Key:    s.Config.Auth.PublicKey,
 		},
-		TokenLookup: "cookie:trenova-token",
-		ContextKey:  "user",
-		SuccessHandler: func(c *fiber.Ctx) error {
-			user, ok := c.Locals("user").(*jwt.Token)
-			if !ok {
-				log.Println("Invalid token: user not found")
-				return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{"error": "Invalid token: user not found"})
-			}
-
-			claims, ok := user.Claims.(jwt.MapClaims)
-			if !ok {
-				log.Println("Invalid token: claims not found")
-				return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{"error": "Invalid token: claims not found"})
-			}
-
-			// Extract and validate userID
-			userIDStr, ok := claims["userID"].(string)
-			if !ok {
-				log.Println("Invalid token: userID not found")
-				return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{"error": "Invalid token: userID not found"})
-			}
-			userID, err := uuid.Parse(userIDStr)
-			if err != nil {
-				log.Printf("Invalid token: userID is not a valid UUID: %v", err)
-				return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{"error": "Invalid token: userID is not a valid UUID"})
-			}
-
-			// Extract and validate organizationID
-			orgIDStr, ok := claims["organizationID"].(string)
-			if !ok {
-				log.Println("Invalid token: organizationID not found")
-				return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{"error": "Invalid token: organizationID not found"})
-			}
-			orgID, err := uuid.Parse(orgIDStr)
-			if err != nil {
-				log.Printf("Invalid token: organizationID is not a valid UUID: %v", err)
-				return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{"error": "Invalid token: organizationID is not a valid UUID"})
-			}
-
-			// Extract and validate businessUnitID
-			buIDStr, ok := claims["businessUnitID"].(string)
-			if !ok {
-				log.Println("Invalid token: businessUnitID not found")
-				return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{"error": "Invalid token: businessUnitID not found"})
-			}
-			buID, err := uuid.Parse(buIDStr)
-			if err != nil {
-				log.Printf("Invalid token: businessUnitID is not a valid UUID: %v", err)
-				return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{"error": "Invalid token: businessUnitID is not a valid UUID"})
-			}
-
-			// Set user information in context
-			c.Locals(util.CTXUserID, userID)
-			c.Locals(util.CTXOrganizationID, orgID)
-			c.Locals(util.CTXBusinessUnitID, buID)
-
-			return c.Next()
-		},
+		TokenLookup:    "cookie:trenova-token",
+		ContextKey:     "user",
+		SuccessHandler: successHandler(),
+		ErrorHandler:   jwtError,
 	})
 }
 
@@ -101,4 +47,81 @@ func LoadKeys() (*rsa.PrivateKey, *rsa.PublicKey, error) {
 	}
 
 	return privateKey, publicKey, nil
+}
+
+func successHandler() fiber.Handler {
+	return func(c *fiber.Ctx) error {
+		user, err := extractUserFromContext(c)
+		if err != nil {
+			return respondWithUnauthorized(c, err.Error())
+		}
+
+		claims, err := extractClaims(user)
+		if err != nil {
+			return respondWithUnauthorized(c, err.Error())
+		}
+
+		userID, err := parseAndValidateID(claims, "userID")
+		if err != nil {
+			return respondWithUnauthorized(c, err.Error())
+		}
+
+		orgID, err := parseAndValidateID(claims, "organizationID")
+		if err != nil {
+			return respondWithUnauthorized(c, err.Error())
+		}
+
+		buID, err := parseAndValidateID(claims, "businessUnitID")
+		if err != nil {
+			return respondWithUnauthorized(c, err.Error())
+		}
+
+		setUserContext(c, userID, orgID, buID)
+
+		return c.Next()
+	}
+}
+
+func extractUserFromContext(c *fiber.Ctx) (*jwt.Token, error) {
+	user, ok := c.Locals("user").(*jwt.Token)
+	if !ok {
+		return nil, errors.New("invalid token: user not found")
+	}
+	return user, nil
+}
+
+func extractClaims(user *jwt.Token) (jwt.MapClaims, error) {
+	claims, ok := user.Claims.(jwt.MapClaims)
+	if !ok {
+		return nil, errors.New("invalid token: claims not found")
+	}
+	return claims, nil
+}
+
+func parseAndValidateID(claims jwt.MapClaims, key string) (uuid.UUID, error) {
+	idStr, ok := claims[key].(string)
+	if !ok {
+		return uuid.Nil, fmt.Errorf("invalid token: %s not found", key)
+	}
+
+	id := uuid.MustParse(idStr)
+
+	return id, nil
+}
+
+func setUserContext(c *fiber.Ctx, userID, orgID, buID uuid.UUID) {
+	c.Locals(utils.CTXUserID, userID)
+	c.Locals(utils.CTXOrganizationID, orgID)
+	c.Locals(utils.CTXBusinessUnitID, buID)
+}
+
+func respondWithUnauthorized(c *fiber.Ctx, message string) error {
+	return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{"error": message})
+}
+
+func jwtError(c *fiber.Ctx, err error) error {
+	if err.Error() == "Missing or malformed JWT" {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"status": "error", "message": "Missing or malformed JWT", "data": nil})
+	}
+	return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{"status": "error", "message": "Invalid or expired JWT", "data": nil})
 }

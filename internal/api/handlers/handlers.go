@@ -1,58 +1,54 @@
 package handlers
 
 import (
-	"github.com/emoss08/trenova/internal/api"
+	"github.com/emoss08/trenova/internal/server"
 	"github.com/gofiber/fiber/v2"
 )
 
-// AttachAllRoutes attaches all the routes to the Fiber instance.
-func AttachAllRoutes(s *api.Server, api fiber.Router) {
-	NewAccessorialChargeHandler(s).RegisterRoutes(api)
-	NewOrganizationHandler(s).RegisterRoutes(api)
-	NewAccountingControlHandler(s).RegisterRoutes(api)
-	NewDispatchControlHandler(s).RegisterRoutes(api)
-	NewShipmentControlHandler(s).RegisterRoutes(api)
-	NewBillingControlHandler(s).RegisterRoutes(api)
-	NewInvoiceControlHandler(s).RegisterRoutes(api)
-	NewRouteControlHandler(s).RegisterRoutes(api)
-	NewFeasibilityToolControlHandler(s).RegisterRoutes(api)
-	NewEmailControlHandler(s).RegisterRoutes(api)
-	NewUserHandler(s).RegisterRoutes(api)
-	NewUserFavoriteHandler(s).RegisterRoutes(api)
-	NewHazardousMaterialSegregationHandler(s).RegisterRoutes(api)
-	NewEmailProfileHandler(s).RegisterRoutes(api)
-	NewTableChangeAlertHandler(s).RegisterRoutes(api)
-	NewGoogleAPIHandler(s).RegisterRoutes(api)
-	NewRevenueCodeHandler(s).RegisterRoutes(api)
-	NewWorkerHandler(s).RegisterRoutes(api)
-	NewChargeTypeHandler(s).RegisterRoutes(api)
-	NewCommentTypeService(s).RegisterRoutes(api)
-	NewCommodityHandler(s).RegisterRoutes(api)
-	NewCustomerHandler(s).RegisterRoutes(api)
-	NewDelayCodeHandler(s).RegisterRoutes(api)
-	NewDivisionCodeHandler(s).RegisterRoutes(api)
-	NewDocumentClassificationHandler(s).RegisterRoutes(api)
-	NewEquipmentManufacturerHandler(s).RegisterRoutes(api)
-	NewEquipmentTypeHandler(s).RegisterRoutes(api)
-	NewFleetCodeHandler(s).RegisterRoutes(api)
-	NewGeneralLedgerAccountHandler(s).RegisterRoutes(api)
-	NewTagHandler(s).RegisterRoutes(api)
-	NewHazardousMaterialHandler(s).RegisterRoutes(api)
-	NewLocationHandler(s).RegisterRoutes(api)
-	NewLocationCategoryHandler(s).RegisterRoutes(api)
-	NewFeatureFlagHandler(s).RegisterRoutes(api)
-	NewQualifierCodeHandler(s).RegisterRoutes(api)
-	NewReasonCodeHandler(s).RegisterRoutes(api)
-	NewServiceTypeHandler(s).RegisterRoutes(api)
-	NewShipmentTypeHandler(s).RegisterRoutes(api)
-	NewUSStateHandler(s).RegisterRoutes(api)
-	NewTractorHandler(s).RegisterRoutes(api)
-	NewTrailerHandler(s).RegisterRoutes(api)
-	NewReportHandler(s).RegisterRoutes(api)
-	NewUserNotificationHandler(s).RegisterRoutes(api)
-	NewPermissionHandler(s).RegisterRoutes(api)
-	NewRoleHandler(s).RegisterRoutes(api)
-	NewResourceHandler(s).RegisterRoutes(api)
-	NewAnalyticHandler(s).RegisterRoutes(api)
-	NewRateHandler(s).RegisterRoutes(api)
+func registerHandler(r fiber.Router, h StandardHandler) {
+	h.RegisterRoutes(r)
+}
+
+func registerFlexibleHandler(r fiber.Router, h FlexibleHandler) {
+	h.RegisterRoutes(r)
+}
+
+func AttachAllRoutes(s *server.Server, r fiber.Router) {
+	// Routes that follow the standard pattern.
+	registerHandler(r, NewLocationCategoryHandler(s))
+	registerHandler(r, NewFleetCodeHandler(s))
+	registerHandler(r, NewDelayCodeHandler(s))
+	registerHandler(r, NewChargeTypeHandler(s))
+	registerHandler(r, NewCommentTypeHandler(s))
+	registerHandler(r, NewTableChangeAlertHandler(s))
+	registerHandler(r, NewGeneralLedgerAccountHandler(s))
+	registerHandler(r, NewTagHandler(s))
+	registerHandler(r, NewDivisionCodeHandler(s))
+	registerHandler(r, NewDocumentClassificationHandler(s))
+	registerHandler(r, NewEquipmentTypeHandler(s))
+	registerHandler(r, NewRevenueCodeHandler(s))
+	registerHandler(r, NewAccessorialChargeHandler(s))
+	registerHandler(r, NewEquipmentManufacturerHandler(s))
+	registerHandler(r, NewTrailerHandler(s))
+	registerHandler(r, NewTractorHandler(s))
+	registerHandler(r, NewHazardousMaterialHandler(s))
+	registerHandler(r, NewCommodityHandler(s))
+	registerHandler(r, NewReasonCodeHandler(s))
+	registerHandler(r, NewShipmentTypeHandler(s))
+	registerHandler(r, NewServiceTypeHandler(s))
+	registerHandler(r, NewQualifierCodeHandler(s))
+	registerHandler(r, NewWorkerHandler(s))
+	registerHandler(r, NewLocationHandler(s))
+
+	// Routes that don't follow the standard pattern.
+	registerFlexibleHandler(r, NewUserHandler(s))
+	registerFlexibleHandler(r, NewUserFavoriteHandler(s))
+	registerFlexibleHandler(r, NewUserNotificationHandler(s))
+	registerFlexibleHandler(r, NewReportHandler(s))
+	registerFlexibleHandler(r, NewOrganizationHandler(s))
+	registerFlexibleHandler(r, NewUserTaskHandler(s))
+	registerFlexibleHandler(r, NewUSStateHandler(s))
+
+	// Test routes for development.
+	registerFlexibleHandler(r, NewTestHandler(s))
 }

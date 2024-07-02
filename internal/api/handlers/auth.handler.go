@@ -1,60 +1,54 @@
 package handlers
 
 import (
+	"fmt"
 	"time"
 
-	"github.com/emoss08/trenova/internal/api"
 	"github.com/emoss08/trenova/internal/api/middleware"
 	"github.com/emoss08/trenova/internal/api/services"
-	"github.com/emoss08/trenova/internal/util"
-	"github.com/emoss08/trenova/internal/util/types"
+	"github.com/emoss08/trenova/internal/server"
+	"github.com/emoss08/trenova/internal/types"
+	"github.com/emoss08/trenova/pkg/models/property"
+	"github.com/emoss08/trenova/pkg/utils"
 	"github.com/gofiber/fiber/v2"
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/rs/zerolog"
 )
 
-// AuthenticationHandler is a struct that handles authentication-related requests.
 type AuthenticationHandler struct {
-	Server  *api.Server
-	Logger  *zerolog.Logger
-	Service *services.AuthenticationService
+	logger  *zerolog.Logger
+	service *services.AuthenticationService
 }
 
-// NewAuthenticationHandler creates a new authentication handler.
-func NewAuthenticationHandler(s *api.Server) *AuthenticationHandler {
+func NewAuthenticationHandler(s *server.Server) *AuthenticationHandler {
 	return &AuthenticationHandler{
-		Server:  s,
-		Logger:  s.Logger,
-		Service: services.NewAuthenticationService(s),
+		logger:  s.Logger,
+		service: services.NewAuthenticationService(s),
 	}
 }
 
-// CheckEmail checks if an email address exists in the database.
-//
-// POST /auth/check-email
-func (h *AuthenticationHandler) CheckEmail() fiber.Handler {
+func (ah *AuthenticationHandler) RegisterRoutes(r fiber.Router) {
+	authAPI := r.Group("/auth")
+	authAPI.Post("/check-email", ah.checkEmail())
+	authAPI.Post("/login", ah.authenticateUser())
+}
+
+func (ah *AuthenticationHandler) checkEmail() fiber.Handler {
 	return func(c *fiber.Ctx) error {
-		var checkEmailRequest struct {
-			EmailAddress string `json:"emailAddress" validate:"required,email"`
+		req := new(types.CheckEmailRequest)
+
+		if err := utils.ParseBodyAndValidate(c, req); err != nil {
+			return c.Status(fiber.StatusBadRequest).JSON(err)
 		}
 
-		if err := util.ParseBodyAndValidate(c, &checkEmailRequest); err != nil {
-			return err
-		}
-
-		// Check if the email exists
-		resp, err := h.Service.
-			CheckEmail(c.UserContext(), checkEmailRequest.EmailAddress)
+		resp, err := ah.service.CheckEmail(c.UserContext(), req.EmailAddress)
 		if err != nil {
-			return c.Status(fiber.StatusInternalServerError).JSON(types.ValidationErrorResponse{
-				Type: "internalServerError",
-				Errors: []types.ValidationErrorDetail{
-					{
-						Code:   "internalServerError",
-						Detail: "Internal server error",
-						Attr:   "emailAddress",
-					},
-				},
+			return c.Status(fiber.StatusBadRequest).JSON(types.ProblemDetail{
+				Type:     "invalid",
+				Title:    "Invalid Request",
+				Status:   fiber.StatusBadRequest,
+				Detail:   "Email address does not exist. Please Try again.",
+				Instance: fmt.Sprintf("%s/probs/validation-error", c.BaseURL()),
 			})
 		}
 
@@ -62,91 +56,75 @@ func (h *AuthenticationHandler) CheckEmail() fiber.Handler {
 	}
 }
 
-// AuthenticateUser authenticates a user and sets the session values.
-//
-// POST /auth
-func (h *AuthenticationHandler) AuthenticateUser() fiber.Handler {
+func (ah *AuthenticationHandler) authenticateUser() fiber.Handler {
 	return func(c *fiber.Ctx) error {
-		var loginRequest struct {
-			EmailAddress string `json:"emailAddress" validate:"required"`
-			Password     string `json:"password" validate:"required"`
+		req := new(types.LoginRequest)
+
+		if err := utils.ParseBodyAndValidate(c, req); err != nil {
+			return c.Status(fiber.StatusBadRequest).JSON(err)
 		}
 
-		if err := c.BodyParser(&loginRequest); err != nil {
-			return c.Status(fiber.StatusBadRequest).JSON(types.ValidationErrorResponse{
-				Type: "badRequest",
-				Errors: []types.ValidationErrorDetail{
-					{
-						Code:   "badRequest",
-						Detail: "Invalid request body",
-						Attr:   "body",
-					},
-				},
-			})
-		}
-
-		// Authenticate the user
-		user, err := h.Service.AuthenticateUser(
-			c.UserContext(), loginRequest.EmailAddress, loginRequest.Password,
-		)
+		entity, field, err := ah.service.AuthenticateUser(c.UserContext(), req.EmailAddress, req.Password)
 		if err != nil {
-			return c.Status(fiber.StatusUnauthorized).JSON(types.ValidationErrorResponse{
-				Type: "unauthorized",
-				Errors: []types.ValidationErrorDetail{
+			return c.Status(fiber.StatusBadRequest).JSON(types.ProblemDetail{
+				Type:     "invalid",
+				Title:    "Invalid Request",
+				Status:   fiber.StatusBadRequest,
+				Detail:   err.Error(),
+				Instance: fmt.Sprintf("%s/probs/validation-error", c.BaseURL()),
+				InvalidParams: []types.InvalidParam{
 					{
-						Code:   "authenticationError",
-						Detail: "Invalid email address or password",
-						Attr:   "emailAddress",
-					},
-					{
-						Code:   "authenticationError",
-						Detail: "Invalid email address or password",
-						Attr:   "password",
+						Name:   field,
+						Reason: err.Error(),
 					},
 				},
 			})
 		}
 
-		if user.Status == "I" {
-			return c.Status(fiber.StatusUnauthorized).JSON(types.ValidationErrorResponse{
-				Type: "unauthorized",
-				Errors: []types.ValidationErrorDetail{
+		if entity.Status == property.StatusInactive {
+			return c.Status(fiber.StatusBadRequest).JSON(types.ProblemDetail{
+				Type:     "invalid",
+				Title:    "Invalid Request",
+				Status:   fiber.StatusBadRequest,
+				Detail:   "User is inactive",
+				Instance: fmt.Sprintf("%s/probs/validation-error", c.BaseURL()),
+				InvalidParams: []types.InvalidParam{
 					{
-						Code:   "authenticationError",
-						Detail: "User is no longer active. Please contact support.",
-						Attr:   "emailAddress",
+						Name:   "status",
+						Reason: "User is inactive",
 					},
 				},
 			})
 		}
 
-		claims := jwt.MapClaims{
-			"userID":         user.ID,
-			"organizationID": user.OrganizationID,
-			"businessUnitID": user.BusinessUnitID,
-			"exp":            time.Now().Add(time.Hour * 72).Unix(),
-		}
+		token := jwt.New(jwt.SigningMethodRS256)
 
-		token := jwt.NewWithClaims(jwt.SigningMethodRS256, claims)
+		claims := token.Claims.(jwt.MapClaims)
+		claims["userID"] = entity.ID.String()
+		claims["organizationID"] = entity.OrganizationID.String()
+		claims["businessUnitID"] = entity.BusinessUnitID.String()
+		claims["exp"] = time.Now().Add(time.Hour * 72).Unix()
 
 		privateKey, _, err := middleware.LoadKeys()
 		if err != nil {
-			h.Logger.Error().Err(err).Msg("Error loading keys")
+			ah.logger.Error().Err(err).Msg("AuthHandler: Error loading keys")
+			return err
 		}
 
 		t, err := token.SignedString(privateKey)
 		if err != nil {
-			h.Logger.Error().Err(err).Msg("Error signing token")
+			ah.logger.Error().Err(err).Msg("AuthHandler: Error signing token")
 			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Error{
 				Code:    fiber.StatusInternalServerError,
 				Message: "Internal server error",
 			})
 		}
 
+		// Set the token in a cookie
 		c.Cookie(&fiber.Cookie{
 			Name:     "trenova-token",
 			Value:    t,
-			Expires:  time.Now().Add(time.Hour * 72), // 3 days
+			Expires:  time.Now().Add(time.Hour * 72),
 			SameSite: "Lax",
 			// HTTPOnly: true,
 			// Secure:   true,
@@ -155,29 +133,5 @@ func (h *AuthenticationHandler) AuthenticateUser() fiber.Handler {
 		return c.JSON(fiber.Map{
 			"token": t,
 		})
-	}
-}
-
-// LogoutUser logs out the user and clears the session.
-//
-// POST /auth/logout
-func (h *AuthenticationHandler) LogoutUser() fiber.Handler {
-	return func(c *fiber.Ctx) error {
-		// Clear the user from context
-		c.Locals(util.CTXOrganizationID, nil)
-		c.Locals(util.CTXBusinessUnitID, nil)
-		c.Locals(util.CTXUserID, nil)
-
-		// Expire the cookie
-		c.Cookie(&fiber.Cookie{
-			Name:     "trenova-token",
-			Value:    "",
-			Expires:  time.Now().Add(-time.Hour),
-			SameSite: "Lax",
-			// HTTPOnly: true,
-			// Secure:   true,
-		})
-
-		return c.SendStatus(fiber.StatusNoContent)
 	}
 }

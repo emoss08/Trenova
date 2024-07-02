@@ -11,7 +11,7 @@
 
 ## Introduction
 
-Welcome to Trenova, a cutting-edge web solution designed to revolutionize transportation and logistics operations. Combining the power of the Django framework with sophisticated frontend technologies, Trenova stands as a testament to innovation and efficiency in the logistics domain. As a contributor, you're joining a mission to streamline logistics processes through advanced technology, including machine learning and automation.
+Welcome to Trenova, a cutting-edge web solution designed to revolutionize transportation and logistics operations. Combining the power of the Fiber framework with sophisticated frontend technologies, Trenova stands as a testament to innovation and efficiency in the logistics domain. As a contributor, you're joining a mission to streamline logistics processes through advanced technology, including machine learning and automation.
 
 ## Code of Conduct
 
@@ -22,6 +22,7 @@ We are committed to maintaining a welcoming and inclusive community at Trenova. 
 ### Prerequisites
 
 - Python 3.12 is required.
+- Golang 1.22.4 is required.
 - Docker is essential for setting up the development environment.
 
 ### Setting Up the Development Environment
@@ -35,23 +36,20 @@ We are committed to maintaining a welcoming and inclusive community at Trenova. 
 
 2. **Docker Setup**:
    - Run `docker-compose up` in the `.docker` directory to build and start the containers.
+   - Alternatively, run `docker compose -f ./.docker/docker-compose.yml up -d --remove-orphans` to start the containers in detached mode.
 
 3. **Application Access**:
    - The React frontend is at `localhost:5173`.
-   - The Django backend at `localhost:8000`.
+   - The Fiber backend at `localhost:3001`.
+   - The FastAPI backend at `localhost:8000`.
 
-4. **Conduktor Setup**:
-   - Optionally install Conduktor to manage Kafka topics and messages.
-   - Run `curl -L https://releases.conduktor.io/console -o docker-compose.yml && docker compose up` in the `.docker` directory to start Conduktor.
-   - Access Conduktor at `localhost:8080`.
-
-5. **Generate RSA Keys**:
+4. **Generate RSA Keys**:
    - Run `openssl genpkey -algorithm RSA -out private_key.pem -pkeyopt rsa_keygen_bits:2048` in the `trenova` directory.
-   - Run `openssl genpkey -algorithm RSA -out private_key.pem -pkeyopt rsa_keygen_bits:2048` in the `trenova` directory.
+   - Run `openssl genpkey -algorithm RSA -out public_key.pem -pkeyopt rsa_keygen_bits:2048` in the `trenova` directory.
 
 ### Understanding the Project
 
-- Explore the tech stack, including Django, Django REST Framework, and React.
+- Explore the tech stack, including Fiber, FastAPI, and React.
 - Review the project structure and documentation for insights into our architecture and patterns.
 
 ## How to Contribute
@@ -73,6 +71,11 @@ We are committed to maintaining a welcoming and inclusive community at Trenova. 
 ### Python Code Style
 
 - We follow the [Google Python Style Guide](https://google.github.io/styleguide/pyguide.html). Adhere to these guidelines for any Python code contributions.
+- This includes conventions on naming, comments, formatting, and more.
+
+### Golang Code Style
+
+- We follow the [Effective Go](https://golang.org/doc/effective_go.html) guidelines. Adhere to these guidelines for any Golang code contributions.
 - This includes conventions on naming, comments, formatting, and more.
 
 ### Frontend Code Style
