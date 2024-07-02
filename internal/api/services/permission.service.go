@@ -2,56 +2,49 @@ package services
 
 import (
 	"context"
-	"fmt"
 
-	"github.com/emoss08/trenova/internal/api"
-	"github.com/emoss08/trenova/internal/ent"
-	"github.com/emoss08/trenova/internal/ent/organization"
-	"github.com/emoss08/trenova/internal/ent/permission"
-	ps "github.com/emoss08/trenova/internal/ent/permission"
-	"github.com/emoss08/trenova/internal/ent/user"
-	"github.com/emoss08/trenova/internal/util"
+	"github.com/emoss08/trenova/internal/server"
+	"github.com/emoss08/trenova/pkg/models"
+	"github.com/emoss08/trenova/pkg/utils"
 	"github.com/gofiber/fiber/v2"
 	"github.com/google/uuid"
-	"github.com/pkg/errors"
 	"github.com/rs/zerolog"
+	"github.com/uptrace/bun"
 )
 
 type PermissionService struct {
-	Client *ent.Client
-	Logger *zerolog.Logger
+	db     *bun.DB
+	logger *zerolog.Logger
 }
 
-func NewPermissionService(s *api.Server) *PermissionService {
+func NewPermissionService(s *server.Server) *PermissionService {
 	return &PermissionService{
-		Client: s.Client,
-		Logger: s.Logger,
+		db:     s.DB,
+		logger: s.Logger,
 	}
 }
 
-// HasPermission checks if a user has a specific permission.
 func (s *PermissionService) hasPermission(ctx context.Context, userID uuid.UUID, permission string) (bool, error) {
-	// Query user with roles and permissions
-	user, err := s.Client.User.Query().
-		Where(user.IDEQ(userID)).
-		WithRoles(func(q *ent.RoleQuery) {
-			q.WithPermissions(func(pq *ent.PermissionQuery) {
-				pq.Where(ps.Codename(permission))
-			})
-		}).Only(ctx)
+	// Query the user with roles and permissions.
+	user := new(models.User)
+
+	err := s.db.NewSelect().
+		Model(user).
+		Relation("Roles.Permissions").
+		Where("u.id = ?", userID).
+		Scan(ctx)
 	if err != nil {
-		s.Logger.Error().Err(err).Str("userID", userID.String()).Msg("Failed to query user")
-		return false, fmt.Errorf("failed to query user: %w", err)
+		return false, err
 	}
 
-	// If the user is admin, return true
-	if user.IsAdmin || user.IsSuperAdmin {
+	// If the user is admin, return true.
+	if user.IsAdmin {
 		return true, nil
 	}
 
-	// Check if the user has the requested permission
-	for _, role := range user.Edges.Roles {
-		for _, perm := range role.Edges.Permissions {
+	// Check if the user has the permission.
+	for _, role := range user.Roles {
+		for _, perm := range role.Permissions {
 			if perm.Codename == permission {
 				return true, nil
 			}
@@ -62,67 +55,50 @@ func (s *PermissionService) hasPermission(ctx context.Context, userID uuid.UUID,
 }
 
 func (s *PermissionService) CheckUserPermission(c *fiber.Ctx, permission string) error {
-	userID, ok := c.Locals(util.CTXUserID).(uuid.UUID)
+	userID, ok := c.Locals(utils.CTXUserID).(uuid.UUID)
 	if !ok {
-		return errors.New("user ID not found in the request context")
+		return fiber.NewError(fiber.StatusUnauthorized, "user id not found in context")
 	}
 
-	hasPermission, err := s.hasPermission(c.UserContext(), userID, permission)
+	hasPermission, err := s.hasPermission(c.Context(), userID, permission)
 	if err != nil {
-		s.Logger.Error().Err(err).Str("userID", userID.String()).Msg("Failed to check user permissions")
-		return fmt.Errorf("failed to check user permissions: %w", err)
+		return err
 	}
 
 	if !hasPermission {
-		s.Logger.Warn().Str("userID", userID.String()).Msg("User does not have permission")
-		return errors.New("user does not have permission")
+		return fiber.NewError(fiber.StatusForbidden, "user does not have permission")
 	}
 
-	return err
+	return nil
 }
 
-// GetPermissions gets the permissions for an organization.
-func (s *PermissionService) GetPermissions(
-	ctx context.Context, limit, offset int, orgID, buID uuid.UUID,
-) ([]*ent.Permission, int, error) {
-	entityCount, countErr := s.Client.Permission.Query().Where(
-		permission.HasOrganizationWith(
-			organization.IDEQ(orgID),
-			organization.BusinessUnitIDEQ(buID),
-		),
-	).Count(ctx)
-
-	if countErr != nil {
-		return nil, 0, countErr
-	}
-
-	entities, err := s.Client.Permission.Query().
+func (s *PermissionService) GetPermissions(ctx context.Context, limit, offset int, orgID, buID uuid.UUID) ([]*models.Permission, int, error) {
+	var permissions []*models.Permission
+	count, err := s.db.NewSelect().
+		Model(&permissions).
+		Relation("Roles").
+		Where("p.organization_id = ?", orgID).
+		Where("p.business_unit_id = ?", buID).
+		Order("p.created_at DESC").
 		Limit(limit).
 		Offset(offset).
-		WithRoles().
-		Where(
-			permission.HasOrganizationWith(
-				organization.IDEQ(orgID),
-				organization.BusinessUnitIDEQ(buID),
-			),
-		).All(ctx)
+		ScanAndCount(ctx)
 	if err != nil {
 		return nil, 0, err
 	}
 
-	return entities, entityCount, nil
+	return permissions, count, nil
 }
 
-// Check if the user has the required permissions or if the user is updating their own profile
 func (s *PermissionService) CheckOwnershipPermission(c *fiber.Ctx, permission string, userID string) error {
-	uid, ok := c.Locals(util.CTXUserID).(uuid.UUID)
+	uid, ok := c.Locals(utils.CTXUserID).(uuid.UUID)
 	if !ok {
-		return errors.New("user ID not found in the request context")
+		return fiber.NewError(fiber.StatusUnauthorized, "user id not found in context")
 	}
 
-	// Check if the user is updating their own profile
+	// Check if the user is updating their own profile.
 	if uid.String() != userID {
-		// if the user is not updating their own profile, check if the user has the required permission
+		// if the user not updating their own profile, check if the user has the required permission.
 		return s.CheckUserPermission(c, permission)
 	}
 

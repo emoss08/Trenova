@@ -2,125 +2,127 @@ package services
 
 import (
 	"context"
+	"fmt"
+	"strings"
 
-	"github.com/emoss08/trenova/internal/api"
-	"github.com/emoss08/trenova/internal/api/services/types"
-	"github.com/emoss08/trenova/internal/ent"
-	"github.com/emoss08/trenova/internal/queries"
-	"github.com/emoss08/trenova/internal/util"
-	"github.com/rs/zerolog"
-
+	"github.com/emoss08/trenova/internal/server"
+	"github.com/emoss08/trenova/pkg/gen"
+	"github.com/emoss08/trenova/pkg/models"
 	"github.com/google/uuid"
+	"github.com/rs/zerolog"
+	"github.com/uptrace/bun"
 )
 
+// LocationService handles business logic for Location
 type LocationService struct {
-	Client       *ent.Client
-	Logger       *zerolog.Logger
-	QueryService *queries.QueryService
+	db      *bun.DB
+	logger  *zerolog.Logger
+	codeGen *gen.CodeGenerator
 }
 
-// NewLocationService creates a new location service.
-func NewLocationService(s *api.Server) *LocationService {
+// NewLocationService creates a new instance of LocationService
+func NewLocationService(s *server.Server) *LocationService {
 	return &LocationService{
-		Client: s.Client,
-		Logger: s.Logger,
-		QueryService: &queries.QueryService{
-			Client: s.Client,
-			Logger: s.Logger,
-		},
+		db:      s.DB,
+		logger:  s.Logger,
+		codeGen: s.CodeGenerator,
 	}
 }
 
-// GetLocations retrieves a list of locations for a given organization and business unit.
-// It returns a slice of Location entities, the total number of location records, and an error object.
-//
-// Parameters:
-//   - ctx: Context which may contain deadlines, cancellation signals, and other request-scoped values.
-//   - limit int: The maximum number of records to return.
-//   - offset int: The number of records to skip before starting to return records.
-//   - orgID uuid.UUID: The identifier of the organization.
-//   - buID uuid.UUID: The identifier of the business unit.
-//
-// Returns:
-//   - []*ent.Location: A slice of Location entities.
-//   - int: The total number of location records.
-//   - error: An error object that indicates why the retrieval failed, nil if no error occurred.
-func (r *LocationService) GetLocations(
-	ctx context.Context, limit, offset int, orgID, buID uuid.UUID,
-) ([]*ent.Location, int, error) {
-	return r.QueryService.GetLocations(ctx, limit, offset, orgID, buID)
+// QueryFilter defines the filter parameters for querying Location
+type LocationQueryFilter struct {
+	Query          string
+	OrganizationID uuid.UUID
+	BusinessUnitID uuid.UUID
+	Limit          int
+	Offset         int
 }
 
-// CreateLocation creates a new location entity.
-//
-// Parameters:
-//   - ctx: Context which may contain deadlines, cancellation signals, and other request-scoped values.
-//   - newEntity *LocationRequest: The location request containing the details of the location to be created.
-//
-// Returns:
-//   - *ent.Location: A pointer to the created Location entity.
-//   - error: An error object that indicates why the creation failed, nil if no error occurred.
-func (r *LocationService) CreateLocation(ctx context.Context, newEntity *types.LocationRequest) (*ent.Location, error) {
-	var createdEntity *ent.Location
+// filterQuery applies filters to the query
+func (s *LocationService) filterQuery(q *bun.SelectQuery, f *LocationQueryFilter) *bun.SelectQuery {
+	q = q.Where("lc.organization_id = ?", f.OrganizationID).
+		Where("lc.business_unit_id = ?", f.BusinessUnitID)
 
-	err := util.WithTx(ctx, r.Client, func(tx *ent.Tx) error {
-		var err error
-		createdEntity, err = r.QueryService.CreateLocationEntity(ctx, tx, newEntity)
-		if err != nil {
-			return err
+	if f.Query != "" {
+		q = q.Where("lc.code = ? OR lc.name ILIKE ?", f.Query, "%"+strings.ToLower(f.Query)+"%")
+	}
+
+	q = q.OrderExpr("CASE WHEN lc.code = ? THEN 0 ELSE 1 END", f.Query).
+		Order("lc.created_at DESC")
+
+	return q.Limit(f.Limit).Offset(f.Offset)
+}
+
+// GetAll retrieves all Location based on the provided filter
+func (s *LocationService) GetAll(ctx context.Context, filter *LocationQueryFilter) ([]*models.Location, int, error) {
+	var entities []*models.Location
+
+	q := s.db.NewSelect().
+		Model(&entities).
+		Relation("LocationCategory").
+		Relation("State")
+
+	q = s.filterQuery(q, filter)
+
+	count, err := q.ScanAndCount(ctx)
+	if err != nil {
+		s.logger.Error().Err(err).Msg("Failed to fetch Location")
+		return nil, 0, fmt.Errorf("failed to fetch Location: %w", err)
+	}
+
+	return entities, count, nil
+}
+
+// Get retrieves a single Location by ID
+func (s *LocationService) Get(ctx context.Context, id, orgID, buID uuid.UUID) (*models.Location, error) {
+	entity := new(models.Location)
+	err := s.db.NewSelect().
+		Model(entity).
+		Where("lc.organization_id = ?", orgID).
+		Where("lc.business_unit_id = ?", buID).
+		Where("lc.id = ?", id).
+		Scan(ctx)
+	if err != nil {
+		s.logger.Error().Err(err).Msg("Failed to fetch Location")
+		return nil, fmt.Errorf("failed to fetch Location: %w", err)
+	}
+
+	return entity, nil
+}
+
+// Create creates a new Location
+func (s *LocationService) Create(ctx context.Context, entity *models.Location) (*models.Location, error) {
+	err := s.db.RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
+		// Query the master key generation entity.
+		mkg, mErr := models.QueryLocationMasterKeyGenerationByOrgID(ctx, s.db, entity.OrganizationID)
+		if mErr != nil {
+			return mErr
 		}
 
-		// If comments are provided, create them and associate them with the location
-		if len(newEntity.Comments) > 0 {
-			if err = r.QueryService.CreateLocationComments(ctx, tx, createdEntity.ID, newEntity); err != nil {
-				return err
-			}
-		}
-
-		// If locations are provided, create them and associate them with the location
-		if len(newEntity.Contacts) > 0 {
-			if err = r.QueryService.CreateLocationContacts(ctx, tx, createdEntity.ID, newEntity); err != nil {
-				return err
-			}
-		}
-
-		return nil
+		return entity.InsertLocation(ctx, tx, s.codeGen, mkg.Pattern)
 	})
 	if err != nil {
-		return nil, err
+		s.logger.Error().Err(err).Msg("Failed to create Location")
+		return nil, fmt.Errorf("failed to create Location: %w", err)
 	}
 
-	return createdEntity, nil
+	return entity, nil
 }
 
-// UpdateLocation updates a location entity.
-//
-// Parameters:
-//   - ctx: Context which may contain deadlines, cancellation signals, and other request-scoped values.
-//   - entity *LocationUpdateRequest: The location update request containing the details of the location to be updated.
-//
-// Returns:
-//   - *ent.Location: A pointer to the updated Location entity.
-//   - error: An error object that indicates why the update failed, nil if no error occurred.
-func (r *LocationService) UpdateLocation(ctx context.Context, entity *types.LocationUpdateRequest) (*ent.Location, error) {
-	var updatedEntity *ent.Location
-
-	err := util.WithTx(ctx, r.Client, func(tx *ent.Tx) error {
-		var err error
-		updatedEntity, err = r.QueryService.UpdateLocationEntity(ctx, tx, entity)
-		if err != nil {
-			return err
-		}
-
-		if err = r.QueryService.SyncLocationComments(ctx, tx, entity, updatedEntity); err != nil {
-			return err
-		}
-
-		return r.QueryService.SyncLocationContacts(ctx, tx, entity, updatedEntity)
+// UpdateOne updates an existing Location
+func (s *LocationService) UpdateOne(ctx context.Context, entity *models.Location) (*models.Location, error) {
+	err := s.db.RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
+		_, err := tx.NewUpdate().
+			Model(entity).
+			WherePK().
+			Returning("*").
+			Exec(ctx)
+		return err
 	})
 	if err != nil {
-		return nil, err
+		s.logger.Error().Err(err).Msg("Failed to update Location")
+		return nil, fmt.Errorf("failed to update Location: %w", err)
 	}
 
-	return updatedEntity, nil
+	return entity, nil
 }

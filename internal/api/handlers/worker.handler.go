@@ -1,213 +1,214 @@
 package handlers
 
 import (
-	"github.com/emoss08/trenova/internal/api"
+	"fmt"
+
 	"github.com/emoss08/trenova/internal/api/services"
-	"github.com/emoss08/trenova/internal/util"
-	"github.com/emoss08/trenova/internal/util/types"
+	"github.com/emoss08/trenova/internal/server"
+	"github.com/emoss08/trenova/internal/types"
+	"github.com/emoss08/trenova/pkg/models"
+	"github.com/emoss08/trenova/pkg/utils"
 	"github.com/gofiber/fiber/v2"
 	"github.com/google/uuid"
+	"github.com/rs/zerolog"
 )
 
-// WorkerHandler is a struct that handles HTTP requests for worker resources.
 type WorkerHandler struct {
-	Service           *services.WorkerService
-	PermissionService *services.PermissionService
+	logger            *zerolog.Logger
+	service           *services.WorkerService
+	permissionService *services.PermissionService
 }
 
-// NewWorkerHandler creates a new WorkerHandler with the given Server instance.
-//
-// Parameters:
-//
-//	s *api.Server: A pointer to an instance of api.Server which contains configuration and state needed by WorkerHandler.
-//
-// Returns:
-//
-//	*WorkerHandler: A pointer to the newly created WorkerHandler instance.
-func NewWorkerHandler(s *api.Server) *WorkerHandler {
+func NewWorkerHandler(s *server.Server) *WorkerHandler {
 	return &WorkerHandler{
-		Service:           services.NewWorkerService(s),
-		PermissionService: services.NewPermissionService(s),
+		logger:            s.Logger,
+		service:           services.NewWorkerService(s),
+		permissionService: services.NewPermissionService(s),
 	}
 }
 
-// RegisterRoutes registers the routes for the WorkerHandler.
 func (h *WorkerHandler) RegisterRoutes(r fiber.Router) {
-	workersAPI := r.Group("/workers")
-	workersAPI.Get("/", h.getWorkers())
-	workersAPI.Post("/", h.createWorker())
-	workersAPI.Put("/:workerID", h.updateWorker())
+	api := r.Group("/workers")
+	api.Get("/", h.Get())
+	api.Get("/:workerID", h.GetByID())
+	api.Post("/", h.Create())
+	api.Put("/:workerID", h.Update())
 }
 
-// getWorkers is a handler that returns a list of workers.
-//
-// GET /workers
-func (h *WorkerHandler) getWorkers() fiber.Handler {
+func (h *WorkerHandler) Get() fiber.Handler {
 	return func(c *fiber.Ctx) error {
-		orgID, ok := c.Locals(util.CTXOrganizationID).(uuid.UUID)
-		buID, buOK := c.Locals(util.CTXBusinessUnitID).(uuid.UUID)
+		orgID, ok := c.Locals(utils.CTXOrganizationID).(uuid.UUID)
+		buID, orgOK := c.Locals(utils.CTXBusinessUnitID).(uuid.UUID)
 
-		if !ok || !buOK {
-			return c.Status(fiber.StatusInternalServerError).JSON(types.ValidationErrorResponse{
-				Type: "internalError",
-				Errors: []types.ValidationErrorDetail{
+		if !ok || !orgOK {
+			h.logger.Error().Msg("WorkerHandler: Organization & Business Unit ID not found in context")
+			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Error{
+				Code:    fiber.StatusUnauthorized,
+				Message: "Organization & Business Unit ID not found in context",
+			})
+		}
+
+		offset, limit, err := utils.PaginationParams(c)
+		if err != nil {
+			return c.Status(fiber.StatusBadRequest).JSON(types.ProblemDetail{
+				Type:     "invalid",
+				Title:    "Invalid Request",
+				Status:   fiber.StatusBadRequest,
+				Detail:   err.Error(),
+				Instance: fmt.Sprintf("%s/probs/validation-error", c.BaseURL()),
+				InvalidParams: []types.InvalidParam{
 					{
-						Code:   "internalError",
-						Detail: "Organization ID or Business Unit ID not found in the request context",
-						Attr:   "orgID, buID",
+						Name:   "limit",
+						Reason: "Limit must be a positive integer",
+					},
+					{
+						Name:   "offset",
+						Reason: "Offset must be a positive integer",
 					},
 				},
 			})
 		}
 
-		// Check if the user has the required permission
-		err := h.PermissionService.CheckUserPermission(c, "worker.view")
-		if err != nil {
-			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
-				"error":   "Unauthorized",
-				"message": "You do not have the required permission to access this resource",
+		if err = h.permissionService.CheckUserPermission(c, models.PermissionWorkerView.String()); err != nil {
+			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Error{
+				Code:    fiber.StatusUnauthorized,
+				Message: "You do not have permission to perform this action.",
 			})
 		}
 
-		offset, limit, err := util.PaginationParams(c)
+		query := c.Query("search", "")
+
+		entities, cnt, err := h.service.GetAll(c.UserContext(), limit, offset, query, orgID, buID)
 		if err != nil {
-			return c.Status(fiber.StatusBadRequest).JSON(types.ValidationErrorResponse{
-				Type: "invalidRequest",
-				Errors: []types.ValidationErrorDetail{
-					{
-						Code:   "invalidRequest",
-						Detail: err.Error(),
-						Attr:   "offset, limit",
-					},
-				},
+			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Error{
+				Code:    fiber.StatusInternalServerError,
+				Message: "Failed to get Workers",
 			})
 		}
 
-		entities, count, err := h.Service.GetWorkers(c.UserContext(), limit, offset, orgID, buID)
-		if err != nil {
-			errorResponse := util.CreateDBErrorResponse(err)
-			return c.Status(fiber.StatusInternalServerError).JSON(errorResponse)
-		}
+		nextURL := utils.GetNextPageURL(c, limit, offset, cnt)
+		prevURL := utils.GetPrevPageURL(c, limit, offset)
 
-		nextURL := util.GetNextPageURL(c, limit, offset, count)
-		prevURL := util.GetPrevPageURL(c, limit, offset)
-
-		return c.Status(fiber.StatusOK).JSON(types.HTTPResponse{
-			Results:  entities,
-			Count:    count,
-			Next:     nextURL,
-			Previous: prevURL,
+		return c.Status(fiber.StatusOK).JSON(types.HTTPResponse[[]*models.Worker]{
+			Results: entities,
+			Count:   cnt,
+			Next:    nextURL,
+			Prev:    prevURL,
 		})
 	}
 }
 
-// createWorker is a handler that creates a worker.
-//
-// POST /workers
-func (h *WorkerHandler) createWorker() fiber.Handler {
+func (h *WorkerHandler) Create() fiber.Handler {
 	return func(c *fiber.Ctx) error {
-		newEntity := new(services.WorkerRequest)
+		createdEntity := new(models.Worker)
 
-		orgID, ok := c.Locals(util.CTXOrganizationID).(uuid.UUID)
-		buID, buOK := c.Locals(util.CTXBusinessUnitID).(uuid.UUID)
+		orgID, ok := c.Locals(utils.CTXOrganizationID).(uuid.UUID)
+		buID, orgOK := c.Locals(utils.CTXBusinessUnitID).(uuid.UUID)
 
-		if !ok || !buOK {
-			return c.Status(fiber.StatusInternalServerError).JSON(types.ValidationErrorResponse{
-				Type: "internalError",
-				Errors: []types.ValidationErrorDetail{
-					{
-						Code:   "internalError",
-						Detail: "Organization ID or Business Unit ID not found in the request context",
-						Attr:   "orgID, buID",
-					},
-				},
+		if !ok || !orgOK {
+			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Error{
+				Code:    fiber.StatusUnauthorized,
+				Message: "Organization & Business Unit ID not found in context",
 			})
 		}
 
-		// Check if the user has the required permission
-		err := h.PermissionService.CheckUserPermission(c, "worker.add")
+		if err := h.permissionService.CheckUserPermission(c, models.PermissionWorkerAdd.String()); err != nil {
+			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Error{
+				Code:    fiber.StatusUnauthorized,
+				Message: "You do not have permission to perform this action.",
+			})
+		}
+
+		createdEntity.BusinessUnitID = buID
+		createdEntity.OrganizationID = orgID
+
+		if err := utils.ParseBodyAndValidate(c, createdEntity); err != nil {
+			return c.Status(fiber.StatusBadRequest).JSON(err)
+		}
+
+		entity, err := h.service.Create(c.UserContext(), createdEntity)
 		if err != nil {
-			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
-				"error":   "Unauthorized",
-				"message": "You do not have the required permission to access this resource",
+			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Error{
+				Code:    fiber.StatusInternalServerError,
+				Message: err.Error(),
 			})
-		}
-
-		newEntity.BusinessUnitID = buID
-		newEntity.OrganizationID = orgID
-
-		if err := util.ParseBodyAndValidate(c, newEntity); err != nil {
-			return c.Status(fiber.StatusBadRequest).JSON(types.ValidationErrorResponse{
-				Type: "invalidRequest",
-				Errors: []types.ValidationErrorDetail{
-					{
-						Code:   "invalidRequest",
-						Detail: err.Error(),
-						Attr:   "body",
-					},
-				},
-			})
-		}
-
-		entity, err := h.Service.CreateWorker(c.UserContext(), newEntity)
-		if err != nil {
-			errorResponse := util.CreateDBErrorResponse(err)
-			return c.Status(fiber.StatusInternalServerError).JSON(errorResponse)
 		}
 
 		return c.Status(fiber.StatusCreated).JSON(entity)
 	}
 }
 
-// updateWorker is a handler that updates a worker.
-//
-// PUT /workers/:workerID
-func (h *WorkerHandler) updateWorker() fiber.Handler {
+func (h *WorkerHandler) GetByID() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		workerID := c.Params("workerID")
 		if workerID == "" {
-			return c.Status(fiber.StatusBadRequest).JSON(types.ValidationErrorResponse{
-				Type: "invalidRequest",
-				Errors: []types.ValidationErrorDetail{
-					{
-						Code:   "invalidRequest",
-						Detail: "Worker ID is required",
-						Attr:   "workerID",
-					},
-				},
+			return c.Status(fiber.StatusBadRequest).JSON(fiber.Error{
+				Code:    fiber.StatusBadRequest,
+				Message: "Worker ID is required",
 			})
 		}
 
-		// Check if the user has the required permission
-		err := h.PermissionService.CheckUserPermission(c, "worker.edit")
+		orgID, ok := c.Locals(utils.CTXOrganizationID).(uuid.UUID)
+		buID, orgOK := c.Locals(utils.CTXBusinessUnitID).(uuid.UUID)
+
+		if !ok || !orgOK {
+			h.logger.Error().Msg("WorkerHandler: Organization & Business Unit ID not found in context")
+			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Error{
+				Code:    fiber.StatusUnauthorized,
+				Message: "Organization & Business Unit ID not found in context",
+			})
+		}
+
+		if err := h.permissionService.CheckUserPermission(c, models.PermissionWorkerView.String()); err != nil {
+			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Error{
+				Code:    fiber.StatusUnauthorized,
+				Message: "You do not have permission to perform this action.",
+			})
+		}
+
+		entity, err := h.service.Get(c.UserContext(), uuid.MustParse(workerID), orgID, buID)
 		if err != nil {
-			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
-				"error":   "Unauthorized",
-				"message": "You do not have the required permission to access this resource",
+			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Error{
+				Code:    fiber.StatusInternalServerError,
+				Message: "Failed to get Worker",
 			})
 		}
 
-		updatedEntity := new(services.WorkerUpdateRequest)
+		return c.Status(fiber.StatusOK).JSON(entity)
+	}
+}
 
-		if err := util.ParseBodyAndValidate(c, updatedEntity); err != nil {
-			return c.Status(fiber.StatusBadRequest).JSON(types.ValidationErrorResponse{
-				Type: "invalidRequest",
-				Errors: []types.ValidationErrorDetail{
-					{
-						Code:   "invalidRequest",
-						Detail: err.Error(),
-						Attr:   "request body",
-					},
-				},
+func (h *WorkerHandler) Update() fiber.Handler {
+	return func(c *fiber.Ctx) error {
+		workerID := c.Params("workerID")
+		if workerID == "" {
+			return c.Status(fiber.StatusBadRequest).JSON(fiber.Error{
+				Code:    fiber.StatusBadRequest,
+				Message: "Worker ID is required",
 			})
+		}
+
+		if err := h.permissionService.CheckUserPermission(c, models.PermissionWorkerEdit.String()); err != nil {
+			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Error{
+				Code:    fiber.StatusUnauthorized,
+				Message: "You do not have permission to perform this action.",
+			})
+		}
+
+		updatedEntity := new(models.Worker)
+
+		if err := utils.ParseBodyAndValidate(c, updatedEntity); err != nil {
+			return c.Status(fiber.StatusBadRequest).JSON(err)
 		}
 
 		updatedEntity.ID = uuid.MustParse(workerID)
 
-		entity, err := h.Service.UpdateWorker(c.UserContext(), updatedEntity)
+		entity, err := h.service.UpdateOne(c.UserContext(), updatedEntity)
 		if err != nil {
-			errorResponse := util.CreateDBErrorResponse(err)
-			return c.Status(fiber.StatusInternalServerError).JSON(errorResponse)
+			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Error{
+				Code:    fiber.StatusInternalServerError,
+				Message: "Failed to update Worker",
+			})
 		}
 
 		return c.Status(fiber.StatusOK).JSON(entity)

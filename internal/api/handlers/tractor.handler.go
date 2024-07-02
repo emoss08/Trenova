@@ -1,204 +1,220 @@
 package handlers
 
 import (
-	"github.com/emoss08/trenova/internal/api"
+	"fmt"
+
 	"github.com/emoss08/trenova/internal/api/services"
-	"github.com/emoss08/trenova/internal/ent"
-	"github.com/emoss08/trenova/internal/util"
-	"github.com/emoss08/trenova/internal/util/types"
+	"github.com/emoss08/trenova/internal/server"
+	"github.com/emoss08/trenova/internal/types"
+	"github.com/emoss08/trenova/pkg/models"
+	"github.com/emoss08/trenova/pkg/utils"
 	"github.com/gofiber/fiber/v2"
 	"github.com/google/uuid"
+	"github.com/rs/zerolog"
 )
 
 type TractorHandler struct {
-	Service           *services.TractorService
-	PermissionService *services.PermissionService
+	logger            *zerolog.Logger
+	service           *services.TractorService
+	permissionService *services.PermissionService
 }
 
-func NewTractorHandler(s *api.Server) *TractorHandler {
+func NewTractorHandler(s *server.Server) *TractorHandler {
 	return &TractorHandler{
-		Service:           services.NewTractorService(s),
-		PermissionService: services.NewPermissionService(s),
+		logger:            s.Logger,
+		service:           services.NewTractorService(s),
+		permissionService: services.NewPermissionService(s),
 	}
 }
 
-// RegisterRoutes registers the routes for the TractorHandler.
 func (h *TractorHandler) RegisterRoutes(r fiber.Router) {
-	tractorAPI := r.Group("/tractors")
-	tractorAPI.Get("/", h.GetTractors())
-	tractorAPI.Post("/", h.CreateTractor())
-	tractorAPI.Put("/:tractorID", h.UpdateTractor())
+	api := r.Group("/tractors")
+	api.Get("/", h.Get())
+	api.Get("/:tractorID", h.GetByID())
+	api.Post("/", h.Create())
+	api.Put("/:tractorID", h.Update())
 }
 
-// GetTractors is a handler that returns a list of tractors.
-//
-// GET /tractors
-func (h *TractorHandler) GetTractors() fiber.Handler {
+func (h *TractorHandler) Get() fiber.Handler {
 	return func(c *fiber.Ctx) error {
-		orgID, ok := c.Locals(util.CTXOrganizationID).(uuid.UUID)
-		buID, buOK := c.Locals(util.CTXBusinessUnitID).(uuid.UUID)
+		orgID, ok := c.Locals(utils.CTXOrganizationID).(uuid.UUID)
+		buID, orgOK := c.Locals(utils.CTXBusinessUnitID).(uuid.UUID)
 
-		if !ok || !buOK {
-			return c.Status(fiber.StatusInternalServerError).JSON(types.ValidationErrorResponse{
-				Type: "internalError",
-				Errors: []types.ValidationErrorDetail{
+		if !ok || !orgOK {
+			h.logger.Error().Msg("TractorHandler: Organization & Business Unit ID not found in context")
+			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Error{
+				Code:    fiber.StatusUnauthorized,
+				Message: "Organization & Business Unit ID not found in context",
+			})
+		}
+
+		offset, limit, err := utils.PaginationParams(c)
+		if err != nil {
+			return c.Status(fiber.StatusBadRequest).JSON(types.ProblemDetail{
+				Type:     "invalid",
+				Title:    "Invalid Request",
+				Status:   fiber.StatusBadRequest,
+				Detail:   err.Error(),
+				Instance: fmt.Sprintf("%s/probs/validation-error", c.BaseURL()),
+				InvalidParams: []types.InvalidParam{
 					{
-						Code:   "internalError",
-						Detail: "Organization ID or Business Unit ID not found in the request context",
-						Attr:   "orgID, buID",
+						Name:   "limit",
+						Reason: "Limit must be a positive integer",
+					},
+					{
+						Name:   "offset",
+						Reason: "Offset must be a positive integer",
 					},
 				},
 			})
 		}
 
-		// Check if the user has the required permission
-		err := h.PermissionService.CheckUserPermission(c, "tractor.view")
-		if err != nil {
-			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
-				"error":   "Unauthorized",
-				"message": "You do not have the required permission to access this resource",
+		if err = h.permissionService.CheckUserPermission(c, models.PermissionTractorView.String()); err != nil {
+			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Error{
+				Code:    fiber.StatusUnauthorized,
+				Message: "You do not have permission to perform this action.",
 			})
 		}
 
-		offset, limit, err := util.PaginationParams(c)
+		filter := &services.TractorQueryFilter{
+			Query:          c.Query("search", ""),
+			OrganizationID: orgID,
+			BusinessUnitID: buID,
+			Limit:          limit,
+			Offset:         offset,
+		}
+
+		entities, cnt, err := h.service.GetAll(c.UserContext(), filter)
 		if err != nil {
-			return c.Status(fiber.StatusBadRequest).JSON(types.ValidationErrorResponse{
-				Type: "invalidRequest",
-				Errors: []types.ValidationErrorDetail{
-					{
-						Code:   "invalidRequest",
-						Detail: err.Error(),
-						Attr:   "offset, limit",
-					},
-				},
+			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Error{
+				Code:    fiber.StatusInternalServerError,
+				Message: "Failed to get Tractors",
 			})
 		}
 
-		entities, count, err := h.Service.GetTractors(c.UserContext(), limit, offset, orgID, buID)
-		if err != nil {
-			errorResponse := util.CreateDBErrorResponse(err)
-			return c.Status(fiber.StatusInternalServerError).JSON(errorResponse)
-		}
+		nextURL := utils.GetNextPageURL(c, limit, offset, cnt)
+		prevURL := utils.GetPrevPageURL(c, limit, offset)
 
-		nextURL := util.GetNextPageURL(c, limit, offset, count)
-		prevURL := util.GetPrevPageURL(c, limit, offset)
-
-		return c.Status(fiber.StatusOK).JSON(types.HTTPResponse{
-			Results:  entities,
-			Count:    count,
-			Next:     nextURL,
-			Previous: prevURL,
+		return c.Status(fiber.StatusOK).JSON(types.HTTPResponse[[]*models.Tractor]{
+			Results: entities,
+			Count:   cnt,
+			Next:    nextURL,
+			Prev:    prevURL,
 		})
 	}
 }
 
-// CreateTractor is a handler that creates a new tractor.
-//
-// POST /tractors
-func (h *TractorHandler) CreateTractor() fiber.Handler {
+func (h *TractorHandler) Create() fiber.Handler {
 	return func(c *fiber.Ctx) error {
-		newEntity := new(ent.Tractor)
+		createdEntity := new(models.Tractor)
 
-		orgID, ok := c.Locals(util.CTXOrganizationID).(uuid.UUID)
-		buID, buOK := c.Locals(util.CTXBusinessUnitID).(uuid.UUID)
+		orgID, ok := c.Locals(utils.CTXOrganizationID).(uuid.UUID)
+		buID, orgOK := c.Locals(utils.CTXBusinessUnitID).(uuid.UUID)
 
-		if !ok || !buOK {
-			return c.Status(fiber.StatusInternalServerError).JSON(types.ValidationErrorResponse{
-				Type: "internalError",
-				Errors: []types.ValidationErrorDetail{
-					{
-						Code:   "internalError",
-						Detail: "Organization ID or Business Unit ID not found in the request context",
-						Attr:   "orgID, buID",
-					},
-				},
+		if !ok || !orgOK {
+			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Error{
+				Code:    fiber.StatusUnauthorized,
+				Message: "Organization & Business Unit ID not found in context",
 			})
 		}
 
-		// Check if the user has the required permission
-		err := h.PermissionService.CheckUserPermission(c, "tractor.add")
+		if err := h.permissionService.CheckUserPermission(c, models.PermissionTractorAdd.String()); err != nil {
+			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Error{
+				Code:    fiber.StatusUnauthorized,
+				Message: "You do not have permission to perform this action.",
+			})
+		}
+
+		createdEntity.BusinessUnitID = buID
+		createdEntity.OrganizationID = orgID
+
+		if err := utils.ParseBodyAndValidate(c, createdEntity); err != nil {
+			return c.Status(fiber.StatusBadRequest).JSON(err)
+		}
+
+		entity, err := h.service.Create(c.UserContext(), createdEntity)
 		if err != nil {
-			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
-				"error":   "Unauthorized",
-				"message": "You do not have the required permission to access this resource",
+			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Error{
+				Code:    fiber.StatusInternalServerError,
+				Message: err.Error(),
 			})
-		}
-
-		newEntity.BusinessUnitID = buID
-		newEntity.OrganizationID = orgID
-
-		if err := util.ParseBodyAndValidate(c, newEntity); err != nil {
-			return c.Status(fiber.StatusBadRequest).JSON(types.ValidationErrorResponse{
-				Type: "invalidRequest",
-				Errors: []types.ValidationErrorDetail{
-					{
-						Code:   "invalidRequest",
-						Detail: err.Error(),
-						Attr:   "body",
-					},
-				},
-			})
-		}
-
-		entity, err := h.Service.CreateTractor(c.UserContext(), newEntity)
-		if err != nil {
-			errorResponse := util.CreateDBErrorResponse(err)
-			return c.Status(fiber.StatusInternalServerError).JSON(errorResponse)
 		}
 
 		return c.Status(fiber.StatusCreated).JSON(entity)
 	}
 }
 
-// UpdateTractor is a handler that updates a tractor.
-//
-// PUT /tractors/:tractorID
-func (h *TractorHandler) UpdateTractor() fiber.Handler {
+func (h *TractorHandler) GetByID() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		tractorID := c.Params("tractorID")
 		if tractorID == "" {
-			return c.Status(fiber.StatusBadRequest).JSON(types.ValidationErrorResponse{
-				Type: "invalidRequest",
-				Errors: []types.ValidationErrorDetail{
-					{
-						Code:   "invalidRequest",
-						Detail: "tractor ID is required",
-						Attr:   "tractorID",
-					},
-				},
+			return c.Status(fiber.StatusBadRequest).JSON(fiber.Error{
+				Code:    fiber.StatusBadRequest,
+				Message: "Tractor ID is required",
 			})
 		}
 
-		// Check if the user has the required permission
-		err := h.PermissionService.CheckUserPermission(c, "tractor.edit")
+		orgID, ok := c.Locals(utils.CTXOrganizationID).(uuid.UUID)
+		buID, orgOK := c.Locals(utils.CTXBusinessUnitID).(uuid.UUID)
+
+		if !ok || !orgOK {
+			h.logger.Error().Msg("TractorHandler: Organization & Business Unit ID not found in context")
+			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Error{
+				Code:    fiber.StatusUnauthorized,
+				Message: "Organization & Business Unit ID not found in context",
+			})
+		}
+
+		if err := h.permissionService.CheckUserPermission(c, models.PermissionTractorView.String()); err != nil {
+			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Error{
+				Code:    fiber.StatusUnauthorized,
+				Message: "You do not have permission to perform this action.",
+			})
+		}
+
+		entity, err := h.service.Get(c.UserContext(), uuid.MustParse(tractorID), orgID, buID)
 		if err != nil {
-			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
-				"error":   "Unauthorized",
-				"message": "You do not have the required permission to access this resource",
+			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Error{
+				Code:    fiber.StatusInternalServerError,
+				Message: "Failed to get Tractor",
 			})
 		}
 
-		updatedEntity := new(ent.Tractor)
+		return c.Status(fiber.StatusOK).JSON(entity)
+	}
+}
 
-		if err := util.ParseBodyAndValidate(c, updatedEntity); err != nil {
-			return c.Status(fiber.StatusBadRequest).JSON(types.ValidationErrorResponse{
-				Type: "invalidRequest",
-				Errors: []types.ValidationErrorDetail{
-					{
-						Code:   "invalidRequest",
-						Detail: err.Error(),
-						Attr:   "request body",
-					},
-				},
+func (h *TractorHandler) Update() fiber.Handler {
+	return func(c *fiber.Ctx) error {
+		tractorID := c.Params("tractorID")
+		if tractorID == "" {
+			return c.Status(fiber.StatusBadRequest).JSON(fiber.Error{
+				Code:    fiber.StatusBadRequest,
+				Message: "Tractor ID is required",
 			})
+		}
+
+		if err := h.permissionService.CheckUserPermission(c, models.PermissionTractorEdit.String()); err != nil {
+			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Error{
+				Code:    fiber.StatusUnauthorized,
+				Message: "You do not have permission to perform this action.",
+			})
+		}
+
+		updatedEntity := new(models.Tractor)
+
+		if err := utils.ParseBodyAndValidate(c, updatedEntity); err != nil {
+			return c.Status(fiber.StatusBadRequest).JSON(err)
 		}
 
 		updatedEntity.ID = uuid.MustParse(tractorID)
 
-		entity, err := h.Service.UpdateTractor(c.UserContext(), updatedEntity)
+		entity, err := h.service.UpdateOne(c.UserContext(), updatedEntity)
 		if err != nil {
-			errorResponse := util.CreateDBErrorResponse(err)
-			return c.Status(fiber.StatusInternalServerError).JSON(errorResponse)
+			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Error{
+				Code:    fiber.StatusInternalServerError,
+				Message: "Failed to update Tractor",
+			})
 		}
 
 		return c.Status(fiber.StatusOK).JSON(entity)

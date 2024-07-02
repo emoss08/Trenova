@@ -1,17 +1,31 @@
 package services
 
 import (
+	"context"
 	"sync"
+	"time"
 
 	"github.com/bytedance/sonic"
-	"github.com/emoss08/trenova/internal/ent"
+	"github.com/emoss08/trenova/internal/server"
 	"github.com/gofiber/contrib/websocket"
 	"github.com/rs/zerolog"
+	"github.com/uptrace/bun"
 )
+
+type TaskStatusUpdate struct {
+	TaskID         string `json:"task_id"`
+	Status         string `json:"status"`
+	Result         string `json:"result,omitempty"`
+	Error          string `json:"error,omitempty"`
+	ClientID       string `json:"client_id"`
+	OrganizationID string `json:"organization_id"`
+	BusinessUnitID string `json:"business_unit_id"`
+}
 
 // Message represents a message sent over the websocket connection.
 type Message struct {
 	Type     string `json:"type"`
+	Title    string `json:"title,omitempty"`
 	Content  string `json:"content"`
 	ClientID string `json:"clientId,omitempty"` // optional field
 }
@@ -23,106 +37,144 @@ var (
 	mu sync.Mutex
 )
 
-// WebsocketService is a struct that manages websocket connections and communication between clients.
 type WebsocketService struct {
-	Client *ent.Client
-	Logger *zerolog.Logger
+	db              *bun.DB
+	logger          *zerolog.Logger
+	heartbeatCancel context.CancelFunc
 }
 
-// NewWebsocketService creates a new websocket service.
-// It initializes the service with a client to interact with the database and a logger.
-//
-// Parameters:
-//
-//	client *ent.Client: A pointer to the client instance used to interact with the database.
-//	logger *zerolog.Logger: A pointer to a logger instance used for logging messages in the service.
-//
-// Returns:
-//
-//	*WebsocketService: A pointer to the newly created WebsocketService instance.
-func NewWebsocketService(client *ent.Client, logger *zerolog.Logger) *WebsocketService {
-	return &WebsocketService{
-		Client: client,
-		Logger: logger,
+func NewWebsocketService(s *server.Server) *WebsocketService {
+	wsService := &WebsocketService{
+		db:     s.DB,
+		logger: s.Logger,
+	}
+
+	ctx, cancel := context.WithCancel(context.Background())
+	go wsService.StartHeartbeat(ctx, 30*time.Second)
+	wsService.heartbeatCancel = cancel
+
+	return wsService
+}
+
+func (s *WebsocketService) StartHeartbeat(ctx context.Context, interval time.Duration) {
+	ticker := time.NewTicker(interval)
+	defer ticker.Stop()
+
+	for {
+		select {
+		case <-ctx.Done():
+			s.logger.Info().Msg("Stopping heartbeat")
+			return
+		case <-ticker.C:
+			s.pingClients()
+		}
 	}
 }
 
-// RegisterClient registers a new client with the given ID and websocket connection.
-//
-// Parameters:
-//
-//	id string: The ID of the client to register.
-//	conn *websocket.Conn: The websocket connection object representing the connection with the client.
-func (ws *WebsocketService) RegisterClient(id string, conn *websocket.Conn) {
+func (s *WebsocketService) pingClients() {
 	mu.Lock()
-	clients[id] = conn
-	mu.Unlock()
-	ws.Logger.Debug().Msgf("Client %s registered", id)
+	defer mu.Unlock()
+
+	for id, conn := range clients {
+		if err := conn.WriteMessage(websocket.PingMessage, []byte{}); err != nil {
+			s.logger.Error().Err(err).Msgf("Failed to ping client %s, unregistering", id)
+			s.UnregisterClient(id)
+		}
+	}
 }
 
-// UnregisterClient unregisters a client with the given ID.
-//
-// Parameters:
-//
-//	id string: The ID of the client to unregister.
-func (ws *WebsocketService) UnregisterClient(id string) {
+func (s *WebsocketService) RegisterClient(id string, conn *websocket.Conn) {
 	mu.Lock()
+	defer mu.Unlock()
+
+	// Check if the clientID is already registered
+	if existingConn, ok := clients[id]; ok {
+		// Notify the client about the reconnection
+		s.notifyClientAboutReconnection(existingConn)
+
+		// Close the existing connection
+		_ = existingConn.Close()
+		s.logger.Info().Str("client_id", id).Msg("existing connection closed for re-registration")
+	}
+
+	// Register the new connection
+	clients[id] = conn
+	s.logger.Info().Str("client_id", id).Msg("client registered")
+}
+
+func (s *WebsocketService) notifyClientAboutReconnection(conn *websocket.Conn) {
+	message := Message{
+		Type:    "reconnect",
+		Title:   "Global Websocket",
+		Content: "You have been reconnected due to a duplicate registration.",
+	}
+	jsonData, err := sonic.Marshal(message)
+	if err != nil {
+		s.logger.Error().Err(err).Msg("failed to marshal reconnection message")
+		return
+	}
+
+	if err = conn.WriteMessage(websocket.TextMessage, jsonData); err != nil {
+		s.logger.Error().Err(err).Msg("failed to send reconnection message")
+	}
+}
+
+func (s *WebsocketService) UnregisterClient(id string) {
+	mu.Lock()
+
 	if conn, ok := clients[id]; ok {
 		_ = conn.Close() // Attempt to close the websocket connection gracefully
 		delete(clients, id)
 	}
 	mu.Unlock()
-	ws.Logger.Debug().Msgf("Client %s unregistered", id)
+
+	s.logger.Info().Str("client_id", id).Msg("client unregistered")
 }
 
-// NotifyClient sends a message to a specific client.
-//
-// Parameters:
-//
-//	clientID string: The ID of the client to send the message to.
-//	message Message: The message to send to the client.
-func (ws *WebsocketService) NotifyClient(clientID string, message Message) {
+func (s *WebsocketService) NotifyClient(clientID string, message Message) {
 	mu.Lock()
 	conn, ok := clients[clientID]
 	mu.Unlock()
+
 	if ok {
 		jsonData, err := sonic.Marshal(message)
 		if err != nil {
-			ws.Logger.Error().Err(err).Msg("Failed to marshal message")
+			s.logger.Error().Err(err).Msg("failed to marshal message")
 			return
 		}
 
 		if err = conn.WriteMessage(websocket.TextMessage, jsonData); err != nil {
-			ws.Logger.Error().Err(err).Msgf("Failed to send message to client %s", clientID)
+			s.logger.Error().Err(err).Msgf("Failed to send message to client %s", clientID)
 		}
 	}
 }
 
-// NotifyAllClients sends a message to all connected clients except the sender.
-// This method is used to broadcast messages to all clients except the one that initiated the broadcast.
-// The senderID parameter is used to exclude the sender from receiving the message.
-//
-// Parameters:
-//
-//	msg Message: The message to broadcast to all clients.
-//	senderID string: The ID of the client that initiated the broadcast.
-func (ws *WebsocketService) NotifyAllClients(msg Message, senderID string) {
+func (s *WebsocketService) NotifyAllClients(msg Message, senderID string) {
 	message, err := sonic.Marshal(msg)
 	if err != nil {
-		ws.Logger.Error().Err(err).Msg("Failed to marshal message")
+		s.logger.Error().Err(err).Msg("failed to marshal message")
 		return
 	}
 
 	mu.Lock()
 	for id, conn := range clients {
-		if id == senderID { // Skip the sender to avoid sending the message back to them
+		if id == senderID {
 			continue
 		}
-		mu.Unlock() // Unlock before sending to reduce lock contention
+
+		mu.Unlock()
 		if err = conn.WriteMessage(websocket.TextMessage, message); err != nil {
-			ws.Logger.Error().Err(err).Msgf("Failed to send message to client %s", id)
+			s.logger.Error().Err(err).Msgf("Failed to send message to client %s", id)
 		}
-		mu.Lock() // Re-lock to continue safely iterating over the map
+		mu.Lock()
 	}
+
 	mu.Unlock()
+}
+
+func (s *WebsocketService) Stop() {
+	if s.heartbeatCancel != nil {
+		s.heartbeatCancel()
+	}
+	s.logger.Info().Msg("Websocket service stopped")
 }
