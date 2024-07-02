@@ -1,303 +1,222 @@
 package handlers
 
 import (
-	"time"
+	"fmt"
 
-	"github.com/emoss08/trenova/internal/api"
 	"github.com/emoss08/trenova/internal/api/services"
-	ltypes "github.com/emoss08/trenova/internal/api/services/types"
-	"github.com/emoss08/trenova/internal/ent"
-	"github.com/emoss08/trenova/internal/ent/location"
-	"github.com/emoss08/trenova/internal/platform/services/routing"
-	"github.com/emoss08/trenova/internal/queries"
-	"github.com/emoss08/trenova/internal/util"
-	"github.com/emoss08/trenova/internal/util/types"
-
+	"github.com/emoss08/trenova/internal/server"
+	"github.com/emoss08/trenova/internal/types"
+	"github.com/emoss08/trenova/pkg/models"
+	"github.com/emoss08/trenova/pkg/utils"
 	"github.com/gofiber/fiber/v2"
 	"github.com/google/uuid"
+	"github.com/rs/zerolog"
 )
 
-type LocationResponse struct {
-	ID                 uuid.UUID             `json:"id,omitempty"`
-	BusinessUnitID     uuid.UUID             `json:"businessUnitId"`
-	OrganizationID     uuid.UUID             `json:"organizationId"`
-	CreatedAt          time.Time             `json:"createdAt"`
-	UpdatedAt          time.Time             `json:"updatedAt"`
-	Version            int                   `json:"version" validate:"omitempty"`
-	Status             location.Status       `json:"status" validate:"required,oneof=A I"`
-	Code               string                `json:"code" validate:"required,max=10"`
-	LocationCategoryID *uuid.UUID            `json:"locationCategoryId" validate:"omitempty"`
-	Name               string                `json:"name" validate:"required"`
-	Description        string                `json:"description" validate:"omitempty"`
-	AddressLine1       string                `json:"addressLine1" validate:"required,max=150"`
-	AddressLine2       string                `json:"addressLine2" validate:"omitempty,max=150"`
-	City               string                `json:"city" validate:"required,max=150"`
-	StateID            uuid.UUID             `json:"stateId" validate:"omitempty,uuid"`
-	PostalCode         string                `json:"postalCode" validate:"required,max=10"`
-	Longitude          float64               `json:"longitude" validate:"omitempty"`
-	Latitude           float64               `json:"latitude" validate:"omitempty"`
-	PlaceID            string                `json:"placeId" validate:"omitempty,max=255"`
-	IsGeocoded         bool                  `json:"isGeocoded"`
-	Comments           []ent.LocationComment `json:"comments"`
-	Contacts           []ent.LocationContact `json:"contacts"`
-	Edges              ent.LocationEdges     `json:"edges"`
-}
-
 type LocationHandler struct {
-	Service           *services.LocationService
-	PermissionService *services.PermissionService
-	RoutingService    *routing.RoutingService
-	QueryService      *queries.QueryService
+	logger            *zerolog.Logger
+	service           *services.LocationService
+	permissionService *services.PermissionService
 }
 
-func NewLocationHandler(s *api.Server) *LocationHandler {
+func NewLocationHandler(s *server.Server) *LocationHandler {
 	return &LocationHandler{
-		Service:           services.NewLocationService(s),
-		PermissionService: services.NewPermissionService(s),
-		RoutingService:    routing.NewRoutingService(s.Logger),
-		QueryService:      queries.NewQueryService(s.Client, s.Logger),
+		logger:            s.Logger,
+		service:           services.NewLocationService(s),
+		permissionService: services.NewPermissionService(s),
 	}
 }
 
-// RegisterRoutes registers the location routes to the fiber app.
 func (h *LocationHandler) RegisterRoutes(r fiber.Router) {
-	locations := r.Group("/locations")
-	locations.Get("/", h.getLocations())
-	locations.Post("/", h.createLocation())
-	locations.Put("/:locationID", h.updateLocation())
-	locations.Get("/autocomplete", h.autoCompleteLocation())
+	api := r.Group("/locations")
+	api.Get("/", h.Get())
+	api.Get("/:locationID", h.GetByID())
+	api.Post("/", h.Create())
+	api.Put("/:locationID", h.Update())
 }
 
-// getLocations is a handler that returns a list of locations.
-//
-// GET /locations
-func (h *LocationHandler) getLocations() fiber.Handler {
+func (h *LocationHandler) Get() fiber.Handler {
 	return func(c *fiber.Ctx) error {
-		orgID, ok := c.Locals(util.CTXOrganizationID).(uuid.UUID)
-		buID, buOK := c.Locals(util.CTXBusinessUnitID).(uuid.UUID)
+		orgID, ok := c.Locals(utils.CTXOrganizationID).(uuid.UUID)
+		buID, orgOK := c.Locals(utils.CTXBusinessUnitID).(uuid.UUID)
 
-		if !ok || !buOK {
-			return c.Status(fiber.StatusInternalServerError).JSON(types.ValidationErrorResponse{
-				Type: "internalError",
-				Errors: []types.ValidationErrorDetail{
+		if !ok || !orgOK {
+			h.logger.Error().Msg("LocationHandler: Organization & Business Unit ID not found in context")
+			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Error{
+				Code:    fiber.StatusUnauthorized,
+				Message: "Organization & Business Unit ID not found in context",
+			})
+		}
+
+		offset, limit, err := utils.PaginationParams(c)
+		if err != nil {
+			return c.Status(fiber.StatusBadRequest).JSON(types.ProblemDetail{
+				Type:     "invalid",
+				Title:    "Invalid Request",
+				Status:   fiber.StatusBadRequest,
+				Detail:   err.Error(),
+				Instance: fmt.Sprintf("%s/probs/validation-error", c.BaseURL()),
+				InvalidParams: []types.InvalidParam{
 					{
-						Code:   "internalError",
-						Detail: "Organization ID or Business Unit ID not found in the request context",
-						Attr:   "orgID, buID",
+						Name:   "limit",
+						Reason: "Limit must be a positive integer",
+					},
+					{
+						Name:   "offset",
+						Reason: "Offset must be a positive integer",
 					},
 				},
 			})
 		}
 
-		// Check if the user has the required permission
-		err := h.PermissionService.CheckUserPermission(c, "location.view")
-		if err != nil {
-			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
-				"error":   "Unauthorized",
-				"message": "You do not have the required permission to access this resource",
+		if err = h.permissionService.CheckUserPermission(c, models.PermissionLocationView.String()); err != nil {
+			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Error{
+				Code:    fiber.StatusUnauthorized,
+				Message: "You do not have permission to perform this action.",
 			})
 		}
 
-		offset, limit, err := util.PaginationParams(c)
+		filter := &services.LocationQueryFilter{
+			Query:          c.Query("search", ""),
+			OrganizationID: orgID,
+			BusinessUnitID: buID,
+			Limit:          limit,
+			Offset:         offset,
+		}
+
+		entities, cnt, err := h.service.GetAll(c.UserContext(), filter)
 		if err != nil {
-			return c.Status(fiber.StatusBadRequest).JSON(types.ValidationErrorResponse{
-				Type: "invalidRequest",
-				Errors: []types.ValidationErrorDetail{
-					{
-						Code:   "invalidRequest",
-						Detail: err.Error(),
-						Attr:   "offset, limit",
-					},
-				},
+			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Error{
+				Code:    fiber.StatusInternalServerError,
+				Message: "Failed to get Locations",
 			})
 		}
 
-		entities, count, err := h.Service.GetLocations(c.UserContext(), limit, offset, orgID, buID)
-		if err != nil {
-			errorResponse := util.CreateDBErrorResponse(err)
-			return c.Status(fiber.StatusInternalServerError).JSON(errorResponse)
-		}
+		nextURL := utils.GetNextPageURL(c, limit, offset, cnt)
+		prevURL := utils.GetPrevPageURL(c, limit, offset)
 
-		nextURL := util.GetNextPageURL(c, limit, offset, count)
-		prevURL := util.GetPrevPageURL(c, limit, offset)
-
-		responses := make([]LocationResponse, len(entities))
-		for i, loc := range entities {
-			// Directly assign the comments from the location object
-			comments := make([]ent.LocationComment, len(loc.Edges.Comments))
-			for j, comment := range loc.Edges.Comments {
-				comments[j] = *comment
-			}
-
-			// Directly assign the comments form the location objects
-			contacts := make([]ent.LocationContact, len(loc.Edges.Contacts))
-			for k, contact := range loc.Edges.Contacts {
-				contacts[k] = *contact
-			}
-
-			// Response for the location
-			responses[i] = LocationResponse{
-				ID:                 loc.ID,
-				BusinessUnitID:     loc.BusinessUnitID,
-				OrganizationID:     loc.OrganizationID,
-				CreatedAt:          loc.CreatedAt,
-				UpdatedAt:          loc.UpdatedAt,
-				Version:            loc.Version,
-				Status:             loc.Status,
-				Code:               loc.Code,
-				LocationCategoryID: loc.LocationCategoryID,
-				Name:               loc.Name,
-				Description:        loc.Description,
-				AddressLine1:       loc.AddressLine1,
-				AddressLine2:       loc.AddressLine2,
-				City:               loc.City,
-				StateID:            loc.StateID,
-				PostalCode:         loc.PostalCode,
-				Longitude:          loc.Longitude,
-				Latitude:           loc.Latitude,
-				PlaceID:            loc.PlaceID,
-				IsGeocoded:         loc.IsGeocoded,
-				Comments:           comments,
-				Contacts:           contacts,
-				Edges:              loc.Edges,
-			}
-		}
-
-		return c.Status(fiber.StatusOK).JSON(types.HTTPResponse{
-			Results:  responses,
-			Count:    count,
-			Next:     nextURL,
-			Previous: prevURL,
+		return c.Status(fiber.StatusOK).JSON(types.HTTPResponse[[]*models.Location]{
+			Results: entities,
+			Count:   cnt,
+			Next:    nextURL,
+			Prev:    prevURL,
 		})
 	}
 }
 
-// createLocation is a handler that creates a new location.
-//
-// POST /locations
-func (h *LocationHandler) createLocation() fiber.Handler {
+func (h *LocationHandler) Create() fiber.Handler {
 	return func(c *fiber.Ctx) error {
-		newEntity := new(ltypes.LocationRequest)
+		createdEntity := new(models.Location)
 
-		orgID, ok := c.Locals(util.CTXOrganizationID).(uuid.UUID)
-		buID, buOK := c.Locals(util.CTXBusinessUnitID).(uuid.UUID)
+		orgID, ok := c.Locals(utils.CTXOrganizationID).(uuid.UUID)
+		buID, orgOK := c.Locals(utils.CTXBusinessUnitID).(uuid.UUID)
 
-		if !ok || !buOK {
-			return c.Status(fiber.StatusInternalServerError).JSON(types.ValidationErrorResponse{
-				Type: "internalError",
-				Errors: []types.ValidationErrorDetail{
-					{
-						Code:   "internalError",
-						Detail: "Organization ID or Business Unit ID not found in the request context",
-						Attr:   "orgID, buID",
-					},
-				},
+		if !ok || !orgOK {
+			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Error{
+				Code:    fiber.StatusUnauthorized,
+				Message: "Organization & Business Unit ID not found in context",
 			})
 		}
 
-		// Check if the user has the required permission
-		err := h.PermissionService.CheckUserPermission(c, "location.add")
-		if err != nil {
-			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
-				"error":   "Unauthorized",
-				"message": "You do not have the required permission to access this resource",
+		if err := h.permissionService.CheckUserPermission(c, models.PermissionLocationAdd.String()); err != nil {
+			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Error{
+				Code:    fiber.StatusUnauthorized,
+				Message: "You do not have permission to perform this action.",
 			})
 		}
 
-		newEntity.BusinessUnitID = buID
-		newEntity.OrganizationID = orgID
+		createdEntity.BusinessUnitID = buID
+		createdEntity.OrganizationID = orgID
 
-		if err = util.ParseBodyAndValidate(c, newEntity); err != nil {
-			return err
+		if err := utils.ParseBodyAndValidate(c, createdEntity); err != nil {
+			return c.Status(fiber.StatusBadRequest).JSON(err)
 		}
 
-		entity, err := h.Service.CreateLocation(c.UserContext(), newEntity)
+		entity, err := h.service.Create(c.UserContext(), createdEntity)
 		if err != nil {
-			errorResponse := util.CreateDBErrorResponse(err)
-			return c.Status(fiber.StatusInternalServerError).JSON(errorResponse)
+			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Error{
+				Code:    fiber.StatusInternalServerError,
+				Message: err.Error(),
+			})
 		}
 
 		return c.Status(fiber.StatusCreated).JSON(entity)
 	}
 }
 
-// updateLocation is a handler that updates a location.
-//
-// PUT /locations/:locationID
-func (h *LocationHandler) updateLocation() fiber.Handler {
+func (h *LocationHandler) GetByID() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		locationID := c.Params("locationID")
 		if locationID == "" {
-			return c.Status(fiber.StatusBadRequest).JSON(types.ValidationErrorResponse{
-				Type: "invalidRequest",
-				Errors: []types.ValidationErrorDetail{
-					{
-						Code:   "invalidRequest",
-						Detail: "location ID is required",
-						Attr:   "locationID",
-					},
-				},
+			return c.Status(fiber.StatusBadRequest).JSON(fiber.Error{
+				Code:    fiber.StatusBadRequest,
+				Message: "Location ID is required",
 			})
 		}
 
-		// Check if the user has the required permission
-		err := h.PermissionService.CheckUserPermission(c, "location.edit")
-		if err != nil {
-			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
-				"error":   "Unauthorized",
-				"message": "You do not have the required permission to access this resource",
+		orgID, ok := c.Locals(utils.CTXOrganizationID).(uuid.UUID)
+		buID, orgOK := c.Locals(utils.CTXBusinessUnitID).(uuid.UUID)
+
+		if !ok || !orgOK {
+			h.logger.Error().Msg("LocationHandler: Organization & Business Unit ID not found in context")
+			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Error{
+				Code:    fiber.StatusUnauthorized,
+				Message: "Organization & Business Unit ID not found in context",
 			})
 		}
 
-		updatedEntity := new(ltypes.LocationUpdateRequest)
-
-		if err = util.ParseBodyAndValidate(c, updatedEntity); err != nil {
-			return err
+		if err := h.permissionService.CheckUserPermission(c, models.PermissionLocationView.String()); err != nil {
+			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Error{
+				Code:    fiber.StatusUnauthorized,
+				Message: "You do not have permission to perform this action.",
+			})
 		}
 
-		updatedEntity.ID = uuid.MustParse(locationID)
-
-		entity, err := h.Service.UpdateLocation(c.UserContext(), updatedEntity)
+		entity, err := h.service.Get(c.UserContext(), uuid.MustParse(locationID), orgID, buID)
 		if err != nil {
-			errorResponse := util.CreateDBErrorResponse(err)
-			return c.Status(fiber.StatusInternalServerError).JSON(errorResponse)
+			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Error{
+				Code:    fiber.StatusInternalServerError,
+				Message: "Failed to get Location",
+			})
 		}
 
 		return c.Status(fiber.StatusOK).JSON(entity)
 	}
 }
 
-func (h *LocationHandler) autoCompleteLocation() fiber.Handler {
+func (h *LocationHandler) Update() fiber.Handler {
 	return func(c *fiber.Ctx) error {
-		orgID, ok := c.Locals(util.CTXOrganizationID).(uuid.UUID)
-		buID, buOK := c.Locals(util.CTXBusinessUnitID).(uuid.UUID)
-
-		if !ok || !buOK {
-			return c.Status(fiber.StatusInternalServerError).JSON(types.ValidationErrorResponse{
-				Type: "internalError",
-				Errors: []types.ValidationErrorDetail{
-					{
-						Code:   "internalError",
-						Detail: "Organization ID or Business Unit ID not found in the request context",
-						Attr:   "orgID, buID",
-					},
-				},
+		locationID := c.Params("locationID")
+		if locationID == "" {
+			return c.Status(fiber.StatusBadRequest).JSON(fiber.Error{
+				Code:    fiber.StatusBadRequest,
+				Message: "Location ID is required",
 			})
 		}
 
-		query := c.Query("query")
-		apiKey, err := h.QueryService.GetGoogleAPIKeyForOrganization(c.UserContext(), orgID, buID)
-		if err != nil {
-			errorResponse := util.CreateDBErrorResponse(err)
-			return c.Status(fiber.StatusInternalServerError).JSON(errorResponse)
+		if err := h.permissionService.CheckUserPermission(c, models.PermissionLocationEdit.String()); err != nil {
+			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Error{
+				Code:    fiber.StatusUnauthorized,
+				Message: "You do not have permission to perform this action.",
+			})
 		}
 
-		locations, err := h.RoutingService.LocationAutoComplete(c.UserContext(), query, apiKey)
-		if err != nil {
-			errorResponse := util.CreateDBErrorResponse(err)
-			return c.Status(fiber.StatusInternalServerError).JSON(errorResponse)
+		updatedEntity := new(models.Location)
+
+		if err := utils.ParseBodyAndValidate(c, updatedEntity); err != nil {
+			return c.Status(fiber.StatusBadRequest).JSON(err)
 		}
 
-		return c.Status(fiber.StatusOK).JSON(locations)
+		updatedEntity.ID = uuid.MustParse(locationID)
+
+		entity, err := h.service.UpdateOne(c.UserContext(), updatedEntity)
+		if err != nil {
+			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Error{
+				Code:    fiber.StatusInternalServerError,
+				Message: "Failed to update Location",
+			})
+		}
+
+		return c.Status(fiber.StatusOK).JSON(entity)
 	}
 }

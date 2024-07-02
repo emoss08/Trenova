@@ -46,6 +46,23 @@ services:
     volumes:
       - redis_data:/data
 
+  meilisearch:
+    image: getmeili/meilisearch:v0.30
+    restart: unless-stopped
+    ports:
+      - "7700:7700"
+    environment:
+      MEILI_MASTER_KEY: private-meilisearch-token-for-dev-only
+      MEILI_LOG_LEVEL: debug
+    volumes:
+      - meilisearch-data:/meili_data
+
+  mellisearch-ui:
+    image: riccoxie/meilisearch-ui:latest
+    container_name: trenova-meilisearch-ui
+    ports:
+      - "24900:24900"
+
   trenova-minio:
     image: quay.io/minio/minio
     command: server /data --console-address ":9001"
@@ -167,20 +184,6 @@ services:
         confluent-hub install --no-prompt confluentinc/kafka-connect-datagen:0.4.0
         /etc/confluent/docker/run
 
-  ksqldb-server:
-    image: confluentinc/cp-ksqldb-server:7.3.2
-    hostname: ksqldb-server
-    container_name: ksqldb-server
-    ports:
-      - "8088:8088"
-    environment:
-      KSQL_BOOTSTRAP_SERVERS: PLAINTEXT://kafka1:19092
-      KSQL_LISTENERS: http://0.0.0.0:8088/
-      KSQL_KSQL_SERVICE_ID: ksqldb-server_
-    depends_on:
-      - zoo1
-      - kafka1
-
   postgresql:
     hostname: postgresql
     container_name: postgresql
@@ -195,11 +198,36 @@ services:
       service: conduktor-console
       file: conduktor.yml
 
+  trenova:
+    image: trenova-go-app
+    container_name: trenova-app
+    depends_on:
+      - db
+      - trenova_redis_stack
+      - meilisearch
+      - trenova-minio
+      - kafka1
+      - kafka-schema-registry
+      - kafka-rest-proxy
+      - kafka-connect
+    ports:
+      - "3001:3001"
+    environment:
+      SERVER_DB_HOST: "db"
+      SERVER_DB_PORT: "5432"
+      SERVER_DB_USER: "postgres"
+      SERVER_DB_PASSWORD: "postgres"
+      SERVER_DB_NAME: "trenova_go_db"
+    restart: always
+    command: [ "./main", "server" ]
+    volumes:
+      - .:/app
+
 volumes:
   postgres_data: {}
   redis_data: {}
   kafka_data: {}
   minio_data:
-  elastic_data: {}
+  meilisearch-data:
   pg_data: {}
   conduktor_data: {}

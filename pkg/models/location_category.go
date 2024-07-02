@@ -1,0 +1,70 @@
+package models
+
+import (
+	"context"
+	"time"
+
+	validation "github.com/go-ozzo/ozzo-validation/v4"
+
+	"github.com/go-ozzo/ozzo-validation/v4/is"
+	"github.com/google/uuid"
+	"github.com/uptrace/bun"
+)
+
+type LocationCategoryPermission string
+
+const (
+	// PermissionLocationCategoryView is the permission to view location category details
+	PermissionLocationCategoryView = LocationCategoryPermission("commenttype.view")
+
+	// PermissionLocationCategoryEdit is the permission to edit location category details
+	PermissionLocationCategoryEdit = LocationCategoryPermission("commenttype.edit")
+
+	// PermissionLocationCategoryAdd is the permission to add a new location category
+	PermissionLocationCategoryAdd = LocationCategoryPermission("commenttype.add")
+
+	// PermissionLocationCategoryDelete is the permission to delete an location category
+	PermissionLocationCategoryDelete = LocationCategoryPermission("commenttype.delete")
+)
+
+// String returns the string representation of the LocationCategoryPermission
+func (p LocationCategoryPermission) String() string {
+	return string(p)
+}
+
+type LocationCategory struct {
+	bun.BaseModel  `bun:"table:location_categories,alias:lc" json:"-"`
+	CreatedAt      time.Time `bun:",nullzero,notnull,default:current_timestamp" json:"createdAt"`
+	UpdatedAt      time.Time `bun:",nullzero,notnull,default:current_timestamp" json:"updatedAt"`
+	ID             uuid.UUID `bun:",pk,type:uuid,default:uuid_generate_v4()" json:"id"`
+	Name           string    `bun:"type:VARCHAR(50),notnull" json:"name" queryField:"true"`
+	Description    string    `bun:"type:TEXT" json:"description"`
+	Color          string    `bun:"type:VARCHAR(10)" json:"color"`
+	BusinessUnitID uuid.UUID `bun:"type:uuid,notnull" json:"businessUnitId"`
+	OrganizationID uuid.UUID `bun:"type:uuid,notnull" json:"organizationId"`
+
+	BusinessUnit *BusinessUnit `bun:"rel:belongs-to,join:business_unit_id=id" json:"-"`
+	Organization *Organization `bun:"rel:belongs-to,join:organization_id=id" json:"-"`
+}
+
+func (c LocationCategory) Validate() error {
+	return validation.ValidateStruct(
+		&c,
+		validation.Field(&c.Name, validation.Required, validation.Length(1, 50)),
+		validation.Field(&c.Color, is.HexColor),
+		validation.Field(&c.BusinessUnitID, validation.Required),
+		validation.Field(&c.OrganizationID, validation.Required),
+	)
+}
+
+var _ bun.BeforeAppendModelHook = (*LocationCategory)(nil)
+
+func (c *LocationCategory) BeforeAppendModel(_ context.Context, query bun.Query) error {
+	switch query.(type) {
+	case *bun.InsertQuery:
+		c.CreatedAt = time.Now()
+	case *bun.UpdateQuery:
+		c.UpdatedAt = time.Now()
+	}
+	return nil
+}

@@ -2,193 +2,120 @@ package services
 
 import (
 	"context"
+	"fmt"
+	"strings"
 
-	"github.com/emoss08/trenova/internal/api"
-	"github.com/emoss08/trenova/internal/util"
-	"github.com/rs/zerolog"
-
-	"github.com/emoss08/trenova/internal/ent"
-	"github.com/emoss08/trenova/internal/ent/organization"
-	"github.com/emoss08/trenova/internal/ent/trailer"
+	"github.com/emoss08/trenova/internal/server"
+	"github.com/emoss08/trenova/pkg/models"
 	"github.com/google/uuid"
+	"github.com/rs/zerolog"
+	"github.com/uptrace/bun"
 )
 
+// TrailerService handles business logic for Trailer
 type TrailerService struct {
-	Client *ent.Client
-	Logger *zerolog.Logger
+	db     *bun.DB
+	logger *zerolog.Logger
 }
 
-// NewTrailerService creates a new trailer service.
-func NewTrailerService(s *api.Server) *TrailerService {
+// NewTrailerService creates a new instance of TrailerService
+func NewTrailerService(s *server.Server) *TrailerService {
 	return &TrailerService{
-		Client: s.Client,
-		Logger: s.Logger,
+		db:     s.DB,
+		logger: s.Logger,
 	}
 }
 
-// GetTrailers gets the trailers for an organization.
-func (r *TrailerService) GetTrailers(
-	ctx context.Context, limit, offset int, orgID, buID uuid.UUID,
-) ([]*ent.Trailer, int, error) {
-	entityCount, countErr := r.Client.Trailer.Query().Where(
-		trailer.HasOrganizationWith(
-			organization.IDEQ(orgID),
-			organization.BusinessUnitIDEQ(buID),
-		),
-	).Count(ctx)
+// QueryFilter defines the filter parameters for querying Trailer
+type TrailerQueryFilter struct {
+	Query          string
+	OrganizationID uuid.UUID
+	BusinessUnitID uuid.UUID
+	Limit          int
+	Offset         int
+}
 
-	if countErr != nil {
-		return nil, 0, countErr
+// filterQuery applies filters to the query
+func (s *TrailerService) filterQuery(q *bun.SelectQuery, f *TrailerQueryFilter) *bun.SelectQuery {
+	q = q.Where("tr.organization_id = ?", f.OrganizationID).
+		Where("tr.business_unit_id = ?", f.BusinessUnitID)
+
+	if f.Query != "" {
+		q = q.Where("tr.code = ? OR tr.code ILIKE ?", f.Query, "%"+strings.ToLower(f.Query)+"%")
 	}
 
-	entities, err := r.Client.Trailer.Query().
-		Limit(limit).
-		Offset(offset).
-		WithEquipmentManufacturer().
-		WithState().
-		WithRegistrationState().
-		WithEquipmentType().
-		WithFleetCode().
-		Where(
-			trailer.HasOrganizationWith(
-				organization.IDEQ(orgID),
-				organization.BusinessUnitIDEQ(buID),
-			),
-		).All(ctx)
+	q = q.OrderExpr("CASE WHEN tr.code = ? THEN 0 ELSE 1 END", f.Query).
+		Order("tr.created_at DESC")
+
+	return q.Limit(f.Limit).Offset(f.Offset)
+}
+
+// GetAll retrieves all Trailer based on the provided filter
+func (s *TrailerService) GetAll(ctx context.Context, filter *TrailerQueryFilter) ([]*models.Trailer, int, error) {
+	var entities []*models.Trailer
+
+	q := s.db.NewSelect().
+		Model(&entities)
+
+	q = s.filterQuery(q, filter)
+
+	count, err := q.ScanAndCount(ctx)
 	if err != nil {
-		return nil, 0, err
+		s.logger.Error().Err(err).Msg("Failed to fetch Trailer")
+		return nil, 0, fmt.Errorf("failed to fetch Trailer: %w", err)
 	}
 
-	return entities, entityCount, nil
+	return entities, count, nil
 }
 
-// CreateTrailer creates a new trailer.
-func (r *TrailerService) CreateTrailer(
-	ctx context.Context, entity *ent.Trailer,
-) (*ent.Trailer, error) {
-	newEntity := new(ent.Trailer)
-
-	err := util.WithTx(ctx, r.Client, func(tx *ent.Tx) error {
-		var err error
-		newEntity, err = r.createTrailerEntity(ctx, tx, entity)
-		if err != nil {
-			return err
-		}
-
-		return nil
-	})
+// Get retrieves a single Trailer by ID
+func (s *TrailerService) Get(ctx context.Context, id, orgID, buID uuid.UUID) (*models.Trailer, error) {
+	entity := new(models.Trailer)
+	err := s.db.NewSelect().
+		Model(entity).
+		Where("tr.organization_id = ?", orgID).
+		Where("tr.business_unit_id = ?", buID).
+		Where("tr.id = ?", id).
+		Scan(ctx)
 	if err != nil {
-		return nil, err
+		s.logger.Error().Err(err).Msg("Failed to fetch Trailer")
+		return nil, fmt.Errorf("failed to fetch Trailer: %w", err)
 	}
 
-	return newEntity, nil
+	return entity, nil
 }
 
-func (r *TrailerService) createTrailerEntity(
-	ctx context.Context, tx *ent.Tx, entity *ent.Trailer,
-) (*ent.Trailer, error) {
-	createdEntity, err := tx.Trailer.Create().
-		SetOrganizationID(entity.OrganizationID).
-		SetBusinessUnitID(entity.BusinessUnitID).
-		SetCode(entity.Code).
-		SetStatus(entity.Status).
-		SetEquipmentTypeID(entity.EquipmentTypeID).
-		SetLicensePlateNumber(entity.LicensePlateNumber).
-		SetVin(entity.Vin).
-		SetNillableEquipmentManufacturerID(entity.EquipmentManufacturerID).
-		SetModel(entity.Model).
-		SetNillableYear(entity.Year).
-		SetNillableStateID(entity.StateID).
-		SetFleetCodeID(entity.FleetCodeID).
-		SetLastInspectionDate(entity.LastInspectionDate).
-		SetRegistrationNumber(entity.RegistrationNumber).
-		SetNillableRegistrationStateID(entity.RegistrationStateID).
-		SetRegistrationExpirationDate(entity.RegistrationExpirationDate).
-		Save(ctx)
-	if err != nil {
-		return nil, err
-	}
-
-	return createdEntity, nil
-}
-
-// UpdateTrailer updates a trailer.
-func (r *TrailerService) UpdateTrailer(
-	ctx context.Context, entity *ent.Trailer,
-) (*ent.Trailer, error) {
-	updatedEntity := new(ent.Trailer)
-
-	err := util.WithTx(ctx, r.Client, func(tx *ent.Tx) error {
-		var err error
-		updatedEntity, err = r.updateTrailerEntity(ctx, tx, entity)
+// Create creates a new Trailer
+func (s *TrailerService) Create(ctx context.Context, entity *models.Trailer) (*models.Trailer, error) {
+	err := s.db.RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
+		_, err := tx.NewInsert().
+			Model(entity).
+			Returning("*").
+			Exec(ctx)
 		return err
 	})
 	if err != nil {
-		return nil, err
+		s.logger.Error().Err(err).Msg("Failed to create Trailer")
+		return nil, fmt.Errorf("failed to create Trailer: %w", err)
 	}
 
-	return updatedEntity, nil
+	return entity, nil
 }
 
-func (r *TrailerService) updateTrailerEntity(
-	ctx context.Context, tx *ent.Tx, entity *ent.Trailer,
-) (*ent.Trailer, error) {
-	current, err := tx.Trailer.Get(ctx, entity.ID)
+// UpdateOne updates an existing Trailer
+func (s *TrailerService) UpdateOne(ctx context.Context, entity *models.Trailer) (*models.Trailer, error) {
+	err := s.db.RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
+		_, err := tx.NewUpdate().
+			Model(entity).
+			WherePK().
+			Returning("*").
+			Exec(ctx)
+		return err
+	})
 	if err != nil {
-		return nil, err
+		s.logger.Error().Err(err).Msg("Failed to update Trailer")
+		return nil, fmt.Errorf("failed to update Trailer: %w", err)
 	}
 
-	// Check if the version matches.
-	if current.Version != entity.Version {
-		return nil, util.NewValidationError("This record has been updated by another user. Please refresh and try again",
-			"syncError",
-			"code")
-	}
-
-	// Start building the update operation
-	updateOp := tx.Trailer.UpdateOneID(entity.ID).
-		SetOrganizationID(entity.OrganizationID).
-		SetCode(entity.Code).
-		SetStatus(entity.Status).
-		SetEquipmentTypeID(entity.EquipmentTypeID).
-		SetLicensePlateNumber(entity.LicensePlateNumber).
-		SetVin(entity.Vin).
-		SetNillableEquipmentManufacturerID(entity.EquipmentManufacturerID).
-		SetModel(entity.Model).
-		SetNillableYear(entity.Year).
-		SetNillableStateID(entity.StateID).
-		SetFleetCodeID(entity.FleetCodeID).
-		SetLastInspectionDate(entity.LastInspectionDate).
-		SetRegistrationNumber(entity.RegistrationNumber).
-		SetNillableRegistrationStateID(entity.RegistrationStateID).
-		SetRegistrationExpirationDate(entity.RegistrationExpirationDate).
-		SetVersion(entity.Version + 1) // Increment the version
-
-	// If registration state id is nil clear the assocation.
-	if entity.RegistrationStateID == nil {
-		updateOp.ClearRegistrationState()
-	}
-
-	// If the equipment manufacturer id is nil clear the association.
-	if entity.EquipmentManufacturerID == nil {
-		updateOp.ClearEquipmentManufacturer()
-	}
-
-	// If the registration state id is nil clear the association.
-	if entity.RegistrationStateID == nil {
-		updateOp.ClearRegistrationState()
-	}
-
-	// If the state id is nil clear the association.
-	if entity.StateID == nil {
-		updateOp.ClearState()
-	}
-
-	// Execute the update operation
-	updatedEntity, err := updateOp.Save(ctx)
-	if err != nil {
-		return nil, err
-	}
-
-	return updatedEntity, nil
+	return entity, nil
 }

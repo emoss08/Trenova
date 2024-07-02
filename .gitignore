@@ -4,13 +4,10 @@
 .idea
 client/client.iml
 test.http
-typings
-frontend
 backend/bin/air
 *.log
 .coverage
 server/core/management/commands/get_memory_usage.py
-Trenova.session.sql
 client/stats.html
 server/rate-confirmation.pdf
 server/test.py
@@ -20,3 +17,5 @@ server/test.edi
 .env
 tmp
 *.pem
+.pnotes
+mc

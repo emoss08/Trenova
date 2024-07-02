@@ -2,153 +2,120 @@ package services
 
 import (
 	"context"
+	"fmt"
+	"strings"
 
-	"github.com/emoss08/trenova/internal/api"
-	"github.com/emoss08/trenova/internal/util"
-	"github.com/rs/zerolog"
-
-	"github.com/emoss08/trenova/internal/ent"
-	"github.com/emoss08/trenova/internal/ent/commodity"
-	"github.com/emoss08/trenova/internal/ent/organization"
+	"github.com/emoss08/trenova/internal/server"
+	"github.com/emoss08/trenova/pkg/models"
 	"github.com/google/uuid"
+	"github.com/rs/zerolog"
+	"github.com/uptrace/bun"
 )
 
+// CommodityService handles business logic for Commodity
 type CommodityService struct {
-	Client *ent.Client
-	Logger *zerolog.Logger
+	db     *bun.DB
+	logger *zerolog.Logger
 }
 
-// NewCommodityService creates a new commodity service.
-func NewCommodityService(s *api.Server) *CommodityService {
+// NewCommodityService creates a new instance of CommodityService
+func NewCommodityService(s *server.Server) *CommodityService {
 	return &CommodityService{
-		Client: s.Client,
-		Logger: s.Logger,
+		db:     s.DB,
+		logger: s.Logger,
 	}
 }
 
-// GetCommodities gets the commodity for an organization.
-func (r *CommodityService) GetCommodities(ctx context.Context, limit, offset int, orgID, buID uuid.UUID) ([]*ent.Commodity, int, error) {
-	entityCount, countErr := r.Client.Commodity.Query().Where(
-		commodity.HasOrganizationWith(
-			organization.IDEQ(orgID),
-			organization.BusinessUnitIDEQ(buID),
-		),
-	).Count(ctx)
+// QueryFilter defines the filter parameters for querying Commodity
+type CommodityQueryFilter struct {
+	Query          string
+	OrganizationID uuid.UUID
+	BusinessUnitID uuid.UUID
+	Limit          int
+	Offset         int
+}
 
-	if countErr != nil {
-		return nil, 0, countErr
+// filterQuery applies filters to the query
+func (s *CommodityService) filterQuery(q *bun.SelectQuery, f *CommodityQueryFilter) *bun.SelectQuery {
+	q = q.Where("com.organization_id = ?", f.OrganizationID).
+		Where("com.business_unit_id = ?", f.BusinessUnitID)
+
+	if f.Query != "" {
+		q = q.Where("com.name = ? OR com.name ILIKE ?", f.Query, "%"+strings.ToLower(f.Query)+"%")
 	}
 
-	entities, err := r.Client.Commodity.Query().
-		Limit(limit).
-		Offset(offset).
-		WithHazardousMaterial().
-		Where(
-			commodity.HasOrganizationWith(
-				organization.IDEQ(orgID),
-				organization.BusinessUnitIDEQ(buID),
-			),
-		).All(ctx)
+	q = q.OrderExpr("CASE WHEN com.name = ? THEN 0 ELSE 1 END", f.Query).
+		Order("com.created_at DESC")
+
+	return q.Limit(f.Limit).Offset(f.Offset)
+}
+
+// GetAll retrieves all Commodity based on the provided filter
+func (s *CommodityService) GetAll(ctx context.Context, filter *CommodityQueryFilter) ([]*models.Commodity, int, error) {
+	var entities []*models.Commodity
+
+	q := s.db.NewSelect().
+		Model(&entities)
+
+	q = s.filterQuery(q, filter)
+
+	count, err := q.ScanAndCount(ctx)
 	if err != nil {
-		return nil, 0, err
+		s.logger.Error().Err(err).Msg("Failed to fetch Commodity")
+		return nil, 0, fmt.Errorf("failed to fetch Commodity: %w", err)
 	}
 
-	return entities, entityCount, nil
+	return entities, count, nil
 }
 
-// CreateCommodity creates a new commodity.
-func (r *CommodityService) CreateCommodity(
-	ctx context.Context, entity *ent.Commodity,
-) (*ent.Commodity, error) {
-	updatedEntity := new(ent.Commodity)
-
-	err := util.WithTx(ctx, r.Client, func(tx *ent.Tx) error {
-		var err error
-		updatedEntity, err = r.createCommodityEntity(ctx, tx, entity)
-		if err != nil {
-			return err
-		}
-
-		return nil
-	})
+// Get retrieves a single Commodity by ID
+func (s *CommodityService) Get(ctx context.Context, id, orgID, buID uuid.UUID) (*models.Commodity, error) {
+	entity := new(models.Commodity)
+	err := s.db.NewSelect().
+		Model(entity).
+		Where("com.organization_id = ?", orgID).
+		Where("com.business_unit_id = ?", buID).
+		Where("com.id = ?", id).
+		Scan(ctx)
 	if err != nil {
-		return nil, err
+		s.logger.Error().Err(err).Msg("Failed to fetch Commodity")
+		return nil, fmt.Errorf("failed to fetch Commodity: %w", err)
 	}
 
-	return updatedEntity, nil
+	return entity, nil
 }
 
-func (r *CommodityService) createCommodityEntity(
-	ctx context.Context, tx *ent.Tx, entity *ent.Commodity,
-) (*ent.Commodity, error) {
-	createdEntity, err := tx.Commodity.Create().
-		SetOrganizationID(entity.OrganizationID).
-		SetBusinessUnitID(entity.BusinessUnitID).
-		SetStatus(entity.Status).
-		SetName(entity.Name).
-		SetDescription(entity.Description).
-		SetIsHazmat(entity.IsHazmat).
-		SetUnitOfMeasure(entity.UnitOfMeasure).
-		SetMinTemp(entity.MinTemp).
-		SetMaxTemp(entity.MaxTemp).
-		SetNillableHazardousMaterialID(entity.HazardousMaterialID).
-		Save(ctx)
-	if err != nil {
-		return nil, err
-	}
-
-	return createdEntity, nil
-}
-
-// UpdateCommodity updates a commodity.
-func (r *CommodityService) UpdateCommodity(ctx context.Context, entity *ent.Commodity) (*ent.Commodity, error) {
-	updatedEntity := new(ent.Commodity)
-
-	err := util.WithTx(ctx, r.Client, func(tx *ent.Tx) error {
-		var err error
-		updatedEntity, err = r.updateCommodityEntity(ctx, tx, entity)
+// Create creates a new Commodity
+func (s *CommodityService) Create(ctx context.Context, entity *models.Commodity) (*models.Commodity, error) {
+	err := s.db.RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
+		_, err := tx.NewInsert().
+			Model(entity).
+			Returning("*").
+			Exec(ctx)
 		return err
 	})
 	if err != nil {
-		return nil, err
+		s.logger.Error().Err(err).Msg("Failed to create Commodity")
+		return nil, fmt.Errorf("failed to create Commodity: %w", err)
 	}
 
-	return updatedEntity, nil
+	return entity, nil
 }
 
-func (r *CommodityService) updateCommodityEntity(
-	ctx context.Context, tx *ent.Tx, entity *ent.Commodity,
-) (*ent.Commodity, error) {
-	current, err := tx.Commodity.Get(ctx, entity.ID)
+// UpdateOne updates an existing Commodity
+func (s *CommodityService) UpdateOne(ctx context.Context, entity *models.Commodity) (*models.Commodity, error) {
+	err := s.db.RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
+		_, err := tx.NewUpdate().
+			Model(entity).
+			WherePK().
+			Returning("*").
+			Exec(ctx)
+		return err
+	})
 	if err != nil {
-		return nil, err
+		s.logger.Error().Err(err).Msg("Failed to update Commodity")
+		return nil, fmt.Errorf("failed to update Commodity: %w", err)
 	}
 
-	// Check if the version matches.
-	if current.Version != entity.Version {
-		return nil, util.NewValidationError("This record has been updated by another user. Please refresh and try again",
-			"syncError",
-			"name")
-	}
-
-	// Start building the update operation
-	updateOp := tx.Commodity.UpdateOneID(entity.ID).
-		SetOrganizationID(entity.OrganizationID).
-		SetStatus(entity.Status).
-		SetName(entity.Name).
-		SetDescription(entity.Description).
-		SetIsHazmat(entity.IsHazmat).
-		SetUnitOfMeasure(entity.UnitOfMeasure).
-		SetMinTemp(entity.MinTemp).
-		SetMaxTemp(entity.MaxTemp).
-		SetNillableHazardousMaterialID(entity.HazardousMaterialID).
-		SetVersion(entity.Version + 1) // Increment the version
-
-	// Execute the update operation
-	updatedEntity, err := updateOp.Save(ctx)
-	if err != nil {
-		return nil, err
-	}
-
-	return updatedEntity, nil
+	return entity, nil
 }
