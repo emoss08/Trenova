@@ -111,13 +111,10 @@ func (g *GeneralLedgerAccount) BeforeAppendModel(_ context.Context, query bun.Qu
 }
 
 type GeneralLedgerAccountTag struct {
-	bun.BaseModel `bun:"table:general_ledger_account_tags" json:"-"`
-	// `GeneralLedgerAccountID` is the foreign key to the general ledger account.
+	bun.BaseModel          `bun:"table:general_ledger_account_tags" json:"-"`
 	GeneralLedgerAccountID uuid.UUID `bun:"general_ledger_account_id,pk,type:uuid" json:"generalLedgerAccountId"`
-	// `GeneralLedgerAccount` is the general ledger account for the tag.
+	TagID                  uuid.UUID `bun:"tag_id,pk,type:uuid" json:"tagId"`
+
 	GeneralLedgerAccount *GeneralLedgerAccount `bun:"rel:belongs-to,join:general_ledger_account_id=id" json:"generalLedgerAccount"`
-	// `TagID` is the foreign key to the tag.
-	TagID uuid.UUID `bun:"tag_id,pk,type:uuid" json:"tagId"`
-	// `Tag` is the tag for the general ledger account.
-	Tag *Tag `bun:"rel:belongs-to,join:tag_id=id" json:"tag"`
+	Tag                  *Tag                  `bun:"rel:belongs-to,join:tag_id=id" json:"tag"`
 }
