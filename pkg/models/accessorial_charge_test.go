@@ -16,6 +16,7 @@ func TestAccessorialCharge_Validate(t *testing.T) {
 			OrganizationID: uuid.New(),
 			BusinessUnitID: uuid.New(),
 			Code:           "CODE",
+			Method:         "Distance",
 			Description:    "Test Accessorial Charge",
 		}
 
