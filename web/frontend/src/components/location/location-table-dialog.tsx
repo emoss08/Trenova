@@ -33,6 +33,8 @@ export function LocationTableSheet({ onOpenChange, open }: TableSheetProps) {
       stateId: undefined,
       postalCode: "",
       description: "",
+      comments: [],
+      contacts: [],
     },
   });
 

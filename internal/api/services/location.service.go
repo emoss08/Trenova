@@ -2,7 +2,6 @@ package services
 
 import (
 	"context"
-	"fmt"
 	"strings"
 
 	"github.com/emoss08/trenova/internal/server"
@@ -60,6 +59,8 @@ func (s *LocationService) GetAll(ctx context.Context, filter *LocationQueryFilte
 	q := s.db.NewSelect().
 		Model(&entities).
 		Relation("LocationCategory").
+		Relation("Comments").
+		Relation("Contacts").
 		Relation("State")
 
 	q = s.filterQuery(q, filter)
@@ -67,7 +68,7 @@ func (s *LocationService) GetAll(ctx context.Context, filter *LocationQueryFilte
 	count, err := q.ScanAndCount(ctx)
 	if err != nil {
 		s.logger.Error().Err(err).Msg("Failed to fetch Location")
-		return nil, 0, fmt.Errorf("failed to fetch Location: %w", err)
+		return nil, 0, err
 	}
 
 	return entities, count, nil
@@ -84,7 +85,7 @@ func (s *LocationService) Get(ctx context.Context, id, orgID, buID uuid.UUID) (*
 		Scan(ctx)
 	if err != nil {
 		s.logger.Error().Err(err).Msg("Failed to fetch Location")
-		return nil, fmt.Errorf("failed to fetch Location: %w", err)
+		return nil, err
 	}
 
 	return entity, nil
@@ -103,7 +104,7 @@ func (s *LocationService) Create(ctx context.Context, entity *models.Location) (
 	})
 	if err != nil {
 		s.logger.Error().Err(err).Msg("Failed to create Location")
-		return nil, fmt.Errorf("failed to create Location: %w", err)
+		return nil, err
 	}
 
 	return entity, nil
@@ -112,16 +113,11 @@ func (s *LocationService) Create(ctx context.Context, entity *models.Location) (
 // UpdateOne updates an existing Location
 func (s *LocationService) UpdateOne(ctx context.Context, entity *models.Location) (*models.Location, error) {
 	err := s.db.RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
-		_, err := tx.NewUpdate().
-			Model(entity).
-			WherePK().
-			Returning("*").
-			Exec(ctx)
-		return err
+		return entity.UpdateLocation(ctx, tx)
 	})
 	if err != nil {
 		s.logger.Error().Err(err).Msg("Failed to update Location")
-		return nil, fmt.Errorf("failed to update Location: %w", err)
+		return nil, err
 	}
 
 	return entity, nil

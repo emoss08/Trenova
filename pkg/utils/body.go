@@ -3,6 +3,7 @@ package utils
 import (
 	"errors"
 	"fmt"
+	"reflect"
 
 	"github.com/emoss08/trenova/internal/types"
 	"github.com/emoss08/trenova/pkg/validator"
@@ -24,12 +25,7 @@ func ParseBodyAndValidate(c *fiber.Ctx, data any) error {
 		// Check if the error is a validation error
 		var validationErr validation.Errors
 		if errors.As(err, &validationErr) {
-			for field, err := range validationErr {
-				invalidParams = append(invalidParams, types.InvalidParam{
-					Name:   field,
-					Reason: err.Error(),
-				})
-			}
+			invalidParams = processValidationErrors("", validationErr)
 		}
 
 		problemDetail := &types.ProblemDetail{
@@ -45,6 +41,67 @@ func ParseBodyAndValidate(c *fiber.Ctx, data any) error {
 	}
 
 	return nil
+}
+
+// processValidationErrors recursively processes validation errors and builds detailed field names
+func processValidationErrors(prefix string, err error) []types.InvalidParam {
+	var invalidParams []types.InvalidParam
+
+	var validationErrors validation.Errors
+	if errors.As(err, &validationErrors) {
+		for field, fieldErr := range validationErrors {
+			fullFieldName := joinFieldNames(prefix, field)
+			invalidParams = append(invalidParams, processFieldError(fullFieldName, fieldErr)...)
+		}
+		return invalidParams
+	}
+
+	// If it's not a validation.Errors, treat it as a single error
+	return []types.InvalidParam{{
+		Name:   prefix,
+		Reason: err.Error(),
+	}}
+}
+
+// processFieldError handles different types of field errors
+func processFieldError(fieldName string, err error) []types.InvalidParam {
+	var validationErrors validation.Errors
+	if errors.As(err, &validationErrors) {
+		return processValidationErrors(fieldName, validationErrors)
+	}
+
+	// Check if it's a slice of errors
+	if reflect.TypeOf(err).Kind() == reflect.Slice {
+		return processSliceError(fieldName, err)
+	}
+
+	// It's a single error
+	return []types.InvalidParam{{
+		Name:   fieldName,
+		Reason: err.Error(),
+	}}
+}
+
+// processSliceError handles errors for slice fields
+func processSliceError(fieldName string, err error) []types.InvalidParam {
+	var invalidParams []types.InvalidParam
+
+	sliceValue := reflect.ValueOf(err)
+	for i := 0; i < sliceValue.Len(); i++ {
+		sliceErr := sliceValue.Index(i).Interface()
+		sliceFieldName := fmt.Sprintf("%s.%d", fieldName, i)
+		invalidParams = append(invalidParams, processFieldError(sliceFieldName, sliceErr.(error))...)
+	}
+
+	return invalidParams
+}
+
+// joinFieldNames joins the prefix and field name, handling empty prefix
+func joinFieldNames(prefix, field string) string {
+	if prefix == "" {
+		return field
+	}
+	return prefix + "." + field
 }
 
 func CreateServiceError(c *fiber.Ctx, err error) error {
