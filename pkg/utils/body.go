@@ -3,6 +3,7 @@ package utils
 import (
 	"errors"
 	"fmt"
+	"reflect"
 
 	"github.com/emoss08/trenova/internal/types"
 	"github.com/emoss08/trenova/pkg/validator"
@@ -10,6 +11,7 @@ import (
 	"github.com/gofiber/fiber/v2"
 )
 
+// ParseBodyAndValidate parses the request body, validates it, and returns a ProblemDetail response if there are validation errors.
 // ParseBodyAndValidate parses the request body, validates it, and returns a ProblemDetail response if there are validation errors.
 func ParseBodyAndValidate(c *fiber.Ctx, data any) error {
 	if err := c.BodyParser(data); err != nil {
@@ -24,12 +26,7 @@ func ParseBodyAndValidate(c *fiber.Ctx, data any) error {
 		// Check if the error is a validation error
 		var validationErr validation.Errors
 		if errors.As(err, &validationErr) {
-			for field, err := range validationErr {
-				invalidParams = append(invalidParams, types.InvalidParam{
-					Name:   field,
-					Reason: err.Error(),
-				})
-			}
+			invalidParams = processValidationErrors("", validationErr)
 		}
 
 		problemDetail := &types.ProblemDetail{
@@ -45,6 +42,49 @@ func ParseBodyAndValidate(c *fiber.Ctx, data any) error {
 	}
 
 	return nil
+}
+
+// processValidationErrors recursively processes validation errors and builds detailed field names
+func processValidationErrors(prefix string, errs validation.Errors) []types.InvalidParam {
+	var invalidParams []types.InvalidParam
+
+	for field, err := range errs {
+		fullFieldName := field
+		if prefix != "" {
+			fullFieldName = prefix + "." + field
+		}
+
+		switch typedErr := err.(type) {
+		case validation.Errors:
+			// Recursive case: nested struct
+			invalidParams = append(invalidParams, processValidationErrors(fullFieldName, typedErr)...)
+		case error:
+			// Handle slice fields
+			if reflect.TypeOf(err).Kind() == reflect.Slice {
+				sliceErrs, ok := err.(validation.Errors)
+				if ok {
+					for i, sliceErr := range sliceErrs {
+						sliceFieldName := fmt.Sprintf("%s.%d", fullFieldName, i)
+						invalidParams = append(invalidParams, processValidationErrors(sliceFieldName, validation.Errors{"": sliceErr})...)
+					}
+				} else {
+					// If it's a slice but not of validation.Errors, handle as a single error
+					invalidParams = append(invalidParams, types.InvalidParam{
+						Name:   fullFieldName,
+						Reason: err.Error(),
+					})
+				}
+			} else {
+				// Base case: single error
+				invalidParams = append(invalidParams, types.InvalidParam{
+					Name:   fullFieldName,
+					Reason: err.Error(),
+				})
+			}
+		}
+	}
+
+	return invalidParams
 }
 
 func CreateServiceError(c *fiber.Ctx, err error) error {
