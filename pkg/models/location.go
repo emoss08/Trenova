@@ -57,10 +57,12 @@ type Location struct {
 	BusinessUnitID     uuid.UUID       `bun:"type:uuid,notnull" json:"businessUnitId"`
 	OrganizationID     uuid.UUID       `bun:"type:uuid,notnull" json:"organizationId"`
 
-	LocationCategory *LocationCategory `bun:"rel:belongs-to,join:location_category_id=id" json:"locationCategory"`
-	State            *UsState          `bun:"rel:belongs-to,join:state_id=id" json:"state"`
-	BusinessUnit     *BusinessUnit     `bun:"rel:belongs-to,join:business_unit_id=id" json:"-"`
-	Organization     *Organization     `bun:"rel:belongs-to,join:organization_id=id" json:"-"`
+	LocationCategory *LocationCategory  `bun:"rel:belongs-to,join:location_category_id=id" json:"locationCategory"`
+	State            *UsState           `bun:"rel:belongs-to,join:state_id=id" json:"state"`
+	BusinessUnit     *BusinessUnit      `bun:"rel:belongs-to,join:business_unit_id=id" json:"-"`
+	Organization     *Organization      `bun:"rel:belongs-to,join:organization_id=id" json:"-"`
+	Comments         []*LocationComment `bun:"rel:has-many,join:id=location_id" json:"comments"`
+	Contacts         []*LocationContact `bun:"rel:has-many,join:id=location_id" json:"contacts"`
 }
 
 func (l Location) Validate() error {
@@ -69,6 +71,8 @@ func (l Location) Validate() error {
 		validation.Field(&l.BusinessUnitID, validation.Required),
 		validation.Field(&l.LocationCategoryID, validation.Required),
 		validation.Field(&l.OrganizationID, validation.Required),
+		validation.Field(&l.Contacts),
+		validation.Field(&l.Comments),
 	)
 }
 
@@ -98,25 +102,6 @@ func (l *Location) GenerateCode(pattern string, counter int) string {
 	}
 }
 
-func (l *Location) InsertLocation(ctx context.Context, tx bun.Tx, codeGen *gen.CodeGenerator, pattern string) error {
-	code, err := codeGen.GenerateUniqueCode(ctx, l, pattern, l.OrganizationID)
-	if err != nil {
-		return fmt.Errorf("error generating unique code: %w", err)
-	}
-	l.Code = code
-
-	if err = l.Validate(); err != nil {
-		return fmt.Errorf("location validation failed: %w", err)
-	}
-
-	_, err = tx.NewInsert().Model(l).Exec(ctx)
-	if err != nil {
-		return fmt.Errorf("error inserting location: %w", err)
-	}
-
-	return nil
-}
-
 var _ bun.BeforeAppendModelHook = (*Location)(nil)
 
 func (l *Location) BeforeAppendModel(_ context.Context, query bun.Query) error {
@@ -125,6 +110,171 @@ func (l *Location) BeforeAppendModel(_ context.Context, query bun.Query) error {
 		l.CreatedAt = time.Now()
 	case *bun.UpdateQuery:
 		l.UpdatedAt = time.Now()
+	}
+	return nil
+}
+
+// InsertLocation creates a new location record
+func (l *Location) InsertLocation(ctx context.Context, tx bun.IDB, codeGen *gen.CodeGenerator, pattern string) error {
+	code, err := codeGen.GenerateUniqueCode(ctx, l, pattern, l.OrganizationID)
+	if err != nil {
+		return err
+	}
+	l.Code = code
+
+	_, err = tx.NewInsert().Model(l).Exec(ctx)
+	if err != nil {
+		return err
+	}
+
+	if err = l.syncLocationContacts(ctx, tx); err != nil {
+		return err
+	}
+
+	return l.syncLocationComments(ctx, tx)
+}
+
+// UpdateLocation updates an existing location record
+func (l *Location) UpdateLocation(ctx context.Context, tx bun.IDB) error {
+	_, err := tx.NewUpdate().Model(l).WherePK().Exec(ctx)
+	if err != nil {
+		return err
+	}
+
+	if err = l.syncLocationContacts(ctx, tx); err != nil {
+		return err
+	}
+
+	return l.syncLocationComments(ctx, tx)
+}
+
+// syncLocationComments synchronizes the comments associated with a location
+func (l *Location) syncLocationComments(ctx context.Context, tx bun.IDB) error {
+	return tx.RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
+		if err := l.deleteRemovedComments(ctx, tx); err != nil {
+			return err
+		}
+		return l.upsertComments(ctx, tx)
+	})
+}
+
+func (l *Location) deleteRemovedComments(ctx context.Context, tx bun.Tx) error {
+	if len(l.Comments) == 0 {
+		// If there are no comments provided, delete all existing comments
+		_, err := tx.NewDelete().
+			Model((*LocationComment)(nil)).
+			Where("location_id = ?", l.ID).
+			Exec(ctx)
+		if err != nil {
+			return err
+		}
+		return nil
+	}
+
+	// Create a slice of IDs for comments that should be kept
+	keepIDs := make([]uuid.UUID, 0, len(l.Comments))
+	for _, comment := range l.Comments {
+		if comment.ID != uuid.Nil {
+			keepIDs = append(keepIDs, comment.ID)
+		}
+	}
+
+	// Delete comments that are not in the keepIDs slice
+	_, err := tx.NewDelete().
+		Model((*LocationComment)(nil)).
+		Where("location_id = ? AND id NOT IN (?)", l.ID, bun.In(keepIDs)).
+		Exec(ctx)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (l *Location) upsertComments(ctx context.Context, tx bun.Tx) error {
+	for _, comment := range l.Comments {
+		comment.LocationID = l.ID
+		comment.OrganizationID = l.OrganizationID
+		comment.BusinessUnitID = l.BusinessUnitID
+		comment.UpdatedAt = time.Now()
+
+		_, err := tx.NewInsert().
+			Model(comment).
+			On("CONFLICT (id) DO UPDATE").
+			Set("comment = EXCLUDED.comment").
+			Set("comment_type_id = EXCLUDED.comment_type_id").
+			Set("user_id = EXCLUDED.user_id").
+			Set("updated_at = EXCLUDED.updated_at").
+			Exec(ctx)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+// syncLocationContacts synchronizes the contacts associated with a location
+func (l *Location) syncLocationContacts(ctx context.Context, tx bun.IDB) error {
+	return tx.RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
+		if err := l.deleteRemovedContacts(ctx, tx); err != nil {
+			return err
+		}
+		return l.upsertContacts(ctx, tx)
+	})
+}
+
+func (l *Location) deleteRemovedContacts(ctx context.Context, tx bun.Tx) error {
+	if len(l.Contacts) == 0 {
+		// If there are no contacts provided, delete all existing contacts
+		_, err := tx.NewDelete().
+			Model((*LocationContact)(nil)).
+			Where("location_id = ?", l.ID).
+			Exec(ctx)
+		if err != nil {
+			return err
+		}
+		return nil
+	}
+
+	// Create a slice of IDs for contacts that should be kept
+	keepIDs := make([]uuid.UUID, 0, len(l.Contacts))
+	for _, contact := range l.Contacts {
+		if contact.ID != uuid.Nil {
+			keepIDs = append(keepIDs, contact.ID)
+		}
+	}
+
+	// Delete contacts that are not in the keepIDs slice
+	_, err := tx.NewDelete().
+		Model((*LocationContact)(nil)).
+		Where("location_id = ? AND id NOT IN (?)", l.ID, bun.In(keepIDs)).
+		Exec(ctx)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (l *Location) upsertContacts(ctx context.Context, tx bun.Tx) error {
+	for _, contact := range l.Contacts {
+		contact.LocationID = l.ID
+		contact.OrganizationID = l.OrganizationID
+		contact.BusinessUnitID = l.BusinessUnitID
+		contact.UpdatedAt = time.Now()
+
+		_, err := tx.NewInsert().
+			Model(contact).
+			On("CONFLICT (id) DO UPDATE").
+			Set("name = EXCLUDED.name").
+			Set("email_address = EXCLUDED.email_address").
+			Set("phone_number = EXCLUDED.phone_number").
+			Set("updated_at = EXCLUDED.updated_at").
+			Exec(ctx)
+		if err != nil {
+			return err
+		}
 	}
 	return nil
 }

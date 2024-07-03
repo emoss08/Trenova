@@ -56,6 +56,8 @@ func (c AccessorialCharge) Validate() error {
 		validation.Field(&c.Code, validation.Required, validation.Length(1, 10).Error("Code must be between 1 and 10 characters")),
 		validation.Field(&c.BusinessUnitID, validation.Required),
 		validation.Field(&c.OrganizationID, validation.Required),
+		validation.Field(&c.Description, validation.Required),
+		validation.Field(&c.Method, validation.Required),
 	)
 }
 

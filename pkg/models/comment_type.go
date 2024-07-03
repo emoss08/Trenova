@@ -40,7 +40,7 @@ type CommentType struct {
 	Name           string            `bun:"type:VARCHAR(20),notnull" json:"name" queryField:"true"`
 	Description    string            `bun:"type:TEXT,notnull" json:"description"`
 	Status         property.Status   `bun:"type:status_enum,notnull,default:'Active'" json:"status"`
-	Severity       property.Severity `bun:"type:severity_enum,notnull,default'Low'" json:"severity"`
+	Severity       property.Severity `bun:"type:severity_enum,notnull,default:'Low'" json:"severity"`
 	BusinessUnitID uuid.UUID         `bun:"type:uuid,notnull" json:"businessUnitId"`
 	OrganizationID uuid.UUID         `bun:"type:uuid,notnull" json:"organizationId"`
 

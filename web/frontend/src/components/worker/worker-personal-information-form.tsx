@@ -42,6 +42,7 @@ export default function WorkerPersonalInformation() {
           callback={postUserProfilePicture}
           successCallback={(data: Worker) => {
             console.info(data);
+            // TODO: Update the profile picture URL in the form
             return "What";
           }}
           removeFileCallback={clearProfilePicture}
@@ -68,6 +69,7 @@ export default function WorkerPersonalInformation() {
             control={control}
             name="code"
             label="Code"
+            readOnly
             rules={{ required: true }}
             placeholder="Enter Code"
             description="A unique code assigned to the worker."
@@ -148,6 +150,7 @@ export default function WorkerPersonalInformation() {
             name="stateId"
             control={control}
             label="State"
+            maxOptions={selectUSStates.length}
             options={selectUSStates}
             isFetchError={isUSStatesError}
             isLoading={isUsStatesLoading}
