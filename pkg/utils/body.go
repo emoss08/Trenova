@@ -12,7 +12,6 @@ import (
 )
 
 // ParseBodyAndValidate parses the request body, validates it, and returns a ProblemDetail response if there are validation errors.
-// ParseBodyAndValidate parses the request body, validates it, and returns a ProblemDetail response if there are validation errors.
 func ParseBodyAndValidate(c *fiber.Ctx, data any) error {
 	if err := c.BodyParser(data); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
