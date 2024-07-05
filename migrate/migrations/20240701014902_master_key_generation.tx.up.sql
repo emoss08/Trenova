@@ -41,3 +41,18 @@ CREATE TABLE
     PRIMARY KEY ("id"),
     FOREIGN KEY ("master_key_id") REFERENCES master_key_generations ("id") ON UPDATE NO ACTION ON DELETE CASCADE
 );
+
+-- ================================================
+-- bun:split
+
+CREATE TABLE
+    IF NOT EXISTS "customer_master_key_generations"
+(
+    "id"            uuid         NOT NULL DEFAULT uuid_generate_v4(),
+    "master_key_id" uuid         NOT NULL,
+    "pattern"       VARCHAR(255) NOT NULL,
+    "created_at"    TIMESTAMPTZ  NOT NULL DEFAULT current_timestamp,
+    "updated_at"    TIMESTAMPTZ  NOT NULL DEFAULT current_timestamp,
+    PRIMARY KEY ("id"),
+    FOREIGN KEY ("master_key_id") REFERENCES master_key_generations ("id") ON UPDATE NO ACTION ON DELETE CASCADE
+);
