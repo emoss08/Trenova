@@ -44,7 +44,7 @@ type Tractor struct {
 	Code                    string       `bun:"type:VARCHAR(50),notnull" json:"code" queryField:"true"`
 	Status                  string       `bun:"type:equipment_status_enum,notnull" json:"status"`
 	Model                   string       `bun:"type:VARCHAR(50)" json:"model"`
-	Year                    *int         `bun:"type:INTEGER,nullzero" json:"year"`
+	Year                    int          `bun:"type:INTEGER,nullzero" json:"year"`
 	LicensePlateNumber      string       `bun:"type:VARCHAR(50)" json:"licensePlateNumber"`
 	Vin                     string       `bun:"type:VARCHAR(17)" json:"vin"`
 	IsLeased                bool         `bun:"type:boolean" json:"isLeased"`
@@ -83,6 +83,7 @@ func (c Tractor) Validate() error {
 
 func (c Tractor) DBValidate(ctx context.Context, db *bun.DB) error {
 	var multiErr validator.MultiValidationError
+	var dbValidationErr *validator.DBValidationError
 
 	if err := c.Validate(); err != nil {
 		return err
@@ -90,7 +91,6 @@ func (c Tractor) DBValidate(ctx context.Context, db *bun.DB) error {
 
 	if err := c.validateEquipmentClass(ctx, db); err != nil {
 		// If the error is a DBValidationError, we can add it to the multiErr
-		var dbValidationErr *validator.DBValidationError
 
 		if errors.As(err, &dbValidationErr) {
 			multiErr.Errors = append(multiErr.Errors, *dbValidationErr)

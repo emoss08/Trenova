@@ -45,8 +45,8 @@ type GeneralLedgerAccount struct {
 	CashFlowType   *property.GLCashFlowType              `bun:"type:cash_flow_type_enum,nullzero" json:"cashFlowType"`
 	AccountSubType *property.GLAccountSubType            `bun:"type:account_sub_type_enum,nullzero" json:"accountSubType"`
 	AccountClass   *property.GLAccountClassificationType `bun:"type:account_classification_type_enum,nullzero" json:"accountClass"`
-	Balance        string                                `bun:"type:NUMERIC(14,2),notnull,default:0" json:"balance"`
-	InterestRate   string                                `bun:"type:NUMERIC(5,2),nullzero" json:"interestRate,omitempty"`
+	Balance        float64                               `bun:"type:NUMERIC(14,2),notnull,default:0" json:"balance"`
+	InterestRate   float64                               `bun:"type:NUMERIC(5,2),nullzero" json:"interestRate,omitempty"`
 	DateClosed     *pgtype.Date                          `bun:",scanonly,nullzero" json:"dateClosed"`
 	Notes          string                                `bun:"type:TEXT" json:"notes"`
 	IsTaxRelevant  bool                                  `bun:"type:BOOLEAN,default:false" json:"isTaxRelevant"`

@@ -44,7 +44,7 @@ type Trailer struct {
 	Code                       string       `bun:"type:VARCHAR(50),notnull" json:"code" queryField:"true"`
 	Status                     string       `bun:"type:equipment_status_enum,notnull" json:"status"`
 	Model                      string       `bun:"type:VARCHAR(50)" json:"model"`
-	Year                       *int         `bun:"type:INTEGER,nullzero" json:"year"`
+	Year                       int          `bun:"type:INTEGER,nullzero" json:"year"`
 	LicensePlateNumber         string       `bun:"type:VARCHAR(50)" json:"licensePlateNumber"`
 	Vin                        string       `bun:"type:VARCHAR(17)" json:"vin"`
 	LastInspectionDate         *pgtype.Date `bun:"type:date,nullzero" json:"lastInspectionDate"`
