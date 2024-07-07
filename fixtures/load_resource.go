@@ -158,6 +158,10 @@ func loadResources(ctx context.Context, db *bun.DB) error {
 				Type:        "WorkerMasterKeyGeneration",
 				Description: "Represents a worker master key generation in the system.",
 			},
+			{
+				Type:        "Location",
+				Description: "Represents a location in the system.",
+			},
 		}
 
 		_, err = db.NewInsert().Model(&resources).Exec(ctx)

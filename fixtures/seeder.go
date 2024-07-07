@@ -88,6 +88,12 @@ func LoadFixtures() error {
 		return err
 	}
 
+	// Load the customer master key generation
+	if err = LoadCustomerMasterKeyGeneration(ctx, db, mkg); err != nil {
+		log.Fatalf("Failed to load equipment master key generation: %v", err)
+		return err
+	}
+
 	// Load the permissions
 	if err = loadPermissions(ctx, db, org, bu); err != nil {
 		log.Fatalf("Failed to load permissions: %v", err)
@@ -106,11 +112,23 @@ func LoadFixtures() error {
 		return err
 	}
 
-	// Load 100k equipment types
-	if err = LoadEquipmentTypes(ctx, db, org.ID, bu.ID); err != nil {
-		log.Fatalf("Failed to load equipment types: %v", err)
+	// Load the customers
+	if err = loadCustomers(ctx, db, codeGen, org.ID, bu.ID); err != nil {
+		log.Fatalf("Failed to load customers: %v", err)
 		return err
 	}
+
+	// Load the shipments
+	if err = loadShipments(ctx, db, codeGen, org.ID, bu.ID); err != nil {
+		log.Fatalf("Failed to load shipments: %v", err)
+		return err
+	}
+
+	// Load 100k equipment types
+	// if err = LoadEquipmentTypes(ctx, db, org.ID, bu.ID); err != nil {
+	// 	log.Fatalf("Failed to load equipment types: %v", err)
+	// 	return err
+	// }
 
 	// Load the admin account
 	if err = LoadAdminAccount(ctx, db, org, bu); err != nil {
