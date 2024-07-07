@@ -149,6 +149,7 @@ func (s *Server) InitCodeGenerationSystem(ctx context.Context) error {
 	mods := []gen.CodeGeneratable{
 		&models.Worker{},
 		&models.Location{},
+		&models.Customer{},
 	}
 
 	// Initialize the counter manager with existing codes
