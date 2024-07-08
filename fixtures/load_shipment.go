@@ -12,6 +12,7 @@ import (
 	"github.com/emoss08/trenova/pkg/models/property"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgtype"
+	"github.com/shopspring/decimal"
 	"github.com/uptrace/bun"
 )
 
@@ -96,7 +97,7 @@ func loadShipments(ctx context.Context, db *bun.DB, gen *gen.CodeGenerator, orgI
 		Name:               "Target",
 		AddressLine1:       "123 Main St",
 		City:               "Minneapolis",
-		StateID:            &state.ID,
+		StateID:            state.ID,
 		PostalCode:         "55401",
 	}
 
@@ -221,8 +222,8 @@ func loadShipments(ctx context.Context, db *bun.DB, gen *gen.CodeGenerator, orgI
 		ServiceTypeID:               &servType.ID,
 		RatingMethod:                property.ShipmentRatingMethodFlatRate,
 		RatingUnit:                  1,
-		OtherChargeAmount:           float64(100),
-		FreightChargeamount:         float64(100),
+		OtherChargeAmount:           decimal.NewFromInt(100),
+		FreightChargeamount:         decimal.NewFromInt(100),
 		CustomerID:                  customer.ID,
 		OriginLocationID:            location.ID,
 		OriginPlannedArrival:        time.Now(),

@@ -90,6 +90,7 @@ require (
 	github.com/pkg/errors v0.9.1
 	github.com/prometheus/client_golang v1.19.1
 	github.com/rs/zerolog v1.33.0
+	github.com/shopspring/decimal v1.4.0
 	github.com/stretchr/testify v1.9.0
 	github.com/subosito/gotenv v1.6.0
 	github.com/uptrace/bun v1.2.1

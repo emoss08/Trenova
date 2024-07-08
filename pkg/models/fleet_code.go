@@ -6,6 +6,7 @@ import (
 
 	"github.com/emoss08/trenova/pkg/models/property"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
+	"github.com/shopspring/decimal"
 
 	"github.com/go-ozzo/ozzo-validation/v4/is"
 	"github.com/google/uuid"
@@ -41,9 +42,9 @@ type FleetCode struct {
 	Status         property.Status `bun:"status,type:status" json:"status"`
 	Code           string          `bun:"type:VARCHAR(10),notnull" json:"code" queryField:"true"`
 	Description    string          `bun:"type:VARCHAR(100)" json:"description"`
-	RevenueGoal    float64         `bun:"type:numeric(10,2),nullzero" json:"revenueGoal"`
-	DeadheadGoal   float64         `bun:"type:numeric(10,2),nullzero" json:"deadheadGoal"`
-	MileageGoal    float64         `bun:"type:numeric(10,2),nullzero" json:"mileageGoal"`
+	RevenueGoal    decimal.Decimal `bun:"type:numeric(10,2),nullzero" json:"revenueGoal"`
+	DeadheadGoal   decimal.Decimal `bun:"type:numeric(10,2),nullzero" json:"deadheadGoal"`
+	MileageGoal    decimal.Decimal `bun:"type:numeric(10,2),nullzero" json:"mileageGoal"`
 	Color          string          `bun:"type:VARCHAR(10)" json:"color"`
 	ManagerID      *uuid.UUID      `bun:"type:uuid" json:"managerId"`
 	Manager        *User           `bun:"rel:belongs-to,join:manager_id=id" json:"manager"`

@@ -8,6 +8,7 @@ import (
 	validation "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/go-ozzo/ozzo-validation/v4/is"
 	"github.com/google/uuid"
+	"github.com/shopspring/decimal"
 	"github.com/uptrace/bun"
 )
 
@@ -41,13 +42,13 @@ type EquipmentType struct {
 	EquipmentClass  string          `bun:"type:VARCHAR(12),notnull,default:'Undefined'" json:"equipmentClass"`
 	Code            string          `bun:"type:VARCHAR(10),notnull" json:"code" queryField:"true"`
 	Description     string          `bun:"type:TEXT" json:"description"`
-	CostPerMile     string          `bun:"type:NUMERIC(10,2),nullzero" json:"costPerMile"`
-	FixedCost       string          `bun:"type:NUMERIC(10,2),nullzero" json:"fixedCost"`
-	VariableCost    string          `bun:"type:NUMERIC(10,2),nullzero" json:"variableCost"`
-	Height          string          `bun:"type:NUMERIC(10,2),nullzero" json:"height"`
-	Length          string          `bun:"type:NUMERIC(10,2),nullzero" json:"length"`
-	Width           string          `bun:"type:NUMERIC(10,2),nullzero" json:"width"`
-	Weight          string          `bun:"type:NUMERIC(10,2),nullzero" json:"weight"`
+	CostPerMile     decimal.Decimal `bun:"type:NUMERIC(10,2),nullzero" json:"costPerMile"`
+	FixedCost       decimal.Decimal `bun:"type:NUMERIC(10,2),nullzero" json:"fixedCost"`
+	VariableCost    decimal.Decimal `bun:"type:NUMERIC(10,2),nullzero" json:"variableCost"`
+	Height          decimal.Decimal `bun:"type:NUMERIC(10,2),nullzero" json:"height"`
+	Length          decimal.Decimal `bun:"type:NUMERIC(10,2),nullzero" json:"length"`
+	Width           decimal.Decimal `bun:"type:NUMERIC(10,2),nullzero" json:"width"`
+	Weight          decimal.Decimal `bun:"type:NUMERIC(10,2),nullzero" json:"weight"`
 	ExemptFromTolls bool            `bun:"type:BOOLEAN,notnull" json:"exemptFromTolls"`
 	Color           string          `bun:"type:VARCHAR(10)" json:"color"`
 	BusinessUnitID  uuid.UUID       `bun:"type:uuid,notnull" json:"businessUnitId"`

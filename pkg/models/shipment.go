@@ -10,6 +10,7 @@ import (
 	"github.com/emoss08/trenova/pkg/validator"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/jackc/pgx/v5/pgtype"
+	"github.com/shopspring/decimal"
 
 	"github.com/google/uuid"
 	"github.com/uptrace/bun"
@@ -76,11 +77,11 @@ type Shipment struct {
 	ServiceTypeID            *uuid.UUID                    `bun:"type:uuid,nullzero" json:"serviceTypeId"`
 	RatingUnit               int                           `bun:"type:integer,notnull" json:"ratingUnit"`
 	RatingMethod             property.ShipmentRatingMethod `bun:"type:rating_method_enum,notnull,default:'FlatRate'" json:"ratingMethod"`
-	OtherChargeAmount        float64                       `bun:"type:NUMERIC(19,4),notnull,default:0" json:"otherChargeAmount"`
-	FreightChargeAmount      float64                       `bun:"type:NUMERIC(19,4),notnull,default:0" json:"freightChargeAmount"`
-	TotalChargeAmount        float64                       `bun:"type:NUMERIC(19,4),notnull,default:0" json:"totalChargeAmount"`
-	Pieces                   *float64                      `bun:"type:NUMERIC(10,2),nullzero" json:"pieces"`
-	Weight                   *float64                      `bun:"type:NUMERIC(10,2),nullzero" json:"weight"`
+	OtherChargeAmount        decimal.Decimal               `bun:"type:NUMERIC(19,4),notnull,default:0" json:"otherChargeAmount"`
+	FreightChargeAmount      decimal.Decimal               `bun:"type:NUMERIC(19,4),notnull,default:0" json:"freightChargeAmount"`
+	TotalChargeAmount        decimal.Decimal               `bun:"type:NUMERIC(19,4),notnull,default:0" json:"totalChargeAmount"`
+	Pieces                   decimal.NullDecimal           `bun:"type:NUMERIC(10,2),nullzero" json:"pieces"`
+	Weight                   decimal.NullDecimal           `bun:"type:NUMERIC(10,2),nullzero" json:"weight"`
 	ReadyToBill              bool                          `bun:",notnull,default:false" json:"readyToBill"`
 	BillDate                 *pgtype.Date                  `bun:"type:date,nullzero" json:"billDate"`
 	ShipDate                 *pgtype.Date                  `bun:"type:date,nullzero" json:"shipDate"`
@@ -105,7 +106,7 @@ type Shipment struct {
 	Priority                 int                           `bun:"type:integer,notnull,default:0" json:"priority"`
 	SpecialInstructions      string                        `bun:"type:TEXT,nullzero" json:"specialInstructions"`
 	TrackingNumber           string                        `bun:"type:VARCHAR(50)" json:"trackingNumber"`
-	TotalDistance            float64                       `bun:"type:NUMERIC(10,2),notnull,default:0" json:"totalDistance"`
+	TotalDistance            decimal.Decimal               `bun:"type:NUMERIC(10,2),notnull,default:0" json:"totalDistance"`
 
 	CreatedBy           *User                `bun:"rel:belongs-to,join:created_by_id=id" json:"-"`
 	BusinessUnit        *BusinessUnit        `bun:"rel:belongs-to,join:business_unit_id=id" json:"-"`
@@ -194,7 +195,7 @@ func (s *Shipment) setStatus(ctx context.Context, db *bun.DB, newStatus property
 
 // CalculateTotalChargeAmount updates the TotalChargeAmount based on FreightChargeAmount and OtherChargeAmount
 func (s *Shipment) CalculateTotalChargeAmount() {
-	s.TotalChargeAmount = s.FreightChargeAmount + s.OtherChargeAmount
+	s.TotalChargeAmount = s.FreightChargeAmount.Add(s.OtherChargeAmount)
 }
 
 // MarkReadyToBill marks the Shipment as ready to bill
@@ -264,11 +265,11 @@ func (s *Shipment) validateDeliveryDate(value any) error {
 }
 
 func (s *Shipment) validateTotalChargeAmount() error {
-	expectedTotal := s.FreightChargeAmount + s.OtherChargeAmount
+	expectedTotal := s.FreightChargeAmount.Add(s.OtherChargeAmount)
 	if s.TotalChargeAmount != expectedTotal {
 		return validator.DBValidationError{
 			Field:   "totalChargeAmount",
-			Message: fmt.Sprintf("Total charge amount must be the sum of freight charge amount and other charge amount. Expected %f, got %f", expectedTotal, s.TotalChargeAmount),
+			Message: fmt.Sprintf("Total charge amount must be the sum of freight charge amount and other charge amount. Expected %d, got %d", expectedTotal, s.TotalChargeAmount),
 		}
 	}
 

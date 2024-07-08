@@ -6,6 +6,7 @@ import (
 
 	"github.com/emoss08/trenova/pkg/models/property"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
+	"github.com/shopspring/decimal"
 
 	"github.com/google/uuid"
 	"github.com/uptrace/bun"
@@ -42,7 +43,7 @@ type AccessorialCharge struct {
 	Description    string          `bun:"type:TEXT" json:"description"`
 	IsDetention    bool            `bun:"is_detention,type:BOOLEAN,default:false" json:"isDetention"`
 	Method         string          `bun:"method,type:fuel_method_enum,notnull" json:"method"`
-	Amount         string          `bun:"amount,type:numeric(19,2),notnull,default:0" json:"amount"`
+	Amount         decimal.Decimal `bun:"amount,type:numeric(19,2),notnull,default:0" json:"amount"`
 	BusinessUnitID uuid.UUID       `bun:"type:uuid,notnull" json:"businessUnitId"`
 	OrganizationID uuid.UUID       `bun:"type:uuid,notnull" json:"organizationId"`
 	ShipmentID     uuid.UUID       `bun:"type:uuid" json:"shipmentId"`

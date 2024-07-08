@@ -8,6 +8,7 @@ import (
 
 	"github.com/emoss08/trenova/pkg/models/property"
 	"github.com/google/uuid"
+	"github.com/shopspring/decimal"
 	"github.com/uptrace/bun"
 )
 
@@ -15,22 +16,23 @@ type ShipmentMove struct {
 	bun.BaseModel     `bun:"table:shipment_moves,alias:sm" json:"-"`
 	CreatedAt         time.Time                   `bun:",nullzero,notnull,default:current_timestamp" json:"createdAt"`
 	UpdatedAt         time.Time                   `bun:",nullzero,notnull,default:current_timestamp" json:"updatedAt"`
-	ID                uuid.UUID                   `bun:",pk,type:uuid,default:uuid_generate_v4()" json:"id"`
 	Status            property.ShipmentMoveStatus `bun:"type:VARCHAR(50),notnull" json:"status"`
 	IsLoaded          bool                        `bun:"type:BOOLEAN,default:false" json:"isLoaded"`
 	SequenceNumber    int                         `bun:"type:INTEGER,notnull" json:"sequenceNumber"`
-	EstimatedDistance float64                     `bun:"type:NUMERIC(10,2),notnull,default:0" json:"estimatedDistance"`
-	ActualDistance    float64                     `bun:"type:NUMERIC(10,2),notnull,default:0" json:"actualDistance"`
-	EstimatedCost     float64                     `bun:"type:NUMERIC(19,4),notnull,default:0" json:"estimatedCost"`
-	ActualCost        float64                     `bun:"type:NUMERIC(19,4),notnull,default:0" json:"actualCost"`
+	EstimatedDistance decimal.Decimal             `bun:"type:NUMERIC(10,2),notnull,default:0" json:"estimatedDistance"`
+	ActualDistance    decimal.Decimal             `bun:"type:NUMERIC(10,2),notnull,default:0" json:"actualDistance"`
+	EstimatedCost     decimal.Decimal             `bun:"type:NUMERIC(19,4),notnull,default:0" json:"estimatedCost"`
+	ActualCost        decimal.Decimal             `bun:"type:NUMERIC(19,4),notnull,default:0" json:"actualCost"`
 	Notes             string                      `bun:"type:TEXT,nullzero" json:"notes"`
-	ShipmentID        uuid.UUID                   `bun:"type:uuid,notnull" json:"shipmentId"`
-	TractorID         uuid.UUID                   `bun:"type:uuid,notnull" json:"tractorId"`
-	TrailerID         uuid.UUID                   `bun:"type:uuid,notnull" json:"trailerId"`
-	PrimaryWorkerID   uuid.UUID                   `bun:"type:uuid,notnull" json:"primaryWorkerId"`
-	SecondaryWorkerID *uuid.UUID                  `bun:"type:uuid,nullzero" json:"secondaryWorkerId"`
-	BusinessUnitID    uuid.UUID                   `bun:"type:uuid,notnull" json:"businessUnitId"`
-	OrganizationID    uuid.UUID                   `bun:"type:uuid,notnull" json:"organizationId"`
+
+	ID                uuid.UUID  `bun:",pk,type:uuid,default:uuid_generate_v4()" json:"id"`
+	ShipmentID        uuid.UUID  `bun:"type:uuid,notnull" json:"shipmentId"`
+	TractorID         uuid.UUID  `bun:"type:uuid,notnull" json:"tractorId"`
+	TrailerID         uuid.UUID  `bun:"type:uuid,notnull" json:"trailerId"`
+	PrimaryWorkerID   uuid.UUID  `bun:"type:uuid,notnull" json:"primaryWorkerId"`
+	SecondaryWorkerID *uuid.UUID `bun:"type:uuid,nullzero" json:"secondaryWorkerId"`
+	BusinessUnitID    uuid.UUID  `bun:"type:uuid,notnull" json:"businessUnitId"`
+	OrganizationID    uuid.UUID  `bun:"type:uuid,notnull" json:"organizationId"`
 
 	BusinessUnit    *BusinessUnit `bun:"rel:belongs-to,join:business_unit_id=id" json:"-"`
 	Organization    *Organization `bun:"rel:belongs-to,join:organization_id=id" json:"-"`

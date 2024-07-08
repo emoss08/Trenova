@@ -11,6 +11,7 @@ import (
 	"github.com/emoss08/trenova/pkg/models/property"
 	"github.com/google/uuid"
 	"github.com/rs/zerolog"
+	"github.com/shopspring/decimal"
 	"github.com/uptrace/bun"
 )
 
@@ -29,12 +30,12 @@ func NewShipmentService(s *server.Server) *ShipmentService {
 }
 
 type StopInput struct {
-	LocationID       uuid.UUID         `json:"locationId"`
-	Type             property.StopType `json:"type"`
-	PlannedArrival   time.Time         `json:"plannedArrival"`
-	PlannedDeparture time.Time         `json:"plannedDeparture"`
-	Weight           *float64          `json:"weight"`
-	Pieces           *float64          `json:"pieces"`
+	LocationID       uuid.UUID           `json:"locationId"`
+	Type             property.StopType   `json:"type"`
+	PlannedArrival   time.Time           `json:"plannedArrival"`
+	PlannedDeparture time.Time           `json:"plannedDeparture"`
+	Weight           decimal.NullDecimal `json:"weight"`
+	Pieces           decimal.NullDecimal `json:"pieces"`
 }
 
 type CreateShipmentInput struct {
@@ -52,11 +53,11 @@ type CreateShipmentInput struct {
 	ServiceTypeID               *uuid.UUID                    `json:"serviceTypeId"`
 	RatingMethod                property.ShipmentRatingMethod `json:"ratingMethod"`
 	RatingUnit                  int                           `json:"ratingUnit"`
-	OtherChargeAmount           float64                       `json:"otherChargeAmount"`
-	FreightChargeamount         float64                       `json:"freightChargeAmount"`
-	TotalChargeAmount           float64                       `json:"totalChargeAmount"`
-	Pieces                      *float64                      `json:"pieces"`
-	Weight                      *float64                      `json:"weight"`
+	OtherChargeAmount           decimal.Decimal               `json:"otherChargeAmount"`
+	FreightChargeamount         decimal.Decimal               `json:"freightChargeAmount"`
+	TotalChargeAmount           decimal.Decimal               `json:"totalChargeAmount"`
+	Pieces                      decimal.NullDecimal           `json:"pieces"`
+	Weight                      decimal.NullDecimal           `json:"weight"`
 	TractorID                   uuid.UUID                     `json:"tractorId"`
 	TrailerID                   uuid.UUID                     `json:"trailerId"`
 	PrimaryWorkerID             uuid.UUID                     `json:"primaryWorkerId"`
@@ -69,7 +70,7 @@ type CreateShipmentInput struct {
 	SpecialInstructions         string                        `json:"specialInstructions"`
 	TrackingNumber              string                        `json:"trackingNumber"`
 	Priority                    int                           `json:"priority"`
-	TotalDistance               float64                       `json:"totalDistance"`
+	TotalDistance               decimal.Decimal               `json:"totalDistance"`
 	Stops                       []StopInput                   `json:"stops"`
 }
 

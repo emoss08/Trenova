@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/pkg/models/property"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/google/uuid"
+	"github.com/shopspring/decimal"
 	"github.com/uptrace/bun"
 )
 
@@ -18,8 +19,8 @@ type Stop struct {
 	AddressLine      string                      `bun:"type:TEXT" json:"addressLine"`
 	Notes            string                      `bun:"type:TEXT,nullzero" json:"notes"`
 	SequenceNumber   int                         `bun:"type:INTEGER,notnull" json:"sequenceNumber"`
-	Pieces           *float64                    `bun:"type:NUMERIC(10,2),default:0" json:"pieces"`
-	Weight           *float64                    `bun:"type:NUMERIC(10,2),default:0" json:"weight"`
+	Pieces           decimal.NullDecimal         `bun:"type:NUMERIC(10,2),default:0" json:"pieces"`
+	Weight           decimal.NullDecimal         `bun:"type:NUMERIC(10,2),default:0" json:"weight"`
 	PlannedArrival   time.Time                   `bun:"type:TIMESTAMP" json:"plannedArrival"`
 	PlannedDeparture time.Time                   `bun:"type:TIMESTAMP" json:"plannedDeparture"`
 	ActualArrival    *time.Time                  `bun:"type:TIMESTAMP,nullzero" json:"actualArrival"`

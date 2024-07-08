@@ -12,6 +12,7 @@ import (
 	"github.com/emoss08/trenova/pkg/testutils"
 	"github.com/emoss08/trenova/pkg/testutils/factory"
 	"github.com/google/uuid"
+	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/require"
 )
 
@@ -24,9 +25,9 @@ func TestShipment_Validate(t *testing.T) {
 			ProNumber:           "PRO",
 			RatingMethod:        property.ShipmentRatingMethodFlatRate,
 			RatingUnit:          1,
-			FreightChargeAmount: 100.00,
-			OtherChargeAmount:   10.00,
-			TotalChargeAmount:   110.00,
+			FreightChargeAmount: decimal.NewFromInt(100),
+			OtherChargeAmount:   decimal.NewFromInt(10),
+			TotalChargeAmount:   decimal.NewFromInt(110),
 			BillOfLading:        "BOL",
 		}
 
@@ -41,9 +42,9 @@ func TestShipment_Validate(t *testing.T) {
 			ProNumber:           "PRO",
 			RatingMethod:        property.ShipmentRatingMethodFlatRate,
 			RatingUnit:          1,
-			FreightChargeAmount: 100.00,
-			OtherChargeAmount:   10.00,
-			TotalChargeAmount:   110.00,
+			FreightChargeAmount: decimal.NewFromInt(100),
+			OtherChargeAmount:   decimal.NewFromInt(10),
+			TotalChargeAmount:   decimal.NewFromInt(110),
 			BillOfLading:        "BOL",
 		}
 
@@ -64,9 +65,9 @@ func TestShipment_DBValidate(t *testing.T) {
 			ProNumber:           "PRO",
 			RatingMethod:        property.ShipmentRatingMethodFlatRate,
 			RatingUnit:          1,
-			FreightChargeAmount: 100.00,
-			TotalChargeAmount:   110.00,
-			OtherChargeAmount:   10.00,
+			FreightChargeAmount: decimal.NewFromInt(100),
+			OtherChargeAmount:   decimal.NewFromInt(10),
+			TotalChargeAmount:   decimal.NewFromInt(110),
 			BillOfLading:        "BOL",
 		}
 
@@ -82,8 +83,8 @@ func TestShipment_DBValidate(t *testing.T) {
 			ProNumber:           "PRO",
 			RatingMethod:        property.ShipmentRatingMethodFlatRate,
 			RatingUnit:          1,
-			FreightChargeAmount: 100.00,
-			TotalChargeAmount:   110.00,
+			FreightChargeAmount: decimal.NewFromInt(100),
+			TotalChargeAmount:   decimal.NewFromInt(110),
 			BillOfLading:        "BOL",
 		}
 
@@ -101,14 +102,14 @@ func TestShipment_CalculateTotalChargeAmount(t *testing.T) {
 			ProNumber:           "PRO",
 			RatingMethod:        property.ShipmentRatingMethodFlatRate,
 			RatingUnit:          1,
-			OtherChargeAmount:   10.00,
-			FreightChargeAmount: 100.00,
+			OtherChargeAmount:   decimal.NewFromInt(10),
+			FreightChargeAmount: decimal.NewFromInt(100),
 			BillOfLading:        "BOL",
 		}
 		// Calculate the total charge amount
 		s.CalculateTotalChargeAmount()
 
-		require.InDelta(t, 110.00, s.TotalChargeAmount, 0.01)
+		require.Equal(t, decimal.NewFromInt(110), s.TotalChargeAmount)
 	})
 }
 
@@ -121,8 +122,8 @@ func TestShipment_MarkReadyToBill(t *testing.T) {
 			ProNumber:           "PRO",
 			RatingMethod:        property.ShipmentRatingMethodFlatRate,
 			RatingUnit:          1,
-			OtherChargeAmount:   10.00,
-			FreightChargeAmount: 100.00,
+			OtherChargeAmount:   decimal.NewFromInt(10),
+			FreightChargeAmount: decimal.NewFromInt(100),
 			BillOfLading:        "BOL",
 		}
 
@@ -139,8 +140,8 @@ func TestShipment_MarkReadyToBill(t *testing.T) {
 			ProNumber:           "PRO",
 			RatingMethod:        property.ShipmentRatingMethodFlatRate,
 			RatingUnit:          1,
-			OtherChargeAmount:   10.00,
-			FreightChargeAmount: 100.00,
+			OtherChargeAmount:   decimal.NewFromInt(10),
+			FreightChargeAmount: decimal.NewFromInt(100),
 			BillOfLading:        "BOL",
 		}
 

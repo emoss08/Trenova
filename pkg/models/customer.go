@@ -37,22 +37,24 @@ func (p CustomerPermission) String() string {
 }
 
 type Customer struct {
-	bun.BaseModel       `bun:"table:customers,alias:cu" json:"-"`
-	ID                  uuid.UUID       `bun:",pk,type:uuid,default:uuid_generate_v4()" json:"id"`
-	BusinessUnitID      uuid.UUID       `bun:"type:uuid,notnull" json:"businessUnitId"`
-	OrganizationID      uuid.UUID       `bun:"type:uuid,notnull" json:"organizationId"`
+	bun.BaseModel `bun:"table:customers,alias:cu" json:"-"`
+
 	Status              property.Status `bun:"status,type:status" json:"status"`
 	Code                string          `bun:"type:VARCHAR(10),notnull" json:"code" queryField:"true"`
 	Name                string          `bun:"type:VARCHAR(150),notnull" json:"name"`
 	AddressLine1        string          `bun:"address_line_1,type:VARCHAR(150),notnull" json:"addressLine1"`
 	AddressLine2        string          `bun:"address_line_2,type:VARCHAR(150),notnull" json:"addressLine2"`
 	City                string          `bun:"type:VARCHAR(150),notnull" json:"city"`
-	StateID             uuid.UUID       `bun:"type:uuid,notnull" json:"stateId"`
 	AutoMarkReadyToBill bool            `bun:"type:boolean,notnull,default:false" json:"autoMarkReadyToBill"`
 	HasCustomerPortal   bool            `bun:"type:boolean,notnull,default:false" json:"hasCustomerPortal"`
 	PostalCode          string          `bun:"type:VARCHAR(10),notnull" json:"postalCode"`
 	CreatedAt           time.Time       `bun:",nullzero,notnull,default:current_timestamp" json:"createdAt"`
 	UpdatedAt           time.Time       `bun:",nullzero,notnull,default:current_timestamp" json:"updatedAt"`
+
+	ID             uuid.UUID `bun:",pk,type:uuid,default:uuid_generate_v4()" json:"id"`
+	StateID        uuid.UUID `bun:"type:uuid,notnull" json:"stateId"`
+	BusinessUnitID uuid.UUID `bun:"type:uuid,notnull" json:"businessUnitId"`
+	OrganizationID uuid.UUID `bun:"type:uuid,notnull" json:"organizationId"`
 
 	State        *UsState      `bun:"rel:belongs-to,join:state_id=id" json:"state"`
 	Organization *Organization `bun:"rel:belongs-to,join:organization_id=id" json:"-"`
@@ -73,11 +75,11 @@ func (c Customer) Validate() error {
 	)
 }
 
-func (c *Customer) TableName() string {
+func (c Customer) TableName() string {
 	return "customers"
 }
 
-func (c *Customer) GetCodePrefix(pattern string) string {
+func (c Customer) GetCodePrefix(pattern string) string {
 	switch pattern {
 	case "NAME-COUNTER":
 		return utils.TruncateString(strings.ToUpper(c.Name), 4)
@@ -88,7 +90,7 @@ func (c *Customer) GetCodePrefix(pattern string) string {
 	}
 }
 
-func (c *Customer) GenerateCode(pattern string, counter int) string {
+func (c Customer) GenerateCode(pattern string, counter int) string {
 	switch pattern {
 	case "NAME-COUNTER":
 		return fmt.Sprintf("%s%04d", utils.TruncateString(strings.ToUpper(c.Name), 4), counter)
