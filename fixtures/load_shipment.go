@@ -59,12 +59,20 @@ func loadShipments(ctx context.Context, db *bun.DB, gen *gen.CodeGenerator, orgI
 		Name:                "Target-0001",
 		AddressLine1:        "123 Main St",
 		City:                "Minneapolis",
-		StateID:             &state.ID,
+		StateID:             state.ID,
 		PostalCode:          "55401",
 		AutoMarkReadyToBill: true,
 	}
 
-	if _, err := db.NewInsert().Model(customer).Exec(ctx); err != nil {
+	err = db.RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
+		mkg, mErr := models.QueryCustomerMasterKeyGenerationByOrgID(ctx, db, orgID)
+		if mErr != nil {
+			return mErr
+		}
+
+		return customer.InsertCustomer(ctx, tx, gen, mkg.Pattern)
+	})
+	if err != nil {
 		return err
 	}
 

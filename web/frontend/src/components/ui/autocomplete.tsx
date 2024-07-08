@@ -155,7 +155,7 @@ export function LocationAutoComplete<T extends FieldValues>({
           className={cn(
             isSearchLoading && "cursor-wait pr-10",
             isFieldError &&
-              "ring-1 ring-inset ring-red-500 placeholder:text-red-500 focus:ring-red-500",
+              "ring-1 ring-inset ring-red-500 placeholder:text-red-500 focus:ring-red-500 bg-red-500 bg-opacity-20",
           )}
           onChange={handleInputChange}
           {...props}

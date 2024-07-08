@@ -44,12 +44,13 @@ type Customer struct {
 	Status              property.Status `bun:"status,type:status" json:"status"`
 	Code                string          `bun:"type:VARCHAR(10),notnull" json:"code" queryField:"true"`
 	Name                string          `bun:"type:VARCHAR(150),notnull" json:"name"`
-	AddressLine1        string          `bun:"address_line_1,type:VARCHAR(150)" json:"addressLine1"`
-	AddressLine2        string          `bun:"address_line_2,type:VARCHAR(150)" json:"addressLine2"`
-	City                string          `bun:"type:VARCHAR(150)" json:"city"`
-	StateID             *uuid.UUID      `bun:"type:uuid,nullzero" json:"stateId"`
+	AddressLine1        string          `bun:"address_line_1,type:VARCHAR(150),notnull" json:"addressLine1"`
+	AddressLine2        string          `bun:"address_line_2,type:VARCHAR(150),notnull" json:"addressLine2"`
+	City                string          `bun:"type:VARCHAR(150),notnull" json:"city"`
+	StateID             uuid.UUID       `bun:"type:uuid,notnull" json:"stateId"`
 	AutoMarkReadyToBill bool            `bun:"type:boolean,notnull,default:false" json:"autoMarkReadyToBill"`
-	PostalCode          string          `bun:"type:VARCHAR(10)" json:"postalCode"`
+	HasCustomerPortal   bool            `bun:"type:boolean,notnull,default:false" json:"hasCustomerPortal"`
+	PostalCode          string          `bun:"type:VARCHAR(10),notnull" json:"postalCode"`
 	CreatedAt           time.Time       `bun:",nullzero,notnull,default:current_timestamp" json:"createdAt"`
 	UpdatedAt           time.Time       `bun:",nullzero,notnull,default:current_timestamp" json:"updatedAt"`
 
@@ -65,10 +66,10 @@ func (c Customer) Validate() error {
 		validation.Field(&c.OrganizationID, validation.Required),
 		validation.Field(&c.Code, validation.Required, validation.Length(1, 10)),
 		validation.Field(&c.Name, validation.Required, validation.Length(1, 150)),
-		validation.Field(&c.AddressLine1, validation.Length(0, 150)),
+		validation.Field(&c.AddressLine1, validation.Required, validation.Length(0, 150)),
 		validation.Field(&c.AddressLine2, validation.Length(0, 150)),
-		validation.Field(&c.City, validation.Length(0, 150)),
-		validation.Field(&c.PostalCode, validation.Length(0, 10)),
+		validation.Field(&c.City, validation.Required, validation.Length(0, 150)),
+		validation.Field(&c.PostalCode, validation.Required, validation.Length(0, 10)),
 	)
 }
 

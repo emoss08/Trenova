@@ -20,10 +20,12 @@ CREATE TABLE
     "description"      TEXT,
     "is_detention"     BOOLEAN          NOT NULL DEFAULT FALSE,
     "method"           fuel_method_enum NOT NULL,
+    "shipment_id"      uuid             NOT NULL,
     "amount"           NUMERIC(19, 2)   NOT NULL DEFAULT 0,
     "created_at"       TIMESTAMPTZ      NOT NULL DEFAULT current_timestamp,
     "updated_at"       TIMESTAMPTZ      NOT NULL DEFAULT current_timestamp,
     PRIMARY KEY ("id"),
+    FOREIGN KEY ("shipment_id") REFERENCES shipments ("id") ON UPDATE NO ACTION ON DELETE CASCADE,
     FOREIGN KEY ("organization_id") REFERENCES organizations ("id") ON UPDATE NO ACTION ON DELETE CASCADE,
     FOREIGN KEY ("business_unit_id") REFERENCES business_units ("id") ON UPDATE NO ACTION ON DELETE CASCADE
 );

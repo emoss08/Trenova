@@ -101,6 +101,7 @@ func (s *Stop) setStatus(ctx context.Context, db *bun.DB, newStatus property.Shi
 		now := time.Now()
 		s.ActualDeparture = &now
 	}
+
 	_, err := db.NewUpdate().Model(s).Column("status", "actual_arrival", "actual_departure").WherePK().Exec(ctx)
 	return err
 }

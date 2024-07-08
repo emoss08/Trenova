@@ -16,13 +16,24 @@ func loadCustomers(ctx context.Context, db *bun.DB, gen *gen.CodeGenerator, orgI
 		return err
 	}
 
+	state := new(models.UsState)
+	err = db.NewSelect().Model(state).Where("abbreviation = ?", "AL").Scan(ctx)
+	if err != nil {
+		return err
+	}
+
 	if count < 20 {
 		for i := 0; i < 20; i++ {
 			customer := models.Customer{
-				BusinessUnitID: buID,
-				OrganizationID: orgID,
-				Status:         property.StatusActive,
-				Name:           "TEST",
+				BusinessUnitID:      buID,
+				OrganizationID:      orgID,
+				Status:              property.StatusActive,
+				Name:                "TEST",
+				AddressLine1:        "123 Main St",
+				City:                "Minneapolis",
+				StateID:             state.ID,
+				PostalCode:          "55401",
+				AutoMarkReadyToBill: true,
 			}
 
 			err = db.RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {

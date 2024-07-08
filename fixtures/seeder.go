@@ -45,12 +45,12 @@ func LoadFixtures() error {
 		(*models.GeneralLedgerAccountTag)(nil),
 	)
 
-	if err := loadResources(ctx, db); err != nil {
+	if err = loadResources(ctx, db); err != nil {
 		log.Fatalf("Failed to load resources: %v", err)
 		return err
 	}
 
-	if err := loadUSStates(ctx, db); err != nil {
+	if err = loadUSStates(ctx, db); err != nil {
 		log.Fatalf("Failed to load US States: %v", err)
 		return err
 	}
