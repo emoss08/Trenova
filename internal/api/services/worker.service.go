@@ -2,6 +2,7 @@ package services
 
 import (
 	"context"
+	"strings"
 
 	"github.com/emoss08/trenova/internal/server"
 	"github.com/emoss08/trenova/pkg/gen"
@@ -25,19 +26,41 @@ func NewWorkerService(s *server.Server) *WorkerService {
 	}
 }
 
-func (s *WorkerService) GetAll(ctx context.Context, limit, offset int, query string, orgID, buID uuid.UUID) ([]*models.Worker, int, error) {
+// QueryFilter defines the filter parameters for querying Worker
+type WorkerQueryFilter struct {
+	Query          string
+	OrganizationID uuid.UUID
+	BusinessUnitID uuid.UUID
+	Limit          int
+	Offset         int
+}
+
+func (s WorkerService) filterQuery(q *bun.SelectQuery, f *WorkerQueryFilter) *bun.SelectQuery {
+	q = q.Where("wk.organization_id = ?", f.OrganizationID).
+		Where("wk.business_unit_id = ?", f.BusinessUnitID)
+
+	if f.Query != "" {
+		q = q.Where("wk.code = ? OR wk.code ILIKE ?", f.Query, "%"+strings.ToLower(f.Query)+"%")
+	}
+
+	q = q.OrderExpr("CASE WHEN wk.code = ? THEN 0 ELSE 1 END", f.Query).
+		Order("wk.created_at DESC")
+
+	return q.Limit(f.Limit).Offset(f.Offset)
+}
+
+func (s *WorkerService) GetAll(ctx context.Context, filter *WorkerQueryFilter) ([]*models.Worker, int, error) {
 	var entities []*models.Worker
-	count, err := s.db.NewSelect().
+
+	q := s.db.NewSelect().
 		Model(&entities).
-		Relation("WorkerProfile").
-		Where("wk.organization_id = ?", orgID).
-		Where("wk.business_unit_id = ?", buID).
-		Where("wk.code ILIKE ?", "%"+query+"%").
-		Order("wk.created_at DESC").
-		Limit(limit).
-		Offset(offset).
-		ScanAndCount(ctx)
+		Relation("WorkerProfile")
+
+	q = s.filterQuery(q, filter)
+
+	count, err := q.ScanAndCount(ctx)
 	if err != nil {
+		s.logger.Error().Err(err).Msg("failed to get workers")
 		return nil, 0, err
 	}
 

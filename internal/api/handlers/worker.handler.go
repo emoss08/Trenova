@@ -76,9 +76,15 @@ func (h *WorkerHandler) Get() fiber.Handler {
 			})
 		}
 
-		query := c.Query("search", "")
+		filter := &services.WorkerQueryFilter{
+			Query:          c.Query("search", ""),
+			OrganizationID: orgID,
+			BusinessUnitID: buID,
+			Limit:          limit,
+			Offset:         offset,
+		}
 
-		entities, cnt, err := h.service.GetAll(c.UserContext(), limit, offset, query, orgID, buID)
+		entities, cnt, err := h.service.GetAll(c.UserContext(), filter)
 		if err != nil {
 			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Error{
 				Code:    fiber.StatusInternalServerError,

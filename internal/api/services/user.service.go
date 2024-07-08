@@ -34,7 +34,6 @@ func (s *UserService) GetAuthenticatedUser(ctx context.Context, userID uuid.UUID
 
 	err := s.db.NewSelect().
 		Model(u).
-		// Get the permissions for each role.
 		Relation("Roles.Permissions").
 		Where("u.id = ?", userID).
 		Scan(ctx)

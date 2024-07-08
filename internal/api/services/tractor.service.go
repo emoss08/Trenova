@@ -55,7 +55,8 @@ func (s *TractorService) GetAll(ctx context.Context, filter *TractorQueryFilter)
 	var entities []*models.Tractor
 
 	q := s.db.NewSelect().
-		Model(&entities).Relation("PrimaryWorker")
+		Model(&entities).
+		Relation("PrimaryWorker")
 
 	q = s.filterQuery(q, filter)
 
