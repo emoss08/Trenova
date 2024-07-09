@@ -35,24 +35,24 @@ func (p EquipmentTypePermission) String() string {
 
 type EquipmentType struct {
 	bun.BaseModel   `bun:"table:equipment_types,alias:et" json:"-"`
-	CreatedAt       time.Time       `bun:",nullzero,notnull,default:current_timestamp" json:"createdAt"`
-	UpdatedAt       time.Time       `bun:",nullzero,notnull,default:current_timestamp" json:"updatedAt"`
-	ID              uuid.UUID       `bun:",pk,type:uuid,default:uuid_generate_v4()" json:"id"`
-	Status          property.Status `bun:"status,type:status,default:'Active'" json:"status"`
-	EquipmentClass  string          `bun:"type:VARCHAR(12),notnull,default:'Undefined'" json:"equipmentClass"`
-	Code            string          `bun:"type:VARCHAR(10),notnull" json:"code" queryField:"true"`
-	Description     string          `bun:"type:TEXT" json:"description"`
-	CostPerMile     decimal.Decimal `bun:"type:NUMERIC(10,2),nullzero" json:"costPerMile"`
-	FixedCost       decimal.Decimal `bun:"type:NUMERIC(10,2),nullzero" json:"fixedCost"`
-	VariableCost    decimal.Decimal `bun:"type:NUMERIC(10,2),nullzero" json:"variableCost"`
-	Height          decimal.Decimal `bun:"type:NUMERIC(10,2),nullzero" json:"height"`
-	Length          decimal.Decimal `bun:"type:NUMERIC(10,2),nullzero" json:"length"`
-	Width           decimal.Decimal `bun:"type:NUMERIC(10,2),nullzero" json:"width"`
-	Weight          decimal.Decimal `bun:"type:NUMERIC(10,2),nullzero" json:"weight"`
-	ExemptFromTolls bool            `bun:"type:BOOLEAN,notnull" json:"exemptFromTolls"`
-	Color           string          `bun:"type:VARCHAR(10)" json:"color"`
-	BusinessUnitID  uuid.UUID       `bun:"type:uuid,notnull" json:"businessUnitId"`
-	OrganizationID  uuid.UUID       `bun:"type:uuid,notnull" json:"organizationId"`
+	CreatedAt       time.Time           `bun:",nullzero,notnull,default:current_timestamp" json:"createdAt"`
+	UpdatedAt       time.Time           `bun:",nullzero,notnull,default:current_timestamp" json:"updatedAt"`
+	ID              uuid.UUID           `bun:",pk,type:uuid,default:uuid_generate_v4()" json:"id"`
+	Status          property.Status     `bun:"status,type:status,default:'Active'" json:"status"`
+	EquipmentClass  string              `bun:"type:VARCHAR(12),notnull,default:'Undefined'" json:"equipmentClass"`
+	Code            string              `bun:"type:VARCHAR(10),notnull" json:"code" queryField:"true"`
+	Description     string              `bun:"type:TEXT" json:"description"`
+	CostPerMile     decimal.NullDecimal `bun:"type:NUMERIC(10,2),nullzero" json:"costPerMile"`
+	FixedCost       decimal.NullDecimal `bun:"type:NUMERIC(10,2),nullzero" json:"fixedCost"`
+	VariableCost    decimal.NullDecimal `bun:"type:NUMERIC(10,2),nullzero" json:"variableCost"`
+	Height          decimal.NullDecimal `bun:"type:NUMERIC(10,2),nullzero" json:"height"`
+	Length          decimal.NullDecimal `bun:"type:NUMERIC(10,2),nullzero" json:"length"`
+	Width           decimal.NullDecimal `bun:"type:NUMERIC(10,2),nullzero" json:"width"`
+	Weight          decimal.NullDecimal `bun:"type:NUMERIC(10,2),nullzero" json:"weight"`
+	ExemptFromTolls bool                `bun:"type:BOOLEAN,notnull" json:"exemptFromTolls"`
+	Color           string              `bun:"type:VARCHAR(10)" json:"color"`
+	BusinessUnitID  uuid.UUID           `bun:"type:uuid,notnull" json:"businessUnitId"`
+	OrganizationID  uuid.UUID           `bun:"type:uuid,notnull" json:"organizationId"`
 
 	BusinessUnit *BusinessUnit `bun:"rel:belongs-to,join:business_unit_id=id" json:"-"`
 	Organization *Organization `bun:"rel:belongs-to,join:organization_id=id" json:"-"`

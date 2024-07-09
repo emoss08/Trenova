@@ -3,6 +3,7 @@ package services
 import (
 	"context"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/emoss08/trenova/internal/server"
@@ -70,24 +71,121 @@ type CreateShipmentInput struct {
 	SpecialInstructions         string                        `json:"specialInstructions"`
 	TrackingNumber              string                        `json:"trackingNumber"`
 	Priority                    int                           `json:"priority"`
-	TotalDistance               decimal.Decimal               `json:"totalDistance"`
+	TotalDistance               decimal.NullDecimal           `json:"totalDistance"`
 	Stops                       []StopInput                   `json:"stops"`
 }
 
-func (s *ShipmentService) GetAll(ctx context.Context, limit, offset int, query string, orgID, buID uuid.UUID) ([]*models.Shipment, int, error) {
-	var entities []*models.Shipment
+// Suggested additions to ShipmentQueryFilter
+type ShipmentQueryFilter struct {
+	Query          string
+	OrganizationID uuid.UUID
+	BusinessUnitID uuid.UUID
+	CustomerID     uuid.UUID
+	FromDate       *time.Time
+	ToDate         *time.Time
+	ShipmentTypeID uuid.UUID
+	IsHazardous    bool
+	Status         property.ShipmentStatus
+	Limit          int
+	Offset         int
+}
+
+type ShipmentCountByStatus struct {
+	Status property.ShipmentStatus `json:"status"`
+	Count  int                     `json:"count"`
+}
+
+func (s *ShipmentService) GetShipmentCountByStatus(ctx context.Context, filter *ShipmentQueryFilter) ([]ShipmentCountByStatus, int, error) {
+	var results []ShipmentCountByStatus
+
+	q := s.db.NewSelect().
+		Model((*models.Shipment)(nil)).
+		Column("sp.status").
+		ColumnExpr("COUNT(*) AS count").
+		Group("sp.status").
+		Order("sp.status")
+
+	q = s.applyFilters(q, filter)
+
+	// Execute.
+	err := q.Scan(ctx, &results)
+	if err != nil {
+		return nil, 0, err
+	}
+
+	totalCount, err := s.getTotalCount(ctx, filter)
+	if err != nil {
+		return nil, 0, err
+	}
+
+	return results, totalCount, nil
+}
+
+// getTotalCount gets the total count of shipments
+func (s *ShipmentService) getTotalCount(ctx context.Context, filter *ShipmentQueryFilter) (int, error) {
 	count, err := s.db.NewSelect().
+		TableExpr("shipments AS sp").
+		Where("sp.organization_id = ?", filter.OrganizationID).
+		Where("sp.business_unit_id = ?", filter.BusinessUnitID).
+		Count(ctx)
+
+	return count, err
+}
+
+// applyFilters applies the filters to the query
+func (s *ShipmentService) applyFilters(q *bun.SelectQuery, f *ShipmentQueryFilter) *bun.SelectQuery {
+	q = q.Where("sp.organization_id = ?", f.OrganizationID).
+		Where("sp.business_unit_id = ?", f.BusinessUnitID)
+
+	if f.Query != "" {
+		q = q.Where("sp.pro_number ILIKE ? OR sp.bill_of_lading ILIKE ? OR c.name ILIKE ?",
+			"%"+f.Query+"%", "%"+f.Query+"%", "%"+f.Query+"%")
+	}
+
+	// Apply additional filters
+	if f.CustomerID != uuid.Nil {
+		q = q.Where("sp.customer_id = ?", f.CustomerID)
+	}
+	if f.FromDate != nil {
+		q = q.Where("sp.created_at >= ?", f.FromDate)
+	}
+	if f.ToDate != nil {
+		q = q.Where("sp.created_at <= ?", f.ToDate)
+	}
+	if f.ShipmentTypeID != uuid.Nil {
+		q = q.Where("sp.shipment_type_id = ?", f.ShipmentTypeID)
+	}
+
+	return q
+}
+
+func (s *ShipmentService) filterQuery(q *bun.SelectQuery, f *ShipmentQueryFilter) *bun.SelectQuery {
+	q = q.Where("sp.organization_id = ?", f.OrganizationID).
+		Where("sp.business_unit_id = ?", f.BusinessUnitID)
+
+	if f.Query != "" {
+		q = q.Where("sp.pro_number = ? OR sp.bill_of_lading ILIKE ?", f.Query, "%"+strings.ToLower(f.Query)+"%")
+	}
+
+	q = q.OrderExpr("CASE WHEN sp.pro_number = ? THEN 0 ELSE 1 END", f.Query).
+		Order("sp.created_at DESC")
+
+	return q.Limit(f.Limit).Offset(f.Offset)
+}
+
+func (s *ShipmentService) GetAll(ctx context.Context, filter *ShipmentQueryFilter) ([]*models.Shipment, int, error) {
+	var entities []*models.Shipment
+
+	q := s.db.NewSelect().
 		Model(&entities).
 		Relation("ShipmentMoves").
-		Relation("ShipmentMoves.Stops").
-		Where("sp.organization_id = ?", orgID).
-		Where("sp.business_unit_id = ?", buID).
-		Where("sp.code ILIKE ?", "%"+query+"%").
-		Order("sp.created_at DESC").
-		Limit(limit).
-		Offset(offset).
-		ScanAndCount(ctx)
+		Relation("ShipmentMoves.Stops")
+
+	q = s.filterQuery(q, filter)
+
+	count, err := q.ScanAndCount(ctx)
 	if err != nil {
+		s.logger.Error().Err(err).Msg("failed to get workers")
 		return nil, 0, err
 	}
 

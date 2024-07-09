@@ -1,13 +1,26 @@
 import { cn, shipmentStatusToReadable } from "@/lib/utils";
 import { getShipmentCountByStatus } from "@/services/ShipmentRequestService";
 import { QueryKeyWithParams } from "@/types";
-import { ShipmentSearchForm } from "@/types/shipment";
+import { ShipmentSearchForm, ShipmentStatus } from "@/types/shipment";
 import { MagnifyingGlassIcon } from "@radix-ui/react-icons";
 import { useQuery } from "@tanstack/react-query";
+import { VariantProps } from "class-variance-authority";
 import { useState } from "react";
-import { Control, UseFormSetValue, UseFormWatch } from "react-hook-form";
+import { Control, UseFormSetValue } from "react-hook-form";
 import { InputField } from "../../common/fields/input";
-import { Button } from "../../ui/button";
+import { Button, buttonVariants } from "../../ui/button";
+
+const statusColors: Record<
+  ShipmentStatus,
+  VariantProps<typeof buttonVariants>["variant"]
+> = {
+  New: "info",
+  InProgress: "purple",
+  Completed: "active",
+  Hold: "warning",
+  Billed: "pink",
+  Voided: "inactive",
+};
 
 function FilterOptions({
   setValue,
@@ -31,7 +44,7 @@ function FilterOptions({
     return <div>Loading...</div>;
   }
 
-  const totalCount = (data && data.totalCount) || 0; // Fallback to 0 if totalCount is undefined
+  const totalCount = (data && data.count) || 0; // Fallback to 0 if totalCount is undefined
 
   // Define the sort order for each status
   const sortOrder = {
@@ -74,7 +87,7 @@ function FilterOptions({
         sortedResults.map(({ status, count }) => (
           <Button
             key={status}
-            variant="outline"
+            variant={statusColors[status]}
             className={cn(
               "hover:bg-foreground hover:text-background flex w-full flex-row justify-between",
               selectedStatus === status && "bg-foreground text-background",
@@ -97,14 +110,10 @@ function FilterOptions({
 export function ShipmentAsideMenus({
   control,
   setValue,
-  watch,
 }: {
   control: Control<ShipmentSearchForm>;
   setValue: UseFormSetValue<ShipmentSearchForm>;
-  watch: UseFormWatch<ShipmentSearchForm>;
 }) {
-  const searchQuery = watch("searchQuery");
-
   return (
     <>
       <div className="mb-4">
@@ -120,7 +129,7 @@ export function ShipmentAsideMenus({
       <p className="text-muted-foreground mb-4 text-sm font-semibold">
         Filter Shipments
       </p>
-      <FilterOptions setValue={setValue} searchQuery={searchQuery} />
+      <FilterOptions setValue={setValue} />
     </>
   );
 }

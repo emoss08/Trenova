@@ -2,12 +2,9 @@ import type {
   CodeTypeProps,
   HazardousClassChoiceProps,
   SegregationTypeChoiceProps,
-  ShipmentEntryMethodChoices,
-  ShipmentStatusChoiceProps,
 } from "@/lib/choices";
 import { type StatusChoiceProps } from "@/types/index";
 import { type BaseModel } from "./organization";
-import { type StopFormValues } from "./stop";
 
 export interface ShipmentControl extends BaseModel {
   id: string;
@@ -68,53 +65,54 @@ export type ReasonCodeFormValues = Omit<
   "id" | "organizationId" | "createdAt" | "updatedAt" | "version"
 >;
 
+export type ShipmentStatus =
+  | "New"
+  | "InProgress"
+  | "Completed"
+  | "Hold"
+  | "Billed"
+  | "Voided";
+
 export interface Shipment extends BaseModel {
   id: string;
   proNumber: string;
-  shipmentType: string;
-  serviceType?: string;
-  status: ShipmentStatusChoiceProps;
-  revenueCode?: string;
-  originAddress?: string;
-  originLocation?: string;
-  originAppointmentWindowStart: string;
-  originAppointmentWindowEnd: string;
-  destinationLocation?: string;
-  destinationAddress?: string;
-  destinationAppointmentWindowStart: string;
-  destinationAppointmentWindowEnd: string;
-  ratingUnits: number;
-  rate?: string;
-  mileage?: number;
-  otherChargeAmount?: string;
-  freightChargeAmount?: string;
-  rateMethod?: string;
-  customer: string;
-  pieces?: number;
-  weight?: string;
+  status: ShipmentStatus;
+  shipmentTypeId: string;
+  revenueCodeId: string;
+  serviceTypeId: string;
+  ratingUnit: number;
+  ratingMethod: "FlatRate" | "PerMile";
+  otherChargeAmount: string;
+  freightChargeAmount: string;
+  totalChargeAmount: string;
+  pieces: number | null;
+  weight: number | null;
   readyToBill: boolean;
-  billDate?: string;
-  shipDate?: string;
+  billDate: string | null;
+  shipDate: string | null;
   billed: boolean;
   transferredToBilling: boolean;
-  billingTransferDate?: string;
-  subTotal?: string;
-  trailer?: string;
-  trailerType: string;
-  tractorType?: string;
-  enteredBy: string;
-  temperatureMin?: string;
-  temperatureMax?: string;
-  bolNumber: string;
-  consigneeRefNumber?: string;
-  comment?: string;
-  voidedComm?: string;
-  autoRate: boolean;
-  currentSuffix?: string;
-  formulaTemplate?: string;
-  entryMethod: ShipmentEntryMethodChoices;
-  copyAmount?: number;
-  stops?: StopFormValues[];
+  transferredToBillingDate: string | null;
+  trailerTypeId: string;
+  tractorTypeId: string;
+  temperatureMin: number;
+  temperatureMax: number;
+  billOfLading: string;
+  voidedComment: string;
+  autoRated: boolean;
+  entryMethod: string;
+  createdById: string | null;
+  isHarzardous: boolean;
+  estimatedDeliveryDate: string | null;
+  actualDeliveryDate: string | null;
+  originLocationId: string;
+  destinationLocationId: string;
+  customerId: string;
+  priority: number;
+  specialInstructions: string;
+  trackingNumber: string;
+  totalDistance: number | null;
+  moves: ShipmentMove[];
 }
 
 export type ShipmentFormValues = Omit<
@@ -131,6 +129,49 @@ export type ShipmentFormValues = Omit<
   | "updatedAt"
   | "version"
 >;
+
+export type ShipmentMove = {
+  createdAt: string;
+  updatedAt: string;
+  status: ShipmentStatus;
+  isLoaded: boolean;
+  sequenceNumber: number;
+  estimatedDistance: number | null;
+  actualDistance: number | null;
+  estimatedCost: number | null;
+  actualCost: number | null;
+  notes: string;
+  id: string;
+  shipmentId: string;
+  tractorId: string;
+  trailerId: string;
+  primaryWorkerId: string;
+  secondaryWorkerId: string | null;
+  businessUnitId: string;
+  organizationId: string;
+  stops: Stop[];
+};
+
+export type Stop = {
+  status: ShipmentStatus;
+  type: "Pickup" | "Delivery";
+  addressLine: string;
+  notes: string;
+  sequenceNumber: number;
+  pieces: number | null;
+  weight: number | null;
+  plannedArrival: string;
+  plannedDeparture: string;
+  actualArrival: string | null;
+  actualDeparture: string | null;
+  createdAt: string;
+  updatedAt: string;
+  id: string;
+  businessUnitId: string;
+  organizationId: string;
+  shipmentMoveId: string;
+  locationId: string;
+};
 
 export type ShipmentSearchForm = {
   searchQuery: string;

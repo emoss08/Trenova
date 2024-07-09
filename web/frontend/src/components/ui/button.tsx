@@ -18,6 +18,14 @@ const buttonVariants = cva(
           "border-input bg-background hover:bg-accent hover:text-accent-foreground border",
         active:
           "border border-green-200 bg-green-200 text-green-600 dark:border-green-500 dark:bg-green-600/30 dark:text-green-400",
+        warning:
+          "border border-yellow-200 bg-yellow-200 text-yellow-600 dark:border-yellow-500 dark:bg-yellow-600/30 dark:text-yellow-400",
+        pink: "border border-pink-200 bg-pink-200 text-pink-600 dark:border-pink-500 dark:bg-pink-600/30 dark:text-pink-400",
+        inactive:
+          "border border-red-200 bg-red-200 text-red-600 dark:border-red-500 dark:bg-red-600/30 dark:text-red-400",
+        purple:
+          "border border-purple-200 bg-purple-200 text-purple-600 dark:border-purple-500 dark:bg-purple-600/30 dark:text-purple-400",
+        info: "border border-blue-200 bg-blue-200 text-blue-600 dark:border-blue-500 dark:bg-blue-600/30 dark:text-blue-400",
         secondary:
           "bg-secondary text-secondary-foreground hover:bg-secondary/80",
         ghost: "hover:bg-accent hover:text-accent-foreground",
@@ -128,3 +136,4 @@ const Button = React.forwardRef<
 Button.displayName = "Button";
 
 export { Button, buttonVariants };
+

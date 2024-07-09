@@ -90,7 +90,9 @@ CREATE INDEX IF NOT EXISTS "idx_shipments_origin_location_id" ON "shipments" ("o
 CREATE INDEX IF NOT EXISTS "idx_shipments_destination_location_id" ON "shipments" ("destination_location_id");
 CREATE INDEX IF NOT EXISTS "idx_shipments_created_by_id" ON "shipments" ("created_by_id");
 CREATE INDEX IF NOT EXISTS "idx_shipments_business_unit_id" ON "shipments" ("business_unit_id");
-
+CREATE INDEX IF NOT EXISTS "idx_shipments_status" ON "shipments" ("status", "organization_id", "business_unit_id");
+CREATE INDEX IF NOT EXISTS "idx_shipments_pro_number" ON "shipments" ("pro_number");
+CREATE INDEX IF NOT EXISTS "idx_shipments_created_at" ON "shipments" ("created_at");
 -- bun:split
 
 COMMENT ON COLUMN shipments.id IS 'Unique identifier for the location, generated as a UUID';

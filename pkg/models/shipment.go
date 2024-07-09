@@ -106,7 +106,7 @@ type Shipment struct {
 	Priority                 int                           `bun:"type:integer,notnull,default:0" json:"priority"`
 	SpecialInstructions      string                        `bun:"type:TEXT,nullzero" json:"specialInstructions"`
 	TrackingNumber           string                        `bun:"type:VARCHAR(50)" json:"trackingNumber"`
-	TotalDistance            decimal.Decimal               `bun:"type:NUMERIC(10,2),notnull,default:0" json:"totalDistance"`
+	TotalDistance            decimal.NullDecimal           `bun:"type:NUMERIC(10,2),nullzero" json:"totalDistance"`
 
 	CreatedBy           *User                `bun:"rel:belongs-to,join:created_by_id=id" json:"-"`
 	BusinessUnit        *BusinessUnit        `bun:"rel:belongs-to,join:business_unit_id=id" json:"-"`
@@ -120,7 +120,7 @@ type Shipment struct {
 	DestinationLocation *Location            `bun:"rel:belongs-to,join:destination_location_id=id" json:"-"`
 	Customer            *Customer            `bun:"rel:belongs-to,join:customer_id=id" json:"-"`
 	AccessorialCharges  []*AccessorialCharge `bun:"rel:has-many,join:id=shipment_id" json:"-"`
-	ShipmentMoves       []*ShipmentMove      `bun:"rel:has-many,join:id=shipment_id" json:"-"`
+	ShipmentMoves       []*ShipmentMove      `bun:"rel:has-many,join:id=shipment_id" json:"moves"`
 }
 
 func (s Shipment) Validate() error {
@@ -211,7 +211,7 @@ func (s *Shipment) MarkReadyToBill() error {
 	return nil
 }
 
-func (s *Shipment) DBValidate(ctx context.Context, db *bun.DB) error {
+func (s Shipment) DBValidate(ctx context.Context, db *bun.DB) error {
 	var multiErr validator.MultiValidationError
 	var dbValidationErr *validator.DBValidationError
 

@@ -19,10 +19,10 @@ type ShipmentMove struct {
 	Status            property.ShipmentMoveStatus `bun:"type:VARCHAR(50),notnull" json:"status"`
 	IsLoaded          bool                        `bun:"type:BOOLEAN,default:false" json:"isLoaded"`
 	SequenceNumber    int                         `bun:"type:INTEGER,notnull" json:"sequenceNumber"`
-	EstimatedDistance decimal.Decimal             `bun:"type:NUMERIC(10,2),notnull,default:0" json:"estimatedDistance"`
-	ActualDistance    decimal.Decimal             `bun:"type:NUMERIC(10,2),notnull,default:0" json:"actualDistance"`
-	EstimatedCost     decimal.Decimal             `bun:"type:NUMERIC(19,4),notnull,default:0" json:"estimatedCost"`
-	ActualCost        decimal.Decimal             `bun:"type:NUMERIC(19,4),notnull,default:0" json:"actualCost"`
+	EstimatedDistance decimal.NullDecimal         `bun:"type:NUMERIC(10,2),nullzero" json:"estimatedDistance"`
+	ActualDistance    decimal.NullDecimal         `bun:"type:NUMERIC(10,2),nullzero" json:"actualDistance"`
+	EstimatedCost     decimal.NullDecimal         `bun:"type:NUMERIC(19,4),nullzero" json:"estimatedCost"`
+	ActualCost        decimal.NullDecimal         `bun:"type:NUMERIC(19,4),nullzero" json:"actualCost"`
 	Notes             string                      `bun:"type:TEXT,nullzero" json:"notes"`
 
 	ID                uuid.UUID  `bun:",pk,type:uuid,default:uuid_generate_v4()" json:"id"`

@@ -35,7 +35,7 @@ type WorkerQueryFilter struct {
 	Offset         int
 }
 
-func (s WorkerService) filterQuery(q *bun.SelectQuery, f *WorkerQueryFilter) *bun.SelectQuery {
+func (s *WorkerService) filterQuery(q *bun.SelectQuery, f *WorkerQueryFilter) *bun.SelectQuery {
 	q = q.Where("wk.organization_id = ?", f.OrganizationID).
 		Where("wk.business_unit_id = ?", f.BusinessUnitID)
 

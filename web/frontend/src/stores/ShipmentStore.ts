@@ -17,7 +17,7 @@ type ShipmentStore = {
 
 export const useShipmentStore = createGlobalStore<ShipmentStore>({
   currentShipment: undefined,
-  currentView: "map",
+  currentView: "list",
   sendMessageDialogOpen: false,
   reviewLogDialogOpen: false,
   currentWorker: undefined,

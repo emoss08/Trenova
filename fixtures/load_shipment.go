@@ -22,241 +22,105 @@ func loadShipments(ctx context.Context, db *bun.DB, gen *gen.CodeGenerator, orgI
 		return err
 	}
 
-	if count > 0 {
-		return nil
-	}
-
-	// Generate shipment type
-	shipType := &models.ShipmentType{
-		OrganizationID: orgID,
-		BusinessUnitID: buID,
-		Status:         property.StatusActive,
-		Code:           "ST-001",
-		Color:          "#000000",
-		Description:    "Shipment Type",
-	}
-
-	err = db.RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
-		if _, err := tx.NewInsert().Model(shipType).Exec(ctx); err != nil {
-			return err
-		}
-
-		return nil
-	})
-	if err != nil {
-		return err
-	}
-
 	state := new(models.UsState)
 	err = db.NewSelect().Model(state).Where("abbreviation = ?", "AL").Scan(ctx)
 	if err != nil {
 		return err
 	}
 
-	customer := &models.Customer{
-		BusinessUnitID:      buID,
-		OrganizationID:      orgID,
-		Status:              property.StatusActive,
-		Name:                "Target-0001",
-		AddressLine1:        "123 Main St",
-		City:                "Minneapolis",
-		StateID:             state.ID,
-		PostalCode:          "55401",
-		AutoMarkReadyToBill: true,
+	customer, err := seedCustomer(ctx, db, gen, state.ID, orgID, buID)
+	if err != nil {
+		return err
 	}
 
-	err = db.RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
-		mkg, mErr := models.QueryCustomerMasterKeyGenerationByOrgID(ctx, db, orgID)
-		if mErr != nil {
-			return mErr
+	location, err := seedLocation(ctx, db, state.ID, orgID, buID)
+	if err != nil {
+		return err
+	}
+
+	revCode, err := seedRevenueCode(ctx, db, orgID, buID)
+	if err != nil {
+		return err
+	}
+
+	serviceType, err := seedServiceType(ctx, db, orgID, buID)
+	if err != nil {
+		return err
+	}
+
+	primaryWorker, err := seedPrimaryWorker(ctx, db, gen, state.ID, orgID, buID)
+	if err != nil {
+		return err
+	}
+
+	equipType, err := seedEquipmentType(ctx, db, orgID, buID)
+	if err != nil {
+		return err
+	}
+
+	shipType, err := seedShipmentType(ctx, db, orgID, buID)
+	if err != nil {
+		return err
+	}
+
+	trailer, err := seedTrailer(ctx, db, equipType.ID, orgID, buID)
+	if err != nil {
+		return err
+	}
+
+	tractor, err := seedTractor(ctx, db, primaryWorker.ID, state.ID, equipType.ID, orgID, buID)
+	if err != nil {
+		return err
+	}
+
+	if count < 20 {
+		for i := 0; i < 20; i++ {
+			input := services.CreateShipmentInput{
+				BusinessUnitID:              buID,
+				OrganizationID:              orgID,
+				ShipmentTypeID:              shipType.ID,
+				RevenueCodeID:               &revCode.ID,
+				ServiceTypeID:               &serviceType.ID,
+				RatingMethod:                property.ShipmentRatingMethodFlatRate,
+				RatingUnit:                  1,
+				OtherChargeAmount:           decimal.NewFromFloat(50),
+				FreightChargeamount:         decimal.NewFromFloat(150),
+				TotalChargeAmount:           decimal.NewFromFloat(200),
+				CustomerID:                  customer.ID,
+				OriginLocationID:            location.ID,
+				OriginPlannedArrival:        time.Now(),
+				OriginPlannedDeparture:      time.Now(),
+				DestinationLocationID:       location.ID,
+				DestinationPlannedArrival:   time.Now(),
+				DestinationPlannedDeparture: time.Now(),
+				PrimaryWorkerID:             primaryWorker.ID,
+				TractorID:                   tractor.ID,
+				TrailerID:                   trailer.ID,
+				TrailerTypeID:               &equipType.ID,
+				TractorTypeID:               &equipType.ID,
+				BillOfLading:                "123456",
+				SpecialInstructions:         "Special Instructions",
+				Stops: []services.StopInput{
+					{
+						LocationID:       location.ID,
+						Type:             property.StopTypePickup,
+						PlannedArrival:   time.Now(),
+						PlannedDeparture: time.Now().Add(2 * time.Hour),
+					},
+					{
+						LocationID:       location.ID,
+						Type:             property.StopTypeDelivery,
+						PlannedArrival:   time.Now().Add(8 * time.Hour),
+						PlannedDeparture: time.Now().Add(9 * time.Hour),
+					},
+				},
+			}
+
+			_, err = create(ctx, db, &input)
+			if err != nil {
+				return err
+			}
 		}
-
-		return customer.InsertCustomer(ctx, tx, gen, mkg.Pattern)
-	})
-	if err != nil {
-		return err
-	}
-
-	locCategory := &models.LocationCategory{
-		BusinessUnitID: buID,
-		OrganizationID: orgID,
-		Name:           "Category",
-		Description:    "Category Description",
-		Color:          "#000000",
-	}
-
-	if _, err := db.NewInsert().Model(locCategory).Exec(ctx); err != nil {
-		return err
-	}
-
-	location := &models.Location{
-		BusinessUnitID:     buID,
-		OrganizationID:     orgID,
-		Status:             property.StatusActive,
-		LocationCategoryID: locCategory.ID,
-		Name:               "Target",
-		AddressLine1:       "123 Main St",
-		City:               "Minneapolis",
-		StateID:            state.ID,
-		PostalCode:         "55401",
-	}
-
-	if _, err := db.NewInsert().Model(location).Exec(ctx); err != nil {
-		return err
-	}
-
-	revCode := &models.RevenueCode{
-		OrganizationID: orgID,
-		BusinessUnitID: buID,
-		Status:         property.StatusActive,
-		Code:           "RC",
-		Description:    "Revenue Code",
-		Color:          "#000000",
-	}
-
-	if _, err := db.NewInsert().Model(revCode).Exec(ctx); err != nil {
-		return err
-	}
-
-	servType := &models.ServiceType{
-		OrganizationID: orgID,
-		BusinessUnitID: buID,
-		Status:         property.StatusActive,
-		Code:           "ST",
-		Description:    "Service Type",
-	}
-
-	if _, err := db.NewInsert().Model(servType).Exec(ctx); err != nil {
-		return err
-	}
-
-	primaryWorker := &models.Worker{
-		OrganizationID: orgID,
-		BusinessUnitID: buID,
-		Status:         property.StatusActive,
-		WorkerType:     property.WorkerTypeEmployee,
-		FirstName:      "John",
-		LastName:       "Doe",
-		AddressLine1:   "123 Main St",
-		AddressLine2:   "Apt 1",
-		City:           "Minneapolis",
-		StateID:        &state.ID,
-		WorkerProfile: &models.WorkerProfile{
-			OrganizationID: orgID,
-			BusinessUnitID: buID,
-			LicenseNumber:  "123456",
-			StateID:        &state.ID,
-			Endorsements:   property.WorkerEndorsementNone,
-			DateOfBirth:    &pgtype.Date{Valid: true, Time: time.Now()},
-		},
-	}
-
-	err = db.RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
-		mkg, mErr := models.QueryWorkerMasterKeyGenerationByOrgID(ctx, db, orgID)
-		if mErr != nil {
-			return mErr
-		}
-
-		return primaryWorker.InsertWorker(ctx, tx, gen, mkg.Pattern)
-	})
-	if err != nil {
-		return err
-	}
-
-	equipType := &models.EquipmentType{
-		OrganizationID: orgID,
-		BusinessUnitID: buID,
-		Status:         property.StatusActive,
-		Code:           "ET",
-		EquipmentClass: "Trailer",
-		Description:    "Equipment Type",
-		Color:          "#000000",
-	}
-
-	if _, err := db.NewInsert().Model(equipType).Exec(ctx); err != nil {
-		return err
-	}
-
-	tractor := &models.Tractor{
-		OrganizationID:     orgID,
-		BusinessUnitID:     buID,
-		Code:               "Test-Tractor",
-		Status:             "Available",
-		EquipmentTypeID:    equipType.ID,
-		Year:               2021,
-		Vin:                "12345678901234567",
-		LicensePlateNumber: "ABC123",
-		PrimaryWorkerID:    primaryWorker.ID,
-		StateID:            &state.ID,
-		IsLeased:           false,
-	}
-
-	if _, err := db.NewInsert().Model(tractor).Exec(ctx); err != nil {
-		return err
-	}
-
-	trailer := &models.Trailer{
-		OrganizationID:             orgID,
-		BusinessUnitID:             buID,
-		Code:                       "Test-Trailer",
-		Status:                     "Available",
-		Model:                      "Test",
-		Year:                       2021,
-		Vin:                        "12345678901234567",
-		LicensePlateNumber:         "ABC123",
-		LastInspectionDate:         &pgtype.Date{Valid: true, Time: time.Now()},
-		RegistrationNumber:         "123456",
-		RegistrationExpirationDate: &pgtype.Date{Valid: true, Time: time.Now()},
-		EquipmentTypeID:            equipType.ID,
-	}
-
-	if _, err := db.NewInsert().Model(trailer).Exec(ctx); err != nil {
-		return err
-	}
-
-	input := services.CreateShipmentInput{
-		BusinessUnitID:              buID,
-		OrganizationID:              orgID,
-		ShipmentTypeID:              shipType.ID,
-		RevenueCodeID:               &revCode.ID,
-		ServiceTypeID:               &servType.ID,
-		RatingMethod:                property.ShipmentRatingMethodFlatRate,
-		RatingUnit:                  1,
-		OtherChargeAmount:           decimal.NewFromInt(100),
-		FreightChargeamount:         decimal.NewFromInt(100),
-		CustomerID:                  customer.ID,
-		OriginLocationID:            location.ID,
-		OriginPlannedArrival:        time.Now(),
-		OriginPlannedDeparture:      time.Now(),
-		DestinationLocationID:       location.ID,
-		DestinationPlannedArrival:   time.Now(),
-		DestinationPlannedDeparture: time.Now(),
-		PrimaryWorkerID:             primaryWorker.ID,
-		TractorID:                   tractor.ID,
-		TrailerID:                   trailer.ID,
-		TrailerTypeID:               &equipType.ID,
-		TractorTypeID:               &equipType.ID,
-		BillOfLading:                "123456",
-		SpecialInstructions:         "Special Instructions",
-		Stops: []services.StopInput{
-			{
-				LocationID:       location.ID,
-				Type:             property.StopTypePickup,
-				PlannedArrival:   time.Now(),
-				PlannedDeparture: time.Now().Add(2 * time.Hour),
-			},
-			{
-				LocationID:       location.ID,
-				Type:             property.StopTypeDelivery,
-				PlannedArrival:   time.Now().Add(8 * time.Hour),
-				PlannedDeparture: time.Now().Add(9 * time.Hour),
-			},
-		},
-	}
-
-	_, err = create(ctx, db, &input)
-	if err != nil {
-		return err
 	}
 
 	return nil
@@ -418,4 +282,221 @@ func consolidateAddress(ctx context.Context, tx bun.Tx, location *models.Locatio
 		location.PostalCode)
 
 	return strings.Join(addressParts, ", "), nil
+}
+
+func seedShipmentType(ctx context.Context, db *bun.DB, orgID, buID uuid.UUID) (*models.ShipmentType, error) {
+	shipType := &models.ShipmentType{
+		OrganizationID: orgID,
+		BusinessUnitID: buID,
+		Status:         property.StatusActive,
+		Code:           "ST-001",
+		Color:          "#000000",
+		Description:    "Shipment Type",
+	}
+
+	err := db.RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
+		if _, err := tx.NewInsert().Model(shipType).Exec(ctx); err != nil {
+			return err
+		}
+
+		return nil
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return shipType, nil
+}
+
+func seedTrailer(ctx context.Context, db *bun.DB, equipTypeID, orgID, buID uuid.UUID) (*models.Trailer, error) {
+	trailer := &models.Trailer{
+		OrganizationID:             orgID,
+		BusinessUnitID:             buID,
+		Code:                       "Test-Trailer",
+		Status:                     "Available",
+		Model:                      "Test",
+		Year:                       2021,
+		Vin:                        "12345678901234567",
+		LicensePlateNumber:         "ABC123",
+		LastInspectionDate:         &pgtype.Date{Valid: true, Time: time.Now()},
+		RegistrationNumber:         "123456",
+		RegistrationExpirationDate: &pgtype.Date{Valid: true, Time: time.Now()},
+		EquipmentTypeID:            equipTypeID,
+	}
+
+	if _, err := db.NewInsert().Model(trailer).Exec(ctx); err != nil {
+		return nil, err
+	}
+
+	return trailer, nil
+}
+
+func seedTractor(ctx context.Context, db *bun.DB, primaryWorkerID, stateID, equipTypeID, orgID, buID uuid.UUID) (*models.Tractor, error) {
+	tractor := &models.Tractor{
+		OrganizationID:     orgID,
+		BusinessUnitID:     buID,
+		Code:               "Test-Tractor",
+		Status:             "Available",
+		EquipmentTypeID:    equipTypeID,
+		Year:               2021,
+		Vin:                "12345678901234567",
+		LicensePlateNumber: "ABC123",
+		PrimaryWorkerID:    primaryWorkerID,
+		StateID:            &stateID,
+		IsLeased:           false,
+	}
+
+	if _, err := db.NewInsert().Model(tractor).Exec(ctx); err != nil {
+		return nil, err
+	}
+
+	return tractor, nil
+}
+
+func seedEquipmentType(ctx context.Context, db *bun.DB, orgID, buID uuid.UUID) (*models.EquipmentType, error) {
+	equipType := &models.EquipmentType{
+		OrganizationID: orgID,
+		BusinessUnitID: buID,
+		Status:         property.StatusActive,
+		Code:           "ET",
+		EquipmentClass: "Trailer",
+		Description:    "Equipment Type",
+		Color:          "#000000",
+	}
+
+	if _, err := db.NewInsert().Model(equipType).Exec(ctx); err != nil {
+		return nil, err
+	}
+
+	return equipType, nil
+}
+
+func seedPrimaryWorker(ctx context.Context, db *bun.DB, gen *gen.CodeGenerator, stateID, orgID, buID uuid.UUID) (*models.Worker, error) {
+	primaryWorker := &models.Worker{
+		OrganizationID: orgID,
+		BusinessUnitID: buID,
+		Status:         property.StatusActive,
+		WorkerType:     property.WorkerTypeEmployee,
+		FirstName:      "John",
+		LastName:       "Doe",
+		AddressLine1:   "123 Main St",
+		AddressLine2:   "Apt 1",
+		City:           "Minneapolis",
+		StateID:        &stateID,
+		WorkerProfile: &models.WorkerProfile{
+			OrganizationID: orgID,
+			BusinessUnitID: buID,
+			LicenseNumber:  "123456",
+			StateID:        &stateID,
+			Endorsements:   property.WorkerEndorsementNone,
+			DateOfBirth:    &pgtype.Date{Valid: true, Time: time.Now()},
+		},
+	}
+
+	err := db.RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
+		mkg, mErr := models.QueryWorkerMasterKeyGenerationByOrgID(ctx, db, orgID)
+		if mErr != nil {
+			return mErr
+		}
+
+		return primaryWorker.InsertWorker(ctx, tx, gen, mkg.Pattern)
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return primaryWorker, nil
+}
+
+func seedServiceType(ctx context.Context, db *bun.DB, orgID, buID uuid.UUID) (*models.ServiceType, error) {
+	servType := &models.ServiceType{
+		OrganizationID: orgID,
+		BusinessUnitID: buID,
+		Status:         property.StatusActive,
+		Code:           "ST",
+		Description:    "Service Type",
+	}
+
+	if _, err := db.NewInsert().Model(servType).Exec(ctx); err != nil {
+		return nil, err
+	}
+
+	return servType, nil
+}
+
+func seedRevenueCode(ctx context.Context, db *bun.DB, orgID, buID uuid.UUID) (*models.RevenueCode, error) {
+	revCode := &models.RevenueCode{
+		OrganizationID: orgID,
+		BusinessUnitID: buID,
+		Status:         property.StatusActive,
+		Code:           "RC",
+		Description:    "Revenue Code",
+		Color:          "#000000",
+	}
+
+	if _, err := db.NewInsert().Model(revCode).Exec(ctx); err != nil {
+		return nil, err
+	}
+
+	return revCode, nil
+}
+
+func seedLocation(ctx context.Context, db *bun.DB, stateID, orgID, buID uuid.UUID) (*models.Location, error) {
+	locCategory := &models.LocationCategory{
+		BusinessUnitID: buID,
+		OrganizationID: orgID,
+		Name:           "Category",
+		Description:    "Category Description",
+		Color:          "#000000",
+	}
+
+	if _, err := db.NewInsert().Model(locCategory).Exec(ctx); err != nil {
+		return nil, err
+	}
+
+	location := &models.Location{
+		BusinessUnitID:     buID,
+		OrganizationID:     orgID,
+		Status:             property.StatusActive,
+		LocationCategoryID: locCategory.ID,
+		Name:               "Target",
+		AddressLine1:       "123 Main St",
+		City:               "Minneapolis",
+		StateID:            stateID,
+		PostalCode:         "55401",
+	}
+
+	if _, err := db.NewInsert().Model(location).Exec(ctx); err != nil {
+		return nil, err
+	}
+
+	return location, nil
+}
+
+func seedCustomer(ctx context.Context, db *bun.DB, gen *gen.CodeGenerator, stateID, orgID, buID uuid.UUID) (*models.Customer, error) {
+	customer := &models.Customer{
+		BusinessUnitID:      buID,
+		OrganizationID:      orgID,
+		Status:              property.StatusActive,
+		Name:                "Target-0001",
+		AddressLine1:        "123 Main St",
+		City:                "Minneapolis",
+		StateID:             stateID,
+		PostalCode:          "55401",
+		AutoMarkReadyToBill: true,
+	}
+
+	err := db.RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
+		mkg, mErr := models.QueryCustomerMasterKeyGenerationByOrgID(ctx, db, orgID)
+		if mErr != nil {
+			return mErr
+		}
+
+		return customer.InsertCustomer(ctx, tx, gen, mkg.Pattern)
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return customer, nil
 }
