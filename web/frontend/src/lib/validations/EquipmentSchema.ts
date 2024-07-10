@@ -85,7 +85,9 @@ export const tractorSchema: ObjectSchema<TractorFormValues> = object().shape({
   equipmentTypeId: string().required("Equipment type is required"),
   licensePlateNumber: string(),
   vin: string(),
-  equipmentManufacturerId: string().optional().nullable(),
+  equipmentManufacturerId: string().required(
+    "Equipment manufacturer is required",
+  ),
   model: string(),
   year: number().nullable(),
   stateId: string().optional().nullable(),

@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/pkg/models/property"
+	"github.com/emoss08/trenova/pkg/validator"
 	"github.com/google/uuid"
 	"github.com/shopspring/decimal"
 	"github.com/uptrace/bun"
@@ -148,6 +149,35 @@ func (m *ShipmentMove) ValidateStopSequence() error {
 		default:
 			return fmt.Errorf("invalid stop type at position %d", i+1)
 		}
+	}
+
+	return nil
+}
+
+func (m *ShipmentMove) AssignWorkersByTractorID(ctx context.Context, db bun.IDB, tractorID uuid.UUID) error {
+	tractor := new(Tractor)
+	err := db.NewSelect().Model(tractor).Where("id = ?", tractorID).Scan(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to fetch tractor: %w", err)
+	}
+
+	// Check if workers are available
+	if tractor.PrimaryWorkerID == uuid.Nil {
+		return validator.DBValidationError{
+			Field:   "primaryWorker",
+			Message: "No primary worker assigned to the selected tractor",
+		}
+	}
+
+	// Assign primary worker
+	m.PrimaryWorkerID = tractor.PrimaryWorkerID
+
+	// Assign secondary worker if available
+	m.SecondaryWorkerID = tractor.SecondaryWorkerID
+
+	_, err = db.NewUpdate().Model(m).Column("primary_worker_id", "secondary_worker_id").WherePK().Exec(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to update movement with workers: %w", err)
 	}
 
 	return nil

@@ -42,7 +42,7 @@ type Tractor struct {
 	UpdatedAt               time.Time    `bun:",nullzero,notnull,default:current_timestamp" json:"updatedAt"`
 	ID                      uuid.UUID    `bun:",pk,type:uuid,default:uuid_generate_v4()" json:"id"`
 	Code                    string       `bun:"type:VARCHAR(50),notnull" json:"code" queryField:"true"`
-	Status                  string       `bun:"type:equipment_status_enum,notnull" json:"status"`
+	Status                  string       `bun:"type:equipment_status_enum,notnull" json:"status"` // TODO(wolfred): Implement custom type
 	Model                   string       `bun:"type:VARCHAR(50)" json:"model"`
 	Year                    int          `bun:"type:INTEGER,nullzero" json:"year"`
 	LicensePlateNumber      string       `bun:"type:VARCHAR(50)" json:"licensePlateNumber"`
@@ -59,9 +59,9 @@ type Tractor struct {
 	SecondaryWorkerID       *uuid.UUID   `bun:"type:uuid" json:"secondaryWorkerId"`
 
 	PrimaryWorker         *Worker                `bun:"rel:has-one,join:primary_worker_id=id" json:"primaryWorker"`
-	SecondaryWorker       *Worker                `bun:"rel:belongs-to,join:secondary_worker_id=id" json:"-"`
+	SecondaryWorker       *Worker                `bun:"rel:belongs-to,join:secondary_worker_id=id" json:"secondaryWorker"`
 	EquipmentType         *EquipmentType         `bun:"rel:belongs-to,join:equipment_type_id=id" json:"equipmentType"`
-	EquipmentManufacturer *EquipmentManufacturer `bun:"rel:belongs-to,join:equipment_manufacturer_id=id" json:"-"`
+	EquipmentManufacturer *EquipmentManufacturer `bun:"rel:belongs-to,join:equipment_manufacturer_id=id" json:"equipmentManufacturer"`
 	State                 *UsState               `bun:"rel:belongs-to,join:state_id=id" json:"-"`
 	FleetCode             *FleetCode             `bun:"rel:belongs-to,join:fleet_code_id=id" json:"-"`
 	BusinessUnit          *BusinessUnit          `bun:"rel:belongs-to,join:business_unit_id=id" json:"-"`

@@ -149,3 +149,11 @@ export type TractorFormValues = Omit<
 >;
 
 export type EquipmentClass = "TRACTOR" | "TRAILER";
+
+export type TractorFilterForm = {
+  searchQuery: string;
+  status: EquipmentStatus;
+  fleetCodeId?: string;
+  expandEquipDetails?: boolean;
+  expandWorkerDetails?: boolean;
+};

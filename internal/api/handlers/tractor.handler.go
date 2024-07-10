@@ -84,6 +84,36 @@ func (h *TractorHandler) Get() fiber.Handler {
 			Offset:         offset,
 		}
 
+		// Parse the status filter
+		if status := c.Query("status"); status != "" {
+			filter.Status = status
+		}
+
+		// Parse the fleet code ID filter
+		if fleetCodeID := c.Query("fleetCodeId"); fleetCodeID != "" {
+			if id, err := uuid.Parse(fleetCodeID); err == nil {
+				filter.FleetCodeID = id
+			}
+		}
+
+		// Parse the expand equipment details filter
+		if expandEquipDetails := c.Query("expandEquipDetails"); expandEquipDetails != "" {
+			if expandEquipDetails == "true" {
+				filter.ExpandEquipDetails = true
+			} else {
+				filter.ExpandEquipDetails = false
+			}
+		}
+
+		// Parse the expand worker details filter
+		if expandWorkerDetails := c.Query("expandWorkerDetails"); expandWorkerDetails != "" {
+			if expandWorkerDetails == "true" {
+				filter.ExpandWorkerDetails = true
+			} else {
+				filter.ExpandWorkerDetails = false
+			}
+		}
+
 		entities, cnt, err := h.service.GetAll(c.UserContext(), filter)
 		if err != nil {
 			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Error{

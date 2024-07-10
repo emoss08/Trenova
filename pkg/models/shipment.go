@@ -201,7 +201,7 @@ func (s *Shipment) CalculateTotalChargeAmount() {
 // MarkReadyToBill marks the Shipment as ready to bill
 func (s *Shipment) MarkReadyToBill() error {
 	if s.Status != property.ShipmentStatusCompleted {
-		return validator.DBValidationError{
+		return &validator.DBValidationError{
 			Field:   "markReadyToBill",
 			Message: "Shipment must be completed before it can be marked as ready to bill",
 		}
@@ -267,7 +267,7 @@ func (s Shipment) validateDeliveryDate(value any) error {
 func (s Shipment) validateTotalChargeAmount() error {
 	expectedTotal := s.FreightChargeAmount.Add(s.OtherChargeAmount)
 	if s.TotalChargeAmount != expectedTotal {
-		return validator.DBValidationError{
+		return &validator.DBValidationError{
 			Field:   "totalChargeAmount",
 			Message: fmt.Sprintf("Total charge amount must be the sum of freight charge amount and other charge amount. Expected %d, got %d", expectedTotal, s.TotalChargeAmount),
 		}
@@ -280,7 +280,7 @@ func (s Shipment) validateStatusTransition(ctx context.Context, db *bun.DB) erro
 	if s.ID == uuid.Nil {
 		// This is a new shipment, so we only need to validae that the status is New
 		if s.Status != property.ShipmentStatusNew {
-			return validator.DBValidationError{
+			return &validator.DBValidationError{
 				Field:   "status",
 				Message: "New shipments must have a status of New",
 			}
@@ -307,7 +307,7 @@ func (s Shipment) validateStatusTransition(ctx context.Context, db *bun.DB) erro
 	// Check if the transition is valid
 	validNextStatuses, exists := validShipmentStatusTransitions[currentStatus]
 	if !exists {
-		return validator.DBValidationError{
+		return &validator.DBValidationError{
 			Field:   "status",
 			Message: "Invalid status transition",
 		}
@@ -319,10 +319,68 @@ func (s Shipment) validateStatusTransition(ctx context.Context, db *bun.DB) erro
 		}
 	}
 
-	return validator.DBValidationError{
+	return &validator.DBValidationError{
 		Field:   "status",
 		Message: fmt.Sprintf("Invalid status transition from %s to %s", currentStatus, s.Status),
 	}
+}
+
+func (s *Shipment) AssignTractorToMovement(ctx context.Context, db *bun.DB, tractorID uuid.UUID) error {
+	if s.Status != property.ShipmentStatusNew {
+		return &validator.BusinessLogicError{
+			Message: "Tractor can only be assigned to a shipment that is in `New` status",
+		}
+	}
+
+	// Start a transaction
+	err := db.RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
+		// Fetch all movements for this shipment
+		var movements []*ShipmentMove
+		err := tx.NewSelect().Model(&movements).Where("shipment_id = ?", s.ID).Scan(ctx)
+		if err != nil {
+			return fmt.Errorf("failed to fetch shipment movements: %w", err)
+		}
+
+		if len(movements) == 0 {
+			return &validator.DBValidationError{
+				Field:   "movements",
+				Message: "No movements found for this shipment",
+			}
+		}
+
+		// Fetch the tractor to ensure it exists and is available
+		tractor := new(Tractor)
+		err = tx.NewSelect().Model(tractor).Where("id = ?", tractorID).Scan(ctx)
+		if err != nil {
+			return fmt.Errorf("failed to fetch tractor: %w", err)
+		}
+
+		if tractor.Status != "Available" {
+			return &validator.DBValidationError{
+				Field:   "tractorId",
+				Message: "Selected tractor is not available",
+			}
+		}
+
+		for _, move := range movements {
+			move.TractorID = tractorID
+			_, err = tx.NewUpdate().Model(move).Column("tractor_id").WherePK().Exec(ctx)
+			if err != nil {
+				return fmt.Errorf("failed to update movement with tractor: %w", err)
+			}
+
+			// Only assign workers if the movement is not in progress
+			if move.Status == property.ShipmentMoveStatusNew {
+				if err = move.AssignWorkersByTractorID(ctx, tx, tractorID); err != nil {
+					return fmt.Errorf("failed to assign workers to movement: %w", err)
+				}
+			}
+		}
+
+		return nil
+	})
+
+	return err
 }
 
 func (s *Shipment) InsertShipment(ctx context.Context, db *bun.DB) error {

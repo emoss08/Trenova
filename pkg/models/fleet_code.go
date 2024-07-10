@@ -36,20 +36,20 @@ func (p FleetCodePermission) String() string {
 
 type FleetCode struct {
 	bun.BaseModel  `bun:"table:fleet_codes,alias:fl" json:"-"`
-	CreatedAt      time.Time       `bun:",nullzero,notnull,default:current_timestamp" json:"createdAt"`
-	UpdatedAt      time.Time       `bun:",nullzero,notnull,default:current_timestamp" json:"updatedAt"`
-	ID             uuid.UUID       `bun:",pk,type:uuid,default:uuid_generate_v4()" json:"id"`
-	Status         property.Status `bun:"status,type:status" json:"status"`
-	Code           string          `bun:"type:VARCHAR(10),notnull" json:"code" queryField:"true"`
-	Description    string          `bun:"type:VARCHAR(100)" json:"description"`
-	RevenueGoal    decimal.Decimal `bun:"type:numeric(10,2),nullzero" json:"revenueGoal"`
-	DeadheadGoal   decimal.Decimal `bun:"type:numeric(10,2),nullzero" json:"deadheadGoal"`
-	MileageGoal    decimal.Decimal `bun:"type:numeric(10,2),nullzero" json:"mileageGoal"`
-	Color          string          `bun:"type:VARCHAR(10)" json:"color"`
-	ManagerID      *uuid.UUID      `bun:"type:uuid" json:"managerId"`
-	Manager        *User           `bun:"rel:belongs-to,join:manager_id=id" json:"manager"`
-	BusinessUnitID uuid.UUID       `bun:"type:uuid,notnull" json:"businessUnitId"`
-	OrganizationID uuid.UUID       `bun:"type:uuid,notnull" json:"organizationId"`
+	CreatedAt      time.Time           `bun:",nullzero,notnull,default:current_timestamp" json:"createdAt"`
+	UpdatedAt      time.Time           `bun:",nullzero,notnull,default:current_timestamp" json:"updatedAt"`
+	ID             uuid.UUID           `bun:",pk,type:uuid,default:uuid_generate_v4()" json:"id"`
+	Status         property.Status     `bun:"status,type:status" json:"status"`
+	Code           string              `bun:"type:VARCHAR(10),notnull" json:"code" queryField:"true"`
+	Description    string              `bun:"type:VARCHAR(100)" json:"description"`
+	RevenueGoal    decimal.NullDecimal `bun:"type:numeric(10,2),nullzero" json:"revenueGoal"`
+	DeadheadGoal   decimal.NullDecimal `bun:"type:numeric(10,2),nullzero" json:"deadheadGoal"`
+	MileageGoal    decimal.NullDecimal `bun:"type:numeric(10,2),nullzero" json:"mileageGoal"`
+	Color          string              `bun:"type:VARCHAR(10)" json:"color"`
+	ManagerID      *uuid.UUID          `bun:"type:uuid" json:"managerId"`
+	Manager        *User               `bun:"rel:belongs-to,join:manager_id=id" json:"manager"`
+	BusinessUnitID uuid.UUID           `bun:"type:uuid,notnull" json:"businessUnitId"`
+	OrganizationID uuid.UUID           `bun:"type:uuid,notnull" json:"organizationId"`
 
 	Organization *Organization `bun:"rel:belongs-to,join:organization_id=id" json:"-"`
 	BusinessUnit *BusinessUnit `bun:"rel:belongs-to,join:business_unit_id=id" json:"-"`

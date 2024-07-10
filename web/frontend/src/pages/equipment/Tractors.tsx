@@ -105,7 +105,7 @@ export default function TractorPage() {
     <DataTable
       queryKey="tractors"
       columns={columns}
-      link="/tractors/"
+      link="/tractors/?expandWorkerDetails=true&expandEquipDetails=true"
       name="Tractor"
       exportModelName="tractors"
       filterColumn="code"

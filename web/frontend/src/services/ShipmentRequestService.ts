@@ -118,3 +118,11 @@ export async function getHazardousSegregationRules(): Promise<
   const response = await axios.get("/hazardous-material-segregations/");
   return response.data.results;
 }
+
+export async function assignTractorToShipment(payload: {
+  shipmentId: string;
+  tractorId: string;
+}): Promise<{ message: string }> {
+  const response = await axios.post("/shipments/assign-tractor/", payload);
+  return response.data;
+}

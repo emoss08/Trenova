@@ -28,11 +28,15 @@ func NewTractorService(s *server.Server) *TractorService {
 
 // QueryFilter defines the filter parameters for querying Tractor
 type TractorQueryFilter struct {
-	Query          string
-	OrganizationID uuid.UUID
-	BusinessUnitID uuid.UUID
-	Limit          int
-	Offset         int
+	Query               string
+	OrganizationID      uuid.UUID
+	BusinessUnitID      uuid.UUID
+	FleetCodeID         uuid.UUID
+	Status              string
+	ExpandWorkerDetails bool
+	ExpandEquipDetails  bool
+	Limit               int
+	Offset              int
 }
 
 // filterQuery applies filters to the query
@@ -42,6 +46,26 @@ func (s *TractorService) filterQuery(q *bun.SelectQuery, f *TractorQueryFilter) 
 
 	if f.Query != "" {
 		q = q.Where("tr.code = ? OR tr.code ILIKE ?", f.Query, "%"+strings.ToLower(f.Query)+"%")
+	}
+
+	if f.ExpandWorkerDetails {
+		q = q.Relation("PrimaryWorker").
+			Relation("PrimaryWorker.WorkerProfile").
+			Relation("SecondaryWorker").
+			Relation("SecondaryWorker.WorkerProfile")
+	}
+
+	if f.ExpandEquipDetails {
+		q = q.Relation("EquipmentType").
+			Relation("EquipmentManufacturer")
+	}
+
+	if f.Status != "" {
+		q = q.Where("tr.status = ?", f.Status)
+	}
+
+	if f.FleetCodeID != uuid.Nil {
+		q = q.Where("tr.fleet_code_id = ?", f.FleetCodeID)
 	}
 
 	q = q.OrderExpr("CASE WHEN tr.code = ? THEN 0 ELSE 1 END", f.Query).
@@ -55,8 +79,7 @@ func (s *TractorService) GetAll(ctx context.Context, filter *TractorQueryFilter)
 	var entities []*models.Tractor
 
 	q := s.db.NewSelect().
-		Model(&entities).
-		Relation("PrimaryWorker")
+		Model(&entities)
 
 	q = s.filterQuery(q, filter)
 

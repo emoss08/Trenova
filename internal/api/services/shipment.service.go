@@ -2,6 +2,7 @@ package services
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"time"
 
@@ -9,6 +10,7 @@ import (
 	"github.com/emoss08/trenova/pkg/gen"
 	"github.com/emoss08/trenova/pkg/models"
 	"github.com/emoss08/trenova/pkg/models/property"
+	"github.com/emoss08/trenova/pkg/validator"
 	"github.com/google/uuid"
 	"github.com/rs/zerolog"
 	"github.com/shopspring/decimal"
@@ -89,78 +91,6 @@ type ShipmentQueryFilter struct {
 	Offset         int
 }
 
-type ShipmentCountByStatus struct {
-	Status property.ShipmentStatus `json:"status"`
-	Count  int                     `json:"count"`
-}
-
-func (s *ShipmentService) GetShipmentCountByStatus(ctx context.Context, filter *ShipmentQueryFilter) ([]ShipmentCountByStatus, int, error) {
-	var results []ShipmentCountByStatus
-
-	q := s.db.NewSelect().
-		Model((*models.Shipment)(nil)).
-		Column("sp.status").
-		ColumnExpr("COUNT(*) AS count").
-		Group("sp.status").
-		Order("sp.status")
-
-	q = s.applyFilters(q, filter)
-
-	// Execute.
-	err := q.Scan(ctx, &results)
-	if err != nil {
-		return nil, 0, err
-	}
-
-	totalCount, err := s.getTotalCount(ctx, filter)
-	if err != nil {
-		return nil, 0, err
-	}
-
-	return results, totalCount, nil
-}
-
-// getTotalCount gets the total count of shipments
-func (s *ShipmentService) getTotalCount(ctx context.Context, filter *ShipmentQueryFilter) (int, error) {
-	count, err := s.db.NewSelect().
-		TableExpr("shipments AS sp").
-		Where("sp.organization_id = ?", filter.OrganizationID).
-		Where("sp.business_unit_id = ?", filter.BusinessUnitID).
-		Count(ctx)
-
-	return count, err
-}
-
-// applyFilters applies the filters to the query
-func (s *ShipmentService) applyFilters(q *bun.SelectQuery, f *ShipmentQueryFilter) *bun.SelectQuery {
-	q = q.Where("sp.organization_id = ?", f.OrganizationID).
-		Where("sp.business_unit_id = ?", f.BusinessUnitID)
-
-	if f.Query != "" {
-		q = q.Where("sp.pro_number ILIKE ? OR sp.bill_of_lading ILIKE ? OR sp.tracking_number ILIKE ?",
-			"%"+f.Query+"%", "%"+f.Query+"%", "%"+f.Query+"%")
-	}
-
-	// Apply additional filters
-	if f.Status != "" {
-		q = q.Where("sp.status = ?", f.Status)
-	}
-	if f.CustomerID != uuid.Nil {
-		q = q.Where("sp.customer_id = ?", f.CustomerID)
-	}
-	if f.FromDate != nil {
-		q = q.Where("sp.created_at >= ?", f.FromDate)
-	}
-	if f.ToDate != nil {
-		q = q.Where("sp.created_at <= ?", f.ToDate)
-	}
-	if f.ShipmentTypeID != uuid.Nil {
-		q = q.Where("sp.shipment_type_id = ?", f.ShipmentTypeID)
-	}
-
-	return q
-}
-
 func (s *ShipmentService) filterQuery(q *bun.SelectQuery, f *ShipmentQueryFilter) *bun.SelectQuery {
 	q = q.Where("sp.organization_id = ?", f.OrganizationID).
 		Where("sp.business_unit_id = ?", f.BusinessUnitID)
@@ -225,6 +155,32 @@ func (s *ShipmentService) Get(ctx context.Context, id uuid.UUID, orgID, buID uui
 	}
 
 	return entity, nil
+}
+
+type AssignTractorInput struct {
+	TractorID  uuid.UUID `json:"tractorId"`
+	ShipmentID uuid.UUID `json:"shipmentId"`
+}
+
+func (s *ShipmentService) AssignTractorToShipment(ctx context.Context, input *AssignTractorInput, orgID, buID uuid.UUID) error {
+	if input.ShipmentID == uuid.Nil || input.TractorID == uuid.Nil {
+		return validator.DBValidationError{Message: "shipmentId and tractorId are required"}
+	}
+
+	shipment, err := s.Get(ctx, input.ShipmentID, orgID, buID)
+	if err != nil {
+		return err
+	}
+
+	if err = shipment.AssignTractorToMovement(ctx, s.db, input.TractorID); err != nil {
+		var dbErr validator.DBValidationError
+		if errors.As(err, &dbErr) {
+			return dbErr
+		}
+
+		return err
+	}
+	return nil
 }
 
 func (s *ShipmentService) Create(ctx context.Context, input *CreateShipmentInput) (*models.Shipment, error) {

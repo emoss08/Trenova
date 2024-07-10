@@ -1,9 +1,12 @@
 import axios from "@/lib/axiosConfig";
-import {
+import type {
   EquipmentManufacturer,
+  EquipmentStatus,
   EquipmentType,
+  Tractor,
   Trailer,
 } from "@/types/equipment";
+import { type ApiResponse } from "@/types/server";
 
 /**
  * Get equipment types from the server.
@@ -47,4 +50,30 @@ export async function getTrailers(limit?: number): Promise<Trailer[]> {
     },
   });
   return response.data.results;
+}
+
+/**
+ * Get Tractors from the server
+ * @returns a list of tractors
+ */
+export async function getTractors(
+  status?: EquipmentStatus,
+  offset?: number,
+  limit?: number,
+  fleetCodeId?: string,
+  expandEquipDetails?: boolean,
+  expandWorkerDetails?: boolean,
+): Promise<ApiResponse<Tractor>> {
+  const response = await axios.get("tractors", {
+    params: {
+      status: status,
+      offset: offset,
+      limit: limit,
+      fleetCodeId: fleetCodeId,
+      expandEquipDetails: expandEquipDetails,
+      expandWorkerDetails: expandWorkerDetails,
+    },
+  });
+
+  return response.data;
 }
