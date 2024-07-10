@@ -36,7 +36,7 @@ type TrailerQueryFilter struct {
 }
 
 // filterQuery applies filters to the query
-func (s *TrailerService) filterQuery(q *bun.SelectQuery, f *TrailerQueryFilter) *bun.SelectQuery {
+func (s TrailerService) filterQuery(q *bun.SelectQuery, f *TrailerQueryFilter) *bun.SelectQuery {
 	q = q.Where("tr.organization_id = ?", f.OrganizationID).
 		Where("tr.business_unit_id = ?", f.BusinessUnitID)
 
@@ -51,7 +51,7 @@ func (s *TrailerService) filterQuery(q *bun.SelectQuery, f *TrailerQueryFilter) 
 }
 
 // GetAll retrieves all Trailer based on the provided filter
-func (s *TrailerService) GetAll(ctx context.Context, filter *TrailerQueryFilter) ([]*models.Trailer, int, error) {
+func (s TrailerService) GetAll(ctx context.Context, filter *TrailerQueryFilter) ([]*models.Trailer, int, error) {
 	var entities []*models.Trailer
 
 	q := s.db.NewSelect().
@@ -69,7 +69,7 @@ func (s *TrailerService) GetAll(ctx context.Context, filter *TrailerQueryFilter)
 }
 
 // Get retrieves a single Trailer by ID
-func (s *TrailerService) Get(ctx context.Context, id, orgID, buID uuid.UUID) (*models.Trailer, error) {
+func (s TrailerService) Get(ctx context.Context, id, orgID, buID uuid.UUID) (*models.Trailer, error) {
 	entity := new(models.Trailer)
 	err := s.db.NewSelect().
 		Model(entity).
@@ -86,7 +86,7 @@ func (s *TrailerService) Get(ctx context.Context, id, orgID, buID uuid.UUID) (*m
 }
 
 // Create creates a new Trailer
-func (s *TrailerService) Create(ctx context.Context, entity *models.Trailer) (*models.Trailer, error) {
+func (s TrailerService) Create(ctx context.Context, entity *models.Trailer) (*models.Trailer, error) {
 	err := s.db.RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
 		_, err := tx.NewInsert().
 			Model(entity).
@@ -103,7 +103,7 @@ func (s *TrailerService) Create(ctx context.Context, entity *models.Trailer) (*m
 }
 
 // UpdateOne updates an existing Trailer
-func (s *TrailerService) UpdateOne(ctx context.Context, entity *models.Trailer) (*models.Trailer, error) {
+func (s TrailerService) UpdateOne(ctx context.Context, entity *models.Trailer) (*models.Trailer, error) {
 	err := s.db.RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
 		_, err := tx.NewUpdate().
 			Model(entity).

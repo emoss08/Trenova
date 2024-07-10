@@ -27,15 +27,16 @@ func NewTractorHandler(s *server.Server) *TractorHandler {
 	}
 }
 
-func (h *TractorHandler) RegisterRoutes(r fiber.Router) {
+func (h TractorHandler) RegisterRoutes(r fiber.Router) {
 	api := r.Group("/tractors")
 	api.Get("/", h.Get())
 	api.Get("/:tractorID", h.GetByID())
+	api.Get("/:tractorID/assignments", h.GetActiveAssignments())
 	api.Post("/", h.Create())
 	api.Put("/:tractorID", h.Update())
 }
 
-func (h *TractorHandler) Get() fiber.Handler {
+func (h TractorHandler) Get() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		orgID, ok := c.Locals(utils.CTXOrganizationID).(uuid.UUID)
 		buID, orgOK := c.Locals(utils.CTXBusinessUnitID).(uuid.UUID)
@@ -134,7 +135,7 @@ func (h *TractorHandler) Get() fiber.Handler {
 	}
 }
 
-func (h *TractorHandler) Create() fiber.Handler {
+func (h TractorHandler) Create() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		createdEntity := new(models.Tractor)
 
@@ -174,7 +175,7 @@ func (h *TractorHandler) Create() fiber.Handler {
 	}
 }
 
-func (h *TractorHandler) GetByID() fiber.Handler {
+func (h TractorHandler) GetByID() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		tractorID := c.Params("tractorID")
 		if tractorID == "" {
@@ -214,7 +215,7 @@ func (h *TractorHandler) GetByID() fiber.Handler {
 	}
 }
 
-func (h *TractorHandler) Update() fiber.Handler {
+func (h TractorHandler) Update() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		tractorID := c.Params("tractorID")
 		if tractorID == "" {
@@ -248,5 +249,38 @@ func (h *TractorHandler) Update() fiber.Handler {
 		}
 
 		return c.Status(fiber.StatusOK).JSON(entity)
+	}
+}
+
+func (h TractorHandler) GetActiveAssignments() fiber.Handler {
+	return func(c *fiber.Ctx) error {
+		tractorID := c.Params("tractorID")
+		if tractorID == "" {
+			return c.Status(fiber.StatusBadRequest).JSON(fiber.Error{
+				Code:    fiber.StatusBadRequest,
+				Message: "Tractor ID is required",
+			})
+		}
+
+		orgID, ok := c.Locals(utils.CTXOrganizationID).(uuid.UUID)
+		buID, orgOK := c.Locals(utils.CTXBusinessUnitID).(uuid.UUID)
+
+		if !ok || !orgOK {
+			h.logger.Error().Msg("TractorHandler: Organization & Business Unit ID not found in context")
+			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Error{
+				Code:    fiber.StatusUnauthorized,
+				Message: "Organization & Business Unit ID not found in context",
+			})
+		}
+
+		assignments, err := h.service.GetActiveAssignments(c.UserContext(), tractorID, orgID, buID)
+		if err != nil {
+			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Error{
+				Code:    fiber.StatusInternalServerError,
+				Message: "Failed to get Tractor Assignments",
+			})
+		}
+
+		return c.JSON(assignments)
 	}
 }

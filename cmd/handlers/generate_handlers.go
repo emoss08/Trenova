@@ -138,7 +138,7 @@ func New{{.ModelName}}Handler(s *server.Server) *{{.ModelName}}Handler {
 	}
 }
 
-func (h *{{.ModelName}}Handler) RegisterRoutes(r fiber.Router) {
+func (h {{.ModelName}}Handler) RegisterRoutes(r fiber.Router) {
 	api := r.Group("/{{.RoutePrefix}}s")
 	api.Get("/", h.Get())
 	api.Get("/:{{.LowerModelName}}ID", h.GetByID())
@@ -216,7 +216,7 @@ func (h *{{.ModelName}}Handler) Get() fiber.Handler {
 	}
 }
 
-func (h *{{.ModelName}}Handler) Create() fiber.Handler {
+func (h {{.ModelName}}Handler) Create() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		createdEntity := new(models.{{.ModelName}})
 
@@ -256,7 +256,7 @@ func (h *{{.ModelName}}Handler) Create() fiber.Handler {
 	}
 }
 
-func (h *{{.ModelName}}Handler) GetByID() fiber.Handler {
+func (h {{.ModelName}}Handler) GetByID() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		{{.LowerModelName}}ID := c.Params("{{.LowerModelName}}ID")
 		if {{.LowerModelName}}ID == "" {
@@ -296,7 +296,7 @@ func (h *{{.ModelName}}Handler) GetByID() fiber.Handler {
 	}
 }
 
-func (h *{{.ModelName}}Handler) Update() fiber.Handler {
+func (h {{.ModelName}}Handler) Update() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		{{.LowerModelName}}ID := c.Params("{{.LowerModelName}}ID")
 		if {{.LowerModelName}}ID == "" {

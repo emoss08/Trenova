@@ -27,7 +27,7 @@ func NewCustomerHandler(s *server.Server) *CustomerHandler {
 	}
 }
 
-func (h *CustomerHandler) RegisterRoutes(r fiber.Router) {
+func (h CustomerHandler) RegisterRoutes(r fiber.Router) {
 	api := r.Group("/customers")
 	api.Get("/", h.Get())
 	api.Get("/:customerID", h.GetByID())
@@ -35,7 +35,7 @@ func (h *CustomerHandler) RegisterRoutes(r fiber.Router) {
 	api.Put("/:customerID", h.Update())
 }
 
-func (h *CustomerHandler) Get() fiber.Handler {
+func (h CustomerHandler) Get() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		orgID, ok := c.Locals(utils.CTXOrganizationID).(uuid.UUID)
 		buID, orgOK := c.Locals(utils.CTXBusinessUnitID).(uuid.UUID)
@@ -104,7 +104,7 @@ func (h *CustomerHandler) Get() fiber.Handler {
 	}
 }
 
-func (h *CustomerHandler) GetByID() fiber.Handler {
+func (h CustomerHandler) GetByID() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		customerID := c.Params("customerID")
 		if customerID == "" {
@@ -144,7 +144,7 @@ func (h *CustomerHandler) GetByID() fiber.Handler {
 	}
 }
 
-func (h *CustomerHandler) Create() fiber.Handler {
+func (h CustomerHandler) Create() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		createdEntity := new(models.Customer)
 
@@ -184,7 +184,7 @@ func (h *CustomerHandler) Create() fiber.Handler {
 	}
 }
 
-func (h *CustomerHandler) Update() fiber.Handler {
+func (h CustomerHandler) Update() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		customerID := c.Params("customerID")
 		if customerID == "" {

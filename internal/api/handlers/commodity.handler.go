@@ -27,7 +27,7 @@ func NewCommodityHandler(s *server.Server) *CommodityHandler {
 	}
 }
 
-func (h *CommodityHandler) RegisterRoutes(r fiber.Router) {
+func (h CommodityHandler) RegisterRoutes(r fiber.Router) {
 	api := r.Group("/commodities")
 	api.Get("/", h.Get())
 	api.Get("/:commodityID", h.GetByID())
@@ -35,7 +35,7 @@ func (h *CommodityHandler) RegisterRoutes(r fiber.Router) {
 	api.Put("/:commodityID", h.Update())
 }
 
-func (h *CommodityHandler) Get() fiber.Handler {
+func (h CommodityHandler) Get() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		orgID, ok := c.Locals(utils.CTXOrganizationID).(uuid.UUID)
 		buID, orgOK := c.Locals(utils.CTXBusinessUnitID).(uuid.UUID)
@@ -104,7 +104,7 @@ func (h *CommodityHandler) Get() fiber.Handler {
 	}
 }
 
-func (h *CommodityHandler) Create() fiber.Handler {
+func (h CommodityHandler) Create() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		createdEntity := new(models.Commodity)
 
@@ -144,7 +144,7 @@ func (h *CommodityHandler) Create() fiber.Handler {
 	}
 }
 
-func (h *CommodityHandler) GetByID() fiber.Handler {
+func (h CommodityHandler) GetByID() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		commodityID := c.Params("commodityID")
 		if commodityID == "" {
@@ -184,7 +184,7 @@ func (h *CommodityHandler) GetByID() fiber.Handler {
 	}
 }
 
-func (h *CommodityHandler) Update() fiber.Handler {
+func (h CommodityHandler) Update() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		commodityID := c.Params("commodityID")
 		if commodityID == "" {

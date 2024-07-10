@@ -36,7 +36,7 @@ type GeneralLedgerAccountQueryFilter struct {
 }
 
 // filterQuery applies filters to the query
-func (s *GeneralLedgerAccountService) filterQuery(q *bun.SelectQuery, f *GeneralLedgerAccountQueryFilter) *bun.SelectQuery {
+func (s GeneralLedgerAccountService) filterQuery(q *bun.SelectQuery, f *GeneralLedgerAccountQueryFilter) *bun.SelectQuery {
 	q = q.Where("gla.organization_id = ?", f.OrganizationID).
 		Where("gla.business_unit_id = ?", f.BusinessUnitID)
 
@@ -51,7 +51,7 @@ func (s *GeneralLedgerAccountService) filterQuery(q *bun.SelectQuery, f *General
 }
 
 // GetAll retrieves all GeneralLedgerAccount based on the provided filter
-func (s *GeneralLedgerAccountService) GetAll(ctx context.Context, filter *GeneralLedgerAccountQueryFilter) ([]*models.GeneralLedgerAccount, int, error) {
+func (s GeneralLedgerAccountService) GetAll(ctx context.Context, filter *GeneralLedgerAccountQueryFilter) ([]*models.GeneralLedgerAccount, int, error) {
 	var entities []*models.GeneralLedgerAccount
 
 	q := s.db.NewSelect().
@@ -69,7 +69,7 @@ func (s *GeneralLedgerAccountService) GetAll(ctx context.Context, filter *Genera
 }
 
 // Get retrieves a single GeneralLedgerAccount by ID
-func (s *GeneralLedgerAccountService) Get(ctx context.Context, id, orgID, buID uuid.UUID) (*models.GeneralLedgerAccount, error) {
+func (s GeneralLedgerAccountService) Get(ctx context.Context, id, orgID, buID uuid.UUID) (*models.GeneralLedgerAccount, error) {
 	entity := new(models.GeneralLedgerAccount)
 	err := s.db.NewSelect().
 		Model(entity).
@@ -86,7 +86,7 @@ func (s *GeneralLedgerAccountService) Get(ctx context.Context, id, orgID, buID u
 }
 
 // Create creates a new GeneralLedgerAccount
-func (s *GeneralLedgerAccountService) Create(ctx context.Context, entity *models.GeneralLedgerAccount) (*models.GeneralLedgerAccount, error) {
+func (s GeneralLedgerAccountService) Create(ctx context.Context, entity *models.GeneralLedgerAccount) (*models.GeneralLedgerAccount, error) {
 	err := s.db.RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
 		_, err := tx.NewInsert().
 			Model(entity).
@@ -103,7 +103,7 @@ func (s *GeneralLedgerAccountService) Create(ctx context.Context, entity *models
 }
 
 // UpdateOne updates an existing GeneralLedgerAccount
-func (s *GeneralLedgerAccountService) UpdateOne(ctx context.Context, entity *models.GeneralLedgerAccount) (*models.GeneralLedgerAccount, error) {
+func (s GeneralLedgerAccountService) UpdateOne(ctx context.Context, entity *models.GeneralLedgerAccount) (*models.GeneralLedgerAccount, error) {
 	err := s.db.RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
 		_, err := tx.NewUpdate().
 			Model(entity).

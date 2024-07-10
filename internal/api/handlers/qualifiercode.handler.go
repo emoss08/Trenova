@@ -27,7 +27,7 @@ func NewQualifierCodeHandler(s *server.Server) *QualifierCodeHandler {
 	}
 }
 
-func (h *QualifierCodeHandler) RegisterRoutes(r fiber.Router) {
+func (h QualifierCodeHandler) RegisterRoutes(r fiber.Router) {
 	api := r.Group("/qualifier-codes")
 	api.Get("/", h.Get())
 	api.Get("/:qualifiercodeID", h.GetByID())
@@ -35,7 +35,7 @@ func (h *QualifierCodeHandler) RegisterRoutes(r fiber.Router) {
 	api.Put("/:qualifiercodeID", h.Update())
 }
 
-func (h *QualifierCodeHandler) Get() fiber.Handler {
+func (h QualifierCodeHandler) Get() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		orgID, ok := c.Locals(utils.CTXOrganizationID).(uuid.UUID)
 		buID, orgOK := c.Locals(utils.CTXBusinessUnitID).(uuid.UUID)
@@ -104,7 +104,7 @@ func (h *QualifierCodeHandler) Get() fiber.Handler {
 	}
 }
 
-func (h *QualifierCodeHandler) Create() fiber.Handler {
+func (h QualifierCodeHandler) Create() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		createdEntity := new(models.QualifierCode)
 
@@ -144,7 +144,7 @@ func (h *QualifierCodeHandler) Create() fiber.Handler {
 	}
 }
 
-func (h *QualifierCodeHandler) GetByID() fiber.Handler {
+func (h QualifierCodeHandler) GetByID() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		qualifiercodeID := c.Params("qualifiercodeID")
 		if qualifiercodeID == "" {
@@ -184,7 +184,7 @@ func (h *QualifierCodeHandler) GetByID() fiber.Handler {
 	}
 }
 
-func (h *QualifierCodeHandler) Update() fiber.Handler {
+func (h QualifierCodeHandler) Update() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		qualifiercodeID := c.Params("qualifiercodeID")
 		if qualifiercodeID == "" {

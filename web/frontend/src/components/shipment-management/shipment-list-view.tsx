@@ -3,13 +3,10 @@ import {
   assignTractorToShipment,
   getShipments,
 } from "@/services/ShipmentRequestService";
+import { useUserStore } from "@/stores/AuthStore";
 import type { Tractor, TractorFilterForm } from "@/types/equipment";
-import type {
-  Shipment,
-  ShipmentSearchForm,
-  ShipmentStatus,
-} from "@/types/shipment";
-import { useMutation, useQuery } from "@tanstack/react-query";
+import type { ShipmentSearchForm, ShipmentStatus } from "@/types/shipment";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import { DragDropContext } from "react-beautiful-dnd";
 import { useForm, useFormContext } from "react-hook-form";
@@ -18,7 +15,7 @@ import { Pagination } from "../common/pagination";
 import { ErrorLoadingData } from "../common/table/data-table-components";
 import { ScrollArea } from "../ui/scroll-area";
 import { Skeleton } from "../ui/skeleton";
-import { ShipmentConfirmDialog } from "./assign-dialog";
+import { AssignmentDialog } from "./assignment-dialog";
 import { ShipmentToolbar } from "./shipment-advanced-filter";
 import { ShipmentList } from "./shipment-list";
 import { TractorList } from "./tractor-list";
@@ -36,11 +33,16 @@ export function ShipmentListView({
   const { searchQuery, statusFilter } = watch();
   const [shipmentPage, setShipmentPage] = useState(1);
   const [tractorPage, setTractorPage] = useState(1);
-  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [newAssignment, setNewAssignment] = useState<{
+    shipmentId: string;
+    shipmentMoveId: string;
+    shipmentProNumber: string;
+    assignedById: string;
+  } | null>(null);
   const [selectedTractor, setSelectedTractor] = useState<Tractor | null>(null);
-  const [selectedShipment, setSelectedShipment] = useState<Shipment | null>(
-    null,
-  );
+  const queryClient = useQueryClient();
+  const user = useUserStore.get("user");
 
   const tractorFilterForm = useForm<TractorFilterForm>({
     defaultValues: {
@@ -116,46 +118,75 @@ export function ShipmentListView({
 
     if (tractor && shipment) {
       setSelectedTractor(tractor);
-      setSelectedShipment(shipment);
-      setIsModalOpen(true);
+      setNewAssignment({
+        shipmentId: shipment.id,
+        shipmentMoveId: shipment.moves[0].id,
+        shipmentProNumber: shipment.proNumber,
+        assignedById: user.id,
+      });
+      setIsDialogOpen(true);
     }
   };
 
-  type AssignWorkerPayload = {
-    tractorId: string;
-    shipmentId: string;
-  };
-
-  const assignMutaton = useMutation({
-    mutationFn: (payload: AssignWorkerPayload) => {
+  const assignMutation = useMutation({
+    mutationFn: (payload: {
+      tractorId: string;
+      assignments: Array<{
+        shipmentId: string;
+        shipmentMoveId: string;
+        sequence: number;
+        assignedById: string;
+      }>;
+    }) => {
       return assignTractorToShipment(payload);
     },
   });
 
-  const handleAssignTractor = () => {
-    if (!selectedTractor || !selectedShipment) return;
+  const handleAssignTractor = (
+    assignments: Array<{
+      id: string;
+      shipmentId: string;
+      shipmentMoveId: string;
+      sequence: number;
+      shipmentProNumber: string;
+      assignedById: string;
+    }>,
+  ) => {
+    if (!selectedTractor || assignments.length === 0) return;
+
+    const formattedAssignments = assignments.map((assignment, index) => ({
+      shipmentId: assignment.shipmentId,
+      shipmentMoveId: assignment.shipmentMoveId,
+      sequence: index + 1, // Ensure sequence is always correct
+      assignedById: assignment.assignedById,
+    }));
 
     toast.promise(
-      assignMutaton.mutateAsync({
+      assignMutation.mutateAsync({
         tractorId: selectedTractor.id,
-        shipmentId: selectedShipment.id,
+        assignments: formattedAssignments,
       }),
       {
-        loading: "Assigning tractor to shipment...",
-        success: (data) => data.message || "Tractor assigned to shipment.",
+        loading: "Assigning tractor to shipment(s)...",
+        success: (data) => {
+          // Invalidate and refetch relevant queries
+          queryClient.invalidateQueries({
+            queryKey: ["activeAssignments", selectedTractor.id],
+          });
+          queryClient.invalidateQueries({
+            queryKey: ["tractors"],
+          });
+          queryClient.invalidateQueries({
+            queryKey: ["shipments"],
+          });
+          return data.message || "Tractor assigned to shipment(s).";
+        },
         error: (data) => {
-          const resp = data.response.data;
-          return resp.message || "Failed to assign tractor to shipment.";
+          const resp = data.response?.data;
+          return resp?.message || "Failed to assign tractor to shipment(s).";
         },
       },
     );
-
-    console.log(
-      `Assigning tractor ${selectedTractor?.code} to shipment ${selectedShipment?.proNumber}`,
-    );
-    setIsModalOpen(false);
-    setSelectedTractor(null);
-    setSelectedShipment(null);
   };
 
   return (
@@ -211,13 +242,13 @@ export function ShipmentListView({
           </div>
         </div>
       </DragDropContext>
-      {isModalOpen && selectedTractor && selectedShipment && (
-        <ShipmentConfirmDialog
-          open={isModalOpen}
-          onOpenChange={setIsModalOpen}
+      {isDialogOpen && selectedTractor && (
+        <AssignmentDialog
+          open={isDialogOpen}
+          onOpenChange={setIsDialogOpen}
           handleAssignTractor={handleAssignTractor}
-          selectedShipment={selectedShipment}
           selectedTractor={selectedTractor}
+          newAssignment={newAssignment}
         />
       )}
     </>

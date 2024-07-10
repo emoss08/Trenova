@@ -36,7 +36,7 @@ type ServiceTypeQueryFilter struct {
 }
 
 // filterQuery applies filters to the query
-func (s *ServiceTypeService) filterQuery(q *bun.SelectQuery, f *ServiceTypeQueryFilter) *bun.SelectQuery {
+func (s ServiceTypeService) filterQuery(q *bun.SelectQuery, f *ServiceTypeQueryFilter) *bun.SelectQuery {
 	q = q.Where("st.organization_id = ?", f.OrganizationID).
 		Where("st.business_unit_id = ?", f.BusinessUnitID)
 
@@ -51,7 +51,7 @@ func (s *ServiceTypeService) filterQuery(q *bun.SelectQuery, f *ServiceTypeQuery
 }
 
 // GetAll retrieves all ServiceType based on the provided filter
-func (s *ServiceTypeService) GetAll(ctx context.Context, filter *ServiceTypeQueryFilter) ([]*models.ServiceType, int, error) {
+func (s ServiceTypeService) GetAll(ctx context.Context, filter *ServiceTypeQueryFilter) ([]*models.ServiceType, int, error) {
 	var entities []*models.ServiceType
 
 	q := s.db.NewSelect().
@@ -69,7 +69,7 @@ func (s *ServiceTypeService) GetAll(ctx context.Context, filter *ServiceTypeQuer
 }
 
 // Get retrieves a single ServiceType by ID
-func (s *ServiceTypeService) Get(ctx context.Context, id, orgID, buID uuid.UUID) (*models.ServiceType, error) {
+func (s ServiceTypeService) Get(ctx context.Context, id, orgID, buID uuid.UUID) (*models.ServiceType, error) {
 	entity := new(models.ServiceType)
 	err := s.db.NewSelect().
 		Model(entity).
@@ -86,7 +86,7 @@ func (s *ServiceTypeService) Get(ctx context.Context, id, orgID, buID uuid.UUID)
 }
 
 // Create creates a new ServiceType
-func (s *ServiceTypeService) Create(ctx context.Context, entity *models.ServiceType) (*models.ServiceType, error) {
+func (s ServiceTypeService) Create(ctx context.Context, entity *models.ServiceType) (*models.ServiceType, error) {
 	err := s.db.RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
 		_, err := tx.NewInsert().
 			Model(entity).
@@ -103,7 +103,7 @@ func (s *ServiceTypeService) Create(ctx context.Context, entity *models.ServiceT
 }
 
 // UpdateOne updates an existing ServiceType
-func (s *ServiceTypeService) UpdateOne(ctx context.Context, entity *models.ServiceType) (*models.ServiceType, error) {
+func (s ServiceTypeService) UpdateOne(ctx context.Context, entity *models.ServiceType) (*models.ServiceType, error) {
 	err := s.db.RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
 		_, err := tx.NewUpdate().
 			Model(entity).

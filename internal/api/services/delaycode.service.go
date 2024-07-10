@@ -36,7 +36,7 @@ type DelayCodeQueryFilter struct {
 }
 
 // filterQuery applies filters to the query
-func (s *DelayCodeService) filterQuery(q *bun.SelectQuery, f *DelayCodeQueryFilter) *bun.SelectQuery {
+func (s DelayCodeService) filterQuery(q *bun.SelectQuery, f *DelayCodeQueryFilter) *bun.SelectQuery {
 	q = q.Where("dc.organization_id = ?", f.OrganizationID).
 		Where("dc.business_unit_id = ?", f.BusinessUnitID)
 
@@ -51,7 +51,7 @@ func (s *DelayCodeService) filterQuery(q *bun.SelectQuery, f *DelayCodeQueryFilt
 }
 
 // GetAll retrieves all DelayCode based on the provided filter
-func (s *DelayCodeService) GetAll(ctx context.Context, filter *DelayCodeQueryFilter) ([]*models.DelayCode, int, error) {
+func (s DelayCodeService) GetAll(ctx context.Context, filter *DelayCodeQueryFilter) ([]*models.DelayCode, int, error) {
 	var entities []*models.DelayCode
 
 	q := s.db.NewSelect().
@@ -69,7 +69,7 @@ func (s *DelayCodeService) GetAll(ctx context.Context, filter *DelayCodeQueryFil
 }
 
 // Get retrieves a single DelayCode by ID
-func (s *DelayCodeService) Get(ctx context.Context, id, orgID, buID uuid.UUID) (*models.DelayCode, error) {
+func (s DelayCodeService) Get(ctx context.Context, id, orgID, buID uuid.UUID) (*models.DelayCode, error) {
 	entity := new(models.DelayCode)
 	err := s.db.NewSelect().
 		Model(entity).
@@ -86,7 +86,7 @@ func (s *DelayCodeService) Get(ctx context.Context, id, orgID, buID uuid.UUID) (
 }
 
 // Create creates a new DelayCode
-func (s *DelayCodeService) Create(ctx context.Context, entity *models.DelayCode) (*models.DelayCode, error) {
+func (s DelayCodeService) Create(ctx context.Context, entity *models.DelayCode) (*models.DelayCode, error) {
 	err := s.db.RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
 		_, err := tx.NewInsert().
 			Model(entity).
@@ -103,7 +103,7 @@ func (s *DelayCodeService) Create(ctx context.Context, entity *models.DelayCode)
 }
 
 // UpdateOne updates an existing DelayCode
-func (s *DelayCodeService) UpdateOne(ctx context.Context, entity *models.DelayCode) (*models.DelayCode, error) {
+func (s DelayCodeService) UpdateOne(ctx context.Context, entity *models.DelayCode) (*models.DelayCode, error) {
 	err := s.db.RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
 		_, err := tx.NewUpdate().
 			Model(entity).

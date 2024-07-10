@@ -27,7 +27,7 @@ func NewReasonCodeHandler(s *server.Server) *ReasonCodeHandler {
 	}
 }
 
-func (h *ReasonCodeHandler) RegisterRoutes(r fiber.Router) {
+func (h ReasonCodeHandler) RegisterRoutes(r fiber.Router) {
 	api := r.Group("/reason-codes")
 	api.Get("/", h.Get())
 	api.Get("/:reasoncodeID", h.GetByID())
@@ -35,7 +35,7 @@ func (h *ReasonCodeHandler) RegisterRoutes(r fiber.Router) {
 	api.Put("/:reasoncodeID", h.Update())
 }
 
-func (h *ReasonCodeHandler) Get() fiber.Handler {
+func (h ReasonCodeHandler) Get() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		orgID, ok := c.Locals(utils.CTXOrganizationID).(uuid.UUID)
 		buID, orgOK := c.Locals(utils.CTXBusinessUnitID).(uuid.UUID)
@@ -104,7 +104,7 @@ func (h *ReasonCodeHandler) Get() fiber.Handler {
 	}
 }
 
-func (h *ReasonCodeHandler) Create() fiber.Handler {
+func (h ReasonCodeHandler) Create() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		createdEntity := new(models.ReasonCode)
 
@@ -144,7 +144,7 @@ func (h *ReasonCodeHandler) Create() fiber.Handler {
 	}
 }
 
-func (h *ReasonCodeHandler) GetByID() fiber.Handler {
+func (h ReasonCodeHandler) GetByID() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		reasoncodeID := c.Params("reasoncodeID")
 		if reasoncodeID == "" {
@@ -184,7 +184,7 @@ func (h *ReasonCodeHandler) GetByID() fiber.Handler {
 	}
 }
 
-func (h *ReasonCodeHandler) Update() fiber.Handler {
+func (h ReasonCodeHandler) Update() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		reasoncodeID := c.Params("reasoncodeID")
 		if reasoncodeID == "" {

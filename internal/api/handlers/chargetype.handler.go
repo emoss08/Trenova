@@ -27,7 +27,7 @@ func NewChargeTypeHandler(s *server.Server) *ChargeTypeHandler {
 	}
 }
 
-func (h *ChargeTypeHandler) RegisterRoutes(r fiber.Router) {
+func (h ChargeTypeHandler) RegisterRoutes(r fiber.Router) {
 	api := r.Group("/charge-types")
 	api.Get("/", h.Get())
 	api.Get("/:chargetypeID", h.GetByID())
@@ -35,7 +35,7 @@ func (h *ChargeTypeHandler) RegisterRoutes(r fiber.Router) {
 	api.Put("/:chargetypeID", h.Update())
 }
 
-func (h *ChargeTypeHandler) Get() fiber.Handler {
+func (h ChargeTypeHandler) Get() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		orgID, ok := c.Locals(utils.CTXOrganizationID).(uuid.UUID)
 		buID, orgOK := c.Locals(utils.CTXBusinessUnitID).(uuid.UUID)
@@ -104,7 +104,7 @@ func (h *ChargeTypeHandler) Get() fiber.Handler {
 	}
 }
 
-func (h *ChargeTypeHandler) Create() fiber.Handler {
+func (h ChargeTypeHandler) Create() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		createdEntity := new(models.ChargeType)
 
@@ -144,7 +144,7 @@ func (h *ChargeTypeHandler) Create() fiber.Handler {
 	}
 }
 
-func (h *ChargeTypeHandler) GetByID() fiber.Handler {
+func (h ChargeTypeHandler) GetByID() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		chargetypeID := c.Params("chargetypeID")
 		if chargetypeID == "" {
@@ -184,7 +184,7 @@ func (h *ChargeTypeHandler) GetByID() fiber.Handler {
 	}
 }
 
-func (h *ChargeTypeHandler) Update() fiber.Handler {
+func (h ChargeTypeHandler) Update() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		chargetypeID := c.Params("chargetypeID")
 		if chargetypeID == "" {

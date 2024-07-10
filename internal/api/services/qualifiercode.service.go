@@ -36,7 +36,7 @@ type QualifierCodeQueryFilter struct {
 }
 
 // filterQuery applies filters to the query
-func (s *QualifierCodeService) filterQuery(q *bun.SelectQuery, f *QualifierCodeQueryFilter) *bun.SelectQuery {
+func (s QualifierCodeService) filterQuery(q *bun.SelectQuery, f *QualifierCodeQueryFilter) *bun.SelectQuery {
 	q = q.Where("qc.organization_id = ?", f.OrganizationID).
 		Where("qc.business_unit_id = ?", f.BusinessUnitID)
 
@@ -51,7 +51,7 @@ func (s *QualifierCodeService) filterQuery(q *bun.SelectQuery, f *QualifierCodeQ
 }
 
 // GetAll retrieves all QualifierCode based on the provided filter
-func (s *QualifierCodeService) GetAll(ctx context.Context, filter *QualifierCodeQueryFilter) ([]*models.QualifierCode, int, error) {
+func (s QualifierCodeService) GetAll(ctx context.Context, filter *QualifierCodeQueryFilter) ([]*models.QualifierCode, int, error) {
 	var entities []*models.QualifierCode
 
 	q := s.db.NewSelect().
@@ -69,7 +69,7 @@ func (s *QualifierCodeService) GetAll(ctx context.Context, filter *QualifierCode
 }
 
 // Get retrieves a single QualifierCode by ID
-func (s *QualifierCodeService) Get(ctx context.Context, id, orgID, buID uuid.UUID) (*models.QualifierCode, error) {
+func (s QualifierCodeService) Get(ctx context.Context, id, orgID, buID uuid.UUID) (*models.QualifierCode, error) {
 	entity := new(models.QualifierCode)
 	err := s.db.NewSelect().
 		Model(entity).
@@ -86,7 +86,7 @@ func (s *QualifierCodeService) Get(ctx context.Context, id, orgID, buID uuid.UUI
 }
 
 // Create creates a new QualifierCode
-func (s *QualifierCodeService) Create(ctx context.Context, entity *models.QualifierCode) (*models.QualifierCode, error) {
+func (s QualifierCodeService) Create(ctx context.Context, entity *models.QualifierCode) (*models.QualifierCode, error) {
 	err := s.db.RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
 		_, err := tx.NewInsert().
 			Model(entity).
@@ -103,7 +103,7 @@ func (s *QualifierCodeService) Create(ctx context.Context, entity *models.Qualif
 }
 
 // UpdateOne updates an existing QualifierCode
-func (s *QualifierCodeService) UpdateOne(ctx context.Context, entity *models.QualifierCode) (*models.QualifierCode, error) {
+func (s QualifierCodeService) UpdateOne(ctx context.Context, entity *models.QualifierCode) (*models.QualifierCode, error) {
 	err := s.db.RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
 		_, err := tx.NewUpdate().
 			Model(entity).

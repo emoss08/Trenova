@@ -2,6 +2,7 @@ import type { EquipmentClassChoiceProps } from "@/lib/choices";
 import type { IChoiceProps, StatusChoiceProps } from "@/types/index";
 import { type FleetCode } from "./dispatch";
 import { type BaseModel } from "./organization";
+import { Shipment } from "./shipment";
 import { type Worker } from "./worker";
 
 export interface EquipmentType extends BaseModel {
@@ -156,4 +157,14 @@ export type TractorFilterForm = {
   fleetCodeId?: string;
   expandEquipDetails?: boolean;
   expandWorkerDetails?: boolean;
+};
+
+export type TractorAssignment = {
+  id: string;
+  shipmentId: string;
+  tractorId: string;
+  shipment: Shipment;
+  shipmentMoveId: string;
+  sequence: number;
+  assignedById: string;
 };

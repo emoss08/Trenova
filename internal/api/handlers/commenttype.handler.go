@@ -27,7 +27,7 @@ func NewCommentTypeHandler(s *server.Server) *CommentTypeHandler {
 	}
 }
 
-func (h *CommentTypeHandler) RegisterRoutes(r fiber.Router) {
+func (h CommentTypeHandler) RegisterRoutes(r fiber.Router) {
 	api := r.Group("/comment-types")
 	api.Get("/", h.Get())
 	api.Get("/:commenttypeID", h.GetByID())
@@ -35,7 +35,7 @@ func (h *CommentTypeHandler) RegisterRoutes(r fiber.Router) {
 	api.Put("/:commenttypeID", h.Update())
 }
 
-func (h *CommentTypeHandler) Get() fiber.Handler {
+func (h CommentTypeHandler) Get() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		orgID, ok := c.Locals(utils.CTXOrganizationID).(uuid.UUID)
 		buID, orgOK := c.Locals(utils.CTXBusinessUnitID).(uuid.UUID)
@@ -104,7 +104,7 @@ func (h *CommentTypeHandler) Get() fiber.Handler {
 	}
 }
 
-func (h *CommentTypeHandler) Create() fiber.Handler {
+func (h CommentTypeHandler) Create() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		createdEntity := new(models.CommentType)
 
@@ -144,7 +144,7 @@ func (h *CommentTypeHandler) Create() fiber.Handler {
 	}
 }
 
-func (h *CommentTypeHandler) GetByID() fiber.Handler {
+func (h CommentTypeHandler) GetByID() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		commenttypeID := c.Params("commenttypeID")
 		if commenttypeID == "" {
@@ -184,7 +184,7 @@ func (h *CommentTypeHandler) GetByID() fiber.Handler {
 	}
 }
 
-func (h *CommentTypeHandler) Update() fiber.Handler {
+func (h CommentTypeHandler) Update() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		commenttypeID := c.Params("commenttypeID")
 		if commenttypeID == "" {

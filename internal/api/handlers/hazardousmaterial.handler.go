@@ -27,7 +27,7 @@ func NewHazardousMaterialHandler(s *server.Server) *HazardousMaterialHandler {
 	}
 }
 
-func (h *HazardousMaterialHandler) RegisterRoutes(r fiber.Router) {
+func (h HazardousMaterialHandler) RegisterRoutes(r fiber.Router) {
 	api := r.Group("/hazardous-materials")
 	api.Get("/", h.Get())
 	api.Get("/:hazardousmaterialID", h.GetByID())
@@ -35,7 +35,7 @@ func (h *HazardousMaterialHandler) RegisterRoutes(r fiber.Router) {
 	api.Put("/:hazardousmaterialID", h.Update())
 }
 
-func (h *HazardousMaterialHandler) Get() fiber.Handler {
+func (h HazardousMaterialHandler) Get() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		orgID, ok := c.Locals(utils.CTXOrganizationID).(uuid.UUID)
 		buID, orgOK := c.Locals(utils.CTXBusinessUnitID).(uuid.UUID)
@@ -104,7 +104,7 @@ func (h *HazardousMaterialHandler) Get() fiber.Handler {
 	}
 }
 
-func (h *HazardousMaterialHandler) Create() fiber.Handler {
+func (h HazardousMaterialHandler) Create() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		createdEntity := new(models.HazardousMaterial)
 
@@ -144,7 +144,7 @@ func (h *HazardousMaterialHandler) Create() fiber.Handler {
 	}
 }
 
-func (h *HazardousMaterialHandler) GetByID() fiber.Handler {
+func (h HazardousMaterialHandler) GetByID() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		hazardousmaterialID := c.Params("hazardousmaterialID")
 		if hazardousmaterialID == "" {
@@ -184,7 +184,7 @@ func (h *HazardousMaterialHandler) GetByID() fiber.Handler {
 	}
 }
 
-func (h *HazardousMaterialHandler) Update() fiber.Handler {
+func (h HazardousMaterialHandler) Update() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		hazardousmaterialID := c.Params("hazardousmaterialID")
 		if hazardousmaterialID == "" {

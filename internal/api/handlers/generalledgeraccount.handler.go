@@ -27,7 +27,7 @@ func NewGeneralLedgerAccountHandler(s *server.Server) *GeneralLedgerAccountHandl
 	}
 }
 
-func (h *GeneralLedgerAccountHandler) RegisterRoutes(r fiber.Router) {
+func (h GeneralLedgerAccountHandler) RegisterRoutes(r fiber.Router) {
 	api := r.Group("/general-ledger-accounts")
 	api.Get("/", h.Get())
 	api.Get("/:generalledgeraccountID", h.GetByID())
@@ -35,7 +35,7 @@ func (h *GeneralLedgerAccountHandler) RegisterRoutes(r fiber.Router) {
 	api.Put("/:generalledgeraccountID", h.Update())
 }
 
-func (h *GeneralLedgerAccountHandler) Get() fiber.Handler {
+func (h GeneralLedgerAccountHandler) Get() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		orgID, ok := c.Locals(utils.CTXOrganizationID).(uuid.UUID)
 		buID, orgOK := c.Locals(utils.CTXBusinessUnitID).(uuid.UUID)
@@ -104,7 +104,7 @@ func (h *GeneralLedgerAccountHandler) Get() fiber.Handler {
 	}
 }
 
-func (h *GeneralLedgerAccountHandler) Create() fiber.Handler {
+func (h GeneralLedgerAccountHandler) Create() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		createdEntity := new(models.GeneralLedgerAccount)
 
@@ -144,7 +144,7 @@ func (h *GeneralLedgerAccountHandler) Create() fiber.Handler {
 	}
 }
 
-func (h *GeneralLedgerAccountHandler) GetByID() fiber.Handler {
+func (h GeneralLedgerAccountHandler) GetByID() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		generalledgeraccountID := c.Params("generalledgeraccountID")
 		if generalledgeraccountID == "" {
@@ -184,7 +184,7 @@ func (h *GeneralLedgerAccountHandler) GetByID() fiber.Handler {
 	}
 }
 
-func (h *GeneralLedgerAccountHandler) Update() fiber.Handler {
+func (h GeneralLedgerAccountHandler) Update() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		generalledgeraccountID := c.Params("generalledgeraccountID")
 		if generalledgeraccountID == "" {

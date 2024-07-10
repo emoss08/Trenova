@@ -27,7 +27,7 @@ func NewRevenueCodeHandler(s *server.Server) *RevenueCodeHandler {
 	}
 }
 
-func (h *RevenueCodeHandler) RegisterRoutes(r fiber.Router) {
+func (h RevenueCodeHandler) RegisterRoutes(r fiber.Router) {
 	api := r.Group("/revenue-codes")
 	api.Get("/", h.Get())
 	api.Get("/:revenuecodeID", h.GetByID())
@@ -35,7 +35,7 @@ func (h *RevenueCodeHandler) RegisterRoutes(r fiber.Router) {
 	api.Put("/:revenuecodeID", h.Update())
 }
 
-func (h *RevenueCodeHandler) Get() fiber.Handler {
+func (h RevenueCodeHandler) Get() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		orgID, ok := c.Locals(utils.CTXOrganizationID).(uuid.UUID)
 		buID, orgOK := c.Locals(utils.CTXBusinessUnitID).(uuid.UUID)
@@ -104,7 +104,7 @@ func (h *RevenueCodeHandler) Get() fiber.Handler {
 	}
 }
 
-func (h *RevenueCodeHandler) Create() fiber.Handler {
+func (h RevenueCodeHandler) Create() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		createdEntity := new(models.RevenueCode)
 
@@ -144,7 +144,7 @@ func (h *RevenueCodeHandler) Create() fiber.Handler {
 	}
 }
 
-func (h *RevenueCodeHandler) GetByID() fiber.Handler {
+func (h RevenueCodeHandler) GetByID() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		revenuecodeID := c.Params("revenuecodeID")
 		if revenuecodeID == "" {
@@ -184,7 +184,7 @@ func (h *RevenueCodeHandler) GetByID() fiber.Handler {
 	}
 }
 
-func (h *RevenueCodeHandler) Update() fiber.Handler {
+func (h RevenueCodeHandler) Update() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		revenuecodeID := c.Params("revenuecodeID")
 		if revenuecodeID == "" {

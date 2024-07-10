@@ -36,7 +36,7 @@ type EquipmentManufacturerQueryFilter struct {
 }
 
 // filterQuery applies filters to the query
-func (s *EquipmentManufacturerService) filterQuery(q *bun.SelectQuery, f *EquipmentManufacturerQueryFilter) *bun.SelectQuery {
+func (s EquipmentManufacturerService) filterQuery(q *bun.SelectQuery, f *EquipmentManufacturerQueryFilter) *bun.SelectQuery {
 	q = q.Where("em.organization_id = ?", f.OrganizationID).
 		Where("em.business_unit_id = ?", f.BusinessUnitID)
 
@@ -51,7 +51,7 @@ func (s *EquipmentManufacturerService) filterQuery(q *bun.SelectQuery, f *Equipm
 }
 
 // GetAll retrieves all EquipmentManufacturer based on the provided filter
-func (s *EquipmentManufacturerService) GetAll(ctx context.Context, filter *EquipmentManufacturerQueryFilter) ([]*models.EquipmentManufacturer, int, error) {
+func (s EquipmentManufacturerService) GetAll(ctx context.Context, filter *EquipmentManufacturerQueryFilter) ([]*models.EquipmentManufacturer, int, error) {
 	var entities []*models.EquipmentManufacturer
 
 	q := s.db.NewSelect().
@@ -69,7 +69,7 @@ func (s *EquipmentManufacturerService) GetAll(ctx context.Context, filter *Equip
 }
 
 // Get retrieves a single EquipmentManufacturer by ID
-func (s *EquipmentManufacturerService) Get(ctx context.Context, id, orgID, buID uuid.UUID) (*models.EquipmentManufacturer, error) {
+func (s EquipmentManufacturerService) Get(ctx context.Context, id, orgID, buID uuid.UUID) (*models.EquipmentManufacturer, error) {
 	entity := new(models.EquipmentManufacturer)
 	err := s.db.NewSelect().
 		Model(entity).
@@ -86,7 +86,7 @@ func (s *EquipmentManufacturerService) Get(ctx context.Context, id, orgID, buID 
 }
 
 // Create creates a new EquipmentManufacturer
-func (s *EquipmentManufacturerService) Create(ctx context.Context, entity *models.EquipmentManufacturer) (*models.EquipmentManufacturer, error) {
+func (s EquipmentManufacturerService) Create(ctx context.Context, entity *models.EquipmentManufacturer) (*models.EquipmentManufacturer, error) {
 	err := s.db.RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
 		_, err := tx.NewInsert().
 			Model(entity).
@@ -103,7 +103,7 @@ func (s *EquipmentManufacturerService) Create(ctx context.Context, entity *model
 }
 
 // UpdateOne updates an existing EquipmentManufacturer
-func (s *EquipmentManufacturerService) UpdateOne(ctx context.Context, entity *models.EquipmentManufacturer) (*models.EquipmentManufacturer, error) {
+func (s EquipmentManufacturerService) UpdateOne(ctx context.Context, entity *models.EquipmentManufacturer) (*models.EquipmentManufacturer, error) {
 	err := s.db.RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
 		_, err := tx.NewUpdate().
 			Model(entity).

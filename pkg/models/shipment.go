@@ -64,7 +64,8 @@ func (p ShipmentPermission) String() string {
 }
 
 type Shipment struct {
-	bun.BaseModel            `bun:"table:shipments,alias:sp" json:"-"`
+	bun.BaseModel `bun:"table:shipments,alias:sp" json:"-"`
+
 	CreatedAt                time.Time                     `bun:",nullzero,notnull,default:current_timestamp" json:"createdAt"`
 	UpdatedAt                time.Time                     `bun:",nullzero,notnull,default:current_timestamp" json:"updatedAt"`
 	BusinessUnitID           uuid.UUID                     `bun:"type:uuid,notnull" json:"businessUnitId"`
@@ -184,6 +185,16 @@ func (s *Shipment) UpdateStatus(ctx context.Context, db *bun.DB) error {
 	}
 
 	return s.setStatus(ctx, db, newStatus)
+}
+
+func (s Shipment) GetMoveByID(ctx context.Context, db *bun.DB, moveID uuid.UUID) (*ShipmentMove, error) {
+	var move ShipmentMove
+	err := db.NewSelect().Model(&move).Where("id = ?", moveID).Scan(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	return &move, nil
 }
 
 // Helper method to set status and handle database updates
@@ -323,64 +334,6 @@ func (s Shipment) validateStatusTransition(ctx context.Context, db *bun.DB) erro
 		Field:   "status",
 		Message: fmt.Sprintf("Invalid status transition from %s to %s", currentStatus, s.Status),
 	}
-}
-
-func (s *Shipment) AssignTractorToMovement(ctx context.Context, db *bun.DB, tractorID uuid.UUID) error {
-	if s.Status != property.ShipmentStatusNew {
-		return &validator.BusinessLogicError{
-			Message: "Tractor can only be assigned to a shipment that is in `New` status",
-		}
-	}
-
-	// Start a transaction
-	err := db.RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
-		// Fetch all movements for this shipment
-		var movements []*ShipmentMove
-		err := tx.NewSelect().Model(&movements).Where("shipment_id = ?", s.ID).Scan(ctx)
-		if err != nil {
-			return fmt.Errorf("failed to fetch shipment movements: %w", err)
-		}
-
-		if len(movements) == 0 {
-			return &validator.DBValidationError{
-				Field:   "movements",
-				Message: "No movements found for this shipment",
-			}
-		}
-
-		// Fetch the tractor to ensure it exists and is available
-		tractor := new(Tractor)
-		err = tx.NewSelect().Model(tractor).Where("id = ?", tractorID).Scan(ctx)
-		if err != nil {
-			return fmt.Errorf("failed to fetch tractor: %w", err)
-		}
-
-		if tractor.Status != "Available" {
-			return &validator.DBValidationError{
-				Field:   "tractorId",
-				Message: "Selected tractor is not available",
-			}
-		}
-
-		for _, move := range movements {
-			move.TractorID = tractorID
-			_, err = tx.NewUpdate().Model(move).Column("tractor_id").WherePK().Exec(ctx)
-			if err != nil {
-				return fmt.Errorf("failed to update movement with tractor: %w", err)
-			}
-
-			// Only assign workers if the movement is not in progress
-			if move.Status == property.ShipmentMoveStatusNew {
-				if err = move.AssignWorkersByTractorID(ctx, tx, tractorID); err != nil {
-					return fmt.Errorf("failed to assign workers to movement: %w", err)
-				}
-			}
-		}
-
-		return nil
-	})
-
-	return err
 }
 
 func (s *Shipment) InsertShipment(ctx context.Context, db *bun.DB) error {

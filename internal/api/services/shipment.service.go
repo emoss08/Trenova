@@ -2,7 +2,6 @@ package services
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"time"
 
@@ -91,7 +90,7 @@ type ShipmentQueryFilter struct {
 	Offset         int
 }
 
-func (s *ShipmentService) filterQuery(q *bun.SelectQuery, f *ShipmentQueryFilter) *bun.SelectQuery {
+func (s ShipmentService) filterQuery(q *bun.SelectQuery, f *ShipmentQueryFilter) *bun.SelectQuery {
 	q = q.Where("sp.organization_id = ?", f.OrganizationID).
 		Where("sp.business_unit_id = ?", f.BusinessUnitID)
 
@@ -123,7 +122,7 @@ func (s *ShipmentService) filterQuery(q *bun.SelectQuery, f *ShipmentQueryFilter
 	return q.Limit(f.Limit).Offset(f.Offset)
 }
 
-func (s *ShipmentService) GetAll(ctx context.Context, filter *ShipmentQueryFilter) ([]*models.Shipment, int, error) {
+func (s ShipmentService) GetAll(ctx context.Context, filter *ShipmentQueryFilter) ([]*models.Shipment, int, error) {
 	var entities []*models.Shipment
 
 	q := s.db.NewSelect().
@@ -142,7 +141,7 @@ func (s *ShipmentService) GetAll(ctx context.Context, filter *ShipmentQueryFilte
 	return entities, count, nil
 }
 
-func (s *ShipmentService) Get(ctx context.Context, id uuid.UUID, orgID, buID uuid.UUID) (*models.Shipment, error) {
+func (s ShipmentService) Get(ctx context.Context, id uuid.UUID, orgID, buID uuid.UUID) (*models.Shipment, error) {
 	entity := new(models.Shipment)
 	err := s.db.NewSelect().
 		Model(entity).
@@ -158,32 +157,87 @@ func (s *ShipmentService) Get(ctx context.Context, id uuid.UUID, orgID, buID uui
 }
 
 type AssignTractorInput struct {
-	TractorID  uuid.UUID `json:"tractorId"`
-	ShipmentID uuid.UUID `json:"shipmentId"`
+	TractorID   uuid.UUID                  `json:"tractorId"`
+	Assignments []models.TractorAssignment `json:"assignments"`
 }
 
-func (s *ShipmentService) AssignTractorToShipment(ctx context.Context, input *AssignTractorInput, orgID, buID uuid.UUID) error {
-	if input.ShipmentID == uuid.Nil || input.TractorID == uuid.Nil {
-		return validator.DBValidationError{Message: "shipmentId and tractorId are required"}
+func (s ShipmentService) AssignTractorToShipment(ctx context.Context, input *AssignTractorInput, orgID, buID uuid.UUID) error {
+	if input.TractorID == uuid.Nil || len(input.Assignments) == 0 {
+		return validator.DBValidationError{Message: "tractorId and at least one assignment are required"}
 	}
 
-	shipment, err := s.Get(ctx, input.ShipmentID, orgID, buID)
+	err := s.db.RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
+		// Fetch existing assignments for this tractor
+		var existingAssignments []models.TractorAssignment
+		err := tx.NewSelect().
+			Model(&existingAssignments).
+			Where("tractor_id = ? AND organization_id = ? AND business_unit_id = ? AND status = ?",
+				input.TractorID, orgID, buID, "Active").
+			Scan(ctx)
+		if err != nil {
+			return fmt.Errorf("failed to fetch existing assignments: %w", err)
+		}
+
+		// Create a map of existing assignments for easy lookup
+		existingMap := make(map[string]*models.TractorAssignment)
+		for i := range existingAssignments {
+			key := fmt.Sprintf("%s-%s", existingAssignments[i].ShipmentID, existingAssignments[i].ShipmentMoveID)
+			existingMap[key] = &existingAssignments[i]
+		}
+
+		// Process new assignments
+		for _, assignment := range input.Assignments {
+			key := fmt.Sprintf("%s-%s", assignment.ShipmentID, assignment.ShipmentMoveID)
+			if existing, ok := existingMap[key]; ok {
+				// Update existing assignment
+				existing.Sequence = assignment.Sequence
+				_, err = tx.NewUpdate().Model(existing).WherePK().Exec(ctx)
+				if err != nil {
+					return fmt.Errorf("failed to update assignment: %w", err)
+				}
+				delete(existingMap, key)
+			} else {
+				// Insert new assignment
+				newAssignment := &models.TractorAssignment{
+					TractorID:      input.TractorID,
+					ShipmentID:     assignment.ShipmentID,
+					ShipmentMoveID: assignment.ShipmentMoveID,
+					Sequence:       assignment.Sequence,
+					AssignedByID:   assignment.AssignedByID,
+					AssignedAt:     time.Now(),
+					Status:         "Active",
+					OrganizationID: orgID,
+					BusinessUnitID: buID,
+				}
+				_, err = tx.NewInsert().Model(newAssignment).Exec(ctx)
+				if err != nil {
+					return fmt.Errorf("failed to insert new assignment: %w", err)
+				}
+			}
+		}
+
+		// Remove assignments that are no longer in the list
+		for _, assignment := range existingMap {
+			_, err = tx.NewUpdate().
+				Model(assignment).
+				Set("status = ?", "Inactive").
+				WherePK().
+				Exec(ctx)
+			if err != nil {
+				return fmt.Errorf("failed to deactivate old assignment: %w", err)
+			}
+		}
+
+		return nil
+	})
 	if err != nil {
 		return err
 	}
 
-	if err = shipment.AssignTractorToMovement(ctx, s.db, input.TractorID); err != nil {
-		var dbErr validator.DBValidationError
-		if errors.As(err, &dbErr) {
-			return dbErr
-		}
-
-		return err
-	}
 	return nil
 }
 
-func (s *ShipmentService) Create(ctx context.Context, input *CreateShipmentInput) (*models.Shipment, error) {
+func (s ShipmentService) Create(ctx context.Context, input *CreateShipmentInput) (*models.Shipment, error) {
 	shipment := &models.Shipment{
 		EntryMethod:           "Manual",
 		Status:                property.ShipmentStatusNew,
@@ -265,7 +319,7 @@ func (s *ShipmentService) Create(ctx context.Context, input *CreateShipmentInput
 	return shipment, nil
 }
 
-func (s *ShipmentService) createStops(ctx context.Context, tx bun.Tx, shipment *models.Shipment, move *models.ShipmentMove, stopInputs []StopInput) ([]*models.Stop, error) {
+func (s ShipmentService) createStops(ctx context.Context, tx bun.Tx, shipment *models.Shipment, move *models.ShipmentMove, stopInputs []StopInput) ([]*models.Stop, error) {
 	stops := make([]*models.Stop, len(stopInputs))
 	for i, input := range stopInputs {
 		location, err := s.getLocation(ctx, tx, input.LocationID)
@@ -305,7 +359,7 @@ func (s *ShipmentService) createStops(ctx context.Context, tx bun.Tx, shipment *
 	return stops, nil
 }
 
-func (s *ShipmentService) getLocation(ctx context.Context, tx bun.Tx, locationID uuid.UUID) (*models.Location, error) {
+func (s ShipmentService) getLocation(ctx context.Context, tx bun.Tx, locationID uuid.UUID) (*models.Location, error) {
 	location := new(models.Location)
 	err := tx.NewSelect().Model(location).Where("id = ?", locationID).Scan(ctx)
 	if err != nil {
@@ -314,6 +368,6 @@ func (s *ShipmentService) getLocation(ctx context.Context, tx bun.Tx, locationID
 	return location, nil
 }
 
-func (s *ShipmentService) consolidateAddress(entity *models.Location) string {
+func (s ShipmentService) consolidateAddress(entity *models.Location) string {
 	return fmt.Sprintf("%s, %s, %s, %s, %s", entity.AddressLine1, entity.AddressLine2, entity.City, entity.State, entity.PostalCode)
 }

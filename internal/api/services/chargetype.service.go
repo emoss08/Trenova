@@ -36,7 +36,7 @@ type ChargeTypeQueryFilter struct {
 }
 
 // filterQuery applies filters to the query
-func (s *ChargeTypeService) filterQuery(q *bun.SelectQuery, f *ChargeTypeQueryFilter) *bun.SelectQuery {
+func (s ChargeTypeService) filterQuery(q *bun.SelectQuery, f *ChargeTypeQueryFilter) *bun.SelectQuery {
 	q = q.Where("ct.organization_id = ?", f.OrganizationID).
 		Where("ct.business_unit_id = ?", f.BusinessUnitID)
 
@@ -51,7 +51,7 @@ func (s *ChargeTypeService) filterQuery(q *bun.SelectQuery, f *ChargeTypeQueryFi
 }
 
 // GetAll retrieves all ChargeType based on the provided filter
-func (s *ChargeTypeService) GetAll(ctx context.Context, filter *ChargeTypeQueryFilter) ([]*models.ChargeType, int, error) {
+func (s ChargeTypeService) GetAll(ctx context.Context, filter *ChargeTypeQueryFilter) ([]*models.ChargeType, int, error) {
 	var entities []*models.ChargeType
 
 	q := s.db.NewSelect().
@@ -69,7 +69,7 @@ func (s *ChargeTypeService) GetAll(ctx context.Context, filter *ChargeTypeQueryF
 }
 
 // Get retrieves a single ChargeType by ID
-func (s *ChargeTypeService) Get(ctx context.Context, id, orgID, buID uuid.UUID) (*models.ChargeType, error) {
+func (s ChargeTypeService) Get(ctx context.Context, id, orgID, buID uuid.UUID) (*models.ChargeType, error) {
 	entity := new(models.ChargeType)
 	err := s.db.NewSelect().
 		Model(entity).
@@ -86,7 +86,7 @@ func (s *ChargeTypeService) Get(ctx context.Context, id, orgID, buID uuid.UUID) 
 }
 
 // Create creates a new ChargeType
-func (s *ChargeTypeService) Create(ctx context.Context, entity *models.ChargeType) (*models.ChargeType, error) {
+func (s ChargeTypeService) Create(ctx context.Context, entity *models.ChargeType) (*models.ChargeType, error) {
 	err := s.db.RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
 		_, err := tx.NewInsert().
 			Model(entity).
@@ -103,7 +103,7 @@ func (s *ChargeTypeService) Create(ctx context.Context, entity *models.ChargeTyp
 }
 
 // UpdateOne updates an existing ChargeType
-func (s *ChargeTypeService) UpdateOne(ctx context.Context, entity *models.ChargeType) (*models.ChargeType, error) {
+func (s ChargeTypeService) UpdateOne(ctx context.Context, entity *models.ChargeType) (*models.ChargeType, error) {
 	err := s.db.RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
 		_, err := tx.NewUpdate().
 			Model(entity).

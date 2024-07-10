@@ -56,7 +56,7 @@ func NewWebsocketService(s *server.Server) *WebsocketService {
 	return wsService
 }
 
-func (s *WebsocketService) StartHeartbeat(ctx context.Context, interval time.Duration) {
+func (s WebsocketService) StartHeartbeat(ctx context.Context, interval time.Duration) {
 	ticker := time.NewTicker(interval)
 	defer ticker.Stop()
 
@@ -71,7 +71,7 @@ func (s *WebsocketService) StartHeartbeat(ctx context.Context, interval time.Dur
 	}
 }
 
-func (s *WebsocketService) pingClients() {
+func (s WebsocketService) pingClients() {
 	mu.Lock()
 	defer mu.Unlock()
 
@@ -83,7 +83,7 @@ func (s *WebsocketService) pingClients() {
 	}
 }
 
-func (s *WebsocketService) RegisterClient(id string, conn *websocket.Conn) {
+func (s WebsocketService) RegisterClient(id string, conn *websocket.Conn) {
 	mu.Lock()
 	defer mu.Unlock()
 
@@ -102,7 +102,7 @@ func (s *WebsocketService) RegisterClient(id string, conn *websocket.Conn) {
 	s.logger.Info().Str("client_id", id).Msg("client registered")
 }
 
-func (s *WebsocketService) notifyClientAboutReconnection(conn *websocket.Conn) {
+func (s WebsocketService) notifyClientAboutReconnection(conn *websocket.Conn) {
 	message := Message{
 		Type:    "reconnect",
 		Title:   "Global Websocket",
@@ -119,7 +119,7 @@ func (s *WebsocketService) notifyClientAboutReconnection(conn *websocket.Conn) {
 	}
 }
 
-func (s *WebsocketService) UnregisterClient(id string) {
+func (s WebsocketService) UnregisterClient(id string) {
 	mu.Lock()
 
 	if conn, ok := clients[id]; ok {
@@ -131,7 +131,7 @@ func (s *WebsocketService) UnregisterClient(id string) {
 	s.logger.Info().Str("client_id", id).Msg("client unregistered")
 }
 
-func (s *WebsocketService) NotifyClient(clientID string, message Message) {
+func (s WebsocketService) NotifyClient(clientID string, message Message) {
 	mu.Lock()
 	conn, ok := clients[clientID]
 	mu.Unlock()
@@ -149,7 +149,7 @@ func (s *WebsocketService) NotifyClient(clientID string, message Message) {
 	}
 }
 
-func (s *WebsocketService) NotifyAllClients(msg Message, senderID string) {
+func (s WebsocketService) NotifyAllClients(msg Message, senderID string) {
 	message, err := sonic.Marshal(msg)
 	if err != nil {
 		s.logger.Error().Err(err).Msg("failed to marshal message")
@@ -172,7 +172,7 @@ func (s *WebsocketService) NotifyAllClients(msg Message, senderID string) {
 	mu.Unlock()
 }
 
-func (s *WebsocketService) Stop() {
+func (s WebsocketService) Stop() {
 	if s.heartbeatCancel != nil {
 		s.heartbeatCancel()
 	}

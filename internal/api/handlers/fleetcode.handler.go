@@ -27,7 +27,7 @@ func NewFleetCodeHandler(s *server.Server) *FleetCodeHandler {
 	}
 }
 
-func (h *FleetCodeHandler) RegisterRoutes(r fiber.Router) {
+func (h FleetCodeHandler) RegisterRoutes(r fiber.Router) {
 	api := r.Group("/fleet-codes")
 	api.Get("/", h.Get())
 	api.Get("/:fleetcodeID", h.GetByID())
@@ -35,7 +35,7 @@ func (h *FleetCodeHandler) RegisterRoutes(r fiber.Router) {
 	api.Put("/:fleetcodeID", h.Update())
 }
 
-func (h *FleetCodeHandler) Get() fiber.Handler {
+func (h FleetCodeHandler) Get() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		orgID, ok := c.Locals(utils.CTXOrganizationID).(uuid.UUID)
 		buID, orgOK := c.Locals(utils.CTXBusinessUnitID).(uuid.UUID)
@@ -104,7 +104,7 @@ func (h *FleetCodeHandler) Get() fiber.Handler {
 	}
 }
 
-func (h *FleetCodeHandler) Create() fiber.Handler {
+func (h FleetCodeHandler) Create() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		createdEntity := new(models.FleetCode)
 
@@ -144,7 +144,7 @@ func (h *FleetCodeHandler) Create() fiber.Handler {
 	}
 }
 
-func (h *FleetCodeHandler) GetByID() fiber.Handler {
+func (h FleetCodeHandler) GetByID() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		fleetcodeID := c.Params("fleetcodeID")
 		if fleetcodeID == "" {
@@ -184,7 +184,7 @@ func (h *FleetCodeHandler) GetByID() fiber.Handler {
 	}
 }
 
-func (h *FleetCodeHandler) Update() fiber.Handler {
+func (h FleetCodeHandler) Update() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		fleetcodeID := c.Params("fleetcodeID")
 		if fleetcodeID == "" {

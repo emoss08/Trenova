@@ -4,6 +4,7 @@ import type {
   EquipmentStatus,
   EquipmentType,
   Tractor,
+  TractorAssignment,
   Trailer,
 } from "@/types/equipment";
 import { type ApiResponse } from "@/types/server";
@@ -75,5 +76,12 @@ export async function getTractors(
     },
   });
 
+  return response.data;
+}
+
+export async function getActiveAssignmentsForTractor(
+  tractorId: string,
+): Promise<TractorAssignment[]> {
+  const response = await axios.get(`tractors/${tractorId}/assignments`);
   return response.data;
 }

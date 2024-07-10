@@ -35,7 +35,7 @@ type WorkerQueryFilter struct {
 	Offset         int
 }
 
-func (s *WorkerService) filterQuery(q *bun.SelectQuery, f *WorkerQueryFilter) *bun.SelectQuery {
+func (s WorkerService) filterQuery(q *bun.SelectQuery, f *WorkerQueryFilter) *bun.SelectQuery {
 	q = q.Where("wk.organization_id = ?", f.OrganizationID).
 		Where("wk.business_unit_id = ?", f.BusinessUnitID)
 
@@ -49,7 +49,7 @@ func (s *WorkerService) filterQuery(q *bun.SelectQuery, f *WorkerQueryFilter) *b
 	return q.Limit(f.Limit).Offset(f.Offset)
 }
 
-func (s *WorkerService) GetAll(ctx context.Context, filter *WorkerQueryFilter) ([]*models.Worker, int, error) {
+func (s WorkerService) GetAll(ctx context.Context, filter *WorkerQueryFilter) ([]*models.Worker, int, error) {
 	var entities []*models.Worker
 
 	q := s.db.NewSelect().
@@ -67,7 +67,7 @@ func (s *WorkerService) GetAll(ctx context.Context, filter *WorkerQueryFilter) (
 	return entities, count, nil
 }
 
-func (s *WorkerService) Get(ctx context.Context, id uuid.UUID, orgID, buID uuid.UUID) (*models.Worker, error) {
+func (s WorkerService) Get(ctx context.Context, id uuid.UUID, orgID, buID uuid.UUID) (*models.Worker, error) {
 	entity := new(models.Worker)
 	err := s.db.NewSelect().
 		Model(entity).
@@ -82,7 +82,7 @@ func (s *WorkerService) Get(ctx context.Context, id uuid.UUID, orgID, buID uuid.
 	return entity, nil
 }
 
-func (s *WorkerService) Create(ctx context.Context, entity *models.Worker) (*models.Worker, error) {
+func (s WorkerService) Create(ctx context.Context, entity *models.Worker) (*models.Worker, error) {
 	err := s.db.RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
 		// Query the master key generation entity.
 		mkg, mErr := models.QueryWorkerMasterKeyGenerationByOrgID(ctx, s.db, entity.OrganizationID)
@@ -99,7 +99,7 @@ func (s *WorkerService) Create(ctx context.Context, entity *models.Worker) (*mod
 	return entity, nil
 }
 
-func (s *WorkerService) UpdateOne(ctx context.Context, entity *models.Worker) (*models.Worker, error) {
+func (s WorkerService) UpdateOne(ctx context.Context, entity *models.Worker) (*models.Worker, error) {
 	err := s.db.RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
 		return entity.UpdateWorker(ctx, tx)
 	})

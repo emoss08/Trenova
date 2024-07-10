@@ -27,7 +27,7 @@ func NewWorkerHandler(s *server.Server) *WorkerHandler {
 	}
 }
 
-func (h *WorkerHandler) RegisterRoutes(r fiber.Router) {
+func (h WorkerHandler) RegisterRoutes(r fiber.Router) {
 	api := r.Group("/workers")
 	api.Get("/", h.Get())
 	api.Get("/:workerID", h.GetByID())
@@ -35,7 +35,7 @@ func (h *WorkerHandler) RegisterRoutes(r fiber.Router) {
 	api.Put("/:workerID", h.Update())
 }
 
-func (h *WorkerHandler) Get() fiber.Handler {
+func (h WorkerHandler) Get() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		orgID, ok := c.Locals(utils.CTXOrganizationID).(uuid.UUID)
 		buID, orgOK := c.Locals(utils.CTXBusinessUnitID).(uuid.UUID)
@@ -104,7 +104,7 @@ func (h *WorkerHandler) Get() fiber.Handler {
 	}
 }
 
-func (h *WorkerHandler) Create() fiber.Handler {
+func (h WorkerHandler) Create() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		createdEntity := new(models.Worker)
 
@@ -144,7 +144,7 @@ func (h *WorkerHandler) Create() fiber.Handler {
 	}
 }
 
-func (h *WorkerHandler) GetByID() fiber.Handler {
+func (h WorkerHandler) GetByID() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		workerID := c.Params("workerID")
 		if workerID == "" {
@@ -184,7 +184,7 @@ func (h *WorkerHandler) GetByID() fiber.Handler {
 	}
 }
 
-func (h *WorkerHandler) Update() fiber.Handler {
+func (h WorkerHandler) Update() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		workerID := c.Params("workerID")
 		if workerID == "" {

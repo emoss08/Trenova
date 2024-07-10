@@ -15,8 +15,7 @@ import (
 
 type ShipmentMove struct {
 	bun.BaseModel     `bun:"table:shipment_moves,alias:sm" json:"-"`
-	CreatedAt         time.Time                   `bun:",nullzero,notnull,default:current_timestamp" json:"createdAt"`
-	UpdatedAt         time.Time                   `bun:",nullzero,notnull,default:current_timestamp" json:"updatedAt"`
+	ID                uuid.UUID                   `bun:",pk,type:uuid,default:uuid_generate_v4()" json:"id"`
 	Status            property.ShipmentMoveStatus `bun:"type:VARCHAR(50),notnull" json:"status"`
 	IsLoaded          bool                        `bun:"type:BOOLEAN,default:false" json:"isLoaded"`
 	SequenceNumber    int                         `bun:"type:INTEGER,notnull" json:"sequenceNumber"`
@@ -25,8 +24,9 @@ type ShipmentMove struct {
 	EstimatedCost     decimal.NullDecimal         `bun:"type:NUMERIC(19,4),nullzero" json:"estimatedCost"`
 	ActualCost        decimal.NullDecimal         `bun:"type:NUMERIC(19,4),nullzero" json:"actualCost"`
 	Notes             string                      `bun:"type:TEXT,nullzero" json:"notes"`
+	CreatedAt         time.Time                   `bun:",nullzero,notnull,default:current_timestamp" json:"createdAt"`
+	UpdatedAt         time.Time                   `bun:",nullzero,notnull,default:current_timestamp" json:"updatedAt"`
 
-	ID                uuid.UUID  `bun:",pk,type:uuid,default:uuid_generate_v4()" json:"id"`
 	ShipmentID        uuid.UUID  `bun:"type:uuid,notnull" json:"shipmentId"`
 	TractorID         uuid.UUID  `bun:"type:uuid,notnull" json:"tractorId"`
 	TrailerID         uuid.UUID  `bun:"type:uuid,notnull" json:"trailerId"`
@@ -35,14 +35,14 @@ type ShipmentMove struct {
 	BusinessUnitID    uuid.UUID  `bun:"type:uuid,notnull" json:"businessUnitId"`
 	OrganizationID    uuid.UUID  `bun:"type:uuid,notnull" json:"organizationId"`
 
+	Shipment        *Shipment     `bun:"rel:belongs-to,join:shipment_id=id" json:"shipment,omitempty"`
+	Tractor         *Tractor      `bun:"rel:belongs-to,join:tractor_id=id" json:"tractor,omitempty"`
+	Trailer         *Trailer      `bun:"rel:belongs-to,join:trailer_id=id" json:"trailer,omitempty"`
+	PrimaryWorker   *Worker       `bun:"rel:belongs-to,join:primary_worker_id=id" json:"primaryWorker,omitempty"`
+	SecondaryWorker *Worker       `bun:"rel:belongs-to,join:secondary_worker_id=id" json:"secondaryWorker,omitempty"`
 	BusinessUnit    *BusinessUnit `bun:"rel:belongs-to,join:business_unit_id=id" json:"-"`
 	Organization    *Organization `bun:"rel:belongs-to,join:organization_id=id" json:"-"`
-	Shipment        *Shipment     `bun:"rel:belongs-to,join:shipment_id=id" json:"shipment"`
-	Tractor         *Tractor      `bun:"rel:belongs-to,join:tractor_id=id" json:"tractor"`
-	Trailer         *Trailer      `bun:"rel:belongs-to,join:trailer_id=id" json:"trailer"`
-	PrimaryWorker   *Worker       `bun:"rel:belongs-to,join:primary_worker_id=id" json:"primaryWorker"`
-	SecondaryWorker *Worker       `bun:"rel:belongs-to,join:secondary_worker_id=id" json:"secondaryWorker"`
-	Stops           []*Stop       `bun:"rel:has-many,join:id=shipment_move_id" json:"stops"`
+	Stops           []*Stop       `bun:"rel:has-many,join:id=shipment_move_id" json:"stops,omitempty"`
 }
 
 var _ bun.BeforeAppendModelHook = (*ShipmentMove)(nil)
@@ -154,11 +154,23 @@ func (m *ShipmentMove) ValidateStopSequence() error {
 	return nil
 }
 
-func (m *ShipmentMove) AssignWorkersByTractorID(ctx context.Context, db bun.IDB, tractorID uuid.UUID) error {
+func (m *ShipmentMove) AssignTractor(ctx context.Context, tx bun.Tx, tractorID uuid.UUID) error {
+	if m.Status != property.ShipmentMoveStatusNew {
+		return validator.BusinessLogicError{
+			Message: "Movement must be in New status to assign a tractor",
+		}
+	}
+
 	tractor := new(Tractor)
-	err := db.NewSelect().Model(tractor).Where("id = ?", tractorID).Scan(ctx)
+	err := tx.NewSelect().Model(tractor).Where("id = ?", tractorID).Scan(ctx)
 	if err != nil {
 		return fmt.Errorf("failed to fetch tractor: %w", err)
+	}
+
+	m.TractorID = tractorID
+	_, err = tx.NewUpdate().Model(m).Column("tractor_id").WherePK().Exec(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to update movement with tractor: %w", err)
 	}
 
 	// Check if workers are available
@@ -175,7 +187,7 @@ func (m *ShipmentMove) AssignWorkersByTractorID(ctx context.Context, db bun.IDB,
 	// Assign secondary worker if available
 	m.SecondaryWorkerID = tractor.SecondaryWorkerID
 
-	_, err = db.NewUpdate().Model(m).Column("primary_worker_id", "secondary_worker_id").WherePK().Exec(ctx)
+	_, err = tx.NewUpdate().Model(m).Column("primary_worker_id", "secondary_worker_id").WherePK().Exec(ctx)
 	if err != nil {
 		return fmt.Errorf("failed to update movement with workers: %w", err)
 	}

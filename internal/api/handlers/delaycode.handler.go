@@ -27,7 +27,7 @@ func NewDelayCodeHandler(s *server.Server) *DelayCodeHandler {
 	}
 }
 
-func (h *DelayCodeHandler) RegisterRoutes(r fiber.Router) {
+func (h DelayCodeHandler) RegisterRoutes(r fiber.Router) {
 	api := r.Group("/delay-codes")
 	api.Get("/", h.Get())
 	api.Get("/:delaycodeID", h.GetByID())
@@ -35,7 +35,7 @@ func (h *DelayCodeHandler) RegisterRoutes(r fiber.Router) {
 	api.Put("/:delaycodeID", h.Update())
 }
 
-func (h *DelayCodeHandler) Get() fiber.Handler {
+func (h DelayCodeHandler) Get() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		orgID, ok := c.Locals(utils.CTXOrganizationID).(uuid.UUID)
 		buID, orgOK := c.Locals(utils.CTXBusinessUnitID).(uuid.UUID)
@@ -104,7 +104,7 @@ func (h *DelayCodeHandler) Get() fiber.Handler {
 	}
 }
 
-func (h *DelayCodeHandler) Create() fiber.Handler {
+func (h DelayCodeHandler) Create() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		createdEntity := new(models.DelayCode)
 
@@ -144,7 +144,7 @@ func (h *DelayCodeHandler) Create() fiber.Handler {
 	}
 }
 
-func (h *DelayCodeHandler) GetByID() fiber.Handler {
+func (h DelayCodeHandler) GetByID() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		delaycodeID := c.Params("delaycodeID")
 		if delaycodeID == "" {
@@ -184,7 +184,7 @@ func (h *DelayCodeHandler) GetByID() fiber.Handler {
 	}
 }
 
-func (h *DelayCodeHandler) Update() fiber.Handler {
+func (h DelayCodeHandler) Update() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		delaycodeID := c.Params("delaycodeID")
 		if delaycodeID == "" {

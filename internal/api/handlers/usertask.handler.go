@@ -27,7 +27,7 @@ func NewUserTaskHandler(s *server.Server) *UserTaskHandler {
 	}
 }
 
-func (h *UserTaskHandler) RegisterRoutes(r fiber.Router) {
+func (h UserTaskHandler) RegisterRoutes(r fiber.Router) {
 	api := r.Group("/user-tasks")
 	api.Get("/", h.getUserTasks())
 }
@@ -36,10 +36,7 @@ func (h *UserTaskHandler) RegisterRoutes(r fiber.Router) {
 //
 // This function is called by the python microservice to update the status of a task.
 // The python microservice sends a POST request to the /user-tasks/update endpoint.
-//
-// Note: Do not register in routes.
-// This is registered directly in the router.
-func (h *UserTaskHandler) UpdateTaskStatus(c *fiber.Ctx) error {
+func (h UserTaskHandler) UpdateTaskStatus(c *fiber.Ctx) error {
 	update := new(services.TaskStatusUpdate)
 	if err := c.BodyParser(update); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
@@ -75,7 +72,7 @@ func (h *UserTaskHandler) UpdateTaskStatus(c *fiber.Ctx) error {
 	return c.SendStatus(fiber.StatusOK)
 }
 
-func (h *UserTaskHandler) getUserTasks() fiber.Handler {
+func (h UserTaskHandler) getUserTasks() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		orgID, ok := c.Locals(utils.CTXOrganizationID).(uuid.UUID)
 		buID, orgOK := c.Locals(utils.CTXBusinessUnitID).(uuid.UUID)

@@ -23,21 +23,14 @@ func NewUserFavoriteHandler(s *server.Server) *UserFavoriteHandler {
 	}
 }
 
-func (ufh *UserFavoriteHandler) RegisterRoutes(r fiber.Router) {
+func (ufh UserFavoriteHandler) RegisterRoutes(r fiber.Router) {
 	ufAPI := r.Group("/user-favorites")
 	ufAPI.Get("", ufh.getUserFavorites())
 	ufAPI.Post("", ufh.addUserFavorite())
 	ufAPI.Delete("", ufh.deleteUserFavorite())
 }
 
-// getUserFavorites godoc
-// @Summary Fetch the user favorites
-// @Tags user-favorites
-// @Accept json
-// @Produce json
-// @Success 200 {object} types.HTTPResponse[ent.UserFavorite]
-// @Router /user-favorites [get]
-func (ufh *UserFavoriteHandler) getUserFavorites() fiber.Handler {
+func (ufh UserFavoriteHandler) getUserFavorites() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		userID, ok := c.Locals(utils.CTXUserID).(uuid.UUID)
 
@@ -73,7 +66,7 @@ func (ufh *UserFavoriteHandler) getUserFavorites() fiber.Handler {
 // @Produce json
 // @Success 201
 // @Router /user-favorites [post]
-func (ufh *UserFavoriteHandler) addUserFavorite() fiber.Handler {
+func (ufh UserFavoriteHandler) addUserFavorite() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		userFav := new(models.UserFavorite)
 
@@ -113,7 +106,7 @@ func (ufh *UserFavoriteHandler) addUserFavorite() fiber.Handler {
 // @Produce json
 // @Success 204
 // @Router /user-favorites [delete]
-func (ufh *UserFavoriteHandler) deleteUserFavorite() fiber.Handler {
+func (ufh UserFavoriteHandler) deleteUserFavorite() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		userFav := new(models.UserFavorite)
 

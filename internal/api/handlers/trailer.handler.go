@@ -27,7 +27,7 @@ func NewTrailerHandler(s *server.Server) *TrailerHandler {
 	}
 }
 
-func (h *TrailerHandler) RegisterRoutes(r fiber.Router) {
+func (h TrailerHandler) RegisterRoutes(r fiber.Router) {
 	api := r.Group("/trailers")
 	api.Get("/", h.Get())
 	api.Get("/:trailerID", h.GetByID())
@@ -35,7 +35,7 @@ func (h *TrailerHandler) RegisterRoutes(r fiber.Router) {
 	api.Put("/:trailerID", h.Update())
 }
 
-func (h *TrailerHandler) Get() fiber.Handler {
+func (h TrailerHandler) Get() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		orgID, ok := c.Locals(utils.CTXOrganizationID).(uuid.UUID)
 		buID, orgOK := c.Locals(utils.CTXBusinessUnitID).(uuid.UUID)
@@ -104,7 +104,7 @@ func (h *TrailerHandler) Get() fiber.Handler {
 	}
 }
 
-func (h *TrailerHandler) Create() fiber.Handler {
+func (h TrailerHandler) Create() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		createdEntity := new(models.Trailer)
 
@@ -144,7 +144,7 @@ func (h *TrailerHandler) Create() fiber.Handler {
 	}
 }
 
-func (h *TrailerHandler) GetByID() fiber.Handler {
+func (h TrailerHandler) GetByID() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		trailerID := c.Params("trailerID")
 		if trailerID == "" {
@@ -184,7 +184,7 @@ func (h *TrailerHandler) GetByID() fiber.Handler {
 	}
 }
 
-func (h *TrailerHandler) Update() fiber.Handler {
+func (h TrailerHandler) Update() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		trailerID := c.Params("trailerID")
 		if trailerID == "" {

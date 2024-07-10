@@ -21,7 +21,7 @@ func NewUSStateService(s *server.Server) *USStateService {
 	}
 }
 
-func (s *USStateService) GetUSStates(ctx context.Context) ([]*models.UsState, int, error) {
+func (s USStateService) GetUSStates(ctx context.Context) ([]*models.UsState, int, error) {
 	var states []*models.UsState
 	count, err := s.db.NewSelect().
 		Model(&states).

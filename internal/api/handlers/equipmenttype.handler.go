@@ -27,7 +27,7 @@ func NewEquipmentTypeHandler(s *server.Server) *EquipmentTypeHandler {
 	}
 }
 
-func (h *EquipmentTypeHandler) RegisterRoutes(r fiber.Router) {
+func (h EquipmentTypeHandler) RegisterRoutes(r fiber.Router) {
 	api := r.Group("/equipment-types")
 	api.Get("/", h.Get())
 	api.Get("/:equipTypeID", h.GetByID())
@@ -35,7 +35,7 @@ func (h *EquipmentTypeHandler) RegisterRoutes(r fiber.Router) {
 	api.Put("/:equipTypeID", h.Update())
 }
 
-func (h *EquipmentTypeHandler) Get() fiber.Handler {
+func (h EquipmentTypeHandler) Get() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		orgID, ok := c.Locals(utils.CTXOrganizationID).(uuid.UUID)
 		buID, orgOK := c.Locals(utils.CTXBusinessUnitID).(uuid.UUID)
@@ -104,7 +104,7 @@ func (h *EquipmentTypeHandler) Get() fiber.Handler {
 	}
 }
 
-func (h *EquipmentTypeHandler) GetByID() fiber.Handler {
+func (h EquipmentTypeHandler) GetByID() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		equipTypeID := c.Params("equipTypeID")
 		if equipTypeID == "" {
@@ -144,7 +144,7 @@ func (h *EquipmentTypeHandler) GetByID() fiber.Handler {
 	}
 }
 
-func (h *EquipmentTypeHandler) Create() fiber.Handler {
+func (h EquipmentTypeHandler) Create() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		createdEntity := new(models.EquipmentType)
 
@@ -184,7 +184,7 @@ func (h *EquipmentTypeHandler) Create() fiber.Handler {
 	}
 }
 
-func (h *EquipmentTypeHandler) Update() fiber.Handler {
+func (h EquipmentTypeHandler) Update() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		equipTypeID := c.Params("equipTypeID")
 		if equipTypeID == "" {

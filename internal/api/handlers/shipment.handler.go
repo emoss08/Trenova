@@ -29,7 +29,7 @@ func NewShipmentHandler(s *server.Server) *ShipmentHandler {
 	}
 }
 
-func (h *ShipmentHandler) RegisterRoutes(r fiber.Router) {
+func (h ShipmentHandler) RegisterRoutes(r fiber.Router) {
 	api := r.Group("/shipments")
 	api.Get("/", h.Get())
 	api.Post("/assign-tractor", h.AssignTractorToShipment())
@@ -38,7 +38,7 @@ func (h *ShipmentHandler) RegisterRoutes(r fiber.Router) {
 	// api.Put("/:shipmentID", h.Update())
 }
 
-func (h *ShipmentHandler) Get() fiber.Handler {
+func (h ShipmentHandler) Get() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		orgID, ok := c.Locals(utils.CTXOrganizationID).(uuid.UUID)
 		buID, orgOK := c.Locals(utils.CTXBusinessUnitID).(uuid.UUID)
@@ -145,7 +145,7 @@ func (h *ShipmentHandler) Get() fiber.Handler {
 	}
 }
 
-func (h *ShipmentHandler) Create() fiber.Handler {
+func (h ShipmentHandler) Create() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		createdEntity := new(services.CreateShipmentInput)
 
@@ -185,7 +185,7 @@ func (h *ShipmentHandler) Create() fiber.Handler {
 	}
 }
 
-func (h *ShipmentHandler) GetByID() fiber.Handler {
+func (h ShipmentHandler) GetByID() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		shipmentID := c.Params("shipmentID")
 		if shipmentID == "" {
@@ -225,7 +225,7 @@ func (h *ShipmentHandler) GetByID() fiber.Handler {
 	}
 }
 
-func (h *ShipmentHandler) AssignTractorToShipment() fiber.Handler {
+func (h ShipmentHandler) AssignTractorToShipment() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		orgID, ok := c.Locals(utils.CTXOrganizationID).(uuid.UUID)
 		buID, orgOK := c.Locals(utils.CTXBusinessUnitID).(uuid.UUID)

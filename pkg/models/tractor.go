@@ -37,31 +37,32 @@ func (p TractorPermission) String() string {
 }
 
 type Tractor struct {
-	bun.BaseModel           `bun:"table:tractors,alias:tr" json:"-"`
-	CreatedAt               time.Time    `bun:",nullzero,notnull,default:current_timestamp" json:"createdAt"`
-	UpdatedAt               time.Time    `bun:",nullzero,notnull,default:current_timestamp" json:"updatedAt"`
-	ID                      uuid.UUID    `bun:",pk,type:uuid,default:uuid_generate_v4()" json:"id"`
-	Code                    string       `bun:"type:VARCHAR(50),notnull" json:"code" queryField:"true"`
-	Status                  string       `bun:"type:equipment_status_enum,notnull" json:"status"` // TODO(wolfred): Implement custom type
-	Model                   string       `bun:"type:VARCHAR(50)" json:"model"`
-	Year                    int          `bun:"type:INTEGER,nullzero" json:"year"`
-	LicensePlateNumber      string       `bun:"type:VARCHAR(50)" json:"licensePlateNumber"`
-	Vin                     string       `bun:"type:VARCHAR(17)" json:"vin"`
-	IsLeased                bool         `bun:"type:boolean" json:"isLeased"`
-	LeasedDate              *pgtype.Date `bun:"type:date,nullzero" json:"leasedDate"`
-	EquipmentTypeID         uuid.UUID    `bun:"type:uuid,notnull" json:"equipmentTypeId"`
-	EquipmentManufacturerID *uuid.UUID   `bun:"type:uuid,nullzero" json:"equipmentManufacturerId"`
-	StateID                 *uuid.UUID   `bun:"type:uuid,nullzero" json:"stateId"`
-	FleetCodeID             *uuid.UUID   `bun:"type:uuid,nullzero" json:"fleetCodeId"`
-	BusinessUnitID          uuid.UUID    `bun:"type:uuid,notnull" json:"businessUnitId"`
-	OrganizationID          uuid.UUID    `bun:"type:uuid,notnull" json:"organizationId"`
-	PrimaryWorkerID         uuid.UUID    `bun:"type:uuid" json:"primaryWorkerId"`
-	SecondaryWorkerID       *uuid.UUID   `bun:"type:uuid" json:"secondaryWorkerId"`
+	bun.BaseModel      `bun:"table:tractors,alias:tr" json:"-"`
+	ID                 uuid.UUID    `bun:",pk,type:uuid,default:uuid_generate_v4()" json:"id"`
+	Code               string       `bun:"type:VARCHAR(50),notnull" json:"code" queryField:"true"`
+	Status             string       `bun:"type:equipment_status_enum,notnull" json:"status"` // TODO(wolfred): Implement custom type
+	Model              string       `bun:"type:VARCHAR(50)" json:"model"`
+	Year               int          `bun:"type:INTEGER,nullzero" json:"year"`
+	LicensePlateNumber string       `bun:"type:VARCHAR(50)" json:"licensePlateNumber"`
+	Vin                string       `bun:"type:VARCHAR(17)" json:"vin"`
+	IsLeased           bool         `bun:"type:boolean" json:"isLeased"`
+	LeasedDate         *pgtype.Date `bun:"type:date,nullzero" json:"leasedDate"`
+	CreatedAt          time.Time    `bun:",nullzero,notnull,default:current_timestamp" json:"createdAt"`
+	UpdatedAt          time.Time    `bun:",nullzero,notnull,default:current_timestamp" json:"updatedAt"`
 
-	PrimaryWorker         *Worker                `bun:"rel:has-one,join:primary_worker_id=id" json:"primaryWorker"`
-	SecondaryWorker       *Worker                `bun:"rel:belongs-to,join:secondary_worker_id=id" json:"secondaryWorker"`
-	EquipmentType         *EquipmentType         `bun:"rel:belongs-to,join:equipment_type_id=id" json:"equipmentType"`
-	EquipmentManufacturer *EquipmentManufacturer `bun:"rel:belongs-to,join:equipment_manufacturer_id=id" json:"equipmentManufacturer"`
+	EquipmentTypeID         uuid.UUID  `bun:"type:uuid,notnull" json:"equipmentTypeId"`
+	EquipmentManufacturerID *uuid.UUID `bun:"type:uuid,nullzero" json:"equipmentManufacturerId"`
+	StateID                 *uuid.UUID `bun:"type:uuid,nullzero" json:"stateId"`
+	FleetCodeID             *uuid.UUID `bun:"type:uuid,nullzero" json:"fleetCodeId"`
+	BusinessUnitID          uuid.UUID  `bun:"type:uuid,notnull" json:"businessUnitId"`
+	OrganizationID          uuid.UUID  `bun:"type:uuid,notnull" json:"organizationId"`
+	PrimaryWorkerID         uuid.UUID  `bun:"type:uuid" json:"primaryWorkerId"`
+	SecondaryWorkerID       *uuid.UUID `bun:"type:uuid" json:"secondaryWorkerId"`
+
+	PrimaryWorker         *Worker                `bun:"rel:has-one,join:primary_worker_id=id" json:"primaryWorker,omitempty"`
+	SecondaryWorker       *Worker                `bun:"rel:belongs-to,join:secondary_worker_id=id" json:"secondaryWorker,omitempty"`
+	EquipmentType         *EquipmentType         `bun:"rel:belongs-to,join:equipment_type_id=id" json:"equipmentType,omitempty"`
+	EquipmentManufacturer *EquipmentManufacturer `bun:"rel:belongs-to,join:equipment_manufacturer_id=id" json:"equipmentManufacturer,omitempty"`
 	State                 *UsState               `bun:"rel:belongs-to,join:state_id=id" json:"-"`
 	FleetCode             *FleetCode             `bun:"rel:belongs-to,join:fleet_code_id=id" json:"-"`
 	BusinessUnit          *BusinessUnit          `bun:"rel:belongs-to,join:business_unit_id=id" json:"-"`

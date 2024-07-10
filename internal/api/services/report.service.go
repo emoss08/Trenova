@@ -91,7 +91,7 @@ type TableRelationship struct {
 }
 
 // GetTableRelationships returns the relationships and columns for the specified table and related tables
-func (s *ReportService) GetTableRelationships(ctx context.Context, tableName string) ([]TableRelationship, error) {
+func (s ReportService) GetTableRelationships(ctx context.Context, tableName string) ([]TableRelationship, error) {
 	query := `
 		WITH table_relationships AS (
 			SELECT
@@ -195,7 +195,7 @@ func (s *ReportService) GetTableRelationships(ctx context.Context, tableName str
 	return relationships, nil
 }
 
-func (s *ReportService) GetColumnsByTableName(ctx context.Context, tableName string) ([]ColumnValue, []TableRelationship, int, error) {
+func (s ReportService) GetColumnsByTableName(ctx context.Context, tableName string) ([]ColumnValue, []TableRelationship, int, error) {
 	excludedTableNames := map[string]bool{
 		"table_change_alerts":       true,
 		"shipment_controls":         true,
@@ -257,7 +257,7 @@ func (s *ReportService) GetColumnsByTableName(ctx context.Context, tableName str
 //
 // This function is used to generate a report based on the given payload. It will call the integration service to generate the report
 // and then add the report to the user's account.
-func (s *ReportService) GenerateReport(ctx context.Context, payload GenerateReportRequest, userID, orgID, buID uuid.UUID) (GenerateReportResponse, error) {
+func (s ReportService) GenerateReport(ctx context.Context, payload GenerateReportRequest, userID, orgID, buID uuid.UUID) (GenerateReportResponse, error) {
 	cfg := config.DefaultServiceConfigFromEnv()
 
 	client := req.C().SetTimeout(10 * time.Second)
@@ -293,7 +293,7 @@ func (s *ReportService) GenerateReport(ctx context.Context, payload GenerateRepo
 // addReportToUser adds the report to the user's account.
 //
 // This function is used to add the report to the user's account.
-func (s *ReportService) addReportToUser(ctx context.Context, userID, orgID, buID uuid.UUID, reportURL string) error {
+func (s ReportService) addReportToUser(ctx context.Context, userID, orgID, buID uuid.UUID, reportURL string) error {
 	report := &models.UserReport{
 		UserID:         userID,
 		OrganizationID: orgID,

@@ -27,7 +27,7 @@ func NewDocumentClassificationHandler(s *server.Server) *DocumentClassificationH
 	}
 }
 
-func (h *DocumentClassificationHandler) RegisterRoutes(r fiber.Router) {
+func (h DocumentClassificationHandler) RegisterRoutes(r fiber.Router) {
 	api := r.Group("/document-classifications")
 	api.Get("/", h.Get())
 	api.Get("/:documentclassificationID", h.GetByID())
@@ -35,7 +35,7 @@ func (h *DocumentClassificationHandler) RegisterRoutes(r fiber.Router) {
 	api.Put("/:documentclassificationID", h.Update())
 }
 
-func (h *DocumentClassificationHandler) Get() fiber.Handler {
+func (h DocumentClassificationHandler) Get() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		orgID, ok := c.Locals(utils.CTXOrganizationID).(uuid.UUID)
 		buID, orgOK := c.Locals(utils.CTXBusinessUnitID).(uuid.UUID)
@@ -104,7 +104,7 @@ func (h *DocumentClassificationHandler) Get() fiber.Handler {
 	}
 }
 
-func (h *DocumentClassificationHandler) Create() fiber.Handler {
+func (h DocumentClassificationHandler) Create() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		createdEntity := new(models.DocumentClassification)
 
@@ -144,7 +144,7 @@ func (h *DocumentClassificationHandler) Create() fiber.Handler {
 	}
 }
 
-func (h *DocumentClassificationHandler) GetByID() fiber.Handler {
+func (h DocumentClassificationHandler) GetByID() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		documentclassificationID := c.Params("documentclassificationID")
 		if documentclassificationID == "" {
@@ -184,7 +184,7 @@ func (h *DocumentClassificationHandler) GetByID() fiber.Handler {
 	}
 }
 
-func (h *DocumentClassificationHandler) Update() fiber.Handler {
+func (h DocumentClassificationHandler) Update() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		documentclassificationID := c.Params("documentclassificationID")
 		if documentclassificationID == "" {

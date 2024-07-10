@@ -27,7 +27,7 @@ func NewLocationHandler(s *server.Server) *LocationHandler {
 	}
 }
 
-func (h *LocationHandler) RegisterRoutes(r fiber.Router) {
+func (h LocationHandler) RegisterRoutes(r fiber.Router) {
 	api := r.Group("/locations")
 	api.Get("/", h.Get())
 	api.Get("/:locationID", h.GetByID())
@@ -35,7 +35,7 @@ func (h *LocationHandler) RegisterRoutes(r fiber.Router) {
 	api.Put("/:locationID", h.Update())
 }
 
-func (h *LocationHandler) Get() fiber.Handler {
+func (h LocationHandler) Get() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		orgID, ok := c.Locals(utils.CTXOrganizationID).(uuid.UUID)
 		buID, orgOK := c.Locals(utils.CTXBusinessUnitID).(uuid.UUID)
@@ -104,7 +104,7 @@ func (h *LocationHandler) Get() fiber.Handler {
 	}
 }
 
-func (h *LocationHandler) Create() fiber.Handler {
+func (h LocationHandler) Create() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		createdEntity := new(models.Location)
 
@@ -142,7 +142,7 @@ func (h *LocationHandler) Create() fiber.Handler {
 	}
 }
 
-func (h *LocationHandler) GetByID() fiber.Handler {
+func (h LocationHandler) GetByID() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		locationID := c.Params("locationID")
 		if locationID == "" {
@@ -182,7 +182,7 @@ func (h *LocationHandler) GetByID() fiber.Handler {
 	}
 }
 
-func (h *LocationHandler) Update() fiber.Handler {
+func (h LocationHandler) Update() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		locationID := c.Params("locationID")
 		if locationID == "" {

@@ -22,7 +22,7 @@ func NewUserTaskService(s *server.Server) *UserTaskService {
 	}
 }
 
-func (s *UserTaskService) GetTasksByUserID(ctx context.Context, userID, buID, orgID uuid.UUID) ([]*models.UserTask, int, error) {
+func (s UserTaskService) GetTasksByUserID(ctx context.Context, userID, buID, orgID uuid.UUID) ([]*models.UserTask, int, error) {
 	var entities []*models.UserTask
 	cnt, err := s.db.NewSelect().
 		Model(&entities).

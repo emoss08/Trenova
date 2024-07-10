@@ -36,7 +36,7 @@ type CommodityQueryFilter struct {
 }
 
 // filterQuery applies filters to the query
-func (s *CommodityService) filterQuery(q *bun.SelectQuery, f *CommodityQueryFilter) *bun.SelectQuery {
+func (s CommodityService) filterQuery(q *bun.SelectQuery, f *CommodityQueryFilter) *bun.SelectQuery {
 	q = q.Where("com.organization_id = ?", f.OrganizationID).
 		Where("com.business_unit_id = ?", f.BusinessUnitID)
 
@@ -51,7 +51,7 @@ func (s *CommodityService) filterQuery(q *bun.SelectQuery, f *CommodityQueryFilt
 }
 
 // GetAll retrieves all Commodity based on the provided filter
-func (s *CommodityService) GetAll(ctx context.Context, filter *CommodityQueryFilter) ([]*models.Commodity, int, error) {
+func (s CommodityService) GetAll(ctx context.Context, filter *CommodityQueryFilter) ([]*models.Commodity, int, error) {
 	var entities []*models.Commodity
 
 	q := s.db.NewSelect().
@@ -69,7 +69,7 @@ func (s *CommodityService) GetAll(ctx context.Context, filter *CommodityQueryFil
 }
 
 // Get retrieves a single Commodity by ID
-func (s *CommodityService) Get(ctx context.Context, id, orgID, buID uuid.UUID) (*models.Commodity, error) {
+func (s CommodityService) Get(ctx context.Context, id, orgID, buID uuid.UUID) (*models.Commodity, error) {
 	entity := new(models.Commodity)
 	err := s.db.NewSelect().
 		Model(entity).
@@ -86,7 +86,7 @@ func (s *CommodityService) Get(ctx context.Context, id, orgID, buID uuid.UUID) (
 }
 
 // Create creates a new Commodity
-func (s *CommodityService) Create(ctx context.Context, entity *models.Commodity) (*models.Commodity, error) {
+func (s CommodityService) Create(ctx context.Context, entity *models.Commodity) (*models.Commodity, error) {
 	err := s.db.RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
 		_, err := tx.NewInsert().
 			Model(entity).
@@ -103,7 +103,7 @@ func (s *CommodityService) Create(ctx context.Context, entity *models.Commodity)
 }
 
 // UpdateOne updates an existing Commodity
-func (s *CommodityService) UpdateOne(ctx context.Context, entity *models.Commodity) (*models.Commodity, error) {
+func (s CommodityService) UpdateOne(ctx context.Context, entity *models.Commodity) (*models.Commodity, error) {
 	err := s.db.RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
 		_, err := tx.NewUpdate().
 			Model(entity).

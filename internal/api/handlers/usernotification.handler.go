@@ -22,7 +22,7 @@ func NewUserNotificationHandler(s *server.Server) *UserNotificationHandler {
 	}
 }
 
-func (unh *UserNotificationHandler) RegisterRoutes(r fiber.Router) {
+func (unh UserNotificationHandler) RegisterRoutes(r fiber.Router) {
 	unAPI := r.Group("/user-notifications")
 	unAPI.Get("/", unh.getUserNotifications())
 }
@@ -32,7 +32,7 @@ type UserNotificationResponse struct {
 	UnreadList  []*models.UserNotification `json:"unreadList"`
 }
 
-func (unh *UserNotificationHandler) getUserNotifications() fiber.Handler {
+func (unh UserNotificationHandler) getUserNotifications() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		orgID, ok := c.Locals(utils.CTXOrganizationID).(uuid.UUID)
 		buID, orgOK := c.Locals(utils.CTXBusinessUnitID).(uuid.UUID)

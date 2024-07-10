@@ -27,7 +27,7 @@ func NewEquipmentManufacturerHandler(s *server.Server) *EquipmentManufacturerHan
 	}
 }
 
-func (h *EquipmentManufacturerHandler) RegisterRoutes(r fiber.Router) {
+func (h EquipmentManufacturerHandler) RegisterRoutes(r fiber.Router) {
 	api := r.Group("/equipment-manufacturers")
 	api.Get("/", h.Get())
 	api.Get("/:equipmentmanufacturerID", h.GetByID())
@@ -35,7 +35,7 @@ func (h *EquipmentManufacturerHandler) RegisterRoutes(r fiber.Router) {
 	api.Put("/:equipmentmanufacturerID", h.Update())
 }
 
-func (h *EquipmentManufacturerHandler) Get() fiber.Handler {
+func (h EquipmentManufacturerHandler) Get() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		orgID, ok := c.Locals(utils.CTXOrganizationID).(uuid.UUID)
 		buID, orgOK := c.Locals(utils.CTXBusinessUnitID).(uuid.UUID)
@@ -104,7 +104,7 @@ func (h *EquipmentManufacturerHandler) Get() fiber.Handler {
 	}
 }
 
-func (h *EquipmentManufacturerHandler) Create() fiber.Handler {
+func (h EquipmentManufacturerHandler) Create() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		createdEntity := new(models.EquipmentManufacturer)
 
@@ -144,7 +144,7 @@ func (h *EquipmentManufacturerHandler) Create() fiber.Handler {
 	}
 }
 
-func (h *EquipmentManufacturerHandler) GetByID() fiber.Handler {
+func (h EquipmentManufacturerHandler) GetByID() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		equipmentmanufacturerID := c.Params("equipmentmanufacturerID")
 		if equipmentmanufacturerID == "" {
@@ -184,7 +184,7 @@ func (h *EquipmentManufacturerHandler) GetByID() fiber.Handler {
 	}
 }
 
-func (h *EquipmentManufacturerHandler) Update() fiber.Handler {
+func (h EquipmentManufacturerHandler) Update() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		equipmentmanufacturerID := c.Params("equipmentmanufacturerID")
 		if equipmentmanufacturerID == "" {

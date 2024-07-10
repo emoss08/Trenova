@@ -27,7 +27,7 @@ func NewServiceTypeHandler(s *server.Server) *ServiceTypeHandler {
 	}
 }
 
-func (h *ServiceTypeHandler) RegisterRoutes(r fiber.Router) {
+func (h ServiceTypeHandler) RegisterRoutes(r fiber.Router) {
 	api := r.Group("/service-types")
 	api.Get("/", h.Get())
 	api.Get("/:servicetypeID", h.GetByID())
@@ -35,7 +35,7 @@ func (h *ServiceTypeHandler) RegisterRoutes(r fiber.Router) {
 	api.Put("/:servicetypeID", h.Update())
 }
 
-func (h *ServiceTypeHandler) Get() fiber.Handler {
+func (h ServiceTypeHandler) Get() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		orgID, ok := c.Locals(utils.CTXOrganizationID).(uuid.UUID)
 		buID, orgOK := c.Locals(utils.CTXBusinessUnitID).(uuid.UUID)
@@ -104,7 +104,7 @@ func (h *ServiceTypeHandler) Get() fiber.Handler {
 	}
 }
 
-func (h *ServiceTypeHandler) Create() fiber.Handler {
+func (h ServiceTypeHandler) Create() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		createdEntity := new(models.ServiceType)
 
@@ -144,7 +144,7 @@ func (h *ServiceTypeHandler) Create() fiber.Handler {
 	}
 }
 
-func (h *ServiceTypeHandler) GetByID() fiber.Handler {
+func (h ServiceTypeHandler) GetByID() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		servicetypeID := c.Params("servicetypeID")
 		if servicetypeID == "" {
@@ -184,7 +184,7 @@ func (h *ServiceTypeHandler) GetByID() fiber.Handler {
 	}
 }
 
-func (h *ServiceTypeHandler) Update() fiber.Handler {
+func (h ServiceTypeHandler) Update() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		servicetypeID := c.Params("servicetypeID")
 		if servicetypeID == "" {

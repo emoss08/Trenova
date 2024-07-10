@@ -39,7 +39,7 @@ type CustomerQueryFilter struct {
 }
 
 // filterQuery applies filters to the query
-func (s *CustomerService) filterQuery(q *bun.SelectQuery, f *CustomerQueryFilter) *bun.SelectQuery {
+func (s CustomerService) filterQuery(q *bun.SelectQuery, f *CustomerQueryFilter) *bun.SelectQuery {
 	q = q.Where("cu.organization_id = ?", f.OrganizationID).
 		Where("cu.business_unit_id = ?", f.BusinessUnitID)
 
@@ -54,7 +54,7 @@ func (s *CustomerService) filterQuery(q *bun.SelectQuery, f *CustomerQueryFilter
 }
 
 // GetAll retrieves all Customer based on the provided filter
-func (s *CustomerService) GetAll(ctx context.Context, filter *CustomerQueryFilter) ([]*models.Customer, int, error) {
+func (s CustomerService) GetAll(ctx context.Context, filter *CustomerQueryFilter) ([]*models.Customer, int, error) {
 	var entities []*models.Customer
 
 	q := s.db.NewSelect().
@@ -72,7 +72,7 @@ func (s *CustomerService) GetAll(ctx context.Context, filter *CustomerQueryFilte
 }
 
 // Get retrieves a single Customer by ID
-func (s *CustomerService) Get(ctx context.Context, id, orgID, buID uuid.UUID) (*models.Customer, error) {
+func (s CustomerService) Get(ctx context.Context, id, orgID, buID uuid.UUID) (*models.Customer, error) {
 	entity := new(models.Customer)
 	err := s.db.NewSelect().
 		Model(entity).
@@ -89,7 +89,7 @@ func (s *CustomerService) Get(ctx context.Context, id, orgID, buID uuid.UUID) (*
 }
 
 // Create creates a new Customer
-func (s *CustomerService) Create(ctx context.Context, entity *models.Customer) (*models.Customer, error) {
+func (s CustomerService) Create(ctx context.Context, entity *models.Customer) (*models.Customer, error) {
 	err := s.db.RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
 		// Query the master key generation entity.
 		mkg, mErr := models.QueryCustomerMasterKeyGenerationByOrgID(ctx, s.db, entity.OrganizationID)
@@ -108,7 +108,7 @@ func (s *CustomerService) Create(ctx context.Context, entity *models.Customer) (
 }
 
 // UpdateOne updates an existing Customer
-func (s *CustomerService) UpdateOne(ctx context.Context, entity *models.Customer) (*models.Customer, error) {
+func (s CustomerService) UpdateOne(ctx context.Context, entity *models.Customer) (*models.Customer, error) {
 	err := s.db.RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
 		_, err := tx.NewUpdate().
 			Model(entity).

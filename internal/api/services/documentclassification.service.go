@@ -36,7 +36,7 @@ type DocumentClassificationQueryFilter struct {
 }
 
 // filterQuery applies filters to the query
-func (s *DocumentClassificationService) filterQuery(q *bun.SelectQuery, f *DocumentClassificationQueryFilter) *bun.SelectQuery {
+func (s DocumentClassificationService) filterQuery(q *bun.SelectQuery, f *DocumentClassificationQueryFilter) *bun.SelectQuery {
 	q = q.Where("dc.organization_id = ?", f.OrganizationID).
 		Where("dc.business_unit_id = ?", f.BusinessUnitID)
 
@@ -51,7 +51,7 @@ func (s *DocumentClassificationService) filterQuery(q *bun.SelectQuery, f *Docum
 }
 
 // GetAll retrieves all DocumentClassification based on the provided filter
-func (s *DocumentClassificationService) GetAll(ctx context.Context, filter *DocumentClassificationQueryFilter) ([]*models.DocumentClassification, int, error) {
+func (s DocumentClassificationService) GetAll(ctx context.Context, filter *DocumentClassificationQueryFilter) ([]*models.DocumentClassification, int, error) {
 	var entities []*models.DocumentClassification
 
 	q := s.db.NewSelect().
@@ -69,7 +69,7 @@ func (s *DocumentClassificationService) GetAll(ctx context.Context, filter *Docu
 }
 
 // Get retrieves a single DocumentClassification by ID
-func (s *DocumentClassificationService) Get(ctx context.Context, id, orgID, buID uuid.UUID) (*models.DocumentClassification, error) {
+func (s DocumentClassificationService) Get(ctx context.Context, id, orgID, buID uuid.UUID) (*models.DocumentClassification, error) {
 	entity := new(models.DocumentClassification)
 	err := s.db.NewSelect().
 		Model(entity).
@@ -86,7 +86,7 @@ func (s *DocumentClassificationService) Get(ctx context.Context, id, orgID, buID
 }
 
 // Create creates a new DocumentClassification
-func (s *DocumentClassificationService) Create(ctx context.Context, entity *models.DocumentClassification) (*models.DocumentClassification, error) {
+func (s DocumentClassificationService) Create(ctx context.Context, entity *models.DocumentClassification) (*models.DocumentClassification, error) {
 	err := s.db.RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
 		_, err := tx.NewInsert().
 			Model(entity).
@@ -103,7 +103,7 @@ func (s *DocumentClassificationService) Create(ctx context.Context, entity *mode
 }
 
 // UpdateOne updates an existing DocumentClassification
-func (s *DocumentClassificationService) UpdateOne(ctx context.Context, entity *models.DocumentClassification) (*models.DocumentClassification, error) {
+func (s DocumentClassificationService) UpdateOne(ctx context.Context, entity *models.DocumentClassification) (*models.DocumentClassification, error) {
 	err := s.db.RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
 		_, err := tx.NewUpdate().
 			Model(entity).

@@ -27,14 +27,14 @@ func NewTagHandler(s *server.Server) *TagHandler {
 	}
 }
 
-func (h *TagHandler) RegisterRoutes(r fiber.Router) {
+func (h TagHandler) RegisterRoutes(r fiber.Router) {
 	api := r.Group("/tags")
 	api.Get("/", h.Get())
 	api.Post("/", h.Create())
 	api.Put("/:tagID", h.Update())
 }
 
-func (h *TagHandler) Get() fiber.Handler {
+func (h TagHandler) Get() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		orgID, ok := c.Locals(utils.CTXOrganizationID).(uuid.UUID)
 		buID, orgOK := c.Locals(utils.CTXBusinessUnitID).(uuid.UUID)
@@ -95,7 +95,7 @@ func (h *TagHandler) Get() fiber.Handler {
 	}
 }
 
-func (h *TagHandler) Create() fiber.Handler {
+func (h TagHandler) Create() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		createdEntity := new(models.Tag)
 
@@ -135,7 +135,7 @@ func (h *TagHandler) Create() fiber.Handler {
 	}
 }
 
-func (h *TagHandler) Update() fiber.Handler {
+func (h TagHandler) Update() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		tagID := c.Params("tagID")
 		if tagID == "" {

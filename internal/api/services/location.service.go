@@ -38,7 +38,7 @@ type LocationQueryFilter struct {
 }
 
 // filterQuery applies filters to the query
-func (s *LocationService) filterQuery(q *bun.SelectQuery, f *LocationQueryFilter) *bun.SelectQuery {
+func (s LocationService) filterQuery(q *bun.SelectQuery, f *LocationQueryFilter) *bun.SelectQuery {
 	q = q.Where("lc.organization_id = ?", f.OrganizationID).
 		Where("lc.business_unit_id = ?", f.BusinessUnitID)
 
@@ -53,7 +53,7 @@ func (s *LocationService) filterQuery(q *bun.SelectQuery, f *LocationQueryFilter
 }
 
 // GetAll retrieves all Location based on the provided filter
-func (s *LocationService) GetAll(ctx context.Context, filter *LocationQueryFilter) ([]*models.Location, int, error) {
+func (s LocationService) GetAll(ctx context.Context, filter *LocationQueryFilter) ([]*models.Location, int, error) {
 	var entities []*models.Location
 
 	q := s.db.NewSelect().
@@ -75,7 +75,7 @@ func (s *LocationService) GetAll(ctx context.Context, filter *LocationQueryFilte
 }
 
 // Get retrieves a single Location by ID
-func (s *LocationService) Get(ctx context.Context, id, orgID, buID uuid.UUID) (*models.Location, error) {
+func (s LocationService) Get(ctx context.Context, id, orgID, buID uuid.UUID) (*models.Location, error) {
 	entity := new(models.Location)
 	err := s.db.NewSelect().
 		Model(entity).
@@ -92,7 +92,7 @@ func (s *LocationService) Get(ctx context.Context, id, orgID, buID uuid.UUID) (*
 }
 
 // Create creates a new Location
-func (s *LocationService) Create(ctx context.Context, entity *models.Location) (*models.Location, error) {
+func (s LocationService) Create(ctx context.Context, entity *models.Location) (*models.Location, error) {
 	err := s.db.RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
 		// Query the master key generation entity.
 		mkg, mErr := models.QueryLocationMasterKeyGenerationByOrgID(ctx, s.db, entity.OrganizationID)
@@ -111,7 +111,7 @@ func (s *LocationService) Create(ctx context.Context, entity *models.Location) (
 }
 
 // UpdateOne updates an existing Location
-func (s *LocationService) UpdateOne(ctx context.Context, entity *models.Location) (*models.Location, error) {
+func (s LocationService) UpdateOne(ctx context.Context, entity *models.Location) (*models.Location, error) {
 	err := s.db.RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
 		return entity.UpdateLocation(ctx, tx)
 	})

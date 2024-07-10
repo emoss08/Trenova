@@ -27,7 +27,7 @@ func NewDivisionCodeHandler(s *server.Server) *DivisionCodeHandler {
 	}
 }
 
-func (h *DivisionCodeHandler) RegisterRoutes(r fiber.Router) {
+func (h DivisionCodeHandler) RegisterRoutes(r fiber.Router) {
 	api := r.Group("/division-codes")
 	api.Get("/", h.Get())
 	api.Get("/:divisioncodeID", h.GetByID())
@@ -35,7 +35,7 @@ func (h *DivisionCodeHandler) RegisterRoutes(r fiber.Router) {
 	api.Put("/:divisioncodeID", h.Update())
 }
 
-func (h *DivisionCodeHandler) Get() fiber.Handler {
+func (h DivisionCodeHandler) Get() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		orgID, ok := c.Locals(utils.CTXOrganizationID).(uuid.UUID)
 		buID, orgOK := c.Locals(utils.CTXBusinessUnitID).(uuid.UUID)
@@ -104,7 +104,7 @@ func (h *DivisionCodeHandler) Get() fiber.Handler {
 	}
 }
 
-func (h *DivisionCodeHandler) Create() fiber.Handler {
+func (h DivisionCodeHandler) Create() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		createdEntity := new(models.DivisionCode)
 
@@ -144,7 +144,7 @@ func (h *DivisionCodeHandler) Create() fiber.Handler {
 	}
 }
 
-func (h *DivisionCodeHandler) GetByID() fiber.Handler {
+func (h DivisionCodeHandler) GetByID() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		divisioncodeID := c.Params("divisioncodeID")
 		if divisioncodeID == "" {
@@ -184,7 +184,7 @@ func (h *DivisionCodeHandler) GetByID() fiber.Handler {
 	}
 }
 
-func (h *DivisionCodeHandler) Update() fiber.Handler {
+func (h DivisionCodeHandler) Update() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		divisioncodeID := c.Params("divisioncodeID")
 		if divisioncodeID == "" {

@@ -27,7 +27,7 @@ func NewAccessorialChargeHandler(s *server.Server) *AccessorialChargeHandler {
 	}
 }
 
-func (h *AccessorialChargeHandler) RegisterRoutes(r fiber.Router) {
+func (h AccessorialChargeHandler) RegisterRoutes(r fiber.Router) {
 	api := r.Group("/accessorial-charges")
 	api.Get("/", h.Get())
 	api.Get("/:accessorialchargeID", h.GetByID())
@@ -35,7 +35,7 @@ func (h *AccessorialChargeHandler) RegisterRoutes(r fiber.Router) {
 	api.Put("/:accessorialchargeID", h.Update())
 }
 
-func (h *AccessorialChargeHandler) Get() fiber.Handler {
+func (h AccessorialChargeHandler) Get() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		orgID, ok := c.Locals(utils.CTXOrganizationID).(uuid.UUID)
 		buID, orgOK := c.Locals(utils.CTXBusinessUnitID).(uuid.UUID)
@@ -104,7 +104,7 @@ func (h *AccessorialChargeHandler) Get() fiber.Handler {
 	}
 }
 
-func (h *AccessorialChargeHandler) Create() fiber.Handler {
+func (h AccessorialChargeHandler) Create() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		createdEntity := new(models.AccessorialCharge)
 
@@ -144,7 +144,7 @@ func (h *AccessorialChargeHandler) Create() fiber.Handler {
 	}
 }
 
-func (h *AccessorialChargeHandler) GetByID() fiber.Handler {
+func (h AccessorialChargeHandler) GetByID() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		accessorialchargeID := c.Params("accessorialchargeID")
 		if accessorialchargeID == "" {
@@ -184,7 +184,7 @@ func (h *AccessorialChargeHandler) GetByID() fiber.Handler {
 	}
 }
 
-func (h *AccessorialChargeHandler) Update() fiber.Handler {
+func (h AccessorialChargeHandler) Update() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		accessorialchargeID := c.Params("accessorialchargeID")
 		if accessorialchargeID == "" {

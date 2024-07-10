@@ -143,3 +143,21 @@ func (s *TractorService) UpdateOne(ctx context.Context, entity *models.Tractor) 
 
 	return entity, nil
 }
+
+func (s *TractorService) GetActiveAssignments(ctx context.Context, tractorID string, orgID, buID uuid.UUID) ([]models.TractorAssignment, error) {
+	var assignments []models.TractorAssignment
+
+	err := s.db.NewSelect().
+		Model(&assignments).
+		Where("ta.tractor_id = ? AND ta.organization_id = ? AND ta.business_unit_id = ? AND ta.status = ?",
+			tractorID, orgID, buID, "Active").
+		Relation("Shipment").
+		Relation("ShipmentMove").
+		Order("sequence ASC").
+		Scan(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to fetch active assignments: %w", err)
+	}
+
+	return assignments, nil
+}
