@@ -19,21 +19,17 @@ func main() {
 	ctx := context.Background()
 
 	// Configure the file rotatelogs
-	logPath := os.ExpandEnv("$HOME/logs/table_change_alert_listener.log") // Use a directory within the home directory
+	logPath := os.ExpandEnv("$HOME/logs/table_change_alert_listener.log") // TODO: We might want this to be set via an environment variable.
 	rotator, err := rotatelogs.New(
 		fmt.Sprintf("%s.%s", logPath, "%Y%m%d%H%M"),
-		rotatelogs.WithLinkName(logPath),          // Generate a symlink to the latest log file
-		rotatelogs.WithRotationTime(24*time.Hour), // Rotate every 24 hours
-		rotatelogs.WithMaxAge(7*24*time.Hour),     // Keep logs for 7 days
+		rotatelogs.WithLinkName(logPath),
+		rotatelogs.WithRotationTime(24*time.Hour),
+		rotatelogs.WithMaxAge(7*24*time.Hour),
 	)
 	if err != nil {
 		log.Fatal().Err(err).Msg("Failed to create rotatelogs")
 	}
 
-	// Configure zerolog with rotatelogs
-	// logger := zerolog.New(rotator).With().Timestamp().Logger()
-
-	// You can also output to both console and file by combining outputs
 	multi := zerolog.MultiLevelWriter(zerolog.ConsoleWriter{Out: os.Stderr}, rotator)
 	logger := zerolog.New(multi).With().Timestamp().Logger()
 

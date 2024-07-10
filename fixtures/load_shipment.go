@@ -73,8 +73,8 @@ func loadShipments(ctx context.Context, db *bun.DB, gen *gen.CodeGenerator, orgI
 		return err
 	}
 
-	if count < 20 {
-		for i := 0; i < 20; i++ {
+	if count < 100 {
+		for i := 0; i < 100; i++ {
 			input := services.CreateShipmentInput{
 				BusinessUnitID:              buID,
 				OrganizationID:              orgID,

@@ -31,7 +31,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
 
   return (
     <div className="bg-background relative flex min-h-screen flex-col" id="app">
-      <RainbowTopBar />
+      {/* <RainbowTopBar /> */}
       <div className="flex flex-1 overflow-hidden">
         {hideAsideMenu ? null : <MainAsideMenu />}
         <div className="flex flex-1 flex-col overflow-hidden">

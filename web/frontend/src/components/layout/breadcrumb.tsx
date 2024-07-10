@@ -38,15 +38,8 @@ export function Breadcrumb({ children }: { children?: React.ReactNode }) {
   const [currentRoute, setCurrentRoute] =
     useBreadcrumbStore.use("currentRoute");
   const [loading, setLoading] = useBreadcrumbStore.use("loading");
-  // Custom Hooks for functionality
   useRouteMatching(setLoading, setCurrentRoute);
   useDocumentTitle(currentRoute);
-
-  const isExcludedPath = useMemo(() => {
-    const excludedPaths = ["/shipments/shipment-management/"];
-
-    return currentRoute && excludedPaths.includes(currentRoute.path);
-  }, [currentRoute]);
 
   // Construct breadcrumb text
   const breadcrumbText = useMemo(() => {
@@ -67,7 +60,7 @@ export function Breadcrumb({ children }: { children?: React.ReactNode }) {
   }
 
   // If the current route is not found or is an excluded path, return null
-  if (!currentRoute || isExcludedPath) {
+  if (!currentRoute) {
     return null;
   }
 

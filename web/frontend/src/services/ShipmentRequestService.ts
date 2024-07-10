@@ -14,13 +14,17 @@ import type {
  * @returns A promise that resolves to a FeasibilityToolControl object.
  */
 export async function getShipments(
-  searchQuery?: string,
-  statusFilter?: string,
+  searchQuery: string,
+  statusFilter: string,
+  offset: number,
+  limit: number,
 ): Promise<ApiResponse<Shipment>> {
   const response = await axios.get("/shipments/", {
     params: {
       search: searchQuery,
       status: statusFilter,
+      limit: limit,
+      offset: offset,
     },
   });
   return response.data;
@@ -39,10 +43,12 @@ type ShipmentCount = {
  */
 export async function getShipmentCountByStatus(
   searchQuery?: string,
+  statusFilter?: string,
 ): Promise<ApiResponse<ShipmentCount>> {
   const response = await axios.get("/shipments/count/", {
     params: {
       search: searchQuery,
+      status: statusFilter,
     },
   });
   return response.data;

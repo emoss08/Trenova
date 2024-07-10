@@ -106,7 +106,7 @@ export function ShipmentInfo({
   const lastDelivery = getLastDelivery();
 
   return (
-    <Card className="hover:bg-muted/30 w-full select-none border border-dashed hover:cursor-pointer">
+    <Card className="hover:bg-muted/30 mb-4 w-full select-none border border-dashed hover:cursor-pointer">
       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
         <CardTitle className="text-sm font-medium">
           Shipment #{shipment.proNumber}

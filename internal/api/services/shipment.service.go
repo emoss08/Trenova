@@ -3,7 +3,6 @@ package services
 import (
 	"context"
 	"fmt"
-	"strings"
 	"time"
 
 	"github.com/emoss08/trenova/internal/server"
@@ -138,11 +137,14 @@ func (s *ShipmentService) applyFilters(q *bun.SelectQuery, f *ShipmentQueryFilte
 		Where("sp.business_unit_id = ?", f.BusinessUnitID)
 
 	if f.Query != "" {
-		q = q.Where("sp.pro_number ILIKE ? OR sp.bill_of_lading ILIKE ? OR c.name ILIKE ?",
+		q = q.Where("sp.pro_number ILIKE ? OR sp.bill_of_lading ILIKE ? OR sp.tracking_number ILIKE ?",
 			"%"+f.Query+"%", "%"+f.Query+"%", "%"+f.Query+"%")
 	}
 
 	// Apply additional filters
+	if f.Status != "" {
+		q = q.Where("sp.status = ?", f.Status)
+	}
 	if f.CustomerID != uuid.Nil {
 		q = q.Where("sp.customer_id = ?", f.CustomerID)
 	}
@@ -164,7 +166,25 @@ func (s *ShipmentService) filterQuery(q *bun.SelectQuery, f *ShipmentQueryFilter
 		Where("sp.business_unit_id = ?", f.BusinessUnitID)
 
 	if f.Query != "" {
-		q = q.Where("sp.pro_number = ? OR sp.bill_of_lading ILIKE ?", f.Query, "%"+strings.ToLower(f.Query)+"%")
+		q = q.Where("sp.pro_number ILIKE ? OR sp.bill_of_lading ILIKE ? OR sp.tracking_number ILIKE ?",
+			"%"+f.Query+"%", "%"+f.Query+"%", "%"+f.Query+"%")
+	}
+
+	// Apply additional filters
+	if f.Status != "" {
+		q = q.Where("sp.status = ?", f.Status)
+	}
+	if f.CustomerID != uuid.Nil {
+		q = q.Where("sp.customer_id = ?", f.CustomerID)
+	}
+	if f.FromDate != nil {
+		q = q.Where("sp.created_at >= ?", f.FromDate)
+	}
+	if f.ToDate != nil {
+		q = q.Where("sp.created_at <= ?", f.ToDate)
+	}
+	if f.ShipmentTypeID != uuid.Nil {
+		q = q.Where("sp.shipment_type_id = ?", f.ShipmentTypeID)
 	}
 
 	q = q.OrderExpr("CASE WHEN sp.pro_number = ? THEN 0 ELSE 1 END", f.Query).

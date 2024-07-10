@@ -227,13 +227,13 @@ func (s Shipment) DBValidate(ctx context.Context, db *bun.DB) error {
 		}
 	}
 
-	if err := s.validateTotalChargeAmount(); err != nil {
-		if errors.As(err, &dbValidationErr) {
-			multiErr.Errors = append(multiErr.Errors, *dbValidationErr)
-		} else {
-			return err
-		}
-	}
+	// if err := s.validateTotalChargeAmount(); err != nil {
+	// 	if errors.As(err, &dbValidationErr) {
+	// 		multiErr.Errors = append(multiErr.Errors, *dbValidationErr)
+	// 	} else {
+	// 		return err
+	// 	}
+	// }
 
 	if err := s.validateDeliveryDate(s.EstimatedDeliveryDate); err != nil {
 		if errors.As(err, &dbValidationErr) {
@@ -250,7 +250,7 @@ func (s Shipment) DBValidate(ctx context.Context, db *bun.DB) error {
 	return nil
 }
 
-func (s *Shipment) validateDeliveryDate(value any) error {
+func (s Shipment) validateDeliveryDate(value any) error {
 	estimatedDelivery, ok := value.(*pgtype.Date)
 	if !ok {
 		return fmt.Errorf("expected *pgtype.Date, got %T", value)
@@ -264,7 +264,7 @@ func (s *Shipment) validateDeliveryDate(value any) error {
 	return nil
 }
 
-func (s *Shipment) validateTotalChargeAmount() error {
+func (s Shipment) validateTotalChargeAmount() error {
 	expectedTotal := s.FreightChargeAmount.Add(s.OtherChargeAmount)
 	if s.TotalChargeAmount != expectedTotal {
 		return validator.DBValidationError{
@@ -276,7 +276,7 @@ func (s *Shipment) validateTotalChargeAmount() error {
 	return nil
 }
 
-func (s *Shipment) validateStatusTransition(ctx context.Context, db *bun.DB) error {
+func (s Shipment) validateStatusTransition(ctx context.Context, db *bun.DB) error {
 	if s.ID == uuid.Nil {
 		// This is a new shipment, so we only need to validae that the status is New
 		if s.Status != property.ShipmentStatusNew {

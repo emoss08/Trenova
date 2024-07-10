@@ -466,7 +466,7 @@ function MainAsideMenu() {
     <MenuContext.Provider value={{ isMinimized, toggleMinimize }}>
       <div
         className={cn(
-          "bg-background border-border hidden h-[99vh] shrink-0 flex-col border-r xl:flex transition-all duration-300 ease-in-out",
+          "bg-background border-border hidden h-screen shrink-0 flex-col border-r xl:flex transition-all duration-300 ease-in-out",
           isMinimized ? "w-[70px]" : "w-72",
         )}
       >
