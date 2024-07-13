@@ -14,7 +14,8 @@ import (
 )
 
 type ShipmentMove struct {
-	bun.BaseModel     `bun:"table:shipment_moves,alias:sm" json:"-"`
+	bun.BaseModel `bun:"table:shipment_moves,alias:sm" json:"-"`
+
 	ID                uuid.UUID                   `bun:",pk,type:uuid,default:uuid_generate_v4()" json:"id"`
 	Status            property.ShipmentMoveStatus `bun:"type:VARCHAR(50),notnull" json:"status"`
 	IsLoaded          bool                        `bun:"type:BOOLEAN,default:false" json:"isLoaded"`
@@ -24,6 +25,7 @@ type ShipmentMove struct {
 	EstimatedCost     decimal.NullDecimal         `bun:"type:NUMERIC(19,4),nullzero" json:"estimatedCost"`
 	ActualCost        decimal.NullDecimal         `bun:"type:NUMERIC(19,4),nullzero" json:"actualCost"`
 	Notes             string                      `bun:"type:TEXT,nullzero" json:"notes"`
+	Version           int64                       `bun:"type:BIGINT" json:"version"`
 	CreatedAt         time.Time                   `bun:",nullzero,notnull,default:current_timestamp" json:"createdAt"`
 	UpdatedAt         time.Time                   `bun:",nullzero,notnull,default:current_timestamp" json:"updatedAt"`
 
@@ -43,25 +45,6 @@ type ShipmentMove struct {
 	BusinessUnit    *BusinessUnit `bun:"rel:belongs-to,join:business_unit_id=id" json:"-"`
 	Organization    *Organization `bun:"rel:belongs-to,join:organization_id=id" json:"-"`
 	Stops           []*Stop       `bun:"rel:has-many,join:id=shipment_move_id" json:"stops,omitempty"`
-}
-
-var _ bun.BeforeAppendModelHook = (*ShipmentMove)(nil)
-
-func (m *ShipmentMove) BeforeAppendModel(_ context.Context, query bun.Query) error {
-	switch query.(type) {
-	case *bun.InsertQuery:
-		m.CreatedAt = time.Now()
-	case *bun.UpdateQuery:
-		m.UpdatedAt = time.Now()
-	}
-	return nil
-}
-
-// Helper method to set status and handle database updates
-func (m *ShipmentMove) setStatus(ctx context.Context, db *bun.DB, newStatus property.ShipmentMoveStatus) error {
-	m.Status = newStatus
-	_, err := db.NewUpdate().Model(m).Column("status").WherePK().Exec(ctx)
-	return err
 }
 
 // UpdateMoveStatus updates the movement status based on its stops
@@ -193,4 +176,60 @@ func (m *ShipmentMove) AssignTractor(ctx context.Context, tx bun.Tx, tractorID u
 	}
 
 	return nil
+}
+
+func (m *ShipmentMove) BeforeUpdate(_ context.Context) error {
+	m.Version++
+
+	return nil
+}
+
+func (m *ShipmentMove) OptimisticUpdate(ctx context.Context, tx bun.IDB) error {
+	ov := m.Version
+
+	if err := m.BeforeUpdate(ctx); err != nil {
+		return err
+	}
+
+	result, err := tx.NewUpdate().
+		Model(m).
+		WherePK().
+		Where("version = ?", ov).
+		Returning("*").
+		Exec(ctx)
+	if err != nil {
+		return err
+	}
+
+	rows, err := result.RowsAffected()
+	if err != nil {
+		return err
+	}
+
+	if rows == 0 {
+		return &validator.BusinessLogicError{
+			Message: fmt.Sprintf("Version mismatch. The ShipmentMove (ID: %s) has been updated by another user. Please refresh and try again.", m.ID),
+		}
+	}
+
+	return nil
+}
+
+var _ bun.BeforeAppendModelHook = (*ShipmentMove)(nil)
+
+func (m *ShipmentMove) BeforeAppendModel(_ context.Context, query bun.Query) error {
+	switch query.(type) {
+	case *bun.InsertQuery:
+		m.CreatedAt = time.Now()
+	case *bun.UpdateQuery:
+		m.UpdatedAt = time.Now()
+	}
+	return nil
+}
+
+// Helper method to set status and handle database updates
+func (m *ShipmentMove) setStatus(ctx context.Context, db *bun.DB, newStatus property.ShipmentMoveStatus) error {
+	m.Status = newStatus
+	_, err := db.NewUpdate().Model(m).Column("status").WherePK().Exec(ctx)
+	return err
 }

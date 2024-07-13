@@ -105,12 +105,11 @@ func (s ChargeTypeService) Create(ctx context.Context, entity *models.ChargeType
 // UpdateOne updates an existing ChargeType
 func (s ChargeTypeService) UpdateOne(ctx context.Context, entity *models.ChargeType) (*models.ChargeType, error) {
 	err := s.db.RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
-		_, err := tx.NewUpdate().
-			Model(entity).
-			WherePK().
-			Returning("*").
-			Exec(ctx)
-		return err
+		if err := entity.OptimisticUpdate(ctx, tx); err != nil {
+			return err
+		}
+
+		return nil
 	})
 	if err != nil {
 		s.logger.Error().Err(err).Msg("Failed to update ChargeType")

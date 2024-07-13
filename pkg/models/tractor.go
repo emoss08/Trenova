@@ -3,6 +3,7 @@ package models
 import (
 	"context"
 	"errors"
+	"fmt"
 	"time"
 
 	"github.com/emoss08/trenova/pkg/validator"
@@ -37,7 +38,8 @@ func (p TractorPermission) String() string {
 }
 
 type Tractor struct {
-	bun.BaseModel      `bun:"table:tractors,alias:tr" json:"-"`
+	bun.BaseModel `bun:"table:tractors,alias:tr" json:"-"`
+
 	ID                 uuid.UUID    `bun:",pk,type:uuid,default:uuid_generate_v4()" json:"id"`
 	Code               string       `bun:"type:VARCHAR(50),notnull" json:"code" queryField:"true"`
 	Status             string       `bun:"type:equipment_status_enum,notnull" json:"status"` // TODO(wolfred): Implement custom type
@@ -47,6 +49,7 @@ type Tractor struct {
 	Vin                string       `bun:"type:VARCHAR(17)" json:"vin"`
 	IsLeased           bool         `bun:"type:boolean" json:"isLeased"`
 	LeasedDate         *pgtype.Date `bun:"type:date,nullzero" json:"leasedDate"`
+	Version            int64        `bun:"type:BIGINT" json:"version"`
 	CreatedAt          time.Time    `bun:",nullzero,notnull,default:current_timestamp" json:"createdAt"`
 	UpdatedAt          time.Time    `bun:",nullzero,notnull,default:current_timestamp" json:"updatedAt"`
 
@@ -80,6 +83,43 @@ func (c Tractor) Validate() error {
 		validation.Field(&c.OrganizationID, validation.Required.Error("OrganizationID is required. Please try again."), is.UUIDv4),
 		validation.Field(&c.SecondaryWorkerID, validation.By(validateWorkers(c.PrimaryWorkerID, c.SecondaryWorkerID))),
 	)
+}
+
+func (c *Tractor) BeforeUpdate(_ context.Context) error {
+	c.Version++
+
+	return nil
+}
+
+func (c *Tractor) OptimisticUpdate(ctx context.Context, tx bun.IDB) error {
+	ov := c.Version
+
+	if err := c.BeforeUpdate(ctx); err != nil {
+		return err
+	}
+
+	result, err := tx.NewUpdate().
+		Model(c).
+		WherePK().
+		Where("version = ?", ov).
+		Returning("*").
+		Exec(ctx)
+	if err != nil {
+		return err
+	}
+
+	rows, err := result.RowsAffected()
+	if err != nil {
+		return err
+	}
+
+	if rows == 0 {
+		return &validator.BusinessLogicError{
+			Message: fmt.Sprintf("Version mismatch. The Tractor (ID: %s) has been updated by another user. Please refresh and try again.", c.ID),
+		}
+	}
+
+	return nil
 }
 
 func (c Tractor) DBValidate(ctx context.Context, db *bun.DB) error {

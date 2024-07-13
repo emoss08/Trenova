@@ -110,12 +110,11 @@ func (s CustomerService) Create(ctx context.Context, entity *models.Customer) (*
 // UpdateOne updates an existing Customer
 func (s CustomerService) UpdateOne(ctx context.Context, entity *models.Customer) (*models.Customer, error) {
 	err := s.db.RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
-		_, err := tx.NewUpdate().
-			Model(entity).
-			WherePK().
-			Returning("*").
-			Exec(ctx)
-		return err
+		if err := entity.OptimisticUpdate(ctx, tx); err != nil {
+			return err
+		}
+
+		return nil
 	})
 	if err != nil {
 		s.logger.Error().Err(err).Msg("Failed to update Customer")

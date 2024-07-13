@@ -111,7 +111,7 @@ func (h TableChangeAlertHandler) Create() fiber.Handler {
 			})
 		}
 
-		if err := h.permissionService.CheckUserPermission(c, models.PermissionTableChangeAlertView.String()); err != nil {
+		if err := h.permissionService.CheckUserPermission(c, models.PermissionTableChangeAlertAdd.String()); err != nil {
 			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Error{
 				Code:    fiber.StatusUnauthorized,
 				Message: "You do not have permission to perform this action.",

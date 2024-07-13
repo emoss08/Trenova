@@ -10,11 +10,13 @@ import (
 
 type Resource struct {
 	bun.BaseModel `bun:"resources"`
-	CreatedAt     time.Time `bun:",nullzero,notnull,default:current_timestamp" json:"createdAt"`
-	UpdatedAt     time.Time `bun:",nullzero,notnull,default:current_timestamp" json:"updatedAt"`
-	ID            uuid.UUID `bun:",pk,type:uuid,default:uuid_generate_v4()" json:"id"`
-	Type          string    `json:"type" queryField:"true"`
-	Description   string    `json:"description"`
+
+	ID uuid.UUID `bun:",pk,type:uuid,default:uuid_generate_v4()" json:"id"`
+
+	Type        string    `json:"type" queryField:"true"`
+	Description string    `json:"description"`
+	CreatedAt   time.Time `bun:",nullzero,notnull,default:current_timestamp" json:"createdAt"`
+	UpdatedAt   time.Time `bun:",nullzero,notnull,default:current_timestamp" json:"updatedAt"`
 }
 
 var _ bun.BeforeAppendModelHook = (*Resource)(nil)

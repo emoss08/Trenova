@@ -7,6 +7,7 @@ CREATE TABLE
     "status"           status_enum NOT NULL DEFAULT 'Active',
     "code"             VARCHAR(10) NOT NULL,
     "description"      TEXT,
+    "version"          BIGINT      NOT NULL,
     "created_at"       TIMESTAMPTZ NOT NULL DEFAULT current_timestamp,
     "updated_at"       TIMESTAMPTZ NOT NULL DEFAULT current_timestamp,
     PRIMARY KEY ("id"),
@@ -20,7 +21,7 @@ CREATE UNIQUE INDEX IF NOT EXISTS "service_types_code_organization_id_unq" ON "s
 CREATE INDEX idx_service_types_code ON service_types (code);
 CREATE INDEX idx_service_types_org_bu ON service_types (organization_id, business_unit_id);
 CREATE INDEX idx_service_types_description ON service_types USING GIN (description gin_trgm_ops);
-CREATE INDEX idx_service_types_created_at ON service_types(created_at);
+CREATE INDEX idx_service_types_created_at ON service_types (created_at);
 
 --bun:split
 

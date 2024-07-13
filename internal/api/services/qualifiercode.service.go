@@ -105,12 +105,11 @@ func (s QualifierCodeService) Create(ctx context.Context, entity *models.Qualifi
 // UpdateOne updates an existing QualifierCode
 func (s QualifierCodeService) UpdateOne(ctx context.Context, entity *models.QualifierCode) (*models.QualifierCode, error) {
 	err := s.db.RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
-		_, err := tx.NewUpdate().
-			Model(entity).
-			WherePK().
-			Returning("*").
-			Exec(ctx)
-		return err
+		if err := entity.OptimisticUpdate(ctx, tx); err != nil {
+			return err
+		}
+
+		return nil
 	})
 	if err != nil {
 		s.logger.Error().Err(err).Msg("Failed to update QualifierCode")

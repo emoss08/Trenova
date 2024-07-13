@@ -9,6 +9,7 @@ import (
 	"github.com/emoss08/trenova/pkg/gen"
 	"github.com/emoss08/trenova/pkg/models/property"
 	"github.com/emoss08/trenova/pkg/utils"
+	"github.com/emoss08/trenova/pkg/validator"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/go-ozzo/ozzo-validation/v4/is"
 	"github.com/google/uuid"
@@ -38,22 +39,24 @@ func (p LocationPermission) String() string {
 
 type Location struct {
 	bun.BaseModel `bun:"table:locations,alias:lc" json:"-"`
-	CreatedAt     time.Time       `bun:",notnull,default:current_timestamp" json:"createdAt"`
-	UpdatedAt     time.Time       `bun:",notnull,default:current_timestamp" json:"updatedAt"`
-	Status        property.Status `bun:"status,type:status_enum" json:"status"`
-	Code          string          `bun:"type:VARCHAR(10),notnull" json:"code" queryField:"true"`
-	Name          string          `bun:"type:VARCHAR(255),notnull" json:"name"`
-	AddressLine1  string          `bun:"address_line_1,type:VARCHAR(150),notnull" json:"addressLine1"`
-	AddressLine2  string          `bun:"address_line_2,type:VARCHAR(150),notnull" json:"addressLine2"`
-	City          string          `bun:"type:VARCHAR(150),notnull" json:"city"`
-	PostalCode    string          `bun:"type:VARCHAR(10),notnull" json:"postalCode"`
-	Longitude     float64         `bun:"type:float" json:"longitude"`
-	Latitude      float64         `bun:"type:float" json:"latitude"`
-	PlaceID       string          `bun:"type:VARCHAR(255)" json:"placeId"`
-	IsGeocoded    bool            `bun:"type:boolean" json:"isGeocoded"`
-	Description   string          `bun:"type:TEXT" json:"description"`
 
-	ID                 uuid.UUID `bun:",pk,type:uuid,default:uuid_generate_v4()" json:"id"`
+	ID           uuid.UUID       `bun:",pk,type:uuid,default:uuid_generate_v4()" json:"id"`
+	Status       property.Status `bun:"status,type:status_enum" json:"status"`
+	Code         string          `bun:"type:VARCHAR(10),notnull" json:"code" queryField:"true"`
+	Name         string          `bun:"type:VARCHAR(255),notnull" json:"name"`
+	AddressLine1 string          `bun:"address_line_1,type:VARCHAR(150),notnull" json:"addressLine1"`
+	AddressLine2 string          `bun:"address_line_2,type:VARCHAR(150),notnull" json:"addressLine2"`
+	City         string          `bun:"type:VARCHAR(150),notnull" json:"city"`
+	PostalCode   string          `bun:"type:VARCHAR(10),notnull" json:"postalCode"`
+	Longitude    float64         `bun:"type:float" json:"longitude"`
+	Latitude     float64         `bun:"type:float" json:"latitude"`
+	PlaceID      string          `bun:"type:VARCHAR(255)" json:"placeId"`
+	IsGeocoded   bool            `bun:"type:boolean" json:"isGeocoded"`
+	Description  string          `bun:"type:TEXT" json:"description"`
+	Version      int64           `bun:"type:BIGINT" json:"version"`
+	CreatedAt    time.Time       `bun:",notnull,default:current_timestamp" json:"createdAt"`
+	UpdatedAt    time.Time       `bun:",notnull,default:current_timestamp" json:"updatedAt"`
+
 	LocationCategoryID uuid.UUID `bun:"type:uuid,notnull" json:"locationCategoryId"`
 	StateID            uuid.UUID `bun:"type:uuid" json:"stateId"`
 	BusinessUnitID     uuid.UUID `bun:"type:uuid,notnull" json:"businessUnitId"`
@@ -112,6 +115,43 @@ func (l Location) GenerateCode(pattern string, counter int) string {
 	}
 }
 
+func (l *Location) BeforeUpdate(_ context.Context) error {
+	l.Version++
+
+	return nil
+}
+
+func (l *Location) OptimisticUpdate(ctx context.Context, tx bun.IDB) error {
+	ov := l.Version
+
+	if err := l.BeforeUpdate(ctx); err != nil {
+		return err
+	}
+
+	result, err := tx.NewUpdate().
+		Model(l).
+		WherePK().
+		Where("version = ?", ov).
+		Returning("*").
+		Exec(ctx)
+	if err != nil {
+		return err
+	}
+
+	rows, err := result.RowsAffected()
+	if err != nil {
+		return err
+	}
+
+	if rows == 0 {
+		return &validator.BusinessLogicError{
+			Message: fmt.Sprintf("Version mismatch. The Location (ID: %s) has been updated by another user. Please refresh and try again.", l.ID),
+		}
+	}
+
+	return nil
+}
+
 var _ bun.BeforeAppendModelHook = (*Location)(nil)
 
 func (l *Location) BeforeAppendModel(_ context.Context, query bun.Query) error {
@@ -146,12 +186,11 @@ func (l *Location) InsertLocation(ctx context.Context, tx bun.IDB, codeGen *gen.
 
 // UpdateLocation updates an existing location record
 func (l *Location) UpdateLocation(ctx context.Context, tx bun.IDB) error {
-	_, err := tx.NewUpdate().Model(l).WherePK().Exec(ctx)
-	if err != nil {
+	if err := l.OptimisticUpdate(ctx, tx); err != nil {
 		return err
 	}
 
-	if err = l.syncLocationContacts(ctx, tx); err != nil {
+	if err := l.syncLocationContacts(ctx, tx); err != nil {
 		return err
 	}
 

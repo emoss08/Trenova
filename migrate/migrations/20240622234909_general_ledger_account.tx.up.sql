@@ -79,6 +79,7 @@ CREATE TABLE
     "notes"            TEXT,
     "is_tax_relevant"  BOOLEAN           NOT NULL DEFAULT FALSE,
     "is_reconciled"    BOOLEAN           NOT NULL DEFAULT FALSE,
+    "version"          BIGINT            NOT NULL,
     "created_at"       TIMESTAMPTZ       NOT NULL DEFAULT current_timestamp,
     "updated_at"       TIMESTAMPTZ       NOT NULL DEFAULT current_timestamp,
     PRIMARY KEY ("id"),
@@ -91,7 +92,7 @@ CREATE TABLE
 CREATE UNIQUE INDEX IF NOT EXISTS "gl_account_account_number_organization_id_unq" ON "general_ledger_accounts" (LOWER("account_number"), organization_id);
 CREATE INDEX idx_general_ledger_accounts_account_number ON general_ledger_accounts (account_number);
 CREATE INDEX idx_general_ledger_accounts_org_bu ON general_ledger_accounts (organization_id, business_unit_id);
-CREATE INDEX idx_general_ledger_accounts_created_at ON general_ledger_accounts(created_at);
+CREATE INDEX idx_general_ledger_accounts_created_at ON general_ledger_accounts (created_at);
 
 --bun:split
 

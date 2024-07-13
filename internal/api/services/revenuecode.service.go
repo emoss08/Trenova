@@ -105,12 +105,11 @@ func (s RevenueCodeService) Create(ctx context.Context, entity *models.RevenueCo
 // UpdateOne updates an existing RevenueCode
 func (s RevenueCodeService) UpdateOne(ctx context.Context, entity *models.RevenueCode) (*models.RevenueCode, error) {
 	err := s.db.RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
-		_, err := tx.NewUpdate().
-			Model(entity).
-			WherePK().
-			Returning("*").
-			Exec(ctx)
-		return err
+		if err := entity.OptimisticUpdate(ctx, tx); err != nil {
+			return err
+		}
+
+		return nil
 	})
 	if err != nil {
 		s.logger.Error().Err(err).Msg("Failed to update RevenueCode")

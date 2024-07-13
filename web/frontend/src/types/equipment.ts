@@ -168,3 +168,30 @@ export type TractorAssignment = {
   sequence: number;
   assignedById: string;
 };
+
+export type AssignmentPayload = {
+  shipmentId: string;
+  shipmentMoveId: string;
+  sequence: number;
+  assignedById: string;
+};
+
+export type AssignTractorPayload = {
+  tractorId: string;
+  assignments: Array<AssignmentPayload>;
+};
+
+export type NewAssignment =
+  | (Omit<AssignmentPayload, "sequence"> & {
+      shipmentProNumber: string;
+    })
+  | null;
+
+export type TractorAssignmentFormValues = {
+  assignments: Array<
+    AssignmentPayload & {
+      id: string;
+      shipmentProNumber: string;
+    }
+  >;
+};

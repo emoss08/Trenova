@@ -159,8 +159,36 @@ func loadResources(ctx context.Context, db *bun.DB) error {
 				Description: "Represents a worker master key generation in the system.",
 			},
 			{
+				Type:        "LocationMasterKeyGeneration",
+				Description: "Represents a location master key generation in the system.",
+			},
+			{
+				Type:        "CustomerMasterKeyGeneration",
+				Description: "Represents a customer master key generation in the system.",
+			},
+			{
 				Type:        "Location",
 				Description: "Represents a location in the system.",
+			},
+			{
+				Type:        "Shipment",
+				Description: "Represents a shipment in the system.",
+			},
+			{
+				Type:        "ShipmentMove",
+				Description: "Represents a shipment move in the system.",
+			},
+			{
+				Type:        "Stop",
+				Description: "Represents a stop in the system.",
+			},
+			{
+				Type:        "Customer",
+				Description: "Represents a customer in the system.",
+			},
+			{
+				Type:        "TractorAssignment",
+				Description: "Represents a tractor assignment in the system.",
 			},
 		}
 

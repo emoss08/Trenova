@@ -14,6 +14,7 @@ CREATE TABLE
     "email_recipients" TEXT,
     "effective_date"   date,
     "expiration_date"  date,
+    "version"          BIGINT      NOT NULL,
     "business_unit_id" uuid                 NOT NULL,
     "organization_id"  uuid                 NOT NULL,
     PRIMARY KEY ("id"),
@@ -21,6 +22,23 @@ CREATE TABLE
     FOREIGN KEY ("business_unit_id") REFERENCES "business_units" ("id") ON UPDATE NO ACTION ON DELETE CASCADE
 );
 
+CREATE UNIQUE INDEX IF NOT EXISTS "table_change_alerts_name_organization_id_unq" ON "table_change_alerts" (LOWER("name"), organization_id);
+CREATE INDEX idx_table_change_alerts_org_bu ON table_change_alerts (organization_id, business_unit_id);
+CREATE INDEX idx_table_change_alerts_code ON table_change_alerts USING gin (name gin_trgm_ops);
+CREATE INDEX idx_table_change_alerts_created_at ON table_change_alerts (created_at);
+
 --bun:split
 
-CREATE UNIQUE INDEX IF NOT EXISTS "table_change_alerts_name_organization_id_unq" ON "table_change_alerts" (LOWER("name"), organization_id);
+COMMENT ON COLUMN table_change_alerts.id IS 'Unique identifier for the table change alert, generated as a UUID';
+COMMENT ON COLUMN table_change_alerts.status IS 'The current status of the table change alert, using the status_enum (e.g., Active, Inactive)';
+COMMENT ON COLUMN table_change_alerts.name IS 'A short, unique name for identifying the table change alert, limited to 50 characters';
+COMMENT ON COLUMN table_change_alerts.database_action IS 'The database action that triggers the table change alert, using the database_action_enum (e.g., Insert, Update, Delete, All)';
+COMMENT ON COLUMN table_change_alerts.topic_name IS 'The name of the topic that the table change alert is associated with, limited to 200 characters';
+COMMENT ON COLUMN table_change_alerts.description IS 'A description of the table change alert';
+COMMENT ON COLUMN table_change_alerts.custom_subject IS 'A custom subject for the table change alert, limited to 200 characters';
+COMMENT ON COLUMN table_change_alerts.delivery_method IS 'The delivery method for the table change alert, using the delivery_method_enum (e.g., Email, Local, Api, Sms)';
+COMMENT ON COLUMN table_change_alerts.email_recipients IS 'A list of email recipients for the table change alert';
+COMMENT ON COLUMN table_change_alerts.effective_date IS 'The effective date for the table change alert';
+COMMENT ON COLUMN table_change_alerts.expiration_date IS 'The expiration date for the table change alert';
+COMMENT ON COLUMN table_change_alerts.business_unit_id IS 'Foreign key referencing the business unit that this table change alert belongs to';
+COMMENT ON COLUMN table_change_alerts.organization_id IS 'Foreign key referencing the organization that this table change alert belongs to';

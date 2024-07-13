@@ -1,4 +1,5 @@
 import axios from "@/lib/axiosConfig";
+import { AssignTractorPayload } from "@/types/equipment";
 import { ApiResponse } from "@/types/server";
 import type {
   FormulaTemplate,
@@ -119,10 +120,9 @@ export async function getHazardousSegregationRules(): Promise<
   return response.data.results;
 }
 
-export async function assignTractorToShipment(payload: {
-  shipmentId: string;
-  tractorId: string;
-}): Promise<{ message: string }> {
+export async function assignTractorToShipment(
+  payload: AssignTractorPayload,
+): Promise<{ message: string }> {
   const response = await axios.post("/shipments/assign-tractor/", payload);
   return response.data;
 }

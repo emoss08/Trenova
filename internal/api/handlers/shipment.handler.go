@@ -9,6 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/types"
 	"github.com/emoss08/trenova/pkg/models"
 	"github.com/emoss08/trenova/pkg/models/property"
+	ptypes "github.com/emoss08/trenova/pkg/types"
 	"github.com/emoss08/trenova/pkg/utils"
 	"github.com/gofiber/fiber/v2"
 	"github.com/google/uuid"
@@ -147,7 +148,7 @@ func (h ShipmentHandler) Get() fiber.Handler {
 
 func (h ShipmentHandler) Create() fiber.Handler {
 	return func(c *fiber.Ctx) error {
-		createdEntity := new(services.CreateShipmentInput)
+		createdEntity := new(ptypes.CreateShipmentInput)
 
 		orgID, ok := c.Locals(utils.CTXOrganizationID).(uuid.UUID)
 		buID, orgOK := c.Locals(utils.CTXBusinessUnitID).(uuid.UUID)
@@ -244,7 +245,7 @@ func (h ShipmentHandler) AssignTractorToShipment() fiber.Handler {
 			})
 		}
 
-		assignTractorInput := new(services.AssignTractorInput)
+		assignTractorInput := new(ptypes.AssignTractorInput)
 		if err := utils.ParseBodyAndValidate(c, assignTractorInput); err != nil {
 			return c.Status(fiber.StatusBadRequest).JSON(err)
 		}

@@ -105,16 +105,15 @@ func (s DivisionCodeService) Create(ctx context.Context, entity *models.Division
 // UpdateOne updates an existing DivisionCode
 func (s DivisionCodeService) UpdateOne(ctx context.Context, entity *models.DivisionCode) (*models.DivisionCode, error) {
 	err := s.db.RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
-		_, err := tx.NewUpdate().
-			Model(entity).
-			WherePK().
-			Returning("*").
-			Exec(ctx)
-		return err
+		if err := entity.OptimisticUpdate(ctx, tx); err != nil {
+			return err
+		}
+
+		return nil
 	})
 	if err != nil {
 		s.logger.Error().Err(err).Msg("Failed to update DivisionCode")
-		return nil, fmt.Errorf("failed to update DivisionCode: %w", err)
+		return nil, err
 	}
 
 	return entity, nil

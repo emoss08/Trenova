@@ -149,7 +149,7 @@ func (uh UserHandler) updateUser() fiber.Handler {
 			})
 		}
 
-		if err := uh.permissionService.CheckOwnershipPermission(c, models.PermissionUserAdd.String(), userID); err != nil {
+		if err := uh.permissionService.CheckOwnershipPermission(c, models.PermissionUserEdit.String(), userID); err != nil {
 			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Error{
 				Code:    fiber.StatusUnauthorized,
 				Message: "You do not have permission to perform this action.",

@@ -28,6 +28,7 @@ CREATE TABLE
     "trailer_id"          uuid                      NOT NULL,
     "primary_worker_id"   uuid                      NOT NULL,
     "secondary_worker_id" uuid,
+    "version"             BIGINT                    NOT NULL,
     "created_at"          TIMESTAMPTZ               NOT NULL DEFAULT current_timestamp,
     "updated_at"          TIMESTAMPTZ               NOT NULL DEFAULT current_timestamp,
     PRIMARY KEY ("id"),

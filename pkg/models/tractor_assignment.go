@@ -3,6 +3,7 @@ package models
 import (
 	"time"
 
+	"github.com/emoss08/trenova/pkg/models/property"
 	"github.com/google/uuid"
 	"github.com/uptrace/bun"
 )
@@ -10,11 +11,11 @@ import (
 type TractorAssignment struct {
 	bun.BaseModel `bun:"table:tractor_assignments,alias:ta" json:"-"`
 
-	ID          uuid.UUID  `bun:",pk,type:uuid,default:uuid_generate_v4()" json:"id"`
-	Sequence    int        `bun:"type:integer,notnull" json:"sequence"`
-	AssignedAt  time.Time  `bun:"type:TIMESTAMPTZ,notnull" json:"assignedAt"`
-	CompletedAt *time.Time `bun:"type:TIMESTAMPTZ,nullzero" json:"completedAt"`
-	Status      string     `bun:"type:varchar(20),notnull" json:"status"`
+	ID          uuid.UUID                 `bun:",pk,type:uuid,default:uuid_generate_v4()" json:"id"`
+	Sequence    int                       `bun:"type:integer,notnull" json:"sequence"`
+	AssignedAt  time.Time                 `bun:"type:TIMESTAMPTZ,notnull" json:"assignedAt"`
+	CompletedAt *time.Time                `bun:"type:TIMESTAMPTZ,nullzero" json:"completedAt"`
+	Status      property.AssignmentStatus `bun:"type:varchar(20),notnull" json:"status"`
 
 	TractorID      uuid.UUID `bun:"type:uuid,notnull" json:"tractorId"`
 	ShipmentID     uuid.UUID `bun:"type:uuid,notnull" json:"shipmentId"`

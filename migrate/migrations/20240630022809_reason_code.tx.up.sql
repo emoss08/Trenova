@@ -8,6 +8,7 @@ CREATE TABLE
     "code"             VARCHAR(10) NOT NULL,
     "code_type"        VARCHAR(10),
     "description"      TEXT,
+    "version"          BIGINT      NOT NULL,
     "created_at"       TIMESTAMPTZ NOT NULL DEFAULT current_timestamp,
     "updated_at"       TIMESTAMPTZ NOT NULL DEFAULT current_timestamp,
     PRIMARY KEY ("id"),
@@ -21,7 +22,7 @@ CREATE UNIQUE INDEX IF NOT EXISTS "reason_codes_code_organization_id_unq" ON "re
 CREATE INDEX idx_reason_codes_code ON reason_codes (code);
 CREATE INDEX idx_reason_codes_org_bu ON reason_codes (organization_id, business_unit_id);
 CREATE INDEX idx_reason_codes_description ON reason_codes USING GIN (description gin_trgm_ops);
-CREATE INDEX idx_reason_codes_created_at ON reason_codes(created_at);
+CREATE INDEX idx_reason_codes_created_at ON reason_codes (created_at);
 
 --bun:split
 

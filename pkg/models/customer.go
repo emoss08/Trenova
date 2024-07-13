@@ -9,6 +9,7 @@ import (
 	"github.com/emoss08/trenova/pkg/gen"
 	"github.com/emoss08/trenova/pkg/models/property"
 	"github.com/emoss08/trenova/pkg/utils"
+	"github.com/emoss08/trenova/pkg/validator"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
 
 	"github.com/google/uuid"
@@ -39,6 +40,7 @@ func (p CustomerPermission) String() string {
 type Customer struct {
 	bun.BaseModel `bun:"table:customers,alias:cu" json:"-"`
 
+	ID                  uuid.UUID       `bun:",pk,type:uuid,default:uuid_generate_v4()" json:"id"`
 	Status              property.Status `bun:"status,type:status" json:"status"`
 	Code                string          `bun:"type:VARCHAR(10),notnull" json:"code" queryField:"true"`
 	Name                string          `bun:"type:VARCHAR(150),notnull" json:"name"`
@@ -48,10 +50,10 @@ type Customer struct {
 	AutoMarkReadyToBill bool            `bun:"type:boolean,notnull,default:false" json:"autoMarkReadyToBill"`
 	HasCustomerPortal   bool            `bun:"type:boolean,notnull,default:false" json:"hasCustomerPortal"`
 	PostalCode          string          `bun:"type:VARCHAR(10),notnull" json:"postalCode"`
+	Version             int64           `bun:"type:BIGINT" json:"version"`
 	CreatedAt           time.Time       `bun:",nullzero,notnull,default:current_timestamp" json:"createdAt"`
 	UpdatedAt           time.Time       `bun:",nullzero,notnull,default:current_timestamp" json:"updatedAt"`
 
-	ID             uuid.UUID `bun:",pk,type:uuid,default:uuid_generate_v4()" json:"id"`
 	StateID        uuid.UUID `bun:"type:uuid,notnull" json:"stateId"`
 	BusinessUnitID uuid.UUID `bun:"type:uuid,notnull" json:"businessUnitId"`
 	OrganizationID uuid.UUID `bun:"type:uuid,notnull" json:"organizationId"`
@@ -99,6 +101,43 @@ func (c Customer) GenerateCode(pattern string, counter int) string {
 	default:
 		return fmt.Sprintf("%s%04d", utils.TruncateString(strings.ToUpper(c.Name), 4), counter)
 	}
+}
+
+func (c *Customer) BeforeUpdate(_ context.Context) error {
+	c.Version++
+
+	return nil
+}
+
+func (c *Customer) OptimisticUpdate(ctx context.Context, tx bun.IDB) error {
+	ov := c.Version
+
+	if err := c.BeforeUpdate(ctx); err != nil {
+		return err
+	}
+
+	result, err := tx.NewUpdate().
+		Model(c).
+		WherePK().
+		Where("version = ?", ov).
+		Returning("*").
+		Exec(ctx)
+	if err != nil {
+		return err
+	}
+
+	rows, err := result.RowsAffected()
+	if err != nil {
+		return err
+	}
+
+	if rows == 0 {
+		return &validator.BusinessLogicError{
+			Message: fmt.Sprintf("Version mismatch. The Customer (ID: %s) has been updated by another user. Please refresh and try again.", c.ID),
+		}
+	}
+
+	return nil
 }
 
 var _ bun.BeforeAppendModelHook = (*Customer)(nil)

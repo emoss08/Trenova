@@ -46,7 +46,7 @@ func (s UserService) GetAuthenticatedUser(ctx context.Context, userID uuid.UUID)
 
 func (s UserService) UpdateUser(ctx context.Context, user *models.User) (*models.User, error) {
 	err := s.db.RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
-		if _, err := tx.NewUpdate().Model(user).WherePK().Returning("*").Exec(ctx); err != nil {
+		if err := user.OptimisticUpdate(ctx, tx); err != nil {
 			return err
 		}
 

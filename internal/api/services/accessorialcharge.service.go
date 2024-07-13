@@ -105,12 +105,11 @@ func (s AccessorialChargeService) Create(ctx context.Context, entity *models.Acc
 // UpdateOne updates an existing AccessorialCharge
 func (s AccessorialChargeService) UpdateOne(ctx context.Context, entity *models.AccessorialCharge) (*models.AccessorialCharge, error) {
 	err := s.db.RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
-		_, err := tx.NewUpdate().
-			Model(entity).
-			WherePK().
-			Returning("*").
-			Exec(ctx)
-		return err
+		if err := entity.OptimisticUpdate(ctx, tx); err != nil {
+			return err
+		}
+
+		return nil
 	})
 	if err != nil {
 		s.logger.Error().Err(err).Msg("Failed to update AccessorialCharge")

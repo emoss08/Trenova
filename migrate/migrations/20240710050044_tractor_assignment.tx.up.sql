@@ -1,5 +1,4 @@
-CREATE TABLE
-    IF NOT EXISTS "tractor_assignments"
+CREATE TABLE IF NOT EXISTS "tractor_assignments"
 (
     "id"               uuid        NOT NULL DEFAULT uuid_generate_v4(),
     "business_unit_id" uuid        NOT NULL,
@@ -24,14 +23,12 @@ CREATE TABLE
 );
 
 --bun:split
-
 CREATE INDEX idx_tractor_assignments_org_bu ON tractor_assignments (organization_id, business_unit_id);
 CREATE INDEX idx_tractor_assignments_shipment ON tractor_assignments (shipment_id);
 CREATE INDEX idx_tractor_assignments_shipment_move ON tractor_assignments (shipment_move_id);
 CREATE INDEX idx_tractor_assignments_tractor ON tractor_assignments (tractor_id);
 
 --bun:split
-
 COMMENT ON COLUMN tractor_assignments.id IS 'Unique identifier for the tractor assignment, generated as a UUID';
 COMMENT ON COLUMN tractor_assignments.business_unit_id IS 'Foreign key referencing the business unit that this tractor assignment belongs to';
 COMMENT ON COLUMN tractor_assignments.organization_id IS 'Foreign key referencing the organization that this tractor assignment belongs to';
@@ -42,4 +39,3 @@ COMMENT ON COLUMN tractor_assignments.sequence IS 'The sequence number of the tr
 COMMENT ON COLUMN tractor_assignments.assigned_at IS 'Timestamp of when the tractor was assigned to the shipment move';
 COMMENT ON COLUMN tractor_assignments.completed_at IS 'Timestamp of when the tractor assignment was completed';
 COMMENT ON COLUMN tractor_assignments.status IS 'The current status of the tractor assignment';
-

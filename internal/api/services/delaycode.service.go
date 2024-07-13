@@ -105,12 +105,11 @@ func (s DelayCodeService) Create(ctx context.Context, entity *models.DelayCode) 
 // UpdateOne updates an existing DelayCode
 func (s DelayCodeService) UpdateOne(ctx context.Context, entity *models.DelayCode) (*models.DelayCode, error) {
 	err := s.db.RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
-		_, err := tx.NewUpdate().
-			Model(entity).
-			WherePK().
-			Returning("*").
-			Exec(ctx)
-		return err
+		if err := entity.OptimisticUpdate(ctx, tx); err != nil {
+			return err
+		}
+
+		return nil
 	})
 	if err != nil {
 		s.logger.Error().Err(err).Msg("Failed to update DelayCode")

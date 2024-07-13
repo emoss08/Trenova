@@ -18,6 +18,7 @@ CREATE TABLE
     "secondary_worker_id"       uuid,
     "is_leased"                 bool                           DEFAULT false,
     "leased_date"               DATE,
+    "version"                   BIGINT                NOT NULL,
     "created_at"                TIMESTAMPTZ           NOT NULL DEFAULT current_timestamp,
     "updated_at"                TIMESTAMPTZ           NOT NULL DEFAULT current_timestamp,
     PRIMARY KEY ("id"),

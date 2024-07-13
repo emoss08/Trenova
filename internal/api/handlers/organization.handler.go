@@ -123,14 +123,6 @@ func (oh OrganizationHandler) updateOrganization() fiber.Handler {
 	}
 }
 
-// uploadOrganizationLogo godoc
-// @Summary Upload a logo for the organization
-// @Tags organizations
-// @Accept multipart/form-data
-// @Produce json
-// @Param logo formData file true "Logo file"
-// @Success 204
-// @Router /organizations/upload-logo [post]
 func (oh OrganizationHandler) uploadOrganizationLogo() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		orgID, ok := c.Locals(utils.CTXOrganizationID).(uuid.UUID)

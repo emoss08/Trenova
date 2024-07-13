@@ -1,12 +1,13 @@
-import { getTractors } from "@/services/EquipmentRequestService";
-import {
-  assignTractorToShipment,
-  getShipments,
-} from "@/services/ShipmentRequestService";
+import { assignTractorToShipment } from "@/services/ShipmentRequestService";
 import { useUserStore } from "@/stores/AuthStore";
-import type { Tractor, TractorFilterForm } from "@/types/equipment";
+import type {
+  AssignTractorPayload,
+  NewAssignment,
+  Tractor,
+  TractorFilterForm,
+} from "@/types/equipment";
 import type { ShipmentSearchForm, ShipmentStatus } from "@/types/shipment";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import { DragDropContext } from "react-beautiful-dnd";
 import { useForm, useFormContext } from "react-hook-form";
@@ -16,6 +17,7 @@ import { ErrorLoadingData } from "../common/table/data-table-components";
 import { ScrollArea } from "../ui/scroll-area";
 import { Skeleton } from "../ui/skeleton";
 import { AssignmentDialog } from "./assignment-dialog";
+import { useShipmentData, useTractorsData } from "./queries";
 import { ShipmentToolbar } from "./shipment-advanced-filter";
 import { ShipmentList } from "./shipment-list";
 import { TractorList } from "./tractor-list";
@@ -34,12 +36,7 @@ export function ShipmentListView({
   const [shipmentPage, setShipmentPage] = useState(1);
   const [tractorPage, setTractorPage] = useState(1);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [newAssignment, setNewAssignment] = useState<{
-    shipmentId: string;
-    shipmentMoveId: string;
-    shipmentProNumber: string;
-    assignedById: string;
-  } | null>(null);
+  const [newAssignment, setNewAssignment] = useState<NewAssignment>(null);
   const [selectedTractor, setSelectedTractor] = useState<Tractor | null>(null);
   const queryClient = useQueryClient();
   const user = useUserStore.get("user");
@@ -61,43 +58,19 @@ export function ShipmentListView({
     fleetCodeId,
   } = watchTractor();
 
-  const {
-    data: tractorData,
-    isLoading: isTractorLoading,
-    isError: isTractorError,
-  } = useQuery({
-    queryKey: [
-      "tractors",
-      tractorSearchQuery,
-      tractorStatusFilter,
-      fleetCodeId,
-      tractorPage,
-    ],
-    queryFn: () =>
-      getTractors(
-        tractorStatusFilter,
-        (tractorPage - 1) * ITEMS_PER_PAGE,
-        ITEMS_PER_PAGE,
-        fleetCodeId,
-      ),
-    staleTime: Infinity,
-  });
-
-  const {
-    data: shipmentData,
-    isLoading: isShipmentLoading,
-    isError: isShipmentError,
-  } = useQuery({
-    queryKey: ["shipments", searchQuery, statusFilter, shipmentPage],
-    queryFn: () =>
-      getShipments(
-        searchQuery,
-        statusFilter,
-        (shipmentPage - 1) * ITEMS_PER_PAGE,
-        ITEMS_PER_PAGE,
-      ),
-    staleTime: Infinity,
-  });
+  const { tractorData, isTractorLoading, isTractorError } = useTractorsData(
+    tractorSearchQuery,
+    tractorStatusFilter,
+    tractorPage,
+    ITEMS_PER_PAGE,
+    fleetCodeId,
+  );
+  const { shipmentData, isShipmentLoading, isShipmentError } = useShipmentData(
+    searchQuery,
+    statusFilter,
+    shipmentPage,
+    ITEMS_PER_PAGE,
+  );
 
   useEffect(() => {
     setShipmentPage(1);
@@ -129,15 +102,7 @@ export function ShipmentListView({
   };
 
   const assignMutation = useMutation({
-    mutationFn: (payload: {
-      tractorId: string;
-      assignments: Array<{
-        shipmentId: string;
-        shipmentMoveId: string;
-        sequence: number;
-        assignedById: string;
-      }>;
-    }) => {
+    mutationFn: (payload: AssignTractorPayload) => {
       return assignTractorToShipment(payload);
     },
   });

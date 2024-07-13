@@ -2,10 +2,11 @@ package models
 
 import (
 	"context"
-	"errors"
+	"fmt"
 	"time"
 
 	"github.com/emoss08/trenova/pkg/models/property"
+	"github.com/emoss08/trenova/pkg/validator"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/google/uuid"
 	"github.com/shopspring/decimal"
@@ -13,7 +14,9 @@ import (
 )
 
 type Stop struct {
-	bun.BaseModel    `bun:"table:stops,alias:st" json:"-"`
+	bun.BaseModel `bun:"table:stops,alias:st" json:"-"`
+
+	ID               uuid.UUID                   `bun:",pk,type:uuid,default:uuid_generate_v4()" json:"id"`
 	Status           property.ShipmentMoveStatus `bun:"type:VARCHAR(50),notnull" json:"status"`
 	Type             property.StopType           `bun:"type:stop_type_enum,default:'Pickup',notnull" json:"type"`
 	AddressLine      string                      `bun:"type:TEXT" json:"addressLine"`
@@ -25,14 +28,14 @@ type Stop struct {
 	PlannedDeparture time.Time                   `bun:"type:TIMESTAMP" json:"plannedDeparture"`
 	ActualArrival    *time.Time                  `bun:"type:TIMESTAMP,nullzero" json:"actualArrival"`
 	ActualDeparture  *time.Time                  `bun:"type:TIMESTAMP,nullzero" json:"actualDeparture"`
+	Version          int64                       `bun:"type:BIGINT" json:"version"`
 	CreatedAt        time.Time                   `bun:",nullzero,notnull,default:current_timestamp" json:"createdAt"`
 	UpdatedAt        time.Time                   `bun:",nullzero,notnull,default:current_timestamp" json:"updatedAt"`
 
-	ID             uuid.UUID `bun:",pk,type:uuid,default:uuid_generate_v4()" json:"id"`
+	LocationID     uuid.UUID `bun:"type:uuid,notnull" json:"locationId"`
 	BusinessUnitID uuid.UUID `bun:"type:uuid,notnull" json:"businessUnitId"`
 	OrganizationID uuid.UUID `bun:"type:uuid,notnull" json:"organizationId"`
 	ShipmentMoveID uuid.UUID `bun:"type:uuid,notnull" json:"shipmentMoveId"`
-	LocationID     uuid.UUID `bun:"type:uuid,notnull" json:"locationId"`
 
 	Location     *Location     `bun:"rel:belongs-to,join:location_id=id" json:"location"`
 	BusinessUnit *BusinessUnit `bun:"rel:belongs-to,join:business_unit_id=id" json:"-"`
@@ -47,6 +50,43 @@ func (s Stop) Validate() error {
 		validation.Field(&s.Type, validation.Required),
 		validation.Field(&s.PlannedArrival, validation.By(validateAppointmentWindow(s.PlannedArrival, s.PlannedDeparture))),
 	)
+}
+
+func (s *Stop) BeforeUpdate(_ context.Context) error {
+	s.Version++
+
+	return nil
+}
+
+func (s *Stop) OptimisticUpdate(ctx context.Context, tx bun.IDB) error {
+	ov := s.Version
+
+	if err := s.BeforeUpdate(ctx); err != nil {
+		return err
+	}
+
+	result, err := tx.NewUpdate().
+		Model(s).
+		WherePK().
+		Where("version = ?", ov).
+		Returning("*").
+		Exec(ctx)
+	if err != nil {
+		return err
+	}
+
+	rows, err := result.RowsAffected()
+	if err != nil {
+		return err
+	}
+
+	if rows == 0 {
+		return &validator.BusinessLogicError{
+			Message: fmt.Sprintf("Version mismatch. The Stop (ID: %s) has been updated by another user. Please refresh and try again.", s.ID),
+		}
+	}
+
+	return nil
 }
 
 func (s *Stop) UpdateStatus(ctx context.Context, db *bun.DB, newStatus property.ShipmentMoveStatus) error {
@@ -73,7 +113,7 @@ func (s *Stop) UpdateStatus(ctx context.Context, db *bun.DB, newStatus property.
 func validateAppointmentWindow(plannedArrival, plannedDepart time.Time) validation.RuleFunc {
 	return func(_ any) error {
 		if plannedArrival.After(plannedDepart) {
-			return errors.New("Planned arrival must be before planned departure. Please try again.")
+			return validator.DBValidationError{Field: "PlannedArrival", Message: "Planned arrival must be before planned departure"}
 		}
 
 		return nil
@@ -95,11 +135,12 @@ func (s *Stop) BeforeAppendModel(_ context.Context, query bun.Query) error {
 // Helper method to set status and handle database updates
 func (s *Stop) setStatus(ctx context.Context, db *bun.DB, newStatus property.ShipmentMoveStatus) error {
 	s.Status = newStatus
-	if newStatus == property.ShipmentMoveStatusInProgress && s.ActualArrival == nil {
-		now := time.Now()
+	now := time.Now()
+
+	switch {
+	case newStatus == property.ShipmentMoveStatusInProgress && s.ActualArrival != nil:
 		s.ActualArrival = &now
-	} else if newStatus == property.ShipmentMoveStatusCompleted && s.ActualDeparture == nil {
-		now := time.Now()
+	case newStatus == property.ShipmentMoveStatusCompleted && s.ActualDeparture != nil:
 		s.ActualDeparture = &now
 	}
 

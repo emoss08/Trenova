@@ -6,10 +6,10 @@ import (
 	"strings"
 	"time"
 
-	"github.com/emoss08/trenova/internal/api/services"
 	"github.com/emoss08/trenova/pkg/gen"
 	"github.com/emoss08/trenova/pkg/models"
 	"github.com/emoss08/trenova/pkg/models/property"
+	"github.com/emoss08/trenova/pkg/types"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/shopspring/decimal"
@@ -75,7 +75,7 @@ func loadShipments(ctx context.Context, db *bun.DB, gen *gen.CodeGenerator, orgI
 
 	if count < 100 {
 		for i := 0; i < 100; i++ {
-			input := services.CreateShipmentInput{
+			input := types.CreateShipmentInput{
 				BusinessUnitID:              buID,
 				OrganizationID:              orgID,
 				ShipmentTypeID:              shipType.ID,
@@ -100,7 +100,7 @@ func loadShipments(ctx context.Context, db *bun.DB, gen *gen.CodeGenerator, orgI
 				TractorTypeID:               &equipType.ID,
 				BillOfLading:                "123456",
 				SpecialInstructions:         "Special Instructions",
-				Stops: []services.StopInput{
+				Stops: []types.StopInput{
 					{
 						LocationID:       location.ID,
 						Type:             property.StopTypePickup,
@@ -126,7 +126,7 @@ func loadShipments(ctx context.Context, db *bun.DB, gen *gen.CodeGenerator, orgI
 	return nil
 }
 
-func create(ctx context.Context, db *bun.DB, input *services.CreateShipmentInput) (*models.Shipment, error) {
+func create(ctx context.Context, db *bun.DB, input *types.CreateShipmentInput) (*models.Shipment, error) {
 	shipment := &models.Shipment{
 		EntryMethod:           "Manual",
 		Status:                property.ShipmentStatusNew,
@@ -208,7 +208,7 @@ func create(ctx context.Context, db *bun.DB, input *services.CreateShipmentInput
 	return shipment, nil
 }
 
-func createStops(ctx context.Context, tx bun.Tx, shipment *models.Shipment, move *models.ShipmentMove, stopInputs []services.StopInput) ([]*models.Stop, error) {
+func createStops(ctx context.Context, tx bun.Tx, shipment *models.Shipment, move *models.ShipmentMove, stopInputs []types.StopInput) ([]*models.Stop, error) {
 	stops := make([]*models.Stop, len(stopInputs))
 
 	for i, input := range stopInputs {

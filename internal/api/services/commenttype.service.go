@@ -105,12 +105,11 @@ func (s CommentTypeService) Create(ctx context.Context, entity *models.CommentTy
 // UpdateOne updates an existing CommentType
 func (s CommentTypeService) UpdateOne(ctx context.Context, entity *models.CommentType) (*models.CommentType, error) {
 	err := s.db.RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
-		_, err := tx.NewUpdate().
-			Model(entity).
-			WherePK().
-			Returning("*").
-			Exec(ctx)
-		return err
+		if err := entity.OptimisticUpdate(ctx, tx); err != nil {
+			return err
+		}
+
+		return nil
 	})
 	if err != nil {
 		s.logger.Error().Err(err).Msg("Failed to update CommentType")

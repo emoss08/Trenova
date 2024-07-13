@@ -9,10 +9,10 @@ import (
 	"github.com/emoss08/trenova/pkg/gen"
 	"github.com/emoss08/trenova/pkg/models"
 	"github.com/emoss08/trenova/pkg/models/property"
+	"github.com/emoss08/trenova/pkg/types"
 	"github.com/emoss08/trenova/pkg/validator"
 	"github.com/google/uuid"
 	"github.com/rs/zerolog"
-	"github.com/shopspring/decimal"
 	"github.com/uptrace/bun"
 )
 
@@ -28,51 +28,6 @@ func NewShipmentService(s *server.Server) *ShipmentService {
 		logger:  s.Logger,
 		codeGen: s.CodeGenerator,
 	}
-}
-
-type StopInput struct {
-	LocationID       uuid.UUID           `json:"locationId"`
-	Type             property.StopType   `json:"type"`
-	PlannedArrival   time.Time           `json:"plannedArrival"`
-	PlannedDeparture time.Time           `json:"plannedDeparture"`
-	Weight           decimal.NullDecimal `json:"weight"`
-	Pieces           decimal.NullDecimal `json:"pieces"`
-}
-
-type CreateShipmentInput struct {
-	BusinessUnitID              uuid.UUID                     `json:"businessUnitId"`
-	OrganizationID              uuid.UUID                     `json:"organizationId"`
-	CustomerID                  uuid.UUID                     `json:"customerId"`
-	OriginLocationID            uuid.UUID                     `json:"originLocationId"`
-	OriginPlannedArrival        time.Time                     `json:"originPlannedArrival"`
-	OriginPlannedDeparture      time.Time                     `json:"originPlannedDeparture"`
-	DestinationLocationID       uuid.UUID                     `json:"destinationLocationId"`
-	DestinationPlannedArrival   time.Time                     `json:"destinationPlannedArrival"`
-	DestinationPlannedDeparture time.Time                     `json:"destinationPlannedDeparture"`
-	ShipmentTypeID              uuid.UUID                     `json:"shipmentTypeId"`
-	RevenueCodeID               *uuid.UUID                    `json:"revenueCodeId"`
-	ServiceTypeID               *uuid.UUID                    `json:"serviceTypeId"`
-	RatingMethod                property.ShipmentRatingMethod `json:"ratingMethod"`
-	RatingUnit                  int                           `json:"ratingUnit"`
-	OtherChargeAmount           decimal.Decimal               `json:"otherChargeAmount"`
-	FreightChargeamount         decimal.Decimal               `json:"freightChargeAmount"`
-	TotalChargeAmount           decimal.Decimal               `json:"totalChargeAmount"`
-	Pieces                      decimal.NullDecimal           `json:"pieces"`
-	Weight                      decimal.NullDecimal           `json:"weight"`
-	TractorID                   uuid.UUID                     `json:"tractorId"`
-	TrailerID                   uuid.UUID                     `json:"trailerId"`
-	PrimaryWorkerID             uuid.UUID                     `json:"primaryWorkerId"`
-	SecondaryWorkerID           *uuid.UUID                    `json:"secondaryWorkerId"`
-	TrailerTypeID               *uuid.UUID                    `json:"trailerTypeId"`
-	TractorTypeID               *uuid.UUID                    `json:"tractorTypeId"`
-	TemperatureMin              int                           `json:"temperatureMin"`
-	TemperatureMax              int                           `json:"temperatureMax"`
-	BillOfLading                string                        `json:"billOfLading"`
-	SpecialInstructions         string                        `json:"specialInstructions"`
-	TrackingNumber              string                        `json:"trackingNumber"`
-	Priority                    int                           `json:"priority"`
-	TotalDistance               decimal.NullDecimal           `json:"totalDistance"`
-	Stops                       []StopInput                   `json:"stops"`
 }
 
 // Suggested additions to ShipmentQueryFilter
@@ -156,12 +111,7 @@ func (s ShipmentService) Get(ctx context.Context, id uuid.UUID, orgID, buID uuid
 	return entity, nil
 }
 
-type AssignTractorInput struct {
-	TractorID   uuid.UUID                  `json:"tractorId"`
-	Assignments []models.TractorAssignment `json:"assignments"`
-}
-
-func (s ShipmentService) AssignTractorToShipment(ctx context.Context, input *AssignTractorInput, orgID, buID uuid.UUID) error {
+func (s ShipmentService) AssignTractorToShipment(ctx context.Context, input *types.AssignTractorInput, orgID, buID uuid.UUID) error {
 	if input.TractorID == uuid.Nil || len(input.Assignments) == 0 {
 		return validator.DBValidationError{Message: "tractorId and at least one assignment are required"}
 	}
@@ -237,7 +187,7 @@ func (s ShipmentService) AssignTractorToShipment(ctx context.Context, input *Ass
 	return nil
 }
 
-func (s ShipmentService) Create(ctx context.Context, input *CreateShipmentInput) (*models.Shipment, error) {
+func (s ShipmentService) Create(ctx context.Context, input *types.CreateShipmentInput) (*models.Shipment, error) {
 	shipment := &models.Shipment{
 		EntryMethod:           "Manual",
 		Status:                property.ShipmentStatusNew,
@@ -319,7 +269,7 @@ func (s ShipmentService) Create(ctx context.Context, input *CreateShipmentInput)
 	return shipment, nil
 }
 
-func (s ShipmentService) createStops(ctx context.Context, tx bun.Tx, shipment *models.Shipment, move *models.ShipmentMove, stopInputs []StopInput) ([]*models.Stop, error) {
+func (s ShipmentService) createStops(ctx context.Context, tx bun.Tx, shipment *models.Shipment, move *models.ShipmentMove, stopInputs []types.StopInput) ([]*models.Stop, error) {
 	stops := make([]*models.Stop, len(stopInputs))
 	for i, input := range stopInputs {
 		location, err := s.getLocation(ctx, tx, input.LocationID)

@@ -11,16 +11,18 @@ import (
 )
 
 type Permission struct {
-	bun.BaseModel    `bun:"permissions"`
-	CreatedAt        time.Time `bun:",nullzero,notnull,default:current_timestamp" json:"createdAt"`
-	UpdatedAt        time.Time `bun:",nullzero,notnull,default:current_timestamp" json:"updatedAt"`
-	ID               uuid.UUID `bun:",pk,type:uuid,default:uuid_generate_v4()" json:"id"`
+	bun.BaseModel `bun:"permissions"`
+
+	ID uuid.UUID `bun:",pk,type:uuid,default:uuid_generate_v4()" json:"id"`
+
 	Codename         string    `json:"codename" queryField:"true"`
 	Action           string    `json:"action"`
 	Label            string    `json:"label"`
 	ReadDescription  string    `json:"readDescription"`
 	WriteDescription string    `json:"writeDescription"`
 	ResourceID       uuid.UUID `bun:"type:uuid" json:"resourceId"`
+	CreatedAt        time.Time `bun:",nullzero,notnull,default:current_timestamp" json:"createdAt"`
+	UpdatedAt        time.Time `bun:",nullzero,notnull,default:current_timestamp" json:"updatedAt"`
 
 	Resource *Resource `bun:"rel:belongs-to,join:resource_id=id" json:"resource"`
 }

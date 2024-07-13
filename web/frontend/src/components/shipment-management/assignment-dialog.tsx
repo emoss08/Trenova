@@ -1,5 +1,9 @@
 import { getActiveAssignmentsForTractor } from "@/services/EquipmentRequestService";
-import { Tractor } from "@/types/equipment";
+import type {
+  NewAssignment,
+  Tractor,
+  TractorAssignmentFormValues,
+} from "@/types/equipment";
 import { useQuery } from "@tanstack/react-query";
 import { useEffect } from "react";
 import { DragDropContext, Draggable, Droppable } from "react-beautiful-dnd";
@@ -15,28 +19,15 @@ import {
   CredenzaTitle,
 } from "../ui/credenza";
 import { DialogFooter } from "../ui/dialog";
-interface AssignmentFormData {
-  assignments: Array<{
-    id: string;
-    shipmentId: string;
-    shipmentMoveId: string;
-    sequence: number;
-    shipmentProNumber: string;
-    assignedById: string;
-  }>;
-}
 
 interface AssignmentDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  handleAssignTractor: (assignments: AssignmentFormData["assignments"]) => void;
+  handleAssignTractor: (
+    assignments: TractorAssignmentFormValues["assignments"],
+  ) => void;
   selectedTractor: Tractor;
-  newAssignment: {
-    shipmentId: string;
-    shipmentMoveId: string;
-    shipmentProNumber: string;
-    assignedById: string;
-  } | null;
+  newAssignment: NewAssignment;
 }
 
 export function AssignmentDialog({
@@ -52,7 +43,7 @@ export function AssignmentDialog({
     enabled: open,
   });
 
-  const { control, handleSubmit } = useForm<AssignmentFormData>({
+  const { control, handleSubmit } = useForm<TractorAssignmentFormValues>({
     defaultValues: {
       assignments: newAssignment
         ? [
@@ -99,7 +90,7 @@ export function AssignmentDialog({
     }
   }, [activeAssignments, newAssignment, replace]);
 
-  const onSubmit = (data: AssignmentFormData) => {
+  const onSubmit = (data: TractorAssignmentFormValues) => {
     handleAssignTractor(data.assignments);
     onOpenChange(false);
   };

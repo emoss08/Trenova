@@ -66,16 +66,9 @@ func (p ShipmentPermission) String() string {
 type Shipment struct {
 	bun.BaseModel `bun:"table:shipments,alias:sp" json:"-"`
 
-	CreatedAt                time.Time                     `bun:",nullzero,notnull,default:current_timestamp" json:"createdAt"`
-	UpdatedAt                time.Time                     `bun:",nullzero,notnull,default:current_timestamp" json:"updatedAt"`
-	BusinessUnitID           uuid.UUID                     `bun:"type:uuid,notnull" json:"businessUnitId"`
-	OrganizationID           uuid.UUID                     `bun:"type:uuid,notnull" json:"organizationId"`
 	ID                       uuid.UUID                     `bun:",pk,type:uuid,default:uuid_generate_v4()" json:"id"`
 	ProNumber                string                        `bun:"type:VARCHAR(12),notnull" json:"proNumber" queryField:"true"`
 	Status                   property.ShipmentStatus       `bun:"type:shipment_status_enum,notnull,default:'New'" json:"status"`
-	ShipmentTypeID           uuid.UUID                     `bun:"type:uuid,notnull" json:"shipmentTypeId"`
-	RevenueCodeID            *uuid.UUID                    `bun:"type:uuid,nullzero" json:"revenueCodeId"`
-	ServiceTypeID            *uuid.UUID                    `bun:"type:uuid,nullzero" json:"serviceTypeId"`
 	RatingUnit               int                           `bun:"type:integer,notnull" json:"ratingUnit"`
 	RatingMethod             property.ShipmentRatingMethod `bun:"type:rating_method_enum,notnull,default:'FlatRate'" json:"ratingMethod"`
 	OtherChargeAmount        decimal.Decimal               `bun:"type:NUMERIC(19,4),notnull,default:0" json:"otherChargeAmount"`
@@ -89,25 +82,34 @@ type Shipment struct {
 	Billed                   bool                          `bun:",notnull,default:false" json:"billed"`
 	TransferredToBilling     bool                          `bun:",notnull,default:false" json:"transferredToBilling"`
 	TransferredToBillingDate *pgtype.Date                  `bun:"type:date,nullzero" json:"transferredToBillingDate"`
-	TrailerTypeID            *uuid.UUID                    `bun:"type:uuid,nullzero" json:"trailerTypeId"`
-	TractorTypeID            *uuid.UUID                    `bun:"type:uuid,nullzero" json:"tractorTypeId"`
 	TemperatureMin           int                           `bun:"type:integer" json:"temperatureMin"`
 	TemperatureMax           int                           `bun:"type:integer" json:"temperatureMax"`
 	BillOfLading             string                        `bun:"type:VARCHAR(20)" json:"billOfLading"`
 	VoidedComment            string                        `bun:"type:TEXT" json:"voidedComment"`
 	AutoRated                bool                          `bun:",notnull,default:false" json:"autoRated"`
 	EntryMethod              string                        `bun:"type:VARCHAR(20)" json:"entryMethod"`
-	CreatedByID              *uuid.UUID                    `bun:"type:uuid,nullzero" json:"createdById"`
 	IsHazardous              bool                          `bun:",notnull,default:false" json:"isHarzardous"`
 	EstimatedDeliveryDate    *pgtype.Date                  `bun:"type:date,nullzero" json:"estimatedDeliveryDate"`
 	ActualDeliveryDate       *pgtype.Date                  `bun:"type:date,nullzero" json:"actualDeliveryDate"`
-	OriginLocationID         uuid.UUID                     `bun:"type:uuid" json:"originLocationId"`
-	DestinationLocationID    uuid.UUID                     `bun:"type:uuid" json:"destinationLocationId"`
-	CustomerID               uuid.UUID                     `bun:"type:uuid" json:"customerId"`
 	Priority                 int                           `bun:"type:integer,notnull,default:0" json:"priority"`
 	SpecialInstructions      string                        `bun:"type:TEXT,nullzero" json:"specialInstructions"`
 	TrackingNumber           string                        `bun:"type:VARCHAR(50)" json:"trackingNumber"`
 	TotalDistance            decimal.NullDecimal           `bun:"type:NUMERIC(10,2),nullzero" json:"totalDistance"`
+	Version                  int64                         `bun:"type:BIGINT" json:"version"`
+	CreatedAt                time.Time                     `bun:",nullzero,notnull,default:current_timestamp" json:"createdAt"`
+	UpdatedAt                time.Time                     `bun:",nullzero,notnull,default:current_timestamp" json:"updatedAt"`
+
+	CreatedByID           *uuid.UUID `bun:"type:uuid,nullzero" json:"createdById"`
+	BusinessUnitID        uuid.UUID  `bun:"type:uuid,notnull" json:"businessUnitId"`
+	OrganizationID        uuid.UUID  `bun:"type:uuid,notnull" json:"organizationId"`
+	ShipmentTypeID        uuid.UUID  `bun:"type:uuid,notnull" json:"shipmentTypeId"`
+	RevenueCodeID         *uuid.UUID `bun:"type:uuid,nullzero" json:"revenueCodeId"`
+	ServiceTypeID         *uuid.UUID `bun:"type:uuid,nullzero" json:"serviceTypeId"`
+	OriginLocationID      uuid.UUID  `bun:"type:uuid" json:"originLocationId"`
+	DestinationLocationID uuid.UUID  `bun:"type:uuid" json:"destinationLocationId"`
+	CustomerID            uuid.UUID  `bun:"type:uuid" json:"customerId"`
+	TrailerTypeID         *uuid.UUID `bun:"type:uuid,nullzero" json:"trailerTypeId"`
+	TractorTypeID         *uuid.UUID `bun:"type:uuid,nullzero" json:"tractorTypeId"`
 
 	CreatedBy           *User                `bun:"rel:belongs-to,join:created_by_id=id" json:"-"`
 	BusinessUnit        *BusinessUnit        `bun:"rel:belongs-to,join:business_unit_id=id" json:"-"`
@@ -124,13 +126,13 @@ type Shipment struct {
 	ShipmentMoves       []*ShipmentMove      `bun:"rel:has-many,join:id=shipment_id" json:"moves"`
 }
 
+// Validate validates the Shipment struct.
 func (s Shipment) Validate() error {
 	return validation.ValidateStruct(
 		&s,
 		validation.Field(&s.Status, validation.Required.Error("Status is required")),
 		validation.Field(&s.RatingMethod, validation.Required.Error("Rating method is required")),
 		validation.Field(&s.TemperatureMin, validation.Max(s.TemperatureMax)),
-		validation.Field(&s.EstimatedDeliveryDate, validation.By(s.validateDeliveryDate)),
 		validation.Field(&s.BillOfLading, validation.Required.Error("Bill of lading is required")),
 		validation.Field(&s.ShipmentTypeID, validation.Required.Error("Shipment Type is required")),
 		validation.Field(&s.RatingUnit, validation.Required.Error("Rating unit is required")),
@@ -144,6 +146,38 @@ func (s Shipment) Validate() error {
 			validation.Required.Error("Total distance is required when rating method is per mile"),
 		)),
 		validation.Field(&s.ShipmentMoves))
+}
+
+func (s *Shipment) BeforeUpdate(_ context.Context) error {
+	s.Version++
+
+	return nil
+}
+
+func (s *Shipment) OptimisticUpdate(ctx context.Context, tx bun.IDB) error {
+	ov := s.Version
+
+	if err := s.BeforeUpdate(ctx); err != nil {
+		return err
+	}
+
+	result, err := tx.NewUpdate().Model(s).WherePK().Where("version = ?", ov).Exec(ctx)
+	if err != nil {
+		return err
+	}
+
+	rows, err := result.RowsAffected()
+	if err != nil {
+		return err
+	}
+
+	if rows == 0 {
+		return &validator.BusinessLogicError{
+			Message: fmt.Sprintf("Version mismatch. The Shipment (ID: %s) has been updated by another user. Please refresh and try again.", s.ID),
+		}
+	}
+
+	return nil
 }
 
 // UpdateShipmentstatus updates the shipment status based on its movements.
@@ -187,6 +221,7 @@ func (s *Shipment) UpdateStatus(ctx context.Context, db *bun.DB) error {
 	return s.setStatus(ctx, db, newStatus)
 }
 
+// GetMoveByID fetches a shipment move by its ID.
 func (s Shipment) GetMoveByID(ctx context.Context, db *bun.DB, moveID uuid.UUID) (*ShipmentMove, error) {
 	var move ShipmentMove
 	err := db.NewSelect().Model(&move).Where("id = ?", moveID).Scan(ctx)
@@ -197,14 +232,14 @@ func (s Shipment) GetMoveByID(ctx context.Context, db *bun.DB, moveID uuid.UUID)
 	return &move, nil
 }
 
-// Helper method to set status and handle database updates
+// Helper method to set status and handle database updates.
 func (s *Shipment) setStatus(ctx context.Context, db *bun.DB, newStatus property.ShipmentStatus) error {
 	s.Status = newStatus
 	_, err := db.NewUpdate().Model(s).Column("status").WherePK().Exec(ctx)
 	return err
 }
 
-// CalculateTotalChargeAmount updates the TotalChargeAmount based on FreightChargeAmount and OtherChargeAmount
+// CalculateTotalChargeAmount updates the TotalChargeAmount based on FreightChargeAmount and OtherChargeAmount.
 func (s *Shipment) CalculateTotalChargeAmount() {
 	s.TotalChargeAmount = s.FreightChargeAmount.Add(s.OtherChargeAmount)
 }
@@ -238,7 +273,7 @@ func (s Shipment) DBValidate(ctx context.Context, db *bun.DB) error {
 		}
 	}
 
-	// if err := s.validateTotalChargeAmount(); err != nil {
+	// if err := validateTotalChargeAmount(s.FreightChargeAmount, s.OtherChargeAmount, s.TotalChargeAmount); err != nil {
 	// 	if errors.As(err, &dbValidationErr) {
 	// 		multiErr.Errors = append(multiErr.Errors, *dbValidationErr)
 	// 	} else {
@@ -246,7 +281,7 @@ func (s Shipment) DBValidate(ctx context.Context, db *bun.DB) error {
 	// 	}
 	// }
 
-	if err := s.validateDeliveryDate(s.EstimatedDeliveryDate); err != nil {
+	if err := validateDeliveryDate(s.ShipDate, s.EstimatedDeliveryDate); err != nil {
 		if errors.As(err, &dbValidationErr) {
 			multiErr.Errors = append(multiErr.Errors, *dbValidationErr)
 		} else {
@@ -261,32 +296,30 @@ func (s Shipment) DBValidate(ctx context.Context, db *bun.DB) error {
 	return nil
 }
 
-func (s Shipment) validateDeliveryDate(value any) error {
-	estimatedDelivery, ok := value.(*pgtype.Date)
-	if !ok {
-		return fmt.Errorf("expected *pgtype.Date, got %T", value)
-	}
-
-	if s.ShipDate != nil && estimatedDelivery != nil {
-		if estimatedDelivery.Time.Before(s.ShipDate.Time) {
+// validateDeliveryDate validates that the estimated delivery date is after the ship date.
+func validateDeliveryDate(shipDate, delDate *pgtype.Date) error {
+	if shipDate != nil && delDate != nil {
+		if delDate.Time.Before(shipDate.Time) {
 			return errors.New("estimated delivery date must be after ship date")
 		}
 	}
 	return nil
 }
 
-func (s Shipment) validateTotalChargeAmount() error {
-	expectedTotal := s.FreightChargeAmount.Add(s.OtherChargeAmount)
-	if s.TotalChargeAmount != expectedTotal {
+// validateTotalChargeAmount validates that the TotalChargeAmount is the sum of FreightChargeAmount and OtherChargeAmount.
+func validateTotalChargeAmount(freightChargeAmount, otherChargeAmount, totalChargeAmount decimal.Decimal) error {
+	expectedTotal := freightChargeAmount.Add(otherChargeAmount)
+	if totalChargeAmount != expectedTotal {
 		return &validator.DBValidationError{
 			Field:   "totalChargeAmount",
-			Message: fmt.Sprintf("Total charge amount must be the sum of freight charge amount and other charge amount. Expected %d, got %d", expectedTotal, s.TotalChargeAmount),
+			Message: fmt.Sprintf("Total charge amount must be the sum of freight charge amount and other charge amount. Expected %d, got %d", expectedTotal, totalChargeAmount),
 		}
 	}
 
 	return nil
 }
 
+// validateStatusTransition validates that the status transition is valid.
 func (s Shipment) validateStatusTransition(ctx context.Context, db *bun.DB) error {
 	if s.ID == uuid.Nil {
 		// This is a new shipment, so we only need to validae that the status is New
@@ -336,6 +369,7 @@ func (s Shipment) validateStatusTransition(ctx context.Context, db *bun.DB) erro
 	}
 }
 
+// InsertShipment inserts a new shipment into the database.
 func (s *Shipment) InsertShipment(ctx context.Context, db *bun.DB) error {
 	if s.ProNumber == "" {
 		proNumber, err := GenerateProNumber(ctx, db, s.OrganizationID)

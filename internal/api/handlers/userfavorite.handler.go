@@ -59,13 +59,6 @@ func (ufh UserFavoriteHandler) getUserFavorites() fiber.Handler {
 	}
 }
 
-// addUserFavorite godoc
-// @Summary Add a user favorite
-// @Tags user-favorites
-// @Accept json
-// @Produce json
-// @Success 201
-// @Router /user-favorites [post]
 func (ufh UserFavoriteHandler) addUserFavorite() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		userFav := new(models.UserFavorite)
@@ -99,13 +92,6 @@ func (ufh UserFavoriteHandler) addUserFavorite() fiber.Handler {
 	}
 }
 
-// deleteUserFavorite godoc
-// @Summary Delete a user favorite
-// @Tags user-favorites
-// @Accept json
-// @Produce json
-// @Success 204
-// @Router /user-favorites [delete]
 func (ufh UserFavoriteHandler) deleteUserFavorite() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		userFav := new(models.UserFavorite)

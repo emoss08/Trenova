@@ -84,7 +84,6 @@ func (s WorkerService) Get(ctx context.Context, id uuid.UUID, orgID, buID uuid.U
 
 func (s WorkerService) Create(ctx context.Context, entity *models.Worker) (*models.Worker, error) {
 	err := s.db.RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
-		// Query the master key generation entity.
 		mkg, mErr := models.QueryWorkerMasterKeyGenerationByOrgID(ctx, s.db, entity.OrganizationID)
 		if mErr != nil {
 			return mErr

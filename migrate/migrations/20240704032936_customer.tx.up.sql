@@ -14,6 +14,7 @@ CREATE TABLE
     "has_customer_portal"     BOOLEAN      NOT NULL DEFAULT false,
     "auto_mark_ready_to_bill" BOOLEAN      NOT NULL DEFAULT false,
     "postal_code"             VARCHAR(10)  NOT NULL,
+    "version"                 BIGINT       NOT NULL,
     "created_at"              TIMESTAMPTZ  NOT NULL DEFAULT current_timestamp,
     "updated_at"              TIMESTAMPTZ  NOT NULL DEFAULT current_timestamp,
     PRIMARY KEY ("id"),

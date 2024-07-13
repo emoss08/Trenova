@@ -64,11 +64,7 @@ func (s TableChangeAlertService) CreateTableChangeAlert(ctx context.Context, tca
 
 func (s TableChangeAlertService) UpdateTableChangeAlert(ctx context.Context, tca *models.TableChangeAlert) (*models.TableChangeAlert, error) {
 	err := s.db.RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
-		if _, err := tx.NewUpdate().
-			Model(tca).
-			WherePK().
-			Returning("*").
-			Exec(ctx); err != nil {
+		if err := tca.OptimisticUpdate(ctx, tx); err != nil {
 			return err
 		}
 

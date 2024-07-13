@@ -28,6 +28,7 @@ CREATE TABLE
     "planned_departure" TIMESTAMPTZ,
     "actual_departure"  TIMESTAMPTZ,
     "notes"             TEXT,
+    "version"           BIGINT                    NOT NULL,
     "created_at"        TIMESTAMPTZ               NOT NULL DEFAULT current_timestamp,
     "updated_at"        TIMESTAMPTZ               NOT NULL DEFAULT current_timestamp,
     PRIMARY KEY ("id"),

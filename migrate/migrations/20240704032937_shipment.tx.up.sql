@@ -63,6 +63,7 @@ CREATE TABLE
     "special_instructions"        TEXT,
     "tracking_number"             VARCHAR(50),
     "total_distance"              numeric(10, 2),
+    "version"                     BIGINT               NOT NULL,
     "created_at"                  TIMESTAMPTZ          NOT NULL DEFAULT current_timestamp,
     "updated_at"                  TIMESTAMPTZ          NOT NULL DEFAULT current_timestamp,
     PRIMARY KEY ("id"),

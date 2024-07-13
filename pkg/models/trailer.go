@@ -3,6 +3,7 @@ package models
 import (
 	"context"
 	"errors"
+	"fmt"
 	"time"
 
 	"github.com/emoss08/trenova/pkg/validator"
@@ -37,9 +38,8 @@ func (p TrailerPermission) String() string {
 }
 
 type Trailer struct {
-	bun.BaseModel              `bun:"table:trailers,alias:tr" json:"-"`
-	CreatedAt                  time.Time    `bun:",nullzero,notnull,default:current_timestamp" json:"createdAt"`
-	UpdatedAt                  time.Time    `bun:",nullzero,notnull,default:current_timestamp" json:"updatedAt"`
+	bun.BaseModel `bun:"table:trailers,alias:tr" json:"-"`
+
 	ID                         uuid.UUID    `bun:",pk,type:uuid,default:uuid_generate_v4()" json:"id"`
 	Code                       string       `bun:"type:VARCHAR(50),notnull" json:"code" queryField:"true"`
 	Status                     string       `bun:"type:equipment_status_enum,notnull" json:"status"`
@@ -50,13 +50,17 @@ type Trailer struct {
 	LastInspectionDate         *pgtype.Date `bun:"type:date,nullzero" json:"lastInspectionDate"`
 	RegistrationNumber         string       `bun:"type:VARCHAR(50)" json:"registrationNumber"`
 	RegistrationExpirationDate *pgtype.Date `bun:"type:date,nullzero" json:"registrationExpirationDate"`
-	EquipmentTypeID            uuid.UUID    `bun:"type:uuid,notnull" json:"equipmentTypeId"`
-	EquipmentManufacturerID    *uuid.UUID   `bun:"type:uuid,nullzero" json:"equipmentManufacturerId"`
-	StateID                    *uuid.UUID   `bun:"type:uuid,nullzero" json:"stateId"`
-	RegistrationStateID        *uuid.UUID   `bun:"type:uuid,nullzero" json:"RegistrationStateId"`
-	FleetCodeID                *uuid.UUID   `bun:"type:uuid,nullzero" json:"fleetCodeId"`
-	BusinessUnitID             uuid.UUID    `bun:"type:uuid,notnull" json:"businessUnitId"`
-	OrganizationID             uuid.UUID    `bun:"type:uuid,notnull" json:"organizationId"`
+	Version                    int64        `bun:"type:BIGINT" json:"version"`
+	CreatedAt                  time.Time    `bun:",nullzero,notnull,default:current_timestamp" json:"createdAt"`
+	UpdatedAt                  time.Time    `bun:",nullzero,notnull,default:current_timestamp" json:"updatedAt"`
+
+	EquipmentTypeID         uuid.UUID  `bun:"type:uuid,notnull" json:"equipmentTypeId"`
+	EquipmentManufacturerID *uuid.UUID `bun:"type:uuid,nullzero" json:"equipmentManufacturerId"`
+	StateID                 *uuid.UUID `bun:"type:uuid,nullzero" json:"stateId"`
+	FleetCodeID             *uuid.UUID `bun:"type:uuid,nullzero" json:"fleetCodeId"`
+	RegistrationStateID     *uuid.UUID `bun:"type:uuid,nullzero" json:"RegistrationStateId"`
+	BusinessUnitID          uuid.UUID  `bun:"type:uuid,notnull" json:"businessUnitId"`
+	OrganizationID          uuid.UUID  `bun:"type:uuid,notnull" json:"organizationId"`
 
 	EquipmentType         *EquipmentType         `bun:"rel:belongs-to,join:equipment_type_id=id" json:"equipmentType"`
 	EquipmentManufacturer *EquipmentManufacturer `bun:"rel:belongs-to,join:equipment_manufacturer_id=id" json:"-"`
@@ -76,6 +80,43 @@ func (c Trailer) Validate() error {
 		validation.Field(&c.EquipmentManufacturerID, validation.Required.Error("Equipment Manufacturer is required. Please try again."), is.UUIDv4),
 		validation.Field(&c.OrganizationID, validation.Required.Error("OrganizationID is required. Please try again."), is.UUIDv4),
 	)
+}
+
+func (c *Trailer) BeforeUpdate(_ context.Context) error {
+	c.Version++
+
+	return nil
+}
+
+func (c *Trailer) OptimisticUpdate(ctx context.Context, tx bun.IDB) error {
+	ov := c.Version
+
+	if err := c.BeforeUpdate(ctx); err != nil {
+		return err
+	}
+
+	result, err := tx.NewUpdate().
+		Model(c).
+		WherePK().
+		Where("version = ?", ov).
+		Returning("*").
+		Exec(ctx)
+	if err != nil {
+		return err
+	}
+
+	rows, err := result.RowsAffected()
+	if err != nil {
+		return err
+	}
+
+	if rows == 0 {
+		return &validator.BusinessLogicError{
+			Message: fmt.Sprintf("Version mismatch. The Trailer (ID: %s) has been updated by another user. Please refresh and try again.", c.ID),
+		}
+	}
+
+	return nil
 }
 
 func (c Trailer) DBValidate(ctx context.Context, db *bun.DB) error {
