@@ -192,8 +192,8 @@ func DefaultServiceConfigFromEnv() Server {
 			MaxOpenConns:    utils.GetEnvAsInt("SERVER_DB_MAX_OPEN_CONNS", 25),
 			MaxIdleConns:    utils.GetEnvAsInt("SERVER_DB_MAX_IDLE_CONNS", 10),
 			ConnMaxLifetime: time.Second * time.Duration(utils.GetEnvAsInt("SERVER_DB_CONN_MAX_LIFETIME_SECONDS", 300)),
-			VerboseLogging:  utils.GetEnvAsBool("SERVER_DB_VERBOSE_LOGGING", true),
-			Debug:           utils.GetEnvAsBool("SERVER_DB_DEBUG", true),
+			VerboseLogging:  utils.GetEnvAsBool("SERVER_DB_VERBOSE_LOGGING", false),
+			Debug:           utils.GetEnvAsBool("SERVER_DB_DEBUG", false),
 		},
 		Logger: Logger{
 			Level:              utils.LogLevelFromString(utils.GetEnv("SERVER_LOGGER_LEVEL", zerolog.DebugLevel.String())),

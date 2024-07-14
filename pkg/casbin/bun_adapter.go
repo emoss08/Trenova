@@ -2,10 +2,10 @@ package casbin
 
 import (
 	"context"
+	"database/sql"
 	"fmt"
 
 	"github.com/casbin/casbin/v2/model"
-	"github.com/casbin/casbin/v2/persist"
 	"github.com/uptrace/bun"
 )
 
@@ -14,148 +14,437 @@ type BunAdapter struct {
 	db *bun.DB
 }
 
-// Rule represents a Casbin policy rule in the database.
-type Rule struct {
-	bun.BaseModel `bun:"table:casbin_rule,alias:cr"`
-
-	ID    int64  `bun:",pk,autoincrement"`
-	Ptype string `bun:",notnull"`
-	V0    string `bun:",notnull"`
-	V1    string `bun:",notnull"`
-	V2    string `bun:",notnull"`
-	V3    string `bun:",notnull"`
-	V4    string `bun:",notnull"`
-	V5    string `bun:",notnull"`
-}
-
-// String converts the Rule to a string representation.
-func (r *Rule) String() string {
-	return fmt.Sprintf("%s, %s, %s, %s, %s, %s, %s", r.Ptype, r.V0, r.V1, r.V2, r.V3, r.V4, r.V5)
-}
-
 // NewBunAdapter creates a new BunAdapter.
 func NewBunAdapter(db *bun.DB) (*BunAdapter, error) {
-	adapter := &BunAdapter{db: db}
-
-	// Ensure the database schema is up to date
-	err := db.ResetModel(context.Background(), (*Rule)(nil))
-	if err != nil {
-		return nil, fmt.Errorf("failed to reset database model: %w", err)
-	}
-
-	return adapter, nil
+	return &BunAdapter{db: db}, nil
 }
 
-// LoadPolicy loads policy rules from the database.
-func (a *BunAdapter) LoadPolicy(model model.Model) error {
-	ctx := context.Background()
-	var rules []Rule
-
-	err := a.db.NewSelect().Model(&rules).Scan(ctx)
-	if err != nil {
-		return fmt.Errorf("failed to load policy rules: %w", err)
+func newCasbinPolicy(ptype string, rule []string) CasbinPolicy {
+	c := CasbinPolicy{
+		PType: ptype,
 	}
 
-	for _, rule := range rules {
-		if err = persist.LoadPolicyLine(rule.String(), model); err != nil {
-			return fmt.Errorf("failed to load policy line: %w", err)
+	for i, v := range rule {
+		switch i {
+		case 0:
+			c.V0 = v
+		case 1:
+			c.V1 = v
+		case 2:
+			c.V2 = v
+		case 3:
+			c.V3 = v
+		case 4:
+			c.V4 = v
+		case 5:
+			c.V5 = v
+		}
+	}
+
+	return c
+}
+
+func (a *BunAdapter) LoadPolicy(model model.Model) error {
+	var policies []CasbinPolicy
+	err := a.db.NewSelect().
+		Model(&policies).
+		Scan(context.Background())
+	if err != nil {
+		return err
+	}
+
+	for _, policy := range policies {
+		if err := loadPolicyRecord(policy, model); err != nil {
+			return err
 		}
 	}
 
 	return nil
 }
 
-// SavePolicy saves policy rules to the database.
+func loadPolicyRecord(policy CasbinPolicy, model model.Model) error {
+	pType := policy.PType
+	sec := pType[:1]
+	ok, err := model.HasPolicyEx(sec, pType, policy.FilterValues())
+	if err != nil {
+		return err
+	}
+
+	if ok {
+		return nil
+	}
+
+	model.AddPolicy(sec, pType, policy.FilterValues())
+	return nil
+}
+
 func (a *BunAdapter) SavePolicy(model model.Model) error {
-	ctx := context.Background()
-	var rules []Rule
+	policies := make([]CasbinPolicy, 0)
 
 	for ptype, ast := range model["p"] {
 		for _, rule := range ast.Policy {
-			rules = append(rules, a.savePolicyLine(ptype, rule))
+			policies = append(policies, newCasbinPolicy(ptype, rule))
 		}
 	}
 
 	for ptype, ast := range model["g"] {
 		for _, rule := range ast.Policy {
-			rules = append(rules, a.savePolicyLine(ptype, rule))
+			policies = append(policies, newCasbinPolicy(ptype, rule))
 		}
 	}
 
-	_, err := a.db.NewInsert().Model(&rules).Exec(ctx)
-	if err != nil {
-		return fmt.Errorf("failed to save policy rules: %w", err)
+	return a.savePolicyRecords(policies)
+}
+
+func (a *BunAdapter) savePolicyRecords(policies []CasbinPolicy) error {
+	// Delete existing policies
+	if err := a.refreshTable(); err != nil {
+		return err
+	}
+
+	if _, err := a.db.NewInsert().
+		Model(&policies).
+		Exec(context.Background()); err != nil {
+		return err
 	}
 
 	return nil
 }
 
-// AddPolicy adds a policy rule to the database.
-func (a *BunAdapter) AddPolicy(_ string, ptype string, rule []string) error {
-	ctx := context.Background()
-	_, err := a.db.NewInsert().Model(a.savePolicyLine(ptype, rule)).Exec(ctx)
-	if err != nil {
-		return fmt.Errorf("failed to add policy rule: %w", err)
+func (a *BunAdapter) refreshTable() error {
+	if _, err := a.db.NewTruncateTable().
+		Model((*CasbinPolicy)(nil)).
+		Exec(context.Background()); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (a *BunAdapter) AddPolicy(sec string, ptype string, rule []string) error {
+	newPolicy := newCasbinPolicy(ptype, rule)
+	if _, err := a.db.NewInsert().Model(&newPolicy).Exec(context.Background()); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (a *BunAdapter) AddPolicies(sec string, ptype string, rules [][]string) error {
+	policies := make([]CasbinPolicy, 0)
+	for _, rule := range rules {
+		policies = append(policies, newCasbinPolicy(ptype, rule))
+	}
+
+	if _, err := a.db.NewInsert().Model(&policies).Exec(context.Background()); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// RemovePolicy removes a policy rule from the storage.
+// This is part of the Auto-Save feature.
+func (a *BunAdapter) RemovePolicy(sec string, ptype string, rule []string) error {
+	exisingPolicy := newCasbinPolicy(ptype, rule)
+	if err := a.deleteRecord(exisingPolicy); err != nil {
+		return err
 	}
 	return nil
 }
 
-// RemovePolicy removes a policy rule from the database.
-func (a *BunAdapter) RemovePolicy(_ string, ptype string, rule []string) error {
-	ctx := context.Background()
-	_, err := a.db.NewDelete().Model((*Rule)(nil)).
-		Where("ptype = ? AND v0 = ? AND v1 = ? AND v2 = ? AND v3 = ? AND v4 = ? AND v5 = ?",
-			ptype, rule[0], rule[1], rule[2], rule[3], rule[4], rule[5]).
-		Exec(ctx)
-	if err != nil {
-		return fmt.Errorf("failed to remove policy rule: %w", err)
+// RemovePolicies removes policy rules from the storage.
+// This is part of the Auto-Save feature.
+func (a *BunAdapter) RemovePolicies(sec string, ptype string, rules [][]string) error {
+	return a.db.RunInTx(context.Background(), &sql.TxOptions{}, func(ctx context.Context, tx bun.Tx) error {
+		for _, rule := range rules {
+			exisingPolicy := newCasbinPolicy(ptype, rule)
+			if err := a.deleteRecordInTx(tx, exisingPolicy); err != nil {
+				return err
+			}
+		}
+		return nil
+	})
+}
+
+func (a *BunAdapter) deleteRecord(existingPolicy CasbinPolicy) error {
+	query := a.db.NewDelete().
+		Model((*CasbinPolicy)(nil)).
+		Where("ptype = ?", existingPolicy.PType)
+
+	values := existingPolicy.filterValuesWithKey()
+
+	return a.delete(query, values)
+}
+
+func (a *BunAdapter) deleteRecordInTx(tx bun.Tx, existingPolicy CasbinPolicy) error {
+	query := tx.NewDelete().
+		Model((*CasbinPolicy)(nil)).
+		Where("ptype = ?", existingPolicy.PType)
+
+	values := existingPolicy.filterValuesWithKey()
+
+	return a.delete(query, values)
+}
+
+func (a *BunAdapter) delete(query *bun.DeleteQuery, values map[string]string) error {
+	for key, value := range values {
+		query = query.Where(fmt.Sprintf("%s = ?", key), value)
+	}
+
+	if _, err := query.Exec(context.Background()); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// RemoveFilteredPolicy removes policy rules that match the filter from the storage.
+// This is part of the Auto-Save feature.
+// This API is explained in the link below:
+// https://casbin.org/docs/management-api/#removefilteredpolicy
+func (a *BunAdapter) RemoveFilteredPolicy(sec string, ptype string, fieldIndex int, fieldValues ...string) error {
+	if err := a.deleteFilteredPolicy(ptype, fieldIndex, fieldValues...); err != nil {
+		return err
 	}
 	return nil
 }
 
-// RemoveFilteredPolicy removes policy rules that match the filter from the database.
-func (a *BunAdapter) RemoveFilteredPolicy(_ string, ptype string, fieldIndex int, fieldValues ...string) error {
-	ctx := context.Background()
-	query := a.db.NewDelete().Model((*Rule)(nil)).Where("ptype = ?", ptype)
+func (a *BunAdapter) deleteFilteredPolicy(ptype string, fieldIndex int, fieldValues ...string) error {
+	query := a.db.NewDelete().
+		Model((*CasbinPolicy)(nil)).
+		Where("ptype = ?", ptype)
 
-	for i, v := range fieldValues {
-		if v != "" {
-			query = query.Where(fmt.Sprintf("v%d = ?", fieldIndex+i), v)
+	// Note that empty string in fieldValues could be any word.
+	if fieldIndex <= 0 && 0 < fieldIndex+len(fieldValues) {
+		value := fieldValues[0-fieldIndex]
+		if value == "" {
+			query = query.Where("v0 LIKE '%'")
+		} else {
+			query = query.Where("v0 = ?", value)
+		}
+	}
+	if fieldIndex <= 1 && 1 < fieldIndex+len(fieldValues) {
+		value := fieldValues[1-fieldIndex]
+		if value == "" {
+			query = query.Where("v1 LIKE '%'")
+		} else {
+			query = query.Where("v1 = ?", value)
+		}
+	}
+	if fieldIndex <= 2 && 2 < fieldIndex+len(fieldValues) {
+		value := fieldValues[2-fieldIndex]
+		if value == "" {
+			query = query.Where("v2 LIKE '%'")
+		} else {
+			query = query.Where("v2 = ?", value)
+		}
+	}
+	if fieldIndex <= 3 && 3 < fieldIndex+len(fieldValues) {
+		value := fieldValues[3-fieldIndex]
+		if value == "" {
+			query = query.Where("v3 LIKE '%'")
+		} else {
+			query = query.Where("v3 = ?", value)
+		}
+	}
+	if fieldIndex <= 4 && 4 < fieldIndex+len(fieldValues) {
+		value := fieldValues[4-fieldIndex]
+		if value == "" {
+			query = query.Where("v4 LIKE '%'")
+		} else {
+			query = query.Where("v4 = ?", value)
+		}
+	}
+	if fieldIndex <= 5 && 5 < fieldIndex+len(fieldValues) {
+		value := fieldValues[5-fieldIndex]
+		if value == "" {
+			query = query.Where("v5 LIKE '%'")
+		} else {
+			query = query.Where("v5 = ?", value)
 		}
 	}
 
-	_, err := query.Exec(ctx)
-	if err != nil {
-		return fmt.Errorf("failed to remove filtered policy rules: %w", err)
+	if _, err := query.Exec(context.Background()); err != nil {
+		return err
 	}
+
 	return nil
 }
 
-// savePolicyLine converts a policy rule to a Rule struct.
-func (a *BunAdapter) savePolicyLine(ptype string, rule []string) Rule {
-	line := Rule{
-		Ptype: ptype,
+// UpdatePolicy updates a policy rule from storage.
+// This is part of the Auto-Save feature.
+func (a *BunAdapter) UpdatePolicy(sec string, ptype string, oldRule, newRule []string) error {
+	oldPolicy := newCasbinPolicy(ptype, oldRule)
+	newPolicy := newCasbinPolicy(ptype, newRule)
+	return a.updateRecord(oldPolicy, newPolicy)
+}
+
+func (a *BunAdapter) updateRecord(oldPolicy, newPolicy CasbinPolicy) error {
+	query := a.db.NewUpdate().
+		Model(&newPolicy).
+		Where("ptype = ?", oldPolicy.PType)
+
+	values := oldPolicy.filterValuesWithKey()
+
+	return a.update(query, values)
+}
+
+func (a *BunAdapter) updateRecordInTx(tx bun.Tx, oldPolicy, newPolicy CasbinPolicy) error {
+	query := tx.NewUpdate().
+		Model(&newPolicy).
+		Where("ptype = ?", oldPolicy.PType)
+
+	values := oldPolicy.filterValuesWithKey()
+
+	return a.update(query, values)
+}
+
+func (a *BunAdapter) update(query *bun.UpdateQuery, values map[string]string) error {
+	for key, value := range values {
+		query = query.Where(fmt.Sprintf("%s = ?", key), value)
 	}
 
-	for i, v := range rule {
-		if i >= 6 {
-			break
+	if _, err := query.Exec(context.Background()); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// UpdatePolicies updates some policy rules to storage, like db, redis.
+func (a *BunAdapter) UpdatePolicies(sec string, ptype string, oldRules, newRules [][]string) error {
+	oldPolicies := make([]CasbinPolicy, 0, len(oldRules))
+	newPolicies := make([]CasbinPolicy, 0, len(newRules))
+	for _, rule := range oldRules {
+		oldPolicies = append(oldPolicies, newCasbinPolicy(ptype, rule))
+	}
+	for _, rule := range newRules {
+		newPolicies = append(newPolicies, newCasbinPolicy(ptype, rule))
+	}
+
+	return a.db.RunInTx(context.Background(), &sql.TxOptions{}, func(ctx context.Context, tx bun.Tx) error {
+		for i := range oldPolicies {
+			if err := a.updateRecordInTx(tx, oldPolicies[i], newPolicies[i]); err != nil {
+				return err
+			}
 		}
-		switch i {
-		case 0:
-			line.V0 = v
-		case 1:
-			line.V1 = v
-		case 2:
-			line.V2 = v
-		case 3:
-			line.V3 = v
-		case 4:
-			line.V4 = v
-		case 5:
-			line.V5 = v
+		return nil
+	})
+}
+
+// UpdateFilteredPolicies deletes old rules and adds new rules.
+func (a *BunAdapter) UpdateFilteredPolicies(sec string, ptype string, newRules [][]string, fieldIndex int, fieldValues ...string) ([][]string, error) {
+	newPolicies := make([]CasbinPolicy, 0, len(newRules))
+	for _, rule := range newRules {
+		newPolicies = append(newPolicies, newCasbinPolicy(ptype, rule))
+	}
+
+	tx, err := a.db.BeginTx(context.Background(), &sql.TxOptions{})
+	if err != nil {
+		return nil, err
+	}
+
+	oldPolicies := make([]CasbinPolicy, 0)
+	selectQuery := tx.NewSelect().
+		Model(&oldPolicies).
+		Where("ptype = ?", ptype)
+	deleteQuery := tx.NewDelete().
+		Model((*CasbinPolicy)(nil)).
+		Where("ptype = ?", ptype)
+
+	// Note that empty string in fieldValues could be any word.
+	if fieldIndex <= 0 && 0 < fieldIndex+len(fieldValues) {
+		value := fieldValues[0-fieldIndex]
+		if value == "" {
+			selectQuery = selectQuery.Where("v0 LIKE '%'")
+			deleteQuery = deleteQuery.Where("v0 LIKE '%'")
+		} else {
+			selectQuery = selectQuery.Where("v0 = ?", value)
+			deleteQuery = deleteQuery.Where("v0 = ?", value)
+		}
+	}
+	if fieldIndex <= 1 && 1 < fieldIndex+len(fieldValues) {
+		value := fieldValues[1-fieldIndex]
+		if value == "" {
+			selectQuery = selectQuery.Where("v1 LIKE '%'")
+			deleteQuery = deleteQuery.Where("v1 LIKE '%'")
+		} else {
+			selectQuery = selectQuery.Where("v1 = ?", value)
+			deleteQuery = deleteQuery.Where("v1 = ?", value)
+		}
+	}
+	if fieldIndex <= 2 && 2 < fieldIndex+len(fieldValues) {
+		value := fieldValues[2-fieldIndex]
+		if value == "" {
+			selectQuery = selectQuery.Where("v2 LIKE '%'")
+			deleteQuery = deleteQuery.Where("v2 LIKE '%'")
+		} else {
+			selectQuery = selectQuery.Where("v2 = ?", value)
+			deleteQuery = deleteQuery.Where("v2 = ?", value)
+		}
+	}
+	if fieldIndex <= 3 && 3 < fieldIndex+len(fieldValues) {
+		value := fieldValues[3-fieldIndex]
+		if value == "" {
+			selectQuery = selectQuery.Where("v3 LIKE '%'")
+			deleteQuery = deleteQuery.Where("v3 LIKE '%'")
+		} else {
+			selectQuery = selectQuery.Where("v3 = ?", value)
+			deleteQuery = deleteQuery.Where("v3 = ?", value)
+		}
+	}
+	if fieldIndex <= 4 && 4 < fieldIndex+len(fieldValues) {
+		value := fieldValues[4-fieldIndex]
+		if value == "" {
+			selectQuery = selectQuery.Where("v4 LIKE '%'")
+			deleteQuery = deleteQuery.Where("v4 LIKE '%'")
+		} else {
+			selectQuery = selectQuery.Where("v4 = ?", value)
+			deleteQuery = deleteQuery.Where("v4 = ?", value)
+		}
+	}
+	if fieldIndex <= 5 && 5 < fieldIndex+len(fieldValues) {
+		value := fieldValues[5-fieldIndex]
+		if value == "" {
+			selectQuery = selectQuery.Where("v5 LIKE '%'")
+			deleteQuery = deleteQuery.Where("v5 LIKE '%'")
+		} else {
+			selectQuery = selectQuery.Where("v5 = ?", value)
+			deleteQuery = deleteQuery.Where("v5 = ?", value)
 		}
 	}
 
-	return line
+	// store old policies
+	if err := selectQuery.Scan(context.Background()); err != nil {
+		if err := tx.Rollback(); err != nil {
+			return nil, err
+		}
+		return nil, err
+	}
+
+	// delete old policies
+	if _, err := deleteQuery.Exec(context.Background()); err != nil {
+		if err := tx.Rollback(); err != nil {
+			return nil, err
+		}
+		return nil, err
+	}
+
+	// create new policies
+	if _, err := tx.NewInsert().
+		Model(&newPolicies).
+		Exec(context.Background()); err != nil {
+		if err := tx.Rollback(); err != nil {
+			return nil, err
+		}
+		return nil, err
+	}
+
+	out := make([][]string, 0, len(oldPolicies))
+	for _, policy := range oldPolicies {
+		out = append(out, policy.toSlice())
+	}
+
+	return out, tx.Commit()
 }

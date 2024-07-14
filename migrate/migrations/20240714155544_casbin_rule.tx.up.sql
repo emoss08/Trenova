@@ -1,11 +1,11 @@
-CREATE TABLE IF NOT EXISTS casbin_rule
+CREATE TABLE IF NOT EXISTS casbin_policies
 (
     id    BIGSERIAL PRIMARY KEY,
-    ptype VARCHAR(255) NOT NULL,
-    v0    VARCHAR(255) NOT NULL,
-    v1    VARCHAR(255) NOT NULL,
-    v2    VARCHAR(255) NOT NULL,
-    v3    VARCHAR(255) NOT NULL,
-    v4    VARCHAR(255) NOT NULL,
-    v5    VARCHAR(255) NOT NULL
+    ptype VARCHAR(100) NOT NULL,
+    v0    VARCHAR(100),
+    v1    VARCHAR(100),
+    v2    VARCHAR(100),
+    v3    VARCHAR(100),
+    v4    VARCHAR(100),
+    v5    VARCHAR(100)
 );

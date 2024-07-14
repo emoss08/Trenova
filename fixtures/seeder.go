@@ -3,9 +3,12 @@ package fixtures
 import (
 	"context"
 	"database/sql"
+	"fmt"
 	"log"
 
+	"github.com/casbin/casbin/v2"
 	"github.com/emoss08/trenova/config"
+	tCasbin "github.com/emoss08/trenova/pkg/casbin"
 	"github.com/emoss08/trenova/pkg/gen"
 	"github.com/emoss08/trenova/pkg/models"
 	"github.com/uptrace/bun"
@@ -33,6 +36,13 @@ func LoadFixtures() error {
 
 	// Initialize the counter manager with existing codes
 	err := codeInitializer.Initialize(ctx, counterManager, &models.Worker{})
+	if err != nil {
+		return err
+	}
+
+	// Initialize the casbin enforcer.
+
+	enforcer, err := initCasbin(db, serverConfig.Casbin.ModelPath)
 	if err != nil {
 		return err
 	}
@@ -94,18 +104,6 @@ func LoadFixtures() error {
 		return err
 	}
 
-	// Load the permissions
-	if err = loadPermissions(ctx, db, org, bu); err != nil {
-		log.Fatalf("Failed to load permissions: %v", err)
-		return err
-	}
-
-	// Load the roles
-	if err = loadRoles(ctx, db, org, bu); err != nil {
-		log.Fatalf("Failed to load roles: %v", err)
-		return err
-	}
-
 	// Load the workers
 	if err = loadWorkers(ctx, db, codeGen, org.ID, bu.ID); err != nil {
 		log.Fatalf("Failed to load workers: %v", err)
@@ -124,17 +122,72 @@ func LoadFixtures() error {
 		return err
 	}
 
-	// Load 100k equipment types
-	// if err = LoadEquipmentTypes(ctx, db, org.ID, bu.ID); err != nil {
-	// 	log.Fatalf("Failed to load equipment types: %v", err)
-	// 	return err
-	// }
-
 	// Load the admin account
-	if err = LoadAdminAccount(ctx, db, org, bu); err != nil {
+	if err = InitializeCasbinPolicies(ctx, db, enforcer, org, bu); err != nil {
 		log.Fatalf("Failed to load admin account: %v", err)
 		return err
 	}
 
 	return nil
+}
+
+func InitializeCasbinPolicies(ctx context.Context, db *bun.DB, enforcer *casbin.Enforcer, org *models.Organization, bu *models.BusinessUnit) error {
+	if err := loadPermissions(ctx, db, enforcer); err != nil {
+		return err
+	}
+
+	if err := loadRoles(ctx, db, enforcer); err != nil {
+		return err
+	}
+
+	if err := LoadAdminAccount(ctx, db, enforcer, org, bu); err != nil {
+		return err
+	}
+
+	if err := LoadNormalAccount(ctx, db, org, bu); err != nil {
+		return err
+	}
+
+	policies, err := enforcer.GetPolicy()
+	if err != nil {
+		return fmt.Errorf("failed to get policies: %w", err)
+	}
+
+	groupPolicies, err := enforcer.GetGroupingPolicy()
+	if err != nil {
+		return fmt.Errorf("failed to get group policies: %w", err)
+	}
+
+	// Debug: Print all policies
+	log.Println("All policies:")
+	for _, policy := range policies {
+		log.Printf("%v\n", policy)
+	}
+
+	// Debug: Print all role assignments
+	log.Println("All role assignments:")
+	for _, assignment := range groupPolicies {
+		log.Printf("%v\n", assignment)
+	}
+
+	return nil
+}
+
+func initCasbin(db *bun.DB, modelPath string) (*casbin.Enforcer, error) {
+	adapter, err := tCasbin.NewBunAdapter(db)
+	if err != nil {
+		return nil, err
+	}
+
+	enforcer, err := casbin.NewEnforcer(modelPath, adapter)
+	if err != nil {
+		return nil, err
+	}
+
+	// Load the policy from the adapter
+	if err = enforcer.LoadPolicy(); err != nil {
+		return nil, fmt.Errorf("failed to load Casbin policy: %w", err)
+	}
+
+	return enforcer, nil
 }
