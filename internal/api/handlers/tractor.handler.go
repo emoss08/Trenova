@@ -23,7 +23,7 @@ func NewTractorHandler(s *server.Server) *TractorHandler {
 	return &TractorHandler{
 		logger:            s.Logger,
 		service:           services.NewTractorService(s),
-		permissionService: services.NewPermissionService(s),
+		permissionService: services.NewPermissionService(s.Enforcer),
 	}
 }
 
@@ -70,9 +70,9 @@ func (h TractorHandler) Get() fiber.Handler {
 			})
 		}
 
-		if err = h.permissionService.CheckUserPermission(c, models.PermissionTractorView.String()); err != nil {
-			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Error{
-				Code:    fiber.StatusUnauthorized,
+		if err := h.permissionService.CheckUserPermission(c, "tractor", "view"); err != nil {
+			return c.Status(fiber.StatusForbidden).JSON(fiber.Error{
+				Code:    fiber.StatusForbidden,
 				Message: "You do not have permission to perform this action.",
 			})
 		}
@@ -149,7 +149,7 @@ func (h TractorHandler) Create() fiber.Handler {
 			})
 		}
 
-		if err := h.permissionService.CheckUserPermission(c, models.PermissionTractorAdd.String()); err != nil {
+		if err := h.permissionService.CheckUserPermission(c, "tractor", "create"); err != nil {
 			return c.Status(fiber.StatusForbidden).JSON(fiber.Error{
 				Code:    fiber.StatusForbidden,
 				Message: "You do not have permission to perform this action.",
@@ -194,7 +194,7 @@ func (h TractorHandler) GetByID() fiber.Handler {
 			})
 		}
 
-		if err := h.permissionService.CheckUserPermission(c, models.PermissionTractorView.String()); err != nil {
+		if err := h.permissionService.CheckUserPermission(c, "tractor", "view"); err != nil {
 			return c.Status(fiber.StatusForbidden).JSON(fiber.Error{
 				Code:    fiber.StatusForbidden,
 				Message: "You do not have permission to perform this action.",
@@ -223,7 +223,7 @@ func (h TractorHandler) Update() fiber.Handler {
 			})
 		}
 
-		if err := h.permissionService.CheckUserPermission(c, models.PermissionTractorEdit.String()); err != nil {
+		if err := h.permissionService.CheckUserPermission(c, "tractor", "update"); err != nil {
 			return c.Status(fiber.StatusForbidden).JSON(fiber.Error{
 				Code:    fiber.StatusForbidden,
 				Message: "You do not have permission to perform this action.",

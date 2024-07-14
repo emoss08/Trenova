@@ -8,6 +8,7 @@ require (
 	github.com/asaskevich/govalidator v0.0.0-20230301143203-a9d515a09cc2 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/bytedance/sonic/loader v0.1.1 // indirect
+	github.com/casbin/govaluate v1.1.0 // indirect
 	github.com/cespare/xxhash/v2 v2.3.0 // indirect
 	github.com/cloudflare/circl v1.3.9 // indirect
 	github.com/cloudwego/base64x v0.1.4 // indirect
@@ -69,6 +70,7 @@ require (
 
 require (
 	github.com/bytedance/sonic v1.11.9
+	github.com/casbin/casbin/v2 v2.97.0
 	github.com/confluentinc/confluent-kafka-go/v2 v2.4.0
 	github.com/fatih/color v1.17.0
 	github.com/go-ozzo/ozzo-validation/v4 v4.3.0

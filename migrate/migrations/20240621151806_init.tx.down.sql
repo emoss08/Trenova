@@ -1,15 +1,12 @@
 DROP TYPE IF EXISTS "status_enum" CASCADE;
 
 -- bun:split
-
 DROP TYPE IF EXISTS database_action_enum CASCADE;
 
 -- bun:split
-
 DROP TYPE IF EXISTS delivery_method_enum CASCADE;
 
 -- bun:split
-
 DROP TABLE IF EXISTS "us_states" CASCADE;
 
 -- bun:split

@@ -23,7 +23,7 @@ func NewHazardousMaterialHandler(s *server.Server) *HazardousMaterialHandler {
 	return &HazardousMaterialHandler{
 		logger:            s.Logger,
 		service:           services.NewHazardousMaterialService(s),
-		permissionService: services.NewPermissionService(s),
+		permissionService: services.NewPermissionService(s.Enforcer),
 	}
 }
 
@@ -69,7 +69,7 @@ func (h HazardousMaterialHandler) Get() fiber.Handler {
 			})
 		}
 
-		if err = h.permissionService.CheckUserPermission(c, models.PermissionHazardousMaterialView.String()); err != nil {
+		if err := h.permissionService.CheckUserPermission(c, "hazardous_material", "view"); err != nil {
 			return c.Status(fiber.StatusForbidden).JSON(fiber.Error{
 				Code:    fiber.StatusForbidden,
 				Message: "You do not have permission to perform this action.",
@@ -118,7 +118,7 @@ func (h HazardousMaterialHandler) Create() fiber.Handler {
 			})
 		}
 
-		if err := h.permissionService.CheckUserPermission(c, models.PermissionHazardousMaterialAdd.String()); err != nil {
+		if err := h.permissionService.CheckUserPermission(c, "hazardous_material", "create"); err != nil {
 			return c.Status(fiber.StatusForbidden).JSON(fiber.Error{
 				Code:    fiber.StatusForbidden,
 				Message: "You do not have permission to perform this action.",
@@ -163,7 +163,7 @@ func (h HazardousMaterialHandler) GetByID() fiber.Handler {
 			})
 		}
 
-		if err := h.permissionService.CheckUserPermission(c, models.PermissionHazardousMaterialView.String()); err != nil {
+		if err := h.permissionService.CheckUserPermission(c, "hazardous_material", "view"); err != nil {
 			return c.Status(fiber.StatusForbidden).JSON(fiber.Error{
 				Code:    fiber.StatusForbidden,
 				Message: "You do not have permission to perform this action.",
@@ -192,7 +192,7 @@ func (h HazardousMaterialHandler) Update() fiber.Handler {
 			})
 		}
 
-		if err := h.permissionService.CheckUserPermission(c, models.PermissionHazardousMaterialEdit.String()); err != nil {
+		if err := h.permissionService.CheckUserPermission(c, "hazardous_material", "update"); err != nil {
 			return c.Status(fiber.StatusForbidden).JSON(fiber.Error{
 				Code:    fiber.StatusForbidden,
 				Message: "You do not have permission to perform this action.",

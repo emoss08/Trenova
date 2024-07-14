@@ -23,7 +23,7 @@ func NewServiceTypeHandler(s *server.Server) *ServiceTypeHandler {
 	return &ServiceTypeHandler{
 		logger:            s.Logger,
 		service:           services.NewServiceTypeService(s),
-		permissionService: services.NewPermissionService(s),
+		permissionService: services.NewPermissionService(s.Enforcer),
 	}
 }
 
@@ -69,7 +69,7 @@ func (h ServiceTypeHandler) Get() fiber.Handler {
 			})
 		}
 
-		if err = h.permissionService.CheckUserPermission(c, models.PermissionServiceTypeView.String()); err != nil {
+		if err := h.permissionService.CheckUserPermission(c, "service_type", "view"); err != nil {
 			return c.Status(fiber.StatusForbidden).JSON(fiber.Error{
 				Code:    fiber.StatusForbidden,
 				Message: "You do not have permission to perform this action.",
@@ -118,7 +118,7 @@ func (h ServiceTypeHandler) Create() fiber.Handler {
 			})
 		}
 
-		if err := h.permissionService.CheckUserPermission(c, models.PermissionServiceTypeAdd.String()); err != nil {
+		if err := h.permissionService.CheckUserPermission(c, "service_type", "create"); err != nil {
 			return c.Status(fiber.StatusForbidden).JSON(fiber.Error{
 				Code:    fiber.StatusForbidden,
 				Message: "You do not have permission to perform this action.",
@@ -163,7 +163,7 @@ func (h ServiceTypeHandler) GetByID() fiber.Handler {
 			})
 		}
 
-		if err := h.permissionService.CheckUserPermission(c, models.PermissionServiceTypeView.String()); err != nil {
+		if err := h.permissionService.CheckUserPermission(c, "service_type", "view"); err != nil {
 			return c.Status(fiber.StatusForbidden).JSON(fiber.Error{
 				Code:    fiber.StatusForbidden,
 				Message: "You do not have permission to perform this action.",
@@ -192,7 +192,7 @@ func (h ServiceTypeHandler) Update() fiber.Handler {
 			})
 		}
 
-		if err := h.permissionService.CheckUserPermission(c, models.PermissionServiceTypeAdd.String()); err != nil {
+		if err := h.permissionService.CheckUserPermission(c, "service_type", "update"); err != nil {
 			return c.Status(fiber.StatusForbidden).JSON(fiber.Error{
 				Code:    fiber.StatusForbidden,
 				Message: "You do not have permission to perform this action.",

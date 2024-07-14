@@ -23,7 +23,7 @@ func NewCommodityHandler(s *server.Server) *CommodityHandler {
 	return &CommodityHandler{
 		logger:            s.Logger,
 		service:           services.NewCommodityService(s),
-		permissionService: services.NewPermissionService(s),
+		permissionService: services.NewPermissionService(s.Enforcer),
 	}
 }
 
@@ -69,7 +69,7 @@ func (h CommodityHandler) Get() fiber.Handler {
 			})
 		}
 
-		if err = h.permissionService.CheckUserPermission(c, models.PermissionCommodityView.String()); err != nil {
+		if err := h.permissionService.CheckUserPermission(c, "commodity", "view"); err != nil {
 			return c.Status(fiber.StatusForbidden).JSON(fiber.Error{
 				Code:    fiber.StatusForbidden,
 				Message: "You do not have permission to perform this action.",
@@ -118,7 +118,7 @@ func (h CommodityHandler) Create() fiber.Handler {
 			})
 		}
 
-		if err := h.permissionService.CheckUserPermission(c, models.PermissionCommodityAdd.String()); err != nil {
+		if err := h.permissionService.CheckUserPermission(c, "commodity", "create"); err != nil {
 			return c.Status(fiber.StatusForbidden).JSON(fiber.Error{
 				Code:    fiber.StatusForbidden,
 				Message: "You do not have permission to perform this action.",
@@ -163,7 +163,7 @@ func (h CommodityHandler) GetByID() fiber.Handler {
 			})
 		}
 
-		if err := h.permissionService.CheckUserPermission(c, models.PermissionCommodityView.String()); err != nil {
+		if err := h.permissionService.CheckUserPermission(c, "commodity", "view"); err != nil {
 			return c.Status(fiber.StatusForbidden).JSON(fiber.Error{
 				Code:    fiber.StatusForbidden,
 				Message: "You do not have permission to perform this action.",
@@ -192,7 +192,7 @@ func (h CommodityHandler) Update() fiber.Handler {
 			})
 		}
 
-		if err := h.permissionService.CheckUserPermission(c, models.PermissionCommodityEdit.String()); err != nil {
+		if err := h.permissionService.CheckUserPermission(c, "commodity", "update"); err != nil {
 			return c.Status(fiber.StatusForbidden).JSON(fiber.Error{
 				Code:    fiber.StatusForbidden,
 				Message: "You do not have permission to perform this action.",

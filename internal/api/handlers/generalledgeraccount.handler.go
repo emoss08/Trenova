@@ -23,7 +23,7 @@ func NewGeneralLedgerAccountHandler(s *server.Server) *GeneralLedgerAccountHandl
 	return &GeneralLedgerAccountHandler{
 		logger:            s.Logger,
 		service:           services.NewGeneralLedgerAccountService(s),
-		permissionService: services.NewPermissionService(s),
+		permissionService: services.NewPermissionService(s.Enforcer),
 	}
 }
 
@@ -69,7 +69,7 @@ func (h GeneralLedgerAccountHandler) Get() fiber.Handler {
 			})
 		}
 
-		if err = h.permissionService.CheckUserPermission(c, models.PermissionGeneralLedgerAccountView.String()); err != nil {
+		if err := h.permissionService.CheckUserPermission(c, "general_ledger_account", "view"); err != nil {
 			return c.Status(fiber.StatusForbidden).JSON(fiber.Error{
 				Code:    fiber.StatusForbidden,
 				Message: "You do not have permission to perform this action.",
@@ -118,7 +118,7 @@ func (h GeneralLedgerAccountHandler) Create() fiber.Handler {
 			})
 		}
 
-		if err := h.permissionService.CheckUserPermission(c, models.PermissionGeneralLedgerAccountAdd.String()); err != nil {
+		if err := h.permissionService.CheckUserPermission(c, "general_ledger_account", "create"); err != nil {
 			return c.Status(fiber.StatusForbidden).JSON(fiber.Error{
 				Code:    fiber.StatusForbidden,
 				Message: "You do not have permission to perform this action.",
@@ -163,7 +163,7 @@ func (h GeneralLedgerAccountHandler) GetByID() fiber.Handler {
 			})
 		}
 
-		if err := h.permissionService.CheckUserPermission(c, models.PermissionGeneralLedgerAccountView.String()); err != nil {
+		if err := h.permissionService.CheckUserPermission(c, "general_ledger_account", "view"); err != nil {
 			return c.Status(fiber.StatusForbidden).JSON(fiber.Error{
 				Code:    fiber.StatusForbidden,
 				Message: "You do not have permission to perform this action.",
@@ -192,7 +192,7 @@ func (h GeneralLedgerAccountHandler) Update() fiber.Handler {
 			})
 		}
 
-		if err := h.permissionService.CheckUserPermission(c, models.PermissionGeneralLedgerAccountEdit.String()); err != nil {
+		if err := h.permissionService.CheckUserPermission(c, "general_ledger_account", "update"); err != nil {
 			return c.Status(fiber.StatusForbidden).JSON(fiber.Error{
 				Code:    fiber.StatusForbidden,
 				Message: "You do not have permission to perform this action.",

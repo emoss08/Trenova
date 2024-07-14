@@ -23,16 +23,16 @@ func NewEquipmentTypeHandler(s *server.Server) *EquipmentTypeHandler {
 	return &EquipmentTypeHandler{
 		logger:            s.Logger,
 		service:           services.NewEquipmentTypeService(s),
-		permissionService: services.NewPermissionService(s),
+		permissionService: services.NewPermissionService(s.Enforcer),
 	}
 }
 
 func (h EquipmentTypeHandler) RegisterRoutes(r fiber.Router) {
 	api := r.Group("/equipment-types")
 	api.Get("/", h.Get())
-	api.Get("/:equipmenttypeID", h.GetByID())
+	api.Get("/:equipTypeID", h.GetByID())
 	api.Post("/", h.Create())
-	api.Put("/:equipmenttypeID", h.Update())
+	api.Put("/:equipTypeID", h.Update())
 }
 
 func (h EquipmentTypeHandler) Get() fiber.Handler {
@@ -69,7 +69,7 @@ func (h EquipmentTypeHandler) Get() fiber.Handler {
 			})
 		}
 
-		if err = h.permissionService.CheckUserPermission(c, models.PermissionEquipmentTypeView.String()); err != nil {
+		if err := h.permissionService.CheckUserPermission(c, "equipment_type", "view"); err != nil {
 			return c.Status(fiber.StatusForbidden).JSON(fiber.Error{
 				Code:    fiber.StatusForbidden,
 				Message: "You do not have permission to perform this action.",
@@ -118,7 +118,7 @@ func (h EquipmentTypeHandler) Create() fiber.Handler {
 			})
 		}
 
-		if err := h.permissionService.CheckUserPermission(c, models.PermissionEquipmentTypeView.String()); err != nil {
+		if err := h.permissionService.CheckUserPermission(c, "equipment_type", "create"); err != nil {
 			return c.Status(fiber.StatusForbidden).JSON(fiber.Error{
 				Code:    fiber.StatusForbidden,
 				Message: "You do not have permission to perform this action.",
@@ -144,8 +144,8 @@ func (h EquipmentTypeHandler) Create() fiber.Handler {
 
 func (h EquipmentTypeHandler) GetByID() fiber.Handler {
 	return func(c *fiber.Ctx) error {
-		equipmenttypeID := c.Params("equipmenttypeID")
-		if equipmenttypeID == "" {
+		equipTypeID := c.Params("equipTypeID")
+		if equipTypeID == "" {
 			return c.Status(fiber.StatusBadRequest).JSON(fiber.Error{
 				Code:    fiber.StatusBadRequest,
 				Message: "EquipmentType ID is required",
@@ -163,14 +163,14 @@ func (h EquipmentTypeHandler) GetByID() fiber.Handler {
 			})
 		}
 
-		if err := h.permissionService.CheckUserPermission(c, models.PermissionEquipmentTypeView.String()); err != nil {
+		if err := h.permissionService.CheckUserPermission(c, "equipment_type", "view"); err != nil {
 			return c.Status(fiber.StatusForbidden).JSON(fiber.Error{
 				Code:    fiber.StatusForbidden,
 				Message: "You do not have permission to perform this action.",
 			})
 		}
 
-		entity, err := h.service.Get(c.UserContext(), uuid.MustParse(equipmenttypeID), orgID, buID)
+		entity, err := h.service.Get(c.UserContext(), uuid.MustParse(equipTypeID), orgID, buID)
 		if err != nil {
 			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Error{
 				Code:    fiber.StatusInternalServerError,
@@ -184,15 +184,15 @@ func (h EquipmentTypeHandler) GetByID() fiber.Handler {
 
 func (h EquipmentTypeHandler) Update() fiber.Handler {
 	return func(c *fiber.Ctx) error {
-		equipmenttypeID := c.Params("equipmenttypeID")
-		if equipmenttypeID == "" {
+		equipTypeID := c.Params("equipTypeID")
+		if equipTypeID == "" {
 			return c.Status(fiber.StatusBadRequest).JSON(fiber.Error{
 				Code:    fiber.StatusBadRequest,
 				Message: "EquipmentType ID is required",
 			})
 		}
 
-		if err := h.permissionService.CheckUserPermission(c, models.PermissionEquipmentTypeAdd.String()); err != nil {
+		if err := h.permissionService.CheckUserPermission(c, "equipment_type", "update"); err != nil {
 			return c.Status(fiber.StatusForbidden).JSON(fiber.Error{
 				Code:    fiber.StatusForbidden,
 				Message: "You do not have permission to perform this action.",
@@ -205,7 +205,7 @@ func (h EquipmentTypeHandler) Update() fiber.Handler {
 			return c.Status(fiber.StatusBadRequest).JSON(err)
 		}
 
-		updatedEntity.ID = uuid.MustParse(equipmenttypeID)
+		updatedEntity.ID = uuid.MustParse(equipTypeID)
 
 		entity, err := h.service.UpdateOne(c.UserContext(), updatedEntity)
 		if err != nil {

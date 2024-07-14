@@ -23,7 +23,7 @@ func NewLocationCategoryHandler(s *server.Server) *LocationCategoryHandler {
 	return &LocationCategoryHandler{
 		logger:            s.Logger,
 		service:           services.NewLocationCategoryService(s),
-		permissionService: services.NewPermissionService(s),
+		permissionService: services.NewPermissionService(s.Enforcer),
 	}
 }
 
@@ -69,7 +69,7 @@ func (h LocationCategoryHandler) Get() fiber.Handler {
 			})
 		}
 
-		if err = h.permissionService.CheckUserPermission(c, models.PermissionLocationCategoryView.String()); err != nil {
+		if err := h.permissionService.CheckUserPermission(c, "location_category", "view"); err != nil {
 			return c.Status(fiber.StatusForbidden).JSON(fiber.Error{
 				Code:    fiber.StatusForbidden,
 				Message: "You do not have permission to perform this action.",
@@ -118,7 +118,7 @@ func (h LocationCategoryHandler) Create() fiber.Handler {
 			})
 		}
 
-		if err := h.permissionService.CheckUserPermission(c, models.PermissionLocationCategoryAdd.String()); err != nil {
+		if err := h.permissionService.CheckUserPermission(c, "location_category", "create"); err != nil {
 			return c.Status(fiber.StatusForbidden).JSON(fiber.Error{
 				Code:    fiber.StatusForbidden,
 				Message: "You do not have permission to perform this action.",
@@ -163,7 +163,7 @@ func (h LocationCategoryHandler) GetByID() fiber.Handler {
 			})
 		}
 
-		if err := h.permissionService.CheckUserPermission(c, models.PermissionLocationCategoryView.String()); err != nil {
+		if err := h.permissionService.CheckUserPermission(c, "location_category", "view"); err != nil {
 			return c.Status(fiber.StatusForbidden).JSON(fiber.Error{
 				Code:    fiber.StatusForbidden,
 				Message: "You do not have permission to perform this action.",
@@ -192,7 +192,7 @@ func (h LocationCategoryHandler) Update() fiber.Handler {
 			})
 		}
 
-		if err := h.permissionService.CheckUserPermission(c, models.PermissionLocationCategoryEdit.String()); err != nil {
+		if err := h.permissionService.CheckUserPermission(c, "location_category", "update"); err != nil {
 			return c.Status(fiber.StatusForbidden).JSON(fiber.Error{
 				Code:    fiber.StatusForbidden,
 				Message: "You do not have permission to perform this action.",

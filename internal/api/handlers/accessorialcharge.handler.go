@@ -23,7 +23,7 @@ func NewAccessorialChargeHandler(s *server.Server) *AccessorialChargeHandler {
 	return &AccessorialChargeHandler{
 		logger:            s.Logger,
 		service:           services.NewAccessorialChargeService(s),
-		permissionService: services.NewPermissionService(s),
+		permissionService: services.NewPermissionService(s.Enforcer),
 	}
 }
 
@@ -69,7 +69,7 @@ func (h AccessorialChargeHandler) Get() fiber.Handler {
 			})
 		}
 
-		if err = h.permissionService.CheckUserPermission(c, models.PermissionAccessorialChargeView.String()); err != nil {
+		if err = h.permissionService.CheckUserPermission(c, "accessorial_charge", "view"); err != nil {
 			return c.Status(fiber.StatusForbidden).JSON(fiber.Error{
 				Code:    fiber.StatusForbidden,
 				Message: "You do not have permission to perform this action.",
@@ -118,7 +118,7 @@ func (h AccessorialChargeHandler) Create() fiber.Handler {
 			})
 		}
 
-		if err := h.permissionService.CheckUserPermission(c, models.PermissionAccessorialChargeView.String()); err != nil {
+		if err := h.permissionService.CheckUserPermission(c, "accessorial_charge", "create"); err != nil {
 			return c.Status(fiber.StatusForbidden).JSON(fiber.Error{
 				Code:    fiber.StatusForbidden,
 				Message: "You do not have permission to perform this action.",
@@ -163,7 +163,7 @@ func (h AccessorialChargeHandler) GetByID() fiber.Handler {
 			})
 		}
 
-		if err := h.permissionService.CheckUserPermission(c, models.PermissionAccessorialChargeView.String()); err != nil {
+		if err := h.permissionService.CheckUserPermission(c, "accessorial_charge", "view"); err != nil {
 			return c.Status(fiber.StatusForbidden).JSON(fiber.Error{
 				Code:    fiber.StatusForbidden,
 				Message: "You do not have permission to perform this action.",
@@ -192,7 +192,7 @@ func (h AccessorialChargeHandler) Update() fiber.Handler {
 			})
 		}
 
-		if err := h.permissionService.CheckUserPermission(c, models.PermissionAccessorialChargeAdd.String()); err != nil {
+		if err := h.permissionService.CheckUserPermission(c, "accessorial_charge", "update"); err != nil {
 			return c.Status(fiber.StatusForbidden).JSON(fiber.Error{
 				Code:    fiber.StatusForbidden,
 				Message: "You do not have permission to perform this action.",

@@ -23,7 +23,7 @@ func NewDocumentClassificationHandler(s *server.Server) *DocumentClassificationH
 	return &DocumentClassificationHandler{
 		logger:            s.Logger,
 		service:           services.NewDocumentClassificationService(s),
-		permissionService: services.NewPermissionService(s),
+		permissionService: services.NewPermissionService(s.Enforcer),
 	}
 }
 
@@ -69,7 +69,7 @@ func (h DocumentClassificationHandler) Get() fiber.Handler {
 			})
 		}
 
-		if err = h.permissionService.CheckUserPermission(c, models.PermissionDocumentClassificationView.String()); err != nil {
+		if err := h.permissionService.CheckUserPermission(c, "document_classification", "view"); err != nil {
 			return c.Status(fiber.StatusForbidden).JSON(fiber.Error{
 				Code:    fiber.StatusForbidden,
 				Message: "You do not have permission to perform this action.",
@@ -118,7 +118,7 @@ func (h DocumentClassificationHandler) Create() fiber.Handler {
 			})
 		}
 
-		if err := h.permissionService.CheckUserPermission(c, models.PermissionDocumentClassificationAdd.String()); err != nil {
+		if err := h.permissionService.CheckUserPermission(c, "document_classification", "create"); err != nil {
 			return c.Status(fiber.StatusForbidden).JSON(fiber.Error{
 				Code:    fiber.StatusForbidden,
 				Message: "You do not have permission to perform this action.",
@@ -163,7 +163,7 @@ func (h DocumentClassificationHandler) GetByID() fiber.Handler {
 			})
 		}
 
-		if err := h.permissionService.CheckUserPermission(c, models.PermissionDocumentClassificationView.String()); err != nil {
+		if err := h.permissionService.CheckUserPermission(c, "document_classification", "view"); err != nil {
 			return c.Status(fiber.StatusForbidden).JSON(fiber.Error{
 				Code:    fiber.StatusForbidden,
 				Message: "You do not have permission to perform this action.",
@@ -192,7 +192,7 @@ func (h DocumentClassificationHandler) Update() fiber.Handler {
 			})
 		}
 
-		if err := h.permissionService.CheckUserPermission(c, models.PermissionDocumentClassificationEdit.String()); err != nil {
+		if err := h.permissionService.CheckUserPermission(c, "document_classification", "update"); err != nil {
 			return c.Status(fiber.StatusForbidden).JSON(fiber.Error{
 				Code:    fiber.StatusForbidden,
 				Message: "You do not have permission to perform this action.",

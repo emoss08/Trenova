@@ -36,7 +36,7 @@ func NewUserHandler(s *server.Server) *UserHandler {
 	return &UserHandler{
 		logger:            s.Logger,
 		service:           services.NewUserService(s),
-		permissionService: services.NewPermissionService(s),
+		permissionService: services.NewPermissionService(s.Enforcer),
 	}
 }
 
@@ -149,7 +149,7 @@ func (uh UserHandler) updateUser() fiber.Handler {
 			})
 		}
 
-		if err := uh.permissionService.CheckOwnershipPermission(c, models.PermissionUserEdit.String(), userID); err != nil {
+		if err := uh.permissionService.CheckOwnershipPermission(c, "user", "update", userID); err != nil {
 			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Error{
 				Code:    fiber.StatusUnauthorized,
 				Message: "You do not have permission to perform this action.",

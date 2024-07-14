@@ -23,7 +23,7 @@ func NewEquipmentManufacturerHandler(s *server.Server) *EquipmentManufacturerHan
 	return &EquipmentManufacturerHandler{
 		logger:            s.Logger,
 		service:           services.NewEquipmentManufacturerService(s),
-		permissionService: services.NewPermissionService(s),
+		permissionService: services.NewPermissionService(s.Enforcer),
 	}
 }
 
@@ -69,7 +69,7 @@ func (h EquipmentManufacturerHandler) Get() fiber.Handler {
 			})
 		}
 
-		if err = h.permissionService.CheckUserPermission(c, models.PermissionEquipmentManufacturerView.String()); err != nil {
+		if err := h.permissionService.CheckUserPermission(c, "equipment_manfuacturer", "view"); err != nil {
 			return c.Status(fiber.StatusForbidden).JSON(fiber.Error{
 				Code:    fiber.StatusForbidden,
 				Message: "You do not have permission to perform this action.",
@@ -118,7 +118,7 @@ func (h EquipmentManufacturerHandler) Create() fiber.Handler {
 			})
 		}
 
-		if err := h.permissionService.CheckUserPermission(c, models.PermissionEquipmentManufacturerAdd.String()); err != nil {
+		if err := h.permissionService.CheckUserPermission(c, "equipment_manfuacturer", "create"); err != nil {
 			return c.Status(fiber.StatusForbidden).JSON(fiber.Error{
 				Code:    fiber.StatusForbidden,
 				Message: "You do not have permission to perform this action.",
@@ -163,7 +163,7 @@ func (h EquipmentManufacturerHandler) GetByID() fiber.Handler {
 			})
 		}
 
-		if err := h.permissionService.CheckUserPermission(c, models.PermissionEquipmentManufacturerView.String()); err != nil {
+		if err := h.permissionService.CheckUserPermission(c, "equipment_manfuacturer", "view"); err != nil {
 			return c.Status(fiber.StatusForbidden).JSON(fiber.Error{
 				Code:    fiber.StatusForbidden,
 				Message: "You do not have permission to perform this action.",
@@ -192,7 +192,7 @@ func (h EquipmentManufacturerHandler) Update() fiber.Handler {
 			})
 		}
 
-		if err := h.permissionService.CheckUserPermission(c, models.PermissionEquipmentManufacturerEdit.String()); err != nil {
+		if err := h.permissionService.CheckUserPermission(c, "equipment_manfuacturer", "update"); err != nil {
 			return c.Status(fiber.StatusForbidden).JSON(fiber.Error{
 				Code:    fiber.StatusForbidden,
 				Message: "You do not have permission to perform this action.",

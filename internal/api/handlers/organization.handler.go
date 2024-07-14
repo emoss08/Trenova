@@ -20,7 +20,7 @@ func NewOrganizationHandler(s *server.Server) *OrganizationHandler {
 	return &OrganizationHandler{
 		logger:            s.Logger,
 		service:           services.NewOrganizationService(s),
-		permissionService: services.NewPermissionService(s),
+		permissionService: services.NewPermissionService(s.Enforcer),
 	}
 }
 
@@ -68,9 +68,9 @@ func (oh OrganizationHandler) getOrganizationDetails() fiber.Handler {
 			})
 		}
 
-		if err := oh.permissionService.CheckUserPermission(c, models.PermissionOrganizationView.String()); err != nil {
-			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Error{
-				Code:    fiber.StatusUnauthorized,
+		if err := oh.permissionService.CheckUserPermission(c, "organization", "view"); err != nil {
+			return c.Status(fiber.StatusForbidden).JSON(fiber.Error{
+				Code:    fiber.StatusForbidden,
 				Message: "You do not have permission to perform this action.",
 			})
 		}
@@ -98,9 +98,9 @@ func (oh OrganizationHandler) updateOrganization() fiber.Handler {
 			})
 		}
 
-		if err := oh.permissionService.CheckUserPermission(c, models.PermissionOrganizationAdd.String()); err != nil {
-			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Error{
-				Code:    fiber.StatusUnauthorized,
+		if err := oh.permissionService.CheckUserPermission(c, "organization", "update"); err != nil {
+			return c.Status(fiber.StatusForbidden).JSON(fiber.Error{
+				Code:    fiber.StatusForbidden,
 				Message: "You do not have permission to perform this action.",
 			})
 		}
@@ -134,9 +134,9 @@ func (oh OrganizationHandler) uploadOrganizationLogo() fiber.Handler {
 			})
 		}
 
-		if err := oh.permissionService.CheckUserPermission(c, models.PermissionOrganizationChangeLogo.String()); err != nil {
-			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Error{
-				Code:    fiber.StatusUnauthorized,
+		if err := oh.permissionService.CheckUserPermission(c, "organization", "change_logo"); err != nil {
+			return c.Status(fiber.StatusForbidden).JSON(fiber.Error{
+				Code:    fiber.StatusForbidden,
 				Message: "You do not have permission to perform this action.",
 			})
 		}
@@ -172,9 +172,9 @@ func (oh OrganizationHandler) clearOrganizationLogo() fiber.Handler {
 			})
 		}
 
-		if err := oh.permissionService.CheckUserPermission(c, models.PermissionOrganizationChangeLogo.String()); err != nil {
-			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Error{
-				Code:    fiber.StatusUnauthorized,
+		if err := oh.permissionService.CheckUserPermission(c, "organization", "change_logo"); err != nil {
+			return c.Status(fiber.StatusForbidden).JSON(fiber.Error{
+				Code:    fiber.StatusForbidden,
 				Message: "You do not have permission to perform this action.",
 			})
 		}

@@ -1,106 +1,66 @@
 package services
 
 import (
-	"context"
-
-	"github.com/emoss08/trenova/internal/server"
-	"github.com/emoss08/trenova/pkg/models"
-	"github.com/emoss08/trenova/pkg/utils"
+	"github.com/casbin/casbin/v2"
 	"github.com/gofiber/fiber/v2"
 	"github.com/google/uuid"
-	"github.com/rs/zerolog"
-	"github.com/uptrace/bun"
 )
 
 type PermissionService struct {
-	db     *bun.DB
-	logger *zerolog.Logger
+	enforecer *casbin.Enforcer
 }
 
-func NewPermissionService(s *server.Server) *PermissionService {
+func NewPermissionService(enforcer *casbin.Enforcer) *PermissionService {
 	return &PermissionService{
-		db:     s.DB,
-		logger: s.Logger,
+		enforecer: enforcer,
 	}
 }
 
-func (s *PermissionService) hasPermission(ctx context.Context, userID uuid.UUID, permission string) (bool, error) {
-	// Query the user with roles and permissions.
-	user := new(models.User)
-
-	err := s.db.NewSelect().
-		Model(user).
-		Relation("Roles.Permissions").
-		Where("u.id = ?", userID).
-		Scan(ctx)
-	if err != nil {
-		return false, err
-	}
-
-	// If the user is admin, return true.
-	if user.IsAdmin {
-		return true, nil
-	}
-
-	// Check if the user has the permission.
-	for _, role := range user.Roles {
-		for _, perm := range role.Permissions {
-			if perm.Codename == permission {
-				return true, nil
-			}
-		}
-	}
-
-	return false, nil
-}
-
-func (s *PermissionService) CheckUserPermission(c *fiber.Ctx, permission string) error {
-	userID, ok := c.Locals(utils.CTXUserID).(uuid.UUID)
+func (s *PermissionService) CheckUserPermission(c *fiber.Ctx, resource string, action string) error {
+	userID, ok := c.Locals("userID").(uuid.UUID)
 	if !ok {
-		return fiber.NewError(fiber.StatusUnauthorized, "user id not found in context")
+		return fiber.NewError(fiber.StatusUnauthorized, "User ID not found in context")
 	}
 
-	hasPermission, err := s.hasPermission(c.Context(), userID, permission)
+	allowed, err := s.enforecer.Enforce(userID.String(), resource, action)
 	if err != nil {
-		return err
+		return fiber.NewError(fiber.StatusInternalServerError, err.Error())
 	}
 
-	if !hasPermission {
-		return fiber.NewError(fiber.StatusForbidden, "user does not have permission")
+	if !allowed {
+		return fiber.NewError(fiber.StatusForbidden, "You do not have permission to perform this action")
 	}
 
 	return nil
 }
 
-func (s *PermissionService) GetPermissions(ctx context.Context, limit, offset int, orgID, buID uuid.UUID) ([]*models.Permission, int, error) {
-	var permissions []*models.Permission
-	count, err := s.db.NewSelect().
-		Model(&permissions).
-		Relation("Roles").
-		Where("p.organization_id = ?", orgID).
-		Where("p.business_unit_id = ?", buID).
-		Order("p.created_at DESC").
-		Limit(limit).
-		Offset(offset).
-		ScanAndCount(ctx)
-	if err != nil {
-		return nil, 0, err
+func (s *PermissionService) CheckOwnershipPermission(c *fiber.Ctx, resource string, action string, ownerID string) error {
+	userID, ok := c.Locals("user_id").(uuid.UUID)
+	if !ok {
+		return fiber.NewError(fiber.StatusUnauthorized, "User ID not found in context")
 	}
 
-	return permissions, count, nil
+	// If the user is updating their own profile, allow it
+	if userID.String() == ownerID && resource == "user" && action == "update" {
+		return nil
+	}
+
+	// Otherwise, check for the regular permission
+	return s.CheckUserPermission(c, resource, action)
 }
 
-func (s *PermissionService) CheckOwnershipPermission(c *fiber.Ctx, permission string, userID string) error {
-	uid, ok := c.Locals(utils.CTXUserID).(uuid.UUID)
-	if !ok {
-		return fiber.NewError(fiber.StatusUnauthorized, "user id not found in context")
-	}
+func (s *PermissionService) AddRoleForUser(userID uuid.UUID, role string) error {
+	_, err := s.enforecer.AddGroupingPolicy(userID.String(), role)
 
-	// Check if the user is updating their own profile.
-	if uid.String() != userID {
-		// if the user not updating their own profile, check if the user has the required permission.
-		return s.CheckUserPermission(c, permission)
-	}
+	return err
+}
 
-	return nil
+func (s *PermissionService) AddPermissionForRole(role, resource, action string) error {
+	_, err := s.enforecer.AddPolicy(role, resource, action)
+	return err
+}
+
+func (s *PermissionService) AddCustomPermissionForUser(userID uuid.UUID, resource, action string) error {
+	_, err := s.enforecer.AddPolicy(userID.String(), resource, action)
+	return err
 }

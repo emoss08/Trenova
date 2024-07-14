@@ -14,27 +14,6 @@ import (
 	"github.com/uptrace/bun"
 )
 
-type AccessorialchargePermission string
-
-const (
-	// PermissionAccessorialChargeView is the permission to view accessorial charge details
-	PermissionAccessorialChargeView = AccessorialchargePermission("accessorialcharge.view")
-
-	// PermissionAccessorialChargeEdit is the permission to edit accessorial charge details
-	PermissionAccessorialChargeEdit = AccessorialchargePermission("accessorialcharge.edit")
-
-	// PermissionAccessorialChargeAdd is the permission to add a new accessorial charge
-	PermissionAccessorialChargeAdd = AccessorialchargePermission("accessorialcharge.add")
-
-	// PermissionAccessorialChargeDelete is the permission to delete an accessorial charge
-	PermissionAccessorialChargeDelete = AccessorialchargePermission("accessorialcharge.delete")
-)
-
-// String returns the string representation of the AccessorialchargePermission
-func (p AccessorialchargePermission) String() string {
-	return string(p)
-}
-
 type AccessorialCharge struct {
 	bun.BaseModel `bun:"table:accessorial_charges,alias:ac" json:"-"`
 

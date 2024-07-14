@@ -26,7 +26,7 @@ func NewShipmentHandler(s *server.Server) *ShipmentHandler {
 	return &ShipmentHandler{
 		logger:            s.Logger,
 		service:           services.NewShipmentService(s),
-		permissionService: services.NewPermissionService(s),
+		permissionService: services.NewPermissionService(s.Enforcer),
 	}
 }
 
@@ -72,7 +72,7 @@ func (h ShipmentHandler) Get() fiber.Handler {
 			})
 		}
 
-		if err = h.permissionService.CheckUserPermission(c, models.PermissionShipmentView.String()); err != nil {
+		if err := h.permissionService.CheckUserPermission(c, "shipment", "view"); err != nil {
 			return c.Status(fiber.StatusForbidden).JSON(fiber.Error{
 				Code:    fiber.StatusForbidden,
 				Message: "You do not have permission to perform this action.",
@@ -160,7 +160,7 @@ func (h ShipmentHandler) Create() fiber.Handler {
 			})
 		}
 
-		if err := h.permissionService.CheckUserPermission(c, models.PermissionShipmentAdd.String()); err != nil {
+		if err := h.permissionService.CheckUserPermission(c, "shipment", "create"); err != nil {
 			return c.Status(fiber.StatusForbidden).JSON(fiber.Error{
 				Code:    fiber.StatusForbidden,
 				Message: "You do not have permission to perform this action.",
@@ -207,7 +207,7 @@ func (h ShipmentHandler) GetByID() fiber.Handler {
 			})
 		}
 
-		if err := h.permissionService.CheckUserPermission(c, models.PermissionShipmentView.String()); err != nil {
+		if err := h.permissionService.CheckUserPermission(c, "shipment", "view"); err != nil {
 			return c.Status(fiber.StatusForbidden).JSON(fiber.Error{
 				Code:    fiber.StatusForbidden,
 				Message: "You do not have permission to perform this action.",
@@ -238,7 +238,7 @@ func (h ShipmentHandler) AssignTractorToShipment() fiber.Handler {
 			})
 		}
 
-		if err := h.permissionService.CheckUserPermission(c, models.PermissionShipmentEdit.String()); err != nil {
+		if err := h.permissionService.CheckUserPermission(c, "shipment", "assign_tractor"); err != nil {
 			return c.Status(fiber.StatusForbidden).JSON(fiber.Error{
 				Code:    fiber.StatusForbidden,
 				Message: "You do not have permission to perform this action.",

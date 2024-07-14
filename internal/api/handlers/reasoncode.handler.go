@@ -23,16 +23,16 @@ func NewReasonCodeHandler(s *server.Server) *ReasonCodeHandler {
 	return &ReasonCodeHandler{
 		logger:            s.Logger,
 		service:           services.NewReasonCodeService(s),
-		permissionService: services.NewPermissionService(s),
+		permissionService: services.NewPermissionService(s.Enforcer),
 	}
 }
 
 func (h ReasonCodeHandler) RegisterRoutes(r fiber.Router) {
 	api := r.Group("/reason-codes")
 	api.Get("/", h.Get())
-	api.Get("/:reasoncodeID", h.GetByID())
+	api.Get("/:reasonCodeID", h.GetByID())
 	api.Post("/", h.Create())
-	api.Put("/:reasoncodeID", h.Update())
+	api.Put("/:reasonCodeID", h.Update())
 }
 
 func (h ReasonCodeHandler) Get() fiber.Handler {
@@ -69,7 +69,7 @@ func (h ReasonCodeHandler) Get() fiber.Handler {
 			})
 		}
 
-		if err = h.permissionService.CheckUserPermission(c, models.PermissionReasonCodeView.String()); err != nil {
+		if err := h.permissionService.CheckUserPermission(c, "reason_code", "view"); err != nil {
 			return c.Status(fiber.StatusForbidden).JSON(fiber.Error{
 				Code:    fiber.StatusForbidden,
 				Message: "You do not have permission to perform this action.",
@@ -118,7 +118,7 @@ func (h ReasonCodeHandler) Create() fiber.Handler {
 			})
 		}
 
-		if err := h.permissionService.CheckUserPermission(c, models.PermissionReasonCodeAdd.String()); err != nil {
+		if err := h.permissionService.CheckUserPermission(c, "reason_code", "create"); err != nil {
 			return c.Status(fiber.StatusForbidden).JSON(fiber.Error{
 				Code:    fiber.StatusForbidden,
 				Message: "You do not have permission to perform this action.",
@@ -144,8 +144,8 @@ func (h ReasonCodeHandler) Create() fiber.Handler {
 
 func (h ReasonCodeHandler) GetByID() fiber.Handler {
 	return func(c *fiber.Ctx) error {
-		reasoncodeID := c.Params("reasoncodeID")
-		if reasoncodeID == "" {
+		reasonCodeID := c.Params("reasonCodeID")
+		if reasonCodeID == "" {
 			return c.Status(fiber.StatusBadRequest).JSON(fiber.Error{
 				Code:    fiber.StatusBadRequest,
 				Message: "ReasonCode ID is required",
@@ -163,14 +163,14 @@ func (h ReasonCodeHandler) GetByID() fiber.Handler {
 			})
 		}
 
-		if err := h.permissionService.CheckUserPermission(c, models.PermissionReasonCodeView.String()); err != nil {
+		if err := h.permissionService.CheckUserPermission(c, "reason_code", "view"); err != nil {
 			return c.Status(fiber.StatusForbidden).JSON(fiber.Error{
 				Code:    fiber.StatusForbidden,
 				Message: "You do not have permission to perform this action.",
 			})
 		}
 
-		entity, err := h.service.Get(c.UserContext(), uuid.MustParse(reasoncodeID), orgID, buID)
+		entity, err := h.service.Get(c.UserContext(), uuid.MustParse(reasonCodeID), orgID, buID)
 		if err != nil {
 			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Error{
 				Code:    fiber.StatusInternalServerError,
@@ -184,15 +184,15 @@ func (h ReasonCodeHandler) GetByID() fiber.Handler {
 
 func (h ReasonCodeHandler) Update() fiber.Handler {
 	return func(c *fiber.Ctx) error {
-		reasoncodeID := c.Params("reasoncodeID")
-		if reasoncodeID == "" {
+		reasonCodeID := c.Params("reasonCodeID")
+		if reasonCodeID == "" {
 			return c.Status(fiber.StatusBadRequest).JSON(fiber.Error{
 				Code:    fiber.StatusBadRequest,
 				Message: "ReasonCode ID is required",
 			})
 		}
 
-		if err := h.permissionService.CheckUserPermission(c, models.PermissionReasonCodeEdit.String()); err != nil {
+		if err := h.permissionService.CheckUserPermission(c, "reason_code", "update"); err != nil {
 			return c.Status(fiber.StatusForbidden).JSON(fiber.Error{
 				Code:    fiber.StatusForbidden,
 				Message: "You do not have permission to perform this action.",
@@ -205,7 +205,7 @@ func (h ReasonCodeHandler) Update() fiber.Handler {
 			return c.Status(fiber.StatusBadRequest).JSON(err)
 		}
 
-		updatedEntity.ID = uuid.MustParse(reasoncodeID)
+		updatedEntity.ID = uuid.MustParse(reasonCodeID)
 
 		entity, err := h.service.UpdateOne(c.UserContext(), updatedEntity)
 		if err != nil {

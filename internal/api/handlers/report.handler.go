@@ -22,7 +22,6 @@ func NewReportHandler(s *server.Server) *ReportHandler {
 		logger:              s.Logger,
 		service:             services.NewReportService(s),
 		notificationService: services.NewUserNotificationService(s),
-		permissionService:   services.NewPermissionService(s),
 	}
 }
 

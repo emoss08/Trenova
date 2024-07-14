@@ -10,7 +10,9 @@ import (
 	"sync"
 	"time"
 
+	"github.com/casbin/casbin/v2"
 	"github.com/emoss08/trenova/config"
+	tCasbin "github.com/emoss08/trenova/pkg/casbin"
 	"github.com/emoss08/trenova/pkg/file"
 	"github.com/emoss08/trenova/pkg/gen"
 	"github.com/emoss08/trenova/pkg/kfk"
@@ -57,6 +59,9 @@ type Server struct {
 
 	// Kafka stores the Kafka client.
 	Kafka *kfk.Client
+
+	// Enforcer stores the Casbin enforcer.
+	Enforcer *casbin.Enforcer
 
 	// Code Generate
 	CodeGenerator   *gen.CodeGenerator
@@ -185,6 +190,25 @@ func (s *Server) InitLogger() {
 	}
 
 	s.Logger = &logger
+}
+
+func (s *Server) InitCasbin() error {
+	adapter, err := tCasbin.NewBunAdapter(s.DB)
+	if err != nil {
+		return err
+	}
+
+	s.Enforcer, err = casbin.NewEnforcer(s.Config.Casbin.ModelPath, adapter)
+	if err != nil {
+		return err
+	}
+
+	// Load the policy rules from the database.
+	if err = s.Enforcer.LoadPolicy(); err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func colorizeLevel(level string) string {
