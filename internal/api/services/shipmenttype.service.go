@@ -36,7 +36,7 @@ type ShipmentTypeQueryFilter struct {
 }
 
 // filterQuery applies filters to the query
-func (s *ShipmentTypeService) filterQuery(q *bun.SelectQuery, f *ShipmentTypeQueryFilter) *bun.SelectQuery {
+func (s ShipmentTypeService) filterQuery(q *bun.SelectQuery, f *ShipmentTypeQueryFilter) *bun.SelectQuery {
 	q = q.Where("st.organization_id = ?", f.OrganizationID).
 		Where("st.business_unit_id = ?", f.BusinessUnitID)
 
@@ -51,7 +51,7 @@ func (s *ShipmentTypeService) filterQuery(q *bun.SelectQuery, f *ShipmentTypeQue
 }
 
 // GetAll retrieves all ShipmentType based on the provided filter
-func (s *ShipmentTypeService) GetAll(ctx context.Context, filter *ShipmentTypeQueryFilter) ([]*models.ShipmentType, int, error) {
+func (s ShipmentTypeService) GetAll(ctx context.Context, filter *ShipmentTypeQueryFilter) ([]*models.ShipmentType, int, error) {
 	var entities []*models.ShipmentType
 
 	q := s.db.NewSelect().
@@ -69,7 +69,7 @@ func (s *ShipmentTypeService) GetAll(ctx context.Context, filter *ShipmentTypeQu
 }
 
 // Get retrieves a single ShipmentType by ID
-func (s *ShipmentTypeService) Get(ctx context.Context, id, orgID, buID uuid.UUID) (*models.ShipmentType, error) {
+func (s ShipmentTypeService) Get(ctx context.Context, id, orgID, buID uuid.UUID) (*models.ShipmentType, error) {
 	entity := new(models.ShipmentType)
 	err := s.db.NewSelect().
 		Model(entity).
@@ -86,7 +86,7 @@ func (s *ShipmentTypeService) Get(ctx context.Context, id, orgID, buID uuid.UUID
 }
 
 // Create creates a new ShipmentType
-func (s *ShipmentTypeService) Create(ctx context.Context, entity *models.ShipmentType) (*models.ShipmentType, error) {
+func (s ShipmentTypeService) Create(ctx context.Context, entity *models.ShipmentType) (*models.ShipmentType, error) {
 	err := s.db.RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
 		_, err := tx.NewInsert().
 			Model(entity).
@@ -103,14 +103,13 @@ func (s *ShipmentTypeService) Create(ctx context.Context, entity *models.Shipmen
 }
 
 // UpdateOne updates an existing ShipmentType
-func (s *ShipmentTypeService) UpdateOne(ctx context.Context, entity *models.ShipmentType) (*models.ShipmentType, error) {
+func (s ShipmentTypeService) UpdateOne(ctx context.Context, entity *models.ShipmentType) (*models.ShipmentType, error) {
 	err := s.db.RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
-		_, err := tx.NewUpdate().
-			Model(entity).
-			WherePK().
-			Returning("*").
-			Exec(ctx)
-		return err
+		if err := entity.OptimisticUpdate(ctx, tx); err != nil {
+			return err
+		}
+
+		return nil
 	})
 	if err != nil {
 		s.logger.Error().Err(err).Msg("Failed to update ShipmentType")

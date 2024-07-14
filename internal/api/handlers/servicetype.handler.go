@@ -23,11 +23,11 @@ func NewServiceTypeHandler(s *server.Server) *ServiceTypeHandler {
 	return &ServiceTypeHandler{
 		logger:            s.Logger,
 		service:           services.NewServiceTypeService(s),
-		permissionService: services.NewPermissionService(s),
+		permissionService: services.NewPermissionService(s.Enforcer),
 	}
 }
 
-func (h *ServiceTypeHandler) RegisterRoutes(r fiber.Router) {
+func (h ServiceTypeHandler) RegisterRoutes(r fiber.Router) {
 	api := r.Group("/service-types")
 	api.Get("/", h.Get())
 	api.Get("/:servicetypeID", h.GetByID())
@@ -35,7 +35,7 @@ func (h *ServiceTypeHandler) RegisterRoutes(r fiber.Router) {
 	api.Put("/:servicetypeID", h.Update())
 }
 
-func (h *ServiceTypeHandler) Get() fiber.Handler {
+func (h ServiceTypeHandler) Get() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		orgID, ok := c.Locals(utils.CTXOrganizationID).(uuid.UUID)
 		buID, orgOK := c.Locals(utils.CTXBusinessUnitID).(uuid.UUID)
@@ -69,9 +69,9 @@ func (h *ServiceTypeHandler) Get() fiber.Handler {
 			})
 		}
 
-		if err = h.permissionService.CheckUserPermission(c, models.PermissionServiceTypeView.String()); err != nil {
-			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Error{
-				Code:    fiber.StatusUnauthorized,
+		if err := h.permissionService.CheckUserPermission(c, "service_type", "view"); err != nil {
+			return c.Status(fiber.StatusForbidden).JSON(fiber.Error{
+				Code:    fiber.StatusForbidden,
 				Message: "You do not have permission to perform this action.",
 			})
 		}
@@ -104,7 +104,7 @@ func (h *ServiceTypeHandler) Get() fiber.Handler {
 	}
 }
 
-func (h *ServiceTypeHandler) Create() fiber.Handler {
+func (h ServiceTypeHandler) Create() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		createdEntity := new(models.ServiceType)
 
@@ -118,9 +118,9 @@ func (h *ServiceTypeHandler) Create() fiber.Handler {
 			})
 		}
 
-		if err := h.permissionService.CheckUserPermission(c, models.PermissionServiceTypeAdd.String()); err != nil {
-			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Error{
-				Code:    fiber.StatusUnauthorized,
+		if err := h.permissionService.CheckUserPermission(c, "service_type", "create"); err != nil {
+			return c.Status(fiber.StatusForbidden).JSON(fiber.Error{
+				Code:    fiber.StatusForbidden,
 				Message: "You do not have permission to perform this action.",
 			})
 		}
@@ -134,17 +134,15 @@ func (h *ServiceTypeHandler) Create() fiber.Handler {
 
 		entity, err := h.service.Create(c.UserContext(), createdEntity)
 		if err != nil {
-			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Error{
-				Code:    fiber.StatusInternalServerError,
-				Message: err.Error(),
-			})
+			resp := utils.CreateServiceError(c, err)
+			return c.Status(fiber.StatusInternalServerError).JSON(resp)
 		}
 
 		return c.Status(fiber.StatusCreated).JSON(entity)
 	}
 }
 
-func (h *ServiceTypeHandler) GetByID() fiber.Handler {
+func (h ServiceTypeHandler) GetByID() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		servicetypeID := c.Params("servicetypeID")
 		if servicetypeID == "" {
@@ -165,9 +163,9 @@ func (h *ServiceTypeHandler) GetByID() fiber.Handler {
 			})
 		}
 
-		if err := h.permissionService.CheckUserPermission(c, models.PermissionServiceTypeView.String()); err != nil {
-			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Error{
-				Code:    fiber.StatusUnauthorized,
+		if err := h.permissionService.CheckUserPermission(c, "service_type", "view"); err != nil {
+			return c.Status(fiber.StatusForbidden).JSON(fiber.Error{
+				Code:    fiber.StatusForbidden,
 				Message: "You do not have permission to perform this action.",
 			})
 		}
@@ -184,7 +182,7 @@ func (h *ServiceTypeHandler) GetByID() fiber.Handler {
 	}
 }
 
-func (h *ServiceTypeHandler) Update() fiber.Handler {
+func (h ServiceTypeHandler) Update() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		servicetypeID := c.Params("servicetypeID")
 		if servicetypeID == "" {
@@ -194,9 +192,9 @@ func (h *ServiceTypeHandler) Update() fiber.Handler {
 			})
 		}
 
-		if err := h.permissionService.CheckUserPermission(c, models.PermissionServiceTypeEdit.String()); err != nil {
-			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Error{
-				Code:    fiber.StatusUnauthorized,
+		if err := h.permissionService.CheckUserPermission(c, "service_type", "update"); err != nil {
+			return c.Status(fiber.StatusForbidden).JSON(fiber.Error{
+				Code:    fiber.StatusForbidden,
 				Message: "You do not have permission to perform this action.",
 			})
 		}
@@ -211,10 +209,8 @@ func (h *ServiceTypeHandler) Update() fiber.Handler {
 
 		entity, err := h.service.UpdateOne(c.UserContext(), updatedEntity)
 		if err != nil {
-			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Error{
-				Code:    fiber.StatusInternalServerError,
-				Message: "Failed to update ServiceType",
-			})
+			resp := utils.CreateServiceError(c, err)
+			return c.Status(fiber.StatusInternalServerError).JSON(resp)
 		}
 
 		return c.Status(fiber.StatusOK).JSON(entity)

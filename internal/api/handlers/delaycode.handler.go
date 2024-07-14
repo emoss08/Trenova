@@ -23,11 +23,11 @@ func NewDelayCodeHandler(s *server.Server) *DelayCodeHandler {
 	return &DelayCodeHandler{
 		logger:            s.Logger,
 		service:           services.NewDelayCodeService(s),
-		permissionService: services.NewPermissionService(s),
+		permissionService: services.NewPermissionService(s.Enforcer),
 	}
 }
 
-func (h *DelayCodeHandler) RegisterRoutes(r fiber.Router) {
+func (h DelayCodeHandler) RegisterRoutes(r fiber.Router) {
 	api := r.Group("/delay-codes")
 	api.Get("/", h.Get())
 	api.Get("/:delaycodeID", h.GetByID())
@@ -35,7 +35,7 @@ func (h *DelayCodeHandler) RegisterRoutes(r fiber.Router) {
 	api.Put("/:delaycodeID", h.Update())
 }
 
-func (h *DelayCodeHandler) Get() fiber.Handler {
+func (h DelayCodeHandler) Get() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		orgID, ok := c.Locals(utils.CTXOrganizationID).(uuid.UUID)
 		buID, orgOK := c.Locals(utils.CTXBusinessUnitID).(uuid.UUID)
@@ -69,9 +69,9 @@ func (h *DelayCodeHandler) Get() fiber.Handler {
 			})
 		}
 
-		if err = h.permissionService.CheckUserPermission(c, models.PermissionDelayCodeView.String()); err != nil {
-			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Error{
-				Code:    fiber.StatusUnauthorized,
+		if err := h.permissionService.CheckUserPermission(c, "customer", "view"); err != nil {
+			return c.Status(fiber.StatusForbidden).JSON(fiber.Error{
+				Code:    fiber.StatusForbidden,
 				Message: "You do not have permission to perform this action.",
 			})
 		}
@@ -104,7 +104,7 @@ func (h *DelayCodeHandler) Get() fiber.Handler {
 	}
 }
 
-func (h *DelayCodeHandler) Create() fiber.Handler {
+func (h DelayCodeHandler) Create() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		createdEntity := new(models.DelayCode)
 
@@ -118,9 +118,9 @@ func (h *DelayCodeHandler) Create() fiber.Handler {
 			})
 		}
 
-		if err := h.permissionService.CheckUserPermission(c, models.PermissionDelayCodeAdd.String()); err != nil {
-			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Error{
-				Code:    fiber.StatusUnauthorized,
+		if err := h.permissionService.CheckUserPermission(c, "customer", "create"); err != nil {
+			return c.Status(fiber.StatusForbidden).JSON(fiber.Error{
+				Code:    fiber.StatusForbidden,
 				Message: "You do not have permission to perform this action.",
 			})
 		}
@@ -134,17 +134,15 @@ func (h *DelayCodeHandler) Create() fiber.Handler {
 
 		entity, err := h.service.Create(c.UserContext(), createdEntity)
 		if err != nil {
-			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Error{
-				Code:    fiber.StatusInternalServerError,
-				Message: err.Error(),
-			})
+			resp := utils.CreateServiceError(c, err)
+			return c.Status(fiber.StatusInternalServerError).JSON(resp)
 		}
 
 		return c.Status(fiber.StatusCreated).JSON(entity)
 	}
 }
 
-func (h *DelayCodeHandler) GetByID() fiber.Handler {
+func (h DelayCodeHandler) GetByID() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		delaycodeID := c.Params("delaycodeID")
 		if delaycodeID == "" {
@@ -165,9 +163,9 @@ func (h *DelayCodeHandler) GetByID() fiber.Handler {
 			})
 		}
 
-		if err := h.permissionService.CheckUserPermission(c, models.PermissionDelayCodeView.String()); err != nil {
-			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Error{
-				Code:    fiber.StatusUnauthorized,
+		if err := h.permissionService.CheckUserPermission(c, "customer", "view"); err != nil {
+			return c.Status(fiber.StatusForbidden).JSON(fiber.Error{
+				Code:    fiber.StatusForbidden,
 				Message: "You do not have permission to perform this action.",
 			})
 		}
@@ -184,7 +182,7 @@ func (h *DelayCodeHandler) GetByID() fiber.Handler {
 	}
 }
 
-func (h *DelayCodeHandler) Update() fiber.Handler {
+func (h DelayCodeHandler) Update() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		delaycodeID := c.Params("delaycodeID")
 		if delaycodeID == "" {
@@ -194,9 +192,9 @@ func (h *DelayCodeHandler) Update() fiber.Handler {
 			})
 		}
 
-		if err := h.permissionService.CheckUserPermission(c, models.PermissionDelayCodeEdit.String()); err != nil {
-			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Error{
-				Code:    fiber.StatusUnauthorized,
+		if err := h.permissionService.CheckUserPermission(c, "customer", "update"); err != nil {
+			return c.Status(fiber.StatusForbidden).JSON(fiber.Error{
+				Code:    fiber.StatusForbidden,
 				Message: "You do not have permission to perform this action.",
 			})
 		}
@@ -211,10 +209,8 @@ func (h *DelayCodeHandler) Update() fiber.Handler {
 
 		entity, err := h.service.UpdateOne(c.UserContext(), updatedEntity)
 		if err != nil {
-			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Error{
-				Code:    fiber.StatusInternalServerError,
-				Message: "Failed to update DelayCode",
-			})
+			resp := utils.CreateServiceError(c, err)
+			return c.Status(fiber.StatusInternalServerError).JSON(resp)
 		}
 
 		return c.Status(fiber.StatusOK).JSON(entity)

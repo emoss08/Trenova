@@ -36,7 +36,7 @@ type RevenueCodeQueryFilter struct {
 }
 
 // filterQuery applies filters to the query
-func (s *RevenueCodeService) filterQuery(q *bun.SelectQuery, f *RevenueCodeQueryFilter) *bun.SelectQuery {
+func (s RevenueCodeService) filterQuery(q *bun.SelectQuery, f *RevenueCodeQueryFilter) *bun.SelectQuery {
 	q = q.Where("rc.organization_id = ?", f.OrganizationID).
 		Where("rc.business_unit_id = ?", f.BusinessUnitID)
 
@@ -51,7 +51,7 @@ func (s *RevenueCodeService) filterQuery(q *bun.SelectQuery, f *RevenueCodeQuery
 }
 
 // GetAll retrieves all RevenueCode based on the provided filter
-func (s *RevenueCodeService) GetAll(ctx context.Context, filter *RevenueCodeQueryFilter) ([]*models.RevenueCode, int, error) {
+func (s RevenueCodeService) GetAll(ctx context.Context, filter *RevenueCodeQueryFilter) ([]*models.RevenueCode, int, error) {
 	var entities []*models.RevenueCode
 
 	q := s.db.NewSelect().
@@ -69,7 +69,7 @@ func (s *RevenueCodeService) GetAll(ctx context.Context, filter *RevenueCodeQuer
 }
 
 // Get retrieves a single RevenueCode by ID
-func (s *RevenueCodeService) Get(ctx context.Context, id, orgID, buID uuid.UUID) (*models.RevenueCode, error) {
+func (s RevenueCodeService) Get(ctx context.Context, id, orgID, buID uuid.UUID) (*models.RevenueCode, error) {
 	entity := new(models.RevenueCode)
 	err := s.db.NewSelect().
 		Model(entity).
@@ -86,7 +86,7 @@ func (s *RevenueCodeService) Get(ctx context.Context, id, orgID, buID uuid.UUID)
 }
 
 // Create creates a new RevenueCode
-func (s *RevenueCodeService) Create(ctx context.Context, entity *models.RevenueCode) (*models.RevenueCode, error) {
+func (s RevenueCodeService) Create(ctx context.Context, entity *models.RevenueCode) (*models.RevenueCode, error) {
 	err := s.db.RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
 		_, err := tx.NewInsert().
 			Model(entity).
@@ -103,14 +103,13 @@ func (s *RevenueCodeService) Create(ctx context.Context, entity *models.RevenueC
 }
 
 // UpdateOne updates an existing RevenueCode
-func (s *RevenueCodeService) UpdateOne(ctx context.Context, entity *models.RevenueCode) (*models.RevenueCode, error) {
+func (s RevenueCodeService) UpdateOne(ctx context.Context, entity *models.RevenueCode) (*models.RevenueCode, error) {
 	err := s.db.RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
-		_, err := tx.NewUpdate().
-			Model(entity).
-			WherePK().
-			Returning("*").
-			Exec(ctx)
-		return err
+		if err := entity.OptimisticUpdate(ctx, tx); err != nil {
+			return err
+		}
+
+		return nil
 	})
 	if err != nil {
 		s.logger.Error().Err(err).Msg("Failed to update RevenueCode")

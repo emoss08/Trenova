@@ -23,11 +23,11 @@ func NewChargeTypeHandler(s *server.Server) *ChargeTypeHandler {
 	return &ChargeTypeHandler{
 		logger:            s.Logger,
 		service:           services.NewChargeTypeService(s),
-		permissionService: services.NewPermissionService(s),
+		permissionService: services.NewPermissionService(s.Enforcer),
 	}
 }
 
-func (h *ChargeTypeHandler) RegisterRoutes(r fiber.Router) {
+func (h ChargeTypeHandler) RegisterRoutes(r fiber.Router) {
 	api := r.Group("/charge-types")
 	api.Get("/", h.Get())
 	api.Get("/:chargetypeID", h.GetByID())
@@ -35,7 +35,7 @@ func (h *ChargeTypeHandler) RegisterRoutes(r fiber.Router) {
 	api.Put("/:chargetypeID", h.Update())
 }
 
-func (h *ChargeTypeHandler) Get() fiber.Handler {
+func (h ChargeTypeHandler) Get() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		orgID, ok := c.Locals(utils.CTXOrganizationID).(uuid.UUID)
 		buID, orgOK := c.Locals(utils.CTXBusinessUnitID).(uuid.UUID)
@@ -69,9 +69,9 @@ func (h *ChargeTypeHandler) Get() fiber.Handler {
 			})
 		}
 
-		if err = h.permissionService.CheckUserPermission(c, models.PermissionChargeTypeView.String()); err != nil {
-			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Error{
-				Code:    fiber.StatusUnauthorized,
+		if err := h.permissionService.CheckUserPermission(c, "charge_type", "view"); err != nil {
+			return c.Status(fiber.StatusForbidden).JSON(fiber.Error{
+				Code:    fiber.StatusForbidden,
 				Message: "You do not have permission to perform this action.",
 			})
 		}
@@ -104,7 +104,7 @@ func (h *ChargeTypeHandler) Get() fiber.Handler {
 	}
 }
 
-func (h *ChargeTypeHandler) Create() fiber.Handler {
+func (h ChargeTypeHandler) Create() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		createdEntity := new(models.ChargeType)
 
@@ -118,9 +118,9 @@ func (h *ChargeTypeHandler) Create() fiber.Handler {
 			})
 		}
 
-		if err := h.permissionService.CheckUserPermission(c, models.PermissionChargeTypeAdd.String()); err != nil {
-			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Error{
-				Code:    fiber.StatusUnauthorized,
+		if err := h.permissionService.CheckUserPermission(c, "charge_type", "create"); err != nil {
+			return c.Status(fiber.StatusForbidden).JSON(fiber.Error{
+				Code:    fiber.StatusForbidden,
 				Message: "You do not have permission to perform this action.",
 			})
 		}
@@ -134,17 +134,15 @@ func (h *ChargeTypeHandler) Create() fiber.Handler {
 
 		entity, err := h.service.Create(c.UserContext(), createdEntity)
 		if err != nil {
-			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Error{
-				Code:    fiber.StatusInternalServerError,
-				Message: err.Error(),
-			})
+			resp := utils.CreateServiceError(c, err)
+			return c.Status(fiber.StatusInternalServerError).JSON(resp)
 		}
 
 		return c.Status(fiber.StatusCreated).JSON(entity)
 	}
 }
 
-func (h *ChargeTypeHandler) GetByID() fiber.Handler {
+func (h ChargeTypeHandler) GetByID() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		chargetypeID := c.Params("chargetypeID")
 		if chargetypeID == "" {
@@ -165,9 +163,9 @@ func (h *ChargeTypeHandler) GetByID() fiber.Handler {
 			})
 		}
 
-		if err := h.permissionService.CheckUserPermission(c, models.PermissionChargeTypeView.String()); err != nil {
-			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Error{
-				Code:    fiber.StatusUnauthorized,
+		if err := h.permissionService.CheckUserPermission(c, "charge_type", "view"); err != nil {
+			return c.Status(fiber.StatusForbidden).JSON(fiber.Error{
+				Code:    fiber.StatusForbidden,
 				Message: "You do not have permission to perform this action.",
 			})
 		}
@@ -184,7 +182,7 @@ func (h *ChargeTypeHandler) GetByID() fiber.Handler {
 	}
 }
 
-func (h *ChargeTypeHandler) Update() fiber.Handler {
+func (h ChargeTypeHandler) Update() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		chargetypeID := c.Params("chargetypeID")
 		if chargetypeID == "" {
@@ -194,9 +192,9 @@ func (h *ChargeTypeHandler) Update() fiber.Handler {
 			})
 		}
 
-		if err := h.permissionService.CheckUserPermission(c, models.PermissionChargeTypeEdit.String()); err != nil {
-			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Error{
-				Code:    fiber.StatusUnauthorized,
+		if err := h.permissionService.CheckUserPermission(c, "charge_type", "update"); err != nil {
+			return c.Status(fiber.StatusForbidden).JSON(fiber.Error{
+				Code:    fiber.StatusForbidden,
 				Message: "You do not have permission to perform this action.",
 			})
 		}
@@ -211,10 +209,8 @@ func (h *ChargeTypeHandler) Update() fiber.Handler {
 
 		entity, err := h.service.UpdateOne(c.UserContext(), updatedEntity)
 		if err != nil {
-			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Error{
-				Code:    fiber.StatusInternalServerError,
-				Message: "Failed to update ChargeType",
-			})
+			resp := utils.CreateServiceError(c, err)
+			return c.Status(fiber.StatusInternalServerError).JSON(resp)
 		}
 
 		return c.Status(fiber.StatusOK).JSON(entity)

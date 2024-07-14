@@ -9,6 +9,7 @@ CREATE TABLE
     "f_carrier_or_driver" BOOLEAN     NOT NULL DEFAULT FALSE,
     "description"         TEXT        NOT NULL,
     "color"               VARCHAR(10),
+    "version"             BIGINT      NOT NULL,
     "business_unit_id"    uuid        NOT NULL,
     "organization_id"     uuid        NOT NULL,
     PRIMARY KEY ("id"),
@@ -22,7 +23,7 @@ CREATE UNIQUE INDEX IF NOT EXISTS "delay_code_code_organization_id_unq" ON "dela
 CREATE INDEX idx_delay_codes_code ON delay_codes (code);
 CREATE INDEX idx_delay_codes_org_bu ON delay_codes (organization_id, business_unit_id);
 CREATE INDEX idx_delay_codes_description ON delay_codes USING GIN (description gin_trgm_ops);
-CREATE INDEX idx_delay_codes_created_at ON delay_codes(created_at);
+CREATE INDEX idx_delay_codes_created_at ON delay_codes (created_at);
 
 --bun:split
 

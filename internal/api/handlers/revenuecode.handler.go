@@ -23,11 +23,11 @@ func NewRevenueCodeHandler(s *server.Server) *RevenueCodeHandler {
 	return &RevenueCodeHandler{
 		logger:            s.Logger,
 		service:           services.NewRevenueCodeService(s),
-		permissionService: services.NewPermissionService(s),
+		permissionService: services.NewPermissionService(s.Enforcer),
 	}
 }
 
-func (h *RevenueCodeHandler) RegisterRoutes(r fiber.Router) {
+func (h RevenueCodeHandler) RegisterRoutes(r fiber.Router) {
 	api := r.Group("/revenue-codes")
 	api.Get("/", h.Get())
 	api.Get("/:revenuecodeID", h.GetByID())
@@ -35,7 +35,7 @@ func (h *RevenueCodeHandler) RegisterRoutes(r fiber.Router) {
 	api.Put("/:revenuecodeID", h.Update())
 }
 
-func (h *RevenueCodeHandler) Get() fiber.Handler {
+func (h RevenueCodeHandler) Get() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		orgID, ok := c.Locals(utils.CTXOrganizationID).(uuid.UUID)
 		buID, orgOK := c.Locals(utils.CTXBusinessUnitID).(uuid.UUID)
@@ -69,9 +69,9 @@ func (h *RevenueCodeHandler) Get() fiber.Handler {
 			})
 		}
 
-		if err = h.permissionService.CheckUserPermission(c, models.PermissionRevenueCodeView.String()); err != nil {
-			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Error{
-				Code:    fiber.StatusUnauthorized,
+		if err := h.permissionService.CheckUserPermission(c, "revenue_code", "view"); err != nil {
+			return c.Status(fiber.StatusForbidden).JSON(fiber.Error{
+				Code:    fiber.StatusForbidden,
 				Message: "You do not have permission to perform this action.",
 			})
 		}
@@ -104,7 +104,7 @@ func (h *RevenueCodeHandler) Get() fiber.Handler {
 	}
 }
 
-func (h *RevenueCodeHandler) Create() fiber.Handler {
+func (h RevenueCodeHandler) Create() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		createdEntity := new(models.RevenueCode)
 
@@ -118,9 +118,9 @@ func (h *RevenueCodeHandler) Create() fiber.Handler {
 			})
 		}
 
-		if err := h.permissionService.CheckUserPermission(c, models.PermissionRevenueCodeAdd.String()); err != nil {
-			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Error{
-				Code:    fiber.StatusUnauthorized,
+		if err := h.permissionService.CheckUserPermission(c, "revenue_code", "create"); err != nil {
+			return c.Status(fiber.StatusForbidden).JSON(fiber.Error{
+				Code:    fiber.StatusForbidden,
 				Message: "You do not have permission to perform this action.",
 			})
 		}
@@ -134,17 +134,15 @@ func (h *RevenueCodeHandler) Create() fiber.Handler {
 
 		entity, err := h.service.Create(c.UserContext(), createdEntity)
 		if err != nil {
-			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Error{
-				Code:    fiber.StatusInternalServerError,
-				Message: err.Error(),
-			})
+			resp := utils.CreateServiceError(c, err)
+			return c.Status(fiber.StatusInternalServerError).JSON(resp)
 		}
 
 		return c.Status(fiber.StatusCreated).JSON(entity)
 	}
 }
 
-func (h *RevenueCodeHandler) GetByID() fiber.Handler {
+func (h RevenueCodeHandler) GetByID() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		revenuecodeID := c.Params("revenuecodeID")
 		if revenuecodeID == "" {
@@ -165,9 +163,9 @@ func (h *RevenueCodeHandler) GetByID() fiber.Handler {
 			})
 		}
 
-		if err := h.permissionService.CheckUserPermission(c, models.PermissionRevenueCodeView.String()); err != nil {
-			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Error{
-				Code:    fiber.StatusUnauthorized,
+		if err := h.permissionService.CheckUserPermission(c, "revenue_code", "view"); err != nil {
+			return c.Status(fiber.StatusForbidden).JSON(fiber.Error{
+				Code:    fiber.StatusForbidden,
 				Message: "You do not have permission to perform this action.",
 			})
 		}
@@ -184,7 +182,7 @@ func (h *RevenueCodeHandler) GetByID() fiber.Handler {
 	}
 }
 
-func (h *RevenueCodeHandler) Update() fiber.Handler {
+func (h RevenueCodeHandler) Update() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		revenuecodeID := c.Params("revenuecodeID")
 		if revenuecodeID == "" {
@@ -194,9 +192,9 @@ func (h *RevenueCodeHandler) Update() fiber.Handler {
 			})
 		}
 
-		if err := h.permissionService.CheckUserPermission(c, models.PermissionRevenueCodeEdit.String()); err != nil {
-			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Error{
-				Code:    fiber.StatusUnauthorized,
+		if err := h.permissionService.CheckUserPermission(c, "revenue_code", "update"); err != nil {
+			return c.Status(fiber.StatusForbidden).JSON(fiber.Error{
+				Code:    fiber.StatusForbidden,
 				Message: "You do not have permission to perform this action.",
 			})
 		}
@@ -211,10 +209,8 @@ func (h *RevenueCodeHandler) Update() fiber.Handler {
 
 		entity, err := h.service.UpdateOne(c.UserContext(), updatedEntity)
 		if err != nil {
-			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Error{
-				Code:    fiber.StatusInternalServerError,
-				Message: "Failed to update RevenueCode",
-			})
+			resp := utils.CreateServiceError(c, err)
+			return c.Status(fiber.StatusInternalServerError).JSON(resp)
 		}
 
 		return c.Status(fiber.StatusOK).JSON(entity)

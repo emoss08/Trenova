@@ -2,10 +2,12 @@ package models
 
 import (
 	"context"
+	"fmt"
 	"regexp"
 	"time"
 
 	"github.com/emoss08/trenova/pkg/models/property"
+	"github.com/emoss08/trenova/pkg/validator"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
 
 	"github.com/google/uuid"
@@ -35,9 +37,8 @@ func (p GeneralLedgerAccountPermission) String() string {
 }
 
 type GeneralLedgerAccount struct {
-	bun.BaseModel  `bun:"table:general_ledger_accounts,alias:gla" json:"-"`
-	CreatedAt      time.Time                             `bun:",nullzero,notnull,default:current_timestamp" json:"createdAt"`
-	UpdatedAt      time.Time                             `bun:",nullzero,notnull,default:current_timestamp" json:"updatedAt"`
+	bun.BaseModel `bun:"table:general_ledger_accounts,alias:gla" json:"-"`
+
 	ID             uuid.UUID                             `bun:",pk,type:uuid,default:uuid_generate_v4()" json:"id"`
 	Status         property.Status                       `bun:"status,type:status" json:"status"`
 	AccountNumber  string                                `bun:"type:VARCHAR(7),notnull" json:"accountNumber" queryField:"true"`
@@ -45,18 +46,22 @@ type GeneralLedgerAccount struct {
 	CashFlowType   *property.GLCashFlowType              `bun:"type:cash_flow_type_enum,nullzero" json:"cashFlowType"`
 	AccountSubType *property.GLAccountSubType            `bun:"type:account_sub_type_enum,nullzero" json:"accountSubType"`
 	AccountClass   *property.GLAccountClassificationType `bun:"type:account_classification_type_enum,nullzero" json:"accountClass"`
-	Balance        string                                `bun:"type:NUMERIC(14,2),notnull,default:0" json:"balance"`
-	InterestRate   string                                `bun:"type:NUMERIC(5,2),nullzero" json:"interestRate,omitempty"`
+	Balance        float64                               `bun:"type:NUMERIC(14,2),notnull,default:0" json:"balance"`
+	InterestRate   float64                               `bun:"type:NUMERIC(5,2),nullzero" json:"interestRate,omitempty"`
 	DateClosed     *pgtype.Date                          `bun:",scanonly,nullzero" json:"dateClosed"`
 	Notes          string                                `bun:"type:TEXT" json:"notes"`
 	IsTaxRelevant  bool                                  `bun:"type:BOOLEAN,default:false" json:"isTaxRelevant"`
 	IsReconciled   bool                                  `bun:"type:BOOLEAN,default:false" json:"isReconciled"`
-	TagIDs         []uuid.UUID                           `bun:",scanonly" json:"tagIds"`
-	BusinessUnitID uuid.UUID                             `bun:"type:uuid,notnull" json:"businessUnitId"`
-	OrganizationID uuid.UUID                             `bun:"type:uuid,notnull" json:"organizationId"`
+	Version        int64                                 `bun:"type:BIGINT" json:"version"`
+	CreatedAt      time.Time                             `bun:",nullzero,notnull,default:current_timestamp" json:"createdAt"`
+	UpdatedAt      time.Time                             `bun:",nullzero,notnull,default:current_timestamp" json:"updatedAt"`
 
-	BusinessUnit *BusinessUnit `bun:"rel:belongs-to,join:business_unit_id=id" json:"-"`
+	TagIDs         []uuid.UUID `bun:",scanonly" json:"tagIds"`
+	BusinessUnitID uuid.UUID   `bun:"type:uuid,notnull" json:"businessUnitId"`
+	OrganizationID uuid.UUID   `bun:"type:uuid,notnull" json:"organizationId"`
+
 	Tags         []*Tag        `bun:"m2m:general_ledger_account_tags,join:GeneralLedgerAccount=Tag" json:"tags"`
+	BusinessUnit *BusinessUnit `bun:"rel:belongs-to,join:business_unit_id=id" json:"-"`
 	Organization *Organization `bun:"rel:belongs-to,join:organization_id=id" json:"-"`
 }
 
@@ -95,6 +100,43 @@ func (g GeneralLedgerAccount) AssociateTagsByID(ctx context.Context, tx bun.Tx, 
 			return err
 		}
 	}
+	return nil
+}
+
+func (g *GeneralLedgerAccount) BeforeUpdate(_ context.Context) error {
+	g.Version++
+
+	return nil
+}
+
+func (g *GeneralLedgerAccount) OptimisticUpdate(ctx context.Context, tx bun.IDB) error {
+	ov := g.Version
+
+	if err := g.BeforeUpdate(ctx); err != nil {
+		return err
+	}
+
+	result, err := tx.NewUpdate().
+		Model(g).
+		WherePK().
+		Where("version = ?", ov).
+		Returning("*").
+		Exec(ctx)
+	if err != nil {
+		return err
+	}
+
+	rows, err := result.RowsAffected()
+	if err != nil {
+		return err
+	}
+
+	if rows == 0 {
+		return &validator.BusinessLogicError{
+			Message: fmt.Sprintf("Version mismatch. The GeneralLedgerAccount (ID: %s) has been updated by another user. Please refresh and try again.", g.ID),
+		}
+	}
+
 	return nil
 }
 

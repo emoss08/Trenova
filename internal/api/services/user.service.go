@@ -29,12 +29,11 @@ func NewUserService(s *server.Server) *UserService {
 	}
 }
 
-func (s *UserService) GetAuthenticatedUser(ctx context.Context, userID uuid.UUID) (*models.User, error) {
+func (s UserService) GetAuthenticatedUser(ctx context.Context, userID uuid.UUID) (*models.User, error) {
 	u := new(models.User)
 
 	err := s.db.NewSelect().
 		Model(u).
-		// Get the permissions for each role.
 		Relation("Roles.Permissions").
 		Where("u.id = ?", userID).
 		Scan(ctx)
@@ -45,9 +44,9 @@ func (s *UserService) GetAuthenticatedUser(ctx context.Context, userID uuid.UUID
 	return u, nil
 }
 
-func (s *UserService) UpdateUser(ctx context.Context, user *models.User) (*models.User, error) {
+func (s UserService) UpdateUser(ctx context.Context, user *models.User) (*models.User, error) {
 	err := s.db.RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
-		if _, err := tx.NewUpdate().Model(user).WherePK().Returning("*").Exec(ctx); err != nil {
+		if err := user.OptimisticUpdate(ctx, tx); err != nil {
 			return err
 		}
 
@@ -60,7 +59,7 @@ func (s *UserService) UpdateUser(ctx context.Context, user *models.User) (*model
 	return user, err
 }
 
-func (s *UserService) ClearProfilePic(ctx context.Context, userID uuid.UUID) error {
+func (s UserService) ClearProfilePic(ctx context.Context, userID uuid.UUID) error {
 	user := new(models.User)
 	user.ProfilePicURL = ""
 	user.ThumbnailURL = ""
@@ -84,7 +83,7 @@ func (s *UserService) ClearProfilePic(ctx context.Context, userID uuid.UUID) err
 	return nil
 }
 
-func (s *UserService) UploadProfilePicture(ctx context.Context, pic *multipart.FileHeader, userID uuid.UUID) (*models.User, error) {
+func (s UserService) UploadProfilePicture(ctx context.Context, pic *multipart.FileHeader, userID uuid.UUID) (*models.User, error) {
 	fileData, err := s.fileService.ReadFileData(pic)
 	if err != nil {
 		s.logger.Error().Err(err).Msg("UserService: Failed to read file data")
@@ -107,7 +106,7 @@ func (s *UserService) UploadProfilePicture(ctx context.Context, pic *multipart.F
 	return s.uploadAndSetProfilePicURL(ctx, userID, params)
 }
 
-func (s *UserService) uploadAndSetProfilePicURL(ctx context.Context, userID uuid.UUID, params minio.SaveFileOptions) (*models.User, error) {
+func (s UserService) uploadAndSetProfilePicURL(ctx context.Context, userID uuid.UUID, params minio.SaveFileOptions) (*models.User, error) {
 	user := new(models.User)
 
 	ui, err := s.minio.SaveFile(ctx, params)
@@ -135,7 +134,7 @@ func (s *UserService) uploadAndSetProfilePicURL(ctx context.Context, userID uuid
 	return user, err
 }
 
-func (s *UserService) ChangePassword(ctx context.Context, userID uuid.UUID, oldPassword, newPassword string) error {
+func (s UserService) ChangePassword(ctx context.Context, userID uuid.UUID, oldPassword, newPassword string) error {
 	user := new(models.User)
 
 	err := s.db.NewSelect().

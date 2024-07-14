@@ -2,8 +2,10 @@ package models
 
 import (
 	"context"
+	"fmt"
 	"time"
 
+	"github.com/emoss08/trenova/pkg/validator"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
 
 	"github.com/google/uuid"
@@ -11,13 +13,16 @@ import (
 )
 
 type Role struct {
-	bun.BaseModel  `bun:"roles"`
-	CreatedAt      time.Time `bun:",nullzero,notnull,default:current_timestamp" json:"createdAt"`
-	UpdatedAt      time.Time `bun:",nullzero,notnull,default:current_timestamp" json:"updatedAt"`
-	ID             uuid.UUID `bun:",pk,type:uuid,default:uuid_generate_v4()" json:"id"`
-	Name           string    `bun:",notnull" json:"name" queryField:"true"`
-	Description    string    `bun:"type:TEXT" json:"description"`
-	Color          string    `json:"color"`
+	bun.BaseModel `bun:"roles,alias:r" json:"-"`
+
+	ID          uuid.UUID `bun:",pk,type:uuid,default:uuid_generate_v4()" json:"id"`
+	Name        string    `bun:",notnull" json:"name" queryField:"true"`
+	Description string    `bun:"type:TEXT" json:"description"`
+	Color       string    `json:"color"`
+	Version     int64     `bun:"type:BIGINT" json:"version"`
+	CreatedAt   time.Time `bun:",nullzero,notnull,default:current_timestamp" json:"createdAt"`
+	UpdatedAt   time.Time `bun:",nullzero,notnull,default:current_timestamp" json:"updatedAt"`
+
 	BusinessUnitID uuid.UUID `bun:"type:uuid,notnull" json:"businessUnitId"`
 	OrganizationID uuid.UUID `bun:"type:uuid,notnull" json:"organizationId"`
 
@@ -31,6 +36,43 @@ func (r Role) Validate() error {
 		&r,
 		validation.Field(&r.Name, validation.Required),
 	)
+}
+
+func (r *Role) BeforeUpdate(_ context.Context) error {
+	r.Version++
+
+	return nil
+}
+
+func (r *Role) OptimisticUpdate(ctx context.Context, tx bun.IDB) error {
+	ov := r.Version
+
+	if err := r.BeforeUpdate(ctx); err != nil {
+		return err
+	}
+
+	result, err := tx.NewUpdate().
+		Model(r).
+		WherePK().
+		Where("version = ?", ov).
+		Returning("*").
+		Exec(ctx)
+	if err != nil {
+		return err
+	}
+
+	rows, err := result.RowsAffected()
+	if err != nil {
+		return err
+	}
+
+	if rows == 0 {
+		return &validator.BusinessLogicError{
+			Message: fmt.Sprintf("Version mismatch. The Role (ID: %s) has been updated by another user. Please refresh and try again.", r.ID),
+		}
+	}
+
+	return nil
 }
 
 var _ bun.BeforeAppendModelHook = (*Role)(nil)

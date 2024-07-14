@@ -3,9 +3,10 @@ package internal
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"fmt"
 
-	_ "github.com/lib/pq"
+	_ "github.com/lib/pq" // db dependency
 )
 
 // InitDB initializes a connection to the PostgreSQL database using the connection string
@@ -22,7 +23,7 @@ import (
 func InitDB(ctx context.Context) (*sql.DB, error) {
 	dbConnectionString := EnvVar("DB_CONNECTION_STRING")
 	if dbConnectionString == "" {
-		return nil, fmt.Errorf("DB_CONNECTION_STRING environment variable is not set")
+		return nil, errors.New("DB_CONNECTION_STRING environment variable is not set")
 	}
 
 	db, err := sql.Open("postgres", dbConnectionString)

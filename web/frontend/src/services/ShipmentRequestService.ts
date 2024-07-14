@@ -1,9 +1,12 @@
 import axios from "@/lib/axiosConfig";
+import { AssignTractorPayload } from "@/types/equipment";
+import { ApiResponse } from "@/types/server";
 import type {
   FormulaTemplate,
   HazardousMaterialSegregationRule,
   ServiceType,
   Shipment,
+  ShipmentStatus,
   ShipmentType,
 } from "@/types/shipment";
 
@@ -12,28 +15,26 @@ import type {
  * @returns A promise that resolves to a FeasibilityToolControl object.
  */
 export async function getShipments(
-  searchQuery?: string,
-  statusFilter?: string,
-): Promise<Shipment[]> {
+  searchQuery: string,
+  statusFilter: string,
+  offset: number,
+  limit: number,
+): Promise<ApiResponse<Shipment>> {
   const response = await axios.get("/shipments/", {
     params: {
       search: searchQuery,
       status: statusFilter,
+      limit: limit,
+      offset: offset,
     },
   });
-  return response.data.results;
+  return response.data;
 }
 
 /** Type for the response of the getShipmentCountByStatus function. */
 type ShipmentCount = {
-  status: string;
+  status: ShipmentStatus;
   count: number;
-};
-
-/** Type for the response of the getShipmentCountByStatus function. */
-type ShipmentsByStatusResponse = {
-  results: ShipmentCount[];
-  totalCount: number;
 };
 
 /**
@@ -43,10 +44,12 @@ type ShipmentsByStatusResponse = {
  */
 export async function getShipmentCountByStatus(
   searchQuery?: string,
-): Promise<ShipmentsByStatusResponse> {
-  const response = await axios.get("/shipments/get_shipment_count_by_status/", {
+  statusFilter?: string,
+): Promise<ApiResponse<ShipmentCount>> {
+  const response = await axios.get("/shipments/count/", {
     params: {
       search: searchQuery,
+      status: statusFilter,
     },
   });
   return response.data;
@@ -115,4 +118,11 @@ export async function getHazardousSegregationRules(): Promise<
 > {
   const response = await axios.get("/hazardous-material-segregations/");
   return response.data.results;
+}
+
+export async function assignTractorToShipment(
+  payload: AssignTractorPayload,
+): Promise<{ message: string }> {
+  const response = await axios.post("/shipments/assign-tractor/", payload);
+  return response.data;
 }

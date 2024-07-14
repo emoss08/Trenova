@@ -68,11 +68,7 @@ func (s *TagService) CreateTag(ctx context.Context, entity *models.Tag) (*models
 
 func (s *TagService) UpdateTag(ctx context.Context, entity *models.Tag) (*models.Tag, error) {
 	err := s.db.RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
-		if _, err := tx.NewUpdate().
-			Model(entity).
-			WherePK().
-			Returning("*").
-			Exec(ctx); err != nil {
+		if err := entity.OptimisticUpdate(ctx, tx); err != nil {
 			return err
 		}
 

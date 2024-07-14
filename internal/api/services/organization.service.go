@@ -63,7 +63,7 @@ func (s *OrganizationService) GetOrganization(ctx context.Context, buID, orgID u
 
 func (s *OrganizationService) UpdateOrganization(ctx context.Context, entity *models.Organization) (*models.Organization, error) {
 	err := s.db.RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
-		if _, err := tx.NewUpdate().Model(entity).WherePK().Returning("*").Exec(ctx); err != nil {
+		if err := entity.OptimisticUpdate(ctx, tx); err != nil {
 			return err
 		}
 

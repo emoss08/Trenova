@@ -21,12 +21,12 @@ func NewUSStateHandler(s *server.Server) *USStateHandler {
 	}
 }
 
-func (h *USStateHandler) RegisterRoutes(r fiber.Router) {
+func (h USStateHandler) RegisterRoutes(r fiber.Router) {
 	api := r.Group("/us-states")
 	api.Get("/", h.Get())
 }
 
-func (h *USStateHandler) Get() fiber.Handler {
+func (h USStateHandler) Get() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		entities, cnt, err := h.service.GetUSStates(c.UserContext())
 		if err != nil {

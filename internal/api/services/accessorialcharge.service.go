@@ -36,7 +36,7 @@ type AccessorialChargeQueryFilter struct {
 }
 
 // filterQuery applies filters to the query
-func (s *AccessorialChargeService) filterQuery(q *bun.SelectQuery, f *AccessorialChargeQueryFilter) *bun.SelectQuery {
+func (s AccessorialChargeService) filterQuery(q *bun.SelectQuery, f *AccessorialChargeQueryFilter) *bun.SelectQuery {
 	q = q.Where("ac.organization_id = ?", f.OrganizationID).
 		Where("ac.business_unit_id = ?", f.BusinessUnitID)
 
@@ -51,7 +51,7 @@ func (s *AccessorialChargeService) filterQuery(q *bun.SelectQuery, f *Accessoria
 }
 
 // GetAll retrieves all AccessorialCharge based on the provided filter
-func (s *AccessorialChargeService) GetAll(ctx context.Context, filter *AccessorialChargeQueryFilter) ([]*models.AccessorialCharge, int, error) {
+func (s AccessorialChargeService) GetAll(ctx context.Context, filter *AccessorialChargeQueryFilter) ([]*models.AccessorialCharge, int, error) {
 	var entities []*models.AccessorialCharge
 
 	q := s.db.NewSelect().
@@ -69,7 +69,7 @@ func (s *AccessorialChargeService) GetAll(ctx context.Context, filter *Accessori
 }
 
 // Get retrieves a single AccessorialCharge by ID
-func (s *AccessorialChargeService) Get(ctx context.Context, id, orgID, buID uuid.UUID) (*models.AccessorialCharge, error) {
+func (s AccessorialChargeService) Get(ctx context.Context, id, orgID, buID uuid.UUID) (*models.AccessorialCharge, error) {
 	entity := new(models.AccessorialCharge)
 	err := s.db.NewSelect().
 		Model(entity).
@@ -86,7 +86,7 @@ func (s *AccessorialChargeService) Get(ctx context.Context, id, orgID, buID uuid
 }
 
 // Create creates a new AccessorialCharge
-func (s *AccessorialChargeService) Create(ctx context.Context, entity *models.AccessorialCharge) (*models.AccessorialCharge, error) {
+func (s AccessorialChargeService) Create(ctx context.Context, entity *models.AccessorialCharge) (*models.AccessorialCharge, error) {
 	err := s.db.RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
 		_, err := tx.NewInsert().
 			Model(entity).
@@ -103,14 +103,13 @@ func (s *AccessorialChargeService) Create(ctx context.Context, entity *models.Ac
 }
 
 // UpdateOne updates an existing AccessorialCharge
-func (s *AccessorialChargeService) UpdateOne(ctx context.Context, entity *models.AccessorialCharge) (*models.AccessorialCharge, error) {
+func (s AccessorialChargeService) UpdateOne(ctx context.Context, entity *models.AccessorialCharge) (*models.AccessorialCharge, error) {
 	err := s.db.RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
-		_, err := tx.NewUpdate().
-			Model(entity).
-			WherePK().
-			Returning("*").
-			Exec(ctx)
-		return err
+		if err := entity.OptimisticUpdate(ctx, tx); err != nil {
+			return err
+		}
+
+		return nil
 	})
 	if err != nil {
 		s.logger.Error().Err(err).Msg("Failed to update AccessorialCharge")

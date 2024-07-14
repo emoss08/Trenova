@@ -20,11 +20,11 @@ func NewOrganizationHandler(s *server.Server) *OrganizationHandler {
 	return &OrganizationHandler{
 		logger:            s.Logger,
 		service:           services.NewOrganizationService(s),
-		permissionService: services.NewPermissionService(s),
+		permissionService: services.NewPermissionService(s.Enforcer),
 	}
 }
 
-func (oh *OrganizationHandler) RegisterRoutes(r fiber.Router) {
+func (oh OrganizationHandler) RegisterRoutes(r fiber.Router) {
 	orgAPI := r.Group("/organizations")
 	orgAPI.Get("/me", oh.getUserOrganization())
 	orgAPI.Get("/details", oh.getOrganizationDetails())
@@ -33,14 +33,7 @@ func (oh *OrganizationHandler) RegisterRoutes(r fiber.Router) {
 	orgAPI.Post("/clear-logo", oh.clearOrganizationLogo())
 }
 
-// getUserOrganization godoc
-// @Summary Fetch the organization for the current user
-// @Tags organizations
-// @Accept json
-// @Produce json
-// @Success 200 {object} UserOrganizationResponse
-// @Router /organizations/me [get]
-func (oh *OrganizationHandler) getUserOrganization() fiber.Handler {
+func (oh OrganizationHandler) getUserOrganization() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		orgID, ok := c.Locals(utils.CTXOrganizationID).(uuid.UUID)
 		buID, orgOK := c.Locals(utils.CTXBusinessUnitID).(uuid.UUID)
@@ -62,14 +55,7 @@ func (oh *OrganizationHandler) getUserOrganization() fiber.Handler {
 	}
 }
 
-// getOrganizationDetails godoc
-// @Summary Fetch a single organization
-// @Tags organizations
-// @Accept json
-// @Produce json
-// @Success 200 {object} OrganizationResponse
-// @Router /organizations/details [get]
-func (oh *OrganizationHandler) getOrganizationDetails() fiber.Handler {
+func (oh OrganizationHandler) getOrganizationDetails() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		orgID, ok := c.Locals(utils.CTXOrganizationID).(uuid.UUID)
 		buID, orgOK := c.Locals(utils.CTXBusinessUnitID).(uuid.UUID)
@@ -82,9 +68,9 @@ func (oh *OrganizationHandler) getOrganizationDetails() fiber.Handler {
 			})
 		}
 
-		if err := oh.permissionService.CheckUserPermission(c, models.PermissionOrganizationView.String()); err != nil {
-			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Error{
-				Code:    fiber.StatusUnauthorized,
+		if err := oh.permissionService.CheckUserPermission(c, "organization", "view"); err != nil {
+			return c.Status(fiber.StatusForbidden).JSON(fiber.Error{
+				Code:    fiber.StatusForbidden,
 				Message: "You do not have permission to perform this action.",
 			})
 		}
@@ -101,16 +87,7 @@ func (oh *OrganizationHandler) getOrganizationDetails() fiber.Handler {
 	}
 }
 
-// updateOrganization godoc
-// @Summary Update a single organization
-// @Tags organizations
-// @Accept json
-// @Produce json
-// @Param orgID path string true "Organization ID"
-// @Param body body UpdateOrganizationRequest true "Organization object"
-// @Success 200 {object} OrganizationResponse
-// @Router /organizations/{orgID} [put]
-func (oh *OrganizationHandler) updateOrganization() fiber.Handler {
+func (oh OrganizationHandler) updateOrganization() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		orgID := c.Params("orgID")
 		if orgID == "" {
@@ -121,9 +98,9 @@ func (oh *OrganizationHandler) updateOrganization() fiber.Handler {
 			})
 		}
 
-		if err := oh.permissionService.CheckUserPermission(c, models.PermissionOrganizationAdd.String()); err != nil {
-			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Error{
-				Code:    fiber.StatusUnauthorized,
+		if err := oh.permissionService.CheckUserPermission(c, "organization", "update"); err != nil {
+			return c.Status(fiber.StatusForbidden).JSON(fiber.Error{
+				Code:    fiber.StatusForbidden,
 				Message: "You do not have permission to perform this action.",
 			})
 		}
@@ -146,15 +123,7 @@ func (oh *OrganizationHandler) updateOrganization() fiber.Handler {
 	}
 }
 
-// uploadOrganizationLogo godoc
-// @Summary Upload a logo for the organization
-// @Tags organizations
-// @Accept multipart/form-data
-// @Produce json
-// @Param logo formData file true "Logo file"
-// @Success 204
-// @Router /organizations/upload-logo [post]
-func (oh *OrganizationHandler) uploadOrganizationLogo() fiber.Handler {
+func (oh OrganizationHandler) uploadOrganizationLogo() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		orgID, ok := c.Locals(utils.CTXOrganizationID).(uuid.UUID)
 		if !ok {
@@ -165,9 +134,9 @@ func (oh *OrganizationHandler) uploadOrganizationLogo() fiber.Handler {
 			})
 		}
 
-		if err := oh.permissionService.CheckUserPermission(c, models.PermissionOrganizationChangeLogo.String()); err != nil {
-			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Error{
-				Code:    fiber.StatusUnauthorized,
+		if err := oh.permissionService.CheckUserPermission(c, "organization", "change_logo"); err != nil {
+			return c.Status(fiber.StatusForbidden).JSON(fiber.Error{
+				Code:    fiber.StatusForbidden,
 				Message: "You do not have permission to perform this action.",
 			})
 		}
@@ -192,12 +161,7 @@ func (oh *OrganizationHandler) uploadOrganizationLogo() fiber.Handler {
 	}
 }
 
-// clearOrganizationLogo godoc
-// @Summary Clear the logo for the organization
-// @Tags organizations
-// @Success 204
-// @Router /organizations/clear-logo [post]
-func (oh *OrganizationHandler) clearOrganizationLogo() fiber.Handler {
+func (oh OrganizationHandler) clearOrganizationLogo() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		orgID, ok := c.Locals(utils.CTXOrganizationID).(uuid.UUID)
 		if !ok {
@@ -208,9 +172,9 @@ func (oh *OrganizationHandler) clearOrganizationLogo() fiber.Handler {
 			})
 		}
 
-		if err := oh.permissionService.CheckUserPermission(c, models.PermissionOrganizationChangeLogo.String()); err != nil {
-			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Error{
-				Code:    fiber.StatusUnauthorized,
+		if err := oh.permissionService.CheckUserPermission(c, "organization", "change_logo"); err != nil {
+			return c.Status(fiber.StatusForbidden).JSON(fiber.Error{
+				Code:    fiber.StatusForbidden,
 				Message: "You do not have permission to perform this action.",
 			})
 		}

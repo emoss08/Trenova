@@ -22,7 +22,7 @@ func NewUserNotificationService(s *server.Server) *UserNotificationService {
 	}
 }
 
-func (s *UserNotificationService) GetUserNotifications(ctx context.Context, limit int, userID, buID, orgID uuid.UUID) ([]*models.UserNotification, int, error) {
+func (s UserNotificationService) GetUserNotifications(ctx context.Context, limit int, userID, buID, orgID uuid.UUID) ([]*models.UserNotification, int, error) {
 	var un []*models.UserNotification
 
 	count, err := s.db.NewSelect().
@@ -41,7 +41,7 @@ func (s *UserNotificationService) GetUserNotifications(ctx context.Context, limi
 	return un, count, nil
 }
 
-func (s *UserNotificationService) MarkNotificationsAsRead(ctx context.Context, orgID, buID, userID uuid.UUID) error {
+func (s UserNotificationService) MarkNotificationsAsRead(ctx context.Context, orgID, buID, userID uuid.UUID) error {
 	un := new(models.UserNotification)
 
 	return s.db.RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
@@ -59,7 +59,7 @@ func (s *UserNotificationService) MarkNotificationsAsRead(ctx context.Context, o
 	})
 }
 
-func (s *UserNotificationService) CreateUserNotification(ctx context.Context, orgID, buID, userID uuid.UUID, title, description, actionURL string) error {
+func (s UserNotificationService) CreateUserNotification(ctx context.Context, orgID, buID, userID uuid.UUID, title, description, actionURL string) error {
 	return s.db.RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
 		un := &models.UserNotification{
 			OrganizationID: orgID,

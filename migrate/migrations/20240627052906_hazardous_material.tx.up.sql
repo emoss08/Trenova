@@ -11,6 +11,7 @@ CREATE TABLE
     "description"          TEXT,
     "packing_group"        VARCHAR,
     "proper_shipping_name" TEXT,
+    "version"              BIGINT      NOT NULL,
     "created_at"           TIMESTAMPTZ NOT NULL DEFAULT current_timestamp,
     "updated_at"           TIMESTAMPTZ NOT NULL DEFAULT current_timestamp,
     PRIMARY KEY ("id"),
@@ -24,7 +25,7 @@ CREATE UNIQUE INDEX IF NOT EXISTS "hazardous_materials_name_organization_id_unq"
 CREATE INDEX idx_hazardous_materials_name ON hazardous_materials (name);
 CREATE INDEX idx_hazardous_materials_org_bu ON hazardous_materials (organization_id, business_unit_id);
 CREATE INDEX idx_hazardous_materials_description ON hazardous_materials USING GIN (description gin_trgm_ops);
-CREATE INDEX idx_hazardous_materials_created_at ON hazardous_materials(created_at);
+CREATE INDEX idx_hazardous_materials_created_at ON hazardous_materials (created_at);
 
 --bun:split
 

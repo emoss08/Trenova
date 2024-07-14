@@ -1,5 +1,4 @@
-CREATE TABLE
-    IF NOT EXISTS "division_codes"
+CREATE TABLE IF NOT EXISTS "division_codes"
 (
     "id"                 uuid        NOT NULL DEFAULT uuid_generate_v4(),
     "business_unit_id"   uuid        NOT NULL,
@@ -11,6 +10,7 @@ CREATE TABLE
     "cash_account_id"    uuid,
     "ap_account_id"      uuid,
     "expense_account_id" uuid,
+    "version"            BIGINT      NOT NULL,
     "created_at"         TIMESTAMPTZ NOT NULL DEFAULT current_timestamp,
     "updated_at"         TIMESTAMPTZ NOT NULL DEFAULT current_timestamp,
     PRIMARY KEY ("id"),
@@ -22,15 +22,13 @@ CREATE TABLE
 );
 
 --bun:split
-
 CREATE UNIQUE INDEX IF NOT EXISTS "division_codes_code_organization_id_unq" ON "division_codes" (LOWER("code"), organization_id);
 CREATE INDEX idx_division_codes_code ON division_codes (code);
 CREATE INDEX idx_division_codes_org_bu ON division_codes (organization_id, business_unit_id);
 CREATE INDEX idx_division_codes_description ON division_codes USING GIN (description gin_trgm_ops);
-CREATE INDEX idx_division_codes_created_at ON division_codes(created_at);
+CREATE INDEX idx_division_codes_created_at ON division_codes (created_at);
 
 --bun:split
-
 COMMENT ON COLUMN division_codes.id IS 'Unique identifier for the division code, generated as a UUID';
 COMMENT ON COLUMN division_codes.business_unit_id IS 'Foreign key referencing the business unit that this division code belongs to';
 COMMENT ON COLUMN division_codes.organization_id IS 'Foreign key referencing the organization that this division code belongs to';

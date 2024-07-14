@@ -1,26 +1,22 @@
 import { createGlobalStore } from "@/lib/useGlobalStore";
+import { type Tractor } from "@/types/equipment";
 import { type Shipment } from "@/types/shipment";
-import { type Worker } from "@/types/worker";
 import { create, type SetState, type StateCreator } from "zustand";
 import { persist } from "zustand/middleware";
 
-export type ShipmentView = "list" | "calendar" | "map";
-
 type ShipmentStore = {
   currentShipment?: Shipment;
-  currentView: ShipmentView;
   sendMessageDialogOpen: boolean;
   reviewLogDialogOpen: boolean;
-  currentWorker?: Worker;
+  currentTractor?: Tractor;
   addShipmentDialogOpen: boolean;
 };
 
 export const useShipmentStore = createGlobalStore<ShipmentStore>({
   currentShipment: undefined,
-  currentView: "map",
   sendMessageDialogOpen: false,
   reviewLogDialogOpen: false,
-  currentWorker: undefined,
+  currentTractor: undefined,
   addShipmentDialogOpen: false,
 });
 
@@ -28,22 +24,22 @@ export type MapType = "roadmap" | "hybrid" | "terrain";
 
 export type MapLayer = "TrafficLayer" | "WeatherLayer" | "TransitLayer";
 
-type ShipmentMapStore = {
+type ShipmentListStore = {
   mapType: MapType;
   setMapType: (mapType: MapType) => void;
   mapLayers: MapLayer[];
   setMapLayers: (mapLayers: MapLayer[]) => void;
 };
 
-const createShipmentStore = (set: SetState<ShipmentMapStore>) => ({
+const createShipmentStore = (set: SetState<ShipmentListStore>) => ({
   mapType: "roadmap",
   setMapType: (mapType: MapType) => set({ mapType }),
   mapLayers: [] as MapLayer[],
   setMapLayers: (mapLayers: MapLayer[]) => set({ mapLayers }),
 });
 
-export const useShipmentMapStore = create<ShipmentMapStore>(
+export const useShipmentListStore = create<ShipmentListStore>(
   persist(createShipmentStore, {
     name: "trenova-shipment-map-preferences",
-  }) as StateCreator<ShipmentMapStore>,
+  }) as StateCreator<ShipmentListStore>,
 );

@@ -36,7 +36,7 @@ type LocationCategoryQueryFilter struct {
 }
 
 // filterQuery applies filters to the query
-func (s *LocationCategoryService) filterQuery(q *bun.SelectQuery, f *LocationCategoryQueryFilter) *bun.SelectQuery {
+func (s LocationCategoryService) filterQuery(q *bun.SelectQuery, f *LocationCategoryQueryFilter) *bun.SelectQuery {
 	q = q.Where("lc.organization_id = ?", f.OrganizationID).
 		Where("lc.business_unit_id = ?", f.BusinessUnitID)
 
@@ -51,7 +51,7 @@ func (s *LocationCategoryService) filterQuery(q *bun.SelectQuery, f *LocationCat
 }
 
 // GetAll retrieves all LocationCategory based on the provided filter
-func (s *LocationCategoryService) GetAll(ctx context.Context, filter *LocationCategoryQueryFilter) ([]*models.LocationCategory, int, error) {
+func (s LocationCategoryService) GetAll(ctx context.Context, filter *LocationCategoryQueryFilter) ([]*models.LocationCategory, int, error) {
 	var entities []*models.LocationCategory
 
 	q := s.db.NewSelect().
@@ -69,7 +69,7 @@ func (s *LocationCategoryService) GetAll(ctx context.Context, filter *LocationCa
 }
 
 // Get retrieves a single LocationCategory by ID
-func (s *LocationCategoryService) Get(ctx context.Context, id, orgID, buID uuid.UUID) (*models.LocationCategory, error) {
+func (s LocationCategoryService) Get(ctx context.Context, id, orgID, buID uuid.UUID) (*models.LocationCategory, error) {
 	entity := new(models.LocationCategory)
 	err := s.db.NewSelect().
 		Model(entity).
@@ -86,7 +86,7 @@ func (s *LocationCategoryService) Get(ctx context.Context, id, orgID, buID uuid.
 }
 
 // Create creates a new LocationCategory
-func (s *LocationCategoryService) Create(ctx context.Context, entity *models.LocationCategory) (*models.LocationCategory, error) {
+func (s LocationCategoryService) Create(ctx context.Context, entity *models.LocationCategory) (*models.LocationCategory, error) {
 	err := s.db.RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
 		_, err := tx.NewInsert().
 			Model(entity).
@@ -103,14 +103,13 @@ func (s *LocationCategoryService) Create(ctx context.Context, entity *models.Loc
 }
 
 // UpdateOne updates an existing LocationCategory
-func (s *LocationCategoryService) UpdateOne(ctx context.Context, entity *models.LocationCategory) (*models.LocationCategory, error) {
+func (s LocationCategoryService) UpdateOne(ctx context.Context, entity *models.LocationCategory) (*models.LocationCategory, error) {
 	err := s.db.RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
-		_, err := tx.NewUpdate().
-			Model(entity).
-			WherePK().
-			Returning("*").
-			Exec(ctx)
-		return err
+		if err := entity.OptimisticUpdate(ctx, tx); err != nil {
+			return err
+		}
+
+		return nil
 	})
 	if err != nil {
 		s.logger.Error().Err(err).Msg("Failed to update LocationCategory")

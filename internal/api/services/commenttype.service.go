@@ -36,7 +36,7 @@ type CommentTypeQueryFilter struct {
 }
 
 // filterQuery applies filters to the query
-func (s *CommentTypeService) filterQuery(q *bun.SelectQuery, f *CommentTypeQueryFilter) *bun.SelectQuery {
+func (s CommentTypeService) filterQuery(q *bun.SelectQuery, f *CommentTypeQueryFilter) *bun.SelectQuery {
 	q = q.Where("ct.organization_id = ?", f.OrganizationID).
 		Where("ct.business_unit_id = ?", f.BusinessUnitID)
 
@@ -51,7 +51,7 @@ func (s *CommentTypeService) filterQuery(q *bun.SelectQuery, f *CommentTypeQuery
 }
 
 // GetAll retrieves all CommentType based on the provided filter
-func (s *CommentTypeService) GetAll(ctx context.Context, filter *CommentTypeQueryFilter) ([]*models.CommentType, int, error) {
+func (s CommentTypeService) GetAll(ctx context.Context, filter *CommentTypeQueryFilter) ([]*models.CommentType, int, error) {
 	var entities []*models.CommentType
 
 	q := s.db.NewSelect().
@@ -69,7 +69,7 @@ func (s *CommentTypeService) GetAll(ctx context.Context, filter *CommentTypeQuer
 }
 
 // Get retrieves a single CommentType by ID
-func (s *CommentTypeService) Get(ctx context.Context, id, orgID, buID uuid.UUID) (*models.CommentType, error) {
+func (s CommentTypeService) Get(ctx context.Context, id, orgID, buID uuid.UUID) (*models.CommentType, error) {
 	entity := new(models.CommentType)
 	err := s.db.NewSelect().
 		Model(entity).
@@ -86,7 +86,7 @@ func (s *CommentTypeService) Get(ctx context.Context, id, orgID, buID uuid.UUID)
 }
 
 // Create creates a new CommentType
-func (s *CommentTypeService) Create(ctx context.Context, entity *models.CommentType) (*models.CommentType, error) {
+func (s CommentTypeService) Create(ctx context.Context, entity *models.CommentType) (*models.CommentType, error) {
 	err := s.db.RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
 		_, err := tx.NewInsert().
 			Model(entity).
@@ -103,14 +103,13 @@ func (s *CommentTypeService) Create(ctx context.Context, entity *models.CommentT
 }
 
 // UpdateOne updates an existing CommentType
-func (s *CommentTypeService) UpdateOne(ctx context.Context, entity *models.CommentType) (*models.CommentType, error) {
+func (s CommentTypeService) UpdateOne(ctx context.Context, entity *models.CommentType) (*models.CommentType, error) {
 	err := s.db.RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
-		_, err := tx.NewUpdate().
-			Model(entity).
-			WherePK().
-			Returning("*").
-			Exec(ctx)
-		return err
+		if err := entity.OptimisticUpdate(ctx, tx); err != nil {
+			return err
+		}
+
+		return nil
 	})
 	if err != nil {
 		s.logger.Error().Err(err).Msg("Failed to update CommentType")

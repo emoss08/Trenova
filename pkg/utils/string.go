@@ -2,8 +2,6 @@ package utils
 
 import (
 	"crypto/rand"
-	"encoding/base64"
-	"encoding/hex"
 	"errors"
 	"strconv"
 	"strings"
@@ -11,51 +9,6 @@ import (
 	"golang.org/x/text/cases"
 	"golang.org/x/text/language"
 )
-
-// GenerateRandomBytes returns n random bytes securely generated using the system's default CSPRNG.
-//
-// An error will be returned if reading from the secure random number generator fails, at which point
-// the returned result should be discarded and not used any further.
-func GenerateRandomBytes(n int) ([]byte, error) {
-	b := make([]byte, n)
-
-	_, err := rand.Read(b)
-	if err != nil {
-		return nil, err
-	}
-
-	return b, nil
-}
-
-// GenerateRandomBase64String returns a string with n random bytes securely generated using the system's
-// default CSPRNG in base64 encoding. The resulting string might not be of length n as the encoding for
-// the raw bytes generated may vary.
-//
-// An error will be returned if reading from the secure random number generator fails, at which point
-// the returned result should be discarded and not used any further.
-func GenerateRandomBase64String(n int) (string, error) {
-	b, err := GenerateRandomBytes(n)
-	if err != nil {
-		return "", err
-	}
-
-	return base64.StdEncoding.EncodeToString(b), nil
-}
-
-// GenerateRandomHexString returns a string with n random bytes securely generated using the system's
-// default CSPRNG in hexadecimal encoding. The resulting string might not be of length n as the encoding
-// for the raw bytes generated may vary.
-//
-// An error will be returned if reading from the secure random number generator fails, at which point
-// the returned result should be discarded and not used any further.
-func GenerateRandomHexString(n int) (string, error) {
-	b, err := GenerateRandomBytes(n)
-	if err != nil {
-		return "", err
-	}
-
-	return hex.EncodeToString(b), nil
-}
 
 // CharRange defines the type for character ranges
 type CharRange int
@@ -125,22 +78,12 @@ func buildString(validateFn func(byte) bool, n int) (string, error) {
 	return str.String(), nil
 }
 
-// Lowercases a string and trims whitespace from the beginning and end of the string
-func ToUsernameFormat(s string) string {
-	return strings.TrimSpace(strings.ToLower(s))
-}
-
 // Title converts a string to title case
 func ToTitleFormat(s string) string {
 	caser := cases.Title(language.AmericanEnglish)
 	title := caser.String(s)
 
 	return title
-}
-
-// FloatToString converts a float64 to a string
-func FloatToString(f float64) string {
-	return strconv.FormatFloat(f, 'f', -1, 64)
 }
 
 func TruncateString(name string, maxLength int) string {
@@ -167,4 +110,19 @@ func StringToInt(value string, defaultCount int) int {
 		return defaultCount
 	}
 	return count
+}
+
+// GenerateRandomBytes returns n random bytes securely generated using the system's default CSPRNG.
+//
+// An error will be returned if reading from the secure random number generator fails, at which point
+// the returned result should be discarded and not used any further.
+func GenerateRandomBytes(n int) ([]byte, error) {
+	b := make([]byte, n)
+
+	_, err := rand.Read(b)
+	if err != nil {
+		return nil, err
+	}
+
+	return b, nil
 }

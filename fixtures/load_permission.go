@@ -5,13 +5,14 @@ import (
 	"fmt"
 	"log"
 	"strings"
+	"unicode"
 
+	"github.com/casbin/casbin/v2"
 	"github.com/emoss08/trenova/pkg/models"
-	"github.com/emoss08/trenova/pkg/utils"
 	"github.com/uptrace/bun"
 )
 
-func loadPermissions(ctx context.Context, db *bun.DB, org *models.Organization, bu *models.BusinessUnit) error {
+func loadPermissions(ctx context.Context, db *bun.DB, enforcer *casbin.Enforcer) error {
 	var permissions []*models.Permission
 
 	err := db.NewSelect().Model(&permissions).Scan(ctx)
@@ -39,41 +40,37 @@ func loadPermissions(ctx context.Context, db *bun.DB, org *models.Organization, 
 		writeDescription string
 	}{
 		{"view", "Can view all", "Can view all"},
-		{"add", "Can view all", "Can add, edit, and delete"},
-		{"edit", "Can view all", "Can add, edit, and delete"},
-		{"delete", "Can view all", "Can add, edit, and delete"},
+		{"add", "Can view all", "Can add, update, and delete"},
+		{"update", "Can view all", "Can add, update, and delete"},
+		{"delete", "Can view all", "Can add, update, and delete"},
 	}
 
 	for _, resource := range resources {
-		resourceTypeLower := strings.ToLower(resource.Type)
+		resourceTypeLower := toSnakeCase(resource.Type)
 		for _, action := range actions {
-			// Format codename, label, and descriptions
-			codename := fmt.Sprintf("%s.%s", resourceTypeLower, action.action)
-			if existingPermissionMap[codename] {
-				continue
-			}
-			label := fmt.Sprintf("%s %s", utils.ToTitleFormat(action.action), resource.Type)
-			readDescription := fmt.Sprintf("%s %s.", action.readDescription, resource.Type)
-			writeDescription := fmt.Sprintf("%s %s.", action.writeDescription, resource.Type)
+			codename := fmt.Sprintf("%s:%s", resourceTypeLower, action.action)
 
-			permission := &models.Permission{
-				Codename:         codename,
-				Action:           action.action,
-				Label:            label,
-				ReadDescription:  readDescription,
-				WriteDescription: writeDescription,
-				ResourceID:       resource.ID,
-				Resource:         resource,
-			}
-
-			_, err := db.NewInsert().Model(permission).Exec(ctx)
+			// Add policy for the Admin role instead of "admin" subject
+			_, err = enforcer.AddPolicy("Admin", codename, "allow")
 			if err != nil {
-				return err
+				return fmt.Errorf("failed to add policy: %w", err)
 			}
 
-			log.Printf("Added permission: %s\n", permission.Codename)
+			log.Printf("Added permission to Casbin: Admin, %s, allow\n", codename)
 		}
 	}
 
-	return nil
+	return enforcer.SavePolicy()
+}
+
+// toSnakeCase converts a string from CamelCase to snake_case
+func toSnakeCase(s string) string {
+	var result string
+	for i, r := range s {
+		if i > 0 && unicode.IsUpper(r) {
+			result += "_"
+		}
+		result += strings.ToLower(string(r))
+	}
+	return result
 }

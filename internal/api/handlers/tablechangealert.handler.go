@@ -23,11 +23,11 @@ func NewTableChangeAlertHandler(s *server.Server) *TableChangeAlertHandler {
 	return &TableChangeAlertHandler{
 		logger:            s.Logger,
 		service:           services.NewTableChangeAlertService(s),
-		permissionService: services.NewPermissionService(s),
+		permissionService: services.NewPermissionService(s.Enforcer),
 	}
 }
 
-func (h *TableChangeAlertHandler) RegisterRoutes(r fiber.Router) {
+func (h TableChangeAlertHandler) RegisterRoutes(r fiber.Router) {
 	api := r.Group("/table-change-alerts")
 	api.Get("/", h.Get())
 	api.Get("/topics", h.getTopicNames())
@@ -35,7 +35,7 @@ func (h *TableChangeAlertHandler) RegisterRoutes(r fiber.Router) {
 	api.Put("/:tableChangeAlertID", h.Update())
 }
 
-func (h *TableChangeAlertHandler) Get() fiber.Handler {
+func (h TableChangeAlertHandler) Get() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		orgID, ok := c.Locals(utils.CTXOrganizationID).(uuid.UUID)
 		buID, orgOK := c.Locals(utils.CTXBusinessUnitID).(uuid.UUID)
@@ -69,9 +69,9 @@ func (h *TableChangeAlertHandler) Get() fiber.Handler {
 			})
 		}
 
-		if err = h.permissionService.CheckUserPermission(c, models.PermissionTableChangeAlertView.String()); err != nil {
-			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Error{
-				Code:    fiber.StatusUnauthorized,
+		if err := h.permissionService.CheckUserPermission(c, "table_change_alert", "view"); err != nil {
+			return c.Status(fiber.StatusForbidden).JSON(fiber.Error{
+				Code:    fiber.StatusForbidden,
 				Message: "You do not have permission to perform this action.",
 			})
 		}
@@ -96,7 +96,7 @@ func (h *TableChangeAlertHandler) Get() fiber.Handler {
 	}
 }
 
-func (h *TableChangeAlertHandler) Create() fiber.Handler {
+func (h TableChangeAlertHandler) Create() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		createdEntity := new(models.TableChangeAlert)
 
@@ -111,9 +111,9 @@ func (h *TableChangeAlertHandler) Create() fiber.Handler {
 			})
 		}
 
-		if err := h.permissionService.CheckUserPermission(c, models.PermissionTableChangeAlertView.String()); err != nil {
-			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Error{
-				Code:    fiber.StatusUnauthorized,
+		if err := h.permissionService.CheckUserPermission(c, "table_change_alert", "create"); err != nil {
+			return c.Status(fiber.StatusForbidden).JSON(fiber.Error{
+				Code:    fiber.StatusForbidden,
 				Message: "You do not have permission to perform this action.",
 			})
 		}
@@ -137,7 +137,7 @@ func (h *TableChangeAlertHandler) Create() fiber.Handler {
 	}
 }
 
-func (h *TableChangeAlertHandler) Update() fiber.Handler {
+func (h TableChangeAlertHandler) Update() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		tableChangeAlertID := c.Params("tableChangeAlertID")
 		if tableChangeAlertID == "" {
@@ -147,9 +147,9 @@ func (h *TableChangeAlertHandler) Update() fiber.Handler {
 			})
 		}
 
-		if err := h.permissionService.CheckUserPermission(c, models.PermissionTableChangeAlertAdd.String()); err != nil {
-			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Error{
-				Code:    fiber.StatusUnauthorized,
+		if err := h.permissionService.CheckUserPermission(c, "table_change_alert", "update"); err != nil {
+			return c.Status(fiber.StatusForbidden).JSON(fiber.Error{
+				Code:    fiber.StatusForbidden,
 				Message: "You do not have permission to perform this action.",
 			})
 		}
@@ -173,7 +173,7 @@ func (h *TableChangeAlertHandler) Update() fiber.Handler {
 	}
 }
 
-func (h *TableChangeAlertHandler) getTopicNames() fiber.Handler {
+func (h TableChangeAlertHandler) getTopicNames() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		entities, cnt, err := h.service.GetTopicNames()
 		if err != nil {

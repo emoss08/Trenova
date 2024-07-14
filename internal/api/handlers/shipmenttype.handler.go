@@ -23,11 +23,11 @@ func NewShipmentTypeHandler(s *server.Server) *ShipmentTypeHandler {
 	return &ShipmentTypeHandler{
 		logger:            s.Logger,
 		service:           services.NewShipmentTypeService(s),
-		permissionService: services.NewPermissionService(s),
+		permissionService: services.NewPermissionService(s.Enforcer),
 	}
 }
 
-func (h *ShipmentTypeHandler) RegisterRoutes(r fiber.Router) {
+func (h ShipmentTypeHandler) RegisterRoutes(r fiber.Router) {
 	api := r.Group("/shipment-types")
 	api.Get("/", h.Get())
 	api.Get("/:shipmenttypeID", h.GetByID())
@@ -35,7 +35,7 @@ func (h *ShipmentTypeHandler) RegisterRoutes(r fiber.Router) {
 	api.Put("/:shipmenttypeID", h.Update())
 }
 
-func (h *ShipmentTypeHandler) Get() fiber.Handler {
+func (h ShipmentTypeHandler) Get() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		orgID, ok := c.Locals(utils.CTXOrganizationID).(uuid.UUID)
 		buID, orgOK := c.Locals(utils.CTXBusinessUnitID).(uuid.UUID)
@@ -69,9 +69,9 @@ func (h *ShipmentTypeHandler) Get() fiber.Handler {
 			})
 		}
 
-		if err = h.permissionService.CheckUserPermission(c, models.PermissionShipmentTypeView.String()); err != nil {
-			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Error{
-				Code:    fiber.StatusUnauthorized,
+		if err := h.permissionService.CheckUserPermission(c, "shipment_type", "view"); err != nil {
+			return c.Status(fiber.StatusForbidden).JSON(fiber.Error{
+				Code:    fiber.StatusForbidden,
 				Message: "You do not have permission to perform this action.",
 			})
 		}
@@ -104,7 +104,7 @@ func (h *ShipmentTypeHandler) Get() fiber.Handler {
 	}
 }
 
-func (h *ShipmentTypeHandler) Create() fiber.Handler {
+func (h ShipmentTypeHandler) Create() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		createdEntity := new(models.ShipmentType)
 
@@ -118,9 +118,9 @@ func (h *ShipmentTypeHandler) Create() fiber.Handler {
 			})
 		}
 
-		if err := h.permissionService.CheckUserPermission(c, models.PermissionShipmentTypeAdd.String()); err != nil {
-			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Error{
-				Code:    fiber.StatusUnauthorized,
+		if err := h.permissionService.CheckUserPermission(c, "shipment_type", "create"); err != nil {
+			return c.Status(fiber.StatusForbidden).JSON(fiber.Error{
+				Code:    fiber.StatusForbidden,
 				Message: "You do not have permission to perform this action.",
 			})
 		}
@@ -134,17 +134,15 @@ func (h *ShipmentTypeHandler) Create() fiber.Handler {
 
 		entity, err := h.service.Create(c.UserContext(), createdEntity)
 		if err != nil {
-			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Error{
-				Code:    fiber.StatusInternalServerError,
-				Message: err.Error(),
-			})
+			resp := utils.CreateServiceError(c, err)
+			return c.Status(fiber.StatusInternalServerError).JSON(resp)
 		}
 
 		return c.Status(fiber.StatusCreated).JSON(entity)
 	}
 }
 
-func (h *ShipmentTypeHandler) GetByID() fiber.Handler {
+func (h ShipmentTypeHandler) GetByID() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		shipmenttypeID := c.Params("shipmenttypeID")
 		if shipmenttypeID == "" {
@@ -165,9 +163,9 @@ func (h *ShipmentTypeHandler) GetByID() fiber.Handler {
 			})
 		}
 
-		if err := h.permissionService.CheckUserPermission(c, models.PermissionShipmentTypeView.String()); err != nil {
-			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Error{
-				Code:    fiber.StatusUnauthorized,
+		if err := h.permissionService.CheckUserPermission(c, "shipment_type", "view"); err != nil {
+			return c.Status(fiber.StatusForbidden).JSON(fiber.Error{
+				Code:    fiber.StatusForbidden,
 				Message: "You do not have permission to perform this action.",
 			})
 		}
@@ -184,7 +182,7 @@ func (h *ShipmentTypeHandler) GetByID() fiber.Handler {
 	}
 }
 
-func (h *ShipmentTypeHandler) Update() fiber.Handler {
+func (h ShipmentTypeHandler) Update() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		shipmenttypeID := c.Params("shipmenttypeID")
 		if shipmenttypeID == "" {
@@ -194,9 +192,9 @@ func (h *ShipmentTypeHandler) Update() fiber.Handler {
 			})
 		}
 
-		if err := h.permissionService.CheckUserPermission(c, models.PermissionShipmentTypeEdit.String()); err != nil {
-			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Error{
-				Code:    fiber.StatusUnauthorized,
+		if err := h.permissionService.CheckUserPermission(c, "shipment_type", "update"); err != nil {
+			return c.Status(fiber.StatusForbidden).JSON(fiber.Error{
+				Code:    fiber.StatusForbidden,
 				Message: "You do not have permission to perform this action.",
 			})
 		}
@@ -211,10 +209,8 @@ func (h *ShipmentTypeHandler) Update() fiber.Handler {
 
 		entity, err := h.service.UpdateOne(c.UserContext(), updatedEntity)
 		if err != nil {
-			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Error{
-				Code:    fiber.StatusInternalServerError,
-				Message: "Failed to update ShipmentType",
-			})
+			resp := utils.CreateServiceError(c, err)
+			return c.Status(fiber.StatusInternalServerError).JSON(resp)
 		}
 
 		return c.Status(fiber.StatusOK).JSON(entity)

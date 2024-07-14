@@ -7,6 +7,7 @@ CREATE TABLE
     "status"           status_enum NOT NULL DEFAULT 'Active',
     "name"             VARCHAR(50) NOT NULL,
     "description"      TEXT,
+    "version"          BIGINT      NOT NULL,
     "business_unit_id" uuid        NOT NULL,
     "organization_id"  uuid        NOT NULL,
     PRIMARY KEY ("id"),
@@ -20,7 +21,7 @@ CREATE UNIQUE INDEX IF NOT EXISTS "charge_type_name_organization_id_unq" ON "cha
 CREATE INDEX idx_charge_types_name ON charge_types (name);
 CREATE INDEX idx_charge_types_org_bu ON charge_types (organization_id, business_unit_id);
 CREATE INDEX idx_charge_types_description ON charge_types USING GIN (description gin_trgm_ops);
-CREATE INDEX idx_charge_types_created_at ON charge_types(created_at);
+CREATE INDEX idx_charge_types_created_at ON charge_types (created_at);
 
 --bun:split
 

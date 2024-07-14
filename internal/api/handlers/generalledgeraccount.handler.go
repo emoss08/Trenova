@@ -23,11 +23,11 @@ func NewGeneralLedgerAccountHandler(s *server.Server) *GeneralLedgerAccountHandl
 	return &GeneralLedgerAccountHandler{
 		logger:            s.Logger,
 		service:           services.NewGeneralLedgerAccountService(s),
-		permissionService: services.NewPermissionService(s),
+		permissionService: services.NewPermissionService(s.Enforcer),
 	}
 }
 
-func (h *GeneralLedgerAccountHandler) RegisterRoutes(r fiber.Router) {
+func (h GeneralLedgerAccountHandler) RegisterRoutes(r fiber.Router) {
 	api := r.Group("/general-ledger-accounts")
 	api.Get("/", h.Get())
 	api.Get("/:generalledgeraccountID", h.GetByID())
@@ -35,7 +35,7 @@ func (h *GeneralLedgerAccountHandler) RegisterRoutes(r fiber.Router) {
 	api.Put("/:generalledgeraccountID", h.Update())
 }
 
-func (h *GeneralLedgerAccountHandler) Get() fiber.Handler {
+func (h GeneralLedgerAccountHandler) Get() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		orgID, ok := c.Locals(utils.CTXOrganizationID).(uuid.UUID)
 		buID, orgOK := c.Locals(utils.CTXBusinessUnitID).(uuid.UUID)
@@ -69,9 +69,9 @@ func (h *GeneralLedgerAccountHandler) Get() fiber.Handler {
 			})
 		}
 
-		if err = h.permissionService.CheckUserPermission(c, models.PermissionGeneralLedgerAccountView.String()); err != nil {
-			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Error{
-				Code:    fiber.StatusUnauthorized,
+		if err := h.permissionService.CheckUserPermission(c, "general_ledger_account", "view"); err != nil {
+			return c.Status(fiber.StatusForbidden).JSON(fiber.Error{
+				Code:    fiber.StatusForbidden,
 				Message: "You do not have permission to perform this action.",
 			})
 		}
@@ -104,7 +104,7 @@ func (h *GeneralLedgerAccountHandler) Get() fiber.Handler {
 	}
 }
 
-func (h *GeneralLedgerAccountHandler) Create() fiber.Handler {
+func (h GeneralLedgerAccountHandler) Create() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		createdEntity := new(models.GeneralLedgerAccount)
 
@@ -118,9 +118,9 @@ func (h *GeneralLedgerAccountHandler) Create() fiber.Handler {
 			})
 		}
 
-		if err := h.permissionService.CheckUserPermission(c, models.PermissionGeneralLedgerAccountAdd.String()); err != nil {
-			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Error{
-				Code:    fiber.StatusUnauthorized,
+		if err := h.permissionService.CheckUserPermission(c, "general_ledger_account", "create"); err != nil {
+			return c.Status(fiber.StatusForbidden).JSON(fiber.Error{
+				Code:    fiber.StatusForbidden,
 				Message: "You do not have permission to perform this action.",
 			})
 		}
@@ -134,17 +134,15 @@ func (h *GeneralLedgerAccountHandler) Create() fiber.Handler {
 
 		entity, err := h.service.Create(c.UserContext(), createdEntity)
 		if err != nil {
-			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Error{
-				Code:    fiber.StatusInternalServerError,
-				Message: err.Error(),
-			})
+			resp := utils.CreateServiceError(c, err)
+			return c.Status(fiber.StatusInternalServerError).JSON(resp)
 		}
 
 		return c.Status(fiber.StatusCreated).JSON(entity)
 	}
 }
 
-func (h *GeneralLedgerAccountHandler) GetByID() fiber.Handler {
+func (h GeneralLedgerAccountHandler) GetByID() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		generalledgeraccountID := c.Params("generalledgeraccountID")
 		if generalledgeraccountID == "" {
@@ -165,9 +163,9 @@ func (h *GeneralLedgerAccountHandler) GetByID() fiber.Handler {
 			})
 		}
 
-		if err := h.permissionService.CheckUserPermission(c, models.PermissionGeneralLedgerAccountView.String()); err != nil {
-			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Error{
-				Code:    fiber.StatusUnauthorized,
+		if err := h.permissionService.CheckUserPermission(c, "general_ledger_account", "view"); err != nil {
+			return c.Status(fiber.StatusForbidden).JSON(fiber.Error{
+				Code:    fiber.StatusForbidden,
 				Message: "You do not have permission to perform this action.",
 			})
 		}
@@ -184,7 +182,7 @@ func (h *GeneralLedgerAccountHandler) GetByID() fiber.Handler {
 	}
 }
 
-func (h *GeneralLedgerAccountHandler) Update() fiber.Handler {
+func (h GeneralLedgerAccountHandler) Update() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		generalledgeraccountID := c.Params("generalledgeraccountID")
 		if generalledgeraccountID == "" {
@@ -194,9 +192,9 @@ func (h *GeneralLedgerAccountHandler) Update() fiber.Handler {
 			})
 		}
 
-		if err := h.permissionService.CheckUserPermission(c, models.PermissionGeneralLedgerAccountEdit.String()); err != nil {
-			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Error{
-				Code:    fiber.StatusUnauthorized,
+		if err := h.permissionService.CheckUserPermission(c, "general_ledger_account", "update"); err != nil {
+			return c.Status(fiber.StatusForbidden).JSON(fiber.Error{
+				Code:    fiber.StatusForbidden,
 				Message: "You do not have permission to perform this action.",
 			})
 		}
@@ -211,10 +209,8 @@ func (h *GeneralLedgerAccountHandler) Update() fiber.Handler {
 
 		entity, err := h.service.UpdateOne(c.UserContext(), updatedEntity)
 		if err != nil {
-			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Error{
-				Code:    fiber.StatusInternalServerError,
-				Message: "Failed to update GeneralLedgerAccount",
-			})
+			resp := utils.CreateServiceError(c, err)
+			return c.Status(fiber.StatusInternalServerError).JSON(resp)
 		}
 
 		return c.Status(fiber.StatusOK).JSON(entity)

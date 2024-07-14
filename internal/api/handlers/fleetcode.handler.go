@@ -23,11 +23,11 @@ func NewFleetCodeHandler(s *server.Server) *FleetCodeHandler {
 	return &FleetCodeHandler{
 		logger:            s.Logger,
 		service:           services.NewFleetCodeService(s),
-		permissionService: services.NewPermissionService(s),
+		permissionService: services.NewPermissionService(s.Enforcer),
 	}
 }
 
-func (h *FleetCodeHandler) RegisterRoutes(r fiber.Router) {
+func (h FleetCodeHandler) RegisterRoutes(r fiber.Router) {
 	api := r.Group("/fleet-codes")
 	api.Get("/", h.Get())
 	api.Get("/:fleetcodeID", h.GetByID())
@@ -35,7 +35,7 @@ func (h *FleetCodeHandler) RegisterRoutes(r fiber.Router) {
 	api.Put("/:fleetcodeID", h.Update())
 }
 
-func (h *FleetCodeHandler) Get() fiber.Handler {
+func (h FleetCodeHandler) Get() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		orgID, ok := c.Locals(utils.CTXOrganizationID).(uuid.UUID)
 		buID, orgOK := c.Locals(utils.CTXBusinessUnitID).(uuid.UUID)
@@ -69,9 +69,9 @@ func (h *FleetCodeHandler) Get() fiber.Handler {
 			})
 		}
 
-		if err = h.permissionService.CheckUserPermission(c, models.PermissionFleetCodeView.String()); err != nil {
-			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Error{
-				Code:    fiber.StatusUnauthorized,
+		if err := h.permissionService.CheckUserPermission(c, "fleet_code", "view"); err != nil {
+			return c.Status(fiber.StatusForbidden).JSON(fiber.Error{
+				Code:    fiber.StatusForbidden,
 				Message: "You do not have permission to perform this action.",
 			})
 		}
@@ -104,7 +104,7 @@ func (h *FleetCodeHandler) Get() fiber.Handler {
 	}
 }
 
-func (h *FleetCodeHandler) Create() fiber.Handler {
+func (h FleetCodeHandler) Create() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		createdEntity := new(models.FleetCode)
 
@@ -118,9 +118,9 @@ func (h *FleetCodeHandler) Create() fiber.Handler {
 			})
 		}
 
-		if err := h.permissionService.CheckUserPermission(c, models.PermissionFleetCodeAdd.String()); err != nil {
-			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Error{
-				Code:    fiber.StatusUnauthorized,
+		if err := h.permissionService.CheckUserPermission(c, "fleet_code", "create"); err != nil {
+			return c.Status(fiber.StatusForbidden).JSON(fiber.Error{
+				Code:    fiber.StatusForbidden,
 				Message: "You do not have permission to perform this action.",
 			})
 		}
@@ -134,17 +134,15 @@ func (h *FleetCodeHandler) Create() fiber.Handler {
 
 		entity, err := h.service.Create(c.UserContext(), createdEntity)
 		if err != nil {
-			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Error{
-				Code:    fiber.StatusInternalServerError,
-				Message: err.Error(),
-			})
+			resp := utils.CreateServiceError(c, err)
+			return c.Status(fiber.StatusInternalServerError).JSON(resp)
 		}
 
 		return c.Status(fiber.StatusCreated).JSON(entity)
 	}
 }
 
-func (h *FleetCodeHandler) GetByID() fiber.Handler {
+func (h FleetCodeHandler) GetByID() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		fleetcodeID := c.Params("fleetcodeID")
 		if fleetcodeID == "" {
@@ -165,9 +163,9 @@ func (h *FleetCodeHandler) GetByID() fiber.Handler {
 			})
 		}
 
-		if err := h.permissionService.CheckUserPermission(c, models.PermissionFleetCodeView.String()); err != nil {
-			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Error{
-				Code:    fiber.StatusUnauthorized,
+		if err := h.permissionService.CheckUserPermission(c, "fleet_code", "view"); err != nil {
+			return c.Status(fiber.StatusForbidden).JSON(fiber.Error{
+				Code:    fiber.StatusForbidden,
 				Message: "You do not have permission to perform this action.",
 			})
 		}
@@ -184,7 +182,7 @@ func (h *FleetCodeHandler) GetByID() fiber.Handler {
 	}
 }
 
-func (h *FleetCodeHandler) Update() fiber.Handler {
+func (h FleetCodeHandler) Update() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		fleetcodeID := c.Params("fleetcodeID")
 		if fleetcodeID == "" {
@@ -194,9 +192,9 @@ func (h *FleetCodeHandler) Update() fiber.Handler {
 			})
 		}
 
-		if err := h.permissionService.CheckUserPermission(c, models.PermissionFleetCodeEdit.String()); err != nil {
-			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Error{
-				Code:    fiber.StatusUnauthorized,
+		if err := h.permissionService.CheckUserPermission(c, "fleet_code", "update"); err != nil {
+			return c.Status(fiber.StatusForbidden).JSON(fiber.Error{
+				Code:    fiber.StatusForbidden,
 				Message: "You do not have permission to perform this action.",
 			})
 		}
@@ -211,10 +209,8 @@ func (h *FleetCodeHandler) Update() fiber.Handler {
 
 		entity, err := h.service.UpdateOne(c.UserContext(), updatedEntity)
 		if err != nil {
-			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Error{
-				Code:    fiber.StatusInternalServerError,
-				Message: "Failed to update FleetCode",
-			})
+			resp := utils.CreateServiceError(c, err)
+			return c.Status(fiber.StatusInternalServerError).JSON(resp)
 		}
 
 		return c.Status(fiber.StatusOK).JSON(entity)

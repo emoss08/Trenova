@@ -19,6 +19,7 @@ CREATE TABLE
     "name"             VARCHAR(20)   NOT NULL,
     "severity"         severity_enum NOT NULL DEFAULT 'Low',
     "description"      TEXT          NOT NULL,
+    "version"          BIGINT      NOT NULL,
     "business_unit_id" uuid          NOT NULL,
     "organization_id"  uuid          NOT NULL,
     PRIMARY KEY ("id"),

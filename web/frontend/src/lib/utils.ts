@@ -1,7 +1,7 @@
+import { ShipmentStatus } from "@/types/shipment";
 import { clsx, type ClassValue } from "clsx";
-import React, { RefObject, useEffect } from "react";
+import { RefObject, useEffect } from "react";
 import { twMerge } from "tailwind-merge";
-import { v4 as uuidv4 } from "uuid";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -27,18 +27,6 @@ export function USDollarFormat(num: number): string {
     style: "currency",
     currency: "USD",
   }).format(num);
-}
-
-/**
- * Formats a number into a USD string
- * @param num - The number to format
- * @returns {string}
- */
-export function USDollarFormatString(num: string): string {
-  return new Intl.NumberFormat("en-US", {
-    style: "currency",
-    currency: "USD",
-  }).format(parseFloat(num));
 }
 
 /**
@@ -92,41 +80,6 @@ export const useClickOutside = <T extends HTMLElement>(
 };
 
 /**
- * Validates a decimal value with a given number of decimal places
- * @param value - The value to validate
- * @param decimalPlaces - The number of decimal places to allow
- * @returns {boolean}
- */
-export function validateDecimal(value: string, decimalPlaces: number): boolean {
-  const regex = new RegExp(`^\\d+(\\.\\d{1,${decimalPlaces}})?$`);
-  return regex.test(value);
-}
-
-/**
- * Formats a duration string into a human readable format
- * @param durationStr - The duration string to format
- * @returns {string}
- */
-export function formatDuration(durationStr: string): string {
-  if (!durationStr) return "";
-
-  const parts = durationStr.split(" ");
-  const days = parseInt(parts[0]);
-  const timeParts = parts[1].split(":");
-  const hours = parseInt(timeParts[0]);
-  const minutes = parseInt(timeParts[1]);
-  const seconds = parseInt(timeParts[2]);
-
-  let result = "";
-  if (days > 0) result += `${days} day${days > 1 ? "s" : ""}, `;
-  if (hours > 0) result += `${hours} hour${hours > 1 ? "s" : ""}, `;
-  if (minutes > 0) result += `${minutes} minute${minutes > 1 ? "s" : ""}, `;
-  if (seconds > 0) result += `${seconds} second${seconds > 1 ? "s" : ""}`;
-
-  return result.replace(/, $/, ""); // Remove trailing comma
-}
-
-/**
  * Sanitizes query params by removing nullish and empty string values
  * @param queryParams
  * @returns {Record<string, string>}
@@ -146,14 +99,6 @@ function sanitizeQueryParams(
     {} as Record<string, string>,
   );
 }
-
-type PopoutWindowParams = {
-  width?: number;
-  height?: number;
-  left?: number;
-  top?: number;
-  hideHeader?: boolean;
-};
 
 /**
  * Opens a new window with the given path and query params
@@ -175,7 +120,13 @@ export function PopoutWindow(
     left = window.screen.width / 2 - width / 2,
     top = window.screen.height / 2 - height / 2,
     hideHeader = true,
-  }: PopoutWindowParams = {},
+  }: {
+    width?: number;
+    height?: number;
+    left?: number;
+    top?: number;
+    hideHeader?: boolean;
+  } = {},
 ): void {
   const extendedQueryParams = sanitizeQueryParams({
     ...incomingQueryParams,
@@ -211,70 +162,27 @@ export const cleanObject = (obj: Record<string, any>): Record<string, any> => {
 };
 
 /**
- * Function to generate Idempotency Key
- * @returns {string}
+ * Function to convert shipment status to human readable format
+ * @param status - The status to convert
  */
-export function generateIdempotencyKey(): string {
-  return uuidv4();
-}
-
-export function shipmentStatusToReadable(status: string) {
+export function shipmentStatusToReadable(status: ShipmentStatus) {
   switch (status) {
-    case "N":
+    case "New":
       return "New";
-    case "P":
+    case "InProgress":
       return "In Progress";
-    case "C":
+    case "Completed":
       return "Completed";
-    case "H":
+    case "Hold":
       return "On Hold";
-    case "B":
+    case "Billed":
       return "Billed";
-    case "V":
+    case "Voided":
       return "Voided";
     default:
       return "Unknown";
   }
 }
-
-type Browser = "chrome" | "firefox" | "safari" | "edge" | "opera" | "ie";
-
-export function isBrowser(browser: Browser): boolean {
-  const userAgent = navigator.userAgent.toLowerCase();
-  switch (browser) {
-    case "chrome":
-      return userAgent.includes("chrome") && !userAgent.includes("edge");
-    case "firefox":
-      return userAgent.includes("firefox");
-    case "safari":
-      return userAgent.includes("safari") && !userAgent.includes("chrome");
-    case "edge":
-      return userAgent.includes("edge");
-    case "opera":
-      return userAgent.includes("opr");
-    case "ie":
-      return userAgent.includes("msie") || userAgent.includes("trident");
-    default:
-      return false;
-  }
-}
-
-/**
- * Typeguard function that checks if the given element is a
- * React element with a children prop.
- *
- * @param element
- * @returns Whether the element is a React element with a children prop.
- */
-export const isElementWithChildren = (
-  element: React.ReactNode,
-): element is React.ReactElement<{ children?: React.ReactNode }> => {
-  return (
-    React.isValidElement(element) &&
-    typeof (element as React.ReactElement<{ children?: React.ReactNode }>).props
-      .children !== "undefined"
-  );
-};
 
 export const toTitleCase = (value: string) => {
   return value

@@ -8,6 +8,7 @@ CREATE TABLE
     "code"             VARCHAR(10) NOT NULL,
     "description"      TEXT,
     "color"            VARCHAR(10),
+    "version"          BIGINT      NOT NULL,
     "created_at"       TIMESTAMPTZ NOT NULL DEFAULT current_timestamp,
     "updated_at"       TIMESTAMPTZ NOT NULL DEFAULT current_timestamp,
     PRIMARY KEY ("id"),
@@ -21,7 +22,7 @@ CREATE UNIQUE INDEX IF NOT EXISTS "document_classifications_code_organization_id
 CREATE INDEX idx_document_classifications_code ON document_classifications (code);
 CREATE INDEX idx_document_classifications_org_bu ON document_classifications (organization_id, business_unit_id);
 CREATE INDEX idx_document_classifications_description ON document_classifications USING GIN (description gin_trgm_ops);
-CREATE INDEX idx_document_classifications_created_at ON document_classifications(created_at);
+CREATE INDEX idx_document_classifications_created_at ON document_classifications (created_at);
 
 --bun:split
 

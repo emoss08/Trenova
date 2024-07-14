@@ -39,6 +39,7 @@ func AttachAllRoutes(s *server.Server, r fiber.Router) {
 	registerHandler(r, NewQualifierCodeHandler(s))
 	registerHandler(r, NewWorkerHandler(s))
 	registerHandler(r, NewLocationHandler(s))
+	registerHandler(r, NewCustomerHandler(s))
 
 	// Routes that don't follow the standard pattern.
 	registerFlexibleHandler(r, NewUserHandler(s))
@@ -48,6 +49,7 @@ func AttachAllRoutes(s *server.Server, r fiber.Router) {
 	registerFlexibleHandler(r, NewOrganizationHandler(s))
 	registerFlexibleHandler(r, NewUserTaskHandler(s))
 	registerFlexibleHandler(r, NewUSStateHandler(s))
+	registerFlexibleHandler(r, NewShipmentHandler(s))
 
 	// Test routes for development.
 	registerFlexibleHandler(r, NewTestHandler(s))

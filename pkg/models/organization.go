@@ -2,9 +2,11 @@ package models
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	"github.com/emoss08/trenova/pkg/models/property"
+	"github.com/emoss08/trenova/pkg/validator"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
 
 	"github.com/google/uuid"
@@ -37,22 +39,25 @@ func (p OrganizationPermission) String() string {
 }
 
 type Organization struct {
-	bun.BaseModel  `bun:"organizations" alias:"o" json:"-"`
-	CreatedAt      time.Time                 `bun:",nullzero,notnull,default:current_timestamp" json:"createdAt"`
-	UpdatedAt      time.Time                 `bun:",nullzero,notnull,default:current_timestamp" json:"updatedAt"`
-	ID             uuid.UUID                 `bun:",pk,type:uuid,default:uuid_generate_v4()" json:"id"`
-	Name           string                    `bun:"name,notnull" json:"name" queryField:"true"`
-	ScacCode       string                    `bun:",notnull" json:"scacCode"`
-	DOTNumber      string                    `bun:"dot_number" json:"dotNumber"`
-	LogoURL        string                    `bun:"logo_url" json:"logoUrl"`
-	OrgType        property.OrganizationType `bun:"org_type,notnull,default:'Asset'" json:"orgType"`
-	AddressLine1   string                    `bun:"address_line_1" json:"addressLine1"`
-	AddressLine2   string                    `bun:"address_line_2" json:"addressLine2"`
-	City           string                    `bun:"city" json:"city"`
-	PostalCode     string                    `bun:"postal_code" json:"postalCode"`
-	Timezone       string                    `bun:"timezone,notnull,default:'America/New_York'" json:"timezone"`
-	BusinessUnitID uuid.UUID                 `bun:"type:uuid" json:"businessUnitId"`
-	StateID        uuid.UUID                 `bun:"type:uuid,notnull" json:"stateId"`
+	bun.BaseModel `bun:"organizations" alias:"o" json:"-"`
+
+	ID           uuid.UUID                 `bun:",pk,type:uuid,default:uuid_generate_v4()" json:"id"`
+	Name         string                    `bun:"name,notnull" json:"name" queryField:"true"`
+	ScacCode     string                    `bun:",notnull" json:"scacCode"`
+	DOTNumber    string                    `bun:"dot_number" json:"dotNumber"`
+	LogoURL      string                    `bun:"logo_url" json:"logoUrl"`
+	OrgType      property.OrganizationType `bun:"org_type,notnull,default:'Asset'" json:"orgType"`
+	AddressLine1 string                    `bun:"address_line_1" json:"addressLine1"`
+	AddressLine2 string                    `bun:"address_line_2" json:"addressLine2"`
+	City         string                    `bun:"city" json:"city"`
+	PostalCode   string                    `bun:"postal_code" json:"postalCode"`
+	Timezone     string                    `bun:"timezone,notnull,default:'America/New_York'" json:"timezone"`
+	Version      int64                     `bun:"type:BIGINT" json:"version"`
+	CreatedAt    time.Time                 `bun:",nullzero,notnull,default:current_timestamp" json:"createdAt"`
+	UpdatedAt    time.Time                 `bun:",nullzero,notnull,default:current_timestamp" json:"updatedAt"`
+
+	BusinessUnitID uuid.UUID `bun:"type:uuid" json:"businessUnitId"`
+	StateID        uuid.UUID `bun:"type:uuid,notnull" json:"stateId"`
 
 	BusinessUnit *BusinessUnit `bun:"rel:belongs-to,join:business_unit_id=id" json:"-"`
 	State        *UsState      `bun:"rel:belongs-to,join:state_id=id" json:"state"`
@@ -71,6 +76,43 @@ func (o Organization) Validate() error {
 		validation.Field(&o.StateID, validation.Required),
 		validation.Field(&o.Timezone, validation.Required),
 	)
+}
+
+func (o *Organization) BeforeUpdate(_ context.Context) error {
+	o.Version++
+
+	return nil
+}
+
+func (o *Organization) OptimisticUpdate(ctx context.Context, tx bun.IDB) error {
+	ov := o.Version
+
+	if err := o.BeforeUpdate(ctx); err != nil {
+		return err
+	}
+
+	result, err := tx.NewUpdate().
+		Model(o).
+		WherePK().
+		Where("version = ?", ov).
+		Returning("*").
+		Exec(ctx)
+	if err != nil {
+		return err
+	}
+
+	rows, err := result.RowsAffected()
+	if err != nil {
+		return err
+	}
+
+	if rows == 0 {
+		return &validator.BusinessLogicError{
+			Message: fmt.Sprintf("Version mismatch. The Organization (ID: %s) has been updated by another user. Please refresh and try again.", o.ID),
+		}
+	}
+
+	return nil
 }
 
 var _ bun.BeforeAppendModelHook = (*Organization)(nil)

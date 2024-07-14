@@ -7,6 +7,7 @@ CREATE TABLE
     "name"             VARCHAR(50) NOT NULL,
     "description"      TEXT,
     "color"            VARCHAR(10),
+    "version"          BIGINT      NOT NULL,
     "created_at"       TIMESTAMPTZ NOT NULL DEFAULT current_timestamp,
     "updated_at"       TIMESTAMPTZ NOT NULL DEFAULT current_timestamp,
     PRIMARY KEY ("id"),
@@ -20,7 +21,7 @@ CREATE UNIQUE INDEX IF NOT EXISTS "location_categories_name_organization_id_unq"
 CREATE INDEX idx_location_categories_name ON location_categories (name);
 CREATE INDEX idx_location_categories_org_bu ON location_categories (organization_id, business_unit_id);
 CREATE INDEX idx_location_categories_description ON location_categories USING GIN (description gin_trgm_ops);
-CREATE INDEX idx_location_categories_created_at ON location_categories(created_at);
+CREATE INDEX idx_location_categories_created_at ON location_categories (created_at);
 
 -- bun:split
 

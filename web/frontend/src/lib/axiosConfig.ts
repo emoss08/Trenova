@@ -1,6 +1,14 @@
 import { API_URL } from "@/lib/constants";
-import { generateIdempotencyKey } from "@/lib/utils";
 import axios from "axios";
+import { v4 as uuidv4 } from "uuid";
+
+/**
+ * Function to generate Idempotency Key
+ * @returns {string}
+ */
+export function generateIdempotencyKey(): string {
+  return uuidv4();
+}
 
 /**
  * Axios request interceptor.

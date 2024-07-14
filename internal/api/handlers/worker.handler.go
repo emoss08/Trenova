@@ -23,11 +23,11 @@ func NewWorkerHandler(s *server.Server) *WorkerHandler {
 	return &WorkerHandler{
 		logger:            s.Logger,
 		service:           services.NewWorkerService(s),
-		permissionService: services.NewPermissionService(s),
+		permissionService: services.NewPermissionService(s.Enforcer),
 	}
 }
 
-func (h *WorkerHandler) RegisterRoutes(r fiber.Router) {
+func (h WorkerHandler) RegisterRoutes(r fiber.Router) {
 	api := r.Group("/workers")
 	api.Get("/", h.Get())
 	api.Get("/:workerID", h.GetByID())
@@ -35,7 +35,7 @@ func (h *WorkerHandler) RegisterRoutes(r fiber.Router) {
 	api.Put("/:workerID", h.Update())
 }
 
-func (h *WorkerHandler) Get() fiber.Handler {
+func (h WorkerHandler) Get() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		orgID, ok := c.Locals(utils.CTXOrganizationID).(uuid.UUID)
 		buID, orgOK := c.Locals(utils.CTXBusinessUnitID).(uuid.UUID)
@@ -69,16 +69,22 @@ func (h *WorkerHandler) Get() fiber.Handler {
 			})
 		}
 
-		if err = h.permissionService.CheckUserPermission(c, models.PermissionWorkerView.String()); err != nil {
-			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Error{
-				Code:    fiber.StatusUnauthorized,
+		if err := h.permissionService.CheckUserPermission(c, "worker", "view"); err != nil {
+			return c.Status(fiber.StatusForbidden).JSON(fiber.Error{
+				Code:    fiber.StatusForbidden,
 				Message: "You do not have permission to perform this action.",
 			})
 		}
 
-		query := c.Query("search", "")
+		filter := &services.WorkerQueryFilter{
+			Query:          c.Query("search", ""),
+			OrganizationID: orgID,
+			BusinessUnitID: buID,
+			Limit:          limit,
+			Offset:         offset,
+		}
 
-		entities, cnt, err := h.service.GetAll(c.UserContext(), limit, offset, query, orgID, buID)
+		entities, cnt, err := h.service.GetAll(c.UserContext(), filter)
 		if err != nil {
 			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Error{
 				Code:    fiber.StatusInternalServerError,
@@ -98,7 +104,7 @@ func (h *WorkerHandler) Get() fiber.Handler {
 	}
 }
 
-func (h *WorkerHandler) Create() fiber.Handler {
+func (h WorkerHandler) Create() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		createdEntity := new(models.Worker)
 
@@ -112,9 +118,9 @@ func (h *WorkerHandler) Create() fiber.Handler {
 			})
 		}
 
-		if err := h.permissionService.CheckUserPermission(c, models.PermissionWorkerAdd.String()); err != nil {
-			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Error{
-				Code:    fiber.StatusUnauthorized,
+		if err := h.permissionService.CheckUserPermission(c, "worker", "create"); err != nil {
+			return c.Status(fiber.StatusForbidden).JSON(fiber.Error{
+				Code:    fiber.StatusForbidden,
 				Message: "You do not have permission to perform this action.",
 			})
 		}
@@ -128,17 +134,15 @@ func (h *WorkerHandler) Create() fiber.Handler {
 
 		entity, err := h.service.Create(c.UserContext(), createdEntity)
 		if err != nil {
-			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Error{
-				Code:    fiber.StatusInternalServerError,
-				Message: err.Error(),
-			})
+			resp := utils.CreateServiceError(c, err)
+			return c.Status(fiber.StatusInternalServerError).JSON(resp)
 		}
 
 		return c.Status(fiber.StatusCreated).JSON(entity)
 	}
 }
 
-func (h *WorkerHandler) GetByID() fiber.Handler {
+func (h WorkerHandler) GetByID() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		workerID := c.Params("workerID")
 		if workerID == "" {
@@ -153,15 +157,15 @@ func (h *WorkerHandler) GetByID() fiber.Handler {
 
 		if !ok || !orgOK {
 			h.logger.Error().Msg("WorkerHandler: Organization & Business Unit ID not found in context")
-			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Error{
-				Code:    fiber.StatusUnauthorized,
+			return c.Status(fiber.StatusForbidden).JSON(fiber.Error{
+				Code:    fiber.StatusForbidden,
 				Message: "Organization & Business Unit ID not found in context",
 			})
 		}
 
-		if err := h.permissionService.CheckUserPermission(c, models.PermissionWorkerView.String()); err != nil {
-			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Error{
-				Code:    fiber.StatusUnauthorized,
+		if err := h.permissionService.CheckUserPermission(c, "worker", "view"); err != nil {
+			return c.Status(fiber.StatusForbidden).JSON(fiber.Error{
+				Code:    fiber.StatusForbidden,
 				Message: "You do not have permission to perform this action.",
 			})
 		}
@@ -178,7 +182,7 @@ func (h *WorkerHandler) GetByID() fiber.Handler {
 	}
 }
 
-func (h *WorkerHandler) Update() fiber.Handler {
+func (h WorkerHandler) Update() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		workerID := c.Params("workerID")
 		if workerID == "" {
@@ -188,9 +192,9 @@ func (h *WorkerHandler) Update() fiber.Handler {
 			})
 		}
 
-		if err := h.permissionService.CheckUserPermission(c, models.PermissionWorkerEdit.String()); err != nil {
-			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Error{
-				Code:    fiber.StatusUnauthorized,
+		if err := h.permissionService.CheckUserPermission(c, "worker", "update"); err != nil {
+			return c.Status(fiber.StatusForbidden).JSON(fiber.Error{
+				Code:    fiber.StatusForbidden,
 				Message: "You do not have permission to perform this action.",
 			})
 		}
@@ -205,10 +209,8 @@ func (h *WorkerHandler) Update() fiber.Handler {
 
 		entity, err := h.service.UpdateOne(c.UserContext(), updatedEntity)
 		if err != nil {
-			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Error{
-				Code:    fiber.StatusInternalServerError,
-				Message: "Failed to update Worker",
-			})
+			resp := utils.CreateServiceError(c, err)
+			return c.Status(fiber.StatusInternalServerError).JSON(resp)
 		}
 
 		return c.Status(fiber.StatusOK).JSON(entity)

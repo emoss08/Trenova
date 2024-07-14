@@ -33,7 +33,7 @@ func ParseBodyAndValidate(c *fiber.Ctx, data any) error {
 			Title:         "Invalid Request",
 			Status:        fiber.StatusBadRequest,
 			Detail:        "Validation error",
-			Instance:      fmt.Sprintf("%s/probs/validation-error", c.BaseURL()),
+			Instance:      fmt.Sprintf("%s/probs/validation-errors", c.BaseURL()),
 			InvalidParams: invalidParams,
 		}
 

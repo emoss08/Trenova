@@ -2,6 +2,7 @@ import type { EquipmentClassChoiceProps } from "@/lib/choices";
 import type { IChoiceProps, StatusChoiceProps } from "@/types/index";
 import { type FleetCode } from "./dispatch";
 import { type BaseModel } from "./organization";
+import { Shipment } from "./shipment";
 import { type Worker } from "./worker";
 
 export interface EquipmentType extends BaseModel {
@@ -149,3 +150,48 @@ export type TractorFormValues = Omit<
 >;
 
 export type EquipmentClass = "TRACTOR" | "TRAILER";
+
+export type TractorFilterForm = {
+  searchQuery: string;
+  status: EquipmentStatus;
+  fleetCodeId?: string;
+  expandEquipDetails?: boolean;
+  expandWorkerDetails?: boolean;
+};
+
+export type TractorAssignment = {
+  id: string;
+  shipmentId: string;
+  tractorId: string;
+  shipment: Shipment;
+  shipmentMoveId: string;
+  sequence: number;
+  assignedById: string;
+};
+
+export type AssignmentPayload = {
+  shipmentId: string;
+  shipmentMoveId: string;
+  sequence: number;
+  assignedById: string;
+};
+
+export type AssignTractorPayload = {
+  tractorId: string;
+  assignments: Array<AssignmentPayload>;
+};
+
+export type NewAssignment =
+  | (Omit<AssignmentPayload, "sequence"> & {
+      shipmentProNumber: string;
+    })
+  | null;
+
+export type TractorAssignmentFormValues = {
+  assignments: Array<
+    AssignmentPayload & {
+      id: string;
+      shipmentProNumber: string;
+    }
+  >;
+};

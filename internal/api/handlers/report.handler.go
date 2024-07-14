@@ -22,17 +22,16 @@ func NewReportHandler(s *server.Server) *ReportHandler {
 		logger:              s.Logger,
 		service:             services.NewReportService(s),
 		notificationService: services.NewUserNotificationService(s),
-		permissionService:   services.NewPermissionService(s),
 	}
 }
 
-func (h *ReportHandler) RegisterRoutes(r fiber.Router) {
+func (h ReportHandler) RegisterRoutes(r fiber.Router) {
 	reportAPI := r.Group("/reports")
 	reportAPI.Get("/column-names", h.getColumnNames())
 	reportAPI.Post("/generate", h.generateReport())
 }
 
-func (h *ReportHandler) getColumnNames() fiber.Handler {
+func (h ReportHandler) getColumnNames() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		tableName := c.Query("tableName")
 		if tableName == "" {
@@ -59,7 +58,7 @@ func (h *ReportHandler) getColumnNames() fiber.Handler {
 	}
 }
 
-func (h *ReportHandler) generateReport() fiber.Handler {
+func (h ReportHandler) generateReport() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		var request services.GenerateReportRequest
 

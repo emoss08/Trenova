@@ -273,6 +273,10 @@ func runServer() {
 	s.InitLogger()
 	s.InitDB()
 
+	if err := s.InitCasbin(); err != nil {
+		log.Fatal().Err(err).Msg("Failed to initialize Casbin")
+	}
+
 	// Initialize the code generator.
 	if err := s.InitCodeGenerationSystem(ctx); err != nil {
 		log.Fatal().Err(err).Msg("Failed to initialize code generator")

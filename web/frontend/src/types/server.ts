@@ -18,7 +18,7 @@ export type APIError = {
   attr: APIAttrs;
 };
 
-export type API_ENDPOINTS =
+export type BaseEndpoint =
   | "/auth/change-password/"
   | "/auth/reset_password/"
   | "/auth/change-email/"
@@ -106,6 +106,8 @@ export type API_ENDPOINTS =
   | "/us-states/"
   | "/analytics/new-shipment-count/"
   | "/accounting-control/";
+
+export type API_ENDPOINTS = `${BaseEndpoint}${"" | `?${string}`}`;
 
 // HTTP Status Codes Ripped from Django Rest Framework
 export const HTTP_100_CONTINUE = 100;
