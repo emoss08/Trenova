@@ -14,27 +14,6 @@ import (
 	"github.com/uptrace/bun"
 )
 
-type EquipmentTypePermission string
-
-const (
-	// PermissionEquipmentTypeView is the permission to view equipment type details
-	PermissionEquipmentTypeView = EquipmentTypePermission("equipmenttype.view")
-
-	// PermissionEquipmentTypeEdit is the permission to edit equipment type details
-	PermissionEquipmentTypeEdit = EquipmentTypePermission("equipmenttype.edit")
-
-	// PermissionEquipmentTypeAdd is the permission to add a necw equipment type
-	PermissionEquipmentTypeAdd = EquipmentTypePermission("equipmenttype.add")
-
-	// PermissionEquipmentTypeDelete is the permission to delete an equipment type
-	PermissionEquipmentTypeDelete = EquipmentTypePermission("equipmenttype.delete")
-)
-
-// String returns the string representation of the EquipmentTypePermission
-func (p EquipmentTypePermission) String() string {
-	return string(p)
-}
-
 type EquipmentType struct {
 	bun.BaseModel `bun:"table:equipment_types,alias:et" json:"-"`
 

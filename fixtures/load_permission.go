@@ -40,9 +40,9 @@ func loadPermissions(ctx context.Context, db *bun.DB, enforcer *casbin.Enforcer)
 		writeDescription string
 	}{
 		{"view", "Can view all", "Can view all"},
-		{"add", "Can view all", "Can add, edit, and delete"},
-		{"edit", "Can view all", "Can add, edit, and delete"},
-		{"delete", "Can view all", "Can add, edit, and delete"},
+		{"add", "Can view all", "Can add, update, and delete"},
+		{"update", "Can view all", "Can add, update, and delete"},
+		{"delete", "Can view all", "Can add, update, and delete"},
 	}
 
 	for _, resource := range resources {
