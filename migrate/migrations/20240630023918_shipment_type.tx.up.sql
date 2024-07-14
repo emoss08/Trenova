@@ -8,6 +8,7 @@ CREATE TABLE
     "code"             VARCHAR(10) NOT NULL,
     "color"            VARCHAR(10),
     "description"      TEXT,
+    "version"          BIGINT      NOT NULL,
     "created_at"       TIMESTAMPTZ NOT NULL DEFAULT current_timestamp,
     "updated_at"       TIMESTAMPTZ NOT NULL DEFAULT current_timestamp,
     PRIMARY KEY ("id"),
@@ -21,7 +22,7 @@ CREATE UNIQUE INDEX IF NOT EXISTS "shipment_types_code_organization_id_unq" ON "
 CREATE INDEX idx_shipment_types_code ON shipment_types (code);
 CREATE INDEX idx_shipment_types_org_bu ON shipment_types (organization_id, business_unit_id);
 CREATE INDEX idx_shipment_types_description ON shipment_types USING GIN (description gin_trgm_ops);
-CREATE INDEX idx_shipment_types_created_at ON shipment_types(created_at);
+CREATE INDEX idx_shipment_types_created_at ON shipment_types (created_at);
 
 --bun:split
 

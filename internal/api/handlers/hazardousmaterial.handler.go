@@ -23,11 +23,11 @@ func NewHazardousMaterialHandler(s *server.Server) *HazardousMaterialHandler {
 	return &HazardousMaterialHandler{
 		logger:            s.Logger,
 		service:           services.NewHazardousMaterialService(s),
-		permissionService: services.NewPermissionService(s),
+		permissionService: services.NewPermissionService(s.Enforcer),
 	}
 }
 
-func (h *HazardousMaterialHandler) RegisterRoutes(r fiber.Router) {
+func (h HazardousMaterialHandler) RegisterRoutes(r fiber.Router) {
 	api := r.Group("/hazardous-materials")
 	api.Get("/", h.Get())
 	api.Get("/:hazardousmaterialID", h.GetByID())
@@ -35,7 +35,7 @@ func (h *HazardousMaterialHandler) RegisterRoutes(r fiber.Router) {
 	api.Put("/:hazardousmaterialID", h.Update())
 }
 
-func (h *HazardousMaterialHandler) Get() fiber.Handler {
+func (h HazardousMaterialHandler) Get() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		orgID, ok := c.Locals(utils.CTXOrganizationID).(uuid.UUID)
 		buID, orgOK := c.Locals(utils.CTXBusinessUnitID).(uuid.UUID)
@@ -69,9 +69,9 @@ func (h *HazardousMaterialHandler) Get() fiber.Handler {
 			})
 		}
 
-		if err = h.permissionService.CheckUserPermission(c, models.PermissionHazardousMaterialView.String()); err != nil {
-			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Error{
-				Code:    fiber.StatusUnauthorized,
+		if err := h.permissionService.CheckUserPermission(c, "hazardous_material", "view"); err != nil {
+			return c.Status(fiber.StatusForbidden).JSON(fiber.Error{
+				Code:    fiber.StatusForbidden,
 				Message: "You do not have permission to perform this action.",
 			})
 		}
@@ -104,7 +104,7 @@ func (h *HazardousMaterialHandler) Get() fiber.Handler {
 	}
 }
 
-func (h *HazardousMaterialHandler) Create() fiber.Handler {
+func (h HazardousMaterialHandler) Create() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		createdEntity := new(models.HazardousMaterial)
 
@@ -118,9 +118,9 @@ func (h *HazardousMaterialHandler) Create() fiber.Handler {
 			})
 		}
 
-		if err := h.permissionService.CheckUserPermission(c, models.PermissionHazardousMaterialAdd.String()); err != nil {
-			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Error{
-				Code:    fiber.StatusUnauthorized,
+		if err := h.permissionService.CheckUserPermission(c, "hazardous_material", "create"); err != nil {
+			return c.Status(fiber.StatusForbidden).JSON(fiber.Error{
+				Code:    fiber.StatusForbidden,
 				Message: "You do not have permission to perform this action.",
 			})
 		}
@@ -134,17 +134,15 @@ func (h *HazardousMaterialHandler) Create() fiber.Handler {
 
 		entity, err := h.service.Create(c.UserContext(), createdEntity)
 		if err != nil {
-			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Error{
-				Code:    fiber.StatusInternalServerError,
-				Message: err.Error(),
-			})
+			resp := utils.CreateServiceError(c, err)
+			return c.Status(fiber.StatusInternalServerError).JSON(resp)
 		}
 
 		return c.Status(fiber.StatusCreated).JSON(entity)
 	}
 }
 
-func (h *HazardousMaterialHandler) GetByID() fiber.Handler {
+func (h HazardousMaterialHandler) GetByID() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		hazardousmaterialID := c.Params("hazardousmaterialID")
 		if hazardousmaterialID == "" {
@@ -165,9 +163,9 @@ func (h *HazardousMaterialHandler) GetByID() fiber.Handler {
 			})
 		}
 
-		if err := h.permissionService.CheckUserPermission(c, models.PermissionHazardousMaterialView.String()); err != nil {
-			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Error{
-				Code:    fiber.StatusUnauthorized,
+		if err := h.permissionService.CheckUserPermission(c, "hazardous_material", "view"); err != nil {
+			return c.Status(fiber.StatusForbidden).JSON(fiber.Error{
+				Code:    fiber.StatusForbidden,
 				Message: "You do not have permission to perform this action.",
 			})
 		}
@@ -184,7 +182,7 @@ func (h *HazardousMaterialHandler) GetByID() fiber.Handler {
 	}
 }
 
-func (h *HazardousMaterialHandler) Update() fiber.Handler {
+func (h HazardousMaterialHandler) Update() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		hazardousmaterialID := c.Params("hazardousmaterialID")
 		if hazardousmaterialID == "" {
@@ -194,9 +192,9 @@ func (h *HazardousMaterialHandler) Update() fiber.Handler {
 			})
 		}
 
-		if err := h.permissionService.CheckUserPermission(c, models.PermissionHazardousMaterialEdit.String()); err != nil {
-			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Error{
-				Code:    fiber.StatusUnauthorized,
+		if err := h.permissionService.CheckUserPermission(c, "hazardous_material", "update"); err != nil {
+			return c.Status(fiber.StatusForbidden).JSON(fiber.Error{
+				Code:    fiber.StatusForbidden,
 				Message: "You do not have permission to perform this action.",
 			})
 		}
@@ -211,10 +209,8 @@ func (h *HazardousMaterialHandler) Update() fiber.Handler {
 
 		entity, err := h.service.UpdateOne(c.UserContext(), updatedEntity)
 		if err != nil {
-			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Error{
-				Code:    fiber.StatusInternalServerError,
-				Message: "Failed to update HazardousMaterial",
-			})
+			resp := utils.CreateServiceError(c, err)
+			return c.Status(fiber.StatusInternalServerError).JSON(resp)
 		}
 
 		return c.Status(fiber.StatusOK).JSON(entity)

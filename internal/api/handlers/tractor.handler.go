@@ -23,19 +23,20 @@ func NewTractorHandler(s *server.Server) *TractorHandler {
 	return &TractorHandler{
 		logger:            s.Logger,
 		service:           services.NewTractorService(s),
-		permissionService: services.NewPermissionService(s),
+		permissionService: services.NewPermissionService(s.Enforcer),
 	}
 }
 
-func (h *TractorHandler) RegisterRoutes(r fiber.Router) {
+func (h TractorHandler) RegisterRoutes(r fiber.Router) {
 	api := r.Group("/tractors")
 	api.Get("/", h.Get())
 	api.Get("/:tractorID", h.GetByID())
+	api.Get("/:tractorID/assignments", h.GetActiveAssignments())
 	api.Post("/", h.Create())
 	api.Put("/:tractorID", h.Update())
 }
 
-func (h *TractorHandler) Get() fiber.Handler {
+func (h TractorHandler) Get() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		orgID, ok := c.Locals(utils.CTXOrganizationID).(uuid.UUID)
 		buID, orgOK := c.Locals(utils.CTXBusinessUnitID).(uuid.UUID)
@@ -69,9 +70,9 @@ func (h *TractorHandler) Get() fiber.Handler {
 			})
 		}
 
-		if err = h.permissionService.CheckUserPermission(c, models.PermissionTractorView.String()); err != nil {
-			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Error{
-				Code:    fiber.StatusUnauthorized,
+		if err := h.permissionService.CheckUserPermission(c, "tractor", "view"); err != nil {
+			return c.Status(fiber.StatusForbidden).JSON(fiber.Error{
+				Code:    fiber.StatusForbidden,
 				Message: "You do not have permission to perform this action.",
 			})
 		}
@@ -82,6 +83,36 @@ func (h *TractorHandler) Get() fiber.Handler {
 			BusinessUnitID: buID,
 			Limit:          limit,
 			Offset:         offset,
+		}
+
+		// Parse the status filter
+		if status := c.Query("status"); status != "" {
+			filter.Status = status
+		}
+
+		// Parse the fleet code ID filter
+		if fleetCodeID := c.Query("fleetCodeId"); fleetCodeID != "" {
+			if id, err := uuid.Parse(fleetCodeID); err == nil {
+				filter.FleetCodeID = id
+			}
+		}
+
+		// Parse the expand equipment details filter
+		if expandEquipDetails := c.Query("expandEquipDetails"); expandEquipDetails != "" {
+			if expandEquipDetails == "true" {
+				filter.ExpandEquipDetails = true
+			} else {
+				filter.ExpandEquipDetails = false
+			}
+		}
+
+		// Parse the expand worker details filter
+		if expandWorkerDetails := c.Query("expandWorkerDetails"); expandWorkerDetails != "" {
+			if expandWorkerDetails == "true" {
+				filter.ExpandWorkerDetails = true
+			} else {
+				filter.ExpandWorkerDetails = false
+			}
 		}
 
 		entities, cnt, err := h.service.GetAll(c.UserContext(), filter)
@@ -104,7 +135,7 @@ func (h *TractorHandler) Get() fiber.Handler {
 	}
 }
 
-func (h *TractorHandler) Create() fiber.Handler {
+func (h TractorHandler) Create() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		createdEntity := new(models.Tractor)
 
@@ -118,9 +149,9 @@ func (h *TractorHandler) Create() fiber.Handler {
 			})
 		}
 
-		if err := h.permissionService.CheckUserPermission(c, models.PermissionTractorAdd.String()); err != nil {
-			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Error{
-				Code:    fiber.StatusUnauthorized,
+		if err := h.permissionService.CheckUserPermission(c, "tractor", "create"); err != nil {
+			return c.Status(fiber.StatusForbidden).JSON(fiber.Error{
+				Code:    fiber.StatusForbidden,
 				Message: "You do not have permission to perform this action.",
 			})
 		}
@@ -134,17 +165,15 @@ func (h *TractorHandler) Create() fiber.Handler {
 
 		entity, err := h.service.Create(c.UserContext(), createdEntity)
 		if err != nil {
-			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Error{
-				Code:    fiber.StatusInternalServerError,
-				Message: err.Error(),
-			})
+			resp := utils.CreateServiceError(c, err)
+			return c.Status(fiber.StatusInternalServerError).JSON(resp)
 		}
 
 		return c.Status(fiber.StatusCreated).JSON(entity)
 	}
 }
 
-func (h *TractorHandler) GetByID() fiber.Handler {
+func (h TractorHandler) GetByID() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		tractorID := c.Params("tractorID")
 		if tractorID == "" {
@@ -165,9 +194,9 @@ func (h *TractorHandler) GetByID() fiber.Handler {
 			})
 		}
 
-		if err := h.permissionService.CheckUserPermission(c, models.PermissionTractorView.String()); err != nil {
-			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Error{
-				Code:    fiber.StatusUnauthorized,
+		if err := h.permissionService.CheckUserPermission(c, "tractor", "view"); err != nil {
+			return c.Status(fiber.StatusForbidden).JSON(fiber.Error{
+				Code:    fiber.StatusForbidden,
 				Message: "You do not have permission to perform this action.",
 			})
 		}
@@ -184,7 +213,7 @@ func (h *TractorHandler) GetByID() fiber.Handler {
 	}
 }
 
-func (h *TractorHandler) Update() fiber.Handler {
+func (h TractorHandler) Update() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		tractorID := c.Params("tractorID")
 		if tractorID == "" {
@@ -194,9 +223,9 @@ func (h *TractorHandler) Update() fiber.Handler {
 			})
 		}
 
-		if err := h.permissionService.CheckUserPermission(c, models.PermissionTractorEdit.String()); err != nil {
-			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Error{
-				Code:    fiber.StatusUnauthorized,
+		if err := h.permissionService.CheckUserPermission(c, "tractor", "update"); err != nil {
+			return c.Status(fiber.StatusForbidden).JSON(fiber.Error{
+				Code:    fiber.StatusForbidden,
 				Message: "You do not have permission to perform this action.",
 			})
 		}
@@ -211,12 +240,43 @@ func (h *TractorHandler) Update() fiber.Handler {
 
 		entity, err := h.service.UpdateOne(c.UserContext(), updatedEntity)
 		if err != nil {
-			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Error{
-				Code:    fiber.StatusInternalServerError,
-				Message: "Failed to update Tractor",
-			})
+			resp := utils.CreateServiceError(c, err)
+			return c.Status(fiber.StatusInternalServerError).JSON(resp)
 		}
 
 		return c.Status(fiber.StatusOK).JSON(entity)
+	}
+}
+
+func (h TractorHandler) GetActiveAssignments() fiber.Handler {
+	return func(c *fiber.Ctx) error {
+		tractorID := c.Params("tractorID")
+		if tractorID == "" {
+			return c.Status(fiber.StatusBadRequest).JSON(fiber.Error{
+				Code:    fiber.StatusBadRequest,
+				Message: "Tractor ID is required",
+			})
+		}
+
+		orgID, ok := c.Locals(utils.CTXOrganizationID).(uuid.UUID)
+		buID, orgOK := c.Locals(utils.CTXBusinessUnitID).(uuid.UUID)
+
+		if !ok || !orgOK {
+			h.logger.Error().Msg("TractorHandler: Organization & Business Unit ID not found in context")
+			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Error{
+				Code:    fiber.StatusUnauthorized,
+				Message: "Organization & Business Unit ID not found in context",
+			})
+		}
+
+		assignments, err := h.service.GetActiveAssignments(c.UserContext(), tractorID, orgID, buID)
+		if err != nil {
+			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Error{
+				Code:    fiber.StatusInternalServerError,
+				Message: "Failed to get Tractor Assignments",
+			})
+		}
+
+		return c.JSON(assignments)
 	}
 }

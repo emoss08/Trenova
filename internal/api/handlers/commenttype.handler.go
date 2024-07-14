@@ -23,11 +23,11 @@ func NewCommentTypeHandler(s *server.Server) *CommentTypeHandler {
 	return &CommentTypeHandler{
 		logger:            s.Logger,
 		service:           services.NewCommentTypeService(s),
-		permissionService: services.NewPermissionService(s),
+		permissionService: services.NewPermissionService(s.Enforcer),
 	}
 }
 
-func (h *CommentTypeHandler) RegisterRoutes(r fiber.Router) {
+func (h CommentTypeHandler) RegisterRoutes(r fiber.Router) {
 	api := r.Group("/comment-types")
 	api.Get("/", h.Get())
 	api.Get("/:commenttypeID", h.GetByID())
@@ -35,7 +35,7 @@ func (h *CommentTypeHandler) RegisterRoutes(r fiber.Router) {
 	api.Put("/:commenttypeID", h.Update())
 }
 
-func (h *CommentTypeHandler) Get() fiber.Handler {
+func (h CommentTypeHandler) Get() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		orgID, ok := c.Locals(utils.CTXOrganizationID).(uuid.UUID)
 		buID, orgOK := c.Locals(utils.CTXBusinessUnitID).(uuid.UUID)
@@ -69,9 +69,9 @@ func (h *CommentTypeHandler) Get() fiber.Handler {
 			})
 		}
 
-		if err = h.permissionService.CheckUserPermission(c, models.PermissionCommentTypeView.String()); err != nil {
-			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Error{
-				Code:    fiber.StatusUnauthorized,
+		if err := h.permissionService.CheckUserPermission(c, "comment_type", "view"); err != nil {
+			return c.Status(fiber.StatusForbidden).JSON(fiber.Error{
+				Code:    fiber.StatusForbidden,
 				Message: "You do not have permission to perform this action.",
 			})
 		}
@@ -104,7 +104,7 @@ func (h *CommentTypeHandler) Get() fiber.Handler {
 	}
 }
 
-func (h *CommentTypeHandler) Create() fiber.Handler {
+func (h CommentTypeHandler) Create() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		createdEntity := new(models.CommentType)
 
@@ -118,9 +118,9 @@ func (h *CommentTypeHandler) Create() fiber.Handler {
 			})
 		}
 
-		if err := h.permissionService.CheckUserPermission(c, models.PermissionCommentTypeAdd.String()); err != nil {
-			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Error{
-				Code:    fiber.StatusUnauthorized,
+		if err := h.permissionService.CheckUserPermission(c, "comment_type", "create"); err != nil {
+			return c.Status(fiber.StatusForbidden).JSON(fiber.Error{
+				Code:    fiber.StatusForbidden,
 				Message: "You do not have permission to perform this action.",
 			})
 		}
@@ -134,17 +134,15 @@ func (h *CommentTypeHandler) Create() fiber.Handler {
 
 		entity, err := h.service.Create(c.UserContext(), createdEntity)
 		if err != nil {
-			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Error{
-				Code:    fiber.StatusInternalServerError,
-				Message: err.Error(),
-			})
+			resp := utils.CreateServiceError(c, err)
+			return c.Status(fiber.StatusInternalServerError).JSON(resp)
 		}
 
 		return c.Status(fiber.StatusCreated).JSON(entity)
 	}
 }
 
-func (h *CommentTypeHandler) GetByID() fiber.Handler {
+func (h CommentTypeHandler) GetByID() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		commenttypeID := c.Params("commenttypeID")
 		if commenttypeID == "" {
@@ -165,9 +163,9 @@ func (h *CommentTypeHandler) GetByID() fiber.Handler {
 			})
 		}
 
-		if err := h.permissionService.CheckUserPermission(c, models.PermissionCommentTypeView.String()); err != nil {
-			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Error{
-				Code:    fiber.StatusUnauthorized,
+		if err := h.permissionService.CheckUserPermission(c, "comment_type", "view"); err != nil {
+			return c.Status(fiber.StatusForbidden).JSON(fiber.Error{
+				Code:    fiber.StatusForbidden,
 				Message: "You do not have permission to perform this action.",
 			})
 		}
@@ -184,7 +182,7 @@ func (h *CommentTypeHandler) GetByID() fiber.Handler {
 	}
 }
 
-func (h *CommentTypeHandler) Update() fiber.Handler {
+func (h CommentTypeHandler) Update() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		commenttypeID := c.Params("commenttypeID")
 		if commenttypeID == "" {
@@ -194,9 +192,9 @@ func (h *CommentTypeHandler) Update() fiber.Handler {
 			})
 		}
 
-		if err := h.permissionService.CheckUserPermission(c, models.PermissionCommentTypeEdit.String()); err != nil {
-			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Error{
-				Code:    fiber.StatusUnauthorized,
+		if err := h.permissionService.CheckUserPermission(c, "comment_type", "update"); err != nil {
+			return c.Status(fiber.StatusForbidden).JSON(fiber.Error{
+				Code:    fiber.StatusForbidden,
 				Message: "You do not have permission to perform this action.",
 			})
 		}
@@ -211,10 +209,8 @@ func (h *CommentTypeHandler) Update() fiber.Handler {
 
 		entity, err := h.service.UpdateOne(c.UserContext(), updatedEntity)
 		if err != nil {
-			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Error{
-				Code:    fiber.StatusInternalServerError,
-				Message: "Failed to update CommentType",
-			})
+			resp := utils.CreateServiceError(c, err)
+			return c.Status(fiber.StatusInternalServerError).JSON(resp)
 		}
 
 		return c.Status(fiber.StatusOK).JSON(entity)

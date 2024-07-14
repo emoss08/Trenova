@@ -23,7 +23,7 @@ func NewAuthenticationService(s *server.Server) *AuthenticationService {
 	}
 }
 
-func (s *AuthenticationService) CheckEmail(ctx context.Context, emailAddress string) (*types.CheckEmailResponse, error) {
+func (s AuthenticationService) CheckEmail(ctx context.Context, emailAddress string) (*types.CheckEmailResponse, error) {
 	user := new(models.User)
 
 	if err := s.db.NewSelect().Model(user).Where("email = ?", emailAddress).Scan(ctx); err != nil {
@@ -40,7 +40,7 @@ func (s *AuthenticationService) CheckEmail(ctx context.Context, emailAddress str
 	}, nil
 }
 
-func (s *AuthenticationService) AuthenticateUser(ctx context.Context, emailAddress, password string) (*models.User, string, error) {
+func (s AuthenticationService) AuthenticateUser(ctx context.Context, emailAddress, password string) (*models.User, string, error) {
 	user := new(models.User)
 
 	if err := s.db.NewSelect().Model(user).Where("email = ?", emailAddress).Scan(ctx); err != nil {

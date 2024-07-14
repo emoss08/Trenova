@@ -190,7 +190,7 @@ type %sQueryFilter struct {
 }
 
 // filterQuery applies filters to the query
-func (s *%sService) filterQuery(q *bun.SelectQuery, f *%sQueryFilter) *bun.SelectQuery {
+func (s %sService) filterQuery(q *bun.SelectQuery, f *%sQueryFilter) *bun.SelectQuery {
 	q = q.Where("%s.organization_id = ?", f.OrganizationID).
 		Where("%s.business_unit_id = ?", f.BusinessUnitID)
 
@@ -205,7 +205,7 @@ func (s *%sService) filterQuery(q *bun.SelectQuery, f *%sQueryFilter) *bun.Selec
 }
 
 // GetAll retrieves all %s based on the provided filter
-func (s *%sService) GetAll(ctx context.Context, filter *%sQueryFilter) ([]*models.%s, int, error) {
+func (s %sService) GetAll(ctx context.Context, filter *%sQueryFilter) ([]*models.%s, int, error) {
 	var entities []*models.%s
 	
 	q := s.db.NewSelect().
@@ -240,7 +240,7 @@ func (s *%sService) Get(ctx context.Context, id, orgID, buID uuid.UUID) (*models
 }
 
 // Create creates a new %s
-func (s *%sService) Create(ctx context.Context, entity *models.%s) (*models.%s, error) {
+func (s %sService) Create(ctx context.Context, entity *models.%s) (*models.%s, error) {
 	err := s.db.RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
 		_, err := tx.NewInsert().
 			Model(entity).
@@ -257,7 +257,7 @@ func (s *%sService) Create(ctx context.Context, entity *models.%s) (*models.%s, 
 }
 
 // UpdateOne updates an existing %s
-func (s *%sService) UpdateOne(ctx context.Context, entity *models.%s) (*models.%s, error) {
+func (s %sService) UpdateOne(ctx context.Context, entity *models.%s) (*models.%s, error) {
 	err := s.db.RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
 		_, err := tx.NewUpdate().
 			Model(entity).

@@ -11,6 +11,7 @@ CREATE TABLE
     "min_temp"              INTEGER,
     "max_temp"              INTEGER,
     "hazardous_material_id" uuid,
+    "version"               BIGINT       NOT NULL,
     "created_at"            TIMESTAMPTZ  NOT NULL DEFAULT current_timestamp,
     "updated_at"            TIMESTAMPTZ  NOT NULL DEFAULT current_timestamp,
     PRIMARY KEY ("id"),
@@ -24,7 +25,7 @@ CREATE TABLE
 CREATE UNIQUE INDEX IF NOT EXISTS "commodities_name_organization_id_unq" ON "commodities" (LOWER("name"), organization_id);
 CREATE INDEX idx_commodities_name ON commodities (name);
 CREATE INDEX idx_commodities_org_bu ON commodities (organization_id, business_unit_id);
-CREATE INDEX idx_commodities_created_at ON charge_types(created_at);
+CREATE INDEX idx_commodities_created_at ON charge_types (created_at);
 
 --bun:split
 

@@ -24,7 +24,7 @@ func NewWebsocketHandler(s *server.Server) *WebsocketHandler {
 	}
 }
 
-func (h *WebsocketHandler) HandleConnection(c *fiber.Ctx) error {
+func (h WebsocketHandler) HandleConnection(c *fiber.Ctx) error {
 	if websocket.IsWebSocketUpgrade(c) {
 		c.Locals("allowed", true)
 		return c.Next()
@@ -33,7 +33,7 @@ func (h *WebsocketHandler) HandleConnection(c *fiber.Ctx) error {
 	return fiber.ErrUpgradeRequired
 }
 
-func (h *WebsocketHandler) HandleWebsocketConnection(c *websocket.Conn) {
+func (h WebsocketHandler) HandleWebsocketConnection(c *websocket.Conn) {
 	id := c.Params("id")
 	allowed, _ := c.Locals("allowed").(bool)
 
@@ -68,7 +68,7 @@ func (h *WebsocketHandler) HandleWebsocketConnection(c *websocket.Conn) {
 	}
 }
 
-func (h *WebsocketHandler) Stop() {
+func (h WebsocketHandler) Stop() {
 	// Call the service's stop function
 	h.service.Stop()
 	h.logger.Info().Msg("Websocket handler stopped")

@@ -28,6 +28,7 @@ CREATE TABLE
     "weight"            NUMERIC(10, 2),
     "exempt_from_tolls" BOOLEAN              NOT NULL DEFAULT FALSE,
     "color"             VARCHAR(10),
+    "version"           BIGINT               NOT NULL,
     "created_at"        TIMESTAMPTZ          NOT NULL DEFAULT current_timestamp,
     "updated_at"        TIMESTAMPTZ          NOT NULL DEFAULT current_timestamp,
     PRIMARY KEY ("id"),
@@ -41,7 +42,7 @@ CREATE UNIQUE INDEX IF NOT EXISTS "equipment_types_code_organization_id_unq" ON 
 CREATE INDEX idx_equipment_types_code ON equipment_types (code);
 CREATE INDEX idx_equipment_types_org_bu ON equipment_types (organization_id, business_unit_id);
 CREATE INDEX idx_equipment_types_description ON equipment_types USING GIN (description gin_trgm_ops);
-CREATE INDEX idx_equipment_types_created_at ON equipment_types(created_at);
+CREATE INDEX idx_equipment_types_created_at ON equipment_types (created_at);
 
 --bun:split
 COMMENT ON COLUMN equipment_types.id IS 'Unique identifier for the equipment type, generated as a UUID';

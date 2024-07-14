@@ -23,11 +23,11 @@ func NewDocumentClassificationHandler(s *server.Server) *DocumentClassificationH
 	return &DocumentClassificationHandler{
 		logger:            s.Logger,
 		service:           services.NewDocumentClassificationService(s),
-		permissionService: services.NewPermissionService(s),
+		permissionService: services.NewPermissionService(s.Enforcer),
 	}
 }
 
-func (h *DocumentClassificationHandler) RegisterRoutes(r fiber.Router) {
+func (h DocumentClassificationHandler) RegisterRoutes(r fiber.Router) {
 	api := r.Group("/document-classifications")
 	api.Get("/", h.Get())
 	api.Get("/:documentclassificationID", h.GetByID())
@@ -35,7 +35,7 @@ func (h *DocumentClassificationHandler) RegisterRoutes(r fiber.Router) {
 	api.Put("/:documentclassificationID", h.Update())
 }
 
-func (h *DocumentClassificationHandler) Get() fiber.Handler {
+func (h DocumentClassificationHandler) Get() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		orgID, ok := c.Locals(utils.CTXOrganizationID).(uuid.UUID)
 		buID, orgOK := c.Locals(utils.CTXBusinessUnitID).(uuid.UUID)
@@ -69,9 +69,9 @@ func (h *DocumentClassificationHandler) Get() fiber.Handler {
 			})
 		}
 
-		if err = h.permissionService.CheckUserPermission(c, models.PermissionDocumentClassificationView.String()); err != nil {
-			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Error{
-				Code:    fiber.StatusUnauthorized,
+		if err := h.permissionService.CheckUserPermission(c, "document_classification", "view"); err != nil {
+			return c.Status(fiber.StatusForbidden).JSON(fiber.Error{
+				Code:    fiber.StatusForbidden,
 				Message: "You do not have permission to perform this action.",
 			})
 		}
@@ -104,7 +104,7 @@ func (h *DocumentClassificationHandler) Get() fiber.Handler {
 	}
 }
 
-func (h *DocumentClassificationHandler) Create() fiber.Handler {
+func (h DocumentClassificationHandler) Create() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		createdEntity := new(models.DocumentClassification)
 
@@ -118,9 +118,9 @@ func (h *DocumentClassificationHandler) Create() fiber.Handler {
 			})
 		}
 
-		if err := h.permissionService.CheckUserPermission(c, models.PermissionDocumentClassificationAdd.String()); err != nil {
-			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Error{
-				Code:    fiber.StatusUnauthorized,
+		if err := h.permissionService.CheckUserPermission(c, "document_classification", "create"); err != nil {
+			return c.Status(fiber.StatusForbidden).JSON(fiber.Error{
+				Code:    fiber.StatusForbidden,
 				Message: "You do not have permission to perform this action.",
 			})
 		}
@@ -134,17 +134,15 @@ func (h *DocumentClassificationHandler) Create() fiber.Handler {
 
 		entity, err := h.service.Create(c.UserContext(), createdEntity)
 		if err != nil {
-			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Error{
-				Code:    fiber.StatusInternalServerError,
-				Message: err.Error(),
-			})
+			resp := utils.CreateServiceError(c, err)
+			return c.Status(fiber.StatusInternalServerError).JSON(resp)
 		}
 
 		return c.Status(fiber.StatusCreated).JSON(entity)
 	}
 }
 
-func (h *DocumentClassificationHandler) GetByID() fiber.Handler {
+func (h DocumentClassificationHandler) GetByID() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		documentclassificationID := c.Params("documentclassificationID")
 		if documentclassificationID == "" {
@@ -165,9 +163,9 @@ func (h *DocumentClassificationHandler) GetByID() fiber.Handler {
 			})
 		}
 
-		if err := h.permissionService.CheckUserPermission(c, models.PermissionDocumentClassificationView.String()); err != nil {
-			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Error{
-				Code:    fiber.StatusUnauthorized,
+		if err := h.permissionService.CheckUserPermission(c, "document_classification", "view"); err != nil {
+			return c.Status(fiber.StatusForbidden).JSON(fiber.Error{
+				Code:    fiber.StatusForbidden,
 				Message: "You do not have permission to perform this action.",
 			})
 		}
@@ -184,7 +182,7 @@ func (h *DocumentClassificationHandler) GetByID() fiber.Handler {
 	}
 }
 
-func (h *DocumentClassificationHandler) Update() fiber.Handler {
+func (h DocumentClassificationHandler) Update() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		documentclassificationID := c.Params("documentclassificationID")
 		if documentclassificationID == "" {
@@ -194,9 +192,9 @@ func (h *DocumentClassificationHandler) Update() fiber.Handler {
 			})
 		}
 
-		if err := h.permissionService.CheckUserPermission(c, models.PermissionDocumentClassificationEdit.String()); err != nil {
-			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Error{
-				Code:    fiber.StatusUnauthorized,
+		if err := h.permissionService.CheckUserPermission(c, "document_classification", "update"); err != nil {
+			return c.Status(fiber.StatusForbidden).JSON(fiber.Error{
+				Code:    fiber.StatusForbidden,
 				Message: "You do not have permission to perform this action.",
 			})
 		}
@@ -211,10 +209,8 @@ func (h *DocumentClassificationHandler) Update() fiber.Handler {
 
 		entity, err := h.service.UpdateOne(c.UserContext(), updatedEntity)
 		if err != nil {
-			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Error{
-				Code:    fiber.StatusInternalServerError,
-				Message: "Failed to update DocumentClassification",
-			})
+			resp := utils.CreateServiceError(c, err)
+			return c.Status(fiber.StatusInternalServerError).JSON(resp)
 		}
 
 		return c.Status(fiber.StatusOK).JSON(entity)

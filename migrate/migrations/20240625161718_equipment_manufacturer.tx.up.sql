@@ -7,6 +7,7 @@ CREATE TABLE
     "status"           status_enum NOT NULL DEFAULT 'Active',
     "name"             VARCHAR     NOT NULL,
     "description"      TEXT,
+    "version"          BIGINT      NOT NULL,
     "created_at"       TIMESTAMPTZ NOT NULL DEFAULT current_timestamp,
     "updated_at"       TIMESTAMPTZ NOT NULL DEFAULT current_timestamp,
     PRIMARY KEY ("id"),
@@ -20,7 +21,7 @@ CREATE UNIQUE INDEX IF NOT EXISTS "equipment_manufacturers_name_organization_id_
 CREATE INDEX idx_equipment_manufacturers_name ON equipment_manufacturers (name);
 CREATE INDEX idx_equipment_manufacturers_org_bu ON equipment_manufacturers (organization_id, business_unit_id);
 CREATE INDEX idx_equipment_manufacturers_description ON equipment_manufacturers USING GIN (description gin_trgm_ops);
-CREATE INDEX idx_equipment_manufacturers_created_at ON equipment_manufacturers(created_at);
+CREATE INDEX idx_equipment_manufacturers_created_at ON equipment_manufacturers (created_at);
 
 --bun:split
 

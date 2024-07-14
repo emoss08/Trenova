@@ -129,6 +129,11 @@ type KafkaServer struct {
 	Broker string
 }
 
+type CasbinConfig struct {
+	// ModelPath is the path to the Casbin model file.
+	ModelPath string
+}
+
 type Server struct {
 	// FiberServer contains configuration options for the Fiber server.
 	Fiber FiberServer
@@ -156,6 +161,9 @@ type Server struct {
 
 	// Integration contains configuration options for the integration services.
 	Integration Integration
+
+	// Casbin contains configuration options for the Casbin authorization library.
+	Casbin CasbinConfig
 }
 
 func DefaultServiceConfigFromEnv() Server {
@@ -184,8 +192,8 @@ func DefaultServiceConfigFromEnv() Server {
 			MaxOpenConns:    utils.GetEnvAsInt("SERVER_DB_MAX_OPEN_CONNS", 25),
 			MaxIdleConns:    utils.GetEnvAsInt("SERVER_DB_MAX_IDLE_CONNS", 10),
 			ConnMaxLifetime: time.Second * time.Duration(utils.GetEnvAsInt("SERVER_DB_CONN_MAX_LIFETIME_SECONDS", 300)),
-			VerboseLogging:  utils.GetEnvAsBool("SERVER_DB_VERBOSE_LOGGING", true),
-			Debug:           utils.GetEnvAsBool("SERVER_DB_DEBUG", true),
+			VerboseLogging:  utils.GetEnvAsBool("SERVER_DB_VERBOSE_LOGGING", false),
+			Debug:           utils.GetEnvAsBool("SERVER_DB_DEBUG", false),
 		},
 		Logger: Logger{
 			Level:              utils.LogLevelFromString(utils.GetEnv("SERVER_LOGGER_LEVEL", zerolog.DebugLevel.String())),
@@ -213,6 +221,9 @@ func DefaultServiceConfigFromEnv() Server {
 			AccessKey: utils.GetEnv("SERVER_MINIO_ACCESS_KEY", "minio"),
 			SecretKey: utils.GetEnv("SERVER_MINIO_SECRET_KEY", "minio123"),
 			UseSSL:    utils.GetEnvAsBool("SERVER_MINIO_USE_SSL", false),
+		},
+		Casbin: CasbinConfig{
+			ModelPath: utils.GetEnv("SERVER_CASBIN_MODEL_PATH", "./config/casbin/model.conf"),
 		},
 	}
 }

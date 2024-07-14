@@ -91,3 +91,30 @@ func LoadLocationMasterKeyGeneration(ctx context.Context, db *bun.DB, mkg *model
 	_, err = db.NewInsert().Model(locationMasterKey).Exec(ctx)
 	return err
 }
+
+func LoadCustomerMasterKeyGeneration(ctx context.Context, db *bun.DB, mkg *models.MasterKeyGeneration) error {
+	// Check if the master key generation has a customer master key generation entity.
+	customerMasterKey := new(models.CustomerMasterKeyGeneration)
+	_, err := db.NewSelect().
+		Model(customerMasterKey).
+		Where("master_key_id = ?", mkg.ID).
+		Exec(ctx)
+	if err != nil {
+		return err
+	}
+
+	if customerMasterKey.ID != uuid.Nil {
+		// Return nil if the customer master key generation already exists.
+		return nil
+	}
+
+	// Create a new customer master key generation if it does not exist.
+	customerMasterKey = &models.CustomerMasterKeyGeneration{
+		Pattern:     "NAME-COUNTER",
+		MasterKeyID: &mkg.ID,
+		MasterKey:   mkg,
+	}
+
+	_, err = db.NewInsert().Model(customerMasterKey).Exec(ctx)
+	return err
+}

@@ -23,11 +23,11 @@ func NewAccessorialChargeHandler(s *server.Server) *AccessorialChargeHandler {
 	return &AccessorialChargeHandler{
 		logger:            s.Logger,
 		service:           services.NewAccessorialChargeService(s),
-		permissionService: services.NewPermissionService(s),
+		permissionService: services.NewPermissionService(s.Enforcer),
 	}
 }
 
-func (h *AccessorialChargeHandler) RegisterRoutes(r fiber.Router) {
+func (h AccessorialChargeHandler) RegisterRoutes(r fiber.Router) {
 	api := r.Group("/accessorial-charges")
 	api.Get("/", h.Get())
 	api.Get("/:accessorialchargeID", h.GetByID())
@@ -35,7 +35,7 @@ func (h *AccessorialChargeHandler) RegisterRoutes(r fiber.Router) {
 	api.Put("/:accessorialchargeID", h.Update())
 }
 
-func (h *AccessorialChargeHandler) Get() fiber.Handler {
+func (h AccessorialChargeHandler) Get() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		orgID, ok := c.Locals(utils.CTXOrganizationID).(uuid.UUID)
 		buID, orgOK := c.Locals(utils.CTXBusinessUnitID).(uuid.UUID)
@@ -69,9 +69,9 @@ func (h *AccessorialChargeHandler) Get() fiber.Handler {
 			})
 		}
 
-		if err = h.permissionService.CheckUserPermission(c, models.PermissionAccessorialChargeView.String()); err != nil {
-			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Error{
-				Code:    fiber.StatusUnauthorized,
+		if err = h.permissionService.CheckUserPermission(c, "accessorial_charge", "view"); err != nil {
+			return c.Status(fiber.StatusForbidden).JSON(fiber.Error{
+				Code:    fiber.StatusForbidden,
 				Message: "You do not have permission to perform this action.",
 			})
 		}
@@ -104,7 +104,7 @@ func (h *AccessorialChargeHandler) Get() fiber.Handler {
 	}
 }
 
-func (h *AccessorialChargeHandler) Create() fiber.Handler {
+func (h AccessorialChargeHandler) Create() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		createdEntity := new(models.AccessorialCharge)
 
@@ -118,9 +118,9 @@ func (h *AccessorialChargeHandler) Create() fiber.Handler {
 			})
 		}
 
-		if err := h.permissionService.CheckUserPermission(c, models.PermissionAccessorialChargeView.String()); err != nil {
-			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Error{
-				Code:    fiber.StatusUnauthorized,
+		if err := h.permissionService.CheckUserPermission(c, "accessorial_charge", "create"); err != nil {
+			return c.Status(fiber.StatusForbidden).JSON(fiber.Error{
+				Code:    fiber.StatusForbidden,
 				Message: "You do not have permission to perform this action.",
 			})
 		}
@@ -134,17 +134,15 @@ func (h *AccessorialChargeHandler) Create() fiber.Handler {
 
 		entity, err := h.service.Create(c.UserContext(), createdEntity)
 		if err != nil {
-			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Error{
-				Code:    fiber.StatusInternalServerError,
-				Message: err.Error(),
-			})
+			resp := utils.CreateServiceError(c, err)
+			return c.Status(fiber.StatusInternalServerError).JSON(resp)
 		}
 
 		return c.Status(fiber.StatusCreated).JSON(entity)
 	}
 }
 
-func (h *AccessorialChargeHandler) GetByID() fiber.Handler {
+func (h AccessorialChargeHandler) GetByID() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		accessorialchargeID := c.Params("accessorialchargeID")
 		if accessorialchargeID == "" {
@@ -165,9 +163,9 @@ func (h *AccessorialChargeHandler) GetByID() fiber.Handler {
 			})
 		}
 
-		if err := h.permissionService.CheckUserPermission(c, models.PermissionAccessorialChargeView.String()); err != nil {
-			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Error{
-				Code:    fiber.StatusUnauthorized,
+		if err := h.permissionService.CheckUserPermission(c, "accessorial_charge", "view"); err != nil {
+			return c.Status(fiber.StatusForbidden).JSON(fiber.Error{
+				Code:    fiber.StatusForbidden,
 				Message: "You do not have permission to perform this action.",
 			})
 		}
@@ -184,7 +182,7 @@ func (h *AccessorialChargeHandler) GetByID() fiber.Handler {
 	}
 }
 
-func (h *AccessorialChargeHandler) Update() fiber.Handler {
+func (h AccessorialChargeHandler) Update() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		accessorialchargeID := c.Params("accessorialchargeID")
 		if accessorialchargeID == "" {
@@ -194,9 +192,9 @@ func (h *AccessorialChargeHandler) Update() fiber.Handler {
 			})
 		}
 
-		if err := h.permissionService.CheckUserPermission(c, models.PermissionAccessorialChargeAdd.String()); err != nil {
-			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Error{
-				Code:    fiber.StatusUnauthorized,
+		if err := h.permissionService.CheckUserPermission(c, "accessorial_charge", "update"); err != nil {
+			return c.Status(fiber.StatusForbidden).JSON(fiber.Error{
+				Code:    fiber.StatusForbidden,
 				Message: "You do not have permission to perform this action.",
 			})
 		}
@@ -211,10 +209,8 @@ func (h *AccessorialChargeHandler) Update() fiber.Handler {
 
 		entity, err := h.service.UpdateOne(c.UserContext(), updatedEntity)
 		if err != nil {
-			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Error{
-				Code:    fiber.StatusInternalServerError,
-				Message: "Failed to update AccessorialCharge",
-			})
+			resp := utils.CreateServiceError(c, err)
+			return c.Status(fiber.StatusInternalServerError).JSON(resp)
 		}
 
 		return c.Status(fiber.StatusOK).JSON(entity)

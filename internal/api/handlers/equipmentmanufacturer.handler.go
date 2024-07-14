@@ -23,11 +23,11 @@ func NewEquipmentManufacturerHandler(s *server.Server) *EquipmentManufacturerHan
 	return &EquipmentManufacturerHandler{
 		logger:            s.Logger,
 		service:           services.NewEquipmentManufacturerService(s),
-		permissionService: services.NewPermissionService(s),
+		permissionService: services.NewPermissionService(s.Enforcer),
 	}
 }
 
-func (h *EquipmentManufacturerHandler) RegisterRoutes(r fiber.Router) {
+func (h EquipmentManufacturerHandler) RegisterRoutes(r fiber.Router) {
 	api := r.Group("/equipment-manufacturers")
 	api.Get("/", h.Get())
 	api.Get("/:equipmentmanufacturerID", h.GetByID())
@@ -35,7 +35,7 @@ func (h *EquipmentManufacturerHandler) RegisterRoutes(r fiber.Router) {
 	api.Put("/:equipmentmanufacturerID", h.Update())
 }
 
-func (h *EquipmentManufacturerHandler) Get() fiber.Handler {
+func (h EquipmentManufacturerHandler) Get() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		orgID, ok := c.Locals(utils.CTXOrganizationID).(uuid.UUID)
 		buID, orgOK := c.Locals(utils.CTXBusinessUnitID).(uuid.UUID)
@@ -69,9 +69,9 @@ func (h *EquipmentManufacturerHandler) Get() fiber.Handler {
 			})
 		}
 
-		if err = h.permissionService.CheckUserPermission(c, models.PermissionEquipmentManufacturerView.String()); err != nil {
-			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Error{
-				Code:    fiber.StatusUnauthorized,
+		if err := h.permissionService.CheckUserPermission(c, "equipment_manfuacturer", "view"); err != nil {
+			return c.Status(fiber.StatusForbidden).JSON(fiber.Error{
+				Code:    fiber.StatusForbidden,
 				Message: "You do not have permission to perform this action.",
 			})
 		}
@@ -104,7 +104,7 @@ func (h *EquipmentManufacturerHandler) Get() fiber.Handler {
 	}
 }
 
-func (h *EquipmentManufacturerHandler) Create() fiber.Handler {
+func (h EquipmentManufacturerHandler) Create() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		createdEntity := new(models.EquipmentManufacturer)
 
@@ -118,9 +118,9 @@ func (h *EquipmentManufacturerHandler) Create() fiber.Handler {
 			})
 		}
 
-		if err := h.permissionService.CheckUserPermission(c, models.PermissionEquipmentManufacturerAdd.String()); err != nil {
-			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Error{
-				Code:    fiber.StatusUnauthorized,
+		if err := h.permissionService.CheckUserPermission(c, "equipment_manfuacturer", "create"); err != nil {
+			return c.Status(fiber.StatusForbidden).JSON(fiber.Error{
+				Code:    fiber.StatusForbidden,
 				Message: "You do not have permission to perform this action.",
 			})
 		}
@@ -134,17 +134,15 @@ func (h *EquipmentManufacturerHandler) Create() fiber.Handler {
 
 		entity, err := h.service.Create(c.UserContext(), createdEntity)
 		if err != nil {
-			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Error{
-				Code:    fiber.StatusInternalServerError,
-				Message: err.Error(),
-			})
+			resp := utils.CreateServiceError(c, err)
+			return c.Status(fiber.StatusInternalServerError).JSON(resp)
 		}
 
 		return c.Status(fiber.StatusCreated).JSON(entity)
 	}
 }
 
-func (h *EquipmentManufacturerHandler) GetByID() fiber.Handler {
+func (h EquipmentManufacturerHandler) GetByID() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		equipmentmanufacturerID := c.Params("equipmentmanufacturerID")
 		if equipmentmanufacturerID == "" {
@@ -165,9 +163,9 @@ func (h *EquipmentManufacturerHandler) GetByID() fiber.Handler {
 			})
 		}
 
-		if err := h.permissionService.CheckUserPermission(c, models.PermissionEquipmentManufacturerView.String()); err != nil {
-			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Error{
-				Code:    fiber.StatusUnauthorized,
+		if err := h.permissionService.CheckUserPermission(c, "equipment_manfuacturer", "view"); err != nil {
+			return c.Status(fiber.StatusForbidden).JSON(fiber.Error{
+				Code:    fiber.StatusForbidden,
 				Message: "You do not have permission to perform this action.",
 			})
 		}
@@ -184,7 +182,7 @@ func (h *EquipmentManufacturerHandler) GetByID() fiber.Handler {
 	}
 }
 
-func (h *EquipmentManufacturerHandler) Update() fiber.Handler {
+func (h EquipmentManufacturerHandler) Update() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		equipmentmanufacturerID := c.Params("equipmentmanufacturerID")
 		if equipmentmanufacturerID == "" {
@@ -194,9 +192,9 @@ func (h *EquipmentManufacturerHandler) Update() fiber.Handler {
 			})
 		}
 
-		if err := h.permissionService.CheckUserPermission(c, models.PermissionEquipmentManufacturerEdit.String()); err != nil {
-			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Error{
-				Code:    fiber.StatusUnauthorized,
+		if err := h.permissionService.CheckUserPermission(c, "equipment_manfuacturer", "update"); err != nil {
+			return c.Status(fiber.StatusForbidden).JSON(fiber.Error{
+				Code:    fiber.StatusForbidden,
 				Message: "You do not have permission to perform this action.",
 			})
 		}
@@ -211,10 +209,8 @@ func (h *EquipmentManufacturerHandler) Update() fiber.Handler {
 
 		entity, err := h.service.UpdateOne(c.UserContext(), updatedEntity)
 		if err != nil {
-			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Error{
-				Code:    fiber.StatusInternalServerError,
-				Message: "Failed to update EquipmentManufacturer",
-			})
+			resp := utils.CreateServiceError(c, err)
+			return c.Status(fiber.StatusInternalServerError).JSON(resp)
 		}
 
 		return c.Status(fiber.StatusOK).JSON(entity)

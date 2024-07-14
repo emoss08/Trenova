@@ -8,6 +8,7 @@ CREATE TABLE
     "name"             VARCHAR(50) NOT NULL,
     "description"      TEXT,
     "color"            VARCHAR(10),
+    "version"          BIGINT      NOT NULL,
     "created_at"       TIMESTAMPTZ NOT NULL DEFAULT current_timestamp,
     "updated_at"       TIMESTAMPTZ NOT NULL DEFAULT current_timestamp,
     PRIMARY KEY ("id"),
@@ -21,7 +22,7 @@ CREATE UNIQUE INDEX IF NOT EXISTS "tags_name_organization_id_unq" ON "tags" (LOW
 CREATE INDEX idx_tags_name ON tags (name);
 CREATE INDEX idx_tags_org_bu ON tags (organization_id, business_unit_id);
 CREATE INDEX idx_tags_description ON tags USING GIN (description gin_trgm_ops);
-CREATE INDEX idx_tags_created_at ON tags(created_at);
+CREATE INDEX idx_tags_created_at ON tags (created_at);
 
 --bun:split
 

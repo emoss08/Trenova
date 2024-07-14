@@ -36,7 +36,7 @@ type DivisionCodeQueryFilter struct {
 }
 
 // filterQuery applies filters to the query
-func (s *DivisionCodeService) filterQuery(q *bun.SelectQuery, f *DivisionCodeQueryFilter) *bun.SelectQuery {
+func (s DivisionCodeService) filterQuery(q *bun.SelectQuery, f *DivisionCodeQueryFilter) *bun.SelectQuery {
 	q = q.Where("dc.organization_id = ?", f.OrganizationID).
 		Where("dc.business_unit_id = ?", f.BusinessUnitID)
 
@@ -51,7 +51,7 @@ func (s *DivisionCodeService) filterQuery(q *bun.SelectQuery, f *DivisionCodeQue
 }
 
 // GetAll retrieves all DivisionCode based on the provided filter
-func (s *DivisionCodeService) GetAll(ctx context.Context, filter *DivisionCodeQueryFilter) ([]*models.DivisionCode, int, error) {
+func (s DivisionCodeService) GetAll(ctx context.Context, filter *DivisionCodeQueryFilter) ([]*models.DivisionCode, int, error) {
 	var entities []*models.DivisionCode
 
 	q := s.db.NewSelect().
@@ -69,7 +69,7 @@ func (s *DivisionCodeService) GetAll(ctx context.Context, filter *DivisionCodeQu
 }
 
 // Get retrieves a single DivisionCode by ID
-func (s *DivisionCodeService) Get(ctx context.Context, id, orgID, buID uuid.UUID) (*models.DivisionCode, error) {
+func (s DivisionCodeService) Get(ctx context.Context, id, orgID, buID uuid.UUID) (*models.DivisionCode, error) {
 	entity := new(models.DivisionCode)
 	err := s.db.NewSelect().
 		Model(entity).
@@ -86,7 +86,7 @@ func (s *DivisionCodeService) Get(ctx context.Context, id, orgID, buID uuid.UUID
 }
 
 // Create creates a new DivisionCode
-func (s *DivisionCodeService) Create(ctx context.Context, entity *models.DivisionCode) (*models.DivisionCode, error) {
+func (s DivisionCodeService) Create(ctx context.Context, entity *models.DivisionCode) (*models.DivisionCode, error) {
 	err := s.db.RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
 		_, err := tx.NewInsert().
 			Model(entity).
@@ -103,18 +103,17 @@ func (s *DivisionCodeService) Create(ctx context.Context, entity *models.Divisio
 }
 
 // UpdateOne updates an existing DivisionCode
-func (s *DivisionCodeService) UpdateOne(ctx context.Context, entity *models.DivisionCode) (*models.DivisionCode, error) {
+func (s DivisionCodeService) UpdateOne(ctx context.Context, entity *models.DivisionCode) (*models.DivisionCode, error) {
 	err := s.db.RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
-		_, err := tx.NewUpdate().
-			Model(entity).
-			WherePK().
-			Returning("*").
-			Exec(ctx)
-		return err
+		if err := entity.OptimisticUpdate(ctx, tx); err != nil {
+			return err
+		}
+
+		return nil
 	})
 	if err != nil {
 		s.logger.Error().Err(err).Msg("Failed to update DivisionCode")
-		return nil, fmt.Errorf("failed to update DivisionCode: %w", err)
+		return nil, err
 	}
 
 	return entity, nil

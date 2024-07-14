@@ -10,6 +10,7 @@ CREATE TABLE
     "expense_account_id" uuid,
     "revenue_account_id" uuid,
     "color"              VARCHAR(10),
+    "version"            BIGINT      NOT NULL,
     "created_at"         TIMESTAMPTZ NOT NULL DEFAULT current_timestamp,
     "updated_at"         TIMESTAMPTZ NOT NULL DEFAULT current_timestamp,
     PRIMARY KEY ("id"),
@@ -25,7 +26,7 @@ CREATE UNIQUE INDEX IF NOT EXISTS "revenue_codes_code_organization_id_unq" ON "r
 CREATE INDEX idx_revenue_codes_code ON revenue_codes (code);
 CREATE INDEX idx_revenue_codes_org_bu ON revenue_codes (organization_id, business_unit_id);
 CREATE INDEX idx_revenue_codes_description ON revenue_codes USING GIN (description gin_trgm_ops);
-CREATE INDEX idx_revenue_codes_created_at ON revenue_codes(created_at);
+CREATE INDEX idx_revenue_codes_created_at ON revenue_codes (created_at);
 
 --bun:split
 

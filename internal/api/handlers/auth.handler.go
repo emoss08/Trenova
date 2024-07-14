@@ -27,13 +27,13 @@ func NewAuthenticationHandler(s *server.Server) *AuthenticationHandler {
 	}
 }
 
-func (ah *AuthenticationHandler) RegisterRoutes(r fiber.Router) {
+func (ah AuthenticationHandler) RegisterRoutes(r fiber.Router) {
 	authAPI := r.Group("/auth")
 	authAPI.Post("/check-email", ah.checkEmail())
 	authAPI.Post("/login", ah.authenticateUser())
 }
 
-func (ah *AuthenticationHandler) checkEmail() fiber.Handler {
+func (ah AuthenticationHandler) checkEmail() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		req := new(types.CheckEmailRequest)
 
@@ -56,7 +56,7 @@ func (ah *AuthenticationHandler) checkEmail() fiber.Handler {
 	}
 }
 
-func (ah *AuthenticationHandler) authenticateUser() fiber.Handler {
+func (ah AuthenticationHandler) authenticateUser() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		req := new(types.LoginRequest)
 

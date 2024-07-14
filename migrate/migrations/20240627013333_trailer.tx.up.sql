@@ -29,6 +29,7 @@ CREATE TABLE
     "registration_number"          VARCHAR(50),
     "registration_state_id"        uuid,
     "registration_expiration_date" DATE,
+    "version" BIGINT NOT NULL,
     "created_at"                   TIMESTAMPTZ           NOT NULL DEFAULT current_timestamp,
     "updated_at"                   TIMESTAMPTZ           NOT NULL DEFAULT current_timestamp,
     PRIMARY KEY ("id"),
@@ -45,7 +46,7 @@ CREATE TABLE
 CREATE UNIQUE INDEX IF NOT EXISTS "trailers_code_organization_id_unq" ON "trailers" (LOWER("code"), organization_id);
 CREATE INDEX idx_trailers_name ON trailers (code);
 CREATE INDEX idx_trailers_org_bu ON trailers (organization_id, business_unit_id);
-CREATE INDEX idx_trailers_created_at ON trailers(created_at);
+CREATE INDEX idx_trailers_created_at ON trailers (created_at);
 
 --bun:split
 

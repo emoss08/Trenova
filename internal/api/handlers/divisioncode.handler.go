@@ -23,11 +23,11 @@ func NewDivisionCodeHandler(s *server.Server) *DivisionCodeHandler {
 	return &DivisionCodeHandler{
 		logger:            s.Logger,
 		service:           services.NewDivisionCodeService(s),
-		permissionService: services.NewPermissionService(s),
+		permissionService: services.NewPermissionService(s.Enforcer),
 	}
 }
 
-func (h *DivisionCodeHandler) RegisterRoutes(r fiber.Router) {
+func (h DivisionCodeHandler) RegisterRoutes(r fiber.Router) {
 	api := r.Group("/division-codes")
 	api.Get("/", h.Get())
 	api.Get("/:divisioncodeID", h.GetByID())
@@ -35,7 +35,7 @@ func (h *DivisionCodeHandler) RegisterRoutes(r fiber.Router) {
 	api.Put("/:divisioncodeID", h.Update())
 }
 
-func (h *DivisionCodeHandler) Get() fiber.Handler {
+func (h DivisionCodeHandler) Get() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		orgID, ok := c.Locals(utils.CTXOrganizationID).(uuid.UUID)
 		buID, orgOK := c.Locals(utils.CTXBusinessUnitID).(uuid.UUID)
@@ -69,10 +69,10 @@ func (h *DivisionCodeHandler) Get() fiber.Handler {
 			})
 		}
 
-		if err = h.permissionService.CheckUserPermission(c, models.PermissionDivisionCodeView.String()); err != nil {
-			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Error{
-				Code:    fiber.StatusUnauthorized,
-				Message: "You do not have permission to perform this action.",
+		if err = h.permissionService.CheckUserPermission(c, "division_code", "view"); err != nil {
+			return c.Status(fiber.StatusForbidden).JSON(fiber.Error{
+				Code:    fiber.StatusForbidden,
+				Message: err.Error(),
 			})
 		}
 
@@ -104,7 +104,7 @@ func (h *DivisionCodeHandler) Get() fiber.Handler {
 	}
 }
 
-func (h *DivisionCodeHandler) Create() fiber.Handler {
+func (h DivisionCodeHandler) Create() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		createdEntity := new(models.DivisionCode)
 
@@ -118,9 +118,9 @@ func (h *DivisionCodeHandler) Create() fiber.Handler {
 			})
 		}
 
-		if err := h.permissionService.CheckUserPermission(c, models.PermissionDivisionCodeAdd.String()); err != nil {
-			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Error{
-				Code:    fiber.StatusUnauthorized,
+		if err := h.permissionService.CheckUserPermission(c, "division_code", "create"); err != nil {
+			return c.Status(fiber.StatusForbidden).JSON(fiber.Error{
+				Code:    fiber.StatusForbidden,
 				Message: "You do not have permission to perform this action.",
 			})
 		}
@@ -134,17 +134,15 @@ func (h *DivisionCodeHandler) Create() fiber.Handler {
 
 		entity, err := h.service.Create(c.UserContext(), createdEntity)
 		if err != nil {
-			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Error{
-				Code:    fiber.StatusInternalServerError,
-				Message: err.Error(),
-			})
+			resp := utils.CreateServiceError(c, err)
+			return c.Status(fiber.StatusInternalServerError).JSON(resp)
 		}
 
 		return c.Status(fiber.StatusCreated).JSON(entity)
 	}
 }
 
-func (h *DivisionCodeHandler) GetByID() fiber.Handler {
+func (h DivisionCodeHandler) GetByID() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		divisioncodeID := c.Params("divisioncodeID")
 		if divisioncodeID == "" {
@@ -165,9 +163,9 @@ func (h *DivisionCodeHandler) GetByID() fiber.Handler {
 			})
 		}
 
-		if err := h.permissionService.CheckUserPermission(c, models.PermissionDivisionCodeView.String()); err != nil {
-			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Error{
-				Code:    fiber.StatusUnauthorized,
+		if err := h.permissionService.CheckUserPermission(c, "division_code", "view"); err != nil {
+			return c.Status(fiber.StatusForbidden).JSON(fiber.Error{
+				Code:    fiber.StatusForbidden,
 				Message: "You do not have permission to perform this action.",
 			})
 		}
@@ -184,7 +182,7 @@ func (h *DivisionCodeHandler) GetByID() fiber.Handler {
 	}
 }
 
-func (h *DivisionCodeHandler) Update() fiber.Handler {
+func (h DivisionCodeHandler) Update() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		divisioncodeID := c.Params("divisioncodeID")
 		if divisioncodeID == "" {
@@ -194,9 +192,9 @@ func (h *DivisionCodeHandler) Update() fiber.Handler {
 			})
 		}
 
-		if err := h.permissionService.CheckUserPermission(c, models.PermissionDivisionCodeEdit.String()); err != nil {
-			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Error{
-				Code:    fiber.StatusUnauthorized,
+		if err := h.permissionService.CheckUserPermission(c, "division_code", "update"); err != nil {
+			return c.Status(fiber.StatusForbidden).JSON(fiber.Error{
+				Code:    fiber.StatusForbidden,
 				Message: "You do not have permission to perform this action.",
 			})
 		}
@@ -211,10 +209,8 @@ func (h *DivisionCodeHandler) Update() fiber.Handler {
 
 		entity, err := h.service.UpdateOne(c.UserContext(), updatedEntity)
 		if err != nil {
-			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Error{
-				Code:    fiber.StatusInternalServerError,
-				Message: "Failed to update DivisionCode",
-			})
+			resp := utils.CreateServiceError(c, err)
+			return c.Status(fiber.StatusInternalServerError).JSON(resp)
 		}
 
 		return c.Status(fiber.StatusOK).JSON(entity)

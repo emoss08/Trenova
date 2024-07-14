@@ -28,6 +28,7 @@ CREATE TABLE
     "fleet_code_id"    uuid,
     "manager_id"       uuid,
     "external_id"      VARCHAR(255),
+    "version"          bigint           NOT NULL,
     "created_at"       TIMESTAMPTZ      NOT NULL DEFAULT current_timestamp,
     "updated_at"       TIMESTAMPTZ      NOT NULL DEFAULT current_timestamp,
     PRIMARY KEY ("id"),
@@ -43,7 +44,7 @@ CREATE TABLE
 CREATE UNIQUE INDEX IF NOT EXISTS "workers_code_organization_id_unq" ON "workers" (LOWER("code"), organization_id);
 CREATE INDEX idx_workers_name ON workers (code);
 CREATE INDEX idx_workers_org_bu ON workers (organization_id, business_unit_id);
-CREATE INDEX idx_workers_created_at ON workers(created_at);
+CREATE INDEX idx_workers_created_at ON workers (created_at);
 
 --bun:split
 
@@ -82,12 +83,12 @@ $$;
 CREATE TABLE
     IF NOT EXISTS "worker_profiles"
 (
-    "id"                      uuid        NOT NULL DEFAULT uuid_generate_v4(),
-    "business_unit_id"        uuid        NOT NULL,
-    "organization_id"         uuid        NOT NULL,
-    "worker_id"               uuid        NOT NULL,
-    "license_number"          VARCHAR(50) NOT NULL,
-    "state_id"                uuid        NOT NULL,
+    "id"                      uuid                    NOT NULL DEFAULT uuid_generate_v4(),
+    "business_unit_id"        uuid                    NOT NULL,
+    "organization_id"         uuid                    NOT NULL,
+    "worker_id"               uuid                    NOT NULL,
+    "license_number"          VARCHAR(50)             NOT NULL,
+    "state_id"                uuid                    NOT NULL,
     "date_of_birth"           DATE,
     "license_expiration_date" DATE,
     "hazmat_expiration_date"  DATE,
@@ -96,8 +97,9 @@ CREATE TABLE
     "physical_due_date"       DATE,
     "mvr_due_date"            DATE,
     "endorsements"            worker_endorsement_enum NOT NULL DEFAULT 'None',
-    "created_at"              TIMESTAMPTZ NOT NULL DEFAULT current_timestamp,
-    "updated_at"              TIMESTAMPTZ NOT NULL DEFAULT current_timestamp,
+    "version"                 BIGINT                  NOT NULL,
+    "created_at"              TIMESTAMPTZ             NOT NULL DEFAULT current_timestamp,
+    "updated_at"              TIMESTAMPTZ             NOT NULL DEFAULT current_timestamp,
     PRIMARY KEY ("id"),
     FOREIGN KEY ("worker_id") REFERENCES workers ("id") ON UPDATE NO ACTION ON DELETE SET NULL,
     FOREIGN KEY ("state_id") REFERENCES us_states ("id") ON UPDATE NO ACTION ON DELETE SET NULL,
@@ -111,7 +113,7 @@ CREATE TABLE
 CREATE UNIQUE INDEX IF NOT EXISTS "worker_profiles_license_number_organization_id_unq" ON "worker_profiles" (LOWER("license_number"), organization_id);
 CREATE INDEX idx_worker_profiles_license_number ON worker_profiles (license_number);
 CREATE INDEX idx_worker_profiles_org_bu ON worker_profiles (organization_id, business_unit_id);
-CREATE INDEX idx_worker_profiles_created_at ON worker_profiles(created_at);
+CREATE INDEX idx_worker_profiles_created_at ON worker_profiles (created_at);
 
 --bun:split
 

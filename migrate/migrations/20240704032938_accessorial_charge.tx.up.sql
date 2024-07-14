@@ -21,6 +21,7 @@ CREATE TABLE
     "is_detention"     BOOLEAN          NOT NULL DEFAULT FALSE,
     "method"           fuel_method_enum NOT NULL,
     "amount"           NUMERIC(19, 2)   NOT NULL DEFAULT 0,
+    "version"          BIGINT           NOT NULL,
     "created_at"       TIMESTAMPTZ      NOT NULL DEFAULT current_timestamp,
     "updated_at"       TIMESTAMPTZ      NOT NULL DEFAULT current_timestamp,
     PRIMARY KEY ("id"),
@@ -41,7 +42,7 @@ COMMENT ON COLUMN accessorial_charges.status IS 'The current status of the acces
 COMMENT ON COLUMN accessorial_charges.code IS 'A short, unique code for identifying the accessorial charge, limited to 10 characters';
 COMMENT ON COLUMN accessorial_charges.description IS 'A detailed description of the accessorial charge';
 COMMENT ON COLUMN accessorial_charges.is_detention IS 'Indicates whether the accessorial charge is for detention, represented as a boolean value';
-COMMENT ON COLUMN accessorial_charges.method IS 'The method used for the accessorial charge, using the rating_method_enum (e.g., Distance, Flat, Percentage)';
+COMMENT ON COLUMN accessorial_charges.method IS 'The method used for the accessorial charge, using the fuel_method_enum (e.g., Distance, Flat, Percentage)';
 COMMENT ON COLUMN accessorial_charges.amount IS 'The amount for the accessorial charge, represented as a numeric value with 19 digits and 2 decimal places, defaulting to 0';
 COMMENT ON COLUMN accessorial_charges.created_at IS 'Timestamp of when the accessorial charge was created, defaults to the current timestamp';
 COMMENT ON COLUMN accessorial_charges.updated_at IS 'Timestamp of the last update to the accessorial charge, defaults to the current timestamp';

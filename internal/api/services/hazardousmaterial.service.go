@@ -36,7 +36,7 @@ type HazardousMaterialQueryFilter struct {
 }
 
 // filterQuery applies filters to the query
-func (s *HazardousMaterialService) filterQuery(q *bun.SelectQuery, f *HazardousMaterialQueryFilter) *bun.SelectQuery {
+func (s HazardousMaterialService) filterQuery(q *bun.SelectQuery, f *HazardousMaterialQueryFilter) *bun.SelectQuery {
 	q = q.Where("hm.organization_id = ?", f.OrganizationID).
 		Where("hm.business_unit_id = ?", f.BusinessUnitID)
 
@@ -51,7 +51,7 @@ func (s *HazardousMaterialService) filterQuery(q *bun.SelectQuery, f *HazardousM
 }
 
 // GetAll retrieves all HazardousMaterial based on the provided filter
-func (s *HazardousMaterialService) GetAll(ctx context.Context, filter *HazardousMaterialQueryFilter) ([]*models.HazardousMaterial, int, error) {
+func (s HazardousMaterialService) GetAll(ctx context.Context, filter *HazardousMaterialQueryFilter) ([]*models.HazardousMaterial, int, error) {
 	var entities []*models.HazardousMaterial
 
 	q := s.db.NewSelect().
@@ -69,7 +69,7 @@ func (s *HazardousMaterialService) GetAll(ctx context.Context, filter *Hazardous
 }
 
 // Get retrieves a single HazardousMaterial by ID
-func (s *HazardousMaterialService) Get(ctx context.Context, id, orgID, buID uuid.UUID) (*models.HazardousMaterial, error) {
+func (s HazardousMaterialService) Get(ctx context.Context, id, orgID, buID uuid.UUID) (*models.HazardousMaterial, error) {
 	entity := new(models.HazardousMaterial)
 	err := s.db.NewSelect().
 		Model(entity).
@@ -86,7 +86,7 @@ func (s *HazardousMaterialService) Get(ctx context.Context, id, orgID, buID uuid
 }
 
 // Create creates a new HazardousMaterial
-func (s *HazardousMaterialService) Create(ctx context.Context, entity *models.HazardousMaterial) (*models.HazardousMaterial, error) {
+func (s HazardousMaterialService) Create(ctx context.Context, entity *models.HazardousMaterial) (*models.HazardousMaterial, error) {
 	err := s.db.RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
 		_, err := tx.NewInsert().
 			Model(entity).
@@ -103,14 +103,13 @@ func (s *HazardousMaterialService) Create(ctx context.Context, entity *models.Ha
 }
 
 // UpdateOne updates an existing HazardousMaterial
-func (s *HazardousMaterialService) UpdateOne(ctx context.Context, entity *models.HazardousMaterial) (*models.HazardousMaterial, error) {
+func (s HazardousMaterialService) UpdateOne(ctx context.Context, entity *models.HazardousMaterial) (*models.HazardousMaterial, error) {
 	err := s.db.RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
-		_, err := tx.NewUpdate().
-			Model(entity).
-			WherePK().
-			Returning("*").
-			Exec(ctx)
-		return err
+		if err := entity.OptimisticUpdate(ctx, tx); err != nil {
+			return err
+		}
+
+		return nil
 	})
 	if err != nil {
 		s.logger.Error().Err(err).Msg("Failed to update HazardousMaterial")

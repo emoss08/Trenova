@@ -23,19 +23,19 @@ func NewLocationCategoryHandler(s *server.Server) *LocationCategoryHandler {
 	return &LocationCategoryHandler{
 		logger:            s.Logger,
 		service:           services.NewLocationCategoryService(s),
-		permissionService: services.NewPermissionService(s),
+		permissionService: services.NewPermissionService(s.Enforcer),
 	}
 }
 
-func (h *LocationCategoryHandler) RegisterRoutes(r fiber.Router) {
-	api := r.Group("/location-categories")
+func (h LocationCategoryHandler) RegisterRoutes(r fiber.Router) {
+	api := r.Group("/location-categorys")
 	api.Get("/", h.Get())
 	api.Get("/:locationcategoryID", h.GetByID())
 	api.Post("/", h.Create())
 	api.Put("/:locationcategoryID", h.Update())
 }
 
-func (h *LocationCategoryHandler) Get() fiber.Handler {
+func (h LocationCategoryHandler) Get() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		orgID, ok := c.Locals(utils.CTXOrganizationID).(uuid.UUID)
 		buID, orgOK := c.Locals(utils.CTXBusinessUnitID).(uuid.UUID)
@@ -69,9 +69,9 @@ func (h *LocationCategoryHandler) Get() fiber.Handler {
 			})
 		}
 
-		if err = h.permissionService.CheckUserPermission(c, models.PermissionLocationCategoryView.String()); err != nil {
-			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Error{
-				Code:    fiber.StatusUnauthorized,
+		if err := h.permissionService.CheckUserPermission(c, "location_category", "view"); err != nil {
+			return c.Status(fiber.StatusForbidden).JSON(fiber.Error{
+				Code:    fiber.StatusForbidden,
 				Message: "You do not have permission to perform this action.",
 			})
 		}
@@ -104,7 +104,7 @@ func (h *LocationCategoryHandler) Get() fiber.Handler {
 	}
 }
 
-func (h *LocationCategoryHandler) Create() fiber.Handler {
+func (h LocationCategoryHandler) Create() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		createdEntity := new(models.LocationCategory)
 
@@ -118,9 +118,9 @@ func (h *LocationCategoryHandler) Create() fiber.Handler {
 			})
 		}
 
-		if err := h.permissionService.CheckUserPermission(c, models.PermissionLocationCategoryAdd.String()); err != nil {
-			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Error{
-				Code:    fiber.StatusUnauthorized,
+		if err := h.permissionService.CheckUserPermission(c, "location_category", "create"); err != nil {
+			return c.Status(fiber.StatusForbidden).JSON(fiber.Error{
+				Code:    fiber.StatusForbidden,
 				Message: "You do not have permission to perform this action.",
 			})
 		}
@@ -134,17 +134,15 @@ func (h *LocationCategoryHandler) Create() fiber.Handler {
 
 		entity, err := h.service.Create(c.UserContext(), createdEntity)
 		if err != nil {
-			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Error{
-				Code:    fiber.StatusInternalServerError,
-				Message: err.Error(),
-			})
+			resp := utils.CreateServiceError(c, err)
+			return c.Status(fiber.StatusInternalServerError).JSON(resp)
 		}
 
 		return c.Status(fiber.StatusCreated).JSON(entity)
 	}
 }
 
-func (h *LocationCategoryHandler) GetByID() fiber.Handler {
+func (h LocationCategoryHandler) GetByID() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		locationcategoryID := c.Params("locationcategoryID")
 		if locationcategoryID == "" {
@@ -165,9 +163,9 @@ func (h *LocationCategoryHandler) GetByID() fiber.Handler {
 			})
 		}
 
-		if err := h.permissionService.CheckUserPermission(c, models.PermissionLocationCategoryView.String()); err != nil {
-			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Error{
-				Code:    fiber.StatusUnauthorized,
+		if err := h.permissionService.CheckUserPermission(c, "location_category", "view"); err != nil {
+			return c.Status(fiber.StatusForbidden).JSON(fiber.Error{
+				Code:    fiber.StatusForbidden,
 				Message: "You do not have permission to perform this action.",
 			})
 		}
@@ -184,7 +182,7 @@ func (h *LocationCategoryHandler) GetByID() fiber.Handler {
 	}
 }
 
-func (h *LocationCategoryHandler) Update() fiber.Handler {
+func (h LocationCategoryHandler) Update() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		locationcategoryID := c.Params("locationcategoryID")
 		if locationcategoryID == "" {
@@ -194,9 +192,9 @@ func (h *LocationCategoryHandler) Update() fiber.Handler {
 			})
 		}
 
-		if err := h.permissionService.CheckUserPermission(c, models.PermissionLocationCategoryEdit.String()); err != nil {
-			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Error{
-				Code:    fiber.StatusUnauthorized,
+		if err := h.permissionService.CheckUserPermission(c, "location_category", "update"); err != nil {
+			return c.Status(fiber.StatusForbidden).JSON(fiber.Error{
+				Code:    fiber.StatusForbidden,
 				Message: "You do not have permission to perform this action.",
 			})
 		}
@@ -211,10 +209,8 @@ func (h *LocationCategoryHandler) Update() fiber.Handler {
 
 		entity, err := h.service.UpdateOne(c.UserContext(), updatedEntity)
 		if err != nil {
-			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Error{
-				Code:    fiber.StatusInternalServerError,
-				Message: "Failed to update LocationCategory",
-			})
+			resp := utils.CreateServiceError(c, err)
+			return c.Status(fiber.StatusInternalServerError).JSON(resp)
 		}
 
 		return c.Status(fiber.StatusOK).JSON(entity)

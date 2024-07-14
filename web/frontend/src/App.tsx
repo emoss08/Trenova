@@ -7,6 +7,7 @@ import { useVerifyToken } from "@/hooks/useVerifyToken";
 import { THEME_KEY } from "@/lib/constants";
 import { ProtectedRoutes } from "@/routing/ProtectedRoutes";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 import "non.geist";
 import { Suspense, memo } from "react";
 import "react-datepicker/dist/react-datepicker.css";
@@ -48,6 +49,6 @@ const AppImpl = memo(() => (
         <ProtectedRoutes />
       </Suspense>
     </BrowserRouter>
-    {/* <ReactQueryDevtools buttonPosition="bottom-right" initialIsOpen={false} /> */}
+    <ReactQueryDevtools buttonPosition="bottom-right" initialIsOpen={false} />
   </QueryClientProvider>
 ));

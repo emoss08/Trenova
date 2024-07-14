@@ -36,7 +36,7 @@ type EquipmentTypeQueryFilter struct {
 }
 
 // filterQuery applies filters to the query
-func (s *EquipmentTypeService) filterQuery(q *bun.SelectQuery, f *EquipmentTypeQueryFilter) *bun.SelectQuery {
+func (s EquipmentTypeService) filterQuery(q *bun.SelectQuery, f *EquipmentTypeQueryFilter) *bun.SelectQuery {
 	q = q.Where("et.organization_id = ?", f.OrganizationID).
 		Where("et.business_unit_id = ?", f.BusinessUnitID)
 
@@ -51,7 +51,7 @@ func (s *EquipmentTypeService) filterQuery(q *bun.SelectQuery, f *EquipmentTypeQ
 }
 
 // GetAll retrieves all EquipmentType based on the provided filter
-func (s *EquipmentTypeService) GetAll(ctx context.Context, filter *EquipmentTypeQueryFilter) ([]*models.EquipmentType, int, error) {
+func (s EquipmentTypeService) GetAll(ctx context.Context, filter *EquipmentTypeQueryFilter) ([]*models.EquipmentType, int, error) {
 	var entities []*models.EquipmentType
 
 	q := s.db.NewSelect().
@@ -69,7 +69,7 @@ func (s *EquipmentTypeService) GetAll(ctx context.Context, filter *EquipmentType
 }
 
 // Get retrieves a single EquipmentType by ID
-func (s *EquipmentTypeService) Get(ctx context.Context, id, orgID, buID uuid.UUID) (*models.EquipmentType, error) {
+func (s EquipmentTypeService) Get(ctx context.Context, id, orgID, buID uuid.UUID) (*models.EquipmentType, error) {
 	entity := new(models.EquipmentType)
 	err := s.db.NewSelect().
 		Model(entity).
@@ -86,7 +86,7 @@ func (s *EquipmentTypeService) Get(ctx context.Context, id, orgID, buID uuid.UUI
 }
 
 // Create creates a new EquipmentType
-func (s *EquipmentTypeService) Create(ctx context.Context, entity *models.EquipmentType) (*models.EquipmentType, error) {
+func (s EquipmentTypeService) Create(ctx context.Context, entity *models.EquipmentType) (*models.EquipmentType, error) {
 	err := s.db.RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
 		_, err := tx.NewInsert().
 			Model(entity).
@@ -103,14 +103,13 @@ func (s *EquipmentTypeService) Create(ctx context.Context, entity *models.Equipm
 }
 
 // UpdateOne updates an existing EquipmentType
-func (s *EquipmentTypeService) UpdateOne(ctx context.Context, entity *models.EquipmentType) (*models.EquipmentType, error) {
+func (s EquipmentTypeService) UpdateOne(ctx context.Context, entity *models.EquipmentType) (*models.EquipmentType, error) {
 	err := s.db.RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
-		_, err := tx.NewUpdate().
-			Model(entity).
-			WherePK().
-			Returning("*").
-			Exec(ctx)
-		return err
+		if err := entity.OptimisticUpdate(ctx, tx); err != nil {
+			return err
+		}
+
+		return nil
 	})
 	if err != nil {
 		s.logger.Error().Err(err).Msg("Failed to update EquipmentType")

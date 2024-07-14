@@ -27,7 +27,7 @@ func NewTableChangeAlertService(s *server.Server) *TableChangeAlertService {
 	}
 }
 
-func (s *TableChangeAlertService) GetTableChangeAlerts(ctx context.Context, limit, offset int, orgID, buID uuid.UUID) ([]*models.TableChangeAlert, int, error) {
+func (s TableChangeAlertService) GetTableChangeAlerts(ctx context.Context, limit, offset int, orgID, buID uuid.UUID) ([]*models.TableChangeAlert, int, error) {
 	var tableChangeAlerts []*models.TableChangeAlert
 	count, err := s.db.NewSelect().
 		Model(&tableChangeAlerts).
@@ -44,7 +44,7 @@ func (s *TableChangeAlertService) GetTableChangeAlerts(ctx context.Context, limi
 	return tableChangeAlerts, count, nil
 }
 
-func (s *TableChangeAlertService) CreateTableChangeAlert(ctx context.Context, tca *models.TableChangeAlert) (*models.TableChangeAlert, error) {
+func (s TableChangeAlertService) CreateTableChangeAlert(ctx context.Context, tca *models.TableChangeAlert) (*models.TableChangeAlert, error) {
 	err := s.db.RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
 		if _, err := tx.NewInsert().
 			Model(tca).
@@ -62,13 +62,9 @@ func (s *TableChangeAlertService) CreateTableChangeAlert(ctx context.Context, tc
 	return tca, nil
 }
 
-func (s *TableChangeAlertService) UpdateTableChangeAlert(ctx context.Context, tca *models.TableChangeAlert) (*models.TableChangeAlert, error) {
+func (s TableChangeAlertService) UpdateTableChangeAlert(ctx context.Context, tca *models.TableChangeAlert) (*models.TableChangeAlert, error) {
 	err := s.db.RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
-		if _, err := tx.NewUpdate().
-			Model(tca).
-			WherePK().
-			Returning("*").
-			Exec(ctx); err != nil {
+		if err := tca.OptimisticUpdate(ctx, tx); err != nil {
 			return err
 		}
 
@@ -81,7 +77,7 @@ func (s *TableChangeAlertService) UpdateTableChangeAlert(ctx context.Context, tc
 	return tca, nil
 }
 
-func (s *TableChangeAlertService) GetTopicNames() ([]types.TopicName, int, error) {
+func (s TableChangeAlertService) GetTopicNames() ([]types.TopicName, int, error) {
 	topics, err := s.kafka.GetTopics()
 	if err != nil {
 		return nil, 0, err

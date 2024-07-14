@@ -85,6 +85,7 @@ export function TractorForm({ control }: { control: Control<FormValues> }) {
             name="equipmentManufacturerId"
             control={control}
             link="/equipment-manufacturers/"
+            rules={{ required: true }}
             valueKey="name"
             label="Equip. Manufacturer"
             placeholder="Select Manufacturer"

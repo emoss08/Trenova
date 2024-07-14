@@ -9,7 +9,9 @@ import (
 	"github.com/emoss08/trenova/pkg/gen"
 	"github.com/emoss08/trenova/pkg/models/property"
 	"github.com/emoss08/trenova/pkg/utils"
+	"github.com/emoss08/trenova/pkg/validator"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
+	"github.com/go-ozzo/ozzo-validation/v4/is"
 	"github.com/google/uuid"
 	"github.com/uptrace/bun"
 )
@@ -23,10 +25,10 @@ const (
 	// PermissionLocationEdit is the permission to edit location details
 	PermissionLocationEdit = LocationPermission("location.edit")
 
-	// PermissionLocationAdd is the permission to add a necw location``
+	// PermissionLocationAdd is the permission to add a necw location
 	PermissionLocationAdd = LocationPermission("location.add")
 
-	// PermissionLocationDelete is the permission to delete an location``
+	// PermissionLocationDelete is the permission to delete an location
 	PermissionLocationDelete = LocationPermission("location.delete")
 )
 
@@ -36,26 +38,29 @@ func (p LocationPermission) String() string {
 }
 
 type Location struct {
-	bun.BaseModel      `bun:"table:locations,alias:lc" json:"-"`
-	CreatedAt          time.Time       `bun:",nullzero,notnull,default:current_timestamp" json:"createdAt"`
-	UpdatedAt          time.Time       `bun:",nullzero,notnull,default:current_timestamp" json:"updatedAt"`
-	ID                 uuid.UUID       `bun:",pk,type:uuid,default:uuid_generate_v4()" json:"id"`
-	Status             property.Status `bun:"status,type:status" json:"status"`
-	Code               string          `bun:"type:VARCHAR(10),notnull" json:"code" queryField:"true"`
-	Name               string          `bun:"type:VARCHAR(255),notnull" json:"name"`
-	AddressLine1       string          `bun:"address_line_1,type:VARCHAR(150),notnull" json:"addressLine1"`
-	AddressLine2       string          `bun:"address_line_2,type:VARCHAR(150),notnull" json:"addressLine2"`
-	City               string          `bun:"type:VARCHAR(150),notnull" json:"city"`
-	PostalCode         string          `bun:"type:VARCHAR(10),notnull" json:"postalCode"`
-	Longitude          float64         `bun:"type:float" json:"longitude"`
-	Latitude           float64         `bun:"type:float" json:"latitude"`
-	PlaceID            string          `bun:"type:VARCHAR(255)" json:"placeId"`
-	IsGeocoded         bool            `bun:"type:boolean" json:"isGeocoded"`
-	Description        string          `bun:"type:TEXT" json:"description"`
-	LocationCategoryID uuid.UUID       `bun:"type:uuid,notnull" json:"locationCategoryId"`
-	StateID            *uuid.UUID      `bun:"type:uuid,nullzero" json:"stateId"`
-	BusinessUnitID     uuid.UUID       `bun:"type:uuid,notnull" json:"businessUnitId"`
-	OrganizationID     uuid.UUID       `bun:"type:uuid,notnull" json:"organizationId"`
+	bun.BaseModel `bun:"table:locations,alias:lc" json:"-"`
+
+	ID           uuid.UUID       `bun:",pk,type:uuid,default:uuid_generate_v4()" json:"id"`
+	Status       property.Status `bun:"status,type:status_enum" json:"status"`
+	Code         string          `bun:"type:VARCHAR(10),notnull" json:"code" queryField:"true"`
+	Name         string          `bun:"type:VARCHAR(255),notnull" json:"name"`
+	AddressLine1 string          `bun:"address_line_1,type:VARCHAR(150),notnull" json:"addressLine1"`
+	AddressLine2 string          `bun:"address_line_2,type:VARCHAR(150),notnull" json:"addressLine2"`
+	City         string          `bun:"type:VARCHAR(150),notnull" json:"city"`
+	PostalCode   string          `bun:"type:VARCHAR(10),notnull" json:"postalCode"`
+	Longitude    float64         `bun:"type:float" json:"longitude"`
+	Latitude     float64         `bun:"type:float" json:"latitude"`
+	PlaceID      string          `bun:"type:VARCHAR(255)" json:"placeId"`
+	IsGeocoded   bool            `bun:"type:boolean" json:"isGeocoded"`
+	Description  string          `bun:"type:TEXT" json:"description"`
+	Version      int64           `bun:"type:BIGINT" json:"version"`
+	CreatedAt    time.Time       `bun:",notnull,default:current_timestamp" json:"createdAt"`
+	UpdatedAt    time.Time       `bun:",notnull,default:current_timestamp" json:"updatedAt"`
+
+	LocationCategoryID uuid.UUID `bun:"type:uuid,notnull" json:"locationCategoryId"`
+	StateID            uuid.UUID `bun:"type:uuid" json:"stateId"`
+	BusinessUnitID     uuid.UUID `bun:"type:uuid,notnull" json:"businessUnitId"`
+	OrganizationID     uuid.UUID `bun:"type:uuid,notnull" json:"organizationId"`
 
 	LocationCategory *LocationCategory  `bun:"rel:belongs-to,join:location_category_id=id" json:"locationCategory"`
 	State            *UsState           `bun:"rel:belongs-to,join:state_id=id" json:"state"`
@@ -69,18 +74,26 @@ func (l Location) Validate() error {
 	return validation.ValidateStruct(
 		&l,
 		validation.Field(&l.BusinessUnitID, validation.Required),
-		validation.Field(&l.LocationCategoryID, validation.Required),
 		validation.Field(&l.OrganizationID, validation.Required),
+		validation.Field(&l.LocationCategoryID, validation.Required),
+		validation.Field(&l.Name, validation.Required, validation.Length(0, 255)),
+		validation.Field(&l.AddressLine1, validation.Required, validation.Length(0, 150)),
+		validation.Field(&l.AddressLine2, validation.Length(0, 150)),
+		validation.Field(&l.City, validation.Required, validation.Length(0, 150)),
+		validation.Field(&l.PostalCode, validation.Required, validation.Length(0, 10)),
+		validation.Field(&l.StateID, validation.Required, is.UUIDv4.Error("State ID must be a valid UUID.")),
+		validation.Field(&l.Longitude, is.Longitude.Error("Longitude must be between -180 and 180.")),
+		validation.Field(&l.Latitude, is.Latitude.Error("Latitude must be between -90 and 90.")),
 		validation.Field(&l.Contacts),
 		validation.Field(&l.Comments),
 	)
 }
 
-func (l *Location) TableName() string {
+func (l Location) TableName() string {
 	return "locations"
 }
 
-func (l *Location) GetCodePrefix(pattern string) string {
+func (l Location) GetCodePrefix(pattern string) string {
 	switch pattern {
 	case "NAME-COUNTER":
 		return utils.TruncateString(strings.ToUpper(l.Name), 4)
@@ -91,7 +104,7 @@ func (l *Location) GetCodePrefix(pattern string) string {
 	}
 }
 
-func (l *Location) GenerateCode(pattern string, counter int) string {
+func (l Location) GenerateCode(pattern string, counter int) string {
 	switch pattern {
 	case "NAME-COUNTER":
 		return fmt.Sprintf("%s%04d", utils.TruncateString(strings.ToUpper(l.Name), 4), counter)
@@ -100,6 +113,43 @@ func (l *Location) GenerateCode(pattern string, counter int) string {
 	default:
 		return fmt.Sprintf("%s%04d", utils.TruncateString(strings.ToUpper(l.Name), 4), counter)
 	}
+}
+
+func (l *Location) BeforeUpdate(_ context.Context) error {
+	l.Version++
+
+	return nil
+}
+
+func (l *Location) OptimisticUpdate(ctx context.Context, tx bun.IDB) error {
+	ov := l.Version
+
+	if err := l.BeforeUpdate(ctx); err != nil {
+		return err
+	}
+
+	result, err := tx.NewUpdate().
+		Model(l).
+		WherePK().
+		Where("version = ?", ov).
+		Returning("*").
+		Exec(ctx)
+	if err != nil {
+		return err
+	}
+
+	rows, err := result.RowsAffected()
+	if err != nil {
+		return err
+	}
+
+	if rows == 0 {
+		return &validator.BusinessLogicError{
+			Message: fmt.Sprintf("Version mismatch. The Location (ID: %s) has been updated by another user. Please refresh and try again.", l.ID),
+		}
+	}
+
+	return nil
 }
 
 var _ bun.BeforeAppendModelHook = (*Location)(nil)
@@ -136,12 +186,11 @@ func (l *Location) InsertLocation(ctx context.Context, tx bun.IDB, codeGen *gen.
 
 // UpdateLocation updates an existing location record
 func (l *Location) UpdateLocation(ctx context.Context, tx bun.IDB) error {
-	_, err := tx.NewUpdate().Model(l).WherePK().Exec(ctx)
-	if err != nil {
+	if err := l.OptimisticUpdate(ctx, tx); err != nil {
 		return err
 	}
 
-	if err = l.syncLocationContacts(ctx, tx); err != nil {
+	if err := l.syncLocationContacts(ctx, tx); err != nil {
 		return err
 	}
 

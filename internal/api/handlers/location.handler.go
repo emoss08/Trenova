@@ -23,11 +23,11 @@ func NewLocationHandler(s *server.Server) *LocationHandler {
 	return &LocationHandler{
 		logger:            s.Logger,
 		service:           services.NewLocationService(s),
-		permissionService: services.NewPermissionService(s),
+		permissionService: services.NewPermissionService(s.Enforcer),
 	}
 }
 
-func (h *LocationHandler) RegisterRoutes(r fiber.Router) {
+func (h LocationHandler) RegisterRoutes(r fiber.Router) {
 	api := r.Group("/locations")
 	api.Get("/", h.Get())
 	api.Get("/:locationID", h.GetByID())
@@ -35,7 +35,7 @@ func (h *LocationHandler) RegisterRoutes(r fiber.Router) {
 	api.Put("/:locationID", h.Update())
 }
 
-func (h *LocationHandler) Get() fiber.Handler {
+func (h LocationHandler) Get() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		orgID, ok := c.Locals(utils.CTXOrganizationID).(uuid.UUID)
 		buID, orgOK := c.Locals(utils.CTXBusinessUnitID).(uuid.UUID)
@@ -69,9 +69,9 @@ func (h *LocationHandler) Get() fiber.Handler {
 			})
 		}
 
-		if err = h.permissionService.CheckUserPermission(c, models.PermissionLocationView.String()); err != nil {
-			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Error{
-				Code:    fiber.StatusUnauthorized,
+		if err := h.permissionService.CheckUserPermission(c, "location", "view"); err != nil {
+			return c.Status(fiber.StatusForbidden).JSON(fiber.Error{
+				Code:    fiber.StatusForbidden,
 				Message: "You do not have permission to perform this action.",
 			})
 		}
@@ -104,7 +104,7 @@ func (h *LocationHandler) Get() fiber.Handler {
 	}
 }
 
-func (h *LocationHandler) Create() fiber.Handler {
+func (h LocationHandler) Create() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		createdEntity := new(models.Location)
 
@@ -118,9 +118,9 @@ func (h *LocationHandler) Create() fiber.Handler {
 			})
 		}
 
-		if err := h.permissionService.CheckUserPermission(c, models.PermissionLocationAdd.String()); err != nil {
-			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Error{
-				Code:    fiber.StatusUnauthorized,
+		if err := h.permissionService.CheckUserPermission(c, "location", "create"); err != nil {
+			return c.Status(fiber.StatusForbidden).JSON(fiber.Error{
+				Code:    fiber.StatusForbidden,
 				Message: "You do not have permission to perform this action.",
 			})
 		}
@@ -142,7 +142,7 @@ func (h *LocationHandler) Create() fiber.Handler {
 	}
 }
 
-func (h *LocationHandler) GetByID() fiber.Handler {
+func (h LocationHandler) GetByID() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		locationID := c.Params("locationID")
 		if locationID == "" {
@@ -163,9 +163,9 @@ func (h *LocationHandler) GetByID() fiber.Handler {
 			})
 		}
 
-		if err := h.permissionService.CheckUserPermission(c, models.PermissionLocationView.String()); err != nil {
-			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Error{
-				Code:    fiber.StatusUnauthorized,
+		if err := h.permissionService.CheckUserPermission(c, "location", "view"); err != nil {
+			return c.Status(fiber.StatusForbidden).JSON(fiber.Error{
+				Code:    fiber.StatusForbidden,
 				Message: "You do not have permission to perform this action.",
 			})
 		}
@@ -182,7 +182,7 @@ func (h *LocationHandler) GetByID() fiber.Handler {
 	}
 }
 
-func (h *LocationHandler) Update() fiber.Handler {
+func (h LocationHandler) Update() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		locationID := c.Params("locationID")
 		if locationID == "" {
@@ -192,9 +192,9 @@ func (h *LocationHandler) Update() fiber.Handler {
 			})
 		}
 
-		if err := h.permissionService.CheckUserPermission(c, models.PermissionLocationEdit.String()); err != nil {
-			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Error{
-				Code:    fiber.StatusUnauthorized,
+		if err := h.permissionService.CheckUserPermission(c, "location", "update"); err != nil {
+			return c.Status(fiber.StatusForbidden).JSON(fiber.Error{
+				Code:    fiber.StatusForbidden,
 				Message: "You do not have permission to perform this action.",
 			})
 		}

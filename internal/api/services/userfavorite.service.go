@@ -22,7 +22,7 @@ func NewUserFavoriteService(s *server.Server) *UserFavoriteService {
 	}
 }
 
-func (s *UserFavoriteService) GetUserFavorites(ctx context.Context, userID uuid.UUID) ([]*models.UserFavorite, int, error) {
+func (s UserFavoriteService) GetUserFavorites(ctx context.Context, userID uuid.UUID) ([]*models.UserFavorite, int, error) {
 	var uf []*models.UserFavorite
 
 	count, err := s.db.NewSelect().
@@ -36,7 +36,7 @@ func (s *UserFavoriteService) GetUserFavorites(ctx context.Context, userID uuid.
 	return uf, count, nil
 }
 
-func (s *UserFavoriteService) AddUserFavorite(ctx context.Context, uf *models.UserFavorite) error {
+func (s UserFavoriteService) AddUserFavorite(ctx context.Context, uf *models.UserFavorite) error {
 	err := s.db.RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
 		if _, err := tx.NewInsert().Model(uf).Exec(ctx); err != nil {
 			return err
@@ -51,7 +51,7 @@ func (s *UserFavoriteService) AddUserFavorite(ctx context.Context, uf *models.Us
 	return err
 }
 
-func (s *UserFavoriteService) DeleteUserFavorite(ctx context.Context, uf *models.UserFavorite) error {
+func (s UserFavoriteService) DeleteUserFavorite(ctx context.Context, uf *models.UserFavorite) error {
 	err := s.db.RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
 		if _, err := tx.NewDelete().Model(uf).
 			Where("user_id = ?", uf.UserID).

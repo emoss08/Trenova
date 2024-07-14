@@ -36,7 +36,7 @@ type FleetCodeQueryFilter struct {
 }
 
 // filterQuery applies filters to the query
-func (s *FleetCodeService) filterQuery(q *bun.SelectQuery, f *FleetCodeQueryFilter) *bun.SelectQuery {
+func (s FleetCodeService) filterQuery(q *bun.SelectQuery, f *FleetCodeQueryFilter) *bun.SelectQuery {
 	q = q.Where("fl.organization_id = ?", f.OrganizationID).
 		Where("fl.business_unit_id = ?", f.BusinessUnitID)
 
@@ -51,7 +51,7 @@ func (s *FleetCodeService) filterQuery(q *bun.SelectQuery, f *FleetCodeQueryFilt
 }
 
 // GetAll retrieves all FleetCode based on the provided filter
-func (s *FleetCodeService) GetAll(ctx context.Context, filter *FleetCodeQueryFilter) ([]*models.FleetCode, int, error) {
+func (s FleetCodeService) GetAll(ctx context.Context, filter *FleetCodeQueryFilter) ([]*models.FleetCode, int, error) {
 	var entities []*models.FleetCode
 
 	q := s.db.NewSelect().
@@ -69,7 +69,7 @@ func (s *FleetCodeService) GetAll(ctx context.Context, filter *FleetCodeQueryFil
 }
 
 // Get retrieves a single FleetCode by ID
-func (s *FleetCodeService) Get(ctx context.Context, id, orgID, buID uuid.UUID) (*models.FleetCode, error) {
+func (s FleetCodeService) Get(ctx context.Context, id, orgID, buID uuid.UUID) (*models.FleetCode, error) {
 	entity := new(models.FleetCode)
 	err := s.db.NewSelect().
 		Model(entity).
@@ -86,7 +86,7 @@ func (s *FleetCodeService) Get(ctx context.Context, id, orgID, buID uuid.UUID) (
 }
 
 // Create creates a new FleetCode
-func (s *FleetCodeService) Create(ctx context.Context, entity *models.FleetCode) (*models.FleetCode, error) {
+func (s FleetCodeService) Create(ctx context.Context, entity *models.FleetCode) (*models.FleetCode, error) {
 	err := s.db.RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
 		_, err := tx.NewInsert().
 			Model(entity).
@@ -103,14 +103,13 @@ func (s *FleetCodeService) Create(ctx context.Context, entity *models.FleetCode)
 }
 
 // UpdateOne updates an existing FleetCode
-func (s *FleetCodeService) UpdateOne(ctx context.Context, entity *models.FleetCode) (*models.FleetCode, error) {
+func (s FleetCodeService) UpdateOne(ctx context.Context, entity *models.FleetCode) (*models.FleetCode, error) {
 	err := s.db.RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
-		_, err := tx.NewUpdate().
-			Model(entity).
-			WherePK().
-			Returning("*").
-			Exec(ctx)
-		return err
+		if err := entity.OptimisticUpdate(ctx, tx); err != nil {
+			return err
+		}
+
+		return nil
 	})
 	if err != nil {
 		s.logger.Error().Err(err).Msg("Failed to update FleetCode")
