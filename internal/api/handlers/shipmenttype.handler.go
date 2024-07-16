@@ -69,7 +69,7 @@ func (h ShipmentTypeHandler) Get() fiber.Handler {
 			})
 		}
 
-		if err := h.permissionService.CheckUserPermission(c, "shipment_type", "view"); err != nil {
+		if err = h.permissionService.CheckUserPermission(c, "shipment_type", "view"); err != nil {
 			return c.Status(fiber.StatusForbidden).JSON(fiber.Error{
 				Code:    fiber.StatusForbidden,
 				Message: "You do not have permission to perform this action.",

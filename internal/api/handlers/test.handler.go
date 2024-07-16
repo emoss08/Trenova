@@ -87,10 +87,10 @@ func (th *TestHandler) uploadMultipleFilesWithClassificationHandler() fiber.Hand
 					FileData:    fileData,
 				}
 
-				ui, err := th.minio.SaveFile(c.UserContext(), params)
-				if err != nil {
-					th.logger.Error().Err(err).Msgf("Failed to save file %s to MinIO", file.Filename)
-					return err
+				ui, mErr := th.minio.SaveFile(c.UserContext(), params)
+				if mErr != nil {
+					th.logger.Error().Err(mErr).Msgf("Failed to save file %s to MinIO", file.Filename)
+					return mErr
 				}
 
 				fileMetadata := FileMetadata{

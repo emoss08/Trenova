@@ -68,7 +68,7 @@ func (h TagHandler) Get() fiber.Handler {
 			})
 		}
 
-		if err := h.permissionService.CheckUserPermission(c, "tag", "create"); err != nil {
+		if err = h.permissionService.CheckUserPermission(c, "tag", "create"); err != nil {
 			return c.Status(fiber.StatusForbidden).JSON(fiber.Error{
 				Code:    fiber.StatusForbidden,
 				Message: "You do not have permission to perform this action.",

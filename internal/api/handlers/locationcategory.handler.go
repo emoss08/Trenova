@@ -69,7 +69,7 @@ func (h LocationCategoryHandler) Get() fiber.Handler {
 			})
 		}
 
-		if err := h.permissionService.CheckUserPermission(c, "location_category", "view"); err != nil {
+		if err = h.permissionService.CheckUserPermission(c, "location_category", "view"); err != nil {
 			return c.Status(fiber.StatusForbidden).JSON(fiber.Error{
 				Code:    fiber.StatusForbidden,
 				Message: "You do not have permission to perform this action.",

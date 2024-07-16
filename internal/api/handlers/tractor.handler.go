@@ -70,7 +70,7 @@ func (h TractorHandler) Get() fiber.Handler {
 			})
 		}
 
-		if err := h.permissionService.CheckUserPermission(c, "tractor", "view"); err != nil {
+		if err = h.permissionService.CheckUserPermission(c, "tractor", "view"); err != nil {
 			return c.Status(fiber.StatusForbidden).JSON(fiber.Error{
 				Code:    fiber.StatusForbidden,
 				Message: "You do not have permission to perform this action.",
@@ -92,7 +92,7 @@ func (h TractorHandler) Get() fiber.Handler {
 
 		// Parse the fleet code ID filter
 		if fleetCodeID := c.Query("fleetCodeId"); fleetCodeID != "" {
-			if id, err := uuid.Parse(fleetCodeID); err == nil {
+			if id, uErr := uuid.Parse(fleetCodeID); uErr == nil {
 				filter.FleetCodeID = id
 			}
 		}

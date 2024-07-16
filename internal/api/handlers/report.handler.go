@@ -14,7 +14,6 @@ type ReportHandler struct {
 	logger              *zerolog.Logger
 	service             *services.ReportService
 	notificationService *services.UserNotificationService
-	permissionService   *services.PermissionService
 }
 
 func NewReportHandler(s *server.Server) *ReportHandler {
