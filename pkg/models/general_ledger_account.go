@@ -15,27 +15,6 @@ import (
 	"github.com/uptrace/bun"
 )
 
-type GeneralLedgerAccountPermission string
-
-const (
-	// PermissionGeneralLedgerAccountView is the permission to view general ledger account details
-	PermissionGeneralLedgerAccountView = GeneralLedgerAccountPermission("generalledgeraccount.view")
-
-	// PermissionGeneralLedgerAccountEdit is the permission to edit general ledger account details
-	PermissionGeneralLedgerAccountEdit = GeneralLedgerAccountPermission("generalledgeraccount.edit")
-
-	// PermissionGeneralLedgerAccountAdd is the permission to add a new general ledger account
-	PermissionGeneralLedgerAccountAdd = GeneralLedgerAccountPermission("generalledgeraccount.add")
-
-	// PermissionGeneralLedgerAccountDelete is the permission to delete an general ledger account
-	PermissionGeneralLedgerAccountDelete = GeneralLedgerAccountPermission("generalledgeraccount.delete")
-)
-
-// String returns the string representation of the GeneralLedgerAccountPermission
-func (p GeneralLedgerAccountPermission) String() string {
-	return string(p)
-}
-
 type GeneralLedgerAccount struct {
 	bun.BaseModel `bun:"table:general_ledger_accounts,alias:gla" json:"-"`
 
@@ -153,7 +132,8 @@ func (g *GeneralLedgerAccount) BeforeAppendModel(_ context.Context, query bun.Qu
 }
 
 type GeneralLedgerAccountTag struct {
-	bun.BaseModel          `bun:"table:general_ledger_account_tags" json:"-"`
+	bun.BaseModel `bun:"table:general_ledger_account_tags" json:"-"`
+
 	GeneralLedgerAccountID uuid.UUID `bun:"general_ledger_account_id,pk,type:uuid" json:"generalLedgerAccountId"`
 	TagID                  uuid.UUID `bun:"tag_id,pk,type:uuid" json:"tagId"`
 

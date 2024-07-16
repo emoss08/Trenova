@@ -12,27 +12,6 @@ import (
 	"github.com/uptrace/bun"
 )
 
-type HazardousMaterialPermission string
-
-const (
-	// PermissionHazardousMaterialView is the permission to view hazardous material details
-	PermissionHazardousMaterialView = HazardousMaterialPermission("hazardousmaterial.view")
-
-	// PermissionHazardousMaterialEdit is the permission to edit hazardous material details
-	PermissionHazardousMaterialEdit = HazardousMaterialPermission("hazardousmaterial.edit")
-
-	// PermissionHazardousMaterialAdd is the permission to add a new hazardous material
-	PermissionHazardousMaterialAdd = HazardousMaterialPermission("hazardousmaterial.add")
-
-	// PermissionHazardousMaterialDelete is the permission to delete a hazardous material
-	PermissionHazardousMaterialDelete = HazardousMaterialPermission("hazardousmaterial.delete")
-)
-
-// String returns the string representation of the HazardousMaterialPermission
-func (p HazardousMaterialPermission) String() string {
-	return string(p)
-}
-
 type HazardousMaterial struct {
 	bun.BaseModel `bun:"table:hazardous_materials,alias:hm" json:"-"`
 

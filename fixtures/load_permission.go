@@ -13,22 +13,8 @@ import (
 )
 
 func loadPermissions(ctx context.Context, db *bun.DB, enforcer *casbin.Enforcer) error {
-	var permissions []*models.Permission
-
-	err := db.NewSelect().Model(&permissions).Scan(ctx)
-	if err != nil {
-		return err
-	}
-
-	existingPermissionMap := make(map[string]bool)
-	for _, permission := range permissions {
-		existingPermissionMap[permission.Codename] = true
-	}
-
-	log.Println("Adding base permissions...")
-
 	var resources []*models.Resource
-	err = db.NewSelect().Model(&resources).Scan(ctx)
+	err := db.NewSelect().Model(&resources).Scan(ctx)
 	if err != nil {
 		return err
 	}
@@ -40,9 +26,9 @@ func loadPermissions(ctx context.Context, db *bun.DB, enforcer *casbin.Enforcer)
 		writeDescription string
 	}{
 		{"view", "Can view all", "Can view all"},
-		{"add", "Can view all", "Can add, update, and delete"},
-		{"update", "Can view all", "Can add, update, and delete"},
-		{"delete", "Can view all", "Can add, update, and delete"},
+		{"create", "Can view all", "Can create, update, and delete"},
+		{"update", "Can view all", "Can create, update, and delete"},
+		{"delete", "Can view all", "Can create, update, and delete"},
 	}
 
 	for _, resource := range resources {

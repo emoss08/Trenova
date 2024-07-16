@@ -29,3 +29,5 @@ type TractorAssignment struct {
 	Shipment     *Shipment     `bun:"rel:belongs-to,join:shipment_id=id" json:"shipment,omitempty"`
 	ShipmentMove *ShipmentMove `bun:"rel:belongs-to,join:shipment_move_id=id" json:"shipmentMove,omitempty"`
 }
+
+// TODO(Wolfred): Add a validate method.

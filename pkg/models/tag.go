@@ -13,27 +13,6 @@ import (
 	"github.com/uptrace/bun"
 )
 
-type TagPermission string
-
-const (
-	// TagView is the permission to view tag details
-	PermissionTagView = TagPermission("tag.view")
-
-	// TagEdit is the permission to edit tag details
-	PermissionTagEdit = TagPermission("tag.edit")
-
-	// TagAdd is the permission to add a new tag
-	PermissionTagAdd = TagPermission("tag.add")
-
-	// TagDelete is the permission to delete an tag
-	PermissionTagDelete = TagPermission("tag.delete")
-)
-
-// String returns the string representation of the TagPermission
-func (p TagPermission) String() string {
-	return string(p)
-}
-
 type Tag struct {
 	bun.BaseModel `bun:"table:tags,alias:t" json:"-"`
 	ID            uuid.UUID       `bun:",pk,type:uuid,default:uuid_generate_v4()" json:"id"`

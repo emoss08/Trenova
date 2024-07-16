@@ -34,7 +34,6 @@ func (s UserService) GetAuthenticatedUser(ctx context.Context, userID uuid.UUID)
 
 	err := s.db.NewSelect().
 		Model(u).
-		Relation("Roles.Permissions").
 		Where("u.id = ?", userID).
 		Scan(ctx)
 	if err != nil {
@@ -44,9 +43,9 @@ func (s UserService) GetAuthenticatedUser(ctx context.Context, userID uuid.UUID)
 	return u, nil
 }
 
-func (s UserService) UpdateUser(ctx context.Context, user *models.User) (*models.User, error) {
+func (s UserService) UpdateUser(ctx context.Context, entity *models.User) (*models.User, error) {
 	err := s.db.RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
-		if err := user.OptimisticUpdate(ctx, tx); err != nil {
+		if err := entity.OptimisticUpdate(ctx, tx); err != nil {
 			return err
 		}
 
@@ -56,7 +55,7 @@ func (s UserService) UpdateUser(ctx context.Context, user *models.User) (*models
 		return nil, err
 	}
 
-	return user, err
+	return entity, err
 }
 
 func (s UserService) ClearProfilePic(ctx context.Context, userID uuid.UUID) error {

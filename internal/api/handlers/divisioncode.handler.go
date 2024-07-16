@@ -30,9 +30,9 @@ func NewDivisionCodeHandler(s *server.Server) *DivisionCodeHandler {
 func (h DivisionCodeHandler) RegisterRoutes(r fiber.Router) {
 	api := r.Group("/division-codes")
 	api.Get("/", h.Get())
-	api.Get("/:divisioncodeID", h.GetByID())
+	api.Get("/:divisionCodeID", h.GetByID())
 	api.Post("/", h.Create())
-	api.Put("/:divisioncodeID", h.Update())
+	api.Put("/:divisionCodeID", h.Update())
 }
 
 func (h DivisionCodeHandler) Get() fiber.Handler {
@@ -144,8 +144,8 @@ func (h DivisionCodeHandler) Create() fiber.Handler {
 
 func (h DivisionCodeHandler) GetByID() fiber.Handler {
 	return func(c *fiber.Ctx) error {
-		divisioncodeID := c.Params("divisioncodeID")
-		if divisioncodeID == "" {
+		divisionCodeID := c.Params("divisionCodeID")
+		if divisionCodeID == "" {
 			return c.Status(fiber.StatusBadRequest).JSON(fiber.Error{
 				Code:    fiber.StatusBadRequest,
 				Message: "DivisionCode ID is required",
@@ -170,7 +170,7 @@ func (h DivisionCodeHandler) GetByID() fiber.Handler {
 			})
 		}
 
-		entity, err := h.service.Get(c.UserContext(), uuid.MustParse(divisioncodeID), orgID, buID)
+		entity, err := h.service.Get(c.UserContext(), uuid.MustParse(divisionCodeID), orgID, buID)
 		if err != nil {
 			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Error{
 				Code:    fiber.StatusInternalServerError,
@@ -184,8 +184,8 @@ func (h DivisionCodeHandler) GetByID() fiber.Handler {
 
 func (h DivisionCodeHandler) Update() fiber.Handler {
 	return func(c *fiber.Ctx) error {
-		divisioncodeID := c.Params("divisioncodeID")
-		if divisioncodeID == "" {
+		divisionCodeID := c.Params("divisionCodeID")
+		if divisionCodeID == "" {
 			return c.Status(fiber.StatusBadRequest).JSON(fiber.Error{
 				Code:    fiber.StatusBadRequest,
 				Message: "DivisionCode ID is required",
@@ -205,7 +205,7 @@ func (h DivisionCodeHandler) Update() fiber.Handler {
 			return c.Status(fiber.StatusBadRequest).JSON(err)
 		}
 
-		updatedEntity.ID = uuid.MustParse(divisioncodeID)
+		updatedEntity.ID = uuid.MustParse(divisionCodeID)
 
 		entity, err := h.service.UpdateOne(c.UserContext(), updatedEntity)
 		if err != nil {

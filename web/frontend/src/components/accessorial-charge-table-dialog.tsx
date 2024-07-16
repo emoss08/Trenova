@@ -5,6 +5,7 @@ import { TextareaField } from "@/components/common/fields/textarea";
 import { Button } from "@/components/ui/button";
 import { useCustomMutation } from "@/hooks/useCustomMutation";
 import { statusChoices } from "@/lib/choices";
+import { usePopoutWindow } from "@/lib/popout-window-hook";
 import { accessorialChargeSchema } from "@/lib/validations/BillingSchema";
 import { type AccessorialChargeFormValues as FormValues } from "@/types/billing";
 import { type TableSheetProps } from "@/types/tables";
@@ -100,6 +101,7 @@ export function ACForm({ control }: { control: Control<FormValues> }) {
 }
 
 export function ACDialog({ onOpenChange, open }: TableSheetProps) {
+  const { isPopout, closePopout } = usePopoutWindow();
   const { control, handleSubmit, reset } = useForm<FormValues>({
     resolver: yupResolver(accessorialChargeSchema),
     defaultValues: {
@@ -124,6 +126,10 @@ export function ACDialog({ onOpenChange, open }: TableSheetProps) {
 
   const onSubmit = (values: FormValues) => {
     mutation.mutate(values);
+
+    if (isPopout) {
+      closePopout();
+    }
   };
 
   if (!open) return null;

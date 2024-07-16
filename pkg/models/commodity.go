@@ -12,27 +12,6 @@ import (
 	"github.com/uptrace/bun"
 )
 
-type CommodityPermission string
-
-const (
-	// PermissionCommodityView is the permission to view commodity details
-	PermissionCommodityView = CommodityPermission("commodity.view")
-
-	// PermissionCommodityEdit is the permission to edit commodity details
-	PermissionCommodityEdit = CommodityPermission("commodity.edit")
-
-	// PermissionCommodityAdd is the permission to add a new commodity
-	PermissionCommodityAdd = CommodityPermission("commodity.add")
-
-	// PermissionCommodityDelete is the permission to delete a commodity
-	PermissionCommodityDelete = CommodityPermission("commodity.delete")
-)
-
-// String returns the string representation of the CommodityPermission
-func (p CommodityPermission) String() string {
-	return string(p)
-}
-
 type Commodity struct {
 	bun.BaseModel `bun:"table:commodities,alias:com" json:"-"`
 
@@ -41,11 +20,11 @@ type Commodity struct {
 	Status        string    `bun:"type:status_enum,notnull,default:'Active'" json:"status"`
 	IsHazmat      bool      `bun:"type:boolean,notnull,default:false" json:"isHazmat"`
 	UnitOfMeasure string    `bun:"type:VARCHAR(50),notnull" json:"unitOfMeasure"`
-	MinTemp       int       `bun:"type:integer,notnull" json:"minTemp"`
-	MaxTemp       int       `bun:"type:integer,notnull" json:"maxTemp"`
+	MinTemp       *int16    `bun:"type:integer,nullzero" json:"minTemp"`
+	MaxTemp       *int16    `bun:"type:integer,nullzero" json:"maxTemp"`
+	Version       int64     `bun:"type:BIGINT" json:"version"`
 	CreatedAt     time.Time `bun:",nullzero,notnull,default:current_timestamp" json:"createdAt"`
 	UpdatedAt     time.Time `bun:",nullzero,notnull,default:current_timestamp" json:"updatedAt"`
-	Version       int64     `bun:"type:BIGINT" json:"version"`
 
 	BusinessUnitID      uuid.UUID `bun:"type:uuid,notnull" json:"businessUnitId"`
 	OrganizationID      uuid.UUID `bun:"type:uuid,notnull" json:"organizationId"`
@@ -62,6 +41,9 @@ func (c Commodity) Validate() error {
 		validation.Field(&c.Name, validation.Required, validation.Length(1, 50)),
 		validation.Field(&c.BusinessUnitID, validation.Required),
 		validation.Field(&c.OrganizationID, validation.Required),
+		validation.Field(&c.IsHazmat,
+			validation.Required.Error("IsHazmat is required. Please Try again."),
+			validation.When(c.HazardousMaterialID != uuid.Nil, validation.Required.Error("Hazardous Material is required when IsHazmat is true. Please try again."))),
 	)
 }
 

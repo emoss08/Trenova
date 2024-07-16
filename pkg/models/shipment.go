@@ -42,27 +42,6 @@ var validShipmentStatusTransitions = map[property.ShipmentStatus][]property.Ship
 	property.ShipmentStatusVoided: {}, // No valid transitions from Voided
 }
 
-type ShipmentPermission string
-
-const (
-	// PermissionShipmentView is the permission to view shipment details
-	PermissionShipmentView = ShipmentPermission("shipment.view")
-
-	// PermissionShipmentEdit is the permission to edit shipment details
-	PermissionShipmentEdit = ShipmentPermission("shipment.edit")
-
-	// PermissionShipmentAdd is the permission to add a new shipment
-	PermissionShipmentAdd = ShipmentPermission("shipment.add")
-
-	// PermissionShipmentDelete is the permission to delete a shipment
-	PermissionShipmentDelete = ShipmentPermission("shipment.delete")
-)
-
-// String returns the string representation of the ShipmentPermission
-func (p ShipmentPermission) String() string {
-	return string(p)
-}
-
 type Shipment struct {
 	bun.BaseModel `bun:"table:shipments,alias:sp" json:"-"`
 
@@ -111,19 +90,18 @@ type Shipment struct {
 	TrailerTypeID         *uuid.UUID `bun:"type:uuid,nullzero" json:"trailerTypeId"`
 	TractorTypeID         *uuid.UUID `bun:"type:uuid,nullzero" json:"tractorTypeId"`
 
-	CreatedBy           *User                `bun:"rel:belongs-to,join:created_by_id=id" json:"-"`
-	BusinessUnit        *BusinessUnit        `bun:"rel:belongs-to,join:business_unit_id=id" json:"-"`
-	Organization        *Organization        `bun:"rel:belongs-to,join:organization_id=id" json:"-"`
-	ShipmentType        *ShipmentType        `bun:"rel:belongs-to,join:shipment_type_id=id" json:"-"`
-	ServiceType         *ServiceType         `bun:"rel:belongs-to,join:service_type_id=id" json:"-"`
-	TractorType         *EquipmentType       `bun:"rel:belongs-to,join:tractor_type_id=id" json:"-"`
-	TrailerType         *EquipmentType       `bun:"rel:belongs-to,join:trailer_type_id=id" json:"-"`
-	RevenueCode         *RevenueCode         `bun:"rel:belongs-to,join:revenue_code_id=id" json:"-"`
-	OriginLocation      *Location            `bun:"rel:belongs-to,join:origin_location_id=id" json:"-"`
-	DestinationLocation *Location            `bun:"rel:belongs-to,join:destination_location_id=id" json:"-"`
-	Customer            *Customer            `bun:"rel:belongs-to,join:customer_id=id" json:"-"`
-	AccessorialCharges  []*AccessorialCharge `bun:"rel:has-many,join:id=shipment_id" json:"-"`
-	ShipmentMoves       []*ShipmentMove      `bun:"rel:has-many,join:id=shipment_id" json:"moves"`
+	CreatedBy           *User           `bun:"rel:belongs-to,join:created_by_id=id" json:"-"`
+	BusinessUnit        *BusinessUnit   `bun:"rel:belongs-to,join:business_unit_id=id" json:"-"`
+	Organization        *Organization   `bun:"rel:belongs-to,join:organization_id=id" json:"-"`
+	ShipmentType        *ShipmentType   `bun:"rel:belongs-to,join:shipment_type_id=id" json:"-"`
+	ServiceType         *ServiceType    `bun:"rel:belongs-to,join:service_type_id=id" json:"-"`
+	TractorType         *EquipmentType  `bun:"rel:belongs-to,join:tractor_type_id=id" json:"-"`
+	TrailerType         *EquipmentType  `bun:"rel:belongs-to,join:trailer_type_id=id" json:"-"`
+	RevenueCode         *RevenueCode    `bun:"rel:belongs-to,join:revenue_code_id=id" json:"-"`
+	OriginLocation      *Location       `bun:"rel:belongs-to,join:origin_location_id=id" json:"-"`
+	DestinationLocation *Location       `bun:"rel:belongs-to,join:destination_location_id=id" json:"-"`
+	Customer            *Customer       `bun:"rel:belongs-to,join:customer_id=id" json:"-"`
+	ShipmentMoves       []*ShipmentMove `bun:"rel:has-many,join:id=shipment_id" json:"moves"`
 }
 
 // Validate validates the Shipment struct.

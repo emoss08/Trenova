@@ -8,27 +8,6 @@ import (
 	"github.com/uptrace/bun"
 )
 
-type WorkerMasterKeyGenerationPermission string
-
-const (
-	// PermissionWorkerMasterKeygenerationView is the permission to view worker master key generation details
-	PermissionWorkerMasterKeygenerationView = WorkerMasterKeyGenerationPermission("workermasterkeygeneration.view")
-
-	// PermissionWorkerMasterKeygenerationEdit is the permission to edit worker master key generation details
-	PermissionWorkerMasterKeygenerationEdit = WorkerMasterKeyGenerationPermission("workermasterkeygeneration.edit")
-
-	// PermissionWorkerMasterKeygenerationAdd is the permission to add a new worker master key generation
-	PermissionWorkerMasterKeygenerationAdd = WorkerMasterKeyGenerationPermission("workermasterkeygeneration.add")
-
-	// PermissionWorkerMasterKeygenerationDelete is the permission to delete an worker master key generation
-	PermissionWorkerMasterKeygenerationDelete = WorkerMasterKeyGenerationPermission("workermasterkeygeneration.delete")
-)
-
-// String returns the string representation of the WorkerMasterKeyGenerationPermission
-func (p WorkerMasterKeyGenerationPermission) String() string {
-	return string(p)
-}
-
 type WorkerMasterKeyGeneration struct {
 	bun.BaseModel `bun:"table:worker_master_key_generations,alias:wmkg" json:"-"`
 	CreatedAt     time.Time  `bun:",nullzero,notnull,default:current_timestamp" json:"createdAt"`

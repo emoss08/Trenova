@@ -13,27 +13,6 @@ import (
 	"github.com/uptrace/bun"
 )
 
-type DivisionCodePermission string
-
-const (
-	// PermissionDivisionCodeView is the permission to view division code details
-	PermissionDivisionCodeView = DivisionCodePermission("divisioncode.view")
-
-	// PermissionDivisionCodeEdit is the permission to edit division code details
-	PermissionDivisionCodeEdit = DivisionCodePermission("divisioncode.edit")
-
-	// PermissionDivisionCodeAdd is the permission to add a necw division code
-	PermissionDivisionCodeAdd = DivisionCodePermission("divisioncode.add")
-
-	// PermissionDivisionCodeDelete is the permission to delete an division code
-	PermissionDivisionCodeDelete = DivisionCodePermission("divisioncode.delete")
-)
-
-// String returns the string representation of the DivisionCodePermission
-func (p DivisionCodePermission) String() string {
-	return string(p)
-}
-
 type DivisionCode struct {
 	bun.BaseModel `bun:"table:division_codes,alias:dc" json:"-"`
 

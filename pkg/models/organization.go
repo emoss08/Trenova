@@ -13,31 +13,6 @@ import (
 	"github.com/uptrace/bun"
 )
 
-// OrganizationPermission is a type for organization permissions
-type OrganizationPermission string
-
-const (
-	// PermissionOrganizationView is the permission to view organization details
-	PermissionOrganizationView = OrganizationPermission("organization.view")
-
-	// PermissionOrganizationEdit is the permission to edit organization details
-	PermissionOrganizationEdit = OrganizationPermission("organization.edit")
-
-	// PermissionOrganizationAdd is the permission to add a new organization
-	PermissionOrganizationAdd = OrganizationPermission("organization.add")
-
-	// PermissionOrganizationDelete is the permission to delete an organization
-	PermissionOrganizationDelete = OrganizationPermission("organization.delete")
-
-	// PermissionOrganizationChangeLogo is the permission to change the logo of the organization
-	PermissionOrganizationChangeLogo = OrganizationPermission("organization.change_logo")
-)
-
-// String returns the string representation of the OrganizationPermission
-func (p OrganizationPermission) String() string {
-	return string(p)
-}
-
 type Organization struct {
 	bun.BaseModel `bun:"organizations" alias:"o" json:"-"`
 

@@ -13,27 +13,6 @@ import (
 	"github.com/uptrace/bun"
 )
 
-type EquipmentManufacturerPermission string
-
-const (
-	// PermissionEquipmentManufacturerView is the permission to view equipment manufacturer details
-	PermissionEquipmentManufacturerView = EquipmentManufacturerPermission("equipmentmanufacturer.view")
-
-	// PermissionEquipmentManufacturerEdit is the permission to edit equipment manufacturer details
-	PermissionEquipmentManufacturerEdit = EquipmentManufacturerPermission("equipmentmanufacturer.edit")
-
-	// PermissionEquipmentManufacturerAdd is the permission to add a new equipment manufacturer
-	PermissionEquipmentManufacturerAdd = EquipmentManufacturerPermission("equipmentmanufacturer.add")
-
-	// PermissionEquipmentManufacturerDelete is the permission to delete an equipment manufacturer
-	PermissionEquipmentManufacturerDelete = EquipmentManufacturerPermission("equipmentmanufacturer.delete")
-)
-
-// String returns the string representation of the EquipmentManufacturerPermission
-func (p EquipmentManufacturerPermission) String() string {
-	return string(p)
-}
-
 type EquipmentManufacturer struct {
 	bun.BaseModel `bun:"table:equipment_manufacturers,alias:em" json:"-"`
 

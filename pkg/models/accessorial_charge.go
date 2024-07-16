@@ -76,7 +76,7 @@ func (c *AccessorialCharge) OptimisticUpdate(ctx context.Context, tx bun.IDB) er
 
 	if rows == 0 {
 		return &validator.BusinessLogicError{
-			Message: fmt.Sprintf("Version mismatch. The DivisionCode (ID: %s) has been updated by another user. Please refresh and try again.", c.ID),
+			Message: fmt.Sprintf("Version mismatch. The AccessorialCharge (ID: %s) has been updated by another user. Please refresh and try again.", c.ID),
 		}
 	}
 

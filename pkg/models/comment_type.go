@@ -13,27 +13,6 @@ import (
 	"github.com/uptrace/bun"
 )
 
-type CommentTypePermission string
-
-const (
-	// PermissionCommentTypeView is the permission to view comment type details
-	PermissionCommentTypeView = CommentTypePermission("commenttype.view")
-
-	// PermissionCommentTypeEdit is the permission to edit comment type details
-	PermissionCommentTypeEdit = CommentTypePermission("commenttype.edit")
-
-	// PermissionCommentTypeAdd is the permission to add a new comment type
-	PermissionCommentTypeAdd = CommentTypePermission("commenttype.add")
-
-	// PermissionCommentTypeDelete is the permission to delete an comment type
-	PermissionCommentTypeDelete = CommentTypePermission("commenttype.delete")
-)
-
-// String returns the string representation of the CommentTypePermission
-func (p CommentTypePermission) String() string {
-	return string(p)
-}
-
 type CommentType struct {
 	bun.BaseModel `bun:"table:comment_types,alias:ct" json:"-"`
 

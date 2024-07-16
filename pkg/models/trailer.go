@@ -16,27 +16,6 @@ import (
 	"github.com/uptrace/bun"
 )
 
-type TrailerPermission string
-
-const (
-	// PermissionTrailerView is the permission to view trailer details
-	PermissionTrailerView = TrailerPermission("trailer.view")
-
-	// PermissionTrailerEdit is the permission to edit trailer details
-	PermissionTrailerEdit = TrailerPermission("trailer.edit")
-
-	// PermissionTrailerAdd is the permission to add a new trailer
-	PermissionTrailerAdd = TrailerPermission("trailer.add")
-
-	// PermissionTrailerDelete is the permission to delete a trailer
-	PermissionTrailerDelete = TrailerPermission("trailer.delete")
-)
-
-// String returns the string representation of the TrailerPermission
-func (p TrailerPermission) String() string {
-	return string(p)
-}
-
 type Trailer struct {
 	bun.BaseModel `bun:"table:trailers,alias:tr" json:"-"`
 

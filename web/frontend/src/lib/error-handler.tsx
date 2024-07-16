@@ -33,11 +33,11 @@ export async function handleError<T extends FieldValues>(
   const invalidParams = data["invalid-params"] || [];
 
   switch (data.instance) {
-    case `${API_BASE_URL}/probs/validation-error`:
+    case `${API_BASE_URL}/probs/validation-errors`:
       console.info("[Trenova] Validation error", invalidParams);
       handleValidationErrors(invalidParams, control);
       break;
-    case `${API_BASE_URL}/probs/database-error`:
+    case `${API_BASE_URL}/probs/database-errors`:
     case `${API_BASE_URL}/probs/invalid-request`: // Combined case for both types of errors
       handleInvalidRequest(invalidParams, control);
       break;

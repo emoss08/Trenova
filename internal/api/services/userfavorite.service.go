@@ -36,9 +36,9 @@ func (s UserFavoriteService) GetUserFavorites(ctx context.Context, userID uuid.U
 	return uf, count, nil
 }
 
-func (s UserFavoriteService) AddUserFavorite(ctx context.Context, uf *models.UserFavorite) error {
+func (s UserFavoriteService) AddUserFavorite(ctx context.Context, entity *models.UserFavorite) error {
 	err := s.db.RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
-		if _, err := tx.NewInsert().Model(uf).Exec(ctx); err != nil {
+		if _, err := tx.NewInsert().Model(entity).Exec(ctx); err != nil {
 			return err
 		}
 
@@ -51,11 +51,11 @@ func (s UserFavoriteService) AddUserFavorite(ctx context.Context, uf *models.Use
 	return err
 }
 
-func (s UserFavoriteService) DeleteUserFavorite(ctx context.Context, uf *models.UserFavorite) error {
+func (s UserFavoriteService) DeleteUserFavorite(ctx context.Context, entity *models.UserFavorite) error {
 	err := s.db.RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
-		if _, err := tx.NewDelete().Model(uf).
-			Where("user_id = ?", uf.UserID).
-			Where("page_link = ?", uf.PageLink).
+		if _, err := tx.NewDelete().Model(entity).
+			Where("user_id = ?", entity.UserID).
+			Where("page_link = ?", entity.PageLink).
 			Exec(ctx); err != nil {
 			return err
 		}

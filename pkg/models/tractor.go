@@ -16,27 +16,6 @@ import (
 	"github.com/uptrace/bun"
 )
 
-type TractorPermission string
-
-const (
-	// PermissionTractorView is the permission to view tractor details
-	PermissionTractorView = TractorPermission("tractor.view")
-
-	// PermissionTractorEdit is the permission to edit tractor details
-	PermissionTractorEdit = TractorPermission("tractor.edit")
-
-	// PermissionTractorAdd is the permission to add a new tractor
-	PermissionTractorAdd = TractorPermission("tractor.add")
-
-	// PermissionTractorDelete is the permission to delete a tractor
-	PermissionTractorDelete = TractorPermission("tractor.delete")
-)
-
-// String returns the string representation of the TractorPermission
-func (p TractorPermission) String() string {
-	return string(p)
-}
-
 type Tractor struct {
 	bun.BaseModel `bun:"table:tractors,alias:tr" json:"-"`
 

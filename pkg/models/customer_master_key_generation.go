@@ -8,27 +8,6 @@ import (
 	"github.com/uptrace/bun"
 )
 
-type CustomerMasterKeyGenerationPermission string
-
-const (
-	// PermissionCustomerMasterKeygenerationView is the permission to view customer master key generation details
-	PermissionCustomerMasterKeygenerationView = CustomerMasterKeyGenerationPermission("customermasterkeygeneration.view")
-
-	// PermissionCustomerMasterKeygenerationEdit is the permission to edit customer master key generation details
-	PermissionCustomerMasterKeygenerationEdit = CustomerMasterKeyGenerationPermission("customermasterkeygeneration.edit")
-
-	// PermissionCustomerMasterKeygenerationAdd is the permission to add a new customer master key generation
-	PermissionCustomerMasterKeygenerationAdd = CustomerMasterKeyGenerationPermission("customermasterkeygeneration.add")
-
-	// PermissionCustomerMasterKeygenerationDelete is the permission to delete an customer master key generation
-	PermissionCustomerMasterKeygenerationDelete = CustomerMasterKeyGenerationPermission("customermasterkeygeneration.delete")
-)
-
-// String returns the string representation of the CustomerMasterKeyGenerationPermission
-func (p CustomerMasterKeyGenerationPermission) String() string {
-	return string(p)
-}
-
 type CustomerMasterKeyGeneration struct {
 	bun.BaseModel `bun:"table:worker_master_key_generations,alias:wmkg" json:"-"`
 	CreatedAt     time.Time  `bun:",nullzero,notnull,default:current_timestamp" json:"createdAt"`

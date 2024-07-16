@@ -15,27 +15,6 @@ import (
 	"github.com/uptrace/bun"
 )
 
-type FleetCodePermission string
-
-const (
-	// PermissionFleetCodeView is the permission to view fleet code details
-	PermissionFleetCodeView = FleetCodePermission("fleetcode.view")
-
-	// PermissionFleetCodeEdit is the permission to edit fleet code details
-	PermissionFleetCodeEdit = FleetCodePermission("fleetcode.edit")
-
-	// PermissionFleetCodeAdd is the permission to add a new fleet code
-	PermissionFleetCodeAdd = FleetCodePermission("fleetcode.add")
-
-	// PermissionFleetCodeDelete is the permission to delete an fleet code
-	PermissionFleetCodeDelete = FleetCodePermission("fleetcode.delete")
-)
-
-// String returns the string representation of the FleetCodePermission
-func (p FleetCodePermission) String() string {
-	return string(p)
-}
-
 type FleetCode struct {
 	bun.BaseModel `bun:"table:fleet_codes,alias:fl" json:"-"`
 

@@ -60,7 +60,7 @@ export const glAccountSchema: ObjectSchema<GLAccountFormValues> =
     isReconciled: boolean(),
     isTaxRelevant: boolean(),
     interestRate: number().nullable().optional(),
-    tagIds: array().of(string().required()),
+    tagIds: array().of(string()),
     tags: array().of(tagSchema),
   });
 

@@ -15,27 +15,6 @@ import (
 	"github.com/uptrace/bun"
 )
 
-type WorkerPermission string
-
-const (
-	// PermissionWorkerView is the permission to view worker details
-	PermissionWorkerView = WorkerPermission("worker.view")
-
-	// PermissionWorkerEdit is the permission to edit worker details
-	PermissionWorkerEdit = WorkerPermission("worker.edit")
-
-	// PermissionWorkerAdd is the permission to add a necw worker
-	PermissionWorkerAdd = WorkerPermission("worker.add")
-
-	// PermissionWorkerDelete is the permission to delete an worker
-	PermissionWorkerDelete = WorkerPermission("worker.delete")
-)
-
-// String returns the string representation of the WorkerPermission
-func (p WorkerPermission) String() string {
-	return string(p)
-}
-
 type Worker struct {
 	bun.BaseModel `bun:"table:workers,alias:wk" json:"-"`
 

@@ -8,27 +8,6 @@ import (
 	"github.com/uptrace/bun"
 )
 
-type LocationMasterKeyGenerationPermission string
-
-const (
-	// PermissionLocationMasterKeygenerationView is the permission to view location master key generation details
-	PermissionLocationMasterKeygenerationView = LocationMasterKeyGenerationPermission("locationmasterkeygeneration.view")
-
-	// PermissionLocationMasterKeygenerationEdit is the permission to edit location master key generation details
-	PermissionLocationMasterKeygenerationEdit = LocationMasterKeyGenerationPermission("locationmasterkeygeneration.edit")
-
-	// PermissionLocationMasterKeygenerationAdd is the permission to add a new location master key generation
-	PermissionLocationMasterKeygenerationAdd = LocationMasterKeyGenerationPermission("locationmasterkeygeneration.add")
-
-	// PermissionLocationMasterKeygenerationDelete is the permission to delete an location master key generation
-	PermissionLocationMasterKeygenerationDelete = LocationMasterKeyGenerationPermission("locationmasterkeygeneration.delete")
-)
-
-// String returns the string representation of the LocationMasterKeyGenerationPermission
-func (p LocationMasterKeyGenerationPermission) String() string {
-	return string(p)
-}
-
 type LocationMasterKeyGeneration struct {
 	bun.BaseModel `bun:"table:location_master_key_generations,alias:lmkg" json:"-"`
 	CreatedAt     time.Time  `bun:",nullzero,notnull,default:current_timestamp" json:"createdAt"`

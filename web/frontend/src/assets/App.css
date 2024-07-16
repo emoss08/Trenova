@@ -104,4 +104,10 @@
         content: " *";
         color: hsl(var(--destructive));
     }
+
+    #drag-drop-portal {
+        position: fixed;
+        z-index: 9999;
+        pointer-events: none;
+    }
 }

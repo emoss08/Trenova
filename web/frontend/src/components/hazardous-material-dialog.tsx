@@ -8,6 +8,7 @@ import {
   packingGroupChoices,
   statusChoices,
 } from "@/lib/choices";
+import { usePopoutWindow } from "@/lib/popout-window-hook";
 import { hazardousMaterialSchema } from "@/lib/validations/CommoditiesSchema";
 import { type HazardousMaterialFormValues as FormValues } from "@/types/commodities";
 import { type TableSheetProps } from "@/types/tables";
@@ -124,7 +125,7 @@ export function HazardousMaterialDialog({
   open,
 }: TableSheetProps) {
   const { t } = useTranslation(["pages.hazardousmaterial", "common"]);
-
+  const { isPopout, closePopout } = usePopoutWindow();
   const { control, reset, handleSubmit } = useForm<FormValues>({
     resolver: yupResolver(hazardousMaterialSchema),
     defaultValues: {
@@ -146,9 +147,16 @@ export function HazardousMaterialDialog({
     closeModal: true,
     reset,
     errorMessage: t("formErrorMessage"),
+    onSettled: () => {
+      if (isPopout) {
+        closePopout();
+      }
+    },
   });
 
-  const onSubmit = (values: FormValues) => mutation.mutate(values);
+  const onSubmit = (values: FormValues) => {
+    mutation.mutate(values);
+  };
 
   return (
     <Credenza open={open} onOpenChange={onOpenChange}>
@@ -167,7 +175,7 @@ export function HazardousMaterialDialog({
                 </Button>
               </CredenzaClose>
               <Button type="submit" isLoading={mutation.isPending}>
-                Save Changes
+                Save {isPopout ? "and Close" : "Changes"}
               </Button>
             </CredenzaFooter>
           </form>

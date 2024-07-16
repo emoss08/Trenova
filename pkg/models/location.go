@@ -16,27 +16,6 @@ import (
 	"github.com/uptrace/bun"
 )
 
-type LocationPermission string
-
-const (
-	// PermissionLocationView is the permission to view location details
-	PermissionLocationView = LocationPermission("location.view")
-
-	// PermissionLocationEdit is the permission to edit location details
-	PermissionLocationEdit = LocationPermission("location.edit")
-
-	// PermissionLocationAdd is the permission to add a necw location
-	PermissionLocationAdd = LocationPermission("location.add")
-
-	// PermissionLocationDelete is the permission to delete an location
-	PermissionLocationDelete = LocationPermission("location.delete")
-)
-
-// String returns the string representation of the LocationPermission
-func (p LocationPermission) String() string {
-	return string(p)
-}
-
 type Location struct {
 	bun.BaseModel `bun:"table:locations,alias:lc" json:"-"`
 

@@ -29,11 +29,11 @@ func (s *PermissionService) CheckUserPermission(c *fiber.Ctx, resource string, a
 
 	allowed, err := s.enforcer.Enforce(userID.String(), permission, "allow")
 	if err != nil {
-		return fiber.NewError(fiber.StatusInternalServerError, err.Error())
+		return fmt.Errorf("Error checking permission: %w", err) //nolint:stylecheck // This is an error message
 	}
 
 	if !allowed {
-		return fiber.NewError(fiber.StatusForbidden, "You do not have permission to perform this action")
+		return fmt.Errorf("You do not have permission to `%s:%s`, please contact your administrator.", resource, action) //nolint:revive,stylecheck // This is an error message
 	}
 
 	return nil

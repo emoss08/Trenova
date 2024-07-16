@@ -2,10 +2,8 @@ import { InputField } from "@/components/common/fields/input";
 import { SelectInput } from "@/components/common/fields/select-input";
 import { Button } from "@/components/ui/button";
 import { useCustomMutation } from "@/hooks/useCustomMutation";
-import { useGLAccounts } from "@/hooks/useQueries";
 import { statusChoices } from "@/lib/choices";
 import { revenueCodeSchema } from "@/lib/validations/AccountingSchema";
-import { TChoiceProps } from "@/types";
 import { type RevenueCodeFormValues as FormValues } from "@/types/accounting";
 import { type TableSheetProps } from "@/types/tables";
 import { yupResolver } from "@hookform/resolvers/yup";
@@ -25,17 +23,7 @@ import {
 } from "./ui/credenza";
 import { Form, FormControl, FormGroup } from "./ui/form";
 
-export function RCForm({
-  control,
-  glAccounts,
-  isLoading,
-  isError,
-}: {
-  control: Control<FormValues>;
-  glAccounts: TChoiceProps[];
-  isLoading: boolean;
-  isError: boolean;
-}) {
+export function RCForm({ control }: { control: Control<FormValues> }) {
   return (
     <Form>
       <FormGroup className="grid gap-6 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-2">
@@ -141,8 +129,6 @@ export function RevenueCodeDialog({ onOpenChange, open }: TableSheetProps) {
 
   const onSubmit = (values: FormValues) => mutation.mutate(values);
 
-  const { selectGLAccounts, isLoading, isError } = useGLAccounts(open);
-
   return (
     <Credenza open={open} onOpenChange={onOpenChange}>
       <CredenzaContent>
@@ -154,12 +140,7 @@ export function RevenueCodeDialog({ onOpenChange, open }: TableSheetProps) {
         </CredenzaDescription>
         <CredenzaBody>
           <form onSubmit={handleSubmit(onSubmit)}>
-            <RCForm
-              control={control}
-              glAccounts={selectGLAccounts}
-              isLoading={isLoading}
-              isError={isError}
-            />
+            <RCForm control={control} />
             <CredenzaFooter>
               <CredenzaClose asChild>
                 <Button variant="outline" type="button">

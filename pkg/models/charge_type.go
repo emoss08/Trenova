@@ -13,27 +13,6 @@ import (
 	"github.com/uptrace/bun"
 )
 
-type ChargeTypePermission string
-
-const (
-	// PermissionChargeTypeView is the permission to view charge type details
-	PermissionChargeTypeView = ChargeTypePermission("chargetype.view")
-
-	// PermissionChargeTypeEdit is the permission to edit charge type details
-	PermissionChargeTypeEdit = ChargeTypePermission("chargetype.edit")
-
-	// PermissionChargeTypeAdd is the permission to add a new charge type
-	PermissionChargeTypeAdd = ChargeTypePermission("chargetype.add")
-
-	// PermissionChargeTypeDelete is the permission to delete an charge type
-	PermissionChargeTypeDelete = ChargeTypePermission("chargetype.delete")
-)
-
-// String returns the string representation of the ChargeTypePermission
-func (p ChargeTypePermission) String() string {
-	return string(p)
-}
-
 type ChargeType struct {
 	bun.BaseModel `bun:"table:charge_types,alias:ct" json:"-"`
 

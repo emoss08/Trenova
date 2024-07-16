@@ -13,27 +13,6 @@ import (
 	"github.com/uptrace/bun"
 )
 
-type ShipmentTypePermission string
-
-const (
-	// PermissionShipmentTypeView is the permission to view shipment type details
-	PermissionShipmentTypeView = ShipmentTypePermission("shipmenttype.view")
-
-	// PermissionShipmentTypeEdit is the permission to edit shipment type details
-	PermissionShipmentTypeEdit = ShipmentTypePermission("shipmenttype.edit")
-
-	// PermissionShipmentTypeAdd is the permission to add a necw shipment type
-	PermissionShipmentTypeAdd = ShipmentTypePermission("shipmenttype.add")
-
-	// PermissionShipmentTypeDelete is the permission to delete an shipment type
-	PermissionShipmentTypeDelete = ShipmentTypePermission("shipmenttype.delete")
-)
-
-// String returns the string representation of the ShipmentTypePermission
-func (p ShipmentTypePermission) String() string {
-	return string(p)
-}
-
 type ShipmentType struct {
 	bun.BaseModel `bun:"table:shipment_types,alias:st" json:"-"`
 

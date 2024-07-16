@@ -16,27 +16,6 @@ import (
 	"github.com/uptrace/bun"
 )
 
-type CustomerPermission string
-
-const (
-	// PermissionCustomerView is the permission to view customer details
-	PermissionCustomerView = CustomerPermission("customer.view")
-
-	// PermissionCustomerEdit is the permission to edit customer details
-	PermissionCustomerEdit = CustomerPermission("customer.edit")
-
-	// PermissionCustomerAdd is the permission to add a new customer
-	PermissionCustomerAdd = CustomerPermission("customer.add")
-
-	// PermissionCustomerDelete is the permission to delete an customer
-	PermissionCustomerDelete = CustomerPermission("customer.delete")
-)
-
-// String returns the string representation of the CustomerPermission
-func (p CustomerPermission) String() string {
-	return string(p)
-}
-
 type Customer struct {
 	bun.BaseModel `bun:"table:customers,alias:cu" json:"-"`
 

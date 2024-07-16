@@ -14,27 +14,6 @@ import (
 	"github.com/uptrace/bun"
 )
 
-type DelayCodePermission string
-
-const (
-	// PermissionDelayCodeView is the permission to view delay code details
-	PermissionDelayCodeView = DelayCodePermission("delaycode.view")
-
-	// PermissionDelayCodeEdit is the permission to edit delay code details
-	PermissionDelayCodeEdit = DelayCodePermission("delaycode.edit")
-
-	// PermissionDelayCodeAdd is the permission to add a new delay code
-	PermissionDelayCodeAdd = DelayCodePermission("delaycode.add")
-
-	// PermissionDelayCodeDelete is the permission to delete an delay code
-	PermissionDelayCodeDelete = DelayCodePermission("delaycode.delete")
-)
-
-// String returns the string representation of the DelayCodePermission
-func (p DelayCodePermission) String() string {
-	return string(p)
-}
-
 type DelayCode struct {
 	bun.BaseModel `bun:"table:delay_codes,alias:dc" json:"-"`
 

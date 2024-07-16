@@ -13,27 +13,6 @@ import (
 	"github.com/uptrace/bun"
 )
 
-type LocationCategoryPermission string
-
-const (
-	// PermissionLocationCategoryView is the permission to view location category details
-	PermissionLocationCategoryView = LocationCategoryPermission("commenttype.view")
-
-	// PermissionLocationCategoryEdit is the permission to edit location category details
-	PermissionLocationCategoryEdit = LocationCategoryPermission("commenttype.edit")
-
-	// PermissionLocationCategoryAdd is the permission to add a new location category
-	PermissionLocationCategoryAdd = LocationCategoryPermission("commenttype.add")
-
-	// PermissionLocationCategoryDelete is the permission to delete an location category
-	PermissionLocationCategoryDelete = LocationCategoryPermission("commenttype.delete")
-)
-
-// String returns the string representation of the LocationCategoryPermission
-func (p LocationCategoryPermission) String() string {
-	return string(p)
-}
-
 type LocationCategory struct {
 	bun.BaseModel `bun:"table:location_categories,alias:lc" json:"-"`
 

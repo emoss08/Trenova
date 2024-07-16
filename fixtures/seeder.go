@@ -50,8 +50,6 @@ func LoadFixtures() error {
 	// Register many to many model so bun can better recognize m2m relation.
 	// This should be done before you use the model for the first time.
 	db.RegisterModel(
-		(*models.RolePermission)(nil),
-		(*models.UserRole)(nil),
 		(*models.GeneralLedgerAccountTag)(nil),
 	)
 

@@ -14,24 +14,6 @@ import (
 	"github.com/uptrace/bun"
 )
 
-type TableChangeAlertPermission string
-
-const (
-	// PermissionTableChangeAlertView is the permission to view table change alert details
-	PermissionTableChangeAlertView = TableChangeAlertPermission("tablechangealert.view")
-
-	// PermissionTableChangeAlertEdit is the permission to edit table change alert details
-	PermissionTableChangeAlertEdit = TableChangeAlertPermission("tablechangealert.edit")
-
-	// PermissionTableChangeAlertAdd is the permission to add a new table change alert
-	PermissionTableChangeAlertAdd = TableChangeAlertPermission("tablechangealert.add")
-)
-
-// String returns the string representation of the TableChangeAlertPermission
-func (p TableChangeAlertPermission) String() string {
-	return string(p)
-}
-
 type TableChangeAlert struct {
 	bun.BaseModel `bun:"table:table_change_alerts,alias:tca" json:"-"`
 

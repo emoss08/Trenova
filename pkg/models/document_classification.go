@@ -13,27 +13,6 @@ import (
 	"github.com/uptrace/bun"
 )
 
-type DocumentClassificationPermission string
-
-const (
-	// PermissionDocumentClassificationView is the permission to view document classification details
-	PermissionDocumentClassificationView = DocumentClassificationPermission("documentclassification.view")
-
-	// PermissionDocumentClassificationEdit is the permission to edit document classification details
-	PermissionDocumentClassificationEdit = DocumentClassificationPermission("documentclassification.edit")
-
-	// PermissionDocumentClassificationAdd is the permission to add a necw document classification
-	PermissionDocumentClassificationAdd = DocumentClassificationPermission("documentclassification.add")
-
-	// PermissionDocumentClassificationDelete is the permission to delete an document classification
-	PermissionDocumentClassificationDelete = DocumentClassificationPermission("documentclassification.delete")
-)
-
-// String returns the string representation of the DocumentClassificationPermission
-func (p DocumentClassificationPermission) String() string {
-	return string(p)
-}
-
 type DocumentClassification struct {
 	bun.BaseModel `bun:"table:document_classifications,alias:dc" json:"-"`
 

@@ -12,27 +12,6 @@ import (
 	"github.com/uptrace/bun"
 )
 
-type ReasonCodePermission string
-
-const (
-	// PermissionReasonCodeView is the permission to view reason code details
-	PermissionReasonCodeView = ReasonCodePermission("reasoncode.view")
-
-	// PermissionReasonCodeEdit is the permission to edit reason code details
-	PermissionReasonCodeEdit = ReasonCodePermission("reasoncode.edit")
-
-	// PermissionReasonCodeAdd is the permission to add a necw reason code
-	PermissionReasonCodeAdd = ReasonCodePermission("reasoncode.add")
-
-	// PermissionReasonCodeDelete is the permission to delete an reason code
-	PermissionReasonCodeDelete = ReasonCodePermission("reasoncode.delete")
-)
-
-// String returns the string representation of the ReasonCodePermission
-func (p ReasonCodePermission) String() string {
-	return string(p)
-}
-
 type ReasonCode struct {
 	bun.BaseModel `bun:"table:reason_codes,alias:rc" json:"-"`
 

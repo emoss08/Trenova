@@ -14,27 +14,6 @@ import (
 	"github.com/uptrace/bun"
 )
 
-type RevenueCodePermission string
-
-const (
-	// PermissionRevenueCodeView is the permission to view revenue code details
-	PermissionRevenueCodeView = RevenueCodePermission("revenuecode.view")
-
-	// PermissionRevenueCodeEdit is the permission to edit revenue code details
-	PermissionRevenueCodeEdit = RevenueCodePermission("revenuecode.edit")
-
-	// PermissionRevenueCodeAdd is the permission to add a new revenue code
-	PermissionRevenueCodeAdd = RevenueCodePermission("revenuecode.add")
-
-	// PermissionRevenueCodeDelete is the permission to delete a revenue code
-	PermissionRevenueCodeDelete = RevenueCodePermission("revenuecode.delete")
-)
-
-// String returns the string representation of the RevenueCodePermission
-func (p RevenueCodePermission) String() string {
-	return string(p)
-}
-
 type RevenueCode struct {
 	bun.BaseModel `bun:"table:revenue_codes,alias:rc" json:"-"`
 

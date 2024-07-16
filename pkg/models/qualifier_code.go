@@ -12,27 +12,6 @@ import (
 	"github.com/uptrace/bun"
 )
 
-type QualifierCodePermission string
-
-const (
-	// PermissionQualifierCodeView is the permission to view qualifier code details
-	PermissionQualifierCodeView = QualifierCodePermission("qualifiercode.view")
-
-	// PermissionQualifierCodeEdit is the permission to edit qualifier code details
-	PermissionQualifierCodeEdit = QualifierCodePermission("qualifiercode.edit")
-
-	// PermissionQualifierCodeAdd is the permission to add a necw qualifier code
-	PermissionQualifierCodeAdd = QualifierCodePermission("qualifiercode.add")
-
-	// PermissionQualifierCodeDelete is the permission to delete an qualifier code
-	PermissionQualifierCodeDelete = QualifierCodePermission("qualifiercode.delete")
-)
-
-// String returns the string representation of the QualifierCodePermission
-func (p QualifierCodePermission) String() string {
-	return string(p)
-}
-
 type QualifierCode struct {
 	bun.BaseModel `bun:"table:qualifier_codes,alias:qc" json:"-"`
 

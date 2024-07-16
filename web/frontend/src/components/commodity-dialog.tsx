@@ -8,6 +8,7 @@ import {
   statusChoices,
   yesAndNoBooleanChoices,
 } from "@/lib/choices";
+import { usePopoutWindow } from "@/lib/popout-window-hook";
 import { commoditySchema } from "@/lib/validations/CommoditiesSchema";
 import { type CommodityFormValues as FormValues } from "@/types/commodities";
 import { type TableSheetProps } from "@/types/tables";
@@ -102,13 +103,13 @@ export function CommodityForm({ control }: { control: Control<FormValues> }) {
         </FormControl>
         <FormControl>
           <SelectInput
+            rules={{ required: true }}
             name="isHazmat"
             control={control}
             label="Is Hazmat"
             options={yesAndNoBooleanChoices}
             placeholder="Is Hazmat"
             description="Is the Commodity a Hazardous Material?"
-            isClearable
           />
         </FormControl>
         <FormControl className="col-span-full">
@@ -128,6 +129,7 @@ export function CommodityForm({ control }: { control: Control<FormValues> }) {
 }
 
 export function CommodityDialog({ onOpenChange, open }: TableSheetProps) {
+  const { isPopout, closePopout } = usePopoutWindow();
   const { control, handleSubmit, watch, reset, setValue } = useForm<FormValues>(
     {
       resolver: yupResolver(commoditySchema),
@@ -164,6 +166,11 @@ export function CommodityDialog({ onOpenChange, open }: TableSheetProps) {
     closeModal: true,
     reset,
     errorMessage: "Failed to create new commodity.",
+    onSettled: () => {
+      if (isPopout) {
+        closePopout();
+      }
+    },
   });
 
   const onSubmit = (values: FormValues) => {

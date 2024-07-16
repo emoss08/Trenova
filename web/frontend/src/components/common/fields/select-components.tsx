@@ -1,5 +1,6 @@
 import { Button } from "@/components/ui/button";
-import { cn, PopoutWindow } from "@/lib/utils";
+import { popoutWindowManager } from "@/lib/popout-window";
+import { cn } from "@/lib/utils";
 import { IconProp } from "@fortawesome/fontawesome-svg-core";
 import { faTriangleExclamation } from "@fortawesome/pro-regular-svg-icons";
 import { faPlus } from "@fortawesome/pro-solid-svg-icons";
@@ -429,9 +430,16 @@ function openPopoutWindow(
   event.preventDefault();
   event.stopPropagation();
 
-  PopoutWindow(popoutLink, {
-    hideHeader: true,
-  });
+  popoutWindowManager.openWindow(
+    popoutLink,
+    {},
+    {
+      hideHeader: true,
+      hideAside: true,
+      width: 800,
+      height: 800,
+    },
+  );
 }
 
 /**

@@ -21,6 +21,7 @@ type MutationOptions<K extends FieldValues> = {
   closeModal?: boolean;
   reset: UseFormReset<K>;
   method: "POST" | "PUT" | "PATCH" | "DELETE";
+  onSettled?: () => void;
 };
 
 export function useCustomMutation<T extends FieldValues>(
@@ -34,6 +35,7 @@ export function useCustomMutation<T extends FieldValues>(
       executeApiMethod(options.method, options.path, data),
     onSuccess: () => handleSuccess(options, queryClient),
     onError: (error: Error) => handleError(error, control),
+    onSettled: options.onSettled,
   });
 }
 

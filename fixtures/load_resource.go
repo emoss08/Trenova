@@ -190,6 +190,10 @@ func loadResources(ctx context.Context, db *bun.DB) error {
 				Type:        "TractorAssignment",
 				Description: "Represents a tractor assignment in the system.",
 			},
+			{
+				Type:        "AccessorialCharge",
+				Description: "Represents a accessorial charge in the system.",
+			},
 		}
 
 		_, err = db.NewInsert().Model(&resources).Exec(ctx)
