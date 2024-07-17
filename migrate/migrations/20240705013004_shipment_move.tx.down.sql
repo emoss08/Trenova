@@ -1,34 +1,34 @@
--- Copyright (c) 2024 Trenova Technologies, LLC
+-- COPYRIGHT(c) 2024 Trenova
 --
--- Licensed under the Business Source License 1.1 (the "License");
--- you may not use this file except in compliance with the License.
--- You may obtain a copy of the License at
+-- This file is part of Trenova.
 --
---     https://trenova.app/pricing/
---
--- Unless required by applicable law or agreed to in writing, software
--- distributed under the License is distributed on an "AS IS" BASIS,
--- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
---
--- Key Terms:
--- - Non-production use only
--- - Change Date: 2026-11-16
--- - Change License: GNU General Public License v2 or later
---
--- For full license text, see the LICENSE file in the root directory.
+-- The Trenova software is licensed under the Business Source License 1.1. You are granted the right
+-- to copy, modify, and redistribute the software, but only for non-production use or with a total
+-- of less than three server instances. Starting from the Change Date (November 16, 2026), the
+-- software will be made available under version 2 or later of the GNU General Public License.
+-- If you use the software in violation of this license, your rights under the license will be
+-- terminated automatically. The software is provided "as is," and the Licensor disclaims all
+-- warranties and conditions. If you use this license's text or the "Business Source License" name
+-- and trademark, you must comply with the Licensor's covenants, which include specifying the
+-- Change License as the GPL Version 2.0 or a compatible license, specifying an Additional Use
+-- Grant, and not modifying the license in any other way.
 
 DROP TABLE IF EXISTS "shipment_moves" CASCADE;
 
 -- bun:split
-
 DROP TYPE IF EXISTS shipment_move_status_enum CASCADE;
 
 -- bun:split
-
 DROP INDEX IF EXISTS "idx_shipment_move_shipment_id" CASCADE;
+
 DROP INDEX IF EXISTS "idx_shipment_move_tractor_id" CASCADE;
+
 DROP INDEX IF EXISTS "idx_shipment_move_trailer_id" CASCADE;
+
 DROP INDEX IF EXISTS "idx_shipment_move_primary_worker_id" CASCADE;
+
 DROP INDEX IF EXISTS "idx_shipment_move_secondary_worker_id" CASCADE;
+
 DROP INDEX IF EXISTS "idx_customer_org_bu" CASCADE;
+
 DROP INDEX IF EXISTS "idx_customer_created_at" CASCADE;

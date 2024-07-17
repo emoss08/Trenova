@@ -1,21 +1,17 @@
-// Copyright (c) 2024 Trenova Technologies, LLC
+// COPYRIGHT(c) 2024 Trenova
 //
-// Licensed under the Business Source License 1.1 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
+// This file is part of Trenova.
 //
-//     https://trenova.app/pricing/
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-//
-// Key Terms:
-// - Non-production use only
-// - Change Date: 2026-11-16
-// - Change License: GNU General Public License v2 or later
-//
-// For full license text, see the LICENSE file in the root directory.
+// The Trenova software is licensed under the Business Source License 1.1. You are granted the right
+// to copy, modify, and redistribute the software, but only for non-production use or with a total
+// of less than three server instances. Starting from the Change Date (November 16, 2026), the
+// software will be made available under version 2 or later of the GNU General Public License.
+// If you use the software in violation of this license, your rights under the license will be
+// terminated automatically. The software is provided "as is," and the Licensor disclaims all
+// warranties and conditions. If you use this license's text or the "Business Source License" name
+// and trademark, you must comply with the Licensor's covenants, which include specifying the
+// Change License as the GPL Version 2.0 or a compatible license, specifying an Additional Use
+// Grant, and not modifying the license in any other way.
 
 package main
 
@@ -31,73 +27,76 @@ import (
 	"path/filepath"
 	"reflect"
 	"strings"
-	"sync"
+	"text/template"
 
 	"github.com/samber/lo"
 )
 
+type Config struct {
+	ProjectRoot     string
+	ModelsDir       string
+	ServicesDir     string
+	ServicesPackage string
+}
+
+type TemplateData struct {
+	ModelName           string
+	LowerModelName      string
+	PluralModelName     string
+	QueryField          string
+	QueryFieldSnakeCase string
+	Alias               string
+	ServicesPackage     string
+}
+
 func main() {
-	// Define command-line flags
-	projectRoot := flag.String("root", "", "Project root directory")
-	modelsDir := flag.String("models", "", "Models directory")
-	servicesDir := flag.String("services", "", "Services directory")
+	config := parseFlags()
+	if err := run(config); err != nil {
+		log.Fatalf("Error: %v", err)
+	}
+}
+
+func parseFlags() Config {
+	config := Config{}
+	flag.StringVar(&config.ProjectRoot, "root", "", "Project root directory")
+	flag.StringVar(&config.ModelsDir, "models", "", "Models directory")
+	flag.StringVar(&config.ServicesDir, "services", "", "Services directory")
+	flag.StringVar(&config.ServicesPackage, "servicesPackage", "services", "Services package name")
 	flag.Parse()
 
-	// Validate input
-	if *projectRoot == "" || *modelsDir == "" || *servicesDir == "" {
+	if config.ProjectRoot == "" || config.ModelsDir == "" || config.ServicesDir == "" {
 		log.Println("Error: All parameters (root, models, services) must be provided")
 		flag.Usage()
 		os.Exit(1)
 	}
 
-	// Ensure the services directory exists
-	err := os.MkdirAll(*servicesDir, os.ModePerm)
-	if err != nil {
-		log.Printf("Error creating services directory: %v\n", err)
-		return
-	}
-
-	// Process model files concurrently
-	err = processModelFiles(*modelsDir, *servicesDir)
-	if err != nil {
-		log.Printf("Error processing model files: %v\n", err)
-	}
+	return config
 }
 
-// processModelFiles walks through the models directory and processes each Go file
-func processModelFiles(modelsDir, servicesDir string) error {
-	var wg sync.WaitGroup
-	errChan := make(chan error, 100)
+func run(config Config) error {
+	if err := os.MkdirAll(config.ServicesDir, os.ModePerm); err != nil {
+		return fmt.Errorf("error creating services directory: %w", err)
+	}
 
-	err := filepath.Walk(modelsDir, func(path string, info os.FileInfo, err error) error {
+	return processModelFiles(config)
+}
+
+func processModelFiles(config Config) error {
+	modelsPath := filepath.Join(config.ProjectRoot, config.ModelsDir)
+	return filepath.Walk(modelsPath, func(path string, info os.FileInfo, err error) error {
 		if err != nil {
 			return err
 		}
 		if !info.IsDir() && strings.HasSuffix(info.Name(), ".go") {
-			wg.Add(1)
-			go func(path string) {
-				defer wg.Done()
-				if err := generateServiceForModelFile(path, servicesDir); err != nil {
-					errChan <- fmt.Errorf("error processing %s: %w", path, err)
-				}
-			}(path)
+			if err := generateServiceForModelFile(path, config); err != nil {
+				log.Printf("Error processing %s: %v", path, err)
+			}
 		}
 		return nil
 	})
-
-	go func() {
-		wg.Wait()
-		close(errChan)
-	}()
-
-	for err := range errChan {
-		log.Printf("%v\n", err)
-	}
-
-	return err
 }
 
-func generateServiceForModelFile(filename, servicesDir string) error {
+func generateServiceForModelFile(filename string, config Config) error {
 	fset := token.NewFileSet()
 	node, err := parser.ParseFile(fset, filename, nil, parser.ParseComments)
 	if err != nil {
@@ -130,7 +129,7 @@ func generateServiceForModelFile(filename, servicesDir string) error {
 			if queryField == "" {
 				continue
 			}
-			if err := generateServiceCode(modelName, structType, servicesDir, queryField); err != nil {
+			if err := generateServiceCode(modelName, structType, queryField, config); err != nil {
 				return fmt.Errorf("error generating service code for %s: %w", modelName, err)
 			}
 		}
@@ -162,14 +161,21 @@ func getQueryField(structType *ast.StructType) string {
 	return ""
 }
 
-// generateServiceCode creates a service file for a given model
-func generateServiceCode(modelName string, structType *ast.StructType, servicesDir string, queryField string) error {
+func generateServiceCode(modelName string, structType *ast.StructType, queryField string, config Config) error {
 	alias := getAliasTag(structType)
 	if alias == "" {
 		alias = strings.ToLower(modelName[:1])
 	}
 
-	queryFieldSnakeCase := lo.SnakeCase(queryField)
+	data := TemplateData{
+		ModelName:           modelName,
+		LowerModelName:      strings.ToLower(modelName),
+		PluralModelName:     pluralize(modelName),
+		QueryField:          queryField,
+		QueryFieldSnakeCase: lo.SnakeCase(queryField),
+		Alias:               alias,
+		ServicesPackage:     config.ServicesPackage,
+	}
 
 	serviceTemplate := `
 package services
@@ -186,22 +192,22 @@ import (
 	"github.com/uptrace/bun"
 )
 
-// %sService handles business logic for %s
-type %sService struct {
+// {{.ModelName}}Service handles business logic for {{.ModelName}}
+type {{.ModelName}}Service struct {
 	db     *bun.DB
 	logger *zerolog.Logger
 }
 
-// New%sService creates a new instance of %sService
-func New%sService(s *server.Server) *%sService {
-	return &%sService{
+// New{{.ModelName}}Service creates a new instance of {{.ModelName}}Service
+func New{{.ModelName}}Service(s *server.Server) *{{.ModelName}}Service {
+	return &{{.ModelName}}Service{
 		db:     s.DB,
 		logger: s.Logger,
 	}
 }
 
-// QueryFilter defines the filter parameters for querying %s
-type %sQueryFilter struct {
+// {{.ModelName}}QueryFilter defines the filter parameters for querying {{.ModelName}}
+type {{.ModelName}}QueryFilter struct {
 	Query          string
 	OrganizationID uuid.UUID
 	BusinessUnitID uuid.UUID
@@ -210,23 +216,23 @@ type %sQueryFilter struct {
 }
 
 // filterQuery applies filters to the query
-func (s %sService) filterQuery(q *bun.SelectQuery, f *%sQueryFilter) *bun.SelectQuery {
-	q = q.Where("%s.organization_id = ?", f.OrganizationID).
-		Where("%s.business_unit_id = ?", f.BusinessUnitID)
+func (s {{.ModelName}}Service) filterQuery(q *bun.SelectQuery, f *{{.ModelName}}QueryFilter) *bun.SelectQuery {
+	q = q.Where("{{.Alias}}.organization_id = ?", f.OrganizationID).
+		Where("{{.Alias}}.business_unit_id = ?", f.BusinessUnitID)
 
 	if f.Query != "" {
-		q = q.Where("%s.%s = ? OR %s.%s ILIKE ?", f.Query, "%%"+strings.ToLower(f.Query)+"%%")
+		q = q.Where("{{.Alias}}.{{.QueryField}} = ? OR {{.Alias}}.{{.QueryField}} ILIKE ?", f.Query, "%"+strings.ToLower(f.Query)+"%")
 	}
 
-	q = q.OrderExpr("CASE WHEN %s.%s = ? THEN 0 ELSE 1 END", f.Query).
-		Order("%s.created_at DESC")
+	q = q.OrderExpr("CASE WHEN {{.Alias}}.{{.QueryField}} = ? THEN 0 ELSE 1 END", f.Query).
+		Order("{{.Alias}}.created_at DESC")
 
 	return q.Limit(f.Limit).Offset(f.Offset)
 }
 
-// GetAll retrieves all %s based on the provided filter
-func (s %sService) GetAll(ctx context.Context, filter *%sQueryFilter) ([]*models.%s, int, error) {
-	var entities []*models.%s
+// GetAll retrieves all {{.PluralModelName}} based on the provided filter
+func (s {{.ModelName}}Service) GetAll(ctx context.Context, filter *{{.ModelName}}QueryFilter) ([]*models.{{.ModelName}}, int, error) {
+	var entities []*models.{{.ModelName}}
 	
 	q := s.db.NewSelect().
 		Model(&entities)
@@ -235,32 +241,32 @@ func (s %sService) GetAll(ctx context.Context, filter *%sQueryFilter) ([]*models
 
 	count, err := q.ScanAndCount(ctx)
 	if err != nil {
-		s.logger.Error().Err(err).Msg("Failed to fetch %s")
-		return nil, 0, fmt.Errorf("failed to fetch %s: %%w", err)
+		s.logger.Error().Err(err).Msg("Failed to fetch {{.PluralModelName}}")
+		return nil, 0, fmt.Errorf("failed to fetch {{.PluralModelName}}: %w", err)
 	}
 
 	return entities, count, nil
 }
 
-// Get retrieves a single %s by ID
-func (s *%sService) Get(ctx context.Context, id, orgID, buID uuid.UUID) (*models.%s, error) {
-	entity := new(models.%s)
+// Get retrieves a single {{.ModelName}} by ID
+func (s *{{.ModelName}}Service) Get(ctx context.Context, id, orgID, buID uuid.UUID) (*models.{{.ModelName}}, error) {
+	entity := new(models.{{.ModelName}})
 	err := s.db.NewSelect().
 		Model(entity).
-		Where("%s.organization_id = ?", orgID).
-		Where("%s.business_unit_id = ?", buID).
-		Where("%s.id = ?", id).
+		Where("{{.Alias}}.organization_id = ?", orgID).
+		Where("{{.Alias}}.business_unit_id = ?", buID).
+		Where("{{.Alias}}.id = ?", id).
 		Scan(ctx)
 	if err != nil {
-		s.logger.Error().Err(err).Msg("Failed to fetch %s")
-		return nil, fmt.Errorf("failed to fetch %s: %%w", err)
+		s.logger.Error().Err(err).Msg("Failed to fetch {{.ModelName}}")
+		return nil, fmt.Errorf("failed to fetch {{.ModelName}}: %w", err)
 	}
 
 	return entity, nil
 }
 
-// Create creates a new %s
-func (s %sService) Create(ctx context.Context, entity *models.%s) (*models.%s, error) {
+// Create creates a new {{.ModelName}}
+func (s {{.ModelName}}Service) Create(ctx context.Context, entity *models.{{.ModelName}}) (*models.{{.ModelName}}, error) {
 	err := s.db.RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
 		_, err := tx.NewInsert().
 			Model(entity).
@@ -269,15 +275,15 @@ func (s %sService) Create(ctx context.Context, entity *models.%s) (*models.%s, e
 		return err
 	})
 	if err != nil {
-		s.logger.Error().Err(err).Msg("Failed to create %s")
-		return nil, fmt.Errorf("failed to create %s: %%w", err)
+		s.logger.Error().Err(err).Msg("Failed to create {{.ModelName}}")
+		return nil, fmt.Errorf("failed to create {{.ModelName}}: %w", err)
 	}
 
 	return entity, nil
 }
 
-// UpdateOne updates an existing %s
-func (s %sService) UpdateOne(ctx context.Context, entity *models.%s) (*models.%s, error) {
+// UpdateOne updates an existing {{.ModelName}}
+func (s {{.ModelName}}Service) UpdateOne(ctx context.Context, entity *models.{{.ModelName}}) (*models.{{.ModelName}}, error) {
 	err := s.db.RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
 		_, err := tx.NewUpdate().
 			Model(entity).
@@ -287,39 +293,39 @@ func (s %sService) UpdateOne(ctx context.Context, entity *models.%s) (*models.%s
 		return err
 	})
 	if err != nil {
-		s.logger.Error().Err(err).Msg("Failed to update %s")
-		return nil, fmt.Errorf("failed to update %s: %%w", err)
+		s.logger.Error().Err(err).Msg("Failed to update {{.ModelName}}")
+		return nil, fmt.Errorf("failed to update {{.ModelName}}: %w", err)
 	}
 
 	return entity, nil
 }
 `
 
-	code := fmt.Sprintf(serviceTemplate,
-		modelName, modelName, modelName, modelName, modelName, modelName, modelName, modelName,
-		modelName, modelName, modelName, modelName, alias, alias, alias, queryFieldSnakeCase, alias, queryFieldSnakeCase,
-		alias, queryFieldSnakeCase, alias,
-		modelName, modelName, modelName, modelName, modelName,
-		modelName, modelName,
-		modelName, modelName, modelName, modelName, alias, alias, alias, modelName, modelName,
-		modelName, modelName, modelName, modelName, modelName, modelName,
-		modelName, modelName, modelName, modelName, modelName, modelName)
-
-	formattedCode, err := format.Source([]byte(code))
+	tmpl, err := template.New("service").Parse(serviceTemplate)
 	if err != nil {
-		return fmt.Errorf("error formatting code for %s: %w", modelName, err)
+		return fmt.Errorf("error parsing template: %w", err)
 	}
 
-	outputPath := filepath.Join(servicesDir, fmt.Sprintf("%s_service.go", strings.ToLower(modelName)))
+	var buf strings.Builder
+	err = tmpl.Execute(&buf, data)
+	if err != nil {
+		return fmt.Errorf("error executing template: %w", err)
+	}
+
+	formattedCode, err := format.Source([]byte(buf.String()))
+	if err != nil {
+		return fmt.Errorf("error formatting code: %w", err)
+	}
+
+	outputPath := filepath.Join(config.ServicesDir, fmt.Sprintf("%s_service.go", lo.SnakeCase(modelName)))
 	if err := os.WriteFile(outputPath, formattedCode, 0o644); err != nil {
 		return fmt.Errorf("error writing service file for %s: %w", modelName, err)
 	}
 
-	log.Printf("Service code generated successfully for %s\n", modelName)
+	log.Printf("Service code generated successfully for %s", modelName)
 	return nil
 }
 
-// getAliasTag extracts the alias tag from the struct
 func getAliasTag(structType *ast.StructType) string {
 	for _, field := range structType.Fields.List {
 		if field.Tag == nil {
@@ -337,23 +343,9 @@ func getAliasTag(structType *ast.StructType) string {
 	return ""
 }
 
-// getRelations builds the relation string for the query
-func getRelations(structType *ast.StructType) string {
-	relations := make(map[string]struct{})
-	for _, field := range structType.Fields.List {
-		if field.Tag != nil {
-			tag := reflect.StructTag(strings.Trim(field.Tag.Value, "`"))
-			bunTag := tag.Get("bun")
-			if strings.Contains(bunTag, "rel:") {
-				relationName := field.Names[0].Name
-				relations[relationName] = struct{}{}
-			}
-		}
+func pluralize(str string) string {
+	if strings.HasSuffix(str, "y") {
+		return str[:len(str)-1] + "ies"
 	}
-
-	var relationsStr strings.Builder
-	for relation := range relations {
-		relationsStr.WriteString(fmt.Sprintf("Relation(\"%s\").\n\t\t", relation))
-	}
-	return relationsStr.String()
+	return str + "s"
 }
