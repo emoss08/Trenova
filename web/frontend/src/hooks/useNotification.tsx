@@ -15,8 +15,6 @@
  * Grant, and not modifying the license in any other way.
  */
 
-
-
 import { WEB_SOCKET_URL } from "@/lib/constants";
 import { WebSocketManager, createWebsocketManager } from "@/lib/websockets";
 import { useUserStore } from "@/stores/AuthStore";

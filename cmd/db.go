@@ -258,11 +258,6 @@ func getMigrator() *migrate.Migrator {
 		panic(err)
 	}
 
-	db := getDB(serverConfig)
-	return migrate.NewMigrator(db, migrations.Migrations)
-}
-
-func getDB(serverConfig config.Server) *bun.DB {
 	sqldb := sql.OpenDB(pgdriver.NewConnector(pgdriver.WithDSN(serverConfig.DB.DSN())))
 	db := bun.NewDB(sqldb, pgdialect.New())
 	db.AddQueryHook(bundebug.NewQueryHook(
@@ -275,11 +270,11 @@ func getDB(serverConfig config.Server) *bun.DB {
 		(*models.GeneralLedgerAccountTag)(nil),
 	)
 
-	return db
+	return migrate.NewMigrator(db, migrations.Migrations)
 }
 
 var dbSeedCmd = &cobra.Command{
-	Use:   "db_seed",
+	Use:   "seed",
 	Short: "Seed the database with fixtures",
 	Run: func(_ *cobra.Command, _ []string) {
 		if err := fixtures.LoadFixtures(); err != nil {

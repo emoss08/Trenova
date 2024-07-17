@@ -15,8 +15,6 @@
  * Grant, and not modifying the license in any other way.
  */
 
-
-
 /** Types for Export Model */
 export type ExportModelChoices = "csv" | "xlsx" | "pdf";
 

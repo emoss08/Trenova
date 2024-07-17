@@ -15,8 +15,6 @@
  * Grant, and not modifying the license in any other way.
  */
 
-
-
 import { ExclamationTriangleIcon } from "@radix-ui/react-icons";
 import { QueryErrorResetBoundary } from "@tanstack/react-query";
 import ReactDOM from "react-dom/client";
@@ -31,10 +29,10 @@ ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
       <ErrorBoundary
         onReset={reset}
         fallbackRender={({ resetErrorBoundary }) => (
-          <div className="bg-background flex h-screen items-center justify-center">
+          <div className="flex h-screen items-center justify-center bg-background">
             <div className="text-center">
               <ExclamationTriangleIcon className="mx-auto size-12 text-red-500" />
-              <h1 className="text-foreground mt-4 text-2xl font-bold">
+              <h1 className="mt-4 text-2xl font-bold text-foreground">
                 There was an error!
               </h1>
               <p className="text-muted-foreground">Please try again.</p>

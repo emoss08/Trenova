@@ -15,8 +15,6 @@
  * Grant, and not modifying the license in any other way.
  */
 
-
-
 import { ACForm } from "@/components/accessorial-charge-table-dialog";
 import { Button } from "@/components/ui/button";
 import { useCustomMutation } from "@/hooks/useCustomMutation";
@@ -24,21 +22,21 @@ import { formatToUserTimezone } from "@/lib/date";
 import { accessorialChargeSchema } from "@/lib/validations/BillingSchema";
 import { useTableStore } from "@/stores/TableStore";
 import type {
-    AccessorialCharge,
-    AccessorialChargeFormValues as FormValues,
+  AccessorialCharge,
+  AccessorialChargeFormValues as FormValues,
 } from "@/types/billing";
 import { yupResolver } from "@hookform/resolvers/yup";
 import { useForm } from "react-hook-form";
 import { Badge } from "./ui/badge";
 import {
-    Credenza,
-    CredenzaBody,
-    CredenzaClose,
-    CredenzaContent,
-    CredenzaDescription,
-    CredenzaFooter,
-    CredenzaHeader,
-    CredenzaTitle,
+  Credenza,
+  CredenzaBody,
+  CredenzaClose,
+  CredenzaContent,
+  CredenzaDescription,
+  CredenzaFooter,
+  CredenzaHeader,
+  CredenzaTitle,
 } from "./ui/credenza";
 
 function ACEditForm({

@@ -15,8 +15,6 @@
  * Grant, and not modifying the license in any other way.
  */
 
-
-
 import { InvoiceControlFormValues } from "@/types/invoicing";
 import * as Yup from "yup";
 import { ObjectSchema } from "yup";

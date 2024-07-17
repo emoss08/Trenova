@@ -15,8 +15,6 @@
  * Grant, and not modifying the license in any other way.
  */
 
-
-
 import { DecimalField } from "@/components/common/fields/decimal-input";
 import { InputField } from "@/components/common/fields/input";
 import { SelectInput } from "@/components/common/fields/select-input";
@@ -221,7 +219,7 @@ export function StopCard({
                   <span>
                     <FontAwesomeIcon
                       icon={faEllipsisV}
-                      className="text-muted-foreground hover:text-foreground size-5 hover:cursor-pointer"
+                      className="size-5 text-muted-foreground hover:cursor-pointer hover:text-foreground"
                     />
                   </span>
                 </DropdownMenuTrigger>
@@ -231,7 +229,7 @@ export function StopCard({
                   <DropdownMenuItem disabled>Add Comment</DropdownMenuItem>
                   <DropdownMenuItem
                     onClick={() => openRemoveAlert(index)}
-                    className="focus:bg-destructive/10 focus:text-destructive font-semibold text-red-500"
+                    className="font-semibold text-red-500 focus:bg-destructive/10 focus:text-destructive"
                     disabled={isDragDisabled}
                   >
                     Remove

@@ -15,8 +15,6 @@
  * Grant, and not modifying the license in any other way.
  */
 
-
-
 import { Control, FieldValues, Path } from "react-hook-form";
 import { toast } from "sonner";
 import { API_BASE_URL } from "./constants";

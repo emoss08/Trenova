@@ -15,27 +15,25 @@
  * Grant, and not modifying the license in any other way.
  */
 
-
-
 import { CheckboxInput } from "@/components/common/fields/checkbox";
 import { InputField } from "@/components/common/fields/input";
 import { SelectInput } from "@/components/common/fields/select-input";
 import { Button } from "@/components/ui/button";
 import {
-    Sheet,
-    SheetContent,
-    SheetDescription,
-    SheetFooter,
-    SheetHeader,
-    SheetTitle,
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetFooter,
+  SheetHeader,
+  SheetTitle,
 } from "@/components/ui/sheet";
 import { useCustomMutation } from "@/hooks/useCustomMutation";
 import { useUSStates } from "@/hooks/useQueries";
 import { cleanObject } from "@/lib/utils";
 import { tractorSchema } from "@/lib/validations/EquipmentSchema";
 import {
-    equipmentStatusChoices,
-    type TractorFormValues as FormValues,
+  equipmentStatusChoices,
+  type TractorFormValues as FormValues,
 } from "@/types/equipment";
 import { TableSheetProps } from "@/types/tables";
 import { yupResolver } from "@hookform/resolvers/yup";

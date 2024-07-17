@@ -253,7 +253,7 @@ func (h ShipmentHandler) AssignTractorToShipment() fiber.Handler {
 			})
 		}
 
-		if err := h.permissionService.CheckUserPermission(c, "shipment", "update"); err != nil {
+		if err := h.permissionService.CheckUserPermission(c, "shipment", "assign_tractor"); err != nil {
 			return c.Status(fiber.StatusForbidden).JSON(fiber.Error{
 				Code:    fiber.StatusForbidden,
 				Message: err.Error(),

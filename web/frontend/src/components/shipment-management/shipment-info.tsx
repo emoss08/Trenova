@@ -15,8 +15,6 @@
  * Grant, and not modifying the license in any other way.
  */
 
-
-
 import { formatToUserTimezone } from "@/lib/date";
 import { cn, shipmentStatusToReadable } from "@/lib/utils";
 import { Shipment, ShipmentStatus, Stop } from "@/types/shipment";
@@ -125,11 +123,11 @@ export function ShipmentInfo({
   const lastDelivery = getLastDelivery();
 
   return (
-    <Card className="hover:bg-muted/30 mb-4 w-full select-none border border-dashed hover:cursor-pointer">
+    <Card className="mb-4 w-full select-none border border-dashed hover:cursor-pointer hover:bg-muted/30">
       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
         <CardTitle className="text-sm font-medium">
           Shipment #{shipment.proNumber}
-          <p className="text-muted-foreground text-xs">
+          <p className="text-xs text-muted-foreground">
             Created: {formatToUserTimezone(shipment.createdAt)}
           </p>
         </CardTitle>
@@ -148,7 +146,7 @@ export function ShipmentInfo({
           <div>
             <h4 className="mb-1 text-sm font-semibold">Origin</h4>
             <p className="text-xs">{firstPickup?.addressLine || "N/A"}</p>
-            <p className="text-muted-foreground mt-1 text-xs">
+            <p className="mt-1 text-xs text-muted-foreground">
               {firstPickup?.plannedArrival
                 ? formatToUserTimezone(firstPickup.plannedArrival)
                 : "N/A"}
@@ -157,7 +155,7 @@ export function ShipmentInfo({
           <div>
             <h4 className="mb-1 text-sm font-semibold">Destination</h4>
             <p className="text-xs">{lastDelivery?.addressLine || "N/A"}</p>
-            <p className="text-muted-foreground mt-1 text-xs">
+            <p className="mt-1 text-xs text-muted-foreground">
               {lastDelivery?.plannedDeparture
                 ? formatToUserTimezone(lastDelivery.plannedDeparture)
                 : "N/A"}

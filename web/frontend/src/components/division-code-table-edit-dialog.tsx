@@ -15,8 +15,6 @@
  * Grant, and not modifying the license in any other way.
  */
 
-
-
 import { Button } from "@/components/ui/button";
 import { useCustomMutation } from "@/hooks/useCustomMutation";
 import { useGLAccounts } from "@/hooks/useQueries";
@@ -24,8 +22,8 @@ import { formatToUserTimezone } from "@/lib/date";
 import { divisionCodeSchema } from "@/lib/validations/AccountingSchema";
 import { useTableStore } from "@/stores/TableStore";
 import type {
-    DivisionCode,
-    DivisionCodeFormValues as FormValues,
+  DivisionCode,
+  DivisionCodeFormValues as FormValues,
 } from "@/types/accounting";
 import { type TableSheetProps } from "@/types/tables";
 import { yupResolver } from "@hookform/resolvers/yup";
@@ -33,14 +31,14 @@ import { useForm } from "react-hook-form";
 import { DCForm } from "./division-code-table-dialog";
 import { Badge } from "./ui/badge";
 import {
-    Credenza,
-    CredenzaBody,
-    CredenzaClose,
-    CredenzaContent,
-    CredenzaDescription,
-    CredenzaFooter,
-    CredenzaHeader,
-    CredenzaTitle,
+  Credenza,
+  CredenzaBody,
+  CredenzaClose,
+  CredenzaContent,
+  CredenzaDescription,
+  CredenzaFooter,
+  CredenzaHeader,
+  CredenzaTitle,
 } from "./ui/credenza";
 
 export function DCEditForm({

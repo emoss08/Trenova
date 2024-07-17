@@ -15,8 +15,6 @@
  * Grant, and not modifying the license in any other way.
  */
 
-
-
 import { Checkbox } from "@/components/common/fields/checkbox";
 import { DataTable } from "@/components/common/table/data-table";
 import {
@@ -131,7 +129,7 @@ export default function TractorPage() {
       tableFacetedFilters={filters}
       TableSheet={TractorDialog}
       TableEditSheet={TractorTableEditSheet}
-      addPermissionName="tractor.add"
+      addPermissionName="tractor:create"
     />
   );
 }

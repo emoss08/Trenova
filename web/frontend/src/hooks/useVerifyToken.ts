@@ -15,8 +15,6 @@
  * Grant, and not modifying the license in any other way.
  */
 
-
-
 import axios from "@/lib/axiosConfig";
 import { useAuthStore, useUserStore } from "@/stores/AuthStore";
 import { useEffect, useState } from "react";

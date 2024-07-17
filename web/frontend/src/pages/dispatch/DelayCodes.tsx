@@ -15,8 +15,6 @@
  * Grant, and not modifying the license in any other way.
  */
 
-
-
 import { Checkbox } from "@/components/common/fields/checkbox";
 import { DataTable } from "@/components/common/table/data-table";
 import { DataTableColumnHeader } from "@/components/common/table/data-table-column-header";
@@ -83,7 +81,7 @@ const columns: ColumnDef<DelayCode>[] = [
     cell: ({ row }) => {
       if (row.original.color) {
         return (
-          <div className="flex items-center space-x-2 text-sm font-medium text-foreground">
+          <div className="text-foreground flex items-center space-x-2 text-sm font-medium">
             <div
               className={"mx-2 size-2 rounded-xl"}
               style={{ backgroundColor: row.original.color }}
@@ -138,7 +136,7 @@ export default function DelayCodes() {
       tableFacetedFilters={filters}
       TableSheet={DelayCodeDialog}
       TableEditSheet={DelayCodeEditDialog}
-      addPermissionName="delaycode.add"
+      addPermissionName="delay_code:create"
     />
   );
 }

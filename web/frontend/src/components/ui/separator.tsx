@@ -15,8 +15,6 @@
  * Grant, and not modifying the license in any other way.
  */
 
-
-
 import * as React from "react";
 import * as SeparatorPrimitive from "@radix-ui/react-separator";
 

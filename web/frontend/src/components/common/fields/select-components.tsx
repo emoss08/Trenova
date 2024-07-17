@@ -15,8 +15,6 @@
  * Grant, and not modifying the license in any other way.
  */
 
-
-
 import { Button } from "@/components/ui/button";
 import { popoutWindowManager } from "@/lib/popout-window";
 import { cn } from "@/lib/utils";
@@ -119,7 +117,7 @@ export function Option({ ...props }: OptionProps) {
         <div className="flex flex-1 flex-col justify-center overflow-hidden">
           <span className="truncate">{label}</span>
           {data.description && (
-            <span className="text-foreground/70 text-wrap text-xs">
+            <span className="text-wrap text-xs text-foreground/70">
               {data.description}
             </span>
           )}
@@ -146,7 +144,7 @@ export function DropdownIndicator(props: DropdownIndicatorProps) {
           className="text-red-500"
         />
       ) : (
-        <CaretSortIcon className="text-muted-foreground size-4 shrink-0" />
+        <CaretSortIcon className="size-4 shrink-0 text-muted-foreground" />
       )}
     </components.DropdownIndicator>
   );
@@ -263,7 +261,7 @@ export function LoadingMessage({ children, ...props }: NoticeProps) {
   return (
     <components.LoadingMessage {...props}>
       <div className="my-1 flex flex-col items-center justify-center">
-        <p className="text-accent-foreground text-xs">
+        <p className="text-xs text-accent-foreground">
           {children || "Loading..."}
         </p>
       </div>
@@ -294,7 +292,7 @@ export function NoOptionsMessage({
   return (
     <components.NoOptionsMessage {...props}>
       <div className="my-1 flex flex-col items-center justify-center">
-        <p className="text-accent-foreground p-2 text-xs">{children}</p>
+        <p className="p-2 text-xs text-accent-foreground">{children}</p>
         {popoutLink && hasPopoutWindow && (
           <AddNewButton
             label={props.selectProps?.popoutLinkLabel as string}
@@ -309,7 +307,7 @@ export function NoOptionsMessage({
 export function Group({ ...props }: GroupProps) {
   return (
     <div>
-      <div className="text-muted-foreground px-3 pt-1 text-xs">
+      <div className="px-3 pt-1 text-xs text-muted-foreground">
         {props.label}
       </div>
       {props.children}
@@ -480,7 +478,7 @@ function AddNewButton({
 
   return (
     <Button
-      className="text-foreground hover:bg-accent hover:text-foreground/90 flex w-full items-center justify-between rounded-sm bg-transparent py-3.5 pl-3 text-xs font-normal shadow-none"
+      className="flex w-full items-center justify-between rounded-sm bg-transparent py-3.5 pl-3 text-xs font-normal text-foreground shadow-none hover:bg-accent hover:text-foreground/90"
       size="xs"
       onClick={(event) => handleClick(event)}
     >

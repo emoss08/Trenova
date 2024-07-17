@@ -15,8 +15,6 @@
  * Grant, and not modifying the license in any other way.
  */
 
-
-
 import { RateTable } from "@/components/rate-management/rate-table";
 import { ComponentLoader } from "@/components/ui/component-loader";
 

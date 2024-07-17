@@ -15,8 +15,6 @@
  * Grant, and not modifying the license in any other way.
  */
 
-
-
 import { useTheme } from "../ui/theme-provider";
 
 export function RainbowTopBar() {
@@ -24,7 +22,7 @@ export function RainbowTopBar() {
 
   return (
     <div
-      className={`bg-rainbow-gradient-light bg-200% h-1 ${
+      className={`h-1 bg-rainbow-gradient-light bg-200% ${
         isRainbowAnimationActive ? "animate-rainbow-flow" : ""
       }`}
     />

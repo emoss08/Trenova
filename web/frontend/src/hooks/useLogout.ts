@@ -15,8 +15,6 @@
  * Grant, and not modifying the license in any other way.
  */
 
-
-
 import axios from "@/lib/axiosConfig";
 import { createWebsocketManager } from "@/lib/websockets";
 import { useAuthStore } from "@/stores/AuthStore";

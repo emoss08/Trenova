@@ -15,8 +15,6 @@
  * Grant, and not modifying the license in any other way.
  */
 
-
-
 import { InputField } from "@/components/common/fields/input";
 import { TextareaField } from "@/components/common/fields/textarea";
 import { Button } from "@/components/ui/button";
@@ -31,14 +29,14 @@ import { Control, useForm } from "react-hook-form";
 import { GradientPicker } from "./common/fields/color-field";
 import { SelectInput } from "./common/fields/select-input";
 import {
-    Credenza,
-    CredenzaBody,
-    CredenzaClose,
-    CredenzaContent,
-    CredenzaDescription,
-    CredenzaFooter,
-    CredenzaHeader,
-    CredenzaTitle,
+  Credenza,
+  CredenzaBody,
+  CredenzaClose,
+  CredenzaContent,
+  CredenzaDescription,
+  CredenzaFooter,
+  CredenzaHeader,
+  CredenzaTitle,
 } from "./ui/credenza";
 
 export function DocumentClassForm({

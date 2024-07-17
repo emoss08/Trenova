@@ -15,8 +15,6 @@
  * Grant, and not modifying the license in any other way.
  */
 
-
-
 import { cn } from "@/lib/utils";
 import { faSpinner } from "@fortawesome/pro-duotone-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
@@ -31,8 +29,8 @@ export function ComponentLoader({ className }: { className?: string }) {
         size="1x"
         className="text-primary motion-safe:animate-spin"
       />
-      <p className="text-foreground mt-2 text-sm">Loading data...</p>
-      <p className="text-muted-foreground mt-2 text-sm">
+      <p className="mt-2 text-sm text-foreground">Loading data...</p>
+      <p className="mt-2 text-sm text-muted-foreground">
         If this takes too long, please refresh the page.
       </p>
     </div>

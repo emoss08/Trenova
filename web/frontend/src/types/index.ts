@@ -15,8 +15,6 @@
  * Grant, and not modifying the license in any other way.
  */
 
-
-
 import { type IconProp } from "@fortawesome/fontawesome-svg-core";
 
 export type ValuesOf<T extends any[]> = T[number];

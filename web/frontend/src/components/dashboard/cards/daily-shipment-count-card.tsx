@@ -15,8 +15,6 @@
  * Grant, and not modifying the license in any other way.
  */
 
-
-
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -40,8 +38,8 @@ import { useMemo } from "react";
 
 function LineChartTooltip({ point }: { point: Point }) {
   return (
-    <div className="bg-background border-border rounded-lg border p-2 shadow-md">
-      <p className="border-border border-b text-sm font-semibold">
+    <div className="rounded-lg border border-border bg-background p-2 shadow-md">
+      <p className="border-b border-border text-sm font-semibold">
         {point.data.xFormatted}
       </p>
       <div className="flex items-center text-sm">
@@ -141,15 +139,15 @@ export default function DailyShipmentCounts() {
         <ComponentLoader className="h-[40vh]" />
       ) : (
         <CardContent className="relative p-0">
-          <div className="border-border flex items-start justify-between border-b border-dashed p-4">
+          <div className="flex items-start justify-between border-b border-dashed border-border p-4">
             <div>
               <div className="flex items-center">
                 <p className="text-2xl font-bold">{data?.count || "--"}</p>
-                <span className="text-muted-foreground ml-2 text-xs font-normal">
+                <span className="ml-2 text-xs font-normal text-muted-foreground">
                   {dateDisplay}
                 </span>
               </div>
-              <h2 className="text-muted-foreground font-semibold">
+              <h2 className="font-semibold text-muted-foreground">
                 Daily Shipment Count
               </h2>
             </div>
@@ -179,9 +177,9 @@ export default function DailyShipmentCounts() {
           {hasChartData ? (
             <LineChart data={formattedData} />
           ) : (
-            <div className="bg-muted/50 border-border m-5 flex h-[30vh] flex-col items-center justify-center rounded-md border">
+            <div className="m-5 flex h-[30vh] flex-col items-center justify-center rounded-md border border-border bg-muted/50">
               <FontAwesomeIcon icon={faChartSimple} className="mb-2 text-2xl" />
-              <h3 className="text-foreground font-semibold">No data to show</h3>
+              <h3 className="font-semibold text-foreground">No data to show</h3>
               <p className="text-muted-foreground">
                 May be due to lack of shipments.
               </p>

@@ -15,8 +15,6 @@
  * Grant, and not modifying the license in any other way.
  */
 
-
-
 import { Button } from "@/components/ui/button";
 import * as AvatarPrimitive from "@radix-ui/react-avatar";
 import * as React from "react";
@@ -138,7 +136,7 @@ export function ImageUploader({
           style={{ display: "none" }}
           onChange={handleFileChange}
         />
-        <p className="text-muted-foreground mt-2 text-xs leading-5">
+        <p className="mt-2 text-xs leading-5 text-muted-foreground">
           JPG, GIF, WEBP or PNG. Max size 1MB.
         </p>
       </div>

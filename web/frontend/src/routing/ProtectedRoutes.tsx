@@ -15,8 +15,6 @@
  * Grant, and not modifying the license in any other way.
  */
 
-
-
 import { Layout, UnprotectedLayout } from "@/components/layout/layout";
 import { useUserPermissions } from "@/context/user-permissions";
 import { useEffect } from "react";
@@ -42,6 +40,9 @@ export function ProtectedRoutes() {
       return <Navigate to="/login" replace />;
     }
     if (route.permission && !userHasPermission(route.permission)) {
+      console.info(
+        `User does not have permission: ${route.permission} for route: ${route.path}`,
+      );
       return <Navigate to="/error" replace />;
     }
     return route.element ?? null;

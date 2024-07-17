@@ -15,8 +15,6 @@
  * Grant, and not modifying the license in any other way.
  */
 
-
-
 import { Button } from "@/components/ui/button";
 import { useUserPermissions } from "@/context/user-permissions";
 import { upperFirst } from "@/lib/utils";
@@ -98,7 +96,7 @@ export function RateBreadcrumb() {
           <FavoriteIcon />
         </h2>
         <div className="flex items-center">
-          <a className="text-muted-foreground hover:text-muted-foreground/80 text-sm font-medium">
+          <a className="text-sm font-medium text-muted-foreground hover:text-muted-foreground/80">
             Dispatch - Rate Management
           </a>
         </div>

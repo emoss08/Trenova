@@ -15,8 +15,6 @@
  * Grant, and not modifying the license in any other way.
  */
 
-
-
 export type ApiResponse<K> = {
   count: number;
   next: string | null;

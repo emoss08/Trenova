@@ -15,8 +15,6 @@
  * Grant, and not modifying the license in any other way.
  */
 
-
-
 import { CommentTypeDialog } from "@/components/comment-type-table-dialog";
 import { CommentTypeEditSheet } from "@/components/comment-type-table-edit-dialog";
 import { Checkbox } from "@/components/common/fields/checkbox";
@@ -111,7 +109,7 @@ const filters: FilterConfig<CommentType>[] = [
 export default function CommentTypes() {
   return (
     <DataTable
-      addPermissionName="commenttype.add"
+      addPermissionName="comment_type:create"
       queryKey="commentTypes"
       columns={columns}
       link="/comment-types/"

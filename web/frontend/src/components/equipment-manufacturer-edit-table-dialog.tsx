@@ -15,8 +15,6 @@
  * Grant, and not modifying the license in any other way.
  */
 
-
-
 import { useCustomMutation } from "@/hooks/useCustomMutation";
 import { yupResolver } from "@hookform/resolvers/yup";
 import { useForm } from "react-hook-form";
@@ -26,21 +24,21 @@ import { formatToUserTimezone } from "@/lib/date";
 import { equipManufacturerSchema } from "@/lib/validations/EquipmentSchema";
 import { useTableStore } from "@/stores/TableStore";
 import {
-    EquipmentManufacturer,
-    EquipmentManufacturerFormValues as FormValues,
+  EquipmentManufacturer,
+  EquipmentManufacturerFormValues as FormValues,
 } from "@/types/equipment";
 import { TableSheetProps } from "@/types/tables";
 import { EquipManuForm } from "./eqiupment-manufacturer-table-dialog";
 import { Badge } from "./ui/badge";
 import {
-    Credenza,
-    CredenzaBody,
-    CredenzaClose,
-    CredenzaContent,
-    CredenzaDescription,
-    CredenzaFooter,
-    CredenzaHeader,
-    CredenzaTitle,
+  Credenza,
+  CredenzaBody,
+  CredenzaClose,
+  CredenzaContent,
+  CredenzaDescription,
+  CredenzaFooter,
+  CredenzaHeader,
+  CredenzaTitle,
 } from "./ui/credenza";
 
 function EquipManuEditForm({

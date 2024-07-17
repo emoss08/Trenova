@@ -15,8 +15,6 @@
  * Grant, and not modifying the license in any other way.
  */
 
-
-
 import { useUSStates } from "@/hooks/useQueries";
 import { workerEndorsementChoices } from "@/lib/choices";
 import { useFormContext } from "react-hook-form";

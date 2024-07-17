@@ -15,8 +15,6 @@
  * Grant, and not modifying the license in any other way.
  */
 
-
-
 import { useNotifications } from "@/hooks/useQueries";
 import { useUserStore } from "@/stores/AuthStore";
 import { faEllipsis } from "@fortawesome/pro-regular-svg-icons";
@@ -37,14 +35,14 @@ export function UserAsideMenu() {
   }
 
   return (
-    <div className="border-border mt-2 flex flex-col space-y-1 border-t px-4 py-2">
+    <div className="mt-2 flex flex-col space-y-1 border-t border-border px-4 py-2">
       <div className="flex items-center space-x-2 pt-2">
         <UserAvatar user={user} />
         <div className="grow">
           <p className="truncate text-sm font-medium leading-none">
             {user.name || user.username}
           </p>
-          <p className="text-muted-foreground text-xs leading-none">
+          <p className="text-xs leading-none text-muted-foreground">
             {user.email}
           </p>
         </div>
@@ -52,7 +50,7 @@ export function UserAsideMenu() {
           <DropdownMenuTrigger asChild>
             <Button className="ml-auto size-6" size="icon" variant="ghost">
               {userHasNotifications && (
-                <span className="ring-background absolute bottom-9 right-4 flex size-1.5 rounded-full bg-green-600 ring-2 motion-safe:animate-pulse"></span>
+                <span className="absolute bottom-9 right-4 flex size-1.5 rounded-full bg-green-600 ring-2 ring-background motion-safe:animate-pulse"></span>
               )}
               <FontAwesomeIcon icon={faEllipsis} />
             </Button>

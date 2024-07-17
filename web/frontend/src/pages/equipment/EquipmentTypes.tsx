@@ -15,8 +15,6 @@
  * Grant, and not modifying the license in any other way.
  */
 
-
-
 import { Checkbox } from "@/components/common/fields/checkbox";
 import { DataTable } from "@/components/common/table/data-table";
 import { DataTableColumnHeader } from "@/components/common/table/data-table-column-header";
@@ -125,7 +123,7 @@ export default function EquipmentTypes() {
       tableFacetedFilters={filters}
       TableSheet={EquipTypeDialog}
       TableEditSheet={EquipTypeEditSheet}
-      addPermissionName="equipmenttype.add"
+      addPermissionName="equipment_type:create"
     />
   );
 }

@@ -30,6 +30,22 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
+type UserPermission struct {
+	Codename         string `json:"codename"`
+	Description      string `json:"description"`
+	Action           string `json:"action"`
+	Label            string `json:"label"`
+	ReadDescription  string `json:"readDescription,omitempty"`
+	WriteDescription string `json:"writeDescription,omitempty"`
+	ResourceID       string `json:"resourceId"`
+}
+
+type UserRole struct {
+	Name        string           `json:"name"`
+	Description string           `json:"description"`
+	Permissions []UserPermission `json:"permissions"`
+}
+
 // TODO(Wolfred): At some point the user should be able to have multiple organizations
 // Within the same business unit. This will require a many to many relationship between
 // the user and the organization.
@@ -60,6 +76,7 @@ type User struct {
 
 	BusinessUnit *BusinessUnit `bun:"rel:belongs-to,join:business_unit_id=id" json:"-"`
 	Organization *Organization `bun:"rel:belongs-to,join:organization_id=id" json:"-"`
+	Roles        []UserRole    `bun:"-" json:"roles"`
 }
 
 func (u User) Validate() error {

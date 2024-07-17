@@ -15,8 +15,6 @@
  * Grant, and not modifying the license in any other way.
  */
 
-
-
 import {
   AlertDialog,
   AlertDialogAction,
@@ -168,7 +166,7 @@ export function UserAvatarMenuContent({
                 <p className="truncate text-sm font-medium leading-none">
                   {user.name || user.username}
                 </p>
-                <p className="text-muted-foreground text-xs leading-none">
+                <p className="text-xs leading-none text-muted-foreground">
                   {user.email}
                 </p>
               </div>
@@ -185,14 +183,12 @@ export function UserAvatarMenuContent({
               </ShortcutsProvider>
             </DropdownMenuShortcut>
           </DropdownMenuItem>
-          <DropdownMenuItem onClick={() => {}}>
-            Tasks
-          </DropdownMenuItem>
+          <DropdownMenuItem onClick={() => {}}>Tasks</DropdownMenuItem>
           <DropdownMenuItem onClick={() => {}}>
             Notifications
             <span className="ml-auto flex gap-x-0.5 tracking-widest">
               {hasNotifications && (
-                <span className="ring-background size-1.5 rounded-full bg-green-600 motion-safe:animate-pulse"></span>
+                <span className="size-1.5 rounded-full bg-green-600 ring-background motion-safe:animate-pulse"></span>
               )}
             </span>
           </DropdownMenuItem>
@@ -263,7 +259,7 @@ export function UserAvatarMenu({ user }: { user: User }) {
       <DropdownMenuTrigger asChild>
         <span className="relative inline-block">
           <UserAvatar user={user} />
-          <span className="ring-background absolute bottom-1 right-1 block size-2 rounded-full bg-green-600 ring-2" />
+          <span className="absolute bottom-1 right-1 block size-2 rounded-full bg-green-600 ring-2 ring-background" />
         </span>
       </DropdownMenuTrigger>
       <UserAvatarMenuContent

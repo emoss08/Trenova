@@ -15,8 +15,6 @@
  * Grant, and not modifying the license in any other way.
  */
 
-
-
 import type { IChoiceProps, TChoiceProps } from "@/types";
 
 /** Type for fuel method choices */

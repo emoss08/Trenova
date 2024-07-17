@@ -15,8 +15,6 @@
  * Grant, and not modifying the license in any other way.
  */
 
-
-
 import "@/assets/App.css";
 import "@/assets/Datepicker.css";
 import LoadingSkeleton from "@/components/layout/loading-skeleton";

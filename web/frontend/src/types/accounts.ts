@@ -15,8 +15,6 @@
  * Grant, and not modifying the license in any other way.
  */
 
-
-
 import { type JobFunctionChoiceProps } from "@/lib/choices";
 import { type TimezoneChoices } from "@/lib/timezone";
 import { type StatusChoiceProps } from ".";
@@ -38,13 +36,6 @@ export interface UserPermission extends BaseModel {
   resourceId: string;
 }
 
-export type UserFavorite = {
-  id: string;
-  userID: string;
-  created: string;
-  pageLink: string;
-};
-
 export interface User extends BaseModel {
   id: string;
   username: string;
@@ -57,8 +48,15 @@ export interface User extends BaseModel {
   profilePicUrl?: string;
   thumbnailUrl?: string;
   lastLogin?: string | null;
-  role: UserRole[];
+  roles: UserRole[];
 }
+
+export type UserFavorite = {
+  id: string;
+  userID: string;
+  created: string;
+  pageLink: string;
+};
 
 export type UserFormValues = Omit<
   User,

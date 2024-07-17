@@ -15,8 +15,6 @@
  * Grant, and not modifying the license in any other way.
  */
 
-
-
 // Credit: https://github.com/flixlix
 
 import { CheckIcon, Cross1Icon } from "@radix-ui/react-icons";
@@ -92,9 +90,9 @@ const timelineDotVariants = cva(
         default: "[&>*]:hidden",
         current:
           "[&>*:not(.radix-circle)]:hidden [&>.radix-circle]:bg-current [&>.radix-circle]:fill-current",
-        done: "bg-primary [&>.radix-check]:text-background [&>*:not(.radix-check)]:hidden",
+        done: "bg-primary [&>*:not(.radix-check)]:hidden [&>.radix-check]:text-background",
         error:
-          "border-destructive bg-destructive [&>.radix-cross]:text-background [&>*:not(.radix-cross)]:hidden",
+          "border-destructive bg-destructive [&>*:not(.radix-cross)]:hidden [&>.radix-cross]:text-background",
         custom: "[&>*:not(:nth-child(4))]:hidden [&>*:nth-child(4)]:block",
       },
     },
@@ -128,7 +126,7 @@ const TimelineDot = React.forwardRef<HTMLDivElement, TimelineDotProps>(
 TimelineDot.displayName = "TimelineDot";
 
 const timelineContentVariants = cva(
-  "text-muted-foreground row-start-2 row-end-2 pb-8",
+  "row-start-2 row-end-2 pb-8 text-muted-foreground",
   {
     variants: {
       side: {
@@ -167,8 +165,8 @@ const timelineHeadingVariants = cva(
         left: "col-start-1 col-end-2 ml-auto text-right",
       },
       variant: {
-        primary: "text-primary text-base font-medium",
-        secondary: "text-muted-foreground text-sm font-light",
+        primary: "text-base font-medium text-primary",
+        secondary: "text-sm font-light text-muted-foreground",
       },
     },
     defaultVariants: {
@@ -220,11 +218,10 @@ const TimelineLine = React.forwardRef<HTMLHRElement, TimelineLineProps>(
 TimelineLine.displayName = "TimelineLine";
 
 export {
-    Timeline,
-    TimelineContent,
-    TimelineDot,
-    TimelineHeading,
-    TimelineItem,
-    TimelineLine
+  Timeline,
+  TimelineContent,
+  TimelineDot,
+  TimelineHeading,
+  TimelineItem,
+  TimelineLine,
 };
-

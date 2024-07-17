@@ -15,8 +15,6 @@
  * Grant, and not modifying the license in any other way.
  */
 
-
-
 import AdminLayout from "@/components/admin-page/layout";
 import { ErrorLoadingData } from "@/components/common/table/data-table-components";
 import { ComponentLoader } from "@/components/ui/component-loader";

@@ -15,14 +15,12 @@
  * Grant, and not modifying the license in any other way.
  */
 
-
-
 import { ShipmentSearchForm } from "@/types/shipment";
 import {
-    CaretSortIcon,
-    DownloadIcon,
-    MagnifyingGlassIcon,
-    PlusIcon,
+  CaretSortIcon,
+  DownloadIcon,
+  MagnifyingGlassIcon,
+  PlusIcon,
 } from "@radix-ui/react-icons";
 import { useFormContext } from "react-hook-form";
 import { InputField } from "../common/fields/input";
@@ -59,7 +57,7 @@ function ShipmentSearch() {
         name="searchQuery"
         control={control}
         placeholder="Search Shipments..."
-        icon={<MagnifyingGlassIcon className="text-muted-foreground size-4" />}
+        icon={<MagnifyingGlassIcon className="size-4 text-muted-foreground" />}
       />
     </div>
   );

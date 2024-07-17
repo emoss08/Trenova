@@ -15,8 +15,6 @@
  * Grant, and not modifying the license in any other way.
  */
 
-
-
 import { Input } from "@/components/common/fields/input";
 import { Label } from "@/components/common/fields/label";
 import { Calendar } from "@/components/ui/calendar";
@@ -151,7 +149,7 @@ export function DatepickerField<TFieldValues extends FieldValues>({
         {isOpen && (
           <div
             ref={popoverRef}
-            className="z-1000 border-muted bg-background absolute bottom-full mb-2 rounded-sm border shadow-md"
+            className="z-1000 absolute bottom-full mb-2 rounded-sm border border-muted bg-background shadow-md"
           >
             <div className="flex w-auto flex-col space-y-2 p-2">
               <Select

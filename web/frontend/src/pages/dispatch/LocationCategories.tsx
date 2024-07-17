@@ -15,8 +15,6 @@
  * Grant, and not modifying the license in any other way.
  */
 
-
-
 import { Checkbox } from "@/components/common/fields/checkbox";
 import { DataTable } from "@/components/common/table/data-table";
 import { DataTableColumnHeader } from "@/components/common/table/data-table-column-header";
@@ -87,7 +85,7 @@ export default function LocationCategories() {
       filterColumn="name"
       TableSheet={LocationCategoryDialog}
       TableEditSheet={LocationCategoryEditDialog}
-      addPermissionName="locationcategory.add"
+      addPermissionName="location_category:create"
     />
   );
 }

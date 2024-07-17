@@ -15,8 +15,6 @@
  * Grant, and not modifying the license in any other way.
  */
 
-
-
 import { JobFunctionChoiceProps } from "@/lib/choices";
 import { StatusChoiceProps } from "@/types";
 import { JobTitleFormValues } from "@/types/accounts";

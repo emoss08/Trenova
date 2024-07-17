@@ -15,26 +15,24 @@
  * Grant, and not modifying the license in any other way.
  */
 
-
-
 import { DatepickerField } from "@/components/common/fields/date-picker";
 import { InputField } from "@/components/common/fields/input";
 import { SelectInput } from "@/components/common/fields/select-input";
 import { Button } from "@/components/ui/button";
 import {
-    Sheet,
-    SheetContent,
-    SheetDescription,
-    SheetFooter,
-    SheetHeader,
-    SheetTitle,
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetFooter,
+  SheetHeader,
+  SheetTitle,
 } from "@/components/ui/sheet";
 import { useCustomMutation } from "@/hooks/useCustomMutation";
 import { useUSStates } from "@/hooks/useQueries";
 import { trailerSchema } from "@/lib/validations/EquipmentSchema";
 import {
-    equipmentStatusChoices,
-    type TrailerFormValues as FormValues,
+  equipmentStatusChoices,
+  type TrailerFormValues as FormValues,
 } from "@/types/equipment";
 import { type TableSheetProps } from "@/types/tables";
 import { yupResolver } from "@hookform/resolvers/yup";

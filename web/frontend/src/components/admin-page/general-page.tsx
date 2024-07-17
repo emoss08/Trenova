@@ -76,21 +76,21 @@ function OrganizationForm({ organization }: { organization: Organization }) {
     <>
       <div className="grid grid-cols-1 gap-8 md:grid-cols-3 xl:grid-cols-4">
         <div className="px-4 sm:px-0">
-          <h2 className="text-foreground text-base font-semibold leading-7">
+          <h2 className="text-base font-semibold leading-7 text-foreground">
             {t("organizationDetails")}
           </h2>
-          <p className="text-muted-foreground mt-1 text-sm leading-6">
+          <p className="mt-1 text-sm leading-6 text-muted-foreground">
             {t("organizationDetailsDescription")}
           </p>
         </div>
 
         <form
-          className="border-border bg-card m-4 border sm:rounded-xl md:col-span-2"
+          className="m-4 border border-border bg-card sm:rounded-xl md:col-span-2"
           onSubmit={handleSubmit(onSubmit)}
         >
           <div className="px-4 py-6 sm:p-8">
             <div className="grid max-w-3xl grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-6">
-              {userHasPermission("organization.change_logo") && (
+              {userHasPermission("organization:change_logo") && (
                 <div className="col-span-full flex items-center gap-x-8">
                   <Avatar className="size-24 flex-none rounded-lg">
                     <AvatarImage src={organization.logoUrl || ""} />
@@ -185,7 +185,7 @@ function OrganizationForm({ organization }: { organization: Organization }) {
               </div>
             </div>
           </div>
-          <div className="border-border flex items-center justify-end gap-x-4 border-t p-4 sm:px-8">
+          <div className="flex items-center justify-end gap-x-4 border-t border-border p-4 sm:px-8">
             <Button
               onClick={(e) => {
                 e.preventDefault();

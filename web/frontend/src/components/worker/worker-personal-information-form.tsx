@@ -15,8 +15,6 @@
  * Grant, and not modifying the license in any other way.
  */
 
-
-
 import { useUSStates } from "@/hooks/useQueries";
 import { statusChoices, workerTypeChoices } from "@/lib/choices";
 import {

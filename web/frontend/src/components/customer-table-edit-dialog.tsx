@@ -15,16 +15,14 @@
  * Grant, and not modifying the license in any other way.
  */
 
-
-
 import { Button } from "@/components/ui/button";
 import {
-    Sheet,
-    SheetContent,
-    SheetDescription,
-    SheetFooter,
-    SheetHeader,
-    SheetTitle,
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetFooter,
+  SheetHeader,
+  SheetTitle,
 } from "@/components/ui/sheet";
 import { useCustomMutation } from "@/hooks/useCustomMutation";
 import { formatToUserTimezone } from "@/lib/date";
@@ -32,8 +30,8 @@ import { cn } from "@/lib/utils";
 import { customerSchema } from "@/lib/validations/CustomerSchema";
 import { useTableStore } from "@/stores/TableStore";
 import type {
-    Customer,
-    CustomerFormValues as FormValues,
+  Customer,
+  CustomerFormValues as FormValues,
 } from "@/types/customer";
 import { type TableSheetProps } from "@/types/tables";
 import { yupResolver } from "@hookform/resolvers/yup";

@@ -15,8 +15,6 @@
  * Grant, and not modifying the license in any other way.
  */
 
-
-
 import { Card, CardContent } from "@/components/ui/card";
 
 export default function TotalActiveRatesCard() {

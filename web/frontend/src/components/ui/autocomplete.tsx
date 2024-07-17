@@ -15,8 +15,6 @@
  * Grant, and not modifying the license in any other way.
  */
 
-
-
 import {
   Command,
   CommandGroup,
@@ -53,14 +51,14 @@ const AutocompleteResults = React.forwardRef<
   if (!searchResults || searchResults.length === 0) {
     return (
       <div className="border-border bg-popover p-2 shadow-lg" ref={ref}>
-        <p className="text-muted-foreground text-sm">No results found.</p>
+        <p className="text-sm text-muted-foreground">No results found.</p>
       </div>
     );
   }
 
   return (
     <div
-      className="z-100 border-border absolute w-auto rounded-md border shadow-lg"
+      className="absolute z-100 w-auto rounded-md border border-border shadow-lg"
       ref={ref}
     >
       <Command className="bg-popover">
@@ -74,7 +72,7 @@ const AutocompleteResults = React.forwardRef<
                 <div className="flex flex-1 items-center justify-between truncate">
                   <div className="flex-1 truncate text-sm">
                     <p className="font-mono text-sm">{result.name}</p>
-                    <p className="text-muted-foreground text-xs">
+                    <p className="text-xs text-muted-foreground">
                       {result.address}
                     </p>
                   </div>
@@ -83,15 +81,15 @@ const AutocompleteResults = React.forwardRef<
             ))}
           </CommandGroup>
         </CommandList>
-        <div className="border-border bg-card flex select-none items-center justify-between border-t p-2">
-          <p className="text-muted-foreground text-xs">
+        <div className="flex select-none items-center justify-between border-t border-border bg-card p-2">
+          <p className="text-xs text-muted-foreground">
             {searchResults.length} results
           </p>
-          <p className="fill-muted-foreground text-muted-foreground size-4 text-xs">
+          <p className="size-4 fill-muted-foreground text-xs text-muted-foreground">
             <svg
               xmlns="http://www.w3.org/2000/svg"
               viewBox="0 0 488 512"
-              className="fill-muted-foreground text-muted-foreground size-4 text-xs"
+              className="size-4 fill-muted-foreground text-xs text-muted-foreground"
             >
               <path d="M488 261.8C488 403.3 391.1 504 248 504 110.8 504 0 393.2 0 256S110.8 8 248 8c66.8 0 123 24.5 166.3 64.9l-67.5 64.9C258.5 52.6 94.3 116.6 94.3 256c0 86.5 69.1 156.6 153.7 156.6 98.2 0 135-70.4 140.8-106.9H248v-85.3h236.1c2.3 12.7 3.9 24.9 3.9 41.4z" />
             </svg>
@@ -183,7 +181,7 @@ export function LocationAutoComplete<T extends FieldValues>({
           <FieldErrorMessage formError={fieldState.error?.message} />
         )}
         {props.description && !fieldState.invalid && (
-          <p className="text-foreground/70 text-xs">{props.description}</p>
+          <p className="text-xs text-foreground/70">{props.description}</p>
         )}
       </div>
       {showResults && completionAllowed && (

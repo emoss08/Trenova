@@ -15,8 +15,6 @@
  * Grant, and not modifying the license in any other way.
  */
 
-
-
 import { CommentTypeForm } from "@/components/comment-type-table-dialog";
 import { Button } from "@/components/ui/button";
 import { useCustomMutation } from "@/hooks/useCustomMutation";
@@ -24,22 +22,22 @@ import { formatToUserTimezone } from "@/lib/date";
 import { commentTypeSchema } from "@/lib/validations/DispatchSchema";
 import { useTableStore } from "@/stores/TableStore";
 import type {
-    CommentType,
-    CommentTypeFormValues as FormValues,
+  CommentType,
+  CommentTypeFormValues as FormValues,
 } from "@/types/dispatch";
 import { type TableSheetProps } from "@/types/tables";
 import { yupResolver } from "@hookform/resolvers/yup";
 import { useForm } from "react-hook-form";
 import { Badge } from "./ui/badge";
 import {
-    Credenza,
-    CredenzaBody,
-    CredenzaClose,
-    CredenzaContent,
-    CredenzaDescription,
-    CredenzaFooter,
-    CredenzaHeader,
-    CredenzaTitle,
+  Credenza,
+  CredenzaBody,
+  CredenzaClose,
+  CredenzaContent,
+  CredenzaDescription,
+  CredenzaFooter,
+  CredenzaHeader,
+  CredenzaTitle,
 } from "./ui/credenza";
 
 function CommentTypeEditForm({ commentType }: { commentType: CommentType }) {

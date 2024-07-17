@@ -15,8 +15,6 @@
  * Grant, and not modifying the license in any other way.
  */
 
-
-
 import { NavigationMenuLink } from "@/components/ui/navigation-menu";
 import { useUserPermissions } from "@/context/user-permissions";
 import { cn } from "@/lib/utils";
@@ -52,7 +50,7 @@ export const ListItem = React.forwardRef<
         {...props}
       >
         <div className="text-sm font-medium leading-none">{title}</div>
-        <p className="text-muted-foreground line-clamp-3 text-xs leading-snug">
+        <p className="line-clamp-3 text-xs leading-snug text-muted-foreground">
           {children}
         </p>
       </Link>

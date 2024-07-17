@@ -15,8 +15,6 @@
  * Grant, and not modifying the license in any other way.
  */
 
-
-
 import { StatusChoiceProps } from "@/types";
 import {
   AccessorialChargeFormValues,

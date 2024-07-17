@@ -15,8 +15,6 @@
  * Grant, and not modifying the license in any other way.
  */
 
-
-
 import type { Tractor, TractorFilterForm } from "@/types/equipment";
 import { Draggable, Droppable } from "react-beautiful-dnd";
 import { type UseFormReturn } from "react-hook-form";
@@ -60,7 +58,7 @@ export function TractorList({ tractors, form }: TractorListProps) {
                     ref={provided.innerRef}
                     {...provided.draggableProps}
                     {...provided.dragHandleProps}
-                    className="bg-background rounded p-2 shadow"
+                    className="rounded bg-background p-2 shadow"
                   >
                     {tractor.code}
                   </li>

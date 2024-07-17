@@ -15,8 +15,6 @@
  * Grant, and not modifying the license in any other way.
  */
 
-
-
 import { Checkbox } from "@/components/common/fields/checkbox";
 import { DataTable } from "@/components/common/table/data-table";
 import { DataTableColumnHeader } from "@/components/common/table/data-table-column-header";
@@ -126,7 +124,7 @@ export default function TrailerPage() {
       tableFacetedFilters={filters}
       TableSheet={TrailerDialog}
       TableEditSheet={TrailerEditDialog}
-      addPermissionName="trailer.add"
+      addPermissionName="trailer:create"
     />
   );
 }

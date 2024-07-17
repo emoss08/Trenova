@@ -38,10 +38,9 @@ export const UserPermissionsProvider = ({
 
   const isAdmin = user?.isAdmin;
 
-  // User is admin or is super admin
   const permissions = useMemo(
     () =>
-      user?.role
+      user?.roles
         ?.map((role) => role.permissions)
         .flat()
         .map((permission) => permission.codename) ?? [],

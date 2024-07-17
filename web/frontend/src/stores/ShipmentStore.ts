@@ -15,8 +15,6 @@
  * Grant, and not modifying the license in any other way.
  */
 
-
-
 import { createGlobalStore } from "@/lib/useGlobalStore";
 import { type Tractor } from "@/types/equipment";
 import { type Shipment } from "@/types/shipment";

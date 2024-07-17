@@ -15,8 +15,6 @@
  * Grant, and not modifying the license in any other way.
  */
 
-
-
 import { createGlobalStore } from "@/lib/useGlobalStore";
 import { Rate } from "@/types/dispatch";
 

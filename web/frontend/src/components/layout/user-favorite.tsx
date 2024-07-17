@@ -15,8 +15,6 @@
  * Grant, and not modifying the license in any other way.
  */
 
-
-
 import { useUserFavorites } from "@/hooks/useQueries";
 import axios from "@/lib/axiosConfig";
 import { useUserStore } from "@/stores/AuthStore";

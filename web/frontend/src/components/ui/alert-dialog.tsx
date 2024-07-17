@@ -15,8 +15,6 @@
  * Grant, and not modifying the license in any other way.
  */
 
-
-
 "use client";
 
 import * as AlertDialogPrimitive from "@radix-ui/react-alert-dialog";
@@ -156,6 +154,5 @@ export {
   AlertDialogOverlay,
   AlertDialogPortal,
   AlertDialogTitle,
-  AlertDialogTrigger
+  AlertDialogTrigger,
 };
-

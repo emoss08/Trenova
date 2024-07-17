@@ -15,16 +15,14 @@
  * Grant, and not modifying the license in any other way.
  */
 
-
-
 import { Button } from "@/components/ui/button";
 import { useCustomMutation } from "@/hooks/useCustomMutation";
 import { formatToUserTimezone } from "@/lib/date";
 import { reasonCodeSchema } from "@/lib/validations/ShipmentSchema";
 import { useTableStore } from "@/stores/TableStore";
 import type {
-    ReasonCodeFormValues as FormValues,
-    ReasonCode,
+  ReasonCodeFormValues as FormValues,
+  ReasonCode,
 } from "@/types/shipment";
 import { type TableSheetProps } from "@/types/tables";
 import { yupResolver } from "@hookform/resolvers/yup";
@@ -32,14 +30,14 @@ import { useForm } from "react-hook-form";
 import { ReasonCodeForm } from "./reason-code-table-dialog";
 import { Badge } from "./ui/badge";
 import {
-    Credenza,
-    CredenzaBody,
-    CredenzaClose,
-    CredenzaContent,
-    CredenzaDescription,
-    CredenzaFooter,
-    CredenzaHeader,
-    CredenzaTitle,
+  Credenza,
+  CredenzaBody,
+  CredenzaClose,
+  CredenzaContent,
+  CredenzaDescription,
+  CredenzaFooter,
+  CredenzaHeader,
+  CredenzaTitle,
 } from "./ui/credenza";
 
 function ReasonCodeEditForm({ reasonCode }: { reasonCode: ReasonCode }) {

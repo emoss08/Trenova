@@ -15,26 +15,24 @@
  * Grant, and not modifying the license in any other way.
  */
 
-
-
 import { Button } from "@/components/ui/button";
 import {
-    Sheet,
-    SheetContent,
-    SheetDescription,
-    SheetFooter,
-    SheetHeader,
-    SheetTitle,
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetFooter,
+  SheetHeader,
+  SheetTitle,
 } from "@/components/ui/sheet";
 import { useCustomMutation } from "@/hooks/useCustomMutation";
 import { useTags } from "@/hooks/useQueries";
 import axios from "@/lib/axiosConfig";
 import {
-    accountClassificationChoices,
-    accountSubTypeChoices,
-    accountTypeChoices,
-    cashFlowTypeChoices,
-    statusChoices,
+  accountClassificationChoices,
+  accountSubTypeChoices,
+  accountTypeChoices,
+  cashFlowTypeChoices,
+  statusChoices,
 } from "@/lib/choices";
 import { cn } from "@/lib/utils";
 import { glAccountSchema } from "@/lib/validations/AccountingSchema";
@@ -44,16 +42,16 @@ import { yupResolver } from "@hookform/resolvers/yup";
 import { useQueryClient } from "@tanstack/react-query";
 import React from "react";
 import {
-    Control,
-    UseFormGetValues,
-    UseFormSetValue,
-    useForm,
+  Control,
+  UseFormGetValues,
+  UseFormSetValue,
+  useForm,
 } from "react-hook-form";
 import { CheckboxInput } from "./common/fields/checkbox";
 import { InputField } from "./common/fields/input";
 import {
-    CreatableSelectField,
-    SelectInput,
+  CreatableSelectField,
+  SelectInput,
 } from "./common/fields/select-input";
 import { TextareaField } from "./common/fields/textarea";
 import { Form, FormControl, FormGroup } from "./ui/form";

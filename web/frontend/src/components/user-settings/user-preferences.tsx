@@ -15,8 +15,6 @@
  * Grant, and not modifying the license in any other way.
  */
 
-
-
 import { ScrollArea } from "../ui/scroll-area";
 import { ColorBlindSwitcher } from "./appearance/color-mode-switcher";
 import { ThemeSwitcher } from "./appearance/theme-switcher";

@@ -15,8 +15,6 @@
  * Grant, and not modifying the license in any other way.
  */
 
-
-
 import * as React from "react";
 import * as PopoverPrimitive from "@radix-ui/react-popover";
 

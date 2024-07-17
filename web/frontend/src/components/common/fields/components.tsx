@@ -15,10 +15,8 @@
  * Grant, and not modifying the license in any other way.
  */
 
-
-
 export function FieldDescription({ description }: { description: string }) {
   return description ? (
-    <p className="text-foreground/70 text-xs">{description}</p>
+    <p className="text-xs text-foreground/70">{description}</p>
   ) : null;
 }

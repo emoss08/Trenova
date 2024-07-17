@@ -15,8 +15,6 @@
  * Grant, and not modifying the license in any other way.
  */
 
-
-
 export type SidebarLink = {
   href: string;
   title: string;

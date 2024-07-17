@@ -15,8 +15,6 @@
  * Grant, and not modifying the license in any other way.
  */
 
-
-
 import { getTractors } from "@/services/EquipmentRequestService";
 import { getShipments } from "@/services/ShipmentRequestService";
 import { EquipmentStatus } from "@/types/equipment";

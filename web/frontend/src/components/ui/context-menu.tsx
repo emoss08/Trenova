@@ -15,8 +15,6 @@
  * Grant, and not modifying the license in any other way.
  */
 
-
-
 "use client";
 
 import * as ContextMenuPrimitive from "@radix-ui/react-context-menu";

@@ -15,17 +15,15 @@
  * Grant, and not modifying the license in any other way.
  */
 
-
-
 import { InputField } from "@/components/common/fields/input";
 import { SelectInput } from "@/components/common/fields/select-input";
 import { TextareaField } from "@/components/common/fields/textarea";
 import { Button } from "@/components/ui/button";
 import { useCustomMutation } from "@/hooks/useCustomMutation";
 import {
-    hazardousClassChoices,
-    packingGroupChoices,
-    statusChoices,
+  hazardousClassChoices,
+  packingGroupChoices,
+  statusChoices,
 } from "@/lib/choices";
 import { usePopoutWindow } from "@/lib/popout-window-hook";
 import { hazardousMaterialSchema } from "@/lib/validations/CommoditiesSchema";
@@ -35,14 +33,14 @@ import { yupResolver } from "@hookform/resolvers/yup";
 import { Control, useForm } from "react-hook-form";
 import { useTranslation } from "react-i18next";
 import {
-    Credenza,
-    CredenzaBody,
-    CredenzaClose,
-    CredenzaContent,
-    CredenzaDescription,
-    CredenzaFooter,
-    CredenzaHeader,
-    CredenzaTitle,
+  Credenza,
+  CredenzaBody,
+  CredenzaClose,
+  CredenzaContent,
+  CredenzaDescription,
+  CredenzaFooter,
+  CredenzaHeader,
+  CredenzaTitle,
 } from "./ui/credenza";
 import { Form, FormControl, FormGroup } from "./ui/form";
 

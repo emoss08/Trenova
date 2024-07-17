@@ -33,32 +33,45 @@ func loadPermissions(ctx context.Context, db *bun.DB, enforcer *casbin.Enforcer)
 		return err
 	}
 
-	// Detailed permissions for each action
-	actions := []struct {
-		action           string
-		readDescription  string
-		writeDescription string
-	}{
-		{"view", "Can view all", "Can view all"},
-		{"create", "Can view all", "Can create, update, and delete"},
-		{"update", "Can view all", "Can create, update, and delete"},
-		{"delete", "Can view all", "Can create, update, and delete"},
+	// Basic CRUD actions
+	basicActions := []string{"view", "create", "update", "delete"}
+
+	// Additional system-defined actions for specific resources
+	additionalActions := map[string][]string{
+		"shipment":     {"assign_tractor"},
+		"tractor":      {"assign_driver"},
+		"organization": {"change_logo"},
 	}
 
 	for _, resource := range resources {
 		resourceTypeLower := lo.SnakeCase(resource.Type)
-		for _, action := range actions {
-			codename := fmt.Sprintf("%s:%s", resourceTypeLower, action.action)
 
-			// Add policy for the Admin role instead of "admin" subject
-			_, err = enforcer.AddPolicy("Admin", codename, "allow")
-			if err != nil {
-				return fmt.Errorf("failed to add policy: %w", err)
+		// Add basic CRUD permissions
+		for _, action := range basicActions {
+			if err = addPermissionPolicy(enforcer, resourceTypeLower, action); err != nil {
+				return err
 			}
+		}
 
-			log.Printf("Added permission to Casbin: Admin, %s, allow\n", codename)
+		// Add additional system-defined permissions
+		if specificActions, exists := additionalActions[resourceTypeLower]; exists {
+			for _, action := range specificActions {
+				if err = addPermissionPolicy(enforcer, resourceTypeLower, action); err != nil {
+					return err
+				}
+			}
 		}
 	}
 
 	return enforcer.SavePolicy()
+}
+
+func addPermissionPolicy(enforcer *casbin.Enforcer, resource, action string) error {
+	codename := fmt.Sprintf("%s:%s", resource, action)
+	_, err := enforcer.AddPolicy("Admin", codename, "allow")
+	if err != nil {
+		return fmt.Errorf("failed to add policy: %w", err)
+	}
+	log.Printf("Added permission to Casbin: Admin, %s, allow\n", codename)
+	return nil
 }

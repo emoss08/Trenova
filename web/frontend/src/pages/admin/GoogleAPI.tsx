@@ -15,8 +15,6 @@
  * Grant, and not modifying the license in any other way.
  */
 
-
-
 import AdminLayout from "@/components/admin-page/layout";
 import { lazy } from "react";
 

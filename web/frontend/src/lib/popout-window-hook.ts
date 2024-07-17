@@ -15,8 +15,6 @@
  * Grant, and not modifying the license in any other way.
  */
 
-
-
 import { useEffect, useState } from "react";
 import { getPopoutWindowManager, PopoutWindowOptions } from "./popout-window";
 

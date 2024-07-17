@@ -15,8 +15,6 @@
  * Grant, and not modifying the license in any other way.
  */
 
-
-
 import { HazmatSegRulesForm } from "@/components/hazmat-seg-rules-table-dialog";
 import { Button } from "@/components/ui/button";
 import { DialogFooter } from "@/components/ui/dialog";
@@ -26,17 +24,17 @@ import { formatToUserTimezone } from "@/lib/date";
 import { useHazmatSegRulesForm } from "@/lib/validations/ShipmentSchema";
 import { useTableStore } from "@/stores/TableStore";
 import type {
-    HazardousMaterialSegregationRuleFormValues as FormValues,
-    HazardousMaterialSegregationRule,
+  HazardousMaterialSegregationRuleFormValues as FormValues,
+  HazardousMaterialSegregationRule,
 } from "@/types/shipment";
 import { FormProvider } from "react-hook-form";
 import { Badge } from "./ui/badge";
 import {
-    Credenza,
-    CredenzaContent,
-    CredenzaDescription,
-    CredenzaHeader,
-    CredenzaTitle,
+  Credenza,
+  CredenzaContent,
+  CredenzaDescription,
+  CredenzaHeader,
+  CredenzaTitle,
 } from "./ui/credenza";
 
 function HazmatRuleEditForm({

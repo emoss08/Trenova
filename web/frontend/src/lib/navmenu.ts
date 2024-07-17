@@ -15,8 +15,6 @@
  * Grant, and not modifying the license in any other way.
  */
 
-
-
 import React from "react";
 
 export type Permission = string | undefined;

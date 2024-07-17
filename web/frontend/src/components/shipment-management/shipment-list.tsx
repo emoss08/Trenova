@@ -15,8 +15,6 @@
  * Grant, and not modifying the license in any other way.
  */
 
-
-
 import { Shipment, ShipmentStatus } from "@/types/shipment";
 import { Droppable } from "react-beautiful-dnd";
 import { ShipmentInfo } from "./shipment-info";
@@ -58,7 +56,7 @@ export function ShipmentList({
               </Droppable>
             ))
           ) : (
-            <div className="text-muted-foreground py-8 text-center">
+            <div className="py-8 text-center text-muted-foreground">
               No shipments found for the given criteria.
             </div>
           )}

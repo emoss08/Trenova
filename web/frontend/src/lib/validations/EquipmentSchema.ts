@@ -15,8 +15,6 @@
  * Grant, and not modifying the license in any other way.
  */
 
-
-
 import { type EquipmentClassChoiceProps } from "@/lib/choices";
 import { type StatusChoiceProps } from "@/types";
 import type {

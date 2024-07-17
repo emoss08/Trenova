@@ -15,15 +15,13 @@
  * Grant, and not modifying the license in any other way.
  */
 
-
-
 import { useCustomMutation } from "@/hooks/useCustomMutation";
 import { formatToUserTimezone } from "@/lib/date";
 import { fleetCodeSchema } from "@/lib/validations/DispatchSchema";
 import { useTableStore } from "@/stores/TableStore";
 import type {
-    FleetCode,
-    FleetCodeFormValues as FormValues,
+  FleetCode,
+  FleetCodeFormValues as FormValues,
 } from "@/types/dispatch";
 import { yupResolver } from "@hookform/resolvers/yup";
 import { useForm } from "react-hook-form";
@@ -31,14 +29,14 @@ import { FleetCodeForm } from "./fleet-code-table-dialog";
 import { Badge } from "./ui/badge";
 import { Button } from "./ui/button";
 import {
-    Credenza,
-    CredenzaBody,
-    CredenzaClose,
-    CredenzaContent,
-    CredenzaDescription,
-    CredenzaFooter,
-    CredenzaHeader,
-    CredenzaTitle,
+  Credenza,
+  CredenzaBody,
+  CredenzaClose,
+  CredenzaContent,
+  CredenzaDescription,
+  CredenzaFooter,
+  CredenzaHeader,
+  CredenzaTitle,
 } from "./ui/credenza";
 
 function FleetCodeEditForm({

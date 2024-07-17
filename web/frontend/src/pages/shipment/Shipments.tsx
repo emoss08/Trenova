@@ -15,8 +15,6 @@
  * Grant, and not modifying the license in any other way.
  */
 
-
-
 import { ShipmentListView } from "@/components/shipment-management/shipment-list-view";
 import { ShipmentSearchForm, ShipmentStatus } from "@/types/shipment";
 import { FormProvider, useForm } from "react-hook-form";

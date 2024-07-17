@@ -15,8 +15,6 @@
  * Grant, and not modifying the license in any other way.
  */
 
-
-
 import { type API_ENDPOINTS } from "@/types/server";
 import "axios";
 

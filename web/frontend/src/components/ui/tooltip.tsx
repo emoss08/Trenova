@@ -15,8 +15,6 @@
  * Grant, and not modifying the license in any other way.
  */
 
-
-
 import * as TooltipPrimitive from "@radix-ui/react-tooltip";
 import * as React from "react";
 
@@ -51,6 +49,5 @@ export {
   TooltipArrow,
   TooltipContent,
   TooltipProvider,
-  TooltipTrigger
+  TooltipTrigger,
 };
-

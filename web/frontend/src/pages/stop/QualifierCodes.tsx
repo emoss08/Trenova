@@ -15,8 +15,6 @@
  * Grant, and not modifying the license in any other way.
  */
 
-
-
 import { Checkbox } from "@/components/common/fields/checkbox";
 import { DataTable } from "@/components/common/table/data-table";
 import { DataTableColumnHeader } from "@/components/common/table/data-table-column-header";
@@ -98,7 +96,7 @@ export default function QualifierCodes() {
       tableFacetedFilters={filters}
       TableSheet={QualifierCodeDialog}
       TableEditSheet={QualifierCodeEditDialog}
-      addPermissionName="qualifiercode.add"
+      addPermissionName="qualifier_code:create"
     />
   );
 }

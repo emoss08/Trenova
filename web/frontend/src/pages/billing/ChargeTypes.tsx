@@ -15,8 +15,6 @@
  * Grant, and not modifying the license in any other way.
  */
 
-
-
 import { ChargeTypeDialog } from "@/components/charge-type-dialog";
 import { ChargeTypeEditSheet } from "@/components/charge-type-edit-dialog";
 import { Checkbox } from "@/components/common/fields/checkbox";
@@ -92,7 +90,7 @@ export default function ChargeTypes() {
       tableFacetedFilters={filters}
       TableSheet={ChargeTypeDialog}
       TableEditSheet={ChargeTypeEditSheet}
-      addPermissionName="chargetype.add"
+      addPermissionName="charge_type:create"
     />
   );
 }

@@ -18,11 +18,14 @@ package services
 import (
 	"context"
 	"mime/multipart"
+	"strings"
 
+	"github.com/casbin/casbin/v2"
 	"github.com/emoss08/trenova/internal/server"
 	"github.com/emoss08/trenova/pkg/file"
 	"github.com/emoss08/trenova/pkg/minio"
 	"github.com/emoss08/trenova/pkg/models"
+	"github.com/emoss08/trenova/pkg/utils"
 	"github.com/google/uuid"
 	"github.com/rs/zerolog"
 	"github.com/uptrace/bun"
@@ -33,6 +36,7 @@ type UserService struct {
 	logger      *zerolog.Logger
 	minio       minio.MinioClient
 	fileService *file.FileService
+	enforcer    *casbin.Enforcer
 }
 
 func NewUserService(s *server.Server) *UserService {
@@ -41,7 +45,14 @@ func NewUserService(s *server.Server) *UserService {
 		logger:      s.Logger,
 		minio:       s.Minio,
 		fileService: file.NewFileService(s.Logger, s.FileHandler),
+		enforcer:    s.Enforcer,
 	}
+}
+
+type UserRolesPermissions struct {
+	UserID      string   `json:"userId"`
+	Roles       []string `json:"roles"`
+	Permissions []string `json:"permissions"`
 }
 
 func (s UserService) GetAuthenticatedUser(ctx context.Context, userID uuid.UUID) (*models.User, error) {
@@ -54,6 +65,45 @@ func (s UserService) GetAuthenticatedUser(ctx context.Context, userID uuid.UUID)
 	if err != nil {
 		return nil, err
 	}
+
+	roles, err := s.enforcer.GetRolesForUser(userID.String())
+	if err != nil {
+		return nil, err
+	}
+
+	var userRoles []models.UserRole
+	for _, roleName := range roles {
+		role := models.UserRole{
+			Name:        roleName,
+			Description: "", // You might want to store role descriptions separately
+			Permissions: []models.UserPermission{},
+		}
+
+		permissions, err := s.enforcer.GetPermissionsForUser(roleName)
+		if err != nil {
+			return nil, err
+		}
+
+		for _, perm := range permissions {
+			if len(perm) >= 3 {
+				parts := strings.Split(perm[1], ":")
+				if len(parts) >= 2 {
+					permission := models.UserPermission{
+						Codename:    perm[1],
+						Description: "", // You might want to store permission descriptions separately
+						Action:      parts[1],
+						Label:       utils.ToTitleFormat(strings.Join(parts, " ")),
+						ResourceID:  parts[0],
+					}
+					role.Permissions = append(role.Permissions, permission)
+				}
+			}
+		}
+
+		userRoles = append(userRoles, role)
+	}
+
+	u.Roles = userRoles
 
 	return u, nil
 }

@@ -15,8 +15,6 @@
  * Grant, and not modifying the license in any other way.
  */
 
-
-
 // Web socket constants
 export const WEB_SOCKET_URL = import.meta.env.VITE_WS_URL;
 export const ENABLE_WEBSOCKETS = import.meta.env

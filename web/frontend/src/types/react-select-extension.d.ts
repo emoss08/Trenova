@@ -15,9 +15,7 @@
  * Grant, and not modifying the license in any other way.
  */
 
-
-
-import type { } from "react-select/base";
+import type {} from "react-select/base";
 
 import { IconProp } from "@fortawesome/fontawesome-svg-core"; // eslint-disable-line import/no-unassigned-import
 

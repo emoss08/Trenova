@@ -15,8 +15,6 @@
  * Grant, and not modifying the license in any other way.
  */
 
-
-
 import * as SwitchPrimitives from "@radix-ui/react-switch";
 import * as React from "react";
 

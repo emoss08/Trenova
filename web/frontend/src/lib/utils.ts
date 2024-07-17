@@ -15,8 +15,6 @@
  * Grant, and not modifying the license in any other way.
  */
 
-
-
 import { ShipmentStatus } from "@/types/shipment";
 import { clsx, type ClassValue } from "clsx";
 import { RefObject, useEffect } from "react";
@@ -42,6 +40,24 @@ export function upperFirst(str: string): string {
  * @returns {string}
  */
 export function USDollarFormat(num: number): string {
+  return new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency: "USD",
+  }).format(num);
+}
+
+/**
+ * Converts a decimal string to a USD string
+ * @param value - The decimal string to convert
+ * @returns {string}
+ */
+export function ConvertDecimalToUSD(value: string): string {
+  if (value === "") {
+    return "";
+  }
+
+  const num = parseFloat(value);
+
   return new Intl.NumberFormat("en-US", {
     style: "currency",
     currency: "USD",

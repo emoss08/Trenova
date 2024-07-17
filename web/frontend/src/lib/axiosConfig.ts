@@ -15,8 +15,6 @@
  * Grant, and not modifying the license in any other way.
  */
 
-
-
 import { API_URL } from "@/lib/constants";
 import axios from "axios";
 import { v4 as uuidv4 } from "uuid";

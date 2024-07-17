@@ -15,8 +15,6 @@
  * Grant, and not modifying the license in any other way.
  */
 
-
-
 import { cn } from "@/lib/utils";
 import { API_ENDPOINTS } from "@/types/server";
 import axios from "axios";

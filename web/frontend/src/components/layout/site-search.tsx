@@ -15,8 +15,6 @@
  * Grant, and not modifying the license in any other way.
  */
 
-
-
 import { useUserPermissions } from "@/context/user-permissions";
 import { useUserFavorites } from "@/hooks/useQueries";
 import { upperFirst } from "@/lib/utils";
@@ -79,9 +77,9 @@ export function SearchButton() {
             aria-label="Open site search"
             aria-expanded={useHeaderStore.get("searchDialogOpen")}
             onClick={() => useHeaderStore.set("searchDialogOpen", true)}
-            className="border-muted-foreground/40 hover:border-muted-foreground/80 group relative flex size-8"
+            className="group relative flex size-8 border-muted-foreground/40 hover:border-muted-foreground/80"
           >
-            <MagnifyingGlassIcon className="text-muted-foreground group-hover:text-foreground size-5" />
+            <MagnifyingGlassIcon className="size-5 text-muted-foreground group-hover:text-foreground" />
           </Button>
         </TooltipTrigger>
         <TooltipContent side="bottom" sideOffset={5}>
@@ -101,10 +99,10 @@ export function SiteSearchInput() {
             aria-label="Open site search"
             aria-expanded={useHeaderStore.get("searchDialogOpen")}
             onClick={() => useHeaderStore.set("searchDialogOpen", true)}
-            className="border-muted-foreground/20 hover:border-muted-foreground/80 hover:bg-accent group mt-10 hidden h-9 w-[250px] items-center justify-between rounded-md border px-3 py-2 text-sm hover:cursor-pointer xl:flex"
+            className="group mt-10 hidden h-9 w-[250px] items-center justify-between rounded-md border border-muted-foreground/20 px-3 py-2 text-sm hover:cursor-pointer hover:border-muted-foreground/80 hover:bg-accent xl:flex"
           >
             <div className="flex items-center">
-              <MagnifyingGlassIcon className="text-muted-foreground group-hover:text-foreground mr-2 size-5" />
+              <MagnifyingGlassIcon className="mr-2 size-5 text-muted-foreground group-hover:text-foreground" />
               <span className="text-muted-foreground">Search...</span>
             </div>
             <div className="pointer-events-none inline-flex select-none">
@@ -257,11 +255,11 @@ export function SiteSearch() {
         {Object.keys(filteredGroups).length === 0 &&
           favoriteCommands.length === 0 && (
             <CommandEmpty key="empty">
-              <AlertCircleIcon className="text-accent-foreground mx-auto size-6" />
-              <p className="text-accent-foreground mt-4 font-semibold">
+              <AlertCircleIcon className="mx-auto size-6 text-accent-foreground" />
+              <p className="mt-4 font-semibold text-accent-foreground">
                 No results found
               </p>
-              <p className="text-muted-foreground mt-2">
+              <p className="mt-2 text-muted-foreground">
                 No pages found for this search term. Please try again.
               </p>
             </CommandEmpty>
@@ -300,7 +298,7 @@ export function SiteSearch() {
           </CommandItem>
         </CommandGroup>
       </CommandList>
-      <div className="bg-background sticky flex justify-center space-x-1 border-t py-2">
+      <div className="sticky flex justify-center space-x-1 border-t bg-background py-2">
         <span className="text-xs">&#8593;</span>
         <span className="text-xs">&#8595;</span>
         <p className="pr-2 text-xs">to navigate</p>

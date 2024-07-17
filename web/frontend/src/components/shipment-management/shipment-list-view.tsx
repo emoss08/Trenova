@@ -15,8 +15,6 @@
  * Grant, and not modifying the license in any other way.
  */
 
-
-
 import { assignTractorToShipment } from "@/services/ShipmentRequestService";
 import { useUserStore } from "@/stores/AuthStore";
 import type {
@@ -178,7 +176,7 @@ export function ShipmentListView({
       <DragDropContext onDragEnd={handleDragEnd}>
         <div className="flex w-full space-x-10">
           <div className="w-1/4">
-            <h2 className="mb-4 text-lg font-semibold">Tractors</h2>
+            <h2 className="text-lg mb-4 font-semibold">Tractors</h2>
             {isTractorLoading ? (
               <Skeleton className="h-[50vh] w-full" />
             ) : isTractorError ? (

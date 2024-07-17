@@ -15,8 +15,6 @@
  * Grant, and not modifying the license in any other way.
  */
 
-
-
 import { Badge, badgeVariants } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -60,11 +58,11 @@ export function DataNotFound({
         className,
       )}
     >
-      <FontAwesomeIcon icon={icon} className="text-foreground size-10" />
-      <h3 className="mt-4 text-lg font-semibold">
+      <FontAwesomeIcon icon={icon} className="size-10 text-foreground" />
+      <h3 className="text-lg mt-4 font-semibold">
         No {upperFirst(name)} added
       </h3>
-      <p className="text-muted-foreground mt-2 text-sm">{message}</p>
+      <p className="mt-2 text-sm text-muted-foreground">{message}</p>
       <Button
         className="mt-3"
         type="button"
@@ -159,16 +157,16 @@ export function ErrorLoadingData({ message }: { message?: string }) {
   return (
     <Card className="col-span-4 lg:col-span-2">
       <CardContent className="relative p-0">
-        <div className="bg-muted/50 border-border m-5 flex h-[40vh] flex-col items-center justify-center rounded-md border">
+        <div className="m-5 flex h-[40vh] flex-col items-center justify-center rounded-md border border-border bg-muted/50">
           <FontAwesomeIcon
             icon={faTriangleExclamation}
             className="mb-2"
             size="3x"
           />
-          <h3 className="text-foreground text-xl font-semibold">
+          <h3 className="text-xl font-semibold text-foreground">
             Well, this is embarrassing...
           </h3>
-          <p className="text-muted-foreground text-sm">
+          <p className="text-sm text-muted-foreground">
             {message || "There was an error loading the data."}
           </p>
           <div className="mt-5 flex space-x-4">

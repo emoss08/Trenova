@@ -15,8 +15,6 @@
  * Grant, and not modifying the license in any other way.
  */
 
-
-
 import * as React from "react";
 
 import { cn } from "@/lib/utils";
@@ -129,6 +127,5 @@ export {
   TableFooter,
   TableHead,
   TableHeader,
-  TableRow
+  TableRow,
 };
-

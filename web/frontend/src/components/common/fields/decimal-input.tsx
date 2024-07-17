@@ -15,8 +15,6 @@
  * Grant, and not modifying the license in any other way.
  */
 
-
-
 import { ExtendedInputProps, Input } from "@/components/common/fields/input";
 import { Label } from "@/components/common/fields/label";
 import { cn } from "@/lib/utils";

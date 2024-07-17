@@ -15,8 +15,6 @@
  * Grant, and not modifying the license in any other way.
  */
 
-
-
 import * as React from "react";
 
 export function useMediaQuery(query: string) {

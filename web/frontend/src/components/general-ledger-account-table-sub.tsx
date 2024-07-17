@@ -15,17 +15,15 @@
  * Grant, and not modifying the license in any other way.
  */
 
-
-
 import { USDollarFormat } from "@/lib/utils";
 import {
-    Table,
-    TableBody,
-    TableCell,
-    TableFooter,
-    TableHead,
-    TableHeader,
-    TableRow,
+  Table,
+  TableBody,
+  TableCell,
+  TableFooter,
+  TableHead,
+  TableHeader,
+  TableRow,
 } from "./ui/table";
 
 const glAccountHistory = [

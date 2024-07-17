@@ -15,8 +15,6 @@
  * Grant, and not modifying the license in any other way.
  */
 
-
-
 import { CookieConsent } from "@/components/layout/cookie-consent";
 import { SearchButton, SiteSearch } from "@/components/layout/site-search";
 import { RainbowTopBar } from "@/components/layout/topbar";
@@ -50,11 +48,10 @@ export function Layout({ children }: { children: React.ReactNode }) {
 
   return (
     <div className="bg-background relative flex min-h-screen flex-col" id="app">
-      {/* <RainbowTopBar /> */}
       <div className="flex flex-1 overflow-hidden">
         {hideAsideMenu ? null : <MainAsideMenu />}
         <div className="flex flex-1 flex-col overflow-hidden">
-          {!isDesktop ? (
+          {!isDesktop && (
             <header className="border-border/40 bg-background/95 flex flex-none border-b xl:hidden">
               <div className="flex h-14 w-full items-center justify-between px-4">
                 <div className="flex items-center gap-x-4">
@@ -68,7 +65,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
                 </div>
               </div>
             </header>
-          ) : null}
+          )}
           <main className="flex-1 overflow-auto px-6">
             <Breadcrumb />
             <SiteSearch />

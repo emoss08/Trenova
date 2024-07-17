@@ -15,8 +15,6 @@
  * Grant, and not modifying the license in any other way.
  */
 
-
-
 import { Checkbox } from "@/components/common/fields/checkbox";
 import { DataTable } from "@/components/common/table/data-table";
 import { DataTableColumnHeader } from "@/components/common/table/data-table-column-header";
@@ -101,7 +99,7 @@ const filters: FilterConfig<ShipmentType>[] = [
 export default function ServiceTypes() {
   return (
     <DataTable
-      addPermissionName="shipmenttype.add"
+      addPermissionName="shipment_type:create"
       queryKey="shipmentTypes"
       columns={columns}
       link="/shipment-types/"

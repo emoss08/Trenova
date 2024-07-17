@@ -15,8 +15,6 @@
  * Grant, and not modifying the license in any other way.
  */
 
-
-
 import { LinkGroupProps } from "@/types/sidebar-nav";
 import { Suspense, lazy, useState } from "react";
 import { ComponentLoader } from "../ui/component-loader";

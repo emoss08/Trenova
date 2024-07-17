@@ -15,8 +15,6 @@
  * Grant, and not modifying the license in any other way.
  */
 
-
-
 import { useDocumentClass } from "@/hooks/useQueries";
 import { BillingCycleChoices, type CustomerFormValues } from "@/types/customer";
 import { useFormContext } from "react-hook-form";

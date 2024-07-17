@@ -15,8 +15,6 @@
  * Grant, and not modifying the license in any other way.
  */
 
-
-
 import type { Column, ColumnDef, Row, Table } from "@tanstack/react-table";
 import React from "react";
 import type { QueryKeys, ValuesOf } from "./index";

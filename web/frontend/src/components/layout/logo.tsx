@@ -15,8 +15,6 @@
  * Grant, and not modifying the license in any other way.
  */
 
-
-
 import { useUserOrganization } from "@/hooks/useQueries";
 import { faChevronDown } from "@fortawesome/pro-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
@@ -35,8 +33,8 @@ export function OrganizationLogo() {
   const cityState = `${data?.city}, ${data?.state?.abbreviation}`;
 
   return (
-    <div className="hover:bg-muted group col-span-full flex w-full items-center gap-x-4 rounded-lg p-1 hover:cursor-pointer">
-      <Avatar className="bg-muted/50 group-hover:bg-muted-foreground/20 border-muted size-14 flex-none rounded-lg border">
+    <div className="group col-span-full flex w-full items-center gap-x-4 rounded-lg p-1 hover:cursor-pointer hover:bg-muted">
+      <Avatar className="size-14 flex-none rounded-lg border border-muted bg-muted/50 group-hover:bg-muted-foreground/20">
         <AvatarImage
           src={data?.logoUrl || ""}
           alt={"Trenova Logo"}
@@ -48,15 +46,15 @@ export function OrganizationLogo() {
       </Avatar>
       <div className="flex flex-1 flex-col">
         <div className="flex items-center">
-          <h2 className="text-foreground mr-2 w-36 truncate text-lg font-semibold leading-7">
+          <h2 className="text-lg mr-2 w-36 truncate font-semibold leading-7 text-foreground">
             {data?.name || ""}
           </h2>
           <FontAwesomeIcon
             icon={faChevronDown}
-            className="text-muted-foreground size-3"
+            className="size-3 text-muted-foreground"
           />
         </div>
-        <p className="text-muted-foreground text-sm">{cityState}</p>
+        <p className="text-sm text-muted-foreground">{cityState}</p>
       </div>
     </div>
   );
@@ -72,8 +70,8 @@ export function MiniOrganizationLogo() {
   const initial = data?.name?.charAt(0);
 
   return (
-    <div className="hover:bg-muted rounded-lghover:cursor-pointer group col-span-full flex w-full items-center gap-x-4">
-      <Avatar className="bg-muted/50 group-hover:bg-muted-foreground/20 border-muted size-9 flex-none rounded-lg border">
+    <div className="rounded-lghover:cursor-pointer group col-span-full flex w-full items-center gap-x-4 hover:bg-muted">
+      <Avatar className="size-9 flex-none rounded-lg border border-muted bg-muted/50 group-hover:bg-muted-foreground/20">
         <AvatarImage
           src={data?.logoUrl || ""}
           alt={"Trenova Logo"}

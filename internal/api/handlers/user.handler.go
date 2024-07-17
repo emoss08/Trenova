@@ -29,18 +29,6 @@ import (
 	"github.com/rs/zerolog"
 )
 
-type ChangePasswordRequest struct {
-	OldPassword string `json:"oldPassword" validate:"required"`
-	NewPassword string `json:"newPassword" validate:"required"`
-}
-
-func (cpr ChangePasswordRequest) Validate() error {
-	return validation.ValidateStruct(&cpr,
-		validation.Field(&cpr.OldPassword, validation.Required),
-		validation.Field(&cpr.NewPassword, validation.Required),
-	)
-}
-
 type UserHandler struct {
 	logger            *zerolog.Logger
 	service           *services.UserService
@@ -53,6 +41,18 @@ func NewUserHandler(s *server.Server) *UserHandler {
 		service:           services.NewUserService(s),
 		permissionService: services.NewPermissionService(s.Enforcer),
 	}
+}
+
+type ChangePasswordRequest struct {
+	OldPassword string `json:"oldPassword" validate:"required"`
+	NewPassword string `json:"newPassword" validate:"required"`
+}
+
+func (cpr ChangePasswordRequest) Validate() error {
+	return validation.ValidateStruct(&cpr,
+		validation.Field(&cpr.OldPassword, validation.Required),
+		validation.Field(&cpr.NewPassword, validation.Required),
+	)
 }
 
 func (uh UserHandler) RegisterRoutes(r fiber.Router) {

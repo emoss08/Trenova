@@ -15,8 +15,6 @@
  * Grant, and not modifying the license in any other way.
  */
 
-
-
 import { v4 as uuidv4 } from "uuid";
 
 export type PopoutWindowOptions = {

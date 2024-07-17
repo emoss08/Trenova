@@ -15,8 +15,6 @@
  * Grant, and not modifying the license in any other way.
  */
 
-
-
 import { DataTable } from "@/components/common/table/data-table";
 import { DataTableColumnHeader } from "@/components/common/table/data-table-column-header";
 import { StatusBadge } from "@/components/common/table/data-table-components";
@@ -103,7 +101,7 @@ export default function GLAccounts() {
       TableEditSheet={GeneralLedgerAccountTableEditSheet}
       renderSubComponent={renderSubComponent}
       getRowCanExpand={() => true}
-      addPermissionName="generalledgeraccount.add"
+      addPermissionName="general_ledger_account:create"
     />
   );
 }

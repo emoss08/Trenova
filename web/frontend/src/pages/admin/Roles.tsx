@@ -15,8 +15,6 @@
  * Grant, and not modifying the license in any other way.
  */
 
-
-
 import AdminLayout from "@/components/admin-page/layout";
 import { Checkbox } from "@/components/common/fields/checkbox";
 import { DataTable } from "@/components/common/table/data-table";
@@ -76,7 +74,7 @@ export default function RoleManagement() {
         filterColumn="name"
         TableSheet={TableChangeAlertSheet}
         TableEditSheet={TableChangeAlertEditSheet}
-        addPermissionName="role.add"
+        addPermissionName="role:create"
       />
     </AdminLayout>
   );

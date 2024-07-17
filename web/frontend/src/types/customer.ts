@@ -15,8 +15,6 @@
  * Grant, and not modifying the license in any other way.
  */
 
-
-
 import { IChoiceProps, type StatusChoiceProps } from "@/types/index";
 import { type BaseModel } from "./organization";
 

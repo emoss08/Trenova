@@ -15,8 +15,6 @@
  * Grant, and not modifying the license in any other way.
  */
 
-
-
 import { Checkbox } from "@/components/common/fields/checkbox";
 import { DataTable } from "@/components/common/table/data-table";
 import { DataTableColumnHeader } from "@/components/common/table/data-table-column-header";
@@ -97,7 +95,7 @@ export default function ServiceTypes() {
       tableFacetedFilters={filters}
       TableSheet={ServiceTypeDialog}
       TableEditSheet={ServiceTypeEditDialog}
-      addPermissionName="servicetype.add"
+      addPermissionName="service_type:create"
     />
   );
 }

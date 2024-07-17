@@ -15,8 +15,6 @@
  * Grant, and not modifying the license in any other way.
  */
 
-
-
 import { type LocationFormValues as FormValues } from "@/types/location";
 import { useFieldArray, type Control } from "react-hook-form";
 
@@ -59,7 +57,7 @@ export function LocationCommentForm({
             {fields.map((field, index) => (
               <FormGroup
                 key={field.id}
-                className="border-border mb-4 grid grid-cols-2 gap-2 rounded-md border border-dashed p-4 lg:grid-cols-2"
+                className="mb-4 grid grid-cols-2 gap-2 rounded-md border border-dashed border-border p-4 lg:grid-cols-2"
               >
                 <FormControl className="col-span-full">
                   <SelectInput
@@ -113,11 +111,11 @@ export function LocationCommentForm({
         </>
       ) : (
         <div className="mt-44 flex grow flex-col items-center justify-center">
-          <XIcon className="text-foreground size-10" />
-          <h3 className="mt-4 text-lg font-semibold">
+          <XIcon className="size-10 text-foreground" />
+          <h3 className="text-lg mt-4 font-semibold">
             No Location Comment added
           </h3>
-          <p className="text-muted-foreground mb-4 mt-2 text-sm">
+          <p className="mb-4 mt-2 text-sm text-muted-foreground">
             You have not added any location comment. Add one below.
           </p>
           <Button type="button" size="sm" onClick={handleAddContact}>

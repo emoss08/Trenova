@@ -15,8 +15,6 @@
  * Grant, and not modifying the license in any other way.
  */
 
-
-
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useNextProNumber, useShipmentControl } from "@/hooks/useQueries";
 import { DispatchInformationCard } from "./cards/dispatch-info";

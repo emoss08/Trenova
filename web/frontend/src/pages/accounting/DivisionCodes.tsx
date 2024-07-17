@@ -15,8 +15,6 @@
  * Grant, and not modifying the license in any other way.
  */
 
-
-
 import { Checkbox } from "@/components/common/fields/checkbox";
 import { DataTable } from "@/components/common/table/data-table";
 import { DataTableColumnHeader } from "@/components/common/table/data-table-column-header";
@@ -86,7 +84,7 @@ const filters: FilterConfig<DivisionCode>[] = [
 export default function DivisionCodes() {
   return (
     <DataTable
-      addPermissionName="divisioncode.add"
+      addPermissionName="division_code:create"
       queryKey="divisionCodes"
       columns={columns}
       link="/division-codes/"

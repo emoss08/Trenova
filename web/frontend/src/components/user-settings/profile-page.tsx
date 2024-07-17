@@ -15,8 +15,6 @@
  * Grant, and not modifying the license in any other way.
  */
 
-
-
 import { User } from "@/types/accounts";
 import { LinkGroupProps } from "@/types/sidebar-nav";
 import { Suspense, lazy, useState } from "react";

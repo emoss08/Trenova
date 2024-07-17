@@ -15,8 +15,6 @@
  * Grant, and not modifying the license in any other way.
  */
 
-
-
 import { SidebarLink } from "@/types/sidebar-nav";
 import React, { Suspense } from "react";
 import { ComponentLoader } from "../ui/component-loader";

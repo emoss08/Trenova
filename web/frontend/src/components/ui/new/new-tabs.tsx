@@ -15,8 +15,6 @@
  * Grant, and not modifying the license in any other way.
  */
 
-
-
 // Credit: https://raw.tremor.so/docs/ui/tabs
 
 import { cn, focusRing } from "@/lib/utils";

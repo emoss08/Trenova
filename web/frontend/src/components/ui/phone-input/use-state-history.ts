@@ -15,8 +15,6 @@
  * Grant, and not modifying the license in any other way.
  */
 
-
-
 import { useCallback, useMemo, useState } from "react";
 
 export interface UseStateHistoryHandlers<T> {

@@ -153,10 +153,6 @@ func InitializeCasbinPolicies(ctx context.Context, db *bun.DB, enforcer *casbin.
 		return err
 	}
 
-	if err := loadRoles(ctx, db, enforcer); err != nil {
-		return err
-	}
-
 	if err := LoadAdminAccount(ctx, db, enforcer, org, bu); err != nil {
 		return err
 	}

@@ -15,8 +15,6 @@
  * Grant, and not modifying the license in any other way.
  */
 
-
-
 import { useFeatureFlags } from "@/hooks/useQueries";
 import { OrganizationFeatureFlag } from "@/types/organization";
 import DOMPurify from "dompurify";
@@ -39,11 +37,11 @@ function FeatureFlagRow({
   return (
     <li
       key={flag.code}
-      className="bg-card text-card-foreground flex flex-col overflow-hidden rounded-lg border text-center"
+      className="flex flex-col overflow-hidden rounded-lg border bg-card text-center text-card-foreground"
     >
       <div className="flex flex-1 flex-col p-8">
         <div className="flex flex-1 flex-col items-center justify-center">
-          <h3 className="text-foreground text-2xl font-semibold">
+          <h3 className="text-2xl font-semibold text-foreground">
             {flag.name}
           </h3>
           <div className="mt-2 flex">
@@ -62,7 +60,7 @@ function FeatureFlagRow({
           <ScrollArea className="mb-4 h-48">
             <dd
               dangerouslySetInnerHTML={{ __html: sanitizedDescription }}
-              className="text-muted-foreground p-4 text-sm"
+              className="p-4 text-sm text-muted-foreground"
             ></dd>
           </ScrollArea>
         </dl>
@@ -75,7 +73,7 @@ function FeatureFlagRow({
           </Label>
         </div>
         <div>
-          <button className="text-primary text-sm hover:underline hover:decoration-blue-600">
+          <button className="text-sm text-primary hover:underline hover:decoration-blue-600">
             Send Feedback
           </button>
         </div>

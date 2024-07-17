@@ -15,8 +15,6 @@
  * Grant, and not modifying the license in any other way.
  */
 
-
-
 import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { Trash2 as RemoveIcon } from "lucide-react";

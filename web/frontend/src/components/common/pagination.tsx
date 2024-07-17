@@ -15,16 +15,14 @@
  * Grant, and not modifying the license in any other way.
  */
 
-
-
 import {
-    PaginationContent,
-    PaginationEllipsis,
-    PaginationItem,
-    PaginationLink,
-    PaginationNext,
-    PaginationPrevious,
-    Pagination as PaginationRoot,
+  PaginationContent,
+  PaginationEllipsis,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+  Pagination as PaginationRoot,
 } from "../ui/pagination";
 
 export function Pagination({

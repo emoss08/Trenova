@@ -15,8 +15,6 @@
  * Grant, and not modifying the license in any other way.
  */
 
-
-
 import { ACDialog } from "@/components/accessorial-charge-table-dialog";
 import { AccessorialChargeTableEditDialog } from "@/components/accessorial-charge-table-edit-dialog";
 import { Checkbox } from "@/components/common/fields/checkbox";
@@ -25,7 +23,7 @@ import { DataTableColumnHeader } from "@/components/common/table/data-table-colu
 import { StatusBadge } from "@/components/common/table/data-table-components";
 import { Badge } from "@/components/ui/badge";
 import { tableStatusChoices } from "@/lib/choices";
-import { truncateText, USDollarFormat } from "@/lib/utils";
+import { ConvertDecimalToUSD, truncateText } from "@/lib/utils";
 import { AccessorialCharge } from "@/types/billing";
 import { type FilterConfig } from "@/types/tables";
 import { fuelMethodChoices } from "@/utils/apps/billing";
@@ -108,7 +106,7 @@ const columns: ColumnDef<AccessorialCharge>[] = [
     header: ({ column }) => (
       <DataTableColumnHeader column={column} title="Charge Amount" />
     ),
-    cell: ({ row }) => USDollarFormat(row.original.amount),
+    cell: ({ row }) => ConvertDecimalToUSD(row.original.amount),
     filterFn: (row, id, value) => {
       return value.includes(row.getValue(id));
     },
@@ -144,7 +142,7 @@ export default function AccessorialCharges() {
       tableFacetedFilters={filters}
       TableSheet={ACDialog}
       TableEditSheet={AccessorialChargeTableEditDialog}
-      addPermissionName="accessorialcharge.add"
+      addPermissionName="accessorial_charge:create"
     />
   );
 }

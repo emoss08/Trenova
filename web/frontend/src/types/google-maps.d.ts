@@ -15,8 +15,6 @@
  * Grant, and not modifying the license in any other way.
  */
 
-
-
 declare module "@google" {
   export type GoogleMap = google.maps.Map;
 }

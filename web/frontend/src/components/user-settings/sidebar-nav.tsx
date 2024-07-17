@@ -15,8 +15,6 @@
  * Grant, and not modifying the license in any other way.
  */
 
-
-
 import { cn } from "@/lib/utils";
 import { LinkGroupProps, type SidebarLink } from "@/types/sidebar-nav";
 import { debounce } from "lodash-es";
@@ -70,13 +68,13 @@ export function SidebarNav({ className, links, ...props }: SidebarNavProps) {
         isScrolled ? "pt-10" : "",
       )}
     >
-      <ScrollArea className="bg-card text-card-foreground size-full rounded-lg border p-3">
+      <ScrollArea className="size-full rounded-lg border bg-card p-3 text-card-foreground">
         <nav className={cn("lg:flex-col", className)} {...props}>
           {Object.entries(groupedLinks).map(
             ([group, groupLinks], index, array) => (
               <div key={group} className="space-y-2">
                 {group !== "ungrouped" && (
-                  <h3 className="text-muted-foreground ml-4 select-none text-sm font-semibold uppercase">
+                  <h3 className="ml-4 select-none text-sm font-semibold uppercase text-muted-foreground">
                     {group}
                   </h3>
                 )}
@@ -118,11 +116,11 @@ export function ModalAsideMenu({
   setActiveTab: (tabId: string) => void;
 }) {
   return (
-    <nav className="transition-spacing fixed top-14 z-30 -ml-2 hidden size-full h-[600px] shrink-0 duration-500 md:sticky md:block">
-      <ScrollArea className="bg-card text-card-foreground size-full border-r">
+    <nav className="fixed top-14 z-30 -ml-2 hidden size-full h-[600px] shrink-0 transition-spacing duration-500 md:sticky md:block">
+      <ScrollArea className="size-full border-r bg-card text-card-foreground">
         {linkGroups.map((group, index, array) => (
           <div key={group.title}>
-            <h3 className="text-muted-foreground select-none text-sm font-semibold uppercase">
+            <h3 className="select-none text-sm font-semibold uppercase text-muted-foreground">
               {group.title}
             </h3>
             {group.links.map((link) => (

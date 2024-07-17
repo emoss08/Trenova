@@ -15,8 +15,6 @@
  * Grant, and not modifying the license in any other way.
  */
 
-
-
 import {
   Select,
   SelectContent,
@@ -315,7 +313,7 @@ export default function Index() {
               </div>
             ))}
           </div>
-          <div className="from-background pointer-events-none absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t to-transparent" />
+          <div className="pointer-events-none absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-background to-transparent" />
         </ScrollArea>
 
         <div className="mt-4 flex gap-x-1">

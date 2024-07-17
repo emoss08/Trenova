@@ -15,8 +15,6 @@
  * Grant, and not modifying the license in any other way.
  */
 
-
-
 import {
   Popover,
   PopoverContent,
@@ -134,7 +132,7 @@ export function DateTimePicker<TFieldValues extends FieldValues>({
         <Popover open={open} onOpenChange={setOpen}>
           <PopoverTrigger asChild>
             <div className="relative">
-              <div className="bg-border absolute inset-y-0 right-8 mt-1.5 h-6 w-px" />
+              <div className="absolute inset-y-0 right-8 mt-1.5 h-6 w-px bg-border" />
               <TooltipProvider delayDuration={100}>
                 <Tooltip>
                   <TooltipTrigger asChild>

@@ -15,8 +15,6 @@
  * Grant, and not modifying the license in any other way.
  */
 
-
-
 import { LocationContactForm } from "@/components/location/location-contacts-form";
 import { LocationInfoForm } from "@/components/location/location-info-form";
 import { Button } from "@/components/ui/button";

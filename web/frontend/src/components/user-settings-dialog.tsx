@@ -15,8 +15,6 @@
  * Grant, and not modifying the license in any other way.
  */
 
-
-
 import { User } from "@/types/accounts";
 import { Credenza, CredenzaBody, CredenzaContent } from "./ui/credenza";
 import UserProfile from "./user-settings/profile-page";

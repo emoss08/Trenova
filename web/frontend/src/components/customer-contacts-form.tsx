@@ -15,8 +15,6 @@
  * Grant, and not modifying the license in any other way.
  */
 
-
-
 import { useFieldArray, useFormContext } from "react-hook-form";
 
 import { InputField } from "@/components/common/fields/input";
@@ -71,7 +69,7 @@ export function CustomerContactForm() {
               {fields.map((field, index) => (
                 <FormGroup
                   key={field.id}
-                  className="border-border rounded-md border border-dashed p-4 lg:grid-cols-2"
+                  className="rounded-md border border-dashed border-border p-4 lg:grid-cols-2"
                 >
                   <FormControl>
                     <InputField
@@ -147,9 +145,9 @@ export function CustomerContactForm() {
           </>
         ) : (
           <div className="mt-44 flex grow flex-col items-center justify-center">
-            <PersonIcon className="text-foreground size-10" />
-            <h3 className="mt-4 text-lg font-semibold">No Contacts added</h3>
-            <p className="text-muted-foreground mb-4 mt-2 text-sm">
+            <PersonIcon className="size-10 text-foreground" />
+            <h3 className="text-lg mt-4 font-semibold">No Contacts added</h3>
+            <p className="mb-4 mt-2 text-sm text-muted-foreground">
               You have not added any contacts. Add one below.
             </p>
             <Button type="button" size="sm" onClick={handleAddContact}>

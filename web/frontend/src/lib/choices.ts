@@ -15,8 +15,6 @@
  * Grant, and not modifying the license in any other way.
  */
 
-
-
 import { IChoiceProps } from "@/types";
 import { TableOptionProps } from "@/types/tables";
 import { CircleIcon, MinusCircledIcon } from "@radix-ui/react-icons";

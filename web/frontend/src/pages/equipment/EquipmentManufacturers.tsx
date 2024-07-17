@@ -15,8 +15,6 @@
  * Grant, and not modifying the license in any other way.
  */
 
-
-
 import { Checkbox } from "@/components/common/fields/checkbox";
 import { DataTable } from "@/components/common/table/data-table";
 import { DataTableColumnHeader } from "@/components/common/table/data-table-column-header";
@@ -88,7 +86,7 @@ const filters: FilterConfig<EquipmentManufacturer>[] = [
 export default function EquipmentManufacturers() {
   return (
     <DataTable
-      addPermissionName="equipmentmanufacturer.add"
+      addPermissionName="equipment_manufacturer:create"
       queryKey="equipmentManufacturers"
       columns={columns}
       link="/equipment-manufacturers/"

@@ -15,8 +15,6 @@
  * Grant, and not modifying the license in any other way.
  */
 
-
-
 import { useCustomMutation } from "@/hooks/useCustomMutation";
 import { TIMEZONES, TimezoneChoices } from "@/lib/timezone";
 import {
@@ -90,7 +88,7 @@ export default function PersonalInformation({ user }: { user: User }) {
         <h2 className="shrink-0 text-sm" id="personal-information">
           Personal Information
         </h2>
-        <p className="text-muted-foreground text-xs">
+        <p className="text-xs text-muted-foreground">
           Update your personal information to keep your profile up-to-date.
         </p>
       </div>
@@ -101,7 +99,7 @@ export default function PersonalInformation({ user }: { user: User }) {
               src={user?.profilePicUrl || avatarSrc}
               layout="constrained"
               alt="User Avatar"
-              className="bg-muted-foreground size-24 flex-none rounded-lg object-cover"
+              className="size-24 flex-none rounded-lg bg-muted-foreground object-cover"
               width={96}
               height={96}
             />
@@ -156,7 +154,7 @@ export default function PersonalInformation({ user }: { user: User }) {
             />
           </div>
         </div>
-        <div className="border-border mt-8 flex justify-end gap-x-2">
+        <div className="mt-8 flex justify-end gap-x-2 border-border">
           <Button variant="outline" type="button">
             Cancel
           </Button>

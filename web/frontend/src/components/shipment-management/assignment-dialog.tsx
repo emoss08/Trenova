@@ -15,8 +15,6 @@
  * Grant, and not modifying the license in any other way.
  */
 
-
-
 import { cn } from "@/lib/utils";
 import { getActiveAssignmentsForTractor } from "@/services/EquipmentRequestService";
 import type {
@@ -78,7 +76,7 @@ const PortalAwareItem = ({
         {...provided.dragHandleProps}
         className="rounded p-1 hover:cursor-move"
       >
-        <GripIcon className="text-foreground size-5" />
+        <GripIcon className="size-5 text-foreground" />
       </div>
       <Input value={field.shipmentProNumber} readOnly className="grow" />
       <Button

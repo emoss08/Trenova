@@ -15,8 +15,6 @@
  * Grant, and not modifying the license in any other way.
  */
 
-
-
 import { CommodityDialog } from "@/components/commodity-dialog";
 import { CommodityEditDialog } from "@/components/commodity-edit-table-dialog";
 import { Checkbox } from "@/components/common/fields/checkbox";
@@ -128,7 +126,7 @@ export default function CommodityPage() {
       tableFacetedFilters={filters}
       TableSheet={CommodityDialog}
       TableEditSheet={CommodityEditDialog}
-      addPermissionName="commodity.add"
+      addPermissionName="commodity:create"
     />
   );
 }
