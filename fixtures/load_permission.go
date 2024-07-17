@@ -4,11 +4,10 @@ import (
 	"context"
 	"fmt"
 	"log"
-	"strings"
-	"unicode"
 
 	"github.com/casbin/casbin/v2"
 	"github.com/emoss08/trenova/pkg/models"
+	"github.com/samber/lo"
 	"github.com/uptrace/bun"
 )
 
@@ -32,7 +31,7 @@ func loadPermissions(ctx context.Context, db *bun.DB, enforcer *casbin.Enforcer)
 	}
 
 	for _, resource := range resources {
-		resourceTypeLower := toSnakeCase(resource.Type)
+		resourceTypeLower := lo.SnakeCase(resource.Type)
 		for _, action := range actions {
 			codename := fmt.Sprintf("%s:%s", resourceTypeLower, action.action)
 
@@ -47,16 +46,4 @@ func loadPermissions(ctx context.Context, db *bun.DB, enforcer *casbin.Enforcer)
 	}
 
 	return enforcer.SavePolicy()
-}
-
-// toSnakeCase converts a string from CamelCase to snake_case
-func toSnakeCase(s string) string {
-	var result string
-	for i, r := range s {
-		if i > 0 && unicode.IsUpper(r) {
-			result += "_"
-		}
-		result += strings.ToLower(string(r))
-	}
-	return result
 }

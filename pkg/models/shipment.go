@@ -187,6 +187,7 @@ func (s *Shipment) UpdateStatus(ctx context.Context, db *bun.DB) error {
 	}
 
 	var newStatus property.ShipmentStatus
+
 	switch {
 	case allCompleted:
 		newStatus = property.ShipmentStatusCompleted

@@ -11,6 +11,8 @@ import (
 	"path/filepath"
 	"strings"
 	"text/template"
+
+	"github.com/samber/lo"
 )
 
 func main() {
@@ -345,7 +347,7 @@ func (h {{.ModelName}}Handler) Update() fiber.Handler {
 		ModelName:       modelName,
 		LowerModelName:  strings.ToLower(modelName),
 		PluralModelName: pluralize(modelName),
-		RoutePrefix:     toKebabCase(modelName),
+		RoutePrefix:     lo.KebabCase(modelName),
 		ServicesPackage: servicesPackage,
 	}
 
@@ -360,7 +362,7 @@ func (h {{.ModelName}}Handler) Update() fiber.Handler {
 		return fmt.Errorf("error formatting code: %w", err)
 	}
 
-	outputPath := filepath.Join(handlersDir, fmt.Sprintf("%s_handler.go", toSnakeCase(modelName)))
+	outputPath := filepath.Join(handlersDir, fmt.Sprintf("%s_handler.go", lo.SnakeCase(modelName)))
 	err = os.WriteFile(outputPath, formattedCode, 0o644)
 	if err != nil {
 		return fmt.Errorf("error writing file: %w", err)
@@ -368,21 +370,6 @@ func (h {{.ModelName}}Handler) Update() fiber.Handler {
 
 	fmt.Printf("Generated handler for %s\n", modelName)
 	return nil
-}
-
-func toSnakeCase(str string) string {
-	var result strings.Builder
-	for i, r := range str {
-		if i > 0 && r >= 'A' && r <= 'Z' {
-			result.WriteRune('_')
-		}
-		result.WriteRune(r)
-	}
-	return strings.ToLower(result.String())
-}
-
-func toKebabCase(str string) string {
-	return strings.ReplaceAll(toSnakeCase(str), "_", "-")
 }
 
 func pluralize(str string) string {

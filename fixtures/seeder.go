@@ -20,7 +20,11 @@ import (
 func LoadFixtures() error {
 	ctx := context.Background()
 
-	serverConfig := config.DefaultServiceConfigFromEnv()
+	serverConfig, err := config.DefaultServiceConfigFromEnv()
+	if err != nil {
+		log.Fatalf("Failed to load server configuration: %v", err)
+		return err
+	}
 
 	sqldb := sql.OpenDB(pgdriver.NewConnector(pgdriver.WithDSN(serverConfig.DB.DSN())))
 	db := bun.NewDB(sqldb, pgdialect.New())
@@ -35,7 +39,7 @@ func LoadFixtures() error {
 	codeInitializer := &gen.CodeInitializer{DB: db}
 
 	// Initialize the counter manager with existing codes
-	err := codeInitializer.Initialize(ctx, counterManager, &models.Worker{})
+	err = codeInitializer.Initialize(ctx, counterManager, &models.Worker{})
 	if err != nil {
 		return err
 	}

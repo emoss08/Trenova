@@ -258,7 +258,11 @@ func (s ReportService) GetColumnsByTableName(ctx context.Context, tableName stri
 // This function is used to generate a report based on the given payload. It will call the integration service to generate the report
 // and then add the report to the user's account.
 func (s ReportService) GenerateReport(ctx context.Context, payload GenerateReportRequest, userID, orgID, buID uuid.UUID) (GenerateReportResponse, error) {
-	cfg := config.DefaultServiceConfigFromEnv()
+	cfg, err := config.DefaultServiceConfigFromEnv()
+	if err != nil {
+		s.logger.Err(err).Msg("Failed to load server configuration")
+		return GenerateReportResponse{}, err
+	}
 
 	client := req.C().SetTimeout(10 * time.Second)
 

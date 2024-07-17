@@ -20,3 +20,5 @@ tmp
 .pnotes
 mc
 gotest
+config.dev.yaml
+config.prod.yaml

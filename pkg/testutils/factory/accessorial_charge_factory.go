@@ -2,12 +2,11 @@ package factory
 
 import (
 	"context"
-	"log"
 
 	"github.com/emoss08/trenova/pkg/models"
 	"github.com/emoss08/trenova/pkg/models/property"
-	"github.com/emoss08/trenova/pkg/utils"
 	"github.com/google/uuid"
+	"github.com/samber/lo"
 	"github.com/uptrace/bun"
 )
 
@@ -20,20 +19,8 @@ func NewAccessorialChargeFactory(db *bun.DB) *AccessorialChargeFactory {
 }
 
 func (o *AccessorialChargeFactory) MustCreateAccessorialCharge(ctx context.Context, orgID, buID uuid.UUID) (*models.AccessorialCharge, error) {
-	// Define the length of the random string
-	length := 10
-
-	// Define the character ranges to include (numeric and lowercase alphabet)
-	charRanges := []utils.CharRange{utils.CharRangeNumeric, utils.CharRangeAlphaLowerCase}
-
-	// Define any extra characters to include
-	extraChars := "!@#$"
-
 	// Generate the random string
-	randomString, err := utils.GenerateRandomString(length, charRanges, extraChars)
-	if err != nil {
-		log.Fatalf("Error generating random string: %v", err)
-	}
+	randomString := lo.RandomString(10, lo.LettersCharset)
 
 	accessorialCharge := &models.AccessorialCharge{
 		Status:         property.StatusActive,
@@ -44,8 +31,7 @@ func (o *AccessorialChargeFactory) MustCreateAccessorialCharge(ctx context.Conte
 		Description:    "Test Accessorial Charge",
 	}
 
-	_, err = o.db.NewInsert().Model(accessorialCharge).Exec(ctx)
-	if err != nil {
+	if _, err := o.db.NewInsert().Model(accessorialCharge).Exec(ctx); err != nil {
 		return nil, err
 	}
 

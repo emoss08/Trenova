@@ -14,8 +14,12 @@ import (
 
 // SetupTestServer initializes a new server for testing.
 func SetupTestServer(t *testing.T) *server.Server {
+	t.Helper()
 	// Load configuration
-	cfg := config.DefaultServiceConfigFromEnv()
+	cfg, err := config.DefaultServiceConfigFromEnv()
+	if err != nil {
+		log.Fatal().Err(err).Msg("Failed to load server configuration")
+	}
 
 	// Initialize logger
 	logger := zerolog.New(log.Logger).With().Timestamp().Logger()

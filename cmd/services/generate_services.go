@@ -11,9 +11,10 @@ import (
 	"os"
 	"path/filepath"
 	"reflect"
-	"regexp"
 	"strings"
 	"sync"
+
+	"github.com/samber/lo"
 )
 
 func main() {
@@ -149,7 +150,7 @@ func generateServiceCode(modelName string, structType *ast.StructType, servicesD
 		alias = strings.ToLower(modelName[:1])
 	}
 
-	queryFieldSnakeCase := toSnakeCase(queryField)
+	queryFieldSnakeCase := lo.SnakeCase(queryField)
 
 	serviceTemplate := `
 package services
@@ -336,10 +337,4 @@ func getRelations(structType *ast.StructType) string {
 		relationsStr.WriteString(fmt.Sprintf("Relation(\"%s\").\n\t\t", relation))
 	}
 	return relationsStr.String()
-}
-
-// toSnakeCase converts a string to snake_case
-func toSnakeCase(str string) string {
-	snake := regexp.MustCompile("([a-z0-9])([A-Z])").ReplaceAllString(str, "${1}_${2}")
-	return strings.ToLower(snake)
 }
