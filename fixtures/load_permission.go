@@ -34,22 +34,38 @@ func loadPermissions(ctx context.Context, db *bun.DB, enforcer *casbin.Enforcer)
 	}
 
 	// Basic CRUD actions
-	basicActions := []string{"view", "create", "update", "delete"}
+	basicActions := []string{"view", "create", "update", "import", "export"}
+
+	// Resources with limited actions
+	limitedActionResources := map[string][]string{
+		"admin_dashboard": {"view", "export"},
+		"billing_client":  {"view", "run_job"},
+	}
 
 	// Additional system-defined actions for specific resources
 	additionalActions := map[string][]string{
 		"shipment":     {"assign_tractor"},
 		"tractor":      {"assign_driver"},
 		"organization": {"change_logo"},
+		"role":         {"view", "update", "assign_permissions"},
 	}
 
 	for _, resource := range resources {
 		resourceTypeLower := lo.SnakeCase(resource.Type)
 
-		// Add basic CRUD permissions
-		for _, action := range basicActions {
-			if err = addPermissionPolicy(enforcer, resourceTypeLower, action); err != nil {
-				return err
+		// Check if the resource should have limited actions
+		if limitedActions, exists := limitedActionResources[resourceTypeLower]; exists {
+			for _, action := range limitedActions {
+				if err = addPermissionPolicy(enforcer, resourceTypeLower, action); err != nil {
+					return err
+				}
+			}
+		} else {
+			// Add basic CRUD permissions
+			for _, action := range basicActions {
+				if err = addPermissionPolicy(enforcer, resourceTypeLower, action); err != nil {
+					return err
+				}
 			}
 		}
 

@@ -161,28 +161,6 @@ func InitializeCasbinPolicies(ctx context.Context, db *bun.DB, enforcer *casbin.
 		return err
 	}
 
-	policies, err := enforcer.GetPolicy()
-	if err != nil {
-		return fmt.Errorf("failed to get policies: %w", err)
-	}
-
-	groupPolicies, err := enforcer.GetGroupingPolicy()
-	if err != nil {
-		return fmt.Errorf("failed to get group policies: %w", err)
-	}
-
-	// Debug: Print all policies
-	log.Println("All policies:")
-	for _, policy := range policies {
-		log.Printf("%v\n", policy)
-	}
-
-	// Debug: Print all role assignments
-	log.Println("All role assignments:")
-	for _, assignment := range groupPolicies {
-		log.Printf("%v\n", assignment)
-	}
-
 	return nil
 }
 

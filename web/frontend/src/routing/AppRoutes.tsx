@@ -380,7 +380,7 @@ export const routes: RouteObjectWithPermission[] = [
     path: "/dispatch/locations/",
     description: "Locations",
     element: <LocationPage />,
-    permission: "location",
+    permission: "location:view",
     isPublic: false,
   },
   // Shipment Pages

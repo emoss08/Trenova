@@ -209,6 +209,18 @@ func loadResources(ctx context.Context, db *bun.DB) error {
 				Type:        "AccessorialCharge",
 				Description: "Represents a accessorial charge in the system.",
 			},
+			{
+				Type:        "Rate",
+				Description: "Represents a rate in the system.",
+			},
+			{
+				Type:        "AdminDashboard",
+				Description: "Represents the admin dashboard in the system.",
+			},
+			{
+				Type:        "BillingClient",
+				Description: "Represents the billing client in the system.",
+			},
 		}
 
 		_, err = db.NewInsert().Model(&resources).Exec(ctx)

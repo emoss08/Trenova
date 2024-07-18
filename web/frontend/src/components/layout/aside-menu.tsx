@@ -77,7 +77,7 @@ const SubMenu = memo(
     };
 
     return (
-      <ul className="relative ml-2 space-y-1 border-l border-dashed border-border pl-2 transition-all duration-300 ease-in-out">
+      <ul className="border-border relative ml-2 space-y-1 border-l border-dashed pl-2 transition-all duration-300 ease-in-out">
         {links.map((subLink) => {
           const isActive = location.pathname === subLink.link;
           return (
@@ -92,7 +92,7 @@ const SubMenu = memo(
               onClick={() => handleItemClick(subLink.link || "#")}
             >
               {isActive && (
-                <div className="absolute left-[-14px] top-1/2 size-2 -translate-y-1/2 rounded-full bg-primary" />
+                <div className="bg-primary absolute left-[-14px] top-1/2 size-2 -translate-y-1/2 rounded-full" />
               )}
               {subLink.label}
             </li>
@@ -118,7 +118,7 @@ const MenuItem = memo(
       return (
         <div>
           {!isMinimized && (
-            <h3 className="select-none text-sm font-semibold uppercase text-muted-foreground">
+            <h3 className="text-muted-foreground select-none text-sm font-semibold uppercase">
               {item.label}
             </h3>
           )}
@@ -236,7 +236,7 @@ const LinksComponent = ({
         <li key={linkItem.menuKey} className="space-y-1">
           {isMinimized ? (
             <DropdownMenu>
-              <DropdownMenuTrigger className="flex items-center rounded-lg p-2 hover:cursor-pointer hover:bg-muted focus:bg-muted">
+              <DropdownMenuTrigger className="hover:bg-muted focus:bg-muted flex items-center rounded-lg p-2 hover:cursor-pointer">
                 {linkItem.icon}
               </DropdownMenuTrigger>
               <DropdownMenuContent side="right">
@@ -423,7 +423,7 @@ export function AsideMenu() {
           <Menu menuItems={menuItems} onLinkClick={toggleMenu} />
         </div>
 
-        <div className="pointer-events-none absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-background to-transparent" />
+        <div className="from-background pointer-events-none absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t to-transparent" />
       </ScrollArea>
       {/* <MenuItem item={logoutItem} onLinkClick={toggleMenu} /> */}
       <UserAsideMenu />
@@ -440,9 +440,9 @@ function AsideMenuButton() {
             <Button
               size="icon"
               variant="outline"
-              className="group relative size-8 border-muted-foreground/40 hover:border-muted-foreground/80"
+              className="border-muted-foreground/40 hover:border-muted-foreground/80 group relative size-8"
             >
-              <MenuIcon className="size-5 text-muted-foreground group-hover:text-foreground" />
+              <MenuIcon className="text-muted-foreground group-hover:text-foreground size-5" />
             </Button>
           </span>
         </TooltipTrigger>
@@ -462,7 +462,7 @@ export function AsideMenuDialog() {
       </SheetTrigger>
       <SheetContent side="left" className="w-[20em] overflow-y-scroll">
         <aside className="overflow-auto">
-          <div className="mb-4 border-b border-dashed border-border pb-4">
+          <div className="border-border mb-4 border-b border-dashed pb-4">
             <OrganizationLogo />
           </div>
           <AsideMenu />
@@ -487,9 +487,9 @@ function MainAsideMenu() {
           isMinimized ? "w-[70px]" : "w-72",
         )}
       >
-        <div className="relative mb-4 border-b border-dashed border-border p-4">
+        <div className="border-border relative mb-4 border-b border-dashed p-4">
           {isMinimized ? <MiniOrganizationLogo /> : <OrganizationLogo />}
-          <span className="mt-4 block text-xs text-muted-foreground">
+          <span className="text-muted-foreground mt-4 block text-xs">
             {isMinimized ? <SearchButton /> : <SiteSearchInput />}
           </span>
           <Button
@@ -499,9 +499,9 @@ function MainAsideMenu() {
             variant="outline"
           >
             {isMinimized ? (
-              <ChevronRight className="size-4 text-muted-foreground" />
+              <ChevronRight className="text-muted-foreground size-4" />
             ) : (
-              <ChevronLeft className="size-4 text-muted-foreground" />
+              <ChevronLeft className="text-muted-foreground size-4" />
             )}
           </Button>
         </div>

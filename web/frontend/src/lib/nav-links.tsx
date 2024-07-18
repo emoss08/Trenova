@@ -38,7 +38,7 @@ export const billingNavLinks: NavLinkGroup[] = [
         key: "billingClient",
         label: "Billing Client",
         link: "/billing/client/",
-        permission: "billing.use_billing_client",
+        permission: "billing_client.view",
         description:
           "This module enables the generation and dispatch of invoices to customers efficiently. It streamlines the billing cycle, ensuring timely and accurate invoicing, and supports various billing formats tailored to customer needs.",
         icon: <FontAwesomeIcon icon={faMoneyBillTransfer} />,
@@ -57,7 +57,7 @@ export const billingNavLinks: NavLinkGroup[] = [
             label: "Charge Types",
             link: "/billing/charge-types/",
             key: "chargeTypes",
-            permission: "view_chargetype",
+            permission: "charge_type:view",
             description:
               "Categorize and manage different types of charges. This facilitates accurate billing and reporting by distinguishing between various charge categories.",
           },
@@ -66,7 +66,7 @@ export const billingNavLinks: NavLinkGroup[] = [
             key: "divisionCodes",
             label: "Division Codes",
             link: "/accounting/division-codes/",
-            permission: "view_divisioncode",
+            permission: "division_code:view",
             description:
               "Use these codes to segment charges and revenue by business divisions. This classification aids in detailed financial analysis and budgeting at the division level.",
           },
@@ -75,7 +75,7 @@ export const billingNavLinks: NavLinkGroup[] = [
             key: "glAccounts",
             label: "GL Accounts",
             link: "/accounting/gl-accounts/",
-            permission: "view_generalledgeraccount",
+            permission: "general_ledger_account:view",
             description:
               "Manage and categorize revenue in the General Ledger. Essential for accurate financial reporting and analysis, ensuring clear visibility into revenue streams.",
           },
@@ -84,7 +84,7 @@ export const billingNavLinks: NavLinkGroup[] = [
             key: "revenueCodes",
             label: "Revenue Codes",
             link: "/accounting/revenue-codes/",
-            permission: "view_revenuecode",
+            permission: "revenue_code:view",
             description:
               "Classify revenue sources for detailed financial tracking and analysis. These codes help in understanding revenue patterns and making informed financial decisions.",
           },
@@ -93,7 +93,7 @@ export const billingNavLinks: NavLinkGroup[] = [
             key: "accessorialCharges",
             label: "Accessorial Charges",
             link: "/billing/accessorial-charges/",
-            permission: "view_accessorialcharge",
+            permission: "accessorial_charge:view",
             description:
               "Define and manage additional charges associated with transportation services. This includes detention, layover, and other incidental charges.",
           },
@@ -102,7 +102,7 @@ export const billingNavLinks: NavLinkGroup[] = [
             key: "customers",
             label: "Customers",
             link: "/billing/customers/",
-            permission: "view_customer",
+            permission: "customer:view",
             description:
               "Manage customer-related data and categorize billing information. Essential for personalized billing management and maintaining accurate customer financial records.",
           },
@@ -111,7 +111,7 @@ export const billingNavLinks: NavLinkGroup[] = [
             key: "documentClassifications",
             label: "Document Classifications",
             link: "/billing/document-classes/",
-            permission: "view_document_classification",
+            permission: "document_classification:view",
             description:
               "Optimize billing management by categorizing essential documents like Proof of Delivery and Bills of Lading, ensuring accurate and efficient customer financial record keeping.",
           },
@@ -133,7 +133,7 @@ export const dispatchNavLinks: NavLinkGroup[] = [
         key: "rateManagement",
         label: "Rate Management",
         link: "/dispatch/rate-management/",
-        permission: "view_rate",
+        permission: "rate:view",
         description:
           "This module allows for the comprehensive management of freight and transportation rates. It includes features for setting, adjusting, and analyzing rates, ensuring competitive pricing and operational efficiency.",
         icon: <FontAwesomeIcon icon={faVault} />,
@@ -152,7 +152,7 @@ export const dispatchNavLinks: NavLinkGroup[] = [
             key: "commentType",
             label: "Comment Type",
             link: "/dispatch/comment-types/",
-            permission: "view_commenttype",
+            permission: "comment_type:view",
             description:
               "Categorize and manage different types of operational comments. This aids in streamlining communication and documenting specific details related to dispatch activities.",
           },
@@ -161,7 +161,7 @@ export const dispatchNavLinks: NavLinkGroup[] = [
             key: "delayCodes",
             label: "Delay Codes",
             link: "/dispatch/delay-codes/",
-            permission: "view_delaycode",
+            permission: "delay_code:view",
             description:
               "Identify and categorize various types of delays encountered during dispatch operations. Essential for analyzing and mitigating operational disruptions.",
           },
@@ -170,7 +170,7 @@ export const dispatchNavLinks: NavLinkGroup[] = [
             key: "fleetCodes",
             label: "Fleet Codes",
             link: "/dispatch/fleet-codes/",
-            permission: "view_fleetcode",
+            permission: "fleet_code:view",
             description:
               "Organize and classify different fleet segments. Facilitates efficient fleet management and helps in tracking and analyzing fleet performance.",
           },
@@ -179,7 +179,7 @@ export const dispatchNavLinks: NavLinkGroup[] = [
             key: "locations",
             label: "Locations",
             link: "/dispatch/locations/",
-            permission: "view_location",
+            permission: "location:view",
             description:
               "Manage and categorize operational locations, including depots, warehouses, and delivery points. Crucial for route planning and logistical coordination.",
           },
@@ -188,7 +188,7 @@ export const dispatchNavLinks: NavLinkGroup[] = [
             key: "routes",
             label: "Routes",
             link: "/dispatch/routes/",
-            permission: "view_route",
+            permission: "route:view",
             description:
               "Define and categorize various transportation routes. Supports strategic route planning and optimization for enhanced delivery efficiency.",
           },
@@ -197,7 +197,7 @@ export const dispatchNavLinks: NavLinkGroup[] = [
             key: "locationCategories",
             label: "Location Categories",
             link: "/dispatch/location-categories/",
-            permission: "view_locationcategory",
+            permission: "location_category:view",
             description:
               "Segment locations into distinct categories for better logistical planning. Helps in tailoring operations to specific location characteristics and requirements.",
           },
@@ -206,7 +206,7 @@ export const dispatchNavLinks: NavLinkGroup[] = [
             key: "workers",
             label: "Workers",
             link: "/dispatch/workers/",
-            permission: "view_worker",
+            permission: "worker:view",
             description:
               "Manage and categorize workers involved in dispatch operations. This includes drivers, dispatchers, and other operational staff.",
           },
@@ -228,7 +228,7 @@ export const equipmentNavLinks: NavLinkGroup[] = [
         key: "equipmentMaintenancePlan",
         label: "Equipment Maintenance Plan",
         link: "#",
-        permission: "view_equipmentmaintenanceplan",
+        permission: "equipment_maintenance_plan:view",
         description:
           "This section facilitates the creation and management of comprehensive maintenance schedules for various equipment. It enables precise tracking and proactive maintenance activities, ensuring optimal equipment performance and longevity.",
         icon: <FontAwesomeIcon icon={faScrewdriverWrench} />,
@@ -247,7 +247,7 @@ export const equipmentNavLinks: NavLinkGroup[] = [
             key: "equipmentTypes",
             label: "Equipment Types",
             link: "/equipment/equipment-types/",
-            permission: "view_equipmenttype",
+            permission: "equipment_type:view",
             description:
               "Define and manage the different categories of equipment. This classification system aids in streamlining maintenance protocols and inventory management based on equipment types.",
           },
@@ -256,7 +256,7 @@ export const equipmentNavLinks: NavLinkGroup[] = [
             key: "equipmentManufacturers",
             label: "Equipment Manufacturers",
             link: "/equipment/equipment-manufacturers/",
-            permission: "view_equipmentmanufacturer",
+            permission: "equipment_manufacturer:view",
             description:
               "Organize and view equipment based on their manufacturers. This section helps in aligning maintenance strategies with specific manufacturer guidelines and specifications.",
           },
@@ -265,7 +265,7 @@ export const equipmentNavLinks: NavLinkGroup[] = [
             key: "tractors",
             label: "Tractor",
             link: "/equipment/tractor/",
-            permission: "view_tractor",
+            permission: "tractor:view",
             description:
               "Dedicated section for managing and categorizing tractors. It includes detailed information and specific maintenance guidelines tailored to tractors, enhancing their operational efficiency.",
           },
@@ -274,7 +274,7 @@ export const equipmentNavLinks: NavLinkGroup[] = [
             key: "trailers",
             label: "Trailer",
             link: "/equipment/trailer/",
-            permission: "view_trailer",
+            permission: "trailer:view",
             description:
               "Focuses on the management and classification of trailers. This part of the system provides specialized maintenance schedules and operational details specific to different types of trailers.",
           },
@@ -296,7 +296,7 @@ export const shipmentNavLinks: NavLinkGroup[] = [
         key: "shipmentManagement",
         label: "Shipment Management",
         link: "/shipments/shipment-management/",
-        permission: "shipment.view",
+        permission: "shipment:view",
         description:
           "This module provides comprehensive tools for managing all aspects of shipments, including scheduling, tracking, and status updates. It's designed to streamline the shipment lifecycle from origin to destination, ensuring timely and efficient delivery.",
         icon: <FontAwesomeIcon icon={faTruck} />,
@@ -315,7 +315,7 @@ export const shipmentNavLinks: NavLinkGroup[] = [
             key: "formulaTemplates",
             label: "Formula Templates",
             link: "/order/formula-template/",
-            permission: "view_formulatemplate",
+            permission: "formula_template:view",
             description:
               "Create and manage formula templates for calculating shipment-related metrics. Essential for automating and standardizing complex calculations in the shipment process.",
           },
@@ -324,7 +324,7 @@ export const shipmentNavLinks: NavLinkGroup[] = [
             key: "shipmentTypes",
             label: "Shipment Types",
             link: "/shipments/shipment-types/",
-            permission: "view_shipmenttype",
+            permission: "shipment_type:view",
             description:
               "Categorize shipments into distinct types for better management and tracking. This helps in tailoring operations to the specific requirements of different shipment categories.",
           },
@@ -333,7 +333,7 @@ export const shipmentNavLinks: NavLinkGroup[] = [
             key: "serviceTypes",
             label: "Service Types",
             link: "/shipments/service-types/",
-            permission: "view_servicetype",
+            permission: "service_type:view",
             description:
               "Define and manage various service types offered in the shipping process. Facilitates customized service offerings and helps in aligning services with customer needs.",
           },
@@ -342,7 +342,7 @@ export const shipmentNavLinks: NavLinkGroup[] = [
             key: "qualifierCodes",
             label: "Qualifier Codes",
             link: "/shipments/qualifier-codes/",
-            permission: "view_qualifiercode",
+            permission: "qualifier_code:view",
             description:
               "Manage codes that qualify different aspects of shipments. These codes are crucial for detailed categorization and analysis of shipment attributes.",
           },
@@ -351,7 +351,7 @@ export const shipmentNavLinks: NavLinkGroup[] = [
             key: "commodityCodes",
             label: "Commodity Codes",
             link: "/shipments/commodity-codes/",
-            permission: "view_commodity",
+            permission: "commodity:view",
             description:
               "Categorize shipments based on the type of commodities being transported. This classification system helps in streamlining shipment operations and optimizing routes.",
           },
@@ -360,7 +360,7 @@ export const shipmentNavLinks: NavLinkGroup[] = [
             key: "hazardousMaterials",
             label: "Hazardous Materials",
             link: "/shipments/hazardous-materials/",
-            permission: "view_hazardousmaterial",
+            permission: "hazardous_material:view",
             description:
               "Manage and categorize shipments containing hazardous materials. This section includes detailed information and specific guidelines for handling hazardous materials.",
           },
@@ -369,7 +369,7 @@ export const shipmentNavLinks: NavLinkGroup[] = [
             key: "reasonCodes",
             label: "Reason Codes",
             link: "/shipments/reason-codes/",
-            permission: "view_reasoncode",
+            permission: "reason_code:view",
             description:
               "Categorize and document different reasons related to shipment processes, such as delays or modifications. Essential for analyzing operational challenges and implementing improvements.",
           },
@@ -390,7 +390,7 @@ export const adminNavLinks: NavLinkGroup[] = [
         key: "adminDashboard",
         label: "Admin Dashboard",
         link: "/admin/dashboard/",
-        permission: "admin.view_dashboard",
+        permission: "admin_dashboard:view",
         description: "Monitor system performance and user activity...",
         icon: <FontAwesomeIcon icon={faTools} />,
       },
