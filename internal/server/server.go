@@ -1,3 +1,18 @@
+// COPYRIGHT(c) 2024 Trenova
+//
+// This file is part of Trenova.
+//
+// The Trenova software is licensed under the Business Source License 1.1. You are granted the right
+// to copy, modify, and redistribute the software, but only for non-production use or with a total
+// of less than three server instances. Starting from the Change Date (November 16, 2026), the
+// software will be made available under version 2 or later of the GNU General Public License.
+// If you use the software in violation of this license, your rights under the license will be
+// terminated automatically. The software is provided "as is," and the Licensor disclaims all
+// warranties and conditions. If you use this license's text or the "Business Source License" name
+// and trademark, you must comply with the Licensor's covenants, which include specifying the
+// Change License as the GPL Version 2.0 or a compatible license, specifying an Additional Use
+// Grant, and not modifying the license in any other way.
+
 package server
 
 import (
@@ -12,6 +27,7 @@ import (
 
 	"github.com/casbin/casbin/v2"
 	"github.com/emoss08/trenova/config"
+	"github.com/emoss08/trenova/pkg/audit"
 	tCasbin "github.com/emoss08/trenova/pkg/casbin"
 	"github.com/emoss08/trenova/pkg/file"
 	"github.com/emoss08/trenova/pkg/gen"
@@ -63,6 +79,9 @@ type Server struct {
 	// Enforcer stores the Casbin enforcer.
 	Enforcer *casbin.Enforcer
 
+	// AuditService stores the audit logging service.
+	AuditService *audit.Service
+
 	// Code Generate
 	CodeGenerator   *gen.CodeGenerator
 	CounterManager  *gen.CounterManager
@@ -81,9 +100,7 @@ type Server struct {
 
 // NewServer creates a new server instance.
 func NewServer(ctx context.Context, cfg config.Server) *Server {
-	server := &Server{
-		Config: cfg,
-	}
+	server := &Server{Config: cfg}
 	server.ctx = ContextWithApp(ctx, server)
 
 	return server
@@ -95,13 +112,13 @@ func (s *Server) Ready() bool {
 
 // OnStop registers a function to be called when the server starts.
 func (s *Server) OnStop(name string, fn HookFunc) {
-	s.Logger.Info().Msgf("Registering onStop hook: %s", name)
+	s.Logger.Debug().Msgf("Registering onStop hook: %s", name)
 	s.onStop.add(newHook(name, fn))
 }
 
 // OnAfterStop registers a function to be called after the server is stopped.
 func (s *Server) OnAfterStop(name string, fn HookFunc) {
-	s.Logger.Info().Msgf("Registering onAfterStop hook: %s", name)
+	s.Logger.Debug().Msgf("Registering onAfterStop hook: %s", name)
 
 	s.onAfterstop.add(newHook(name, fn))
 }
@@ -130,8 +147,6 @@ func (s *Server) InitDB() *bun.DB {
 		// Register many-to-many model so bun can better recognize m2m relation.
 		// This should be done before you use the model for the first time.
 		db.RegisterModel(
-			(*models.RolePermission)(nil),
-			(*models.UserRole)(nil),
 			(*models.GeneralLedgerAccountTag)(nil),
 		)
 
@@ -143,6 +158,17 @@ func (s *Server) InitDB() *bun.DB {
 	})
 
 	return s.DB
+}
+
+func (s *Server) InitAuditService() error {
+	s.AuditService = audit.NewAuditService(s.DB, s.Logger, s.Config.Audit.QueueSize, s.Config.Audit.WorkerCount)
+
+	// Register shutdown hook
+	s.OnStop("audit.Shutdown", func(ctx context.Context, _ *Server) error {
+		return s.AuditService.Shutdown(ctx)
+	})
+
+	return nil
 }
 
 func (s *Server) InitCodeGenerationSystem(ctx context.Context) error {

@@ -63,7 +63,7 @@ export function DataTableColumnHeader<TData, TValue>({
           <Button
             variant="ghost"
             size="sm"
-            className="data-[state=open]:bg-accent -ml-3 h-8 focus-visible:ring-transparent"
+            className="-ml-3 h-8 focus-visible:ring-transparent data-[state=open]:bg-accent"
           >
             <span>{title}</span>
             {column.getIsSorted() === "desc" ? (
@@ -77,16 +77,16 @@ export function DataTableColumnHeader<TData, TValue>({
         </DropdownMenuTrigger>
         <DropdownMenuContent align="start">
           <DropdownMenuItem onClick={() => column.toggleSorting(false)}>
-            <ArrowUpIcon className="text-muted-foreground/70 mr-2 size-3.5" />
+            <ArrowUpIcon className="mr-2 size-3.5 text-muted-foreground/70" />
             Asc
           </DropdownMenuItem>
           <DropdownMenuItem onClick={() => column.toggleSorting(true)}>
-            <ArrowDownIcon className="text-muted-foreground/70 mr-2 size-3.5" />
+            <ArrowDownIcon className="mr-2 size-3.5 text-muted-foreground/70" />
             Desc
           </DropdownMenuItem>
           <DropdownMenuSeparator />
           <DropdownMenuItem onClick={() => column.toggleVisibility(false)}>
-            <EyeNoneIcon className="text-muted-foreground/70 mr-2 size-3.5" />
+            <EyeNoneIcon className="mr-2 size-3.5 text-muted-foreground/70" />
             Hide
           </DropdownMenuItem>
         </DropdownMenuContent>
@@ -114,7 +114,7 @@ export function DataTableTooltipColumnHeader({
           <TooltipTrigger asChild>
             <FontAwesomeIcon
               icon={faCircleInfo}
-              className="text-muted-foreground mb-0.5 size-3.5"
+              className="mb-0.5 size-3.5 text-muted-foreground"
             />
           </TooltipTrigger>
           <TooltipContent>

@@ -10,8 +10,8 @@ RUN apk add --update --no-cache alpine-sdk bash ca-certificates \
 WORKDIR /app
 
 # Environment variables for Go build
-ENV GOOS linux
-ENV GOARCH amd64
+ENV GOOS=linux
+ENV GOARCH=amd64
 
 # Copy go.mod and go.sum files
 COPY go.mod go.sum ./
@@ -46,9 +46,11 @@ COPY --from=builder /app/main .
 COPY --from=builder /app/migrate/migrations /root/migrate/migrations
 COPY --from=builder /app/private_key.pem /root/private_key.pem
 COPY --from=builder /app/public_key.pem /root/public_key.pem
+COPY --from=builder /app/config.prod.yaml /root/config.prod.yaml
+COPY --from=builder /app/model.conf /root/model.conf
 
 # Expose the application port
 EXPOSE 3001
 
 # Command to run the executable with arguments
-CMD ["./main", "server"]
+CMD ["./main", "serve", "--env", "prod"]

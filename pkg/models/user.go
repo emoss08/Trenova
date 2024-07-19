@@ -1,3 +1,18 @@
+// COPYRIGHT(c) 2024 Trenova
+//
+// This file is part of Trenova.
+//
+// The Trenova software is licensed under the Business Source License 1.1. You are granted the right
+// to copy, modify, and redistribute the software, but only for non-production use or with a total
+// of less than three server instances. Starting from the Change Date (November 16, 2026), the
+// software will be made available under version 2 or later of the GNU General Public License.
+// If you use the software in violation of this license, your rights under the license will be
+// terminated automatically. The software is provided "as is," and the Licensor disclaims all
+// warranties and conditions. If you use this license's text or the "Business Source License" name
+// and trademark, you must comply with the Licensor's covenants, which include specifying the
+// Change License as the GPL Version 2.0 or a compatible license, specifying an Additional Use
+// Grant, and not modifying the license in any other way.
+
 package models
 
 import (
@@ -15,26 +30,20 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
-// UserPermission is a type for user permissions
-type UserPermission string
+type UserPermission struct {
+	Codename         string `json:"codename"`
+	Description      string `json:"description"`
+	Action           string `json:"action"`
+	Label            string `json:"label"`
+	ReadDescription  string `json:"readDescription,omitempty"`
+	WriteDescription string `json:"writeDescription,omitempty"`
+	ResourceID       string `json:"resourceId"`
+}
 
-const (
-	// PermissionUserView is the permission to view user details
-	PermissionUserView = UserPermission("user.view")
-
-	// PermissionUserEdit is the permission to edit user details
-	PermissionUserEdit = UserPermission("user.edit")
-
-	// PermissionUserAdd is the permission to add a new user
-	PermissionUserAdd = UserPermission("user.add")
-
-	// PermissionUserDelete is the permission to delete an user
-	PermissionUserDelete = UserPermission("user.delete")
-)
-
-// String returns the string representation of the UserPermission
-func (p UserPermission) String() string {
-	return string(p)
+type UserRole struct {
+	Name        string           `json:"name"`
+	Description string           `json:"description"`
+	Permissions []UserPermission `json:"permissions"`
 }
 
 // TODO(Wolfred): At some point the user should be able to have multiple organizations
@@ -44,7 +53,6 @@ func (p UserPermission) String() string {
 // in the user model itself.
 // This will ensure that the user is only able to access the organization they are currently working with.
 
-// User is the model for the user.
 type User struct {
 	bun.BaseModel `bun:"table:users,alias:u" json:"-"`
 
@@ -68,7 +76,7 @@ type User struct {
 
 	BusinessUnit *BusinessUnit `bun:"rel:belongs-to,join:business_unit_id=id" json:"-"`
 	Organization *Organization `bun:"rel:belongs-to,join:organization_id=id" json:"-"`
-	Roles        []*Role       `bun:"m2m:user_roles,join:User=Role" json:"roles"`
+	Roles        []UserRole    `bun:"-" json:"roles"`
 }
 
 func (u User) Validate() error {
@@ -142,33 +150,6 @@ func (u *User) BeforeAppendModel(_ context.Context, query bun.Query) error {
 		u.CreatedAt = time.Now()
 	case *bun.UpdateQuery:
 		u.UpdatedAt = time.Now()
-	}
-	return nil
-}
-
-// UserRole is the model for the user roles.
-type UserRole struct {
-	bun.BaseModel `bun:"table:user_roles" json:"-"`
-	CreatedAt     time.Time `bun:",nullzero,notnull,default:current_timestamp" json:"createdAt"`
-	UpdatedAt     time.Time `bun:",nullzero,notnull,default:current_timestamp" json:"updatedAt"`
-	// `UserID` is the foreign key to the user.
-	UserID uuid.UUID `bun:",pk,type:uuid" json:"userId"`
-	// `User` is the user for the role.
-	User *User `bun:"rel:belongs-to,join:user_id=id" json:"-"`
-	// `RoleID` is the foreign key to the role.
-	RoleID uuid.UUID `bun:",pk,type:uuid" json:"roleId"`
-	// `Role` is the role for the user.
-	Role *Role `bun:"rel:belongs-to,join:role_id=id" json:"-"`
-}
-
-var _ bun.BeforeAppendModelHook = (*UserRole)(nil)
-
-func (ur *UserRole) BeforeAppendModel(_ context.Context, query bun.Query) error {
-	switch query.(type) {
-	case *bun.InsertQuery:
-		ur.CreatedAt = time.Now()
-	case *bun.UpdateQuery:
-		ur.UpdatedAt = time.Now()
 	}
 	return nil
 }

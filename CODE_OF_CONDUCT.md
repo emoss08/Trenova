@@ -34,7 +34,7 @@ This Code of Conduct applies both within project spaces and in public spaces whe
 
 ## Enforcement
 
-Instances of abusive, harassing, or otherwise unacceptable behavior may be reported to the Trenova project team at [Support Email](emoss@Trenova.io). All complaints will be reviewed, investigated, and will result in a response appropriate to the circumstances. The project team is obligated to maintain confidentiality regarding the reporter of an incident. Specific enforcement policies may be posted separately.
+Instances of abusive, harassing, or otherwise unacceptable behavior may be reported to the Trenova project team at [Support Email](emoss@Trenova.app). All complaints will be reviewed, investigated, and will result in a response appropriate to the circumstances. The project team is obligated to maintain confidentiality regarding the reporter of an incident. Specific enforcement policies may be posted separately.
 
 Project maintainers who do not follow or enforce the Code of Conduct in good faith may face temporary or permanent repercussions as determined by other members of Trenova's leadership.
 

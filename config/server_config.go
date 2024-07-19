@@ -1,12 +1,32 @@
+// COPYRIGHT(c) 2024 Trenova
+//
+// This file is part of Trenova.
+//
+// The Trenova software is licensed under the Business Source License 1.1. You are granted the right
+// to copy, modify, and redistribute the software, but only for non-production use or with a total
+// of less than three server instances. Starting from the Change Date (November 16, 2026), the
+// software will be made available under version 2 or later of the GNU General Public License.
+// If you use the software in violation of this license, your rights under the license will be
+// terminated automatically. The software is provided "as is," and the Licensor disclaims all
+// warranties and conditions. If you use this license's text or the "Business Source License" name
+// and trademark, you must comply with the Licensor's covenants, which include specifying the
+// Change License as the GPL Version 2.0 or a compatible license, specifying an Additional Use
+// Grant, and not modifying the license in any other way.
+
 package config
 
 import (
 	"crypto/rsa"
-	"time"
+	"fmt"
+	"path/filepath"
+	"strings"
 
-	"github.com/emoss08/trenova/pkg/utils"
+	"github.com/fatih/color"
 	"github.com/rs/zerolog"
+	"github.com/spf13/viper"
 )
+
+var configEnv string // This will store the value of the environment flag
 
 type FiberServer struct {
 	// ListenAddress is the address that the server will listen on.
@@ -134,6 +154,11 @@ type CasbinConfig struct {
 	ModelPath string
 }
 
+type AuditConfig struct {
+	QueueSize   int
+	WorkerCount int
+}
+
 type Server struct {
 	// FiberServer contains configuration options for the Fiber server.
 	Fiber FiberServer
@@ -164,66 +189,73 @@ type Server struct {
 
 	// Casbin contains configuration options for the Casbin authorization library.
 	Casbin CasbinConfig
+
+	// Audit contains configuration options for the audit service.
+	Audit AuditConfig
 }
 
-func DefaultServiceConfigFromEnv() Server {
-	return Server{
-		Fiber: FiberServer{
-			ListenAddress:               utils.GetEnv("SERVER_FIBER_LISTEN_ADDRESS", ":3001"),
-			EnableLoggingMiddleware:     utils.GetEnvAsBool("SERVER_FIBER_ENABLE_LOGGER_MIDDLEWARE", true),
-			EnableCORSMiddleware:        utils.GetEnvAsBool("SERVER_FIBER_ENABLE_CORS_MIDDLEWARE", true),
-			EnableRequestIDMiddleware:   utils.GetEnvAsBool("SERVER_FIBER_ENABLE_REQUEST_ID_MIDDLEWARE", true),
-			EnableHelmetMiddleware:      utils.GetEnvAsBool("SERVER_FIBER_ENABLE_HELMET_MIDDLEWARE", true),
-			EnableIdempotencyMiddleware: utils.GetEnvAsBool("SERVER_FIBER_ENABLE_IDEMPOTENCY_MIDDLEWARE", true),
-			EnableRecoverMiddleware:     utils.GetEnvAsBool("SERVER_FIBER_ENABLE_RECOVER_MIDDLEWARE", true),
-			EnablePrometheusMiddleware:  utils.GetEnvAsBool("SERVER_FIBER_ENABLE_PROMETHEUS_MIDDLEWARE", true),
-			EnablePrefork:               utils.GetEnvAsBool("SERVER_FIBER_ENABLE_PREFORK", false),
-			EnablePrintRoutes:           utils.GetEnvAsBool("SERVER_FIBER_ENABLE_PRINT_ROUTES", false),
-		},
-		DB: Database{
-			Host:     utils.GetEnv("SERVER_DB_HOST", "localhost"),
-			Port:     utils.GetEnvAsInt("SERVER_DB_PORT", 5432),
-			Database: utils.GetEnv("SERVER_DB_NAME", "trenova_go_db"),
-			Username: utils.GetEnv("SERVER_DB_USER", "postgres"),
-			Password: utils.GetEnv("SERVER_DB_PASSWORD", "postgres"),
-			AdditionalParams: map[string]string{
-				"sslmode": utils.GetEnv("SERVER_DB_SSL_MODE", "disable"),
-			},
-			MaxOpenConns:    utils.GetEnvAsInt("SERVER_DB_MAX_OPEN_CONNS", 25),
-			MaxIdleConns:    utils.GetEnvAsInt("SERVER_DB_MAX_IDLE_CONNS", 10),
-			ConnMaxLifetime: time.Second * time.Duration(utils.GetEnvAsInt("SERVER_DB_CONN_MAX_LIFETIME_SECONDS", 300)),
-			VerboseLogging:  utils.GetEnvAsBool("SERVER_DB_VERBOSE_LOGGING", false),
-			Debug:           utils.GetEnvAsBool("SERVER_DB_DEBUG", false),
-		},
-		Logger: Logger{
-			Level:              utils.LogLevelFromString(utils.GetEnv("SERVER_LOGGER_LEVEL", zerolog.DebugLevel.String())),
-			PrettyPrintConsole: utils.GetEnvAsBool("SERVER_LOGGER_PRETTY_PRINT_CONSOLE", true),
-		},
-		Kafka: KafkaServer{
-			Broker: utils.GetEnv("SERVER_KAFKA_BROKER", "localhost:9092"),
-		},
-		// Meilisearch: Meilisearch{
-		// 	Host:  utils.GetEnv("SERVER_MELLISEARCH_HOST", "http://localhost:7700"),
-		// 	Token: utils.GetEnv("SERVER_MELLISEARCH_TOKEN", "private-meilisearch-token-for-dev-only"),
-		// },
-		Cors: Cors{
-			AllowedOrigins:   utils.GetEnv("SEVER_CORS_ALLOWED_ORIGINS", "https://localhost:5173, http://localhost:5173, https://localhost:4173, http://localhost:4173"),
-			AllowedHeaders:   utils.GetEnv("SEVER_CORS_ALLOWED_HEADERS", "Authorization, Origin, Content-Type, Accept, X-CSRF-Token, X-Idempotency-Key"),
-			AllowedMethods:   utils.GetEnv("SERVER_CORS_ALLOWED_METHODS", "GET, POST, PUT, DELETE, OPTIONS"),
-			AllowCredentials: utils.GetEnvAsBool("SERVER_CORS_ALLOWED_METHODS", true),
-			MaxAge:           utils.GetEnvAsInt("SERVER_CORS_MAX_AGE", 300),
-		},
-		Integration: Integration{
-			GenerateReportEndpoint: utils.GetEnv("SERVER_INTEGRATION_GENERATE_REPORT_ENDPOINT", "http://localhost:8000/report/generate-report/"),
-		},
-		Minio: Minio{
-			Endpoint:  utils.GetEnv("SERVER_MINIO_ENDPOINT", "localhost:9000"),
-			AccessKey: utils.GetEnv("SERVER_MINIO_ACCESS_KEY", "minio"),
-			SecretKey: utils.GetEnv("SERVER_MINIO_SECRET_KEY", "minio123"),
-			UseSSL:    utils.GetEnvAsBool("SERVER_MINIO_USE_SSL", false),
-		},
-		Casbin: CasbinConfig{
-			ModelPath: utils.GetEnv("SERVER_CASBIN_MODEL_PATH", "./config/casbin/model.conf"),
-		},
+func DefaultServiceConfigFromEnv(isTest bool) (Server, error) {
+	v := viper.New()
+
+	if configEnv == "" {
+		configEnv = "dev"
 	}
+
+	configName := fmt.Sprintf("config.%s", configEnv)
+	v.SetConfigName(configName)
+	v.SetConfigType("yaml")
+
+	if !isTest {
+		v.AddConfigPath(".")
+		v.AddConfigPath("./config")
+		v.AddConfigPath("$HOME/.trenova")
+		v.AddConfigPath("/etc/trenova")
+	} else {
+		// For tests, we'll use a minimal in-memory configuration
+		v.SetConfigType("yaml")
+		v.SetConfigName("config.test")
+		v.SetConfigType("yaml")
+		v.ReadConfig(strings.NewReader(`
+fiber:
+  listenAddress: ":3001"
+logger:
+  level: 0
+  prettyPrintConsole: true
+db:
+  maxOpenConns: 5
+  maxIdleConns: 5
+  connMaxLifetime: "5m"
+`))
+	}
+
+	if err := v.ReadInConfig(); err != nil {
+		if _, ok := err.(viper.ConfigFileNotFoundError); ok && !isTest {
+			return Server{}, fmt.Errorf("config file %s.yaml not found: %w", configName, err)
+		} else if !isTest {
+			return Server{}, fmt.Errorf("failed to read config file: %w", err)
+		}
+	}
+
+	var config Server
+	if err := v.Unmarshal(&config); err != nil {
+		return Server{}, fmt.Errorf("failed to unmarshal config: %w", err)
+	}
+
+	// Special handling for logger level and DB connection max lifetime
+	config.Logger.Level = zerolog.Level(v.GetInt("logger.level"))
+	config.DB.ConnMaxLifetime = v.GetDuration("db.connMaxLifetime")
+
+	if !isTest {
+		configFile := v.ConfigFileUsed()
+		c := color.New(color.FgCyan, color.Bold)
+		c.Printf("Environment: %s\n", configEnv)
+		c.Printf("Config file: %s\n", filepath.Base(configFile))
+	}
+
+	return config, nil
+}
+
+// SetConfigEnv sets the configuration environment
+func SetConfigEnv(env string) {
+	configEnv = env
 }

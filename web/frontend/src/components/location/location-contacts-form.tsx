@@ -1,3 +1,20 @@
+/**
+ * COPYRIGHT(c) 2024 Trenova
+ *
+ * This file is part of Trenova.
+ *
+ * The Trenova software is licensed under the Business Source License 1.1. You are granted the right
+ * to copy, modify, and redistribute the software, but only for non-production use or with a total
+ * of less than three server instances. Starting from the Change Date (November 16, 2026), the
+ * software will be made available under version 2 or later of the GNU General Public License.
+ * If you use the software in violation of this license, your rights under the license will be
+ * terminated automatically. The software is provided "as is," and the Licensor disclaims all
+ * warranties and conditions. If you use this license's text or the "Business Source License" name
+ * and trademark, you must comply with the Licensor's covenants, which include specifying the
+ * Change License as the GPL Version 2.0 or a compatible license, specifying an Additional Use
+ * Grant, and not modifying the license in any other way.
+ */
+
 import { type LocationFormValues as FormValues } from "@/types/location";
 import { XIcon } from "lucide-react";
 import { useFieldArray, type Control } from "react-hook-form";
@@ -29,7 +46,7 @@ export function LocationContactForm({
             {fields.map((field, index) => (
               <FormGroup
                 key={field.id}
-                className="border-border rounded-md border border-dashed p-4 lg:grid-cols-3"
+                className="rounded-md border border-dashed border-border p-4 lg:grid-cols-3"
               >
                 <FormControl>
                   <InputField
@@ -85,11 +102,11 @@ export function LocationContactForm({
         </>
       ) : (
         <div className="mt-44 flex grow flex-col items-center justify-center">
-          <XIcon className="text-foreground size-10" />
-          <h3 className="mt-4 text-lg font-semibold">
+          <XIcon className="size-10 text-foreground" />
+          <h3 className="text-lg mt-4 font-semibold">
             No Location Contact added
           </h3>
-          <p className="text-muted-foreground mb-4 mt-2 text-sm">
+          <p className="mb-4 mt-2 text-sm text-muted-foreground">
             You have not added any location contact. Add one below.
           </p>
           <Button type="button" size="sm" onClick={handleAddContact}>

@@ -1,3 +1,18 @@
+// COPYRIGHT(c) 2024 Trenova
+//
+// This file is part of Trenova.
+//
+// The Trenova software is licensed under the Business Source License 1.1. You are granted the right
+// to copy, modify, and redistribute the software, but only for non-production use or with a total
+// of less than three server instances. Starting from the Change Date (November 16, 2026), the
+// software will be made available under version 2 or later of the GNU General Public License.
+// If you use the software in violation of this license, your rights under the license will be
+// terminated automatically. The software is provided "as is," and the Licensor disclaims all
+// warranties and conditions. If you use this license's text or the "Business Source License" name
+// and trademark, you must comply with the Licensor's covenants, which include specifying the
+// Change License as the GPL Version 2.0 or a compatible license, specifying an Additional Use
+// Grant, and not modifying the license in any other way.
+
 package services
 
 import (
@@ -8,6 +23,7 @@ import (
 	"github.com/emoss08/trenova/config"
 	"github.com/emoss08/trenova/internal/server"
 	"github.com/emoss08/trenova/pkg/models"
+	validation "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/google/uuid"
 	"github.com/imroc/req/v3"
 	"github.com/rs/zerolog"
@@ -56,14 +72,25 @@ type Relationship struct {
 
 // GenerateReportRequest represents the payload for generating a report.
 type GenerateReportRequest struct {
-	TableName      string         `json:"tableName" validate:"required"`
-	Columns        []string       `json:"columns" validate:"required"`
-	Relationships  []Relationship `json:"relationships" validate:"omitempty"`
-	FileFormat     FileFormat     `json:"fileFormat" validate:"required"`
-	DeliveryMethod DeliveryMethod `json:"deliveryMethod" validate:"required"`
+	TableName      string         `json:"tableName"`
+	Columns        []string       `json:"columns"`
+	Relationships  []Relationship `json:"relationships"`
+	FileFormat     FileFormat     `json:"fileFormat"`
+	DeliveryMethod DeliveryMethod `json:"deliveryMethod"`
 	OrganizationID uuid.UUID      `json:"organizationId"`
 	BusinessUnitID uuid.UUID      `json:"businessUnitId"`
 	UserID         uuid.UUID      `json:"userId"`
+}
+
+func (gr GenerateReportRequest) Validate() error {
+	return validation.ValidateStruct(
+		&gr,
+		validation.Field(&gr.BusinessUnitID, validation.Required),
+		validation.Field(&gr.OrganizationID, validation.Required),
+		validation.Field(&gr.UserID, validation.Required),
+		validation.Field(&gr.FileFormat, validation.In("csv", "xls", "xlsx", "pdf")),
+		validation.Field(&gr.DeliveryMethod, validation.In("email", "local")),
+	)
 }
 
 // GenerateReportResponse represents the response for generating a report.
@@ -258,7 +285,11 @@ func (s ReportService) GetColumnsByTableName(ctx context.Context, tableName stri
 // This function is used to generate a report based on the given payload. It will call the integration service to generate the report
 // and then add the report to the user's account.
 func (s ReportService) GenerateReport(ctx context.Context, payload GenerateReportRequest, userID, orgID, buID uuid.UUID) (GenerateReportResponse, error) {
-	cfg := config.DefaultServiceConfigFromEnv()
+	cfg, err := config.DefaultServiceConfigFromEnv(false)
+	if err != nil {
+		s.logger.Err(err).Msg("Failed to load server configuration")
+		return GenerateReportResponse{}, err
+	}
 
 	client := req.C().SetTimeout(10 * time.Second)
 

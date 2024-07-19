@@ -1,3 +1,20 @@
+/**
+ * COPYRIGHT(c) 2024 Trenova
+ *
+ * This file is part of Trenova.
+ *
+ * The Trenova software is licensed under the Business Source License 1.1. You are granted the right
+ * to copy, modify, and redistribute the software, but only for non-production use or with a total
+ * of less than three server instances. Starting from the Change Date (November 16, 2026), the
+ * software will be made available under version 2 or later of the GNU General Public License.
+ * If you use the software in violation of this license, your rights under the license will be
+ * terminated automatically. The software is provided "as is," and the Licensor disclaims all
+ * warranties and conditions. If you use this license's text or the "Business Source License" name
+ * and trademark, you must comply with the Licensor's covenants, which include specifying the
+ * Change License as the GPL Version 2.0 or a compatible license, specifying an Additional Use
+ * Grant, and not modifying the license in any other way.
+ */
+
 // Credit: https://github.com/flixlix
 
 import { CheckIcon, Cross1Icon } from "@radix-ui/react-icons";
@@ -73,9 +90,9 @@ const timelineDotVariants = cva(
         default: "[&>*]:hidden",
         current:
           "[&>*:not(.radix-circle)]:hidden [&>.radix-circle]:bg-current [&>.radix-circle]:fill-current",
-        done: "bg-primary [&>.radix-check]:text-background [&>*:not(.radix-check)]:hidden",
+        done: "bg-primary [&>*:not(.radix-check)]:hidden [&>.radix-check]:text-background",
         error:
-          "border-destructive bg-destructive [&>.radix-cross]:text-background [&>*:not(.radix-cross)]:hidden",
+          "border-destructive bg-destructive [&>*:not(.radix-cross)]:hidden [&>.radix-cross]:text-background",
         custom: "[&>*:not(:nth-child(4))]:hidden [&>*:nth-child(4)]:block",
       },
     },
@@ -109,7 +126,7 @@ const TimelineDot = React.forwardRef<HTMLDivElement, TimelineDotProps>(
 TimelineDot.displayName = "TimelineDot";
 
 const timelineContentVariants = cva(
-  "text-muted-foreground row-start-2 row-end-2 pb-8",
+  "row-start-2 row-end-2 pb-8 text-muted-foreground",
   {
     variants: {
       side: {
@@ -148,8 +165,8 @@ const timelineHeadingVariants = cva(
         left: "col-start-1 col-end-2 ml-auto text-right",
       },
       variant: {
-        primary: "text-primary text-base font-medium",
-        secondary: "text-muted-foreground text-sm font-light",
+        primary: "text-base font-medium text-primary",
+        secondary: "text-sm font-light text-muted-foreground",
       },
     },
     defaultVariants: {
@@ -201,11 +218,10 @@ const TimelineLine = React.forwardRef<HTMLHRElement, TimelineLineProps>(
 TimelineLine.displayName = "TimelineLine";
 
 export {
-    Timeline,
-    TimelineContent,
-    TimelineDot,
-    TimelineHeading,
-    TimelineItem,
-    TimelineLine
+  Timeline,
+  TimelineContent,
+  TimelineDot,
+  TimelineHeading,
+  TimelineItem,
+  TimelineLine,
 };
-

@@ -1,3 +1,18 @@
+// COPYRIGHT(c) 2024 Trenova
+//
+// This file is part of Trenova.
+//
+// The Trenova software is licensed under the Business Source License 1.1. You are granted the right
+// to copy, modify, and redistribute the software, but only for non-production use or with a total
+// of less than three server instances. Starting from the Change Date (November 16, 2026), the
+// software will be made available under version 2 or later of the GNU General Public License.
+// If you use the software in violation of this license, your rights under the license will be
+// terminated automatically. The software is provided "as is," and the Licensor disclaims all
+// warranties and conditions. If you use this license's text or the "Business Source License" name
+// and trademark, you must comply with the Licensor's covenants, which include specifying the
+// Change License as the GPL Version 2.0 or a compatible license, specifying an Additional Use
+// Grant, and not modifying the license in any other way.
+
 package models
 
 import (
@@ -12,27 +27,6 @@ import (
 	"github.com/google/uuid"
 	"github.com/uptrace/bun"
 )
-
-type EquipmentManufacturerPermission string
-
-const (
-	// PermissionEquipmentManufacturerView is the permission to view equipment manufacturer details
-	PermissionEquipmentManufacturerView = EquipmentManufacturerPermission("equipmentmanufacturer.view")
-
-	// PermissionEquipmentManufacturerEdit is the permission to edit equipment manufacturer details
-	PermissionEquipmentManufacturerEdit = EquipmentManufacturerPermission("equipmentmanufacturer.edit")
-
-	// PermissionEquipmentManufacturerAdd is the permission to add a new equipment manufacturer
-	PermissionEquipmentManufacturerAdd = EquipmentManufacturerPermission("equipmentmanufacturer.add")
-
-	// PermissionEquipmentManufacturerDelete is the permission to delete an equipment manufacturer
-	PermissionEquipmentManufacturerDelete = EquipmentManufacturerPermission("equipmentmanufacturer.delete")
-)
-
-// String returns the string representation of the EquipmentManufacturerPermission
-func (p EquipmentManufacturerPermission) String() string {
-	return string(p)
-}
 
 type EquipmentManufacturer struct {
 	bun.BaseModel `bun:"table:equipment_manufacturers,alias:em" json:"-"`
