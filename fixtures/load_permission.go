@@ -1,76 +1,93 @@
+// COPYRIGHT(c) 2024 Trenova
+//
+// This file is part of Trenova.
+//
+// The Trenova software is licensed under the Business Source License 1.1. You are granted the right
+// to copy, modify, and redistribute the software, but only for non-production use or with a total
+// of less than three server instances. Starting from the Change Date (November 16, 2026), the
+// software will be made available under version 2 or later of the GNU General Public License.
+// If you use the software in violation of this license, your rights under the license will be
+// terminated automatically. The software is provided "as is," and the Licensor disclaims all
+// warranties and conditions. If you use this license's text or the "Business Source License" name
+// and trademark, you must comply with the Licensor's covenants, which include specifying the
+// Change License as the GPL Version 2.0 or a compatible license, specifying an Additional Use
+// Grant, and not modifying the license in any other way.
+
 package fixtures
 
 import (
 	"context"
 	"fmt"
 	"log"
-	"strings"
-	"unicode"
 
 	"github.com/casbin/casbin/v2"
 	"github.com/emoss08/trenova/pkg/models"
+	"github.com/samber/lo"
 	"github.com/uptrace/bun"
 )
 
 func loadPermissions(ctx context.Context, db *bun.DB, enforcer *casbin.Enforcer) error {
-	var permissions []*models.Permission
-
-	err := db.NewSelect().Model(&permissions).Scan(ctx)
-	if err != nil {
-		return err
-	}
-
-	existingPermissionMap := make(map[string]bool)
-	for _, permission := range permissions {
-		existingPermissionMap[permission.Codename] = true
-	}
-
-	log.Println("Adding base permissions...")
-
 	var resources []*models.Resource
-	err = db.NewSelect().Model(&resources).Scan(ctx)
+	err := db.NewSelect().Model(&resources).Scan(ctx)
 	if err != nil {
 		return err
 	}
 
-	// Detailed permissions for each action
-	actions := []struct {
-		action           string
-		readDescription  string
-		writeDescription string
-	}{
-		{"view", "Can view all", "Can view all"},
-		{"add", "Can view all", "Can add, update, and delete"},
-		{"update", "Can view all", "Can add, update, and delete"},
-		{"delete", "Can view all", "Can add, update, and delete"},
+	// Basic CRUD actions
+	basicActions := []string{"view", "create", "update", "import", "export"}
+
+	// Resources with limited actions
+	limitedActionResources := map[string][]string{
+		"admin_dashboard": {"view", "export"},
+		"billing_client":  {"view", "run_job"},
+	}
+
+	// Additional system-defined actions for specific resources
+	additionalActions := map[string][]string{
+		"shipment":     {"assign_tractor"},
+		"tractor":      {"assign_driver"},
+		"organization": {"change_logo"},
+		"role":         {"view", "update", "assign_permissions"},
 	}
 
 	for _, resource := range resources {
-		resourceTypeLower := toSnakeCase(resource.Type)
-		for _, action := range actions {
-			codename := fmt.Sprintf("%s:%s", resourceTypeLower, action.action)
+		resourceTypeLower := lo.SnakeCase(resource.Type)
 
-			// Add policy for the Admin role instead of "admin" subject
-			_, err = enforcer.AddPolicy("Admin", codename, "allow")
-			if err != nil {
-				return fmt.Errorf("failed to add policy: %w", err)
+		// Check if the resource should have limited actions
+		if limitedActions, exists := limitedActionResources[resourceTypeLower]; exists {
+			for _, action := range limitedActions {
+				if err = addPermissionPolicy(enforcer, resourceTypeLower, action); err != nil {
+					return err
+				}
 			}
+		} else {
+			// Add basic CRUD permissions
+			for _, action := range basicActions {
+				if err = addPermissionPolicy(enforcer, resourceTypeLower, action); err != nil {
+					return err
+				}
+			}
+		}
 
-			log.Printf("Added permission to Casbin: Admin, %s, allow\n", codename)
+		// Add additional system-defined permissions
+		if specificActions, exists := additionalActions[resourceTypeLower]; exists {
+			for _, action := range specificActions {
+				if err = addPermissionPolicy(enforcer, resourceTypeLower, action); err != nil {
+					return err
+				}
+			}
 		}
 	}
 
 	return enforcer.SavePolicy()
 }
 
-// toSnakeCase converts a string from CamelCase to snake_case
-func toSnakeCase(s string) string {
-	var result string
-	for i, r := range s {
-		if i > 0 && unicode.IsUpper(r) {
-			result += "_"
-		}
-		result += strings.ToLower(string(r))
+func addPermissionPolicy(enforcer *casbin.Enforcer, resource, action string) error {
+	codename := fmt.Sprintf("%s:%s", resource, action)
+	_, err := enforcer.AddPolicy("Admin", codename, "allow")
+	if err != nil {
+		return fmt.Errorf("failed to add policy: %w", err)
 	}
-	return result
+	log.Printf("Added permission to Casbin: Admin, %s, allow\n", codename)
+	return nil
 }

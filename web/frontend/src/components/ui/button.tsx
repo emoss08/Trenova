@@ -1,3 +1,20 @@
+/**
+ * COPYRIGHT(c) 2024 Trenova
+ *
+ * This file is part of Trenova.
+ *
+ * The Trenova software is licensed under the Business Source License 1.1. You are granted the right
+ * to copy, modify, and redistribute the software, but only for non-production use or with a total
+ * of less than three server instances. Starting from the Change Date (November 16, 2026), the
+ * software will be made available under version 2 or later of the GNU General Public License.
+ * If you use the software in violation of this license, your rights under the license will be
+ * terminated automatically. The software is provided "as is," and the Licensor disclaims all
+ * warranties and conditions. If you use this license's text or the "Business Source License" name
+ * and trademark, you must comply with the Licensor's covenants, which include specifying the
+ * Change License as the GPL Version 2.0 or a compatible license, specifying an Additional Use
+ * Grant, and not modifying the license in any other way.
+ */
+
 import { cn } from "@/lib/utils";
 import { IconProp } from "@fortawesome/fontawesome-svg-core";
 import { faSpinner } from "@fortawesome/pro-solid-svg-icons";
@@ -7,7 +24,7 @@ import { cva, type VariantProps } from "class-variance-authority";
 import * as React from "react";
 
 const buttonVariants = cva(
-  "ring-offset-background focus-visible:ring-ring inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50",
+  "inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50",
   {
     variants: {
       variant: {
@@ -15,7 +32,7 @@ const buttonVariants = cva(
         destructive:
           "bg-destructive text-destructive-foreground hover:bg-destructive/90",
         outline:
-          "border-input bg-background hover:bg-accent hover:text-accent-foreground border",
+          "border border-input bg-background hover:bg-accent hover:text-accent-foreground",
         active:
           "border border-green-200 bg-green-200 text-green-600 dark:border-green-500 dark:bg-green-600/30 dark:text-green-400",
         warning:
@@ -31,19 +48,19 @@ const buttonVariants = cva(
         ghost: "hover:bg-accent hover:text-accent-foreground",
         link: "text-primary underline-offset-4 hover:underline",
         expandIcon:
-          "bg-primary text-background hover:bg-primary/90 group relative",
+          "group relative bg-primary text-background hover:bg-primary/90",
         ringHover:
-          "bg-primary text-primary-foreground hover:bg-primary/90 hover:ring-primary/90 transition-all duration-300 hover:ring-2 hover:ring-offset-2",
+          "bg-primary text-primary-foreground transition-all duration-300 hover:bg-primary/90 hover:ring-2 hover:ring-primary/90 hover:ring-offset-2",
         shine:
-          "animate-shine from-primary via-primary/75 to-primary text-primary-foreground bg-gradient-to-r bg-[length:400%_100%] ",
+          "animate-shine bg-gradient-to-r from-primary via-primary/75 to-primary bg-[length:400%_100%] text-primary-foreground ",
         gooeyRight:
-          "bg-primary text-primary-foreground relative z-0 overflow-hidden from-zinc-400 transition-all duration-500 before:absolute before:inset-0 before:-z-10 before:translate-x-[150%] before:translate-y-[150%] before:scale-[2.5] before:rounded-[100%] before:bg-gradient-to-r before:transition-transform before:duration-1000  hover:before:translate-x-0 hover:before:translate-y-0 ",
+          "relative z-0 overflow-hidden bg-primary from-zinc-400 text-primary-foreground transition-all duration-500 before:absolute before:inset-0 before:-z-10 before:translate-x-[150%] before:translate-y-[150%] before:scale-[2.5] before:rounded-[100%] before:bg-gradient-to-r before:transition-transform before:duration-1000  hover:before:translate-x-0 hover:before:translate-y-0 ",
         gooeyLeft:
-          "bg-primary text-primary-foreground relative z-0 overflow-hidden from-zinc-400 transition-all duration-500 after:absolute after:inset-0 after:-z-10 after:translate-x-[-150%] after:translate-y-[150%] after:scale-[2.5] after:rounded-[100%] after:bg-gradient-to-l after:transition-transform after:duration-1000  hover:after:translate-x-0 hover:after:translate-y-0 ",
+          "relative z-0 overflow-hidden bg-primary from-zinc-400 text-primary-foreground transition-all duration-500 after:absolute after:inset-0 after:-z-10 after:translate-x-[-150%] after:translate-y-[150%] after:scale-[2.5] after:rounded-[100%] after:bg-gradient-to-l after:transition-transform after:duration-1000  hover:after:translate-x-0 hover:after:translate-y-0 ",
         linkHover1:
-          "after:bg-primary relative after:absolute after:bottom-2 after:h-px after:w-2/3 after:origin-bottom-left after:scale-x-100 after:transition-transform after:duration-300 after:ease-in-out hover:after:origin-bottom-right hover:after:scale-x-0",
+          "relative after:absolute after:bottom-2 after:h-px after:w-2/3 after:origin-bottom-left after:scale-x-100 after:bg-primary after:transition-transform after:duration-300 after:ease-in-out hover:after:origin-bottom-right hover:after:scale-x-0",
         linkHover2:
-          "after:bg-primary relative after:absolute after:bottom-2 after:h-px after:w-2/3 after:origin-bottom-right after:scale-x-0 after:transition-transform after:duration-300 after:ease-in-out hover:after:origin-bottom-left hover:after:scale-x-100",
+          "relative after:absolute after:bottom-2 after:h-px after:w-2/3 after:origin-bottom-right after:scale-x-0 after:bg-primary after:transition-transform after:duration-300 after:ease-in-out hover:after:origin-bottom-left hover:after:scale-x-100",
       },
       size: {
         default: "h-10 px-4 py-2",
@@ -136,4 +153,3 @@ const Button = React.forwardRef<
 Button.displayName = "Button";
 
 export { Button, buttonVariants };
-

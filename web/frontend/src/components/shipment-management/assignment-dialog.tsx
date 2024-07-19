@@ -1,3 +1,21 @@
+/**
+ * COPYRIGHT(c) 2024 Trenova
+ *
+ * This file is part of Trenova.
+ *
+ * The Trenova software is licensed under the Business Source License 1.1. You are granted the right
+ * to copy, modify, and redistribute the software, but only for non-production use or with a total
+ * of less than three server instances. Starting from the Change Date (November 16, 2026), the
+ * software will be made available under version 2 or later of the GNU General Public License.
+ * If you use the software in violation of this license, your rights under the license will be
+ * terminated automatically. The software is provided "as is," and the Licensor disclaims all
+ * warranties and conditions. If you use this license's text or the "Business Source License" name
+ * and trademark, you must comply with the Licensor's covenants, which include specifying the
+ * Change License as the GPL Version 2.0 or a compatible license, specifying an Additional Use
+ * Grant, and not modifying the license in any other way.
+ */
+
+import { cn } from "@/lib/utils";
 import { getActiveAssignmentsForTractor } from "@/services/EquipmentRequestService";
 import type {
   NewAssignment,
@@ -5,8 +23,17 @@ import type {
   TractorAssignmentFormValues,
 } from "@/types/equipment";
 import { useQuery } from "@tanstack/react-query";
+import { GripIcon, XIcon } from "lucide-react";
 import { useEffect } from "react";
-import { DragDropContext, Draggable, Droppable } from "react-beautiful-dnd";
+import {
+  DragDropContext,
+  Draggable,
+  DraggableProvided,
+  DraggableStateSnapshot,
+  Droppable,
+  DropResult,
+} from "react-beautiful-dnd";
+import ReactDOM from "react-dom";
 import { useFieldArray, useForm } from "react-hook-form";
 import { Input } from "../common/fields/input";
 import { Button } from "../ui/button";
@@ -20,7 +47,63 @@ import {
 } from "../ui/credenza";
 import { DialogFooter } from "../ui/dialog";
 
-interface AssignmentDialogProps {
+// Create a portal container
+const portalContainer = document.createElement("div");
+portalContainer.setAttribute("id", "drag-drop-portal");
+document.body.appendChild(portalContainer);
+
+const PortalAwareItem = ({
+  provided,
+  snapshot,
+  field,
+  onRemove,
+}: {
+  provided: DraggableProvided;
+  snapshot: DraggableStateSnapshot;
+  field: TractorAssignmentFormValues["assignments"]["0"];
+  onRemove: (id: any) => void;
+}) => {
+  const child = (
+    <li
+      ref={provided.innerRef}
+      {...provided.draggableProps}
+      className={cn(
+        "border-border hover:bg-muted flex items-center space-x-2 rounded-md border p-2",
+        snapshot.isDragging && "opacity-60 shadow-lg bg-muted",
+      )}
+    >
+      <div
+        {...provided.dragHandleProps}
+        className="rounded p-1 hover:cursor-move"
+      >
+        <GripIcon className="size-5 text-foreground" />
+      </div>
+      <Input value={field.shipmentProNumber} readOnly className="grow" />
+      <Button
+        className="size-8"
+        size="icon"
+        variant="ghost"
+        onClick={() => onRemove(field.id)}
+        type="button"
+      >
+        <XIcon className="size-4" />
+      </Button>
+    </li>
+  );
+
+  if (snapshot.isDragging) {
+    return ReactDOM.createPortal(child, portalContainer);
+  }
+
+  return child;
+};
+export function AssignmentDialog({
+  open,
+  onOpenChange,
+  handleAssignTractor,
+  selectedTractor,
+  newAssignment,
+}: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   handleAssignTractor: (
@@ -28,15 +111,7 @@ interface AssignmentDialogProps {
   ) => void;
   selectedTractor: Tractor;
   newAssignment: NewAssignment;
-}
-
-export function AssignmentDialog({
-  open,
-  onOpenChange,
-  handleAssignTractor,
-  selectedTractor,
-  newAssignment,
-}: AssignmentDialogProps) {
+}) {
   const { data: activeAssignments, isLoading } = useQuery({
     queryKey: ["activeAssignments", selectedTractor.id],
     queryFn: async () => getActiveAssignmentsForTractor(selectedTractor.id),
@@ -95,7 +170,7 @@ export function AssignmentDialog({
     onOpenChange(false);
   };
 
-  const handleDragEnd = (result: any) => {
+  const handleDragEnd = (result: DropResult) => {
     if (!result.destination) return;
     move(result.source.index, result.destination.index);
   };
@@ -106,7 +181,7 @@ export function AssignmentDialog({
 
   return (
     <Credenza open={open} onOpenChange={onOpenChange}>
-      <CredenzaContent>
+      <CredenzaContent className="max-w-md">
         <CredenzaHeader>
           <CredenzaTitle>Assignments: {selectedTractor.code}</CredenzaTitle>
         </CredenzaHeader>
@@ -118,31 +193,24 @@ export function AssignmentDialog({
             <DragDropContext onDragEnd={handleDragEnd}>
               <Droppable droppableId="assignments">
                 {(provided) => (
-                  <ul {...provided.droppableProps} ref={provided.innerRef}>
+                  <ul
+                    {...provided.droppableProps}
+                    ref={provided.innerRef}
+                    className="max-h-[50vh] space-y-2 overflow-y-auto"
+                  >
                     {fields.map((field, index) => (
                       <Draggable
                         key={field.id}
                         draggableId={field.id}
                         index={index}
                       >
-                        {(provided) => (
-                          <li
-                            ref={provided.innerRef}
-                            {...provided.draggableProps}
-                            {...provided.dragHandleProps}
-                            className="mb-2 flex items-center space-x-2"
-                          >
-                            <p></p>
-                            <span>{index + 1}.</span>
-                            <Input value={field.shipmentProNumber} readOnly />
-                            <Button
-                              size="xs"
-                              variant="link"
-                              onClick={() => remove(index)}
-                            >
-                              Remove
-                            </Button>
-                          </li>
+                        {(provided, snapshot) => (
+                          <PortalAwareItem
+                            provided={provided}
+                            snapshot={snapshot}
+                            field={field}
+                            onRemove={remove}
+                          />
                         )}
                       </Draggable>
                     ))}

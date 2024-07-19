@@ -1,3 +1,18 @@
+// COPYRIGHT(c) 2024 Trenova
+//
+// This file is part of Trenova.
+//
+// The Trenova software is licensed under the Business Source License 1.1. You are granted the right
+// to copy, modify, and redistribute the software, but only for non-production use or with a total
+// of less than three server instances. Starting from the Change Date (November 16, 2026), the
+// software will be made available under version 2 or later of the GNU General Public License.
+// If you use the software in violation of this license, your rights under the license will be
+// terminated automatically. The software is provided "as is," and the Licensor disclaims all
+// warranties and conditions. If you use this license's text or the "Business Source License" name
+// and trademark, you must comply with the Licensor's covenants, which include specifying the
+// Change License as the GPL Version 2.0 or a compatible license, specifying an Additional Use
+// Grant, and not modifying the license in any other way.
+
 package fixtures
 
 import (
@@ -20,7 +35,11 @@ import (
 func LoadFixtures() error {
 	ctx := context.Background()
 
-	serverConfig := config.DefaultServiceConfigFromEnv()
+	serverConfig, err := config.DefaultServiceConfigFromEnv(false)
+	if err != nil {
+		log.Fatalf("Failed to load server configuration: %v", err)
+		return err
+	}
 
 	sqldb := sql.OpenDB(pgdriver.NewConnector(pgdriver.WithDSN(serverConfig.DB.DSN())))
 	db := bun.NewDB(sqldb, pgdialect.New())
@@ -35,7 +54,7 @@ func LoadFixtures() error {
 	codeInitializer := &gen.CodeInitializer{DB: db}
 
 	// Initialize the counter manager with existing codes
-	err := codeInitializer.Initialize(ctx, counterManager, &models.Worker{})
+	err = codeInitializer.Initialize(ctx, counterManager, &models.Worker{})
 	if err != nil {
 		return err
 	}
@@ -50,8 +69,6 @@ func LoadFixtures() error {
 	// Register many to many model so bun can better recognize m2m relation.
 	// This should be done before you use the model for the first time.
 	db.RegisterModel(
-		(*models.RolePermission)(nil),
-		(*models.UserRole)(nil),
 		(*models.GeneralLedgerAccountTag)(nil),
 	)
 
@@ -136,38 +153,12 @@ func InitializeCasbinPolicies(ctx context.Context, db *bun.DB, enforcer *casbin.
 		return err
 	}
 
-	if err := loadRoles(ctx, db, enforcer); err != nil {
-		return err
-	}
-
 	if err := LoadAdminAccount(ctx, db, enforcer, org, bu); err != nil {
 		return err
 	}
 
 	if err := LoadNormalAccount(ctx, db, org, bu); err != nil {
 		return err
-	}
-
-	policies, err := enforcer.GetPolicy()
-	if err != nil {
-		return fmt.Errorf("failed to get policies: %w", err)
-	}
-
-	groupPolicies, err := enforcer.GetGroupingPolicy()
-	if err != nil {
-		return fmt.Errorf("failed to get group policies: %w", err)
-	}
-
-	// Debug: Print all policies
-	log.Println("All policies:")
-	for _, policy := range policies {
-		log.Printf("%v\n", policy)
-	}
-
-	// Debug: Print all role assignments
-	log.Println("All role assignments:")
-	for _, assignment := range groupPolicies {
-		log.Printf("%v\n", assignment)
 	}
 
 	return nil

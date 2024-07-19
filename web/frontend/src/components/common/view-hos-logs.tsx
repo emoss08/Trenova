@@ -76,7 +76,7 @@ const VerticalLines = ({ serviceHours }: { serviceHours: any[] }) => {
           return (
             <div
               key={index}
-              className="border-foreground absolute border-l-2"
+              className="absolute border-l-2 border-foreground"
               style={{
                 left: `${(gridColumnEnd - 1) * 4.1667}%`,
                 height: "28%",
@@ -137,7 +137,7 @@ export function HourGrid() {
                     width: `${(gridColumnEnd - gridColumnStart) * 4.1667}%`, // Convert grid column difference to percentage
                   }}
                 >
-                  <div className="border-foreground h-full border-b-2" />
+                  <div className="h-full border-b-2 border-foreground" />
                 </div>
               );
             }

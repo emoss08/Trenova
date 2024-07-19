@@ -1,4 +1,3 @@
-version: '4'
 services:
   db:
     image: postgres:latest
@@ -212,14 +211,8 @@ services:
       - kafka-connect
     ports:
       - "3001:3001"
-    environment:
-      SERVER_DB_HOST: "db"
-      SERVER_DB_PORT: "5432"
-      SERVER_DB_USER: "postgres"
-      SERVER_DB_PASSWORD: "postgres"
-      SERVER_DB_NAME: "trenova_go_db"
     restart: always
-    command: [ "./main", "server" ]
+    command: [ "./main", "serve", "--env", "prod" ]
     volumes:
       - .:/app
 

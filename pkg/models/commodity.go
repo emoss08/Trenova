@@ -1,3 +1,18 @@
+// COPYRIGHT(c) 2024 Trenova
+//
+// This file is part of Trenova.
+//
+// The Trenova software is licensed under the Business Source License 1.1. You are granted the right
+// to copy, modify, and redistribute the software, but only for non-production use or with a total
+// of less than three server instances. Starting from the Change Date (November 16, 2026), the
+// software will be made available under version 2 or later of the GNU General Public License.
+// If you use the software in violation of this license, your rights under the license will be
+// terminated automatically. The software is provided "as is," and the Licensor disclaims all
+// warranties and conditions. If you use this license's text or the "Business Source License" name
+// and trademark, you must comply with the Licensor's covenants, which include specifying the
+// Change License as the GPL Version 2.0 or a compatible license, specifying an Additional Use
+// Grant, and not modifying the license in any other way.
+
 package models
 
 import (
@@ -12,27 +27,6 @@ import (
 	"github.com/uptrace/bun"
 )
 
-type CommodityPermission string
-
-const (
-	// PermissionCommodityView is the permission to view commodity details
-	PermissionCommodityView = CommodityPermission("commodity.view")
-
-	// PermissionCommodityEdit is the permission to edit commodity details
-	PermissionCommodityEdit = CommodityPermission("commodity.edit")
-
-	// PermissionCommodityAdd is the permission to add a new commodity
-	PermissionCommodityAdd = CommodityPermission("commodity.add")
-
-	// PermissionCommodityDelete is the permission to delete a commodity
-	PermissionCommodityDelete = CommodityPermission("commodity.delete")
-)
-
-// String returns the string representation of the CommodityPermission
-func (p CommodityPermission) String() string {
-	return string(p)
-}
-
 type Commodity struct {
 	bun.BaseModel `bun:"table:commodities,alias:com" json:"-"`
 
@@ -41,11 +35,11 @@ type Commodity struct {
 	Status        string    `bun:"type:status_enum,notnull,default:'Active'" json:"status"`
 	IsHazmat      bool      `bun:"type:boolean,notnull,default:false" json:"isHazmat"`
 	UnitOfMeasure string    `bun:"type:VARCHAR(50),notnull" json:"unitOfMeasure"`
-	MinTemp       int       `bun:"type:integer,notnull" json:"minTemp"`
-	MaxTemp       int       `bun:"type:integer,notnull" json:"maxTemp"`
+	MinTemp       *int16    `bun:"type:integer,nullzero" json:"minTemp"`
+	MaxTemp       *int16    `bun:"type:integer,nullzero" json:"maxTemp"`
+	Version       int64     `bun:"type:BIGINT" json:"version"`
 	CreatedAt     time.Time `bun:",nullzero,notnull,default:current_timestamp" json:"createdAt"`
 	UpdatedAt     time.Time `bun:",nullzero,notnull,default:current_timestamp" json:"updatedAt"`
-	Version       int64     `bun:"type:BIGINT" json:"version"`
 
 	BusinessUnitID      uuid.UUID `bun:"type:uuid,notnull" json:"businessUnitId"`
 	OrganizationID      uuid.UUID `bun:"type:uuid,notnull" json:"organizationId"`
@@ -62,6 +56,9 @@ func (c Commodity) Validate() error {
 		validation.Field(&c.Name, validation.Required, validation.Length(1, 50)),
 		validation.Field(&c.BusinessUnitID, validation.Required),
 		validation.Field(&c.OrganizationID, validation.Required),
+		validation.Field(&c.IsHazmat,
+			validation.Required.Error("IsHazmat is required. Please Try again."),
+			validation.When(c.HazardousMaterialID != uuid.Nil, validation.Required.Error("Hazardous Material is required when IsHazmat is true. Please try again."))),
 	)
 }
 

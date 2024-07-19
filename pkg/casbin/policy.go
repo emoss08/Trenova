@@ -1,5 +1,3 @@
-// Credit https://github.com/JunNishimura/casbin-bun-adapter
-
 package casbin
 
 import "github.com/uptrace/bun"

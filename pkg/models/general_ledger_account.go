@@ -1,3 +1,18 @@
+// COPYRIGHT(c) 2024 Trenova
+//
+// This file is part of Trenova.
+//
+// The Trenova software is licensed under the Business Source License 1.1. You are granted the right
+// to copy, modify, and redistribute the software, but only for non-production use or with a total
+// of less than three server instances. Starting from the Change Date (November 16, 2026), the
+// software will be made available under version 2 or later of the GNU General Public License.
+// If you use the software in violation of this license, your rights under the license will be
+// terminated automatically. The software is provided "as is," and the Licensor disclaims all
+// warranties and conditions. If you use this license's text or the "Business Source License" name
+// and trademark, you must comply with the Licensor's covenants, which include specifying the
+// Change License as the GPL Version 2.0 or a compatible license, specifying an Additional Use
+// Grant, and not modifying the license in any other way.
+
 package models
 
 import (
@@ -14,27 +29,6 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/uptrace/bun"
 )
-
-type GeneralLedgerAccountPermission string
-
-const (
-	// PermissionGeneralLedgerAccountView is the permission to view general ledger account details
-	PermissionGeneralLedgerAccountView = GeneralLedgerAccountPermission("generalledgeraccount.view")
-
-	// PermissionGeneralLedgerAccountEdit is the permission to edit general ledger account details
-	PermissionGeneralLedgerAccountEdit = GeneralLedgerAccountPermission("generalledgeraccount.edit")
-
-	// PermissionGeneralLedgerAccountAdd is the permission to add a new general ledger account
-	PermissionGeneralLedgerAccountAdd = GeneralLedgerAccountPermission("generalledgeraccount.add")
-
-	// PermissionGeneralLedgerAccountDelete is the permission to delete an general ledger account
-	PermissionGeneralLedgerAccountDelete = GeneralLedgerAccountPermission("generalledgeraccount.delete")
-)
-
-// String returns the string representation of the GeneralLedgerAccountPermission
-func (p GeneralLedgerAccountPermission) String() string {
-	return string(p)
-}
 
 type GeneralLedgerAccount struct {
 	bun.BaseModel `bun:"table:general_ledger_accounts,alias:gla" json:"-"`
@@ -153,7 +147,8 @@ func (g *GeneralLedgerAccount) BeforeAppendModel(_ context.Context, query bun.Qu
 }
 
 type GeneralLedgerAccountTag struct {
-	bun.BaseModel          `bun:"table:general_ledger_account_tags" json:"-"`
+	bun.BaseModel `bun:"table:general_ledger_account_tags" json:"-"`
+
 	GeneralLedgerAccountID uuid.UUID `bun:"general_ledger_account_id,pk,type:uuid" json:"generalLedgerAccountId"`
 	TagID                  uuid.UUID `bun:"tag_id,pk,type:uuid" json:"tagId"`
 

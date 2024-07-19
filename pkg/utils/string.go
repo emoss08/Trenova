@@ -1,8 +1,22 @@
+// COPYRIGHT(c) 2024 Trenova
+//
+// This file is part of Trenova.
+//
+// The Trenova software is licensed under the Business Source License 1.1. You are granted the right
+// to copy, modify, and redistribute the software, but only for non-production use or with a total
+// of less than three server instances. Starting from the Change Date (November 16, 2026), the
+// software will be made available under version 2 or later of the GNU General Public License.
+// If you use the software in violation of this license, your rights under the license will be
+// terminated automatically. The software is provided "as is," and the Licensor disclaims all
+// warranties and conditions. If you use this license's text or the "Business Source License" name
+// and trademark, you must comply with the Licensor's covenants, which include specifying the
+// Change License as the GPL Version 2.0 or a compatible license, specifying an Additional Use
+// Grant, and not modifying the license in any other way.
+
 package utils
 
 import (
 	"crypto/rand"
-	"errors"
 	"strconv"
 	"strings"
 
@@ -18,65 +32,6 @@ const (
 	CharRangeAlphaLowerCase
 	CharRangeAlphaUpperCase
 )
-
-func GenerateRandomString(n int, ranges []CharRange, extra string) (string, error) {
-	if len(ranges) == 0 && len(extra) == 0 {
-		return "", errors.New("random string can only be created if set of characters or extra string characters supplied")
-	}
-
-	validateFn := makeValidator(ranges, extra)
-	return buildString(validateFn, n)
-}
-
-// makeValidator creates a function to validate if a byte is within the allowed character sets.
-func makeValidator(ranges []CharRange, extra string) func(byte) bool {
-	return func(c byte) bool {
-		if strings.IndexByte(extra, c) >= 0 {
-			return true
-		}
-		for _, r := range ranges {
-			if isInRange(r, c) {
-				return true
-			}
-		}
-		return false
-	}
-}
-
-// isInRange checks if a given byte is within a specified character range.
-func isInRange(r CharRange, c byte) bool {
-	switch r {
-	case CharRangeNumeric:
-		return c >= '0' && c <= '9'
-	case CharRangeAlphaLowerCase:
-		return c >= 'a' && c <= 'z'
-	case CharRangeAlphaUpperCase:
-		return c >= 'A' && c <= 'Z'
-	default:
-		return false
-	}
-}
-
-// buildString builds the final string from random bytes that pass the validation function.
-// It ensures the string meets the required length by repeatedly generating random bytes if necessary.
-func buildString(validateFn func(byte) bool, n int) (string, error) {
-	var str strings.Builder
-	for str.Len() < n {
-		buf, err := GenerateRandomBytes(n - str.Len()) // Generate only as many bytes as are needed
-		if err != nil {
-			return "", err
-		}
-		for _, b := range buf {
-			if validateFn(b) {
-				str.WriteByte(b)
-			}
-			if str.Len() == n {
-				break
-			}
-		}
-	}
-	return str.String(), nil
-}
 
 // Title converts a string to title case
 func ToTitleFormat(s string) string {
