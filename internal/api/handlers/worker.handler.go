@@ -18,6 +18,9 @@ package handlers
 import (
 	"fmt"
 
+	"github.com/emoss08/trenova/pkg/audit"
+	"github.com/emoss08/trenova/pkg/models/property"
+
 	"github.com/emoss08/trenova/internal/api/services"
 	"github.com/emoss08/trenova/internal/server"
 	"github.com/emoss08/trenova/internal/types"
@@ -32,6 +35,7 @@ type WorkerHandler struct {
 	logger            *zerolog.Logger
 	service           *services.WorkerService
 	permissionService *services.PermissionService
+	auditService      *audit.Service
 }
 
 func NewWorkerHandler(s *server.Server) *WorkerHandler {
@@ -39,6 +43,7 @@ func NewWorkerHandler(s *server.Server) *WorkerHandler {
 		logger:            s.Logger,
 		service:           services.NewWorkerService(s),
 		permissionService: services.NewPermissionService(s.Enforcer),
+		auditService:      s.AuditService,
 	}
 }
 
@@ -52,15 +57,9 @@ func (h WorkerHandler) RegisterRoutes(r fiber.Router) {
 
 func (h WorkerHandler) Get() fiber.Handler {
 	return func(c *fiber.Ctx) error {
-		orgID, ok := c.Locals(utils.CTXOrganizationID).(uuid.UUID)
-		buID, orgOK := c.Locals(utils.CTXBusinessUnitID).(uuid.UUID)
-
-		if !ok || !orgOK {
-			h.logger.Error().Msg("WorkerHandler: Organization & Business Unit ID not found in context")
-			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Error{
-				Code:    fiber.StatusUnauthorized,
-				Message: "Organization & Business Unit ID not found in context",
-			})
+		ids, err := utils.ExtractAndHandleContextIDs(c)
+		if err != nil {
+			return err
 		}
 
 		offset, limit, err := utils.PaginationParams(c)
@@ -87,23 +86,24 @@ func (h WorkerHandler) Get() fiber.Handler {
 		if err = h.permissionService.CheckUserPermission(c, "worker", "view"); err != nil {
 			return c.Status(fiber.StatusForbidden).JSON(fiber.Error{
 				Code:    fiber.StatusForbidden,
-				Message: "You do not have permission to perform this action.",
+				Message: err.Error(),
 			})
 		}
 
 		filter := &services.WorkerQueryFilter{
 			Query:          c.Query("search", ""),
-			OrganizationID: orgID,
-			BusinessUnitID: buID,
+			OrganizationID: ids.OrganizationID,
+			BusinessUnitID: ids.BusinessUnitID,
 			Limit:          limit,
 			Offset:         offset,
 		}
 
 		entities, cnt, err := h.service.GetAll(c.UserContext(), filter)
 		if err != nil {
+			h.logger.Error().Err(err).Msg("Error getting workers")
 			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Error{
 				Code:    fiber.StatusInternalServerError,
-				Message: "Failed to get Workers",
+				Message: err.Error(),
 			})
 		}
 
@@ -119,46 +119,13 @@ func (h WorkerHandler) Get() fiber.Handler {
 	}
 }
 
-func (h WorkerHandler) Create() fiber.Handler {
-	return func(c *fiber.Ctx) error {
-		createdEntity := new(models.Worker)
-
-		orgID, ok := c.Locals(utils.CTXOrganizationID).(uuid.UUID)
-		buID, orgOK := c.Locals(utils.CTXBusinessUnitID).(uuid.UUID)
-
-		if !ok || !orgOK {
-			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Error{
-				Code:    fiber.StatusUnauthorized,
-				Message: "Organization & Business Unit ID not found in context",
-			})
-		}
-
-		if err := h.permissionService.CheckUserPermission(c, "worker", "create"); err != nil {
-			return c.Status(fiber.StatusForbidden).JSON(fiber.Error{
-				Code:    fiber.StatusForbidden,
-				Message: "You do not have permission to perform this action.",
-			})
-		}
-
-		createdEntity.BusinessUnitID = buID
-		createdEntity.OrganizationID = orgID
-
-		if err := utils.ParseBodyAndValidate(c, createdEntity); err != nil {
-			return c.Status(fiber.StatusBadRequest).JSON(err)
-		}
-
-		entity, err := h.service.Create(c.UserContext(), createdEntity)
-		if err != nil {
-			resp := utils.CreateServiceError(c, err)
-			return c.Status(fiber.StatusInternalServerError).JSON(resp)
-		}
-
-		return c.Status(fiber.StatusCreated).JSON(entity)
-	}
-}
-
 func (h WorkerHandler) GetByID() fiber.Handler {
 	return func(c *fiber.Ctx) error {
+		ids, err := utils.ExtractAndHandleContextIDs(c)
+		if err != nil {
+			return err
+		}
+
 		workerID := c.Params("workerID")
 		if workerID == "" {
 			return c.Status(fiber.StatusBadRequest).JSON(fiber.Error{
@@ -167,29 +134,19 @@ func (h WorkerHandler) GetByID() fiber.Handler {
 			})
 		}
 
-		orgID, ok := c.Locals(utils.CTXOrganizationID).(uuid.UUID)
-		buID, orgOK := c.Locals(utils.CTXBusinessUnitID).(uuid.UUID)
-
-		if !ok || !orgOK {
-			h.logger.Error().Msg("WorkerHandler: Organization & Business Unit ID not found in context")
+		if err = h.permissionService.CheckUserPermission(c, "worker", "view"); err != nil {
 			return c.Status(fiber.StatusForbidden).JSON(fiber.Error{
 				Code:    fiber.StatusForbidden,
-				Message: "Organization & Business Unit ID not found in context",
+				Message: err.Error(),
 			})
 		}
 
-		if err := h.permissionService.CheckUserPermission(c, "worker", "view"); err != nil {
-			return c.Status(fiber.StatusForbidden).JSON(fiber.Error{
-				Code:    fiber.StatusForbidden,
-				Message: "You do not have permission to perform this action.",
-			})
-		}
-
-		entity, err := h.service.Get(c.UserContext(), uuid.MustParse(workerID), orgID, buID)
+		entity, err := h.service.Get(c.UserContext(), uuid.MustParse(workerID), ids.OrganizationID, ids.BusinessUnitID)
 		if err != nil {
+			h.logger.Error().Str("workerID", workerID).Err(err).Msg("Error getting worker by ID")
 			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Error{
 				Code:    fiber.StatusInternalServerError,
-				Message: "Failed to get Worker",
+				Message: err.Error(),
 			})
 		}
 
@@ -197,8 +154,49 @@ func (h WorkerHandler) GetByID() fiber.Handler {
 	}
 }
 
+func (h WorkerHandler) Create() fiber.Handler {
+	return func(c *fiber.Ctx) error {
+		ids, err := utils.ExtractAndHandleContextIDs(c)
+		if err != nil {
+			return err
+		}
+
+		createdEntity := new(models.Worker)
+
+		if err = h.permissionService.CheckUserPermission(c, "worker", "create"); err != nil {
+			return c.Status(fiber.StatusForbidden).JSON(fiber.Error{
+				Code:    fiber.StatusForbidden,
+				Message: err.Error(),
+			})
+		}
+
+		createdEntity.BusinessUnitID = ids.BusinessUnitID
+		createdEntity.OrganizationID = ids.OrganizationID
+
+		if err = utils.ParseBodyAndValidate(c, createdEntity); err != nil {
+			return c.Status(fiber.StatusBadRequest).JSON(err)
+		}
+
+		entity, err := h.service.Create(c.UserContext(), createdEntity)
+		if err != nil {
+			h.logger.Error().Interface("entity", createdEntity).Err(err).Msg("Failed to create Worker")
+			resp := utils.CreateServiceError(c, err)
+			return c.Status(fiber.StatusInternalServerError).JSON(resp)
+		}
+
+		go h.auditService.LogAction("workers", entity.ID.String(), property.AuditLogActionCreate, entity, ids.UserID, ids.OrganizationID, ids.BusinessUnitID)
+
+		return c.Status(fiber.StatusCreated).JSON(entity)
+	}
+}
+
 func (h WorkerHandler) Update() fiber.Handler {
 	return func(c *fiber.Ctx) error {
+		ids, err := utils.ExtractAndHandleContextIDs(c)
+		if err != nil {
+			return err
+		}
+
 		workerID := c.Params("workerID")
 		if workerID == "" {
 			return c.Status(fiber.StatusBadRequest).JSON(fiber.Error{
@@ -207,16 +205,16 @@ func (h WorkerHandler) Update() fiber.Handler {
 			})
 		}
 
-		if err := h.permissionService.CheckUserPermission(c, "worker", "update"); err != nil {
+		if err = h.permissionService.CheckUserPermission(c, "worker", "update"); err != nil {
 			return c.Status(fiber.StatusForbidden).JSON(fiber.Error{
 				Code:    fiber.StatusForbidden,
-				Message: "You do not have permission to perform this action.",
+				Message: err.Error(),
 			})
 		}
 
 		updatedEntity := new(models.Worker)
 
-		if err := utils.ParseBodyAndValidate(c, updatedEntity); err != nil {
+		if err = utils.ParseBodyAndValidate(c, updatedEntity); err != nil {
 			return c.Status(fiber.StatusBadRequest).JSON(err)
 		}
 
@@ -224,9 +222,12 @@ func (h WorkerHandler) Update() fiber.Handler {
 
 		entity, err := h.service.UpdateOne(c.UserContext(), updatedEntity)
 		if err != nil {
+			h.logger.Error().Interface("entity", updatedEntity).Err(err).Msg("Failed to update Worker")
 			resp := utils.CreateServiceError(c, err)
 			return c.Status(fiber.StatusInternalServerError).JSON(resp)
 		}
+
+		go h.auditService.LogAction("workers", entity.ID.String(), property.AuditLogActionUpdate, entity, ids.UserID, ids.OrganizationID, ids.BusinessUnitID)
 
 		return c.Status(fiber.StatusOK).JSON(entity)
 	}

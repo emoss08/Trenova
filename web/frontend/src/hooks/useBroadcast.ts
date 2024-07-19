@@ -15,6 +15,7 @@
  * Grant, and not modifying the license in any other way.
  */
 
+import { QueryKey } from "@/types";
 import { useQueryClient } from "@tanstack/react-query";
 import { useCallback, useEffect } from "react";
 
@@ -83,3 +84,12 @@ export const useQueryInvalidationListener = () => {
     };
   }, [handleInvalidationMessage]);
 };
+
+// InvalidQueryViaBroadcastChannel is a function that sends a message to the broadcast channel to invalidate a query.
+// @param queryKeys - The query keys to invalidate.
+// @returns void
+export function invalidateQueryViaBroadcastChannel(queryKeys: QueryKey[]) {
+  const broadcastChannel = new BroadcastChannel("query-invalidation");
+  broadcastChannel.postMessage({ type: "invalidate", queryKeys });
+  broadcastChannel.close();
+}

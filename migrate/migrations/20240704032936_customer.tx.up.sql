@@ -14,28 +14,29 @@
 -- Grant, and not modifying the license in any other way.
 
 CREATE TABLE
-    IF NOT EXISTS "customers" (
-        "id" uuid NOT NULL DEFAULT uuid_generate_v4 (),
-        "business_unit_id" uuid NOT NULL,
-        "organization_id" uuid NOT NULL,
-        "status" status_enum NOT NULL DEFAULT 'Active',
-        "code" VARCHAR(10) NOT NULL,
-        "name" VARCHAR(150) NOT NULL,
-        "address_line_1" VARCHAR(150) NOT NULL,
-        "address_line_2" VARCHAR(150),
-        "city" VARCHAR(150) NOT NULL,
-        "state_id" uuid NOT NULL,
-        "has_customer_portal" BOOLEAN NOT NULL DEFAULT false,
-        "auto_mark_ready_to_bill" BOOLEAN NOT NULL DEFAULT false,
-        "postal_code" VARCHAR(10) NOT NULL,
-        "version" BIGINT NOT NULL,
-        "created_at" TIMESTAMPTZ NOT NULL DEFAULT current_timestamp,
-        "updated_at" TIMESTAMPTZ NOT NULL DEFAULT current_timestamp,
-        PRIMARY KEY ("id"),
-        FOREIGN KEY ("state_id") REFERENCES us_states ("id") ON UPDATE NO ACTION ON DELETE SET NULL,
-        FOREIGN KEY ("organization_id") REFERENCES organizations ("id") ON UPDATE NO ACTION ON DELETE CASCADE,
-        FOREIGN KEY ("business_unit_id") REFERENCES business_units ("id") ON UPDATE NO ACTION ON DELETE CASCADE
-    );
+    IF NOT EXISTS "customers"
+(
+    "id"                      uuid         NOT NULL DEFAULT uuid_generate_v4(),
+    "business_unit_id"        uuid         NOT NULL,
+    "organization_id"         uuid         NOT NULL,
+    "status"                  status_enum  NOT NULL DEFAULT 'Active',
+    "code"                    VARCHAR(10)  NOT NULL,
+    "name"                    VARCHAR(150) NOT NULL,
+    "address_line_1"          VARCHAR(150) NOT NULL,
+    "address_line_2"          VARCHAR(150),
+    "city"                    VARCHAR(150) NOT NULL,
+    "state_id"                uuid         NOT NULL,
+    "has_customer_portal"     BOOLEAN      NOT NULL DEFAULT false,
+    "auto_mark_ready_to_bill" BOOLEAN      NOT NULL DEFAULT false,
+    "postal_code"             VARCHAR(10)  NOT NULL,
+    "version"                 BIGINT       NOT NULL,
+    "created_at"              TIMESTAMPTZ  NOT NULL DEFAULT current_timestamp,
+    "updated_at"              TIMESTAMPTZ  NOT NULL DEFAULT current_timestamp,
+    PRIMARY KEY ("id"),
+    FOREIGN KEY ("state_id") REFERENCES us_states ("id") ON UPDATE NO ACTION ON DELETE SET NULL,
+    FOREIGN KEY ("organization_id") REFERENCES organizations ("id") ON UPDATE NO ACTION ON DELETE CASCADE,
+    FOREIGN KEY ("business_unit_id") REFERENCES business_units ("id") ON UPDATE NO ACTION ON DELETE CASCADE
+);
 
 --bun:split
 CREATE UNIQUE INDEX IF NOT EXISTS "customers_code_organization_id_unq" ON "customers" (LOWER("code"), organization_id);

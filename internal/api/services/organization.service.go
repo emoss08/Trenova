@@ -91,15 +91,15 @@ func (s *OrganizationService) UpdateOrganization(ctx context.Context, entity *mo
 	return entity, nil
 }
 
-func (s *OrganizationService) UploadLogo(ctx context.Context, logo *multipart.FileHeader, orgID uuid.UUID) error {
+func (s *OrganizationService) UploadLogo(ctx context.Context, logo *multipart.FileHeader, orgID uuid.UUID) (*models.Organization, error) {
 	fileData, err := s.fileService.ReadFileData(logo)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	objectName, err := s.fileService.RenameFile(logo, orgID)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	params := minio.SaveFileOptions{
@@ -112,12 +112,12 @@ func (s *OrganizationService) UploadLogo(ctx context.Context, logo *multipart.Fi
 	return s.updateAndSetLogoURL(ctx, orgID, params)
 }
 
-func (s *OrganizationService) updateAndSetLogoURL(ctx context.Context, orgID uuid.UUID, params minio.SaveFileOptions) error {
+func (s *OrganizationService) updateAndSetLogoURL(ctx context.Context, orgID uuid.UUID, params minio.SaveFileOptions) (*models.Organization, error) {
 	org := new(models.Organization)
 
 	ui, err := s.minio.SaveFile(ctx, params)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	err = s.db.RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
@@ -133,13 +133,13 @@ func (s *OrganizationService) updateAndSetLogoURL(ctx context.Context, orgID uui
 		return nil
 	})
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	return nil
+	return org, nil
 }
 
-func (s *OrganizationService) ClearLogo(ctx context.Context, orgID uuid.UUID) error {
+func (s *OrganizationService) ClearLogo(ctx context.Context, orgID uuid.UUID) (*models.Organization, error) {
 	org := new(models.Organization)
 
 	err := s.db.RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
@@ -155,8 +155,8 @@ func (s *OrganizationService) ClearLogo(ctx context.Context, orgID uuid.UUID) er
 		return nil
 	})
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	return nil
+	return org, nil
 }

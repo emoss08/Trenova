@@ -23,6 +23,7 @@ import (
 	"github.com/emoss08/trenova/config"
 	"github.com/emoss08/trenova/internal/server"
 	"github.com/emoss08/trenova/pkg/models"
+	validation "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/google/uuid"
 	"github.com/imroc/req/v3"
 	"github.com/rs/zerolog"
@@ -71,14 +72,25 @@ type Relationship struct {
 
 // GenerateReportRequest represents the payload for generating a report.
 type GenerateReportRequest struct {
-	TableName      string         `json:"tableName" validate:"required"`
-	Columns        []string       `json:"columns" validate:"required"`
-	Relationships  []Relationship `json:"relationships" validate:"omitempty"`
-	FileFormat     FileFormat     `json:"fileFormat" validate:"required"`
-	DeliveryMethod DeliveryMethod `json:"deliveryMethod" validate:"required"`
+	TableName      string         `json:"tableName"`
+	Columns        []string       `json:"columns"`
+	Relationships  []Relationship `json:"relationships"`
+	FileFormat     FileFormat     `json:"fileFormat"`
+	DeliveryMethod DeliveryMethod `json:"deliveryMethod"`
 	OrganizationID uuid.UUID      `json:"organizationId"`
 	BusinessUnitID uuid.UUID      `json:"businessUnitId"`
 	UserID         uuid.UUID      `json:"userId"`
+}
+
+func (gr GenerateReportRequest) Validate() error {
+	return validation.ValidateStruct(
+		&gr,
+		validation.Field(&gr.BusinessUnitID, validation.Required),
+		validation.Field(&gr.OrganizationID, validation.Required),
+		validation.Field(&gr.UserID, validation.Required),
+		validation.Field(&gr.FileFormat, validation.In("csv", "xls", "xlsx", "pdf")),
+		validation.Field(&gr.DeliveryMethod, validation.In("email", "local")),
+	)
 }
 
 // GenerateReportResponse represents the response for generating a report.

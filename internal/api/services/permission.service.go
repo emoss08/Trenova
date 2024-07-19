@@ -37,7 +37,7 @@ func NewPermissionService(enforcer *casbin.Enforcer) *PermissionService {
 func (s *PermissionService) CheckUserPermission(c *fiber.Ctx, resource string, action string) error {
 	userID, ok := c.Locals(utils.CTXUserID).(uuid.UUID)
 	if !ok {
-		return fiber.NewError(fiber.StatusUnauthorized, "User ID not found in context")
+		return fmt.Errorf("User ID not found in context")
 	}
 
 	permission := fmt.Sprintf("%s:%s", resource, action)

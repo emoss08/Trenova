@@ -21,7 +21,9 @@ import (
 	"github.com/emoss08/trenova/internal/api/services"
 	"github.com/emoss08/trenova/internal/server"
 	"github.com/emoss08/trenova/internal/types"
+	"github.com/emoss08/trenova/pkg/audit"
 	"github.com/emoss08/trenova/pkg/models"
+	"github.com/emoss08/trenova/pkg/models/property"
 	"github.com/emoss08/trenova/pkg/utils"
 	"github.com/gofiber/fiber/v2"
 	"github.com/google/uuid"
@@ -32,6 +34,7 @@ type LocationHandler struct {
 	logger            *zerolog.Logger
 	service           *services.LocationService
 	permissionService *services.PermissionService
+	auditService      *audit.Service
 }
 
 func NewLocationHandler(s *server.Server) *LocationHandler {
@@ -39,6 +42,7 @@ func NewLocationHandler(s *server.Server) *LocationHandler {
 		logger:            s.Logger,
 		service:           services.NewLocationService(s),
 		permissionService: services.NewPermissionService(s.Enforcer),
+		auditService:      s.AuditService,
 	}
 }
 
@@ -52,15 +56,9 @@ func (h LocationHandler) RegisterRoutes(r fiber.Router) {
 
 func (h LocationHandler) Get() fiber.Handler {
 	return func(c *fiber.Ctx) error {
-		orgID, ok := c.Locals(utils.CTXOrganizationID).(uuid.UUID)
-		buID, orgOK := c.Locals(utils.CTXBusinessUnitID).(uuid.UUID)
-
-		if !ok || !orgOK {
-			h.logger.Error().Msg("LocationHandler: Organization & Business Unit ID not found in context")
-			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Error{
-				Code:    fiber.StatusUnauthorized,
-				Message: "Organization & Business Unit ID not found in context",
-			})
+		ids, err := utils.ExtractAndHandleContextIDs(c)
+		if err != nil {
+			return err
 		}
 
 		offset, limit, err := utils.PaginationParams(c)
@@ -87,23 +85,24 @@ func (h LocationHandler) Get() fiber.Handler {
 		if err = h.permissionService.CheckUserPermission(c, "location", "view"); err != nil {
 			return c.Status(fiber.StatusForbidden).JSON(fiber.Error{
 				Code:    fiber.StatusForbidden,
-				Message: "You do not have permission to perform this action.",
+				Message: err.Error(),
 			})
 		}
 
 		filter := &services.LocationQueryFilter{
 			Query:          c.Query("search", ""),
-			OrganizationID: orgID,
-			BusinessUnitID: buID,
+			OrganizationID: ids.OrganizationID,
+			BusinessUnitID: ids.BusinessUnitID,
 			Limit:          limit,
 			Offset:         offset,
 		}
 
 		entities, cnt, err := h.service.GetAll(c.UserContext(), filter)
 		if err != nil {
+			h.logger.Error().Err(err).Msg("Error getting locations")
 			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Error{
 				Code:    fiber.StatusInternalServerError,
-				Message: "Failed to get Locations",
+				Message: err.Error(),
 			})
 		}
 
@@ -119,46 +118,13 @@ func (h LocationHandler) Get() fiber.Handler {
 	}
 }
 
-func (h LocationHandler) Create() fiber.Handler {
-	return func(c *fiber.Ctx) error {
-		createdEntity := new(models.Location)
-
-		orgID, ok := c.Locals(utils.CTXOrganizationID).(uuid.UUID)
-		buID, orgOK := c.Locals(utils.CTXBusinessUnitID).(uuid.UUID)
-
-		if !ok || !orgOK {
-			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Error{
-				Code:    fiber.StatusUnauthorized,
-				Message: "Organization & Business Unit ID not found in context",
-			})
-		}
-
-		if err := h.permissionService.CheckUserPermission(c, "location", "create"); err != nil {
-			return c.Status(fiber.StatusForbidden).JSON(fiber.Error{
-				Code:    fiber.StatusForbidden,
-				Message: "You do not have permission to perform this action.",
-			})
-		}
-
-		createdEntity.BusinessUnitID = buID
-		createdEntity.OrganizationID = orgID
-
-		if err := utils.ParseBodyAndValidate(c, createdEntity); err != nil {
-			return c.Status(fiber.StatusBadRequest).JSON(err)
-		}
-
-		entity, err := h.service.Create(c.UserContext(), createdEntity)
-		if err != nil {
-			resp := utils.CreateServiceError(c, err)
-			return c.Status(fiber.StatusInternalServerError).JSON(resp)
-		}
-
-		return c.Status(fiber.StatusCreated).JSON(entity)
-	}
-}
-
 func (h LocationHandler) GetByID() fiber.Handler {
 	return func(c *fiber.Ctx) error {
+		ids, err := utils.ExtractAndHandleContextIDs(c)
+		if err != nil {
+			return err
+		}
+
 		locationID := c.Params("locationID")
 		if locationID == "" {
 			return c.Status(fiber.StatusBadRequest).JSON(fiber.Error{
@@ -167,29 +133,19 @@ func (h LocationHandler) GetByID() fiber.Handler {
 			})
 		}
 
-		orgID, ok := c.Locals(utils.CTXOrganizationID).(uuid.UUID)
-		buID, orgOK := c.Locals(utils.CTXBusinessUnitID).(uuid.UUID)
-
-		if !ok || !orgOK {
-			h.logger.Error().Msg("LocationHandler: Organization & Business Unit ID not found in context")
-			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Error{
-				Code:    fiber.StatusUnauthorized,
-				Message: "Organization & Business Unit ID not found in context",
-			})
-		}
-
-		if err := h.permissionService.CheckUserPermission(c, "location", "view"); err != nil {
+		if err = h.permissionService.CheckUserPermission(c, "location", "view"); err != nil {
 			return c.Status(fiber.StatusForbidden).JSON(fiber.Error{
 				Code:    fiber.StatusForbidden,
-				Message: "You do not have permission to perform this action.",
+				Message: err.Error(),
 			})
 		}
 
-		entity, err := h.service.Get(c.UserContext(), uuid.MustParse(locationID), orgID, buID)
+		entity, err := h.service.Get(c.UserContext(), uuid.MustParse(locationID), ids.OrganizationID, ids.BusinessUnitID)
 		if err != nil {
+			h.logger.Error().Str("locationID", locationID).Err(err).Msg("Error getting location by ID")
 			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Error{
 				Code:    fiber.StatusInternalServerError,
-				Message: "Failed to get Location",
+				Message: err.Error(),
 			})
 		}
 
@@ -197,8 +153,49 @@ func (h LocationHandler) GetByID() fiber.Handler {
 	}
 }
 
+func (h LocationHandler) Create() fiber.Handler {
+	return func(c *fiber.Ctx) error {
+		ids, err := utils.ExtractAndHandleContextIDs(c)
+		if err != nil {
+			return err
+		}
+
+		createdEntity := new(models.Location)
+
+		if err = h.permissionService.CheckUserPermission(c, "location", "create"); err != nil {
+			return c.Status(fiber.StatusForbidden).JSON(fiber.Error{
+				Code:    fiber.StatusForbidden,
+				Message: err.Error(),
+			})
+		}
+
+		createdEntity.BusinessUnitID = ids.BusinessUnitID
+		createdEntity.OrganizationID = ids.OrganizationID
+
+		if err = utils.ParseBodyAndValidate(c, createdEntity); err != nil {
+			return c.Status(fiber.StatusBadRequest).JSON(err)
+		}
+
+		entity, err := h.service.Create(c.UserContext(), createdEntity)
+		if err != nil {
+			h.logger.Error().Interface("entity", createdEntity).Err(err).Msg("Failed to create Location")
+			resp := utils.CreateServiceError(c, err)
+			return c.Status(fiber.StatusInternalServerError).JSON(resp)
+		}
+
+		go h.auditService.LogAction("locations", entity.ID.String(), property.AuditLogActionCreate, entity, ids.UserID, ids.OrganizationID, ids.BusinessUnitID)
+
+		return c.Status(fiber.StatusCreated).JSON(entity)
+	}
+}
+
 func (h LocationHandler) Update() fiber.Handler {
 	return func(c *fiber.Ctx) error {
+		ids, err := utils.ExtractAndHandleContextIDs(c)
+		if err != nil {
+			return err
+		}
+
 		locationID := c.Params("locationID")
 		if locationID == "" {
 			return c.Status(fiber.StatusBadRequest).JSON(fiber.Error{
@@ -207,16 +204,16 @@ func (h LocationHandler) Update() fiber.Handler {
 			})
 		}
 
-		if err := h.permissionService.CheckUserPermission(c, "location", "update"); err != nil {
+		if err = h.permissionService.CheckUserPermission(c, "location", "update"); err != nil {
 			return c.Status(fiber.StatusForbidden).JSON(fiber.Error{
 				Code:    fiber.StatusForbidden,
-				Message: "You do not have permission to perform this action.",
+				Message: err.Error(),
 			})
 		}
 
 		updatedEntity := new(models.Location)
 
-		if err := utils.ParseBodyAndValidate(c, updatedEntity); err != nil {
+		if err = utils.ParseBodyAndValidate(c, updatedEntity); err != nil {
 			return c.Status(fiber.StatusBadRequest).JSON(err)
 		}
 
@@ -224,9 +221,12 @@ func (h LocationHandler) Update() fiber.Handler {
 
 		entity, err := h.service.UpdateOne(c.UserContext(), updatedEntity)
 		if err != nil {
+			h.logger.Error().Interface("entity", updatedEntity).Err(err).Msg("Failed to update Location")
 			resp := utils.CreateServiceError(c, err)
 			return c.Status(fiber.StatusInternalServerError).JSON(resp)
 		}
+
+		go h.auditService.LogAction("locations", entity.ID.String(), property.AuditLogActionUpdate, entity, ids.UserID, ids.OrganizationID, ids.BusinessUnitID)
 
 		return c.Status(fiber.StatusOK).JSON(entity)
 	}

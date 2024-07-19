@@ -21,7 +21,9 @@ import (
 	"github.com/emoss08/trenova/internal/api/services"
 	"github.com/emoss08/trenova/internal/server"
 	"github.com/emoss08/trenova/internal/types"
+	"github.com/emoss08/trenova/pkg/audit"
 	"github.com/emoss08/trenova/pkg/models"
+	"github.com/emoss08/trenova/pkg/models/property"
 	"github.com/emoss08/trenova/pkg/utils"
 	"github.com/gofiber/fiber/v2"
 	"github.com/google/uuid"
@@ -32,6 +34,7 @@ type CommodityHandler struct {
 	logger            *zerolog.Logger
 	service           *services.CommodityService
 	permissionService *services.PermissionService
+	auditService      *audit.Service
 }
 
 func NewCommodityHandler(s *server.Server) *CommodityHandler {
@@ -39,6 +42,7 @@ func NewCommodityHandler(s *server.Server) *CommodityHandler {
 		logger:            s.Logger,
 		service:           services.NewCommodityService(s),
 		permissionService: services.NewPermissionService(s.Enforcer),
+		auditService:      s.AuditService,
 	}
 }
 
@@ -52,15 +56,9 @@ func (h CommodityHandler) RegisterRoutes(r fiber.Router) {
 
 func (h CommodityHandler) Get() fiber.Handler {
 	return func(c *fiber.Ctx) error {
-		orgID, ok := c.Locals(utils.CTXOrganizationID).(uuid.UUID)
-		buID, orgOK := c.Locals(utils.CTXBusinessUnitID).(uuid.UUID)
-
-		if !ok || !orgOK {
-			h.logger.Error().Msg("CommodityHandler: Organization & Business Unit ID not found in context")
-			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Error{
-				Code:    fiber.StatusUnauthorized,
-				Message: "Organization & Business Unit ID not found in context",
-			})
+		ids, err := utils.ExtractAndHandleContextIDs(c)
+		if err != nil {
+			return err
 		}
 
 		offset, limit, err := utils.PaginationParams(c)
@@ -87,23 +85,24 @@ func (h CommodityHandler) Get() fiber.Handler {
 		if err = h.permissionService.CheckUserPermission(c, "commodity", "view"); err != nil {
 			return c.Status(fiber.StatusForbidden).JSON(fiber.Error{
 				Code:    fiber.StatusForbidden,
-				Message: "You do not have permission to perform this action.",
+				Message: err.Error(),
 			})
 		}
 
 		filter := &services.CommodityQueryFilter{
 			Query:          c.Query("search", ""),
-			OrganizationID: orgID,
-			BusinessUnitID: buID,
+			OrganizationID: ids.OrganizationID,
+			BusinessUnitID: ids.BusinessUnitID,
 			Limit:          limit,
 			Offset:         offset,
 		}
 
 		entities, cnt, err := h.service.GetAll(c.UserContext(), filter)
 		if err != nil {
+			h.logger.Error().Err(err).Msg("Errors getting commodities")
 			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Error{
 				Code:    fiber.StatusInternalServerError,
-				Message: "Failed to get Commodities",
+				Message: err.Error(),
 			})
 		}
 
@@ -116,44 +115,6 @@ func (h CommodityHandler) Get() fiber.Handler {
 			Next:    nextURL,
 			Prev:    prevURL,
 		})
-	}
-}
-
-func (h CommodityHandler) Create() fiber.Handler {
-	return func(c *fiber.Ctx) error {
-		createdEntity := new(models.Commodity)
-
-		orgID, ok := c.Locals(utils.CTXOrganizationID).(uuid.UUID)
-		buID, orgOK := c.Locals(utils.CTXBusinessUnitID).(uuid.UUID)
-
-		if !ok || !orgOK {
-			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Error{
-				Code:    fiber.StatusUnauthorized,
-				Message: "Organization & Business Unit ID not found in context",
-			})
-		}
-
-		if err := h.permissionService.CheckUserPermission(c, "commodity", "create"); err != nil {
-			return c.Status(fiber.StatusForbidden).JSON(fiber.Error{
-				Code:    fiber.StatusForbidden,
-				Message: "You do not have permission to perform this action.",
-			})
-		}
-
-		createdEntity.BusinessUnitID = buID
-		createdEntity.OrganizationID = orgID
-
-		if err := utils.ParseBodyAndValidate(c, createdEntity); err != nil {
-			return c.Status(fiber.StatusBadRequest).JSON(err)
-		}
-
-		entity, err := h.service.Create(c.UserContext(), createdEntity)
-		if err != nil {
-			resp := utils.CreateServiceError(c, err)
-			return c.Status(fiber.StatusInternalServerError).JSON(resp)
-		}
-
-		return c.Status(fiber.StatusCreated).JSON(entity)
 	}
 }
 
@@ -181,12 +142,13 @@ func (h CommodityHandler) GetByID() fiber.Handler {
 		if err := h.permissionService.CheckUserPermission(c, "commodity", "view"); err != nil {
 			return c.Status(fiber.StatusForbidden).JSON(fiber.Error{
 				Code:    fiber.StatusForbidden,
-				Message: "You do not have permission to perform this action.",
+				Message: err.Error(),
 			})
 		}
 
 		entity, err := h.service.Get(c.UserContext(), uuid.MustParse(commodityID), orgID, buID)
 		if err != nil {
+			h.logger.Error().Err(err).Msg("Failed to get Commodity")
 			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Error{
 				Code:    fiber.StatusInternalServerError,
 				Message: "Failed to get Commodity",
@@ -197,8 +159,49 @@ func (h CommodityHandler) GetByID() fiber.Handler {
 	}
 }
 
+func (h CommodityHandler) Create() fiber.Handler {
+	return func(c *fiber.Ctx) error {
+		ids, err := utils.ExtractAndHandleContextIDs(c)
+		if err != nil {
+			return err
+		}
+
+		createdEntity := new(models.Commodity)
+
+		if err = h.permissionService.CheckUserPermission(c, "commodity", "create"); err != nil {
+			return c.Status(fiber.StatusForbidden).JSON(fiber.Error{
+				Code:    fiber.StatusForbidden,
+				Message: err.Error(),
+			})
+		}
+
+		createdEntity.BusinessUnitID = ids.BusinessUnitID
+		createdEntity.OrganizationID = ids.OrganizationID
+
+		if err = utils.ParseBodyAndValidate(c, createdEntity); err != nil {
+			return c.Status(fiber.StatusBadRequest).JSON(err)
+		}
+
+		entity, err := h.service.Create(c.UserContext(), createdEntity)
+		if err != nil {
+			h.logger.Error().Interface("entity", createdEntity).Err(err).Msg("Failed to create Commodity")
+			resp := utils.CreateServiceError(c, err)
+			return c.Status(fiber.StatusInternalServerError).JSON(resp)
+		}
+
+		go h.auditService.LogAction("commodities", entity.ID.String(), property.AuditLogActionCreate, entity, ids.UserID, ids.OrganizationID, ids.BusinessUnitID)
+
+		return c.Status(fiber.StatusCreated).JSON(entity)
+	}
+}
+
 func (h CommodityHandler) Update() fiber.Handler {
 	return func(c *fiber.Ctx) error {
+		ids, err := utils.ExtractAndHandleContextIDs(c)
+		if err != nil {
+			return err
+		}
+
 		commodityID := c.Params("commodityID")
 		if commodityID == "" {
 			return c.Status(fiber.StatusBadRequest).JSON(fiber.Error{
@@ -207,16 +210,16 @@ func (h CommodityHandler) Update() fiber.Handler {
 			})
 		}
 
-		if err := h.permissionService.CheckUserPermission(c, "commodity", "update"); err != nil {
+		if err = h.permissionService.CheckUserPermission(c, "commodity", "update"); err != nil {
 			return c.Status(fiber.StatusForbidden).JSON(fiber.Error{
 				Code:    fiber.StatusForbidden,
-				Message: "You do not have permission to perform this action.",
+				Message: err.Error(),
 			})
 		}
 
 		updatedEntity := new(models.Commodity)
 
-		if err := utils.ParseBodyAndValidate(c, updatedEntity); err != nil {
+		if err = utils.ParseBodyAndValidate(c, updatedEntity); err != nil {
 			return c.Status(fiber.StatusBadRequest).JSON(err)
 		}
 
@@ -224,9 +227,12 @@ func (h CommodityHandler) Update() fiber.Handler {
 
 		entity, err := h.service.UpdateOne(c.UserContext(), updatedEntity)
 		if err != nil {
+			h.logger.Error().Interface("entity", entity).Err(err).Msg("Failed to update Commodity")
 			resp := utils.CreateServiceError(c, err)
 			return c.Status(fiber.StatusInternalServerError).JSON(resp)
 		}
+
+		go h.auditService.LogAction("commodities", entity.ID.String(), property.AuditLogActionUpdate, entity, ids.UserID, ids.OrganizationID, ids.BusinessUnitID)
 
 		return c.Status(fiber.StatusOK).JSON(entity)
 	}

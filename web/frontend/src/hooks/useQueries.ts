@@ -59,7 +59,6 @@ import {
   getFeatureFlags,
   getGoogleApiInformation,
   getInvoiceControl,
-  getOrganizationDetails,
   getRouteControl,
   getShipmentControl,
   getTableNames,
@@ -711,7 +710,7 @@ export function useOrganization() {
     isError: organizationError,
   } = useQuery({
     queryKey: ["organization"] as QueryKeys,
-    queryFn: async () => getOrganizationDetails(),
+    queryFn: async () => getUserOrganizationDetails(),
   });
 
   return {

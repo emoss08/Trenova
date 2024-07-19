@@ -29,8 +29,8 @@ export function ComponentLoader({ className }: { className?: string }) {
         size="1x"
         className="text-primary motion-safe:animate-spin"
       />
-      <p className="mt-2 text-sm text-foreground">Loading data...</p>
-      <p className="mt-2 text-sm text-muted-foreground">
+      <p className="text-foreground mt-2 text-sm">Loading data...</p>
+      <p className="text-muted-foreground mt-2 text-sm">
         If this takes too long, please refresh the page.
       </p>
     </div>

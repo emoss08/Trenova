@@ -19,6 +19,7 @@ import { InputField } from "@/components/common/fields/input";
 import { SelectInput } from "@/components/common/fields/select-input";
 import { Button } from "@/components/ui/button";
 import { useUserPermissions } from "@/context/user-permissions";
+import { invalidateQueryViaBroadcastChannel } from "@/hooks/useBroadcast";
 import { useCustomMutation } from "@/hooks/useCustomMutation";
 import { TIMEZONES } from "@/lib/timezone";
 import { organizationSchema } from "@/lib/validations/OrganizationSchema";
@@ -57,7 +58,6 @@ function OrganizationForm({ organization }: { organization: Organization }) {
     method: "PUT",
     path: `/organizations/${organization.id}`,
     successMessage: t("formSuccessMessage"),
-    queryKeysToInvalidate: "userOrganization",
     reset,
     errorMessage: t("formErrorMessage"),
   });
@@ -67,25 +67,23 @@ function OrganizationForm({ organization }: { organization: Organization }) {
     reset(values);
 
     // Additional query to invalidate.
-    queryClient.invalidateQueries({
-      queryKey: ["organization"] as QueryKeys,
-    });
+    invalidateQueryViaBroadcastChannel(["userOrganization", "organization"]);
   };
 
   return (
     <>
       <div className="grid grid-cols-1 gap-8 md:grid-cols-3 xl:grid-cols-4">
         <div className="px-4 sm:px-0">
-          <h2 className="text-base font-semibold leading-7 text-foreground">
+          <h2 className="text-foreground text-base font-semibold leading-7">
             {t("organizationDetails")}
           </h2>
-          <p className="mt-1 text-sm leading-6 text-muted-foreground">
+          <p className="text-muted-foreground mt-1 text-sm leading-6">
             {t("organizationDetailsDescription")}
           </p>
         </div>
 
         <form
-          className="m-4 border border-border bg-card sm:rounded-xl md:col-span-2"
+          className="border-border bg-card m-4 border sm:rounded-xl md:col-span-2"
           onSubmit={handleSubmit(onSubmit)}
         >
           <div className="px-4 py-6 sm:p-8">
@@ -104,9 +102,6 @@ function OrganizationForm({ organization }: { organization: Organization }) {
                     successCallback={() => {
                       queryClient.invalidateQueries({
                         queryKey: ["userOrganization"] as QueryKeys,
-                      });
-                      queryClient.invalidateQueries({
-                        queryKey: ["organization"] as QueryKeys,
                       });
 
                       return "Logo updated successfully.";
@@ -185,7 +180,7 @@ function OrganizationForm({ organization }: { organization: Organization }) {
               </div>
             </div>
           </div>
-          <div className="flex items-center justify-end gap-x-4 border-t border-border p-4 sm:px-8">
+          <div className="border-border flex items-center justify-end gap-x-4 border-t p-4 sm:px-8">
             <Button
               onClick={(e) => {
                 e.preventDefault();

@@ -27,6 +27,7 @@ import (
 
 	"github.com/casbin/casbin/v2"
 	"github.com/emoss08/trenova/config"
+	"github.com/emoss08/trenova/pkg/audit"
 	tCasbin "github.com/emoss08/trenova/pkg/casbin"
 	"github.com/emoss08/trenova/pkg/file"
 	"github.com/emoss08/trenova/pkg/gen"
@@ -78,6 +79,9 @@ type Server struct {
 	// Enforcer stores the Casbin enforcer.
 	Enforcer *casbin.Enforcer
 
+	// AuditService stores the audit logging service.
+	AuditService *audit.Service
+
 	// Code Generate
 	CodeGenerator   *gen.CodeGenerator
 	CounterManager  *gen.CounterManager
@@ -96,9 +100,7 @@ type Server struct {
 
 // NewServer creates a new server instance.
 func NewServer(ctx context.Context, cfg config.Server) *Server {
-	server := &Server{
-		Config: cfg,
-	}
+	server := &Server{Config: cfg}
 	server.ctx = ContextWithApp(ctx, server)
 
 	return server
@@ -110,13 +112,13 @@ func (s *Server) Ready() bool {
 
 // OnStop registers a function to be called when the server starts.
 func (s *Server) OnStop(name string, fn HookFunc) {
-	s.Logger.Info().Msgf("Registering onStop hook: %s", name)
+	s.Logger.Debug().Msgf("Registering onStop hook: %s", name)
 	s.onStop.add(newHook(name, fn))
 }
 
 // OnAfterStop registers a function to be called after the server is stopped.
 func (s *Server) OnAfterStop(name string, fn HookFunc) {
-	s.Logger.Info().Msgf("Registering onAfterStop hook: %s", name)
+	s.Logger.Debug().Msgf("Registering onAfterStop hook: %s", name)
 
 	s.onAfterstop.add(newHook(name, fn))
 }
@@ -156,6 +158,17 @@ func (s *Server) InitDB() *bun.DB {
 	})
 
 	return s.DB
+}
+
+func (s *Server) InitAuditService() error {
+	s.AuditService = audit.NewAuditService(s.DB, s.Logger, s.Config.Audit.QueueSize, s.Config.Audit.WorkerCount)
+
+	// Register shutdown hook
+	s.OnStop("audit.Shutdown", func(ctx context.Context, _ *Server) error {
+		return s.AuditService.Shutdown(ctx)
+	})
+
+	return nil
 }
 
 func (s *Server) InitCodeGenerationSystem(ctx context.Context) error {

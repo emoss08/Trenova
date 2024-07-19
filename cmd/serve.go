@@ -74,6 +74,10 @@ func runServer() {
 	s.InitLogger()
 	s.InitDB()
 
+	if err := s.InitAuditService(); err != nil {
+		log.Fatal().Err(err).Msg("Failed to initialize audit service")
+	}
+
 	if err := s.InitCasbin(); err != nil {
 		log.Fatal().Err(err).Msg("Failed to initialize Casbin")
 	}
@@ -89,7 +93,7 @@ func runServer() {
 	go func() {
 		if err := s.Start(); err != nil {
 			if errors.Is(err, http.ErrServerClosed) {
-				log.Info().Msg("Server shutdown")
+				log.Debug().Msg("Server shutdown")
 			} else {
 				log.Fatal().Err(err).Msg("Failed to start server")
 			}
@@ -100,8 +104,8 @@ func runServer() {
 	signal.Notify(c, os.Interrupt, syscall.SIGTERM)
 
 	<-c
-	log.Info().Msg("Shutting down server")
+	log.Debug().Msg("Shutting down server")
 	_ = s.Shutdown()
 
-	log.Info().Msg("Server shutdown complete")
+	log.Debug().Msg("Server shutdown complete")
 }

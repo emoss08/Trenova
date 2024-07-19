@@ -40,7 +40,6 @@ type MutationOptions<K extends FieldValues> = {
   method: "POST" | "PUT" | "PATCH" | "DELETE";
   onSettled?: () => void;
 };
-
 export function useCustomMutation<T extends FieldValues>(
   control: Control<T>,
   options: MutationOptions<T>,

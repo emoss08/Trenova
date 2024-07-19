@@ -21,7 +21,9 @@ import (
 	"github.com/emoss08/trenova/internal/api/services"
 	"github.com/emoss08/trenova/internal/server"
 	"github.com/emoss08/trenova/internal/types"
+	"github.com/emoss08/trenova/pkg/audit"
 	"github.com/emoss08/trenova/pkg/models"
+	"github.com/emoss08/trenova/pkg/models/property"
 	"github.com/emoss08/trenova/pkg/utils"
 	"github.com/gofiber/fiber/v2"
 	"github.com/google/uuid"
@@ -32,6 +34,7 @@ type DelayCodeHandler struct {
 	logger            *zerolog.Logger
 	service           *services.DelayCodeService
 	permissionService *services.PermissionService
+	auditService      *audit.Service
 }
 
 func NewDelayCodeHandler(s *server.Server) *DelayCodeHandler {
@@ -39,6 +42,7 @@ func NewDelayCodeHandler(s *server.Server) *DelayCodeHandler {
 		logger:            s.Logger,
 		service:           services.NewDelayCodeService(s),
 		permissionService: services.NewPermissionService(s.Enforcer),
+		auditService:      s.AuditService,
 	}
 }
 
@@ -52,15 +56,9 @@ func (h DelayCodeHandler) RegisterRoutes(r fiber.Router) {
 
 func (h DelayCodeHandler) Get() fiber.Handler {
 	return func(c *fiber.Ctx) error {
-		orgID, ok := c.Locals(utils.CTXOrganizationID).(uuid.UUID)
-		buID, orgOK := c.Locals(utils.CTXBusinessUnitID).(uuid.UUID)
-
-		if !ok || !orgOK {
-			h.logger.Error().Msg("DelayCodeHandler: Organization & Business Unit ID not found in context")
-			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Error{
-				Code:    fiber.StatusUnauthorized,
-				Message: "Organization & Business Unit ID not found in context",
-			})
+		ids, err := utils.ExtractAndHandleContextIDs(c)
+		if err != nil {
+			return err
 		}
 
 		offset, limit, err := utils.PaginationParams(c)
@@ -84,26 +82,27 @@ func (h DelayCodeHandler) Get() fiber.Handler {
 			})
 		}
 
-		if err = h.permissionService.CheckUserPermission(c, "customer", "view"); err != nil {
+		if err = h.permissionService.CheckUserPermission(c, "delay_code", "view"); err != nil {
 			return c.Status(fiber.StatusForbidden).JSON(fiber.Error{
 				Code:    fiber.StatusForbidden,
-				Message: "You do not have permission to perform this action.",
+				Message: err.Error(),
 			})
 		}
 
 		filter := &services.DelayCodeQueryFilter{
 			Query:          c.Query("search", ""),
-			OrganizationID: orgID,
-			BusinessUnitID: buID,
+			OrganizationID: ids.OrganizationID,
+			BusinessUnitID: ids.BusinessUnitID,
 			Limit:          limit,
 			Offset:         offset,
 		}
 
 		entities, cnt, err := h.service.GetAll(c.UserContext(), filter)
 		if err != nil {
+			h.logger.Error().Err(err).Msg("Error getting delay codes")
 			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Error{
 				Code:    fiber.StatusInternalServerError,
-				Message: "Failed to get DelayCodes",
+				Message: err.Error(),
 			})
 		}
 
@@ -119,46 +118,13 @@ func (h DelayCodeHandler) Get() fiber.Handler {
 	}
 }
 
-func (h DelayCodeHandler) Create() fiber.Handler {
-	return func(c *fiber.Ctx) error {
-		createdEntity := new(models.DelayCode)
-
-		orgID, ok := c.Locals(utils.CTXOrganizationID).(uuid.UUID)
-		buID, orgOK := c.Locals(utils.CTXBusinessUnitID).(uuid.UUID)
-
-		if !ok || !orgOK {
-			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Error{
-				Code:    fiber.StatusUnauthorized,
-				Message: "Organization & Business Unit ID not found in context",
-			})
-		}
-
-		if err := h.permissionService.CheckUserPermission(c, "customer", "create"); err != nil {
-			return c.Status(fiber.StatusForbidden).JSON(fiber.Error{
-				Code:    fiber.StatusForbidden,
-				Message: "You do not have permission to perform this action.",
-			})
-		}
-
-		createdEntity.BusinessUnitID = buID
-		createdEntity.OrganizationID = orgID
-
-		if err := utils.ParseBodyAndValidate(c, createdEntity); err != nil {
-			return c.Status(fiber.StatusBadRequest).JSON(err)
-		}
-
-		entity, err := h.service.Create(c.UserContext(), createdEntity)
-		if err != nil {
-			resp := utils.CreateServiceError(c, err)
-			return c.Status(fiber.StatusInternalServerError).JSON(resp)
-		}
-
-		return c.Status(fiber.StatusCreated).JSON(entity)
-	}
-}
-
 func (h DelayCodeHandler) GetByID() fiber.Handler {
 	return func(c *fiber.Ctx) error {
+		ids, err := utils.ExtractAndHandleContextIDs(c)
+		if err != nil {
+			return err
+		}
+
 		delaycodeID := c.Params("delaycodeID")
 		if delaycodeID == "" {
 			return c.Status(fiber.StatusBadRequest).JSON(fiber.Error{
@@ -167,29 +133,19 @@ func (h DelayCodeHandler) GetByID() fiber.Handler {
 			})
 		}
 
-		orgID, ok := c.Locals(utils.CTXOrganizationID).(uuid.UUID)
-		buID, orgOK := c.Locals(utils.CTXBusinessUnitID).(uuid.UUID)
-
-		if !ok || !orgOK {
-			h.logger.Error().Msg("DelayCodeHandler: Organization & Business Unit ID not found in context")
-			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Error{
-				Code:    fiber.StatusUnauthorized,
-				Message: "Organization & Business Unit ID not found in context",
-			})
-		}
-
-		if err := h.permissionService.CheckUserPermission(c, "customer", "view"); err != nil {
+		if err = h.permissionService.CheckUserPermission(c, "delay_code", "view"); err != nil {
 			return c.Status(fiber.StatusForbidden).JSON(fiber.Error{
 				Code:    fiber.StatusForbidden,
-				Message: "You do not have permission to perform this action.",
+				Message: err.Error(),
 			})
 		}
 
-		entity, err := h.service.Get(c.UserContext(), uuid.MustParse(delaycodeID), orgID, buID)
+		entity, err := h.service.Get(c.UserContext(), uuid.MustParse(delaycodeID), ids.OrganizationID, ids.BusinessUnitID)
 		if err != nil {
+			h.logger.Error().Str("delaycodeID", delaycodeID).Err(err).Msg("Error getting delay code by ID")
 			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Error{
 				Code:    fiber.StatusInternalServerError,
-				Message: "Failed to get DelayCode",
+				Message: err.Error(),
 			})
 		}
 
@@ -197,8 +153,49 @@ func (h DelayCodeHandler) GetByID() fiber.Handler {
 	}
 }
 
+func (h DelayCodeHandler) Create() fiber.Handler {
+	return func(c *fiber.Ctx) error {
+		ids, err := utils.ExtractAndHandleContextIDs(c)
+		if err != nil {
+			return err
+		}
+
+		createdEntity := new(models.DelayCode)
+
+		if err = h.permissionService.CheckUserPermission(c, "delay_code", "create"); err != nil {
+			return c.Status(fiber.StatusForbidden).JSON(fiber.Error{
+				Code:    fiber.StatusForbidden,
+				Message: err.Error(),
+			})
+		}
+
+		createdEntity.BusinessUnitID = ids.BusinessUnitID
+		createdEntity.OrganizationID = ids.OrganizationID
+
+		if err = utils.ParseBodyAndValidate(c, createdEntity); err != nil {
+			return c.Status(fiber.StatusBadRequest).JSON(err)
+		}
+
+		entity, err := h.service.Create(c.UserContext(), createdEntity)
+		if err != nil {
+			h.logger.Error().Interface("entity", createdEntity).Err(err).Msg("Failed to create DelayCode")
+			resp := utils.CreateServiceError(c, err)
+			return c.Status(fiber.StatusInternalServerError).JSON(resp)
+		}
+
+		go h.auditService.LogAction("delay_codes", entity.ID.String(), property.AuditLogActionCreate, entity, ids.UserID, ids.OrganizationID, ids.BusinessUnitID)
+
+		return c.Status(fiber.StatusCreated).JSON(entity)
+	}
+}
+
 func (h DelayCodeHandler) Update() fiber.Handler {
 	return func(c *fiber.Ctx) error {
+		ids, err := utils.ExtractAndHandleContextIDs(c)
+		if err != nil {
+			return err
+		}
+
 		delaycodeID := c.Params("delaycodeID")
 		if delaycodeID == "" {
 			return c.Status(fiber.StatusBadRequest).JSON(fiber.Error{
@@ -207,16 +204,16 @@ func (h DelayCodeHandler) Update() fiber.Handler {
 			})
 		}
 
-		if err := h.permissionService.CheckUserPermission(c, "customer", "update"); err != nil {
+		if err = h.permissionService.CheckUserPermission(c, "delay_code", "update"); err != nil {
 			return c.Status(fiber.StatusForbidden).JSON(fiber.Error{
 				Code:    fiber.StatusForbidden,
-				Message: "You do not have permission to perform this action.",
+				Message: err.Error(),
 			})
 		}
 
 		updatedEntity := new(models.DelayCode)
 
-		if err := utils.ParseBodyAndValidate(c, updatedEntity); err != nil {
+		if err = utils.ParseBodyAndValidate(c, updatedEntity); err != nil {
 			return c.Status(fiber.StatusBadRequest).JSON(err)
 		}
 
@@ -224,9 +221,12 @@ func (h DelayCodeHandler) Update() fiber.Handler {
 
 		entity, err := h.service.UpdateOne(c.UserContext(), updatedEntity)
 		if err != nil {
+			h.logger.Error().Interface("entity", updatedEntity).Err(err).Msg("Failed to update DelayCode")
 			resp := utils.CreateServiceError(c, err)
 			return c.Status(fiber.StatusInternalServerError).JSON(resp)
 		}
+
+		go h.auditService.LogAction("delay_codes", entity.ID.String(), property.AuditLogActionUpdate, entity, ids.UserID, ids.OrganizationID, ids.BusinessUnitID)
 
 		return c.Status(fiber.StatusOK).JSON(entity)
 	}

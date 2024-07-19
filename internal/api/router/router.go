@@ -141,7 +141,7 @@ func Init(s *server.Server) {
 
 	// cancel the heartbeat on app close.
 	s.OnStop("ws.Stop", func(ctx context.Context, app *server.Server) error {
-		app.Logger.Info().Msg("Stopping websocket service")
+		app.Logger.Debug().Msg("Stopping websocket service")
 		wsHandler.Stop()
 		return nil
 	})

@@ -57,6 +57,24 @@ func (c DocumentClassification) Validate() error {
 	)
 }
 
+func (c *DocumentClassification) TableName() string {
+	return "document_classifications"
+}
+
+func (c *DocumentClassification) GetAuditableFields() map[string]interface{} {
+	return map[string]interface{}{
+		"Status":      c.Status,
+		"Code":        c.Code,
+		"Description": c.Description,
+		"Color":       c.Color,
+		"Version":     c.Version,
+	}
+}
+
+func (c *DocumentClassification) GetID() string {
+	return c.ID.String()
+}
+
 func (c *DocumentClassification) BeforeUpdate(_ context.Context) error {
 	c.Version++
 

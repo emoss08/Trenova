@@ -78,7 +78,7 @@ func (s WebsocketService) StartHeartbeat(ctx context.Context, interval time.Dura
 	for {
 		select {
 		case <-ctx.Done():
-			s.logger.Info().Msg("Stopping heartbeat")
+			s.logger.Debug().Msg("Stopping heartbeat")
 			return
 		case <-ticker.C:
 			s.pingClients()
@@ -191,5 +191,5 @@ func (s WebsocketService) Stop() {
 	if s.heartbeatCancel != nil {
 		s.heartbeatCancel()
 	}
-	s.logger.Info().Msg("Websocket service stopped")
+	s.logger.Debug().Msg("Websocket service stopped")
 }

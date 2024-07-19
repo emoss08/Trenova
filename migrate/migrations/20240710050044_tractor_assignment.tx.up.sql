@@ -12,30 +12,28 @@
 -- and trademark, you must comply with the Licensor's covenants, which include specifying the
 -- Change License as the GPL Version 2.0 or a compatible license, specifying an Additional Use
 -- Grant, and not modifying the license in any other way.
-
-CREATE TABLE
-    IF NOT EXISTS "tractor_assignments" (
-        "id" uuid NOT NULL DEFAULT uuid_generate_v4 (),
-        "business_unit_id" uuid NOT NULL,
-        "organization_id" uuid NOT NULL,
-        "tractor_id" uuid NOT NULL,
-        "shipment_id" uuid NOT NULL,
-        "shipment_move_id" uuid NOT NULL,
-        "assigned_by_id" uuid NOT NULL,
-        "sequence" integer NOT NULL,
-        "assigned_at" TIMESTAMPTZ NOT NULL,
-        "completed_at" TIMESTAMPTZ,
-        "status" varchar(20) NOT NULL,
-        PRIMARY KEY ("id"),
-        FOREIGN KEY ("organization_id") REFERENCES organizations ("id") ON UPDATE NO ACTION ON DELETE CASCADE,
-        FOREIGN KEY ("business_unit_id") REFERENCES business_units ("id") ON UPDATE NO ACTION ON DELETE CASCADE,
-        FOREIGN KEY ("shipment_id") REFERENCES shipments ("id") ON UPDATE NO ACTION ON DELETE CASCADE,
-        FOREIGN KEY ("shipment_move_id") REFERENCES shipment_moves ("id") ON UPDATE NO ACTION ON DELETE CASCADE,
-        FOREIGN KEY ("tractor_id") REFERENCES tractors ("id") ON UPDATE NO ACTION ON DELETE CASCADE,
-        FOREIGN KEY ("assigned_by_id") REFERENCES users ("id") ON UPDATE NO ACTION ON DELETE CASCADE,
-        UNIQUE ("shipment_move_id", "tractor_id"),
-        UNIQUE ("tractor_id", "sequence")
-    );
+CREATE TABLE IF NOT EXISTS "tractor_assignments" (
+    "id" uuid NOT NULL DEFAULT uuid_generate_v4(),
+    "business_unit_id" uuid NOT NULL,
+    "organization_id" uuid NOT NULL,
+    "tractor_id" uuid NOT NULL,
+    "shipment_id" uuid NOT NULL,
+    "shipment_move_id" uuid NOT NULL,
+    "assigned_by_id" uuid NOT NULL,
+    "sequence" integer NOT NULL,
+    "assigned_at" TIMESTAMPTZ NOT NULL,
+    "completed_at" TIMESTAMPTZ,
+    "status" varchar(20) NOT NULL,
+    PRIMARY KEY ("id"),
+    FOREIGN KEY ("organization_id") REFERENCES organizations ("id") ON UPDATE NO ACTION ON DELETE CASCADE,
+    FOREIGN KEY ("business_unit_id") REFERENCES business_units ("id") ON UPDATE NO ACTION ON DELETE CASCADE,
+    FOREIGN KEY ("shipment_id") REFERENCES shipments ("id") ON UPDATE NO ACTION ON DELETE CASCADE,
+    FOREIGN KEY ("shipment_move_id") REFERENCES shipment_moves ("id") ON UPDATE NO ACTION ON DELETE CASCADE,
+    FOREIGN KEY ("tractor_id") REFERENCES tractors ("id") ON UPDATE NO ACTION ON DELETE CASCADE,
+    FOREIGN KEY ("assigned_by_id") REFERENCES users ("id") ON UPDATE NO ACTION ON DELETE CASCADE,
+    UNIQUE ("shipment_move_id", "tractor_id"),
+    UNIQUE ("tractor_id", "sequence")
+);
 
 --bun:split
 CREATE INDEX idx_tractor_assignments_org_bu ON tractor_assignments (organization_id, business_unit_id);

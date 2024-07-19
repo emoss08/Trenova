@@ -271,7 +271,7 @@ function TableExportModalBody({
             </RadioGroup>
           )}
         />
-        <p className="mt-1 text-xs text-foreground/70">
+        <p className="text-foreground/70 mt-1 text-xs">
           Select a format to export (CSV, Excel, or PDF).
         </p>
       </div>

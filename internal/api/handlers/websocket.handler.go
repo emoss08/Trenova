@@ -86,5 +86,5 @@ func (h WebsocketHandler) HandleWebsocketConnection(c *websocket.Conn) {
 func (h WebsocketHandler) Stop() {
 	// Call the service's stop function
 	h.service.Stop()
-	h.logger.Info().Msg("Websocket handler stopped")
+	h.logger.Debug().Msg("Websocket handler stopped")
 }

@@ -152,6 +152,11 @@ type CasbinConfig struct {
 	ModelPath string
 }
 
+type AuditConfig struct {
+	QueueSize   int
+	WorkerCount int
+}
+
 type Server struct {
 	// FiberServer contains configuration options for the Fiber server.
 	Fiber FiberServer
@@ -182,6 +187,9 @@ type Server struct {
 
 	// Casbin contains configuration options for the Casbin authorization library.
 	Casbin CasbinConfig
+
+	// Audit contains configuration options for the audit service.
+	Audit AuditConfig
 }
 
 func DefaultServiceConfigFromEnv() (Server, error) {

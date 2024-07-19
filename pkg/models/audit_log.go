@@ -19,17 +19,26 @@ import (
 	"encoding/json"
 	"time"
 
+	"github.com/emoss08/trenova/pkg/models/property"
 	"github.com/google/uuid"
 	"github.com/uptrace/bun"
 )
 
 type AuditLog struct {
 	bun.BaseModel `bun:"table:audit_logs,alias:al"`
-	ID            uuid.UUID       `bun:",pk,type:uuid,default:uuid_generate_v4()"`
-	EntityType    string          `bun:"type:varchar(50),notnull"`
-	EntityID      uuid.UUID       `bun:"type:uuid,notnull"`
-	Action        string          `bun:"type:varchar(50),notnull"`
-	ChangedFields json.RawMessage `bun:"type:jsonb"`
-	UserID        uuid.UUID       `bun:"type:uuid,notnull"`
-	Timestamp     time.Time       `bun:",nullzero,notnull,default:current_timestamp"`
+
+	ID        uuid.UUID               `bun:",pk,type:uuid,default:uuid_generate_v4()"`
+	TableName string                  `bun:"type:varchar(255),notnull"`
+	EntityID  string                  `bun:"type:varchar(255),notnull"`
+	Action    property.AuditLogAction `bun:"type:audit_log_status_enum,notnull"`
+	Data      json.RawMessage         `bun:"type:jsonb"`
+	Timestamp time.Time               `bun:"default:current_timestamp"`
+
+	UserID         uuid.UUID `bun:"type:uuid"`
+	OrganizationID uuid.UUID `bun:"type:uuid"`
+	BusinessUnitID uuid.UUID `bun:"type:uuid"`
+
+	User         *User         `bun:"rel:belongs-to,join:user_id=id" json:"-"`
+	Organization *Organization `bun:"rel:belongs-to,join:organization_id=id" json:"-"`
+	BusinessUnit *BusinessUnit `bun:"rel:belongs-to,join:business_unit_id=id" json:"-"`
 }

@@ -15,6 +15,14 @@
 
 package utils
 
+import (
+	"errors"
+	"fmt"
+
+	"github.com/gofiber/fiber/v2"
+	"github.com/google/uuid"
+)
+
 type ContextKey string
 
 const (
@@ -24,3 +32,67 @@ const (
 	CTXUserID           = ContextKey("userID")
 	CTXDB               = ContextKey("db")
 )
+
+var ErrMissingContextData = errors.New("required data missing from context")
+
+// ContextIDs represents the important IDs extracted from the Fiber context
+type ContextIDs struct {
+	OrganizationID uuid.UUID
+	BusinessUnitID uuid.UUID
+	UserID         uuid.UUID
+}
+
+// ExtractContextIDs extracts and validates OrganizationID, BusinessUnitID, and UserID from the Fiber context
+func ExtractContextIDs(c *fiber.Ctx) (ContextIDs, error) {
+	var ids ContextIDs
+	var ok bool
+
+	// Extract OrganizationID
+	ids.OrganizationID, ok = c.Locals(CTXOrganizationID).(uuid.UUID)
+	if !ok || ids.OrganizationID == uuid.Nil {
+		return ids, formatError("OrganizationID")
+	}
+
+	// Extract BusinessUnitID
+	ids.BusinessUnitID, ok = c.Locals(CTXBusinessUnitID).(uuid.UUID)
+	if !ok || ids.BusinessUnitID == uuid.Nil {
+		return ids, formatError("BusinessUnitID")
+	}
+
+	// Extract UserID
+	ids.UserID, ok = c.Locals(CTXUserID).(uuid.UUID)
+	if !ok || ids.UserID == uuid.Nil {
+		return ids, formatError("UserID")
+	}
+
+	return ids, nil
+}
+
+// formatError creates a formatted error message for missing or invalid IDs
+func formatError(missingField string) error {
+	return fmt.Errorf("%w: %s is missing or invalid", ErrMissingContextData, missingField)
+}
+
+// HandleContextError handles errors from ExtractContextIDs and returns an appropriate Fiber error
+func HandleContextError(c *fiber.Ctx, err error) error {
+	if errors.Is(err, ErrMissingContextData) {
+		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Error{
+			Code:    fiber.StatusUnauthorized,
+			Message: err.Error(),
+		})
+	}
+	// Handle other types of errors if needed
+	return c.Status(fiber.StatusInternalServerError).JSON(fiber.Error{
+		Code:    fiber.StatusInternalServerError,
+		Message: "An unexpected error occurred",
+	})
+}
+
+// ExtractAndHandleContextIDs combines extraction and error handling
+func ExtractAndHandleContextIDs(c *fiber.Ctx) (ContextIDs, error) {
+	ids, err := ExtractContextIDs(c)
+	if err != nil {
+		return ids, HandleContextError(c, err)
+	}
+	return ids, nil
+}

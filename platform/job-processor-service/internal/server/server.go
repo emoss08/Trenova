@@ -111,7 +111,7 @@ func (s *Server) Start() error {
 }
 
 func (s *Server) Shutdown(ctx context.Context) error {
-	log.Warn().Msg("Shutting down server")
+	log.Debug().Msg("Shutting down server")
 	defer func() {
 		// Close the database connection
 		if err := s.DB.Close(ctx); err != nil {
