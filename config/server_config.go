@@ -18,6 +18,8 @@ package config
 import (
 	"crypto/rsa"
 	"fmt"
+	"path/filepath"
+	"strings"
 
 	"github.com/fatih/color"
 	"github.com/rs/zerolog"
@@ -192,40 +194,63 @@ type Server struct {
 	Audit AuditConfig
 }
 
-func DefaultServiceConfigFromEnv() (Server, error) {
+func DefaultServiceConfigFromEnv(isTest bool) (Server, error) {
 	v := viper.New()
 
-	configName := "config"
-	if configEnv != "" {
-		configName = fmt.Sprintf("config.%s", configEnv)
+	if configEnv == "" {
+		configEnv = "dev"
 	}
+
+	configName := fmt.Sprintf("config.%s", configEnv)
 	v.SetConfigName(configName)
 	v.SetConfigType("yaml")
 
-	v.AddConfigPath(".")
-	v.AddConfigPath("./config")
-	v.AddConfigPath("$HOME/.trenova")
-	v.AddConfigPath("/etc/trenova")
-
-	if err := v.ReadInConfig(); err != nil {
-		if _, ok := err.(viper.ConfigFileNotFoundError); ok {
-			return Server{}, fmt.Errorf("config file not found: %w", err)
-		}
-		return Server{}, fmt.Errorf("failed to read config file: %w", err)
+	if !isTest {
+		v.AddConfigPath(".")
+		v.AddConfigPath("./config")
+		v.AddConfigPath("$HOME/.trenova")
+		v.AddConfigPath("/etc/trenova")
+	} else {
+		// For tests, we'll use a minimal in-memory configuration
+		v.SetConfigType("yaml")
+		v.SetConfigName("config.test")
+		v.SetConfigType("yaml")
+		v.ReadConfig(strings.NewReader(`
+fiber:
+  listenAddress: ":3001"
+logger:
+  level: 0
+  prettyPrintConsole: true
+db:
+  maxOpenConns: 5
+  maxIdleConns: 5
+  connMaxLifetime: "5m"
+`))
 	}
 
-	configFile := v.ConfigFileUsed()
-
-	c := color.New(color.FgCyan, color.Underline, color.Bold)
-	c.Printf("Using configuration file: %s\n", configFile)
+	if err := v.ReadInConfig(); err != nil {
+		if _, ok := err.(viper.ConfigFileNotFoundError); ok && !isTest {
+			return Server{}, fmt.Errorf("config file %s.yaml not found: %w", configName, err)
+		} else if !isTest {
+			return Server{}, fmt.Errorf("failed to read config file: %w", err)
+		}
+	}
 
 	var config Server
 	if err := v.Unmarshal(&config); err != nil {
 		return Server{}, fmt.Errorf("failed to unmarshal config: %w", err)
 	}
 
+	// Special handling for logger level and DB connection max lifetime
 	config.Logger.Level = zerolog.Level(v.GetInt("logger.level"))
 	config.DB.ConnMaxLifetime = v.GetDuration("db.connMaxLifetime")
+
+	if !isTest {
+		configFile := v.ConfigFileUsed()
+		c := color.New(color.FgCyan, color.Bold)
+		c.Printf("Environment: %s\n", configEnv)
+		c.Printf("Config file: %s\n", filepath.Base(configFile))
+	}
 
 	return config, nil
 }

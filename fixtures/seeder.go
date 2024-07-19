@@ -35,7 +35,7 @@ import (
 func LoadFixtures() error {
 	ctx := context.Background()
 
-	serverConfig, err := config.DefaultServiceConfigFromEnv()
+	serverConfig, err := config.DefaultServiceConfigFromEnv(false)
 	if err != nil {
 		log.Fatalf("Failed to load server configuration: %v", err)
 		return err

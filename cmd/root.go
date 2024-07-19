@@ -29,7 +29,8 @@ var rootCmd = &cobra.Command{
 	Use:   "trenova",
 	Short: "Trenova is a transportation management system",
 	PersistentPreRun: func(cmd *cobra.Command, args []string) {
-		config.SetConfigEnv(configEnv)
+		env, _ := cmd.Flags().GetString("env")
+		config.SetConfigEnv(env)
 	},
 }
 
@@ -41,5 +42,5 @@ func Execute() {
 }
 
 func init() {
-	rootCmd.PersistentFlags().StringVar(&configEnv, "env", "", "configuration environment (e.g., dev, prod)")
+	rootCmd.PersistentFlags().String("env", "", "configuration environment (default is dev)")
 }

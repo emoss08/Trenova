@@ -49,7 +49,7 @@ func init() {
 
 func runServer() {
 	ctx := context.Background()
-	serverConfig, err := config.DefaultServiceConfigFromEnv()
+	serverConfig, err := config.DefaultServiceConfigFromEnv(false)
 	if err != nil {
 		log.Fatal().Err(err).Msg("Failed to load server configuration")
 	}

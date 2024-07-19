@@ -253,7 +253,7 @@ var markAppliedCmd = &cobra.Command{
 }
 
 func getMigrator() *migrate.Migrator {
-	serverConfig, err := config.DefaultServiceConfigFromEnv()
+	serverConfig, err := config.DefaultServiceConfigFromEnv(false)
 	if err != nil {
 		panic(err)
 	}

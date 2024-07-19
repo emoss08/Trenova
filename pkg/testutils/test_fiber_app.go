@@ -31,7 +31,7 @@ import (
 func SetupTestServer(t *testing.T) *server.Server {
 	t.Helper()
 	// Load configuration
-	cfg, err := config.DefaultServiceConfigFromEnv()
+	cfg, err := config.DefaultServiceConfigFromEnv(true)
 	if err != nil {
 		log.Fatal().Err(err).Msg("Failed to load server configuration")
 	}
