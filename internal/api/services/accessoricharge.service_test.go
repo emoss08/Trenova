@@ -107,7 +107,7 @@ func TestAccessorialChargeService(t *testing.T) {
 		for _, code := range codes {
 			charge := createTestAccessorialCharge(code)
 			charge.Code = code
-			_, err := service.Create(ctx, charge)
+			_, err = service.Create(ctx, charge)
 			require.NoError(t, err)
 		}
 

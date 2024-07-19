@@ -250,7 +250,8 @@ func (h ShipmentHandler) AssignTractorToShipment() fiber.Handler {
 			return c.Status(fiber.StatusBadRequest).JSON(err)
 		}
 
-		if err = h.service.AssignTractorToShipment(c.UserContext(), assignTractorInput, ids.OrganizationID, ids.BusinessUnitID); err != nil {
+		assignments, err := h.service.AssignTractorToShipment(c.UserContext(), assignTractorInput, ids.OrganizationID, ids.BusinessUnitID)
+		if err != nil {
 			h.logger.Error().Interface("entity", assignTractorInput).Err(err).Msg("Failed to assign tractor to shipment")
 			return c.Status(fiber.StatusBadRequest).JSON(fiber.Error{
 				Message: err.Error(),
@@ -258,10 +259,11 @@ func (h ShipmentHandler) AssignTractorToShipment() fiber.Handler {
 			})
 		}
 
-		go h.auditService.LogAction("shipments", assignTractorInput.TractorID.String(), property.AuditLogActionUpdate, assignTractorInput, ids.UserID, ids.OrganizationID, ids.BusinessUnitID)
+		go h.auditService.LogAction("shipments", assignTractorInput.TractorID.String(), property.AuditLogActionUpdate, assignments, ids.UserID, ids.OrganizationID, ids.BusinessUnitID)
 
 		return c.Status(fiber.StatusOK).JSON(fiber.Map{
 			"message": "Tractor assigned to shipment successfully.",
+			"data":    assignments,
 		})
 	}
 }
