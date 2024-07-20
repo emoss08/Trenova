@@ -35,7 +35,7 @@ type DebeziumPayload struct {
 	After       map[string]interface{} `json:"after"`
 	Source      Source                 `json:"source"`
 	Op          string                 `json:"op"`
-	TsMs        int64                  `json:"ts_ms"`
+	TSMs        int64                  `json:"ts_ms"`
 	Transaction interface{}            `json:"transaction"`
 }
 
@@ -45,13 +45,13 @@ type Source struct {
 	Version   string `json:"version"`
 	Connector string `json:"connector"`
 	Name      string `json:"name"`
-	TsMs      int64  `json:"ts_ms"`
+	TSMs      int64  `json:"ts_ms"`
 	Snapshot  string `json:"snapshot"`
 	DB        string `json:"db"`
 	Sequence  string `json:"sequence"`
 	Schema    string `json:"schema"`
 	Table     string `json:"table"`
-	TxId      int64  `json:"txId"`
+	TxID      int64  `json:"txId"`
 	Lsn       int64  `json:"lsn"`
 	Xmin      int64  `json:"xmin"`
 }
@@ -70,8 +70,8 @@ const (
 type SubscriptionStatus string
 
 const (
-	Active   = SubscriptionStatus("A")
-	Inactive = SubscriptionStatus("I")
+	Active   = SubscriptionStatus("Active")
+	Inactive = SubscriptionStatus("Inactive")
 )
 
 // SubscriptionDeliveryMethod represents the delivery method for a subscription.
@@ -145,7 +145,7 @@ func (s *SubscriptionService) GetActiveSubscriptions(ctx context.Context) ([]Sub
 
 	if cachedTopics != "" {
 		var subscriptions []Subscription
-		if err := sonic.Unmarshal([]byte(cachedTopics), &subscriptions); err != nil {
+		if err = sonic.Unmarshal([]byte(cachedTopics), &subscriptions); err != nil {
 			s.logger.Error().Err(err).Msg("failed to unmarshal topics")
 			return nil, fmt.Errorf("failed to unmarshal topics: %w", err)
 		}
@@ -199,7 +199,7 @@ FROM
 
 	for rows.Next() {
 		var subscription Subscription
-		if err := rows.Scan(
+		if err = rows.Scan(
 			&subscription.ID,
 			&subscription.Status,
 			&subscription.TopicName,
@@ -240,7 +240,7 @@ func (s *SubscriptionService) cacheSubscriptions(ctx context.Context, subscripti
 		return
 	}
 
-	if err := s.cache.Set(ctx, cacheKey, cacheData, 0).Err(); err != nil {
+	if err = s.cache.Set(ctx, cacheKey, cacheData, 0).Err(); err != nil {
 		s.logger.Error().Err(err).Msg("failed to set cache")
 	}
 }
@@ -312,21 +312,27 @@ func ParseDebeziumPayload(payload []byte) (*DebeziumPayload, error) {
 //	bool - true if the payload matches the subscription criteria, false otherwise
 func (s *SubscriptionService) MatchesSubscription(subscription Subscription, payload DebeziumPayload) bool {
 	if subscription.Status != Active {
+		s.logger.Info().Str("status", string(subscription.Status)).Msg("Subscription is not active")
 		return false
 	}
 
 	now := pgtype.Date{Time: time.Now()}
 	if subscription.EffectiveDate != nil && now.Time.Before(subscription.EffectiveDate.Time) {
+		s.logger.Info().Time("now", now.Time).Time("effectiveDate", subscription.EffectiveDate.Time).Msg("Subscription is not yet effective")
 		return false
 	}
 	if subscription.ExpirationDate != nil && now.Time.After(subscription.ExpirationDate.Time) {
+		s.logger.Info().Time("now", now.Time).Time("expirationDate", subscription.ExpirationDate.Time).Msg("Subscription has expired")
 		return false
 	}
 
 	action := s.MapActionToDebeziumType(subscription.DatabaseAction)
+	s.logger.Info().Str("subscriptionAction", action).Str("payloadOp", payload.Op).Msg("Comparing actions")
 	if action != "" && action != "all" && action != payload.Op {
+		s.logger.Info().Msg("Action does not match")
 		return false
 	}
 
+	s.logger.Info().Msg("Subscription matches all criteria")
 	return true
 }

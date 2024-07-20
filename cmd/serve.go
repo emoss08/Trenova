@@ -57,33 +57,33 @@ func runServer() {
 	s := server.NewServer(ctx, serverConfig)
 
 	// Load the RSA keys.
-	if err := s.LoadRSAKeys(); err != nil {
+	if err = s.LoadRSAKeys(); err != nil {
 		log.Fatal().Err(err).Msg("Failed to load RSA keys")
 	}
 
 	// Initialize the Minio client.
-	if err := s.InitMinioClient(); err != nil {
+	if err = s.InitMinioClient(); err != nil {
 		log.Fatal().Err(err).Msg("Failed to initialize Minio client")
-	}
-
-	// Initialize the Kafka client.
-	if err := s.InitKafkaClient(); err != nil {
-		log.Fatal().Err(err).Msg("Failed to initialize Kafka client")
 	}
 
 	s.InitLogger()
 	s.InitDB()
 
-	if err := s.InitAuditService(); err != nil {
+	// Initialize the Kafka client.
+	if err = s.InitKafkaClient(); err != nil {
+		log.Fatal().Err(err).Msg("Failed to initialize Kafka client")
+	}
+
+	if err = s.InitAuditService(); err != nil {
 		log.Fatal().Err(err).Msg("Failed to initialize audit service")
 	}
 
-	if err := s.InitCasbin(); err != nil {
+	if err = s.InitCasbin(); err != nil {
 		log.Fatal().Err(err).Msg("Failed to initialize Casbin")
 	}
 
 	// Initialize the code generator.
-	if err := s.InitCodeGenerationSystem(ctx); err != nil {
+	if err = s.InitCodeGenerationSystem(ctx); err != nil {
 		log.Fatal().Err(err).Msg("Failed to initialize code generator")
 	}
 
