@@ -404,7 +404,7 @@ export const routes: RouteObjectWithPermission[] = [
     isPublic: false,
   },
   {
-    title: "Hazaroudous Material",
+    title: "Hazardous Material",
     group: "Shipment Management",
     subMenu: "configuration files",
     path: "/shipments/hazardous-materials/",

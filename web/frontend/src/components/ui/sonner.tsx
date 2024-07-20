@@ -15,10 +15,8 @@
  * Grant, and not modifying the license in any other way.
  */
 
-"use client";
-
-import { useTheme } from "next-themes";
 import { Toaster as Sonner } from "sonner";
+import { useTheme } from "./theme-provider";
 
 type ToasterProps = React.ComponentProps<typeof Sonner>;
 
@@ -47,3 +45,4 @@ const Toaster = ({ ...props }: ToasterProps) => {
 };
 
 export { Toaster };
+
