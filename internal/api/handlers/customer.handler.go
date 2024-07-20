@@ -22,6 +22,7 @@ import (
 	"github.com/emoss08/trenova/internal/server"
 	"github.com/emoss08/trenova/internal/types"
 	"github.com/emoss08/trenova/pkg/audit"
+	"github.com/emoss08/trenova/pkg/constants"
 	"github.com/emoss08/trenova/pkg/models"
 	"github.com/emoss08/trenova/pkg/models/property"
 	"github.com/emoss08/trenova/pkg/utils"
@@ -71,18 +72,18 @@ func (h CustomerHandler) Get() fiber.Handler {
 				Instance: fmt.Sprintf("%s/probs/validation-error", c.BaseURL()),
 				InvalidParams: []types.InvalidParam{
 					{
-						Name:   "limit",
-						Reason: "Limit must be a positive integer",
+						Name:   constants.FieldLimit,
+						Reason: constants.ReasonMustBePositiveInteger,
 					},
 					{
-						Name:   "offset",
-						Reason: "Offset must be a positive integer",
+						Name:   constants.FieldOffset,
+						Reason: constants.ReasonMustBePositiveInteger,
 					},
 				},
 			})
 		}
 
-		if err = h.permissionService.CheckUserPermission(c, "customer", "view"); err != nil {
+		if err = h.permissionService.CheckUserPermission(c, constants.EntityCustomer, constants.ActionView); err != nil {
 			return c.Status(fiber.StatusForbidden).JSON(fiber.Error{
 				Code:    fiber.StatusForbidden,
 				Message: err.Error(),
@@ -133,7 +134,7 @@ func (h CustomerHandler) GetByID() fiber.Handler {
 			})
 		}
 
-		if err = h.permissionService.CheckUserPermission(c, "customer", "view"); err != nil {
+		if err = h.permissionService.CheckUserPermission(c, constants.EntityCustomer, constants.ActionView); err != nil {
 			return c.Status(fiber.StatusForbidden).JSON(fiber.Error{
 				Code:    fiber.StatusForbidden,
 				Message: err.Error(),
@@ -142,7 +143,7 @@ func (h CustomerHandler) GetByID() fiber.Handler {
 
 		entity, err := h.service.Get(c.UserContext(), uuid.MustParse(customerID), ids.OrganizationID, ids.BusinessUnitID)
 		if err != nil {
-			h.logger.Error().Err(err).Msg("Failed to get Customer")
+			h.logger.Error().Str("customerID", customerID).Err(err).Msg("Failed to get Customer by ID")
 			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Error{
 				Code:    fiber.StatusInternalServerError,
 				Message: err.Error(),
@@ -162,7 +163,7 @@ func (h CustomerHandler) Create() fiber.Handler {
 
 		createdEntity := new(models.Customer)
 
-		if err = h.permissionService.CheckUserPermission(c, "customer", "create"); err != nil {
+		if err = h.permissionService.CheckUserPermission(c, constants.EntityCustomer, constants.ActionCreate); err != nil {
 			return c.Status(fiber.StatusForbidden).JSON(fiber.Error{
 				Code:    fiber.StatusForbidden,
 				Message: err.Error(),
@@ -185,7 +186,7 @@ func (h CustomerHandler) Create() fiber.Handler {
 			})
 		}
 
-		go h.auditService.LogAction("customers", entity.ID.String(), property.AuditLogActionCreate, entity, ids.UserID, ids.OrganizationID, ids.BusinessUnitID)
+		go h.auditService.LogAction(constants.TableCustomer, entity.ID.String(), property.AuditLogActionCreate, entity, ids.UserID, ids.OrganizationID, ids.BusinessUnitID)
 
 		return c.Status(fiber.StatusCreated).JSON(entity)
 	}
@@ -206,7 +207,7 @@ func (h CustomerHandler) Update() fiber.Handler {
 			})
 		}
 
-		if err = h.permissionService.CheckUserPermission(c, "customer", "update"); err != nil {
+		if err = h.permissionService.CheckUserPermission(c, constants.EntityCustomer, constants.ActionUpdate); err != nil {
 			return c.Status(fiber.StatusForbidden).JSON(fiber.Error{
 				Code:    fiber.StatusForbidden,
 				Message: err.Error(),
@@ -228,7 +229,7 @@ func (h CustomerHandler) Update() fiber.Handler {
 			return c.Status(fiber.StatusInternalServerError).JSON(resp)
 		}
 
-		go h.auditService.LogAction("customers", entity.ID.String(), property.AuditLogActionUpdate, entity, ids.UserID, ids.OrganizationID, ids.BusinessUnitID)
+		go h.auditService.LogAction(constants.TableCustomer, entity.ID.String(), property.AuditLogActionUpdate, entity, ids.UserID, ids.OrganizationID, ids.BusinessUnitID)
 
 		return c.Status(fiber.StatusOK).JSON(entity)
 	}

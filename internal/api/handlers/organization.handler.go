@@ -19,11 +19,17 @@ import (
 	"github.com/emoss08/trenova/internal/api/services"
 	"github.com/emoss08/trenova/internal/server"
 	"github.com/emoss08/trenova/pkg/audit"
+	"github.com/emoss08/trenova/pkg/constants"
 	"github.com/emoss08/trenova/pkg/models"
 	"github.com/emoss08/trenova/pkg/models/property"
 	"github.com/emoss08/trenova/pkg/utils"
 	"github.com/gofiber/fiber/v2"
 	"github.com/rs/zerolog"
+)
+
+const (
+	// actionChangeLogo is the permission action for changing the logo of an organization.
+	actionChangeLogo = "change_logo"
 )
 
 type OrganizationHandler struct {
@@ -75,7 +81,7 @@ func (oh OrganizationHandler) getOrganizationDetails() fiber.Handler {
 			return err
 		}
 
-		if err = oh.permissionService.CheckUserPermission(c, "organization", "view"); err != nil {
+		if err = oh.permissionService.CheckUserPermission(c, constants.EntityOrganization, constants.ActionView); err != nil {
 			return c.Status(fiber.StatusForbidden).JSON(fiber.Error{
 				Code:    fiber.StatusForbidden,
 				Message: err.Error(),
@@ -110,7 +116,7 @@ func (oh OrganizationHandler) updateOrganization() fiber.Handler {
 			})
 		}
 
-		if err = oh.permissionService.CheckUserPermission(c, "organization", "update"); err != nil {
+		if err = oh.permissionService.CheckUserPermission(c, constants.EntityOrganization, constants.ActionUpdate); err != nil {
 			return c.Status(fiber.StatusForbidden).JSON(fiber.Error{
 				Code:    fiber.StatusForbidden,
 				Message: err.Error(),
@@ -132,7 +138,7 @@ func (oh OrganizationHandler) updateOrganization() fiber.Handler {
 			})
 		}
 
-		go oh.auditService.LogAction("organizations", entity.ID.String(), property.AuditLogActionUpdate, entity, ids.UserID, ids.OrganizationID, ids.BusinessUnitID)
+		go oh.auditService.LogAction(constants.TableOrganization, entity.ID.String(), property.AuditLogActionUpdate, entity, ids.UserID, ids.OrganizationID, ids.BusinessUnitID)
 
 		return c.Status(fiber.StatusOK).JSON(entity)
 	}
@@ -145,7 +151,7 @@ func (oh OrganizationHandler) uploadOrganizationLogo() fiber.Handler {
 			return err
 		}
 
-		if err = oh.permissionService.CheckUserPermission(c, "organization", "change_logo"); err != nil {
+		if err = oh.permissionService.CheckUserPermission(c, constants.EntityOrganization, actionChangeLogo); err != nil {
 			return c.Status(fiber.StatusForbidden).JSON(fiber.Error{
 				Code:    fiber.StatusForbidden,
 				Message: err.Error(),
@@ -171,7 +177,7 @@ func (oh OrganizationHandler) uploadOrganizationLogo() fiber.Handler {
 			})
 		}
 
-		go oh.auditService.LogAction("organizations", entity.ID.String(), property.AuditLogActionUpdate, entity, ids.UserID, ids.OrganizationID, ids.BusinessUnitID)
+		go oh.auditService.LogAction(constants.TableOrganization, entity.ID.String(), property.AuditLogActionUpdate, entity, ids.UserID, ids.OrganizationID, ids.BusinessUnitID)
 
 		return c.Status(fiber.StatusOK).JSON(entity)
 	}
@@ -184,7 +190,7 @@ func (oh OrganizationHandler) clearOrganizationLogo() fiber.Handler {
 			return err
 		}
 
-		if err = oh.permissionService.CheckUserPermission(c, "organization", "change_logo"); err != nil {
+		if err = oh.permissionService.CheckUserPermission(c, constants.EntityOrganization, actionChangeLogo); err != nil {
 			return c.Status(fiber.StatusForbidden).JSON(fiber.Error{
 				Code:    fiber.StatusForbidden,
 				Message: err.Error(),
@@ -200,7 +206,7 @@ func (oh OrganizationHandler) clearOrganizationLogo() fiber.Handler {
 			})
 		}
 
-		go oh.auditService.LogAction("organizations", entity.ID.String(), property.AuditLogActionUpdate, entity, ids.UserID, ids.OrganizationID, ids.BusinessUnitID)
+		go oh.auditService.LogAction(constants.TableOrganization, entity.ID.String(), property.AuditLogActionUpdate, entity, ids.UserID, ids.OrganizationID, ids.BusinessUnitID)
 
 		return c.Status(fiber.StatusOK).JSON(entity)
 	}

@@ -22,6 +22,7 @@ import (
 	"github.com/emoss08/trenova/internal/server"
 	"github.com/emoss08/trenova/internal/types"
 	"github.com/emoss08/trenova/pkg/audit"
+	"github.com/emoss08/trenova/pkg/constants"
 	"github.com/emoss08/trenova/pkg/models"
 	"github.com/emoss08/trenova/pkg/models/property"
 	"github.com/emoss08/trenova/pkg/utils"
@@ -71,18 +72,18 @@ func (h DocumentClassificationHandler) Get() fiber.Handler {
 				Instance: fmt.Sprintf("%s/probs/validation-error", c.BaseURL()),
 				InvalidParams: []types.InvalidParam{
 					{
-						Name:   "limit",
-						Reason: "Limit must be a positive integer",
+						Name:   constants.FieldLimit,
+						Reason: constants.ReasonMustBePositiveInteger,
 					},
 					{
-						Name:   "offset",
-						Reason: "Offset must be a positive integer",
+						Name:   constants.FieldOffset,
+						Reason: constants.ReasonMustBePositiveInteger,
 					},
 				},
 			})
 		}
 
-		if err = h.permissionService.CheckUserPermission(c, "document_classification", "view"); err != nil {
+		if err = h.permissionService.CheckUserPermission(c, constants.EntityDocumentClassification, constants.ActionView); err != nil {
 			return c.Status(fiber.StatusForbidden).JSON(fiber.Error{
 				Code:    fiber.StatusForbidden,
 				Message: err.Error(),
@@ -132,7 +133,7 @@ func (h DocumentClassificationHandler) GetByID() fiber.Handler {
 			})
 		}
 
-		if err = h.permissionService.CheckUserPermission(c, "document_classification", "view"); err != nil {
+		if err = h.permissionService.CheckUserPermission(c, constants.EntityDocumentClassification, constants.ActionView); err != nil {
 			return c.Status(fiber.StatusForbidden).JSON(fiber.Error{
 				Code:    fiber.StatusForbidden,
 				Message: err.Error(),
@@ -160,7 +161,7 @@ func (h DocumentClassificationHandler) Create() fiber.Handler {
 
 		createdEntity := new(models.DocumentClassification)
 
-		if err = h.permissionService.CheckUserPermission(c, "document_classification", "create"); err != nil {
+		if err = h.permissionService.CheckUserPermission(c, constants.EntityDocumentClassification, constants.ActionCreate); err != nil {
 			return c.Status(fiber.StatusForbidden).JSON(fiber.Error{
 				Code:    fiber.StatusForbidden,
 				Message: err.Error(),
@@ -180,7 +181,7 @@ func (h DocumentClassificationHandler) Create() fiber.Handler {
 			return c.Status(fiber.StatusInternalServerError).JSON(resp)
 		}
 
-		go h.auditService.LogAction("document_classifications", entity.ID.String(), property.AuditLogActionCreate, entity, ids.UserID, ids.OrganizationID, ids.BusinessUnitID)
+		go h.auditService.LogAction(constants.TableDocumentClassification, entity.ID.String(), property.AuditLogActionCreate, entity, ids.UserID, ids.OrganizationID, ids.BusinessUnitID)
 
 		return c.Status(fiber.StatusCreated).JSON(entity)
 	}
@@ -201,7 +202,7 @@ func (h DocumentClassificationHandler) Update() fiber.Handler {
 			})
 		}
 
-		if err = h.permissionService.CheckUserPermission(c, "document_classification", "update"); err != nil {
+		if err = h.permissionService.CheckUserPermission(c, constants.EntityDocumentClassification, constants.ActionUpdate); err != nil {
 			return c.Status(fiber.StatusForbidden).JSON(fiber.Error{
 				Code:    fiber.StatusForbidden,
 				Message: err.Error(),
@@ -221,7 +222,7 @@ func (h DocumentClassificationHandler) Update() fiber.Handler {
 			return c.Status(fiber.StatusInternalServerError).JSON(resp)
 		}
 
-		go h.auditService.LogAction("document_classifications", entity.ID.String(), property.AuditLogActionUpdate, entity, ids.UserID, ids.OrganizationID, ids.BusinessUnitID)
+		go h.auditService.LogAction(constants.TableDocumentClassification, entity.ID.String(), property.AuditLogActionUpdate, entity, ids.UserID, ids.OrganizationID, ids.BusinessUnitID)
 
 		return c.Status(fiber.StatusOK).JSON(entity)
 	}
