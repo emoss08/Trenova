@@ -18,26 +18,49 @@
 import { upperFirst } from "@/lib/utils";
 import { routes } from "@/routing/AppRoutes";
 import { useBreadcrumbStore } from "@/stores/BreadcrumbStore";
-import { useEffect, useMemo } from "react";
-import { matchPath, useLocation } from "react-router-dom";
+import { useCallback, useEffect, useMemo } from "react";
+import { Link, matchPath, useLocation } from "react-router-dom";
+import {
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbList,
+  BreadcrumbPage,
+  BreadcrumbSeparator,
+} from "../ui/breadcrumb";
 import { Skeleton } from "../ui/skeleton";
 import { FavoriteIcon } from "./user-favorite";
 
-export function Breadcrumb({ children }: { children?: React.ReactNode }) {
+type BreadcrumbItemType = {
+  label: string;
+  path: string;
+};
+
+export function SiteBreadcrumb({ children }: { children?: React.ReactNode }) {
   const location = useLocation();
   const [currentRoute, setCurrentRoute] =
     useBreadcrumbStore.use("currentRoute");
   const [loading, setLoading] = useBreadcrumbStore.use("loading");
 
+  // Memoize the routes array
+  const memoizedRoutes = useMemo(() => routes, []);
+
+  // Create a memoized function for finding the matching route
+  const findMatchingRoute = useCallback(
+    (pathname: string) => {
+      return memoizedRoutes.find(
+        (route) => route.path !== "*" && matchPath(route.path, pathname),
+      );
+    },
+    [memoizedRoutes],
+  );
+
   useEffect(() => {
     setLoading(true);
-    const matchedRoute = routes.find(
-      (route) => route.path !== "*" && matchPath(route.path, location.pathname),
-    );
-
+    const matchedRoute = findMatchingRoute(location.pathname);
     setCurrentRoute(matchedRoute || null);
     setLoading(false);
-  }, [location, setLoading, setCurrentRoute]);
+  }, [location, setCurrentRoute, setLoading, findMatchingRoute]);
 
   useEffect(() => {
     if (currentRoute) {
@@ -45,14 +68,30 @@ export function Breadcrumb({ children }: { children?: React.ReactNode }) {
     }
   }, [currentRoute]);
 
-  // Construct breadcrumb text
-  const breadcrumbText = useMemo(() => {
-    if (!currentRoute) return "";
-    const parts = [currentRoute.group, currentRoute.subMenu, currentRoute.title]
-      .filter((str): str is string => str !== undefined)
-      .map(upperFirst);
-    return parts.join(" - ");
-  }, [currentRoute]);
+  const breadcrumbItems = useMemo(() => {
+    if (!currentRoute) return [];
+    const items: BreadcrumbItemType[] = [
+      { label: "Home", path: "/" },
+      ...(currentRoute.group
+        ? [
+            {
+              label: upperFirst(currentRoute.group),
+              path: `/${currentRoute.group}`,
+            },
+          ]
+        : []),
+      ...(currentRoute.subMenu
+        ? [
+            {
+              label: upperFirst(currentRoute.subMenu),
+              path: `/${currentRoute.group}/${currentRoute.subMenu}`,
+            },
+          ]
+        : []),
+      { label: currentRoute.title, path: location.pathname },
+    ];
+    return items;
+  }, [currentRoute, location.pathname]);
 
   if (loading) {
     return (
@@ -63,7 +102,6 @@ export function Breadcrumb({ children }: { children?: React.ReactNode }) {
     );
   }
 
-  // If the current route is not found or is an excluded path, return null
   if (!currentRoute) {
     return null;
   }
@@ -72,14 +110,25 @@ export function Breadcrumb({ children }: { children?: React.ReactNode }) {
     <div className="pb-4 pt-5 md:py-4">
       <div>
         <h2 className="mt-10 flex scroll-m-20 items-center pb-2 text-xl font-semibold tracking-tight transition-colors first:mt-0">
-          {currentRoute?.title}
+          {currentRoute.title}
           <FavoriteIcon />
         </h2>
-        <div className="flex items-center">
-          <a className="text-muted-foreground hover:text-muted-foreground/80 text-sm font-medium">
-            {breadcrumbText}
-          </a>
-        </div>
+        <Breadcrumb>
+          <BreadcrumbList>
+            {breadcrumbItems.map((item, index) => (
+              <BreadcrumbItem key={item.path}>
+                {index === breadcrumbItems.length - 1 ? (
+                  <BreadcrumbPage>{item.label}</BreadcrumbPage>
+                ) : (
+                  <BreadcrumbLink asChild>
+                    <Link to={item.path}>{item.label}</Link>
+                  </BreadcrumbLink>
+                )}
+                {index < breadcrumbItems.length - 1 && <BreadcrumbSeparator />}
+              </BreadcrumbItem>
+            ))}
+          </BreadcrumbList>
+        </Breadcrumb>
       </div>
       <div className="mt-3 flex">{children}</div>
     </div>
