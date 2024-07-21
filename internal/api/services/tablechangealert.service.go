@@ -31,7 +31,7 @@ import (
 type TableChangeAlertService struct {
 	db     *bun.DB
 	logger *zerolog.Logger
-	kafka  *kfk.Client
+	kafka  *kfk.KafkaClient
 }
 
 func NewTableChangeAlertService(s *server.Server) *TableChangeAlertService {
@@ -108,6 +108,9 @@ func (s TableChangeAlertService) GetTopicNames() ([]types.TopicName, int, error)
 		"permissions",
 		"user_roles",
 		"bun",
+		"pro_number_counters",
+		"master_key_generations",
+		"audit_logs",
 		"users",
 		"us_states",
 	}

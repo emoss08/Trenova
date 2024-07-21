@@ -126,10 +126,12 @@ func (s ShipmentService) Get(ctx context.Context, id uuid.UUID, orgID, buID uuid
 	return entity, nil
 }
 
-func (s ShipmentService) AssignTractorToShipment(ctx context.Context, input *types.AssignTractorInput, orgID, buID uuid.UUID) error {
+func (s ShipmentService) AssignTractorToShipment(ctx context.Context, input *types.AssignTractorInput, orgID, buID uuid.UUID) ([]models.TractorAssignment, error) { //nolint:gocognit // This function is complex by design
 	if input.TractorID == uuid.Nil || len(input.Assignments) == 0 {
-		return validator.DBValidationError{Message: "tractorId and at least one assignment are required"}
+		return nil, validator.DBValidationError{Message: "tractorId and at least one assignment are required"}
 	}
+
+	var assignedAssignments []models.TractorAssignment
 
 	err := s.db.RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
 		// Fetch existing assignments for this tractor
@@ -138,6 +140,7 @@ func (s ShipmentService) AssignTractorToShipment(ctx context.Context, input *typ
 			Model(&existingAssignments).
 			Where("tractor_id = ? AND organization_id = ? AND business_unit_id = ? AND status = ?",
 				input.TractorID, orgID, buID, "Active").
+			Order("sequence ASC").
 			Scan(ctx)
 		if err != nil {
 			return fmt.Errorf("failed to fetch existing assignments: %w", err)
@@ -151,15 +154,16 @@ func (s ShipmentService) AssignTractorToShipment(ctx context.Context, input *typ
 		}
 
 		// Process new assignments
-		for _, assignment := range input.Assignments {
+		for i, assignment := range input.Assignments {
 			key := fmt.Sprintf("%s-%s", assignment.ShipmentID, assignment.ShipmentMoveID)
 			if existing, ok := existingMap[key]; ok {
 				// Update existing assignment
-				existing.Sequence = assignment.Sequence
+				existing.Sequence = i + 1
 				_, err = tx.NewUpdate().Model(existing).WherePK().Exec(ctx)
 				if err != nil {
 					return fmt.Errorf("failed to update assignment: %w", err)
 				}
+				assignedAssignments = append(assignedAssignments, *existing)
 				delete(existingMap, key)
 			} else {
 				// Insert new assignment
@@ -167,7 +171,7 @@ func (s ShipmentService) AssignTractorToShipment(ctx context.Context, input *typ
 					TractorID:      input.TractorID,
 					ShipmentID:     assignment.ShipmentID,
 					ShipmentMoveID: assignment.ShipmentMoveID,
-					Sequence:       assignment.Sequence,
+					Sequence:       i + 1,
 					AssignedByID:   assignment.AssignedByID,
 					AssignedAt:     time.Now(),
 					Status:         "Active",
@@ -178,6 +182,7 @@ func (s ShipmentService) AssignTractorToShipment(ctx context.Context, input *typ
 				if err != nil {
 					return fmt.Errorf("failed to insert new assignment: %w", err)
 				}
+				assignedAssignments = append(assignedAssignments, *newAssignment)
 			}
 		}
 
@@ -196,10 +201,10 @@ func (s ShipmentService) AssignTractorToShipment(ctx context.Context, input *typ
 		return nil
 	})
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	return nil
+	return assignedAssignments, nil
 }
 
 func (s ShipmentService) Create(ctx context.Context, input *types.CreateShipmentInput) (*models.Shipment, error) {

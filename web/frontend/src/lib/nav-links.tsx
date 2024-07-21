@@ -15,6 +15,7 @@
  * Grant, and not modifying the license in any other way.
  */
 
+import { Icon } from "@/components/common/icons";
 import { type NavLinkGroup } from "@/types/sidebar-nav";
 import {
   faFolders,
@@ -24,13 +25,12 @@ import {
   faTruck,
   faVault,
 } from "@fortawesome/pro-regular-svg-icons";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 
 /** Links for Billing Navigation Menu */
 export const billingNavLinks: NavLinkGroup[] = [
   {
     menuKey: "dispatchMenu",
-    minimizedIcon: <FontAwesomeIcon icon={faVault} />,
+    minimizedIcon: <Icon icon={faVault} />,
     label: "Dispatch Management",
     links: [
       {
@@ -41,7 +41,7 @@ export const billingNavLinks: NavLinkGroup[] = [
         permission: "billing_client.view",
         description:
           "This module enables the generation and dispatch of invoices to customers efficiently. It streamlines the billing cycle, ensuring timely and accurate invoicing, and supports various billing formats tailored to customer needs.",
-        icon: <FontAwesomeIcon icon={faMoneyBillTransfer} />,
+        icon: <Icon icon={faMoneyBillTransfer} />,
       },
       {
         menuKey: "billingMenu",
@@ -50,7 +50,7 @@ export const billingNavLinks: NavLinkGroup[] = [
         description:
           "Centralize configuration settings for the billing process. Adjust and customize billing workflows, rules, and parameters to align with business practices and financial strategies.",
         link: "#", // Placeholder, replace with the actual link
-        icon: <FontAwesomeIcon icon={faFolders} />,
+        icon: <Icon icon={faFolders} />,
         subLinks: [
           {
             menuKey: "billingMenu",
@@ -125,7 +125,7 @@ export const billingNavLinks: NavLinkGroup[] = [
 export const dispatchNavLinks: NavLinkGroup[] = [
   {
     menuKey: "dispatchMenu",
-    minimizedIcon: <FontAwesomeIcon icon={faVault} />,
+    minimizedIcon: <Icon icon={faVault} />,
     label: "Dispatch Management",
     links: [
       {
@@ -136,7 +136,7 @@ export const dispatchNavLinks: NavLinkGroup[] = [
         permission: "rate:view",
         description:
           "This module allows for the comprehensive management of freight and transportation rates. It includes features for setting, adjusting, and analyzing rates, ensuring competitive pricing and operational efficiency.",
-        icon: <FontAwesomeIcon icon={faVault} />,
+        icon: <Icon icon={faVault} />,
       },
       {
         menuKey: "dispatchMenu",
@@ -145,7 +145,7 @@ export const dispatchNavLinks: NavLinkGroup[] = [
         description:
           "Central hub for configuring and customizing the dispatch process. This includes setting dispatch parameters, defining operational rules, and ensuring alignment with logistical strategies.",
         link: "#",
-        icon: <FontAwesomeIcon icon={faFolders} />,
+        icon: <Icon icon={faFolders} />,
         subLinks: [
           {
             menuKey: "dispatchMenu",
@@ -220,7 +220,7 @@ export const dispatchNavLinks: NavLinkGroup[] = [
 export const equipmentNavLinks: NavLinkGroup[] = [
   {
     menuKey: "equipmentMenu",
-    minimizedIcon: <FontAwesomeIcon icon={faScrewdriverWrench} />,
+    minimizedIcon: <Icon icon={faScrewdriverWrench} />,
     label: "Equipment Management",
     links: [
       {
@@ -231,7 +231,7 @@ export const equipmentNavLinks: NavLinkGroup[] = [
         permission: "equipment_maintenance_plan:view",
         description:
           "This section facilitates the creation and management of comprehensive maintenance schedules for various equipment. It enables precise tracking and proactive maintenance activities, ensuring optimal equipment performance and longevity.",
-        icon: <FontAwesomeIcon icon={faScrewdriverWrench} />,
+        icon: <Icon icon={faScrewdriverWrench} />,
       },
       {
         menuKey: "equipmentMenu",
@@ -240,7 +240,7 @@ export const equipmentNavLinks: NavLinkGroup[] = [
         link: "#",
         description:
           "Access and modify the core configuration settings governing the equipment maintenance processes. This central hub allows for the customization and fine-tuning of maintenance workflows and parameters.",
-        icon: <FontAwesomeIcon icon={faFolders} />,
+        icon: <Icon icon={faFolders} />,
         subLinks: [
           {
             menuKey: "equipmentMenu",
@@ -288,7 +288,7 @@ export const equipmentNavLinks: NavLinkGroup[] = [
 export const shipmentNavLinks: NavLinkGroup[] = [
   {
     menuKey: "shipmentMenu",
-    minimizedIcon: <FontAwesomeIcon icon={faTruck} />,
+    minimizedIcon: <Icon icon={faTruck} />,
     label: "Shipment",
     links: [
       {
@@ -299,7 +299,7 @@ export const shipmentNavLinks: NavLinkGroup[] = [
         permission: "shipment:view",
         description:
           "This module provides comprehensive tools for managing all aspects of shipments, including scheduling, tracking, and status updates. It's designed to streamline the shipment lifecycle from origin to destination, ensuring timely and efficient delivery.",
-        icon: <FontAwesomeIcon icon={faTruck} />,
+        icon: <Icon icon={faTruck} />,
       },
       {
         menuKey: "shipmentMenu",
@@ -308,7 +308,7 @@ export const shipmentNavLinks: NavLinkGroup[] = [
         link: "#",
         description:
           "Centralize the configuration for all shipment-related processes. Adjust parameters and settings to align shipment operations with business goals and operational efficiency.",
-        icon: <FontAwesomeIcon icon={faFolders} />,
+        icon: <Icon icon={faFolders} />,
         subLinks: [
           {
             menuKey: "shipmentMenu",
@@ -382,7 +382,7 @@ export const shipmentNavLinks: NavLinkGroup[] = [
 export const adminNavLinks: NavLinkGroup[] = [
   {
     menuKey: "adminMenu",
-    minimizedIcon: <FontAwesomeIcon icon={faTools} />,
+    minimizedIcon: <Icon icon={faTools} />,
     label: "Administration",
     links: [
       {
@@ -392,7 +392,7 @@ export const adminNavLinks: NavLinkGroup[] = [
         link: "/admin/dashboard/",
         permission: "admin_dashboard:view",
         description: "Monitor system performance and user activity...",
-        icon: <FontAwesomeIcon icon={faTools} />,
+        icon: <Icon icon={faTools} />,
       },
     ],
   },

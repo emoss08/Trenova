@@ -23,6 +23,7 @@ import (
 	"github.com/emoss08/trenova/internal/server"
 	"github.com/emoss08/trenova/internal/types"
 	"github.com/emoss08/trenova/pkg/audit"
+	"github.com/emoss08/trenova/pkg/constants"
 	"github.com/emoss08/trenova/pkg/models"
 	"github.com/emoss08/trenova/pkg/models/property"
 	ptypes "github.com/emoss08/trenova/pkg/types"
@@ -74,18 +75,18 @@ func (h ShipmentHandler) Get() fiber.Handler {
 				Instance: fmt.Sprintf("%s/probs/validation-error", c.BaseURL()),
 				InvalidParams: []types.InvalidParam{
 					{
-						Name:   "limit",
-						Reason: "Limit must be a positive integer",
+						Name:   constants.FieldLimit,
+						Reason: constants.ReasonMustBePositiveInteger,
 					},
 					{
-						Name:   "offset",
-						Reason: "Offset must be a positive integer",
+						Name:   constants.FieldOffset,
+						Reason: constants.ReasonMustBePositiveInteger,
 					},
 				},
 			})
 		}
 
-		if err = h.permissionService.CheckUserPermission(c, "shipment", "view"); err != nil {
+		if err = h.permissionService.CheckUserPermission(c, constants.EntityShipment, constants.ActionView); err != nil {
 			return c.Status(fiber.StatusForbidden).JSON(fiber.Error{
 				Code:    fiber.StatusForbidden,
 				Message: err.Error(),
@@ -107,13 +108,13 @@ func (h ShipmentHandler) Get() fiber.Handler {
 			}
 		}
 
-		if fromDate := c.Query("fromDate"); fromDate != "" {
+		if fromDate := c.Query(constants.FieldFromDate); fromDate != "" {
 			if date, err := time.Parse(time.RFC3339, fromDate); err == nil {
 				filter.FromDate = &date
 			}
 		}
 
-		if toDate := c.Query("toDate"); toDate != "" {
+		if toDate := c.Query(constants.FieldToDate); toDate != "" {
 			if date, err := time.Parse(time.RFC3339, toDate); err == nil {
 				filter.ToDate = &date
 			}
@@ -132,11 +133,7 @@ func (h ShipmentHandler) Get() fiber.Handler {
 
 		// Parse isHazardous filter
 		if isHazardous := c.Query("isHazardous"); isHazardous != "" {
-			if isHazardous == "true" {
-				filter.IsHazardous = true
-			} else {
-				filter.IsHazardous = false
-			}
+			filter.IsHazardous = isHazardous == constants.QueryParamTrue
 		}
 
 		entities, cnt, err := h.service.GetAll(c.UserContext(), filter)
@@ -144,7 +141,7 @@ func (h ShipmentHandler) Get() fiber.Handler {
 			h.logger.Error().Err(err).Msg("Error getting shipments")
 			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Error{
 				Code:    fiber.StatusInternalServerError,
-				Message: err.Error(),
+				Message: constants.ErrInternalServer,
 			})
 		}
 
@@ -250,7 +247,8 @@ func (h ShipmentHandler) AssignTractorToShipment() fiber.Handler {
 			return c.Status(fiber.StatusBadRequest).JSON(err)
 		}
 
-		if err = h.service.AssignTractorToShipment(c.UserContext(), assignTractorInput, ids.OrganizationID, ids.BusinessUnitID); err != nil {
+		assignments, err := h.service.AssignTractorToShipment(c.UserContext(), assignTractorInput, ids.OrganizationID, ids.BusinessUnitID)
+		if err != nil {
 			h.logger.Error().Interface("entity", assignTractorInput).Err(err).Msg("Failed to assign tractor to shipment")
 			return c.Status(fiber.StatusBadRequest).JSON(fiber.Error{
 				Message: err.Error(),
@@ -258,10 +256,11 @@ func (h ShipmentHandler) AssignTractorToShipment() fiber.Handler {
 			})
 		}
 
-		go h.auditService.LogAction("shipments", assignTractorInput.TractorID.String(), property.AuditLogActionUpdate, assignTractorInput, ids.UserID, ids.OrganizationID, ids.BusinessUnitID)
+		go h.auditService.LogAction("shipments", assignTractorInput.TractorID.String(), property.AuditLogActionUpdate, assignments, ids.UserID, ids.OrganizationID, ids.BusinessUnitID)
 
 		return c.Status(fiber.StatusOK).JSON(fiber.Map{
 			"message": "Tractor assigned to shipment successfully.",
+			"data":    assignments,
 		})
 	}
 }

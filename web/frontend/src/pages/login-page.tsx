@@ -33,10 +33,10 @@ import { useForm } from "react-hook-form";
 import { useNavigate } from "react-router-dom";
 
 import { InternalLink } from "@/components/ui/link";
+import { APP_DEFAULT_LOGO } from "@/lib/constants";
 import { checkUserEmail } from "@/services/AccountRequestService";
 import { HTTP_200_OK } from "@/types/server";
 import { useMutation } from "@tanstack/react-query";
-import trenovaLogo from "../assets/images/logo.avif";
 
 type LoginFormValues = {
   emailAddress: string;
@@ -49,7 +49,7 @@ type CheckEmailValues = {
 
 function AuthFooter() {
   return (
-    <footer className="absolute bottom-10 w-full text-center text-muted-foreground">
+    <footer className="text-muted-foreground absolute bottom-10 w-full text-center">
       <div className="flex items-center justify-center gap-2">
         <p className="text-xs">&copy; 2024 Trenova. All rights reserved.</p>
         <span className="text-xs">|</span>
@@ -281,7 +281,7 @@ export default function LoginPage() {
     <div className="relative min-h-screen pt-20">
       <div className="flex flex-col items-center justify-start space-y-4">
         <Image
-          src={trenovaLogo}
+          src={APP_DEFAULT_LOGO}
           layout="constrained"
           className="mb-5 w-[200px]"
           alt="trenova-logo"

@@ -25,7 +25,7 @@ import {
   faChevronLeft,
   faChevronRight,
 } from "@fortawesome/pro-solid-svg-icons";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { Icon } from "../common/icons";
 
 export type CalendarProps = React.ComponentProps<typeof DayPicker>;
 
@@ -75,14 +75,10 @@ function Calendar({
       }}
       components={{
         IconLeft: ({ ...props }) => (
-          <FontAwesomeIcon icon={faChevronLeft} className="size-4" {...props} />
+          <Icon icon={faChevronLeft} className="size-4" {...props} />
         ),
         IconRight: ({ ...props }) => (
-          <FontAwesomeIcon
-            icon={faChevronRight}
-            className="size-4"
-            {...props}
-          />
+          <Icon icon={faChevronRight} className="size-4" {...props} />
         ),
       }}
       {...props}
@@ -92,3 +88,4 @@ function Calendar({
 Calendar.displayName = "Calendar";
 
 export { Calendar };
+

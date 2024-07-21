@@ -15,8 +15,6 @@
  * Grant, and not modifying the license in any other way.
  */
 
-"use client";
-
 import { type DialogProps } from "@radix-ui/react-dialog";
 import { Command as CommandPrimitive } from "cmdk";
 import * as React from "react";
@@ -166,5 +164,6 @@ export {
   CommandItem,
   CommandList,
   CommandSeparator,
-  CommandShortcut,
+  CommandShortcut
 };
+

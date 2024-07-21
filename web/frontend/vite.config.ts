@@ -68,7 +68,8 @@ export default defineConfig(({ mode }) => {
                 "react-hook-form",
                 "@radix-ui",
                 "react-aria",
-                "react-dom",
+                "react-beautiful-dnd",
+                "i18next",
                 "@fortawesome",
               ];
               const chunk = packages.find((pkg) =>

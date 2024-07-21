@@ -16,6 +16,7 @@
  */
 
 import { InputField } from "@/components/common/fields/input";
+import { Icon } from "@/components/common/icons";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { InternalLink } from "@/components/ui/link";
@@ -24,7 +25,6 @@ import axios from "@/lib/axiosConfig";
 import { cn } from "@/lib/utils";
 import { resetPasswordSchema } from "@/lib/validations/AccountsSchema";
 import { faLoader } from "@fortawesome/pro-duotone-svg-icons";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { yupResolver } from "@hookform/resolvers/yup";
 import React from "react";
 import { useForm } from "react-hook-form";
@@ -87,10 +87,7 @@ export function ResetPasswordForm() {
         <Button disabled={isLoading} className="my-2 w-full">
           {isLoading ? (
             <>
-              <FontAwesomeIcon
-                icon={faLoader}
-                className="mr-2 size-4 animate-spin"
-              />
+              <Icon icon={faLoader} className="mr-2 size-4 animate-spin" />
               Sending Email
             </>
           ) : (

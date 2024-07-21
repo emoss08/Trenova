@@ -22,6 +22,7 @@ import (
 	"github.com/emoss08/trenova/internal/server"
 	"github.com/emoss08/trenova/internal/types"
 	"github.com/emoss08/trenova/pkg/audit"
+	"github.com/emoss08/trenova/pkg/constants"
 	"github.com/emoss08/trenova/pkg/models"
 	"github.com/emoss08/trenova/pkg/models/property"
 	"github.com/emoss08/trenova/pkg/utils"
@@ -49,9 +50,9 @@ func NewAccessorialChargeHandler(s *server.Server) *AccessorialChargeHandler {
 func (h AccessorialChargeHandler) RegisterRoutes(r fiber.Router) {
 	api := r.Group("/accessorial-charges")
 	api.Get("/", h.Get())
-	api.Get("/:accessorialchargeID", h.GetByID())
+	api.Get("/:accessorialChargeID", h.GetByID())
 	api.Post("/", h.Create())
-	api.Put("/:accessorialchargeID", h.Update())
+	api.Put("/:accessorialChargeID", h.Update())
 }
 
 func (h AccessorialChargeHandler) Get() fiber.Handler {
@@ -71,18 +72,18 @@ func (h AccessorialChargeHandler) Get() fiber.Handler {
 				Instance: fmt.Sprintf("%s/probs/validation-error", c.BaseURL()),
 				InvalidParams: []types.InvalidParam{
 					{
-						Name:   "limit",
-						Reason: "Limit must be a positive integer",
+						Name:   constants.FieldLimit,
+						Reason: constants.ReasonMustBePositiveInteger,
 					},
 					{
-						Name:   "offset",
-						Reason: "Offset must be a positive integer",
+						Name:   constants.FieldOffset,
+						Reason: constants.ReasonMustBePositiveInteger,
 					},
 				},
 			})
 		}
 
-		if err = h.permissionService.CheckUserPermission(c, "accessorial_charge", "view"); err != nil {
+		if err = h.permissionService.CheckUserPermission(c, constants.EntityAccessorialCharge, constants.ActionView); err != nil {
 			return c.Status(fiber.StatusForbidden).JSON(fiber.Error{
 				Code:    fiber.StatusForbidden,
 				Message: err.Error(),
@@ -124,23 +125,24 @@ func (h AccessorialChargeHandler) GetByID() fiber.Handler {
 			return err
 		}
 
-		accessorialchargeID := c.Params("accessorialchargeID")
-		if accessorialchargeID == "" {
+		accessorialChargeID := c.Params("accessorialChargeID")
+		if accessorialChargeID == "" {
 			return c.Status(fiber.StatusBadRequest).JSON(fiber.Error{
 				Code:    fiber.StatusBadRequest,
 				Message: "AccessorialCharge ID is required",
 			})
 		}
 
-		if err = h.permissionService.CheckUserPermission(c, "accessorial_charge", "view"); err != nil {
+		if err = h.permissionService.CheckUserPermission(c, constants.EntityAccessorialCharge, constants.ActionView); err != nil {
 			return c.Status(fiber.StatusForbidden).JSON(fiber.Error{
 				Code:    fiber.StatusForbidden,
 				Message: err.Error(),
 			})
 		}
 
-		entity, err := h.service.Get(c.UserContext(), uuid.MustParse(accessorialchargeID), ids.OrganizationID, ids.BusinessUnitID)
+		entity, err := h.service.Get(c.UserContext(), uuid.MustParse(accessorialChargeID), ids.OrganizationID, ids.BusinessUnitID)
 		if err != nil {
+			h.logger.Error().Str("accessorialChargeID", accessorialChargeID).Err(err).Msg("Failed to get AccessorialCharge")
 			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Error{
 				Code:    fiber.StatusInternalServerError,
 				Message: err.Error(),
@@ -160,7 +162,7 @@ func (h AccessorialChargeHandler) Create() fiber.Handler {
 
 		createdEntity := new(models.AccessorialCharge)
 
-		if err = h.permissionService.CheckUserPermission(c, "accessorial_charge", "create"); err != nil {
+		if err = h.permissionService.CheckUserPermission(c, constants.EntityAccessorialCharge, constants.ActionCreate); err != nil {
 			return c.Status(fiber.StatusForbidden).JSON(fiber.Error{
 				Code:    fiber.StatusForbidden,
 				Message: err.Error(),
@@ -181,7 +183,7 @@ func (h AccessorialChargeHandler) Create() fiber.Handler {
 			return c.Status(fiber.StatusInternalServerError).JSON(resp)
 		}
 
-		go h.auditService.LogAction("accessorial_charges", entity.ID.String(), property.AuditLogActionCreate, entity, ids.UserID, ids.OrganizationID, ids.BusinessUnitID)
+		go h.auditService.LogAction(constants.TableAccessorialCharge, entity.ID.String(), property.AuditLogActionCreate, entity, ids.UserID, ids.OrganizationID, ids.BusinessUnitID)
 
 		return c.Status(fiber.StatusCreated).JSON(entity)
 	}
@@ -194,15 +196,15 @@ func (h AccessorialChargeHandler) Update() fiber.Handler {
 			return err
 		}
 
-		accessorialchargeID := c.Params("accessorialchargeID")
-		if accessorialchargeID == "" {
+		accessorialChargeID := c.Params("accessorialChargeID")
+		if accessorialChargeID == "" {
 			return c.Status(fiber.StatusBadRequest).JSON(fiber.Error{
 				Code:    fiber.StatusBadRequest,
 				Message: "AccessorialCharge ID is required",
 			})
 		}
 
-		if err = h.permissionService.CheckUserPermission(c, "accessorial_charge", "update"); err != nil {
+		if err = h.permissionService.CheckUserPermission(c, constants.EntityAccessorialCharge, constants.ActionUpdate); err != nil {
 			return c.Status(fiber.StatusForbidden).JSON(fiber.Error{
 				Code:    fiber.StatusForbidden,
 				Message: err.Error(),
@@ -215,7 +217,7 @@ func (h AccessorialChargeHandler) Update() fiber.Handler {
 			return c.Status(fiber.StatusBadRequest).JSON(err)
 		}
 
-		updatedEntity.ID = uuid.MustParse(accessorialchargeID)
+		updatedEntity.ID = uuid.MustParse(accessorialChargeID)
 
 		entity, err := h.service.UpdateOne(c.UserContext(), updatedEntity)
 		if err != nil {
@@ -224,7 +226,7 @@ func (h AccessorialChargeHandler) Update() fiber.Handler {
 			return c.Status(fiber.StatusInternalServerError).JSON(resp)
 		}
 
-		go h.auditService.LogAction("accessorial_charges", entity.ID.String(), property.AuditLogActionUpdate, entity, ids.UserID, ids.OrganizationID, ids.BusinessUnitID)
+		go h.auditService.LogAction(constants.TableAccessorialCharge, entity.ID.String(), property.AuditLogActionUpdate, entity, ids.UserID, ids.OrganizationID, ids.BusinessUnitID)
 
 		return c.Status(fiber.StatusOK).JSON(entity)
 	}

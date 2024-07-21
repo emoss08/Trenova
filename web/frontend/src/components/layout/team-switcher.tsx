@@ -32,9 +32,9 @@ import {
 } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
 import { faCheck } from "@fortawesome/pro-duotone-svg-icons";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { CaretSortIcon } from "@radix-ui/react-icons";
 import React from "react";
+import { Icon } from "../common/icons";
 import { Button } from "../ui/button";
 
 const organizations = [
@@ -128,7 +128,7 @@ export default function OrganizationSwitcher({
                       <AvatarFallback>SC</AvatarFallback>
                     </Avatar>
                     <span className="truncate">{team.label}</span>
-                    <FontAwesomeIcon
+                    <Icon
                       icon={faCheck}
                       className={cn(
                         "ml-auto h-4 w-4",

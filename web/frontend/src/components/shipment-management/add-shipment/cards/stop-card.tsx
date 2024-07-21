@@ -18,6 +18,7 @@
 import { DecimalField } from "@/components/common/fields/decimal-input";
 import { InputField } from "@/components/common/fields/input";
 import { SelectInput } from "@/components/common/fields/select-input";
+import { Icon } from "@/components/common/icons";
 import { LocationAutoComplete } from "@/components/ui/autocomplete";
 import {
   DropdownMenu,
@@ -32,7 +33,6 @@ import { shipmentStatusChoices, shipmentStopChoices } from "@/lib/choices";
 import { cn } from "@/lib/utils";
 import { ShipmentFormValues } from "@/types/shipment";
 import { faEllipsisV, faGrid } from "@fortawesome/pro-duotone-svg-icons";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import React, { useState } from "react";
 import { Draggable } from "react-beautiful-dnd";
 import { UseFieldArrayRemove, useFormContext } from "react-hook-form";
@@ -205,7 +205,7 @@ export function StopCard({
             <div className="mb-5 flex justify-between border-b pb-2">
               <span {...provided.dragHandleProps}>
                 {!isDragDisabled && (
-                  <FontAwesomeIcon
+                  <Icon
                     icon={faGrid}
                     className={cn(
                       "text-muted-foreground hover:text-foreground hover:cursor-pointer size-5",
@@ -217,9 +217,9 @@ export function StopCard({
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <span>
-                    <FontAwesomeIcon
+                    <Icon
                       icon={faEllipsisV}
-                      className="size-5 text-muted-foreground hover:cursor-pointer hover:text-foreground"
+                      className="text-muted-foreground hover:text-foreground size-5 hover:cursor-pointer"
                     />
                   </span>
                 </DropdownMenuTrigger>
@@ -229,7 +229,7 @@ export function StopCard({
                   <DropdownMenuItem disabled>Add Comment</DropdownMenuItem>
                   <DropdownMenuItem
                     onClick={() => openRemoveAlert(index)}
-                    className="font-semibold text-red-500 focus:bg-destructive/10 focus:text-destructive"
+                    className="focus:bg-destructive/10 focus:text-destructive font-semibold text-red-500"
                     disabled={isDragDisabled}
                   >
                     Remove
