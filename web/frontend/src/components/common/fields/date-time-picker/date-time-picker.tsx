@@ -28,7 +28,6 @@ import {
 } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 import { faCalendarAlt } from "@fortawesome/pro-duotone-svg-icons";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import React, { useRef, useState } from "react";
 import { DateValue, useDatePicker, useInteractOutside } from "react-aria";
 import {
@@ -37,6 +36,7 @@ import {
   useController,
 } from "react-hook-form";
 import { DatePickerStateOptions, useDatePickerState } from "react-stately";
+import { Icon } from "../../icons";
 import { FieldDescription } from "../components";
 import { ErrorMessage } from "../error-message";
 import { Label } from "../label";
@@ -132,12 +132,12 @@ export function DateTimePicker<TFieldValues extends FieldValues>({
         <Popover open={open} onOpenChange={setOpen}>
           <PopoverTrigger asChild>
             <div className="relative">
-              <div className="absolute inset-y-0 right-8 mt-1.5 h-6 w-px bg-border" />
+              <div className="bg-border absolute inset-y-0 right-8 mt-1.5 h-6 w-px" />
               <TooltipProvider delayDuration={100}>
                 <Tooltip>
                   <TooltipTrigger asChild>
                     <div className="absolute right-0 mr-2.5 mt-2.5">
-                      <FontAwesomeIcon
+                      <Icon
                         icon={faCalendarAlt}
                         className={cn(
                           "text-muted-foreground hover:text-foreground mb-2.5 size-4 cursor-pointer",

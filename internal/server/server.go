@@ -74,7 +74,7 @@ type Server struct {
 	FileHandler file.FileHandler
 
 	// Kafka stores the Kafka client.
-	Kafka *kfk.Client
+	Kafka *kfk.KafkaClient
 
 	// Enforcer stores the Casbin enforcer.
 	Enforcer *casbin.Enforcer
@@ -265,8 +265,12 @@ func (s *Server) InitMinioClient() error {
 }
 
 func (s *Server) InitKafkaClient() error {
-	cfg := kfk.ConfigMap{"bootstrap.servers": s.Config.Kafka.Broker}
-	s.Kafka = kfk.NewClient(&cfg, s.Logger)
+	client, err := kfk.NewKafkaClient(s.Config.Kafka.Seeds, s.Logger)
+	if err != nil {
+		return err
+	}
+
+	s.Kafka = client
 
 	return nil
 }

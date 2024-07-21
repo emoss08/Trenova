@@ -25,15 +25,6 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
 
-  pg-admin:
-    image: dpage/pgadmin4
-    container_name: trenova-pgadmin
-    ports:
-      - "5050:80"
-    environment:
-      PGADMIN_DEFAULT_EMAIL: root@pgadmin.com
-      PGADMIN_DEFAULT_PASSWORD: root
-
   trenova_redis_stack:
     image: redis/redis-stack:latest
     container_name: trenova-cache-stack
@@ -45,22 +36,22 @@ services:
     volumes:
       - redis_data:/data
 
-  meilisearch:
-    image: getmeili/meilisearch:v0.30
-    restart: unless-stopped
-    ports:
-      - "7700:7700"
-    environment:
-      MEILI_MASTER_KEY: private-meilisearch-token-for-dev-only
-      MEILI_LOG_LEVEL: debug
-    volumes:
-      - meilisearch-data:/meili_data
+  # meilisearch:
+  #   image: getmeili/meilisearch:v0.30
+  #   restart: unless-stopped
+  #   ports:
+  #     - "7700:7700"
+  #   environment:
+  #     MEILI_MASTER_KEY: private-meilisearch-token-for-dev-only
+  #     MEILI_LOG_LEVEL: debug
+  #   volumes:
+  #     - meilisearch-data:/meili_data
 
-  mellisearch-ui:
-    image: riccoxie/meilisearch-ui:latest
-    container_name: trenova-meilisearch-ui
-    ports:
-      - "24900:24900"
+  # mellisearch-ui:
+  #   image: riccoxie/meilisearch-ui:latest
+  #   container_name: trenova-meilisearch-ui
+  #   ports:
+  #     - "24900:24900"
 
   trenova-minio:
     image: quay.io/minio/minio
@@ -203,7 +194,6 @@ services:
     depends_on:
       - db
       - trenova_redis_stack
-      - meilisearch
       - trenova-minio
       - kafka1
       - kafka-schema-registry

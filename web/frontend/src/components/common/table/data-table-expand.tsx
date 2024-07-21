@@ -19,8 +19,8 @@ import {
   faChevronDown,
   faChevronRight,
 } from "@fortawesome/pro-solid-svg-icons";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { Row } from "@tanstack/react-table";
+import { Icon } from "../icons";
 
 export function DataTableColumnExpand<TData>({ row }: { row: Row<TData> }) {
   return row.getCanExpand() ? (
@@ -31,9 +31,9 @@ export function DataTableColumnExpand<TData>({ row }: { row: Row<TData> }) {
       }}
     >
       {row.getIsExpanded() ? (
-        <FontAwesomeIcon icon={faChevronDown} className="size-3" /> // Apply rotation
+        <Icon icon={faChevronDown} className="size-3" /> // Apply rotation
       ) : (
-        <FontAwesomeIcon icon={faChevronRight} className="size-3" /> // Apply rotation
+        <Icon icon={faChevronRight} className="size-3" /> // Apply rotation
       )}
     </button>
   ) : (

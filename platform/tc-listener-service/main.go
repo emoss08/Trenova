@@ -23,6 +23,7 @@ import (
 
 	"kafka/internal"
 	"kafka/internal/services"
+	"kafka/pkg"
 
 	rotatelogs "github.com/lestrrat-go/file-rotatelogs"
 	"github.com/rs/zerolog"
@@ -62,5 +63,16 @@ func main() {
 
 	s := services.NewSubscriptionService(db, &logger, redisClient)
 
-	services.StartListener(s, &logger)
+	emailService := services.NewEmailService()
+
+	// Ping the email service to ensure it is available
+	if err = emailService.Ping(); err != nil {
+		logger.Fatal().Err(err).Msg("Failed to ping email service")
+	}
+
+	brokers := []string{"localhost:9092"}
+	group := "table-change-alert-listener"
+	commitStyle := pkg.ManualCommitUncommitted
+
+	services.StartListener(brokers, group, commitStyle, s, emailService, &logger)
 }

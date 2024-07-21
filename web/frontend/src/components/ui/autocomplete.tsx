@@ -23,20 +23,20 @@ import {
 } from "@/components/ui/command";
 import { useLocationAutoComplete } from "@/hooks/useQueries";
 import { cn } from "@/lib/utils";
-import { GoogleAutoCompleteResult } from "@/types/location";
+import { type GoogleAutoCompleteResult } from "@/types/location";
 import { faSpinner } from "@fortawesome/pro-duotone-svg-icons";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { debounce } from "lodash-es";
 import * as React from "react";
 import { useInteractOutside } from "react-aria";
 import {
-  FieldValues,
-  UseControllerProps,
+  type FieldValues,
+  type UseControllerProps,
   useController,
 } from "react-hook-form";
 import { FieldErrorMessage } from "../common/fields/error-message";
-import { Input, InputProps } from "../common/fields/input";
+import { Input, type InputProps } from "../common/fields/input";
 import { Label } from "../common/fields/label";
+import { Icon } from "../common/icons";
 
 type AutocompleteResultsProps = {
   searchResults: GoogleAutoCompleteResult[] | null;
@@ -51,14 +51,14 @@ const AutocompleteResults = React.forwardRef<
   if (!searchResults || searchResults.length === 0) {
     return (
       <div className="border-border bg-popover p-2 shadow-lg" ref={ref}>
-        <p className="text-sm text-muted-foreground">No results found.</p>
+        <p className="text-muted-foreground text-sm">No results found.</p>
       </div>
     );
   }
 
   return (
     <div
-      className="absolute z-100 w-auto rounded-md border border-border shadow-lg"
+      className="z-100 border-border absolute w-auto rounded-md border shadow-lg"
       ref={ref}
     >
       <Command className="bg-popover">
@@ -72,7 +72,7 @@ const AutocompleteResults = React.forwardRef<
                 <div className="flex flex-1 items-center justify-between truncate">
                   <div className="flex-1 truncate text-sm">
                     <p className="font-mono text-sm">{result.name}</p>
-                    <p className="text-xs text-muted-foreground">
+                    <p className="text-muted-foreground text-xs">
                       {result.address}
                     </p>
                   </div>
@@ -81,15 +81,15 @@ const AutocompleteResults = React.forwardRef<
             ))}
           </CommandGroup>
         </CommandList>
-        <div className="flex select-none items-center justify-between border-t border-border bg-card p-2">
-          <p className="text-xs text-muted-foreground">
+        <div className="border-border bg-card flex select-none items-center justify-between border-t p-2">
+          <p className="text-muted-foreground text-xs">
             {searchResults.length} results
           </p>
-          <p className="size-4 fill-muted-foreground text-xs text-muted-foreground">
+          <p className="fill-muted-foreground text-muted-foreground size-4 text-xs">
             <svg
               xmlns="http://www.w3.org/2000/svg"
               viewBox="0 0 488 512"
-              className="size-4 fill-muted-foreground text-xs text-muted-foreground"
+              className="fill-muted-foreground text-muted-foreground size-4 text-xs"
             >
               <path d="M488 261.8C488 403.3 391.1 504 248 504 110.8 504 0 393.2 0 256S110.8 8 248 8c66.8 0 123 24.5 166.3 64.9l-67.5 64.9C258.5 52.6 94.3 116.6 94.3 256c0 86.5 69.1 156.6 153.7 156.6 98.2 0 135-70.4 140.8-106.9H248v-85.3h236.1c2.3 12.7 3.9 24.9 3.9 41.4z" />
             </svg>
@@ -164,7 +164,7 @@ export function LocationAutoComplete<T extends FieldValues>({
       <div className="relative">
         {isSearchLoading && (
           <div className="pointer-events-none absolute right-2 mt-2.5 flex items-center pl-3">
-            <FontAwesomeIcon icon={faSpinner} className="animate-spin" />
+            <Icon icon={faSpinner} className="animate-spin" />
           </div>
         )}
         <Input
@@ -181,7 +181,7 @@ export function LocationAutoComplete<T extends FieldValues>({
           <FieldErrorMessage formError={fieldState.error?.message} />
         )}
         {props.description && !fieldState.invalid && (
-          <p className="text-xs text-foreground/70">{props.description}</p>
+          <p className="text-foreground/70 text-xs">{props.description}</p>
         )}
       </div>
       {showResults && completionAllowed && (

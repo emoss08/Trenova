@@ -145,8 +145,8 @@ type Minio struct {
 
 type KafkaServer struct {
 	// Brokers is the list of Kafka brokers.
-	// Example: "localhost:9092, localhost:9093"
-	Broker string
+	// Example: "localhost:9092", "localhost:9093"
+	Seeds []string
 }
 
 type CasbinConfig struct {

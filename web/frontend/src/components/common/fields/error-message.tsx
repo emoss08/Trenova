@@ -16,7 +16,7 @@
  */
 
 import { faTriangleExclamation } from "@fortawesome/pro-regular-svg-icons";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { Icon } from "../icons";
 
 export function ErrorMessage({ formError }: { formError?: string }) {
   return (
@@ -30,10 +30,7 @@ export function FieldErrorMessage({ formError }: { formError?: string }) {
   return (
     <>
       <div className="pointer-events-none absolute inset-y-0 right-0 mr-2.5 mt-1.5">
-        <FontAwesomeIcon
-          icon={faTriangleExclamation}
-          className="text-red-500"
-        />
+        <Icon icon={faTriangleExclamation} className="text-red-500" />
       </div>
       <ErrorMessage formError={formError} />
     </>

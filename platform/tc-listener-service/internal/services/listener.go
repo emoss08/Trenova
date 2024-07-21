@@ -12,7 +12,6 @@
 // and trademark, you must comply with the Licensor's covenants, which include specifying the
 // Change License as the GPL Version 2.0 or a compatible license, specifying an Additional Use
 // Grant, and not modifying the license in any other way.
-
 package services
 
 import (
@@ -21,219 +20,152 @@ import (
 	"encoding/json"
 	"fmt"
 	"html/template"
-	"log"
 	"os"
-	"os/signal"
 	"strings"
 	"sync"
-	"syscall"
 	"time"
+
+	"kafka/pkg"
 
 	"github.com/jordan-wright/email"
 	"github.com/rs/zerolog"
-	"gopkg.in/confluentinc/confluent-kafka-go.v1/kafka"
+	"github.com/twmb/franz-go/pkg/kgo"
 )
 
+const globalAlertUpdateTopic = "trenova_app.public.table_change_alerts"
+
 type KafkaListener struct {
-	dataConsumer        *kafka.Consumer
-	alertUpdateConsumer *kafka.Consumer
+	client              *kgo.Client
 	running             bool
 	mu                  sync.Mutex
 	emailService        *EmailService
 	subscriptionService *SubscriptionService
 	logger              *zerolog.Logger
 	batchEmailer        *BatchEmailer
+	commitStyle         pkg.CommitStyle
 }
 
-// NewKafkaListener initializes a KafkaListener with a data consumer, an alert update consumer,
-// and an email service. It subscribes the alert update consumer to the specified topic and
-// starts listening for messages.
-//
-// Parameters:
-//
-//	ctx - context for managing lifecycle of the KafkaListener
-//	alertTopic - Kafka topic for alert updates
-//	subService - SubscriptionService for managing subscriptions
-//
-// Returns:
-//
-//	KafkaListener - a new KafkaListener instance
-//	error - an error if initialization fails
-func NewKafkaListener(ctx context.Context, alertTopic string, subService *SubscriptionService, logger *zerolog.Logger) (*KafkaListener, error) {
-	dataConsumer, err := createConsumer("localhost:9092", "trenova-data-alert-1")
+func NewKafkaListener(ctx context.Context, brokers []string, group string, commitStyle pkg.CommitStyle, subService *SubscriptionService, emailService *EmailService, logger *zerolog.Logger) (*KafkaListener, error) {
+	opts := []kgo.Opt{
+		kgo.SeedBrokers(brokers...),
+		kgo.ConsumerGroup(group),
+		kgo.ConsumeResetOffset(kgo.NewOffset().AtStart()),
+		kgo.WithLogger(kgo.BasicLogger(os.Stderr, kgo.LogLevelInfo, nil)),
+	}
+
+	if commitStyle != pkg.AutoCommit {
+		opts = append(opts, kgo.DisableAutoCommit())
+	}
+
+	client, err := kgo.NewClient(opts...)
 	if err != nil {
-		logger.Err(err).Msg("Failed to create data consumer")
-		return nil, fmt.Errorf("failed to create data consumer: %w", err)
+		logger.Err(err).Msg("Failed to create Kafka client")
+		return nil, fmt.Errorf("failed to create Kafka client: %w", err)
 	}
 
-	alertUpdateConsumer, err := createConsumer("localhost:9092", "trenova-table-change-alert-1")
-	if err != nil {
-		logger.Err(err).Msg("Failed to create alert update consumer")
-		return nil, fmt.Errorf("failed to create alert update consumer: %w", err)
-	}
-
-	emailService := NewEmailService()
-
-	// Ping the email service to ensure it is available
-	if err := emailService.Ping(); err != nil {
-		logger.Err(err).Msg("Failed to ping email service")
-		return nil, fmt.Errorf("failed to ping email service: %w", err)
-	}
-
-	batchEmailer := NewBatchEmailer(emailService, logger, 30*time.Second) // Send emails every 30 seconds
+	batchEmailer := NewBatchEmailer(emailService, logger, 30*time.Second)
 
 	kl := &KafkaListener{
-		dataConsumer:        dataConsumer,
-		alertUpdateConsumer: alertUpdateConsumer,
+		client:              client,
 		running:             true,
 		emailService:        emailService,
 		subscriptionService: subService,
 		logger:              logger,
 		batchEmailer:        batchEmailer,
+		commitStyle:         commitStyle,
 	}
 
-	if err := kl.alertUpdateConsumer.Subscribe(alertTopic, nil); err != nil {
-		logger.Err(err).Msgf("Failed to subscribe alert update consumer to topic %s", alertTopic)
-		return nil, fmt.Errorf("failed to subscribe alert update consumer to topic %s: %w", alertTopic, err)
+	if err = kl.updateTopics(ctx); err != nil {
+		return nil, err
 	}
 
-	go kl.listen(ctx)
+	go kl.consume(ctx)
 
 	return kl, nil
 }
 
-// createConsumer creates a new Kafka consumer configured with the specified bootstrap servers
-// and group ID. The consumer starts reading from the latest offset and auto-commit is disabled.
-//
-// Parameters:
-//
-//	bootstrapServers - comma-separated list of Kafka bootstrap servers
-//	groupID - consumer group ID
-//
-// Returns:
-//
-//	*kafka.Consumer - a new Kafka consumer instance
-//	error - an error if the consumer creation fails
-func createConsumer(bootstrapServers, groupID string) (*kafka.Consumer, error) {
-	return kafka.NewConsumer(&kafka.ConfigMap{
-		"bootstrap.servers":  bootstrapServers,
-		"group.id":           groupID,
-		"auto.offset.reset":  "latest", // Start from the latest offset
-		"enable.auto.commit": false,    // Disable auto commit to control offset commits manually
-		// "debug":              "cgrp,topic,fetch", // Enable debug logging
+func (kl *KafkaListener) updateTopics(ctx context.Context) error {
+	subscriptions, err := kl.subscriptionService.GetActiveSubscriptions(ctx)
+	if err != nil {
+		kl.logger.Err(err).Msg("Failed to get active subscriptions")
+		return fmt.Errorf("failed to get active subscriptions: %w", err)
+	}
 
-	})
+	topics := make([]string, 0, len(subscriptions))
+	for _, sub := range subscriptions {
+		topics = append(topics, sub.TopicName)
+	}
+
+	// Add the global alert update topic
+	topics = append(topics, globalAlertUpdateTopic)
+
+	kl.logger.Info().Msgf("Updating subscriptions to: %v", topics)
+	kl.client.AddConsumeTopics(topics...)
+
+	return nil
 }
 
-// subscribeToTopics retrieves the active subscriptions and subscribes the data consumer to
-// the relevant Kafka topics. It periodically checks for updates to the subscriptions and
-// retries if no active topics are found.
-//
-// Parameters:
-//
-//	ctx - context for managing lifecycle of the subscription process
-func (kl *KafkaListener) subscribeToTopics(ctx context.Context) {
+func (kl *KafkaListener) consume(ctx context.Context) {
 	for kl.running {
-		select {
-		case <-ctx.Done():
+		fetches := kl.client.PollFetches(ctx)
+		if fetches.IsClientClosed() {
 			return
-		default:
-			subscriptions, err := kl.subscriptionService.GetActiveSubscriptions(ctx)
-			if err != nil {
-				kl.logger.Err(err).Msg("Failed to get active subscriptions")
-				time.Sleep(5 * time.Minute)
-				continue
-			}
+		}
 
-			topicsMap := make(map[string]struct{})
-			for _, sub := range subscriptions {
-				topicsMap[sub.TopicName] = struct{}{}
-			}
+		fetches.EachError(func(t string, p int32, err error) {
+			kl.logger.Error().Err(err).Str("topic", t).Int32("partition", p).Msg("Fetch error")
+		})
 
-			var topics []string
-			for topic := range topicsMap {
-				topics = append(topics, topic)
-			}
+		var records []*kgo.Record
+		fetches.EachRecord(func(record *kgo.Record) {
+			records = append(records, record)
+			kl.processRecord(ctx, record)
+		})
 
-			if len(topics) > 0 {
-				kl.logger.Info().Msg("Retrieved active topics")
-				for i, topic := range topics {
-					kl.logger.Info().Msgf("Topic %d: '%s'", i, topic)
-				}
-
-				if err := kl.dataConsumer.SubscribeTopics(topics, nil); err != nil {
-					kl.logger.Err(err).Msg("Failed to subscribe data consumer to topics")
-				} else {
-					kl.logger.Info().Msgf("Successfully subscribed to topics: %v", topics)
-					return
-				}
+		switch kl.commitStyle {
+		case pkg.AutoCommit:
+			kl.logger.Info().Msgf("Processed %d records - autocommit will handle offsets", len(records))
+		case pkg.ManualCommitRecords:
+			if err := kl.client.CommitRecords(ctx, records...); err != nil {
+				kl.logger.Error().Err(err).Msg("Failed to commit records")
 			} else {
-				kl.logger.Info().Msg("No active topics found. Retrying in 5 minutes...")
+				kl.logger.Info().Msgf("Committed %d records manually", len(records))
 			}
-			time.Sleep(5 * time.Minute)
-		}
-	}
-}
-
-// listen starts goroutines to listen for data messages, alert updates, and topic subscriptions.
-// It runs until the provided context is cancelled.
-//
-// Parameters:
-//
-//	ctx - context for managing lifecycle of the listener
-func (kl *KafkaListener) listen(ctx context.Context) {
-	go kl.listenForDataMessages(ctx)
-	go kl.listenForAlertUpdates(ctx)
-	go kl.subscribeToTopics(ctx)
-
-	<-ctx.Done()
-	kl.shutdown()
-}
-
-// listenForDataMessages reads messages from the data consumer and processes valid JSON messages.
-// It unmarshals the messages into DebeziumPayload structs and calls processDataMessage.
-//
-// Parameters:
-//
-//	ctx - context for managing lifecycle of the message listening
-func (kl *KafkaListener) listenForDataMessages(ctx context.Context) {
-	for kl.running {
-		select {
-		case <-ctx.Done():
-			return
-		default:
-			msg, err := kl.dataConsumer.ReadMessage(10 * time.Millisecond)
-			if err == nil {
-				if json.Valid(msg.Value) {
-					var payload DebeziumPayload
-					if err := json.Unmarshal(msg.Value, &payload); err != nil {
-						kl.logger.Err(err).Msg("Failed to unmarshal JSON message")
-						continue
-					}
-					kl.processDataMessage(ctx, msg, payload)
-				} else {
-					kl.logger.Info().Msgf("Received invalid JSON message: %s", string(msg.Value))
-				}
-			} else if kafkaErr, ok := err.(kafka.Error); ok && kafkaErr.Code() != kafka.ErrTimedOut {
-				kl.logger.Err(err).Msg("Error reading data message")
+		case pkg.ManualCommitUncommitted:
+			if err := kl.client.CommitUncommittedOffsets(ctx); err != nil {
+				kl.logger.Error().Err(err).Msg("Failed to commit uncommitted offsets")
+			} else {
+				kl.logger.Info().Msgf("Committed uncommitted offsets for %d records", len(records))
 			}
 		}
 	}
 }
 
-// processDataMessage processes a Debezium payload message. It matches the message with active
-// subscriptions and sends it if relevant to the subscription's topic and organization.
-//
-// Parameters:
-//
-//	ctx - context for managing lifecycle of the message processing
-//	msg - Kafka message containing the Debezium payload
-//	payload - unmarshaled Debezium payload
-func (kl *KafkaListener) processDataMessage(ctx context.Context, msg *kafka.Message, payload DebeziumPayload) {
-	topicName := ""
-	if msg.TopicPartition.Topic != nil {
-		topicName = *msg.TopicPartition.Topic
+func (kl *KafkaListener) processRecord(ctx context.Context, record *kgo.Record) {
+	if record.Topic == globalAlertUpdateTopic {
+		kl.handleAlertUpdate(ctx, record)
+	} else {
+		kl.handleDataMessage(ctx, record)
 	}
+}
+
+func (kl *KafkaListener) handleDataMessage(ctx context.Context, record *kgo.Record) {
+	if !json.Valid(record.Value) {
+		kl.logger.Info().Msgf("Received invalid JSON message: %s", string(record.Value))
+		return
+	}
+
+	payload, err := ParseDebeziumPayload(record.Value)
+	if err != nil {
+		kl.logger.Err(err).Msg("Failed to parse Debezium payload")
+		return
+	}
+
+	kl.processDataMessage(ctx, record, *payload)
+}
+
+func (kl *KafkaListener) processDataMessage(ctx context.Context, record *kgo.Record, payload DebeziumPayload) {
+	kl.logger.Info().Str("topicName", record.Topic).Msg("Processing message for topic")
 
 	subscriptions, err := kl.subscriptionService.GetActiveSubscriptions(ctx)
 	if err != nil {
@@ -243,24 +175,31 @@ func (kl *KafkaListener) processDataMessage(ctx context.Context, msg *kafka.Mess
 
 	organizationID, ok := payload.After["organization_id"].(string)
 	if !ok || organizationID == "" {
-		kl.logger.Err(fmt.Errorf("organization ID not found in Debezium payload: %v", payload.After)).Msg("")
+		kl.logger.Error().Interface("payload", payload).Msg("Organization ID not found in Debezium payload")
 		return
 	}
 
 	for _, sub := range subscriptions {
-		if kl.subscriptionService.MatchesSubscription(sub, payload) && sub.TopicName == topicName && sub.OrganizationID == organizationID {
+		if kl.subscriptionService.MatchesSubscription(sub, payload) &&
+			sub.TopicName == record.Topic &&
+			sub.OrganizationID == organizationID {
 			kl.sendMessage(sub, payload)
 		}
 	}
 }
 
-// loadEmailTemplate reads and parses the email template from a file.
-// It returns the parsed template or an error if the template cannot be read or parsed.
-//
-// Returns:
-//
-//	*template.Template - parsed email template
-//	error - an error if the template cannot be read or parsed
+func (kl *KafkaListener) sendMessage(sub Subscription, payload DebeziumPayload) {
+	switch sub.DeliveryMethod {
+	case Email:
+		kl.logger.Info().Msgf("Sending email for subscription: %v", sub)
+		kl.sendEmail(sub, payload)
+	case Local, API, SMS:
+		kl.logger.Info().Msgf("Delivery method not yet implemented: %s", sub.DeliveryMethod)
+	default:
+		kl.logger.Info().Msgf("Unsupported delivery method: %s", sub.DeliveryMethod)
+	}
+}
+
 func (kl *KafkaListener) loadEmailTemplate() (*template.Template, error) {
 	emailTemplate, err := os.ReadFile("web/templates/table_change_alert.html.tmpl")
 	if err != nil {
@@ -277,22 +216,15 @@ func (kl *KafkaListener) loadEmailTemplate() (*template.Template, error) {
 	return tmpl, nil
 }
 
-// sendMessage sends an email based on the provided subscription and Debezium payload.
-// It uses the email template to format the message and sends it to the subscription's recipients.
-//
-// Parameters:
-//
-//	sub - subscription details for the message
-//	payload - Debezium payload containing the data to send
-func (kl *KafkaListener) sendMessage(sub Subscription, payload DebeziumPayload) {
+func (kl *KafkaListener) sendEmail(sub Subscription, payload DebeziumPayload) {
 	tmpl, err := kl.loadEmailTemplate()
 	if err != nil {
-		log.Printf("Failed to parse email template: %v", err)
+		kl.logger.Err(err).Msg("Failed to load email template")
 		return
 	}
 
 	var buf bytes.Buffer
-	if err := tmpl.Execute(&buf, payload); err != nil {
+	if err = tmpl.Execute(&buf, payload); err != nil {
 		kl.logger.Err(err).Msg("Failed to execute email template")
 		return
 	}
@@ -308,109 +240,44 @@ func (kl *KafkaListener) sendMessage(sub Subscription, payload DebeziumPayload) 
 	e.Subject = subjectName
 	e.HTML = buf.Bytes()
 
-	// TODO(WOLFRED): Add support for other delivery methods.
-	switch sub.DeliveryMethod {
-	case "Email":
-		recipients := strings.Split(sub.EmailRecipients, ",")
-		e.To = recipients
-		kl.batchEmailer.AddEmail(e)
-	case "Local":
-		// We can probably transmit this via API to the local server and store it in the user inbox?
-		// We could have it pass the notice via a kafka topic to the main application and then that manage the notification refresh?
-		// Or we can use a local storage mechanism to store the notification and then have the main application poll for new notifications?
-	case "Api":
-		// We can batch API request similar to emails to whatever endpoint the user has configured.
-	case "Sms":
-		// This one is easy, we just need to find a way to send SMS messages.
-	default:
-		kl.logger.Info().Msgf("Unsupported delivery method: %s", sub.DeliveryMethod)
+	recipients := strings.Split(sub.EmailRecipients, ",")
+	e.To = recipients
+	kl.batchEmailer.AddEmail(e)
+}
+
+func (kl *KafkaListener) handleAlertUpdate(ctx context.Context, record *kgo.Record) {
+	kl.logger.Info().Msgf("Alert update message on %s: %s", record.Topic, string(record.Value))
+
+	kl.subscriptionService.InvalidateCache(ctx)
+
+	if err := kl.updateTopics(ctx); err != nil {
+		kl.logger.Err(err).Msg("Failed to update topics after alert update")
 	}
 }
 
-// listenForAlertUpdates reads messages from the alert update consumer and processes them.
-// It invalidates the cache and updates the subscriptions when an alert update is received.
-//
-// Parameters:
-//
-//	ctx - context for managing lifecycle of the alert update listening
-func (kl *KafkaListener) listenForAlertUpdates(ctx context.Context) {
-	for kl.running {
-		select {
-		case <-ctx.Done():
-			return
-		default:
-			msg, err := kl.alertUpdateConsumer.ReadMessage(100 * time.Millisecond)
-			if err == nil {
-				kl.logger.Info().Msgf("Alert update message on %s: %s", msg.TopicPartition, msg.String())
-
-				// Invalidate cache and re-fetch subscriptions
-				kl.subscriptionService.InvalidateCache(ctx)
-
-				subscriptions, err := kl.subscriptionService.GetActiveSubscriptions(ctx)
-				if err != nil {
-					kl.logger.Err(err).Msg("Failed to get active subscriptions")
-					continue
-				}
-
-				topicsMap := make(map[string]struct{})
-				for _, sub := range subscriptions {
-					topicsMap[sub.TopicName] = struct{}{}
-				}
-
-				var topics []string
-				for topic := range topicsMap {
-					topics = append(topics, topic)
-				}
-
-				if len(topics) > 0 {
-					kl.logger.Info().Msgf("Updating subscriptions to: %v", topics)
-					if err := kl.dataConsumer.SubscribeTopics(topics, nil); err != nil {
-						kl.logger.Info().Msgf("Failed to update topic subscriptions: %v", err)
-					}
-				}
-			} else if kafkaErr, ok := err.(kafka.Error); ok && kafkaErr.Code() != kafka.ErrTimedOut {
-				kl.logger.Err(err).Msg("Error reading alert update message")
-			}
-		}
-	}
-}
-
-// shutdown gracefully shuts down the KafkaListener by closing the Kafka consumers
-// and stopping the listener. It ensures that the listener is no longer running and logs the shutdown status.
 func (kl *KafkaListener) shutdown() {
 	kl.mu.Lock()
 	defer kl.mu.Unlock()
 	if !kl.running {
 		return
 	}
-	log.Println("Shutting down Kafka listener...")
-	kl.batchEmailer.Stop() // Ensure all batched emails are sent
-	if err := kl.dataConsumer.Close(); err != nil {
-		kl.logger.Printf("Error closing data consumer: %v\n", err)
-	}
-	if err := kl.alertUpdateConsumer.Close(); err != nil {
-		kl.logger.Error().Err(err).Msg("Error closing alert update consumer")
-	}
+	kl.logger.Info().Msg("Shutting down Kafka listener...")
+	kl.batchEmailer.Stop()
+	kl.client.Close()
 	kl.running = false
 	kl.logger.Info().Msg("Kafka listener shutdown successfully")
 }
 
-// StartListener initializes and starts the KafkaListener with the provided subscription service.
-// It runs until an interrupt signal is received, at which point it shuts down the listener.
-//
-// Parameters:
-//
-//	subService - SubscriptionService for managing subscriptions
-func StartListener(subService *SubscriptionService, logger *zerolog.Logger) {
-	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+func StartListener(brokers []string, group string, commitStyle pkg.CommitStyle, subService *SubscriptionService, emailService *EmailService, logger *zerolog.Logger) {
+	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	alertUpdateTopic := "trenova_app.public.table_change_alerts"
-	listener, err := NewKafkaListener(ctx, alertUpdateTopic, subService, logger)
+	listener, err := NewKafkaListener(ctx, brokers, group, commitStyle, subService, emailService, logger)
 	if err != nil {
-		log.Fatalf("Failed to initialize Kafka listener: %v", err)
+		logger.Fatal().Err(err).Msg("Failed to initialize Kafka listener")
 	}
 
+	// Wait for interrupt signal
 	<-ctx.Done()
 	listener.shutdown()
 }

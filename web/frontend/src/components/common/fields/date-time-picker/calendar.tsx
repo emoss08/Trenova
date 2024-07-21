@@ -21,7 +21,6 @@ import {
   faChevronLeft,
   faChevronRight,
 } from "@fortawesome/pro-solid-svg-icons";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   CalendarDate,
   isToday as _isToday,
@@ -40,6 +39,7 @@ import {
   useLocale,
 } from "react-aria";
 import { CalendarState, useCalendarState } from "react-stately";
+import { Icon } from "../../icons";
 
 function Calendar(props: CalendarProps<DateValue>) {
   const prevButtonRef = React.useRef<HTMLButtonElement | null>(null);
@@ -77,7 +77,7 @@ function Calendar(props: CalendarProps<DateValue>) {
             "absolute left-1 h-7 w-7 bg-transparent p-0 opacity-50 hover:opacity-100",
           )}
         >
-          <FontAwesomeIcon icon={faChevronLeft} className="size-4" />
+          <Icon icon={faChevronLeft} className="size-4" />
         </Button>
         <div className="text-sm font-medium">{title}</div>
         <Button
@@ -88,7 +88,7 @@ function Calendar(props: CalendarProps<DateValue>) {
             "absolute right-1 h-7 w-7 bg-transparent p-0 opacity-50 hover:opacity-100",
           )}
         >
-          <FontAwesomeIcon icon={faChevronRight} className="size-4" />
+          <Icon icon={faChevronRight} className="size-4" />
         </Button>
       </div>
       <CalendarGrid state={state} />
@@ -116,7 +116,7 @@ function CalendarGrid({ state, ...props }: CalendarGridProps) {
         <tr className="flex">
           {weekDays.map((day, index) => (
             <th
-              className="w-9 rounded-md text-[0.8rem] font-normal text-muted-foreground"
+              className="text-muted-foreground w-9 rounded-md text-[0.8rem] font-normal"
               key={index}
             >
               {day}
@@ -195,3 +195,4 @@ function CalendarCell({ state, date }: CalendarCellProps) {
 }
 
 export { Calendar };
+

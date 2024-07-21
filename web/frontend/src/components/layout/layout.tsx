@@ -16,7 +16,7 @@
  */
 
 import { CookieConsent } from "@/components/layout/cookie-consent";
-import { SearchButton, SiteSearch } from "@/components/layout/site-search";
+import { SearchButton } from "@/components/layout/site-search";
 import { RainbowTopBar } from "@/components/layout/topbar";
 import { UserAvatarMenu } from "@/components/layout/user-avatar-menu";
 import { useQueryInvalidationListener } from "@/hooks/useBroadcast";
@@ -28,6 +28,7 @@ import { useLocation } from "react-router-dom";
 import MainAsideMenu, { AsideMenuDialog } from "./aside-menu";
 import { Breadcrumb } from "./breadcrumb";
 import { NotificationMenu } from "./notification_menu/notification-menu";
+import { SiteSearchDialog } from "./site-search-dialog";
 
 /**
  * Layout component that provides a common structure for protected pages.
@@ -68,7 +69,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
           )}
           <main className="flex-1 overflow-auto px-6">
             <Breadcrumb />
-            <SiteSearch />
+            <SiteSearchDialog />
             {children}
           </main>
         </div>

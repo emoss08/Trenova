@@ -65,7 +65,7 @@ func TestCommentTypeService(t *testing.T) {
 	t.Run("GetAll", func(t *testing.T) {
 		// Create multiple AccessorialCharges
 		for i := 0; i < 5; i++ {
-			_, err := service.Create(ctx, createTestCommentType(fmt.Sprintf("CODE%d", i)))
+			_, err = service.Create(ctx, createTestCommentType(fmt.Sprintf("CODE%d", i)))
 			require.NoError(t, err)
 		}
 
@@ -106,7 +106,7 @@ func TestCommentTypeService(t *testing.T) {
 		for _, code := range codes {
 			charge := createTestCommentType(code)
 			charge.Name = code
-			_, err := service.Create(ctx, charge)
+			_, err = service.Create(ctx, charge)
 			require.NoError(t, err)
 		}
 

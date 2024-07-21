@@ -13,8 +13,21 @@
 -- Change License as the GPL Version 2.0 or a compatible license, specifying an Additional Use
 -- Grant, and not modifying the license in any other way.
 
-SET
-    statement_timeout = 0;
 
-SELECT
-    1;
+DROP TABLE IF EXISTS "tractor_assignments" CASCADE;
+
+--bun:split
+
+DROP INDEX IF EXISTS idx_tractor_assignments_org_bu CASCADE;
+
+--bun:split
+
+DROP INDEX IF EXISTS idx_tractor_assignments_shipment CASCADE;
+
+--bun:split
+
+DROP INDEX IF EXISTS idx_tractor_assignments_shipment_move CASCADE;
+
+--bun:split
+
+DROP INDEX IF EXISTS idx_tractor_assignments_tractor CASCADE;

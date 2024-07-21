@@ -16,9 +16,6 @@ ENV GOARCH=amd64
 # Copy go.mod and go.sum files
 COPY go.mod go.sum ./
 
-# Explicitly download the Kafka package with musl tag
-RUN go get -tags musl -u github.com/confluentinc/confluent-kafka-go/v2/kafka
-
 # Download all dependencies
 RUN go mod tidy
 RUN go mod download

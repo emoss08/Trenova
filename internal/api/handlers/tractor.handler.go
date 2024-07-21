@@ -19,6 +19,7 @@ import (
 	"fmt"
 
 	"github.com/emoss08/trenova/pkg/audit"
+	"github.com/emoss08/trenova/pkg/constants"
 	"github.com/emoss08/trenova/pkg/models/property"
 
 	"github.com/emoss08/trenova/internal/api/services"
@@ -73,18 +74,18 @@ func (h TractorHandler) Get() fiber.Handler {
 				Instance: fmt.Sprintf("%s/probs/validation-error", c.BaseURL()),
 				InvalidParams: []types.InvalidParam{
 					{
-						Name:   "limit",
-						Reason: "Limit must be a positive integer",
+						Name:   constants.FieldLimit,
+						Reason: constants.ReasonMustBePositiveInteger,
 					},
 					{
-						Name:   "offset",
-						Reason: "Offset must be a positive integer",
+						Name:   constants.FieldOffset,
+						Reason: constants.ReasonMustBePositiveInteger,
 					},
 				},
 			})
 		}
 
-		if err = h.permissionService.CheckUserPermission(c, "tractor", "view"); err != nil {
+		if err = h.permissionService.CheckUserPermission(c, constants.EntityTractor, constants.ActionView); err != nil {
 			return c.Status(fiber.StatusForbidden).JSON(fiber.Error{
 				Code:    fiber.StatusForbidden,
 				Message: err.Error(),
@@ -113,20 +114,12 @@ func (h TractorHandler) Get() fiber.Handler {
 
 		// Parse the expand equipment details filter
 		if expandEquipDetails := c.Query("expandEquipDetails"); expandEquipDetails != "" {
-			if expandEquipDetails == "true" {
-				filter.ExpandEquipDetails = true
-			} else {
-				filter.ExpandEquipDetails = false
-			}
+			filter.ExpandEquipDetails = expandEquipDetails == constants.QueryParamTrue
 		}
 
 		// Parse the expand worker details filter
 		if expandWorkerDetails := c.Query("expandWorkerDetails"); expandWorkerDetails != "" {
-			if expandWorkerDetails == "true" {
-				filter.ExpandWorkerDetails = true
-			} else {
-				filter.ExpandWorkerDetails = false
-			}
+			filter.ExpandWorkerDetails = expandWorkerDetails == constants.QueryParamTrue
 		}
 
 		entities, cnt, err := h.service.GetAll(c.UserContext(), filter)
@@ -165,7 +158,7 @@ func (h TractorHandler) GetByID() fiber.Handler {
 			})
 		}
 
-		if err = h.permissionService.CheckUserPermission(c, "tractor", "view"); err != nil {
+		if err = h.permissionService.CheckUserPermission(c, constants.EntityTractor, constants.ActionView); err != nil {
 			return c.Status(fiber.StatusForbidden).JSON(fiber.Error{
 				Code:    fiber.StatusForbidden,
 				Message: err.Error(),
@@ -194,7 +187,7 @@ func (h TractorHandler) Create() fiber.Handler {
 
 		createdEntity := new(models.Tractor)
 
-		if err = h.permissionService.CheckUserPermission(c, "tractor", "create"); err != nil {
+		if err = h.permissionService.CheckUserPermission(c, constants.EntityTractor, constants.ActionCreate); err != nil {
 			return c.Status(fiber.StatusForbidden).JSON(fiber.Error{
 				Code:    fiber.StatusForbidden,
 				Message: err.Error(),
@@ -215,7 +208,7 @@ func (h TractorHandler) Create() fiber.Handler {
 			return c.Status(fiber.StatusInternalServerError).JSON(resp)
 		}
 
-		go h.auditService.LogAction("tractors", entity.ID.String(), property.AuditLogActionCreate, entity, ids.UserID, ids.OrganizationID, ids.BusinessUnitID)
+		go h.auditService.LogAction(constants.TableTractor, entity.ID.String(), property.AuditLogActionCreate, entity, ids.UserID, ids.OrganizationID, ids.BusinessUnitID)
 
 		return c.Status(fiber.StatusCreated).JSON(entity)
 	}
@@ -236,7 +229,7 @@ func (h TractorHandler) Update() fiber.Handler {
 			})
 		}
 
-		if err = h.permissionService.CheckUserPermission(c, "tractor", "update"); err != nil {
+		if err = h.permissionService.CheckUserPermission(c, constants.EntityTractor, constants.ActionUpdate); err != nil {
 			return c.Status(fiber.StatusForbidden).JSON(fiber.Error{
 				Code:    fiber.StatusForbidden,
 				Message: err.Error(),
@@ -258,7 +251,7 @@ func (h TractorHandler) Update() fiber.Handler {
 			return c.Status(fiber.StatusInternalServerError).JSON(resp)
 		}
 
-		go h.auditService.LogAction("tractors", entity.ID.String(), property.AuditLogActionUpdate, entity, ids.UserID, ids.OrganizationID, ids.BusinessUnitID)
+		go h.auditService.LogAction(constants.TableTractor, entity.ID.String(), property.AuditLogActionUpdate, entity, ids.UserID, ids.OrganizationID, ids.BusinessUnitID)
 
 		return c.Status(fiber.StatusOK).JSON(entity)
 	}

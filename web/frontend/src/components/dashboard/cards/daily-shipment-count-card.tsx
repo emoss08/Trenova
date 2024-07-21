@@ -15,6 +15,7 @@
  * Grant, and not modifying the license in any other way.
  */
 
+import { Icon } from "@/components/common/icons";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -32,14 +33,13 @@ import {
   faArrowDownArrowUp,
   faClock,
 } from "@fortawesome/pro-regular-svg-icons";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { Point, ResponsiveLine } from "@nivo/line";
 import { useMemo } from "react";
 
 function LineChartTooltip({ point }: { point: Point }) {
   return (
-    <div className="rounded-lg border border-border bg-background p-2 shadow-md">
-      <p className="border-b border-border text-sm font-semibold">
+    <div className="border-border bg-background rounded-lg border p-2 shadow-md">
+      <p className="border-border border-b text-sm font-semibold">
         {point.data.xFormatted}
       </p>
       <div className="flex items-center text-sm">
@@ -139,15 +139,15 @@ export default function DailyShipmentCounts() {
         <ComponentLoader className="h-[40vh]" />
       ) : (
         <CardContent className="relative p-0">
-          <div className="flex items-start justify-between border-b border-dashed border-border p-4">
+          <div className="border-border flex items-start justify-between border-b border-dashed p-4">
             <div>
               <div className="flex items-center">
                 <p className="text-2xl font-bold">{data?.count || "--"}</p>
-                <span className="ml-2 text-xs font-normal text-muted-foreground">
+                <span className="text-muted-foreground ml-2 text-xs font-normal">
                   {dateDisplay}
                 </span>
               </div>
-              <h2 className="font-semibold text-muted-foreground">
+              <h2 className="text-muted-foreground font-semibold">
                 Daily Shipment Count
               </h2>
             </div>
@@ -156,7 +156,7 @@ export default function DailyShipmentCounts() {
               variant="outline"
               className="absolute right-52 top-4"
             >
-              <FontAwesomeIcon icon={faArrowDownArrowUp} className="mr-2" />
+              <Icon icon={faArrowDownArrowUp} className="mr-2" />
               Sorted by
               <Badge withDot={false} variant="purple" className="ml-2">
                 Created At
@@ -167,7 +167,7 @@ export default function DailyShipmentCounts() {
               variant="outline"
               className="absolute right-4 top-4"
             >
-              <FontAwesomeIcon icon={faClock} className="mr-2" />
+              <Icon icon={faClock} className="mr-2" />
               Last
               <Badge withDot={false} variant="info" className="ml-2">
                 Last 30 days
@@ -177,9 +177,9 @@ export default function DailyShipmentCounts() {
           {hasChartData ? (
             <LineChart data={formattedData} />
           ) : (
-            <div className="m-5 flex h-[30vh] flex-col items-center justify-center rounded-md border border-border bg-muted/50">
-              <FontAwesomeIcon icon={faChartSimple} className="mb-2 text-2xl" />
-              <h3 className="font-semibold text-foreground">No data to show</h3>
+            <div className="border-border bg-muted/50 m-5 flex h-[30vh] flex-col items-center justify-center rounded-md border">
+              <Icon icon={faChartSimple} className="mb-2 text-2xl" />
+              <h3 className="text-foreground font-semibold">No data to show</h3>
               <p className="text-muted-foreground">
                 May be due to lack of shipments.
               </p>

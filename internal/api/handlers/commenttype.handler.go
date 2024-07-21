@@ -22,6 +22,7 @@ import (
 	"github.com/emoss08/trenova/internal/server"
 	"github.com/emoss08/trenova/internal/types"
 	"github.com/emoss08/trenova/pkg/audit"
+	"github.com/emoss08/trenova/pkg/constants"
 	"github.com/emoss08/trenova/pkg/models"
 	"github.com/emoss08/trenova/pkg/models/property"
 	"github.com/emoss08/trenova/pkg/utils"
@@ -71,18 +72,18 @@ func (h CommentTypeHandler) Get() fiber.Handler {
 				Instance: fmt.Sprintf("%s/probs/validation-error", c.BaseURL()),
 				InvalidParams: []types.InvalidParam{
 					{
-						Name:   "limit",
-						Reason: "Limit must be a positive integer",
+						Name:   constants.FieldLimit,
+						Reason: constants.ReasonMustBePositiveInteger,
 					},
 					{
-						Name:   "offset",
-						Reason: "Offset must be a positive integer",
+						Name:   constants.FieldOffset,
+						Reason: constants.ReasonMustBePositiveInteger,
 					},
 				},
 			})
 		}
 
-		if err = h.permissionService.CheckUserPermission(c, "comment_type", "view"); err != nil {
+		if err = h.permissionService.CheckUserPermission(c, constants.EntityCommentType, constants.ActionView); err != nil {
 			return c.Status(fiber.StatusForbidden).JSON(fiber.Error{
 				Code:    fiber.StatusForbidden,
 				Message: err.Error(),
@@ -118,6 +119,41 @@ func (h CommentTypeHandler) Get() fiber.Handler {
 	}
 }
 
+func (h CommentTypeHandler) GetByID() fiber.Handler {
+	return func(c *fiber.Ctx) error {
+		ids, err := utils.ExtractAndHandleContextIDs(c)
+		if err != nil {
+			return err
+		}
+
+		commenttypeID := c.Params("commenttypeID")
+		if commenttypeID == "" {
+			return c.Status(fiber.StatusBadRequest).JSON(fiber.Error{
+				Code:    fiber.StatusBadRequest,
+				Message: "CommentType ID is required",
+			})
+		}
+
+		if err = h.permissionService.CheckUserPermission(c, constants.EntityCommentType, constants.ActionView); err != nil {
+			return c.Status(fiber.StatusForbidden).JSON(fiber.Error{
+				Code:    fiber.StatusForbidden,
+				Message: err.Error(),
+			})
+		}
+
+		entity, err := h.service.Get(c.UserContext(), uuid.MustParse(commenttypeID), ids.OrganizationID, ids.BusinessUnitID)
+		if err != nil {
+			h.logger.Error().Err(err).Msg("Failed to get CommentType")
+			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Error{
+				Code:    fiber.StatusInternalServerError,
+				Message: err.Error(),
+			})
+		}
+
+		return c.Status(fiber.StatusOK).JSON(entity)
+	}
+}
+
 func (h CommentTypeHandler) Create() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		ids, err := utils.ExtractAndHandleContextIDs(c)
@@ -127,7 +163,7 @@ func (h CommentTypeHandler) Create() fiber.Handler {
 
 		createdEntity := new(models.CommentType)
 
-		if err = h.permissionService.CheckUserPermission(c, "comment_type", "create"); err != nil {
+		if err = h.permissionService.CheckUserPermission(c, constants.EntityCommentType, constants.ActionCreate); err != nil {
 			return c.Status(fiber.StatusForbidden).JSON(fiber.Error{
 				Code:    fiber.StatusForbidden,
 				Message: err.Error(),
@@ -148,44 +184,9 @@ func (h CommentTypeHandler) Create() fiber.Handler {
 			return c.Status(fiber.StatusInternalServerError).JSON(resp)
 		}
 
+		go h.auditService.LogAction(constants.TableCommentType, entity.ID.String(), property.AuditLogActionCreate, entity, ids.UserID, ids.OrganizationID, ids.BusinessUnitID)
+
 		return c.Status(fiber.StatusCreated).JSON(entity)
-	}
-}
-
-func (h CommentTypeHandler) GetByID() fiber.Handler {
-	return func(c *fiber.Ctx) error {
-		ids, err := utils.ExtractAndHandleContextIDs(c)
-		if err != nil {
-			return err
-		}
-
-		commenttypeID := c.Params("commenttypeID")
-		if commenttypeID == "" {
-			return c.Status(fiber.StatusBadRequest).JSON(fiber.Error{
-				Code:    fiber.StatusBadRequest,
-				Message: "CommentType ID is required",
-			})
-		}
-
-		if err = h.permissionService.CheckUserPermission(c, "comment_type", "view"); err != nil {
-			return c.Status(fiber.StatusForbidden).JSON(fiber.Error{
-				Code:    fiber.StatusForbidden,
-				Message: err.Error(),
-			})
-		}
-
-		entity, err := h.service.Get(c.UserContext(), uuid.MustParse(commenttypeID), ids.OrganizationID, ids.BusinessUnitID)
-		if err != nil {
-			h.logger.Error().Err(err).Msg("Failed to get CommentType")
-			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Error{
-				Code:    fiber.StatusInternalServerError,
-				Message: err.Error(),
-			})
-		}
-
-		go h.auditService.LogAction("comment_types", entity.ID.String(), property.AuditLogActionCreate, entity, ids.UserID, ids.OrganizationID, ids.BusinessUnitID)
-
-		return c.Status(fiber.StatusOK).JSON(entity)
 	}
 }
 
@@ -204,7 +205,7 @@ func (h CommentTypeHandler) Update() fiber.Handler {
 			})
 		}
 
-		if err = h.permissionService.CheckUserPermission(c, "comment_type", "update"); err != nil {
+		if err = h.permissionService.CheckUserPermission(c, constants.EntityCommentType, constants.ActionUpdate); err != nil {
 			return c.Status(fiber.StatusForbidden).JSON(fiber.Error{
 				Code:    fiber.StatusForbidden,
 				Message: err.Error(),
@@ -226,7 +227,7 @@ func (h CommentTypeHandler) Update() fiber.Handler {
 			return c.Status(fiber.StatusInternalServerError).JSON(resp)
 		}
 
-		go h.auditService.LogAction("comment_types", entity.ID.String(), property.AuditLogActionUpdate, entity, ids.UserID, ids.OrganizationID, ids.BusinessUnitID)
+		go h.auditService.LogAction(constants.TableCommentType, entity.ID.String(), property.AuditLogActionUpdate, entity, ids.UserID, ids.OrganizationID, ids.BusinessUnitID)
 
 		return c.Status(fiber.StatusOK).JSON(entity)
 	}

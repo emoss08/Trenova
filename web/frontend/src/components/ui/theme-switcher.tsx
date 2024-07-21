@@ -24,7 +24,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useTheme } from "@/components/ui/theme-provider";
 import { faMoonStars, faSun } from "@fortawesome/pro-duotone-svg-icons";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { Icon } from "../common/icons";
 
 export function ModeToggle() {
   const { setTheme } = useTheme();
@@ -33,11 +33,11 @@ export function ModeToggle() {
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Button variant="outline" size="icon">
-          <FontAwesomeIcon
+          <Icon
             icon={faSun}
             className="size-[1.2rem] rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0"
           />
-          <FontAwesomeIcon
+          <Icon
             icon={faMoonStars}
             className="absolute size-[1.2rem] rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100"
           />

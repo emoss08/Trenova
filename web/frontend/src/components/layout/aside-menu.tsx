@@ -29,7 +29,6 @@ import { cn } from "@/lib/utils";
 import { useHeaderStore } from "@/stores/HeaderStore";
 import { MenuData, NavLinkGroup, type LinkData } from "@/types/sidebar-nav";
 import { faGrid2, faMinus, faPlus } from "@fortawesome/pro-regular-svg-icons";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { ChevronLeft, ChevronRight, MenuIcon } from "lucide-react";
 import {
   createContext,
@@ -41,6 +40,7 @@ import {
   useState,
 } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
+import { Icon } from "../common/icons";
 import { Button } from "../ui/button";
 import {
   DropdownMenu,
@@ -269,14 +269,14 @@ const LinksComponent = ({
                   <span className="text-sm">{linkItem.label}</span>
                 </div>
                 {openSubMenu === linkItem.menuKey ? (
-                  <FontAwesomeIcon
+                  <Icon
                     icon={faMinus}
                     className={cn(
                       "size-3 transition-transform duration-300 ease-in-out",
                     )}
                   />
                 ) : (
-                  <FontAwesomeIcon
+                  <Icon
                     icon={faPlus}
                     className={cn(
                       "size-3 transition-transform duration-300 ease-in-out",
@@ -363,7 +363,7 @@ export function AsideMenu() {
       menuKey: "dashboardMenu",
       label: "Dashboard",
       link: "/",
-      icon: <FontAwesomeIcon icon={faGrid2} />,
+      icon: <Icon icon={faGrid2} />,
     },
     {
       menuKey: "billingMenu",

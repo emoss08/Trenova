@@ -22,6 +22,7 @@ import (
 	"github.com/emoss08/trenova/internal/server"
 	"github.com/emoss08/trenova/internal/types"
 	"github.com/emoss08/trenova/pkg/audit"
+	"github.com/emoss08/trenova/pkg/constants"
 	"github.com/emoss08/trenova/pkg/models"
 	"github.com/emoss08/trenova/pkg/models/property"
 	"github.com/emoss08/trenova/pkg/utils"
@@ -71,18 +72,18 @@ func (h QualifierCodeHandler) Get() fiber.Handler {
 				Instance: fmt.Sprintf("%s/probs/validation-error", c.BaseURL()),
 				InvalidParams: []types.InvalidParam{
 					{
-						Name:   "limit",
-						Reason: "Limit must be a positive integer",
+						Name:   constants.FieldLimit,
+						Reason: constants.ReasonMustBePositiveInteger,
 					},
 					{
-						Name:   "offset",
-						Reason: "Offset must be a positive integer",
+						Name:   constants.FieldOffset,
+						Reason: constants.ReasonMustBePositiveInteger,
 					},
 				},
 			})
 		}
 
-		if err = h.permissionService.CheckUserPermission(c, "qualifier_code", "view"); err != nil {
+		if err = h.permissionService.CheckUserPermission(c, constants.EntityQualifierCode, constants.ActionView); err != nil {
 			return c.Status(fiber.StatusForbidden).JSON(fiber.Error{
 				Code:    fiber.StatusForbidden,
 				Message: err.Error(),
@@ -133,7 +134,7 @@ func (h QualifierCodeHandler) GetByID() fiber.Handler {
 			})
 		}
 
-		if err = h.permissionService.CheckUserPermission(c, "qualifier_code", "view"); err != nil {
+		if err = h.permissionService.CheckUserPermission(c, constants.EntityQualifierCode, constants.ActionView); err != nil {
 			return c.Status(fiber.StatusForbidden).JSON(fiber.Error{
 				Code:    fiber.StatusForbidden,
 				Message: err.Error(),
@@ -162,7 +163,7 @@ func (h QualifierCodeHandler) Create() fiber.Handler {
 
 		createdEntity := new(models.QualifierCode)
 
-		if err = h.permissionService.CheckUserPermission(c, "qualifier_code", "create"); err != nil {
+		if err = h.permissionService.CheckUserPermission(c, constants.EntityQualifierCode, constants.ActionCreate); err != nil {
 			return c.Status(fiber.StatusForbidden).JSON(fiber.Error{
 				Code:    fiber.StatusForbidden,
 				Message: err.Error(),
@@ -183,7 +184,7 @@ func (h QualifierCodeHandler) Create() fiber.Handler {
 			return c.Status(fiber.StatusInternalServerError).JSON(resp)
 		}
 
-		go h.auditService.LogAction("qualifier_codes", entity.ID.String(), property.AuditLogActionCreate, entity, ids.UserID, ids.OrganizationID, ids.BusinessUnitID)
+		go h.auditService.LogAction(constants.TableQualifierCode, entity.ID.String(), property.AuditLogActionCreate, entity, ids.UserID, ids.OrganizationID, ids.BusinessUnitID)
 
 		return c.Status(fiber.StatusCreated).JSON(entity)
 	}
@@ -204,7 +205,7 @@ func (h QualifierCodeHandler) Update() fiber.Handler {
 			})
 		}
 
-		if err = h.permissionService.CheckUserPermission(c, "qualifier_code", "update"); err != nil {
+		if err = h.permissionService.CheckUserPermission(c, constants.EntityQualifierCode, constants.ActionUpdate); err != nil {
 			return c.Status(fiber.StatusForbidden).JSON(fiber.Error{
 				Code:    fiber.StatusForbidden,
 				Message: err.Error(),
@@ -226,7 +227,7 @@ func (h QualifierCodeHandler) Update() fiber.Handler {
 			return c.Status(fiber.StatusInternalServerError).JSON(resp)
 		}
 
-		go h.auditService.LogAction("locations", entity.ID.String(), property.AuditLogActionUpdate, entity, ids.UserID, ids.OrganizationID, ids.BusinessUnitID)
+		go h.auditService.LogAction(constants.TableQualifierCode, entity.ID.String(), property.AuditLogActionUpdate, entity, ids.UserID, ids.OrganizationID, ids.BusinessUnitID)
 
 		return c.Status(fiber.StatusOK).JSON(entity)
 	}
