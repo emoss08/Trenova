@@ -26,12 +26,12 @@ import {
   faChevronsLeft,
   faChevronsRight,
 } from "@fortawesome/pro-duotone-svg-icons";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { PaginationState, Table } from "@tanstack/react-table";
 import {
   faChevronLeft,
   faChevronRight,
 } from "@fortawesome/pro-solid-svg-icons";
+import { PaginationState, Table } from "@tanstack/react-table";
+import { Icon } from "../icons";
 
 type DataTablePaginationProps<TData> = {
   table: Table<TData>;
@@ -52,7 +52,7 @@ export function DataTablePagination<TData>({
   return table.getPageCount() > 0 ? (
     <div className="flex items-center justify-between py-4">
       <div className="hidden sm:block">
-        <p className="text-sm text-muted-foreground">
+        <p className="text-muted-foreground text-sm">
           Showing <span className="font-medium">{fromValue}</span> to&nbsp;
           <span className="font-medium">{toValue}</span> of&nbsp;
           <span className="font-medium">{totalCount}</span>&nbsp;results
@@ -91,7 +91,7 @@ export function DataTablePagination<TData>({
             disabled={!table.getCanPreviousPage()}
           >
             <span className="sr-only">Go to first page</span>
-            <FontAwesomeIcon icon={faChevronsLeft} className="size-4" />
+            <Icon icon={faChevronsLeft} className="size-4" />
           </Button>
           <Button
             variant="outline"
@@ -100,7 +100,7 @@ export function DataTablePagination<TData>({
             disabled={!table.getCanPreviousPage()}
           >
             <span className="sr-only">Go to previous page</span>
-            <FontAwesomeIcon icon={faChevronLeft} className="size-4" />
+            <Icon icon={faChevronLeft} className="size-4" />
           </Button>
           <Button
             variant="outline"
@@ -109,7 +109,7 @@ export function DataTablePagination<TData>({
             disabled={!table.getCanNextPage()}
           >
             <span className="sr-only">Go to next page</span>
-            <FontAwesomeIcon icon={faChevronRight} className="size-4" />
+            <Icon icon={faChevronRight} className="size-4" />
           </Button>
           <Button
             variant="outline"
@@ -118,7 +118,7 @@ export function DataTablePagination<TData>({
             disabled={!table.getCanNextPage()}
           >
             <span className="sr-only">Go to last page</span>
-            <FontAwesomeIcon icon={faChevronsRight} className="size-4" />
+            <Icon icon={faChevronsRight} className="size-4" />
           </Button>
         </div>
       </div>

@@ -18,10 +18,12 @@
 import { Button } from "@/components/ui/button";
 import { popoutWindowManager } from "@/lib/popout-window";
 import { cn } from "@/lib/utils";
-import { IconProp } from "@fortawesome/fontawesome-svg-core";
-import { faTriangleExclamation } from "@fortawesome/pro-regular-svg-icons";
+import {
+  faTriangleExclamation,
+  type IconDefinition,
+} from "@fortawesome/pro-regular-svg-icons";
+
 import { faPlus } from "@fortawesome/pro-solid-svg-icons";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { CaretSortIcon, CheckIcon, Cross2Icon } from "@radix-ui/react-icons";
 import React from "react";
 import { Path, PathValue } from "react-hook-form";
@@ -40,6 +42,7 @@ import {
   SingleValueProps,
   ValueContainerProps,
 } from "react-select";
+import { Icon } from "../icons";
 
 /**
  * Option type for the SelectInput component.
@@ -78,9 +81,9 @@ export type SelectOption = {
    * Icon to be displayed in the option.
    * @type {IconProp}
    * @default undefined
-   * @example <FontAwesomeIcon icon={faPlus} />
+   * @example <Icon icon={faPlus} />
    */
-  readonly icon?: IconProp;
+  readonly icon?: IconDefinition;
 };
 
 /**
@@ -100,7 +103,7 @@ export function Option({ ...props }: OptionProps) {
         }`}
       >
         {data.icon ? (
-          <FontAwesomeIcon
+          <Icon
             icon={data.icon}
             className={`size-4 ${
               isSelected
@@ -117,7 +120,7 @@ export function Option({ ...props }: OptionProps) {
         <div className="flex flex-1 flex-col justify-center overflow-hidden">
           <span className="truncate">{label}</span>
           {data.description && (
-            <span className="text-wrap text-xs text-foreground/70">
+            <span className="text-foreground/70 text-wrap text-xs">
               {data.description}
             </span>
           )}
@@ -139,12 +142,9 @@ export function DropdownIndicator(props: DropdownIndicatorProps) {
   return (
     <components.DropdownIndicator {...props}>
       {props.selectProps["aria-invalid"] ? (
-        <FontAwesomeIcon
-          icon={faTriangleExclamation}
-          className="text-red-500"
-        />
+        <Icon icon={faTriangleExclamation} className="text-red-500" />
       ) : (
-        <CaretSortIcon className="size-4 shrink-0 text-muted-foreground" />
+        <CaretSortIcon className="text-muted-foreground size-4 shrink-0" />
       )}
     </components.DropdownIndicator>
   );
@@ -261,7 +261,7 @@ export function LoadingMessage({ children, ...props }: NoticeProps) {
   return (
     <components.LoadingMessage {...props}>
       <div className="my-1 flex flex-col items-center justify-center">
-        <p className="text-xs text-accent-foreground">
+        <p className="text-accent-foreground text-xs">
           {children || "Loading..."}
         </p>
       </div>
@@ -292,7 +292,7 @@ export function NoOptionsMessage({
   return (
     <components.NoOptionsMessage {...props}>
       <div className="my-1 flex flex-col items-center justify-center">
-        <p className="p-2 text-xs text-accent-foreground">{children}</p>
+        <p className="text-accent-foreground p-2 text-xs">{children}</p>
         {popoutLink && hasPopoutWindow && (
           <AddNewButton
             label={props.selectProps?.popoutLinkLabel as string}
@@ -307,7 +307,7 @@ export function NoOptionsMessage({
 export function Group({ ...props }: GroupProps) {
   return (
     <div>
-      <div className="px-3 pt-1 text-xs text-muted-foreground">
+      <div className="text-muted-foreground px-3 pt-1 text-xs">
         {props.label}
       </div>
       {props.children}
@@ -478,12 +478,12 @@ function AddNewButton({
 
   return (
     <Button
-      className="flex w-full items-center justify-between rounded-sm bg-transparent py-3.5 pl-3 text-xs font-normal text-foreground shadow-none hover:bg-accent hover:text-foreground/90"
+      className="text-foreground hover:bg-accent hover:text-foreground/90 flex w-full items-center justify-between rounded-sm bg-transparent py-3.5 pl-3 text-xs font-normal shadow-none"
       size="xs"
       onClick={(event) => handleClick(event)}
     >
       <span className="mr-2">{label} Entry</span>
-      <FontAwesomeIcon icon={faPlus} className="size-3" />
+      <Icon icon={faPlus} className="size-3" />
     </Button>
   );
 }

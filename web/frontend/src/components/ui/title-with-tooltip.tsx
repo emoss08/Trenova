@@ -23,7 +23,7 @@ import {
 } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 import { faCircleInfo } from "@fortawesome/pro-duotone-svg-icons";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { Icon } from "../common/icons";
 
 interface TitleWithTooltipProps extends React.HTMLAttributes<HTMLDivElement> {
   title: string;
@@ -41,9 +41,9 @@ export function TitleWithTooltip({
       <TooltipProvider delayDuration={100}>
         <Tooltip>
           <TooltipTrigger asChild>
-            <FontAwesomeIcon
+            <Icon
               icon={faCircleInfo}
-              className="mb-0.5 size-3.5 text-foreground"
+              className="text-foreground mb-0.5 size-3.5"
             />
           </TooltipTrigger>
           <TooltipContent>

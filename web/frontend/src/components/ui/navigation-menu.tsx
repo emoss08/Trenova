@@ -21,7 +21,7 @@ import * as React from "react";
 
 import { cn } from "@/lib/utils";
 import { faChevronDown } from "@fortawesome/pro-solid-svg-icons";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { Icon } from "../common/icons";
 
 interface ExtendedNavigationMenuProps
   extends React.ComponentPropsWithoutRef<typeof NavigationMenuPrimitive.Root> {
@@ -71,7 +71,7 @@ NavigationMenuList.displayName = NavigationMenuPrimitive.List.displayName;
 const NavigationMenuItem = NavigationMenuPrimitive.Item;
 
 const navigationMenuTriggerStyle = cva(
-  "data-[state=open]:navigation-menu-trigger-open data-[state=closed]:navigation-menu-trigger-closed group relative inline-flex h-10 w-max items-center justify-center rounded-md px-4 py-2 text-sm font-normal transition-colors hover:bg-accent hover:text-accent-foreground focus:text-accent-foreground focus:outline-none disabled:pointer-events-none disabled:opacity-50",
+  "data-[state=open]:navigation-menu-trigger-open data-[state=closed]:navigation-menu-trigger-closed hover:bg-accent hover:text-accent-foreground focus:text-accent-foreground group relative inline-flex h-10 w-max items-center justify-center rounded-md px-4 py-2 text-sm font-normal transition-colors focus:outline-none disabled:pointer-events-none disabled:opacity-50",
 );
 
 const NavigationMenuTrigger = React.forwardRef<
@@ -84,9 +84,9 @@ const NavigationMenuTrigger = React.forwardRef<
     {...props}
   >
     {children}
-    <FontAwesomeIcon
+    <Icon
       icon={faChevronDown}
-      className="relative top-px ml-2 size-2 text-accent-foreground/50 transition duration-200 group-data-[state=open]:rotate-180"
+      className="text-accent-foreground/50 relative top-px ml-2 size-2 transition duration-200 group-data-[state=open]:rotate-180"
       aria-hidden="true"
     />
   </NavigationMenuPrimitive.Trigger>
@@ -137,7 +137,7 @@ const NavigationMenuIndicator = React.forwardRef<
     )}
     {...props}
   >
-    <div className="relative top-[60%] size-2 rotate-45 rounded-tl-sm bg-border shadow-md" />
+    <div className="bg-border relative top-[60%] size-2 rotate-45 rounded-tl-sm shadow-md" />
   </NavigationMenuPrimitive.Indicator>
 ));
 NavigationMenuIndicator.displayName =
@@ -151,6 +151,7 @@ export {
   NavigationMenuLink,
   NavigationMenuList,
   NavigationMenuTrigger,
-  NavigationMenuViewport,
   navigationMenuTriggerStyle,
+  NavigationMenuViewport
 };
+

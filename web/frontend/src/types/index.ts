@@ -15,7 +15,7 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import { type IconProp } from "@fortawesome/fontawesome-svg-core";
+import { IconDefinition } from "@fortawesome/pro-duotone-svg-icons";
 
 export type ValuesOf<T extends any[]> = T[number];
 
@@ -31,7 +31,7 @@ export interface IChoiceProps<T extends string | boolean | number> {
   label: string;
   color?: string;
   description?: string;
-  icon?: IconProp;
+  icon?: IconDefinition;
 }
 
 export type StatusChoiceProps = "Active" | "Inactive";

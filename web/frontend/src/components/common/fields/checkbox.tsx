@@ -20,13 +20,13 @@ import * as React from "react";
 
 import { cn } from "@/lib/utils";
 import { faCheck } from "@fortawesome/pro-solid-svg-icons";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   Controller,
   FieldValues,
   useController,
   UseControllerProps,
 } from "react-hook-form";
+import { Icon } from "../icons";
 import { ErrorMessage } from "./error-message";
 
 const Checkbox = React.forwardRef<
@@ -44,7 +44,7 @@ const Checkbox = React.forwardRef<
     <CheckboxPrimitive.Indicator
       className={cn("flex items-center justify-center text-current")}
     >
-      <FontAwesomeIcon icon={faCheck} className="size-3 font-bold" />
+      <Icon icon={faCheck} className="size-3 font-bold" />
     </CheckboxPrimitive.Indicator>
   </CheckboxPrimitive.Root>
 ));
@@ -92,7 +92,7 @@ export function CheckboxInput<T extends FieldValues>({
           </span>
         )}
         {description && (
-          <p className="select-none text-wrap text-sm text-muted-foreground">
+          <p className="text-muted-foreground select-none text-wrap text-sm">
             {description}
           </p>
         )}

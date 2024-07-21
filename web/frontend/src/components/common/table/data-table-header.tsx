@@ -24,10 +24,10 @@ import type {
   FilterConfig,
 } from "@/types/tables";
 import { faX } from "@fortawesome/pro-solid-svg-icons";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { flexRender, type Table as TableType } from "@tanstack/react-table";
 import React, { type ChangeEvent } from "react";
 import { Input } from "../fields/input";
+import { Icon } from "../icons";
 import { DataTableImportExportOption } from "./data-table-export-modal";
 import { DataTableFacetedFilter } from "./data-table-faceted-filter";
 import { DataTableViewOptions } from "./data-table-view-options";
@@ -172,7 +172,7 @@ export function DataTableTopBar<K>({
             className="h-8 px-2 lg:px-3"
           >
             Reset
-            <FontAwesomeIcon icon={faX} className="ml-2 size-4" />
+            <Icon icon={faX} className="ml-2 size-4" />
           </Button>
         )}
       </div>

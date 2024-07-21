@@ -25,12 +25,12 @@ import {
 } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
 import { faPaintBrush } from "@fortawesome/pro-duotone-svg-icons";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   FieldValues,
   UseControllerProps,
   useController,
 } from "react-hook-form";
+import { Icon } from "../icons";
 import { FieldDescription } from "./components";
 import { FieldErrorMessage } from "./error-message";
 
@@ -113,7 +113,7 @@ export function GradientPicker<TFieldValues extends FieldValues>({
                   style={{ background: field.value }}
                 ></div>
               ) : (
-                <FontAwesomeIcon icon={faPaintBrush} className="size-4" />
+                <Icon icon={faPaintBrush} className="size-4" />
               )}
               <div className="flex-1 truncate">
                 {field.value ? field.value : "Pick a color"}
