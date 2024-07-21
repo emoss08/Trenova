@@ -26,7 +26,7 @@ import {
 import { useTheme } from "@/components/ui/theme-provider";
 import { useUserPermissions } from "@/context/user-permissions";
 import { useUserFavorites } from "@/hooks/useQueries";
-import { RECENT_SEARCH_KEY } from "@/lib/constants";
+import { RECENT_SEARCH_LOCAL_KEY } from "@/lib/constants";
 import { upperFirst } from "@/lib/utils";
 import { RouteObjectWithPermission, routes } from "@/routing/AppRoutes";
 import { useHeaderStore } from "@/stores/HeaderStore";
@@ -46,14 +46,14 @@ import { useNavigate } from "react-router-dom";
 import { Icon } from "../common/icons";
 import Highlight from "./Highlight";
 
-const groupVariants: Record<string, BadgeVariant>[] = [
-  { administration: "warning" },
-  { main: "default" },
-  { billing: "inactive" },
-  { accounting: "pink" },
-  { dispatch: "info" },
-  { equipment: "purple" },
-];
+const groupVariants: Record<string, BadgeVariant> = {
+  administration: "warning",
+  main: "default",
+  billing: "inactive",
+  accounting: "pink",
+  dispatch: "info",
+  equipment: "purple",
+};
 
 type BadgeVariant = VariantProps<typeof badgeVariants>["variant"];
 
@@ -330,39 +330,35 @@ export function SiteSearchDialog() {
   const [selectedIndex, setSelectedIndex] = useState(-1);
   const dialogRef = useRef<HTMLDivElement>(null);
   const selectedItemRef = useRef<HTMLDivElement>(null);
+  const openRef = useRef(open);
 
   // Load recent searches from local storage on component mount
   useEffect(() => {
-    const storedSearches = localStorage.getItem(RECENT_SEARCH_KEY);
+    const storedSearches = localStorage.getItem(RECENT_SEARCH_LOCAL_KEY);
     if (storedSearches) {
       setRecentSearches(JSON.parse(storedSearches));
     }
-
-    // Cleanup function
-    return () => {
-      if (open) {
-        setOpen(false);
-      }
-    };
   }, [open, setOpen]);
 
-  const handleGlobalKeyDown = useCallback(
-    (e: KeyboardEvent) => {
-      const isToggleKey =
-        (e.key === "k" && (e.metaKey || e.ctrlKey)) || e.key === "/";
-      const isEditableTarget =
-        (e.target instanceof HTMLElement && e.target.isContentEditable) ||
-        e.target instanceof HTMLInputElement ||
-        e.target instanceof HTMLTextAreaElement ||
-        e.target instanceof HTMLSelectElement;
+  // Update ref when open state changes
+  useEffect(() => {
+    openRef.current = open;
+  }, [open]);
 
-      if (isToggleKey && !isEditableTarget) {
-        e.preventDefault();
-        setOpen((open) => !open);
-      }
-    },
-    [setOpen],
-  );
+  const handleGlobalKeyDown = useCallback((e: KeyboardEvent) => {
+    const isToggleKey =
+      (e.key === "k" && (e.metaKey || e.ctrlKey)) || e.key === "/";
+    const isEditableTarget =
+      (e.target instanceof HTMLElement && e.target.isContentEditable) ||
+      e.target instanceof HTMLInputElement ||
+      e.target instanceof HTMLTextAreaElement ||
+      e.target instanceof HTMLSelectElement;
+
+    if (isToggleKey && !isEditableTarget) {
+      e.preventDefault();
+      setOpen(!openRef.current);
+    }
+  }, []);
 
   useEffect(() => {
     document.addEventListener("keydown", handleGlobalKeyDown);
@@ -370,8 +366,7 @@ export function SiteSearchDialog() {
   }, [handleGlobalKeyDown]);
 
   const favoritePaths = useMemo(
-    () =>
-      new Set((userFavorites as any[])?.map((favorite) => favorite.pageLink)),
+    () => new Set(userFavorites?.map((favorite) => favorite.pageLink)),
     [userFavorites],
   );
 
@@ -403,7 +398,7 @@ export function SiteSearchDialog() {
 
     // Cleanup function
     return () => debouncedFilter.cancel();
-  }, [inputValue, debouncedFilter]);
+  }, [inputValue, debouncedFilter, filterAndHighlight]);
 
   function handleSearchChange(value: string) {
     setInputValue(value);
@@ -417,8 +412,7 @@ export function SiteSearchDialog() {
   }
 
   const mapGroupVariant = useCallback((group: string) => {
-    const variant = groupVariants.find((v) => v[group]);
-    return variant ? variant[group] : "outline";
+    return groupVariants[group] || "outline";
   }, []);
 
   const handleNavigate = useCallback(
@@ -426,15 +420,23 @@ export function SiteSearchDialog() {
       navigate(path);
       setOpen(false);
 
-      // Update recent searches
-      const updatedSearches = [
-        title,
-        ...recentSearches.filter((s) => s !== title),
-      ].slice(0, 5);
-      setRecentSearches(updatedSearches);
-      localStorage.setItem(RECENT_SEARCH_KEY, JSON.stringify(updatedSearches));
+      // Update recent searches using functional update
+      setRecentSearches((prevSearches) => {
+        const updatedSearches = [
+          title,
+          ...prevSearches.filter((s) => s !== title),
+        ].slice(0, 5);
+
+        // Update localStorage
+        localStorage.setItem(
+          RECENT_SEARCH_LOCAL_KEY,
+          JSON.stringify(updatedSearches),
+        );
+
+        return updatedSearches;
+      });
     },
-    [navigate, recentSearches, setOpen],
+    [navigate, setOpen],
   );
 
   const favoriteRoutes = useMemo(

@@ -25,7 +25,7 @@ export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL as string;
 // Theme constants
 export const THEME_KEY = import.meta.env.VITE_THEME_KEY as string;
 
-export const RECENT_SEARCH_KEY = import.meta.env
+export const RECENT_SEARCH_LOCAL_KEY = import.meta.env
   .VITE_RECENT_SEARCH_LOCAL_KEY as string;
 
 export const APP_DEFAULT_LOGO = import.meta.env.VITE_DEFAULT_LOGO_URL as string;
