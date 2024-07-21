@@ -44,8 +44,26 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { VisuallyHidden } from "react-aria";
 import { useNavigate } from "react-router-dom";
 import { Icon } from "../common/icons";
+import Highlight from "./Highlight";
+
+const groupVariants: Record<string, BadgeVariant>[] = [
+  { administration: "warning" },
+  { main: "default" },
+  { billing: "inactive" },
+  { accounting: "pink" },
+  { dispatch: "info" },
+  { equipment: "purple" },
+];
 
 type BadgeVariant = VariantProps<typeof badgeVariants>["variant"];
+
+const popularSearches = [
+  "Dashboard",
+  "Shipments",
+  "Invoices",
+  "Reports",
+  "Settings",
+];
 
 function prepareRouteGroups(routeList: typeof routes) {
   return routeList.reduce(
@@ -57,27 +75,6 @@ function prepareRouteGroups(routeList: typeof routes) {
       return acc;
     },
     {} as Record<string, typeof routes>,
-  );
-}
-
-function Highlight({ text, highlight }: { text: string; highlight: string }) {
-  if (!highlight.trim()) {
-    return <span>{text}</span>;
-  }
-  const regex = new RegExp(`(${highlight})`, "gi");
-  const parts = text.split(regex);
-  return (
-    <span>
-      {parts.map((part, i) =>
-        regex.test(part) ? (
-          <mark key={i} className="bg-blue-300">
-            {part}
-          </mark>
-        ) : (
-          <span key={i}>{part}</span>
-        ),
-      )}
-    </span>
   );
 }
 
@@ -340,40 +337,43 @@ export function SiteSearchDialog() {
     if (storedSearches) {
       setRecentSearches(JSON.parse(storedSearches));
     }
-  }, []);
 
-  useEffect(() => {
-    const down = (e: KeyboardEvent) => {
-      if ((e.key === "k" && (e.metaKey || e.ctrlKey)) || e.key === "/") {
-        if (
-          (e.target instanceof HTMLElement && e.target.isContentEditable) ||
-          e.target instanceof HTMLInputElement ||
-          e.target instanceof HTMLTextAreaElement ||
-          e.target instanceof HTMLSelectElement
-        ) {
-          return;
-        }
+    // Cleanup function
+    return () => {
+      if (open) {
+        setOpen(false);
+      }
+    };
+  }, [open, setOpen]);
+
+  const handleGlobalKeyDown = useCallback(
+    (e: KeyboardEvent) => {
+      const isToggleKey =
+        (e.key === "k" && (e.metaKey || e.ctrlKey)) || e.key === "/";
+      const isEditableTarget =
+        (e.target instanceof HTMLElement && e.target.isContentEditable) ||
+        e.target instanceof HTMLInputElement ||
+        e.target instanceof HTMLTextAreaElement ||
+        e.target instanceof HTMLSelectElement;
+
+      if (isToggleKey && !isEditableTarget) {
         e.preventDefault();
         setOpen((open) => !open);
       }
-    };
-    document.addEventListener("keydown", down);
-    return () => document.removeEventListener("keydown", down);
-  }, [setOpen]);
+    },
+    [setOpen],
+  );
+
+  useEffect(() => {
+    document.addEventListener("keydown", handleGlobalKeyDown);
+    return () => document.removeEventListener("keydown", handleGlobalKeyDown);
+  }, [handleGlobalKeyDown]);
 
   const favoritePaths = useMemo(
     () =>
       new Set((userFavorites as any[])?.map((favorite) => favorite.pageLink)),
     [userFavorites],
   );
-
-  const popularSearches = [
-    "Dashboard",
-    "Shipments",
-    "Invoices",
-    "Reports",
-    "Settings",
-  ];
 
   const filterAndHighlight = useCallback(
     (value: string) => {
@@ -400,6 +400,8 @@ export function SiteSearchDialog() {
 
   useEffect(() => {
     debouncedFilter(inputValue);
+
+    // Cleanup function
     return () => debouncedFilter.cancel();
   }, [inputValue, debouncedFilter]);
 
@@ -414,19 +416,26 @@ export function SiteSearchDialog() {
     }
   }
 
-  const groupVariants: Record<string, BadgeVariant>[] = [
-    { administration: "warning" },
-    { main: "default" },
-    { billing: "inactive" },
-    { accounting: "pink" },
-    { dispatch: "info" },
-    { equipment: "purple" },
-  ];
-
-  function mapGroupVariant(group: string): BadgeVariant {
+  const mapGroupVariant = useCallback((group: string) => {
     const variant = groupVariants.find((v) => v[group]);
     return variant ? variant[group] : "outline";
-  }
+  }, []);
+
+  const handleNavigate = useCallback(
+    (path: string, title: string) => {
+      navigate(path);
+      setOpen(false);
+
+      // Update recent searches
+      const updatedSearches = [
+        title,
+        ...recentSearches.filter((s) => s !== title),
+      ].slice(0, 5);
+      setRecentSearches(updatedSearches);
+      localStorage.setItem(RECENT_SEARCH_KEY, JSON.stringify(updatedSearches));
+    },
+    [navigate, recentSearches, setOpen],
+  );
 
   const favoriteRoutes = useMemo(
     () =>
@@ -435,19 +444,6 @@ export function SiteSearchDialog() {
         .filter((route) => favoritePaths.has(route.path)),
     [filteredGroups, favoritePaths],
   );
-
-  function handleNavigate(path: string, title: string) {
-    navigate(path);
-    setOpen(false);
-
-    // Update recent searches
-    const updatedSearches = [
-      title,
-      ...recentSearches.filter((s) => s !== title),
-    ].slice(0, 5);
-    setRecentSearches(updatedSearches);
-    localStorage.setItem(RECENT_SEARCH_KEY, JSON.stringify(updatedSearches));
-  }
 
   const allItems = useMemo(() => {
     return [
@@ -484,15 +480,14 @@ export function SiteSearchDialog() {
               const route = routes.find((r) => r.title === selectedItem.value);
               if (route) handleNavigate(route.path as string, route.title);
             } else if (
-              selectedItem.type === "favorite" ||
-              selectedItem.type === "route"
+              (selectedItem.type === "favorite" ||
+                selectedItem.type === "route") &&
+              typeof selectedItem.value !== "string"
             ) {
-              if (typeof selectedItem.value !== "string") {
-                handleNavigate(
-                  selectedItem.value.path as string,
-                  selectedItem.value.title,
-                );
-              }
+              handleNavigate(
+                selectedItem.value.path as string,
+                selectedItem.value.title,
+              );
             }
           }
           break;
@@ -502,7 +497,7 @@ export function SiteSearchDialog() {
           break;
       }
     },
-    [selectedIndex, allItems, handleNavigate, setOpen, routes],
+    [selectedIndex, allItems, handleNavigate, setOpen],
   );
 
   useEffect(() => {
@@ -518,7 +513,7 @@ export function SiteSearchDialog() {
     }
   }, [selectedIndex]);
 
-  const renderSearchResults = () => {
+  const renderSearchResults = useCallback(() => {
     let currentIndex = 0;
 
     return (
@@ -578,7 +573,16 @@ export function SiteSearchDialog() {
         ) : null}
       </>
     );
-  };
+  }, [
+    recentSearches,
+    inputValue,
+    favoriteRoutes,
+    filteredGroups,
+    selectedIndex,
+    selectedItemRef,
+    handleNavigate,
+    mapGroupVariant,
+  ]);
 
   return (
     <Dialog open={open} onOpenChange={handleDialogOpenChange}>
@@ -595,12 +599,24 @@ export function SiteSearchDialog() {
             </DialogDescription>
           </DialogHeader>
         </VisuallyHidden>
-        <div className="flex size-full flex-col overflow-hidden rounded-md text-zinc-950 dark:text-zinc-50">
-          <SearchInput value={inputValue} onChange={handleSearchChange} />
-          <div className="max-h-[300px] overflow-y-auto overflow-x-hidden">
+        <div
+          className="flex size-full flex-col overflow-hidden rounded-md text-zinc-950 dark:text-zinc-50"
+          role="search"
+          aria-label="Site search"
+        >
+          <SearchInput
+            value={inputValue}
+            onChange={handleSearchChange}
+            aria-label="Search input"
+          />
+          <div
+            className="max-h-[300px] overflow-y-auto overflow-x-hidden"
+            role="list"
+            aria-label="Search results"
+          >
             {renderSearchResults()}
           </div>
-          <SearchFooter setTheme={setTheme} />
+          <SearchFooter setTheme={setTheme} aria-label="Search footer" />
         </div>
       </DialogContent>
     </Dialog>
