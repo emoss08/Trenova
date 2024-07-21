@@ -18,7 +18,7 @@
 import { upperFirst } from "@/lib/utils";
 import { routes } from "@/routing/AppRoutes";
 import { useBreadcrumbStore } from "@/stores/BreadcrumbStore";
-import { useCallback, useEffect, useMemo } from "react";
+import { useEffect, useMemo } from "react";
 import { Link, matchPath, useLocation } from "react-router-dom";
 import {
   Breadcrumb,
@@ -42,25 +42,16 @@ export function SiteBreadcrumb({ children }: { children?: React.ReactNode }) {
     useBreadcrumbStore.use("currentRoute");
   const [loading, setLoading] = useBreadcrumbStore.use("loading");
 
-  // Memoize the routes array
-  const memoizedRoutes = useMemo(() => routes, []);
-
-  // Create a memoized function for finding the matching route
-  const findMatchingRoute = useCallback(
-    (pathname: string) => {
-      return memoizedRoutes.find(
-        (route) => route.path !== "*" && matchPath(route.path, pathname),
-      );
-    },
-    [memoizedRoutes],
+  const matchingRoute = routes.find(
+    (route) => route.path !== "*" && matchPath(route.path, location.pathname),
   );
 
   useEffect(() => {
     setLoading(true);
-    const matchedRoute = findMatchingRoute(location.pathname);
+    const matchedRoute = matchingRoute;
     setCurrentRoute(matchedRoute || null);
     setLoading(false);
-  }, [location, setCurrentRoute, setLoading, findMatchingRoute]);
+  }, [location, setCurrentRoute, setLoading, matchingRoute]);
 
   useEffect(() => {
     if (currentRoute) {
