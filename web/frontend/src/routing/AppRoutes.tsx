@@ -177,7 +177,7 @@ export type RouteObjectWithPermission = RouteObject & {
 
 export const routes: RouteObjectWithPermission[] = [
   {
-    title: "Home",
+    title: "Dashboard",
     group: "main",
     path: "/",
     description: "Get to the main page",
@@ -327,6 +327,7 @@ export const routes: RouteObjectWithPermission[] = [
   {
     title: "Location Categories",
     group: "dispatch",
+    subMenu: "configuration files",
     path: "/dispatch/location-categories/",
     description: "Location Categories",
     element: <LocationCategoryPage />,

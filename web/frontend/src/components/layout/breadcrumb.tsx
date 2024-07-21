@@ -15,7 +15,7 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import { upperFirst } from "@/lib/utils";
+import { toTitleCase } from "@/lib/utils";
 import { routes } from "@/routing/AppRoutes";
 import { useBreadcrumbStore } from "@/stores/BreadcrumbStore";
 import { useEffect, useMemo } from "react";
@@ -35,7 +35,6 @@ type BreadcrumbItemType = {
   label: string;
   path: string;
 };
-
 export function SiteBreadcrumb({ children }: { children?: React.ReactNode }) {
   const location = useLocation();
   const [currentRoute, setCurrentRoute] =
@@ -51,36 +50,38 @@ export function SiteBreadcrumb({ children }: { children?: React.ReactNode }) {
     const matchedRoute = matchingRoute;
     setCurrentRoute(matchedRoute || null);
     setLoading(false);
-  }, [location, setCurrentRoute, setLoading, matchingRoute]);
+  }, [location, setCurrentRoute, setLoading]);
 
   useEffect(() => {
     if (currentRoute) {
       document.title = currentRoute.title;
     }
   }, [currentRoute]);
-
   const breadcrumbItems = useMemo(() => {
     if (!currentRoute) return [];
-    const items: BreadcrumbItemType[] = [
-      { label: "Home", path: "/" },
-      ...(currentRoute.group
-        ? [
-            {
-              label: upperFirst(currentRoute.group),
-              path: `/${currentRoute.group}`,
-            },
-          ]
-        : []),
-      ...(currentRoute.subMenu
-        ? [
-            {
-              label: upperFirst(currentRoute.subMenu),
-              path: `/${currentRoute.group}/${currentRoute.subMenu}`,
-            },
-          ]
-        : []),
-      { label: currentRoute.title, path: location.pathname },
-    ];
+    const items: BreadcrumbItemType[] = [{ label: "Home", path: "/" }];
+
+    if (currentRoute.group) {
+      items.push({
+        label: toTitleCase(currentRoute.group),
+        path: `/${currentRoute.group}`,
+      });
+    }
+
+    if (currentRoute.subMenu) {
+      items.push({
+        label: toTitleCase(currentRoute.subMenu),
+        path: currentRoute.group
+          ? `/${currentRoute.group}/${currentRoute.subMenu}`
+          : `/${currentRoute.subMenu}`,
+      });
+    }
+
+    items.push({
+      label: toTitleCase(currentRoute.title),
+      path: location.pathname,
+    });
+
     return items;
   }, [currentRoute, location.pathname]);
 
@@ -101,7 +102,7 @@ export function SiteBreadcrumb({ children }: { children?: React.ReactNode }) {
     <div className="pb-4 pt-5 md:py-4">
       <div>
         <h2 className="mt-10 flex scroll-m-20 items-center pb-2 text-xl font-semibold tracking-tight transition-colors first:mt-0">
-          {currentRoute.title}
+          {toTitleCase(currentRoute.title)}
           <FavoriteIcon />
         </h2>
         <Breadcrumb>
