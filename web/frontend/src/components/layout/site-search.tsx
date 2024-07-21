@@ -16,9 +16,7 @@
  */
 
 import { useHeaderStore } from "@/stores/HeaderStore";
-import {
-  MagnifyingGlassIcon
-} from "@radix-ui/react-icons";
+import { MagnifyingGlassIcon } from "@radix-ui/react-icons";
 import { Button } from "../ui/button";
 import { KeyCombo, Keys, ShortcutsProvider } from "../ui/keyboard";
 import {
@@ -27,7 +25,6 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "../ui/tooltip";
-
 
 export function SearchButton() {
   return (
@@ -40,9 +37,9 @@ export function SearchButton() {
             aria-label="Open site search"
             aria-expanded={useHeaderStore.get("searchDialogOpen")}
             onClick={() => useHeaderStore.set("searchDialogOpen", true)}
-            className="group relative flex size-8 border-muted-foreground/40 hover:border-muted-foreground/80"
+            className="border-muted-foreground/40 hover:border-muted-foreground/80 group relative flex size-8"
           >
-            <MagnifyingGlassIcon className="size-5 text-muted-foreground group-hover:text-foreground" />
+            <MagnifyingGlassIcon className="text-muted-foreground group-hover:text-foreground size-5" />
           </Button>
         </TooltipTrigger>
         <TooltipContent side="bottom" sideOffset={5}>
@@ -53,7 +50,6 @@ export function SearchButton() {
   );
 }
 
-
 export function SiteSearchInput() {
   return (
     <TooltipProvider delayDuration={100}>
@@ -61,17 +57,17 @@ export function SiteSearchInput() {
         <TooltipTrigger asChild>
           <span
             aria-label="Open site search"
-            aria-expanded={useHeaderStore.get('searchDialogOpen')}
-            onClick={() => useHeaderStore.set('searchDialogOpen', true)}
-            className="group mt-10 hidden h-9 w-[250px] items-center justify-between rounded-md border border-muted-foreground/20 px-3 py-2 text-sm hover:cursor-pointer hover:border-muted-foreground/80 hover:bg-accent xl:flex"
+            aria-expanded={useHeaderStore.get("searchDialogOpen")}
+            onClick={() => useHeaderStore.set("searchDialogOpen", true)}
+            className="border-muted-foreground/20 hover:border-muted-foreground/80 hover:bg-accent group mt-10 hidden h-9 w-[250px] items-center justify-between rounded-md border px-3 py-2 text-sm hover:cursor-pointer xl:flex"
           >
             <div className="flex items-center">
-              <MagnifyingGlassIcon className="mr-2 size-5 text-muted-foreground group-hover:text-foreground" />
+              <MagnifyingGlassIcon className="text-muted-foreground group-hover:text-foreground mr-2 size-5" />
               <span className="text-muted-foreground">Search...</span>
             </div>
             <div className="pointer-events-none inline-flex select-none">
               <ShortcutsProvider os="mac">
-                <KeyCombo keyNames={[Keys.Command, 'K']} />
+                <KeyCombo keyNames={[Keys.Command, "K"]} />
               </ShortcutsProvider>
             </div>
           </span>
