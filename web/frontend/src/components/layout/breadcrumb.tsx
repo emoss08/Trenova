@@ -47,8 +47,7 @@ export function SiteBreadcrumb({ children }: { children?: React.ReactNode }) {
 
   useEffect(() => {
     setLoading(true);
-    const matchedRoute = matchingRoute;
-    setCurrentRoute(matchedRoute || null);
+    setCurrentRoute(matchingRoute || null);
     setLoading(false);
   }, [location, setCurrentRoute, setLoading]);
 
