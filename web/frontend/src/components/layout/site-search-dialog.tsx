@@ -504,7 +504,7 @@ export function SiteSearchDialog() {
 
   useEffect(() => {
     setSelectedIndex(-1);
-  }, [inputValue, allItems.length]);
+  }, [inputValue]);
 
   useEffect(() => {
     if (selectedIndex >= 0 && selectedItemRef.current) {
