@@ -219,14 +219,12 @@ export function shipmentStatusToReadable(status: ShipmentStatus) {
   }
 }
 
-export const toTitleCase = (value: string) => {
-  return value
-    .toLowerCase()
-    .split("_")
-    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+export function toTitleCase(str: string): string {
+  return str
+    .split(" ")
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
     .join(" ");
-};
-
+}
 export const focusRing = [
   // base
   "outline outline-offset-2 outline-0 focus-visible:outline-2",

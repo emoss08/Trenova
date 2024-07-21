@@ -26,7 +26,7 @@ import { useUserStore } from "@/stores/AuthStore";
 import React from "react";
 import { useLocation } from "react-router-dom";
 import MainAsideMenu, { AsideMenuDialog } from "./aside-menu";
-import { Breadcrumb } from "./breadcrumb";
+import { SiteBreadcrumb } from "./breadcrumb";
 import { NotificationMenu } from "./notification_menu/notification-menu";
 import { SiteSearchDialog } from "./site-search-dialog";
 
@@ -68,7 +68,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
             </header>
           )}
           <main className="flex-1 overflow-auto px-6">
-            <Breadcrumb />
+            <SiteBreadcrumb />
             <SiteSearchDialog />
             {children}
           </main>
