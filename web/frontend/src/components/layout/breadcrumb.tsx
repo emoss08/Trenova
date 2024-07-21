@@ -18,45 +18,32 @@
 import { upperFirst } from "@/lib/utils";
 import { routes } from "@/routing/AppRoutes";
 import { useBreadcrumbStore } from "@/stores/BreadcrumbStore";
-import { pathToRegexp } from "path-to-regexp";
 import { useEffect, useMemo } from "react";
-import { useLocation } from "react-router-dom";
+import { matchPath, useLocation } from "react-router-dom";
 import { Skeleton } from "../ui/skeleton";
 import { FavoriteIcon } from "./user-favorite";
 
-const useRouteMatching = (
-  setLoading: (loading: boolean) => void,
-  setCurrentRoute: (route: any) => void,
-) => {
+export function Breadcrumb({ children }: { children?: React.ReactNode }) {
   const location = useLocation();
+  const [currentRoute, setCurrentRoute] =
+    useBreadcrumbStore.use("currentRoute");
+  const [loading, setLoading] = useBreadcrumbStore.use("loading");
 
   useEffect(() => {
     setLoading(true);
-    const matchedRoute = routes.find((route) => {
-      return (
-        route.path !== "*" && pathToRegexp(route.path).test(location.pathname)
-      );
-    });
+    const matchedRoute = routes.find(
+      (route) => route.path !== "*" && matchPath(route.path, location.pathname),
+    );
 
     setCurrentRoute(matchedRoute || null);
     setLoading(false);
   }, [location, setLoading, setCurrentRoute]);
-};
 
-const useDocumentTitle = (currentRoute: any) => {
   useEffect(() => {
     if (currentRoute) {
       document.title = currentRoute.title;
     }
   }, [currentRoute]);
-};
-
-export function Breadcrumb({ children }: { children?: React.ReactNode }) {
-  const [currentRoute, setCurrentRoute] =
-    useBreadcrumbStore.use("currentRoute");
-  const [loading, setLoading] = useBreadcrumbStore.use("loading");
-  useRouteMatching(setLoading, setCurrentRoute);
-  useDocumentTitle(currentRoute);
 
   // Construct breadcrumb text
   const breadcrumbText = useMemo(() => {
@@ -89,7 +76,7 @@ export function Breadcrumb({ children }: { children?: React.ReactNode }) {
           <FavoriteIcon />
         </h2>
         <div className="flex items-center">
-          <a className="text-sm font-medium text-muted-foreground hover:text-muted-foreground/80">
+          <a className="text-muted-foreground hover:text-muted-foreground/80 text-sm font-medium">
             {breadcrumbText}
           </a>
         </div>
