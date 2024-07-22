@@ -56,6 +56,7 @@ export function SiteBreadcrumb({ children }: { children?: React.ReactNode }) {
       document.title = currentRoute.title;
     }
   }, [currentRoute]);
+
   const breadcrumbItems = useMemo(() => {
     if (!currentRoute) return [];
     const items: BreadcrumbItemType[] = [{ label: "Home", path: "/" }];

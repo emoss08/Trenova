@@ -22,6 +22,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/server"
 	"github.com/emoss08/trenova/pkg/models"
+	"github.com/emoss08/trenova/pkg/models/property"
 	"github.com/google/uuid"
 	"github.com/rs/zerolog"
 	"github.com/uptrace/bun"
@@ -158,18 +159,46 @@ func (s *TractorService) UpdateOne(ctx context.Context, entity *models.Tractor) 
 	return entity, nil
 }
 
-func (s *TractorService) GetActiveAssignments(ctx context.Context, tractorID string, orgID, buID uuid.UUID) ([]models.TractorAssignment, error) {
+// AssignmentQueryFilter defines the filter parameters for querying Active Assignments
+type AssignmentQueryFilter struct {
+	OrganizationID        uuid.UUID
+	BusinessUnitID        uuid.UUID
+	TractorID             uuid.UUID
+	Status                property.AssignmentStatus
+	ExpandShipmentDetails bool
+}
+
+// filterAssignmentQuery applies filters to the get active assignments query.
+func (s *TractorService) filterAssignmentQuery(q *bun.SelectQuery, f *AssignmentQueryFilter) *bun.SelectQuery {
+	q = q.Where("ta.organization_id = ?", f.OrganizationID).
+		Where("ta.business_unit_id = ?", f.BusinessUnitID)
+
+	if f.ExpandShipmentDetails {
+		q = q.Relation("Shipment").
+			Relation("ShipmentMove")
+	}
+
+	if f.Status != "" {
+		q = q.Where("ta.status = ?", f.Status)
+	}
+
+	if f.TractorID != uuid.Nil {
+		q = q.Where("ta.tractor_id = ?", f.TractorID)
+	}
+
+	return q
+}
+
+func (s *TractorService) GetActiveAssignments(ctx context.Context, filter *AssignmentQueryFilter) ([]models.TractorAssignment, error) {
 	var assignments []models.TractorAssignment
 
-	err := s.db.NewSelect().
-		Model(&assignments).
-		Where("ta.tractor_id = ? AND ta.organization_id = ? AND ta.business_unit_id = ? AND ta.status = ?",
-			tractorID, orgID, buID, "Active").
-		Relation("Shipment").
-		Relation("ShipmentMove").
-		Order("sequence ASC").
-		Scan(ctx)
-	if err != nil {
+	q := s.db.NewSelect().
+		Model(&assignments)
+
+	q = s.filterAssignmentQuery(q, filter)
+
+	if err := q.Scan(ctx); err != nil {
+		s.logger.Error().Err(err).Msg("Failed to fetch active assignments")
 		return nil, fmt.Errorf("failed to fetch active assignments: %w", err)
 	}
 

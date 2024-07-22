@@ -272,7 +272,22 @@ func (h TractorHandler) GetActiveAssignments() fiber.Handler {
 			})
 		}
 
-		assignments, err := h.service.GetActiveAssignments(c.UserContext(), tractorID, ids.OrganizationID, ids.BusinessUnitID)
+		filter := &services.AssignmentQueryFilter{
+			OrganizationID: ids.OrganizationID,
+			BusinessUnitID: ids.BusinessUnitID,
+			TractorID:      uuid.MustParse(tractorID),
+		}
+
+		// Pase and set addtional filters
+		if status := c.Query("status"); status != "" {
+			filter.Status = property.AssignmentStatus(status)
+		}
+
+		if expandShipmentDetails := c.Query("expandShipmentDetails"); expandShipmentDetails != "" {
+			filter.ExpandShipmentDetails = expandShipmentDetails == constants.QueryParamTrue
+		}
+
+		assignments, err := h.service.GetActiveAssignments(c.UserContext(), filter)
 		if err != nil {
 			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Error{
 				Code:    fiber.StatusInternalServerError,
