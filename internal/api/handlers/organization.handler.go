@@ -50,28 +50,10 @@ func NewOrganizationHandler(s *server.Server) *OrganizationHandler {
 
 func (oh OrganizationHandler) RegisterRoutes(r fiber.Router) {
 	orgAPI := r.Group("/organizations")
-	orgAPI.Get("/me", oh.getUserOrganization())
-	orgAPI.Get("/details", oh.getOrganizationDetails())
+	orgAPI.Get("/", oh.getOrganizationDetails())
 	orgAPI.Put("/:orgID", oh.updateOrganization())
 	orgAPI.Post("/upload-logo", oh.uploadOrganizationLogo())
 	orgAPI.Post("/clear-logo", oh.clearOrganizationLogo())
-}
-
-func (oh OrganizationHandler) getUserOrganization() fiber.Handler {
-	return func(c *fiber.Ctx) error {
-		ids, err := utils.ExtractAndHandleContextIDs(c)
-		if err != nil {
-			return err
-		}
-
-		entity, err := oh.service.GetUserOrganization(c.UserContext(), ids.BusinessUnitID, ids.OrganizationID)
-		if err != nil {
-			oh.logger.Error().Str("organizationID", ids.OrganizationID.String()).Err(err).Msg("Error getting user organization")
-			return c.Status(fiber.StatusInternalServerError).JSON(err)
-		}
-
-		return c.Status(fiber.StatusOK).JSON(entity)
-	}
 }
 
 func (oh OrganizationHandler) getOrganizationDetails() fiber.Handler {
