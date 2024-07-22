@@ -126,7 +126,7 @@ func (s ShipmentService) Get(ctx context.Context, id uuid.UUID, orgID, buID uuid
 	return entity, nil
 }
 
-func (s ShipmentService) AssignTractorToShipment(ctx context.Context, input *types.AssignTractorInput, orgID, buID uuid.UUID) ([]models.TractorAssignment, error) { //nolint:gocognit // This function is complex by design
+func (s ShipmentService) AssignTractorToShipment(ctx context.Context, input *types.AssignTractorInput, orgID, buID uuid.UUID) ([]models.TractorAssignment, error) {
 	if input.TractorID == uuid.Nil || len(input.Assignments) == 0 {
 		return nil, validator.DBValidationError{Message: "tractorId and at least one assignment are required"}
 	}
@@ -134,13 +134,12 @@ func (s ShipmentService) AssignTractorToShipment(ctx context.Context, input *typ
 	var assignedAssignments []models.TractorAssignment
 
 	err := s.db.RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
-		// Fetch existing assignments for this tractor
+		// Fetch all existing assignments for this tractor
 		var existingAssignments []models.TractorAssignment
 		err := tx.NewSelect().
 			Model(&existingAssignments).
-			Where("tractor_id = ? AND organization_id = ? AND business_unit_id = ? AND status = ?",
-				input.TractorID, orgID, buID, "Active").
-			Order("sequence ASC").
+			Where("tractor_id = ? AND organization_id = ? AND business_unit_id = ?",
+				input.TractorID, orgID, buID).
 			Scan(ctx)
 		if err != nil {
 			return fmt.Errorf("failed to fetch existing assignments: %w", err)
@@ -159,6 +158,7 @@ func (s ShipmentService) AssignTractorToShipment(ctx context.Context, input *typ
 			if existing, ok := existingMap[key]; ok {
 				// Update existing assignment
 				existing.Sequence = i + 1
+				existing.Status = "Active"
 				_, err = tx.NewUpdate().Model(existing).WherePK().Exec(ctx)
 				if err != nil {
 					return fmt.Errorf("failed to update assignment: %w", err)
@@ -186,15 +186,18 @@ func (s ShipmentService) AssignTractorToShipment(ctx context.Context, input *typ
 			}
 		}
 
-		// Remove assignments that are no longer in the list
+		// Deactivate assignments that are no longer in the list
 		for _, assignment := range existingMap {
-			_, err = tx.NewUpdate().
-				Model(assignment).
-				Set("status = ?", "Inactive").
-				WherePK().
-				Exec(ctx)
-			if err != nil {
-				return fmt.Errorf("failed to deactivate old assignment: %w", err)
+			if assignment.Status == "Active" {
+				assignment.Status = "Inactive"
+				_, err = tx.NewUpdate().
+					Model(assignment).
+					Set("status = ?", "Inactive").
+					WherePK().
+					Exec(ctx)
+				if err != nil {
+					return fmt.Errorf("failed to deactivate old assignment: %w", err)
+				}
 			}
 		}
 
