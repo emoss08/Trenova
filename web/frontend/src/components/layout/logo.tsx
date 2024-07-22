@@ -15,14 +15,14 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import { useUserOrganization } from "@/hooks/useQueries";
+import { useOrganization } from "@/hooks/useQueries";
 import { faChevronDown } from "@fortawesome/pro-solid-svg-icons";
 import { Icon } from "../common/icons";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 import { Skeleton } from "../ui/skeleton";
 
 export function OrganizationLogo() {
-  const { data, isLoading } = useUserOrganization();
+  const { data, isLoading } = useOrganization();
 
   if (isLoading) {
     return <Skeleton className="h-14" />;
@@ -58,7 +58,7 @@ export function OrganizationLogo() {
 }
 
 export function MiniOrganizationLogo() {
-  const { data, isLoading } = useUserOrganization();
+  const { data, isLoading } = useOrganization();
 
   if (isLoading) {
     return <Skeleton className="h-14" />;

@@ -59,11 +59,11 @@ import {
   getFeatureFlags,
   getGoogleApiInformation,
   getInvoiceControl,
+  getOrganizationDetails,
   getRouteControl,
   getShipmentControl,
   getTableNames,
   getTopicNames,
-  getUserOrganizationDetails,
 } from "@/services/OrganizationRequestService";
 import { getColumns } from "@/services/ReportRequestService";
 import {
@@ -687,36 +687,16 @@ export function useFeatureFlags() {
 /**
  * Get the Logged-in Users Organization
  */
-export function useUserOrganization() {
+export function useOrganization() {
   const { data, isLoading, isError } = useQuery({
-    queryKey: ["userOrganization"] as QueryKeys,
-    queryFn: async () => getUserOrganizationDetails(),
+    queryKey: ["organization"] as QueryKeys,
+    queryFn: async () => getOrganizationDetails(),
   });
 
   return {
     data,
     isLoading,
     isError,
-  };
-}
-
-/**
- * Get the Logged-in Users Organization
- */
-export function useOrganization() {
-  const {
-    data: organizationData,
-    isLoading: organizationLoading,
-    isError: organizationError,
-  } = useQuery({
-    queryKey: ["organization"] as QueryKeys,
-    queryFn: async () => getUserOrganizationDetails(),
-  });
-
-  return {
-    organizationData,
-    organizationLoading,
-    organizationError,
   };
 }
 
