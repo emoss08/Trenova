@@ -68,7 +68,7 @@ const PortalAwareItem = ({
       ref={provided.innerRef}
       {...provided.draggableProps}
       className={cn(
-        "border-border hover:bg-muted flex items-center space-x-2 rounded-md border p-2",
+        "bg-background border-border hover:bg-muted flex items-center space-x-2 rounded-md border p-2",
         snapshot.isDragging && "opacity-60 shadow-lg bg-muted",
       )}
     >
@@ -76,7 +76,7 @@ const PortalAwareItem = ({
         {...provided.dragHandleProps}
         className="rounded p-1 hover:cursor-move"
       >
-        <GripIcon className="size-5 text-foreground" />
+        <GripIcon className="text-foreground size-5" />
       </div>
       <Input value={field.shipmentProNumber} readOnly className="grow" />
       <Button
@@ -114,7 +114,8 @@ export function AssignmentDialog({
 }) {
   const { data: activeAssignments, isLoading } = useQuery({
     queryKey: ["activeAssignments", selectedTractor.id],
-    queryFn: async () => getActiveAssignmentsForTractor(selectedTractor.id),
+    queryFn: async () =>
+      getActiveAssignmentsForTractor(selectedTractor.id, "Active", true),
     enabled: open,
   });
 
@@ -181,7 +182,7 @@ export function AssignmentDialog({
 
   return (
     <Credenza open={open} onOpenChange={onOpenChange}>
-      <CredenzaContent className="max-w-md">
+      <CredenzaContent className="bg-background max-w-md">
         <CredenzaHeader>
           <CredenzaTitle>Assignments: {selectedTractor.code}</CredenzaTitle>
         </CredenzaHeader>

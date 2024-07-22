@@ -98,7 +98,14 @@ export async function getTractors(
 
 export async function getActiveAssignmentsForTractor(
   tractorId: string,
+  status?: string,
+  expandShipmentDetails?: boolean,
 ): Promise<TractorAssignment[]> {
-  const response = await axios.get(`tractors/${tractorId}/assignments`);
+  const response = await axios.get(`tractors/${tractorId}/assignments`, {
+    params: {
+      expandShipmentDetails: expandShipmentDetails,
+      status: status,
+    },
+  });
   return response.data;
 }
