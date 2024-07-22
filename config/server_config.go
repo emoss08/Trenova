@@ -93,6 +93,11 @@ type Meilisearch struct {
 	Token string
 }
 
+type Cache struct {
+	// Addr is the address to the redis server.
+	Addr string
+}
+
 type Auth struct {
 	// PrivateKey is the RSA private key used to sign JWT tokens.
 	PrivateKey *rsa.PrivateKey
@@ -192,6 +197,9 @@ type Server struct {
 
 	// Audit contains configuration options for the audit service.
 	Audit AuditConfig
+
+	// Cache contains configuration options for the cache service.
+	Cache Cache
 }
 
 func DefaultServiceConfigFromEnv(isTest bool) (Server, error) {

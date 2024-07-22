@@ -34,6 +34,7 @@ import (
 	"github.com/emoss08/trenova/pkg/kfk"
 	"github.com/emoss08/trenova/pkg/minio"
 	"github.com/emoss08/trenova/pkg/models"
+	"github.com/emoss08/trenova/pkg/redis"
 	"github.com/fatih/color"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/utils"
@@ -96,6 +97,11 @@ type Server struct {
 	dbOnce sync.Once
 	// DB stores the connection to the database.
 	DB *bun.DB
+
+	// Lazy init
+	cacheOnce sync.Once
+	// Cache stores the cache client.
+	Cache *redis.Client
 }
 
 // NewServer creates a new server instance.
@@ -158,6 +164,20 @@ func (s *Server) InitDB() *bun.DB {
 	})
 
 	return s.DB
+}
+
+func (s *Server) InitCache() *redis.Client {
+	s.cacheOnce.Do(func() {
+		client := redis.NewClient(s.Config.Cache.Addr, s.Logger)
+
+		s.OnStop("cache.Close", func(_ context.Context, _ *Server) error {
+			return client.Close()
+		})
+
+		s.Cache = client
+	})
+
+	return s.Cache
 }
 
 func (s *Server) InitAuditService() error {

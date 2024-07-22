@@ -14,6 +14,7 @@ require (
 	github.com/cloudwego/base64x v0.1.4 // indirect
 	github.com/cloudwego/iasm v0.2.0 // indirect
 	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc // indirect
+	github.com/dgryski/go-rendezvous v0.0.0-20200823014737-9f7001d12a5f // indirect
 	github.com/dustin/go-humanize v1.0.1 // indirect
 	github.com/fasthttp/websocket v1.5.9 // indirect
 	github.com/fsnotify/fsnotify v1.7.0 // indirect
@@ -96,6 +97,7 @@ require (
 	github.com/jackc/pgx/v5 v5.6.0
 	github.com/minio/minio-go/v7 v7.0.72
 	github.com/prometheus/client_golang v1.19.1
+	github.com/redis/go-redis/v9 v9.6.0
 	github.com/rs/zerolog v1.33.0
 	github.com/samber/lo v1.46.0
 	github.com/shopspring/decimal v1.4.0
