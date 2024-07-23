@@ -168,7 +168,10 @@ func (s *Server) InitDB() *bun.DB {
 
 func (s *Server) InitCache() *redis.Client {
 	s.cacheOnce.Do(func() {
-		client := redis.NewClient(s.Config.Cache.Addr, s.Logger)
+		client := redis.NewClient(&redis.Options{
+			Addr:        s.Config.Cache.Addr,
+			DialTimeout: 5 * time.Second,
+		}, s.Logger)
 
 		s.OnStop("cache.Close", func(_ context.Context, _ *Server) error {
 			return client.Close()
