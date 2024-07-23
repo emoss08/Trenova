@@ -28,17 +28,11 @@ type ThemeProviderProps = {
 type ThemeProviderState = {
   theme: Theme;
   setTheme: (theme: Theme) => void;
-  isRainbowAnimationActive: boolean;
-  toggleRainbowAnimation: () => void;
-  setIsRainbowAnimationActive: (isRainbowAnimationActive: boolean) => void;
 };
 
 const initialState: ThemeProviderState = {
   theme: "system",
   setTheme: () => null,
-  isRainbowAnimationActive: false,
-  toggleRainbowAnimation: () => null,
-  setIsRainbowAnimationActive: () => null,
 };
 
 const ThemeProviderContext = createContext<ThemeProviderState>(initialState);
@@ -52,14 +46,6 @@ export function ThemeProvider({
   const [theme, setTheme] = useState<Theme>(
     () => (localStorage.getItem(storageKey) as Theme) || defaultTheme,
   );
-
-  const [isRainbowAnimationActive, setIsRainbowAnimationActive] =
-    useState<boolean>(() => {
-      const storedValue = localStorage.getItem(
-        storageKey + "-rainbow-animation",
-      );
-      return storedValue ? JSON.parse(storedValue) : false;
-    });
 
   useEffect(() => {
     const root = window.document.documentElement;
@@ -77,29 +63,13 @@ export function ThemeProvider({
     }
 
     root.classList.add(theme);
-
-    if (isRainbowAnimationActive) {
-      root.classList.add("rainbow-animation");
-    } else {
-      root.classList.remove("rainbow-animation");
-    }
-  }, [theme, isRainbowAnimationActive]);
+  }, [theme]);
 
   const value = {
     theme,
     setTheme: (theme: Theme) => {
       localStorage.setItem(storageKey, theme);
       setTheme(theme);
-    },
-    isRainbowAnimationActive,
-    setIsRainbowAnimationActive,
-    toggleRainbowAnimation: () => {
-      const newValue = !isRainbowAnimationActive;
-      localStorage.setItem(
-        storageKey + "-rainbow-animation",
-        JSON.stringify(newValue),
-      );
-      setIsRainbowAnimationActive(newValue);
     },
   };
 

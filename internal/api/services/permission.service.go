@@ -16,6 +16,7 @@
 package services
 
 import (
+	"errors"
 	"fmt"
 
 	"github.com/casbin/casbin/v2"
@@ -23,6 +24,8 @@ import (
 	"github.com/gofiber/fiber/v2"
 	"github.com/google/uuid"
 )
+
+var ErrUserNotFound = errors.New("user not found in context")
 
 type PermissionService struct {
 	enforcer *casbin.Enforcer
@@ -37,7 +40,7 @@ func NewPermissionService(enforcer *casbin.Enforcer) *PermissionService {
 func (s *PermissionService) CheckUserPermission(c *fiber.Ctx, resource string, action string) error {
 	userID, ok := c.Locals(utils.CTXUserID).(uuid.UUID)
 	if !ok {
-		return fmt.Errorf("User ID not found in context")
+		return ErrUserNotFound
 	}
 
 	permission := fmt.Sprintf("%s:%s", resource, action)

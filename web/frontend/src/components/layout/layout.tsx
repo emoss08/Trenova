@@ -39,7 +39,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
   const location = useLocation();
   const queryParams = new URLSearchParams(location.search);
   const hideAsideMenu = queryParams.get("hideAside") === "true";
-  const isDesktop = useMediaQuery("(min-width: 1024px)");
+  const isDesktop = useMediaQuery("(min-width: 1280px)");
 
   // Listen for query invalidation events
   useQueryInvalidationListener();
@@ -53,7 +53,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
         {hideAsideMenu ? null : <MainAsideMenu />}
         <div className="flex flex-1 flex-col overflow-hidden">
           {!isDesktop && (
-            <header className="border-border/40 bg-background/95 flex flex-none border-b xl:hidden">
+            <header className="border-border/40 bg-background/95 flex flex-none border-b">
               <div className="flex h-14 w-full items-center justify-between px-4">
                 <div className="flex items-center gap-x-4">
                   <AsideMenuDialog />

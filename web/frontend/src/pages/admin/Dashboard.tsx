@@ -18,7 +18,7 @@
 import AdminLayout from "@/components/admin-page/layout";
 import { ErrorLoadingData } from "@/components/common/table/data-table-components";
 import { ComponentLoader } from "@/components/ui/component-loader";
-import { useUserOrganization } from "@/hooks/useQueries";
+import { useOrganization } from "@/hooks/useQueries";
 import { lazy } from "react";
 
 const GeneralPage = lazy(() => import("@/components/admin-page/general-page"));
@@ -28,7 +28,7 @@ export default function AdminPage() {
     data: organizationData,
     isError: organizationError,
     isLoading: organizationLoading,
-  } = useUserOrganization();
+  } = useOrganization();
   if (organizationError) {
     return (
       <ErrorLoadingData message="An Error occurred, while loading your profile, plese contact your system administrator." />
