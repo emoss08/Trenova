@@ -34,19 +34,9 @@ import { ShipmentControl } from "@/types/shipment";
 /**
  * Featches the details of the user currently assigned organization.
  * @returns A promise that resolves to the organization's details.
- * @note This only returns parts of the organization
- */
-export async function getUserOrganizationDetails(): Promise<Organization> {
-  const response = await axios.get("/organizations/me/");
-  return response.data;
-}
-
-/**
- * Featches the details of the user currently assigned organization.
- * @returns A promise that resolves to the organization's details.
  */
 export async function getOrganizationDetails(): Promise<Organization> {
-  const response = await axios.get("/organizations/details/");
+  const response = await axios.get("/organizations/");
   return response.data;
 }
 

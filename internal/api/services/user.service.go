@@ -79,9 +79,9 @@ func (s UserService) GetAuthenticatedUser(ctx context.Context, userID uuid.UUID)
 			Permissions: []models.UserPermission{},
 		}
 
-		permissions, err := s.enforcer.GetPermissionsForUser(roleName)
-		if err != nil {
-			return nil, err
+		permissions, pErr := s.enforcer.GetPermissionsForUser(roleName)
+		if pErr != nil {
+			return nil, pErr
 		}
 
 		for _, perm := range permissions {
@@ -90,7 +90,7 @@ func (s UserService) GetAuthenticatedUser(ctx context.Context, userID uuid.UUID)
 				if len(parts) >= 2 {
 					permission := models.UserPermission{
 						Codename:    perm[1],
-						Description: "", // You might want to store permission descriptions separately
+						Description: "",
 						Action:      parts[1],
 						Label:       utils.ToTitleFormat(strings.Join(parts, " ")),
 						ResourceID:  parts[0],

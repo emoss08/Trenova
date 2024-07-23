@@ -117,8 +117,7 @@ export function UserAvatarMenuContent({
   user: User;
   hasNotifications: boolean;
 }) {
-  const { theme, setTheme, isRainbowAnimationActive, toggleRainbowAnimation } =
-    useTheme();
+  const { theme, setTheme } = useTheme();
   const [currentTheme, setCurrentTheme] = useState(theme);
   const [signOutDialogOpen, setSignOutDialogOpen] =
     useHeaderStore.use("signOutMenuOpen");
@@ -166,7 +165,7 @@ export function UserAvatarMenuContent({
                 <p className="truncate text-sm font-medium leading-none">
                   {user.name || user.username}
                 </p>
-                <p className="text-xs leading-none text-muted-foreground">
+                <p className="text-muted-foreground text-xs leading-none">
                   {user.email}
                 </p>
               </div>
@@ -188,7 +187,7 @@ export function UserAvatarMenuContent({
             Notifications
             <span className="ml-auto flex gap-x-0.5 tracking-widest">
               {hasNotifications && (
-                <span className="size-1.5 rounded-full bg-green-600 ring-background motion-safe:animate-pulse"></span>
+                <span className="ring-background size-1.5 rounded-full bg-green-600 motion-safe:animate-pulse"></span>
               )}
             </span>
           </DropdownMenuItem>
@@ -218,10 +217,6 @@ export function UserAvatarMenuContent({
             </DropdownMenuSubContent>
           </DropdownMenuPortal>
         </DropdownMenuSub>
-        <DropdownMenuSeparator />
-        <DropdownMenuItem onClick={toggleRainbowAnimation}>
-          {isRainbowAnimationActive ? "Turn off" : "Turn on"} rainbow
-        </DropdownMenuItem>
         <DropdownMenuSeparator />
         <DropdownMenuItem onClick={() => setSignOutDialogOpen(true)}>
           Log out
@@ -259,7 +254,7 @@ export function UserAvatarMenu({ user }: { user: User }) {
       <DropdownMenuTrigger asChild>
         <span className="relative inline-block">
           <UserAvatar user={user} />
-          <span className="absolute bottom-1 right-1 block size-2 rounded-full bg-green-600 ring-2 ring-background" />
+          <span className="ring-background absolute bottom-1 right-1 block size-2 rounded-full bg-green-600 ring-2" />
         </span>
       </DropdownMenuTrigger>
       <UserAvatarMenuContent

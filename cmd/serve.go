@@ -68,6 +68,7 @@ func runServer() {
 
 	s.InitLogger()
 	s.InitDB()
+	s.InitCache()
 
 	// Initialize the Kafka client.
 	if err = s.InitKafkaClient(); err != nil {

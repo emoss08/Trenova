@@ -17,12 +17,14 @@ package services
 
 import (
 	"context"
+	"fmt"
 	"mime/multipart"
 
 	"github.com/emoss08/trenova/internal/server"
 	"github.com/emoss08/trenova/pkg/file"
 	"github.com/emoss08/trenova/pkg/minio"
 	"github.com/emoss08/trenova/pkg/models"
+	"github.com/emoss08/trenova/pkg/redis"
 	"github.com/google/uuid"
 	"github.com/rs/zerolog"
 	"github.com/uptrace/bun"
@@ -32,6 +34,7 @@ type OrganizationService struct {
 	db          *bun.DB
 	logger      *zerolog.Logger
 	minio       minio.MinioClient
+	cache       *redis.Client
 	fileService *file.FileService
 }
 
@@ -40,14 +43,36 @@ func NewOrganizationService(s *server.Server) *OrganizationService {
 		db:          s.DB,
 		logger:      s.Logger,
 		minio:       s.Minio,
+		cache:       s.Cache,
 		fileService: file.NewFileService(s.Logger, s.FileHandler),
 	}
 }
 
-func (s *OrganizationService) GetUserOrganization(ctx context.Context, buID, orgID uuid.UUID) (*models.Organization, error) {
-	org := new(models.Organization)
+func (s *OrganizationService) organizationCacheKey(orgID uuid.UUID) string {
+	return fmt.Sprintf("organization:%s", orgID.String())
+}
 
-	err := s.db.NewSelect().
+func (s *OrganizationService) GetOrganization(ctx context.Context, buID, orgID uuid.UUID) (*models.Organization, error) {
+	cacheKey := s.organizationCacheKey(orgID)
+
+	// Try toi fetch the organization from the cache
+	cachedOrg, err := s.cache.FetchFromCacheByKey(ctx, cacheKey)
+	if err != nil {
+		s.logger.Error().Err(err).Msg("Failed to fetch organization from cache")
+	}
+
+	if cachedOrg != "" {
+		org := new(models.Organization)
+		if err = org.UnmarshalBinary([]byte(cachedOrg)); err != nil {
+			s.logger.Error().Err(err).Msg("Failed to unmarshal organization from cache")
+		}
+
+		return org, nil
+	}
+
+	// If not in cache then fetch from the database
+	org := new(models.Organization)
+	err = s.db.NewSelect().
 		Model(org).
 		Relation("State").
 		Where("organization.business_unit_id = ?", buID).
@@ -57,20 +82,14 @@ func (s *OrganizationService) GetUserOrganization(ctx context.Context, buID, org
 		return nil, err
 	}
 
-	return org, nil
-}
-
-func (s *OrganizationService) GetOrganization(ctx context.Context, buID, orgID uuid.UUID) (*models.Organization, error) {
-	org := new(models.Organization)
-
-	err := s.db.NewSelect().
-		Model(org).
-		Relation("State").
-		Where("organization.business_unit_id = ?", buID).
-		Where("organization.id = ?", orgID).
-		Scan(ctx)
+	// Cache the organization
+	orgJSON, err := org.MarshalBinary()
 	if err != nil {
-		return nil, err
+		s.logger.Error().Err(err).Msg("Failed to marshal organization")
+	}
+
+	if err = s.cache.CacheByKey(ctx, cacheKey, string(orgJSON)); err != nil {
+		s.logger.Error().Err(err).Msg("Failed to cache organization")
 	}
 
 	return org, nil
@@ -86,6 +105,12 @@ func (s *OrganizationService) UpdateOrganization(ctx context.Context, entity *mo
 	})
 	if err != nil {
 		return nil, err
+	}
+
+	// invalidate cache
+	cacheKey := s.organizationCacheKey(entity.ID)
+	if err = s.cache.InvalidateCacheByKey(ctx, cacheKey); err != nil {
+		s.logger.Error().Err(err).Msg("Failed to invalidate cache")
 	}
 
 	return entity, nil
@@ -136,6 +161,12 @@ func (s *OrganizationService) updateAndSetLogoURL(ctx context.Context, orgID uui
 		return nil, err
 	}
 
+	// invalidate cache
+	cacheKey := s.organizationCacheKey(orgID)
+	if err = s.cache.InvalidateCacheByKey(ctx, cacheKey); err != nil {
+		s.logger.Error().Err(err).Msg("Failed to invalidate cache")
+	}
+
 	return org, nil
 }
 
@@ -156,6 +187,12 @@ func (s *OrganizationService) ClearLogo(ctx context.Context, orgID uuid.UUID) (*
 	})
 	if err != nil {
 		return nil, err
+	}
+
+	// invalidate cache
+	cacheKey := s.organizationCacheKey(orgID)
+	if err = s.cache.InvalidateCacheByKey(ctx, cacheKey); err != nil {
+		s.logger.Error().Err(err).Msg("Failed to invalidate cache")
 	}
 
 	return org, nil
