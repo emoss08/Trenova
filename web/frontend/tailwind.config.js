@@ -15,8 +15,6 @@
  * Grant, and not modifying the license in any other way.
  */
 
-
-
 import typographyPlugin from "@tailwindcss/typography";
 import animatePlugin from "tailwindcss-animate";
 
