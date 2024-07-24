@@ -20,7 +20,6 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/pkg/models/property"
 	"github.com/emoss08/trenova/pkg/validator"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
@@ -104,14 +103,6 @@ func (o *Organization) OptimisticUpdate(ctx context.Context, tx bun.IDB) error {
 	}
 
 	return nil
-}
-
-func (o *Organization) UnmarshalBinary(data []byte) error {
-	return sonic.Unmarshal(data, o)
-}
-
-func (o *Organization) MarshalBinary() ([]byte, error) {
-	return sonic.Marshal(o)
 }
 
 var _ bun.BeforeAppendModelHook = (*Organization)(nil)
