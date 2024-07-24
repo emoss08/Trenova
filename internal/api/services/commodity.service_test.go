@@ -2,6 +2,7 @@ package services_test
 
 import (
 	"context"
+	"fmt"
 	"testing"
 
 	"github.com/emoss08/trenova/internal/api/services"
@@ -48,7 +49,7 @@ func TestCommodityService(t *testing.T) {
 	t.Run("GetAll", func(t *testing.T) {
 		// Create multiple Commodity
 		for i := 0; i < 5; i++ {
-			_, err := service.Create(ctx, createTestCommodity("CODE"+string(i)))
+			_, err := service.Create(ctx, createTestCommodity(fmt.Sprintf("CODE%d", i)))
 			require.NoError(t, err)
 		}
 
@@ -80,7 +81,7 @@ func TestCommodityService(t *testing.T) {
 	t.Run("QueryFiltering", func(t *testing.T) {
 		// Create multiple Commodity
 		for i := 0; i < 5; i++ {
-			_, err := service.Create(ctx, createTestCommodity("CODE"+string(i)))
+			_, err := service.Create(ctx, createTestCommodity(fmt.Sprintf("CODE%d", i)))
 			require.NoError(t, err)
 		}
 
