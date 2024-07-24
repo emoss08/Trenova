@@ -61,12 +61,13 @@ type Worker struct {
 	Organization  *Organization  `bun:"rel:belongs-to,join:organization_id=id" json:"-"`
 }
 
-func (w Worker) Validate() error {
+func (w *Worker) Validate() error {
 	return validation.ValidateStruct(
 		&w,
 		validation.Field(&w.Code, validation.Required, validation.Length(10, 10).Error("Code must be 4 characters")),
 		validation.Field(&w.BusinessUnitID, validation.Required),
 		validation.Field(&w.OrganizationID, validation.Required),
+		validation.Field(&w.WorkerProfile),
 	)
 }
 
@@ -123,10 +124,6 @@ func (w *Worker) InsertWorker(ctx context.Context, tx bun.Tx, codeGen *gen.CodeG
 
 	if err = w.Validate(); err != nil {
 		return fmt.Errorf("worker validation failed: %w", err)
-	}
-
-	if err = w.WorkerProfile.Validate(); err != nil {
-		return fmt.Errorf("worker profile validation failed: %w", err)
 	}
 
 	_, err = tx.NewInsert().Model(w).Exec(ctx)

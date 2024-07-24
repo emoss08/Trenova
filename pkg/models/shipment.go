@@ -82,7 +82,7 @@ type Shipment struct {
 	VoidedComment            string                        `bun:"type:TEXT" json:"voidedComment"`
 	AutoRated                bool                          `bun:",notnull,default:false" json:"autoRated"`
 	EntryMethod              string                        `bun:"type:VARCHAR(20)" json:"entryMethod"`
-	IsHazardous              bool                          `bun:",notnull,default:false" json:"isHarzardous"`
+	IsHazardous              bool                          `bun:",notnull,default:false" json:"isHazardous"`
 	EstimatedDeliveryDate    *pgtype.Date                  `bun:"type:date,nullzero" json:"estimatedDeliveryDate"`
 	ActualDeliveryDate       *pgtype.Date                  `bun:"type:date,nullzero" json:"actualDeliveryDate"`
 	Priority                 int                           `bun:"type:integer,notnull,default:0" json:"priority"`
@@ -120,7 +120,7 @@ type Shipment struct {
 }
 
 // Validate validates the Shipment struct.
-func (s Shipment) Validate() error {
+func (s *Shipment) Validate() error {
 	return validation.ValidateStruct(
 		&s,
 		validation.Field(&s.Status, validation.Required.Error("Status is required")),
@@ -173,7 +173,7 @@ func (s *Shipment) OptimisticUpdate(ctx context.Context, tx bun.IDB) error {
 	return nil
 }
 
-// UpdateShipmentstatus updates the shipment status based on its movements.
+// UpdateStatus updates the shipment status based on its movements.
 func (s *Shipment) UpdateStatus(ctx context.Context, db *bun.DB) error {
 	// Fetch all movements for this shipment
 	var movements []*ShipmentMove
@@ -216,7 +216,7 @@ func (s *Shipment) UpdateStatus(ctx context.Context, db *bun.DB) error {
 }
 
 // GetMoveByID fetches a shipment move by its ID.
-func (s Shipment) GetMoveByID(ctx context.Context, db *bun.DB, moveID uuid.UUID) (*ShipmentMove, error) {
+func (s *Shipment) GetMoveByID(ctx context.Context, db *bun.DB, moveID uuid.UUID) (*ShipmentMove, error) {
 	var move ShipmentMove
 	err := db.NewSelect().Model(&move).Where("id = ?", moveID).Scan(ctx)
 	if err != nil {
@@ -251,7 +251,38 @@ func (s *Shipment) MarkReadyToBill() error {
 	return nil
 }
 
-func (s Shipment) DBValidate(ctx context.Context, db *bun.DB) error {
+func (s *Shipment) getShipmentControlByOrgID(ctx context.Context, db *bun.DB, orgID uuid.UUID) (*ShipmentControl, error) {
+	shipmentControl := new(ShipmentControl)
+
+	err := db.NewSelect().Model(s).Where("organization_id = ?", orgID).Scan(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	return shipmentControl, nil
+}
+
+// checkForDuplicateBOLs checks for duplicate BOLs in the database by organization ID.
+func (s *Shipment) checkForDuplicateBOLs(ctx context.Context, db *bun.DB, orgID uuid.UUID) error {
+	var duplicateBOLs []*string
+	err := db.NewSelect().
+		Model((*Shipment)(nil)).
+		ColumnExpr("DISTINCT bill_of_lading").
+		Where("organization_id = ?", orgID).
+		Where("bill_of_lading = ?", s.BillOfLading).
+		Scan(ctx, &duplicateBOLs)
+	if err != nil {
+		return err
+	}
+
+	if len(duplicateBOLs) > 0 {
+		return &validator.DBValidationError{Field: "billOfLading", Message: fmt.Sprintf("Bill of lading %s already exists", s.BillOfLading)}
+	}
+
+	return nil
+}
+
+func (s *Shipment) DBValidate(ctx context.Context, db *bun.DB) error {
 	var multiErr validator.MultiValidationError
 	var dbValidationErr *validator.DBValidationError
 
@@ -259,7 +290,36 @@ func (s Shipment) DBValidate(ctx context.Context, db *bun.DB) error {
 		return err
 	}
 
-	if err := s.validateStatusTransition(ctx, db); err != nil {
+	shipControl, err := s.getShipmentControlByOrgID(ctx, db, s.OrganizationID)
+	if err != nil {
+		return err
+	}
+
+	// Validate the revenue code if EnforceRevCode is enabled in Shipment Controls
+	if shipControl.EnforceRevCode && s.RevenueCodeID == nil {
+		multiErr.Errors = append(multiErr.Errors, validator.DBValidationError{
+			Field:   "revenueCodeId",
+			Message: "Organization enforces a revenue code when creating shipments. Please try again.",
+		})
+	}
+
+	// Validate the voided comment if EnforceVoidedComm is enabled in Shipment Controls
+	if shipControl.EnforceVoidedComm && s.Status == property.ShipmentStatusVoided && s.VoidedComment == "" {
+		multiErr.Errors = append(multiErr.Errors, validator.DBValidationError{
+			Field:   "voidedComment",
+			Message: "Organization requires a voided comment. Please try again.",
+		})
+	}
+
+	// Validate the origin and destination locations are not the same if enabled in Shipment Controls
+	if shipControl.CompareOriginDestination && s.OriginLocationID == s.DestinationLocationID {
+		multiErr.Errors = append(multiErr.Errors, validator.DBValidationError{
+			Field:   "destinationLocationId",
+			Message: "Organization does not allow the origin and destination locations to be the same. Please try again.",
+		})
+	}
+
+	if err = s.validateStatusTransition(ctx, db); err != nil {
 		if errors.As(err, &dbValidationErr) {
 			multiErr.Errors = append(multiErr.Errors, *dbValidationErr)
 		} else {
@@ -267,15 +327,15 @@ func (s Shipment) DBValidate(ctx context.Context, db *bun.DB) error {
 		}
 	}
 
-	// if err := validateTotalChargeAmount(s.FreightChargeAmount, s.OtherChargeAmount, s.TotalChargeAmount); err != nil {
-	// 	if errors.As(err, &dbValidationErr) {
-	// 		multiErr.Errors = append(multiErr.Errors, *dbValidationErr)
-	// 	} else {
-	// 		return err
-	// 	}
-	// }
+	if err = s.checkForDuplicateBOLs(ctx, db, s.OrganizationID); err != nil {
+		if errors.As(err, &dbValidationErr) {
+			multiErr.Errors = append(multiErr.Errors, *dbValidationErr)
+		} else {
+			return err
+		}
+	}
 
-	if err := validateDeliveryDate(s.ShipDate, s.EstimatedDeliveryDate); err != nil {
+	if err = validateDeliveryDate(s.ShipDate, s.EstimatedDeliveryDate); err != nil {
 		if errors.As(err, &dbValidationErr) {
 			multiErr.Errors = append(multiErr.Errors, *dbValidationErr)
 		} else {
@@ -300,23 +360,10 @@ func validateDeliveryDate(shipDate, delDate *pgtype.Date) error {
 	return nil
 }
 
-// validateTotalChargeAmount validates that the TotalChargeAmount is the sum of FreightChargeAmount and OtherChargeAmount.
-func validateTotalChargeAmount(freightChargeAmount, otherChargeAmount, totalChargeAmount decimal.Decimal) error {
-	expectedTotal := freightChargeAmount.Add(otherChargeAmount)
-	if totalChargeAmount != expectedTotal {
-		return &validator.DBValidationError{
-			Field:   "totalChargeAmount",
-			Message: fmt.Sprintf("Total charge amount must be the sum of freight charge amount and other charge amount. Expected %d, got %d", expectedTotal, totalChargeAmount),
-		}
-	}
-
-	return nil
-}
-
 // validateStatusTransition validates that the status transition is valid.
-func (s Shipment) validateStatusTransition(ctx context.Context, db *bun.DB) error {
+func (s *Shipment) validateStatusTransition(ctx context.Context, db *bun.DB) error {
 	if s.ID == uuid.Nil {
-		// This is a new shipment, so we only need to validae that the status is New
+		// This is a new shipment, so we only need to validate that the status is New
 		if s.Status != property.ShipmentStatusNew {
 			return &validator.DBValidationError{
 				Field:   "status",
@@ -337,7 +384,7 @@ func (s Shipment) validateStatusTransition(ctx context.Context, db *bun.DB) erro
 		return &validator.BusinessLogicError{Message: "Failed to fetch current shipment status"}
 	}
 
-	// Check if the new status is different from the cureent status.
+	// Check if the new status is different from the current status.
 	if s.Status == currentStatus {
 		return nil
 	}
@@ -374,14 +421,22 @@ func (s *Shipment) InsertShipment(ctx context.Context, db *bun.DB) error {
 		s.ProNumber = proNumber
 	}
 
-	s.CalculateTotalChargeAmount()
-
-	if err := s.DBValidate(ctx, db); err != nil {
+	shipControl, err := s.getShipmentControlByOrgID(ctx, db, s.OrganizationID)
+	if err != nil {
 		return err
 	}
 
-	err := db.RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
-		if _, err := tx.NewInsert().Model(s).Exec(ctx); err != nil {
+	// Calculate the total charge amount if AutoTotalShipment is enabled in Shipment Controls
+	if shipControl.AutoTotalShipment {
+		s.CalculateTotalChargeAmount()
+	}
+
+	if err = s.DBValidate(ctx, db); err != nil {
+		return err
+	}
+
+	err = db.RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
+		if _, err = tx.NewInsert().Model(s).Exec(ctx); err != nil {
 			return err
 		}
 
