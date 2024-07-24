@@ -20,7 +20,6 @@ import (
 	"crypto/rsa"
 	"crypto/x509"
 	"encoding/pem"
-	"os"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -47,8 +46,8 @@ func SetTestKeys(t *testing.T) (*rsa.PrivateKey, *rsa.PublicKey) {
 		Bytes: publicKeyBytes,
 	})
 
-	os.Setenv("PRIVATE_KEY", string(privateKeyPEM))
-	os.Setenv("PUBLIC_KEY", string(publicKeyPEM))
+	t.Setenv("PRIVATE_KEY", string(privateKeyPEM))
+	t.Setenv("PUBLIC_KEY", string(publicKeyPEM))
 
 	return privateKey, publicKey
 }
