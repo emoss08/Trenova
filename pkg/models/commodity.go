@@ -20,6 +20,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/emoss08/trenova/pkg/models/property"
 	"github.com/emoss08/trenova/pkg/validator"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
 
@@ -30,16 +31,16 @@ import (
 type Commodity struct {
 	bun.BaseModel `bun:"table:commodities,alias:com" json:"-"`
 
-	ID            uuid.UUID `bun:",pk,type:uuid,default:uuid_generate_v4()" json:"id"`
-	Name          string    `bun:"type:VARCHAR(100),notnull" json:"name" queryField:"true"`
-	Status        string    `bun:"type:status_enum,notnull,default:'Active'" json:"status"`
-	IsHazmat      bool      `bun:"type:boolean,notnull,default:false" json:"isHazmat"`
-	UnitOfMeasure string    `bun:"type:VARCHAR(50),notnull" json:"unitOfMeasure"`
-	MinTemp       *int16    `bun:"type:integer,nullzero" json:"minTemp"`
-	MaxTemp       *int16    `bun:"type:integer,nullzero" json:"maxTemp"`
-	Version       int64     `bun:"type:BIGINT" json:"version"`
-	CreatedAt     time.Time `bun:",nullzero,notnull,default:current_timestamp" json:"createdAt"`
-	UpdatedAt     time.Time `bun:",nullzero,notnull,default:current_timestamp" json:"updatedAt"`
+	ID            uuid.UUID       `bun:",pk,type:uuid,default:uuid_generate_v4()" json:"id"`
+	Name          string          `bun:"type:VARCHAR(100),notnull" json:"name" queryField:"true"`
+	Status        property.Status `bun:"type:status_enum,notnull,default:'Active'" json:"status"`
+	IsHazmat      bool            `bun:"type:boolean,notnull,default:false" json:"isHazmat"`
+	UnitOfMeasure string          `bun:"type:VARCHAR(50),notnull" json:"unitOfMeasure"`
+	MinTemp       *int16          `bun:"type:integer,nullzero" json:"minTemp"`
+	MaxTemp       *int16          `bun:"type:integer,nullzero" json:"maxTemp"`
+	Version       int64           `bun:"type:BIGINT" json:"version"`
+	CreatedAt     time.Time       `bun:",nullzero,notnull,default:current_timestamp" json:"createdAt"`
+	UpdatedAt     time.Time       `bun:",nullzero,notnull,default:current_timestamp" json:"updatedAt"`
 
 	BusinessUnitID      uuid.UUID `bun:"type:uuid,notnull" json:"businessUnitId"`
 	OrganizationID      uuid.UUID `bun:"type:uuid,notnull" json:"organizationId"`
