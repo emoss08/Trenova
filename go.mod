@@ -86,7 +86,6 @@ require (
 	github.com/casbin/casbin/v2 v2.97.0
 	github.com/fatih/color v1.17.0
 	github.com/go-ozzo/ozzo-validation/v4 v4.3.0
-	github.com/gofiber/contrib/fiberzerolog v1.0.2
 	github.com/gofiber/contrib/jwt v1.0.9
 	github.com/gofiber/contrib/websocket v1.3.1
 	github.com/gofiber/fiber/v2 v2.52.5

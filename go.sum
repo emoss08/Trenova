@@ -82,8 +82,6 @@ github.com/go-task/slim-sprig/v3 v3.0.0/go.mod h1:W848ghGpv3Qj3dhTPRyJypKRiqCdHZ
 github.com/goccy/go-json v0.10.3 h1:KZ5WoDbxAIgm2HNbYckL0se1fHD6rz5j4ywS6ebzDqA=
 github.com/goccy/go-json v0.10.3/go.mod h1:oq7eo15ShAhp70Anwd5lgX2pLfOS3QCiwU/PULtXL6M=
 github.com/godbus/dbus/v5 v5.0.4/go.mod h1:xhWf0FNVPg57R7Z0UbKHbJfkEywrmjJnf7w5xrFpKfA=
-github.com/gofiber/contrib/fiberzerolog v1.0.2 h1:LMa/luarQVeINoRwZLHtLQYepLPDIwUNB5OmdZKk+s8=
-github.com/gofiber/contrib/fiberzerolog v1.0.2/go.mod h1:aTPsgArSgxRWcUeJ/K6PiICz3mbQENR1QOR426QwOoQ=
 github.com/gofiber/contrib/jwt v1.0.9 h1:Vzxm+6VrW9R2rDiCFsud/I/WsojA+5bH00e8o/zOu/8=
 github.com/gofiber/contrib/jwt v1.0.9/go.mod h1:BV4AcktsOlqmQRgaw1649/U9HFS42efwzi3FML3MRGA=
 github.com/gofiber/contrib/websocket v1.3.1 h1:iINEnUIT7Wi1ttGWW5fY1fnKQlIEa5KTDXmMoedKinE=
