@@ -21,9 +21,9 @@ import (
 	"time"
 
 	"github.com/bytedance/sonic"
+	"github.com/emoss08/trenova/config"
 	"github.com/emoss08/trenova/internal/server"
 	"github.com/gofiber/contrib/websocket"
-	"github.com/rs/zerolog"
 	"github.com/uptrace/bun"
 )
 
@@ -54,7 +54,7 @@ var (
 
 type WebsocketService struct {
 	db              *bun.DB
-	logger          *zerolog.Logger
+	logger          *config.ServerLogger
 	heartbeatCancel context.CancelFunc
 }
 

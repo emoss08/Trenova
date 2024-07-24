@@ -20,17 +20,17 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/emoss08/trenova/config"
 	"github.com/emoss08/trenova/internal/server"
 	"github.com/emoss08/trenova/pkg/models"
 	"github.com/google/uuid"
-	"github.com/rs/zerolog"
 	"github.com/uptrace/bun"
 )
 
 // ChargeTypeService handles business logic for ChargeType
 type ChargeTypeService struct {
 	db     *bun.DB
-	logger *zerolog.Logger
+	logger *config.ServerLogger
 }
 
 // NewChargeTypeService creates a new instance of ChargeTypeService

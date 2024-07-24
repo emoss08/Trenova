@@ -19,12 +19,12 @@ package handlers
 import (
 	"fmt"
 
+	"github.com/emoss08/trenova/config"
 	"github.com/emoss08/trenova/internal/server"
 	"github.com/emoss08/trenova/pkg/file"
 	"github.com/emoss08/trenova/pkg/minio"
 	"github.com/gofiber/fiber/v2"
 	"github.com/google/uuid"
-	"github.com/rs/zerolog"
 )
 
 type FileMetadata struct {
@@ -36,7 +36,7 @@ type FileMetadata struct {
 type TestHandler struct {
 	fileService *file.FileService
 	minio       minio.MinioClient
-	logger      *zerolog.Logger
+	logger      *config.ServerLogger
 }
 
 func NewTestHandler(s *server.Server) *TestHandler {

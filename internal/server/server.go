@@ -29,6 +29,7 @@ import (
 	"github.com/emoss08/trenova/config"
 	"github.com/emoss08/trenova/pkg/audit"
 	tCasbin "github.com/emoss08/trenova/pkg/casbin"
+
 	"github.com/emoss08/trenova/pkg/file"
 	"github.com/emoss08/trenova/pkg/gen"
 	"github.com/emoss08/trenova/pkg/kfk"
@@ -37,12 +38,9 @@ import (
 	"github.com/emoss08/trenova/pkg/redis"
 	"github.com/fatih/color"
 	"github.com/gofiber/fiber/v2"
-	"github.com/gofiber/fiber/v2/utils"
 	"github.com/golang-jwt/jwt/v5"
 	mio "github.com/minio/minio-go/v7"
 	"github.com/minio/minio-go/v7/pkg/credentials"
-	"github.com/rs/zerolog"
-	"github.com/rs/zerolog/log"
 	"github.com/uptrace/bun"
 	"github.com/uptrace/bun/dialect/pgdialect"
 	"github.com/uptrace/bun/driver/pgdriver"
@@ -66,7 +64,7 @@ type Server struct {
 	Config config.Server
 
 	// Logger stores the application logger.
-	Logger *zerolog.Logger
+	Logger *config.ServerLogger
 
 	// Minio stores the Minio client.
 	Minio *minio.Client
@@ -217,28 +215,18 @@ func (s *Server) InitCodeGenerationSystem(ctx context.Context) error {
 
 // InitLogger initializes the logger.
 func (s *Server) InitLogger() {
-	logger := zerolog.New(log.Logger).With().Timestamp().Logger()
-
-	if s.Config.Logger.PrettyPrintConsole {
-		logger = logger.Output(zerolog.ConsoleWriter{
-			Out:        os.Stdout,
-			TimeFormat: "15:04:05",
-			FormatLevel: func(i any) string {
-				return colorizeLevel(utils.ToUpper(i.(string)))
-			},
-			FormatMessage: func(i any) string {
-				return fmt.Sprintf("%s", i)
-			},
-			FormatFieldName: func(i any) string {
-				return fmt.Sprintf("%s=", i)
-			},
-			FormatFieldValue: func(i any) string {
-				return fmt.Sprintf("%s", i)
-			},
-		})
+	logConfig := config.LoggerConfig{
+		Level:              s.Config.Logger.Level,
+		PrettyPrintConsole: true,
+		LogToFile:          true,
+		LogFilePath:        s.Config.Logger.LogFilePath,
+		LogMaxSize:         100,
+		LogMaxBackups:      3,
+		LogMaxAge:          28,
+		LogCompress:        true,
 	}
 
-	s.Logger = &logger
+	s.Logger = config.NewLogger(logConfig)
 }
 
 func (s *Server) InitCasbin() error {
@@ -332,6 +320,9 @@ func (s *Server) Start() error {
 	if err := onStart.Run(s.ctx, s); err != nil {
 		return err
 	}
+
+	s.Logger.Info().Msg("Application starting")
+	s.Logger.LogAppInfo("1.0.0", "development")
 
 	return s.Fiber.Listen(s.Config.Fiber.ListenAddress)
 }

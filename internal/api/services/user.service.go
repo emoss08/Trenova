@@ -21,19 +21,19 @@ import (
 	"strings"
 
 	"github.com/casbin/casbin/v2"
+	"github.com/emoss08/trenova/config"
 	"github.com/emoss08/trenova/internal/server"
 	"github.com/emoss08/trenova/pkg/file"
 	"github.com/emoss08/trenova/pkg/minio"
 	"github.com/emoss08/trenova/pkg/models"
 	"github.com/emoss08/trenova/pkg/utils"
 	"github.com/google/uuid"
-	"github.com/rs/zerolog"
 	"github.com/uptrace/bun"
 )
 
 type UserService struct {
 	db          *bun.DB
-	logger      *zerolog.Logger
+	logger      *config.ServerLogger
 	minio       minio.MinioClient
 	fileService *file.FileService
 	enforcer    *casbin.Enforcer

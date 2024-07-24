@@ -18,6 +18,7 @@ package handlers
 import (
 	"fmt"
 
+	"github.com/emoss08/trenova/config"
 	"github.com/emoss08/trenova/pkg/audit"
 	"github.com/emoss08/trenova/pkg/constants"
 	"github.com/emoss08/trenova/pkg/models/property"
@@ -29,11 +30,10 @@ import (
 	"github.com/emoss08/trenova/pkg/utils"
 	"github.com/gofiber/fiber/v2"
 	"github.com/google/uuid"
-	"github.com/rs/zerolog"
 )
 
 type WorkerHandler struct {
-	logger            *zerolog.Logger
+	logger            *config.ServerLogger
 	service           *services.WorkerService
 	permissionService *services.PermissionService
 	auditService      *audit.Service
@@ -159,6 +159,7 @@ func (h WorkerHandler) Create() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		ids, err := utils.ExtractAndHandleContextIDs(c)
 		if err != nil {
+			h.logger.Error().Err(err).Msg("Failed to extract context IDs")
 			return err
 		}
 

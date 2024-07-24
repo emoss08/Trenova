@@ -22,8 +22,8 @@ import (
 	"io"
 	"mime/multipart"
 
+	"github.com/emoss08/trenova/config"
 	"github.com/minio/minio-go/v7"
-	"github.com/rs/zerolog"
 )
 
 // MinioClient defines the interface for Minio client operations.
@@ -40,10 +40,10 @@ type Client struct {
 	client   *minio.Client
 	options  *minio.Options
 	endpoint string
-	logger   *zerolog.Logger
+	logger   *config.ServerLogger
 }
 
-func NewClient(endpoint string, logger *zerolog.Logger, opts *minio.Options) *Client {
+func NewClient(endpoint string, logger *config.ServerLogger, opts *minio.Options) *Client {
 	mClient := &Client{
 		endpoint: endpoint,
 		options:  opts,

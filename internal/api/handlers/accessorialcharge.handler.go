@@ -18,6 +18,7 @@ package handlers
 import (
 	"fmt"
 
+	"github.com/emoss08/trenova/config"
 	"github.com/emoss08/trenova/internal/api/services"
 	"github.com/emoss08/trenova/internal/server"
 	"github.com/emoss08/trenova/internal/types"
@@ -28,11 +29,10 @@ import (
 	"github.com/emoss08/trenova/pkg/utils"
 	"github.com/gofiber/fiber/v2"
 	"github.com/google/uuid"
-	"github.com/rs/zerolog"
 )
 
 type AccessorialChargeHandler struct {
-	logger            *zerolog.Logger
+	logger            *config.ServerLogger
 	service           *services.AccessorialChargeService
 	permissionService *services.PermissionService
 	auditService      *audit.Service
@@ -59,6 +59,7 @@ func (h AccessorialChargeHandler) Get() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		ids, err := utils.ExtractAndHandleContextIDs(c)
 		if err != nil {
+			h.logger.LogError(err, "Failed to extract context IDs")
 			return err
 		}
 
@@ -100,6 +101,7 @@ func (h AccessorialChargeHandler) Get() fiber.Handler {
 
 		entities, cnt, err := h.service.GetAll(c.UserContext(), filter)
 		if err != nil {
+			h.logger.LogHTTP(c.Request(), fiber.StatusInternalServerError, 0, 0)
 			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Error{
 				Code:    fiber.StatusInternalServerError,
 				Message: err.Error(),

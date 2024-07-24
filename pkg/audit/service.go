@@ -6,23 +6,23 @@ import (
 	"sync"
 	"time"
 
+	"github.com/emoss08/trenova/config"
 	"github.com/emoss08/trenova/pkg/models"
 	"github.com/emoss08/trenova/pkg/models/property"
 	"github.com/google/uuid"
-	"github.com/rs/zerolog"
 	"github.com/uptrace/bun"
 )
 
 type Service struct {
 	db         *bun.DB
-	logger     *zerolog.Logger
+	logger     *config.ServerLogger
 	workQueue  chan *models.AuditLog
 	workerPool chan struct{}
 	shutdown   chan struct{}
 	wg         sync.WaitGroup
 }
 
-func NewAuditService(db *bun.DB, logger *zerolog.Logger, queueSize int, workerCount int) *Service {
+func NewAuditService(db *bun.DB, logger *config.ServerLogger, queueSize int, workerCount int) *Service {
 	as := &Service{
 		db:         db,
 		logger:     logger,

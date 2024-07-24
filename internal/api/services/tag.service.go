@@ -18,17 +18,17 @@ package services
 import (
 	"context"
 
+	"github.com/emoss08/trenova/config"
 	"github.com/emoss08/trenova/internal/server"
 	"github.com/emoss08/trenova/pkg/models"
 	"github.com/emoss08/trenova/pkg/models/property"
 	"github.com/google/uuid"
-	"github.com/rs/zerolog"
 	"github.com/uptrace/bun"
 )
 
 type TagService struct {
 	db     *bun.DB
-	logger *zerolog.Logger
+	logger *config.ServerLogger
 }
 
 func NewTagService(s *server.Server) *TagService {
