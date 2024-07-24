@@ -24,7 +24,6 @@ import (
 	"github.com/rs/zerolog/log"
 
 	"github.com/gofiber/fiber/v2"
-	"github.com/rs/zerolog"
 )
 
 // SetupTestServer initializes a new server for testing.
@@ -37,12 +36,17 @@ func SetupTestServer(t *testing.T) *server.Server {
 	}
 
 	// Initialize logger
-	logger := zerolog.New(log.Logger).With().Timestamp().Logger()
-	if cfg.Logger.PrettyPrintConsole {
-		logger = log.Output(zerolog.NewConsoleWriter(func(w *zerolog.ConsoleWriter) {
-			w.TimeFormat = "15:04:05"
-		}))
+	logConfig := config.LoggerConfig{
+		Level:              0,
+		PrettyPrintConsole: true,
+		LogToFile:          true,
+		LogFilePath:        "/var/log/myapp.log",
+		LogMaxSize:         100,
+		LogMaxBackups:      3,
+		LogMaxAge:          28,
+		LogCompress:        true,
 	}
+	logger := config.NewLogger(logConfig)
 
 	// Initialize Fiber app
 	fiberApp := fiber.New()
@@ -55,7 +59,7 @@ func SetupTestServer(t *testing.T) *server.Server {
 	s := &server.Server{
 		Fiber:  fiberApp,
 		Config: cfg,
-		Logger: &logger,
+		Logger: logger,
 		DB:     testDB.GetDB(),
 	}
 

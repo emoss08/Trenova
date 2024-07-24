@@ -19,6 +19,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/emoss08/trenova/config"
 	"github.com/emoss08/trenova/internal/api/middleware"
 	"github.com/emoss08/trenova/internal/api/services"
 	"github.com/emoss08/trenova/internal/server"
@@ -27,11 +28,10 @@ import (
 	"github.com/emoss08/trenova/pkg/utils"
 	"github.com/gofiber/fiber/v2"
 	"github.com/golang-jwt/jwt/v5"
-	"github.com/rs/zerolog"
 )
 
 type AuthenticationHandler struct {
-	logger  *zerolog.Logger
+	logger  *config.ServerLogger
 	service *services.AuthenticationService
 }
 

@@ -16,16 +16,16 @@
 package handlers
 
 import (
+	"github.com/emoss08/trenova/config"
 	"github.com/emoss08/trenova/internal/api/services"
 	"github.com/emoss08/trenova/internal/server"
 	"github.com/gofiber/contrib/websocket"
 	"github.com/gofiber/fiber/v2"
-	"github.com/rs/zerolog"
 )
 
 type WebsocketHandler struct {
 	server              *server.Server
-	logger              *zerolog.Logger
+	logger              *config.ServerLogger
 	service             *services.WebsocketService
 	notificationService *services.UserNotificationService
 }

@@ -22,17 +22,17 @@ import (
 	"mime/multipart"
 	"testing"
 
+	"github.com/emoss08/trenova/config"
 	"github.com/emoss08/trenova/pkg/minio"
 	mio "github.com/minio/minio-go/v7"
-	"github.com/rs/zerolog"
 )
 
 type MockMinioClient struct {
 	Buckets map[string]map[string][]byte
-	Logger  *zerolog.Logger
+	Logger  *config.ServerLogger
 }
 
-func NewMockMinioClient(logger *zerolog.Logger) *MockMinioClient {
+func NewMockMinioClient(logger *config.ServerLogger) *MockMinioClient {
 	return &MockMinioClient{
 		Buckets: make(map[string]map[string][]byte),
 		Logger:  logger,
@@ -104,7 +104,7 @@ func (m *MockMinioClient) MoveFile(ctx context.Context, tempBucket, tempObject, 
 	return permObject, nil
 }
 
-func WithTestMinioClient(t *testing.T, logger *zerolog.Logger) *MockMinioClient {
+func WithTestMinioClient(t *testing.T, logger *config.ServerLogger) *MockMinioClient {
 	t.Helper()
 	return NewMockMinioClient(logger)
 }

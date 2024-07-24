@@ -20,18 +20,18 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/emoss08/trenova/config"
 	"github.com/emoss08/trenova/internal/server"
 	"github.com/emoss08/trenova/pkg/models"
 	"github.com/emoss08/trenova/pkg/models/property"
 	"github.com/google/uuid"
-	"github.com/rs/zerolog"
 	"github.com/uptrace/bun"
 )
 
 // TractorService handles business logic for Tractor
 type TractorService struct {
 	db     *bun.DB
-	logger *zerolog.Logger
+	logger *config.ServerLogger
 }
 
 // NewTractorService creates a new instance of TractorService

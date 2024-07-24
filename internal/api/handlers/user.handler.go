@@ -18,6 +18,7 @@ package handlers
 import (
 	"fmt"
 
+	"github.com/emoss08/trenova/config"
 	"github.com/emoss08/trenova/internal/api/services"
 	"github.com/emoss08/trenova/internal/server"
 	"github.com/emoss08/trenova/internal/types"
@@ -27,11 +28,10 @@ import (
 	validation "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/gofiber/fiber/v2"
 	"github.com/google/uuid"
-	"github.com/rs/zerolog"
 )
 
 type UserHandler struct {
-	logger            *zerolog.Logger
+	logger            *config.ServerLogger
 	service           *services.UserService
 	permissionService *services.PermissionService
 }

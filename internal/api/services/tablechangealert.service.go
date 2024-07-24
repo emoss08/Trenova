@@ -19,18 +19,18 @@ import (
 	"context"
 	"strings"
 
+	"github.com/emoss08/trenova/config"
 	"github.com/emoss08/trenova/internal/server"
 	"github.com/emoss08/trenova/internal/types"
 	"github.com/emoss08/trenova/pkg/kfk"
 	"github.com/emoss08/trenova/pkg/models"
 	"github.com/google/uuid"
-	"github.com/rs/zerolog"
 	"github.com/uptrace/bun"
 )
 
 type TableChangeAlertService struct {
 	db     *bun.DB
-	logger *zerolog.Logger
+	logger *config.ServerLogger
 	kafka  *kfk.KafkaClient
 }
 

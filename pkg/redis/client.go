@@ -3,20 +3,20 @@ package redis
 import (
 	"context"
 
+	"github.com/emoss08/trenova/config"
 	goRedis "github.com/redis/go-redis/v9"
-	"github.com/rs/zerolog"
 )
 
 type Client struct {
 	client  *goRedis.Client
-	logger  *zerolog.Logger
+	logger  *config.ServerLogger
 	options *goRedis.Options
 }
 
 // Options is a type alias for go-redis Options.
 type Options = goRedis.Options
 
-func NewClient(options *goRedis.Options, logger *zerolog.Logger) *Client {
+func NewClient(options *goRedis.Options, logger *config.ServerLogger) *Client {
 	client := &Client{options: options, logger: logger}
 
 	if err := client.initialize(); err != nil {

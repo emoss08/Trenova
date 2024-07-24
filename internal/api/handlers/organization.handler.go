@@ -16,6 +16,7 @@
 package handlers
 
 import (
+	"github.com/emoss08/trenova/config"
 	"github.com/emoss08/trenova/internal/api/services"
 	"github.com/emoss08/trenova/internal/server"
 	"github.com/emoss08/trenova/pkg/audit"
@@ -24,7 +25,6 @@ import (
 	"github.com/emoss08/trenova/pkg/models/property"
 	"github.com/emoss08/trenova/pkg/utils"
 	"github.com/gofiber/fiber/v2"
-	"github.com/rs/zerolog"
 )
 
 const (
@@ -33,7 +33,7 @@ const (
 )
 
 type OrganizationHandler struct {
-	logger            *zerolog.Logger
+	logger            *config.ServerLogger
 	service           *services.OrganizationService
 	permissionService *services.PermissionService
 	auditService      *audit.Service
