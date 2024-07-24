@@ -42,9 +42,9 @@ type Commodity struct {
 	CreatedAt     time.Time       `bun:",nullzero,notnull,default:current_timestamp" json:"createdAt"`
 	UpdatedAt     time.Time       `bun:",nullzero,notnull,default:current_timestamp" json:"updatedAt"`
 
-	BusinessUnitID      uuid.UUID `bun:"type:uuid,notnull" json:"businessUnitId"`
-	OrganizationID      uuid.UUID `bun:"type:uuid,notnull" json:"organizationId"`
-	HazardousMaterialID uuid.UUID `bun:"type:uuid" json:"hazardousMaterialId"`
+	BusinessUnitID      uuid.UUID  `bun:"type:uuid,notnull" json:"businessUnitId"`
+	OrganizationID      uuid.UUID  `bun:"type:uuid,notnull" json:"organizationId"`
+	HazardousMaterialID *uuid.UUID `bun:"type:uuid,nullzero" json:"hazardousMaterialId"`
 
 	BusinessUnit      *BusinessUnit      `bun:"rel:belongs-to,join:business_unit_id=id" json:"-"`
 	Organization      *Organization      `bun:"rel:belongs-to,join:organization_id=id" json:"-"`
@@ -59,7 +59,7 @@ func (c Commodity) Validate() error {
 		validation.Field(&c.OrganizationID, validation.Required),
 		validation.Field(&c.IsHazmat,
 			validation.Required.Error("IsHazmat is required. Please Try again."),
-			validation.When(c.HazardousMaterialID != uuid.Nil, validation.Required.Error("Hazardous Material is required when IsHazmat is true. Please try again."))),
+			validation.When(c.HazardousMaterialID != nil, validation.Required.Error("Hazardous Material is required when IsHazmat is true. Please try again."))),
 	)
 }
 

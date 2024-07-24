@@ -24,11 +24,10 @@ func TestCommodityService(t *testing.T) {
 
 	createTestCommodity := func(name string) *models.Commodity {
 		return &models.Commodity{
-			Name:                name,
-			Status:              property.StatusActive,
-			OrganizationID:      org.ID,
-			BusinessUnitID:      org.BusinessUnitID,
-			HazardousMaterialID: uuid.Nil,
+			Name:           name,
+			Status:         property.StatusActive,
+			OrganizationID: org.ID,
+			BusinessUnitID: org.BusinessUnitID,
 		}
 	}
 
