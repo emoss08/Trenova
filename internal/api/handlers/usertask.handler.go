@@ -16,6 +16,7 @@
 package handlers
 
 import (
+	"github.com/emoss08/trenova/config"
 	"github.com/emoss08/trenova/internal/api/services"
 	"github.com/emoss08/trenova/internal/server"
 	"github.com/emoss08/trenova/internal/types"
@@ -23,11 +24,10 @@ import (
 	"github.com/emoss08/trenova/pkg/utils"
 	"github.com/gofiber/fiber/v2"
 	"github.com/google/uuid"
-	"github.com/rs/zerolog"
 )
 
 type UserTaskHandler struct {
-	logger              *zerolog.Logger
+	logger              *config.ServerLogger
 	service             *services.UserTaskService
 	notificationService *services.UserNotificationService
 	websocketService    *services.WebsocketService

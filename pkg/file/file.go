@@ -21,18 +21,18 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/emoss08/trenova/config"
 	"github.com/google/uuid"
-	"github.com/rs/zerolog"
 )
 
 // FileService handles file operations.
 type FileService struct {
-	logger      *zerolog.Logger
+	logger      *config.ServerLogger
 	fileHandler FileHandler
 }
 
 // NewFileService creates a new FileService.
-func NewFileService(logger *zerolog.Logger, fileHandler FileHandler) *FileService {
+func NewFileService(logger *config.ServerLogger, fileHandler FileHandler) *FileService {
 	return &FileService{
 		logger:      logger,
 		fileHandler: fileHandler,

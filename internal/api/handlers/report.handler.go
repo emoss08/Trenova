@@ -16,16 +16,16 @@
 package handlers
 
 import (
+	"github.com/emoss08/trenova/config"
 	"github.com/emoss08/trenova/internal/api/services"
 	"github.com/emoss08/trenova/internal/server"
 	"github.com/emoss08/trenova/internal/types"
 	"github.com/emoss08/trenova/pkg/utils"
 	"github.com/gofiber/fiber/v2"
-	"github.com/rs/zerolog"
 )
 
 type ReportHandler struct {
-	logger              *zerolog.Logger
+	logger              *config.ServerLogger
 	service             *services.ReportService
 	notificationService *services.UserNotificationService
 }

@@ -19,17 +19,17 @@ import (
 	"context"
 	"strings"
 
+	"github.com/emoss08/trenova/config"
 	"github.com/emoss08/trenova/internal/server"
 	"github.com/emoss08/trenova/pkg/gen"
 	"github.com/emoss08/trenova/pkg/models"
 	"github.com/google/uuid"
-	"github.com/rs/zerolog"
 	"github.com/uptrace/bun"
 )
 
 type WorkerService struct {
 	db      *bun.DB
-	logger  *zerolog.Logger
+	logger  *config.ServerLogger
 	codeGen *gen.CodeGenerator
 }
 
@@ -91,6 +91,7 @@ func (s WorkerService) Get(ctx context.Context, id uuid.UUID, orgID, buID uuid.U
 		Where("wk.id = ?", id).
 		Scan(ctx)
 	if err != nil {
+		s.logger.Error().Err(err).Msg("failed to get worker")
 		return nil, err
 	}
 
@@ -101,12 +102,14 @@ func (s WorkerService) Create(ctx context.Context, entity *models.Worker) (*mode
 	err := s.db.RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
 		mkg, mErr := models.QueryWorkerMasterKeyGenerationByOrgID(ctx, s.db, entity.OrganizationID)
 		if mErr != nil {
+			s.logger.Error().Err(mErr).Msg("failed to get worker master key generation")
 			return mErr
 		}
 
 		return entity.InsertWorker(ctx, tx, s.codeGen, mkg.Pattern)
 	})
 	if err != nil {
+		s.logger.Error().Err(err).Msg("failed to create worker")
 		return nil, err
 	}
 
@@ -118,6 +121,7 @@ func (s WorkerService) UpdateOne(ctx context.Context, entity *models.Worker) (*m
 		return entity.UpdateWorker(ctx, tx)
 	})
 	if err != nil {
+		s.logger.Error().Err(err).Msg("failed to update worker")
 		return nil, err
 	}
 

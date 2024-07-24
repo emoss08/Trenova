@@ -26,13 +26,12 @@ import (
 	validation "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/google/uuid"
 	"github.com/imroc/req/v3"
-	"github.com/rs/zerolog"
 	"github.com/uptrace/bun"
 )
 
 type ReportService struct {
 	db              *bun.DB
-	logger          *zerolog.Logger
+	logger          *config.ServerLogger
 	websocketServer *WebsocketService
 }
 

@@ -20,17 +20,17 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/emoss08/trenova/config"
 	"github.com/emoss08/trenova/internal/server"
 	"github.com/emoss08/trenova/pkg/models"
 	"github.com/google/uuid"
-	"github.com/rs/zerolog"
 	"github.com/uptrace/bun"
 )
 
 // QualifierCodeService handles business logic for QualifierCode
 type QualifierCodeService struct {
 	db     *bun.DB
-	logger *zerolog.Logger
+	logger *config.ServerLogger
 }
 
 // NewQualifierCodeService creates a new instance of QualifierCodeService

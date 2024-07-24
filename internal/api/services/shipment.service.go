@@ -20,6 +20,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/emoss08/trenova/config"
 	"github.com/emoss08/trenova/internal/server"
 	"github.com/emoss08/trenova/pkg/gen"
 	"github.com/emoss08/trenova/pkg/models"
@@ -27,13 +28,12 @@ import (
 	"github.com/emoss08/trenova/pkg/types"
 	"github.com/emoss08/trenova/pkg/validator"
 	"github.com/google/uuid"
-	"github.com/rs/zerolog"
 	"github.com/uptrace/bun"
 )
 
 type ShipmentService struct {
 	db      *bun.DB
-	logger  *zerolog.Logger
+	logger  *config.ServerLogger
 	codeGen *gen.CodeGenerator
 }
 
@@ -120,6 +120,7 @@ func (s ShipmentService) Get(ctx context.Context, id uuid.UUID, orgID, buID uuid
 		Where("sp.id = ?", id).
 		Scan(ctx)
 	if err != nil {
+		s.logger.Error().Err(err).Msg("failed to fetch shipment")
 		return nil, err
 	}
 
@@ -142,7 +143,8 @@ func (s ShipmentService) AssignTractorToShipment(ctx context.Context, input *typ
 				input.TractorID, orgID, buID).
 			Scan(ctx)
 		if err != nil {
-			return fmt.Errorf("failed to fetch existing assignments: %w", err)
+			s.logger.Error().Err(err).Msg("failed to fetch existing assignments")
+			return err
 		}
 
 		// Create a map of existing assignments for easy lookup
@@ -159,10 +161,11 @@ func (s ShipmentService) AssignTractorToShipment(ctx context.Context, input *typ
 				// Update existing assignment
 				existing.Sequence = i + 1
 				existing.Status = "Active"
-				_, err = tx.NewUpdate().Model(existing).WherePK().Exec(ctx)
-				if err != nil {
-					return fmt.Errorf("failed to update assignment: %w", err)
+				if _, err = tx.NewUpdate().Model(existing).WherePK().Exec(ctx); err != nil {
+					s.logger.Error().Err(err).Msg("failed to update assignment sequence")
+					return err
 				}
+
 				assignedAssignments = append(assignedAssignments, *existing)
 				delete(existingMap, key)
 			} else {
@@ -178,10 +181,12 @@ func (s ShipmentService) AssignTractorToShipment(ctx context.Context, input *typ
 					OrganizationID: orgID,
 					BusinessUnitID: buID,
 				}
-				_, err = tx.NewInsert().Model(newAssignment).Exec(ctx)
-				if err != nil {
-					return fmt.Errorf("failed to insert new assignment: %w", err)
+
+				if _, err = tx.NewInsert().Model(newAssignment).Exec(ctx); err != nil {
+					s.logger.Error().Err(err).Msg("failed to insert new assignment")
+					return err
 				}
+
 				assignedAssignments = append(assignedAssignments, *newAssignment)
 			}
 		}
@@ -196,7 +201,8 @@ func (s ShipmentService) AssignTractorToShipment(ctx context.Context, input *typ
 					WherePK().
 					Exec(ctx)
 				if err != nil {
-					return fmt.Errorf("failed to deactivate old assignment: %w", err)
+					s.logger.Error().Err(err).Msg("failed to deactivate old assignment")
+					return err
 				}
 			}
 		}
@@ -243,6 +249,7 @@ func (s ShipmentService) Create(ctx context.Context, input *types.CreateShipment
 	err := s.db.RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
 		// Insert the shipment.
 		if err := shipment.InsertShipment(ctx, s.db); err != nil {
+			s.logger.Error().Err(err).Msg("failed to insert shipment")
 			return err
 		}
 
@@ -263,6 +270,7 @@ func (s ShipmentService) Create(ctx context.Context, input *types.CreateShipment
 		// Create stops
 		stops, err := s.createStops(ctx, tx, shipment, move, input.Stops)
 		if err != nil {
+			s.logger.Error().Err(err).Msg("failed to create stops")
 			return err
 		}
 
@@ -270,22 +278,26 @@ func (s ShipmentService) Create(ctx context.Context, input *types.CreateShipment
 
 		// Validate stop sequence
 		if err = move.ValidateStopSequence(); err != nil {
+			s.logger.Error().Err(err).Msg("failed to validate stop sequence")
 			return err
 		}
 
 		// Insert the move
 		if _, err = tx.NewInsert().Model(move).Exec(ctx); err != nil {
+			s.logger.Error().Err(err).Msg("failed to insert shipment move")
 			return err
 		}
 
 		// Insert all stops
 		if _, err = tx.NewInsert().Model(&stops).Exec(ctx); err != nil {
+			s.logger.Error().Err(err).Msg("failed to insert stops")
 			return err
 		}
 
 		return nil
 	})
 	if err != nil {
+		s.logger.Error().Err(err).Msg("failed to create shipment")
 		return nil, err
 	}
 
@@ -297,6 +309,7 @@ func (s ShipmentService) createStops(ctx context.Context, tx bun.Tx, shipment *m
 	for i, input := range stopInputs {
 		location, err := s.getLocation(ctx, tx, input.LocationID)
 		if err != nil {
+			s.logger.Error().Err(err).Msg("failed to fetch location")
 			return nil, err
 		}
 
@@ -317,6 +330,7 @@ func (s ShipmentService) createStops(ctx context.Context, tx bun.Tx, shipment *m
 
 		// Validate the stop
 		if err = stop.Validate(); err != nil {
+			s.logger.Error().Err(err).Msg("failed to validate stop")
 			return nil, err
 		}
 
@@ -334,9 +348,9 @@ func (s ShipmentService) createStops(ctx context.Context, tx bun.Tx, shipment *m
 
 func (s ShipmentService) getLocation(ctx context.Context, tx bun.Tx, locationID uuid.UUID) (*models.Location, error) {
 	location := new(models.Location)
-	err := tx.NewSelect().Model(location).Where("id = ?", locationID).Scan(ctx)
-	if err != nil {
-		return nil, fmt.Errorf("failed to fetch location: %w", err)
+	if err := tx.NewSelect().Model(location).Where("id = ?", locationID).Scan(ctx); err != nil {
+		s.logger.Error().Err(err).Msg("failed to fetch location")
+		return nil, err
 	}
 	return location, nil
 }

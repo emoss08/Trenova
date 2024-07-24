@@ -18,15 +18,15 @@ package services
 import (
 	"context"
 
+	"github.com/emoss08/trenova/config"
 	"github.com/emoss08/trenova/internal/server"
 	"github.com/emoss08/trenova/pkg/models"
-	"github.com/rs/zerolog"
 	"github.com/uptrace/bun"
 )
 
 type USStateService struct {
 	db     *bun.DB
-	logger *zerolog.Logger
+	logger *config.ServerLogger
 }
 
 func NewUSStateService(s *server.Server) *USStateService {

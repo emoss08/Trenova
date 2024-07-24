@@ -22,7 +22,6 @@ import (
 	"strings"
 
 	"github.com/fatih/color"
-	"github.com/rs/zerolog"
 	"github.com/spf13/viper"
 )
 
@@ -126,14 +125,6 @@ type Cors struct {
 	MaxAge int
 }
 
-type Logger struct {
-	// Level is the log level for the logger.
-	Level zerolog.Level
-
-	// PrettyPrintConsole will print the logs in a human-readable format.
-	PrettyPrintConsole bool
-}
-
 type Minio struct {
 	// Endpoint is the URL of the Minio server.
 	Endpoint string `json:"-"`
@@ -181,7 +172,7 @@ type Server struct {
 	Cors Cors
 
 	// Logger contains configuration options for the logger.
-	Logger Logger
+	Logger LoggerConfig
 
 	// Minio contains configuration options for the Minio server.
 	Minio Minio
@@ -250,7 +241,6 @@ db:
 	}
 
 	// Special handling for logger level and DB connection max lifetime
-	config.Logger.Level = zerolog.Level(v.GetInt("logger.level"))
 	config.DB.ConnMaxLifetime = v.GetDuration("db.connMaxLifetime")
 
 	if !isTest {

@@ -23,7 +23,6 @@ import (
 	"github.com/emoss08/trenova/internal/api/handlers"
 	"github.com/emoss08/trenova/internal/api/middleware"
 	"github.com/emoss08/trenova/internal/server"
-	"github.com/gofiber/contrib/fiberzerolog"
 	"github.com/gofiber/contrib/websocket"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/adaptor"
@@ -64,9 +63,7 @@ func Init(s *server.Server) {
 
 	// Register the middle that is global to all routes.
 	if s.Config.Fiber.EnableLoggingMiddleware {
-		apiV1.Use(fiberzerolog.New(fiberzerolog.Config{
-			Logger: s.Logger,
-		}))
+		apiV1.Use(middleware.NewCustomFiberzerolog(s.Logger))
 	} else {
 		log.Warn().Msg("Logging middleware is disabled. This is not recommended.")
 	}

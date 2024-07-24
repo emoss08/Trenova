@@ -21,19 +21,19 @@ import (
 	"mime/multipart"
 
 	"github.com/bytedance/sonic"
+	"github.com/emoss08/trenova/config"
 	"github.com/emoss08/trenova/internal/server"
 	"github.com/emoss08/trenova/pkg/file"
 	"github.com/emoss08/trenova/pkg/minio"
 	"github.com/emoss08/trenova/pkg/models"
 	"github.com/emoss08/trenova/pkg/redis"
 	"github.com/google/uuid"
-	"github.com/rs/zerolog"
 	"github.com/uptrace/bun"
 )
 
 type OrganizationService struct {
 	db          *bun.DB
-	logger      *zerolog.Logger
+	logger      *config.ServerLogger
 	minio       minio.MinioClient
 	cache       *redis.Client
 	fileService *file.FileService
@@ -56,7 +56,7 @@ func (s *OrganizationService) organizationCacheKey(orgID uuid.UUID) string {
 func (s *OrganizationService) GetOrganization(ctx context.Context, buID, orgID uuid.UUID) (*models.Organization, error) {
 	cacheKey := s.organizationCacheKey(orgID)
 
-	// Try toi fetch the organization from the cache
+	// Try to fetch the organization from the cache
 	cachedOrg, err := s.cache.FetchFromCacheByKey(ctx, cacheKey)
 	if err != nil {
 		s.logger.Error().Err(err).Msg("Failed to fetch organization from cache")
@@ -67,7 +67,7 @@ func (s *OrganizationService) GetOrganization(ctx context.Context, buID, orgID u
 		org := new(models.Organization)
 
 		if err = sonic.Unmarshal([]byte(cachedOrg), org); err != nil {
-			s.logger.Error().Err(err).Msg("Failed to unmarshal organization from cache")
+			s.logger.Error().Err(err).Str("cacheKey", cacheKey).Msg("Failed to unmarshal organization from cache")
 			return nil, err
 		}
 
@@ -94,7 +94,7 @@ func (s *OrganizationService) GetOrganization(ctx context.Context, buID, orgID u
 	}
 
 	if err = s.cache.CacheByKey(ctx, cacheKey, string(orgJSON)); err != nil {
-		s.logger.Error().Err(err).Msg("Failed to cache organization")
+		s.logger.Error().Err(err).Str("cacheKey", cacheKey).Msg("Failed to cache organization")
 		return nil, err
 	}
 
@@ -116,7 +116,7 @@ func (s *OrganizationService) UpdateOrganization(ctx context.Context, entity *mo
 	// invalidate cache
 	cacheKey := s.organizationCacheKey(entity.ID)
 	if err = s.cache.InvalidateCacheByKey(ctx, cacheKey); err != nil {
-		s.logger.Error().Err(err).Msg("Failed to invalidate cache")
+		s.logger.Error().Err(err).Str("cacheKey", cacheKey).Msg("Failed to invalidate cache")
 		return nil, err
 	}
 
@@ -171,7 +171,8 @@ func (s *OrganizationService) updateAndSetLogoURL(ctx context.Context, orgID uui
 	// invalidate cache
 	cacheKey := s.organizationCacheKey(orgID)
 	if err = s.cache.InvalidateCacheByKey(ctx, cacheKey); err != nil {
-		s.logger.Error().Err(err).Msg("Failed to invalidate cache")
+		s.logger.Error().Err(err).Str("cacheKey", cacheKey).Msg("Failed to invalidate cache")
+		return nil, err
 	}
 
 	return org, nil
@@ -199,7 +200,7 @@ func (s *OrganizationService) ClearLogo(ctx context.Context, orgID uuid.UUID) (*
 	// invalidate cache
 	cacheKey := s.organizationCacheKey(orgID)
 	if err = s.cache.InvalidateCacheByKey(ctx, cacheKey); err != nil {
-		s.logger.Error().Err(err).Msg("Failed to invalidate cache")
+		s.logger.Error().Err(err).Str("cacheKey", cacheKey).Msg("Failed to invalidate cache")
 		return nil, err
 	}
 

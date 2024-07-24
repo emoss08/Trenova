@@ -4,7 +4,7 @@ import (
 	"context"
 	"time"
 
-	"github.com/rs/zerolog"
+	"github.com/emoss08/trenova/config"
 	"github.com/twmb/franz-go/pkg/kerr"
 	"github.com/twmb/franz-go/pkg/kgo"
 
@@ -16,11 +16,11 @@ import (
 type KafkaClient struct {
 	Seeds    []string
 	Admin    *kadm.Client
-	Logger   *zerolog.Logger
+	Logger   *config.ServerLogger
 	Producer *kgo.Client
 }
 
-func NewKafkaClient(seeds []string, logger *zerolog.Logger) (*KafkaClient, error) {
+func NewKafkaClient(seeds []string, logger *config.ServerLogger) (*KafkaClient, error) {
 	client := &KafkaClient{Seeds: seeds, Logger: logger}
 	err := client.initialize()
 	if err != nil {
