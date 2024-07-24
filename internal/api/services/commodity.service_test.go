@@ -44,4 +44,56 @@ func TestCommodityService(t *testing.T) {
 		assert.Equal(t, created.Name, fetched.Name)
 		assert.Equal(t, created.Status, fetched.Status)
 	})
+
+	t.Run("GetAll", func(t *testing.T) {
+		// Create multiple Commodity
+		for i := 0; i < 5; i++ {
+			_, err := service.Create(ctx, createTestCommodity("CODE"+string(i)))
+			require.NoError(t, err)
+		}
+
+		// Query all Commodity
+		filter := &services.CommodityQueryFilter{
+			OrganizationID: org.ID,
+			BusinessUnitID: org.BusinessUnitID,
+			Limit:          5,
+			Offset:         0,
+		}
+		entities, total, err := service.GetAll(ctx, filter)
+		require.NoError(t, err)
+		assert.Len(t, entities, 5)
+		assert.Equal(t, 5, total)
+	})
+
+	t.Run("Update", func(t *testing.T) {
+		created, err := service.Create(ctx, createTestCommodity("OKAYOKAY"))
+		require.NoError(t, err)
+
+		// Update the Commodity
+		created.Name = "UPDATED"
+		updated, err := service.UpdateOne(ctx, created)
+		require.NoError(t, err)
+		assert.Equal(t, created.ID, updated.ID)
+		assert.Equal(t, "UPDATED", updated.Name)
+	})
+
+	t.Run("QueryFiltering", func(t *testing.T) {
+		// Create multiple Commodity
+		for i := 0; i < 5; i++ {
+			_, err := service.Create(ctx, createTestCommodity("CODE"+string(i)))
+			require.NoError(t, err)
+		}
+
+		// Query all Commodity
+		filter := &services.CommodityQueryFilter{
+			OrganizationID: org.ID,
+			BusinessUnitID: org.BusinessUnitID,
+			Limit:          5,
+			Offset:         0,
+		}
+		entities, total, err := service.GetAll(ctx, filter)
+		require.NoError(t, err)
+		assert.Len(t, entities, 1)
+		assert.Equal(t, 1, total)
+	})
 }
