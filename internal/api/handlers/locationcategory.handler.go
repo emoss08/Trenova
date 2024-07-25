@@ -133,7 +133,7 @@ func (h LocationCategoryHandler) GetByID() fiber.Handler {
 			})
 		}
 
-		if err = h.permissionService.CheckUserPermission(c, constants.EntityLocation, constants.ActionView); err != nil {
+		if err = h.permissionService.CheckUserPermission(c, constants.EntityLocationCategory, constants.ActionView); err != nil {
 			return c.Status(fiber.StatusForbidden).JSON(fiber.Error{
 				Code:    fiber.StatusForbidden,
 				Message: err.Error(),
@@ -162,7 +162,7 @@ func (h LocationCategoryHandler) Create() fiber.Handler {
 
 		createdEntity := new(models.LocationCategory)
 
-		if err = h.permissionService.CheckUserPermission(c, constants.EntityLocation, constants.ActionCreate); err != nil {
+		if err = h.permissionService.CheckUserPermission(c, constants.EntityLocationCategory, constants.ActionCreate); err != nil {
 			return c.Status(fiber.StatusForbidden).JSON(fiber.Error{
 				Code:    fiber.StatusForbidden,
 				Message: err.Error(),
@@ -183,7 +183,7 @@ func (h LocationCategoryHandler) Create() fiber.Handler {
 			return c.Status(fiber.StatusInternalServerError).JSON(resp)
 		}
 
-		go h.auditService.LogAction(constants.TableLocation, entity.ID.String(), property.AuditLogActionCreate, entity, ids.UserID, ids.OrganizationID, ids.BusinessUnitID)
+		go h.auditService.LogAction(constants.TableLocationCategory, entity.ID.String(), property.AuditLogActionCreate, entity, ids.UserID, ids.OrganizationID, ids.BusinessUnitID)
 
 		return c.Status(fiber.StatusCreated).JSON(entity)
 	}
@@ -204,7 +204,7 @@ func (h LocationCategoryHandler) Update() fiber.Handler {
 			})
 		}
 
-		if err = h.permissionService.CheckUserPermission(c, constants.EntityLocation, constants.ActionUpdate); err != nil {
+		if err = h.permissionService.CheckUserPermission(c, constants.EntityLocationCategory, constants.ActionUpdate); err != nil {
 			return c.Status(fiber.StatusForbidden).JSON(fiber.Error{
 				Code:    fiber.StatusForbidden,
 				Message: err.Error(),
@@ -226,7 +226,7 @@ func (h LocationCategoryHandler) Update() fiber.Handler {
 			return c.Status(fiber.StatusInternalServerError).JSON(resp)
 		}
 
-		go h.auditService.LogAction(constants.TableLocation, entity.ID.String(), property.AuditLogActionUpdate, entity, ids.UserID, ids.OrganizationID, ids.BusinessUnitID)
+		go h.auditService.LogAction(constants.TableLocationCategory, entity.ID.String(), property.AuditLogActionUpdate, entity, ids.UserID, ids.OrganizationID, ids.BusinessUnitID)
 
 		return c.Status(fiber.StatusOK).JSON(entity)
 	}
