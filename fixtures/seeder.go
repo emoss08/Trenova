@@ -66,7 +66,7 @@ func LoadFixtures() error {
 		return err
 	}
 
-	// Register many to many model so bun can better recognize m2m relation.
+	// Register many-to-many model so bun can better recognize m2m relation.
 	// This should be done before you use the model for the first time.
 	db.RegisterModel(
 		(*models.GeneralLedgerAccountTag)(nil),
@@ -94,6 +94,11 @@ func LoadFixtures() error {
 	if err != nil {
 		log.Fatalf("Failed to load organization: %v", err)
 		return err
+	}
+
+	// Load the Shipment Control
+	if err = loadShipmentControl(ctx, db, org.ID, bu.ID); err != nil {
+		log.Fatalf("Failed to load shipment control: %v", err)
 	}
 
 	// Load the master key generation

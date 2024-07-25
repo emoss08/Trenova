@@ -37,58 +37,58 @@ func loadShipments(ctx context.Context, db *bun.DB, gen *gen.CodeGenerator, orgI
 		return err
 	}
 
-	state := new(models.UsState)
-	err = db.NewSelect().Model(state).Where("abbreviation = ?", "AL").Scan(ctx)
-	if err != nil {
-		return err
-	}
+	if count < 1 {
+		state := new(models.UsState)
+		err = db.NewSelect().Model(state).Where("abbreviation = ?", "AL").Scan(ctx)
+		if err != nil {
+			return err
+		}
 
-	customer, err := seedCustomer(ctx, db, gen, state.ID, orgID, buID)
-	if err != nil {
-		return err
-	}
+		customer, err := seedCustomer(ctx, db, gen, state.ID, orgID, buID)
+		if err != nil {
+			return err
+		}
 
-	location, err := seedLocation(ctx, db, state.ID, orgID, buID)
-	if err != nil {
-		return err
-	}
+		location, err := seedLocation(ctx, db, state.ID, orgID, buID)
+		if err != nil {
+			return err
+		}
 
-	revCode, err := seedRevenueCode(ctx, db, orgID, buID)
-	if err != nil {
-		return err
-	}
+		revCode, err := seedRevenueCode(ctx, db, orgID, buID)
+		if err != nil {
+			return err
+		}
 
-	serviceType, err := seedServiceType(ctx, db, orgID, buID)
-	if err != nil {
-		return err
-	}
+		serviceType, err := seedServiceType(ctx, db, orgID, buID)
+		if err != nil {
+			return err
+		}
 
-	primaryWorker, err := seedPrimaryWorker(ctx, db, gen, state.ID, orgID, buID)
-	if err != nil {
-		return err
-	}
+		primaryWorker, err := seedPrimaryWorker(ctx, db, gen, state.ID, orgID, buID)
+		if err != nil {
+			return err
+		}
 
-	equipType, err := seedEquipmentType(ctx, db, orgID, buID)
-	if err != nil {
-		return err
-	}
+		equipType, err := seedEquipmentType(ctx, db, orgID, buID)
+		if err != nil {
+			return err
+		}
 
-	shipType, err := seedShipmentType(ctx, db, orgID, buID)
-	if err != nil {
-		return err
-	}
+		shipType, err := seedShipmentType(ctx, db, orgID, buID)
+		if err != nil {
+			return err
+		}
 
-	trailer, err := seedTrailer(ctx, db, equipType.ID, orgID, buID)
-	if err != nil {
-		return err
-	}
+		trailer, err := seedTrailer(ctx, db, equipType.ID, orgID, buID)
+		if err != nil {
+			return err
+		}
 
-	tractor, err := seedTractor(ctx, db, primaryWorker.ID, state.ID, equipType.ID, orgID, buID)
-	if err != nil {
-		return err
-	}
+		tractor, err := seedTractor(ctx, db, primaryWorker.ID, state.ID, equipType.ID, orgID, buID)
+		if err != nil {
+			return err
+		}
 
-	if count < 100 {
 		for i := 0; i < 100; i++ {
 			input := types.CreateShipmentInput{
 				BusinessUnitID:              buID,

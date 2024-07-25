@@ -221,6 +221,10 @@ func loadResources(ctx context.Context, db *bun.DB) error {
 				Type:        "BillingClient",
 				Description: "Represents the billing client in the system.",
 			},
+			{
+				Type:        "ShipmentControl",
+				Description: "Represents a shipment control in the system.",
+			},
 		}
 
 		_, err = db.NewInsert().Model(&resources).Exec(ctx)
