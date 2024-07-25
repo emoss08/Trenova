@@ -61,7 +61,7 @@ type Worker struct {
 	Organization  *Organization  `bun:"rel:belongs-to,join:organization_id=id" json:"-"`
 }
 
-func (w *Worker) Validate() error {
+func (w Worker) Validate() error {
 	return validation.ValidateStruct(
 		&w,
 		validation.Field(&w.Code, validation.Required, validation.Length(10, 10).Error("Code must be 4 characters")),

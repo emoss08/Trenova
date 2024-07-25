@@ -40,6 +40,7 @@ func QueryWorkerMasterKeyGenerationByOrgID(ctx context.Context, db *bun.DB, orgI
 	if err != nil {
 		return nil, err
 	}
+
 	return &workerMasterKeyGeneration, nil
 }
 

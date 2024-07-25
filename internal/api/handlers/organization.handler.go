@@ -51,7 +51,7 @@ func NewOrganizationHandler(s *server.Server) *OrganizationHandler {
 func (oh OrganizationHandler) RegisterRoutes(r fiber.Router) {
 	orgAPI := r.Group("/organizations")
 	orgAPI.Get("/", oh.getOrganizationDetails())
-	orgAPI.Put("/:orgID", oh.updateOrganization())
+	orgAPI.Put("/", oh.updateOrganization())
 	orgAPI.Post("/upload-logo", oh.uploadOrganizationLogo())
 	orgAPI.Post("/clear-logo", oh.clearOrganizationLogo())
 }
@@ -90,14 +90,6 @@ func (oh OrganizationHandler) updateOrganization() fiber.Handler {
 			return err
 		}
 
-		orgID := c.Params("orgID")
-		if orgID == "" {
-			return c.Status(fiber.StatusBadRequest).JSON(fiber.Error{
-				Code:    fiber.StatusBadRequest,
-				Message: "orgID is required",
-			})
-		}
-
 		if err = oh.permissionService.CheckUserPermission(c, constants.EntityOrganization, constants.ActionUpdate); err != nil {
 			return c.Status(fiber.StatusForbidden).JSON(fiber.Error{
 				Code:    fiber.StatusForbidden,
@@ -106,6 +98,8 @@ func (oh OrganizationHandler) updateOrganization() fiber.Handler {
 		}
 
 		updatedEntity := new(models.Organization)
+		updatedEntity.BusinessUnitID = ids.BusinessUnitID
+		updatedEntity.ID = ids.OrganizationID
 
 		if err = utils.ParseBodyAndValidate(c, updatedEntity); err != nil {
 			return c.Status(fiber.StatusBadRequest).JSON(err)

@@ -62,6 +62,7 @@ func AttachAllRoutes(s *server.Server, r fiber.Router) {
 	registerFlexibleHandler(r, NewUserNotificationHandler(s))
 	registerFlexibleHandler(r, NewReportHandler(s))
 	registerFlexibleHandler(r, NewOrganizationHandler(s))
+	registerFlexibleHandler(r, NewShipmentControlHandler(s))
 	registerFlexibleHandler(r, NewUserTaskHandler(s))
 	registerFlexibleHandler(r, NewUSStateHandler(s))
 	registerFlexibleHandler(r, NewShipmentHandler(s))

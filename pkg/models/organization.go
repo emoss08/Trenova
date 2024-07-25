@@ -18,11 +18,10 @@ package models
 import (
 	"context"
 	"fmt"
-	"time"
-
 	"github.com/emoss08/trenova/pkg/models/property"
 	"github.com/emoss08/trenova/pkg/validator"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/uptrace/bun"
@@ -49,8 +48,9 @@ type Organization struct {
 	BusinessUnitID uuid.UUID `bun:"type:uuid" json:"businessUnitId"`
 	StateID        uuid.UUID `bun:"type:uuid,notnull" json:"stateId"`
 
-	BusinessUnit *BusinessUnit `bun:"rel:belongs-to,join:business_unit_id=id" json:"-"`
-	State        *UsState      `bun:"rel:belongs-to,join:state_id=id" json:"state"`
+	ShipmentControl *ShipmentControl `bun:"rel:has-one,join:id=organization_id" json:"-"`
+	BusinessUnit    *BusinessUnit    `bun:"rel:belongs-to,join:business_unit_id=id" json:"-"`
+	State           *UsState         `bun:"rel:belongs-to,join:state_id=id" json:"state"`
 }
 
 func (o Organization) Validate() error {
@@ -59,7 +59,6 @@ func (o Organization) Validate() error {
 		validation.Field(&o.BusinessUnitID, validation.Required),
 		validation.Field(&o.Name, validation.Required),
 		validation.Field(&o.ScacCode, validation.Required, validation.Length(4, 4).Error("SCAC code must be 4 characters")),
-		// validation.Field(&o.DOTNumber, validation.Required, validation.Length(12, 12).Error("DOT number must be 12 characters")),
 		validation.Field(&o.OrgType, validation.Required),
 		validation.Field(&o.AddressLine1, validation.Length(0, 150).Error("Address line 1 must be less than 150 characters")),
 		validation.Field(&o.City, validation.Required),
