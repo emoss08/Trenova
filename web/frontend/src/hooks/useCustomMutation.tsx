@@ -28,7 +28,6 @@ import {
 import { type AxiosResponse } from "axios";
 import type { Control, FieldValues, UseFormReset } from "react-hook-form";
 import { toast } from "sonner";
-
 type DataProp = Record<string, unknown> | FormData;
 type MutationOptions<K extends FieldValues> = {
   path: string;
@@ -38,15 +37,16 @@ type MutationOptions<K extends FieldValues> = {
   closeModal?: boolean;
   reset: UseFormReset<K>;
   method: "POST" | "PUT" | "PATCH" | "DELETE";
-  onSettled?: () => void;
+  onSettled?: (data: AxiosResponse<any, any> | undefined) => void;
 };
+
 export function useCustomMutation<T extends FieldValues>(
   control: Control<T>,
   options: MutationOptions<T>,
-): UseMutationResult<AxiosResponse, Error, DataProp> {
+): UseMutationResult<AxiosResponse<any, any>, Error, DataProp> {
   const queryClient = useQueryClient();
 
-  return useMutation({
+  return useMutation<AxiosResponse<any, any>, Error, DataProp>({
     mutationFn: (data: DataProp) =>
       executeApiMethod(options.method, options.path, data),
     onSuccess: () => handleSuccess(options, queryClient),
