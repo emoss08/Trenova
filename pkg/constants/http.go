@@ -69,6 +69,7 @@ const (
 	EntityTrailer                = "trailer"
 	EntityUser                   = "user"
 	EntityWorker                 = "worker"
+	EntityShipmentControl        = "shipment_control"
 )
 
 // Table names
@@ -101,4 +102,5 @@ const (
 	TableTrailer                = "trailers"
 	TableUser                   = "users"
 	TableWorker                 = "workers"
+	TableShipmentControl        = "shipment_controls"
 )

@@ -111,15 +111,6 @@ export async function getRouteControl(): Promise<RouteControl> {
 }
 
 /**
- * Fetches depots from the server.
- * @returns A promise that resolves to an array of depots.
- */
-export async function getDepots(): Promise<Depot[]> {
-  const response = await axios.get("/depots/");
-  return response.data.results;
-}
-
-/**
  * Fetches feature flags for the organization from the server.
  * @returns A promise that resolves to an array of feature flags.
  */
@@ -141,17 +132,6 @@ export async function getGoogleApiInformation(): Promise<GoogleAPI> {
  * Fetches topic values from the server.
  * @returns A promise that resolves to an array of Table Names.
  */
-export async function getTableNames(): Promise<
-  { value: string; label: string }[]
-> {
-  const response = await axios.get("/table-change-alerts/table-names/");
-  return response.data.results;
-}
-
-/**
- * Fetches topic values from the server.
- * @returns A promise that resolves to an array of Table Names.
- */
 export async function getTopicNames(): Promise<Topic[]> {
   const response = await axios.get("/table-change-alerts/topics/");
   return response.data.results;
@@ -159,8 +139,8 @@ export async function getTopicNames(): Promise<Topic[]> {
 
 /**
  * Posts a user profile picture to the server.
- * @param profilePicture Profile picture to be uploaded
  * @returns A promise that resolves to the user's details.
+ * @param logo
  */
 export async function postOrganizationLogo(logo: File): Promise<Organization> {
   const formData = new FormData();
