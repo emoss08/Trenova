@@ -13,16 +13,17 @@
 -- Change License as the GPL Version 2.0 or a compatible license, specifying an Additional Use
 -- Grant, and not modifying the license in any other way.
 
-CREATE TABLE IF NOT EXISTS "shipment_control"
+CREATE TABLE IF NOT EXISTS "shipment_controls"
 (
     "id"                         uuid        NOT NULL DEFAULT uuid_generate_v4(),
-    "business_unit_id" uuid NOT NULL,
-    "organization_id" uuid NOT NULL,
+    "business_unit_id"           uuid        NOT NULL,
+    "organization_id"            uuid        NOT NULL,
     "enforce_rev_code"           BOOLEAN     NOT NULL DEFAULT FALSE,
     "enforce_voided_comm"        BOOLEAN     NOT NULL DEFAULT FALSE,
     "auto_total_shipment"        BOOLEAN     NOT NULL DEFAULT FALSE,
     "compare_origin_destination" BOOLEAN     NOT NULL DEFAULT FALSE,
-    "check_for_duplicate_bol"   BOOLEAN     NOT NULL DEFAULT FALSE,
+    "check_for_duplicate_bol"    BOOLEAN     NOT NULL DEFAULT FALSE,
+    "version"                    BIGINT      NOT NULL,
     "created_at"                 TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updated_at"                 TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
     PRIMARY KEY ("id"),
@@ -31,13 +32,13 @@ CREATE TABLE IF NOT EXISTS "shipment_control"
 );
 
 -- bun:split
-CREATE INDEX IF NOT EXISTS "idx_shipment_control_org_bu" ON "shipment_control" (organization_id, business_unit_id);
+CREATE INDEX IF NOT EXISTS "idx_shipment_control_org_bu" ON "shipment_controls" (organization_id, business_unit_id);
 
-CREATE UNIQUE INDEX IF NOT EXISTS "shipment_control_org_id_unq" ON "shipment_control" (organization_id);
+CREATE UNIQUE INDEX IF NOT EXISTS "shipment_control_org_id_unq" ON "shipment_controls" (organization_id);
 
 -- bun:split
-COMMENT ON COLUMN "shipment_control"."enforce_rev_code" IS 'Requires a revenue code to be entered for each shipment';
-COMMENT ON COLUMN "shipment_control"."enforce_voided_comm" IS 'Requires a comment to be entered when voiding a shipment';
-COMMENT ON COLUMN "shipment_control"."auto_total_shipment" IS 'Automatically calculates the total shipment billing total';
-COMMENT ON COLUMN "shipment_control"."compare_origin_destination" IS 'Ensures the origin and destination are different';
-COMMENT ON COLUMN "shipment_control"."check_for_duplicate_bol" IS 'Checks for duplicate BOL numbers';
+COMMENT ON COLUMN "shipment_controls"."enforce_rev_code" IS 'Requires a revenue code to be entered for each shipment';
+COMMENT ON COLUMN "shipment_controls"."enforce_voided_comm" IS 'Requires a comment to be entered when voiding a shipment';
+COMMENT ON COLUMN "shipment_controls"."auto_total_shipment" IS 'Automatically calculates the total shipment billing total';
+COMMENT ON COLUMN "shipment_controls"."compare_origin_destination" IS 'Ensures the origin and destination are different';
+COMMENT ON COLUMN "shipment_controls"."check_for_duplicate_bol" IS 'Checks for duplicate BOL numbers';
