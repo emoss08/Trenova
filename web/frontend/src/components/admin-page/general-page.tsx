@@ -19,7 +19,6 @@ import { InputField } from "@/components/common/fields/input";
 import { SelectInput } from "@/components/common/fields/select-input";
 import { Button } from "@/components/ui/button";
 import { useUserPermissions } from "@/context/user-permissions";
-import { invalidateQueryViaBroadcastChannel } from "@/hooks/useBroadcast";
 import { useCustomMutation } from "@/hooks/useCustomMutation";
 import { TIMEZONES } from "@/lib/timezone";
 import { organizationSchema } from "@/lib/validations/OrganizationSchema";
@@ -42,48 +41,80 @@ import {
   AvatarImage,
   ImageUploader,
 } from "../ui/avatar";
+import { useState } from "react";
 
 function OrganizationForm({ organization }: { organization: Organization }) {
   const { t } = useTranslation(["admin.generalpage", "common"]);
   const { userHasPermission } = useUserPermissions();
-
   const queryClient = useQueryClient();
+  const [localLogoUrl, setLocalLogoUrl] = useState(organization.logoUrl);
 
-  const { control, handleSubmit, reset } = useForm<OrganizationFormValues>({
-    resolver: yupResolver(organizationSchema),
-    defaultValues: organization,
-  });
+  const { control, handleSubmit, reset, setValue } =
+    useForm<OrganizationFormValues>({
+      resolver: yupResolver(organizationSchema),
+      defaultValues: { ...organization, logoUrl: localLogoUrl },
+    });
 
   const mutation = useCustomMutation<OrganizationFormValues>(control, {
     method: "PUT",
-    path: `/organizations/${organization.id}`,
+    path: "/organizations/",
     successMessage: t("formSuccessMessage"),
+    queryKeysToInvalidate: "organization",
     reset,
     errorMessage: t("formErrorMessage"),
+    onSettled: (response) => {
+      reset(response?.data);
+      setLocalLogoUrl(response?.data.logoUrl);
+    },
   });
 
   const onSubmit = (values: OrganizationFormValues) => {
     mutation.mutate(values);
-    reset(values);
+  };
 
-    // Additional query to invalidate.
-    invalidateQueryViaBroadcastChannel(["userOrganization", "organization"]);
+  const handleLogoUpdate = async (file: File) => {
+    try {
+      const response = await postOrganizationLogo(file);
+      setLocalLogoUrl(response.logoUrl);
+      setValue("logoUrl", response.logoUrl);
+      queryClient.invalidateQueries({
+        queryKey: ["organization"] as QueryKeys,
+      });
+      return "Logo updated successfully.";
+    } catch (error) {
+      console.error("Error updating logo:", error);
+      return "Failed to update logo.";
+    }
+  };
+
+  const handleLogoRemoval = async () => {
+    try {
+      await clearOrganizationLogo();
+      setLocalLogoUrl("");
+      setValue("logoUrl", "");
+      queryClient.invalidateQueries({
+        queryKey: ["organization"] as QueryKeys,
+      });
+      return "Logo removed successfully.";
+    } catch (error) {
+      console.error("Error removing logo:", error);
+      return "Failed to remove logo.";
+    }
   };
 
   return (
     <>
       <div className="grid grid-cols-1 gap-8 md:grid-cols-3 xl:grid-cols-4">
         <div className="px-4 sm:px-0">
-          <h2 className="text-foreground text-base font-semibold leading-7">
+          <h2 className="text-base font-semibold leading-7 text-foreground">
             {t("organizationDetails")}
           </h2>
-          <p className="text-muted-foreground mt-1 text-sm leading-6">
+          <p className="mt-1 text-sm leading-6 text-muted-foreground">
             {t("organizationDetailsDescription")}
           </p>
         </div>
-
         <form
-          className="border-border bg-card m-4 border sm:rounded-xl md:col-span-2"
+          className="m-4 border border-border bg-card sm:rounded-xl md:col-span-2"
           onSubmit={handleSubmit(onSubmit)}
         >
           <div className="px-4 py-6 sm:p-8">
@@ -98,19 +129,16 @@ function OrganizationForm({ organization }: { organization: Organization }) {
                   </Avatar>
                   <ImageUploader
                     iconText="Change Logo"
-                    callback={postOrganizationLogo}
+                    callback={handleLogoUpdate}
                     successCallback={() => {
                       queryClient.invalidateQueries({
-                        queryKey: ["userOrganization"] as QueryKeys,
+                        queryKey: ["organization"] as QueryKeys,
                       });
 
                       return "Logo updated successfully.";
                     }}
-                    removeFileCallback={clearOrganizationLogo}
+                    removeFileCallback={handleLogoRemoval}
                     removeSuccessCallback={() => {
-                      queryClient.invalidateQueries({
-                        queryKey: ["userOrganization"] as QueryKeys,
-                      });
                       queryClient.invalidateQueries({
                         queryKey: ["organization"] as QueryKeys,
                       });
@@ -180,7 +208,7 @@ function OrganizationForm({ organization }: { organization: Organization }) {
               </div>
             </div>
           </div>
-          <div className="border-border flex items-center justify-end gap-x-4 border-t p-4 sm:px-8">
+          <div className="flex items-center justify-end gap-x-4 border-t border-border p-4 sm:px-8">
             <Button
               onClick={(e) => {
                 e.preventDefault();

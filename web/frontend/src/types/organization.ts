@@ -40,6 +40,7 @@ export type Organization = {
     abbreviation: string;
     name: string;
   };
+  version: string;
   postalCode?: string;
 };
 

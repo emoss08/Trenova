@@ -22,8 +22,8 @@ import { useCustomMutation } from "@/hooks/useCustomMutation";
 import { useShipmentControl } from "@/hooks/useQueries";
 import { shipmentControlSchema } from "@/lib/validations/ShipmentSchema";
 import type {
-  ShipmentControlFormValues,
   ShipmentControl as ShipmentControlType,
+  ShipmentControlFormValues,
 } from "@/types/shipment";
 import { yupResolver } from "@hookform/resolvers/yup";
 import { useForm } from "react-hook-form";
@@ -36,37 +36,24 @@ function ShipmentControlForm({
   shipmentControl: ShipmentControlType;
 }) {
   const { t } = useTranslation(["admin.shipmentcontrol", "common"]); // Use the translation hook
-
   const { control, handleSubmit, reset } = useForm<ShipmentControlFormValues>({
     resolver: yupResolver(shipmentControlSchema),
-    defaultValues: {
-      autoRateShipment: shipmentControl.autoRateShipment,
-      calculateDistance: shipmentControl.calculateDistance,
-      enforceRevCode: shipmentControl.enforceRevCode,
-      enforceVoidedComm: shipmentControl.enforceVoidedComm,
-      generateRoutes: shipmentControl.generateRoutes,
-      enforceCommodity: shipmentControl.enforceCommodity,
-      autoSequenceStops: shipmentControl.autoSequenceStops,
-      autoShipmentTotal: shipmentControl.autoShipmentTotal,
-      enforceOriginDestination: shipmentControl.enforceOriginDestination,
-      checkForDuplicateBol: shipmentControl.checkForDuplicateBol,
-      sendPlacardInfo: shipmentControl.sendPlacardInfo,
-      enforceHazmatSegRules: shipmentControl.enforceHazmatSegRules,
-    },
+    defaultValues: shipmentControl,
   });
-
   const mutation = useCustomMutation<ShipmentControlFormValues>(control, {
     method: "PUT",
-    path: `/shipment-control/${shipmentControl.id}/`,
+    path: "/shipment-control/",
     successMessage: t("formSuccessMessage"),
     queryKeysToInvalidate: "shipmentControl",
     reset,
     errorMessage: t("formErrorMessage"),
+    onSettled: (response) => {
+      reset(response?.data);
+    },
   });
 
   const onSubmit = (values: ShipmentControlFormValues) => {
     mutation.mutate(values);
-    reset(values);
   };
 
   return (
@@ -76,22 +63,6 @@ function ShipmentControlForm({
     >
       <div className="px-4 py-6 sm:p-8">
         <div className="grid max-w-3xl grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-6">
-          <div className="col-span-3">
-            <CheckboxInput
-              name="autoRateShipment"
-              control={control}
-              label={t("fields.autoRateShipment.label")}
-              description={t("fields.autoRateShipment.description")}
-            />
-          </div>
-          <div className="col-span-3">
-            <CheckboxInput
-              name="calculateDistance"
-              control={control}
-              label={t("fields.calculateDistance.label")}
-              description={t("fields.calculateDistance.description")}
-            />
-          </div>
           <div className="col-span-3">
             <CheckboxInput
               name="enforceRevCode"
@@ -110,31 +81,7 @@ function ShipmentControlForm({
           </div>
           <div className="col-span-3">
             <CheckboxInput
-              name="generateRoutes"
-              control={control}
-              label={t("fields.generateRoutes.label")}
-              description={t("fields.generateRoutes.description")}
-            />
-          </div>
-          <div className="col-span-3">
-            <CheckboxInput
-              name="enforceCommodity"
-              control={control}
-              label={t("fields.enforceCommodity.label")}
-              description={t("fields.enforceCommodity.description")}
-            />
-          </div>
-          <div className="col-span-3">
-            <CheckboxInput
-              name="autoSequenceStops"
-              control={control}
-              label={t("fields.autoSequenceStops.label")}
-              description={t("fields.autoSequenceStops.description")}
-            />
-          </div>
-          <div className="col-span-3">
-            <CheckboxInput
-              name="autoShipmentTotal"
+              name="autoTotalShipment"
               control={control}
               label={t("fields.autoShipmentTotal.label")}
               description={t("fields.autoShipmentTotal.description")}
@@ -142,7 +89,7 @@ function ShipmentControlForm({
           </div>
           <div className="col-span-3">
             <CheckboxInput
-              name="enforceOriginDestination"
+              name="compareOriginDestination"
               control={control}
               label={t("fields.enforceOriginDestination.label")}
               description={t("fields.enforceOriginDestination.description")}
@@ -154,22 +101,6 @@ function ShipmentControlForm({
               control={control}
               label={t("fields.checkForDuplicateBol.label")}
               description={t("fields.checkForDuplicateBol.description")}
-            />
-          </div>
-          <div className="col-span-3">
-            <CheckboxInput
-              name="sendPlacardInfo"
-              control={control}
-              label={t("fields.sendPlacardInfo.label")}
-              description={t("fields.sendPlacardInfo.description")}
-            />
-          </div>
-          <div className="col-span-3">
-            <CheckboxInput
-              name="enforceHazmatSegRules"
-              control={control}
-              label={t("fields.enforceHazmatSegRules.label")}
-              description={t("fields.enforceHazmatSegRules.description")}
             />
           </div>
         </div>
