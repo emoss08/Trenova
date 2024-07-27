@@ -25,17 +25,36 @@ $$
     END
 $$;
 
+DO
+$$
+    BEGIN
+        IF NOT EXISTS (SELECT 1
+                       FROM pg_type
+                       WHERE typname = 'log_status_enum') THEN CREATE TYPE log_status_enum AS ENUM ('ATTEMPTED', 'SUCCEEDED', 'FAILED', 'ERROR');
+
+        END IF;
+
+    END
+$$;
+
+
 CREATE TABLE IF NOT EXISTS "audit_logs"
 (
-    "id"               uuid                  NOT NULL DEFAULT uuid_generate_v4(),
-    "business_unit_id" uuid                  NOT NULL,
-    "organization_id"  uuid                  NOT NULL,
-    "table_name"       varchar(255)          NOT NULL,
-    "entity_id"        varchar(255)          NOT NULL,
-    "action"           audit_log_status_enum NOT NULL,
-    "data"             jsonb,
-    "user_id"          uuid                  NOT NULL,
-    "timestamp"        TIMESTAMPTZ           NOT NULL DEFAULT current_timestamp,
+    "id"                uuid                  NOT NULL DEFAULT uuid_generate_v4(),
+    "business_unit_id"  uuid                  NOT NULL,
+    "organization_id"   uuid                  NOT NULL,
+    "table_name"        varchar(255)          NOT NULL,
+    "entity_id"         varchar(255)          NOT NULL,
+    "action"            audit_log_status_enum NOT NULL,
+    "data"              jsonb,
+    "attempted_changes" jsonb,
+    "actual_changes"    jsonb,
+    "description"       TEXT,
+    "error_message"     TEXT,
+    "attempt_id"        uuid,
+    "status"            log_status_enum       NOT NULL DEFAULT 'ATTEMPTED',
+    "user_id"           uuid                  NOT NULL,
+    "timestamp"         TIMESTAMPTZ           NOT NULL DEFAULT current_timestamp,
     PRIMARY KEY ("id"),
     FOREIGN KEY ("user_id") REFERENCES users ("id") ON UPDATE NO ACTION ON DELETE CASCADE,
     FOREIGN KEY ("organization_id") REFERENCES organizations ("id") ON UPDATE NO ACTION ON DELETE CASCADE,

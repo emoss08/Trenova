@@ -50,9 +50,9 @@ func NewCommentTypeHandler(s *server.Server) *CommentTypeHandler {
 func (h CommentTypeHandler) RegisterRoutes(r fiber.Router) {
 	api := r.Group("/comment-types")
 	api.Get("/", h.Get())
-	api.Get("/:commenttypeID", h.GetByID())
+	api.Get("/:commentTypeID", h.GetByID())
 	api.Post("/", h.Create())
-	api.Put("/:commenttypeID", h.Update())
+	api.Put("/:commentTypeID", h.Update())
 }
 
 func (h CommentTypeHandler) Get() fiber.Handler {
@@ -126,8 +126,8 @@ func (h CommentTypeHandler) GetByID() fiber.Handler {
 			return err
 		}
 
-		commenttypeID := c.Params("commenttypeID")
-		if commenttypeID == "" {
+		commentTypeID := c.Params("commentTypeID")
+		if commentTypeID == "" {
 			return c.Status(fiber.StatusBadRequest).JSON(fiber.Error{
 				Code:    fiber.StatusBadRequest,
 				Message: "CommentType ID is required",
@@ -141,7 +141,7 @@ func (h CommentTypeHandler) GetByID() fiber.Handler {
 			})
 		}
 
-		entity, err := h.service.Get(c.UserContext(), uuid.MustParse(commenttypeID), ids.OrganizationID, ids.BusinessUnitID)
+		entity, err := h.service.Get(c.UserContext(), uuid.MustParse(commentTypeID), ids.OrganizationID, ids.BusinessUnitID)
 		if err != nil {
 			h.logger.Error().Err(err).Msg("Failed to get CommentType")
 			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Error{
@@ -177,14 +177,19 @@ func (h CommentTypeHandler) Create() fiber.Handler {
 			return c.Status(fiber.StatusBadRequest).JSON(err)
 		}
 
+		attemptID := h.auditService.LogAttempt(c.Context(), constants.TableCommentType, "", property.AuditLogActionCreate, createdEntity, ids.UserID, ids.OrganizationID, ids.BusinessUnitID)
+
 		entity, err := h.service.Create(c.UserContext(), createdEntity)
 		if err != nil {
 			h.logger.Error().Err(err).Msg("Failed to create CommentType")
 			resp := utils.CreateServiceError(c, err)
+
+			h.auditService.LogError(c.Context(), property.AuditLogActionCreate, attemptID, ids.OrganizationID, ids.BusinessUnitID, ids.UserID, err.Error())
+
 			return c.Status(fiber.StatusInternalServerError).JSON(resp)
 		}
 
-		go h.auditService.LogAction(constants.TableCommentType, entity.ID.String(), property.AuditLogActionCreate, entity, ids.UserID, ids.OrganizationID, ids.BusinessUnitID)
+		h.auditService.LogAction(c.Context(), constants.TableCommentType, entity.ID.String(), property.AuditLogActionCreate, entity, ids.UserID, ids.OrganizationID, ids.BusinessUnitID)
 
 		return c.Status(fiber.StatusCreated).JSON(entity)
 	}
@@ -197,8 +202,8 @@ func (h CommentTypeHandler) Update() fiber.Handler {
 			return err
 		}
 
-		commenttypeID := c.Params("commenttypeID")
-		if commenttypeID == "" {
+		commentTypeID := c.Params("commentTypeID")
+		if commentTypeID == "" {
 			return c.Status(fiber.StatusBadRequest).JSON(fiber.Error{
 				Code:    fiber.StatusBadRequest,
 				Message: "CommentType ID is required",
@@ -218,16 +223,20 @@ func (h CommentTypeHandler) Update() fiber.Handler {
 			return c.Status(fiber.StatusBadRequest).JSON(err)
 		}
 
-		updatedEntity.ID = uuid.MustParse(commenttypeID)
+		updatedEntity.ID = uuid.MustParse(commentTypeID)
+		attemptID := h.auditService.LogAttempt(c.Context(), constants.TableCommentType, commentTypeID, property.AuditLogActionUpdate, updatedEntity, ids.UserID, ids.OrganizationID, ids.BusinessUnitID)
 
 		entity, err := h.service.UpdateOne(c.UserContext(), updatedEntity)
 		if err != nil {
 			h.logger.Error().Err(err).Msg("Failed to update CommentType")
 			resp := utils.CreateServiceError(c, err)
+
+			h.auditService.LogError(c.Context(), property.AuditLogActionUpdate, attemptID, ids.OrganizationID, ids.BusinessUnitID, ids.UserID, err.Error())
+
 			return c.Status(fiber.StatusInternalServerError).JSON(resp)
 		}
 
-		go h.auditService.LogAction(constants.TableCommentType, entity.ID.String(), property.AuditLogActionUpdate, entity, ids.UserID, ids.OrganizationID, ids.BusinessUnitID)
+		h.auditService.LogAction(c.Context(), constants.TableCommentType, entity.ID.String(), property.AuditLogActionUpdate, entity, ids.UserID, ids.OrganizationID, ids.BusinessUnitID)
 
 		return c.Status(fiber.StatusOK).JSON(entity)
 	}

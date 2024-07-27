@@ -105,16 +105,19 @@ func (oh OrganizationHandler) updateOrganization() fiber.Handler {
 			return c.Status(fiber.StatusBadRequest).JSON(err)
 		}
 
+		attemptID := oh.auditService.LogAttempt(c.Context(), constants.TableChargeType, ids.OrganizationID.String(), property.AuditLogActionUpdate, updatedEntity, ids.UserID, ids.OrganizationID, ids.BusinessUnitID)
+
 		entity, err := oh.service.UpdateOrganization(c.UserContext(), updatedEntity)
 		if err != nil {
 			oh.logger.Error().Interface("entity", updatedEntity).Err(err).Msg("Failed to update Organization")
-			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Error{
-				Code:    fiber.StatusInternalServerError,
-				Message: err.Error(),
-			})
+			resp := utils.CreateServiceError(c, err)
+
+			oh.auditService.LogError(c.Context(), property.AuditLogActionCreate, attemptID, ids.OrganizationID, ids.BusinessUnitID, ids.UserID, err.Error())
+
+			return c.Status(fiber.StatusInternalServerError).JSON(resp)
 		}
 
-		go oh.auditService.LogAction(constants.TableOrganization, entity.ID.String(), property.AuditLogActionUpdate, entity, ids.UserID, ids.OrganizationID, ids.BusinessUnitID)
+		oh.auditService.LogAction(c.Context(), constants.TableOrganization, entity.ID.String(), property.AuditLogActionUpdate, entity, ids.UserID, ids.OrganizationID, ids.BusinessUnitID)
 
 		return c.Status(fiber.StatusOK).JSON(entity)
 	}
@@ -143,17 +146,22 @@ func (oh OrganizationHandler) uploadOrganizationLogo() fiber.Handler {
 			})
 		}
 
+		attemptID := oh.auditService.LogAttempt(c.Context(), constants.TableOrganization, ids.OrganizationID.String(), property.AuditLogActionCreate, nil, ids.UserID, ids.OrganizationID, ids.BusinessUnitID)
+
 		// Return back the entire organization.
 		entity, err := oh.service.UploadLogo(c.UserContext(), logo, ids.OrganizationID)
 		if err != nil {
 			oh.logger.Error().Str("organizationID", ids.OrganizationID.String()).Err(err).Msg("Failed to upload logo for organization")
+
+			oh.auditService.LogError(c.Context(), property.AuditLogActionUpdate, attemptID, ids.OrganizationID, ids.BusinessUnitID, ids.UserID, err.Error())
+
 			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Error{
 				Code:    fiber.StatusInternalServerError,
 				Message: err.Error(),
 			})
 		}
 
-		go oh.auditService.LogAction(constants.TableOrganization, entity.ID.String(), property.AuditLogActionUpdate, entity, ids.UserID, ids.OrganizationID, ids.BusinessUnitID)
+		oh.auditService.LogAction(c.Context(), constants.TableOrganization, entity.ID.String(), property.AuditLogActionUpdate, entity, ids.UserID, ids.OrganizationID, ids.BusinessUnitID)
 
 		return c.Status(fiber.StatusOK).JSON(entity)
 	}
@@ -173,16 +181,19 @@ func (oh OrganizationHandler) clearOrganizationLogo() fiber.Handler {
 			})
 		}
 
+		attemptID := oh.auditService.LogAttempt(c.Context(), constants.TableOrganization, ids.OrganizationID.String(), property.AuditLogActionUpdate, nil, ids.UserID, ids.OrganizationID, ids.BusinessUnitID)
+
 		entity, err := oh.service.ClearLogo(c.UserContext(), ids.OrganizationID)
 		if err != nil {
 			oh.logger.Error().Str("organizationID", ids.OrganizationID.String()).Err(err).Msg("Failed to clear logo for organization")
-			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Error{
-				Code:    fiber.StatusInternalServerError,
-				Message: err.Error(),
-			})
+			resp := utils.CreateServiceError(c, err)
+
+			oh.auditService.LogError(c.Context(), property.AuditLogActionUpdate, attemptID, ids.OrganizationID, ids.BusinessUnitID, ids.UserID, err.Error())
+
+			return c.Status(fiber.StatusInternalServerError).JSON(resp)
 		}
 
-		go oh.auditService.LogAction(constants.TableOrganization, entity.ID.String(), property.AuditLogActionUpdate, entity, ids.UserID, ids.OrganizationID, ids.BusinessUnitID)
+		oh.auditService.LogAction(c.Context(), constants.TableOrganization, entity.ID.String(), property.AuditLogActionUpdate, entity, ids.UserID, ids.OrganizationID, ids.BusinessUnitID)
 
 		return c.Status(fiber.StatusOK).JSON(entity)
 	}

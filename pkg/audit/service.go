@@ -3,6 +3,8 @@ package audit
 import (
 	"context"
 	"encoding/json"
+	"fmt"
+
 	"sync"
 	"time"
 
@@ -59,10 +61,16 @@ func (as *Service) insertLog(auditLog *models.AuditLog) {
 	}
 }
 
-func (as *Service) LogAction(tableName, entityID string, action property.AuditLogAction, data any, userID, orgID, buID uuid.UUID) {
+func (as *Service) LogAction(ctx context.Context, tableName, entityID string, action property.AuditLogAction, data any, userID, orgID, buID uuid.UUID) {
 	dataJSON, err := json.Marshal(data)
 	if err != nil {
 		as.logger.Error().Err(err).Msg("Failed to marshal data for audit log")
+		return
+	}
+
+	user, err := fetchUserDetails(ctx, as.db, userID)
+	if err != nil {
+		as.logger.Error().Err(err).Msg("Failed to fetch user details for audit log")
 		return
 	}
 
@@ -75,6 +83,9 @@ func (as *Service) LogAction(tableName, entityID string, action property.AuditLo
 		OrganizationID: orgID,
 		BusinessUnitID: buID,
 		Timestamp:      time.Now(),
+		Status:         property.LogStatusSucceeded,
+		Description:    fmt.Sprintf("%s performed %s on %s", user.Username, action.String(), tableName),
+		AttemptID:      nil,
 	}
 
 	as.wg.Add(1)
@@ -85,6 +96,72 @@ func (as *Service) LogAction(tableName, entityID string, action property.AuditLo
 	default:
 		as.logger.Debug().Msg("Work queue is full, logging synchronously")
 		// Work queue is full, log synchronously as a fallback
+		as.wg.Done()
+		as.insertLog(auditLog)
+	}
+}
+
+func (as *Service) LogAttempt(ctx context.Context, tableName, entityID string, action property.AuditLogAction, attemptedData any, userID, orgID, buID uuid.UUID) uuid.UUID {
+	attemptID := uuid.New()
+	dataJSON, _ := json.Marshal(attemptedData)
+	user, err := fetchUserDetails(ctx, as.db, userID)
+	if err != nil {
+		as.logger.Error().Err(err).Msg("Failed to fetch user details for audit log")
+		return attemptID
+	}
+
+	auditLog := &models.AuditLog{
+		ID:               attemptID,
+		TableName:        tableName,
+		EntityID:         entityID,
+		Action:           action,
+		AttemptedChanges: dataJSON,
+		UserID:           userID,
+		OrganizationID:   orgID,
+		BusinessUnitID:   buID,
+		Timestamp:        time.Now(),
+		Status:           property.LogStatusAttempted,
+		Description:      fmt.Sprintf("User: %s attempted %s on %s", user.Username, action.String(), tableName),
+	}
+
+	as.wg.Add(1)
+	select {
+	case as.workQueue <- auditLog:
+		as.logger.Debug().Msg("Attempt log added to work queue")
+	default:
+		as.logger.Debug().Msg("Work queue is full, logging attempt synchronously")
+		as.wg.Done()
+		as.insertLog(auditLog)
+	}
+
+	return attemptID
+}
+
+func (as *Service) LogError(ctx context.Context, action property.AuditLogAction, attemptID, orgID, buID, userID uuid.UUID, errorMsg string) {
+	user, err := fetchUserDetails(ctx, as.db, userID)
+	if err != nil {
+		as.logger.Error().Err(err).Msg("Failed to fetch user details for audit log")
+		return
+	}
+
+	auditLog := &models.AuditLog{
+		ID:             attemptID,
+		OrganizationID: orgID,
+		BusinessUnitID: buID,
+		Action:         action,
+		Timestamp:      time.Now(),
+		Status:         property.LogStatusFailed,
+		ErrorMessage:   errorMsg,
+		Description:    fmt.Sprintf("%s failed to perform action", user.Username),
+		UserID:         userID,
+	}
+
+	as.wg.Add(1)
+	select {
+	case as.workQueue <- auditLog:
+		as.logger.Debug().Msg("Error log added to work queue")
+	default:
+		as.logger.Debug().Msg("Work queue is full, logging error synchronously")
 		as.wg.Done()
 		as.insertLog(auditLog)
 	}
@@ -105,4 +182,13 @@ func (as *Service) Shutdown(ctx context.Context) error {
 	case <-ctx.Done():
 		return ctx.Err()
 	}
+}
+
+func fetchUserDetails(ctx context.Context, db *bun.DB, userID uuid.UUID) (*models.User, error) {
+	user := new(models.User)
+	err := db.NewSelect().Model(user).Where("id = ?", userID).Scan(ctx)
+	if err != nil {
+		return nil, err
+	}
+	return user, nil
 }

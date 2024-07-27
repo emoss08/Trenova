@@ -201,7 +201,7 @@ func (h ShipmentHandler) Create() fiber.Handler {
 
 		createdEntity := new(ptypes.CreateShipmentInput)
 
-		if err = h.permissionService.CheckUserPermission(c, "shipment", "create"); err != nil {
+		if err = h.permissionService.CheckUserPermission(c, constants.EntityShipment, constants.ActionCreate); err != nil {
 			return c.Status(fiber.StatusForbidden).JSON(fiber.Error{
 				Code:    fiber.StatusForbidden,
 				Message: err.Error(),
@@ -215,14 +215,19 @@ func (h ShipmentHandler) Create() fiber.Handler {
 			return c.Status(fiber.StatusBadRequest).JSON(err)
 		}
 
+		attemptID := h.auditService.LogAttempt(c.Context(), constants.TableShipment, "", property.AuditLogActionCreate, createdEntity, ids.UserID, ids.OrganizationID, ids.BusinessUnitID)
+
 		entity, err := h.service.Create(c.UserContext(), createdEntity)
 		if err != nil {
 			h.logger.Error().Interface("entity", createdEntity).Err(err).Msg("Failed to create Shipment")
 			resp := utils.CreateServiceError(c, err)
+
+			h.auditService.LogError(c.Context(), property.AuditLogActionCreate, attemptID, ids.OrganizationID, ids.BusinessUnitID, ids.UserID, err.Error())
+
 			return c.Status(fiber.StatusInternalServerError).JSON(resp)
 		}
 
-		go h.auditService.LogAction("shipments", entity.ID.String(), property.AuditLogActionCreate, entity, ids.UserID, ids.OrganizationID, ids.BusinessUnitID)
+		h.auditService.LogAction(c.Context(), constants.TableShipment, entity.ID.String(), property.AuditLogActionCreate, entity, ids.UserID, ids.OrganizationID, ids.BusinessUnitID)
 
 		return c.Status(fiber.StatusCreated).JSON(entity)
 	}
@@ -235,7 +240,7 @@ func (h ShipmentHandler) AssignTractorToShipment() fiber.Handler {
 			return err
 		}
 
-		if err = h.permissionService.CheckUserPermission(c, "shipment", "assign_tractor"); err != nil {
+		if err = h.permissionService.CheckUserPermission(c, constants.EntityShipment, "assign_tractor"); err != nil {
 			return c.Status(fiber.StatusForbidden).JSON(fiber.Error{
 				Code:    fiber.StatusForbidden,
 				Message: err.Error(),
@@ -247,16 +252,19 @@ func (h ShipmentHandler) AssignTractorToShipment() fiber.Handler {
 			return c.Status(fiber.StatusBadRequest).JSON(err)
 		}
 
+		attemptID := h.auditService.LogAttempt(c.Context(), constants.TableShipment, assignTractorInput.TractorID.String(), property.AuditLogActionUpdate, assignTractorInput, ids.UserID, ids.OrganizationID, ids.BusinessUnitID)
+
 		assignments, err := h.service.AssignTractorToShipment(c.UserContext(), assignTractorInput, ids.OrganizationID, ids.BusinessUnitID)
 		if err != nil {
 			h.logger.Error().Interface("entity", assignTractorInput).Err(err).Msg("Failed to assign tractor to shipment")
-			return c.Status(fiber.StatusBadRequest).JSON(fiber.Error{
-				Message: err.Error(),
-				Code:    fiber.StatusBadRequest,
-			})
+			resp := utils.CreateServiceError(c, err)
+
+			h.auditService.LogError(c.Context(), property.AuditLogActionUpdate, attemptID, ids.OrganizationID, ids.BusinessUnitID, ids.UserID, err.Error())
+
+			return c.Status(fiber.StatusInternalServerError).JSON(resp)
 		}
 
-		go h.auditService.LogAction("shipments", assignTractorInput.TractorID.String(), property.AuditLogActionUpdate, assignments, ids.UserID, ids.OrganizationID, ids.BusinessUnitID)
+		h.auditService.LogAction(c.Context(), constants.TableShipment, assignTractorInput.TractorID.String(), property.AuditLogActionUpdate, assignments, ids.UserID, ids.OrganizationID, ids.BusinessUnitID)
 
 		return c.Status(fiber.StatusOK).JSON(fiber.Map{
 			"message": "Tractor assigned to shipment successfully.",

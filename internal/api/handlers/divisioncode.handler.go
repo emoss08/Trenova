@@ -177,14 +177,19 @@ func (h DivisionCodeHandler) Create() fiber.Handler {
 			return c.Status(fiber.StatusBadRequest).JSON(err)
 		}
 
-		entity, err := h.service.Create(c.UserContext(), createdEntity)
+		attemptID := h.auditService.LogAttempt(c.Context(), constants.TableDivisionCode, "", property.AuditLogActionCreate, createdEntity, ids.UserID, ids.OrganizationID, ids.BusinessUnitID)
+
+		entity, err := h.service.Create(c.Context(), createdEntity)
 		if err != nil {
 			h.logger.Error().Interface("entity", createdEntity).Err(err).Msg("Failed to create DivisionCode")
 			resp := utils.CreateServiceError(c, err)
+
+			h.auditService.LogError(c.Context(), property.AuditLogActionCreate, attemptID, ids.OrganizationID, ids.BusinessUnitID, ids.UserID, err.Error())
+
 			return c.Status(fiber.StatusInternalServerError).JSON(resp)
 		}
 
-		go h.auditService.LogAction(constants.TableDivisionCode, entity.ID.String(), property.AuditLogActionCreate, entity, ids.UserID, ids.OrganizationID, ids.BusinessUnitID)
+		h.auditService.LogAction(c.Context(), constants.TableDivisionCode, entity.ID.String(), property.AuditLogActionCreate, entity, ids.UserID, ids.OrganizationID, ids.BusinessUnitID)
 
 		return c.Status(fiber.StatusCreated).JSON(entity)
 	}
@@ -220,14 +225,19 @@ func (h DivisionCodeHandler) Update() fiber.Handler {
 
 		updatedEntity.ID = uuid.MustParse(divisionCodeID)
 
+		attemptID := h.auditService.LogAttempt(c.Context(), constants.TableDivisionCode, "", property.AuditLogActionUpdate, updatedEntity, ids.UserID, ids.OrganizationID, ids.BusinessUnitID)
+
 		entity, err := h.service.UpdateOne(c.UserContext(), updatedEntity)
 		if err != nil {
 			h.logger.Error().Interface("entity", updatedEntity).Err(err).Msg("Failed to update DivisionCode")
 			resp := utils.CreateServiceError(c, err)
+
+			h.auditService.LogError(c.Context(), property.AuditLogActionUpdate, attemptID, ids.OrganizationID, ids.BusinessUnitID, ids.UserID, err.Error())
+
 			return c.Status(fiber.StatusInternalServerError).JSON(resp)
 		}
 
-		go h.auditService.LogAction(constants.TableDivisionCode, entity.ID.String(), property.AuditLogActionUpdate, entity, ids.UserID, ids.OrganizationID, ids.BusinessUnitID)
+		h.auditService.LogAction(c.Context(), constants.TableDivisionCode, entity.ID.String(), property.AuditLogActionUpdate, entity, ids.UserID, ids.OrganizationID, ids.BusinessUnitID)
 
 		return c.Status(fiber.StatusOK).JSON(entity)
 	}

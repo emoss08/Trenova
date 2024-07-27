@@ -113,6 +113,11 @@ const links: SidebarLink[] = [
     disabled: true,
   },
   {
+    href: "/admin/audit-logs/",
+    title: "Audit Logs",
+    group: "Data & Integrations",
+  },
+  {
     href: "/admin/data-retention/",
     title: "Data Retention",
     group: "Data & Integrations",

@@ -41,6 +41,7 @@ const (
 
 // Entity types
 const (
+	EntityAuditLog               = "audit_log"
 	EntityShipment               = "shipment"
 	EntityAccessorialCharge      = "accessorial_charge"
 	EntityChargeType             = "charge_type"

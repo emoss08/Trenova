@@ -50,9 +50,9 @@ func NewChargeTypeHandler(s *server.Server) *ChargeTypeHandler {
 func (h ChargeTypeHandler) RegisterRoutes(r fiber.Router) {
 	api := r.Group("/charge-types")
 	api.Get("/", h.Get())
-	api.Get("/:chargetypeID", h.GetByID())
+	api.Get("/:chargeTypeID", h.GetByID())
 	api.Post("/", h.Create())
-	api.Put("/:chargetypeID", h.Update())
+	api.Put("/:chargeTypeID", h.Update())
 }
 
 func (h ChargeTypeHandler) Get() fiber.Handler {
@@ -126,8 +126,8 @@ func (h ChargeTypeHandler) GetByID() fiber.Handler {
 			return err
 		}
 
-		chargetypeID := c.Params("chargetypeID")
-		if chargetypeID == "" {
+		chargeTypeID := c.Params("chargeTypeID")
+		if chargeTypeID == "" {
 			return c.Status(fiber.StatusBadRequest).JSON(fiber.Error{
 				Code:    fiber.StatusBadRequest,
 				Message: "ChargeType ID is required",
@@ -141,9 +141,9 @@ func (h ChargeTypeHandler) GetByID() fiber.Handler {
 			})
 		}
 
-		entity, err := h.service.Get(c.UserContext(), uuid.MustParse(chargetypeID), ids.OrganizationID, ids.BusinessUnitID)
+		entity, err := h.service.Get(c.UserContext(), uuid.MustParse(chargeTypeID), ids.OrganizationID, ids.BusinessUnitID)
 		if err != nil {
-			h.logger.Error().Str("chargetypeID", chargetypeID).Err(err).Msg("Failed to get ChargeType")
+			h.logger.Error().Str("chargeTypeID", chargeTypeID).Err(err).Msg("Failed to get ChargeType")
 
 			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Error{
 				Code:    fiber.StatusInternalServerError,
@@ -178,14 +178,19 @@ func (h ChargeTypeHandler) Create() fiber.Handler {
 			return c.Status(fiber.StatusBadRequest).JSON(err)
 		}
 
+		attemptID := h.auditService.LogAttempt(c.Context(), constants.TableChargeType, "", property.AuditLogActionCreate, createdEntity, ids.UserID, ids.OrganizationID, ids.BusinessUnitID)
+
 		entity, err := h.service.Create(c.UserContext(), createdEntity)
 		if err != nil {
 			h.logger.Error().Interface("entity", createdEntity).Err(err).Msg("Failed to create ChargeType")
 			resp := utils.CreateServiceError(c, err)
+
+			h.auditService.LogError(c.Context(), property.AuditLogActionCreate, attemptID, ids.OrganizationID, ids.BusinessUnitID, ids.UserID, err.Error())
+
 			return c.Status(fiber.StatusInternalServerError).JSON(resp)
 		}
 
-		go h.auditService.LogAction(constants.TableChargeType, entity.ID.String(), property.AuditLogActionCreate, entity, ids.UserID, ids.OrganizationID, ids.BusinessUnitID)
+		h.auditService.LogAction(c.Context(), constants.TableChargeType, entity.ID.String(), property.AuditLogActionCreate, entity, ids.UserID, ids.OrganizationID, ids.BusinessUnitID)
 
 		return c.Status(fiber.StatusCreated).JSON(entity)
 	}
@@ -198,8 +203,8 @@ func (h ChargeTypeHandler) Update() fiber.Handler {
 			return err
 		}
 
-		chargetypeID := c.Params("chargetypeID")
-		if chargetypeID == "" {
+		chargeTypeID := c.Params("chargeTypeID")
+		if chargeTypeID == "" {
 			return c.Status(fiber.StatusBadRequest).JSON(fiber.Error{
 				Code:    fiber.StatusBadRequest,
 				Message: "ChargeType ID is required",
@@ -219,16 +224,21 @@ func (h ChargeTypeHandler) Update() fiber.Handler {
 			return c.Status(fiber.StatusBadRequest).JSON(err)
 		}
 
-		updatedEntity.ID = uuid.MustParse(chargetypeID)
+		updatedEntity.ID = uuid.MustParse(chargeTypeID)
+
+		attemptID := h.auditService.LogAttempt(c.Context(), constants.TableChargeType, chargeTypeID, property.AuditLogActionUpdate, updatedEntity, ids.UserID, ids.OrganizationID, ids.BusinessUnitID)
 
 		entity, err := h.service.UpdateOne(c.UserContext(), updatedEntity)
 		if err != nil {
 			h.logger.Error().Interface("entity", updatedEntity).Err(err).Msg("Failed to update ChargeType")
 			resp := utils.CreateServiceError(c, err)
+
+			h.auditService.LogError(c.Context(), property.AuditLogActionUpdate, attemptID, ids.OrganizationID, ids.BusinessUnitID, ids.UserID, err.Error())
+
 			return c.Status(fiber.StatusInternalServerError).JSON(resp)
 		}
 
-		go h.auditService.LogAction(constants.TableChargeType, entity.ID.String(), property.AuditLogActionUpdate, entity, ids.UserID, ids.OrganizationID, ids.BusinessUnitID)
+		h.auditService.LogAction(c.Context(), constants.TableChargeType, entity.ID.String(), property.AuditLogActionUpdate, entity, ids.UserID, ids.OrganizationID, ids.BusinessUnitID)
 
 		return c.Status(fiber.StatusOK).JSON(entity)
 	}

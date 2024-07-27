@@ -50,9 +50,9 @@ func NewDelayCodeHandler(s *server.Server) *DelayCodeHandler {
 func (h DelayCodeHandler) RegisterRoutes(r fiber.Router) {
 	api := r.Group("/delay-codes")
 	api.Get("/", h.Get())
-	api.Get("/:delaycodeID", h.GetByID())
+	api.Get("/:delayCodeID", h.GetByID())
 	api.Post("/", h.Create())
-	api.Put("/:delaycodeID", h.Update())
+	api.Put("/:delayCodeID", h.Update())
 }
 
 func (h DelayCodeHandler) Get() fiber.Handler {
@@ -126,8 +126,8 @@ func (h DelayCodeHandler) GetByID() fiber.Handler {
 			return err
 		}
 
-		delaycodeID := c.Params("delaycodeID")
-		if delaycodeID == "" {
+		delayCodeID := c.Params("delayCodeID")
+		if delayCodeID == "" {
 			return c.Status(fiber.StatusBadRequest).JSON(fiber.Error{
 				Code:    fiber.StatusBadRequest,
 				Message: "DelayCode ID is required",
@@ -141,9 +141,9 @@ func (h DelayCodeHandler) GetByID() fiber.Handler {
 			})
 		}
 
-		entity, err := h.service.Get(c.UserContext(), uuid.MustParse(delaycodeID), ids.OrganizationID, ids.BusinessUnitID)
+		entity, err := h.service.Get(c.UserContext(), uuid.MustParse(delayCodeID), ids.OrganizationID, ids.BusinessUnitID)
 		if err != nil {
-			h.logger.Error().Str("delaycodeID", delaycodeID).Err(err).Msg("Error getting delay code by ID")
+			h.logger.Error().Str("delayCodeID", delayCodeID).Err(err).Msg("Error getting delay code by ID")
 			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Error{
 				Code:    fiber.StatusInternalServerError,
 				Message: err.Error(),
@@ -177,14 +177,19 @@ func (h DelayCodeHandler) Create() fiber.Handler {
 			return c.Status(fiber.StatusBadRequest).JSON(err)
 		}
 
+		attemptID := h.auditService.LogAttempt(c.Context(), constants.TableDelayCode, "", property.AuditLogActionCreate, createdEntity, ids.UserID, ids.OrganizationID, ids.BusinessUnitID)
+
 		entity, err := h.service.Create(c.UserContext(), createdEntity)
 		if err != nil {
 			h.logger.Error().Interface("entity", createdEntity).Err(err).Msg("Failed to create DelayCode")
 			resp := utils.CreateServiceError(c, err)
+
+			h.auditService.LogError(c.Context(), property.AuditLogActionCreate, attemptID, ids.OrganizationID, ids.BusinessUnitID, ids.UserID, err.Error())
+
 			return c.Status(fiber.StatusInternalServerError).JSON(resp)
 		}
 
-		go h.auditService.LogAction(constants.TableDelayCode, entity.ID.String(), property.AuditLogActionCreate, entity, ids.UserID, ids.OrganizationID, ids.BusinessUnitID)
+		h.auditService.LogAction(c.Context(), constants.TableDelayCode, entity.ID.String(), property.AuditLogActionCreate, entity, ids.UserID, ids.OrganizationID, ids.BusinessUnitID)
 
 		return c.Status(fiber.StatusCreated).JSON(entity)
 	}
@@ -197,8 +202,8 @@ func (h DelayCodeHandler) Update() fiber.Handler {
 			return err
 		}
 
-		delaycodeID := c.Params("delaycodeID")
-		if delaycodeID == "" {
+		delayCodeID := c.Params("delayCodeID")
+		if delayCodeID == "" {
 			return c.Status(fiber.StatusBadRequest).JSON(fiber.Error{
 				Code:    fiber.StatusBadRequest,
 				Message: "DelayCode ID is required",
@@ -218,16 +223,21 @@ func (h DelayCodeHandler) Update() fiber.Handler {
 			return c.Status(fiber.StatusBadRequest).JSON(err)
 		}
 
-		updatedEntity.ID = uuid.MustParse(delaycodeID)
+		updatedEntity.ID = uuid.MustParse(delayCodeID)
+
+		attemptID := h.auditService.LogAttempt(c.Context(), constants.TableDelayCode, delayCodeID, property.AuditLogActionUpdate, updatedEntity, ids.UserID, ids.OrganizationID, ids.BusinessUnitID)
 
 		entity, err := h.service.UpdateOne(c.UserContext(), updatedEntity)
 		if err != nil {
 			h.logger.Error().Interface("entity", updatedEntity).Err(err).Msg("Failed to update DelayCode")
 			resp := utils.CreateServiceError(c, err)
+
+			h.auditService.LogError(c.Context(), property.AuditLogActionUpdate, attemptID, ids.OrganizationID, ids.BusinessUnitID, ids.UserID, err.Error())
+
 			return c.Status(fiber.StatusInternalServerError).JSON(resp)
 		}
 
-		go h.auditService.LogAction(constants.TableDelayCode, entity.ID.String(), property.AuditLogActionUpdate, entity, ids.UserID, ids.OrganizationID, ids.BusinessUnitID)
+		h.auditService.LogAction(c.Context(), constants.TableDelayCode, entity.ID.String(), property.AuditLogActionUpdate, entity, ids.UserID, ids.OrganizationID, ids.BusinessUnitID)
 
 		return c.Status(fiber.StatusOK).JSON(entity)
 	}

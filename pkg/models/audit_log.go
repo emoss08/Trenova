@@ -27,18 +27,24 @@ import (
 type AuditLog struct {
 	bun.BaseModel `bun:"table:audit_logs,alias:al"`
 
-	ID        uuid.UUID               `bun:",pk,type:uuid,default:uuid_generate_v4()"`
-	TableName string                  `bun:"type:varchar(255),notnull"`
-	EntityID  string                  `bun:"type:varchar(255),notnull"`
-	Action    property.AuditLogAction `bun:"type:audit_log_status_enum,notnull"`
-	Data      json.RawMessage         `bun:"type:jsonb"`
-	Timestamp time.Time               `bun:"default:current_timestamp"`
+	ID               uuid.UUID               `bun:",pk,type:uuid,default:uuid_generate_v4()" json:"id"`
+	TableName        string                  `bun:"type:varchar(255),notnull" json:"tableName"`
+	EntityID         string                  `bun:"type:varchar(255),notnull" json:"entityID"`
+	Description      string                  `bun:"type:text" json:"description"`
+	ErrorMessage     string                  `bun:"type:text" json:"errorMessage"`
+	AttemptID        *uuid.UUID              `bun:"type:uuid,nullzero" json:"attemptID"`
+	Status           property.LogStatus      `bun:"type:log_status_enum,notnull,default:'ATTEMPTED'" json:"status"`
+	Action           property.AuditLogAction `bun:"type:audit_log_status_enum,notnull" json:"action"`
+	Data             json.RawMessage         `bun:"type:jsonb" json:"data"`
+	AttemptedChanges json.RawMessage         `bun:"type:jsonb" json:"attemptedChanges"`
+	ActualChanges    json.RawMessage         `bun:"type:jsonb" json:"actualChanges"`
+	Timestamp        time.Time               `bun:"default:current_timestamp" json:"timestamp"`
 
-	UserID         uuid.UUID `bun:"type:uuid"`
-	OrganizationID uuid.UUID `bun:"type:uuid"`
-	BusinessUnitID uuid.UUID `bun:"type:uuid"`
+	UserID         uuid.UUID `bun:"type:uuid" json:"userID"`
+	OrganizationID uuid.UUID `bun:"type:uuid" json:"organizationId"`
+	BusinessUnitID uuid.UUID `bun:"type:uuid" json:"businessUnitId"`
 
-	User         *User         `bun:"rel:belongs-to,join:user_id=id" json:"-"`
+	User         *User         `bun:"rel:belongs-to,join:user_id=id" json:"user,omitempty"`
 	Organization *Organization `bun:"rel:belongs-to,join:organization_id=id" json:"-"`
 	BusinessUnit *BusinessUnit `bun:"rel:belongs-to,join:business_unit_id=id" json:"-"`
 }

@@ -26,7 +26,6 @@ type AuditLogAction string
 const (
 	AuditLogActionCreate = AuditLogAction("CREATE")
 	AuditLogActionUpdate = AuditLogAction("UPDATE")
-	AuditLogActionDelete = AuditLogAction("DELETE")
 )
 
 func (o AuditLogAction) String() string {

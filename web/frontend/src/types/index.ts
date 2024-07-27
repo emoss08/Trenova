@@ -98,6 +98,7 @@ export type QueryKey =
   | "currentUser"
   | "reportColumns"
   | "organization"
+  | "auditLogs"
   | "dailyShipmentCounts"
   | "shipmentCountByStatus"
   | "validateBOLNumber";

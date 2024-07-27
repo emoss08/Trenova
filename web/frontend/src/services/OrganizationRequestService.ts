@@ -16,11 +16,11 @@
  */
 
 import axios from "@/lib/axiosConfig";
-import { BillingControl } from "@/types/billing";
-import { DispatchControl } from "@/types/dispatch";
-import { InvoiceControl } from "@/types/invoicing";
-import {
-  Depot,
+import { type BillingControl } from "@/types/billing";
+import { type DispatchControl } from "@/types/dispatch";
+import { type InvoiceControl } from "@/types/invoicing";
+import type {
+  AuditLog,
   EmailControl,
   EmailProfile,
   GoogleAPI,
@@ -29,6 +29,7 @@ import {
   Topic,
 } from "@/types/organization";
 import { RouteControl } from "@/types/route";
+import { ApiResponse } from "@/types/server";
 import { ShipmentControl } from "@/types/shipment";
 
 /**
@@ -156,4 +157,28 @@ export async function postOrganizationLogo(logo: File): Promise<Organization> {
 
 export async function clearOrganizationLogo(): Promise<void> {
   await axios.post("organizations/clear-logo");
+}
+
+/**
+ * Fetches audit log values from the server.
+ * @returns A promise that resolves to an array of Audit Logs.
+ */
+export async function getAuditLogs(
+  tableName?: string,
+  userId?: string,
+  entityId?: string,
+  action?: string,
+  status?: string,
+): Promise<ApiResponse<AuditLog>> {
+  const params: Record<string, string | undefined> = {};
+
+  if (tableName) params.tableName = tableName;
+  if (userId) params.userId = userId;
+  if (entityId) params.entityId = entityId;
+  if (action) params.action = action;
+  if (status) params.status = status;
+
+  const response = await axios.get("audit-logs", { params });
+
+  return response.data;
 }

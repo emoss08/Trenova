@@ -41,7 +41,7 @@ func NewReasonCodeService(s *server.Server) *ReasonCodeService {
 	}
 }
 
-// QueryFilter defines the filter parameters for querying ReasonCode
+// ReasonCodeQueryFilter defines the filter parameters for querying ReasonCode.
 type ReasonCodeQueryFilter struct {
 	Query          string
 	OrganizationID uuid.UUID
@@ -51,7 +51,7 @@ type ReasonCodeQueryFilter struct {
 }
 
 // filterQuery applies filters to the query
-func (s *ReasonCodeService) filterQuery(q *bun.SelectQuery, f *ReasonCodeQueryFilter) *bun.SelectQuery {
+func (s ReasonCodeService) filterQuery(q *bun.SelectQuery, f *ReasonCodeQueryFilter) *bun.SelectQuery {
 	q = q.Where("rc.organization_id = ?", f.OrganizationID).
 		Where("rc.business_unit_id = ?", f.BusinessUnitID)
 
@@ -66,7 +66,7 @@ func (s *ReasonCodeService) filterQuery(q *bun.SelectQuery, f *ReasonCodeQueryFi
 }
 
 // GetAll retrieves all ReasonCode based on the provided filter
-func (s *ReasonCodeService) GetAll(ctx context.Context, filter *ReasonCodeQueryFilter) ([]*models.ReasonCode, int, error) {
+func (s ReasonCodeService) GetAll(ctx context.Context, filter *ReasonCodeQueryFilter) ([]*models.ReasonCode, int, error) {
 	var entities []*models.ReasonCode
 
 	q := s.db.NewSelect().
@@ -84,7 +84,7 @@ func (s *ReasonCodeService) GetAll(ctx context.Context, filter *ReasonCodeQueryF
 }
 
 // Get retrieves a single ReasonCode by ID
-func (s *ReasonCodeService) Get(ctx context.Context, id, orgID, buID uuid.UUID) (*models.ReasonCode, error) {
+func (s ReasonCodeService) Get(ctx context.Context, id, orgID, buID uuid.UUID) (*models.ReasonCode, error) {
 	entity := new(models.ReasonCode)
 	err := s.db.NewSelect().
 		Model(entity).
@@ -101,7 +101,7 @@ func (s *ReasonCodeService) Get(ctx context.Context, id, orgID, buID uuid.UUID) 
 }
 
 // Create creates a new ReasonCode
-func (s *ReasonCodeService) Create(ctx context.Context, entity *models.ReasonCode) (*models.ReasonCode, error) {
+func (s ReasonCodeService) Create(ctx context.Context, entity *models.ReasonCode) (*models.ReasonCode, error) {
 	err := s.db.RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
 		_, err := tx.NewInsert().
 			Model(entity).
@@ -118,7 +118,7 @@ func (s *ReasonCodeService) Create(ctx context.Context, entity *models.ReasonCod
 }
 
 // UpdateOne updates an existing ReasonCode
-func (s *ReasonCodeService) UpdateOne(ctx context.Context, entity *models.ReasonCode) (*models.ReasonCode, error) {
+func (s ReasonCodeService) UpdateOne(ctx context.Context, entity *models.ReasonCode) (*models.ReasonCode, error) {
 	err := s.db.RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
 		if err := entity.OptimisticUpdate(ctx, tx); err != nil {
 			return err

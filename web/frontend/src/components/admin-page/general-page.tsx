@@ -33,6 +33,7 @@ import type {
 } from "@/types/organization";
 import { yupResolver } from "@hookform/resolvers/yup";
 import { useQueryClient } from "@tanstack/react-query";
+import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { useTranslation } from "react-i18next";
 import {
@@ -41,7 +42,6 @@ import {
   AvatarImage,
   ImageUploader,
 } from "../ui/avatar";
-import { useState } from "react";
 
 function OrganizationForm({ organization }: { organization: Organization }) {
   const { t } = useTranslation(["admin.generalpage", "common"]);
@@ -106,15 +106,15 @@ function OrganizationForm({ organization }: { organization: Organization }) {
     <>
       <div className="grid grid-cols-1 gap-8 md:grid-cols-3 xl:grid-cols-4">
         <div className="px-4 sm:px-0">
-          <h2 className="text-base font-semibold leading-7 text-foreground">
+          <h2 className="text-foreground text-base font-semibold leading-7">
             {t("organizationDetails")}
           </h2>
-          <p className="mt-1 text-sm leading-6 text-muted-foreground">
+          <p className="text-muted-foreground mt-1 text-sm leading-6">
             {t("organizationDetailsDescription")}
           </p>
         </div>
         <form
-          className="m-4 border border-border bg-card sm:rounded-xl md:col-span-2"
+          className="border-border bg-card m-4 border sm:rounded-xl md:col-span-2"
           onSubmit={handleSubmit(onSubmit)}
         >
           <div className="px-4 py-6 sm:p-8">
@@ -163,9 +163,9 @@ function OrganizationForm({ organization }: { organization: Organization }) {
                   name="orgType"
                   control={control}
                   options={[
-                    { label: "Asset", value: "A" },
-                    { label: "Brokerage", value: "B" },
-                    { label: "Both", value: "X" },
+                    { label: "Asset", value: "Asset" },
+                    { label: "Brokerage", value: "Brokerage" },
+                    { label: "Both", value: "Both" },
                   ]}
                   rules={{ required: true }}
                   label={t("fields.orgType.label")}
@@ -208,7 +208,7 @@ function OrganizationForm({ organization }: { organization: Organization }) {
               </div>
             </div>
           </div>
-          <div className="flex items-center justify-end gap-x-4 border-t border-border p-4 sm:px-8">
+          <div className="border-border flex items-center justify-end gap-x-4 border-t p-4 sm:px-8">
             <Button
               onClick={(e) => {
                 e.preventDefault();

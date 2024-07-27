@@ -29,9 +29,9 @@ func NewShipmentControlHandler(s *server.Server) *ShipmentControlHandler {
 }
 
 func (sh ShipmentControlHandler) RegisterRoutes(r fiber.Router) {
-	shControlAPI := r.Group("/shipment-control")
-	shControlAPI.Get("/", sh.getShipmentControlDetails())
-	shControlAPI.Put("/", sh.updateShipmentControl())
+	api := r.Group("/shipment-control")
+	api.Get("/", sh.getShipmentControlDetails())
+	api.Put("/", sh.updateShipmentControl())
 }
 
 func (sh ShipmentControlHandler) getShipmentControlDetails() fiber.Handler {
@@ -83,16 +83,19 @@ func (sh ShipmentControlHandler) updateShipmentControl() fiber.Handler {
 			return c.Status(fiber.StatusBadRequest).JSON(err)
 		}
 
+		attemptID := sh.auditService.LogAttempt(c.Context(), constants.TableShipmentControl, updatedEntity.ID.String(), property.AuditLogActionUpdate, updatedEntity, ids.UserID, ids.OrganizationID, ids.BusinessUnitID)
+
 		entity, err := sh.service.UpdateShipmentControl(c.UserContext(), updatedEntity)
 		if err != nil {
 			sh.logger.Error().Interface("entity", updatedEntity).Err(err).Msg("Failed to update ShipmentControl")
-			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Error{
-				Code:    fiber.StatusInternalServerError,
-				Message: err.Error(),
-			})
+			resp := utils.CreateServiceError(c, err)
+
+			sh.auditService.LogError(c.Context(), property.AuditLogActionUpdate, attemptID, ids.OrganizationID, ids.BusinessUnitID, ids.UserID, err.Error())
+
+			return c.Status(fiber.StatusInternalServerError).JSON(resp)
 		}
 
-		go sh.auditService.LogAction(constants.TableShipmentControl, entity.ID.String(), property.AuditLogActionUpdate, entity, ids.UserID, ids.OrganizationID, ids.BusinessUnitID)
+		sh.auditService.LogAction(c.Context(), constants.TableShipmentControl, entity.ID.String(), property.AuditLogActionUpdate, entity, ids.UserID, ids.OrganizationID, ids.BusinessUnitID)
 
 		return c.Status(fiber.StatusOK).JSON(entity)
 	}

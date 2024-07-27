@@ -41,7 +41,7 @@ func NewDivisionCodeService(s *server.Server) *DivisionCodeService {
 	}
 }
 
-// QueryFilter defines the filter parameters for querying DivisionCode
+// DivisionCodeQueryFilter defines the filter parameters for querying DivisionCode.
 type DivisionCodeQueryFilter struct {
 	Query          string
 	OrganizationID uuid.UUID

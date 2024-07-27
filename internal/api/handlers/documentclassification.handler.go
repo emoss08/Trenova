@@ -50,9 +50,9 @@ func NewDocumentClassificationHandler(s *server.Server) *DocumentClassificationH
 func (h DocumentClassificationHandler) RegisterRoutes(r fiber.Router) {
 	api := r.Group("/document-classifications")
 	api.Get("/", h.Get())
-	api.Get("/:documentclassificationID", h.GetByID())
+	api.Get("/:documentClassID", h.GetByID())
 	api.Post("/", h.Create())
-	api.Put("/:documentclassificationID", h.Update())
+	api.Put("/:documentClassID", h.Update())
 }
 
 func (h DocumentClassificationHandler) Get() fiber.Handler {
@@ -125,8 +125,8 @@ func (h DocumentClassificationHandler) GetByID() fiber.Handler {
 			return err
 		}
 
-		documentclassificationID := c.Params("documentclassificationID")
-		if documentclassificationID == "" {
+		documentClassID := c.Params("documentClassID")
+		if documentClassID == "" {
 			return c.Status(fiber.StatusBadRequest).JSON(fiber.Error{
 				Code:    fiber.StatusBadRequest,
 				Message: "DocumentClassification ID is required",
@@ -140,7 +140,7 @@ func (h DocumentClassificationHandler) GetByID() fiber.Handler {
 			})
 		}
 
-		entity, err := h.service.Get(c.UserContext(), uuid.MustParse(documentclassificationID), ids.OrganizationID, ids.BusinessUnitID)
+		entity, err := h.service.Get(c.UserContext(), uuid.MustParse(documentClassID), ids.OrganizationID, ids.BusinessUnitID)
 		if err != nil {
 			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Error{
 				Code:    fiber.StatusInternalServerError,
@@ -175,13 +175,19 @@ func (h DocumentClassificationHandler) Create() fiber.Handler {
 			return c.Status(fiber.StatusBadRequest).JSON(err)
 		}
 
+		attemptID := h.auditService.LogAttempt(c.Context(), constants.TableDocumentClassification, "", property.AuditLogActionCreate, createdEntity, ids.UserID, ids.OrganizationID, ids.BusinessUnitID)
+
 		entity, err := h.service.Create(c.UserContext(), createdEntity)
 		if err != nil {
+			h.logger.Error().Interface("entity", createdEntity).Err(err).Msg("Failed to create DocumentClassification")
 			resp := utils.CreateServiceError(c, err)
+
+			h.auditService.LogError(c.Context(), property.AuditLogActionCreate, attemptID, ids.OrganizationID, ids.BusinessUnitID, ids.UserID, err.Error())
+
 			return c.Status(fiber.StatusInternalServerError).JSON(resp)
 		}
 
-		go h.auditService.LogAction(constants.TableDocumentClassification, entity.ID.String(), property.AuditLogActionCreate, entity, ids.UserID, ids.OrganizationID, ids.BusinessUnitID)
+		h.auditService.LogAction(c.Context(), constants.TableDocumentClassification, entity.ID.String(), property.AuditLogActionCreate, entity, ids.UserID, ids.OrganizationID, ids.BusinessUnitID)
 
 		return c.Status(fiber.StatusCreated).JSON(entity)
 	}
@@ -194,8 +200,8 @@ func (h DocumentClassificationHandler) Update() fiber.Handler {
 			return err
 		}
 
-		documentclassificationID := c.Params("documentclassificationID")
-		if documentclassificationID == "" {
+		documentClassID := c.Params("documentClassID")
+		if documentClassID == "" {
 			return c.Status(fiber.StatusBadRequest).JSON(fiber.Error{
 				Code:    fiber.StatusBadRequest,
 				Message: "DocumentClassification ID is required",
@@ -214,15 +220,21 @@ func (h DocumentClassificationHandler) Update() fiber.Handler {
 			return c.Status(fiber.StatusBadRequest).JSON(err)
 		}
 
-		updatedEntity.ID = uuid.MustParse(documentclassificationID)
+		updatedEntity.ID = uuid.MustParse(documentClassID)
+
+		attemptID := h.auditService.LogAttempt(c.Context(), constants.TableDocumentClassification, documentClassID, property.AuditLogActionUpdate, updatedEntity, ids.UserID, ids.OrganizationID, ids.BusinessUnitID)
 
 		entity, err := h.service.UpdateOne(c.UserContext(), updatedEntity)
 		if err != nil {
+			h.logger.Error().Interface("entity", updatedEntity).Err(err).Msg("Failed to update DocumentClassification")
 			resp := utils.CreateServiceError(c, err)
+
+			h.auditService.LogError(c.Context(), property.AuditLogActionUpdate, attemptID, ids.OrganizationID, ids.BusinessUnitID, ids.UserID, err.Error())
+
 			return c.Status(fiber.StatusInternalServerError).JSON(resp)
 		}
 
-		go h.auditService.LogAction(constants.TableDocumentClassification, entity.ID.String(), property.AuditLogActionUpdate, entity, ids.UserID, ids.OrganizationID, ids.BusinessUnitID)
+		h.auditService.LogAction(c.Context(), constants.TableDocumentClassification, entity.ID.String(), property.AuditLogActionUpdate, entity, ids.UserID, ids.OrganizationID, ids.BusinessUnitID)
 
 		return c.Status(fiber.StatusOK).JSON(entity)
 	}

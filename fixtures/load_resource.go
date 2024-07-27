@@ -225,6 +225,10 @@ func loadResources(ctx context.Context, db *bun.DB) error {
 				Type:        "ShipmentControl",
 				Description: "Represents a shipment control in the system.",
 			},
+			{
+				Type:        "AuditLog",
+				Description: "Represents a audit log in the system.",
+			},
 		}
 
 		_, err = db.NewInsert().Model(&resources).Exec(ctx)
