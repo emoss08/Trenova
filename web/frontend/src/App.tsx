@@ -66,6 +66,6 @@ const AppImpl = memo(() => (
         <ProtectedRoutes />
       </Suspense>
     </BrowserRouter>
-    <ReactQueryDevtools buttonPosition="bottom-left" initialIsOpen={false} />
+    <ReactQueryDevtools buttonPosition="bottom-right" initialIsOpen={false} />
   </QueryClientProvider>
 ));

@@ -25,15 +25,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/common/fields/select";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import {
   Credenza,
   CredenzaBody,
   CredenzaContent,
-  CredenzaDescription,
-  CredenzaHeader,
-  CredenzaTitle,
 } from "@/components/ui/credenza";
 import {
   Table,
@@ -47,7 +43,6 @@ import {
 import { formatToUserTimezone } from "@/lib/date";
 import { getAuditLogs } from "@/services/OrganizationRequestService";
 import { AuditLog, AuditLogAction, AuditLogStatus } from "@/types/organization";
-import { ScrollArea } from "@radix-ui/react-scroll-area";
 import { useQuery } from "@tanstack/react-query";
 import {
   type ColumnDef,
@@ -56,6 +51,8 @@ import {
   useReactTable,
 } from "@tanstack/react-table";
 import { useState } from "react";
+import { upperFirst } from "@/lib/utils";
+import { AuditLogView } from "@/components/audit-log/dialog-table";
 
 function ActionBadge({ action }: { action: AuditLogAction }) {
   return (
@@ -83,23 +80,9 @@ const columns: ColumnDef<AuditLog>[] = [
     cell: ({ row }) => mapStatusToBadge(row.original.status),
   },
   {
-    accessorKey: "user",
-    header: "User",
-    cell: ({ row }) => {
-      const user = row.original.user;
-      return (
-        <div className="flex items-center">
-          <Avatar className="size-9">
-            <AvatarImage src={user.profilePicUrl || ""} alt={user.name} />
-            <AvatarFallback>{user.name[0]}</AvatarFallback>
-          </Avatar>
-          <div className="ml-4">
-            <div className="font-medium">{user.name}</div>
-            <div className="text-sm text-muted-foreground">{user.email}</div>
-          </div>
-        </div>
-      );
-    },
+    accessorKey: "username",
+    header: "Username",
+    cell: ({ row }) => upperFirst(row.original.username),
   },
   {
     accessorKey: "tableName",
@@ -117,37 +100,6 @@ const columns: ColumnDef<AuditLog>[] = [
   },
 ];
 
-function AuditLogDetailsTable({ data }: { data: { [key: string]: any } }) {
-  return (
-    <>
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead className="w-1/5">Field</TableHead>
-            <TableHead>Value</TableHead>
-          </TableRow>
-        </TableHeader>
-      </Table>
-      <Table>
-        <ScrollArea className="h-[500px]">
-          <TableBody>
-            {Object.entries(data).map(([key, value]) => (
-              <TableRow key={key}>
-                <TableCell className="w-1/5 font-medium">{key}</TableCell>
-                <TableCell className="break-all">
-                  {typeof value === "object"
-                    ? JSON.stringify(value, null, 2)
-                    : String(value)}
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </ScrollArea>
-      </Table>
-    </>
-  );
-}
-
 function AuditLogDataDialog({
   auditLog,
   open,
@@ -159,21 +111,9 @@ function AuditLogDataDialog({
 }) {
   return (
     <Credenza open={open} onOpenChange={setOpen}>
-      <CredenzaContent className="max-w-[800px] bg-background">
-        <CredenzaHeader>
-          <CredenzaTitle className="flex">
-            <span>Viewing Audit Log Entry</span>
-            <span className="ml-3">
-              <ActionBadge action={auditLog.action} />
-            </span>
-          </CredenzaTitle>
-        </CredenzaHeader>
-        <CredenzaDescription>
-          Action performed by <b>{auditLog.user.username}</b> on{" "}
-          {formatToUserTimezone(auditLog.timestamp)}
-        </CredenzaDescription>
+      <CredenzaContent className="max-w-[600px] bg-background">
         <CredenzaBody>
-          <AuditLogDetailsTable data={auditLog.data} />
+          <AuditLogView auditLog={auditLog} />
         </CredenzaBody>
       </CredenzaContent>
     </Credenza>

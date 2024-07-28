@@ -29,7 +29,6 @@ import (
 	"github.com/emoss08/trenova/config"
 	"github.com/emoss08/trenova/pkg/audit"
 	tCasbin "github.com/emoss08/trenova/pkg/casbin"
-
 	"github.com/emoss08/trenova/pkg/file"
 	"github.com/emoss08/trenova/pkg/gen"
 	"github.com/emoss08/trenova/pkg/kfk"
@@ -39,6 +38,7 @@ import (
 	"github.com/fatih/color"
 	"github.com/gofiber/fiber/v2"
 	"github.com/golang-jwt/jwt/v5"
+	_ "github.com/lib/pq" // Needed for the Postgresql driver
 	mio "github.com/minio/minio-go/v7"
 	"github.com/minio/minio-go/v7/pkg/credentials"
 	"github.com/uptrace/bun"

@@ -18,6 +18,7 @@ package services
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"github.com/emoss08/trenova/pkg/audit"
 	"github.com/emoss08/trenova/pkg/models/property"
@@ -59,7 +60,7 @@ func (s AuditLogService) filterQuery(q *bun.SelectQuery, f *AuditLogQueryFilter)
 		Where("al.business_unit_id = ?", f.BusinessUnitID)
 
 	if f.TableName != "" {
-		q = q.Where("al.table_name = ?", f.TableName)
+		q = q.Where("al.table_name = ? OR al.table_name ILIKE ?", "%"+strings.ToLower(f.TableName)+"%")
 	}
 
 	if f.UserID != uuid.Nil {
