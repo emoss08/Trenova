@@ -24,35 +24,23 @@ import {
   getTags,
 } from "@/services/AccountingRequestService";
 import { getDailyShipmentCounts } from "@/services/AnalyticRequestService";
-import {
-  getAccessorialCharges,
-  getDocumentClassifications,
-} from "@/services/BillingRequestService";
-import {
-  getCommodities,
-  getHazardousMaterials,
-} from "@/services/CommodityRequestService";
+import { getDocumentClassifications } from "@/services/BillingRequestService";
 import { getCustomers } from "@/services/CustomerRequestService";
 import {
   getCommentTypes,
   getFeasibilityControl,
-  getFleetCodes,
-  getRates,
 } from "@/services/DispatchRequestService";
 import {
-  getEquipmentManufacturers,
   getEquipmentTypes,
   getTrailers,
 } from "@/services/EquipmentRequestService";
 import {
-  getLocationCategories,
   getLocations,
   getUSStates,
   searchLocation,
 } from "@/services/LocationRequestService";
 import {
   getBillingControl,
-  getDepots,
   getDispatchControl,
   getEmailControl,
   getEmailProfiles,
@@ -62,58 +50,32 @@ import {
   getOrganizationDetails,
   getRouteControl,
   getShipmentControl,
-  getTableNames,
   getTopicNames,
 } from "@/services/OrganizationRequestService";
 import { getColumns } from "@/services/ReportRequestService";
 import {
-  getFormulaTemplates,
   getNextProNumber,
   getServiceTypes,
   getShipmentTypes,
-  validateBOLNumber,
 } from "@/services/ShipmentRequestService";
-import {
-  getAuthenticatedUser,
-  getUserDetails,
-  getUserNotifications,
-  getUsers,
-} from "@/services/UserRequestService";
+import { getUserNotifications, getUsers } from "@/services/UserRequestService";
 import { getWorkers } from "@/services/WorkerRequestService";
-import type { QueryKeyWithParams, QueryKeys, StatusChoiceProps } from "@/types";
+import type { QueryKeys, QueryKeyWithParams, StatusChoiceProps } from "@/types";
 import type {
   GeneralLedgerAccount,
   RevenueCode,
   Tag,
 } from "@/types/accounting";
 import type { User } from "@/types/accounts";
-import type {
-  AccessorialCharge,
-  DocumentClassification,
-} from "@/types/billing";
-import type { Commodity, HazardousMaterial } from "@/types/commodities";
+import type { DocumentClassification } from "@/types/billing";
 import type { Customer } from "@/types/customer";
-import type { CommentType, FleetCode, Rate } from "@/types/dispatch";
-import type {
-  EquipmentManufacturer,
-  EquipmentType,
-  Trailer,
-} from "@/types/equipment";
-import type { Location, LocationCategory, USStates } from "@/types/location";
-import type {
-  Depot,
-  EmailProfile,
-  TableName,
-  Topic,
-} from "@/types/organization";
-import type {
-  FormulaTemplate,
-  ServiceType,
-  ShipmentControl,
-  ShipmentType,
-} from "@/types/shipment";
+import type { CommentType } from "@/types/dispatch";
+import type { EquipmentType, Trailer } from "@/types/equipment";
+import type { Location, USStates } from "@/types/location";
+import type { EmailProfile, Topic } from "@/types/organization";
+import type { ServiceType, ShipmentType } from "@/types/shipment";
 import type { Worker } from "@/types/worker";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 
 /**
  * Get Tags for select options
@@ -169,26 +131,6 @@ export function useGLAccounts(show?: boolean) {
 }
 
 /**
- * Get Accessorial Charges for select options
- * @param show - show or hide the query
- */
-export function useAccessorialCharges(show?: boolean) {
-  const { data, isLoading, isError, isFetched } = useQuery({
-    queryKey: ["accessorialCharges"] as QueryKeys,
-    queryFn: async () => getAccessorialCharges(),
-    enabled: show,
-  });
-
-  const selectAccessorialChargeData =
-    (data as AccessorialCharge[])?.map((item: AccessorialCharge) => ({
-      value: item.id,
-      label: item.code,
-    })) || [];
-
-  return { selectAccessorialChargeData, isLoading, isError, isFetched };
-}
-
-/**
  * Use Accounting Control Hook to get Accounting Control Details
  */
 export function useAccountingControl() {
@@ -240,15 +182,9 @@ export function useDispatchControl() {
  * Use ShipmentControl hook to get Shipment Control Details
  */
 export function useShipmentControl() {
-  const queryClient = useQueryClient();
-
   const { data, isLoading, isError, isFetched, isFetching } = useQuery({
     queryKey: ["shipmentControl"] as QueryKeys,
     queryFn: async () => getShipmentControl(),
-    initialData: () =>
-      queryClient.getQueryData([
-        "shipmentControl",
-      ] as QueryKeys) as ShipmentControl,
   });
 
   return { data, isLoading, isError, isFetched, isFetching };
@@ -264,26 +200,6 @@ export function useRouteControl() {
   });
 
   return { data, isLoading, isError, isFetched, isFetching };
-}
-
-/**
- * Get Commodities for select options
- * @param show - show or hide the query
- */
-export function useCommodities(show?: boolean) {
-  const { data, isLoading, isError, isFetched } = useQuery({
-    queryKey: ["commodities"] as QueryKeys,
-    queryFn: async () => getCommodities(),
-    enabled: show,
-  });
-
-  const selectCommodityData =
-    (data as Commodity[])?.map((item: Commodity) => ({
-      value: item.id,
-      label: item.name,
-    })) || [];
-
-  return { selectCommodityData, isLoading, isError, isFetched, data };
 }
 
 /**
@@ -328,7 +244,6 @@ export function useDocumentClass(show?: boolean) {
 
 /**
  * Get Equipment Types for select options
- * @param equipmentClass - Equipment Class
  * @param show - show or hide the query
  * @param limit - limit the number of results
  */
@@ -361,26 +276,6 @@ export function useFeasibilityControl() {
   });
 
   return { data, isLoading, isError, isFetched, isFetching };
-}
-
-/**
- * Get Hazardous Materials for select options
- * @param show - show or hide the query
- */
-export function useHazardousMaterial(show?: boolean) {
-  const { data, isLoading, isError, isFetched } = useQuery({
-    queryKey: ["hazardousMaterials"] as QueryKeys,
-    queryFn: async () => getHazardousMaterials(),
-    enabled: show,
-  });
-
-  const selectHazardousMaterials =
-    (data as HazardousMaterial[])?.map((item: HazardousMaterial) => ({
-      value: item.id,
-      label: item.name,
-    })) || [];
-
-  return { selectHazardousMaterials, isLoading, isError, isFetched, data };
 }
 
 /**
@@ -454,38 +349,6 @@ export function useUsers(show?: boolean) {
 }
 
 /**
- * Get User Details
- * @param userId - user id
- */
-export function useUser(userId: string) {
-  return useQuery({
-    queryKey: ["users", userId] as QueryKeyWithParams<"users", [string]>,
-    queryFn: async () =>
-      userId ? getUserDetails(userId) : Promise.resolve(null),
-  });
-}
-
-/**
- * Get Location Categories for select options
- * @param show - show or hide the query
- */
-export function useLocationCategories(show?: boolean) {
-  const { data, isError, isLoading } = useQuery({
-    queryKey: ["locationCategories"] as QueryKeys,
-    queryFn: async () => getLocationCategories(),
-    enabled: show,
-  });
-
-  const selectLocationCategories =
-    (data as LocationCategory[])?.map((location: LocationCategory) => ({
-      value: location.id,
-      label: location.name,
-    })) || [];
-
-  return { selectLocationCategories, isError, isLoading };
-}
-
-/**
  * Get US States for select options
  * @param show - show or hide the query
  * @param limit
@@ -528,78 +391,10 @@ export function useCommentTypes(show?: boolean) {
 }
 
 /**
- * Get Depots for select options
- * @param show - show or hide the query
- */
-export function useDepots(show?: boolean) {
-  const { data, isError, isLoading } = useQuery({
-    queryKey: ["depots"] as QueryKeys,
-    queryFn: async () => getDepots(),
-    enabled: show,
-  });
-
-  const selectDepots =
-    (data as Depot[])?.map((depot: Depot) => ({
-      value: depot.id,
-      label: depot.name,
-    })) || [];
-
-  return { selectDepots, isError, isLoading };
-}
-
-/**
- * Get Fleet Codes for select options
- * @param show - show or hide the query
- * @param limit - limit the number of results
- */
-export function useFleetCodes(show?: boolean, limit: number = 100) {
-  const { data, isError, isLoading } = useQuery({
-    queryKey: ["fleetCodes", limit] as QueryKeyWithParams<
-      "fleetCodes",
-      [number]
-    >,
-    queryFn: async () => getFleetCodes(limit),
-    enabled: show,
-  });
-
-  const selectFleetCodes =
-    (data as FleetCode[])?.map((fleetCode: FleetCode) => ({
-      value: fleetCode.id,
-      label: fleetCode.code,
-    })) || [];
-
-  return { selectFleetCodes, isError, isLoading };
-}
-
-/**
- * Get Equipment Manufacturers for select options
- * @param show - show or hide the query
- * @param limit - limit the number of results
- */
-export function useEquipManufacturers(show?: boolean, limit: number = 100) {
-  const { data, isError, isLoading } = useQuery({
-    queryKey: ["equipmentManufacturers", limit] as QueryKeyWithParams<
-      "equipmentManufacturers",
-      [number]
-    >,
-    queryFn: async () => getEquipmentManufacturers(limit),
-    enabled: show,
-  });
-
-  const selectEquipManufacturers =
-    (data as EquipmentManufacturer[])?.map(
-      (equipManufacturer: EquipmentManufacturer) => ({
-        value: equipManufacturer.id,
-        label: equipManufacturer.name,
-      }),
-    ) || [];
-
-  return { selectEquipManufacturers, isError, isLoading };
-}
-
-/**
  * Get Workers for select options
  * @param show - show or hide the query
+ * @param searchQuery
+ * @param fleetCodeId
  * @param limit - limit the number of results
  * @param status - status of the workers.
  * @fleetCodeId - id of the fleet code.
@@ -660,6 +455,7 @@ export function useEmailControl() {
 /**
  * Get UserNotifications for notification menu
  * @param userId - user id
+ * @param markAsRead
  */
 export function useNotifications(userId: string, markAsRead: boolean = false) {
   const { data: notificationsData, isLoading: notificationsLoading } = useQuery(
@@ -715,26 +511,6 @@ export function useGoogleAPI(open?: boolean) {
   });
 
   return { googleAPIData, isLoading, isError };
-}
-
-/**
- * Get Table Names for select options
- * @param show - show or hide the query
- */
-export function useTableNames(show?: boolean) {
-  const { data, isError, isLoading } = useQuery({
-    queryKey: ["tableNames"] as QueryKeys,
-    queryFn: async () => getTableNames(),
-    enabled: show,
-  });
-
-  const selectTableNames =
-    (data as TableName[])?.map((table: TableName) => ({
-      value: table.value,
-      label: table.label,
-    })) || [];
-
-  return { selectTableNames, isError, isLoading };
 }
 
 /**
@@ -856,57 +632,6 @@ export function useLocationAutoComplete(searchQuery: string) {
 }
 
 /**
- * Get the Rates for select options
- * @param limit - limit the number of results
- * @param show - show or hide the query
- * @returns selectRates, isRateError, isRatesLoading, ratesData
- */
-export function useRates(limit?: number, show?: boolean) {
-  const {
-    data: ratesData,
-    isError: isRateError,
-    isLoading: isRatesLoading,
-  } = useQuery({
-    queryKey: ["rates", limit] as QueryKeyWithParams<"rates", [number]>,
-    queryFn: async () => getRates(limit),
-    enabled: show,
-  });
-
-  const selectRates =
-    (ratesData as Rate[])?.map((rate: Rate) => ({
-      value: rate.id,
-      label: rate.rateNumber,
-    })) || [];
-
-  return { selectRates, isRateError, isRatesLoading, ratesData };
-}
-
-/**
- * Get the Formula Templates for select options
- * @returns selectFormulaTemplates, isFormulaError, isFormulaLoading
- */
-export function useFormulaTemplates() {
-  const {
-    data: formulaTemplates,
-    isError: isFormulaError,
-    isLoading: isFormulaLoading,
-  } = useQuery({
-    queryKey: ["formulaTemplates"],
-    queryFn: async () => getFormulaTemplates(),
-  });
-
-  const selectFormulaTemplates =
-    (formulaTemplates as FormulaTemplate[])?.map(
-      (template: FormulaTemplate) => ({
-        value: template.id,
-        label: template.name,
-      }),
-    ) || [];
-
-  return { selectFormulaTemplates, isFormulaError, isFormulaLoading };
-}
-
-/**
  * Get the Service Types for select options
  * @returns selectServiceTypes, isServiceTypeError, isServiceTypeLoading
  */
@@ -927,27 +652,6 @@ export function useServiceTypes() {
     })) || [];
 
   return { selectServiceTypes, isServiceTypeError, isServiceTypeLoading };
-}
-
-export function useValidateBOLNumber(bol_number: string) {
-  const { data, isError, isLoading } = useQuery({
-    queryKey: ["validateBOLNumber", bol_number] as QueryKeyWithParams<
-      "validateBOLNumber",
-      [string]
-    >,
-    queryFn: async () => validateBOLNumber(bol_number),
-  });
-
-  return { data, isError, isLoading };
-}
-
-export function useAuthenticatedUser() {
-  const { data, isError, isLoading, isSuccess, isFetched } = useQuery({
-    queryKey: ["authenticatedUser"] as QueryKeys,
-    queryFn: async () => getAuthenticatedUser(),
-  });
-
-  return { data, isError, isLoading, isSuccess, isFetched };
 }
 
 export function useDailyShipmentCounts(startDate: string, endDate: string) {

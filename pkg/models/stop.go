@@ -73,6 +73,15 @@ func (s *Stop) BeforeUpdate(_ context.Context) error {
 	return nil
 }
 
+func (s *Stop) PrepareForInsert() error {
+	return s.Validate()
+}
+
+func (s *Stop) InsertPrepared(ctx context.Context, tx bun.IDB) error {
+	_, err := tx.NewInsert().Model(s).Returning("*").Exec(ctx)
+	return err
+}
+
 func (s *Stop) OptimisticUpdate(ctx context.Context, tx bun.IDB) error {
 	ov := s.Version
 

@@ -21,6 +21,7 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/config"
+	"github.com/emoss08/trenova/internal/api/common"
 	"github.com/emoss08/trenova/internal/server"
 	"github.com/emoss08/trenova/pkg/models"
 	"github.com/google/uuid"
@@ -29,14 +30,18 @@ import (
 
 // LocationCategoryService handles business logic for LocationCategory
 type LocationCategoryService struct {
-	db     *bun.DB
+	common.AuditableService
 	logger *config.ServerLogger
 }
 
 // NewLocationCategoryService creates a new instance of LocationCategoryService
 func NewLocationCategoryService(s *server.Server) *LocationCategoryService {
 	return &LocationCategoryService{
-		db:     s.DB,
+		AuditableService: common.AuditableService{
+			DB:            s.DB,
+			AuditService:  s.AuditService,
+			CodeGenerator: s.CodeGenerator,
+		},
 		logger: s.Logger,
 	}
 }
@@ -69,9 +74,7 @@ func (s LocationCategoryService) filterQuery(q *bun.SelectQuery, f *LocationCate
 func (s LocationCategoryService) GetAll(ctx context.Context, filter *LocationCategoryQueryFilter) ([]*models.LocationCategory, int, error) {
 	var entities []*models.LocationCategory
 
-	q := s.db.NewSelect().
-		Model(&entities)
-
+	q := s.DB.NewSelect().Model(&entities)
 	q = s.filterQuery(q, filter)
 
 	count, err := q.ScanAndCount(ctx)
@@ -86,12 +89,7 @@ func (s LocationCategoryService) GetAll(ctx context.Context, filter *LocationCat
 // Get retrieves a single LocationCategory by ID
 func (s LocationCategoryService) Get(ctx context.Context, id, orgID, buID uuid.UUID) (*models.LocationCategory, error) {
 	entity := new(models.LocationCategory)
-	err := s.db.NewSelect().
-		Model(entity).
-		Where("lc.organization_id = ?", orgID).
-		Where("lc.business_unit_id = ?", buID).
-		Where("lc.id = ?", id).
-		Scan(ctx)
+	err := s.GetByID(ctx, id, orgID, buID, entity)
 	if err != nil {
 		s.logger.Error().Err(err).Msg("Failed to fetch LocationCategory")
 		return nil, fmt.Errorf("failed to fetch LocationCategory: %w", err)
@@ -101,14 +99,8 @@ func (s LocationCategoryService) Get(ctx context.Context, id, orgID, buID uuid.U
 }
 
 // Create creates a new LocationCategory
-func (s LocationCategoryService) Create(ctx context.Context, entity *models.LocationCategory) (*models.LocationCategory, error) {
-	err := s.db.RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
-		_, err := tx.NewInsert().
-			Model(entity).
-			Returning("*").
-			Exec(ctx)
-		return err
-	})
+func (s LocationCategoryService) Create(ctx context.Context, entity *models.LocationCategory, userID uuid.UUID) (*models.LocationCategory, error) {
+	_, err := s.CreateWithAudit(ctx, entity, userID)
 	if err != nil {
 		s.logger.Error().Err(err).Msg("Failed to create LocationCategory")
 		return nil, fmt.Errorf("failed to create LocationCategory: %w", err)
@@ -118,14 +110,8 @@ func (s LocationCategoryService) Create(ctx context.Context, entity *models.Loca
 }
 
 // UpdateOne updates an existing LocationCategory
-func (s LocationCategoryService) UpdateOne(ctx context.Context, entity *models.LocationCategory) (*models.LocationCategory, error) {
-	err := s.db.RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
-		if err := entity.OptimisticUpdate(ctx, tx); err != nil {
-			return err
-		}
-
-		return nil
-	})
+func (s LocationCategoryService) UpdateOne(ctx context.Context, entity *models.LocationCategory, userID uuid.UUID) (*models.LocationCategory, error) {
+	err := s.UpdateWithAudit(ctx, entity, userID)
 	if err != nil {
 		s.logger.Error().Err(err).Msg("Failed to update LocationCategory")
 		return nil, fmt.Errorf("failed to update LocationCategory: %w", err)

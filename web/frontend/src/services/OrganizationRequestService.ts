@@ -16,11 +16,11 @@
  */
 
 import axios from "@/lib/axiosConfig";
-import { BillingControl } from "@/types/billing";
-import { DispatchControl } from "@/types/dispatch";
-import { InvoiceControl } from "@/types/invoicing";
-import {
-  Depot,
+import { type BillingControl } from "@/types/billing";
+import { type DispatchControl } from "@/types/dispatch";
+import { type InvoiceControl } from "@/types/invoicing";
+import type {
+  AuditLog,
   EmailControl,
   EmailProfile,
   GoogleAPI,
@@ -29,6 +29,7 @@ import {
   Topic,
 } from "@/types/organization";
 import { RouteControl } from "@/types/route";
+import { ApiResponse } from "@/types/server";
 import { ShipmentControl } from "@/types/shipment";
 
 /**
@@ -111,15 +112,6 @@ export async function getRouteControl(): Promise<RouteControl> {
 }
 
 /**
- * Fetches depots from the server.
- * @returns A promise that resolves to an array of depots.
- */
-export async function getDepots(): Promise<Depot[]> {
-  const response = await axios.get("/depots/");
-  return response.data.results;
-}
-
-/**
  * Fetches feature flags for the organization from the server.
  * @returns A promise that resolves to an array of feature flags.
  */
@@ -141,17 +133,6 @@ export async function getGoogleApiInformation(): Promise<GoogleAPI> {
  * Fetches topic values from the server.
  * @returns A promise that resolves to an array of Table Names.
  */
-export async function getTableNames(): Promise<
-  { value: string; label: string }[]
-> {
-  const response = await axios.get("/table-change-alerts/table-names/");
-  return response.data.results;
-}
-
-/**
- * Fetches topic values from the server.
- * @returns A promise that resolves to an array of Table Names.
- */
 export async function getTopicNames(): Promise<Topic[]> {
   const response = await axios.get("/table-change-alerts/topics/");
   return response.data.results;
@@ -159,8 +140,8 @@ export async function getTopicNames(): Promise<Topic[]> {
 
 /**
  * Posts a user profile picture to the server.
- * @param profilePicture Profile picture to be uploaded
  * @returns A promise that resolves to the user's details.
+ * @param logo
  */
 export async function postOrganizationLogo(logo: File): Promise<Organization> {
   const formData = new FormData();
@@ -176,4 +157,28 @@ export async function postOrganizationLogo(logo: File): Promise<Organization> {
 
 export async function clearOrganizationLogo(): Promise<void> {
   await axios.post("organizations/clear-logo");
+}
+
+/**
+ * Fetches audit log values from the server.
+ * @returns A promise that resolves to an array of Audit Logs.
+ */
+export async function getAuditLogs(
+  tableName?: string,
+  userId?: string,
+  entityId?: string,
+  action?: string,
+  status?: string,
+): Promise<ApiResponse<AuditLog>> {
+  const params: Record<string, string | undefined> = {};
+
+  if (tableName) params.tableName = tableName;
+  if (userId) params.userId = userId;
+  if (entityId) params.entityId = entityId;
+  if (action) params.action = action;
+  if (status) params.status = status;
+
+  const response = await axios.get("audit-logs", { params });
+
+  return response.data;
 }

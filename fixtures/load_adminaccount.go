@@ -27,16 +27,16 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
-func LoadAdminAccount(ctx context.Context, db *bun.DB, enforcer *casbin.Enforcer, org *models.Organization, bu *models.BusinessUnit) error {
+func LoadAdminAccount(ctx context.Context, db *bun.DB, enforcer *casbin.Enforcer, org *models.Organization, bu *models.BusinessUnit) (*models.User, error) {
 	exists, err := db.NewSelect().Model((*models.User)(nil)).Where("username = ?", "admin").Exists(ctx)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	if !exists {
 		hashedPassword, err := bcrypt.GenerateFromPassword([]byte("admin"), bcrypt.DefaultCost)
 		if err != nil {
-			return err
+			return nil, err
 		}
 
 		user := &models.User{
@@ -55,13 +55,13 @@ func LoadAdminAccount(ctx context.Context, db *bun.DB, enforcer *casbin.Enforcer
 
 		_, err = db.NewInsert().Model(user).Exec(ctx)
 		if err != nil {
-			return err
+			return nil, err
 		}
 
 		// Assign the Admin role to the user
 		_, err = enforcer.AddGroupingPolicy(user.ID.String(), "Admin", "role")
 		if err != nil {
-			return fmt.Errorf("failed to assign Admin role: %w", err)
+			return nil, fmt.Errorf("failed to assign Admin role: %w", err)
 		}
 
 		log.Printf("Assigned Admin role to user: %s\n", user.ID.String())
@@ -73,9 +73,11 @@ func LoadAdminAccount(ctx context.Context, db *bun.DB, enforcer *casbin.Enforcer
 		color.Yellow("Email: admin@trenova.app")
 		color.Yellow("Password: admin")
 		color.Yellow("-----------------------------")
+
+		return user, nil
 	}
 
-	return enforcer.SavePolicy()
+	return nil, enforcer.SavePolicy()
 }
 
 // Normal Account is an account with no permissions assigned

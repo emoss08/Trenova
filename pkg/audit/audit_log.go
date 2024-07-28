@@ -13,7 +13,7 @@
 // Change License as the GPL Version 2.0 or a compatible license, specifying an Additional Use
 // Grant, and not modifying the license in any other way.
 
-package models
+package audit
 
 import (
 	"encoding/json"
@@ -24,21 +24,21 @@ import (
 	"github.com/uptrace/bun"
 )
 
-type AuditLog struct {
+type Log struct {
 	bun.BaseModel `bun:"table:audit_logs,alias:al"`
 
-	ID        uuid.UUID               `bun:",pk,type:uuid,default:uuid_generate_v4()"`
-	TableName string                  `bun:"type:varchar(255),notnull"`
-	EntityID  string                  `bun:"type:varchar(255),notnull"`
-	Action    property.AuditLogAction `bun:"type:audit_log_status_enum,notnull"`
-	Data      json.RawMessage         `bun:"type:jsonb"`
-	Timestamp time.Time               `bun:"default:current_timestamp"`
+	ID           uuid.UUID               `bun:",pk,type:uuid,default:uuid_generate_v4()" json:"id"`
+	TableName    string                  `bun:"type:varchar(255),notnull" json:"tableName"`
+	EntityID     string                  `bun:"type:varchar(255),notnull" json:"entityId"`
+	Action       property.AuditLogAction `bun:"type:audit_log_status_enum,notnull" json:"action"`
+	Changes      json.RawMessage         `bun:"type:jsonb" json:"changes"`
+	Timestamp    time.Time               `bun:"default:current_timestamp" json:"timestamp"`
+	Description  string                  `bun:"type:text" json:"description"`
+	ErrorMessage string                  `bun:"type:text" json:"errorMessage"`
+	Status       property.LogStatus      `bun:"type:log_status_enum,notnull,default:'ATTEMPTED'" json:"status"`
+	Username     string                  `bun:"type:varchar(255),notnull" json:"username"`
 
-	UserID         uuid.UUID `bun:"type:uuid"`
-	OrganizationID uuid.UUID `bun:"type:uuid"`
-	BusinessUnitID uuid.UUID `bun:"type:uuid"`
-
-	User         *User         `bun:"rel:belongs-to,join:user_id=id" json:"-"`
-	Organization *Organization `bun:"rel:belongs-to,join:organization_id=id" json:"-"`
-	BusinessUnit *BusinessUnit `bun:"rel:belongs-to,join:business_unit_id=id" json:"-"`
+	UserID         uuid.UUID `bun:"type:uuid" json:"userId"`
+	OrganizationID uuid.UUID `bun:"type:uuid" json:"orgId"`
+	BusinessUnitID uuid.UUID `bun:"type:uuid" json:"businessUnitId"`
 }

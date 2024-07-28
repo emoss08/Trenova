@@ -25,6 +25,9 @@ func NewCustomFiberzerolog(logger *config.ServerLogger) fiber.Handler {
 			Str("user_agent", c.Get("User-Agent")).
 			Msg("HTTP Request")
 
+		// Set the user agent in user context
+		c.Locals("user-agent", c.Get("User-Agent"))
+
 		return err
 	}
 }

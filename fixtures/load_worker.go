@@ -20,6 +20,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/emoss08/trenova/pkg/audit"
 	"github.com/emoss08/trenova/pkg/gen"
 	"github.com/emoss08/trenova/pkg/models"
 	"github.com/emoss08/trenova/pkg/models/property"
@@ -28,7 +29,7 @@ import (
 	"github.com/uptrace/bun"
 )
 
-func loadWorkers(ctx context.Context, db *bun.DB, gen *gen.CodeGenerator, orgID, buID uuid.UUID) error {
+func loadWorkers(ctx context.Context, db *bun.DB, gen *gen.CodeGenerator, auditService *audit.Service, user *models.User, orgID, buID uuid.UUID) error {
 	count, err := db.NewSelect().Model((*models.Worker)(nil)).Count(ctx)
 	if err != nil {
 		return err
@@ -65,7 +66,12 @@ func loadWorkers(ctx context.Context, db *bun.DB, gen *gen.CodeGenerator, orgID,
 					return mErr
 				}
 
-				return worker.InsertWorker(ctx, tx, gen, mkg.Pattern)
+				auditUser := audit.AuditUser{
+					ID:       user.ID,
+					Username: user.Username,
+				}
+
+				return worker.InsertWithCodeGen(ctx, tx, gen, mkg.Pattern, auditService, auditUser)
 			})
 			if err != nil {
 				return err

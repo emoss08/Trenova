@@ -188,7 +188,7 @@ func (tdb *TestDB) Close() error {
 
 // WithTransaction runs a function within a transaction
 func (tdb *TestDB) WithTransaction(fn func(*bun.Tx) error) error {
-	return tdb.DB.RunInTx(context.Background(), nil, func(ctx context.Context, tx bun.Tx) error {
+	return tdb.DB.RunInTx(context.Background(), nil, func(_ context.Context, tx bun.Tx) error {
 		return fn(&tx)
 	})
 }
@@ -204,12 +204,12 @@ func SetupTestCase(t *testing.T) (*TestDB, func()) {
 	}
 
 	// Reset the database to a clean state
-	if err := testDB.ResetDatabase(); err != nil {
+	if err = testDB.ResetDatabase(); err != nil {
 		t.Fatalf("Failed to reset database: %v", err)
 	}
 
 	return testDB, func() {
-		if err := testDB.Close(); err != nil {
+		if err = testDB.Close(); err != nil {
 			t.Errorf("Failed to close database connection: %v", err)
 		}
 	}

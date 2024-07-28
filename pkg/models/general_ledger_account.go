@@ -21,6 +21,8 @@ import (
 	"regexp"
 	"time"
 
+	"github.com/emoss08/trenova/pkg/audit"
+	"github.com/emoss08/trenova/pkg/constants"
 	"github.com/emoss08/trenova/pkg/models/property"
 	"github.com/emoss08/trenova/pkg/validator"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
@@ -94,6 +96,55 @@ func (g GeneralLedgerAccount) AssociateTagsByID(ctx context.Context, tx bun.Tx, 
 			return err
 		}
 	}
+	return nil
+}
+
+func (g *GeneralLedgerAccount) Insert(ctx context.Context, tx bun.IDB, auditService *audit.Service, user audit.AuditUser) error {
+	if err := g.Validate(); err != nil {
+		return err
+	}
+
+	if _, err := tx.NewInsert().Model(g).Returning("*").Exec(ctx); err != nil {
+		return err
+	}
+
+	auditService.LogAction(
+		constants.TableGeneralLedgerAccount,
+		g.ID.String(),
+		property.AuditLogActionCreate,
+		user,
+		g.OrganizationID,
+		g.BusinessUnitID,
+		audit.WithDiff(nil, g),
+	)
+
+	return nil
+}
+
+func (g *GeneralLedgerAccount) UpdateOne(ctx context.Context, tx bun.IDB, auditService *audit.Service, user audit.AuditUser) error {
+	original := new(GeneralLedgerAccount)
+	if err := tx.NewSelect().Model(original).Where("id = ?", g.ID).Scan(ctx); err != nil {
+		return validator.BusinessLogicError{Message: err.Error()}
+	}
+
+	if err := g.Validate(); err != nil {
+		return err
+	}
+
+	if err := g.OptimisticUpdate(ctx, tx); err != nil {
+		return err
+	}
+
+	auditService.LogAction(
+		constants.TableGeneralLedgerAccount,
+		g.ID.String(),
+		property.AuditLogActionUpdate,
+		user,
+		g.OrganizationID,
+		g.BusinessUnitID,
+		audit.WithDiff(original, g),
+	)
+
 	return nil
 }
 

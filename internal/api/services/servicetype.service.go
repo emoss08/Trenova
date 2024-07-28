@@ -21,6 +21,7 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/config"
+	"github.com/emoss08/trenova/internal/api/common"
 	"github.com/emoss08/trenova/internal/server"
 	"github.com/emoss08/trenova/pkg/models"
 	"github.com/google/uuid"
@@ -29,19 +30,22 @@ import (
 
 // ServiceTypeService handles business logic for ServiceType
 type ServiceTypeService struct {
-	db     *bun.DB
+	common.AuditableService
 	logger *config.ServerLogger
 }
 
 // NewServiceTypeService creates a new instance of ServiceTypeService
 func NewServiceTypeService(s *server.Server) *ServiceTypeService {
 	return &ServiceTypeService{
-		db:     s.DB,
+		AuditableService: common.AuditableService{
+			DB:           s.DB,
+			AuditService: s.AuditService,
+		},
 		logger: s.Logger,
 	}
 }
 
-// QueryFilter defines the filter parameters for querying ServiceType
+// ServiceTypeQueryFilter defines the filter parameters for querying ServiceType
 type ServiceTypeQueryFilter struct {
 	Query          string
 	OrganizationID uuid.UUID
@@ -69,9 +73,7 @@ func (s ServiceTypeService) filterQuery(q *bun.SelectQuery, f *ServiceTypeQueryF
 func (s ServiceTypeService) GetAll(ctx context.Context, filter *ServiceTypeQueryFilter) ([]*models.ServiceType, int, error) {
 	var entities []*models.ServiceType
 
-	q := s.db.NewSelect().
-		Model(&entities)
-
+	q := s.DB.NewSelect().Model(&entities)
 	q = s.filterQuery(q, filter)
 
 	count, err := q.ScanAndCount(ctx)
@@ -86,12 +88,7 @@ func (s ServiceTypeService) GetAll(ctx context.Context, filter *ServiceTypeQuery
 // Get retrieves a single ServiceType by ID
 func (s ServiceTypeService) Get(ctx context.Context, id, orgID, buID uuid.UUID) (*models.ServiceType, error) {
 	entity := new(models.ServiceType)
-	err := s.db.NewSelect().
-		Model(entity).
-		Where("st.organization_id = ?", orgID).
-		Where("st.business_unit_id = ?", buID).
-		Where("st.id = ?", id).
-		Scan(ctx)
+	err := s.GetByID(ctx, id, orgID, buID, entity)
 	if err != nil {
 		s.logger.Error().Err(err).Msg("Failed to fetch ServiceType")
 		return nil, fmt.Errorf("failed to fetch ServiceType: %w", err)
@@ -101,14 +98,8 @@ func (s ServiceTypeService) Get(ctx context.Context, id, orgID, buID uuid.UUID) 
 }
 
 // Create creates a new ServiceType
-func (s ServiceTypeService) Create(ctx context.Context, entity *models.ServiceType) (*models.ServiceType, error) {
-	err := s.db.RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
-		_, err := tx.NewInsert().
-			Model(entity).
-			Returning("*").
-			Exec(ctx)
-		return err
-	})
+func (s ServiceTypeService) Create(ctx context.Context, entity *models.ServiceType, userID uuid.UUID) (*models.ServiceType, error) {
+	_, err := s.CreateWithAudit(ctx, entity, userID)
 	if err != nil {
 		s.logger.Error().Err(err).Msg("Failed to create ServiceType")
 		return nil, fmt.Errorf("failed to create ServiceType: %w", err)
@@ -118,14 +109,8 @@ func (s ServiceTypeService) Create(ctx context.Context, entity *models.ServiceTy
 }
 
 // UpdateOne updates an existing ServiceType
-func (s ServiceTypeService) UpdateOne(ctx context.Context, entity *models.ServiceType) (*models.ServiceType, error) {
-	err := s.db.RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
-		if err := entity.OptimisticUpdate(ctx, tx); err != nil {
-			return err
-		}
-
-		return nil
-	})
+func (s ServiceTypeService) UpdateOne(ctx context.Context, entity *models.ServiceType, userID uuid.UUID) (*models.ServiceType, error) {
+	err := s.UpdateWithAudit(ctx, entity, userID)
 	if err != nil {
 		s.logger.Error().Err(err).Msg("Failed to update ServiceType")
 		return nil, fmt.Errorf("failed to update ServiceType: %w", err)

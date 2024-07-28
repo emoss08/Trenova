@@ -23,6 +23,7 @@ import type {
   RouteModelChoiceProps,
   TimezoneChoices,
 } from "@/lib/choices";
+import { User } from "@/types/accounts";
 import { type StatusChoiceProps } from ".";
 
 export type Organization = {
@@ -40,12 +41,11 @@ export type Organization = {
     abbreviation: string;
     name: string;
   };
+  version: string;
   postalCode?: string;
 };
 
 export type OrganizationFormValues = Omit<Organization, "id">;
-
-// type DeliveryMethod = "Email" | "Api" | "Local" | "Sms";
 
 export interface TableChangeAlert extends BaseModel {
   id: string;
@@ -149,6 +149,25 @@ export type GoogleAPIFormValues = Omit<
   GoogleAPI,
   "id" | "organizationId" | "createdAt" | "updatedAt" | "version"
 >;
+
+export type AuditLogAction = "CREATE" | "UPDATE" | "DELETE";
+
+export type AuditLogStatus = "ATTEMPTED" | "SUCCEEDED" | "FAILED";
+
+export type AuditLog = {
+  id: string;
+  status: AuditLogStatus;
+  tableName: string;
+  entityID: string;
+  action: AuditLogAction;
+  attemptedChanges: { [key: string]: any };
+  actualChanges: { [key: string]: any };
+  timestamp: string;
+  userId: string;
+  organizationId: string;
+  businessUnitId: string;
+  user: User;
+};
 
 /** Base Trenova Interface
  *

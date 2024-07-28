@@ -44,14 +44,14 @@ type ProNumberCounter struct {
 }
 
 // GenerateProNumber generates the next pro_number for a given organization
-func GenerateProNumber(ctx context.Context, db *bun.DB, orgID uuid.UUID) (string, error) {
+func GenerateProNumber(ctx context.Context, tx bun.IDB, orgID uuid.UUID) (string, error) {
 	mu.Lock()
 	defer mu.Unlock()
 
 	currentYear := nowFunc().Year()
 
 	var counter ProNumberCounter
-	err := db.NewSelect().
+	err := tx.NewSelect().
 		Model(&counter).
 		Where("organization_id = ?", orgID).
 		For("UPDATE").
@@ -67,7 +67,7 @@ func GenerateProNumber(ctx context.Context, db *bun.DB, orgID uuid.UUID) (string
 	// Increment the counter
 	counter.LastUsedNumber++
 
-	_, err = db.NewInsert().
+	_, err = tx.NewInsert().
 		Model(&counter).
 		On("CONFLICT (organization_id) DO UPDATE").
 		Set("last_used_number = EXCLUDED.last_used_number").

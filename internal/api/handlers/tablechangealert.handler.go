@@ -22,10 +22,8 @@ import (
 	"github.com/emoss08/trenova/internal/api/services"
 	"github.com/emoss08/trenova/internal/server"
 	"github.com/emoss08/trenova/internal/types"
-	"github.com/emoss08/trenova/pkg/audit"
 	"github.com/emoss08/trenova/pkg/constants"
 	"github.com/emoss08/trenova/pkg/models"
-	"github.com/emoss08/trenova/pkg/models/property"
 	"github.com/emoss08/trenova/pkg/utils"
 	"github.com/gofiber/fiber/v2"
 	"github.com/google/uuid"
@@ -35,7 +33,6 @@ type TableChangeAlertHandler struct {
 	logger            *config.ServerLogger
 	service           *services.TableChangeAlertService
 	permissionService *services.PermissionService
-	auditService      *audit.Service
 }
 
 func NewTableChangeAlertHandler(s *server.Server) *TableChangeAlertHandler {
@@ -43,7 +40,6 @@ func NewTableChangeAlertHandler(s *server.Server) *TableChangeAlertHandler {
 		logger:            s.Logger,
 		service:           services.NewTableChangeAlertService(s),
 		permissionService: services.NewPermissionService(s.Enforcer),
-		auditService:      s.AuditService,
 	}
 }
 
@@ -90,7 +86,7 @@ func (h TableChangeAlertHandler) Get() fiber.Handler {
 			})
 		}
 
-		entities, cnt, err := h.service.GetTableChangeAlerts(c.UserContext(), limit, offset, ids.OrganizationID, ids.BusinessUnitID)
+		entities, cnt, err := h.service.Get(c.UserContext(), limit, offset, ids.OrganizationID, ids.BusinessUnitID)
 		if err != nil {
 			h.logger.Error().Err(err).Msg("Error getting table change alerts")
 			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Error{
@@ -134,16 +130,13 @@ func (h TableChangeAlertHandler) Create() fiber.Handler {
 			return c.Status(fiber.StatusBadRequest).JSON(err)
 		}
 
-		entity, err := h.service.CreateTableChangeAlert(c.UserContext(), createdEntity)
+		entity, err := h.service.Create(c.UserContext(), createdEntity, ids.UserID)
 		if err != nil {
 			h.logger.Error().Interface("entity", createdEntity).Err(err).Msg("Failed to create TableChangeAlert")
-			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Error{
-				Code:    fiber.StatusInternalServerError,
-				Message: err.Error(),
-			})
-		}
+			resp := utils.CreateServiceError(c, err)
 
-		go h.auditService.LogAction(constants.TableTableChangeAlert, entity.ID.String(), property.AuditLogActionCreate, entity, ids.UserID, ids.OrganizationID, ids.BusinessUnitID)
+			return c.Status(fiber.StatusInternalServerError).JSON(resp)
+		}
 
 		return c.Status(fiber.StatusCreated).JSON(entity)
 	}
@@ -164,7 +157,7 @@ func (h TableChangeAlertHandler) Update() fiber.Handler {
 			})
 		}
 
-		if err = h.permissionService.CheckUserPermission(c, constants.EntityTableChangeAlert, constants.ActionUpdate); err != nil {
+		if err := h.permissionService.CheckUserPermission(c, constants.EntityTableChangeAlert, constants.ActionUpdate); err != nil {
 			return c.Status(fiber.StatusForbidden).JSON(fiber.Error{
 				Code:    fiber.StatusForbidden,
 				Message: err.Error(),
@@ -173,22 +166,19 @@ func (h TableChangeAlertHandler) Update() fiber.Handler {
 
 		updatedEntity := new(models.TableChangeAlert)
 
-		if err = utils.ParseBodyAndValidate(c, updatedEntity); err != nil {
+		if err := utils.ParseBodyAndValidate(c, updatedEntity); err != nil {
 			return c.Status(fiber.StatusBadRequest).JSON(err)
 		}
 
 		updatedEntity.ID = uuid.MustParse(tableChangeAlertID)
 
-		entity, err := h.service.UpdateTableChangeAlert(c.UserContext(), updatedEntity)
+		entity, err := h.service.UpdateOne(c.UserContext(), updatedEntity, ids.UserID)
 		if err != nil {
 			h.logger.Error().Interface("entity", updatedEntity).Err(err).Msg("Failed to update TableChangeAlert")
-			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Error{
-				Code:    fiber.StatusInternalServerError,
-				Message: "Failed to update table change alert",
-			})
-		}
+			resp := utils.CreateServiceError(c, err)
 
-		go h.auditService.LogAction(constants.TableTableChangeAlert, entity.ID.String(), property.AuditLogActionUpdate, entity, ids.UserID, ids.OrganizationID, ids.BusinessUnitID)
+			return c.Status(fiber.StatusInternalServerError).JSON(resp)
+		}
 
 		return c.Status(fiber.StatusOK).JSON(entity)
 	}

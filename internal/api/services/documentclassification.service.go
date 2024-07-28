@@ -21,6 +21,7 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/config"
+	"github.com/emoss08/trenova/internal/api/common"
 	"github.com/emoss08/trenova/internal/server"
 	"github.com/emoss08/trenova/pkg/models"
 	"github.com/google/uuid"
@@ -29,14 +30,17 @@ import (
 
 // DocumentClassificationService handles business logic for DocumentClassification
 type DocumentClassificationService struct {
-	db     *bun.DB
+	common.AuditableService
 	logger *config.ServerLogger
 }
 
 // NewDocumentClassificationService creates a new instance of DocumentClassificationService
 func NewDocumentClassificationService(s *server.Server) *DocumentClassificationService {
 	return &DocumentClassificationService{
-		db:     s.DB,
+		AuditableService: common.AuditableService{
+			DB:           s.DB,
+			AuditService: s.AuditService,
+		},
 		logger: s.Logger,
 	}
 }
@@ -69,9 +73,7 @@ func (s DocumentClassificationService) filterQuery(q *bun.SelectQuery, f *Docume
 func (s DocumentClassificationService) GetAll(ctx context.Context, filter *DocumentClassificationQueryFilter) ([]*models.DocumentClassification, int, error) {
 	var entities []*models.DocumentClassification
 
-	q := s.db.NewSelect().
-		Model(&entities)
-
+	q := s.DB.NewSelect().Model(&entities)
 	q = s.filterQuery(q, filter)
 
 	count, err := q.ScanAndCount(ctx)
@@ -86,12 +88,7 @@ func (s DocumentClassificationService) GetAll(ctx context.Context, filter *Docum
 // Get retrieves a single DocumentClassification by ID
 func (s DocumentClassificationService) Get(ctx context.Context, id, orgID, buID uuid.UUID) (*models.DocumentClassification, error) {
 	entity := new(models.DocumentClassification)
-	err := s.db.NewSelect().
-		Model(entity).
-		Where("dc.organization_id = ?", orgID).
-		Where("dc.business_unit_id = ?", buID).
-		Where("dc.id = ?", id).
-		Scan(ctx)
+	err := s.GetByID(ctx, id, orgID, buID, entity)
 	if err != nil {
 		s.logger.Error().Err(err).Msg("Failed to fetch DocumentClassification")
 		return nil, fmt.Errorf("failed to fetch DocumentClassification: %w", err)
@@ -101,14 +98,8 @@ func (s DocumentClassificationService) Get(ctx context.Context, id, orgID, buID 
 }
 
 // Create creates a new DocumentClassification
-func (s DocumentClassificationService) Create(ctx context.Context, entity *models.DocumentClassification) (*models.DocumentClassification, error) {
-	err := s.db.RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
-		_, err := tx.NewInsert().
-			Model(entity).
-			Returning("*").
-			Exec(ctx)
-		return err
-	})
+func (s DocumentClassificationService) Create(ctx context.Context, entity *models.DocumentClassification, userID uuid.UUID) (*models.DocumentClassification, error) {
+	_, err := s.CreateWithAudit(ctx, entity, userID)
 	if err != nil {
 		s.logger.Error().Err(err).Msg("Failed to create DocumentClassification")
 		return nil, fmt.Errorf("failed to create DocumentClassification: %w", err)
@@ -118,14 +109,8 @@ func (s DocumentClassificationService) Create(ctx context.Context, entity *model
 }
 
 // UpdateOne updates an existing DocumentClassification
-func (s DocumentClassificationService) UpdateOne(ctx context.Context, entity *models.DocumentClassification) (*models.DocumentClassification, error) {
-	err := s.db.RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
-		if err := entity.OptimisticUpdate(ctx, tx); err != nil {
-			return err
-		}
-
-		return nil
-	})
+func (s DocumentClassificationService) UpdateOne(ctx context.Context, entity *models.DocumentClassification, userID uuid.UUID) (*models.DocumentClassification, error) {
+	err := s.UpdateWithAudit(ctx, entity, userID)
 	if err != nil {
 		s.logger.Error().Err(err).Msg("Failed to update DocumentClassification")
 		return nil, fmt.Errorf("failed to update DocumentClassification: %w", err)

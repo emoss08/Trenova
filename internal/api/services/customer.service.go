@@ -21,8 +21,8 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/config"
+	"github.com/emoss08/trenova/internal/api/common"
 	"github.com/emoss08/trenova/internal/server"
-	"github.com/emoss08/trenova/pkg/gen"
 	"github.com/emoss08/trenova/pkg/models"
 	"github.com/google/uuid"
 	"github.com/uptrace/bun"
@@ -30,21 +30,23 @@ import (
 
 // CustomerService handles business logic for Customer
 type CustomerService struct {
-	db      *bun.DB
-	logger  *config.ServerLogger
-	codeGen *gen.CodeGenerator
+	common.AuditableService
+	logger *config.ServerLogger
 }
 
 // NewCustomerService creates a new instance of CustomerService
 func NewCustomerService(s *server.Server) *CustomerService {
 	return &CustomerService{
-		db:      s.DB,
-		logger:  s.Logger,
-		codeGen: s.CodeGenerator,
+		AuditableService: common.AuditableService{
+			DB:            s.DB,
+			AuditService:  s.AuditService,
+			CodeGenerator: s.CodeGenerator,
+		},
+		logger: s.Logger,
 	}
 }
 
-// QueryFilter defines the filter parameters for querying Customer
+// CustomerQueryFilter defines the filter parameters for querying Customer
 type CustomerQueryFilter struct {
 	Query          string
 	OrganizationID uuid.UUID
@@ -72,9 +74,7 @@ func (s CustomerService) filterQuery(q *bun.SelectQuery, f *CustomerQueryFilter)
 func (s CustomerService) GetAll(ctx context.Context, filter *CustomerQueryFilter) ([]*models.Customer, int, error) {
 	var entities []*models.Customer
 
-	q := s.db.NewSelect().
-		Model(&entities)
-
+	q := s.DB.NewSelect().Model(&entities)
 	q = s.filterQuery(q, filter)
 
 	count, err := q.ScanAndCount(ctx)
@@ -89,12 +89,7 @@ func (s CustomerService) GetAll(ctx context.Context, filter *CustomerQueryFilter
 // Get retrieves a single Customer by ID
 func (s CustomerService) Get(ctx context.Context, id, orgID, buID uuid.UUID) (*models.Customer, error) {
 	entity := new(models.Customer)
-	err := s.db.NewSelect().
-		Model(entity).
-		Where("cu.organization_id = ?", orgID).
-		Where("cu.business_unit_id = ?", buID).
-		Where("cu.id = ?", id).
-		Scan(ctx)
+	err := s.GetByID(ctx, id, orgID, buID, entity)
 	if err != nil {
 		s.logger.Error().Err(err).Msg("Failed to fetch Customer")
 		return nil, fmt.Errorf("failed to fetch Customer: %w", err)
@@ -104,16 +99,12 @@ func (s CustomerService) Get(ctx context.Context, id, orgID, buID uuid.UUID) (*m
 }
 
 // Create creates a new Customer
-func (s CustomerService) Create(ctx context.Context, entity *models.Customer) (*models.Customer, error) {
-	err := s.db.RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
-		// Query the master key generation entity.
-		mkg, mErr := models.QueryCustomerMasterKeyGenerationByOrgID(ctx, s.db, entity.OrganizationID)
-		if mErr != nil {
-			return mErr
-		}
-
-		return entity.InsertCustomer(ctx, tx, s.codeGen, mkg.Pattern)
-	})
+func (s CustomerService) Create(ctx context.Context, entity *models.Customer, userID uuid.UUID) (*models.Customer, error) {
+	mkg, err := models.QueryCustomerMasterKeyGenerationByOrgID(ctx, s.DB, entity.OrganizationID)
+	if err != nil {
+		return nil, err
+	}
+	err = s.CreateWithAuditAndCodeGen(ctx, entity, userID, mkg.Pattern)
 	if err != nil {
 		s.logger.Error().Err(err).Msg("Failed to create Customer")
 		return nil, err
@@ -123,14 +114,8 @@ func (s CustomerService) Create(ctx context.Context, entity *models.Customer) (*
 }
 
 // UpdateOne updates an existing Customer
-func (s CustomerService) UpdateOne(ctx context.Context, entity *models.Customer) (*models.Customer, error) {
-	err := s.db.RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
-		if err := entity.OptimisticUpdate(ctx, tx); err != nil {
-			return err
-		}
-
-		return nil
-	})
+func (s CustomerService) UpdateOne(ctx context.Context, entity *models.Customer, userID uuid.UUID) (*models.Customer, error) {
+	err := s.UpdateWithAudit(ctx, entity, userID)
 	if err != nil {
 		s.logger.Error().Err(err).Msg("Failed to update Customer")
 		return nil, fmt.Errorf("failed to update Customer: %w", err)

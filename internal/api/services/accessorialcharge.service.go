@@ -21,6 +21,7 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/config"
+	"github.com/emoss08/trenova/internal/api/common"
 	"github.com/emoss08/trenova/internal/server"
 	"github.com/emoss08/trenova/pkg/models"
 	"github.com/google/uuid"
@@ -29,23 +30,26 @@ import (
 
 // AccessorialChargeService handles business logic for AccessorialCharge
 type AccessorialChargeService struct {
-	db     *bun.DB
+	common.AuditableService
 	logger *config.ServerLogger
 }
 
-// NewAccessorialChargeService creates a new instance of AccessorialChargeService
 func NewAccessorialChargeService(s *server.Server) *AccessorialChargeService {
 	return &AccessorialChargeService{
-		db:     s.DB,
+		AuditableService: common.AuditableService{
+			DB:           s.DB,
+			AuditService: s.AuditService,
+		},
 		logger: s.Logger,
 	}
 }
 
-// QueryFilter defines the filter parameters for querying AccessorialCharge
+// AccessorialChargeQueryFilter defines the filter parameters for querying AccessorialCharge
 type AccessorialChargeQueryFilter struct {
 	Query          string
 	OrganizationID uuid.UUID
 	BusinessUnitID uuid.UUID
+	UserID         uuid.UUID
 	Limit          int
 	Offset         int
 }
@@ -69,9 +73,7 @@ func (s AccessorialChargeService) filterQuery(q *bun.SelectQuery, f *Accessorial
 func (s AccessorialChargeService) GetAll(ctx context.Context, filter *AccessorialChargeQueryFilter) ([]*models.AccessorialCharge, int, error) {
 	var entities []*models.AccessorialCharge
 
-	q := s.db.NewSelect().
-		Model(&entities)
-
+	q := s.DB.NewSelect().Model(&entities)
 	q = s.filterQuery(q, filter)
 
 	count, err := q.ScanAndCount(ctx)
@@ -83,53 +85,31 @@ func (s AccessorialChargeService) GetAll(ctx context.Context, filter *Accessoria
 	return entities, count, nil
 }
 
-// Get retrieves a single AccessorialCharge by ID
 func (s AccessorialChargeService) Get(ctx context.Context, id, orgID, buID uuid.UUID) (*models.AccessorialCharge, error) {
 	entity := new(models.AccessorialCharge)
-	err := s.db.NewSelect().
-		Model(entity).
-		Where("ac.organization_id = ?", orgID).
-		Where("ac.business_unit_id = ?", buID).
-		Where("ac.id = ?", id).
-		Scan(ctx)
+	err := s.GetByID(ctx, id, orgID, buID, entity)
 	if err != nil {
 		s.logger.Error().Err(err).Msg("Failed to fetch AccessorialCharge")
 		return nil, fmt.Errorf("failed to fetch AccessorialCharge: %w", err)
 	}
-
 	return entity, nil
 }
 
 // Create creates a new AccessorialCharge
-func (s AccessorialChargeService) Create(ctx context.Context, entity *models.AccessorialCharge) (*models.AccessorialCharge, error) {
-	err := s.db.RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
-		_, err := tx.NewInsert().
-			Model(entity).
-			Returning("*").
-			Exec(ctx)
-		return err
-	})
+func (s AccessorialChargeService) Create(ctx context.Context, entity *models.AccessorialCharge, userID uuid.UUID) (*models.AccessorialCharge, error) {
+	_, err := s.CreateWithAudit(ctx, entity, userID)
 	if err != nil {
 		s.logger.Error().Err(err).Msg("Failed to create AccessorialCharge")
 		return nil, fmt.Errorf("failed to create AccessorialCharge: %w", err)
 	}
-
 	return entity, nil
 }
 
-// UpdateOne updates an existing AccessorialCharge
-func (s AccessorialChargeService) UpdateOne(ctx context.Context, entity *models.AccessorialCharge) (*models.AccessorialCharge, error) {
-	err := s.db.RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
-		if err := entity.OptimisticUpdate(ctx, tx); err != nil {
-			return err
-		}
-
-		return nil
-	})
+func (s AccessorialChargeService) UpdateOne(ctx context.Context, entity *models.AccessorialCharge, userID uuid.UUID) (*models.AccessorialCharge, error) {
+	err := s.UpdateWithAudit(ctx, entity, userID)
 	if err != nil {
 		s.logger.Error().Err(err).Msg("Failed to update AccessorialCharge")
 		return nil, fmt.Errorf("failed to update AccessorialCharge: %w", err)
 	}
-
 	return entity, nil
 }

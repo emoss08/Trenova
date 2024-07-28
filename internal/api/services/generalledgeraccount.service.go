@@ -21,6 +21,7 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/config"
+	"github.com/emoss08/trenova/internal/api/common"
 	"github.com/emoss08/trenova/internal/server"
 	"github.com/emoss08/trenova/pkg/models"
 	"github.com/google/uuid"
@@ -29,14 +30,17 @@ import (
 
 // GeneralLedgerAccountService handles business logic for GeneralLedgerAccount
 type GeneralLedgerAccountService struct {
-	db     *bun.DB
+	common.AuditableService
 	logger *config.ServerLogger
 }
 
 // NewGeneralLedgerAccountService creates a new instance of GeneralLedgerAccountService
 func NewGeneralLedgerAccountService(s *server.Server) *GeneralLedgerAccountService {
 	return &GeneralLedgerAccountService{
-		db:     s.DB,
+		AuditableService: common.AuditableService{
+			DB:           s.DB,
+			AuditService: s.AuditService,
+		},
 		logger: s.Logger,
 	}
 }
@@ -69,9 +73,7 @@ func (s GeneralLedgerAccountService) filterQuery(q *bun.SelectQuery, f *GeneralL
 func (s GeneralLedgerAccountService) GetAll(ctx context.Context, filter *GeneralLedgerAccountQueryFilter) ([]*models.GeneralLedgerAccount, int, error) {
 	var entities []*models.GeneralLedgerAccount
 
-	q := s.db.NewSelect().
-		Model(&entities)
-
+	q := s.DB.NewSelect().Model(&entities)
 	q = s.filterQuery(q, filter)
 
 	count, err := q.ScanAndCount(ctx)
@@ -86,12 +88,7 @@ func (s GeneralLedgerAccountService) GetAll(ctx context.Context, filter *General
 // Get retrieves a single GeneralLedgerAccount by ID
 func (s GeneralLedgerAccountService) Get(ctx context.Context, id, orgID, buID uuid.UUID) (*models.GeneralLedgerAccount, error) {
 	entity := new(models.GeneralLedgerAccount)
-	err := s.db.NewSelect().
-		Model(entity).
-		Where("gla.organization_id = ?", orgID).
-		Where("gla.business_unit_id = ?", buID).
-		Where("gla.id = ?", id).
-		Scan(ctx)
+	err := s.GetByID(ctx, id, orgID, buID, entity)
 	if err != nil {
 		s.logger.Error().Err(err).Msg("Failed to fetch GeneralLedgerAccount")
 		return nil, fmt.Errorf("failed to fetch GeneralLedgerAccount: %w", err)
@@ -101,14 +98,8 @@ func (s GeneralLedgerAccountService) Get(ctx context.Context, id, orgID, buID uu
 }
 
 // Create creates a new GeneralLedgerAccount
-func (s GeneralLedgerAccountService) Create(ctx context.Context, entity *models.GeneralLedgerAccount) (*models.GeneralLedgerAccount, error) {
-	err := s.db.RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
-		_, err := tx.NewInsert().
-			Model(entity).
-			Returning("*").
-			Exec(ctx)
-		return err
-	})
+func (s GeneralLedgerAccountService) Create(ctx context.Context, entity *models.GeneralLedgerAccount, userID uuid.UUID) (*models.GeneralLedgerAccount, error) {
+	_, err := s.CreateWithAudit(ctx, entity, userID)
 	if err != nil {
 		s.logger.Error().Err(err).Msg("Failed to create GeneralLedgerAccount")
 		return nil, fmt.Errorf("failed to create GeneralLedgerAccount: %w", err)
@@ -118,14 +109,8 @@ func (s GeneralLedgerAccountService) Create(ctx context.Context, entity *models.
 }
 
 // UpdateOne updates an existing GeneralLedgerAccount
-func (s GeneralLedgerAccountService) UpdateOne(ctx context.Context, entity *models.GeneralLedgerAccount) (*models.GeneralLedgerAccount, error) {
-	err := s.db.RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
-		if err := entity.OptimisticUpdate(ctx, tx); err != nil {
-			return err
-		}
-
-		return nil
-	})
+func (s GeneralLedgerAccountService) UpdateOne(ctx context.Context, entity *models.GeneralLedgerAccount, userID uuid.UUID) (*models.GeneralLedgerAccount, error) {
+	err := s.UpdateWithAudit(ctx, entity, userID)
 	if err != nil {
 		s.logger.Error().Err(err).Msg("Failed to update GeneralLedgerAccount")
 		return nil, fmt.Errorf("failed to update GeneralLedgerAccount: %w", err)

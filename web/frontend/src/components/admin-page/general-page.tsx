@@ -19,7 +19,6 @@ import { InputField } from "@/components/common/fields/input";
 import { SelectInput } from "@/components/common/fields/select-input";
 import { Button } from "@/components/ui/button";
 import { useUserPermissions } from "@/context/user-permissions";
-import { invalidateQueryViaBroadcastChannel } from "@/hooks/useBroadcast";
 import { useCustomMutation } from "@/hooks/useCustomMutation";
 import { TIMEZONES } from "@/lib/timezone";
 import { organizationSchema } from "@/lib/validations/OrganizationSchema";
@@ -34,6 +33,7 @@ import type {
 } from "@/types/organization";
 import { yupResolver } from "@hookform/resolvers/yup";
 import { useQueryClient } from "@tanstack/react-query";
+import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { useTranslation } from "react-i18next";
 import {
@@ -46,28 +46,60 @@ import {
 function OrganizationForm({ organization }: { organization: Organization }) {
   const { t } = useTranslation(["admin.generalpage", "common"]);
   const { userHasPermission } = useUserPermissions();
-
   const queryClient = useQueryClient();
+  const [localLogoUrl, setLocalLogoUrl] = useState(organization.logoUrl);
 
-  const { control, handleSubmit, reset } = useForm<OrganizationFormValues>({
-    resolver: yupResolver(organizationSchema),
-    defaultValues: organization,
-  });
+  const { control, handleSubmit, reset, setValue } =
+    useForm<OrganizationFormValues>({
+      resolver: yupResolver(organizationSchema),
+      defaultValues: { ...organization, logoUrl: localLogoUrl },
+    });
 
   const mutation = useCustomMutation<OrganizationFormValues>(control, {
     method: "PUT",
-    path: `/organizations/${organization.id}`,
+    path: "/organizations/",
     successMessage: t("formSuccessMessage"),
+    queryKeysToInvalidate: "organization",
     reset,
     errorMessage: t("formErrorMessage"),
+    onSettled: (response) => {
+      reset(response?.data);
+      setLocalLogoUrl(response?.data.logoUrl);
+    },
   });
 
   const onSubmit = (values: OrganizationFormValues) => {
     mutation.mutate(values);
-    reset(values);
+  };
 
-    // Additional query to invalidate.
-    invalidateQueryViaBroadcastChannel(["userOrganization", "organization"]);
+  const handleLogoUpdate = async (file: File) => {
+    try {
+      const response = await postOrganizationLogo(file);
+      setLocalLogoUrl(response.logoUrl);
+      setValue("logoUrl", response.logoUrl);
+      queryClient.invalidateQueries({
+        queryKey: ["organization"] as QueryKeys,
+      });
+      return "Logo updated successfully.";
+    } catch (error) {
+      console.error("Error updating logo:", error);
+      return "Failed to update logo.";
+    }
+  };
+
+  const handleLogoRemoval = async () => {
+    try {
+      await clearOrganizationLogo();
+      setLocalLogoUrl("");
+      setValue("logoUrl", "");
+      queryClient.invalidateQueries({
+        queryKey: ["organization"] as QueryKeys,
+      });
+      return "Logo removed successfully.";
+    } catch (error) {
+      console.error("Error removing logo:", error);
+      return "Failed to remove logo.";
+    }
   };
 
   return (
@@ -81,7 +113,6 @@ function OrganizationForm({ organization }: { organization: Organization }) {
             {t("organizationDetailsDescription")}
           </p>
         </div>
-
         <form
           className="border-border bg-card m-4 border sm:rounded-xl md:col-span-2"
           onSubmit={handleSubmit(onSubmit)}
@@ -98,19 +129,16 @@ function OrganizationForm({ organization }: { organization: Organization }) {
                   </Avatar>
                   <ImageUploader
                     iconText="Change Logo"
-                    callback={postOrganizationLogo}
+                    callback={handleLogoUpdate}
                     successCallback={() => {
                       queryClient.invalidateQueries({
-                        queryKey: ["userOrganization"] as QueryKeys,
+                        queryKey: ["organization"] as QueryKeys,
                       });
 
                       return "Logo updated successfully.";
                     }}
-                    removeFileCallback={clearOrganizationLogo}
+                    removeFileCallback={handleLogoRemoval}
                     removeSuccessCallback={() => {
-                      queryClient.invalidateQueries({
-                        queryKey: ["userOrganization"] as QueryKeys,
-                      });
                       queryClient.invalidateQueries({
                         queryKey: ["organization"] as QueryKeys,
                       });
@@ -135,9 +163,9 @@ function OrganizationForm({ organization }: { organization: Organization }) {
                   name="orgType"
                   control={control}
                   options={[
-                    { label: "Asset", value: "A" },
-                    { label: "Brokerage", value: "B" },
-                    { label: "Both", value: "X" },
+                    { label: "Asset", value: "Asset" },
+                    { label: "Brokerage", value: "Brokerage" },
+                    { label: "Both", value: "Both" },
                   ]}
                   rules={{ required: true }}
                   label={t("fields.orgType.label")}

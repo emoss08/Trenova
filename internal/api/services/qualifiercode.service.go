@@ -21,6 +21,7 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/config"
+	"github.com/emoss08/trenova/internal/api/common"
 	"github.com/emoss08/trenova/internal/server"
 	"github.com/emoss08/trenova/pkg/models"
 	"github.com/google/uuid"
@@ -29,14 +30,17 @@ import (
 
 // QualifierCodeService handles business logic for QualifierCode
 type QualifierCodeService struct {
-	db     *bun.DB
+	common.AuditableService
 	logger *config.ServerLogger
 }
 
 // NewQualifierCodeService creates a new instance of QualifierCodeService
 func NewQualifierCodeService(s *server.Server) *QualifierCodeService {
 	return &QualifierCodeService{
-		db:     s.DB,
+		AuditableService: common.AuditableService{
+			DB:           s.DB,
+			AuditService: s.AuditService,
+		},
 		logger: s.Logger,
 	}
 }
@@ -69,9 +73,7 @@ func (s QualifierCodeService) filterQuery(q *bun.SelectQuery, f *QualifierCodeQu
 func (s QualifierCodeService) GetAll(ctx context.Context, filter *QualifierCodeQueryFilter) ([]*models.QualifierCode, int, error) {
 	var entities []*models.QualifierCode
 
-	q := s.db.NewSelect().
-		Model(&entities)
-
+	q := s.DB.NewSelect().Model(&entities)
 	q = s.filterQuery(q, filter)
 
 	count, err := q.ScanAndCount(ctx)
@@ -86,12 +88,7 @@ func (s QualifierCodeService) GetAll(ctx context.Context, filter *QualifierCodeQ
 // Get retrieves a single QualifierCode by ID
 func (s QualifierCodeService) Get(ctx context.Context, id, orgID, buID uuid.UUID) (*models.QualifierCode, error) {
 	entity := new(models.QualifierCode)
-	err := s.db.NewSelect().
-		Model(entity).
-		Where("qc.organization_id = ?", orgID).
-		Where("qc.business_unit_id = ?", buID).
-		Where("qc.id = ?", id).
-		Scan(ctx)
+	err := s.GetByID(ctx, id, orgID, buID, entity)
 	if err != nil {
 		s.logger.Error().Err(err).Msg("Failed to fetch QualifierCode")
 		return nil, fmt.Errorf("failed to fetch QualifierCode: %w", err)
@@ -101,14 +98,8 @@ func (s QualifierCodeService) Get(ctx context.Context, id, orgID, buID uuid.UUID
 }
 
 // Create creates a new QualifierCode
-func (s QualifierCodeService) Create(ctx context.Context, entity *models.QualifierCode) (*models.QualifierCode, error) {
-	err := s.db.RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
-		_, err := tx.NewInsert().
-			Model(entity).
-			Returning("*").
-			Exec(ctx)
-		return err
-	})
+func (s QualifierCodeService) Create(ctx context.Context, entity *models.QualifierCode, userID uuid.UUID) (*models.QualifierCode, error) {
+	_, err := s.CreateWithAudit(ctx, entity, userID)
 	if err != nil {
 		s.logger.Error().Err(err).Msg("Failed to create QualifierCode")
 		return nil, fmt.Errorf("failed to create QualifierCode: %w", err)
@@ -118,14 +109,8 @@ func (s QualifierCodeService) Create(ctx context.Context, entity *models.Qualifi
 }
 
 // UpdateOne updates an existing QualifierCode
-func (s QualifierCodeService) UpdateOne(ctx context.Context, entity *models.QualifierCode) (*models.QualifierCode, error) {
-	err := s.db.RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
-		if err := entity.OptimisticUpdate(ctx, tx); err != nil {
-			return err
-		}
-
-		return nil
-	})
+func (s QualifierCodeService) UpdateOne(ctx context.Context, entity *models.QualifierCode, userID uuid.UUID) (*models.QualifierCode, error) {
+	err := s.UpdateWithAudit(ctx, entity, userID)
 	if err != nil {
 		s.logger.Error().Err(err).Msg("Failed to update QualifierCode")
 		return nil, fmt.Errorf("failed to update QualifierCode: %w", err)

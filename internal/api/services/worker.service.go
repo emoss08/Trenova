@@ -20,24 +20,26 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/config"
+	"github.com/emoss08/trenova/internal/api/common"
 	"github.com/emoss08/trenova/internal/server"
-	"github.com/emoss08/trenova/pkg/gen"
 	"github.com/emoss08/trenova/pkg/models"
 	"github.com/google/uuid"
 	"github.com/uptrace/bun"
 )
 
 type WorkerService struct {
-	db      *bun.DB
-	logger  *config.ServerLogger
-	codeGen *gen.CodeGenerator
+	common.AuditableService
+	logger *config.ServerLogger
 }
 
 func NewWorkerService(s *server.Server) *WorkerService {
 	return &WorkerService{
-		db:      s.DB,
-		logger:  s.Logger,
-		codeGen: s.CodeGenerator,
+		AuditableService: common.AuditableService{
+			DB:            s.DB,
+			AuditService:  s.AuditService,
+			CodeGenerator: s.CodeGenerator,
+		},
+		logger: s.Logger,
 	}
 }
 
@@ -67,7 +69,7 @@ func (s WorkerService) filterQuery(q *bun.SelectQuery, f *WorkerQueryFilter) *bu
 func (s WorkerService) GetAll(ctx context.Context, filter *WorkerQueryFilter) ([]*models.Worker, int, error) {
 	var entities []*models.Worker
 
-	q := s.db.NewSelect().
+	q := s.DB.NewSelect().
 		Model(&entities).
 		Relation("WorkerProfile")
 
@@ -84,12 +86,7 @@ func (s WorkerService) GetAll(ctx context.Context, filter *WorkerQueryFilter) ([
 
 func (s WorkerService) Get(ctx context.Context, id uuid.UUID, orgID, buID uuid.UUID) (*models.Worker, error) {
 	entity := new(models.Worker)
-	err := s.db.NewSelect().
-		Model(entity).
-		Where("wk.organization_id = ?", orgID).
-		Where("wk.business_unit_id = ?", buID).
-		Where("wk.id = ?", id).
-		Scan(ctx)
+	err := s.GetByID(ctx, id, orgID, buID, entity)
 	if err != nil {
 		s.logger.Error().Err(err).Msg("failed to get worker")
 		return nil, err
@@ -98,16 +95,13 @@ func (s WorkerService) Get(ctx context.Context, id uuid.UUID, orgID, buID uuid.U
 	return entity, nil
 }
 
-func (s WorkerService) Create(ctx context.Context, entity *models.Worker) (*models.Worker, error) {
-	err := s.db.RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
-		mkg, mErr := models.QueryWorkerMasterKeyGenerationByOrgID(ctx, s.db, entity.OrganizationID)
-		if mErr != nil {
-			s.logger.Error().Err(mErr).Msg("failed to get worker master key generation")
-			return mErr
-		}
-
-		return entity.InsertWorker(ctx, tx, s.codeGen, mkg.Pattern)
-	})
+func (s WorkerService) Create(ctx context.Context, entity *models.Worker, userID uuid.UUID) (*models.Worker, error) {
+	mkg, err := models.QueryWorkerMasterKeyGenerationByOrgID(ctx, s.DB, entity.OrganizationID)
+	if err != nil {
+		s.logger.Error().Err(err).Msg("failed to get worker master key generation")
+		return nil, err
+	}
+	err = s.CreateWithAuditAndCodeGen(ctx, entity, userID, mkg.Pattern)
 	if err != nil {
 		s.logger.Error().Err(err).Msg("failed to create worker")
 		return nil, err
@@ -116,10 +110,8 @@ func (s WorkerService) Create(ctx context.Context, entity *models.Worker) (*mode
 	return entity, nil
 }
 
-func (s WorkerService) UpdateOne(ctx context.Context, entity *models.Worker) (*models.Worker, error) {
-	err := s.db.RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
-		return entity.UpdateWorker(ctx, tx)
-	})
+func (s WorkerService) UpdateOne(ctx context.Context, entity *models.Worker, userID uuid.UUID) (*models.Worker, error) {
+	err := s.UpdateWithAudit(ctx, entity, userID)
 	if err != nil {
 		s.logger.Error().Err(err).Msg("failed to update worker")
 		return nil, err

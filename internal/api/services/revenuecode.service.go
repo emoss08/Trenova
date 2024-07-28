@@ -21,6 +21,7 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/config"
+	"github.com/emoss08/trenova/internal/api/common"
 	"github.com/emoss08/trenova/internal/server"
 	"github.com/emoss08/trenova/pkg/models"
 	"github.com/google/uuid"
@@ -29,19 +30,22 @@ import (
 
 // RevenueCodeService handles business logic for RevenueCode
 type RevenueCodeService struct {
-	db     *bun.DB
+	common.AuditableService
 	logger *config.ServerLogger
 }
 
 // NewRevenueCodeService creates a new instance of RevenueCodeService
 func NewRevenueCodeService(s *server.Server) *RevenueCodeService {
 	return &RevenueCodeService{
-		db:     s.DB,
+		AuditableService: common.AuditableService{
+			DB:           s.DB,
+			AuditService: s.AuditService,
+		},
 		logger: s.Logger,
 	}
 }
 
-// QueryFilter defines the filter parameters for querying RevenueCode
+// RevenueCodeQueryFilter defines the filter parameters for querying RevenueCode
 type RevenueCodeQueryFilter struct {
 	Query          string
 	OrganizationID uuid.UUID
@@ -69,9 +73,7 @@ func (s RevenueCodeService) filterQuery(q *bun.SelectQuery, f *RevenueCodeQueryF
 func (s RevenueCodeService) GetAll(ctx context.Context, filter *RevenueCodeQueryFilter) ([]*models.RevenueCode, int, error) {
 	var entities []*models.RevenueCode
 
-	q := s.db.NewSelect().
-		Model(&entities)
-
+	q := s.DB.NewSelect().Model(&entities)
 	q = s.filterQuery(q, filter)
 
 	count, err := q.ScanAndCount(ctx)
@@ -86,12 +88,7 @@ func (s RevenueCodeService) GetAll(ctx context.Context, filter *RevenueCodeQuery
 // Get retrieves a single RevenueCode by ID
 func (s RevenueCodeService) Get(ctx context.Context, id, orgID, buID uuid.UUID) (*models.RevenueCode, error) {
 	entity := new(models.RevenueCode)
-	err := s.db.NewSelect().
-		Model(entity).
-		Where("rc.organization_id = ?", orgID).
-		Where("rc.business_unit_id = ?", buID).
-		Where("rc.id = ?", id).
-		Scan(ctx)
+	err := s.GetByID(ctx, id, orgID, buID, entity)
 	if err != nil {
 		s.logger.Error().Err(err).Msg("Failed to fetch RevenueCode")
 		return nil, fmt.Errorf("failed to fetch RevenueCode: %w", err)
@@ -101,14 +98,8 @@ func (s RevenueCodeService) Get(ctx context.Context, id, orgID, buID uuid.UUID) 
 }
 
 // Create creates a new RevenueCode
-func (s RevenueCodeService) Create(ctx context.Context, entity *models.RevenueCode) (*models.RevenueCode, error) {
-	err := s.db.RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
-		_, err := tx.NewInsert().
-			Model(entity).
-			Returning("*").
-			Exec(ctx)
-		return err
-	})
+func (s RevenueCodeService) Create(ctx context.Context, entity *models.RevenueCode, userID uuid.UUID) (*models.RevenueCode, error) {
+	_, err := s.CreateWithAudit(ctx, entity, userID)
 	if err != nil {
 		s.logger.Error().Err(err).Msg("Failed to create RevenueCode")
 		return nil, fmt.Errorf("failed to create RevenueCode: %w", err)
@@ -118,14 +109,8 @@ func (s RevenueCodeService) Create(ctx context.Context, entity *models.RevenueCo
 }
 
 // UpdateOne updates an existing RevenueCode
-func (s RevenueCodeService) UpdateOne(ctx context.Context, entity *models.RevenueCode) (*models.RevenueCode, error) {
-	err := s.db.RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
-		if err := entity.OptimisticUpdate(ctx, tx); err != nil {
-			return err
-		}
-
-		return nil
-	})
+func (s RevenueCodeService) UpdateOne(ctx context.Context, entity *models.RevenueCode, userID uuid.UUID) (*models.RevenueCode, error) {
+	err := s.UpdateWithAudit(ctx, entity, userID)
 	if err != nil {
 		s.logger.Error().Err(err).Msg("Failed to update RevenueCode")
 		return nil, fmt.Errorf("failed to update RevenueCode: %w", err)

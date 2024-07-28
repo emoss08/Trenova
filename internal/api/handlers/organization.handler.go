@@ -19,10 +19,8 @@ import (
 	"github.com/emoss08/trenova/config"
 	"github.com/emoss08/trenova/internal/api/services"
 	"github.com/emoss08/trenova/internal/server"
-	"github.com/emoss08/trenova/pkg/audit"
 	"github.com/emoss08/trenova/pkg/constants"
 	"github.com/emoss08/trenova/pkg/models"
-	"github.com/emoss08/trenova/pkg/models/property"
 	"github.com/emoss08/trenova/pkg/utils"
 	"github.com/gofiber/fiber/v2"
 )
@@ -36,7 +34,6 @@ type OrganizationHandler struct {
 	logger            *config.ServerLogger
 	service           *services.OrganizationService
 	permissionService *services.PermissionService
-	auditService      *audit.Service
 }
 
 func NewOrganizationHandler(s *server.Server) *OrganizationHandler {
@@ -44,14 +41,13 @@ func NewOrganizationHandler(s *server.Server) *OrganizationHandler {
 		logger:            s.Logger,
 		service:           services.NewOrganizationService(s),
 		permissionService: services.NewPermissionService(s.Enforcer),
-		auditService:      s.AuditService,
 	}
 }
 
 func (oh OrganizationHandler) RegisterRoutes(r fiber.Router) {
 	orgAPI := r.Group("/organizations")
 	orgAPI.Get("/", oh.getOrganizationDetails())
-	orgAPI.Put("/:orgID", oh.updateOrganization())
+	orgAPI.Put("/", oh.updateOrganization())
 	orgAPI.Post("/upload-logo", oh.uploadOrganizationLogo())
 	orgAPI.Post("/clear-logo", oh.clearOrganizationLogo())
 }
@@ -90,14 +86,6 @@ func (oh OrganizationHandler) updateOrganization() fiber.Handler {
 			return err
 		}
 
-		orgID := c.Params("orgID")
-		if orgID == "" {
-			return c.Status(fiber.StatusBadRequest).JSON(fiber.Error{
-				Code:    fiber.StatusBadRequest,
-				Message: "orgID is required",
-			})
-		}
-
 		if err = oh.permissionService.CheckUserPermission(c, constants.EntityOrganization, constants.ActionUpdate); err != nil {
 			return c.Status(fiber.StatusForbidden).JSON(fiber.Error{
 				Code:    fiber.StatusForbidden,
@@ -106,6 +94,8 @@ func (oh OrganizationHandler) updateOrganization() fiber.Handler {
 		}
 
 		updatedEntity := new(models.Organization)
+		updatedEntity.BusinessUnitID = ids.BusinessUnitID
+		updatedEntity.ID = ids.OrganizationID
 
 		if err = utils.ParseBodyAndValidate(c, updatedEntity); err != nil {
 			return c.Status(fiber.StatusBadRequest).JSON(err)
@@ -114,13 +104,10 @@ func (oh OrganizationHandler) updateOrganization() fiber.Handler {
 		entity, err := oh.service.UpdateOrganization(c.UserContext(), updatedEntity)
 		if err != nil {
 			oh.logger.Error().Interface("entity", updatedEntity).Err(err).Msg("Failed to update Organization")
-			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Error{
-				Code:    fiber.StatusInternalServerError,
-				Message: err.Error(),
-			})
-		}
+			resp := utils.CreateServiceError(c, err)
 
-		go oh.auditService.LogAction(constants.TableOrganization, entity.ID.String(), property.AuditLogActionUpdate, entity, ids.UserID, ids.OrganizationID, ids.BusinessUnitID)
+			return c.Status(fiber.StatusInternalServerError).JSON(resp)
+		}
 
 		return c.Status(fiber.StatusOK).JSON(entity)
 	}
@@ -153,13 +140,12 @@ func (oh OrganizationHandler) uploadOrganizationLogo() fiber.Handler {
 		entity, err := oh.service.UploadLogo(c.UserContext(), logo, ids.OrganizationID)
 		if err != nil {
 			oh.logger.Error().Str("organizationID", ids.OrganizationID.String()).Err(err).Msg("Failed to upload logo for organization")
+
 			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Error{
 				Code:    fiber.StatusInternalServerError,
 				Message: err.Error(),
 			})
 		}
-
-		go oh.auditService.LogAction(constants.TableOrganization, entity.ID.String(), property.AuditLogActionUpdate, entity, ids.UserID, ids.OrganizationID, ids.BusinessUnitID)
 
 		return c.Status(fiber.StatusOK).JSON(entity)
 	}
@@ -182,13 +168,10 @@ func (oh OrganizationHandler) clearOrganizationLogo() fiber.Handler {
 		entity, err := oh.service.ClearLogo(c.UserContext(), ids.OrganizationID)
 		if err != nil {
 			oh.logger.Error().Str("organizationID", ids.OrganizationID.String()).Err(err).Msg("Failed to clear logo for organization")
-			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Error{
-				Code:    fiber.StatusInternalServerError,
-				Message: err.Error(),
-			})
-		}
+			resp := utils.CreateServiceError(c, err)
 
-		go oh.auditService.LogAction(constants.TableOrganization, entity.ID.String(), property.AuditLogActionUpdate, entity, ids.UserID, ids.OrganizationID, ids.BusinessUnitID)
+			return c.Status(fiber.StatusInternalServerError).JSON(resp)
+		}
 
 		return c.Status(fiber.StatusOK).JSON(entity)
 	}

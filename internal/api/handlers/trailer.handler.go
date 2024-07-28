@@ -19,9 +19,7 @@ import (
 	"fmt"
 
 	"github.com/emoss08/trenova/config"
-	"github.com/emoss08/trenova/pkg/audit"
 	"github.com/emoss08/trenova/pkg/constants"
-	"github.com/emoss08/trenova/pkg/models/property"
 
 	"github.com/emoss08/trenova/internal/api/services"
 	"github.com/emoss08/trenova/internal/server"
@@ -36,7 +34,6 @@ type TrailerHandler struct {
 	logger            *config.ServerLogger
 	service           *services.TrailerService
 	permissionService *services.PermissionService
-	auditService      *audit.Service
 }
 
 func NewTrailerHandler(s *server.Server) *TrailerHandler {
@@ -44,7 +41,6 @@ func NewTrailerHandler(s *server.Server) *TrailerHandler {
 		logger:            s.Logger,
 		service:           services.NewTrailerService(s),
 		permissionService: services.NewPermissionService(s.Enforcer),
-		auditService:      s.AuditService,
 	}
 }
 
@@ -178,13 +174,13 @@ func (h TrailerHandler) Create() fiber.Handler {
 			return c.Status(fiber.StatusBadRequest).JSON(err)
 		}
 
-		entity, err := h.service.Create(c.UserContext(), createdEntity)
+		entity, err := h.service.Create(c.UserContext(), createdEntity, ids.UserID)
 		if err != nil {
 			h.logger.Error().Interface("entity", createdEntity).Err(err).Msg("Failed to create Trailer")
 			resp := utils.CreateServiceError(c, err)
+
 			return c.Status(fiber.StatusInternalServerError).JSON(resp)
 		}
-		go h.auditService.LogAction(constants.TableTrailer, entity.ID.String(), property.AuditLogActionCreate, entity, ids.UserID, ids.OrganizationID, ids.BusinessUnitID)
 
 		return c.Status(fiber.StatusCreated).JSON(entity)
 	}
@@ -205,7 +201,7 @@ func (h TrailerHandler) Update() fiber.Handler {
 			})
 		}
 
-		if err = h.permissionService.CheckUserPermission(c, constants.EntityTrailer, constants.ActionUpdate); err != nil {
+		if err := h.permissionService.CheckUserPermission(c, constants.EntityTrailer, constants.ActionUpdate); err != nil {
 			return c.Status(fiber.StatusForbidden).JSON(fiber.Error{
 				Code:    fiber.StatusForbidden,
 				Message: err.Error(),
@@ -214,20 +210,19 @@ func (h TrailerHandler) Update() fiber.Handler {
 
 		updatedEntity := new(models.Trailer)
 
-		if err = utils.ParseBodyAndValidate(c, updatedEntity); err != nil {
+		if err := utils.ParseBodyAndValidate(c, updatedEntity); err != nil {
 			return c.Status(fiber.StatusBadRequest).JSON(err)
 		}
 
 		updatedEntity.ID = uuid.MustParse(trailerID)
 
-		entity, err := h.service.UpdateOne(c.UserContext(), updatedEntity)
+		entity, err := h.service.UpdateOne(c.UserContext(), updatedEntity, ids.UserID)
 		if err != nil {
 			h.logger.Error().Interface("entity", updatedEntity).Err(err).Msg("Failed to update Trailer")
 			resp := utils.CreateServiceError(c, err)
+
 			return c.Status(fiber.StatusInternalServerError).JSON(resp)
 		}
-
-		go h.auditService.LogAction(constants.TableTrailer, entity.ID.String(), property.AuditLogActionUpdate, entity, ids.UserID, ids.OrganizationID, ids.BusinessUnitID)
 
 		return c.Status(fiber.StatusOK).JSON(entity)
 	}

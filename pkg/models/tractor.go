@@ -21,6 +21,9 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/emoss08/trenova/pkg/audit"
+	"github.com/emoss08/trenova/pkg/constants"
+	"github.com/emoss08/trenova/pkg/models/property"
 	"github.com/emoss08/trenova/pkg/validator"
 	"github.com/jackc/pgx/v5/pgtype"
 
@@ -72,11 +75,59 @@ func (c Tractor) Validate() error {
 		validation.Field(&c.Code, validation.Required, validation.Length(1, 50)),
 		validation.Field(&c.BusinessUnitID, validation.Required.Error("Business Unit is required. Please try again."), is.UUIDv4),
 		validation.Field(&c.EquipmentTypeID, validation.Required.Error("Equipment Type is required. Please try again."), is.UUIDv4),
-		validation.Field(&c.EquipmentManufacturerID, validation.Required.Error("Equipment Manufacturer is required. Please try again."), is.UUIDv4),
 		validation.Field(&c.LeasedDate, validation.When(c.IsLeased, validation.NotNil)),
 		validation.Field(&c.OrganizationID, validation.Required.Error("OrganizationID is required. Please try again."), is.UUIDv4),
 		validation.Field(&c.SecondaryWorkerID, validation.By(validateWorkers(c.PrimaryWorkerID, c.SecondaryWorkerID))),
 	)
+}
+
+func (c *Tractor) Insert(ctx context.Context, tx bun.IDB, auditService *audit.Service, user audit.AuditUser) error {
+	if err := c.Validate(); err != nil {
+		return err
+	}
+
+	if _, err := tx.NewInsert().Model(c).Returning("*").Exec(ctx); err != nil {
+		return err
+	}
+
+	auditService.LogAction(
+		constants.TableTractor,
+		c.ID.String(),
+		property.AuditLogActionCreate,
+		user,
+		c.OrganizationID,
+		c.BusinessUnitID,
+		audit.WithDiff(nil, c),
+	)
+
+	return nil
+}
+
+func (c *Tractor) UpdateOne(ctx context.Context, tx bun.IDB, auditService *audit.Service, user audit.AuditUser) error {
+	original := new(Tractor)
+	if err := tx.NewSelect().Model(original).Where("id = ?", c.ID).Scan(ctx); err != nil {
+		return validator.BusinessLogicError{Message: err.Error()}
+	}
+
+	if err := c.Validate(); err != nil {
+		return err
+	}
+
+	if err := c.OptimisticUpdate(ctx, tx); err != nil {
+		return err
+	}
+
+	auditService.LogAction(
+		constants.TableTractor,
+		c.ID.String(),
+		property.AuditLogActionUpdate,
+		user,
+		c.OrganizationID,
+		c.BusinessUnitID,
+		audit.WithDiff(original, c),
+	)
+
+	return nil
 }
 
 func (c *Tractor) BeforeUpdate(_ context.Context) error {
