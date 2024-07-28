@@ -24,10 +24,12 @@ import (
 )
 
 type MasterKeyGeneration struct {
-	bun.BaseModel  `bun:"table:master_key_generations,alias:mkg" json:"-"`
-	CreatedAt      time.Time `bun:",nullzero,notnull,default:current_timestamp" json:"createdAt"`
-	UpdatedAt      time.Time `bun:",nullzero,notnull,default:current_timestamp" json:"updatedAt"`
-	ID             uuid.UUID `bun:",pk,type:uuid,default:uuid_generate_v4()" json:"id"`
+	bun.BaseModel `bun:"table:master_key_generations,alias:mkg" json:"-"`
+	ID            uuid.UUID `bun:",pk,type:uuid,default:uuid_generate_v4()" json:"id"`
+
+	CreatedAt time.Time `bun:",nullzero,notnull,default:current_timestamp" json:"createdAt"`
+	UpdatedAt time.Time `bun:",nullzero,notnull,default:current_timestamp" json:"updatedAt"`
+
 	BusinessUnitID uuid.UUID `bun:"type:uuid,notnull" json:"businessUnitId"`
 	OrganizationID uuid.UUID `bun:"type:uuid,notnull" json:"organizationId"`
 

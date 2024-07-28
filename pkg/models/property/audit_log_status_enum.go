@@ -26,7 +26,7 @@ type AuditLogAction string
 const (
 	AuditLogActionCreate = AuditLogAction("CREATE")
 	AuditLogActionUpdate = AuditLogAction("UPDATE")
-	AuditLogActionDelete = AuditLogAction("DELETE")
+	AuditLogActionView   = AuditLogAction("VIEW")
 )
 
 func (o AuditLogAction) String() string {
@@ -34,7 +34,7 @@ func (o AuditLogAction) String() string {
 }
 
 func (AuditLogAction) Values() []string {
-	return []string{"CREATE", "UPDATE", "DELETE"}
+	return []string{"CREATE", "UPDATE", "VIEW"}
 }
 
 func (o AuditLogAction) Value() (driver.Value, error) {

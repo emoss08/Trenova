@@ -20,6 +20,10 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/emoss08/trenova/pkg/audit"
+	"github.com/emoss08/trenova/pkg/constants"
+
+	"github.com/emoss08/trenova/pkg/models/property"
 	"github.com/emoss08/trenova/pkg/validator"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
 
@@ -30,20 +34,20 @@ import (
 type Commodity struct {
 	bun.BaseModel `bun:"table:commodities,alias:com" json:"-"`
 
-	ID            uuid.UUID `bun:",pk,type:uuid,default:uuid_generate_v4()" json:"id"`
-	Name          string    `bun:"type:VARCHAR(100),notnull" json:"name" queryField:"true"`
-	Status        string    `bun:"type:status_enum,notnull,default:'Active'" json:"status"`
-	IsHazmat      bool      `bun:"type:boolean,notnull,default:false" json:"isHazmat"`
-	UnitOfMeasure string    `bun:"type:VARCHAR(50),notnull" json:"unitOfMeasure"`
-	MinTemp       *int16    `bun:"type:integer,nullzero" json:"minTemp"`
-	MaxTemp       *int16    `bun:"type:integer,nullzero" json:"maxTemp"`
-	Version       int64     `bun:"type:BIGINT" json:"version"`
-	CreatedAt     time.Time `bun:",nullzero,notnull,default:current_timestamp" json:"createdAt"`
-	UpdatedAt     time.Time `bun:",nullzero,notnull,default:current_timestamp" json:"updatedAt"`
+	ID            uuid.UUID       `bun:",pk,type:uuid,default:uuid_generate_v4()" json:"id"`
+	Name          string          `bun:"type:VARCHAR(100),notnull" json:"name" queryField:"true"`
+	Status        property.Status `bun:"type:status_enum,notnull,default:'Active'" json:"status"`
+	IsHazmat      bool            `bun:"type:boolean,notnull,default:false" json:"isHazmat"`
+	UnitOfMeasure string          `bun:"type:VARCHAR(50),notnull" json:"unitOfMeasure"`
+	MinTemp       *int16          `bun:"type:integer,nullzero" json:"minTemp"`
+	MaxTemp       *int16          `bun:"type:integer,nullzero" json:"maxTemp"`
+	Version       int64           `bun:"type:BIGINT" json:"version"`
+	CreatedAt     time.Time       `bun:",nullzero,notnull,default:current_timestamp" json:"createdAt"`
+	UpdatedAt     time.Time       `bun:",nullzero,notnull,default:current_timestamp" json:"updatedAt"`
 
-	BusinessUnitID      uuid.UUID `bun:"type:uuid,notnull" json:"businessUnitId"`
-	OrganizationID      uuid.UUID `bun:"type:uuid,notnull" json:"organizationId"`
-	HazardousMaterialID uuid.UUID `bun:"type:uuid" json:"hazardousMaterialId"`
+	BusinessUnitID      uuid.UUID  `bun:"type:uuid,notnull" json:"businessUnitId"`
+	OrganizationID      uuid.UUID  `bun:"type:uuid,notnull" json:"organizationId"`
+	HazardousMaterialID *uuid.UUID `bun:"type:uuid,nullzero" json:"hazardousMaterialId"`
 
 	BusinessUnit      *BusinessUnit      `bun:"rel:belongs-to,join:business_unit_id=id" json:"-"`
 	Organization      *Organization      `bun:"rel:belongs-to,join:organization_id=id" json:"-"`
@@ -58,8 +62,57 @@ func (c Commodity) Validate() error {
 		validation.Field(&c.OrganizationID, validation.Required),
 		validation.Field(&c.IsHazmat,
 			validation.Required.Error("IsHazmat is required. Please Try again."),
-			validation.When(c.HazardousMaterialID != uuid.Nil, validation.Required.Error("Hazardous Material is required when IsHazmat is true. Please try again."))),
+			validation.When(c.HazardousMaterialID != nil, validation.Required.Error("Hazardous Material is required when IsHazmat is true. Please try again."))),
 	)
+}
+
+func (c *Commodity) Insert(ctx context.Context, tx bun.IDB, auditService *audit.Service, user audit.AuditUser) error {
+	if err := c.Validate(); err != nil {
+		return err
+	}
+
+	if _, err := tx.NewInsert().Model(c).Returning("*").Exec(ctx); err != nil {
+		return err
+	}
+
+	auditService.LogAction(
+		constants.TableCommodity,
+		c.ID.String(),
+		property.AuditLogActionCreate,
+		user,
+		c.OrganizationID,
+		c.BusinessUnitID,
+		audit.WithDiff(nil, c),
+	)
+
+	return nil
+}
+
+func (c *Commodity) UpdateOne(ctx context.Context, tx bun.IDB, auditService *audit.Service, user audit.AuditUser) error {
+	original := new(Commodity)
+	if err := tx.NewSelect().Model(original).Where("id = ?", c.ID).Scan(ctx); err != nil {
+		return validator.BusinessLogicError{Message: err.Error()}
+	}
+
+	if err := c.Validate(); err != nil {
+		return err
+	}
+
+	if err := c.OptimisticUpdate(ctx, tx); err != nil {
+		return err
+	}
+
+	auditService.LogAction(
+		constants.TableCommodity,
+		c.ID.String(),
+		property.AuditLogActionUpdate,
+		user,
+		c.OrganizationID,
+		c.BusinessUnitID,
+		audit.WithDiff(original, c),
+	)
+
+	return nil
 }
 
 func (c *Commodity) BeforeUpdate(_ context.Context) error {

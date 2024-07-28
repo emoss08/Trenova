@@ -38,7 +38,13 @@ func (f *StateFactory) CreateUSState(ctx context.Context) (*models.UsState, erro
 		CountryIso3:  "USA",
 	}
 
-	_, err := f.db.NewInsert().Model(state).Exec(ctx)
+	// check if the state already exist.
+	err := f.db.NewSelect().Model(state).Where("name = ?", state.Name).Scan(ctx)
+	if err == nil {
+		return state, nil
+	}
+
+	_, err = f.db.NewInsert().Model(state).Exec(ctx)
 	if err != nil {
 		return nil, err
 	}

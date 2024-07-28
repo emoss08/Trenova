@@ -20,6 +20,8 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/emoss08/trenova/pkg/audit"
+	"github.com/emoss08/trenova/pkg/constants"
 	"github.com/emoss08/trenova/pkg/models/property"
 	"github.com/emoss08/trenova/pkg/validator"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
@@ -31,18 +33,19 @@ import (
 type WorkerProfile struct {
 	bun.BaseModel `bun:"table:worker_profiles,alias:wkp" json:"-"`
 
-	ID                   uuid.UUID                  `bun:",pk,type:uuid,default:uuid_generate_v4()" json:"id"`
-	DateOfBirth          *pgtype.Date               `bun:"type:date,nullzero" json:"dateOfBirth"`
-	LicenseNumber        string                     `bun:"type:VARCHAR(50),notnull" json:"licenseNumber"`
-	Endorsements         property.WorkerEndorsement `bun:"type:worker_endorsement_enum,default:'None',notnull" json:"endorsements"`
-	HazmatExpirationDate *pgtype.Date               `bun:"type:date,nullzero" json:"hazmatExpirationDate"`
-	HireDate             *pgtype.Date               `bun:"type:date,nullzero" json:"hireDate"`
-	TerminationDate      *pgtype.Date               `bun:"type:date,nullzero" json:"terminationDate"`
-	PhysicalDueDate      *pgtype.Date               `bun:"type:date,nullzero" json:"physicalDueDate"`
-	MVRDueDate           *pgtype.Date               `bun:"type:date,nullzero" json:"mvrDueDate"`
-	Version              int64                      `bun:"type:BIGINT" json:"version"`
-	CreatedAt            time.Time                  `bun:",nullzero,notnull,default:current_timestamp" json:"createdAt"`
-	UpdatedAt            time.Time                  `bun:",nullzero,notnull,default:current_timestamp" json:"updatedAt"`
+	ID                    uuid.UUID                  `bun:",pk,type:uuid,default:uuid_generate_v4()" json:"id"`
+	DateOfBirth           *pgtype.Date               `bun:"type:date,nullzero" json:"dateOfBirth"`
+	LicenseNumber         string                     `bun:"type:VARCHAR(50),notnull" json:"licenseNumber"`
+	Endorsements          property.WorkerEndorsement `bun:"type:worker_endorsement_enum,default:'None',notnull" json:"endorsements"`
+	HazmatExpirationDate  *pgtype.Date               `bun:"type:date,nullzero" json:"hazmatExpirationDate"`
+	LicenseExpirationDate *pgtype.Date               `bun:"type:date,nullzero" json:"licenseExpirationDate"`
+	HireDate              *pgtype.Date               `bun:"type:date,nullzero" json:"hireDate"`
+	TerminationDate       *pgtype.Date               `bun:"type:date,nullzero" json:"terminationDate"`
+	PhysicalDueDate       *pgtype.Date               `bun:"type:date,nullzero" json:"physicalDueDate"`
+	MVRDueDate            *pgtype.Date               `bun:"type:date,nullzero" json:"mvrDueDate"`
+	Version               int64                      `bun:"type:BIGINT" json:"version"`
+	CreatedAt             time.Time                  `bun:",nullzero,notnull,default:current_timestamp" json:"createdAt"`
+	UpdatedAt             time.Time                  `bun:",nullzero,notnull,default:current_timestamp" json:"updatedAt"`
 
 	StateID        *uuid.UUID `bun:"type:uuid,nullzero" json:"stateId"`
 	WorkerID       uuid.UUID  `bun:"type:uuid,notnull" json:"workerId"`
@@ -66,6 +69,51 @@ func (wp WorkerProfile) Validate() error {
 
 func (wp *WorkerProfile) BeforeUpdate(_ context.Context) error {
 	wp.Version++
+
+	return nil
+}
+
+func (wp *WorkerProfile) Insert(ctx context.Context, tx bun.IDB, auditService *audit.Service, user audit.AuditUser) error {
+	if err := wp.Validate(); err != nil {
+		return err
+	}
+
+	if _, err := tx.NewInsert().Model(wp).Returning("*").Exec(ctx); err != nil {
+		return err
+	}
+
+	auditService.LogAction(
+		constants.TableWorkerProfile,
+		wp.ID.String(),
+		property.AuditLogActionCreate,
+		user,
+		wp.OrganizationID,
+		wp.BusinessUnitID,
+		audit.WithDiff(nil, wp),
+	)
+
+	return nil
+}
+
+func (wp *WorkerProfile) UpdateOne(ctx context.Context, tx bun.IDB, auditService *audit.Service, user audit.AuditUser) error {
+	original := new(WorkerProfile)
+	if err := tx.NewSelect().Model(original).Where("id = ?", wp.ID).Scan(ctx); err != nil {
+		return err
+	}
+
+	if err := wp.OptimisticUpdate(ctx, tx); err != nil {
+		return err
+	}
+
+	auditService.LogAction(
+		constants.TableWorkerProfile,
+		wp.ID.String(),
+		property.AuditLogActionUpdate,
+		user,
+		wp.OrganizationID,
+		wp.BusinessUnitID,
+		audit.WithDiff(original, wp),
+	)
 
 	return nil
 }

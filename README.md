@@ -12,7 +12,7 @@ in the transportation and logistics sector.**
 [**Discover Trenova Beam: Revolutionizing Logistics with Specialized LLM Technology**](https://github.com/emoss08/Trenova/blob/main/beam.md)
 </div>
 
-### Disclaimers:
+### Disclaimers
 
 - **Development Phase**: Trenova Suite is currently under development. The current version is a prototype and is not
   suitable for production deployment.

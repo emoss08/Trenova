@@ -25,6 +25,19 @@ $$
     END
 $$;
 
+DO
+$$
+    BEGIN
+        IF NOT EXISTS (SELECT 1
+                       FROM pg_type
+                       WHERE typname = 'log_status_enum') THEN CREATE TYPE log_status_enum AS ENUM ('ATTEMPTED', 'SUCCEEDED', 'FAILED', 'ERROR');
+
+        END IF;
+
+    END
+$$;
+
+
 CREATE TABLE IF NOT EXISTS "audit_logs"
 (
     "id"               uuid                  NOT NULL DEFAULT uuid_generate_v4(),
@@ -33,7 +46,11 @@ CREATE TABLE IF NOT EXISTS "audit_logs"
     "table_name"       varchar(255)          NOT NULL,
     "entity_id"        varchar(255)          NOT NULL,
     "action"           audit_log_status_enum NOT NULL,
-    "data"             jsonb,
+    "changes"          jsonb,
+    "description"      TEXT,
+    "username"         varchar(255)          NOT NULL,
+    "error_message"    TEXT,
+    "status"           log_status_enum       NOT NULL DEFAULT 'ATTEMPTED',
     "user_id"          uuid                  NOT NULL,
     "timestamp"        TIMESTAMPTZ           NOT NULL DEFAULT current_timestamp,
     PRIMARY KEY ("id"),

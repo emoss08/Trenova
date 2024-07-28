@@ -21,6 +21,7 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/config"
+	"github.com/emoss08/trenova/internal/api/common"
 	"github.com/emoss08/trenova/internal/server"
 	"github.com/emoss08/trenova/pkg/models"
 	"github.com/google/uuid"
@@ -29,19 +30,22 @@ import (
 
 // CommodityService handles business logic for Commodity
 type CommodityService struct {
-	db     *bun.DB
+	common.AuditableService
 	logger *config.ServerLogger
 }
 
 // NewCommodityService creates a new instance of CommodityService
 func NewCommodityService(s *server.Server) *CommodityService {
 	return &CommodityService{
-		db:     s.DB,
+		AuditableService: common.AuditableService{
+			DB:           s.DB,
+			AuditService: s.AuditService,
+		},
 		logger: s.Logger,
 	}
 }
 
-// QueryFilter defines the filter parameters for querying Commodity
+// CommodityQueryFilter defines the filter parameters for querying Commodity
 type CommodityQueryFilter struct {
 	Query          string
 	OrganizationID uuid.UUID
@@ -69,9 +73,7 @@ func (s CommodityService) filterQuery(q *bun.SelectQuery, f *CommodityQueryFilte
 func (s CommodityService) GetAll(ctx context.Context, filter *CommodityQueryFilter) ([]*models.Commodity, int, error) {
 	var entities []*models.Commodity
 
-	q := s.db.NewSelect().
-		Model(&entities)
-
+	q := s.DB.NewSelect().Model(&entities)
 	q = s.filterQuery(q, filter)
 
 	count, err := q.ScanAndCount(ctx)
@@ -86,12 +88,7 @@ func (s CommodityService) GetAll(ctx context.Context, filter *CommodityQueryFilt
 // Get retrieves a single Commodity by ID
 func (s CommodityService) Get(ctx context.Context, id, orgID, buID uuid.UUID) (*models.Commodity, error) {
 	entity := new(models.Commodity)
-	err := s.db.NewSelect().
-		Model(entity).
-		Where("com.organization_id = ?", orgID).
-		Where("com.business_unit_id = ?", buID).
-		Where("com.id = ?", id).
-		Scan(ctx)
+	err := s.GetByID(ctx, id, orgID, buID, entity)
 	if err != nil {
 		s.logger.Error().Err(err).Msg("Failed to fetch Commodity")
 		return nil, fmt.Errorf("failed to fetch Commodity: %w", err)
@@ -101,14 +98,8 @@ func (s CommodityService) Get(ctx context.Context, id, orgID, buID uuid.UUID) (*
 }
 
 // Create creates a new Commodity
-func (s CommodityService) Create(ctx context.Context, entity *models.Commodity) (*models.Commodity, error) {
-	err := s.db.RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
-		_, err := tx.NewInsert().
-			Model(entity).
-			Returning("*").
-			Exec(ctx)
-		return err
-	})
+func (s CommodityService) Create(ctx context.Context, entity *models.Commodity, userID uuid.UUID) (*models.Commodity, error) {
+	_, err := s.CreateWithAudit(ctx, entity, userID)
 	if err != nil {
 		s.logger.Error().Err(err).Msg("Failed to create Commodity")
 		return nil, fmt.Errorf("failed to create Commodity: %w", err)
@@ -118,14 +109,8 @@ func (s CommodityService) Create(ctx context.Context, entity *models.Commodity) 
 }
 
 // UpdateOne updates an existing Commodity
-func (s CommodityService) UpdateOne(ctx context.Context, entity *models.Commodity) (*models.Commodity, error) {
-	err := s.db.RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
-		if err := entity.OptimisticUpdate(ctx, tx); err != nil {
-			return err
-		}
-
-		return nil
-	})
+func (s CommodityService) UpdateOne(ctx context.Context, entity *models.Commodity, userID uuid.UUID) (*models.Commodity, error) {
+	err := s.UpdateWithAudit(ctx, entity, userID)
 	if err != nil {
 		s.logger.Error().Err(err).Msg("Failed to update Commodity")
 		return nil, fmt.Errorf("failed to update Commodity: %w", err)

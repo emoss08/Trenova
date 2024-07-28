@@ -21,6 +21,7 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/config"
+	"github.com/emoss08/trenova/internal/api/common"
 	"github.com/emoss08/trenova/internal/server"
 	"github.com/emoss08/trenova/pkg/models"
 	"github.com/google/uuid"
@@ -29,19 +30,22 @@ import (
 
 // CommentTypeService handles business logic for CommentType
 type CommentTypeService struct {
-	db     *bun.DB
+	common.AuditableService
 	logger *config.ServerLogger
 }
 
 // NewCommentTypeService creates a new instance of CommentTypeService
 func NewCommentTypeService(s *server.Server) *CommentTypeService {
 	return &CommentTypeService{
-		db:     s.DB,
+		AuditableService: common.AuditableService{
+			DB:           s.DB,
+			AuditService: s.AuditService,
+		},
 		logger: s.Logger,
 	}
 }
 
-// QueryFilter defines the filter parameters for querying CommentType
+// CommentTypeQueryFilter defines the filter parameters for querying CommentType
 type CommentTypeQueryFilter struct {
 	Query          string
 	OrganizationID uuid.UUID
@@ -69,9 +73,7 @@ func (s CommentTypeService) filterQuery(q *bun.SelectQuery, f *CommentTypeQueryF
 func (s CommentTypeService) GetAll(ctx context.Context, filter *CommentTypeQueryFilter) ([]*models.CommentType, int, error) {
 	var entities []*models.CommentType
 
-	q := s.db.NewSelect().
-		Model(&entities)
-
+	q := s.DB.NewSelect().Model(&entities)
 	q = s.filterQuery(q, filter)
 
 	count, err := q.ScanAndCount(ctx)
@@ -86,12 +88,7 @@ func (s CommentTypeService) GetAll(ctx context.Context, filter *CommentTypeQuery
 // Get retrieves a single CommentType by ID
 func (s CommentTypeService) Get(ctx context.Context, id, orgID, buID uuid.UUID) (*models.CommentType, error) {
 	entity := new(models.CommentType)
-	err := s.db.NewSelect().
-		Model(entity).
-		Where("ct.organization_id = ?", orgID).
-		Where("ct.business_unit_id = ?", buID).
-		Where("ct.id = ?", id).
-		Scan(ctx)
+	err := s.GetByID(ctx, id, orgID, buID, entity)
 	if err != nil {
 		s.logger.Error().Err(err).Msg("Failed to fetch CommentType")
 		return nil, fmt.Errorf("failed to fetch CommentType: %w", err)
@@ -101,14 +98,8 @@ func (s CommentTypeService) Get(ctx context.Context, id, orgID, buID uuid.UUID) 
 }
 
 // Create creates a new CommentType
-func (s CommentTypeService) Create(ctx context.Context, entity *models.CommentType) (*models.CommentType, error) {
-	err := s.db.RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
-		_, err := tx.NewInsert().
-			Model(entity).
-			Returning("*").
-			Exec(ctx)
-		return err
-	})
+func (s CommentTypeService) Create(ctx context.Context, entity *models.CommentType, userID uuid.UUID) (*models.CommentType, error) {
+	_, err := s.CreateWithAudit(ctx, entity, userID)
 	if err != nil {
 		s.logger.Error().Err(err).Msg("Failed to create CommentType")
 		return nil, fmt.Errorf("failed to create CommentType: %w", err)
@@ -118,14 +109,8 @@ func (s CommentTypeService) Create(ctx context.Context, entity *models.CommentTy
 }
 
 // UpdateOne updates an existing CommentType
-func (s CommentTypeService) UpdateOne(ctx context.Context, entity *models.CommentType) (*models.CommentType, error) {
-	err := s.db.RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
-		if err := entity.OptimisticUpdate(ctx, tx); err != nil {
-			return err
-		}
-
-		return nil
-	})
+func (s CommentTypeService) UpdateOne(ctx context.Context, entity *models.CommentType, userID uuid.UUID) (*models.CommentType, error) {
+	err := s.UpdateWithAudit(ctx, entity, userID)
 	if err != nil {
 		s.logger.Error().Err(err).Msg("Failed to update CommentType")
 		return nil, fmt.Errorf("failed to update CommentType: %w", err)

@@ -36,7 +36,13 @@ func (b *BusinessUnitFactory) CreateBusinessUnit(ctx context.Context) (*models.B
 		PhoneNumber: "704-555-1212",
 	}
 
-	_, err := b.db.NewInsert().Model(bu).Exec(ctx)
+	// Check if the business unit already exist.
+	err := b.db.NewSelect().Model(bu).Where("name = ?", bu.Name).Scan(ctx)
+	if err == nil {
+		return bu, nil
+	}
+
+	_, err = b.db.NewInsert().Model(bu).Exec(ctx)
 	if err != nil {
 		return nil, err
 	}

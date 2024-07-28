@@ -21,6 +21,11 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/emoss08/trenova/pkg/audit"
+	"github.com/emoss08/trenova/pkg/constants"
+
+	"github.com/rs/zerolog/log"
+
 	"github.com/emoss08/trenova/pkg/models/property"
 	"github.com/emoss08/trenova/pkg/validator"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
@@ -82,7 +87,7 @@ type Shipment struct {
 	VoidedComment            string                        `bun:"type:TEXT" json:"voidedComment"`
 	AutoRated                bool                          `bun:",notnull,default:false" json:"autoRated"`
 	EntryMethod              string                        `bun:"type:VARCHAR(20)" json:"entryMethod"`
-	IsHazardous              bool                          `bun:",notnull,default:false" json:"isHarzardous"`
+	IsHazardous              bool                          `bun:",notnull,default:false" json:"isHazardous"`
 	EstimatedDeliveryDate    *pgtype.Date                  `bun:"type:date,nullzero" json:"estimatedDeliveryDate"`
 	ActualDeliveryDate       *pgtype.Date                  `bun:"type:date,nullzero" json:"actualDeliveryDate"`
 	Priority                 int                           `bun:"type:integer,notnull,default:0" json:"priority"`
@@ -141,39 +146,50 @@ func (s Shipment) Validate() error {
 		validation.Field(&s.ShipmentMoves))
 }
 
-func (s *Shipment) BeforeUpdate(_ context.Context) error {
-	s.Version++
+// DBValidate validates the Shipment struct against the database.
+func (s *Shipment) DBValidate(ctx context.Context, tx bun.IDB) error {
+	var multiErr validator.MultiValidationError
+
+	if err := s.Validate(); err != nil {
+		return err
+	}
+
+	shipControl, err := QueryShipmentControlByOrgID(ctx, tx, s.OrganizationID)
+	if err != nil {
+		log.Error().Err(err).Str("orgID", s.OrganizationID.String()).Msg("Failed to fetch shipment controls")
+		return err
+	}
+
+	// Validate the revenue if EnforceRevenue is enabled in Shipment Controls
+	s.validateRevenueCode(shipControl, multiErr)
+
+	// Validate the voided comment if EnforceVoidedComm is enabled in Shipment Controls
+	s.validateEnforceVoidedComm(shipControl, multiErr)
+
+	// Validate the origin and destination locations are not the same if enabled in Shipment Controls
+	s.CompareOriginDestination(shipControl, multiErr)
+
+	// Validate the delivery date is after the ship date
+	s.validateDeliveryDate(s.ShipDate, s.EstimatedDeliveryDate, multiErr)
+
+	// Check for duplicate BOLs
+	if err = s.checkForDuplicateBOLs(ctx, tx, s.OrganizationID, multiErr); err != nil {
+		return err
+	}
+
+	// Validate the status transition
+	if err = s.validateStatusTransition(ctx, tx, multiErr); err != nil {
+		return err
+	}
+
+	if len(multiErr.Errors) > 0 {
+		return multiErr
+	}
 
 	return nil
 }
 
-func (s *Shipment) OptimisticUpdate(ctx context.Context, tx bun.IDB) error {
-	ov := s.Version
-
-	if err := s.BeforeUpdate(ctx); err != nil {
-		return err
-	}
-
-	result, err := tx.NewUpdate().Model(s).WherePK().Where("version = ?", ov).Exec(ctx)
-	if err != nil {
-		return err
-	}
-
-	rows, err := result.RowsAffected()
-	if err != nil {
-		return err
-	}
-
-	if rows == 0 {
-		return &validator.BusinessLogicError{
-			Message: fmt.Sprintf("Version mismatch. The Shipment (ID: %s) has been updated by another user. Please refresh and try again.", s.ID),
-		}
-	}
-
-	return nil
-}
-
-// UpdateShipmentstatus updates the shipment status based on its movements.
+// UpdateStatus updates the shipment status based on its movements.
 func (s *Shipment) UpdateStatus(ctx context.Context, db *bun.DB) error {
 	// Fetch all movements for this shipment
 	var movements []*ShipmentMove
@@ -216,10 +232,11 @@ func (s *Shipment) UpdateStatus(ctx context.Context, db *bun.DB) error {
 }
 
 // GetMoveByID fetches a shipment move by its ID.
-func (s Shipment) GetMoveByID(ctx context.Context, db *bun.DB, moveID uuid.UUID) (*ShipmentMove, error) {
+func (s *Shipment) GetMoveByID(ctx context.Context, db *bun.DB, moveID uuid.UUID) (*ShipmentMove, error) {
 	var move ShipmentMove
 	err := db.NewSelect().Model(&move).Where("id = ?", moveID).Scan(ctx)
 	if err != nil {
+		log.Error().Err(err).Str("moveID", moveID.String()).Msg("Failed to fetch shipment move")
 		return nil, err
 	}
 
@@ -251,77 +268,93 @@ func (s *Shipment) MarkReadyToBill() error {
 	return nil
 }
 
-func (s Shipment) DBValidate(ctx context.Context, db *bun.DB) error {
-	var multiErr validator.MultiValidationError
-	var dbValidationErr *validator.DBValidationError
+func (s *Shipment) UpdateOne(ctx context.Context, tx bun.IDB, auditService *audit.Service, user audit.AuditUser) error {
+	//original := new(Customer)
+	//if err := tx.NewSelect().Model(original).Where("id = ?", c.ID).Scan(ctx); err != nil {
+	//	return err
+	//}
+	//
+	//if err := c.OptimisticUpdate(ctx, tx); err != nil {
+	//	return err
+	//}
+	//
+	//auditService.LogAction(
+	//	constants.TableCustomer,
+	//	c.ID.String(),
+	//	property.AuditLogActionUpdate,
+	//	user,
+	//	c.OrganizationID,
+	//	c.BusinessUnitID,
+	//	audit.WithDiff(original, c),
+	//)
+	//
+	//return nil
+	return errors.New("not implemented")
+}
 
-	if err := s.Validate(); err != nil {
-		return err
+// checkForDuplicateBOLs checks for duplicate BOLs in the database by organization ID.
+func (s *Shipment) checkForDuplicateBOLs(ctx context.Context, tx bun.IDB, orgID uuid.UUID, multiErr validator.MultiValidationError) error {
+	var duplicateBOLs []*string
+	err := tx.NewSelect().
+		Model((*Shipment)(nil)).
+		ColumnExpr("DISTINCT bill_of_lading").
+		Where("organization_id = ?", orgID).
+		Where("bill_of_lading = ?", s.BillOfLading).
+		Scan(ctx, &duplicateBOLs)
+	if err != nil {
+		log.Error().Err(err).Str("orgID", orgID.String()).Msg("Failed to fetch shipments with duplicate BOLs")
+		return &validator.BusinessLogicError{Message: "Failed to fetch shipments with duplicate BOLs"}
 	}
 
-	if err := s.validateStatusTransition(ctx, db); err != nil {
-		if errors.As(err, &dbValidationErr) {
-			multiErr.Errors = append(multiErr.Errors, *dbValidationErr)
-		} else {
-			return err
-		}
-	}
-
-	// if err := validateTotalChargeAmount(s.FreightChargeAmount, s.OtherChargeAmount, s.TotalChargeAmount); err != nil {
-	// 	if errors.As(err, &dbValidationErr) {
-	// 		multiErr.Errors = append(multiErr.Errors, *dbValidationErr)
-	// 	} else {
-	// 		return err
-	// 	}
-	// }
-
-	if err := validateDeliveryDate(s.ShipDate, s.EstimatedDeliveryDate); err != nil {
-		if errors.As(err, &dbValidationErr) {
-			multiErr.Errors = append(multiErr.Errors, *dbValidationErr)
-		} else {
-			return err
-		}
-	}
-
-	if len(multiErr.Errors) > 0 {
-		return multiErr
+	if len(duplicateBOLs) > 0 {
+		multiErr.Errors = append(multiErr.Errors, validator.DBValidationError{
+			Field:   "billOfLading",
+			Message: fmt.Sprintf("Bill of lading %s already exists in the system. Please try again.", s.BillOfLading),
+		})
 	}
 
 	return nil
 }
 
-// validateDeliveryDate validates that the estimated delivery date is after the ship date.
-func validateDeliveryDate(shipDate, delDate *pgtype.Date) error {
-	if shipDate != nil && delDate != nil {
-		if delDate.Time.Before(shipDate.Time) {
-			return errors.New("estimated delivery date must be after ship date")
-		}
+// validateRevenueCode validates that the revenue code is set if EnforceRevCode is enabled in Shipment Controls.
+func (s *Shipment) validateRevenueCode(sc *ShipmentControl, multiErr validator.MultiValidationError) {
+	if sc.EnforceRevCode && s.RevenueCodeID == nil {
+		multiErr.Errors = append(multiErr.Errors, validator.DBValidationError{
+			Field:   "revenueCodeId",
+			Message: "Organization enforces a revenue code when creating shipments. Please try again.",
+		})
 	}
-	return nil
 }
 
-// validateTotalChargeAmount validates that the TotalChargeAmount is the sum of FreightChargeAmount and OtherChargeAmount.
-func validateTotalChargeAmount(freightChargeAmount, otherChargeAmount, totalChargeAmount decimal.Decimal) error {
-	expectedTotal := freightChargeAmount.Add(otherChargeAmount)
-	if totalChargeAmount != expectedTotal {
-		return &validator.DBValidationError{
-			Field:   "totalChargeAmount",
-			Message: fmt.Sprintf("Total charge amount must be the sum of freight charge amount and other charge amount. Expected %d, got %d", expectedTotal, totalChargeAmount),
-		}
+// validateEnforceVoidedComm validates that the voided comment is set if EnforceVoidedComm is enabled in Shipment Controls.
+func (s *Shipment) validateEnforceVoidedComm(sc *ShipmentControl, multiErr validator.MultiValidationError) {
+	if sc.EnforceVoidedComm && s.Status == property.ShipmentStatusVoided && s.VoidedComment == "" {
+		multiErr.Errors = append(multiErr.Errors, validator.DBValidationError{
+			Field:   "voidedComment",
+			Message: "Organization requires a voided comment. Please try again.",
+		})
 	}
+}
 
-	return nil
+// CompareOriginDestination compares the origin and destination locations and adds an error if they are the same.
+func (s *Shipment) CompareOriginDestination(sc *ShipmentControl, multiErr validator.MultiValidationError) {
+	if sc.CompareOriginDestination && s.OriginLocationID == s.DestinationLocationID {
+		multiErr.Errors = append(multiErr.Errors, validator.DBValidationError{
+			Field:   "destinationLocationId",
+			Message: "Organization does not allow the origin and destination locations to be the same. Please try again.",
+		})
+	}
 }
 
 // validateStatusTransition validates that the status transition is valid.
-func (s Shipment) validateStatusTransition(ctx context.Context, db *bun.DB) error {
+func (s *Shipment) validateStatusTransition(ctx context.Context, tx bun.IDB, multiErr validator.MultiValidationError) error {
 	if s.ID == uuid.Nil {
-		// This is a new shipment, so we only need to validae that the status is New
+		// This is a new shipment, so we only need to validate that the status is New
 		if s.Status != property.ShipmentStatusNew {
-			return &validator.DBValidationError{
+			multiErr.Errors = append(multiErr.Errors, validator.DBValidationError{
 				Field:   "status",
 				Message: "New shipments must have a status of New",
-			}
+			})
 		}
 
 		return nil
@@ -329,15 +362,16 @@ func (s Shipment) validateStatusTransition(ctx context.Context, db *bun.DB) erro
 
 	var currentStatus property.ShipmentStatus
 
-	err := db.NewSelect().
+	err := tx.NewSelect().
 		Model((*Shipment)(nil)).
 		Where("id = ?", s.ID).
 		Scan(ctx, &currentStatus)
 	if err != nil {
+		log.Error().Err(err).Str("shipmentID", s.ID.String()).Msg("Failed to fetch current shipment status")
 		return &validator.BusinessLogicError{Message: "Failed to fetch current shipment status"}
 	}
 
-	// Check if the new status is different from the cureent status.
+	// Check if the new status is different from the current status.
 	if s.Status == currentStatus {
 		return nil
 	}
@@ -345,10 +379,10 @@ func (s Shipment) validateStatusTransition(ctx context.Context, db *bun.DB) erro
 	// Check if the transition is valid
 	validNextStatuses, exists := validShipmentStatusTransitions[currentStatus]
 	if !exists {
-		return &validator.DBValidationError{
+		multiErr.Errors = append(multiErr.Errors, validator.DBValidationError{
 			Field:   "status",
-			Message: "Invalid status transition",
-		}
+			Message: fmt.Sprintf("Invalid status transition from %s to %s", currentStatus, s.Status),
+		})
 	}
 
 	for _, validStatus := range validNextStatuses {
@@ -357,16 +391,30 @@ func (s Shipment) validateStatusTransition(ctx context.Context, db *bun.DB) erro
 		}
 	}
 
-	return &validator.DBValidationError{
+	multiErr.Errors = append(multiErr.Errors, validator.DBValidationError{
 		Field:   "status",
 		Message: fmt.Sprintf("Invalid status transition from %s to %s", currentStatus, s.Status),
+	})
+
+	return nil
+}
+
+// validateDeliveryDate validates that the estimated delivery date is after the ship date.
+func (s *Shipment) validateDeliveryDate(shipDate, delDate *pgtype.Date, multiErr validator.MultiValidationError) {
+	if shipDate != nil && delDate != nil {
+		if delDate.Time.Before(shipDate.Time) {
+			multiErr.Errors = append(multiErr.Errors, validator.DBValidationError{
+				Field:   "estimatedDeliveryDate",
+				Message: "Estimated delivery date must be after the ship date",
+			})
+		}
 	}
 }
 
-// InsertShipment inserts a new shipment into the database.
-func (s *Shipment) InsertShipment(ctx context.Context, db *bun.DB) error {
+// Insert inserts a new shipment into the database.
+func (s *Shipment) Insert(ctx context.Context, tx bun.IDB, auditService *audit.Service, user audit.AuditUser) error {
 	if s.ProNumber == "" {
-		proNumber, err := GenerateProNumber(ctx, db, s.OrganizationID)
+		proNumber, err := GenerateProNumber(ctx, tx, s.OrganizationID)
 		if err != nil {
 			return validator.BusinessLogicError{Message: err.Error()}
 		}
@@ -374,21 +422,69 @@ func (s *Shipment) InsertShipment(ctx context.Context, db *bun.DB) error {
 		s.ProNumber = proNumber
 	}
 
-	s.CalculateTotalChargeAmount()
-
-	if err := s.DBValidate(ctx, db); err != nil {
+	shipControl, err := QueryShipmentControlByOrgID(ctx, tx, s.OrganizationID)
+	if err != nil {
 		return err
 	}
 
-	err := db.RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
-		if _, err := tx.NewInsert().Model(s).Exec(ctx); err != nil {
-			return err
-		}
+	// Calculate the total charge amount if AutoTotalShipment is enabled in Shipment Controls
+	if shipControl.AutoTotalShipment {
+		s.CalculateTotalChargeAmount()
+	}
 
-		return nil
-	})
+	if err = s.DBValidate(ctx, tx); err != nil {
+		return err
+	}
+
+	if _, err = tx.NewInsert().Model(s).Exec(ctx); err != nil {
+		log.Error().Err(err).Msg("Failed to insert shipment")
+		return err
+	}
+
+	auditService.LogAction(
+		constants.TableShipment,
+		s.ID.String(),
+		property.AuditLogActionCreate,
+		user,
+		s.OrganizationID,
+		s.BusinessUnitID,
+		audit.WithDiff(nil, s),
+	)
 
 	return err
+}
+
+func (s *Shipment) BeforeUpdate(_ context.Context) error {
+	s.Version++
+
+	return nil
+}
+
+// OptimisticUpdate updates the Shipment in the database with optimistic locking.
+func (s *Shipment) OptimisticUpdate(ctx context.Context, tx bun.IDB) error {
+	ov := s.Version
+
+	if err := s.BeforeUpdate(ctx); err != nil {
+		return err
+	}
+
+	result, err := tx.NewUpdate().Model(s).WherePK().Where("version = ?", ov).Exec(ctx)
+	if err != nil {
+		return err
+	}
+
+	rows, err := result.RowsAffected()
+	if err != nil {
+		return err
+	}
+
+	if rows == 0 {
+		return &validator.BusinessLogicError{
+			Message: fmt.Sprintf("Version mismatch. The Shipment (ID: %s) has been updated by another user. Please refresh and try again.", s.ID),
+		}
+	}
+
+	return nil
 }
 
 var _ bun.BeforeAppendModelHook = (*Shipment)(nil)

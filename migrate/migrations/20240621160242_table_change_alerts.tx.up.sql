@@ -38,11 +38,11 @@ CREATE TABLE
 
 CREATE UNIQUE INDEX IF NOT EXISTS "table_change_alerts_name_organization_id_unq" ON "table_change_alerts" (LOWER("name"), organization_id);
 
-CREATE INDEX idx_table_change_alerts_org_bu ON table_change_alerts (organization_id, business_unit_id);
+CREATE INDEX IF NOT EXISTS idx_table_change_alerts_org_bu ON table_change_alerts (organization_id, business_unit_id);
 
-CREATE INDEX idx_table_change_alerts_code ON table_change_alerts USING gin (name gin_trgm_ops);
+CREATE INDEX IF NOT EXISTS idx_table_change_alerts_code ON table_change_alerts USING gin (name gin_trgm_ops);
 
-CREATE INDEX idx_table_change_alerts_created_at ON table_change_alerts (created_at);
+CREATE INDEX IF NOT EXISTS idx_table_change_alerts_created_at ON table_change_alerts (created_at);
 
 --bun:split
 COMMENT ON COLUMN table_change_alerts.id IS 'Unique identifier for the table change alert, generated as a UUID';

@@ -22,10 +22,8 @@ import (
 	"github.com/emoss08/trenova/internal/api/services"
 	"github.com/emoss08/trenova/internal/server"
 	"github.com/emoss08/trenova/internal/types"
-	"github.com/emoss08/trenova/pkg/audit"
 	"github.com/emoss08/trenova/pkg/constants"
 	"github.com/emoss08/trenova/pkg/models"
-	"github.com/emoss08/trenova/pkg/models/property"
 	"github.com/emoss08/trenova/pkg/utils"
 	"github.com/gofiber/fiber/v2"
 	"github.com/google/uuid"
@@ -35,7 +33,6 @@ type LocationCategoryHandler struct {
 	logger            *config.ServerLogger
 	service           *services.LocationCategoryService
 	permissionService *services.PermissionService
-	auditService      *audit.Service
 }
 
 func NewLocationCategoryHandler(s *server.Server) *LocationCategoryHandler {
@@ -43,7 +40,6 @@ func NewLocationCategoryHandler(s *server.Server) *LocationCategoryHandler {
 		logger:            s.Logger,
 		service:           services.NewLocationCategoryService(s),
 		permissionService: services.NewPermissionService(s.Enforcer),
-		auditService:      s.AuditService,
 	}
 }
 
@@ -133,7 +129,7 @@ func (h LocationCategoryHandler) GetByID() fiber.Handler {
 			})
 		}
 
-		if err = h.permissionService.CheckUserPermission(c, constants.EntityLocation, constants.ActionView); err != nil {
+		if err = h.permissionService.CheckUserPermission(c, constants.EntityLocationCategory, constants.ActionView); err != nil {
 			return c.Status(fiber.StatusForbidden).JSON(fiber.Error{
 				Code:    fiber.StatusForbidden,
 				Message: err.Error(),
@@ -162,7 +158,7 @@ func (h LocationCategoryHandler) Create() fiber.Handler {
 
 		createdEntity := new(models.LocationCategory)
 
-		if err = h.permissionService.CheckUserPermission(c, constants.EntityLocation, constants.ActionCreate); err != nil {
+		if err = h.permissionService.CheckUserPermission(c, constants.EntityLocationCategory, constants.ActionCreate); err != nil {
 			return c.Status(fiber.StatusForbidden).JSON(fiber.Error{
 				Code:    fiber.StatusForbidden,
 				Message: err.Error(),
@@ -176,14 +172,13 @@ func (h LocationCategoryHandler) Create() fiber.Handler {
 			return c.Status(fiber.StatusBadRequest).JSON(err)
 		}
 
-		entity, err := h.service.Create(c.UserContext(), createdEntity)
+		entity, err := h.service.Create(c.UserContext(), createdEntity, ids.UserID)
 		if err != nil {
 			h.logger.Error().Interface("entity", createdEntity).Err(err).Msg("Failed to create Location Category")
 			resp := utils.CreateServiceError(c, err)
+
 			return c.Status(fiber.StatusInternalServerError).JSON(resp)
 		}
-
-		go h.auditService.LogAction(constants.TableLocation, entity.ID.String(), property.AuditLogActionCreate, entity, ids.UserID, ids.OrganizationID, ids.BusinessUnitID)
 
 		return c.Status(fiber.StatusCreated).JSON(entity)
 	}
@@ -204,7 +199,7 @@ func (h LocationCategoryHandler) Update() fiber.Handler {
 			})
 		}
 
-		if err = h.permissionService.CheckUserPermission(c, constants.EntityLocation, constants.ActionUpdate); err != nil {
+		if err = h.permissionService.CheckUserPermission(c, constants.EntityLocationCategory, constants.ActionUpdate); err != nil {
 			return c.Status(fiber.StatusForbidden).JSON(fiber.Error{
 				Code:    fiber.StatusForbidden,
 				Message: err.Error(),
@@ -219,14 +214,13 @@ func (h LocationCategoryHandler) Update() fiber.Handler {
 
 		updatedEntity.ID = uuid.MustParse(locationCategoryID)
 
-		entity, err := h.service.UpdateOne(c.UserContext(), updatedEntity)
+		entity, err := h.service.UpdateOne(c.UserContext(), updatedEntity, ids.UserID)
 		if err != nil {
 			h.logger.Error().Interface("entity", updatedEntity).Err(err).Msg("Failed to update Location Category")
 			resp := utils.CreateServiceError(c, err)
+
 			return c.Status(fiber.StatusInternalServerError).JSON(resp)
 		}
-
-		go h.auditService.LogAction(constants.TableLocation, entity.ID.String(), property.AuditLogActionUpdate, entity, ids.UserID, ids.OrganizationID, ids.BusinessUnitID)
 
 		return c.Status(fiber.StatusOK).JSON(entity)
 	}

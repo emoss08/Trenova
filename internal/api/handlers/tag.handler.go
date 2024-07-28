@@ -22,10 +22,8 @@ import (
 	"github.com/emoss08/trenova/internal/api/services"
 	"github.com/emoss08/trenova/internal/server"
 	"github.com/emoss08/trenova/internal/types"
-	"github.com/emoss08/trenova/pkg/audit"
 	"github.com/emoss08/trenova/pkg/constants"
 	"github.com/emoss08/trenova/pkg/models"
-	"github.com/emoss08/trenova/pkg/models/property"
 	"github.com/emoss08/trenova/pkg/utils"
 	"github.com/gofiber/fiber/v2"
 	"github.com/google/uuid"
@@ -35,7 +33,6 @@ type TagHandler struct {
 	logger            *config.ServerLogger
 	service           *services.TagService
 	permissionService *services.PermissionService
-	auditService      *audit.Service
 }
 
 func NewTagHandler(s *server.Server) *TagHandler {
@@ -43,7 +40,6 @@ func NewTagHandler(s *server.Server) *TagHandler {
 		logger:            s.Logger,
 		service:           services.NewTagService(s),
 		permissionService: services.NewPermissionService(s.Enforcer),
-		auditService:      s.AuditService,
 	}
 }
 
@@ -89,7 +85,7 @@ func (h TagHandler) Get() fiber.Handler {
 			})
 		}
 
-		entities, cnt, err := h.service.GetTags(c.UserContext(), limit, offset, ids.OrganizationID, ids.BusinessUnitID)
+		entities, cnt, err := h.service.Get(c.UserContext(), limit, offset, ids.OrganizationID, ids.BusinessUnitID)
 		if err != nil {
 			h.logger.Error().Err(err).Msg("Error getting tags")
 			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Error{
@@ -133,16 +129,13 @@ func (h TagHandler) Create() fiber.Handler {
 			return c.Status(fiber.StatusBadRequest).JSON(err)
 		}
 
-		entity, err := h.service.CreateTag(c.UserContext(), createdEntity)
+		entity, err := h.service.Create(c.UserContext(), createdEntity)
 		if err != nil {
 			h.logger.Error().Interface("entity", createdEntity).Err(err).Msg("Failed to create Tag")
-			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Error{
-				Code:    fiber.StatusInternalServerError,
-				Message: err.Error(),
-			})
-		}
+			resp := utils.CreateServiceError(c, err)
 
-		go h.auditService.LogAction(constants.TableTag, entity.ID.String(), property.AuditLogActionCreate, entity, ids.UserID, ids.OrganizationID, ids.BusinessUnitID)
+			return c.Status(fiber.StatusInternalServerError).JSON(resp)
+		}
 
 		return c.Status(fiber.StatusCreated).JSON(entity)
 	}
@@ -150,11 +143,6 @@ func (h TagHandler) Create() fiber.Handler {
 
 func (h TagHandler) Update() fiber.Handler {
 	return func(c *fiber.Ctx) error {
-		ids, err := utils.ExtractAndHandleContextIDs(c)
-		if err != nil {
-			return err
-		}
-
 		tagID := c.Params("tagID")
 		if tagID == "" {
 			return c.Status(fiber.StatusBadRequest).JSON(fiber.Error{
@@ -163,7 +151,7 @@ func (h TagHandler) Update() fiber.Handler {
 			})
 		}
 
-		if err = h.permissionService.CheckUserPermission(c, constants.EntityTag, constants.ActionUpdate); err != nil {
+		if err := h.permissionService.CheckUserPermission(c, constants.EntityTag, constants.ActionUpdate); err != nil {
 			return c.Status(fiber.StatusForbidden).JSON(fiber.Error{
 				Code:    fiber.StatusForbidden,
 				Message: err.Error(),
@@ -172,22 +160,19 @@ func (h TagHandler) Update() fiber.Handler {
 
 		updatedEntity := new(models.Tag)
 
-		if err = utils.ParseBodyAndValidate(c, updatedEntity); err != nil {
+		if err := utils.ParseBodyAndValidate(c, updatedEntity); err != nil {
 			return c.Status(fiber.StatusBadRequest).JSON(err)
 		}
 
 		updatedEntity.ID = uuid.MustParse(tagID)
 
-		entity, err := h.service.UpdateTag(c.UserContext(), updatedEntity)
+		entity, err := h.service.UpdateOne(c.UserContext(), updatedEntity)
 		if err != nil {
 			h.logger.Error().Interface("entity", updatedEntity).Err(err).Msg("Failed to update Tag")
-			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Error{
-				Code:    fiber.StatusInternalServerError,
-				Message: err.Error(),
-			})
-		}
+			resp := utils.CreateServiceError(c, err)
 
-		go h.auditService.LogAction(constants.TableTag, entity.ID.String(), property.AuditLogActionUpdate, entity, ids.UserID, ids.OrganizationID, ids.BusinessUnitID)
+			return c.Status(fiber.StatusInternalServerError).JSON(resp)
+		}
 
 		return c.Status(fiber.StatusOK).JSON(entity)
 	}

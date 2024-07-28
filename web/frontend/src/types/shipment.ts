@@ -25,18 +25,11 @@ import { type BaseModel } from "./organization";
 
 export interface ShipmentControl extends BaseModel {
   id: string;
-  autoRateShipment: boolean;
-  calculateDistance: boolean;
   enforceRevCode: boolean;
   enforceVoidedComm: boolean;
-  generateRoutes: boolean;
-  enforceCommodity: boolean;
-  autoSequenceStops: boolean;
-  enforceOriginDestination: boolean;
-  autoShipmentTotal: boolean;
+  compareOriginDestination: boolean;
+  autoTotalShipment: boolean;
   checkForDuplicateBol: boolean;
-  sendPlacardInfo: boolean;
-  enforceHazmatSegRules: boolean;
 }
 
 export type ShipmentControlFormValues = Omit<

@@ -28,6 +28,9 @@ import (
 var configEnv string // This will store the value of the environment flag
 
 type FiberServer struct {
+	// SecretKey is the secret key used to sign cookies.
+	SecretKey string
+
 	// ListenAddress is the address that the server will listen on.
 	ListenAddress string
 

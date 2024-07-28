@@ -23,7 +23,6 @@ import (
 	"github.com/emoss08/trenova/internal/api/services"
 	"github.com/emoss08/trenova/internal/server"
 	"github.com/emoss08/trenova/internal/types"
-	"github.com/emoss08/trenova/pkg/audit"
 	"github.com/emoss08/trenova/pkg/constants"
 	"github.com/emoss08/trenova/pkg/models"
 	"github.com/emoss08/trenova/pkg/models/property"
@@ -37,7 +36,6 @@ type ShipmentHandler struct {
 	logger            *config.ServerLogger
 	service           *services.ShipmentService
 	permissionService *services.PermissionService
-	auditService      *audit.Service
 }
 
 func NewShipmentHandler(s *server.Server) *ShipmentHandler {
@@ -45,7 +43,6 @@ func NewShipmentHandler(s *server.Server) *ShipmentHandler {
 		logger:            s.Logger,
 		service:           services.NewShipmentService(s),
 		permissionService: services.NewPermissionService(s.Enforcer),
-		auditService:      s.AuditService,
 	}
 }
 
@@ -201,7 +198,7 @@ func (h ShipmentHandler) Create() fiber.Handler {
 
 		createdEntity := new(ptypes.CreateShipmentInput)
 
-		if err = h.permissionService.CheckUserPermission(c, "shipment", "create"); err != nil {
+		if err = h.permissionService.CheckUserPermission(c, constants.EntityShipment, constants.ActionCreate); err != nil {
 			return c.Status(fiber.StatusForbidden).JSON(fiber.Error{
 				Code:    fiber.StatusForbidden,
 				Message: err.Error(),
@@ -215,14 +212,13 @@ func (h ShipmentHandler) Create() fiber.Handler {
 			return c.Status(fiber.StatusBadRequest).JSON(err)
 		}
 
-		entity, err := h.service.Create(c.UserContext(), createdEntity)
+		entity, err := h.service.Create(c.UserContext(), createdEntity, ids.UserID)
 		if err != nil {
 			h.logger.Error().Interface("entity", createdEntity).Err(err).Msg("Failed to create Shipment")
 			resp := utils.CreateServiceError(c, err)
+
 			return c.Status(fiber.StatusInternalServerError).JSON(resp)
 		}
-
-		go h.auditService.LogAction("shipments", entity.ID.String(), property.AuditLogActionCreate, entity, ids.UserID, ids.OrganizationID, ids.BusinessUnitID)
 
 		return c.Status(fiber.StatusCreated).JSON(entity)
 	}
@@ -235,7 +231,7 @@ func (h ShipmentHandler) AssignTractorToShipment() fiber.Handler {
 			return err
 		}
 
-		if err = h.permissionService.CheckUserPermission(c, "shipment", "assign_tractor"); err != nil {
+		if err = h.permissionService.CheckUserPermission(c, constants.EntityShipment, "assign_tractor"); err != nil {
 			return c.Status(fiber.StatusForbidden).JSON(fiber.Error{
 				Code:    fiber.StatusForbidden,
 				Message: err.Error(),
@@ -250,13 +246,10 @@ func (h ShipmentHandler) AssignTractorToShipment() fiber.Handler {
 		assignments, err := h.service.AssignTractorToShipment(c.UserContext(), assignTractorInput, ids.OrganizationID, ids.BusinessUnitID)
 		if err != nil {
 			h.logger.Error().Interface("entity", assignTractorInput).Err(err).Msg("Failed to assign tractor to shipment")
-			return c.Status(fiber.StatusBadRequest).JSON(fiber.Error{
-				Message: err.Error(),
-				Code:    fiber.StatusBadRequest,
-			})
-		}
+			resp := utils.CreateServiceError(c, err)
 
-		go h.auditService.LogAction("shipments", assignTractorInput.TractorID.String(), property.AuditLogActionUpdate, assignments, ids.UserID, ids.OrganizationID, ids.BusinessUnitID)
+			return c.Status(fiber.StatusInternalServerError).JSON(resp)
+		}
 
 		return c.Status(fiber.StatusOK).JSON(fiber.Map{
 			"message": "Tractor assigned to shipment successfully.",

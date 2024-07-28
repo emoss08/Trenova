@@ -45,7 +45,10 @@ export function DataTableBody<K extends Record<string, any>>({
           <Fragment key={row.id}>
             <TableRow
               data-state={row.getIsSelected() ? "selected" : undefined}
-              className={cn(row.getIsExpanded() ? "bg-accent" : "")}
+              className={cn(
+                "select-none",
+                row.getIsExpanded() ? "bg-accent" : "",
+              )}
             >
               {row.getVisibleCells().map((cell) => (
                 <TableCell

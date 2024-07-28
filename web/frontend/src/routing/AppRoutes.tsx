@@ -61,6 +61,7 @@ const EmailControlPage = lazy(
   () => import("../pages/admin/control-files/EmailControl"),
 );
 const EmailProfilePage = lazy(() => import("../pages/admin/EmailProfiles"));
+const AuditLogPage = lazy(() => import("../pages/admin/AuditLogs"));
 const GoogleAPIPage = lazy(() => import("../pages/admin/GoogleAPI"));
 const HazardousMaterialSegregationPage = lazy(
   () => import("../pages/admin/HazardousMaterialSegregation"),
@@ -553,6 +554,15 @@ export const routes: RouteObjectWithPermission[] = [
     description: "Email Profiles",
     element: <EmailProfilePage />,
     permission: "email_profile:view",
+    isPublic: false,
+  },
+  {
+    title: "Audit Logs",
+    group: "administration",
+    path: "/admin/audit-logs/",
+    description: "Audit Logs",
+    element: <AuditLogPage />,
+    permission: "audit_log:view",
     isPublic: false,
   },
   {

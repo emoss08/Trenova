@@ -27,6 +27,7 @@ import (
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/adaptor"
 	"github.com/gofiber/fiber/v2/middleware/cors"
+	"github.com/gofiber/fiber/v2/middleware/encryptcookie"
 	"github.com/gofiber/fiber/v2/middleware/helmet"
 	"github.com/gofiber/fiber/v2/middleware/idempotency"
 	"github.com/gofiber/fiber/v2/middleware/recover"
@@ -99,6 +100,10 @@ func Init(s *server.Server) {
 		log.Warn().Msg("Helmet middleware is disabled. This is not recommended.")
 	}
 
+	apiV1.Use(encryptcookie.New(encryptcookie.Config{
+		Key: s.Config.Fiber.SecretKey,
+	}))
+
 	// Register the recover middleware.
 	if s.Config.Fiber.EnableRecoverMiddleware {
 		s.Fiber.Use(recover.New())
@@ -137,7 +142,7 @@ func Init(s *server.Server) {
 	handlers.AttachAllRoutes(s, apiV1)
 
 	// cancel the heartbeat on app close.
-	s.OnStop("ws.Stop", func(ctx context.Context, app *server.Server) error {
+	s.OnStop("ws.Stop", func(_ context.Context, app *server.Server) error {
 		app.Logger.Debug().Msg("Stopping websocket service")
 		wsHandler.Stop()
 		return nil

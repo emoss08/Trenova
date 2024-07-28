@@ -21,6 +21,7 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/config"
+	"github.com/emoss08/trenova/internal/api/common"
 	"github.com/emoss08/trenova/internal/server"
 	"github.com/emoss08/trenova/pkg/models"
 	"github.com/google/uuid"
@@ -29,19 +30,22 @@ import (
 
 // DivisionCodeService handles business logic for DivisionCode
 type DivisionCodeService struct {
-	db     *bun.DB
+	common.AuditableService
 	logger *config.ServerLogger
 }
 
 // NewDivisionCodeService creates a new instance of DivisionCodeService
 func NewDivisionCodeService(s *server.Server) *DivisionCodeService {
 	return &DivisionCodeService{
-		db:     s.DB,
+		AuditableService: common.AuditableService{
+			DB:           s.DB,
+			AuditService: s.AuditService,
+		},
 		logger: s.Logger,
 	}
 }
 
-// QueryFilter defines the filter parameters for querying DivisionCode
+// DivisionCodeQueryFilter defines the filter parameters for querying DivisionCode.
 type DivisionCodeQueryFilter struct {
 	Query          string
 	OrganizationID uuid.UUID
@@ -69,9 +73,7 @@ func (s DivisionCodeService) filterQuery(q *bun.SelectQuery, f *DivisionCodeQuer
 func (s DivisionCodeService) GetAll(ctx context.Context, filter *DivisionCodeQueryFilter) ([]*models.DivisionCode, int, error) {
 	var entities []*models.DivisionCode
 
-	q := s.db.NewSelect().
-		Model(&entities)
-
+	q := s.DB.NewSelect().Model(&entities)
 	q = s.filterQuery(q, filter)
 
 	count, err := q.ScanAndCount(ctx)
@@ -86,12 +88,7 @@ func (s DivisionCodeService) GetAll(ctx context.Context, filter *DivisionCodeQue
 // Get retrieves a single DivisionCode by ID
 func (s DivisionCodeService) Get(ctx context.Context, id, orgID, buID uuid.UUID) (*models.DivisionCode, error) {
 	entity := new(models.DivisionCode)
-	err := s.db.NewSelect().
-		Model(entity).
-		Where("dc.organization_id = ?", orgID).
-		Where("dc.business_unit_id = ?", buID).
-		Where("dc.id = ?", id).
-		Scan(ctx)
+	err := s.GetByID(ctx, id, orgID, buID, entity)
 	if err != nil {
 		s.logger.Error().Err(err).Msg("Failed to fetch DivisionCode")
 		return nil, fmt.Errorf("failed to fetch DivisionCode: %w", err)
@@ -101,14 +98,8 @@ func (s DivisionCodeService) Get(ctx context.Context, id, orgID, buID uuid.UUID)
 }
 
 // Create creates a new DivisionCode
-func (s DivisionCodeService) Create(ctx context.Context, entity *models.DivisionCode) (*models.DivisionCode, error) {
-	err := s.db.RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
-		_, err := tx.NewInsert().
-			Model(entity).
-			Returning("*").
-			Exec(ctx)
-		return err
-	})
+func (s DivisionCodeService) Create(ctx context.Context, entity *models.DivisionCode, userID uuid.UUID) (*models.DivisionCode, error) {
+	_, err := s.CreateWithAudit(ctx, entity, userID)
 	if err != nil {
 		s.logger.Error().Err(err).Msg("Failed to create DivisionCode")
 		return nil, fmt.Errorf("failed to create DivisionCode: %w", err)
@@ -118,14 +109,8 @@ func (s DivisionCodeService) Create(ctx context.Context, entity *models.Division
 }
 
 // UpdateOne updates an existing DivisionCode
-func (s DivisionCodeService) UpdateOne(ctx context.Context, entity *models.DivisionCode) (*models.DivisionCode, error) {
-	err := s.db.RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
-		if err := entity.OptimisticUpdate(ctx, tx); err != nil {
-			return err
-		}
-
-		return nil
-	})
+func (s DivisionCodeService) UpdateOne(ctx context.Context, entity *models.DivisionCode, userID uuid.UUID) (*models.DivisionCode, error) {
+	err := s.UpdateWithAudit(ctx, entity, userID)
 	if err != nil {
 		s.logger.Error().Err(err).Msg("Failed to update DivisionCode")
 		return nil, err

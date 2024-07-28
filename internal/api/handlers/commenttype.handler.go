@@ -22,10 +22,8 @@ import (
 	"github.com/emoss08/trenova/internal/api/services"
 	"github.com/emoss08/trenova/internal/server"
 	"github.com/emoss08/trenova/internal/types"
-	"github.com/emoss08/trenova/pkg/audit"
 	"github.com/emoss08/trenova/pkg/constants"
 	"github.com/emoss08/trenova/pkg/models"
-	"github.com/emoss08/trenova/pkg/models/property"
 	"github.com/emoss08/trenova/pkg/utils"
 	"github.com/gofiber/fiber/v2"
 	"github.com/google/uuid"
@@ -35,7 +33,6 @@ type CommentTypeHandler struct {
 	logger            *config.ServerLogger
 	service           *services.CommentTypeService
 	permissionService *services.PermissionService
-	auditService      *audit.Service
 }
 
 func NewCommentTypeHandler(s *server.Server) *CommentTypeHandler {
@@ -43,16 +40,15 @@ func NewCommentTypeHandler(s *server.Server) *CommentTypeHandler {
 		logger:            s.Logger,
 		service:           services.NewCommentTypeService(s),
 		permissionService: services.NewPermissionService(s.Enforcer),
-		auditService:      s.AuditService,
 	}
 }
 
 func (h CommentTypeHandler) RegisterRoutes(r fiber.Router) {
 	api := r.Group("/comment-types")
 	api.Get("/", h.Get())
-	api.Get("/:commenttypeID", h.GetByID())
+	api.Get("/:commentTypeID", h.GetByID())
 	api.Post("/", h.Create())
-	api.Put("/:commenttypeID", h.Update())
+	api.Put("/:commentTypeID", h.Update())
 }
 
 func (h CommentTypeHandler) Get() fiber.Handler {
@@ -126,8 +122,8 @@ func (h CommentTypeHandler) GetByID() fiber.Handler {
 			return err
 		}
 
-		commenttypeID := c.Params("commenttypeID")
-		if commenttypeID == "" {
+		commentTypeID := c.Params("commentTypeID")
+		if commentTypeID == "" {
 			return c.Status(fiber.StatusBadRequest).JSON(fiber.Error{
 				Code:    fiber.StatusBadRequest,
 				Message: "CommentType ID is required",
@@ -141,7 +137,7 @@ func (h CommentTypeHandler) GetByID() fiber.Handler {
 			})
 		}
 
-		entity, err := h.service.Get(c.UserContext(), uuid.MustParse(commenttypeID), ids.OrganizationID, ids.BusinessUnitID)
+		entity, err := h.service.Get(c.UserContext(), uuid.MustParse(commentTypeID), ids.OrganizationID, ids.BusinessUnitID)
 		if err != nil {
 			h.logger.Error().Err(err).Msg("Failed to get CommentType")
 			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Error{
@@ -177,14 +173,13 @@ func (h CommentTypeHandler) Create() fiber.Handler {
 			return c.Status(fiber.StatusBadRequest).JSON(err)
 		}
 
-		entity, err := h.service.Create(c.UserContext(), createdEntity)
+		entity, err := h.service.Create(c.UserContext(), createdEntity, ids.UserID)
 		if err != nil {
 			h.logger.Error().Err(err).Msg("Failed to create CommentType")
 			resp := utils.CreateServiceError(c, err)
+
 			return c.Status(fiber.StatusInternalServerError).JSON(resp)
 		}
-
-		go h.auditService.LogAction(constants.TableCommentType, entity.ID.String(), property.AuditLogActionCreate, entity, ids.UserID, ids.OrganizationID, ids.BusinessUnitID)
 
 		return c.Status(fiber.StatusCreated).JSON(entity)
 	}
@@ -197,8 +192,8 @@ func (h CommentTypeHandler) Update() fiber.Handler {
 			return err
 		}
 
-		commenttypeID := c.Params("commenttypeID")
-		if commenttypeID == "" {
+		commentTypeID := c.Params("commentTypeID")
+		if commentTypeID == "" {
 			return c.Status(fiber.StatusBadRequest).JSON(fiber.Error{
 				Code:    fiber.StatusBadRequest,
 				Message: "CommentType ID is required",
@@ -218,16 +213,15 @@ func (h CommentTypeHandler) Update() fiber.Handler {
 			return c.Status(fiber.StatusBadRequest).JSON(err)
 		}
 
-		updatedEntity.ID = uuid.MustParse(commenttypeID)
+		updatedEntity.ID = uuid.MustParse(commentTypeID)
 
-		entity, err := h.service.UpdateOne(c.UserContext(), updatedEntity)
+		entity, err := h.service.UpdateOne(c.UserContext(), updatedEntity, ids.UserID)
 		if err != nil {
 			h.logger.Error().Err(err).Msg("Failed to update CommentType")
 			resp := utils.CreateServiceError(c, err)
+
 			return c.Status(fiber.StatusInternalServerError).JSON(resp)
 		}
-
-		go h.auditService.LogAction(constants.TableCommentType, entity.ID.String(), property.AuditLogActionUpdate, entity, ids.UserID, ids.OrganizationID, ids.BusinessUnitID)
 
 		return c.Status(fiber.StatusOK).JSON(entity)
 	}

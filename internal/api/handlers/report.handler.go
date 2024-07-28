@@ -71,6 +71,7 @@ func (h ReportHandler) getColumnNames() fiber.Handler {
 	}
 }
 
+// TODO(WOLFRED): Add audit log service here
 func (h ReportHandler) generateReport() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		ids, err := utils.ExtractAndHandleContextIDs(c)

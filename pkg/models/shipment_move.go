@@ -21,6 +21,9 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/emoss08/trenova/pkg/audit"
+	"github.com/emoss08/trenova/pkg/constants"
+
 	"github.com/emoss08/trenova/pkg/models/property"
 	"github.com/emoss08/trenova/pkg/validator"
 	"github.com/google/uuid"
@@ -62,7 +65,7 @@ type ShipmentMove struct {
 	Stops           []*Stop       `bun:"rel:has-many,join:id=shipment_move_id" json:"stops,omitempty"`
 }
 
-// UpdateMoveStatus updates the movement status based on its stops
+// UpdateStatus updates the movement status based on its stops
 func (m *ShipmentMove) UpdateStatus(ctx context.Context, db *bun.DB) error {
 	// Fetch all stops for this movement
 	var stops []*Stop
@@ -191,6 +194,28 @@ func (m *ShipmentMove) AssignTractor(ctx context.Context, tx bun.Tx, tractorID u
 	}
 
 	return nil
+}
+
+func (m *ShipmentMove) Insert(ctx context.Context, tx bun.IDB, auditService *audit.Service, user audit.AuditUser) (*ShipmentMove, error) {
+	//if err := m.Validate(); err != nil {
+	//	return nil, err
+	//}
+
+	if _, err := tx.NewInsert().Model(m).Returning("*").Exec(ctx); err != nil {
+		return nil, err
+	}
+
+	auditService.LogAction(
+		constants.TableShipmentMove,
+		m.ID.String(),
+		property.AuditLogActionCreate,
+		user,
+		m.OrganizationID,
+		m.BusinessUnitID,
+		audit.WithDiff(nil, m),
+	)
+
+	return m, nil
 }
 
 func (m *ShipmentMove) BeforeUpdate(_ context.Context) error {

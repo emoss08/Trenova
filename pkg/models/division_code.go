@@ -20,6 +20,8 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/emoss08/trenova/pkg/audit"
+	"github.com/emoss08/trenova/pkg/constants"
 	"github.com/emoss08/trenova/pkg/models/property"
 	"github.com/emoss08/trenova/pkg/validator"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
@@ -65,6 +67,55 @@ func (d DivisionCode) Validate() error {
 
 func (d *DivisionCode) BeforeUpdate(_ context.Context) error {
 	d.Version++
+
+	return nil
+}
+
+func (d *DivisionCode) Insert(ctx context.Context, tx bun.IDB, auditService *audit.Service, user audit.AuditUser) error {
+	if err := d.Validate(); err != nil {
+		return err
+	}
+
+	if _, err := tx.NewInsert().Model(d).Returning("*").Exec(ctx); err != nil {
+		return err
+	}
+
+	auditService.LogAction(
+		constants.TableDivisionCode,
+		d.ID.String(),
+		property.AuditLogActionCreate,
+		user,
+		d.OrganizationID,
+		d.BusinessUnitID,
+		audit.WithDiff(nil, d),
+	)
+
+	return nil
+}
+
+func (d *DivisionCode) UpdateOne(ctx context.Context, tx bun.IDB, auditService *audit.Service, user audit.AuditUser) error {
+	original := new(DivisionCode)
+	if err := tx.NewSelect().Model(original).Where("id = ?", d.ID).Scan(ctx); err != nil {
+		return validator.BusinessLogicError{Message: err.Error()}
+	}
+
+	if err := d.Validate(); err != nil {
+		return err
+	}
+
+	if err := d.OptimisticUpdate(ctx, tx); err != nil {
+		return err
+	}
+
+	auditService.LogAction(
+		constants.TableDivisionCode,
+		d.ID.String(),
+		property.AuditLogActionUpdate,
+		user,
+		d.OrganizationID,
+		d.BusinessUnitID,
+		audit.WithDiff(original, d),
+	)
 
 	return nil
 }

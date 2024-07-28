@@ -41,6 +41,7 @@ const (
 
 // Entity types
 const (
+	EntityAuditLog               = "audit_log"
 	EntityShipment               = "shipment"
 	EntityAccessorialCharge      = "accessorial_charge"
 	EntityChargeType             = "charge_type"
@@ -69,6 +70,7 @@ const (
 	EntityTrailer                = "trailer"
 	EntityUser                   = "user"
 	EntityWorker                 = "worker"
+	EntityShipmentControl        = "shipment_control"
 )
 
 // Table names
@@ -101,4 +103,8 @@ const (
 	TableTrailer                = "trailers"
 	TableUser                   = "users"
 	TableWorker                 = "workers"
+	TableWorkerProfile          = "worker_profiles"
+	TableShipmentControl        = "shipment_controls"
+	TableShipmentMove           = "shipment_moves"
+	TableStop                   = "stops"
 )

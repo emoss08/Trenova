@@ -22,10 +22,8 @@ import (
 	"github.com/emoss08/trenova/internal/api/services"
 	"github.com/emoss08/trenova/internal/server"
 	"github.com/emoss08/trenova/internal/types"
-	"github.com/emoss08/trenova/pkg/audit"
 	"github.com/emoss08/trenova/pkg/constants"
 	"github.com/emoss08/trenova/pkg/models"
-	"github.com/emoss08/trenova/pkg/models/property"
 	"github.com/emoss08/trenova/pkg/utils"
 	"github.com/gofiber/fiber/v2"
 	"github.com/google/uuid"
@@ -35,7 +33,6 @@ type AccessorialChargeHandler struct {
 	logger            *config.ServerLogger
 	service           *services.AccessorialChargeService
 	permissionService *services.PermissionService
-	auditService      *audit.Service
 }
 
 func NewAccessorialChargeHandler(s *server.Server) *AccessorialChargeHandler {
@@ -43,7 +40,6 @@ func NewAccessorialChargeHandler(s *server.Server) *AccessorialChargeHandler {
 		logger:            s.Logger,
 		service:           services.NewAccessorialChargeService(s),
 		permissionService: services.NewPermissionService(s.Enforcer),
-		auditService:      s.AuditService,
 	}
 }
 
@@ -95,6 +91,7 @@ func (h AccessorialChargeHandler) Get() fiber.Handler {
 			Query:          c.Query("search", ""),
 			OrganizationID: ids.OrganizationID,
 			BusinessUnitID: ids.BusinessUnitID,
+			UserID:         ids.UserID,
 			Limit:          limit,
 			Offset:         offset,
 		}
@@ -178,14 +175,13 @@ func (h AccessorialChargeHandler) Create() fiber.Handler {
 			return c.Status(fiber.StatusBadRequest).JSON(err)
 		}
 
-		entity, err := h.service.Create(c.UserContext(), createdEntity)
+		entity, err := h.service.Create(c.UserContext(), createdEntity, ids.UserID)
 		if err != nil {
 			h.logger.Error().Interface("entity", entity).Err(err).Msg("Failed to create AccessorialCharge")
 			resp := utils.CreateServiceError(c, err)
+
 			return c.Status(fiber.StatusInternalServerError).JSON(resp)
 		}
-
-		go h.auditService.LogAction(constants.TableAccessorialCharge, entity.ID.String(), property.AuditLogActionCreate, entity, ids.UserID, ids.OrganizationID, ids.BusinessUnitID)
 
 		return c.Status(fiber.StatusCreated).JSON(entity)
 	}
@@ -221,14 +217,13 @@ func (h AccessorialChargeHandler) Update() fiber.Handler {
 
 		updatedEntity.ID = uuid.MustParse(accessorialChargeID)
 
-		entity, err := h.service.UpdateOne(c.UserContext(), updatedEntity)
+		entity, err := h.service.UpdateOne(c.UserContext(), updatedEntity, ids.UserID)
 		if err != nil {
 			h.logger.Error().Interface("entity", entity).Err(err).Msg("Failed to update AccessorialCharge")
 			resp := utils.CreateServiceError(c, err)
+
 			return c.Status(fiber.StatusInternalServerError).JSON(resp)
 		}
-
-		go h.auditService.LogAction(constants.TableAccessorialCharge, entity.ID.String(), property.AuditLogActionUpdate, entity, ids.UserID, ids.OrganizationID, ids.BusinessUnitID)
 
 		return c.Status(fiber.StatusOK).JSON(entity)
 	}

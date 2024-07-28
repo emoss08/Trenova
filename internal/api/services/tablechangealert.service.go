@@ -20,31 +20,34 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/config"
+	"github.com/emoss08/trenova/internal/api/common"
 	"github.com/emoss08/trenova/internal/server"
 	"github.com/emoss08/trenova/internal/types"
 	"github.com/emoss08/trenova/pkg/kfk"
 	"github.com/emoss08/trenova/pkg/models"
 	"github.com/google/uuid"
-	"github.com/uptrace/bun"
 )
 
 type TableChangeAlertService struct {
-	db     *bun.DB
+	common.AuditableService
 	logger *config.ServerLogger
 	kafka  *kfk.KafkaClient
 }
 
 func NewTableChangeAlertService(s *server.Server) *TableChangeAlertService {
 	return &TableChangeAlertService{
-		db:     s.DB,
+		AuditableService: common.AuditableService{
+			DB:           s.DB,
+			AuditService: s.AuditService,
+		},
 		logger: s.Logger,
 		kafka:  s.Kafka,
 	}
 }
 
-func (s TableChangeAlertService) GetTableChangeAlerts(ctx context.Context, limit, offset int, orgID, buID uuid.UUID) ([]*models.TableChangeAlert, int, error) {
+func (s TableChangeAlertService) Get(ctx context.Context, limit, offset int, orgID, buID uuid.UUID) ([]*models.TableChangeAlert, int, error) {
 	var tableChangeAlerts []*models.TableChangeAlert
-	count, err := s.db.NewSelect().
+	count, err := s.DB.NewSelect().
 		Model(&tableChangeAlerts).
 		Where("tca.organization_id = ?", orgID).
 		Where("tca.business_unit_id = ?", buID).
@@ -59,37 +62,22 @@ func (s TableChangeAlertService) GetTableChangeAlerts(ctx context.Context, limit
 	return tableChangeAlerts, count, nil
 }
 
-func (s TableChangeAlertService) CreateTableChangeAlert(ctx context.Context, tca *models.TableChangeAlert) (*models.TableChangeAlert, error) {
-	err := s.db.RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
-		if _, err := tx.NewInsert().
-			Model(tca).
-			Returning("*").
-			Exec(ctx); err != nil {
-			return err
-		}
-
-		return nil
-	})
+func (s TableChangeAlertService) Create(ctx context.Context, entity *models.TableChangeAlert, userID uuid.UUID) (*models.TableChangeAlert, error) {
+	_, err := s.CreateWithAudit(ctx, entity, userID)
 	if err != nil {
 		return nil, err
 	}
 
-	return tca, nil
+	return entity, nil
 }
 
-func (s TableChangeAlertService) UpdateTableChangeAlert(ctx context.Context, tca *models.TableChangeAlert) (*models.TableChangeAlert, error) {
-	err := s.db.RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
-		if err := tca.OptimisticUpdate(ctx, tx); err != nil {
-			return err
-		}
-
-		return nil
-	})
+func (s TableChangeAlertService) UpdateOne(ctx context.Context, entity *models.TableChangeAlert, userID uuid.UUID) (*models.TableChangeAlert, error) {
+	err := s.UpdateWithAudit(ctx, entity, userID)
 	if err != nil {
 		return nil, err
 	}
 
-	return tca, nil
+	return entity, nil
 }
 
 func (s TableChangeAlertService) GetTopicNames() ([]types.TopicName, int, error) {

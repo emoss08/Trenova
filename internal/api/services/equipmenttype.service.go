@@ -21,6 +21,7 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/config"
+	"github.com/emoss08/trenova/internal/api/common"
 	"github.com/emoss08/trenova/internal/server"
 	"github.com/emoss08/trenova/pkg/models"
 	"github.com/google/uuid"
@@ -29,14 +30,17 @@ import (
 
 // EquipmentTypeService handles business logic for EquipmentType
 type EquipmentTypeService struct {
-	db     *bun.DB
+	common.AuditableService
 	logger *config.ServerLogger
 }
 
 // NewEquipmentTypeService creates a new instance of EquipmentTypeService
 func NewEquipmentTypeService(s *server.Server) *EquipmentTypeService {
 	return &EquipmentTypeService{
-		db:     s.DB,
+		AuditableService: common.AuditableService{
+			DB:           s.DB,
+			AuditService: s.AuditService,
+		},
 		logger: s.Logger,
 	}
 }
@@ -69,9 +73,7 @@ func (s EquipmentTypeService) filterQuery(q *bun.SelectQuery, f *EquipmentTypeQu
 func (s EquipmentTypeService) GetAll(ctx context.Context, filter *EquipmentTypeQueryFilter) ([]*models.EquipmentType, int, error) {
 	var entities []*models.EquipmentType
 
-	q := s.db.NewSelect().
-		Model(&entities)
-
+	q := s.DB.NewSelect().Model(&entities)
 	q = s.filterQuery(q, filter)
 
 	count, err := q.ScanAndCount(ctx)
@@ -86,12 +88,7 @@ func (s EquipmentTypeService) GetAll(ctx context.Context, filter *EquipmentTypeQ
 // Get retrieves a single EquipmentType by ID
 func (s EquipmentTypeService) Get(ctx context.Context, id, orgID, buID uuid.UUID) (*models.EquipmentType, error) {
 	entity := new(models.EquipmentType)
-	err := s.db.NewSelect().
-		Model(entity).
-		Where("et.organization_id = ?", orgID).
-		Where("et.business_unit_id = ?", buID).
-		Where("et.id = ?", id).
-		Scan(ctx)
+	err := s.GetByID(ctx, id, orgID, buID, entity)
 	if err != nil {
 		s.logger.Error().Err(err).Msg("Failed to fetch EquipmentType")
 		return nil, fmt.Errorf("failed to fetch EquipmentType: %w", err)
@@ -101,14 +98,8 @@ func (s EquipmentTypeService) Get(ctx context.Context, id, orgID, buID uuid.UUID
 }
 
 // Create creates a new EquipmentType
-func (s EquipmentTypeService) Create(ctx context.Context, entity *models.EquipmentType) (*models.EquipmentType, error) {
-	err := s.db.RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
-		_, err := tx.NewInsert().
-			Model(entity).
-			Returning("*").
-			Exec(ctx)
-		return err
-	})
+func (s EquipmentTypeService) Create(ctx context.Context, entity *models.EquipmentType, userID uuid.UUID) (*models.EquipmentType, error) {
+	_, err := s.CreateWithAudit(ctx, entity, userID)
 	if err != nil {
 		s.logger.Error().Err(err).Msg("Failed to create EquipmentType")
 		return nil, fmt.Errorf("failed to create EquipmentType: %w", err)
@@ -118,14 +109,8 @@ func (s EquipmentTypeService) Create(ctx context.Context, entity *models.Equipme
 }
 
 // UpdateOne updates an existing EquipmentType
-func (s EquipmentTypeService) UpdateOne(ctx context.Context, entity *models.EquipmentType) (*models.EquipmentType, error) {
-	err := s.db.RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
-		if err := entity.OptimisticUpdate(ctx, tx); err != nil {
-			return err
-		}
-
-		return nil
-	})
+func (s EquipmentTypeService) UpdateOne(ctx context.Context, entity *models.EquipmentType, userID uuid.UUID) (*models.EquipmentType, error) {
+	err := s.UpdateWithAudit(ctx, entity, userID)
 	if err != nil {
 		s.logger.Error().Err(err).Msg("Failed to update EquipmentType")
 		return nil, fmt.Errorf("failed to update EquipmentType: %w", err)

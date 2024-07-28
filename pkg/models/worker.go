@@ -17,10 +17,13 @@ package models
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"strings"
 	"time"
 
+	"github.com/emoss08/trenova/pkg/audit"
+	"github.com/emoss08/trenova/pkg/constants"
 	"github.com/emoss08/trenova/pkg/gen"
 	"github.com/emoss08/trenova/pkg/models/property"
 	"github.com/emoss08/trenova/pkg/utils"
@@ -67,6 +70,7 @@ func (w Worker) Validate() error {
 		validation.Field(&w.Code, validation.Required, validation.Length(10, 10).Error("Code must be 4 characters")),
 		validation.Field(&w.BusinessUnitID, validation.Required),
 		validation.Field(&w.OrganizationID, validation.Required),
+		validation.Field(&w.WorkerProfile),
 	)
 }
 
@@ -107,7 +111,7 @@ func (w *Worker) OptimisticUpdate(ctx context.Context, tx bun.IDB) error {
 	return nil
 }
 
-func (w *Worker) InsertWorker(ctx context.Context, tx bun.Tx, codeGen *gen.CodeGenerator, pattern string) error {
+func (w *Worker) InsertWithCodeGen(ctx context.Context, tx bun.Tx, codeGen *gen.CodeGenerator, pattern string, auditService *audit.Service, user audit.AuditUser) error {
 	if w.WorkerProfile == nil {
 		return validator.DBValidationError{
 			Field:   "workerProfile",
@@ -125,10 +129,6 @@ func (w *Worker) InsertWorker(ctx context.Context, tx bun.Tx, codeGen *gen.CodeG
 		return fmt.Errorf("worker validation failed: %w", err)
 	}
 
-	if err = w.WorkerProfile.Validate(); err != nil {
-		return fmt.Errorf("worker profile validation failed: %w", err)
-	}
-
 	_, err = tx.NewInsert().Model(w).Exec(ctx)
 	if err != nil {
 		return fmt.Errorf("error inserting worker: %w", err)
@@ -138,16 +138,28 @@ func (w *Worker) InsertWorker(ctx context.Context, tx bun.Tx, codeGen *gen.CodeG
 	w.WorkerProfile.BusinessUnitID = w.BusinessUnitID
 	w.WorkerProfile.OrganizationID = w.OrganizationID
 
-	_, err = tx.NewInsert().Model(w.WorkerProfile).Exec(ctx)
-	if err != nil {
+	if err = w.WorkerProfile.Insert(ctx, tx, auditService, user); err != nil {
 		return fmt.Errorf("error inserting worker profile: %w", err)
 	}
+
+	auditService.LogAction(
+		constants.TableWorker,
+		w.ID.String(),
+		property.AuditLogActionCreate,
+		user,
+		w.OrganizationID,
+		w.BusinessUnitID,
+		audit.WithDiff(nil, w),
+	)
 
 	return nil
 }
 
-func (w *Worker) UpdateWorker(ctx context.Context, tx bun.Tx) error {
-	var err error
+func (w *Worker) UpdateOne(ctx context.Context, tx bun.IDB, auditService *audit.Service, user audit.AuditUser) error {
+	original := new(Customer)
+	if err := tx.NewSelect().Model(original).Where("id = ?", w.ID).Scan(ctx); err != nil {
+		return err
+	}
 
 	if w.WorkerProfile == nil {
 		return validator.DBValidationError{
@@ -156,22 +168,31 @@ func (w *Worker) UpdateWorker(ctx context.Context, tx bun.Tx) error {
 		}
 	}
 
-	if err = w.Validate(); err != nil {
+	if err := w.Validate(); err != nil {
 		return fmt.Errorf("worker validation failed: %w", err)
 	}
 
-	if err = w.WorkerProfile.Validate(); err != nil {
+	if err := w.WorkerProfile.Validate(); err != nil {
 		return fmt.Errorf("worker profile validation failed: %w", err)
 	}
 
-	if err = w.OptimisticUpdate(ctx, tx); err != nil {
+	if err := w.OptimisticUpdate(ctx, tx); err != nil {
 		return err
 	}
 
-	_, err = tx.NewUpdate().Model(w.WorkerProfile).Where("worker_id = ?", w.ID).Exec(ctx)
-	if err != nil {
+	if err := w.WorkerProfile.UpdateOne(ctx, tx, auditService, user); err != nil {
 		return fmt.Errorf("error updating worker profile: %w", err)
 	}
+
+	auditService.LogAction(
+		constants.TableWorker,
+		w.ID.String(),
+		property.AuditLogActionUpdate,
+		user,
+		w.OrganizationID,
+		w.BusinessUnitID,
+		audit.WithDiff(original, w),
+	)
 
 	return nil
 }
@@ -216,4 +237,9 @@ func (w *Worker) BeforeAppendModel(_ context.Context, query bun.Query) error {
 		w.UpdatedAt = time.Now()
 	}
 	return nil
+}
+
+func (w *Worker) Insert(ctx context.Context, tx bun.IDB, auditService *audit.Service, user audit.AuditUser) error {
+	// This method is required by the Auditable interface, but for Worker, we'll always use InsertWithCodeGen
+	return errors.New("worker requires code generation, use InsertWithCodeGen instead")
 }

@@ -54,6 +54,12 @@ func (o *OrganizationFactory) MustCreateOrganization(ctx context.Context) (*mode
 		Timezone:       "America/New_York",
 	}
 
+	// Check if the organization already exists
+	err = o.db.NewSelect().Model(org).Where("name = ?", org.Name).Scan(ctx)
+	if err == nil {
+		return org, nil
+	}
+
 	_, err = o.db.NewInsert().Model(org).Exec(ctx)
 	if err != nil {
 		return nil, err

@@ -21,6 +21,7 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/config"
+	"github.com/emoss08/trenova/internal/api/common"
 	"github.com/emoss08/trenova/internal/server"
 	"github.com/emoss08/trenova/pkg/models"
 	"github.com/google/uuid"
@@ -29,19 +30,22 @@ import (
 
 // ChargeTypeService handles business logic for ChargeType
 type ChargeTypeService struct {
-	db     *bun.DB
+	common.AuditableService
 	logger *config.ServerLogger
 }
 
 // NewChargeTypeService creates a new instance of ChargeTypeService
 func NewChargeTypeService(s *server.Server) *ChargeTypeService {
 	return &ChargeTypeService{
-		db:     s.DB,
+		AuditableService: common.AuditableService{
+			DB:           s.DB,
+			AuditService: s.AuditService,
+		},
 		logger: s.Logger,
 	}
 }
 
-// QueryFilter defines the filter parameters for querying ChargeType
+// ChargeTypeQueryFilter defines the filter parameters for querying ChargeType
 type ChargeTypeQueryFilter struct {
 	Query          string
 	OrganizationID uuid.UUID
@@ -69,9 +73,7 @@ func (s ChargeTypeService) filterQuery(q *bun.SelectQuery, f *ChargeTypeQueryFil
 func (s ChargeTypeService) GetAll(ctx context.Context, filter *ChargeTypeQueryFilter) ([]*models.ChargeType, int, error) {
 	var entities []*models.ChargeType
 
-	q := s.db.NewSelect().
-		Model(&entities)
-
+	q := s.DB.NewSelect().Model(&entities)
 	q = s.filterQuery(q, filter)
 
 	count, err := q.ScanAndCount(ctx)
@@ -86,29 +88,17 @@ func (s ChargeTypeService) GetAll(ctx context.Context, filter *ChargeTypeQueryFi
 // Get retrieves a single ChargeType by ID
 func (s ChargeTypeService) Get(ctx context.Context, id, orgID, buID uuid.UUID) (*models.ChargeType, error) {
 	entity := new(models.ChargeType)
-	err := s.db.NewSelect().
-		Model(entity).
-		Where("ct.organization_id = ?", orgID).
-		Where("ct.business_unit_id = ?", buID).
-		Where("ct.id = ?", id).
-		Scan(ctx)
+	err := s.GetByID(ctx, id, orgID, buID, entity)
 	if err != nil {
 		s.logger.Error().Err(err).Msg("Failed to fetch ChargeType")
 		return nil, fmt.Errorf("failed to fetch ChargeType: %w", err)
 	}
-
 	return entity, nil
 }
 
 // Create creates a new ChargeType
-func (s ChargeTypeService) Create(ctx context.Context, entity *models.ChargeType) (*models.ChargeType, error) {
-	err := s.db.RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
-		_, err := tx.NewInsert().
-			Model(entity).
-			Returning("*").
-			Exec(ctx)
-		return err
-	})
+func (s ChargeTypeService) Create(ctx context.Context, entity *models.ChargeType, userID uuid.UUID) (*models.ChargeType, error) {
+	_, err := s.CreateWithAudit(ctx, entity, userID)
 	if err != nil {
 		s.logger.Error().Err(err).Msg("Failed to create ChargeType")
 		return nil, fmt.Errorf("failed to create ChargeType: %w", err)
@@ -118,18 +108,11 @@ func (s ChargeTypeService) Create(ctx context.Context, entity *models.ChargeType
 }
 
 // UpdateOne updates an existing ChargeType
-func (s ChargeTypeService) UpdateOne(ctx context.Context, entity *models.ChargeType) (*models.ChargeType, error) {
-	err := s.db.RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
-		if err := entity.OptimisticUpdate(ctx, tx); err != nil {
-			return err
-		}
-
-		return nil
-	})
+func (s ChargeTypeService) UpdateOne(ctx context.Context, entity *models.ChargeType, userID uuid.UUID) (*models.ChargeType, error) {
+	err := s.UpdateWithAudit(ctx, entity, userID)
 	if err != nil {
 		s.logger.Error().Err(err).Msg("Failed to update ChargeType")
 		return nil, fmt.Errorf("failed to update ChargeType: %w", err)
 	}
-
 	return entity, nil
 }

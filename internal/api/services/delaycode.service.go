@@ -21,6 +21,7 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/config"
+	"github.com/emoss08/trenova/internal/api/common"
 	"github.com/emoss08/trenova/internal/server"
 	"github.com/emoss08/trenova/pkg/models"
 	"github.com/google/uuid"
@@ -29,14 +30,17 @@ import (
 
 // DelayCodeService handles business logic for DelayCode
 type DelayCodeService struct {
-	db     *bun.DB
+	common.AuditableService
 	logger *config.ServerLogger
 }
 
 // NewDelayCodeService creates a new instance of DelayCodeService
 func NewDelayCodeService(s *server.Server) *DelayCodeService {
 	return &DelayCodeService{
-		db:     s.DB,
+		AuditableService: common.AuditableService{
+			DB:           s.DB,
+			AuditService: s.AuditService,
+		},
 		logger: s.Logger,
 	}
 }
@@ -69,9 +73,7 @@ func (s DelayCodeService) filterQuery(q *bun.SelectQuery, f *DelayCodeQueryFilte
 func (s DelayCodeService) GetAll(ctx context.Context, filter *DelayCodeQueryFilter) ([]*models.DelayCode, int, error) {
 	var entities []*models.DelayCode
 
-	q := s.db.NewSelect().
-		Model(&entities)
-
+	q := s.DB.NewSelect().Model(&entities)
 	q = s.filterQuery(q, filter)
 
 	count, err := q.ScanAndCount(ctx)
@@ -86,12 +88,7 @@ func (s DelayCodeService) GetAll(ctx context.Context, filter *DelayCodeQueryFilt
 // Get retrieves a single DelayCode by ID
 func (s DelayCodeService) Get(ctx context.Context, id, orgID, buID uuid.UUID) (*models.DelayCode, error) {
 	entity := new(models.DelayCode)
-	err := s.db.NewSelect().
-		Model(entity).
-		Where("dc.organization_id = ?", orgID).
-		Where("dc.business_unit_id = ?", buID).
-		Where("dc.id = ?", id).
-		Scan(ctx)
+	err := s.GetByID(ctx, id, orgID, buID, entity)
 	if err != nil {
 		s.logger.Error().Err(err).Msg("Failed to fetch DelayCode")
 		return nil, fmt.Errorf("failed to fetch DelayCode: %w", err)
@@ -101,14 +98,8 @@ func (s DelayCodeService) Get(ctx context.Context, id, orgID, buID uuid.UUID) (*
 }
 
 // Create creates a new DelayCode
-func (s DelayCodeService) Create(ctx context.Context, entity *models.DelayCode) (*models.DelayCode, error) {
-	err := s.db.RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
-		_, err := tx.NewInsert().
-			Model(entity).
-			Returning("*").
-			Exec(ctx)
-		return err
-	})
+func (s DelayCodeService) Create(ctx context.Context, entity *models.DelayCode, userID uuid.UUID) (*models.DelayCode, error) {
+	_, err := s.CreateWithAudit(ctx, entity, userID)
 	if err != nil {
 		s.logger.Error().Err(err).Msg("Failed to create DelayCode")
 		return nil, fmt.Errorf("failed to create DelayCode: %w", err)
@@ -118,14 +109,8 @@ func (s DelayCodeService) Create(ctx context.Context, entity *models.DelayCode) 
 }
 
 // UpdateOne updates an existing DelayCode
-func (s DelayCodeService) UpdateOne(ctx context.Context, entity *models.DelayCode) (*models.DelayCode, error) {
-	err := s.db.RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
-		if err := entity.OptimisticUpdate(ctx, tx); err != nil {
-			return err
-		}
-
-		return nil
-	})
+func (s DelayCodeService) UpdateOne(ctx context.Context, entity *models.DelayCode, userID uuid.UUID) (*models.DelayCode, error) {
+	err := s.UpdateWithAudit(ctx, entity, userID)
 	if err != nil {
 		s.logger.Error().Err(err).Msg("Failed to update DelayCode")
 		return nil, fmt.Errorf("failed to update DelayCode: %w", err)

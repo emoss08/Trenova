@@ -60,7 +60,9 @@ func (s *OrganizationService) GetOrganization(ctx context.Context, buID, orgID u
 	cachedOrg, err := s.cache.FetchFromCacheByKey(ctx, cacheKey)
 	if err != nil {
 		s.logger.Error().Err(err).Msg("Failed to fetch organization from cache")
-		return nil, err
+		// Do not return an error if the organization is not in the cache.
+		// We want to fetch it from the database in that case.
+		// Once fetched from the database, we will cache it.
 	}
 
 	if cachedOrg != "" {
@@ -95,7 +97,8 @@ func (s *OrganizationService) GetOrganization(ctx context.Context, buID, orgID u
 
 	if err = s.cache.CacheByKey(ctx, cacheKey, string(orgJSON)); err != nil {
 		s.logger.Error().Err(err).Str("cacheKey", cacheKey).Msg("Failed to cache organization")
-		return nil, err
+		// We do not want to return an error if we fail to cache the organization.
+		// We have already fetched it from the database and returned it.
 	}
 
 	return org, nil
