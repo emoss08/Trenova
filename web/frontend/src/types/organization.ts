@@ -23,7 +23,6 @@ import type {
   RouteModelChoiceProps,
   TimezoneChoices,
 } from "@/lib/choices";
-import { User } from "@/types/accounts";
 import { type StatusChoiceProps } from ".";
 
 export type Organization = {
@@ -84,31 +83,17 @@ export type EmailProfileFormValues = Omit<
   "id" | "organizationId" | "createdAt" | "updatedAt" | "version"
 >;
 
-export type Department = {
-  id: string;
-  name: string;
-  organization: string;
-  description: string;
-  depot: string;
-};
-
 /** Types for EmailControl */
 export interface EmailControl extends BaseModel {
   id: string;
   billingEmailProfileId?: string | null;
-  rateExpirtationEmailProfileId?: string | null;
+  rateExpirationEmailProfileId?: string | null;
 }
 
 export type EmailControlFormValues = Omit<
   EmailControl,
   "id" | "organizationId" | "createdAt" | "updatedAt" | "version"
 >;
-
-export type Depot = BaseModel & {
-  id: string;
-  name: string;
-  description?: string;
-};
 
 export type FeatureFlag = {
   name: string;
@@ -154,19 +139,26 @@ export type AuditLogAction = "CREATE" | "UPDATE" | "DELETE";
 
 export type AuditLogStatus = "ATTEMPTED" | "SUCCEEDED" | "FAILED";
 
+export const enum EnumAuditLogStatus {
+  ATTEMPTED = "ATTEMPTED",
+  SUCCEEDED = "SUCCEEDED",
+  FAILED = "FAILED",
+}
+
 export type AuditLog = {
   id: string;
   status: AuditLogStatus;
   tableName: string;
   entityID: string;
   action: AuditLogAction;
-  attemptedChanges: { [key: string]: any };
-  actualChanges: { [key: string]: any };
+  description?: string;
+  errorMessage?: string;
+  changes: { [key: string]: any };
   timestamp: string;
   userId: string;
+  username: string;
   organizationId: string;
   businessUnitId: string;
-  user: User;
 };
 
 /** Base Trenova Interface
