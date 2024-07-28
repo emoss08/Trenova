@@ -17,10 +17,13 @@ package models
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"strings"
 	"time"
 
+	"github.com/emoss08/trenova/pkg/audit"
+	"github.com/emoss08/trenova/pkg/constants"
 	"github.com/emoss08/trenova/pkg/gen"
 	"github.com/emoss08/trenova/pkg/models/property"
 	"github.com/emoss08/trenova/pkg/utils"
@@ -109,6 +112,69 @@ func (l Location) GenerateCode(pattern string, counter int) string {
 	}
 }
 
+func (l *Location) InsertWithCodeGen(ctx context.Context, tx bun.Tx, codeGen *gen.CodeGenerator, pattern string, auditService *audit.Service, user audit.AuditUser) error {
+	code, err := codeGen.GenerateUniqueCode(ctx, l, pattern, l.OrganizationID)
+	if err != nil {
+		return err
+	}
+	l.Code = code
+
+	_, err = tx.NewInsert().Model(l).Exec(ctx)
+	if err != nil {
+		return err
+	}
+
+	if err = l.syncLocationContacts(ctx, tx); err != nil {
+		return err
+	}
+
+	if err = l.syncLocationComments(ctx, tx); err != nil {
+		return err
+	}
+
+	auditService.LogAction(
+		constants.TableLocation,
+		l.ID.String(),
+		property.AuditLogActionCreate,
+		user,
+		l.OrganizationID,
+		l.BusinessUnitID,
+		audit.WithDiff(nil, l),
+	)
+
+	return nil
+}
+
+func (l *Location) UpdateOne(ctx context.Context, tx bun.IDB, auditService *audit.Service, user audit.AuditUser) error {
+	original := new(Location)
+	if err := tx.NewSelect().Model(original).Where("id = ?", l.ID).Scan(ctx); err != nil {
+		return validator.BusinessLogicError{Message: err.Error()}
+	}
+	if err := l.OptimisticUpdate(ctx, tx); err != nil {
+		return err
+	}
+
+	if err := l.syncLocationContacts(ctx, tx); err != nil {
+		return err
+	}
+
+	if err := l.syncLocationComments(ctx, tx); err != nil {
+		return err
+	}
+
+	auditService.LogAction(
+		constants.TableLocation,
+		l.ID.String(),
+		property.AuditLogActionUpdate,
+		user,
+		l.OrganizationID,
+		l.BusinessUnitID,
+		audit.WithDiff(original, l),
+	)
+
+	return nil
+}
+
 func (l *Location) BeforeUpdate(_ context.Context) error {
 	l.Version++
 
@@ -156,39 +222,6 @@ func (l *Location) BeforeAppendModel(_ context.Context, query bun.Query) error {
 		l.UpdatedAt = time.Now()
 	}
 	return nil
-}
-
-// InsertLocation creates a new location record
-func (l *Location) InsertLocation(ctx context.Context, tx bun.IDB, codeGen *gen.CodeGenerator, pattern string) error {
-	code, err := codeGen.GenerateUniqueCode(ctx, l, pattern, l.OrganizationID)
-	if err != nil {
-		return err
-	}
-	l.Code = code
-
-	_, err = tx.NewInsert().Model(l).Exec(ctx)
-	if err != nil {
-		return err
-	}
-
-	if err = l.syncLocationContacts(ctx, tx); err != nil {
-		return err
-	}
-
-	return l.syncLocationComments(ctx, tx)
-}
-
-// UpdateLocation updates an existing location record
-func (l *Location) UpdateLocation(ctx context.Context, tx bun.IDB) error {
-	if err := l.OptimisticUpdate(ctx, tx); err != nil {
-		return err
-	}
-
-	if err := l.syncLocationContacts(ctx, tx); err != nil {
-		return err
-	}
-
-	return l.syncLocationComments(ctx, tx)
 }
 
 // syncLocationComments synchronizes the comments associated with a location
@@ -320,4 +353,9 @@ func (l *Location) upsertContacts(ctx context.Context, tx bun.Tx) error {
 		}
 	}
 	return nil
+}
+
+func (l *Location) Insert(ctx context.Context, tx bun.IDB, auditService *audit.Service, user audit.AuditUser) error {
+	// This method is required by the Auditable interface, but for Location, we'll always use InsertWithCodeGen
+	return errors.New("location requires code generation, use InsertWithCodeGen instead")
 }

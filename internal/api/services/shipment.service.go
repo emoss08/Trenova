@@ -20,9 +20,13 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/emoss08/trenova/pkg/audit"
+	"github.com/emoss08/trenova/pkg/constants"
+
+	"github.com/emoss08/trenova/internal/api/common"
+
 	"github.com/emoss08/trenova/config"
 	"github.com/emoss08/trenova/internal/server"
-	"github.com/emoss08/trenova/pkg/gen"
 	"github.com/emoss08/trenova/pkg/models"
 	"github.com/emoss08/trenova/pkg/models/property"
 	"github.com/emoss08/trenova/pkg/types"
@@ -32,20 +36,22 @@ import (
 )
 
 type ShipmentService struct {
-	db      *bun.DB
-	logger  *config.ServerLogger
-	codeGen *gen.CodeGenerator
+	common.AuditableService
+	logger *config.ServerLogger
 }
 
 func NewShipmentService(s *server.Server) *ShipmentService {
 	return &ShipmentService{
-		db:      s.DB,
-		logger:  s.Logger,
-		codeGen: s.CodeGenerator,
+		AuditableService: common.AuditableService{
+			DB:            s.DB,
+			AuditService:  s.AuditService,
+			CodeGenerator: s.CodeGenerator,
+		},
+		logger: s.Logger,
 	}
 }
 
-// Suggested additions to ShipmentQueryFilter
+// ShipmentQueryFilter Suggested additions to ShipmentQueryFilter
 type ShipmentQueryFilter struct {
 	Query          string
 	OrganizationID uuid.UUID
@@ -95,7 +101,7 @@ func (s ShipmentService) filterQuery(q *bun.SelectQuery, f *ShipmentQueryFilter)
 func (s ShipmentService) GetAll(ctx context.Context, filter *ShipmentQueryFilter) ([]*models.Shipment, int, error) {
 	var entities []*models.Shipment
 
-	q := s.db.NewSelect().
+	q := s.DB.NewSelect().
 		Model(&entities).
 		Relation("ShipmentMoves").
 		Relation("ShipmentMoves.Stops")
@@ -113,12 +119,7 @@ func (s ShipmentService) GetAll(ctx context.Context, filter *ShipmentQueryFilter
 
 func (s ShipmentService) Get(ctx context.Context, id uuid.UUID, orgID, buID uuid.UUID) (*models.Shipment, error) {
 	entity := new(models.Shipment)
-	err := s.db.NewSelect().
-		Model(entity).
-		Where("sp.organization_id = ?", orgID).
-		Where("sp.business_unit_id = ?", buID).
-		Where("sp.id = ?", id).
-		Scan(ctx)
+	err := s.GetByID(ctx, id, orgID, buID, entity)
 	if err != nil {
 		s.logger.Error().Err(err).Msg("failed to fetch shipment")
 		return nil, err
@@ -134,7 +135,7 @@ func (s ShipmentService) AssignTractorToShipment(ctx context.Context, input *typ
 
 	var assignedAssignments []models.TractorAssignment
 
-	err := s.db.RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
+	err := s.DB.RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
 		// Fetch all existing assignments for this tractor
 		var existingAssignments []models.TractorAssignment
 		err := tx.NewSelect().
@@ -216,7 +217,7 @@ func (s ShipmentService) AssignTractorToShipment(ctx context.Context, input *typ
 	return assignedAssignments, nil
 }
 
-func (s ShipmentService) Create(ctx context.Context, input *types.CreateShipmentInput) (*models.Shipment, error) {
+func (s ShipmentService) Create(ctx context.Context, input *types.CreateShipmentInput, userID uuid.UUID) (*models.Shipment, error) {
 	shipment := &models.Shipment{
 		EntryMethod:           "Manual",
 		Status:                property.ShipmentStatusNew,
@@ -246,10 +247,11 @@ func (s ShipmentService) Create(ctx context.Context, input *types.CreateShipment
 		TotalDistance:         input.TotalDistance,
 	}
 
-	err := s.db.RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
+	err := s.DB.RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
 		// Insert the shipment.
-		if err := shipment.InsertShipment(ctx, s.db); err != nil {
-			s.logger.Error().Err(err).Msg("failed to insert shipment")
+		auditUser, err := s.CreateWithAudit(ctx, shipment, userID)
+		if err != nil {
+			s.logger.Error().Err(err).Msg("failed to create Shipment")
 			return err
 		}
 
@@ -267,7 +269,7 @@ func (s ShipmentService) Create(ctx context.Context, input *types.CreateShipment
 			SecondaryWorkerID: input.SecondaryWorkerID,
 		}
 
-		// Create stops
+		// Create stops (but don't insert yet)
 		stops, err := s.createStops(ctx, tx, shipment, move, input.Stops)
 		if err != nil {
 			s.logger.Error().Err(err).Msg("failed to create stops")
@@ -283,15 +285,28 @@ func (s ShipmentService) Create(ctx context.Context, input *types.CreateShipment
 		}
 
 		// Insert the move
-		if _, err = tx.NewInsert().Model(move).Exec(ctx); err != nil {
+		if _, err = move.Insert(ctx, tx, s.AuditService, auditUser); err != nil {
 			s.logger.Error().Err(err).Msg("failed to insert shipment move")
 			return err
 		}
 
-		// Insert all stops
-		if _, err = tx.NewInsert().Model(&stops).Exec(ctx); err != nil {
-			s.logger.Error().Err(err).Msg("failed to insert stops")
-			return err
+		// Now insert and audit stops
+		for _, stop := range stops {
+			stop.ShipmentMoveID = move.ID
+			if err = stop.InsertPrepared(ctx, tx); err != nil {
+				s.logger.Error().Err(err).Msg("failed to insert stop")
+				return err
+			}
+
+			s.AuditService.LogAction(
+				constants.TableStop,
+				stop.ID.String(),
+				property.AuditLogActionCreate,
+				auditUser,
+				stop.OrganizationID,
+				stop.BusinessUnitID,
+				audit.WithDiff(nil, stop),
+			)
 		}
 
 		return nil
@@ -314,7 +329,7 @@ func (s ShipmentService) createStops(ctx context.Context, tx bun.Tx, shipment *m
 		}
 
 		stop := &models.Stop{
-			ShipmentMoveID:   move.ID,
+			ShipmentMoveID:   move.ID, // This will be set later
 			LocationID:       input.LocationID,
 			Type:             input.Type,
 			SequenceNumber:   i + 1,
@@ -328,9 +343,9 @@ func (s ShipmentService) createStops(ctx context.Context, tx bun.Tx, shipment *m
 			AddressLine:      s.consolidateAddress(location),
 		}
 
-		// Validate the stop
-		if err = stop.Validate(); err != nil {
-			s.logger.Error().Err(err).Msg("failed to validate stop")
+		// Prepare the stop
+		if err := stop.PrepareForInsert(); err != nil {
+			s.logger.Error().Err(err).Msg("failed to prepare stop")
 			return nil, err
 		}
 

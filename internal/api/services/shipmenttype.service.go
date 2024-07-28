@@ -41,7 +41,7 @@ func NewShipmentTypeService(s *server.Server) *ShipmentTypeService {
 	}
 }
 
-// QueryFilter defines the filter parameters for querying ShipmentType
+// ShipmentTypeQueryFilter QueryFilter defines the filter parameters for querying ShipmentType
 type ShipmentTypeQueryFilter struct {
 	Query          string
 	OrganizationID uuid.UUID

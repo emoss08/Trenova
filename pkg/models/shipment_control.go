@@ -5,6 +5,9 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/emoss08/trenova/pkg/audit"
+	"github.com/emoss08/trenova/pkg/constants"
+	"github.com/emoss08/trenova/pkg/models/property"
 	"github.com/emoss08/trenova/pkg/validator"
 
 	"github.com/google/uuid"
@@ -30,9 +33,9 @@ type ShipmentControl struct {
 	BusinessUnit *BusinessUnit `bun:"rel:belongs-to,join:business_unit_id=id" json:"-"`
 }
 
-func QueryShipmentControlByOrgID(ctx context.Context, db *bun.DB, orgID uuid.UUID) (*ShipmentControl, error) {
+func QueryShipmentControlByOrgID(ctx context.Context, tx bun.IDB, orgID uuid.UUID) (*ShipmentControl, error) {
 	var shipmentControl ShipmentControl
-	err := db.NewSelect().Model(&shipmentControl).Where("sc.organization_id = ?", orgID).Scan(ctx)
+	err := tx.NewSelect().Model(&shipmentControl).Where("sc.organization_id = ?", orgID).Scan(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -42,6 +45,55 @@ func QueryShipmentControlByOrgID(ctx context.Context, db *bun.DB, orgID uuid.UUI
 
 func (sc *ShipmentControl) BeforeUpdate(_ context.Context) error {
 	sc.Version++
+
+	return nil
+}
+
+func (c *ShipmentControl) Insert(ctx context.Context, tx bun.IDB, auditService *audit.Service, user audit.AuditUser) error {
+	//if err := c.Validate(); err != nil {
+	//	return err
+	//}
+
+	if _, err := tx.NewInsert().Model(c).Returning("*").Exec(ctx); err != nil {
+		return err
+	}
+
+	auditService.LogAction(
+		constants.TableShipmentControl,
+		c.ID.String(),
+		property.AuditLogActionCreate,
+		user,
+		c.OrganizationID,
+		c.BusinessUnitID,
+		audit.WithDiff(nil, c),
+	)
+
+	return nil
+}
+
+func (c *ShipmentControl) UpdateOne(ctx context.Context, tx bun.IDB, auditService *audit.Service, user audit.AuditUser) error {
+	original := new(ShipmentControl)
+	if err := tx.NewSelect().Model(original).Where("id = ?", c.ID).Scan(ctx); err != nil {
+		return validator.BusinessLogicError{Message: err.Error()}
+	}
+
+	//if err := c.Validate(); err != nil {
+	//	return err
+	//}
+
+	if err := c.OptimisticUpdate(ctx, tx); err != nil {
+		return err
+	}
+
+	auditService.LogAction(
+		constants.TableShipmentControl,
+		c.ID.String(),
+		property.AuditLogActionUpdate,
+		user,
+		c.OrganizationID,
+		c.BusinessUnitID,
+		audit.WithDiff(original, c),
+	)
 
 	return nil
 }

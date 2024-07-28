@@ -17,11 +17,15 @@ package models
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"strings"
 	"time"
 
+	"github.com/emoss08/trenova/pkg/constants"
 	"github.com/emoss08/trenova/pkg/gen"
+
+	"github.com/emoss08/trenova/pkg/audit"
 	"github.com/emoss08/trenova/pkg/models/property"
 	"github.com/emoss08/trenova/pkg/utils"
 	"github.com/emoss08/trenova/pkg/validator"
@@ -97,6 +101,53 @@ func (c Customer) GenerateCode(pattern string, counter int) string {
 	}
 }
 
+func (c *Customer) InsertWithCodeGen(ctx context.Context, tx bun.Tx, codeGen *gen.CodeGenerator, pattern string, auditService *audit.Service, user audit.AuditUser) error {
+	code, err := codeGen.GenerateUniqueCode(ctx, c, pattern, c.OrganizationID)
+	if err != nil {
+		return err
+	}
+	c.Code = code
+
+	if _, err = tx.NewInsert().Model(c).Exec(ctx); err != nil {
+		return err
+	}
+
+	auditService.LogAction(
+		constants.TableCustomer,
+		c.ID.String(),
+		property.AuditLogActionCreate,
+		user,
+		c.OrganizationID,
+		c.BusinessUnitID,
+		audit.WithDiff(nil, c),
+	)
+
+	return nil
+}
+
+func (c *Customer) UpdateOne(ctx context.Context, tx bun.IDB, auditService *audit.Service, user audit.AuditUser) error {
+	original := new(Customer)
+	if err := tx.NewSelect().Model(original).Where("id = ?", c.ID).Scan(ctx); err != nil {
+		return err
+	}
+
+	if err := c.OptimisticUpdate(ctx, tx); err != nil {
+		return err
+	}
+
+	auditService.LogAction(
+		constants.TableCustomer,
+		c.ID.String(),
+		property.AuditLogActionUpdate,
+		user,
+		c.OrganizationID,
+		c.BusinessUnitID,
+		audit.WithDiff(original, c),
+	)
+
+	return nil
+}
+
 func (c *Customer) BeforeUpdate(_ context.Context) error {
 	c.Version++
 
@@ -146,17 +197,7 @@ func (c *Customer) BeforeAppendModel(_ context.Context, query bun.Query) error {
 	return nil
 }
 
-func (c *Customer) InsertCustomer(ctx context.Context, tx bun.Tx, codeGen *gen.CodeGenerator, pattern string) error {
-	code, err := codeGen.GenerateUniqueCode(ctx, c, pattern, c.OrganizationID)
-	if err != nil {
-		return err
-	}
-	c.Code = code
-
-	_, err = tx.NewInsert().Model(c).Exec(ctx)
-	if err != nil {
-		return err
-	}
-
-	return nil
+func (c *Customer) Insert(ctx context.Context, tx bun.IDB, auditService *audit.Service, user audit.AuditUser) error {
+	// This method is required by the Auditable interface, but for Customer, we'll always use InsertWithCodeGen
+	return errors.New("customer requires code generation, use InsertWithCodeGen instead")
 }

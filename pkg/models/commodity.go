@@ -20,6 +20,9 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/emoss08/trenova/pkg/audit"
+	"github.com/emoss08/trenova/pkg/constants"
+
 	"github.com/emoss08/trenova/pkg/models/property"
 	"github.com/emoss08/trenova/pkg/validator"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
@@ -61,6 +64,55 @@ func (c Commodity) Validate() error {
 			validation.Required.Error("IsHazmat is required. Please Try again."),
 			validation.When(c.HazardousMaterialID != nil, validation.Required.Error("Hazardous Material is required when IsHazmat is true. Please try again."))),
 	)
+}
+
+func (c *Commodity) Insert(ctx context.Context, tx bun.IDB, auditService *audit.Service, user audit.AuditUser) error {
+	if err := c.Validate(); err != nil {
+		return err
+	}
+
+	if _, err := tx.NewInsert().Model(c).Returning("*").Exec(ctx); err != nil {
+		return err
+	}
+
+	auditService.LogAction(
+		constants.TableCommodity,
+		c.ID.String(),
+		property.AuditLogActionCreate,
+		user,
+		c.OrganizationID,
+		c.BusinessUnitID,
+		audit.WithDiff(nil, c),
+	)
+
+	return nil
+}
+
+func (c *Commodity) UpdateOne(ctx context.Context, tx bun.IDB, auditService *audit.Service, user audit.AuditUser) error {
+	original := new(Commodity)
+	if err := tx.NewSelect().Model(original).Where("id = ?", c.ID).Scan(ctx); err != nil {
+		return validator.BusinessLogicError{Message: err.Error()}
+	}
+
+	if err := c.Validate(); err != nil {
+		return err
+	}
+
+	if err := c.OptimisticUpdate(ctx, tx); err != nil {
+		return err
+	}
+
+	auditService.LogAction(
+		constants.TableCommodity,
+		c.ID.String(),
+		property.AuditLogActionUpdate,
+		user,
+		c.OrganizationID,
+		c.BusinessUnitID,
+		audit.WithDiff(original, c),
+	)
+
+	return nil
 }
 
 func (c *Commodity) BeforeUpdate(_ context.Context) error {

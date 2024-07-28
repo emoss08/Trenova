@@ -22,10 +22,8 @@ import (
 	"github.com/emoss08/trenova/internal/api/services"
 	"github.com/emoss08/trenova/internal/server"
 	"github.com/emoss08/trenova/internal/types"
-	"github.com/emoss08/trenova/pkg/audit"
 	"github.com/emoss08/trenova/pkg/constants"
 	"github.com/emoss08/trenova/pkg/models"
-	"github.com/emoss08/trenova/pkg/models/property"
 	"github.com/emoss08/trenova/pkg/utils"
 	"github.com/gofiber/fiber/v2"
 	"github.com/google/uuid"
@@ -35,7 +33,6 @@ type ShipmentTypeHandler struct {
 	logger            *config.ServerLogger
 	service           *services.ShipmentTypeService
 	permissionService *services.PermissionService
-	auditService      *audit.Service
 }
 
 func NewShipmentTypeHandler(s *server.Server) *ShipmentTypeHandler {
@@ -43,7 +40,6 @@ func NewShipmentTypeHandler(s *server.Server) *ShipmentTypeHandler {
 		logger:            s.Logger,
 		service:           services.NewShipmentTypeService(s),
 		permissionService: services.NewPermissionService(s.Enforcer),
-		auditService:      s.AuditService,
 	}
 }
 
@@ -177,19 +173,13 @@ func (h ShipmentTypeHandler) Create() fiber.Handler {
 			return c.Status(fiber.StatusBadRequest).JSON(err)
 		}
 
-		attemptID := h.auditService.LogAttempt(c.Context(), constants.TableShipmentType, "", property.AuditLogActionCreate, createdEntity, ids.UserID, ids.OrganizationID, ids.BusinessUnitID)
-
 		entity, err := h.service.Create(c.UserContext(), createdEntity)
 		if err != nil {
 			h.logger.Error().Interface("entity", createdEntity).Err(err).Msg("Failed to create ShipmentType")
 			resp := utils.CreateServiceError(c, err)
 
-			h.auditService.LogError(c.Context(), property.AuditLogActionCreate, attemptID, ids.OrganizationID, ids.BusinessUnitID, ids.UserID, err.Error())
-
 			return c.Status(fiber.StatusInternalServerError).JSON(resp)
 		}
-
-		h.auditService.LogAction(c.Context(), constants.TableShipmentType, entity.ID.String(), property.AuditLogActionCreate, entity, ids.UserID, ids.OrganizationID, ids.BusinessUnitID)
 
 		return c.Status(fiber.StatusCreated).JSON(entity)
 	}
@@ -197,11 +187,6 @@ func (h ShipmentTypeHandler) Create() fiber.Handler {
 
 func (h ShipmentTypeHandler) Update() fiber.Handler {
 	return func(c *fiber.Ctx) error {
-		ids, err := utils.ExtractAndHandleContextIDs(c)
-		if err != nil {
-			return err
-		}
-
 		shipmentTypeID := c.Params("shipmentTypeID")
 		if shipmentTypeID == "" {
 			return c.Status(fiber.StatusBadRequest).JSON(fiber.Error{
@@ -210,7 +195,7 @@ func (h ShipmentTypeHandler) Update() fiber.Handler {
 			})
 		}
 
-		if err = h.permissionService.CheckUserPermission(c, constants.EntityShipmentType, constants.ActionUpdate); err != nil {
+		if err := h.permissionService.CheckUserPermission(c, constants.EntityShipmentType, constants.ActionUpdate); err != nil {
 			return c.Status(fiber.StatusForbidden).JSON(fiber.Error{
 				Code:    fiber.StatusForbidden,
 				Message: err.Error(),
@@ -219,25 +204,19 @@ func (h ShipmentTypeHandler) Update() fiber.Handler {
 
 		updatedEntity := new(models.ShipmentType)
 
-		if err = utils.ParseBodyAndValidate(c, updatedEntity); err != nil {
+		if err := utils.ParseBodyAndValidate(c, updatedEntity); err != nil {
 			return c.Status(fiber.StatusBadRequest).JSON(err)
 		}
 
 		updatedEntity.ID = uuid.MustParse(shipmentTypeID)
-
-		attemptID := h.auditService.LogAttempt(c.Context(), constants.TableShipmentType, shipmentTypeID, property.AuditLogActionUpdate, updatedEntity, ids.UserID, ids.OrganizationID, ids.BusinessUnitID)
 
 		entity, err := h.service.UpdateOne(c.UserContext(), updatedEntity)
 		if err != nil {
 			h.logger.Error().Interface("entity", updatedEntity).Err(err).Msg("Failed to update ShipmentType")
 			resp := utils.CreateServiceError(c, err)
 
-			h.auditService.LogError(c.Context(), property.AuditLogActionUpdate, attemptID, ids.OrganizationID, ids.BusinessUnitID, ids.UserID, err.Error())
-
 			return c.Status(fiber.StatusInternalServerError).JSON(resp)
 		}
-
-		h.auditService.LogAction(c.Context(), constants.TableShipmentType, entity.ID.String(), property.AuditLogActionUpdate, entity, ids.UserID, ids.OrganizationID, ids.BusinessUnitID)
 
 		return c.Status(fiber.StatusOK).JSON(entity)
 	}

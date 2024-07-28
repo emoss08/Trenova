@@ -19,13 +19,13 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/emoss08/trenova/pkg/audit"
 	"github.com/emoss08/trenova/pkg/models/property"
 
 	"github.com/rs/zerolog"
 
 	"github.com/emoss08/trenova/config"
 	"github.com/emoss08/trenova/internal/server"
-	"github.com/emoss08/trenova/pkg/models"
 	"github.com/google/uuid"
 	"github.com/uptrace/bun"
 )
@@ -81,11 +81,11 @@ func (s AuditLogService) filterQuery(q *bun.SelectQuery, f *AuditLogQueryFilter)
 	return q.Limit(f.Limit).Offset(f.Offset)
 }
 
-func (s AuditLogService) GetAll(ctx context.Context, filter *AuditLogQueryFilter) ([]*models.AuditLog, int, error) {
-	var entities []*models.AuditLog
+func (s AuditLogService) GetAll(ctx context.Context, filter *AuditLogQueryFilter) ([]*audit.Log, int, error) {
+	var entities []*audit.Log
 
 	q := s.db.NewSelect().Model(&entities).
-		Relation("User").Order("al.timestamp DESC")
+		Order("al.timestamp DESC")
 
 	q = s.filterQuery(q, filter)
 

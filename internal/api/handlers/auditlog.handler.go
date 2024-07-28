@@ -3,9 +3,8 @@ package handlers
 import (
 	"fmt"
 
+	"github.com/emoss08/trenova/pkg/audit"
 	"github.com/emoss08/trenova/pkg/models/property"
-
-	"github.com/emoss08/trenova/pkg/models"
 
 	"github.com/google/uuid"
 
@@ -113,7 +112,7 @@ func (h AuditLogHandler) Get() fiber.Handler {
 		nextURL := utils.GetNextPageURL(c, limit, offset, cnt)
 		prevURL := utils.GetPrevPageURL(c, limit, offset)
 
-		return c.Status(fiber.StatusOK).JSON(types.HTTPResponse[[]*models.AuditLog]{
+		return c.Status(fiber.StatusOK).JSON(types.HTTPResponse[[]*audit.Log]{
 			Results: entities,
 			Count:   cnt,
 			Next:    nextURL,

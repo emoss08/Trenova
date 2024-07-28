@@ -22,10 +22,8 @@ import (
 	"github.com/emoss08/trenova/internal/api/services"
 	"github.com/emoss08/trenova/internal/server"
 	"github.com/emoss08/trenova/internal/types"
-	"github.com/emoss08/trenova/pkg/audit"
 	"github.com/emoss08/trenova/pkg/constants"
 	"github.com/emoss08/trenova/pkg/models"
-	"github.com/emoss08/trenova/pkg/models/property"
 	"github.com/emoss08/trenova/pkg/utils"
 	"github.com/gofiber/fiber/v2"
 	"github.com/google/uuid"
@@ -35,7 +33,6 @@ type HazardousMaterialHandler struct {
 	logger            *config.ServerLogger
 	service           *services.HazardousMaterialService
 	permissionService *services.PermissionService
-	auditService      *audit.Service
 }
 
 func NewHazardousMaterialHandler(s *server.Server) *HazardousMaterialHandler {
@@ -43,7 +40,6 @@ func NewHazardousMaterialHandler(s *server.Server) *HazardousMaterialHandler {
 		logger:            s.Logger,
 		service:           services.NewHazardousMaterialService(s),
 		permissionService: services.NewPermissionService(s.Enforcer),
-		auditService:      s.AuditService,
 	}
 }
 
@@ -177,19 +173,13 @@ func (h HazardousMaterialHandler) Create() fiber.Handler {
 			return c.Status(fiber.StatusBadRequest).JSON(err)
 		}
 
-		attemptID := h.auditService.LogAttempt(c.Context(), constants.TableHazardousMaterial, "", property.AuditLogActionCreate, createdEntity, ids.UserID, ids.OrganizationID, ids.BusinessUnitID)
-
-		entity, err := h.service.Create(c.UserContext(), createdEntity)
+		entity, err := h.service.Create(c.UserContext(), createdEntity, ids.UserID)
 		if err != nil {
 			h.logger.Error().Interface("entity", createdEntity).Err(err).Msg("Failed to create HazardousMaterial")
 			resp := utils.CreateServiceError(c, err)
 
-			h.auditService.LogError(c.Context(), property.AuditLogActionCreate, attemptID, ids.OrganizationID, ids.BusinessUnitID, ids.UserID, err.Error())
-
 			return c.Status(fiber.StatusInternalServerError).JSON(resp)
 		}
-
-		h.auditService.LogAction(c.Context(), constants.TableHazardousMaterial, entity.ID.String(), property.AuditLogActionCreate, entity, ids.UserID, ids.OrganizationID, ids.BusinessUnitID)
 
 		return c.Status(fiber.StatusCreated).JSON(entity)
 	}
@@ -225,19 +215,13 @@ func (h HazardousMaterialHandler) Update() fiber.Handler {
 
 		updatedEntity.ID = uuid.MustParse(hazmatID)
 
-		attemptID := h.auditService.LogAttempt(c.Context(), constants.TableHazardousMaterial, hazmatID, property.AuditLogActionUpdate, updatedEntity, ids.UserID, ids.OrganizationID, ids.BusinessUnitID)
-
-		entity, err := h.service.UpdateOne(c.UserContext(), updatedEntity)
+		entity, err := h.service.UpdateOne(c.UserContext(), updatedEntity, ids.UserID)
 		if err != nil {
 			h.logger.Error().Interface("entity", updatedEntity).Err(err).Msg("Failed to update HazardousMaterial")
 			resp := utils.CreateServiceError(c, err)
 
-			h.auditService.LogError(c.Context(), property.AuditLogActionUpdate, attemptID, ids.OrganizationID, ids.BusinessUnitID, ids.UserID, err.Error())
-
 			return c.Status(fiber.StatusInternalServerError).JSON(resp)
 		}
-
-		h.auditService.LogAction(c.Context(), constants.TableHazardousMaterial, entity.ID.String(), property.AuditLogActionUpdate, entity, ids.UserID, ids.OrganizationID, ids.BusinessUnitID)
 
 		return c.Status(fiber.StatusOK).JSON(entity)
 	}

@@ -20,8 +20,8 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/config"
+	"github.com/emoss08/trenova/internal/api/common"
 	"github.com/emoss08/trenova/internal/server"
-	"github.com/emoss08/trenova/pkg/gen"
 	"github.com/emoss08/trenova/pkg/models"
 	"github.com/google/uuid"
 	"github.com/uptrace/bun"
@@ -29,17 +29,19 @@ import (
 
 // LocationService handles business logic for Location
 type LocationService struct {
-	db      *bun.DB
-	logger  *config.ServerLogger
-	codeGen *gen.CodeGenerator
+	common.AuditableService
+	logger *config.ServerLogger
 }
 
 // NewLocationService creates a new instance of LocationService
 func NewLocationService(s *server.Server) *LocationService {
 	return &LocationService{
-		db:      s.DB,
-		logger:  s.Logger,
-		codeGen: s.CodeGenerator,
+		AuditableService: common.AuditableService{
+			DB:            s.DB,
+			AuditService:  s.AuditService,
+			CodeGenerator: s.CodeGenerator,
+		},
+		logger: s.Logger,
 	}
 }
 
@@ -70,14 +72,11 @@ func (s LocationService) filterQuery(q *bun.SelectQuery, f *LocationQueryFilter)
 // GetAll retrieves all Location based on the provided filter
 func (s LocationService) GetAll(ctx context.Context, filter *LocationQueryFilter) ([]*models.Location, int, error) {
 	var entities []*models.Location
-
-	q := s.db.NewSelect().
-		Model(&entities).
+	q := s.DB.NewSelect().Model(&entities).
 		Relation("LocationCategory").
 		Relation("Comments").
 		Relation("Contacts").
 		Relation("State")
-
 	q = s.filterQuery(q, filter)
 
 	count, err := q.ScanAndCount(ctx)
@@ -92,12 +91,7 @@ func (s LocationService) GetAll(ctx context.Context, filter *LocationQueryFilter
 // Get retrieves a single Location by ID
 func (s LocationService) Get(ctx context.Context, id, orgID, buID uuid.UUID) (*models.Location, error) {
 	entity := new(models.Location)
-	err := s.db.NewSelect().
-		Model(entity).
-		Where("lc.organization_id = ?", orgID).
-		Where("lc.business_unit_id = ?", buID).
-		Where("lc.id = ?", id).
-		Scan(ctx)
+	err := s.GetByID(ctx, id, orgID, buID, entity)
 	if err != nil {
 		s.logger.Error().Err(err).Msg("Failed to fetch Location")
 		return nil, err
@@ -107,16 +101,12 @@ func (s LocationService) Get(ctx context.Context, id, orgID, buID uuid.UUID) (*m
 }
 
 // Create creates a new Location
-func (s LocationService) Create(ctx context.Context, entity *models.Location) (*models.Location, error) {
-	err := s.db.RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
-		// Query the master key generation entity.
-		mkg, mErr := models.QueryLocationMasterKeyGenerationByOrgID(ctx, s.db, entity.OrganizationID)
-		if mErr != nil {
-			return mErr
-		}
-
-		return entity.InsertLocation(ctx, tx, s.codeGen, mkg.Pattern)
-	})
+func (s LocationService) Create(ctx context.Context, entity *models.Location, userID uuid.UUID) (*models.Location, error) {
+	mkg, err := models.QueryLocationMasterKeyGenerationByOrgID(ctx, s.DB, entity.OrganizationID)
+	if err != nil {
+		return nil, err
+	}
+	err = s.CreateWithAuditAndCodeGen(ctx, entity, userID, mkg.Pattern)
 	if err != nil {
 		s.logger.Error().Err(err).Msg("Failed to create Location")
 		return nil, err
@@ -126,10 +116,8 @@ func (s LocationService) Create(ctx context.Context, entity *models.Location) (*
 }
 
 // UpdateOne updates an existing Location
-func (s LocationService) UpdateOne(ctx context.Context, entity *models.Location) (*models.Location, error) {
-	err := s.db.RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
-		return entity.UpdateLocation(ctx, tx)
-	})
+func (s LocationService) UpdateOne(ctx context.Context, entity *models.Location, userID uuid.UUID) (*models.Location, error) {
+	err := s.UpdateWithAudit(ctx, entity, userID)
 	if err != nil {
 		s.logger.Error().Err(err).Msg("Failed to update Location")
 		return nil, err

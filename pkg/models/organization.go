@@ -18,10 +18,11 @@ package models
 import (
 	"context"
 	"fmt"
+	"time"
+
 	"github.com/emoss08/trenova/pkg/models/property"
 	"github.com/emoss08/trenova/pkg/validator"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
-	"time"
 
 	"github.com/google/uuid"
 	"github.com/uptrace/bun"

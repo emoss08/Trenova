@@ -21,6 +21,7 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/config"
+	"github.com/emoss08/trenova/internal/api/common"
 	"github.com/emoss08/trenova/internal/server"
 	"github.com/emoss08/trenova/pkg/models"
 	"github.com/google/uuid"
@@ -29,14 +30,17 @@ import (
 
 // HazardousMaterialService handles business logic for HazardousMaterial
 type HazardousMaterialService struct {
-	db     *bun.DB
+	common.AuditableService
 	logger *config.ServerLogger
 }
 
 // NewHazardousMaterialService creates a new instance of HazardousMaterialService
 func NewHazardousMaterialService(s *server.Server) *HazardousMaterialService {
 	return &HazardousMaterialService{
-		db:     s.DB,
+		AuditableService: common.AuditableService{
+			DB:           s.DB,
+			AuditService: s.AuditService,
+		},
 		logger: s.Logger,
 	}
 }
@@ -69,9 +73,7 @@ func (s HazardousMaterialService) filterQuery(q *bun.SelectQuery, f *HazardousMa
 func (s HazardousMaterialService) GetAll(ctx context.Context, filter *HazardousMaterialQueryFilter) ([]*models.HazardousMaterial, int, error) {
 	var entities []*models.HazardousMaterial
 
-	q := s.db.NewSelect().
-		Model(&entities)
-
+	q := s.DB.NewSelect().Model(&entities)
 	q = s.filterQuery(q, filter)
 
 	count, err := q.ScanAndCount(ctx)
@@ -86,12 +88,7 @@ func (s HazardousMaterialService) GetAll(ctx context.Context, filter *HazardousM
 // Get retrieves a single HazardousMaterial by ID
 func (s HazardousMaterialService) Get(ctx context.Context, id, orgID, buID uuid.UUID) (*models.HazardousMaterial, error) {
 	entity := new(models.HazardousMaterial)
-	err := s.db.NewSelect().
-		Model(entity).
-		Where("hm.organization_id = ?", orgID).
-		Where("hm.business_unit_id = ?", buID).
-		Where("hm.id = ?", id).
-		Scan(ctx)
+	err := s.GetByID(ctx, id, orgID, buID, entity)
 	if err != nil {
 		s.logger.Error().Err(err).Msg("Failed to fetch HazardousMaterial")
 		return nil, fmt.Errorf("failed to fetch HazardousMaterial: %w", err)
@@ -101,14 +98,8 @@ func (s HazardousMaterialService) Get(ctx context.Context, id, orgID, buID uuid.
 }
 
 // Create creates a new HazardousMaterial
-func (s HazardousMaterialService) Create(ctx context.Context, entity *models.HazardousMaterial) (*models.HazardousMaterial, error) {
-	err := s.db.RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
-		_, err := tx.NewInsert().
-			Model(entity).
-			Returning("*").
-			Exec(ctx)
-		return err
-	})
+func (s HazardousMaterialService) Create(ctx context.Context, entity *models.HazardousMaterial, userID uuid.UUID) (*models.HazardousMaterial, error) {
+	_, err := s.CreateWithAudit(ctx, entity, userID)
 	if err != nil {
 		s.logger.Error().Err(err).Msg("Failed to create HazardousMaterial")
 		return nil, fmt.Errorf("failed to create HazardousMaterial: %w", err)
@@ -118,14 +109,8 @@ func (s HazardousMaterialService) Create(ctx context.Context, entity *models.Haz
 }
 
 // UpdateOne updates an existing HazardousMaterial
-func (s HazardousMaterialService) UpdateOne(ctx context.Context, entity *models.HazardousMaterial) (*models.HazardousMaterial, error) {
-	err := s.db.RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
-		if err := entity.OptimisticUpdate(ctx, tx); err != nil {
-			return err
-		}
-
-		return nil
-	})
+func (s HazardousMaterialService) UpdateOne(ctx context.Context, entity *models.HazardousMaterial, userID uuid.UUID) (*models.HazardousMaterial, error) {
+	err := s.UpdateWithAudit(ctx, entity, userID)
 	if err != nil {
 		s.logger.Error().Err(err).Msg("Failed to update HazardousMaterial")
 		return nil, fmt.Errorf("failed to update HazardousMaterial: %w", err)

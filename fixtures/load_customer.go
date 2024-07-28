@@ -18,6 +18,7 @@ package fixtures
 import (
 	"context"
 
+	"github.com/emoss08/trenova/pkg/audit"
 	"github.com/emoss08/trenova/pkg/gen"
 	"github.com/emoss08/trenova/pkg/models"
 	"github.com/emoss08/trenova/pkg/models/property"
@@ -25,7 +26,7 @@ import (
 	"github.com/uptrace/bun"
 )
 
-func loadCustomers(ctx context.Context, db *bun.DB, gen *gen.CodeGenerator, orgID, buID uuid.UUID) error {
+func loadCustomers(ctx context.Context, db *bun.DB, gen *gen.CodeGenerator, auditService *audit.Service, user *models.User, orgID, buID uuid.UUID) error {
 	count, err := db.NewSelect().Model((*models.Customer)(nil)).Count(ctx)
 	if err != nil {
 		return err
@@ -57,7 +58,12 @@ func loadCustomers(ctx context.Context, db *bun.DB, gen *gen.CodeGenerator, orgI
 					return mErr
 				}
 
-				return customer.InsertCustomer(ctx, tx, gen, mkg.Pattern)
+				auditUser := audit.AuditUser{
+					ID:       user.ID,
+					Username: user.Username,
+				}
+
+				return customer.InsertWithCodeGen(ctx, tx, gen, mkg.Pattern, auditService, auditUser)
 			})
 			if err != nil {
 				return err

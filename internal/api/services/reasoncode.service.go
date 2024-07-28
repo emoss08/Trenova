@@ -21,6 +21,7 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/config"
+	"github.com/emoss08/trenova/internal/api/common"
 	"github.com/emoss08/trenova/internal/server"
 	"github.com/emoss08/trenova/pkg/models"
 	"github.com/google/uuid"
@@ -29,14 +30,17 @@ import (
 
 // ReasonCodeService handles business logic for ReasonCode
 type ReasonCodeService struct {
-	db     *bun.DB
+	common.AuditableService
 	logger *config.ServerLogger
 }
 
 // NewReasonCodeService creates a new instance of ReasonCodeService
 func NewReasonCodeService(s *server.Server) *ReasonCodeService {
 	return &ReasonCodeService{
-		db:     s.DB,
+		AuditableService: common.AuditableService{
+			DB:           s.DB,
+			AuditService: s.AuditService,
+		},
 		logger: s.Logger,
 	}
 }
@@ -69,9 +73,7 @@ func (s ReasonCodeService) filterQuery(q *bun.SelectQuery, f *ReasonCodeQueryFil
 func (s ReasonCodeService) GetAll(ctx context.Context, filter *ReasonCodeQueryFilter) ([]*models.ReasonCode, int, error) {
 	var entities []*models.ReasonCode
 
-	q := s.db.NewSelect().
-		Model(&entities)
-
+	q := s.DB.NewSelect().Model(&entities)
 	q = s.filterQuery(q, filter)
 
 	count, err := q.ScanAndCount(ctx)
@@ -86,12 +88,7 @@ func (s ReasonCodeService) GetAll(ctx context.Context, filter *ReasonCodeQueryFi
 // Get retrieves a single ReasonCode by ID
 func (s ReasonCodeService) Get(ctx context.Context, id, orgID, buID uuid.UUID) (*models.ReasonCode, error) {
 	entity := new(models.ReasonCode)
-	err := s.db.NewSelect().
-		Model(entity).
-		Where("rc.organization_id = ?", orgID).
-		Where("rc.business_unit_id = ?", buID).
-		Where("rc.id = ?", id).
-		Scan(ctx)
+	err := s.GetByID(ctx, id, orgID, buID, entity)
 	if err != nil {
 		s.logger.Error().Err(err).Msg("Failed to fetch ReasonCode")
 		return nil, fmt.Errorf("failed to fetch ReasonCode: %w", err)
@@ -101,14 +98,8 @@ func (s ReasonCodeService) Get(ctx context.Context, id, orgID, buID uuid.UUID) (
 }
 
 // Create creates a new ReasonCode
-func (s ReasonCodeService) Create(ctx context.Context, entity *models.ReasonCode) (*models.ReasonCode, error) {
-	err := s.db.RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
-		_, err := tx.NewInsert().
-			Model(entity).
-			Returning("*").
-			Exec(ctx)
-		return err
-	})
+func (s ReasonCodeService) Create(ctx context.Context, entity *models.ReasonCode, userID uuid.UUID) (*models.ReasonCode, error) {
+	_, err := s.CreateWithAudit(ctx, entity, userID)
 	if err != nil {
 		s.logger.Error().Err(err).Msg("Failed to create ReasonCode")
 		return nil, fmt.Errorf("failed to create ReasonCode: %w", err)
@@ -118,14 +109,8 @@ func (s ReasonCodeService) Create(ctx context.Context, entity *models.ReasonCode
 }
 
 // UpdateOne updates an existing ReasonCode
-func (s ReasonCodeService) UpdateOne(ctx context.Context, entity *models.ReasonCode) (*models.ReasonCode, error) {
-	err := s.db.RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
-		if err := entity.OptimisticUpdate(ctx, tx); err != nil {
-			return err
-		}
-
-		return nil
-	})
+func (s ReasonCodeService) UpdateOne(ctx context.Context, entity *models.ReasonCode, userID uuid.UUID) (*models.ReasonCode, error) {
+	err := s.UpdateWithAudit(ctx, entity, userID)
 	if err != nil {
 		s.logger.Error().Err(err).Msg("Failed to update ReasonCode")
 		return nil, fmt.Errorf("failed to update ReasonCode: %w", err)

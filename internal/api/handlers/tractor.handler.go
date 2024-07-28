@@ -19,7 +19,6 @@ import (
 	"fmt"
 
 	"github.com/emoss08/trenova/config"
-	"github.com/emoss08/trenova/pkg/audit"
 	"github.com/emoss08/trenova/pkg/constants"
 	"github.com/emoss08/trenova/pkg/models/property"
 
@@ -36,7 +35,6 @@ type TractorHandler struct {
 	logger            *config.ServerLogger
 	service           *services.TractorService
 	permissionService *services.PermissionService
-	auditService      *audit.Service
 }
 
 func NewTractorHandler(s *server.Server) *TractorHandler {
@@ -44,7 +42,6 @@ func NewTractorHandler(s *server.Server) *TractorHandler {
 		logger:            s.Logger,
 		service:           services.NewTractorService(s),
 		permissionService: services.NewPermissionService(s.Enforcer),
-		auditService:      s.AuditService,
 	}
 }
 
@@ -201,19 +198,13 @@ func (h TractorHandler) Create() fiber.Handler {
 			return c.Status(fiber.StatusBadRequest).JSON(err)
 		}
 
-		attemptID := h.auditService.LogAttempt(c.Context(), constants.TableTractor, "", property.AuditLogActionCreate, createdEntity, ids.UserID, ids.OrganizationID, ids.BusinessUnitID)
-
 		entity, err := h.service.Create(c.UserContext(), createdEntity)
 		if err != nil {
 			h.logger.Error().Interface("entity", createdEntity).Err(err).Msg("Failed to create Tractor")
 			resp := utils.CreateServiceError(c, err)
 
-			h.auditService.LogError(c.Context(), property.AuditLogActionCreate, attemptID, ids.OrganizationID, ids.BusinessUnitID, ids.UserID, err.Error())
-
 			return c.Status(fiber.StatusInternalServerError).JSON(resp)
 		}
-
-		h.auditService.LogAction(c.Context(), constants.TableTractor, entity.ID.String(), property.AuditLogActionCreate, entity, ids.UserID, ids.OrganizationID, ids.BusinessUnitID)
 
 		return c.Status(fiber.StatusCreated).JSON(entity)
 	}
@@ -221,11 +212,6 @@ func (h TractorHandler) Create() fiber.Handler {
 
 func (h TractorHandler) Update() fiber.Handler {
 	return func(c *fiber.Ctx) error {
-		ids, err := utils.ExtractAndHandleContextIDs(c)
-		if err != nil {
-			return err
-		}
-
 		tractorID := c.Params("tractorID")
 		if tractorID == "" {
 			return c.Status(fiber.StatusBadRequest).JSON(fiber.Error{
@@ -234,7 +220,7 @@ func (h TractorHandler) Update() fiber.Handler {
 			})
 		}
 
-		if err = h.permissionService.CheckUserPermission(c, constants.EntityTractor, constants.ActionUpdate); err != nil {
+		if err := h.permissionService.CheckUserPermission(c, constants.EntityTractor, constants.ActionUpdate); err != nil {
 			return c.Status(fiber.StatusForbidden).JSON(fiber.Error{
 				Code:    fiber.StatusForbidden,
 				Message: err.Error(),
@@ -243,25 +229,19 @@ func (h TractorHandler) Update() fiber.Handler {
 
 		updatedEntity := new(models.Tractor)
 
-		if err = utils.ParseBodyAndValidate(c, updatedEntity); err != nil {
+		if err := utils.ParseBodyAndValidate(c, updatedEntity); err != nil {
 			return c.Status(fiber.StatusBadRequest).JSON(err)
 		}
 
 		updatedEntity.ID = uuid.MustParse(tractorID)
-
-		attemptID := h.auditService.LogAttempt(c.Context(), constants.TableTractor, tractorID, property.AuditLogActionUpdate, updatedEntity, ids.UserID, ids.OrganizationID, ids.BusinessUnitID)
 
 		entity, err := h.service.UpdateOne(c.UserContext(), updatedEntity)
 		if err != nil {
 			h.logger.Error().Interface("entity", updatedEntity).Err(err).Msg("Failed to update Tractor")
 			resp := utils.CreateServiceError(c, err)
 
-			h.auditService.LogError(c.Context(), property.AuditLogActionUpdate, attemptID, ids.OrganizationID, ids.BusinessUnitID, ids.UserID, err.Error())
-
 			return c.Status(fiber.StatusInternalServerError).JSON(resp)
 		}
-
-		h.auditService.LogAction(c.Context(), constants.TableTractor, entity.ID.String(), property.AuditLogActionUpdate, entity, ids.UserID, ids.OrganizationID, ids.BusinessUnitID)
 
 		return c.Status(fiber.StatusOK).JSON(entity)
 	}

@@ -21,6 +21,9 @@ import (
 	"strings"
 	"time"
 
+	"github.com/emoss08/trenova/pkg/constants"
+
+	"github.com/emoss08/trenova/pkg/audit"
 	"github.com/emoss08/trenova/pkg/gen"
 	"github.com/emoss08/trenova/pkg/models"
 	"github.com/emoss08/trenova/pkg/models/property"
@@ -31,7 +34,7 @@ import (
 	"github.com/uptrace/bun"
 )
 
-func loadShipments(ctx context.Context, db *bun.DB, gen *gen.CodeGenerator, orgID, buID uuid.UUID) error {
+func loadShipments(ctx context.Context, db *bun.DB, gen *gen.CodeGenerator, auditService *audit.Service, user *models.User, orgID, buID uuid.UUID) error {
 	count, err := db.NewSelect().Model((*models.Shipment)(nil)).Count(ctx)
 	if err != nil {
 		return err
@@ -44,22 +47,22 @@ func loadShipments(ctx context.Context, db *bun.DB, gen *gen.CodeGenerator, orgI
 			return err
 		}
 
-		customer, err := seedCustomer(ctx, db, gen, state.ID, orgID, buID)
+		customer, err := seedCustomer(ctx, db, gen, auditService, user, state.ID, orgID, buID)
 		if err != nil {
 			return err
 		}
 
-		location, err := seedLocation(ctx, db, state.ID, orgID, buID)
+		location, err := seedLocation(ctx, db, gen, auditService, user, state.ID, orgID, buID)
 		if err != nil {
 			return err
 		}
 
-		revCode, err := seedRevenueCode(ctx, db, orgID, buID)
+		revCode, err := seedRevenueCode(ctx, db, auditService, user, orgID, buID)
 		if err != nil {
 			return err
 		}
 
-		serviceType, err := seedServiceType(ctx, db, orgID, buID)
+		serviceType, err := seedServiceType(ctx, db, auditService, user, orgID, buID)
 		if err != nil {
 			return err
 		}
@@ -69,22 +72,22 @@ func loadShipments(ctx context.Context, db *bun.DB, gen *gen.CodeGenerator, orgI
 			return err
 		}
 
-		equipType, err := seedEquipmentType(ctx, db, orgID, buID)
+		equipType, err := seedEquipmentType(ctx, db, auditService, user, orgID, buID)
 		if err != nil {
 			return err
 		}
 
-		shipType, err := seedShipmentType(ctx, db, orgID, buID)
+		shipType, err := seedShipmentType(ctx, db, auditService, user, orgID, buID)
 		if err != nil {
 			return err
 		}
 
-		trailer, err := seedTrailer(ctx, db, equipType.ID, orgID, buID)
+		trailer, err := seedTrailer(ctx, db, auditService, user, equipType.ID, orgID, buID)
 		if err != nil {
 			return err
 		}
 
-		tractor, err := seedTractor(ctx, db, primaryWorker.ID, state.ID, equipType.ID, orgID, buID)
+		tractor, err := seedTractor(ctx, db, auditService, user, primaryWorker.ID, state.ID, equipType.ID, orgID, buID)
 		if err != nil {
 			return err
 		}
@@ -131,7 +134,7 @@ func loadShipments(ctx context.Context, db *bun.DB, gen *gen.CodeGenerator, orgI
 				},
 			}
 
-			_, err = create(ctx, db, &input)
+			_, err = create(ctx, db, &input, auditService, user)
 			if err != nil {
 				return err
 			}
@@ -141,7 +144,7 @@ func loadShipments(ctx context.Context, db *bun.DB, gen *gen.CodeGenerator, orgI
 	return nil
 }
 
-func create(ctx context.Context, db *bun.DB, input *types.CreateShipmentInput) (*models.Shipment, error) {
+func create(ctx context.Context, db *bun.DB, input *types.CreateShipmentInput, auditService *audit.Service, user *models.User) (*models.Shipment, error) {
 	shipment := &models.Shipment{
 		EntryMethod:           "Manual",
 		Status:                property.ShipmentStatusNew,
@@ -171,9 +174,14 @@ func create(ctx context.Context, db *bun.DB, input *types.CreateShipmentInput) (
 		TotalDistance:         input.TotalDistance,
 	}
 
+	auditUser := audit.AuditUser{
+		ID:       user.ID,
+		Username: user.Username,
+	}
+
 	err := db.RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
 		// Insert the shipment.
-		if err := shipment.InsertShipment(ctx, db); err != nil {
+		if err := shipment.Insert(ctx, db, auditService, auditUser); err != nil {
 			return err
 		}
 
@@ -191,12 +199,7 @@ func create(ctx context.Context, db *bun.DB, input *types.CreateShipmentInput) (
 			SecondaryWorkerID: input.SecondaryWorkerID,
 		}
 
-		// Insert the move
-		if _, err := tx.NewInsert().Model(move).Exec(ctx); err != nil {
-			return err
-		}
-
-		// Create stops
+		// Create stops (but don't insert yet)
 		stops, err := createStops(ctx, tx, shipment, move, input.Stops)
 		if err != nil {
 			return err
@@ -209,9 +212,27 @@ func create(ctx context.Context, db *bun.DB, input *types.CreateShipmentInput) (
 			return err
 		}
 
-		// Insert all stops
-		if _, err = tx.NewInsert().Model(&stops).Exec(ctx); err != nil {
+		// Insert the move
+		if _, err = move.Insert(ctx, tx, auditService, auditUser); err != nil {
 			return err
+		}
+
+		// Now insert and audit stops
+		for _, stop := range stops {
+			stop.ShipmentMoveID = move.ID
+			if err = stop.InsertPrepared(ctx, tx); err != nil {
+				return err
+			}
+
+			auditService.LogAction(
+				constants.TableStop,
+				stop.ID.String(),
+				property.AuditLogActionCreate,
+				auditUser,
+				stop.OrganizationID,
+				stop.BusinessUnitID,
+				audit.WithDiff(nil, stop),
+			)
 		}
 
 		return nil
@@ -252,8 +273,8 @@ func createStops(ctx context.Context, tx bun.Tx, shipment *models.Shipment, move
 			AddressLine:      consolidatedAddress,
 		}
 
-		// Validate the stop
-		if err = stop.Validate(); err != nil {
+		// Prepare the stop
+		if err := stop.PrepareForInsert(); err != nil {
 			return nil, err
 		}
 
@@ -299,31 +320,29 @@ func consolidateAddress(ctx context.Context, tx bun.Tx, location *models.Locatio
 	return strings.Join(addressParts, ", "), nil
 }
 
-func seedShipmentType(ctx context.Context, db *bun.DB, orgID, buID uuid.UUID) (*models.ShipmentType, error) {
+func seedShipmentType(ctx context.Context, db *bun.DB, auditService *audit.Service, user *models.User, orgID, buID uuid.UUID) (*models.ShipmentType, error) {
 	shipType := &models.ShipmentType{
 		OrganizationID: orgID,
 		BusinessUnitID: buID,
 		Status:         property.StatusActive,
-		Code:           "ST-001",
+		Code:           "ST001",
 		Color:          "#000000",
 		Description:    "Shipment Type",
 	}
 
-	err := db.RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
-		if _, err := tx.NewInsert().Model(shipType).Exec(ctx); err != nil {
-			return err
-		}
+	auditUser := audit.AuditUser{
+		ID:       user.ID,
+		Username: user.Username,
+	}
 
-		return nil
-	})
-	if err != nil {
+	if err := shipType.Insert(ctx, db, auditService, auditUser); err != nil {
 		return nil, err
 	}
 
 	return shipType, nil
 }
 
-func seedTrailer(ctx context.Context, db *bun.DB, equipTypeID, orgID, buID uuid.UUID) (*models.Trailer, error) {
+func seedTrailer(ctx context.Context, db *bun.DB, auditService *audit.Service, user *models.User, equipTypeID, orgID, buID uuid.UUID) (*models.Trailer, error) {
 	trailer := &models.Trailer{
 		OrganizationID:             orgID,
 		BusinessUnitID:             buID,
@@ -339,14 +358,19 @@ func seedTrailer(ctx context.Context, db *bun.DB, equipTypeID, orgID, buID uuid.
 		EquipmentTypeID:            equipTypeID,
 	}
 
-	if _, err := db.NewInsert().Model(trailer).Exec(ctx); err != nil {
+	auditUser := audit.AuditUser{
+		ID:       user.ID,
+		Username: user.Username,
+	}
+
+	if err := trailer.Insert(ctx, db, auditService, auditUser); err != nil {
 		return nil, err
 	}
 
 	return trailer, nil
 }
 
-func seedTractor(ctx context.Context, db *bun.DB, primaryWorkerID, stateID, equipTypeID, orgID, buID uuid.UUID) (*models.Tractor, error) {
+func seedTractor(ctx context.Context, db *bun.DB, auditService *audit.Service, user *models.User, primaryWorkerID, stateID, equipTypeID, orgID, buID uuid.UUID) (*models.Tractor, error) {
 	tractor := &models.Tractor{
 		OrganizationID:     orgID,
 		BusinessUnitID:     buID,
@@ -361,14 +385,19 @@ func seedTractor(ctx context.Context, db *bun.DB, primaryWorkerID, stateID, equi
 		IsLeased:           false,
 	}
 
-	if _, err := db.NewInsert().Model(tractor).Exec(ctx); err != nil {
+	auditUser := audit.AuditUser{
+		ID:       user.ID,
+		Username: user.Username,
+	}
+
+	if err := tractor.Insert(ctx, db, auditService, auditUser); err != nil {
 		return nil, err
 	}
 
 	return tractor, nil
 }
 
-func seedEquipmentType(ctx context.Context, db *bun.DB, orgID, buID uuid.UUID) (*models.EquipmentType, error) {
+func seedEquipmentType(ctx context.Context, db *bun.DB, auditService *audit.Service, user *models.User, orgID, buID uuid.UUID) (*models.EquipmentType, error) {
 	equipType := &models.EquipmentType{
 		OrganizationID: orgID,
 		BusinessUnitID: buID,
@@ -379,7 +408,12 @@ func seedEquipmentType(ctx context.Context, db *bun.DB, orgID, buID uuid.UUID) (
 		Color:          "#000000",
 	}
 
-	if _, err := db.NewInsert().Model(equipType).Exec(ctx); err != nil {
+	auditUser := audit.AuditUser{
+		ID:       user.ID,
+		Username: user.Username,
+	}
+
+	if err := equipType.Insert(ctx, db, auditService, auditUser); err != nil {
 		return nil, err
 	}
 
@@ -423,40 +457,50 @@ func seedPrimaryWorker(ctx context.Context, db *bun.DB, gen *gen.CodeGenerator, 
 	return primaryWorker, nil
 }
 
-func seedServiceType(ctx context.Context, db *bun.DB, orgID, buID uuid.UUID) (*models.ServiceType, error) {
+func seedServiceType(ctx context.Context, db *bun.DB, auditService *audit.Service, user *models.User, orgID, buID uuid.UUID) (*models.ServiceType, error) {
 	servType := &models.ServiceType{
 		OrganizationID: orgID,
 		BusinessUnitID: buID,
 		Status:         property.StatusActive,
-		Code:           "ST",
+		Code:           "ST00",
 		Description:    "Service Type",
 	}
 
-	if _, err := db.NewInsert().Model(servType).Exec(ctx); err != nil {
+	auditUser := audit.AuditUser{
+		ID:       user.ID,
+		Username: user.Username,
+	}
+
+	if err := servType.Insert(ctx, db, auditService, auditUser); err != nil {
 		return nil, err
 	}
 
 	return servType, nil
 }
 
-func seedRevenueCode(ctx context.Context, db *bun.DB, orgID, buID uuid.UUID) (*models.RevenueCode, error) {
+func seedRevenueCode(ctx context.Context, db *bun.DB, auditService *audit.Service, user *models.User, orgID, buID uuid.UUID) (*models.RevenueCode, error) {
 	revCode := &models.RevenueCode{
 		OrganizationID: orgID,
 		BusinessUnitID: buID,
 		Status:         property.StatusActive,
-		Code:           "RC",
+		Code:           "RC00",
 		Description:    "Revenue Code",
 		Color:          "#000000",
 	}
 
-	if _, err := db.NewInsert().Model(revCode).Exec(ctx); err != nil {
+	auditUser := audit.AuditUser{
+		ID:       user.ID,
+		Username: user.Username,
+	}
+
+	if err := revCode.Insert(ctx, db, auditService, auditUser); err != nil {
 		return nil, err
 	}
 
 	return revCode, nil
 }
 
-func seedLocation(ctx context.Context, db *bun.DB, stateID, orgID, buID uuid.UUID) (*models.Location, error) {
+func seedLocation(ctx context.Context, db *bun.DB, gen *gen.CodeGenerator, auditService *audit.Service, user *models.User, stateID, orgID, buID uuid.UUID) (*models.Location, error) {
 	locCategory := &models.LocationCategory{
 		BusinessUnitID: buID,
 		OrganizationID: orgID,
@@ -481,14 +525,27 @@ func seedLocation(ctx context.Context, db *bun.DB, stateID, orgID, buID uuid.UUI
 		PostalCode:         "55401",
 	}
 
-	if _, err := db.NewInsert().Model(location).Exec(ctx); err != nil {
+	err := db.RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
+		mkg, mErr := models.QueryLocationMasterKeyGenerationByOrgID(ctx, db, orgID)
+		if mErr != nil {
+			return mErr
+		}
+
+		auditUser := audit.AuditUser{
+			ID:       user.ID,
+			Username: user.Username,
+		}
+
+		return location.InsertWithCodeGen(ctx, tx, gen, mkg.Pattern, auditService, auditUser)
+	})
+	if err != nil {
 		return nil, err
 	}
 
 	return location, nil
 }
 
-func seedCustomer(ctx context.Context, db *bun.DB, gen *gen.CodeGenerator, stateID, orgID, buID uuid.UUID) (*models.Customer, error) {
+func seedCustomer(ctx context.Context, db *bun.DB, gen *gen.CodeGenerator, auditService *audit.Service, user *models.User, stateID, orgID, buID uuid.UUID) (*models.Customer, error) {
 	customer := &models.Customer{
 		BusinessUnitID:      buID,
 		OrganizationID:      orgID,
@@ -507,7 +564,12 @@ func seedCustomer(ctx context.Context, db *bun.DB, gen *gen.CodeGenerator, state
 			return mErr
 		}
 
-		return customer.InsertCustomer(ctx, tx, gen, mkg.Pattern)
+		auditUser := audit.AuditUser{
+			ID:       user.ID,
+			Username: user.Username,
+		}
+
+		return customer.InsertWithCodeGen(ctx, tx, gen, mkg.Pattern, auditService, auditUser)
 	})
 	if err != nil {
 		return nil, err

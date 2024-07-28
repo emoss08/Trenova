@@ -1,15 +1,18 @@
 package utils
 
-import "reflect"
+import (
+	"encoding/json"
+	"reflect"
+)
 
 // FieldChange represents a change in a single field
 type FieldChange struct {
-	From interface{} `json:"from"`
-	To   interface{} `json:"to"`
+	From any `json:"from"`
+	To   any `json:"to"`
 }
 
 // DiffStructs compares two structs and returns a map of the changes
-func DiffStructs(original, updated interface{}) map[string]FieldChange {
+func StructDiff(original, updated any) map[string]FieldChange {
 	changes := make(map[string]FieldChange)
 
 	originalValue := reflect.ValueOf(original)
@@ -48,4 +51,52 @@ func DiffStructs(original, updated interface{}) map[string]FieldChange {
 	}
 
 	return changes
+}
+
+// JSONDiff compares two structs and returns a map of the changes
+func JSONDiff(before, after any) (map[string]FieldChange, error) {
+	beforeJSON, err := json.Marshal(before)
+	if err != nil {
+		return nil, err
+	}
+	afterJSON, err := json.Marshal(after)
+	if err != nil {
+		return nil, err
+	}
+
+	var beforeMap, afterMap map[string]any
+	if err = json.Unmarshal(beforeJSON, &beforeMap); err != nil {
+		return nil, err
+	}
+	if err = json.Unmarshal(afterJSON, &afterMap); err != nil {
+		return nil, err
+	}
+
+	diff := make(map[string]FieldChange)
+	for key, afterValue := range afterMap {
+		beforeValue, exists := beforeMap[key]
+		if !exists {
+			// This is a new field
+			diff[key] = FieldChange{
+				To: afterValue,
+			}
+		} else if !reflect.DeepEqual(beforeValue, afterValue) {
+			// This is an updated field
+			diff[key] = FieldChange{
+				From: beforeValue,
+				To:   afterValue,
+			}
+		}
+	}
+
+	// Check for deleted fields
+	for key, beforeValue := range beforeMap {
+		if _, exists := afterMap[key]; !exists {
+			diff[key] = FieldChange{
+				From: beforeValue,
+			}
+		}
+	}
+
+	return diff, nil
 }

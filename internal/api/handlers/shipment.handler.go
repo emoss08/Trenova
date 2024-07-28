@@ -23,7 +23,6 @@ import (
 	"github.com/emoss08/trenova/internal/api/services"
 	"github.com/emoss08/trenova/internal/server"
 	"github.com/emoss08/trenova/internal/types"
-	"github.com/emoss08/trenova/pkg/audit"
 	"github.com/emoss08/trenova/pkg/constants"
 	"github.com/emoss08/trenova/pkg/models"
 	"github.com/emoss08/trenova/pkg/models/property"
@@ -37,7 +36,6 @@ type ShipmentHandler struct {
 	logger            *config.ServerLogger
 	service           *services.ShipmentService
 	permissionService *services.PermissionService
-	auditService      *audit.Service
 }
 
 func NewShipmentHandler(s *server.Server) *ShipmentHandler {
@@ -45,7 +43,6 @@ func NewShipmentHandler(s *server.Server) *ShipmentHandler {
 		logger:            s.Logger,
 		service:           services.NewShipmentService(s),
 		permissionService: services.NewPermissionService(s.Enforcer),
-		auditService:      s.AuditService,
 	}
 }
 
@@ -215,19 +212,13 @@ func (h ShipmentHandler) Create() fiber.Handler {
 			return c.Status(fiber.StatusBadRequest).JSON(err)
 		}
 
-		attemptID := h.auditService.LogAttempt(c.Context(), constants.TableShipment, "", property.AuditLogActionCreate, createdEntity, ids.UserID, ids.OrganizationID, ids.BusinessUnitID)
-
-		entity, err := h.service.Create(c.UserContext(), createdEntity)
+		entity, err := h.service.Create(c.UserContext(), createdEntity, ids.UserID)
 		if err != nil {
 			h.logger.Error().Interface("entity", createdEntity).Err(err).Msg("Failed to create Shipment")
 			resp := utils.CreateServiceError(c, err)
 
-			h.auditService.LogError(c.Context(), property.AuditLogActionCreate, attemptID, ids.OrganizationID, ids.BusinessUnitID, ids.UserID, err.Error())
-
 			return c.Status(fiber.StatusInternalServerError).JSON(resp)
 		}
-
-		h.auditService.LogAction(c.Context(), constants.TableShipment, entity.ID.String(), property.AuditLogActionCreate, entity, ids.UserID, ids.OrganizationID, ids.BusinessUnitID)
 
 		return c.Status(fiber.StatusCreated).JSON(entity)
 	}
@@ -252,19 +243,13 @@ func (h ShipmentHandler) AssignTractorToShipment() fiber.Handler {
 			return c.Status(fiber.StatusBadRequest).JSON(err)
 		}
 
-		attemptID := h.auditService.LogAttempt(c.Context(), constants.TableShipment, assignTractorInput.TractorID.String(), property.AuditLogActionUpdate, assignTractorInput, ids.UserID, ids.OrganizationID, ids.BusinessUnitID)
-
 		assignments, err := h.service.AssignTractorToShipment(c.UserContext(), assignTractorInput, ids.OrganizationID, ids.BusinessUnitID)
 		if err != nil {
 			h.logger.Error().Interface("entity", assignTractorInput).Err(err).Msg("Failed to assign tractor to shipment")
 			resp := utils.CreateServiceError(c, err)
 
-			h.auditService.LogError(c.Context(), property.AuditLogActionUpdate, attemptID, ids.OrganizationID, ids.BusinessUnitID, ids.UserID, err.Error())
-
 			return c.Status(fiber.StatusInternalServerError).JSON(resp)
 		}
-
-		h.auditService.LogAction(c.Context(), constants.TableShipment, assignTractorInput.TractorID.String(), property.AuditLogActionUpdate, assignments, ids.UserID, ids.OrganizationID, ids.BusinessUnitID)
 
 		return c.Status(fiber.StatusOK).JSON(fiber.Map{
 			"message": "Tractor assigned to shipment successfully.",

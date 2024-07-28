@@ -4,10 +4,8 @@ import (
 	"github.com/emoss08/trenova/config"
 	"github.com/emoss08/trenova/internal/api/services"
 	"github.com/emoss08/trenova/internal/server"
-	"github.com/emoss08/trenova/pkg/audit"
 	"github.com/emoss08/trenova/pkg/constants"
 	"github.com/emoss08/trenova/pkg/models"
-	"github.com/emoss08/trenova/pkg/models/property"
 	"github.com/emoss08/trenova/pkg/utils"
 	"github.com/gofiber/fiber/v2"
 )
@@ -16,7 +14,6 @@ type ShipmentControlHandler struct {
 	logger            *config.ServerLogger
 	service           *services.ShipmentControlService
 	permissionService *services.PermissionService
-	auditService      *audit.Service
 }
 
 func NewShipmentControlHandler(s *server.Server) *ShipmentControlHandler {
@@ -24,7 +21,6 @@ func NewShipmentControlHandler(s *server.Server) *ShipmentControlHandler {
 		logger:            s.Logger,
 		service:           services.NewShipmentControlService(s),
 		permissionService: services.NewPermissionService(s.Enforcer),
-		auditService:      s.AuditService,
 	}
 }
 
@@ -83,19 +79,13 @@ func (sh ShipmentControlHandler) updateShipmentControl() fiber.Handler {
 			return c.Status(fiber.StatusBadRequest).JSON(err)
 		}
 
-		attemptID := sh.auditService.LogAttempt(c.Context(), constants.TableShipmentControl, updatedEntity.ID.String(), property.AuditLogActionUpdate, updatedEntity, ids.UserID, ids.OrganizationID, ids.BusinessUnitID)
-
 		entity, err := sh.service.UpdateShipmentControl(c.UserContext(), updatedEntity)
 		if err != nil {
 			sh.logger.Error().Interface("entity", updatedEntity).Err(err).Msg("Failed to update ShipmentControl")
 			resp := utils.CreateServiceError(c, err)
 
-			sh.auditService.LogError(c.Context(), property.AuditLogActionUpdate, attemptID, ids.OrganizationID, ids.BusinessUnitID, ids.UserID, err.Error())
-
 			return c.Status(fiber.StatusInternalServerError).JSON(resp)
 		}
-
-		sh.auditService.LogAction(c.Context(), constants.TableShipmentControl, entity.ID.String(), property.AuditLogActionUpdate, entity, ids.UserID, ids.OrganizationID, ids.BusinessUnitID)
 
 		return c.Status(fiber.StatusOK).JSON(entity)
 	}

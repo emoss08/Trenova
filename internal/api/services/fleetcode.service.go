@@ -21,6 +21,7 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/config"
+	"github.com/emoss08/trenova/internal/api/common"
 	"github.com/emoss08/trenova/internal/server"
 	"github.com/emoss08/trenova/pkg/models"
 	"github.com/google/uuid"
@@ -29,14 +30,17 @@ import (
 
 // FleetCodeService handles business logic for FleetCode
 type FleetCodeService struct {
-	db     *bun.DB
+	common.AuditableService
 	logger *config.ServerLogger
 }
 
 // NewFleetCodeService creates a new instance of FleetCodeService
 func NewFleetCodeService(s *server.Server) *FleetCodeService {
 	return &FleetCodeService{
-		db:     s.DB,
+		AuditableService: common.AuditableService{
+			DB:           s.DB,
+			AuditService: s.AuditService,
+		},
 		logger: s.Logger,
 	}
 }
@@ -69,9 +73,7 @@ func (s FleetCodeService) filterQuery(q *bun.SelectQuery, f *FleetCodeQueryFilte
 func (s FleetCodeService) GetAll(ctx context.Context, filter *FleetCodeQueryFilter) ([]*models.FleetCode, int, error) {
 	var entities []*models.FleetCode
 
-	q := s.db.NewSelect().
-		Model(&entities)
-
+	q := s.DB.NewSelect().Model(&entities)
 	q = s.filterQuery(q, filter)
 
 	count, err := q.ScanAndCount(ctx)
@@ -86,12 +88,7 @@ func (s FleetCodeService) GetAll(ctx context.Context, filter *FleetCodeQueryFilt
 // Get retrieves a single FleetCode by ID
 func (s FleetCodeService) Get(ctx context.Context, id, orgID, buID uuid.UUID) (*models.FleetCode, error) {
 	entity := new(models.FleetCode)
-	err := s.db.NewSelect().
-		Model(entity).
-		Where("fl.organization_id = ?", orgID).
-		Where("fl.business_unit_id = ?", buID).
-		Where("fl.id = ?", id).
-		Scan(ctx)
+	err := s.GetByID(ctx, id, orgID, buID, entity)
 	if err != nil {
 		s.logger.Error().Err(err).Msg("Failed to fetch FleetCode")
 		return nil, fmt.Errorf("failed to fetch FleetCode: %w", err)
@@ -101,14 +98,8 @@ func (s FleetCodeService) Get(ctx context.Context, id, orgID, buID uuid.UUID) (*
 }
 
 // Create creates a new FleetCode
-func (s FleetCodeService) Create(ctx context.Context, entity *models.FleetCode) (*models.FleetCode, error) {
-	err := s.db.RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
-		_, err := tx.NewInsert().
-			Model(entity).
-			Returning("*").
-			Exec(ctx)
-		return err
-	})
+func (s FleetCodeService) Create(ctx context.Context, entity *models.FleetCode, userID uuid.UUID) (*models.FleetCode, error) {
+	_, err := s.CreateWithAudit(ctx, entity, userID)
 	if err != nil {
 		s.logger.Error().Err(err).Msg("Failed to create FleetCode")
 		return nil, fmt.Errorf("failed to create FleetCode: %w", err)
@@ -118,14 +109,8 @@ func (s FleetCodeService) Create(ctx context.Context, entity *models.FleetCode) 
 }
 
 // UpdateOne updates an existing FleetCode
-func (s FleetCodeService) UpdateOne(ctx context.Context, entity *models.FleetCode) (*models.FleetCode, error) {
-	err := s.db.RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
-		if err := entity.OptimisticUpdate(ctx, tx); err != nil {
-			return err
-		}
-
-		return nil
-	})
+func (s FleetCodeService) UpdateOne(ctx context.Context, entity *models.FleetCode, userID uuid.UUID) (*models.FleetCode, error) {
+	err := s.UpdateWithAudit(ctx, entity, userID)
 	if err != nil {
 		s.logger.Error().Err(err).Msg("Failed to update FleetCode")
 		return nil, fmt.Errorf("failed to update FleetCode: %w", err)

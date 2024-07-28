@@ -17,8 +17,12 @@ package models
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"time"
+
+	"github.com/emoss08/trenova/pkg/audit"
+	"github.com/emoss08/trenova/pkg/constants"
 
 	"github.com/rs/zerolog/log"
 
@@ -143,14 +147,14 @@ func (s Shipment) Validate() error {
 }
 
 // DBValidate validates the Shipment struct against the database.
-func (s Shipment) DBValidate(ctx context.Context, db *bun.DB) error {
+func (s *Shipment) DBValidate(ctx context.Context, tx bun.IDB) error {
 	var multiErr validator.MultiValidationError
 
 	if err := s.Validate(); err != nil {
 		return err
 	}
 
-	shipControl, err := QueryShipmentControlByOrgID(ctx, db, s.OrganizationID)
+	shipControl, err := QueryShipmentControlByOrgID(ctx, tx, s.OrganizationID)
 	if err != nil {
 		log.Error().Err(err).Str("orgID", s.OrganizationID.String()).Msg("Failed to fetch shipment controls")
 		return err
@@ -169,12 +173,12 @@ func (s Shipment) DBValidate(ctx context.Context, db *bun.DB) error {
 	s.validateDeliveryDate(s.ShipDate, s.EstimatedDeliveryDate, multiErr)
 
 	// Check for duplicate BOLs
-	if err = s.checkForDuplicateBOLs(ctx, db, s.OrganizationID, multiErr); err != nil {
+	if err = s.checkForDuplicateBOLs(ctx, tx, s.OrganizationID, multiErr); err != nil {
 		return err
 	}
 
 	// Validate the status transition
-	if err = s.validateStatusTransition(ctx, db, multiErr); err != nil {
+	if err = s.validateStatusTransition(ctx, tx, multiErr); err != nil {
 		return err
 	}
 
@@ -228,7 +232,7 @@ func (s *Shipment) UpdateStatus(ctx context.Context, db *bun.DB) error {
 }
 
 // GetMoveByID fetches a shipment move by its ID.
-func (s Shipment) GetMoveByID(ctx context.Context, db *bun.DB, moveID uuid.UUID) (*ShipmentMove, error) {
+func (s *Shipment) GetMoveByID(ctx context.Context, db *bun.DB, moveID uuid.UUID) (*ShipmentMove, error) {
 	var move ShipmentMove
 	err := db.NewSelect().Model(&move).Where("id = ?", moveID).Scan(ctx)
 	if err != nil {
@@ -264,10 +268,34 @@ func (s *Shipment) MarkReadyToBill() error {
 	return nil
 }
 
+func (s *Shipment) UpdateOne(ctx context.Context, tx bun.IDB, auditService *audit.Service, user audit.AuditUser) error {
+	//original := new(Customer)
+	//if err := tx.NewSelect().Model(original).Where("id = ?", c.ID).Scan(ctx); err != nil {
+	//	return err
+	//}
+	//
+	//if err := c.OptimisticUpdate(ctx, tx); err != nil {
+	//	return err
+	//}
+	//
+	//auditService.LogAction(
+	//	constants.TableCustomer,
+	//	c.ID.String(),
+	//	property.AuditLogActionUpdate,
+	//	user,
+	//	c.OrganizationID,
+	//	c.BusinessUnitID,
+	//	audit.WithDiff(original, c),
+	//)
+	//
+	//return nil
+	return errors.New("not implemented")
+}
+
 // checkForDuplicateBOLs checks for duplicate BOLs in the database by organization ID.
-func (s Shipment) checkForDuplicateBOLs(ctx context.Context, db *bun.DB, orgID uuid.UUID, multiErr validator.MultiValidationError) error {
+func (s *Shipment) checkForDuplicateBOLs(ctx context.Context, tx bun.IDB, orgID uuid.UUID, multiErr validator.MultiValidationError) error {
 	var duplicateBOLs []*string
-	err := db.NewSelect().
+	err := tx.NewSelect().
 		Model((*Shipment)(nil)).
 		ColumnExpr("DISTINCT bill_of_lading").
 		Where("organization_id = ?", orgID).
@@ -289,7 +317,7 @@ func (s Shipment) checkForDuplicateBOLs(ctx context.Context, db *bun.DB, orgID u
 }
 
 // validateRevenueCode validates that the revenue code is set if EnforceRevCode is enabled in Shipment Controls.
-func (s Shipment) validateRevenueCode(sc *ShipmentControl, multiErr validator.MultiValidationError) {
+func (s *Shipment) validateRevenueCode(sc *ShipmentControl, multiErr validator.MultiValidationError) {
 	if sc.EnforceRevCode && s.RevenueCodeID == nil {
 		multiErr.Errors = append(multiErr.Errors, validator.DBValidationError{
 			Field:   "revenueCodeId",
@@ -299,7 +327,7 @@ func (s Shipment) validateRevenueCode(sc *ShipmentControl, multiErr validator.Mu
 }
 
 // validateEnforceVoidedComm validates that the voided comment is set if EnforceVoidedComm is enabled in Shipment Controls.
-func (s Shipment) validateEnforceVoidedComm(sc *ShipmentControl, multiErr validator.MultiValidationError) {
+func (s *Shipment) validateEnforceVoidedComm(sc *ShipmentControl, multiErr validator.MultiValidationError) {
 	if sc.EnforceVoidedComm && s.Status == property.ShipmentStatusVoided && s.VoidedComment == "" {
 		multiErr.Errors = append(multiErr.Errors, validator.DBValidationError{
 			Field:   "voidedComment",
@@ -309,7 +337,7 @@ func (s Shipment) validateEnforceVoidedComm(sc *ShipmentControl, multiErr valida
 }
 
 // CompareOriginDestination compares the origin and destination locations and adds an error if they are the same.
-func (s Shipment) CompareOriginDestination(sc *ShipmentControl, multiErr validator.MultiValidationError) {
+func (s *Shipment) CompareOriginDestination(sc *ShipmentControl, multiErr validator.MultiValidationError) {
 	if sc.CompareOriginDestination && s.OriginLocationID == s.DestinationLocationID {
 		multiErr.Errors = append(multiErr.Errors, validator.DBValidationError{
 			Field:   "destinationLocationId",
@@ -319,7 +347,7 @@ func (s Shipment) CompareOriginDestination(sc *ShipmentControl, multiErr validat
 }
 
 // validateStatusTransition validates that the status transition is valid.
-func (s Shipment) validateStatusTransition(ctx context.Context, db *bun.DB, multiErr validator.MultiValidationError) error {
+func (s *Shipment) validateStatusTransition(ctx context.Context, tx bun.IDB, multiErr validator.MultiValidationError) error {
 	if s.ID == uuid.Nil {
 		// This is a new shipment, so we only need to validate that the status is New
 		if s.Status != property.ShipmentStatusNew {
@@ -334,7 +362,7 @@ func (s Shipment) validateStatusTransition(ctx context.Context, db *bun.DB, mult
 
 	var currentStatus property.ShipmentStatus
 
-	err := db.NewSelect().
+	err := tx.NewSelect().
 		Model((*Shipment)(nil)).
 		Where("id = ?", s.ID).
 		Scan(ctx, &currentStatus)
@@ -383,10 +411,10 @@ func (s *Shipment) validateDeliveryDate(shipDate, delDate *pgtype.Date, multiErr
 	}
 }
 
-// InsertShipment inserts a new shipment into the database.
-func (s *Shipment) InsertShipment(ctx context.Context, db *bun.DB) error {
+// Insert inserts a new shipment into the database.
+func (s *Shipment) Insert(ctx context.Context, tx bun.IDB, auditService *audit.Service, user audit.AuditUser) error {
 	if s.ProNumber == "" {
-		proNumber, err := GenerateProNumber(ctx, db, s.OrganizationID)
+		proNumber, err := GenerateProNumber(ctx, tx, s.OrganizationID)
 		if err != nil {
 			return validator.BusinessLogicError{Message: err.Error()}
 		}
@@ -394,7 +422,7 @@ func (s *Shipment) InsertShipment(ctx context.Context, db *bun.DB) error {
 		s.ProNumber = proNumber
 	}
 
-	shipControl, err := QueryShipmentControlByOrgID(ctx, db, s.OrganizationID)
+	shipControl, err := QueryShipmentControlByOrgID(ctx, tx, s.OrganizationID)
 	if err != nil {
 		return err
 	}
@@ -404,18 +432,24 @@ func (s *Shipment) InsertShipment(ctx context.Context, db *bun.DB) error {
 		s.CalculateTotalChargeAmount()
 	}
 
-	if err := s.DBValidate(ctx, db); err != nil {
+	if err = s.DBValidate(ctx, tx); err != nil {
 		return err
 	}
 
-	err = db.RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
-		if _, err = tx.NewInsert().Model(s).Exec(ctx); err != nil {
-			log.Error().Err(err).Msg("Failed to insert shipment")
-			return err
-		}
+	if _, err = tx.NewInsert().Model(s).Exec(ctx); err != nil {
+		log.Error().Err(err).Msg("Failed to insert shipment")
+		return err
+	}
 
-		return nil
-	})
+	auditService.LogAction(
+		constants.TableShipment,
+		s.ID.String(),
+		property.AuditLogActionCreate,
+		user,
+		s.OrganizationID,
+		s.BusinessUnitID,
+		audit.WithDiff(nil, s),
+	)
 
 	return err
 }

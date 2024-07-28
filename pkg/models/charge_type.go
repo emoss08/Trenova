@@ -20,6 +20,10 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/emoss08/trenova/pkg/constants"
+
+	"github.com/emoss08/trenova/pkg/audit"
+
 	"github.com/emoss08/trenova/pkg/models/property"
 	"github.com/emoss08/trenova/pkg/validator"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
@@ -55,8 +59,58 @@ func (c ChargeType) Validate() error {
 	)
 }
 
+func (c *ChargeType) Insert(ctx context.Context, tx bun.IDB, auditService *audit.Service, user audit.AuditUser) error {
+	if err := c.Validate(); err != nil {
+		return err
+	}
+
+	if _, err := tx.NewInsert().Model(c).Returning("*").Exec(ctx); err != nil {
+		return err
+	}
+
+	auditService.LogAction(
+		constants.TableChargeType,
+		c.ID.String(),
+		property.AuditLogActionCreate,
+		user,
+		c.OrganizationID,
+		c.BusinessUnitID,
+		audit.WithDiff(nil, c),
+	)
+
+	return nil
+}
+
 func (c *ChargeType) BeforeUpdate(_ context.Context) error {
 	c.Version++
+
+	return nil
+}
+
+func (c *ChargeType) UpdateOne(ctx context.Context, tx bun.IDB, auditService *audit.Service, user audit.AuditUser) error {
+	// Fetch the original state of the charge type
+	original := new(ChargeType)
+	if err := tx.NewSelect().Model(original).WherePK().Scan(ctx); err != nil {
+		return validator.BusinessLogicError{Message: err.Error()}
+	}
+
+	if err := c.Validate(); err != nil {
+		return err
+	}
+
+	if err := c.OptimisticUpdate(ctx, tx); err != nil {
+		return err
+	}
+
+	auditService.LogAction(
+		constants.TableChargeType,
+		c.ID.String(),
+		property.AuditLogActionUpdate,
+		user,
+		c.OrganizationID,
+		c.BusinessUnitID,
+		audit.WithDiff(original, c),
+	)
 
 	return nil
 }

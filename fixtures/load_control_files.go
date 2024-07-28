@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+
 	"github.com/emoss08/trenova/pkg/models"
 	"github.com/google/uuid"
 	"github.com/uptrace/bun"

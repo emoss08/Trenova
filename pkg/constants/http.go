@@ -104,4 +104,6 @@ const (
 	TableUser                   = "users"
 	TableWorker                 = "workers"
 	TableShipmentControl        = "shipment_controls"
+	TableShipmentMove           = "shipment_moves"
+	TableStop                   = "stops"
 )

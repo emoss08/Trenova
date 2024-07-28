@@ -160,7 +160,8 @@ export type AuditLog = {
   tableName: string;
   entityID: string;
   action: AuditLogAction;
-  data: { [key: string]: any };
+  attemptedChanges: { [key: string]: any };
+  actualChanges: { [key: string]: any };
   timestamp: string;
   userId: string;
   organizationId: string;

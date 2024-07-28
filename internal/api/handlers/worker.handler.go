@@ -19,9 +19,7 @@ import (
 	"fmt"
 
 	"github.com/emoss08/trenova/config"
-	"github.com/emoss08/trenova/pkg/audit"
 	"github.com/emoss08/trenova/pkg/constants"
-	"github.com/emoss08/trenova/pkg/models/property"
 
 	"github.com/emoss08/trenova/internal/api/services"
 	"github.com/emoss08/trenova/internal/server"
@@ -36,7 +34,6 @@ type WorkerHandler struct {
 	logger            *config.ServerLogger
 	service           *services.WorkerService
 	permissionService *services.PermissionService
-	auditService      *audit.Service
 }
 
 func NewWorkerHandler(s *server.Server) *WorkerHandler {
@@ -44,7 +41,6 @@ func NewWorkerHandler(s *server.Server) *WorkerHandler {
 		logger:            s.Logger,
 		service:           services.NewWorkerService(s),
 		permissionService: services.NewPermissionService(s.Enforcer),
-		auditService:      s.AuditService,
 	}
 }
 
@@ -179,19 +175,13 @@ func (h WorkerHandler) Create() fiber.Handler {
 			return c.Status(fiber.StatusBadRequest).JSON(err)
 		}
 
-		attemptID := h.auditService.LogAttempt(c.Context(), constants.TableWorker, "", property.AuditLogActionCreate, createdEntity, ids.UserID, ids.OrganizationID, ids.BusinessUnitID)
-
 		entity, err := h.service.Create(c.UserContext(), createdEntity)
 		if err != nil {
 			h.logger.Error().Interface("entity", createdEntity).Err(err).Msg("Failed to create Worker")
 			resp := utils.CreateServiceError(c, err)
 
-			h.auditService.LogError(c.Context(), property.AuditLogActionUpdate, attemptID, ids.OrganizationID, ids.BusinessUnitID, ids.UserID, err.Error())
-
 			return c.Status(fiber.StatusInternalServerError).JSON(resp)
 		}
-
-		h.auditService.LogAction(c.Context(), constants.TableWorker, entity.ID.String(), property.AuditLogActionCreate, entity, ids.UserID, ids.OrganizationID, ids.BusinessUnitID)
 
 		return c.Status(fiber.StatusCreated).JSON(entity)
 	}
@@ -199,11 +189,6 @@ func (h WorkerHandler) Create() fiber.Handler {
 
 func (h WorkerHandler) Update() fiber.Handler {
 	return func(c *fiber.Ctx) error {
-		ids, err := utils.ExtractAndHandleContextIDs(c)
-		if err != nil {
-			return err
-		}
-
 		workerID := c.Params("workerID")
 		if workerID == "" {
 			return c.Status(fiber.StatusBadRequest).JSON(fiber.Error{
@@ -212,7 +197,7 @@ func (h WorkerHandler) Update() fiber.Handler {
 			})
 		}
 
-		if err = h.permissionService.CheckUserPermission(c, constants.EntityWorker, constants.ActionUpdate); err != nil {
+		if err := h.permissionService.CheckUserPermission(c, constants.EntityWorker, constants.ActionUpdate); err != nil {
 			return c.Status(fiber.StatusForbidden).JSON(fiber.Error{
 				Code:    fiber.StatusForbidden,
 				Message: err.Error(),
@@ -221,24 +206,19 @@ func (h WorkerHandler) Update() fiber.Handler {
 
 		updatedEntity := new(models.Worker)
 
-		if err = utils.ParseBodyAndValidate(c, updatedEntity); err != nil {
+		if err := utils.ParseBodyAndValidate(c, updatedEntity); err != nil {
 			return c.Status(fiber.StatusBadRequest).JSON(err)
 		}
 
 		updatedEntity.ID = uuid.MustParse(workerID)
 
-		attemptID := h.auditService.LogAttempt(c.Context(), constants.TableWorker, workerID, property.AuditLogActionUpdate, updatedEntity, ids.UserID, ids.OrganizationID, ids.BusinessUnitID)
 		entity, err := h.service.UpdateOne(c.UserContext(), updatedEntity)
 		if err != nil {
 			h.logger.Error().Interface("entity", updatedEntity).Err(err).Msg("Failed to update Worker")
 			resp := utils.CreateServiceError(c, err)
 
-			h.auditService.LogError(c.Context(), property.AuditLogActionUpdate, attemptID, ids.OrganizationID, ids.BusinessUnitID, ids.UserID, err.Error())
-
 			return c.Status(fiber.StatusInternalServerError).JSON(resp)
 		}
-
-		h.auditService.LogAction(c.Context(), constants.TableWorker, entity.ID.String(), property.AuditLogActionUpdate, entity, ids.UserID, ids.OrganizationID, ids.BusinessUnitID)
 
 		return c.Status(fiber.StatusOK).JSON(entity)
 	}

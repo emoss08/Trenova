@@ -23,6 +23,7 @@ import (
 
 	"github.com/casbin/casbin/v2"
 	"github.com/emoss08/trenova/config"
+	"github.com/emoss08/trenova/pkg/audit"
 	tCasbin "github.com/emoss08/trenova/pkg/casbin"
 	"github.com/emoss08/trenova/pkg/gen"
 	"github.com/emoss08/trenova/pkg/models"
@@ -52,6 +53,22 @@ func LoadFixtures() error {
 	codeChecker := &gen.CodeChecker{DB: db}
 	codeGen := gen.NewCodeGenerator(counterManager, codeChecker)
 	codeInitializer := &gen.CodeInitializer{DB: db}
+
+	// Register a new logger.
+	logConfig := config.LoggerConfig{
+		Level:              serverConfig.Logger.Level,
+		PrettyPrintConsole: true,
+		LogToFile:          true,
+		LogFilePath:        serverConfig.Logger.LogFilePath,
+		LogMaxSize:         100,
+		LogMaxBackups:      3,
+		LogMaxAge:          28,
+		LogCompress:        true,
+	}
+	logger := config.NewLogger(logConfig)
+
+	// Register the Audit Service.
+	auditService := audit.NewAuditService(db, logger, serverConfig.Audit.QueueSize, serverConfig.Audit.WorkerCount)
 
 	// Initialize the counter manager with existing codes
 	err = codeInitializer.Initialize(ctx, counterManager, &models.Worker{})
@@ -132,14 +149,19 @@ func LoadFixtures() error {
 		return err
 	}
 
+	user, err := LoadAdminAccount(ctx, db, enforcer, org, bu)
+	if err != nil {
+		log.Fatalf("Failed to load admin account: %v", err)
+		return err
+	}
 	// Load the customers
-	if err = loadCustomers(ctx, db, codeGen, org.ID, bu.ID); err != nil {
+	if err = loadCustomers(ctx, db, codeGen, auditService, user, org.ID, bu.ID); err != nil {
 		log.Fatalf("Failed to load customers: %v", err)
 		return err
 	}
 
 	// Load the shipments
-	if err = loadShipments(ctx, db, codeGen, org.ID, bu.ID); err != nil {
+	if err = loadShipments(ctx, db, codeGen, auditService, user, org.ID, bu.ID); err != nil {
 		log.Fatalf("Failed to load shipments: %v", err)
 		return err
 	}
@@ -155,10 +177,6 @@ func LoadFixtures() error {
 
 func InitializeCasbinPolicies(ctx context.Context, db *bun.DB, enforcer *casbin.Enforcer, org *models.Organization, bu *models.BusinessUnit) error {
 	if err := loadPermissions(ctx, db, enforcer); err != nil {
-		return err
-	}
-
-	if err := LoadAdminAccount(ctx, db, enforcer, org, bu); err != nil {
 		return err
 	}
 

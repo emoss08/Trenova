@@ -22,10 +22,8 @@ import (
 	"github.com/emoss08/trenova/internal/api/services"
 	"github.com/emoss08/trenova/internal/server"
 	"github.com/emoss08/trenova/internal/types"
-	"github.com/emoss08/trenova/pkg/audit"
 	"github.com/emoss08/trenova/pkg/constants"
 	"github.com/emoss08/trenova/pkg/models"
-	"github.com/emoss08/trenova/pkg/models/property"
 	"github.com/emoss08/trenova/pkg/utils"
 	"github.com/gofiber/fiber/v2"
 	"github.com/google/uuid"
@@ -35,7 +33,6 @@ type TableChangeAlertHandler struct {
 	logger            *config.ServerLogger
 	service           *services.TableChangeAlertService
 	permissionService *services.PermissionService
-	auditService      *audit.Service
 }
 
 func NewTableChangeAlertHandler(s *server.Server) *TableChangeAlertHandler {
@@ -43,7 +40,6 @@ func NewTableChangeAlertHandler(s *server.Server) *TableChangeAlertHandler {
 		logger:            s.Logger,
 		service:           services.NewTableChangeAlertService(s),
 		permissionService: services.NewPermissionService(s.Enforcer),
-		auditService:      s.AuditService,
 	}
 }
 
@@ -134,19 +130,13 @@ func (h TableChangeAlertHandler) Create() fiber.Handler {
 			return c.Status(fiber.StatusBadRequest).JSON(err)
 		}
 
-		attemptID := h.auditService.LogAttempt(c.Context(), constants.TableTableChangeAlert, "", property.AuditLogActionCreate, createdEntity, ids.UserID, ids.OrganizationID, ids.BusinessUnitID)
-
 		entity, err := h.service.CreateTableChangeAlert(c.UserContext(), createdEntity)
 		if err != nil {
 			h.logger.Error().Interface("entity", createdEntity).Err(err).Msg("Failed to create TableChangeAlert")
 			resp := utils.CreateServiceError(c, err)
 
-			h.auditService.LogError(c.Context(), property.AuditLogActionCreate, attemptID, ids.OrganizationID, ids.BusinessUnitID, ids.UserID, err.Error())
-
 			return c.Status(fiber.StatusInternalServerError).JSON(resp)
 		}
-
-		h.auditService.LogAction(c.Context(), constants.TableTableChangeAlert, entity.ID.String(), property.AuditLogActionCreate, entity, ids.UserID, ids.OrganizationID, ids.BusinessUnitID)
 
 		return c.Status(fiber.StatusCreated).JSON(entity)
 	}
@@ -154,11 +144,6 @@ func (h TableChangeAlertHandler) Create() fiber.Handler {
 
 func (h TableChangeAlertHandler) Update() fiber.Handler {
 	return func(c *fiber.Ctx) error {
-		ids, err := utils.ExtractAndHandleContextIDs(c)
-		if err != nil {
-			return err
-		}
-
 		tableChangeAlertID := c.Params("tableChangeAlertID")
 		if tableChangeAlertID == "" {
 			return c.Status(fiber.StatusBadRequest).JSON(fiber.Error{
@@ -167,7 +152,7 @@ func (h TableChangeAlertHandler) Update() fiber.Handler {
 			})
 		}
 
-		if err = h.permissionService.CheckUserPermission(c, constants.EntityTableChangeAlert, constants.ActionUpdate); err != nil {
+		if err := h.permissionService.CheckUserPermission(c, constants.EntityTableChangeAlert, constants.ActionUpdate); err != nil {
 			return c.Status(fiber.StatusForbidden).JSON(fiber.Error{
 				Code:    fiber.StatusForbidden,
 				Message: err.Error(),
@@ -176,24 +161,19 @@ func (h TableChangeAlertHandler) Update() fiber.Handler {
 
 		updatedEntity := new(models.TableChangeAlert)
 
-		if err = utils.ParseBodyAndValidate(c, updatedEntity); err != nil {
+		if err := utils.ParseBodyAndValidate(c, updatedEntity); err != nil {
 			return c.Status(fiber.StatusBadRequest).JSON(err)
 		}
 
 		updatedEntity.ID = uuid.MustParse(tableChangeAlertID)
-		attemptID := h.auditService.LogAttempt(c.Context(), constants.TableTableChangeAlert, tableChangeAlertID, property.AuditLogActionUpdate, updatedEntity, ids.UserID, ids.OrganizationID, ids.BusinessUnitID)
 
 		entity, err := h.service.UpdateTableChangeAlert(c.UserContext(), updatedEntity)
 		if err != nil {
 			h.logger.Error().Interface("entity", updatedEntity).Err(err).Msg("Failed to update TableChangeAlert")
 			resp := utils.CreateServiceError(c, err)
 
-			h.auditService.LogError(c.Context(), property.AuditLogActionUpdate, attemptID, ids.OrganizationID, ids.BusinessUnitID, ids.UserID, err.Error())
-
 			return c.Status(fiber.StatusInternalServerError).JSON(resp)
 		}
-
-		h.auditService.LogAction(c.Context(), constants.TableTableChangeAlert, entity.ID.String(), property.AuditLogActionUpdate, entity, ids.UserID, ids.OrganizationID, ids.BusinessUnitID)
 
 		return c.Status(fiber.StatusOK).JSON(entity)
 	}
