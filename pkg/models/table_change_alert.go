@@ -68,50 +68,50 @@ func (f TableChangeAlert) Validate() error {
 	)
 }
 
-func (c *TableChangeAlert) Insert(ctx context.Context, tx bun.IDB, auditService *audit.Service, user audit.AuditUser) error {
-	if err := c.Validate(); err != nil {
+func (f *TableChangeAlert) Insert(ctx context.Context, tx bun.IDB, auditService *audit.Service, user audit.AuditUser) error {
+	if err := f.Validate(); err != nil {
 		return err
 	}
 
-	if _, err := tx.NewInsert().Model(c).Returning("*").Exec(ctx); err != nil {
+	if _, err := tx.NewInsert().Model(f).Returning("*").Exec(ctx); err != nil {
 		return err
 	}
 
 	auditService.LogAction(
 		constants.TableTableChangeAlert,
-		c.ID.String(),
+		f.ID.String(),
 		property.AuditLogActionCreate,
 		user,
-		c.OrganizationID,
-		c.BusinessUnitID,
-		audit.WithDiff(nil, c),
+		f.OrganizationID,
+		f.BusinessUnitID,
+		audit.WithDiff(nil, f),
 	)
 
 	return nil
 }
 
-func (c *TableChangeAlert) UpdateOne(ctx context.Context, tx bun.IDB, auditService *audit.Service, user audit.AuditUser) error {
+func (f *TableChangeAlert) UpdateOne(ctx context.Context, tx bun.IDB, auditService *audit.Service, user audit.AuditUser) error {
 	original := new(TableChangeAlert)
-	if err := tx.NewSelect().Model(original).Where("id = ?", c.ID).Scan(ctx); err != nil {
+	if err := tx.NewSelect().Model(original).Where("id = ?", f.ID).Scan(ctx); err != nil {
 		return validator.BusinessLogicError{Message: err.Error()}
 	}
 
-	if err := c.Validate(); err != nil {
+	if err := f.Validate(); err != nil {
 		return err
 	}
 
-	if err := c.OptimisticUpdate(ctx, tx); err != nil {
+	if err := f.OptimisticUpdate(ctx, tx); err != nil {
 		return err
 	}
 
 	auditService.LogAction(
 		constants.TableTableChangeAlert,
-		c.ID.String(),
+		f.ID.String(),
 		property.AuditLogActionUpdate,
 		user,
-		c.OrganizationID,
-		c.BusinessUnitID,
-		audit.WithDiff(original, c),
+		f.OrganizationID,
+		f.BusinessUnitID,
+		audit.WithDiff(original, f),
 	)
 
 	return nil
