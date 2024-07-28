@@ -173,7 +173,7 @@ func (h ShipmentTypeHandler) Create() fiber.Handler {
 			return c.Status(fiber.StatusBadRequest).JSON(err)
 		}
 
-		entity, err := h.service.Create(c.UserContext(), createdEntity)
+		entity, err := h.service.Create(c.UserContext(), createdEntity, ids.UserID)
 		if err != nil {
 			h.logger.Error().Interface("entity", createdEntity).Err(err).Msg("Failed to create ShipmentType")
 			resp := utils.CreateServiceError(c, err)
@@ -187,6 +187,11 @@ func (h ShipmentTypeHandler) Create() fiber.Handler {
 
 func (h ShipmentTypeHandler) Update() fiber.Handler {
 	return func(c *fiber.Ctx) error {
+		ids, err := utils.ExtractAndHandleContextIDs(c)
+		if err != nil {
+			return err
+		}
+
 		shipmentTypeID := c.Params("shipmentTypeID")
 		if shipmentTypeID == "" {
 			return c.Status(fiber.StatusBadRequest).JSON(fiber.Error{
@@ -210,7 +215,7 @@ func (h ShipmentTypeHandler) Update() fiber.Handler {
 
 		updatedEntity.ID = uuid.MustParse(shipmentTypeID)
 
-		entity, err := h.service.UpdateOne(c.UserContext(), updatedEntity)
+		entity, err := h.service.UpdateOne(c.UserContext(), updatedEntity, ids.UserID)
 		if err != nil {
 			h.logger.Error().Interface("entity", updatedEntity).Err(err).Msg("Failed to update ShipmentType")
 			resp := utils.CreateServiceError(c, err)

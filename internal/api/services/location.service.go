@@ -45,7 +45,7 @@ func NewLocationService(s *server.Server) *LocationService {
 	}
 }
 
-// QueryFilter defines the filter parameters for querying Location
+// LocationQueryFilter defines the filter parameters for querying Location
 type LocationQueryFilter struct {
 	Query          string
 	OrganizationID uuid.UUID

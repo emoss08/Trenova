@@ -21,6 +21,7 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/config"
+	"github.com/emoss08/trenova/internal/api/common"
 	"github.com/emoss08/trenova/internal/server"
 	"github.com/emoss08/trenova/pkg/models"
 	"github.com/google/uuid"
@@ -29,19 +30,22 @@ import (
 
 // ShipmentTypeService handles business logic for ShipmentType
 type ShipmentTypeService struct {
-	db     *bun.DB
+	common.AuditableService
 	logger *config.ServerLogger
 }
 
 // NewShipmentTypeService creates a new instance of ShipmentTypeService
 func NewShipmentTypeService(s *server.Server) *ShipmentTypeService {
 	return &ShipmentTypeService{
-		db:     s.DB,
+		AuditableService: common.AuditableService{
+			DB:           s.DB,
+			AuditService: s.AuditService,
+		},
 		logger: s.Logger,
 	}
 }
 
-// ShipmentTypeQueryFilter QueryFilter defines the filter parameters for querying ShipmentType
+// ShipmentTypeQueryFilter defines the filter parameters for querying ShipmentType
 type ShipmentTypeQueryFilter struct {
 	Query          string
 	OrganizationID uuid.UUID
@@ -69,9 +73,7 @@ func (s ShipmentTypeService) filterQuery(q *bun.SelectQuery, f *ShipmentTypeQuer
 func (s ShipmentTypeService) GetAll(ctx context.Context, filter *ShipmentTypeQueryFilter) ([]*models.ShipmentType, int, error) {
 	var entities []*models.ShipmentType
 
-	q := s.db.NewSelect().
-		Model(&entities)
-
+	q := s.DB.NewSelect().Model(&entities)
 	q = s.filterQuery(q, filter)
 
 	count, err := q.ScanAndCount(ctx)
@@ -86,12 +88,7 @@ func (s ShipmentTypeService) GetAll(ctx context.Context, filter *ShipmentTypeQue
 // Get retrieves a single ShipmentType by ID
 func (s ShipmentTypeService) Get(ctx context.Context, id, orgID, buID uuid.UUID) (*models.ShipmentType, error) {
 	entity := new(models.ShipmentType)
-	err := s.db.NewSelect().
-		Model(entity).
-		Where("st.organization_id = ?", orgID).
-		Where("st.business_unit_id = ?", buID).
-		Where("st.id = ?", id).
-		Scan(ctx)
+	err := s.GetByID(ctx, id, orgID, buID, entity)
 	if err != nil {
 		s.logger.Error().Err(err).Msg("Failed to fetch ShipmentType")
 		return nil, fmt.Errorf("failed to fetch ShipmentType: %w", err)
@@ -101,14 +98,8 @@ func (s ShipmentTypeService) Get(ctx context.Context, id, orgID, buID uuid.UUID)
 }
 
 // Create creates a new ShipmentType
-func (s ShipmentTypeService) Create(ctx context.Context, entity *models.ShipmentType) (*models.ShipmentType, error) {
-	err := s.db.RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
-		_, err := tx.NewInsert().
-			Model(entity).
-			Returning("*").
-			Exec(ctx)
-		return err
-	})
+func (s ShipmentTypeService) Create(ctx context.Context, entity *models.ShipmentType, userID uuid.UUID) (*models.ShipmentType, error) {
+	_, err := s.CreateWithAudit(ctx, entity, userID)
 	if err != nil {
 		s.logger.Error().Err(err).Msg("Failed to create ShipmentType")
 		return nil, fmt.Errorf("failed to create ShipmentType: %w", err)
@@ -118,14 +109,8 @@ func (s ShipmentTypeService) Create(ctx context.Context, entity *models.Shipment
 }
 
 // UpdateOne updates an existing ShipmentType
-func (s ShipmentTypeService) UpdateOne(ctx context.Context, entity *models.ShipmentType) (*models.ShipmentType, error) {
-	err := s.db.RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
-		if err := entity.OptimisticUpdate(ctx, tx); err != nil {
-			return err
-		}
-
-		return nil
-	})
+func (s ShipmentTypeService) UpdateOne(ctx context.Context, entity *models.ShipmentType, userID uuid.UUID) (*models.ShipmentType, error) {
+	err := s.UpdateWithAudit(ctx, entity, userID)
 	if err != nil {
 		s.logger.Error().Err(err).Msg("Failed to update ShipmentType")
 		return nil, fmt.Errorf("failed to update ShipmentType: %w", err)

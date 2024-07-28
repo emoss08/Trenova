@@ -103,6 +103,7 @@ const (
 	TableTrailer                = "trailers"
 	TableUser                   = "users"
 	TableWorker                 = "workers"
+	TableWorkerProfile          = "worker_profiles"
 	TableShipmentControl        = "shipment_controls"
 	TableShipmentMove           = "shipment_moves"
 	TableStop                   = "stops"

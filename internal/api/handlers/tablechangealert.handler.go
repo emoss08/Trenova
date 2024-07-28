@@ -86,7 +86,7 @@ func (h TableChangeAlertHandler) Get() fiber.Handler {
 			})
 		}
 
-		entities, cnt, err := h.service.GetTableChangeAlerts(c.UserContext(), limit, offset, ids.OrganizationID, ids.BusinessUnitID)
+		entities, cnt, err := h.service.Get(c.UserContext(), limit, offset, ids.OrganizationID, ids.BusinessUnitID)
 		if err != nil {
 			h.logger.Error().Err(err).Msg("Error getting table change alerts")
 			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Error{
@@ -130,7 +130,7 @@ func (h TableChangeAlertHandler) Create() fiber.Handler {
 			return c.Status(fiber.StatusBadRequest).JSON(err)
 		}
 
-		entity, err := h.service.CreateTableChangeAlert(c.UserContext(), createdEntity)
+		entity, err := h.service.Create(c.UserContext(), createdEntity, ids.UserID)
 		if err != nil {
 			h.logger.Error().Interface("entity", createdEntity).Err(err).Msg("Failed to create TableChangeAlert")
 			resp := utils.CreateServiceError(c, err)
@@ -144,6 +144,11 @@ func (h TableChangeAlertHandler) Create() fiber.Handler {
 
 func (h TableChangeAlertHandler) Update() fiber.Handler {
 	return func(c *fiber.Ctx) error {
+		ids, err := utils.ExtractAndHandleContextIDs(c)
+		if err != nil {
+			return err
+		}
+
 		tableChangeAlertID := c.Params("tableChangeAlertID")
 		if tableChangeAlertID == "" {
 			return c.Status(fiber.StatusBadRequest).JSON(fiber.Error{
@@ -167,7 +172,7 @@ func (h TableChangeAlertHandler) Update() fiber.Handler {
 
 		updatedEntity.ID = uuid.MustParse(tableChangeAlertID)
 
-		entity, err := h.service.UpdateTableChangeAlert(c.UserContext(), updatedEntity)
+		entity, err := h.service.UpdateOne(c.UserContext(), updatedEntity, ids.UserID)
 		if err != nil {
 			h.logger.Error().Interface("entity", updatedEntity).Err(err).Msg("Failed to update TableChangeAlert")
 			resp := utils.CreateServiceError(c, err)

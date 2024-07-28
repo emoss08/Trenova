@@ -85,7 +85,7 @@ func (h TagHandler) Get() fiber.Handler {
 			})
 		}
 
-		entities, cnt, err := h.service.GetTags(c.UserContext(), limit, offset, ids.OrganizationID, ids.BusinessUnitID)
+		entities, cnt, err := h.service.Get(c.UserContext(), limit, offset, ids.OrganizationID, ids.BusinessUnitID)
 		if err != nil {
 			h.logger.Error().Err(err).Msg("Error getting tags")
 			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Error{
@@ -129,7 +129,7 @@ func (h TagHandler) Create() fiber.Handler {
 			return c.Status(fiber.StatusBadRequest).JSON(err)
 		}
 
-		entity, err := h.service.CreateTag(c.UserContext(), createdEntity)
+		entity, err := h.service.Create(c.UserContext(), createdEntity)
 		if err != nil {
 			h.logger.Error().Interface("entity", createdEntity).Err(err).Msg("Failed to create Tag")
 			resp := utils.CreateServiceError(c, err)
@@ -166,7 +166,7 @@ func (h TagHandler) Update() fiber.Handler {
 
 		updatedEntity.ID = uuid.MustParse(tagID)
 
-		entity, err := h.service.UpdateTag(c.UserContext(), updatedEntity)
+		entity, err := h.service.UpdateOne(c.UserContext(), updatedEntity)
 		if err != nil {
 			h.logger.Error().Interface("entity", updatedEntity).Err(err).Msg("Failed to update Tag")
 			resp := utils.CreateServiceError(c, err)

@@ -198,7 +198,7 @@ func (h TractorHandler) Create() fiber.Handler {
 			return c.Status(fiber.StatusBadRequest).JSON(err)
 		}
 
-		entity, err := h.service.Create(c.UserContext(), createdEntity)
+		entity, err := h.service.Create(c.UserContext(), createdEntity, ids.UserID)
 		if err != nil {
 			h.logger.Error().Interface("entity", createdEntity).Err(err).Msg("Failed to create Tractor")
 			resp := utils.CreateServiceError(c, err)
@@ -212,6 +212,11 @@ func (h TractorHandler) Create() fiber.Handler {
 
 func (h TractorHandler) Update() fiber.Handler {
 	return func(c *fiber.Ctx) error {
+		ids, err := utils.ExtractAndHandleContextIDs(c)
+		if err != nil {
+			return err
+		}
+
 		tractorID := c.Params("tractorID")
 		if tractorID == "" {
 			return c.Status(fiber.StatusBadRequest).JSON(fiber.Error{
@@ -235,7 +240,7 @@ func (h TractorHandler) Update() fiber.Handler {
 
 		updatedEntity.ID = uuid.MustParse(tractorID)
 
-		entity, err := h.service.UpdateOne(c.UserContext(), updatedEntity)
+		entity, err := h.service.UpdateOne(c.UserContext(), updatedEntity, ids.UserID)
 		if err != nil {
 			h.logger.Error().Interface("entity", updatedEntity).Err(err).Msg("Failed to update Tractor")
 			resp := utils.CreateServiceError(c, err)

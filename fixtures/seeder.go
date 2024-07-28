@@ -143,17 +143,18 @@ func LoadFixtures() error {
 		return err
 	}
 
-	// Load the workers
-	if err = loadWorkers(ctx, db, codeGen, org.ID, bu.ID); err != nil {
-		log.Fatalf("Failed to load workers: %v", err)
-		return err
-	}
-
 	user, err := LoadAdminAccount(ctx, db, enforcer, org, bu)
 	if err != nil {
 		log.Fatalf("Failed to load admin account: %v", err)
 		return err
 	}
+
+	// Load the workers
+	if err = loadWorkers(ctx, db, codeGen, auditService, user, org.ID, bu.ID); err != nil {
+		log.Fatalf("Failed to load workers: %v", err)
+		return err
+	}
+
 	// Load the customers
 	if err = loadCustomers(ctx, db, codeGen, auditService, user, org.ID, bu.ID); err != nil {
 		log.Fatalf("Failed to load customers: %v", err)

@@ -71,50 +71,50 @@ func (d *DivisionCode) BeforeUpdate(_ context.Context) error {
 	return nil
 }
 
-func (c *DivisionCode) Insert(ctx context.Context, tx bun.IDB, auditService *audit.Service, user audit.AuditUser) error {
-	if err := c.Validate(); err != nil {
+func (d *DivisionCode) Insert(ctx context.Context, tx bun.IDB, auditService *audit.Service, user audit.AuditUser) error {
+	if err := d.Validate(); err != nil {
 		return err
 	}
 
-	if _, err := tx.NewInsert().Model(c).Returning("*").Exec(ctx); err != nil {
+	if _, err := tx.NewInsert().Model(d).Returning("*").Exec(ctx); err != nil {
 		return err
 	}
 
 	auditService.LogAction(
 		constants.TableDivisionCode,
-		c.ID.String(),
+		d.ID.String(),
 		property.AuditLogActionCreate,
 		user,
-		c.OrganizationID,
-		c.BusinessUnitID,
-		audit.WithDiff(nil, c),
+		d.OrganizationID,
+		d.BusinessUnitID,
+		audit.WithDiff(nil, d),
 	)
 
 	return nil
 }
 
-func (c *DivisionCode) UpdateOne(ctx context.Context, tx bun.IDB, auditService *audit.Service, user audit.AuditUser) error {
+func (d *DivisionCode) UpdateOne(ctx context.Context, tx bun.IDB, auditService *audit.Service, user audit.AuditUser) error {
 	original := new(DivisionCode)
-	if err := tx.NewSelect().Model(original).Where("id = ?", c.ID).Scan(ctx); err != nil {
+	if err := tx.NewSelect().Model(original).Where("id = ?", d.ID).Scan(ctx); err != nil {
 		return validator.BusinessLogicError{Message: err.Error()}
 	}
 
-	if err := c.Validate(); err != nil {
+	if err := d.Validate(); err != nil {
 		return err
 	}
 
-	if err := c.OptimisticUpdate(ctx, tx); err != nil {
+	if err := d.OptimisticUpdate(ctx, tx); err != nil {
 		return err
 	}
 
 	auditService.LogAction(
 		constants.TableDivisionCode,
-		c.ID.String(),
+		d.ID.String(),
 		property.AuditLogActionUpdate,
 		user,
-		c.OrganizationID,
-		c.BusinessUnitID,
-		audit.WithDiff(original, c),
+		d.OrganizationID,
+		d.BusinessUnitID,
+		audit.WithDiff(original, d),
 	)
 
 	return nil

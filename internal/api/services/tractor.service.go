@@ -21,6 +21,7 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/config"
+	"github.com/emoss08/trenova/internal/api/common"
 	"github.com/emoss08/trenova/internal/server"
 	"github.com/emoss08/trenova/pkg/models"
 	"github.com/emoss08/trenova/pkg/models/property"
@@ -30,14 +31,17 @@ import (
 
 // TractorService handles business logic for Tractor
 type TractorService struct {
-	db     *bun.DB
+	common.AuditableService
 	logger *config.ServerLogger
 }
 
 // NewTractorService creates a new instance of TractorService
 func NewTractorService(s *server.Server) *TractorService {
 	return &TractorService{
-		db:     s.DB,
+		AuditableService: common.AuditableService{
+			DB:           s.DB,
+			AuditService: s.AuditService,
+		},
 		logger: s.Logger,
 	}
 }
@@ -94,9 +98,7 @@ func (s *TractorService) filterQuery(q *bun.SelectQuery, f *TractorQueryFilter) 
 func (s *TractorService) GetAll(ctx context.Context, filter *TractorQueryFilter) ([]*models.Tractor, int, error) {
 	var entities []*models.Tractor
 
-	q := s.db.NewSelect().
-		Model(&entities)
-
+	q := s.DB.NewSelect().Model(&entities)
 	q = s.filterQuery(q, filter)
 
 	count, err := q.ScanAndCount(ctx)
@@ -111,12 +113,7 @@ func (s *TractorService) GetAll(ctx context.Context, filter *TractorQueryFilter)
 // Get retrieves a single Tractor by ID
 func (s *TractorService) Get(ctx context.Context, id, orgID, buID uuid.UUID) (*models.Tractor, error) {
 	entity := new(models.Tractor)
-	err := s.db.NewSelect().
-		Model(entity).
-		Where("tr.organization_id = ?", orgID).
-		Where("tr.business_unit_id = ?", buID).
-		Where("tr.id = ?", id).
-		Scan(ctx)
+	err := s.GetByID(ctx, id, orgID, buID, entity)
 	if err != nil {
 		s.logger.Error().Err(err).Msg("Failed to fetch Tractor")
 		return nil, fmt.Errorf("failed to fetch Tractor: %w", err)
@@ -126,14 +123,8 @@ func (s *TractorService) Get(ctx context.Context, id, orgID, buID uuid.UUID) (*m
 }
 
 // Create creates a new Tractor
-func (s *TractorService) Create(ctx context.Context, entity *models.Tractor) (*models.Tractor, error) {
-	err := s.db.RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
-		_, err := tx.NewInsert().
-			Model(entity).
-			Returning("*").
-			Exec(ctx)
-		return err
-	})
+func (s *TractorService) Create(ctx context.Context, entity *models.Tractor, userID uuid.UUID) (*models.Tractor, error) {
+	_, err := s.CreateWithAudit(ctx, entity, userID)
 	if err != nil {
 		s.logger.Error().Err(err).Msg("Failed to create Tractor")
 		return nil, fmt.Errorf("failed to create Tractor: %w", err)
@@ -143,14 +134,8 @@ func (s *TractorService) Create(ctx context.Context, entity *models.Tractor) (*m
 }
 
 // UpdateOne updates an existing Tractor
-func (s *TractorService) UpdateOne(ctx context.Context, entity *models.Tractor) (*models.Tractor, error) {
-	err := s.db.RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
-		if err := entity.OptimisticUpdate(ctx, tx); err != nil {
-			return err
-		}
-
-		return nil
-	})
+func (s *TractorService) UpdateOne(ctx context.Context, entity *models.Tractor, userID uuid.UUID) (*models.Tractor, error) {
+	err := s.UpdateWithAudit(ctx, entity, userID)
 	if err != nil {
 		s.logger.Error().Err(err).Msg("Failed to update Tractor")
 		return nil, fmt.Errorf("failed to update Tractor: %w", err)
@@ -192,7 +177,7 @@ func (s *TractorService) filterAssignmentQuery(q *bun.SelectQuery, f *Assignment
 func (s *TractorService) GetActiveAssignments(ctx context.Context, filter *AssignmentQueryFilter) ([]models.TractorAssignment, error) {
 	var assignments []models.TractorAssignment
 
-	q := s.db.NewSelect().
+	q := s.DB.NewSelect().
 		Model(&assignments)
 
 	q = s.filterAssignmentQuery(q, filter)

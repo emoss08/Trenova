@@ -174,7 +174,7 @@ func (h TrailerHandler) Create() fiber.Handler {
 			return c.Status(fiber.StatusBadRequest).JSON(err)
 		}
 
-		entity, err := h.service.Create(c.UserContext(), createdEntity)
+		entity, err := h.service.Create(c.UserContext(), createdEntity, ids.UserID)
 		if err != nil {
 			h.logger.Error().Interface("entity", createdEntity).Err(err).Msg("Failed to create Trailer")
 			resp := utils.CreateServiceError(c, err)
@@ -188,6 +188,11 @@ func (h TrailerHandler) Create() fiber.Handler {
 
 func (h TrailerHandler) Update() fiber.Handler {
 	return func(c *fiber.Ctx) error {
+		ids, err := utils.ExtractAndHandleContextIDs(c)
+		if err != nil {
+			return err
+		}
+
 		trailerID := c.Params("trailerID")
 		if trailerID == "" {
 			return c.Status(fiber.StatusBadRequest).JSON(fiber.Error{
@@ -211,7 +216,7 @@ func (h TrailerHandler) Update() fiber.Handler {
 
 		updatedEntity.ID = uuid.MustParse(trailerID)
 
-		entity, err := h.service.UpdateOne(c.UserContext(), updatedEntity)
+		entity, err := h.service.UpdateOne(c.UserContext(), updatedEntity, ids.UserID)
 		if err != nil {
 			h.logger.Error().Interface("entity", updatedEntity).Err(err).Msg("Failed to update Trailer")
 			resp := utils.CreateServiceError(c, err)

@@ -19,6 +19,7 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/config"
+	"github.com/emoss08/trenova/internal/api/common"
 	"github.com/emoss08/trenova/internal/server"
 	"github.com/emoss08/trenova/pkg/models"
 	"github.com/emoss08/trenova/pkg/models/property"
@@ -27,20 +28,23 @@ import (
 )
 
 type TagService struct {
-	db     *bun.DB
+	common.AuditableService
 	logger *config.ServerLogger
 }
 
 func NewTagService(s *server.Server) *TagService {
 	return &TagService{
-		db:     s.DB,
+		AuditableService: common.AuditableService{
+			DB:           s.DB,
+			AuditService: s.AuditService,
+		},
 		logger: s.Logger,
 	}
 }
 
-func (s *TagService) GetTags(ctx context.Context, limit, offset int, orgID, buID uuid.UUID) ([]*models.Tag, int, error) {
+func (s *TagService) Get(ctx context.Context, limit, offset int, orgID, buID uuid.UUID) ([]*models.Tag, int, error) {
 	var tags []*models.Tag
-	cnt, err := s.db.NewSelect().
+	cnt, err := s.DB.NewSelect().
 		Model(&tags).
 		Where("t.organization_id = ?", orgID).
 		Where("t.business_unit_id = ?", buID).
@@ -55,7 +59,7 @@ func (s *TagService) GetTags(ctx context.Context, limit, offset int, orgID, buID
 	return tags, cnt, nil
 }
 
-func (s *TagService) CreateTag(ctx context.Context, entity *models.Tag) (*models.Tag, error) {
+func (s *TagService) Create(ctx context.Context, entity *models.Tag) (*models.Tag, error) {
 	entity = &models.Tag{
 		OrganizationID: entity.OrganizationID,
 		BusinessUnitID: entity.BusinessUnitID,
@@ -64,7 +68,7 @@ func (s *TagService) CreateTag(ctx context.Context, entity *models.Tag) (*models
 		Color:          entity.Color,
 	}
 
-	err := s.db.RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
+	err := s.DB.RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
 		if _, err := tx.NewInsert().
 			Model(entity).
 			Returning("*").
@@ -81,8 +85,8 @@ func (s *TagService) CreateTag(ctx context.Context, entity *models.Tag) (*models
 	return entity, nil
 }
 
-func (s *TagService) UpdateTag(ctx context.Context, entity *models.Tag) (*models.Tag, error) {
-	err := s.db.RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
+func (s *TagService) UpdateOne(ctx context.Context, entity *models.Tag) (*models.Tag, error) {
+	err := s.DB.RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
 		if err := entity.OptimisticUpdate(ctx, tx); err != nil {
 			return err
 		}

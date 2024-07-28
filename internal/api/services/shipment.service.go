@@ -344,7 +344,7 @@ func (s ShipmentService) createStops(ctx context.Context, tx bun.Tx, shipment *m
 		}
 
 		// Prepare the stop
-		if err := stop.PrepareForInsert(); err != nil {
+		if err = stop.PrepareForInsert(); err != nil {
 			s.logger.Error().Err(err).Msg("failed to prepare stop")
 			return nil, err
 		}

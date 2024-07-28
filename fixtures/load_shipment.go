@@ -67,7 +67,7 @@ func loadShipments(ctx context.Context, db *bun.DB, gen *gen.CodeGenerator, audi
 			return err
 		}
 
-		primaryWorker, err := seedPrimaryWorker(ctx, db, gen, state.ID, orgID, buID)
+		primaryWorker, err := seedPrimaryWorker(ctx, db, gen, auditService, user, state.ID, orgID, buID)
 		if err != nil {
 			return err
 		}
@@ -420,7 +420,7 @@ func seedEquipmentType(ctx context.Context, db *bun.DB, auditService *audit.Serv
 	return equipType, nil
 }
 
-func seedPrimaryWorker(ctx context.Context, db *bun.DB, gen *gen.CodeGenerator, stateID, orgID, buID uuid.UUID) (*models.Worker, error) {
+func seedPrimaryWorker(ctx context.Context, db *bun.DB, gen *gen.CodeGenerator, auditService *audit.Service, user *models.User, stateID, orgID, buID uuid.UUID) (*models.Worker, error) {
 	primaryWorker := &models.Worker{
 		OrganizationID: orgID,
 		BusinessUnitID: buID,
@@ -442,13 +442,18 @@ func seedPrimaryWorker(ctx context.Context, db *bun.DB, gen *gen.CodeGenerator, 
 		},
 	}
 
+	auditUser := audit.AuditUser{
+		ID:       user.ID,
+		Username: user.Username,
+	}
+
 	err := db.RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
 		mkg, mErr := models.QueryWorkerMasterKeyGenerationByOrgID(ctx, db, orgID)
 		if mErr != nil {
 			return mErr
 		}
 
-		return primaryWorker.InsertWorker(ctx, tx, gen, mkg.Pattern)
+		return primaryWorker.InsertWithCodeGen(ctx, tx, gen, mkg.Pattern, auditService, auditUser)
 	})
 	if err != nil {
 		return nil, err

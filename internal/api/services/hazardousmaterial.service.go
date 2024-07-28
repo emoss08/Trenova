@@ -45,7 +45,7 @@ func NewHazardousMaterialService(s *server.Server) *HazardousMaterialService {
 	}
 }
 
-// QueryFilter defines the filter parameters for querying HazardousMaterial
+// HazardousMaterialQueryFilter defines the filter parameters for querying HazardousMaterial
 type HazardousMaterialQueryFilter struct {
 	Query          string
 	OrganizationID uuid.UUID

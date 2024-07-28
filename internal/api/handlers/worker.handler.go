@@ -175,7 +175,7 @@ func (h WorkerHandler) Create() fiber.Handler {
 			return c.Status(fiber.StatusBadRequest).JSON(err)
 		}
 
-		entity, err := h.service.Create(c.UserContext(), createdEntity)
+		entity, err := h.service.Create(c.UserContext(), createdEntity, ids.UserID)
 		if err != nil {
 			h.logger.Error().Interface("entity", createdEntity).Err(err).Msg("Failed to create Worker")
 			resp := utils.CreateServiceError(c, err)
@@ -189,6 +189,12 @@ func (h WorkerHandler) Create() fiber.Handler {
 
 func (h WorkerHandler) Update() fiber.Handler {
 	return func(c *fiber.Ctx) error {
+		ids, err := utils.ExtractAndHandleContextIDs(c)
+		if err != nil {
+			h.logger.Error().Err(err).Msg("Failed to extract context IDs")
+			return err
+		}
+
 		workerID := c.Params("workerID")
 		if workerID == "" {
 			return c.Status(fiber.StatusBadRequest).JSON(fiber.Error{
@@ -212,7 +218,7 @@ func (h WorkerHandler) Update() fiber.Handler {
 
 		updatedEntity.ID = uuid.MustParse(workerID)
 
-		entity, err := h.service.UpdateOne(c.UserContext(), updatedEntity)
+		entity, err := h.service.UpdateOne(c.UserContext(), updatedEntity, ids.UserID)
 		if err != nil {
 			h.logger.Error().Interface("entity", updatedEntity).Err(err).Msg("Failed to update Worker")
 			resp := utils.CreateServiceError(c, err)

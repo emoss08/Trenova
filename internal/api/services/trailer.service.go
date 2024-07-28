@@ -21,6 +21,7 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/config"
+	"github.com/emoss08/trenova/internal/api/common"
 	"github.com/emoss08/trenova/internal/server"
 	"github.com/emoss08/trenova/pkg/models"
 	"github.com/google/uuid"
@@ -29,14 +30,17 @@ import (
 
 // TrailerService handles business logic for Trailer
 type TrailerService struct {
-	db     *bun.DB
+	common.AuditableService
 	logger *config.ServerLogger
 }
 
 // NewTrailerService creates a new instance of TrailerService
 func NewTrailerService(s *server.Server) *TrailerService {
 	return &TrailerService{
-		db:     s.DB,
+		AuditableService: common.AuditableService{
+			DB:           s.DB,
+			AuditService: s.AuditService,
+		},
 		logger: s.Logger,
 	}
 }
@@ -69,9 +73,7 @@ func (s TrailerService) filterQuery(q *bun.SelectQuery, f *TrailerQueryFilter) *
 func (s TrailerService) GetAll(ctx context.Context, filter *TrailerQueryFilter) ([]*models.Trailer, int, error) {
 	var entities []*models.Trailer
 
-	q := s.db.NewSelect().
-		Model(&entities)
-
+	q := s.DB.NewSelect().Model(&entities)
 	q = s.filterQuery(q, filter)
 
 	count, err := q.ScanAndCount(ctx)
@@ -86,12 +88,7 @@ func (s TrailerService) GetAll(ctx context.Context, filter *TrailerQueryFilter) 
 // Get retrieves a single Trailer by ID
 func (s TrailerService) Get(ctx context.Context, id, orgID, buID uuid.UUID) (*models.Trailer, error) {
 	entity := new(models.Trailer)
-	err := s.db.NewSelect().
-		Model(entity).
-		Where("tr.organization_id = ?", orgID).
-		Where("tr.business_unit_id = ?", buID).
-		Where("tr.id = ?", id).
-		Scan(ctx)
+	err := s.GetByID(ctx, id, orgID, buID, entity)
 	if err != nil {
 		s.logger.Error().Err(err).Msg("Failed to fetch Trailer")
 		return nil, fmt.Errorf("failed to fetch Trailer: %w", err)
@@ -101,14 +98,8 @@ func (s TrailerService) Get(ctx context.Context, id, orgID, buID uuid.UUID) (*mo
 }
 
 // Create creates a new Trailer
-func (s TrailerService) Create(ctx context.Context, entity *models.Trailer) (*models.Trailer, error) {
-	err := s.db.RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
-		_, err := tx.NewInsert().
-			Model(entity).
-			Returning("*").
-			Exec(ctx)
-		return err
-	})
+func (s TrailerService) Create(ctx context.Context, entity *models.Trailer, userID uuid.UUID) (*models.Trailer, error) {
+	_, err := s.CreateWithAudit(ctx, entity, userID)
 	if err != nil {
 		s.logger.Error().Err(err).Msg("Failed to create Trailer")
 		return nil, fmt.Errorf("failed to create Trailer: %w", err)
@@ -118,14 +109,8 @@ func (s TrailerService) Create(ctx context.Context, entity *models.Trailer) (*mo
 }
 
 // UpdateOne updates an existing Trailer
-func (s TrailerService) UpdateOne(ctx context.Context, entity *models.Trailer) (*models.Trailer, error) {
-	err := s.db.RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
-		if err := entity.OptimisticUpdate(ctx, tx); err != nil {
-			return err
-		}
-
-		return nil
-	})
+func (s TrailerService) UpdateOne(ctx context.Context, entity *models.Trailer, userID uuid.UUID) (*models.Trailer, error) {
+	err := s.UpdateWithAudit(ctx, entity, userID)
 	if err != nil {
 		s.logger.Error().Err(err).Msg("Failed to update Trailer")
 		return nil, fmt.Errorf("failed to update Trailer: %w", err)
