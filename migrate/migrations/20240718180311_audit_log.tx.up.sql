@@ -25,6 +25,8 @@ $$
     END
 $$;
 
+--bun:split
+
 DO
 $$
     BEGIN
@@ -37,6 +39,7 @@ $$
     END
 $$;
 
+--bun:split
 
 CREATE TABLE IF NOT EXISTS "audit_logs"
 (

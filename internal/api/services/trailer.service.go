@@ -45,7 +45,7 @@ func NewTrailerService(s *server.Server) *TrailerService {
 	}
 }
 
-// QueryFilter defines the filter parameters for querying Trailer
+// TrailerQueryFilter defines the filter parameters for querying Trailer
 type TrailerQueryFilter struct {
 	Query          string
 	OrganizationID uuid.UUID

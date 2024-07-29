@@ -31,28 +31,26 @@ import (
 )
 
 type DivisionCode struct {
-	bun.BaseModel `bun:"table:division_codes,alias:dc" json:"-"`
+	ID          uuid.UUID       `xorm:"pk uuid default uuid_generate_v4()" json:"id"`
+	Status      property.Status `xorm:"status VARCHAR(255)" json:"status"`
+	Code        string          `xorm:"VARCHAR(4) notnull" json:"code" queryField:"true"`
+	Description string          `xorm:"TEXT" json:"description"`
+	Color       string          `xorm:"VARCHAR(10)" json:"color"`
+	Version     int64           `xorm:"BIGINT" json:"version"`
+	CreatedAt   time.Time       `xorm:"created notnull default current_timestamp" json:"createdAt"`
+	UpdatedAt   time.Time       `xorm:"updated notnull default current_timestamp" json:"updatedAt"`
 
-	ID          uuid.UUID       `bun:",pk,type:uuid,default:uuid_generate_v4()" json:"id"`
-	Status      property.Status `bun:"status,type:status" json:"status"`
-	Code        string          `bun:"type:VARCHAR(4),notnull" json:"code" queryField:"true"`
-	Description string          `bun:"type:TEXT" json:"description"`
-	Color       string          `bun:"type:VARCHAR(10)" json:"color"`
-	Version     int64           `bun:"type:BIGINT" json:"version"`
-	CreatedAt   time.Time       `bun:",nullzero,notnull,default:current_timestamp" json:"createdAt"`
-	UpdatedAt   time.Time       `bun:",nullzero,notnull,default:current_timestamp" json:"updatedAt"`
+	CashAccountID    *uuid.UUID `xorm:"uuid null" json:"cashAccountId"`
+	ApAccountID      *uuid.UUID `xorm:"uuid null" json:"apAccountId"`
+	ExpenseAccountID *uuid.UUID `xorm:"uuid null" json:"expenseAccountId"`
+	BusinessUnitID   uuid.UUID  `xorm:"uuid notnull" json:"businessUnitId"`
+	OrganizationID   uuid.UUID  `xorm:"uuid notnull" json:"organizationId"`
 
-	CashAccountID    *uuid.UUID `bun:"type:uuid,nullzero" json:"cashAccountId"`
-	ApAccountID      *uuid.UUID `bun:"type:uuid,nullzero" json:"apAccountId"`
-	ExpenseAccountID *uuid.UUID `bun:"type:uuid,nullzero" json:"expenseAccountId"`
-	BusinessUnitID   uuid.UUID  `bun:"type:uuid,notnull" json:"businessUnitId"`
-	OrganizationID   uuid.UUID  `bun:"type:uuid,notnull" json:"organizationId"`
-
-	CashAccount    *GeneralLedgerAccount `bun:"rel:belongs-to,join:cash_account_id=id" json:"-"`
-	ApAccount      *GeneralLedgerAccount `bun:"rel:belongs-to,join:ap_account_id=id" json:"-"`
-	ExpenseAccount *GeneralLedgerAccount `bun:"rel:belongs-to,join:expense_account_id=id" json:"-"`
-	BusinessUnit   *BusinessUnit         `bun:"rel:belongs-to,join:business_unit_id=id" json:"-"`
-	Organization   *Organization         `bun:"rel:belongs-to,join:organization_id=id" json:"-"`
+	CashAccount    *GeneralLedgerAccount `xorm:"-" json:"-"`
+	ApAccount      *GeneralLedgerAccount `xorm:"-" json:"-"`
+	ExpenseAccount *GeneralLedgerAccount `xorm:"-" json:"-"`
+	BusinessUnit   *BusinessUnit         `xorm:"-" json:"-"`
+	Organization   *Organization         `xorm:"-" json:"-"`
 }
 
 func (d DivisionCode) Validate() error {
