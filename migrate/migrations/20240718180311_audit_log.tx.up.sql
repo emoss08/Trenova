@@ -58,3 +58,41 @@ CREATE TABLE IF NOT EXISTS "audit_logs"
     FOREIGN KEY ("organization_id") REFERENCES organizations ("id") ON UPDATE NO ACTION ON DELETE CASCADE,
     FOREIGN KEY ("business_unit_id") REFERENCES business_units ("id") ON UPDATE NO ACTION ON DELETE CASCADE
 );
+
+--bun:split
+
+CREATE INDEX CONCURRENTLY IF NOT EXISTS "idx_audit_logs_table_name" ON "audit_logs" ("table_name");
+
+CREATE INDEX IF NOT EXISTS "idx_audit_logs_entity_id" ON "audit_logs" ("entity_id");
+
+CREATE INDEX IF NOT EXISTS "idx_audit_logs_user_id" ON "audit_logs" ("user_id");
+
+CREATE INDEX IF NOT EXISTS "idx_audit_logs_username" ON "audit_logs" ("username");
+
+--bun:split
+
+COMMENT ON COLUMN "audit_logs"."id" IS 'Unique identifier for the audit log, generated as a UUID';
+
+COMMENT ON COLUMN "audit_logs".business_unit_id IS 'Foreign key referencing the business unit that this trailer belongs to';
+
+COMMENT ON COLUMN "audit_logs".organization_id IS 'Foreign key referencing the organization that this trailer belongs to';
+
+COMMENT ON COLUMN "audit_logs".table_name IS 'Name of the table that was audited';
+
+COMMENT ON COLUMN "audit_logs".entity_id IS 'Unique identifier of the entity that was audited';
+
+COMMENT ON COLUMN "audit_logs".action IS 'Action that was performed on the entity';
+
+COMMENT ON COLUMN "audit_logs".changes IS 'JSON object containing the changes made to the entity';
+
+COMMENT ON COLUMN "audit_logs".description IS 'Description of the action that was performed';
+
+COMMENT ON COLUMN "audit_logs".username IS 'Username of the user who performed the action';
+
+COMMENT ON COLUMN "audit_logs".error_message IS 'Error message if the action failed';
+
+COMMENT ON COLUMN "audit_logs".status IS 'Status of the action';
+
+COMMENT ON COLUMN "audit_logs".user_id IS 'Foreign key referencing the user who performed the action';
+
+COMMENT ON COLUMN "audit_logs".timestamp IS 'Timestamp when the action was performed';
