@@ -49,31 +49,31 @@ func (sc *ShipmentControl) BeforeUpdate(_ context.Context) error {
 	return nil
 }
 
-func (c *ShipmentControl) Insert(ctx context.Context, tx bun.IDB, auditService *audit.Service, user audit.AuditUser) error {
+func (sc *ShipmentControl) Insert(ctx context.Context, tx bun.IDB, auditService *audit.Service, user audit.AuditUser) error {
 	//if err := c.Validate(); err != nil {
 	//	return err
 	//}
 
-	if _, err := tx.NewInsert().Model(c).Returning("*").Exec(ctx); err != nil {
+	if _, err := tx.NewInsert().Model(sc).Returning("*").Exec(ctx); err != nil {
 		return err
 	}
 
 	auditService.LogAction(
 		constants.TableShipmentControl,
-		c.ID.String(),
+		sc.ID.String(),
 		property.AuditLogActionCreate,
 		user,
-		c.OrganizationID,
-		c.BusinessUnitID,
-		audit.WithDiff(nil, c),
+		sc.OrganizationID,
+		sc.BusinessUnitID,
+		audit.WithDiff(nil, sc),
 	)
 
 	return nil
 }
 
-func (c *ShipmentControl) UpdateOne(ctx context.Context, tx bun.IDB, auditService *audit.Service, user audit.AuditUser) error {
+func (sc *ShipmentControl) UpdateOne(ctx context.Context, tx bun.IDB, auditService *audit.Service, user audit.AuditUser) error {
 	original := new(ShipmentControl)
-	if err := tx.NewSelect().Model(original).Where("id = ?", c.ID).Scan(ctx); err != nil {
+	if err := tx.NewSelect().Model(original).Where("id = ?", sc.ID).Scan(ctx); err != nil {
 		return validator.BusinessLogicError{Message: err.Error()}
 	}
 
@@ -81,18 +81,18 @@ func (c *ShipmentControl) UpdateOne(ctx context.Context, tx bun.IDB, auditServic
 	//	return err
 	//}
 
-	if err := c.OptimisticUpdate(ctx, tx); err != nil {
+	if err := sc.OptimisticUpdate(ctx, tx); err != nil {
 		return err
 	}
 
 	auditService.LogAction(
 		constants.TableShipmentControl,
-		c.ID.String(),
+		sc.ID.String(),
 		property.AuditLogActionUpdate,
 		user,
-		c.OrganizationID,
-		c.BusinessUnitID,
-		audit.WithDiff(original, c),
+		sc.OrganizationID,
+		sc.BusinessUnitID,
+		audit.WithDiff(original, sc),
 	)
 
 	return nil
