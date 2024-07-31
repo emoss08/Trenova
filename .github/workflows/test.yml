@@ -30,7 +30,11 @@ jobs:
           --health-retries 5
         ports:
           - 5432:5432
-
+      redis:
+        image: redis:latest
+        ports:
+          - 6379:6379
+      
     steps:
       - name: Check Out Code
         uses: actions/checkout@v4
@@ -50,9 +54,3 @@ jobs:
 
       - name: Test
         run: go test -p 1 -v ./...
-        env:
-          TEST_DB_HOST: localhost
-          TEST_DB_PORT: 5432
-          TEST_DB_USER: postgres
-          TEST_DB_PASSWORD: postgres
-          TEST_DB_NAME: test_db

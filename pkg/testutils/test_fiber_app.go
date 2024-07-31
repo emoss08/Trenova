@@ -144,7 +144,6 @@ func SetupTestServer(t *testing.T) (*server.Server, func()) {
 		// Close other resources
 		_ = s.Cache.Close()
 		_ = s.AuditService.Shutdown(context.Background())
-		// Add any other necessary cleanup
 	}
 
 	return s, cleanup
