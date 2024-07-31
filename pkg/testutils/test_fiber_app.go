@@ -49,7 +49,7 @@ func SetupTestServer(t *testing.T) (*server.Server, func()) {
 	// Create a new DB connection
 	sqldb := sql.OpenDB(pgdriver.NewConnector(pgdriver.WithDSN(databaseURL)))
 	db := bun.NewDB(sqldb, pgdialect.New())
-	db.AddQueryHook(bundebug.NewQueryHook(bundebug.WithVerbose(true)))
+	db.AddQueryHook(bundebug.NewQueryHook(bundebug.WithVerbose(false)))
 
 	// Register models
 	db.RegisterModel(
