@@ -257,12 +257,12 @@ export function DataTable<TData extends Record<string, any>>({
             name={name}
             filterColumn={filterColumn}
             selectedRowCount={selectedRowCount}
-            tableFacetedFilters={tableFacetedFilters}
             addPermissionName={addPermissionName}
+            tableFacetedFilters={tableFacetedFilters}
             userHasPermission={userHasPermission}
             store={store}
           />
-          <div className="border-border rounded-md border">
+          <div className="border-border bg-card rounded-md border">
             <Table>
               <DataTableHeader table={table} />
               <DataTableBody

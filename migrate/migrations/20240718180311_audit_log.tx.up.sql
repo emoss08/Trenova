@@ -64,7 +64,7 @@ CREATE TABLE IF NOT EXISTS "audit_logs"
 
 --bun:split
 
-CREATE INDEX CONCURRENTLY IF NOT EXISTS "idx_audit_logs_table_name" ON "audit_logs" ("table_name");
+CREATE INDEX IF NOT EXISTS "idx_audit_logs_table_name" ON "audit_logs" ("table_name");
 
 CREATE INDEX IF NOT EXISTS "idx_audit_logs_entity_id" ON "audit_logs" ("entity_id");
 

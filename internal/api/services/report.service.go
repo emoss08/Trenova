@@ -49,20 +49,7 @@ type FileFormat string
 // DeliveryMethod represents the method of delivery for the report.
 type DeliveryMethod string
 
-// Constants for the file format of the report.
-const (
-	CSV  = FileFormat("csv")
-	XLS  = FileFormat("xls")
-	XLSX = FileFormat("xlsx")
-	PDF  = FileFormat("pdf")
-)
-
-// Constants for the delivery method of the report.
-const (
-	Email = DeliveryMethod("email")
-	Local = DeliveryMethod("local")
-)
-
+// Relationship represents a relationship between tables.
 type Relationship struct {
 	ForeignKey      string   `json:"foreignKey"`
 	ReferencedTable string   `json:"referencedTable"`
@@ -87,8 +74,6 @@ func (gr GenerateReportRequest) Validate() error {
 		validation.Field(&gr.BusinessUnitID, validation.Required),
 		validation.Field(&gr.OrganizationID, validation.Required),
 		validation.Field(&gr.UserID, validation.Required),
-		validation.Field(&gr.FileFormat, validation.In("csv", "xls", "xlsx", "pdf")),
-		validation.Field(&gr.DeliveryMethod, validation.In("email", "local")),
 	)
 }
 

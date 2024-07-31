@@ -21,6 +21,7 @@ import uuid
 from io import BytesIO
 from typing import Dict, List, Optional, Tuple
 
+from isort import file
 import pandas as pd
 from minio import Minio, error
 from sqlalchemy import TextClause, inspect
@@ -96,7 +97,7 @@ def upload_file(*, file_path: str, bucket_name: str) -> str:
         return ""
 
 
-def _convert_datetime_columns(*, df: pd.DataFrame) -> None:
+def _convert_datetime_columns(*, df: pd.DataFrame, file_format: str) -> None:
     """Convert timezone-aware datetime columns in a DataFrame to naive datetimes.
 
     Args:
@@ -105,9 +106,18 @@ def _convert_datetime_columns(*, df: pd.DataFrame) -> None:
     Returns:
         None: this function does not return anything.
     """
-    for column in df.columns:
-        if isinstance(df[column].dtype, pd.DatetimeTZDtype):
-            df[column] = df[column].dt.tz_convert(None)
+    match file_format:
+        case "csv":
+            logger.debug("Converting datetime columns to naive datetimes.")
+            pass
+        case "xlsx":
+            logger.debug("Converting datetime columns to naive datetimes.")
+            for column in df.columns:
+                if isinstance(df[column].dtypes, pd.DatetimeTZDtype):
+                    df[column] = df[column].dt.tz_convert(None)
+        case "pdf":
+            logger.debug("Converting datetime columns to naive datetimes.")
+            pass
 
 
 def prepare_dataframe(
@@ -117,6 +127,7 @@ def prepare_dataframe(
     relationships: Optional[List[Relationship]],
     business_unit_id: str,
     table_name: str,
+    file_format: str,
 ) -> pd.DataFrame | None:
     """Executes the constructed query using a transactional session and fetches all results.
 
@@ -143,7 +154,7 @@ def prepare_dataframe(
                 },
             )
 
-            _convert_datetime_columns(df=df)
+            _convert_datetime_columns(df=df, file_format=file_format)
             return df
     except SQLAlchemyError as e:
         logger.exception(f"An error occurred: {e}")

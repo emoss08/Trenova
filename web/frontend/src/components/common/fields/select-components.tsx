@@ -79,7 +79,7 @@ export type SelectOption = {
 
   /**
    * Icon to be displayed in the option.
-   * @type {IconProp}
+   * @type {IconDefinition}
    * @default undefined
    * @example <Icon icon={faPlus} />
    */

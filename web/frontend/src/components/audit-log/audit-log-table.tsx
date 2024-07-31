@@ -1,11 +1,11 @@
-import { Button } from "../ui/button";
-import { ScrollArea } from "../ui/scroll-area";
-import { useState } from "react";
-import { Badge } from "../ui/badge";
+import JsonViewer from "@/components/json-viewer";
 import { formatToUserTimezone } from "@/lib/date";
 import { AuditLog, EnumAuditLogStatus } from "@/types/organization";
 import { MoonIcon, SunIcon } from "@radix-ui/react-icons";
-import JsonViewer from "@/components/json-viewer";
+import { useState } from "react";
+import { Badge } from "../ui/badge";
+import { Button } from "../ui/button";
+import { ScrollArea } from "../ui/scroll-area";
 
 export function AuditLogView({ auditLog }: { auditLog: AuditLog }) {
   const [showDetails, setShowDetails] = useState(false);

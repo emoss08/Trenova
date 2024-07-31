@@ -31,26 +31,28 @@ import (
 )
 
 type DivisionCode struct {
-	ID          uuid.UUID       `xorm:"pk uuid default uuid_generate_v4()" json:"id"`
-	Status      property.Status `xorm:"status VARCHAR(255)" json:"status"`
-	Code        string          `xorm:"VARCHAR(4) notnull" json:"code" queryField:"true"`
-	Description string          `xorm:"TEXT" json:"description"`
-	Color       string          `xorm:"VARCHAR(10)" json:"color"`
-	Version     int64           `xorm:"BIGINT" json:"version"`
-	CreatedAt   time.Time       `xorm:"created notnull default current_timestamp" json:"createdAt"`
-	UpdatedAt   time.Time       `xorm:"updated notnull default current_timestamp" json:"updatedAt"`
+	bun.BaseModel `bun:"table:division_codes,alias:dc" json:"-"`
 
-	CashAccountID    *uuid.UUID `xorm:"uuid null" json:"cashAccountId"`
-	ApAccountID      *uuid.UUID `xorm:"uuid null" json:"apAccountId"`
-	ExpenseAccountID *uuid.UUID `xorm:"uuid null" json:"expenseAccountId"`
-	BusinessUnitID   uuid.UUID  `xorm:"uuid notnull" json:"businessUnitId"`
-	OrganizationID   uuid.UUID  `xorm:"uuid notnull" json:"organizationId"`
+	ID          uuid.UUID       `bun:"id,pk,type:uuid,default:uuid_generate_v4()" json:"id"`
+	Status      property.Status `bun:"status,type:status" json:"status"`
+	Code        string          `bun:"code,type:VARCHAR(4),notnull" json:"code" queryField:"true"`
+	Description string          `bun:"description,type:TEXT" json:"description"`
+	Color       string          `bun:"color,type:VARCHAR(10)" json:"color"`
+	Version     int64           `bun:"version,type:BIGINT" json:"version"`
+	CreatedAt   time.Time       `bun:"created_at,nullzero,notnull,default:current_timestamp" json:"createdAt"`
+	UpdatedAt   time.Time       `bun:"updated_at,nullzero,notnull,default:current_timestamp" json:"updatedAt"`
 
-	CashAccount    *GeneralLedgerAccount `xorm:"-" json:"-"`
-	ApAccount      *GeneralLedgerAccount `xorm:"-" json:"-"`
-	ExpenseAccount *GeneralLedgerAccount `xorm:"-" json:"-"`
-	BusinessUnit   *BusinessUnit         `xorm:"-" json:"-"`
-	Organization   *Organization         `xorm:"-" json:"-"`
+	CashAccountID    *uuid.UUID `bun:"cash_account_id,type:uuid,nullzero" json:"cashAccountId"`
+	ApAccountID      *uuid.UUID `bun:"ap_account_id,type:uuid,nullzero" json:"apAccountId"`
+	ExpenseAccountID *uuid.UUID `bun:"expense_account_id,type:uuid,nullzero" json:"expenseAccountId"`
+	BusinessUnitID   uuid.UUID  `bun:"business_unit_id,type:uuid,notnull" json:"businessUnitId"`
+	OrganizationID   uuid.UUID  `bun:"organization_id,type:uuid,notnull" json:"organizationId"`
+
+	CashAccount    *GeneralLedgerAccount `bun:"rel:belongs-to,join:cash_account_id=id" json:"-"`
+	ApAccount      *GeneralLedgerAccount `bun:"rel:belongs-to,join:ap_account_id=id" json:"-"`
+	ExpenseAccount *GeneralLedgerAccount `bun:"rel:belongs-to,join:expense_account_id=id" json:"-"`
+	BusinessUnit   *BusinessUnit         `bun:"rel:belongs-to,join:business_unit_id=id" json:"-"`
+	Organization   *Organization         `bun:"rel:belongs-to,join:organization_id=id" json:"-"`
 }
 
 func (d DivisionCode) Validate() error {

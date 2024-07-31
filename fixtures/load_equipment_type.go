@@ -34,7 +34,7 @@ const (
 	totalEquipmentTypes = 100_000
 )
 
-func LoadEquipmentTypes(ctx context.Context, db *bun.DB, orgID, buID uuid.UUID) error {
+func loadEquipmentTypes(ctx context.Context, db *bun.DB, orgID, buID uuid.UUID) error {
 	start := time.Now()
 
 	count, err := db.NewSelect().Model((*models.EquipmentType)(nil)).Count(ctx)
@@ -42,7 +42,7 @@ func LoadEquipmentTypes(ctx context.Context, db *bun.DB, orgID, buID uuid.UUID) 
 		return fmt.Errorf("failed to count existing equipment types: %w", err)
 	}
 
-	if count > 0 {
+	if count > 10 {
 		log.Printf("Equipment types already loaded. Count: %d", count)
 		return nil
 	}

@@ -23,7 +23,7 @@
 
     * {
         @apply border-border;
-        font-family: 'Geist Variable';
+        font-family: 'Geist Variable', monospace;
     }
 
     body {
@@ -73,7 +73,7 @@
         --radius: 0.5rem;
     }
 
-    .dark-plus {
+    .dark{
         --background: 240 10% 3.9%;
         --foreground: 0 0% 98%;
         --card: 240 10% 3.9%;
@@ -95,10 +95,10 @@
         --ring: 240 4.9% 83.9%;
     }
 
-    .dark {
+    .dark-plus {
         --background: 240 10% 3.92%;
         --foreground: 0 0% 98.04%;
-        --card: 240 10% 3.92%;
+        --card: 240 6% 6%;
         --card-foreground: 0 0% 98.04%;
         --popover: 240 10% 3.92%;
         --popover-foreground: 0 0% 98.04%;

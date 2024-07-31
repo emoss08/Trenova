@@ -167,6 +167,12 @@ func LoadFixtures() error {
 		return err
 	}
 
+	// Load the equipment types
+	if err = loadEquipmentTypes(ctx, db, org.ID, bu.ID); err != nil {
+		log.Fatalf("Failed to load equipment types: %v", err)
+		return err
+	}
+
 	// Load the admin account
 	if err = InitializeCasbinPolicies(ctx, db, enforcer, org, bu); err != nil {
 		log.Fatalf("Failed to load admin account: %v", err)

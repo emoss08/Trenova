@@ -19,6 +19,7 @@ import { cn } from "@/lib/utils";
 import { Controller, UseControllerProps, useController } from "react-hook-form";
 import Select, { GroupBase, OptionsOrGroups, Props } from "react-select";
 
+import { useMemo } from "react";
 import CreatableSelect, { CreatableProps } from "react-select/creatable";
 import { FieldDescription } from "./components";
 import { Label } from "./label";
@@ -61,6 +62,11 @@ interface SelectInputProps<T extends Record<string, unknown>>
   isReadOnly?: boolean;
 }
 
+type GroupedOption = {
+  label: string;
+  options: SelectOption[];
+};
+
 /**
  * A wrapper around react-select's Select component.
  * @param props {SelectInputProps}
@@ -98,8 +104,88 @@ export function SelectInput<T extends Record<string, unknown>>(
 
   const dataLoading = isLoading || isDisabled;
   const errorOccurred = isFetchError || fieldState.invalid;
-  const processedValue = ValueProcessor(field.value, options, isMulti);
   const menuOpen = isReadOnly ? false : menuIsOpen;
+
+  const selectAllOption: SelectOption = useMemo(
+    () => ({
+      label: "Select All",
+      value: "<SELECT_ALL>" as string,
+      color: "#15803d",
+    }),
+    [],
+  );
+
+  const getOptionsWithSelectAll = useMemo(() => {
+    if (!isMulti) return options;
+
+    if (options.length > 0 && "options" in options[0]) {
+      // Grouped options
+      return [selectAllOption, ...options];
+    } else {
+      // Flat options
+      return [selectAllOption, ...(options as SelectOption[])];
+    }
+  }, [isMulti, options, selectAllOption]);
+
+  const flattenOptions = useMemo(() => {
+    return options.flatMap((item) => {
+      if ("options" in item && Array.isArray(item.options)) {
+        return item.options;
+      }
+      return item as SelectOption;
+    });
+  }, [options]);
+
+  const getValue = () => {
+    if (!isMulti) {
+      const selectedValue = field.value as string | undefined;
+      return selectedValue
+        ? flattenOptions.find((opt) => opt.value === selectedValue) || null
+        : null;
+    }
+
+    if (Array.isArray(field.value)) {
+      const selectedValues = field.value as string[];
+      return flattenOptions.filter((opt) =>
+        selectedValues.includes(opt.value as string),
+      );
+    }
+
+    return [];
+  };
+
+  const handleChange = (newValue: any, actionMeta: any) => {
+    if (!isMulti) {
+      return newValue ? newValue.value : null;
+    }
+
+    if (!Array.isArray(newValue)) {
+      return [];
+    }
+
+    const { action, option } = actionMeta;
+
+    if (action === "select-option" && option?.value === selectAllOption.value) {
+      return flattenOptions.map((opt) => opt.value);
+    } else if (
+      action === "deselect-option" &&
+      option?.value === selectAllOption.value
+    ) {
+      return [];
+    } else {
+      return newValue.flatMap((item: GroupedOption | SelectOption) => {
+        if (item && "options" in item && Array.isArray(item.options)) {
+          // This is a group
+          return item.options.map((opt) => opt?.value).filter(Boolean);
+        } else if (item && "value" in item) {
+          // This is an individual option
+          return item.value;
+        } else {
+          return [];
+        }
+      });
+    }
+  };
 
   return (
     <>
@@ -111,7 +197,7 @@ export function SelectInput<T extends Record<string, unknown>>(
         <Controller
           name={name}
           control={control}
-          render={({ field }) => (
+          render={({ field: { onChange, ...restField } }) => (
             <Select
               unstyled
               aria-invalid={errorOccurred}
@@ -120,7 +206,7 @@ export function SelectInput<T extends Record<string, unknown>>(
               closeMenuOnSelect={!isMulti}
               hideSelectedOptions={hideSelectedOptions}
               popoutLinkLabel={popoutLinkLabel}
-              options={options}
+              options={getOptionsWithSelectAll}
               isMulti={isMulti}
               isLoading={isLoading}
               hasPopoutWindow={hasPopoutWindow}
@@ -197,20 +283,11 @@ export function SelectInput<T extends Record<string, unknown>>(
                   "ml-3 mt-2 mb-1 text-muted-foreground text-sm",
                 noOptionsMessage: () => "text-muted-foreground",
               }}
-              {...field}
-              value={processedValue}
-              onChange={(selected) => {
-                if (isMulti) {
-                  field.onChange(
-                    selected
-                      ? (selected as SelectOption[]).map((opt) => opt.value)
-                      : [],
-                  );
-                } else {
-                  field.onChange(
-                    selected ? (selected as SelectOption).value : null,
-                  );
-                }
+              {...restField}
+              value={getValue()}
+              onChange={(newValue, actionMeta) => {
+                const transformedValue = handleChange(newValue, actionMeta);
+                onChange(transformedValue);
               }}
             />
           )}

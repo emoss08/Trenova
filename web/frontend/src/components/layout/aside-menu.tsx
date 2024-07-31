@@ -28,7 +28,8 @@ import {
 import { cn } from "@/lib/utils";
 import { useHeaderStore } from "@/stores/HeaderStore";
 import { MenuData, NavLinkGroup, type LinkData } from "@/types/sidebar-nav";
-import { faGrid2, faMinus, faPlus } from "@fortawesome/pro-regular-svg-icons";
+import { faGrid2 } from "@fortawesome/pro-regular-svg-icons";
+import { faCaretDown, faCaretUp } from "@fortawesome/pro-solid-svg-icons";
 import { ChevronLeft, ChevronRight, MenuIcon } from "lucide-react";
 import {
   createContext,
@@ -77,7 +78,7 @@ const SubMenu = memo(
     };
 
     return (
-      <ul className="border-border relative ml-2 space-y-1 border-l border-dashed pl-2 transition-all duration-300 ease-in-out">
+      <ul className="relative ml-2 space-y-1 border-l border-dashed border-border pl-2 transition-all duration-300 ease-in-out">
         {links.map((subLink) => {
           const isActive = location.pathname === subLink.link;
           return (
@@ -86,13 +87,13 @@ const SubMenu = memo(
               className={cn(
                 "relative flex items-center text-muted-foreground cursor-pointer rounded-lg select-none p-2 text-sm transition-all",
                 isActive
-                  ? "bg-muted/10 text-primary border border-border"
-                  : "hover:bg-muted/10 hover:text-primary border border-transparent hover:border-border",
+                  ? "bg-card text-primary border border-border"
+                  : "hover:bg-card hover:text-primary border border-transparent hover:border-border",
               )}
               onClick={() => handleItemClick(subLink.link || "#")}
             >
               {isActive && (
-                <div className="bg-primary absolute left-[-14px] top-1/2 size-2 -translate-y-1/2 rounded-full" />
+                <div className="absolute left-[-14px] top-1/2 size-2 -translate-y-1/2 rounded-full bg-primary" />
               )}
               {subLink.label}
             </li>
@@ -118,7 +119,7 @@ const MenuItem = memo(
       return (
         <div>
           {!isMinimized && (
-            <h3 className="text-muted-foreground select-none text-sm font-semibold uppercase">
+            <h3 className="mb-2 select-none text-sm font-semibold uppercase text-muted-foreground">
               {item.label}
             </h3>
           )}
@@ -138,8 +139,8 @@ const MenuItem = memo(
         className={cn(
           "group select-none list-none rounded-md p-2 hover:cursor-pointer",
           isActive
-            ? "bg-muted/10 text-primary border border-border"
-            : "hover:bg-muted/10 hover:text-primary border border-transparent hover:border-border",
+            ? "bg-muted/30 text-primary border border-border"
+            : "hover:bg-muted/30 hover:text-primary border border-transparent hover:border-border",
         )}
       >
         {item.link ? (
@@ -150,7 +151,7 @@ const MenuItem = memo(
               "flex w-full items-center leading-6",
               isActive
                 ? "text-primary"
-                : "text-muted-foreground/80 group-hover:text-primary",
+                : "text-foreground group-hover:text-primary",
             )}
           >
             {item.icon}
@@ -163,7 +164,7 @@ const MenuItem = memo(
               "flex w-full items-center leading-6",
               isActive
                 ? "text-primary"
-                : "text-muted-foreground/80 group-hover:text-primary",
+                : "text-foreground group-hover:text-primary",
             )}
           >
             {item.icon}
@@ -236,7 +237,7 @@ const LinksComponent = ({
         <li key={linkItem.menuKey} className="space-y-1">
           {isMinimized ? (
             <DropdownMenu>
-              <DropdownMenuTrigger className="hover:bg-muted focus:bg-muted flex items-center rounded-lg p-2 hover:cursor-pointer">
+              <DropdownMenuTrigger className="flex items-center rounded-lg p-2 hover:cursor-pointer hover:bg-muted focus:bg-muted">
                 {linkItem.icon}
               </DropdownMenuTrigger>
               <DropdownMenuContent side="right">
@@ -260,7 +261,7 @@ const LinksComponent = ({
               <div
                 onClick={() => handleToggleSubMenu(linkItem.menuKey)}
                 className={cn(
-                  "text-muted-foreground/80 hover:text-primary flex cursor-pointer select-none items-center justify-between rounded-md p-2 leading-6",
+                  "text-foreground hover:text-primary flex cursor-pointer select-none items-center justify-between rounded-md p-2 leading-6",
                   openSubMenu === linkItem.menuKey ? "text-primary" : "",
                 )}
               >
@@ -270,14 +271,14 @@ const LinksComponent = ({
                 </div>
                 {openSubMenu === linkItem.menuKey ? (
                   <Icon
-                    icon={faMinus}
+                    icon={faCaretUp}
                     className={cn(
                       "size-3 transition-transform duration-300 ease-in-out",
                     )}
                   />
                 ) : (
                   <Icon
-                    icon={faPlus}
+                    icon={faCaretDown}
                     className={cn(
                       "size-3 transition-transform duration-300 ease-in-out",
                     )}
@@ -322,7 +323,7 @@ const LinksComponent = ({
     [linkData, renderLink],
   );
 
-  return <ul className="space-y-1">{permittedLinks}</ul>;
+  return <ul>{permittedLinks}</ul>;
 };
 
 function Menu({
@@ -422,10 +423,8 @@ export function AsideMenu() {
         <div className="pb-10">
           <Menu menuItems={menuItems} onLinkClick={toggleMenu} />
         </div>
-
-        <div className="from-background pointer-events-none absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t to-transparent" />
+        <div className="pointer-events-none absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-background to-transparent" />
       </ScrollArea>
-      {/* <MenuItem item={logoutItem} onLinkClick={toggleMenu} /> */}
       <UserAsideMenu />
     </div>
   );
@@ -440,9 +439,9 @@ function AsideMenuButton() {
             <Button
               size="icon"
               variant="outline"
-              className="border-muted-foreground/40 hover:border-muted-foreground/80 group relative size-8"
+              className="group relative size-8 border-muted-foreground/40 hover:border-muted-foreground/80"
             >
-              <MenuIcon className="text-muted-foreground group-hover:text-foreground size-5" />
+              <MenuIcon className="size-5 text-muted-foreground group-hover:text-foreground" />
             </Button>
           </span>
         </TooltipTrigger>
@@ -462,7 +461,7 @@ export function AsideMenuDialog() {
       </SheetTrigger>
       <SheetContent side="left" className="w-[20em] overflow-y-scroll">
         <aside className="overflow-auto">
-          <div className="border-border mb-4 border-b border-dashed pb-4">
+          <div className="mb-4 border-b border-dashed border-border pb-4">
             <OrganizationLogo />
           </div>
           <AsideMenu />
@@ -483,13 +482,13 @@ function MainAsideMenu() {
     <MenuContext.Provider value={{ isMinimized, toggleMinimize }}>
       <div
         className={cn(
-          "bg-background border-border hidden h-screen shrink-0 flex-col border-r xl:flex transition-all duration-300 ease-in-out",
+          "bg-background border-border hidden h-[calc(100vh-2rem)] my-4 mx-2 rounded-lg border  shrink-0 flex-col xl:flex transition-all duration-300 ease-in-out",
           isMinimized ? "w-[70px]" : "w-72",
         )}
       >
-        <div className="border-border relative mb-4 border-b border-dashed p-4">
+        <div className="relative mb-4 border-b border-dashed border-border p-4">
           {isMinimized ? <MiniOrganizationLogo /> : <OrganizationLogo />}
-          <span className="text-muted-foreground mt-4 block text-xs">
+          <span className="mt-4 block text-xs text-muted-foreground">
             {isMinimized ? <SearchButton /> : <SiteSearchInput />}
           </span>
           <Button
@@ -499,9 +498,9 @@ function MainAsideMenu() {
             variant="outline"
           >
             {isMinimized ? (
-              <ChevronRight className="text-muted-foreground size-4" />
+              <ChevronRight className="size-4 text-muted-foreground" />
             ) : (
-              <ChevronLeft className="text-muted-foreground size-4" />
+              <ChevronLeft className="size-4 text-muted-foreground" />
             )}
           </Button>
         </div>

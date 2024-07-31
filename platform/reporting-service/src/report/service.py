@@ -76,6 +76,7 @@ def report_generate(
         relationships=relationships,
         business_unit_id=business_unit_id,
         table_name=table_name,
+        file_format=file_format,
     )
     if df is None:
         raise DataFrameCreationError("An error occurred while creating the DataFrame.")

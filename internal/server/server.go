@@ -35,7 +35,6 @@ import (
 	"github.com/emoss08/trenova/pkg/minio"
 	"github.com/emoss08/trenova/pkg/models"
 	"github.com/emoss08/trenova/pkg/redis"
-	"github.com/fatih/color"
 	"github.com/gofiber/fiber/v2"
 	"github.com/golang-jwt/jwt/v5"
 	_ "github.com/lib/pq" // Needed for the Postgresql driver
@@ -111,7 +110,13 @@ func NewServer(ctx context.Context, cfg config.Server) *Server {
 }
 
 func (s *Server) Ready() bool {
-	return s.DB != nil && s.Logger != nil && s.Minio != nil && s.Kafka != nil
+	return s.DB != nil &&
+		s.Logger != nil &&
+		s.Minio != nil &&
+		s.Kafka != nil &&
+		s.Enforcer != nil &&
+		s.AuditService != nil &&
+		s.CodeGenerator != nil
 }
 
 // OnStop registers a function to be called when the server starts.
@@ -246,21 +251,6 @@ func (s *Server) InitCasbin() error {
 	}
 
 	return nil
-}
-
-func colorizeLevel(level string) string {
-	switch level {
-	case "INFO":
-		return color.New(color.BgGreen, color.FgHiBlack).Sprint(level)
-	case "DEBUG":
-		return color.New(color.BgBlue, color.FgHiBlack).Sprint(level)
-	case "WARN":
-		return color.New(color.BgYellow, color.FgHiBlack).Sprint(level)
-	case "ERROR":
-		return color.New(color.FgRed).Sprint(level)
-	default:
-		return level
-	}
 }
 
 // InitMinioClient initializes the Minio client.
