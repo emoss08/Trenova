@@ -74,7 +74,7 @@ func (as *AuditableService) CreateWithAudit(ctx context.Context, entity Auditabl
 func (as *AuditableService) UpdateWithAudit(ctx context.Context, entity Auditable, userID uuid.UUID) error {
 	auditUser, err := as.GetAuditUser(ctx, userID)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to get audit user %s", err)
 	}
 
 	return as.DB.RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {

@@ -21,38 +21,41 @@ import (
 	"fmt"
 )
 
-type DeliveryMethod string
+type UnitOfMeasure string
 
 const (
-	DeliveryMethodEmail = DeliveryMethod("Email")
-	DeliveryMethodLocal = DeliveryMethod("Local")
-	DeliveryMethodApi   = DeliveryMethod("Api")
-	DeliveryMethodSms   = DeliveryMethod("Sms")
+	UnitOfMeasurePallet   = UnitOfMeasure("Pallet")
+	UnitOfMeasureTote     = UnitOfMeasure("Tote")
+	UnitOfMeasureDrum     = UnitOfMeasure("Drum")
+	UnitOfMeasureCylinder = UnitOfMeasure("Cylinder")
+	UnitOfMeasureCase     = UnitOfMeasure("Case")
+	UnitOfMeasureAmpule   = UnitOfMeasure("Ampule")
+	UnitOfMeasureBag      = UnitOfMeasure("Bag")
+	UnitOfMeasureBottle   = UnitOfMeasure("Bottle")
+	UnitOfMeasurePail     = UnitOfMeasure("Pail")
+	UnitOfMeasurePieces   = UnitOfMeasure("Pieces")
+	UnitOfMeasureIsoTank  = UnitOfMeasure("IsoTank")
 )
 
-func (o DeliveryMethod) String() string {
+func (o UnitOfMeasure) String() string {
 	return string(o)
 }
 
-func (DeliveryMethod) Values() []string {
-	return []string{"Email", "Local", "Api", "Sms"}
-}
-
-func (o DeliveryMethod) Value() (driver.Value, error) {
+func (o UnitOfMeasure) Value() (driver.Value, error) {
 	return string(o), nil
 }
 
-func (o *DeliveryMethod) Scan(value any) error {
+func (o *UnitOfMeasure) Scan(value any) error {
 	if value == nil {
-		return errors.New("deliverymethod: expected a value, got nil")
+		return errors.New("unitofmeasure: expected a value, got nil")
 	}
 	switch v := value.(type) {
 	case string:
-		*o = DeliveryMethod(v)
+		*o = UnitOfMeasure(v)
 	case []byte:
-		*o = DeliveryMethod(string(v))
+		*o = UnitOfMeasure(string(v))
 	default:
-		return fmt.Errorf("deliverymethod: cannot can type %T into DeliveryMethod", value)
+		return fmt.Errorf("unitofmeasure: cannot can type %T into UnitOfMeasure", value)
 	}
 	return nil
 }

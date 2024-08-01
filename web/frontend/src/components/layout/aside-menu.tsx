@@ -87,8 +87,8 @@ const SubMenu = memo(
               className={cn(
                 "relative flex items-center text-muted-foreground cursor-pointer rounded-lg select-none p-2 text-sm transition-all",
                 isActive
-                  ? "bg-card text-primary border border-border"
-                  : "hover:bg-card hover:text-primary border border-transparent hover:border-border",
+                  ? "bg-muted/30 text-primary border border-border"
+                  : "hover:bg-muted/30 hover:text-primary border border-transparent hover:border-border",
               )}
               onClick={() => handleItemClick(subLink.link || "#")}
             >

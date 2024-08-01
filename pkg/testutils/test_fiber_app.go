@@ -59,16 +59,23 @@ func SetupTestServer(t *testing.T) (*server.Server, func()) {
 
 	// Run migrations
 	migrator := migrate.NewMigrator(db, migrations.Migrations)
-	if err := migrator.Init(context.Background()); err != nil {
+	if err = migrator.Init(context.Background()); err != nil {
 		closeDatabase()
 		t.Fatalf("Failed to initialize migrator: %v", err)
 	}
 
-	if err := migrator.Lock(context.Background()); err != nil {
+	if err = migrator.Lock(context.Background()); err != nil {
 		closeDatabase()
 		t.Fatalf("Failed to lock migrations: %v", err)
 	}
-	defer migrator.Unlock(context.Background()) //nolint:errcheck
+
+	defer func(migrator *migrate.Migrator, ctx context.Context) {
+		err := migrator.Unlock(ctx)
+		if err != nil {
+			closeDatabase()
+			t.Fatalf("Failed to unlock migrations: %v", err)
+		}
+	}(migrator, context.Background())
 
 	group, err := migrator.Migrate(context.Background())
 	if err != nil {

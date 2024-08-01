@@ -197,7 +197,7 @@ func (c *Customer) BeforeAppendModel(_ context.Context, query bun.Query) error {
 	return nil
 }
 
-func (c *Customer) Insert(ctx context.Context, tx bun.IDB, auditService *audit.Service, user audit.AuditUser) error {
+func (c *Customer) Insert(_ context.Context, _ bun.IDB, _ *audit.Service, _ audit.AuditUser) error {
 	// This method is required by the Auditable interface, but for Customer, we'll always use InsertWithCodeGen
 	return errors.New("customer requires code generation, use InsertWithCodeGen instead")
 }
