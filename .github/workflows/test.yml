@@ -19,7 +19,6 @@ jobs:
     runs-on: ubuntu-latest
 
     services:
-      postgres:
       redis:
         image: redis:latest
         ports:
