@@ -2,7 +2,9 @@ package factory
 
 import (
 	"context"
+	"database/sql"
 	"errors"
+	"log"
 
 	"golang.org/x/crypto/bcrypt"
 
@@ -24,39 +26,44 @@ func (u *UserFactory) CreateOrGetUser(ctx context.Context) (*models.User, error)
 		return nil, err
 	}
 
-	exists, err := u.db.NewSelect().Model((*models.User)(nil)).Where("username = ?", "test_admin").Exists(ctx)
+	user := new(models.User)
+	err = u.db.NewSelect().Model(user).Where("username = ?", "admin").Scan(ctx)
+
+	if err == nil {
+		// User exists, return the existing user
+		return user, nil
+	}
+
+	if !errors.Is(err, sql.ErrNoRows) {
+		// An unexpected error occurred
+		return nil, err
+	}
+
+	// User does not exist, create a new one
+	log.Printf("User does not exist, creating user")
+	hashedPassword, err := bcrypt.GenerateFromPassword([]byte("admin"), bcrypt.DefaultCost)
 	if err != nil {
 		return nil, err
 	}
 
-	if !exists {
-		hashedPassword, err := bcrypt.GenerateFromPassword([]byte("admin"), bcrypt.DefaultCost)
-		if err != nil {
-			return nil, err
-		}
-
-		user := &models.User{
-			OrganizationID: org.ID,
-			Organization:   org,
-			BusinessUnitID: org.BusinessUnitID,
-			BusinessUnit:   org.BusinessUnit,
-			Status:         "Active",
-			Username:       "admin",
-			Password:       string(hashedPassword),
-			Email:          "admin@trenova.app",
-			Name:           "System Administrator",
-			IsAdmin:        true,
-			Timezone:       "America/New_York",
-		}
-
-		_, err = u.db.NewInsert().Model(user).Exec(ctx)
-		if err != nil {
-			return nil, err
-		}
-
-		return user, nil
+	newUser := &models.User{
+		OrganizationID: org.ID,
+		Organization:   org,
+		BusinessUnitID: org.BusinessUnitID,
+		BusinessUnit:   org.BusinessUnit,
+		Status:         "Active",
+		Username:       "admin",
+		Password:       string(hashedPassword),
+		Email:          "admin@trenova.app",
+		Name:           "System Administrator",
+		IsAdmin:        true,
+		Timezone:       "America/New_York",
 	}
 
-	return nil, errors.New("cannot get user")
+	_, err = u.db.NewInsert().Model(newUser).Exec(ctx)
+	if err != nil {
+		return nil, err
+	}
 
+	return newUser, nil
 }

@@ -19,14 +19,10 @@ import (
 	"database/sql"
 	"fmt"
 	"log"
-	"runtime"
 	"time"
 
 	"github.com/ory/dockertest/v3"
 	"github.com/ory/dockertest/v3/docker"
-	"github.com/uptrace/bun"
-	"github.com/uptrace/bun/dialect/pgdialect"
-	"github.com/uptrace/bun/extra/bundebug"
 )
 
 const (
@@ -34,33 +30,39 @@ const (
 	DatabaseName                = "database_test"
 )
 
-type Database struct {
-	db *bun.DB
-}
-
-func New(db *sql.DB, verbose bool) *Database {
-	d := new(Database)
-	d.db = bun.NewDB(db, pgdialect.New())
-
-	// configuration of database
-	maxOpenConnections := 4 * runtime.GOMAXPROCS(0)
-	d.db.SetMaxOpenConns(maxOpenConnections)
-	d.db.SetMaxIdleConns(maxOpenConnections)
-
-	if verbose {
-		d.db.AddQueryHook(bundebug.NewQueryHook(bundebug.WithVerbose(true)))
+func retryWithBackoff(attempts int, initialSleep time.Duration, fn func() error) error {
+	var err error
+	sleep := initialSleep
+	for i := 0; i < attempts; i++ {
+		err = fn()
+		if err == nil {
+			return nil
+		}
+		log.Printf("Attempt %d failed, retrying in %v: %v", i+1, sleep, err)
+		time.Sleep(sleep)
+		sleep = sleep * 2
 	}
-
-	return d
+	return fmt.Errorf("after %d attempts, last error: %s", attempts, err)
 }
 
 func initDatabase() (string, func(), error) {
+	var err error
+	dbOnce.Do(func() {
+		sharedDBURL, dbCleanup, err = createTestDatabase()
+	})
+	if err != nil {
+		return "", nil, err
+	}
+	return sharedDBURL, nil, nil
+}
+
+func createTestDatabase() (string, func(), error) {
 	pool, err := dockertest.NewPool("")
 	if err != nil {
 		log.Fatalf("Could not connect to docker: %s", err)
 	}
 
-	// pulls an image, creates a container based on it and runs it
+	log.Println("Starting PostgreSQL container...")
 	resource, err := pool.RunWithOptions(&dockertest.RunOptions{
 		Repository: "postgres",
 		Tag:        "16.3",
@@ -71,7 +73,6 @@ func initDatabase() (string, func(), error) {
 			"listen_addresses = '*'",
 		},
 	}, func(cfg *docker.HostConfig) {
-		// set AutoRemove to true so that stopped container goes away by itself
 		cfg.AutoRemove = true
 		cfg.RestartPolicy = docker.RestartPolicy{Name: "no"}
 	})
@@ -81,26 +82,35 @@ func initDatabase() (string, func(), error) {
 
 	hostAndPort := resource.GetHostPort("5432/tcp")
 	databaseURL := fmt.Sprintf("postgres://%s:%s@%s/%s?sslmode=disable", DatabaseUsernameAndPassword, DatabaseUsernameAndPassword, hostAndPort, DatabaseName)
-	log.Println("Connecting to database on url: ", databaseURL)
+	log.Println("PostgreSQL container started. Connecting to database on url: ", databaseURL)
 
-	_ = resource.Expire(120) // Tell docker to hard kill the container in 120 seconds
+	// Increase the max wait time
+	pool.MaxWait = 300 * time.Second // 5 minutes
 
-	// exponential backoff-retry, because the application in the container might not be ready to accept connections yet
-	pool.MaxWait = 120 * time.Second
-	if err = pool.Retry(func() error {
+	// Add an initial delay before attempting to connect
+	time.Sleep(5 * time.Second)
+
+	log.Println("Attempting to connect to the database...")
+	err = retryWithBackoff(15, 2*time.Second, func() error {
 		db, err := sql.Open("postgres", databaseURL)
 		if err != nil {
 			return err
 		}
-		return db.Ping()
-	}); err != nil {
+		err = db.Ping()
+		if err == nil {
+			log.Println("Successfully connected to the database.")
+		}
+		return err
+	})
+	if err != nil {
 		log.Fatalf("Could not connect to docker: %s", err)
 	}
 
 	return databaseURL, func() {
-		// You can't defer this because os.Exit doesn't care for defer
+		log.Println("Purging database container...")
 		if err = pool.Purge(resource); err != nil {
 			log.Fatalf("Could not purge resource: %s", err)
 		}
-	}, err
+		log.Println("Database container purged successfully.")
+	}, nil
 }

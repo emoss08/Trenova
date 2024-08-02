@@ -19,6 +19,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"sync"
 	"testing"
 
 	"github.com/emoss08/trenova/config"
@@ -37,54 +38,64 @@ import (
 	"github.com/gofiber/fiber/v2"
 )
 
+var (
+	sharedDBURL string
+	dbOnce      sync.Once
+	dbCleanup   func()
+)
+
+func InitTestEnvironment() {
+	dbOnce.Do(func() {
+		var err error
+		sharedDBURL, dbCleanup, err = createTestDatabase()
+		if err != nil {
+			panic(err)
+		}
+	})
+}
+
 // SetupTestServer initializes a new server for testing.
 func SetupTestServer(t *testing.T) (*server.Server, func()) {
 	t.Helper()
-	// Initialize test database
-	databaseURL, closeDatabase, err := initDatabase()
-	if err != nil {
-		t.Fatalf("Failed to initialize test database: %v", err)
-	}
+
+	// Ensure the test environment is initialized
+	InitTestEnvironment()
 
 	// Create a new DB connection
-	sqldb := sql.OpenDB(pgdriver.NewConnector(pgdriver.WithDSN(databaseURL)))
+	sqldb := sql.OpenDB(pgdriver.NewConnector(pgdriver.WithDSN(sharedDBURL)))
 	db := bun.NewDB(sqldb, pgdialect.New())
 	db.AddQueryHook(bundebug.NewQueryHook(bundebug.WithVerbose(false)))
 
 	// Register models
 	db.RegisterModel(
 		(*models.GeneralLedgerAccountTag)(nil),
-		// Add other models as needed
 	)
 
 	// Run migrations
 	migrator := migrate.NewMigrator(db, migrations.Migrations)
-	if err = migrator.Init(context.Background()); err != nil {
-		closeDatabase()
+	if err := migrator.Init(context.Background()); err != nil {
 		t.Fatalf("Failed to initialize migrator: %v", err)
 	}
 
-	if err = migrator.Lock(context.Background()); err != nil {
-		closeDatabase()
+	if err := migrator.Lock(context.Background()); err != nil {
 		t.Fatalf("Failed to lock migrations: %v", err)
 	}
 
 	defer func(migrator *migrate.Migrator, ctx context.Context) {
 		err := migrator.Unlock(ctx)
 		if err != nil {
-			closeDatabase()
 			t.Fatalf("Failed to unlock migrations: %v", err)
 		}
 	}(migrator, context.Background())
 
 	group, err := migrator.Migrate(context.Background())
 	if err != nil {
-		closeDatabase()
 		t.Fatalf("Failed to run migrations: %v", err)
 	}
 	if !group.IsZero() {
 		fmt.Printf("Migrated to %s\n", group)
 	}
+
 	// Load configuration
 	cfg := config.Server{
 		// Initialize with test-specific configurations
@@ -97,8 +108,11 @@ func SetupTestServer(t *testing.T) (*server.Server, func()) {
 		Kafka:       config.KafkaServer{},
 		Integration: config.Integration{},
 		Casbin:      config.CasbinConfig{},
-		Audit:       config.AuditConfig{},
-		Cache:       config.Cache{},
+		Audit: config.AuditConfig{
+			QueueSize:   1000, // Increased queue size for tests
+			WorkerCount: 10,   // Increased worker count for tests
+		},
+		Cache: config.Cache{},
 	}
 
 	// Initialize server
@@ -126,9 +140,7 @@ func SetupTestServer(t *testing.T) (*server.Server, func()) {
 	s.CodeInitializer = &gen.CodeInitializer{DB: s.DB}
 
 	// Initialize Cache
-	s.Cache = redis.NewClient(&redis.Options{
-		Addr: cfg.Cache.Addr,
-	}, s.Logger)
+	s.Cache = redis.NewClient(&redis.Options{Addr: cfg.Cache.Addr}, s.Logger)
 
 	// Generate and set up temporary RSA keys for the test
 	privateKey, publicKey := SetTestKeys(t)
@@ -146,7 +158,6 @@ func SetupTestServer(t *testing.T) (*server.Server, func()) {
 		if err := s.DB.Close(); err != nil {
 			t.Errorf("Failed to close database connection: %v", err)
 		}
-		closeDatabase()
 
 		// Close other resources
 		_ = s.Cache.Close()
@@ -154,4 +165,10 @@ func SetupTestServer(t *testing.T) (*server.Server, func()) {
 	}
 
 	return s, cleanup
+}
+
+func CleanupTestDatabase() {
+	if dbCleanup != nil {
+		dbCleanup()
+	}
 }
