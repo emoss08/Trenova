@@ -19,7 +19,9 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"os"
 	"sync"
+	"syscall"
 	"testing"
 
 	"github.com/emoss08/trenova/config"
@@ -44,25 +46,70 @@ var (
 	dbCleanup   func()
 )
 
+const dbURLFile = "/tmp/trenova_test_db_url"
+
 func InitTestEnvironment() {
 	dbOnce.Do(func() {
-		var err error
-		sharedDBURL, dbCleanup, err = createTestDatabase()
+		lockFile := "/tmp/trenova_test.lock"
+		file, err := os.OpenFile(lockFile, os.O_CREATE|os.O_RDWR, 0666)
 		if err != nil {
-			panic(err)
+			panic(fmt.Sprintf("cannot open lock file: %v", err))
+		}
+		defer file.Close()
+
+		err = syscall.Flock(int(file.Fd()), syscall.LOCK_EX)
+		if err != nil {
+			panic(fmt.Sprintf("cannot flock: %v", err))
+		}
+		defer syscall.Flock(int(file.Fd()), syscall.LOCK_UN)
+
+		// Check if the DB URL file already exists
+		if _, err := os.Stat(dbURLFile); os.IsNotExist(err) {
+			// File doesn't exist, create the database
+			url, cleanup, err := createTestDatabase()
+			if err != nil {
+				panic(fmt.Sprintf("cannot create test database: %v", err))
+			}
+			dbCleanup = cleanup
+			sharedDBURL = url
+
+			// Write the URL to the file
+			err = os.WriteFile(dbURLFile, []byte(url), 0666)
+			if err != nil {
+				panic(fmt.Sprintf("cannot write DB URL to file: %v", err))
+			}
+		} else {
+			// File exists, read the URL
+			urlBytes, err := os.ReadFile(dbURLFile)
+			if err != nil {
+				panic(fmt.Sprintf("cannot read DB URL from file: %v", err))
+			}
+			sharedDBURL = string(urlBytes)
 		}
 	})
+}
+
+func GetTestDatabaseURL() string {
+	InitTestEnvironment()
+	return sharedDBURL
+}
+
+func CleanupTestEnvironment() {
+	if dbCleanup != nil {
+		dbCleanup()
+	}
+	os.Remove(dbURLFile)
 }
 
 // SetupTestServer initializes a new server for testing.
 func SetupTestServer(t *testing.T) (*server.Server, func()) {
 	t.Helper()
 
-	// Ensure the test environment is initialized
-	InitTestEnvironment()
+	// Get the shared database URL
+	databaseURL := GetTestDatabaseURL()
 
 	// Create a new DB connection
-	sqldb := sql.OpenDB(pgdriver.NewConnector(pgdriver.WithDSN(sharedDBURL)))
+	sqldb := sql.OpenDB(pgdriver.NewConnector(pgdriver.WithDSN(databaseURL)))
 	db := bun.NewDB(sqldb, pgdialect.New())
 	db.AddQueryHook(bundebug.NewQueryHook(bundebug.WithVerbose(false)))
 
@@ -165,10 +212,4 @@ func SetupTestServer(t *testing.T) (*server.Server, func()) {
 	}
 
 	return s, cleanup
-}
-
-func CleanupTestDatabase() {
-	if dbCleanup != nil {
-		dbCleanup()
-	}
 }

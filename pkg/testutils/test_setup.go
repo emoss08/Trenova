@@ -8,6 +8,6 @@ import (
 func TestMain(m *testing.M) {
 	InitTestEnvironment()
 	code := m.Run()
-	CleanupTestDatabase()
+	CleanupTestEnvironment()
 	os.Exit(code)
 }
