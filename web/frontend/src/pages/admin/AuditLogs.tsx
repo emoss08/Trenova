@@ -16,8 +16,8 @@
  */
 
 import AdminLayout from "@/components/admin-page/layout";
+import { AuditLogView } from "@/components/audit-log/audit-log-table";
 import { Input } from "@/components/common/fields/input";
-import { Label } from "@/components/common/fields/label";
 import {
   Select,
   SelectContent,
@@ -26,6 +26,7 @@ import {
   SelectValue,
 } from "@/components/common/fields/select";
 import { Badge } from "@/components/ui/badge";
+import { Card } from "@/components/ui/card";
 import {
   Credenza,
   CredenzaBody,
@@ -34,13 +35,13 @@ import {
 import {
   Table,
   TableBody,
-  TableCaption,
   TableCell,
   TableHead,
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
 import { formatToUserTimezone } from "@/lib/date";
+import { upperFirst } from "@/lib/utils";
 import { getAuditLogs } from "@/services/OrganizationRequestService";
 import { AuditLog, AuditLogAction, AuditLogStatus } from "@/types/organization";
 import { useQuery } from "@tanstack/react-query";
@@ -51,13 +52,18 @@ import {
   useReactTable,
 } from "@tanstack/react-table";
 import { useState } from "react";
-import { upperFirst } from "@/lib/utils";
-import { AuditLogView } from "@/components/audit-log/dialog-table";
 
-function ActionBadge({ action }: { action: AuditLogAction }) {
-  return (
-    <Badge variant={action === "CREATE" ? "purple" : "info"}>{action}</Badge>
-  );
+function mapActionToBadge(action: AuditLogAction) {
+  switch (action) {
+    case "CREATE":
+      return <Badge variant="purple">Create</Badge>;
+    case "UPDATE":
+      return <Badge variant="info">Update</Badge>;
+    case "DELETE":
+      return <Badge variant="inactive">Delete</Badge>;
+    default:
+      return <Badge variant="default">Unknown</Badge>;
+  }
 }
 
 function mapStatusToBadge(status: AuditLogStatus) {
@@ -91,7 +97,7 @@ const columns: ColumnDef<AuditLog>[] = [
   {
     accessorKey: "action",
     header: "Action",
-    cell: ({ row }) => <ActionBadge action={row.original.action} />,
+    cell: ({ row }) => mapActionToBadge(row.original.action),
   },
   {
     accessorKey: "timestamp",
@@ -165,109 +171,98 @@ function AuditLogTable() {
   if (isError) return <div>Error loading audit logs</div>;
   return (
     <>
-      <div className="mb-4 space-y-4">
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <Label htmlFor="tableName">Table Name</Label>
-            <Input
-              id="tableName"
-              value={filters.tableName}
-              onChange={(e) => handleFilterChange("tableName", e.target.value)}
-              placeholder="Filter by table name"
-            />
-          </div>
-          <div>
-            <Label htmlFor="userId">User ID</Label>
-            <Input
-              id="userId"
-              value={filters.userId}
-              onChange={(e) => handleFilterChange("userId", e.target.value)}
-              placeholder="Filter by user ID"
-            />
-          </div>
-          <div>
-            <Label htmlFor="entityId">Entity ID</Label>
-            <Input
-              id="entityId"
-              value={filters.entityId}
-              onChange={(e) => handleFilterChange("entityId", e.target.value)}
-              placeholder="Filter by entity ID"
-            />
-          </div>
-          <div>
-            <Label htmlFor="action">Action</Label>
-            <Select
-              value={filters.action}
-              onValueChange={(value) => handleFilterChange("action", value)}
-            >
-              <SelectTrigger id="action">
-                <SelectValue placeholder="Select an action" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="NONE">All Actions</SelectItem>
-                <SelectItem value="CREATE">Create</SelectItem>
-                <SelectItem value="UPDATE">Update</SelectItem>
-                <SelectItem value="DELETE">Delete</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-          <div>
-            <Label htmlFor="status">Status</Label>
-            <Select
-              value={filters.status}
-              onValueChange={(value) => handleFilterChange("status", value)}
-            >
-              <SelectTrigger id="status">
-                <SelectValue placeholder="Select an status" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="NONE">All Actions</SelectItem>
-                <SelectItem value="ATTEMPTED">Attempted</SelectItem>
-                <SelectItem value="SUCCEEDED">Succeeded</SelectItem>
-                <SelectItem value="FAILED">Failed</SelectItem>
-              </SelectContent>
-            </Select>
+      <Card className="rounded-md border border-border bg-card">
+        <div className="m-4 space-y-4">
+          <div className="grid grid-cols-4 gap-4">
+            <div>
+              <Input
+                id="tableName"
+                value={filters.tableName}
+                onChange={(e) =>
+                  handleFilterChange("tableName", e.target.value)
+                }
+                placeholder="Filter by table name"
+              />
+            </div>
+            <div>
+              <Input
+                id="userId"
+                value={filters.userId}
+                onChange={(e) => handleFilterChange("userId", e.target.value)}
+                placeholder="Filter by user ID"
+              />
+            </div>
+            <div>
+              <Select
+                value={filters.action}
+                onValueChange={(value) => handleFilterChange("action", value)}
+              >
+                <SelectTrigger id="action">
+                  <SelectValue placeholder="Select an action" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="NONE">All Actions</SelectItem>
+                  <SelectItem value="CREATE">Create</SelectItem>
+                  <SelectItem value="UPDATE">Update</SelectItem>
+                  <SelectItem value="DELETE">Delete</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Select
+                value={filters.status}
+                onValueChange={(value) => handleFilterChange("status", value)}
+              >
+                <SelectTrigger id="status">
+                  <SelectValue placeholder="Select an status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="NONE">All Actions</SelectItem>
+                  <SelectItem value="ATTEMPTED">Attempted</SelectItem>
+                  <SelectItem value="SUCCEEDED">Succeeded</SelectItem>
+                  <SelectItem value="FAILED">Failed</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
           </div>
         </div>
-      </div>
-
-      <Table>
-        <TableCaption>A list of audit logs for the organization.</TableCaption>
-        <TableHeader>
-          {table.getHeaderGroups().map((headerGroup) => (
-            <TableRow key={headerGroup.id}>
-              {headerGroup.headers.map((header) => (
-                <TableHead key={header.id}>
-                  {header.isPlaceholder
-                    ? null
-                    : flexRender(
-                        header.column.columnDef.header,
-                        header.getContext(),
-                      )}
-                </TableHead>
-              ))}
-            </TableRow>
-          ))}
-        </TableHeader>
-        <TableBody>
-          {table.getRowModel().rows.map((row) => (
-            <TableRow
-              key={row.id}
-              className="cursor-pointer select-none"
-              onClick={() => {
-                setCurrentRecord(row.original);
-                setViewDialogOpen(true);
-              }}
-            >
-              {row.getVisibleCells().map((cell) => (
-                <TableCell key={cell.id}>
-                  {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                </TableCell>
-              ))}
-            </TableRow>
-          ))}
-        </TableBody>
-      </Table>
+        <Table>
+          <TableHeader>
+            {table.getHeaderGroups().map((headerGroup) => (
+              <TableRow key={headerGroup.id}>
+                {headerGroup.headers.map((header) => (
+                  <TableHead key={header.id}>
+                    {header.isPlaceholder
+                      ? null
+                      : flexRender(
+                          header.column.columnDef.header,
+                          header.getContext(),
+                        )}
+                  </TableHead>
+                ))}
+              </TableRow>
+            ))}
+          </TableHeader>
+          <TableBody>
+            {table.getRowModel().rows.map((row) => (
+              <TableRow
+                key={row.id}
+                className="cursor-pointer select-none"
+                onDoubleClick={() => {
+                  setCurrentRecord(row.original);
+                  setViewDialogOpen(true);
+                }}
+              >
+                {row.getVisibleCells().map((cell) => (
+                  <TableCell key={cell.id}>
+                    {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                  </TableCell>
+                ))}
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </Card>
       {viewDialogOpen && currentRecord && (
         <AuditLogDataDialog
           auditLog={currentRecord}

@@ -48,12 +48,12 @@ export function Layout({ children }: { children: React.ReactNode }) {
   useNotificationListener();
 
   return (
-    <div className="bg-background relative flex min-h-screen flex-col" id="app">
+    <div className="relative flex min-h-screen flex-col bg-background" id="app">
       <div className="flex flex-1 overflow-hidden">
         {hideAsideMenu ? null : <MainAsideMenu />}
         <div className="flex flex-1 flex-col overflow-hidden">
           {!isDesktop && (
-            <header className="border-border/40 bg-background/95 flex flex-none border-b">
+            <header className="flex flex-none border-b border-border/40 bg-background/95">
               <div className="flex h-14 w-full items-center justify-between px-4">
                 <div className="flex items-center gap-x-4">
                   <AsideMenuDialog />
@@ -61,7 +61,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
                 <div className="ml-auto flex items-center gap-x-4">
                   <SearchButton />
                   <NotificationMenu />
-                  <div className="border-muted-foreground/40 h-7 border-l" />
+                  <div className="h-7 border-l border-muted-foreground/40" />
                   {user && <UserAvatarMenu user={user} />}
                 </div>
               </div>

@@ -23,6 +23,18 @@ import { Button } from "../ui/button";
 import { DropdownMenu, DropdownMenuTrigger } from "../ui/dropdown-menu";
 import { Skeleton } from "../ui/skeleton";
 import { UserAvatar, UserAvatarMenuContent } from "./user-avatar-menu";
+import { cn } from "@/lib/utils";
+import React from "react";
+import { User } from "@/types/accounts";
+
+function UserAsideAvatar({ user }: { user: User }) {
+  return (
+    <span className="relative inline-block">
+      <UserAvatar user={user} />
+      <span className="absolute bottom-1 right-1 block size-2 rounded-full bg-green-600 ring-2 ring-background" />
+    </span>
+  );
+}
 
 export function UserAsideMenu() {
   const user = useUserStore.get("user");
@@ -35,22 +47,29 @@ export function UserAsideMenu() {
   }
 
   return (
-    <div className="border-border mt-2 flex flex-col space-y-1 border-t px-4 py-2">
-      <div className="flex items-center space-x-2 pt-2">
-        <UserAvatar user={user} />
+    <div className="m-2 flex flex-col space-y-1 rounded-lg border border-border p-2">
+      <div className="flex items-center space-x-2">
+        <UserAsideAvatar user={user} />
         <div className="grow">
           <p className="truncate text-sm font-medium leading-none">
             {user.name || user.username}
           </p>
-          <p className="text-muted-foreground text-xs leading-none">
+          <p className="text-xs leading-none text-muted-foreground">
             {user.email}
           </p>
         </div>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button className="ml-auto size-6" size="icon" variant="ghost">
+            <Button
+              className={cn(
+                "ml-auto size-6",
+                userHasNotifications && "bg-green-600/10 hover:bg-green-600/20",
+              )}
+              size="icon"
+              variant="ghost"
+            >
               {userHasNotifications && (
-                <span className="ring-background absolute bottom-9 right-4 flex size-1.5 rounded-full bg-green-600 ring-2 motion-safe:animate-pulse"></span>
+                <span className="absolute bottom-11 right-4 flex size-1.5 rounded-full bg-green-600 ring-2 ring-background motion-safe:animate-pulse"></span>
               )}
               <Icon icon={faEllipsis} />
             </Button>

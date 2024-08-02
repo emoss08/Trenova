@@ -99,7 +99,7 @@ export function SiteBreadcrumb({ children }: { children?: React.ReactNode }) {
   }
 
   return (
-    <div className="pb-4 pt-5 md:py-4">
+    <div className="px-5 py-2 md:py-4">
       <div>
         <h2 className="mt-10 flex scroll-m-20 items-center pb-2 text-xl font-semibold tracking-tight transition-colors first:mt-0">
           {toTitleCase(currentRoute.title)}

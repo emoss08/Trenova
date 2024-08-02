@@ -102,8 +102,10 @@ func (s CustomerService) Get(ctx context.Context, id, orgID, buID uuid.UUID) (*m
 func (s CustomerService) Create(ctx context.Context, entity *models.Customer, userID uuid.UUID) (*models.Customer, error) {
 	mkg, err := models.QueryCustomerMasterKeyGenerationByOrgID(ctx, s.DB, entity.OrganizationID)
 	if err != nil {
+		s.logger.Error().Str("orgID", entity.OrganizationID.String()).Err(err).Msg("Failed to query master key generation.")
 		return nil, err
 	}
+
 	err = s.CreateWithAuditAndCodeGen(ctx, entity, userID, mkg.Pattern)
 	if err != nil {
 		s.logger.Error().Err(err).Msg("Failed to create Customer")

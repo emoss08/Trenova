@@ -30,21 +30,23 @@ export function useLogout() {
     state.isAuthenticated,
     state.setIsAuthenticated,
   ]);
+
   return () => {
     try {
-      axios.post("/auth/logout/").then(() => {});
-      const returnUrl = sessionStorage.getItem("returnUrl");
-      if (returnUrl !== "/login" && returnUrl !== "/logout") {
-        sessionStorage.removeItem("returnUrl");
-      }
-      setIsAuthenticated(false);
-      localStorage.removeItem("trenova-user-id"); // Clear user ID from localStorage
-      navigate("/login");
+      axios.post("/auth/logout/").then(() => {
+        const returnURL = sessionStorage.getItem("returnUrl");
+        if (returnURL !== "/login" && returnURL !== "/logout") {
+          sessionStorage.removeItem("returnUrl");
+        }
 
-      // Clear all queries
-      queryClient.clear();
+        setIsAuthenticated(false);
+        localStorage.removeItem("trenova-user-id");
+        navigate("/login");
 
-      webSocketManager.disconnectFromAll();
+        queryClient.clear();
+
+        webSocketManager.disconnectAll();
+      });
     } catch (exception) {
       console.error("[Trenova] Logout", exception);
     }

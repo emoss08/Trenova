@@ -15,7 +15,7 @@
 
 
 from datetime import datetime
-from typing import Optional, TypedDict
+from typing import List, Optional, TypedDict
 from uuid import UUID
 
 from pydantic import BaseModel

@@ -52,6 +52,7 @@ import { AvatarImage } from "@radix-ui/react-avatar";
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { UserSettingsDialog } from "../user-settings-dialog";
+import { truncateText } from "@/lib/utils";
 
 type UserAvatarProps = React.ComponentPropsWithoutRef<typeof Avatar> & {
   user: User;
@@ -156,16 +157,16 @@ export function UserAvatarMenuContent({
 
   return (
     <>
-      <DropdownMenuContent className="w-56">
+      <DropdownMenuContent className="w-56 bg-card">
         <DropdownMenuLabel className="font-normal">
           <div className="flex flex-col space-y-1">
             <div className="flex items-center space-x-2">
               <UserAvatar user={user} />
               <div>
                 <p className="truncate text-sm font-medium leading-none">
-                  {user.name || user.username}
+                  {truncateText(user.name || user.username, 20)}
                 </p>
-                <p className="text-muted-foreground text-xs leading-none">
+                <p className="text-xs leading-none text-muted-foreground">
                   {user.email}
                 </p>
               </div>
@@ -187,7 +188,7 @@ export function UserAvatarMenuContent({
             Notifications
             <span className="ml-auto flex gap-x-0.5 tracking-widest">
               {hasNotifications && (
-                <span className="ring-background size-1.5 rounded-full bg-green-600 motion-safe:animate-pulse"></span>
+                <span className="size-1.5 rounded-full bg-green-600 ring-background motion-safe:animate-pulse"></span>
               )}
             </span>
           </DropdownMenuItem>
@@ -254,7 +255,7 @@ export function UserAvatarMenu({ user }: { user: User }) {
       <DropdownMenuTrigger asChild>
         <span className="relative inline-block">
           <UserAvatar user={user} />
-          <span className="ring-background absolute bottom-1 right-1 block size-2 rounded-full bg-green-600 ring-2" />
+          <span className="absolute bottom-1 right-1 block size-2 rounded-full bg-green-600 ring-2 ring-background" />
         </span>
       </DropdownMenuTrigger>
       <UserAvatarMenuContent

@@ -24,10 +24,10 @@ import (
 type DeliveryMethod string
 
 const (
-	DeliveryMethodInsert = DeliveryMethod("Email")
-	DeliveryMethodUpdate = DeliveryMethod("Local")
-	DeliveryMethodDelete = DeliveryMethod("Api")
-	DeliveryMethodAll    = DeliveryMethod("Sms")
+	DeliveryMethodEmail = DeliveryMethod("Email")
+	DeliveryMethodLocal = DeliveryMethod("Local")
+	DeliveryMethodApi   = DeliveryMethod("Api")
+	DeliveryMethodSms   = DeliveryMethod("Sms")
 )
 
 func (o DeliveryMethod) String() string {

@@ -27,19 +27,22 @@ import (
 
 type BusinessUnit struct {
 	bun.BaseModel `bun:"business_units"`
-	CreatedAt     time.Time  `bun:",nullzero,notnull,default:current_timestamp" json:"createdAt"`
-	UpdatedAt     time.Time  `bun:",nullzero,notnull,default:current_timestamp" json:"updatedAt"`
-	ID            uuid.UUID  `bun:",pk,type:uuid,default:uuid_generate_v4()" json:"id"`
-	Name          string     `bun:"type:VARCHAR(100),notnull" json:"name" queryField:"true"`
-	AddressLine1  string     `json:"addressLine1"`
-	AddressLine2  string     `json:"addressLine2"`
-	City          string     `json:"city"`
-	StateID       *uuid.UUID `bun:"type:uuid" json:"stateId"`
-	State         *UsState   `bun:"rel:belongs-to,join:state_id=id" json:"state"`
-	PostalCode    string     `json:"postalCode"`
-	PhoneNumber   string     `bun:"type:VARCHAR(15)" json:"phoneNumber"`
-	ContactName   string     `json:"contactName"`
-	ContactEmail  string     `json:"contactEmail"`
+
+	ID           uuid.UUID `bun:",pk,type:uuid,default:uuid_generate_v4()" json:"id"`
+	Name         string    `bun:"type:VARCHAR(100),notnull" json:"name" queryField:"true"`
+	AddressLine1 string    `json:"addressLine1"`
+	AddressLine2 string    `json:"addressLine2"`
+	City         string    `json:"city"`
+	PostalCode   string    `json:"postalCode"`
+	PhoneNumber  string    `bun:"type:VARCHAR(15)" json:"phoneNumber"`
+	ContactName  string    `json:"contactName"`
+	ContactEmail string    `json:"contactEmail"`
+	CreatedAt    time.Time `bun:",nullzero,notnull,default:current_timestamp" json:"createdAt"`
+	UpdatedAt    time.Time `bun:",nullzero,notnull,default:current_timestamp" json:"updatedAt"`
+
+	StateID *uuid.UUID `bun:"type:uuid" json:"stateId"`
+
+	State *UsState `bun:"rel:belongs-to,join:state_id=id" json:"state"`
 }
 
 func (b BusinessUnit) Validate() error {

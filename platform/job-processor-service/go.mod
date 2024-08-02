@@ -8,9 +8,13 @@ require (
 	github.com/inconshreveable/mousetrap v1.1.0 // indirect
 	github.com/jackc/pgpassfile v1.0.0 // indirect
 	github.com/jackc/pgservicefile v0.0.0-20221227161230-091c0ba34f0a // indirect
+	github.com/jinzhu/inflection v1.0.0 // indirect
 	github.com/mattn/go-colorable v0.1.13 // indirect
-	github.com/mattn/go-isatty v0.0.19 // indirect
+	github.com/mattn/go-isatty v0.0.20 // indirect
 	github.com/spf13/pflag v1.0.5 // indirect
+	github.com/tmthrgd/go-hex v0.0.0-20190904060850-447a3041c3bc // indirect
+	github.com/vmihailenco/msgpack/v5 v5.4.1 // indirect
+	github.com/vmihailenco/tagparser/v2 v2.0.0 // indirect
 	golang.org/x/crypto v0.17.0 // indirect
 	golang.org/x/text v0.14.0 // indirect
 )
@@ -26,7 +30,8 @@ require (
 	github.com/rs/zerolog v1.33.0
 	github.com/spf13/cast v1.3.1 // indirect
 	github.com/spf13/cobra v1.8.0
-	golang.org/x/sys v0.15.0 // indirect
+	github.com/uptrace/bun v1.2.1
+	golang.org/x/sys v0.18.0 // indirect
 	golang.org/x/time v0.0.0-20190308202827-9d24e82272b4 // indirect
 	google.golang.org/protobuf v1.33.0 // indirect
 )

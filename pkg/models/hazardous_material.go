@@ -33,17 +33,17 @@ import (
 type HazardousMaterial struct {
 	bun.BaseModel `bun:"table:hazardous_materials,alias:hm" json:"-"`
 
-	ID                 uuid.UUID `bun:",pk,type:uuid,default:uuid_generate_v4()" json:"id"`
-	Name               string    `bun:"type:VARCHAR(50),notnull" json:"name" queryField:"true"`
-	Status             string    `bun:"type:status_enum,notnull,default:'Active'" json:"status"`
-	HazardClass        string    `bun:"type:VARCHAR(16),notnull:default:'HazardClass1And1'" json:"hazardClass"`
-	ERGNumber          string    `bun:"type:VARCHAR" json:"ergNumber"`
-	Description        string    `bun:"type:TEXT" json:"description"`
-	PackingGroup       string    `bun:"type:VARCHAR,default:'PackingGroup1'" json:"packingGroup"`
-	ProperShippingName string    `bun:"type:TEXT" json:"properShippingName"`
-	Version            int64     `bun:"type:BIGINT" json:"version"`
-	CreatedAt          time.Time `bun:",nullzero,notnull,default:current_timestamp" json:"createdAt"`
-	UpdatedAt          time.Time `bun:",nullzero,notnull,default:current_timestamp" json:"updatedAt"`
+	ID                 uuid.UUID       `bun:",pk,type:uuid,default:uuid_generate_v4()" json:"id"`
+	Name               string          `bun:"type:VARCHAR(50),notnull" json:"name" queryField:"true"`
+	Status             property.Status `bun:"type:status_enum,notnull,default:'Active'" json:"status"`
+	HazardClass        string          `bun:"type:VARCHAR(16),notnull:default:'HazardClass1And1'" json:"hazardClass"`
+	ERGNumber          string          `bun:"type:VARCHAR" json:"ergNumber"`
+	Description        string          `bun:"type:TEXT" json:"description"`
+	PackingGroup       string          `bun:"type:VARCHAR,default:'PackingGroup1'" json:"packingGroup"`
+	ProperShippingName string          `bun:"type:TEXT" json:"properShippingName"`
+	Version            int64           `bun:"type:BIGINT" json:"version"`
+	CreatedAt          time.Time       `bun:",nullzero,notnull,default:current_timestamp" json:"createdAt"`
+	UpdatedAt          time.Time       `bun:",nullzero,notnull,default:current_timestamp" json:"updatedAt"`
 
 	BusinessUnitID uuid.UUID `bun:"type:uuid,notnull" json:"businessUnitId"`
 	OrganizationID uuid.UUID `bun:"type:uuid,notnull" json:"organizationId"`

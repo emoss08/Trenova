@@ -35,12 +35,10 @@ import {
 import { useReportColumns } from "@/hooks/useQueries";
 import axios from "@/lib/axiosConfig";
 import { StoreType } from "@/lib/useGlobalStore";
-import { ExportModelSchema } from "@/lib/validations/GenericSchema";
 import { TableStoreProps, useTableStore as store } from "@/stores/TableStore";
 import { IChoiceProps } from "@/types";
 import { DeliveryMethodChoices, TExportModelFormValues } from "@/types/forms";
 import { faDownload, faEnvelope } from "@fortawesome/pro-regular-svg-icons";
-import { yupResolver } from "@hookform/resolvers/yup";
 import { DialogTitle } from "@radix-ui/react-dialog";
 import { EllipsisVerticalIcon } from "lucide-react";
 import React, { useEffect } from "react";
@@ -87,9 +85,11 @@ function TableExportModalBody({
     showExportModal,
   );
 
+  console.info("Selected Columns", selectedColumns);
+
   const { control, handleSubmit, reset, watch, setError } =
     useForm<TExportModelFormValues>({
-      resolver: yupResolver(ExportModelSchema),
+      // resolver: yupResolver(ExportModelSchema),
       defaultValues: {
         columns: [],
         deliveryMethod: "local",
@@ -156,10 +156,10 @@ function TableExportModalBody({
       const response = await axios.post("reports/generate/", {
         tableName: modelName as string,
         fileFormat: values.fileFormat,
-        columns: mainColumns,
-        relationships: relationships,
         deliveryMethod: values.deliveryMethod,
         emailRecipients: values.emailRecipients,
+        columns: mainColumns,
+        relationships: relationships,
       });
 
       if (response.status === 200) {
@@ -227,7 +227,7 @@ function TableExportModalBody({
           isLoading={isLoading}
           isFetchError={isError}
           name="columns"
-          options={groupedOptions}
+          options={groupedOptions as any}
           label="Columns"
           placeholder="Select columns"
           description="A group of columns/fields that will be exported into your specified format."
