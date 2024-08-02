@@ -24,6 +24,8 @@ import (
 	"syscall"
 	"testing"
 
+	"github.com/gofiber/fiber/v2"
+
 	"github.com/emoss08/trenova/config"
 	"github.com/emoss08/trenova/internal/server"
 	"github.com/emoss08/trenova/migrate/migrations"
@@ -36,8 +38,6 @@ import (
 	"github.com/uptrace/bun/driver/pgdriver"
 	"github.com/uptrace/bun/extra/bundebug"
 	"github.com/uptrace/bun/migrate"
-
-	"github.com/gofiber/fiber/v2"
 )
 
 var (
@@ -46,45 +46,47 @@ var (
 	dbCleanup   func()
 )
 
-const dbURLFile = "/tmp/trenova_test_db_url"
+const (
+	dbURLFile = "/tmp/trenova_test_db_url"
+	lockFile  = "/tmp/trenova_test.lock"
+)
 
 func InitTestEnvironment() {
 	dbOnce.Do(func() {
-		lockFile := "/tmp/trenova_test.lock"
 		file, err := os.OpenFile(lockFile, os.O_CREATE|os.O_RDWR, 0666)
 		if err != nil {
 			panic(fmt.Sprintf("cannot open lock file: %v", err))
 		}
-		defer file.Close()
+		defer func(file *os.File) {
+			err := file.Close()
+			if err != nil {
+				panic(fmt.Sprintf("cannot close lock file: %v", err))
+			}
+		}(file)
 
 		err = syscall.Flock(int(file.Fd()), syscall.LOCK_EX)
 		if err != nil {
 			panic(fmt.Sprintf("cannot flock: %v", err))
 		}
-		defer syscall.Flock(int(file.Fd()), syscall.LOCK_UN)
+		defer func(fd int, how int) {
+			err := syscall.Flock(fd, how)
+			if err != nil {
+				panic(fmt.Sprintf("cannot flock: %v", err))
+			}
+		}(int(file.Fd()), syscall.LOCK_UN)
 
-		// Check if the DB URL file already exists
-		if _, err := os.Stat(dbURLFile); os.IsNotExist(err) {
-			// File doesn't exist, create the database
-			url, cleanup, err := createTestDatabase()
-			if err != nil {
-				panic(fmt.Sprintf("cannot create test database: %v", err))
-			}
-			dbCleanup = cleanup
-			sharedDBURL = url
+		// Always try to create a new database
+		url, cleanup, err := createTestDatabase()
+		if err != nil {
+			panic(fmt.Sprintf("cannot create test database: %v", err))
+		}
+		dbCleanup = cleanup
+		sharedDBURL = url
 
-			// Write the URL to the file
-			err = os.WriteFile(dbURLFile, []byte(url), 0666)
-			if err != nil {
-				panic(fmt.Sprintf("cannot write DB URL to file: %v", err))
-			}
-		} else {
-			// File exists, read the URL
-			urlBytes, err := os.ReadFile(dbURLFile)
-			if err != nil {
-				panic(fmt.Sprintf("cannot read DB URL from file: %v", err))
-			}
-			sharedDBURL = string(urlBytes)
+		// Write the URL to the file
+		err = os.WriteFile(dbURLFile, []byte(url), 0666)
+		if err != nil {
+			panic(fmt.Sprintf("cannot write DB URL to file: %v", err))
 		}
 	})
 }
@@ -98,7 +100,10 @@ func CleanupTestEnvironment() {
 	if dbCleanup != nil {
 		dbCleanup()
 	}
-	os.Remove(dbURLFile)
+	err := os.Remove(dbURLFile)
+	if err != nil {
+		panic(fmt.Sprintf("cannot remove DB URL file: %v", err))
+	}
 }
 
 // SetupTestServer initializes a new server for testing.
@@ -202,7 +207,7 @@ func SetupTestServer(t *testing.T) (*server.Server, func()) {
 
 	cleanup := func() {
 		// Close DB connection
-		if err := s.DB.Close(); err != nil {
+		if err = s.DB.Close(); err != nil {
 			t.Errorf("Failed to close database connection: %v", err)
 		}
 

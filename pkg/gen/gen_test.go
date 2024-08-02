@@ -38,7 +38,7 @@ func (m *MockCodeGeneratable) TableName() string {
 	return m.tableName
 }
 
-func (m *MockCodeGeneratable) GetCodePrefix(pattern string) string {
+func (m *MockCodeGeneratable) GetCodePrefix(_ string) string {
 	return m.codePrefix
 }
 
@@ -104,7 +104,7 @@ func TestCodeGenerator_GenerateUniqueCode(t *testing.T) {
 				}
 			},
 			setupDB: func(db *bun.DB) {
-				err = db.RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
+				err = db.RunInTx(ctx, nil, func(_ context.Context, tx bun.Tx) error {
 					_, err = tx.NewInsert().Model(&TestModel{
 						ID:             uuid.New().String(),
 						Code:           "TST0001000",
