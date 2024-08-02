@@ -18,49 +18,61 @@ import (
 	"github.com/emoss08/trenova/pkg/testutils"
 )
 
-func TestNewFleetCodeService(t *testing.T) {
+func TestNewLocationService(t *testing.T) {
 	ctx := context.Background()
 	s, cleanup := testutils.SetupTestServer(t)
 	defer cleanup()
 
-	service := services.NewFleetCodeService(s)
+	service := services.NewLocationService(s)
 	org, err := factory.NewOrganizationFactory(s.DB).MustCreateOrganization(ctx)
 	require.NoError(t, err)
 	user, err := factory.NewUserFactory(s.DB).CreateOrGetUser(ctx)
 	require.NoError(t, err)
+	state, err := factory.NewStateFactory(s.DB).CreateUSState(ctx)
+	require.NoError(t, err)
 
-	createTestFleetCode := func(code string) *models.FleetCode {
-		return &models.FleetCode{
-			OrganizationID: org.ID,
-			BusinessUnitID: org.BusinessUnitID,
-			Status:         property.StatusActive,
-			Code:           code,
-			Description:    "Test Description",
+	locCategory := &models.LocationCategory{
+		BusinessUnitID: org.BusinessUnitID,
+		OrganizationID: org.ID,
+		Name:           "Category",
+		Description:    "Category Description",
+		Color:          "#000000",
+	}
+
+	_, err = s.DB.NewInsert().Model(locCategory).Exec(ctx)
+	require.NoError(t, err)
+
+	createLocation := func(name string) *models.Location {
+		return &models.Location{
+			OrganizationID:     org.ID,
+			BusinessUnitID:     org.BusinessUnitID,
+			Status:             property.StatusActive,
+			Name:               name,
+			StateID:            state.ID,
+			LocationCategoryID: locCategory.ID,
 		}
 	}
 
 	t.Run("CreateAndGet", func(t *testing.T) {
-		created, err := service.Create(ctx, createTestFleetCode("OKAY"), user.ID)
+		created, err := service.Create(ctx, createLocation("TEST"), user.ID)
 		require.NoError(t, err)
 		assert.NotNil(t, created)
 		assert.NotEqual(t, uuid.Nil, created.ID)
 
-		// Get the created FleetCode
+		// Get the created Location
 		fetched, err := service.Get(ctx, created.ID, created.OrganizationID, created.BusinessUnitID)
 		require.NoError(t, err)
 		assert.Equal(t, created.ID, fetched.ID)
-		assert.Equal(t, created.Code, fetched.Code)
+		assert.Equal(t, created.Name, fetched.Name)
 	})
 
 	t.Run("GetAll", func(t *testing.T) {
-		// Create multiple equipment manufacturers
 		for i := 0; i < 5; i++ {
-			_, err = service.Create(ctx, createTestFleetCode(fmt.Sprintf("COD%d", i)), user.ID)
+			_, err = service.Create(ctx, createLocation(fmt.Sprintf("name-%d", i)), user.ID)
 			require.NoError(t, err)
 		}
 
-		// Query all equipment manufacturers
-		filter := &services.FleetCodeQueryFilter{
+		filter := &services.LocationQueryFilter{
 			OrganizationID: org.ID,
 			BusinessUnitID: org.BusinessUnitID,
 			Limit:          10,
@@ -74,36 +86,36 @@ func TestNewFleetCodeService(t *testing.T) {
 	})
 
 	t.Run("Update", func(t *testing.T) {
-		// Create a new FleetCode
-		newFleetCode := createTestFleetCode("TES1")
-		created, err := service.Create(ctx, newFleetCode, user.ID)
+		// Create a new Location
+		newLocation := createLocation("TEST1")
+		created, err := service.Create(ctx, newLocation, user.ID)
 		require.NoError(t, err)
 
-		// Update the FleetCode
-		created.Description = "Testing update"
+		// Update the Location
+		created.Description = "Test Description"
 		updated, err := service.UpdateOne(ctx, created, user.ID)
 		require.NoError(t, err)
-		assert.Equal(t, "Testing update", updated.Description)
+		assert.Equal(t, "Test Description", updated.Description)
 
-		// Fetch the updated FleetCode
+		// Fetch the updated Location
 		fetched, err := service.Get(ctx, updated.ID, updated.OrganizationID, updated.BusinessUnitID)
 		require.NoError(t, err)
-		assert.Equal(t, "Testing update", fetched.Description)
+		assert.Equal(t, "Test Description", fetched.Description)
 	})
 
 	t.Run("QueryFiltering", func(t *testing.T) {
-		// Create FleetCode with different codes
-		codes := []string{"ABCI", "DEFI", "GHII"}
-		for _, code := range codes {
-			entity := createTestFleetCode(code)
-			entity.Code = code
+		// Create Location with different codes
+		names := []string{"TEST2", "TEST3", "TEST4"}
+		for _, name := range names {
+			entity := createLocation(name)
+			entity.Name = name
 			_, err = service.Create(ctx, entity, user.ID)
 			require.NoError(t, err)
 		}
 
 		// Query with a specific code
-		filter := &services.FleetCodeQueryFilter{
-			Query:          "ABCI",
+		filter := &services.LocationQueryFilter{
+			Query:          "TEST2",
 			OrganizationID: org.ID,
 			BusinessUnitID: org.BusinessUnitID,
 			Limit:          10,
@@ -113,6 +125,6 @@ func TestNewFleetCodeService(t *testing.T) {
 		results, count, err := service.GetAll(ctx, filter)
 		require.NoError(t, err)
 		assert.Equal(t, 1, count)
-		assert.Equal(t, "ABCI", results[0].Code)
+		assert.Equal(t, "TEST2", results[0].Name)
 	})
 }

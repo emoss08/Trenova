@@ -45,7 +45,7 @@ func NewGeneralLedgerAccountService(s *server.Server) *GeneralLedgerAccountServi
 	}
 }
 
-// QueryFilter defines the filter parameters for querying GeneralLedgerAccount
+// GeneralLedgerAccountQueryFilter defines the filter parameters for querying GeneralLedgerAccount
 type GeneralLedgerAccountQueryFilter struct {
 	Query          string
 	OrganizationID uuid.UUID

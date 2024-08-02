@@ -18,49 +18,49 @@ import (
 	"github.com/emoss08/trenova/pkg/testutils"
 )
 
-func TestNewFleetCodeService(t *testing.T) {
+func TestNewGeneralLedgerAccountService(t *testing.T) {
 	ctx := context.Background()
 	s, cleanup := testutils.SetupTestServer(t)
 	defer cleanup()
 
-	service := services.NewFleetCodeService(s)
+	service := services.NewGeneralLedgerAccountService(s)
 	org, err := factory.NewOrganizationFactory(s.DB).MustCreateOrganization(ctx)
 	require.NoError(t, err)
 	user, err := factory.NewUserFactory(s.DB).CreateOrGetUser(ctx)
 	require.NoError(t, err)
 
-	createTestFleetCode := func(code string) *models.FleetCode {
-		return &models.FleetCode{
+	createGeneralLedgerAccount := func(accountNumber string) *models.GeneralLedgerAccount {
+		return &models.GeneralLedgerAccount{
 			OrganizationID: org.ID,
 			BusinessUnitID: org.BusinessUnitID,
 			Status:         property.StatusActive,
-			Code:           code,
-			Description:    "Test Description",
+			AccountNumber:  accountNumber,
+			AccountType:    property.GLAccountTypeExpense,
 		}
 	}
 
 	t.Run("CreateAndGet", func(t *testing.T) {
-		created, err := service.Create(ctx, createTestFleetCode("OKAY"), user.ID)
+		created, err := service.Create(ctx, createGeneralLedgerAccount("1500-00"), user.ID)
 		require.NoError(t, err)
 		assert.NotNil(t, created)
 		assert.NotEqual(t, uuid.Nil, created.ID)
 
-		// Get the created FleetCode
+		// Get the created GeneralLedgerAccount
 		fetched, err := service.Get(ctx, created.ID, created.OrganizationID, created.BusinessUnitID)
 		require.NoError(t, err)
 		assert.Equal(t, created.ID, fetched.ID)
-		assert.Equal(t, created.Code, fetched.Code)
+		assert.Equal(t, created.AccountNumber, fetched.AccountNumber)
 	})
 
 	t.Run("GetAll", func(t *testing.T) {
 		// Create multiple equipment manufacturers
 		for i := 0; i < 5; i++ {
-			_, err = service.Create(ctx, createTestFleetCode(fmt.Sprintf("COD%d", i)), user.ID)
+			_, err = service.Create(ctx, createGeneralLedgerAccount(fmt.Sprintf("%d000-00", i)), user.ID)
 			require.NoError(t, err)
 		}
 
 		// Query all equipment manufacturers
-		filter := &services.FleetCodeQueryFilter{
+		filter := &services.GeneralLedgerAccountQueryFilter{
 			OrganizationID: org.ID,
 			BusinessUnitID: org.BusinessUnitID,
 			Limit:          10,
@@ -74,36 +74,36 @@ func TestNewFleetCodeService(t *testing.T) {
 	})
 
 	t.Run("Update", func(t *testing.T) {
-		// Create a new FleetCode
-		newFleetCode := createTestFleetCode("TES1")
-		created, err := service.Create(ctx, newFleetCode, user.ID)
+		// Create a new GeneralLedgerAccount
+		newGeneralLedgerAccount := createGeneralLedgerAccount("5100-00")
+		created, err := service.Create(ctx, newGeneralLedgerAccount, user.ID)
 		require.NoError(t, err)
 
-		// Update the FleetCode
-		created.Description = "Testing update"
+		// Update the GeneralLedgerAccount
+		created.AccountType = property.GLAccountTypeEquity
 		updated, err := service.UpdateOne(ctx, created, user.ID)
 		require.NoError(t, err)
-		assert.Equal(t, "Testing update", updated.Description)
+		assert.Equal(t, property.GLAccountTypeEquity, updated.AccountType)
 
-		// Fetch the updated FleetCode
+		// Fetch the updated GeneralLedgerAccount
 		fetched, err := service.Get(ctx, updated.ID, updated.OrganizationID, updated.BusinessUnitID)
 		require.NoError(t, err)
-		assert.Equal(t, "Testing update", fetched.Description)
+		assert.Equal(t, property.GLAccountTypeEquity, fetched.AccountType)
 	})
 
 	t.Run("QueryFiltering", func(t *testing.T) {
-		// Create FleetCode with different codes
-		codes := []string{"ABCI", "DEFI", "GHII"}
-		for _, code := range codes {
-			entity := createTestFleetCode(code)
-			entity.Code = code
+		// Create GeneralLedgerAccount with different codes
+		accountNumbers := []string{"2100-00", "3100-00", "4400-00"}
+		for _, accountNumber := range accountNumbers {
+			entity := createGeneralLedgerAccount(accountNumber)
+			entity.AccountNumber = accountNumber
 			_, err = service.Create(ctx, entity, user.ID)
 			require.NoError(t, err)
 		}
 
 		// Query with a specific code
-		filter := &services.FleetCodeQueryFilter{
-			Query:          "ABCI",
+		filter := &services.GeneralLedgerAccountQueryFilter{
+			Query:          "4400-00",
 			OrganizationID: org.ID,
 			BusinessUnitID: org.BusinessUnitID,
 			Limit:          10,
@@ -113,6 +113,6 @@ func TestNewFleetCodeService(t *testing.T) {
 		results, count, err := service.GetAll(ctx, filter)
 		require.NoError(t, err)
 		assert.Equal(t, 1, count)
-		assert.Equal(t, "ABCI", results[0].Code)
+		assert.Equal(t, "4400-00", results[0].AccountNumber)
 	})
 }
