@@ -93,6 +93,7 @@ func (s ChargeTypeService) Get(ctx context.Context, id, orgID, buID uuid.UUID) (
 		s.logger.Error().Err(err).Msg("Failed to fetch ChargeType")
 		return nil, fmt.Errorf("failed to fetch ChargeType: %w", err)
 	}
+
 	return entity, nil
 }
 
@@ -109,10 +110,13 @@ func (s ChargeTypeService) Create(ctx context.Context, entity *models.ChargeType
 
 // UpdateOne updates an existing ChargeType
 func (s ChargeTypeService) UpdateOne(ctx context.Context, entity *models.ChargeType, userID uuid.UUID) (*models.ChargeType, error) {
+	s.logger.Debug().Interface("entity", entity).Msg("Updating Charge Type Entity.")
+
 	err := s.UpdateWithAudit(ctx, entity, userID)
 	if err != nil {
 		s.logger.Error().Err(err).Msg("Failed to update ChargeType")
 		return nil, fmt.Errorf("failed to update ChargeType: %w", err)
 	}
+
 	return entity, nil
 }

@@ -90,7 +90,7 @@ func (c *ChargeType) BeforeUpdate(_ context.Context) error {
 func (c *ChargeType) UpdateOne(ctx context.Context, tx bun.IDB, auditService *audit.Service, user audit.AuditUser) error {
 	// Fetch the original state of the charge type
 	original := new(ChargeType)
-	if err := tx.NewSelect().Model(original).WherePK().Scan(ctx); err != nil {
+	if err := tx.NewSelect().Model(original).Where("id = ?", c.ID).Scan(ctx); err != nil {
 		return validator.BusinessLogicError{Message: err.Error()}
 	}
 

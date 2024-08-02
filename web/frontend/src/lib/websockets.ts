@@ -55,10 +55,10 @@ export type WebSocketEvent = WebSocketEventMap[keyof WebSocketEventMap];
  */
 export class WebSocketConnection {
   private socket: WebSocket;
-  private url: string;
-  private reconnectInterval: number;
+  private readonly url: string;
+  private readonly reconnectInterval: number;
   private reconnectAttempts: number = 0;
-  private maxReconnectAttempts: number;
+  private readonly maxReconnectAttempts: number;
 
   constructor(
     url: string,
@@ -140,6 +140,7 @@ export interface WebSocketManager {
     options?: WebSocketOptions,
   ) => WebSocketConnection | boolean;
   disconnect: (id: string) => void;
+  disconnectAll: () => void;
   get: (id: string) => WebSocketConnection;
   send: <T>(id: string, data: T) => void;
   sendJson: (id: string, data: any) => void;
@@ -174,6 +175,12 @@ export function createWebsocketManager(): WebSocketManager {
 
     connection.close();
     connections.delete(id);
+  }
+
+  function disconnectAll() {
+    for (const id of connections.keys()) {
+      disconnect(id);
+    }
   }
 
   function send<T>(id: string, data: T) {
@@ -214,6 +221,7 @@ export function createWebsocketManager(): WebSocketManager {
   return {
     connect,
     disconnect,
+    disconnectAll,
     send,
     sendJson,
     receive,

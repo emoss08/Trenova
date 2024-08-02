@@ -34,7 +34,7 @@ type QualifierCode struct {
 	bun.BaseModel `bun:"table:qualifier_codes,alias:qc" json:"-"`
 
 	ID          uuid.UUID       `bun:",pk,type:uuid,default:uuid_generate_v4()" json:"id"`
-	Status      property.Status `bun:"status,type:status" json:"status"`
+	Status      property.Status `bun:"status,type:status,default:'Active'" json:"status"`
 	Code        string          `bun:"type:VARCHAR(10),notnull" json:"code" queryField:"true"`
 	Description string          `bun:"type:TEXT" json:"description"`
 	Version     int64           `bun:"type:BIGINT" json:"version"`

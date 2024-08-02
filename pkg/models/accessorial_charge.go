@@ -55,7 +55,7 @@ type AccessorialCharge struct {
 func (c AccessorialCharge) Validate() error {
 	return validation.ValidateStruct(
 		&c,
-		validation.Field(&c.Code, validation.Required, validation.Length(1, 10).Error("Code must be between 1 and 10 characters")),
+		validation.Field(&c.Code, validation.Required, validation.Length(1, 10).Error("Code must be between 1 and 10 characters. Please try again")),
 		validation.Field(&c.BusinessUnitID, validation.Required),
 		validation.Field(&c.OrganizationID, validation.Required),
 		validation.Field(&c.Description, validation.Required),

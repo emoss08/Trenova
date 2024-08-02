@@ -16,8 +16,7 @@
  */
 
 import { useOrganization } from "@/hooks/useQueries";
-import { faChevronDown } from "@fortawesome/pro-solid-svg-icons";
-import { Icon } from "../common/icons";
+import { CaretSortIcon } from "@radix-ui/react-icons";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 import { Skeleton } from "../ui/skeleton";
 
@@ -33,8 +32,8 @@ export function OrganizationLogo() {
   const cityState = `${data?.city}, ${data?.state?.abbreviation}`;
 
   return (
-    <div className="hover:bg-muted group col-span-full flex w-full items-center gap-x-4 rounded-lg p-1 hover:cursor-pointer">
-      <Avatar className="border-muted bg-muted/50 group-hover:bg-muted-foreground/20 size-14 flex-none rounded-lg border">
+    <div className="group col-span-full flex w-full items-center gap-x-4 rounded-lg p-1 hover:cursor-pointer hover:bg-muted">
+      <Avatar className="size-14 flex-none rounded-lg border border-muted bg-muted/50 group-hover:bg-muted-foreground/20">
         <AvatarImage
           src={data?.logoUrl || ""}
           alt={"Trenova Logo"}
@@ -45,13 +44,13 @@ export function OrganizationLogo() {
         </AvatarFallback>
       </Avatar>
       <div className="flex flex-1 flex-col">
-        <div className="flex items-center">
-          <h2 className="text-foreground mr-2 w-36 truncate text-lg font-semibold leading-7">
+        <div className="flex items-center justify-between">
+          <h2 className="text-lg w-36 truncate font-semibold leading-7 text-foreground">
             {data?.name || ""}
           </h2>
-          <Icon icon={faChevronDown} className="text-muted-foreground size-3" />
+          <CaretSortIcon className="size-5 self-center text-muted-foreground" />
         </div>
-        <p className="text-muted-foreground text-sm">{cityState}</p>
+        <p className="text-sm text-muted-foreground">{cityState}</p>
       </div>
     </div>
   );
@@ -67,11 +66,11 @@ export function MiniOrganizationLogo() {
   const initial = data?.name?.charAt(0);
 
   return (
-    <div className="rounded-lghover:cursor-pointer hover:bg-muted group col-span-full flex w-full items-center gap-x-4">
-      <Avatar className="border-muted bg-muted/50 group-hover:bg-muted-foreground/20 size-9 flex-none rounded-lg border">
+    <div className="rounded-lghover:cursor-pointer group col-span-full flex w-full items-center gap-x-4 hover:bg-muted">
+      <Avatar className="size-9 flex-none rounded-lg border border-muted bg-muted/50 group-hover:bg-muted-foreground/20">
         <AvatarImage
           src={data?.logoUrl || ""}
-          alt={"Trenova Logo"}
+          alt="Trenova Logo"
           className="size-9 flex-none rounded-lg p-2"
         />
         <AvatarFallback className="rounded-none" delayMs={600}>

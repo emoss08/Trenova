@@ -38,7 +38,7 @@ func (m *MockCodeGeneratable) TableName() string {
 	return m.tableName
 }
 
-func (m *MockCodeGeneratable) GetCodePrefix(pattern string) string {
+func (m *MockCodeGeneratable) GetCodePrefix(_ string) string {
 	return m.codePrefix
 }
 
@@ -56,20 +56,20 @@ type TestModel struct {
 }
 
 func TestCodeGenerator_GenerateUniqueCode(t *testing.T) {
-	testDB, cleanup := testutils.SetupTestCase(t)
+	server, cleanup := testutils.SetupTestServer(t)
 	defer cleanup()
 
 	ctx := context.Background()
 	orgID := uuid.New().String()
 
 	// Create a test table
-	_, err := testDB.DB.NewCreateTable().Model((*TestModel)(nil)).Exec(ctx)
+	_, err := server.DB.NewCreateTable().Model((*TestModel)(nil)).Exec(ctx)
 	require.NoError(t, err)
 
 	tests := []struct {
 		name          string
 		setupModel    func() *MockCodeGeneratable
-		setupDB       func(*testutils.TestDB)
+		setupDB       func(db *bun.DB)
 		expectedCode  string
 		expectedError string
 	}{
@@ -84,7 +84,7 @@ func TestCodeGenerator_GenerateUniqueCode(t *testing.T) {
 					},
 				}
 			},
-			setupDB: func(db *testutils.TestDB) {
+			setupDB: func(db *bun.DB) {
 				// No setup needed for this test case
 			},
 			expectedCode: "TST0001000",
@@ -103,8 +103,8 @@ func TestCodeGenerator_GenerateUniqueCode(t *testing.T) {
 					},
 				}
 			},
-			setupDB: func(db *testutils.TestDB) {
-				err = db.WithTransaction(func(tx *bun.Tx) error {
+			setupDB: func(db *bun.DB) {
+				err = db.RunInTx(ctx, nil, func(_ context.Context, tx bun.Tx) error {
 					_, err = tx.NewInsert().Model(&TestModel{
 						ID:             uuid.New().String(),
 						Code:           "TST0001000",
@@ -112,6 +112,7 @@ func TestCodeGenerator_GenerateUniqueCode(t *testing.T) {
 					}).Exec(ctx)
 					return err
 				})
+
 				require.NoError(t, err)
 			},
 			expectedCode: "TST0002000",
@@ -121,10 +122,10 @@ func TestCodeGenerator_GenerateUniqueCode(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			// Setup
-			tt.setupDB(testDB)
+			tt.setupDB(server.DB)
 			model := tt.setupModel()
 
-			codeChecker := &gen.CodeChecker{DB: testDB.DB}
+			codeChecker := &gen.CodeChecker{DB: server.DB}
 			cg := gen.NewCodeGenerator(gen.NewCounterManager(), codeChecker)
 
 			// Test

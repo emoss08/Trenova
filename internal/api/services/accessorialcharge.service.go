@@ -92,6 +92,7 @@ func (s AccessorialChargeService) Get(ctx context.Context, id, orgID, buID uuid.
 		s.logger.Error().Err(err).Msg("Failed to fetch AccessorialCharge")
 		return nil, fmt.Errorf("failed to fetch AccessorialCharge: %w", err)
 	}
+
 	return entity, nil
 }
 
@@ -102,6 +103,7 @@ func (s AccessorialChargeService) Create(ctx context.Context, entity *models.Acc
 		s.logger.Error().Err(err).Msg("Failed to create AccessorialCharge")
 		return nil, fmt.Errorf("failed to create AccessorialCharge: %w", err)
 	}
+
 	return entity, nil
 }
 
@@ -111,5 +113,6 @@ func (s AccessorialChargeService) UpdateOne(ctx context.Context, entity *models.
 		s.logger.Error().Err(err).Msg("Failed to update AccessorialCharge")
 		return nil, fmt.Errorf("failed to update AccessorialCharge: %w", err)
 	}
+
 	return entity, nil
 }

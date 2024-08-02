@@ -34,16 +34,16 @@ import (
 type Commodity struct {
 	bun.BaseModel `bun:"table:commodities,alias:com" json:"-"`
 
-	ID            uuid.UUID       `bun:",pk,type:uuid,default:uuid_generate_v4()" json:"id"`
-	Name          string          `bun:"type:VARCHAR(100),notnull" json:"name" queryField:"true"`
-	Status        property.Status `bun:"type:status_enum,notnull,default:'Active'" json:"status"`
-	IsHazmat      bool            `bun:"type:boolean,notnull,default:false" json:"isHazmat"`
-	UnitOfMeasure string          `bun:"type:VARCHAR(50),notnull" json:"unitOfMeasure"`
-	MinTemp       *int16          `bun:"type:integer,nullzero" json:"minTemp"`
-	MaxTemp       *int16          `bun:"type:integer,nullzero" json:"maxTemp"`
-	Version       int64           `bun:"type:BIGINT" json:"version"`
-	CreatedAt     time.Time       `bun:",nullzero,notnull,default:current_timestamp" json:"createdAt"`
-	UpdatedAt     time.Time       `bun:",nullzero,notnull,default:current_timestamp" json:"updatedAt"`
+	ID            uuid.UUID              `bun:",pk,type:uuid,default:uuid_generate_v4()" json:"id"`
+	Name          string                 `bun:"type:VARCHAR(100),notnull" json:"name" queryField:"true"`
+	Status        property.Status        `bun:"type:status_enum,notnull,default:'Active'" json:"status"`
+	IsHazmat      bool                   `bun:"type:boolean,notnull,default:false" json:"isHazmat"`
+	UnitOfMeasure property.UnitOfMeasure `bun:"type:VARCHAR(50),notnull" json:"unitOfMeasure"` // TODO(wolfred): implement Unit of measure property and type
+	MinTemp       *int16                 `bun:"type:integer,nullzero" json:"minTemp"`
+	MaxTemp       *int16                 `bun:"type:integer,nullzero" json:"maxTemp"`
+	Version       int64                  `bun:"type:BIGINT" json:"version"`
+	CreatedAt     time.Time              `bun:",nullzero,notnull,default:current_timestamp" json:"createdAt"`
+	UpdatedAt     time.Time              `bun:",nullzero,notnull,default:current_timestamp" json:"updatedAt"`
 
 	BusinessUnitID      uuid.UUID  `bun:"type:uuid,notnull" json:"businessUnitId"`
 	OrganizationID      uuid.UUID  `bun:"type:uuid,notnull" json:"organizationId"`
@@ -57,12 +57,10 @@ type Commodity struct {
 func (c Commodity) Validate() error {
 	return validation.ValidateStruct(
 		&c,
-		validation.Field(&c.Name, validation.Required, validation.Length(1, 50)),
+		validation.Field(&c.Name, validation.Required, validation.Length(1, 50).Error("Name must be between 1 and 50 characters. Please try again")),
 		validation.Field(&c.BusinessUnitID, validation.Required),
 		validation.Field(&c.OrganizationID, validation.Required),
-		validation.Field(&c.IsHazmat,
-			validation.Required.Error("IsHazmat is required. Please Try again."),
-			validation.When(c.HazardousMaterialID != nil, validation.Required.Error("Hazardous Material is required when IsHazmat is true. Please try again."))),
+		validation.Field(&c.HazardousMaterialID, validation.When(c.IsHazmat, validation.Required.Error("Hazardous Material ID is required when isHazmat is true. Please try again"))),
 	)
 }
 

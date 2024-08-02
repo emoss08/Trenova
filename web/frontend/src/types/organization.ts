@@ -23,7 +23,7 @@ import type {
   RouteModelChoiceProps,
   TimezoneChoices,
 } from "@/lib/choices";
-import { type StatusChoiceProps } from ".";
+import { IChoiceProps, type StatusChoiceProps } from ".";
 
 export type Organization = {
   id: string;
@@ -160,6 +160,16 @@ export type AuditLog = {
   organizationId: string;
   businessUnitId: string;
 };
+
+/**
+ * Returns status choices for a select input.
+ * @returns An array of status choices.
+ */
+export const auditLogStatusChoices = [
+  { value: "ATTEMPTED", label: "Attempted", color: "#15803d" },
+  { value: "SUCCEEDED", label: "Succeeded", color: "#b91c1c" },
+  { value: "FAILED", label: "Failed", color: "#b91c1c" },
+] satisfies ReadonlyArray<IChoiceProps<AuditLogStatus>>;
 
 /** Base Trenova Interface
  *

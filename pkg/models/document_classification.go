@@ -53,7 +53,7 @@ type DocumentClassification struct {
 func (c DocumentClassification) Validate() error {
 	return validation.ValidateStruct(
 		&c,
-		validation.Field(&c.Code, validation.Required, validation.Length(1, 10).Error("Code must be atleast 10 characters")),
+		validation.Field(&c.Code, validation.Required, validation.Length(1, 10).Error("Code must be at least 10 characters")),
 		validation.Field(&c.Color, is.HexColor),
 		validation.Field(&c.BusinessUnitID, validation.Required),
 		validation.Field(&c.OrganizationID, validation.Required),

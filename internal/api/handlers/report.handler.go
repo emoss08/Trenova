@@ -81,13 +81,13 @@ func (h ReportHandler) generateReport() fiber.Handler {
 
 		var request services.GenerateReportRequest
 
-		if err = utils.ParseBodyAndValidate(c, &request); err != nil {
-			return c.Status(fiber.StatusBadRequest).JSON(err)
-		}
-
 		request.BusinessUnitID = ids.BusinessUnitID
 		request.OrganizationID = ids.OrganizationID
 		request.UserID = ids.UserID
+
+		if err = utils.ParseBodyAndValidate(c, &request); err != nil {
+			return c.Status(fiber.StatusBadRequest).JSON(err)
+		}
 
 		entity, err := h.service.GenerateReport(c.UserContext(), request, ids.UserID, ids.OrganizationID, ids.BusinessUnitID)
 		if err != nil {
