@@ -4,7 +4,10 @@ help: ## Show this help.
 	@awk 'BEGIN {FS = ":.*?## "} /^[a-zA-Z0-9_-]+:.*?## / {printf "  \033[36m%-30s\033[0m %s\n", $$1, $$2}' $(MAKEFILE_LIST) | sort
 
 test: ## Run tests.
-	gotest -tags testmain ./... -v
+	go test -p 1 ./...
+
+test-pretty: ## Run tests with pretty output.
+	richgo test -p 1 ./...
 
 test-coverage: ## Generate test coverage report.
 	go test -coverprofile=coverage.out ./...
