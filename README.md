@@ -12,8 +12,6 @@ in the transportation and logistics sector.**
 [**Discover Trenova Beam: Revolutionizing Logistics with Specialized LLM Technology**](https://github.com/emoss08/Trenova/blob/main/beam.md)
 </div>
 
-Let me help you craft a more professional and informative announcement. Here's an improved version:
-
 > [!IMPORTANT]  
 > Trenova is undergoing significant development in a private repository, with version 1.0 nearing completion.
 > The upcoming release will introduce comprehensive features and a complete UI redesign. Upon reaching this milestone,
