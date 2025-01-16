@@ -35,6 +35,8 @@ const (
 	ResourceEquipmentManufacturer = Resource("equipment_manufacturer") // Represents resources for managing equipment manfacturers.
 	ResourceShipmentType          = Resource("shipment_type")          // Represents resources for managing shipment type.
 	ResourceServiceType           = Resource("service_type")           // Represents resources for managing service types.
+	ResourceHazardousMaterial     = Resource("hazardous_material")     // Represents resources for managing hazardous materials.
+
 	// Financial resources
 	ResourceInvoice = Resource("invoice") // Represents resources related to invoices.
 

@@ -20,6 +20,16 @@ CREATE TYPE hazardous_class_enum AS ENUM(
     'HazardClass8'
 );
 
+--bun:split
+
+CREATE TYPE packing_group_enum AS ENUM(
+    'I',
+    'II',
+    'III'
+);
+
+--bun:split
+
 CREATE TABLE IF NOT EXISTS "hazardous_materials"(
     -- Primary identifiers
     "id" varchar(100) NOT NULL,
@@ -33,7 +43,7 @@ CREATE TABLE IF NOT EXISTS "hazardous_materials"(
     "class" hazardous_class_enum NOT NULL,
     "un_number" varchar(100),
     "erg_number" varchar(100),
-    "packing_group" varchar(3),
+    "packing_group" packing_group_enum,
     "proper_shipping_name" text,
     "handling_instructions" text,
     "emergency_contact" text,
@@ -59,5 +69,5 @@ CREATE INDEX "idx_hazardous_materials_organization" ON "hazardous_materials"("or
 
 CREATE INDEX "idx_hazardous_materials_created_updated" ON "hazardous_materials"("created_at", "updated_at");
 
-COMMENT ON TABLE "hazardous_materials" IS 'Stores information about service types';
+COMMENT ON TABLE "hazardous_materials" IS 'Stores information about hazardous materials';
 
