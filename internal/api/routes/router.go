@@ -17,6 +17,7 @@ import (
 	"github.com/trenova-app/transport/internal/api/handlers/equipmentmanufacturer"
 	"github.com/trenova-app/transport/internal/api/handlers/equipmenttype"
 	"github.com/trenova-app/transport/internal/api/handlers/fleetcode"
+	"github.com/trenova-app/transport/internal/api/handlers/hazardousmaterial"
 	organizationHandler "github.com/trenova-app/transport/internal/api/handlers/organization"
 	"github.com/trenova-app/transport/internal/api/handlers/search"
 	"github.com/trenova-app/transport/internal/api/handlers/servicetype"
@@ -63,6 +64,7 @@ type RouterParams struct {
 	EquipmentManufacturerHandler *equipmentmanufacturer.Handler
 	ShipmentTypeHandler          *shipmenttype.Handler
 	ServiceTypeHandler           *servicetype.Handler
+	HazardousMaterialHandler     *hazardousmaterial.Handler
 }
 
 type Router struct {
@@ -182,4 +184,7 @@ func (r *Router) setupProtectedRoutes(router fiber.Router, rl *middleware.RateLi
 
 	// Service Types
 	r.p.ServiceTypeHandler.RegisterRoutes(router, rl)
+
+	// Hazardous Materials
+	r.p.HazardousMaterialHandler.RegisterRoutes(router, rl)
 }
