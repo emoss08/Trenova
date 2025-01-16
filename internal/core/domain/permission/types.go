@@ -287,6 +287,10 @@ var (
 			BaseActions,
 			append(DataActions, FieldActions...)...,
 		),
+		ResourceHazardousMaterial: append(
+			BaseActions,
+			append(DataActions, FieldActions...)...,
+		),
 
 		// Financial resources
 		ResourceInvoice: append(
