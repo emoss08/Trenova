@@ -1,9 +1,2 @@
 # Auto detect text files and perform LF normalization
 * text=auto
-
-# Language overrides
-*.ts linguist-language=TypeScript
-*.go linguist-language=Go
-
-# Disable html files from being detected
-*.html linguist-vendored

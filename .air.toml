@@ -3,20 +3,11 @@ root = "."
 tmp_dir = "tmp"
 
 [build]
-cmd = "go build -o ./tmp/main ."
+cmd = "go build -o ./tmp/main ./cmd/api/main.go"
 bin = "./tmp/main"
 delay = 100
-exclude_dir = [
-    "assets",
-    "tmp",
-    "vendor",
-    "platform/reporting-service",
-    "platform/tc-listener-service",
-    "platform/job-processor-service",
-    "web",
-]
-include_ext = ["go", "tpl", "tmpl", "html"]
+exclude_dir = ["assets", "tmp", "vendor", "ui", "platform"]
+include_ext = ["go", "tpl", "tmpl", "html", "yaml"]
 exclude_regex = ["_test\\.go"]
-include_file = ["config.dev.yaml"]
 send_interrupt = false
 stop_on_error = true

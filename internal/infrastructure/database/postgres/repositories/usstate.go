@@ -1,0 +1,77 @@
+package repositories
+
+import (
+	"context"
+
+	"github.com/rotisserie/eris"
+	"github.com/rs/zerolog"
+	"github.com/trenova-app/transport/internal/core/domain/usstate"
+	"github.com/trenova-app/transport/internal/core/ports/db"
+	"github.com/trenova-app/transport/internal/core/ports/repositories"
+	"github.com/trenova-app/transport/internal/pkg/logger"
+	"go.uber.org/fx"
+)
+
+type UsStateRepositoryParams struct {
+	fx.In
+
+	DB     db.Connection
+	Logger *logger.Logger
+	Cache  repositories.UsStateCacheRepository
+}
+
+type usStateRepository struct {
+	db    db.Connection
+	l     *zerolog.Logger
+	cache repositories.UsStateCacheRepository
+}
+
+func NewUsStateRepository(p UsStateRepositoryParams) repositories.UsStateRepository {
+	log := p.Logger.With().
+		Str("repository", "us_state").
+		Str("component", "database").
+		Logger()
+
+	return &usStateRepository{
+		db:    p.DB,
+		l:     &log,
+		cache: p.Cache,
+	}
+}
+
+func (r *usStateRepository) List(ctx context.Context) (*repositories.ListUsStateResult, error) {
+	dba, err := r.db.DB(ctx)
+	if err != nil {
+		return nil, eris.Wrap(err, "get database connection")
+	}
+
+	log := r.l.With().
+		Str("operation", "List").
+		Logger()
+
+	// Try to get from cache first
+	states, err := r.cache.Get(ctx)
+	if err == nil && states.Total > 0 {
+		log.Debug().Int("stateCount", states.Total).Msg("got states from cache")
+		return states, nil
+	}
+
+	dbStates := make([]*usstate.UsState, 0)
+
+	// If cache miss, get from database
+	count, err := dba.NewSelect().Model(&dbStates).ScanAndCount(ctx)
+	if err != nil {
+		log.Error().Err(err).Msg("failed to list us states")
+		return nil, eris.Wrap(err, "failed to list us states")
+	}
+
+	// Set in cache for next time
+	if err = r.cache.Set(ctx, dbStates); err != nil {
+		log.Error().Err(err).Msg("failed to set states in cache")
+	}
+
+	return &repositories.ListUsStateResult{
+		States: dbStates,
+		Total:  count,
+	}, nil
+}
