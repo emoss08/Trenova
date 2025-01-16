@@ -44,9 +44,10 @@ CREATE TABLE IF NOT EXISTS "hazardous_materials"(
     "un_number" varchar(100),
     "erg_number" varchar(100),
     "packing_group" packing_group_enum,
-    "proper_shipping_name" text,
-    "handling_instructions" text,
-    "emergency_contact" text,
+    "proper_shipping_name" text NOT NULL,
+    "handling_instructions" text NOT NULL,
+    "emergency_contact" text NOT NULL,
+    "emergency_contact_phone_number" text NOT NULL,
     "placard_required" boolean NOT NULL DEFAULT FALSE,
     "is_reportable_quantity" boolean NOT NULL DEFAULT FALSE,
     -- Metadata
