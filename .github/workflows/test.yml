@@ -1,41 +1,79 @@
-name: Go-Test
+name: CI Pipeline
 
 on:
   push:
-    branches: [ "master" ]
+    branches: ["main"]
   pull_request:
-    branches: [ "master" ]
+    branches: ["main"]
 
-permissions:
-  # Required: allow read access to the content for analysis.
-  contents: read
-  # Optional: allow read access to pull request. Use with `only-new-issues` option.
-  pull-requests: read
-  # Optional: Allow write access to checks to allow the action to annotate code in the PR.
-  checks: write
+concurrency:
+  group: ${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
+  # -------------------------------------------------------
+  # 1. Build and Test job for multiple Go versions
+  # -------------------------------------------------------
   build-and-test:
+    name: Build and Test
     runs-on: ubuntu-latest
-
-    services:
-      redis:
-        image: redis:latest
-        ports:
-          - 6379:6379
-      
+    strategy:
+      matrix:
+        go-version: ["1.21.x", "1.22.x", "1.23.x"]
     steps:
-      - name: Check Out Code
+      - name: Check out code
         uses: actions/checkout@v4
 
       - name: Set up Go
         uses: actions/setup-go@v5
         with:
-          go-version: 1.22
-          cache: false
+          go-version: ${{ matrix.go-version }}
+          cache: true
+
+      - name: Install Dependencies
+        run: go mod download
 
       - name: Build
-        run: go build -v ./...
+        run: go build ./...
 
-      - name: Test
-        run: go test -tags testmain -p 1 -v ./...
+      - name: Run Tests
+        run: |
+          go test -v -race  ./...
+
+    # -------------------------------------------------------
+    # 2. Lint job
+    # -------------------------------------------------------
+  golangci:
+    name: lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: stable
+      - name: golangci-lint
+        uses: golangci/golangci-lint-action@v6
+        with:
+          version: v1.60
+
+  # -------------------------------------------------------
+  # 3. Security scanning (optional)
+  # -------------------------------------------------------
+  security-scan:
+    name: Security Scan
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: "1.21.x"
+          cache: true
+
+      - name: Install gosec
+        run: go install github.com/securego/gosec/v2/cmd/gosec@latest
+
+      - name: Run gosec
+        run: gosec ./...

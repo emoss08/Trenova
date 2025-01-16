@@ -1,0 +1,619 @@
+- model: UsState
+  rows:
+    - _id: al
+      name: Alabama
+      abbreviation: AL
+      country_name: United States
+      country_iso3: USA
+      created_at: "{{ timestamp }}"
+    - _id: ak
+      name: Alaska
+      abbreviation: AK
+      country_name: United States
+      country_iso3: USA
+      created_at: "{{ timestamp }}"
+    - _id: az
+      name: Arizona
+      abbreviation: AZ
+      country_name: United States
+      country_iso3: USA
+      created_at: "{{ timestamp }}"
+    - _id: ar
+      name: Arkansas
+      abbreviation: AR
+      country_name: United States
+      country_iso3: USA
+      created_at: "{{ timestamp }}"
+    - _id: ca
+      name: California
+      abbreviation: CA
+      country_name: United States
+      country_iso3: USA
+      created_at: "{{ timestamp }}"
+    - _id: co
+      name: Colorado
+      abbreviation: CO
+      country_name: United States
+      country_iso3: USA
+      created_at: "{{ timestamp }}"
+    - _id: ct
+      name: Connecticut
+      abbreviation: CT
+      country_name: United States
+      country_iso3: USA
+      created_at: "{{ timestamp }}"
+    - _id: de
+      name: Delaware
+      abbreviation: DE
+      country_name: United States
+      country_iso3: USA
+      created_at: "{{ timestamp }}"
+    - _id: fl
+      name: Florida
+      abbreviation: FL
+      country_name: United States
+      country_iso3: USA
+      created_at: "{{ timestamp }}"
+    - _id: ga
+      name: Georgia
+      abbreviation: GA
+      country_name: United States
+      country_iso3: USA
+      created_at: "{{ timestamp }}"
+    - _id: hi
+      name: Hawaii
+      abbreviation: HI
+      country_name: United States
+      country_iso3: USA
+      created_at: "{{ timestamp }}"
+    - _id: id
+      name: Idaho
+      abbreviation: ID
+      country_name: United States
+      country_iso3: USA
+      created_at: "{{ timestamp }}"
+    - _id: il
+      name: Illinois
+      abbreviation: IL
+      country_name: United States
+      country_iso3: USA
+      created_at: "{{ timestamp }}"
+    - _id: in
+      name: Indiana
+      abbreviation: IN
+      country_name: United States
+      country_iso3: USA
+      created_at: "{{ timestamp }}"
+    - _id: ia
+      name: Iowa
+      abbreviation: IA
+      country_name: United States
+      country_iso3: USA
+      created_at: "{{ timestamp }}"
+    - _id: ks
+      name: Kansas
+      abbreviation: KS
+      country_name: United States
+      country_iso3: USA
+      created_at: "{{ timestamp }}"
+    - _id: ky
+      name: Kentucky
+      abbreviation: KY
+      country_name: United States
+      country_iso3: USA
+      created_at: "{{ timestamp }}"
+    - _id: la
+      name: Louisiana
+      abbreviation: LA
+      country_name: United States
+      country_iso3: USA
+      created_at: "{{ timestamp }}"
+    - _id: me
+      name: Maine
+      abbreviation: ME
+      country_name: United States
+      country_iso3: USA
+      created_at: "{{ timestamp }}"
+    - _id: md
+      name: Maryland
+      abbreviation: MD
+      country_name: United States
+      country_iso3: USA
+      created_at: "{{ timestamp }}"
+    - _id: ma
+      name: Massachusetts
+      abbreviation: MA
+      country_name: United States
+      country_iso3: USA
+      created_at: "{{ timestamp }}"
+    - _id: mi
+      name: Michigan
+      abbreviation: MI
+      country_name: United States
+      country_iso3: USA
+      created_at: "{{ timestamp }}"
+    - _id: mn
+      name: Minnesota
+      abbreviation: MN
+      country_name: United States
+      country_iso3: USA
+      created_at: "{{ timestamp }}"
+    - _id: ms
+      name: Mississippi
+      abbreviation: MS
+      country_name: United States
+      country_iso3: USA
+      created_at: "{{ timestamp }}"
+    - _id: mo
+      name: Missouri
+      abbreviation: MO
+      country_name: United States
+      country_iso3: USA
+      created_at: "{{ timestamp }}"
+    - _id: mt
+      name: Montana
+      abbreviation: MT
+      country_name: United States
+      country_iso3: USA
+      created_at: "{{ timestamp }}"
+    - _id: ne
+      name: Nebraska
+      abbreviation: NE
+      country_name: United States
+      country_iso3: USA
+      created_at: "{{ timestamp }}"
+    - _id: nv
+      name: Nevada
+      abbreviation: NV
+      country_name: United States
+      country_iso3: USA
+      created_at: "{{ timestamp }}"
+    - _id: nh
+      name: New Hampshire
+      abbreviation: NH
+      country_name: United States
+      country_iso3: USA
+      created_at: "{{ timestamp }}"
+    - _id: nj
+      name: New Jersey
+      abbreviation: NJ
+      country_name: United States
+      country_iso3: USA
+      created_at: "{{ timestamp }}"
+    - _id: nm
+      name: New Mexico
+      abbreviation: NM
+      country_name: United States
+      country_iso3: USA
+      created_at: "{{ timestamp }}"
+    - _id: ny
+      name: New York
+      abbreviation: NY
+      country_name: United States
+      country_iso3: USA
+      created_at: "{{ timestamp }}"
+    - _id: nc
+      name: North Carolina
+      abbreviation: NC
+      country_name: United States
+      country_iso3: USA
+      created_at: "{{ timestamp }}"
+    - _id: nd
+      name: North Dakota
+      abbreviation: ND
+      country_name: United States
+      country_iso3: USA
+      created_at: "{{ timestamp }}"
+    - _id: oh
+      name: Ohio
+      abbreviation: OH
+      country_name: United States
+      country_iso3: USA
+      created_at: "{{ timestamp }}"
+    - _id: ok
+      name: Oklahoma
+      abbreviation: OK
+      country_name: United States
+      country_iso3: USA
+      created_at: "{{ timestamp }}"
+    - _id: or
+      name: Oregon
+      abbreviation: OR
+      country_name: United States
+      country_iso3: USA
+      created_at: "{{ timestamp }}"
+    - _id: pa
+      name: Pennsylvania
+      abbreviation: PA
+      country_name: United States
+      country_iso3: USA
+      created_at: "{{ timestamp }}"
+    - _id: ri
+      name: Rhode Island
+      abbreviation: RI
+      country_name: United States
+      country_iso3: USA
+      created_at: "{{ timestamp }}"
+    - _id: sc
+      name: South Carolina
+      abbreviation: SC
+      country_name: United States
+      country_iso3: USA
+      created_at: "{{ timestamp }}"
+    - _id: sd
+      name: South Dakota
+      abbreviation: SD
+      country_name: United States
+      country_iso3: USA
+      created_at: "{{ timestamp }}"
+    - _id: tn
+      name: Tennessee
+      abbreviation: TN
+      country_name: United States
+      country_iso3: USA
+      created_at: "{{ timestamp }}"
+    - _id: tx
+      name: Texas
+      abbreviation: TX
+      country_name: United States
+      country_iso3: USA
+      created_at: "{{ timestamp }}"
+    - _id: ut
+      name: Utah
+      abbreviation: UT
+      country_name: United States
+      country_iso3: USA
+      created_at: "{{ timestamp }}"
+    - _id: vt
+      name: Vermont
+      abbreviation: VT
+      country_name: United States
+      country_iso3: USA
+      created_at: "{{ timestamp }}"
+    - _id: va
+      name: Virginia
+      abbreviation: VA
+      country_name: United States
+      country_iso3: USA
+      created_at: "{{ timestamp }}"
+    - _id: wa
+      name: Washington
+      abbreviation: WA
+      country_name: United States
+      country_iso3: USA
+      created_at: "{{ timestamp }}"
+    - _id: wv
+      name: West Virginia
+      abbreviation: WV
+      country_name: United States
+      country_iso3: USA
+      created_at: "{{ timestamp }}"
+    - _id: wi
+      name: Wisconsin
+      abbreviation: WI
+      country_name: United States
+      country_iso3: USA
+      created_at: "{{ timestamp }}"
+    - _id: wy
+      name: Wyoming
+      abbreviation: WY
+      country_name: United States
+      country_iso3: USA
+      created_at: "{{ timestamp }}"
+
+- model: BusinessUnit
+  rows:
+    - _id: trenova
+      name: Acme Transportation Inc.
+      code: ACME
+      primary_contact: "John Doe"
+      primary_email: "john.doe@trenova.com"
+      primary_phone: "123-456-7890"
+      address_line1: "123 Main St"
+      city: Los Angeles
+      state_id: "{{ $.UsState.ca.ID }}"
+      postal_code: "90001"
+      tax_id: "123456789"
+      description: "Trenova Transportation"
+      created_at: "{{ timestamp }}"
+
+- model: Organization
+  rows:
+    - _id: trenova
+      name: Trenova Transportation LLC
+      business_unit_id: "{{ $.BusinessUnit.trenova.ID }}"
+      address_line1: 456 Main St
+      city: Los Angeles
+      state_id: "{{ $.UsState.ca.ID }}"
+      postal_code: 90001
+      dot_number: 123456
+      scac_code: TRNV
+      created_at: "{{ timestamp }}"
+
+    - _id: trenova_2
+      name: Acme Transportation Inc.
+      business_unit_id: "{{ $.BusinessUnit.trenova.ID }}"
+      address_line1: 456 Main St
+      city: Los Angeles
+      state_id: "{{ $.UsState.ca.ID }}"
+      postal_code: 90001
+      dot_number: 654321
+      scac_code: ACEM
+      created_at: "{{ timestamp }}"
+
+- model: PretrainedModel
+  rows:
+    - _id: pm_1
+      name: "Document Quality Model"
+      version: "1.0.0"
+      type: "DocumentQuality"
+      status: "Beta"
+      description: "This is a beta model for document quality"
+      path: "https://trenova.com/document-quality-model.zip"
+      is_default: true
+      is_active: true
+      trained_at: "{{ timestamp }}"
+      created_at: "{{ timestamp }}"
+
+- model: DocumentQualityConfig
+  rows:
+    - _id: dqc_1
+      organization_id: "{{ $.Organization.trenova.ID }}"
+      business_unit_id: "{{ $.BusinessUnit.trenova.ID }}"
+      model_id: "{{ $.PretrainedModel.pm_1.ID }}"
+      created_at: "{{ timestamp }}"
+
+- model: FleetCode
+  rows:
+    - _id: fc_1
+      organization_id: "{{ $.Organization.trenova.ID }}"
+      business_unit_id: "{{ $.BusinessUnit.trenova.ID }}"
+      created_at: "{{ timestamp }}"
+      name: "LOCAL"
+      color: "#eb4034"
+      description: "Local Workers"
+
+- model: EquipmentType
+  rows:
+    - _id: tractor_equip_type
+      code: TRN
+      class: Tractor
+      color: "#dc143c"
+      description: "Tractor Equipment Type"
+      organization_id: "{{ $.Organization.trenova.ID }}"
+      business_unit_id: "{{ $.BusinessUnit.trenova.ID }}"
+      created_at: "{{ now.Unix }}"
+    - _id: trailer_equip_type
+      code: TRL
+      class: Trailer
+      color: "#ff4500"
+      description: "Trailer Equipment Type"
+      organization_id: "{{ $.Organization.trenova.ID }}"
+      business_unit_id: "{{ $.BusinessUnit.trenova.ID }}"
+      created_at: "{{ now.Unix }}"
+    - _id: container_equip_type
+      code: CNR
+      class: Container
+      color: "#6a5acd"
+      description: "Container Equipment Type"
+      organization_id: "{{ $.Organization.trenova.ID }}"
+      business_unit_id: "{{ $.BusinessUnit.trenova.ID }}"
+      created_at: "{{ now.Unix }}"
+
+- model: ShipmentType
+  rows:
+    - _id: ftl_shipment_type
+      organization_id: "{{ $.Organization.trenova.ID }}"
+      business_unit_id: "{{ $.BusinessUnit.trenova.ID }}"
+      created_at: "{{ now.Unix }}"
+      code: "FTL"
+      description: "Full Truckload"
+      color: "#dc143c"
+    - _id: ltl_shipment_type
+      organization_id: "{{ $.Organization.trenova.ID }}"
+      business_unit_id: "{{ $.BusinessUnit.trenova.ID }}"
+      created_at: "{{ now.Unix }}"
+      code: "LTL"
+      description: "Less-than-Truckload"
+      color: "#4682b4"
+    - _id: ptl_shipment_type
+      organization_id: "{{ $.Organization.trenova.ID }}"
+      business_unit_id: "{{ $.BusinessUnit.trenova.ID }}"
+      created_at: "{{ now.Unix }}"
+      code: "PTL"
+      description: "Partial Truckload"
+      color: "#8a2be2"
+    - _id: parcel_shipment_type
+      organization_id: "{{ $.Organization.trenova.ID }}"
+      business_unit_id: "{{ $.BusinessUnit.trenova.ID }}"
+      created_at: "{{ now.Unix }}"
+      code: "PAR"
+      description: "Parcel Shipping"
+      color: "#ffa500"
+    - _id: reefer_shipment_type
+      organization_id: "{{ $.Organization.trenova.ID }}"
+      business_unit_id: "{{ $.BusinessUnit.trenova.ID }}"
+      created_at: "{{ now.Unix }}"
+      code: "REEF"
+      description: "Refrigerated (Reefer)"
+      color: "#00ced1"
+    - _id: flatbed_shipment_type
+      organization_id: "{{ $.Organization.trenova.ID }}"
+      business_unit_id: "{{ $.BusinessUnit.trenova.ID }}"
+      created_at: "{{ now.Unix }}"
+      code: "FLAT"
+      description: "Flatbed Loads"
+      color: "#ff4500"
+    - _id: hazmat_shipment_type
+      organization_id: "{{ $.Organization.trenova.ID }}"
+      business_unit_id: "{{ $.BusinessUnit.trenova.ID }}"
+      created_at: "{{ now.Unix }}"
+      code: "HAZ"
+      description: "Hazardous Materials"
+      color: "#ff0000"
+    - _id: oversized_shipment_type
+      organization_id: "{{ $.Organization.trenova.ID }}"
+      business_unit_id: "{{ $.BusinessUnit.trenova.ID }}"
+      created_at: "{{ now.Unix }}"
+      code: "OVS"
+      description: "Oversized/Over-Dimensional Loads"
+      color: "#800080"
+    - _id: bulk_shipment_type
+      organization_id: "{{ $.Organization.trenova.ID }}"
+      business_unit_id: "{{ $.BusinessUnit.trenova.ID }}"
+      created_at: "{{ now.Unix }}"
+      code: "BLK"
+      description: "Bulk Freight"
+      color: "#228b22"
+    - _id: livestock_shipment_type
+      organization_id: "{{ $.Organization.trenova.ID }}"
+      business_unit_id: "{{ $.BusinessUnit.trenova.ID }}"
+      created_at: "{{ now.Unix }}"
+      code: "LVS"
+      description: "Livestock Transport"
+      color: "#deb887"
+
+- model: ServiceType
+  rows:
+    - _id: std_service_type
+      code: STD
+      description: Standard Freight Service
+      organization_id: "{{ $.Organization.trenova.ID }}"
+      business_unit_id: "{{ $.BusinessUnit.trenova.ID }}"
+      created_at: "{{ now.Unix }}"
+      color: "#0000cd"
+    - _id: exp_service_type
+      code: EXP
+      description: Expedited Freight Service
+      organization_id: "{{ $.Organization.trenova.ID }}"
+      business_unit_id: "{{ $.BusinessUnit.trenova.ID }}"
+      created_at: "{{ now.Unix }}"
+      color: "#ff6347"
+    - _id: gtd_service_type
+      code: GTD
+      description: Guaranteed Delivery Service
+      organization_id: "{{ $.Organization.trenova.ID }}"
+      business_unit_id: "{{ $.BusinessUnit.trenova.ID }}"
+      created_at: "{{ now.Unix }}"
+      color: "#32cd32"
+    - _id: same_day_service_type
+      code: SDD
+      description: Same-Day Delivery Service
+      organization_id: "{{ $.Organization.trenova.ID }}"
+      business_unit_id: "{{ $.BusinessUnit.trenova.ID }}"
+      created_at: "{{ now.Unix }}"
+      color: "#ffd700"
+    - _id: liftgate_service_type
+      code: LFT
+      description: Liftgate Service for Loading/Unloading
+      organization_id: "{{ $.Organization.trenova.ID }}"
+      business_unit_id: "{{ $.BusinessUnit.trenova.ID }}"
+      created_at: "{{ now.Unix }}"
+      color: "#00ff7f"
+    - _id: inside_delivery_service_type
+      code: IND
+      description: Inside Delivery Service
+      organization_id: "{{ $.Organization.trenova.ID }}"
+      business_unit_id: "{{ $.BusinessUnit.trenova.ID }}"
+      created_at: "{{ now.Unix }}"
+      color: "#8b4513"
+    - _id: hazmat_service_type
+      code: HZS
+      description: Certified Hazmat Service
+      organization_id: "{{ $.Organization.trenova.ID }}"
+      business_unit_id: "{{ $.BusinessUnit.trenova.ID }}"
+      created_at: "{{ now.Unix }}"
+      color: "#b22222"
+    - _id: crossdock_service_type
+      code: CRD
+      description: Cross-Docking Service
+      organization_id: "{{ $.Organization.trenova.ID }}"
+      business_unit_id: "{{ $.BusinessUnit.trenova.ID }}"
+      created_at: "{{ now.Unix }}"
+      color: "#4169e1"
+    - _id: temp_controlled_service_type
+      code: TCS
+      description: Temperature-Controlled Service
+      organization_id: "{{ $.Organization.trenova.ID }}"
+      business_unit_id: "{{ $.BusinessUnit.trenova.ID }}"
+      created_at: "{{ now.Unix }}"
+      color: "#40e0d0"
+    - _id: drayage_service_type
+      code: DRY
+      description: Drayage Service for Short-Haul
+      organization_id: "{{ $.Organization.trenova.ID }}"
+      business_unit_id: "{{ $.BusinessUnit.trenova.ID }}"
+      created_at: "{{ now.Unix }}"
+      color: "#ff1493"
+
+- model: EquipmentManufacturer
+  rows:
+    - _id: kenworth_manufacturer
+      name: Kenworth
+      organization_id: "{{ $.Organization.trenova.ID }}"
+      business_unit_id: "{{ $.BusinessUnit.trenova.ID }}"
+      created_at: "{{ now.Unix }}"
+    - _id: freightliner_manufacturer
+      name: Freightliner
+      organization_id: "{{ $.Organization.trenova.ID }}"
+      business_unit_id: "{{ $.BusinessUnit.trenova.ID }}"
+      created_at: "{{ now.Unix }}"
+    - _id: mack_manufacturer
+      name: Mack
+      organization_id: "{{ $.Organization.trenova.ID }}"
+      business_unit_id: "{{ $.BusinessUnit.trenova.ID }}"
+      created_at: "{{ now.Unix }}"
+
+- model: Worker
+  rows:
+    - _id: worker_1
+      organization_id: "{{ $.Organization.trenova.ID }}"
+      business_unit_id: "{{ $.BusinessUnit.trenova.ID }}"
+      fleet_code_id: "{{ $.FleetCode.fc_1.ID }}"
+      created_at: "{{ timestamp }}"
+      first_name: John
+      last_name: Doe
+      gender: Male
+      address_line1: 123 Main St
+      city: Los Angeles
+      state_id: "{{ $.UsState.ca.ID }}"
+      postal_code: 90001
+
+- model: WorkerProfile
+  rows:
+    - _id: wp_1
+      worker_id: "{{ $.Worker.worker_1.ID }}"
+      organization_id: "{{ $.Organization.trenova.ID }}"
+      business_unit_id: "{{ $.BusinessUnit.trenova.ID }}"
+      dob: "{{ yearsAgo 30 }}"
+      license_number: "1234567890"
+      license_expiry: "{{ yearsFromNow 2 }}"
+      license_state_id: "{{ $.UsState.fl.ID }}"
+      endorsement: "X" # Tanker Hazmat
+      hazmat_expiry: "{{ yearsFromNow 4 }}"
+      hire_date: "{{ monthsAgo 6 }}"
+      mvr_due_date: "{{ yearsFromNow 1 }}"
+      last_drug_test: "{{ monthsAgo 1 }}"
+      last_mvr_check: "{{ monthsAgo 1 }}"
+      physical_due_date: "{{ timestamp }}"
+      created_at: "{{ timestamp }}"
+
+- model: WorkerPTO
+  rows:
+    - _id: wpto_1
+      worker_id: "{{ $.Worker.worker_1.ID }}"
+      organization_id: "{{ $.Organization.trenova.ID }}"
+      business_unit_id: "{{ $.BusinessUnit.trenova.ID }}"
+      created_at: "{{ timestamp }}"
+      start_date: "{{ daysFromNow 1 }}"
+      end_date: "{{ daysFromNow 5 }}"
+      status: "Requested"
+      type: "Vacation"
+      reason: "Vacation"
+
+- model: HazmatExpiration
+  rows:
+    - _id: ee_fl_1
+      state_id: "{{ $.UsState.fl.ID }}"
+      years: 4 # 4 years for hazmat endorsement in the state of florida.
+      created_at: "{{ timestamp }}"

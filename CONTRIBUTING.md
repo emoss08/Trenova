@@ -22,7 +22,7 @@ We are committed to maintaining a welcoming and inclusive community at Trenova. 
 ### Prerequisites
 
 - Python 3.12 is required.
-- Golang 1.22.4 is required.
+- Golang 1.23 is required.
 - Docker is essential for setting up the development environment.
 
 ### Setting Up the Development Environment
@@ -45,7 +45,7 @@ We are committed to maintaining a welcoming and inclusive community at Trenova. 
 
 4. **Generate RSA Keys**:
    - Run `openssl genpkey -algorithm RSA -out private_key.pem -pkeyopt rsa_keygen_bits:2048` in the `trenova` directory.
-   - Run `openssl genpkey -algorithm RSA -out public_key.pem -pkeyopt rsa_keygen_bits:2048` in the `trenova` directory.
+   - Run `openssl rsa -pubout -in private_key.pem -out public_key.pem` in the `trenova` directory.
 
 ### Understanding the Project
 

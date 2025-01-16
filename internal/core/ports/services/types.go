@@ -1,0 +1,39 @@
+package services
+
+import (
+	validation "github.com/go-ozzo/ozzo-validation/v4"
+	"github.com/trenova-app/transport/internal/core/domain/user"
+	"github.com/trenova-app/transport/pkg/types/pulid"
+)
+
+type LoginRequest struct {
+	EmailAddress string `json:"emailAddress"`
+	Password     string `json:"password"`
+}
+
+func (lr *LoginRequest) Validate() error {
+	return validation.ValidateStruct(lr,
+		validation.
+			Field(&lr.EmailAddress,
+				validation.Required.Error("Email address is required. Please try again."),
+				validation.Length(1, 255).Error("Email address must be between 1 and 255 characters. Please try again."),
+			),
+		validation.
+			Field(&lr.Password,
+				validation.Required.Error("Password is required. Please try again."),
+			),
+	)
+}
+
+type LoginResponse struct {
+	User      *user.User `json:"user"`
+	ExpiresAt int64      `json:"expiresAt"`
+	SessionID string     `json:"sessionId"`
+}
+
+type Session struct {
+	UserID    pulid.ID `json:"userId"`
+	OrgID     pulid.ID `json:"orgId"`
+	BuID      pulid.ID `json:"buId"`
+	ExpiresAt int64    `json:"expiresAt"`
+}

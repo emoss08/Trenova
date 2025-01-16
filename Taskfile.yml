@@ -1,0 +1,67 @@
+version: "3"
+
+tasks:
+  run:
+    cmd: go run ./cmd/api/main.go serve
+  reset:
+    cmds:
+      - task: db-reset
+      - task: redis-flushall
+      - task: db-init
+      - task: db-migrate
+      - task: db-seed
+  check:
+    cmds:
+      - task: test-pretty
+      - task: lint
+      - task: format
+      - task: critic
+      - task: security
+  swag:
+    cmds:
+      - task: swag-fmt
+      - task: swag-init
+  test:
+    cmd: go test ./... -v
+  test-pretty:
+    cmd: |
+      if ! command -v richgo &> /dev/null
+      then
+        echo "richgo could not be found, installing..."
+        go get -u github.com/kyoh86/richgo
+      fi
+      richgo test ./... -v
+    silent: true
+  update-go-deps:
+    cmd: go get -u ./... && go mod tidy
+  run-client:
+    dir: ui
+    cmd: pnpm run dev
+  lint:
+    cmd: golangci-lint run --timeout 5m
+  nilcheck:
+    cmd: nilaway ./...
+  format:
+    cmd: go fmt ./...
+  critic:
+    cmd: gocritic check -enableAll -disable=sloppyReassign,unnamedResult,importShadow,paramTypeCombine,whyNoLint,commentedOutCode ./...
+  security:
+    cmd: gosec ./...
+  tidy:
+    cmd: go mod tidy
+  bump-deps:
+    cmd: go get -u ./... && go mod tidy
+  db-reset:
+    cmd: go run cmd/db/main.go db reset
+  db-init:
+    cmd: go run cmd/db/main.go db init
+  db-migrate:
+    cmd: go run cmd/db/main.go db migrate
+  db-seed:
+    cmd: go run cmd/db/main.go db seed
+  redis-flushall:
+    cmd: go run cmd/db/main.go redis flushall
+  swag-init:
+    cmd: swag init --parseDependency --parseInternal --parseDepth 1
+  swag-fmt:
+    cmd: swag fmt
