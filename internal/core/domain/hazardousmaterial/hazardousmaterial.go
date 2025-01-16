@@ -28,19 +28,20 @@ type HazardousMaterial struct {
 	OrganizationID pulid.ID `bun:"organization_id,notnull,type:VARCHAR(100)" json:"organizationId"`
 
 	// Core Fields
-	Status               domain.Status  `bun:"status,type:status,default:'Active'" json:"status"`
-	Code                 string         `bun:"code,notnull,type:VARCHAR(100)" json:"code"`
-	Name                 string         `bun:"name,notnull,type:VARCHAR(100)" json:"name"`
-	Description          string         `bun:"description,type:TEXT,notnull" json:"description"`
-	Class                HazardousClass `bun:"class,type:hazardous_class_enum,notnull" json:"class"`
-	UNNumber             string         `bun:"un_number,type:VARCHAR(100)" json:"unNumber"`
-	ERGNumber            string         `bun:"erg_number,type:VARCHAR(100)" json:"ergNumber"`
-	PackingGroup         PackingGroup   `bun:"packing_group,type:packing_group_enum" json:"packingGroup"`
-	ProperShippingName   string         `bun:"proper_shipping_name,type:TEXT" json:"properShippingName"`
-	HandlingInstructions string         `bun:"handling_instructions,type:TEXT" json:"handlingInstructions"`
-	EmergencyContact     string         `bun:"emergency_contact,type:TEXT" json:"emergencyContact"`
-	PlacardRequired      bool           `bun:"placard_required,type:BOOLEAN,default:false" json:"placardRequired"`
-	IsReportableQuantity bool           `bun:"is_reportable_quantity,type:BOOLEAN,default:false" json:"isReportableQuantity"`
+	Status                      domain.Status  `bun:"status,type:status,default:'Active'" json:"status"`
+	Code                        string         `bun:"code,notnull,type:VARCHAR(100)" json:"code"`
+	Name                        string         `bun:"name,notnull,type:VARCHAR(100)" json:"name"`
+	Description                 string         `bun:"description,type:TEXT,notnull" json:"description"`
+	Class                       HazardousClass `bun:"class,type:hazardous_class_enum,notnull" json:"class"`
+	UNNumber                    string         `bun:"un_number,type:VARCHAR(100)" json:"unNumber"`
+	ERGNumber                   string         `bun:"erg_number,type:VARCHAR(100)" json:"ergNumber"`
+	PackingGroup                PackingGroup   `bun:"packing_group,type:packing_group_enum" json:"packingGroup"`
+	ProperShippingName          string         `bun:"proper_shipping_name,type:TEXT,notnull" json:"properShippingName"`
+	HandlingInstructions        string         `bun:"handling_instructions,type:TEXT,notnull" json:"handlingInstructions"`
+	EmergencyContact            string         `bun:"emergency_contact,type:TEXT,notnull" json:"emergencyContact"`
+	EmergencyContactPhoneNumber string         `bun:"emergency_contact_phone_number,type:TEXT,notnull" json:"emergencyContactPhoneNumber"`
+	PlacardRequired             bool           `bun:"placard_required,type:BOOLEAN,default:false" json:"placardRequired"`
+	IsReportableQuantity        bool           `bun:"is_reportable_quantity,type:BOOLEAN,default:false" json:"isReportableQuantity"`
 
 	// Metadata
 	Version   int64 `bun:"version,type:BIGINT" json:"version"`
