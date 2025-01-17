@@ -245,6 +245,12 @@ export const commandRoutes: CommandGroupInfo[] = [
         label: "Service Types",
         icon: faTruck,
       },
+      {
+        id: "hazardous-materials",
+        link: "/shipments/configurations/hazardous-materials",
+        label: "Hazardous Materials",
+        icon: faTruck,
+      },
     ],
   },
   {

@@ -1,5 +1,9 @@
 import { type ChoiceProps, Gender, Status } from "@/types/common";
 import { EquipmentClass } from "@/types/equipment-type";
+import {
+  HazardousClassChoiceProps,
+  PackingGroupChoiceProps,
+} from "@/types/hazardous-material";
 import { Endorsement, PTOStatus, PTOType, WorkerType } from "@/types/worker";
 
 /**
@@ -60,3 +64,104 @@ export const ptoTypeChoices = [
   { value: PTOType.Maternity, label: "Maternity", color: "#0369a1" },
   { value: PTOType.Paternity, label: "Paternity", color: "#0369a1" },
 ] satisfies ReadonlyArray<ChoiceProps<PTOType>>;
+
+export const hazardousClassChoices = [
+  {
+    value: HazardousClassChoiceProps.HazardClass1And1,
+    label: "Division 1.1: Mass Explosive Hazard",
+  },
+  {
+    value: HazardousClassChoiceProps.HazardClass1And2,
+    label: "Division 1.2: Projection Hazard",
+  },
+  {
+    value: HazardousClassChoiceProps.HazardClass1And3,
+    label: "Division 1.3: Fire and/or Minor Blast/Minor Projection Hazard",
+  },
+  {
+    value: HazardousClassChoiceProps.HazardClass1And4,
+    label: "Division 1.4: Minor Explosion Hazard",
+  },
+  {
+    value: HazardousClassChoiceProps.HazardClass1And5,
+    label: "Division 1.5: Very Insensitive With Mass Explosion Hazard",
+  },
+  {
+    value: HazardousClassChoiceProps.HazardClass1And6,
+    label: "Division 1.6: Extremely Insensitive; No Mass Explosion Hazard",
+  },
+  {
+    value: HazardousClassChoiceProps.HazardClass2And1,
+    label: "Division 2.1: Flammable Gases",
+  },
+  {
+    value: HazardousClassChoiceProps.HazardClass2And2,
+    label: "Division 2.2: Non-Flammable Gases",
+  },
+  {
+    value: HazardousClassChoiceProps.HazardClass2And3,
+    label: "Division 2.3: Poisonous Gases",
+  },
+  {
+    value: HazardousClassChoiceProps.HazardClass3,
+    label: "Division 3: Flammable Liquids",
+  },
+  {
+    value: HazardousClassChoiceProps.HazardClass4And1,
+    label: "Division 4.1: Flammable Solids",
+  },
+  {
+    value: HazardousClassChoiceProps.HazardClass4And2,
+    label: "Division 4.2: Spontaneously Combustible Solids",
+  },
+  {
+    value: HazardousClassChoiceProps.HazardClass4And3,
+    label: "Division 4.3: Dangerous When Wet",
+  },
+  {
+    value: HazardousClassChoiceProps.HazardClass5And1,
+    label: "Division 5.1: Oxidizing Substances",
+  },
+  {
+    value: HazardousClassChoiceProps.HazardClass5And2,
+    label: "Division 5.2: Organic Peroxides",
+  },
+  {
+    value: HazardousClassChoiceProps.HazardClass6And1,
+    label: "Division 6.1: Toxic Substances",
+  },
+  {
+    value: HazardousClassChoiceProps.HazardClass6And2,
+    label: "Division 6.2: Infectious Substances",
+  },
+  {
+    value: HazardousClassChoiceProps.HazardClass7,
+    label: "Division 7: Radioactive Material",
+  },
+  {
+    value: HazardousClassChoiceProps.HazardClass8,
+    label: "Division 8: Corrosive Substances",
+  },
+  {
+    value: HazardousClassChoiceProps.HazardClass9,
+    label: "Division 9: Miscellaneous Hazardous Substances and Articles",
+  },
+] satisfies ReadonlyArray<ChoiceProps<HazardousClassChoiceProps>>;
+
+export const packingGroupChoices = [
+  {
+    value: PackingGroupChoiceProps.PackingGroupI,
+    label: "I (High Danger)",
+    color: "#b91c1c",
+  },
+  {
+    value: PackingGroupChoiceProps.PackingGroupII,
+    label: "II (Medium Danger)",
+    color: "#ca8a04",
+  },
+  {
+    value: PackingGroupChoiceProps.PackingGroupIII,
+    label: "III (Low Danger)",
+    color: "#16a34a",
+  },
+] satisfies ReadonlyArray<ChoiceProps<PackingGroupChoiceProps>>;

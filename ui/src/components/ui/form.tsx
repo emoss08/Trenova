@@ -73,12 +73,7 @@ export const Form = React.forwardRef<HTMLFormElement, FormProps>(
     };
 
     return (
-      <form
-        ref={ref}
-        onSubmit={handleSubmit}
-        className={cn("space-y-4", className)}
-        {...props}
-      >
+      <form ref={ref} onSubmit={handleSubmit} className={className} {...props}>
         {children}
       </form>
     );

@@ -35,7 +35,7 @@ type HazardousMaterial struct {
 	Class                       HazardousClass `bun:"class,type:hazardous_class_enum,notnull" json:"class"`
 	UNNumber                    string         `bun:"un_number,type:VARCHAR(100)" json:"unNumber"`
 	ERGNumber                   string         `bun:"erg_number,type:VARCHAR(100)" json:"ergNumber"`
-	PackingGroup                PackingGroup   `bun:"packing_group,type:packing_group_enum" json:"packingGroup"`
+	PackingGroup                PackingGroup   `bun:"packing_group,type:packing_group_enum,notnull" json:"packingGroup"`
 	ProperShippingName          string         `bun:"proper_shipping_name,type:TEXT,notnull" json:"properShippingName"`
 	HandlingInstructions        string         `bun:"handling_instructions,type:TEXT,notnull" json:"handlingInstructions"`
 	EmergencyContact            string         `bun:"emergency_contact,type:TEXT,notnull" json:"emergencyContact"`
@@ -104,6 +104,26 @@ func (hm *HazardousMaterial) Validate(ctx context.Context, multiErr *errors.Mult
 		// Description is required
 		validation.Field(&hm.Description,
 			validation.Required.Error("Description is required"),
+		),
+
+		// Proper Shipping Name is required
+		validation.Field(&hm.ProperShippingName,
+			validation.Required.Error("Proper Shipping Name is required"),
+		),
+
+		// Handling Instructions is required
+		validation.Field(&hm.HandlingInstructions,
+			validation.Required.Error("Handling Instructions is required"),
+		),
+
+		// Emergency Contact is required
+		validation.Field(&hm.EmergencyContact,
+			validation.Required.Error("Emergency Contact is required"),
+		),
+
+		// Emergency Contact Phone Number is required
+		validation.Field(&hm.EmergencyContactPhoneNumber,
+			validation.Required.Error("Emergency Contact Phone Number is required"),
 		),
 	)
 	if err != nil {
