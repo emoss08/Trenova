@@ -82,7 +82,8 @@ const DialogHeader = ({
 }: React.HTMLAttributes<HTMLDivElement>) => (
   <div
     className={cn(
-      "flex flex-col p-2 text-center sm:text-left select-none",
+      "flex flex-col p-2 text-center sm:text-left select-none border-b border-input rounded-t-lg",
+      "sticky top-0", // Added sticky positioning
       className,
     )}
     {...props}
@@ -96,7 +97,7 @@ const DialogFooter = ({
 }: React.HTMLAttributes<HTMLDivElement>) => (
   <div
     className={cn(
-      "flex flex-col-reverse justify-between p-2 h-11 border-t border-input bg-sidebar rounded-b-lg sm:flex-row sm:space-x-2",
+      "flex flex-col-reverse sm:flex-row sm:space-x-2 justify-between p-2 h-11 border-t border-input bg-sidebar rounded-b-lg",
       className,
     )}
     {...props}
@@ -111,7 +112,7 @@ const DialogTitle = React.forwardRef<
   <DialogPrimitive.Title
     ref={ref}
     className={cn(
-      "font-semibold text-sm leading-none tracking-tight flex items-center gap-x-2",
+      "font-semibold leading-none tracking-tight flex items-center gap-x-2",
       className,
     )}
     {...props}
@@ -137,7 +138,14 @@ type DialogBodyProps = {
 };
 
 const DialogBody = ({ children, className }: DialogBodyProps) => (
-  <div className={cn("px-4", className)}>{children}</div>
+  <div
+    className={cn(
+      "flex-1 overflow-y-auto px-4 py-2 max-h-[70vh]", // Added scrolling behavior
+      className,
+    )}
+  >
+    {children}
+  </div>
 );
 
 export {
