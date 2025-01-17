@@ -1,7 +1,7 @@
 import { FormEditModal } from "@/components/ui/form-edit-model";
 import {
-    serviceTypeSchema,
-    ServiceTypeSchema,
+  serviceTypeSchema,
+  ServiceTypeSchema,
 } from "@/lib/schemas/service-type-schema";
 import { type EditTableSheetProps } from "@/types/data-table";
 import { yupResolver } from "@hookform/resolvers/yup";

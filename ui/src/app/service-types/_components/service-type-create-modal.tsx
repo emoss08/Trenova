@@ -1,7 +1,7 @@
 import { FormCreateModal } from "@/components/ui/form-create-modal";
 import {
-    serviceTypeSchema,
-    ServiceTypeSchema,
+  serviceTypeSchema,
+  ServiceTypeSchema,
 } from "@/lib/schemas/service-type-schema";
 import { Status } from "@/types/common";
 import { type TableSheetProps } from "@/types/data-table";
