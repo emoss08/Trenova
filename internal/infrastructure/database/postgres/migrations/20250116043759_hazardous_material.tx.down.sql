@@ -1,3 +1,1 @@
-SET statement_timeout = 0;
-
-SELECT 1;
+DROP TABLE IF EXISTS "hazardous_materials";

@@ -39,6 +39,15 @@ const routes: RouteObject[] = [
               return { Component: ServiceTypes };
             },
           },
+          {
+            path: "/shipments/configurations/hazardous-materials",
+            async lazy() {
+              const { HazardousMaterials } = await import(
+                "@/app/hazardous-materials/page"
+              );
+              return { Component: HazardousMaterials };
+            },
+          },
           // Billing Links
           {
             path: "/billing/client",

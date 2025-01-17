@@ -564,6 +564,26 @@
       business_unit_id: "{{ $.BusinessUnit.trenova.ID }}"
       created_at: "{{ now.Unix }}"
 
+- model: HazardousMaterial
+  rows:
+    - _id: test_hazardous_material
+      organization_id: "{{ $.Organization.trenova.ID }}"
+      business_unit_id: "{{ $.BusinessUnit.trenova.ID }}"
+      created_at: "{{ now.Unix }}"
+      code: "TEST"
+      name: "Test Hazardous Material"
+      description: "Test Hazardous Material"
+      class: "HazardClass1And1"
+      un_number: "123456"
+      erg_number: "123456"
+      packing_group: "III"
+      proper_shipping_name: "Test Proper Shipping Name"
+      handling_instructions: "Test Handling Instructions"
+      emergency_contact: "Test Emergency Contact"
+      emergency_contact_phone_number: "123-456-7890"
+      placard_required: true
+      is_reportable_quantity: true
+
 - model: Worker
   rows:
     - _id: worker_1

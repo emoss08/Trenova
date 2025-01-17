@@ -8,6 +8,7 @@ import (
 	"github.com/trenova-app/transport/internal/core/domain/equipmentmanufacturer"
 	"github.com/trenova-app/transport/internal/core/domain/equipmenttype"
 	"github.com/trenova-app/transport/internal/core/domain/fleetcode"
+	"github.com/trenova-app/transport/internal/core/domain/hazardousmaterial"
 	"github.com/trenova-app/transport/internal/core/domain/organization"
 	"github.com/trenova-app/transport/internal/core/domain/permission"
 	"github.com/trenova-app/transport/internal/core/domain/pretrainedmodels"
@@ -48,5 +49,6 @@ func RegisterEntities() []any {
 		&equipmentmanufacturer.EquipmentManufacturer{},
 		&shipmenttype.ShipmentType{},
 		&servicetype.ServiceType{},
+		&hazardousmaterial.HazardousMaterial{},
 	}
 }

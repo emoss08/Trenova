@@ -1,6 +1,7 @@
 import type { InputProps } from "@/components/ui/input";
 import type { TextareaProps } from "@/components/ui/textarea";
-import { IconDefinition } from "@fortawesome/pro-regular-svg-icons";
+import { type IconDefinition } from "@fortawesome/pro-regular-svg-icons";
+import { type CheckboxProps } from "@radix-ui/react-checkbox";
 import type {
   Control,
   FieldValues,
@@ -28,6 +29,15 @@ export type ColorFieldProps<TFieldValues extends FieldValues> = {
 } & FormControlProps<TFieldValues>;
 
 export type InputFieldProps<T extends FieldValues> = BaseInputFieldProps &
+  FormControlProps<T>;
+
+type BaseCheckboxFieldProps = Omit<CheckboxProps, "name"> & {
+  label: string;
+  outlined?: boolean;
+  description?: string;
+};
+
+export type CheckboxFieldProps<T extends FieldValues> = BaseCheckboxFieldProps &
   FormControlProps<T>;
 
 type BaseTextareaFieldProps = Omit<TextareaProps, "name"> & {
