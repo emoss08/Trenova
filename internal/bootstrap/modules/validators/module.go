@@ -1,6 +1,7 @@
 package validators
 
 import (
+	"github.com/trenova-app/transport/internal/pkg/validator/commodityvalidator"
 	"github.com/trenova-app/transport/internal/pkg/validator/compliancevalidator"
 	"github.com/trenova-app/transport/internal/pkg/validator/equipmentmanufacturervalidator"
 	"github.com/trenova-app/transport/internal/pkg/validator/equipmenttypevalidator"
@@ -23,4 +24,5 @@ var Module = fx.Module("validators", fx.Provide(
 	shipmenttypevalidator.NewValidator,
 	servicetypevalidator.NewValidator,
 	hazardousmaterialvalidator.NewValidator,
+	commodityvalidator.NewValidator,
 ))

@@ -2,6 +2,7 @@ package api
 
 import (
 	"github.com/trenova-app/transport/internal/api/handlers/auth"
+	"github.com/trenova-app/transport/internal/api/handlers/commodity"
 	"github.com/trenova-app/transport/internal/api/handlers/documentqualityconfig"
 	"github.com/trenova-app/transport/internal/api/handlers/equipmentmanufacturer"
 	"github.com/trenova-app/transport/internal/api/handlers/equipmenttype"
@@ -37,4 +38,5 @@ var HandlersModule = fx.Module("api.Handlers", fx.Provide(
 	shipmenttype.NewHandler,
 	servicetype.NewHandler,
 	hazardousmaterial.NewHandler,
+	commodity.NewHandler,
 ))

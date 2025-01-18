@@ -251,6 +251,12 @@ export const commandRoutes: CommandGroupInfo[] = [
         label: "Hazardous Materials",
         icon: faTruck,
       },
+      {
+        id: "commodities",
+        link: "/shipments/configurations/commodities",
+        label: "Commodities",
+        icon: faTruck,
+      },
     ],
   },
   {

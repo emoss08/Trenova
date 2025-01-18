@@ -36,6 +36,7 @@ const (
 	ResourceShipmentType          = Resource("shipment_type")          // Represents resources for managing shipment type.
 	ResourceServiceType           = Resource("service_type")           // Represents resources for managing service types.
 	ResourceHazardousMaterial     = Resource("hazardous_material")     // Represents resources for managing hazardous materials.
+	ResourceCommodity             = Resource("commodity")              // Represents resources for managing commodities.
 
 	// Financial resources
 	ResourceInvoice = Resource("invoice") // Represents resources related to invoices.
@@ -288,6 +289,10 @@ var (
 			append(DataActions, FieldActions...)...,
 		),
 		ResourceHazardousMaterial: append(
+			BaseActions,
+			append(DataActions, FieldActions...)...,
+		),
+		ResourceCommodity: append(
 			BaseActions,
 			append(DataActions, FieldActions...)...,
 		),

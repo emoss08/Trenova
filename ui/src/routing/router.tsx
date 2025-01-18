@@ -48,6 +48,13 @@ const routes: RouteObject[] = [
               return { Component: HazardousMaterials };
             },
           },
+          {
+            path: "/shipments/configurations/commodities",
+            async lazy() {
+              const { Commodities } = await import("@/app/commodities/page");
+              return { Component: Commodities };
+            },
+          },
           // Billing Links
           {
             path: "/billing/client",

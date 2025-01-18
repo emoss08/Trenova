@@ -2,6 +2,7 @@ package registry
 
 import (
 	"github.com/trenova-app/transport/internal/core/domain/businessunit"
+	"github.com/trenova-app/transport/internal/core/domain/commodity"
 	"github.com/trenova-app/transport/internal/core/domain/compliance"
 	"github.com/trenova-app/transport/internal/core/domain/documentqualityconfig"
 	"github.com/trenova-app/transport/internal/core/domain/documentqualityfeedback"
@@ -50,5 +51,6 @@ func RegisterEntities() []any {
 		&shipmenttype.ShipmentType{},
 		&servicetype.ServiceType{},
 		&hazardousmaterial.HazardousMaterial{},
+		&commodity.Commodity{},
 	}
 }

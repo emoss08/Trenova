@@ -3,6 +3,7 @@ package services
 import (
 	"github.com/trenova-app/transport/internal/core/services/audit"
 	"github.com/trenova-app/transport/internal/core/services/auth"
+	"github.com/trenova-app/transport/internal/core/services/commodity"
 	"github.com/trenova-app/transport/internal/core/services/documentqualityconfig"
 	"github.com/trenova-app/transport/internal/core/services/equipmentmanufacturer"
 	"github.com/trenova-app/transport/internal/core/services/equipmenttype"
@@ -41,4 +42,5 @@ var Module = fx.Module("services", fx.Provide(
 	shipmenttype.NewService,
 	servicetype.NewService,
 	hazardousmaterial.NewService,
+	commodity.NewService,
 ))
