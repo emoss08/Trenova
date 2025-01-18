@@ -20,7 +20,6 @@ export function getColumns(): ColumnDef<HazardousMaterialSchema>[] {
               table.toggleAllPageRowsSelected(!!checked)
             }
             aria-label="Select all"
-            className="translate-y-0.5"
           />
         );
       },
@@ -29,7 +28,6 @@ export function getColumns(): ColumnDef<HazardousMaterialSchema>[] {
           checked={row.getIsSelected()}
           onCheckedChange={(checked) => row.toggleSelected(!!checked)}
           aria-label="Select row"
-          className="translate-y-0.5"
         />
       ),
       enableSorting: false,

@@ -21,7 +21,6 @@ export function getColumns(): ColumnDef<EquipmentTypeSchema>[] {
               table.toggleAllPageRowsSelected(!!checked)
             }
             aria-label="Select all"
-            className="translate-y-0.5"
           />
         );
       },
@@ -30,7 +29,6 @@ export function getColumns(): ColumnDef<EquipmentTypeSchema>[] {
           checked={row.getIsSelected()}
           onCheckedChange={(checked) => row.toggleSelected(!!checked)}
           aria-label="Select row"
-          className="translate-y-0.5"
         />
       ),
       enableSorting: false,
