@@ -1,5 +1,12 @@
+import {
+  faCircleCheck,
+  faCircleInfo,
+  faCircleXmark,
+  faTriangleExclamation,
+} from "@fortawesome/pro-solid-svg-icons";
 import { useTheme } from "next-themes";
 import { Toaster as Sonner } from "sonner";
+import { Icon } from "./icons";
 
 type ToasterProps = React.ComponentProps<typeof Sonner>;
 
@@ -9,8 +16,20 @@ const Toaster = ({ ...props }: ToasterProps) => {
   return (
     <Sonner
       theme={theme as ToasterProps["theme"]}
-      richColors
       className="toaster group"
+      icons={{
+        info: <Icon icon={faCircleInfo} className="size-4 text-blue-500" />,
+        warning: (
+          <Icon
+            icon={faTriangleExclamation}
+            className="size-4 text-yellow-500"
+          />
+        ),
+        error: <Icon icon={faCircleXmark} className="size-4 text-red-500" />,
+        success: (
+          <Icon icon={faCircleCheck} className="size-4 text-green-500" />
+        ),
+      }}
       toastOptions={{
         classNames: {
           toast:
