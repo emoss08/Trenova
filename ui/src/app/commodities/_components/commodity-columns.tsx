@@ -1,9 +1,18 @@
 import { DataTableColumnHeader } from "@/components/data-table/_components/data-table-column-header";
+import { DataTableDescription } from "@/components/data-table/_components/data-table-components";
 import { StatusBadge } from "@/components/status-badge";
+import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { type CommoditySchema } from "@/lib/schemas/commodity-schema";
-import { truncateText } from "@/lib/utils";
 import { type ColumnDef } from "@tanstack/react-table";
+
+function HazmatBadge({ isHazmat }: { isHazmat: boolean }) {
+  return (
+    <Badge variant={isHazmat ? "active" : "inactive"} className="max-h-6">
+      {isHazmat ? "Yes" : "No"}
+    </Badge>
+  );
+}
 
 export function getColumns(): ColumnDef<CommoditySchema>[] {
   return [
@@ -55,7 +64,33 @@ export function getColumns(): ColumnDef<CommoditySchema>[] {
       header: ({ column }) => (
         <DataTableColumnHeader column={column} title="Description" />
       ),
-      cell: ({ row }) => truncateText(row.original.description, 100),
+      cell: ({ row }) => (
+        <DataTableDescription description={row.original.description} />
+      ),
+    },
+    {
+      id: "temperatureRange",
+      accessorFn: (row) => {
+        return `${row.minTemperature}°F - ${row.maxTemperature}°F`;
+      },
+      header: "Temperature Range",
+      cell: ({ row }) => {
+        if (row.original?.minTemperature && row.original?.maxTemperature) {
+          return (
+            <span>
+              {row.original.minTemperature}&deg;F -{" "}
+              {row.original.maxTemperature}&deg;F
+            </span>
+          );
+        }
+
+        return "No Temperature Range";
+      },
+    },
+    {
+      accessorKey: "isHazmat",
+      header: "Is Hazmat",
+      cell: ({ row }) => <HazmatBadge isHazmat={row.original.isHazardous} />,
     },
   ];
 }

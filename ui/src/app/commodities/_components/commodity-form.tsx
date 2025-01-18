@@ -73,7 +73,7 @@ export function CommodityForm() {
           control={control}
           label="Is Hazardous"
           outlined
-          description="Indicates if the commodity is classified as hazardous according to DOT regulations."
+          description="Indicates if the commodity is classified as hazardous."
         />
       </FormControl>
       <FormControl>
