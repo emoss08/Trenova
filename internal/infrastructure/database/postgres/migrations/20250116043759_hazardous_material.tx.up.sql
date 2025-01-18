@@ -21,7 +21,6 @@ CREATE TYPE hazardous_class_enum AS ENUM(
 );
 
 --bun:split
-
 CREATE TYPE packing_group_enum AS ENUM(
     'I',
     'II',
@@ -29,7 +28,6 @@ CREATE TYPE packing_group_enum AS ENUM(
 );
 
 --bun:split
-
 CREATE TABLE IF NOT EXISTS "hazardous_materials"(
     -- Primary identifiers
     "id" varchar(100) NOT NULL,

@@ -23,7 +23,7 @@ type HazardousMaterial struct {
 	bun.BaseModel `bun:"table:hazardous_materials,alias:hm" json:"-"`
 
 	// Primary identifiers
-	ID             pulid.ID `bun:",pk,type:VARCHAR(50)" json:"id"`
+	ID             pulid.ID `bun:",pk,type:VARCHAR(100)" json:"id"`
 	BusinessUnitID pulid.ID `bun:"business_unit_id,notnull,type:VARCHAR(100)" json:"businessUnitId"`
 	OrganizationID pulid.ID `bun:"organization_id,notnull,type:VARCHAR(100)" json:"organizationId"`
 
