@@ -281,6 +281,12 @@ export const commandRoutes: CommandGroupInfo[] = [
         label: "Equipment Types",
         icon: faTruck,
       },
+      {
+        id: "equipment-manufacturers",
+        link: "/equipment/configurations/equipment-manufacturers",
+        label: "Equipment Manufacturers",
+        icon: faTruck,
+      },
     ],
   },
 ];
