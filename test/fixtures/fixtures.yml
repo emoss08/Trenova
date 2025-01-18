@@ -584,6 +584,17 @@
       placard_required: true
       is_reportable_quantity: true
 
+- model: Commodity
+  rows:
+    - _id: test_commodity
+      organization_id: "{{ $.Organization.trenova.ID }}"
+      business_unit_id: "{{ $.BusinessUnit.trenova.ID }}"
+      created_at: "{{ now.Unix }}"
+      name: "Test Commodity"
+      description: "Test Commodity"
+      hazardous_material_id: "{{ $.HazardousMaterial.test_hazardous_material.ID }}"
+      is_hazardous: true
+
 - model: Worker
   rows:
     - _id: worker_1
@@ -609,7 +620,7 @@
       license_number: "1234567890"
       license_expiry: "{{ yearsFromNow 2 }}"
       license_state_id: "{{ $.UsState.fl.ID }}"
-      endorsement: "X" # Tanker Hazmat
+      endorsement: "X"
       hazmat_expiry: "{{ yearsFromNow 4 }}"
       hire_date: "{{ monthsAgo 6 }}"
       mvr_due_date: "{{ yearsFromNow 1 }}"

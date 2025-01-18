@@ -13,6 +13,7 @@ import (
 	"github.com/gofiber/fiber/v2/middleware/pprof"
 	"github.com/gofiber/fiber/v2/middleware/requestid"
 	authHandler "github.com/trenova-app/transport/internal/api/handlers/auth"
+	"github.com/trenova-app/transport/internal/api/handlers/commodity"
 	"github.com/trenova-app/transport/internal/api/handlers/documentqualityconfig"
 	"github.com/trenova-app/transport/internal/api/handlers/equipmentmanufacturer"
 	"github.com/trenova-app/transport/internal/api/handlers/equipmenttype"
@@ -65,6 +66,7 @@ type RouterParams struct {
 	ShipmentTypeHandler          *shipmenttype.Handler
 	ServiceTypeHandler           *servicetype.Handler
 	HazardousMaterialHandler     *hazardousmaterial.Handler
+	CommodityHandler             *commodity.Handler
 }
 
 type Router struct {
@@ -187,4 +189,7 @@ func (r *Router) setupProtectedRoutes(router fiber.Router, rl *middleware.RateLi
 
 	// Hazardous Materials
 	r.p.HazardousMaterialHandler.RegisterRoutes(router, rl)
+
+	// Commodities
+	r.p.CommodityHandler.RegisterRoutes(router, rl)
 }
