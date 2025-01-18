@@ -40,11 +40,11 @@ const fetchOptions = async (link: string, inputValue: string, page: number) => {
       },
     });
 
-    const data = response.data;
+    const { results, next } = response.data;
 
     return {
-      options: data.results || [],
-      hasMore: !!data.next,
+      options: results || [],
+      hasMore: !!next,
     };
   } catch (error: any) {
     console.error("Error fetching options", error);
