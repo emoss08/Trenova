@@ -64,6 +64,10 @@ const ReactAsyncSelect = React.forwardRef<any, ReactAsyncSelectInputProps>(
       onChange,
       placeholder,
       isClearable,
+      hasPopoutWindow,
+      popoutLink,
+      popoutLinkLabel,
+      hasPermission,
       ...rest
     },
     ref,
@@ -145,6 +149,10 @@ const ReactAsyncSelect = React.forwardRef<any, ReactAsyncSelectInputProps>(
         inputValue={inputValue}
         isClearable={isClearable}
         placeholder={placeholder}
+        hasPopoutWindow={hasPopoutWindow}
+        popoutLink={popoutLink}
+        popoutLinkLabel={popoutLinkLabel}
+        hasPermission={hasPermission}
         styles={{
           control: () => ({
             cursor: "pointer",
@@ -236,6 +244,10 @@ export function AsyncSelectField<T extends FieldValues>({
   placeholder,
   link,
   isClearable,
+  hasPopoutWindow,
+  popoutLink,
+  popoutLinkLabel,
+  hasPermission,
 }: Omit<AsyncSelectFieldProps<T>, "onChange" | "id" | "options">) {
   const [isOpen, setIsOpen] = useState(false);
 
@@ -281,6 +293,10 @@ export function AsyncSelectField<T extends FieldValues>({
             aria-invalid={fieldState.invalid}
             isInvalid={fieldState.invalid}
             isLoading={isLoading}
+            hasPopoutWindow={hasPopoutWindow}
+            popoutLink={popoutLink}
+            popoutLinkLabel={popoutLinkLabel}
+            hasPermission={hasPermission}
           />
         </FieldWrapper>
       )}

@@ -1,3 +1,4 @@
+import { popoutWindowManager } from "@/hooks/popout-window/popout-window";
 import { cn } from "@/lib/utils";
 import { SelectOption } from "@/types/fields";
 import { ExtendedOption } from "@/types/react-select-extension";
@@ -67,25 +68,23 @@ export function ValueProcessor<T extends Record<string, unknown>>(
   };
 }
 
-// function openPopoutWindow(
-//   popoutLink: string,
-//   event: React.MouseEvent<HTMLButtonElement>,
-// ) {
-//   event.preventDefault();
-//   event.stopPropagation();
+function openPopoutWindow(
+  popoutLink: string,
+  event: React.MouseEvent<HTMLButtonElement>,
+) {
+  event.preventDefault();
+  event.stopPropagation();
 
-//   popoutWindowManager.openWindow(
-//     popoutLink,
-//     {},
-//     {
-//       mode: "create",
-//       hideHeader: true,
-//       hideAside: true,
-//       width: 800,
-//       height: 800,
-//     },
-//   );
-// }
+  popoutWindowManager.openWindow(
+    popoutLink,
+    {},
+    {
+      mode: "create",
+      width: 800,
+      height: 800,
+    },
+  );
+}
 
 function useAddNewButton(selectProps: SelectProps | undefined) {
   const { popoutLink, hasPopoutWindow, hasPermission, popoutLinkLabel } =
@@ -296,15 +295,15 @@ export function ErrorMessage({
   );
 }
 
-function AddNewButton({ label }: AddNewButtonProps) {
-  // const handleClick = (event: React.MouseEvent<HTMLButtonElement>) => {
-  //   openPopoutWindow(popoutLink, event);
-  // };
+function AddNewButton({ label, popoutLink }: AddNewButtonProps) {
+  const handleClick = (event: React.MouseEvent<HTMLButtonElement>) => {
+    openPopoutWindow(popoutLink, event);
+  };
 
   return (
     <span
       className="flex h-7 w-full cursor-pointer items-center justify-between rounded-sm bg-transparent px-2 py-3.5 pl-3 text-xs font-normal text-foreground shadow-none hover:bg-accent hover:text-foreground/90"
-      // onClick={handleClick}
+      onClick={handleClick}
     >
       <span className="mr-2">{label} Entry</span>
       <Icon icon={faPlus} className="size-3" />
