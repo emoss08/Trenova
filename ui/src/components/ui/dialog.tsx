@@ -27,7 +27,7 @@ const DialogOverlay = React.forwardRef<
   <DialogPrimitive.Overlay
     ref={ref}
     className={cn(
-      "fixed inset-0 z-50 bg-black/20 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0",
+      "fixed grid place-items-center overflow-auto inset-0 z-50 bg-black/20 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0",
       className,
     )}
     {...props}
@@ -40,38 +40,39 @@ const DialogContent = React.forwardRef<
   React.ComponentPropsWithoutRef<typeof DialogPrimitive.Content>
 >(({ className, children, ...props }, ref) => (
   <DialogPortal>
-    <DialogOverlay />
-    <DialogPrimitive.Content
-      // @ts-expect-error DialogContent should not have a tabindex according to https://html.spec.whatwg.org/multipage/interactive-elements.html#dialog-focusing-steps
-      tabIndex="false"
-      ref={ref}
-      className={cn(
-        "fixed left-[50%] top-[50%] z-50 grid w-full max-w-lg translate-x-[-50%] translate-y-[-50%] border bg-background shadow-lg duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[state=closed]:slide-out-to-left-1/2 data-[state=closed]:slide-out-to-top-[48%] data-[state=open]:slide-in-from-left-1/2 data-[state=open]:slide-in-from-top-[48%] sm:rounded-lg",
-        className,
-      )}
-      {...props}
-    >
-      {children}
-      <TooltipProvider>
-        <Tooltip delayDuration={0}>
-          <TooltipTrigger asChild>
-            <DialogPrimitive.Close asChild className="absolute right-2 top-2">
-              <Button
-                variant="ghost"
-                size="icon"
-                className="rounded-sm px-1.5 transition-[border-color,box-shadow] duration-100 ease-in-out focus:border focus:border-blue-600 focus:outline-none focus:ring-4 focus:ring-blue-600/20 disabled:pointer-events-none [&_svg]:size-4 "
-              >
-                <Icon icon={faXmark} className="size-4" />
-                <span className="sr-only">Close</span>
-              </Button>
-            </DialogPrimitive.Close>
-          </TooltipTrigger>
-          <TooltipContent side="right">
-            <p>Close</p>
-          </TooltipContent>
-        </Tooltip>
-      </TooltipProvider>
-    </DialogPrimitive.Content>
+    <DialogOverlay>
+      <DialogPrimitive.Content
+        // @ts-expect-error DialogContent should not have a tabindex according to https://html.spec.whatwg.org/multipage/interactive-elements.html#dialog-focusing-steps
+        tabIndex="false"
+        ref={ref}
+        className={cn(
+          "relative z-50 grid my-2 w-full max-w-lg border bg-background shadow-lg duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 sm:rounded-lg",
+          className,
+        )}
+        {...props}
+      >
+        {children}
+        <TooltipProvider>
+          <Tooltip delayDuration={0}>
+            <TooltipTrigger asChild>
+              <DialogPrimitive.Close asChild className="absolute right-2 top-2">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="rounded-sm px-1.5 transition-[border-color,box-shadow] duration-100 ease-in-out focus:border focus:border-blue-600 focus:outline-none focus:ring-4 focus:ring-blue-600/20 disabled:pointer-events-none [&_svg]:size-4 "
+                >
+                  <Icon icon={faXmark} className="size-4" />
+                  <span className="sr-only">Close</span>
+                </Button>
+              </DialogPrimitive.Close>
+            </TooltipTrigger>
+            <TooltipContent side="right">
+              <p>Close</p>
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
+      </DialogPrimitive.Content>
+    </DialogOverlay>
   </DialogPortal>
 ));
 DialogContent.displayName = DialogPrimitive.Content.displayName;
@@ -82,8 +83,7 @@ const DialogHeader = ({
 }: React.HTMLAttributes<HTMLDivElement>) => (
   <div
     className={cn(
-      "flex flex-col p-2 text-center sm:text-left select-none border-b border-input rounded-t-lg",
-      "sticky top-0",
+      "flex flex-col p-2 text-center sm:text-left select-none border-b border-input",
       className,
     )}
     {...props}
@@ -97,7 +97,7 @@ const DialogFooter = ({
 }: React.HTMLAttributes<HTMLDivElement>) => (
   <div
     className={cn(
-      "flex flex-col-reverse sm:flex-row sm:space-x-2 justify-between p-2 h-11 border-t border-input bg-sidebar rounded-b-lg",
+      "flex flex-col-reverse justify-between p-2 h-11 border-t border-input bg-sidebar rounded-b-lg sm:flex-row sm:space-x-2",
       className,
     )}
     {...props}
@@ -138,11 +138,7 @@ type DialogBodyProps = {
 };
 
 const DialogBody = ({ children, className }: DialogBodyProps) => (
-  <div
-    className={cn("flex-1 overflow-y-auto px-4 py-2 max-h-[70vh]", className)}
-  >
-    {children}
-  </div>
+  <div className={cn("p-2", className)}>{children}</div>
 );
 
 export {
