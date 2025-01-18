@@ -38,12 +38,6 @@ import { toast } from "sonner";
 import { type ObjectSchema } from "yup";
 import { Badge } from "./badge";
 import { Form } from "./form";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "./tooltip";
 
 type FormEditModalProps<T extends FieldValues> = EditTableSheetProps<T> & {
   url: API_ENDPOINTS;
@@ -143,21 +137,9 @@ export function FormEditModal<T extends FieldValues>({
           <DialogHeader>
             <DialogTitle>
               <div>{fieldKey ? currentRecord[fieldKey] : title}</div>
-              <TooltipProvider>
-                <Tooltip delayDuration={0}>
-                  {/* @ts-expect-error // We don't want to focus the tooltip trigger */}
-                  <TooltipTrigger tabIndex="false" asChild>
-                    <div>
-                      <Badge variant="purple" className="text-3xs">
-                        {currentRecord.id}
-                      </Badge>
-                    </div>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p>ID: {currentRecord.id}</p>
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
+              <Badge variant="purple" withDot={false} className="text-3xs">
+                {currentRecord.id}
+              </Badge>
             </DialogTitle>
             <DialogDescription>
               Last updated on {formatToUserTimezone(currentRecord.updatedAt)}
