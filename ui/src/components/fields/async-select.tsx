@@ -63,6 +63,7 @@ const ReactAsyncSelect = React.forwardRef<any, ReactAsyncSelectInputProps>(
       value,
       onChange,
       placeholder,
+      isClearable,
       ...rest
     },
     ref,
@@ -142,6 +143,7 @@ const ReactAsyncSelect = React.forwardRef<any, ReactAsyncSelectInputProps>(
         value={selectedOption}
         loadOptions={promiseOptions}
         inputValue={inputValue}
+        isClearable={isClearable}
         placeholder={placeholder}
         styles={{
           control: () => ({
@@ -233,6 +235,7 @@ export function AsyncSelectField<T extends FieldValues>({
   isFetchError,
   placeholder,
   link,
+  isClearable,
 }: Omit<AsyncSelectFieldProps<T>, "onChange" | "id" | "options">) {
   const [isOpen, setIsOpen] = useState(false);
 
@@ -264,6 +267,7 @@ export function AsyncSelectField<T extends FieldValues>({
             name={name}
             isMulti={isMulti}
             onChange={onChange}
+            isClearable={isClearable}
             placeholder={placeholder}
             onBlur={onBlur}
             onFocus={() => setIsOpen(true)}
