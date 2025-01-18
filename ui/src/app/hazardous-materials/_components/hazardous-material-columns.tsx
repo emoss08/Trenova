@@ -2,6 +2,7 @@ import { DataTableColumnHeader } from "@/components/data-table/_components/data-
 import { StatusBadge } from "@/components/status-badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { type HazardousMaterialSchema } from "@/lib/schemas/hazardous-material-schema";
+import { truncateText } from "@/lib/utils";
 import { type ColumnDef } from "@tanstack/react-table";
 
 export function getColumns(): ColumnDef<HazardousMaterialSchema>[] {
@@ -54,6 +55,7 @@ export function getColumns(): ColumnDef<HazardousMaterialSchema>[] {
       header: ({ column }) => (
         <DataTableColumnHeader column={column} title="Description" />
       ),
+      cell: ({ row }) => truncateText(row.original.description, 100),
     },
   ];
 }
