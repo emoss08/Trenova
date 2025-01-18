@@ -36,10 +36,10 @@ type HazardousMaterial struct {
 	UNNumber                    string         `bun:"un_number,type:VARCHAR(100)" json:"unNumber"`
 	ERGNumber                   string         `bun:"erg_number,type:VARCHAR(100)" json:"ergNumber"`
 	PackingGroup                PackingGroup   `bun:"packing_group,type:packing_group_enum,notnull" json:"packingGroup"`
-	ProperShippingName          string         `bun:"proper_shipping_name,type:TEXT,notnull" json:"properShippingName"`
-	HandlingInstructions        string         `bun:"handling_instructions,type:TEXT,notnull" json:"handlingInstructions"`
-	EmergencyContact            string         `bun:"emergency_contact,type:TEXT,notnull" json:"emergencyContact"`
-	EmergencyContactPhoneNumber string         `bun:"emergency_contact_phone_number,type:TEXT,notnull" json:"emergencyContactPhoneNumber"`
+	ProperShippingName          string         `bun:"proper_shipping_name,type:TEXT" json:"properShippingName"`
+	HandlingInstructions        string         `bun:"handling_instructions,type:TEXT" json:"handlingInstructions"`
+	EmergencyContact            string         `bun:"emergency_contact,type:TEXT" json:"emergencyContact"`
+	EmergencyContactPhoneNumber string         `bun:"emergency_contact_phone_number,type:TEXT" json:"emergencyContactPhoneNumber"`
 	PlacardRequired             bool           `bun:"placard_required,type:BOOLEAN,default:false" json:"placardRequired"`
 	IsReportableQuantity        bool           `bun:"is_reportable_quantity,type:BOOLEAN,default:false" json:"isReportableQuantity"`
 
@@ -104,26 +104,6 @@ func (hm *HazardousMaterial) Validate(ctx context.Context, multiErr *errors.Mult
 		// Description is required
 		validation.Field(&hm.Description,
 			validation.Required.Error("Description is required"),
-		),
-
-		// Proper Shipping Name is required
-		validation.Field(&hm.ProperShippingName,
-			validation.Required.Error("Proper Shipping Name is required"),
-		),
-
-		// Handling Instructions is required
-		validation.Field(&hm.HandlingInstructions,
-			validation.Required.Error("Handling Instructions is required"),
-		),
-
-		// Emergency Contact is required
-		validation.Field(&hm.EmergencyContact,
-			validation.Required.Error("Emergency Contact is required"),
-		),
-
-		// Emergency Contact Phone Number is required
-		validation.Field(&hm.EmergencyContactPhoneNumber,
-			validation.Required.Error("Emergency Contact Phone Number is required"),
 		),
 	)
 	if err != nil {
