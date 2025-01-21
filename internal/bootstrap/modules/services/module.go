@@ -10,6 +10,7 @@ import (
 	"github.com/trenova-app/transport/internal/core/services/file"
 	"github.com/trenova-app/transport/internal/core/services/fleetcode"
 	"github.com/trenova-app/transport/internal/core/services/hazardousmaterial"
+	"github.com/trenova-app/transport/internal/core/services/locationcategory"
 	"github.com/trenova-app/transport/internal/core/services/organization"
 	"github.com/trenova-app/transport/internal/core/services/permission"
 	"github.com/trenova-app/transport/internal/core/services/search"
@@ -43,4 +44,5 @@ var Module = fx.Module("services", fx.Provide(
 	servicetype.NewService,
 	hazardousmaterial.NewService,
 	commodity.NewService,
+	locationcategory.NewService,
 ))
