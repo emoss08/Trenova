@@ -37,6 +37,7 @@ const (
 	ResourceServiceType           = Resource("service_type")           // Represents resources for managing service types.
 	ResourceHazardousMaterial     = Resource("hazardous_material")     // Represents resources for managing hazardous materials.
 	ResourceCommodity             = Resource("commodity")              // Represents resources for managing commodities.
+	ResourceLocationCategory      = Resource("location_category")      // Represents resources for managing location categories.
 
 	// Financial resources
 	ResourceInvoice = Resource("invoice") // Represents resources related to invoices.
@@ -293,6 +294,10 @@ var (
 			append(DataActions, FieldActions...)...,
 		),
 		ResourceCommodity: append(
+			BaseActions,
+			append(DataActions, FieldActions...)...,
+		),
+		ResourceLocationCategory: append(
 			BaseActions,
 			append(DataActions, FieldActions...)...,
 		),

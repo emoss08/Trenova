@@ -473,6 +473,118 @@
       description: "Livestock Transport"
       color: "#deb887"
 
+- model: LocationCategory
+  rows:
+    - _id: location_category_1
+      name: Company Terminal
+      description: Primary fleet operations hub with secure parking and driver facilities
+      type: Terminal
+      facility_type: CrossDock
+      color: "#2E7D32" # Dark Green
+      has_secure_parking: true
+      requires_appointment: false
+      allows_overnight: true
+      has_restroom: true
+      organization_id: "{{ $.Organization.trenova.ID }}"
+      business_unit_id: "{{ $.BusinessUnit.trenova.ID }}"
+      created_at: "{{ now.Unix }}"
+
+    - _id: location_category_2
+      name: Customer Warehouse
+      description: Standard customer receiving facilities
+      type: Warehouse
+      facility_type: StorageWarehouse
+      color: "#1976D2" # Blue
+      has_secure_parking: false
+      requires_appointment: true
+      allows_overnight: false
+      has_restroom: true
+      organization_id: "{{ $.Organization.trenova.ID }}"
+      business_unit_id: "{{ $.BusinessUnit.trenova.ID }}"
+      created_at: "{{ now.Unix }}"
+
+    - _id: location_category_3
+      name: Regional Distribution Center
+      description: Large-scale distribution facility with full service capabilities
+      type: DistributionCenter
+      facility_type: CrossDock
+      color: "#7B1FA2" # Purple
+      has_secure_parking: true
+      requires_appointment: true
+      allows_overnight: true
+      has_restroom: true
+      organization_id: "{{ $.Organization.trenova.ID }}"
+      business_unit_id: "{{ $.BusinessUnit.trenova.ID }}"
+      created_at: "{{ now.Unix }}"
+
+    - _id: location_category_4
+      name: Cold Storage Facility
+      description: Temperature-controlled storage and distribution
+      type: Warehouse
+      facility_type: ColdStorage
+      color: "#0097A7" # Cyan
+      has_secure_parking: true
+      requires_appointment: true
+      allows_overnight: false
+      has_restroom: true
+      organization_id: "{{ $.Organization.trenova.ID }}"
+      business_unit_id: "{{ $.BusinessUnit.trenova.ID }}"
+      created_at: "{{ now.Unix }}"
+
+    - _id: location_category_5
+      name: Truck Stop
+      description: Driver services and rest facility
+      type: TruckStop
+      color: "#FF5722" # Deep Orange
+      has_secure_parking: true
+      requires_appointment: false
+      allows_overnight: true
+      has_restroom: true
+      organization_id: "{{ $.Organization.trenova.ID }}"
+      business_unit_id: "{{ $.BusinessUnit.trenova.ID }}"
+      created_at: "{{ now.Unix }}"
+
+    - _id: location_category_6
+      name: Hazmat Facility
+      description: Specialized facility for hazardous materials handling
+      type: Warehouse
+      facility_type: HazmatFacility
+      color: "#F44336" # Red
+      has_secure_parking: true
+      requires_appointment: true
+      allows_overnight: false
+      has_restroom: true
+      organization_id: "{{ $.Organization.trenova.ID }}"
+      business_unit_id: "{{ $.BusinessUnit.trenova.ID }}"
+      created_at: "{{ now.Unix }}"
+
+    - _id: location_category_7
+      name: Maintenance Facility
+      description: Fleet service and repair center
+      type: MaintenanceFacility
+      color: "#FFA000" # Amber
+      has_secure_parking: true
+      requires_appointment: true
+      allows_overnight: true
+      has_restroom: true
+      organization_id: "{{ $.Organization.trenova.ID }}"
+      business_unit_id: "{{ $.BusinessUnit.trenova.ID }}"
+      created_at: "{{ now.Unix }}"
+
+    - _id: location_category_8
+      name: Intermodal Yard
+      description: Rail to truck transfer facility
+      type: RailYard
+      facility_type: IntermodalFacility
+      color: "#455A64" # Blue Grey
+      has_secure_parking: true
+      requires_appointment: true
+      allows_overnight: false
+      has_restroom: true
+      organization_id: "{{ $.Organization.trenova.ID }}"
+      business_unit_id: "{{ $.BusinessUnit.trenova.ID }}"
+      created_at: "{{ now.Unix }}"
+
 - model: ServiceType
   rows:
     - _id: std_service_type
@@ -593,7 +705,6 @@
       name: "Test Commodity"
       description: "Test Commodity"
       hazardous_material_id: "{{ $.HazardousMaterial.test_hazardous_material.ID }}"
-      is_hazardous: true
 
 - model: Worker
   rows:

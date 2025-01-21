@@ -19,4 +19,5 @@ var Module = fx.Module("postgres-repositories", fx.Provide(
 	NewServiceTypeRepository,
 	NewHazardousMaterialRepository,
 	NewCommodityRepository,
+	NewLocationCategoryRepository,
 ))
