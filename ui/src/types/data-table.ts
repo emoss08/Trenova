@@ -82,6 +82,7 @@ type TableRowAction<TData> = {
 
 type DataTableCreateButtonProps = {
   name: string;
+  exportModelName: string;
   isDisabled?: boolean;
   onCreateClick?: () => void;
 };
@@ -103,6 +104,7 @@ export type TableStoreProps<TData extends Record<string, any>> = {
   editModalOpen: boolean;
   initialPageSize: number;
   defaultSort: ExtendedSortingState<TData>;
+  showImportModal: boolean;
   setInitialPageSize: OnChangeFn<number>;
   setDefaultSort: OnChangeFn<ExtendedSortingState<TData>>;
   onDataChange?: (data: TData[]) => void;
@@ -158,7 +160,7 @@ type DataTableProps<TData extends Record<string, any>> = {
   // filterColumn: string;
   TableModal?: React.ComponentType<TableSheetProps>;
   TableEditModal?: React.ComponentType<EditTableSheetProps<TData>>;
-  // exportModelName: string;
+  exportModelName: string;
   extraSearchParams?: Record<string, any>;
   // permissionName: string;
   initialPageSize?: number;
