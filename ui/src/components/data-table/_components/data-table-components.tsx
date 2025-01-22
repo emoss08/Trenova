@@ -1,13 +1,13 @@
 import {
-    Tooltip,
-    TooltipContent,
-    TooltipProvider,
-    TooltipTrigger,
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { truncateText } from "@/lib/utils";
 
 type DataTableDescriptionProps = {
-  description: string;
+  description?: string;
   truncateLength?: number;
 };
 
@@ -15,6 +15,10 @@ export function DataTableDescription({
   description,
   truncateLength = 50,
 }: DataTableDescriptionProps) {
+  if (!description) {
+    return <span>No description</span>;
+  }
+
   return (
     <TooltipProvider delayDuration={0}>
       <Tooltip>
