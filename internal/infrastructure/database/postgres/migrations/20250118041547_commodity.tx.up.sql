@@ -3,12 +3,11 @@ CREATE TABLE IF NOT EXISTS "commodities"(
     "id" varchar(100) NOT NULL,
     "business_unit_id" varchar(100) NOT NULL,
     "organization_id" varchar(100) NOT NULL,
-    "hazardous_material_id" varchar(100) NOT NULL,
+    "hazardous_material_id" varchar(100),
     -- Core fields
     "status" status_enum NOT NULL DEFAULT 'Active',
     "name" varchar(100) NOT NULL,
     "description" text NOT NULL,
-    "is_hazardous" boolean NOT NULL DEFAULT FALSE,
     "min_temperature" float,
     "max_temperature" float,
     "weight_per_unit" float,
