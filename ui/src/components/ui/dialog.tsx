@@ -97,7 +97,7 @@ const DialogFooter = ({
 }: React.HTMLAttributes<HTMLDivElement>) => (
   <div
     className={cn(
-      "flex flex-col-reverse justify-between py-2 px-4 border-t border-input bg-sidebar rounded-b-lg sm:flex-row sm:space-x-2",
+      "flex flex-col-reverse justify-between p-2 border-t border-input bg-sidebar rounded-b-lg sm:flex-row sm:space-x-2",
       className,
     )}
     {...props}
@@ -138,7 +138,7 @@ type DialogBodyProps = {
 };
 
 const DialogBody = ({ children, className }: DialogBodyProps) => (
-  <div className={cn("p-4", className)}>{children}</div>
+  <div className={cn("p-3", className)}>{children}</div>
 );
 
 export {
