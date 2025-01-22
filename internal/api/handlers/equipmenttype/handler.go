@@ -114,9 +114,10 @@ func (h Handler) get(c *fiber.Ctx) error {
 	}
 
 	fc, err := h.ets.Get(c.UserContext(), repositories.GetEquipmentTypeByIDOptions{
-		ID:    equipTypeID,
-		BuID:  reqCtx.BuID,
-		OrgID: reqCtx.OrgID,
+		ID:     equipTypeID,
+		BuID:   reqCtx.BuID,
+		OrgID:  reqCtx.OrgID,
+		UserID: reqCtx.UserID,
 	})
 	if err != nil {
 		return h.eh.HandleError(c, err)

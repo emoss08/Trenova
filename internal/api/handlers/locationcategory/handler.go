@@ -114,9 +114,10 @@ func (h Handler) get(c *fiber.Ctx) error {
 	}
 
 	com, err := h.lcs.Get(c.UserContext(), repositories.GetLocationCategoryByIDOptions{
-		ID:    lcID,
-		BuID:  reqCtx.BuID,
-		OrgID: reqCtx.OrgID,
+		ID:     lcID,
+		BuID:   reqCtx.BuID,
+		OrgID:  reqCtx.OrgID,
+		UserID: reqCtx.UserID,
 	})
 	if err != nil {
 		return h.eh.HandleError(c, err)
