@@ -6,19 +6,10 @@ import { TextareaField } from "@/components/fields/textarea-field";
 import { FormControl, FormGroup } from "@/components/ui/form";
 import { statusChoices } from "@/lib/choices";
 import { type CommoditySchema } from "@/lib/schemas/commodity-schema";
-import { useEffect } from "react";
 import { useFormContext } from "react-hook-form";
 
 export function CommodityForm() {
-  const { control, setValue, watch } = useFormContext<CommoditySchema>();
-
-  // Watch hazardousMaterialId specifically for changes
-  const hazardousMaterialId = watch("hazardousMaterialId");
-
-  useEffect(() => {
-    // Update isHazardous when hazardousMaterialId changes
-    setValue("isHazardous", Boolean(hazardousMaterialId));
-  }, [hazardousMaterialId, setValue]);
+  const { control } = useFormContext<CommoditySchema>();
 
   return (
     <FormGroup className="gap-y-3" cols={2}>
@@ -62,18 +53,20 @@ export function CommodityForm() {
           label="Hazardous Material"
           placeholder="Select Hazardous Material"
           description="Select the hazardous material classification if this commodity contains regulated substances."
+          // TODO(wolfred): We need to change this to include the actual user permissions
+          hasPermission
           hasPopoutWindow
           popoutLink="/shipments/configurations/hazardous-materials/"
           popoutLinkLabel="Hazardous Material"
         />
       </FormControl>
       <FormControl>
-        <CheckboxField
-          name="isHazardous"
+        <InputField
+          name="freightClass"
           control={control}
-          label="Is Hazardous"
-          outlined
-          description="Indicates if the commodity is classified as hazardous."
+          label="Freight Class"
+          placeholder="Freight Class"
+          description="The NMFC code used for pricing and handling in LTL shipping."
         />
       </FormControl>
       <FormControl>
@@ -106,16 +99,8 @@ export function CommodityForm() {
           description="The weight (in pounds) of a single unit of this commodity. Used for calculating total load weight."
         />
       </FormControl>
+
       <FormControl>
-        <InputField
-          name="freightClass"
-          control={control}
-          label="Freight Class"
-          placeholder="Freight Class"
-          description="The NMFC code used for pricing and handling in LTL shipping."
-        />
-      </FormControl>
-      <FormControl cols="full">
         <InputField
           name="dotClassification"
           control={control}
