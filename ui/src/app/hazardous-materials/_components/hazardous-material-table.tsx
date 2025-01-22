@@ -12,7 +12,8 @@ export default function HazardousMaterialTable() {
     <DataTable<HazardousMaterialSchema>
       name="Hazardous Material"
       link="/hazardous-materials/"
-      queryKey="hazardous-material-list"
+      exportModelName="hazardous-material"
+      queryKey={["hazardous-material"]}
       TableModal={CreateHazardousMaterialModal}
       TableEditModal={EditHazardousMaterialModal}
       columns={columns}
