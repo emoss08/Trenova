@@ -31,6 +31,21 @@ type Config struct {
 
 	// Search is the search configuration.
 	Search SearchConfig `mapstructure:"search"`
+
+	// Static is the static configuration.
+	Static StaticConfig `mapstructure:"static"`
+}
+
+// StaticConfig is the configuration for the static files.
+type StaticConfig struct {
+	// Path is the path to the static files.
+	Path string `mapstructure:"path"`
+
+	// Browse is the browse flag.
+	Browse bool `mapstructure:"browse"`
+
+	// Root is the root directory.
+	Root string `mapstructure:"root"`
 }
 
 // AuditConfig is the configuration for the audit service.
