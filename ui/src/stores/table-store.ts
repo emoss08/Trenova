@@ -17,6 +17,7 @@ export const useTableStore = createGlobalStore<TableStoreProps<any>>({
   editModalOpen: false,
   initialPageSize: 10,
   defaultSort: [],
+  showImportModal: false,
   onDataChange: () => {},
   setInitialPageSize: () => {},
   setDefaultSort: () => {},
