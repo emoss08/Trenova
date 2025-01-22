@@ -93,7 +93,7 @@ function createNavigationItems<T extends FieldValues>() {
       id: "documents",
       name: "Documents",
       icon: <Icon icon={faFile} />,
-      component: <div>Documents</div>,
+      component: <div>Coming soon</div>,
       validateSection: (errors: Partial<T>) =>
         checkSectionErrors(errors, [] as Path<T>[]),
     },

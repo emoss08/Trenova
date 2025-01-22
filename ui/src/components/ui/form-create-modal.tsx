@@ -21,12 +21,13 @@ import {
 import { Form } from "@/components/ui/form";
 import { usePopoutWindow } from "@/hooks/popout-window/use-popout-window";
 import { useUnsavedChanges } from "@/hooks/use-form";
+import { broadcastQueryInvalidation } from "@/hooks/use-invalidate-query";
 import { http } from "@/lib/http-client";
 import { cn } from "@/lib/utils";
 import { type TableSheetProps } from "@/types/data-table";
 import { type APIError } from "@/types/errors";
 import { type API_ENDPOINTS } from "@/types/server";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { type QueryKey, useMutation } from "@tanstack/react-query";
 import { useCallback } from "react";
 import {
   type FieldValues,
@@ -40,7 +41,7 @@ import { type ObjectSchema } from "yup";
 type FormCreateModalProps<T extends FieldValues> = TableSheetProps & {
   url: API_ENDPOINTS;
   title: string;
-  queryKey: string;
+  queryKey: QueryKey;
   formComponent: React.ReactNode;
   form: UseFormReturn<T>;
   schema: ObjectSchema<T>;
@@ -59,7 +60,6 @@ export function FormCreateModal<T extends FieldValues>({
   queryKey,
   notice,
 }: FormCreateModalProps<T>) {
-  const queryClient = useQueryClient();
   const { isPopout, closePopout } = usePopoutWindow();
 
   const {
@@ -90,12 +90,21 @@ export function FormCreateModal<T extends FieldValues>({
       return response.data;
     },
     onSuccess: () => {
-      toast.success(`${title} created successfully`);
+      toast.success(`${title} created successfully`, {
+        description: "Changes have been saved.",
+      });
       onOpenChange(false);
-      form.reset();
+      reset();
 
-      // Invalidate the equipment type list query to refresh the table
-      queryClient.invalidateQueries({ queryKey: [queryKey] });
+      // Invalidate the query to refresh the table
+      broadcastQueryInvalidation({
+        queryKeys: [queryKey],
+        options: { correlationId: `create-${queryKey}-${Date.now()}` },
+        config: {
+          predicate: true,
+          refetchType: "all",
+        },
+      });
     },
     onError: (error: APIError) => {
       if (error.isValidationError()) {
