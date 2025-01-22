@@ -10,6 +10,7 @@ import (
 	"github.com/trenova-app/transport/internal/pkg/ctx"
 	"github.com/trenova-app/transport/internal/pkg/utils/paginationutils/limitoffsetpagination"
 	"github.com/trenova-app/transport/internal/pkg/validator"
+	"github.com/trenova-app/transport/pkg/types"
 	"github.com/trenova-app/transport/pkg/types/pulid"
 	"go.uber.org/fx"
 )
@@ -83,7 +84,12 @@ func (h Handler) selectOptions(c *fiber.Ctx) error {
 		return h.eh.HandleError(c, err)
 	}
 
-	return c.Status(fiber.StatusOK).JSON(options)
+	return c.Status(fiber.StatusOK).JSON(ports.Response[[]*types.SelectOption]{
+		Results: options,
+		Count:   len(options),
+		Next:    "",
+		Prev:    "",
+	})
 }
 
 func (h Handler) list(c *fiber.Ctx) error {
