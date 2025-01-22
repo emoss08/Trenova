@@ -17,6 +17,12 @@ export interface RequestConfig extends Omit<RequestInit, "method" | "body"> {
   isFormData?: boolean;
 }
 
+type DownloadOptions = {
+  filename?: string;
+  responseType?: "blob";
+  onProgress?: (progress: number) => void;
+} & Omit<RequestConfig, "responseType">;
+
 const DEFAULT_RETRY_COUNT = 1;
 const DEFAULT_TIMEOUT = 30000;
 
@@ -245,6 +251,43 @@ class HttpClient {
     config?: RequestConfig,
   ): Promise<HttpClientResponse<T>> {
     return this.request<T>("PATCH", endpoint, data, config);
+  }
+
+  async downloadFile(
+    endpoint: string,
+    options: DownloadOptions = {},
+  ): Promise<void> {
+    try {
+      const response = await this.get<Blob>(endpoint, {
+        ...options,
+        responseType: "blob",
+      });
+
+      const contentDisposition = response.headers.get("content-disposition");
+      const suggestedFilename = contentDisposition
+        ? contentDisposition.split("filename=")[1]?.replace(/['"]/g, "")
+        : undefined;
+
+      const blob = new Blob([response.data], {
+        type:
+          response.headers.get("content-type") || "application/octet-stream",
+      });
+
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = options.filename || suggestedFilename || "download";
+
+      document.body.appendChild(link);
+      link.click();
+
+      // Cleanup
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error("Download failed:", error);
+      throw error;
+    }
   }
 }
 
