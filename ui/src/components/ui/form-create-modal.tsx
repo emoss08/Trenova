@@ -90,8 +90,8 @@ export function FormCreateModal<T extends FieldValues>({
       return response.data;
     },
     onSuccess: () => {
-      toast.success(`${title} created successfully`, {
-        description: "Changes have been saved.",
+      toast.success("Changes have been saved.", {
+        description: `${title} created successfully`,
       });
       onOpenChange(false);
       reset();
