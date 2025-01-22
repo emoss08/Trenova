@@ -1,3 +1,4 @@
+"use no memo";
 import { TableBody, TableCell, TableRow } from "@/components/ui/table";
 import { DataTableBodyProps } from "@/types/data-table";
 import { flexRender } from "@tanstack/react-table";
@@ -6,6 +7,7 @@ export function DataTableBody<TData extends Record<string, any>>({
   table,
   setCurrentRecord,
   setEditModalOpen,
+  isLoading,
 }: DataTableBodyProps<TData>) {
   return (
     <TableBody>
@@ -20,9 +22,10 @@ export function DataTableBody<TData extends Record<string, any>>({
               <TableCell
                 key={cell.id}
                 onDoubleClick={() => {
-                  setCurrentRecord(row.original);
-                  setEditModalOpen(true);
-                  console.log("row.original", row.original);
+                  if (!isLoading) {
+                    setCurrentRecord(row.original);
+                    setEditModalOpen(true);
+                  }
                 }}
               >
                 {flexRender(cell.column.columnDef.cell, cell.getContext())}
