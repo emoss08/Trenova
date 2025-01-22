@@ -95,6 +95,19 @@ const routes: RouteObject[] = [
               title: "Fleet Codes",
             },
           },
+          {
+            path: "/dispatch/configurations/location-categories",
+            async lazy() {
+              const { LocationCategories } = await import(
+                "@/app/location-categories/page"
+              );
+              return { Component: LocationCategories };
+            },
+            handle: {
+              crumb: "Location Categories",
+              title: "Location Categories",
+            },
+          },
           // Equipment Links
           {
             path: "/equipment/configurations/equipment-types",

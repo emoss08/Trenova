@@ -1,6 +1,7 @@
 import { type WorkerSchema } from "@/lib/schemas/worker-schema";
 import { badgeVariants } from "@/lib/variants/badge";
 import { type Status } from "@/types/common";
+import { type PackingGroupChoiceProps } from "@/types/hazardous-material";
 import { type VariantProps } from "class-variance-authority";
 import { Badge } from "./ui/badge";
 
@@ -33,4 +34,42 @@ export function WorkerTypeBadge({ type }: { type: WorkerSchema["type"] }) {
   };
 
   return <Badge {...typeAttr[type]}>{typeAttr[type].text}</Badge>;
+}
+
+export function PackingGroupBadge({
+  group,
+}: {
+  group: PackingGroupChoiceProps;
+}) {
+  const packingGroupAttributes: Record<
+    PackingGroupChoiceProps,
+    BadgeAttrProps
+  > = {
+    I: {
+      variant: "inactive",
+      text: "High Danger",
+    },
+    II: {
+      variant: "warning",
+      text: "Medium Danger",
+    },
+    III: {
+      variant: "active",
+      text: "Low Danger",
+    },
+  };
+
+  return (
+    <Badge variant={packingGroupAttributes[group].variant} className="max-h-6">
+      {packingGroupAttributes[group].text}
+    </Badge>
+  );
+}
+
+export function HazmatBadge({ isHazmat }: { isHazmat: boolean }) {
+  return (
+    <Badge variant={isHazmat ? "active" : "inactive"} className="max-h-6">
+      {isHazmat ? "Yes" : "No"}
+    </Badge>
+  );
 }

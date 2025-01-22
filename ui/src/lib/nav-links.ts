@@ -156,9 +156,9 @@ export const routes: routeInfo[] = [
             link: "/shipments/configurations/service-types",
           },
           {
-            key: "commodity-codes",
-            label: "Commodity Codes",
-            link: "/shipments/configurations/commodity-codes",
+            key: "commodities",
+            label: "Commodities",
+            link: "/shipments/configurations/commodities",
           },
           {
             key: "hazardous-materials",
@@ -273,6 +273,12 @@ export const commandRoutes: CommandGroupInfo[] = [
         id: "fleet-codes",
         link: "/dispatch/configurations/fleet-codes",
         label: "Fleet Codes",
+        icon: faTruck,
+      },
+      {
+        id: "location-categories",
+        link: "/dispatch/configurations/location-categories",
+        label: "Location Categories",
         icon: faTruck,
       },
     ],
