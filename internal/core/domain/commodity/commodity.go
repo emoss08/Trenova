@@ -19,7 +19,7 @@ type Commodity struct {
 	bun.BaseModel `bun:"table:commodities,alias:com" json:"-"`
 
 	// Primary identifiers
-	ID                  pulid.ID  `bun:",pk,type:VARCHAR(100)" json:"id"`
+	ID                  pulid.ID  `bun:",pk,type:VARCHAR(100),notnull" json:"id"`
 	BusinessUnitID      pulid.ID  `bun:"business_unit_id,notnull,type:VARCHAR(100)" json:"businessUnitId"`
 	OrganizationID      pulid.ID  `bun:"organization_id,notnull,type:VARCHAR(100)" json:"organizationId"`
 	HazardousMaterialID *pulid.ID `bun:"hazardous_material_id,type:VARCHAR(100),nullzero" json:"hazardousMaterialId"`
@@ -28,7 +28,6 @@ type Commodity struct {
 	Status            domain.Status `bun:"status,type:status,default:'Active'" json:"status"`
 	Name              string        `bun:"name,notnull,type:VARCHAR(100)" json:"name"`
 	Description       string        `bun:"description,type:TEXT,notnull" json:"description"`
-	IsHazardous       bool          `bun:"is_hazardous,type:BOOLEAN,default:false" json:"isHazardous"`
 	MinTemperature    *float64      `bun:"min_temperature,type:FLOAT,nullzero" json:"minTemperature"`
 	MaxTemperature    *float64      `bun:"max_temperature,type:FLOAT,nullzero" json:"maxTemperature"`
 	WeightPerUnit     *float64      `bun:"weight_per_unit,type:FLOAT,nullzero" json:"weightPerUnit"`
@@ -39,8 +38,8 @@ type Commodity struct {
 
 	// Metadata
 	Version   int64 `bun:"version,type:BIGINT" json:"version"`
-	CreatedAt int64 `bun:"created_at,type:BIGINT,nullzero,notnull,default:extract(epoch from current_timestamp)::bigint" json:"createdAt"`
-	UpdatedAt int64 `bun:"updated_at,type:BIGINT,nullzero,notnull,default:extract(epoch from current_timestamp)::bigint" json:"updatedAt"`
+	CreatedAt int64 `bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" json:"createdAt"`
+	UpdatedAt int64 `bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" json:"updatedAt"`
 
 	// Relationships
 	BusinessUnit      *businessunit.BusinessUnit           `bun:"rel:belongs-to,join:business_unit_id=id" json:"-"`
@@ -60,11 +59,17 @@ func (c *Commodity) Validate(ctx context.Context, multiErr *errors.MultiError) {
 		validation.Field(&c.Description,
 			validation.Required.Error("Description is required"),
 		),
-
-		// Is hazardous must be true if hazardous material is not null
-		validation.Field(&c.IsHazardous,
-			validation.When(c.HazardousMaterialID != nil,
-				validation.Required.Error("Is hazardous is required when hazardous material is selected"),
+		// Min temperature must be less than max temperature and vice versa
+		validation.Field(&c.MinTemperature,
+			validation.When(c.MaxTemperature != nil,
+				validation.Required.Error("Min temperature is required when max temperature is provided"),
+				validation.Min(c.MaxTemperature).Error("Min temperature must be less than max temperature"),
+			),
+		),
+		validation.Field(&c.MaxTemperature,
+			validation.When(c.MinTemperature != nil,
+				validation.Required.Error("Max temperature is required when min temperature is provided"),
+				validation.Min(c.MinTemperature).Error("Max temperature must be greater than min temperature"),
 			),
 		),
 	)
