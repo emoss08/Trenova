@@ -37,6 +37,7 @@ export function DataTable<TData extends Record<string, any>>({
   extraSearchParams,
   queryKey,
   name,
+  exportModelName,
   TableModal,
   TableEditModal,
   initialPageSize = DEFAULT_PAGE_SIZE,
@@ -172,7 +173,10 @@ export function DataTable<TData extends Record<string, any>>({
         <div className="flex items-center gap-2"></div>
         <div className="flex items-center gap-2">
           <DataTableViewOptions table={table} />
-          <DataTableCreateButton name={name} />
+          <DataTableCreateButton
+            name={name}
+            exportModelName={exportModelName}
+          />
         </div>
       </div>
       <div className="overflow-hidden rounded-md border border-sidebar-border">

@@ -28,12 +28,18 @@ import {
   UploadIcon,
 } from "@radix-ui/react-icons";
 import React, { useCallback } from "react";
+import { DataTableImportModal } from "./data-table-import-modal";
 
 export function DataTableCreateButton({
   name,
   isDisabled,
   onCreateClick,
+  exportModelName,
 }: DataTableCreateButtonProps) {
+  const [showImportModal, setShowImportModal] =
+    // eslint-disable-next-line react-compiler/react-compiler
+    useTableStore.use("showImportModal");
+
   const handleClick = useCallback(() => {
     // Handle create logic
     if (onCreateClick) {
@@ -44,47 +50,58 @@ export function DataTableCreateButton({
   }, [onCreateClick]);
 
   return (
-    <Popover>
-      <PopoverTrigger asChild>
-        <Button variant="default" disabled={isDisabled}>
-          <Icon icon={faPlus} className="size-4 text-background" />
-          <span>New</span>
-        </Button>
-      </PopoverTrigger>
-      <PopoverContent align="end" side="bottom" className="w-auto p-1">
-        <div className="flex w-full flex-col gap-1">
-          <Button
-            variant="ghost"
-            className="flex size-full flex-col items-start gap-0.5 text-left"
-            onClick={handleClick}
-          >
-            <div className="flex items-center gap-2">
-              <PlusIcon className="size-4" />
-              <span>Add New {name}</span>
-            </div>
-            <div>
-              <p className="text-xs font-normal text-muted-foreground">
-                Create a new {name} from scratch
-              </p>
-            </div>
+    <>
+      <Popover>
+        <PopoverTrigger asChild>
+          <Button variant="default" disabled={isDisabled}>
+            <Icon icon={faPlus} className="size-4 text-background" />
+            <span>New</span>
           </Button>
-          <Button
-            variant="ghost"
-            className="flex size-full flex-col items-start gap-0.5 text-left"
-          >
-            <div className="flex items-center gap-2">
-              <UploadIcon className="size-4" />
-              <span>Import {name}s</span>
-            </div>
-            <div>
-              <p className="text-xs font-normal text-muted-foreground">
-                Import existing {name}s from a file
-              </p>
-            </div>
-          </Button>
-        </div>
-      </PopoverContent>
-    </Popover>
+        </PopoverTrigger>
+        <PopoverContent align="end" side="bottom" className="w-auto p-1">
+          <div className="flex w-full flex-col gap-1">
+            <Button
+              variant="ghost"
+              className="flex size-full flex-col items-start gap-0.5 text-left"
+              onClick={handleClick}
+            >
+              <div className="flex items-center gap-2">
+                <PlusIcon className="size-4" />
+                <span>Add New {name}</span>
+              </div>
+              <div>
+                <p className="text-xs font-normal text-muted-foreground">
+                  Create a new {name} from scratch
+                </p>
+              </div>
+            </Button>
+            <Button
+              variant="ghost"
+              className="flex size-full flex-col items-start gap-0.5 text-left"
+              onClick={() => setShowImportModal(true)}
+            >
+              <div className="flex items-center gap-2">
+                <UploadIcon className="size-4" />
+                <span>Import {name}s</span>
+              </div>
+              <div>
+                <p className="text-xs font-normal text-muted-foreground">
+                  Import existing {name}s from a file
+                </p>
+              </div>
+            </Button>
+          </div>
+        </PopoverContent>
+      </Popover>
+      {showImportModal && (
+        <DataTableImportModal
+          open={showImportModal}
+          onOpenChange={setShowImportModal}
+          name={name}
+          exportModelName={exportModelName}
+        />
+      )}
+    </>
   );
 }
 

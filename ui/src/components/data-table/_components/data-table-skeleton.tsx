@@ -1,11 +1,11 @@
 import { Skeleton } from "@/components/ui/skeleton";
 import {
-    Table,
-    TableBody,
-    TableCell,
-    TableHead,
-    TableHeader,
-    TableRow,
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
 } from "@/components/ui/table";
 import { cn } from "@/lib/utils";
 interface DataTableSkeletonProps extends React.HTMLAttributes<HTMLDivElement> {
