@@ -82,8 +82,8 @@ export function FormEditModal<T extends FieldValues>({
       return response.data;
     },
     onSuccess: () => {
-      toast.success(`${title} Updated Successfully`, {
-        description: "Changes have been saved.",
+      toast.success("Changes have been saved.", {
+        description: `${title} updated successfully`,
       });
       onOpenChange(false);
       reset();
