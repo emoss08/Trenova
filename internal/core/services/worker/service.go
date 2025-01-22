@@ -57,15 +57,15 @@ func NewService(p ServiceParams) *Service {
 	}
 }
 
-func (s *Service) SelectOptions(ctx context.Context, opts *repositories.ListWorkerOptions) ([]types.SelectOption, error) {
+func (s *Service) SelectOptions(ctx context.Context, opts *repositories.ListWorkerOptions) ([]*types.SelectOption, error) {
 	result, err := s.repo.List(ctx, opts)
 	if err != nil {
 		return nil, eris.Wrap(err, "failed to list workers")
 	}
 
-	options := make([]types.SelectOption, len(result.Items))
+	options := make([]*types.SelectOption, len(result.Items))
 	for i, worker := range result.Items {
-		options[i] = types.SelectOption{
+		options[i] = &types.SelectOption{
 			Value: worker.ID.String(),
 			Label: worker.FullName(),
 		}
