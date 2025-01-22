@@ -114,9 +114,10 @@ func (h Handler) get(c *fiber.Ctx) error {
 	}
 
 	st, err := h.sts.Get(c.UserContext(), repositories.GetServiceTypeByIDOptions{
-		ID:    serviceTypeID,
-		BuID:  reqCtx.BuID,
-		OrgID: reqCtx.OrgID,
+		ID:     serviceTypeID,
+		BuID:   reqCtx.BuID,
+		OrgID:  reqCtx.OrgID,
+		UserID: reqCtx.UserID,
 	})
 	if err != nil {
 		return h.eh.HandleError(c, err)

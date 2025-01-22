@@ -114,9 +114,10 @@ func (h Handler) get(c *fiber.Ctx) error {
 	}
 
 	hm, err := h.hms.Get(c.UserContext(), repositories.GetHazardousMaterialByIDOptions{
-		ID:    hmID,
-		BuID:  reqCtx.BuID,
-		OrgID: reqCtx.OrgID,
+		ID:     hmID,
+		BuID:   reqCtx.BuID,
+		OrgID:  reqCtx.OrgID,
+		UserID: reqCtx.UserID,
 	})
 	if err != nil {
 		return h.eh.HandleError(c, err)

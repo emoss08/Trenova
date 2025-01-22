@@ -124,6 +124,7 @@ func (h Handler) get(c *fiber.Ctx) error {
 		WorkerID:       workerID,
 		BuID:           reqCtx.BuID,
 		OrgID:          reqCtx.OrgID,
+		UserID:         reqCtx.UserID,
 		IncludeProfile: c.QueryBool("includeProfile"),
 		IncludePTO:     c.QueryBool("includePTO"),
 	})
