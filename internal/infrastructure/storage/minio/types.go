@@ -19,6 +19,9 @@ type ListObjectsOptions = minio.ListObjectsOptions
 // ObjectInfo is a wrapper around minio.ObjectInfo
 type ObjectInfo = minio.ObjectInfo
 
+// Object is a wrapper around minio.Object
+type Object = minio.Object
+
 // StatObjectOptions is a wrapper around minio.StatObjectOptions
 type StatObjectOptions = minio.StatObjectOptions
 
