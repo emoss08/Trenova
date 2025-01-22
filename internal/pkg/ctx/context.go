@@ -37,7 +37,7 @@ func GetRequestContext(c *fiber.Ctx) (*RequestContext, error) {
 	if userID, ok := c.Locals(CTXUserID).(pulid.ID); ok {
 		ctx.UserID = userID
 	} else {
-		log.Debug().Interface("actual_type", c.Locals(CTXUserID)).Msg("invalid user ID type")
+		log.Debug().Interface("userID", c.Locals(CTXUserID)).Msg("invalid user ID type")
 		return nil, eris.Wrap(ErrMissingContextData, "user ID not found or invalid type")
 	}
 
@@ -45,7 +45,7 @@ func GetRequestContext(c *fiber.Ctx) (*RequestContext, error) {
 	if orgID, ok := c.Locals(CTXOrganizationID).(pulid.ID); ok {
 		ctx.OrgID = orgID
 	} else {
-		log.Debug().Interface("actual_type", c.Locals(CTXOrganizationID)).Msg("invalid org ID type")
+		log.Debug().Interface("orgID", c.Locals(CTXOrganizationID)).Msg("invalid org ID type")
 		return nil, eris.Wrap(ErrMissingContextData, "organization ID not found or invalid type")
 	}
 
@@ -53,7 +53,7 @@ func GetRequestContext(c *fiber.Ctx) (*RequestContext, error) {
 	if buID, ok := c.Locals(CTXBusinessUnitID).(pulid.ID); ok {
 		ctx.BuID = buID
 	} else {
-		log.Debug().Interface("actual_type", c.Locals(CTXBusinessUnitID)).Msg("invalid business unit ID type")
+		log.Debug().Interface("buID", c.Locals(CTXBusinessUnitID)).Msg("invalid business unit ID type")
 		return nil, eris.Wrap(ErrMissingContextData, "business unit ID not found or invalid type")
 	}
 

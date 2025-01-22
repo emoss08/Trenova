@@ -735,8 +735,8 @@
       hazmat_expiry: "{{ yearsFromNow 4 }}"
       hire_date: "{{ monthsAgo 6 }}"
       mvr_due_date: "{{ yearsFromNow 1 }}"
-      last_drug_test: "{{ monthsAgo 1 }}"
-      last_mvr_check: "{{ monthsAgo 1 }}"
+      last_drug_test: "{{ monthsAgo 6 }}"
+      last_mvr_check: "{{ monthsAgo 6 }}"
       physical_due_date: "{{ timestamp }}"
       created_at: "{{ timestamp }}"
 
