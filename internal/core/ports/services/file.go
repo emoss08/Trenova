@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/minio/minio-go/v7"
 	"github.com/rotisserie/eris"
 )
 
@@ -117,6 +118,7 @@ type FileService interface {
 	SaveFile(ctx context.Context, req *SaveFileRequest) (*SaveFileResponse, error)
 	SaveFileVersion(ctx context.Context, req *SaveFileRequest) (*SaveFileResponse, error)
 	GetFileVersion(ctx context.Context, bucketName, objectName string) ([]VersionInfo, error)
+	GetFileByBucketName(ctx context.Context, bucketName, objectName string) (*minio.Object, error)
 	GetSpecificVersion(ctx context.Context, bucketName, objectName, versionID string) ([]byte, *VersionInfo, error)
 	RestoreVersion(ctx context.Context, req *SaveFileRequest, versionID string) (*SaveFileResponse, error)
 	ValidateFile(filename string, size int64, fileType FileType) error
