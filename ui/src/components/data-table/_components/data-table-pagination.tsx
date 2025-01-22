@@ -79,8 +79,8 @@ export function DataTablePagination<TData>({
 }: DataTablePaginationProps<TData>) {
   const [isTransitioning, startTransition] = React.useTransition();
 
-  const currentPage = table.getState().pagination.pageIndex + 1;
-  const pageSize = table.getState().pagination.pageSize;
+  const { pageIndex, pageSize } = table.getState().pagination;
+  const currentPage = pageIndex + 1;
   const totalPages = Math.ceil(totalCount / pageSize);
 
   const normalizedPageSizeOptions = React.useMemo(() => {
