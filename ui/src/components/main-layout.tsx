@@ -1,5 +1,6 @@
 import { usePopoutWindow } from "@/hooks/popout-window/use-popout-window";
 import { useAuth } from "@/hooks/use-auth";
+import { useQueryInvalidationListener } from "@/hooks/use-invalidate-query";
 import { Outlet } from "react-router";
 import { AppSidebar } from "./app-sidebar";
 import { Header } from "./header";
@@ -9,6 +10,7 @@ export function MainLayout() {
   const { isPopout } = usePopoutWindow();
 
   useAuth();
+  useQueryInvalidationListener();
 
   return (
     <div className="flex min-h-screen flex-col">
