@@ -4,6 +4,7 @@ import {
   HazardousClassChoiceProps,
   PackingGroupChoiceProps,
 } from "@/types/hazardous-material";
+import { FacilityType, LocationCategoryType } from "@/types/location-category";
 import { Endorsement, PTOStatus, PTOType, WorkerType } from "@/types/worker";
 
 /**
@@ -165,3 +166,63 @@ export const packingGroupChoices = [
     color: "#16a34a",
   },
 ] satisfies ReadonlyArray<ChoiceProps<PackingGroupChoiceProps>>;
+
+export const locationCategoryTypeChoices = [
+  { value: LocationCategoryType.Terminal, label: "Terminal", color: "#15803d" },
+  {
+    value: LocationCategoryType.Warehouse,
+    label: "Warehouse",
+    color: "#7e22ce",
+  },
+  {
+    value: LocationCategoryType.DistributionCenter,
+    label: "Distribution Center",
+    color: "#dc2626",
+  },
+  {
+    value: LocationCategoryType.TruckStop,
+    label: "Truck Stop",
+    color: "#f59e0b",
+  },
+  {
+    value: LocationCategoryType.RestArea,
+    label: "Rest Area",
+    color: "#0369a1",
+  },
+  {
+    value: LocationCategoryType.CustomerLocation,
+    label: "Customer Location",
+    color: "#10b981",
+  },
+  { value: LocationCategoryType.Port, label: "Port", color: "#6366f1" },
+  {
+    value: LocationCategoryType.RailYard,
+    label: "Rail Yard",
+    color: "#ec4899",
+  },
+  {
+    value: LocationCategoryType.MaintenanceFacility,
+    label: "Maintenance Facility",
+    color: "#14b8a6",
+  },
+] satisfies ReadonlyArray<ChoiceProps<LocationCategoryType>>;
+
+export const facilityTypeChoices = [
+  { value: FacilityType.CrossDock, label: "Cross Dock", color: "#7e22ce" },
+  {
+    value: FacilityType.StorageWarehouse,
+    label: "Storage Warehouse",
+    color: "#dc2626",
+  },
+  { value: FacilityType.ColdStorage, label: "Cold Storage", color: "#f59e0b" },
+  {
+    value: FacilityType.HazmatFacility,
+    label: "Hazmat Facility",
+    color: "#0369a1",
+  },
+  {
+    value: FacilityType.IntermodalFacility,
+    label: "Intermodal Facility",
+    color: "#10b981",
+  },
+] satisfies ReadonlyArray<ChoiceProps<FacilityType>>;

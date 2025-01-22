@@ -194,6 +194,13 @@ func (m *Manager) Search() *SearchConfig {
 	return &m.Cfg.Search
 }
 
+func (m *Manager) Static() *StaticConfig {
+	if m.Cfg == nil {
+		return nil
+	}
+	return &m.Cfg.Static
+}
+
 // GetDSN returns a formatted database connection string
 func (m *Manager) GetDSN() string {
 	db := m.Database()

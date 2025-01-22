@@ -41,8 +41,8 @@ type LocationCategory struct {
 
 	// Metadata
 	Version   int64 `bun:"version,type:BIGINT" json:"version"`
-	CreatedAt int64 `bun:"created_at,type:BIGINT,nullzero,notnull,default:extract(epoch from current_timestamp)::bigint" json:"createdAt"`
-	UpdatedAt int64 `bun:"updated_at,type:BIGINT,nullzero,notnull,default:extract(epoch from current_timestamp)::bigint" json:"updatedAt"`
+	CreatedAt int64 `bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" json:"createdAt"`
+	UpdatedAt int64 `bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" json:"updatedAt"`
 
 	// Relationships
 	BusinessUnit *businessunit.BusinessUnit `bun:"rel:belongs-to,join:business_unit_id=id" json:"-"`
@@ -84,7 +84,7 @@ func (lc *LocationCategory) Validate(ctx context.Context, multiErr *errors.Multi
 
 		// Color must be a valid hex color
 		validation.Field(&lc.Color,
-			is.HexColor.Error("Color must be a valid hex color. Please try again."),
+			is.HexColor.Error("Color must be a valid hex color"),
 		),
 	)
 	if err != nil {

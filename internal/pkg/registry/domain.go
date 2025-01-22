@@ -10,11 +10,13 @@ import (
 	"github.com/trenova-app/transport/internal/core/domain/equipmenttype"
 	"github.com/trenova-app/transport/internal/core/domain/fleetcode"
 	"github.com/trenova-app/transport/internal/core/domain/hazardousmaterial"
+	"github.com/trenova-app/transport/internal/core/domain/location"
 	"github.com/trenova-app/transport/internal/core/domain/organization"
 	"github.com/trenova-app/transport/internal/core/domain/permission"
 	"github.com/trenova-app/transport/internal/core/domain/pretrainedmodels"
 	"github.com/trenova-app/transport/internal/core/domain/servicetype"
 	"github.com/trenova-app/transport/internal/core/domain/session"
+	"github.com/trenova-app/transport/internal/core/domain/shipment"
 	"github.com/trenova-app/transport/internal/core/domain/shipmenttype"
 	"github.com/trenova-app/transport/internal/core/domain/tableconfiguration"
 	"github.com/trenova-app/transport/internal/core/domain/user"
@@ -52,5 +54,9 @@ func RegisterEntities() []any {
 		&servicetype.ServiceType{},
 		&hazardousmaterial.HazardousMaterial{},
 		&commodity.Commodity{},
+		&shipment.ShipmentCommodity{},
+		&shipment.Shipment{},
+		&location.LocationCategory{},
+		&location.Location{},
 	}
 }
