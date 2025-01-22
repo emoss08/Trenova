@@ -32,10 +32,7 @@ export function DataTableImportModal({
           <DialogDescription>Import {name}s from a file</DialogDescription>
         </DialogHeader>
         <DialogBody>
-          <DataTableTemplateButton
-            name={name}
-            exportModelName={exportModelName}
-          />
+          <DataTableTemplateButton exportModelName={exportModelName} />
         </DialogBody>
         <DialogFooter>
           <Button
@@ -53,16 +50,14 @@ export function DataTableImportModal({
 }
 
 function DataTableTemplateButton({
-  name,
   exportModelName,
 }: {
-  name: string;
   exportModelName: string;
 }) {
   const handleDownload = async () => {
     try {
       await http.downloadFile(`/reporting/template?entity=${exportModelName}`, {
-        filename: `${exportModelName}.csv`,
+        filename: `${exportModelName}-${crypto.randomUUID()}.csv`,
       });
     } catch (error) {
       console.error("Error downloading template:", error);
