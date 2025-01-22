@@ -35,7 +35,7 @@ func LoadAdminAccount(ctx context.Context, db *bun.DB, fixture *dbfixture.Fixtur
 			Status:                domain.StatusActive,
 			Username:              "admin",
 			EmailAddress:          "admin@trenova.app",
-			Timezone:              "America/Los_Angeles",
+			Timezone:              "America/New_York",
 			Name:                  "System Administrator",
 		}
 
