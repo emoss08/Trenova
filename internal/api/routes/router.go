@@ -21,6 +21,7 @@ import (
 	"github.com/trenova-app/transport/internal/api/handlers/hazardousmaterial"
 	"github.com/trenova-app/transport/internal/api/handlers/locationcategory"
 	organizationHandler "github.com/trenova-app/transport/internal/api/handlers/organization"
+	"github.com/trenova-app/transport/internal/api/handlers/reporting"
 	"github.com/trenova-app/transport/internal/api/handlers/search"
 	"github.com/trenova-app/transport/internal/api/handlers/servicetype"
 	"github.com/trenova-app/transport/internal/api/handlers/session"
@@ -36,6 +37,7 @@ import (
 	"github.com/trenova-app/transport/internal/pkg/config"
 	"github.com/trenova-app/transport/internal/pkg/logger"
 	"github.com/trenova-app/transport/internal/pkg/validator"
+
 	"go.uber.org/fx"
 )
 
@@ -76,6 +78,7 @@ type RouterParams struct {
 	HazardousMaterialHandler     *hazardousmaterial.Handler
 	CommodityHandler             *commodity.Handler
 	LocationCategoryHandler      *locationcategory.Handler
+	ReportingHandler             *reporting.Handler
 }
 
 type Router struct {
@@ -126,13 +129,13 @@ func (r *Router) setupMiddleware() {
 		},
 		LogRequestBody:  true,
 		LogResponseBody: true,
-		// MaxBodySize: 1024,
 	}
 
 	r.app.Use(
 		favicon.New(),
 		compress.New(),
 		helmet.New(),
+
 		middleware.NewLogger(r.p.Logger, logConfig),
 		encryptcookie.New(encryptcookie.Config{
 			Key: r.cfg.Server().SecretKey,
@@ -204,4 +207,7 @@ func (r *Router) setupProtectedRoutes(router fiber.Router, rl *middleware.RateLi
 
 	// Location Categories
 	r.p.LocationCategoryHandler.RegisterRoutes(router, rl)
+
+	// Reporting
+	r.p.ReportingHandler.RegisterRoutes(router, rl)
 }
