@@ -14,6 +14,7 @@ import (
 	"github.com/trenova-app/transport/internal/pkg/config"
 	"github.com/trenova-app/transport/internal/pkg/logger"
 	"github.com/trenova-app/transport/internal/pkg/registry"
+	"github.com/trenova-app/transport/internal/pkg/utils/fileutils"
 	"github.com/trenova-app/transport/internal/pkg/validator/compliancevalidator"
 	"github.com/trenova-app/transport/internal/pkg/validator/rptmetavalidator"
 	"github.com/trenova-app/transport/internal/pkg/validator/workervalidator"
@@ -198,22 +199,6 @@ func ResetTestDB(ctx context.Context, db *bun.DB) error {
 	return nil
 }
 
-// findProjectRoot looks for the go.mod file to determine project root
-func findProjectRoot(startPath string) (string, error) {
-	currentPath := startPath
-	for {
-		if _, err := os.Stat(filepath.Join(currentPath, "go.mod")); err == nil {
-			return currentPath, nil
-		}
-
-		parentPath := filepath.Dir(currentPath)
-		if parentPath == currentPath {
-			return "", fmt.Errorf("could not find project root (no go.mod found)")
-		}
-		currentPath = parentPath
-	}
-}
-
 // loadFixtures loads all fixture files
 func (s *BaseSuite) loadFixtures() error {
 	// Get current working directory
@@ -223,7 +208,7 @@ func (s *BaseSuite) loadFixtures() error {
 	}
 
 	// Find project root
-	projectRoot, err := findProjectRoot(currentDir)
+	projectRoot, err := fileutils.FindProjectRoot(currentDir)
 	if err != nil {
 		return fmt.Errorf("failed to find project root: %w", err)
 	}
