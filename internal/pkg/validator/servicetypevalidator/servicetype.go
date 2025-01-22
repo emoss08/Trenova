@@ -61,7 +61,7 @@ func (v *Validator) ValidateUniqueness(ctx context.Context, valCtx *validator.Va
 
 	vb := queryutils.NewUniquenessValidator(st.GetTableName()).
 		WithTenant(st.OrganizationID, st.BusinessUnitID).
-		WithModelName("ShipmentType").
+		WithModelName("ServiceType").
 		WithFieldAndTemplate("code", st.Code,
 			"Service Type with code ':value' already exists in the organization.",
 			map[string]string{
