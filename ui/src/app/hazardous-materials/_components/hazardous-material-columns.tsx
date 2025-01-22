@@ -1,8 +1,12 @@
 import { DataTableColumnHeader } from "@/components/data-table/_components/data-table-column-header";
-import { StatusBadge } from "@/components/status-badge";
+import { DataTableDescription } from "@/components/data-table/_components/data-table-components";
+import { PackingGroupBadge, StatusBadge } from "@/components/status-badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { type HazardousMaterialSchema } from "@/lib/schemas/hazardous-material-schema";
-import { truncateText } from "@/lib/utils";
+import {
+  HazardousClassChoiceProps,
+  mapToHazardousClassChoice,
+} from "@/types/hazardous-material";
 import { type ColumnDef } from "@tanstack/react-table";
 
 export function getColumns(): ColumnDef<HazardousMaterialSchema>[] {
@@ -51,11 +55,32 @@ export function getColumns(): ColumnDef<HazardousMaterialSchema>[] {
       ),
     },
     {
+      accessorKey: "class",
+      header: ({ column }) => (
+        <DataTableColumnHeader column={column} title="Class" />
+      ),
+      cell: ({ row }) =>
+        mapToHazardousClassChoice(
+          row.original.class as HazardousClassChoiceProps,
+        ),
+    },
+    {
       accessorKey: "description",
       header: ({ column }) => (
         <DataTableColumnHeader column={column} title="Description" />
       ),
-      cell: ({ row }) => truncateText(row.original.description, 100),
+      cell: ({ row }) => (
+        <DataTableDescription description={row.original.description} />
+      ),
+    },
+    {
+      accessorKey: "packingGroup",
+      header: ({ column }) => (
+        <DataTableColumnHeader column={column} title="Packing Group" />
+      ),
+      cell: ({ row }) => (
+        <PackingGroupBadge group={row.original.packingGroup} />
+      ),
     },
   ];
 }
