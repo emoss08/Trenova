@@ -11,7 +11,6 @@ export const commoditySchema = object({
     .oneOf(Object.values(Status)),
   name: string().required("Name is required"),
   description: string().required("Description is required"),
-  isHazardous: boolean().required("Is hazardous is required"),
   minTemperature: number().optional().nullable(),
   maxTemperature: number().optional().nullable(),
   weightPerUnit: number().optional().nullable(),
