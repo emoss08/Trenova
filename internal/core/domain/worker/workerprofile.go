@@ -101,14 +101,6 @@ func (p *WorkerProfile) Validate(ctx context.Context, multiErr *errors.MultiErro
 			validation.Required.Error("Last drug test is required"),
 		),
 
-		// If DisqualificationReason is provided, it must be between 10 and 500 characters
-		validation.Field(&p.DisqualificationReason,
-			validation.When(!p.IsQualified,
-				validation.Required.Error("Disqualification reason is required when worker is not qualified"),
-				validation.Length(10, 500).Error("Disqualification reason must be between 10 and 500 characters"),
-			),
-		),
-
 		validation.Field(&p.LastMVRCheck,
 			validation.Required.Error("Last MVR check is required"),
 		),
