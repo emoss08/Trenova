@@ -93,7 +93,7 @@ func (ur *userRepository) FindByEmail(ctx context.Context, email string) (*user.
 
 	if err = q.Scan(ctx); err != nil {
 		if eris.Is(err, sql.ErrNoRows) {
-			return nil, errors.NewValidationError("emailAddress", errors.ErrNotFound, "User not found")
+			return nil, errors.NewValidationError("emailAddress", errors.ErrNotFound, "User with this email address not found")
 		}
 
 		ur.l.Error().Err(err).Msgf("failed to find user by email %s", email)
