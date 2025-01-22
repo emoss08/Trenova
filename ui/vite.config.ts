@@ -1,10 +1,15 @@
 import { nodeResolve } from "@rollup/plugin-node-resolve";
-import react from "@vitejs/plugin-react-swc";
+import react from "@vitejs/plugin-react";
+
 import path from "path";
 import { visualizer } from "rollup-plugin-visualizer";
 import { defineConfig, type PluginOption } from "vite";
 import { compression } from "vite-plugin-compression2";
 import { VitePWA } from "vite-plugin-pwa";
+
+const ReactCompilerConfig = {
+  target: "18", // '17' | '18' | '19'
+};
 
 // Define vendor chunks that should be bundled separately
 const vendorChunks = {
@@ -61,7 +66,11 @@ const vendorChunks = {
 
 export default defineConfig(({ mode }) => ({
   plugins: [
-    react(),
+    react({
+      babel: {
+        plugins: [["babel-plugin-react-compiler", ReactCompilerConfig]],
+      },
+    }),
     nodeResolve(),
     VitePWA({
       registerType: "autoUpdate",
@@ -176,13 +185,7 @@ export default defineConfig(({ mode }) => ({
   },
 
   optimizeDeps: {
-    include: [
-      "react",
-      "react-dom",
-      "react-router-dom",
-      "@tanstack/react-query",
-      "zustand",
-    ],
+    include: ["@tanstack/react-query", "zustand"],
     exclude: ["@vite/client", "@vite/env"],
   },
 
