@@ -20,13 +20,14 @@ import {
 } from "@/components/ui/dialog";
 import { usePopoutWindow } from "@/hooks/popout-window/use-popout-window";
 import { useUnsavedChanges } from "@/hooks/use-form";
+import { broadcastQueryInvalidation } from "@/hooks/use-invalidate-query";
 import { formatToUserTimezone } from "@/lib/date";
 import { http } from "@/lib/http-client";
 import { cn } from "@/lib/utils";
 import { type EditTableSheetProps } from "@/types/data-table";
 import { APIError } from "@/types/errors";
 import { type API_ENDPOINTS } from "@/types/server";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, type QueryKey } from "@tanstack/react-query";
 import { useCallback } from "react";
 import {
   FormProvider,
@@ -36,13 +37,12 @@ import {
 } from "react-hook-form";
 import { toast } from "sonner";
 import { type ObjectSchema } from "yup";
-import { Badge } from "./badge";
 import { Form } from "./form";
 
 type FormEditModalProps<T extends FieldValues> = EditTableSheetProps<T> & {
   url: API_ENDPOINTS;
   title: string;
-  queryKey: string;
+  queryKey: QueryKey;
   formComponent: React.ReactNode;
   form: UseFormReturn<T>;
   schema: ObjectSchema<T>;
@@ -62,7 +62,6 @@ export function FormEditModal<T extends FieldValues>({
   form,
   className,
 }: FormEditModalProps<T>) {
-  const queryClient = useQueryClient();
   const { isPopout, closePopout } = usePopoutWindow();
 
   const {
@@ -83,12 +82,21 @@ export function FormEditModal<T extends FieldValues>({
       return response.data;
     },
     onSuccess: () => {
-      toast.success(`${title} Updated Successfully`);
+      toast.success(`${title} Updated Successfully`, {
+        description: "Changes have been saved.",
+      });
       onOpenChange(false);
       reset();
 
       // Invalidate the query to refresh the table
-      queryClient.invalidateQueries({ queryKey: [queryKey] });
+      broadcastQueryInvalidation({
+        queryKeys: [queryKey],
+        options: { correlationId: `create-${queryKey}-${Date.now()}` },
+        config: {
+          predicate: true,
+          refetchType: "all",
+        },
+      });
     },
     onError: (error: APIError) => {
       if (error.isValidationError()) {
@@ -137,9 +145,6 @@ export function FormEditModal<T extends FieldValues>({
           <DialogHeader>
             <DialogTitle>
               <div>{fieldKey ? currentRecord[fieldKey] : title}</div>
-              <Badge variant="purple" withDot={false} className="text-3xs">
-                {currentRecord.id}
-              </Badge>
             </DialogTitle>
             <DialogDescription>
               Last updated on {formatToUserTimezone(currentRecord.updatedAt)}

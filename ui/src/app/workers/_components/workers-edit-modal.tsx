@@ -21,12 +21,13 @@ import {
 import { Form } from "@/components/ui/form";
 import { VisuallyHidden } from "@/components/ui/visually-hidden";
 import { useUnsavedChanges } from "@/hooks/use-form";
+import { broadcastQueryInvalidation } from "@/hooks/use-invalidate-query";
 import { http } from "@/lib/http-client";
 import { workerSchema, WorkerSchema } from "@/lib/schemas/worker-schema";
 import { EditTableSheetProps } from "@/types/data-table";
 import { type APIError } from "@/types/errors";
 import { yupResolver } from "@hookform/resolvers/yup";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation } from "@tanstack/react-query";
 import { useCallback } from "react";
 import { FormProvider, useForm } from "react-hook-form";
 import { toast } from "sonner";
@@ -36,8 +37,6 @@ function WorkerEditForm({
   currentRecord,
   onOpenChange,
 }: EditTableSheetProps<WorkerSchema>) {
-  const queryClient = useQueryClient();
-
   const form = useForm<WorkerSchema>({
     resolver: yupResolver(workerSchema),
     defaultValues: currentRecord,
@@ -61,7 +60,7 @@ function WorkerEditForm({
       form.reset();
 
       // Invalidate the worker list query to refresh the table
-      queryClient.invalidateQueries({ queryKey: ["worker-list"] });
+      broadcastQueryInvalidation({ queryKeys: ["worker-list"] });
     },
     onError: (error: APIError) => {
       if (error.isValidationError()) {
