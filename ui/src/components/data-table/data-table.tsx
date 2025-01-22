@@ -13,6 +13,7 @@ import {
 } from "@tanstack/react-table";
 import { parseAsInteger, useQueryState } from "nuqs";
 import { useCallback, useMemo, useTransition } from "react";
+import { Skeleton } from "../ui/skeleton";
 import { Table } from "../ui/table";
 import { DataTableBody } from "./_components/data-table-body";
 import { DataTableHeader } from "./_components/data-table-header";
@@ -95,6 +96,27 @@ export function DataTable<TData extends Record<string, any>>({
     extraSearchParams,
   );
 
+  // Memoized placeholder data with loading skeleton
+  const placeholderData = useMemo(
+    () =>
+      dataQuery.isLoading
+        ? Array.from({ length: pagination.pageSize }, () => ({}) as TData)
+        : dataQuery.data?.results || [],
+    [dataQuery.isLoading, dataQuery.data, pagination.pageSize],
+  );
+
+  // Memoized display columns with loading state
+  const displayColumns = useMemo(
+    () =>
+      dataQuery.isLoading
+        ? columns.map((column) => ({
+            ...column,
+            cell: () => <Skeleton className="h-5 w-full" />,
+          }))
+        : columns,
+    [dataQuery.isLoading, columns],
+  );
+
   // Memoize handlers to prevent unnecessary re-renders
   const handlePageChange = useCallback(
     (newPage: number) => {
@@ -116,8 +138,8 @@ export function DataTable<TData extends Record<string, any>>({
   );
 
   const table = useReactTable({
-    data: (dataQuery.data?.results as unknown as TData[]) ?? [],
-    columns,
+    data: placeholderData as TData[],
+    columns: displayColumns,
     pageCount: Math.ceil(
       (dataQuery.data?.count ?? 0) / (pageSize ?? initialPageSize),
     ),
@@ -157,6 +179,7 @@ export function DataTable<TData extends Record<string, any>>({
         <Table>
           <DataTableHeader table={table} />
           <DataTableBody
+            isLoading={isLoading}
             setCurrentRecord={setCurrentRecord}
             setEditModalOpen={setEditModalOpen}
             table={table}
