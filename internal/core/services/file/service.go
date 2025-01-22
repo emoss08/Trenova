@@ -60,7 +60,7 @@ func NewService(p ServiceParams) services.FileService {
 		MaxFileSize: maxFileSize,
 		AllowedFileTypes: map[services.FileType][]string{
 			services.ImageFile: {".jpg", ".jpeg", ".png", ".gif", ".webp"},
-			services.DocFile:   {".doc", ".docx", ".xls", ".xlsx", ".ppt", ".pptx"},
+			services.DocFile:   {".doc", ".docx", ".xls", ".xlsx", ".csv", ".ppt", ".pptx"},
 			services.PDFFile:   {".pdf"},
 		},
 		DefaultRegion: defaultRegion,
@@ -177,6 +177,37 @@ func (s *service) GetFileVersion(ctx context.Context, bucketName, objectName str
 	}
 
 	return versions, nil
+}
+
+func (s *service) checkObjectExists(ctx context.Context, bucketName, objectName string) (bool, error) {
+	_, err := s.client.StatObject(ctx, bucketName, objectName, minio.StatObjectOptions{})
+	if err != nil {
+		return false, eris.Wrap(err, "check object exists")
+	}
+
+	return true, nil
+}
+
+func (s *service) GetFileByBucketName(ctx context.Context, bucketName, objectName string) (*minio.Object, error) {
+	// Check if the object exists
+	exists, err := s.checkObjectExists(ctx, bucketName, objectName)
+	if err != nil {
+		return nil, eris.Wrap(err, "check object exists")
+	}
+
+	if !exists {
+		return nil, eris.New("object not found")
+	}
+
+	obj, err := s.client.GetObject(ctx, bucketName, objectName, minio.GetObjectOptions{})
+	if err != nil {
+		return nil, eris.Wrap(err, "get object")
+	}
+
+	// ! Do not defer obj.Close() here since we need to return the object
+	// ! the caller is responsible for closing the object
+
+	return obj, nil
 }
 
 func (s *service) GetSpecificVersion(ctx context.Context, bucketName, objectName, versionID string) ([]byte, *services.VersionInfo, error) {
