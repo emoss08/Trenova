@@ -32,7 +32,7 @@ export function CreateFleetCodeModal({ open, onOpenChange }: TableSheetProps) {
       form={form}
       schema={fleetCodeSchema}
       url="/fleet-codes/"
-      queryKey="fleet-code-list"
+      queryKey={["fleet-code"]}
     />
   );
 }

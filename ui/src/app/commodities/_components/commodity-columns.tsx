@@ -1,18 +1,9 @@
 import { DataTableColumnHeader } from "@/components/data-table/_components/data-table-column-header";
 import { DataTableDescription } from "@/components/data-table/_components/data-table-components";
-import { StatusBadge } from "@/components/status-badge";
-import { Badge } from "@/components/ui/badge";
+import { HazmatBadge, StatusBadge } from "@/components/status-badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { type CommoditySchema } from "@/lib/schemas/commodity-schema";
 import { type ColumnDef } from "@tanstack/react-table";
-
-function HazmatBadge({ isHazmat }: { isHazmat: boolean }) {
-  return (
-    <Badge variant={isHazmat ? "active" : "inactive"} className="max-h-6">
-      {isHazmat ? "Yes" : "No"}
-    </Badge>
-  );
-}
 
 export function getColumns(): ColumnDef<CommoditySchema>[] {
   return [
@@ -88,9 +79,12 @@ export function getColumns(): ColumnDef<CommoditySchema>[] {
       },
     },
     {
-      accessorKey: "isHazmat",
+      id: "isHazmat",
+      accessorKey: "hazardousMaterialId",
       header: "Is Hazmat",
-      cell: ({ row }) => <HazmatBadge isHazmat={row.original.isHazardous} />,
+      cell: ({ row }) => (
+        <HazmatBadge isHazmat={!!row.original.hazardousMaterialId} />
+      ),
     },
   ];
 }
