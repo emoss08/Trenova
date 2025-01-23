@@ -1,0 +1,87 @@
+package testutils
+
+import (
+	"context"
+	"fmt"
+	"os"
+	"path/filepath"
+	"sync"
+	"testing"
+
+	"github.com/emoss08/trenova/internal/infrastructure/database/postgres/migrations"
+	"github.com/emoss08/trenova/internal/pkg/utils/fileutils"
+	"github.com/emoss08/trenova/test/fixtures"
+	"github.com/uptrace/bun"
+	"github.com/uptrace/bun/dbfixture"
+)
+
+type TestDBConnection struct {
+	db *bun.DB
+}
+
+func (t *TestDBConnection) DB(ctx context.Context) (*bun.DB, error) {
+	return t.db, nil
+}
+
+func (t *TestDBConnection) Close() error {
+	return nil
+}
+
+func (t *TestDBConnection) Fixture(ctx context.Context) (*dbfixture.Fixture, error) {
+	workingDir, err := os.Getwd()
+	if err != nil {
+		return nil, fmt.Errorf("failed to get working directory: %w", err)
+	}
+
+	projectRoot, err := fileutils.FindProjectRoot(workingDir)
+	if err != nil {
+		return nil, fmt.Errorf("failed to find project root: %w", err)
+	}
+
+	fixturesPath := filepath.Join(projectRoot, "test", "fixtures")
+
+	if _, err := os.Stat(fixturesPath); os.IsNotExist(err) {
+		return nil, fmt.Errorf("fixtures directory does not exist: %s", fixturesPath)
+	}
+
+	if err = fileutils.EnsureDirExists(fixturesPath); err != nil {
+		return nil, fmt.Errorf("failed to ensure fixtures directory exists: %w", err)
+	}
+
+	helpers := fixtures.NewFixtureHelpers()
+	fixture := dbfixture.New(t.db, dbfixture.WithTemplateFuncs(helpers.GetTemplateFuncs()))
+
+	if err := fixture.Load(ctx, os.DirFS(fixturesPath), "fixtures.yml"); err != nil {
+		return nil, fmt.Errorf("failed to load fixtures: %w", err)
+	}
+
+	return fixture, nil
+}
+
+func NewTestDBConnection(db *bun.DB) *TestDBConnection {
+	return &TestDBConnection{db: db}
+}
+
+var (
+	testDB     *TestDatabase
+	testDBConn *TestDBConnection
+	once       sync.Once
+)
+
+func GetTestDB() *TestDBConnection {
+	once.Do(func() {
+		testDB = NewTestDatabase(&testing.T{}, migrations.Migrations)
+		testDBConn = NewTestDBConnection(testDB.DB)
+	})
+
+	return testDBConn
+}
+
+func CleanupTestDB() {
+	if testDB != nil {
+		testDB.Cleanup()
+		testDB = nil
+		testDBConn = nil
+		once = sync.Once{}
+	}
+}
