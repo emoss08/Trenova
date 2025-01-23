@@ -27,4 +27,5 @@ var Module = fx.Module("validators", fx.Provide(
 	hazardousmaterialvalidator.NewValidator,
 	commodityvalidator.NewValidator,
 	locationvalidator.NewLocationCategoryValidator,
+	locationvalidator.NewValidator,
 ))

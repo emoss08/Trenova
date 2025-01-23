@@ -19,6 +19,7 @@ import (
 	"github.com/trenova-app/transport/internal/api/handlers/equipmenttype"
 	"github.com/trenova-app/transport/internal/api/handlers/fleetcode"
 	"github.com/trenova-app/transport/internal/api/handlers/hazardousmaterial"
+	"github.com/trenova-app/transport/internal/api/handlers/location"
 	"github.com/trenova-app/transport/internal/api/handlers/locationcategory"
 	organizationHandler "github.com/trenova-app/transport/internal/api/handlers/organization"
 	"github.com/trenova-app/transport/internal/api/handlers/reporting"
@@ -79,6 +80,7 @@ type RouterParams struct {
 	CommodityHandler             *commodity.Handler
 	LocationCategoryHandler      *locationcategory.Handler
 	ReportingHandler             *reporting.Handler
+	LocationHandler              *location.Handler
 }
 
 type Router struct {
@@ -210,4 +212,7 @@ func (r *Router) setupProtectedRoutes(router fiber.Router, rl *middleware.RateLi
 
 	// Reporting
 	r.p.ReportingHandler.RegisterRoutes(router, rl)
+
+	// Locations
+	r.p.LocationHandler.RegisterRoutes(router, rl)
 }

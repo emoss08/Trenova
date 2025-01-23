@@ -57,4 +57,5 @@ type Shipment struct {
 	Organization *organization.Organization `json:"organization,omitempty" bun:"rel:belongs-to,join:organization_id=id"`
 	ShipmentType *shipmenttype.ShipmentType `json:"shipmentType,omitempty" bun:"rel:belongs-to,join:shipment_type_id=id"`
 	ServiceType  *servicetype.ServiceType   `json:"serviceType,omitempty" bun:"rel:belongs-to,join:service_type_id=id"`
+	Commodities  []*ShipmentCommodity       `json:"commodities,omitempty" bun:"rel:has-many,join:id=shipment_id"`
 }
