@@ -26,11 +26,11 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
             "file:border-0 file:bg-transparent file:text-sm file:font-medium",
             "placeholder:text-muted-foreground",
             "disabled:cursor-not-allowed disabled:opacity-50",
-            "focus-visible:border-blue-600 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-blue-600/20",
+            "focus-visible:border-blue-600 focus-visible:outline-hidden focus-visible:ring-4 focus-visible:ring-blue-600/20",
             "transition-[border-color,box-shadow] duration-200 ease-in-out",
             // Invalid state
             isInvalid &&
-              "border-red-500 bg-red-500 bg-opacity-20 ring-0 ring-red-500 placeholder:text-red-500 focus:outline-none focus-visible:border-red-600 focus-visible:ring-4 focus-visible:ring-red-400/20",
+              "border-red-500 bg-red-500 bg-opacity-20 ring-0 ring-red-500 placeholder:text-red-500 focus:outline-hidden focus-visible:border-red-600 focus-visible:ring-4 focus-visible:ring-red-400/20",
             icon && "pl-10",
             className,
           )}

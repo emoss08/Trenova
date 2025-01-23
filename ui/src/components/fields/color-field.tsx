@@ -95,7 +95,7 @@ export function ColorField<T extends FieldValues>({
                   variant="outline"
                   type="button"
                   className={cn(
-                    "w-full h-8 justify-start text-left font-normal truncate gap-2 rounded border-muted-foreground/20 bg-muted px-1.5 data-[state=open]:border-blue-600 data-[state=open]:outline-none data-[state=open]:ring-4 data-[state=open]:ring-blue-600/20",
+                    "w-full h-8 justify-start text-left font-normal truncate gap-2 rounded border-muted-foreground/20 bg-muted px-1.5 data-[state=open]:border-blue-600 data-[state=open]:outline-hidden data-[state=open]:ring-4 data-[state=open]:ring-blue-600/20",
                     !value && "text-muted-foreground",
                     className,
                   )}
@@ -103,7 +103,7 @@ export function ColorField<T extends FieldValues>({
                   <div className="flex w-full items-center gap-2">
                     {value ? (
                       <div
-                        className="size-4 rounded !bg-cover !bg-center transition-all"
+                        className="size-4 rounded bg-cover! bg-center! transition-all"
                         style={{ background: value }}
                       />
                     ) : (
@@ -115,7 +115,7 @@ export function ColorField<T extends FieldValues>({
                   </div>
                 </Button>
               </PopoverTrigger>
-              <PopoverContent className="w-[--radix-popover-trigger-width] p-2">
+              <PopoverContent className="w-(--radix-popover-trigger-width) p-2">
                 <TooltipProvider>
                   <div className="flex flex-col gap-1">
                     <div className="mb-2 flex items-center justify-between border-b border-border">

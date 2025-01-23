@@ -119,7 +119,7 @@ export function Option<
     <components.Option {...props}>
       <div
         className={cn(
-          "group relative flex cursor-pointer select-none items-center gap-x-3 rounded-sm px-3 py-1.5 text-xs outline-none",
+          "group relative flex cursor-pointer select-none items-center gap-x-3 rounded-sm px-3 py-1.5 text-xs outline-hidden",
           isSelected && "bg-accent",
           isFocused && "bg-accent",
         )}
