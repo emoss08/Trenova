@@ -1,4 +1,5 @@
 import { DataTableColumnHeader } from "@/components/data-table/_components/data-table-column-header";
+import { DataTableDescription } from "@/components/data-table/_components/data-table-components";
 import { StatusBadge } from "@/components/status-badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { type FleetCodeSchema } from "@/lib/schemas/fleet-code-schema";
@@ -69,6 +70,9 @@ export function getColumns(): ColumnDef<FleetCodeSchema>[] {
       accessorKey: "description",
       header: ({ column }) => (
         <DataTableColumnHeader column={column} title="Description" />
+      ),
+      cell: ({ row }) => (
+        <DataTableDescription description={row.original.description} />
       ),
     },
   ];
