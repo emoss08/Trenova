@@ -3,12 +3,12 @@ package repositories
 import (
 	"context"
 
+	"github.com/emoss08/trenova/internal/core/domain/audit"
+	"github.com/emoss08/trenova/internal/core/ports/db"
+	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/pkg/logger"
 	"github.com/rotisserie/eris"
 	"github.com/rs/zerolog"
-	"github.com/trenova-app/transport/internal/core/domain/audit"
-	"github.com/trenova-app/transport/internal/core/ports/db"
-	"github.com/trenova-app/transport/internal/core/ports/repositories"
-	"github.com/trenova-app/transport/internal/pkg/logger"
 	"github.com/uptrace/bun"
 	"go.uber.org/fx"
 )

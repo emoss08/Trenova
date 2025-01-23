@@ -6,11 +6,11 @@ import (
 	"time"
 
 	"github.com/bytedance/sonic"
+	"github.com/emoss08/trenova/internal/pkg/config"
+	"github.com/emoss08/trenova/internal/pkg/logger"
 	"github.com/redis/go-redis/v9"
 	"github.com/rotisserie/eris"
 	"github.com/rs/zerolog"
-	"github.com/trenova-app/transport/internal/pkg/config"
-	"github.com/trenova-app/transport/internal/pkg/logger"
 	"go.uber.org/fx"
 )
 

@@ -1,12 +1,12 @@
 package documentqualityconfig
 
 import (
+	"github.com/emoss08/trenova/internal/api/middleware"
+	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/core/services/documentqualityconfig"
+	"github.com/emoss08/trenova/internal/pkg/ctx"
+	"github.com/emoss08/trenova/internal/pkg/validator"
 	"github.com/gofiber/fiber/v2"
-	"github.com/trenova-app/transport/internal/api/middleware"
-	"github.com/trenova-app/transport/internal/core/ports/repositories"
-	"github.com/trenova-app/transport/internal/core/services/documentqualityconfig"
-	"github.com/trenova-app/transport/internal/pkg/ctx"
-	"github.com/trenova-app/transport/internal/pkg/validator"
 	"go.uber.org/fx"
 )
 

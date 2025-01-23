@@ -4,12 +4,12 @@ import (
 	"context"
 	"time"
 
+	"github.com/emoss08/trenova/internal/core/domain/usstate"
+	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/infrastructure/cache/redis"
+	"github.com/emoss08/trenova/internal/pkg/logger"
 	"github.com/rotisserie/eris"
 	"github.com/rs/zerolog"
-	"github.com/trenova-app/transport/internal/core/domain/usstate"
-	"github.com/trenova-app/transport/internal/core/ports/repositories"
-	"github.com/trenova-app/transport/internal/infrastructure/cache/redis"
-	"github.com/trenova-app/transport/internal/pkg/logger"
 	"go.uber.org/fx"
 )
 

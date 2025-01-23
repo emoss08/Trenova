@@ -3,7 +3,7 @@ package main
 import (
 	"os"
 
-	"github.com/trenova-app/transport/cmd/db/commands"
+	"github.com/emoss08/trenova/cmd/db/commands"
 )
 
 func main() {

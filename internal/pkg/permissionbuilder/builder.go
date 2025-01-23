@@ -3,7 +3,7 @@ package permissionbuilder
 import (
 	"fmt"
 
-	"github.com/trenova-app/transport/internal/core/domain/permission"
+	"github.com/emoss08/trenova/internal/core/domain/permission"
 )
 
 type PermissionBuilder struct {

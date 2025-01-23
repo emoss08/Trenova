@@ -1,7 +1,7 @@
 package session
 
 import (
-	"github.com/trenova-app/transport/pkg/types/pulid"
+	"github.com/emoss08/trenova/pkg/types/pulid"
 )
 
 // Event represents a session event

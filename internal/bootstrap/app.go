@@ -7,12 +7,12 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/trenova-app/transport/internal/bootstrap/modules/api"
-	"github.com/trenova-app/transport/internal/bootstrap/modules/infrastructure"
-	"github.com/trenova-app/transport/internal/bootstrap/modules/services"
-	"github.com/trenova-app/transport/internal/bootstrap/modules/validators"
-	redisRepos "github.com/trenova-app/transport/internal/infrastructure/cache/redis/repositories"
-	postgresRepos "github.com/trenova-app/transport/internal/infrastructure/database/postgres/repositories"
+	"github.com/emoss08/trenova/internal/bootstrap/modules/api"
+	"github.com/emoss08/trenova/internal/bootstrap/modules/infrastructure"
+	"github.com/emoss08/trenova/internal/bootstrap/modules/services"
+	"github.com/emoss08/trenova/internal/bootstrap/modules/validators"
+	redisRepos "github.com/emoss08/trenova/internal/infrastructure/cache/redis/repositories"
+	postgresRepos "github.com/emoss08/trenova/internal/infrastructure/database/postgres/repositories"
 
 	"go.uber.org/fx"
 )

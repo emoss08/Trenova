@@ -3,9 +3,9 @@ package permissiongrant
 import (
 	"context"
 
-	"github.com/trenova-app/transport/internal/core/domain/permission"
-	"github.com/trenova-app/transport/internal/core/domain/user"
-	"github.com/trenova-app/transport/pkg/types/pulid"
+	"github.com/emoss08/trenova/internal/core/domain/permission"
+	"github.com/emoss08/trenova/internal/core/domain/user"
+	"github.com/emoss08/trenova/pkg/types/pulid"
 	"github.com/uptrace/bun"
 )
 

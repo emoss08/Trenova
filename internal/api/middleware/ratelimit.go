@@ -7,14 +7,14 @@ import (
 	"strings"
 	"time"
 
+	"github.com/emoss08/trenova/internal/infrastructure/cache/redis"
+	tCtx "github.com/emoss08/trenova/internal/pkg/ctx"
+	"github.com/emoss08/trenova/internal/pkg/errors"
+	"github.com/emoss08/trenova/internal/pkg/logger"
+	"github.com/emoss08/trenova/pkg/types/pulid"
 	"github.com/gofiber/fiber/v2"
 	"github.com/rotisserie/eris"
 	"github.com/rs/zerolog"
-	"github.com/trenova-app/transport/internal/infrastructure/cache/redis"
-	tCtx "github.com/trenova-app/transport/internal/pkg/ctx"
-	"github.com/trenova-app/transport/internal/pkg/errors"
-	"github.com/trenova-app/transport/internal/pkg/logger"
-	"github.com/trenova-app/transport/pkg/types/pulid"
 )
 
 // RateLimitParams defines the dependencies required for rate limiting

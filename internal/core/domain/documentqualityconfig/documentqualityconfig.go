@@ -3,14 +3,14 @@ package documentqualityconfig
 import (
 	"context"
 
+	"github.com/emoss08/trenova/internal/core/domain"
+	"github.com/emoss08/trenova/internal/core/domain/pretrainedmodels"
+	"github.com/emoss08/trenova/internal/pkg/errors"
+	"github.com/emoss08/trenova/internal/pkg/utils/queryutils"
+	"github.com/emoss08/trenova/internal/pkg/utils/timeutils"
+	"github.com/emoss08/trenova/pkg/types/pulid"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/rotisserie/eris"
-	"github.com/trenova-app/transport/internal/core/domain"
-	"github.com/trenova-app/transport/internal/core/domain/pretrainedmodels"
-	"github.com/trenova-app/transport/internal/pkg/errors"
-	"github.com/trenova-app/transport/internal/pkg/utils/queryutils"
-	"github.com/trenova-app/transport/internal/pkg/utils/timeutils"
-	"github.com/trenova-app/transport/pkg/types/pulid"
 	"github.com/uptrace/bun"
 )
 

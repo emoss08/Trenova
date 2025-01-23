@@ -4,11 +4,11 @@ import (
 	"context"
 	"regexp"
 
+	"github.com/emoss08/trenova/internal/core/domain/usstate"
+	"github.com/emoss08/trenova/internal/pkg/utils/timeutils"
+	"github.com/emoss08/trenova/pkg/types/pulid"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/go-ozzo/ozzo-validation/v4/is"
-	"github.com/trenova-app/transport/internal/core/domain/usstate"
-	"github.com/trenova-app/transport/internal/pkg/utils/timeutils"
-	"github.com/trenova-app/transport/pkg/types/pulid"
 	"github.com/uptrace/bun"
 )
 

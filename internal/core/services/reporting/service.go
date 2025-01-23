@@ -5,10 +5,10 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/emoss08/trenova/internal/pkg/logger"
+	"github.com/emoss08/trenova/internal/pkg/utils/fileutils"
 	"github.com/rotisserie/eris"
 	"github.com/rs/zerolog"
-	"github.com/trenova-app/transport/internal/pkg/logger"
-	"github.com/trenova-app/transport/internal/pkg/utils/fileutils"
 	"go.uber.org/fx"
 )
 

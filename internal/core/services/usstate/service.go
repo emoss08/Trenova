@@ -3,11 +3,11 @@ package usstate
 import (
 	"context"
 
+	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/pkg/logger"
+	"github.com/emoss08/trenova/pkg/types"
 	"github.com/rotisserie/eris"
 	"github.com/rs/zerolog"
-	"github.com/trenova-app/transport/internal/core/ports/repositories"
-	"github.com/trenova-app/transport/internal/pkg/logger"
-	"github.com/trenova-app/transport/pkg/types"
 	"go.uber.org/fx"
 )
 

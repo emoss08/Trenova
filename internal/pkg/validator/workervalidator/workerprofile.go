@@ -3,10 +3,10 @@ package workervalidator
 import (
 	"context"
 
-	"github.com/trenova-app/transport/internal/core/domain/worker"
-	"github.com/trenova-app/transport/internal/pkg/errors"
-	"github.com/trenova-app/transport/internal/pkg/validator"
-	"github.com/trenova-app/transport/internal/pkg/validator/compliancevalidator"
+	"github.com/emoss08/trenova/internal/core/domain/worker"
+	"github.com/emoss08/trenova/internal/pkg/errors"
+	"github.com/emoss08/trenova/internal/pkg/validator"
+	"github.com/emoss08/trenova/internal/pkg/validator/compliancevalidator"
 	"go.uber.org/fx"
 )
 

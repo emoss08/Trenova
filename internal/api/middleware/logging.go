@@ -5,9 +5,9 @@ import (
 	"strings"
 	"time"
 
+	"github.com/emoss08/trenova/internal/pkg/logger"
 	"github.com/gofiber/fiber/v2"
 	"github.com/google/uuid"
-	"github.com/trenova-app/transport/internal/pkg/logger"
 )
 
 // LogConfig holds the configuration for the logging middleware

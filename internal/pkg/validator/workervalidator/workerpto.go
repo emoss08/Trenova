@@ -5,10 +5,10 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/trenova-app/transport/internal/core/domain/worker"
-	"github.com/trenova-app/transport/internal/core/ports/repositories"
-	"github.com/trenova-app/transport/internal/pkg/errors"
-	"github.com/trenova-app/transport/internal/pkg/validator"
+	"github.com/emoss08/trenova/internal/core/domain/worker"
+	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/pkg/errors"
+	"github.com/emoss08/trenova/internal/pkg/validator"
 	"go.uber.org/fx"
 )
 

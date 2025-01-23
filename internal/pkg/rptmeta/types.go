@@ -1,9 +1,9 @@
 package rptmeta
 
 import (
+	"github.com/emoss08/trenova/internal/pkg/errors"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/rotisserie/eris"
-	"github.com/trenova-app/transport/internal/pkg/errors"
 )
 
 // Caching configuration for the report

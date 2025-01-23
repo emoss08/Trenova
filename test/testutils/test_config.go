@@ -3,8 +3,8 @@ package testutils
 import (
 	"time"
 
+	"github.com/emoss08/trenova/internal/pkg/config"
 	"github.com/spf13/viper"
-	"github.com/trenova-app/transport/internal/pkg/config"
 )
 
 func NewTestConfig() *config.Config {

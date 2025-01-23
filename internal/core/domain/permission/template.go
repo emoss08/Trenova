@@ -3,7 +3,7 @@ package permission
 import (
 	"context"
 
-	"github.com/trenova-app/transport/pkg/types/pulid"
+	"github.com/emoss08/trenova/pkg/types/pulid"
 	"github.com/uptrace/bun"
 )
 

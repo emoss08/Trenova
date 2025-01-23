@@ -5,7 +5,7 @@ import (
 	"log"
 	"path/filepath"
 
-	"github.com/trenova-app/transport/internal/pkg/rptmeta"
+	"github.com/emoss08/trenova/internal/pkg/rptmeta"
 )
 
 func main() {

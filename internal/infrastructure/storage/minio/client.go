@@ -7,13 +7,13 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/pkg/config"
+	"github.com/emoss08/trenova/internal/pkg/logger"
 	"github.com/minio/minio-go/v7"
 	"github.com/minio/minio-go/v7/pkg/credentials"
 	"github.com/rotisserie/eris"
 	"github.com/rs/zerolog"
-	"github.com/trenova-app/transport/internal/core/ports/services"
-	"github.com/trenova-app/transport/internal/pkg/config"
-	"github.com/trenova-app/transport/internal/pkg/logger"
 	"go.uber.org/fx"
 )
 

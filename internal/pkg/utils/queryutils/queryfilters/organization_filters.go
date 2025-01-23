@@ -3,7 +3,7 @@ package queryfilters
 import (
 	"fmt"
 
-	"github.com/trenova-app/transport/internal/core/ports"
+	"github.com/emoss08/trenova/internal/core/ports"
 	"github.com/uptrace/bun"
 )
 

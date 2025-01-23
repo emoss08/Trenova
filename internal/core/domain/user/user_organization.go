@@ -4,8 +4,8 @@ import (
 	"context"
 	"time"
 
-	"github.com/trenova-app/transport/internal/core/domain/organization"
-	"github.com/trenova-app/transport/pkg/types/pulid"
+	"github.com/emoss08/trenova/internal/core/domain/organization"
+	"github.com/emoss08/trenova/pkg/types/pulid"
 	"github.com/uptrace/bun"
 )
 

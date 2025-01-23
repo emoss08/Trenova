@@ -3,7 +3,7 @@ package audit
 import (
 	"sync"
 
-	"github.com/trenova-app/transport/internal/core/domain/audit"
+	"github.com/emoss08/trenova/internal/core/domain/audit"
 )
 
 type Buffer struct {
