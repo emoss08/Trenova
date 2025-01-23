@@ -1,59 +1,87 @@
 package testutils
 
 import (
-	"database/sql"
+	"context"
 	"fmt"
+	"os"
+	"path/filepath"
 	"sync"
-	"time"
+	"testing"
 
+	"github.com/emoss08/trenova/internal/infrastructure/database/postgres/migrations"
+	"github.com/emoss08/trenova/internal/pkg/utils/fileutils"
+	"github.com/emoss08/trenova/test/fixtures"
 	"github.com/uptrace/bun"
-	"github.com/uptrace/bun/dialect/pgdialect"
-	"github.com/uptrace/bun/driver/pgdriver"
+	"github.com/uptrace/bun/dbfixture"
 )
 
-const testDBName = "bun_test"
+type TestDBConnection struct {
+	db *bun.DB
+}
+
+func (t *TestDBConnection) DB(ctx context.Context) (*bun.DB, error) {
+	return t.db, nil
+}
+
+func (t *TestDBConnection) Close() error {
+	return nil
+}
+
+func (t *TestDBConnection) Fixture(ctx context.Context) (*dbfixture.Fixture, error) {
+	workingDir, err := os.Getwd()
+	if err != nil {
+		return nil, fmt.Errorf("failed to get working directory: %w", err)
+	}
+
+	projectRoot, err := fileutils.FindProjectRoot(workingDir)
+	if err != nil {
+		return nil, fmt.Errorf("failed to find project root: %w", err)
+	}
+
+	fixturesPath := filepath.Join(projectRoot, "test", "fixtures")
+
+	if _, err := os.Stat(fixturesPath); os.IsNotExist(err) {
+		return nil, fmt.Errorf("fixtures directory does not exist: %s", fixturesPath)
+	}
+
+	if err = fileutils.EnsureDirExists(fixturesPath); err != nil {
+		return nil, fmt.Errorf("failed to ensure fixtures directory exists: %w", err)
+	}
+
+	helpers := fixtures.NewFixtureHelpers()
+	fixture := dbfixture.New(t.db, dbfixture.WithTemplateFuncs(helpers.GetTemplateFuncs()))
+
+	if err := fixture.Load(ctx, os.DirFS(fixturesPath), "fixtures.yml"); err != nil {
+		return nil, fmt.Errorf("failed to load fixtures: %w", err)
+	}
+
+	return fixture, nil
+}
+
+func NewTestDBConnection(db *bun.DB) *TestDBConnection {
+	return &TestDBConnection{db: db}
+}
 
 var (
-	globalOnce sync.Once
-	testDB     *bun.DB
+	testDB     *TestDatabase
+	testDBConn *TestDBConnection
+	once       sync.Once
 )
 
-// initTestDatabase ensures we have a connection to the test database
-func initTestDatabase() error {
-	var initErr error
-	globalOnce.Do(func() {
-		// Connect to test database
-		dsn := fmt.Sprintf("postgres://postgres:postgres@localhost:5432/%s?sslmode=disable", testDBName)
-		sqldb := sql.OpenDB(pgdriver.NewConnector(pgdriver.WithDSN(dsn)))
-		db := bun.NewDB(sqldb, pgdialect.New())
-
-		// Configure connection pool
-		db.SetMaxOpenConns(4)
-		db.SetMaxIdleConns(4)
-		db.SetConnMaxLifetime(time.Hour)
-
-		// Test connection
-		if err := db.Ping(); err != nil {
-			initErr = fmt.Errorf("failed to connect to test database: %w", err)
-			return
-		}
-
-		testDB = db
+func GetTestDB() *TestDBConnection {
+	once.Do(func() {
+		testDB = NewTestDatabase(&testing.T{}, migrations.Migrations)
+		testDBConn = NewTestDBConnection(testDB.DB)
 	})
-	return initErr
+
+	return testDBConn
 }
 
-// GetTestDB returns a connection to the test database
-func GetTestDB() (*bun.DB, error) {
-	if err := initTestDatabase(); err != nil {
-		return nil, err
-	}
-	return testDB, nil
-}
-
-// CleanupTestDB closes the test database connection
 func CleanupTestDB() {
 	if testDB != nil {
-		testDB.Close()
+		testDB.Cleanup()
+		testDB = nil
+		testDBConn = nil
+		once = sync.Once{}
 	}
 }

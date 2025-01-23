@@ -63,7 +63,7 @@ func FindProjectRoot(startPath string) (string, error) {
 func EnsureDirExists(path string) error {
 	if _, err := os.Stat(path); os.IsNotExist(err) {
 		log.Info().Str("path", path).Msgf("directory %s does not exists, creating...", path)
-		return os.MkdirAll(path, 0o755)
+		return os.MkdirAll(path, 0o750)
 	}
 
 	return nil

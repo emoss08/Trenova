@@ -39,6 +39,13 @@ func MonthsAgoUnix(months int) int64 {
 	return time.Now().AddDate(0, -months, 0).Unix()
 }
 
+// MonthsAgoUnixPointer returns a pointer to the Unix timestamp corresponding to the current time minus a specified number of months.
+// The function uses the AddDate method to subtract the specified number of months.
+func MonthsAgoUnixPointer(months int) *int64 {
+	now := time.Now().AddDate(0, -months, 0).Unix()
+	return &now
+}
+
 // MonthsFromNowUnix returns the Unix timestamp corresponding to the current time plus a specified number of months.
 // The function uses the AddDate method to add the specified number of months.
 func MonthsFromNowUnix(months int) int64 {
