@@ -211,7 +211,7 @@ const ReactSelectInput = React.forwardRef<any, ReactSelectInputProps>(
                 isError &&
                 "ring-red-500 border-red-600 ring-4 ring-red-400/20",
               // Invalid state
-              isError && "border-red-500 bg-red-500 bg-opacity-20",
+              isError && "border-red-500 bg-red-500/20",
             ),
           placeholder: () =>
             cn("text-muted-foreground", isError && "text-red-500"),
@@ -250,6 +250,8 @@ const ReactSelectInput = React.forwardRef<any, ReactSelectInputProps>(
   },
 );
 
+ReactSelectInput.displayName = "ReactSelectInput";
+
 export function SelectField<T extends FieldValues>({
   label,
   description,
@@ -263,6 +265,7 @@ export function SelectField<T extends FieldValues>({
   isLoading,
   isFetchError,
   placeholder,
+  menuPlacement,
 }: Omit<SelectFieldProps<T>, "onChange">) {
   const [isOpen, setIsOpen] = useState(false);
 
@@ -288,6 +291,7 @@ export function SelectField<T extends FieldValues>({
         >
           <ReactSelectInput
             isDisabled={disabled}
+            menuPlacement={menuPlacement}
             id={inputId}
             ref={ref}
             name={name}

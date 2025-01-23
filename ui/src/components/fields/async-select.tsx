@@ -191,7 +191,7 @@ const ReactAsyncSelect = React.forwardRef<any, ReactAsyncSelectInputProps>(
                 isError &&
                 "ring-red-500 border-red-600 ring-4 ring-red-400/20",
               // Invalid state
-              isError && "border-red-500 bg-red-500 bg-opacity-20",
+              isError && "border-red-500 bg-red-500/20",
             ),
           placeholder: () =>
             cn("text-muted-foreground", isError && "text-red-500"),
