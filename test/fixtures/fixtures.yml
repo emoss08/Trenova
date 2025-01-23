@@ -585,6 +585,20 @@
       business_unit_id: "{{ $.BusinessUnit.trenova.ID }}"
       created_at: "{{ now.Unix }}"
 
+- model: Location
+  rows:
+    - _id: test_location
+      organization_id: "{{ $.Organization.trenova.ID }}"
+      business_unit_id: "{{ $.BusinessUnit.trenova.ID }}"
+      created_at: "{{ now.Unix }}"
+      name: "Test Location"
+      address_line_1: "1234 Main St"
+      code: "TEST000000"
+      city: "Los Angeles"
+      postal_code: "90001"
+      state_id: "{{ $.UsState.ca.ID }}"
+      location_category_id: "{{ $.LocationCategory.location_category_1.ID }}"
+
 - model: ServiceType
   rows:
     - _id: std_service_type

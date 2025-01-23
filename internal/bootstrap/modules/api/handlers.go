@@ -8,6 +8,7 @@ import (
 	"github.com/trenova-app/transport/internal/api/handlers/equipmenttype"
 	"github.com/trenova-app/transport/internal/api/handlers/fleetcode"
 	"github.com/trenova-app/transport/internal/api/handlers/hazardousmaterial"
+	"github.com/trenova-app/transport/internal/api/handlers/location"
 	"github.com/trenova-app/transport/internal/api/handlers/locationcategory"
 	"github.com/trenova-app/transport/internal/api/handlers/organization"
 	"github.com/trenova-app/transport/internal/api/handlers/reporting"
@@ -43,4 +44,5 @@ var HandlersModule = fx.Module("api.Handlers", fx.Provide(
 	commodity.NewHandler,
 	locationcategory.NewHandler,
 	reporting.NewHandler,
+	location.NewHandler,
 ))
