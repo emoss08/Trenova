@@ -1,7 +1,8 @@
-package dbtests_test
+package compliancevalidator_test
 
 import (
 	"context"
+	"os"
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/worker"
@@ -11,22 +12,30 @@ import (
 	"github.com/emoss08/trenova/internal/pkg/utils/timeutils"
 	"github.com/emoss08/trenova/internal/pkg/validator/compliancevalidator"
 	"github.com/emoss08/trenova/test/testutils"
-	"github.com/stretchr/testify/require"
 )
 
+var (
+	ts  *testutils.TestSetup
+	ctx = context.Background()
+)
+
+func TestMain(m *testing.M) {
+	setup, err := testutils.NewTestSetup(ctx)
+	if err != nil {
+		panic(err)
+	}
+
+	ts = setup
+
+	os.Exit(m.Run())
+}
+
 func TestComplianceValidator(t *testing.T) {
-	ctx := context.Background()
-	db := testutils.GetTestDB()
-
-	fixture, err := db.Fixture(ctx)
-	require.NotNil(t, fixture, "fixture not found")
-	require.NoError(t, err, "error loading fixture")
-
-	workerProfile := fixture.MustRow("WorkerProfile.wp_1").(*worker.WorkerProfile)
+	workerProfile := ts.Fixture.MustRow("WorkerProfile.wp_1").(*worker.WorkerProfile)
 
 	hazmatRepo := repositories.NewHazmatExpirationRepository(repositories.HazmatExpirationRepositoryParams{
 		Logger: logger.NewLogger(testutils.NewTestConfig()),
-		DB:     db,
+		DB:     ts.DB,
 	})
 
 	validator := compliancevalidator.NewValidator(compliancevalidator.ValidatorParams{

@@ -15,8 +15,11 @@ import (
 	"github.com/uptrace/bun/dbfixture"
 )
 
+var BunFixture *dbfixture.Fixture
+
 type TestDBConnection struct {
-	db *bun.DB
+	db      *bun.DB
+	fixture *dbfixture.Fixture
 }
 
 func (t *TestDBConnection) DB(ctx context.Context) (*bun.DB, error) {
@@ -51,6 +54,8 @@ func (t *TestDBConnection) Fixture(ctx context.Context) (*dbfixture.Fixture, err
 	helpers := fixtures.NewFixtureHelpers()
 	fixture := dbfixture.New(t.db, dbfixture.WithTemplateFuncs(helpers.GetTemplateFuncs()))
 
+	BunFixture = fixture
+
 	if err := fixture.Load(ctx, os.DirFS(fixturesPath), "fixtures.yml"); err != nil {
 		return nil, fmt.Errorf("failed to load fixtures: %w", err)
 	}
@@ -58,8 +63,8 @@ func (t *TestDBConnection) Fixture(ctx context.Context) (*dbfixture.Fixture, err
 	return fixture, nil
 }
 
-func NewTestDBConnection(db *bun.DB) *TestDBConnection {
-	return &TestDBConnection{db: db}
+func NewTestDBConnection(db *bun.DB, fixture *dbfixture.Fixture) *TestDBConnection {
+	return &TestDBConnection{db: db, fixture: fixture}
 }
 
 var (
@@ -71,10 +76,24 @@ var (
 func GetTestDB() *TestDBConnection {
 	once.Do(func() {
 		testDB = NewTestDatabase(&testing.T{}, migrations.Migrations)
-		testDBConn = NewTestDBConnection(testDB.DB)
+		testDBConn = NewTestDBConnection(testDB.DB, testDB.Fixture)
 	})
 
 	return testDBConn
+}
+
+func GetTestFixture() *dbfixture.Fixture {
+	once.Do(func() {
+		testDB = NewTestDatabase(&testing.T{}, migrations.Migrations)
+		testDBConn = NewTestDBConnection(testDB.DB, testDB.Fixture)
+	})
+
+	return BunFixture
+}
+
+func FixtureMustRow(name string) any {
+	fixture := GetTestFixture()
+	return fixture.MustRow(name)
 }
 
 func CleanupTestDB() {
