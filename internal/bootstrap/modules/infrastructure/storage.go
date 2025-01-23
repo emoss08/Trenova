@@ -1,7 +1,7 @@
 package infrastructure
 
 import (
-	"github.com/trenova-app/transport/internal/infrastructure/storage/minio"
+	"github.com/emoss08/trenova/internal/infrastructure/storage/minio"
 	"go.uber.org/fx"
 )
 

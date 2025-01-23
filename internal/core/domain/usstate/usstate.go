@@ -3,8 +3,8 @@ package usstate
 import (
 	"context"
 
-	"github.com/trenova-app/transport/internal/pkg/utils/timeutils"
-	"github.com/trenova-app/transport/pkg/types/pulid"
+	"github.com/emoss08/trenova/internal/pkg/utils/timeutils"
+	"github.com/emoss08/trenova/pkg/types/pulid"
 	"github.com/uptrace/bun"
 )
 

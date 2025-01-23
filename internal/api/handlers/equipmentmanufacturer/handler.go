@@ -1,17 +1,17 @@
 package equipmentmanufacturer
 
 import (
+	"github.com/emoss08/trenova/internal/api/middleware"
+	equipmentmanufacturerdomain "github.com/emoss08/trenova/internal/core/domain/equipmentmanufacturer"
+	"github.com/emoss08/trenova/internal/core/ports"
+	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/core/services/equipmentmanufacturer"
+	"github.com/emoss08/trenova/internal/pkg/ctx"
+	"github.com/emoss08/trenova/internal/pkg/utils/paginationutils/limitoffsetpagination"
+	"github.com/emoss08/trenova/internal/pkg/validator"
+	"github.com/emoss08/trenova/pkg/types"
+	"github.com/emoss08/trenova/pkg/types/pulid"
 	"github.com/gofiber/fiber/v2"
-	"github.com/trenova-app/transport/internal/api/middleware"
-	equipmentmanufacturerdomain "github.com/trenova-app/transport/internal/core/domain/equipmentmanufacturer"
-	"github.com/trenova-app/transport/internal/core/ports"
-	"github.com/trenova-app/transport/internal/core/ports/repositories"
-	"github.com/trenova-app/transport/internal/core/services/equipmentmanufacturer"
-	"github.com/trenova-app/transport/internal/pkg/ctx"
-	"github.com/trenova-app/transport/internal/pkg/utils/paginationutils/limitoffsetpagination"
-	"github.com/trenova-app/transport/internal/pkg/validator"
-	"github.com/trenova-app/transport/pkg/types"
-	"github.com/trenova-app/transport/pkg/types/pulid"
 	"go.uber.org/fx"
 )
 

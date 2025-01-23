@@ -3,8 +3,8 @@ package redis
 import (
 	"context"
 
+	"github.com/emoss08/trenova/internal/core/ports/infra"
 	"github.com/redis/go-redis/v9"
-	"github.com/trenova-app/transport/internal/core/ports/infra"
 )
 
 type Pipeliner struct {

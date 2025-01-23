@@ -4,7 +4,7 @@ import (
 	"log"
 	"os"
 
-	"github.com/trenova-app/transport/cmd/api/commands"
+	"github.com/emoss08/trenova/cmd/api/commands"
 )
 
 func main() {

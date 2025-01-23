@@ -3,7 +3,7 @@ package repositories
 import (
 	"context"
 
-	"github.com/trenova-app/transport/internal/core/domain/usstate"
+	"github.com/emoss08/trenova/internal/core/domain/usstate"
 )
 
 type ListUsStateResult struct {

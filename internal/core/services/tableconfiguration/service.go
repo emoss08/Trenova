@@ -3,16 +3,16 @@ package tableconfiguration
 import (
 	"context"
 
+	"github.com/emoss08/trenova/internal/core/domain/permission"
+	"github.com/emoss08/trenova/internal/core/domain/tableconfiguration"
+	"github.com/emoss08/trenova/internal/core/ports"
+	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/pkg/errors"
+	"github.com/emoss08/trenova/internal/pkg/logger"
+	"github.com/emoss08/trenova/pkg/types/pulid"
 	"github.com/rotisserie/eris"
 	"github.com/rs/zerolog"
-	"github.com/trenova-app/transport/internal/core/domain/permission"
-	"github.com/trenova-app/transport/internal/core/domain/tableconfiguration"
-	"github.com/trenova-app/transport/internal/core/ports"
-	"github.com/trenova-app/transport/internal/core/ports/repositories"
-	"github.com/trenova-app/transport/internal/core/ports/services"
-	"github.com/trenova-app/transport/internal/pkg/errors"
-	"github.com/trenova-app/transport/internal/pkg/logger"
-	"github.com/trenova-app/transport/pkg/types/pulid"
 
 	"go.uber.org/fx"
 )

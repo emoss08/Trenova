@@ -1,8 +1,8 @@
 package infrastructure
 
 import (
+	"github.com/emoss08/trenova/internal/pkg/config"
 	"github.com/rotisserie/eris"
-	"github.com/trenova-app/transport/internal/pkg/config"
 	"go.uber.org/fx"
 )
 

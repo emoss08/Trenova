@@ -4,9 +4,9 @@ import (
 	"context"
 	"log"
 
+	"github.com/emoss08/trenova/internal/pkg/config"
 	"github.com/redis/go-redis/v9"
 	"github.com/spf13/cobra"
-	"github.com/trenova-app/transport/internal/pkg/config"
 )
 
 var redisCmd = &cobra.Command{

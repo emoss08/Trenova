@@ -3,14 +3,14 @@ package auth
 import (
 	"time"
 
+	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/core/services/auth"
+	"github.com/emoss08/trenova/internal/pkg/config"
+	"github.com/emoss08/trenova/internal/pkg/ctx"
+	"github.com/emoss08/trenova/internal/pkg/validator"
+	"github.com/emoss08/trenova/pkg/types/pulid"
 	"github.com/gofiber/fiber/v2"
 	"github.com/rs/zerolog/log"
-	"github.com/trenova-app/transport/internal/core/ports/services"
-	"github.com/trenova-app/transport/internal/core/services/auth"
-	"github.com/trenova-app/transport/internal/pkg/config"
-	"github.com/trenova-app/transport/internal/pkg/ctx"
-	"github.com/trenova-app/transport/internal/pkg/validator"
-	"github.com/trenova-app/transport/pkg/types/pulid"
 	"go.uber.org/fx"
 )
 

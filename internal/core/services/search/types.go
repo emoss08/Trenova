@@ -1,8 +1,8 @@
 package search
 
 import (
-	"github.com/trenova-app/transport/internal/core/ports/infra"
-	"github.com/trenova-app/transport/pkg/types/pulid"
+	"github.com/emoss08/trenova/internal/core/ports/infra"
+	"github.com/emoss08/trenova/pkg/types/pulid"
 )
 
 type batchOpt struct {

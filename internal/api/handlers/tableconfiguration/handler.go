@@ -1,14 +1,14 @@
 package tableconfiguration
 
 import (
+	"github.com/emoss08/trenova/internal/api/middleware"
+	tableconfigurationdomain "github.com/emoss08/trenova/internal/core/domain/tableconfiguration"
+	"github.com/emoss08/trenova/internal/core/ports"
+	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/core/services/tableconfiguration"
+	"github.com/emoss08/trenova/internal/pkg/ctx"
+	"github.com/emoss08/trenova/internal/pkg/validator"
 	"github.com/gofiber/fiber/v2"
-	"github.com/trenova-app/transport/internal/api/middleware"
-	tableconfigurationdomain "github.com/trenova-app/transport/internal/core/domain/tableconfiguration"
-	"github.com/trenova-app/transport/internal/core/ports"
-	"github.com/trenova-app/transport/internal/core/ports/repositories"
-	"github.com/trenova-app/transport/internal/core/services/tableconfiguration"
-	"github.com/trenova-app/transport/internal/pkg/ctx"
-	"github.com/trenova-app/transport/internal/pkg/validator"
 	"go.uber.org/fx"
 )
 

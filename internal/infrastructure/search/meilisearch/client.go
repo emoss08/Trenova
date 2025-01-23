@@ -5,13 +5,13 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/emoss08/trenova/internal/core/ports/infra"
+	"github.com/emoss08/trenova/internal/pkg/config"
+	"github.com/emoss08/trenova/internal/pkg/logger"
 	"github.com/meilisearch/meilisearch-go"
 	"github.com/mitchellh/mapstructure"
 	"github.com/rotisserie/eris"
 	"github.com/rs/zerolog"
-	"github.com/trenova-app/transport/internal/core/ports/infra"
-	"github.com/trenova-app/transport/internal/pkg/config"
-	"github.com/trenova-app/transport/internal/pkg/logger"
 	"go.uber.org/fx"
 )
 

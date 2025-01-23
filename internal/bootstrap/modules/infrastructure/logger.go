@@ -1,7 +1,7 @@
 package infrastructure
 
 import (
-	"github.com/trenova-app/transport/internal/pkg/logger"
+	"github.com/emoss08/trenova/internal/pkg/logger"
 	"go.uber.org/fx"
 )
 

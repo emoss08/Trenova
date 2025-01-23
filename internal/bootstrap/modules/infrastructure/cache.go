@@ -1,7 +1,7 @@
 package infrastructure
 
 import (
-	"github.com/trenova-app/transport/internal/infrastructure/cache/redis"
+	"github.com/emoss08/trenova/internal/infrastructure/cache/redis"
 	"go.uber.org/fx"
 )
 

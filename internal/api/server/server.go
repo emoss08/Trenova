@@ -5,10 +5,10 @@ import (
 	"time"
 
 	"github.com/bytedance/sonic"
+	"github.com/emoss08/trenova/internal/pkg/config"
+	"github.com/emoss08/trenova/internal/pkg/logger"
 	"github.com/gofiber/fiber/v2"
 	"github.com/rotisserie/eris"
-	"github.com/trenova-app/transport/internal/pkg/config"
-	"github.com/trenova-app/transport/internal/pkg/logger"
 	"go.uber.org/fx"
 )
 

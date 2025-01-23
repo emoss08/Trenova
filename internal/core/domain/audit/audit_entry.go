@@ -4,12 +4,12 @@ import (
 	"context"
 	"time"
 
+	"github.com/emoss08/trenova/internal/core/domain/businessunit"
+	"github.com/emoss08/trenova/internal/core/domain/organization"
+	"github.com/emoss08/trenova/internal/core/domain/permission"
+	"github.com/emoss08/trenova/internal/core/domain/user"
+	"github.com/emoss08/trenova/pkg/types/pulid"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
-	"github.com/trenova-app/transport/internal/core/domain/businessunit"
-	"github.com/trenova-app/transport/internal/core/domain/organization"
-	"github.com/trenova-app/transport/internal/core/domain/permission"
-	"github.com/trenova-app/transport/internal/core/domain/user"
-	"github.com/trenova-app/transport/pkg/types/pulid"
 	"github.com/uptrace/bun"
 )
 

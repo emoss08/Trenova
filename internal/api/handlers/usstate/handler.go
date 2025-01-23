@@ -1,11 +1,11 @@
 package usstate
 
 import (
+	"github.com/emoss08/trenova/internal/api/middleware"
+	usstate "github.com/emoss08/trenova/internal/core/services/usstate"
+	"github.com/emoss08/trenova/internal/pkg/ctx"
+	"github.com/emoss08/trenova/internal/pkg/validator"
 	"github.com/gofiber/fiber/v2"
-	"github.com/trenova-app/transport/internal/api/middleware"
-	usstate "github.com/trenova-app/transport/internal/core/services/usstate"
-	"github.com/trenova-app/transport/internal/pkg/ctx"
-	"github.com/trenova-app/transport/internal/pkg/validator"
 )
 
 type Handler struct {
