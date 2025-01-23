@@ -32,3 +32,26 @@ export function DataTableDescription({
     </TooltipProvider>
   );
 }
+
+export function DataTableColorColumn({
+  color,
+  text,
+}: {
+  color?: string;
+  text: string;
+}) {
+  const isColor = !!color;
+  return isColor ? (
+    <div className="flex items-center gap-x-1.5 text-sm font-medium text-foreground">
+      <div
+        className="size-2 rounded-full"
+        style={{
+          backgroundColor: color,
+        }}
+      />
+      <p>{text}</p>
+    </div>
+  ) : (
+    <p>{text}</p>
+  );
+}

@@ -161,7 +161,7 @@ func (lr *locationRepository) Create(ctx context.Context, l *location.Location) 
 	return l, nil
 }
 
-func (lr *locationRepository) Update(ctx context.Context, l *location.Location) (*location.Location, error) {
+func (lr *locationRepository) Update(ctx context.Context, loc *location.Location) (*location.Location, error) {
 	dba, err := lr.db.DB(ctx)
 	if err != nil {
 		return nil, eris.Wrap(err, "get database connection")
@@ -169,36 +169,34 @@ func (lr *locationRepository) Update(ctx context.Context, l *location.Location) 
 
 	log := lr.l.With().
 		Str("operation", "Update").
-		Str("id", l.GetID()).
-		Int64("version", l.Version).
+		Str("id", loc.GetID()).
+		Int64("version", loc.Version).
 		Logger()
 
 	err = dba.RunInTx(ctx, nil, func(c context.Context, tx bun.Tx) error {
-		ov := l.Version
+		ov := loc.Version
 
-		l.Version++
+		loc.Version++
 
 		results, rErr := tx.NewUpdate().
-			Model(l).
-			WherePK().
+			Model(loc).
 			Where("loc.version = ?", ov).
-			Where("loc.organization_id = ?", l.OrganizationID).
-			Where("loc.business_unit_id = ?", l.BusinessUnitID).
+			WherePK().
 			Returning("*").
 			Exec(c)
 		if rErr != nil {
 			log.Error().
 				Err(rErr).
-				Interface("location", l).
+				Interface("location", loc).
 				Msg("failed to update location")
-			return eris.Wrap(rErr, "update location")
+			return rErr
 		}
 
 		rows, roErr := results.RowsAffected()
 		if roErr != nil {
 			log.Error().
 				Err(roErr).
-				Interface("location", l).
+				Interface("location", loc).
 				Msg("failed to get rows affected")
 			return eris.Wrap(roErr, "get rows affected")
 		}
@@ -207,7 +205,7 @@ func (lr *locationRepository) Update(ctx context.Context, l *location.Location) 
 			return errors.NewValidationError(
 				"version",
 				errors.ErrVersionMismatch,
-				fmt.Sprintf("Version mismatch. The Location (%s) has either been updated or deleted since the last request.", l.GetID()),
+				fmt.Sprintf("Version mismatch. The Location (%s) has either been updated or deleted since the last request.", loc.GetID()),
 			)
 		}
 
@@ -215,8 +213,8 @@ func (lr *locationRepository) Update(ctx context.Context, l *location.Location) 
 	})
 	if err != nil {
 		log.Error().Err(err).Msg("failed to update location")
-		return nil, eris.Wrap(err, "update location")
+		return nil, err
 	}
 
-	return l, nil
+	return loc, nil
 }
