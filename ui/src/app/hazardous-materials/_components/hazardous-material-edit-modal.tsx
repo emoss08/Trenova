@@ -25,7 +25,7 @@ export function EditHazardousMaterialModal({
       onOpenChange={onOpenChange}
       url="/hazardous-materials/"
       title="Hazardous Material"
-      queryKey="hazardous-material-list"
+      queryKey={["hazardous-material"]}
       formComponent={<HazardousMaterialForm />}
       fieldKey="code"
       className="max-w-[550px]"

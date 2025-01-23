@@ -164,8 +164,6 @@ func (cr *commodityRepository) Update(ctx context.Context, com *commodity.Commod
 			Model(com).
 			WherePK().
 			Where("com.version = ?", ov).
-			Where("com.organization_id = ?", com.OrganizationID).
-			Where("com.business_unit_id = ?", com.BusinessUnitID).
 			Returning("*").
 			Exec(c)
 		if rErr != nil {

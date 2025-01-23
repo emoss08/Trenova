@@ -19,6 +19,8 @@
     "moduleResolution": "Node",
     "resolveJsonModule": true,
     "isolatedModules": true,
+    "strictNullChecks": true,
+    "strictFunctionTypes": false,
     "noEmit": true,
     "jsx": "react-jsx",
     "types": [

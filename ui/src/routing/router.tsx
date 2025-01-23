@@ -108,6 +108,19 @@ const routes: RouteObject[] = [
               title: "Location Categories",
             },
           },
+          {
+            path: "/dispatch/configurations/locations",
+            async lazy() {
+              const { Locations } = await import(
+                "@/app/locations/page"
+              );
+              return { Component: Locations };
+            },
+            handle: {
+              crumb: "Locations",
+              title: "Locations",
+            },
+          },
           // Equipment Links
           {
             path: "/equipment/configurations/equipment-types",

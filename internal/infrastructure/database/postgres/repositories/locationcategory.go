@@ -164,8 +164,6 @@ func (lcr *locationCategoryRepository) Update(ctx context.Context, lc *location.
 			Model(lc).
 			WherePK().
 			Where("lc.version = ?", ov).
-			Where("lc.organization_id = ?", lc.OrganizationID).
-			Where("lc.business_unit_id = ?", lc.BusinessUnitID).
 			Returning("*").
 			Exec(c)
 		if rErr != nil {

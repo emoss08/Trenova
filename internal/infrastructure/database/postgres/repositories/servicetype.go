@@ -164,8 +164,6 @@ func (str *serviceTypeRepository) Update(ctx context.Context, st *servicetype.Se
 			Model(st).
 			WherePK().
 			Where("st.version = ?", ov).
-			Where("st.organization_id = ?", st.OrganizationID).
-			Where("st.business_unit_id = ?", st.BusinessUnitID).
 			Returning("*").
 			Exec(c)
 		if rErr != nil {

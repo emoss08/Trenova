@@ -164,8 +164,6 @@ func (hmr *hazardousMaterialRepository) Update(ctx context.Context, hm *hazardou
 			Model(hm).
 			WherePK().
 			Where("hm.version = ?", ov).
-			Where("hm.organization_id = ?", hm.OrganizationID).
-			Where("hm.business_unit_id = ?", hm.BusinessUnitID).
 			Returning("*").
 			Exec(c)
 		if rErr != nil {

@@ -167,8 +167,6 @@ func (fcr *equipmentTypeRepository) Update(
 			Model(et).
 			WherePK().
 			Where("et.version = ?", ov).
-			Where("et.organization_id = ?", et.OrganizationID).
-			Where("et.business_unit_id = ?", et.BusinessUnitID).
 			Returning("*").
 			Exec(c)
 		if rErr != nil {

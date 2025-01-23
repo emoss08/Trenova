@@ -175,8 +175,6 @@ func (emr *equipmentManufacturerRepository) Update(
 			Model(em).
 			WherePK().
 			Where("em.version = ?", ov).
-			Where("em.organization_id = ?", em.OrganizationID).
-			Where("em.business_unit_id = ?", em.BusinessUnitID).
 			Returning("*").
 			Exec(c)
 		if rErr != nil {
