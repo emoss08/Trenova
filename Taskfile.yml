@@ -25,12 +25,12 @@ tasks:
     cmd: go test ./... -v
   test-pretty:
     cmd: |
-      if ! command -v richgo &> /dev/null
+      if ! command -v tparse &> /dev/null
       then
-        echo "richgo could not be found, installing..."
-        go get -u github.com/kyoh86/richgo
+        echo "tparse could not be found, installing..."
+        go install github.com/mfridman/tparse@latest
       fi
-      richgo test ./... -v
+      set -o pipefail && go test ./... -json | tparse -all
     silent: true
   update-go-deps:
     cmd: go get -u ./... && go mod tidy

@@ -59,6 +59,61 @@ func TestComplianceValidator(t *testing.T) {
 				},
 			},
 		},
+		{
+			name: "mvr_renewal_is_overdue",
+			modifyProfile: func(p *worker.WorkerProfile) {
+				p.LastMVRCheck = timeutils.YearsFromNowUnix(1)
+				p.MVRDueDate = timeutils.YearsAgoUnixPointer(2)
+			},
+			expectedErrors: []struct {
+				Field   string
+				Code    errors.ErrorCode
+				Message string
+			}{
+				{
+					Field:   "profile.mvrDueDate",
+					Code:    errors.ErrComplianceViolation,
+					Message: "MVR renewal is overdue (49 CFR § 391.25(c)(2))",
+				},
+			},
+		},
+		{
+			name: "med_exam_is_required_every_24_months",
+			modifyProfile: func(p *worker.WorkerProfile) {
+				p.LastMVRCheck = timeutils.YearsFromNowUnix(1)
+				p.MVRDueDate = timeutils.YearsFromNowUnixPointer(1)
+				p.PhysicalDueDate = timeutils.YearsAgoUnixPointer(3)
+			},
+			expectedErrors: []struct {
+				Field   string
+				Code    errors.ErrorCode
+				Message string
+			}{
+				{
+					Field:   "profile.physicalDueDate",
+					Code:    errors.ErrComplianceViolation,
+					Message: "Medical examination is required at least every 24 months (49 CFR § 391.45)",
+				},
+			},
+		},
+		{
+			name: "commercial_drivers_license_is_expired",
+			modifyProfile: func(p *worker.WorkerProfile) {
+				p.LicenseExpiry = timeutils.YearsAgoUnix(1)
+				p.PhysicalDueDate = timeutils.MonthsAgoUnixPointer(1)
+			},
+			expectedErrors: []struct {
+				Field   string
+				Code    errors.ErrorCode
+				Message string
+			}{
+				{
+					Field:   "profile.licenseExpiry",
+					Code:    errors.ErrComplianceViolation,
+					Message: "Commercial driver's license is expired (49 CFR § 391.11(b)(5))",
+				},
+			},
+		},
 	}
 
 	for _, scenario := range scenarios {
