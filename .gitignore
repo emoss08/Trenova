@@ -10,3 +10,5 @@ private_key.pem
 public_key.pem
 .env
 node_modules
+.fleet
+.idea
