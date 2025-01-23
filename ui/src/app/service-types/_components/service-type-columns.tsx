@@ -1,4 +1,5 @@
 import { DataTableColumnHeader } from "@/components/data-table/_components/data-table-column-header";
+import { DataTableColorColumn } from "@/components/data-table/_components/data-table-components";
 import { StatusBadge } from "@/components/status-badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { type ServiceTypeSchema } from "@/lib/schemas/service-type-schema";
@@ -48,22 +49,12 @@ export function getColumns(): ColumnDef<ServiceTypeSchema>[] {
       header: ({ column }) => (
         <DataTableColumnHeader column={column} title="Code" />
       ),
-      cell: ({ row }) => {
-        const isColor = !!row.original.color;
-        return isColor ? (
-          <div className="flex items-center gap-x-1.5 text-sm font-medium text-foreground">
-            <div
-              className="size-2 rounded-full"
-              style={{
-                backgroundColor: row.original.color,
-              }}
-            />
-            <p>{row.original.code}</p>
-          </div>
-        ) : (
-          <p>{row.original.code}</p>
-        );
-      },
+      cell: ({ row }) => (
+        <DataTableColorColumn
+          color={row.original.color}
+          text={row.original.code}
+        />
+      ),
     },
     {
       accessorKey: "description",

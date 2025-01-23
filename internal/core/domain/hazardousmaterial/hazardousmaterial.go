@@ -24,8 +24,8 @@ type HazardousMaterial struct {
 
 	// Primary identifiers
 	ID             pulid.ID `bun:",pk,type:VARCHAR(100)" json:"id"`
-	BusinessUnitID pulid.ID `bun:"business_unit_id,notnull,type:VARCHAR(100)" json:"businessUnitId"`
-	OrganizationID pulid.ID `bun:"organization_id,notnull,type:VARCHAR(100)" json:"organizationId"`
+	BusinessUnitID pulid.ID `bun:"business_unit_id,notnull,type:VARCHAR(100),pk" json:"businessUnitId"`
+	OrganizationID pulid.ID `bun:"organization_id,notnull,type:VARCHAR(100),pk" json:"organizationId"`
 
 	// Core Fields
 	Status                      domain.Status  `bun:"status,type:status,default:'Active'" json:"status"`

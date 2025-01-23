@@ -24,11 +24,13 @@ type Location struct {
 	bun.BaseModel `bun:"table:locations,alias:loc" json:"-"`
 
 	// Primary identifiers
-	ID                 pulid.ID `bun:",pk,type:VARCHAR(100),notnull" json:"id"`
-	BusinessUnitID     pulid.ID `bun:"business_unit_id,pk,notnull,type:VARCHAR(100)" json:"businessUnitId"`
-	OrganizationID     pulid.ID `bun:"organization_id,pk,notnull,type:VARCHAR(100)" json:"organizationId"`
-	LocationCategoryID pulid.ID `bun:"location_category_id,pk,notnull,type:VARCHAR(100)" json:"locationCategoryId"`
-	StateID            pulid.ID `bun:"state_id,pk,notnull,type:VARCHAR(100)" json:"stateId"`
+	ID             pulid.ID `bun:",pk,type:VARCHAR(100),notnull" json:"id"`
+	BusinessUnitID pulid.ID `bun:"business_unit_id,pk,notnull,type:VARCHAR(100)" json:"businessUnitId"`
+	OrganizationID pulid.ID `bun:"organization_id,pk,notnull,type:VARCHAR(100)" json:"organizationId"`
+
+	// Relationship identifiers (Non-Primary-Keys)
+	LocationCategoryID pulid.ID `bun:"location_category_id,notnull,type:VARCHAR(100)" json:"locationCategoryId"`
+	StateID            pulid.ID `bun:"state_id,notnull,type:VARCHAR(100)" json:"stateId"`
 
 	// Core Fields
 	Status       domain.Status `json:"status" bun:"status,type:status_enum,notnull,default:'Active'"`

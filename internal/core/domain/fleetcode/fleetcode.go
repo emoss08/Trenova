@@ -26,18 +26,20 @@ type FleetCode struct {
 	bun.BaseModel `bun:"table:fleet_codes,alias:fc" json:"-"`
 
 	// Primary identifiers
-	ID             pulid.ID      `json:"id" bun:",pk,type:VARCHAR(100)"`
-	Name           string        `json:"name" bun:"name,type:VARCHAR(100),notnull"`
-	Status         domain.Status `json:"status" bun:"status,type:status_enum,notnull,default:'Active'"`
-	OrganizationID pulid.ID      `json:"organizationId" bun:"organization_id,pk,type:VARCHAR(100),notnull"`
-	BusinessUnitID pulid.ID      `json:"businessUnitId" bun:"business_unit_id,pk,type:VARCHAR(100),notnull"`
-	ManagerID      *pulid.ID     `json:"managerId" bun:"manager_id,type:VARCHAR(100),nullzero"`
+	ID             pulid.ID `json:"id" bun:",pk,type:VARCHAR(100)"`
+	OrganizationID pulid.ID `json:"organizationId" bun:"organization_id,pk,type:VARCHAR(100),notnull"`
+	BusinessUnitID pulid.ID `json:"businessUnitId" bun:"business_unit_id,pk,type:VARCHAR(100),notnull"`
+
+	// Relationship identifiers (Non-Primary-Keys)
+	ManagerID *pulid.ID `json:"managerId" bun:"manager_id,type:VARCHAR(100),nullzero"`
 
 	// Core fields
+	Status       domain.Status       `json:"status" bun:"status,type:status_enum,notnull,default:'Active'"`
+	Name         string              `json:"name" bun:"name,type:VARCHAR(100),notnull"`
 	Description  string              `json:"description" bun:"description,type:TEXT"`
-	RevenueGoal  decimal.NullDecimal `json:"revenueGoal" bun:"revenue_goal,type:NUMERIC(10, 2),nullzero"`
-	DeadheadGoal decimal.NullDecimal `json:"deadheadGoal" bun:"deadhead_goal,type:NUMERIC(10, 2),nullzero"`
-	MileageGoal  decimal.NullDecimal `json:"mileageGoal" bun:"mileage_goal,type:NUMERIC(10, 2),nullzero"`
+	RevenueGoal  decimal.NullDecimal `json:"revenueGoal" bun:"revenue_goal,type:NUMERIC(10,2),nullzero"`
+	DeadheadGoal decimal.NullDecimal `json:"deadheadGoal" bun:"deadhead_goal,type:NUMERIC(10,2),nullzero"`
+	MileageGoal  decimal.NullDecimal `json:"mileageGoal" bun:"mileage_goal,type:NUMERIC(10,2),nullzero"`
 	Color        string              `json:"color" bun:"color,type:VARCHAR(10)"`
 
 	// Metadata

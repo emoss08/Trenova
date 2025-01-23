@@ -5,13 +5,13 @@ import eslintPluginPrettierRecommended from "eslint-plugin-prettier/recommended"
 import react from "eslint-plugin-react";
 import reactCompiler from "eslint-plugin-react-compiler";
 import reactRefresh from "eslint-plugin-react-refresh";
-import tailwind from "eslint-plugin-tailwindcss";
+// import tailwind from "eslint-plugin-tailwindcss";
 import tseslint from "typescript-eslint";
 
 export default tseslint.config(
   tseslint.configs.recommended,
   ...pluginQuery.configs["flat/recommended"],
-  ...tailwind.configs["flat/recommended"],
+  // ...tailwind.configs["flat/recommended"],
   eslint.configs.recommended,
   tseslint.configs.strict,
   reactRefresh.configs.vite,

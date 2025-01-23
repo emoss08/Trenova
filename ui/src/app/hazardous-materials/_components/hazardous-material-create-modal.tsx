@@ -47,7 +47,7 @@ export function CreateHazardousMaterialModal({
       form={form}
       schema={hazardousMaterialSchema}
       url="/hazardous-materials/"
-      queryKey="hazardous-material-list"
+      queryKey={["hazardous-material"]}
       className="max-w-[550px]"
       notice={<HazardousMaterialNotice />}
     />

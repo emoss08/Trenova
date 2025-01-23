@@ -166,8 +166,6 @@ func (fcr *fleetCodeRepository) Update(
 			Model(fc).
 			WherePK().
 			Where("fc.version = ?", ov).
-			Where("fc.organization_id = ?", fc.OrganizationID).
-			Where("fc.business_unit_id = ?", fc.BusinessUnitID).
 			Returning("*").
 			Exec(c)
 		if rErr != nil {

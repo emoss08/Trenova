@@ -281,6 +281,12 @@ export const commandRoutes: CommandGroupInfo[] = [
         label: "Location Categories",
         icon: faTruck,
       },
+      {
+        id: "locations",
+        link: "/dispatch/configurations/locations",
+        label: "Locations",
+        icon: faTruck,
+      },
     ],
   },
   {

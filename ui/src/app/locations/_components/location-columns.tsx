@@ -1,11 +1,14 @@
 import { DataTableColumnHeader } from "@/components/data-table/_components/data-table-column-header";
-import { DataTableDescription } from "@/components/data-table/_components/data-table-components";
+import {
+  DataTableColorColumn,
+  DataTableDescription,
+} from "@/components/data-table/_components/data-table-components";
 import { StatusBadge } from "@/components/status-badge";
 import { Checkbox } from "@/components/ui/checkbox";
-import { type FleetCodeSchema } from "@/lib/schemas/fleet-code-schema";
+import { type LocationSchema } from "@/lib/schemas/location-schema";
 import { type ColumnDef } from "@tanstack/react-table";
 
-export function getColumns(): ColumnDef<FleetCodeSchema>[] {
+export function getColumns(): ColumnDef<LocationSchema>[] {
   return [
     {
       accessorKey: "select",
@@ -45,24 +48,33 @@ export function getColumns(): ColumnDef<FleetCodeSchema>[] {
       },
     },
     {
+      accessorKey: "code",
+      header: ({ column }) => (
+        <DataTableColumnHeader column={column} title="Code" />
+      ),
+    },
+    {
       accessorKey: "name",
       header: ({ column }) => (
         <DataTableColumnHeader column={column} title="Name" />
       ),
+    },
+    {
+      accessorKey: "locationCategory",
+      header: ({ column }) => (
+        <DataTableColumnHeader column={column} title="Location Category" />
+      ),
       cell: ({ row }) => {
-        const isColor = !!row.original.color;
-        return isColor ? (
-          <div className="flex items-center gap-x-1.5 text-sm font-medium text-foreground">
-            <div
-              className="size-2 rounded-full"
-              style={{
-                backgroundColor: row.original.color,
-              }}
-            />
-            <p>{row.original.name}</p>
-          </div>
+        const locationCategory = row.original.locationCategory;
+        const isLocationCategory = !!locationCategory;
+
+        return isLocationCategory ? (
+          <DataTableColorColumn
+            color={locationCategory?.color}
+            text={locationCategory?.name ?? ""}
+          />
         ) : (
-          <p>{row.original.name}</p>
+          <p>No location category</p>
         );
       },
     },
@@ -74,6 +86,25 @@ export function getColumns(): ColumnDef<FleetCodeSchema>[] {
       cell: ({ row }) => (
         <DataTableDescription description={row.original.description} />
       ),
+    },
+    {
+      id: "addressLine",
+      header: ({ column }) => (
+        <DataTableColumnHeader column={column} title="Address Line" />
+      ),
+      cell: ({ row }) => {
+        const state = row.original?.state;
+        const addressLine =
+          row.original.addressLine1 +
+          (row.original.addressLine2 ? `, ${row.original.addressLine2}` : "");
+        const cityStateZip = `${row.original.city} ${state?.abbreviation}, ${row.original.postalCode}`;
+
+        return (
+          <p>
+            {addressLine} {cityStateZip}
+          </p>
+        );
+      },
     },
   ];
 }

@@ -439,9 +439,6 @@ func (wr *workerRepository) handlePTOOperations( //nolint:funlen,gocognit,cyclop
 		if len(ptosToDelete) > 0 {
 			_, err := tx.NewDelete().
 				Model(&ptosToDelete).
-				Where("wpto.worker_id = ?", wkr.ID).
-				Where("wpto.organization_id = ?", wkr.OrganizationID).
-				Where("wpto.business_unit_id = ?", wkr.BusinessUnitID).
 				WherePK().
 				Exec(ctx)
 			if err != nil {

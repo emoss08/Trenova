@@ -19,9 +19,11 @@ type Commodity struct {
 	bun.BaseModel `bun:"table:commodities,alias:com" json:"-"`
 
 	// Primary identifiers
-	ID                  pulid.ID  `bun:",pk,type:VARCHAR(100),notnull" json:"id"`
-	BusinessUnitID      pulid.ID  `bun:"business_unit_id,notnull,type:VARCHAR(100)" json:"businessUnitId"`
-	OrganizationID      pulid.ID  `bun:"organization_id,notnull,type:VARCHAR(100)" json:"organizationId"`
+	ID             pulid.ID `bun:",pk,type:VARCHAR(100),notnull" json:"id"`
+	BusinessUnitID pulid.ID `bun:"business_unit_id,notnull,pk,type:VARCHAR(100)" json:"businessUnitId"`
+	OrganizationID pulid.ID `bun:"organization_id,notnull,pk,type:VARCHAR(100)" json:"organizationId"`
+
+	// Relationship identifiers (Non-Primary-Keys)
 	HazardousMaterialID *pulid.ID `bun:"hazardous_material_id,type:VARCHAR(100),nullzero" json:"hazardousMaterialId"`
 
 	// Core Fields

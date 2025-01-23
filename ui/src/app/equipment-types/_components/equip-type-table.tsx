@@ -12,7 +12,8 @@ export default function EquipmentTypeTable() {
     <DataTable<EquipmentTypeSchema>
       name="Equipment Type"
       link="/equipment-types/"
-      queryKey="equip-type-list"
+      queryKey={["equipment-type"]}
+      exportModelName="equipment-type"
       TableModal={CreateEquipTypeModal}
       TableEditModal={EditEquipTypeModal}
       columns={columns}
