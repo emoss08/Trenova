@@ -21,11 +21,13 @@ type WorkerPTO struct {
 	bun.BaseModel `bun:"table:worker_pto,alias:wpto" json:"-"`
 
 	// Primary identifiers
-	ID             pulid.ID  `json:"id" bun:"id,pk,type:VARCHAR(100)"`
-	BusinessUnitID pulid.ID  `bun:"business_unit_id,type:VARCHAR(100),notnull" json:"businessUnitId"`
-	OrganizationID pulid.ID  `bun:"organization_id,type:VARCHAR(100),pk,notnull" json:"organizationId"`
-	WorkerID       pulid.ID  `bun:"worker_id,type:VARCHAR(100),notnull" json:"workerId"`
-	ApproverID     *pulid.ID `bun:"approver_id,type:VARCHAR(100),nullzero" json:"approverId"`
+	ID             pulid.ID `json:"id" bun:"id,pk,type:VARCHAR(100)"`
+	BusinessUnitID pulid.ID `bun:"business_unit_id,type:VARCHAR(100),notnull,pk" json:"businessUnitId"`
+	OrganizationID pulid.ID `bun:"organization_id,type:VARCHAR(100),notnull,pk" json:"organizationId"`
+	WorkerID       pulid.ID `bun:"worker_id,type:VARCHAR(100),notnull,pk" json:"workerId"`
+
+	// Relationship identifiers (Non-Primary-Keys)
+	ApproverID *pulid.ID `bun:"approver_id,type:VARCHAR(100),nullzero" json:"approverId"`
 
 	// Core Fields
 	Status    PTOStatus `json:"status" bun:"status,type:worker_pto_status_enum,notnull,default:'Requested'"`

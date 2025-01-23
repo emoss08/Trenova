@@ -25,8 +25,8 @@ type EquipmentType struct {
 
 	// Primary identifiers
 	ID             pulid.ID `bun:"id,type:VARCHAR(100),pk,notnull" json:"id"`
-	BusinessUnitID pulid.ID `bun:"business_unit_id,type:VARCHAR(100),notnull" json:"businessUnitId"`
-	OrganizationID pulid.ID `bun:"organization_id,type:VARCHAR(100),pk,notnull" json:"organizationId"`
+	BusinessUnitID pulid.ID `bun:"business_unit_id,type:VARCHAR(100),notnull,pk" json:"businessUnitId"`
+	OrganizationID pulid.ID `bun:"organization_id,type:VARCHAR(100),notnull,pk" json:"organizationId"`
 
 	// Core Fields
 	Status      domain.Status `json:"status" bun:"status,type:status_enum,notnull,default:'Active'"`
