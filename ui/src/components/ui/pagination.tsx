@@ -15,7 +15,7 @@ const Pagination = ({ className, ...props }: React.ComponentProps<"nav">) => (
     role="navigation"
     aria-label="pagination"
     className={cn(
-      "mx-auto flex w-full justify-center flex-row items-center gap-1 aria-[disabled=true]:opacity-50",
+      "mx-auto flex w-full justify-center flex-row items-center gap-1 aria-disabled:opacity-50",
       className,
     )}
     {...props}

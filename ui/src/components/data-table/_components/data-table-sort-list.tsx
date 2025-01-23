@@ -190,7 +190,7 @@ export function DataTableSortList<TData>({
           align="start"
           collisionPadding={16}
           className={cn(
-            "flex w-[calc(100vw-theme(spacing.20))] min-w-72 max-w-[25rem] origin-[var(--radix-popover-content-transform-origin)] flex-col p-4 sm:w-[25rem]",
+            "flex w-[calc(100vw-(--spacing(20)))] min-w-72 max-w-[25rem] origin-[var(--radix-popover-content-transform-origin)] flex-col p-4 sm:w-[25rem]",
             sorting.length > 0 ? "gap-3.5" : "gap-2",
           )}
         >
@@ -227,7 +227,7 @@ export function DataTableSortList<TData>({
                             variant="outline"
                             size="sm"
                             role="combobox"
-                            className="h-8 w-44 justify-between gap-2 rounded border-muted-foreground/20 bg-muted px-1.5 data-[state=open]:border-blue-600 data-[state=open]:outline-none data-[state=open]:ring-4 data-[state=open]:ring-blue-600/20"
+                            className="h-8 w-44 justify-between gap-2 rounded border-muted-foreground/20 bg-muted px-1.5 data-[state=open]:border-blue-600 data-[state=open]:outline-hidden data-[state=open]:ring-4 data-[state=open]:ring-blue-600/20"
                             aria-controls={fieldListboxId}
                           >
                             <span className="truncate">

@@ -1,6 +1,6 @@
 import { nodeResolve } from "@rollup/plugin-node-resolve";
+import tailwindcss from "@tailwindcss/vite";
 import react from "@vitejs/plugin-react";
-
 import path from "path";
 import { visualizer } from "rollup-plugin-visualizer";
 import { defineConfig, type PluginOption } from "vite";
@@ -71,6 +71,7 @@ export default defineConfig(({ mode }) => ({
         plugins: [["babel-plugin-react-compiler", ReactCompilerConfig]],
       },
     }),
+    tailwindcss(),
     nodeResolve(),
     VitePWA({
       registerType: "autoUpdate",

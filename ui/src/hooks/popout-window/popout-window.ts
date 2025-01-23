@@ -37,7 +37,7 @@ type PopoutWindowState = {
 // Constants
 
 type MessageHandler = (event: MessageEvent) => void;
-type WindowEventType = "load" | "unload" | "focus" | "blur";
+type WindowEventType = "load" | "unload" | "focus" | "blur-sm";
 
 interface PopoutWindowEvents {
   onReady?: (windowId: string) => void;
@@ -295,7 +295,7 @@ class PopoutWindowManager {
   }
 
   private attachWindowEvents(id: string, window: Window): void {
-    const events: WindowEventType[] = ["load", "unload", "focus", "blur"];
+    const events: WindowEventType[] = ["load", "unload", "focus", "blur-sm"];
 
     events.forEach((eventType) => {
       window.addEventListener(eventType, () => {

@@ -204,7 +204,7 @@ const ReactSelectInput = React.forwardRef<any, ReactSelectInputProps>(
           control: (state) =>
             cn(
               "flex h-8 w-full rounded-md border border-muted-foreground/20 px-2 py-1.5 bg-muted text-sm",
-              "transition-[border-color,box-shadow] outline-none  duration-200 ease-in-out",
+              "transition-[border-color,box-shadow] outline-hidden  duration-200 ease-in-out",
               state.isFocused && "border-blue-600 ring-4 ring-blue-600/20",
               // Invalid and focused state
               state.isFocused &&

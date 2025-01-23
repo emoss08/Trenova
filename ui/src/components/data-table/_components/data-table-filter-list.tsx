@@ -285,7 +285,7 @@ export function DataTableFilterList<TData>({
                 variant="outline"
                 aria-label={`${filterField.label} filter values`}
                 aria-controls={`${inputId}-listbox`}
-                className="w-full justify-between gap-2 rounded border-muted-foreground/20 bg-muted px-1.5 data-[state=open]:border-blue-600 data-[state=open]:outline-none data-[state=open]:ring-4 data-[state=open]:ring-blue-600/20"
+                className="w-full justify-between gap-2 rounded border-muted-foreground/20 bg-muted px-1.5 data-[state=open]:border-blue-600 data-[state=open]:outline-hidden data-[state=open]:ring-4 data-[state=open]:ring-blue-600/20"
               >
                 <>
                   {selectedValues.size === 0 && (
@@ -402,7 +402,7 @@ export function DataTableFilterList<TData>({
                 aria-label={`${filterField.label} date filter`}
                 aria-controls={`${inputId}-calendar`}
                 className={cn(
-                  "w-full justify-start gap-2 rounded text-left font-normal bg-muted border-muted-foreground/20 data-[state=open]:border-blue-600 data-[state=open]:outline-none data-[state=open]:ring-4 data-[state=open]:ring-blue-600/20",
+                  "w-full justify-start gap-2 rounded text-left font-normal bg-muted border-muted-foreground/20 data-[state=open]:border-blue-600 data-[state=open]:outline-hidden data-[state=open]:ring-4 data-[state=open]:ring-blue-600/20",
                   !filter.value && "text-muted-foreground",
                 )}
               >
@@ -544,7 +544,7 @@ export function DataTableFilterList<TData>({
           align="start"
           collisionPadding={16}
           className={cn(
-            "flex w-[calc(100vw-theme(spacing.12))] min-w-60 origin-[var(--radix-popover-content-transform-origin)] flex-col p-4 sm:w-[36rem]",
+            "flex w-[calc(100vw-(--spacing(12)))] min-w-60 origin-[var(--radix-popover-content-transform-origin)] flex-col p-4 sm:w-[36rem]",
             filters.length > 0 ? "gap-3.5" : "gap-2",
           )}
         >
@@ -615,7 +615,7 @@ export function DataTableFilterList<TData>({
                           role="combobox"
                           aria-label="Select filter field"
                           aria-controls={fieldListboxId}
-                          className="w-32 justify-between gap-2 rounded border-muted-foreground/20 bg-muted data-[state=open]:border-blue-600 data-[state=open]:outline-none data-[state=open]:ring-4 data-[state=open]:ring-blue-600/20"
+                          className="w-32 justify-between gap-2 rounded border-muted-foreground/20 bg-muted data-[state=open]:border-blue-600 data-[state=open]:outline-hidden data-[state=open]:ring-4 data-[state=open]:ring-blue-600/20"
                         >
                           <span className="truncate">
                             {filterFields.find(

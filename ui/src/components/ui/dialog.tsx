@@ -59,7 +59,7 @@ const DialogContent = React.forwardRef<
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="rounded-sm px-1.5 transition-[border-color,box-shadow] duration-100 ease-in-out focus:border focus:border-blue-600 focus:outline-none focus:ring-4 focus:ring-blue-600/20 disabled:pointer-events-none [&_svg]:size-4 "
+                  className="rounded-sm px-1.5 transition-[border-color,box-shadow] duration-100 ease-in-out focus:border focus:border-blue-600 focus:outline-hidden focus:ring-4 focus:ring-blue-600/20 disabled:pointer-events-none [&_svg]:size-4 "
                 >
                   <Icon icon={faXmark} className="size-4" />
                   <span className="sr-only">Close</span>

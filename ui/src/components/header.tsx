@@ -19,7 +19,7 @@ export function Header() {
   const isLoading = navigation.state === "loading";
 
   return (
-    <header className="flex h-14 w-full shrink-0 items-center gap-2 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 dark:border-border">
+    <header className="flex h-14 w-full shrink-0 items-center gap-2 bg-background/95 backdrop-blur-sm supports-backdrop-filter:bg-background/60 dark:border-border">
       <div className="flex flex-1 items-center gap-2 px-3">
         <SidebarTrigger />
         <Separator orientation="vertical" className="mr-2 h-4" />
