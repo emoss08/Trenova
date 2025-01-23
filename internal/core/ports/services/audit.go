@@ -3,9 +3,9 @@ package services
 import (
 	"context"
 
-	"github.com/trenova-app/transport/internal/core/domain/audit"
-	"github.com/trenova-app/transport/internal/core/domain/permission"
-	"github.com/trenova-app/transport/pkg/types/pulid"
+	"github.com/emoss08/trenova/internal/core/domain/audit"
+	"github.com/emoss08/trenova/internal/core/domain/permission"
+	"github.com/emoss08/trenova/pkg/types/pulid"
 )
 
 type LogActionParams struct {

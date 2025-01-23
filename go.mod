@@ -1,4 +1,4 @@
-module github.com/trenova-app/transport
+module github.com/emoss08/trenova
 
 go 1.23.4
 

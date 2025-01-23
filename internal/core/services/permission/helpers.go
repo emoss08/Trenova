@@ -5,12 +5,12 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/emoss08/trenova/internal/core/domain/permission"
+	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/pkg/utils/timeutils"
+	"github.com/emoss08/trenova/pkg/types/pulid"
 	"github.com/rotisserie/eris"
 	"github.com/samber/lo"
-	"github.com/trenova-app/transport/internal/core/domain/permission"
-	"github.com/trenova-app/transport/internal/core/ports/services"
-	"github.com/trenova-app/transport/internal/pkg/utils/timeutils"
-	"github.com/trenova-app/transport/pkg/types/pulid"
 )
 
 func evaluateFieldPermission(perm *permission.Permission, field string, ctx *services.PermissionContext) services.FieldPermissionCheck {

@@ -1,7 +1,7 @@
 package infrastructure
 
 import (
-	"github.com/trenova-app/transport/internal/infrastructure/search/meilisearch"
+	"github.com/emoss08/trenova/internal/infrastructure/search/meilisearch"
 	"go.uber.org/fx"
 )
 

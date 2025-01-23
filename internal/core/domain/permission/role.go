@@ -3,9 +3,9 @@ package permission
 import (
 	"context"
 
+	"github.com/emoss08/trenova/internal/core/domain"
+	"github.com/emoss08/trenova/pkg/types/pulid"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
-	"github.com/trenova-app/transport/internal/core/domain"
-	"github.com/trenova-app/transport/pkg/types/pulid"
 	"github.com/uptrace/bun"
 )
 

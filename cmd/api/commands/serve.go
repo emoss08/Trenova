@@ -1,8 +1,8 @@
 package commands
 
 import (
+	"github.com/emoss08/trenova/internal/bootstrap"
 	"github.com/spf13/cobra"
-	"github.com/trenova-app/transport/internal/bootstrap"
 )
 
 func newServeCmd() *cobra.Command {

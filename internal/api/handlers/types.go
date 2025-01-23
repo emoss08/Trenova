@@ -1,6 +1,6 @@
 package handlers
 
-import "github.com/trenova-app/transport/internal/pkg/utils/paginationutils/cursorpagination"
+import "github.com/emoss08/trenova/internal/pkg/utils/paginationutils/cursorpagination"
 
 type BaseHandlerRequest struct {
 	QueryOpts cursorpagination.Query

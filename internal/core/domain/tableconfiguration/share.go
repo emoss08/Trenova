@@ -3,11 +3,11 @@ package tableconfiguration
 import (
 	"context"
 
-	"github.com/trenova-app/transport/internal/core/domain/businessunit"
-	"github.com/trenova-app/transport/internal/core/domain/organization"
-	"github.com/trenova-app/transport/internal/core/domain/user"
-	"github.com/trenova-app/transport/internal/pkg/utils/timeutils"
-	"github.com/trenova-app/transport/pkg/types/pulid"
+	"github.com/emoss08/trenova/internal/core/domain/businessunit"
+	"github.com/emoss08/trenova/internal/core/domain/organization"
+	"github.com/emoss08/trenova/internal/core/domain/user"
+	"github.com/emoss08/trenova/internal/pkg/utils/timeutils"
+	"github.com/emoss08/trenova/pkg/types/pulid"
 	"github.com/uptrace/bun"
 )
 

@@ -3,11 +3,11 @@ package workervalidator
 import (
 	"context"
 
-	"github.com/trenova-app/transport/internal/core/domain"
-	"github.com/trenova-app/transport/internal/core/domain/worker"
-	"github.com/trenova-app/transport/internal/core/ports/repositories"
-	"github.com/trenova-app/transport/internal/pkg/errors"
-	"github.com/trenova-app/transport/internal/pkg/validator"
+	"github.com/emoss08/trenova/internal/core/domain"
+	"github.com/emoss08/trenova/internal/core/domain/worker"
+	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/pkg/errors"
+	"github.com/emoss08/trenova/internal/pkg/validator"
 	"go.uber.org/fx"
 )
 
@@ -37,7 +37,7 @@ func NewValidator(p ValidatorParams) *Validator {
 }
 
 // Validate validates a worker and returns a MultiError if there are any validation errors
-func (v *Validator)Validate(ctx context.Context, valCtx *validator.ValidationContext, wrk *worker.Worker) *errors.MultiError {
+func (v *Validator) Validate(ctx context.Context, valCtx *validator.ValidationContext, wrk *worker.Worker) *errors.MultiError {
 	multiErr := errors.NewMultiError()
 
 	// Basic worker validation

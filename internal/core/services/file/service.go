@@ -12,14 +12,14 @@ import (
 	"strings"
 	"time"
 
+	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/infrastructure/storage/minio"
+	"github.com/emoss08/trenova/internal/pkg/config"
+	"github.com/emoss08/trenova/internal/pkg/logger"
+	"github.com/emoss08/trenova/internal/pkg/utils/sortutils"
 	"github.com/rotisserie/eris"
 	"github.com/rs/zerolog"
 	"github.com/samber/lo"
-	"github.com/trenova-app/transport/internal/core/ports/services"
-	"github.com/trenova-app/transport/internal/infrastructure/storage/minio"
-	"github.com/trenova-app/transport/internal/pkg/config"
-	"github.com/trenova-app/transport/internal/pkg/logger"
-	"github.com/trenova-app/transport/internal/pkg/utils/sortutils"
 	"go.uber.org/fx"
 )
 

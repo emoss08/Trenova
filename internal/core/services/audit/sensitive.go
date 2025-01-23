@@ -7,9 +7,9 @@ import (
 	"strings"
 	"sync"
 
+	"github.com/emoss08/trenova/internal/core/domain/audit"
+	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/go-ozzo/ozzo-validation/v4/is"
-	"github.com/trenova-app/transport/internal/core/domain/audit"
-	"github.com/trenova-app/transport/internal/core/domain/permission"
 )
 
 type SensitiveFieldAction int

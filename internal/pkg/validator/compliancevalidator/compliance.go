@@ -6,13 +6,13 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/emoss08/trenova/internal/core/domain/compliance"
+	"github.com/emoss08/trenova/internal/core/domain/worker"
+	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/pkg/errors"
+	"github.com/emoss08/trenova/internal/pkg/utils/timeutils"
 	"github.com/rotisserie/eris"
 	"github.com/rs/zerolog/log"
-	"github.com/trenova-app/transport/internal/core/domain/compliance"
-	"github.com/trenova-app/transport/internal/core/domain/worker"
-	"github.com/trenova-app/transport/internal/core/ports/repositories"
-	"github.com/trenova-app/transport/internal/pkg/errors"
-	"github.com/trenova-app/transport/internal/pkg/utils/timeutils"
 	"go.uber.org/fx"
 )
 

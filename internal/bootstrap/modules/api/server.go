@@ -1,7 +1,7 @@
 package api
 
 import (
-	"github.com/trenova-app/transport/internal/api/server"
+	"github.com/emoss08/trenova/internal/api/server"
 	"go.uber.org/fx"
 )
 

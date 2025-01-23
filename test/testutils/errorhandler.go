@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/pkg/errors"
 	"github.com/stretchr/testify/assert"
-	"github.com/trenova-app/transport/internal/pkg/errors"
 )
 
 type ErrorMatcher struct {

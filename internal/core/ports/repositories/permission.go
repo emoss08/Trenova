@@ -3,8 +3,8 @@ package repositories
 import (
 	"context"
 
-	"github.com/trenova-app/transport/internal/core/domain/permission"
-	"github.com/trenova-app/transport/pkg/types/pulid"
+	"github.com/emoss08/trenova/internal/core/domain/permission"
+	"github.com/emoss08/trenova/pkg/types/pulid"
 )
 
 type PermissionRepository interface {

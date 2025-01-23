@@ -4,8 +4,8 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/trenova-app/transport/internal/pkg/errors"
-	"github.com/trenova-app/transport/internal/pkg/rptmeta"
+	"github.com/emoss08/trenova/internal/pkg/errors"
+	"github.com/emoss08/trenova/internal/pkg/rptmeta"
 	"go.uber.org/fx"
 )
 

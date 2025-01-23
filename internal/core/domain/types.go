@@ -3,7 +3,7 @@ package domain
 import (
 	"context"
 
-	"github.com/trenova-app/transport/internal/pkg/errors"
+	"github.com/emoss08/trenova/internal/pkg/errors"
 )
 
 type Status string

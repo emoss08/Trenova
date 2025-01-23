@@ -4,10 +4,10 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/emoss08/trenova/internal/api/middleware"
+	"github.com/emoss08/trenova/internal/core/services/reporting"
+	"github.com/emoss08/trenova/internal/pkg/validator"
 	"github.com/gofiber/fiber/v2"
-	"github.com/trenova-app/transport/internal/api/middleware"
-	"github.com/trenova-app/transport/internal/core/services/reporting"
-	"github.com/trenova-app/transport/internal/pkg/validator"
 	"go.uber.org/fx"
 )
 

@@ -1,8 +1,8 @@
 package workervalidator
 
 import (
+	"github.com/emoss08/trenova/internal/core/domain/worker"
 	"github.com/rotisserie/eris"
-	"github.com/trenova-app/transport/internal/core/domain/worker"
 )
 
 var ErrWorkerProfileRequired = eris.New("worker profile is required for assignment eligibility check")

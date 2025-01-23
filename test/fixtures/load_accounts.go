@@ -3,13 +3,13 @@ package fixtures
 import (
 	"context"
 
+	"github.com/emoss08/trenova/internal/core/domain"
+	"github.com/emoss08/trenova/internal/core/domain/businessunit"
+	"github.com/emoss08/trenova/internal/core/domain/organization"
+	"github.com/emoss08/trenova/internal/core/domain/user"
 	"github.com/fatih/color"
 	"github.com/jaswdr/faker/v2"
 	"github.com/rotisserie/eris"
-	"github.com/trenova-app/transport/internal/core/domain"
-	"github.com/trenova-app/transport/internal/core/domain/businessunit"
-	"github.com/trenova-app/transport/internal/core/domain/organization"
-	"github.com/trenova-app/transport/internal/core/domain/user"
 	"github.com/uptrace/bun"
 	"github.com/uptrace/bun/dbfixture"
 )

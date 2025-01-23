@@ -3,13 +3,13 @@ package equipmentmanufacturervalidator
 import (
 	"context"
 
+	"github.com/emoss08/trenova/internal/core/domain/equipmentmanufacturer"
+	"github.com/emoss08/trenova/internal/core/ports/db"
+	"github.com/emoss08/trenova/internal/pkg/errors"
+	"github.com/emoss08/trenova/internal/pkg/utils/queryutils"
+	"github.com/emoss08/trenova/internal/pkg/validator"
 	"github.com/rotisserie/eris"
 	"github.com/rs/zerolog/log"
-	"github.com/trenova-app/transport/internal/core/domain/equipmentmanufacturer"
-	"github.com/trenova-app/transport/internal/core/ports/db"
-	"github.com/trenova-app/transport/internal/pkg/errors"
-	"github.com/trenova-app/transport/internal/pkg/utils/queryutils"
-	"github.com/trenova-app/transport/internal/pkg/validator"
 	"go.uber.org/fx"
 )
 

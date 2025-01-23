@@ -1,9 +1,9 @@
 package services
 
 import (
+	"github.com/emoss08/trenova/internal/core/domain/user"
+	"github.com/emoss08/trenova/pkg/types/pulid"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
-	"github.com/trenova-app/transport/internal/core/domain/user"
-	"github.com/trenova-app/transport/pkg/types/pulid"
 )
 
 type LoginRequest struct {

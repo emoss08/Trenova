@@ -5,8 +5,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/emoss08/trenova/internal/pkg/config"
 	"github.com/rs/zerolog"
-	"github.com/trenova-app/transport/internal/pkg/config"
 )
 
 type Logger struct {
