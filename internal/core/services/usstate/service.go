@@ -33,16 +33,16 @@ func NewService(p ServiceParams) *Service {
 }
 
 // SelectOptions returns a list of select options for us states.
-func (s *Service) SelectOptions(ctx context.Context) ([]types.SelectOption, error) {
+func (s *Service) SelectOptions(ctx context.Context) ([]*types.SelectOption, error) {
 	result, err := s.repo.List(ctx)
 	if err != nil {
 		s.l.Error().Err(err).Msg("failed to list us states")
 		return nil, eris.Wrap(err, "failed to list us states")
 	}
 
-	options := make([]types.SelectOption, len(result.States))
-	for i, state := range result.States {
-		options[i] = types.SelectOption{
+	options := make([]*types.SelectOption, len(result.Items))
+	for i, state := range result.Items {
+		options[i] = &types.SelectOption{
 			Label: state.Name,
 			Value: state.ID.String(),
 		}

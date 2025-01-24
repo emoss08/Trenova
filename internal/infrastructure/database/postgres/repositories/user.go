@@ -10,7 +10,6 @@ import (
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/pkg/errors"
 	"github.com/emoss08/trenova/internal/pkg/logger"
-	"github.com/emoss08/trenova/pkg/types/pulid"
 	"github.com/rotisserie/eris"
 	"github.com/rs/zerolog"
 	"github.com/uptrace/bun"
@@ -103,37 +102,7 @@ func (ur *userRepository) FindByEmail(ctx context.Context, email string) (*user.
 	return u, nil
 }
 
-func (ur *userRepository) UpdateLastLogin(ctx context.Context, userID pulid.ID) error {
-	dba, err := ur.db.DB(ctx)
-	if err != nil {
-		return eris.Wrap(err, "get database connection")
-	}
-
-	return dba.RunInTx(ctx, nil, func(c context.Context, tx bun.Tx) error {
-		u := new(user.User)
-
-		results, rErr := tx.NewUpdate().Model(u).Where("usr.id = ?", userID).Exec(c)
-		if rErr != nil {
-			ur.l.Error().Err(rErr).Msgf("failed to update last login for user %s", userID)
-			return eris.Wrapf(rErr, "failed to update last login for user %s", userID)
-		}
-
-		rows, roErr := results.RowsAffected()
-		if roErr != nil {
-			ur.l.Error().Err(roErr).Msgf("failed to get rows affected for user %s", userID)
-			return eris.Wrapf(roErr, "failed to get rows affected for user %s", userID)
-		}
-
-		if rows == 0 {
-			return errors.NewValidationError("id", errors.ErrNotFound, "User not found")
-		}
-
-		ur.l.Info().Msgf("updated last login for user %s", userID)
-		return nil
-	})
-}
-
-func (ur *userRepository) GetByID(ctx context.Context, opts *repositories.GetUserByIDOptions) (*user.User, error) {
+func (ur *userRepository) GetByID(ctx context.Context, opts repositories.GetUserByIDOptions) (*user.User, error) {
 	dba, err := ur.db.DB(ctx)
 	if err != nil {
 		return nil, eris.Wrap(err, "get database connection")

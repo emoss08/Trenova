@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/core/domain/usstate"
+	"github.com/emoss08/trenova/internal/core/ports"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/cache/redis"
 	"github.com/emoss08/trenova/internal/pkg/logger"
@@ -45,7 +46,7 @@ func NewStateRepository(p StateRepositoryParams) repositories.UsStateCacheReposi
 }
 
 // Get retrieves all states from the cache
-func (sr *stateRepository) Get(ctx context.Context) (*repositories.ListUsStateResult, error) {
+func (sr *stateRepository) Get(ctx context.Context) (*ports.ListResult[*usstate.UsState], error) {
 	log := sr.l.With().Str("operation", "Get").Logger()
 
 	states := make([]*usstate.UsState, 0)
@@ -63,9 +64,9 @@ func (sr *stateRepository) Get(ctx context.Context) (*repositories.ListUsStateRe
 		Int("stateCount", len(states)).
 		Msg("retrieved states from cache")
 
-	return &repositories.ListUsStateResult{
-		States: states,
-		Total:  len(states),
+	return &ports.ListResult[*usstate.UsState]{
+		Items: states,
+		Total: len(states),
 	}, nil
 }
 

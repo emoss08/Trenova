@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/core/domain/usstate"
+	"github.com/emoss08/trenova/internal/core/ports"
 	"github.com/emoss08/trenova/internal/core/ports/db"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/pkg/logger"
@@ -39,7 +40,7 @@ func NewUsStateRepository(p UsStateRepositoryParams) repositories.UsStateReposit
 	}
 }
 
-func (r *usStateRepository) List(ctx context.Context) (*repositories.ListUsStateResult, error) {
+func (r *usStateRepository) List(ctx context.Context) (*ports.ListResult[*usstate.UsState], error) {
 	dba, err := r.db.DB(ctx)
 	if err != nil {
 		return nil, eris.Wrap(err, "get database connection")
@@ -70,8 +71,8 @@ func (r *usStateRepository) List(ctx context.Context) (*repositories.ListUsState
 		log.Error().Err(err).Msg("failed to set states in cache")
 	}
 
-	return &repositories.ListUsStateResult{
-		States: dbStates,
-		Total:  count,
+	return &ports.ListResult[*usstate.UsState]{
+		Items: dbStates,
+		Total: count,
 	}, nil
 }

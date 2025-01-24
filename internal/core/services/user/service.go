@@ -59,7 +59,7 @@ func (s *Service) SelectOptions(ctx context.Context, opts *ports.LimitOffsetQuer
 	return options, nil
 }
 
-func (s *Service) GetByID(ctx context.Context, opts *repositories.GetUserByIDOptions) (*user.User, error) {
+func (s *Service) GetByID(ctx context.Context, opts repositories.GetUserByIDOptions) (*user.User, error) {
 	result, err := s.ps.HasPermission(ctx, &services.PermissionCheck{
 		UserID:         opts.UserID,
 		BusinessUnitID: opts.BuID,
