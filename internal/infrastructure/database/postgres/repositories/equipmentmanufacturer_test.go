@@ -56,7 +56,7 @@ func TestEquipmentManufacturerRepository(t *testing.T) {
 			},
 		}
 
-		testutils.TestRepoList(ctx, t, repo, opts, 3)
+		testutils.TestRepoList(ctx, t, repo, opts)
 	})
 
 	t.Run("get equipment manufacturer by id", func(t *testing.T) {

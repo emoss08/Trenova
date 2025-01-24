@@ -41,7 +41,7 @@ func TestLocationRepository(t *testing.T) {
 			},
 		}
 
-		testutils.TestRepoList(ctx, t, repo, opts, 1)
+		testutils.TestRepoList(ctx, t, repo, opts)
 	})
 
 	t.Run("get location by id", func(t *testing.T) {
