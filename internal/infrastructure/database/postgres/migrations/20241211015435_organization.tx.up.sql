@@ -1,7 +1,7 @@
 CREATE TYPE "org_type_enum" AS ENUM(
-    'Asset',
+    'Carrier',
     'Brokerage',
-    'Both'
+    'BrokerageCarrier'
 );
 
 CREATE TABLE IF NOT EXISTS "organizations"(
@@ -14,8 +14,7 @@ CREATE TABLE IF NOT EXISTS "organizations"(
     "scac_code" varchar(4) NOT NULL,
     "dot_number" varchar(8) NOT NULL,
     "logo_url" varchar(255),
-    "thumbnail_url" varchar(255),
-    "org_type" org_type_enum NOT NULL DEFAULT 'Asset',
+    "org_type" org_type_enum NOT NULL DEFAULT 'Carrier',
     "bucket_name" varchar(63) NOT NULL,
     "address_line1" varchar(150) NOT NULL,
     "address_line2" varchar(150),

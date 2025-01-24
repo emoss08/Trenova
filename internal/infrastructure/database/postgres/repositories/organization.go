@@ -6,16 +6,11 @@ import (
 	"fmt"
 
 	"github.com/emoss08/trenova/internal/core/domain/organization"
-	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/ports"
 	"github.com/emoss08/trenova/internal/core/ports/db"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
-	"github.com/emoss08/trenova/internal/core/services/audit"
 	"github.com/emoss08/trenova/internal/pkg/errors"
 	"github.com/emoss08/trenova/internal/pkg/logger"
-	"github.com/emoss08/trenova/internal/pkg/utils/jsonutils"
-	"github.com/emoss08/trenova/pkg/types/pulid"
 	"github.com/rotisserie/eris"
 	"github.com/rs/zerolog"
 	"github.com/uptrace/bun"
@@ -25,15 +20,13 @@ import (
 type OrganizationRepositoryParams struct {
 	fx.In
 
-	DB           db.Connection
-	AuditService services.AuditService
-	Logger       *logger.Logger
+	DB     db.Connection
+	Logger *logger.Logger
 }
 
 type organizationRepository struct {
-	db           db.Connection
-	auditService services.AuditService
-	l            *zerolog.Logger
+	db db.Connection
+	l  *zerolog.Logger
 }
 
 func NewOrganizationRepository(p OrganizationRepositoryParams) repositories.OrganizationRepository {
@@ -42,9 +35,8 @@ func NewOrganizationRepository(p OrganizationRepositoryParams) repositories.Orga
 		Logger()
 
 	return &organizationRepository{
-		db:           p.DB,
-		l:            &log,
-		auditService: p.AuditService,
+		db: p.DB,
+		l:  &log,
 	}
 }
 
@@ -57,7 +49,7 @@ func (or *organizationRepository) filterQuery(q *bun.SelectQuery, f *ports.Limit
 }
 
 // List returns a list of organizations for a business unit.
-func (or *organizationRepository) List(ctx context.Context, opts *ports.LimitOffsetQueryOptions) (*repositories.ListOrganizationResult, error) {
+func (or *organizationRepository) List(ctx context.Context, opts *ports.LimitOffsetQueryOptions) (*ports.ListResult[*organization.Organization], error) {
 	dba, err := or.db.DB(ctx)
 	if err != nil {
 		return nil, eris.Wrap(err, "get database connection")
@@ -80,9 +72,9 @@ func (or *organizationRepository) List(ctx context.Context, opts *ports.LimitOff
 		return nil, eris.Wrap(err, "failed to scan and count organizations")
 	}
 
-	return &repositories.ListOrganizationResult{
-		Organizations: organizations,
-		Total:         count,
+	return &ports.ListResult[*organization.Organization]{
+		Items: organizations,
+		Total: count,
 	}, nil
 }
 
@@ -129,7 +121,7 @@ func (or *organizationRepository) GetByID(ctx context.Context, opts repositories
 
 // Create creates an organization and audits the creation.
 func (or *organizationRepository) Create(
-	ctx context.Context, org *organization.Organization, userID pulid.ID,
+	ctx context.Context, org *organization.Organization,
 ) (*organization.Organization, error) {
 	dba, err := or.db.DB(ctx)
 	if err != nil {
@@ -143,10 +135,6 @@ func (or *organizationRepository) Create(
 		Logger()
 
 	err = dba.RunInTx(ctx, nil, func(c context.Context, tx bun.Tx) error {
-		if err := org.DBValidate(c, tx); err != nil {
-			return err
-		}
-
 		if _, err = tx.NewInsert().Model(org).Exec(c); err != nil {
 			log.Error().
 				Err(err).
@@ -166,28 +154,11 @@ func (or *organizationRepository) Create(
 		return nil, eris.Wrap(err, "create organization")
 	}
 
-	// Log the creation
-	err = or.auditService.LogAction(
-		&services.LogActionParams{
-			Resource:       permission.ResourceOrganization,
-			ResourceID:     org.ID.String(),
-			Action:         permission.ActionCreate,
-			UserID:         userID,
-			CurrentState:   jsonutils.MustToJSON(org),
-			OrganizationID: org.ID,
-			BusinessUnitID: org.BusinessUnitID,
-		},
-		audit.WithComment("Organization created"),
-	)
-	if err != nil {
-		log.Error().Err(err).Msg("failed to log organization creation")
-	}
-
 	return org, nil
 }
 
 func (or *organizationRepository) Update(
-	ctx context.Context, org *organization.Organization, userID pulid.ID,
+	ctx context.Context, org *organization.Organization,
 ) (*organization.Organization, error) {
 	dba, err := or.db.DB(ctx)
 	if err != nil {
@@ -200,23 +171,7 @@ func (or *organizationRepository) Update(
 		Int64("version", org.Version).
 		Logger()
 
-	opts := repositories.GetOrgByIDOptions{
-		OrgID:        org.ID,
-		BuID:         org.BusinessUnitID,
-		IncludeState: true,
-		IncludeBu:    true,
-	}
-
-	original, err := or.GetByID(ctx, opts)
-	if err != nil {
-		return nil, eris.Wrap(err, "failed to get original organization")
-	}
-
 	err = dba.RunInTx(ctx, nil, func(c context.Context, tx bun.Tx) error {
-		if err := org.DBValidate(c, tx); err != nil {
-			return err
-		}
-
 		ov := org.Version
 		org.Version++
 
@@ -251,30 +206,11 @@ func (or *organizationRepository) Update(
 		return nil, eris.Wrap(err, "update organization")
 	}
 
-	// Log the update if the insert was successful
-	err = or.auditService.LogAction(
-		&services.LogActionParams{
-			Resource:       permission.ResourceOrganization,
-			ResourceID:     org.ID.String(),
-			Action:         permission.ActionUpdate,
-			UserID:         userID,
-			CurrentState:   jsonutils.MustToJSON(org),
-			PreviousState:  jsonutils.MustToJSON(original),
-			OrganizationID: org.ID,
-			BusinessUnitID: org.BusinessUnitID,
-		},
-		audit.WithComment("Organization updated"),
-		audit.WithDiff(original, org),
-	)
-	if err != nil {
-		log.Error().Err(err).Msg("failed to log organization update")
-	}
-
 	return org, nil
 }
 
 // SetLogo sets the logo for an organization.
-func (or *organizationRepository) SetLogo(ctx context.Context, org *organization.Organization, userID pulid.ID) (*organization.Organization, error) {
+func (or *organizationRepository) SetLogo(ctx context.Context, org *organization.Organization) (*organization.Organization, error) {
 	dba, err := or.db.DB(ctx)
 	if err != nil {
 		return nil, eris.Wrap(err, "get database connection")
@@ -283,17 +219,7 @@ func (or *organizationRepository) SetLogo(ctx context.Context, org *organization
 	log := or.l.With().
 		Str("operation", "SetLogo").
 		Str("orgID", org.ID.String()).
-		Str("userID", userID.String()).
 		Logger()
-
-	original, err := or.GetByID(ctx, repositories.GetOrgByIDOptions{
-		OrgID: org.ID,
-		BuID:  org.BusinessUnitID,
-	})
-	if err != nil {
-		log.Error().Err(err).Msg("failed to get original organization")
-		return nil, eris.Wrap(err, "get original organization")
-	}
 
 	err = dba.RunInTx(ctx, nil, func(c context.Context, tx bun.Tx) error {
 		results, rErr := tx.NewUpdate().Model(org).
@@ -330,29 +256,11 @@ func (or *organizationRepository) SetLogo(ctx context.Context, org *organization
 		return nil, eris.Wrap(err, "set organization logo")
 	}
 
-	err = or.auditService.LogAction(
-		&services.LogActionParams{
-			Resource:       permission.ResourceOrganization,
-			ResourceID:     org.ID.String(),
-			Action:         permission.ActionUpdate,
-			UserID:         userID,
-			CurrentState:   jsonutils.MustToJSON(org),
-			PreviousState:  jsonutils.MustToJSON(original),
-			OrganizationID: org.ID,
-			BusinessUnitID: org.BusinessUnitID,
-		},
-		audit.WithComment("Organization logo set"),
-		audit.WithDiff(original, org),
-	)
-	if err != nil {
-		log.Error().Err(err).Msg("failed to log organization logo set")
-	}
-
 	return org, nil
 }
 
-func (or *organizationRepository) ClearLogo(ctx context.Context, org *organization.Organization, userID pulid.ID) (*organization.Organization, error) {
-	log := or.l.With().Str("operation", "ClearLogo").Str("orgID", org.ID.String()).Str("userID", userID.String()).Logger()
+func (or *organizationRepository) ClearLogo(ctx context.Context, org *organization.Organization) (*organization.Organization, error) {
+	log := or.l.With().Str("operation", "ClearLogo").Str("orgID", org.ID.String()).Logger()
 
 	original, err := or.GetByID(ctx, repositories.GetOrgByIDOptions{
 		OrgID: org.ID,
@@ -372,33 +280,15 @@ func (or *organizationRepository) ClearLogo(ctx context.Context, org *organizati
 	org.LogoURL = ""
 	org.Metadata = nil
 
-	updatedOrg, err := or.SetLogo(ctx, org, userID)
+	updatedOrg, err := or.SetLogo(ctx, org)
 	if err != nil {
 		return nil, eris.Wrap(err, "set organization logo")
-	}
-
-	err = or.auditService.LogAction(
-		&services.LogActionParams{
-			Resource:       permission.ResourceOrganization,
-			ResourceID:     org.ID.String(),
-			Action:         permission.ActionUpdate,
-			UserID:         userID,
-			CurrentState:   jsonutils.MustToJSON(updatedOrg),
-			PreviousState:  jsonutils.MustToJSON(original),
-			OrganizationID: org.ID,
-			BusinessUnitID: org.BusinessUnitID,
-		},
-		audit.WithComment("Organization logo cleared"),
-		audit.WithDiff(original, updatedOrg),
-	)
-	if err != nil {
-		log.Error().Err(err).Msg("failed to log organization logo cleared")
 	}
 
 	return updatedOrg, nil
 }
 
-func (or *organizationRepository) GetUserOrganizations(ctx context.Context, opts *ports.LimitOffsetQueryOptions) (*repositories.ListOrganizationResult, error) {
+func (or *organizationRepository) GetUserOrganizations(ctx context.Context, opts *ports.LimitOffsetQueryOptions) (*ports.ListResult[*organization.Organization], error) {
 	dba, err := or.db.DB(ctx)
 	if err != nil {
 		or.l.Error().Err(err).Msg("failed to get database connection")
@@ -422,8 +312,8 @@ func (or *organizationRepository) GetUserOrganizations(ctx context.Context, opts
 		return nil, eris.Wrap(err, "scan organizations")
 	}
 
-	return &repositories.ListOrganizationResult{
-		Organizations: orgs,
-		Total:         total,
+	return &ports.ListResult[*organization.Organization]{
+		Items: orgs,
+		Total: total,
 	}, nil
 }

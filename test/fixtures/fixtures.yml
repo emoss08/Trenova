@@ -328,6 +328,7 @@
       postal_code: 90001
       dot_number: 123456
       scac_code: TRNV
+      org_type: Carrier
       created_at: "{{ timestamp }}"
 
     - _id: trenova_2
@@ -339,7 +340,20 @@
       postal_code: 90001
       dot_number: 654321
       scac_code: ACEM
+      org_type: BrokerageCarrier
       created_at: "{{ timestamp }}"
+
+- model: User
+  rows:
+    - _id: test_user
+      current_organization_id: "{{ $.Organization.trenova.ID }}"
+      business_unit_id: "{{ $.BusinessUnit.trenova.ID }}"
+      name: "Test User"
+      username: "testuser"
+      email_address: "testuser@trenova.com"
+      password: "testuser"
+      created_at: "{{ timestamp }}"
+      status: "Inactive"
 
 - model: PretrainedModel
   rows:

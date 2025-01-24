@@ -87,7 +87,7 @@ func (s *Service) List(ctx context.Context, opts *ports.LimitOffsetQueryOptions)
 	)
 	if err != nil {
 		s.l.Error().Err(err).Msg("failed to check permissions")
-		return nil, eris.Wrap(err, "failed to check permissions")
+		return nil, eris.Wrap(err, "check permissions")
 	}
 
 	if !result.Allowed {
@@ -97,7 +97,7 @@ func (s *Service) List(ctx context.Context, opts *ports.LimitOffsetQueryOptions)
 	entities, err := s.repo.List(ctx, opts)
 	if err != nil {
 		log.Error().Err(err).Msg("failed to list fleet codes")
-		return nil, eris.Wrap(err, "failed to list fleet codes")
+		return nil, eris.Wrap(err, "list fleet codes")
 	}
 
 	return &ports.ListResult[*fleetcode.FleetCode]{
@@ -125,7 +125,7 @@ func (s *Service) Get(ctx context.Context, opts repositories.GetFleetCodeByIDOpt
 	)
 	if err != nil {
 		log.Error().Err(err).Msg("failed to check permissions")
-		return nil, eris.Wrap(err, "failed to check read fleet code permissions")
+		return nil, eris.Wrap(err, "check read fleet code permissions")
 	}
 
 	if !result.Allowed {
@@ -135,7 +135,7 @@ func (s *Service) Get(ctx context.Context, opts repositories.GetFleetCodeByIDOpt
 	entity, err := s.repo.GetByID(ctx, opts)
 	if err != nil {
 		log.Error().Err(err).Msg("failed to get fleet code")
-		return nil, eris.Wrap(err, "failed to get fleet code")
+		return nil, eris.Wrap(err, "get fleet code")
 	}
 
 	return entity, nil

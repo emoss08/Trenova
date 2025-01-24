@@ -88,7 +88,7 @@ func (h Handler) get(c *fiber.Ctx) error {
 		return h.eh.HandleError(c, err)
 	}
 
-	usr, err := h.uh.GetByID(c.UserContext(), &repositories.GetUserByIDOptions{
+	usr, err := h.uh.GetByID(c.UserContext(), repositories.GetUserByIDOptions{
 		OrgID:        reqCtx.OrgID,
 		BuID:         reqCtx.BuID,
 		UserID:       userID,
@@ -108,7 +108,7 @@ func (h Handler) me(c *fiber.Ctx) error {
 		return h.eh.HandleError(c, err)
 	}
 
-	usr, err := h.uh.GetByID(c.UserContext(), &repositories.GetUserByIDOptions{
+	usr, err := h.uh.GetByID(c.UserContext(), repositories.GetUserByIDOptions{
 		OrgID:        reqCtx.OrgID,
 		BuID:         reqCtx.BuID,
 		UserID:       reqCtx.UserID,
