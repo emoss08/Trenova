@@ -40,13 +40,6 @@ func TestEquipmentManufacturerRepository(t *testing.T) {
 	bu := ts.Fixture.MustRow("BusinessUnit.trenova").(*businessunit.BusinessUnit)
 	emf1 := ts.Fixture.MustRow("EquipmentManufacturer.kenworth_manufacturer").(*equipmentmanufacturer.EquipmentManufacturer)
 	// Test Data
-	em := &equipmentmanufacturer.EquipmentManufacturer{
-		Name:           "Test Equipment Manufacturer 2",
-		Description:    "Test Equipment Manufacturer Description",
-		Status:         domain.StatusActive,
-		BusinessUnitID: bu.ID,
-		OrganizationID: org.ID,
-	}
 
 	repo := repositories.NewEquipmentManufacturerRepository(repositories.EquipManuRepositoryParams{
 		Logger: logger.NewLogger(testutils.NewTestConfig()),
@@ -54,44 +47,51 @@ func TestEquipmentManufacturerRepository(t *testing.T) {
 	})
 
 	t.Run("list equipment manufacturers", func(t *testing.T) {
-		equipmentManufacturers, err := repo.List(ctx, &ports.LimitOffsetQueryOptions{
+		opts := &ports.LimitOffsetQueryOptions{
 			Limit:  10,
 			Offset: 0,
 			TenantOpts: &ports.TenantOptions{
 				OrgID: org.ID,
 				BuID:  bu.ID,
 			},
-		})
+		}
 
-		require.NoError(t, err)
-		require.NotNil(t, equipmentManufacturers)
-		require.Len(t, equipmentManufacturers.Items, 3)
+		testutils.TestRepoList(ctx, t, repo, opts, 3)
 	})
 
 	t.Run("get equipment manufacturer by id", func(t *testing.T) {
-		equipManu, err := repo.GetByID(ctx, repoports.GetEquipManufacturerByIDOptions{
+		testutils.TestRepoGetByID(ctx, t, repo, repoports.GetEquipManufacturerByIDOptions{
 			ID:    emf1.ID,
 			OrgID: org.ID,
 			BuID:  bu.ID,
 		})
+	})
 
-		require.NoError(t, err)
-		require.NotNil(t, equipManu)
-		require.Equal(t, emf1.ID, equipManu.ID)
+	t.Run("get equipment manufacturer with invalid id", func(t *testing.T) {
+		equipManu, err := repo.GetByID(ctx, repoports.GetEquipManufacturerByIDOptions{
+			ID:    "invalid-id",
+			OrgID: org.ID,
+			BuID:  bu.ID,
+		})
+
+		require.Error(t, err, "equipment manufacturer not found")
+		require.Nil(t, equipManu)
 	})
 
 	t.Run("create equipment manufacturer", func(t *testing.T) {
-		created, err := repo.Create(ctx, em)
-		require.NoError(t, err)
-		require.NotNil(t, created)
-		require.Equal(t, em.ID, created.ID)
+		em := &equipmentmanufacturer.EquipmentManufacturer{
+			Name:           "Test Equipment Manufacturer 2",
+			Description:    "Test Equipment Manufacturer Description",
+			Status:         domain.StatusActive,
+			BusinessUnitID: bu.ID,
+			OrganizationID: org.ID,
+		}
+
+		testutils.TestRepoCreate(ctx, t, repo, em)
 	})
 
 	t.Run("update equipment manufacturer", func(t *testing.T) {
-		em.Name = "Test Equipment Manufacturer 3"
-		updated, err := repo.Update(ctx, em)
-		require.NoError(t, err)
-		require.NotNil(t, updated)
-		require.Equal(t, em.ID, updated.ID)
+		emf1.Name = "Test Equipment Manufacturer 3"
+		testutils.TestRepoUpdate(ctx, t, repo, emf1)
 	})
 }
