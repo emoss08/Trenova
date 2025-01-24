@@ -45,6 +45,32 @@ func TestOrganizationRepository(t *testing.T) {
 		})
 	})
 
+	t.Run("get by id with state", func(t *testing.T) {
+		opts := repoports.GetOrgByIDOptions{
+			OrgID:        org.ID,
+			BuID:         bu.ID,
+			IncludeState: true,
+		}
+
+		result, err := repo.GetByID(ctx, opts)
+		require.NoError(t, err)
+		require.NotNil(t, result)
+		require.NotEmpty(t, result.State)
+	})
+
+	t.Run("get by id with business unit", func(t *testing.T) {
+		opts := repoports.GetOrgByIDOptions{
+			OrgID:     org.ID,
+			BuID:      bu.ID,
+			IncludeBu: true,
+		}
+
+		result, err := repo.GetByID(ctx, opts)
+		require.NoError(t, err)
+		require.NotNil(t, result)
+		require.NotEmpty(t, result.BusinessUnit)
+	})
+
 	t.Run("get with invalid id", func(t *testing.T) {
 		entity, err := repo.GetByID(ctx, repoports.GetOrgByIDOptions{
 			OrgID: "invalid-id",
@@ -77,5 +103,25 @@ func TestOrganizationRepository(t *testing.T) {
 	t.Run("update", func(t *testing.T) {
 		org.Name = "Test Organization 2"
 		testutils.TestRepoUpdate(ctx, t, repo, org)
+	})
+
+	t.Run("update organization version lock failure", func(t *testing.T) {
+		org.Name = "Test Organization 3"
+		org.Version = 0
+
+		results, err := repo.Update(ctx, org)
+
+		require.Error(t, err)
+		require.Nil(t, results)
+	})
+
+	t.Run("update organization with invalid information", func(t *testing.T) {
+		org.Name = "Test Organization 3"
+		org.StateID = "invalid-id"
+
+		results, err := repo.Update(ctx, org)
+
+		require.Error(t, err)
+		require.Nil(t, results)
 	})
 }
