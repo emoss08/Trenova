@@ -52,7 +52,7 @@ func (or *organizationRepository) filterQuery(q *bun.SelectQuery, f *ports.Limit
 func (or *organizationRepository) List(ctx context.Context, opts *ports.LimitOffsetQueryOptions) (*ports.ListResult[*organization.Organization], error) {
 	dba, err := or.db.DB(ctx)
 	if err != nil {
-		return nil, eris.Wrap(err, "get database connection")
+		return nil, err
 	}
 
 	log := or.l.With().
@@ -69,7 +69,7 @@ func (or *organizationRepository) List(ctx context.Context, opts *ports.LimitOff
 	count, err := q.ScanAndCount(ctx)
 	if err != nil {
 		log.Error().Err(err).Msg("failed to scan and count organizations")
-		return nil, eris.Wrap(err, "failed to scan and count organizations")
+		return nil, err
 	}
 
 	return &ports.ListResult[*organization.Organization]{
@@ -82,7 +82,7 @@ func (or *organizationRepository) List(ctx context.Context, opts *ports.LimitOff
 func (or *organizationRepository) GetByID(ctx context.Context, opts repositories.GetOrgByIDOptions) (*organization.Organization, error) {
 	dba, err := or.db.DB(ctx)
 	if err != nil {
-		return nil, eris.Wrap(err, "get database connection")
+		return nil, err
 	}
 
 	log := or.l.With().
@@ -113,7 +113,7 @@ func (or *organizationRepository) GetByID(ctx context.Context, opts repositories
 		}
 
 		log.Error().Err(err).Msgf("failed to get organization by ID %s", opts.OrgID)
-		return nil, eris.Wrapf(err, "failed to get organization by ID %s", opts.OrgID)
+		return nil, err
 	}
 
 	return org, nil
@@ -125,7 +125,7 @@ func (or *organizationRepository) Create(
 ) (*organization.Organization, error) {
 	dba, err := or.db.DB(ctx)
 	if err != nil {
-		return nil, eris.Wrap(err, "get database connection")
+		return nil, err
 	}
 
 	log := or.l.With().
@@ -140,7 +140,7 @@ func (or *organizationRepository) Create(
 				Err(err).
 				Interface("organization", org).
 				Msg("failed to insert organization")
-			return eris.Wrap(err, "insert organization")
+			return err
 		}
 
 		log.Info().
@@ -151,7 +151,7 @@ func (or *organizationRepository) Create(
 		return nil
 	})
 	if err != nil {
-		return nil, eris.Wrap(err, "create organization")
+		return nil, err
 	}
 
 	return org, nil
@@ -162,7 +162,7 @@ func (or *organizationRepository) Update(
 ) (*organization.Organization, error) {
 	dba, err := or.db.DB(ctx)
 	if err != nil {
-		return nil, eris.Wrap(err, "get database connection")
+		return nil, err
 	}
 
 	log := or.l.With().
@@ -184,13 +184,13 @@ func (or *organizationRepository) Update(
 			log.Error().Err(rErr).
 				Interface("organization", org).
 				Msg("failed to update organization")
-			return eris.Wrap(rErr, "update organization")
+			return err
 		}
 
 		rows, roErr := results.RowsAffected()
 		if roErr != nil {
 			log.Error().Err(roErr).Msg("failed to get rows affected")
-			return eris.Wrap(roErr, "get rows affected")
+			return err
 		}
 
 		if rows == 0 {
@@ -203,7 +203,7 @@ func (or *organizationRepository) Update(
 		return nil
 	})
 	if err != nil {
-		return nil, eris.Wrap(err, "update organization")
+		return nil, err
 	}
 
 	return org, nil
@@ -213,7 +213,7 @@ func (or *organizationRepository) Update(
 func (or *organizationRepository) SetLogo(ctx context.Context, org *organization.Organization) (*organization.Organization, error) {
 	dba, err := or.db.DB(ctx)
 	if err != nil {
-		return nil, eris.Wrap(err, "get database connection")
+		return nil, err
 	}
 
 	log := or.l.With().
@@ -230,13 +230,13 @@ func (or *organizationRepository) SetLogo(ctx context.Context, org *organization
 			Exec(c)
 		if rErr != nil {
 			log.Error().Err(rErr).Msg("failed to update organization logo")
-			return eris.Wrap(rErr, "update organization logo")
+			return err
 		}
 
 		rows, roErr := results.RowsAffected()
 		if roErr != nil {
 			log.Error().Err(roErr).Msg("failed to get rows affected")
-			return eris.Wrap(roErr, "get rows affected")
+			return err
 		}
 
 		if rows == 0 {
@@ -253,7 +253,7 @@ func (or *organizationRepository) SetLogo(ctx context.Context, org *organization
 	})
 	if err != nil {
 		log.Error().Err(err).Msg("failed to set organization logo")
-		return nil, eris.Wrap(err, "set organization logo")
+		return nil, err
 	}
 
 	return org, nil
@@ -268,7 +268,7 @@ func (or *organizationRepository) ClearLogo(ctx context.Context, org *organizati
 	})
 	if err != nil {
 		log.Error().Err(err).Msg("failed to get original organization")
-		return nil, eris.Wrap(err, "get original organization")
+		return nil, err
 	}
 
 	if original.LogoURL == "" {
@@ -282,7 +282,7 @@ func (or *organizationRepository) ClearLogo(ctx context.Context, org *organizati
 
 	updatedOrg, err := or.SetLogo(ctx, org)
 	if err != nil {
-		return nil, eris.Wrap(err, "set organization logo")
+		return nil, err
 	}
 
 	return updatedOrg, nil
@@ -292,7 +292,7 @@ func (or *organizationRepository) GetUserOrganizations(ctx context.Context, opts
 	dba, err := or.db.DB(ctx)
 	if err != nil {
 		or.l.Error().Err(err).Msg("failed to get database connection")
-		return nil, eris.Wrap(err, "get database connection")
+		return nil, err
 	}
 
 	orgs := make([]*organization.Organization, 0)
@@ -309,7 +309,7 @@ func (or *organizationRepository) GetUserOrganizations(ctx context.Context, opts
 	total, err := q.ScanAndCount(ctx)
 	if err != nil {
 		or.l.Error().Err(err).Msg("failed to scan organizations")
-		return nil, eris.Wrap(err, "scan organizations")
+		return nil, err
 	}
 
 	return &ports.ListResult[*organization.Organization]{

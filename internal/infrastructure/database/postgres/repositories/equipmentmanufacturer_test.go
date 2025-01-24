@@ -59,6 +59,20 @@ func TestEquipmentManufacturerRepository(t *testing.T) {
 		testutils.TestRepoList(ctx, t, repo, opts)
 	})
 
+	t.Run("list locations with query", func(t *testing.T) {
+		opts := &ports.LimitOffsetQueryOptions{
+			Limit:  10,
+			Offset: 0,
+			Query:  "Kenworth",
+			TenantOpts: &ports.TenantOptions{
+				OrgID: org.ID,
+				BuID:  bu.ID,
+			},
+		}
+
+		testutils.TestRepoList(ctx, t, repo, opts)
+	})
+
 	t.Run("get equipment manufacturer by id", func(t *testing.T) {
 		testutils.TestRepoGetByID(ctx, t, repo, repoports.GetEquipManufacturerByIDOptions{
 			ID:    emf1.ID,
@@ -67,7 +81,7 @@ func TestEquipmentManufacturerRepository(t *testing.T) {
 		})
 	})
 
-	t.Run("get equipment manufacturer with invalid id", func(t *testing.T) {
+	t.Run("get equipment manufacturer id failure", func(t *testing.T) {
 		equipManu, err := repo.GetByID(ctx, repoports.GetEquipManufacturerByIDOptions{
 			ID:    "invalid-id",
 			OrgID: org.ID,
@@ -90,8 +104,33 @@ func TestEquipmentManufacturerRepository(t *testing.T) {
 		testutils.TestRepoCreate(ctx, t, repo, em)
 	})
 
+	t.Run("create equipment manufacturer failure", func(t *testing.T) {
+		em := &equipmentmanufacturer.EquipmentManufacturer{
+			Name:           "Test Equipment Manufacturer 2",
+			Description:    "Test Equipment Manufacturer Description",
+			Status:         domain.StatusActive,
+			BusinessUnitID: bu.ID,
+			OrganizationID: "invalid-id",
+		}
+
+		results, err := repo.Create(ctx, em)
+
+		require.Error(t, err)
+		require.Nil(t, results)
+	})
+
 	t.Run("update equipment manufacturer", func(t *testing.T) {
 		emf1.Name = "Test Equipment Manufacturer 3"
 		testutils.TestRepoUpdate(ctx, t, repo, emf1)
+	})
+
+	t.Run("update equipment manufacturer with invalid information", func(t *testing.T) {
+		emf1.Name = "Test Location 3"
+		emf1.OrganizationID = "invalid-id"
+
+		results, err := repo.Update(ctx, emf1)
+
+		require.Error(t, err)
+		require.Nil(t, results)
 	})
 }
