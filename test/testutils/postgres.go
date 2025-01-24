@@ -90,7 +90,7 @@ func NewTestDatabase(t testing.TB, migrations *migrate.Migrations) *TestDatabase
 	sqldb := stdlib.OpenDBFromPool(pool)
 	bunDB := bun.NewDB(sqldb, pgdialect.New())
 
-	bunDB.AddQueryHook(bundebug.NewQueryHook(bundebug.WithVerbose(true), bundebug.FromEnv("BUNDEBUG")))
+	bunDB.AddQueryHook(bundebug.NewQueryHook(bundebug.WithVerbose(false), bundebug.FromEnv("BUNDEBUG")))
 
 	// Register entities
 	bunDB.RegisterModel(registry.RegisterEntities()...)
