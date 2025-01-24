@@ -8,11 +8,6 @@ import (
 	"github.com/emoss08/trenova/pkg/types/pulid"
 )
 
-type ListOrganizationResult struct {
-	Organizations []*organization.Organization
-	Total         int
-}
-
 type GetOrgByIDOptions struct {
 	// ID of the organization
 	OrgID pulid.ID
@@ -28,11 +23,11 @@ type GetOrgByIDOptions struct {
 }
 
 type OrganizationRepository interface {
-	List(ctx context.Context, opts *ports.LimitOffsetQueryOptions) (*ListOrganizationResult, error)
+	List(ctx context.Context, opts *ports.LimitOffsetQueryOptions) (*ports.ListResult[*organization.Organization], error)
 	GetByID(ctx context.Context, opts GetOrgByIDOptions) (*organization.Organization, error)
-	Create(ctx context.Context, org *organization.Organization, requesterID pulid.ID) (*organization.Organization, error)
-	Update(ctx context.Context, org *organization.Organization, requesterID pulid.ID) (*organization.Organization, error)
-	SetLogo(ctx context.Context, org *organization.Organization, userID pulid.ID) (*organization.Organization, error)
-	ClearLogo(ctx context.Context, org *organization.Organization, userID pulid.ID) (*organization.Organization, error)
-	GetUserOrganizations(ctx context.Context, opts *ports.LimitOffsetQueryOptions) (*ListOrganizationResult, error)
+	Create(ctx context.Context, org *organization.Organization) (*organization.Organization, error)
+	Update(ctx context.Context, org *organization.Organization) (*organization.Organization, error)
+	SetLogo(ctx context.Context, org *organization.Organization) (*organization.Organization, error)
+	ClearLogo(ctx context.Context, org *organization.Organization) (*organization.Organization, error)
+	GetUserOrganizations(ctx context.Context, opts *ports.LimitOffsetQueryOptions) (*ports.ListResult[*organization.Organization], error)
 }
