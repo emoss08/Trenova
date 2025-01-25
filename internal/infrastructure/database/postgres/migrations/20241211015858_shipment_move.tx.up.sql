@@ -1,5 +1,5 @@
 -- Enum with documentation for each status
-CREATE TYPE "shipment_move_status_enum" AS ENUM(
+CREATE TYPE "stop_status_enum" AS ENUM(
     'New', -- Initial state when move is created
     'InTransit', -- Move is currently being executed
     'Completed', -- Move has been completed successfully
@@ -11,14 +11,18 @@ CREATE TABLE IF NOT EXISTS "shipment_moves"(
     "id" varchar(100) NOT NULL,
     "organization_id" varchar(100) NOT NULL,
     "business_unit_id" varchar(100) NOT NULL,
+    -- Primary keys
     "shipment_id" varchar(100) NOT NULL,
-    "status" shipment_move_status_enum NOT NULL DEFAULT 'New',
+    -- Core Fields
+    "status" stop_status_enum NOT NULL DEFAULT 'New',
     "loaded" boolean NOT NULL DEFAULT TRUE,
-    "sequence" integer NOT NULL DEFAULT 0 CHECK ("sequence" >= 0),
-    "distance" numeric(10, 2) NOT NULL DEFAULT 0 CHECK ("distance" >= 0),
+    "sequence_number" integer NOT NULL DEFAULT 0 CHECK ("sequence_number" >= 0),
+    "distance" float,
+    -- Metadata
     "version" bigint NOT NULL DEFAULT 0,
     "created_at" bigint NOT NULL DEFAULT EXTRACT(EPOCH FROM CURRENT_TIMESTAMP) ::bigint,
     "updated_at" bigint NOT NULL DEFAULT EXTRACT(EPOCH FROM CURRENT_TIMESTAMP) ::bigint,
+    -- Constraints
     CONSTRAINT "pk_shipment_moves" PRIMARY KEY ("id", "organization_id", "business_unit_id"),
     CONSTRAINT "fk_shipment_moves_business_unit" FOREIGN KEY ("business_unit_id") REFERENCES "business_units"("id") ON UPDATE NO ACTION ON DELETE CASCADE,
     CONSTRAINT "fk_shipment_moves_organization" FOREIGN KEY ("organization_id") REFERENCES "organizations"("id") ON UPDATE NO ACTION ON DELETE CASCADE,
@@ -33,7 +37,7 @@ CREATE INDEX IF NOT EXISTS "idx_shipment_moves_business_unit" ON "shipment_moves
 
 CREATE INDEX IF NOT EXISTS "idx_shipment_moves_shipment" ON "shipment_moves"("shipment_id", "organization_id");
 
-CREATE INDEX IF NOT EXISTS "idx_shipment_moves_sequence" ON "shipment_moves"("sequence");
+CREATE INDEX IF NOT EXISTS "idx_shipment_moves_sequence_number" ON "shipment_moves"("sequence_number");
 
 COMMENT ON TABLE shipment_moves IS 'Stores information about individual moves within a shipment journey';
 

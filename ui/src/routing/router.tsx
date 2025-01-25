@@ -111,9 +111,7 @@ const routes: RouteObject[] = [
           {
             path: "/dispatch/configurations/locations",
             async lazy() {
-              const { Locations } = await import(
-                "@/app/locations/page"
-              );
+              const { Locations } = await import("@/app/locations/page");
               return { Component: Locations };
             },
             handle: {
@@ -148,6 +146,17 @@ const routes: RouteObject[] = [
               title: "Equipment Manufacturers",
             },
           },
+          {
+            path: "/equipment/configurations/tractors",
+            async lazy() {
+              const { Tractor } = await import("@/app/tractor/page");
+              return { Component: Tractor };
+            },
+            handle: {
+              crumb: "Tractors",
+              title: "Tractors",
+            },
+          },
         ],
       },
       // Auth routes with AuthLayout
@@ -175,3 +184,4 @@ const routes: RouteObject[] = [
 const router = createBrowserRouter(routes);
 
 export { router, routes };
+

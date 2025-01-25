@@ -8,7 +8,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/google/uuid"
+	"github.com/oklog/ulid/v2"
 	"github.com/rotisserie/eris"
 )
 
@@ -52,7 +52,7 @@ func (h *FixtureHelpers) GetTemplateFuncs() map[string]any {
 		"timestamp":     h.Timestamp,
 
 		// ID and reference helpers
-		"uuid":        h.UUID,
+		"ulid":        h.ULID,
 		"sequence":    h.Sequence,
 		"reference":   h.Reference,
 		"randomEnum":  h.RandomEnum,
@@ -162,10 +162,10 @@ func (h *FixtureHelpers) Timestamp() int64 {
 	return h.baseTime.Unix()
 }
 
-// UUID generates and returns a new version 4 UUID as a string. This can be used
+// PULID generates and returns a new PULID as a string. This can be used
 // for generating unique identifiers in fixtures.
-func (h *FixtureHelpers) UUID() string {
-	return uuid.New().String()
+func (h *FixtureHelpers) ULID() string {
+	return ulid.MustNew(ulid.Timestamp(time.Now()), ulid.Monotonic(rand.Reader, 0)).String()
 }
 
 // Sequence returns an incrementing integer each time it is called with the same

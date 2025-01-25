@@ -66,7 +66,7 @@ export function FormEditModal<T extends FieldValues>({
 
   const {
     setError,
-    formState: { isDirty, isSubmitting },
+    formState: { isDirty, isSubmitting, errors },
     handleSubmit,
     reset,
   } = form;
@@ -131,6 +131,7 @@ export function FormEditModal<T extends FieldValues>({
     onClose: handleClose,
   });
 
+  console.log(errors);
   const onSubmit = useCallback(
     async (values: T) => {
       await mutation.mutateAsync(values);

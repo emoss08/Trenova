@@ -39,6 +39,7 @@ const (
 	ResourceCommodity             = Resource("commodity")              // Represents resources for managing commodities.
 	ResourceLocationCategory      = Resource("location_category")      // Represents resources for managing location categories.
 	ResourceLocation              = Resource("location")               // Represents resources for managing locations.
+
 	// Financial resources
 	ResourceInvoice = Resource("invoice") // Represents resources related to invoices.
 

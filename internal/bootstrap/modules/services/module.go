@@ -20,6 +20,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/session"
 	"github.com/emoss08/trenova/internal/core/services/shipmenttype"
 	"github.com/emoss08/trenova/internal/core/services/tableconfiguration"
+	"github.com/emoss08/trenova/internal/core/services/tractor"
 	"github.com/emoss08/trenova/internal/core/services/user"
 	"github.com/emoss08/trenova/internal/core/services/usstate"
 	"github.com/emoss08/trenova/internal/core/services/worker"
@@ -49,4 +50,5 @@ var Module = fx.Module("services", fx.Provide(
 	locationcategory.NewService,
 	reporting.NewService,
 	location.NewService,
+	tractor.NewService,
 ))

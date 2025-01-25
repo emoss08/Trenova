@@ -1,13 +1,14 @@
 package middleware
 
 import (
+	"crypto/rand"
 	"fmt"
 	"strings"
 	"time"
 
 	"github.com/emoss08/trenova/internal/pkg/logger"
 	"github.com/gofiber/fiber/v2"
-	"github.com/google/uuid"
+	"github.com/oklog/ulid/v2"
 )
 
 // LogConfig holds the configuration for the logging middleware
@@ -112,7 +113,7 @@ func NewLogger(l *logger.Logger, config ...LogConfig) fiber.Handler {
 		// Generate request ID if not present
 		requestID := c.Get("X-Request-ID")
 		if requestID == "" {
-			requestID = uuid.New().String()
+			requestID = ulid.MustNew(ulid.Timestamp(time.Now()), ulid.Monotonic(rand.Reader, 0)).String()
 			c.Set("X-Request-ID", requestID)
 		}
 

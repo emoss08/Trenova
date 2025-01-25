@@ -748,6 +748,30 @@
       city: Los Angeles
       state_id: "{{ $.UsState.ca.ID }}"
       postal_code: 90001
+    - _id: worker_2
+      organization_id: "{{ $.Organization.trenova.ID }}"
+      business_unit_id: "{{ $.BusinessUnit.trenova.ID }}"
+      fleet_code_id: "{{ $.FleetCode.fc_1.ID }}"
+      created_at: "{{ timestamp }}"
+      first_name: Jane
+      last_name: Doe
+      gender: Female
+      address_line1: 123 Main St
+      city: Los Angeles
+      state_id: "{{ $.UsState.ca.ID }}"
+      postal_code: 90001
+    - _id: worker_3
+      organization_id: "{{ $.Organization.trenova.ID }}"
+      business_unit_id: "{{ $.BusinessUnit.trenova.ID }}"
+      fleet_code_id: "{{ $.FleetCode.fc_1.ID }}"
+      created_at: "{{ timestamp }}"
+      first_name: Thomas
+      last_name: Edison
+      gender: Male
+      address_line1: 123 Main St
+      city: Los Angeles
+      state_id: "{{ $.UsState.ca.ID }}"
+      postal_code: 90001
 
 - model: WorkerProfile
   rows:
@@ -756,6 +780,38 @@
       organization_id: "{{ $.Organization.trenova.ID }}"
       business_unit_id: "{{ $.BusinessUnit.trenova.ID }}"
       dob: "{{ yearsAgo 30 }}"
+      license_number: "1234567890"
+      license_expiry: "{{ yearsFromNow 2 }}"
+      license_state_id: "{{ $.UsState.fl.ID }}"
+      endorsement: "X"
+      hazmat_expiry: "{{ yearsFromNow 4 }}"
+      hire_date: "{{ monthsAgo 6 }}"
+      mvr_due_date: "{{ yearsFromNow 1 }}"
+      last_drug_test: "{{ monthsAgo 6 }}"
+      last_mvr_check: "{{ monthsAgo 6 }}"
+      physical_due_date: "{{ timestamp }}"
+      created_at: "{{ timestamp }}"
+    - _id: wp_2
+      worker_id: "{{ $.Worker.worker_2.ID }}"
+      organization_id: "{{ $.Organization.trenova.ID }}"
+      business_unit_id: "{{ $.BusinessUnit.trenova.ID }}"
+      dob: "{{ yearsAgo 20 }}"
+      license_number: "1234567890"
+      license_expiry: "{{ yearsFromNow 2 }}"
+      license_state_id: "{{ $.UsState.fl.ID }}"
+      endorsement: "X"
+      hazmat_expiry: "{{ yearsFromNow 4 }}"
+      hire_date: "{{ monthsAgo 6 }}"
+      mvr_due_date: "{{ yearsFromNow 1 }}"
+      last_drug_test: "{{ monthsAgo 6 }}"
+      last_mvr_check: "{{ monthsAgo 6 }}"
+      physical_due_date: "{{ timestamp }}"
+      created_at: "{{ timestamp }}"
+    - _id: wp_3
+      worker_id: "{{ $.Worker.worker_3.ID }}"
+      organization_id: "{{ $.Organization.trenova.ID }}"
+      business_unit_id: "{{ $.BusinessUnit.trenova.ID }}"
+      dob: "{{ yearsAgo 20 }}"
       license_number: "1234567890"
       license_expiry: "{{ yearsFromNow 2 }}"
       license_state_id: "{{ $.UsState.fl.ID }}"
@@ -787,3 +843,15 @@
       state_id: "{{ $.UsState.fl.ID }}"
       years: 4 # 4 years for hazmat endorsement in the state of florida.
       created_at: "{{ timestamp }}"
+
+- model: Tractor
+  rows:
+    - _id: tractor_1
+      organization_id: "{{ $.Organization.trenova.ID }}"
+      business_unit_id: "{{ $.BusinessUnit.trenova.ID }}"
+      equipment_type_id: "{{ $.EquipmentType.tractor_equip_type.ID }}"
+      equipment_manufacturer_id: "{{ $.EquipmentManufacturer.freightliner_manufacturer.ID }}"
+      code: TRN-001
+      primary_worker_id: "{{ $.Worker.worker_1.ID }}"
+      secondary_worker_id: "{{ $.Worker.worker_2.ID }}"
+      created_at: "{{ now.Unix }}"
