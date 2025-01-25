@@ -91,3 +91,7 @@ func MustParse(s string) (ID, error) {
 	}
 	return id, nil
 }
+
+func Equals(a, b ID) bool {
+	return a == b
+}

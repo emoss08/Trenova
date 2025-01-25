@@ -12,6 +12,12 @@ import { useBreadcrumbs } from "@/hooks/use-breadcrumbs";
 import React from "react";
 import { useNavigation } from "react-router";
 import { NavActions } from "./nav-actions";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "./ui/tooltip";
 
 export function Header() {
   const navigation = useNavigation();
@@ -21,7 +27,16 @@ export function Header() {
   return (
     <header className="flex h-14 w-full shrink-0 items-center gap-2 bg-background/95 backdrop-blur-sm supports-backdrop-filter:bg-background/60 dark:border-border">
       <div className="flex flex-1 items-center gap-2 px-3">
-        <SidebarTrigger />
+        <TooltipProvider delayDuration={0}>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <SidebarTrigger />
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>Toggle Sidebar</p>
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
         <Separator orientation="vertical" className="mr-2 h-4" />
         <Breadcrumb>
           <BreadcrumbList>

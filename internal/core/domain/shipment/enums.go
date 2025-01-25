@@ -39,21 +39,27 @@ const (
 	Other = RatingMethod("Other")
 )
 
-func (rm RatingMethod) String() string {
-	return string(rm)
-}
-
-func (rm RatingMethod) IsValid() bool {
-	switch rm {
-	case FlatRate, PerMile, PerStop, PerPound, PerPallet, PerLinearFoot, Other:
-		return true
-	}
-	return false
-}
-
 type EntryMethod string
 
 const (
 	EntryMethodManual     = EntryMethod("Manual")
 	EntryMethodElectronic = EntryMethod("Electronic")
+)
+
+type StopType string
+
+const (
+	StopTypePickup        = StopType("Pickup")
+	StopTypeDelivery      = StopType("Delivery")
+	StopTypeSplitPickup   = StopType("SplitPickup")
+	StopTypeSplitDelivery = StopType("SplitDelivery")
+)
+
+type StopStatus string
+
+const (
+	StopStatusNew       = StopStatus("New")
+	StopStatusInTransit = StopStatus("InTransit")
+	StopStatusCompleted = StopStatus("Completed")
+	StopStatusCanceled  = StopStatus("Canceled")
 )

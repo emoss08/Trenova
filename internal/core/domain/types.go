@@ -23,8 +23,23 @@ const (
 	GenderFemale = Gender("Female")
 )
 
+type EquipmentStatus string
+
+const (
+	// EquipmentStatusAvailable is the equipment is available for use
+	EquipmentStatusAvailable = EquipmentStatus("Available")
+
+	// EquipmentStatusOOS is the equipment is out of service
+	EquipmentStatusOOS = EquipmentStatus("OutOfService")
+
+	// EquipmentStatusAtMaintenance is the equipment is at maintenance
+	EquipmentStatusAtMaintenance = EquipmentStatus("AtMaintenance")
+
+	// EquipmentStatusSold is the equipment is sold
+	EquipmentStatusSold = EquipmentStatus("Sold")
+)
+
 type Validatable interface {
 	Validate(ctx context.Context, multiErr *errors.MultiError)
-	// ValidateUniqueness(ctx context.Context, tx bun.IDB, multiErr *errors.MultiError)
 	GetTableName() string
 }
