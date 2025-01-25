@@ -1,11 +1,3 @@
--- Enums with comments explaining each status
-CREATE TYPE stop_status_enum AS ENUM(
-    'New', -- Initial state when stop is created
-    'InTransit', -- Vehicle is en route to stop
-    'Completed', -- Stop has been completed successfully
-    'Cancelled' -- Stop has been cancelled and won't be completed
-);
-
 -- Enums with comments explaining each type
 CREATE TYPE stop_type_enum AS ENUM(
     'Pickup', -- Regular pickup stop

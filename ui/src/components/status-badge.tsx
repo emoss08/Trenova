@@ -2,15 +2,13 @@ import { type WorkerSchema } from "@/lib/schemas/worker-schema";
 import { badgeVariants } from "@/lib/variants/badge";
 import { type Status } from "@/types/common";
 import { type PackingGroupChoiceProps } from "@/types/hazardous-material";
+import { EquipmentStatus } from "@/types/tractor";
 import { type VariantProps } from "class-variance-authority";
 import { Badge } from "./ui/badge";
 
 export function StatusBadge({ status }: { status: Status }) {
   return (
-    <Badge
-      variant={status === "Active" ? "active" : "inactive"}
-      // className="max-h-6"
-    >
+    <Badge variant={status === "Active" ? "active" : "inactive"}>
       {status}
     </Badge>
   );
@@ -34,6 +32,33 @@ export function WorkerTypeBadge({ type }: { type: WorkerSchema["type"] }) {
   };
 
   return <Badge {...typeAttr[type]}>{typeAttr[type].text}</Badge>;
+}
+
+export function EquipmentStatusBadge({ status }: { status: EquipmentStatus }) {
+  const statusAttributes: Record<EquipmentStatus, BadgeAttrProps> = {
+    [EquipmentStatus.Available]: {
+      variant: "active",
+      text: "Available",
+    },
+    [EquipmentStatus.OutOfService]: {
+      variant: "inactive",
+      text: "Out of Service",
+    },
+    [EquipmentStatus.AtMaintenance]: {
+      variant: "purple",
+      text: "At Maintenance",
+    },
+    [EquipmentStatus.Sold]: {
+      variant: "info",
+      text: "Sold",
+    },
+  };
+
+  return (
+    <Badge variant={statusAttributes[status].variant} className="max-h-6">
+      {statusAttributes[status].text}
+    </Badge>
+  );
 }
 
 export function PackingGroupBadge({

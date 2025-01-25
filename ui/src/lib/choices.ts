@@ -5,6 +5,7 @@ import {
   PackingGroupChoiceProps,
 } from "@/types/hazardous-material";
 import { FacilityType, LocationCategoryType } from "@/types/location-category";
+import { EquipmentStatus } from "@/types/tractor";
 import { Endorsement, PTOStatus, PTOType, WorkerType } from "@/types/worker";
 
 /**
@@ -15,6 +16,21 @@ export const statusChoices = [
   { value: Status.Active, label: "Active", color: "#15803d" },
   { value: Status.Inactive, label: "Inactive", color: "#b91c1c" },
 ] satisfies ReadonlyArray<ChoiceProps<Status>>;
+
+export const equipmentStatusChoices = [
+  { value: EquipmentStatus.Available, label: "Available", color: "#15803d" },
+  {
+    value: EquipmentStatus.OutOfService,
+    label: "OutOfService",
+    color: "#b91c1c",
+  },
+  {
+    value: EquipmentStatus.AtMaintenance,
+    label: "AtMaintenance",
+    color: "#7e22ce",
+  },
+  { value: EquipmentStatus.Sold, label: "Sold", color: "#f59e0b" },
+] satisfies ReadonlyArray<ChoiceProps<EquipmentStatus>>;
 
 /**
  * Returns status choices for a select input.

@@ -19,6 +19,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/internal/core/domain/shipmenttype"
 	"github.com/emoss08/trenova/internal/core/domain/tableconfiguration"
+	"github.com/emoss08/trenova/internal/core/domain/tractor"
 	"github.com/emoss08/trenova/internal/core/domain/user"
 	"github.com/emoss08/trenova/internal/core/domain/usstate"
 	"github.com/emoss08/trenova/internal/core/domain/worker"
@@ -54,9 +55,11 @@ func RegisterEntities() []any {
 		&servicetype.ServiceType{},
 		&hazardousmaterial.HazardousMaterial{},
 		&commodity.Commodity{},
-		&shipment.ShipmentCommodity{},
-		&shipment.Shipment{},
+		&tractor.Tractor{},
 		&location.LocationCategory{},
 		&location.Location{},
+		&shipment.ShipmentCommodity{},
+		&shipment.ShipmentMove{},
+		&shipment.Shipment{},
 	}
 }

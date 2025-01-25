@@ -126,6 +126,19 @@ COMMENT ON TABLE worker_profiles IS 'Stores extended worker information includin
 ALTER TABLE "assignments"
     ADD CONSTRAINT "fk_assignments_worker" FOREIGN KEY ("worker_id", "organization_id", "business_unit_id") REFERENCES "workers"("id", "organization_id", "business_unit_id") ON UPDATE NO ACTION ON DELETE CASCADE;
 
+-- Update shipment_moves table foreign key
+ALTER TABLE "shipment_moves"
+    ADD COLUMN "primary_worker_id" varchar(100) NOT NULL;
+
+ALTER TABLE "shipment_moves"
+    ADD CONSTRAINT "fk_shipments_primary_worker" FOREIGN KEY ("primary_worker_id", "organization_id", "business_unit_id") REFERENCES "workers"("id", "organization_id", "business_unit_id") ON UPDATE NO ACTION ON DELETE SET NULL;
+
+ALTER TABLE "shipment_moves"
+    ADD COLUMN "secondary_worker_id" varchar(100) NOT NULL;
+
+ALTER TABLE "shipment_moves"
+    ADD CONSTRAINT "fk_shipments_secondary_worker" FOREIGN KEY ("secondary_worker_id", "organization_id", "business_unit_id") REFERENCES "workers"("id", "organization_id", "business_unit_id") ON UPDATE NO ACTION ON DELETE SET NULL;
+
 --bun:split
 CREATE TYPE worker_pto_status_enum AS ENUM(
     'Requested', -- The PTO request has been requested
@@ -299,7 +312,8 @@ CREATE INDEX "idx_worker_documents_document_requirement" ON "worker_documents"("
 CREATE INDEX "idx_worker_documents_reviewer" ON "worker_documents"("reviewer_id");
 
 CREATE INDEX "idx_worker_documents_dates" ON "worker_documents"("expiry_date", "issue_date", "reviewed_at")
-WHERE expiry_date IS NOT NULL OR issue_date IS NOT NULL OR reviewed_at IS NOT NULL;
+WHERE
+    expiry_date IS NOT NULL OR issue_date IS NOT NULL OR reviewed_at IS NOT NULL;
 
 COMMENT ON TABLE worker_documents IS 'Stores information about a worker''s documents';
 
@@ -336,3 +350,4 @@ CREATE INDEX "idx_document_reviews_status" ON "document_reviews"("status");
 CREATE INDEX "idx_document_reviews_reviewed_at" ON "document_reviews"("reviewed_at");
 
 COMMENT ON TABLE document_reviews IS 'Stores information about document reviews';
+
