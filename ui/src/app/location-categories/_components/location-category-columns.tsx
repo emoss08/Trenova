@@ -1,42 +1,19 @@
 import { DataTableColumnHeader } from "@/components/data-table/_components/data-table-column-header";
+import { createCommonColumns } from "@/components/data-table/_components/data-table-column-helpers";
 import { DataTableDescription } from "@/components/data-table/_components/data-table-components";
-import { Checkbox } from "@/components/ui/checkbox";
 import { type LocationCategorySchema } from "@/lib/schemas/location-category-schema";
 import {
   mapToFacilityType,
   mapToLocationCategoryType,
 } from "@/types/location-category";
-import { type ColumnDef } from "@tanstack/react-table";
+import { createColumnHelper, type ColumnDef } from "@tanstack/react-table";
 
 export function getColumns(): ColumnDef<LocationCategorySchema>[] {
+  const columnHelper = createColumnHelper<LocationCategorySchema>();
+  const commonColumns = createCommonColumns(columnHelper);
+
   return [
-    {
-      accessorKey: "select",
-      id: "select",
-      header: ({ table }) => {
-        return (
-          <Checkbox
-            checked={
-              table.getIsAllPageRowsSelected() ||
-              (table.getIsSomePageRowsSelected() && "indeterminate")
-            }
-            onCheckedChange={(checked) =>
-              table.toggleAllPageRowsSelected(!!checked)
-            }
-            aria-label="Select all"
-          />
-        );
-      },
-      cell: ({ row }) => (
-        <Checkbox
-          checked={row.getIsSelected()}
-          onCheckedChange={(checked) => row.toggleSelected(!!checked)}
-          aria-label="Select row"
-        />
-      ),
-      enableSorting: false,
-      enableHiding: false,
-    },
+    commonColumns.selection,
     {
       accessorKey: "name",
       header: ({ column }) => (
