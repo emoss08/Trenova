@@ -138,6 +138,20 @@ func TestTractorRepository(t *testing.T) {
 		require.NotEmpty(t, entity.SecondaryWorker)
 	})
 
+	t.Run("get tractor by id with equipment details", func(t *testing.T) {
+		entity, err := repo.GetByID(ctx, repoports.GetTractorByIDOptions{
+			ID:                      trk.ID,
+			OrgID:                   org.ID,
+			BuID:                    bu.ID,
+			IncludeEquipmentDetails: true,
+		})
+
+		require.NoError(t, err)
+		require.NotNil(t, entity)
+		require.NotEmpty(t, entity.EquipmentManufacturer)
+		require.NotEmpty(t, entity.EquipmentType)
+	})
+
 	t.Run("get tractor by id failure", func(t *testing.T) {
 		result, err := repo.GetByID(ctx, repoports.GetTractorByIDOptions{
 			ID:    "invalid-id",
