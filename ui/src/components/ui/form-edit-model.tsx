@@ -28,7 +28,7 @@ import { type EditTableSheetProps } from "@/types/data-table";
 import { APIError } from "@/types/errors";
 import { type API_ENDPOINTS } from "@/types/server";
 import { useMutation } from "@tanstack/react-query";
-import { useCallback } from "react";
+import { useCallback, useEffect } from "react";
 import {
   FormProvider,
   Path,
@@ -38,6 +38,12 @@ import {
 import { toast } from "sonner";
 import { type ObjectSchema } from "yup";
 import { Form } from "./form";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "./tooltip";
 
 type FormEditModalProps<T extends FieldValues> = EditTableSheetProps<T> & {
   url: API_ENDPOINTS;
@@ -138,6 +144,23 @@ export function FormEditModal<T extends FieldValues>({
     [mutation.mutateAsync],
   );
 
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (
+        open &&
+        (event.ctrlKey || event.metaKey) &&
+        event.key === "Enter" &&
+        !isSubmitting
+      ) {
+        event.preventDefault();
+        handleSubmit(onSubmit)();
+      }
+    };
+
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, [open, isSubmitting, handleSubmit, onSubmit]);
+
   return (
     <>
       <Dialog open={open} onOpenChange={onClose}>
@@ -157,9 +180,24 @@ export function FormEditModal<T extends FieldValues>({
                 <Button type="button" variant="outline" onClick={onClose}>
                   Cancel
                 </Button>
-                <Button type="submit" isLoading={isSubmitting}>
-                  Save {isPopout ? "and Close" : "Changes"}
-                </Button>
+                <TooltipProvider delayDuration={0}>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button type="submit" isLoading={isSubmitting}>
+                        Save {isPopout ? "and Close" : "Changes"}
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent className="flex items-center gap-2">
+                      <kbd className="-me-1 inline-flex h-5 max-h-full items-center rounded bg-muted-foreground/60 px-1 font-[inherit] text-[0.625rem] font-medium text-background">
+                        Ctrl
+                      </kbd>
+                      <kbd className="-me-1 inline-flex h-5 max-h-full items-center rounded bg-muted-foreground/60 px-1 font-[inherit] text-[0.625rem] font-medium text-background">
+                        Enter
+                      </kbd>
+                      <p>to save and close the {title}</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
               </DialogFooter>
             </Form>
           </FormProvider>
