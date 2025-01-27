@@ -855,3 +855,23 @@
       primary_worker_id: "{{ $.Worker.worker_1.ID }}"
       secondary_worker_id: "{{ $.Worker.worker_2.ID }}"
       created_at: "{{ now.Unix }}"
+
+- model: Trailer
+  rows:
+    - _id: test_trailer
+      organization_id: "{{ $.Organization.trenova.ID }}"
+      business_unit_id: "{{ $.BusinessUnit.trenova.ID }}"
+      created_at: "{{ now.Unix }}"
+      code: "TRL-001"
+      status: "Available"
+      model: "Test Trailer"
+      make: "Test Trailer"
+      year: 2024
+      license_plate_number: "TEST000000"
+      vin: "TEST000000"
+      last_inspection_date: "{{ now.Unix }}"
+      registration_number: "TEST000000"
+      registration_expiry: "{{ now.Unix }}"
+      equipment_manufacturer_id: "{{ $.EquipmentManufacturer.freightliner_manufacturer.ID }}"
+      equipment_type_id: "{{ $.EquipmentType.trailer_equip_type.ID }}"
+      registration_state_id: "{{ $.UsState.ca.ID }}"

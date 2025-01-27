@@ -311,6 +311,12 @@ export const commandRoutes: CommandGroupInfo[] = [
         label: "Tractors",
         icon: faTruck,
       },
+      {
+        id: "trailers",
+        link: "/equipment/configurations/trailers",
+        label: "Trailers",
+        icon: faTruck,
+      },
     ],
   },
 ];

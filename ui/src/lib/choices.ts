@@ -20,13 +20,13 @@ export const statusChoices = [
 export const equipmentStatusChoices = [
   { value: EquipmentStatus.Available, label: "Available", color: "#15803d" },
   {
-    value: EquipmentStatus.OutOfService,
-    label: "OutOfService",
+    value: EquipmentStatus.OOS,
+    label: "Out of Service",
     color: "#b91c1c",
   },
   {
     value: EquipmentStatus.AtMaintenance,
-    label: "AtMaintenance",
+    label: "At Maintenance",
     color: "#7e22ce",
   },
   { value: EquipmentStatus.Sold, label: "Sold", color: "#f59e0b" },

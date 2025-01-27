@@ -5,7 +5,7 @@ import (
 	"database/sql"
 	"fmt"
 
-	"github.com/emoss08/trenova/internal/core/domain/tractor"
+	"github.com/emoss08/trenova/internal/core/domain/trailer"
 	"github.com/emoss08/trenova/internal/core/ports"
 	"github.com/emoss08/trenova/internal/core/ports/db"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
@@ -18,30 +18,30 @@ import (
 	"go.uber.org/fx"
 )
 
-type TractorRepositoryParams struct {
+type TrailerRepositoryParams struct {
 	fx.In
 
 	DB     db.Connection
 	Logger *logger.Logger
 }
 
-type tractorRepository struct {
+type trailerRepository struct {
 	db db.Connection
 	l  *zerolog.Logger
 }
 
-func NewTractorRepository(p TractorRepositoryParams) repositories.TractorRepository {
+func NewTrailerRepository(p TrailerRepositoryParams) repositories.TrailerRepository {
 	log := p.Logger.With().
-		Str("repository", "tractor").
+		Str("repository", "trailer").
 		Logger()
 
-	return &tractorRepository{
+	return &trailerRepository{
 		db: p.DB,
 		l:  &log,
 	}
 }
 
-func (tr *tractorRepository) filterQuery(q *bun.SelectQuery, opts *repositories.ListTractorOptions) *bun.SelectQuery {
+func (tr *trailerRepository) filterQuery(q *bun.SelectQuery, opts *repositories.ListTrailerOptions) *bun.SelectQuery {
 	q = queryfilters.TenantFilterQuery(&queryfilters.TenantFilterQueryOptions{
 		Query:      q,
 		TableAlias: "tr",
@@ -52,20 +52,14 @@ func (tr *tractorRepository) filterQuery(q *bun.SelectQuery, opts *repositories.
 		q = q.Relation("EquipmentType").Relation("EquipmentManufacturer")
 	}
 
-	if opts.IncludeWorkerDetails {
-		q = q.Relation("PrimaryWorker").Relation("PrimaryWorker.Profile")
-		q = q.Relation("SecondaryWorker").Relation("SecondaryWorker.Profile")
-
-	}
-
 	if opts.Filter.Query != "" {
-		q = q.Where("tr.code ILIKE ? OR tr.vin ILIKE ?", "%"+opts.Filter.Query+"%", "%"+opts.Filter.Query+"%")
+		q = q.Where("tr.code ILIKE ?", "%"+opts.Filter.Query+"%")
 	}
 
 	return q.Limit(opts.Filter.Limit).Offset(opts.Filter.Offset)
 }
 
-func (tr *tractorRepository) List(ctx context.Context, opts *repositories.ListTractorOptions) (*ports.ListResult[*tractor.Tractor], error) {
+func (tr *trailerRepository) List(ctx context.Context, opts *repositories.ListTrailerOptions) (*ports.ListResult[*trailer.Trailer], error) {
 	dba, err := tr.db.DB(ctx)
 	if err != nil {
 		return nil, eris.Wrap(err, "get database connection")
@@ -77,24 +71,24 @@ func (tr *tractorRepository) List(ctx context.Context, opts *repositories.ListTr
 		Str("userID", opts.Filter.TenantOpts.UserID.String()).
 		Logger()
 
-	entities := make([]*tractor.Tractor, 0)
+	entities := make([]*trailer.Trailer, 0)
 
 	q := dba.NewSelect().Model(&entities)
 	q = tr.filterQuery(q, opts)
 
 	total, err := q.ScanAndCount(ctx)
 	if err != nil {
-		log.Error().Err(err).Msg("failed to scan tractors")
+		log.Error().Err(err).Msg("failed to scan trailers")
 		return nil, err
 	}
 
-	return &ports.ListResult[*tractor.Tractor]{
+	return &ports.ListResult[*trailer.Trailer]{
 		Items: entities,
 		Total: total,
 	}, nil
 }
 
-func (tr *tractorRepository) GetByID(ctx context.Context, opts repositories.GetTractorByIDOptions) (*tractor.Tractor, error) {
+func (tr *trailerRepository) GetByID(ctx context.Context, opts repositories.GetTrailerByIDOptions) (*trailer.Trailer, error) {
 	dba, err := tr.db.DB(ctx)
 	if err != nil {
 		return nil, eris.Wrap(err, "get database connection")
@@ -102,43 +96,31 @@ func (tr *tractorRepository) GetByID(ctx context.Context, opts repositories.GetT
 
 	log := tr.l.With().
 		Str("operation", "GetByID").
-		Str("tractorID", opts.ID.String()).
+		Str("trailerID", opts.ID.String()).
 		Logger()
 
-	entity := new(tractor.Tractor)
+	entity := new(trailer.Trailer)
 
 	query := dba.NewSelect().Model(entity).
 		Where("tr.id = ? AND tr.organization_id = ? AND tr.business_unit_id = ?", opts.ID, opts.OrgID, opts.BuID)
 
-	// Include the worker details if requested
-	if opts.IncludeWorkerDetails {
-		query = query.Relation("PrimaryWorker", func(sq *bun.SelectQuery) *bun.SelectQuery {
-			return sq.Relation("PrimaryWorker.WorkerProfile")
-		})
-
-		query = query.Relation("SecondaryWorker", func(sq *bun.SelectQuery) *bun.SelectQuery {
-			return sq.Relation("SecondaryWorker.WorkerProfile")
-		})
-	}
-
-	// Include the equipment details if requested
 	if opts.IncludeEquipmentDetails {
 		query = query.Relation("EquipmentType").Relation("EquipmentManufacturer")
 	}
 
 	if err = query.Scan(ctx); err != nil {
 		if eris.Is(err, sql.ErrNoRows) {
-			return nil, errors.NewNotFoundError("Tractor not found within your organization")
+			return nil, errors.NewNotFoundError("Trailer not found within your organization")
 		}
 
-		log.Error().Err(err).Msg("failed to get tractor")
+		log.Error().Err(err).Msg("failed to get trailer")
 		return nil, err
 	}
 
 	return entity, nil
 }
 
-func (tr *tractorRepository) Create(ctx context.Context, t *tractor.Tractor) (*tractor.Tractor, error) {
+func (tr *trailerRepository) Create(ctx context.Context, t *trailer.Trailer) (*trailer.Trailer, error) {
 	dba, err := tr.db.DB(ctx)
 	if err != nil {
 		return nil, eris.Wrap(err, "get database connection")
@@ -154,22 +136,22 @@ func (tr *tractorRepository) Create(ctx context.Context, t *tractor.Tractor) (*t
 		if _, iErr := tx.NewInsert().Model(t).Exec(c); iErr != nil {
 			log.Error().
 				Err(iErr).
-				Interface("tractor", t).
-				Msg("failed to insert tractor")
+				Interface("trailer", t).
+				Msg("failed to insert trailer")
 			return err
 		}
 
 		return nil
 	})
 	if err != nil {
-		log.Error().Err(err).Msg("failed to create tractor")
+		log.Error().Err(err).Msg("failed to create trailer")
 		return nil, err
 	}
 
 	return t, nil
 }
 
-func (tr *tractorRepository) Update(ctx context.Context, t *tractor.Tractor) (*tractor.Tractor, error) {
+func (tr *trailerRepository) Update(ctx context.Context, t *trailer.Trailer) (*trailer.Trailer, error) {
 	dba, err := tr.db.DB(ctx)
 	if err != nil {
 		return nil, eris.Wrap(err, "get database connection")
@@ -195,8 +177,8 @@ func (tr *tractorRepository) Update(ctx context.Context, t *tractor.Tractor) (*t
 		if rErr != nil {
 			log.Error().
 				Err(rErr).
-				Interface("tractor", t).
-				Msg("failed to update tractor")
+				Interface("trailer", t).
+				Msg("failed to update trailer")
 			return err
 		}
 
@@ -204,7 +186,7 @@ func (tr *tractorRepository) Update(ctx context.Context, t *tractor.Tractor) (*t
 		if roErr != nil {
 			log.Error().
 				Err(roErr).
-				Interface("tractor", t).
+				Interface("trailer", t).
 				Msg("failed to get rows affected")
 			return err
 		}
@@ -213,14 +195,14 @@ func (tr *tractorRepository) Update(ctx context.Context, t *tractor.Tractor) (*t
 			return errors.NewValidationError(
 				"version",
 				errors.ErrVersionMismatch,
-				fmt.Sprintf("Version mismatch. The Tractor (%s) has either been updated or deleted since the last request.", t.GetID()),
+				fmt.Sprintf("Version mismatch. The Trailer (%s) has either been updated or deleted since the last request.", t.GetID()),
 			)
 		}
 
 		return nil
 	})
 	if err != nil {
-		log.Error().Err(err).Msg("failed to update tractor")
+		log.Error().Err(err).Msg("failed to update trailer")
 		return nil, err
 	}
 

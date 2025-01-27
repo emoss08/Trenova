@@ -20,6 +20,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/handlers/shipmenttype"
 	"github.com/emoss08/trenova/internal/api/handlers/tableconfiguration"
 	"github.com/emoss08/trenova/internal/api/handlers/tractor"
+	"github.com/emoss08/trenova/internal/api/handlers/trailer"
 	"github.com/emoss08/trenova/internal/api/handlers/user"
 	"github.com/emoss08/trenova/internal/api/handlers/usstate"
 	"github.com/emoss08/trenova/internal/api/handlers/worker"
@@ -83,6 +84,7 @@ type RouterParams struct {
 	ReportingHandler             *reporting.Handler
 	LocationHandler              *location.Handler
 	TractorHandler               *tractor.Handler
+	TrailerHandler               *trailer.Handler
 }
 
 type Router struct {
@@ -220,4 +222,7 @@ func (r *Router) setupProtectedRoutes(router fiber.Router, rl *middleware.RateLi
 
 	// Tractors
 	r.p.TractorHandler.RegisterRoutes(router, rl)
+
+	// Trailers
+	r.p.TrailerHandler.RegisterRoutes(router, rl)
 }
