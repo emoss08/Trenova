@@ -1,6 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { Icon } from "@/components/ui/icons";
 
+import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -16,11 +17,10 @@ import {
   DataTableCreateButtonProps,
   DataTableViewOptionsProps,
 } from "@/types/data-table";
-import { faPlus } from "@fortawesome/pro-solid-svg-icons";
+import { faEye, faPlus } from "@fortawesome/pro-solid-svg-icons";
 import {
-  MixerHorizontalIcon,
   PlusIcon,
-  UploadIcon,
+  UploadIcon
 } from "@radix-ui/react-icons";
 import React, { useCallback } from "react";
 import { DataTableImportModal } from "./data-table-import-modal";
@@ -129,17 +129,33 @@ export function DataTableViewOptions<TData>({
     [columns, searchQuery],
   );
 
+  // Get visible columns count from table state
+  const visibleColumnsCount = table.getVisibleLeafColumns().length;
+
+  const handleToggleVisibility = React.useCallback(
+    (columnId: string, isVisible: boolean) => {
+      table.getColumn(columnId)?.toggleVisibility(!isVisible);
+    },
+    [table],
+  );
+
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
         <Button
           variant="outline"
-          size="sm"
           className="h-8 border-dashed"
           aria-label="Toggle column visibility"
         >
-          <MixerHorizontalIcon className="mr-2 size-4" />
+          <Icon icon={faEye} className="size-4" />
           View
+          <Badge
+            variant="default"
+            withDot={false}
+            className="ml-0.5 size-5 text-xs p-1.5"
+          >
+            {visibleColumnsCount}
+          </Badge>
           <span className="sr-only">Toggle column visibility options</span>
         </Button>
       </PopoverTrigger>
@@ -149,6 +165,7 @@ export function DataTableViewOptions<TData>({
             placeholder="Search columns..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
+            className="h-8 text-sm"
           />
           <div className="my-3 border-dashed border-t border-border" />
           <ScrollArea className="h-72">
@@ -171,7 +188,7 @@ export function DataTableViewOptions<TData>({
                         id={column.id}
                         checked={isVisible}
                         onCheckedChange={() =>
-                          column.toggleVisibility(!isVisible)
+                          handleToggleVisibility(column.id, isVisible)
                         }
                         aria-label={`Toggle ${toSentenceCase(column.id)} column`}
                       />
