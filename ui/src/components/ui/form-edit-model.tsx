@@ -27,7 +27,7 @@ import { cn } from "@/lib/utils";
 import { type EditTableSheetProps } from "@/types/data-table";
 import { APIError } from "@/types/errors";
 import { type API_ENDPOINTS } from "@/types/server";
-import { useMutation, type QueryKey } from "@tanstack/react-query";
+import { useMutation } from "@tanstack/react-query";
 import { useCallback } from "react";
 import {
   FormProvider,
@@ -42,7 +42,7 @@ import { Form } from "./form";
 type FormEditModalProps<T extends FieldValues> = EditTableSheetProps<T> & {
   url: API_ENDPOINTS;
   title: string;
-  queryKey: QueryKey;
+  queryKey: string;
   formComponent: React.ReactNode;
   form: UseFormReturn<T>;
   schema: ObjectSchema<T>;
@@ -66,7 +66,7 @@ export function FormEditModal<T extends FieldValues>({
 
   const {
     setError,
-    formState: { isDirty, isSubmitting, errors },
+    formState: { isDirty, isSubmitting },
     handleSubmit,
     reset,
   } = form;
@@ -90,7 +90,7 @@ export function FormEditModal<T extends FieldValues>({
 
       // Invalidate the query to refresh the table
       broadcastQueryInvalidation({
-        queryKeys: [queryKey],
+        queryKey: [queryKey],
         options: { correlationId: `create-${queryKey}-${Date.now()}` },
         config: {
           predicate: true,
@@ -131,7 +131,6 @@ export function FormEditModal<T extends FieldValues>({
     onClose: handleClose,
   });
 
-  console.log(errors);
   const onSubmit = useCallback(
     async (values: T) => {
       await mutation.mutateAsync(values);

@@ -12,7 +12,7 @@ export default function FleetCodesDataTable() {
     <DataTable<FleetCodeSchema>
       name="Fleet Code"
       link="/fleet-codes/"
-      queryKey={["fleet-code"]}
+      queryKey="fleet-code-list"
       exportModelName="fleet-code"
       TableModal={CreateFleetCodeModal}
       TableEditModal={EditFleetCodeModal}

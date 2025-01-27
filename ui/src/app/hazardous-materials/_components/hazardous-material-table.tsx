@@ -13,7 +13,7 @@ export default function HazardousMaterialTable() {
       name="Hazardous Material"
       link="/hazardous-materials/"
       exportModelName="hazardous-material"
-      queryKey={["hazardous-material"]}
+      queryKey="hazardous-material-list"
       TableModal={CreateHazardousMaterialModal}
       TableEditModal={EditHazardousMaterialModal}
       columns={columns}

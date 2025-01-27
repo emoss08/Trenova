@@ -12,7 +12,7 @@ export default function CommodityTable() {
     <DataTable<CommoditySchema>
       name="Commodity"
       link="/commodities/"
-      queryKey={["commodity"]}
+      queryKey="commodity-list"
       exportModelName="commodity"
       TableModal={CreateCommodityModal}
       TableEditModal={EditCommodityModal}

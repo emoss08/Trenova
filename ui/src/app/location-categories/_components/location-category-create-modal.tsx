@@ -4,7 +4,7 @@ import {
   type LocationCategorySchema,
 } from "@/lib/schemas/location-category-schema";
 import { type TableSheetProps } from "@/types/data-table";
-import { FacilityType, LocationCategoryType } from "@/types/location-category";
+import { LocationCategoryType } from "@/types/location-category";
 import { yupResolver } from "@hookform/resolvers/yup";
 import { useForm } from "react-hook-form";
 import { LocationCategoryForm } from "./location-category-form";
@@ -19,7 +19,7 @@ export function CreateLocationCategoryModal({
       name: "",
       description: "",
       type: LocationCategoryType.CustomerLocation,
-      facilityType: FacilityType.None,
+      facilityType: undefined,
       hasRestroom: false,
       requiresAppointment: false,
       hasSecureParking: false,

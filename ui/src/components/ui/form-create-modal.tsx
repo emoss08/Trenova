@@ -27,7 +27,7 @@ import { cn } from "@/lib/utils";
 import { type TableSheetProps } from "@/types/data-table";
 import { type APIError } from "@/types/errors";
 import { type API_ENDPOINTS } from "@/types/server";
-import { type QueryKey, useMutation } from "@tanstack/react-query";
+import { useMutation } from "@tanstack/react-query";
 import { useCallback } from "react";
 import {
   type FieldValues,
@@ -41,7 +41,7 @@ import { type ObjectSchema } from "yup";
 type FormCreateModalProps<T extends FieldValues> = TableSheetProps & {
   url: API_ENDPOINTS;
   title: string;
-  queryKey: QueryKey;
+  queryKey: string;
   formComponent: React.ReactNode;
   form: UseFormReturn<T>;
   schema: ObjectSchema<T>;
@@ -98,7 +98,7 @@ export function FormCreateModal<T extends FieldValues>({
 
       // Invalidate the query to refresh the table
       broadcastQueryInvalidation({
-        queryKeys: [queryKey],
+        queryKey: [queryKey],
         options: { correlationId: `create-${queryKey}-${Date.now()}` },
         config: {
           predicate: true,

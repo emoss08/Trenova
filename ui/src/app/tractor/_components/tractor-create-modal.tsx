@@ -26,7 +26,7 @@ export function CreateTractorModal({ open, onOpenChange }: TableSheetProps) {
       form={form}
       schema={tractorSchema}
       url="/tractors/"
-      queryKey={["tractor"]}
+      queryKey="tractor-list"
     />
   );
 }

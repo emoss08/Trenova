@@ -31,7 +31,7 @@ export function CreateEquipTypeModal({ open, onOpenChange }: TableSheetProps) {
       form={form}
       schema={equipmentTypeSchema}
       url="/equipment-types/"
-      queryKey={["equipment-type"]}
+      queryKey="equipment-type-list"
     />
   );
 }

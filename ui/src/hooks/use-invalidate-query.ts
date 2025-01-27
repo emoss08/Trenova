@@ -46,7 +46,7 @@
  * ```
  */
 
-import { QueryKey, useQueryClient } from "@tanstack/react-query";
+import { useQueryClient } from "@tanstack/react-query";
 import { useCallback, useEffect, useRef } from "react";
 
 interface InvalidationConfig {
@@ -57,7 +57,7 @@ interface InvalidationConfig {
 
 interface InvalidationMessage {
   type: "invalidate";
-  queryKeys: QueryKey;
+  queryKeys: string[];
   config?: InvalidationConfig;
   correlationId?: string;
 }
@@ -221,11 +221,11 @@ export const useQueryInvalidationListener = () => {
 
 // Enhanced broadcast function with transaction tracking
 export const broadcastQueryInvalidation = async ({
-  queryKeys,
+  queryKey,
   config,
   options,
 }: {
-  queryKeys: QueryKey[];
+  queryKey: string[];
   config?: InvalidationConfig;
   options?: { correlationId?: string };
 }) => {
@@ -233,7 +233,7 @@ export const broadcastQueryInvalidation = async ({
     const channel = new BroadcastChannel(CHANNEL_NAME);
     const message: InvalidationMessage = {
       type: "invalidate",
-      queryKeys,
+      queryKeys: queryKey,
       config,
       correlationId: options?.correlationId || crypto.randomUUID(),
     };
@@ -243,7 +243,7 @@ export const broadcastQueryInvalidation = async ({
     };
 
     channel.postMessage(message);
-    logDebug(`Broadcasted invalidation for keys: ${queryKeys.join(", ")}`);
+    logDebug(`Broadcasted invalidation for keys: ${queryKey.join(", ")}`);
     cleanup();
   } catch (error) {
     console.error("[Trenova] Broadcast failed:", error);
