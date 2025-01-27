@@ -48,12 +48,12 @@ func (tr *trailerRepository) filterQuery(q *bun.SelectQuery, opts *repositories.
 		Filter:     opts.Filter,
 	})
 
-	if opts.Filter.Query != "" {
-		q = q.Where("tr.code ILIKE ?", "%"+opts.Filter.Query+"%")
-	}
-
 	if opts.IncludeEquipmentDetails {
 		q = q.Relation("EquipmentType").Relation("EquipmentManufacturer")
+	}
+
+	if opts.Filter.Query != "" {
+		q = q.Where("tr.code ILIKE ?", "%"+opts.Filter.Query+"%")
 	}
 
 	return q.Limit(opts.Filter.Limit).Offset(opts.Filter.Offset)

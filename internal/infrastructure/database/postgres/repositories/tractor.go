@@ -54,8 +54,8 @@ func (tr *tractorRepository) filterQuery(q *bun.SelectQuery, opts *repositories.
 
 	if opts.IncludeWorkerDetails {
 		q = q.Relation("PrimaryWorker").Relation("PrimaryWorker.Profile")
-
 		q = q.Relation("SecondaryWorker").Relation("SecondaryWorker.Profile")
+
 	}
 
 	if opts.Filter.Query != "" {
