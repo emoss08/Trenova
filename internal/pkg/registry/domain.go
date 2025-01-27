@@ -14,6 +14,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/organization"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/pretrainedmodels"
+	"github.com/emoss08/trenova/internal/core/domain/resource"
 	"github.com/emoss08/trenova/internal/core/domain/servicetype"
 	"github.com/emoss08/trenova/internal/core/domain/session"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
@@ -31,6 +32,7 @@ func RegisterEntities() []any {
 		&usstate.UsState{},
 		&businessunit.BusinessUnit{},
 		&organization.Organization{},
+		&resource.ResourceDefinition{},
 		&session.Event{},
 		&session.Session{},
 		&permission.RolePermission{},

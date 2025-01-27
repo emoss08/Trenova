@@ -24,9 +24,9 @@ type ServiceType struct {
 	bun.BaseModel `bun:"table:service_types,alias:st" json:"-"`
 
 	// Primary identifiers
-	ID             pulid.ID `bun:"id,type:VARCHAR(100),pk,notnull" json:"id"`
-	BusinessUnitID pulid.ID `bun:"business_unit_id,type:VARCHAR(100),pk,notnull" json:"businessUnitId"`
-	OrganizationID pulid.ID `bun:"organization_id,type:VARCHAR(100),pk,notnull" json:"organizationId"`
+	ID             pulid.ID `json:"id" bun:"id,type:VARCHAR(100),pk,notnull"`
+	BusinessUnitID pulid.ID `json:"businessUnitId" bun:"business_unit_id,type:VARCHAR(100),pk,notnull"`
+	OrganizationID pulid.ID `json:"organizationId" bun:"organization_id,type:VARCHAR(100),pk,notnull"`
 
 	// Core Fields
 	Status      domain.Status `json:"status" bun:"status,type:status_enum,notnull,default:'Active'"`

@@ -1,39 +1,16 @@
 import { DataTableColumnHeader } from "@/components/data-table/_components/data-table-column-header";
+import { createCommonColumns } from "@/components/data-table/_components/data-table-column-helpers";
 import { StatusBadge } from "@/components/status-badge";
-import { Checkbox } from "@/components/ui/checkbox";
 import { type EquipmentManufacturerSchema } from "@/lib/schemas/equipment-manufacturer-schema";
 import { truncateText } from "@/lib/utils";
-import { type ColumnDef } from "@tanstack/react-table";
+import { createColumnHelper, type ColumnDef } from "@tanstack/react-table";
 
 export function getColumns(): ColumnDef<EquipmentManufacturerSchema>[] {
+  const columnHelper = createColumnHelper<EquipmentManufacturerSchema>();
+  const commonColumns = createCommonColumns(columnHelper);
+
   return [
-    {
-      accessorKey: "select",
-      id: "select",
-      header: ({ table }) => {
-        return (
-          <Checkbox
-            checked={
-              table.getIsAllPageRowsSelected() ||
-              (table.getIsSomePageRowsSelected() && "indeterminate")
-            }
-            onCheckedChange={(checked) =>
-              table.toggleAllPageRowsSelected(!!checked)
-            }
-            aria-label="Select all"
-          />
-        );
-      },
-      cell: ({ row }) => (
-        <Checkbox
-          checked={row.getIsSelected()}
-          onCheckedChange={(checked) => row.toggleSelected(!!checked)}
-          aria-label="Select row"
-        />
-      ),
-      enableSorting: false,
-      enableHiding: false,
-    },
+    commonColumns.selection,
     {
       accessorKey: "status",
       header: ({ column }) => (
