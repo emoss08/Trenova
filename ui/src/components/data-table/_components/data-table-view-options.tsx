@@ -18,10 +18,7 @@ import {
   DataTableViewOptionsProps,
 } from "@/types/data-table";
 import { faEye, faPlus } from "@fortawesome/pro-solid-svg-icons";
-import {
-  PlusIcon,
-  UploadIcon
-} from "@radix-ui/react-icons";
+import { PlusIcon, UploadIcon } from "@radix-ui/react-icons";
 import React, { useCallback } from "react";
 import { DataTableImportModal } from "./data-table-import-modal";
 
@@ -152,7 +149,7 @@ export function DataTableViewOptions<TData>({
           <Badge
             variant="default"
             withDot={false}
-            className="ml-0.5 size-5 text-xs p-1.5"
+            className="ml-0.5 size-4 text-xs p-1 rounded-sm"
           >
             {visibleColumnsCount}
           </Badge>
