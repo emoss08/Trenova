@@ -16,7 +16,6 @@ export function CreateCommodityModal({ open, onOpenChange }: TableSheetProps) {
       status: Status.Active,
       name: "",
       description: "",
-      isHazardous: false,
       minTemperature: undefined,
       maxTemperature: undefined,
       weightPerUnit: undefined,
@@ -37,7 +36,7 @@ export function CreateCommodityModal({ open, onOpenChange }: TableSheetProps) {
       form={form}
       schema={commoditySchema}
       url="/commodities/"
-      queryKey="commodity-list"
+      queryKey={["commodity"]}
       className="max-w-[550px]"
     />
   );

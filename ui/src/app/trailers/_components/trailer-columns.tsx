@@ -1,12 +1,14 @@
 import { DataTableColumnHeader } from "@/components/data-table/_components/data-table-column-header";
-import { DataTableColorColumn } from "@/components/data-table/_components/data-table-components";
+import {
+  DataTableColorColumn,
+  LastInspectionDateBadge,
+} from "@/components/data-table/_components/data-table-components";
 import { EquipmentStatusBadge } from "@/components/status-badge";
 import { Checkbox } from "@/components/ui/checkbox";
-import { InternalLink } from "@/components/ui/link";
-import { type Tractor } from "@/types/tractor";
+import { type Trailer } from "@/types/trailer";
 import { type ColumnDef } from "@tanstack/react-table";
 
-export function getColumns(): ColumnDef<Tractor>[] {
+export function getColumns(): ColumnDef<Trailer>[] {
   return [
     {
       accessorKey: "select",
@@ -70,36 +72,13 @@ export function getColumns(): ColumnDef<Tractor>[] {
       },
     },
     {
-      id: "assignedWorkers",
-      header: "Assigned Workers",
+      accessorKey: "lastInspectionDate",
+      header: ({ column }) => (
+        <DataTableColumnHeader column={column} title="Last Inspection Date" />
+      ),
       cell: ({ row }) => {
-        const { primaryWorker, secondaryWorker } = row.original;
-
-        const isPrimaryWorker = !!primaryWorker;
-        const isSecondaryWorker = !!secondaryWorker;
-
-        return isPrimaryWorker ? (
-          <div className="flex flex-col gap-0.5">
-            <p>
-              <InternalLink to="/dispatch/configurations/workers">
-                {primaryWorker?.firstName} {primaryWorker?.lastName}
-              </InternalLink>
-            </p>
-            {isSecondaryWorker && (
-              <div className="flex items-center gap-1 text-muted-foreground text-2xs">
-                <p>Co-Driver:</p>
-                <InternalLink
-                  to="/dispatch/configurations/workers"
-                  className="text-2xs text-muted-foreground"
-                >
-                  {secondaryWorker?.firstName} {secondaryWorker?.lastName}
-                </InternalLink>
-              </div>
-            )}
-          </div>
-        ) : (
-          <p>No assigned workers</p>
-        );
+        const lastInspectionDate = row.original.lastInspectionDate;
+        return <LastInspectionDateBadge value={lastInspectionDate} />;
       },
     },
   ];

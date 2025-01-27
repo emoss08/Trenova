@@ -14,13 +14,13 @@ import { faExternalLinkAlt } from "@fortawesome/pro-regular-svg-icons";
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import {
-    AlertDialog,
-    AlertDialogAction,
-    AlertDialogCancel,
-    AlertDialogContent,
-    AlertDialogDescription,
-    AlertDialogFooter,
-    AlertDialogTitle,
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogTitle,
 } from "./alert-dialog";
 import { Icon } from "./icons";
 
@@ -105,3 +105,5 @@ export const InternalLink = React.forwardRef<
     </Link>
   );
 });
+
+InternalLink.displayName = "InternalLink";

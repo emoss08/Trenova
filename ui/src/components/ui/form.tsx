@@ -147,7 +147,7 @@ export const FormSection = React.forwardRef<HTMLDivElement, FormSectionProps>(
             </h3>
           )}
           {description && (
-            <p className="text-sm text-muted-foreground">{description}</p>
+            <p className="text-xs text-muted-foreground">{description}</p>
           )}
         </div>
       )}

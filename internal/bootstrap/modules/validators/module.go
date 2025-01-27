@@ -11,6 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/pkg/validator/servicetypevalidator"
 	"github.com/emoss08/trenova/internal/pkg/validator/shipmenttypevalidator"
 	"github.com/emoss08/trenova/internal/pkg/validator/tractorvalidator"
+	"github.com/emoss08/trenova/internal/pkg/validator/trailervalidator"
 	"github.com/emoss08/trenova/internal/pkg/validator/workervalidator"
 	"go.uber.org/fx"
 )
@@ -30,4 +31,5 @@ var Module = fx.Module("validators", fx.Provide(
 	locationvalidator.NewLocationCategoryValidator,
 	locationvalidator.NewValidator,
 	tractorvalidator.NewValidator,
+	trailervalidator.NewValidator,
 ))

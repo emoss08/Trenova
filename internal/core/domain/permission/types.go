@@ -254,6 +254,10 @@ var (
 			BaseActions,
 			append(AssignableActions, FieldActions...)...,
 		),
+		ResourceTrailer: append(
+			BaseActions,
+			append(AssignableActions, FieldActions...)...,
+		),
 		ResourceShipment: append(
 			append(BaseActions, WorkflowActions...),
 			append(AssignableActions,

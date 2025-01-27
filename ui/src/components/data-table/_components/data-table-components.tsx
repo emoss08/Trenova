@@ -1,9 +1,11 @@
+import { Badge } from "@/components/ui/badge";
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { generateDateOnlyString, toDate } from "@/lib/date";
 import { truncateText } from "@/lib/utils";
 
 type DataTableDescriptionProps = {
@@ -53,5 +55,20 @@ export function DataTableColorColumn({
     </div>
   ) : (
     <p>{text}</p>
+  );
+}
+
+export function LastInspectionDateBadge({
+  value,
+}: {
+  value: number | null | undefined;
+}) {
+  const inspectionDate = toDate(value ?? undefined);
+
+  if (!inspectionDate)
+    return <Badge variant="inactive">No inspection date</Badge>;
+
+  return (
+    <Badge variant="active">{generateDateOnlyString(inspectionDate)}</Badge>
   );
 }

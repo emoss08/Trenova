@@ -16,7 +16,7 @@ export function DataTableBody<TData extends Record<string, any>>({
           <TableRow
             key={row.id}
             data-state={row.getIsSelected() && "selected"}
-            className="hover:cursor-pointer hover:bg-muted/40"
+            className="hover:bg-muted/40"
           >
             {row.getVisibleCells().map((cell) => (
               <TableCell
