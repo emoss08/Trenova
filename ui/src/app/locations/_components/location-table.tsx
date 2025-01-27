@@ -16,7 +16,7 @@ export default function LocationsDataTable() {
         includeCategory: true,
         includeState: true,
       }}
-      queryKey={["location"]}
+      queryKey="location-list"
       exportModelName="location"
       TableModal={CreateLocationModal}
       TableEditModal={EditLocationModal}

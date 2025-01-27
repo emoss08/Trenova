@@ -1,5 +1,3 @@
-"use no memo";
-
 import { useDataTableQuery } from "@/hooks/use-data-table-query";
 import { useDataTableState } from "@/hooks/use-data-table-state";
 import { DataTableProps } from "@/types/data-table";

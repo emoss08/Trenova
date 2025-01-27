@@ -34,7 +34,6 @@ CREATE TABLE IF NOT EXISTS "shipments"(
     "weight" integer CHECK ("weight" > 0),
     "temperature_min" numeric(10, 2),
     "temperature_max" numeric(10, 2),
-    "is_hazardous" boolean NOT NULL DEFAULT FALSE,
     "bill_date" bigint,
     "ready_to_bill" boolean NOT NULL DEFAULT FALSE,
     "ready_to_bill_date" bigint,

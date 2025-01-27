@@ -36,7 +36,7 @@ export function CreateCommodityModal({ open, onOpenChange }: TableSheetProps) {
       form={form}
       schema={commoditySchema}
       url="/commodities/"
-      queryKey={["commodity"]}
+      queryKey="commodity-list"
       className="max-w-[550px]"
     />
   );

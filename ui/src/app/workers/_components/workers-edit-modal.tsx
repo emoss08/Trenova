@@ -60,7 +60,7 @@ function WorkerEditForm({
       form.reset();
 
       // Invalidate the worker list query to refresh the table
-      broadcastQueryInvalidation({ queryKeys: ["worker-list"] });
+      broadcastQueryInvalidation({ queryKey: ["worker-list"] });
     },
     onError: (error: APIError) => {
       if (error.isValidationError()) {

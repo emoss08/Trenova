@@ -1,32 +1,24 @@
 import { Button } from "@/components/ui/button";
-import {
-  Command,
-  CommandEmpty,
-  CommandGroup,
-  CommandInput,
-  CommandItem,
-  CommandList,
-} from "@/components/ui/command";
 import { Icon } from "@/components/ui/icons";
 
+import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { cn, toSentenceCase } from "@/lib/utils";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Switch } from "@/components/ui/switch";
+import { toSentenceCase } from "@/lib/utils";
 import { useTableStore } from "@/stores/table-store";
 import {
   DataTableCreateButtonProps,
   DataTableViewOptionsProps,
 } from "@/types/data-table";
-import { faPlus } from "@fortawesome/pro-solid-svg-icons";
-import {
-  CheckIcon,
-  MixerHorizontalIcon,
-  PlusIcon,
-  UploadIcon,
-} from "@radix-ui/react-icons";
+import { faEye, faPlus } from "@fortawesome/pro-solid-svg-icons";
+import { PlusIcon, UploadIcon } from "@radix-ui/react-icons";
 import React, { useCallback } from "react";
 import { DataTableImportModal } from "./data-table-import-modal";
 
@@ -109,56 +101,105 @@ export function DataTableViewOptions<TData>({
   table,
 }: DataTableViewOptionsProps<TData>) {
   const [open, setOpen] = React.useState(false);
+  const [searchQuery, setSearchQuery] = React.useState("");
+
+  // Get all hideable columns
+  const columns = React.useMemo(
+    () =>
+      table
+        .getAllColumns()
+        .filter(
+          (column) =>
+            typeof column.accessorFn !== "undefined" && column.getCanHide(),
+        ),
+    [table],
+  );
+
+  // Filter columns based on search query
+  const filteredColumns = React.useMemo(
+    () =>
+      columns.filter((column) =>
+        toSentenceCase(column.id)
+          .toLowerCase()
+          .includes(searchQuery.toLowerCase()),
+      ),
+    [columns, searchQuery],
+  );
+
+  // Get visible columns count from table state
+  const visibleColumnsCount = table.getVisibleLeafColumns().length;
+
+  const handleToggleVisibility = React.useCallback(
+    (columnId: string, isVisible: boolean) => {
+      table.getColumn(columnId)?.toggleVisibility(!isVisible);
+    },
+    [table],
+  );
 
   return (
-    <Popover open={open} onOpenChange={(open) => setOpen(open)}>
+    <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
         <Button
-          variant="ghost"
-          className="h-7"
-          aria-label="Toggle columns"
-          role="combobox"
+          variant="outline"
+          className="h-8 border-dashed"
+          aria-label="Toggle column visibility"
         >
-          <MixerHorizontalIcon className="size-3" />
+          <Icon icon={faEye} className="size-4" />
           View
+          <Badge
+            variant="default"
+            withDot={false}
+            className="ml-0.5 size-4 text-xs p-1 rounded-sm"
+          >
+            {visibleColumnsCount}
+          </Badge>
+          <span className="sr-only">Toggle column visibility options</span>
         </Button>
       </PopoverTrigger>
-      <PopoverContent align="end" side="bottom" className="w-44 p-0">
-        <Command>
-          <CommandList>
-            <CommandInput className="h-7" placeholder="Search columns..." />
-            <CommandEmpty>No columns found.</CommandEmpty>
-            <CommandGroup>
-              {table
-                .getAllColumns()
-                .filter(
-                  (column) =>
-                    typeof column.accessorFn !== "undefined" &&
-                    column.getCanHide(),
-                )
-                .map((column) => {
+      <PopoverContent align="end" side="bottom" className="w-[200px] p-2">
+        <div className="space-y-2">
+          <Input
+            placeholder="Search columns..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="h-8 text-sm"
+          />
+          <div className="my-3 border-dashed border-t border-border" />
+          <ScrollArea className="h-72">
+            <div className="space-y-1.5">
+              {filteredColumns.length > 0 ? (
+                filteredColumns.map((column) => {
+                  const isVisible = column.getIsVisible();
                   return (
-                    <CommandItem
+                    <div
                       key={column.id}
-                      onSelect={() =>
-                        column.toggleVisibility(!column.getIsVisible())
-                      }
+                      className="flex items-center justify-between space-x-2 rounded-md px-2 py-1"
                     >
-                      <span className="truncate">
+                      <Label
+                        htmlFor={column.id}
+                        className="flex-grow text-sm font-normal"
+                      >
                         {toSentenceCase(column.id)}
-                      </span>
-                      <CheckIcon
-                        className={cn(
-                          "ml-auto size-4 shrink-0",
-                          column.getIsVisible() ? "opacity-100" : "opacity-0",
-                        )}
+                      </Label>
+                      <Switch
+                        id={column.id}
+                        checked={isVisible}
+                        onCheckedChange={() =>
+                          handleToggleVisibility(column.id, isVisible)
+                        }
+                        aria-label={`Toggle ${toSentenceCase(column.id)} column`}
                       />
-                    </CommandItem>
+                    </div>
                   );
-                })}
-            </CommandGroup>
-          </CommandList>
-        </Command>
+                })
+              ) : (
+                <p className="p-2 text-sm text-muted-foreground">
+                  No columns found
+                </p>
+              )}
+            </div>
+          </ScrollArea>
+        </div>
       </PopoverContent>
     </Popover>
   );

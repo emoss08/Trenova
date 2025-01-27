@@ -25,7 +25,7 @@ export function EditTractorModal({
       onOpenChange={onOpenChange}
       url="/tractors/"
       title="Tractor"
-      queryKey={["tractor"]}
+      queryKey="tractor-list"
       formComponent={<TractorForm />}
       fieldKey="code"
       form={form}

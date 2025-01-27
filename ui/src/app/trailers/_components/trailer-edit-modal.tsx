@@ -25,7 +25,7 @@ export function EditTrailerModal({
       onOpenChange={onOpenChange}
       url="/trailers/"
       title="Trailer"
-      queryKey={["trailer"]}
+      queryKey="trailer-list"
       formComponent={<TrailerForm />}
       fieldKey="code"
       form={form}

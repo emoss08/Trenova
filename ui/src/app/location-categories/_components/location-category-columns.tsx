@@ -71,7 +71,13 @@ export function getColumns(): ColumnDef<LocationCategorySchema>[] {
       header: ({ column }) => (
         <DataTableColumnHeader column={column} title="Facility Type" />
       ),
-      cell: ({ row }) => <p>{mapToFacilityType(row.original.facilityType)}</p>,
+      cell: ({ row }) => (
+        <p>
+          {row.original.facilityType
+            ? mapToFacilityType(row.original.facilityType)
+            : ""}
+        </p>
+      ),
     },
     {
       accessorKey: "description",

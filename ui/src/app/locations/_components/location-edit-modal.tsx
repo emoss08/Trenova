@@ -28,7 +28,7 @@ export function EditLocationModal({
       form={form}
       schema={locationSchema}
       url="/locations/"
-      queryKey={["location"]}
+      queryKey="location-list"
       fieldKey="name"
     />
   );
