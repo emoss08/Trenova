@@ -150,9 +150,9 @@ export function DataTableViewOptions<TData>({
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
           />
-          <div className="my-4 border-dashed border-t border-border" />
+          <div className="my-3 border-dashed border-t border-border" />
           <ScrollArea className="h-72">
-            <div className="space-y-2">
+            <div className="space-y-1.5">
               {filteredColumns.length > 0 ? (
                 filteredColumns.map((column) => {
                   const isVisible = column.getIsVisible();
@@ -161,7 +161,10 @@ export function DataTableViewOptions<TData>({
                       key={column.id}
                       className="flex items-center justify-between space-x-2 rounded-md px-2 py-1"
                     >
-                      <Label htmlFor={column.id} className="flex-grow text-xs">
+                      <Label
+                        htmlFor={column.id}
+                        className="flex-grow text-sm font-normal"
+                      >
                         {toSentenceCase(column.id)}
                       </Label>
                       <Switch
