@@ -40,7 +40,7 @@ export function EquipmentStatusBadge({ status }: { status: EquipmentStatus }) {
       variant: "active",
       text: "Available",
     },
-    [EquipmentStatus.OutOfService]: {
+    [EquipmentStatus.OOS]: {
       variant: "inactive",
       text: "Out of Service",
     },
@@ -49,7 +49,7 @@ export function EquipmentStatusBadge({ status }: { status: EquipmentStatus }) {
       text: "At Maintenance",
     },
     [EquipmentStatus.Sold]: {
-      variant: "info",
+      variant: "warning",
       text: "Sold",
     },
   };

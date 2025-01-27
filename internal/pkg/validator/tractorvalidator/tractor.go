@@ -121,12 +121,13 @@ func (v *Validator) validateEquipmentClass(ctx context.Context, t *tractor.Tract
 		BuID:  t.BusinessUnitID,
 	})
 	if err != nil {
-		multiErr.Add("equipmentTypeID", errors.ErrSystemError, err.Error())
+		multiErr.Add("equipmentTypeId", errors.ErrSystemError, err.Error())
+		// * Immediately return to avoid further validation
 		return
 	}
 
 	if et.Class != equipmenttype.ClassTractor {
-		multiErr.Add("equipmentTypeID", errors.ErrInvalid, "Equipment type must have class 'Tractor'")
+		multiErr.Add("equipmentTypeId", errors.ErrInvalid, "Equipment type must have subclass 'Tractor'")
 	}
 }
 

@@ -1,10 +1,10 @@
-package tractor
+package trailer
 
 import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/domain/tractor"
+	"github.com/emoss08/trenova/internal/core/domain/trailer"
 	"github.com/emoss08/trenova/internal/core/ports"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/ports/services"
@@ -14,7 +14,7 @@ import (
 	"github.com/emoss08/trenova/internal/pkg/logger"
 	"github.com/emoss08/trenova/internal/pkg/utils/jsonutils"
 	"github.com/emoss08/trenova/internal/pkg/validator"
-	"github.com/emoss08/trenova/internal/pkg/validator/tractorvalidator"
+	"github.com/emoss08/trenova/internal/pkg/validator/trailervalidator"
 	"github.com/emoss08/trenova/pkg/types"
 	"github.com/emoss08/trenova/pkg/types/pulid"
 	"github.com/rotisserie/eris"
@@ -26,25 +26,25 @@ type ServiceParams struct {
 	fx.In
 
 	Logger        *logger.Logger
-	Repo          repositories.TractorRepository
+	Repo          repositories.TrailerRepository
 	PermService   services.PermissionService
 	AuditService  services.AuditService
 	SearchService *search.Service
-	Validator     *tractorvalidator.Validator
+	Validator     *trailervalidator.Validator
 }
 
 type Service struct {
 	l    *zerolog.Logger
-	repo repositories.TractorRepository
+	repo repositories.TrailerRepository
 	ps   services.PermissionService
 	as   services.AuditService
 	ss   *search.Service
-	v    *tractorvalidator.Validator
+	v    *trailervalidator.Validator
 }
 
 func NewService(p ServiceParams) *Service {
 	log := p.Logger.With().
-		Str("service", "tractor").
+		Str("service", "trailer").
 		Logger()
 
 	return &Service{
@@ -57,7 +57,7 @@ func NewService(p ServiceParams) *Service {
 	}
 }
 
-func (s *Service) SelectOptions(ctx context.Context, opts *repositories.ListTractorOptions) ([]*types.SelectOption, error) {
+func (s *Service) SelectOptions(ctx context.Context, opts *repositories.ListTrailerOptions) ([]*types.SelectOption, error) {
 	result, err := s.repo.List(ctx, opts)
 	if err != nil {
 		return nil, err
@@ -74,14 +74,14 @@ func (s *Service) SelectOptions(ctx context.Context, opts *repositories.ListTrac
 	return options, nil
 }
 
-func (s *Service) List(ctx context.Context, opts *repositories.ListTractorOptions) (*ports.ListResult[*tractor.Tractor], error) {
+func (s *Service) List(ctx context.Context, opts *repositories.ListTrailerOptions) (*ports.ListResult[*trailer.Trailer], error) {
 	log := s.l.With().Str("operation", "List").Logger()
 
 	result, err := s.ps.HasAnyPermissions(ctx,
 		[]*services.PermissionCheck{
 			{
 				UserID:         opts.Filter.TenantOpts.UserID,
-				Resource:       permission.ResourceTractor,
+				Resource:       permission.ResourceTrailer,
 				Action:         permission.ActionRead,
 				BusinessUnitID: opts.Filter.TenantOpts.BuID,
 				OrganizationID: opts.Filter.TenantOpts.OrgID,
@@ -94,32 +94,32 @@ func (s *Service) List(ctx context.Context, opts *repositories.ListTractorOption
 	}
 
 	if !result.Allowed {
-		return nil, errors.NewAuthorizationError("You do not have permission to read tractors")
+		return nil, errors.NewAuthorizationError("You do not have permission to read trailers")
 	}
 
 	entities, err := s.repo.List(ctx, opts)
 	if err != nil {
-		log.Error().Err(err).Msg("failed to list tractors")
+		log.Error().Err(err).Msg("failed to list trailers")
 		return nil, err
 	}
 
-	return &ports.ListResult[*tractor.Tractor]{
+	return &ports.ListResult[*trailer.Trailer]{
 		Items: entities.Items,
 		Total: entities.Total,
 	}, nil
 }
 
-func (s *Service) Get(ctx context.Context, opts repositories.GetTractorByIDOptions) (*tractor.Tractor, error) {
+func (s *Service) Get(ctx context.Context, opts repositories.GetTrailerByIDOptions) (*trailer.Trailer, error) {
 	log := s.l.With().
 		Str("operation", "GetByID").
-		Str("tractorID", opts.ID.String()).
+		Str("trailerID", opts.ID.String()).
 		Logger()
 
 	result, err := s.ps.HasAnyPermissions(ctx,
 		[]*services.PermissionCheck{
 			{
 				UserID:         opts.UserID,
-				Resource:       permission.ResourceTractor,
+				Resource:       permission.ResourceTrailer,
 				Action:         permission.ActionRead,
 				BusinessUnitID: opts.BuID,
 				OrganizationID: opts.OrgID,
@@ -132,19 +132,19 @@ func (s *Service) Get(ctx context.Context, opts repositories.GetTractorByIDOptio
 	}
 
 	if !result.Allowed {
-		return nil, errors.NewAuthorizationError("You do not have permission to read this tractor")
+		return nil, errors.NewAuthorizationError("You do not have permission to read this trailer")
 	}
 
 	entity, err := s.repo.GetByID(ctx, opts)
 	if err != nil {
-		log.Error().Err(err).Msg("failed to get tractor")
+		log.Error().Err(err).Msg("failed to get trailer")
 		return nil, err
 	}
 
 	return entity, nil
 }
 
-func (s *Service) Create(ctx context.Context, lc *tractor.Tractor, userID pulid.ID) (*tractor.Tractor, error) {
+func (s *Service) Create(ctx context.Context, lc *trailer.Trailer, userID pulid.ID) (*trailer.Trailer, error) {
 	log := s.l.With().
 		Str("operation", "Create").
 		Str("code", lc.Code).
@@ -154,7 +154,7 @@ func (s *Service) Create(ctx context.Context, lc *tractor.Tractor, userID pulid.
 		[]*services.PermissionCheck{
 			{
 				UserID:         userID,
-				Resource:       permission.ResourceTractor,
+				Resource:       permission.ResourceTrailer,
 				Action:         permission.ActionCreate,
 				BusinessUnitID: lc.BusinessUnitID,
 				OrganizationID: lc.OrganizationID,
@@ -167,7 +167,7 @@ func (s *Service) Create(ctx context.Context, lc *tractor.Tractor, userID pulid.
 	}
 
 	if !result.Allowed {
-		return nil, errors.NewAuthorizationError("You do not have permission to create a tractor")
+		return nil, errors.NewAuthorizationError("You do not have permission to create a trailer")
 	}
 
 	valCtx := &validator.ValidationContext{
@@ -190,7 +190,7 @@ func (s *Service) Create(ctx context.Context, lc *tractor.Tractor, userID pulid.
 
 	err = s.as.LogAction(
 		&services.LogActionParams{
-			Resource:       permission.ResourceTractor,
+			Resource:       permission.ResourceTrailer,
 			ResourceID:     createdEntity.GetID(),
 			Action:         permission.ActionCreate,
 			UserID:         userID,
@@ -198,16 +198,16 @@ func (s *Service) Create(ctx context.Context, lc *tractor.Tractor, userID pulid.
 			OrganizationID: createdEntity.OrganizationID,
 			BusinessUnitID: createdEntity.BusinessUnitID,
 		},
-		audit.WithComment("Tractor created"),
+		audit.WithComment("Trailer created"),
 	)
 	if err != nil {
-		log.Error().Err(err).Msg("failed to log tractor creation")
+		log.Error().Err(err).Msg("failed to log trailer creation")
 	}
 
 	return createdEntity, nil
 }
 
-func (s *Service) Update(ctx context.Context, t *tractor.Tractor, userID pulid.ID) (*tractor.Tractor, error) {
+func (s *Service) Update(ctx context.Context, t *trailer.Trailer, userID pulid.ID) (*trailer.Trailer, error) {
 	log := s.l.With().
 		Str("operation", "Update").
 		Str("code", t.Code).
@@ -217,7 +217,7 @@ func (s *Service) Update(ctx context.Context, t *tractor.Tractor, userID pulid.I
 		[]*services.PermissionCheck{
 			{
 				UserID:         userID,
-				Resource:       permission.ResourceTractor,
+				Resource:       permission.ResourceTrailer,
 				Action:         permission.ActionUpdate,
 				BusinessUnitID: t.BusinessUnitID,
 				OrganizationID: t.OrganizationID,
@@ -230,7 +230,7 @@ func (s *Service) Update(ctx context.Context, t *tractor.Tractor, userID pulid.I
 	}
 
 	if !result.Allowed {
-		return nil, errors.NewAuthorizationError("You do not have permission to update this tractor")
+		return nil, errors.NewAuthorizationError("You do not have permission to update this trailer")
 	}
 
 	valCtx := &validator.ValidationContext{
@@ -242,7 +242,7 @@ func (s *Service) Update(ctx context.Context, t *tractor.Tractor, userID pulid.I
 		return nil, err
 	}
 
-	original, err := s.repo.GetByID(ctx, repositories.GetTractorByIDOptions{
+	original, err := s.repo.GetByID(ctx, repositories.GetTrailerByIDOptions{
 		ID:    t.ID,
 		OrgID: t.OrganizationID,
 		BuID:  t.BusinessUnitID,
@@ -253,21 +253,21 @@ func (s *Service) Update(ctx context.Context, t *tractor.Tractor, userID pulid.I
 
 	updatedEntity, err := s.repo.Update(ctx, t)
 	if err != nil {
-		log.Error().Err(err).Msg("failed to update tractor")
+		log.Error().Err(err).Msg("failed to update trailer")
 		return nil, err
 	}
 
 	if err = s.ss.Index(ctx, updatedEntity); err != nil {
 		log.Error().
 			Err(err).
-			Interface("tractor", updatedEntity).
+			Interface("trailer", updatedEntity).
 			Msg("failed to update search index")
 	}
 
 	// Log the update if the insert was successful
 	err = s.as.LogAction(
 		&services.LogActionParams{
-			Resource:       permission.ResourceTractor,
+			Resource:       permission.ResourceTrailer,
 			ResourceID:     updatedEntity.GetID(),
 			Action:         permission.ActionUpdate,
 			UserID:         userID,
@@ -276,11 +276,11 @@ func (s *Service) Update(ctx context.Context, t *tractor.Tractor, userID pulid.I
 			OrganizationID: updatedEntity.OrganizationID,
 			BusinessUnitID: updatedEntity.BusinessUnitID,
 		},
-		audit.WithComment("Tractor updated"),
+		audit.WithComment("Trailer updated"),
 		audit.WithDiff(original, updatedEntity),
 	)
 	if err != nil {
-		log.Error().Err(err).Msg("failed to log tractor update")
+		log.Error().Err(err).Msg("failed to log trailer update")
 	}
 
 	return updatedEntity, nil

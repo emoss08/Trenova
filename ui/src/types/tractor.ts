@@ -7,8 +7,8 @@ import { type WorkerSchema } from "@/lib/schemas/worker-schema";
 
 export enum EquipmentStatus {
   Available = "Available",
-  OutOfService = "Out of Service",
-  AtMaintenance = "At Maintenance",
+  OOS = "OutOfService",
+  AtMaintenance = "AtMaintenance",
   Sold = "Sold",
 }
 

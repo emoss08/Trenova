@@ -1,3 +1,4 @@
+/* eslint-disable prefer-const */
 import { RootErrorBoundary } from "@/components/error-boundary";
 import LoadingSkeleton from "@/components/loading";
 import { MainLayout } from "@/components/main-layout";
@@ -18,7 +19,7 @@ const routes: RouteObject[] = [
             path: "/",
             index: true,
             async lazy() {
-              const { Dashboard } = await import("@/app/dashboard/page");
+              let { Dashboard } = await import("@/app/dashboard/page");
               return { Component: Dashboard };
             },
           },
@@ -26,23 +27,21 @@ const routes: RouteObject[] = [
           {
             path: "/shipments/configurations/shipment-types",
             async lazy() {
-              const { ShipmentTypes } = await import(
-                "@/app/shipment-types/page"
-              );
+              let { ShipmentTypes } = await import("@/app/shipment-types/page");
               return { Component: ShipmentTypes };
             },
           },
           {
             path: "/shipments/configurations/service-types",
             async lazy() {
-              const { ServiceTypes } = await import("@/app/service-types/page");
+              let { ServiceTypes } = await import("@/app/service-types/page");
               return { Component: ServiceTypes };
             },
           },
           {
             path: "/shipments/configurations/hazardous-materials",
             async lazy() {
-              const { HazardousMaterials } = await import(
+              let { HazardousMaterials } = await import(
                 "@/app/hazardous-materials/page"
               );
               return { Component: HazardousMaterials };
@@ -51,7 +50,7 @@ const routes: RouteObject[] = [
           {
             path: "/shipments/configurations/commodities",
             async lazy() {
-              const { Commodities } = await import("@/app/commodities/page");
+              let { Commodities } = await import("@/app/commodities/page");
               return { Component: Commodities };
             },
           },
@@ -59,16 +58,14 @@ const routes: RouteObject[] = [
           {
             path: "/billing/client",
             async lazy() {
-              const { BillingClient } = await import(
-                "@/app/billing-client/page"
-              );
+              let { BillingClient } = await import("@/app/billing-client/page");
               return { Component: BillingClient };
             },
           },
           {
             path: "/billing/configurations/charge-types",
             async lazy() {
-              const { ChargeTypes } = await import("@/app/charge-types/page");
+              let { ChargeTypes } = await import("@/app/charge-types/page");
               return { Component: ChargeTypes };
             },
           },
@@ -76,7 +73,7 @@ const routes: RouteObject[] = [
           {
             path: "/dispatch/configurations/workers",
             async lazy() {
-              const { Workers } = await import("@/app/workers/page");
+              let { Workers } = await import("@/app/workers/page");
               return { Component: Workers };
             },
             handle: {
@@ -87,7 +84,7 @@ const routes: RouteObject[] = [
           {
             path: "/dispatch/configurations/fleet-codes",
             async lazy() {
-              const { FleetCodes } = await import("@/app/fleet-codes/page");
+              let { FleetCodes } = await import("@/app/fleet-codes/page");
               return { Component: FleetCodes };
             },
             handle: {
@@ -98,7 +95,7 @@ const routes: RouteObject[] = [
           {
             path: "/dispatch/configurations/location-categories",
             async lazy() {
-              const { LocationCategories } = await import(
+              let { LocationCategories } = await import(
                 "@/app/location-categories/page"
               );
               return { Component: LocationCategories };
@@ -111,7 +108,7 @@ const routes: RouteObject[] = [
           {
             path: "/dispatch/configurations/locations",
             async lazy() {
-              const { Locations } = await import("@/app/locations/page");
+              let { Locations } = await import("@/app/locations/page");
               return { Component: Locations };
             },
             handle: {
@@ -123,7 +120,7 @@ const routes: RouteObject[] = [
           {
             path: "/equipment/configurations/equipment-types",
             async lazy() {
-              const { EquipmentTypes } = await import(
+              let { EquipmentTypes } = await import(
                 "@/app/equipment-types/page"
               );
               return { Component: EquipmentTypes };
@@ -136,7 +133,7 @@ const routes: RouteObject[] = [
           {
             path: "/equipment/configurations/equipment-manufacturers",
             async lazy() {
-              const { EquipmentManufacturers } = await import(
+              let { EquipmentManufacturers } = await import(
                 "@/app/equipment-manufacturers/page"
               );
               return { Component: EquipmentManufacturers };
@@ -149,12 +146,23 @@ const routes: RouteObject[] = [
           {
             path: "/equipment/configurations/tractors",
             async lazy() {
-              const { Tractor } = await import("@/app/tractor/page");
+              let { Tractor } = await import("@/app/tractor/page");
               return { Component: Tractor };
             },
             handle: {
               crumb: "Tractors",
               title: "Tractors",
+            },
+          },
+          {
+            path: "/equipment/configurations/trailers",
+            async lazy() {
+              let { Trailers } = await import("@/app/trailers/page");
+              return { Component: Trailers };
+            },
+            handle: {
+              crumb: "Trailers",
+              title: "Trailers",
             },
           },
         ],
@@ -169,7 +177,7 @@ const routes: RouteObject[] = [
               {
                 index: true,
                 async lazy() {
-                  const { LoginPage } = await import("@/app/auth/login-page");
+                  let { LoginPage } = await import("@/app/auth/login-page");
                   return { Component: LoginPage };
                 },
               },
