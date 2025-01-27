@@ -206,11 +206,10 @@ export function AutoCompleteDateField<T extends FieldValues>({
       render={({ field, fieldState }) => {
         const dateValue = field.value ? toDate(field.value) : undefined;
 
+        // eslint-disable-next-line react-compiler/react-compiler
         const handleChange = useCallback(
           (date: Date | undefined) => {
-            console.info("Date before format", date);
             const formattedDate = toUnixTimeStamp(date);
-            console.log("formattedDate", formattedDate);
             field.onChange(formattedDate);
           },
           [field],

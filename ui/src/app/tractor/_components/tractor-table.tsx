@@ -16,7 +16,7 @@ export default function TractorTable() {
         includeWorkerDetails: true,
         includeEquipmentDetails: true,
       }}
-      queryKey={["tractor"]}
+      queryKey="tractor-list"
       exportModelName="tractor"
       TableModal={CreateTractorModal}
       TableEditModal={EditTractorModal}

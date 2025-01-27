@@ -25,7 +25,7 @@ export function EditEquipTypeModal({
       onOpenChange={onOpenChange}
       url="/equipment-types/"
       title="Equipment Type"
-      queryKey={["equipment-type"]}
+      queryKey="equipment-type-list"
       formComponent={<EquipTypeForm />}
       fieldKey="code"
       form={form}

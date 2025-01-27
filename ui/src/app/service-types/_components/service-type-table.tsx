@@ -13,6 +13,7 @@ export default function ServiceTypesDataTable() {
       name="Service Type"
       link="/service-types/"
       queryKey="service-type-list"
+      exportModelName="service-type"
       TableModal={CreateServiceTypeModal}
       TableEditModal={EditServiceTypeModal}
       columns={columns}

@@ -37,7 +37,7 @@ export function CreateTrailerModal({ open, onOpenChange }: TableSheetProps) {
       form={form}
       schema={trailerSchema}
       url="/trailers/"
-      queryKey={["trailer"]}
+      queryKey="trailer-list"
       className="max-w-[500px]"
     />
   );

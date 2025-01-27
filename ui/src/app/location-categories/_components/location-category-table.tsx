@@ -14,7 +14,7 @@ export default function LocationCategoryTable() {
     <DataTable<LocationCategorySchema>
       name="Location Category"
       link="/location-categories/"
-      queryKey={["location-category"]}
+      queryKey="location-category-list"
       exportModelName="location-category"
       TableModal={CreateLocationCategoryModal}
       TableEditModal={EditLocationCategoryModal}

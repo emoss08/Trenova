@@ -13,6 +13,7 @@ export default function EquipManufacturerTable() {
       name="Equipment Type"
       link="/equipment-manufacturers/"
       queryKey="equip-manufacturer-list"
+      exportModelName="equipment-manufacturer"
       TableModal={CreateEquipManufacturerModal}
       TableEditModal={EditEquipManufacturerModal}
       columns={columns}

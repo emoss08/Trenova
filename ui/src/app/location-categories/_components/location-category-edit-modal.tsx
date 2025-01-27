@@ -1,7 +1,7 @@
 import { FormEditModal } from "@/components/ui/form-edit-model";
 import {
-    locationCategorySchema,
-    LocationCategorySchema,
+  locationCategorySchema,
+  LocationCategorySchema,
 } from "@/lib/schemas/location-category-schema";
 import { type EditTableSheetProps } from "@/types/data-table";
 import { yupResolver } from "@hookform/resolvers/yup";

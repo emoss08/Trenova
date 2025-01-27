@@ -1,7 +1,6 @@
 import { DataTableConfig } from "@/config/data-table";
 import { filterSchema } from "@/lib/parsers";
 import { API_ENDPOINTS } from "@/types/server";
-import { type QueryKey } from "@tanstack/react-query";
 import type {
   ColumnDef,
   ColumnFilter,
@@ -155,7 +154,7 @@ type DataTableProps<TData extends Record<string, any>> = {
   columns: ColumnDef<TData>[];
   name: string;
   link: API_ENDPOINTS;
-  queryKey: QueryKey;
+  queryKey: string;
   // filterFields: DataTableAdvancedFilterField<TData>[];
   // filterColumn: string;
   TableModal?: React.ComponentType<TableSheetProps>;

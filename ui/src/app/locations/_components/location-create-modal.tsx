@@ -38,7 +38,7 @@ export function CreateLocationModal({ open, onOpenChange }: TableSheetProps) {
       form={form}
       schema={locationSchema}
       url="/locations/"
-      queryKey={["location"]}
+      queryKey="location-list"
     />
   );
 }

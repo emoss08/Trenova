@@ -1,6 +1,6 @@
 import { API_URL } from "@/constants/env";
 import { API_ENDPOINTS, type LimitOffsetResponse } from "@/types/server";
-import { type QueryKey, useQuery } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { PaginationState } from "@tanstack/react-table";
 
 export async function fetchData<TData extends Record<string, any>>(
@@ -29,7 +29,7 @@ export async function fetchData<TData extends Record<string, any>>(
 }
 
 export function useDataTableQuery<TData extends Record<string, any>>(
-  queryKey: QueryKey,
+  queryKey: string,
   link: API_ENDPOINTS,
   pagination: PaginationState,
   extraSearchParams?: Record<string, any>,

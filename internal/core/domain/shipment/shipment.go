@@ -43,7 +43,6 @@ type Shipment struct {
 	TemperatureMin     decimal.NullDecimal `json:"temperatureMin" bun:"temperature_min,type:NUMERIC(10,2),nullzero"`
 	TemperatureMax     decimal.NullDecimal `json:"temperatureMax" bun:"temperature_max,type:NUMERIC(10,2),nullzero"`
 	BOL                string              `json:"bol" bun:"bol,type:VARCHAR(100),notnull"`
-	IsHazardous        bool                `json:"isHazardous" bun:"is_hazardous,type:BOOLEAN,notnull,default:false"`
 	ActualDeliveryDate *int64              `json:"actualDeliveryDate" bun:"actual_delivery_date,type:BIGINT,nullzero"`
 	ActualShipDate     *int64              `json:"actualShipDate" bun:"actual_ship_date,type:BIGINT,nullzero"`
 

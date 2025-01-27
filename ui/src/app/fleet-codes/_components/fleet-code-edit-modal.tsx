@@ -25,7 +25,7 @@ export function EditFleetCodeModal({
       onOpenChange={onOpenChange}
       url="/fleet-codes/"
       title="Fleet Code"
-      queryKey={["fleet-code"]}
+      queryKey="fleet-code-list"
       formComponent={<FleetCodeForm />}
       fieldKey="name"
       form={form}

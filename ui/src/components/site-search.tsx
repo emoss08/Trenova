@@ -55,7 +55,6 @@ export default function SiteSearchDialog() {
 
   const handleNavigate = useCallback(
     (link: string) => {
-      console.log("navigate", link);
       navigate(link);
       setOpen(false);
     },

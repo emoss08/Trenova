@@ -15,7 +15,7 @@ export default function TrailerTable() {
       extraSearchParams={{
         includeEquipmentDetails: true,
       }}
-      queryKey={["trailer"]}
+      queryKey="trailer-list"
       exportModelName="trailer"
       TableModal={CreateTrailerModal}
       TableEditModal={EditTrailerModal}
