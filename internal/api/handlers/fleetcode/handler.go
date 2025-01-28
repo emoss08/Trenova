@@ -66,15 +66,16 @@ func (h Handler) selectOptions(c *fiber.Ctx) error {
 		return h.eh.HandleError(c, err)
 	}
 
-	opts := &ports.LimitOffsetQueryOptions{
-		TenantOpts: &ports.TenantOptions{
-			OrgID:  reqCtx.OrgID,
-			BuID:   reqCtx.BuID,
-			UserID: reqCtx.UserID,
+	opts := &repositories.ListFleetCodeOptions{
+		Filter: &ports.LimitOffsetQueryOptions{
+			TenantOpts: &ports.TenantOptions{
+				OrgID:  reqCtx.OrgID,
+				BuID:   reqCtx.BuID,
+				UserID: reqCtx.UserID,
+			},
+			Limit:  c.QueryInt("limit", 100),
+			Offset: c.QueryInt("offset", 0),
 		},
-		Limit:  c.QueryInt("limit", 100),
-		Offset: c.QueryInt("offset", 0),
-		Query:  c.Query("search"),
 	}
 
 	options, err := h.fs.SelectOptions(c.UserContext(), opts)
@@ -96,7 +97,10 @@ func (h Handler) list(c *fiber.Ctx) error {
 	}
 
 	handler := func(fc *fiber.Ctx, filter *ports.LimitOffsetQueryOptions) (*ports.ListResult[*fleetcodedomain.FleetCode], error) {
-		return h.fs.List(fc.UserContext(), filter)
+		return h.fs.List(fc.UserContext(), &repositories.ListFleetCodeOptions{
+			Filter:                filter,
+			IncludeManagerDetails: c.QueryBool("includeManagerDetails"),
+		})
 	}
 
 	return limitoffsetpagination.HandlePaginatedRequest(c, h.eh, reqCtx, handler)
@@ -114,10 +118,11 @@ func (h Handler) get(c *fiber.Ctx) error {
 	}
 
 	fc, err := h.fs.Get(c.UserContext(), repositories.GetFleetCodeByIDOptions{
-		ID:     fleetCodeID,
-		BuID:   reqCtx.BuID,
-		OrgID:  reqCtx.OrgID,
-		UserID: reqCtx.UserID,
+		ID:                    fleetCodeID,
+		BuID:                  reqCtx.BuID,
+		OrgID:                 reqCtx.OrgID,
+		UserID:                reqCtx.UserID,
+		IncludeManagerDetails: c.QueryBool("includeManagerDetails"),
 	})
 	if err != nil {
 		return h.eh.HandleError(c, err)

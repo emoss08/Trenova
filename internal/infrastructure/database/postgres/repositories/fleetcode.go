@@ -41,30 +41,34 @@ func NewFleetCodeRepository(p FleetCodeRepositoryParams) repositories.FleetCodeR
 	}
 }
 
-func (fcr *fleetCodeRepository) filterQuery(q *bun.SelectQuery, opts *ports.LimitOffsetQueryOptions) *bun.SelectQuery {
+func (fcr *fleetCodeRepository) filterQuery(q *bun.SelectQuery, opts *repositories.ListFleetCodeOptions) *bun.SelectQuery {
 	q = queryfilters.TenantFilterQuery(&queryfilters.TenantFilterQueryOptions{
 		Query:      q,
 		TableAlias: "fc",
-		Filter:     opts,
+		Filter:     opts.Filter,
 	})
 
-	if opts.Query != "" {
-		q = q.Where("fc.name ILIKE ? OR fc.description ILIKE ?", "%"+opts.Query+"%", "%"+opts.Query+"%")
+	if opts.IncludeManagerDetails {
+		q = q.Relation("Manager")
 	}
 
-	return q.Limit(opts.Limit).Offset(opts.Offset)
+	if opts.Filter.Query != "" {
+		q = q.Where("fc.name ILIKE ? OR fc.description ILIKE ?", "%"+opts.Filter.Query+"%", "%"+opts.Filter.Query+"%")
+	}
+
+	return q.Limit(opts.Filter.Limit).Offset(opts.Filter.Offset)
 }
 
-func (fcr *fleetCodeRepository) List(ctx context.Context, opts *ports.LimitOffsetQueryOptions) (*ports.ListResult[*fleetcode.FleetCode], error) {
+func (fcr *fleetCodeRepository) List(ctx context.Context, opts *repositories.ListFleetCodeOptions) (*ports.ListResult[*fleetcode.FleetCode], error) {
 	dba, err := fcr.db.DB(ctx)
 	if err != nil {
-		return nil, eris.Wrap(err, "get database connection")
+		return nil, err
 	}
 
 	log := fcr.l.With().
 		Str("operation", "List").
-		Str("buID", opts.TenantOpts.BuID.String()).
-		Str("userID", opts.TenantOpts.UserID.String()).
+		Str("buID", opts.Filter.TenantOpts.BuID.String()).
+		Str("userID", opts.Filter.TenantOpts.UserID.String()).
 		Logger()
 
 	fcs := make([]*fleetcode.FleetCode, 0)
@@ -75,7 +79,7 @@ func (fcr *fleetCodeRepository) List(ctx context.Context, opts *ports.LimitOffse
 	total, err := q.ScanAndCount(ctx)
 	if err != nil {
 		log.Error().Err(err).Msg("failed to scan fleet codes")
-		return nil, eris.Wrap(err, "scan fleet codes")
+		return nil, err
 	}
 
 	return &ports.ListResult[*fleetcode.FleetCode]{
@@ -87,7 +91,7 @@ func (fcr *fleetCodeRepository) List(ctx context.Context, opts *ports.LimitOffse
 func (fcr *fleetCodeRepository) GetByID(ctx context.Context, opts repositories.GetFleetCodeByIDOptions) (*fleetcode.FleetCode, error) {
 	dba, err := fcr.db.DB(ctx)
 	if err != nil {
-		return nil, eris.Wrap(err, "get database connection")
+		return nil, err
 	}
 
 	log := fcr.l.With().
@@ -100,13 +104,17 @@ func (fcr *fleetCodeRepository) GetByID(ctx context.Context, opts repositories.G
 	query := dba.NewSelect().Model(fc).
 		Where("fc.id = ? AND fc.organization_id = ? AND fc.business_unit_id = ?", opts.ID, opts.OrgID, opts.BuID)
 
+	if opts.IncludeManagerDetails {
+		query = query.Relation("Manager")
+	}
+
 	if err = query.Scan(ctx); err != nil {
 		if eris.Is(err, sql.ErrNoRows) {
 			return nil, errors.NewNotFoundError("Fleet code not found within your organization")
 		}
 
 		log.Error().Err(err).Msg("failed to get fleet code")
-		return nil, eris.Wrap(err, "get fleet code")
+		return nil, err
 	}
 
 	return fc, nil
@@ -130,13 +138,13 @@ func (fcr *fleetCodeRepository) Create(ctx context.Context, fc *fleetcode.FleetC
 				Err(iErr).
 				Interface("fleetCode", fc).
 				Msg("failed to insert fleet code")
-			return eris.Wrap(iErr, "insert fleet code")
+			return iErr
 		}
 
 		return nil
 	})
 	if err != nil {
-		return nil, eris.Wrap(err, "create fleet code")
+		return nil, err
 	}
 
 	return fc, nil
@@ -173,7 +181,7 @@ func (fcr *fleetCodeRepository) Update(
 				Err(rErr).
 				Interface("fleetCode", fc).
 				Msg("failed to update fleet code")
-			return eris.Wrap(rErr, "update fleet code")
+			return rErr
 		}
 
 		rows, roErr := results.RowsAffected()
@@ -182,14 +190,14 @@ func (fcr *fleetCodeRepository) Update(
 				Err(roErr).
 				Interface("fleetCode", fc).
 				Msg("failed to get rows affected")
-			return eris.Wrap(roErr, "get rows affected")
+			return roErr
 		}
 
 		if rows == 0 {
 			return errors.NewValidationError(
 				"version",
 				errors.ErrVersionMismatch,
-				fmt.Sprintf("Version mismatch. The fleet code (%s) has either been updated or deleted since the last request.", fc.ID.String()),
+				fmt.Sprintf("Version mismatch. The Fleet Code (%s) has either been updated or deleted since the last request.", fc.ID.String()),
 			)
 		}
 
@@ -197,7 +205,7 @@ func (fcr *fleetCodeRepository) Update(
 	})
 	if err != nil {
 		log.Error().Err(err).Msg("failed to update fleet code")
-		return nil, eris.Wrap(err, "update fleet code")
+		return nil, err
 	}
 
 	return fc, nil
