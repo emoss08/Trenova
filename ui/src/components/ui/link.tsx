@@ -12,7 +12,7 @@
 import { cn } from "@/lib/utils";
 import { faExternalLinkAlt } from "@fortawesome/pro-regular-svg-icons";
 import React, { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, LinkProps } from "react-router-dom";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -86,24 +86,26 @@ export function ExternalLink({
 }
 
 // Small Wrapper around react router <Link> to keep up with the design system
-export const InternalLink = React.forwardRef<
-  HTMLAnchorElement,
-  React.ComponentProps<typeof Link>
->((props, ref) => {
-  const { to, children, className } = props;
+export const InternalLink = React.forwardRef<HTMLAnchorElement, LinkProps>(
+  (props, ref) => {
+    const { children, className } = props;
 
-  return (
-    <Link
-      to={to}
-      ref={ref}
-      className={cn(
-        "inline-flex items-center text-primary underline",
-        className,
-      )}
-    >
-      {children}
-    </Link>
-  );
-});
+    return (
+      <Link
+        ref={ref}
+        className={cn(
+          "inline-flex items-center text-primary underline",
+          className,
+        )}
+        style={{
+          textDecoration: "underline",
+        }}
+        {...props}
+      >
+        {children}
+      </Link>
+    );
+  },
+);
 
 InternalLink.displayName = "InternalLink";

@@ -1,9 +1,9 @@
-package location
+package customer
 
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/core/domain/location"
+	"github.com/emoss08/trenova/internal/core/domain/customer"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/ports"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
@@ -13,7 +13,7 @@ import (
 	"github.com/emoss08/trenova/internal/pkg/logger"
 	"github.com/emoss08/trenova/internal/pkg/utils/jsonutils"
 	"github.com/emoss08/trenova/internal/pkg/validator"
-	"github.com/emoss08/trenova/internal/pkg/validator/locationvalidator"
+	"github.com/emoss08/trenova/internal/pkg/validator/customervalidator"
 	"github.com/emoss08/trenova/pkg/types"
 	"github.com/emoss08/trenova/pkg/types/pulid"
 	"github.com/rs/zerolog"
@@ -24,23 +24,23 @@ type ServiceParams struct {
 	fx.In
 
 	Logger       *logger.Logger
-	Repo         repositories.LocationRepository
+	Repo         repositories.CustomerRepository
 	PermService  services.PermissionService
 	AuditService services.AuditService
-	Validator    *locationvalidator.Validator
+	Validator    *customervalidator.Validator
 }
 
 type Service struct {
 	l    *zerolog.Logger
-	repo repositories.LocationRepository
+	repo repositories.CustomerRepository
 	ps   services.PermissionService
 	as   services.AuditService
-	v    *locationvalidator.Validator
+	v    *customervalidator.Validator
 }
 
 func NewService(p ServiceParams) *Service {
 	log := p.Logger.With().
-		Str("service", "location").
+		Str("service", "customer").
 		Logger()
 
 	return &Service{
@@ -52,7 +52,7 @@ func NewService(p ServiceParams) *Service {
 	}
 }
 
-func (s *Service) SelectOptions(ctx context.Context, opts *repositories.ListLocationOptions) ([]*types.SelectOption, error) {
+func (s *Service) SelectOptions(ctx context.Context, opts *repositories.ListCustomerOptions) ([]*types.SelectOption, error) {
 	result, err := s.repo.List(ctx, opts)
 	if err != nil {
 		return nil, err
@@ -69,14 +69,14 @@ func (s *Service) SelectOptions(ctx context.Context, opts *repositories.ListLoca
 	return options, nil
 }
 
-func (s *Service) List(ctx context.Context, opts *repositories.ListLocationOptions) (*ports.ListResult[*location.Location], error) {
+func (s *Service) List(ctx context.Context, opts *repositories.ListCustomerOptions) (*ports.ListResult[*customer.Customer], error) {
 	log := s.l.With().Str("operation", "List").Logger()
 
 	result, err := s.ps.HasAnyPermissions(ctx,
 		[]*services.PermissionCheck{
 			{
 				UserID:         opts.Filter.TenantOpts.UserID,
-				Resource:       permission.ResourceLocation,
+				Resource:       permission.ResourceCustomer,
 				Action:         permission.ActionRead,
 				BusinessUnitID: opts.Filter.TenantOpts.BuID,
 				OrganizationID: opts.Filter.TenantOpts.OrgID,
@@ -89,32 +89,32 @@ func (s *Service) List(ctx context.Context, opts *repositories.ListLocationOptio
 	}
 
 	if !result.Allowed {
-		return nil, errors.NewAuthorizationError("You do not have permission to read locations")
+		return nil, errors.NewAuthorizationError("You do not have permission to read customers")
 	}
 
 	entities, err := s.repo.List(ctx, opts)
 	if err != nil {
-		log.Error().Err(err).Msg("failed to list locations")
+		log.Error().Err(err).Msg("failed to list customers")
 		return nil, err
 	}
 
-	return &ports.ListResult[*location.Location]{
+	return &ports.ListResult[*customer.Customer]{
 		Items: entities.Items,
 		Total: entities.Total,
 	}, nil
 }
 
-func (s *Service) Get(ctx context.Context, opts repositories.GetLocationByIDOptions) (*location.Location, error) {
+func (s *Service) Get(ctx context.Context, opts repositories.GetCustomerByIDOptions) (*customer.Customer, error) {
 	log := s.l.With().
 		Str("operation", "GetByID").
-		Str("locationID", opts.ID.String()).
+		Str("customerID", opts.ID.String()).
 		Logger()
 
 	result, err := s.ps.HasAnyPermissions(ctx,
 		[]*services.PermissionCheck{
 			{
 				UserID:         opts.UserID,
-				Resource:       permission.ResourceLocation,
+				Resource:       permission.ResourceCustomer,
 				Action:         permission.ActionRead,
 				BusinessUnitID: opts.BuID,
 				OrganizationID: opts.OrgID,
@@ -127,32 +127,32 @@ func (s *Service) Get(ctx context.Context, opts repositories.GetLocationByIDOpti
 	}
 
 	if !result.Allowed {
-		return nil, errors.NewAuthorizationError("You do not have permission to read this location")
+		return nil, errors.NewAuthorizationError("You do not have permission to read this customer")
 	}
 
 	entity, err := s.repo.GetByID(ctx, opts)
 	if err != nil {
-		log.Error().Err(err).Msg("failed to get location")
+		log.Error().Err(err).Msg("failed to get customer")
 		return nil, err
 	}
 
 	return entity, nil
 }
 
-func (s *Service) Create(ctx context.Context, loc *location.Location, userID pulid.ID) (*location.Location, error) {
+func (s *Service) Create(ctx context.Context, cus *customer.Customer, userID pulid.ID) (*customer.Customer, error) {
 	log := s.l.With().
 		Str("operation", "Create").
-		Str("name", loc.Name).
+		Str("name", cus.Name).
 		Logger()
 
 	result, err := s.ps.HasAnyPermissions(ctx,
 		[]*services.PermissionCheck{
 			{
 				UserID:         userID,
-				Resource:       permission.ResourceLocation,
+				Resource:       permission.ResourceCustomer,
 				Action:         permission.ActionCreate,
-				BusinessUnitID: loc.BusinessUnitID,
-				OrganizationID: loc.OrganizationID,
+				BusinessUnitID: cus.BusinessUnitID,
+				OrganizationID: cus.OrganizationID,
 			},
 		},
 	)
@@ -170,18 +170,18 @@ func (s *Service) Create(ctx context.Context, loc *location.Location, userID pul
 		IsUpdate: false,
 	}
 
-	if err := s.v.Validate(ctx, valCtx, loc); err != nil {
+	if err := s.v.Validate(ctx, valCtx, cus); err != nil {
 		return nil, err
 	}
 
-	createdEntity, err := s.repo.Create(ctx, loc)
+	createdEntity, err := s.repo.Create(ctx, cus)
 	if err != nil {
 		return nil, err
 	}
 
 	err = s.as.LogAction(
 		&services.LogActionParams{
-			Resource:       permission.ResourceLocation,
+			Resource:       permission.ResourceCustomer,
 			ResourceID:     createdEntity.GetID(),
 			Action:         permission.ActionCreate,
 			UserID:         userID,
@@ -189,29 +189,29 @@ func (s *Service) Create(ctx context.Context, loc *location.Location, userID pul
 			OrganizationID: createdEntity.OrganizationID,
 			BusinessUnitID: createdEntity.BusinessUnitID,
 		},
-		audit.WithComment("Location created"),
+		audit.WithComment("Customer created"),
 	)
 	if err != nil {
-		log.Error().Err(err).Msg("failed to log location creation")
+		log.Error().Err(err).Msg("failed to log customer creation")
 	}
 
 	return createdEntity, nil
 }
 
-func (s *Service) Update(ctx context.Context, loc *location.Location, userID pulid.ID) (*location.Location, error) {
+func (s *Service) Update(ctx context.Context, cus *customer.Customer, userID pulid.ID) (*customer.Customer, error) {
 	log := s.l.With().
 		Str("operation", "Update").
-		Str("name", loc.Name).
+		Str("name", cus.Name).
 		Logger()
 
 	result, err := s.ps.HasAnyPermissions(ctx,
 		[]*services.PermissionCheck{
 			{
 				UserID:         userID,
-				Resource:       permission.ResourceLocation,
+				Resource:       permission.ResourceCustomer,
 				Action:         permission.ActionUpdate,
-				BusinessUnitID: loc.BusinessUnitID,
-				OrganizationID: loc.OrganizationID,
+				BusinessUnitID: cus.BusinessUnitID,
+				OrganizationID: cus.OrganizationID,
 			},
 		},
 	)
@@ -221,39 +221,37 @@ func (s *Service) Update(ctx context.Context, loc *location.Location, userID pul
 	}
 
 	if !result.Allowed {
-		return nil, errors.NewAuthorizationError("You do not have permission to update this location")
+		return nil, errors.NewAuthorizationError("You do not have permission to update this customer")
 	}
 
-	// Validate the location
 	valCtx := &validator.ValidationContext{
 		IsUpdate: true,
 		IsCreate: false,
 	}
 
-	if err := s.v.Validate(ctx, valCtx, loc); err != nil {
+	if err := s.v.Validate(ctx, valCtx, cus); err != nil {
 		return nil, err
 	}
 
-	original, err := s.repo.GetByID(ctx, repositories.GetLocationByIDOptions{
-		ID:    loc.ID,
-		OrgID: loc.OrganizationID,
-		BuID:  loc.BusinessUnitID,
+	original, err := s.repo.GetByID(ctx, repositories.GetCustomerByIDOptions{
+		ID:    cus.ID,
+		OrgID: cus.OrganizationID,
+		BuID:  cus.BusinessUnitID,
 	})
 	if err != nil {
-		log.Error().Err(err).Msg("failed to get location")
 		return nil, err
 	}
 
-	updatedEntity, err := s.repo.Update(ctx, loc)
+	updatedEntity, err := s.repo.Update(ctx, cus)
 	if err != nil {
-		log.Error().Err(err).Msg("failed to update location")
+		log.Error().Err(err).Msg("failed to update customer")
 		return nil, err
 	}
 
 	// Log the update if the insert was successful
 	err = s.as.LogAction(
 		&services.LogActionParams{
-			Resource:       permission.ResourceLocation,
+			Resource:       permission.ResourceCustomer,
 			ResourceID:     updatedEntity.GetID(),
 			Action:         permission.ActionUpdate,
 			UserID:         userID,
@@ -262,11 +260,11 @@ func (s *Service) Update(ctx context.Context, loc *location.Location, userID pul
 			OrganizationID: updatedEntity.OrganizationID,
 			BusinessUnitID: updatedEntity.BusinessUnitID,
 		},
-		audit.WithComment("Location updated"),
+		audit.WithComment("Customer updated"),
 		audit.WithDiff(original, updatedEntity),
 	)
 	if err != nil {
-		log.Error().Err(err).Msg("failed to log location update")
+		log.Error().Err(err).Msg("failed to log customer update")
 	}
 
 	return updatedEntity, nil

@@ -35,10 +35,16 @@ const DialogOverlay = React.forwardRef<
 ));
 DialogOverlay.displayName = DialogPrimitive.Overlay.displayName;
 
+type DialogContentProps = React.ComponentPropsWithoutRef<
+  typeof DialogPrimitive.Content
+> & {
+  withClose?: boolean;
+};
+
 const DialogContent = React.forwardRef<
   React.ElementRef<typeof DialogPrimitive.Content>,
-  React.ComponentPropsWithoutRef<typeof DialogPrimitive.Content>
->(({ className, children, ...props }, ref) => (
+  DialogContentProps
+>(({ className, children, withClose = true, ...props }, ref) => (
   <DialogPortal>
     <DialogOverlay>
       <DialogPrimitive.Content
@@ -52,28 +58,33 @@ const DialogContent = React.forwardRef<
         {...props}
       >
         {children}
-        <TooltipProvider>
-          <Tooltip delayDuration={0}>
-            <TooltipTrigger asChild>
-              <DialogPrimitive.Close asChild className="absolute right-2 top-2">
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="rounded-sm px-1.5 transition-[border-color,box-shadow] duration-100 ease-in-out focus:border focus:border-blue-600 focus:outline-hidden focus:ring-4 focus:ring-blue-600/20 disabled:pointer-events-none [&_svg]:size-4 "
+        {withClose && (
+          <TooltipProvider>
+            <Tooltip delayDuration={0}>
+              <TooltipTrigger asChild>
+                <DialogPrimitive.Close
+                  asChild
+                  className="absolute right-2 top-2"
                 >
-                  <Icon icon={faXmark} className="size-4" />
-                  <span className="sr-only">Close</span>
-                </Button>
-              </DialogPrimitive.Close>
-            </TooltipTrigger>
-            <TooltipContent className="flex items-center gap-2" side="right">
-              <kbd className="-me-1 inline-flex h-5 max-h-full items-center rounded bg-muted-foreground/60 px-1 font-[inherit] text-[0.625rem] font-medium text-background">
-                Esc
-              </kbd>
-              <p>to close the dialog</p>
-            </TooltipContent>
-          </Tooltip>
-        </TooltipProvider>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="rounded-sm px-1.5 transition-[border-color,box-shadow] duration-100 ease-in-out focus:border focus:border-blue-600 focus:outline-hidden focus:ring-4 focus:ring-blue-600/20 disabled:pointer-events-none [&_svg]:size-4 "
+                  >
+                    <Icon icon={faXmark} className="size-4" />
+                    <span className="sr-only">Close</span>
+                  </Button>
+                </DialogPrimitive.Close>
+              </TooltipTrigger>
+              <TooltipContent className="flex items-center gap-2" side="right">
+                <kbd className="-me-1 inline-flex h-5 max-h-full items-center rounded bg-muted-foreground/60 px-1 font-[inherit] text-[0.625rem] font-medium text-background">
+                  Esc
+                </kbd>
+                <p>to close the dialog</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        )}
       </DialogPrimitive.Content>
     </DialogOverlay>
   </DialogPortal>

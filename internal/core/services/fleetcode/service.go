@@ -53,10 +53,10 @@ func NewService(p ServiceParams) *Service {
 	}
 }
 
-func (s *Service) SelectOptions(ctx context.Context, opts *ports.LimitOffsetQueryOptions) ([]*types.SelectOption, error) {
+func (s *Service) SelectOptions(ctx context.Context, opts *repositories.ListFleetCodeOptions) ([]*types.SelectOption, error) {
 	result, err := s.repo.List(ctx, opts)
 	if err != nil {
-		return nil, eris.Wrap(err, "select fleet codes")
+		return nil, err
 	}
 
 	options := make([]*types.SelectOption, len(result.Items))
@@ -71,23 +71,23 @@ func (s *Service) SelectOptions(ctx context.Context, opts *ports.LimitOffsetQuer
 	return options, nil
 }
 
-func (s *Service) List(ctx context.Context, opts *ports.LimitOffsetQueryOptions) (*ports.ListResult[*fleetcode.FleetCode], error) {
+func (s *Service) List(ctx context.Context, opts *repositories.ListFleetCodeOptions) (*ports.ListResult[*fleetcode.FleetCode], error) {
 	log := s.l.With().Str("operation", "List").Logger()
 
 	result, err := s.ps.HasAnyPermissions(ctx,
 		[]*services.PermissionCheck{
 			{
-				UserID:         opts.TenantOpts.UserID,
+				UserID:         opts.Filter.TenantOpts.UserID,
 				Resource:       permission.ResourceFleetCode,
 				Action:         permission.ActionRead,
-				BusinessUnitID: opts.TenantOpts.BuID,
-				OrganizationID: opts.TenantOpts.OrgID,
+				BusinessUnitID: opts.Filter.TenantOpts.BuID,
+				OrganizationID: opts.Filter.TenantOpts.OrgID,
 			},
 		},
 	)
 	if err != nil {
 		s.l.Error().Err(err).Msg("failed to check permissions")
-		return nil, eris.Wrap(err, "check permissions")
+		return nil, err
 	}
 
 	if !result.Allowed {
@@ -97,7 +97,7 @@ func (s *Service) List(ctx context.Context, opts *ports.LimitOffsetQueryOptions)
 	entities, err := s.repo.List(ctx, opts)
 	if err != nil {
 		log.Error().Err(err).Msg("failed to list fleet codes")
-		return nil, eris.Wrap(err, "list fleet codes")
+		return nil, err
 	}
 
 	return &ports.ListResult[*fleetcode.FleetCode]{
@@ -125,7 +125,7 @@ func (s *Service) Get(ctx context.Context, opts repositories.GetFleetCodeByIDOpt
 	)
 	if err != nil {
 		log.Error().Err(err).Msg("failed to check permissions")
-		return nil, eris.Wrap(err, "check read fleet code permissions")
+		return nil, err
 	}
 
 	if !result.Allowed {
@@ -135,7 +135,7 @@ func (s *Service) Get(ctx context.Context, opts repositories.GetFleetCodeByIDOpt
 	entity, err := s.repo.GetByID(ctx, opts)
 	if err != nil {
 		log.Error().Err(err).Msg("failed to get fleet code")
-		return nil, eris.Wrap(err, "get fleet code")
+		return nil, err
 	}
 
 	return entity, nil
@@ -219,7 +219,7 @@ func (s *Service) Update(ctx context.Context, fc *fleetcode.FleetCode, userID pu
 	)
 	if err != nil {
 		log.Error().Err(err).Msg("failed to check permissions")
-		return nil, eris.Wrap(err, "check update fleet code permissions")
+		return nil, err
 	}
 
 	if !result.Allowed {
@@ -242,13 +242,13 @@ func (s *Service) Update(ctx context.Context, fc *fleetcode.FleetCode, userID pu
 		BuID:  fc.BusinessUnitID,
 	})
 	if err != nil {
-		return nil, eris.Wrap(err, "get fleet code")
+		return nil, err
 	}
 
 	updatedFleetCode, err := s.repo.Update(ctx, fc)
 	if err != nil {
 		log.Error().Err(err).Msg("failed to update fleet code")
-		return nil, eris.Wrap(err, "update fleet code")
+		return nil, err
 	}
 
 	// Log the update if the insert was successful

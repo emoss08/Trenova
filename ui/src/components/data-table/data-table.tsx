@@ -1,7 +1,9 @@
 import { useDataTableQuery } from "@/hooks/use-data-table-query";
 import { useDataTableState } from "@/hooks/use-data-table-state";
+import { http } from "@/lib/http-client";
 import { DataTableProps } from "@/types/data-table";
 import { PaginationResponse } from "@/types/server";
+import { useQuery } from "@tanstack/react-query";
 import {
   getCoreRowModel,
   getFacetedRowModel,
@@ -11,8 +13,9 @@ import {
   getSortedRowModel,
   useReactTable,
 } from "@tanstack/react-table";
-import { parseAsInteger, useQueryState } from "nuqs";
-import { useCallback, useMemo, useTransition } from "react";
+import { parseAsInteger, parseAsString, useQueryState } from "nuqs";
+import { useCallback, useEffect, useMemo, useTransition } from "react";
+import { Separator } from "../ui/separator";
 import { Skeleton } from "../ui/skeleton";
 import { Table } from "../ui/table";
 import { DataTableBody } from "./_components/data-table-body";
@@ -29,6 +32,11 @@ const DEFAULT_PAGE_SIZE_OPTIONS = [10, 20, 30, 40, 50] as const;
 const searchParams = {
   page: parseAsInteger.withDefault(1),
   pageSize: parseAsInteger.withDefault(10),
+};
+
+const entityParams = {
+  entityId: parseAsString,
+  modal: parseAsString,
 };
 
 export function DataTable<TData extends Record<string, any>>({
@@ -62,6 +70,66 @@ export function DataTable<TData extends Record<string, any>>({
     }),
   );
 
+  // Entity URL State management
+  const [entityId, setEntityId] = useQueryState(
+    "entityId",
+    entityParams.entityId.withOptions({
+      startTransition,
+      shallow: false,
+    }),
+  );
+  const [modalType, setModalType] = useQueryState(
+    "modal",
+    entityParams.modal.withOptions({
+      startTransition,
+      shallow: false,
+    }),
+  );
+
+  // Entity Query
+  const entityQuery = useQuery({
+    queryKey: [queryKey, "entity", link, entityId],
+    queryFn: async () => {
+      if (!entityId) return null;
+      const response = await http.get(`${link}${entityId}`);
+      return response.data;
+    },
+    enabled: !!entityId,
+    staleTime: 30000, // 30 seconds
+  });
+
+  const handleRowDoubleClick = useCallback(
+    async (rowData: TData) => {
+      if (!rowData.id) return;
+
+      // Update URL with entityId and modal state
+      await setEntityId(rowData.id);
+      await setModalType("edit");
+    },
+    [setEntityId, setModalType],
+  );
+
+  // Update the handleModalClose function to properly clear both parameters
+  const handleEditModalClose = useCallback(async () => {
+    await Promise.all([setEntityId(null), setModalType(null)]);
+  }, [setEntityId, setModalType]);
+
+  const handleCreateModalClose = useCallback(async () => {
+    await setModalType(null);
+  }, [setModalType]);
+
+  useEffect(() => {
+    // Only handle edit modal consistency
+    if (entityId && !modalType) {
+      setModalType("edit").catch(console.error);
+    }
+
+    // Only clear modal if we're in edit mode and lose the entityId
+    if (!entityId && modalType === "edit") {
+      setModalType(null).catch(console.error);
+    }
+  }, [entityId, modalType, setModalType]);
+
   // Derive pagination state from URL
   const pagination = useMemo(
     () => ({
@@ -74,20 +142,14 @@ export function DataTable<TData extends Record<string, any>>({
   const {
     rowSelection,
     setRowSelection,
-    currentRecord,
-    setCurrentRecord,
     columnVisibility,
     setColumnVisibility,
     columnFilters,
     setColumnFilters,
     sorting,
     // setSorting,
-    showCreateModal,
-    setShowCreateModal,
     // showFilterDialog,
     // setShowFilterDialog,
-    editModalOpen,
-    setEditModalOpen,
   } = useDataTableState<TData>();
 
   const dataQuery = useDataTableQuery<PaginationResponse<TData>>(
@@ -165,7 +227,11 @@ export function DataTable<TData extends Record<string, any>>({
     getFacetedUniqueValues: getFacetedUniqueValues(),
   });
 
+  const isEditModalOpen = Boolean(entityId && modalType === "edit");
+  const isCreateModalOpen = Boolean(modalType === "create");
   const isLoading = dataQuery.isLoading || isTransitioning;
+  const isEntityLoading = entityQuery.isLoading;
+  const isEntityError = entityQuery.error;
 
   return (
     <div className="mt-2 flex flex-col gap-3 overflow-y-hidden overflow-x-scroll">
@@ -173,9 +239,13 @@ export function DataTable<TData extends Record<string, any>>({
         <div className="flex items-center gap-2"></div>
         <div className="flex items-center gap-2">
           <DataTableViewOptions table={table} />
+          <Separator className="h-6 w-px bg-border" orientation="vertical" />
           <DataTableCreateButton
             name={name}
             exportModelName={exportModelName}
+            onCreateClick={() => {
+              setModalType("create");
+            }}
           />
         </div>
       </div>
@@ -183,9 +253,7 @@ export function DataTable<TData extends Record<string, any>>({
         <Table>
           <DataTableHeader table={table} />
           <DataTableBody
-            isLoading={isLoading}
-            setCurrentRecord={setCurrentRecord}
-            setEditModalOpen={setEditModalOpen}
+            handleRowDoubleClick={handleRowDoubleClick}
             table={table}
           />
         </Table>
@@ -198,14 +266,23 @@ export function DataTable<TData extends Record<string, any>>({
         onPageChange={handlePageChange}
         onPageSizeChange={handlePageSizeChange}
       />
-      {showCreateModal && TableModal && (
-        <TableModal open={showCreateModal} onOpenChange={setShowCreateModal} />
+      {isCreateModalOpen && TableModal && (
+        <TableModal
+          open={isCreateModalOpen}
+          onOpenChange={() => {
+            handleCreateModalClose();
+          }}
+        />
       )}
-      {editModalOpen && TableEditModal && (
+      {isEditModalOpen && TableEditModal && (
         <TableEditModal
-          open={editModalOpen}
-          onOpenChange={setEditModalOpen}
-          currentRecord={currentRecord as TData}
+          open={isEditModalOpen}
+          onOpenChange={() => {
+            handleEditModalClose();
+          }}
+          currentRecord={(entityQuery.data as TData) || undefined}
+          isLoading={isEntityLoading}
+          error={isEntityError}
         />
       )}
     </div>

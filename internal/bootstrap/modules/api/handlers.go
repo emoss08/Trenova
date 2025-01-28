@@ -3,6 +3,7 @@ package api
 import (
 	"github.com/emoss08/trenova/internal/api/handlers/auth"
 	"github.com/emoss08/trenova/internal/api/handlers/commodity"
+	"github.com/emoss08/trenova/internal/api/handlers/customer"
 	"github.com/emoss08/trenova/internal/api/handlers/documentqualityconfig"
 	"github.com/emoss08/trenova/internal/api/handlers/equipmentmanufacturer"
 	"github.com/emoss08/trenova/internal/api/handlers/equipmenttype"
@@ -49,4 +50,5 @@ var HandlersModule = fx.Module("api.Handlers", fx.Provide(
 	location.NewHandler,
 	tractor.NewHandler,
 	trailer.NewHandler,
+	customer.NewHandler,
 ))

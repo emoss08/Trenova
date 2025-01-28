@@ -121,6 +121,15 @@ var resrouceDefs = []*resource.ResourceDefinition{
 		AllowAutomations:   true,
 		AllowNotifications: true,
 	},
+	{
+		ResourceType:       permission.ResourceCustomer,
+		DisplayName:        "Customer",
+		TableName:          "customers",
+		Description:        "Customer Management",
+		AllowCustomFields:  true,
+		AllowAutomations:   false,
+		AllowNotifications: true,
+	},
 }
 
 func LoadResourceDefinition(ctx context.Context, db *bun.DB) error {

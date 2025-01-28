@@ -23,6 +23,14 @@ const routes: RouteObject[] = [
               return { Component: Dashboard };
             },
           },
+          // Billing Links
+          {
+            path: "/billing/configurations/customers",
+            async lazy() {
+              let { Customers } = await import("@/app/customers/page");
+              return { Component: Customers };
+            },
+          },
           // Shipment Links
           {
             path: "/shipments/configurations/shipment-types",
@@ -105,6 +113,7 @@ const routes: RouteObject[] = [
               title: "Location Categories",
             },
           },
+          // Location Links
           {
             path: "/dispatch/configurations/locations",
             async lazy() {
@@ -114,6 +123,19 @@ const routes: RouteObject[] = [
             handle: {
               crumb: "Locations",
               title: "Locations",
+            },
+          },
+          {
+            path: "/dispatch/configurations/locations/:locationId",
+            async lazy() {
+              let { LocationView } = await import(
+                "@/app/locations/location-view"
+              );
+              return { Component: LocationView };
+            },
+            handle: {
+              crumb: "Location View",
+              title: "Location View",
             },
           },
           // Equipment Links
