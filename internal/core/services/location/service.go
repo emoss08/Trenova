@@ -16,7 +16,6 @@ import (
 	"github.com/emoss08/trenova/internal/pkg/validator/locationvalidator"
 	"github.com/emoss08/trenova/pkg/types"
 	"github.com/emoss08/trenova/pkg/types/pulid"
-	"github.com/rotisserie/eris"
 	"github.com/rs/zerolog"
 	"go.uber.org/fx"
 )
@@ -56,7 +55,7 @@ func NewService(p ServiceParams) *Service {
 func (s *Service) SelectOptions(ctx context.Context, opts *repositories.ListLocationOptions) ([]*types.SelectOption, error) {
 	result, err := s.repo.List(ctx, opts)
 	if err != nil {
-		return nil, eris.Wrap(err, "select locations")
+		return nil, err
 	}
 
 	options := make([]*types.SelectOption, len(result.Items))
@@ -86,7 +85,7 @@ func (s *Service) List(ctx context.Context, opts *repositories.ListLocationOptio
 	)
 	if err != nil {
 		s.l.Error().Err(err).Msg("failed to check permissions")
-		return nil, eris.Wrap(err, "check permissions")
+		return nil, err
 	}
 
 	if !result.Allowed {
@@ -96,7 +95,7 @@ func (s *Service) List(ctx context.Context, opts *repositories.ListLocationOptio
 	entities, err := s.repo.List(ctx, opts)
 	if err != nil {
 		log.Error().Err(err).Msg("failed to list locations")
-		return nil, eris.Wrap(err, "list locations")
+		return nil, err
 	}
 
 	return &ports.ListResult[*location.Location]{
@@ -108,7 +107,7 @@ func (s *Service) List(ctx context.Context, opts *repositories.ListLocationOptio
 func (s *Service) Get(ctx context.Context, opts repositories.GetLocationByIDOptions) (*location.Location, error) {
 	log := s.l.With().
 		Str("operation", "GetByID").
-		Str("hmID", opts.ID.String()).
+		Str("locationID", opts.ID.String()).
 		Logger()
 
 	result, err := s.ps.HasAnyPermissions(ctx,
@@ -124,7 +123,7 @@ func (s *Service) Get(ctx context.Context, opts repositories.GetLocationByIDOpti
 	)
 	if err != nil {
 		log.Error().Err(err).Msg("failed to check permissions")
-		return nil, eris.Wrap(err, "check read location permissions")
+		return nil, err
 	}
 
 	if !result.Allowed {
@@ -134,7 +133,7 @@ func (s *Service) Get(ctx context.Context, opts repositories.GetLocationByIDOpti
 	entity, err := s.repo.GetByID(ctx, opts)
 	if err != nil {
 		log.Error().Err(err).Msg("failed to get location")
-		return nil, eris.Wrap(err, "get location")
+		return nil, err
 	}
 
 	return entity, nil
@@ -159,7 +158,7 @@ func (s *Service) Create(ctx context.Context, loc *location.Location, userID pul
 	)
 	if err != nil {
 		log.Error().Err(err).Msg("failed to check permissions")
-		return nil, eris.Wrap(err, "check create location permissions")
+		return nil, err
 	}
 
 	if !result.Allowed {
@@ -177,7 +176,7 @@ func (s *Service) Create(ctx context.Context, loc *location.Location, userID pul
 
 	createdEntity, err := s.repo.Create(ctx, loc)
 	if err != nil {
-		return nil, eris.Wrap(err, "create location")
+		return nil, err
 	}
 
 	err = s.as.LogAction(
@@ -218,7 +217,7 @@ func (s *Service) Update(ctx context.Context, loc *location.Location, userID pul
 	)
 	if err != nil {
 		log.Error().Err(err).Msg("failed to check permissions")
-		return nil, eris.Wrap(err, "check update location permissions")
+		return nil, err
 	}
 
 	if !result.Allowed {
@@ -241,13 +240,14 @@ func (s *Service) Update(ctx context.Context, loc *location.Location, userID pul
 		BuID:  loc.BusinessUnitID,
 	})
 	if err != nil {
-		return nil, eris.Wrap(err, "get location")
+		log.Error().Err(err).Msg("failed to get location")
+		return nil, err
 	}
 
 	updatedEntity, err := s.repo.Update(ctx, loc)
 	if err != nil {
 		log.Error().Err(err).Msg("failed to update location")
-		return nil, eris.Wrap(err, "update location")
+		return nil, err
 	}
 
 	// Log the update if the insert was successful
