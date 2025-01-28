@@ -3,7 +3,6 @@ import { v4 as uuidv4 } from "uuid";
 // Type definitions
 export type PopoutWindowOptions = {
   modal?: "create" | "edit";
-  recordId?: string;
   width?: number;
   height?: number;
   left?: number;
@@ -15,7 +14,6 @@ export type PopoutWindowOptions = {
 // Define a type for processed options where some fields remain optional
 type ProcessedPopoutWindowOptions = {
   modal: "create" | "edit";
-  recordId?: string;
   width: number;
   height: number;
   left: number;
@@ -247,7 +245,6 @@ class PopoutWindowManager {
   ) {
     return {
       modal: options.modal,
-      recordId: options.recordId || "",
       popoutId: id,
       width: options.width.toString(),
       height: options.height.toString(),
