@@ -1,5 +1,8 @@
 import { DataTableColumnHeader } from "@/components/data-table/_components/data-table-column-header";
-import { createCommonColumns } from "@/components/data-table/_components/data-table-column-helpers";
+import {
+  createCommonColumns,
+  createEntityColumn,
+} from "@/components/data-table/_components/data-table-column-helpers";
 import { DataTableDescription } from "@/components/data-table/_components/data-table-components";
 import { type LocationCategorySchema } from "@/lib/schemas/location-category-schema";
 import {
@@ -14,28 +17,13 @@ export function getColumns(): ColumnDef<LocationCategorySchema>[] {
 
   return [
     commonColumns.selection,
-    {
+    createEntityColumn(columnHelper, "name", {
       accessorKey: "name",
-      header: ({ column }) => (
-        <DataTableColumnHeader column={column} title="Name" />
-      ),
-      cell: ({ row }) => {
-        const isColor = !!row.original.color;
-        return isColor ? (
-          <div className="flex items-center gap-x-1.5 text-sm font-medium text-foreground">
-            <div
-              className="size-2 rounded-full"
-              style={{
-                backgroundColor: row.original.color,
-              }}
-            />
-            <p>{row.original.name}</p>
-          </div>
-        ) : (
-          <p>{row.original.name}</p>
-        );
-      },
-    },
+      getHeaderText: "Name",
+      getId: (locationCategory) => locationCategory.id,
+      getDisplayText: (locationCategory) => locationCategory.name,
+      getColor: (locationCategory) => locationCategory.color,
+    }),
     {
       accessorKey: "type",
       header: ({ column }) => (

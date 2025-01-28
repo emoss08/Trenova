@@ -1,5 +1,8 @@
 import { DataTableColumnHeader } from "@/components/data-table/_components/data-table-column-header";
-import { createCommonColumns } from "@/components/data-table/_components/data-table-column-helpers";
+import {
+  createCommonColumns,
+  createEntityColumn,
+} from "@/components/data-table/_components/data-table-column-helpers";
 import { DataTableDescription } from "@/components/data-table/_components/data-table-components";
 import { PackingGroupBadge, StatusBadge } from "@/components/status-badge";
 import { type HazardousMaterialSchema } from "@/lib/schemas/hazardous-material-schema";
@@ -25,12 +28,12 @@ export function getColumns(): ColumnDef<HazardousMaterialSchema>[] {
         return <StatusBadge status={status} />;
       },
     },
-    {
+    createEntityColumn(columnHelper, "code", {
       accessorKey: "code",
-      header: ({ column }) => (
-        <DataTableColumnHeader column={column} title="Code" />
-      ),
-    },
+      getHeaderText: "Code",
+      getId: (hazardousMaterial) => hazardousMaterial.id,
+      getDisplayText: (hazardousMaterial) => hazardousMaterial.code,
+    }),
     {
       accessorKey: "class",
       header: ({ column }) => (

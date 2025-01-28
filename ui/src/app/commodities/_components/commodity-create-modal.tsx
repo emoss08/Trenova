@@ -37,7 +37,7 @@ export function CreateCommodityModal({ open, onOpenChange }: TableSheetProps) {
       schema={commoditySchema}
       url="/commodities/"
       queryKey="commodity-list"
-      className="max-w-[550px]"
+      className="max-w-[500px]"
     />
   );
 }

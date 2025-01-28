@@ -110,6 +110,7 @@ export function FormEditModal<T extends FieldValues>({
       });
     },
     onError: (error: APIError) => {
+      // TODO(Wolfred): Add a standardized error handling system that catches all errors and displays them in a consistent way
       if (error.isValidationError()) {
         error.getFieldErrors().forEach((fieldError) => {
           setError(fieldError.name as Path<T>, {
@@ -217,7 +218,7 @@ export function FormEditModal<T extends FieldValues>({
               <Button type="button" variant="outline" onClick={onClose}>
                 Cancel
               </Button>
-              <TooltipProvider delayDuration={0}>
+              <TooltipProvider>
                 <Tooltip>
                   <TooltipTrigger asChild>
                     <Button type="submit" isLoading={isSubmitting}>

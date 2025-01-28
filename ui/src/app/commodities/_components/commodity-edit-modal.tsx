@@ -28,7 +28,7 @@ export function EditCommodityModal({
       queryKey="commodity-list"
       formComponent={<CommodityForm />}
       fieldKey="name"
-      className="max-w-[550px]"
+      className="max-w-[500px]"
       form={form}
       schema={commoditySchema}
     />

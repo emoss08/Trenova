@@ -1,5 +1,6 @@
 import { cn } from "@/lib/utils";
 import { faSpinnerThird } from "@fortawesome/pro-regular-svg-icons";
+import { Suspense } from "react";
 import { Icon } from "./icons";
 
 export function ComponentLoader({
@@ -28,4 +29,8 @@ export function ComponentLoader({
       </p>
     </div>
   );
+}
+
+export function SuspenseLoader({ children }: { children: React.ReactNode }) {
+  return <Suspense fallback={<ComponentLoader />}>{children}</Suspense>;
 }
