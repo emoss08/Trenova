@@ -79,7 +79,7 @@ function openPopoutWindow(
     popoutLink,
     {},
     {
-      mode: "create",
+      modal: "create",
       width: 800,
       height: 800,
     },

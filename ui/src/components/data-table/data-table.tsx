@@ -110,17 +110,22 @@ export function DataTable<TData extends Record<string, any>>({
   );
 
   // Update the handleModalClose function to properly clear both parameters
-  const handleModalClose = useCallback(async () => {
+  const handleEditModalClose = useCallback(async () => {
     await Promise.all([setEntityId(null), setModalType(null)]);
   }, [setEntityId, setModalType]);
 
+  const handleCreateModalClose = useCallback(async () => {
+    await setModalType(null);
+  }, [setModalType]);
+
   useEffect(() => {
-    // Ensure modal state is consistent with URL parameters
+    // Only handle edit modal consistency
     if (entityId && !modalType) {
       setModalType("edit").catch(console.error);
     }
 
-    if (!entityId && modalType) {
+    // Only clear modal if we're in edit mode and lose the entityId
+    if (!entityId && modalType === "edit") {
       setModalType(null).catch(console.error);
     }
   }, [entityId, modalType, setModalType]);
@@ -143,8 +148,6 @@ export function DataTable<TData extends Record<string, any>>({
     setColumnFilters,
     sorting,
     // setSorting,
-    showCreateModal,
-    setShowCreateModal,
     // showFilterDialog,
     // setShowFilterDialog,
   } = useDataTableState<TData>();
@@ -224,7 +227,8 @@ export function DataTable<TData extends Record<string, any>>({
     getFacetedUniqueValues: getFacetedUniqueValues(),
   });
 
-  const isModalOpen = Boolean(entityId && modalType);
+  const isEditModalOpen = Boolean(entityId && modalType === "edit");
+  const isCreateModalOpen = Boolean(modalType === "create");
   const isLoading = dataQuery.isLoading || isTransitioning;
   const isEntityLoading = entityQuery.isLoading;
   const isEntityError = entityQuery.error;
@@ -239,6 +243,9 @@ export function DataTable<TData extends Record<string, any>>({
           <DataTableCreateButton
             name={name}
             exportModelName={exportModelName}
+            onCreateClick={() => {
+              setModalType("create");
+            }}
           />
         </div>
       </div>
@@ -259,14 +266,19 @@ export function DataTable<TData extends Record<string, any>>({
         onPageChange={handlePageChange}
         onPageSizeChange={handlePageSizeChange}
       />
-      {showCreateModal && TableModal && (
-        <TableModal open={showCreateModal} onOpenChange={setShowCreateModal} />
-      )}
-      {isModalOpen && TableEditModal && (
-        <TableEditModal
-          open={isModalOpen}
+      {isCreateModalOpen && TableModal && (
+        <TableModal
+          open={isCreateModalOpen}
           onOpenChange={() => {
-            handleModalClose();
+            handleCreateModalClose();
+          }}
+        />
+      )}
+      {isEditModalOpen && TableEditModal && (
+        <TableEditModal
+          open={isEditModalOpen}
+          onOpenChange={() => {
+            handleEditModalClose();
           }}
           currentRecord={(entityQuery.data as TData) || undefined}
           isLoading={isEntityLoading}
