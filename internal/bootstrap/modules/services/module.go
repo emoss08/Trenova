@@ -4,6 +4,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/audit"
 	"github.com/emoss08/trenova/internal/core/services/auth"
 	"github.com/emoss08/trenova/internal/core/services/commodity"
+	"github.com/emoss08/trenova/internal/core/services/customer"
 	"github.com/emoss08/trenova/internal/core/services/documentqualityconfig"
 	"github.com/emoss08/trenova/internal/core/services/equipmentmanufacturer"
 	"github.com/emoss08/trenova/internal/core/services/equipmenttype"
@@ -53,4 +54,5 @@ var Module = fx.Module("services", fx.Provide(
 	location.NewService,
 	tractor.NewService,
 	trailer.NewService,
+	customer.NewService,
 ))
