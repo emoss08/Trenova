@@ -1,6 +1,11 @@
 import { Checkbox } from "@/components/ui/checkbox";
 import { InternalLink } from "@/components/ui/link";
-import { cn } from "@/lib/utils";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { ColumnDef, ColumnHelper } from "@tanstack/react-table";
 import { DataTableColumnHeader } from "./data-table-column-header";
 
@@ -51,7 +56,6 @@ type EntityRefConfig<TEntity, TParent> = {
     displayText: string;
   } | null;
   className?: string;
-  // Add color support
   color?: {
     getColor: (entity: TEntity) => string | undefined;
   };
@@ -92,54 +96,140 @@ export function createEntityRefColumn<
 
       return (
         <div className="flex flex-col gap-0.5">
-          <InternalLink
-            to={{
-              pathname: config.basePath,
-              search: `?entityId=${id}&modal=edit`,
-            }}
-            state={{
-              isNavigatingToModal: true,
-            }}
-            className={cn("hover:underline", config.className)}
-            replace // Use replace to avoid adding to history stack
-            preventScrollReset // Prevent scrolling to top on navigation
-          >
-            {color ? (
-              <div className="flex items-center gap-x-1.5 text-sm font-medium text-foreground">
-                <div
-                  className="size-2 rounded-full"
-                  style={{
-                    backgroundColor: color,
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <InternalLink
+                  to={{
+                    pathname: config.basePath,
+                    search: `?entityId=${id}&modal=edit`,
                   }}
-                />
-                <p>{displayText}</p>
-              </div>
-            ) : (
-              displayText
-            )}
-          </InternalLink>
+                  state={{
+                    isNavigatingToModal: true,
+                  }}
+                  className={config.className}
+                  replace
+                  preventScrollReset
+                >
+                  {color ? (
+                    <div className="flex items-center gap-x-1.5 text-sm font-normal text-foreground underline hover:text-foreground/70">
+                      <div
+                        className="size-2 rounded-full"
+                        style={{
+                          backgroundColor: color,
+                        }}
+                      />
+                      <p>{displayText}</p>
+                    </div>
+                  ) : (
+                    <span className="text-sm font-normal underline hover:text-foreground/70">
+                      {displayText}
+                    </span>
+                  )}
+                </InternalLink>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>Click to view {displayText}</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
 
           {secondaryInfo && (
             <div className="flex items-center gap-1 text-muted-foreground text-2xs">
               <span>{secondaryInfo.label}:</span>
-              <InternalLink
-                to={{
-                  pathname: config.basePath,
-                  search: `?entityId=${config.getId(secondaryInfo.entity)}&modal=edit`,
-                }}
-                state={{
-                  isNavigatingToModal: true,
-                }}
-                className="text-2xs text-muted-foreground hover:underline"
-                replace
-                preventScrollReset
-                viewTransition
-              >
-                {secondaryInfo.displayText}
-              </InternalLink>
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <InternalLink
+                      to={{
+                        pathname: config.basePath,
+                        search: `?entityId=${config.getId(secondaryInfo.entity)}&modal=edit`,
+                      }}
+                      state={{
+                        isNavigatingToModal: true,
+                      }}
+                      className="text-2xs text-muted-foreground underline hover:text-muted-foreground/70"
+                      replace
+                      preventScrollReset
+                      viewTransition
+                    >
+                      {secondaryInfo.displayText}
+                    </InternalLink>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>Click to view {secondaryInfo.displayText}</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
             </div>
           )}
         </div>
+      );
+    },
+  }) as ColumnDef<T>;
+}
+
+type EntityColumnConfig<T extends Record<string, any>, K extends keyof T> = {
+  accessorKey: K;
+  getHeaderText?: string;
+  getId: (entity: T) => string | undefined;
+  getDisplayText: (entity: T) => string;
+  className?: string;
+  getColor?: (entity: T) => string | undefined;
+};
+
+export function createEntityColumn<T extends Record<string, any>>(
+  columnHelper: ColumnHelper<T>,
+  accessorKey: keyof T,
+  config: EntityColumnConfig<T, keyof T>,
+): ColumnDef<T> {
+  return columnHelper.accessor((row) => row[accessorKey], {
+    id: accessorKey as string,
+    header: ({ column }) => (
+      <DataTableColumnHeader
+        column={column}
+        title={config.getHeaderText ?? ""}
+      />
+    ),
+    cell: ({ row }) => {
+      const entity = row.original;
+
+      if (!entity) {
+        return <p>-</p>;
+      }
+
+      const id = config.getId(row.original);
+      const displayText = config.getDisplayText(row.original);
+      const color = config.getColor?.(row.original);
+
+      return (
+        <InternalLink
+          to={{
+            search: `?entityId=${id}&modal=edit`,
+          }}
+          state={{
+            isNavigatingToModal: true,
+          }}
+          className={config.className}
+          replace
+          preventScrollReset
+        >
+          {color ? (
+            <div className="flex items-center gap-x-1.5 text-sm font-normal text-foreground hover:text-foreground/70 w-fit underline">
+              <div
+                className="size-2 rounded-full"
+                style={{
+                  backgroundColor: color,
+                }}
+              />
+              <p>{displayText}</p>
+            </div>
+          ) : (
+            <span className="text-sm font-normal underline text-foreground hover:text-foreground/70">
+              {displayText}
+            </span>
+          )}
+        </InternalLink>
       );
     },
   }) as ColumnDef<T>;

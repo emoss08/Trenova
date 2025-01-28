@@ -38,6 +38,7 @@ type User struct {
 	ProfilePicURL string        `json:"profilePicUrl" bun:"profile_pic_url,type:VARCHAR(255)"`
 	ThumbnailURL  string        `json:"thumbnailUrl" bun:"thumbnail_url,type:VARCHAR(255)"`
 	Timezone      string        `json:"timezone" bun:"timezone,type:VARCHAR(50),notnull"`
+	TimeFormat    TimeFormat    `json:"timeFormat" bun:"time_format,type:time_format_enum,notnull,default:'12-hour'"`
 	IsLocked      bool          `json:"isLocked" bun:"is_locked,type:BOOLEAN,notnull,default:false"`
 	LastLoginAt   int64         `json:"lastLoginAt" bun:"last_login_at,nullzero,notnull,default:extract(epoch from current_timestamp)::bigint"`
 

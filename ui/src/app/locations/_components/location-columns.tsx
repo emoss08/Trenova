@@ -1,9 +1,10 @@
 import { DataTableColumnHeader } from "@/components/data-table/_components/data-table-column-header";
-import { createCommonColumns } from "@/components/data-table/_components/data-table-column-helpers";
 import {
-  DataTableColorColumn,
-  DataTableDescription,
-} from "@/components/data-table/_components/data-table-components";
+  createCommonColumns,
+  createEntityColumn,
+  createEntityRefColumn,
+} from "@/components/data-table/_components/data-table-column-helpers";
+import { DataTableDescription } from "@/components/data-table/_components/data-table-components";
 import { StatusBadge } from "@/components/status-badge";
 import { type LocationSchema } from "@/lib/schemas/location-schema";
 import { createColumnHelper, type ColumnDef } from "@tanstack/react-table";
@@ -24,37 +25,25 @@ export function getColumns(): ColumnDef<LocationSchema>[] {
         return <StatusBadge status={status} />;
       },
     },
-    {
-      accessorKey: "code",
-      header: ({ column }) => (
-        <DataTableColumnHeader column={column} title="Code" />
-      ),
-    },
-    {
+    createEntityColumn(columnHelper, "name", {
       accessorKey: "name",
-      header: ({ column }) => (
-        <DataTableColumnHeader column={column} title="Name" />
-      ),
-    },
-    {
-      accessorKey: "locationCategory",
-      header: ({ column }) => (
-        <DataTableColumnHeader column={column} title="Location Category" />
-      ),
-      cell: ({ row }) => {
-        const locationCategory = row.original.locationCategory;
-        const isLocationCategory = !!locationCategory;
-
-        return isLocationCategory ? (
-          <DataTableColorColumn
-            color={locationCategory?.color}
-            text={locationCategory?.name ?? ""}
-          />
-        ) : (
-          <p>No location category</p>
-        );
+      getHeaderText: "Name",
+      getId: (location) => location.id,
+      getDisplayText: (location) => location.name,
+    }),
+    createEntityRefColumn<LocationSchema, "locationCategory">(
+      columnHelper,
+      "locationCategory",
+      {
+        basePath: "/dispatch/configurations/location-categories",
+        getHeaderText: "Location Category",
+        getId: (locationCategory) => locationCategory.id ?? undefined,
+        getDisplayText: (locationCategory) => locationCategory.name,
+        color: {
+          getColor: (locationCategory) => locationCategory.color,
+        },
       },
-    },
+    ),
     {
       accessorKey: "description",
       header: ({ column }) => (

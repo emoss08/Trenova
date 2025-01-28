@@ -1,6 +1,7 @@
 import * as React from "react";
 import {
   DayPicker,
+  type DropdownNavProps,
   type DropdownProps,
   useDayPicker,
   useNavigation,
@@ -27,7 +28,7 @@ const CalendarDropdown = ({ name, value }: DropdownProps) => {
   const getSelectItems = (): SelectItem[] => {
     if (name === "months") {
       return Array.from({ length: 12 }, (_, i) => ({
-        label: format(setMonth(new Date(), i), "MMM"),
+        label: format(setMonth(new Date(), i), "MMMM"),
         value: i.toString(),
       }));
     }
@@ -57,7 +58,7 @@ const CalendarDropdown = ({ name, value }: DropdownProps) => {
 
   const getDisplayValue = () => {
     return name === "months"
-      ? format(currentMonth, "MMM")
+      ? format(currentMonth, "MMMM")
       : currentMonth.getFullYear().toString();
   };
 
@@ -66,8 +67,15 @@ const CalendarDropdown = ({ name, value }: DropdownProps) => {
 
   return (
     <Select onValueChange={handleValueChange} value={value?.toString()}>
-      <SelectTrigger className="h-8">{getDisplayValue()}</SelectTrigger>
-      <SelectContent>
+      <SelectTrigger
+        className={cn(
+          "h-7 px-2 gap-1 text-xs",
+          name === "months" ? "w-full" : "w-fit",
+        )}
+      >
+        {getDisplayValue()}
+      </SelectTrigger>
+      <SelectContent className="max-h-[min(26rem,var(--radix-select-content-available-height))]">
         {selectItems.map((item) => (
           <SelectItem key={item.value} value={item.value}>
             {item.label}
@@ -87,14 +95,14 @@ function Calendar({
   return (
     <DayPicker
       showOutsideDays={showOutsideDays}
-      className={cn("p-3", className)}
-      captionLayout="dropdown-buttons"
+      className={cn("w-fit rounded-lg border border-border p-2", className)}
+      captionLayout="dropdown"
       fromDate={new Date(new Date().getFullYear() - 100, 0, 1)}
       toDate={new Date(new Date().getFullYear() + 20, 11, 31)}
       classNames={{
         months: "flex flex-col sm:flex-row space-y-4 sm:space-x-4 sm:space-y-0",
-        month: "space-y-4",
-        caption: "flex justify-center pt-1 relative items-center",
+        month: "w-full",
+        caption: "relative mb-1 flex h-9 items-center justify-center z-20 mx-0",
         caption_label: "text-sm font-medium hidden",
         nav: "space-x-1 flex items-center",
         nav_button: cn(
@@ -129,9 +137,10 @@ function Calendar({
         day_range_middle:
           "aria-selected:bg-accent aria-selected:text-accent-foreground",
         day_hidden: "invisible",
-        caption_dropdowns: "flex gap-1",
+        caption_dropdowns: "flex w-full items-center gap-2",
         ...classNames,
       }}
+      hideNavigation
       components={{
         IconLeft: ({ className, ...props }) => (
           <ChevronLeftIcon className={cn("h-4 w-4", className)} {...props} />
@@ -140,6 +149,13 @@ function Calendar({
           <ChevronRightIcon className={cn("h-4 w-4", className)} {...props} />
         ),
         Dropdown: CalendarDropdown,
+        DropdownNav: (props: DropdownNavProps) => {
+          return (
+            <div className="flex w-full items-center gap-2">
+              {props.children}
+            </div>
+          );
+        },
       }}
       {...props}
     />

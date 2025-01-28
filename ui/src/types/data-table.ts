@@ -117,7 +117,7 @@ export type TableSheetProps = {
 export type EditTableSheetProps<TData extends Record<string, any>> =
   TableSheetProps & {
     currentRecord?: TData;
-    isLoading: boolean;
+    isLoading?: boolean;
     error?: Error | null;
   };
 
@@ -141,10 +141,6 @@ interface DataTableState<TData extends Record<string, unknown>> {
   setSorting: OnChangeFn<ExtendedSortingState<TData>>;
   showFilterDialog: boolean;
   setShowFilterDialog: OnChangeFn<boolean>;
-  showCreateModal: boolean;
-  setShowCreateModal: OnChangeFn<boolean>;
-  editModalOpen: boolean;
-  setEditModalOpen: OnChangeFn<boolean>;
   initialPageSize: number;
   setInitialPageSize: OnChangeFn<number>;
   defaultSort: SortingState;
@@ -172,7 +168,6 @@ type DataTableProps<TData extends Record<string, any>> = {
 
 type DataTableBodyProps<TData extends Record<string, any>> = {
   table: Table<TData>;
-  handleRowDoubleClick: (rowData: TData) => void;
 };
 
 export type {

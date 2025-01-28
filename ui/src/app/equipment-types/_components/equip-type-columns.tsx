@@ -1,8 +1,11 @@
 import { DataTableColumnHeader } from "@/components/data-table/_components/data-table-column-header";
-import { createCommonColumns } from "@/components/data-table/_components/data-table-column-helpers";
+import {
+  createCommonColumns,
+  createEntityColumn,
+} from "@/components/data-table/_components/data-table-column-helpers";
+import { DataTableDescription } from "@/components/data-table/_components/data-table-components";
 import { StatusBadge } from "@/components/status-badge";
 import { EquipmentTypeSchema } from "@/lib/schemas/equipment-type-schema";
-import { truncateText } from "@/lib/utils";
 import { createColumnHelper, type ColumnDef } from "@tanstack/react-table";
 
 export function getColumns(): ColumnDef<EquipmentTypeSchema>[] {
@@ -21,28 +24,13 @@ export function getColumns(): ColumnDef<EquipmentTypeSchema>[] {
         return <StatusBadge status={status} />;
       },
     },
-    {
+    createEntityColumn(columnHelper, "code", {
       accessorKey: "code",
-      header: ({ column }) => (
-        <DataTableColumnHeader column={column} title="Code" />
-      ),
-      cell: ({ row }) => {
-        const isColor = !!row.original.color;
-        return isColor ? (
-          <div className="flex items-center gap-x-1.5 text-sm font-medium text-foreground">
-            <div
-              className="size-2 rounded-full"
-              style={{
-                backgroundColor: row.original.color,
-              }}
-            />
-            <p>{row.original.code}</p>
-          </div>
-        ) : (
-          <p>{row.original.code}</p>
-        );
-      },
-    },
+      getHeaderText: "Code",
+      getId: (equipmentType) => equipmentType.id,
+      getDisplayText: (equipmentType) => equipmentType.code,
+      getColor: (equipmentType) => equipmentType.color,
+    }),
     {
       accessorKey: "class",
       header: ({ column }) => (
@@ -54,7 +42,9 @@ export function getColumns(): ColumnDef<EquipmentTypeSchema>[] {
       header: ({ column }) => (
         <DataTableColumnHeader column={column} title="Description" />
       ),
-      cell: ({ row }) => truncateText(row.original.description ?? "", 40),
+      cell: ({ row }) => (
+        <DataTableDescription description={row.original.description} />
+      ),
     },
   ];
 }

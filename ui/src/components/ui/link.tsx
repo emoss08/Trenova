@@ -1,14 +1,3 @@
-/**
- * Trenova - (c) 2024 Eric Moss
- * Licensed under the Business Source License 1.1 (BSL 1.1)
- *
- * You may use this software for non-production purposes only.
- * For full license text, see the LICENSE file in the project root.
- *
- * This software will be licensed under GPLv2 or later on 2026-11-16.
- * For alternative licensing options, email: eric@trenova.app
- */
-
 import { cn } from "@/lib/utils";
 import { faExternalLinkAlt } from "@fortawesome/pro-regular-svg-icons";
 import React, { useState } from "react";
@@ -94,11 +83,13 @@ export const InternalLink = React.forwardRef<HTMLAnchorElement, LinkProps>(
       <Link
         ref={ref}
         className={cn(
-          "inline-flex items-center text-primary underline",
+          "inline-flex w-full items-center text-primary hover:text-primary/70 underline",
           className,
         )}
         style={{
-          textDecoration: "underline",
+          fontWeight: "normal",
+          width: "fit-content",
+          display: "inline-block",
         }}
         {...props}
       >

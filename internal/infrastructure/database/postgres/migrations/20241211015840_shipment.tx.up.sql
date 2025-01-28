@@ -45,9 +45,7 @@ CREATE TABLE IF NOT EXISTS "shipments"(
     -- Constraints
     CONSTRAINT "pk_shipments" PRIMARY KEY ("id", "organization_id", "business_unit_id"),
     CONSTRAINT "fk_shipments_business_unit" FOREIGN KEY ("business_unit_id") REFERENCES "business_units"("id") ON UPDATE NO ACTION ON DELETE CASCADE,
-    CONSTRAINT "fk_shipments_organization" FOREIGN KEY ("organization_id") REFERENCES "organizations"("id") ON UPDATE NO ACTION ON DELETE CASCADE,
-    CONSTRAINT "check_temperature_range" CHECK ("temperature_max" >= "temperature_min"),
-    CONSTRAINT "check_charge_amounts" CHECK ("total_charge_amount" = "freight_charge_amount" + "other_charge_amount")
+    CONSTRAINT "fk_shipments_organization" FOREIGN KEY ("organization_id") REFERENCES "organizations"("id") ON UPDATE NO ACTION ON DELETE CASCADE
 );
 
 --bun:split

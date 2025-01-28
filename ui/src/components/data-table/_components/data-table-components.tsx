@@ -18,7 +18,7 @@ export function DataTableDescription({
   truncateLength = 50,
 }: DataTableDescriptionProps) {
   if (!description) {
-    return <span>No description</span>;
+    return <span>-</span>;
   }
 
   return (
@@ -70,5 +70,13 @@ export function LastInspectionDateBadge({
 
   return (
     <Badge variant="active">{generateDateOnlyString(inspectionDate)}</Badge>
+  );
+}
+
+export function BooleanBadge({ value }: { value: boolean }) {
+  return (
+    <Badge variant={value ? "active" : "inactive"}>
+      {value ? "Yes" : "No"}
+    </Badge>
   );
 }

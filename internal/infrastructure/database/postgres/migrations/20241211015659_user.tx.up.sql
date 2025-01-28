@@ -3,6 +3,11 @@ CREATE TYPE "status_enum" AS ENUM(
     'Inactive'
 );
 
+CREATE TYPE "time_format_enum" AS ENUM(
+    '12-hour',
+    '24-hour'
+);
+
 --bun:split
 CREATE TABLE IF NOT EXISTS "users"(
     -- Primary identifiers
@@ -16,6 +21,7 @@ CREATE TABLE IF NOT EXISTS "users"(
     "password" varchar(255) NOT NULL,
     "email_address" varchar(255) NOT NULL,
     "timezone" varchar(50) NOT NULL,
+    "time_format" time_format_enum NOT NULL DEFAULT '12-hour',
     "profile_pic_url" varchar(255),
     "thumbnail_url" varchar(255),
     "is_locked" boolean NOT NULL DEFAULT FALSE,

@@ -1,5 +1,3 @@
-"use no memo";
-
 import { DataTable } from "@/components/data-table/data-table";
 import { LocationCategorySchema } from "@/lib/schemas/location-category-schema";
 import { useMemo } from "react";
