@@ -230,6 +230,18 @@ export const commandRoutes: CommandGroupInfo[] = [
     ],
   },
   {
+    id: "billing-management",
+    label: "Billing Management",
+    routes: [
+      {
+        id: "customers",
+        link: "/billing/configurations/customers",
+        label: "Customers",
+        icon: faUsers,
+      },
+    ],
+  },
+  {
     id: "shipment-management",
     label: "Shipment Management",
     routes: [

@@ -383,6 +383,7 @@
       organization_id: "{{ $.Organization.trenova.ID }}"
       business_unit_id: "{{ $.BusinessUnit.trenova.ID }}"
       created_at: "{{ timestamp }}"
+      manager_id: "{{ $.User.test_user.ID }}"
       name: "LOCAL"
       color: "#eb4034"
       description: "Local Workers"
@@ -875,3 +876,16 @@
       equipment_manufacturer_id: "{{ $.EquipmentManufacturer.freightliner_manufacturer.ID }}"
       equipment_type_id: "{{ $.EquipmentType.trailer_equip_type.ID }}"
       registration_state_id: "{{ $.UsState.ca.ID }}"
+
+- model: Customer
+  rows:
+    - _id: test_customer
+      organization_id: "{{ $.Organization.trenova.ID }}"
+      business_unit_id: "{{ $.BusinessUnit.trenova.ID }}"
+      code: "TEST000000"
+      created_at: "{{ now.Unix }}"
+      name: "Test Customer"
+      address_line_1: "1234 Main St"
+      city: "Los Angeles"
+      postal_code: "90001"
+      state_id: "{{ $.UsState.ca.ID }}"

@@ -49,12 +49,10 @@ func (lr *locationRepository) filterQuery(q *bun.SelectQuery, opts *repositories
 	})
 
 	if opts.IncludeCategory {
-		lr.l.Trace().Msg("including category")
 		q = q.Relation("LocationCategory")
 	}
 
 	if opts.IncludeState {
-		lr.l.Trace().Msg("including state")
 		q = q.Relation("State")
 	}
 
@@ -102,7 +100,7 @@ func (lr *locationRepository) GetByID(ctx context.Context, opts repositories.Get
 
 	log := lr.l.With().
 		Str("operation", "GetByID").
-		Str("locationCategoryID", opts.ID.String()).
+		Str("locationID", opts.ID.String()).
 		Logger()
 
 	entity := new(location.Location)

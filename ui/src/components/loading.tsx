@@ -17,9 +17,9 @@ export default function LoadingSkeleton() {
             is gearing up for you.
           </p>
           <p className="mt-1 text-sm text-muted-foreground">
-            We're working at lightning speed to get things ready. If this takes
-            longer than a coffee break (10 seconds), please check your internet
-            connection. <br />
+            We&apos;re working at lightning speed to get things ready. If this
+            takes longer than a coffee break (10 seconds), please check your
+            internet connection. <br />
             <u className="text-foreground decoration-blue-600">
               Still stuck?
             </u>{" "}

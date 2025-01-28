@@ -28,8 +28,6 @@ const (
 	ResourceTrailer               = Resource("trailer")                // Represents resources for managing trailers.
 	ResourceShipment              = Resource("shipment")               // Represents resources for managing loads.
 	ResourceMovement              = Resource("movement")               // Represents resources for managing movements.
-	ResourceStop                  = Resource("stop")                   // Represents resources for managing stops in a route.
-	ResourceRoute                 = Resource("route")                  // Represents resources related to routing.
 	ResourceFleetCode             = Resource("fleet_code")             // Represents resources for managing fleet codes.
 	ResourceEquipmentType         = Resource("equipment_type")         // Represents resources for managing equipment types.
 	ResourceEquipmentManufacturer = Resource("equipment_manufacturer") // Represents resources for managing equipment manfacturers.
@@ -39,6 +37,7 @@ const (
 	ResourceCommodity             = Resource("commodity")              // Represents resources for managing commodities.
 	ResourceLocationCategory      = Resource("location_category")      // Represents resources for managing location categories.
 	ResourceLocation              = Resource("location")               // Represents resources for managing locations.
+	ResourceCustomer              = Resource("customer")               // Represents resources for managing customers.
 
 	// Financial resources
 	ResourceInvoice = Resource("invoice") // Represents resources related to invoices.
@@ -307,6 +306,10 @@ var (
 			append(DataActions, FieldActions...)...,
 		),
 		ResourceLocation: append(
+			BaseActions,
+			append(DataActions, FieldActions...)...,
+		),
+		ResourceCustomer: append(
 			BaseActions,
 			append(DataActions, FieldActions...)...,
 		),

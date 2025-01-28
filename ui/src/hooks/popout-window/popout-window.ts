@@ -2,8 +2,7 @@ import { v4 as uuidv4 } from "uuid";
 
 // Type definitions
 export type PopoutWindowOptions = {
-  mode?: "create" | "edit";
-  recordId?: string;
+  modal?: "create" | "edit";
   width?: number;
   height?: number;
   left?: number;
@@ -14,8 +13,7 @@ export type PopoutWindowOptions = {
 
 // Define a type for processed options where some fields remain optional
 type ProcessedPopoutWindowOptions = {
-  mode: "create" | "edit";
-  recordId?: string;
+  modal: "create" | "edit";
   width: number;
   height: number;
   left: number;
@@ -47,7 +45,7 @@ interface PopoutWindowEvents {
 
 // Constants
 const DEFAULT_OPTIONS = {
-  mode: "create" as const,
+  modal: "create" as const,
   width: 1280,
   height: 720,
   hideHeader: true,
@@ -246,8 +244,7 @@ class PopoutWindowManager {
     options: ProcessedPopoutWindowOptions,
   ) {
     return {
-      mode: options.mode,
-      recordId: options.recordId || "",
+      modal: options.modal,
       popoutId: id,
       width: options.width.toString(),
       height: options.height.toString(),

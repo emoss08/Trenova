@@ -17,7 +17,8 @@ import {
   DataTableCreateButtonProps,
   DataTableViewOptionsProps,
 } from "@/types/data-table";
-import { faEye, faPlus } from "@fortawesome/pro-solid-svg-icons";
+import { faPlusCircle } from "@fortawesome/pro-regular-svg-icons";
+import { faEye } from "@fortawesome/pro-solid-svg-icons";
 import { PlusIcon, UploadIcon } from "@radix-ui/react-icons";
 import React, { useCallback } from "react";
 import { DataTableImportModal } from "./data-table-import-modal";
@@ -46,7 +47,7 @@ export function DataTableCreateButton({
       <Popover>
         <PopoverTrigger asChild>
           <Button variant="default" disabled={isDisabled}>
-            <Icon icon={faPlus} className="size-4 text-background" />
+            <Icon icon={faPlusCircle} className="size-4 text-background" />
             <span>New</span>
           </Button>
         </PopoverTrigger>

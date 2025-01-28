@@ -24,6 +24,7 @@ import { broadcastQueryInvalidation } from "@/hooks/use-invalidate-query";
 import { formatToUserTimezone } from "@/lib/date";
 import { http } from "@/lib/http-client";
 import { cn } from "@/lib/utils";
+import { useAuthStore } from "@/stores/user-store";
 import { type EditTableSheetProps } from "@/types/data-table";
 import { APIError } from "@/types/errors";
 import { type API_ENDPOINTS } from "@/types/server";
@@ -37,6 +38,7 @@ import {
 } from "react-hook-form";
 import { toast } from "sonner";
 import { type ObjectSchema } from "yup";
+import { ComponentLoader } from "./component-loader";
 import { Form } from "./form";
 import {
   Tooltip,
@@ -67,8 +69,11 @@ export function FormEditModal<T extends FieldValues>({
   fieldKey,
   form,
   className,
+  isLoading,
+  error,
 }: FormEditModalProps<T>) {
   const { isPopout, closePopout } = usePopoutWindow();
+  const { user } = useAuthStore();
 
   const {
     setError,
@@ -84,7 +89,7 @@ export function FormEditModal<T extends FieldValues>({
 
   const mutation = useMutation({
     mutationFn: async (values: T) => {
-      const response = await http.put(`${url}${currentRecord.id}`, values);
+      const response = await http.put(`${url}${currentRecord?.id}`, values);
       return response.data;
     },
     onSuccess: () => {
@@ -161,47 +166,86 @@ export function FormEditModal<T extends FieldValues>({
     return () => document.removeEventListener("keydown", handleKeyDown);
   }, [open, isSubmitting, handleSubmit, onSubmit]);
 
+  useEffect(() => {
+    if (!isLoading && currentRecord) {
+      reset(currentRecord);
+    }
+  }, [currentRecord, isLoading, reset]);
+
+  // If there's an error, show a toast and close the modal
+  useEffect(() => {
+    if (error) {
+      toast.error("Failed to load record", {
+        description: "Please try again in a moment",
+      });
+      onOpenChange(false);
+    }
+  }, [error, onOpenChange]);
+
+  const dialogContent = (
+    <DialogContent
+      withClose={!isLoading}
+      className={cn("max-w-[450px]", className)}
+    >
+      <DialogHeader>
+        <DialogTitle>
+          <div>
+            {isLoading
+              ? "Loading record..."
+              : fieldKey && currentRecord
+                ? currentRecord[fieldKey]
+                : title}
+          </div>
+        </DialogTitle>
+        {!isLoading && currentRecord && (
+          <DialogDescription>
+            Last updated on{" "}
+            {formatToUserTimezone(currentRecord.updatedAt, user?.timezone)}
+          </DialogDescription>
+        )}
+      </DialogHeader>
+
+      {isLoading ? (
+        <DialogBody>
+          <ComponentLoader />
+        </DialogBody>
+      ) : (
+        <FormProvider {...form}>
+          <Form onSubmit={handleSubmit(onSubmit)}>
+            <DialogBody>{formComponent}</DialogBody>
+            <DialogFooter>
+              <Button type="button" variant="outline" onClick={onClose}>
+                Cancel
+              </Button>
+              <TooltipProvider delayDuration={0}>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button type="submit" isLoading={isSubmitting}>
+                      Save {isPopout ? "and Close" : "Changes"}
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent className="flex items-center gap-2">
+                    <kbd className="inline-flex h-5 max-h-full items-center rounded bg-muted-foreground/60 px-1 font-[inherit] text-[0.625rem] font-medium text-background">
+                      Ctrl
+                    </kbd>
+                    <kbd className="inline-flex h-5 max-h-full items-center rounded bg-muted-foreground/60 px-1 font-[inherit] text-[0.625rem] font-medium text-background">
+                      Enter
+                    </kbd>
+                    <p>to save and close the {title}</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            </DialogFooter>
+          </Form>
+        </FormProvider>
+      )}
+    </DialogContent>
+  );
+
   return (
     <>
       <Dialog open={open} onOpenChange={onClose}>
-        <DialogContent className={cn("max-w-[450px]", className)}>
-          <DialogHeader>
-            <DialogTitle>
-              <div>{fieldKey ? currentRecord[fieldKey] : title}</div>
-            </DialogTitle>
-            <DialogDescription>
-              Last updated on {formatToUserTimezone(currentRecord.updatedAt)}
-            </DialogDescription>
-          </DialogHeader>
-          <FormProvider {...form}>
-            <Form onSubmit={handleSubmit(onSubmit)}>
-              <DialogBody>{formComponent}</DialogBody>
-              <DialogFooter>
-                <Button type="button" variant="outline" onClick={onClose}>
-                  Cancel
-                </Button>
-                <TooltipProvider delayDuration={0}>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Button type="submit" isLoading={isSubmitting}>
-                        Save {isPopout ? "and Close" : "Changes"}
-                      </Button>
-                    </TooltipTrigger>
-                    <TooltipContent className="flex items-center gap-2">
-                      <kbd className="-me-1 inline-flex h-5 max-h-full items-center rounded bg-muted-foreground/60 px-1 font-[inherit] text-[0.625rem] font-medium text-background">
-                        Ctrl
-                      </kbd>
-                      <kbd className="-me-1 inline-flex h-5 max-h-full items-center rounded bg-muted-foreground/60 px-1 font-[inherit] text-[0.625rem] font-medium text-background">
-                        Enter
-                      </kbd>
-                      <p>to save and close the {title}</p>
-                    </TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
-              </DialogFooter>
-            </Form>
-          </FormProvider>
-        </DialogContent>
+        {dialogContent}
       </Dialog>
 
       {showWarning && (

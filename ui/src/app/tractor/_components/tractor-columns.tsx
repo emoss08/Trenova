@@ -1,8 +1,9 @@
 import { DataTableColumnHeader } from "@/components/data-table/_components/data-table-column-header";
-import { createCommonColumns } from "@/components/data-table/_components/data-table-column-helpers";
-import { DataTableColorColumn } from "@/components/data-table/_components/data-table-components";
+import {
+  createCommonColumns,
+  createEntityRefColumn,
+} from "@/components/data-table/_components/data-table-column-helpers";
 import { EquipmentStatusBadge } from "@/components/status-badge";
-import { InternalLink } from "@/components/ui/link";
 import { type Tractor } from "@/types/tractor";
 import { createColumnHelper, type ColumnDef } from "@tanstack/react-table";
 
@@ -28,56 +29,36 @@ export function getColumns(): ColumnDef<Tractor>[] {
         <DataTableColumnHeader column={column} title="Code" />
       ),
     },
-    {
-      id: "equipmentType",
-      accessorKey: "equipmentType",
-      header: "Equipment Type",
-      cell: ({ row }) => {
-        const equipType = row.original.equipmentType;
-        const isEquipType = !!equipType;
-
-        return isEquipType ? (
-          <DataTableColorColumn
-            color={equipType?.color}
-            text={equipType?.code ?? ""}
-          />
-        ) : (
-          <p>No equipment type</p>
-        );
+    createEntityRefColumn<Tractor, "equipmentType">(
+      columnHelper,
+      "equipmentType",
+      {
+        basePath: "/equipment/configurations/equipment-types",
+        getId: (equipType) => equipType.id,
+        getDisplayText: (equipType) => equipType.code,
+        getHeaderText: "Equipment Type",
+        color: {
+          getColor: (equipType) => equipType.color,
+        },
       },
-    },
-    {
-      id: "assignedWorkers",
-      header: "Assigned Workers",
-      cell: ({ row }) => {
-        const { primaryWorker, secondaryWorker } = row.original;
-
-        const isPrimaryWorker = !!primaryWorker;
-        const isSecondaryWorker = !!secondaryWorker;
-
-        return isPrimaryWorker ? (
-          <div className="flex flex-col gap-0.5">
-            <p>
-              <InternalLink to="/dispatch/configurations/workers">
-                {primaryWorker?.firstName} {primaryWorker?.lastName}
-              </InternalLink>
-            </p>
-            {isSecondaryWorker && (
-              <div className="flex items-center gap-1 text-muted-foreground text-2xs">
-                <p>Co-Driver:</p>
-                <InternalLink
-                  to="/dispatch/configurations/workers"
-                  className="text-2xs text-muted-foreground"
-                >
-                  {secondaryWorker?.firstName} {secondaryWorker?.lastName}
-                </InternalLink>
-              </div>
-            )}
-          </div>
-        ) : (
-          <p>No assigned workers</p>
-        );
+    ),
+    createEntityRefColumn<Tractor, "primaryWorker">(
+      columnHelper,
+      "primaryWorker",
+      {
+        basePath: "/dispatch/configurations/workers",
+        getHeaderText: "Assigned Workers",
+        getId: (worker) => worker.id ?? undefined,
+        getDisplayText: (worker) => `${worker.firstName} ${worker.lastName}`,
+        getSecondaryInfo: (_, tractor) =>
+          tractor.secondaryWorker
+            ? {
+                label: "Co-Driver",
+                entity: tractor.secondaryWorker,
+                displayText: `${tractor.secondaryWorker.firstName} ${tractor.secondaryWorker.lastName}`,
+              }
+            : null,
       },
-    },
+    ),
   ];
 }

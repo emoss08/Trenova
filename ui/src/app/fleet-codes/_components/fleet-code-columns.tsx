@@ -2,11 +2,11 @@ import { DataTableColumnHeader } from "@/components/data-table/_components/data-
 import { createCommonColumns } from "@/components/data-table/_components/data-table-column-helpers";
 import { DataTableDescription } from "@/components/data-table/_components/data-table-components";
 import { StatusBadge } from "@/components/status-badge";
-import { type FleetCodeSchema } from "@/lib/schemas/fleet-code-schema";
+import { type FleetCode } from "@/types/fleet-code";
 import { createColumnHelper, type ColumnDef } from "@tanstack/react-table";
 
-export function getColumns(): ColumnDef<FleetCodeSchema>[] {
-  const columnHelper = createColumnHelper<FleetCodeSchema>();
+export function getColumns(): ColumnDef<FleetCode>[] {
+  const columnHelper = createColumnHelper<FleetCode>();
   const commonColumns = createCommonColumns(columnHelper);
 
   return [
@@ -51,6 +51,17 @@ export function getColumns(): ColumnDef<FleetCodeSchema>[] {
       cell: ({ row }) => (
         <DataTableDescription description={row.original.description} />
       ),
+    },
+    {
+      id: "manager",
+      header: ({ column }) => (
+        <DataTableColumnHeader column={column} title="Manager" />
+      ),
+      cell: ({ row }) => {
+        const { manager } = row.original;
+        if (!manager) return "-";
+        return <p>{manager.name}</p>;
+      },
     },
   ];
 }

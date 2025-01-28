@@ -13,6 +13,9 @@ export default function FleetCodesDataTable() {
       name="Fleet Code"
       link="/fleet-codes/"
       queryKey="fleet-code-list"
+      extraSearchParams={{
+        includeManagerDetails: true,
+      }}
       exportModelName="fleet-code"
       TableModal={CreateFleetCodeModal}
       TableEditModal={EditFleetCodeModal}

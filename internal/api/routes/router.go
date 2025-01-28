@@ -5,6 +5,7 @@ import (
 
 	authHandler "github.com/emoss08/trenova/internal/api/handlers/auth"
 	"github.com/emoss08/trenova/internal/api/handlers/commodity"
+	"github.com/emoss08/trenova/internal/api/handlers/customer"
 	"github.com/emoss08/trenova/internal/api/handlers/documentqualityconfig"
 	"github.com/emoss08/trenova/internal/api/handlers/equipmentmanufacturer"
 	"github.com/emoss08/trenova/internal/api/handlers/equipmenttype"
@@ -85,6 +86,7 @@ type RouterParams struct {
 	LocationHandler              *location.Handler
 	TractorHandler               *tractor.Handler
 	TrailerHandler               *trailer.Handler
+	CustomerHandler              *customer.Handler
 }
 
 type Router struct {
@@ -225,4 +227,7 @@ func (r *Router) setupProtectedRoutes(router fiber.Router, rl *middleware.RateLi
 
 	// Trailers
 	r.p.TrailerHandler.RegisterRoutes(router, rl)
+
+	// Customers
+	r.p.CustomerHandler.RegisterRoutes(router, rl)
 }
