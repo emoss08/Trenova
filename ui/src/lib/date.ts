@@ -1,4 +1,3 @@
-import { useAuthStore } from "@/stores/user-store";
 import * as chrono from "chrono-node";
 import { format, fromUnixTime } from "date-fns";
 
@@ -121,15 +120,14 @@ export function isValidDateTimeFormat(dateString: string) {
 }
 
 /**
- * Formats a Unix timestamp to a date and time string in the user's timezone.
- * Converts the timestamp to a Date object and formats it using the user's timezone.
+ * Formats a Unix timestamp to a date and time string in the specified timezone.
+ * Converts the timestamp to a Date object and formats it using the provided timezone.
  *
  * @param timestamp The Unix timestamp to format.
- * @returns A formatted date and time string in the user's timezone, or "N/A" if the date is invalid.
+ * @param timezone The timezone to format the date in
+ * @returns A formatted date and time string in the specified timezone, or "N/A" if the date is invalid.
  */
-export function formatToUserTimezone(timestamp: number) {
-  const { user } = useAuthStore();
-
+export function formatToUserTimezone(timestamp: number, timezone?: string) {
   // Convert Unix timestamp to Date object
   const date = fromUnixTime(timestamp);
 
@@ -144,7 +142,7 @@ export function formatToUserTimezone(timestamp: number) {
     day: "2-digit",
     hour: "2-digit",
     minute: "2-digit",
-    timeZone: user?.timezone,
+    timeZone: timezone || "UTC",
     timeZoneName: "short",
   });
 }

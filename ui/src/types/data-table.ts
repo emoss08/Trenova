@@ -116,7 +116,9 @@ export type TableSheetProps = {
 
 export type EditTableSheetProps<TData extends Record<string, any>> =
   TableSheetProps & {
-    currentRecord: TData;
+    currentRecord?: TData;
+    isLoading: boolean;
+    error?: Error | null;
   };
 
 type CurrentRecord<TData extends Record<string, unknown>> = TData | undefined;
@@ -170,9 +172,7 @@ type DataTableProps<TData extends Record<string, any>> = {
 
 type DataTableBodyProps<TData extends Record<string, any>> = {
   table: Table<TData>;
-  setCurrentRecord: SetCurrentRecord<TData>;
-  setEditModalOpen: OnChangeFn<boolean>;
-  isLoading: boolean;
+  handleRowDoubleClick: (rowData: TData) => void;
 };
 
 export type {
