@@ -2,6 +2,7 @@ package shipment
 
 import (
 	"github.com/emoss08/trenova/internal/core/domain/businessunit"
+	"github.com/emoss08/trenova/internal/core/domain/customer"
 	"github.com/emoss08/trenova/internal/core/domain/organization"
 	"github.com/emoss08/trenova/internal/core/domain/servicetype"
 	"github.com/emoss08/trenova/internal/core/domain/shipmenttype"
@@ -17,8 +18,11 @@ type Shipment struct {
 	ID             pulid.ID `bun:"id,type:VARCHAR(100),pk,notnull" json:"id"`
 	BusinessUnitID pulid.ID `bun:"business_unit_id,type:VARCHAR(100),pk,notnull" json:"businessUnitId"`
 	OrganizationID pulid.ID `bun:"organization_id,type:VARCHAR(100),pk,notnull" json:"organizationId"`
-	ServiceTypeID  pulid.ID `bun:"service_type_id,type:VARCHAR(100),pk,notnull" json:"serviceTypeId"`
-	ShipmentTypeID pulid.ID `bun:"shipment_type_id,type:VARCHAR(100),pk,notnull" json:"shipmentTypeId"`
+
+	// Relationship identifiers (Non-Primary-Keys)
+	ServiceTypeID  pulid.ID `bun:"service_type_id,type:VARCHAR(100),notnull" json:"serviceTypeId"`
+	ShipmentTypeID pulid.ID `bun:"shipment_type_id,type:VARCHAR(100),notnull" json:"shipmentTypeId"`
+	CustomerID     pulid.ID `bun:"customer_id,type:VARCHAR(100),notnull" json:"customerId"`
 
 	// Core fields
 	Status    Status `json:"status" bun:"status,type:status_enum,notnull,default:'New'"`
@@ -56,5 +60,6 @@ type Shipment struct {
 	Organization *organization.Organization `json:"organization,omitempty" bun:"rel:belongs-to,join:organization_id=id"`
 	ShipmentType *shipmenttype.ShipmentType `json:"shipmentType,omitempty" bun:"rel:belongs-to,join:shipment_type_id=id"`
 	ServiceType  *servicetype.ServiceType   `json:"serviceType,omitempty" bun:"rel:belongs-to,join:service_type_id=id"`
+	Customer     *customer.Customer         `json:"customer,omitempty" bun:"rel:belongs-to,join:customer_id=id"`
 	Commodities  []*ShipmentCommodity       `json:"commodities,omitempty" bun:"rel:has-many,join:id=shipment_id"`
 }

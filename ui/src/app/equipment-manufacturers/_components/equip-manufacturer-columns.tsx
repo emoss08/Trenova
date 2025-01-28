@@ -1,8 +1,11 @@
 import { DataTableColumnHeader } from "@/components/data-table/_components/data-table-column-header";
-import { createCommonColumns } from "@/components/data-table/_components/data-table-column-helpers";
+import {
+  createCommonColumns,
+  createEntityColumn,
+} from "@/components/data-table/_components/data-table-column-helpers";
+import { DataTableDescription } from "@/components/data-table/_components/data-table-components";
 import { StatusBadge } from "@/components/status-badge";
 import { type EquipmentManufacturerSchema } from "@/lib/schemas/equipment-manufacturer-schema";
-import { truncateText } from "@/lib/utils";
 import { createColumnHelper, type ColumnDef } from "@tanstack/react-table";
 
 export function getColumns(): ColumnDef<EquipmentManufacturerSchema>[] {
@@ -21,18 +24,20 @@ export function getColumns(): ColumnDef<EquipmentManufacturerSchema>[] {
         return <StatusBadge status={status} />;
       },
     },
-    {
+    createEntityColumn(columnHelper, "name", {
       accessorKey: "name",
-      header: ({ column }) => (
-        <DataTableColumnHeader column={column} title="Name" />
-      ),
-    },
+      getHeaderText: "Name",
+      getId: (equipmentManufacturer) => equipmentManufacturer.id,
+      getDisplayText: (equipmentManufacturer) => equipmentManufacturer.name,
+    }),
     {
       accessorKey: "description",
       header: ({ column }) => (
         <DataTableColumnHeader column={column} title="Description" />
       ),
-      cell: ({ row }) => truncateText(row.original.description ?? "", 40),
+      cell: ({ row }) => (
+        <DataTableDescription description={row.original.description} />
+      ),
     },
   ];
 }

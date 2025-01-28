@@ -1,6 +1,9 @@
 import { DataTableColumnHeader } from "@/components/data-table/_components/data-table-column-header";
-import { createCommonColumns } from "@/components/data-table/_components/data-table-column-helpers";
-import { DataTableColorColumn } from "@/components/data-table/_components/data-table-components";
+import {
+  createCommonColumns,
+  createEntityColumn,
+} from "@/components/data-table/_components/data-table-column-helpers";
+import { DataTableDescription } from "@/components/data-table/_components/data-table-components";
 import { StatusBadge } from "@/components/status-badge";
 import { type ServiceTypeSchema } from "@/lib/schemas/service-type-schema";
 import { createColumnHelper, type ColumnDef } from "@tanstack/react-table";
@@ -21,22 +24,20 @@ export function getColumns(): ColumnDef<ServiceTypeSchema>[] {
         return <StatusBadge status={status} />;
       },
     },
-    {
+    createEntityColumn(columnHelper, "code", {
       accessorKey: "code",
-      header: ({ column }) => (
-        <DataTableColumnHeader column={column} title="Code" />
-      ),
-      cell: ({ row }) => (
-        <DataTableColorColumn
-          color={row.original.color}
-          text={row.original.code}
-        />
-      ),
-    },
+      getHeaderText: "Code",
+      getId: (shipmentType) => shipmentType.id,
+      getDisplayText: (shipmentType) => shipmentType.code,
+      getColor: (shipmentType) => shipmentType.color,
+    }),
     {
       accessorKey: "description",
       header: ({ column }) => (
         <DataTableColumnHeader column={column} title="Description" />
+      ),
+      cell: ({ row }) => (
+        <DataTableDescription description={row.original.description} />
       ),
     },
   ];

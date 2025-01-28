@@ -1,5 +1,9 @@
 import { DataTableColumnHeader } from "@/components/data-table/_components/data-table-column-header";
-import { createCommonColumns } from "@/components/data-table/_components/data-table-column-helpers";
+import {
+  createCommonColumns,
+  createEntityColumn,
+} from "@/components/data-table/_components/data-table-column-helpers";
+import { DataTableDescription } from "@/components/data-table/_components/data-table-components";
 import { StatusBadge } from "@/components/status-badge";
 import { type ShipmentTypeSchema } from "@/lib/schemas/shipment-type-schema";
 import { createColumnHelper, type ColumnDef } from "@tanstack/react-table";
@@ -20,32 +24,20 @@ export function getColumns(): ColumnDef<ShipmentTypeSchema>[] {
         return <StatusBadge status={status} />;
       },
     },
-    {
+    createEntityColumn(columnHelper, "code", {
       accessorKey: "code",
-      header: ({ column }) => (
-        <DataTableColumnHeader column={column} title="Code" />
-      ),
-      cell: ({ row }) => {
-        const isColor = !!row.original.color;
-        return isColor ? (
-          <div className="flex items-center gap-x-1.5 text-sm font-medium text-foreground">
-            <div
-              className="size-2 rounded-full"
-              style={{
-                backgroundColor: row.original.color,
-              }}
-            />
-            <p>{row.original.code}</p>
-          </div>
-        ) : (
-          <p>{row.original.code}</p>
-        );
-      },
-    },
+      getHeaderText: "Code",
+      getId: (shipmentType) => shipmentType.id,
+      getDisplayText: (shipmentType) => shipmentType.code,
+      getColor: (shipmentType) => shipmentType.color,
+    }),
     {
       accessorKey: "description",
       header: ({ column }) => (
         <DataTableColumnHeader column={column} title="Description" />
+      ),
+      cell: ({ row }) => (
+        <DataTableDescription description={row.original.description} />
       ),
     },
   ];

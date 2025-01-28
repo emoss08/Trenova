@@ -10,9 +10,7 @@ export function useDataTableState<
   const [columnVisibility, setColumnVisibility] = store.use("columnVisibility");
   const [columnFilters, setColumnFilters] = store.use("columnFilters");
   const [sorting, setSorting] = store.use("sorting");
-  const [showCreateModal, setShowCreateModal] = store.use("showCreateModal");
   const [showFilterDialog, setShowFilterDialog] = store.use("showFilterDialog");
-  const [editModalOpen, setEditModalOpen] = store.use("editModalOpen");
   const [initialPageSize, setInitialPageSize] = store.use("initialPageSize");
   const [defaultSort, setDefaultSort] = store.use("defaultSort");
 
@@ -29,12 +27,8 @@ export function useDataTableState<
     setColumnFilters,
     sorting,
     setSorting,
-    showCreateModal,
-    setShowCreateModal,
     showFilterDialog,
     setShowFilterDialog,
-    editModalOpen,
-    setEditModalOpen,
     initialPageSize,
     setInitialPageSize,
     defaultSort,

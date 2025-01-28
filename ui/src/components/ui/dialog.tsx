@@ -60,7 +60,7 @@ const DialogContent = React.forwardRef<
         {children}
         {withClose && (
           <TooltipProvider>
-            <Tooltip delayDuration={0}>
+            <Tooltip>
               <TooltipTrigger asChild>
                 <DialogPrimitive.Close
                   asChild

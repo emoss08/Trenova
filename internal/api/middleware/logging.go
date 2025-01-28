@@ -144,6 +144,15 @@ func NewLogger(l *logger.Logger, config ...LogConfig) fiber.Handler {
 			Str("latency", formattedDuration).
 			Str("userAgent", c.Get("User-Agent"))
 
+		warnEvent := l.Warn().
+			Str("requestId", requestID).
+			Str("method", method).
+			Str("path", path).
+			Int("status", c.Response().StatusCode()).
+			Str("ip", c.IP()).
+			Str("latency", formattedDuration).
+			Str("userAgent", c.Get("User-Agent"))
+
 		// Add headers if configured
 		if len(cfg.LogHeaders) > 0 {
 			headers := extractHeaders(c, cfg.LogHeaders)
@@ -168,7 +177,7 @@ func NewLogger(l *logger.Logger, config ...LogConfig) fiber.Handler {
 
 		// Log as warning if request is slow
 		if duration > cfg.SlowRequestThreshold {
-			logEvent.Msg("Slow HTTP Request")
+			warnEvent.Msg("Slow HTTP Request")
 		} else {
 			logEvent.Msg("HTTP Request")
 		}

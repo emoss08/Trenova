@@ -1,4 +1,5 @@
 import { MetaTags } from "@/components/meta-tags";
+import { SuspenseLoader } from "@/components/ui/component-loader";
 import EquipManufacturerTable from "./_components/equip-manufacturer-table";
 
 export function EquipmentManufacturers() {
@@ -8,7 +9,9 @@ export function EquipmentManufacturers() {
         title="Equipment Manufacturers"
         description="Equipment Manufacturers"
       />
-      <EquipManufacturerTable />
+      <SuspenseLoader>
+        <EquipManufacturerTable />
+      </SuspenseLoader>
     </>
   );
 }

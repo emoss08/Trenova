@@ -98,17 +98,6 @@ export function DataTable<TData extends Record<string, any>>({
     staleTime: 30000, // 30 seconds
   });
 
-  const handleRowDoubleClick = useCallback(
-    async (rowData: TData) => {
-      if (!rowData.id) return;
-
-      // Update URL with entityId and modal state
-      await setEntityId(rowData.id);
-      await setModalType("edit");
-    },
-    [setEntityId, setModalType],
-  );
-
   // Update the handleModalClose function to properly clear both parameters
   const handleEditModalClose = useCallback(async () => {
     await Promise.all([setEntityId(null), setModalType(null)]);
@@ -252,10 +241,7 @@ export function DataTable<TData extends Record<string, any>>({
       <div className="overflow-hidden rounded-md border border-sidebar-border">
         <Table>
           <DataTableHeader table={table} />
-          <DataTableBody
-            handleRowDoubleClick={handleRowDoubleClick}
-            table={table}
-          />
+          <DataTableBody table={table} />
         </Table>
       </div>
       <DataTablePagination

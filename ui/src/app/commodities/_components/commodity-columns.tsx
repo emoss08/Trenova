@@ -1,5 +1,8 @@
 import { DataTableColumnHeader } from "@/components/data-table/_components/data-table-column-header";
-import { createCommonColumns } from "@/components/data-table/_components/data-table-column-helpers";
+import {
+  createCommonColumns,
+  createEntityColumn,
+} from "@/components/data-table/_components/data-table-column-helpers";
 import { DataTableDescription } from "@/components/data-table/_components/data-table-components";
 import { HazmatBadge, StatusBadge } from "@/components/status-badge";
 import { type CommoditySchema } from "@/lib/schemas/commodity-schema";
@@ -21,12 +24,12 @@ export function getColumns(): ColumnDef<CommoditySchema>[] {
         return <StatusBadge status={status} />;
       },
     },
-    {
+    createEntityColumn(columnHelper, "name", {
       accessorKey: "name",
-      header: ({ column }) => (
-        <DataTableColumnHeader column={column} title="Name" />
-      ),
-    },
+      getHeaderText: "Name",
+      getId: (commodity) => commodity.id,
+      getDisplayText: (commodity) => commodity.name,
+    }),
     {
       accessorKey: "description",
       header: ({ column }) => (

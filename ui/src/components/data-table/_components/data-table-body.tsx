@@ -5,7 +5,6 @@ import { flexRender } from "@tanstack/react-table";
 
 export function DataTableBody<TData extends Record<string, any>>({
   table,
-  handleRowDoubleClick,
 }: DataTableBodyProps<TData>) {
   // Render empty state
   if (!table.getRowModel().rows?.length) {
@@ -38,17 +37,9 @@ export function DataTableBody<TData extends Record<string, any>>({
           {row.getVisibleCells().map((cell) => (
             <TableCell
               key={cell.id}
-              onDoubleClick={() => handleRowDoubleClick(row.original)}
-              className="focus-within:border focus-within:border-primary transition-colors duration-200"
               role="cell"
               aria-label={`${cell.column.id} cell`}
               tabIndex={0}
-              onKeyDown={(e) => {
-                if (e.key === "Enter" || e.key === " ") {
-                  e.preventDefault();
-                  handleRowDoubleClick(row.original);
-                }
-              }}
             >
               {flexRender(cell.column.columnDef.cell, cell.getContext())}
             </TableCell>

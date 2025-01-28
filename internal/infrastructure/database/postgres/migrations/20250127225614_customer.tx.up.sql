@@ -36,3 +36,10 @@ CREATE INDEX "idx_customers_created_updated" ON "customers"("created_at", "updat
 
 COMMENT ON TABLE "customers" IS 'Stores information about customers';
 
+--bun:split
+ALTER TABLE "shipments"
+    ADD COLUMN "customer_id" varchar(100) NOT NULL;
+
+ALTER TABLE "shipments"
+    ADD CONSTRAINT "fk_shipments_customer" FOREIGN KEY ("customer_id", "organization_id", "business_unit_id") REFERENCES "customers"("id", "organization_id", "business_unit_id") ON UPDATE NO ACTION ON DELETE CASCADE;
+
