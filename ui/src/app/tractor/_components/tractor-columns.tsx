@@ -61,5 +61,6 @@ export function getColumns(): ColumnDef<Tractor>[] {
             : null,
       },
     ),
+    commonColumns.createdAt,
   ];
 }

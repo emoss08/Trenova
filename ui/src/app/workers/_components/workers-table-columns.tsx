@@ -78,5 +78,6 @@ export function getColumns(): ColumnDef<WorkerSchema>[] {
         );
       },
     },
+    commonColumns.createdAt,
   ];
 }

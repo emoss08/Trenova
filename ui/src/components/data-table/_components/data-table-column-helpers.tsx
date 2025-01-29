@@ -6,6 +6,8 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { generateDateOnlyString, toDate } from "@/lib/date";
+import { BaseModel } from "@/types/common";
 import { ColumnDef, ColumnHelper } from "@tanstack/react-table";
 import { DataTableColumnHeader } from "./data-table-column-header";
 
@@ -39,7 +41,27 @@ export function createCommonColumns<T extends Record<string, unknown>>(
       enableSorting: false,
       enableHiding: false,
     }),
+    createdAt: createdAtColumn(columnHelper) as ColumnDef<T>,
   };
+}
+
+function createdAtColumn<T extends Record<string, unknown>>(
+  columnHelper: ColumnHelper<T>,
+) {
+  return columnHelper.accessor(
+    (row) => (row.original as unknown as BaseModel).createdAt,
+    {
+      id: "createdAt",
+      header: "Created At",
+      cell: ({ row }) => {
+        const { createdAt } = row.original;
+        const date = toDate(createdAt as number);
+        if (!date) return <p>-</p>;
+
+        return <p>{generateDateOnlyString(date)}</p>;
+      },
+    },
+  );
 }
 
 type EntityRefConfig<TEntity, TParent> = {

@@ -37,6 +37,7 @@ export function getColumns(): ColumnDef<CustomerSchema>[] {
       ),
     },
     {
+      id: "autoMarkReadyToBill",
       accessorKey: "autoMarkReadyToBill",
       header: ({ column }) => (
         <DataTableColumnHeader
@@ -48,5 +49,6 @@ export function getColumns(): ColumnDef<CustomerSchema>[] {
         <BooleanBadge value={row.original.autoMarkReadyToBill} />
       ),
     },
+    commonColumns.createdAt,
   ];
 }

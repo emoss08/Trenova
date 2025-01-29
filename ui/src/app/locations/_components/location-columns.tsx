@@ -72,5 +72,6 @@ export function getColumns(): ColumnDef<LocationSchema>[] {
         );
       },
     },
+    commonColumns.createdAt,
   ];
 }

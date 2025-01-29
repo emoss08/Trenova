@@ -51,5 +51,6 @@ export function getColumns(): ColumnDef<FleetCode>[] {
         return <p>{manager.name}</p>;
       },
     },
+    commonColumns.createdAt,
   ];
 }
