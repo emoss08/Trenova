@@ -111,10 +111,87 @@ export const cleanObject = (obj: Record<string, any>): Record<string, any> => {
   return cleanedObj;
 };
 
+/**
+ * List of words that should remain lowercase in titles
+ * unless they are the first or last word
+ */
+const LOWERCASE_WORDS = new Set([
+  "a",
+  "an",
+  "the",
+  "and",
+  "but",
+  "or",
+  "for",
+  "nor",
+  "in",
+  "on",
+  "at",
+  "to",
+  "by",
+  "of",
+]);
+
+/**
+ * Converts a string to title case with special handling for technical terms
+ * @param str - The input string to format
+ * @returns Formatted string in title case
+ */
 export function toTitleCase(str: string): string {
-  return str
-    .split(" ")
-    .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+  // First, handle technical terms and special cases
+  const technicalTerms: Record<string, string> = {
+    id: "ID",
+    url: "URL",
+    uri: "URI",
+    api: "API",
+    ui: "UI",
+    ux: "UX",
+    ip: "IP",
+    sql: "SQL",
+  };
+
+  // Split the input string by common delimiters
+  const words = str
+    .replace(/_/g, " ") // Replace underscores with spaces
+    .replace(/([A-Z])/g, " $1") // Add space before capital letters
+    .toLowerCase() // Convert to lowercase
+    .replace(/\s+/g, " ") // Replace multiple spaces with single space
+    .trim() // Remove leading/trailing spaces
+    .split(" "); // Split into array of words
+
+  return words
+    .map((word, index, arr) => {
+      // Check if it's a known technical term
+      if (technicalTerms[word]) {
+        return technicalTerms[word];
+      }
+
+      // Special handling for "At" in timestamps
+      if (
+        word === "at" &&
+        (arr[index - 1]?.toLowerCase().includes("created") ||
+          arr[index - 1]?.toLowerCase().includes("updated"))
+      ) {
+        return "At";
+      }
+
+      // Always capitalize first and last words
+      if (index === 0 || index === arr.length - 1) {
+        return word.charAt(0).toUpperCase() + word.slice(1);
+      }
+
+      // Keep lowercase words in lowercase unless they're after a colon or period
+      if (
+        LOWERCASE_WORDS.has(word) &&
+        arr[index - 1]?.slice(-1) !== ":" &&
+        arr[index - 1]?.slice(-1) !== "."
+      ) {
+        return word;
+      }
+
+      // Capitalize the first letter of other words
+      return word.charAt(0).toUpperCase() + word.slice(1);
+    })
     .join(" ");
 }
 

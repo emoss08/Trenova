@@ -1,5 +1,38 @@
+import { TimeFormat } from "@/types/user";
 import * as chrono from "chrono-node";
 import { format, fromUnixTime } from "date-fns";
+
+type DateFormatOptions = {
+  /**
+   * The timezone to format the date in
+   * @default 'UTC'
+   */
+  timezone?: string;
+
+  /**
+   * The time format to use (12-hour or 24-hour)
+   * @default '12-hour'
+   */
+  timeFormat?: TimeFormat;
+
+  /**
+   * Whether to show seconds
+   * @default false
+   */
+  showSeconds?: boolean;
+
+  /**
+   * Whether to show the timezone name
+   * @default true
+   */
+  showTimeZone?: boolean;
+
+  /**
+   * Whether to show the date
+   * @default true
+   */
+  showDate?: boolean;
+};
 
 /**
  * Converts a Date object to a Unix timestamp.
@@ -120,14 +153,23 @@ export function isValidDateTimeFormat(dateString: string) {
 }
 
 /**
- * Formats a Unix timestamp to a date and time string in the specified timezone.
- * Converts the timestamp to a Date object and formats it using the provided timezone.
- *
- * @param timestamp The Unix timestamp to format.
- * @param timezone The timezone to format the date in
- * @returns A formatted date and time string in the specified timezone, or "N/A" if the date is invalid.
+ * Formats a Unix timestamp to a localized date string based on user preferences
+ * @param timestamp - Unix timestamp in seconds
+ * @param options - Formatting options
+ * @returns Formatted date string
  */
-export function formatToUserTimezone(timestamp: number, timezone?: string) {
+export function formatToUserTimezone(
+  timestamp: number,
+  options: DateFormatOptions = {},
+): string {
+  const {
+    timezone = "UTC",
+    timeFormat = "12-hour",
+    showSeconds = false,
+    showTimeZone = true,
+    showDate = true,
+  } = options;
+
   // Convert Unix timestamp to Date object
   const date = fromUnixTime(timestamp);
 
@@ -136,13 +178,27 @@ export function formatToUserTimezone(timestamp: number, timezone?: string) {
     return "N/A";
   }
 
-  return date.toLocaleString("en-US", {
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
+  const formatOptions: Intl.DateTimeFormatOptions = {
     hour: "2-digit",
     minute: "2-digit",
-    timeZone: timezone || "UTC",
-    timeZoneName: "short",
-  });
+    timeZone: timezone,
+    hour12: timeFormat === "12-hour",
+  };
+
+  // Add optional formatting
+  if (showSeconds) {
+    formatOptions.second = "2-digit";
+  }
+
+  if (showTimeZone) {
+    formatOptions.timeZoneName = "short";
+  }
+
+  if (showDate) {
+    formatOptions.year = "numeric";
+    formatOptions.month = "2-digit";
+    formatOptions.day = "2-digit";
+  }
+
+  return date.toLocaleString("en-US", formatOptions);
 }
