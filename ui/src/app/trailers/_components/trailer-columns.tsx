@@ -64,5 +64,6 @@ export function getColumns(): ColumnDef<Trailer>[] {
         return <LastInspectionDateBadge value={lastInspectionDate} />;
       },
     },
+    commonColumns.createdAt,
   ];
 }
