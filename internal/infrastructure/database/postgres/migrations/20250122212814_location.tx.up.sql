@@ -44,3 +44,10 @@ CREATE INDEX "idx_locations_created_updated" ON "locations"("created_at", "updat
 
 COMMENT ON TABLE "locations" IS 'Stores information about locations';
 
+--bun:split
+ALTER TABLE "stops"
+    ADD COLUMN "location_id" varchar(100) NOT NULL;
+
+ALTER TABLE "stops"
+    ADD CONSTRAINT "fk_stops_location" FOREIGN KEY ("location_id", "business_unit_id", "organization_id") REFERENCES "locations"("id", "business_unit_id", "organization_id") ON UPDATE NO ACTION ON DELETE SET NULL;
+

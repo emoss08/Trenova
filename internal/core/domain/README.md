@@ -40,8 +40,8 @@ The `domain` directory contains the core business objects, rules, and logic of t
        Origin        Address
        Destination   Address
        Weight        Weight
-       CreatedAt     time.Time
-       UpdatedAt     time.Time
+       CreatedAt     int64
+       UpdatedAt     int64
    }
    ```
 
@@ -64,7 +64,7 @@ The `domain` directory contains the core business objects, rules, and logic of t
        ShipmentID     string
        PreviousStatus ShipmentStatus
        NewStatus      ShipmentStatus
-       ChangedAt      time.Time
+       ChangedAt      int64
    }
    ```
 
@@ -147,8 +147,8 @@ type Shipment struct {
     Status       Status
     Weight       Weight
     Route        Route
-    createdAt    time.Time
-    updatedAt    time.Time
+    createdAt    int64
+    updatedAt    int64
 }
 
 // NewShipment creates a new shipment with validation
