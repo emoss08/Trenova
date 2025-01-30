@@ -43,6 +43,16 @@ export function getColumns(): ColumnDef<Tractor>[] {
         },
       },
     ),
+    createEntityRefColumn<Tractor, "equipmentManufacturer">(
+      columnHelper,
+      "equipmentManufacturer",
+      {
+        basePath: "/equipment/configurations/equipment-manufacturers",
+        getId: (equipManufacturer) => equipManufacturer.id,
+        getDisplayText: (equipManufacturer) => equipManufacturer.name,
+        getHeaderText: "Equipment Manufacturer",
+      },
+    ),
     createEntityRefColumn<Tractor, "primaryWorker">(
       columnHelper,
       "primaryWorker",
@@ -61,21 +71,14 @@ export function getColumns(): ColumnDef<Tractor>[] {
             : null,
       },
     ),
-    createEntityRefColumn<Tractor, "equipmentManufacturer">(
-      columnHelper,
-      "equipmentManufacturer",
-      {
-        basePath: "/equipment/configurations/equipment-manufacturers",
-        getId: (equipManufacturer) => equipManufacturer.id,
-        getDisplayText: (equipManufacturer) => equipManufacturer.name,
-        getHeaderText: "Equipment Manufacturer",
-      },
-    ),
     createEntityRefColumn<Tractor, "fleetCode">(columnHelper, "fleetCode", {
       basePath: "/dispatch/configurations/fleet-codes",
       getId: (fleetCode) => fleetCode.id,
       getDisplayText: (fleetCode) => fleetCode.name,
       getHeaderText: "Fleet Code",
+      color: {
+        getColor: (fleetCode) => fleetCode.color,
+      },
     }),
     commonColumns.createdAt,
   ];

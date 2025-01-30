@@ -853,6 +853,7 @@
       equipment_type_id: "{{ $.EquipmentType.tractor_equip_type.ID }}"
       equipment_manufacturer_id: "{{ $.EquipmentManufacturer.freightliner_manufacturer.ID }}"
       code: TRN-001
+      fleet_code_id: "{{ $.FleetCode.fc_1.ID }}"
       primary_worker_id: "{{ $.Worker.worker_1.ID }}"
       secondary_worker_id: "{{ $.Worker.worker_2.ID }}"
       created_at: "{{ now.Unix }}"

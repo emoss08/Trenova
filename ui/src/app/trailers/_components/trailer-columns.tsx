@@ -59,6 +59,9 @@ export function getColumns(): ColumnDef<Trailer>[] {
       getId: (fleetCode) => fleetCode.id,
       getDisplayText: (fleetCode) => fleetCode.name,
       getHeaderText: "Fleet Code",
+      color: {
+        getColor: (fleetCode) => fleetCode.color,
+      },
     }),
     {
       accessorKey: "lastInspectionDate",
