@@ -54,6 +54,12 @@ export function getColumns(): ColumnDef<Trailer>[] {
         getHeaderText: "Equipment Manufacturer",
       },
     ),
+    createEntityRefColumn<Trailer, "fleetCode">(columnHelper, "fleetCode", {
+      basePath: "/dispatch/configurations/fleet-codes",
+      getId: (fleetCode) => fleetCode.id,
+      getDisplayText: (fleetCode) => fleetCode.name,
+      getHeaderText: "Fleet Code",
+    }),
     {
       accessorKey: "lastInspectionDate",
       header: ({ column }) => (

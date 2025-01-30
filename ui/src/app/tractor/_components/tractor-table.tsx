@@ -15,6 +15,7 @@ export default function TractorTable() {
       extraSearchParams={{
         includeWorkerDetails: true,
         includeEquipmentDetails: true,
+        includeFleetDetails: true,
       }}
       queryKey="tractor-list"
       exportModelName="tractor"

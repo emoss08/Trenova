@@ -12,6 +12,7 @@ type ListTractorOptions struct {
 	Filter                  *ports.LimitOffsetQueryOptions
 	IncludeWorkerDetails    bool `query:"includeWorkerDetails"`
 	IncludeEquipmentDetails bool `query:"includeEquipmentDetails"`
+	IncludeFleetDetails     bool `query:"includeFleetDetails"`
 }
 
 type GetTractorByIDOptions struct {
@@ -21,6 +22,7 @@ type GetTractorByIDOptions struct {
 	UserID                  pulid.ID
 	IncludeWorkerDetails    bool `query:"includeWorkerDetails"`
 	IncludeEquipmentDetails bool `query:"includeEquipmentDetails"`
+	IncludeFleetDetails     bool `query:"includeFleetDetails"`
 }
 
 type TractorRepository interface {

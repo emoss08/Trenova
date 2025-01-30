@@ -104,11 +104,7 @@ export function createEntityRefColumn<
       const entity = getValue();
 
       if (!entity) {
-        return (
-          <p className="text-muted-foreground">
-            No {config.basePath.split("/").pop()}
-          </p>
-        );
+        return <p className="text-muted-foreground">-</p>;
       }
 
       const id = config.getId(entity);
