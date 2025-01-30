@@ -11,6 +11,7 @@ import (
 type ListTrailerOptions struct {
 	Filter                  *ports.LimitOffsetQueryOptions
 	IncludeEquipmentDetails bool `query:"includeEquipmentDetails"`
+	IncludeFleetDetails     bool `query:"includeFleetDetails"`
 }
 
 type GetTrailerByIDOptions struct {
@@ -19,6 +20,7 @@ type GetTrailerByIDOptions struct {
 	BuID                    pulid.ID
 	UserID                  pulid.ID
 	IncludeEquipmentDetails bool `query:"includeEquipmentDetails"`
+	IncludeFleetDetails     bool `query:"includeFleetDetails"`
 }
 
 type TrailerRepository interface {
