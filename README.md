@@ -181,8 +181,8 @@ Comprehensive documentation is available:
 
 We believe in building a strong, supportive community around Trenova:
 
-- [GitHub Issues](https://github.com/username/trenova/issues) - Bug reports and feature requests
-- [GitHub Discussions](https://github.com/username/trenova/discussions) - Community discussions and support
+- [GitHub Issues](https://github.com/emoss08/trenova/issues) - Bug reports and feature requests
+- [GitHub Discussions](https://github.com/emoss08/trenova/discussions) - Community discussions and support
 - [Documentation](https://docs.trenova.io) - Comprehensive guides and references
 
 ## Commercial Support
