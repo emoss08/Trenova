@@ -868,6 +868,7 @@
       model: "Test Trailer"
       make: "Test Trailer"
       year: 2024
+      fleet_code_id: "{{ $.FleetCode.fc_1.ID }}"
       license_plate_number: "TEST000000"
       vin: "TEST000000"
       last_inspection_date: "{{ now.Unix }}"
