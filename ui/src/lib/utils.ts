@@ -1,6 +1,7 @@
 import { clsx, type ClassValue } from "clsx";
 import { RefObject, useEffect } from "react";
 import { twMerge } from "tailwind-merge";
+import { LocationSchema } from "./schemas/location-schema";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -235,4 +236,14 @@ export function composeEventHandlers<E>(
       return ourEventHandler?.(event);
     }
   };
+}
+
+//
+export function formatLocation(location: LocationSchema) {
+  const { state, addressLine1, addressLine2, city, postalCode } = location;
+
+  const addressLine = addressLine1 + (addressLine2 ? `, ${addressLine2}` : "");
+  const cityStateZip = `${city} ${state?.abbreviation}, ${postalCode}`;
+
+  return `${addressLine} ${cityStateZip}`;
 }

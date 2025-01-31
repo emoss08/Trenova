@@ -33,6 +33,13 @@ const routes: RouteObject[] = [
           },
           // Shipment Links
           {
+            path: "/shipments/",
+            async lazy() {
+              let { Shipment } = await import("@/app/shipment/page");
+              return { Component: Shipment };
+            },
+          },
+          {
             path: "/shipments/configurations/shipment-types",
             async lazy() {
               let { ShipmentTypes } = await import("@/app/shipment-types/page");

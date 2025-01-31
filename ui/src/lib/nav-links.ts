@@ -132,8 +132,8 @@ export const routes: routeInfo[] = [
     tree: [
       {
         key: "shipments",
-        label: "Shipment Entry",
-        link: "/shipments/entry",
+        label: "Shipments",
+        link: "/shipments",
       },
       {
         key: "configuration-files",
