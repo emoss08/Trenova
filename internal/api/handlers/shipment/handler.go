@@ -102,6 +102,7 @@ func (h Handler) list(c *fiber.Ctx) error {
 			IncludeMoveDetails:      c.QueryBool("includeMoveDetails"),
 			IncludeCommodityDetails: c.QueryBool("includeCommodityDetails"),
 			IncludeStopDetails:      c.QueryBool("includeStopDetails"),
+			IncludeCustomerDetails:  c.QueryBool("includeCustomerDetails"),
 			Filter:                  filter,
 		})
 	}
@@ -128,6 +129,7 @@ func (h Handler) get(c *fiber.Ctx) error {
 		IncludeMoveDetails:      c.QueryBool("includeMoveDetails"),
 		IncludeCommodityDetails: c.QueryBool("includeCommodityDetails"),
 		IncludeStopDetails:      c.QueryBool("includeStopDetails"),
+		IncludeCustomerDetails:  c.QueryBool("includeCustomerDetails"),
 	})
 	if err != nil {
 		return h.eh.HandleError(c, err)

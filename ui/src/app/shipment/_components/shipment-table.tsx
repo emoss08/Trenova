@@ -13,6 +13,7 @@ export default function ShipmentTable() {
       extraSearchParams={{
         includeMoveDetails: true,
         includeStopDetails: true,
+        includeCustomerDetails: true,
       }}
       queryKey="shipment-list"
       exportModelName="shipment"

@@ -52,6 +52,10 @@ func (sr *shipmentRepository) filterQuery(q *bun.SelectQuery, opts *repositories
 		q = q.Where("sp.pro_number ILIKE ?", "%"+opts.Filter.Query+"%")
 	}
 
+	if opts.IncludeCustomerDetails {
+		q = q.Relation("Customer")
+	}
+
 	if opts.IncludeMoveDetails {
 		q = q.Relation("Moves")
 	}
@@ -128,6 +132,10 @@ func (sr *shipmentRepository) GetByID(ctx context.Context, opts repositories.Get
 
 	if opts.IncludeCommodityDetails {
 		query = query.Relation("Commodities")
+	}
+
+	if opts.IncludeCustomerDetails {
+		query = query.Relation("Customer")
 	}
 
 	if err = query.Scan(ctx); err != nil {
