@@ -2,6 +2,7 @@ package shipment
 
 import (
 	"context"
+	"strings"
 
 	"github.com/emoss08/trenova/internal/core/domain"
 	"github.com/emoss08/trenova/internal/core/domain/businessunit"
@@ -10,6 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/organization"
 	"github.com/emoss08/trenova/internal/core/domain/servicetype"
 	"github.com/emoss08/trenova/internal/core/domain/shipmenttype"
+	"github.com/emoss08/trenova/internal/core/ports/infra"
 	"github.com/emoss08/trenova/internal/pkg/errors"
 	"github.com/emoss08/trenova/internal/pkg/utils/timeutils"
 	"github.com/emoss08/trenova/pkg/types/pulid"
@@ -152,8 +154,9 @@ func (st *Shipment) Validate(ctx context.Context, multiErr *errors.MultiError) {
 	if err != nil {
 		var validationErrs validation.Errors
 		if eris.As(err, &validationErrs) {
-			errors.FromValidationErrors(validationErrs, multiErr, "")
+			errors.FromOzzoErrors(validationErrs, multiErr)
 		}
+
 	}
 }
 
@@ -164,6 +167,30 @@ func (st *Shipment) GetID() string {
 
 func (st *Shipment) GetTableName() string {
 	return "shipments"
+}
+
+// Search Configuration
+func (st *Shipment) GetSearchType() string {
+	return "shipment"
+}
+
+func (st *Shipment) ToDocument() infra.SearchDocument {
+	searchableText := []string{
+		st.ProNumber,
+		st.BOL,
+	}
+
+	return infra.SearchDocument{
+		ID:             st.ID.String(),
+		Type:           "shipment",
+		BusinessUnitID: st.BusinessUnitID.String(),
+		OrganizationID: st.OrganizationID.String(),
+		CreatedAt:      st.CreatedAt,
+		UpdatedAt:      st.UpdatedAt,
+		Title:          st.ProNumber,
+		Description:    st.ProNumber,
+		SearchableText: strings.Join(searchableText, " "),
+	}
 }
 
 func (st *Shipment) BeforeAppendModel(_ context.Context, query bun.Query) error {
