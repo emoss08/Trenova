@@ -229,6 +229,23 @@ func TestShipmentValidator(t *testing.T) {
 			},
 		},
 		{
+			name: "shipment must have at last one move",
+			modifyShipment: func(shp *shipment.Shipment) {
+				shp.Moves = []*shipment.ShipmentMove{}
+			},
+			expectedErrors: []struct {
+				Field   string
+				Code    errors.ErrorCode
+				Message string
+			}{
+				{
+					Field:   "moves",
+					Code:    errors.ErrInvalid,
+					Message: "Shipment must have at least one move",
+				},
+			},
+		},
+		{
 			name: "temperature min must be less than temperature max",
 			modifyShipment: func(shp *shipment.Shipment) {
 				shp.TemperatureMin = decimal.NewNullDecimal(decimal.NewFromInt(100))
