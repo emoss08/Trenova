@@ -53,12 +53,16 @@ func (sr *shipmentRepository) filterQuery(q *bun.SelectQuery, opts *repositories
 	}
 
 	if opts.IncludeMoveDetails {
-		q = q.Relation("Moves").Relation("Moves.Stops")
+		q = q.Relation("Moves")
 	}
 
 	// ! IncludeMoveDetails must be true to include StopDetails
 	if opts.IncludeStopDetails {
-		q = q.Relation("Moves.Stops.Location")
+		q = q.RelationWithOpts("Moves.Stops", bun.RelationOpts{
+			Apply: func(sq *bun.SelectQuery) *bun.SelectQuery {
+				return sq.Relation("Location").Relation("Location.State")
+			},
+		})
 	}
 
 	if opts.IncludeCommodityDetails {
