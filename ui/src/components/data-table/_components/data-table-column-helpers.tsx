@@ -37,6 +37,7 @@ type NestedEntityRefConfig<TEntity, TParent> = EntityRefConfig<
   TParent
 > & {
   getEntity: (parent: TParent) => TEntity | null | undefined;
+  columnId?: string;
 };
 
 export function createCommonColumns<T extends Record<string, unknown>>(
@@ -277,7 +278,7 @@ export function createNestedEntityRefColumn<
   config: NestedEntityRefConfig<TValue, T>,
 ): ColumnDef<T> {
   return columnHelper.accessor((row) => config.getEntity(row), {
-    id: v4(),
+    id: config.columnId ?? v4(),
     header: ({ column }) => (
       <DataTableColumnHeader
         column={column}
@@ -342,10 +343,10 @@ export function createNestedEntityRefColumn<
           {secondaryInfo && (
             <div className="flex items-center gap-1 text-muted-foreground text-2xs">
               {secondaryInfo.label && <span>{secondaryInfo.label}:</span>}
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    {clickable ? (
+              {clickable ? (
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
                       <InternalLink
                         to={{
                           pathname: config.basePath,
@@ -364,15 +365,15 @@ export function createNestedEntityRefColumn<
                       >
                         {secondaryInfo.displayText}
                       </InternalLink>
-                    ) : (
-                      <p>{secondaryInfo.displayText}</p>
-                    )}
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p>Click to view {secondaryInfo.displayText}</p>
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>Click to view {secondaryInfo.displayText}</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              ) : (
+                <p>{secondaryInfo.displayText}</p>
+              )}
             </div>
           )}
         </div>
