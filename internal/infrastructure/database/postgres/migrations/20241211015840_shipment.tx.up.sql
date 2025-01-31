@@ -66,6 +66,5 @@ CREATE INDEX IF NOT EXISTS "idx_shipments_business_unit" ON "shipments"("busines
 
 CREATE INDEX IF NOT EXISTS "idx_shipments_billing_status" ON "shipments"("ready_to_bill", "sent_to_billing");
 
--- Add helpful comments
 COMMENT ON TABLE shipments IS 'Stores information about shipments and their billing status';
 

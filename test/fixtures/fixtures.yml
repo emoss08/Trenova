@@ -891,3 +891,28 @@
       city: "Los Angeles"
       postal_code: "90001"
       state_id: "{{ $.UsState.ca.ID }}"
+
+- model: Shipment
+  rows:
+    - _id: test_shipment
+      organization_id: "{{ $.Organization.trenova.ID }}"
+      business_unit_id: "{{ $.BusinessUnit.trenova.ID }}"
+      created_at: "{{ now.Unix }}"
+      status: "New"
+      pro_number: "S121094129213012"
+      bol: "TEST000000"
+      shipment_type_id: "{{ $.ShipmentType.ftl_shipment_type.ID }}"
+      service_type_id: "{{ $.ServiceType.std_service_type.ID }}"
+      customer_id: "{{ $.Customer.test_customer.ID }}"
+      rating_unit: 1
+      rating_method: "PerMile"
+      other_charge_amount: 100.00
+      freight_charge_amount: 100.00
+      total_charge_amount: 200.00
+      pieces: 1
+      weight: 1000.00
+      ready_to_bill: false
+      billed: false
+      sent_to_billing: false
+      temperature_min: 10.00
+      temperature_max: 20.00
