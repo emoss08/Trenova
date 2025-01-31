@@ -16,10 +16,11 @@ CREATE TABLE IF NOT EXISTS "shipment_moves"(
     -- Core Fields
     "status" stop_status_enum NOT NULL DEFAULT 'New',
     "loaded" boolean NOT NULL DEFAULT TRUE,
-    "sequence_number" integer NOT NULL DEFAULT 0 CHECK ("sequence_number" >= 0),
+    "sequence" integer NOT NULL DEFAULT 0 CHECK ("sequence" >= 0),
     "distance" float,
     -- Metadata
     "version" bigint NOT NULL DEFAULT 0,
+
     "created_at" bigint NOT NULL DEFAULT EXTRACT(EPOCH FROM CURRENT_TIMESTAMP) ::bigint,
     "updated_at" bigint NOT NULL DEFAULT EXTRACT(EPOCH FROM CURRENT_TIMESTAMP) ::bigint,
     -- Constraints
@@ -37,7 +38,7 @@ CREATE INDEX IF NOT EXISTS "idx_shipment_moves_business_unit" ON "shipment_moves
 
 CREATE INDEX IF NOT EXISTS "idx_shipment_moves_shipment" ON "shipment_moves"("shipment_id", "organization_id");
 
-CREATE INDEX IF NOT EXISTS "idx_shipment_moves_sequence_number" ON "shipment_moves"("sequence_number");
+CREATE INDEX IF NOT EXISTS "idx_shipment_moves_sequence" ON "shipment_moves"("sequence");
 
 COMMENT ON TABLE shipment_moves IS 'Stores information about individual moves within a shipment journey';
 

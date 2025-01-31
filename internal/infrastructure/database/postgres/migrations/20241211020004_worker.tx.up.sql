@@ -134,7 +134,8 @@ ALTER TABLE "shipment_moves"
     ADD CONSTRAINT "fk_shipments_primary_worker" FOREIGN KEY ("primary_worker_id", "organization_id", "business_unit_id") REFERENCES "workers"("id", "organization_id", "business_unit_id") ON UPDATE NO ACTION ON DELETE SET NULL;
 
 ALTER TABLE "shipment_moves"
-    ADD COLUMN "secondary_worker_id" varchar(100) NOT NULL;
+    ADD COLUMN "secondary_worker_id" varchar(100);
+
 
 ALTER TABLE "shipment_moves"
     ADD CONSTRAINT "fk_shipments_secondary_worker" FOREIGN KEY ("secondary_worker_id", "organization_id", "business_unit_id") REFERENCES "workers"("id", "organization_id", "business_unit_id") ON UPDATE NO ACTION ON DELETE SET NULL;

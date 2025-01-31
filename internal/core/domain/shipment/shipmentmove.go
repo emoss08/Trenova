@@ -25,17 +25,17 @@ type ShipmentMove struct {
 	OrganizationID pulid.ID `bun:"organization_id,pk,notnull,type:VARCHAR(100)" json:"organizationId"`
 
 	// Relationship identifiers (Non-Primary-Keys)
-	ShipmentID        pulid.ID `bun:"shipment_id,type:VARCHAR(100),notnull" json:"shipmentId"`
-	PrimaryWorkerID   pulid.ID `bun:"primary_worker_id,type:VARCHAR(100),nullzero" json:"primaryWorkerId"`
-	SecondaryWorkerID pulid.ID `bun:"secondary_worker_id,type:VARCHAR(100),nullzero" json:"secondaryWorkerId"`
-	TrailerID         pulid.ID `bun:"trailer_id,type:VARCHAR(100),nullzero" json:"trailerId"`
-	TractorID         pulid.ID `bun:"tractor_id,type:VARCHAR(100),nullzero" json:"tractorId"`
+	ShipmentID        pulid.ID  `bun:"shipment_id,type:VARCHAR(100),notnull" json:"shipmentId"`
+	PrimaryWorkerID   pulid.ID  `bun:"primary_worker_id,type:VARCHAR(100),notnull" json:"primaryWorkerId"`
+	SecondaryWorkerID *pulid.ID `bun:"secondary_worker_id,type:VARCHAR(100),nullzero" json:"secondaryWorkerId"`
+	TrailerID         pulid.ID  `bun:"trailer_id,type:VARCHAR(100),nullzero" json:"trailerId"`
+	TractorID         pulid.ID  `bun:"tractor_id,type:VARCHAR(100),nullzero" json:"tractorId"`
 
 	// Core Fields
-	Status         StopStatus `json:"status" bun:"status,type:stop_status_enum,notnull,default:'New'"`
-	Loaded         bool       `json:"loaded" bun:"loaded,type:BOOLEAN,notnull,default:true"`
-	SequenceNumber int        `json:"sequenceNumber" bun:"sequence_number,type:INTEGER,notnull,default:0"`
-	Distance       *float64   `json:"distance" bun:"distance,type:FLOAT,nullzero"`
+	Status   StopStatus `json:"status" bun:"status,type:stop_status_enum,notnull,default:'New'"`
+	Loaded   bool       `json:"loaded" bun:"loaded,type:BOOLEAN,notnull,default:true"`
+	Sequence int        `json:"sequence" bun:"sequence,type:INTEGER,notnull,default:0"`
+	Distance *float64   `json:"distance" bun:"distance,type:FLOAT,nullzero"`
 
 	// Metadata
 	Version   int64 `bun:"version,type:BIGINT" json:"version"`

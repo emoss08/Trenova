@@ -916,3 +916,47 @@
       sent_to_billing: false
       temperature_min: 10.00
       temperature_max: 20.00
+
+- model: ShipmentMove
+  rows:
+    - _id: test_shipment_move
+      organization_id: "{{ $.Organization.trenova.ID }}"
+      business_unit_id: "{{ $.BusinessUnit.trenova.ID }}"
+      created_at: "{{ now.Unix }}"
+      status: "New"
+      sequence: 0
+      shipment_id: "{{ $.Shipment.test_shipment.ID }}"
+      tractor_id: "{{ $.Tractor.tractor_1.ID }}"
+      trailer_id: "{{ $.Trailer.test_trailer.ID }}"
+      primary_worker_id: "{{ $.Worker.worker_1.ID }}"
+
+- model: Stop
+  rows:
+    - _id: test_stop
+      organization_id: "{{ $.Organization.trenova.ID }}"
+      business_unit_id: "{{ $.BusinessUnit.trenova.ID }}"
+      created_at: "{{ now.Unix }}"
+      status: "New"
+      type: "Pickup"
+      sequence: 0
+      shipment_move_id: "{{ $.ShipmentMove.test_shipment_move.ID }}"
+      location_id: "{{ $.Location.test_location.ID }}"
+      address_line: "1234 Main St"
+      pieces: 1
+      weight: 1000.00
+      planned_arrival: "{{ now.Unix }}"
+      planned_departure: "{{ now.Unix }}"
+    - _id: test_stop_2
+      organization_id: "{{ $.Organization.trenova.ID }}"
+      business_unit_id: "{{ $.BusinessUnit.trenova.ID }}"
+      created_at: "{{ now.Unix }}"
+      status: "New"
+      type: "Delivery"
+      sequence: 1
+      shipment_move_id: "{{ $.ShipmentMove.test_shipment_move.ID }}"
+      location_id: "{{ $.Location.test_location.ID }}"
+      address_line: "1234 Main St"
+      pieces: 1
+      weight: 1000.00
+      planned_arrival: "{{ now.Unix }}"
+      planned_departure: "{{ now.Unix }}"
