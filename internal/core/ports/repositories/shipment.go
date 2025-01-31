@@ -12,6 +12,9 @@ type ListShipmentOptions struct {
 	Filter                  *ports.LimitOffsetQueryOptions
 	IncludeMoveDetails      bool `query:"includeMoveDetails"`
 	IncludeCommodityDetails bool `query:"includeCommodityDetails"`
+
+	// IncludeStopDetails includes the stops for each move in the shipment (Location Information)
+	IncludeStopDetails bool `query:"includeStopDetails"`
 }
 
 type GetShipmentByIDOptions struct {
@@ -21,6 +24,9 @@ type GetShipmentByIDOptions struct {
 	UserID                  pulid.ID
 	IncludeMoveDetails      bool `query:"includeMoveDetails"`
 	IncludeCommodityDetails bool `query:"includeCommodityDetails"`
+
+	// IncludeStopDetails includes the stops for each move in the shipment (Location Information)
+	IncludeStopDetails bool `query:"includeStopDetails"`
 }
 
 type ShipmentRepository interface {

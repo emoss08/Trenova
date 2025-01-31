@@ -56,6 +56,11 @@ func (sr *shipmentRepository) filterQuery(q *bun.SelectQuery, opts *repositories
 		q = q.Relation("Moves").Relation("Moves.Stops")
 	}
 
+	// ! IncludeMoveDetails must be true to include StopDetails
+	if opts.IncludeStopDetails {
+		q = q.Relation("Moves.Stops.Location")
+	}
+
 	if opts.IncludeCommodityDetails {
 		q = q.Relation("Commodities")
 	}
@@ -107,6 +112,19 @@ func (sr *shipmentRepository) GetByID(ctx context.Context, opts repositories.Get
 
 	query := dba.NewSelect().Model(entity).
 		Where("sp.id = ? AND sp.organization_id = ? AND sp.business_unit_id = ?", opts.ID, opts.OrgID, opts.BuID)
+
+	if opts.IncludeMoveDetails {
+		query = query.Relation("Moves").Relation("Moves.Stops")
+	}
+
+	// ! IncludeMoveDetails must be true to include StopDetails
+	if opts.IncludeStopDetails {
+		query = query.Relation("Moves.Stops.Location")
+	}
+
+	if opts.IncludeCommodityDetails {
+		query = query.Relation("Commodities")
+	}
 
 	if err = query.Scan(ctx); err != nil {
 		if eris.Is(err, sql.ErrNoRows) {

@@ -101,6 +101,7 @@ func (h Handler) list(c *fiber.Ctx) error {
 		return h.ss.List(fc.UserContext(), &repositories.ListShipmentOptions{
 			IncludeMoveDetails:      c.QueryBool("includeMoveDetails"),
 			IncludeCommodityDetails: c.QueryBool("includeCommodityDetails"),
+			IncludeStopDetails:      c.QueryBool("includeStopDetails"),
 			Filter:                  filter,
 		})
 	}
@@ -126,6 +127,7 @@ func (h Handler) get(c *fiber.Ctx) error {
 		UserID:                  reqCtx.UserID,
 		IncludeMoveDetails:      c.QueryBool("includeMoveDetails"),
 		IncludeCommodityDetails: c.QueryBool("includeCommodityDetails"),
+		IncludeStopDetails:      c.QueryBool("includeStopDetails"),
 	})
 	if err != nil {
 		return h.eh.HandleError(c, err)
