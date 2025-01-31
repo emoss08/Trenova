@@ -606,12 +606,23 @@
       organization_id: "{{ $.Organization.trenova.ID }}"
       business_unit_id: "{{ $.BusinessUnit.trenova.ID }}"
       created_at: "{{ now.Unix }}"
-      name: "Test Location"
-      address_line_1: "1234 Main St"
-      code: "TEST000000"
-      city: "Los Angeles"
-      postal_code: "90001"
+      name: "Ralphs"
+      address_line_1: "8626 Firestone Blvd"
+      code: "RAL001"
+      city: "Downey"
+      postal_code: "90241"
       state_id: "{{ $.UsState.ca.ID }}"
+      location_category_id: "{{ $.LocationCategory.location_category_1.ID }}"
+    - _id: test_location_2
+      organization_id: "{{ $.Organization.trenova.ID }}"
+      business_unit_id: "{{ $.BusinessUnit.trenova.ID }}"
+      created_at: "{{ now.Unix }}"
+      name: "Mcdonalds"
+      address_line_1: "1101 Summit Ave"
+      code: "MCD001"
+      city: "Greensboro"
+      postal_code: "27410"
+      state_id: "{{ $.UsState.nc.ID }}"
       location_category_id: "{{ $.LocationCategory.location_category_1.ID }}"
 
 - model: ServiceType
@@ -954,7 +965,7 @@
       type: "Delivery"
       sequence: 1
       shipment_move_id: "{{ $.ShipmentMove.test_shipment_move.ID }}"
-      location_id: "{{ $.Location.test_location.ID }}"
+      location_id: "{{ $.Location.test_location_2.ID }}"
       address_line: "1234 Main St"
       pieces: 1
       weight: 1000.00
