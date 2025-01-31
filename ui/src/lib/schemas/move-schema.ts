@@ -16,8 +16,7 @@ export const moveSchema = object({
   tractorId: string().optional(),
   loaded: boolean().required("Loaded is required"),
   sequence: number().required("Sequence is required"),
-  distance: string()
-    .optional()
+  distance: number()
     .transform((_, originalValue) => {
       if (
         originalValue === "" ||
@@ -26,9 +25,11 @@ export const moveSchema = object({
       ) {
         return undefined;
       }
-      const parsed = parseFloat(originalValue);
+      const parsed = parseInt(originalValue, 10);
       return isNaN(parsed) ? undefined : parsed;
-    }),
+    })
+    .integer("Distance must be a whole number")
+    .min(0, "Distance cannot be negative"),
 });
 
 export type MoveSchema = InferType<typeof moveSchema>;

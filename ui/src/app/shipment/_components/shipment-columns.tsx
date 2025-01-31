@@ -1,12 +1,22 @@
-import { DataTableColumnHeader } from "@/components/data-table/_components/data-table-column-header";
 import {
-    createCommonColumns,
-    createEntityColumn,
-    createNestedEntityRefColumn,
+  DataTableColumnHeader,
+  DataTableColumnHeaderWithTooltip,
+} from "@/components/data-table/_components/data-table-column-header";
+import {
+  createCommonColumns,
+  createEntityColumn,
+  createEntityRefColumn,
+  createNestedEntityRefColumn,
 } from "@/components/data-table/_components/data-table-column-helpers";
 import { ShipmentStatusBadge } from "@/components/status-badge";
+import { generateDateTimeString, toDate } from "@/lib/date";
 import { LocationSchema } from "@/lib/schemas/location-schema";
-import { ShipmentLocations } from "@/lib/shipment/utils";
+import {
+  calculateShipmentMileage,
+  getDestinationStopInfo,
+  getOriginStopInfo,
+  ShipmentLocations,
+} from "@/lib/shipment/utils";
 import { formatLocation } from "@/lib/utils";
 import { Shipment } from "@/types/shipment";
 import { createColumnHelper, type ColumnDef } from "@tanstack/react-table";
@@ -26,6 +36,7 @@ export function getColumns(): ColumnDef<Shipment>[] {
         const status = row.original.status;
         return <ShipmentStatusBadge status={status} />;
       },
+      size: 100,
     },
     createEntityColumn(columnHelper, "proNumber", {
       accessorKey: "proNumber",
@@ -33,7 +44,14 @@ export function getColumns(): ColumnDef<Shipment>[] {
       getId: (shipment) => shipment.id,
       getDisplayText: (shipment) => shipment.proNumber,
     }),
+    createEntityRefColumn<Shipment, "customer">(columnHelper, "customer", {
+      basePath: "/billing/configurations/customers",
+      getId: (customer) => customer.id,
+      getDisplayText: (customer) => customer.name,
+      getHeaderText: "Customer",
+    }),
     createNestedEntityRefColumn(columnHelper, {
+      columnId: "originLocation",
       basePath: "/dispatch/configurations/locations",
       getHeaderText: "Origin Location",
       getId: (location) => location.id,
@@ -53,7 +71,28 @@ export function getColumns(): ColumnDef<Shipment>[] {
         }
       },
     }),
+    {
+      id: "originPickup",
+      header: ({ column }) => (
+        <DataTableColumnHeader column={column} title="Origin Date" />
+      ),
+      cell: ({ row }) => {
+        const shipment = row.original;
+        const originStop = getOriginStopInfo(shipment);
+        if (!originStop) {
+          return <p>-</p>;
+        }
+
+        const arrivalDate = toDate(originStop.plannedArrival);
+        if (!arrivalDate) {
+          return <p>-</p>;
+        }
+
+        return <p>{generateDateTimeString(arrivalDate)}</p>;
+      },
+    },
     createNestedEntityRefColumn(columnHelper, {
+      columnId: "destinationLocation",
       basePath: "/dispatch/configurations/locations",
       getHeaderText: "Destination Location",
       getId: (location) => location.id,
@@ -73,6 +112,47 @@ export function getColumns(): ColumnDef<Shipment>[] {
         }
       },
     }),
+    {
+      id: "destinationPickup",
+      header: ({ column }) => (
+        <DataTableColumnHeaderWithTooltip
+          column={column}
+          title="Destination Date"
+          tooltipContent="The date and time the shipment is expected to arrive at the destination location."
+        />
+      ),
+      cell: ({ row }) => {
+        const shipment = row.original;
+        const destinationStop = getDestinationStopInfo(shipment);
+        if (!destinationStop) {
+          return <p>-</p>;
+        }
+
+        const arrivalDate = toDate(destinationStop.plannedArrival);
+        if (!arrivalDate) {
+          return <p>-</p>;
+        }
+
+        return <p>{generateDateTimeString(arrivalDate)}</p>;
+      },
+    },
+    {
+      id: "totalDistance",
+      header: ({ column }) => (
+        <DataTableColumnHeader column={column} title="Total Distance" />
+      ),
+      cell: ({ row }) => {
+        const shipment = row.original;
+        const mileage = calculateShipmentMileage(shipment);
+        return mileage;
+      },
+    },
+    {
+      accessorKey: "bol",
+      header: ({ column }) => (
+        <DataTableColumnHeader column={column} title="BOL" />
+      ),
+    },
     commonColumns.createdAt,
   ];
 }

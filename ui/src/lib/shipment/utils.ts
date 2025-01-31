@@ -7,7 +7,7 @@ const STOP_TYPES = {
   DELIVERY: "Delivery",
 } as const;
 
-function calculateOriginLocation(shipment: Shipment) {
+export function getOriginStopInfo(shipment: Shipment) {
   if (!shipment.moves?.length) {
     return null;
   }
@@ -18,15 +18,29 @@ function calculateOriginLocation(shipment: Shipment) {
   }
 
   for (const stop of firstMove.stops) {
-    if (stop.type === STOP_TYPES.PICKUP && stop.location) {
-      return stop.location;
+    if (stop.type === STOP_TYPES.PICKUP) {
+      return stop;
     }
   }
 
   return null;
 }
 
-function calculateDestinationLocation(shipment: Shipment) {
+function calculateOriginLocation(shipment: Shipment) {
+  const originStop = getOriginStopInfo(shipment);
+
+  if (!originStop) {
+    return null;
+  }
+
+  if (!originStop.location) {
+    return null;
+  }
+
+  return originStop.location;
+}
+
+export function getDestinationStopInfo(shipment: Shipment) {
   if (!shipment.moves?.length) {
     return null;
   }
@@ -38,13 +52,25 @@ function calculateDestinationLocation(shipment: Shipment) {
 
     for (let j = move.stops.length - 1; j >= 0; j--) {
       const stop = move.stops[j];
-      if (stop.type === STOP_TYPES.DELIVERY && stop.location) {
-        return stop.location;
+      if (stop.type === STOP_TYPES.DELIVERY) {
+        return stop;
       }
     }
   }
+}
 
-  return null;
+function calculateDestinationLocation(shipment: Shipment) {
+  const destinationStop = getDestinationStopInfo(shipment);
+
+  if (!destinationStop) {
+    return null;
+  }
+
+  if (!destinationStop.location) {
+    return null;
+  }
+
+  return destinationStop.location;
 }
 
 const locationCache = new WeakMap<
@@ -92,3 +118,29 @@ export const ShipmentLocations = {
     locationCache.delete(shipment);
   },
 } as const;
+
+export function calculateShipmentMileage(shipment: Shipment) {
+  // First find all of the moves for the shipment
+  const { moves } = shipment;
+  if (!moves?.length) {
+    return 0;
+  }
+
+  // Second, loop through all of the moves and sum up the distance for each move
+
+  let totalDistance = 0;
+  for (const move of moves) {
+    const { distance } = move;
+    if (!distance) {
+      continue;
+    }
+
+    if (typeof distance !== "number") {
+      throw new Error("Distance is not a number");
+    }
+
+    totalDistance += distance;
+  }
+
+  return totalDistance;
+}

@@ -206,6 +206,11 @@ export function DataTable<TData extends Record<string, any>>({
     enableRowSelection: true,
     onRowSelectionChange: setRowSelection,
     // onSortingChange: setSorting,
+    defaultColumn: {
+      size: 200,
+      minSize: 10,
+      maxSize: 300,
+    },
     onColumnFiltersChange: setColumnFilters,
     onColumnVisibilityChange: setColumnVisibility,
     getCoreRowModel: getCoreRowModel(),
@@ -223,9 +228,9 @@ export function DataTable<TData extends Record<string, any>>({
   const isEntityError = entityQuery.error;
 
   return (
-    <div className="mt-2 flex flex-col gap-3 overflow-y-hidden overflow-x-scroll">
+    <div className="mt-2 flex flex-col gap-3">
       <div className="flex justify-between">
-        <div className="flex items-center gap-2"></div>
+        <div className="flex items-center gap-2">Put something here</div>
         <div className="flex items-center gap-2">
           <DataTableViewOptions table={table} />
           <Separator className="h-6 w-px bg-border" orientation="vertical" />
@@ -238,7 +243,7 @@ export function DataTable<TData extends Record<string, any>>({
           />
         </div>
       </div>
-      <div className="overflow-hidden rounded-md border border-sidebar-border">
+      <div className="rounded-md border border-sidebar-border">
         <Table>
           <DataTableHeader table={table} />
           <DataTableBody table={table} />

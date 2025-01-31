@@ -1,5 +1,3 @@
-"use no memo";
-
 import { SelectIcon } from "@radix-ui/react-select";
 import { type Column } from "@tanstack/react-table";
 

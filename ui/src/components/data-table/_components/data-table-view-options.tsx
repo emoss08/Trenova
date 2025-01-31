@@ -1,7 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Icon } from "@/components/ui/icons";
 
-import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -147,13 +146,9 @@ export function DataTableViewOptions<TData>({
         >
           <Icon icon={faEye} className="size-4" />
           View
-          <Badge
-            variant="default"
-            withDot={false}
-            className="ml-0.5 size-4 text-xs p-1 rounded-sm"
-          >
+          <div className="size-4 text-2xs rounded-sm bg-foreground text-background">
             {visibleColumnsCount}
-          </Badge>
+          </div>
           <span className="sr-only">Toggle column visibility options</span>
         </Button>
       </PopoverTrigger>

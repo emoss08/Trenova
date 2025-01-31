@@ -67,6 +67,7 @@ export function createCommonColumns<T extends Record<string, unknown>>(
           aria-label="Select row"
         />
       ),
+      size: 50,
       enableSorting: false,
       enableHiding: false,
     }),
