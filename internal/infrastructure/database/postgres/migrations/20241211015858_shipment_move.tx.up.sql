@@ -3,7 +3,7 @@ CREATE TYPE "stop_status_enum" AS ENUM(
     'New', -- Initial state when move is created
     'InTransit', -- Move is currently being executed
     'Completed', -- Move has been completed successfully
-    'Cancelled' -- Move has been cancelled and won't be completed
+    'Canceled' -- Move has been cancelled and won't be completed
 );
 
 CREATE TABLE IF NOT EXISTS "shipment_moves"(
