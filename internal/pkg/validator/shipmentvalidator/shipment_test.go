@@ -40,12 +40,60 @@ func newShipment() *shipment.Shipment {
 		RatingMethod:        shipment.RatingMethodFlatRate,
 		FreightChargeAmount: decimal.NewNullDecimal(decimal.NewFromInt(1000)),
 		ReadyToBill:         false,
+		Moves: []*shipment.ShipmentMove{
+			{
+				Status:          shipment.StopStatusNew,
+				PrimaryWorkerID: pulid.MustNew("wrk_"),
+				TractorID:       pulid.MustNew("trk_"),
+				TrailerID:       pulid.MustNew("trl_"),
+				Stops: []*shipment.Stop{
+					{
+						Type:             shipment.StopTypePickup,
+						Sequence:         0,
+						Status:           shipment.StopStatusNew,
+						PlannedArrival:   100,
+						PlannedDeparture: 200,
+					},
+					{
+						Type:             shipment.StopTypePickup,
+						Sequence:         1,
+						Status:           shipment.StopStatusNew,
+						PlannedArrival:   300,
+						PlannedDeparture: 400,
+					},
+					{
+						Type:             shipment.StopTypeDelivery,
+						Sequence:         2,
+						Status:           shipment.StopStatusNew,
+						PlannedArrival:   500,
+						PlannedDeparture: 600,
+					},
+					{
+						Type:             shipment.StopTypeDelivery,
+						Sequence:         3,
+						Status:           shipment.StopStatusNew,
+						PlannedArrival:   700,
+						PlannedDeparture: 800,
+					},
+				},
+			},
+		},
 	}
 }
 
 func TestShipmentValidator(t *testing.T) {
-	val := spValidator.NewValidator(spValidator.ValidatorParams{
+	sv := spValidator.NewStopValidator(spValidator.StopValidatorParams{
 		DB: ts.DB,
+	})
+
+	mv := spValidator.NewMoveValidator(spValidator.MoveValidatorParams{
+		DB:            ts.DB,
+		StopValidator: sv,
+	})
+
+	val := spValidator.NewValidator(spValidator.ValidatorParams{
+		DB:            ts.DB,
+		MoveValidator: mv,
 	})
 
 	scenarios := []struct {

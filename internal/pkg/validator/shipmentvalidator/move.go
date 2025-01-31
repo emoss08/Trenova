@@ -14,16 +14,19 @@ import (
 type MoveValidatorParams struct {
 	fx.In
 
-	DB db.Connection
+	DB            db.Connection
+	StopValidator *StopValidator
 }
 
 type MoveValidator struct {
 	db db.Connection
+	sv *StopValidator
 }
 
 func NewMoveValidator(p MoveValidatorParams) *MoveValidator {
 	return &MoveValidator{
 		db: p.DB,
+		sv: p.StopValidator,
 	}
 }
 
@@ -31,7 +34,7 @@ func (v *MoveValidator) Validate(ctx context.Context, valCtx *validator.Validati
 	moveMultiErr := multiErr.WithIndex("moves", idx)
 
 	m.Validate(ctx, moveMultiErr)
-	v.validateStops(m, moveMultiErr)
+	v.validateStops(ctx, valCtx, m, moveMultiErr)
 
 	if valCtx.IsCreate {
 		v.validateID(m, moveMultiErr)
@@ -44,10 +47,14 @@ func (v *MoveValidator) validateID(m *shipment.ShipmentMove, multiErr *errors.Mu
 	}
 }
 
-func (v *MoveValidator) validateStops(m *shipment.ShipmentMove, multiErr *errors.MultiError) {
+func (v *MoveValidator) validateStops(ctx context.Context, valCtx *validator.ValidationContext, m *shipment.ShipmentMove, multiErr *errors.MultiError) {
 	v.validateStopLength(m, multiErr)
 	v.validateStopTimes(m, multiErr)
 	v.validateStopSequence(m, multiErr)
+
+	for idx, stop := range m.Stops {
+		v.sv.Validate(ctx, valCtx, stop, multiErr, idx)
+	}
 }
 
 // validateStopLength validates that atleast two stops are in a movement.
@@ -67,15 +74,6 @@ func (v *MoveValidator) validateStopTimes(m *shipment.ShipmentMove, multiErr *er
 		currStop := m.Stops[i]
 		nextStop := m.Stops[i+1]
 
-		// Validate individual stop times (arrival before departure at same stop)
-		if currStop.PlannedArrival >= currStop.PlannedDeparture {
-			multiErr.Add(
-				fmt.Sprintf("stops[%d].plannedArrival", i),
-				errors.ErrInvalid,
-				"Planned arrival must be before planned departure",
-			)
-		}
-
 		// Validate sequential stop times
 		if currStop.PlannedDeparture >= nextStop.PlannedArrival {
 			multiErr.Add(
@@ -83,17 +81,6 @@ func (v *MoveValidator) validateStopTimes(m *shipment.ShipmentMove, multiErr *er
 				errors.ErrInvalid,
 				"Planned departure must be before next stop's planned arrival",
 			)
-		}
-
-		// Validate actual times if present
-		if currStop.ActualArrival != nil && currStop.ActualDeparture != nil {
-			if *currStop.ActualArrival >= *currStop.ActualDeparture {
-				multiErr.Add(
-					fmt.Sprintf("stops[%d].actualArrival", i),
-					errors.ErrInvalid,
-					"Actual arrival must be before actual departure",
-				)
-			}
 		}
 
 		if currStop.ActualDeparture != nil && nextStop.ActualArrival != nil {

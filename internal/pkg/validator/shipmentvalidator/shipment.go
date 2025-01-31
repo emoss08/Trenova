@@ -15,16 +15,19 @@ import (
 type ValidatorParams struct {
 	fx.In
 
-	DB db.Connection
+	DB            db.Connection
+	MoveValidator *MoveValidator
 }
 
 type Validator struct {
 	db db.Connection
+	mv *MoveValidator
 }
 
 func NewValidator(p ValidatorParams) *Validator {
 	return &Validator{
 		db: p.DB,
+		mv: p.MoveValidator,
 	}
 }
 
@@ -41,11 +44,25 @@ func (v *Validator) Validate(ctx context.Context, valCtx *validator.ValidationCo
 	// Validate ID
 	v.validateID(shp, valCtx, multiErr)
 
+	// Validate Moves
+	v.ValidateMoves(ctx, valCtx, shp, multiErr)
+
 	if multiErr.HasErrors() {
 		return multiErr
 	}
 
 	return nil
+}
+
+func (v *Validator) ValidateMoves(ctx context.Context, valCtx *validator.ValidationContext, shp *shipment.Shipment, multiErr *errors.MultiError) {
+	if len(shp.Moves) == 0 {
+		multiErr.Add("moves", errors.ErrInvalid, "Shipment must have at least one move")
+		return
+	}
+
+	for idx, move := range shp.Moves {
+		v.mv.Validate(ctx, valCtx, move, multiErr, idx)
+	}
 }
 
 func (v *Validator) ValidateUniqueness(ctx context.Context, valCtx *validator.ValidationContext, shp *shipment.Shipment, multiErr *errors.MultiError) error {

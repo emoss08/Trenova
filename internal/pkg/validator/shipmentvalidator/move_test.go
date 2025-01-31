@@ -131,20 +131,6 @@ func TestMoveValidator(t *testing.T) {
 			},
 		},
 		{
-			name: "validate stop planned arrival before departure",
-			modifyMove: func(s *shipment.ShipmentMove) {
-				s.Stops[0].PlannedArrival = 300
-				s.Stops[0].PlannedDeparture = 200
-			},
-			expectedErrors: []struct {
-				Field   string
-				Code    errors.ErrorCode
-				Message string
-			}{
-				{Field: "moves[0].stops[0].plannedArrival", Code: errors.ErrInvalid, Message: "Planned arrival must be before planned departure"},
-			},
-		},
-		{
 			name: "validate actual departure before next arrival",
 			modifyMove: func(s *shipment.ShipmentMove) {
 				s.Stops[0].ActualDeparture = &[]int64{300}[0]
@@ -159,17 +145,17 @@ func TestMoveValidator(t *testing.T) {
 			},
 		},
 		{
-			name: "validate actual arrival before departure at same stop",
+			name: "validate planned departure before next planned arrival",
 			modifyMove: func(s *shipment.ShipmentMove) {
-				s.Stops[0].ActualArrival = &[]int64{300}[0]
-				s.Stops[0].ActualDeparture = &[]int64{200}[0]
+				s.Stops[0].PlannedDeparture = 300
+				s.Stops[1].PlannedArrival = 200
 			},
 			expectedErrors: []struct {
 				Field   string
 				Code    errors.ErrorCode
 				Message string
 			}{
-				{Field: "moves[0].stops[0].actualArrival", Code: errors.ErrInvalid, Message: "Actual arrival must be before actual departure"},
+				{Field: "moves[0].stops[0].plannedDeparture", Code: errors.ErrInvalid, Message: "Planned departure must be before next stop's planned arrival"},
 			},
 		},
 		{
