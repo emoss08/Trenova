@@ -120,6 +120,7 @@ func NewLogger(l *logger.Logger, config ...LogConfig) fiber.Handler {
 		start := time.Now()
 		path := c.Path()
 		method := c.Method()
+		queryParams := c.Queries()
 
 		// Extract request body if configured
 		var reqBody string
@@ -139,6 +140,7 @@ func NewLogger(l *logger.Logger, config ...LogConfig) fiber.Handler {
 			Str("requestId", requestID).
 			Str("method", method).
 			Str("path", path).
+			Interface("queryParams", queryParams).
 			Int("status", c.Response().StatusCode()).
 			Str("ip", c.IP()).
 			Str("latency", formattedDuration).

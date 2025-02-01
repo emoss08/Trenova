@@ -2,13 +2,14 @@
 CREATE TYPE "shipment_status_enum" AS ENUM(
     'New', -- Initial state when shipment is created
     'InTransit', -- Shipment is currently being transported
+    'Delayed', -- Shipment is currently delayed
     'Completed', -- Shipment has been delivered successfully
     'Billed', -- Shipment has been billed to the customer
     'Canceled' -- Shipment has been Canceled
 );
 
 CREATE TYPE "rating_method_enum" AS ENUM(
-    'Flat', -- Fixed rate for entire shipment
+    'FlatRate', -- Fixed rate for entire shipment
     'PerMile', -- Rate calculated per mile traveled
     'PerStop', -- Rate calculated per stop made
     'PerPound', -- Rate calculated by weight
@@ -23,22 +24,29 @@ CREATE TABLE IF NOT EXISTS "shipments"(
     "pro_number" varchar(100) NOT NULL,
     "organization_id" varchar(100) NOT NULL,
     "business_unit_id" varchar(100) NOT NULL,
+    -- Core Fields
     "status" shipment_status_enum NOT NULL DEFAULT 'New',
     "bol" varchar(100) NOT NULL,
-    "rating_method" rating_method_enum NOT NULL DEFAULT 'Flat',
+    -- Misc. Shipment Related Fields
+    "actual_ship_date" bigint,
+    "actual_delivery_date" bigint,
+    "temperature_min" numeric(10, 2),
+    "temperature_max" numeric(10, 2),
+    -- Billing Related Fields
+    "bill_date" bigint,
+    "ready_to_bill" boolean NOT NULL DEFAULT FALSE,
+    "ready_to_bill_date" bigint,
+    "sent_to_billing" boolean NOT NULL DEFAULT FALSE,
     "rating_unit" integer NOT NULL DEFAULT 1 CHECK ("rating_unit" > 0),
+    "rating_method" rating_method_enum NOT NULL DEFAULT 'FlatRate',
     "freight_charge_amount" numeric(19, 4) NOT NULL DEFAULT 0 CHECK ("freight_charge_amount" >= 0),
     "other_charge_amount" numeric(19, 4) NOT NULL DEFAULT 0 CHECK ("other_charge_amount" >= 0),
     "total_charge_amount" numeric(19, 4) NOT NULL DEFAULT 0 CHECK ("total_charge_amount" >= 0),
     "pieces" integer CHECK ("pieces" > 0),
     "weight" integer CHECK ("weight" > 0),
-    "temperature_min" numeric(10, 2),
-    "temperature_max" numeric(10, 2),
-    "bill_date" bigint,
-    "ready_to_bill" boolean NOT NULL DEFAULT FALSE,
-    "ready_to_bill_date" bigint,
-    "sent_to_billing" boolean NOT NULL DEFAULT FALSE,
     "sent_to_billing_date" bigint,
+    "billed" boolean NOT NULL DEFAULT FALSE,
+    -- Metadata
     "version" bigint NOT NULL DEFAULT 0,
     "created_at" bigint NOT NULL DEFAULT EXTRACT(EPOCH FROM CURRENT_TIMESTAMP) ::bigint,
     "updated_at" bigint NOT NULL DEFAULT EXTRACT(EPOCH FROM CURRENT_TIMESTAMP) ::bigint,
@@ -59,6 +67,5 @@ CREATE INDEX IF NOT EXISTS "idx_shipments_business_unit" ON "shipments"("busines
 
 CREATE INDEX IF NOT EXISTS "idx_shipments_billing_status" ON "shipments"("ready_to_bill", "sent_to_billing");
 
--- Add helpful comments
 COMMENT ON TABLE shipments IS 'Stores information about shipments and their billing status';
 

@@ -62,5 +62,6 @@ export function getColumns(): ColumnDef<HazardousMaterialSchema>[] {
         <PackingGroupBadge group={row.original.packingGroup} />
       ),
     },
+    commonColumns.createdAt,
   ];
 }

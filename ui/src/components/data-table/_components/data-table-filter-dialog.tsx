@@ -11,7 +11,6 @@ import {
 } from "@/components/ui/dialog";
 import { Form, FormControl, FormGroup } from "@/components/ui/form";
 import { dataTableConfig } from "@/config/data-table";
-import { generateRowId } from "@/hooks/use-data-table-query";
 import { getDefaultFilterOperator, getValidFilters } from "@/lib/data-table";
 import { http } from "@/lib/http-client";
 import { Status } from "@/types/common";

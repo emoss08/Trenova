@@ -5,6 +5,7 @@
   
   [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
   [![Go Report Card](https://goreportcard.com/badge/github.com/emoss08/trenova)](https://goreportcard.com/report/github.com/emoss08/trenova)
+  [![Discord](https://dcbadge.limes.pink/api/server/https://discord.gg/XDBqyvrryq?style=flat-square&theme=default-inverted)](https://discord.gg/XDBqyvrryq)
 </div>
 
 > [!IMPORTANT]
@@ -181,8 +182,8 @@ Comprehensive documentation is available:
 
 We believe in building a strong, supportive community around Trenova:
 
-- [GitHub Issues](https://github.com/username/trenova/issues) - Bug reports and feature requests
-- [GitHub Discussions](https://github.com/username/trenova/discussions) - Community discussions and support
+- [GitHub Issues](https://github.com/emoss08/trenova/issues) - Bug reports and feature requests
+- [GitHub Discussions](https://github.com/emoss08/trenova/discussions) - Community discussions and support
 - [Documentation](https://docs.trenova.io) - Comprehensive guides and references
 
 ## Commercial Support

@@ -55,7 +55,10 @@ func (tr *tractorRepository) filterQuery(q *bun.SelectQuery, opts *repositories.
 	if opts.IncludeWorkerDetails {
 		q = q.Relation("PrimaryWorker").Relation("PrimaryWorker.Profile")
 		q = q.Relation("SecondaryWorker").Relation("SecondaryWorker.Profile")
+	}
 
+	if opts.IncludeFleetDetails {
+		q = q.Relation("FleetCode")
 	}
 
 	if opts.Filter.Query != "" {
@@ -119,6 +122,10 @@ func (tr *tractorRepository) GetByID(ctx context.Context, opts repositories.GetT
 		query = query.Relation("SecondaryWorker", func(sq *bun.SelectQuery) *bun.SelectQuery {
 			return sq.Relation("SecondaryWorker.WorkerProfile")
 		})
+	}
+
+	if opts.IncludeFleetDetails {
+		query = query.Relation("FleetCode")
 	}
 
 	// Include the equipment details if requested

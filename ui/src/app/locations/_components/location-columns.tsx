@@ -7,6 +7,7 @@ import {
 import { DataTableDescription } from "@/components/data-table/_components/data-table-components";
 import { StatusBadge } from "@/components/status-badge";
 import { type LocationSchema } from "@/lib/schemas/location-schema";
+import { formatLocation } from "@/lib/utils";
 import { createColumnHelper, type ColumnDef } from "@tanstack/react-table";
 
 export function getColumns(): ColumnDef<LocationSchema>[] {
@@ -59,18 +60,10 @@ export function getColumns(): ColumnDef<LocationSchema>[] {
         <DataTableColumnHeader column={column} title="Address Line" />
       ),
       cell: ({ row }) => {
-        const state = row.original?.state;
-        const addressLine =
-          row.original.addressLine1 +
-          (row.original.addressLine2 ? `, ${row.original.addressLine2}` : "");
-        const cityStateZip = `${row.original.city} ${state?.abbreviation}, ${row.original.postalCode}`;
-
-        return (
-          <p>
-            {addressLine} {cityStateZip}
-          </p>
-        );
+        return <p>{formatLocation(row.original)}</p>;
       },
     },
+
+    commonColumns.createdAt,
   ];
 }

@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/bootstrap/modules/api"
+	"github.com/emoss08/trenova/internal/bootstrap/modules/external"
 	"github.com/emoss08/trenova/internal/bootstrap/modules/infrastructure"
 	"github.com/emoss08/trenova/internal/bootstrap/modules/services"
 	"github.com/emoss08/trenova/internal/bootstrap/modules/validators"
@@ -23,6 +24,7 @@ func Bootstrap() error {
 		infrastructure.Module,
 		redisRepos.Module,
 		postgresRepos.Module,
+		external.Module,
 		validators.Module,
 		services.Module,
 		api.Module,

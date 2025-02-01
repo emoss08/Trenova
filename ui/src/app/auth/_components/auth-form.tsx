@@ -64,7 +64,7 @@ export function AuthForm() {
         </CardTitle>
         <CardDescription className="flex space-x-1 text-sm">
           <span className="text-muted-foreground">
-            Don't have an account yet?
+            Don&apos;t have an account yet?
           </span>
           <Link className="text-primary underline" to="#">
             Create an Account

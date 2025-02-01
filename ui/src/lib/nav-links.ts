@@ -132,8 +132,8 @@ export const routes: routeInfo[] = [
     tree: [
       {
         key: "shipments",
-        label: "Shipment Entry",
-        link: "/shipments/entry",
+        label: "Shipments Management",
+        link: "/shipments/management",
       },
       {
         key: "configuration-files",
@@ -245,6 +245,13 @@ export const commandRoutes: CommandGroupInfo[] = [
     id: "shipment-management",
     label: "Shipment Management",
     routes: [
+      {
+        id: "shipments",
+        link: "/shipments/management",
+        label: "Shipments",
+        icon: faTruck,
+      },
+
       {
         id: "shipment-types",
         link: "/shipments/configurations/shipment-types",

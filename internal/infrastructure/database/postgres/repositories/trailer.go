@@ -52,6 +52,10 @@ func (tr *trailerRepository) filterQuery(q *bun.SelectQuery, opts *repositories.
 		q = q.Relation("EquipmentType").Relation("EquipmentManufacturer")
 	}
 
+	if opts.IncludeFleetDetails {
+		q = q.Relation("FleetCode")
+	}
+
 	if opts.Filter.Query != "" {
 		q = q.Where("tr.code ILIKE ?", "%"+opts.Filter.Query+"%")
 	}
@@ -106,6 +110,10 @@ func (tr *trailerRepository) GetByID(ctx context.Context, opts repositories.GetT
 
 	if opts.IncludeEquipmentDetails {
 		query = query.Relation("EquipmentType").Relation("EquipmentManufacturer")
+	}
+
+	if opts.IncludeFleetDetails {
+		query = query.Relation("FleetCode")
 	}
 
 	if err = query.Scan(ctx); err != nil {

@@ -53,5 +53,6 @@ export function getColumns(): ColumnDef<LocationCategorySchema>[] {
         <DataTableDescription description={row.original.description} />
       ),
     },
+    commonColumns.createdAt,
   ];
 }

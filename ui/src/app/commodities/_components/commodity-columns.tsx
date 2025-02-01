@@ -66,5 +66,6 @@ export function getColumns(): ColumnDef<CommoditySchema>[] {
         <HazmatBadge isHazmat={!!row.original.hazardousMaterialId} />
       ),
     },
+    commonColumns.createdAt,
   ];
 }

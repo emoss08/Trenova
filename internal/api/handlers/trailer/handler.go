@@ -101,6 +101,7 @@ func (h Handler) list(c *fiber.Ctx) error {
 		return h.ts.List(fc.UserContext(), &repositories.ListTrailerOptions{
 			Filter:                  filter,
 			IncludeEquipmentDetails: c.QueryBool("includeEquipmentDetails"),
+			IncludeFleetDetails:     c.QueryBool("includeFleetDetails"),
 		})
 	}
 
@@ -124,6 +125,7 @@ func (h Handler) get(c *fiber.Ctx) error {
 		OrgID:                   reqCtx.OrgID,
 		UserID:                  reqCtx.UserID,
 		IncludeEquipmentDetails: c.QueryBool("includeEquipmentDetails"),
+		IncludeFleetDetails:     c.QueryBool("includeFleetDetails"),
 	})
 	if err != nil {
 		return h.eh.HandleError(c, err)

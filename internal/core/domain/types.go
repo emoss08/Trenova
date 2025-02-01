@@ -39,6 +39,13 @@ const (
 	EquipmentStatusSold = EquipmentStatus("Sold")
 )
 
+type RoutingProvider string
+
+const (
+	// PCMiler is the provider for PCMiler
+	RoutingProviderPCMiler = RoutingProvider("PCMiler")
+)
+
 type Validatable interface {
 	Validate(ctx context.Context, multiErr *errors.MultiError)
 	GetTableName() string

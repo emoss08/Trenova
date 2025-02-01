@@ -81,6 +81,26 @@ func TestTrailerRepository(t *testing.T) {
 		require.NotEmpty(t, result.Items[0].EquipmentManufacturer)
 	})
 
+	t.Run("list trailers with fleet details", func(t *testing.T) {
+		opts := &repoports.ListTrailerOptions{
+			IncludeFleetDetails: true,
+			Filter: &ports.LimitOffsetQueryOptions{
+				Limit:  10,
+				Offset: 0,
+				TenantOpts: &ports.TenantOptions{
+					OrgID: org.ID,
+					BuID:  bu.ID,
+				},
+			},
+		}
+
+		result, err := repo.List(ctx, opts)
+		require.NoError(t, err)
+		require.NotNil(t, result)
+		require.NotEmpty(t, result.Items)
+		require.NotEmpty(t, result.Items[0].FleetCode)
+	})
+
 	t.Run("get trailer by id", func(t *testing.T) {
 		testutils.TestRepoGetByID(ctx, t, repo, repoports.GetTrailerByIDOptions{
 			ID:    trail.ID,
@@ -112,6 +132,19 @@ func TestTrailerRepository(t *testing.T) {
 		require.NotNil(t, entity)
 		require.NotEmpty(t, entity.EquipmentType)
 		require.NotEmpty(t, entity.EquipmentManufacturer)
+	})
+
+	t.Run("get trailer by id with fleet details", func(t *testing.T) {
+		entity, err := repo.GetByID(ctx, repoports.GetTrailerByIDOptions{
+			ID:                  trail.ID,
+			OrgID:               org.ID,
+			BuID:                bu.ID,
+			IncludeFleetDetails: true,
+		})
+
+		require.NoError(t, err)
+		require.NotNil(t, entity)
+		require.NotEmpty(t, entity.FleetCode)
 	})
 
 	t.Run("get trailer by id failure", func(t *testing.T) {

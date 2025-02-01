@@ -13,6 +13,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/hazardousmaterial"
 	"github.com/emoss08/trenova/internal/core/domain/location"
 	"github.com/emoss08/trenova/internal/core/domain/organization"
+	"github.com/emoss08/trenova/internal/core/domain/pcmilerconfiguration"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/pretrainedmodels"
 	"github.com/emoss08/trenova/internal/core/domain/resource"
@@ -64,8 +65,10 @@ func RegisterEntities() []any {
 		&trailer.Trailer{},
 		&location.LocationCategory{},
 		&location.Location{},
+		&shipment.Stop{},
 		&shipment.ShipmentCommodity{},
 		&shipment.ShipmentMove{},
 		&shipment.Shipment{},
+		&pcmilerconfiguration.PCMilerConfiguration{},
 	}
 }

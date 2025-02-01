@@ -15,7 +15,7 @@ import (
 	"github.com/uptrace/bun"
 )
 
-var _ bun.BeforeAppendModelHook = (*Worker)(nil)
+var _ bun.BeforeAppendModelHook = (*WorkerPTO)(nil)
 
 type WorkerPTO struct {
 	bun.BaseModel `bun:"table:worker_pto,alias:wpto" json:"-"`
