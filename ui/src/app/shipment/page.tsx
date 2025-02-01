@@ -14,7 +14,7 @@ export function Shipment() {
             <div className="h-full w-full bg-muted" />
           </div>
           <div className="col-span-9">
-            <APIProvider apiKey={"AIzaSyB5vu2b8MNo3UA9KbTpS30eaO00R6CTz-c"}>
+            <APIProvider apiKey={import.meta.env.VITE_GOOGLE_MAPS_API_KEY}>
               <Map
                 defaultCenter={position}
                 defaultZoom={10}
