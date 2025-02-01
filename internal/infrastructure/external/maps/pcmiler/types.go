@@ -1,7 +1,12 @@
 package pcmiler
 
-// SingleSearchURL is the URL for the single search API
-var SingleSearchURL = "https://singlesearch.alk.com/NA/api/search"
+var (
+	// SingleSearchURL is the URL for the single search API
+	SingleSearchURL = "https://singlesearch.alk.com/NA/api/search"
+
+	// RouteReportURL is the URL for the route report API
+	RouteReportURL = "https://pcmiler.alk.com/apis/rest/v1.0/Service.svc/route/routeReports"
+)
 
 // Address struct represents address details
 type Address struct {

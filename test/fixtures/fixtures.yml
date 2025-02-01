@@ -628,6 +628,11 @@
       postal_code: "90241"
       state_id: "{{ $.UsState.ca.ID }}"
       location_category_id: "{{ $.LocationCategory.location_category_1.ID }}"
+      latitude: 33.93638237907036
+      longitude: -118.12713490285472
+      place_id: "ChIJd2xkV5zNwoAROL47nNV-eKw"
+      is_geocoded: true
+
     - _id: test_location_2
       organization_id: "{{ $.Organization.trenova.ID }}"
       business_unit_id: "{{ $.BusinessUnit.trenova.ID }}"
@@ -639,6 +644,11 @@
       postal_code: "27410"
       state_id: "{{ $.UsState.nc.ID }}"
       location_category_id: "{{ $.LocationCategory.location_category_1.ID }}"
+      latitude: 36.08947731626447
+      longitude: -79.77463246046224
+      place_id: "ChIJqQCYky0fU4gRGsIU6EhmoPA"
+      is_geocoded: true
+
     - _id: test_location_3
       organization_id: "{{ $.Organization.trenova.ID }}"
       business_unit_id: "{{ $.BusinessUnit.trenova.ID }}"
@@ -649,7 +659,11 @@
       city: "Dallas"
       postal_code: "75231"
       state_id: "{{ $.UsState.tx.ID }}"
+      longitude: -96.75433187219494
+      latitude: 32.86299364462629
       location_category_id: "{{ $.LocationCategory.location_category_1.ID }}"
+      place_id: "ChIJBRfH_4WfToYRFFH_9IqgCPY"
+      is_geocoded: true
 
 - model: ServiceType
   rows:

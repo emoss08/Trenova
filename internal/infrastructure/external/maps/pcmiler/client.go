@@ -70,3 +70,29 @@ func (c *client) SingleSearch(ctx context.Context, params *SingleSearchParams) (
 
 	return &locationResp, nil
 }
+
+type RouteReportParams struct {
+	AuthToken string `url:"authToken"`
+
+	// Comma separated list of lat/long pairs separated by semi colons
+	// Example: -76.123456,42.123456;-76.123126,42.123126
+	Stops string `url:"stops"`
+
+	// The asset ID to use for the route report
+	AssetID string `url:"assetId"`
+
+	// The place ID to use for the route report
+	PlaceID string `url:"placeId"`
+
+	// The region to use for the route report
+	// Default is 4 (North America)
+	Region Region `url:"region"`
+
+	// Comma separated list of reports to generate
+	// Example: "Mileage,Detail,CalcMiles,Directions,Geotunnel,LeastCost,Road,State,WeatherAlerts"
+	Reports string `url:"reports"`
+}
+
+// func (c *client) RouteReport(ctx context.Context, params *RouteReportParams) (interface{}, error) {
+
+// }

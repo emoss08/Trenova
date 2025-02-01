@@ -57,6 +57,9 @@ const vendorChunks = {
     "@fortawesome/pro-solid-svg-icons",
   ],
 
+  // Maps
+  "google-maps": ["@vis.gl/react-google-maps"],
+
   // Date handling
   "date-utils": ["date-fns", "chrono-node"],
 

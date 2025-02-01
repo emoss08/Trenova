@@ -189,7 +189,7 @@ export function IndicatorSeparator(props: IndicatorSeparatorProps) {
 export function ClearIndicator(props: ClearIndicatorProps) {
   return (
     <components.ClearIndicator {...props}>
-      <Icon icon={faXmark} className="size-3 shrink-0" />
+      <Icon icon={faXmark} className="size-3" />
     </components.ClearIndicator>
   );
 }
