@@ -1,5 +1,44 @@
+import { TimeFormat } from "@/types/user";
 import * as chrono from "chrono-node";
 import { format, fromUnixTime } from "date-fns";
+
+type DateFormatOptions = {
+  /**
+   * The timezone to format the date in
+   * @default 'UTC'
+   */
+  timezone?: string;
+
+  /**
+   * The time format to use (12-hour or 24-hour)
+   * @default '24-hour'
+   */
+  timeFormat?: TimeFormat;
+
+  /**
+   * Whether to show seconds
+   * @default false
+   */
+  showSeconds?: boolean;
+
+  /**
+   * Whether to show the timezone name
+   * @default true
+   */
+  showTimeZone?: boolean;
+
+  /**
+   * Whether to show the date
+   * @default true
+   */
+  showDate?: boolean;
+};
+
+const TIME_FORMAT_24 = "HH:mm";
+const TIME_FORMAT_24_WITH_SECONDS = "HH:mm:ss";
+const DATE_FORMAT = "MM/dd/yyyy";
+const DATE_TIME_FORMAT_24 = `${DATE_FORMAT} ${TIME_FORMAT_24}`;
+const DATE_TIME_FORMAT_24_WITH_SECONDS = `${DATE_FORMAT} ${TIME_FORMAT_24_WITH_SECONDS}`;
 
 /**
  * Converts a Date object to a Unix timestamp.
@@ -7,8 +46,12 @@ import { format, fromUnixTime } from "date-fns";
  *
  * @param date The Date object to convert.
  * @returns A Unix timestamp representing the input date.
+ * @throws {Error} If the input date is invalid
  */
 export function dateToUnixTimestamp(date: Date): number {
+  if (!(date instanceof Date) || isNaN(date.getTime())) {
+    throw new Error("Invalid date provided to dateToUnixTimestamp");
+  }
   return Math.floor(date.getTime() / 1000);
 }
 
@@ -21,7 +64,6 @@ export function dateToUnixTimestamp(date: Date): number {
 export function getTodayDate(): number {
   const date = new Date();
   date.setUTCHours(0, 0, 0, 0);
-
   return dateToUnixTimestamp(date);
 }
 
@@ -32,43 +74,57 @@ export function getTodayDate(): number {
  * @param unixTimeStamp The Unix timestamp to convert, or undefined.
  * @returns A Date object representing the timestamp, or undefined if the input is undefined.
  */
-export const toDate = (unixTimeStamp: number | undefined) => {
-  return unixTimeStamp ? new Date(unixTimeStamp * 1000) : undefined;
+export const toDate = (unixTimeStamp: number | undefined): Date | undefined => {
+  if (!unixTimeStamp || isNaN(unixTimeStamp)) {
+    return undefined;
+  }
+  const date = new Date(unixTimeStamp * 1000);
+  return isNaN(date.getTime()) ? undefined : date;
 };
 
 /**
- * Converts a Unix timestamp to a Date object.
+ * Converts a Date object to a Unix timestamp.
  * Handles undefined input gracefully.
  *
- * @param unixTimeStamp The Unix timestamp to convert, or undefined.
- * @returns A Date object representing the timestamp, or undefined if the input is undefined.
+ * @param date The Date object to convert, or undefined.
+ * @returns A Unix timestamp representing the date, or undefined if the input is undefined.
  */
-export const toUnixTimeStamp = (date: Date | undefined) => {
-  if (!date) return undefined;
-
-  return date ? Math.floor(date.getTime() / 1000) : undefined;
+export const toUnixTimeStamp = (date: Date | undefined): number | undefined => {
+  if (!date || !(date instanceof Date) || isNaN(date.getTime())) {
+    return undefined;
+  }
+  return Math.floor(date.getTime() / 1000);
 };
 
 /**
  * Generates a date string from a Date object.
- * Formats the date using date-fns in the format "MMM do yyyy".
+ * Formats the date using date-fns in the format "dd MMM yyyy".
  *
  * @param date The Date object to format.
  * @returns A formatted date string.
+ * @throws {Error} If the input date is invalid
  */
-export function generateDateOnlyString(date: Date) {
-  return format(date, "MMM do yyyy");
+export function generateDateOnlyString(date: Date): string {
+  if (!(date instanceof Date) || isNaN(date.getTime())) {
+    throw new Error("Invalid date provided to generateDateOnlyString");
+  }
+  return format(date, DATE_FORMAT);
 }
 
 /**
  * Generates a Date object with the time set to midnight (00:00:00) from a date string.
  * Parses the input string using chrono-node and normalizes the time to midnight.
+ *
  * @param date The date string to parse.
  * @returns A Date object representing the parsed date at midnight, or null if parsing fails.
  */
-export function generateDateOnly(date: string) {
+export function generateDateOnly(date: string): Date | null {
+  if (!date || typeof date !== "string") {
+    return null;
+  }
+
   const parsed = chrono.parseDate(date);
-  if (parsed) {
+  if (parsed && !isNaN(parsed.getTime())) {
     const normalized = new Date(parsed);
     normalized.setHours(0, 0, 0, 0);
     return normalized;
@@ -76,33 +132,61 @@ export function generateDateOnly(date: string) {
   return null;
 }
 
-const dateOnlyFormatRegex =
-  /^(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\s([1-9]|[12]\d|3[01])(st|nd|rd|th)\s\d{4}$/;
+// const dateOnlyFormatRegex =
+//   /^(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\s([1-9]|[12]\d|3[01])(st|nd|rd|th)\s\d{4}$/;
 
-export function isValidDateOnlyFormat(dateString: string) {
-  return dateOnlyFormatRegex.test(dateString);
+/**
+ * Checks if a date string matches the expected format.
+ *
+ * @param dateString The date string to validate.
+ * @returns True if the date string matches the format, false otherwise.
+ */
+export function isValidDateOnlyFormat(dateString: string): boolean {
+  if (!dateString || typeof dateString !== "string") {
+    return false;
+  }
+  try {
+    const date = new Date(dateString);
+    return !isNaN(date.getTime()) && format(date, DATE_FORMAT) === dateString;
+  } catch {
+    return false;
+  }
 }
 
 /**
- * Generates a date and time string from a Date object.
- * Formats the date using date-fns in the format "MMM do yyyy, hh:mm a".
+ * Generates a date and time string from a Date object using 24-hour format.
  *
  * @param date The Date object to format.
+ * @param showSeconds Whether to include seconds in the output.
  * @returns A formatted date and time string.
+ * @throws {Error} If the input date is invalid
  */
-export function generateDateTimeString(date: Date) {
-  return format(date, "MMM do yyyy, hh:mm a");
+export function generateDateTimeString(
+  date: Date,
+  showSeconds = false,
+): string {
+  if (!(date instanceof Date) || isNaN(date.getTime())) {
+    throw new Error("Invalid date provided to generateDateTimeString");
+  }
+  return format(
+    date,
+    showSeconds ? DATE_TIME_FORMAT_24_WITH_SECONDS : DATE_TIME_FORMAT_24,
+  );
 }
 
 /**
  * Generates a Date object from a date and time string.
- * Parses the input string using chrono-node.
  *
  * @param date The date and time string to parse.
  * @returns A Date object representing the parsed date and time, or null if parsing fails.
  */
-export function generateDateTime(date: string) {
-  return chrono.parseDate(date);
+export function generateDateTime(date: string): Date | null {
+  if (!date || typeof date !== "string") {
+    return null;
+  }
+
+  const parsed = chrono.parseDate(date);
+  return parsed && !isNaN(parsed.getTime()) ? parsed : null;
 }
 
 const dateTimeFormatRegex =
@@ -110,39 +194,75 @@ const dateTimeFormatRegex =
 
 /**
  * Checks if a date string is in a valid date and time format.
- * Uses a regular expression to validate the format "MMM do yyyy, hh:mm a".
  *
  * @param dateString The date string to validate.
  * @returns True if the date string is in the valid format, false otherwise.
  */
-export function isValidDateTimeFormat(dateString: string) {
+export function isValidDateTimeFormat(dateString: string): boolean {
+  if (!dateString || typeof dateString !== "string") {
+    return false;
+  }
   return dateTimeFormatRegex.test(dateString);
 }
 
 /**
- * Formats a Unix timestamp to a date and time string in the specified timezone.
- * Converts the timestamp to a Date object and formats it using the provided timezone.
+ * Formats a Unix timestamp to a localized date string based on user preferences
  *
- * @param timestamp The Unix timestamp to format.
- * @param timezone The timezone to format the date in
- * @returns A formatted date and time string in the specified timezone, or "N/A" if the date is invalid.
+ * @param timestamp - Unix timestamp in seconds
+ * @param options - Formatting options
+ * @returns Formatted date string
  */
-export function formatToUserTimezone(timestamp: number, timezone?: string) {
-  // Convert Unix timestamp to Date object
+export function formatToUserTimezone(
+  timestamp: number,
+  options: DateFormatOptions = {},
+): string {
+  if (!timestamp || isNaN(timestamp)) {
+    return "N/A";
+  }
+
+  const {
+    timezone = "UTC",
+    showSeconds = false,
+    showTimeZone = true,
+    showDate = true,
+  } = options;
+
   const date = fromUnixTime(timestamp);
 
-  // Check if the date is valid
   if (isNaN(date.getTime())) {
     return "N/A";
   }
 
-  return date.toLocaleString("en-US", {
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
+  const formatOptions: Intl.DateTimeFormatOptions = {
     hour: "2-digit",
     minute: "2-digit",
-    timeZone: timezone || "UTC",
-    timeZoneName: "short",
-  });
+    timeZone: timezone,
+    hour12: false, // Always use 24-hour format
+  };
+
+  if (showSeconds) {
+    formatOptions.second = "2-digit";
+  }
+
+  if (showTimeZone) {
+    formatOptions.timeZoneName = "short";
+  }
+
+  if (showDate) {
+    formatOptions.year = "numeric";
+    formatOptions.month = "2-digit";
+    formatOptions.day = "2-digit";
+  }
+
+  return new Intl.DateTimeFormat("en-US", formatOptions).format(date);
+}
+
+/**
+ * Validates if a given value is a valid Date object
+ *
+ * @param date - Value to check
+ * @returns boolean indicating if the value is a valid Date
+ */
+export function isValidDate(date: unknown): date is Date {
+  return date instanceof Date && !isNaN(date.getTime());
 }

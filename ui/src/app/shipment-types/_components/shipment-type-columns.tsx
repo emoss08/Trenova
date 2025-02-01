@@ -40,5 +40,6 @@ export function getColumns(): ColumnDef<ShipmentTypeSchema>[] {
         <DataTableDescription description={row.original.description} />
       ),
     },
+    commonColumns.createdAt,
   ];
 }

@@ -13,9 +13,11 @@ import (
 	"github.com/emoss08/trenova/internal/api/handlers/locationcategory"
 	"github.com/emoss08/trenova/internal/api/handlers/organization"
 	"github.com/emoss08/trenova/internal/api/handlers/reporting"
+	"github.com/emoss08/trenova/internal/api/handlers/routing"
 	"github.com/emoss08/trenova/internal/api/handlers/search"
 	"github.com/emoss08/trenova/internal/api/handlers/servicetype"
 	"github.com/emoss08/trenova/internal/api/handlers/session"
+	"github.com/emoss08/trenova/internal/api/handlers/shipment"
 	"github.com/emoss08/trenova/internal/api/handlers/shipmenttype"
 	"github.com/emoss08/trenova/internal/api/handlers/tableconfiguration"
 	"github.com/emoss08/trenova/internal/api/handlers/tractor"
@@ -51,4 +53,6 @@ var HandlersModule = fx.Module("api.Handlers", fx.Provide(
 	tractor.NewHandler,
 	trailer.NewHandler,
 	customer.NewHandler,
+	shipment.NewHandler,
+	routing.NewHandler,
 ))

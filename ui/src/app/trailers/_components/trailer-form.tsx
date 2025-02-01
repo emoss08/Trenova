@@ -46,6 +46,7 @@ function GeneralInformationSection({
           label="Equipment Type"
           placeholder="Equipment Type"
           description="The type of equipment the trailer is categorized under."
+          hasPermission
           hasPopoutWindow
           popoutLink="/equipment/configurations/equipment-types/"
           popoutLinkLabel="Equipment Type"
@@ -60,6 +61,7 @@ function GeneralInformationSection({
           label="Equipment Manufacturer"
           placeholder="Equipment Manufacturer"
           description="The manufacturer of the trailer's equipment."
+          hasPermission
           hasPopoutWindow
           popoutLink="/equipment/configurations/equipment-manufacturers/"
           popoutLinkLabel="Equipment Manufacturer"
@@ -111,6 +113,7 @@ function GeneralInformationSection({
           label="Fleet Code"
           placeholder="Fleet Code"
           description="The fleet code associated with the trailer."
+          hasPermission
           hasPopoutWindow
           popoutLink="/dispatch/configurations/fleet-codes/"
           popoutLinkLabel="Fleet Code"

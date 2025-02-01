@@ -14,6 +14,7 @@ export default function TrailerTable() {
       link="/trailers/"
       extraSearchParams={{
         includeEquipmentDetails: true,
+        includeFleetDetails: true,
       }}
       queryKey="trailer-list"
       exportModelName="trailer"

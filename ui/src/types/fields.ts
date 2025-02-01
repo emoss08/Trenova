@@ -12,9 +12,12 @@ import { GroupBase, Props as ReactSelectProps } from "react-select";
 import { type AsyncProps as ReactAsyncSelectProps } from "react-select/async";
 
 type BaseInputFieldProps = Omit<InputProps, "name"> & {
-  label: string;
+  label?: string;
   description?: string;
 };
+
+export type InputFieldProps<T extends FieldValues> = BaseInputFieldProps &
+  FormControlProps<T>;
 
 type FormControlProps<T extends FieldValues> = {
   name: Path<T>;
@@ -27,9 +30,6 @@ export type ColorFieldProps<TFieldValues extends FieldValues> = {
   label?: string;
   className?: string;
 } & FormControlProps<TFieldValues>;
-
-export type InputFieldProps<T extends FieldValues> = BaseInputFieldProps &
-  FormControlProps<T>;
 
 type BaseCheckboxFieldProps = Omit<CheckboxProps, "name"> & {
   label: string;
@@ -78,7 +78,7 @@ export type BaseSelectFieldProps = Omit<
 > & {
   onChange: (...event: any[]) => void;
   options: SelectOption[];
-  label: string;
+  label?: string;
   description?: string;
   isReadOnly?: boolean;
   isInvalid?: boolean;
@@ -93,7 +93,7 @@ export type BaseAsyncSelectFieldProps = Omit<
 > & {
   onChange: (...event: any[]) => void;
   link: string;
-  label: string;
+  label?: string;
   description?: string;
   isReadOnly?: boolean;
   isInvalid?: boolean;

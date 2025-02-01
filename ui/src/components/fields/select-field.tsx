@@ -223,8 +223,7 @@ const ReactSelectInput = React.forwardRef<any, ReactSelectInputProps>(
           multiValueLabel: () => "text-xs leading-4",
           multiValueRemove: () =>
             "hover:text-foreground/50 text-foreground rounded-md h-4 w-4",
-          indicatorsContainer: () =>
-            cn("gap-1", isReadOnly && "cursor-not-allowed"),
+          indicatorsContainer: () => cn(isReadOnly && "cursor-not-allowed"),
           clearIndicator: () => "text-foreground/50 hover:text-foreground",
           dropdownIndicator: () =>
             "p-1 text-foreground/50 rounded-md hover:text-foreground",
@@ -263,6 +262,7 @@ export function SelectField<T extends FieldValues>({
   isReadOnly,
   isMulti,
   isLoading,
+  isClearable,
   isFetchError,
   placeholder,
   menuPlacement,
@@ -296,6 +296,7 @@ export function SelectField<T extends FieldValues>({
             ref={ref}
             name={name}
             isMulti={isMulti}
+            isClearable={isClearable}
             onChange={onChange}
             placeholder={placeholder}
             onBlur={onBlur}

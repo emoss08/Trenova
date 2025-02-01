@@ -87,6 +87,7 @@ export function TractorForm() {
           label="Fleet Code"
           placeholder="Fleet Code"
           description="Select the fleet code of the tractor"
+          hasPermission
           hasPopoutWindow
           popoutLink="/dispatch/configurations/fleet-codes/"
           popoutLinkLabel="Fleet Code"
@@ -101,6 +102,7 @@ export function TractorForm() {
           label="Equipment Type"
           placeholder="Equipment Type"
           description="Select the equipment type of the tractor"
+          hasPermission
           hasPopoutWindow
           popoutLink="/equipment/configurations/equipment-types/"
           popoutLinkLabel="Equipment Type"
@@ -115,9 +117,10 @@ export function TractorForm() {
           label="Equipment Manufacturer"
           placeholder="Equipment Manufacturer"
           description="Select the equipment manufacturer of the tractor"
+          hasPermission
           hasPopoutWindow
           popoutLink="/equipment/configurations/equipment-manufacturers/"
-          popoutLinkLabel="Equipment Manufacturer"
+          popoutLinkLabel="Equip Manu."
         />
       </FormControl>
       <FormControl>
@@ -129,6 +132,7 @@ export function TractorForm() {
           label="Primary Worker"
           placeholder="Primary Worker"
           description="Select the primary worker of the tractor"
+          hasPermission
           hasPopoutWindow
           popoutLink="/dispatch/configurations/workers/"
           popoutLinkLabel="Worker"
@@ -142,6 +146,7 @@ export function TractorForm() {
           label="Secondary Worker"
           placeholder="Secondary Worker"
           description="Select the secondary worker of the tractor"
+          hasPermission
           hasPopoutWindow
           popoutLink="/dispatch/configurations/workers/"
           popoutLinkLabel="Worker"

@@ -35,8 +35,7 @@ export const queries = createQueryKeyStore({
     options: () => ({
       queryKey: ["us-states/options"],
       queryFn: async () => {
-        const response = await getUsStateOptions();
-        return response;
+        return await getUsStateOptions();
       },
     }),
   },

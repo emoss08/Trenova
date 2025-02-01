@@ -1,7 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Icon } from "@/components/ui/icons";
 
-import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -11,7 +10,7 @@ import {
 } from "@/components/ui/popover";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Switch } from "@/components/ui/switch";
-import { toSentenceCase } from "@/lib/utils";
+import { toSentenceCase, toTitleCase } from "@/lib/utils";
 import { useTableStore } from "@/stores/table-store";
 import {
   DataTableCreateButtonProps,
@@ -147,13 +146,9 @@ export function DataTableViewOptions<TData>({
         >
           <Icon icon={faEye} className="size-4" />
           View
-          <Badge
-            variant="default"
-            withDot={false}
-            className="ml-0.5 size-4 text-xs p-1 rounded-sm"
-          >
+          <div className="size-4 text-2xs rounded-sm bg-foreground text-background">
             {visibleColumnsCount}
-          </Badge>
+          </div>
           <span className="sr-only">Toggle column visibility options</span>
         </Button>
       </PopoverTrigger>
@@ -180,7 +175,7 @@ export function DataTableViewOptions<TData>({
                         htmlFor={column.id}
                         className="flex-grow text-sm font-normal"
                       >
-                        {toSentenceCase(column.id)}
+                        {toTitleCase(column.id)}
                       </Label>
                       <Switch
                         id={column.id}
@@ -188,7 +183,7 @@ export function DataTableViewOptions<TData>({
                         onCheckedChange={() =>
                           handleToggleVisibility(column.id, isVisible)
                         }
-                        aria-label={`Toggle ${toSentenceCase(column.id)} column`}
+                        aria-label={`Toggle ${toTitleCase(column.id)} column`}
                       />
                     </div>
                   );

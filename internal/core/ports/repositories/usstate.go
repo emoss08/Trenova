@@ -9,6 +9,7 @@ import (
 
 type UsStateRepository interface {
 	List(ctx context.Context) (*ports.ListResult[*usstate.UsState], error)
+	GetByAbbreviation(ctx context.Context, abbreviation string) (*usstate.UsState, error)
 }
 
 type UsStateCacheRepository interface {

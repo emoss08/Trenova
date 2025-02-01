@@ -40,5 +40,6 @@ export function getColumns(): ColumnDef<ServiceTypeSchema>[] {
         <DataTableDescription description={row.original.description} />
       ),
     },
+    commonColumns.createdAt,
   ];
 }

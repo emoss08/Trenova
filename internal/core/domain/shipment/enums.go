@@ -3,40 +3,40 @@ package shipment
 type Status string
 
 const (
-	New       = Status("New")
-	InTransit = Status("InTransit")
-	Delayed   = Status("Delayed")
-	Completed = Status("Completed")
-	Billed    = Status("Billed")
-	Canceled  = Status("Canceled")
+	StatusNew       = Status("New")
+	StatusInTransit = Status("InTransit")
+	StatusDelayed   = Status("Delayed")
+	StatusCompleted = Status("Completed")
+	StatusBilled    = Status("Billed")
+	StatusCanceled  = Status("Canceled")
 )
 
 type RatingMethod string
 
 const (
 	// FlatRate is the cost per shipment
-	FlatRate = RatingMethod("FlatRate")
+	RatingMethodFlatRate = RatingMethod("FlatRate")
 
 	// PerMile is the cost per mile of the shipment
-	PerMile = RatingMethod("PerMile")
+	RatingMethodPerMile = RatingMethod("PerMile")
 
 	// PerStop is the cost per stop of the shipment
-	PerStop = RatingMethod("PerStop")
+	RatingMethodPerStop = RatingMethod("PerStop")
 
 	// PerPound is the cost per pound of the shipment
-	PerPound = RatingMethod("PerPound")
+	RatingMethodPerPound = RatingMethod("PerPound")
 
 	// PerPallet is the cost per pallet position used
-	PerPallet = RatingMethod("PerPallet")
+	RatingMethodPerPallet = RatingMethod("PerPallet")
 
 	// PerLinearFoot is the cost based on the linear feet of trailer space used.
 	// This is commonly used for LTL shipments, Flatbed haulers, and specific
 	// commodities that are measured in linear feet.
-	PerLinearFoot = RatingMethod("PerLinearFoot")
+	RatingMethodPerLinearFoot = RatingMethod("PerLinearFoot")
 
 	// Other takes the rating units and the rate and does multiplication
 	// of the two to get the total cost
-	Other = RatingMethod("Other")
+	RatingMethodOther = RatingMethod("Other")
 )
 
 type EntryMethod string

@@ -46,5 +46,6 @@ export function getColumns(): ColumnDef<EquipmentTypeSchema>[] {
         <DataTableDescription description={row.original.description} />
       ),
     },
+    commonColumns.createdAt,
   ];
 }

@@ -26,7 +26,7 @@ export function CreateEquipManufacturerModal({
     <FormCreateModal
       open={open}
       onOpenChange={onOpenChange}
-      title="Equipment Type"
+      title="Equipment Manufacturer"
       formComponent={<EquipManufacturerForm />}
       form={form}
       schema={equipmentManufacturerSchema}

@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/bytedance/sonic"
 	val "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/rotisserie/eris"
 )
@@ -37,6 +38,8 @@ func IsError(err error) bool {
 }
 
 type MultiError struct {
+	prefix string
+	parent *MultiError
 	Errors []*Error `json:"errors"`
 }
 
@@ -46,19 +49,72 @@ func NewMultiError() *MultiError {
 	}
 }
 
+// getFullPrefix builds the complete prefix by walking up the parent chain
+func (m *MultiError) getFullPrefix() string {
+	var prefixes []string
+	current := m
+
+	// Walk up the parent chain collecting prefixes
+	for current != nil && current.prefix != "" {
+		prefixes = append([]string{current.prefix}, prefixes...)
+		current = current.parent
+	}
+
+	if len(prefixes) == 0 {
+		return ""
+	}
+
+	return strings.Join(prefixes, ".")
+}
+
+func (m *MultiError) WithPrefix(prefix string) *MultiError {
+	return &MultiError{
+		prefix: prefix,
+		parent: m,
+		Errors: m.Errors, // Share the same error slice with parent
+	}
+}
+
+func (m *MultiError) WithIndex(prefix string, idx int) *MultiError {
+	return m.WithPrefix(fmt.Sprintf("%s[%d]", prefix, idx))
+}
+
 // Add adds a new validation error to the collection
 func (m *MultiError) Add(field string, code ErrorCode, message string) {
-	m.Errors = append(m.Errors, &Error{
-		Field:   field,
+	fieldPath := field
+	fullPrefix := m.getFullPrefix()
+
+	if fullPrefix != "" {
+		if field != "" {
+			fieldPath = fmt.Sprintf("%s.%s", fullPrefix, field)
+		} else {
+			fieldPath = fullPrefix
+		}
+	}
+
+	err := &Error{
+		Field:   fieldPath,
 		Code:    code,
 		Message: message,
-	})
+	}
+
+	// Always add to the root parent
+	root := m
+	for root.parent != nil {
+		root = root.parent
+	}
+	root.Errors = append(root.Errors, err)
 }
 
 // AddError adds an existing Error to the collection
 func (m *MultiError) AddError(err *Error) {
 	if err != nil {
-		m.Errors = append(m.Errors, err)
+		// If this is a child MultiError, propagate to parent
+		if m.parent != nil {
+			m.parent.Errors = append(m.parent.Errors, err)
+		} else {
+			m.Errors = append(m.Errors, err)
+		}
 	}
 }
 
@@ -90,6 +146,14 @@ func (m *MultiError) MarshalJSON() ([]byte, error) {
 	}{
 		Errors: m.Errors,
 	})
+}
+
+func (m *MultiError) ToJSON() string {
+	output, err := sonic.Marshal(m)
+	if err != nil {
+		return ""
+	}
+	return string(output)
 }
 
 func IsMultiError(err error) bool {
@@ -287,11 +351,38 @@ func inferErrorCode(err error) ErrorCode {
 	}
 }
 
+// Deprecated: Use FromOzzoErrors instead.
 func FromValidationErrors(valErrors val.Errors, multiErr *MultiError, prefix string) {
 	for field, err := range valErrors {
 		fieldName := field
-		if prefix != "" {
+		fullPrefix := multiErr.getFullPrefix() // Get the full prefix from MultiError
+
+		// Combine prefixes if both exist
+		if fullPrefix != "" {
+			if prefix != "" {
+				fieldName = fmt.Sprintf("%s.%s.%s", fullPrefix, prefix, field)
+			} else {
+				fieldName = fmt.Sprintf("%s.%s", fullPrefix, field)
+			}
+		} else if prefix != "" {
 			fieldName = fmt.Sprintf("%s.%s", prefix, field)
+		}
+
+		multiErr.AddError(&Error{
+			Field:   fieldName,
+			Code:    inferErrorCode(err),
+			Message: err.Error(),
+		})
+	}
+}
+
+func FromOzzoErrors(valErrors val.Errors, multiErr *MultiError) {
+	for field, err := range valErrors {
+		fieldName := field
+		fullPrefix := multiErr.getFullPrefix() // Get the full prefix from MultiError
+
+		if fullPrefix != "" {
+			fieldName = fmt.Sprintf("%s.%s", fullPrefix, field)
 		}
 
 		multiErr.AddError(&Error{

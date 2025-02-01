@@ -201,7 +201,10 @@ export function FormEditModal<T extends FieldValues>({
         {!isLoading && currentRecord && (
           <DialogDescription>
             Last updated on{" "}
-            {formatToUserTimezone(currentRecord.updatedAt, user?.timezone)}
+            {formatToUserTimezone(currentRecord.updatedAt, {
+              timezone: user?.timezone,
+              timeFormat: user?.timeFormat,
+            })}
           </DialogDescription>
         )}
       </DialogHeader>

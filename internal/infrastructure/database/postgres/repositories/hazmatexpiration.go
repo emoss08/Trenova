@@ -43,8 +43,6 @@ func (r *hazmatExpirationRepository) GetHazmatExpirationByStateID(ctx context.Co
 		return nil, eris.Wrap(err, "get database connection")
 	}
 
-	r.logger.Debug().Str("state_id", stateID.String()).Msg("getting hazmat expiration")
-
 	expiration := new(compliance.HazmatExpiration)
 	err = dba.NewSelect().Model(expiration).
 		Where("state_id = ?", stateID).
@@ -52,8 +50,6 @@ func (r *hazmatExpirationRepository) GetHazmatExpirationByStateID(ctx context.Co
 	if err != nil {
 		return nil, eris.Wrap(err, "get hazmat expiration by state id")
 	}
-
-	r.logger.Debug().Interface("expiration", expiration).Msg("hazmat expiration")
 
 	return expiration, nil
 }

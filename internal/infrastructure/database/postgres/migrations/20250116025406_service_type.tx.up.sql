@@ -32,7 +32,7 @@ COMMENT ON TABLE "service_types" IS 'Stores information about service types';
 
 --bun:split
 ALTER TABLE "shipments"
-    ADD COLUMN "service_type_id" varchar(100);
+    ADD COLUMN "service_type_id" varchar(100) NOT NULL;
 
 ALTER TABLE "shipments"
     ADD CONSTRAINT "fk_shipments_service_type" FOREIGN KEY ("service_type_id", "business_unit_id", "organization_id") REFERENCES "service_types"("id", "business_unit_id", "organization_id") ON UPDATE NO ACTION ON DELETE SET NULL;

@@ -2,6 +2,7 @@ import { type WorkerSchema } from "@/lib/schemas/worker-schema";
 import { badgeVariants } from "@/lib/variants/badge";
 import { type Status } from "@/types/common";
 import { type PackingGroupChoiceProps } from "@/types/hazardous-material";
+import { ShipmentStatus } from "@/types/shipment";
 import { EquipmentStatus } from "@/types/tractor";
 import { type VariantProps } from "class-variance-authority";
 import { Badge } from "./ui/badge";
@@ -51,6 +52,41 @@ export function EquipmentStatusBadge({ status }: { status: EquipmentStatus }) {
     [EquipmentStatus.Sold]: {
       variant: "warning",
       text: "Sold",
+    },
+  };
+
+  return (
+    <Badge variant={statusAttributes[status].variant} className="max-h-6">
+      {statusAttributes[status].text}
+    </Badge>
+  );
+}
+
+export function ShipmentStatusBadge({ status }: { status: ShipmentStatus }) {
+  const statusAttributes: Record<ShipmentStatus, BadgeAttrProps> = {
+    [ShipmentStatus.New]: {
+      variant: "purple",
+      text: "New",
+    },
+    [ShipmentStatus.InTransit]: {
+      variant: "info",
+      text: "In Transit",
+    },
+    [ShipmentStatus.Delayed]: {
+      variant: "warning",
+      text: "Delayed",
+    },
+    [ShipmentStatus.Completed]: {
+      variant: "active",
+      text: "Completed",
+    },
+    [ShipmentStatus.Billed]: {
+      variant: "teal",
+      text: "Billed",
+    },
+    [ShipmentStatus.Canceled]: {
+      variant: "inactive",
+      text: "Canceled",
     },
   };
 

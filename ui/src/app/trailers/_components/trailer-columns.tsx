@@ -54,6 +54,15 @@ export function getColumns(): ColumnDef<Trailer>[] {
         getHeaderText: "Equipment Manufacturer",
       },
     ),
+    createEntityRefColumn<Trailer, "fleetCode">(columnHelper, "fleetCode", {
+      basePath: "/dispatch/configurations/fleet-codes",
+      getId: (fleetCode) => fleetCode.id,
+      getDisplayText: (fleetCode) => fleetCode.name,
+      getHeaderText: "Fleet Code",
+      color: {
+        getColor: (fleetCode) => fleetCode.color,
+      },
+    }),
     {
       accessorKey: "lastInspectionDate",
       header: ({ column }) => (
@@ -64,5 +73,6 @@ export function getColumns(): ColumnDef<Trailer>[] {
         return <LastInspectionDateBadge value={lastInspectionDate} />;
       },
     },
+    commonColumns.createdAt,
   ];
 }
