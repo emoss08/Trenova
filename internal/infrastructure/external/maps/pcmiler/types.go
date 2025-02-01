@@ -85,3 +85,80 @@ type LocationResponse struct {
 	Err       int        `json:"Err"`
 	Locations []Location `json:"Locations"`
 }
+
+type SingleSearchParams struct {
+	// String indicating the text to search for (Required)
+	Query string `json:"query" url:"query"`
+
+	// Limits search results by the specified number. Must be a value between 1 and 100. (Not Required)
+	MaxResults int `json:"maxResults" url:"maxResults"`
+
+	// 	The current longitude and latitude, where longitude and latitude are either decimal or
+	// integer coordinates. (Not Required)
+	CurrentLonLat string `json:"currentLonLat" url:"currentLonLat"`
+
+	// A comma-separated list of InterpTypes to include in the search response.
+	// Allowed filters: Country, State, County, City, POBox, Zip, SPLC, Street, RouteNumber,
+	//  RouteAlpha, POI, POIStreet, FullPostCode, POIType, CrossStreet, LatLon, CustomPlace, and None.
+	// (Example: includeOnly=CustomPlace,Street. This will return only custom places and streets that match
+	// with the search string.)
+	// To include results from ZIP codes that only apply to post office boxes, the values POBox and Zip must be
+	// included in your request. (Not Required)
+	IncludeOnly string `json:"includeOnly" url:"includeOnly"`
+
+	// A comma-separated list of Points of Interest (POI) category names by which you want to filter all POI results. A GET
+	// call to /search/poiCategories can be used to retrieve the current list of
+	// categories available for filtering. (Not Required)
+	PoiCategories string `json:"poiCategories" url:"poiCategories"`
+
+	// A comma-separated list of country codes by which you want to filter all results. It defaults to ISO format.
+	Countries string `json:"countries" url:"countries"`
+
+	// The standard for country abbreviations: ISO, FIPS, GENC2, and GENC3. (Not Required)
+	CountryType string `json:"countryType" url:"countryType"`
+
+	// A comma-separated list of state abbreviations by which you want to filter all results. (Not Required)
+	States string `json:"states" url:"states"`
+
+	// Set to include=Meta to include additional metadata in your results, such as road grid and link
+	// information as well as the confidence level of the search results.
+	// (See QueryConfidence in response parameters below.) (Not Required)
+	Include string `json:"include" url:"include"`
+
+	// If set to true, this option includes custom places in the search results where the location’s PlaceId
+	// or PlaceName starts with the query string. Note that custom places can only be searched by name and ID,
+	// not by address, city, state, or ZIP code. Custom place results will appear before any other search results.
+	// This setting is a convenience feature that integrates a call to the Places API’s places/v1/place/search
+	// endpoint into the single search call. However, it comes with a performance cost, as single search must
+	// wait for the places call to complete before returning results. For optimal performance, consider leaving
+	// this option off (false) and making a separate parallel call to the places endpoint.
+	//  Default is false. (Not Required)
+	UseCustomPlaces bool `json:"useCustomPlaces" url:"useCustomPlaces"`
+
+	// Sets whether the house number should be returned as a separate field from the rest of the street address.
+	// Default is false. (Not Required)
+	SeparateHN bool `json:"separateHN" url:"separateHN"`
+
+	// If set to true, all potential house number ranges will be returned for a particular street match.
+	// Default is false. (Not Required)
+	GetAllHNRanges bool `json:"getAllHNRanges" url:"getAllHNRanges"`
+
+	// Set to true to return the TrimblePlaceId, PlaceName and SiteName for a location, if they exist.
+	// Default is false. (Not Required)
+	IncludeTrimblePlaceIds bool `json:"includeTrimblePlaceIds" url:"includeTrimblePlaceIds"`
+
+	// The language to use in results. U.S. English is the default.
+	Lang string `json:"lang" url:"lang"`
+
+	// Used with partial postal code queries. When provided, the center coordinates of multiple postal code
+	// points will be calculated and returned. For example, a search for &includeOnly=zip&query=840 will return
+	// a long list of ZIP codes starting with “840.” Adding &includeCenter instead returns a single point that is
+	// roughly central to all of those ZIP codes.
+	IncludeCenter bool `json:"includeCenter" url:"includeCenter"`
+
+	// 	Limits the amount of difference that is allowed between the input query and the match results. This is generally better left to the default of false, but in some cases where automation is applied to results, it may limit false positives.
+	StrictMatch bool `json:"strictMatch" url:"strictMatch"`
+
+	// Limits search results to within a specified distance in miles from the current location, as identified by currentLonLat. A valid currentLonLat must be sent in the request for this parameter to take effect. In some cases, a short radiusFromCurrentLonLat may produce no matches.
+	RadiusFromCurrentLonLat float32 `json:"radiusFromCurrentLonLat" url:"radiusFromCurrentLonLat"`
+}
