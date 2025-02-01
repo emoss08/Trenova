@@ -2,7 +2,6 @@
 
 import { MetaTags } from "@/components/meta-tags";
 import { SuspenseLoader } from "@/components/ui/component-loader";
-import { Skeleton } from "@/components/ui/skeleton";
 import { API_URL } from "@/constants/env";
 import { ShipmentFilterSchema } from "@/lib/schemas/shipment-filter-schema";
 import { LimitOffsetResponse } from "@/types/server";
@@ -30,8 +29,11 @@ type ShipmentQueryParams = {
 
 function fetchShipments(queryParams: ShipmentQueryParams) {
   const fetchURL = new URL(`${API_URL}/shipments/`);
-  fetchURL.searchParams.set("pageIndex", queryParams.pageIndex.toString());
-  fetchURL.searchParams.set("pageSize", queryParams.pageSize.toString());
+  fetchURL.searchParams.set("limit", queryParams.pageSize.toString());
+  fetchURL.searchParams.set(
+    "offset",
+    (queryParams.pageIndex * queryParams.pageSize).toString(),
+  );
   fetchURL.searchParams.set(
     "expandShipmentDetails",
     queryParams.expandShipmentDetails.toString(),
@@ -102,24 +104,16 @@ export function Shipment() {
         <FormProvider {...form}>
           <div className="flex gap-4 h-[calc(100vh-theme(spacing.16))]">
             <div className="w-[420px] flex-shrink-0">
-              {isLoading ? (
-                <div className="flex flex-col gap-2">
-                  <Skeleton className="h-10 w-full" />
-                  <Skeleton className="h-10 w-full" />
-                  <Skeleton className="h-10 w-full" />
-                </div>
-              ) : (
-                <ShipmentSidebar
-                  shipments={data?.results || []}
-                  totalCount={data?.count || 0}
-                  page={page ?? 1}
-                  pageSize={pageSize ?? DEFAULT_PAGE_SIZE}
-                  onPageChange={handlePageChange}
-                  onPageSizeChange={handlePageSizeChange}
-                  pageSizeOptions={PAGE_SIZE_OPTIONS}
-                  isLoading={isLoading || isTransitioning}
-                />
-              )}
+              <ShipmentSidebar
+                shipments={data?.results || []}
+                totalCount={data?.count || 0}
+                page={page ?? 1}
+                pageSize={pageSize ?? DEFAULT_PAGE_SIZE}
+                onPageChange={handlePageChange}
+                onPageSizeChange={handlePageSizeChange}
+                pageSizeOptions={PAGE_SIZE_OPTIONS}
+                isLoading={isLoading || isTransitioning}
+              />
             </div>
             <div className="flex-grow rounded-md border overflow-hidden">
               <APIProvider apiKey={import.meta.env.VITE_GOOGLE_MAPS_API_KEY}>

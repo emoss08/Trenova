@@ -18,7 +18,7 @@ export function ShipmentCard({ shipment }: { shipment: ShipmentResponse }) {
   const { status, customer } = shipment;
 
   return (
-    <div className="p-2 border-b border-sidebar-border text-sm last:border-b-0">
+    <div className="p-2 border border-sidebar-border rounded-md bg-card text-sm">
       <div className="flex flex-col gap-2">
         <div className="flex justify-between w-full items-center">
           <ShipmentStatusBadge status={status} />

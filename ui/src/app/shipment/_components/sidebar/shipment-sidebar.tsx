@@ -10,6 +10,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Skeleton } from "@/components/ui/skeleton";
 import { statusChoices } from "@/lib/choices";
 import { ShipmentFilterSchema } from "@/lib/schemas/shipment-filter-schema";
 import { type Shipment as ShipmentResponse } from "@/types/shipment";
@@ -19,6 +20,7 @@ import {
   faFilter,
   faSearch,
 } from "@fortawesome/pro-regular-svg-icons";
+import { useMemo } from "react";
 import { useFormContext } from "react-hook-form";
 import { ShipmentCard } from "./shipment-card";
 import { FilterOptions } from "./shipment-filter-options";
@@ -34,6 +36,26 @@ type ShipmentSidebarProps = {
   isLoading: boolean;
 };
 
+// Define a loading shipment card component
+function ShipmentCardSkeleton() {
+  return (
+    <div className="p-4 border border-sidebar-border rounded-md bg-card space-y-2">
+      <div className="flex justify-between items-start">
+        <Skeleton className="h-4 w-16" />
+        <Skeleton className="h-4 w-8" />
+      </div>
+      <div className="flex justify-between items-start">
+        <Skeleton className="h-4 w-36" />
+        <Skeleton className="h-4 w-16" />
+      </div>
+      <div className="space-y-1">
+        <Skeleton className="h-3 w-52" />
+        <Skeleton className="h-3 w-52" />
+      </div>
+    </div>
+  );
+}
+
 export function ShipmentSidebar({
   shipments,
   totalCount,
@@ -42,13 +64,25 @@ export function ShipmentSidebar({
   onPageChange,
   onPageSizeChange,
   pageSizeOptions,
-  isLoading,
+  isLoading = true,
 }: ShipmentSidebarProps) {
   const { control } = useFormContext<ShipmentFilterSchema>();
   const totalPages = Math.ceil(totalCount / pageSize);
 
   const start = (page - 1) * pageSize + 1;
   const end = Math.min(page * pageSize, totalCount);
+
+  // const isLoading = true;
+  const displayData = useMemo(
+    () =>
+      isLoading
+        ? (Array.from({ length: pageSize }, () => undefined) as (
+            | ShipmentResponse
+            | undefined
+          )[])
+        : shipments,
+    [isLoading, pageSize, shipments],
+  );
 
   return (
     <div className="flex flex-col h-full bg-sidebar rounded-md border border-sidebar-border">
@@ -90,9 +124,13 @@ export function ShipmentSidebar({
       <div className="flex-1 min-h-0">
         <ScrollArea className="h-full">
           <div className="p-2 space-y-2">
-            {shipments.map((shipment) => (
-              <ShipmentCard key={shipment.id} shipment={shipment} />
-            ))}
+            {displayData.map((shipment, index) =>
+              isLoading || !shipment ? (
+                <ShipmentCardSkeleton key={index} />
+              ) : (
+                <ShipmentCard key={shipment.id} shipment={shipment} />
+              ),
+            )}
           </div>
         </ScrollArea>
       </div>
