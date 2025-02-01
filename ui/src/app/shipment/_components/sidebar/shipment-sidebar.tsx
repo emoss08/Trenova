@@ -56,7 +56,7 @@ function ShipmentCardSkeleton() {
   );
 }
 
-export function ShipmentSidebar({
+export default function ShipmentSidebar({
   shipments,
   totalCount,
   page,

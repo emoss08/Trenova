@@ -8,21 +8,27 @@ import {
     TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { CustomerSchema } from "@/lib/schemas/customer-schema";
+import { LocationSchema } from "@/lib/schemas/location-schema";
 import { ShipmentLocations } from "@/lib/shipment/utils";
 import { formatLocation } from "@/lib/utils";
 import { type Shipment as ShipmentResponse } from "@/types/shipment";
-import { faSignalStream } from "@fortawesome/pro-solid-svg-icons";
+import { faSignalStream } from "@fortawesome/pro-regular-svg-icons";
 import { Timeline } from "./shipment-timeline";
 
 export function ShipmentCard({ shipment }: { shipment: ShipmentResponse }) {
   const { status, customer } = shipment;
+  const { origin } = ShipmentLocations.useLocations(shipment);
+
+  if (!origin) {
+    return <p>-</p>;
+  }
 
   return (
     <div className="p-2 border border-sidebar-border rounded-md bg-card text-sm">
       <div className="flex flex-col gap-2">
         <div className="flex justify-between w-full items-center">
           <ShipmentStatusBadge status={status} />
-          <Icon icon={faSignalStream} className="size-4" />
+          <LocationGeocoded location={origin} />
         </div>
         <div className="flex justify-between gap-2">
           <ProNumber shipment={shipment} />
@@ -105,4 +111,22 @@ function StopInformation({ shipment }: { shipment: ShipmentResponse }) {
   ];
 
   return <Timeline items={items} />;
+}
+
+export function LocationGeocoded({ location }: { location: LocationSchema }) {
+  return !location.isGeocoded ? (
+    <TooltipProvider>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <span className="relative flex size-4">
+            <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-red-600 opacity-75"></span>
+            <Icon icon={faSignalStream} className="size-4 text-red-500" />
+          </span>
+        </TooltipTrigger>
+        <TooltipContent>
+          <p>Origin Location Not Geocoded</p>
+        </TooltipContent>
+      </Tooltip>
+    </TooltipProvider>
+  ) : null;
 }

@@ -11,7 +11,7 @@ import { APIProvider, Map } from "@vis.gl/react-google-maps";
 import { parseAsInteger, useQueryState } from "nuqs";
 import { useCallback, useTransition } from "react";
 import { FormProvider, useForm } from "react-hook-form";
-import { ShipmentSidebar } from "./_components/sidebar/shipment-sidebar";
+import ShipmentSidebar from "./_components/sidebar/shipment-sidebar";
 
 const DEFAULT_PAGE_SIZE = 10;
 const PAGE_SIZE_OPTIONS = [10, 25, 50] as const;
@@ -104,16 +104,18 @@ export function Shipment() {
         <FormProvider {...form}>
           <div className="flex gap-4 h-[calc(100vh-theme(spacing.16))]">
             <div className="w-[420px] flex-shrink-0">
-              <ShipmentSidebar
-                shipments={data?.results || []}
-                totalCount={data?.count || 0}
-                page={page ?? 1}
-                pageSize={pageSize ?? DEFAULT_PAGE_SIZE}
-                onPageChange={handlePageChange}
-                onPageSizeChange={handlePageSizeChange}
-                pageSizeOptions={PAGE_SIZE_OPTIONS}
-                isLoading={isLoading || isTransitioning}
-              />
+              <SuspenseLoader>
+                <ShipmentSidebar
+                  shipments={data?.results || []}
+                  totalCount={data?.count || 0}
+                  page={page ?? 1}
+                  pageSize={pageSize ?? DEFAULT_PAGE_SIZE}
+                  onPageChange={handlePageChange}
+                  onPageSizeChange={handlePageSizeChange}
+                  pageSizeOptions={PAGE_SIZE_OPTIONS}
+                  isLoading={isLoading || isTransitioning}
+                />
+              </SuspenseLoader>
             </div>
             <div className="flex-grow rounded-md border overflow-hidden">
               <APIProvider apiKey={import.meta.env.VITE_GOOGLE_MAPS_API_KEY}>
