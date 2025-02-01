@@ -343,6 +343,21 @@
       org_type: BrokerageCarrier
       created_at: "{{ timestamp }}"
 
+- model: PCMilerConfiguration
+  rows:
+    - _id: pcmiler_1
+      organization_id: "{{ $.Organization.trenova.ID }}"
+      business_unit_id: "{{ $.BusinessUnit.trenova.ID }}"
+      api_key: "1234567890"
+      created_at: "{{ timestamp }}"
+      updated_at: "{{ timestamp }}"
+    - _id: pcmiler_2
+      organization_id: "{{ $.Organization.trenova_2.ID }}"
+      business_unit_id: "{{ $.BusinessUnit.trenova.ID }}"
+      api_key: "1234567890"
+      created_at: "{{ timestamp }}"
+      updated_at: "{{ timestamp }}"
+
 - model: User
   rows:
     - _id: test_user

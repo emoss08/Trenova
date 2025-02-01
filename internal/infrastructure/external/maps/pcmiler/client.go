@@ -30,7 +30,10 @@ type client struct {
 func NewClient(p ClientParams) Client {
 	log := p.Logger.With().Str("client", "pcmiler").Logger()
 
-	reqClient := req.C().SetTimeout(10 * time.Second)
+	reqClient := req.C().
+		SetTimeout(10 * time.Second).
+		EnableDumpEachRequest().
+		EnableCompression()
 
 	c := &client{
 		l:  &log,
@@ -48,6 +51,7 @@ func (c *client) SingleSearch(ctx context.Context, params *SingleSearchParams) (
 	}
 
 	url := fmt.Sprintf("%s?%s", SingleSearchURL, v.Encode())
+	c.l.Trace().Msgf("Making single search request to %s", url)
 
 	var locationResp LocationResponse
 	resp, err := c.rc.R().
@@ -60,7 +64,7 @@ func (c *client) SingleSearch(ctx context.Context, params *SingleSearchParams) (
 	}
 
 	if resp.IsErrorState() {
-		c.l.Error().Err(resp.Err).Msg("single search request failed")
+		c.l.Error().Interface("error", resp.Err).Msg("single search request failed")
 		return nil, resp.Err
 	}
 
