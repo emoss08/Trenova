@@ -99,11 +99,10 @@ func (h Handler) list(c *fiber.Ctx) error {
 
 	handler := func(fc *fiber.Ctx, filter *ports.LimitOffsetQueryOptions) (*ports.ListResult[*shipmentdomain.Shipment], error) {
 		return h.ss.List(fc.UserContext(), &repositories.ListShipmentOptions{
-			IncludeMoveDetails:      c.QueryBool("includeMoveDetails"),
-			IncludeCommodityDetails: c.QueryBool("includeCommodityDetails"),
-			IncludeStopDetails:      c.QueryBool("includeStopDetails"),
-			IncludeCustomerDetails:  c.QueryBool("includeCustomerDetails"),
-			Filter:                  filter,
+			ShipmentOptions: repositories.ShipmentOptions{
+				ExpandShipmentDetails: c.QueryBool("expandShipmentDetails"),
+			},
+			Filter: filter,
 		})
 	}
 
@@ -122,14 +121,13 @@ func (h Handler) get(c *fiber.Ctx) error {
 	}
 
 	shp, err := h.ss.Get(c.UserContext(), repositories.GetShipmentByIDOptions{
-		ID:                      shipmentID,
-		BuID:                    reqCtx.BuID,
-		OrgID:                   reqCtx.OrgID,
-		UserID:                  reqCtx.UserID,
-		IncludeMoveDetails:      c.QueryBool("includeMoveDetails"),
-		IncludeCommodityDetails: c.QueryBool("includeCommodityDetails"),
-		IncludeStopDetails:      c.QueryBool("includeStopDetails"),
-		IncludeCustomerDetails:  c.QueryBool("includeCustomerDetails"),
+		ID:     shipmentID,
+		BuID:   reqCtx.BuID,
+		OrgID:  reqCtx.OrgID,
+		UserID: reqCtx.UserID,
+		ShipmentOptions: repositories.ShipmentOptions{
+			ExpandShipmentDetails: c.QueryBool("expandShipmentDetails"),
+		},
 	})
 	if err != nil {
 		return h.eh.HandleError(c, err)

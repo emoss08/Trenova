@@ -1,29 +1,31 @@
 "use no memo";
 
-import { InputField } from "@/components/fields/input-field";
-import { SelectField } from "@/components/fields/select-field";
 import { MetaTags } from "@/components/meta-tags";
-import { Button } from "@/components/ui/button";
 import { SuspenseLoader } from "@/components/ui/component-loader";
-import { Icon } from "@/components/ui/icons";
+import { Skeleton } from "@/components/ui/skeleton";
 import { API_URL } from "@/constants/env";
-import { statusChoices } from "@/lib/choices";
 import { ShipmentFilterSchema } from "@/lib/schemas/shipment-filter-schema";
 import { LimitOffsetResponse } from "@/types/server";
 import { type Shipment as ShipmentResponse } from "@/types/shipment";
-import { faFilter, faSearch } from "@fortawesome/pro-regular-svg-icons";
 import { useQuery } from "@tanstack/react-query";
 import { APIProvider, Map } from "@vis.gl/react-google-maps";
-import { useForm } from "react-hook-form";
-import { FilterOptions } from "./_components/sidebar/filter-options";
+import { parseAsInteger, useQueryState } from "nuqs";
+import { useCallback, useTransition } from "react";
+import { FormProvider, useForm } from "react-hook-form";
+import { ShipmentSidebar } from "./_components/sidebar/shipment-sidebar";
+
+const DEFAULT_PAGE_SIZE = 10;
+const PAGE_SIZE_OPTIONS = [10, 25, 50] as const;
+
+const searchParams = {
+  page: parseAsInteger.withDefault(1),
+  pageSize: parseAsInteger.withDefault(DEFAULT_PAGE_SIZE),
+};
 
 type ShipmentQueryParams = {
   pageIndex: number;
   pageSize: number;
-  includeMoveDetails: boolean;
-  includeCommodityDetails: boolean;
-  includeStopDetails: boolean;
-  includeCustomerDetails: boolean;
+  expandShipmentDetails: boolean;
 };
 
 function fetchShipments(queryParams: ShipmentQueryParams) {
@@ -31,20 +33,8 @@ function fetchShipments(queryParams: ShipmentQueryParams) {
   fetchURL.searchParams.set("pageIndex", queryParams.pageIndex.toString());
   fetchURL.searchParams.set("pageSize", queryParams.pageSize.toString());
   fetchURL.searchParams.set(
-    "includeMoveDetails",
-    queryParams.includeMoveDetails.toString(),
-  );
-  fetchURL.searchParams.set(
-    "includeCommodityDetails",
-    queryParams.includeCommodityDetails.toString(),
-  );
-  fetchURL.searchParams.set(
-    "includeStopDetails",
-    queryParams.includeStopDetails.toString(),
-  );
-  fetchURL.searchParams.set(
-    "includeCustomerDetails",
-    queryParams.includeCustomerDetails.toString(),
+    "expandShipmentDetails",
+    queryParams.expandShipmentDetails.toString(),
   );
 
   return useQuery<LimitOffsetResponse<ShipmentResponse>>({
@@ -60,75 +50,92 @@ function fetchShipments(queryParams: ShipmentQueryParams) {
 
 export function Shipment() {
   const center = { lat: 39.8283, lng: -98.5795 }; // Center of continental US
+  const [isTransitioning, startTransition] = useTransition();
 
-  const { data: shipments } = fetchShipments({
-    pageIndex: 0,
-    pageSize: 10,
-    includeMoveDetails: true,
-    includeCommodityDetails: false,
-    includeStopDetails: true,
-    includeCustomerDetails: true,
+  const [page, setPage] = useQueryState(
+    "page",
+    searchParams.page.withOptions({
+      startTransition,
+      shallow: false,
+    }),
+  );
+
+  const [pageSize, setPageSize] = useQueryState(
+    "pageSize",
+    searchParams.pageSize.withOptions({
+      startTransition,
+      shallow: false,
+    }),
+  );
+
+  const form = useForm<ShipmentFilterSchema>();
+
+  const { data, isLoading } = fetchShipments({
+    pageIndex: (page ?? 1) - 1,
+    pageSize: pageSize ?? DEFAULT_PAGE_SIZE,
+    expandShipmentDetails: true,
   });
+
+  const handlePageChange = useCallback(
+    (page: number) => {
+      startTransition(() => {
+        setPage(page);
+      });
+    },
+    [setPage, startTransition],
+  );
+
+  const handlePageSizeChange = useCallback(
+    (pageSize: number) => {
+      startTransition(() => {
+        setPage(1);
+        setPageSize(pageSize);
+      });
+    },
+    [setPage, setPageSize, startTransition],
+  );
 
   return (
     <>
       <MetaTags title="Shipments" description="Shipments" />
       <SuspenseLoader>
-        <div className="flex gap-4 size-full">
-          <div className="w-full max-w-[420px] flex-shrink-0">
-            <ShipmentSidebar />
+        <FormProvider {...form}>
+          <div className="flex gap-4 h-[calc(100vh-theme(spacing.16))]">
+            <div className="w-[420px] flex-shrink-0">
+              {isLoading ? (
+                <div className="flex flex-col gap-2">
+                  <Skeleton className="h-10 w-full" />
+                  <Skeleton className="h-10 w-full" />
+                  <Skeleton className="h-10 w-full" />
+                </div>
+              ) : (
+                <ShipmentSidebar
+                  shipments={data?.results || []}
+                  totalCount={data?.count || 0}
+                  page={page ?? 1}
+                  pageSize={pageSize ?? DEFAULT_PAGE_SIZE}
+                  onPageChange={handlePageChange}
+                  onPageSizeChange={handlePageSizeChange}
+                  pageSizeOptions={PAGE_SIZE_OPTIONS}
+                  isLoading={isLoading || isTransitioning}
+                />
+              )}
+            </div>
+            <div className="flex-grow rounded-md border overflow-hidden">
+              <APIProvider apiKey={import.meta.env.VITE_GOOGLE_MAPS_API_KEY}>
+                <Map
+                  defaultCenter={center}
+                  defaultZoom={5}
+                  gestureHandling="greedy"
+                  mapId="SHIPMENT_MAP"
+                  streetViewControl={false}
+                  className="w-full h-full"
+                />
+              </APIProvider>
+            </div>
           </div>
-          <div className="flex-grow rounded-md border overflow-hidden mb-2">
-            <APIProvider apiKey={import.meta.env.VITE_GOOGLE_MAPS_API_KEY}>
-              <Map
-                defaultCenter={center}
-                defaultZoom={4}
-                gestureHandling="greedy"
-                mapId="SHIPMENT_MAP"
-                streetViewControl={false}
-                className="w-full h-full min-h-[600px]"
-              />
-            </APIProvider>
-          </div>
-        </div>
+        </FormProvider>
       </SuspenseLoader>
     </>
-  );
-}
-
-function ShipmentSidebar() {
-  const form = useForm<ShipmentFilterSchema>();
-  const { control } = form;
-
-  return (
-    <div className="flex flex-col gap-2 bg-sidebar rounded-md p-2 border border-sidebar-border w-full">
-      <FilterOptions />
-      <div className="flex flex-row gap-2 justify-start mb-1">
-        <InputField
-          control={control}
-          name="search"
-          placeholder="Search"
-          className="h-7 w-[250px]"
-          icon={
-            <Icon icon={faSearch} className="size-3.5 text-muted-foreground" />
-          }
-        />
-        <SelectField
-          control={control}
-          name="status"
-          placeholder="Status"
-          className="h-7 w-30"
-          isClearable
-          options={statusChoices}
-        />
-        <Button
-          variant="outline"
-          size="icon"
-          className="border-muted-foreground/20 bg-muted border"
-        >
-          <Icon icon={faFilter} className="size-3.5" />
-        </Button>
-      </div>
-    </div>
   );
 }

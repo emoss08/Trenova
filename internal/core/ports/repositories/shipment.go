@@ -8,23 +8,21 @@ import (
 	"github.com/emoss08/trenova/pkg/types/pulid"
 )
 
+type ShipmentOptions struct {
+	ExpandShipmentDetails bool `query:"expandShipmentDetails"`
+}
+
 type ListShipmentOptions struct {
-	Filter                  *ports.LimitOffsetQueryOptions
-	IncludeMoveDetails      bool `query:"includeMoveDetails"`
-	IncludeCommodityDetails bool `query:"includeCommodityDetails"`
-	IncludeCustomerDetails  bool `query:"includeCustomerDetails"`
-	IncludeStopDetails      bool `query:"includeStopDetails"`
+	Filter          *ports.LimitOffsetQueryOptions
+	ShipmentOptions ShipmentOptions
 }
 
 type GetShipmentByIDOptions struct {
-	ID                      pulid.ID
-	OrgID                   pulid.ID
-	BuID                    pulid.ID
-	UserID                  pulid.ID
-	IncludeMoveDetails      bool `query:"includeMoveDetails"`
-	IncludeCommodityDetails bool `query:"includeCommodityDetails"`
-	IncludeCustomerDetails  bool `query:"includeCustomerDetails"`
-	IncludeStopDetails      bool `query:"includeStopDetails"`
+	ID              pulid.ID
+	OrgID           pulid.ID
+	BuID            pulid.ID
+	UserID          pulid.ID
+	ShipmentOptions ShipmentOptions
 }
 
 type ShipmentRepository interface {

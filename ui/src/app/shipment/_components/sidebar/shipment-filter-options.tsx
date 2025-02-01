@@ -14,7 +14,7 @@ export function FilterOptions() {
   const [activeTab, setActiveTab] = useState<TabType>("shipments");
 
   return (
-    <div className="flex flex-row gap-2 justify-start mb-1">
+    <div className="flex flex-row gap-2 justify-start">
       {TABS.map(({ id, label }) => (
         <Button
           key={id}

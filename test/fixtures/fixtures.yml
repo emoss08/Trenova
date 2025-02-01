@@ -991,6 +991,28 @@
       sent_to_billing: false
       temperature_min: 10.00
       temperature_max: 20.00
+    - _id: in_transit_shipment_2
+      organization_id: "{{ $.Organization.trenova.ID }}"
+      business_unit_id: "{{ $.BusinessUnit.trenova.ID }}"
+      created_at: "{{ now.Unix }}"
+      status: "InTransit"
+      pro_number: "S121054159213013"
+      bol: "TEST000000"
+      shipment_type_id: "{{ $.ShipmentType.ftl_shipment_type.ID }}"
+      service_type_id: "{{ $.ServiceType.std_service_type.ID }}"
+      customer_id: "{{ $.Customer.test_customer.ID }}"
+      rating_unit: 1
+      rating_method: "PerMile"
+      other_charge_amount: 100.00
+      freight_charge_amount: 400.00
+      total_charge_amount: 500.00
+      pieces: 1
+      weight: 1000.00
+      ready_to_bill: false
+      billed: false
+      sent_to_billing: false
+      temperature_min: 10.00
+      temperature_max: 20.00
 
     # Delayed Shipment
     - _id: delayed_shipment
@@ -1119,13 +1141,24 @@
       distance: 100.00
 
     # In Transit Shipment Move
-    - _id: test_shipment_move_3
+    - _id: in_transit_shipment_move
       organization_id: "{{ $.Organization.trenova.ID }}"
       business_unit_id: "{{ $.BusinessUnit.trenova.ID }}"
       created_at: "{{ now.Unix }}"
       status: "InTransit"
       sequence: 1
       shipment_id: "{{ $.Shipment.in_transit_shipment.ID }}"
+      tractor_id: "{{ $.Tractor.tractor_1.ID }}"
+      trailer_id: "{{ $.Trailer.test_trailer.ID }}"
+      primary_worker_id: "{{ $.Worker.worker_1.ID }}"
+      distance: 5223.00
+    - _id: in_transit_shipment_move_2
+      organization_id: "{{ $.Organization.trenova.ID }}"
+      business_unit_id: "{{ $.BusinessUnit.trenova.ID }}"
+      created_at: "{{ now.Unix }}"
+      status: "InTransit"
+      sequence: 1
+      shipment_id: "{{ $.Shipment.in_transit_shipment_2.ID }}"
       tractor_id: "{{ $.Tractor.tractor_1.ID }}"
       trailer_id: "{{ $.Trailer.test_trailer.ID }}"
       primary_worker_id: "{{ $.Worker.worker_1.ID }}"
@@ -1247,14 +1280,14 @@
       planned_departure: 1738185281
 
     # In Transit Shipment Move Stops
-    - _id: test_stop_5
+    - _id: in_transit_stop_1
       organization_id: "{{ $.Organization.trenova.ID }}"
       business_unit_id: "{{ $.BusinessUnit.trenova.ID }}"
       created_at: "{{ now.Unix }}"
       status: "New"
       type: "Pickup"
       sequence: 0
-      shipment_move_id: "{{ $.ShipmentMove.test_shipment_move_3.ID }}"
+      shipment_move_id: "{{ $.ShipmentMove.in_transit_shipment_move.ID }}"
       location_id: "{{ $.Location.test_location.ID }}"
       address_line: "8626 Firestone Blvd, Downey, CA 90242"
       pieces: 1
@@ -1262,14 +1295,45 @@
       planned_arrival: "{{ now.Unix }}"
       planned_departure: "{{ now.Unix }}"
 
-    - _id: test_stop_6
+    - _id: in_transit_stop_2
       organization_id: "{{ $.Organization.trenova.ID }}"
       business_unit_id: "{{ $.BusinessUnit.trenova.ID }}"
       created_at: "{{ now.Unix }}"
       status: "New"
       type: "Delivery"
       sequence: 1
-      shipment_move_id: "{{ $.ShipmentMove.test_shipment_move_3.ID }}"
+      shipment_move_id: "{{ $.ShipmentMove.in_transit_shipment_move.ID }}"
+      location_id: "{{ $.Location.test_location_2.ID }}"
+      address_line: "1101 Summit Ave, Greensboro, NC 27410"
+      pieces: 1
+      weight: 1000.00
+      planned_arrival: "{{ now.Unix }}"
+      planned_departure: "{{ now.Unix }}"
+
+    # In Transit Shipment Move 2 Stops
+    - _id: in_transit_stop_3
+      organization_id: "{{ $.Organization.trenova.ID }}"
+      business_unit_id: "{{ $.BusinessUnit.trenova.ID }}"
+      created_at: "{{ now.Unix }}"
+      status: "New"
+      type: "Pickup"
+      sequence: 0
+      shipment_move_id: "{{ $.ShipmentMove.in_transit_shipment_move_2.ID }}"
+      location_id: "{{ $.Location.test_location_3.ID }}"
+      address_line: "6185 Retail Rd, Dallas, TX 75231"
+      pieces: 1
+      weight: 1000.00
+      planned_arrival: "{{ now.Unix }}"
+      planned_departure: "{{ now.Unix }}"
+
+    - _id: in_transit_stop_4
+      organization_id: "{{ $.Organization.trenova.ID }}"
+      business_unit_id: "{{ $.BusinessUnit.trenova.ID }}"
+      created_at: "{{ now.Unix }}"
+      status: "New"
+      type: "Delivery"
+      sequence: 1
+      shipment_move_id: "{{ $.ShipmentMove.in_transit_shipment_move_2.ID }}"
       location_id: "{{ $.Location.test_location_2.ID }}"
       address_line: "1101 Summit Ave, Greensboro, NC 27410"
       pieces: 1

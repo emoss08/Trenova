@@ -41,6 +41,24 @@ func NewShipmentRepository(p ShipmentRepositoryParams) repositories.ShipmentRepo
 	}
 }
 
+func (sr *shipmentRepository) addOptions(q *bun.SelectQuery, opts repositories.ShipmentOptions) *bun.SelectQuery {
+	if opts.ExpandShipmentDetails {
+		q = q.Relation("Customer")
+		q = q.Relation("Moves")
+
+		q = q.RelationWithOpts("Moves.Stops", bun.RelationOpts{
+			Apply: func(sq *bun.SelectQuery) *bun.SelectQuery {
+				return sq.Relation("Location").Relation("Location.State")
+			},
+		})
+
+		q = q.Relation("ServiceType")
+		q = q.Relation("Commodities")
+	}
+
+	return q
+}
+
 func (sr *shipmentRepository) filterQuery(q *bun.SelectQuery, opts *repositories.ListShipmentOptions) *bun.SelectQuery {
 	q = queryfilters.TenantFilterQuery(&queryfilters.TenantFilterQueryOptions{
 		Query:      q,
@@ -52,26 +70,7 @@ func (sr *shipmentRepository) filterQuery(q *bun.SelectQuery, opts *repositories
 		q = q.Where("sp.pro_number ILIKE ?", "%"+opts.Filter.Query+"%")
 	}
 
-	if opts.IncludeCustomerDetails {
-		q = q.Relation("Customer")
-	}
-
-	if opts.IncludeMoveDetails {
-		q = q.Relation("Moves")
-	}
-
-	// ! IncludeMoveDetails must be true to include StopDetails
-	if opts.IncludeStopDetails {
-		q = q.RelationWithOpts("Moves.Stops", bun.RelationOpts{
-			Apply: func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return sq.Relation("Location").Relation("Location.State")
-			},
-		})
-	}
-
-	if opts.IncludeCommodityDetails {
-		q = q.Relation("Commodities")
-	}
+	q = sr.addOptions(q, opts.ShipmentOptions)
 
 	return q.Limit(opts.Filter.Limit).Offset(opts.Filter.Offset)
 }
@@ -118,27 +117,12 @@ func (sr *shipmentRepository) GetByID(ctx context.Context, opts repositories.Get
 
 	entity := new(shipment.Shipment)
 
-	query := dba.NewSelect().Model(entity).
+	q := dba.NewSelect().Model(entity).
 		Where("sp.id = ? AND sp.organization_id = ? AND sp.business_unit_id = ?", opts.ID, opts.OrgID, opts.BuID)
 
-	if opts.IncludeMoveDetails {
-		query = query.Relation("Moves").Relation("Moves.Stops")
-	}
+	q = sr.addOptions(q, opts.ShipmentOptions)
 
-	// ! IncludeMoveDetails must be true to include StopDetails
-	if opts.IncludeStopDetails {
-		query = query.Relation("Moves.Stops.Location")
-	}
-
-	if opts.IncludeCommodityDetails {
-		query = query.Relation("Commodities")
-	}
-
-	if opts.IncludeCustomerDetails {
-		query = query.Relation("Customer")
-	}
-
-	if err = query.Scan(ctx); err != nil {
+	if err = q.Scan(ctx); err != nil {
 		if eris.Is(err, sql.ErrNoRows) {
 			return nil, errors.NewNotFoundError("Shipment not found within your organization")
 		}
