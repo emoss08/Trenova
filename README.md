@@ -5,6 +5,7 @@
   
   [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
   [![Go Report Card](https://goreportcard.com/badge/github.com/emoss08/trenova)](https://goreportcard.com/report/github.com/emoss08/trenova)
+  [![Discord](https://dcbadge.limes.pink/api/server/https://discord.gg/XDBqyvrryq?style=flat-square&theme=default-inverted)](https://discord.gg/XDBqyvrryq)
 </div>
 
 > [!IMPORTANT]
