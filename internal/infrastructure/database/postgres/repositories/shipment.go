@@ -11,6 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/pkg/errors"
 	"github.com/emoss08/trenova/internal/pkg/logger"
+	"github.com/emoss08/trenova/internal/pkg/search"
 	"github.com/emoss08/trenova/internal/pkg/utils/queryutils/queryfilters"
 	"github.com/rotisserie/eris"
 	"github.com/rs/zerolog"
@@ -67,7 +68,33 @@ func (sr *shipmentRepository) filterQuery(q *bun.SelectQuery, opts *repositories
 	})
 
 	if opts.Filter.Query != "" {
-		q = q.Where("sp.pro_number ILIKE ?", "%"+opts.Filter.Query+"%")
+		searchConfig := search.Config{
+			TableAlias: "sp",
+			Fields: []search.SearchableField{
+				{
+					Name:   "pro_number",
+					Weight: "A",
+					Type:   search.TypeComposite,
+				},
+				{
+					Name:   "bol",
+					Weight: "A",
+					Type:   search.TypeComposite,
+				},
+
+				{
+					Name:       "status",
+					Weight:     "B",
+					Type:       search.TypeEnum,
+					Dictionary: "english",
+				},
+			},
+			MinLength:       2,
+			MaxTerms:        6,
+			UsePartialMatch: true,
+		}
+
+		q = search.BuildSearchQuery[shipment.Shipment](q, opts.Filter.Query, searchConfig)
 	}
 
 	q = sr.addOptions(q, opts.ShipmentOptions)
