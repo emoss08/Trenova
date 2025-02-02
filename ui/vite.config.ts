@@ -2,7 +2,6 @@ import { nodeResolve } from "@rollup/plugin-node-resolve";
 import tailwindcss from "@tailwindcss/vite";
 import react from "@vitejs/plugin-react";
 import path from "path";
-import { visualizer } from "rollup-plugin-visualizer";
 import { defineConfig, type PluginOption } from "vite";
 import { compression } from "vite-plugin-compression2";
 import { VitePWA } from "vite-plugin-pwa";
@@ -67,7 +66,7 @@ const vendorChunks = {
   utils: ["clsx", "tailwind-merge", "class-variance-authority"],
 };
 
-export default defineConfig(({ mode }) => ({
+export default defineConfig({
   plugins: [
     react({
       babel: {
@@ -75,40 +74,33 @@ export default defineConfig(({ mode }) => ({
       },
     }),
     tailwindcss(),
-    nodeResolve(),
+    nodeResolve() as PluginOption,
     VitePWA({
       registerType: "autoUpdate",
       devOptions: {
-        enabled: true,
+        enabled: false,
+        navigateFallback: "index.html",
+        suppressWarnings: true,
+        type: "module",
       },
-      includeAssets: [
-        "favicon.ico",
-        "logo.webp",
-        "apple-touch-icon.png",
-        "mask-icon.svg",
-      ],
+      workbox: {
+        globPatterns: ["**/*.{js,css,html,svg,png,ico,webp}"],
+        cleanupOutdatedCaches: true,
+        clientsClaim: true,
+      },
+      pwaAssets: {
+        disabled: false,
+        config: true,
+      },
       manifest: {
         name: "Trenova TMS",
         short_name: "Trenova",
         description:
           "An Open Source AI-driven asset based transportation management system",
         theme_color: "#000000",
-        icons: [
-          {
-            src: "/favicon.ico",
-            sizes: "any",
-            type: "image/x-icon",
-          },
-          {
-            src: "/logo.webp",
-            sizes: "any",
-            type: "image/webp",
-          },
-        ],
       },
     }),
     compression({
-      // Add compression for production builds
       algorithm: "brotliCompress",
       threshold: 512,
       deleteOriginalAssets: false,
@@ -116,12 +108,6 @@ export default defineConfig(({ mode }) => ({
     compression({
       algorithm: "gzip",
     }),
-    visualizer({
-      open: true,
-      gzipSize: true,
-      brotliSize: true,
-      template: "treemap", // Use treemap for better visualization
-    }) as PluginOption,
   ],
 
   resolve: {
@@ -132,7 +118,7 @@ export default defineConfig(({ mode }) => ({
 
   build: {
     target: ["es2020", "edge88", "firefox78", "chrome87", "safari14"],
-    sourcemap: mode === "development",
+    sourcemap: true,
     reportCompressedSize: true,
     chunkSizeWarningLimit: 1000, // Increase warning limit for chunks
     rollupOptions: {
@@ -141,8 +127,9 @@ export default defineConfig(({ mode }) => ({
           ...vendorChunks,
           // Dynamic chunks for routes
           ...(() => {
-            const dynamicImports = {};
-            // Add dynamic imports for each major feature
+            const dynamicImports = {
+              "shipment-module": ["@/app/shipment/page.tsx"],
+            };
             return dynamicImports;
           })(),
         },
@@ -168,17 +155,20 @@ export default defineConfig(({ mode }) => ({
         },
         minifyInternalExports: true,
         assetFileNames: (assetInfo) => {
-          const info = assetInfo.name.split(".");
-          const extType = info[info.length - 1];
-          if (/png|jpe?g|svg|gif|tiff|bmp|ico/i.test(extType)) {
+          const info = assetInfo.name?.split(".");
+          const extType = info?.[info.length - 1];
+          if (extType && /png|jpe?g|svg|gif|tiff|bmp|ico/i.test(extType)) {
             return "assets/images/[name]-[hash][extname]";
           }
-          if (/css/i.test(extType)) {
+
+          if (extType && /css/i.test(extType)) {
             return "assets/css/[name]-[hash][extname]";
           }
-          if (/woff2?|ttf|eot/i.test(extType)) {
+
+          if (extType && /woff2?|ttf|eot/i.test(extType)) {
             return "assets/fonts/[name]-[hash][extname]";
           }
+
           return "assets/[ext]/[name]-[hash][extname]";
         },
       },
@@ -201,4 +191,4 @@ export default defineConfig(({ mode }) => ({
       overlay: true,
     },
   },
-}));
+});

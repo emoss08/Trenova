@@ -2,10 +2,10 @@ import { ShipmentStatusBadge } from "@/components/status-badge";
 import { Icon } from "@/components/ui/icons";
 import { InternalLink } from "@/components/ui/link";
 import {
-    Tooltip,
-    TooltipContent,
-    TooltipProvider,
-    TooltipTrigger,
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { CustomerSchema } from "@/lib/schemas/customer-schema";
 import { LocationSchema } from "@/lib/schemas/location-schema";
@@ -15,8 +15,19 @@ import { type Shipment as ShipmentResponse } from "@/types/shipment";
 import { faSignalStream } from "@fortawesome/pro-regular-svg-icons";
 import { Timeline } from "./shipment-timeline";
 
-export function ShipmentCard({ shipment }: { shipment: ShipmentResponse }) {
+type ShipmentCardProps = {
+  shipment: ShipmentResponse;
+  isSelected: boolean;
+  onSelect: (shipmentId: string) => void;
+};
+
+export function ShipmentCard({
+  shipment,
+  isSelected,
+  onSelect,
+}: ShipmentCardProps) {
   const { status, customer } = shipment;
+
   const { origin } = ShipmentLocations.useLocations(shipment);
 
   if (!origin) {
@@ -31,23 +42,35 @@ export function ShipmentCard({ shipment }: { shipment: ShipmentResponse }) {
           <LocationGeocoded location={origin} />
         </div>
         <div className="flex justify-between gap-2">
-          <ProNumber shipment={shipment} />
+          <ProNumber shipment={shipment} onSelect={onSelect} />
           <div className="flex items-center gap-2">
             <CustomerBadge customer={customer} />
           </div>
         </div>
+
         <StopInformation shipment={shipment} />
       </div>
     </div>
   );
 }
 
-function ProNumber({ shipment }: { shipment: ShipmentResponse }) {
+function ProNumber({
+  shipment,
+  onSelect,
+}: {
+  shipment: ShipmentResponse;
+  onSelect: (shipmentId: string) => void;
+}) {
   return (
     <div className="flex items-center gap-0.5">
-      <InternalLink to={`/shipment/${shipment.id}`}>
+      <button
+        onClick={() => {
+          onSelect(shipment.id ?? "");
+        }}
+        className="text-muted-foreground underline hover:text-foreground/70"
+      >
         {shipment.proNumber}
-      </InternalLink>
+      </button>
     </div>
   );
 }

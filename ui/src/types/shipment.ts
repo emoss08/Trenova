@@ -37,3 +37,24 @@ export type Shipment = ShipmentSchema & {
   trailerType?: EquipmentTypeSchema | null;
   moves: ShipmentMove[];
 };
+
+export type ShipmentQueryParams = {
+  pageIndex: number;
+  pageSize: number;
+  expandShipmentDetails: boolean;
+  query?: string;
+};
+
+export type ShipmentDetailsQueryParams = {
+  shipmentId: string;
+};
+
+export type ShipmentPaginationProps = {
+  totalCount: number;
+  page: number;
+  pageSize: number;
+  onPageChange: (page: number) => void;
+  onPageSizeChange: (pageSize: number) => void;
+  pageSizeOptions: readonly number[];
+  isLoading: boolean;
+};
