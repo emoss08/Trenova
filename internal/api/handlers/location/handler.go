@@ -99,6 +99,10 @@ func (h Handler) list(c *fiber.Ctx) error {
 	}
 
 	handler := func(fc *fiber.Ctx, filter *ports.LimitOffsetQueryOptions) (*ports.ListResult[*locationdomain.Location], error) {
+		if err = fc.QueryParser(filter); err != nil {
+			return nil, h.eh.HandleError(fc, err)
+		}
+
 		return h.ls.List(fc.UserContext(), &repositories.ListLocationOptions{
 			Filter:          filter,
 			IncludeCategory: c.QueryBool("includeCategory"),

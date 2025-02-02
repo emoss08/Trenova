@@ -96,6 +96,10 @@ func (h Handler) list(c *fiber.Ctx) error {
 	}
 
 	handler := func(fc *fiber.Ctx, filter *ports.LimitOffsetQueryOptions) (*ports.ListResult[*equipmentmanufacturerdomain.EquipmentManufacturer], error) {
+		if err = fc.QueryParser(filter); err != nil {
+			return nil, h.eh.HandleError(fc, err)
+		}
+
 		return h.ems.List(fc.UserContext(), filter)
 	}
 

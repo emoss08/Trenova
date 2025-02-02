@@ -103,6 +103,10 @@ func (h Handler) list(c *fiber.Ctx) error {
 	}
 
 	handler := func(fc *fiber.Ctx, filter *ports.LimitOffsetQueryOptions) (*ports.ListResult[*orgdomain.Organization], error) {
+		if err = fc.QueryParser(filter); err != nil {
+			return nil, h.eh.HandleError(fc, err)
+		}
+
 		return h.os.List(fc.UserContext(), filter)
 	}
 
