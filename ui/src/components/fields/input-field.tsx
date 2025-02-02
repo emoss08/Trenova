@@ -16,6 +16,7 @@ export function InputField<T extends FieldValues>({
   disabled,
   autoComplete,
   placeholder,
+  inputClassProps,
   "aria-label": ariaLabel,
   "aria-describedby": ariaDescribedBy,
   ...props
@@ -46,6 +47,7 @@ export function InputField<T extends FieldValues>({
             autoComplete={autoComplete}
             placeholder={placeholder}
             aria-label={ariaLabel || label}
+            className={inputClassProps}
             isInvalid={fieldState.invalid}
             icon={icon}
             aria-describedby={cn(

@@ -3,18 +3,20 @@
 import { MetaTags } from "@/components/meta-tags";
 import { SuspenseLoader } from "@/components/ui/component-loader";
 import { API_URL } from "@/constants/env";
+import { useDebounce } from "@/hooks/use-debounce";
 import { ShipmentFilterSchema } from "@/lib/schemas/shipment-filter-schema";
 import { LimitOffsetResponse } from "@/types/server";
 import { type Shipment as ShipmentResponse } from "@/types/shipment";
 import { useQuery } from "@tanstack/react-query";
 import { APIProvider, Map } from "@vis.gl/react-google-maps";
 import { parseAsInteger, useQueryState } from "nuqs";
-import { useCallback, useTransition } from "react";
+import { useCallback, useEffect, useTransition } from "react";
 import { FormProvider, useForm } from "react-hook-form";
 import ShipmentSidebar from "./_components/sidebar/shipment-sidebar";
 
 const DEFAULT_PAGE_SIZE = 10;
 const PAGE_SIZE_OPTIONS = [10, 25, 50] as const;
+const SEARCH_DEBOUNCE_TIME = 300;
 
 const searchParams = {
   page: parseAsInteger.withDefault(1),
@@ -25,6 +27,7 @@ type ShipmentQueryParams = {
   pageIndex: number;
   pageSize: number;
   expandShipmentDetails: boolean;
+  query?: string;
 };
 
 function fetchShipments(queryParams: ShipmentQueryParams) {
@@ -38,6 +41,11 @@ function fetchShipments(queryParams: ShipmentQueryParams) {
     "expandShipmentDetails",
     queryParams.expandShipmentDetails.toString(),
   );
+
+  // Append the search params
+  if (queryParams.query) {
+    fetchURL.searchParams.set("query", queryParams.query);
+  }
 
   return useQuery<LimitOffsetResponse<ShipmentResponse>>({
     queryKey: ["shipments", fetchURL.href, queryParams],
@@ -70,12 +78,31 @@ export function Shipment() {
     }),
   );
 
-  const form = useForm<ShipmentFilterSchema>();
+  const form = useForm<ShipmentFilterSchema>({
+    defaultValues: {
+      search: undefined,
+      status: undefined,
+    },
+  });
+
+  // get the search value from the form values
+  const queryValue = form.watch("search");
+  const debouncedQueryValue = useDebounce(queryValue, SEARCH_DEBOUNCE_TIME);
+
+  // Reset to the first page when search value changes
+  useEffect(() => {
+    if (page !== 1) {
+      startTransition(() => {
+        setPage(1);
+      });
+    }
+  }, [debouncedQueryValue, page, setPage, startTransition]);
 
   const { data, isLoading } = fetchShipments({
     pageIndex: (page ?? 1) - 1,
     pageSize: pageSize ?? DEFAULT_PAGE_SIZE,
     expandShipmentDetails: true,
+    query: debouncedQueryValue,
   });
 
   const handlePageChange = useCallback(

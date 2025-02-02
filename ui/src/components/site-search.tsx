@@ -93,7 +93,7 @@ export default function SiteSearchDialog() {
       </TooltipProvider>
       <CommandDialog open={open} onOpenChange={setOpen}>
         <CommandInput
-          className="h-7 rounded-none"
+          className="rounded-none"
           placeholder="Type a command or search..."
         />
         <CommandList className="h-[600px]">

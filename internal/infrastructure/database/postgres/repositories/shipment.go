@@ -11,6 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/pkg/errors"
 	"github.com/emoss08/trenova/internal/pkg/logger"
+	"github.com/emoss08/trenova/internal/pkg/postgressearch"
 	"github.com/emoss08/trenova/internal/pkg/utils/queryutils/queryfilters"
 	"github.com/rotisserie/eris"
 	"github.com/rs/zerolog"
@@ -67,7 +68,11 @@ func (sr *shipmentRepository) filterQuery(q *bun.SelectQuery, opts *repositories
 	})
 
 	if opts.Filter.Query != "" {
-		q = q.Where("sp.pro_number ILIKE ?", "%"+opts.Filter.Query+"%")
+		q = postgressearch.BuildSearchQuery[shipment.Shipment](
+			q,
+			opts.Filter.Query,
+			shipment.Shipment{},
+		)
 	}
 
 	q = sr.addOptions(q, opts.ShipmentOptions)
