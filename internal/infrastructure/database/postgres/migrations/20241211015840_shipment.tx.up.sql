@@ -69,3 +69,64 @@ CREATE INDEX IF NOT EXISTS "idx_shipments_billing_status" ON "shipments"("ready_
 
 COMMENT ON TABLE shipments IS 'Stores information about shipments and their billing status';
 
+--bun:split
+ALTER TABLE "shipments"
+    ADD COLUMN IF NOT EXISTS search_vector tsvector;
+
+--bun:split
+CREATE INDEX IF NOT EXISTS idx_shipments_search ON shipments USING GIN(search_vector);
+
+--bun:split
+CREATE INDEX IF NOT EXISTS idx_shipments_status_composite ON shipments(status, organization_id, business_unit_id) INCLUDE (pro_number, bol, ready_to_bill, sent_to_billing);
+
+--bun:split
+CREATE INDEX IF NOT EXISTS idx_shipments_billing_composite ON shipments(ready_to_bill, sent_to_billing, billed) INCLUDE (bill_date, total_charge_amount)
+WHERE
+    ready_to_bill = TRUE OR sent_to_billing = TRUE OR billed = TRUE;
+
+--bun:split
+CREATE INDEX IF NOT EXISTS idx_shipments_dates_brin ON shipments USING BRIN(actual_ship_date, actual_delivery_date, created_at) WITH (pages_per_range = 128);
+
+--bun:split
+CREATE OR REPLACE FUNCTION shipments_search_vector_update()
+    RETURNS TRIGGER
+    AS $$
+BEGIN
+    NEW.search_vector := setweight(to_tsvector('simple', COALESCE(NEW.pro_number, '')), 'A') || setweight(to_tsvector('simple', COALESCE(NEW.bol, '')), 'A') || setweight(to_tsvector('english', COALESCE(CAST(NEW.status AS text), '')), 'B') || setweight(to_tsvector('english', COALESCE(CAST(NEW.rating_method AS text), '')), 'C');
+    -- Update total_charge_amount if it's changed
+    NEW.total_charge_amount := NEW.freight_charge_amount + NEW.other_charge_amount;
+    -- Auto-update timestamps
+    NEW.updated_at := EXTRACT(EPOCH FROM CURRENT_TIMESTAMP)::bigint;
+    RETURN NEW;
+END;
+$$
+LANGUAGE plpgsql;
+
+--bun:split
+DROP TRIGGER IF EXISTS shipments_search_vector_trigger ON shipments;
+
+--bun:split
+CREATE TRIGGER shipments_search_vector_trigger
+    BEFORE INSERT OR UPDATE ON shipments
+    FOR EACH ROW
+    EXECUTE FUNCTION shipments_search_vector_update();
+
+--bun:split
+CREATE INDEX IF NOT EXISTS idx_shipments_active ON shipments(created_at DESC)
+WHERE
+    status NOT IN ('Completed', 'Canceled', 'Billed');
+
+--bun:split
+ALTER TABLE shipments
+    ALTER COLUMN status SET STATISTICS 1000;
+
+--bun:split
+ALTER TABLE shipments
+    ALTER COLUMN organization_id SET STATISTICS 1000;
+
+ALTER TABLE shipments
+    ALTER COLUMN business_unit_id SET STATISTICS 1000;
+
+--bun:split
+CREATE INDEX IF NOT EXISTS idx_shipments_trgm_pro_bol ON shipments USING gin((pro_number || ' ' || bol) gin_trgm_ops);
+

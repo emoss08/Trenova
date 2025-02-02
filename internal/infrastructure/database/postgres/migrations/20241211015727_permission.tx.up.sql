@@ -142,6 +142,15 @@ CREATE INDEX "idx_roles_created_updated" ON "roles"("created_at", "updated_at");
 
 CREATE INDEX "idx_roles_metadata" ON "roles" USING gin("metadata");
 
+ALTER TABLE roles
+    ALTER COLUMN status SET STATISTICS 1000;
+
+ALTER TABLE roles
+    ALTER COLUMN business_unit_id SET STATISTICS 1000;
+
+ALTER TABLE roles
+    ALTER COLUMN organization_id SET STATISTICS 1000;
+
 -- Table and column comments
 COMMENT ON TABLE roles IS 'Stores role definitions for access control management';
 
@@ -220,6 +229,21 @@ CREATE INDEX "idx_permission_grants_field_overrides" ON "permission_grants" USIN
 CREATE INDEX "idx_permission_grants_conditions" ON "permission_grants" USING gin("conditions");
 
 CREATE INDEX "idx_permission_grants_audit_trail" ON "permission_grants" USING gin("audit_trail");
+
+ALTER TABLE permission_grants
+    ALTER COLUMN status SET STATISTICS 1000;
+
+ALTER TABLE permission_grants
+    ALTER COLUMN business_unit_id SET STATISTICS 1000;
+
+ALTER TABLE permission_grants
+    ALTER COLUMN organization_id SET STATISTICS 1000;
+
+ALTER TABLE permission_grants
+    ALTER COLUMN user_id SET STATISTICS 1000;
+
+ALTER TABLE permission_grants
+    ALTER COLUMN permission_id SET STATISTICS 1000;
 
 -- Table and column comments
 COMMENT ON TABLE permission_grants IS 'Stores granted permissions to users with associated metadata and audit information';
@@ -302,6 +326,14 @@ WHERE
     expires_at IS NOT NULL;
 
 CREATE INDEX "idx_user_roles_created" ON "user_roles"("created_at");
+
+--bun:split
+ALTER TABLE user_roles
+    ALTER COLUMN business_unit_id SET STATISTICS 1000;
+
+--bun:split
+ALTER TABLE user_roles
+    ALTER COLUMN organization_id SET STATISTICS 1000;
 
 COMMENT ON TABLE user_roles IS 'Junction table linking users to their assigned roles';
 
