@@ -52,7 +52,7 @@ func TestCustomerRepository(t *testing.T) {
 					OrgID: org.ID,
 					BuID:  bu.ID,
 				},
-				Query: "Test customer",
+				Query: "Honeywell",
 			},
 		}
 
