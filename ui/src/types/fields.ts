@@ -14,6 +14,7 @@ import { type AsyncProps as ReactAsyncSelectProps } from "react-select/async";
 type BaseInputFieldProps = Omit<InputProps, "name"> & {
   label?: string;
   description?: string;
+  inputClassProps?: string;
 };
 
 export type InputFieldProps<T extends FieldValues> = BaseInputFieldProps &
