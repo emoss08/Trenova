@@ -126,3 +126,12 @@ CREATE TRIGGER trigger_check_user_organization_mapping
     FOR EACH ROW
     EXECUTE FUNCTION check_user_organization_mapping();
 
+ALTER TABLE users
+    ALTER COLUMN status SET STATISTICS 1000;
+
+ALTER TABLE users
+    ALTER COLUMN business_unit_id SET STATISTICS 1000;
+
+ALTER TABLE users
+    ALTER COLUMN current_organization_id SET STATISTICS 1000;
+

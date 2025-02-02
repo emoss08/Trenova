@@ -932,12 +932,12 @@
 
 - model: Customer
   rows:
-    - _id: test_customer
+    - _id: honeywell_customer
       organization_id: "{{ $.Organization.trenova.ID }}"
       business_unit_id: "{{ $.BusinessUnit.trenova.ID }}"
-      code: "TEST000000"
+      code: "HONEYWELL"
       created_at: "{{ now.Unix }}"
-      name: "Test Customer"
+      name: "Honeywell"
       address_line_1: "1234 Main St"
       city: "Los Angeles"
       postal_code: "90001"
@@ -954,7 +954,7 @@
       bol: "TEST000000"
       shipment_type_id: "{{ $.ShipmentType.ftl_shipment_type.ID }}"
       service_type_id: "{{ $.ServiceType.std_service_type.ID }}"
-      customer_id: "{{ $.Customer.test_customer.ID }}"
+      customer_id: "{{ $.Customer.honeywell_customer.ID }}"
       rating_unit: 1
       rating_method: "PerMile"
       other_charge_amount: 100.00
@@ -978,7 +978,7 @@
       bol: "TEST000000"
       shipment_type_id: "{{ $.ShipmentType.ftl_shipment_type.ID }}"
       service_type_id: "{{ $.ServiceType.std_service_type.ID }}"
-      customer_id: "{{ $.Customer.test_customer.ID }}"
+      customer_id: "{{ $.Customer.honeywell_customer.ID }}"
       rating_unit: 1
       rating_method: "PerMile"
       other_charge_amount: 100.00
@@ -1000,7 +1000,7 @@
       bol: "TEST000000"
       shipment_type_id: "{{ $.ShipmentType.ftl_shipment_type.ID }}"
       service_type_id: "{{ $.ServiceType.std_service_type.ID }}"
-      customer_id: "{{ $.Customer.test_customer.ID }}"
+      customer_id: "{{ $.Customer.honeywell_customer.ID }}"
       rating_unit: 1
       rating_method: "PerMile"
       other_charge_amount: 100.00
@@ -1024,7 +1024,7 @@
       bol: "TEST000000"
       shipment_type_id: "{{ $.ShipmentType.ftl_shipment_type.ID }}"
       service_type_id: "{{ $.ServiceType.std_service_type.ID }}"
-      customer_id: "{{ $.Customer.test_customer.ID }}"
+      customer_id: "{{ $.Customer.honeywell_customer.ID }}"
       rating_unit: 1
       rating_method: "PerMile"
       other_charge_amount: 100.00
@@ -1048,7 +1048,7 @@
       bol: "TEST000000"
       shipment_type_id: "{{ $.ShipmentType.ftl_shipment_type.ID }}"
       service_type_id: "{{ $.ServiceType.std_service_type.ID }}"
-      customer_id: "{{ $.Customer.test_customer.ID }}"
+      customer_id: "{{ $.Customer.honeywell_customer.ID }}"
       rating_unit: 1
       rating_method: "PerMile"
       other_charge_amount: 100.00
@@ -1072,7 +1072,7 @@
       bol: "TEST000000"
       shipment_type_id: "{{ $.ShipmentType.ftl_shipment_type.ID }}"
       service_type_id: "{{ $.ServiceType.std_service_type.ID }}"
-      customer_id: "{{ $.Customer.test_customer.ID }}"
+      customer_id: "{{ $.Customer.honeywell_customer.ID }}"
       rating_unit: 1
       rating_method: "FlatRate"
       other_charge_amount: 100.00
@@ -1098,7 +1098,7 @@
       bol: "TEST000000"
       shipment_type_id: "{{ $.ShipmentType.ftl_shipment_type.ID }}"
       service_type_id: "{{ $.ServiceType.std_service_type.ID }}"
-      customer_id: "{{ $.Customer.test_customer.ID }}"
+      customer_id: "{{ $.Customer.honeywell_customer.ID }}"
       rating_unit: 1
       rating_method: "FlatRate"
       other_charge_amount: 100.00
