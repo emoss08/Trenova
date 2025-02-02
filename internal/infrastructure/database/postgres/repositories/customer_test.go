@@ -20,7 +20,7 @@ import (
 func TestCustomerRepository(t *testing.T) {
 	org := ts.Fixture.MustRow("Organization.trenova").(*organization.Organization)
 	bu := ts.Fixture.MustRow("BusinessUnit.trenova").(*businessunit.BusinessUnit)
-	loc := ts.Fixture.MustRow("Customer.test_customer").(*customer.Customer)
+	loc := ts.Fixture.MustRow("Customer.honeywell_customer").(*customer.Customer)
 	usState := ts.Fixture.MustRow("UsState.ca").(*usstate.UsState)
 
 	repo := repositories.NewCustomerRepository(repositories.CustomerRepositoryParams{
