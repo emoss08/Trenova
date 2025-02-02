@@ -58,3 +58,18 @@ export type ShipmentPaginationProps = {
   pageSizeOptions: readonly number[];
   isLoading: boolean;
 };
+
+export type ShipmentCardProps = {
+  shipment: Shipment;
+  isSelected: boolean;
+  onSelect: (shipmentId: string) => void;
+  inputValue?: string;
+};
+
+export type ShipmentListProps = {
+  displayData: (Shipment | undefined)[];
+  isLoading: boolean;
+  selectedShipmentId?: string | null;
+  onShipmentSelect: (shipmentId: string) => void;
+  inputValue?: string;
+};

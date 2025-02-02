@@ -1,32 +1,27 @@
 import { ShipmentStatusBadge } from "@/components/status-badge";
 import { Icon } from "@/components/ui/icons";
-import { InternalLink } from "@/components/ui/link";
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { CustomerSchema } from "@/lib/schemas/customer-schema";
 import { LocationSchema } from "@/lib/schemas/location-schema";
 import { ShipmentLocations } from "@/lib/shipment/utils";
 import { formatLocation } from "@/lib/utils";
-import { type Shipment as ShipmentResponse } from "@/types/shipment";
+import type { Shipment, ShipmentCardProps } from "@/types/shipment";
+
+import Highlight from "@/components/ui/highlight";
 import { faSignalStream } from "@fortawesome/pro-regular-svg-icons";
 import { Timeline } from "./shipment-timeline";
-
-type ShipmentCardProps = {
-  shipment: ShipmentResponse;
-  isSelected: boolean;
-  onSelect: (shipmentId: string) => void;
-};
 
 export function ShipmentCard({
   shipment,
   isSelected,
   onSelect,
+  inputValue,
 }: ShipmentCardProps) {
-  const { status, customer } = shipment;
+  const { status } = shipment;
 
   const { origin } = ShipmentLocations.useLocations(shipment);
 
@@ -41,13 +36,11 @@ export function ShipmentCard({
           <ShipmentStatusBadge status={status} />
           <LocationGeocoded location={origin} />
         </div>
-        <div className="flex justify-between gap-2">
-          <ProNumber shipment={shipment} onSelect={onSelect} />
-          <div className="flex items-center gap-2">
-            <CustomerBadge customer={customer} />
-          </div>
-        </div>
-
+        <ProNumber
+          shipment={shipment}
+          onSelect={onSelect}
+          inputValue={inputValue}
+        />
         <StopInformation shipment={shipment} />
       </div>
     </div>
@@ -57,9 +50,11 @@ export function ShipmentCard({
 function ProNumber({
   shipment,
   onSelect,
+  inputValue,
 }: {
-  shipment: ShipmentResponse;
+  shipment: Shipment;
   onSelect: (shipmentId: string) => void;
+  inputValue?: string;
 }) {
   return (
     <div className="flex items-center gap-0.5">
@@ -67,43 +62,15 @@ function ProNumber({
         onClick={() => {
           onSelect(shipment.id ?? "");
         }}
-        className="text-muted-foreground underline hover:text-foreground/70"
+        className="text-muted-foreground underline hover:text-foreground/70 cursor-pointer"
       >
-        {shipment.proNumber}
+        <Highlight text={shipment.proNumber} highlight={inputValue} />
       </button>
     </div>
   );
 }
 
-function CustomerBadge({ customer }: { customer: CustomerSchema }) {
-  return (
-    <TooltipProvider>
-      <Tooltip>
-        <TooltipTrigger>
-          <InternalLink
-            to={{
-              pathname: "/billing/configurations/customers",
-              search: `?entityId=${customer.id}&modal=edit`,
-            }}
-            state={{
-              isNavigatingToModal: true,
-            }}
-            className="text-muted-foreground underline hover:text-foreground/70"
-            replace
-            preventScrollReset
-          >
-            {customer.code}
-          </InternalLink>
-        </TooltipTrigger>
-        <TooltipContent>
-          <p>Click to view {customer.name}</p>
-        </TooltipContent>
-      </Tooltip>
-    </TooltipProvider>
-  );
-}
-
-function StopInformation({ shipment }: { shipment: ShipmentResponse }) {
+function StopInformation({ shipment }: { shipment: Shipment }) {
   const { destination, origin } = ShipmentLocations.useLocations(shipment);
 
   if (!origin || !destination) {

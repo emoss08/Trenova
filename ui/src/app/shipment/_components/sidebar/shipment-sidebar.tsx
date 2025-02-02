@@ -11,7 +11,7 @@ import { ShipmentPagination } from "./shipment-sidebar-pagination";
 
 const DEFAULT_PAGE_SIZE = 10;
 const PAGE_SIZE_OPTIONS = [10, 25, 50] as const;
-const SEARCH_DEBOUNCE_TIME = 300;
+const SEARCH_DEBOUNCE_TIME = 500;
 
 const searchParams = {
   page: parseAsInteger.withDefault(1),
@@ -130,19 +130,21 @@ export function ShipmentSidebar() {
           isLoading={shipmentsQuery.isLoading || isTransitioning}
           selectedShipmentId={selectedShipmentId}
           onShipmentSelect={handleShipmentSelection}
+          inputValue={debouncedQueryValue}
         />
       )}
 
-      {/* Fixed bottom section */}
-      <ShipmentPagination
-        totalCount={shipmentsQuery.data?.count || 0}
-        page={page}
-        pageSize={pageSize}
-        onPageChange={handlePageChange}
-        onPageSizeChange={handlePageSizeChange}
-        pageSizeOptions={PAGE_SIZE_OPTIONS}
-        isLoading={shipmentsQuery.isLoading || isTransitioning}
-      />
+      {!selectedShipmentId && (
+        <ShipmentPagination
+          totalCount={shipmentsQuery.data?.count || 0}
+          page={page}
+          pageSize={pageSize}
+          onPageChange={handlePageChange}
+          onPageSizeChange={handlePageSizeChange}
+          pageSizeOptions={PAGE_SIZE_OPTIONS}
+          isLoading={shipmentsQuery.isLoading || isTransitioning}
+        />
+      )}
     </div>
   );
 }

@@ -7,7 +7,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Skeleton } from "@/components/ui/skeleton";
 import { statusChoices } from "@/lib/choices";
 import { type ShipmentFilterSchema } from "@/lib/schemas/shipment-filter-schema";
-import { type Shipment as ShipmentResponse } from "@/types/shipment";
+import type { ShipmentListProps } from "@/types/shipment";
 import {
   faBox,
   faFilter,
@@ -17,13 +17,6 @@ import {
 import { useFormContext } from "react-hook-form";
 import { ShipmentCard } from "./shipment-card";
 import { FilterOptions } from "./shipment-filter-options";
-
-type ShipmentListProps = {
-  displayData: (ShipmentResponse | undefined)[];
-  isLoading: boolean;
-  selectedShipmentId?: string | null;
-  onShipmentSelect: (shipmentId: string) => void;
-};
 
 // Define a loading shipment card component
 function ShipmentCardSkeleton() {
@@ -50,6 +43,7 @@ export function ShipmentList({
   isLoading,
   selectedShipmentId,
   onShipmentSelect,
+  inputValue,
 }: ShipmentListProps) {
   const { control } = useFormContext<ShipmentFilterSchema>();
 
@@ -100,6 +94,7 @@ export function ShipmentList({
                   shipment={shipment}
                   isSelected={selectedShipmentId === shipment.id}
                   onSelect={onShipmentSelect}
+                  inputValue={inputValue}
                 />
               ),
             )}
