@@ -98,6 +98,10 @@ func (h Handler) list(c *fiber.Ctx) error {
 	}
 
 	handler := func(fc *fiber.Ctx, filter *ports.LimitOffsetQueryOptions) (*ports.ListResult[*workerdomain.Worker], error) {
+		if err = fc.QueryParser(filter); err != nil {
+			return nil, h.eh.HandleError(fc, err)
+		}
+
 		return h.ws.List(fc.UserContext(), &repositories.ListWorkerOptions{
 			Filter:         filter,
 			IncludeProfile: c.QueryBool("includeProfile"),
