@@ -24,6 +24,7 @@ import (
 var (
 	_ bun.BeforeAppendModelHook = (*Shipment)(nil)
 	_ domain.Validatable        = (*Shipment)(nil)
+	_ infra.PostgresSearchable  = (*Shipment)(nil)
 )
 
 type Shipment struct {
@@ -209,4 +210,31 @@ func (st *Shipment) BeforeAppendModel(_ context.Context, query bun.Query) error 
 	}
 
 	return nil
+}
+
+func (st Shipment) GetPostgresSearchConfig() infra.PostgresSearchConfig {
+	return infra.PostgresSearchConfig{
+		TableAlias: "sp",
+		Fields: []infra.PostgresSearchableField{
+			{
+				Name:   "pro_number",
+				Weight: "A",
+				Type:   infra.PostgresSearchTypeComposite,
+			},
+			{
+				Name:   "bol",
+				Weight: "A",
+				Type:   infra.PostgresSearchTypeComposite,
+			},
+			{
+				Name:       "status",
+				Weight:     "B",
+				Type:       infra.PostgresSearchTypeEnum,
+				Dictionary: "english",
+			},
+		},
+		MinLength:       2,
+		MaxTerms:        6,
+		UsePartialMatch: true,
+	}
 }

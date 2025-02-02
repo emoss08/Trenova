@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/pkg/errors"
+	"github.com/emoss08/trenova/internal/pkg/postgressearch"
 )
 
 type Status string
@@ -50,3 +51,4 @@ type Validatable interface {
 	Validate(ctx context.Context, multiErr *errors.MultiError)
 	GetTableName() string
 }
+
