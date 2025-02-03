@@ -1,14 +1,10 @@
 import { nodeResolve } from "@rollup/plugin-node-resolve";
 import tailwindcss from "@tailwindcss/vite";
-import react from "@vitejs/plugin-react";
+import react from "@vitejs/plugin-react-swc";
 import path from "path";
 import { defineConfig, type PluginOption } from "vite";
 import { compression } from "vite-plugin-compression2";
 import { VitePWA } from "vite-plugin-pwa";
-
-const ReactCompilerConfig = {
-  target: "18", // '17' | '18' | '19'
-};
 
 // Define vendor chunks that should be bundled separately
 const vendorChunks = {
@@ -68,11 +64,7 @@ const vendorChunks = {
 
 export default defineConfig({
   plugins: [
-    react({
-      babel: {
-        plugins: [["babel-plugin-react-compiler", ReactCompilerConfig]],
-      },
-    }),
+    react(),
     tailwindcss(),
     nodeResolve() as PluginOption,
     VitePWA({

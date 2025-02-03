@@ -5,7 +5,7 @@ import { parseAsInteger, parseAsString, useQueryState } from "nuqs";
 import { useCallback, useEffect, useMemo, useTransition } from "react";
 import { useFormContext } from "react-hook-form";
 import { useShipmentDetails, useShipments } from "../../queries/shipment";
-import { ShipmentDetails } from "./shipment-details";
+import { ShipmentDetails } from "./details/shipment-details";
 import { ShipmentList } from "./shipment-list";
 import { ShipmentPagination } from "./shipment-sidebar-pagination";
 

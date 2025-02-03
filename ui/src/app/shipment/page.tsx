@@ -1,4 +1,3 @@
-"use no memo";
 
 import { MetaTags } from "@/components/meta-tags";
 import { SuspenseLoader } from "@/components/ui/component-loader";

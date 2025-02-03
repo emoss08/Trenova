@@ -967,6 +967,8 @@
       sent_to_billing: false
       temperature_min: 10.00
       temperature_max: 20.00
+      tractor_type_id: "{{ $.EquipmentType.tractor_equip_type.ID }}"
+      trailer_type_id: "{{ $.EquipmentType.trailer_equip_type.ID }}"
 
     # In Transit Shipment
     - _id: in_transit_shipment
@@ -1476,3 +1478,14 @@
       planned_departure: "{{ now.Unix }}"
       actual_arrival: "{{ now.Unix }}"
       actual_departure: "{{ now.Unix }}"
+
+- model: ShipmentCommodity
+  rows:
+    - _id: test_shipment_commodity_1
+      organization_id: "{{ $.Organization.trenova.ID }}"
+      business_unit_id: "{{ $.BusinessUnit.trenova.ID }}"
+      created_at: "{{ now.Unix }}"
+      shipment_id: "{{ $.Shipment.test_shipment.ID }}"
+      commodity_id: "{{ $.Commodity.test_commodity.ID }}"
+      pieces: 1
+      weight: 1000.00

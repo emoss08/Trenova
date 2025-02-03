@@ -1,4 +1,5 @@
 import { ShipmentStatusBadge } from "@/components/status-badge";
+import Highlight from "@/components/ui/highlight";
 import { Icon } from "@/components/ui/icons";
 import {
   Tooltip,
@@ -10,8 +11,6 @@ import { LocationSchema } from "@/lib/schemas/location-schema";
 import { ShipmentLocations } from "@/lib/shipment/utils";
 import { formatLocation } from "@/lib/utils";
 import type { Shipment, ShipmentCardProps } from "@/types/shipment";
-
-import Highlight from "@/components/ui/highlight";
 import { faSignalStream } from "@fortawesome/pro-regular-svg-icons";
 import { Timeline } from "./shipment-timeline";
 
@@ -62,7 +61,7 @@ function ProNumber({
         onClick={() => {
           onSelect(shipment.id ?? "");
         }}
-        className="text-muted-foreground underline hover:text-foreground/70 cursor-pointer"
+        className="text-primary underline hover:text-primary/70 cursor-pointer"
       >
         <Highlight text={shipment.proNumber} highlight={inputValue} />
       </button>
