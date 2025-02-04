@@ -1,3 +1,4 @@
+import { ShipmentStatusBadge } from "@/components/status-badge";
 import { Icon } from "@/components/ui/icons";
 import {
   Tooltip,
@@ -6,16 +7,14 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
-import { mapToRatingMethod, type Shipment } from "@/types/shipment";
+import {
+  mapToRatingMethod,
+  type Shipment,
+  type ShipmentStatus,
+} from "@/types/shipment";
 import { faCheck, faCopy } from "@fortawesome/pro-solid-svg-icons";
 import { useState } from "react";
 import { DetailsRow, ShipmentDetailColumn } from "./shipment-detail-column";
-
-import { ShipmentStatusBadge } from "@/components/status-badge";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { EntityRedirectLink } from "@/components/ui/link";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { type ShipmentStatus } from "@/types/shipment";
 
 export function ShipmentDetailsHeader({
   proNumber,
@@ -184,65 +183,6 @@ export function ShipmentBillingDetails({ shipment }: { shipment: Shipment }) {
           label="Total Charge Amount"
           value={shipment.totalChargeAmount.toString()}
         />
-      </div>
-    </div>
-  );
-}
-
-export function ShipmentCommodityDetails({ shipment }: { shipment: Shipment }) {
-  const commodities = shipment.commodities;
-
-  if (!commodities) {
-    return (
-      <div className="flex flex-col gap-2 border-y border-bg-sidebar-border py-4">
-        <Card>
-          <CardHeader className="flex justify-center text-center">
-            <CardTitle>No Commodities</CardTitle>
-          </CardHeader>
-          <CardContent className="flex justify-center text-center">
-            <p className="text-sm text-muted-foreground">
-              Shipment has no associated commodities
-            </p>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
-
-  return (
-    <div className="flex flex-col gap-2 border-y border-bg-sidebar-border py-4">
-      <h3 className="text-sm font-medium">Commodities</h3>
-      <div className="bg-card rounded-lg border border-bg-sidebar-border">
-        {/* Header */}
-        <div className="grid grid-cols-12 gap-4 p-2 text-sm text-muted-foreground">
-          <div className="col-span-6">Commodity</div>
-          <div className="col-span-3 text-left">Pieces</div>
-          <div className="col-span-3 text-left">Weight</div>
-        </div>
-
-        {/* Scrollable Content */}
-        <ScrollArea className="flex max-h-40 flex-col overflow-y-auto">
-          <div className="flex flex-col">
-            {commodities.map((commodity) => (
-              <div
-                key={commodity.id}
-                className="grid grid-cols-12 gap-4 border-t text-sm border-border p-2"
-              >
-                <div className="col-span-6">
-                  <EntityRedirectLink
-                    entityId={commodity.commodity.id}
-                    baseUrl="/shipments/configurations/commodities"
-                    modelOpen
-                  >
-                    {commodity.commodity.name}
-                  </EntityRedirectLink>
-                </div>
-                <div className="col-span-3 text-left">{commodity.pieces}</div>
-                <div className="col-span-3 text-left">{commodity.weight}</div>
-              </div>
-            ))}
-          </div>
-        </ScrollArea>
       </div>
     </div>
   );

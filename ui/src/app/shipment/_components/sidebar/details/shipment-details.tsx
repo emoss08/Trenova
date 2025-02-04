@@ -3,9 +3,9 @@ import { Icon } from "@/components/ui/icons";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { type Shipment } from "@/types/shipment";
 import { faChevronLeft } from "@fortawesome/pro-solid-svg-icons";
+import { ShipmentCommodityDetails } from "./shipment-commodity-details";
 import {
   ShipmentBillingDetails,
-  ShipmentCommodityDetails,
   ShipmentDetailsHeader,
   ShipmentServiceDetails,
 } from "./shipment-details-components";
