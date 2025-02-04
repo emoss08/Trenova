@@ -110,18 +110,17 @@ type EntityRedirectLinkProps = Omit<LinkProps, "to"> & {
 export const EntityRedirectLink = React.forwardRef<
   HTMLAnchorElement,
   EntityRedirectLinkProps
->((props, ref) => {
-  const { children, className } = props;
-  if (!props.entityId) {
+>(({ entityId, baseUrl, modelOpen, children, className, ...rest }, ref) => {
+  if (!entityId) {
     return <>{children}</>;
   }
 
-  let url = `${props.baseUrl}`;
+  let url = `${baseUrl}`;
 
-  if (props.modelOpen) {
-    url += `?entityId=${props.entityId}&modal=edit`;
+  if (modelOpen) {
+    url += `?entityId=${entityId}&modal=edit`;
   } else {
-    url += `/${props.entityId}`;
+    url += `/${entityId}`;
   }
 
   return (
@@ -137,7 +136,7 @@ export const EntityRedirectLink = React.forwardRef<
         width: "fit-content",
         display: "inline-block",
       }}
-      {...props}
+      {...rest}
     >
       {children}
     </Link>
