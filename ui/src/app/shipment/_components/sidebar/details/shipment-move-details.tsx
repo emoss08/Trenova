@@ -54,8 +54,11 @@ export function ShipmentMovesDetails({ shipment }: { shipment: Shipment }) {
   const { moves } = shipment;
 
   return (
-    <div className="flex flex-col gap-4 py-4">
-      <h3 className="text-sm font-medium">Moves</h3>
+    <div className="flex flex-col gap-1 py-4">
+      <div className="flex items-center gap-1">
+        <h3 className="text-sm font-medium">Moves</h3>
+        <span className="text-2xs text-muted-foreground">({moves.length})</span>
+      </div>
       {moves.map((move) => (
         <MoveInformation key={move.id} move={move} />
       ))}

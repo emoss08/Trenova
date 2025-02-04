@@ -21,7 +21,7 @@ const CommodityRow = memo(function CommodityRow({
   return (
     <div
       className={cn(
-        "grid grid-cols-12 gap-4 p-2 text-sm bg-background",
+        "grid grid-cols-12 gap-4 p-2 text-sm bg-transparent",
         !isLast && "border-b border-border",
       )}
       style={style}
@@ -95,15 +95,21 @@ export function ShipmentCommodityDetails({
         className,
       )}
     >
-      <h3 className="text-sm font-medium">Commodities</h3>
-      <div className="rounded-lg border border-bg-sidebar-border bg-card">
+      <div className="flex items-center gap-1">
+        <h3 className="text-sm font-medium">Commodities</h3>
+        <span className="text-2xs text-muted-foreground">
+          ({commodities.length})
+        </span>
+      </div>
+
+      <div className="rounded-lg border border-bg-sidebar-border bg-transparent">
         <TableHeader />
         <VirtualizedScrollArea
           ref={parentRef}
           className="flex max-h-40 flex-col"
         >
           <div
-            className="relative w-full"
+            className="relative w-full rounded-b-lg"
             style={{ height: `${virtualizer.getTotalSize()}px` }}
           >
             {virtualizer.getVirtualItems().map((virtualRow) => {
