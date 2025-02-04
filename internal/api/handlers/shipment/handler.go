@@ -33,13 +33,7 @@ func NewHandler(p HandlerParams) *Handler {
 
 func (h Handler) RegisterRoutes(r fiber.Router, rl *middleware.RateLimiter) {
 	api := r.Group("/shipments")
-
-	api.Get("/select-options", rl.WithRateLimit(
-		[]fiber.Handler{h.selectOptions},
-		middleware.PerMinute(120), // 120 reads per minute
-	)...)
-
-	api.Get("", rl.WithRateLimit(
+	api.Get("/", rl.WithRateLimit(
 		[]fiber.Handler{h.list},
 		middleware.PerSecond(5), // 5 reads per second
 	)...)
@@ -49,12 +43,17 @@ func (h Handler) RegisterRoutes(r fiber.Router, rl *middleware.RateLimiter) {
 		middleware.PerMinute(60), // 60 reads per minute
 	)...)
 
-	api.Get("/:shipmentID", rl.WithRateLimit(
+	api.Get("/select-options/", rl.WithRateLimit(
+		[]fiber.Handler{h.selectOptions},
+		middleware.PerMinute(120), // 120 reads per minute
+	)...)
+
+	api.Get("/:shipmentID/", rl.WithRateLimit(
 		[]fiber.Handler{h.get},
 		middleware.PerMinute(60), // 60 reads per minute
 	)...)
 
-	api.Put("/:shipmentID", rl.WithRateLimit(
+	api.Put("/:shipmentID/", rl.WithRateLimit(
 		[]fiber.Handler{h.update},
 		middleware.PerMinute(60), // 60 writes per minute
 	)...)
