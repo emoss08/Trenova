@@ -27,7 +27,7 @@ export function ShipmentDetailsHeader({
   status: ShipmentStatus;
 }) {
   return (
-    <div className="flex flex-col gap-0.5">
+    <div className="flex flex-col gap-0.5 px-4 pb-2 border-b border-bg-sidebar-border">
       <div className="flex items-center gap-2 justify-between">
         <h2 className="text-xl">{proNumber}</h2>
         <ShipmentStatusBadge status={status} />
@@ -39,7 +39,7 @@ export function ShipmentDetailsHeader({
 
 export function ShipmentServiceDetails({ shipment }: { shipment: Shipment }) {
   return (
-    <div className="flex flex-col gap-2 border-t border-bg-sidebar-border pt-4">
+    <div className="flex flex-col gap-2 pb-4">
       <h3 className="text-sm font-medium">Service Information</h3>
       <div className="grid grid-cols-2 gap-y-4">
         {/* Left Column */}
@@ -160,7 +160,7 @@ export function ShipmentDetailsBOL({
 
 export function ShipmentBillingDetails({ shipment }: { shipment: Shipment }) {
   return (
-    <div className="flex flex-col gap-2 border-t border-bg-sidebar-border pt-4">
+    <div className="flex flex-col gap-2 border-t border-bg-sidebar-border py-4">
       <h3 className="text-sm font-medium">Billing Information</h3>
       <div className="space-y-4">
         <DetailsRow
@@ -194,7 +194,7 @@ export function ShipmentCommodityDetails({ shipment }: { shipment: Shipment }) {
 
   if (!commodities) {
     return (
-      <div className="flex flex-col gap-2 border-t border-bg-sidebar-border pt-4">
+      <div className="flex flex-col gap-2 border-y border-bg-sidebar-border py-4">
         <Card>
           <CardHeader className="flex justify-center text-center">
             <CardTitle>No Commodities</CardTitle>
@@ -210,7 +210,8 @@ export function ShipmentCommodityDetails({ shipment }: { shipment: Shipment }) {
   }
 
   return (
-    <div className="flex flex-col gap-2 border-t border-bg-sidebar-border pt-4">
+    <div className="flex flex-col gap-2 border-y border-bg-sidebar-border py-4">
+      <h3 className="text-sm font-medium">Commodities</h3>
       <div className="bg-card rounded-lg border border-bg-sidebar-border">
         {/* Header */}
         <div className="grid grid-cols-12 gap-4 p-2 text-sm text-muted-foreground">

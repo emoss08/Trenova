@@ -1,13 +1,15 @@
 import { Button } from "@/components/ui/button";
 import { Icon } from "@/components/ui/icons";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { type Shipment } from "@/types/shipment";
 import { faChevronLeft } from "@fortawesome/pro-solid-svg-icons";
 import {
   ShipmentBillingDetails,
   ShipmentCommodityDetails,
   ShipmentDetailsHeader,
-  ShipmentServiceDetails
+  ShipmentServiceDetails,
 } from "./shipment-details-components";
+import { ShipmentMovesDetails } from "./shipment-move-details";
 
 interface ShipmentDetailsProps {
   selectedShipment?: Shipment | null;
@@ -31,22 +33,26 @@ export function ShipmentDetails({
 
   return (
     <div className="size-full">
-      <div className="py-2 px-3">
-        <div className="flex items-center gap-2">
+      <div className="py-2">
+        <div className="flex items-center gap-2 px-4">
           <Button variant="outline" size="sm" onClick={onBack}>
             <Icon icon={faChevronLeft} className="size-4" />
             <span className="text-sm">Back</span>
           </Button>
         </div>
-        <div className="flex flex-col gap-2 mt-4 px-2">
+        <div className="flex flex-col gap-2 mt-4">
           <ShipmentDetailsHeader
             proNumber={selectedShipment.proNumber}
             status={selectedShipment.status}
             bol={selectedShipment.bol}
           />
-          <ShipmentServiceDetails shipment={selectedShipment} />
-          <ShipmentBillingDetails shipment={selectedShipment} />
-          <ShipmentCommodityDetails shipment={selectedShipment} />
+          <ScrollArea className="flex max-h-[calc(100vh-12rem)] flex-col overflow-y-auto px-4">
+            <ShipmentServiceDetails shipment={selectedShipment} />
+            <ShipmentBillingDetails shipment={selectedShipment} />
+            <ShipmentCommodityDetails shipment={selectedShipment} />
+            <ShipmentMovesDetails shipment={selectedShipment} />
+            <div className="pointer-events-none absolute bottom-0 left-0 right-0 h-8 bg-gradient-to-t from-sidebar to-transparent" />
+          </ScrollArea>
         </div>
       </div>
     </div>
