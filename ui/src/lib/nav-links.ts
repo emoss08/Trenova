@@ -132,7 +132,7 @@ export const routes: routeInfo[] = [
     tree: [
       {
         key: "shipments",
-        label: "Shipments Management",
+        label: "Shipment Management",
         link: "/shipments/management",
       },
       {

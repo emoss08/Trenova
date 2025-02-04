@@ -12,7 +12,10 @@ import {
   type Shipment,
   type ShipmentStatus,
 } from "@/types/shipment";
-import { faCheck, faCopy } from "@fortawesome/pro-solid-svg-icons";
+import {
+  faCheck,
+  faCopy
+} from "@fortawesome/pro-solid-svg-icons";
 import { useState } from "react";
 import { DetailsRow, ShipmentDetailColumn } from "./shipment-detail-column";
 
@@ -41,7 +44,6 @@ export function ShipmentServiceDetails({ shipment }: { shipment: Shipment }) {
     <div className="flex flex-col gap-2 pb-4">
       <h3 className="text-sm font-medium">Service Information</h3>
       <div className="grid grid-cols-2 gap-y-4">
-        {/* Left Column */}
         <div className="space-y-4">
           <div className="space-y-1">
             <p className="text-sm text-muted-foreground">Service Type</p>
@@ -50,7 +52,6 @@ export function ShipmentServiceDetails({ shipment }: { shipment: Shipment }) {
               text={shipment.serviceType.code}
             />
           </div>
-
           <div className="space-y-1">
             <p className="text-sm text-muted-foreground">Shipment Type</p>
             <ShipmentDetailColumn
@@ -59,8 +60,6 @@ export function ShipmentServiceDetails({ shipment }: { shipment: Shipment }) {
             />
           </div>
         </div>
-
-        {/* Right Column */}
         <div className="space-y-4 text-right">
           <div className="space-y-1">
             <p className="text-sm text-muted-foreground">Tractor Type</p>

@@ -9,6 +9,7 @@ import {
   ShipmentDetailsHeader,
   ShipmentServiceDetails,
 } from "./shipment-details-components";
+import { ShipmentDetailActions } from "./shipment-menu-actions";
 import { ShipmentMovesDetails } from "./shipment-move-details";
 
 interface ShipmentDetailsProps {
@@ -34,11 +35,12 @@ export function ShipmentDetails({
   return (
     <div className="size-full">
       <div className="py-2">
-        <div className="flex items-center gap-2 px-4">
+        <div className="flex items-center gap-2 px-4 justify-between">
           <Button variant="outline" size="sm" onClick={onBack}>
             <Icon icon={faChevronLeft} className="size-4" />
             <span className="text-sm">Back</span>
           </Button>
+          <ShipmentDetailActions />
         </div>
         <div className="flex flex-col gap-2 mt-4">
           <ShipmentDetailsHeader
