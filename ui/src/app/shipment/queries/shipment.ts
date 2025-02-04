@@ -1,9 +1,9 @@
 import { getShipmentByID, getShipments } from "@/services/shipment";
 import { type LimitOffsetResponse } from "@/types/server";
 import type {
-    ShipmentDetailsQueryParams,
-    ShipmentQueryParams,
-    Shipment as ShipmentResponse,
+  ShipmentDetailsQueryParams,
+  ShipmentQueryParams,
+  Shipment as ShipmentResponse,
 } from "@/types/shipment";
 import { useQuery } from "@tanstack/react-query";
 

@@ -1,4 +1,3 @@
-
 import { MetaTags } from "@/components/meta-tags";
 import { SuspenseLoader } from "@/components/ui/component-loader";
 import { Skeleton } from "@/components/ui/skeleton";

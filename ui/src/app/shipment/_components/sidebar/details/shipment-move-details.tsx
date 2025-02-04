@@ -1,15 +1,33 @@
 import { StopStatusBadge } from "@/components/status-badge";
 import { Icon } from "@/components/ui/icons";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { formatSplitDateTime } from "@/lib/date";
 import { cn } from "@/lib/utils";
 import { type ShipmentMove } from "@/types/move";
 import { type Shipment } from "@/types/shipment";
 import { Stop, StopStatus } from "@/types/stop";
-import { faArrowDown, faPlus } from "@fortawesome/pro-regular-svg-icons";
+import {
+  faArrowDown,
+  faCheck,
+  faPlus,
+} from "@fortawesome/pro-regular-svg-icons";
 import { faCircle, faTruck, faXmark } from "@fortawesome/pro-solid-svg-icons";
 import { memo } from "react";
 
-const getStatusIcon = (status: StopStatus) => {
+const getStatusIcon = (
+  status: StopStatus,
+  isLastStop: boolean,
+  moveStatus: StopStatus,
+) => {
+  if (isLastStop && moveStatus === StopStatus.Completed) {
+    return faCheck;
+  }
+
   switch (status) {
     case StopStatus.New:
       return faPlus;
@@ -54,15 +72,19 @@ export function ShipmentMovesDetails({ shipment }: { shipment: Shipment }) {
   const { moves } = shipment;
 
   return (
-    <div className="flex flex-col gap-1 py-4">
-      <div className="flex items-center gap-1">
-        <h3 className="text-sm font-medium">Moves</h3>
-        <span className="text-2xs text-muted-foreground">({moves.length})</span>
+    <TooltipProvider delayDuration={0}>
+      <div className="flex flex-col gap-1 py-4">
+        <div className="flex items-center gap-1">
+          <h3 className="text-sm font-medium">Moves</h3>
+          <span className="text-2xs text-muted-foreground">
+            ({moves?.length ?? 0})
+          </span>
+        </div>
+        {moves.map((move) => (
+          <MoveInformation key={move.id} move={move} />
+        ))}
       </div>
-      {moves.map((move) => (
-        <MoveInformation key={move.id} move={move} />
-      ))}
-    </div>
+    </TooltipProvider>
   );
 }
 
@@ -87,7 +109,12 @@ const MoveInformation = memo(function MoveInformation({
             const isLastStop = index === move.stops.length - 1;
 
             return (
-              <StopTimeline key={stop.id} stop={stop} isLast={isLastStop} />
+              <StopTimeline
+                key={stop.id}
+                stop={stop}
+                isLast={isLastStop}
+                moveStatus={move.status}
+              />
             );
           })}
         </div>
@@ -115,17 +142,58 @@ const MoveStatusBadge = memo(function MoveStatusBadge({
   );
 });
 
+// New helper function to format the tooltip content
+const formatStopTimingInfo = (stop: Stop) => {
+  if (!stop.actualArrival || !stop.actualDeparture)
+    return <p>Unable to show timing information</p>;
+
+  const arrival = formatSplitDateTime(stop.actualArrival);
+  const departure = formatSplitDateTime(stop.actualDeparture);
+
+  return (
+    <ul className="grid gap-1 text-xs">
+      <li className="grid gap-0.5">
+        <span className="text-muted-foreground">Actual Arrival Time:</span>
+        <span className="font-medium">
+          {arrival.date} {arrival.time}
+        </span>
+      </li>
+      <li className="grid gap-0.5">
+        <span className="text-muted-foreground">Actual Departure Time:</span>
+        <span className="font-medium">
+          {departure.date} {departure.time}
+        </span>
+      </li>
+    </ul>
+  );
+};
+
 const StopTimeline = memo(function StopTimeline({
   stop,
   isLast,
+  moveStatus,
 }: {
   stop: Stop;
   isLast: boolean;
+  moveStatus: StopStatus;
 }) {
-  const stopIcon = getStatusIcon(stop.status);
+  const stopIcon = getStatusIcon(stop.status, isLast, moveStatus);
   const bgColor = getBgColor(stop.status);
   const lineStyles = getLineStyles(stop.status);
   const plannedArrival = formatSplitDateTime(stop.plannedArrival);
+  const tooltipContent =
+    stop.status === StopStatus.Completed ? formatStopTimingInfo(stop) : null;
+
+  const stopCircle = (
+    <div
+      className={cn(
+        "rounded-full size-6 flex items-center justify-center",
+        bgColor,
+      )}
+    >
+      <Icon icon={stopIcon} className="size-3.5 text-white" />
+    </div>
+  );
 
   return (
     <div key={stop.id} className="relative">
@@ -145,14 +213,14 @@ const StopTimeline = memo(function StopTimeline({
           <div className="text-muted-foreground">{plannedArrival.time}</div>
         </div>
         <div className="relative z-10">
-          <div
-            className={cn(
-              "rounded-full size-6 flex items-center justify-center",
-              bgColor,
-            )}
-          >
-            <Icon icon={stopIcon} className="size-4 text-white" />
-          </div>
+          {tooltipContent ? (
+            <Tooltip>
+              <TooltipTrigger asChild>{stopCircle}</TooltipTrigger>
+              <TooltipContent>{tooltipContent}</TooltipContent>
+            </Tooltip>
+          ) : (
+            stopCircle
+          )}
         </div>
         <div className="flex-1">
           <div className="text-sm text-primary">

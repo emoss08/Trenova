@@ -1,8 +1,13 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { EmptyState } from "@/components/ui/empty-state";
 import { EntityRedirectLink } from "@/components/ui/link";
 import { VirtualizedScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
 import { Shipment, ShipmentCommodity } from "@/types/shipment";
+import {
+  faBoxesStacked,
+  faTrailer,
+  faTruckContainer,
+} from "@fortawesome/pro-solid-svg-icons";
 import { useVirtualizer } from "@tanstack/react-virtual";
 import { CSSProperties, memo, useCallback, useRef } from "react";
 
@@ -64,7 +69,7 @@ export function ShipmentCommodityDetails({
   const { commodities } = shipment;
   const parentRef = useRef<HTMLDivElement>(null);
   const virtualizer = useVirtualizer({
-    count: commodities.length ?? 0,
+    count: commodities?.length ?? 0,
     getScrollElement: () => parentRef.current,
     estimateSize: useCallback(() => ROW_HEIGHT, []),
     overscan: OVERSCAN,
@@ -74,16 +79,12 @@ export function ShipmentCommodityDetails({
   if (!commodities?.length) {
     return (
       <div className="flex flex-col gap-2 border-y border-bg-sidebar-border py-4">
-        <Card>
-          <CardHeader className="flex justify-center text-center">
-            <CardTitle>No Commodities</CardTitle>
-          </CardHeader>
-          <CardContent className="flex justify-center text-center">
-            <p className="text-sm text-muted-foreground">
-              Shipment has no associated commodities
-            </p>
-          </CardContent>
-        </Card>
+        <EmptyState
+          className="max-h-[200px] p-4"
+          title="No Commodities"
+          description="Shipment has no associated commodities"
+          icons={[faTrailer, faBoxesStacked, faTruckContainer]}
+        />
       </div>
     );
   }
@@ -98,7 +99,7 @@ export function ShipmentCommodityDetails({
       <div className="flex items-center gap-1">
         <h3 className="text-sm font-medium">Commodities</h3>
         <span className="text-2xs text-muted-foreground">
-          ({commodities.length})
+          ({commodities.length ?? 0})
         </span>
       </div>
 
