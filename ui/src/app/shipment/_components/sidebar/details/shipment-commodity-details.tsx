@@ -26,7 +26,7 @@ const CommodityRow = memo(function CommodityRow({
   return (
     <div
       className={cn(
-        "grid grid-cols-12 gap-4 p-2 text-sm bg-transparent",
+        "grid grid-cols-12 gap-4 p-2 text-sm",
         !isLast && "border-b border-border",
       )}
       style={style}
@@ -50,7 +50,7 @@ CommodityRow.displayName = "CommodityRow";
 
 // Header component
 const TableHeader = memo(() => (
-  <div className="sticky top-0 z-10 grid grid-cols-12 gap-4 bg-card p-2 text-sm text-muted-foreground border-b border-border rounded-t-lg">
+  <div className="sticky top-0 z-10 grid grid-cols-12 gap-4 p-2 text-sm text-muted-foreground bg-card border-b border-border rounded-t-lg">
     <div className="col-span-6">Commodity</div>
     <div className="col-span-3 text-left">Pieces</div>
     <div className="col-span-3 text-left">Weight</div>
@@ -103,7 +103,7 @@ export function ShipmentCommodityDetails({
         </span>
       </div>
 
-      <div className="rounded-lg border border-bg-sidebar-border bg-transparent">
+      <div className="rounded-lg border border-bg-sidebar-border bg-card">
         <TableHeader />
         <VirtualizedScrollArea
           ref={parentRef}
