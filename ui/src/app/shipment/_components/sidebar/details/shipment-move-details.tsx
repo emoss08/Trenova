@@ -2,10 +2,12 @@ import { StopStatusBadge } from "@/components/status-badge";
 import { Icon } from "@/components/ui/icons";
 import { formatSplitDateTime } from "@/lib/date";
 import { cn } from "@/lib/utils";
-import { Shipment } from "@/types/shipment";
-import { StopStatus } from "@/types/stop";
+import { type ShipmentMove } from "@/types/move";
+import { type Shipment } from "@/types/shipment";
+import { Stop, StopStatus } from "@/types/stop";
 import { faArrowDown, faPlus } from "@fortawesome/pro-regular-svg-icons";
 import { faCircle, faTruck, faXmark } from "@fortawesome/pro-solid-svg-icons";
+import { memo } from "react";
 
 const getStatusIcon = (status: StopStatus) => {
   switch (status) {
@@ -51,106 +53,114 @@ const getLineStyles = (status: StopStatus) => {
 export function ShipmentMovesDetails({ shipment }: { shipment: Shipment }) {
   const { moves } = shipment;
 
-  const moveDetails = moves.map((move) => {
-    return {
-      id: move.id,
-      status: move.status,
-      stops: move.stops.map((stop) => {
-        return {
-          id: stop.id,
-          type: stop.type,
-          status: stop.status,
-          location: stop.location,
-          plannedDepartureDate: stop.plannedDeparture,
-          plannedArrivalDate: stop.plannedArrival,
-          actualDepartureDate: stop.actualDeparture,
-          actualArrivalDate: stop.actualArrival,
-        };
-      }),
-    };
-  });
-
   return (
     <div className="flex flex-col gap-4 py-4">
       <h3 className="text-sm font-medium">Moves</h3>
-      {moveDetails.map((move) => (
-        <div
-          className="bg-card rounded-lg border border-bg-sidebar-border p-4"
-          key={move.id}
-        >
-          <div className="flex justify-between items-center mb-4">
-            <StopStatusBadge status={move.status} />
-            <span className="text-sm text-muted-foreground">
-              {move.stops.length} stops
-            </span>
-          </div>
-
-          <div className="relative">
-            {/* Stops */}
-            <div className="space-y-6">
-              {move.stops.map((stop, index) => {
-                const stopIcon = getStatusIcon(stop.status);
-                const bgColor = getBgColor(stop.status);
-                const lineStyles = getLineStyles(stop.status);
-                const plannedArrival = formatSplitDateTime(
-                  stop.plannedArrivalDate,
-                );
-                const isLastStop = index === move.stops.length - 1;
-
-                return (
-                  <div key={stop.id} className="relative">
-                    {/* Connecting line to next stop */}
-                    {!isLastStop && (
-                      <div
-                        className={cn(
-                          "absolute left-[121px] ml-[2px] top-[20px] bottom-0 w-[2px]",
-                          lineStyles,
-                        )}
-                        style={{ height: "48px" }}
-                      />
-                    )}
-
-                    <div className="flex items-start gap-4">
-                      {/* Date and Time */}
-                      <div className="w-24 text-right text-sm">
-                        <div className="text-primary">
-                          {plannedArrival.date}
-                        </div>
-                        <div className="text-muted-foreground">
-                          {plannedArrival.time}
-                        </div>
-                      </div>
-
-                      {/* Icon */}
-                      <div className="relative z-10">
-                        <div
-                          className={cn(
-                            "rounded-full size-6 flex items-center justify-center",
-                            bgColor,
-                          )}
-                        >
-                          <Icon icon={stopIcon} className="size-4 text-white" />
-                        </div>
-                      </div>
-
-                      <div className="flex-1">
-                        <div className="text-sm text-primary">
-                          {stop.location?.addressLine1}
-                        </div>
-                        <div className="text-2xs text-muted-foreground">
-                          {stop.location?.city},{" "}
-                          {stop.location?.state?.abbreviation}{" "}
-                          {stop.location?.postalCode}
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        </div>
+      {moves.map((move) => (
+        <MoveInformation key={move.id} move={move} />
       ))}
     </div>
   );
 }
+
+const MoveInformation = memo(function MoveInformation({
+  move,
+}: {
+  move?: ShipmentMove;
+}) {
+  if (!move) {
+    return <p>No move</p>;
+  }
+
+  return (
+    <div
+      className="bg-card rounded-lg border border-bg-sidebar-border p-4"
+      key={move.id}
+    >
+      <MoveStatusBadge move={move} />
+      <div className="relative">
+        <div className="space-y-6">
+          {move.stops.map((stop, index) => {
+            const isLastStop = index === move.stops.length - 1;
+
+            return (
+              <StopTimeline key={stop.id} stop={stop} isLast={isLastStop} />
+            );
+          })}
+        </div>
+      </div>
+    </div>
+  );
+});
+
+const MoveStatusBadge = memo(function MoveStatusBadge({
+  move,
+}: {
+  move?: ShipmentMove;
+}) {
+  if (!move) {
+    return <p>No move</p>;
+  }
+
+  return (
+    <div className="flex justify-between items-center mb-4">
+      <StopStatusBadge status={move.status} />
+      <span className="text-sm text-muted-foreground">
+        {move.stops.length} stops
+      </span>
+    </div>
+  );
+});
+
+const StopTimeline = memo(function StopTimeline({
+  stop,
+  isLast,
+}: {
+  stop: Stop;
+  isLast: boolean;
+}) {
+  const stopIcon = getStatusIcon(stop.status);
+  const bgColor = getBgColor(stop.status);
+  const lineStyles = getLineStyles(stop.status);
+  const plannedArrival = formatSplitDateTime(stop.plannedArrival);
+
+  return (
+    <div key={stop.id} className="relative">
+      {!isLast && (
+        <div
+          className={cn(
+            "absolute left-[121px] ml-[2px] top-[20px] bottom-0 w-[2px]",
+            lineStyles,
+          )}
+          style={{ height: "48px" }}
+        />
+      )}
+
+      <div className="flex items-start gap-4">
+        <div className="w-24 text-right text-sm">
+          <div className="text-primary">{plannedArrival.date}</div>
+          <div className="text-muted-foreground">{plannedArrival.time}</div>
+        </div>
+        <div className="relative z-10">
+          <div
+            className={cn(
+              "rounded-full size-6 flex items-center justify-center",
+              bgColor,
+            )}
+          >
+            <Icon icon={stopIcon} className="size-4 text-white" />
+          </div>
+        </div>
+        <div className="flex-1">
+          <div className="text-sm text-primary">
+            {stop.location?.addressLine1}
+          </div>
+          <div className="text-2xs text-muted-foreground">
+            {stop.location?.city}, {stop.location?.state?.abbreviation}{" "}
+            {stop.location?.postalCode}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+});
