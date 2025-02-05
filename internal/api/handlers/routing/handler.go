@@ -32,7 +32,7 @@ func NewHandler(p HandlerParams) *Handler {
 func (h Handler) RegisterRoutes(r fiber.Router, rl *middleware.RateLimiter) {
 	api := r.Group("/routing")
 
-	api.Get("/single-search", rl.WithRateLimit(
+	api.Get("/single-search/", rl.WithRateLimit(
 		[]fiber.Handler{h.singleSearch},
 		middleware.PerMinute(120),
 	)...)

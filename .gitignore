@@ -12,3 +12,4 @@ public_key.pem
 node_modules
 .fleet
 .idea
+.cursorrules

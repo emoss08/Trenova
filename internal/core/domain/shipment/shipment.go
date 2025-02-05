@@ -158,7 +158,6 @@ func (st *Shipment) Validate(ctx context.Context, multiErr *errors.MultiError) {
 		if eris.As(err, &validationErrs) {
 			errors.FromOzzoErrors(validationErrs, multiErr)
 		}
-
 	}
 }
 

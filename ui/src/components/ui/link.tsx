@@ -100,3 +100,47 @@ export const InternalLink = React.forwardRef<HTMLAnchorElement, LinkProps>(
 );
 
 InternalLink.displayName = "InternalLink";
+
+type EntityRedirectLinkProps = Omit<LinkProps, "to"> & {
+  entityId?: string;
+  baseUrl: string;
+  modelOpen?: boolean;
+};
+
+export const EntityRedirectLink = React.forwardRef<
+  HTMLAnchorElement,
+  EntityRedirectLinkProps
+>(({ entityId, baseUrl, modelOpen, children, className, ...rest }, ref) => {
+  if (!entityId) {
+    return <>{children}</>;
+  }
+
+  let url = `${baseUrl}`;
+
+  if (modelOpen) {
+    url += `?entityId=${entityId}&modal=edit`;
+  } else {
+    url += `/${entityId}`;
+  }
+
+  return (
+    <Link
+      ref={ref}
+      to={url}
+      className={cn(
+        "inline-flex w-full items-center text-primary hover:text-primary/70 underline",
+        className,
+      )}
+      style={{
+        fontWeight: "normal",
+        width: "fit-content",
+        display: "inline-block",
+      }}
+      {...rest}
+    >
+      {children}
+    </Link>
+  );
+});
+
+EntityRedirectLink.displayName = "EntityRedirectLink";

@@ -20,7 +20,7 @@ func NewHandler(os *usstate.Service, eh *validator.ErrorHandler) *Handler {
 func (h Handler) RegisterRoutes(r fiber.Router, rl *middleware.RateLimiter) {
 	api := r.Group("/us-states")
 
-	api.Get("/select-options", rl.WithRateLimit(
+	api.Get("/select-options/", rl.WithRateLimit(
 		[]fiber.Handler{h.selectOptions},
 		middleware.PerMinute(120), // 120 reads per minute
 	)...)

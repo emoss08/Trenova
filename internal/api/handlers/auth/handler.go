@@ -39,10 +39,10 @@ func NewHandler(p HandlerParams) *Handler {
 func (h Handler) RegisterRoutes(r fiber.Router) {
 	api := r.Group("/auth")
 
-	api.Post("/login", h.login)
-	api.Post("/logout", h.logout)
-	api.Post("/check-email", h.checkEmail)
-	api.Post("/validate-session", h.validateSession)
+	api.Post("/login/", h.login)
+	api.Post("/logout/", h.logout)
+	api.Post("/check-email/", h.checkEmail)
+	api.Post("/validate-session/", h.validateSession)
 }
 
 func (h Handler) login(c *fiber.Ctx) error {

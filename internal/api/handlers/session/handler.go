@@ -20,9 +20,8 @@ func NewHandler(ss *session.Service, eh *validator.ErrorHandler) *Handler {
 func (h Handler) RegisterRoutes(r fiber.Router) {
 	api := r.Group("/sessions")
 
-	// No rate limiting
-	api.Get("/me", h.get)
-	api.Delete("/:sessID", h.revoke)
+	api.Get("/me/", h.get)
+	api.Delete("/:sessID/", h.revoke)
 }
 
 func (h Handler) get(c *fiber.Ctx) error {

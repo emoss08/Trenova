@@ -53,8 +53,17 @@ func (sr *shipmentRepository) addOptions(q *bun.SelectQuery, opts repositories.S
 			},
 		})
 
+		q = q.RelationWithOpts("Commodities", bun.RelationOpts{
+			Apply: func(sq *bun.SelectQuery) *bun.SelectQuery {
+				return sq.Relation("Commodity")
+			},
+		})
+
 		q = q.Relation("ServiceType")
-		q = q.Relation("Commodities")
+		q = q.Relation("ShipmentType")
+
+		q = q.Relation("TractorType")
+		q = q.Relation("TrailerType")
 	}
 
 	return q

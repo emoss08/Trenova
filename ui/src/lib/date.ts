@@ -68,6 +68,29 @@ export function getTodayDate(): number {
 }
 
 /**
+ * Formats a Unix timestamp into separated date and time parts using 24-hour format.
+ * Date is formatted as "MMM d" (e.g., "Jan 23")
+ * Time is formatted as "HH:mm" (e.g., "14:30")
+ *
+ * @param timestamp Unix timestamp in seconds
+ * @returns Object containing formatted date and time strings, or default values if timestamp is invalid
+ */
+export function formatSplitDateTime(timestamp: number | undefined): {
+  date: string;
+  time: string;
+} {
+  if (!timestamp) return { date: "-", time: "" };
+
+  const dateObj = toDate(timestamp);
+  if (!dateObj) return { date: "-", time: "" };
+
+  return {
+    date: format(dateObj, "d MMM yyyy"),
+    time: format(dateObj, "HH:mm"),
+  };
+}
+
+/**
  * Converts a Unix timestamp to a Date object.
  * Handles undefined input gracefully.
  *
