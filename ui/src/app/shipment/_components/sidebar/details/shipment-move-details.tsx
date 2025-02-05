@@ -6,8 +6,8 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { useShipment } from "@/hooks/use-shipment";
 import { formatSplitDateTime } from "@/lib/date";
-import { useShipment } from "@/lib/shipment/shipment-context";
 import { cn } from "@/lib/utils";
 import { type ShipmentMove } from "@/types/move";
 import { Stop, StopStatus } from "@/types/stop";

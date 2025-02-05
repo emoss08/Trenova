@@ -1,6 +1,6 @@
 import { useDebounce } from "@/hooks/use-debounce";
+import { ShipmentProvider } from "@/hooks/use-shipment";
 import { type ShipmentFilterSchema } from "@/lib/schemas/shipment-filter-schema";
-import { ShipmentProvider } from "@/lib/shipment/shipment-context";
 import { type Shipment as ShipmentResponse } from "@/types/shipment";
 import { parseAsInteger, parseAsString, useQueryState } from "nuqs";
 import {

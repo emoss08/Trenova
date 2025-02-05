@@ -2,7 +2,7 @@
 import { EmptyState } from "@/components/ui/empty-state";
 import { EntityRedirectLink } from "@/components/ui/link";
 import { VirtualizedScrollArea } from "@/components/ui/scroll-area";
-import { useShipment } from "@/lib/shipment/shipment-context";
+import { useShipment } from "@/hooks/use-shipment";
 import { cn } from "@/lib/utils";
 import { ShipmentCommodity } from "@/types/shipment";
 import {

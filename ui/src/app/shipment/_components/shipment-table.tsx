@@ -9,7 +9,7 @@ export default function ShipmentTable() {
   return (
     <DataTable<Shipment>
       name="Shipment"
-      link="/shipments"
+      link="/shipments/"
       extraSearchParams={{
         includeMoveDetails: true,
         includeStopDetails: true,

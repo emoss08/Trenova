@@ -6,7 +6,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { useShipment } from "@/lib/shipment/shipment-context";
+import { useShipment } from "@/hooks/use-shipment";
 import { cn } from "@/lib/utils";
 import { mapToRatingMethod } from "@/types/shipment";
 import { faCheck, faCopy } from "@fortawesome/pro-solid-svg-icons";
