@@ -7,9 +7,9 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { formatSplitDateTime } from "@/lib/date";
+import { useShipment } from "@/lib/shipment/shipment-context";
 import { cn } from "@/lib/utils";
 import { type ShipmentMove } from "@/types/move";
-import { type Shipment } from "@/types/shipment";
 import { Stop, StopStatus } from "@/types/stop";
 import {
   faArrowDown,
@@ -68,7 +68,13 @@ const getLineStyles = (status: StopStatus) => {
   return getBgColor(status);
 };
 
-export function ShipmentMovesDetails({ shipment }: { shipment: Shipment }) {
+export function ShipmentMovesDetails() {
+  const { shipment } = useShipment();
+
+  if (!shipment) {
+    return null;
+  }
+
   const { moves } = shipment;
 
   return (

@@ -19,7 +19,7 @@ interface ShipmentDetailsProps {
   onBack: () => void;
 }
 
-export function ShipmentDetails({
+export default function ShipmentDetails({
   selectedShipment,
   isLoading,
   onBack,
@@ -43,16 +43,12 @@ export function ShipmentDetails({
           <ShipmentDetailActions />
         </div>
         <div className="flex flex-col gap-2 mt-4">
-          <ShipmentDetailsHeader
-            proNumber={selectedShipment.proNumber}
-            status={selectedShipment.status}
-            bol={selectedShipment.bol}
-          />
+          <ShipmentDetailsHeader />
           <ScrollArea className="flex max-h-[calc(100vh-12rem)] flex-col overflow-y-auto px-4">
-            <ShipmentServiceDetails shipment={selectedShipment} />
-            <ShipmentBillingDetails shipment={selectedShipment} />
-            <ShipmentCommodityDetails shipment={selectedShipment} />
-            <ShipmentMovesDetails shipment={selectedShipment} />
+            <ShipmentServiceDetails />
+            <ShipmentBillingDetails />
+            <ShipmentCommodityDetails />
+            <ShipmentMovesDetails />
             <div className="pointer-events-none absolute bottom-0 left-0 right-0 h-8 bg-gradient-to-t from-sidebar to-transparent" />
           </ScrollArea>
         </div>

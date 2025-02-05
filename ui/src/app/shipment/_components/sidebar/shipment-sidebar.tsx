@@ -1,13 +1,24 @@
 import { useDebounce } from "@/hooks/use-debounce";
 import { type ShipmentFilterSchema } from "@/lib/schemas/shipment-filter-schema";
+import { ShipmentProvider } from "@/lib/shipment/shipment-context";
 import { type Shipment as ShipmentResponse } from "@/types/shipment";
 import { parseAsInteger, parseAsString, useQueryState } from "nuqs";
-import { useCallback, useEffect, useMemo, useTransition } from "react";
+import {
+  lazy,
+  Suspense,
+  useCallback,
+  useEffect,
+  useMemo,
+  useTransition,
+} from "react";
 import { useFormContext } from "react-hook-form";
 import { useShipmentDetails, useShipments } from "../../queries/shipment";
-import { ShipmentDetails } from "./details/shipment-details";
+import { ShipmentDetailsSkeleton } from "./details/shipment-details-skeleton";
 import { ShipmentList } from "./shipment-list";
 import { ShipmentPagination } from "./shipment-sidebar-pagination";
+
+// Components
+const ShipmentDetails = lazy(() => import("./details/shipment-details"));
 
 const DEFAULT_PAGE_SIZE = 10;
 const PAGE_SIZE_OPTIONS = [10, 25, 50] as const;
@@ -119,11 +130,18 @@ export function ShipmentSidebar() {
   return (
     <div className="flex flex-col h-full bg-sidebar rounded-md border border-sidebar-border">
       {selectedShipmentId ? (
-        <ShipmentDetails
-          selectedShipment={shipmentDetails.data}
+        <ShipmentProvider
+          initialShipment={shipmentDetails.data}
           isLoading={shipmentDetails.isLoading}
-          onBack={handleBack}
-        />
+        >
+          <Suspense fallback={<ShipmentDetailsSkeleton />}>
+            <ShipmentDetails
+              selectedShipment={shipmentDetails.data}
+              isLoading={shipmentDetails.isLoading}
+              onBack={handleBack}
+            />
+          </Suspense>
+        </ShipmentProvider>
       ) : (
         <ShipmentList
           displayData={displayData ?? []}

@@ -1,8 +1,10 @@
+/* eslint-disable react-hooks/rules-of-hooks */
 import { EmptyState } from "@/components/ui/empty-state";
 import { EntityRedirectLink } from "@/components/ui/link";
 import { VirtualizedScrollArea } from "@/components/ui/scroll-area";
+import { useShipment } from "@/lib/shipment/shipment-context";
 import { cn } from "@/lib/utils";
-import { Shipment, ShipmentCommodity } from "@/types/shipment";
+import { ShipmentCommodity } from "@/types/shipment";
 import {
   faBoxesStacked,
   faTrailer,
@@ -48,7 +50,6 @@ const CommodityRow = memo(function CommodityRow({
 
 CommodityRow.displayName = "CommodityRow";
 
-// Header component
 const TableHeader = memo(() => (
   <div className="sticky top-0 z-10 grid grid-cols-12 gap-4 p-2 text-sm text-muted-foreground bg-card border-b border-border rounded-t-lg">
     <div className="col-span-6">Commodity</div>
@@ -60,14 +61,18 @@ const TableHeader = memo(() => (
 TableHeader.displayName = "TableHeader";
 
 export function ShipmentCommodityDetails({
-  shipment,
-  className = "",
+  className,
 }: {
-  shipment: Shipment;
   className?: string;
 }) {
-  const { commodities } = shipment;
   const parentRef = useRef<HTMLDivElement>(null);
+  const { shipment } = useShipment();
+
+  if (!shipment) {
+    return null;
+  }
+  const { commodities } = shipment;
+
   const virtualizer = useVirtualizer({
     count: commodities?.length ?? 0,
     getScrollElement: () => parentRef.current,

@@ -6,40 +6,38 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { useShipment } from "@/lib/shipment/shipment-context";
 import { cn } from "@/lib/utils";
-import {
-  mapToRatingMethod,
-  type Shipment,
-  type ShipmentStatus,
-} from "@/types/shipment";
-import {
-  faCheck,
-  faCopy
-} from "@fortawesome/pro-solid-svg-icons";
+import { mapToRatingMethod } from "@/types/shipment";
+import { faCheck, faCopy } from "@fortawesome/pro-solid-svg-icons";
 import { useState } from "react";
 import { DetailsRow, ShipmentDetailColumn } from "./shipment-detail-column";
 
-export function ShipmentDetailsHeader({
-  proNumber,
-  bol,
-  status,
-}: {
-  proNumber: string;
-  bol: string;
-  status: ShipmentStatus;
-}) {
+export function ShipmentDetailsHeader() {
+  const { shipment } = useShipment();
+
+  if (!shipment) {
+    return null;
+  }
+
   return (
     <div className="flex flex-col gap-0.5 px-4 pb-2 border-b border-bg-sidebar-border">
       <div className="flex items-center gap-2 justify-between">
-        <h2 className="text-xl">{proNumber}</h2>
-        <ShipmentStatusBadge status={status} />
+        <h2 className="text-xl">{shipment.proNumber}</h2>
+        <ShipmentStatusBadge status={shipment.status} />
       </div>
-      <ShipmentDetailsBOL label="Tracking ID:" bol={bol} />
+      <ShipmentDetailsBOL label="Tracking ID:" bol={shipment.bol} />
     </div>
   );
 }
 
-export function ShipmentServiceDetails({ shipment }: { shipment: Shipment }) {
+export function ShipmentServiceDetails() {
+  const { shipment } = useShipment();
+
+  if (!shipment) {
+    return null;
+  }
+
   return (
     <div className="flex flex-col gap-2 pb-4">
       <h3 className="text-sm font-medium">Service Information</h3>
@@ -156,7 +154,13 @@ export function ShipmentDetailsBOL({
   );
 }
 
-export function ShipmentBillingDetails({ shipment }: { shipment: Shipment }) {
+export function ShipmentBillingDetails() {
+  const { shipment } = useShipment();
+
+  if (!shipment) {
+    return null;
+  }
+
   return (
     <div className="flex flex-col gap-2 border-t border-bg-sidebar-border py-4">
       <h3 className="text-sm font-medium">Billing Information</h3>
