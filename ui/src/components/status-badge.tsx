@@ -3,6 +3,7 @@ import { badgeVariants } from "@/lib/variants/badge";
 import { type Status } from "@/types/common";
 import { type PackingGroupChoiceProps } from "@/types/hazardous-material";
 import { ShipmentStatus } from "@/types/shipment";
+import { StopStatus } from "@/types/stop";
 import { EquipmentStatus } from "@/types/tractor";
 import { type VariantProps } from "class-variance-authority";
 import { Badge } from "./ui/badge";
@@ -33,6 +34,33 @@ export function WorkerTypeBadge({ type }: { type: WorkerSchema["type"] }) {
   };
 
   return <Badge {...typeAttr[type]}>{typeAttr[type].text}</Badge>;
+}
+
+export function StopStatusBadge({ status }: { status: StopStatus }) {
+  const stopStatusAttributes: Record<StopStatus, BadgeAttrProps> = {
+    [StopStatus.New]: {
+      variant: "purple",
+      text: "New",
+    },
+    [StopStatus.InTransit]: {
+      variant: "info",
+      text: "In Transit",
+    },
+    [StopStatus.Completed]: {
+      variant: "active",
+      text: "Completed",
+    },
+    [StopStatus.Canceled]: {
+      variant: "inactive",
+      text: "Canceled",
+    },
+  };
+
+  return (
+    <Badge variant={stopStatusAttributes[status].variant} className="max-h-6">
+      {stopStatusAttributes[status].text}
+    </Badge>
+  );
 }
 
 export function EquipmentStatusBadge({ status }: { status: EquipmentStatus }) {

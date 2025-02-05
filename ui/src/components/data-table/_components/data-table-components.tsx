@@ -6,7 +6,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { generateDateOnlyString, toDate } from "@/lib/date";
-import { truncateText } from "@/lib/utils";
+import { cn, truncateText } from "@/lib/utils";
 
 type DataTableDescriptionProps = {
   description?: string;
@@ -38,13 +38,20 @@ export function DataTableDescription({
 export function DataTableColorColumn({
   color,
   text,
+  className,
 }: {
   color?: string;
   text: string;
+  className?: string;
 }) {
   const isColor = !!color;
   return isColor ? (
-    <div className="flex items-center gap-x-1.5 text-sm font-medium text-foreground">
+    <div
+      className={cn(
+        "flex items-center gap-x-1.5 text-sm font-medium text-foreground",
+        className,
+      )}
+    >
       <div
         className="size-2 rounded-full"
         style={{

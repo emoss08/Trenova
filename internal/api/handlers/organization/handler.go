@@ -25,7 +25,7 @@ func NewHandler(os *organization.Service, eh *validator.ErrorHandler) *Handler {
 func (h Handler) RegisterRoutes(r fiber.Router, rl *middleware.RateLimiter) {
 	api := r.Group("/organizations")
 
-	api.Get("/select-options", rl.WithRateLimit(
+	api.Get("/select-options/", rl.WithRateLimit(
 		[]fiber.Handler{h.selectOptions},
 		middleware.PerMinute(120), // 120 reads per minute
 	)...)
@@ -35,12 +35,12 @@ func (h Handler) RegisterRoutes(r fiber.Router, rl *middleware.RateLimiter) {
 		middleware.PerMinute(120), // 120 reads per minute
 	)...)
 
-	api.Get("/me", rl.WithRateLimit(
+	api.Get("/me/", rl.WithRateLimit(
 		[]fiber.Handler{h.getUserOrganizations},
 		middleware.PerSecond(10), // 10 reads per second
 	)...)
 
-	api.Get("/:orgID", rl.WithRateLimit(
+	api.Get("/:orgID/", rl.WithRateLimit(
 		[]fiber.Handler{h.get},
 		middleware.PerMinute(120), // 120 reads per minute
 	)...)
@@ -50,17 +50,17 @@ func (h Handler) RegisterRoutes(r fiber.Router, rl *middleware.RateLimiter) {
 		middleware.PerMinute(30), // 30 writes per minute
 	)...)
 
-	api.Put("/:orgID", rl.WithRateLimit(
+	api.Put("/:orgID/", rl.WithRateLimit(
 		[]fiber.Handler{h.update},
 		middleware.PerMinute(30), // 30 writes per minute
 	)...)
 
-	api.Post("/:orgID/logo", rl.WithRateLimit(
+	api.Post("/:orgID/logo/", rl.WithRateLimit(
 		[]fiber.Handler{h.uploadLogo},
 		middleware.PerMinute(5), // 5 writes per minute
 	)...)
 
-	api.Delete("/:orgID/logo", rl.WithRateLimit(
+	api.Delete("/:orgID/logo/", rl.WithRateLimit(
 		[]fiber.Handler{h.clearLogo},
 		middleware.PerMinute(5), // 5 writes per minute (Matches the upload rate limit)
 	)...)

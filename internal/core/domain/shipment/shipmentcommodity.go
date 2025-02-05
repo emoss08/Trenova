@@ -41,7 +41,7 @@ type ShipmentCommodity struct {
 
 	// Relationships
 	Shipment     *Shipment                  `bun:"rel:belongs-to,join:shipment_id=id" json:"-"`
-	Commodity    *commodity.Commodity       `bun:"rel:belongs-to,join:commodity_id=id" json:"-"`
+	Commodity    *commodity.Commodity       `bun:"rel:belongs-to,join:commodity_id=id" json:"commodity,omitempty"`
 	BusinessUnit *businessunit.BusinessUnit `bun:"rel:belongs-to,join:business_unit_id=id" json:"-"`
 	Organization *organization.Organization `bun:"rel:belongs-to,join:organization_id=id" json:"-"`
 }

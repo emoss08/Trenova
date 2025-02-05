@@ -18,7 +18,7 @@ export function ComponentLoader({
     >
       <Icon
         icon={faSpinnerThird}
-        size="2x"
+        size="1x"
         className="text-primary motion-safe:animate-spin"
       />
       <p className="text-foreground mt-2 text-sm">

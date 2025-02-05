@@ -13,7 +13,7 @@ export async function getOrgById({
   includeState = false,
   includeBu = false,
 }: GetOrgByIdOptions) {
-  return http.get<Organization>(`/organizations/${orgId}`, {
+  return http.get<Organization>(`/organizations/${orgId}/`, {
     params: {
       includeState: includeState.toString(),
       includeBu: includeBu.toString(),
@@ -22,5 +22,5 @@ export async function getOrgById({
 }
 
 export async function listOrganizations() {
-  return http.get<LimitOffsetResponse<Organization>>("/organizations/me");
+  return http.get<LimitOffsetResponse<Organization>>("/organizations/me/");
 }

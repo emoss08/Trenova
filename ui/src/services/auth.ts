@@ -8,33 +8,29 @@ import type {
 import { User } from "@/types/user";
 
 export async function checkEmail(email: string) {
-  return http.post<CheckEmailResponse>("/auth/check-email", {
+  return http.post<CheckEmailResponse>("/auth/check-email/", {
     emailAddress: email,
   });
 }
 
-export async function refresh() {
-  return http.post<{ message: string }>("/auth/refresh");
-}
-
 export async function resetPassword(email: string) {
-  return http.post<ResetPasswordResponse>("/auth/reset-password", {
+  return http.post<ResetPasswordResponse>("/auth/reset-password/", {
     emailAddress: email,
   });
 }
 
 export async function login(request: LoginRequest) {
-  return http.post<LoginResponse>("/auth/login", request);
+  return http.post<LoginResponse>("/auth/login/", request);
 }
 
 export async function validateSession() {
-  return http.post<{ valid: boolean }>("/auth/validate-session");
+  return http.post<{ valid: boolean }>("/auth/validate-session/");
 }
 
 export async function logout() {
-  return http.post("/auth/logout");
+  return http.post("/auth/logout/");
 }
 
 export async function getCurrentUser() {
-  return http.get<User>("/users/me");
+  return http.get<User>("/users/me/");
 }
