@@ -151,7 +151,7 @@ const DropdownMenuItem = React.forwardRef<
       ref={ref}
       disabled={disabled}
       className={cn(
-        "relative flex cursor-pointer select-none items-center gap-2 rounded-sm px-2 py-1 text-sm outline-hidden transition-colors focus:bg-accent focus:text-accent-foreground data-disabled:pointer-events-none data-disabled:opacity-50 [&>svg]:size-3 [&>svg]:shrink-0",
+        "relative flex cursor-pointer select-none items-center gap-2 rounded-sm px-2 py-1 text-sm outline-hidden transition-colors focus:bg-accent focus:text-accent-foreground data-disabled:opacity-50 data-disabled:cursor-not-allowed [&>svg]:size-3 [&>svg]:shrink-0",
         inset && "pl-8",
         color && statusColors[color],
         className,
@@ -186,7 +186,7 @@ const DropdownMenuCheckboxItem = React.forwardRef<
   <DropdownMenuPrimitive.CheckboxItem
     ref={ref}
     className={cn(
-      "relative flex cursor-default select-none items-center rounded-sm py-1.5 pl-8 pr-2 text-xs outline-hidden transition-colors focus:bg-accent focus:text-accent-foreground data-disabled:pointer-events-none data-disabled:opacity-50",
+      "relative flex cursor-default select-none items-center rounded-sm py-1.5 pl-8 pr-2 text-xs outline-hidden transition-colors focus:bg-accent focus:text-accent-foreground data-disabled:opacity-50 data-disabled:cursor-not-allowed",
       className,
     )}
     checked={checked}

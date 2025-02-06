@@ -194,23 +194,6 @@ func (st *Shipment) ToDocument() infra.SearchDocument {
 	}
 }
 
-func (st *Shipment) BeforeAppendModel(_ context.Context, query bun.Query) error {
-	now := timeutils.NowUnix()
-
-	switch query.(type) {
-	case *bun.InsertQuery:
-		if st.ID.IsNil() {
-			st.ID = pulid.MustNew("shp_")
-		}
-
-		st.CreatedAt = now
-	case *bun.UpdateQuery:
-		st.UpdatedAt = now
-	}
-
-	return nil
-}
-
 func (st Shipment) GetPostgresSearchConfig() infra.PostgresSearchConfig {
 	return infra.PostgresSearchConfig{
 		TableAlias: "sp",
@@ -236,4 +219,21 @@ func (st Shipment) GetPostgresSearchConfig() infra.PostgresSearchConfig {
 		MaxTerms:        6,
 		UsePartialMatch: true,
 	}
+}
+
+func (st *Shipment) BeforeAppendModel(_ context.Context, query bun.Query) error {
+	now := timeutils.NowUnix()
+
+	switch query.(type) {
+	case *bun.InsertQuery:
+		if st.ID.IsNil() {
+			st.ID = pulid.MustNew("shp_")
+		}
+
+		st.CreatedAt = now
+	case *bun.UpdateQuery:
+		st.UpdatedAt = now
+	}
+
+	return nil
 }

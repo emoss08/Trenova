@@ -1,9 +1,10 @@
-import { StopStatusBadge } from "@/components/status-badge";
+import { MoveStatusBadge } from "@/components/status-badge";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuLabel,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Icon } from "@/components/ui/icons";
@@ -16,7 +17,7 @@ import {
 import { useShipment } from "@/hooks/use-shipment";
 import { formatSplitDateTime } from "@/lib/date";
 import { cn } from "@/lib/utils";
-import { type ShipmentMove } from "@/types/move";
+import { MoveStatus, type ShipmentMove } from "@/types/move";
 import { Stop, StopStatus } from "@/types/stop";
 import {
   faArrowDown,
@@ -25,14 +26,15 @@ import {
   faPlus,
 } from "@fortawesome/pro-regular-svg-icons";
 import { faCircle, faTruck, faXmark } from "@fortawesome/pro-solid-svg-icons";
-import { memo } from "react";
+import { memo, useState } from "react";
+import { AssignmentDialog } from "../../assignment/assignment-dialog";
 
 const getStatusIcon = (
   status: StopStatus,
   isLastStop: boolean,
-  moveStatus: StopStatus,
+  moveStatus: MoveStatus,
 ) => {
-  if (isLastStop && moveStatus === StopStatus.Completed) {
+  if (isLastStop && moveStatus === MoveStatus.Completed) {
     return faCheck;
   }
 
@@ -116,7 +118,7 @@ const MoveInformation = memo(function MoveInformation({
       className="bg-card rounded-lg border border-bg-sidebar-border p-4"
       key={move.id}
     >
-      <MoveStatusBadge move={move} />
+      <StatusBadge move={move} />
       <div className="relative">
         <div className="space-y-6">
           {move.stops.map((stop, index) => {
@@ -137,7 +139,7 @@ const MoveInformation = memo(function MoveInformation({
   );
 });
 
-const MoveStatusBadge = memo(function MoveStatusBadge({
+const StatusBadge = memo(function StatusBadge({
   move,
 }: {
   move?: ShipmentMove;
@@ -148,8 +150,8 @@ const MoveStatusBadge = memo(function MoveStatusBadge({
 
   return (
     <div className="flex justify-between items-center mb-4">
-      <StopStatusBadge status={move.status} />
-      <MoveActions />
+      <MoveStatusBadge status={move.status} />
+      <MoveActions move={move} />
     </div>
   );
 });
@@ -187,7 +189,7 @@ const StopTimeline = memo(function StopTimeline({
 }: {
   stop: Stop;
   isLast: boolean;
-  moveStatus: StopStatus;
+  moveStatus: MoveStatus;
 }) {
   const stopIcon = getStatusIcon(stop.status, isLast, moveStatus);
   const bgColor = getBgColor(stop.status);
@@ -218,7 +220,6 @@ const StopTimeline = memo(function StopTimeline({
           style={{ height: "48px" }}
         />
       )}
-
       <div className="flex items-start gap-4">
         <div className="w-24 text-right text-sm">
           <div className="text-primary">{plannedArrival.date}</div>
@@ -248,17 +249,48 @@ const StopTimeline = memo(function StopTimeline({
   );
 });
 
-function MoveActions() {
+function MoveActions({ move }: { move: ShipmentMove }) {
+  const [assignmentDialogOpen, setAssignmentDialogOpen] =
+    useState<boolean>(false);
+
+  if (!move) {
+    return null;
+  }
+
+  // Move is not new, so we cannot assign equipment and workers
+  const assignDisabled = move.status !== MoveStatus.New;
+
   return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button variant="outline" size="sm" className="p-2">
-          <Icon icon={faEllipsisVertical} className="size-4" />
-        </Button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent>
-        <DropdownMenuItem title="View Details" />
-      </DropdownMenuContent>
-    </DropdownMenu>
+    <>
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button variant="outline" size="sm" className="p-2">
+            <Icon icon={faEllipsisVertical} className="size-4" />
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="start">
+          <DropdownMenuLabel>Move Actions</DropdownMenuLabel>
+          <DropdownMenuItem
+            title="Assign"
+            description="Assign equipment and worker(s) to the move"
+            disabled={assignDisabled}
+            onClick={() => setAssignmentDialogOpen(!assignmentDialogOpen)}
+          />
+          <DropdownMenuItem
+            title="View Details"
+            description="View the details of the move"
+          />
+          <DropdownMenuItem
+            title="Edit Move"
+            description="Modify move details"
+          />
+        </DropdownMenuContent>
+      </DropdownMenu>
+      <AssignmentDialog
+        open={assignmentDialogOpen}
+        onOpenChange={setAssignmentDialogOpen}
+        shipmentMoveId={move.id}
+      />
+    </>
   );
 }

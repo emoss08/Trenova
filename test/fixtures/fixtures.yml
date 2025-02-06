@@ -1126,9 +1126,6 @@
       status: "New"
       sequence: 0
       shipment_id: "{{ $.Shipment.test_shipment.ID }}"
-      tractor_id: "{{ $.Tractor.tractor_1.ID }}"
-      trailer_id: "{{ $.Trailer.test_trailer.ID }}"
-      primary_worker_id: "{{ $.Worker.worker_1.ID }}"
       distance: 1523.00
     - _id: test_shipment_move_2
       organization_id: "{{ $.Organization.trenova.ID }}"
@@ -1137,20 +1134,14 @@
       status: "New"
       sequence: 1
       shipment_id: "{{ $.Shipment.test_shipment.ID }}"
-      tractor_id: "{{ $.Tractor.tractor_1.ID }}"
-      trailer_id: "{{ $.Trailer.test_trailer.ID }}"
-      primary_worker_id: "{{ $.Worker.worker_1.ID }}"
       distance: 100.00
     - _id: test_shipment_move_3
       organization_id: "{{ $.Organization.trenova.ID }}"
       business_unit_id: "{{ $.BusinessUnit.trenova.ID }}"
       created_at: "{{ now.Unix }}"
       status: "New"
-      sequence: 1
+      sequence: 2
       shipment_id: "{{ $.Shipment.test_shipment.ID }}"
-      tractor_id: "{{ $.Tractor.tractor_1.ID }}"
-      trailer_id: "{{ $.Trailer.test_trailer.ID }}"
-      primary_worker_id: "{{ $.Worker.worker_1.ID }}"
       distance: 100.00
 
     # In Transit Shipment Move
@@ -1159,11 +1150,8 @@
       business_unit_id: "{{ $.BusinessUnit.trenova.ID }}"
       created_at: "{{ now.Unix }}"
       status: "InTransit"
-      sequence: 1
+      sequence: 0
       shipment_id: "{{ $.Shipment.in_transit_shipment.ID }}"
-      tractor_id: "{{ $.Tractor.tractor_1.ID }}"
-      trailer_id: "{{ $.Trailer.test_trailer.ID }}"
-      primary_worker_id: "{{ $.Worker.worker_1.ID }}"
       distance: 5223.00
     - _id: in_transit_shipment_move_2
       organization_id: "{{ $.Organization.trenova.ID }}"
@@ -1172,9 +1160,6 @@
       status: "InTransit"
       sequence: 1
       shipment_id: "{{ $.Shipment.in_transit_shipment_2.ID }}"
-      tractor_id: "{{ $.Tractor.tractor_1.ID }}"
-      trailer_id: "{{ $.Trailer.test_trailer.ID }}"
-      primary_worker_id: "{{ $.Worker.worker_1.ID }}"
       distance: 5223.00
 
     # Delayed Shipment Move
@@ -1183,11 +1168,8 @@
       business_unit_id: "{{ $.BusinessUnit.trenova.ID }}"
       created_at: "{{ now.Unix }}"
       status: "InTransit"
-      sequence: 1
+      sequence: 0
       shipment_id: "{{ $.Shipment.delayed_shipment.ID }}"
-      tractor_id: "{{ $.Tractor.tractor_1.ID }}"
-      trailer_id: "{{ $.Trailer.test_trailer.ID }}"
-      primary_worker_id: "{{ $.Worker.worker_1.ID }}"
       distance: 2312.00
 
     # Completed Shipment Move
@@ -1196,11 +1178,8 @@
       business_unit_id: "{{ $.BusinessUnit.trenova.ID }}"
       created_at: "{{ now.Unix }}"
       status: "Completed"
-      sequence: 1
+      sequence: 0
       shipment_id: "{{ $.Shipment.completed_shipment.ID }}"
-      tractor_id: "{{ $.Tractor.tractor_1.ID }}"
-      trailer_id: "{{ $.Trailer.test_trailer.ID }}"
-      primary_worker_id: "{{ $.Worker.worker_1.ID }}"
       distance: 2312.00
 
     # Billed Shipment Move
@@ -1209,11 +1188,8 @@
       business_unit_id: "{{ $.BusinessUnit.trenova.ID }}"
       created_at: "{{ now.Unix }}"
       status: "Completed"
-      sequence: 1
+      sequence: 0
       shipment_id: "{{ $.Shipment.billed_shipment.ID }}"
-      tractor_id: "{{ $.Tractor.tractor_1.ID }}"
-      trailer_id: "{{ $.Trailer.test_trailer.ID }}"
-      primary_worker_id: "{{ $.Worker.worker_1.ID }}"
       distance: 2312.00
 
     # Cancelled Shipment Move
@@ -1222,11 +1198,8 @@
       business_unit_id: "{{ $.BusinessUnit.trenova.ID }}"
       created_at: "{{ now.Unix }}"
       status: "Canceled"
-      sequence: 1
+      sequence: 0
       shipment_id: "{{ $.Shipment.canceled_shipment.ID }}"
-      tractor_id: "{{ $.Tractor.tractor_1.ID }}"
-      trailer_id: "{{ $.Trailer.test_trailer.ID }}"
-      primary_worker_id: "{{ $.Worker.worker_1.ID }}"
       distance: 2312.00
 
 - model: Stop
@@ -1283,7 +1256,7 @@
       created_at: "{{ now.Unix }}"
       status: "New"
       type: "Delivery"
-      sequence: 2
+      sequence: 1
       shipment_move_id: "{{ $.ShipmentMove.test_shipment_move_2.ID }}"
       location_id: "{{ $.Location.test_location_3.ID }}"
       address_line: "6185 Retail Rd, Dallas, TX 75231"
@@ -1298,7 +1271,7 @@
       created_at: "{{ now.Unix }}"
       status: "New"
       type: "Pickup"
-      sequence: 0
+      sequence: 2
       shipment_move_id: "{{ $.ShipmentMove.test_shipment_move_2.ID }}"
       location_id: "{{ $.Location.test_location_3.ID }}"
       address_line: "6185 Retail Rd, Dallas, TX 75231"
@@ -1313,7 +1286,7 @@
       created_at: "{{ now.Unix }}"
       status: "New"
       type: "Delivery"
-      sequence: 2
+      sequence: 3
       shipment_move_id: "{{ $.ShipmentMove.test_shipment_move_2.ID }}"
       location_id: "{{ $.Location.test_location.ID }}"
       address_line: "8626 Firestone Blvd, Downey, CA 90242"
@@ -1343,7 +1316,7 @@
       created_at: "{{ now.Unix }}"
       status: "New"
       type: "Delivery"
-      sequence: 2
+      sequence: 1
       shipment_move_id: "{{ $.ShipmentMove.test_shipment_move_3.ID }}"
       location_id: "{{ $.Location.test_location_2.ID }}"
       address_line: "1101 Summit Ave, Greensboro, NC 27410"
