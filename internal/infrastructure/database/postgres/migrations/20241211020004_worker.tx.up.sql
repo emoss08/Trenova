@@ -122,21 +122,6 @@ CREATE INDEX "idx_worker_profiles_last_checks" ON "worker_profiles"("last_compli
 COMMENT ON TABLE worker_profiles IS 'Stores extended worker information including licensing and certification details';
 
 --bun:split
--- Update shipment_moves table foreign key
-ALTER TABLE "shipment_moves"
-    ADD COLUMN "primary_worker_id" varchar(100) NOT NULL;
-
-ALTER TABLE "shipment_moves"
-    ADD CONSTRAINT "fk_shipments_primary_worker" FOREIGN KEY ("primary_worker_id", "organization_id", "business_unit_id") REFERENCES "workers"("id", "organization_id", "business_unit_id") ON UPDATE NO ACTION ON DELETE SET NULL;
-
-ALTER TABLE "shipment_moves"
-    ADD COLUMN "secondary_worker_id" varchar(100);
-
-
-ALTER TABLE "shipment_moves"
-    ADD CONSTRAINT "fk_shipments_secondary_worker" FOREIGN KEY ("secondary_worker_id", "organization_id", "business_unit_id") REFERENCES "workers"("id", "organization_id", "business_unit_id") ON UPDATE NO ACTION ON DELETE SET NULL;
-
---bun:split
 CREATE TYPE worker_pto_status_enum AS ENUM(
     'Requested', -- The PTO request has been requested
     'Approved', -- The PTO request has been approved

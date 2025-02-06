@@ -14,6 +14,7 @@ CREATE TYPE stop_type_enum AS ENUM(
     'SplitPickup' -- Partial pickup of shipment
 );
 
+--bun:split
 CREATE TABLE IF NOT EXISTS stops(
     -- Primary identifiers
     "id" varchar(100) NOT NULL,
@@ -31,25 +32,45 @@ CREATE TABLE IF NOT EXISTS stops(
     "actual_arrival" bigint,
     "actual_departure" bigint,
     "address_line" varchar(255),
-    -- Metadata
+    -- Metadata with generated columns for timestamp conversion
     "version" bigint NOT NULL DEFAULT 0,
     "created_at" bigint NOT NULL DEFAULT EXTRACT(EPOCH FROM CURRENT_TIMESTAMP) ::bigint,
     "updated_at" bigint NOT NULL DEFAULT EXTRACT(EPOCH FROM CURRENT_TIMESTAMP) ::bigint,
+    "created_at_timestamp" timestamp GENERATED ALWAYS AS (to_timestamp(created_at)) STORED,
+    "updated_at_timestamp" timestamp GENERATED ALWAYS AS (to_timestamp(updated_at)) STORED,
     CONSTRAINT "pk_stops" PRIMARY KEY ("id", "organization_id", "business_unit_id"),
+    -- Added unique constraint for sequence within same shipment_move
+    CONSTRAINT "uq_stops_shipment_move_sequence" UNIQUE ("shipment_move_id", "organization_id", "business_unit_id", "sequence"),
     CONSTRAINT "fk_stops_business_unit" FOREIGN KEY ("business_unit_id") REFERENCES "business_units"("id") ON UPDATE NO ACTION ON DELETE CASCADE,
     CONSTRAINT "fk_stops_organization" FOREIGN KEY ("organization_id") REFERENCES "organizations"("id") ON UPDATE NO ACTION ON DELETE CASCADE,
-    CONSTRAINT "fk_stops_shipment_move" FOREIGN KEY ("shipment_move_id", "organization_id", "business_unit_id") REFERENCES "shipment_moves"("id", "organization_id", "business_unit_id") ON UPDATE NO ACTION ON DELETE CASCADE
+    CONSTRAINT "fk_stops_shipment_move" FOREIGN KEY ("shipment_move_id", "organization_id", "business_unit_id") REFERENCES "shipment_moves"("id", "organization_id", "business_unit_id") ON UPDATE NO ACTION ON DELETE CASCADE,
+    -- Added check constraints for data validation
+    CONSTRAINT "chk_stops_planned_times" CHECK (planned_departure >= planned_arrival),
+    CONSTRAINT "chk_stops_actual_times" CHECK (actual_departure >= actual_arrival),
+    CONSTRAINT "chk_stops_pieces_positive" CHECK (pieces IS NULL OR pieces >= 0),
+    CONSTRAINT "chk_stops_weight_positive" CHECK (weight IS NULL OR weight >= 0)
 );
 
-CREATE INDEX IF NOT EXISTS "idx_stops_created_at" ON "stops"("created_at", "updated_at");
+-- Partial index for active stops (not canceled) to improve common queries
+CREATE INDEX IF NOT EXISTS "idx_stops_active" ON "stops"("organization_id", "business_unit_id", "status")
+WHERE
+    status != 'Canceled';
 
-CREATE INDEX IF NOT EXISTS "idx_stops_status" ON "stops"("status");
+-- Composite index for common filtering and sorting patterns
+CREATE INDEX IF NOT EXISTS "idx_stops_common_queries" ON "stops"("organization_id", "business_unit_id", "created_at_timestamp", "status", "type");
 
-CREATE INDEX IF NOT EXISTS "idx_stops_type" ON "stops"("type");
+-- Index for timestamp range queries
+CREATE INDEX IF NOT EXISTS "idx_stops_timestamps" ON "stops"("created_at_timestamp", "updated_at_timestamp");
 
-CREATE INDEX IF NOT EXISTS "idx_stops_business_unit" ON "stops"("business_unit_id", "organization_id");
+-- Index for shipment move relationship with included columns for common queries
+CREATE INDEX IF NOT EXISTS "idx_stops_shipment_move" ON "stops"("shipment_move_id", "organization_id", "business_unit_id") INCLUDE ("status", "type", "sequence", "planned_arrival");
 
-CREATE INDEX IF NOT EXISTS "idx_stops_shipment_move" ON "stops"("shipment_move_id", "organization_id", "business_unit_id");
+-- BRIN index for timestamp ranges (more efficient for large tables)
+CREATE INDEX IF NOT EXISTS "idx_stops_brin_timestamps" ON "stops" USING BRIN("created_at_timestamp", "updated_at_timestamp") WITH (pages_per_range = 128);
 
 COMMENT ON TABLE stops IS 'Stores information about pickup and delivery stops for shipments';
+
+COMMENT ON COLUMN stops.created_at_timestamp IS 'Converted timestamp from created_at epoch for easier querying';
+
+COMMENT ON COLUMN stops.updated_at_timestamp IS 'Converted timestamp from updated_at epoch for easier querying';
 
