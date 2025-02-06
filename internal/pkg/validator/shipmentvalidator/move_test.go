@@ -13,10 +13,7 @@ import (
 
 func newMovement() *shipment.ShipmentMove {
 	return &shipment.ShipmentMove{
-		Status:          shipment.StopStatusNew,
-		PrimaryWorkerID: pulid.MustNew("wrk_"),
-		TractorID:       pulid.MustNew("trk_"),
-		TrailerID:       pulid.MustNew("trl_"),
+		Status: shipment.MoveStatusNew,
 		Stops: []*shipment.Stop{
 			{
 				Type:             shipment.StopTypePickup,
@@ -75,45 +72,6 @@ func TestMoveValidator(t *testing.T) {
 				Message string
 			}{
 				{Field: "moves[0].status", Code: errors.ErrRequired, Message: "Status is required"},
-			},
-		},
-		{
-			name: "tractor is required",
-			modifyMove: func(s *shipment.ShipmentMove) {
-				s.TractorID = ""
-			},
-			expectedErrors: []struct {
-				Field   string
-				Code    errors.ErrorCode
-				Message string
-			}{
-				{Field: "moves[0].tractorId", Code: errors.ErrRequired, Message: "Tractor is required"},
-			},
-		},
-		{
-			name: "trailer is required",
-			modifyMove: func(s *shipment.ShipmentMove) {
-				s.TrailerID = ""
-			},
-			expectedErrors: []struct {
-				Field   string
-				Code    errors.ErrorCode
-				Message string
-			}{
-				{Field: "moves[0].trailerId", Code: errors.ErrRequired, Message: "Trailer is required"},
-			},
-		},
-		{
-			name: "primary worker is required",
-			modifyMove: func(s *shipment.ShipmentMove) {
-				s.PrimaryWorkerID = ""
-			},
-			expectedErrors: []struct {
-				Field   string
-				Code    errors.ErrorCode
-				Message string
-			}{
-				{Field: "moves[0].primaryWorkerId", Code: errors.ErrRequired, Message: "Primary Worker is required"},
 			},
 		},
 		{

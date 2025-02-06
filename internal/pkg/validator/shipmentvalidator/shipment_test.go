@@ -42,10 +42,7 @@ func newShipment() *shipment.Shipment {
 		ReadyToBill:         false,
 		Moves: []*shipment.ShipmentMove{
 			{
-				Status:          shipment.StopStatusNew,
-				PrimaryWorkerID: pulid.MustNew("wrk_"),
-				TractorID:       pulid.MustNew("trk_"),
-				TrailerID:       pulid.MustNew("trl_"),
+				Status: shipment.MoveStatusNew,
 				Stops: []*shipment.Stop{
 					{
 						Type:             shipment.StopTypePickup,
