@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"time"
 
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/internal/core/ports"
@@ -13,6 +14,7 @@ import (
 	"github.com/emoss08/trenova/internal/pkg/logger"
 	"github.com/emoss08/trenova/internal/pkg/postgressearch"
 	"github.com/emoss08/trenova/internal/pkg/utils/queryutils/queryfilters"
+	"github.com/emoss08/trenova/pkg/types/pulid"
 	"github.com/rotisserie/eris"
 	"github.com/rs/zerolog"
 	"github.com/uptrace/bun"
@@ -240,4 +242,132 @@ func (sr *shipmentRepository) Update(ctx context.Context, shp *shipment.Shipment
 	}
 
 	return shp, nil
+}
+
+// Cancel handles the data operations for canceling a shipment and its related entities
+func (sr *shipmentRepository) Cancel(ctx context.Context, opts repositories.CancelShipmentOptions) error {
+	dba, err := sr.db.DB(ctx)
+	if err != nil {
+		return eris.Wrap(err, "get database connection")
+	}
+
+	log := sr.l.With().
+		Str("operation", "Cancel").
+		Str("shipmentID", opts.ShipmentID.String()).
+		Logger()
+
+	err = dba.RunInTx(ctx, nil, func(c context.Context, tx bun.Tx) error {
+		// Update shipment status
+		results, err := tx.NewUpdate().
+			Model((*shipment.Shipment)(nil)).
+			Where("sp.id = ? AND sp.organization_id = ? AND sp.business_unit_id = ?",
+				opts.ShipmentID, opts.OrgID, opts.BuID).
+			Set("status = ?", shipment.StatusCanceled).
+			Set("canceled_at = ?", time.Now().UTC()).
+			Set("canceled_by = ?", opts.UserID).
+			Set("cancel_reason = ?", opts.Reason).
+			Set("version = version + 1").
+			Returning("*").
+			Exec(c)
+		if err != nil {
+			log.Error().Err(err).Msg("failed to update shipment status")
+			return eris.Wrap(err, "update shipment status")
+		}
+
+		rows, err := results.RowsAffected()
+		if err != nil {
+			return eris.Wrap(err, "get rows affected")
+		}
+
+		if rows == 0 {
+			return errors.NewNotFoundError("Shipment not found")
+		}
+
+		// Cancel associated moves and their assignments
+		if err := sr.cancelShipmentComponents(c, tx, CancelComponentsOptions{
+			ShipmentID:   opts.ShipmentID,
+			CanceledAt:   time.Now().UTC(),
+			CanceledBy:   opts.UserID,
+			CancelReason: opts.Reason,
+		}); err != nil {
+			return eris.Wrap(err, "cancel shipment components")
+		}
+
+		return nil
+	})
+	if err != nil {
+		log.Error().Err(err).Msg("failed to cancel shipment")
+		return err
+	}
+
+	return nil
+}
+
+type CancelComponentsOptions struct {
+	ShipmentID   pulid.ID
+	CanceledAt   time.Time
+	CanceledBy   pulid.ID
+	CancelReason string
+}
+
+func (sr *shipmentRepository) cancelShipmentComponents(ctx context.Context, tx bun.Tx, opts CancelComponentsOptions) error {
+	// Get all moves for the shipment
+	moves := make([]*shipment.ShipmentMove, 0)
+	err := tx.NewSelect().
+		Model(&moves).
+		Where("sm.shipment_id = ?", opts.ShipmentID).
+		Scan(ctx)
+	if err != nil {
+		return eris.Wrap(err, "fetch shipment moves")
+	}
+
+	if len(moves) == 0 {
+		return nil // No moves to cancel
+	}
+
+	moveIDs := make([]pulid.ID, len(moves))
+	for i, move := range moves {
+		moveIDs[i] = move.ID
+	}
+
+	// Cancel moves in bulk
+	_, err = tx.NewUpdate().
+		Model((*shipment.ShipmentMove)(nil)).
+		Set("status = ?", shipment.MoveStatusCanceled).
+		Set("canceled_at = ?", opts.CanceledAt).
+		Set("canceled_by = ?", opts.CanceledBy).
+		Set("cancel_reason = ?", opts.CancelReason).
+		Where("sm.id IN (?)", bun.In(moveIDs)).
+		Exec(ctx)
+	if err != nil {
+		return eris.Wrap(err, "cancel moves")
+	}
+
+	// Cancel assignments in bulk
+	_, err = tx.NewUpdate().
+		Model((*shipment.Assignment)(nil)).
+		Set("status = ?", shipment.AssignmentStatusCanceled).
+		Set("canceled_at = ?", opts.CanceledAt).
+		Set("canceled_by = ?", opts.CanceledBy).
+		Set("cancel_reason = ?", opts.CancelReason).
+		Where("a.shipment_move_id IN (?)", bun.In(moveIDs)).
+		Exec(ctx)
+	if err != nil {
+		return eris.Wrap(err, "cancel assignments")
+	}
+
+	// Cancel stops in bulk
+	_, err = tx.NewUpdate().
+		Model((*shipment.Stop)(nil)).
+		Set("status = ?", shipment.StopStatusCanceled).
+		Set("canceled_at = ?", opts.CanceledAt).
+		Set("canceled_by = ?", opts.CanceledBy).
+		Set("cancel_reason = ?", opts.CancelReason).
+		Where("stp.shipment_move_id IN (?)", bun.In(moveIDs)).
+		Exec(ctx)
+	if err != nil {
+		return eris.Wrap(err, "cancel stops")
+	}
+
+	return nil
 }

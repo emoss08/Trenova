@@ -25,9 +25,18 @@ type GetShipmentByIDOptions struct {
 	ShipmentOptions ShipmentOptions
 }
 
+type CancelShipmentOptions struct {
+	ShipmentID pulid.ID
+	OrgID      pulid.ID
+	BuID       pulid.ID
+	UserID     pulid.ID
+	Reason     string
+}
+
 type ShipmentRepository interface {
 	List(ctx context.Context, opts *ListShipmentOptions) (*ports.ListResult[*shipment.Shipment], error)
 	GetByID(ctx context.Context, opts GetShipmentByIDOptions) (*shipment.Shipment, error)
 	Create(ctx context.Context, t *shipment.Shipment) (*shipment.Shipment, error)
 	Update(ctx context.Context, t *shipment.Shipment) (*shipment.Shipment, error)
+	Cancel(ctx context.Context, opts CancelShipmentOptions) error
 }

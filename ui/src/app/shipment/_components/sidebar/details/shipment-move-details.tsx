@@ -258,7 +258,7 @@ function MoveActions({ move }: { move: ShipmentMove }) {
   }
 
   // Move is not new, so we cannot assign equipment and workers
-  const assignDisabled = move.status !== MoveStatus.New;
+  const reassignEnabled = move.status === MoveStatus.Assigned;
 
   return (
     <>
@@ -271,18 +271,17 @@ function MoveActions({ move }: { move: ShipmentMove }) {
         <DropdownMenuContent align="start">
           <DropdownMenuLabel>Move Actions</DropdownMenuLabel>
           <DropdownMenuItem
-            title="Assign"
+            title={reassignEnabled ? "Reassign" : "Assign"}
             description="Assign equipment and worker(s) to the move"
-            disabled={assignDisabled}
             onClick={() => setAssignmentDialogOpen(!assignmentDialogOpen)}
-          />
-          <DropdownMenuItem
-            title="View Details"
-            description="View the details of the move"
           />
           <DropdownMenuItem
             title="Edit Move"
             description="Modify move details"
+          />
+          <DropdownMenuItem
+            title="View Audit Log"
+            description="View the audit log for the move"
           />
         </DropdownMenuContent>
       </DropdownMenu>
