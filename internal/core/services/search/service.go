@@ -147,14 +147,14 @@ func (s *Service) Index(ctx context.Context, entity infra.SearchableEntity) erro
 					Str("type", doc.Type).
 					Msg("failed to index document asynchronously")
 			} else {
-				s.l.Trace().
+				s.l.Debug().
 					Str("id", doc.ID).
 					Str("type", doc.Type).
 					Msg("document indexed successfully")
 			}
 		},
 	}:
-		s.l.Trace().
+		s.l.Debug().
 			Str("id", doc.ID).
 			Str("type", doc.Type).
 			Msg("document queued for indexing")
@@ -202,7 +202,7 @@ func (s *Service) Search(ctx context.Context, params *Request) (*Response, error
 		return nil, eris.Wrap(err, "search")
 	}
 
-	log.Trace().Int("resultCount", len(results)).Msg("search results")
+	log.Debug().Int("resultCount", len(results)).Msg("search results")
 
 	return &Response{
 		Results: results,
@@ -218,7 +218,7 @@ func (s *Service) monitor() {
 	for {
 		select {
 		case <-s.stopMonitor:
-			s.l.Trace().Msg("monitor stopped due to service shutdown")
+			s.l.Debug().Msg("monitor stopped due to service shutdown")
 			return
 		case <-ticker.C:
 			s.checkServiceHealth()
@@ -234,7 +234,7 @@ func (s *Service) checkServiceHealth() {
 			Bool("isRunning", s.isRunning.Load()).
 			Msg("service health check - documents pending")
 	} else {
-		s.l.Trace().
+		s.l.Debug().
 			Int("bufferSize", bufferSize).
 			Bool("isRunning", s.isRunning.Load()).
 			Msg("service health check - no documents pending")
@@ -242,7 +242,7 @@ func (s *Service) checkServiceHealth() {
 }
 
 func (s *Service) startBatchProcessor() {
-	s.l.Trace().
+	s.l.Debug().
 		Int("maxBatchSize", s.config.MaxBatchSize).
 		Int("batchInterval", s.config.BatchInterval).
 		Msg("starting batch processor")
@@ -257,22 +257,22 @@ func (s *Service) startBatchProcessor() {
 	ticker := time.NewTicker(batchInterval)
 	defer ticker.Stop()
 
-	s.l.Trace().
+	s.l.Debug().
 		Str("interval", batchInterval.String()).
 		Msg("batch processor timer started")
 
 	// Log initial state
-	s.l.Trace().Msg("batch processor ready to receive documents")
+	s.l.Debug().Msg("batch processor ready to receive documents")
 
 	processBatch := func(reason string) {
 		if len(batch) == 0 {
-			s.l.Trace().
+			s.l.Debug().
 				Str("reason", reason).
 				Msg("timer check - no documents to process")
 			return
 		}
 
-		s.l.Trace().
+		s.l.Debug().
 			Int("batchSize", len(batch)).
 			Str("reason", reason).
 			Msg("processing batch")
@@ -294,7 +294,7 @@ func (s *Service) startBatchProcessor() {
 			return
 
 		case op := <-s.batchQueues:
-			s.l.Trace().
+			s.l.Debug().
 				Int("currentBatchSize", len(batch)).
 				Int("newDocuments", len(op.documents)).
 				Int("maxBatchSize", s.config.MaxBatchSize).
@@ -312,7 +312,7 @@ func (s *Service) startBatchProcessor() {
 		case t := <-ticker.C:
 			// Log timer ticks at Info level
 			timeSinceLastLog := time.Since(lastTickLog)
-			s.l.Trace().
+			s.l.Debug().
 				Time("tickTime", t).
 				Int("currentBatchSize", len(batch)).
 				Str("timeSinceLastTick", timeSinceLastLog.String()).
@@ -331,7 +331,7 @@ func (s *Service) startBatchProcessor() {
 
 func (s *Service) processBatch(docs []*infra.SearchDocument, callbacks []func(error)) {
 	start := time.Now()
-	s.l.Trace().
+	s.l.Debug().
 		Int("batchSize", len(docs)).
 		Msg("starting batch processing")
 
@@ -365,7 +365,7 @@ func (s *Service) processBatch(docs []*infra.SearchDocument, callbacks []func(er
 		return
 	}
 
-	s.l.Trace().
+	s.l.Debug().
 		Int("batchSize", len(docs)).
 		Int64("taskId", task.TaskUID).
 		Str("status", task.Status).
@@ -382,7 +382,7 @@ func (s *Service) processBatch(docs []*infra.SearchDocument, callbacks []func(er
 }
 
 func (s *Service) flushBatch(ctx context.Context) error { //nolint: gocognit
-	s.l.Trace().Msg("performing final batch flush")
+	s.l.Debug().Msg("performing final batch flush")
 
 	// Try to drain the batch queue
 	documents := make([]*infra.SearchDocument, 0)
@@ -403,7 +403,7 @@ drainLoop:
 			if !ok {
 				break drainLoop
 			}
-			s.l.Trace().Int("batchSize", len(op.documents)).Msg("drained batch")
+			s.l.Debug().Int("batchSize", len(op.documents)).Msg("drained batch")
 			documents = append(documents, op.documents...)
 			for range op.documents {
 				callbacks = append(callbacks, op.callback)
@@ -415,7 +415,7 @@ drainLoop:
 	}
 
 	if len(documents) == 0 {
-		s.l.Trace().Msg("no documents to flush")
+		s.l.Debug().Msg("no documents to flush")
 		return nil
 	}
 
@@ -447,7 +447,7 @@ drainLoop:
 		}
 	}
 
-	s.l.Trace().Msg("final batch flushed successfully")
+	s.l.Debug().Msg("final batch flushed successfully")
 
 	return nil
 }

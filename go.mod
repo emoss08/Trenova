@@ -13,6 +13,7 @@ require (
 	github.com/jackc/pgx/v5 v5.7.2
 	github.com/jaswdr/faker/v2 v2.3.3
 	github.com/lib/pq v1.10.9
+	github.com/logrusorgru/aurora v2.0.3+incompatible
 	github.com/meilisearch/meilisearch-go v0.30.0
 	github.com/minio/minio-go/v7 v7.0.84
 	github.com/mitchellh/mapstructure v1.5.0
@@ -36,6 +37,7 @@ require (
 	go.uber.org/fx v1.23.0
 	golang.org/x/crypto v0.32.0
 	golang.org/x/net v0.34.0
+	gopkg.in/natefinch/lumberjack.v2 v2.2.1
 	gopkg.in/yaml.v3 v3.0.1
 )
 

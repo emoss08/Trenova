@@ -145,6 +145,13 @@ func (m *Manager) Server() *ServerConfig {
 	return &m.Cfg.Server
 }
 
+func (m *Manager) Log() *LogConfig {
+	if m.Cfg == nil {
+		return nil
+	}
+	return &m.Cfg.Log
+}
+
 func (m *Manager) Database() *DatabaseConfig {
 	if m.Cfg == nil {
 		return nil
@@ -202,6 +209,7 @@ func (m *Manager) Static() *StaticConfig {
 }
 
 // GetDSN returns a formatted database connection string
+
 func (m *Manager) GetDSN() string {
 	db := m.Database()
 	if db == nil {

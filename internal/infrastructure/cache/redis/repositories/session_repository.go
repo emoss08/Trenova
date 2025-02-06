@@ -86,7 +86,7 @@ func (sr *sessionRepository) Create(ctx context.Context, sess *session.Session) 
 		return eris.Wrap(err, "execute pipeline")
 	}
 
-	log.Trace().Msg("session created successfully")
+	log.Debug().Msg("session created successfully")
 	return nil
 }
 

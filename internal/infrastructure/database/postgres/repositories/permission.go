@@ -56,7 +56,7 @@ func (pr *permissionRepository) GetUserPermissions(ctx context.Context, userID p
 	// Try to get from cache first
 	permissions, err := pr.cache.GetUserPermissions(ctx, userID)
 	if err == nil && len(permissions) > 0 {
-		log.Trace().Int("count", len(permissions)).Msg("got permissions from cache")
+		log.Debug().Int("count", len(permissions)).Msg("got permissions from cache")
 		return permissions, nil
 	}
 
@@ -120,7 +120,7 @@ func (pr *permissionRepository) GetUserRoles(ctx context.Context, userID pulid.I
 	// Try to get from cache first
 	roles, err := pr.cache.GetUserRoles(ctx, userID)
 	if err == nil && len(roles) > 0 {
-		log.Trace().Int("count", len(roles)).Msg("got roles from cache")
+		log.Debug().Int("count", len(roles)).Msg("got roles from cache")
 		return roles, nil
 	}
 
@@ -147,7 +147,7 @@ func (pr *permissionRepository) GetUserRoles(ctx context.Context, userID pulid.I
 		log.Warn().Err(err).Msg("failed to cache user roles")
 	}
 
-	log.Trace().Int("count", len(roleNames)).Msg("got roles from database")
+	log.Debug().Int("count", len(roleNames)).Msg("got roles from database")
 	return roleNames, nil
 }
 
