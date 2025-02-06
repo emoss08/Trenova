@@ -130,6 +130,33 @@ var resrouceDefs = []*resource.ResourceDefinition{
 		AllowAutomations:   false,
 		AllowNotifications: true,
 	},
+	{
+		ResourceType:       permission.ResourceShipment,
+		DisplayName:        "Shipment",
+		TableName:          "shipments",
+		Description:        "Shipment Management",
+		AllowCustomFields:  true,
+		AllowAutomations:   false,
+		AllowNotifications: true,
+	},
+	{
+		ResourceType:       permission.ResourceShipmentMove,
+		DisplayName:        "Shipment Move",
+		TableName:          "shipment_moves",
+		Description:        "Shipment Move Management",
+		AllowCustomFields:  true,
+		AllowAutomations:   false,
+		AllowNotifications: true,
+	},
+	{
+		ResourceType:       permission.ResourceAssignment,
+		DisplayName:        "Assignment",
+		TableName:          "assignments",
+		Description:        "Assign a worker to a movement",
+		AllowCustomFields:  true,
+		AllowAutomations:   false,
+		AllowNotifications: true,
+	},
 }
 
 func LoadResourceDefinition(ctx context.Context, db *bun.DB) error {

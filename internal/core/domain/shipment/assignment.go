@@ -14,9 +14,10 @@ import (
 var _ bun.BeforeAppendModelHook = (*Assignment)(nil)
 
 type Assignment struct {
-	bun.BaseModel `bun:"table:shipment_assignments,alias:sa" json:"-"`
+	bun.BaseModel `bun:"table:assignments,alias:a" json:"-"`
 
 	// Primary identifiers
+	// TODO(wolfred): We need to change the ID to a generated ID so it is searchable
 	ID             pulid.ID `bun:",pk,type:VARCHAR(100),notnull" json:"id"`
 	BusinessUnitID pulid.ID `bun:"business_unit_id,pk,notnull,type:VARCHAR(100)" json:"businessUnitId"`
 	OrganizationID pulid.ID `bun:"organization_id,pk,notnull,type:VARCHAR(100)" json:"organizationId"`
@@ -24,9 +25,9 @@ type Assignment struct {
 	// Relationship identifiers (Non-Primary-Keys)
 	ShipmentMoveID    pulid.ID  `bun:"shipment_move_id,type:VARCHAR(100),notnull" json:"shipmentMoveId"`
 	PrimaryWorkerID   pulid.ID  `bun:"primary_worker_id,type:VARCHAR(100),notnull" json:"primaryWorkerId"`
-	SecondaryWorkerID *pulid.ID `bun:"secondary_worker_id,type:VARCHAR(100),nullzero" json:"secondaryWorkerId"`
 	TrailerID         pulid.ID  `bun:"trailer_id,type:VARCHAR(100),nullzero" json:"trailerId"`
 	TractorID         pulid.ID  `bun:"tractor_id,type:VARCHAR(100),nullzero" json:"tractorId"`
+	SecondaryWorkerID *pulid.ID `bun:"secondary_worker_id,type:VARCHAR(100),nullzero" json:"secondaryWorkerId"`
 
 	// Core Fields
 	Status AssignmentStatus `json:"status" bun:"status,type:assignment_status_enum,notnull,default:'New'"`
@@ -42,6 +43,15 @@ type Assignment struct {
 	PrimaryWorker   *worker.Worker   `bun:"rel:belongs-to,join:primary_worker_id=id" json:"primaryWorker,omitempty"`
 	SecondaryWorker *worker.Worker   `bun:"rel:belongs-to,join:secondary_worker_id=id" json:"secondaryWorker,omitempty"`
 	ShipmentMove    *ShipmentMove    `bun:"rel:belongs-to,join:shipment_move_id=id" json:"shipmentMove,omitempty"`
+}
+
+// Pagination Configuration
+func (a *Assignment) GetID() string {
+	return a.ID.String()
+}
+
+func (a *Assignment) GetTableName() string {
+	return "assignments"
 }
 
 func (a *Assignment) BeforeAppendModel(_ context.Context, query bun.Query) error {

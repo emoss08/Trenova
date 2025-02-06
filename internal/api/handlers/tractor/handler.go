@@ -54,6 +54,11 @@ func (h Handler) RegisterRoutes(r fiber.Router, rl *middleware.RateLimiter) {
 		middleware.PerMinute(60), // 60 reads per minute
 	)...)
 
+	api.Get("/:tractorID/assignment/", rl.WithRateLimit(
+		[]fiber.Handler{h.assignment},
+		middleware.PerMinute(60), // 60 reads per minute
+	)...)
+
 	api.Put("/:tractorID/", rl.WithRateLimit(
 		[]fiber.Handler{h.update},
 		middleware.PerMinute(60), // 60 writes per minute
@@ -184,4 +189,27 @@ func (h Handler) update(c *fiber.Ctx) error {
 	}
 
 	return c.Status(fiber.StatusOK).JSON(updatedTractor)
+}
+
+func (h Handler) assignment(c *fiber.Ctx) error {
+	reqCtx, err := ctx.WithRequestContext(c)
+	if err != nil {
+		return h.eh.HandleError(c, err)
+	}
+
+	tractorID, err := pulid.MustParse(c.Params("tractorID"))
+	if err != nil {
+		return h.eh.HandleError(c, err)
+	}
+
+	assignment, err := h.ts.Assignment(c.UserContext(), repositories.AssignmentOptions{
+		TractorID: tractorID,
+		OrgID:     reqCtx.OrgID,
+		BuID:      reqCtx.BuID,
+	})
+	if err != nil {
+		return h.eh.HandleError(c, err)
+	}
+
+	return c.Status(fiber.StatusOK).JSON(assignment)
 }
