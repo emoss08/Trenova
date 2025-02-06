@@ -45,11 +45,16 @@ func NewShipmentRepository(p ShipmentRepositoryParams) repositories.ShipmentRepo
 func (sr *shipmentRepository) addOptions(q *bun.SelectQuery, opts repositories.ShipmentOptions) *bun.SelectQuery {
 	if opts.ExpandShipmentDetails {
 		q = q.Relation("Customer")
-		q = q.Relation("Moves")
+
+		q = q.RelationWithOpts("Moves", bun.RelationOpts{
+			Apply: func(sq *bun.SelectQuery) *bun.SelectQuery {
+				return sq.Order("sm.sequence ASC").Relation("Assignment")
+			},
+		})
 
 		q = q.RelationWithOpts("Moves.Stops", bun.RelationOpts{
 			Apply: func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return sq.Relation("Location").Relation("Location.State")
+				return sq.Order("stp.sequence ASC").Relation("Location").Relation("Location.State")
 			},
 		})
 
