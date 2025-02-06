@@ -69,31 +69,38 @@ export function ShipmentSidebar() {
     pageSize: pageSize ?? DEFAULT_PAGE_SIZE,
     expandShipmentDetails: true,
     query: debouncedQueryValue,
+    enabled: !selectedShipmentId, // Only run query when no shipment is selected
   });
 
   const shipmentDetails = useShipmentDetails({
     shipmentId: selectedShipmentId ?? "",
+    enabled: Boolean(selectedShipmentId),
   });
 
   const displayData = useMemo(
     () =>
-      shipmentsQuery.isLoading
+      shipmentsQuery.isLoading && !selectedShipmentId
         ? (Array.from({ length: pageSize }, () => undefined) as (
             | ShipmentResponse
             | undefined
           )[])
-        : shipmentsQuery.data?.results,
-    [shipmentsQuery.data?.results, shipmentsQuery.isLoading, pageSize],
+        : (shipmentsQuery.data?.results ?? []),
+    [
+      shipmentsQuery.data?.results,
+      shipmentsQuery.isLoading,
+      pageSize,
+      selectedShipmentId,
+    ],
   );
 
   // Reset to the first page when search value changes
   useEffect(() => {
-    if (page !== 1) {
+    if (page !== 1 && !selectedShipmentId) {
       startTransition(() => {
         setPage(1);
       });
     }
-  }, [debouncedQueryValue, page, setPage, startTransition]);
+  }, [debouncedQueryValue, page, setPage, startTransition, selectedShipmentId]);
 
   const handlePageChange = useCallback(
     (page: number) => {
@@ -123,9 +130,9 @@ export function ShipmentSidebar() {
     [setSelectedShipmentId, startTransition],
   );
 
-  const handleBack = () => {
+  const handleBack = useCallback(() => {
     handleShipmentSelection("");
-  };
+  }, [handleShipmentSelection]);
 
   return (
     <div className="flex flex-col h-full bg-sidebar rounded-md border border-sidebar-border">

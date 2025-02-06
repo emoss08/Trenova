@@ -1,4 +1,12 @@
 -- Enums with comments explaining each type
+CREATE TYPE "stop_status_enum" AS ENUM(
+    'New', -- Initial state when move is created
+    'InTransit', -- Move is currently being executed
+    'Completed', -- Move has been completed successfully
+    'Canceled' -- Move has been cancelled and won't be completed
+);
+
+--bun:split
 CREATE TYPE stop_type_enum AS ENUM(
     'Pickup', -- Regular pickup stop
     'Delivery', -- Regular delivery stop

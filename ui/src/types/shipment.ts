@@ -65,10 +65,12 @@ export type ShipmentQueryParams = {
   pageSize: number;
   expandShipmentDetails: boolean;
   query?: string;
+  enabled?: boolean;
 };
 
 export type ShipmentDetailsQueryParams = {
   shipmentId: string;
+  enabled?: boolean;
 };
 
 export type ShipmentPaginationProps = {

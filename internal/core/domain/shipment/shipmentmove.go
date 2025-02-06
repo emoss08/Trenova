@@ -16,6 +16,8 @@ import (
 	"github.com/uptrace/bun"
 )
 
+var _ bun.BeforeAppendModelHook = (*ShipmentMove)(nil)
+
 type ShipmentMove struct {
 	bun.BaseModel `bun:"table:shipment_moves,alias:sm" json:"-"`
 
@@ -26,13 +28,13 @@ type ShipmentMove struct {
 
 	// Relationship identifiers (Non-Primary-Keys)
 	ShipmentID        pulid.ID  `bun:"shipment_id,type:VARCHAR(100),notnull" json:"shipmentId"`
-	PrimaryWorkerID   pulid.ID  `bun:"primary_worker_id,type:VARCHAR(100),notnull" json:"primaryWorkerId"`
+	PrimaryWorkerID   *pulid.ID `bun:"primary_worker_id,type:VARCHAR(100),nullzero" json:"primaryWorkerId"`
 	SecondaryWorkerID *pulid.ID `bun:"secondary_worker_id,type:VARCHAR(100),nullzero" json:"secondaryWorkerId"`
-	TrailerID         pulid.ID  `bun:"trailer_id,type:VARCHAR(100),nullzero" json:"trailerId"`
-	TractorID         pulid.ID  `bun:"tractor_id,type:VARCHAR(100),nullzero" json:"tractorId"`
+	TrailerID         *pulid.ID `bun:"trailer_id,type:VARCHAR(100),nullzero" json:"trailerId"`
+	TractorID         *pulid.ID `bun:"tractor_id,type:VARCHAR(100),nullzero" json:"tractorId"`
 
 	// Core Fields
-	Status   StopStatus `json:"status" bun:"status,type:stop_status_enum,notnull,default:'New'"`
+	Status   MoveStatus `json:"status" bun:"status,type:move_status_enum,notnull,default:'New'"`
 	Loaded   bool       `json:"loaded" bun:"loaded,type:BOOLEAN,notnull,default:true"`
 	Sequence int        `json:"sequence" bun:"sequence,type:INTEGER,notnull,default:0"`
 	Distance *float64   `json:"distance" bun:"distance,type:FLOAT,nullzero"`
@@ -55,15 +57,16 @@ type ShipmentMove struct {
 
 func (sm *ShipmentMove) Validate(ctx context.Context, multiErr *errors.MultiError) {
 	err := validation.ValidateStructWithContext(ctx, sm,
-		// Status is required and must be a valid stop status
+		// Status is required and must be a valid move status
 		validation.Field(&sm.Status,
 			validation.Required.Error("Status is required"),
 			validation.In(
-				StopStatusNew,
-				StopStatusInTransit,
-				StopStatusCompleted,
-				StopStatusCanceled,
-			).Error("Status must be a valid stop status"),
+				MoveStatusNew,
+				MoveStatusAssigned,
+				MoveStatusInTransit,
+				MoveStatusCompleted,
+				MoveStatusCanceled,
+			).Error("Status must be a valid move status"),
 		),
 
 		// Tractor ID is requird

@@ -122,10 +122,6 @@ CREATE INDEX "idx_worker_profiles_last_checks" ON "worker_profiles"("last_compli
 COMMENT ON TABLE worker_profiles IS 'Stores extended worker information including licensing and certification details';
 
 --bun:split
--- Update assignments table foreign key
-ALTER TABLE "assignments"
-    ADD CONSTRAINT "fk_assignments_worker" FOREIGN KEY ("worker_id", "organization_id", "business_unit_id") REFERENCES "workers"("id", "organization_id", "business_unit_id") ON UPDATE NO ACTION ON DELETE CASCADE;
-
 -- Update shipment_moves table foreign key
 ALTER TABLE "shipment_moves"
     ADD COLUMN "primary_worker_id" varchar(100) NOT NULL;

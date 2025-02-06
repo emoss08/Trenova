@@ -1,4 +1,11 @@
 import { StopStatusBadge } from "@/components/status-badge";
+import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Icon } from "@/components/ui/icons";
 import {
   Tooltip,
@@ -14,6 +21,7 @@ import { Stop, StopStatus } from "@/types/stop";
 import {
   faArrowDown,
   faCheck,
+  faEllipsisVertical,
   faPlus,
 } from "@fortawesome/pro-regular-svg-icons";
 import { faCircle, faTruck, faXmark } from "@fortawesome/pro-solid-svg-icons";
@@ -141,9 +149,7 @@ const MoveStatusBadge = memo(function MoveStatusBadge({
   return (
     <div className="flex justify-between items-center mb-4">
       <StopStatusBadge status={move.status} />
-      <span className="text-sm text-muted-foreground">
-        {move.stops.length} stops
-      </span>
+      <MoveActions />
     </div>
   );
 });
@@ -241,3 +247,18 @@ const StopTimeline = memo(function StopTimeline({
     </div>
   );
 });
+
+function MoveActions() {
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button variant="outline" size="sm" className="p-2">
+          <Icon icon={faEllipsisVertical} className="size-4" />
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent>
+        <DropdownMenuItem title="View Details" />
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+}
