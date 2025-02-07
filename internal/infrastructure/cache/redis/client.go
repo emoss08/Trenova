@@ -114,7 +114,7 @@ func (c *Client) Get(ctx context.Context, key string) (string, error) {
 	val, err := c.Client.Get(ctx, key).Result()
 	if err != nil {
 		if eris.Is(err, redis.Nil) {
-			c.l.Trace().
+			c.l.Debug().
 				Str("key", key).
 				Msg("redis key not found")
 			return "", redis.Nil
@@ -126,7 +126,7 @@ func (c *Client) Get(ctx context.Context, key string) (string, error) {
 		return "", eris.Wrap(err, "failed to get value from redis")
 	}
 
-	c.l.Trace().
+	c.l.Debug().
 		Str("key", key).
 		Str("value", val).
 		Msg("redis get success")
@@ -141,7 +141,7 @@ func (c *Client) Set(ctx context.Context, key string, value any, expiration time
 		return eris.Wrapf(err, "failed to set key: %s", key)
 	}
 
-	c.l.Trace().
+	c.l.Debug().
 		Str("key", key).
 		Interface("value", value).
 		Dur("expiration", expiration).
@@ -201,7 +201,7 @@ func (c *Client) HSet(ctx context.Context, key, field string, value interface{})
 		return eris.Wrapf(err, "failed to set hash field: %s.%s", key, field)
 	}
 
-	c.l.Trace().
+	c.l.Debug().
 		Str("key", key).
 		Str("field", field).
 		Interface("value", value).
@@ -230,7 +230,7 @@ func (c *Client) SAdd(ctx context.Context, key string, members ...interface{}) e
 		return eris.Wrapf(err, "failed to add members to set: %s", key)
 	}
 
-	c.l.Trace().
+	c.l.Debug().
 		Str("key", key).
 		Interface("members", members).
 		Msg("members added to set successfully")
@@ -277,7 +277,7 @@ func (c *Client) Del(ctx context.Context, key string) error {
 		return eris.Wrap(err, "failed to delete key from redis")
 	}
 
-	c.l.Trace().
+	c.l.Debug().
 		Str("key", key).
 		Msg("redis del success")
 

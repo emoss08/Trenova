@@ -12,7 +12,6 @@ func NewTestConfig() *config.Config {
 		App: config.AppConfig{
 			Name:        "transport-test",
 			Environment: "testing",
-			LogLevel:    "error",
 			Version:     "test",
 		},
 		DB: config.DatabaseConfig{

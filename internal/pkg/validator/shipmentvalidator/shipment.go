@@ -2,6 +2,7 @@ package shipmentvalidator
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/internal/core/ports/db"
@@ -125,7 +126,7 @@ func (v *Validator) validateTemperature(shp *shipment.Shipment, multiErr *errors
 
 // validateBillingFlags performs comprehensive validation of billing-related fields and flags
 // to ensure proper billing state transitions and data consistency.
-func (v *Validator) validateBillingFlags(shp *shipment.Shipment, multiErr *errors.MultiError) { //nolint: gocognit // validation
+func (v *Validator) validateBillingFlags(shp *shipment.Shipment, multiErr *errors.MultiError) { //nolint: gocognit,cyclop,funlen // validation
 	// --------------------------------------
 	// 1. Ready to Bill State Validation
 	// Ensures that if a shipment is not marked as ready to bill,
@@ -280,4 +281,23 @@ func (v *Validator) validateBillingFlags(shp *shipment.Shipment, multiErr *error
 			"Actual delivery date is required to mark shipment as ready to bill",
 		)
 	}
+}
+
+func (v *Validator) ValidateCancellation(shp *shipment.Shipment) *errors.MultiError {
+	multiErr := errors.NewMultiError()
+
+	if !cancelableShipmentStatuses[shp.Status] {
+		multiErr.Add(
+			"status",
+
+			errors.ErrInvalid,
+			fmt.Sprintf("Cannot cancel shipment in status `%s`", shp.Status),
+		)
+	}
+
+	if multiErr.HasErrors() {
+		return multiErr
+	}
+
+	return nil
 }

@@ -2,6 +2,7 @@ import { type WorkerSchema } from "@/lib/schemas/worker-schema";
 import { badgeVariants } from "@/lib/variants/badge";
 import { type Status } from "@/types/common";
 import { type PackingGroupChoiceProps } from "@/types/hazardous-material";
+import { MoveStatus } from "@/types/move";
 import { ShipmentStatus } from "@/types/shipment";
 import { StopStatus } from "@/types/stop";
 import { EquipmentStatus } from "@/types/tractor";
@@ -59,6 +60,37 @@ export function StopStatusBadge({ status }: { status: StopStatus }) {
   return (
     <Badge variant={stopStatusAttributes[status].variant} className="max-h-6">
       {stopStatusAttributes[status].text}
+    </Badge>
+  );
+}
+
+export function MoveStatusBadge({ status }: { status: MoveStatus }) {
+  const moveStatusAttributes: Record<MoveStatus, BadgeAttrProps> = {
+    [MoveStatus.New]: {
+      variant: "purple",
+      text: "New",
+    },
+    [MoveStatus.Assigned]: {
+      variant: "warning",
+      text: "Assigned",
+    },
+    [StopStatus.InTransit]: {
+      variant: "info",
+      text: "In Transit",
+    },
+    [StopStatus.Completed]: {
+      variant: "active",
+      text: "Completed",
+    },
+    [StopStatus.Canceled]: {
+      variant: "inactive",
+      text: "Canceled",
+    },
+  };
+
+  return (
+    <Badge variant={moveStatusAttributes[status].variant} className="max-h-6">
+      {moveStatusAttributes[status].text}
     </Badge>
   );
 }

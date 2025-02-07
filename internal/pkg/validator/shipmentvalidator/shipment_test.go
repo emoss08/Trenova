@@ -42,10 +42,7 @@ func newShipment() *shipment.Shipment {
 		ReadyToBill:         false,
 		Moves: []*shipment.ShipmentMove{
 			{
-				Status:          shipment.StopStatusNew,
-				PrimaryWorkerID: pulid.MustNew("wrk_"),
-				TractorID:       pulid.MustNew("trk_"),
-				TrailerID:       pulid.MustNew("trl_"),
+				Status: shipment.MoveStatusNew,
 				Stops: []*shipment.Stop{
 					{
 						Type:             shipment.StopTypePickup,
@@ -497,6 +494,96 @@ func TestShipmentValidator(t *testing.T) { //nolint: funlen // Tests
 			scenario.modifyShipment(shp)
 
 			me := val.Validate(ctx, vCtx, shp)
+
+			matcher := testutils.NewErrorMatcher(t, me)
+			matcher.HasExactErrors(scenario.expectedErrors)
+		})
+	}
+}
+
+func TestShipmentCancelValidation(t *testing.T) {
+	sv := spValidator.NewStopValidator(spValidator.StopValidatorParams{
+		DB: ts.DB,
+	})
+
+	mv := spValidator.NewMoveValidator(spValidator.MoveValidatorParams{
+		DB:            ts.DB,
+		StopValidator: sv,
+	})
+
+	val := spValidator.NewValidator(spValidator.ValidatorParams{
+		DB:            ts.DB,
+		MoveValidator: mv,
+	})
+	scenarios := []struct {
+		name           string
+		modifyShipment func(*shipment.Shipment)
+		expectedErrors []struct {
+			Field   string
+			Code    errors.ErrorCode
+			Message string
+		}
+	}{
+		{
+			name: "cannot cancel shipment in status completed",
+			modifyShipment: func(s *shipment.Shipment) {
+				s.Status = shipment.StatusCompleted
+			},
+			expectedErrors: []struct {
+				Field   string
+				Code    errors.ErrorCode
+				Message string
+			}{
+				{
+					Field:   "status",
+					Code:    errors.ErrInvalid,
+					Message: "Cannot cancel shipment in status `Completed`",
+				},
+			},
+		},
+		{
+			name: "cannot cancel shipment in status billed",
+			modifyShipment: func(s *shipment.Shipment) {
+				s.Status = shipment.StatusBilled
+			},
+			expectedErrors: []struct {
+				Field   string
+				Code    errors.ErrorCode
+				Message string
+			}{
+				{
+					Field:   "status",
+					Code:    errors.ErrInvalid,
+					Message: "Cannot cancel shipment in status `Billed`",
+				},
+			},
+		},
+		{
+			name: "cannot cancel shipment in status canceled",
+			modifyShipment: func(s *shipment.Shipment) {
+				s.Status = shipment.StatusCanceled
+			},
+			expectedErrors: []struct {
+				Field   string
+				Code    errors.ErrorCode
+				Message string
+			}{
+				{
+					Field:   "status",
+					Code:    errors.ErrInvalid,
+					Message: "Cannot cancel shipment in status `Canceled`",
+				},
+			},
+		},
+	}
+
+	for _, scenario := range scenarios {
+		t.Run(scenario.name, func(t *testing.T) {
+			shp := newShipment()
+
+			scenario.modifyShipment(shp)
+
+			me := val.ValidateCancellation(shp)
 
 			matcher := testutils.NewErrorMatcher(t, me)
 			matcher.HasExactErrors(scenario.expectedErrors)

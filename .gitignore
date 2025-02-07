@@ -13,3 +13,4 @@ node_modules
 .fleet
 .idea
 .cursorrules
+logs/*

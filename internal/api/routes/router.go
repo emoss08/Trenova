@@ -3,6 +3,7 @@ package routes
 import (
 	"time"
 
+	"github.com/emoss08/trenova/internal/api/handlers/assignment"
 	authHandler "github.com/emoss08/trenova/internal/api/handlers/auth"
 	"github.com/emoss08/trenova/internal/api/handlers/commodity"
 	"github.com/emoss08/trenova/internal/api/handlers/customer"
@@ -91,6 +92,7 @@ type RouterParams struct {
 	CustomerHandler              *customer.Handler
 	ShipmentHandler              *shipment.Handler
 	RoutingHandler               *routing.Handler
+	AssignmentHandler            *assignment.Handler
 }
 
 type Router struct {
@@ -240,4 +242,7 @@ func (r *Router) setupProtectedRoutes(router fiber.Router, rl *middleware.RateLi
 
 	// Routing
 	r.p.RoutingHandler.RegisterRoutes(router, rl)
+
+	// Assignments
+	r.p.AssignmentHandler.RegisterRoutes(router, rl)
 }

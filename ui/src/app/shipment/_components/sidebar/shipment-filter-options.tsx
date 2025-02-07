@@ -1,12 +1,12 @@
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
 
-type TabType = "shipments" | "vehicles" | "workers" | "assets";
+type TabType = "shipments" | "vehicles" | "assignments" | "assets";
 
 const TABS: { id: TabType; label: string }[] = [
   { id: "shipments", label: "Shipments" },
   { id: "vehicles", label: "Vehicles" },
-  { id: "workers", label: "Workers" },
+  { id: "assignments", label: "Assignments" },
   { id: "assets", label: "Assets" },
 ];
 

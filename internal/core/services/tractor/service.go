@@ -285,3 +285,20 @@ func (s *Service) Update(ctx context.Context, t *tractor.Tractor, userID pulid.I
 
 	return updatedEntity, nil
 }
+
+func (s *Service) Assignment(ctx context.Context, opts repositories.AssignmentOptions) (*repositories.AssignmentResponse, error) {
+	log := s.l.With().
+		Str("operation", "Assignment").
+		Str("tractorID", opts.TractorID.String()).
+		Logger()
+
+	// ! We do not need to check permissions for this operation
+
+	assignment, err := s.repo.Assignment(ctx, opts)
+	if err != nil {
+		log.Error().Err(err).Msg("failed to get tractor assignment")
+		return nil, err
+	}
+
+	return assignment, nil
+}

@@ -24,15 +24,12 @@ CREATE TABLE IF NOT EXISTS "shipments"(
     "pro_number" varchar(100) NOT NULL,
     "organization_id" varchar(100) NOT NULL,
     "business_unit_id" varchar(100) NOT NULL,
-    -- Core Fields
     "status" shipment_status_enum NOT NULL DEFAULT 'New',
     "bol" varchar(100) NOT NULL,
-    -- Misc. Shipment Related Fields
     "actual_ship_date" bigint,
     "actual_delivery_date" bigint,
     "temperature_min" numeric(10, 2),
     "temperature_max" numeric(10, 2),
-    -- Billing Related Fields
     "bill_date" bigint,
     "ready_to_bill" boolean NOT NULL DEFAULT FALSE,
     "ready_to_bill_date" bigint,
@@ -46,6 +43,11 @@ CREATE TABLE IF NOT EXISTS "shipments"(
     "weight" integer CHECK ("weight" > 0),
     "sent_to_billing_date" bigint,
     "billed" boolean NOT NULL DEFAULT FALSE,
+    -- Cancellation Related Fields
+    "canceled_by_id" varchar(100),
+    "canceled_at" bigint,
+    "cancel_reason" varchar(100),
+
     -- Metadata
     "version" bigint NOT NULL DEFAULT 0,
     "created_at" bigint NOT NULL DEFAULT EXTRACT(EPOCH FROM CURRENT_TIMESTAMP) ::bigint,
@@ -53,7 +55,8 @@ CREATE TABLE IF NOT EXISTS "shipments"(
     -- Constraints
     CONSTRAINT "pk_shipments" PRIMARY KEY ("id", "organization_id", "business_unit_id"),
     CONSTRAINT "fk_shipments_business_unit" FOREIGN KEY ("business_unit_id") REFERENCES "business_units"("id") ON UPDATE NO ACTION ON DELETE CASCADE,
-    CONSTRAINT "fk_shipments_organization" FOREIGN KEY ("organization_id") REFERENCES "organizations"("id") ON UPDATE NO ACTION ON DELETE CASCADE
+    CONSTRAINT "fk_shipments_organization" FOREIGN KEY ("organization_id") REFERENCES "organizations"("id") ON UPDATE NO ACTION ON DELETE CASCADE,
+    CONSTRAINT "fk_shipments_canceled_by" FOREIGN KEY ("canceled_by_id") REFERENCES "users"("id") ON UPDATE NO ACTION ON DELETE SET NULL
 );
 
 --bun:split

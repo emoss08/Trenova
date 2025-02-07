@@ -1,6 +1,7 @@
 package services
 
 import (
+	"github.com/emoss08/trenova/internal/core/services/assignment"
 	"github.com/emoss08/trenova/internal/core/services/audit"
 	"github.com/emoss08/trenova/internal/core/services/auth"
 	"github.com/emoss08/trenova/internal/core/services/commodity"
@@ -59,4 +60,5 @@ var Module = fx.Module("services", fx.Provide(
 	customer.NewService,
 	shipment.NewService,
 	routing.NewService,
+	assignment.NewService,
 ))

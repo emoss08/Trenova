@@ -11,6 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/organization"
 	"github.com/emoss08/trenova/internal/core/domain/servicetype"
 	"github.com/emoss08/trenova/internal/core/domain/shipmenttype"
+	"github.com/emoss08/trenova/internal/core/domain/user"
 	"github.com/emoss08/trenova/internal/core/ports/infra"
 	"github.com/emoss08/trenova/internal/pkg/errors"
 	"github.com/emoss08/trenova/internal/pkg/utils/timeutils"
@@ -68,6 +69,11 @@ type Shipment struct {
 	ActualDeliveryDate *int64              `json:"actualDeliveryDate" bun:"actual_delivery_date,type:BIGINT,nullzero"`
 	ActualShipDate     *int64              `json:"actualShipDate" bun:"actual_ship_date,type:BIGINT,nullzero"`
 
+	// Cancelation Related Fields
+	CanceledAt   *int64    `json:"canceledAt" bun:"canceled_at,type:BIGINT,nullzero"`
+	CanceledByID *pulid.ID `json:"canceledById" bun:"canceled_by_id,type:VARCHAR(100),nullzero"`
+	CancelReason string    `json:"cancelReason" bun:"cancel_reason,type:VARCHAR(100),nullzero"`
+
 	// Metadata
 	Version      int64  `json:"version" bun:"version,type:BIGINT"`
 	CreatedAt    int64  `json:"createdAt" bun:"created_at,notnull,default:extract(epoch from current_timestamp)::bigint"`
@@ -82,6 +88,7 @@ type Shipment struct {
 	Customer     *customer.Customer           `json:"customer,omitempty" bun:"rel:belongs-to,join:customer_id=id"`
 	TractorType  *equipmenttype.EquipmentType `json:"tractorType,omitempty" bun:"rel:belongs-to,join:tractor_type_id=id"`
 	TrailerType  *equipmenttype.EquipmentType `json:"trailerType,omitempty" bun:"rel:belongs-to,join:trailer_type_id=id"`
+	CanceledBy   *user.User                   `json:"canceledBy,omitempty" bun:"rel:belongs-to,join:canceled_by_id=id"`
 	Moves        []*ShipmentMove              `json:"moves,omitempty" bun:"rel:has-many,join:id=shipment_id"`
 	Commodities  []*ShipmentCommodity         `json:"commodities,omitempty" bun:"rel:has-many,join:id=shipment_id"`
 }
@@ -194,24 +201,7 @@ func (st *Shipment) ToDocument() infra.SearchDocument {
 	}
 }
 
-func (st *Shipment) BeforeAppendModel(_ context.Context, query bun.Query) error {
-	now := timeutils.NowUnix()
-
-	switch query.(type) {
-	case *bun.InsertQuery:
-		if st.ID.IsNil() {
-			st.ID = pulid.MustNew("shp_")
-		}
-
-		st.CreatedAt = now
-	case *bun.UpdateQuery:
-		st.UpdatedAt = now
-	}
-
-	return nil
-}
-
-func (st Shipment) GetPostgresSearchConfig() infra.PostgresSearchConfig {
+func (st *Shipment) GetPostgresSearchConfig() infra.PostgresSearchConfig {
 	return infra.PostgresSearchConfig{
 		TableAlias: "sp",
 		Fields: []infra.PostgresSearchableField{
@@ -236,4 +226,21 @@ func (st Shipment) GetPostgresSearchConfig() infra.PostgresSearchConfig {
 		MaxTerms:        6,
 		UsePartialMatch: true,
 	}
+}
+
+func (st *Shipment) BeforeAppendModel(_ context.Context, query bun.Query) error {
+	now := timeutils.NowUnix()
+
+	switch query.(type) {
+	case *bun.InsertQuery:
+		if st.ID.IsNil() {
+			st.ID = pulid.MustNew("shp_")
+		}
+
+		st.CreatedAt = now
+	case *bun.UpdateQuery:
+		st.UpdatedAt = now
+	}
+
+	return nil
 }
