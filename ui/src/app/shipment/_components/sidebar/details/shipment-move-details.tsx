@@ -5,6 +5,7 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuLabel,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Icon } from "@/components/ui/icons";
@@ -260,6 +261,8 @@ function MoveActions({ move }: { move: ShipmentMove }) {
   // Move is not new, so we cannot assign equipment and workers
   const reassignEnabled = move.status === MoveStatus.Assigned;
 
+  const assignDisabled = move.status !== MoveStatus.New;
+
   return (
     <>
       <DropdownMenu>
@@ -270,11 +273,14 @@ function MoveActions({ move }: { move: ShipmentMove }) {
         </DropdownMenuTrigger>
         <DropdownMenuContent align="start">
           <DropdownMenuLabel>Move Actions</DropdownMenuLabel>
+          <DropdownMenuSeparator />
           <DropdownMenuItem
             title={reassignEnabled ? "Reassign" : "Assign"}
             description="Assign equipment and worker(s) to the move"
             onClick={() => setAssignmentDialogOpen(!assignmentDialogOpen)}
+            disabled={assignDisabled}
           />
+
           <DropdownMenuItem
             title="Edit Move"
             description="Modify move details"

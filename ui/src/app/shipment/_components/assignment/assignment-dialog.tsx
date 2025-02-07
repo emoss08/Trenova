@@ -171,7 +171,7 @@ export function AssignmentDialog({
                 <Button type="button" variant="outline" onClick={onClose}>
                   Cancel
                 </Button>
-                <TooltipProvider delayDuration={0}>
+                <TooltipProvider>
                   <Tooltip>
                     <TooltipTrigger asChild>
                       <Button
