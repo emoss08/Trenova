@@ -1,11 +1,12 @@
-import { CommoditySchema } from "@/lib/schemas/commodity-schema";
-import { CustomerSchema } from "@/lib/schemas/customer-schema";
-import { EquipmentTypeSchema } from "@/lib/schemas/equipment-type-schema";
+import { type CommoditySchema } from "@/lib/schemas/commodity-schema";
+import { type CustomerSchema } from "@/lib/schemas/customer-schema";
+import { type EquipmentTypeSchema } from "@/lib/schemas/equipment-type-schema";
 import { type ServiceTypeSchema } from "@/lib/schemas/service-type-schema";
-import { ShipmentCommoditySchema } from "@/lib/schemas/shipment-commodity-schema";
+import { type ShipmentCommoditySchema } from "@/lib/schemas/shipment-commodity-schema";
 import { type ShipmentSchema } from "@/lib/schemas/shipment-schema";
-import { ShipmentTypeSchema } from "@/lib/schemas/shipment-type-schema";
-import { ShipmentMove } from "./move";
+import { type ShipmentTypeSchema } from "@/lib/schemas/shipment-type-schema";
+import { type ShipmentMove } from "./move";
+import { type User } from "./user";
 
 export enum ShipmentStatus {
   New = "New",
@@ -58,6 +59,11 @@ export type Shipment = ShipmentSchema & {
   tractorType?: EquipmentTypeSchema | null;
   trailerType?: EquipmentTypeSchema | null;
   moves: ShipmentMove[];
+  // Cancelation Related Fields
+  canceledAt?: number | null;
+  canceledById?: string | null;
+  cancelReason?: string | null;
+  canceledBy?: User | null;
 };
 
 export type ShipmentQueryParams = {

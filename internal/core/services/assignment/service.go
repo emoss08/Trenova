@@ -11,6 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/pkg/errors"
 	"github.com/emoss08/trenova/internal/pkg/logger"
 	"github.com/emoss08/trenova/internal/pkg/utils/jsonutils"
+	"github.com/emoss08/trenova/internal/pkg/validator/assignmentvalidator"
 	"github.com/emoss08/trenova/pkg/types/pulid"
 	"github.com/rs/zerolog"
 	"go.uber.org/fx"
@@ -23,7 +24,7 @@ type ServiceParams struct {
 	Repo         repositories.AssignmentRepository
 	PermService  services.PermissionService
 	AuditService services.AuditService
-	// TODO(Wolfred): Add validator
+	Validator    *assignmentvalidator.Validator
 }
 
 type Service struct {
@@ -31,6 +32,7 @@ type Service struct {
 	repo repositories.AssignmentRepository
 	ps   services.PermissionService
 	as   services.AuditService
+	v    *assignmentvalidator.Validator
 }
 
 func NewService(p ServiceParams) *Service {
@@ -43,6 +45,7 @@ func NewService(p ServiceParams) *Service {
 		repo: p.Repo,
 		ps:   p.PermService,
 		as:   p.AuditService,
+		v:    p.Validator,
 	}
 }
 
@@ -70,6 +73,11 @@ func (s *Service) SingleAssign(ctx context.Context, a *shipment.Assignment, user
 
 	if !result.Allowed {
 		return nil, errors.NewAuthorizationError("You do not have permission to assign")
+	}
+
+	// * Validate the assignment
+	if err := s.v.Validate(ctx, a); err != nil {
+		return nil, err
 	}
 
 	createdEntity, err := s.repo.SingleAssign(ctx, a)

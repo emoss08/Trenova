@@ -334,6 +334,7 @@ var (
 				ActionComplete,
 				ActionModifyField,
 				ActionViewField,
+				ActionCancel,
 			)...,
 		),
 		ResourceReport: append(

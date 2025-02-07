@@ -1115,6 +1115,9 @@
       sent_to_billing_date: "{{ now.Unix }}"
       temperature_min: 10.00
       temperature_max: 20.00
+      canceled_at: "{{ now.Unix }}"
+      canceled_by_id: "{{ $.User.test_user.ID }}"
+      cancel_reason: "Test"
 
 - model: ShipmentMove
   rows:
