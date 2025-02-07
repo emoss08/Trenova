@@ -292,7 +292,7 @@ var cancelableStatuses = map[shipment.Status]bool{
 	shipment.StatusCanceled:  false, // Can't cancel already canceled shipments
 }
 
-func (v *Validator) ValidateCancel(shp *shipment.Shipment) *errors.MultiError {
+func (v *Validator) ValidateCancellation(shp *shipment.Shipment) *errors.MultiError {
 	multiErr := errors.NewMultiError()
 
 	if !cancelableStatuses[shp.Status] {

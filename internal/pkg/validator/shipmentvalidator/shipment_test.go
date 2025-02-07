@@ -583,7 +583,7 @@ func TestShipmentCancelValidation(t *testing.T) {
 
 			scenario.modifyShipment(shp)
 
-			me := val.ValidateCancel(shp)
+			me := val.ValidateCancellation(shp)
 
 			matcher := testutils.NewErrorMatcher(t, me)
 			matcher.HasExactErrors(scenario.expectedErrors)
