@@ -1,6 +1,7 @@
 -- Enum with documentation for each status
-CREATE TYPE "stop_status_enum" AS ENUM(
+CREATE TYPE "move_status_enum" AS ENUM(
     'New', -- Initial state when move is created
+    'Assigned', -- Move is currently being executed
     'InTransit', -- Move is currently being executed
     'Completed', -- Move has been completed successfully
     'Canceled' -- Move has been cancelled and won't be completed
@@ -14,13 +15,12 @@ CREATE TABLE IF NOT EXISTS "shipment_moves"(
     -- Primary keys
     "shipment_id" varchar(100) NOT NULL,
     -- Core Fields
-    "status" stop_status_enum NOT NULL DEFAULT 'New',
+    "status" move_status_enum NOT NULL DEFAULT 'New',
     "loaded" boolean NOT NULL DEFAULT TRUE,
     "sequence" integer NOT NULL DEFAULT 0 CHECK ("sequence" >= 0),
     "distance" float,
     -- Metadata
     "version" bigint NOT NULL DEFAULT 0,
-
     "created_at" bigint NOT NULL DEFAULT EXTRACT(EPOCH FROM CURRENT_TIMESTAMP) ::bigint,
     "updated_at" bigint NOT NULL DEFAULT EXTRACT(EPOCH FROM CURRENT_TIMESTAMP) ::bigint,
     -- Constraints

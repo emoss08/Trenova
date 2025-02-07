@@ -25,9 +25,19 @@ type GetShipmentByIDOptions struct {
 	ShipmentOptions ShipmentOptions
 }
 
+type CancelShipmentRequest struct {
+	ShipmentID   pulid.ID `json:"shipmentId"`
+	OrgID        pulid.ID `json:"orgId"`
+	BuID         pulid.ID `json:"buId"`
+	CanceledByID pulid.ID `json:"canceledById"`
+	CanceledAt   int64    `json:"canceledAt"`
+	CancelReason string   `json:"cancelReason"`
+}
+
 type ShipmentRepository interface {
 	List(ctx context.Context, opts *ListShipmentOptions) (*ports.ListResult[*shipment.Shipment], error)
 	GetByID(ctx context.Context, opts GetShipmentByIDOptions) (*shipment.Shipment, error)
 	Create(ctx context.Context, t *shipment.Shipment) (*shipment.Shipment, error)
 	Update(ctx context.Context, t *shipment.Shipment) (*shipment.Shipment, error)
+	Cancel(ctx context.Context, req *CancelShipmentRequest) error
 }

@@ -1,15 +1,16 @@
 import { Button } from "@/components/ui/button";
 import { Icon } from "@/components/ui/icons";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { type Shipment } from "@/types/shipment";
+import { ShipmentStatus, type Shipment } from "@/types/shipment";
 import { faChevronLeft } from "@fortawesome/pro-solid-svg-icons";
+import { CanceledShipmentOverlay } from "../shipment-cancellation-overlay";
 import { ShipmentCommodityDetails } from "./shipment-commodity-details";
 import {
   ShipmentBillingDetails,
   ShipmentDetailsHeader,
   ShipmentServiceDetails,
 } from "./shipment-details-components";
-import { ShipmentDetailActions } from "./shipment-menu-actions";
+import { ShipmentActions } from "./shipment-menu-actions";
 import { ShipmentMovesDetails } from "./shipment-move-details";
 
 interface ShipmentDetailsProps {
@@ -32,7 +33,7 @@ export default function ShipmentDetails({
     return <p>Loading...</p>;
   }
 
-  return (
+  const content = (
     <div className="size-full">
       <div className="py-2">
         <div className="flex items-center gap-2 px-4 justify-between">
@@ -40,7 +41,7 @@ export default function ShipmentDetails({
             <Icon icon={faChevronLeft} className="size-4" />
             <span className="text-sm">Back</span>
           </Button>
-          <ShipmentDetailActions />
+          <ShipmentActions shipment={selectedShipment} />
         </div>
         <div className="flex flex-col gap-2 mt-4">
           <ShipmentDetailsHeader />
@@ -55,4 +56,20 @@ export default function ShipmentDetails({
       </div>
     </div>
   );
+
+  // Wrap content in overlay if shipment is canceled
+  if (selectedShipment.status === ShipmentStatus.Canceled) {
+    return (
+      <CanceledShipmentOverlay
+        canceledAt={selectedShipment.canceledAt ?? 0}
+        canceledBy={selectedShipment.canceledBy?.name ?? ""}
+        cancelReason={selectedShipment.cancelReason ?? ""}
+        onBack={onBack}
+      >
+        {content}
+      </CanceledShipmentOverlay>
+    );
+  }
+
+  return content;
 }

@@ -95,7 +95,7 @@ func (s *Service) Login(ctx context.Context, ip, userAgent string, req *services
 			Msg("failed to reset login attempts")
 	}
 
-	s.l.Trace().
+	s.l.Debug().
 		Str("session_id", sess.ID.String()).
 		Msg("successful login")
 

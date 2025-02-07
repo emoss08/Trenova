@@ -7,6 +7,9 @@ type Config struct {
 	// App is the app configuration.
 	App AppConfig `mapstructure:"app"`
 
+	// Log is the log configuration.
+	Log LogConfig `mapstructure:"logging"`
+
 	// Server is the server configuration.
 	Server ServerConfig `mapstructure:"server"`
 
@@ -34,6 +37,45 @@ type Config struct {
 
 	// Static is the static configuration.
 	Static StaticConfig `mapstructure:"static"`
+}
+
+type LogConfig struct {
+	// LogLevel is the app log level.
+	// trace, debug, info, warn, error, fatal, panic
+	Level string `mapstructure:"level"`
+
+	// SamplingPeriod is the sampling period.
+	// This is the period at which the log is sampled.
+	// Defaults to 10 seconds.
+	SamplingPeriod time.Duration `mapstructure:"samplingPeriod"`
+
+	// SamplingInterval is the sampling interval.
+	// This is the interval at which the log is sampled.
+	// Defaults to 1000.
+	SamplingInterval uint32 `mapstructure:"samplingInterval"`
+
+	// FileConfig is the file configuration.
+	FileConfig FileConfig `mapstructure:"file"`
+}
+
+type FileConfig struct {
+	// Enabled is the enabled flag.
+	Enabled bool `mapstructure:"enabled"`
+
+	// Path is the path to the log file.
+	Path string `mapstructure:"path"`
+
+	// MaxSize is the max size of the log file.
+	MaxSize int `mapstructure:"maxSize"`
+
+	// MaxBackups is the max backups.
+	MaxBackups int `mapstructure:"maxBackups"`
+
+	// MaxAge is the max age of the log file.
+	MaxAge int `mapstructure:"maxAge"`
+
+	// Compress is the compress flag.
+	Compress bool `mapstructure:"compress"`
 }
 
 // StaticConfig is the configuration for the static files.
@@ -71,10 +113,6 @@ type AppConfig struct {
 	// Environment is the app environment.
 	// development, staging, production, testing
 	Environment string `mapstructure:"environment"`
-
-	// LogLevel is the app log level.
-	// trace, debug, info, warn, error, fatal, panic
-	LogLevel string `mapstructure:"logLevel"`
 
 	// Version is the app version.
 	Version string `mapstructure:"version"`

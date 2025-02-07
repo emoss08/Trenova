@@ -285,3 +285,68 @@ func (s *Service) Update(ctx context.Context, shp *shipment.Shipment, userID pul
 
 	return updatedEntity, nil
 }
+
+func (s *Service) Cancel(ctx context.Context, req *repositories.CancelShipmentRequest) error {
+	log := s.l.With().
+		Str("operation", "Cancel").
+		Str("shipmentID", req.ShipmentID.String()).
+		Logger()
+
+	result, err := s.ps.HasAnyPermissions(ctx,
+		[]*services.PermissionCheck{
+			{
+				UserID:         req.CanceledByID,
+				Resource:       permission.ResourceShipment,
+				Action:         permission.ActionCancel,
+				BusinessUnitID: req.BuID,
+				OrganizationID: req.OrgID,
+			},
+		},
+	)
+	if err != nil {
+		log.Error().Err(err).Msg("failed to check permissions")
+		return err
+	}
+
+	if !result.Allowed {
+		return errors.NewAuthorizationError("You do not have permission to cancel this shipment")
+	}
+
+	// get the original shipment
+	original, err := s.repo.GetByID(ctx, repositories.GetShipmentByIDOptions{
+		ID:    req.ShipmentID,
+		OrgID: req.OrgID,
+		BuID:  req.BuID,
+	})
+	if err != nil {
+		log.Error().Err(err).Msg("failed to get shipment")
+		return err
+	}
+
+	if err := s.v.ValidateCancellation(original); err != nil {
+		return err
+	}
+
+	if err = s.repo.Cancel(ctx, req); err != nil {
+		log.Error().Err(err).Msg("failed to cancel shipment")
+		return err
+	}
+
+	// Log the update if the insert was successful
+	err = s.as.LogAction(
+		&services.LogActionParams{
+			Resource:       permission.ResourceShipment,
+			ResourceID:     req.ShipmentID.String(),
+			Action:         permission.ActionCancel,
+			UserID:         req.CanceledByID,
+			OrganizationID: req.OrgID,
+			BusinessUnitID: req.BuID,
+		},
+		audit.WithComment("Shipment canceled"),
+	)
+	if err != nil {
+		log.Error().Err(err).Msg("failed to log shipment cancellation")
+	}
+
+	return nil
+}

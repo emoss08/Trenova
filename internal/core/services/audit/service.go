@@ -215,12 +215,12 @@ func (s *service) Stop(ctx context.Context) error {
 	case <-shutdownCtx.Done():
 		return eris.Wrap(ErrTimeoutWaitingStop, "workers failed to stop")
 	case <-flusherOK:
-		s.l.Trace().Msg("flusher stopped")
+		s.l.Debug().Msg("flusher stopped")
 		select {
 		case <-shutdownCtx.Done():
 			return eris.Wrap(ErrTimeoutWaitingStop, "monitor failed to stop")
 		case <-monitorOK:
-			s.l.Trace().Msg("monitor stopped")
+			s.l.Debug().Msg("monitor stopped")
 		}
 	}
 
@@ -240,7 +240,7 @@ func (s *service) monitor() {
 	for {
 		select {
 		case <-s.stopMonitor:
-			s.l.Trace().Msg("monitor stopped due to service shutdown")
+			s.l.Debug().Msg("monitor stopped due to service shutdown")
 			return
 		case <-ticker.C:
 			s.checkServiceHealth()
@@ -250,7 +250,7 @@ func (s *service) monitor() {
 
 func (s *service) checkServiceHealth() {
 	bufferSize := s.buffer.Size()
-	s.l.Trace().
+	s.l.Debug().
 		Int("buffer_size", bufferSize).
 		Bool("is_running", s.isRunning.Load()).
 		Msg("health check")
@@ -263,7 +263,7 @@ func (s *service) startFlusher() {
 	for {
 		select {
 		case <-s.stopFlusher:
-			s.l.Trace().Msg("flusher stopped due to service shutdown")
+			s.l.Debug().Msg("flusher stopped due to service shutdown")
 			return
 		case <-ticker.C:
 			if !s.isRunning.Load() {
@@ -283,7 +283,7 @@ func (s *service) flushBuffer(ctx context.Context) error {
 		return ErrEmptyBuffer
 	}
 
-	s.l.Trace().Int("entries", len(entries)).Msg("flushing buffer")
+	s.l.Debug().Int("entries", len(entries)).Msg("flushing buffer")
 
 	// Insert the entries into the database
 	err := s.insertChunk(ctx, entries)
@@ -291,7 +291,7 @@ func (s *service) flushBuffer(ctx context.Context) error {
 		return eris.Wrap(err, "failed to insert audit entries")
 	}
 
-	s.l.Trace().Msg("flushed buffer")
+	s.l.Debug().Msg("flushed buffer")
 
 	return nil
 }

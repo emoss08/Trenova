@@ -47,10 +47,3 @@ CREATE INDEX "idx_trailers_created_updated" ON "trailers"("created_at", "updated
 
 COMMENT ON TABLE "trailers" IS 'Stores information about trailers';
 
---bun:split
-ALTER TABLE "shipment_moves"
-    ADD COLUMN "trailer_id" varchar(100) NOT NULL;
-
-ALTER TABLE "shipment_moves"
-    ADD CONSTRAINT "fk_shipment_moves_trailer" FOREIGN KEY ("trailer_id", "business_unit_id", "organization_id") REFERENCES "trailers"("id", "business_unit_id", "organization_id") ON UPDATE NO ACTION ON DELETE SET NULL;
-

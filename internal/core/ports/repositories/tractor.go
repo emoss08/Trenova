@@ -25,7 +25,19 @@ type GetTractorByIDOptions struct {
 	IncludeFleetDetails     bool `query:"includeFleetDetails"`
 }
 
+type AssignmentOptions struct {
+	TractorID pulid.ID `json:"tractorId"`
+	OrgID     pulid.ID `json:"orgId"`
+	BuID      pulid.ID `json:"buId"`
+}
+
+type AssignmentResponse struct {
+	PrimaryWorkerID   pulid.ID  `json:"primaryWorkerId"`
+	SecondaryWorkerID *pulid.ID `json:"secondaryWorkerId"`
+}
+
 type TractorRepository interface {
+	Assignment(ctx context.Context, opts AssignmentOptions) (*AssignmentResponse, error)
 	List(ctx context.Context, opts *ListTractorOptions) (*ports.ListResult[*tractor.Tractor], error)
 	GetByID(ctx context.Context, opts GetTractorByIDOptions) (*tractor.Tractor, error)
 	Create(ctx context.Context, t *tractor.Tractor) (*tractor.Tractor, error)

@@ -51,7 +51,7 @@ func (c *client) SingleSearch(ctx context.Context, params *SingleSearchParams) (
 	}
 
 	url := fmt.Sprintf("%s?%s", SingleSearchURL, v.Encode())
-	c.l.Trace().Msgf("Making single search request to %s", url)
+	c.l.Debug().Msgf("Making single search request to %s", url)
 
 	var locationResp LocationResponse
 	resp, err := c.rc.R().

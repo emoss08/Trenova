@@ -77,7 +77,7 @@ const DialogContent = React.forwardRef<
                 </DialogPrimitive.Close>
               </TooltipTrigger>
               <TooltipContent className="flex items-center gap-2" side="right">
-                <kbd className="-me-1 inline-flex h-5 max-h-full items-center rounded bg-muted-foreground/60 px-1 font-[inherit] text-[0.625rem] font-medium text-background">
+                <kbd className="-me-1 inline-flex h-5 max-h-full items-center rounded bg-muted-foreground/60 px-1 font-[inherit] text-[0.625rem] font-medium text-foreground">
                   Esc
                 </kbd>
                 <p>to close the dialog</p>

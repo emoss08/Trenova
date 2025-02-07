@@ -95,7 +95,7 @@ func (m *AuthMiddleware) Authenticate() fiber.Handler {
 		// Set session in context
 		m.setSessionContext(c, sess)
 
-		log.Trace().
+		log.Debug().
 			Str("userId", sess.UserID.String()).
 			Str("sessionId", sess.ID.String()).
 			Str("businessUnitId", sess.BusinessUnitID.String()).

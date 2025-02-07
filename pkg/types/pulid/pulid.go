@@ -40,6 +40,11 @@ func newULID() ulid.ULID {
 // MustNew returns a new PULID for time.Now() given a prefix. This uses the default entropy source.
 func MustNew(prefix string) ID { return ID(prefix + newULID().String()) }
 
+func MustNewPtr(prefix string) *ID {
+	id := MustNew(prefix)
+	return &id
+}
+
 // Must return a
 func Must(prefix string) *ID {
 	id := MustNew(prefix)

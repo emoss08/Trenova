@@ -233,3 +233,30 @@ func (tr *tractorRepository) Update(ctx context.Context, t *tractor.Tractor) (*t
 
 	return t, nil
 }
+
+func (tr *tractorRepository) Assignment(ctx context.Context, opts repositories.AssignmentOptions) (*repositories.AssignmentResponse, error) {
+	dba, err := tr.db.DB(ctx)
+	if err != nil {
+		return nil, eris.Wrap(err, "get database connection")
+	}
+
+	log := tr.l.With().
+		Str("operation", "Assignment").
+		Str("tractorID", opts.TractorID.String()).
+		Logger()
+
+	entity := new(tractor.Tractor)
+
+	q := dba.NewSelect().Model(entity).
+		Column("tr.primary_worker_id", "tr.secondary_worker_id").
+		Where("tr.id = ? AND tr.organization_id = ? AND tr.business_unit_id = ?", opts.TractorID, opts.OrgID, opts.BuID)
+
+	if err = q.Scan(ctx); err != nil {
+		log.Error().Err(err).Msg("failed to get tractor")
+	}
+
+	return &repositories.AssignmentResponse{
+		PrimaryWorkerID:   entity.PrimaryWorkerID,
+		SecondaryWorkerID: entity.SecondaryWorkerID,
+	}, nil
+}

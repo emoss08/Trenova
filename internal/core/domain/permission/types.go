@@ -26,8 +26,9 @@ const (
 	ResourceWorker                = Resource("worker")                 // Represents resources related to workers.
 	ResourceTractor               = Resource("tractor")                // Represents resources for managing tractors.
 	ResourceTrailer               = Resource("trailer")                // Represents resources for managing trailers.
-	ResourceShipment              = Resource("shipment")               // Represents resources for managing loads.
-	ResourceMovement              = Resource("movement")               // Represents resources for managing movements.
+	ResourceShipment              = Resource("shipment")               // Represents resources for managing shipments.
+	ResourceAssignment            = Resource("assignment")             // Represents resources for managing assignments.
+	ResourceShipmentMove          = Resource("shipment_move")          // Represents resources for managing movements.
 	ResourceFleetCode             = Resource("fleet_code")             // Represents resources for managing fleet codes.
 	ResourceEquipmentType         = Resource("equipment_type")         // Represents resources for managing equipment types.
 	ResourceEquipmentManufacturer = Resource("equipment_manufacturer") // Represents resources for managing equipment manfacturers.
@@ -265,7 +266,14 @@ var (
 				ActionViewField,
 			)...,
 		),
-		ResourceMovement: append(
+		ResourceAssignment: {
+			ActionAssign, // can the user assign the move to the worker?
+			ActionRead,   // can the user view the assignment?
+			ActionCancel, // can the user cancel the assignment?
+			ActionAudit,  // can the user view the audit logs for the assignment?
+			ActionManage, // does the user have permission to manage the assignment? (Full access)
+		},
+		ResourceShipmentMove: append(
 			append(BaseActions, WorkflowActions...),
 			append(DataActions, FieldActions...)...,
 		),
@@ -326,6 +334,7 @@ var (
 				ActionComplete,
 				ActionModifyField,
 				ActionViewField,
+				ActionCancel,
 			)...,
 		),
 		ResourceReport: append(

@@ -13,14 +13,19 @@ export function useShipments(queryParams: ShipmentQueryParams) {
     queryFn: async () => {
       return await getShipments(queryParams);
     },
+    enabled: queryParams.enabled,
   });
 }
 
-export function useShipmentDetails({ shipmentId }: ShipmentDetailsQueryParams) {
+export function useShipmentDetails({
+  shipmentId,
+  enabled,
+}: ShipmentDetailsQueryParams) {
   return useQuery<ShipmentResponse>({
     queryKey: ["shipment", shipmentId],
     queryFn: async () => {
       return await getShipmentByID(shipmentId, true);
     },
+    enabled: enabled,
   });
 }

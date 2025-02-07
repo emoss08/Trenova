@@ -13,6 +13,7 @@ import (
 	"github.com/emoss08/trenova/internal/pkg/logger"
 	"github.com/emoss08/trenova/internal/pkg/postgressearch"
 	"github.com/emoss08/trenova/internal/pkg/utils/queryutils/queryfilters"
+	"github.com/emoss08/trenova/pkg/types/pulid"
 	"github.com/rotisserie/eris"
 	"github.com/rs/zerolog"
 	"github.com/uptrace/bun"
@@ -45,11 +46,16 @@ func NewShipmentRepository(p ShipmentRepositoryParams) repositories.ShipmentRepo
 func (sr *shipmentRepository) addOptions(q *bun.SelectQuery, opts repositories.ShipmentOptions) *bun.SelectQuery {
 	if opts.ExpandShipmentDetails {
 		q = q.Relation("Customer")
-		q = q.Relation("Moves")
+
+		q = q.RelationWithOpts("Moves", bun.RelationOpts{
+			Apply: func(sq *bun.SelectQuery) *bun.SelectQuery {
+				return sq.Order("sm.sequence ASC").Relation("Assignment")
+			},
+		})
 
 		q = q.RelationWithOpts("Moves.Stops", bun.RelationOpts{
 			Apply: func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return sq.Relation("Location").Relation("Location.State")
+				return sq.Order("stp.sequence ASC").Relation("Location").Relation("Location.State")
 			},
 		})
 
@@ -64,6 +70,8 @@ func (sr *shipmentRepository) addOptions(q *bun.SelectQuery, opts repositories.S
 
 		q = q.Relation("TractorType")
 		q = q.Relation("TrailerType")
+
+		q = q.Relation("CanceledBy")
 	}
 
 	return q
@@ -77,10 +85,10 @@ func (sr *shipmentRepository) filterQuery(q *bun.SelectQuery, opts *repositories
 	})
 
 	if opts.Filter.Query != "" {
-		q = postgressearch.BuildSearchQuery[shipment.Shipment](
+		q = postgressearch.BuildSearchQuery(
 			q,
 			opts.Filter.Query,
-			shipment.Shipment{},
+			(*shipment.Shipment)(nil),
 		)
 	}
 
@@ -235,4 +243,117 @@ func (sr *shipmentRepository) Update(ctx context.Context, shp *shipment.Shipment
 	}
 
 	return shp, nil
+}
+
+// Cancel handles the data operations for canceling a shipment and its related entities
+func (sr *shipmentRepository) Cancel(ctx context.Context, req *repositories.CancelShipmentRequest) error {
+	dba, err := sr.db.DB(ctx)
+	if err != nil {
+		return eris.Wrap(err, "get database connection")
+	}
+
+	log := sr.l.With().
+		Str("operation", "Cancel").
+		Str("shipmentID", req.ShipmentID.String()).
+		Logger()
+
+	err = dba.RunInTx(ctx, nil, func(c context.Context, tx bun.Tx) error {
+		// Update shipment status
+		results, rErr := tx.NewUpdate().
+			Model((*shipment.Shipment)(nil)).
+			Where("sp.id = ? AND sp.organization_id = ? AND sp.business_unit_id = ?",
+				req.ShipmentID, req.OrgID, req.BuID).
+			Set("status = ?", shipment.StatusCanceled).
+			Set("canceled_at = ?", req.CanceledAt).
+			Set("canceled_by_id = ?", req.CanceledByID).
+			Set("cancel_reason = ?", req.CancelReason).
+			Set("version = version + 1").
+			Exec(c)
+
+		if rErr != nil {
+			log.Error().Err(rErr).Msg("failed to update shipment status")
+			return rErr
+		}
+
+		rows, roErr := results.RowsAffected()
+		if roErr != nil {
+			log.Error().Err(roErr).Msg("failed to get rows affected")
+			return roErr
+		}
+
+		if rows == 0 {
+			return errors.NewNotFoundError("Shipment not found")
+		}
+
+		// Cancel associated moves and their assignments
+		if err = sr.cancelShipmentComponents(c, tx, req); err != nil {
+			log.Error().Err(err).Msg("failed to cancel shipment components")
+			return err
+		}
+
+		return nil
+	})
+	if err != nil {
+		log.Error().Err(err).Msg("failed to cancel shipment")
+		return err
+	}
+
+	return nil
+}
+
+func (sr *shipmentRepository) cancelShipmentComponents(ctx context.Context, tx bun.Tx, req *repositories.CancelShipmentRequest) error {
+	// Get all moves for the shipment
+	moves := make([]*shipment.ShipmentMove, 0)
+	err := tx.NewSelect().
+		Model(&moves).
+		Where("sm.shipment_id = ?", req.ShipmentID).
+		Scan(ctx)
+	if err != nil {
+		sr.l.Error().Err(err).Msg("failed to fetch shipment moves")
+		return err
+	}
+
+	if len(moves) == 0 {
+		return nil // No moves to cancel
+	}
+
+	moveIDs := make([]pulid.ID, len(moves))
+	for i, move := range moves {
+		moveIDs[i] = move.ID
+	}
+
+	// Cancel moves in bulk
+	_, err = tx.NewUpdate().
+		Model((*shipment.ShipmentMove)(nil)).
+		Set("status = ?", shipment.MoveStatusCanceled).
+		Where("sm.id IN (?)", bun.In(moveIDs)).
+		Exec(ctx)
+	if err != nil {
+		sr.l.Error().Err(err).Msg("failed to cancel moves")
+		return err
+	}
+
+	// Cancel assignments in bulk
+	_, err = tx.NewUpdate().
+		Model((*shipment.Assignment)(nil)).
+		Set("status = ?", shipment.AssignmentStatusCanceled).
+		Where("a.shipment_move_id IN (?)", bun.In(moveIDs)).
+		Exec(ctx)
+	if err != nil {
+		sr.l.Error().Err(err).Msg("failed to cancel assignments")
+		return err
+	}
+
+	// Cancel stops in bulk
+	_, err = tx.NewUpdate().
+		Model((*shipment.Stop)(nil)).
+		Set("status = ?", shipment.StopStatusCanceled).
+		Where("stp.shipment_move_id IN (?)", bun.In(moveIDs)).
+		Exec(ctx)
+	if err != nil {
+		sr.l.Error().Err(err).Msg("failed to cancel stops")
+		return err
+	}
+
+	return nil
 }

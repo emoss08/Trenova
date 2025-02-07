@@ -37,7 +37,7 @@ func NewClient(p ClientParams) infra.SearchClient {
 		return nil
 	}
 
-	log.Trace().
+	log.Debug().
 		Str("host", cfg.Host).
 		Int("maxBatchSize", cfg.MaxBatchSize).
 		Int("batchInterval", cfg.BatchInterval).
@@ -60,7 +60,7 @@ func NewClient(p ClientParams) infra.SearchClient {
 
 func (c *client) InitializeIndexes() error {
 	idxName := c.GetIndexName()
-	c.l.Trace().Str("idxName", idxName).Msg("initializing index")
+	c.l.Debug().Str("idxName", idxName).Msg("initializing index")
 
 	// configure the global settings for the index
 	settings := &meilisearch.Settings{
@@ -73,7 +73,7 @@ func (c *client) InitializeIndexes() error {
 	// create or update the index
 	_, err := c.meili.GetIndex(idxName)
 	if err != nil {
-		c.l.Trace().Err(err).Str("idxName", idxName).Msg("index not found, creating...")
+		c.l.Debug().Err(err).Str("idxName", idxName).Msg("index not found, creating...")
 		_, err = c.meili.CreateIndex(&meilisearch.IndexConfig{
 			Uid:        idxName,
 			PrimaryKey: "id",
@@ -91,7 +91,7 @@ func (c *client) InitializeIndexes() error {
 		return eris.Wrap(err, "failed to update index settings")
 	}
 
-	c.l.Trace().Str("idxName", idxName).Msg("index initialized")
+	c.l.Debug().Str("idxName", idxName).Msg("index initialized")
 	return nil
 }
 
@@ -144,7 +144,7 @@ func (c *client) Search(ctx context.Context, opts *infra.SearchOptions) ([]*infr
 	}
 
 	// perform the search
-	c.l.Trace().Interface("searchRequest", searchRequest).Msg("executing search request")
+	c.l.Debug().Interface("searchRequest", searchRequest).Msg("executing search request")
 	res, err := c.meili.Index(c.GetIndexName()).SearchWithContext(ctx, opts.Query, searchRequest)
 	if err != nil {
 		c.l.Error().Err(err).Msg("failed to execute search request")

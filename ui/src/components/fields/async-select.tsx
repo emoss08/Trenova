@@ -32,7 +32,7 @@ const fetchOptions = async (link: string, inputValue: string, page: number) => {
     const response = await http.get<{
       results: SelectOption[];
       next: string;
-    }>(`${link}/select-options`, {
+    }>(`${link}/select-options/`, {
       params: {
         search: inputValue,
         limit: limit.toString(),
@@ -229,6 +229,8 @@ const ReactAsyncSelect = React.forwardRef<any, ReactAsyncSelectInputProps>(
     );
   },
 );
+
+ReactAsyncSelect.displayName = "ReactAsyncSelect";
 
 export function AsyncSelectField<T extends FieldValues>({
   label,

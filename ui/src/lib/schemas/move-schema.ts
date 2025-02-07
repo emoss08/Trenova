@@ -1,15 +1,14 @@
-import { StopStatus } from "@/types/stop";
+import { MoveStatus } from "@/types/move";
 import { boolean, type InferType, mixed, number, object, string } from "yup";
 
 export const moveSchema = object({
-  id: string().optional(),
   organizationId: string().nullable().optional(),
   businessUnitId: string().nullable().optional(),
   // * The shipment ID will be associated on the backend
   shipmentID: string().optional(),
-  status: mixed<StopStatus>()
+  status: mixed<MoveStatus>()
     .required("Status is required")
-    .oneOf(Object.values(StopStatus)),
+    .oneOf(Object.values(MoveStatus)),
   primaryWorkerId: string().required("Primary Worker is required"),
   secondaryWorkerId: string().optional(),
   trailerId: string().optional(),

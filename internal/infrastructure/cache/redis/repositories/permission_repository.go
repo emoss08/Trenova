@@ -65,7 +65,7 @@ func (pc *permissionRepository) GetUserRoles(ctx context.Context, userID pulid.I
 		return nil, eris.Wrapf(err, "failed to get roles for user %s", userID)
 	}
 
-	log.Trace().
+	log.Debug().
 		Int("roleCount", len(roles)).
 		Msg("retrieved user roles from cache")
 
@@ -84,7 +84,7 @@ func (pc *permissionRepository) SetUserRoles(ctx context.Context, userID pulid.I
 		return eris.Wrapf(err, "failed to set roles for user %s", userID)
 	}
 
-	log.Trace().
+	log.Debug().
 		Int("roleCount", len(roles)).
 		Msg("stored user roles in cache")
 
@@ -109,7 +109,7 @@ func (pc *permissionRepository) GetUserPermissions(ctx context.Context, userID p
 		return nil, eris.Wrapf(err, "failed to get permissions for user %s", userID)
 	}
 
-	log.Trace().
+	log.Debug().
 		Int("permissionCount", len(permissions)).
 		Msg("retrieved user permissions from cache")
 
@@ -128,7 +128,7 @@ func (pc *permissionRepository) SetUserPermissions(ctx context.Context, userID p
 		return eris.Wrapf(err, "failed to set permissions for user %s", userID)
 	}
 
-	log.Trace().
+	log.Debug().
 		Int("permissionCount", len(permissions)).
 		Msg("stored user permissions in cache")
 

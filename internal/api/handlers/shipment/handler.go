@@ -15,16 +15,16 @@ import (
 	"go.uber.org/fx"
 )
 
-type Handler struct {
-	ss *shipment.Service
-	eh *validator.ErrorHandler
-}
-
 type HandlerParams struct {
 	fx.In
 
 	ShipmentService *shipment.Service
 	ErrorHandler    *validator.ErrorHandler
+}
+
+type Handler struct {
+	ss *shipment.Service
+	eh *validator.ErrorHandler
 }
 
 func NewHandler(p HandlerParams) *Handler {
@@ -41,6 +41,11 @@ func (h Handler) RegisterRoutes(r fiber.Router, rl *middleware.RateLimiter) {
 	api.Post("/", rl.WithRateLimit(
 		[]fiber.Handler{h.create},
 		middleware.PerMinute(60), // 60 reads per minute
+	)...)
+
+	api.Post("/cancel/", rl.WithRateLimit(
+		[]fiber.Handler{h.cancel},
+		middleware.PerSecond(5), // 5 writes per second
 	)...)
 
 	api.Get("/select-options/", rl.WithRateLimit(
@@ -187,4 +192,26 @@ func (h Handler) update(c *fiber.Ctx) error {
 	}
 
 	return c.Status(fiber.StatusOK).JSON(entity)
+}
+
+func (h Handler) cancel(c *fiber.Ctx) error {
+	reqCtx, err := ctx.WithRequestContext(c)
+	if err != nil {
+		return h.eh.HandleError(c, err)
+	}
+
+	req := new(repositories.CancelShipmentRequest)
+	req.OrgID = reqCtx.OrgID
+	req.BuID = reqCtx.BuID
+
+	if err = c.BodyParser(req); err != nil {
+		return h.eh.HandleError(c, err)
+	}
+
+	err = h.ss.Cancel(c.UserContext(), req)
+	if err != nil {
+		return h.eh.HandleError(c, err)
+	}
+
+	return c.SendStatus(fiber.StatusNoContent)
 }
