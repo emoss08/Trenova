@@ -201,7 +201,7 @@ func (st *Shipment) ToDocument() infra.SearchDocument {
 	}
 }
 
-func (st Shipment) GetPostgresSearchConfig() infra.PostgresSearchConfig {
+func (st *Shipment) GetPostgresSearchConfig() infra.PostgresSearchConfig {
 	return infra.PostgresSearchConfig{
 		TableAlias: "sp",
 		Fields: []infra.PostgresSearchableField{
