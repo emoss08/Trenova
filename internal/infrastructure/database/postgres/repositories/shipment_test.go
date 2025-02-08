@@ -10,12 +10,14 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/servicetype"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/internal/core/domain/shipmenttype"
+	"github.com/emoss08/trenova/internal/core/domain/user"
 	"github.com/emoss08/trenova/internal/core/ports"
 	"github.com/stretchr/testify/require"
 
 	repoports "github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/database/postgres/repositories"
 	"github.com/emoss08/trenova/internal/pkg/logger"
+	"github.com/emoss08/trenova/internal/pkg/utils/timeutils"
 	"github.com/emoss08/trenova/test/testutils"
 )
 
@@ -28,6 +30,7 @@ func TestShipmentRepository(t *testing.T) {
 	cus := ts.Fixture.MustRow("Customer.honeywell_customer").(*customer.Customer)
 	trEquipType := ts.Fixture.MustRow("EquipmentType.tractor_equip_type").(*equipmenttype.EquipmentType)
 	trlEquipType := ts.Fixture.MustRow("EquipmentType.trailer_equip_type").(*equipmenttype.EquipmentType)
+	usr := ts.Fixture.MustRow("User.test_user").(*user.User)
 
 	repo := repositories.NewShipmentRepository(repositories.ShipmentRepositoryParams{
 		Logger: logger.NewLogger(testutils.NewTestConfig()),
@@ -204,5 +207,24 @@ func TestShipmentRepository(t *testing.T) {
 
 		require.Error(t, err)
 		require.Nil(t, results)
+	})
+
+	t.Run("cancel shipment", func(t *testing.T) {
+		now := timeutils.NowUnix()
+
+		newEntity, err := repo.Cancel(ctx, &repoports.CancelShipmentRequest{
+			ShipmentID:   smt.ID,
+			OrgID:        org.ID,
+			BuID:         bu.ID,
+			CanceledByID: usr.ID,
+			CanceledAt:   now,
+			CancelReason: "Test",
+		})
+
+		require.NoError(t, err)
+		require.Equal(t, shipment.StatusCanceled, newEntity.Status)
+		require.Equal(t, "Test", newEntity.CancelReason)
+		require.Equal(t, &now, newEntity.CanceledAt)
+		require.Equal(t, &usr.ID, newEntity.CanceledByID)
 	})
 }

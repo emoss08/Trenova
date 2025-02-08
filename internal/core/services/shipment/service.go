@@ -286,7 +286,7 @@ func (s *Service) Update(ctx context.Context, shp *shipment.Shipment, userID pul
 	return updatedEntity, nil
 }
 
-func (s *Service) Cancel(ctx context.Context, req *repositories.CancelShipmentRequest) error {
+func (s *Service) Cancel(ctx context.Context, req *repositories.CancelShipmentRequest) (*shipment.Shipment, error) {
 	log := s.l.With().
 		Str("operation", "Cancel").
 		Str("shipmentID", req.ShipmentID.String()).
@@ -305,11 +305,11 @@ func (s *Service) Cancel(ctx context.Context, req *repositories.CancelShipmentRe
 	)
 	if err != nil {
 		log.Error().Err(err).Msg("failed to check permissions")
-		return err
+		return nil, err
 	}
 
 	if !result.Allowed {
-		return errors.NewAuthorizationError("You do not have permission to cancel this shipment")
+		return nil, errors.NewAuthorizationError("You do not have permission to cancel this shipment")
 	}
 
 	// get the original shipment
@@ -320,16 +320,17 @@ func (s *Service) Cancel(ctx context.Context, req *repositories.CancelShipmentRe
 	})
 	if err != nil {
 		log.Error().Err(err).Msg("failed to get shipment")
-		return err
+		return nil, err
 	}
 
 	if err := s.v.ValidateCancellation(original); err != nil {
-		return err
+		return nil, err
 	}
 
-	if err = s.repo.Cancel(ctx, req); err != nil {
+	newEntity, err := s.repo.Cancel(ctx, req)
+	if err != nil {
 		log.Error().Err(err).Msg("failed to cancel shipment")
-		return err
+		return nil, err
 	}
 
 	// Log the update if the insert was successful
@@ -348,5 +349,5 @@ func (s *Service) Cancel(ctx context.Context, req *repositories.CancelShipmentRe
 		log.Error().Err(err).Msg("failed to log shipment cancellation")
 	}
 
-	return nil
+	return newEntity, nil
 }

@@ -246,10 +246,10 @@ func (sr *shipmentRepository) Update(ctx context.Context, shp *shipment.Shipment
 }
 
 // Cancel handles the data operations for canceling a shipment and its related entities
-func (sr *shipmentRepository) Cancel(ctx context.Context, req *repositories.CancelShipmentRequest) error {
+func (sr *shipmentRepository) Cancel(ctx context.Context, req *repositories.CancelShipmentRequest) (*shipment.Shipment, error) {
 	dba, err := sr.db.DB(ctx)
 	if err != nil {
-		return eris.Wrap(err, "get database connection")
+		return nil, eris.Wrap(err, "get database connection")
 	}
 
 	log := sr.l.With().
@@ -257,10 +257,11 @@ func (sr *shipmentRepository) Cancel(ctx context.Context, req *repositories.Canc
 		Str("shipmentID", req.ShipmentID.String()).
 		Logger()
 
+	shp := new(shipment.Shipment)
 	err = dba.RunInTx(ctx, nil, func(c context.Context, tx bun.Tx) error {
 		// Update shipment status
 		results, rErr := tx.NewUpdate().
-			Model((*shipment.Shipment)(nil)).
+			Model(shp).
 			Where("sp.id = ? AND sp.organization_id = ? AND sp.business_unit_id = ?",
 				req.ShipmentID, req.OrgID, req.BuID).
 			Set("status = ?", shipment.StatusCanceled).
@@ -268,6 +269,7 @@ func (sr *shipmentRepository) Cancel(ctx context.Context, req *repositories.Canc
 			Set("canceled_by_id = ?", req.CanceledByID).
 			Set("cancel_reason = ?", req.CancelReason).
 			Set("version = version + 1").
+			Returning("*").
 			Exec(c)
 
 		if rErr != nil {
@@ -295,10 +297,10 @@ func (sr *shipmentRepository) Cancel(ctx context.Context, req *repositories.Canc
 	})
 	if err != nil {
 		log.Error().Err(err).Msg("failed to cancel shipment")
-		return err
+		return nil, err
 	}
 
-	return nil
+	return shp, nil
 }
 
 func (sr *shipmentRepository) cancelShipmentComponents(ctx context.Context, tx bun.Tx, req *repositories.CancelShipmentRequest) error {
