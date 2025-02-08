@@ -154,6 +154,7 @@ func TestMoveValidator(t *testing.T) {
 				Message string
 			}{
 				{Field: "moves[0].stops[1].type", Code: errors.ErrInvalid, Message: "Stop type must be pickup or delivery"},
+				{Field: "moves[0].stops[1].type", Code: "INVALID", Message: "Type must be a valid stop type"},
 			},
 		},
 		{

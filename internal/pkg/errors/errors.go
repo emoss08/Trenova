@@ -68,11 +68,40 @@ func (m *MultiError) getFullPrefix() string {
 }
 
 func (m *MultiError) WithPrefix(prefix string) *MultiError {
-	return &MultiError{
+	child := &MultiError{
 		prefix: prefix,
 		parent: m,
-		Errors: m.Errors, // Share the same error slice with parent
+		Errors: make([]*Error, 0),
 	}
+	return child
+}
+
+// AddError adds an existing Error to the collection with proper prefix handling
+func (m *MultiError) AddError(err *Error) {
+	if err == nil {
+		return
+	}
+
+	// Create a copy of the error to avoid modifying the original
+	errCopy := &Error{
+		Field:    err.Field,
+		Code:     err.Code,
+		Message:  err.Message,
+		Internal: err.Internal,
+	}
+
+	// Find the root MultiError
+	root := m
+	for root.parent != nil {
+		root = root.parent
+	}
+
+	// If this is a child MultiError with a prefix, prepend it to the field
+	if prefix := m.getFullPrefix(); prefix != "" && errCopy.Field != "" {
+		errCopy.Field = prefix + "." + errCopy.Field
+	}
+
+	root.Errors = append(root.Errors, errCopy)
 }
 
 func (m *MultiError) WithIndex(prefix string, idx int) *MultiError {
@@ -104,18 +133,6 @@ func (m *MultiError) Add(field string, code ErrorCode, message string) {
 		root = root.parent
 	}
 	root.Errors = append(root.Errors, err)
-}
-
-// AddError adds an existing Error to the collection
-func (m *MultiError) AddError(err *Error) {
-	if err != nil {
-		// If this is a child MultiError, propagate to parent
-		if m.parent != nil {
-			m.parent.Errors = append(m.parent.Errors, err)
-		} else {
-			m.Errors = append(m.Errors, err)
-		}
-	}
 }
 
 // HasErrors returns true if there are any validation errors
@@ -333,7 +350,7 @@ func (e *RateLimitError) WithInternal(err error) *RateLimitError {
 	return e
 }
 
-func inferErrorCode(err error) ErrorCode {
+func InferErrorCode(err error) ErrorCode {
 	msg := err.Error()
 	switch {
 	case strings.Contains(msg, "required"):
@@ -370,7 +387,7 @@ func FromValidationErrors(valErrors val.Errors, multiErr *MultiError, prefix str
 
 		multiErr.AddError(&Error{
 			Field:   fieldName,
-			Code:    inferErrorCode(err),
+			Code:    InferErrorCode(err),
 			Message: err.Error(),
 		})
 	}
@@ -378,17 +395,11 @@ func FromValidationErrors(valErrors val.Errors, multiErr *MultiError, prefix str
 
 func FromOzzoErrors(valErrors val.Errors, multiErr *MultiError) {
 	for field, err := range valErrors {
-		fieldName := field
-		fullPrefix := multiErr.getFullPrefix() // Get the full prefix from MultiError
-
-		if fullPrefix != "" {
-			fieldName = fmt.Sprintf("%s.%s", fullPrefix, field)
-		}
-
-		multiErr.AddError(&Error{
-			Field:   fieldName,
-			Code:    inferErrorCode(err),
+		validationErr := &Error{
+			Field:   field,
+			Code:    InferErrorCode(err),
 			Message: err.Error(),
-		})
+		}
+		multiErr.AddError(validationErr)
 	}
 }
