@@ -250,6 +250,8 @@ const StopTimeline = memo(function StopTimeline({
   );
 });
 
+const AssignmentStatus = [MoveStatus.New, MoveStatus.Assigned];
+
 function MoveActions({ move }: { move: ShipmentMove }) {
   const [assignmentDialogOpen, setAssignmentDialogOpen] =
     useState<boolean>(false);
@@ -257,11 +259,11 @@ function MoveActions({ move }: { move: ShipmentMove }) {
   if (!move) {
     return null;
   }
+  const { assignment, status } = move;
 
   // Move is not new, so we cannot assign equipment and workers
-  const reassignEnabled = move.status === MoveStatus.Assigned;
-
-  const assignDisabled = move.status !== MoveStatus.New;
+  const reassignEnabled = status === MoveStatus.Assigned;
+  const assignDisabled = !AssignmentStatus.includes(status);
 
   return (
     <>
@@ -295,6 +297,7 @@ function MoveActions({ move }: { move: ShipmentMove }) {
         open={assignmentDialogOpen}
         onOpenChange={setAssignmentDialogOpen}
         shipmentMoveId={move.id}
+        assignmentId={assignment?.id}
       />
     </>
   );

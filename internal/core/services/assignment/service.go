@@ -49,6 +49,41 @@ func NewService(p ServiceParams) *Service {
 	}
 }
 
+func (s *Service) Get(ctx context.Context, opts repositories.GetAssignmentByIDOptions) (*shipment.Assignment, error) {
+	log := s.l.With().
+		Str("operation", "GetByID").
+		Str("hmID", opts.ID.String()).
+		Logger()
+
+	result, err := s.ps.HasAnyPermissions(ctx,
+		[]*services.PermissionCheck{
+			{
+				UserID:         opts.UserID,
+				Resource:       permission.ResourceAssignment,
+				Action:         permission.ActionRead,
+				BusinessUnitID: opts.BusinessUnitID,
+				OrganizationID: opts.OrganizationID,
+			},
+		},
+	)
+	if err != nil {
+		log.Error().Err(err).Msg("failed to check permissions")
+		return nil, err
+	}
+
+	if !result.Allowed {
+		return nil, errors.NewAuthorizationError("You do not have permission to read this assignment")
+	}
+
+	entity, err := s.repo.GetByID(ctx, opts)
+	if err != nil {
+		log.Error().Err(err).Msg("failed to get assignment")
+		return nil, err
+	}
+
+	return entity, nil
+}
+
 func (s *Service) SingleAssign(ctx context.Context, a *shipment.Assignment, userID pulid.ID) (*shipment.Assignment, error) {
 	log := s.l.With().
 		Str("operation", "SingleAssign").
@@ -87,7 +122,7 @@ func (s *Service) SingleAssign(ctx context.Context, a *shipment.Assignment, user
 
 	err = s.as.LogAction(
 		&services.LogActionParams{
-			Resource:       permission.ResourceShipment,
+			Resource:       permission.ResourceAssignment,
 			ResourceID:     createdEntity.GetID(),
 			Action:         permission.ActionCreate,
 			UserID:         userID,
@@ -99,6 +134,70 @@ func (s *Service) SingleAssign(ctx context.Context, a *shipment.Assignment, user
 	)
 	if err != nil {
 		log.Error().Err(err).Msg("failed to log assignment creation")
+	}
+
+	return createdEntity, nil
+}
+
+func (s *Service) Reassign(ctx context.Context, a *shipment.Assignment, userID pulid.ID) (*shipment.Assignment, error) {
+	log := s.l.With().
+		Str("operation", "Reassign").
+		Str("id", a.ID.String()).
+		Logger()
+
+	result, err := s.ps.HasAnyPermissions(ctx,
+		[]*services.PermissionCheck{
+			{
+				UserID:         userID,
+				Resource:       permission.ResourceAssignment,
+				Action:         permission.ActionReassign,
+				BusinessUnitID: a.BusinessUnitID,
+				OrganizationID: a.OrganizationID,
+			},
+		},
+	)
+	if err != nil {
+		log.Error().Err(err).Msg("failed to check permissions")
+		return nil, err
+	}
+
+	if !result.Allowed {
+		return nil, errors.NewAuthorizationError("You do not have permission to reassign")
+	}
+
+	if err := s.v.Validate(ctx, a); err != nil {
+		return nil, err
+	}
+
+	createdEntity, err := s.repo.Reassign(ctx, a)
+	if err != nil {
+		return nil, err
+	}
+
+	original, err := s.repo.GetByID(ctx, repositories.GetAssignmentByIDOptions{
+		ID:             a.ID,
+		OrganizationID: a.OrganizationID,
+		BusinessUnitID: a.BusinessUnitID,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	err = s.as.LogAction(
+		&services.LogActionParams{
+			Resource:       permission.ResourceAssignment,
+			ResourceID:     createdEntity.GetID(),
+			Action:         permission.ActionReassign,
+			UserID:         userID,
+			CurrentState:   jsonutils.MustToJSON(createdEntity),
+			OrganizationID: createdEntity.OrganizationID,
+			BusinessUnitID: createdEntity.BusinessUnitID,
+		},
+		audit.WithComment("Assignment re-assigned"),
+		audit.WithDiff(original, createdEntity),
+	)
+	if err != nil {
+		log.Error().Err(err).Msg("failed to log assignment re-assignment")
 	}
 
 	return createdEntity, nil

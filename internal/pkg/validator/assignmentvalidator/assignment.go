@@ -58,11 +58,11 @@ func (v *Validator) validateAssignmentCriteria(ctx context.Context, a *shipment.
 		return
 	}
 
-	if move.Status != shipment.MoveStatusNew {
+	if !assignableMoveStatuses[move.Status] {
 		multiErr.Add(
-			"move",
+			"__all__",
 			errors.ErrInvalid,
-			"Cannot assign to a move that is not in the `New` status",
+			fmt.Sprintf("Cannot assign to a move that is in the `%s` status", move.Status),
 		)
 
 		return

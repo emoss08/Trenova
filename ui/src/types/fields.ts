@@ -102,7 +102,7 @@ export type BaseAsyncSelectFieldProps = Omit<
   isLoading?: boolean;
   isFetchError?: boolean;
   className?: string;
-  valueKey?: string | string[];
+  valueKey: string | string[];
   id?: string;
 };
 

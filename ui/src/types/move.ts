@@ -1,3 +1,4 @@
+import { type AssignmentSchema } from "@/lib/schemas/assignment-schema";
 import { type MoveSchema } from "@/lib/schemas/move-schema";
 import { type WorkerSchema } from "@/lib/schemas/worker-schema";
 import { type Stop } from "./stop";
@@ -19,4 +20,5 @@ export type ShipmentMove = MoveSchema & {
   trailer?: Trailer | null;
   tractor?: Tractor | null;
   stops: Stop[];
+  assignment?: AssignmentSchema | null;
 };

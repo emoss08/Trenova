@@ -34,6 +34,20 @@ export function AssignmentForm() {
     defaultValue: "",
   });
 
+  const primaryWorkerId = useWatch({
+    control,
+    name: "primaryWorkerId",
+    exact: true,
+    defaultValue: "",
+  });
+
+  const secondaryWorkerId = useWatch({
+    control,
+    name: "secondaryWorkerId",
+    exact: true,
+    defaultValue: "",
+  });
+
   const {
     data: assignmentData,
     isLoading: isAssignmentLoading,
@@ -42,25 +56,29 @@ export function AssignmentForm() {
 
   useEffect(() => {
     if (assignmentData && !isAssignmentLoading) {
-      setValue("primaryWorkerId", assignmentData.primaryWorkerId, {
-        shouldDirty: true,
-        shouldValidate: true,
-      });
-
-      // Update the secondary worker if it exists
-      if (assignmentData.secondaryWorkerId) {
-        setValue("secondaryWorkerId", assignmentData.secondaryWorkerId, {
+      // Only set primary worker if it's currently empty
+      if (!primaryWorkerId && assignmentData.primaryWorkerId) {
+        setValue("primaryWorkerId", assignmentData.primaryWorkerId, {
           shouldDirty: true,
           shouldValidate: true,
         });
-      } else {
-        setValue("secondaryWorkerId", null, {
+      }
+
+      // Only set secondary worker if it's currently empty and the tractor has one assigned
+      if (!secondaryWorkerId && assignmentData.secondaryWorkerId) {
+        setValue("secondaryWorkerId", assignmentData.secondaryWorkerId, {
           shouldDirty: true,
           shouldValidate: true,
         });
       }
     }
-  }, [assignmentData, isAssignmentLoading, setValue]);
+  }, [
+    assignmentData,
+    isAssignmentLoading,
+    primaryWorkerId,
+    secondaryWorkerId,
+    setValue,
+  ]);
 
   return (
     <FormGroup cols={2}>
@@ -68,7 +86,7 @@ export function AssignmentForm() {
         <AsyncSelectField
           name="tractorId"
           control={control}
-          link="/tractors"
+          link="/tractors/"
           label="Tractor"
           rules={{ required: true }}
           placeholder="Select Tractor"
@@ -78,13 +96,14 @@ export function AssignmentForm() {
           hasPopoutWindow
           popoutLink="/shipments/configurations/tractors/"
           popoutLinkLabel="Tractor"
+          valueKey="code"
         />
       </FormControl>
       <FormControl>
         <AsyncSelectField
           name="trailerId"
           control={control}
-          link="/trailers"
+          link="/trailers/"
           label="Trailer"
           rules={{ required: true }}
           placeholder="Select Trailer"
@@ -94,13 +113,14 @@ export function AssignmentForm() {
           hasPopoutWindow
           popoutLink="/shipments/configurations/trailers/"
           popoutLinkLabel="Trailer"
+          valueKey={["code"]}
         />
       </FormControl>
       <FormControl>
         <AsyncSelectField
           name="primaryWorkerId"
           control={control}
-          link="/workers"
+          link="/workers/"
           label="Primary Worker"
           rules={{ required: true }}
           placeholder="Select Primary Worker"
@@ -110,6 +130,7 @@ export function AssignmentForm() {
           hasPopoutWindow
           popoutLink="/shipments/configurations/workers/"
           popoutLinkLabel="Primary Worker"
+          valueKey={["firstName", "lastName"]}
         />
       </FormControl>
       <FormControl>
@@ -117,7 +138,7 @@ export function AssignmentForm() {
           isClearable
           name="secondaryWorkerId"
           control={control}
-          link="/workers"
+          link="/workers/"
           label="Secondary Worker"
           placeholder="Select Secondary Worker"
           description="Select the secondary worker for the assignment."
@@ -126,6 +147,7 @@ export function AssignmentForm() {
           hasPopoutWindow
           popoutLink="/shipments/configurations/workers/"
           popoutLinkLabel="Secondary Worker"
+          valueKey={["firstName", "lastName"]}
         />
       </FormControl>
     </FormGroup>
