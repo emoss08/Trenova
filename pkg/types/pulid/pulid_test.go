@@ -55,7 +55,7 @@ func TestMustNew(t *testing.T) {
 			id := pulid.MustNew(tt.prefix)
 			assert.NotEmpty(t, id)
 			if tt.prefix != "" {
-				assert.True(t, len(id) > len(tt.prefix))
+				assert.Greater(t, len(id), len(tt.prefix))
 				assert.Equal(t, tt.prefix, string(id[:len(tt.prefix)]))
 			}
 		})
@@ -67,7 +67,7 @@ func TestMustNewPtr(t *testing.T) {
 	id := pulid.MustNewPtr(prefix)
 	require.NotNil(t, id)
 	assert.NotEmpty(t, *id)
-	assert.True(t, len(*id) > len(prefix))
+	assert.Greater(t, len(*id), len(prefix))
 	assert.Equal(t, prefix, string((*id)[:len(prefix)]))
 }
 
@@ -76,7 +76,7 @@ func TestMust(t *testing.T) {
 	id := pulid.Must(prefix)
 	require.NotNil(t, id)
 	assert.NotEmpty(t, *id)
-	assert.True(t, len(*id) > len(prefix))
+	assert.Greater(t, len(*id), len(prefix))
 	assert.Equal(t, prefix, string((*id)[:len(prefix)]))
 }
 
@@ -120,7 +120,7 @@ func TestID_Scan(t *testing.T) {
 			if tt.wantErr {
 				assert.Error(t, err)
 			} else {
-				assert.NoError(t, err)
+				require.NoError(t, err)
 				assert.Equal(t, tt.want, id)
 			}
 		})
@@ -154,7 +154,7 @@ func TestID_Value(t *testing.T) {
 			if tt.wantErr {
 				assert.Error(t, err)
 			} else {
-				assert.NoError(t, err)
+				require.NoError(t, err)
 				assert.Equal(t, tt.want, got)
 			}
 		})
@@ -193,7 +193,7 @@ func TestParse(t *testing.T) {
 			if tt.wantErr {
 				assert.Error(t, err)
 			} else {
-				assert.NoError(t, err)
+				require.NoError(t, err)
 				assert.Equal(t, tt.want, got)
 			}
 		})
@@ -227,7 +227,7 @@ func TestMustParse(t *testing.T) {
 			if tt.wantErr {
 				assert.Error(t, err)
 			} else {
-				assert.NoError(t, err)
+				require.NoError(t, err)
 				assert.Equal(t, tt.want, got)
 			}
 		})
