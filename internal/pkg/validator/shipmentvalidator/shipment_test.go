@@ -535,7 +535,7 @@ func TestShipmentCancelValidation(t *testing.T) {
 				Message string
 			}{
 				{
-					Field:   "status",
+					Field:   "__all__",
 					Code:    errors.ErrInvalid,
 					Message: "Cannot cancel shipment in status `Completed`",
 				},
@@ -552,7 +552,7 @@ func TestShipmentCancelValidation(t *testing.T) {
 				Message string
 			}{
 				{
-					Field:   "status",
+					Field:   "__all__",
 					Code:    errors.ErrInvalid,
 					Message: "Cannot cancel shipment in status `Billed`",
 				},
@@ -569,7 +569,7 @@ func TestShipmentCancelValidation(t *testing.T) {
 				Message string
 			}{
 				{
-					Field:   "status",
+					Field:   "__all__",
 					Code:    errors.ErrInvalid,
 					Message: "Cannot cancel shipment in status `Canceled`",
 				},

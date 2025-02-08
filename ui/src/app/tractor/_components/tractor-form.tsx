@@ -32,7 +32,6 @@ export function TractorForm() {
           description="The code of the tractor"
         />
       </FormControl>
-
       <FormControl cols="full">
         <InputField
           control={control}
@@ -83,7 +82,7 @@ export function TractorForm() {
         <AsyncSelectField
           name="fleetCodeId"
           control={control}
-          link="/fleet-codes"
+          link="/fleet-codes/"
           label="Fleet Code"
           placeholder="Fleet Code"
           description="Select the fleet code of the tractor"
@@ -98,8 +97,9 @@ export function TractorForm() {
           name="equipmentTypeId"
           control={control}
           rules={{ required: true }}
-          link="/equipment-types"
+          link="/equipment-types/"
           label="Equipment Type"
+          valueKey="code"
           placeholder="Equipment Type"
           description="Select the equipment type of the tractor"
           hasPermission
@@ -113,8 +113,9 @@ export function TractorForm() {
           name="equipmentManufacturerId"
           control={control}
           rules={{ required: true }}
-          link="/equipment-manufacturers"
+          link="/equipment-manufacturers/"
           label="Equipment Manufacturer"
+          valueKey="name"
           placeholder="Equipment Manufacturer"
           description="Select the equipment manufacturer of the tractor"
           hasPermission
@@ -128,8 +129,9 @@ export function TractorForm() {
           name="primaryWorkerId"
           control={control}
           rules={{ required: true }}
-          link="/workers"
+          link="/workers/"
           label="Primary Worker"
+          valueKey={["firstName", "lastName"]}
           placeholder="Primary Worker"
           description="Select the primary worker of the tractor"
           hasPermission
@@ -142,8 +144,9 @@ export function TractorForm() {
         <AsyncSelectField
           name="secondaryWorkerId"
           control={control}
-          link="/workers"
+          link="/workers/"
           label="Secondary Worker"
+          valueKey={["firstName", "lastName"]}
           placeholder="Secondary Worker"
           description="Select the secondary worker of the tractor"
           hasPermission

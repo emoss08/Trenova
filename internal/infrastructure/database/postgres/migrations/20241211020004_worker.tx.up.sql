@@ -36,24 +36,73 @@ CREATE TABLE IF NOT EXISTS "workers"(
 );
 
 --bun:split
--- Indexes for workers table
 CREATE INDEX "idx_workers_business_unit" ON "workers"("business_unit_id");
 
+--bun:split
 CREATE INDEX "idx_workers_organization" ON "workers"("organization_id");
 
+--bun:split
 CREATE INDEX "idx_workers_state" ON "workers"("state_id")
 WHERE
     state_id IS NOT NULL;
 
+--bun:split
 CREATE INDEX "idx_workers_status" ON "workers"("status");
 
+--bun:split
 CREATE INDEX "idx_workers_type" ON "workers"("type");
 
+--bun:split
 CREATE INDEX "idx_workers_name" ON "workers"("last_name", "first_name");
 
+--bun:split
 CREATE INDEX "idx_workers_created_updated" ON "workers"("created_at", "updated_at");
 
+--bun:split
 COMMENT ON TABLE workers IS 'Stores information about company workers (employees and contractors)';
+
+--bun:split
+ALTER TABLE "workers"
+    ADD COLUMN IF NOT EXISTS search_vector tsvector;
+
+--bun:split
+CREATE INDEX IF NOT EXISTS idx_workers_search ON workers USING GIN(search_vector);
+
+--bun:split
+CREATE OR REPLACE FUNCTION workers_search_vector_update()
+    RETURNS TRIGGER
+    AS $$
+BEGIN
+    NEW.search_vector := setweight(to_tsvector('simple', COALESCE(NEW.first_name, '')), 'A') || setweight(to_tsvector('simple', COALESCE(NEW.last_name, '')), 'A') || setweight(to_tsvector('english', COALESCE(CAST(NEW.status AS text), '')), 'B');
+    -- Auto-update timestamps
+    NEW.updated_at := EXTRACT(EPOCH FROM CURRENT_TIMESTAMP)::bigint;
+    RETURN NEW;
+END;
+$$
+LANGUAGE plpgsql;
+
+--bun:split
+DROP TRIGGER IF EXISTS workers_search_vector_trigger ON workers;
+
+--bun:split
+CREATE TRIGGER workers_search_vector_trigger
+    BEFORE INSERT OR UPDATE ON workers
+    FOR EACH ROW
+    EXECUTE FUNCTION workers_search_vector_update();
+
+--bun:split
+ALTER TABLE workers
+    ALTER COLUMN status SET STATISTICS 1000;
+
+--bun:split
+ALTER TABLE workers
+    ALTER COLUMN organization_id SET STATISTICS 1000;
+
+ALTER TABLE workers
+    ALTER COLUMN business_unit_id SET STATISTICS 1000;
+
+--bun:split
+CREATE INDEX IF NOT EXISTS idx_workers_trgm_name ON workers USING gin((first_name || ' ' || last_name) gin_trgm_ops);
 
 --bun:split
 -- Endorsement type enum with descriptions

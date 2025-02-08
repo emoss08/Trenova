@@ -16,8 +16,14 @@ func LoadFixtures(ctx context.Context, fixture *dbfixture.Fixture, db *bun.DB) e
 	if err := LoadPermissions(ctx, db, fixture); err != nil {
 		return err
 	}
+
 	// Load fake accounts
 	if err := LoadFakeAccounts(ctx, db, fixture); err != nil {
+		return err
+	}
+
+	// Load fake workers
+	if err := LoadWorkers(ctx, db, fixture); err != nil {
 		return err
 	}
 

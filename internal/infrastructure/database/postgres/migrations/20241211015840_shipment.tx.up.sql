@@ -47,7 +47,6 @@ CREATE TABLE IF NOT EXISTS "shipments"(
     "canceled_by_id" varchar(100),
     "canceled_at" bigint,
     "cancel_reason" varchar(100),
-
     -- Metadata
     "version" bigint NOT NULL DEFAULT 0,
     "created_at" bigint NOT NULL DEFAULT EXTRACT(EPOCH FROM CURRENT_TIMESTAMP) ::bigint,
