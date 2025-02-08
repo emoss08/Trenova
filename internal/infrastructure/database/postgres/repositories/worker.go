@@ -257,13 +257,17 @@ func (wr *workerRepository) Update(ctx context.Context, wkr *worker.Worker) (*wo
 		}
 
 		// Update the worker profile
-		if err = wr.updateProfile(c, wkr.Profile); err != nil {
-			return err
+		if wkr.Profile != nil {
+			if err = wr.updateProfile(c, wkr.Profile); err != nil {
+				return err
+			}
 		}
 
 		// Handle PTO operations
-		if err = wr.handlePTOOperations(c, tx, wkr, false); err != nil {
-			return err
+		if len(wkr.PTO) > 0 {
+			if err = wr.handlePTOOperations(c, tx, wkr, false); err != nil {
+				return err
+			}
 		}
 
 		return nil

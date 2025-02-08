@@ -8,7 +8,6 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/usstate"
 	"github.com/emoss08/trenova/internal/core/domain/worker"
 	"github.com/emoss08/trenova/internal/core/ports"
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	repoports "github.com/emoss08/trenova/internal/core/ports/repositories"
@@ -29,7 +28,7 @@ func TestWorkerRepository(t *testing.T) {
 		DB:     ts.DB,
 	})
 
-	t.Run("list", func(t *testing.T) {
+	t.Run("list workers", func(t *testing.T) {
 		opts := &repoports.ListWorkerOptions{
 			Filter: &ports.LimitOffsetQueryOptions{
 				Limit:  10,
@@ -42,6 +41,78 @@ func TestWorkerRepository(t *testing.T) {
 		}
 
 		testutils.TestRepoList(ctx, t, repo, opts)
+	})
+
+	t.Run("list workers with query", func(t *testing.T) {
+		opts := &repoports.ListWorkerOptions{
+			Filter: &ports.LimitOffsetQueryOptions{
+				Limit:  10,
+				Offset: 0,
+				Query:  "John",
+				TenantOpts: &ports.TenantOptions{
+					OrgID: org.ID,
+					BuID:  bu.ID,
+				},
+			},
+		}
+
+		testutils.TestRepoList(ctx, t, repo, opts)
+	})
+
+	t.Run("list workers with filter id", func(t *testing.T) {
+		opts := &repoports.ListWorkerOptions{
+			Filter: &ports.LimitOffsetQueryOptions{
+				Limit:  10,
+				Offset: 0,
+				ID:     wrk.ID,
+				TenantOpts: &ports.TenantOptions{
+					OrgID: org.ID,
+					BuID:  bu.ID,
+				},
+			},
+		}
+
+		testutils.TestRepoList(ctx, t, repo, opts)
+	})
+
+	t.Run("list workers with profiles", func(t *testing.T) {
+		opts := &repoports.ListWorkerOptions{
+			IncludeProfile: true,
+			Filter: &ports.LimitOffsetQueryOptions{
+				Limit:  10,
+				Offset: 0,
+				TenantOpts: &ports.TenantOptions{
+					OrgID: org.ID,
+					BuID:  bu.ID,
+				},
+			},
+		}
+
+		result, err := repo.List(ctx, opts)
+		require.NoError(t, err)
+		require.NotNil(t, result)
+		require.NotEmpty(t, result.Items)
+		require.NotNil(t, result.Items[0].Profile)
+	})
+
+	t.Run("list workers with pto", func(t *testing.T) {
+		opts := &repoports.ListWorkerOptions{
+			IncludePTO: true,
+			Filter: &ports.LimitOffsetQueryOptions{
+				Limit:  10,
+				Offset: 0,
+				TenantOpts: &ports.TenantOptions{
+					OrgID: org.ID,
+					BuID:  bu.ID,
+				},
+			},
+		}
+
+		result, err := repo.List(ctx, opts)
+		require.NoError(t, err)
+		require.NotNil(t, result)
+		require.NotEmpty(t, result.Items)
+		require.NotEmpty(t, result.Items[0].PTO)
 	})
 
 	t.Run("get by id", func(t *testing.T) {
@@ -91,22 +162,20 @@ func TestWorkerRepository(t *testing.T) {
 		testutils.TestRepoCreate(ctx, t, repo, newEntity)
 	})
 
-	t.Run("update", func(t *testing.T) {
-		// Fetch the worker along with the profile from the database
-		updatedEntity, err := repo.GetByID(ctx, repoports.GetWorkerByIDOptions{
-			IncludeProfile: true,
-			WorkerID:       wrk.ID,
-			OrgID:          org.ID,
-			BuID:           bu.ID,
-		})
+	t.Run("update worker", func(t *testing.T) {
+		wrk.FirstName = "Jane"
 
-		updatedEntity.FirstName = "Jane"
-		updatedEntity.Profile.LicenseNumber = "0987654321"
-
+		result, err := repo.Update(ctx, wrk)
 		require.NoError(t, err)
-		require.NotNil(t, wrk)
-		require.NotNil(t, updatedEntity.Profile)
-		assert.Equal(t, "Jane", updatedEntity.FirstName)
-		assert.Equal(t, "0987654321", updatedEntity.Profile.LicenseNumber)
+		require.NotNil(t, result)
+		require.Equal(t, "Jane", result.FirstName)
+	})
+
+	t.Run("update worker with invalid id", func(t *testing.T) {
+		wrk.ID = "invalid-id"
+
+		result, err := repo.Update(ctx, wrk)
+		require.Error(t, err)
+		require.Nil(t, result)
 	})
 }
