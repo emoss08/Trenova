@@ -4,8 +4,12 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/businessunit"
+	"github.com/emoss08/trenova/internal/core/domain/customer"
+	"github.com/emoss08/trenova/internal/core/domain/equipmenttype"
 	"github.com/emoss08/trenova/internal/core/domain/organization"
+	"github.com/emoss08/trenova/internal/core/domain/servicetype"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
+	"github.com/emoss08/trenova/internal/core/domain/shipmenttype"
 	"github.com/emoss08/trenova/internal/core/ports"
 	"github.com/stretchr/testify/require"
 
@@ -19,6 +23,11 @@ func TestShipmentRepository(t *testing.T) {
 	org := ts.Fixture.MustRow("Organization.trenova").(*organization.Organization)
 	bu := ts.Fixture.MustRow("BusinessUnit.trenova").(*businessunit.BusinessUnit)
 	smt := ts.Fixture.MustRow("Shipment.test_shipment").(*shipment.Shipment)
+	serviceType := ts.Fixture.MustRow("ServiceType.std_service_type").(*servicetype.ServiceType)
+	shipmentType := ts.Fixture.MustRow("ShipmentType.ftl_shipment_type").(*shipmenttype.ShipmentType)
+	cus := ts.Fixture.MustRow("Customer.honeywell_customer").(*customer.Customer)
+	trEquipType := ts.Fixture.MustRow("EquipmentType.tractor_equip_type").(*equipmenttype.EquipmentType)
+	trlEquipType := ts.Fixture.MustRow("EquipmentType.trailer_equip_type").(*equipmenttype.EquipmentType)
 
 	repo := repositories.NewShipmentRepository(repositories.ShipmentRepositoryParams{
 		Logger: logger.NewLogger(testutils.NewTestConfig()),
@@ -122,97 +131,78 @@ func TestShipmentRepository(t *testing.T) {
 		require.NotEmpty(t, entity.Commodities)
 	})
 
-	// t.Run("get tractor by id with equipment details", func(t *testing.T) {
-	// 	entity, err := repo.GetByID(ctx, repoports.GetTractorByIDOptions{
-	// 		ID:                      trk.ID,
-	// 		OrgID:                   org.ID,
-	// 		BuID:                    bu.ID,
-	// 		IncludeEquipmentDetails: true,
-	// 	})
+	t.Run("get shipment by id failure", func(t *testing.T) {
+		result, err := repo.GetByID(ctx, repoports.GetShipmentByIDOptions{
+			ID:    "invalid-id",
+			OrgID: org.ID,
+			BuID:  bu.ID,
+		})
 
-	// 	require.NoError(t, err)
-	// 	require.NotNil(t, entity)
-	// 	require.NotEmpty(t, entity.EquipmentManufacturer)
-	// 	require.NotEmpty(t, entity.EquipmentType)
-	// })
+		require.Error(t, err)
+		require.Nil(t, result)
+	})
 
-	// t.Run("get tractor by id with fleet details", func(t *testing.T) {
-	// 	entity, err := repo.GetByID(ctx, repoports.GetTractorByIDOptions{
-	// 		ID:                  trk.ID,
-	// 		OrgID:               org.ID,
-	// 		BuID:                bu.ID,
-	// 		IncludeFleetDetails: true,
-	// 	})
+	t.Run("create shipment", func(t *testing.T) {
+		// Test Data
+		newEntity := &shipment.Shipment{
+			ProNumber:      "TEST",
+			ServiceTypeID:  serviceType.ID,
+			ShipmentTypeID: shipmentType.ID,
+			TrailerTypeID:  &trlEquipType.ID,
+			TractorTypeID:  &trEquipType.ID,
+			CustomerID:     cus.ID,
+			BusinessUnitID: bu.ID,
+			OrganizationID: org.ID,
+		}
 
-	// 	require.NoError(t, err)
-	// 	require.NotNil(t, entity)
-	// 	require.NotEmpty(t, entity.FleetCode)
-	// })
+		testutils.TestRepoCreate(ctx, t, repo, newEntity)
+	})
 
-	// t.Run("get tractor by id failure", func(t *testing.T) {
-	// 	result, err := repo.GetByID(ctx, repoports.GetTractorByIDOptions{
-	// 		ID:    "invalid-id",
-	// 		OrgID: org.ID,
-	// 		BuID:  bu.ID,
-	// 	})
+	t.Run("create shipment failure", func(t *testing.T) {
+		// Test Data
+		newEntity := &shipment.Shipment{
+			ProNumber:      "TEST",
+			ServiceTypeID:  serviceType.ID,
+			ShipmentTypeID: "invalid-id",
+			TrailerTypeID:  &trlEquipType.ID,
+			TractorTypeID:  &trEquipType.ID,
+			CustomerID:     cus.ID,
+			BusinessUnitID: bu.ID,
+			OrganizationID: org.ID,
+		}
 
-	// 	require.Error(t, err)
-	// 	require.Nil(t, result)
-	// })
+		results, err := repo.Create(ctx, newEntity)
 
-	// t.Run("create tractor", func(t *testing.T) {
-	// 	// Test Data
-	// 	newEntity := &tractor.Tractor{
-	// 		Code:                    "TRN-1",
-	// 		PrimaryWorkerID:         wrk3.ID,
-	// 		EquipmentTypeID:         et.ID,
-	// 		EquipmentManufacturerID: em.ID,
-	// 		BusinessUnitID:          bu.ID,
-	// 		OrganizationID:          org.ID,
-	// 	}
+		require.Error(t, err)
+		require.Nil(t, results)
+	})
 
-	// 	testutils.TestRepoCreate(ctx, t, repo, newEntity)
-	// })
+	t.Run("update shipment", func(t *testing.T) {
+		smt.ProNumber = "S12354123"
 
-	// t.Run("create tractor failure", func(t *testing.T) {
-	// 	// Test Data
-	// 	newEntity := &tractor.Tractor{
-	// 		Code:                    "TRN-2",
-	// 		PrimaryWorkerID:         wrk.ID,
-	// 		EquipmentTypeID:         "invalid-id",
-	// 		EquipmentManufacturerID: em.ID,
-	// 		BusinessUnitID:          bu.ID,
-	// 		OrganizationID:          org.ID,
-	// 	}
+		result, err := repo.Update(ctx, smt)
+		require.NoError(t, err)
+		require.Equal(t, "S12354123", smt.ProNumber)
+		require.NotNil(t, result)
+	})
 
-	// 	results, err := repo.Create(ctx, newEntity)
+	t.Run("update shipment version lock failure", func(t *testing.T) {
+		smt.ProNumber = "S12354123"
+		smt.Version = 0
 
-	// 	require.Error(t, err)
-	// 	require.Nil(t, results)
-	// })
+		results, err := repo.Update(ctx, smt)
 
-	// t.Run("update tractor", func(t *testing.T) {
-	// 	trk.Code = "TRN-3"
-	// 	testutils.TestRepoUpdate(ctx, t, repo, trk)
-	// })
+		require.Error(t, err)
+		require.Nil(t, results)
+	})
 
-	// t.Run("update tractor version lock failure", func(t *testing.T) {
-	// 	trk.Code = "TRN-4"
-	// 	trk.Version = 0
+	t.Run("update shipment with invalid information", func(t *testing.T) {
+		smt.ProNumber = "S12354123"
+		smt.ShipmentTypeID = "invalid-id"
 
-	// 	results, err := repo.Update(ctx, trk)
+		results, err := repo.Update(ctx, smt)
 
-	// 	require.Error(t, err)
-	// 	require.Nil(t, results)
-	// })
-
-	// t.Run("update tractor with invalid information", func(t *testing.T) {
-	// 	trk.Code = "TRN-5"
-	// 	trk.EquipmentTypeID = "invalid-id"
-
-	// 	results, err := repo.Update(ctx, trk)
-
-	// 	require.Error(t, err)
-	// 	require.Nil(t, results)
-	// })
+		require.Error(t, err)
+		require.Nil(t, results)
+	})
 }
