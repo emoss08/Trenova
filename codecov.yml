@@ -1,2 +1,5 @@
 ignore:
+  - cmd/*
+  - docs/*
   - test/*
+  - scripts/*
