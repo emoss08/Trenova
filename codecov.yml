@@ -3,3 +3,4 @@ ignore:
   - docs/*
   - test/*
   - scripts/*
+  - web/*
