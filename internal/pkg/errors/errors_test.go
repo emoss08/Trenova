@@ -258,8 +258,8 @@ func TestInferErrorCode(t *testing.T) {
 		},
 		{
 			name:     "rate limit error",
-			err:      val.NewError("rate limit", "too many requests"),
-			expected: errors.ErrInvalid,
+			err:      val.NewError("rate limit", "rate limit exceeded"),
+			expected: errors.ErrTooManyRequests,
 		},
 		{
 			name:     "default error",
