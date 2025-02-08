@@ -10,7 +10,6 @@ import (
 	"github.com/emoss08/trenova/internal/pkg/logger"
 	"github.com/rotisserie/eris"
 	"github.com/rs/zerolog"
-	"github.com/uptrace/bun"
 	"go.uber.org/fx"
 )
 
@@ -100,27 +99,4 @@ func (r *usStateRepository) GetByAbbreviation(ctx context.Context, abbreviation 
 	}
 
 	return state, nil
-}
-
-func (r *usStateRepository) GetBulkStatesByAbbreviation(ctx context.Context, abbreviations []string) ([]*usstate.UsState, error) {
-	dba, err := r.db.DB(ctx)
-	if err != nil {
-		return nil, eris.Wrap(err, "get database connection")
-	}
-
-	log := r.l.With().
-		Str("operation", "GetBulkStatesByAbbreviation").
-		Logger()
-
-	states := make([]*usstate.UsState, 0)
-
-	if err = dba.NewSelect().
-		Model(&states).
-		Where("abbreviation IN (?)", bun.In(abbreviations)).
-		Scan(ctx); err != nil {
-		log.Error().Err(err).Msg("failed to get us states by abbreviation")
-		return nil, eris.Wrap(err, "failed to get us states by abbreviation")
-	}
-
-	return states, nil
 }
