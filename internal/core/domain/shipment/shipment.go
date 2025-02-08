@@ -49,8 +49,8 @@ type Shipment struct {
 
 	// Billing Related Fields
 	RatingUnit          int64               `json:"ratingUnit" bun:"rating_unit,type:INTEGER,notnull,default:1"`
-	RatingMethod        RatingMethod        `json:"ratingMethod" bun:"rating_method,type:rating_method_enum,notnull,default:'Flat'"`
 	OtherChargeAmount   decimal.NullDecimal `json:"otherChargeAmount" bun:"other_charge_amount,type:NUMERIC(19,4),notnull,default:0"`
+	RatingMethod        RatingMethod        `json:"ratingMethod" bun:"rating_method,type:rating_method_enum,notnull,default:'Flat'"`
 	FreightChargeAmount decimal.NullDecimal `json:"freightChargeAmount" bun:"freight_charge_amount,type:NUMERIC(19,4),notnull,default:0"`
 	TotalChargeAmount   decimal.NullDecimal `json:"totalChargeAmount" bun:"total_charge_amount,type:NUMERIC(19,4),notnull,default:0"`
 	Pieces              *int64              `json:"pieces" bun:"pieces,type:INTEGER,nullzero"`
@@ -78,7 +78,8 @@ type Shipment struct {
 	Version      int64  `json:"version" bun:"version,type:BIGINT"`
 	CreatedAt    int64  `json:"createdAt" bun:"created_at,notnull,default:extract(epoch from current_timestamp)::bigint"`
 	UpdatedAt    int64  `json:"updatedAt" bun:"updated_at,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	SearchVector string `json:"-" bun:"search_vector,type:TSVECTOR"`
+	SearchVector string `json:"-" bun:"search_vector,type:TSVECTOR,scanonly"`
+	Rank         string `json:"-" bun:"rank,type:VARCHAR(100),scanonly"`
 
 	// Relationships
 	BusinessUnit *businessunit.BusinessUnit   `json:"businessUnit,omitempty" bun:"rel:belongs-to,join:business_unit_id=id"`

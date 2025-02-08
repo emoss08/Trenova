@@ -39,5 +39,5 @@ type ShipmentRepository interface {
 	GetByID(ctx context.Context, opts GetShipmentByIDOptions) (*shipment.Shipment, error)
 	Create(ctx context.Context, t *shipment.Shipment) (*shipment.Shipment, error)
 	Update(ctx context.Context, t *shipment.Shipment) (*shipment.Shipment, error)
-	Cancel(ctx context.Context, req *CancelShipmentRequest) error
+	Cancel(ctx context.Context, req *CancelShipmentRequest) (*shipment.Shipment, error)
 }

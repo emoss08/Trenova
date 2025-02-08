@@ -24,31 +24,80 @@ type ReactAsyncSelectInputProps = Omit<
   "label" | "control"
 >;
 
-const fetchOptions = async (link: string, inputValue: string, page: number) => {
-  const limit = 50;
+// First, let's update the fetchOptions function
+const fetchOptions = async (
+  link: string,
+  inputValue: string,
+  page: number,
+  valueKey?: string | string[],
+): Promise<{ options: SelectOption[]; hasMore: boolean }> => {
+  const limit = 10;
   const offset = (page - 1) * limit;
 
   try {
-    const response = await http.get<{
+    const { data } = await http.get<{
       results: SelectOption[];
       next: string;
-    }>(`${link}/select-options/`, {
+      query: string;
+    }>(link, {
       params: {
-        search: inputValue,
+        query: inputValue,
         limit: limit.toString(),
         offset: offset.toString(),
       },
     });
 
-    const { results, next } = response.data;
+    const formatLabel = (result: any) => {
+      if (Array.isArray(valueKey)) {
+        return valueKey
+          .map((key) => result[key])
+          .filter(Boolean)
+          .join(" ");
+      }
+      return result[valueKey || "name"];
+    };
+
+    console.info("formatLabel", formatLabel(data.results[0]));
+
+    const options =
+      data.results?.map((result: any) => ({
+        value: result.id,
+        label: formatLabel(result),
+        color: result?.color,
+      })) || [];
 
     return {
-      options: results || [],
-      hasMore: !!next,
+      options,
+      hasMore: !!data.next,
     };
-  } catch (error: any) {
-    console.error("Error fetching options", error);
+  } catch (error) {
+    console.error("Error fetching options:", error);
     return { options: [], hasMore: false };
+  }
+};
+
+const fetchInitialValue = async (
+  link: string,
+  id: string | number,
+  valueKey?: string | string[],
+): Promise<SelectOption> => {
+  try {
+    const { data } = await http.get<any>(`${link}${id}/`);
+
+    let label: string;
+    if (Array.isArray(valueKey)) {
+      label = valueKey
+        .map((key) => data[key])
+        .filter(Boolean)
+        .join(" ");
+    } else {
+      label = data[valueKey || "name"];
+    }
+
+    return { label, value: data.id, color: data?.color };
+  } catch (error) {
+    console.error("Error fetching initial value:", error);
+    return { label: "Error fetching value", value: id };
   }
 };
 
@@ -68,7 +117,8 @@ const ReactAsyncSelect = React.forwardRef<any, ReactAsyncSelectInputProps>(
       popoutLink,
       popoutLinkLabel,
       hasPermission,
-      ...rest
+      valueKey,
+      // ...rest
     },
     ref,
   ) => {
@@ -81,30 +131,64 @@ const ReactAsyncSelect = React.forwardRef<any, ReactAsyncSelectInputProps>(
     useEffect(() => {
       // If value exists fetch the corresponding option
       if (value) {
-        fetchOptions(link, "", 1).then(({ options }) => {
+        // First try to get from existing options
+        fetchOptions(link, "", 1, valueKey).then(async ({ options }) => {
           if (isMulti) {
             const selected = options.filter((o) =>
               (value as unknown as (string | number | boolean)[]).includes(
                 o.value as string | number | boolean,
               ),
             );
-            setSelectedOption(selected);
+
+            // If we couldn't find all values in the options, fetch the missing ones
+            if (
+              selected.length <
+              (value as unknown as (string | number | boolean)[]).length
+            ) {
+              const missingValues = (
+                value as unknown as (string | number | boolean)[]
+              ).filter((v) => !selected.some((s) => s.value === v));
+
+              // Fetch missing values
+              const missingOptions = await Promise.all(
+                missingValues.map((v) =>
+                  fetchInitialValue(link, v as string | number, valueKey),
+                ),
+              );
+
+              setSelectedOption([...selected, ...missingOptions]);
+            } else {
+              setSelectedOption(selected);
+            }
           } else {
             const selected = options.find(
               (o) =>
                 o.value === (value as unknown as string | number | boolean),
             );
-            setSelectedOption(selected as SelectOption);
+
+            if (selected) {
+              setSelectedOption(selected);
+            } else {
+              // If not found in options, fetch directly
+              const option = await fetchInitialValue(
+                link,
+                value as unknown as string | number,
+                valueKey,
+              );
+              setSelectedOption(option);
+            }
           }
         });
+      } else {
+        setSelectedOption(null);
       }
-    }, [value, isMulti, link]);
+    }, [value, isMulti, link, valueKey]);
 
     const debouncedFetchOptions = useMemo(
       () =>
         debounce(
           (inputValue: string, callback: (options: SelectOption[]) => void) => {
-            fetchOptions(link, inputValue, 1)
+            fetchOptions(link, inputValue, 1, valueKey)
               .then(({ options }) => callback(options))
               .catch((error) => {
                 console.error("Error in debouncedFetchOptions:", error);
@@ -113,7 +197,7 @@ const ReactAsyncSelect = React.forwardRef<any, ReactAsyncSelectInputProps>(
           },
           300,
         ),
-      [link],
+      [link, valueKey],
     );
 
     const promiseOptions = (inputValue: string) =>
@@ -250,6 +334,7 @@ export function AsyncSelectField<T extends FieldValues>({
   popoutLink,
   popoutLinkLabel,
   hasPermission,
+  valueKey,
 }: Omit<AsyncSelectFieldProps<T>, "onChange" | "id" | "options">) {
   const [isOpen, setIsOpen] = useState(false);
 
@@ -291,6 +376,7 @@ export function AsyncSelectField<T extends FieldValues>({
             isFetchError={isFetchError}
             isReadOnly={isReadOnly}
             value={value}
+            valueKey={valueKey}
             aria-describedby={cn(description && descriptionId, errorId)}
             aria-invalid={fieldState.invalid}
             isInvalid={fieldState.invalid}

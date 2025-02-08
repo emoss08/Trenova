@@ -23,6 +23,7 @@ var (
 	_ bun.BeforeAppendModelHook = (*Worker)(nil)
 	_ infra.SearchableEntity    = (*Worker)(nil)
 	_ domain.Validatable        = (*Worker)(nil)
+	_ infra.PostgresSearchable  = (*Worker)(nil)
 )
 
 type Worker struct {
@@ -50,9 +51,11 @@ type Worker struct {
 	AssignmentBlocked string        `json:"assignmentBlocked,omitempty" bun:"assignment_blocked,type:VARCHAR(255)"`
 
 	// Metadata
-	Version   int64 `json:"version" bun:"version,type:BIGINT"`
-	CreatedAt int64 `json:"createdAt" bun:"created_at,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	UpdatedAt int64 `json:"updatedAt" bun:"updated_at,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	Version      int64  `json:"version" bun:"version,type:BIGINT"`
+	CreatedAt    int64  `json:"createdAt" bun:"created_at,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	UpdatedAt    int64  `json:"updatedAt" bun:"updated_at,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	SearchVector string `json:"-" bun:"search_vector,type:TSVECTOR,scanonly"`
+	Rank         string `json:"-" bun:"rank,type:VARCHAR(100),scanonly"`
 
 	// Relationships
 	BusinessUnit *businessunit.BusinessUnit `json:"businessUnit,omitempty" bun:"rel:belongs-to,join:business_unit_id=id"`
@@ -152,6 +155,33 @@ func (w *Worker) ToDocument() infra.SearchDocument {
 		Title:          w.FullName(),
 		Description:    w.FullName(),
 		SearchableText: strings.Join(searchableText, " "),
+	}
+}
+
+func (w *Worker) GetPostgresSearchConfig() infra.PostgresSearchConfig {
+	return infra.PostgresSearchConfig{
+		TableAlias: "wrk",
+		Fields: []infra.PostgresSearchableField{
+			{
+				Name:   "first_name",
+				Weight: "A",
+				Type:   infra.PostgresSearchTypeComposite,
+			},
+			{
+				Name:   "last_name",
+				Weight: "A",
+				Type:   infra.PostgresSearchTypeComposite,
+			},
+			{
+				Name:       "status",
+				Weight:     "B",
+				Type:       infra.PostgresSearchTypeEnum,
+				Dictionary: "english",
+			},
+		},
+		MinLength:       2,
+		MaxTerms:        6,
+		UsePartialMatch: true,
 	}
 }
 

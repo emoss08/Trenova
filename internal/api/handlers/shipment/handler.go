@@ -208,10 +208,10 @@ func (h Handler) cancel(c *fiber.Ctx) error {
 		return h.eh.HandleError(c, err)
 	}
 
-	err = h.ss.Cancel(c.UserContext(), req)
+	newEntity, err := h.ss.Cancel(c.UserContext(), req)
 	if err != nil {
 		return h.eh.HandleError(c, err)
 	}
 
-	return c.SendStatus(fiber.StatusNoContent)
+	return c.Status(fiber.StatusOK).JSON(newEntity)
 }

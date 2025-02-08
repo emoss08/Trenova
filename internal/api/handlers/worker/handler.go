@@ -41,7 +41,7 @@ func (h Handler) RegisterRoutes(r fiber.Router, rl *middleware.RateLimiter) {
 
 	api.Get("/", rl.WithRateLimit(
 		[]fiber.Handler{h.list},
-		middleware.PerSecond(5), // 5 reads per second
+		middleware.PerMinute(120), // 120 reads per minute
 	)...)
 
 	api.Post("/", rl.WithRateLimit(
@@ -68,12 +68,13 @@ func (h Handler) selectOptions(c *fiber.Ctx) error {
 
 	opts := &repositories.ListWorkerOptions{
 		Filter: &ports.LimitOffsetQueryOptions{
+			Query: c.Query("query"),
 			TenantOpts: &ports.TenantOptions{
 				OrgID:  reqCtx.OrgID,
 				BuID:   reqCtx.BuID,
 				UserID: reqCtx.UserID,
 			},
-			Limit:  100,
+			Limit:  10,
 			Offset: 0,
 		},
 	}
