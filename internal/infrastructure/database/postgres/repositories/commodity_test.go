@@ -4,8 +4,12 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/businessunit"
+	"github.com/emoss08/trenova/internal/core/domain/commodity"
 	"github.com/emoss08/trenova/internal/core/domain/organization"
 	"github.com/emoss08/trenova/internal/core/ports"
+	repoports "github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/pkg/types/pulid"
+	"github.com/stretchr/testify/require"
 
 	"github.com/emoss08/trenova/internal/infrastructure/database/postgres/repositories"
 	"github.com/emoss08/trenova/internal/pkg/logger"
@@ -15,8 +19,7 @@ import (
 func TestCommodityRepository(t *testing.T) {
 	org := ts.Fixture.MustRow("Organization.trenova").(*organization.Organization)
 	bu := ts.Fixture.MustRow("BusinessUnit.trenova").(*businessunit.BusinessUnit)
-	// loc := ts.Fixture.MustRow("Customer.honeywell_customer").(*customer.Customer)
-	// usState := ts.Fixture.MustRow("UsState.ca").(*usstate.UsState)
+	comm := ts.Fixture.MustRow("Commodity.test_commodity").(*commodity.Commodity)
 
 	repo := repositories.NewCommodityRepository(repositories.CommodityRepositoryParams{
 		Logger: logger.NewLogger(testutils.NewTestConfig()),
@@ -36,145 +39,89 @@ func TestCommodityRepository(t *testing.T) {
 		testutils.TestRepoList(ctx, t, repo, opts)
 	})
 
-	// t.Run("list customers with query", func(t *testing.T) {
-	// 	opts := &repoports.ListCustomerOptions{
-	// 		Filter: &ports.LimitOffsetQueryOptions{
-	// 			Limit:  10,
-	// 			Offset: 0,
-	// 			TenantOpts: &ports.TenantOptions{
-	// 				OrgID: org.ID,
-	// 				BuID:  bu.ID,
-	// 			},
-	// 			Query: "Honeywell",
-	// 		},
-	// 	}
+	t.Run("list commodities with query", func(t *testing.T) {
+		opts := &ports.LimitOffsetQueryOptions{
+			Limit:  10,
+			Offset: 0,
+			TenantOpts: &ports.TenantOptions{
+				OrgID: org.ID,
+				BuID:  bu.ID,
+			},
+			Query: "Test",
+		}
 
-	// 	testutils.TestRepoList(ctx, t, repo, opts)
-	// })
+		testutils.TestRepoList(ctx, t, repo, opts)
+	})
 
-	// t.Run("list customers with state", func(t *testing.T) {
-	// 	opts := &repoports.ListCustomerOptions{
-	// 		IncludeState: true,
-	// 		Filter: &ports.LimitOffsetQueryOptions{
-	// 			Limit:  10,
-	// 			Offset: 0,
-	// 			TenantOpts: &ports.TenantOptions{
-	// 				OrgID: org.ID,
-	// 				BuID:  bu.ID,
-	// 			},
-	// 		},
-	// 	}
+	t.Run("get commodity by id", func(t *testing.T) {
+		testutils.TestRepoGetByID(ctx, t, repo, repoports.GetCommodityByIDOptions{
+			ID:    comm.ID,
+			OrgID: org.ID,
+			BuID:  bu.ID,
+		})
+	})
 
-	// 	result, err := repo.List(ctx, opts)
-	// 	require.NoError(t, err)
-	// 	require.NotNil(t, result)
-	// 	require.NotEmpty(t, result.Items)
-	// 	require.NotEmpty(t, result.Items[0].State)
-	// })
+	t.Run("get commodity with invalid id", func(t *testing.T) {
+		l, err := repo.GetByID(ctx, repoports.GetCommodityByIDOptions{
+			ID:    "invalid-id",
+			OrgID: org.ID,
+			BuID:  bu.ID,
+		})
 
-	// t.Run("get customer by id", func(t *testing.T) {
-	// 	testutils.TestRepoGetByID(ctx, t, repo, repoports.GetCustomerByIDOptions{
-	// 		ID:    loc.ID,
-	// 		OrgID: org.ID,
-	// 		BuID:  bu.ID,
-	// 	})
-	// })
+		require.Error(t, err)
+		require.Nil(t, l)
+	})
 
-	// t.Run("get customer with invalid id", func(t *testing.T) {
-	// 	l, err := repo.GetByID(ctx, repoports.GetCustomerByIDOptions{
-	// 		ID:    "invalid-id",
-	// 		OrgID: org.ID,
-	// 		BuID:  bu.ID,
-	// 	})
+	t.Run("create commodity", func(t *testing.T) {
+		// Test Data
+		l := &commodity.Commodity{
+			Name:           "Test commodity 2",
+			Description:    "1234 Main St",
+			BusinessUnitID: bu.ID,
+			OrganizationID: org.ID,
+		}
 
-	// 	require.Error(t, err, "customer not found")
-	// 	require.Nil(t, l)
-	// })
+		testutils.TestRepoCreate(ctx, t, repo, l)
+	})
 
-	// t.Run("get customer by id with state", func(t *testing.T) {
-	// 	result, err := repo.GetByID(ctx, repoports.GetCustomerByIDOptions{
-	// 		ID:           loc.ID,
-	// 		OrgID:        org.ID,
-	// 		BuID:         bu.ID,
-	// 		IncludeState: true,
-	// 	})
+	t.Run("create commodity failure", func(t *testing.T) {
+		// Test Data
+		l := &commodity.Commodity{
+			Name:                "Test commodity 2",
+			Description:         "1234 Main St",
+			HazardousMaterialID: pulid.Must("invalid-id"),
+			BusinessUnitID:      bu.ID,
+			OrganizationID:      org.ID,
+		}
 
-	// 	require.NoError(t, err)
-	// 	require.NotNil(t, result)
-	// 	require.NotEmpty(t, result.State)
-	// })
+		results, err := repo.Create(ctx, l)
 
-	// t.Run("get customer by id failure", func(t *testing.T) {
-	// 	result, err := repo.GetByID(ctx, repoports.GetCustomerByIDOptions{
-	// 		ID:           "invalid-id",
-	// 		OrgID:        org.ID,
-	// 		BuID:         bu.ID,
-	// 		IncludeState: true,
-	// 	})
+		require.Error(t, err)
+		require.Nil(t, results)
+	})
 
-	// 	require.Error(t, err)
-	// 	require.Nil(t, result)
-	// })
+	t.Run("update commodity", func(t *testing.T) {
+		comm.Name = "Test Commodity 3"
+		testutils.TestRepoUpdate(ctx, t, repo, comm)
+	})
 
-	// t.Run("create customer", func(t *testing.T) {
-	// 	// Test Data
-	// 	l := &customer.Customer{
-	// 		Name:           "Test customer 2",
-	// 		AddressLine1:   "1234 Main St",
-	// 		Code:           "TEST000001",
-	// 		City:           "Los Angeles",
-	// 		PostalCode:     "90001",
-	// 		Status:         domain.StatusActive,
-	// 		StateID:        usState.ID,
-	// 		BusinessUnitID: bu.ID,
-	// 		OrganizationID: org.ID,
-	// 	}
+	t.Run("update commodity version lock failure", func(t *testing.T) {
+		comm.Name = "Test Commodity 3"
+		comm.Version = 0
 
-	// 	testutils.TestRepoCreate(ctx, t, repo, l)
-	// })
+		results, err := repo.Update(ctx, comm)
 
-	// t.Run("create customer failure", func(t *testing.T) {
-	// 	// Test Data
-	// 	l := &customer.Customer{
-	// 		Name:           "Test customer 2",
-	// 		AddressLine1:   "1234 Main St",
-	// 		Code:           "TEST000001",
-	// 		City:           "Los Angeles",
-	// 		PostalCode:     "90001",
-	// 		Status:         domain.StatusActive,
-	// 		StateID:        "invalid-id",
-	// 		BusinessUnitID: bu.ID,
-	// 		OrganizationID: org.ID,
-	// 	}
+		require.Error(t, err)
+		require.Nil(t, results)
+	})
 
-	// 	results, err := repo.Create(ctx, l)
+	t.Run("update commodity with invalid information", func(t *testing.T) {
+		comm.Name = "Test commodity 3"
+		comm.HazardousMaterialID = pulid.Must("invalid-id")
 
-	// 	require.Error(t, err)
-	// 	require.Nil(t, results)
-	// })
+		results, err := repo.Update(ctx, comm)
 
-	// t.Run("update customer", func(t *testing.T) {
-	// 	loc.Name = "Test Customer 3"
-	// 	testutils.TestRepoUpdate(ctx, t, repo, loc)
-	// })
-
-	// t.Run("update customer version lock failure", func(t *testing.T) {
-	// 	loc.Name = "Test Customer 3"
-	// 	loc.Version = 0
-
-	// 	results, err := repo.Update(ctx, loc)
-
-	// 	require.Error(t, err)
-	// 	require.Nil(t, results)
-	// })
-
-	// t.Run("update customer with invalid information", func(t *testing.T) {
-	// 	loc.Name = "Test customer 3"
-	// 	loc.StateID = "invalid-id"
-
-	// 	results, err := repo.Update(ctx, loc)
-
-	// 	require.Error(t, err)
-	// 	require.Nil(t, results)
-	// })
+		require.Error(t, err)
+		require.Nil(t, results)
+	})
 }
