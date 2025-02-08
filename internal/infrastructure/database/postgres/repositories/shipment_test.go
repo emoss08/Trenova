@@ -227,4 +227,20 @@ func TestShipmentRepository(t *testing.T) {
 		require.Equal(t, &now, newEntity.CanceledAt)
 		require.Equal(t, &usr.ID, newEntity.CanceledByID)
 	})
+
+	t.Run("cancel shipment with invalid shipment id", func(t *testing.T) {
+		now := timeutils.NowUnix()
+
+		newEntity, err := repo.Cancel(ctx, &repoports.CancelShipmentRequest{
+			ShipmentID:   "invalid-id",
+			OrgID:        org.ID,
+			BuID:         bu.ID,
+			CanceledByID: usr.ID,
+			CanceledAt:   now,
+			CancelReason: "Test",
+		})
+
+		require.Error(t, err, "Shipment not found")
+		require.Nil(t, newEntity)
+	})
 }
