@@ -8,8 +8,9 @@ import type {
   Path,
   RegisterOptions,
 } from "react-hook-form";
-import { GroupBase, Props as ReactSelectProps } from "react-select";
+import type { GroupBase, Props as ReactSelectProps } from "react-select";
 import { type AsyncProps as ReactAsyncSelectProps } from "react-select/async";
+import { type API_ENDPOINTS } from "./server";
 
 type BaseInputFieldProps = Omit<InputProps, "name"> & {
   label?: string;
@@ -93,7 +94,7 @@ export type BaseAsyncSelectFieldProps = Omit<
   "options" | "onChange" | "name"
 > & {
   onChange: (...event: any[]) => void;
-  link: string;
+  link: API_ENDPOINTS;
   label?: string;
   description?: string;
   isReadOnly?: boolean;
@@ -101,6 +102,7 @@ export type BaseAsyncSelectFieldProps = Omit<
   isLoading?: boolean;
   isFetchError?: boolean;
   className?: string;
+  valueKey?: string | string[];
   id?: string;
 };
 

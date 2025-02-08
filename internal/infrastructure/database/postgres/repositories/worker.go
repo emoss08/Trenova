@@ -11,6 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/pkg/errors"
 	"github.com/emoss08/trenova/internal/pkg/logger"
+	"github.com/emoss08/trenova/internal/pkg/postgressearch"
 	"github.com/emoss08/trenova/internal/pkg/utils/queryutils/queryfilters"
 	"github.com/emoss08/trenova/pkg/types/pulid"
 	"github.com/rotisserie/eris"
@@ -53,13 +54,28 @@ func (wr *workerRepository) filterQuery(q *bun.SelectQuery, opts *repositories.L
 		q = q.Relation("Profile")
 	}
 
+	if opts.Filter.Query != "" {
+		q = postgressearch.BuildSearchQuery(
+			q,
+			opts.Filter.Query,
+			(*worker.Worker)(nil),
+		)
+	}
+
+	// If we are requesting a single item, we can use the ID to filter
+	// This is useful for select options ,but ensure the query is empty
+	// because we will use the ID to filter
+	if opts.Filter.ID.IsNotNil() && opts.Filter.Query == "" {
+		q = q.Where("wrk.id = ?", opts.Filter.ID)
+	}
+
 	if opts.IncludePTO {
 		q = q.Relation("PTO", func(sq *bun.SelectQuery) *bun.SelectQuery {
 			return sq.Order("start_date ASC")
 		})
 	}
 
-	return q.Limit(opts.Filter.Limit).Offset(opts.Filter.Offset)
+	return q.Order("wrk.created_at DESC").Limit(opts.Filter.Limit).Offset(opts.Filter.Offset)
 }
 
 // List returns a list of workers in the database

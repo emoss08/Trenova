@@ -288,8 +288,7 @@ func (v *Validator) ValidateCancellation(shp *shipment.Shipment) *errors.MultiEr
 
 	if !cancelableShipmentStatuses[shp.Status] {
 		multiErr.Add(
-			"status",
-
+			"__all__",
 			errors.ErrInvalid,
 			fmt.Sprintf("Cannot cancel shipment in status `%s`", shp.Status),
 		)
