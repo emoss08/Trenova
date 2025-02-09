@@ -138,7 +138,6 @@ const ReactAsyncSelect = React.forwardRef<any, ReactAsyncSelectInputProps>(
     const [inputValue, setInputValue] = useState("");
     const previousValueRef = useRef<any>(value);
     const optionsCache = useRef<SelectOption[]>([]);
-    const isMounted = useRef(false);
 
     useEffect(() => {
       const abortController = new AbortController();

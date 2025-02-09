@@ -23,13 +23,15 @@ import (
 type ShipmentRepositoryParams struct {
 	fx.In
 
-	DB     db.Connection
-	Logger *logger.Logger
+	DB            db.Connection
+	Logger        *logger.Logger
+	ProNumberRepo repositories.ProNumberRepository
 }
 
 type shipmentRepository struct {
-	db db.Connection
-	l  *zerolog.Logger
+	db            db.Connection
+	l             *zerolog.Logger
+	proNumberRepo repositories.ProNumberRepository
 }
 
 func NewShipmentRepository(p ShipmentRepositoryParams) repositories.ShipmentRepository {
@@ -38,8 +40,9 @@ func NewShipmentRepository(p ShipmentRepositoryParams) repositories.ShipmentRepo
 		Logger()
 
 	return &shipmentRepository{
-		db: p.DB,
-		l:  &log,
+		db:            p.DB,
+		l:             &log,
+		proNumberRepo: p.ProNumberRepo,
 	}
 }
 
@@ -179,7 +182,15 @@ func (sr *shipmentRepository) Create(ctx context.Context, shp *shipment.Shipment
 		Str("buID", shp.BusinessUnitID.String()).
 		Logger()
 
+	proNumber, err := sr.proNumberRepo.GetNextProNumber(ctx, shp.OrganizationID)
+	if err != nil {
+		log.Error().Err(err).Msg("failed to get next pro number")
+		return nil, err
+	}
+
 	err = dba.RunInTx(ctx, nil, func(c context.Context, tx bun.Tx) error {
+		shp.ProNumber = proNumber
+
 		if _, iErr := tx.NewInsert().Model(shp).Exec(c); iErr != nil {
 			log.Error().
 				Err(iErr).
