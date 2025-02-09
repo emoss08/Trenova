@@ -134,7 +134,7 @@ func (v *Validator) validateEquipmentClass(ctx context.Context, t *tractor.Tract
 func (v *Validator) validateSecondaryWorker(t *tractor.Tractor, multiErr *errors.MultiError) {
 	// Validate the secondary worker is not the same as the primary worker
 	if t.SecondaryWorkerID != nil && pulid.Equals(*t.SecondaryWorkerID, t.PrimaryWorkerID) {
-		multiErr.Add("secondaryWorkerID", errors.ErrInvalid, "Secondary worker cannot be the same as the primary worker")
+		multiErr.Add("secondaryWorkerId", errors.ErrInvalid, "Secondary worker cannot be the same as the primary worker")
 	}
 }
 

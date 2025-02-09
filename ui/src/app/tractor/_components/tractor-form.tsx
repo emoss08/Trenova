@@ -90,6 +90,7 @@ export function TractorForm() {
           hasPopoutWindow
           popoutLink="/dispatch/configurations/fleet-codes/"
           popoutLinkLabel="Fleet Code"
+          valueKey="name"
         />
       </FormControl>
       <FormControl>
@@ -153,6 +154,7 @@ export function TractorForm() {
           hasPopoutWindow
           popoutLink="/dispatch/configurations/workers/"
           popoutLinkLabel="Worker"
+          isClearable
         />
       </FormControl>
     </FormGroup>

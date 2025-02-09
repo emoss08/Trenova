@@ -30,7 +30,7 @@ const AssignmentDetailItem = memo(function AssignmentDetailItem({
           value={value}
           modelOpen
         >
-          {value}
+          {value ?? "-"}
         </EntityRedirectLink>
       </div>
     </div>
