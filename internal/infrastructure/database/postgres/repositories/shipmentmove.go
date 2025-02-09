@@ -68,7 +68,7 @@ func (sr *shipmentMoveRepository) GetByID(ctx context.Context, opts repositories
 	return move, nil
 }
 
-func (sr *shipmentMoveRepository) UpdateStatus(ctx context.Context, opts repositories.UpdateStatusOptions) (*shipment.ShipmentMove, error) {
+func (sr *shipmentMoveRepository) UpdateStatus(ctx context.Context, opts *repositories.UpdateMoveStatusRequest) (*shipment.ShipmentMove, error) {
 	dba, err := sr.db.DB(ctx)
 	if err != nil {
 		return nil, eris.Wrap(err, "get database connection")
@@ -130,4 +130,30 @@ func (sr *shipmentMoveRepository) UpdateStatus(ctx context.Context, opts reposit
 	}
 
 	return move, nil
+}
+
+func (sr *shipmentMoveRepository) GetMovesByShipmentID(ctx context.Context, opts repositories.GetMovesByShipmentIDOptions) ([]*shipment.ShipmentMove, error) {
+	dba, err := sr.db.DB(ctx)
+	if err != nil {
+		return nil, eris.Wrap(err, "get database connection")
+	}
+
+	log := sr.l.With().
+		Str("operation", "GetMovesByShipmentID").
+		Str("shipmentID", opts.ShipmentID.String()).
+		Logger()
+
+	moves := make([]*shipment.ShipmentMove, 0)
+
+	q := dba.NewSelect().Model(&moves).
+		Where("sm.shipment_id = ?", opts.ShipmentID).
+		Where("sm.organization_id = ?", opts.OrgID).
+		Where("sm.business_unit_id = ?", opts.BuID)
+
+	if err := q.Scan(ctx); err != nil {
+		log.Error().Err(err).Msg("failed to get moves by shipment id")
+		return nil, err
+	}
+
+	return moves, nil
 }

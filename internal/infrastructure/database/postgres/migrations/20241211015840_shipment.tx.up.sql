@@ -1,10 +1,13 @@
 -- Enums with documentation
 CREATE TYPE "shipment_status_enum" AS ENUM(
     'New', -- Initial state when shipment is created
+    'PartiallyAssigned', -- Shipment has been partially assigned to a worker
+    'Assigned', -- Shipment has been assigned to a worker
     'InTransit', -- Shipment is currently being transported
     'Delayed', -- Shipment is currently delayed
     'Completed', -- Shipment has been delivered successfully
     'Billed', -- Shipment has been billed to the customer
+
     'Canceled' -- Shipment has been Canceled
 );
 

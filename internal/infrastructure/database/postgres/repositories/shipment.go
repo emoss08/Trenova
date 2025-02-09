@@ -245,6 +245,70 @@ func (sr *shipmentRepository) Update(ctx context.Context, shp *shipment.Shipment
 	return shp, nil
 }
 
+func (sr *shipmentRepository) UpdateStatus(ctx context.Context, opts *repositories.UpdateShipmentStatusRequest) (*shipment.Shipment, error) {
+	dba, err := sr.db.DB(ctx)
+	if err != nil {
+		return nil, eris.Wrap(err, "get database connection")
+	}
+
+	log := sr.l.With().
+		Str("operation", "UpdateStatus").
+		Str("shipmentID", opts.GetOpts.ID.String()).
+		Str("status", string(opts.Status)).
+		Logger()
+
+	// Get the move
+	shp, err := sr.GetByID(ctx, opts.GetOpts)
+	if err != nil {
+		return nil, err
+	}
+
+	err = dba.RunInTx(ctx, nil, func(c context.Context, tx bun.Tx) error {
+		// Update the move version
+		ov := shp.Version
+		shp.Version++
+
+		results, rErr := tx.NewUpdate().Model(shp).
+			WherePK().
+			Where("sp.version = ?", ov).
+			Set("status = ?", opts.Status).
+			Returning("*").
+			Exec(c)
+		if rErr != nil {
+			log.Error().Err(rErr).
+				Interface("shipment", shp).
+				Msg("failed to update shipment version")
+			return rErr
+		}
+
+		rows, roErr := results.RowsAffected()
+		if roErr != nil {
+			log.Error().Err(roErr).
+				Interface("shipment", shp).
+				Msg("failed to get rows affected")
+			return roErr
+		}
+
+		if rows == 0 {
+			return errors.NewValidationError(
+				"version",
+				errors.ErrVersionMismatch,
+				fmt.Sprintf("Version mismatch. The shipment (%s) has been updated since your last request.", shp.GetID()),
+			)
+		}
+
+		return nil
+	})
+	if err != nil {
+		log.Error().Err(err).
+			Interface("shipment", shp).
+			Msg("failed to update shipment status")
+		return nil, err
+	}
+
+	return shp, nil
+}
+
 // Cancel handles the data operations for canceling a shipment and its related entities
 func (sr *shipmentRepository) Cancel(ctx context.Context, req *repositories.CancelShipmentRequest) (*shipment.Shipment, error) {
 	dba, err := sr.db.DB(ctx)

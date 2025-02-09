@@ -15,7 +15,6 @@ import { ShipmentMovesDetails } from "./shipment-move-details";
 
 interface ShipmentDetailsProps {
   selectedShipment?: Shipment | null;
-
   isLoading: boolean;
   onBack: () => void;
 }

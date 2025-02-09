@@ -259,6 +259,7 @@ function MoveActions({ move }: { move: ShipmentMove }) {
   if (!move) {
     return null;
   }
+
   const { assignment, status } = move;
 
   // Move is not new, so we cannot assign equipment and workers

@@ -35,12 +35,17 @@ func (h Handler) RegisterRoutes(r fiber.Router, rl *middleware.RateLimiter) {
 	api := r.Group("/assignments")
 	api.Post("/single/", rl.WithRateLimit(
 		[]fiber.Handler{h.assign},
-		middleware.PerMinute(60), // 60 reads per minute
+		middleware.PerMinute(60), // 60 writes per minute
+	)...)
+
+	api.Post("/bulk/", rl.WithRateLimit(
+		[]fiber.Handler{h.bulkAssign},
+		middleware.PerMinute(60), // 60 writes per minute
 	)...)
 
 	api.Put("/:assignmentID/", rl.WithRateLimit(
 		[]fiber.Handler{h.reassign},
-		middleware.PerMinute(60), // 60 reads per minute
+		middleware.PerMinute(60), // 60 writes per minute
 	)...)
 
 	api.Get("/:assignmentID/", rl.WithRateLimit(
@@ -116,6 +121,28 @@ func (h Handler) reassign(c *fiber.Ctx) error {
 	}
 
 	entity, err := h.as.Reassign(c.UserContext(), amt, reqCtx.UserID)
+	if err != nil {
+		return h.eh.HandleError(c, err)
+	}
+
+	return c.Status(fiber.StatusOK).JSON(entity)
+}
+
+func (h Handler) bulkAssign(c *fiber.Ctx) error {
+	reqCtx, err := ctx.WithRequestContext(c)
+	if err != nil {
+		return h.eh.HandleError(c, err)
+	}
+
+	amt := new(repositories.AssignmentRequest)
+	amt.OrgID = reqCtx.OrgID
+	amt.BuID = reqCtx.BuID
+
+	if err = c.BodyParser(amt); err != nil {
+		return h.eh.HandleError(c, err)
+	}
+
+	entity, err := h.as.BulkAssign(c.UserContext(), amt)
 	if err != nil {
 		return h.eh.HandleError(c, err)
 	}

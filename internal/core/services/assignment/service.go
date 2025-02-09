@@ -5,6 +5,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
+	"github.com/emoss08/trenova/internal/core/ports"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/audit"
@@ -82,6 +83,65 @@ func (s *Service) Get(ctx context.Context, opts repositories.GetAssignmentByIDOp
 	}
 
 	return entity, nil
+}
+
+func (s *Service) BulkAssign(ctx context.Context, req *repositories.AssignmentRequest) (*ports.ListResult[*shipment.Assignment], error) {
+	log := s.l.With().
+		Str("operation", "BulkAssign").
+		Str("shipmentID", req.ShipmentID.String()).
+		Logger()
+
+	result, err := s.ps.HasAnyPermissions(ctx,
+		[]*services.PermissionCheck{
+			{
+				UserID:         req.UserID,
+				Resource:       permission.ResourceAssignment,
+				Action:         permission.ActionAssign,
+				BusinessUnitID: req.BuID,
+				OrganizationID: req.OrgID,
+			},
+		},
+	)
+	if err != nil {
+		log.Error().Err(err).Msg("failed to check permissions")
+		return nil, err
+	}
+
+	if !result.Allowed {
+		return nil, errors.NewAuthorizationError("You do not have permission to assign")
+	}
+
+	// * Validate the assignment
+	if err := req.Validate(ctx); err != nil {
+		return nil, err
+	}
+
+	createdEntity, err := s.repo.BulkAssign(ctx, req)
+	if err != nil {
+		return nil, err
+	}
+
+	err = s.as.LogAction(
+		&services.LogActionParams{
+			Resource:       permission.ResourceAssignment,
+			ResourceID:     "",
+			Action:         permission.ActionCreate,
+			UserID:         req.UserID,
+			CurrentState:   jsonutils.MustToJSON(createdEntity),
+			OrganizationID: req.OrgID,
+			BusinessUnitID: req.BuID,
+		},
+		audit.WithComment("Assignments created"),
+		audit.WithDiff(req, createdEntity),
+	)
+	if err != nil {
+		log.Error().Err(err).Msg("failed to log assignment creation")
+	}
+
+	return &ports.ListResult[*shipment.Assignment]{
+		Items: createdEntity,
+		Total: len(createdEntity),
+	}, nil
 }
 
 func (s *Service) SingleAssign(ctx context.Context, a *shipment.Assignment, userID pulid.ID) (*shipment.Assignment, error) {

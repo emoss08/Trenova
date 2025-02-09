@@ -10,6 +10,8 @@ import { type User } from "./user";
 
 export enum ShipmentStatus {
   New = "New",
+  PartiallyAssigned = "PartiallyAssigned",
+  Assigned = "Assigned",
   InTransit = "InTransit",
   Delayed = "Delayed",
   Completed = "Completed",

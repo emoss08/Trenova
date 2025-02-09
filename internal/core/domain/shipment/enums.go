@@ -6,6 +6,14 @@ const (
 	// StatusNew indicates that the shipment has been created but not yet processed
 	StatusNew = Status("New")
 
+	// StatusPartiallyAssigned indicates that the shipment has multiple moves
+	// but only some of them have been assigned to a worker
+	StatusPartiallyAssigned = Status("PartiallyAssigned")
+
+	// StatusAssigned indicates that all moves on the shipment have been assigned
+	// to workers(s)
+	StatusAssigned = Status("Assigned")
+
 	// StatusInTransit indicates that the shipment is currently being processed
 	StatusInTransit = Status("InTransit")
 

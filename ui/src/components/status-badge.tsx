@@ -128,6 +128,14 @@ export function ShipmentStatusBadge({ status }: { status: ShipmentStatus }) {
       variant: "purple",
       text: "New",
     },
+    [ShipmentStatus.PartiallyAssigned]: {
+      variant: "warning",
+      text: "Partially Assigned",
+    },
+    [ShipmentStatus.Assigned]: {
+      variant: "warning",
+      text: "Assigned",
+    },
     [ShipmentStatus.InTransit]: {
       variant: "info",
       text: "In Transit",

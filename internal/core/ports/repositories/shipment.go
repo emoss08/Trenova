@@ -18,11 +18,28 @@ type ListShipmentOptions struct {
 }
 
 type GetShipmentByIDOptions struct {
-	ID              pulid.ID
-	OrgID           pulid.ID
-	BuID            pulid.ID
-	UserID          pulid.ID
+	// The ID of the shipment
+	ID pulid.ID
+
+	// The ID of the organization
+	OrgID pulid.ID
+
+	// The ID of the business unit
+	BuID pulid.ID
+
+	// The ID of the user (Optional)
+	UserID pulid.ID
+
+	// Shipment options (Optional)
 	ShipmentOptions ShipmentOptions
+}
+
+type UpdateShipmentStatusRequest struct {
+	// Fetch the shipment
+	GetOpts GetShipmentByIDOptions
+
+	// The status of the shipment
+	Status shipment.Status
 }
 
 type CancelShipmentRequest struct {
@@ -39,5 +56,6 @@ type ShipmentRepository interface {
 	GetByID(ctx context.Context, opts GetShipmentByIDOptions) (*shipment.Shipment, error)
 	Create(ctx context.Context, t *shipment.Shipment) (*shipment.Shipment, error)
 	Update(ctx context.Context, t *shipment.Shipment) (*shipment.Shipment, error)
+	UpdateStatus(ctx context.Context, opts *UpdateShipmentStatusRequest) (*shipment.Shipment, error)
 	Cancel(ctx context.Context, req *CancelShipmentRequest) (*shipment.Shipment, error)
 }
