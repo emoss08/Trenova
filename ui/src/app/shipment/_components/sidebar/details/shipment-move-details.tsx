@@ -9,6 +9,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Icon } from "@/components/ui/icons";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   Tooltip,
   TooltipContent,
@@ -29,6 +30,7 @@ import {
 import { faCircle, faTruck, faXmark } from "@fortawesome/pro-solid-svg-icons";
 import { memo, useState } from "react";
 import { AssignmentDialog } from "../../assignment/assignment-dialog";
+import { AssignmentDetails } from "./move-assignment-details";
 
 const getStatusIcon = (
   status: StopStatus,
@@ -97,9 +99,11 @@ export function ShipmentMovesDetails() {
             ({moves?.length ?? 0})
           </span>
         </div>
-        {moves.map((move) => (
-          <MoveInformation key={move.id} move={move} />
-        ))}
+        <div className="flex flex-col gap-2">
+          {moves.map((move) => (
+            <MoveInformation key={move.id} move={move} />
+          ))}
+        </div>
       </div>
     </TooltipProvider>
   );
@@ -116,26 +120,29 @@ const MoveInformation = memo(function MoveInformation({
 
   return (
     <div
-      className="bg-card rounded-lg border border-bg-sidebar-border p-4"
+      className="bg-card rounded-lg border border-bg-sidebar-border space-y-2"
       key={move.id}
     >
       <StatusBadge move={move} />
-      <div className="relative">
-        <div className="space-y-6">
-          {move.stops.map((stop, index) => {
-            const isLastStop = index === move.stops.length - 1;
+      <ScrollArea className="flex max-h-[250px] flex-col overflow-y-auto px-4 py-2">
+        <div className="relative">
+          <div className="space-y-6">
+            {move.stops.map((stop, index) => {
+              const isLastStop = index === move.stops.length - 1;
 
-            return (
-              <StopTimeline
-                key={stop.id}
-                stop={stop}
-                isLast={isLastStop}
-                moveStatus={move.status}
-              />
-            );
-          })}
+              return (
+                <StopTimeline
+                  key={stop.id}
+                  stop={stop}
+                  isLast={isLastStop}
+                  moveStatus={move.status}
+                />
+              );
+            })}
+          </div>
         </div>
-      </div>
+      </ScrollArea>
+      <AssignmentDetails move={move} />
     </div>
   );
 });
@@ -150,7 +157,7 @@ const StatusBadge = memo(function StatusBadge({
   }
 
   return (
-    <div className="flex justify-between items-center mb-4">
+    <div className="flex justify-between items-center p-3 border-b border-sidebar-border">
       <MoveStatusBadge status={move.status} />
       <MoveActions move={move} />
     </div>

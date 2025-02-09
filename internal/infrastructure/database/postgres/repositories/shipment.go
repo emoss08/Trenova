@@ -49,13 +49,20 @@ func (sr *shipmentRepository) addOptions(q *bun.SelectQuery, opts repositories.S
 
 		q = q.RelationWithOpts("Moves", bun.RelationOpts{
 			Apply: func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return sq.Order("sm.sequence ASC").Relation("Assignment")
+				return sq.Order("sm.sequence ASC").
+					Relation("Assignment").
+					Relation("Assignment.Tractor").
+					Relation("Assignment.Trailer").
+					Relation("Assignment.PrimaryWorker").
+					Relation("Assignment.SecondaryWorker")
 			},
 		})
 
 		q = q.RelationWithOpts("Moves.Stops", bun.RelationOpts{
 			Apply: func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return sq.Order("stp.sequence ASC").Relation("Location").Relation("Location.State")
+				return sq.Order("stp.sequence ASC").
+					Relation("Location").
+					Relation("Location.State")
 			},
 		})
 
@@ -140,7 +147,11 @@ func (sr *shipmentRepository) GetByID(ctx context.Context, opts repositories.Get
 	entity := new(shipment.Shipment)
 
 	q := dba.NewSelect().Model(entity).
-		Where("sp.id = ? AND sp.organization_id = ? AND sp.business_unit_id = ?", opts.ID, opts.OrgID, opts.BuID)
+		WhereGroup("AND", func(q *bun.SelectQuery) *bun.SelectQuery {
+			return q.Where("sp.id = ?", opts.ID).
+				Where("sp.organization_id = ?", opts.OrgID).
+				Where("sp.business_unit_id = ?", opts.BuID)
+		})
 
 	q = sr.addOptions(q, opts.ShipmentOptions)
 

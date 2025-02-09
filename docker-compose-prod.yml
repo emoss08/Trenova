@@ -186,7 +186,7 @@ services:
     depends_on:
       - api
     environment:
-      - VITE_API_URL=/api
+      - VITE_API_URL=/api/v1
     restart: unless-stopped
     deploy:
       resources:

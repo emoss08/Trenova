@@ -21,7 +21,7 @@ WORKDIR /app
 RUN npm install -g serve
 
 ENV NODE_ENV=production
-ENV VITE_API_URL=http://trenova.local/api/v1
+ENV VITE_API_URL=https://trenova.local/api/v1
 
 COPY --from=builder /app/dist ./dist
 
