@@ -1,32 +1,20 @@
 trenova.local {
-	tls internal
-	log {
-		output file /var/log/caddy/access.log {
-			roll_size 10mb
-			roll_keep 5
-			roll_keep_for 720h
-		}
-		format transform `{request>remote_ip} - {user_id} [{ts}] "{request>method} {request>uri} {request>proto}" {status} {size} "{request>headers>Referer>[0]}" "{request>headers>User-Agent>[0]}"` {
-			time_format "02/Jan/2006:15:04:05 -0700"
-		}
-	}
+	tls /etc/caddy/certs/cert.pem /etc/caddy/certs/key.pem
 
 	handle /ws/* {
-		reverse_proxy 0.0.0.0:3001 {
+		reverse_proxy api:3001 {
 			header_up Host {host}
 			header_up X-Real-IP {remote}
-			header_up X-Forwarded-For {remote}
-			header_up X-Forwarded-Proto {scheme}
 			header_up Connection "Upgrade"
 			header_up Upgrade "websocket"
 		}
 	}
 
 	handle /api/* {
-		reverse_proxy 0.0.0.0:3001
+		reverse_proxy api:3001
 	}
 
 	handle /* {
-		reverse_proxy 0.0.0.0:5173
+		reverse_proxy client:5173
 	}
 }

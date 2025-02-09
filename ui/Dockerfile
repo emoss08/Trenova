@@ -1,22 +1,29 @@
-FROM node:20-alpine AS development-dependencies-env
-COPY . /app
+FROM node:20-alpine AS builder
+
+# Create app directory
 WORKDIR /app
+
+# Copy package files and .npmrc
+COPY package*.json ./.npmrc ./ .env ./
+
+# Install dependencies
 RUN npm ci
 
-FROM node:20-alpine AS production-dependencies-env
-COPY ./package.json package-lock.json /app/
-WORKDIR /app
-RUN npm ci --omit=dev
+# Copy source
+COPY . .
 
-FROM node:20-alpine AS build-env
-COPY . /app/
-COPY --from=development-dependencies-env /app/node_modules /app/node_modules
-WORKDIR /app
-RUN npm run build
+# Build the app
+RUN npm run build \
+    && rm -f .npmrc  # Remove .npmrc after build
 
 FROM node:20-alpine
-COPY ./package.json package-lock.json /app/
-COPY --from=production-dependencies-env /app/node_modules /app/node_modules
-COPY --from=build-env /app/build /app/build
 WORKDIR /app
-CMD ["npm", "run", "start"]
+RUN npm install -g serve
+
+ENV NODE_ENV=production
+ENV VITE_API_URL=http://trenova.local/api/v1
+
+COPY --from=builder /app/dist ./dist
+
+EXPOSE 5173
+CMD ["serve", "-s", "dist", "-l", "5173"]
