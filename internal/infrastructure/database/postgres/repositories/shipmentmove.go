@@ -68,6 +68,47 @@ func (sr *shipmentMoveRepository) GetByID(ctx context.Context, opts repositories
 	return move, nil
 }
 
+func (sr *shipmentMoveRepository) BulkUpdateStatus(ctx context.Context, req repositories.BulkUpdateMoveStatusRequest) ([]*shipment.ShipmentMove, error) {
+	dba, err := sr.db.DB(ctx)
+	if err != nil {
+		return nil, eris.Wrap(err, "get database connection")
+	}
+
+	log := sr.l.With().
+		Str("operation", "BulkUpdateStatus").
+		Interface("moveIDs", req.MoveIDs).
+		Str("status", string(req.Status)).
+		Logger()
+
+	moves := make([]*shipment.ShipmentMove, len(req.MoveIDs))
+	results, err := dba.NewUpdate().
+		Model(moves).
+		Set("status = ?", req.Status).
+		Where("sm.id IN (?)", bun.In(req.MoveIDs)).
+		Returning("*").
+		Exec(ctx)
+	if err != nil {
+		log.Error().Err(err).Msg("failed to bulk update move status")
+		return nil, err
+	}
+
+	rows, err := results.RowsAffected()
+	if err != nil {
+		log.Error().Err(err).Msg("failed to get rows affected")
+		return nil, err
+	}
+
+	if rows != int64(len(req.MoveIDs)) {
+		return nil, errors.NewValidationError(
+			"move.status",
+			errors.ErrVersionMismatch,
+			fmt.Sprintf("Version mismatch. The move (%s) has been updated since your last request.", moves[0].ID),
+		)
+	}
+
+	return moves, nil
+}
+
 func (sr *shipmentMoveRepository) UpdateStatus(ctx context.Context, opts *repositories.UpdateMoveStatusRequest) (*shipment.ShipmentMove, error) {
 	dba, err := sr.db.DB(ctx)
 	if err != nil {
@@ -150,7 +191,7 @@ func (sr *shipmentMoveRepository) GetMovesByShipmentID(ctx context.Context, opts
 		Where("sm.organization_id = ?", opts.OrgID).
 		Where("sm.business_unit_id = ?", opts.BuID)
 
-	if err := q.Scan(ctx); err != nil {
+	if err = q.Scan(ctx); err != nil {
 		log.Error().Err(err).Msg("failed to get moves by shipment id")
 		return nil, err
 	}

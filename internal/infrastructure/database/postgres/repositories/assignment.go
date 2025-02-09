@@ -46,6 +46,16 @@ func NewAssignmentRepository(p AssignmentRepositoryParams) repositories.Assignme
 	}
 }
 
+// GetByID retrieves an assignment by its unique ID within the specified organization and business unit.
+// It executes a database query to fetch the assignment details, handling possible errors such as missing records.
+//
+// Parameters:
+//   - ctx: Context for managing request scope and cancellation.
+//   - opts: Options struct containing ID, OrganizationID, and BusinessUnitID to filter the assignment.
+//
+// Returns:
+//   - *shipment.Assignment: The retrieved assignment entity if found.
+//   - error: An error if the assignment is not found or the query fails.
 func (ar *assignmentRepository) GetByID(ctx context.Context, opts repositories.GetAssignmentByIDOptions) (*shipment.Assignment, error) {
 	dba, err := ar.db.DB(ctx)
 	if err != nil {
@@ -74,6 +84,17 @@ func (ar *assignmentRepository) GetByID(ctx context.Context, opts repositories.G
 	return entity, nil
 }
 
+// BulkAssign assigns multiple shipment moves to workers and equipment within a transaction.
+// It first fetches all shipment moves for the specified shipment and then creates corresponding assignments.
+// The function updates the status of the moves and the shipment to reflect the assignments.
+//
+// Parameters:
+//   - ctx: Context for managing request scope and cancellation.
+//   - req: A struct containing shipment ID, organization ID, business unit ID, and worker/equipment details.
+//
+// Returns:
+//   - []*shipment.Assignment: A list of created assignment entities.
+//   - error: An error if the assignments cannot be created or if a database operation fails.
 func (ar *assignmentRepository) BulkAssign(ctx context.Context, req *repositories.AssignmentRequest) ([]*shipment.Assignment, error) {
 	dba, err := ar.db.DB(ctx)
 	if err != nil {
@@ -109,7 +130,52 @@ func (ar *assignmentRepository) BulkAssign(ctx context.Context, req *repositorie
 	return assignments, nil
 }
 
-// SingleAssign implementation remains mostly the same but with improved error wrapping
+func (ar *assignmentRepository) extractMoveIDs(moves []*shipment.ShipmentMove) []pulid.ID {
+	moveIDs := make([]pulid.ID, len(moves))
+	for i, move := range moves {
+		moveIDs[i] = move.ID
+	}
+	return moveIDs
+}
+
+func (ar *assignmentRepository) processBulkAssignment(ctx context.Context, tx bun.Tx, assignments []*shipment.Assignment,
+	moveIDs []pulid.ID, req *repositories.AssignmentRequest,
+) error {
+	if err := tx.NewInsert().Model(assignments).Scan(ctx); err != nil {
+		return err
+	}
+
+	if _, err := ar.moveRepo.BulkUpdateStatus(ctx, repositories.BulkUpdateMoveStatusRequest{
+		MoveIDs: moveIDs,
+		Status:  shipment.MoveStatusAssigned,
+	}); err != nil {
+		return err
+	}
+
+	if _, err := ar.shipmentRepo.UpdateStatus(ctx, &repositories.UpdateShipmentStatusRequest{
+		GetOpts: repositories.GetShipmentByIDOptions{
+			ID:    req.ShipmentID,
+			OrgID: req.OrgID,
+			BuID:  req.BuID,
+		},
+		Status: shipment.StatusAssigned,
+	}); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// SingleAssign creates an assignment for a single shipment move and updates related statuses.
+// It ensures the assignment is inserted into the database, and the status of the move and shipment is updated accordingly.
+//
+// Parameters:
+//   - ctx: Context for managing request scope and cancellation.
+//   - a: The assignment entity to be created.
+//
+// Returns:
+//   - *shipment.Assignment: The created assignment entity.
+//   - error: An error if the assignment creation fails or if database updates are unsuccessful.
 func (ar *assignmentRepository) SingleAssign(ctx context.Context, a *shipment.Assignment) (*shipment.Assignment, error) {
 	dba, err := ar.db.DB(ctx)
 	if err != nil {
@@ -122,37 +188,16 @@ func (ar *assignmentRepository) SingleAssign(ctx context.Context, a *shipment.As
 		Logger()
 
 	err = dba.RunInTx(ctx, nil, func(c context.Context, tx bun.Tx) error {
-		if err = ar.processAssignment(c, tx, a); err != nil {
-			return err
+		_, err = tx.NewInsert().Model(a).Exec(ctx)
+		if err != nil {
+			return eris.Wrap(err, "insert assignment")
 		}
+
 		return ar.updateAssignmentStatuses(c, a)
 	})
 	if err != nil {
 		log.Error().Err(err).Msg("failed to process single assignment")
 		return nil, err
-	}
-
-	return a, nil
-}
-
-// Reassign updates an existing assignment for a shipment move.
-func (ar *assignmentRepository) Reassign(ctx context.Context, a *shipment.Assignment) (*shipment.Assignment, error) {
-	dba, err := ar.db.DB(ctx)
-	if err != nil {
-		return nil, eris.Wrap(err, "get database connection")
-	}
-
-	log := ar.l.With().
-		Str("operation", "Reassign").
-		Str("assignmentID", a.ID.String()).
-		Logger()
-
-	err = dba.RunInTx(ctx, nil, func(c context.Context, tx bun.Tx) error {
-		return ar.processReassignment(c, tx, a)
-	})
-	if err != nil {
-		log.Error().Err(err).Msg("failed to process reassignment")
-		return nil, eris.Wrap(err, "process reassignment")
 	}
 
 	return a, nil
@@ -174,64 +219,6 @@ func (ar *assignmentRepository) createAssignments(moves []*shipment.ShipmentMove
 	return assignments
 }
 
-func (ar *assignmentRepository) extractMoveIDs(moves []*shipment.ShipmentMove) []pulid.ID {
-	moveIDs := make([]pulid.ID, len(moves))
-	for i, move := range moves {
-		moveIDs[i] = move.ID
-	}
-	return moveIDs
-}
-
-func (ar *assignmentRepository) processBulkAssignment(ctx context.Context, tx bun.Tx, assignments []*shipment.Assignment,
-	moveIDs []pulid.ID, req *repositories.AssignmentRequest,
-) error {
-	if err := tx.NewInsert().Model(assignments).Scan(ctx); err != nil {
-		return err
-	}
-
-	if err := ar.updateMovesStatus(ctx, tx, moveIDs); err != nil {
-		return err
-	}
-
-	if err := ar.updateShipmentStatus(ctx, req); err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func (ar *assignmentRepository) updateMovesStatus(ctx context.Context, tx bun.Tx, moveIDs []pulid.ID) error {
-	_, err := tx.NewUpdate().
-		Model((*shipment.ShipmentMove)(nil)).
-		Set("status = ?", shipment.MoveStatusAssigned).
-		Where("sm.id IN (?)", bun.In(moveIDs)).
-		Exec(ctx)
-	if err != nil {
-		return eris.Wrap(err, "update move status")
-	}
-	return nil
-}
-
-func (ar *assignmentRepository) updateShipmentStatus(ctx context.Context, req *repositories.AssignmentRequest) error {
-	_, err := ar.shipmentRepo.UpdateStatus(ctx, &repositories.UpdateShipmentStatusRequest{
-		GetOpts: repositories.GetShipmentByIDOptions{
-			ID:    req.ShipmentID,
-			OrgID: req.OrgID,
-			BuID:  req.BuID,
-		},
-		Status: shipment.StatusAssigned,
-	})
-	return err
-}
-
-func (ar *assignmentRepository) processAssignment(ctx context.Context, tx bun.Tx, a *shipment.Assignment) error {
-	_, err := tx.NewInsert().Model(a).Exec(ctx)
-	if err != nil {
-		return eris.Wrap(err, "insert assignment")
-	}
-	return nil
-}
-
 func (ar *assignmentRepository) updateAssignmentStatuses(ctx context.Context, a *shipment.Assignment) error {
 	move, err := ar.moveRepo.GetByID(ctx, repositories.GetMoveByIDOptions{
 		MoveID: a.ShipmentMoveID,
@@ -243,24 +230,19 @@ func (ar *assignmentRepository) updateAssignmentStatuses(ctx context.Context, a 
 	}
 
 	// Update move status
-	if err = ar.updateMoveStatus(ctx, a); err != nil {
-		return err
-	}
-
-	// Update shipment status
-	return ar.updateLinkedShipmentStatus(ctx, move.ShipmentID, a)
-}
-
-func (ar *assignmentRepository) updateMoveStatus(ctx context.Context, a *shipment.Assignment) error {
-	_, err := ar.moveRepo.UpdateStatus(ctx, &repositories.UpdateMoveStatusRequest{
+	if _, err = ar.moveRepo.UpdateStatus(ctx, &repositories.UpdateMoveStatusRequest{
 		GetMoveOpts: repositories.GetMoveByIDOptions{
 			MoveID: a.ShipmentMoveID,
 			OrgID:  a.OrganizationID,
 			BuID:   a.BusinessUnitID,
 		},
 		Status: shipment.MoveStatusAssigned,
-	})
-	return err
+	}); err != nil {
+		return err
+	}
+
+	// Update shipment status
+	return ar.updateLinkedShipmentStatus(ctx, move.ShipmentID, a)
 }
 
 func (ar *assignmentRepository) updateLinkedShipmentStatus(ctx context.Context, shipmentID pulid.ID, a *shipment.Assignment) error {
@@ -300,6 +282,39 @@ func (ar *assignmentRepository) updateLinkedShipmentStatus(ctx context.Context, 
 		Status: status,
 	})
 	return err
+}
+
+// Reassign updates an existing assignment by modifying worker and equipment details.
+// It ensures the update is done safely using optimistic locking, preventing conflicts from concurrent modifications.
+// If the version mismatch occurs, it returns a validation error indicating a potential concurrent update issue.
+//
+// Parameters:
+//   - ctx: Context for managing request scope and cancellation.
+//   - a: The assignment entity containing updated details.
+//
+// Returns:
+//   - *shipment.Assignment: The updated assignment entity.
+//   - error: An error if the update fails due to database errors or version mismatch.
+func (ar *assignmentRepository) Reassign(ctx context.Context, a *shipment.Assignment) (*shipment.Assignment, error) {
+	dba, err := ar.db.DB(ctx)
+	if err != nil {
+		return nil, eris.Wrap(err, "get database connection")
+	}
+
+	log := ar.l.With().
+		Str("operation", "Reassign").
+		Str("assignmentID", a.ID.String()).
+		Logger()
+
+	err = dba.RunInTx(ctx, nil, func(c context.Context, tx bun.Tx) error {
+		return ar.processReassignment(c, tx, a)
+	})
+	if err != nil {
+		log.Error().Err(err).Msg("failed to process reassignment")
+		return nil, eris.Wrap(err, "process reassignment")
+	}
+
+	return a, nil
 }
 
 func (ar *assignmentRepository) processReassignment(ctx context.Context, tx bun.Tx, a *shipment.Assignment) error {

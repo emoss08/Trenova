@@ -26,6 +26,14 @@ type UpdateMoveStatusRequest struct {
 	Status shipment.MoveStatus
 }
 
+type BulkUpdateMoveStatusRequest struct {
+	// IDs of the moves
+	MoveIDs []pulid.ID
+
+	// Status of the move
+	Status shipment.MoveStatus
+}
+
 type GetMovesByShipmentIDOptions struct {
 	// ID of the shipment
 	ShipmentID pulid.ID
@@ -41,4 +49,5 @@ type ShipmentMoveRepository interface {
 	GetByID(ctx context.Context, opts GetMoveByIDOptions) (*shipment.ShipmentMove, error)
 	UpdateStatus(ctx context.Context, opts *UpdateMoveStatusRequest) (*shipment.ShipmentMove, error)
 	GetMovesByShipmentID(ctx context.Context, opts GetMovesByShipmentIDOptions) ([]*shipment.ShipmentMove, error)
+	BulkUpdateStatus(ctx context.Context, opts BulkUpdateMoveStatusRequest) ([]*shipment.ShipmentMove, error)
 }
