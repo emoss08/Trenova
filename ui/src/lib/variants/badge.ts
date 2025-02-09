@@ -13,6 +13,8 @@ export const badgeVariants = cva(
         inactive: "text-red-600 bg-red-600/20 dark:text-red-400",
         info: "text-blue-600 bg-blue-600/20 dark:text-blue-400",
         purple: "text-purple-600 bg-purple-600/20 dark:text-purple-400",
+        orange: "text-orange-600 bg-orange-600/20 dark:text-orange-400",
+        indigo: "text-indigo-600 bg-indigo-600/20 dark:text-indigo-400",
         pink: "text-pink-600 bg-pink-600/20 dark:text-pink-400",
         teal: "text-teal-600 bg-teal-600/20 dark:text-teal-400",
         warning: "text-yellow-600 bg-yellow-600/20 dark:text-yellow-400",

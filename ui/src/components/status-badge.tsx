@@ -8,6 +8,12 @@ import { StopStatus } from "@/types/stop";
 import { EquipmentStatus } from "@/types/tractor";
 import { type VariantProps } from "class-variance-authority";
 import { Badge } from "./ui/badge";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "./ui/tooltip";
 
 export function StatusBadge({ status }: { status: Status }) {
   return (
@@ -20,6 +26,7 @@ export function StatusBadge({ status }: { status: Status }) {
 export type BadgeAttrProps = {
   variant: VariantProps<typeof badgeVariants>["variant"];
   text: string;
+  description?: string;
 };
 
 export function WorkerTypeBadge({ type }: { type: WorkerSchema["type"] }) {
@@ -127,41 +134,66 @@ export function ShipmentStatusBadge({ status }: { status: ShipmentStatus }) {
     [ShipmentStatus.New]: {
       variant: "purple",
       text: "New",
+      description:
+        "Shipment has been created and is pending initial assignment.",
     },
     [ShipmentStatus.PartiallyAssigned]: {
-      variant: "warning",
+      variant: "indigo",
       text: "Partially Assigned",
+      description:
+        "Equipment or worker assignments are pending for one or more moves within this shipment.",
     },
     [ShipmentStatus.Assigned]: {
       variant: "warning",
       text: "Assigned",
+      description:
+        "All required equipment and workers have been assigned to this shipment's moves.",
     },
     [ShipmentStatus.InTransit]: {
       variant: "info",
       text: "In Transit",
+      description:
+        "Active shipment with cargo currently in transport between designated locations.",
     },
     [ShipmentStatus.Delayed]: {
-      variant: "warning",
+      variant: "orange",
       text: "Delayed",
+      description:
+        "Shipment has exceeded scheduled arrival or delivery timeframes at one or more stops.",
     },
     [ShipmentStatus.Completed]: {
       variant: "active",
       text: "Completed",
+      description:
+        "All transportation activities for this shipment have been successfully completed.",
     },
     [ShipmentStatus.Billed]: {
       variant: "teal",
       text: "Billed",
+      description:
+        "Invoice has been generated and posted for completed transportation services.",
     },
     [ShipmentStatus.Canceled]: {
       variant: "inactive",
       text: "Canceled",
+      description:
+        "Shipment has been terminated and will not be completed as originally planned.",
     },
   };
 
   return (
-    <Badge variant={statusAttributes[status].variant} className="max-h-6">
-      {statusAttributes[status].text}
-    </Badge>
+    <TooltipProvider>
+      <Tooltip>
+        <TooltipTrigger>
+          <Badge variant={statusAttributes[status].variant} className="max-h-6">
+            {statusAttributes[status].text}
+          </Badge>
+        </TooltipTrigger>
+        <TooltipContent className="max-w-xs text-wrap text-center">
+          <p>{statusAttributes[status].description}</p>
+        </TooltipContent>
+      </Tooltip>
+    </TooltipProvider>
   );
 }
 
