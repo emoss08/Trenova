@@ -2,7 +2,13 @@ import { http } from "@/lib/http-client";
 import { cn } from "@/lib/utils";
 import { AsyncSelectFieldProps, SelectOption } from "@/types/fields";
 import debounce from "debounce";
-import React, { useEffect, useMemo, useState } from "react";
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { Controller, FieldValues } from "react-hook-form";
 import AsyncSelect from "react-select/async";
 import { FieldWrapper } from "./field-components";
@@ -24,13 +30,13 @@ type ReactAsyncSelectInputProps = Omit<
   "label" | "control"
 >;
 
-// First, let's update the fetchOptions function
-const fetchOptions = async (
+async function fetchOptions(
   link: string,
   inputValue: string,
   page: number,
   valueKey?: string | string[],
-): Promise<{ options: SelectOption[]; hasMore: boolean }> => {
+  signal?: AbortSignal,
+): Promise<{ options: SelectOption[]; hasMore: boolean }> {
   const limit = 10;
   const offset = (page - 1) * limit;
 
@@ -45,19 +51,16 @@ const fetchOptions = async (
         limit: limit.toString(),
         offset: offset.toString(),
       },
+      signal,
     });
 
-    const formatLabel = (result: any) => {
-      if (Array.isArray(valueKey)) {
-        return valueKey
-          .map((key) => result[key])
-          .filter(Boolean)
-          .join(" ");
-      }
-      return result[valueKey || "name"];
-    };
-
-    console.info("formatLabel", formatLabel(data.results[0]));
+    const formatLabel = (result: any) =>
+      Array.isArray(valueKey)
+        ? valueKey
+            .map((key) => result[key])
+            .filter(Boolean)
+            .join(" ")
+        : result[valueKey || "name"];
 
     const options =
       data.results?.map((result: any) => ({
@@ -71,10 +74,13 @@ const fetchOptions = async (
       hasMore: !!data.next,
     };
   } catch (error) {
+    if (error instanceof Error && error.name === "AbortError") {
+      return { options: [], hasMore: false };
+    }
     console.error("Error fetching options:", error);
     return { options: [], hasMore: false };
   }
-};
+}
 
 const fetchInitialValue = async (
   link: string,
@@ -122,17 +128,46 @@ const ReactAsyncSelect = React.forwardRef<any, ReactAsyncSelectInputProps>(
     },
     ref,
   ) => {
-    const isError = isFetchError || isInvalid;
+    const isError = useMemo(
+      () => isFetchError || isInvalid,
+      [isFetchError, isInvalid],
+    );
     const [selectedOption, setSelectedOption] = useState<
       SelectOption | SelectOption[] | null
     >(null);
     const [inputValue, setInputValue] = useState("");
+    const previousValueRef = useRef<any>(value);
+    const optionsCache = useRef<SelectOption[]>([]);
+    const isMounted = useRef(false);
 
     useEffect(() => {
-      // If value exists fetch the corresponding option
-      if (value) {
-        // First try to get from existing options
-        fetchOptions(link, "", 1, valueKey).then(async ({ options }) => {
+      const abortController = new AbortController();
+
+      // Skip if the value hasn't actually changed
+      if (value === previousValueRef.current) {
+        return;
+      }
+
+      const fetchAndSetOption = async () => {
+        // If value is explicitly null/undefined/empty, just clear and exit
+        if (
+          value === null ||
+          value === undefined ||
+          (value as unknown as string) === ""
+        ) {
+          setSelectedOption(null);
+          previousValueRef.current = value;
+          return;
+        }
+
+        try {
+          if (!value) {
+            setSelectedOption(null);
+            return;
+          }
+
+          const { options } = await fetchOptions(link, "", 1, valueKey);
+
           if (isMulti) {
             const selected = options.filter((o) =>
               (value as unknown as (string | number | boolean)[]).includes(
@@ -140,25 +175,15 @@ const ReactAsyncSelect = React.forwardRef<any, ReactAsyncSelectInputProps>(
               ),
             );
 
-            // If we couldn't find all values in the options, fetch the missing ones
-            if (
-              selected.length <
-              (value as unknown as (string | number | boolean)[]).length
-            ) {
-              const missingValues = (
-                value as unknown as (string | number | boolean)[]
-              ).filter((v) => !selected.some((s) => s.value === v));
-
-              // Fetch missing values
+            if (selected.length > 0) {
+              setSelectedOption(selected);
+            } else if ((value as unknown as string[]).length > 0) {
               const missingOptions = await Promise.all(
-                missingValues.map((v) =>
-                  fetchInitialValue(link, v as string | number, valueKey),
+                (value as unknown as string[]).map((v) =>
+                  fetchInitialValue(link, v, valueKey),
                 ),
               );
-
-              setSelectedOption([...selected, ...missingOptions]);
-            } else {
-              setSelectedOption(selected);
+              setSelectedOption(missingOptions);
             }
           } else {
             const selected = options.find(
@@ -168,8 +193,7 @@ const ReactAsyncSelect = React.forwardRef<any, ReactAsyncSelectInputProps>(
 
             if (selected) {
               setSelectedOption(selected);
-            } else {
-              // If not found in options, fetch directly
+            } else if (value) {
               const option = await fetchInitialValue(
                 link,
                 value as unknown as string | number,
@@ -178,16 +202,49 @@ const ReactAsyncSelect = React.forwardRef<any, ReactAsyncSelectInputProps>(
               setSelectedOption(option);
             }
           }
-        });
-      } else {
-        setSelectedOption(null);
-      }
+
+          previousValueRef.current = value;
+        } catch (error) {
+          console.error("Error fetching options:", error);
+          setSelectedOption(null);
+          previousValueRef.current = value;
+        }
+      };
+
+      fetchAndSetOption();
+
+      return () => abortController.abort();
     }, [value, isMulti, link, valueKey]);
+
+    const handleChange = useCallback(
+      (selected: any) => {
+        if (isMulti) {
+          const newValue = selected
+            ? selected.map((opt: SelectOption) => opt.value)
+            : [];
+          onChange(newValue);
+          setSelectedOption(selected);
+          previousValueRef.current = newValue;
+        } else {
+          const newValue = selected ? selected.value : null;
+          onChange(newValue);
+          setSelectedOption(selected);
+          previousValueRef.current = newValue;
+        }
+      },
+      [isMulti, onChange],
+    );
 
     const debouncedFetchOptions = useMemo(
       () =>
         debounce(
           (inputValue: string, callback: (options: SelectOption[]) => void) => {
+            // Allow empty input for initial load, but require 2+ chars for search
+            if (inputValue && inputValue.length < 2) {
+              callback([]);
+              return;
+            }
+
             fetchOptions(link, inputValue, 1, valueKey)
               .then(({ options }) => callback(options))
               .catch((error) => {
@@ -196,30 +253,39 @@ const ReactAsyncSelect = React.forwardRef<any, ReactAsyncSelectInputProps>(
               });
           },
           300,
+          { immediate: false },
         ),
       [link, valueKey],
     );
 
-    const promiseOptions = (inputValue: string) =>
-      new Promise<SelectOption[]>((resolve) => {
-        debouncedFetchOptions(inputValue, resolve);
-      });
+    // Fetch initial options on mount
+    useEffect(() => {
+      fetchOptions(link, "", 1, valueKey)
+        .then(({ options }) => {
+          optionsCache.current = options;
+        })
+        .catch((error) => {
+          console.error("Error fetching initial options:", error);
+        });
+    }, [link, valueKey]);
 
-    const handleChange = (selected: any) => {
-      if (isMulti) {
-        const newValue = (selected as SelectOption[]).map((opt) => opt.value);
-        onChange(newValue);
-        setSelectedOption(selected);
-      } else {
-        const newValue = (selected as SelectOption)?.value;
-        onChange(newValue);
-        setSelectedOption(selected);
-      }
-    };
+    const promiseOptions = useCallback(
+      (inputValue: string) =>
+        new Promise<SelectOption[]>((resolve) => {
+          // For initial load (empty input), use cached options if available
+          if (!inputValue && optionsCache.current.length > 0) {
+            resolve(optionsCache.current);
+            return;
+          }
 
-    const handleInputChange = (inputValue: string) => {
+          debouncedFetchOptions(inputValue, resolve);
+        }),
+      [debouncedFetchOptions],
+    );
+
+    const handleInputChange = useCallback((inputValue: string) => {
       setInputValue(inputValue);
-    };
+    }, []);
 
     return (
       <AsyncSelect

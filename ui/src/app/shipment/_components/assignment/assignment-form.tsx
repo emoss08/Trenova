@@ -22,63 +22,23 @@ function useTractorAssignment(tractorId: string) {
 }
 
 export function AssignmentForm() {
-  const { control, setValue } = useFormContext<AssignmentSchema>();
-
-  // If the tractorId is in place we need to fetch the workers assigned to it
-  // and automatically populate the workerID and secondaryWorkerID(If exists)
+  const { control, setValue, getValues } = useFormContext<AssignmentSchema>();
 
   const tractorId = useWatch({
     control,
     name: "tractorId",
-    exact: true,
-    defaultValue: "",
   });
 
-  const primaryWorkerId = useWatch({
-    control,
-    name: "primaryWorkerId",
-    exact: true,
-    defaultValue: "",
-  });
+  const { data: assignmentData } = useTractorAssignment(tractorId);
 
-  const secondaryWorkerId = useWatch({
-    control,
-    name: "secondaryWorkerId",
-    exact: true,
-    defaultValue: "",
-  });
-
-  const {
-    data: assignmentData,
-    isLoading: isAssignmentLoading,
-    error: assignmentError,
-  } = useTractorAssignment(tractorId);
-
+  // Only set worker values when tractor changes
   useEffect(() => {
-    if (assignmentData && !isAssignmentLoading) {
-      // Only set primary worker if it's currently empty
-      if (!primaryWorkerId && assignmentData.primaryWorkerId) {
-        setValue("primaryWorkerId", assignmentData.primaryWorkerId, {
-          shouldDirty: true,
-          shouldValidate: true,
-        });
-      }
-
-      // Only set secondary worker if it's currently empty and the tractor has one assigned
-      if (!secondaryWorkerId && assignmentData.secondaryWorkerId) {
-        setValue("secondaryWorkerId", assignmentData.secondaryWorkerId, {
-          shouldDirty: true,
-          shouldValidate: true,
-        });
-      }
+    if (assignmentData && tractorId) {
+      setValue("primaryWorkerId", assignmentData.primaryWorkerId || "");
+      setValue("secondaryWorkerId", assignmentData.secondaryWorkerId || null);
+      console.log("Form values:", getValues());
     }
-  }, [
-    assignmentData,
-    isAssignmentLoading,
-    primaryWorkerId,
-    secondaryWorkerId,
-    setValue,
-  ]);
+  }, [tractorId, assignmentData, setValue, getValues]);
 
   return (
     <FormGroup cols={2}>
