@@ -23,6 +23,7 @@ CREATE TYPE "action_enum" AS ENUM(
     'reject', -- Permission to reject requests/changes
     'submit', -- Permission to submit for approval
     'cancel', -- Permission to cancel operations
+    'duplicate', -- Permission to duplicate resources
     'export', -- Permission to export data
     'import', -- Permission to import data
     'archive', -- Permission to archive resources

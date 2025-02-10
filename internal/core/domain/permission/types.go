@@ -73,13 +73,14 @@ const (
 	ActionViewField   = Action("view_field")   // View specific fields in a resource.
 
 	// Workflow actions
-	ActionApprove  = Action("approve")  // Approve an action or resource.
-	ActionReject   = Action("reject")   // Reject an action or resource.
-	ActionSubmit   = Action("submit")   // Submit an action or resource for approval.
-	ActionCancel   = Action("cancel")   // Cancel an action or resource.
-	ActionAssign   = Action("assign")   // Assign a resource to a user or group.
-	ActionReassign = Action("reassign") // Reassign a resource to a different user or group.
-	ActionComplete = Action("complete") // Mark a resource or action as completed.
+	ActionApprove   = Action("approve")   // Approve an action or resource.
+	ActionReject    = Action("reject")    // Reject an action or resource.
+	ActionSubmit    = Action("submit")    // Submit an action or resource for approval.
+	ActionCancel    = Action("cancel")    // Cancel an action or resource.
+	ActionAssign    = Action("assign")    // Assign a resource to a user or group.
+	ActionReassign  = Action("reassign")  // Reassign a resource to a different user or group.
+	ActionComplete  = Action("complete")  // Mark a resource or action as completed.
+	ActionDuplicate = Action("duplicate") // Duplicate a resource.
 
 	// Configuration actions
 	ActionManageDefaults = Action("manage_defaults") // Manage default table configurations.
@@ -264,6 +265,7 @@ var (
 				ActionComplete,
 				ActionModifyField,
 				ActionViewField,
+				ActionDuplicate,
 			)...,
 		),
 		ResourceAssignment: {

@@ -50,4 +50,5 @@ type ShipmentMoveRepository interface {
 	UpdateStatus(ctx context.Context, opts *UpdateMoveStatusRequest) (*shipment.ShipmentMove, error)
 	GetMovesByShipmentID(ctx context.Context, opts GetMovesByShipmentIDOptions) ([]*shipment.ShipmentMove, error)
 	BulkUpdateStatus(ctx context.Context, opts BulkUpdateMoveStatusRequest) ([]*shipment.ShipmentMove, error)
+	BulkInsert(ctx context.Context, moves []*shipment.ShipmentMove) ([]*shipment.ShipmentMove, error)
 }

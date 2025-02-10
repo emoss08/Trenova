@@ -12,6 +12,7 @@ import { ShipmentStatus, type Shipment } from "@/types/shipment";
 import { faEllipsisVertical } from "@fortawesome/pro-regular-svg-icons";
 import { useState } from "react";
 import { ShipmentCancellationDialog } from "../../cancellation/shipment-cancellatioin-dialog";
+import { ShipmentDuplicateDialog } from "../../duplicate/shipment-duplicate-dialog";
 
 // Map of status that are allowed to be canceled.
 const cancellatedStatuses = [
@@ -22,6 +23,8 @@ const cancellatedStatuses = [
 
 export function ShipmentActions({ shipment }: { shipment: Shipment }) {
   const [cancellationDialogOpen, setCancellationDialogOpen] =
+    useState<boolean>(false);
+  const [duplicateDialogOpen, setDuplicateDialogOpen] =
     useState<boolean>(false);
 
   const isCancellable = cancellatedStatuses.includes(shipment.status);
@@ -48,6 +51,7 @@ export function ShipmentActions({ shipment }: { shipment: Shipment }) {
           <DropdownMenuItem
             title="Duplicate"
             description="Create a copy of this shipment."
+            onClick={() => setDuplicateDialogOpen(true)}
           />
           <DropdownMenuItem
             title="Cancel"
@@ -95,6 +99,11 @@ export function ShipmentActions({ shipment }: { shipment: Shipment }) {
           />
         </DropdownMenuContent>
       </DropdownMenu>
+      <ShipmentDuplicateDialog
+        open={duplicateDialogOpen}
+        onOpenChange={setDuplicateDialogOpen}
+        shipment={shipment}
+      />
       <ShipmentCancellationDialog
         open={cancellationDialogOpen}
         onOpenChange={setCancellationDialogOpen}

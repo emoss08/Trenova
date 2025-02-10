@@ -41,11 +41,43 @@ function ShipmentCardSkeleton() {
 export function ShipmentList({
   displayData,
   isLoading,
-  selectedShipmentId,
   onShipmentSelect,
   inputValue,
 }: ShipmentListProps) {
   const { control } = useFormContext<ShipmentFilterSchema>();
+  const renderContent = () => {
+    // During loading, always show skeletons
+    if (isLoading) {
+      console.log("Loading shipments");
+      return Array.from({ length: 10 }, (_, index) => (
+        <ShipmentCardSkeleton key={`skeleton-${index}`} />
+      ));
+    }
+
+    // If we have data, show it
+    if (displayData?.length > 0) {
+      console.log("Showing shipments");
+      return displayData.map((shipment) => (
+        <ShipmentCard
+          key={shipment?.id}
+          shipment={shipment}
+          onSelect={onShipmentSelect}
+          inputValue={inputValue}
+        />
+      ));
+    }
+
+    // Only show empty state if we're not loading and have no data
+    console.log("No shipments found");
+    return (
+      <EmptyState
+        title="No Shipments Found"
+        description="Adjust your search criteria and try again"
+        className="size-full border-none bg-transparent"
+        icons={[faBox, faSearch, faTruck]}
+      />
+    );
+  };
 
   return (
     <>
@@ -84,29 +116,7 @@ export function ShipmentList({
 
       <div className="flex-1 min-h-0">
         <ScrollArea className="h-full">
-          <div className="p-2 space-y-2">
-            {displayData.map((shipment, index) =>
-              isLoading || !shipment ? (
-                <ShipmentCardSkeleton key={index} />
-              ) : (
-                <ShipmentCard
-                  key={shipment.id}
-                  shipment={shipment}
-                  isSelected={selectedShipmentId === shipment.id}
-                  onSelect={onShipmentSelect}
-                  inputValue={inputValue}
-                />
-              ),
-            )}
-            {displayData.length === 0 && (
-              <EmptyState
-                title="No Shipments Found"
-                description="Adjust your search criteria and try again"
-                className="size-full border-none bg-transparent"
-                icons={[faBox, faSearch, faTruck]}
-              />
-            )}
-          </div>
+          <div className="p-2 space-y-2">{renderContent()}</div>
         </ScrollArea>
       </div>
     </>

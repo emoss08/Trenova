@@ -92,8 +92,7 @@ export type ShipmentPaginationProps = {
 };
 
 export type ShipmentCardProps = {
-  shipment: Shipment;
-  isSelected: boolean;
+  shipment?: Shipment;
   onSelect: (shipmentId: string) => void;
   inputValue?: string;
 };

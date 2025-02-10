@@ -198,3 +198,30 @@ func (sr *shipmentMoveRepository) GetMovesByShipmentID(ctx context.Context, opts
 
 	return moves, nil
 }
+
+func (sr *shipmentMoveRepository) BulkInsert(ctx context.Context, moves []*shipment.ShipmentMove) ([]*shipment.ShipmentMove, error) {
+	dba, err := sr.db.DB(ctx)
+	if err != nil {
+		return nil, eris.Wrap(err, "get database connection")
+	}
+
+	log := sr.l.With().
+		Str("operation", "BulkInsert").
+		Interface("moves", moves).
+		Logger()
+
+	err = dba.RunInTx(ctx, nil, func(c context.Context, tx bun.Tx) error {
+		if _, err = tx.NewInsert().Model(&moves).Exec(c); err != nil {
+			log.Error().Err(err).Msg("failed to bulk insert moves")
+			return err
+		}
+
+		return nil
+	})
+	if err != nil {
+		log.Error().Err(err).Msg("failed to bulk insert moves and stops")
+		return nil, err
+	}
+
+	return moves, nil
+}

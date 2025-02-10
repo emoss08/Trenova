@@ -4,12 +4,14 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { ShipmentStatus, type Shipment } from "@/types/shipment";
 import { faChevronLeft } from "@fortawesome/pro-solid-svg-icons";
 import { CanceledShipmentOverlay } from "../shipment-cancellation-overlay";
+import { ShipmentNotFoundOverlay } from "../shipment-not-found-overlay";
 import { ShipmentCommodityDetails } from "./shipment-commodity-details";
 import {
   ShipmentBillingDetails,
   ShipmentDetailsHeader,
   ShipmentServiceDetails,
 } from "./shipment-details-components";
+import { ShipmentDetailsSkeleton } from "./shipment-details-skeleton";
 import { ShipmentActions } from "./shipment-menu-actions";
 import { ShipmentMovesDetails } from "./shipment-move-details";
 
@@ -24,12 +26,12 @@ export default function ShipmentDetails({
   isLoading,
   onBack,
 }: ShipmentDetailsProps) {
-  if (!selectedShipment) {
-    return null;
+  if (isLoading) {
+    return <ShipmentDetailsSkeleton />;
   }
 
-  if (isLoading) {
-    return <p>Loading...</p>;
+  if (!selectedShipment) {
+    return <ShipmentNotFoundOverlay onBack={onBack} />;
   }
 
   const content = (

@@ -6,8 +6,6 @@ import { ShipmentSidebar } from "./sidebar/shipment-sidebar";
 export default function ShipmentMap() {
   const center = { lat: 39.8283, lng: -98.5795 };
 
-  console.log("SHIPMENT MAP RENDERED");
-
   return (
     <div className="flex gap-4 h-[calc(100vh-theme(spacing.16))]">
       <div className="w-[420px] flex-shrink-0">
