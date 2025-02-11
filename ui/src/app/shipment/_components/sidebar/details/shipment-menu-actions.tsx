@@ -62,10 +62,6 @@ export function ShipmentActions({ shipment }: { shipment: Shipment }) {
           <DropdownMenuLabel>Management Actions</DropdownMenuLabel>
           <DropdownMenuSeparator />
           <DropdownMenuItem
-            title="Split Shipment"
-            description="Divide this shipment into multiple parts."
-          />
-          <DropdownMenuItem
             title="Merge Shipment"
             description="Combine multiple shipments into one."
           />

@@ -97,6 +97,9 @@ const (
 	ActionAudit     = Action("audit")     // Audit actions for compliance and review.
 	ActionDelegate  = Action("delegate")  // Delegate permissions or responsibilities to others.
 	ActionConfigure = Action("configure") // Configure system settings or resources.
+
+	// Shipment related actions
+	ActionSplit = Action("split") // Split a shipment.
 )
 
 type Scope string
@@ -276,7 +279,7 @@ var (
 			ActionManage, // does the user have permission to manage the assignment? (Full access)
 		},
 		ResourceShipmentMove: append(
-			append(BaseActions, WorkflowActions...),
+			append(BaseActions, ActionSplit),
 			append(DataActions, FieldActions...)...,
 		),
 		ResourceFleetCode: append(

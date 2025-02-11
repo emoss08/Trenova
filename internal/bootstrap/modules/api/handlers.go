@@ -19,6 +19,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/handlers/servicetype"
 	"github.com/emoss08/trenova/internal/api/handlers/session"
 	"github.com/emoss08/trenova/internal/api/handlers/shipment"
+	"github.com/emoss08/trenova/internal/api/handlers/shipmentmove"
 	"github.com/emoss08/trenova/internal/api/handlers/shipmenttype"
 	"github.com/emoss08/trenova/internal/api/handlers/tableconfiguration"
 	"github.com/emoss08/trenova/internal/api/handlers/tractor"
@@ -57,4 +58,5 @@ var HandlersModule = fx.Module("api.Handlers", fx.Provide(
 	shipment.NewHandler,
 	routing.NewHandler,
 	assignment.NewHandler,
+	shipmentmove.NewHandler,
 ))

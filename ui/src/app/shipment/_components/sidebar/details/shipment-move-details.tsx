@@ -245,7 +245,7 @@ const StopTimeline = memo(function StopTimeline({
         </div>
         <div className="flex-1">
           <div className="text-sm text-primary">
-            {stop.location?.addressLine1}
+            {stop.location?.addressLine1} ({stop.type})
           </div>
           <div className="text-2xs text-muted-foreground">
             {stop.location?.city}, {stop.location?.state?.abbreviation}{" "}
@@ -290,14 +290,17 @@ function MoveActions({ move }: { move: ShipmentMove }) {
             onClick={() => setAssignmentDialogOpen(!assignmentDialogOpen)}
             disabled={assignDisabled}
           />
-
+          <DropdownMenuItem
+            title="Split Move"
+            description="Divide this move into multiple parts."
+          />
           <DropdownMenuItem
             title="Edit Move"
-            description="Modify move details"
+            description="Modify move details."
           />
           <DropdownMenuItem
             title="View Audit Log"
-            description="View the audit log for the move"
+            description="View the audit log for the move."
           />
         </DropdownMenuContent>
       </DropdownMenu>
