@@ -644,7 +644,7 @@ func (sr *shipmentRepository) duplicateShipmentFields(ctx context.Context, origi
 		Weight:              original.Weight,
 		TemperatureMin:      original.TemperatureMin,
 		TemperatureMax:      original.TemperatureMax,
-		BOL:                 fmt.Sprintf("%s-COPY", original.BOL),
+		BOL:                 "GENERATED-COPY",
 	}
 
 	return shp, nil

@@ -39,7 +39,7 @@ export function PopoverForm({
         layoutId={`${title}-wrapper`}
         onClick={() => setOpen(true)}
         style={{ borderRadius: 100 }}
-        className="flex size-10 items-center justify-center border bg-foreground text-sm text-background font-medium outline-none cursor-pointer"
+        className="flex size-10 items-center justify-center text-sm text-white font-medium outline-none cursor-pointer bg-gradient-to-r from-blue-500 to-purple-500 hover:from-sky-500 hover:to-indigo-500 shadow-lg transition-colors duration-300"
       >
         <motion.span layoutId={`${title}-title`}>
           <Icon icon={faFingerprint} className="size-4" />
