@@ -108,7 +108,7 @@ export function StopDialogForm() {
             />
           </FormControl>
 
-          <FormControl>
+          <FormControl cols="full">
             <AsyncSelectField
               name="locationId"
               control={control}
@@ -124,7 +124,7 @@ export function StopDialogForm() {
               valueKey={["code"]}
             />
           </FormControl>
-          <FormControl>
+          <FormControl cols="full">
             <InputField
               name="addressLine"
               control={control}

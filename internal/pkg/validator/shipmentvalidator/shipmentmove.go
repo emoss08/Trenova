@@ -81,7 +81,10 @@ func (v *MoveValidator) validateStops(ctx context.Context, valCtx *validator.Val
 	v.validateStopSequence(m, multiErr)
 
 	for idx, stop := range m.Stops {
-		v.sv.Validate(ctx, valCtx, stop, multiErr, idx)
+		stopMultiErr := v.sv.Validate(ctx, valCtx, stop, WithIndexedMultiError(multiErr, idx))
+		if stopMultiErr != nil {
+			multiErr.Add("stops", errors.ErrInvalid, stopMultiErr.Error())
+		}
 	}
 }
 

@@ -2,7 +2,7 @@ trenova.local {
 	tls /etc/caddy/certs/cert.pem /etc/caddy/certs/key.pem
 
 	handle /ws/* {
-		reverse_proxy api:3001 {
+		reverse_proxy tren-api:3001 {
 			header_up Host {host}
 			header_up X-Real-IP {remote}
 			header_up Connection "Upgrade"
@@ -11,10 +11,10 @@ trenova.local {
 	}
 
 	handle /api/* {
-		reverse_proxy api:3001
+		reverse_proxy tren-api:3001
 	}
 
 	handle /* {
-		reverse_proxy client:5173
+		reverse_proxy tren-client:5173
 	}
 }

@@ -3,10 +3,11 @@ x-build-args: &build-args
   GO_VERSION: 1.23
   ALPINE_VERSION: latest
 
+name: trenova-prod
 services:
-  db:
+  tren-db:
+    container_name: tren-db
     image: postgres:latest
-    container_name: db
     ports:
       - "5432:5432"
     environment:
@@ -68,9 +69,9 @@ services:
       retries: 5
       start_period: 30s # Allow time for initial startup
 
-  meilisearch:
+  tren-search:
+    container_name: tren-search
     image: getmeili/meilisearch:v1.11.3
-    container_name: meilisearch
     ports:
       - "7700:7700"
     environment:
@@ -92,9 +93,9 @@ services:
       retries: 3
       timeout: 5s
 
-  redis:
+  tren-redis:
+    container_name: tren-redis
     image: redis/redis-stack:latest
-    container_name: redis
     ports:
       - "6379:6379"
     environment:
@@ -114,9 +115,9 @@ services:
       timeout: 5s
       retries: 5
 
-  minio:
+  tren-minio:
+    container_name: tren-minio
     image: quay.io/minio/minio
-    container_name: minio
     command: server /data --console-address ":9001"
     environment:
       - MINIO_ROOT_USER=${MINIO_ROOT_USER:-minioadmin}
@@ -139,25 +140,25 @@ services:
       timeout: 20s
       retries: 3
 
-  api:
+  tren-api:
+    container_name: tren-api
     build:
       context: .
       dockerfile: Dockerfile
       args:
         <<: *build-args
-    container_name: trenova-api
     ports:
       - "3001:3001"
     environment:
       - APP_ENV=production
     depends_on:
-      db:
+      tren-db:
         condition: service_healthy
-      redis:
+      tren-redis:
         condition: service_healthy
-      meilisearch:
+      tren-search:
         condition: service_healthy
-      minio:
+      tren-minio:
         condition: service_healthy
     networks:
       - app-network
@@ -174,19 +175,19 @@ services:
       start_period: 10s
     restart: unless-stopped
 
-  client:
+  tren-client:
+    container_name: tren-client
     build:
       context: ./ui
       dockerfile: Dockerfile
-    container_name: trenova-client
     ports:
       - "5173:5173"
     networks:
       - app-network
     depends_on:
-      - api
+      - tren-api
     environment:
-      - VITE_API_URL=/api/v1
+      - VITE_API_URL=https://trenova.local/api/v1
     restart: unless-stopped
     deploy:
       resources:
@@ -194,11 +195,11 @@ services:
           memory: 256M
           cpus: "0.5"
 
-  caddy:
+  tren-caddy:
+    container_name: tren-caddy
     build:
       context: .
       dockerfile: Dockerfile.caddy
-    container_name: caddy
     ports:
       - "80:80"
       - "443:443"
@@ -211,7 +212,7 @@ services:
     networks:
       - app-network
     depends_on:
-      - api
+      - tren-api
     restart: unless-stopped
     deploy:
       resources:

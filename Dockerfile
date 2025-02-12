@@ -1,4 +1,4 @@
-FROM golang:1.23-alpine AS builder
+FROM golang:1.24rc3-alpine AS builder
 
 # Install necessary packages and librdkafka
 RUN apk add --update --no-cache alpine-sdk bash ca-certificates \
