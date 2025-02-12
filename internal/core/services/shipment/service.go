@@ -389,24 +389,6 @@ func (s *Service) Duplicate(ctx context.Context, req *repositories.DuplicateShip
 		return nil, err
 	}
 
-	// get the original shipment
-	original, err := s.repo.GetByID(ctx, repositories.GetShipmentByIDOptions{
-		ID:    req.ShipmentID,
-		OrgID: req.OrgID,
-		BuID:  req.BuID,
-		ShipmentOptions: repositories.ShipmentOptions{
-			ExpandShipmentDetails: true,
-		},
-	})
-	if err != nil {
-		log.Error().Err(err).Msg("failed to get shipment")
-		return nil, err
-	}
-
-	if err := s.v.ValidateCancellation(original); err != nil {
-		return nil, err
-	}
-
 	newEntity, err := s.repo.Duplicate(ctx, req)
 	if err != nil {
 		log.Error().Err(err).Msg("failed to duplicate shipment")

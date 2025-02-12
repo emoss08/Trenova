@@ -49,7 +49,7 @@ export function CommodityForm() {
           isClearable
           name="hazardousMaterialId"
           control={control}
-          link="/hazardous-materials"
+          link="/hazardous-materials/"
           label="Hazardous Material"
           placeholder="Select Hazardous Material"
           description="Select the hazardous material classification if this commodity contains regulated substances."

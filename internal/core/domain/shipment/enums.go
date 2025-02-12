@@ -20,6 +20,10 @@ const (
 	// StatusDelayed indicates that the shipment is delayed
 	StatusDelayed = Status("Delayed")
 
+	// StatusPartiallyCompleted indicates that not all moves on the shipment
+	// have been completed
+	StatusPartiallyCompleted = Status("PartiallyCompleted")
+
 	// StatusCompleted indicates that the shipment has been completed
 	StatusCompleted = Status("Completed")
 

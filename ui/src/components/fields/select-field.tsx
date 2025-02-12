@@ -51,6 +51,7 @@ const ReactSelectInput = React.forwardRef<any, ReactSelectInputProps>(
       placeholder = "Select an option...",
       className,
       isReadOnly,
+      isDisabled,
       isInvalid,
       isMulti,
       onChange,
@@ -166,6 +167,7 @@ const ReactSelectInput = React.forwardRef<any, ReactSelectInputProps>(
         className={className}
         value={getValue()}
         isLoading={isLoading}
+        isDisabled={isDisabled || isReadOnly}
         onChange={(newValue, actionMeta) => {
           const transformedValue = handleChange(
             newValue,
@@ -215,7 +217,7 @@ const ReactSelectInput = React.forwardRef<any, ReactSelectInputProps>(
             ),
           placeholder: () =>
             cn("text-muted-foreground", isError && "text-red-500"),
-          container: () => cn(isReadOnly && "cursor-not-allowed opacity-50"),
+          container: () => cn(isReadOnly && "cursor-not-allowed opacity-60"),
           valueContainer: () => cn("gap-1", isReadOnly && "cursor-not-allowed"),
           singleValue: () => "leading-7 ml-1",
           multiValue: () =>
@@ -300,7 +302,7 @@ export function SelectField<T extends FieldValues>({
             onChange={onChange}
             placeholder={placeholder}
             onBlur={onBlur}
-            onFocus={() => setIsOpen(true)}
+            // onFocus={() => setIsOpen(true)}
             menuIsOpen={isOpen}
             onMenuOpen={() => setIsOpen(true)}
             onMenuClose={() => setIsOpen(false)}

@@ -94,14 +94,14 @@ func LoadFakeAccounts(ctx context.Context, db *bun.DB, fixture *dbfixture.Fixtur
 	for i := 0; i < numAccounts; i++ {
 		email := fake.Internet().Email()
 		name := fake.Person().Name()
-		username := fake.Internet().User() // This sometimes will generate the same username for multiple users so re-generate if it already exists
+		username := fake.RandomStringWithLength(19) // This sometimes will generate the same username for multiple users so re-generate if it already exists
 		timezone := "America/Los_Angeles"
 
 		usr := &user.User{
 			CurrentOrganizationID: org.ID,
 			BusinessUnitID:        bu.ID,
 			Status:                domain.StatusActive,
-			Username:              username,
+			Username:              username, // ensure the user name is no longer than 20 characters
 			EmailAddress:          email,
 			Timezone:              timezone,
 			Name:                  name,

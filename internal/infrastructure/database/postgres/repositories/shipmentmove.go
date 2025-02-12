@@ -240,10 +240,9 @@ func (sr *shipmentMoveRepository) SplitMove(ctx context.Context, req *repositori
 	log := sr.l.With().
 		Str("operation", "SplitMove").
 		Str("moveID", req.MoveID.String()).
-		Str("splitLocationID", req.SplitLocationID.String()).
 		Logger()
 
-	// Get the original move with it's stops
+	// Get the original move with its stops
 	originalMove, err := sr.GetByID(ctx, repositories.GetMoveByIDOptions{
 		MoveID:            req.MoveID,
 		OrgID:             req.OrgID,
@@ -254,53 +253,114 @@ func (sr *shipmentMoveRepository) SplitMove(ctx context.Context, req *repositori
 		return nil, err
 	}
 
-	result := new(repositories.SplitMoveResponse)
+	var newMove *shipment.ShipmentMove
 	err = dba.RunInTx(ctx, nil, func(c context.Context, tx bun.Tx) error {
-		// Create the new move
-		newMove := &shipment.ShipmentMove{
-			ID:             pulid.MustNew("smv_"), // We need to generate a new ID for the new move
+		// First, get all moves for this shipment with sequence > originalMove.Sequence
+		var moves []*shipment.ShipmentMove
+		err = tx.NewSelect().
+			Model(&moves).
+			Where("shipment_id = ? AND sequence > ?", originalMove.ShipmentID, originalMove.Sequence).
+			Order("sequence DESC").
+			Scan(c)
+		if err != nil {
+			return err
+		}
+
+		// Update sequences for existing moves, starting from the highest sequence
+		for _, move := range moves {
+			move.Sequence++
+			if _, err = tx.NewUpdate().Model(move).
+				Set("sequence = ?", move.Sequence).
+				WherePK().
+				Exec(c); err != nil {
+				return err
+			}
+		}
+
+		// Delete the original delivery stop
+		_, err = tx.NewDelete().Model((*shipment.Stop)(nil)).
+			Where("shipment_move_id = ? AND sequence = ?", originalMove.ID, 1).
+			Exec(c)
+		if err != nil {
+			return err
+		}
+
+		// Create split delivery stop for the original move
+		splitDeliveryStop := &shipment.Stop{
+			ID:               pulid.MustNew("stp_"),
+			BusinessUnitID:   originalMove.BusinessUnitID,
+			OrganizationID:   originalMove.OrganizationID,
+			ShipmentMoveID:   originalMove.ID, // Keep it on original move
+			LocationID:       req.SplitLocationID,
+			Status:           shipment.StopStatusNew,
+			Type:             shipment.StopTypeSplitDelivery,
+			Sequence:         1,
+			Pieces:           req.SplitQuantities.Pieces,
+			Weight:           req.SplitQuantities.Weight,
+			PlannedArrival:   req.SplitDeliveryTimes.PlannedArrival,
+			PlannedDeparture: req.SplitDeliveryTimes.PlannedDeparture,
+		}
+
+		// Insert the split delivery stop
+		if _, err = tx.NewInsert().Model(splitDeliveryStop).Exec(c); err != nil {
+			return err
+		}
+
+		// Create new move with sequence 1
+		newMove = &shipment.ShipmentMove{
+			ID:             pulid.MustNew("smv_"),
 			BusinessUnitID: originalMove.BusinessUnitID,
 			OrganizationID: originalMove.OrganizationID,
 			ShipmentID:     originalMove.ShipmentID,
 			Status:         shipment.MoveStatusNew,
 			Loaded:         true,
-			Distance:       originalMove.Distance, // TODO(Wolfred): We will need to recalculate this once we have PCMiler added properly.
+			Sequence:       1, // Explicitly set to 1
+			Distance:       originalMove.Distance,
 		}
-
-		sr.l.Info().Interface("req", req).Msg("Split request")
-
-		newStops, modifiedStops := sr.processSplitStops(originalMove, req, newMove.ID)
 
 		// Insert the new move
 		if _, err = tx.NewInsert().Model(newMove).Exec(c); err != nil {
-			sr.l.Error().Err(err).Msg("failed to insert new move")
 			return err
 		}
 
-		// Insert the new stops
-		if _, err = tx.NewInsert().Model(&newStops).Exec(c); err != nil {
-			sr.l.Error().Err(err).Msg("failed to insert new stops")
+		// Create stops for new move
+		newMoveStops := []*shipment.Stop{
+			{
+				// Split Pickup
+				ID:               pulid.MustNew("stp_"),
+				BusinessUnitID:   originalMove.BusinessUnitID,
+				OrganizationID:   originalMove.OrganizationID,
+				ShipmentMoveID:   newMove.ID,
+				LocationID:       req.SplitLocationID,
+				Status:           shipment.StopStatusNew,
+				Type:             shipment.StopTypeSplitPickup,
+				Sequence:         0,
+				Pieces:           req.SplitQuantities.Pieces,
+				Weight:           req.SplitQuantities.Weight,
+				PlannedArrival:   req.SplitPickupTimes.PlannedArrival,
+				PlannedDeparture: req.SplitPickupTimes.PlannedDeparture,
+			},
+			{
+				// Final Delivery
+				ID:               pulid.MustNew("stp_"),
+				BusinessUnitID:   originalMove.BusinessUnitID,
+				OrganizationID:   originalMove.OrganizationID,
+				ShipmentMoveID:   newMove.ID,
+				LocationID:       originalMove.Stops[1].LocationID,
+				Status:           shipment.StopStatusNew,
+				Type:             shipment.StopTypeDelivery,
+				Sequence:         1,
+				Pieces:           req.SplitQuantities.Pieces,
+				Weight:           req.SplitQuantities.Weight,
+				PlannedArrival:   originalMove.Stops[1].PlannedArrival,
+				PlannedDeparture: originalMove.Stops[1].PlannedDeparture,
+				AddressLine:      originalMove.Stops[1].AddressLine,
+			},
+		}
+
+		// Insert the stops for new move
+		if _, err = tx.NewInsert().Model(&newMoveStops).Exec(c); err != nil {
 			return err
-		}
-
-		// update the modified stops
-		for _, stop := range modifiedStops {
-			if _, err = tx.NewUpdate().Model(stop).WherePK().Exec(c); err != nil {
-				sr.l.Error().Err(err).Msg("failed to update modified stop")
-				return err
-			}
-		}
-
-		// Update the original move
-		originalMove.Version++
-		if _, err = tx.NewUpdate().Model(originalMove).WherePK().Exec(c); err != nil {
-			sr.l.Error().Err(err).Msg("failed to update original move")
-			return err
-		}
-
-		result = &repositories.SplitMoveResponse{
-			OriginalMove: originalMove,
-			NewMove:      newMove,
 		}
 
 		return nil
@@ -310,63 +370,31 @@ func (sr *shipmentMoveRepository) SplitMove(ctx context.Context, req *repositori
 		return nil, err
 	}
 
+	// Fetch updated moves for response
+	originalMove, err = sr.GetByID(ctx, repositories.GetMoveByIDOptions{
+		MoveID:            originalMove.ID,
+		OrgID:             req.OrgID,
+		BuID:              req.BuID,
+		ExpandMoveDetails: true,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	newMove, err = sr.GetByID(ctx, repositories.GetMoveByIDOptions{
+		MoveID:            newMove.ID,
+		OrgID:             req.OrgID,
+		BuID:              req.BuID,
+		ExpandMoveDetails: true,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	result := &repositories.SplitMoveResponse{
+		OriginalMove: originalMove,
+		NewMove:      newMove,
+	}
+
 	return result, nil
-}
-
-func (sr *shipmentMoveRepository) processSplitStops(
-	originalMove *shipment.ShipmentMove, req *repositories.SplitMoveRequest, newMoveID pulid.ID,
-) ([]*shipment.Stop, []*shipment.Stop) {
-	newStops := make([]*shipment.Stop, 0)
-	modifiedStops := make([]*shipment.Stop, 0)
-
-	// Create split delivery stop
-	splitDeliveryStop := &shipment.Stop{
-		BusinessUnitID:   originalMove.BusinessUnitID,
-		OrganizationID:   originalMove.OrganizationID,
-		ShipmentMoveID:   originalMove.ID,
-		LocationID:       req.SplitLocationID,
-		Status:           shipment.StopStatusNew,
-		Type:             shipment.StopTypeSplitDelivery,
-		Sequence:         req.SplitAfterStopSequence + 1,
-		Pieces:           req.SplitQuantities.Pieces,
-		Weight:           req.SplitQuantities.Weight,
-		PlannedArrival:   req.SplitDeliveryTimes.PlannedArrival,
-		PlannedDeparture: req.SplitDeliveryTimes.PlannedDeparture,
-	}
-	modifiedStops = append(modifiedStops, splitDeliveryStop)
-
-	// Create split pickup stop for new move
-	splitPickupStop := &shipment.Stop{
-		BusinessUnitID:   originalMove.BusinessUnitID,
-		OrganizationID:   originalMove.OrganizationID,
-		ShipmentMoveID:   newMoveID,
-		LocationID:       req.SplitLocationID,
-		Status:           shipment.StopStatusNew,
-		Type:             shipment.StopTypeSplitPickup,
-		Sequence:         1,
-		Pieces:           req.SplitQuantities.Pieces,
-		Weight:           req.SplitQuantities.Weight,
-		PlannedArrival:   req.SplitPickupTimes.PlannedArrival,
-		PlannedDeparture: req.SplitPickupTimes.PlannedDeparture,
-	}
-	newStops = append(newStops, splitPickupStop)
-
-	// Create final delivery stop (copy from original delivery stop)
-	originalDelivery := originalMove.Stops[1]
-	finalDeliveryStop := &shipment.Stop{
-		BusinessUnitID:   originalMove.BusinessUnitID,
-		OrganizationID:   originalMove.OrganizationID,
-		ShipmentMoveID:   newMoveID,
-		LocationID:       originalDelivery.LocationID,
-		Status:           shipment.StopStatusNew,
-		Type:             shipment.StopTypeDelivery,
-		Sequence:         2,
-		Pieces:           req.SplitQuantities.Pieces,
-		Weight:           req.SplitQuantities.Weight,
-		PlannedArrival:   originalDelivery.PlannedArrival,
-		PlannedDeparture: originalDelivery.PlannedDeparture,
-	}
-	newStops = append(newStops, finalDeliveryStop)
-
-	return newStops, modifiedStops
 }

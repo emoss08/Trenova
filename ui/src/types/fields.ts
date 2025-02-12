@@ -124,6 +124,11 @@ export type DoubleClickSelectFieldProps<T extends FieldValues> = {
   options: SelectOption[];
 };
 
+export type Suggestion = {
+  date: Date;
+  inputString: string;
+};
+
 export interface DatePickerProps
   extends React.InputHTMLAttributes<HTMLInputElement> {
   date: Date | undefined;
@@ -144,10 +149,16 @@ export type AutoCompleteDateFieldProps<T extends FieldValues> = Omit<
 export interface DateTimePickerProps
   extends React.InputHTMLAttributes<HTMLInputElement> {
   dateTime: Date | undefined;
-  setDateTime: React.Dispatch<React.SetStateAction<Date | undefined>>;
+  setDateTime: (date: Date | undefined) => void;
+  isInvalid?: boolean;
+  placeholder?: string;
+  clearable?: boolean;
+  label?: string;
+  description?: string;
 }
 
-export type Suggestion = {
-  date: Date;
-  inputString: string;
-};
+export type AutoCompleteDateTimeFieldProps<T extends FieldValues> = Omit<
+  DateTimePickerProps,
+  "dateTime" | "setDateTime"
+> &
+  FormControlProps<T>;

@@ -10,6 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/pkg/errors"
 	"github.com/emoss08/trenova/internal/pkg/logger"
 	"github.com/emoss08/trenova/internal/pkg/utils/jsonutils"
+	"github.com/emoss08/trenova/internal/pkg/validator/shipmentvalidator"
 	"github.com/emoss08/trenova/pkg/types/pulid"
 	"github.com/rs/zerolog"
 	"go.uber.org/fx"
@@ -22,7 +23,7 @@ type ServiceParams struct {
 	Repo         repositories.ShipmentMoveRepository
 	PermService  services.PermissionService
 	AuditService services.AuditService
-	// Validator     *shipmentvalidator.Validator
+	Validator    *shipmentvalidator.MoveValidator
 }
 
 type Service struct {
@@ -30,7 +31,7 @@ type Service struct {
 	repo repositories.ShipmentMoveRepository
 	ps   services.PermissionService
 	as   services.AuditService
-	// v    *shipmentvalidator.Validator
+	v    *shipmentvalidator.MoveValidator
 }
 
 func NewService(p ServiceParams) *Service {
@@ -83,8 +84,7 @@ func (s *Service) Split(ctx context.Context, req *repositories.SplitMoveRequest,
 		return nil, err
 	}
 
-	// TODO(Wolfred): Add validation
-	if err := req.Validate(ctx, original); err != nil {
+	if err := s.v.ValidateSplitRequest(ctx, original, req); err != nil {
 		return nil, err
 	}
 

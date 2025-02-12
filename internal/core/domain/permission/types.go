@@ -29,6 +29,7 @@ const (
 	ResourceShipment              = Resource("shipment")               // Represents resources for managing shipments.
 	ResourceAssignment            = Resource("assignment")             // Represents resources for managing assignments.
 	ResourceShipmentMove          = Resource("shipment_move")          // Represents resources for managing movements.
+	ResourceStop                  = Resource("stop")                   // Represents resources for managing stops.
 	ResourceFleetCode             = Resource("fleet_code")             // Represents resources for managing fleet codes.
 	ResourceEquipmentType         = Resource("equipment_type")         // Represents resources for managing equipment types.
 	ResourceEquipmentManufacturer = Resource("equipment_manufacturer") // Represents resources for managing equipment manfacturers.
@@ -287,6 +288,10 @@ var (
 			append(DataActions, FieldActions...)...,
 		),
 		ResourceDocumentQualityConfig: append(
+			BaseActions,
+			append(DataActions, FieldActions...)...,
+		),
+		ResourceStop: append(
 			BaseActions,
 			append(DataActions, FieldActions...)...,
 		),

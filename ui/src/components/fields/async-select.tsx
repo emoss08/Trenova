@@ -138,12 +138,13 @@ const ReactAsyncSelect = React.forwardRef<any, ReactAsyncSelectInputProps>(
     const [inputValue, setInputValue] = useState("");
     const previousValueRef = useRef<any>(value);
     const optionsCache = useRef<SelectOption[]>([]);
+    const mountedRef = useRef(false);
 
     useEffect(() => {
       const abortController = new AbortController();
 
-      // Skip if the value hasn't actually changed
-      if (value === previousValueRef.current) {
+      // Skip if the value hasn't actually changed and component is already mounted
+      if (value === previousValueRef.current && mountedRef.current) {
         return;
       }
 
@@ -211,8 +212,12 @@ const ReactAsyncSelect = React.forwardRef<any, ReactAsyncSelectInputProps>(
       };
 
       fetchAndSetOption();
+      mountedRef.current = true;
 
-      return () => abortController.abort();
+      return () => {
+        abortController.abort();
+        mountedRef.current = false; // Reset mounted state on cleanup
+      };
     }, [value, isMulti, link, valueKey]);
 
     const handleChange = useCallback(
