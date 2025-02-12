@@ -263,6 +263,11 @@ func (sr *shipmentMoveRepository) SplitMove(ctx context.Context, req *repositori
 			Order("sequence DESC").
 			Scan(c)
 		if err != nil {
+			sr.l.Error().
+				Err(err).
+				Str("moveID", originalMove.GetID()).
+				Int("sequence", originalMove.Sequence).
+				Msg("failed to get moves with sequence greater than original move")
 			return err
 		}
 
@@ -271,8 +276,14 @@ func (sr *shipmentMoveRepository) SplitMove(ctx context.Context, req *repositori
 			move.Sequence++
 			if _, err = tx.NewUpdate().Model(move).
 				Set("sequence = ?", move.Sequence).
+				Set("version = version + 1").
 				WherePK().
 				Exec(c); err != nil {
+				sr.l.Error().
+					Err(err).
+					Str("moveID", move.GetID()).
+					Int("sequence", move.Sequence).
+					Msg("failed to update move sequence")
 				return err
 			}
 		}
@@ -282,6 +293,10 @@ func (sr *shipmentMoveRepository) SplitMove(ctx context.Context, req *repositori
 			Where("shipment_move_id = ? AND sequence = ?", originalMove.ID, 1).
 			Exec(c)
 		if err != nil {
+			sr.l.Error().
+				Err(err).
+				Str("moveID", originalMove.GetID()).
+				Msg("failed to delte the original delivery stop from the original move")
 			return err
 		}
 
@@ -303,6 +318,11 @@ func (sr *shipmentMoveRepository) SplitMove(ctx context.Context, req *repositori
 
 		// Insert the split delivery stop
 		if _, err = tx.NewInsert().Model(splitDeliveryStop).Exec(c); err != nil {
+			sr.l.Error().
+				Err(err).
+				Str("moveID", originalMove.GetID()).
+				Interface("splitDeliveryStop", splitDeliveryStop).
+				Msg("failed to insert the split delivery stop")
 			return err
 		}
 
@@ -320,6 +340,11 @@ func (sr *shipmentMoveRepository) SplitMove(ctx context.Context, req *repositori
 
 		// Insert the new move
 		if _, err = tx.NewInsert().Model(newMove).Exec(c); err != nil {
+			sr.l.Error().
+				Err(err).
+				Str("moveID", originalMove.GetID()).
+				Interface("newMove", newMove).
+				Msg("failed to insert the new move")
 			return err
 		}
 
@@ -360,6 +385,11 @@ func (sr *shipmentMoveRepository) SplitMove(ctx context.Context, req *repositori
 
 		// Insert the stops for new move
 		if _, err = tx.NewInsert().Model(&newMoveStops).Exec(c); err != nil {
+			sr.l.Error().
+				Err(err).
+				Str("moveID", originalMove.GetID()).
+				Interface("newMoveStops", newMoveStops).
+				Msg("failed to insert the stops for the new move")
 			return err
 		}
 

@@ -71,6 +71,7 @@ func (v *MoveValidator) ValidateSplitRequest(
 func (v *MoveValidator) validateID(m *shipment.ShipmentMove, multiErr *errors.MultiError) {
 	if m.ID.IsNotNil() {
 		multiErr.Add("id", errors.ErrInvalid, "ID cannot be set on create")
+		return
 	}
 }
 
@@ -195,6 +196,15 @@ func (v *MoveValidator) validateSplitTimes(
 	originalPickup := m.Stops[0]   // First stop is the original pickup
 	originalDelivery := m.Stops[1] // Second stop is the original delivery
 
+	// Validate that the user is not trying to split a move that is already split
+	if originalPickup.Type == shipment.StopTypeSplitPickup || originalDelivery.Type == shipment.StopTypeSplitDelivery {
+		multiErr.Add(
+			"moveId",
+			errors.ErrInvalid,
+			"Cannot split a move that is already split",
+		)
+		return
+	}
 	// Validate split delivery times
 	if req.SplitDeliveryTimes.PlannedArrival <= originalPickup.PlannedDeparture {
 		multiErr.Add(

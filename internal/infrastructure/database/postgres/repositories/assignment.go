@@ -77,7 +77,7 @@ func (ar *assignmentRepository) GetByID(ctx context.Context, opts repositories.G
 		if eris.Is(err, sql.ErrNoRows) {
 			return nil, errors.NewNotFoundError("Assignment not found within your organization")
 		}
-		log.Error().Err(err).Msg("failed to get assignment")
+		log.Error().Err(err).Msg("failed to get assignment by ID")
 		return nil, err
 	}
 
@@ -112,7 +112,10 @@ func (ar *assignmentRepository) BulkAssign(ctx context.Context, req *repositorie
 		BuID:       req.BuID,
 	})
 	if err != nil {
-		log.Error().Err(err).Msg("failed to get shipment moves")
+		log.Error().
+			Err(err).
+			Str("shipmentID", req.ShipmentID.String()).
+			Msg("failed to get shipment moves")
 		return nil, err
 	}
 
@@ -145,13 +148,19 @@ func (ar *assignmentRepository) processBulkAssignment(ctx context.Context, tx bu
 		return err
 	}
 
+	// * Update the status of the moves to assigned
 	if _, err := ar.moveRepo.BulkUpdateStatus(ctx, repositories.BulkUpdateMoveStatusRequest{
 		MoveIDs: moveIDs,
 		Status:  shipment.MoveStatusAssigned,
 	}); err != nil {
+		ar.l.Error().
+			Err(err).
+			Interface("moveIDs", moveIDs).
+			Msg("failed to to bulk update move statuses to assigned")
 		return err
 	}
 
+	// * Update the status of the shipment to assigned
 	if _, err := ar.shipmentRepo.UpdateStatus(ctx, &repositories.UpdateShipmentStatusRequest{
 		GetOpts: repositories.GetShipmentByIDOptions{
 			ID:    req.ShipmentID,
@@ -160,6 +169,10 @@ func (ar *assignmentRepository) processBulkAssignment(ctx context.Context, tx bu
 		},
 		Status: shipment.StatusAssigned,
 	}); err != nil {
+		ar.l.Error().
+			Err(err).
+			Str("shipmentID", req.ShipmentID.String()).
+			Msg("failed to update shipment status to assigned")
 		return err
 	}
 
@@ -188,9 +201,9 @@ func (ar *assignmentRepository) SingleAssign(ctx context.Context, a *shipment.As
 		Logger()
 
 	err = dba.RunInTx(ctx, nil, func(c context.Context, tx bun.Tx) error {
-		_, err = tx.NewInsert().Model(a).Exec(ctx)
-		if err != nil {
-			return eris.Wrap(err, "insert assignment")
+		if _, err = tx.NewInsert().Model(a).Exec(ctx); err != nil {
+			ar.l.Error().Err(err).Interface("assignment", a).Msg("failed to insert assignment")
+			return err
 		}
 
 		return ar.updateAssignmentStatuses(c, a)
@@ -216,6 +229,7 @@ func (ar *assignmentRepository) createAssignments(moves []*shipment.ShipmentMove
 			SecondaryWorkerID: req.SecondaryWorkerID,
 		}
 	}
+
 	return assignments
 }
 
@@ -226,6 +240,9 @@ func (ar *assignmentRepository) updateAssignmentStatuses(ctx context.Context, a 
 		BuID:   a.BusinessUnitID,
 	})
 	if err != nil {
+		ar.l.Error().Err(err).
+			Interface("move", move).
+			Msg("failed to get move by ID")
 		return err
 	}
 
@@ -238,6 +255,9 @@ func (ar *assignmentRepository) updateAssignmentStatuses(ctx context.Context, a 
 		},
 		Status: shipment.MoveStatusAssigned,
 	}); err != nil {
+		ar.l.Error().Err(err).
+			Interface("move", move).
+			Msg("failed to update move status to assigned")
 		return err
 	}
 
@@ -253,6 +273,10 @@ func (ar *assignmentRepository) updateLinkedShipmentStatus(ctx context.Context, 
 		BuID:       a.BusinessUnitID,
 	})
 	if err != nil {
+		ar.l.Error().
+			Err(err).
+			Str("shipmentID", shipmentID.String()).
+			Msg("failed to get moves by shipment ID")
 		return err
 	}
 
@@ -343,6 +367,9 @@ func (ar *assignmentRepository) processReassignment(ctx context.Context, tx bun.
 	// Check if the update affected any rows
 	rowsAffected, err := res.RowsAffected()
 	if err != nil {
+		ar.l.Error().Err(err).
+			Interface("assignment", a).
+			Msg("failed to get rows affected")
 		return err
 	}
 
