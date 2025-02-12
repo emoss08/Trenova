@@ -2,7 +2,6 @@ package stop
 
 import (
 	"github.com/emoss08/trenova/internal/api/middleware"
-	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/services/stop"
 	"github.com/emoss08/trenova/internal/pkg/ctx"
@@ -35,11 +34,6 @@ func (h Handler) RegisterRoutes(r fiber.Router, rl *middleware.RateLimiter) {
 		[]fiber.Handler{h.get},
 		middleware.PerMinute(300), // 300 reads per minute
 	)...)
-
-	api.Put("/:stopID/", rl.WithRateLimit(
-		[]fiber.Handler{h.update},
-		middleware.PerMinute(300), // 300 writes per minute
-	)...)
 }
 
 func (h Handler) get(c *fiber.Ctx) error {
@@ -65,32 +59,4 @@ func (h Handler) get(c *fiber.Ctx) error {
 	}
 
 	return c.Status(fiber.StatusOK).JSON(stp)
-}
-
-func (h Handler) update(c *fiber.Ctx) error {
-	reqCtx, err := ctx.WithRequestContext(c)
-	if err != nil {
-		return h.eh.HandleError(c, err)
-	}
-
-	stopID, err := pulid.MustParse(c.Params("stopID"))
-	if err != nil {
-		return h.eh.HandleError(c, err)
-	}
-
-	stp := new(shipment.Stop)
-	stp.ID = stopID
-	stp.OrganizationID = reqCtx.OrgID
-	stp.BusinessUnitID = reqCtx.BuID
-
-	if err = c.BodyParser(stp); err != nil {
-		return h.eh.HandleError(c, err)
-	}
-
-	updatedEntity, err := h.ss.Update(c.UserContext(), stp, reqCtx.UserID)
-	if err != nil {
-		return h.eh.HandleError(c, err)
-	}
-
-	return c.Status(fiber.StatusOK).JSON(updatedEntity)
 }

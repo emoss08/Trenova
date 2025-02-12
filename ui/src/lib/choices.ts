@@ -5,6 +5,7 @@ import {
   PackingGroupChoiceProps,
 } from "@/types/hazardous-material";
 import { FacilityType, LocationCategoryType } from "@/types/location-category";
+import { RatingMethod, ShipmentStatus } from "@/types/shipment";
 import { StopStatus, StopType } from "@/types/stop";
 import { EquipmentStatus } from "@/types/tractor";
 import { Endorsement, PTOStatus, PTOType, WorkerType } from "@/types/worker";
@@ -17,6 +18,33 @@ export const statusChoices = [
   { value: Status.Active, label: "Active", color: "#15803d" },
   { value: Status.Inactive, label: "Inactive", color: "#b91c1c" },
 ] satisfies ReadonlyArray<ChoiceProps<Status>>;
+
+export const shipmentStatusChoices = [
+  { value: ShipmentStatus.New, label: "New", color: "#15803d" },
+  {
+    value: ShipmentStatus.PartiallyAssigned,
+    label: "Partially Assigned",
+    color: "#7e22ce",
+  },
+  { value: ShipmentStatus.Assigned, label: "Assigned", color: "#b91c1c" },
+  { value: ShipmentStatus.InTransit, label: "In Transit", color: "#f59e0b" },
+  { value: ShipmentStatus.Delayed, label: "Delayed", color: "#0369a1" },
+  { value: ShipmentStatus.Completed, label: "Completed", color: "#10b981" },
+] satisfies ReadonlyArray<ChoiceProps<ShipmentStatus>>;
+
+export const ratingMethodChoices = [
+  { value: RatingMethod.FlatRate, label: "Flat Rate", color: "#15803d" },
+  { value: RatingMethod.PerMile, label: "Per Mile", color: "#7e22ce" },
+  { value: RatingMethod.PerStop, label: "Per Stop", color: "#b91c1c" },
+  { value: RatingMethod.PerPound, label: "Per Pound", color: "#f59e0b" },
+  { value: RatingMethod.PerPallet, label: "Per Pallet", color: "#0369a1" },
+  {
+    value: RatingMethod.PerLinearFoot,
+    label: "Per Linear Foot",
+    color: "#10b981",
+  },
+  { value: RatingMethod.Other, label: "Other", color: "#ec4899" },
+] satisfies ReadonlyArray<ChoiceProps<RatingMethod>>;
 
 export const equipmentStatusChoices = [
   { value: EquipmentStatus.Available, label: "Available", color: "#15803d" },
