@@ -86,19 +86,7 @@ export function StopDialogForm() {
               options={stopStatusChoices}
             />
           </FormControl>
-        </FormGroup>
-      </div>
 
-      <div className="pt-2">
-        <div className="flex items-center gap-2 mb-1">
-          <h3 className="text-sm font-semibold text-foreground">
-            Cargo Details
-          </h3>
-        </div>
-        <p className="text-2xs text-muted-foreground mb-3">
-          Specify the freight information for accurate load planning.
-        </p>
-        <FormGroup cols={2} className="gap-4">
           <FormControl>
             <InputField
               name="pieces"
@@ -119,19 +107,7 @@ export function StopDialogForm() {
               description="Specifies the total freight weight for this stop."
             />
           </FormControl>
-        </FormGroup>
-      </div>
 
-      <div className="pt-2">
-        <div className="flex items-center gap-2 mb-1">
-          <h3 className="text-sm font-semibold text-foreground">
-            Location Details
-          </h3>
-        </div>
-        <p className="text-2xs text-muted-foreground mb-3">
-          Enter the precise location information for navigation and routing.
-        </p>
-        <FormGroup cols={1} className="gap-4">
           <FormControl>
             <AsyncSelectField
               name="locationId"

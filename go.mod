@@ -1,6 +1,6 @@
 module github.com/emoss08/trenova
 
-go 1.23.4
+go 1.24
 
 require (
 	github.com/bytedance/sonic v1.12.8
@@ -15,7 +15,7 @@ require (
 	github.com/lib/pq v1.10.9
 	github.com/logrusorgru/aurora v2.0.3+incompatible
 	github.com/meilisearch/meilisearch-go v0.30.0
-	github.com/minio/minio-go/v7 v7.0.84
+	github.com/minio/minio-go/v7 v7.0.85
 	github.com/mitchellh/mapstructure v1.5.0
 	github.com/oklog/ulid/v2 v2.1.0
 	github.com/redis/go-redis/v9 v9.7.0
@@ -35,9 +35,9 @@ require (
 	github.com/uptrace/bun/extra/bundebug v1.2.9
 	go.uber.org/atomic v1.11.0
 	go.uber.org/fx v1.23.0
-	golang.org/x/crypto v0.32.0
-	golang.org/x/exp v0.0.0-20250207012021-f9890c6ad9f3
-	golang.org/x/net v0.34.0
+	golang.org/x/crypto v0.33.0
+	golang.org/x/exp v0.0.0-20250210185358-939b2ce775ac
+	golang.org/x/net v0.35.0
 	gopkg.in/natefinch/lumberjack.v2 v2.2.1
 	gopkg.in/yaml.v3 v3.0.1
 )
@@ -73,7 +73,7 @@ require (
 	github.com/goccy/go-json v0.10.5 // indirect
 	github.com/gogo/protobuf v1.3.2 // indirect
 	github.com/golang-jwt/jwt/v4 v4.5.1 // indirect
-	github.com/google/pprof v0.0.0-20250202011525-fc3143867406 // indirect
+	github.com/google/pprof v0.0.0-20250208200701-d0013a598941 // indirect
 	github.com/google/uuid v1.6.0 // indirect
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.22.0 // indirect
 	github.com/hashicorp/errwrap v1.1.0 // indirect
@@ -150,7 +150,7 @@ require (
 	golang.org/x/sync v0.11.0 // indirect
 	golang.org/x/sys v0.30.0 // indirect
 	golang.org/x/text v0.22.0 // indirect
-	golang.org/x/tools v0.29.0 // indirect
+	golang.org/x/tools v0.30.0 // indirect
 	gopkg.in/ini.v1 v1.67.0 // indirect
 	mellium.im/sasl v0.3.2 // indirect
 )
