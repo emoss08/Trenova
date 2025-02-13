@@ -150,7 +150,8 @@ services:
     ports:
       - "3001:3001"
     environment:
-      - APP_ENV=production
+      - TRENOVA_APP_ENVIRONMENT=production
+      - TRENOVA_SERVER_SECRET_KEY=${SERVER_SECRET_KEY:-secretKey}
     depends_on:
       tren-db:
         condition: service_healthy
