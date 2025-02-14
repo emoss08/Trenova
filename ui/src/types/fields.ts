@@ -157,8 +157,53 @@ export interface DateTimePickerProps
   description?: string;
 }
 
-export type AutoCompleteDateTimeFieldProps<T extends FieldValues> = Omit<
-  DateTimePickerProps,
-  "dateTime" | "setDateTime"
+export interface AutocompleteFormControlProps<T extends FieldValues> {
+  name: Path<T>;
+  control: Control<T>;
+  rules?: RegisterOptions<T, Path<T>>;
+}
+
+export interface BaseAutocompleteFieldProps<TOption> {
+  /** Link to fetch options */
+  link: API_ENDPOINTS;
+  /** Preload all data ahead of time */
+  preload?: boolean;
+  /** Function to filter options */
+  filterFn?: (option: TOption, query: string) => boolean;
+  /** Function to render each option */
+  renderOption: (option: TOption) => React.ReactNode;
+  /** Function to get the value from an option */
+  getOptionValue: (option: TOption) => string | number;
+  /** Function to get the display value for the selected option */
+  getDisplayValue: (option: TOption) => React.ReactNode;
+  /** Custom not found message */
+  notFound?: React.ReactNode;
+  /** Currently selected value */
+  value: string;
+  /** Callback when selection changes */
+  onChange: (...event: any[]) => void;
+  /** Label for the select field */
+  label: string;
+  /** Placeholder text when no selection */
+  placeholder?: string;
+  /** Disable the entire select */
+  disabled?: boolean;
+  /** Custom width for the popover */
+  width?: string | number;
+  /** Custom class names */
+  className?: string;
+  /** Custom trigger button class names */
+  triggerClassName?: string;
+  /** Custom no results message */
+  noResultsMessage?: string;
+  /** Allow clearing the selection */
+  clearable?: boolean;
+}
+
+export type AutocompleteFieldProps<TOption, TForm extends FieldValues> = Omit<
+  BaseAutocompleteFieldProps<TOption>,
+  "onChange" | "value"
 > &
-  FormControlProps<T>;
+  AutocompleteFormControlProps<TForm> & {
+    description?: string;
+  };

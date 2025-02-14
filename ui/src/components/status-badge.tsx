@@ -1,4 +1,5 @@
 import { type WorkerSchema } from "@/lib/schemas/worker-schema";
+import { cn } from "@/lib/utils";
 import { badgeVariants } from "@/lib/variants/badge";
 import { type Status } from "@/types/common";
 import { type PackingGroupChoiceProps } from "@/types/hazardous-material";
@@ -27,6 +28,12 @@ export type BadgeAttrProps = {
   variant: VariantProps<typeof badgeVariants>["variant"];
   text: string;
   description?: string;
+};
+
+export type PlainBadgeAttrProps = {
+  text: string;
+  description?: string;
+  className?: string;
 };
 
 export function WorkerTypeBadge({ type }: { type: WorkerSchema["type"] }) {
@@ -188,6 +195,84 @@ export function ShipmentStatusBadge({ status }: { status: ShipmentStatus }) {
           <Badge variant={statusAttributes[status].variant} className="max-h-6">
             {statusAttributes[status].text}
           </Badge>
+        </TooltipTrigger>
+        <TooltipContent className="max-w-xs text-wrap text-center">
+          <p>{statusAttributes[status].description}</p>
+        </TooltipContent>
+      </Tooltip>
+    </TooltipProvider>
+  );
+}
+
+export function PlainShipmentStatusBadge({
+  status,
+}: {
+  status: ShipmentStatus;
+}) {
+  const statusAttributes: Record<ShipmentStatus, PlainBadgeAttrProps> = {
+    [ShipmentStatus.New]: {
+      className: "bg-purple-600",
+      text: "New",
+      description:
+        "Shipment has been created and is pending initial assignment.",
+    },
+    [ShipmentStatus.PartiallyAssigned]: {
+      className: "bg-indigo-600-600",
+      text: "Partially Assigned",
+      description:
+        "Equipment or worker assignments are pending for one or more moves within this shipment.",
+    },
+    [ShipmentStatus.Assigned]: {
+      className: "bg-warning",
+      text: "Assigned",
+      description:
+        "All required equipment and workers have been assigned to this shipment's moves.",
+    },
+    [ShipmentStatus.InTransit]: {
+      className: "bg-info",
+      text: "In Transit",
+      description:
+        "Active shipment with cargo currently in transport between designated locations.",
+    },
+    [ShipmentStatus.Delayed]: {
+      className: "bg-orange-600",
+      text: "Delayed",
+      description:
+        "Shipment has exceeded scheduled arrival or delivery timeframes at one or more stops.",
+    },
+    [ShipmentStatus.Completed]: {
+      className: "bg-green-600",
+      text: "Completed",
+      description:
+        "All transportation activities for this shipment have been successfully completed.",
+    },
+    [ShipmentStatus.Billed]: {
+      className: "bg-teal-600",
+      text: "Billed",
+      description:
+        "Invoice has been generated and posted for completed transportation services.",
+    },
+    [ShipmentStatus.Canceled]: {
+      className: "bg-red-600",
+      text: "Canceled",
+      description:
+        "Shipment has been terminated and will not be completed as originally planned.",
+    },
+  };
+
+  return (
+    <TooltipProvider>
+      <Tooltip>
+        <TooltipTrigger>
+          <div className="flex items-center gap-x-1">
+            <div
+              className={cn(
+                "size-2 rounded-full",
+                statusAttributes[status].className,
+              )}
+            />
+            <p>{statusAttributes[status].text}</p>
+          </div>
         </TooltipTrigger>
         <TooltipContent className="max-w-xs text-wrap text-center">
           <p>{statusAttributes[status].description}</p>

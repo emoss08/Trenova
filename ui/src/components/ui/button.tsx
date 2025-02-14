@@ -4,7 +4,7 @@ import * as React from "react";
 
 import { cn } from "@/lib/utils";
 import { buttonVariants } from "@/lib/variants/button";
-import PulsatingDots from "./pulsating-dots";
+import { PulsatingDots } from "./pulsating-dots";
 
 export interface ButtonProps
   extends React.ButtonHTMLAttributes<HTMLButtonElement>,
@@ -46,3 +46,4 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
 Button.displayName = "Button";
 
 export { Button };
+
