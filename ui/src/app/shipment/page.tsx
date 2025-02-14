@@ -1,13 +1,13 @@
 import { MetaTags } from "@/components/meta-tags";
 import { SuspenseLoader } from "@/components/ui/component-loader";
-import { useShipmentView } from "@/hooks/use-shipment-view";
+import { useShipmentParams } from "@/hooks/use-shipment-params";
 import { ShipmentFilterSchema } from "@/lib/schemas/shipment-filter-schema";
 import { FormProvider, useForm } from "react-hook-form";
 import ShipmentMap from "./_components/shipment-map";
 import ShipmentTable from "./_components/shipment-table";
 
 export function Shipment() {
-  const { view } = useShipmentView();
+  const { view } = useShipmentParams();
 
   const form = useForm<ShipmentFilterSchema>({
     defaultValues: {

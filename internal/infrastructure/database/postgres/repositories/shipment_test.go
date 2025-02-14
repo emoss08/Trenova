@@ -32,9 +32,15 @@ func TestShipmentRepository(t *testing.T) {
 	trlEquipType := ts.Fixture.MustRow("EquipmentType.trailer_equip_type").(*equipmenttype.EquipmentType)
 	usr := ts.Fixture.MustRow("User.test_user").(*user.User)
 
-	repo := repositories.NewShipmentRepository(repositories.ShipmentRepositoryParams{
+	proNumberRepo := repositories.NewProNumberRepository(repositories.ProNumberRepositoryParams{
 		Logger: logger.NewLogger(testutils.NewTestConfig()),
 		DB:     ts.DB,
+	})
+
+	repo := repositories.NewShipmentRepository(repositories.ShipmentRepositoryParams{
+		Logger:        logger.NewLogger(testutils.NewTestConfig()),
+		DB:            ts.DB,
+		ProNumberRepo: proNumberRepo,
 	})
 
 	t.Run("list shipments", func(t *testing.T) {
@@ -148,7 +154,6 @@ func TestShipmentRepository(t *testing.T) {
 	t.Run("create shipment", func(t *testing.T) {
 		// Test Data
 		newEntity := &shipment.Shipment{
-			ProNumber:      "TEST",
 			ServiceTypeID:  serviceType.ID,
 			ShipmentTypeID: shipmentType.ID,
 			TrailerTypeID:  &trlEquipType.ID,
@@ -159,6 +164,26 @@ func TestShipmentRepository(t *testing.T) {
 		}
 
 		testutils.TestRepoCreate(ctx, t, repo, newEntity)
+	})
+
+	t.Run("create shipment with pro number", func(t *testing.T) {
+		// Test Data
+		newEntity := &shipment.Shipment{
+			ServiceTypeID:  serviceType.ID,
+			ShipmentTypeID: shipmentType.ID,
+			TrailerTypeID:  &trlEquipType.ID,
+			TractorTypeID:  &trEquipType.ID,
+			CustomerID:     cus.ID,
+			BusinessUnitID: bu.ID,
+			OrganizationID: org.ID,
+		}
+
+		result, err := repo.Create(ctx, newEntity)
+		require.NoError(t, err)
+		require.NotNil(t, result)
+
+		t.Logf("Pro Number: %s", result.ProNumber)
+		require.NotEmpty(t, result.ProNumber)
 	})
 
 	t.Run("create shipment failure", func(t *testing.T) {

@@ -1,12 +1,24 @@
 import { cn } from "@/lib/utils";
 import { motion } from "framer-motion";
 
-type PulsatingDotProps = {
-  size?: number;
-  color?: string;
+type SizeOptions = 0.5 | 1 | 2 | 3 | 4 | 5;
+
+type ColorOptions =
+  | "foreground"
+  | "primary"
+  | "background"
+  | "red"
+  | "blue"
+  | "green"
+  | "yellow";
+
+type DotsProps = {
+  size?: SizeOptions;
+  color?: ColorOptions;
 };
 
-const sizes: Record<number, string> = {
+const sizes: Record<SizeOptions, string> = {
+  0.5: "size-0.5",
   1: "size-1",
   2: "size-2",
   3: "size-3",
@@ -14,7 +26,7 @@ const sizes: Record<number, string> = {
   5: "size-5",
 };
 
-const colors: Record<string, string> = {
+const colors: Record<ColorOptions, string> = {
   foreground: "bg-foreground",
   primary: "bg-primary",
   background: "bg-background",
@@ -24,10 +36,7 @@ const colors: Record<string, string> = {
   yellow: "bg-yellow-500",
 };
 
-export default function PulsatingDots({
-  size = 1,
-  color = "red",
-}: PulsatingDotProps) {
+export function PulsatingDots({ size = 1, color = "red" }: DotsProps) {
   const sizeClass = sizes[size];
   const colorClass = colors[color];
 
@@ -73,6 +82,36 @@ export default function PulsatingDots({
           }}
         />
       </div>
+    </div>
+  );
+}
+
+export function FadeLoaderDots({ size = 1, color = "red" }: DotsProps) {
+  const circleVariants = {
+    hidden: { opacity: 0 },
+    visible: { opacity: 1 },
+  };
+
+  const sizeClass = sizes[size];
+  const colorClass = colors[color];
+
+  return (
+    <div className="flex items-center justify-center space-x-2">
+      {[...Array(3)].map((_, index) => (
+        <motion.div
+          key={index}
+          className={cn("h-4 w-4 rounded-full", sizeClass, colorClass)}
+          variants={circleVariants}
+          initial="hidden"
+          animate="visible"
+          transition={{
+            duration: 0.9,
+            delay: index * 0.2,
+            repeat: Infinity,
+            repeatType: "reverse",
+          }}
+        ></motion.div>
+      ))}
     </div>
   );
 }

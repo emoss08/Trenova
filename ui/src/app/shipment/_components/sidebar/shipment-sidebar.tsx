@@ -1,16 +1,8 @@
 import { useDebounce } from "@/hooks/use-debounce";
 import { ShipmentProvider } from "@/hooks/use-shipment";
+import { useShipmentParams } from "@/hooks/use-shipment-params";
 import { type ShipmentFilterSchema } from "@/lib/schemas/shipment-filter-schema";
-import { type Shipment as ShipmentResponse } from "@/types/shipment";
-import { parseAsInteger, parseAsString, useQueryState } from "nuqs";
-import {
-  lazy,
-  Suspense,
-  useCallback,
-  useEffect,
-  useMemo,
-  useTransition,
-} from "react";
+import { lazy, Suspense, useCallback, useEffect, useMemo } from "react";
 import { useFormContext } from "react-hook-form";
 import { useShipmentDetails, useShipments } from "../../queries/shipment";
 import { ShipmentDetailsSkeleton } from "./details/shipment-details-skeleton";
@@ -20,46 +12,40 @@ import { ShipmentPagination } from "./shipment-sidebar-pagination";
 // Components
 const ShipmentDetails = lazy(() => import("./details/shipment-details"));
 
-const DEFAULT_PAGE_SIZE = 10;
 const PAGE_SIZE_OPTIONS = [10, 25, 50] as const;
 const SEARCH_DEBOUNCE_TIME = 500;
 
-const searchParams = {
-  page: parseAsInteger.withDefault(1),
-  pageSize: parseAsInteger.withDefault(DEFAULT_PAGE_SIZE),
-  selectedShipmentId: parseAsString.withDefault(""),
-  mode: parseAsString.withDefault("list"),
-};
-
 export function ShipmentSidebar() {
-  const [isTransitioning, startTransition] = useTransition();
+  const {
+    page,
+    pageSize,
+    selectedShipmentId,
+    updateParams,
+    isTransitioning,
+    DEFAULT_PAGE_SIZE,
+  } = useShipmentParams();
   const form = useFormContext<ShipmentFilterSchema>();
 
-  /* Query States */
-  const [page, setPage] = useQueryState(
-    "page",
-    searchParams.page.withOptions({
-      startTransition,
-      shallow: false,
-    }),
+  const handlePageChange = useCallback(
+    (newPage: number) => {
+      updateParams({ page: newPage });
+    },
+    [updateParams],
   );
 
-  const [pageSize, setPageSize] = useQueryState(
-    "pageSize",
-    searchParams.pageSize.withOptions({
-      startTransition,
-      shallow: false,
-    }),
+  const handlePageSizeChange = useCallback(
+    (newPageSize: number) => {
+      updateParams({ pageSize: newPageSize });
+    },
+    [updateParams],
   );
 
-  const [selectedShipmentId, setSelectedShipmentId] = useQueryState(
-    "selectedShipmentId",
-    searchParams.selectedShipmentId.withOptions({
-      startTransition,
-      shallow: false,
-    }),
+  const handleShipmentSelection = useCallback(
+    (shipmentId: string) => {
+      updateParams({ selectedShipmentId: shipmentId });
+    },
+    [updateParams],
   );
-
   // get the search value from the form values
   const queryValue = form.watch("search");
   const debouncedQueryValue = useDebounce(queryValue, SEARCH_DEBOUNCE_TIME);
@@ -77,88 +63,63 @@ export function ShipmentSidebar() {
     enabled: Boolean(selectedShipmentId),
   });
 
-  const displayData = useMemo(
-    () =>
-      shipmentsQuery.isLoading && !selectedShipmentId
-        ? (Array.from({ length: pageSize }, () => undefined) as (
-            | ShipmentResponse
-            | undefined
-          )[])
-        : (shipmentsQuery.data?.results ?? []),
-    [
-      shipmentsQuery.data?.results,
-      shipmentsQuery.isLoading,
-      pageSize,
-      selectedShipmentId,
-    ],
-  );
-
-  // Reset to the first page when search value changes
-  useEffect(() => {
-    if (page !== 1 && !selectedShipmentId) {
-      startTransition(() => {
-        setPage(1);
-      });
+  // Modified displayData logic to better handle loading states
+  const displayData = useMemo(() => {
+    // Don't show loading state when transitioning to detail view
+    if (shipmentsQuery.isLoading && !selectedShipmentId) {
+      return Array.from(
+        { length: pageSize ?? DEFAULT_PAGE_SIZE },
+        () => undefined,
+      );
     }
-  }, [debouncedQueryValue, page, setPage, startTransition, selectedShipmentId]);
+    return shipmentsQuery.data?.results ?? [];
+  }, [
+    shipmentsQuery.data?.results,
+    shipmentsQuery.isLoading,
+    pageSize,
+    selectedShipmentId,
+    DEFAULT_PAGE_SIZE,
+  ]);
 
-  const handlePageChange = useCallback(
-    (page: number) => {
-      startTransition(() => {
-        setPage(page);
-      });
-    },
-    [setPage, startTransition],
-  );
-
-  const handlePageSizeChange = useCallback(
-    (pageSize: number) => {
-      startTransition(() => {
-        setPage(1);
-        setPageSize(pageSize);
-      });
-    },
-    [setPage, setPageSize, startTransition],
-  );
-
-  const handleShipmentSelection = useCallback(
-    (shipmentId: string) => {
-      startTransition(() => {
-        setSelectedShipmentId(shipmentId);
-      });
-    },
-    [setSelectedShipmentId, startTransition],
-  );
+  useEffect(() => {
+    // Only reset page when search value changes
+    if (!selectedShipmentId) {
+      updateParams({ page: 1 });
+    }
+  }, [debouncedQueryValue, updateParams, selectedShipmentId]);
 
   const handleBack = useCallback(() => {
     handleShipmentSelection("");
   }, [handleShipmentSelection]);
+
+  const isDetailsLoading = selectedShipmentId
+    ? shipmentDetails.isLoading
+    : false;
 
   return (
     <div className="flex flex-col h-full bg-sidebar rounded-md border border-sidebar-border">
       {selectedShipmentId ? (
         <ShipmentProvider
           initialShipment={shipmentDetails.data}
-          isLoading={shipmentDetails.isLoading}
+          isLoading={isDetailsLoading}
         >
           <Suspense fallback={<ShipmentDetailsSkeleton />}>
             <ShipmentDetails
               selectedShipment={shipmentDetails.data}
-              isLoading={shipmentDetails.isLoading}
+              isLoading={isDetailsLoading}
               onBack={handleBack}
             />
           </Suspense>
         </ShipmentProvider>
       ) : (
         <ShipmentList
-          displayData={displayData ?? []}
-          isLoading={shipmentsQuery.isLoading || isTransitioning}
+          displayData={displayData}
+          isLoading={shipmentsQuery.isLoading}
           selectedShipmentId={selectedShipmentId}
           onShipmentSelect={handleShipmentSelection}
           inputValue={debouncedQueryValue}
         />
       )}
-
       {!selectedShipmentId && (
         <ShipmentPagination
           totalCount={shipmentsQuery.data?.count || 0}

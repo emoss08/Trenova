@@ -16,6 +16,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/pcmilerconfiguration"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/pretrainedmodels"
+	"github.com/emoss08/trenova/internal/core/domain/pronumber"
 	"github.com/emoss08/trenova/internal/core/domain/resource"
 	"github.com/emoss08/trenova/internal/core/domain/servicetype"
 	"github.com/emoss08/trenova/internal/core/domain/session"
@@ -70,5 +71,6 @@ func RegisterEntities() []any {
 		&shipment.ShipmentMove{},
 		&shipment.Shipment{},
 		&pcmilerconfiguration.PCMilerConfiguration{},
+		&pronumber.Sequence{},
 	}
 }

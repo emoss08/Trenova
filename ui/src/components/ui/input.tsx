@@ -10,7 +10,7 @@ export type InputProps = React.ComponentProps<"input"> & {
 const Input = React.forwardRef<HTMLInputElement, InputProps>(
   ({ className, type, isInvalid, icon, ...props }, ref) => {
     return (
-      <div className="relative">
+      <div className="relative w-full">
         {icon && (
           <div
             className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3"

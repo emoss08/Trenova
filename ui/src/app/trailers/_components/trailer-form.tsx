@@ -1,10 +1,14 @@
-import { AsyncSelectField } from "@/components/fields/async-select";
+import { AutocompleteField } from "@/components/fields/autocomplete";
 import { AutoCompleteDateField } from "@/components/fields/date-field";
 import { InputField } from "@/components/fields/input-field";
+import { ColorOptionValue } from "@/components/fields/select-components";
 import { SelectField } from "@/components/fields/select-field";
 import { FormControl, FormGroup } from "@/components/ui/form";
 import { equipmentStatusChoices } from "@/lib/choices";
 import { queries } from "@/lib/queries";
+import { EquipmentManufacturerSchema } from "@/lib/schemas/equipment-manufacturer-schema";
+import { EquipmentTypeSchema } from "@/lib/schemas/equipment-type-schema";
+import { FleetCodeSchema } from "@/lib/schemas/fleet-code-schema";
 import { type TrailerSchema } from "@/lib/schemas/trailer-schema";
 import { useQuery } from "@tanstack/react-query";
 import { Control, useFormContext } from "react-hook-form";
@@ -38,33 +42,34 @@ function GeneralInformationSection({
         />
       </FormControl>
       <FormControl>
-        <AsyncSelectField
+        <AutocompleteField<EquipmentTypeSchema, TrailerSchema>
           name="equipmentTypeId"
           control={control}
-          rules={{ required: true }}
-          link="/equipment-types"
+          link="/equipment-types/"
           label="Equipment Type"
+          rules={{ required: true }}
           placeholder="Equipment Type"
           description="The type of equipment the trailer is categorized under."
-          hasPermission
-          hasPopoutWindow
-          popoutLink="/equipment/configurations/equipment-types/"
-          popoutLinkLabel="Equipment Type"
+          getOptionValue={(option) => option.id || ""}
+          getDisplayValue={(option) => (
+            <ColorOptionValue color={option.color} value={option.code} />
+          )}
+          renderOption={(option) => (
+            <ColorOptionValue color={option.color} value={option.code} />
+          )}
         />
       </FormControl>
       <FormControl>
-        <AsyncSelectField
+        <AutocompleteField<EquipmentManufacturerSchema, TrailerSchema>
           name="equipmentManufacturerId"
           control={control}
-          rules={{ required: true }}
-          link="/equipment-manufacturers"
-          label="Equipment Manufacturer"
-          placeholder="Equipment Manufacturer"
+          link="/equipment-manufacturers/"
+          label="Equip. Manufacturer"
+          placeholder="Equip. Manufacturer"
           description="The manufacturer of the trailer's equipment."
-          hasPermission
-          hasPopoutWindow
-          popoutLink="/equipment/configurations/equipment-manufacturers/"
-          popoutLinkLabel="Equipment Manufacturer"
+          getOptionValue={(option) => option.id || ""}
+          getDisplayValue={(option) => option.name}
+          renderOption={(option) => option.name}
         />
       </FormControl>
       <FormControl>
@@ -106,17 +111,21 @@ function GeneralInformationSection({
         />
       </FormControl>
       <FormControl cols="full">
-        <AsyncSelectField
+        <AutocompleteField<FleetCodeSchema, TrailerSchema>
           name="fleetCodeId"
           control={control}
-          link="/fleet-codes"
+          link="/fleet-codes/"
           label="Fleet Code"
           placeholder="Fleet Code"
           description="The fleet code associated with the trailer."
-          hasPermission
-          hasPopoutWindow
-          popoutLink="/dispatch/configurations/fleet-codes/"
-          popoutLinkLabel="Fleet Code"
+          rules={{ required: true }}
+          getOptionValue={(option) => option.id || ""}
+          getDisplayValue={(option) => (
+            <ColorOptionValue color={option.color} value={option.name} />
+          )}
+          renderOption={(option) => (
+            <ColorOptionValue color={option.color} value={option.name} />
+          )}
         />
       </FormControl>
     </FormGroup>

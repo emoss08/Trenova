@@ -149,5 +149,6 @@ export const shipmentSchema = object({
     })
     .integer("Actual Ship Date must be a whole number")
     .optional(),
+  // serviceType: serviceTypeSchema.optional().nullable(),
 });
 export type ShipmentSchema = InferType<typeof shipmentSchema>;

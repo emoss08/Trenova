@@ -2,10 +2,13 @@ package user
 
 import (
 	"github.com/emoss08/trenova/internal/api/middleware"
+	userdomain "github.com/emoss08/trenova/internal/core/domain/user"
 	"github.com/emoss08/trenova/internal/core/ports"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/services/user"
+
 	"github.com/emoss08/trenova/internal/pkg/ctx"
+	"github.com/emoss08/trenova/internal/pkg/utils/paginationutils/limitoffsetpagination"
 	"github.com/emoss08/trenova/internal/pkg/validator"
 	"github.com/emoss08/trenova/pkg/types"
 	"github.com/emoss08/trenova/pkg/types/pulid"
@@ -31,6 +34,11 @@ func NewHandler(p HandlerParams) *Handler {
 
 func (h Handler) RegisterRoutes(r fiber.Router, rl *middleware.RateLimiter) {
 	api := r.Group("/users")
+
+	api.Get("/", rl.WithRateLimit(
+		[]fiber.Handler{h.list},
+		middleware.PerSecond(5), // 5 reads per second
+	)...)
 
 	api.Get("/select-options/", rl.WithRateLimit(
 		[]fiber.Handler{h.selectOptions},
@@ -77,6 +85,23 @@ func (h Handler) selectOptions(c *fiber.Ctx) error {
 	})
 }
 
+func (h Handler) list(c *fiber.Ctx) error {
+	reqCtx, err := ctx.WithRequestContext(c)
+	if err != nil {
+		return h.eh.HandleError(c, err)
+	}
+
+	handler := func(fc *fiber.Ctx, filter *ports.LimitOffsetQueryOptions) (*ports.ListResult[*userdomain.User], error) {
+		if err = fc.QueryParser(filter); err != nil {
+			return nil, h.eh.HandleError(fc, err)
+		}
+
+		return h.uh.List(fc.UserContext(), filter)
+	}
+
+	return limitoffsetpagination.HandlePaginatedRequest(c, h.eh, reqCtx, handler)
+}
+
 func (h Handler) get(c *fiber.Ctx) error {
 	reqCtx, err := ctx.WithRequestContext(c)
 	if err != nil {
@@ -88,7 +113,7 @@ func (h Handler) get(c *fiber.Ctx) error {
 		return h.eh.HandleError(c, err)
 	}
 
-	usr, err := h.uh.GetByID(c.UserContext(), repositories.GetUserByIDOptions{
+	usr, err := h.uh.Get(c.UserContext(), repositories.GetUserByIDOptions{
 		OrgID:        reqCtx.OrgID,
 		BuID:         reqCtx.BuID,
 		UserID:       userID,
@@ -108,7 +133,7 @@ func (h Handler) me(c *fiber.Ctx) error {
 		return h.eh.HandleError(c, err)
 	}
 
-	usr, err := h.uh.GetByID(c.UserContext(), repositories.GetUserByIDOptions{
+	usr, err := h.uh.Get(c.UserContext(), repositories.GetUserByIDOptions{
 		OrgID:        reqCtx.OrgID,
 		BuID:         reqCtx.BuID,
 		UserID:       reqCtx.UserID,

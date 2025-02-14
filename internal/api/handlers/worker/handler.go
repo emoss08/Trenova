@@ -36,22 +36,22 @@ func (h Handler) RegisterRoutes(r fiber.Router, rl *middleware.RateLimiter) {
 
 	api.Get("/select-options/", rl.WithRateLimit(
 		[]fiber.Handler{h.selectOptions},
-		middleware.PerMinute(120), // 120 reads per minute
+		middleware.PerMinute(300), // 120 reads per minute
 	)...)
 
 	api.Get("/", rl.WithRateLimit(
 		[]fiber.Handler{h.list},
-		middleware.PerMinute(120), // 120 reads per minute
+		middleware.PerMinute(300), // 120 reads per minute
 	)...)
 
 	api.Post("/", rl.WithRateLimit(
 		[]fiber.Handler{h.create},
-		middleware.PerMinute(60), // 60 reads per minute
+		middleware.PerMinute(300), // 60 reads per minute
 	)...)
 
 	api.Get("/:workerID/", rl.WithRateLimit(
 		[]fiber.Handler{h.get},
-		middleware.PerMinute(60), // 60 reads per minute
+		middleware.PerMinute(300), // 60 reads per minute
 	)...)
 
 	api.Put("/:workerID/", rl.WithRateLimit(

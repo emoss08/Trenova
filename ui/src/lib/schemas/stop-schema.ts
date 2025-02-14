@@ -5,6 +5,7 @@ export const stopSchema = object({
   id: string().optional(),
   organizationId: string().nullable().optional(),
   businessUnitId: string().nullable().optional(),
+  locationId: string().required("Location is required"),
   status: mixed<StopStatus>()
     .required("Status is required")
     .oneOf(Object.values(StopStatus)),

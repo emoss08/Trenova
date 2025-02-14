@@ -2,11 +2,10 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { APIProvider, Map } from "@vis.gl/react-google-maps";
 import { Suspense } from "react";
 import { ShipmentSidebar } from "./sidebar/shipment-sidebar";
+import { GOOGLE_MAPS_API_KEY } from "@/constants/env";
 
 export default function ShipmentMap() {
   const center = { lat: 39.8283, lng: -98.5795 };
-
-  console.log("SHIPMENT MAP RENDERED");
 
   return (
     <div className="flex gap-4 h-[calc(100vh-theme(spacing.16))]">
@@ -16,7 +15,7 @@ export default function ShipmentMap() {
         </Suspense>
       </div>
       <div className="flex-grow rounded-md border overflow-hidden">
-        <APIProvider apiKey={import.meta.env.VITE_GOOGLE_MAPS_API_KEY}>
+        <APIProvider apiKey={GOOGLE_MAPS_API_KEY}>
           <Map
             defaultCenter={center}
             defaultZoom={5}

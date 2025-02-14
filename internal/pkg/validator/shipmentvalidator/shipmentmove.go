@@ -6,6 +6,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/internal/core/ports/db"
+	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/pkg/errors"
 	"github.com/emoss08/trenova/internal/pkg/validator"
 	"go.uber.org/fx"
@@ -41,9 +42,36 @@ func (v *MoveValidator) Validate(ctx context.Context, valCtx *validator.Validati
 	}
 }
 
+func (v *MoveValidator) ValidateSplitRequest(
+	ctx context.Context, m *shipment.ShipmentMove, req *repositories.SplitMoveRequest,
+) *errors.MultiError {
+	me := errors.NewMultiError()
+
+	req.Validate(ctx, m, me)
+
+	// Validate the stop length
+	v.validateStopLength(m, me)
+
+	// Validate the stop sequence
+	v.validateStopSequence(m, me)
+
+	// Validate the split times
+	v.validateSplitTimes(m, req, me)
+
+	// Validate the split sequence
+	v.validateSplitSequence(req, me)
+
+	if me.HasErrors() {
+		return me
+	}
+
+	return nil
+}
+
 func (v *MoveValidator) validateID(m *shipment.ShipmentMove, multiErr *errors.MultiError) {
 	if m.ID.IsNotNil() {
 		multiErr.Add("id", errors.ErrInvalid, "ID cannot be set on create")
+		return
 	}
 }
 
@@ -53,7 +81,10 @@ func (v *MoveValidator) validateStops(ctx context.Context, valCtx *validator.Val
 	v.validateStopSequence(m, multiErr)
 
 	for idx, stop := range m.Stops {
-		v.sv.Validate(ctx, valCtx, stop, multiErr, idx)
+		stopMultiErr := v.sv.Validate(ctx, valCtx, stop, WithIndexedMultiError(multiErr, idx))
+		if stopMultiErr != nil {
+			multiErr.Add("stops", errors.ErrInvalid, stopMultiErr.Error())
+		}
 	}
 }
 
@@ -154,5 +185,96 @@ func (v *MoveValidator) validateStopSequence(m *shipment.ShipmentMove, multiErr 
 				"Delivery stop must be preceded by a pickup or split pickup",
 			)
 		}
+	}
+}
+
+func (v *MoveValidator) validateSplitTimes(
+	m *shipment.ShipmentMove, req *repositories.SplitMoveRequest, multiErr *errors.MultiError,
+) {
+	if len(m.Stops) != 2 {
+		multiErr.Add("stops", errors.ErrInvalid, "Move must have exactly two stops to be split.")
+		return
+	}
+
+	originalPickup := m.Stops[0]   // First stop is the original pickup
+	originalDelivery := m.Stops[1] // Second stop is the original delivery
+
+	// Validate that the user is not trying to split a move that is already split
+	if originalPickup.Type == shipment.StopTypeSplitPickup || originalDelivery.Type == shipment.StopTypeSplitDelivery {
+		multiErr.Add(
+			"moveId",
+			errors.ErrInvalid,
+			"Cannot split a move that is already split",
+		)
+		return
+	}
+	// Validate split delivery times
+	if req.SplitDeliveryTimes.PlannedArrival <= originalPickup.PlannedDeparture {
+		multiErr.Add(
+			"splitDeliveryTimes.plannedArrival",
+			errors.ErrInvalid,
+			"Split delivery planned arrival must be after original pickup planned departure",
+		)
+	}
+
+	if req.SplitDeliveryTimes.PlannedDeparture <= req.SplitDeliveryTimes.PlannedArrival {
+		multiErr.Add(
+			"splitDeliveryTimes.plannedDeparture",
+			errors.ErrInvalid,
+			"Split delivery planned departure must be after split delivery planned arrival",
+		)
+	}
+
+	// Validate split pickup times
+	if req.SplitPickupTimes.PlannedArrival <= req.SplitDeliveryTimes.PlannedDeparture {
+		multiErr.Add(
+			"splitPickupTimes.plannedArrival",
+			errors.ErrInvalid,
+			"Split pickup planned arrival must be after split delivery planned departure",
+		)
+	}
+
+	if req.SplitPickupTimes.PlannedDeparture <= req.SplitPickupTimes.PlannedArrival {
+		multiErr.Add(
+			"splitPickupTimes.plannedDeparture",
+			errors.ErrInvalid,
+			"Split pickup planned departure must be after split pickup planned arrival",
+		)
+	}
+
+	if originalDelivery.PlannedArrival <= req.SplitPickupTimes.PlannedDeparture {
+		multiErr.Add(
+			"splitPickupTimes.plannedDeparture",
+			errors.ErrInvalid,
+			"Original delivery planned arrival must be after split pickup planned departure",
+		)
+	}
+}
+
+func (v *MoveValidator) validateSplitSequence(req *repositories.SplitMoveRequest, multiErr *errors.MultiError) {
+	// Can only split after the pickup (sequence 0)
+	if req.SplitAfterStopSequence != 0 {
+		multiErr.Add(
+			"splitAfterStopSequence",
+			errors.ErrInvalid,
+			"For a simple pickup-delivery move, must split after the pickup (sequence 0)",
+		)
+		return
+	}
+
+	if req.SplitDeliveryTimes.PlannedDeparture <= req.SplitDeliveryTimes.PlannedArrival {
+		multiErr.Add(
+			"splitDeliveryTimes",
+			errors.ErrInvalid,
+			"Split delivery departure must be after arrival",
+		)
+	}
+
+	if req.SplitPickupTimes.PlannedDeparture <= req.SplitPickupTimes.PlannedArrival {
+		multiErr.Add(
+			"splitPickupTimes",
+			errors.ErrInvalid,
+			"Split pickup departure must be after arrival",
+		)
 	}
 }

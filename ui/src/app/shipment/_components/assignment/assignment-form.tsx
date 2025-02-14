@@ -1,6 +1,9 @@
-import { AsyncSelectField } from "@/components/fields/async-select";
+import { AutocompleteField } from "@/components/fields/autocomplete";
 import { FormControl, FormGroup } from "@/components/ui/form";
 import { AssignmentSchema } from "@/lib/schemas/assignment-schema";
+import { TractorSchema } from "@/lib/schemas/tractor-schema";
+import { TrailerSchema } from "@/lib/schemas/trailer-schema";
+import { WorkerSchema } from "@/lib/schemas/worker-schema";
 import { getTractorAssignments } from "@/services/tractor";
 import { useQuery } from "@tanstack/react-query";
 import { useEffect } from "react";
@@ -22,110 +25,79 @@ function useTractorAssignment(tractorId: string) {
 }
 
 export function AssignmentForm() {
-  const { control, setValue } = useFormContext<AssignmentSchema>();
-
-  // If the tractorId is in place we need to fetch the workers assigned to it
-  // and automatically populate the workerID and secondaryWorkerID(If exists)
+  const { control, setValue, getValues } = useFormContext<AssignmentSchema>();
 
   const tractorId = useWatch({
     control,
     name: "tractorId",
-    exact: true,
-    defaultValue: "",
   });
 
-  const {
-    data: assignmentData,
-    isLoading: isAssignmentLoading,
-    error: assignmentError,
-  } = useTractorAssignment(tractorId);
+  const { data: assignmentData } = useTractorAssignment(tractorId);
 
+  // Only set worker values when tractor changes
   useEffect(() => {
-    if (assignmentData && !isAssignmentLoading) {
-      setValue("primaryWorkerId", assignmentData.primaryWorkerId, {
-        shouldDirty: true,
-        shouldValidate: true,
-      });
-
-      // Update the secondary worker if it exists
-      if (assignmentData.secondaryWorkerId) {
-        setValue("secondaryWorkerId", assignmentData.secondaryWorkerId, {
-          shouldDirty: true,
-          shouldValidate: true,
-        });
-      } else {
-        setValue("secondaryWorkerId", null, {
-          shouldDirty: true,
-          shouldValidate: true,
-        });
-      }
+    if (assignmentData && tractorId) {
+      setValue("primaryWorkerId", assignmentData.primaryWorkerId || "");
+      setValue("secondaryWorkerId", assignmentData.secondaryWorkerId || null);
+      console.log("Form values:", getValues());
     }
-  }, [assignmentData, isAssignmentLoading, setValue]);
+  }, [tractorId, assignmentData, setValue, getValues]);
 
   return (
     <FormGroup cols={2}>
       <FormControl>
-        <AsyncSelectField
+        <AutocompleteField<TractorSchema, AssignmentSchema>
           name="tractorId"
           control={control}
-          link="/tractors"
+          link="/tractors/"
           label="Tractor"
           rules={{ required: true }}
           placeholder="Select Tractor"
           description="Select the tractor for the assignment."
-          // TODO(wolfred): We need to change this to include the actual user permissions
-          hasPermission
-          hasPopoutWindow
-          popoutLink="/shipments/configurations/tractors/"
-          popoutLinkLabel="Tractor"
+          getOptionValue={(option) => option.id || ""}
+          getDisplayValue={(option) => `${option.code}`}
+          renderOption={(option) => `${option.code}`}
         />
       </FormControl>
       <FormControl>
-        <AsyncSelectField
+        <AutocompleteField<TrailerSchema, AssignmentSchema>
           name="trailerId"
           control={control}
-          link="/trailers"
+          link="/trailers/"
           label="Trailer"
           rules={{ required: true }}
           placeholder="Select Trailer"
           description="Select the trailer for the assignment."
-          // TODO(wolfred): We need to change this to include the actual user permissions
-          hasPermission
-          hasPopoutWindow
-          popoutLink="/shipments/configurations/trailers/"
-          popoutLinkLabel="Trailer"
+          getOptionValue={(option) => option.id || ""}
+          getDisplayValue={(option) => `${option.code}`}
+          renderOption={(option) => `${option.code}`}
         />
       </FormControl>
       <FormControl>
-        <AsyncSelectField
+        <AutocompleteField<WorkerSchema, AssignmentSchema>
           name="primaryWorkerId"
           control={control}
-          link="/workers"
+          link="/workers/"
           label="Primary Worker"
           rules={{ required: true }}
           placeholder="Select Primary Worker"
           description="Select the primary worker for the assignment."
-          // TODO(wolfred): We need to change this to include the actual user permissions
-          hasPermission
-          hasPopoutWindow
-          popoutLink="/shipments/configurations/workers/"
-          popoutLinkLabel="Primary Worker"
+          getOptionValue={(option) => option.id || ""}
+          getDisplayValue={(option) => `${option.firstName} ${option.lastName}`}
+          renderOption={(option) => `${option.firstName} ${option.lastName}`}
         />
       </FormControl>
       <FormControl>
-        <AsyncSelectField
-          isClearable
+        <AutocompleteField<WorkerSchema, AssignmentSchema>
           name="secondaryWorkerId"
           control={control}
-          link="/workers"
+          link="/workers/"
           label="Secondary Worker"
           placeholder="Select Secondary Worker"
           description="Select the secondary worker for the assignment."
-          // TODO(wolfred): We need to change this to include the actual user permissions
-          hasPermission
-          hasPopoutWindow
-          popoutLink="/shipments/configurations/workers/"
-          popoutLinkLabel="Secondary Worker"
+          getOptionValue={(option) => option.id || ""}
+          getDisplayValue={(option) => `${option.firstName} ${option.lastName}`}
+          renderOption={(option) => `${option.firstName} ${option.lastName}`}
         />
       </FormControl>
     </FormGroup>

@@ -48,8 +48,14 @@ func newMovement() *shipment.ShipmentMove {
 }
 
 func TestMoveValidator(t *testing.T) {
+	stpValidator := spValidator.NewStopValidator(
+		spValidator.StopValidatorParams{
+			DB: ts.DB,
+		},
+	)
 	val := spValidator.NewMoveValidator(spValidator.MoveValidatorParams{
-		DB: ts.DB,
+		DB:            ts.DB,
+		StopValidator: stpValidator,
 	})
 
 	scenarios := []struct {

@@ -239,7 +239,11 @@ export function composeEventHandlers<E>(
 }
 
 //
-export function formatLocation(location: LocationSchema) {
+export function formatLocation(location?: LocationSchema) {
+  if (!location) {
+    return "";
+  }
+
   const { state, addressLine1, addressLine2, city, postalCode } = location;
 
   const addressLine = addressLine1 + (addressLine2 ? `, ${addressLine2}` : "");

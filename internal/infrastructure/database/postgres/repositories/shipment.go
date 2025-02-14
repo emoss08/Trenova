@@ -13,6 +13,7 @@ import (
 	"github.com/emoss08/trenova/internal/pkg/logger"
 	"github.com/emoss08/trenova/internal/pkg/postgressearch"
 	"github.com/emoss08/trenova/internal/pkg/utils/queryutils/queryfilters"
+	"github.com/emoss08/trenova/internal/pkg/utils/timeutils"
 	"github.com/emoss08/trenova/pkg/types/pulid"
 	"github.com/rotisserie/eris"
 	"github.com/rs/zerolog"
@@ -23,13 +24,19 @@ import (
 type ShipmentRepositoryParams struct {
 	fx.In
 
-	DB     db.Connection
-	Logger *logger.Logger
+	DB            db.Connection
+	Logger        *logger.Logger
+	ProNumberRepo repositories.ProNumberRepository
+	MoveRepo      repositories.ShipmentMoveRepository
+	StopRepo      repositories.StopRepository
 }
 
 type shipmentRepository struct {
-	db db.Connection
-	l  *zerolog.Logger
+	db            db.Connection
+	l             *zerolog.Logger
+	proNumberRepo repositories.ProNumberRepository
+	moveRepo      repositories.ShipmentMoveRepository
+	stopRepo      repositories.StopRepository
 }
 
 func NewShipmentRepository(p ShipmentRepositoryParams) repositories.ShipmentRepository {
@@ -38,8 +45,11 @@ func NewShipmentRepository(p ShipmentRepositoryParams) repositories.ShipmentRepo
 		Logger()
 
 	return &shipmentRepository{
-		db: p.DB,
-		l:  &log,
+		db:            p.DB,
+		l:             &log,
+		proNumberRepo: p.ProNumberRepo,
+		moveRepo:      p.MoveRepo,
+		stopRepo:      p.StopRepo,
 	}
 }
 
@@ -49,13 +59,20 @@ func (sr *shipmentRepository) addOptions(q *bun.SelectQuery, opts repositories.S
 
 		q = q.RelationWithOpts("Moves", bun.RelationOpts{
 			Apply: func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return sq.Order("sm.sequence ASC").Relation("Assignment")
+				return sq.Order("sm.sequence ASC").
+					Relation("Assignment").
+					Relation("Assignment.Tractor").
+					Relation("Assignment.Trailer").
+					Relation("Assignment.PrimaryWorker").
+					Relation("Assignment.SecondaryWorker")
 			},
 		})
 
 		q = q.RelationWithOpts("Moves.Stops", bun.RelationOpts{
 			Apply: func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return sq.Order("stp.sequence ASC").Relation("Location").Relation("Location.State")
+				return sq.Order("stp.sequence ASC").
+					Relation("Location").
+					Relation("Location.State")
 			},
 		})
 
@@ -114,6 +131,9 @@ func (sr *shipmentRepository) List(ctx context.Context, opts *repositories.ListS
 	q := dba.NewSelect().Model(&entities)
 	q = sr.filterQuery(q, opts)
 
+	// * New statuses should be at the top
+	q.Order("sp.status ASC")
+
 	total, err := q.ScanAndCount(ctx)
 	if err != nil {
 		log.Error().Err(err).Msg("failed to scan shipments")
@@ -140,7 +160,11 @@ func (sr *shipmentRepository) GetByID(ctx context.Context, opts repositories.Get
 	entity := new(shipment.Shipment)
 
 	q := dba.NewSelect().Model(entity).
-		Where("sp.id = ? AND sp.organization_id = ? AND sp.business_unit_id = ?", opts.ID, opts.OrgID, opts.BuID)
+		WhereGroup("AND", func(q *bun.SelectQuery) *bun.SelectQuery {
+			return q.Where("sp.id = ?", opts.ID).
+				Where("sp.organization_id = ?", opts.OrgID).
+				Where("sp.business_unit_id = ?", opts.BuID)
+		})
 
 	q = sr.addOptions(q, opts.ShipmentOptions)
 
@@ -168,7 +192,15 @@ func (sr *shipmentRepository) Create(ctx context.Context, shp *shipment.Shipment
 		Str("buID", shp.BusinessUnitID.String()).
 		Logger()
 
+	proNumber, err := sr.proNumberRepo.GetNextProNumber(ctx, shp.OrganizationID)
+	if err != nil {
+		log.Error().Err(err).Msg("failed to get next pro number")
+		return nil, err
+	}
+
 	err = dba.RunInTx(ctx, nil, func(c context.Context, tx bun.Tx) error {
+		shp.ProNumber = proNumber
+
 		if _, iErr := tx.NewInsert().Model(shp).Exec(c); iErr != nil {
 			log.Error().
 				Err(iErr).
@@ -239,6 +271,70 @@ func (sr *shipmentRepository) Update(ctx context.Context, shp *shipment.Shipment
 	})
 	if err != nil {
 		log.Error().Err(err).Msg("failed to update shipment")
+		return nil, err
+	}
+
+	return shp, nil
+}
+
+func (sr *shipmentRepository) UpdateStatus(ctx context.Context, opts *repositories.UpdateShipmentStatusRequest) (*shipment.Shipment, error) {
+	dba, err := sr.db.DB(ctx)
+	if err != nil {
+		return nil, eris.Wrap(err, "get database connection")
+	}
+
+	log := sr.l.With().
+		Str("operation", "UpdateStatus").
+		Str("shipmentID", opts.GetOpts.ID.String()).
+		Str("status", string(opts.Status)).
+		Logger()
+
+	// Get the move
+	shp, err := sr.GetByID(ctx, opts.GetOpts)
+	if err != nil {
+		return nil, err
+	}
+
+	err = dba.RunInTx(ctx, nil, func(c context.Context, tx bun.Tx) error {
+		// Update the move version
+		ov := shp.Version
+		shp.Version++
+
+		results, rErr := tx.NewUpdate().Model(shp).
+			WherePK().
+			Where("sp.version = ?", ov).
+			Set("status = ?", opts.Status).
+			Returning("*").
+			Exec(c)
+		if rErr != nil {
+			log.Error().Err(rErr).
+				Interface("shipment", shp).
+				Msg("failed to update shipment version")
+			return rErr
+		}
+
+		rows, roErr := results.RowsAffected()
+		if roErr != nil {
+			log.Error().Err(roErr).
+				Interface("shipment", shp).
+				Msg("failed to get rows affected")
+			return roErr
+		}
+
+		if rows == 0 {
+			return errors.NewValidationError(
+				"version",
+				errors.ErrVersionMismatch,
+				fmt.Sprintf("Version mismatch. The shipment (%s) has been updated since your last request.", shp.GetID()),
+			)
+		}
+
+		return nil
+	})
+	if err != nil {
+		log.Error().Err(err).
+			Interface("shipment", shp).
+			Msg("failed to update shipment status")
 		return nil, err
 	}
 
@@ -358,4 +454,198 @@ func (sr *shipmentRepository) cancelShipmentComponents(ctx context.Context, tx b
 	}
 
 	return nil
+}
+
+func (sr *shipmentRepository) Duplicate(ctx context.Context, req *repositories.DuplicateShipmentRequest) (*shipment.Shipment, error) {
+	dba, err := sr.db.DB(ctx)
+	if err != nil {
+		return nil, eris.Wrap(err, "get database connection")
+	}
+
+	log := sr.l.With().
+		Str("operation", "Duplicate").
+		Str("shipmentID", req.ShipmentID.String()).
+		Logger()
+
+	originalShipment, err := sr.GetByID(ctx, repositories.GetShipmentByIDOptions{
+		ID:    req.ShipmentID,
+		OrgID: req.OrgID,
+		BuID:  req.BuID,
+		ShipmentOptions: repositories.ShipmentOptions{
+			ExpandShipmentDetails: true,
+		},
+	})
+	if err != nil {
+		log.Error().Err(err).Msg("failed to get original shipment")
+		return nil, err
+	}
+
+	var newShipment *shipment.Shipment
+	err = dba.RunInTx(ctx, nil, func(c context.Context, tx bun.Tx) error {
+		// Create new shipment
+		newShipment, err = sr.duplicateShipmentFields(c, originalShipment)
+		if err != nil {
+			return eris.Wrap(err, "duplicate shipment fields")
+		}
+
+		// Insert the new shipment directly with the transaction
+		sr.l.Debug().Interface("new shipment", newShipment).Msg("inserting new shipment")
+		if _, err = tx.NewInsert().Model(newShipment).Exec(c); err != nil {
+			return eris.Wrap(err, "insert new shipment")
+		}
+
+		// Prepare moves and stops
+		moves, stops := sr.prepareMovesAndStops(originalShipment, newShipment, req.OverrideDates)
+		commodities := sr.prepareCommodities(originalShipment, newShipment)
+
+		// Bulk insert moves directly with the transaction
+		if len(moves) > 0 {
+			sr.l.Debug().Interface("moves", moves).Msg("bulk inserting moves")
+			if _, err = tx.NewInsert().Model(&moves).Exec(c); err != nil {
+				return eris.Wrap(err, "bulk insert moves")
+			}
+		}
+
+		// Bulk insert stops directly with the transaction
+		if len(stops) > 0 {
+			sr.l.Debug().Interface("stops", stops).Msg("bulk inserting stops")
+			if _, err = tx.NewInsert().Model(&stops).Exec(c); err != nil {
+				return eris.Wrap(err, "bulk insert stops")
+			}
+		}
+
+		// Bulk insert commodities directly with the transaction
+		// Only duplicate if the include commodities flag is true
+		if len(commodities) > 0 && req.IncludeCommodities {
+			sr.l.Debug().Interface("commodities", commodities).Msg("bulk inserting commodities")
+			if _, err = tx.NewInsert().Model(&commodities).Exec(c); err != nil {
+				return eris.Wrap(err, "bulk insert commodities")
+			}
+		}
+
+		return nil
+	})
+	if err != nil {
+		log.Error().Err(err).Msg("failed to duplicate shipment")
+		return nil, err
+	}
+
+	return newShipment, nil
+}
+
+func (sr *shipmentRepository) prepareMovesAndStops(
+	original *shipment.Shipment, newShipment *shipment.Shipment, overrideDates bool,
+) ([]*shipment.ShipmentMove, []*shipment.Stop) {
+	moves := make([]*shipment.ShipmentMove, 0, len(original.Moves))
+	stops := make([]*shipment.Stop, 0)
+
+	for _, originalMove := range original.Moves {
+		newMove := &shipment.ShipmentMove{
+			ID:             pulid.MustNew("smv_"),
+			BusinessUnitID: original.BusinessUnitID,
+			OrganizationID: original.OrganizationID,
+			ShipmentID:     newShipment.ID,
+			Status:         shipment.MoveStatusNew,
+			Loaded:         originalMove.Loaded,
+			Sequence:       originalMove.Sequence,
+			Distance:       originalMove.Distance,
+		}
+		moves = append(moves, newMove)
+
+		// Prepare stops for this move
+		moveStops := sr.prepareStops(originalMove, newMove, overrideDates)
+		stops = append(stops, moveStops...)
+	}
+
+	return moves, stops
+}
+
+func (sr *shipmentRepository) prepareStops(
+	originalMove *shipment.ShipmentMove, newMove *shipment.ShipmentMove, overrideDates bool,
+) []*shipment.Stop {
+	stops := make([]*shipment.Stop, 0, len(originalMove.Stops))
+
+	for _, stop := range originalMove.Stops {
+		newStop := &shipment.Stop{
+			ID:             pulid.MustNew("stp_"),
+			BusinessUnitID: stop.BusinessUnitID,
+			OrganizationID: stop.OrganizationID,
+			ShipmentMoveID: newMove.ID,
+			LocationID:     stop.LocationID,
+			Status:         shipment.StopStatusNew,
+			Type:           stop.Type,
+			Sequence:       stop.Sequence,
+			Pieces:         stop.Pieces,
+			Weight:         stop.Weight,
+			PlannedArrival: stop.PlannedArrival,
+			AddressLine:    stop.AddressLine,
+		}
+
+		if overrideDates {
+			now := timeutils.NowUnix()
+			oneDay := timeutils.DaysToSeconds(1)
+			newStop.PlannedArrival = now
+			newStop.PlannedDeparture = now + oneDay
+		} else {
+			newStop.PlannedDeparture = stop.PlannedDeparture
+		}
+
+		stops = append(stops, newStop)
+	}
+
+	return stops
+}
+
+func (sr *shipmentRepository) prepareCommodities(original *shipment.Shipment, newShipment *shipment.Shipment) []*shipment.ShipmentCommodity {
+	commodities := make([]*shipment.ShipmentCommodity, 0, len(original.Commodities))
+
+	for _, commodity := range original.Commodities {
+		newCommodity := &shipment.ShipmentCommodity{
+			ID:             pulid.MustNew("sc_"),
+			BusinessUnitID: original.BusinessUnitID,
+			OrganizationID: original.OrganizationID,
+			ShipmentID:     newShipment.ID,
+			CommodityID:    commodity.CommodityID,
+			Weight:         commodity.Weight,
+			Pieces:         commodity.Pieces,
+		}
+
+		commodities = append(commodities, newCommodity)
+	}
+
+	return commodities
+}
+
+func (sr *shipmentRepository) duplicateShipmentFields(ctx context.Context, original *shipment.Shipment) (*shipment.Shipment, error) {
+	// Get new pro number
+	proNumber, err := sr.proNumberRepo.GetNextProNumber(ctx, original.OrganizationID)
+	if err != nil {
+		sr.l.Error().Err(err).Msg("failed to get next pro number")
+		return nil, err
+	}
+
+	shp := &shipment.Shipment{
+		ID:                  pulid.MustNew("shp_"),
+		BusinessUnitID:      original.BusinessUnitID,
+		OrganizationID:      original.OrganizationID,
+		ServiceTypeID:       original.ServiceTypeID,
+		ShipmentTypeID:      original.ShipmentTypeID,
+		CustomerID:          original.CustomerID,
+		TractorTypeID:       original.TractorTypeID,
+		TrailerTypeID:       original.TrailerTypeID,
+		Status:              shipment.StatusNew,
+		ProNumber:           proNumber,
+		RatingUnit:          original.RatingUnit,
+		OtherChargeAmount:   original.OtherChargeAmount,
+		RatingMethod:        original.RatingMethod,
+		FreightChargeAmount: original.FreightChargeAmount,
+		TotalChargeAmount:   original.TotalChargeAmount,
+		Pieces:              original.Pieces,
+		Weight:              original.Weight,
+		TemperatureMin:      original.TemperatureMin,
+		TemperatureMax:      original.TemperatureMax,
+		BOL:                 "GENERATED-COPY",
+	}
+
+	return shp, nil
 }
