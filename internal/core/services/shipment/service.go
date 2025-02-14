@@ -17,7 +17,6 @@ import (
 	"github.com/emoss08/trenova/internal/pkg/validator/shipmentvalidator"
 	"github.com/emoss08/trenova/pkg/types"
 	"github.com/emoss08/trenova/pkg/types/pulid"
-	"github.com/rotisserie/eris"
 	"github.com/rs/zerolog"
 	"go.uber.org/fx"
 )
@@ -89,8 +88,8 @@ func (s *Service) List(ctx context.Context, opts *repositories.ListShipmentOptio
 		},
 	)
 	if err != nil {
-		s.l.Error().Err(err).Msg("failed to check permissions")
-		return nil, eris.Wrap(err, "check permissions")
+		log.Error().Err(err).Msg("failed to check permissions")
+		return nil, err
 	}
 
 	if !result.Allowed {

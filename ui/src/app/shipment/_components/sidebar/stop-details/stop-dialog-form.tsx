@@ -1,4 +1,4 @@
-import { AsyncSelectField } from "@/components/fields/async-select";
+import { AutocompleteField } from "@/components/fields/autocomplete";
 import { AutoCompleteDateTimeField } from "@/components/fields/datetime-field";
 import { InputField } from "@/components/fields/input-field";
 import { SelectField } from "@/components/fields/select-field";
@@ -109,7 +109,7 @@ export function StopDialogForm() {
           </FormControl>
 
           <FormControl cols="full">
-            <AsyncSelectField
+            <AutocompleteField<LocationSchema, StopSchema>
               name="locationId"
               control={control}
               link="/locations/"
@@ -117,11 +117,9 @@ export function StopDialogForm() {
               rules={{ required: true }}
               placeholder="Select location"
               description="Select the designated location for this stop."
-              hasPermission
-              hasPopoutWindow
-              popoutLink="/shipments/configurations/locations/"
-              popoutLinkLabel="Location"
-              valueKey={["code"]}
+              getOptionValue={(option) => option.id || ""}
+              getDisplayValue={(option) => option.name}
+              renderOption={(option) => option.name}
             />
           </FormControl>
           <FormControl cols="full">

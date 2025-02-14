@@ -8,8 +8,7 @@ import type {
   Path,
   RegisterOptions,
 } from "react-hook-form";
-import type { GroupBase, Props as ReactSelectProps } from "react-select";
-import { type AsyncProps as ReactAsyncSelectProps } from "react-select/async";
+import type { Props as ReactSelectProps } from "react-select";
 import { type API_ENDPOINTS } from "./server";
 
 type BaseInputFieldProps = Omit<InputProps, "name"> & {
@@ -88,26 +87,6 @@ export type BaseSelectFieldProps = Omit<
 
 export type SelectFieldProps<T extends FieldValues> = BaseSelectFieldProps &
   FormControlProps<T>;
-
-export type BaseAsyncSelectFieldProps = Omit<
-  ReactAsyncSelectProps<SelectOption, boolean, GroupBase<SelectOption>>,
-  "options" | "onChange" | "name"
-> & {
-  onChange: (...event: any[]) => void;
-  link: API_ENDPOINTS;
-  label?: string;
-  description?: string;
-  isReadOnly?: boolean;
-  isInvalid?: boolean;
-  isLoading?: boolean;
-  isFetchError?: boolean;
-  className?: string;
-  valueKey: string | string[];
-  id?: string;
-};
-
-export type AsyncSelectFieldProps<T extends FieldValues> =
-  BaseAsyncSelectFieldProps & FormControlProps<T>;
 
 export type DoubleClickEditDateProps<T extends FieldValues> = {
   name: Path<T>;

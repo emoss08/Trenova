@@ -1,8 +1,9 @@
-import { AsyncSelectField } from "@/components/fields/async-select";
+import { AutocompleteField } from "@/components/fields/autocomplete";
 import { InputField } from "@/components/fields/input-field";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { FormControl, FormGroup } from "@/components/ui/form";
 import { Icon } from "@/components/ui/icons";
+import { EquipmentTypeSchema } from "@/lib/schemas/equipment-type-schema";
 import { ShipmentSchema } from "@/lib/schemas/shipment-schema";
 import { faTruck } from "@fortawesome/pro-solid-svg-icons";
 import { useFormContext } from "react-hook-form";
@@ -36,33 +37,30 @@ function EquipmentForm() {
   return (
     <FormGroup cols={2} className="gap-4">
       <FormControl>
-        <AsyncSelectField
-          control={control}
+        <AutocompleteField<EquipmentTypeSchema, ShipmentSchema>
           name="tractorTypeId"
+          control={control}
           label="Tractor Type"
           link="/equipment-types/"
-          valueKey={["id"]}
+          rules={{ required: true }}
           placeholder="Select Tractor Type"
           description="Select the type of tractor used, considering any special requirements (e.g., refrigeration)."
-          hasPopoutWindow
-          hasPermission
-          popoutLink="/equipment/equipment-types/"
-          popoutLinkLabel="Equipment Type"
+          getOptionValue={(option) => option.id || ""}
+          getDisplayValue={(option) => option.code}
+          renderOption={(option) => option.code}
         />
       </FormControl>
       <FormControl>
-        <AsyncSelectField
-          control={control}
+        <AutocompleteField<EquipmentTypeSchema, ShipmentSchema>
           name="trailerTypeId"
+          control={control}
           label="Trailer Type"
           link="/equipment-types/"
-          valueKey={["id"]}
           placeholder="Select Trailer Type"
           description="Select the type of trailer used, considering any special requirements (e.g., refrigeration)."
-          hasPopoutWindow
-          hasPermission
-          popoutLink="/equipment/equipment-types/"
-          popoutLinkLabel="Equipment Type"
+          getOptionValue={(option) => option.id || ""}
+          getDisplayValue={(option) => option.code}
+          renderOption={(option) => option.code}
         />
       </FormControl>
       <FormControl>
