@@ -346,3 +346,35 @@ export function NoOptionsMessage({
     </components.NoOptionsMessage>
   );
 }
+
+export function ColorOptionValue({
+  color,
+  value,
+  className,
+}: {
+  value: any;
+  color?: string;
+  className?: string;
+}) {
+  const isColor = !!color;
+
+  return isColor ? (
+    <div
+      className={cn(
+        "flex h-5 items-center text-sm font-medium text-foreground",
+        isColor && "gap-x-1.5",
+        className,
+      )}
+    >
+      <div
+        className="size-2 rounded-full"
+        style={{
+          backgroundColor: color,
+        }}
+      />
+      <p>{value}</p>
+    </div>
+  ) : (
+    value
+  );
+}

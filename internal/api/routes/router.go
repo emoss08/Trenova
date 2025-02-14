@@ -21,7 +21,9 @@ import (
 	"github.com/emoss08/trenova/internal/api/handlers/servicetype"
 	"github.com/emoss08/trenova/internal/api/handlers/session"
 	"github.com/emoss08/trenova/internal/api/handlers/shipment"
+	"github.com/emoss08/trenova/internal/api/handlers/shipmentmove"
 	"github.com/emoss08/trenova/internal/api/handlers/shipmenttype"
+	"github.com/emoss08/trenova/internal/api/handlers/stop"
 	"github.com/emoss08/trenova/internal/api/handlers/tableconfiguration"
 	"github.com/emoss08/trenova/internal/api/handlers/tractor"
 	"github.com/emoss08/trenova/internal/api/handlers/trailer"
@@ -93,6 +95,8 @@ type RouterParams struct {
 	ShipmentHandler              *shipment.Handler
 	RoutingHandler               *routing.Handler
 	AssignmentHandler            *assignment.Handler
+	ShipmentMoveHandler          *shipmentmove.Handler
+	StopHandler                  *stop.Handler
 }
 
 type Router struct {
@@ -245,4 +249,10 @@ func (r *Router) setupProtectedRoutes(router fiber.Router, rl *middleware.RateLi
 
 	// Assignments
 	r.p.AssignmentHandler.RegisterRoutes(router, rl)
+
+	// Shipment Moves
+	r.p.ShipmentMoveHandler.RegisterRoutes(router, rl)
+
+	// Stops
+	r.p.StopHandler.RegisterRoutes(router, rl)
 }

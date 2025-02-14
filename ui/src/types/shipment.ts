@@ -5,17 +5,35 @@ import { type ServiceTypeSchema } from "@/lib/schemas/service-type-schema";
 import { type ShipmentCommoditySchema } from "@/lib/schemas/shipment-commodity-schema";
 import { type ShipmentSchema } from "@/lib/schemas/shipment-schema";
 import { type ShipmentTypeSchema } from "@/lib/schemas/shipment-type-schema";
+import { BaseModel } from "./common";
 import { type ShipmentMove } from "./move";
 import { type User } from "./user";
 
 export enum ShipmentStatus {
   New = "New",
+  PartiallyAssigned = "PartiallyAssigned",
+  Assigned = "Assigned",
   InTransit = "InTransit",
   Delayed = "Delayed",
   Completed = "Completed",
   Billed = "Billed",
   Canceled = "Canceled",
 }
+
+export const mapToShipmentStatus = (status: ShipmentStatus) => {
+  const statusLabels = {
+    New: "New",
+    PartiallyAssigned: "Partially Assigned",
+    Assigned: "Assigned",
+    InTransit: "In Transit",
+    Delayed: "Delayed",
+    Completed: "Completed",
+    Billed: "Billed",
+    Canceled: "Canceled",
+  };
+
+  return statusLabels[status];
+};
 
 export enum RatingMethod {
   FlatRate = "FlatRate",
@@ -51,20 +69,21 @@ export type ShipmentCommodity = ShipmentCommoditySchema & {
   shipment: ShipmentSchema;
 };
 
-export type Shipment = ShipmentSchema & {
-  serviceType: ServiceTypeSchema;
-  shipmentType: ShipmentTypeSchema;
-  customer: CustomerSchema;
-  commodities: ShipmentCommodity[];
-  tractorType?: EquipmentTypeSchema | null;
-  trailerType?: EquipmentTypeSchema | null;
-  moves: ShipmentMove[];
-  // Cancelation Related Fields
-  canceledAt?: number | null;
-  canceledById?: string | null;
-  cancelReason?: string | null;
-  canceledBy?: User | null;
-};
+export type Shipment = BaseModel &
+  ShipmentSchema & {
+    serviceType: ServiceTypeSchema;
+    shipmentType: ShipmentTypeSchema;
+    customer: CustomerSchema;
+    commodities: ShipmentCommodity[];
+    tractorType?: EquipmentTypeSchema | null;
+    trailerType?: EquipmentTypeSchema | null;
+    moves: ShipmentMove[];
+    // Cancelation Related Fields
+    canceledAt?: number | null;
+    canceledById?: string | null;
+    cancelReason?: string | null;
+    canceledBy?: User | null;
+  };
 
 export type ShipmentQueryParams = {
   pageIndex: number;
@@ -90,8 +109,7 @@ export type ShipmentPaginationProps = {
 };
 
 export type ShipmentCardProps = {
-  shipment: Shipment;
-  isSelected: boolean;
+  shipment?: Shipment;
   onSelect: (shipmentId: string) => void;
   inputValue?: string;
 };

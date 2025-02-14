@@ -1,9 +1,10 @@
-import { AsyncSelectField } from "@/components/fields/async-select";
+import { AutocompleteField } from "@/components/fields/autocomplete";
 import { AutoCompleteDateField } from "@/components/fields/date-field";
 import { SelectField } from "@/components/fields/select-field";
 import { FormControl, FormGroup } from "@/components/ui/form";
 import { Separator } from "@/components/ui/separator";
 import { genderChoices, statusChoices, workerTypeChoices } from "@/lib/choices";
+import { FleetCodeSchema } from "@/lib/schemas/fleet-code-schema";
 import { type WorkerSchema } from "@/lib/schemas/worker-schema";
 import { useFormContext } from "react-hook-form";
 
@@ -85,16 +86,16 @@ export default function WorkersEmploymentDetailsForm() {
             />
           </FormControl>
           <FormControl>
-            <AsyncSelectField
+            <AutocompleteField<FleetCodeSchema, WorkerSchema>
               name="fleetCodeId"
               control={control}
-              link="/fleet-codes"
+              link="/fleet-codes/"
               label="Fleet Code"
               placeholder="Select Fleet Code"
               description="Select the fleet code of the worker"
-              hasPopoutWindow
-              popoutLink="/fleet-codes/"
-              popoutLinkLabel="Fleet Code"
+              getOptionValue={(option) => option.id || ""}
+              getDisplayValue={(option) => option.name}
+              renderOption={(option) => option.name}
             />
           </FormControl>
         </FormGroup>

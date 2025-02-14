@@ -90,6 +90,10 @@ export function formatSplitDateTime(timestamp: number | undefined): {
   };
 }
 
+export function formatDate(date: Date): string {
+  return format(date, "d MMM yyyy");
+}
+
 /**
  * Converts a Unix timestamp to a Date object.
  * Handles undefined input gracefully.

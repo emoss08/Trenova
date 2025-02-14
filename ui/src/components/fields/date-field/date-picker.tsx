@@ -106,7 +106,7 @@ export const AutoCompleteDatePicker = forwardRef<
       // If outside set `date` to undefined, clear the input
       setInputValue("");
     }
-  }, []);
+  }, [date]);
 
   function handleKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
     if (e.key === "ArrowDown") {

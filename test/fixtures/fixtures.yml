@@ -1220,8 +1220,8 @@
       address_line: "8626 Firestone Blvd, Downey, CA 90242"
       pieces: 1
       weight: 1000.00
-      planned_arrival: 1737685184
-      planned_departure: 1737692384
+      planned_arrival: "{{ daysAgo 10 }}"
+      planned_departure: "{{ daysAgo 10 }}"
 
     - _id: test_stop_2
       organization_id: "{{ $.Organization.trenova.ID }}"
@@ -1235,8 +1235,8 @@
       address_line: "1101 Summit Ave, Greensboro, NC 27410"
       pieces: 1
       weight: 1000.00
-      planned_arrival: 1737746081
-      planned_departure: 1737836081
+      planned_arrival: "{{ daysFromNow 10 }}"
+      planned_departure: "{{ daysFromNow 10 }}"
 
     - _id: test_stop_3
       organization_id: "{{ $.Organization.trenova.ID }}"

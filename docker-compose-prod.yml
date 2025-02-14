@@ -3,10 +3,11 @@ x-build-args: &build-args
   GO_VERSION: 1.23
   ALPINE_VERSION: latest
 
+name: trenova-prod
 services:
-  db:
+  tren-db:
+    container_name: tren-db
     image: postgres:latest
-    container_name: db
     ports:
       - "5432:5432"
     environment:
@@ -14,7 +15,6 @@ services:
       POSTGRES_USER: ${DB_USER:-postgres}
       POSTGRES_DB: ${DB_NAME:-postgres}
       POSTGRES_MULTIPLE_EXTENSIONS: "pg_stat_statements,pg_buffercache"
-      # Add performance-related configurations
       POSTGRES_INITDB_ARGS: "--data-checksums"
     command:
       - "postgres"
@@ -49,8 +49,6 @@ services:
     restart: unless-stopped
     volumes:
       - pg_data:/var/lib/postgresql/data
-      # Add volume for custom initialization scripts
-      - ./init-scripts:/docker-entrypoint-initdb.d
     deploy:
       resources:
         limits:
@@ -71,9 +69,9 @@ services:
       retries: 5
       start_period: 30s # Allow time for initial startup
 
-  meilisearch:
+  tren-search:
+    container_name: tren-search
     image: getmeili/meilisearch:v1.11.3
-    container_name: meilisearch
     ports:
       - "7700:7700"
     environment:
@@ -95,9 +93,9 @@ services:
       retries: 3
       timeout: 5s
 
-  redis:
+  tren-redis:
+    container_name: tren-redis
     image: redis/redis-stack:latest
-    container_name: redis
     ports:
       - "6379:6379"
     environment:
@@ -117,9 +115,9 @@ services:
       timeout: 5s
       retries: 5
 
-  minio:
+  tren-minio:
+    container_name: tren-minio
     image: quay.io/minio/minio
-    container_name: minio
     command: server /data --console-address ":9001"
     environment:
       - MINIO_ROOT_USER=${MINIO_ROOT_USER:-minioadmin}
@@ -142,222 +140,94 @@ services:
       timeout: 20s
       retries: 3
 
-  # zookeeper:
-  #   image: confluentinc/cp-zookeeper:7.3.2
-  #   hostname: zookeeper
-  #   container_name: zookeeper
-  #   ports:
-  #     - "2181:2181"
-  #   environment:
-  #     ZOOKEEPER_CLIENT_PORT: 2181
-  #     ZOOKEEPER_SERVER_ID: 1
-  #     ZOOKEEPER_SERVERS: zookeeper:2888:3888
-  #   networks:
-  #     - app-network
-  #   deploy:
-  #     resources:
-  #       limits:
-  #         memory: 512M
-  #   healthcheck:
-  #     test: ["CMD", "nc", "-z", "localhost", "2181"]
-  #     interval: 10s
-  #     timeout: 5s
-  #     retries: 5
-
-  # kafka:
-  #   image: confluentinc/cp-kafka:7.3.2
-  #   hostname: kafka
-  #   container_name: kafka
-  #   ports:
-  #     - "9092:9092"
-  #     - "29092:29092"
-  #     - "9999:9999"
-  #   environment:
-  #     KAFKA_LISTENERS: INTERNAL://0.0.0.0:19092,EXTERNAL://0.0.0.0:9092,DOCKER://0.0.0.0:29092
-  #     KAFKA_ADVERTISED_LISTENERS: INTERNAL://kafka:19092,EXTERNAL://localhost:9092,DOCKER://host.docker.internal:29092
-  #     KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: INTERNAL:PLAINTEXT,EXTERNAL:PLAINTEXT,DOCKER:PLAINTEXT
-  #     KAFKA_INTER_BROKER_LISTENER_NAME: INTERNAL
-  #     KAFKA_ZOOKEEPER_CONNECT: "zookeeper:2181"
-  #     KAFKA_BROKER_ID: 1
-  #     KAFKA_LOG4J_LOGGERS: "kafka.controller=INFO,kafka.producer.async.DefaultEventHandler=INFO,state.change.logger=INFO"
-  #     KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
-  #     KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
-  #     KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
-  #     KAFKA_JMX_PORT: 9001
-  #     KAFKA_JMX_HOSTNAME: ${DOCKER_HOST_IP:-127.0.0.1}
-  #     KAFKA_AUTHORIZER_CLASS_NAME: kafka.security.authorizer.AclAuthorizer
-  #     KAFKA_ALLOW_EVERYONE_IF_NO_ACL_FOUND: "true"
-  #   depends_on:
-  #     zookeeper:
-  #       condition: service_healthy
-  #   networks:
-  #     - app-network
-  #   deploy:
-  #     resources:
-  #       limits:
-  #         memory: 2G
-  #   healthcheck:
-  #     test: ["CMD", "nc", "-z", "localhost", "9092"]
-  #     interval: 10s
-  #     timeout: 5s
-  #     retries: 5
-
-  # kafka-ui:
-  #   container_name: kafka-ui
-  #   image: provectuslabs/kafka-ui:latest
-  #   ports:
-  #     - 8080:8080
-  #   environment:
-  #     KAFKA_CLUSTERS_0_NAME: local
-  #     KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: kafka:19092
-  #     KAFKA_CLUSTERS_0_ZOOKEEPER: zookeeper:2181
-  #     KAFKA_CLUSTERS_0_SCHEMAREGISTRY: http://kafka-schema-registry:8081
-  #     KAFKA_CLUSTERS_0_KAFKACONNECT_0_NAME: kafka-connect
-  #     KAFKA_CLUSTERS_0_KAFKACONNECT_0_ADDRESS: http://kafka-connect:8083
-  #     DYNAMIC_CONFIG_ENABLED: "true"
-  #   depends_on:
-  #     kafka:
-  #       condition: service_healthy
-  #     kafka-schema-registry:
-  #       condition: service_healthy
-  #     kafka-connect:
-  #       condition: service_healthy
-  #   deploy:
-  #     resources:
-  #       limits:
-  #         memory: 1G
-  #   networks:
-  #     - app-network
-
-  # kafka-schema-registry:
-  #   image: confluentinc/cp-schema-registry:7.3.2
-  #   hostname: kafka-schema-registry
-  #   container_name: kafka-schema-registry
-  #   ports:
-  #     - "8081:8081"
-  #   environment:
-  #     SCHEMA_REGISTRY_KAFKASTORE_BOOTSTRAP_SERVERS: PLAINTEXT://kafka:19092
-  #     SCHEMA_REGISTRY_HOST_NAME: kafka-schema-registry
-  #     SCHEMA_REGISTRY_LISTENERS: http://0.0.0.0:8081
-  #   depends_on:
-  #     kafka:
-  #       condition: service_healthy
-  #   networks:
-  #     - app-network
-  #   deploy:
-  #     resources:
-  #       limits:
-  #         memory: 1G
-  #   healthcheck:
-  #     test: ["CMD", "curl", "-f", "http://localhost:8081"]
-  #     interval: 10s
-  #     timeout: 5s
-  #     retries: 5
-
-  # kafka-rest-proxy:
-  #   image: confluentinc/cp-kafka-rest:7.3.2
-  #   hostname: kafka-rest-proxy
-  #   container_name: kafka-rest-proxy
-  #   ports:
-  #     - "8082:8082"
-  #   environment:
-  #     KAFKA_REST_LISTENERS: http://0.0.0.0:8082/
-  #     KAFKA_REST_SCHEMA_REGISTRY_URL: http://kafka-schema-registry:8081/
-  #     KAFKA_REST_HOST_NAME: kafka-rest-proxy
-  #     KAFKA_REST_BOOTSTRAP_SERVERS: PLAINTEXT://kafka:19092
-  #   depends_on:
-  #     kafka-schema-registry:
-  #       condition: service_healthy
-  #   deploy:
-  #     resources:
-  #       limits:
-  #         memory: 512M
-  #   networks:
-  #     - app-network
-  #   healthcheck:
-  #     test: ["CMD", "curl", "-f", "http://localhost:8082"]
-  #     interval: 10s
-  #     timeout: 5s
-  #     retries: 5
-
-  # kafka-connect:
-  #   image: confluentinc/cp-kafka-connect:7.3.2
-  #   hostname: kafka-connect
-  #   container_name: kafka-connect
-  #   ports:
-  #     - "8083:8083"
-  #   environment:
-  #     CONNECT_BOOTSTRAP_SERVERS: "kafka:19092"
-  #     CONNECT_REST_PORT: 8083
-  #     CONNECT_GROUP_ID: compose-connect-group
-  #     CONNECT_CONFIG_STORAGE_TOPIC: docker-connect-configs
-  #     CONNECT_OFFSET_STORAGE_TOPIC: docker-connect-offsets
-  #     CONNECT_STATUS_STORAGE_TOPIC: docker-connect-status
-  #     CONNECT_KEY_CONVERTER: org.apache.kafka.connect.json.JsonConverter
-  #     CONNECT_VALUE_CONVERTER: org.apache.kafka.connect.json.JsonConverter
-  #     CONNECT_KEY_CONVERTER_SCHEMAS_ENABLE: "false"
-  #     CONNECT_VALUE_CONVERTER_SCHEMAS_ENABLE: "false"
-  #     CONNECT_INTERNAL_KEY_CONVERTER: "org.apache.kafka.connect.json.JsonConverter"
-  #     CONNECT_INTERNAL_VALUE_CONVERTER: "org.apache.kafka.connect.json.JsonConverter"
-  #     CONNECT_REST_ADVERTISED_HOST_NAME: "kafka-connect"
-  #     CONNECT_LOG4J_ROOT_LOGLEVEL: "INFO"
-  #     CONNECT_LOG4J_LOGGERS: "org.apache.kafka.connect.runtime.rest=WARN,org.reflections=ERROR"
-  #     CONNECT_CONFIG_STORAGE_REPLICATION_FACTOR: "1"
-  #     CONNECT_OFFSET_STORAGE_REPLICATION_FACTOR: "1"
-  #     CONNECT_STATUS_STORAGE_REPLICATION_FACTOR: "1"
-  #     CONNECT_PLUGIN_PATH: "/usr/share/java,/etc/kafka-connect/jars,/usr/share/confluent-hub-components"
-  #   volumes:
-  #     - ./connectors:/etc/kafka-connect/jars/
-  #   depends_on:
-  #     kafka:
-  #       condition: service_healthy
-  #     kafka-schema-registry:
-  #       condition: service_healthy
-  #   command:
-  #     - bash
-  #     - -c
-  #     - |
-  #       confluent-hub install --no-prompt debezium/debezium-connector-postgresql:latest
-  #       confluent-hub install --no-prompt confluentinc/kafka-connect-datagen:0.4.0
-  #       /etc/confluent/docker/run
-  #   deploy:
-  #     resources:
-  #       limits:
-  #         memory: 2G
-  #   networks:
-  #     - app-network
-  #   healthcheck:
-  #     test: ["CMD", "curl", "-f", "http://localhost:8083/connectors"]
-  #     interval: 10s
-  #     timeout: 5s
-  #     retries: 5
-
-  mailhog:
-    image: mailhog/mailhog
-    container_name: mailhog
+  tren-api:
+    container_name: tren-api
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        <<: *build-args
     ports:
-      - "1025:1025"
-      - "8025:8025"
+      - "3001:3001"
     environment:
-      MH_AUTH_FILE: ${MAILHOG_AUTH_FILE:-/auth/mailhog.auth}
-    volumes:
-      - ./dev/mailhog.auth:/auth/mailhog.auth
-    restart: always
+      - TRENOVA_APP_ENVIRONMENT=production
+      - TRENOVA_SERVER_SECRET_KEY=${SERVER_SECRET_KEY:-secretKey}
+    depends_on:
+      tren-db:
+        condition: service_healthy
+      tren-redis:
+        condition: service_healthy
+      tren-search:
+        condition: service_healthy
+      tren-minio:
+        condition: service_healthy
+    networks:
+      - app-network
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: "1"
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:8080/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    restart: unless-stopped
+
+  tren-client:
+    container_name: tren-client
+    build:
+      context: ./ui
+      dockerfile: Dockerfile
+    ports:
+      - "5173:5173"
+    networks:
+      - app-network
+    depends_on:
+      - tren-api
+    environment:
+      - VITE_API_URL=https://trenova.local/api/v1
+    restart: unless-stopped
     deploy:
       resources:
         limits:
           memory: 256M
+          cpus: "0.5"
+
+  tren-caddy:
+    container_name: tren-caddy
+    build:
+      context: .
+      dockerfile: Dockerfile.caddy
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - caddy_data:/data
+      - caddy_config:/config
+      - ./logs/caddy:/var/log/caddy
+    environment:
+      - ACME_AGREE=true
     networks:
       - app-network
+    depends_on:
+      - tren-api
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 128M
+          cpus: "0.5"
 
 volumes:
   pg_data: {}
   redis_data: {}
   minio_data: {}
-  mailhog_data: {}
   meilisearch_data: {}
-  prometheus_data: {}
-  grafana_data: {}
+  caddy_data: {}
+  caddy_config: {}
 
 networks:
   app-network:

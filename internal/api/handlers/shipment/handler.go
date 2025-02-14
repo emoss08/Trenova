@@ -62,6 +62,11 @@ func (h Handler) RegisterRoutes(r fiber.Router, rl *middleware.RateLimiter) {
 		[]fiber.Handler{h.update},
 		middleware.PerMinute(60), // 60 writes per minute
 	)...)
+
+	api.Post("/duplicate/", rl.WithRateLimit(
+		[]fiber.Handler{h.duplicate},
+		middleware.PerMinute(60), // 60 writes per minute
+	)...)
 }
 
 func (h Handler) selectOptions(c *fiber.Ctx) error {
@@ -209,6 +214,29 @@ func (h Handler) cancel(c *fiber.Ctx) error {
 	}
 
 	newEntity, err := h.ss.Cancel(c.UserContext(), req)
+	if err != nil {
+		return h.eh.HandleError(c, err)
+	}
+
+	return c.Status(fiber.StatusOK).JSON(newEntity)
+}
+
+func (h Handler) duplicate(c *fiber.Ctx) error {
+	reqCtx, err := ctx.WithRequestContext(c)
+	if err != nil {
+		return h.eh.HandleError(c, err)
+	}
+
+	req := new(repositories.DuplicateShipmentRequest)
+	req.OrgID = reqCtx.OrgID
+	req.BuID = reqCtx.BuID
+	req.UserID = reqCtx.UserID
+
+	if err = c.BodyParser(req); err != nil {
+		return h.eh.HandleError(c, err)
+	}
+
+	newEntity, err := h.ss.Duplicate(c.UserContext(), req)
 	if err != nil {
 		return h.eh.HandleError(c, err)
 	}

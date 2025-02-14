@@ -145,30 +145,10 @@ type ServerConfig struct {
 	// Per-connection buffer size for responses' writing.
 	WriteBufferSize int `mapstructure:"writeBufferSize"`
 
-	// ReadTimeout is the read timeout defined in seconds.
-	// The amount of time allowed to read the full request,
-	// including the body. The default timeout is unlimited.
-	ReadTimeout int `mapstructure:"readTimeout"`
-
-	// WriteTimeout is the write timeout defined in seconds.
-	// The maximum duration before timing out writes of the response.
-	// The default timeout is unlimited.
-	WriteTimeout int `mapstructure:"writeTimeout"`
-
-	// IdleTimeout is the idle timeout defined in seconds.
-	// The maximum amount of time to wait for the next request
-	// when keep-alive is enabled. If IdleTimeout is zero, the
-	// value of ReadTimeout is used.
-	IdleTimeout int `mapstructure:"idleTimeout"`
-
 	// PassLocalsToViews enables passing of the locals set on a fiber.Ctx
 	// to the template engine. See our Template Middleware for supported
 	// engines.
 	PassLocalsToViews bool `mapstructure:"passLocalsToViews"`
-
-	// Concurrency is the maximum number of concurrent connections.
-	// Defaults to 256 * 1024.
-	Concurrency int `mapstructure:"concurrency"`
 
 	// DisableStartupMessage disables the startup message.
 	DisableStartupMessage bool `mapstructure:"disableStartupMessage"`

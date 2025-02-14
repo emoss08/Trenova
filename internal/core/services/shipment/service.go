@@ -17,7 +17,6 @@ import (
 	"github.com/emoss08/trenova/internal/pkg/validator/shipmentvalidator"
 	"github.com/emoss08/trenova/pkg/types"
 	"github.com/emoss08/trenova/pkg/types/pulid"
-	"github.com/rotisserie/eris"
 	"github.com/rs/zerolog"
 	"go.uber.org/fx"
 )
@@ -89,8 +88,8 @@ func (s *Service) List(ctx context.Context, opts *repositories.ListShipmentOptio
 		},
 	)
 	if err != nil {
-		s.l.Error().Err(err).Msg("failed to check permissions")
-		return nil, eris.Wrap(err, "check permissions")
+		log.Error().Err(err).Msg("failed to check permissions")
+		return nil, err
 	}
 
 	if !result.Allowed {
@@ -246,6 +245,9 @@ func (s *Service) Update(ctx context.Context, shp *shipment.Shipment, userID pul
 		ID:    shp.ID,
 		OrgID: shp.OrganizationID,
 		BuID:  shp.BusinessUnitID,
+		ShipmentOptions: repositories.ShipmentOptions{
+			ExpandShipmentDetails: true,
+		},
 	})
 	if err != nil {
 		return nil, err
@@ -317,6 +319,9 @@ func (s *Service) Cancel(ctx context.Context, req *repositories.CancelShipmentRe
 		ID:    req.ShipmentID,
 		OrgID: req.OrgID,
 		BuID:  req.BuID,
+		ShipmentOptions: repositories.ShipmentOptions{
+			ExpandShipmentDetails: true,
+		},
 	})
 	if err != nil {
 		log.Error().Err(err).Msg("failed to get shipment")
@@ -347,6 +352,62 @@ func (s *Service) Cancel(ctx context.Context, req *repositories.CancelShipmentRe
 	)
 	if err != nil {
 		log.Error().Err(err).Msg("failed to log shipment cancellation")
+	}
+
+	return newEntity, nil
+}
+
+func (s *Service) Duplicate(ctx context.Context, req *repositories.DuplicateShipmentRequest) (*shipment.Shipment, error) {
+	log := s.l.With().
+		Str("operation", "Duplicate").
+		Str("shipmentID", req.ShipmentID.String()).
+		Logger()
+
+	result, err := s.ps.HasAnyPermissions(ctx,
+		[]*services.PermissionCheck{
+			{
+				UserID:         req.UserID,
+				Resource:       permission.ResourceShipment,
+				Action:         permission.ActionDuplicate,
+				BusinessUnitID: req.BuID,
+				OrganizationID: req.OrgID,
+			},
+		},
+	)
+	if err != nil {
+		log.Error().Err(err).Msg("failed to check permissions")
+		return nil, err
+	}
+
+	if !result.Allowed {
+		return nil, errors.NewAuthorizationError("You do not have permission to duplicate this shipment")
+	}
+
+	// * Validate the request
+	if err := req.Validate(ctx); err != nil {
+		return nil, err
+	}
+
+	newEntity, err := s.repo.Duplicate(ctx, req)
+	if err != nil {
+		log.Error().Err(err).Msg("failed to duplicate shipment")
+		return nil, err
+	}
+
+	// Log the update if the insert was successful
+	err = s.as.LogAction(
+		&services.LogActionParams{
+			Resource:       permission.ResourceShipment,
+			ResourceID:     req.ShipmentID.String(),
+			Action:         permission.ActionDuplicate,
+			UserID:         req.UserID,
+			OrganizationID: req.OrgID,
+			BusinessUnitID: req.BuID,
+		},
+		audit.WithComment("Shipment duplicated"),
+	)
+	if err != nil {
+		log.Error().Err(err).Msg("failed to log shipment duplication")
 	}
 
 	return newEntity, nil

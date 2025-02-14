@@ -133,7 +133,7 @@ func TestStopValidator(t *testing.T) {
 
 			me := errors.NewMultiError()
 
-			val.Validate(ctx, vCtx, stop, me, 0)
+			val.Validate(ctx, vCtx, stop, spValidator.WithIndexedMultiError(me, 0))
 
 			matcher := testutils.NewErrorMatcher(t, me)
 			matcher.HasExactErrors(scenario.expectedErrors)

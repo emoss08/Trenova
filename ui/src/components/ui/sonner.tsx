@@ -4,8 +4,8 @@ import {
   faCircleXmark,
   faTriangleExclamation,
 } from "@fortawesome/pro-solid-svg-icons";
-import { useTheme } from "next-themes";
 import { Toaster as Sonner } from "sonner";
+import { useTheme } from "../theme-provider";
 import { Icon } from "./icons";
 
 type ToasterProps = React.ComponentProps<typeof Sonner>;

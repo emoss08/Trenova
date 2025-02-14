@@ -1,4 +1,4 @@
-import { AsyncSelectField } from "@/components/fields/async-select";
+import { AutocompleteField } from "@/components/fields/autocomplete";
 import { CheckboxField } from "@/components/fields/checkbox-field";
 import { InputField } from "@/components/fields/input-field";
 import { SelectField } from "@/components/fields/select-field";
@@ -6,6 +6,7 @@ import { TextareaField } from "@/components/fields/textarea-field";
 import { FormControl, FormGroup } from "@/components/ui/form";
 import { statusChoices } from "@/lib/choices";
 import { type CommoditySchema } from "@/lib/schemas/commodity-schema";
+import { HazardousMaterialSchema } from "@/lib/schemas/hazardous-material-schema";
 import { useFormContext } from "react-hook-form";
 
 export function CommodityForm() {
@@ -45,19 +46,18 @@ export function CommodityForm() {
         />
       </FormControl>
       <FormControl>
-        <AsyncSelectField
-          isClearable
+        <AutocompleteField<HazardousMaterialSchema, CommoditySchema>
           name="hazardousMaterialId"
           control={control}
-          link="/hazardous-materials"
+          link="/hazardous-materials/"
           label="Hazardous Material"
+          clearable
+          rules={{ required: true }}
           placeholder="Select Hazardous Material"
           description="Select the hazardous material classification if this commodity contains regulated substances."
-          // TODO(wolfred): We need to change this to include the actual user permissions
-          hasPermission
-          hasPopoutWindow
-          popoutLink="/shipments/configurations/hazardous-materials/"
-          popoutLinkLabel="Hazardous Material"
+          getOptionValue={(option) => option.id || ""}
+          getDisplayValue={(option) => `${option.code}`}
+          renderOption={(option) => `${option.code}`}
         />
       </FormControl>
       <FormControl>

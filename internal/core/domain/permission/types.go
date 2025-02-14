@@ -29,6 +29,7 @@ const (
 	ResourceShipment              = Resource("shipment")               // Represents resources for managing shipments.
 	ResourceAssignment            = Resource("assignment")             // Represents resources for managing assignments.
 	ResourceShipmentMove          = Resource("shipment_move")          // Represents resources for managing movements.
+	ResourceStop                  = Resource("stop")                   // Represents resources for managing stops.
 	ResourceFleetCode             = Resource("fleet_code")             // Represents resources for managing fleet codes.
 	ResourceEquipmentType         = Resource("equipment_type")         // Represents resources for managing equipment types.
 	ResourceEquipmentManufacturer = Resource("equipment_manufacturer") // Represents resources for managing equipment manfacturers.
@@ -73,13 +74,14 @@ const (
 	ActionViewField   = Action("view_field")   // View specific fields in a resource.
 
 	// Workflow actions
-	ActionApprove  = Action("approve")  // Approve an action or resource.
-	ActionReject   = Action("reject")   // Reject an action or resource.
-	ActionSubmit   = Action("submit")   // Submit an action or resource for approval.
-	ActionCancel   = Action("cancel")   // Cancel an action or resource.
-	ActionAssign   = Action("assign")   // Assign a resource to a user or group.
-	ActionReassign = Action("reassign") // Reassign a resource to a different user or group.
-	ActionComplete = Action("complete") // Mark a resource or action as completed.
+	ActionApprove   = Action("approve")   // Approve an action or resource.
+	ActionReject    = Action("reject")    // Reject an action or resource.
+	ActionSubmit    = Action("submit")    // Submit an action or resource for approval.
+	ActionCancel    = Action("cancel")    // Cancel an action or resource.
+	ActionAssign    = Action("assign")    // Assign a resource to a user or group.
+	ActionReassign  = Action("reassign")  // Reassign a resource to a different user or group.
+	ActionComplete  = Action("complete")  // Mark a resource or action as completed.
+	ActionDuplicate = Action("duplicate") // Duplicate a resource.
 
 	// Configuration actions
 	ActionManageDefaults = Action("manage_defaults") // Manage default table configurations.
@@ -96,6 +98,9 @@ const (
 	ActionAudit     = Action("audit")     // Audit actions for compliance and review.
 	ActionDelegate  = Action("delegate")  // Delegate permissions or responsibilities to others.
 	ActionConfigure = Action("configure") // Configure system settings or resources.
+
+	// Shipment related actions
+	ActionSplit = Action("split") // Split a shipment.
 )
 
 type Scope string
@@ -264,6 +269,7 @@ var (
 				ActionComplete,
 				ActionModifyField,
 				ActionViewField,
+				ActionDuplicate,
 			)...,
 		),
 		ResourceAssignment: {
@@ -274,7 +280,7 @@ var (
 			ActionManage, // does the user have permission to manage the assignment? (Full access)
 		},
 		ResourceShipmentMove: append(
-			append(BaseActions, WorkflowActions...),
+			append(BaseActions, ActionSplit),
 			append(DataActions, FieldActions...)...,
 		),
 		ResourceFleetCode: append(
@@ -282,6 +288,10 @@ var (
 			append(DataActions, FieldActions...)...,
 		),
 		ResourceDocumentQualityConfig: append(
+			BaseActions,
+			append(DataActions, FieldActions...)...,
+		),
+		ResourceStop: append(
 			BaseActions,
 			append(DataActions, FieldActions...)...,
 		),

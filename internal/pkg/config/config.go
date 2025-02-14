@@ -38,7 +38,7 @@ func (m *Manager) Load() (*Config, error) {
 	m.Viper.AddConfigPath(".")
 
 	// Environment variables
-	m.Viper.SetEnvPrefix("TMS")
+	m.Viper.SetEnvPrefix("TRENOVA")
 	m.Viper.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
 	m.Viper.AutomaticEnv()
 

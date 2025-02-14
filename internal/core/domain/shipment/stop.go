@@ -94,6 +94,14 @@ func (s *Stop) Validate(ctx context.Context, multiErr *errors.MultiError) {
 	}
 }
 
+func (s *Stop) GetID() string {
+	return s.ID.String()
+}
+
+func (s *Stop) GetTableName() string {
+	return "stops"
+}
+
 func (s *Stop) BeforeAppendModel(_ context.Context, query bun.Query) error {
 	now := time.Now().Unix()
 

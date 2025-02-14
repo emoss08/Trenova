@@ -35,7 +35,7 @@ import {
 import { AssignmentStatus } from "@/types/assignment";
 import { type APIError } from "@/types/errors";
 import { yupResolver } from "@hookform/resolvers/yup";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { useCallback, useEffect } from "react";
 import { FormProvider, type Path, useForm } from "react-hook-form";
 import { toast } from "sonner";
@@ -45,13 +45,30 @@ type AssignmentDialogProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   shipmentMoveId: string;
+  assignmentId?: string;
 };
 
 export function AssignmentDialog({
   open,
   onOpenChange,
   shipmentMoveId,
+  assignmentId,
 }: AssignmentDialogProps) {
+  const isEditing = !!assignmentId;
+
+  const { data: existingAssignment, isLoading: isLoadingAssignment } = useQuery(
+    {
+      queryKey: ["assignment", assignmentId],
+      queryFn: async () => {
+        const response = await http.get<AssignmentSchema>(
+          `/assignments/${assignmentId}/`,
+        );
+        return response.data;
+      },
+      enabled: isEditing && open,
+    },
+  );
+
   const form = useForm<AssignmentSchema>({
     resolver: yupResolver(assignmentSchema),
     defaultValues: {
@@ -71,6 +88,12 @@ export function AssignmentDialog({
     reset,
   } = form;
 
+  useEffect(() => {
+    if (existingAssignment && !isLoadingAssignment) {
+      reset(existingAssignment);
+    }
+  }, [existingAssignment, isLoadingAssignment, reset]);
+
   const handleClose = useCallback(() => {
     onOpenChange(false);
     reset();
@@ -88,21 +111,36 @@ export function AssignmentDialog({
 
   const mutation = useMutation({
     mutationFn: async (values: AssignmentSchema) => {
-      const response = await http.post("/assignments/single/", values);
-      return response.data;
+      if (isEditing) {
+        const response = await http.put(
+          `/assignments/${assignmentId}/`,
+          values,
+        );
+        return response.data;
+      } else {
+        const response = await http.post("/assignments/single/", values);
+        return response.data;
+      }
     },
     onSuccess: () => {
-      toast.success("Movement assigned successfully", {
-        description: `The movement has been assigned to the selected equipment and worker(s)`,
-      });
+      toast.success(
+        isEditing
+          ? "Assignment updated successfully"
+          : "Movement assigned successfully",
+        {
+          description: isEditing
+            ? "The assignment has been updated with the new equipment and worker(s)"
+            : "The movement has been assigned to the selected equipment and worker(s)",
+        },
+      );
       onOpenChange(false);
       reset();
 
       // Invalidate the query to refresh the table
       broadcastQueryInvalidation({
-        queryKey: ["assignment-list", "shipment"],
+        queryKey: ["assignment", "shipment"],
         options: {
-          correlationId: `create-shipment-move-assignment-${Date.now()}`,
+          correlationId: `${isEditing ? "update" : "create"}-shipment-move-assignment-${Date.now()}`,
         },
         config: {
           predicate: true,
@@ -157,15 +195,25 @@ export function AssignmentDialog({
       <Dialog open={open} onOpenChange={onOpenChange}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Assign {shipmentMoveId}</DialogTitle>
+            <DialogTitle>
+              {isEditing ? "Edit Assignment" : "Assign"} {shipmentMoveId}
+            </DialogTitle>
             <DialogDescription>
-              Assign equipment and worker(s) to the selected movement.
+              {isEditing
+                ? "Update equipment and worker(s) for this assignment."
+                : "Assign equipment and worker(s) to the selected movement."}
             </DialogDescription>
           </DialogHeader>
           <FormProvider {...form}>
             <Form className="space-y-0 p-0" onSubmit={handleSubmit(onSubmit)}>
               <DialogBody>
-                <AssignmentForm />
+                {isLoadingAssignment ? (
+                  <div className="flex items-center justify-center p-4">
+                    Loading assignment details...
+                  </div>
+                ) : (
+                  <AssignmentForm />
+                )}
               </DialogBody>
               <DialogFooter>
                 <Button type="button" variant="outline" onClick={onClose}>
@@ -177,9 +225,11 @@ export function AssignmentDialog({
                       <Button
                         type="submit"
                         isLoading={isSubmitting}
-                        loadingText="Assigning..."
+                        loadingText={
+                          isEditing ? "Reassigning..." : "Assigning..."
+                        }
                       >
-                        Assign
+                        {isEditing ? "Reassign" : "Assign"}
                       </Button>
                     </TooltipTrigger>
                     <TooltipContent className="flex items-center gap-2">

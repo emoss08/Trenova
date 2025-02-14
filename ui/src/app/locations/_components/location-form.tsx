@@ -1,10 +1,12 @@
-import { AsyncSelectField } from "@/components/fields/async-select";
+import { AutocompleteField } from "@/components/fields/autocomplete";
 import { InputField } from "@/components/fields/input-field";
+import { ColorOptionValue } from "@/components/fields/select-components";
 import { SelectField } from "@/components/fields/select-field";
 import { TextareaField } from "@/components/fields/textarea-field";
 import { FormControl, FormGroup } from "@/components/ui/form";
 import { statusChoices } from "@/lib/choices";
 import { queries } from "@/lib/queries";
+import { LocationCategorySchema } from "@/lib/schemas/location-category-schema";
 import { type LocationSchema } from "@/lib/schemas/location-schema";
 import { useQuery } from "@tanstack/react-query";
 import { useFormContext } from "react-hook-form";
@@ -51,20 +53,24 @@ export function LocationForm() {
         />
       </FormControl>
       <FormControl cols="full">
-        <AsyncSelectField
-          name="locationCategoryId"
-          control={control}
-          rules={{ required: true }}
-          link="/location-categories"
-          label="Location Category"
-          placeholder="Select Location Category"
-          description="Select the location category for the location."
-          // TODO(wolfred): We need to change this to include the actual user permissions
-          hasPermission
-          hasPopoutWindow
-          popoutLink="/dispatch/configurations/location-categories/"
-          popoutLinkLabel="Location Category"
-        />
+        <FormControl>
+          <AutocompleteField<LocationCategorySchema, LocationSchema>
+            name="locationCategoryId"
+            control={control}
+            rules={{ required: true }}
+            link="/location-categories/"
+            label="Location Category"
+            placeholder="Select Location Category"
+            description="Select the location category for the location."
+            getOptionValue={(option) => option.id || ""}
+            getDisplayValue={(option) => (
+              <ColorOptionValue color={option.color} value={option.name} />
+            )}
+            renderOption={(option) => (
+              <ColorOptionValue color={option.color} value={option.name} />
+            )}
+          />
+        </FormControl>
       </FormControl>
       <FormControl cols="full">
         <TextareaField

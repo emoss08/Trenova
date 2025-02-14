@@ -16,12 +16,14 @@ import { Timeline } from "./shipment-timeline";
 
 export function ShipmentCard({
   shipment,
-  isSelected,
   onSelect,
   inputValue,
 }: ShipmentCardProps) {
-  const { status } = shipment;
+  if (!shipment) {
+    return null;
+  }
 
+  const { status } = shipment;
   const { origin } = ShipmentLocations.useLocations(shipment);
 
   if (!origin) {

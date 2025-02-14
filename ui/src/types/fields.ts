@@ -8,8 +8,7 @@ import type {
   Path,
   RegisterOptions,
 } from "react-hook-form";
-import type { GroupBase, Props as ReactSelectProps } from "react-select";
-import { type AsyncProps as ReactAsyncSelectProps } from "react-select/async";
+import type { Props as ReactSelectProps } from "react-select";
 import { type API_ENDPOINTS } from "./server";
 
 type BaseInputFieldProps = Omit<InputProps, "name"> & {
@@ -89,26 +88,6 @@ export type BaseSelectFieldProps = Omit<
 export type SelectFieldProps<T extends FieldValues> = BaseSelectFieldProps &
   FormControlProps<T>;
 
-export type BaseAsyncSelectFieldProps = Omit<
-  ReactAsyncSelectProps<SelectOption, boolean, GroupBase<SelectOption>>,
-  "options" | "onChange" | "name"
-> & {
-  onChange: (...event: any[]) => void;
-  link: API_ENDPOINTS;
-  label?: string;
-  description?: string;
-  isReadOnly?: boolean;
-  isInvalid?: boolean;
-  isLoading?: boolean;
-  isFetchError?: boolean;
-  className?: string;
-  valueKey?: string | string[];
-  id?: string;
-};
-
-export type AsyncSelectFieldProps<T extends FieldValues> =
-  BaseAsyncSelectFieldProps & FormControlProps<T>;
-
 export type DoubleClickEditDateProps<T extends FieldValues> = {
   name: Path<T>;
   control: Control<T>;
@@ -122,6 +101,11 @@ export type DoubleClickSelectFieldProps<T extends FieldValues> = {
   rules?: RegisterOptions<T, Path<T>>;
   placeholder?: string;
   options: SelectOption[];
+};
+
+export type Suggestion = {
+  date: Date;
+  inputString: string;
 };
 
 export interface DatePickerProps
@@ -144,10 +128,61 @@ export type AutoCompleteDateFieldProps<T extends FieldValues> = Omit<
 export interface DateTimePickerProps
   extends React.InputHTMLAttributes<HTMLInputElement> {
   dateTime: Date | undefined;
-  setDateTime: React.Dispatch<React.SetStateAction<Date | undefined>>;
+  setDateTime: (date: Date | undefined) => void;
+  isInvalid?: boolean;
+  placeholder?: string;
+  clearable?: boolean;
+  label?: string;
+  description?: string;
 }
 
-export type Suggestion = {
-  date: Date;
-  inputString: string;
-};
+export interface AutocompleteFormControlProps<T extends FieldValues> {
+  name: Path<T>;
+  control: Control<T>;
+  rules?: RegisterOptions<T, Path<T>>;
+}
+
+export interface BaseAutocompleteFieldProps<TOption> {
+  /** Link to fetch options */
+  link: API_ENDPOINTS;
+  /** Preload all data ahead of time */
+  preload?: boolean;
+  /** Function to filter options */
+  filterFn?: (option: TOption, query: string) => boolean;
+  /** Function to render each option */
+  renderOption: (option: TOption) => React.ReactNode;
+  /** Function to get the value from an option */
+  getOptionValue: (option: TOption) => string | number;
+  /** Function to get the display value for the selected option */
+  getDisplayValue: (option: TOption) => React.ReactNode;
+  /** Custom not found message */
+  notFound?: React.ReactNode;
+  /** Currently selected value */
+  value: string;
+  /** Callback when selection changes */
+  onChange: (...event: any[]) => void;
+  /** Label for the select field */
+  label: string;
+  /** Placeholder text when no selection */
+  placeholder?: string;
+  /** Disable the entire select */
+  disabled?: boolean;
+  /** Custom width for the popover */
+  width?: string | number;
+  /** Custom class names */
+  className?: string;
+  /** Custom trigger button class names */
+  triggerClassName?: string;
+  /** Custom no results message */
+  noResultsMessage?: string;
+  /** Allow clearing the selection */
+  clearable?: boolean;
+}
+
+export type AutocompleteFieldProps<TOption, TForm extends FieldValues> = Omit<
+  BaseAutocompleteFieldProps<TOption>,
+  "onChange" | "value"
+> &
+  AutocompleteFormControlProps<TForm> & {
+    description?: string;
+  };

@@ -10,12 +10,12 @@ interface TimelineItemProps {
   className?: string;
 }
 
-const TimelineItem: React.FC<TimelineItemProps> = ({
+const TimelineItem = ({
   icon,
   content,
   isLast = false,
   className,
-}) => {
+}: TimelineItemProps) => {
   return (
     <div className={cn("flex items-start", className)}>
       <div className="flex flex-col items-center mr-2 relative">
@@ -52,7 +52,7 @@ interface TimelineProps {
   className?: string;
 }
 
-export const Timeline: React.FC<TimelineProps> = ({ items, className }) => {
+export const Timeline = ({ items, className }: TimelineProps) => {
   return (
     <div
       className={cn("max-w-md space-y-2", className)}

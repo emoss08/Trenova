@@ -83,5 +83,6 @@ func (v *Validator) ValidateUniqueness(ctx context.Context, valCtx *validator.Va
 func (v *Validator) validateID(com *commodity.Commodity, valCtx *validator.ValidationContext, multiErr *errors.MultiError) {
 	if valCtx.IsCreate && com.ID.IsNotNil() {
 		multiErr.Add("id", errors.ErrInvalid, "ID cannot be set on create")
+		return
 	}
 }

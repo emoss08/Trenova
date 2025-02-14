@@ -1,9 +1,14 @@
-import { AsyncSelectField } from "@/components/fields/async-select";
+import { AutocompleteField } from "@/components/fields/autocomplete";
 import { InputField } from "@/components/fields/input-field";
+import { ColorOptionValue } from "@/components/fields/select-components";
 import { SelectField } from "@/components/fields/select-field";
 import { FormControl, FormGroup } from "@/components/ui/form";
 import { equipmentStatusChoices } from "@/lib/choices";
+import { EquipmentManufacturerSchema } from "@/lib/schemas/equipment-manufacturer-schema";
+import { EquipmentTypeSchema } from "@/lib/schemas/equipment-type-schema";
+import { FleetCodeSchema } from "@/lib/schemas/fleet-code-schema";
 import { type TractorSchema } from "@/lib/schemas/tractor-schema";
+import { WorkerSchema } from "@/lib/schemas/worker-schema";
 import { useFormContext } from "react-hook-form";
 
 export function TractorForm() {
@@ -79,80 +84,79 @@ export function TractorForm() {
         />
       </FormControl>
       <FormControl cols="full">
-        <AsyncSelectField
+        <AutocompleteField<FleetCodeSchema, TractorSchema>
           name="fleetCodeId"
           control={control}
           link="/fleet-codes/"
           label="Fleet Code"
           placeholder="Fleet Code"
-          description="Select the fleet code of the tractor"
-          hasPermission
-          hasPopoutWindow
-          popoutLink="/dispatch/configurations/fleet-codes/"
-          popoutLinkLabel="Fleet Code"
+          description="The fleet code associated with the tractor"
+          rules={{ required: true }}
+          getOptionValue={(option) => option.id || ""}
+          getDisplayValue={(option) => (
+            <ColorOptionValue color={option.color} value={option.name} />
+          )}
+          renderOption={(option) => (
+            <ColorOptionValue color={option.color} value={option.name} />
+          )}
         />
       </FormControl>
       <FormControl>
-        <AsyncSelectField
+        <AutocompleteField<EquipmentTypeSchema, TractorSchema>
           name="equipmentTypeId"
           control={control}
-          rules={{ required: true }}
           link="/equipment-types/"
           label="Equipment Type"
-          valueKey="code"
+          rules={{ required: true }}
           placeholder="Equipment Type"
-          description="Select the equipment type of the tractor"
-          hasPermission
-          hasPopoutWindow
-          popoutLink="/equipment/configurations/equipment-types/"
-          popoutLinkLabel="Equipment Type"
+          description="The type of equipment the tractor is categorized under."
+          getOptionValue={(option) => option.id || ""}
+          getDisplayValue={(option) => (
+            <ColorOptionValue color={option.color} value={option.code} />
+          )}
+          renderOption={(option) => (
+            <ColorOptionValue color={option.color} value={option.code} />
+          )}
         />
       </FormControl>
       <FormControl>
-        <AsyncSelectField
+        <AutocompleteField<EquipmentManufacturerSchema, TractorSchema>
           name="equipmentManufacturerId"
           control={control}
-          rules={{ required: true }}
           link="/equipment-manufacturers/"
-          label="Equipment Manufacturer"
-          valueKey="name"
-          placeholder="Equipment Manufacturer"
-          description="Select the equipment manufacturer of the tractor"
-          hasPermission
-          hasPopoutWindow
-          popoutLink="/equipment/configurations/equipment-manufacturers/"
-          popoutLinkLabel="Equip Manu."
+          label="Equip. Manufacturer"
+          placeholder="Equip. Manufacturer"
+          description="The manufacturer of the tractor's equipment."
+          getOptionValue={(option) => option.id || ""}
+          getDisplayValue={(option) => option.name}
+          renderOption={(option) => option.name}
         />
       </FormControl>
       <FormControl>
-        <AsyncSelectField
+        <AutocompleteField<WorkerSchema, TractorSchema>
           name="primaryWorkerId"
           control={control}
-          rules={{ required: true }}
           link="/workers/"
           label="Primary Worker"
-          valueKey={["firstName", "lastName"]}
-          placeholder="Primary Worker"
-          description="Select the primary worker of the tractor"
-          hasPermission
-          hasPopoutWindow
-          popoutLink="/dispatch/configurations/workers/"
-          popoutLinkLabel="Worker"
+          rules={{ required: true }}
+          placeholder="Select Primary Worker"
+          description="Select the primary worker for the assignment."
+          getOptionValue={(option) => option.id || ""}
+          getDisplayValue={(option) => `${option.firstName} ${option.lastName}`}
+          renderOption={(option) => `${option.firstName} ${option.lastName}`}
         />
       </FormControl>
       <FormControl>
-        <AsyncSelectField
+        <AutocompleteField<WorkerSchema, TractorSchema>
           name="secondaryWorkerId"
           control={control}
           link="/workers/"
           label="Secondary Worker"
-          valueKey={["firstName", "lastName"]}
-          placeholder="Secondary Worker"
-          description="Select the secondary worker of the tractor"
-          hasPermission
-          hasPopoutWindow
-          popoutLink="/dispatch/configurations/workers/"
-          popoutLinkLabel="Worker"
+          placeholder="Select Secondary Worker"
+          description="Select the secondary worker for the assignment."
+          getOptionValue={(option) => option.id || ""}
+          getDisplayValue={(option) => `${option.firstName} ${option.lastName}`}
+          renderOption={(option) => `${option.firstName} ${option.lastName}`}
         />
       </FormControl>
     </FormGroup>

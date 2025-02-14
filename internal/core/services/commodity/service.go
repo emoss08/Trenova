@@ -241,13 +241,13 @@ func (s *Service) Update(ctx context.Context, com *commodity.Commodity, userID p
 		BuID:  com.BusinessUnitID,
 	})
 	if err != nil {
-		return nil, eris.Wrap(err, "get commodity")
+		return nil, err
 	}
 
 	updatedEntity, err := s.repo.Update(ctx, com)
 	if err != nil {
 		log.Error().Err(err).Msg("failed to update commodity")
-		return nil, eris.Wrap(err, "update commodity")
+		return nil, err
 	}
 
 	// Log the update if the insert was successful

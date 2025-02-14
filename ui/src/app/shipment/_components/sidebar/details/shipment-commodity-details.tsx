@@ -38,6 +38,7 @@ const CommodityRow = memo(function CommodityRow({
           entityId={shipmentCommodity.commodity.id}
           baseUrl="/shipments/configurations/commodities"
           modelOpen
+          value={shipmentCommodity.commodity.name}
         >
           {shipmentCommodity.commodity.name}
         </EntityRedirectLink>

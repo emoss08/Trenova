@@ -12,6 +12,12 @@ import {
   AlertDialogTitle,
 } from "./alert-dialog";
 import { Icon } from "./icons";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "./tooltip";
 
 function ExternalLinkDialog({
   open,
@@ -105,42 +111,55 @@ type EntityRedirectLinkProps = Omit<LinkProps, "to"> & {
   entityId?: string;
   baseUrl: string;
   modelOpen?: boolean;
+  value?: string;
 };
 
 export const EntityRedirectLink = React.forwardRef<
   HTMLAnchorElement,
   EntityRedirectLinkProps
->(({ entityId, baseUrl, modelOpen, children, className, ...rest }, ref) => {
-  if (!entityId) {
-    return <>{children}</>;
-  }
+>(
+  (
+    { entityId, baseUrl, modelOpen, children, className, value, ...rest },
+    ref,
+  ) => {
+    if (!entityId) {
+      return <>{children}</>;
+    }
 
-  let url = `${baseUrl}`;
+    let url = `${baseUrl}`;
 
-  if (modelOpen) {
-    url += `?entityId=${entityId}&modal=edit`;
-  } else {
-    url += `/${entityId}`;
-  }
+    if (modelOpen) {
+      url += `?entityId=${entityId}&modal=edit`;
+    } else {
+      url += `/${entityId}`;
+    }
 
-  return (
-    <Link
-      ref={ref}
-      to={url}
-      className={cn(
-        "inline-flex w-full items-center text-primary hover:text-primary/70 underline",
-        className,
-      )}
-      style={{
-        fontWeight: "normal",
-        width: "fit-content",
-        display: "inline-block",
-      }}
-      {...rest}
-    >
-      {children}
-    </Link>
-  );
-});
+    return (
+      <TooltipProvider>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Link
+              ref={ref}
+              to={url}
+              className={cn(
+                "inline-flex w-full items-center text-primary hover:text-primary/70 underline",
+                className,
+              )}
+              style={{
+                fontWeight: "normal",
+                width: "fit-content",
+                display: "inline-block",
+              }}
+              {...rest}
+            >
+              {children}
+            </Link>
+          </TooltipTrigger>
+          <TooltipContent>Click to view {value ?? "unknown"}</TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
+    );
+  },
+);
 
 EntityRedirectLink.displayName = "EntityRedirectLink";
