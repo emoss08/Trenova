@@ -33,10 +33,8 @@ CREATE TABLE IF NOT EXISTS "shipments"(
     "actual_delivery_date" bigint,
     "temperature_min" numeric(10, 2),
     "temperature_max" numeric(10, 2),
+    -- Billing Related Fields
     "bill_date" bigint,
-    "ready_to_bill" boolean NOT NULL DEFAULT FALSE,
-    "ready_to_bill_date" bigint,
-    "sent_to_billing" boolean NOT NULL DEFAULT FALSE,
     "rating_unit" integer NOT NULL DEFAULT 1 CHECK ("rating_unit" > 0),
     "rating_method" rating_method_enum NOT NULL DEFAULT 'FlatRate',
     "freight_charge_amount" numeric(19, 4) NOT NULL DEFAULT 0 CHECK ("freight_charge_amount" >= 0),
@@ -44,8 +42,6 @@ CREATE TABLE IF NOT EXISTS "shipments"(
     "total_charge_amount" numeric(19, 4) NOT NULL DEFAULT 0 CHECK ("total_charge_amount" >= 0),
     "pieces" integer CHECK ("pieces" > 0),
     "weight" integer CHECK ("weight" > 0),
-    "sent_to_billing_date" bigint,
-    "billed" boolean NOT NULL DEFAULT FALSE,
     -- Cancellation Related Fields
     "canceled_by_id" varchar(100),
     "canceled_at" bigint,
@@ -70,8 +66,6 @@ CREATE INDEX IF NOT EXISTS "idx_shipments_status" ON "shipments"("status");
 
 CREATE INDEX IF NOT EXISTS "idx_shipments_business_unit" ON "shipments"("business_unit_id", "organization_id");
 
-CREATE INDEX IF NOT EXISTS "idx_shipments_billing_status" ON "shipments"("ready_to_bill", "sent_to_billing");
-
 COMMENT ON TABLE shipments IS 'Stores information about shipments and their billing status';
 
 --bun:split
@@ -81,13 +75,6 @@ ALTER TABLE "shipments"
 --bun:split
 CREATE INDEX IF NOT EXISTS idx_shipments_search ON shipments USING GIN(search_vector);
 
---bun:split
-CREATE INDEX IF NOT EXISTS idx_shipments_status_composite ON shipments(status, organization_id, business_unit_id) INCLUDE (pro_number, bol, ready_to_bill, sent_to_billing);
-
---bun:split
-CREATE INDEX IF NOT EXISTS idx_shipments_billing_composite ON shipments(ready_to_bill, sent_to_billing, billed) INCLUDE (bill_date, total_charge_amount)
-WHERE
-    ready_to_bill = TRUE OR sent_to_billing = TRUE OR billed = TRUE;
 
 --bun:split
 CREATE INDEX IF NOT EXISTS idx_shipments_dates_brin ON shipments USING BRIN(actual_ship_date, actual_delivery_date, created_at) WITH (pages_per_range = 128);

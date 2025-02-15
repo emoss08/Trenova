@@ -5,12 +5,11 @@ import { type ShipmentFilterSchema } from "@/lib/schemas/shipment-filter-schema"
 import { lazy, Suspense, useCallback, useEffect, useMemo } from "react";
 import { useFormContext } from "react-hook-form";
 import { useShipmentDetails, useShipments } from "../../queries/shipment";
-import { ShipmentDetailsSkeleton } from "./details/shipment-details-skeleton";
+import { ShipmentDetailsSkeleton } from "./form/shipment-details-skeleton";
 import { ShipmentList } from "./shipment-list";
-import { ShipmentPagination } from "./shipment-sidebar-pagination";
 
 // Components
-const ShipmentDetails = lazy(() => import("./details/shipment-details"));
+const ShipmentDetails = lazy(() => import("./form/shipment-form"));
 
 const PAGE_SIZE_OPTIONS = [10, 25, 50] as const;
 const SEARCH_DEBOUNCE_TIME = 500;
@@ -118,17 +117,6 @@ export function ShipmentSidebar() {
           selectedShipmentId={selectedShipmentId}
           onShipmentSelect={handleShipmentSelection}
           inputValue={debouncedQueryValue}
-        />
-      )}
-      {!selectedShipmentId && (
-        <ShipmentPagination
-          totalCount={shipmentsQuery.data?.count || 0}
-          page={page}
-          pageSize={pageSize}
-          onPageChange={handlePageChange}
-          onPageSizeChange={handlePageSizeChange}
-          pageSizeOptions={PAGE_SIZE_OPTIONS}
-          isLoading={shipmentsQuery.isLoading || isTransitioning}
         />
       )}
     </div>

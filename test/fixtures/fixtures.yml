@@ -951,7 +951,7 @@
       created_at: "{{ now.Unix }}"
       status: "New"
       pro_number: "S121094129213012"
-      bol: "TEST000000"
+      bol: "S121094129213012"
       shipment_type_id: "{{ $.ShipmentType.ftl_shipment_type.ID }}"
       service_type_id: "{{ $.ServiceType.std_service_type.ID }}"
       customer_id: "{{ $.Customer.honeywell_customer.ID }}"
@@ -962,9 +962,6 @@
       total_charge_amount: 200.00
       pieces: 1
       weight: 1000.00
-      ready_to_bill: false
-      billed: false
-      sent_to_billing: false
       temperature_min: 10.00
       temperature_max: 20.00
       tractor_type_id: "{{ $.EquipmentType.tractor_equip_type.ID }}"
@@ -988,11 +985,9 @@
       total_charge_amount: 500.00
       pieces: 1
       weight: 1000.00
-      ready_to_bill: false
-      billed: false
-      sent_to_billing: false
       temperature_min: 10.00
       temperature_max: 20.00
+
     - _id: in_transit_shipment_2
       organization_id: "{{ $.Organization.trenova.ID }}"
       business_unit_id: "{{ $.BusinessUnit.trenova.ID }}"
@@ -1010,9 +1005,6 @@
       total_charge_amount: 500.00
       pieces: 1
       weight: 1000.00
-      ready_to_bill: false
-      billed: false
-      sent_to_billing: false
       temperature_min: 10.00
       temperature_max: 20.00
 
@@ -1034,9 +1026,6 @@
       total_charge_amount: 500.00
       pieces: 1
       weight: 1000.00
-      ready_to_bill: false
-      billed: false
-      sent_to_billing: false
       temperature_min: 10.00
       temperature_max: 20.00
 
@@ -1058,9 +1047,6 @@
       total_charge_amount: 500.00
       pieces: 1
       weight: 1000.00
-      ready_to_bill: false
-      billed: false
-      sent_to_billing: false
       temperature_min: 10.00
       temperature_max: 20.00
 
@@ -1082,11 +1068,6 @@
       total_charge_amount: 500.00
       pieces: 1
       weight: 1000.00
-      billed: true
-      ready_to_bill: true
-      ready_to_bill_date: "{{ now.Unix }}"
-      sent_to_billing: true
-      sent_to_billing_date: "{{ now.Unix }}"
       temperature_min: 10.00
       temperature_max: 20.00
 
@@ -1108,11 +1089,6 @@
       total_charge_amount: 500.00
       pieces: 1
       weight: 1000.00
-      billed: true
-      ready_to_bill: true
-      ready_to_bill_date: "{{ now.Unix }}"
-      sent_to_billing: true
-      sent_to_billing_date: "{{ now.Unix }}"
       temperature_min: 10.00
       temperature_max: 20.00
       canceled_at: "{{ now.Unix }}"
@@ -1545,142 +1521,6 @@
       pieces: 1
       weight: 1000.00
     - _id: test_shipment_commodity_3
-      organization_id: "{{ $.Organization.trenova.ID }}"
-      business_unit_id: "{{ $.BusinessUnit.trenova.ID }}"
-      created_at: "{{ now.Unix }}"
-      shipment_id: "{{ $.Shipment.test_shipment.ID }}"
-      commodity_id: "{{ $.Commodity.test_commodity.ID }}"
-      pieces: 1
-      weight: 1000.00
-    - _id: test_shipment_commodity_4
-      organization_id: "{{ $.Organization.trenova.ID }}"
-      business_unit_id: "{{ $.BusinessUnit.trenova.ID }}"
-      created_at: "{{ now.Unix }}"
-      shipment_id: "{{ $.Shipment.test_shipment.ID }}"
-      commodity_id: "{{ $.Commodity.test_commodity.ID }}"
-      pieces: 1
-      weight: 1000.00
-    - _id: test_shipment_commodity_5
-      organization_id: "{{ $.Organization.trenova.ID }}"
-      business_unit_id: "{{ $.BusinessUnit.trenova.ID }}"
-      created_at: "{{ now.Unix }}"
-      shipment_id: "{{ $.Shipment.test_shipment.ID }}"
-      commodity_id: "{{ $.Commodity.test_commodity.ID }}"
-      pieces: 1
-      weight: 1000.00
-    - _id: test_shipment_commodity_6
-      organization_id: "{{ $.Organization.trenova.ID }}"
-      business_unit_id: "{{ $.BusinessUnit.trenova.ID }}"
-      created_at: "{{ now.Unix }}"
-      shipment_id: "{{ $.Shipment.test_shipment.ID }}"
-      commodity_id: "{{ $.Commodity.test_commodity.ID }}"
-      pieces: 1
-      weight: 1000.00
-    - _id: test_shipment_commodity_7
-      organization_id: "{{ $.Organization.trenova.ID }}"
-      business_unit_id: "{{ $.BusinessUnit.trenova.ID }}"
-      created_at: "{{ now.Unix }}"
-      shipment_id: "{{ $.Shipment.test_shipment.ID }}"
-      commodity_id: "{{ $.Commodity.test_commodity.ID }}"
-      pieces: 1
-      weight: 1000.00
-    - _id: test_shipment_commodity_8
-      organization_id: "{{ $.Organization.trenova.ID }}"
-      business_unit_id: "{{ $.BusinessUnit.trenova.ID }}"
-      created_at: "{{ now.Unix }}"
-      shipment_id: "{{ $.Shipment.test_shipment.ID }}"
-      commodity_id: "{{ $.Commodity.test_commodity.ID }}"
-      pieces: 1
-      weight: 1000.00
-    - _id: test_shipment_commodity_9
-      organization_id: "{{ $.Organization.trenova.ID }}"
-      business_unit_id: "{{ $.BusinessUnit.trenova.ID }}"
-      created_at: "{{ now.Unix }}"
-      shipment_id: "{{ $.Shipment.test_shipment.ID }}"
-      commodity_id: "{{ $.Commodity.test_commodity.ID }}"
-      pieces: 1
-      weight: 1000.00
-    - _id: test_shipment_commodity_10
-      organization_id: "{{ $.Organization.trenova.ID }}"
-      business_unit_id: "{{ $.BusinessUnit.trenova.ID }}"
-      created_at: "{{ now.Unix }}"
-      shipment_id: "{{ $.Shipment.test_shipment.ID }}"
-      commodity_id: "{{ $.Commodity.test_commodity.ID }}"
-      pieces: 1
-      weight: 1000.00
-    - _id: test_shipment_commodity_11
-      organization_id: "{{ $.Organization.trenova.ID }}"
-      business_unit_id: "{{ $.BusinessUnit.trenova.ID }}"
-      created_at: "{{ now.Unix }}"
-      shipment_id: "{{ $.Shipment.test_shipment.ID }}"
-      commodity_id: "{{ $.Commodity.test_commodity.ID }}"
-      pieces: 1
-      weight: 1000.00
-    - _id: test_shipment_commodity_12
-      organization_id: "{{ $.Organization.trenova.ID }}"
-      business_unit_id: "{{ $.BusinessUnit.trenova.ID }}"
-      created_at: "{{ now.Unix }}"
-      shipment_id: "{{ $.Shipment.test_shipment.ID }}"
-      commodity_id: "{{ $.Commodity.test_commodity.ID }}"
-      pieces: 1
-      weight: 1000.00
-    - _id: test_shipment_commodity_13
-      organization_id: "{{ $.Organization.trenova.ID }}"
-      business_unit_id: "{{ $.BusinessUnit.trenova.ID }}"
-      created_at: "{{ now.Unix }}"
-      shipment_id: "{{ $.Shipment.test_shipment.ID }}"
-      commodity_id: "{{ $.Commodity.test_commodity.ID }}"
-      pieces: 1
-      weight: 1000.00
-    - _id: test_shipment_commodity_14
-      organization_id: "{{ $.Organization.trenova.ID }}"
-      business_unit_id: "{{ $.BusinessUnit.trenova.ID }}"
-      created_at: "{{ now.Unix }}"
-      shipment_id: "{{ $.Shipment.test_shipment.ID }}"
-      commodity_id: "{{ $.Commodity.test_commodity.ID }}"
-      pieces: 1
-      weight: 1000.00
-    - _id: test_shipment_commodity_15
-      organization_id: "{{ $.Organization.trenova.ID }}"
-      business_unit_id: "{{ $.BusinessUnit.trenova.ID }}"
-      created_at: "{{ now.Unix }}"
-      shipment_id: "{{ $.Shipment.test_shipment.ID }}"
-      commodity_id: "{{ $.Commodity.test_commodity.ID }}"
-      pieces: 1
-      weight: 1000.00
-    - _id: test_shipment_commodity_16
-      organization_id: "{{ $.Organization.trenova.ID }}"
-      business_unit_id: "{{ $.BusinessUnit.trenova.ID }}"
-      created_at: "{{ now.Unix }}"
-      shipment_id: "{{ $.Shipment.test_shipment.ID }}"
-      commodity_id: "{{ $.Commodity.test_commodity.ID }}"
-      pieces: 1
-      weight: 1000.00
-    - _id: test_shipment_commodity_17
-      organization_id: "{{ $.Organization.trenova.ID }}"
-      business_unit_id: "{{ $.BusinessUnit.trenova.ID }}"
-      created_at: "{{ now.Unix }}"
-      shipment_id: "{{ $.Shipment.test_shipment.ID }}"
-      commodity_id: "{{ $.Commodity.test_commodity.ID }}"
-      pieces: 1
-      weight: 1000.00
-    - _id: test_shipment_commodity_18
-      organization_id: "{{ $.Organization.trenova.ID }}"
-      business_unit_id: "{{ $.BusinessUnit.trenova.ID }}"
-      created_at: "{{ now.Unix }}"
-      shipment_id: "{{ $.Shipment.test_shipment.ID }}"
-      commodity_id: "{{ $.Commodity.test_commodity.ID }}"
-      pieces: 1
-      weight: 1000.00
-    - _id: test_shipment_commodity_19
-      organization_id: "{{ $.Organization.trenova.ID }}"
-      business_unit_id: "{{ $.BusinessUnit.trenova.ID }}"
-      created_at: "{{ now.Unix }}"
-      shipment_id: "{{ $.Shipment.test_shipment.ID }}"
-      commodity_id: "{{ $.Commodity.test_commodity.ID }}"
-      pieces: 1
-      weight: 1000.00
-    - _id: test_shipment_commodity_20
       organization_id: "{{ $.Organization.trenova.ID }}"
       business_unit_id: "{{ $.BusinessUnit.trenova.ID }}"
       created_at: "{{ now.Unix }}"

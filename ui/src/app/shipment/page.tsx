@@ -3,7 +3,6 @@ import { SuspenseLoader } from "@/components/ui/component-loader";
 import { useShipmentParams } from "@/hooks/use-shipment-params";
 import { ShipmentFilterSchema } from "@/lib/schemas/shipment-filter-schema";
 import { FormProvider, useForm } from "react-hook-form";
-import ShipmentMap from "./_components/shipment-map";
 import ShipmentTable from "./_components/shipment-table";
 
 export function Shipment() {
@@ -21,7 +20,7 @@ export function Shipment() {
       <MetaTags title="Shipments" description="Shipments" />
       <SuspenseLoader>
         <FormProvider {...form}>
-          {view === "list" ? <ShipmentTable /> : <ShipmentMap />}
+          <ShipmentTable />
         </FormProvider>
       </SuspenseLoader>
     </>

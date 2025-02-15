@@ -1,9 +1,8 @@
 import { Button } from "@/components/ui/button";
 import { Icon } from "@/components/ui/icons";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { ShipmentStatus, type Shipment } from "@/types/shipment";
+import { type Shipment } from "@/types/shipment";
 import { faChevronLeft } from "@fortawesome/pro-solid-svg-icons";
-import { CanceledShipmentOverlay } from "../shipment-cancellation-overlay";
 import { ShipmentNotFoundOverlay } from "../shipment-not-found-overlay";
 import { ShipmentCommodityDetails } from "./shipment-commodity-details";
 import {
@@ -15,16 +14,22 @@ import { ShipmentDetailsSkeleton } from "./shipment-details-skeleton";
 import { ShipmentActions } from "./shipment-menu-actions";
 import { ShipmentMovesDetails } from "./shipment-move-details";
 
+// ShipmentDetails.tsx
 interface ShipmentDetailsProps {
   selectedShipment?: Shipment | null;
   isLoading: boolean;
   onBack: () => void;
+  dimensions: {
+    contentHeight: number;
+    viewportHeight: number;
+  };
 }
 
-export default function ShipmentDetails({
+export function ShipmentForm({
   selectedShipment,
   isLoading,
   onBack,
+  dimensions,
 }: ShipmentDetailsProps) {
   if (isLoading) {
     return <ShipmentDetailsSkeleton />;
@@ -34,9 +39,28 @@ export default function ShipmentDetails({
     return <ShipmentNotFoundOverlay onBack={onBack} />;
   }
 
-  const content = (
+  // Calculate the optimal height for the scroll area
+  const calculateScrollAreaHeight = () => {
+    const { contentHeight, viewportHeight } = dimensions;
+
+    // Constants for height calculations
+    const headerHeight = 120; // Height of the header section
+    const minHeight = 400; // Minimum height for the scroll area
+    const footerHeight = 60; // Height of the footer section
+
+    // Use viewport height as base for calculation
+    const baseHeight = Math.min(contentHeight, viewportHeight);
+    const calculatedHeight = baseHeight - headerHeight - footerHeight;
+
+    // Ensure we don't go below minimum height
+    return Math.max(calculatedHeight, minHeight);
+  };
+
+  const scrollAreaHeight = `${calculateScrollAreaHeight()}px`;
+
+  return (
     <div className="size-full">
-      <div className="py-2">
+      <div className="pt-4">
         <div className="flex items-center gap-2 px-4 justify-between">
           <Button variant="outline" size="sm" onClick={onBack}>
             <Icon icon={faChevronLeft} className="size-4" />
@@ -46,31 +70,22 @@ export default function ShipmentDetails({
         </div>
         <div className="flex flex-col gap-2 mt-4">
           <ShipmentDetailsHeader />
-          <ScrollArea className="flex max-h-[calc(100vh-12rem)] flex-col overflow-y-auto px-4">
-            <ShipmentServiceDetails />
-            <ShipmentBillingDetails />
-            <ShipmentCommodityDetails />
-            <ShipmentMovesDetails />
-            <div className="pointer-events-none absolute bottom-0 left-0 right-0 h-8 bg-gradient-to-t from-sidebar to-transparent" />
+          <ScrollArea
+            className="flex flex-col overflow-y-auto px-4"
+            style={{
+              height: scrollAreaHeight,
+              minHeight: "400px",
+            }}
+          >
+            <div className="flex flex-col gap-4 pb-2">
+              <ShipmentServiceDetails />
+              <ShipmentBillingDetails />
+              <ShipmentCommodityDetails />
+              <ShipmentMovesDetails />
+            </div>
           </ScrollArea>
         </div>
       </div>
     </div>
   );
-
-  // Wrap content in overlay if shipment is canceled
-  if (selectedShipment.status === ShipmentStatus.Canceled) {
-    return (
-      <CanceledShipmentOverlay
-        canceledAt={selectedShipment.canceledAt ?? 0}
-        canceledBy={selectedShipment.canceledBy?.name ?? ""}
-        cancelReason={selectedShipment.cancelReason ?? ""}
-        onBack={onBack}
-      >
-        {content}
-      </CanceledShipmentOverlay>
-    );
-  }
-
-  return content;
 }
