@@ -10,6 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/pkg/errors"
 	"github.com/emoss08/trenova/internal/pkg/logger"
+	"github.com/emoss08/trenova/internal/pkg/utils/timeutils"
 	"github.com/emoss08/trenova/pkg/types/pulid"
 	"github.com/rotisserie/eris"
 	"github.com/rs/zerolog"
@@ -130,6 +131,8 @@ func (ar *assignmentRepository) BulkAssign(ctx context.Context, req *repositorie
 		return nil, err
 	}
 
+	ar.l.Debug().Interface("assignments", assignments).Msg("bulk assignments created")
+
 	return assignments, nil
 }
 
@@ -138,13 +141,14 @@ func (ar *assignmentRepository) extractMoveIDs(moves []*shipment.ShipmentMove) [
 	for i, move := range moves {
 		moveIDs[i] = move.ID
 	}
+
 	return moveIDs
 }
 
-func (ar *assignmentRepository) processBulkAssignment(ctx context.Context, tx bun.Tx, assignments []*shipment.Assignment,
-	moveIDs []pulid.ID, req *repositories.AssignmentRequest,
+func (ar *assignmentRepository) processBulkAssignment(
+	ctx context.Context, tx bun.Tx, assignments []*shipment.Assignment, moveIDs []pulid.ID, req *repositories.AssignmentRequest,
 ) error {
-	if err := tx.NewInsert().Model(assignments).Scan(ctx); err != nil {
+	if err := tx.NewInsert().Model(&assignments).Scan(ctx); err != nil {
 		return err
 	}
 
@@ -342,9 +346,31 @@ func (ar *assignmentRepository) Reassign(ctx context.Context, a *shipment.Assign
 }
 
 func (ar *assignmentRepository) processReassignment(ctx context.Context, tx bun.Tx, a *shipment.Assignment) error {
-	// Increment the version of the assignment
-	originalVersion := a.Version
-	a.Version++
+	// Get the current version for comparison
+	current := new(shipment.Assignment)
+	err := tx.NewSelect().
+		Model(current).
+		Where("id = ? AND organization_id = ? AND business_unit_id = ?",
+			a.ID, a.OrganizationID, a.BusinessUnitID).
+		Scan(ctx)
+	if err != nil {
+		if eris.Is(err, sql.ErrNoRows) {
+			return errors.NewNotFoundError("Assignment not found")
+		}
+		return err
+	}
+
+	// Check for version mismatch
+	if current.Version != a.Version {
+		return errors.NewValidationError(
+			"version",
+			errors.ErrVersionMismatch,
+			fmt.Sprintf("Version mismatch. The Assignment (%s) has been updated since your last request.", a.ID),
+		)
+	}
+
+	// Increment version and update
+	a.Version = current.Version + 1
 
 	res, err := tx.NewUpdate().
 		Model(a).
@@ -353,23 +379,16 @@ func (ar *assignmentRepository) processReassignment(ctx context.Context, tx bun.
 		Set("primary_worker_id = ?", a.PrimaryWorkerID).
 		Set("secondary_worker_id = ?", a.SecondaryWorkerID).
 		Set("version = ?", a.Version).
-		WhereGroup(" AND ", func(q *bun.UpdateQuery) *bun.UpdateQuery {
-			return q.Where("a.id = ?", a.ID).
-				Where("a.organization_id = ?", a.OrganizationID).
-				Where("a.business_unit_id = ?", a.BusinessUnitID).
-				Where("a.version = ?", originalVersion)
-		}).
+		Set("updated_at = ?", timeutils.NowUnix()).
+		Where("id = ? AND organization_id = ? AND business_unit_id = ? AND version = ?",
+			a.ID, a.OrganizationID, a.BusinessUnitID, current.Version).
 		Exec(ctx)
 	if err != nil {
 		return err
 	}
 
-	// Check if the update affected any rows
 	rowsAffected, err := res.RowsAffected()
 	if err != nil {
-		ar.l.Error().Err(err).
-			Interface("assignment", a).
-			Msg("failed to get rows affected")
 		return err
 	}
 
@@ -377,7 +396,7 @@ func (ar *assignmentRepository) processReassignment(ctx context.Context, tx bun.
 		return errors.NewValidationError(
 			"version",
 			errors.ErrVersionMismatch,
-			fmt.Sprintf("Version mismatch. The Assignment (%s) has either been updated or deleted since the last request.", a.ID),
+			fmt.Sprintf("Version mismatch. The Assignment (%s) has been updated since your last request.", a.ID),
 		)
 	}
 

@@ -27,16 +27,12 @@ type ShipmentRepositoryParams struct {
 	DB            db.Connection
 	Logger        *logger.Logger
 	ProNumberRepo repositories.ProNumberRepository
-	MoveRepo      repositories.ShipmentMoveRepository
-	StopRepo      repositories.StopRepository
 }
 
 type shipmentRepository struct {
 	db            db.Connection
 	l             *zerolog.Logger
 	proNumberRepo repositories.ProNumberRepository
-	moveRepo      repositories.ShipmentMoveRepository
-	stopRepo      repositories.StopRepository
 }
 
 func NewShipmentRepository(p ShipmentRepositoryParams) repositories.ShipmentRepository {
@@ -48,8 +44,6 @@ func NewShipmentRepository(p ShipmentRepositoryParams) repositories.ShipmentRepo
 		db:            p.DB,
 		l:             &log,
 		proNumberRepo: p.ProNumberRepo,
-		moveRepo:      p.MoveRepo,
-		stopRepo:      p.StopRepo,
 	}
 }
 

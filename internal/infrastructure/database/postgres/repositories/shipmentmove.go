@@ -9,6 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/pkg/errors"
 	"github.com/emoss08/trenova/internal/pkg/logger"
+	"github.com/emoss08/trenova/internal/pkg/utils/timeutils"
 	"github.com/emoss08/trenova/pkg/types/pulid"
 	"github.com/rotisserie/eris"
 	"github.com/rs/zerolog"
@@ -87,8 +88,11 @@ func (sr *shipmentMoveRepository) BulkUpdateStatus(ctx context.Context, req repo
 
 	moves := make([]*shipment.ShipmentMove, len(req.MoveIDs))
 	results, err := dba.NewUpdate().
-		Model(moves).
+		Model(&moves).
+		Column("status").
+		Column("updated_at").
 		Set("status = ?", req.Status).
+		Set("updated_at = ?", timeutils.NowUnix()). // Explicity set the updated_at to the current time
 		Where("sm.id IN (?)", bun.In(req.MoveIDs)).
 		Returning("*").
 		Exec(ctx)

@@ -967,6 +967,28 @@
       tractor_type_id: "{{ $.EquipmentType.tractor_equip_type.ID }}"
       trailer_type_id: "{{ $.EquipmentType.trailer_equip_type.ID }}"
 
+    - _id: test_shipment_2
+      organization_id: "{{ $.Organization.trenova.ID }}"
+      business_unit_id: "{{ $.BusinessUnit.trenova.ID }}"
+      created_at: "{{ now.Unix }}"
+      status: "New"
+      pro_number: "S121096129213212"
+      bol: "S121094129213012"
+      shipment_type_id: "{{ $.ShipmentType.ftl_shipment_type.ID }}"
+      service_type_id: "{{ $.ServiceType.std_service_type.ID }}"
+      customer_id: "{{ $.Customer.honeywell_customer.ID }}"
+      rating_unit: 1
+      rating_method: "PerMile"
+      other_charge_amount: 100.00
+      freight_charge_amount: 100.00
+      total_charge_amount: 200.00
+      pieces: 1
+      weight: 1000.00
+      temperature_min: 10.00
+      temperature_max: 20.00
+      tractor_type_id: "{{ $.EquipmentType.tractor_equip_type.ID }}"
+      trailer_type_id: "{{ $.EquipmentType.trailer_equip_type.ID }}"
+
     # In Transit Shipment
     - _id: in_transit_shipment
       organization_id: "{{ $.Organization.trenova.ID }}"
@@ -1121,6 +1143,16 @@
       status: "New"
       sequence: 2
       shipment_id: "{{ $.Shipment.test_shipment.ID }}"
+      distance: 100.00
+
+    #Shipment 2 Moves
+    - _id: test_shipment_move_8
+      organization_id: "{{ $.Organization.trenova.ID }}"
+      business_unit_id: "{{ $.BusinessUnit.trenova.ID }}"
+      created_at: "{{ now.Unix }}"
+      status: "New"
+      sequence: 2
+      shipment_id: "{{ $.Shipment.test_shipment_2.ID }}"
       distance: 100.00
 
     # In Transit Shipment Move
@@ -1501,6 +1533,36 @@
       planned_departure: "{{ now.Unix }}"
       actual_arrival: "{{ now.Unix }}"
       actual_departure: "{{ now.Unix }}"
+    # Shipment 1 Move Stops
+    - _id: test_stop_14
+      organization_id: "{{ $.Organization.trenova.ID }}"
+      business_unit_id: "{{ $.BusinessUnit.trenova.ID }}"
+      created_at: "{{ now.Unix }}"
+      status: "New"
+      type: "Pickup"
+      sequence: 0
+      shipment_move_id: "{{ $.ShipmentMove.test_shipment_move_8.ID }}"
+      location_id: "{{ $.Location.test_location.ID }}"
+      address_line: "8626 Firestone Blvd, Downey, CA 90242"
+      pieces: 1
+      weight: 1000.00
+      planned_arrival: "{{ daysAgo 10 }}"
+      planned_departure: "{{ daysAgo 10 }}"
+
+    - _id: test_stop_15
+      organization_id: "{{ $.Organization.trenova.ID }}"
+      business_unit_id: "{{ $.BusinessUnit.trenova.ID }}"
+      created_at: "{{ now.Unix }}"
+      status: "New"
+      type: "Delivery"
+      sequence: 1
+      shipment_move_id: "{{ $.ShipmentMove.test_shipment_move_8.ID }}"
+      location_id: "{{ $.Location.test_location_2.ID }}"
+      address_line: "1101 Summit Ave, Greensboro, NC 27410"
+      pieces: 1
+      weight: 1000.00
+      planned_arrival: "{{ daysFromNow 10 }}"
+      planned_departure: "{{ daysFromNow 10 }}"
 
 - model: ShipmentCommodity
   rows:

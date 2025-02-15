@@ -34,7 +34,6 @@ CREATE TABLE IF NOT EXISTS "shipments"(
     "temperature_min" numeric(10, 2),
     "temperature_max" numeric(10, 2),
     -- Billing Related Fields
-    "bill_date" bigint,
     "rating_unit" integer NOT NULL DEFAULT 1 CHECK ("rating_unit" > 0),
     "rating_method" rating_method_enum NOT NULL DEFAULT 'FlatRate',
     "freight_charge_amount" numeric(19, 4) NOT NULL DEFAULT 0 CHECK ("freight_charge_amount" >= 0),
