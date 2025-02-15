@@ -10,12 +10,20 @@ import {
   SheetTitle,
 } from "@/components/ui/sheet";
 import { VisuallyHidden } from "@/components/ui/visually-hidden";
-import { shipmentSchema, ShipmentSchema } from "@/lib/schemas/shipment-schema";
+import { broadcastQueryInvalidation } from "@/hooks/use-invalidate-query";
+import { useResponsiveDimensions } from "@/hooks/use-responsive-dimensions";
+import { http } from "@/lib/http-client";
+import {
+  shipmentSchema,
+  type ShipmentSchema,
+} from "@/lib/schemas/shipment-schema";
 import { EditTableSheetProps } from "@/types/data-table";
 import { Shipment } from "@/types/shipment";
 import { yupResolver } from "@hookform/resolvers/yup";
-import { useEffect, useRef, useState } from "react";
+import { useMutation } from "@tanstack/react-query";
+import { useCallback, useEffect, useRef } from "react";
 import { FormProvider, useForm } from "react-hook-form";
+import { toast } from "sonner";
 import { useShipmentDetails } from "../queries/shipment";
 import { ShipmentForm } from "./sidebar/form/shipment-form";
 
@@ -25,11 +33,7 @@ export function ShipmentEditSheet({
   currentRecord,
 }: EditTableSheetProps<Shipment>) {
   const sheetRef = useRef<HTMLDivElement>(null);
-  const isMountedRef = useRef(false);
-  const [dimensions, setDimensions] = useState({
-    contentHeight: 0,
-    viewportHeight: 0,
-  });
+  const dimensions = useResponsiveDimensions(sheetRef, open);
 
   const shipmentDetails = useShipmentDetails({
     shipmentId: currentRecord?.id ?? "",
@@ -44,11 +48,15 @@ export function ShipmentEditSheet({
   });
 
   const {
+    watch,
     setError,
-    formState: { isDirty, isSubmitting },
+    formState: { isDirty, isSubmitting, errors },
     handleSubmit,
     reset,
   } = form;
+
+  console.debug("shipment values", watch());
+  console.debug("errors", errors);
 
   useEffect(() => {
     if (shipmentDetails.data && !isDetailsLoading) {
@@ -56,56 +64,41 @@ export function ShipmentEditSheet({
     }
   }, [shipmentDetails.data, isDetailsLoading, reset]);
 
-  useEffect(() => {
-    if (!open) return;
+  const { mutateAsync } = useMutation({
+    mutationFn: async (values: ShipmentSchema) => {
+      const response = await http.put(
+        `/shipments/${currentRecord?.id}`,
+        values,
+      );
+      return response.data;
+    },
+    onSuccess: () => {
+      toast.success("Shipment updated successfully");
+      onOpenChange(false);
 
-    const updateDimensions = () => {
-      if (sheetRef.current) {
-        const contentHeight = sheetRef.current.getBoundingClientRect().height;
-        const viewportHeight = window.innerHeight;
+      // Reset the form again to ensure the form is cleared with the new values
+      reset();
 
-        // Only update if we have valid measurements
-        if (contentHeight > 0 && viewportHeight > 0) {
-          setDimensions({
-            contentHeight,
-            viewportHeight,
-          });
-        }
-      }
-    };
+      broadcastQueryInvalidation({
+        queryKey: ["shipment", "shipment-list", "stop", "assignment"],
+        options: {
+          correlationId: `update-shipment-${Date.now()}`,
+        },
+        config: {
+          predicate: true,
+          refetchType: "all",
+        },
+      });
+    },
+  });
 
-    // Initial setup with a small delay to ensure proper rendering
-    const initialTimer = setTimeout(() => {
-      isMountedRef.current = true;
-      updateDimensions();
-    }, 100);
-
-    // Create a ResizeObserver for the sheet content
-    const resizeObserver = new ResizeObserver(() => {
-      if (isMountedRef.current) {
-        updateDimensions();
-      }
-    });
-
-    if (sheetRef.current) {
-      resizeObserver.observe(sheetRef.current);
-    }
-
-    // Handle window resize
-    const handleResize = () => {
-      if (isMountedRef.current) {
-        updateDimensions();
-      }
-    };
-    window.addEventListener("resize", handleResize);
-
-    return () => {
-      clearTimeout(initialTimer);
-      resizeObserver.disconnect();
-      window.removeEventListener("resize", handleResize);
-      isMountedRef.current = false;
-    };
-  }, [open]);
+  const onSubmit = useCallback(
+    async (values: ShipmentSchema) => {
+      console.debug("onSubmit", values);
+      await mutateAsync(values);
+    },
+    [mutateAsync],
+  );
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
@@ -122,7 +115,7 @@ export function ShipmentEditSheet({
         </VisuallyHidden>
 
         <FormProvider {...form}>
-          <Form>
+          <Form className="space-y-0 p-0" onSubmit={handleSubmit(onSubmit)}>
             <SheetBody className="p-0">
               {shipmentDetails.data && (
                 <ShipmentForm
@@ -137,7 +130,9 @@ export function ShipmentEditSheet({
               <Button variant="outline" onClick={() => onOpenChange(false)}>
                 Cancel
               </Button>
-              <Button>Save Changes</Button>
+              <Button type="submit" isLoading={isSubmitting}>
+                Save Changes
+              </Button>
             </SheetFooter>
           </Form>
         </FormProvider>

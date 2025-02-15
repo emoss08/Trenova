@@ -39,7 +39,6 @@ export function AssignmentForm() {
     if (assignmentData && tractorId) {
       setValue("primaryWorkerId", assignmentData.primaryWorkerId || "");
       setValue("secondaryWorkerId", assignmentData.secondaryWorkerId || null);
-      console.log("Form values:", getValues());
     }
   }, [tractorId, assignmentData, setValue, getValues]);
 

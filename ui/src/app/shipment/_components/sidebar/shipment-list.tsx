@@ -48,7 +48,6 @@ export function ShipmentList({
   const renderContent = () => {
     // During loading, always show skeletons
     if (isLoading) {
-      console.log("Loading shipments");
       return Array.from({ length: 10 }, (_, index) => (
         <ShipmentCardSkeleton key={`skeleton-${index}`} />
       ));
@@ -56,7 +55,6 @@ export function ShipmentList({
 
     // If we have data, show it
     if (displayData?.length > 0) {
-      console.log("Showing shipments");
       return displayData.map((shipment) => (
         <ShipmentCard
           key={shipment?.id}
@@ -68,7 +66,6 @@ export function ShipmentList({
     }
 
     // Only show empty state if we're not loading and have no data
-    console.log("No shipments found");
     return (
       <EmptyState
         title="No Shipments Found"

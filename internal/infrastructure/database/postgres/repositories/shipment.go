@@ -9,6 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/ports"
 	"github.com/emoss08/trenova/internal/core/ports/db"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/core/services/calculator"
 	"github.com/emoss08/trenova/internal/pkg/errors"
 	"github.com/emoss08/trenova/internal/pkg/logger"
 	"github.com/emoss08/trenova/internal/pkg/postgressearch"
@@ -27,12 +28,14 @@ type ShipmentRepositoryParams struct {
 	DB            db.Connection
 	Logger        *logger.Logger
 	ProNumberRepo repositories.ProNumberRepository
+	Calculator    *calculator.ShipmentCalculator
 }
 
 type shipmentRepository struct {
 	db            db.Connection
 	l             *zerolog.Logger
 	proNumberRepo repositories.ProNumberRepository
+	calc          *calculator.ShipmentCalculator
 }
 
 func NewShipmentRepository(p ShipmentRepositoryParams) repositories.ShipmentRepository {
@@ -44,6 +47,7 @@ func NewShipmentRepository(p ShipmentRepositoryParams) repositories.ShipmentRepo
 		db:            p.DB,
 		l:             &log,
 		proNumberRepo: p.ProNumberRepo,
+		calc:          p.Calculator,
 	}
 }
 
@@ -192,6 +196,9 @@ func (sr *shipmentRepository) Create(ctx context.Context, shp *shipment.Shipment
 		return nil, err
 	}
 
+	// Calculate the totals for the shipment
+	sr.calc.CalculateTotals(shp)
+
 	err = dba.RunInTx(ctx, nil, func(c context.Context, tx bun.Tx) error {
 		shp.ProNumber = proNumber
 
@@ -200,6 +207,12 @@ func (sr *shipmentRepository) Create(ctx context.Context, shp *shipment.Shipment
 				Err(iErr).
 				Interface("shipment", shp).
 				Msg("failed to insert shipment")
+			return err
+		}
+
+		// Handle commodity operations
+		if err := sr.handleCommodityOperations(c, tx, shp, true); err != nil {
+			log.Error().Err(err).Msg("failed to handle commodity operations")
 			return err
 		}
 
@@ -224,6 +237,9 @@ func (sr *shipmentRepository) Update(ctx context.Context, shp *shipment.Shipment
 		Str("id", shp.GetID()).
 		Int64("version", shp.Version).
 		Logger()
+
+	// Calculate the totals for the shipment
+	sr.calc.CalculateTotals(shp)
 
 	err = dba.RunInTx(ctx, nil, func(c context.Context, tx bun.Tx) error {
 		ov := shp.Version
@@ -259,6 +275,12 @@ func (sr *shipmentRepository) Update(ctx context.Context, shp *shipment.Shipment
 				errors.ErrVersionMismatch,
 				fmt.Sprintf("Version mismatch. The Shipment (%s) has either been updated or deleted since the last request.", shp.GetID()),
 			)
+		}
+
+		// Handle commodity operations
+		if err := sr.handleCommodityOperations(c, tx, shp, false); err != nil {
+			log.Error().Err(err).Msg("failed to handle commodity operations")
+			return err
 		}
 
 		return nil
@@ -642,4 +664,131 @@ func (sr *shipmentRepository) duplicateShipmentFields(ctx context.Context, origi
 	}
 
 	return shp, nil
+}
+
+func (sr *shipmentRepository) handleCommodityOperations(ctx context.Context, tx bun.Tx, shp *shipment.Shipment, isCreate bool) error {
+	log := sr.l.With().
+		Str("operation", "handleCommodityOperations").
+		Str("shipmentID", shp.ID.String()).
+		Logger()
+
+	// if there are no commodities and it's a create operation, we can return early
+	if len(shp.Commodities) == 0 && isCreate {
+		return nil
+	}
+
+	// Get existing commodities for comparison if this is an update
+	var existingCommodities []*shipment.ShipmentCommodity
+	if !isCreate {
+		if err := tx.NewSelect().
+			Model(&existingCommodities).
+			Where("sc.shipment_id = ?", shp.ID).
+			Where("sc.organization_id = ?", shp.OrganizationID).
+			Where("sc.business_unit_id = ?", shp.BusinessUnitID).
+			Scan(ctx); err != nil {
+			log.Error().Err(err).Msg("failed to fetch existing commodities")
+			return eris.Wrap(err, "fetch existing commodities")
+		}
+	}
+
+	// Prepare commodities for operations
+	newCommodities := make([]*shipment.ShipmentCommodity, 0)
+	updateCommodities := make([]*shipment.ShipmentCommodity, 0)
+	existingCommodityMap := make(map[pulid.ID]*shipment.ShipmentCommodity)
+	updatedCommodityIDs := make(map[pulid.ID]struct{})
+
+	// Create map of existing commodities for quick lookup
+	for _, commodity := range existingCommodities {
+		existingCommodityMap[commodity.ID] = commodity
+	}
+
+	// Categorize commodities for different operations
+	for _, commodity := range shp.Commodities {
+		// Set required fields
+		commodity.ShipmentID = shp.ID
+		commodity.OrganizationID = shp.OrganizationID
+		commodity.BusinessUnitID = shp.BusinessUnitID
+
+		if isCreate || commodity.ID.IsNil() {
+			// Append new commodities
+			newCommodities = append(newCommodities, commodity)
+		} else {
+			if existing, ok := existingCommodityMap[commodity.ID]; ok {
+				// Increment version for optimistic locking
+				commodity.Version = existing.Version + 1
+				updateCommodities = append(updateCommodities, commodity)
+				updatedCommodityIDs[commodity.ID] = struct{}{}
+			}
+		}
+	}
+
+	// Handle bulk insert of new commodities
+	if len(newCommodities) > 0 {
+		if _, err := tx.NewInsert().Model(&newCommodities).Exec(ctx); err != nil {
+			log.Error().Err(err).Msg("failed to bulk insert new commodities")
+			return eris.Wrap(err, "bulk insert commodities")
+		}
+	}
+
+	// Handle bulk update of new commodities
+	if len(updateCommodities) > 0 {
+		values := tx.NewValues(&updateCommodities)
+		res, err := tx.NewUpdate().
+			With("_data", values).
+			Model((*shipment.ShipmentCommodity)(nil)).
+			TableExpr("_data").
+			Set("shipment_id = _data.shipment_id").
+			Set("commodity_id = _data.commodity_id").
+			Set("weight = _data.weight").
+			Set("pieces = _data.pieces").
+			Set("version = _data.version").
+			Where("sc.id = _data.id").
+			Where("sc.version = _data.version - 1").
+			Where("sc.organization_id = _data.organization_id").
+			Where("sc.business_unit_id = _data.business_unit_id").
+			Exec(ctx)
+		if err != nil {
+			log.Error().Err(err).Msg("failed to bulk update commodities")
+			return eris.Wrap(err, "bulk update commodities")
+		}
+
+		rowsAffected, err := res.RowsAffected()
+		if err != nil {
+			log.Error().Err(err).Msg("failed to get rows affected for updated commodities")
+			return eris.Wrap(err, "get rows affected for updated commodities")
+		}
+
+		if int(rowsAffected) != len(updateCommodities) {
+			return errors.NewValidationError(
+				"version",
+				errors.ErrVersionMismatch,
+				"One or more commodities have been modified since last retrieval",
+			)
+		}
+
+		log.Debug().Int("count", len(updateCommodities)).Msg("bulk updated commodities")
+	}
+
+	// Handle deletion of commodities that are no longer present
+	if !isCreate {
+		commoditiesToDelete := make([]*shipment.ShipmentCommodity, 0)
+		for id, commodity := range existingCommodityMap {
+			if _, exists := updatedCommodityIDs[id]; !exists {
+				commoditiesToDelete = append(commoditiesToDelete, commodity)
+			}
+		}
+
+		if len(commoditiesToDelete) > 0 {
+			_, err := tx.NewDelete().
+				Model(&commoditiesToDelete).
+				WherePK().
+				Exec(ctx)
+			if err != nil {
+				log.Error().Err(err).Msg("failed to bulk delete commodities")
+				return eris.Wrap(err, "bulk delete commodities")
+			}
+		}
+	}
+
+	return nil
 }

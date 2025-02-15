@@ -961,7 +961,7 @@
       freight_charge_amount: 100.00
       total_charge_amount: 200.00
       pieces: 1
-      weight: 1000.00
+      weight: 1000
       temperature_min: 10.00
       temperature_max: 20.00
       tractor_type_id: "{{ $.EquipmentType.tractor_equip_type.ID }}"
@@ -983,7 +983,7 @@
       freight_charge_amount: 100.00
       total_charge_amount: 200.00
       pieces: 1
-      weight: 1000.00
+      weight: 1000
       temperature_min: 10.00
       temperature_max: 20.00
       tractor_type_id: "{{ $.EquipmentType.tractor_equip_type.ID }}"
@@ -1006,7 +1006,7 @@
       freight_charge_amount: 400.00
       total_charge_amount: 500.00
       pieces: 1
-      weight: 1000.00
+      weight: 1000
       temperature_min: 10.00
       temperature_max: 20.00
 
@@ -1026,7 +1026,7 @@
       freight_charge_amount: 400.00
       total_charge_amount: 500.00
       pieces: 1
-      weight: 1000.00
+      weight: 1000
       temperature_min: 10.00
       temperature_max: 20.00
 
@@ -1047,7 +1047,7 @@
       freight_charge_amount: 400.00
       total_charge_amount: 500.00
       pieces: 1
-      weight: 1000.00
+      weight: 1000
       temperature_min: 10.00
       temperature_max: 20.00
 
@@ -1068,7 +1068,7 @@
       freight_charge_amount: 400.00
       total_charge_amount: 500.00
       pieces: 1
-      weight: 1000.00
+      weight: 1000
       temperature_min: 10.00
       temperature_max: 20.00
 
@@ -1089,7 +1089,7 @@
       freight_charge_amount: 400.00
       total_charge_amount: 500.00
       pieces: 1
-      weight: 1000.00
+      weight: 1000
       temperature_min: 10.00
       temperature_max: 20.00
 
@@ -1110,7 +1110,7 @@
       freight_charge_amount: 400.00
       total_charge_amount: 500.00
       pieces: 1
-      weight: 1000.00
+      weight: 1000
       temperature_min: 10.00
       temperature_max: 20.00
       canceled_at: "{{ now.Unix }}"
@@ -1227,7 +1227,7 @@
       location_id: "{{ $.Location.test_location.ID }}"
       address_line: "8626 Firestone Blvd, Downey, CA 90242"
       pieces: 1
-      weight: 1000.00
+      weight: 1000
       planned_arrival: "{{ daysAgo 10 }}"
       planned_departure: "{{ daysAgo 10 }}"
 
@@ -1242,7 +1242,7 @@
       location_id: "{{ $.Location.test_location_2.ID }}"
       address_line: "1101 Summit Ave, Greensboro, NC 27410"
       pieces: 1
-      weight: 1000.00
+      weight: 1000
       planned_arrival: "{{ daysFromNow 10 }}"
       planned_departure: "{{ daysFromNow 10 }}"
 
@@ -1257,7 +1257,7 @@
       location_id: "{{ $.Location.test_location_2.ID }}"
       address_line: "1101 Summit Ave, Greensboro, NC 27410"
       pieces: 1
-      weight: 1000.00
+      weight: 1000
       planned_arrival: 1737918881
       planned_departure: 1738019681
 
@@ -1272,7 +1272,7 @@
       location_id: "{{ $.Location.test_location_3.ID }}"
       address_line: "6185 Retail Rd, Dallas, TX 75231"
       pieces: 1
-      weight: 1000.00
+      weight: 1000
       planned_arrival: 1738073681
       planned_departure: 1738185281
 
@@ -1287,7 +1287,7 @@
       location_id: "{{ $.Location.test_location_3.ID }}"
       address_line: "6185 Retail Rd, Dallas, TX 75231"
       pieces: 1
-      weight: 1000.00
+      weight: 1000
       planned_arrival: 1737918881
       planned_departure: 1738019681
 
@@ -1302,7 +1302,7 @@
       location_id: "{{ $.Location.test_location.ID }}"
       address_line: "8626 Firestone Blvd, Downey, CA 90242"
       pieces: 1
-      weight: 1000.00
+      weight: 1000
       planned_arrival: 1738073681
       planned_departure: 1738185281
 
@@ -1317,7 +1317,7 @@
       location_id: "{{ $.Location.test_location.ID }}"
       address_line: "8626 Firestone Blvd, Downey, CA 90242"
       pieces: 1
-      weight: 1000.00
+      weight: 1000
       planned_arrival: 1737918881
       planned_departure: 1738019681
 
@@ -1332,7 +1332,7 @@
       location_id: "{{ $.Location.test_location_2.ID }}"
       address_line: "1101 Summit Ave, Greensboro, NC 27410"
       pieces: 1
-      weight: 1000.00
+      weight: 1000
       planned_arrival: 1738073681
       planned_departure: 1738185281
 
@@ -1348,7 +1348,7 @@
       location_id: "{{ $.Location.test_location.ID }}"
       address_line: "8626 Firestone Blvd, Downey, CA 90242"
       pieces: 1
-      weight: 1000.00
+      weight: 1000
       planned_arrival: "{{ now.Unix }}"
       planned_departure: "{{ now.Unix }}"
 
@@ -1363,7 +1363,7 @@
       location_id: "{{ $.Location.test_location_2.ID }}"
       address_line: "1101 Summit Ave, Greensboro, NC 27410"
       pieces: 1
-      weight: 1000.00
+      weight: 1000
       planned_arrival: "{{ now.Unix }}"
       planned_departure: "{{ now.Unix }}"
 
@@ -1379,7 +1379,7 @@
       location_id: "{{ $.Location.test_location_3.ID }}"
       address_line: "6185 Retail Rd, Dallas, TX 75231"
       pieces: 1
-      weight: 1000.00
+      weight: 1000
       planned_arrival: "{{ now.Unix }}"
       planned_departure: "{{ now.Unix }}"
 
@@ -1394,7 +1394,7 @@
       location_id: "{{ $.Location.test_location_2.ID }}"
       address_line: "1101 Summit Ave, Greensboro, NC 27410"
       pieces: 1
-      weight: 1000.00
+      weight: 1000
       planned_arrival: "{{ now.Unix }}"
       planned_departure: "{{ now.Unix }}"
 
@@ -1410,7 +1410,7 @@
       location_id: "{{ $.Location.test_location_2.ID }}"
       address_line: "1101 Summit Ave, Greensboro, NC 27410"
       pieces: 1
-      weight: 1000.00
+      weight: 1000
       planned_arrival: "{{ monthsAgo 1 }}"
       planned_departure: "{{ monthsAgo 1 }}"
 
@@ -1425,7 +1425,7 @@
       location_id: "{{ $.Location.test_location_3.ID }}"
       address_line: "6185 Retail Rd, Dallas, TX 75231"
       pieces: 1
-      weight: 1000.00
+      weight: 1000
       planned_arrival: "{{ monthsAgo 1 }}"
       planned_departure: "{{ monthsAgo 1 }}"
 
@@ -1441,7 +1441,7 @@
       location_id: "{{ $.Location.test_location_2.ID }}"
       address_line: "1101 Summit Ave, Greensboro, NC 27410"
       pieces: 1
-      weight: 1000.00
+      weight: 1000
       planned_arrival: "{{ now.Unix }}"
       planned_departure: "{{ now.Unix }}"
       actual_arrival: "{{ now.Unix }}"
@@ -1458,7 +1458,7 @@
       location_id: "{{ $.Location.test_location_3.ID }}"
       address_line: "6185 Retail Rd, Dallas, TX 75231"
       pieces: 1
-      weight: 1000.00
+      weight: 1000
       planned_arrival: "{{ now.Unix }}"
       planned_departure: "{{ now.Unix }}"
       actual_arrival: "{{ now.Unix }}"
@@ -1476,7 +1476,7 @@
       location_id: "{{ $.Location.test_location_3.ID }}"
       address_line: "6185 Retail Rd, Dallas, TX 75231"
       pieces: 1
-      weight: 1000.00
+      weight: 1000
       planned_arrival: "{{ now.Unix }}"
       planned_departure: "{{ now.Unix }}"
       actual_arrival: "{{ now.Unix }}"
@@ -1493,7 +1493,7 @@
       location_id: "{{ $.Location.test_location_2.ID }}"
       address_line: "1101 Summit Ave, Greensboro, NC 27410"
       pieces: 1
-      weight: 1000.00
+      weight: 1000
       planned_arrival: "{{ now.Unix }}"
       planned_departure: "{{ now.Unix }}"
       actual_arrival: "{{ now.Unix }}"
@@ -1511,7 +1511,7 @@
       location_id: "{{ $.Location.test_location.ID }}"
       address_line: "8626 Firestone Blvd, Downey, CA 90242"
       pieces: 1
-      weight: 1000.00
+      weight: 1000
       planned_arrival: "{{ now.Unix }}"
       planned_departure: "{{ now.Unix }}"
       actual_arrival: "{{ now.Unix }}"
@@ -1528,7 +1528,7 @@
       location_id: "{{ $.Location.test_location_2.ID }}"
       address_line: "1101 Summit Ave, Greensboro, NC 27410"
       pieces: 1
-      weight: 1000.00
+      weight: 1000
       planned_arrival: "{{ now.Unix }}"
       planned_departure: "{{ now.Unix }}"
       actual_arrival: "{{ now.Unix }}"
@@ -1545,7 +1545,7 @@
       location_id: "{{ $.Location.test_location.ID }}"
       address_line: "8626 Firestone Blvd, Downey, CA 90242"
       pieces: 1
-      weight: 1000.00
+      weight: 1000
       planned_arrival: "{{ daysAgo 10 }}"
       planned_departure: "{{ daysAgo 10 }}"
 
@@ -1560,7 +1560,7 @@
       location_id: "{{ $.Location.test_location_2.ID }}"
       address_line: "1101 Summit Ave, Greensboro, NC 27410"
       pieces: 1
-      weight: 1000.00
+      weight: 1000
       planned_arrival: "{{ daysFromNow 10 }}"
       planned_departure: "{{ daysFromNow 10 }}"
 
@@ -1573,7 +1573,7 @@
       shipment_id: "{{ $.Shipment.test_shipment.ID }}"
       commodity_id: "{{ $.Commodity.test_commodity.ID }}"
       pieces: 1
-      weight: 1000.00
+      weight: 1000
     - _id: test_shipment_commodity_2
       organization_id: "{{ $.Organization.trenova.ID }}"
       business_unit_id: "{{ $.BusinessUnit.trenova.ID }}"
@@ -1581,7 +1581,7 @@
       shipment_id: "{{ $.Shipment.test_shipment.ID }}"
       commodity_id: "{{ $.Commodity.test_commodity.ID }}"
       pieces: 1
-      weight: 1000.00
+      weight: 1000
     - _id: test_shipment_commodity_3
       organization_id: "{{ $.Organization.trenova.ID }}"
       business_unit_id: "{{ $.BusinessUnit.trenova.ID }}"
@@ -1589,4 +1589,4 @@
       shipment_id: "{{ $.Shipment.test_shipment.ID }}"
       commodity_id: "{{ $.Commodity.test_commodity.ID }}"
       pieces: 1
-      weight: 1000.00
+      weight: 1000

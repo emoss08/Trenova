@@ -154,7 +154,6 @@ export function Autocomplete<T>({
       onChange(newValue);
       // Call onOptionChange here where we have access to options
       if (onOptionChange) {
-        console.log("selectedOpt", selectedOpt);
         onOptionChange(selectedOpt || null);
       }
       setOpen(false);
