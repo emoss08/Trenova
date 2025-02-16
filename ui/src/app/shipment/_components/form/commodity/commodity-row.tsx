@@ -6,9 +6,6 @@ import { ShipmentCommodity } from "@/types/shipment";
 import { faPencil, faTrash } from "@fortawesome/pro-solid-svg-icons";
 import { CSSProperties, memo } from "react";
 
-const ROW_HEIGHT = 38;
-const OVERSCAN = 5;
-
 function CommodityRow({
   index,
   shipmentCommodity,

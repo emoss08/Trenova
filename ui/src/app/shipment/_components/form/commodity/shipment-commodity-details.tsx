@@ -4,8 +4,10 @@ import { ShipmentSchema } from "@/lib/schemas/shipment-schema";
 import { cn } from "@/lib/utils";
 import { ShipmentCommodity } from "@/types/shipment";
 import { faPlus } from "@fortawesome/pro-solid-svg-icons";
+import { useLocalStorage } from "@uidotdev/usehooks";
 import { useState } from "react";
 import { useFieldArray, useFormContext } from "react-hook-form";
+import { CommodityDeleteDialog } from "./commodity-delete-dialog";
 import { CommodityDialog } from "./commodity-dialog";
 import { CommodityList } from "./commodity-list";
 
@@ -16,6 +18,13 @@ export function ShipmentCommodityDetails({
 }) {
   const [commodityDialogOpen, setCommodityDialogOpen] =
     useState<boolean>(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState<boolean>(false);
+  const [deletingIndex, setDeletingIndex] = useState<number | null>(null);
+  const [showConfirmDeleteDialog, setShowConfirmDeleteDialog] = useLocalStorage(
+    "showCommodityDeleteDialog",
+    true,
+  );
+
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
   const { control } = useFormContext<ShipmentSchema>();
   const {
@@ -37,14 +46,29 @@ export function ShipmentCommodityDetails({
   };
 
   const handleDelete = (index: number) => {
-    remove(index);
+    if (showConfirmDeleteDialog) {
+      setDeletingIndex(index);
+      setDeleteDialogOpen(true);
+    } else {
+      remove(index);
+    }
+  };
+
+  const handleConfirmDelete = (doNotShowAgain: boolean) => {
+    if (deletingIndex !== null) {
+      remove(deletingIndex);
+      if (doNotShowAgain) {
+        setShowConfirmDeleteDialog(false);
+      }
+      setDeleteDialogOpen(false);
+      setDeletingIndex(null);
+    }
   };
 
   const handleDialogClose = () => {
     setCommodityDialogOpen(false);
     setEditingIndex(null);
   };
-
   return (
     <>
       <div
@@ -85,6 +109,16 @@ export function ShipmentCommodityDetails({
           index={editingIndex ?? commodities.length}
         />
       )}
+      <CommodityDeleteDialog
+        open={deleteDialogOpen}
+        onOpenChange={(open) => {
+          setDeleteDialogOpen(open);
+          if (!open) {
+            setDeletingIndex(null);
+          }
+        }}
+        handleDelete={handleConfirmDelete}
+      />
     </>
   );
 }

@@ -2,9 +2,9 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { ScrollArea, VirtualizedScrollArea } from "@/components/ui/scroll-area";
 import { ShipmentCommodity } from "@/types/shipment";
 import {
-    faBoxesStacked,
-    faTrailer,
-    faTruckContainer,
+  faBoxesStacked,
+  faTrailer,
+  faTruckContainer,
 } from "@fortawesome/pro-solid-svg-icons";
 import { useVirtualizer } from "@tanstack/react-virtual";
 import { memo, useCallback, useRef } from "react";
