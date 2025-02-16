@@ -38,6 +38,20 @@ func TestLocationCategoryRepository(t *testing.T) {
 		testutils.TestRepoList(ctx, t, repo, opts)
 	})
 
+	t.Run("list with query", func(t *testing.T) {
+		opts := &ports.LimitOffsetQueryOptions{
+			Limit:  10,
+			Offset: 0,
+			TenantOpts: &ports.TenantOptions{
+				OrgID: org.ID,
+				BuID:  bu.ID,
+			},
+			Query: "Company",
+		}
+
+		testutils.TestRepoList(ctx, t, repo, opts)
+	})
+
 	t.Run("get by id", func(t *testing.T) {
 		testutils.TestRepoGetByID(ctx, t, repo, repoports.GetLocationCategoryByIDOptions{
 			ID:    lcategory.ID,
@@ -78,5 +92,15 @@ func TestLocationCategoryRepository(t *testing.T) {
 	t.Run("update", func(t *testing.T) {
 		lcategory.Description = "Test Location Category 2"
 		testutils.TestRepoUpdate(ctx, t, repo, lcategory)
+	})
+
+	t.Run("update shipment version lock failure", func(t *testing.T) {
+		lcategory.Description = "Test Location Category 2"
+		lcategory.Version = 0
+
+		results, err := repo.Update(ctx, lcategory)
+
+		require.Error(t, err)
+		require.Nil(t, results)
 	})
 }

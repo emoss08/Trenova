@@ -6,8 +6,8 @@ CREATE TABLE IF NOT EXISTS "shipment_commodities"(
     "shipment_id" varchar(100) NOT NULL,
     "commodity_id" varchar(100) NOT NULL,
     -- Core fields
-    "weight" float NOT NULL,
-    "pieces" int NOT NULL,
+    "weight" integer NOT NULL,
+    "pieces" integer NOT NULL,
     -- Metadata
     "version" bigint NOT NULL DEFAULT 0,
     "created_at" bigint NOT NULL DEFAULT EXTRACT(EPOCH FROM current_timestamp) ::bigint,

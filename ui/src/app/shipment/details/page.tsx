@@ -21,7 +21,7 @@ import { useShipmentDetails } from "../queries/shipment";
 const RatingDetails = lazy(() => import("./_components/rating-details"));
 const EquipmentDetails = lazy(() => import("./_components/equipment-details"));
 const GeneralInformation = lazy(
-  () => import("./_components/general-information"),
+  () => import("./_components/general-information/general-information"),
 );
 
 export function ShipmentDetails() {
@@ -103,16 +103,20 @@ function ShipmentForm({ shipment }: { shipment: Shipment }) {
     <FormProvider {...form}>
       <Form onSubmit={handleSubmit(onSubmit)}>
         <SuspenseLoader>
-          <div className="grid grid-cols-12 gap-2">
-            <div className="col-span-8">{/* <GeneralInformation /> */}</div>
-            <div className="col-span-4">
-              <ScrollArea className="flex max-h-[calc(100vh-80px)] flex-col overflow-y-auto rounded-lg pr-4">
-                <div className="grid grid-cols-1 gap-4">
-                  <RatingDetails />
-                  {/* <EquipmentDetails /> */}
-                </div>
-                <div className="pointer-events-none absolute bottom-0 left-0 right-0 h-10 bg-gradient-to-t from-sidebar to-transparent" />
-              </ScrollArea>
+          <div className="max-w-9xl">
+            <div className="grid grid-cols-12 gap-2 mx-auto">
+              <div className="col-span-8">
+                <GeneralInformation />
+              </div>
+              <div className="col-span-4">
+                <ScrollArea className="flex max-h-[calc(100vh-80px)] flex-col overflow-y-auto rounded-lg pr-4">
+                  <div className="grid grid-cols-1 gap-4">
+                    <RatingDetails />
+                    <EquipmentDetails />
+                  </div>
+                  <div className="pointer-events-none absolute bottom-0 left-0 right-0 h-10 bg-gradient-to-t from-sidebar to-transparent" />
+                </ScrollArea>
+              </div>
             </div>
           </div>
         </SuspenseLoader>

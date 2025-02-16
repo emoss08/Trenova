@@ -23,6 +23,7 @@ func Bootstrap() error {
 	app := fx.New(
 		infrastructure.Module,
 		redisRepos.Module,
+		services.CalculatorModule,
 		postgresRepos.Module,
 		external.Module,
 		validators.Module,

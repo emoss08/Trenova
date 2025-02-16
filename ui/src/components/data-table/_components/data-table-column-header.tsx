@@ -19,7 +19,6 @@ import {
   faArrowDown,
   faArrowUp,
   faArrowUpArrowDown,
-  faCircleInfo,
 } from "@fortawesome/pro-regular-svg-icons";
 import { ArrowDownIcon, ArrowUpIcon, EyeNoneIcon } from "@radix-ui/react-icons";
 
@@ -66,62 +65,64 @@ export function DataTableColumnHeader<TData, TValue>({
                 ? "Sorted ascending. Click to sort descending."
                 : "Not sorted. Click to sort ascending."
           }
-          className="-ml-3 h-8 w-fit border-transparent bg-transparent text-xs hover:bg-accent hover:text-accent-foreground data-[state=open]:bg-accent data-[state=open]:text-accent-foreground [&>svg:last-child]:hidden"
+          className="inline-flex items-center justify-between -ml-3 h-8 w-fit border-transparent bg-transparent text-xs hover:bg-accent hover:text-accent-foreground data-[state=open]:bg-accent data-[state=open]:text-accent-foreground [&>svg:last-child]:hidden"
         >
-          {title}
-          <SelectIcon asChild>
-            {column.getCanSort() && column.getIsSorted() === "desc" ? (
-              <Icon
-                icon={faArrowDown}
-                className="ml-2 size-3"
-                aria-hidden="true"
-              />
-            ) : column.getIsSorted() === "asc" ? (
-              <Icon
-                icon={faArrowUp}
-                className="ml-2 size-3"
-                aria-hidden="true"
-              />
-            ) : (
-              <Icon
-                icon={faArrowUpArrowDown}
-                className="ml-2 size-3"
-                aria-hidden="true"
-              />
-            )}
-          </SelectIcon>
+          <div className="inline-flex items-center gap-1">
+            {title}
+            <SelectIcon asChild className="inline-flex items-center">
+              {column.getCanSort() && column.getIsSorted() === "desc" ? (
+                <Icon
+                  icon={faArrowDown}
+                  className="size-3 translate-y-[0.5px]"
+                  aria-hidden="true"
+                />
+              ) : column.getIsSorted() === "asc" ? (
+                <Icon
+                  icon={faArrowUp}
+                  className="size-3 translate-y-[0.5px]"
+                  aria-hidden="true"
+                />
+              ) : (
+                <Icon
+                  icon={faArrowUpArrowDown}
+                  className="size-3 translate-y-[0.5px]"
+                  aria-hidden="true"
+                />
+              )}
+            </SelectIcon>
+          </div>
         </SelectTrigger>
-        <SelectContent align="start">
+        <SelectContent align="start" className="min-w-[8rem]">
           {column.getCanSort() && (
             <>
               <SelectItem value={ascValue}>
-                <span className="flex items-center">
+                <span className="inline-flex items-center gap-2">
                   <ArrowUpIcon
-                    className="mr-2 size-3.5 text-muted-foreground/70"
+                    className="size-3.5 text-muted-foreground/70 translate-y-[0.5px]"
                     aria-hidden="true"
                   />
-                  Asc
+                  <span>Asc</span>
                 </span>
               </SelectItem>
               <SelectItem value={descValue}>
-                <span className="flex items-center">
+                <span className="inline-flex items-center gap-2">
                   <ArrowDownIcon
-                    className="mr-2 size-3.5 text-muted-foreground/70"
+                    className="size-3.5 text-muted-foreground/70 translate-y-[0.5px]"
                     aria-hidden="true"
                   />
-                  Desc
+                  <span>Desc</span>
                 </span>
               </SelectItem>
             </>
           )}
           {column.getCanHide() && (
             <SelectItem value={hideValue}>
-              <span className="flex items-center">
+              <span className="inline-flex items-center gap-2">
                 <EyeNoneIcon
-                  className="mr-2 size-3.5 text-muted-foreground/70"
+                  className="size-3.5 text-muted-foreground/70 translate-y-[0.5px]"
                   aria-hidden="true"
                 />
-                Hide
+                <span>Hide</span>
               </span>
             </SelectItem>
           )}
@@ -135,6 +136,7 @@ type DataTableColumnHeaderWithTooltipProps<TData, TValue> =
   DataTableColumnHeaderProps<TData, TValue> & {
     title: string;
     tooltipContent: string;
+    startContent?: React.ReactNode;
   };
 
 export function DataTableColumnHeaderWithTooltip<TData, TValue>({
@@ -142,6 +144,7 @@ export function DataTableColumnHeaderWithTooltip<TData, TValue>({
   tooltipContent,
   column,
   className,
+  startContent,
 }: DataTableColumnHeaderWithTooltipProps<TData, TValue>) {
   if (!column.getCanSort() && !column.getCanHide()) {
     return <div className={cn(className)}>{title}</div>;
@@ -167,46 +170,50 @@ export function DataTableColumnHeaderWithTooltip<TData, TValue>({
           else if (value === hideValue) column.toggleVisibility(false);
         }}
       >
-        <SelectTrigger
-          aria-label={
-            column.getIsSorted() === "desc"
-              ? "Sorted descending. Click to sort ascending."
-              : column.getIsSorted() === "asc"
-                ? "Sorted ascending. Click to sort descending."
-                : "Not sorted. Click to sort ascending."
-          }
-          className="-ml-3 h-8 w-fit border-transparent bg-transparent text-xs hover:bg-accent hover:text-accent-foreground data-[state=open]:bg-accent data-[state=open]:text-accent-foreground [&>svg:last-child]:hidden"
-        >
-          {title}
-          <SelectIcon asChild>
-            {column.getCanSort() && column.getIsSorted() === "desc" ? (
-              <Icon
-                icon={faArrowDown}
-                className="ml-2 size-3"
-                aria-hidden="true"
-              />
-            ) : column.getIsSorted() === "asc" ? (
-              <Icon
-                icon={faArrowUp}
-                className="ml-2 size-3"
-                aria-hidden="true"
-              />
-            ) : (
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger>
-                    <Icon
-                      icon={faCircleInfo}
-                      className="ml-2 size-3"
-                      aria-hidden="true"
-                    />
-                  </TooltipTrigger>
-                  <TooltipContent>{tooltipContent}</TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
-            )}
-          </SelectIcon>
-        </SelectTrigger>
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger>
+              <SelectTrigger
+                aria-label={
+                  column.getIsSorted() === "desc"
+                    ? "Sorted descending. Click to sort ascending."
+                    : column.getIsSorted() === "asc"
+                      ? "Sorted ascending. Click to sort descending."
+                      : "Not sorted. Click to sort ascending."
+                }
+                className="inline-flex items-center justify-center -ml-3 h-8 w-fit border-transparent bg-transparent text-xs hover:bg-accent hover:text-accent-foreground data-[state=open]:bg-accent data-[state=open]:text-accent-foreground [&>svg:last-child]:hidden"
+              >
+                <div className="inline-flex items-center gap-1">
+                  {startContent}
+                  {title}
+                  <SelectIcon asChild className="inline-flex items-center">
+                    {column.getCanSort() && column.getIsSorted() === "desc" ? (
+                      <Icon
+                        icon={faArrowDown}
+                        className="size-3 translate-y-[0.5px]"
+                        aria-hidden="true"
+                      />
+                    ) : column.getIsSorted() === "asc" ? (
+                      <Icon
+                        icon={faArrowUp}
+                        className="size-3 translate-y-[0.5px]"
+                        aria-hidden="true"
+                      />
+                    ) : (
+                      <Icon
+                        icon={faArrowUpArrowDown}
+                        className="size-3 translate-y-[0.5px]"
+                        aria-hidden="true"
+                      />
+                    )}
+                  </SelectIcon>
+                </div>
+              </SelectTrigger>
+            </TooltipTrigger>
+            <TooltipContent>{tooltipContent}</TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
+
         <SelectContent align="start">
           {column.getCanSort() && (
             <>

@@ -1,4 +1,5 @@
 import { type InferType, number, object, string } from "yup";
+import { commoditySchema } from "./commodity-schema";
 
 export const shipmentCommoditySchema = object({
   id: string().optional(),
@@ -6,6 +7,7 @@ export const shipmentCommoditySchema = object({
   businessUnitId: string().nullable().optional(),
   shipmentId: string().required("Shipment ID is required"),
   commodityId: string().required("Commodity ID is required"),
+  commodity: commoditySchema.optional(),
   weight: number().required("Weight is required"),
   pieces: number().required("Pieces is required"),
 });

@@ -1,5 +1,14 @@
 import { MoveStatus } from "@/types/move";
-import { boolean, type InferType, mixed, number, object, string } from "yup";
+import {
+  array,
+  boolean,
+  type InferType,
+  mixed,
+  number,
+  object,
+  string,
+} from "yup";
+import { stopSchema } from "./stop-schema";
 
 export const moveSchema = object({
   organizationId: string().nullable().optional(),
@@ -9,8 +18,6 @@ export const moveSchema = object({
   status: mixed<MoveStatus>()
     .required("Status is required")
     .oneOf(Object.values(MoveStatus)),
-  primaryWorkerId: string().required("Primary Worker is required"),
-  secondaryWorkerId: string().optional(),
   trailerId: string().optional(),
   tractorId: string().optional(),
   loaded: boolean().required("Loaded is required"),
@@ -29,6 +36,7 @@ export const moveSchema = object({
     })
     .integer("Distance must be a whole number")
     .min(0, "Distance cannot be negative"),
+  stops: array().of(stopSchema),
 });
 
 export type MoveSchema = InferType<typeof moveSchema>;

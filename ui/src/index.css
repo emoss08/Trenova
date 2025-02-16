@@ -17,6 +17,10 @@
   --text-4xl: 1.75rem;
   --text-5xl: 2rem;
 
+  --container-8xl: 96rem;
+  --container-9xl: 120rem;
+
+
   --font-*: initial;
   --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif,
     "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
@@ -76,6 +80,7 @@
     0% {
       background-position: 0 0;
     }
+
     100% {
       background-position: 0 100%;
     }
@@ -91,6 +96,7 @@
   color utility to any element that depends on these defaults.
 */
 @layer base {
+
   *,
   ::after,
   ::before,

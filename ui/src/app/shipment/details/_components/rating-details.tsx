@@ -1,6 +1,8 @@
 import { AutocompleteField } from "@/components/fields/autocomplete";
 import { CheckboxField } from "@/components/fields/checkbox-field";
-import { DateField } from "@/components/fields/date-field";
+import {
+  AutoCompleteDateField
+} from "@/components/fields/date-field";
 import { InputField } from "@/components/fields/input-field";
 import { SelectField } from "@/components/fields/select-field";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -42,7 +44,7 @@ function RatingForm() {
   return (
     <FormGroup cols={2} className="gap-4">
       <FormControl>
-        <AutocompleteField<CustomerSchema>
+        <AutocompleteField<CustomerSchema, Shipment>
           name="customerId"
           control={control}
           link="/customers/"
@@ -112,7 +114,7 @@ function RatingForm() {
         />
       </FormControl>
       <FormControl>
-        <DateField
+        <AutoCompleteDateField
           control={control}
           rules={{ required: true }}
           name="readyToBillDate"
@@ -121,7 +123,7 @@ function RatingForm() {
         />
       </FormControl>
       <FormControl>
-        <DateField
+        <AutoCompleteDateField
           control={control}
           rules={{ required: true }}
           name="sentToBillingDate"

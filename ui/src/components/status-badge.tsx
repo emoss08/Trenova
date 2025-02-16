@@ -136,7 +136,9 @@ export function EquipmentStatusBadge({ status }: { status: EquipmentStatus }) {
   );
 }
 
-export function ShipmentStatusBadge({ status }: { status: ShipmentStatus }) {
+export function ShipmentStatusBadge({ status }: { status?: ShipmentStatus }) {
+  if (!status) return null;
+
   const statusAttributes: Record<ShipmentStatus, BadgeAttrProps> = {
     [ShipmentStatus.New]: {
       variant: "purple",
@@ -217,7 +219,7 @@ export function PlainShipmentStatusBadge({
         "Shipment has been created and is pending initial assignment.",
     },
     [ShipmentStatus.PartiallyAssigned]: {
-      className: "bg-indigo-600-600",
+      className: "bg-indigo-600",
       text: "Partially Assigned",
       description:
         "Equipment or worker assignments are pending for one or more moves within this shipment.",

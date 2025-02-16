@@ -1,4 +1,4 @@
-import { Button } from "@/components/ui/button";
+import { Button, ButtonProps } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { IconDefinition } from "@fortawesome/pro-regular-svg-icons";
 import { Icon } from "./icons";
@@ -10,6 +10,7 @@ interface EmptyStateProps {
   action?: {
     label: string;
     onClick: () => void;
+    variant?: ButtonProps["variant"];
   };
   className?: string;
 }
@@ -56,7 +57,7 @@ export function EmptyState({
       {action && (
         <Button
           onClick={action.onClick}
-          variant="outline"
+          variant={action.variant}
           className={cn("mt-4", "active:shadow-none")}
         >
           {action.label}

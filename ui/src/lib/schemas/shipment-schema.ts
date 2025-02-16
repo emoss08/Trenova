@@ -1,5 +1,7 @@
 import { RatingMethod, ShipmentStatus } from "@/types/shipment";
-import { boolean, type InferType, mixed, number, object, string } from "yup";
+import { array, type InferType, mixed, number, object, string } from "yup";
+import { moveSchema } from "./move-schema";
+import { shipmentCommoditySchema } from "./shipment-commodity-schema";
 
 export const shipmentSchema = object({
   id: string().optional(),
@@ -73,51 +75,6 @@ export const shipmentSchema = object({
     })
     .integer("Weight must be a whole number")
     .optional(),
-  readyToBillDate: number()
-    .transform((_, originalValue) => {
-      if (
-        originalValue === "" ||
-        originalValue === null ||
-        originalValue === undefined
-      ) {
-        return undefined;
-      }
-      const parsed = parseInt(originalValue, 10);
-      return isNaN(parsed) ? undefined : parsed;
-    })
-    .integer("Ready to Bill Date must be a whole number")
-    .optional(),
-  sentToBillingDate: number()
-    .transform((_, originalValue) => {
-      if (
-        originalValue === "" ||
-        originalValue === null ||
-        originalValue === undefined
-      ) {
-        return undefined;
-      }
-      const parsed = parseInt(originalValue, 10);
-      return isNaN(parsed) ? undefined : parsed;
-    })
-    .integer("Sent to Billing Date must be a whole number")
-    .optional(),
-  billDate: number()
-    .transform((_, originalValue) => {
-      if (
-        originalValue === "" ||
-        originalValue === null ||
-        originalValue === undefined
-      ) {
-        return undefined;
-      }
-      const parsed = parseInt(originalValue, 10);
-      return isNaN(parsed) ? undefined : parsed;
-    })
-    .integer("Bill Date must be a whole number")
-    .optional(),
-  readyToBill: boolean().required("Ready to Bill is required"),
-  sentToBilling: boolean().required("Sent to Billing is required"),
-  billed: boolean().required("Billed is required"),
   temperatureMin: number().required("Temperature Min is required"),
   temperatureMax: number().required("Temperature Max is required"),
   bol: string().required("BOL is required"),
@@ -149,6 +106,7 @@ export const shipmentSchema = object({
     })
     .integer("Actual Ship Date must be a whole number")
     .optional(),
-  // serviceType: serviceTypeSchema.optional().nullable(),
+  moves: array().of(moveSchema),
+  commodities: array().of(shipmentCommoditySchema),
 });
 export type ShipmentSchema = InferType<typeof shipmentSchema>;

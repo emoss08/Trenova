@@ -55,12 +55,6 @@ type Shipment struct {
 	TotalChargeAmount   decimal.NullDecimal `json:"totalChargeAmount" bun:"total_charge_amount,type:NUMERIC(19,4),notnull,default:0"`
 	Pieces              *int64              `json:"pieces" bun:"pieces,type:INTEGER,nullzero"`
 	Weight              *int64              `json:"weight" bun:"weight,type:INTEGER,nullzero"`
-	ReadyToBillDate     *int64              `json:"readyToBillDate" bun:"ready_to_bill_date,type:BIGINT,nullzero"`
-	SentToBillingDate   *int64              `json:"sentToBillingDate" bun:"sent_to_billing_date,type:BIGINT,nullzero"`
-	BillDate            *int64              `json:"billDate" bun:"bill_date,type:BIGINT,nullzero"`
-	ReadyToBill         bool                `json:"readyToBill" bun:"ready_to_bill,type:BOOLEAN,notnull,default:false"`
-	SentToBilling       bool                `json:"sentToBilling" bun:"sent_to_billing,type:BOOLEAN,notnull,default:false"`
-	Billed              bool                `json:"billed" bun:"billed,type:BOOLEAN,notnull,default:false"`
 
 	// Misc. Shipment Related Fields
 	TemperatureMin     decimal.NullDecimal `json:"temperatureMin" bun:"temperature_min,type:NUMERIC(10,2),nullzero"`
@@ -200,6 +194,17 @@ func (st *Shipment) ToDocument() infra.SearchDocument {
 		Description:    st.ProNumber,
 		SearchableText: strings.Join(searchableText, " "),
 	}
+}
+
+// HasCommodities returns true if the shipment has commodities
+func (st *Shipment) HasCommodities() bool {
+	// Check if the shipment has commodities
+	if st.Commodities == nil {
+		return false
+	}
+
+	// Check if the shipment has any commodities
+	return len(st.Commodities) > 0
 }
 
 func (st *Shipment) GetPostgresSearchConfig() infra.PostgresSearchConfig {
