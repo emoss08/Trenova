@@ -196,6 +196,17 @@ func (st *Shipment) ToDocument() infra.SearchDocument {
 	}
 }
 
+// HasCommodities returns true if the shipment has commodities
+func (st *Shipment) HasCommodities() bool {
+	// Check if the shipment has commodities
+	if st.Commodities == nil {
+		return false
+	}
+
+	// Check if the shipment has any commodities
+	return len(st.Commodities) > 0
+}
+
 func (st *Shipment) GetPostgresSearchConfig() infra.PostgresSearchConfig {
 	return infra.PostgresSearchConfig{
 		TableAlias: "sp",

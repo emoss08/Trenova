@@ -15,8 +15,8 @@ import { MoveStatus, type ShipmentMove } from "@/types/move";
 import { faEllipsisVertical, faPlus } from "@fortawesome/pro-regular-svg-icons";
 import { memo, useState } from "react";
 import { useFieldArray, useFormContext } from "react-hook-form";
-import { AssignmentDialog } from "../../assignment/assignment-dialog";
-import { StopTimeline } from "../stop-details/stop-timeline-content";
+import { AssignmentDialog } from "../assignment/assignment-dialog";
+import { StopTimeline } from "../sidebar/stop-details/stop-timeline-content";
 import { AssignmentDetails } from "./move-assignment-details";
 
 export function ShipmentMovesDetails() {

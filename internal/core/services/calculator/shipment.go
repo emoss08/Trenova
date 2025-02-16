@@ -32,7 +32,7 @@ func (sc *ShipmentCalculator) CalculateTotals(shp *shipment.Shipment) {
 }
 
 func (sc *ShipmentCalculator) CalculateCommodityTotals(shp *shipment.Shipment) {
-	if len(shp.Commodities) == 0 {
+	if !shp.HasCommodities() {
 		sc.l.Debug().
 			Str("shipmentID", shp.ID.String()).
 			Msg("no commodities found")

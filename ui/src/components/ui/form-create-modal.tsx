@@ -70,7 +70,7 @@ export function FormCreateModal<T extends FieldValues>({
 
   const {
     setError,
-    formState: { isDirty, isSubmitting },
+    formState: { isDirty, isSubmitting, isSubmitSuccessful },
     handleSubmit,
     reset,
   } = form;
@@ -90,7 +90,7 @@ export function FormCreateModal<T extends FieldValues>({
     onClose: handleClose,
   });
 
-  const mutation = useMutation({
+  const { mutateAsync } = useMutation({
     mutationFn: async (values: T) => {
       const response = await http.post(url, values);
       return response.data;
@@ -100,7 +100,6 @@ export function FormCreateModal<T extends FieldValues>({
         description: `${title} created successfully`,
       });
       onOpenChange(false);
-      reset();
 
       // Invalidate the query to refresh the table
       broadcastQueryInvalidation({
@@ -137,10 +136,16 @@ export function FormCreateModal<T extends FieldValues>({
 
   const onSubmit = useCallback(
     async (values: T) => {
-      await mutation.mutateAsync(values);
+      await mutateAsync(values);
     },
-    [mutation.mutateAsync],
+    [mutateAsync],
   );
+
+  // Reset the form when the mutation is successful
+  // This is recommended by react-hook-form - https://react-hook-form.com/docs/useform/reset
+  useEffect(() => {
+    reset();
+  }, [isSubmitSuccessful, reset]);
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {

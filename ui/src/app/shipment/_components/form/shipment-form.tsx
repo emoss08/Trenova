@@ -3,8 +3,8 @@ import { Icon } from "@/components/ui/icons";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { type Shipment } from "@/types/shipment";
 import { faChevronLeft } from "@fortawesome/pro-solid-svg-icons";
-import { ShipmentNotFoundOverlay } from "../shipment-not-found-overlay";
-import { ShipmentCommodityDetails } from "./shipment-commodity-details";
+import { ShipmentNotFoundOverlay } from "../sidebar/shipment-not-found-overlay";
+import { ShipmentCommodityDetails } from "./commodity/shipment-commodity-details";
 import {
   ShipmentBillingDetails,
   ShipmentDetailsHeader,

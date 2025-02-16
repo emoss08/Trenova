@@ -5,11 +5,11 @@ import { type ShipmentFilterSchema } from "@/lib/schemas/shipment-filter-schema"
 import { lazy, Suspense, useCallback, useEffect, useMemo } from "react";
 import { useFormContext } from "react-hook-form";
 import { useShipmentDetails, useShipments } from "../../queries/shipment";
-import { ShipmentDetailsSkeleton } from "./form/shipment-details-skeleton";
+import { ShipmentDetailsSkeleton } from "../form/shipment-details-skeleton";
 import { ShipmentList } from "./shipment-list";
 
 // Components
-const ShipmentDetails = lazy(() => import("./form/shipment-form"));
+const ShipmentDetails = lazy(() => import("../form/shipment-form"));
 
 const PAGE_SIZE_OPTIONS = [10, 25, 50] as const;
 const SEARCH_DEBOUNCE_TIME = 500;

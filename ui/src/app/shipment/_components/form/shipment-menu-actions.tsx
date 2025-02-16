@@ -12,8 +12,8 @@ import { ShipmentStatus, type Shipment } from "@/types/shipment";
 import { faEllipsisVertical } from "@fortawesome/pro-regular-svg-icons";
 import { useState } from "react";
 import { useNavigate } from "react-router";
-import { ShipmentCancellationDialog } from "../../cancellation/shipment-cancellatioin-dialog";
-import { ShipmentDuplicateDialog } from "../../duplicate/shipment-duplicate-dialog";
+import { ShipmentCancellationDialog } from "../cancellation/shipment-cancellatioin-dialog";
+import { ShipmentDuplicateDialog } from "../duplicate/shipment-duplicate-dialog";
 
 // Map of status that are allowed to be canceled.
 const cancellatedStatuses = [

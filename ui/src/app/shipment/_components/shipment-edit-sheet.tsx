@@ -25,7 +25,7 @@ import { useCallback, useEffect, useRef } from "react";
 import { FormProvider, useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { useShipmentDetails } from "../queries/shipment";
-import { ShipmentForm } from "./sidebar/form/shipment-form";
+import { ShipmentForm } from "./form/shipment-form";
 
 export function ShipmentEditSheet({
   open,
