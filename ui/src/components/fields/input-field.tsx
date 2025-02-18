@@ -28,6 +28,7 @@ export function InputField<T extends FieldValues>({
   inputClassProps,
   "aria-label": ariaLabel,
   "aria-describedby": ariaDescribedBy,
+  readOnly,
   ...props
 }: InputFieldProps<T>) {
   const inputId = `input-${name}`;
@@ -52,6 +53,7 @@ export function InputField<T extends FieldValues>({
             {...props}
             id={inputId}
             type={type}
+            readOnly={readOnly}
             disabled={disabled}
             autoComplete={autoComplete}
             placeholder={placeholder}

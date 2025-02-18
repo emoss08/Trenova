@@ -14,6 +14,7 @@ export const commoditySchema = object({
   minTemperature: number().optional().nullable(),
   maxTemperature: number().optional().nullable(),
   weightPerUnit: number().optional().nullable(),
+  linearFeetPerUnit: number().optional().nullable(),
   freightClass: string().optional(),
   dotClassification: string().optional(),
   stackable: boolean().required("Stackable is required"),

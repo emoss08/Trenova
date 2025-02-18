@@ -33,6 +33,7 @@ type Commodity struct {
 	MinTemperature    *float64      `bun:"min_temperature,type:FLOAT,nullzero" json:"minTemperature"`
 	MaxTemperature    *float64      `bun:"max_temperature,type:FLOAT,nullzero" json:"maxTemperature"`
 	WeightPerUnit     *float64      `bun:"weight_per_unit,type:FLOAT,nullzero" json:"weightPerUnit"`
+	LinearFeetPerUnit *float64      `bun:"linear_feet_per_unit,type:FLOAT,nullzero" json:"linearFeetPerUnit"`
 	FreightClass      string        `bun:"freight_class,type:VARCHAR(100)" json:"freightClass"`
 	DOTClassification string        `bun:"dot_classification,type:VARCHAR(100)" json:"dotClassification"`
 	Stackable         bool          `bun:"stackable,type:BOOLEAN,default:false" json:"stackable"`

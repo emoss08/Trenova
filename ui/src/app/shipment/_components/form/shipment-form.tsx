@@ -5,8 +5,8 @@ import { type Shipment } from "@/types/shipment";
 import { faChevronLeft } from "@fortawesome/pro-solid-svg-icons";
 import { ShipmentNotFoundOverlay } from "../sidebar/shipment-not-found-overlay";
 import { ShipmentCommodityDetails } from "./commodity/shipment-commodity-details";
+import { ShipmentBillingDetails } from "./shipment-billing-details";
 import {
-  ShipmentBillingDetails,
   ShipmentDetailsHeader,
   ShipmentServiceDetails,
 } from "./shipment-details-components";

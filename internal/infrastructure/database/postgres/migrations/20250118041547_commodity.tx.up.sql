@@ -11,6 +11,7 @@ CREATE TABLE IF NOT EXISTS "commodities"(
     "min_temperature" float,
     "max_temperature" float,
     "weight_per_unit" float,
+    "linear_feet_per_unit" float,
     "freight_class" varchar(100),
     "dot_classification" varchar(100),
     "stackable" boolean NOT NULL DEFAULT FALSE,

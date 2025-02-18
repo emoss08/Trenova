@@ -1,7 +1,6 @@
 import { AutocompleteField } from "@/components/fields/autocomplete";
-import { DoubleClickInput, InputField } from "@/components/fields/input-field";
+import { DoubleClickInput } from "@/components/fields/input-field";
 import { ColorOptionValue } from "@/components/fields/select-components";
-import { SelectField } from "@/components/fields/select-field";
 import { ShipmentStatusBadge } from "@/components/status-badge";
 import { FormControl, FormGroup } from "@/components/ui/form";
 import { Icon } from "@/components/ui/icons";
@@ -11,8 +10,6 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { ratingMethodChoices } from "@/lib/choices";
-import { CustomerSchema } from "@/lib/schemas/customer-schema";
 import { EquipmentTypeSchema } from "@/lib/schemas/equipment-type-schema";
 import { ServiceTypeSchema } from "@/lib/schemas/service-type-schema";
 import { ShipmentSchema } from "@/lib/schemas/shipment-schema";
@@ -185,83 +182,6 @@ export function ShipmentDetailsBOL({
           </Tooltip>
         </TooltipProvider>
       </div>
-    </div>
-  );
-}
-
-export function ShipmentBillingDetails() {
-  const { control } = useFormContext<ShipmentSchema>();
-
-  return (
-    <div className="flex flex-col gap-2 border-t border-bg-sidebar-border py-4">
-      <h3 className="text-sm font-medium">Billing Information</h3>
-      <FormGroup cols={2} className="gap-4">
-        <FormControl>
-          <AutocompleteField<CustomerSchema, ShipmentSchema>
-            name="customerId"
-            control={control}
-            link="/customers/"
-            label="Customer"
-            rules={{ required: true }}
-            placeholder="Select Customer"
-            description="Select the customer of the shipment"
-            getOptionValue={(option) => option.code}
-            getDisplayValue={(option) => option.code}
-            renderOption={(option) => option.code}
-          />
-        </FormControl>
-        <FormControl>
-          <SelectField
-            control={control}
-            rules={{ required: true }}
-            name="ratingMethod"
-            label="Rating Method"
-            placeholder="Rating Method"
-            description="Rating Method"
-            options={ratingMethodChoices}
-          />
-        </FormControl>
-        <FormControl>
-          <InputField
-            control={control}
-            rules={{ required: true }}
-            name="ratingUnit"
-            label="Rating Unit"
-            placeholder="Rating Unit"
-            description="Rating Unit"
-          />
-        </FormControl>
-        <FormControl>
-          <InputField
-            control={control}
-            rules={{ required: true }}
-            name="otherChargeAmount"
-            label="Other Charge Amount"
-            placeholder="Other Charge Amount"
-            description="Other Charge Amount"
-          />
-        </FormControl>
-        <FormControl>
-          <InputField
-            control={control}
-            rules={{ required: true }}
-            name="freightChargeAmount"
-            label="Freight Charge Amount"
-            placeholder="Freight Charge Amount"
-            description="Freight Charge Amount"
-          />
-        </FormControl>
-        <FormControl>
-          <InputField
-            control={control}
-            rules={{ required: true }}
-            name="totalChargeAmount"
-            label="Total Charge Amount"
-            placeholder="Total Charge Amount"
-            description="The total amount for the shipment, including the standard rate and additional charges."
-          />
-        </FormControl>
-      </FormGroup>
     </div>
   );
 }

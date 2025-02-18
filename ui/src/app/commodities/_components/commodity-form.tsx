@@ -99,8 +99,18 @@ export function CommodityForm() {
           description="The weight (in pounds) of a single unit of this commodity. Used for calculating total load weight."
         />
       </FormControl>
-
       <FormControl>
+        <InputField
+          name="linearFeetPerUnit"
+          control={control}
+          label="Linear Feet Per Unit"
+          placeholder="Linear Feet Per Unit"
+          type="number"
+          description="The linear feet (in feet) of a single unit of this commodity. Used for calculating total load linear feet."
+        />
+      </FormControl>
+
+      <FormControl cols="full">
         <InputField
           name="dotClassification"
           control={control}
@@ -109,7 +119,7 @@ export function CommodityForm() {
           description="The U.S. Department of Transportation classification used for regulatory compliance."
         />
       </FormControl>
-      <FormControl>
+      <FormControl cols="full">
         <CheckboxField
           name="stackable"
           control={control}
@@ -118,7 +128,7 @@ export function CommodityForm() {
           description="Indicates if the commodity can be safely stacked during transport or storage."
         />
       </FormControl>
-      <FormControl>
+      <FormControl cols="full">
         <CheckboxField
           name="fragile"
           control={control}
