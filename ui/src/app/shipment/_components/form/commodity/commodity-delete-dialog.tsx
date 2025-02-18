@@ -23,6 +23,10 @@ export function CommodityDeleteDialog({
 }: CommodityDeleteDialogProps) {
   const [doNotShowAgain, setDoNotShowAgain] = useState(false);
 
+  const handleDeleteClick = () => {
+    handleDelete(doNotShowAgain);
+  };
+
   return (
     <AlertDialog open={open} onOpenChange={onOpenChange}>
       <AlertDialogContent className="sm:max-w-md p-3">
@@ -56,7 +60,7 @@ export function CommodityDeleteDialog({
             <AlertDialogCancel onClick={() => onOpenChange(false)}>
               Cancel
             </AlertDialogCancel>
-            <AlertDialogAction onClick={() => handleDelete(doNotShowAgain)}>
+            <AlertDialogAction onClick={handleDeleteClick}>
               Delete
             </AlertDialogAction>
           </div>

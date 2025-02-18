@@ -48,15 +48,11 @@ export function ShipmentEditSheet({
   });
 
   const {
-    watch,
     setError,
-    formState: { isDirty, isSubmitting, errors },
+    formState: { isDirty, isSubmitting },
     handleSubmit,
     reset,
   } = form;
-
-  console.debug("shipment values", watch());
-  console.debug("errors", errors);
 
   useEffect(() => {
     if (shipmentDetails.data && !isDetailsLoading) {
