@@ -38,11 +38,17 @@ func TestShipmentRepository(t *testing.T) {
 		DB:     ts.DB,
 	})
 
+	shipmentCommodityRepo := repositories.NewShipmentCommodityRepository(repositories.ShipmentCommodityRepositoryParams{
+		Logger: logger.NewLogger(testutils.NewTestConfig()),
+		DB:     ts.DB,
+	})
+
 	repo := repositories.NewShipmentRepository(repositories.ShipmentRepositoryParams{
-		Logger:        logger.NewLogger(testutils.NewTestConfig()),
-		DB:            ts.DB,
-		ProNumberRepo: proNumberRepo,
-		Calculator:    calculator.NewShipmentCalculator(calculator.ShipmentCalculatorParams{Logger: logger.NewLogger(testutils.NewTestConfig())}),
+		Logger:                      logger.NewLogger(testutils.NewTestConfig()),
+		DB:                          ts.DB,
+		ProNumberRepo:               proNumberRepo,
+		ShipmentCommodityRepository: shipmentCommodityRepo,
+		Calculator:                  calculator.NewShipmentCalculator(calculator.ShipmentCalculatorParams{Logger: logger.NewLogger(testutils.NewTestConfig())}),
 	})
 
 	t.Run("list shipments", func(t *testing.T) {

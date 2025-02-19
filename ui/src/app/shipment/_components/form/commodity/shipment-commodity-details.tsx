@@ -109,6 +109,7 @@ export function ShipmentCommodityDetails({
           isEditing={editingIndex !== null}
           update={update}
           index={editingIndex ?? commodities.length}
+          remove={remove}
         />
       )}
       {deleteDialogOpen && (

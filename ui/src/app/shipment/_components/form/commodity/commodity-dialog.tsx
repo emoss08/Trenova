@@ -2,25 +2,31 @@ import { AutocompleteField } from "@/components/fields/autocomplete";
 import { InputField } from "@/components/fields/input-field";
 import { Button } from "@/components/ui/button";
 import {
-    Dialog,
-    DialogBody,
-    DialogContent,
-    DialogDescription,
-    DialogFooter,
-    DialogHeader,
-    DialogTitle,
+  Dialog,
+  DialogBody,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
 } from "@/components/ui/dialog";
 import { FormControl, FormGroup } from "@/components/ui/form";
 import { CommoditySchema } from "@/lib/schemas/commodity-schema";
 import { ShipmentSchema } from "@/lib/schemas/shipment-schema";
 import { TableSheetProps } from "@/types/data-table";
 import { ShipmentCommodity } from "@/types/shipment";
-import { UseFieldArrayUpdate, useFormContext } from "react-hook-form";
+import { useCallback } from "react";
+import {
+  UseFieldArrayRemove,
+  UseFieldArrayUpdate,
+  useFormContext,
+} from "react-hook-form";
 
 interface CommodityDialogProps extends TableSheetProps {
   index: number;
   isEditing: boolean;
   update: UseFieldArrayUpdate<ShipmentSchema, "commodities">;
+  remove: UseFieldArrayRemove;
   initialData?: ShipmentCommodity;
 }
 
@@ -30,8 +36,9 @@ export function CommodityDialog({
   isEditing,
   update,
   index,
+  remove,
 }: CommodityDialogProps) {
-  const { getValues } = useFormContext<ShipmentSchema>();
+  const { getValues, reset } = useFormContext<ShipmentSchema>();
 
   const handleSave = () => {
     const formValues = getValues();
@@ -56,6 +63,30 @@ export function CommodityDialog({
     onOpenChange(false);
   };
 
+  const handleClose = useCallback(() => {
+    onOpenChange(false);
+
+    if (!isEditing) {
+      remove(index);
+    } else {
+      const originalValues = getValues();
+      const commodities = originalValues?.commodities || [];
+
+      reset(
+        {
+          commodities: [
+            ...commodities.slice(0, index),
+            commodities[index],
+            ...commodities.slice(index + 1),
+          ],
+        },
+        {
+          keepValues: true,
+        },
+      );
+    }
+  }, [onOpenChange, remove, index, isEditing, reset, getValues]);
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-sm">
@@ -71,7 +102,7 @@ export function CommodityDialog({
           <CommodityForm index={index} />
         </DialogBody>
         <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>
+          <Button variant="outline" onClick={handleClose}>
             Cancel
           </Button>
           <Button onClick={handleSave}>Save</Button>

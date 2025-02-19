@@ -27,20 +27,22 @@ import (
 type ShipmentRepositoryParams struct {
 	fx.In
 
-	DB            db.Connection
-	Logger        *logger.Logger
-	ProNumberRepo repositories.ProNumberRepository
-	Calculator    *calculator.ShipmentCalculator
+	DB                          db.Connection
+	Logger                      *logger.Logger
+	ShipmentCommodityRepository repositories.ShipmentCommodityRepository
+	ProNumberRepo               repositories.ProNumberRepository
+	Calculator                  *calculator.ShipmentCalculator
 }
 
 // shipmentRepository implements the ShipmentRepository interface
 // and provides methods to manage shipments, including CRUD operations,
 // status updates, duplication, and cancellation.
 type shipmentRepository struct {
-	db            db.Connection
-	l             *zerolog.Logger
-	proNumberRepo repositories.ProNumberRepository
-	calc          *calculator.ShipmentCalculator
+	db                          db.Connection
+	l                           *zerolog.Logger
+	shipmentCommodityRepository repositories.ShipmentCommodityRepository
+	proNumberRepo               repositories.ProNumberRepository
+	calc                        *calculator.ShipmentCalculator
 }
 
 // NewShipmentRepository initializes a new instance of shipmentRepository with its dependencies.
@@ -56,10 +58,11 @@ func NewShipmentRepository(p ShipmentRepositoryParams) repositories.ShipmentRepo
 		Logger()
 
 	return &shipmentRepository{
-		db:            p.DB,
-		l:             &log,
-		proNumberRepo: p.ProNumberRepo,
-		calc:          p.Calculator,
+		db:                          p.DB,
+		l:                           &log,
+		shipmentCommodityRepository: p.ShipmentCommodityRepository,
+		proNumberRepo:               p.ProNumberRepo,
+		calc:                        p.Calculator,
 	}
 }
 
@@ -129,6 +132,7 @@ func (sr *shipmentRepository) filterQuery(q *bun.SelectQuery, opts *repositories
 		Filter:     opts.Filter,
 	})
 
+	// * If there is a query, build the postgres search query
 	if opts.Filter.Query != "" {
 		q = postgressearch.BuildSearchQuery(
 			q,
@@ -164,9 +168,13 @@ func (sr *shipmentRepository) List(ctx context.Context, opts *repositories.ListS
 		Str("userID", opts.Filter.TenantOpts.UserID.String()).
 		Logger()
 
+	// * Create a slice of shipments
 	entities := make([]*shipment.Shipment, 0)
 
+	// * Build base query
 	q := dba.NewSelect().Model(&entities)
+
+	// * Append filters to base query
 	q = sr.filterQuery(q, opts)
 
 	// * New statuses should be at the top
@@ -271,7 +279,7 @@ func (sr *shipmentRepository) Create(ctx context.Context, shp *shipment.Shipment
 		}
 
 		// * Handle commodity operations
-		if err := sr.handleCommodityOperations(c, tx, shp, true); err != nil {
+		if err := sr.shipmentCommodityRepository.HandleCommodityOperations(c, tx, shp, true); err != nil {
 			log.Error().Err(err).Msg("failed to handle commodity operations")
 			return err
 		}
@@ -311,11 +319,12 @@ func (sr *shipmentRepository) Update(ctx context.Context, shp *shipment.Shipment
 	// * Calculate the totals for the shipment
 	sr.calc.CalculateTotals(shp)
 
+	// * Run in a transaction
 	err = dba.RunInTx(ctx, nil, func(c context.Context, tx bun.Tx) error {
 		ov := shp.Version
-
 		shp.Version++
 
+		// * Update the shipment
 		results, rErr := tx.NewUpdate().
 			Model(shp).
 			WherePK().
@@ -347,8 +356,8 @@ func (sr *shipmentRepository) Update(ctx context.Context, shp *shipment.Shipment
 			)
 		}
 
-		// Handle commodity operations
-		if err := sr.handleCommodityOperations(c, tx, shp, false); err != nil {
+		// * Handle commodity operations
+		if err := sr.shipmentCommodityRepository.HandleCommodityOperations(c, tx, shp, false); err != nil {
 			log.Error().Err(err).Msg("failed to handle commodity operations")
 			return err
 		}
@@ -391,6 +400,7 @@ func (sr *shipmentRepository) UpdateStatus(ctx context.Context, opts *repositori
 		return nil, err
 	}
 
+	// * Run in a transaction
 	err = dba.RunInTx(ctx, nil, func(c context.Context, tx bun.Tx) error {
 		// * Update the move version
 		ov := shp.Version
@@ -457,7 +467,10 @@ func (sr *shipmentRepository) Cancel(ctx context.Context, req *repositories.Canc
 		Str("shipmentID", req.ShipmentID.String()).
 		Logger()
 
+	// * Create a new shipment
 	shp := new(shipment.Shipment)
+
+	// * Run in a transaction
 	err = dba.RunInTx(ctx, nil, func(c context.Context, tx bun.Tx) error {
 		// * Update shipment status
 		results, rErr := tx.NewUpdate().
@@ -483,6 +496,7 @@ func (sr *shipmentRepository) Cancel(ctx context.Context, req *repositories.Canc
 			return roErr
 		}
 
+		// * If no rows were affected, return a not found error
 		if rows == 0 {
 			return errors.NewNotFoundError("Shipment not found")
 		}
@@ -517,7 +531,8 @@ func (sr *shipmentRepository) cancelShipmentComponents(ctx context.Context, tx b
 	}
 
 	if len(moves) == 0 {
-		return nil // No moves to cancel
+		// * No moves to cancel
+		return nil
 	}
 
 	// * Create a slice of move IDs and loop through each move and append the ID to the slice
@@ -596,19 +611,26 @@ func (sr *shipmentRepository) Duplicate(ctx context.Context, req *repositories.D
 		log.Error().Err(err).Msg("failed to get original shipment")
 		return nil, err
 	}
+	// * Create a new shipment
+	newShipment := new(shipment.Shipment)
 
-	var newShipment *shipment.Shipment
+	// * Run in a transaction
 	err = dba.RunInTx(ctx, nil, func(c context.Context, tx bun.Tx) error {
-		// * Create new shipment
+		// * Dupllicate the original shipment fields
 		newShipment, err = sr.duplicateShipmentFields(c, originalShipment)
 		if err != nil {
-			return eris.Wrap(err, "duplicate shipment fields")
+			log.Error().
+				Interface("originalShipment", originalShipment).
+				Err(err).
+				Msgf("failed to duplicate shipment fields for shipment %s", originalShipment.GetID())
+			return err
 		}
 
 		// * Insert the new shipment directly with the transaction
-		sr.l.Debug().Interface("new shipment", newShipment).Msg("inserting new shipment")
+		log.Debug().Interface("new shipment", newShipment).Msg("inserting new shipment")
 		if _, err = tx.NewInsert().Model(newShipment).Exec(c); err != nil {
-			return eris.Wrap(err, "insert new shipment")
+			log.Error().Err(err).Msg("failed to insert new shipment")
+			return err
 		}
 
 		// * Prepare moves and stops
@@ -617,26 +639,29 @@ func (sr *shipmentRepository) Duplicate(ctx context.Context, req *repositories.D
 
 		// * Bulk insert moves directly with the transaction
 		if len(moves) > 0 {
-			sr.l.Debug().Interface("moves", moves).Msg("bulk inserting moves")
+			log.Debug().Interface("moves", moves).Msg("bulk inserting moves")
 			if _, err = tx.NewInsert().Model(&moves).Exec(c); err != nil {
-				return eris.Wrap(err, "bulk insert moves")
+				log.Error().Err(err).Msg("failed to bulk insert moves")
+				return err
 			}
 		}
 
 		// * Bulk insert stops directly with the transaction
 		if len(stops) > 0 {
-			sr.l.Debug().Interface("stops", stops).Msg("bulk inserting stops")
+			log.Debug().Interface("stops", stops).Msg("bulk inserting stops")
 			if _, err = tx.NewInsert().Model(&stops).Exec(c); err != nil {
-				return eris.Wrap(err, "bulk insert stops")
+				log.Error().Err(err).Msg("failed to bulk insert stops")
+				return err
 			}
 		}
 
 		// * Bulk insert commodities directly with the transaction
 		// * Only duplicate if the include commodities flag is true
 		if len(commodities) > 0 && req.IncludeCommodities {
-			sr.l.Debug().Interface("commodities", commodities).Msg("bulk inserting commodities")
+			log.Debug().Interface("commodities", commodities).Msg("bulk inserting commodities")
 			if _, err = tx.NewInsert().Model(&commodities).Exec(c); err != nil {
-				return eris.Wrap(err, "bulk insert commodities")
+				log.Error().Err(err).Msg("failed to bulk insert commodities")
+				return err
 			}
 		}
 
@@ -777,143 +802,4 @@ func (sr *shipmentRepository) duplicateShipmentFields(ctx context.Context, origi
 	}
 
 	return shp, nil
-}
-
-// handleCommodityOperations manages create, update, and delete operations for shipment commodities.
-// It handles version control to ensure data consistency and bulk operations for efficiency.
-//
-// Parameters:
-//   - ctx: Context for request scope and cancellation.
-//   - tx: Database transaction for atomic operations.
-//   - shp: The shipment entity containing commodities.
-//   - isCreate: Flag indicating if this is a create operation.
-//
-// Returns:
-//   - error: If any commodity operation fails.
-func (sr *shipmentRepository) handleCommodityOperations(ctx context.Context, tx bun.Tx, shp *shipment.Shipment, isCreate bool) error {
-	log := sr.l.With().
-		Str("operation", "handleCommodityOperations").
-		Str("shipmentID", shp.ID.String()).
-		Logger()
-
-	// * If there are no commodities and it's a create operation, we can return early
-	if len(shp.Commodities) == 0 && isCreate {
-		return nil
-	}
-
-	// * Get existing commodities for comparison if this is an update
-	var existingCommodities []*shipment.ShipmentCommodity
-	if !isCreate {
-		if err := tx.NewSelect().
-			Model(&existingCommodities).
-			Where("sc.shipment_id = ?", shp.ID).
-			Where("sc.organization_id = ?", shp.OrganizationID).
-			Where("sc.business_unit_id = ?", shp.BusinessUnitID).
-			Scan(ctx); err != nil {
-			log.Error().Err(err).Msg("failed to fetch existing commodities")
-			return eris.Wrap(err, "fetch existing commodities")
-		}
-	}
-
-	// * Prepare commodities for operations
-	newCommodities := make([]*shipment.ShipmentCommodity, 0)
-	updateCommodities := make([]*shipment.ShipmentCommodity, 0)
-	existingCommodityMap := make(map[pulid.ID]*shipment.ShipmentCommodity)
-	updatedCommodityIDs := make(map[pulid.ID]struct{})
-
-	// * Create map of existing commodities for quick lookup
-	for _, commodity := range existingCommodities {
-		existingCommodityMap[commodity.ID] = commodity
-	}
-
-	// * Categorize commodities for different operations
-	for _, commodity := range shp.Commodities {
-		// Set required fields
-		commodity.ShipmentID = shp.ID
-		commodity.OrganizationID = shp.OrganizationID
-		commodity.BusinessUnitID = shp.BusinessUnitID
-
-		if isCreate || commodity.ID.IsNil() {
-			// * Append new commodities
-			newCommodities = append(newCommodities, commodity)
-		} else {
-			if existing, ok := existingCommodityMap[commodity.ID]; ok {
-				// * Increment version for optimistic locking
-				commodity.Version = existing.Version + 1
-				updateCommodities = append(updateCommodities, commodity)
-				updatedCommodityIDs[commodity.ID] = struct{}{}
-			}
-		}
-	}
-
-	// * Handle bulk insert of new commodities
-	if len(newCommodities) > 0 {
-		if _, err := tx.NewInsert().Model(&newCommodities).Exec(ctx); err != nil {
-			log.Error().Err(err).Msg("failed to bulk insert new commodities")
-			return eris.Wrap(err, "bulk insert commodities")
-		}
-	}
-
-	// * Handle bulk update of new commodities
-	if len(updateCommodities) > 0 {
-		values := tx.NewValues(&updateCommodities)
-		res, err := tx.NewUpdate().
-			With("_data", values).
-			Model((*shipment.ShipmentCommodity)(nil)).
-			TableExpr("_data").
-			Set("shipment_id = _data.shipment_id").
-			Set("commodity_id = _data.commodity_id").
-			Set("weight = _data.weight").
-			Set("pieces = _data.pieces").
-			Set("version = _data.version").
-			Where("sc.id = _data.id").
-			Where("sc.version = _data.version - 1").
-			Where("sc.organization_id = _data.organization_id").
-			Where("sc.business_unit_id = _data.business_unit_id").
-			Exec(ctx)
-		if err != nil {
-			log.Error().Err(err).Msg("failed to bulk update commodities")
-			return eris.Wrap(err, "bulk update commodities")
-		}
-
-		rowsAffected, err := res.RowsAffected()
-		if err != nil {
-			log.Error().Err(err).Msg("failed to get rows affected for updated commodities")
-			return eris.Wrap(err, "get rows affected for updated commodities")
-		}
-
-		if int(rowsAffected) != len(updateCommodities) {
-			return errors.NewValidationError(
-				"version",
-				errors.ErrVersionMismatch,
-				"One or more commodities have been modified since last retrieval",
-			)
-		}
-
-		log.Debug().Int("count", len(updateCommodities)).Msg("bulk updated commodities")
-	}
-
-	// * Handle deletion of commodities that are no longer present
-	if !isCreate {
-		commoditiesToDelete := make([]*shipment.ShipmentCommodity, 0)
-		for id, commodity := range existingCommodityMap {
-			if _, exists := updatedCommodityIDs[id]; !exists {
-				commoditiesToDelete = append(commoditiesToDelete, commodity)
-			}
-		}
-
-		// * Delete the commodities that are no longer present
-		if len(commoditiesToDelete) > 0 {
-			_, err := tx.NewDelete().
-				Model(&commoditiesToDelete).
-				WherePK().
-				Exec(ctx)
-			if err != nil {
-				log.Error().Err(err).Msg("failed to bulk delete commodities")
-				return eris.Wrap(err, "bulk delete commodities")
-			}
-		}
-	}
-
-	return nil
 }

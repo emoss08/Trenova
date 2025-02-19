@@ -3,7 +3,7 @@
   
   **Revolutionizing Transportation Management Through AI Innovation**
   
-  [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
+  [![License: AGPL-3.0](https://img.shields.io/badge/License-AGPL-blue.svg)](https://www.gnu.org/licenses/agpl-3.0)
   [![Go Report Card](https://goreportcard.com/badge/github.com/emoss08/trenova)](https://goreportcard.com/report/github.com/emoss08/trenova)
   [![Discord](https://dcbadge.limes.pink/api/server/https://discord.gg/XDBqyvrryq?style=flat-square&theme=default-inverted)](https://discord.gg/XDBqyvrryq)
 </div>
@@ -203,7 +203,7 @@ Contact us at <support@trenova.app> for more information.
 
 ## License
 
-Trenova is released under the MIT License. See [LICENSE](LICENSE) file for details.
+Trenova is distributed under the GPL-3.0-only License. See [LICENSE](LICENSE) file for details.
 
 ## Acknowledgments
 
