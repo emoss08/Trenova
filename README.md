@@ -203,7 +203,7 @@ Contact us at <support@trenova.app> for more information.
 
 ## License
 
-Trenova is distributed under the GPL-3.0-only License. See [LICENSE](LICENSE) file for details.
+Trenova is distributed under the AGPL-3.0-only License. See [LICENSE](LICENSE) file for details.
 
 ## Acknowledgments
 
