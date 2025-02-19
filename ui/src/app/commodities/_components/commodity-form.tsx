@@ -52,7 +52,6 @@ export function CommodityForm() {
           link="/hazardous-materials/"
           label="Hazardous Material"
           clearable
-          rules={{ required: true }}
           placeholder="Select Hazardous Material"
           description="Select the hazardous material classification if this commodity contains regulated substances."
           getOptionValue={(option) => option.id || ""}

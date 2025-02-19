@@ -1,6 +1,12 @@
 import { Button } from "@/components/ui/button";
 import { Icon } from "@/components/ui/icons";
 import { EntityRedirectLink } from "@/components/ui/link";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 import { ShipmentCommodity } from "@/types/shipment";
 import { faPencil, faTrash } from "@fortawesome/pro-solid-svg-icons";
@@ -53,23 +59,38 @@ function CommodityRow({
       <div className="col-span-2 text-left">{shipmentCommodity.pieces}</div>
       <div className="col-span-2 text-left">{shipmentCommodity.weight}</div>
       <div className="col-span-2 flex gap-0.5 justify-end">
-        <Button
-          type="button"
-          variant="ghost"
-          size="xs"
-          onClick={() => onEdit(index)}
-        >
-          <Icon icon={faPencil} className="size-4" />
-        </Button>
-        <Button
-          type="button"
-          variant="ghost"
-          className="hover:bg-red-500/30 text-red-600 hover:text-red-600"
-          size="xs"
-          onClick={() => onDelete(index)}
-        >
-          <Icon icon={faTrash} className="size-4" />
-        </Button>
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                type="button"
+                variant="ghost"
+                size="xs"
+                onClick={() => onEdit(index)}
+              >
+                <Icon icon={faPencil} className="size-4" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>Edit Commodity</TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
+
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger>
+              <Button
+                type="button"
+                variant="ghost"
+                className="hover:bg-red-500/30 text-red-600 hover:text-red-600"
+                size="xs"
+                onClick={() => onDelete(index)}
+              >
+                <Icon icon={faTrash} className="size-4" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>Delete Commodity</TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
       </div>
     </div>
   );

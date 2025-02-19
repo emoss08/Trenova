@@ -40,7 +40,7 @@ export function ShipmentMovesDetails() {
             ({moves?.length ?? 0})
           </span>
         </div>
-        <Button variant="outline" size="xs">
+        <Button type="button" variant="outline" size="xs">
           <Icon icon={faPlus} className="size-4" />
           Add Move
         </Button>
