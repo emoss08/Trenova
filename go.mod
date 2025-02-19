@@ -3,10 +3,12 @@ module github.com/emoss08/trenova
 go 1.24
 
 require (
-	github.com/bytedance/sonic v1.12.8
+	github.com/bytedance/sonic v1.12.9
 	github.com/docker/go-connections v0.5.0
 	github.com/fatih/color v1.18.0
+	github.com/fsnotify/fsnotify v1.8.0
 	github.com/go-ozzo/ozzo-validation/v4 v4.3.0
+	github.com/gofiber/contrib/websocket v1.3.3
 	github.com/gofiber/fiber/v2 v2.52.6
 	github.com/google/go-querystring v1.1.0
 	github.com/imroc/req/v3 v3.49.1
@@ -15,7 +17,7 @@ require (
 	github.com/lib/pq v1.10.9
 	github.com/logrusorgru/aurora v2.0.3+incompatible
 	github.com/meilisearch/meilisearch-go v0.30.0
-	github.com/minio/minio-go/v7 v7.0.85
+	github.com/minio/minio-go/v7 v7.0.86
 	github.com/mitchellh/mapstructure v1.5.1-0.20231216201459-8508981c8b6c
 	github.com/oklog/ulid/v2 v2.1.0
 	github.com/redis/go-redis/v9 v9.7.0
@@ -24,19 +26,19 @@ require (
 	github.com/samber/lo v1.49.1
 	github.com/shopspring/decimal v1.4.0
 	github.com/sourcegraph/conc v0.3.0
-	github.com/spf13/cobra v1.8.1
+	github.com/spf13/cobra v1.9.1
 	github.com/spf13/viper v1.19.0
 	github.com/stretchr/testify v1.10.0
 	github.com/testcontainers/testcontainers-go v0.35.0
-	github.com/uptrace/bun v1.2.9
-	github.com/uptrace/bun/dbfixture v1.2.9
-	github.com/uptrace/bun/dialect/pgdialect v1.2.9
-	github.com/uptrace/bun/driver/pgdriver v1.2.9
-	github.com/uptrace/bun/extra/bundebug v1.2.9
+	github.com/uptrace/bun v1.2.10
+	github.com/uptrace/bun/dbfixture v1.2.10
+	github.com/uptrace/bun/dialect/pgdialect v1.2.10
+	github.com/uptrace/bun/driver/pgdriver v1.2.10
+	github.com/uptrace/bun/extra/bundebug v1.2.10
 	go.uber.org/atomic v1.11.0
 	go.uber.org/fx v1.23.0
 	golang.org/x/crypto v0.33.0
-	golang.org/x/exp v0.0.0-20250210185358-939b2ce775ac
+	golang.org/x/exp v0.0.0-20250218142911-aa4b98e5adaa
 	golang.org/x/net v0.35.0
 	gopkg.in/natefinch/lumberjack.v2 v2.2.1
 	gopkg.in/yaml.v3 v3.0.1
@@ -80,7 +82,6 @@ require (
 	github.com/emirpasic/gods v1.18.1 // indirect
 	github.com/fasthttp/websocket v1.5.12 // indirect
 	github.com/felixge/httpsnoop v1.0.4 // indirect
-	github.com/fsnotify/fsnotify v1.8.0 // indirect
 	github.com/go-git/gcfg v1.5.1-0.20230307220236-3a3c6141e376 // indirect
 	github.com/go-git/go-billy/v5 v5.6.1 // indirect
 	github.com/go-git/go-git/v5 v5.13.1 // indirect
@@ -94,7 +95,6 @@ require (
 	github.com/go-task/template v0.1.0 // indirect
 	github.com/gobwas/glob v0.2.3 // indirect
 	github.com/goccy/go-json v0.10.5 // indirect
-	github.com/gofiber/contrib/websocket v1.3.3 // indirect
 	github.com/gogo/protobuf v1.3.2 // indirect
 	github.com/gohugoio/hugo v0.139.4 // indirect
 	github.com/golang-jwt/jwt/v4 v4.5.1 // indirect
@@ -115,7 +115,7 @@ require (
 	github.com/joho/godotenv v1.5.1 // indirect
 	github.com/josharian/intern v1.0.0 // indirect
 	github.com/kevinburke/ssh_config v1.2.0 // indirect
-	github.com/klauspost/compress v1.17.11 // indirect
+	github.com/klauspost/compress v1.18.0 // indirect
 	github.com/klauspost/cpuid/v2 v2.2.9 // indirect
 	github.com/lufia/plan9stats v0.0.0-20240909124753-873cd0166683 // indirect
 	github.com/magiconair/properties v1.8.9 // indirect
@@ -124,6 +124,7 @@ require (
 	github.com/mattn/go-isatty v0.0.20 // indirect
 	github.com/mattn/go-runewidth v0.0.16 // indirect
 	github.com/mattn/go-zglob v0.0.6 // indirect
+	github.com/minio/crc64nvme v1.0.1 // indirect
 	github.com/minio/md5-simd v1.1.2 // indirect
 	github.com/mitchellh/hashstructure/v2 v2.0.2 // indirect
 	github.com/moby/docker-image-spec v1.3.1 // indirect
@@ -144,7 +145,7 @@ require (
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2 // indirect
 	github.com/power-devops/perfstat v0.0.0-20240221224432-82ca36839d55 // indirect
-	github.com/puzpuzpuz/xsync/v3 v3.5.0 // indirect
+	github.com/puzpuzpuz/xsync/v3 v3.5.1 // indirect
 	github.com/quic-go/qpack v0.5.1 // indirect
 	github.com/quic-go/quic-go v0.49.0 // indirect
 	github.com/radovskyb/watcher v1.0.7 // indirect
@@ -172,7 +173,6 @@ require (
 	github.com/twitchyliquid64/golang-asm v0.15.1 // indirect
 	github.com/valyala/bytebufferpool v1.0.0 // indirect
 	github.com/valyala/fasthttp v1.59.0 // indirect
-	github.com/valyala/tcplisten v1.0.0 // indirect
 	github.com/vmihailenco/msgpack/v5 v5.4.1 // indirect
 	github.com/vmihailenco/tagparser/v2 v2.0.0 // indirect
 	github.com/xanzy/ssh-agent v0.3.3 // indirect
