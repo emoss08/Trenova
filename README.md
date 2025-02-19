@@ -95,7 +95,6 @@ Trenova's mission is to revolutionize transportation management through:
 
 4. **Industry Innovation**
    - Creating open standards for transportation technology
-   - Fostering collaborative development
    - Enabling rapid adaptation to market changes
    - Building an ecosystem of integrated solutions
 
@@ -108,7 +107,7 @@ Trenova's commitment to open source goes beyond just sharing code - it's about c
 1. **Innovation Through Collaboration**
    - Transportation challenges are inherently interconnected
    - Solutions require input from dispatchers, drivers, maintenance staff, and management
-   - Open source enables rapid iteration based on real-world feedback
+   - Open source ensures transparency and allows the community to provide real-world feedback, though all development is handled internally.
    - Cross-pollination of ideas from different sectors enhances feature development
 
 2. **Transparency and Trust**
@@ -121,7 +120,6 @@ Trenova's commitment to open source goes beyond just sharing code - it's about c
    - Features prioritized based on actual user needs
    - Rapid bug fixes and security updates
    - Shared knowledge base for common challenges
-   - Collaborative solution development
 
 4. **Unlimited Customization**
    - Carriers can modify any aspect of the system
@@ -138,7 +136,6 @@ Trenova's commitment to open source goes beyond just sharing code - it's about c
 ### Our Open Source Commitment
 
 - **Regular Code Releases**: Maintaining a predictable release schedule
-- **Developer Support**: Comprehensive documentation and support for contributors
 - **Security First**: Regular security audits and responsible disclosure policy
 - **Plugin Architecture**: Enabling easy extension of core functionality
 - **Community Governance**: Transparent decision-making process for project direction
@@ -159,8 +156,6 @@ Comprehensive documentation is available:
 - [Getting Started Guide](docs/getting-started.md)
 - [User Documentation](docs/user-guide.md)
 - [API Reference](docs/api.md)
-- [Contributing Guidelines](CONTRIBUTING.md)
-- [Code of Conduct](CODE_OF_CONDUCT.md)
 
 ## System Requirements
 
@@ -186,6 +181,15 @@ We believe in building a strong, supportive community around Trenova:
 - [GitHub Discussions](https://github.com/emoss08/trenova/discussions) - Community discussions and support
 - [Documentation](https://docs.trenova.io) - Comprehensive guides and references
 
+## Contribution Policy
+
+> ⚠️ **Please Note:**  
+> While Trenova is open source for transparency and community insight, we are **not accepting external contributions** at this time. Our development team is focused on building the core functionality and ensuring a cohesive vision for the platform.  
+>
+> We welcome feedback, ideas, and discussions through [GitHub Issues](https://github.com/emoss08/trenova/issues) and [GitHub Discussions](https://github.com/emoss08/trenova/discussions), but pull requests from external contributors will not be merged.
+
+Thank you for your understanding and continued support as we work towards making Trenova the future of transportation management.
+
 ## Commercial Support
 
 For organizations requiring additional support, we offer:
@@ -195,7 +199,7 @@ For organizations requiring additional support, we offer:
 - Deployment assistance
 - Training and consultation
 
-Contact us at support@trenova.app for more information.
+Contact us at <support@trenova.app> for more information.
 
 ## License
 
@@ -206,7 +210,6 @@ Trenova is released under the MIT License. See [LICENSE](LICENSE) file for detai
 Trenova exists thanks to:
 
 - The transportation professionals who shared their experiences and insights
-- Our growing community of contributors and users
 - The open source projects that make Trenova possible
 
 ---
