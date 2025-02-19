@@ -204,7 +204,3 @@ Thank you for your understanding and continued support as we work towards making
 ## License
 
 Trenova is distributed under the AGPL-3.0-only License. See [LICENSE](LICENSE) file for details.
-
----
-
-**Trenova: Empowering the future of transportation management, one carrier at a time.**
