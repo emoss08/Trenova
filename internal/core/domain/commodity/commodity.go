@@ -62,6 +62,7 @@ func (c *Commodity) Validate(ctx context.Context, multiErr *errors.MultiError) {
 		validation.Field(&c.Description,
 			validation.Required.Error("Description is required"),
 		),
+
 		// Min temperature must be less than max temperature and vice versa
 		validation.Field(&c.MinTemperature,
 			validation.When(c.MaxTemperature != nil,
