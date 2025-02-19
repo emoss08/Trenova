@@ -29,6 +29,7 @@ func NewLogger(cfg *config.Config) *Logger {
 		SamplingInterval: cfg.Log.SamplingInterval,
 		FileConfig: config.FileConfig{
 			Enabled:    cfg.Log.FileConfig.Enabled,
+			FileName:   cfg.Log.FileConfig.FileName,
 			Path:       cfg.Log.FileConfig.Path,
 			MaxSize:    cfg.Log.FileConfig.MaxSize,
 			MaxBackups: cfg.Log.FileConfig.MaxBackups,
@@ -146,7 +147,7 @@ func configureConsoleWriter(env string) zerolog.ConsoleWriter {
 
 func configureFileWriter(cfg config.FileConfig) io.Writer {
 	return &lumberjack.Logger{
-		Filename:   cfg.Path,
+		Filename:   filepath.Join(cfg.Path, cfg.FileName),
 		MaxSize:    cfg.MaxSize,
 		MaxBackups: cfg.MaxBackups,
 		MaxAge:     cfg.MaxAge,

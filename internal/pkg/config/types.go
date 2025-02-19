@@ -65,6 +65,9 @@ type FileConfig struct {
 	// Path is the path to the log file.
 	Path string `mapstructure:"path"`
 
+	// FileName is the name of the log file.
+	FileName string `mapstructure:"fileName"`
+
 	// MaxSize is the max size of the log file.
 	MaxSize int `mapstructure:"maxSize"`
 

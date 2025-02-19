@@ -32,6 +32,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/user"
 	"github.com/emoss08/trenova/internal/core/services/usstate"
 	"github.com/emoss08/trenova/internal/core/services/worker"
+	"github.com/emoss08/trenova/internal/pkg/logreader"
 	"go.uber.org/fx"
 )
 
@@ -66,6 +67,7 @@ var Module = fx.Module("services", fx.Provide(
 	assignment.NewService,
 	shipmentmove.NewService,
 	stop.NewService,
+	logreader.NewService,
 ))
 
 var CalculatorModule = fx.Module("calculator", fx.Provide(

@@ -12,6 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/handlers/hazardousmaterial"
 	"github.com/emoss08/trenova/internal/api/handlers/location"
 	"github.com/emoss08/trenova/internal/api/handlers/locationcategory"
+	"github.com/emoss08/trenova/internal/api/handlers/logreader"
 	"github.com/emoss08/trenova/internal/api/handlers/organization"
 	"github.com/emoss08/trenova/internal/api/handlers/reporting"
 	"github.com/emoss08/trenova/internal/api/handlers/routing"
@@ -61,4 +62,5 @@ var HandlersModule = fx.Module("api.Handlers", fx.Provide(
 	assignment.NewHandler,
 	shipmentmove.NewHandler,
 	stop.NewHandler,
+	logreader.NewHandler,
 ))

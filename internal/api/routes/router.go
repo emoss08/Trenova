@@ -14,6 +14,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/handlers/hazardousmaterial"
 	"github.com/emoss08/trenova/internal/api/handlers/location"
 	"github.com/emoss08/trenova/internal/api/handlers/locationcategory"
+	"github.com/emoss08/trenova/internal/api/handlers/logreader"
 	organizationHandler "github.com/emoss08/trenova/internal/api/handlers/organization"
 	"github.com/emoss08/trenova/internal/api/handlers/reporting"
 	"github.com/emoss08/trenova/internal/api/handlers/routing"
@@ -97,6 +98,7 @@ type RouterParams struct {
 	AssignmentHandler            *assignment.Handler
 	ShipmentMoveHandler          *shipmentmove.Handler
 	StopHandler                  *stop.Handler
+	LogReaderHandler             *logreader.Handler
 }
 
 type Router struct {
@@ -255,4 +257,7 @@ func (r *Router) setupProtectedRoutes(router fiber.Router, rl *middleware.RateLi
 
 	// Stops
 	r.p.StopHandler.RegisterRoutes(router, rl)
+
+	// Log Reader
+	r.p.LogReaderHandler.RegisterRoutes(router, rl)
 }
