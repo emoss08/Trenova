@@ -181,15 +181,6 @@ We believe in building a strong, supportive community around Trenova:
 - [GitHub Discussions](https://github.com/emoss08/trenova/discussions) - Community discussions and support
 - [Documentation](https://docs.trenova.io) - Comprehensive guides and references
 
-## Contribution Policy
-
-> ⚠️ **Please Note:**  
-> While Trenova is open source for transparency and community insight, we are **not accepting external contributions** at this time. Our development team is focused on building the core functionality and ensuring a cohesive vision for the platform.  
->
-> We welcome feedback, ideas, and discussions through [GitHub Issues](https://github.com/emoss08/trenova/issues) and [GitHub Discussions](https://github.com/emoss08/trenova/discussions), but pull requests from external contributors will not be merged.
-
-Thank you for your understanding and continued support as we work towards making Trenova the future of transportation management.
-
 ## Commercial Support
 
 For organizations requiring additional support, we offer:
@@ -201,16 +192,18 @@ For organizations requiring additional support, we offer:
 
 Contact us at <support@trenova.app> for more information.
 
+## Contribution Policy
+
+> ⚠️ **Please Note:**  
+> While Trenova is open source for transparency and community insight, we are **not accepting external contributions** at this time. Our development team is focused on building the core functionality and ensuring a cohesive vision for the platform.  
+>
+> We welcome feedback, ideas, and discussions through [GitHub Issues](https://github.com/emoss08/trenova/issues) and [GitHub Discussions](https://github.com/emoss08/trenova/discussions), but pull requests from external contributors will not be merged.
+
+Thank you for your understanding and continued support as we work towards making Trenova the future of transportation management.
+
 ## License
 
 Trenova is distributed under the AGPL-3.0-only License. See [LICENSE](LICENSE) file for details.
-
-## Acknowledgments
-
-Trenova exists thanks to:
-
-- The transportation professionals who shared their experiences and insights
-- The open source projects that make Trenova possible
 
 ---
 
