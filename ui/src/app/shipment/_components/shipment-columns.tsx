@@ -3,13 +3,17 @@ import {
   DataTableColumnHeaderWithTooltip,
 } from "@/components/data-table/_components/data-table-column-header";
 import {
-  createCommonColumns,
   createEntityColumn,
   createEntityRefColumn,
   createNestedEntityRefColumn,
 } from "@/components/data-table/_components/data-table-column-helpers";
 import { ShipmentStatusBadge } from "@/components/status-badge";
-import { generateDateTimeString, toDate } from "@/lib/date";
+import { Checkbox } from "@/components/ui/checkbox";
+import {
+  generateDateOnlyString,
+  generateDateTimeString,
+  toDate,
+} from "@/lib/date";
 import { LocationSchema } from "@/lib/schemas/location-schema";
 import {
   calculateShipmentMileage,
@@ -23,10 +27,35 @@ import { createColumnHelper, type ColumnDef } from "@tanstack/react-table";
 
 export function getColumns(): ColumnDef<Shipment>[] {
   const columnHelper = createColumnHelper<Shipment>();
-  const commonColumns = createCommonColumns(columnHelper);
 
   return [
-    commonColumns.selection,
+    {
+      id: "select",
+      header: ({ table }) => {
+        return (
+          <Checkbox
+            checked={
+              table.getIsAllPageRowsSelected() ||
+              (table.getIsSomePageRowsSelected() && "indeterminate")
+            }
+            onCheckedChange={(checked) =>
+              table.toggleAllPageRowsSelected(!!checked)
+            }
+            aria-label="Select all"
+          />
+        );
+      },
+      cell: ({ row }) => (
+        <Checkbox
+          checked={row.getIsSelected()}
+          onCheckedChange={(checked) => row.toggleSelected(!!checked)}
+          aria-label="Select row"
+        />
+      ),
+      size: 50,
+      enableSorting: false,
+      enableHiding: false,
+    },
     {
       accessorKey: "status",
       header: ({ column }) => (
@@ -74,7 +103,11 @@ export function getColumns(): ColumnDef<Shipment>[] {
     {
       id: "originPickup",
       header: ({ column }) => (
-        <DataTableColumnHeader column={column} title="Origin Date" />
+        <DataTableColumnHeaderWithTooltip
+          column={column}
+          title="Origin Date"
+          tooltipContent="The date and time the shipment is expected to arrive at the origin location."
+        />
       ),
       cell: ({ row }) => {
         const shipment = row.original;
@@ -144,7 +177,7 @@ export function getColumns(): ColumnDef<Shipment>[] {
       cell: ({ row }) => {
         const shipment = row.original;
         const mileage = calculateShipmentMileage(shipment);
-        return mileage;
+        return `${mileage} mi.`;
       },
     },
     {
@@ -153,6 +186,16 @@ export function getColumns(): ColumnDef<Shipment>[] {
         <DataTableColumnHeader column={column} title="BOL" />
       ),
     },
-    commonColumns.createdAt,
+    {
+      id: "createdAt",
+      header: "Created At",
+      cell: ({ row }) => {
+        const { createdAt } = row.original;
+        const date = toDate(createdAt as number);
+        if (!date) return <p>-</p>;
+
+        return <p>{generateDateOnlyString(date)}</p>;
+      },
+    },
   ];
 }

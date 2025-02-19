@@ -198,6 +198,24 @@ const routes: RouteObject[] = [
               title: "Trailers",
             },
           },
+
+          // Organization Setting Links
+          {
+            path: "/organization/",
+            handle: {
+              crumb: "Organization",
+              title: "Organization",
+            },
+            children: [
+              {
+                path: "logs",
+                async lazy() {
+                  let { LogReader } = await import("@/app/logreader/page");
+                  return { Component: LogReader };
+                },
+              },
+            ],
+          },
         ],
       },
       // Auth routes with AuthLayout

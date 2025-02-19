@@ -12,6 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/shipmenttype"
 	"github.com/emoss08/trenova/internal/core/domain/user"
 	"github.com/emoss08/trenova/internal/core/ports"
+	"github.com/emoss08/trenova/internal/core/services/calculator"
 	"github.com/stretchr/testify/require"
 
 	repoports "github.com/emoss08/trenova/internal/core/ports/repositories"
@@ -37,10 +38,17 @@ func TestShipmentRepository(t *testing.T) {
 		DB:     ts.DB,
 	})
 
+	shipmentCommodityRepo := repositories.NewShipmentCommodityRepository(repositories.ShipmentCommodityRepositoryParams{
+		Logger: logger.NewLogger(testutils.NewTestConfig()),
+		DB:     ts.DB,
+	})
+
 	repo := repositories.NewShipmentRepository(repositories.ShipmentRepositoryParams{
-		Logger:        logger.NewLogger(testutils.NewTestConfig()),
-		DB:            ts.DB,
-		ProNumberRepo: proNumberRepo,
+		Logger:                      logger.NewLogger(testutils.NewTestConfig()),
+		DB:                          ts.DB,
+		ProNumberRepo:               proNumberRepo,
+		ShipmentCommodityRepository: shipmentCommodityRepo,
+		Calculator:                  calculator.NewShipmentCalculator(calculator.ShipmentCalculatorParams{Logger: logger.NewLogger(testutils.NewTestConfig())}),
 	})
 
 	t.Run("list shipments", func(t *testing.T) {

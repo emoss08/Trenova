@@ -2,6 +2,7 @@ import { DataTable } from "@/components/data-table/data-table";
 import { Shipment } from "@/types/shipment";
 import { useMemo } from "react";
 import { getColumns } from "./shipment-columns";
+import { ShipmentEditSheet } from "./shipment-edit-sheet";
 
 export default function ShipmentTable() {
   const columns = useMemo(() => getColumns(), []);
@@ -11,14 +12,12 @@ export default function ShipmentTable() {
       name="Shipment"
       link="/shipments/"
       extraSearchParams={{
-        includeMoveDetails: true,
-        includeStopDetails: true,
-        includeCustomerDetails: true,
+        expandShipmentDetails: true,
       }}
       queryKey="shipment-list"
       exportModelName="shipment"
       //   TableModal={CreateTractorModal}
-      //   TableEditModal={EditTractorModal}
+      TableEditModal={ShipmentEditSheet}
       columns={columns}
     />
   );

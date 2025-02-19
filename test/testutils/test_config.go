@@ -94,3 +94,20 @@ func NewTestConfigManager(cfg *config.Config) *config.Manager {
 		Viper: viper.New(),
 	}
 }
+
+func NewTestLogConfig() *config.LogConfig {
+	return &config.LogConfig{
+		Level:            "debug",
+		SamplingPeriod:   10 * time.Second,
+		SamplingInterval: 1000,
+		FileConfig: config.FileConfig{
+			Enabled:    true,
+			Path:       "logs",
+			FileName:   "trenova.log",
+			MaxSize:    10,
+			MaxBackups: 10,
+			MaxAge:     10,
+			Compress:   true,
+		},
+	}
+}

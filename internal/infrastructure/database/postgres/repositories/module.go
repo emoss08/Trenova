@@ -1,6 +1,8 @@
 package repositories
 
-import "go.uber.org/fx"
+import (
+	"go.uber.org/fx"
+)
 
 var Module = fx.Module("postgres-repositories", fx.Provide(
 	NewPermissionRepository,
@@ -26,6 +28,7 @@ var Module = fx.Module("postgres-repositories", fx.Provide(
 	NewCustomerRepository,
 	NewProNumberRepository,
 	NewStopRepository,
+	NewShipmentCommodityRepository,
 	NewShipmentMoveRepository,
 	NewShipmentRepository,
 	NewPCMilerConfigurationRepository,

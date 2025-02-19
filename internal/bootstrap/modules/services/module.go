@@ -4,6 +4,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/assignment"
 	"github.com/emoss08/trenova/internal/core/services/audit"
 	"github.com/emoss08/trenova/internal/core/services/auth"
+	"github.com/emoss08/trenova/internal/core/services/calculator"
 	"github.com/emoss08/trenova/internal/core/services/commodity"
 	"github.com/emoss08/trenova/internal/core/services/customer"
 	"github.com/emoss08/trenova/internal/core/services/documentqualityconfig"
@@ -31,6 +32,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/user"
 	"github.com/emoss08/trenova/internal/core/services/usstate"
 	"github.com/emoss08/trenova/internal/core/services/worker"
+	"github.com/emoss08/trenova/internal/pkg/logreader"
 	"go.uber.org/fx"
 )
 
@@ -65,4 +67,9 @@ var Module = fx.Module("services", fx.Provide(
 	assignment.NewService,
 	shipmentmove.NewService,
 	stop.NewService,
+	logreader.NewService,
+))
+
+var CalculatorModule = fx.Module("calculator", fx.Provide(
+	calculator.NewShipmentCalculator,
 ))

@@ -2,18 +2,18 @@ import { usePopoutWindow } from "@/hooks/popout-window/use-popout-window";
 import { useAuth } from "@/hooks/use-auth";
 import { useQueryInvalidationListener } from "@/hooks/use-invalidate-query";
 import { Outlet } from "react-router";
-import { AIAssistant } from "./ai-assistant";
+// import { AIAssistant } from "./ai-assistant";
 import { AppSidebar } from "./app-sidebar";
 import { Header } from "./header";
 import { SidebarInset, SidebarProvider } from "./ui/sidebar";
 
-function BottomRightPopup() {
-  return (
-    <div className="fixed bottom-6 right-10 z-50">
-      <AIAssistant />
-    </div>
-  );
-}
+// function BottomRightPopup() {
+//   return (
+//     <div className="fixed bottom-6 right-10 z-50">
+//       <AIAssistant />
+//     </div>
+//   );
+// }
 
 export function MainLayout() {
   const { isPopout } = usePopoutWindow();
@@ -34,7 +34,7 @@ export function MainLayout() {
           </SidebarInset>
         </SidebarProvider>
       </div>
-      <BottomRightPopup />
+      {/* <BottomRightPopup /> */}
     </div>
   );
 }

@@ -11,8 +11,9 @@ import { Icon } from "@/components/ui/icons";
 import { ShipmentStatus, type Shipment } from "@/types/shipment";
 import { faEllipsisVertical } from "@fortawesome/pro-regular-svg-icons";
 import { useState } from "react";
-import { ShipmentCancellationDialog } from "../../cancellation/shipment-cancellatioin-dialog";
-import { ShipmentDuplicateDialog } from "../../duplicate/shipment-duplicate-dialog";
+import { useNavigate } from "react-router";
+import { ShipmentCancellationDialog } from "../cancellation/shipment-cancellatioin-dialog";
+import { ShipmentDuplicateDialog } from "../duplicate/shipment-duplicate-dialog";
 
 // Map of status that are allowed to be canceled.
 const cancellatedStatuses = [
@@ -22,6 +23,8 @@ const cancellatedStatuses = [
 ];
 
 export function ShipmentActions({ shipment }: { shipment: Shipment }) {
+  const navigate = useNavigate();
+
   const [cancellationDialogOpen, setCancellationDialogOpen] =
     useState<boolean>(false);
   const [duplicateDialogOpen, setDuplicateDialogOpen] =
@@ -37,7 +40,7 @@ export function ShipmentActions({ shipment }: { shipment: Shipment }) {
             <Icon icon={faEllipsisVertical} className="size-4" />
           </Button>
         </DropdownMenuTrigger>
-        <DropdownMenuContent align="start">
+        <DropdownMenuContent side="bottom" align="end">
           <DropdownMenuLabel>General Actions</DropdownMenuLabel>
           <DropdownMenuSeparator />
           <DropdownMenuItem
@@ -47,6 +50,9 @@ export function ShipmentActions({ shipment }: { shipment: Shipment }) {
           <DropdownMenuItem
             title="Edit"
             description="Modify shipment details."
+            onClick={() => {
+              navigate(`/shipments/${shipment.id}`);
+            }}
           />
           <DropdownMenuItem
             title="Duplicate"
