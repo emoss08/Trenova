@@ -177,6 +177,8 @@ export interface BaseAutocompleteFieldProps<TOption> {
   noResultsMessage?: string;
   /** Allow clearing the selection */
   clearable?: boolean;
+  /** Callback when an option is selected (Specific to AutocompleteField) */
+  onOptionChange?: (option: TOption | null) => void;
 }
 
 export type AutocompleteFieldProps<TOption, TForm extends FieldValues> = Omit<

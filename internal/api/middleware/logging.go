@@ -181,7 +181,7 @@ func NewLogger(l *logger.Logger, config ...LogConfig) fiber.Handler {
 		if duration > cfg.SlowRequestThreshold {
 			warnEvent.Msg("Slow HTTP Request")
 		} else {
-			logEvent.Msg("HTTP Request")
+			logEvent.Str("status", "OK").Msg("HTTP Request")
 		}
 
 		return err

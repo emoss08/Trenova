@@ -26,6 +26,7 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
             "file:border-0 file:bg-transparent file:text-sm file:font-medium",
             "placeholder:text-muted-foreground",
             "disabled:cursor-not-allowed disabled:opacity-50",
+            "read-only:cursor-default read-only:text-muted-foreground",
             "focus-visible:border-blue-600 focus-visible:outline-hidden focus-visible:ring-4 focus-visible:ring-blue-600/20",
             "transition-[border-color,box-shadow] duration-200 ease-in-out",
             // Invalid state

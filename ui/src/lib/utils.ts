@@ -238,7 +238,6 @@ export function composeEventHandlers<E>(
   };
 }
 
-//
 export function formatLocation(location?: LocationSchema) {
   if (!location) {
     return "";
@@ -250,4 +249,10 @@ export function formatLocation(location?: LocationSchema) {
   const cityStateZip = `${city} ${state?.abbreviation}, ${postalCode}`;
 
   return `${addressLine} ${cityStateZip}`;
+}
+
+/** Helper function to safely convert decimal string to number */
+export function toNumber(value: any): number {
+  const num = Number(value);
+  return isNaN(num) ? 0 : num; // Ensure it returns 0 if NaN
 }

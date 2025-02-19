@@ -78,6 +78,7 @@ export function Autocomplete<T>({
   className,
   triggerClassName,
   noResultsMessage,
+  onOptionChange,
   clearable = true,
 }: BaseAutocompleteFieldProps<T>) {
   const [open, setOpen] = useState(false);
@@ -151,9 +152,13 @@ export function Autocomplete<T>({
 
       setSelectedOption(selectedOpt || null);
       onChange(newValue);
+      // Call onOptionChange here where we have access to options
+      if (onOptionChange) {
+        onOptionChange(selectedOpt || null);
+      }
       setOpen(false);
     },
-    [value, onChange, clearable, options, getOptionValue],
+    [value, onChange, onOptionChange, clearable, options, getOptionValue],
   );
 
   const handleScrollEnd = useCallback(
@@ -178,7 +183,7 @@ export function Autocomplete<T>({
           role="combobox"
           aria-expanded={open}
           className={cn(
-            "w-full gap-2 rounded border-muted-foreground/20 bg-muted px-1.5 data-[state=open]:border-blue-600 data-[state=open]:outline-hidden data-[state=open]:ring-4 data-[state=open]:ring-blue-600/20",
+            "w-full font-normal gap-2 rounded border-muted-foreground/20 bg-muted px-1.5 data-[state=open]:border-blue-600 data-[state=open]:outline-hidden data-[state=open]:ring-4 data-[state=open]:ring-blue-600/20",
             "[&_svg]:size-4 justify-between",
             disabled && "opacity-50 cursor-not-allowed",
             triggerClassName,
@@ -226,7 +231,7 @@ export function Autocomplete<T>({
             <CommandGroup className="flex flex-col gap-2">
               {options.map((option) => (
                 <CommandItem
-                  className="[&_svg]:size-3 cursor-pointer"
+                  className="[&_svg]:size-3 cursor-pointer font-normal"
                   key={getOptionValue(option).toString()}
                   value={getOptionValue(option).toString()}
                   onSelect={handleSelect}
@@ -263,6 +268,7 @@ export function AutocompleteField<TOption, TForm extends FieldValues>({
   description,
   getOptionValue,
   getDisplayValue,
+  onOptionChange,
   clearable,
   ...props
 }: AutocompleteFieldProps<TOption, TForm>) {
@@ -288,6 +294,7 @@ export function AutocompleteField<TOption, TForm extends FieldValues>({
             label={label}
             value={value}
             onChange={onChange}
+            onOptionChange={onOptionChange}
             disabled={disabled}
             clearable={clearable}
             {...props}

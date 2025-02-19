@@ -31,8 +31,8 @@ type ShipmentCommodity struct {
 	CommodityID    pulid.ID `bun:"commodity_id,pk,notnull,type:VARCHAR(100)" json:"commodityId"`
 
 	// Core Fields
-	Weight float64 `bun:"weight,type:FLOAT,notnull" json:"weight"`
-	Pieces int64   `bun:"pieces,type:INTEGER,notnull" json:"pieces"`
+	Weight int64 `bun:"weight,type:INTEGER,notnull" json:"weight"`
+	Pieces int64 `bun:"pieces,type:INTEGER,notnull" json:"pieces"`
 
 	// Metadata
 	Version   int64 `bun:"version,type:BIGINT" json:"version"`
@@ -56,7 +56,7 @@ func (sc *ShipmentCommodity) Validate(ctx context.Context, multiErr *errors.Mult
 		// Weight is required
 		validation.Field(&sc.Weight,
 			validation.Required.Error("Weight is required"),
-			validation.Min(0.0).Error("Weight must be greater than or equal to 0"),
+			validation.Min(1).Error("Weight must be at least 1"),
 		),
 		// Commodity ID is required
 		validation.Field(&sc.CommodityID,
@@ -66,7 +66,7 @@ func (sc *ShipmentCommodity) Validate(ctx context.Context, multiErr *errors.Mult
 	if err != nil {
 		var validationErrs validation.Errors
 		if eris.As(err, &validationErrs) {
-			errors.FromValidationErrors(validationErrs, multiErr, "")
+			errors.FromOzzoErrors(validationErrs, multiErr)
 		}
 	}
 }

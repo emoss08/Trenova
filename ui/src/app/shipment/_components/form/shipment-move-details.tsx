@@ -10,34 +10,44 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Icon } from "@/components/ui/icons";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { useShipment } from "@/hooks/use-shipment";
+import { ShipmentSchema } from "@/lib/schemas/shipment-schema";
 import { MoveStatus, type ShipmentMove } from "@/types/move";
-import { faEllipsisVertical } from "@fortawesome/pro-regular-svg-icons";
+import { faEllipsisVertical, faPlus } from "@fortawesome/pro-regular-svg-icons";
 import { memo, useState } from "react";
-import { AssignmentDialog } from "../../assignment/assignment-dialog";
-import { StopTimeline } from "../stop-details/stop-timeline-content";
+import { useFieldArray, useFormContext } from "react-hook-form";
+import { AssignmentDialog } from "../assignment/assignment-dialog";
+import { StopTimeline } from "../sidebar/stop-details/stop-timeline-content";
 import { AssignmentDetails } from "./move-assignment-details";
 
 export function ShipmentMovesDetails() {
-  const { shipment } = useShipment();
+  const { control } = useFormContext<ShipmentSchema>();
 
-  if (!shipment) {
-    return null;
-  }
-
-  const { moves } = shipment;
+  const {
+    fields: moves,
+    append,
+    remove,
+  } = useFieldArray({
+    control,
+    name: "moves",
+  });
 
   return (
-    <div className="flex flex-col gap-1 py-4">
-      <div className="flex items-center gap-1">
-        <h3 className="text-sm font-medium">Moves</h3>
-        <span className="text-2xs text-muted-foreground">
-          ({moves?.length ?? 0})
-        </span>
+    <div className="flex flex-col gap-2 border-t border-bg-sidebar-border py-4">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-1">
+          <h3 className="text-sm font-medium">Moves</h3>
+          <span className="text-2xs text-muted-foreground">
+            ({moves?.length ?? 0})
+          </span>
+        </div>
+        <Button type="button" variant="outline" size="xs">
+          <Icon icon={faPlus} className="size-4" />
+          Add Move
+        </Button>
       </div>
-      <div className="flex flex-col gap-2">
+      <div className="flex flex-col gap-4">
         {moves.map((move) => (
-          <MoveInformation key={move.id} move={move} />
+          <MoveInformation key={move.id} move={move as ShipmentMove} />
         ))}
       </div>
     </div>

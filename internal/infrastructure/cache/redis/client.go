@@ -126,7 +126,7 @@ func (c *Client) Get(ctx context.Context, key string) (string, error) {
 		return "", eris.Wrap(err, "failed to get value from redis")
 	}
 
-	c.l.Debug().
+	c.l.Trace().
 		Str("key", key).
 		Str("value", val).
 		Msg("redis get success")
@@ -141,7 +141,7 @@ func (c *Client) Set(ctx context.Context, key string, value any, expiration time
 		return eris.Wrapf(err, "failed to set key: %s", key)
 	}
 
-	c.l.Debug().
+	c.l.Trace().
 		Str("key", key).
 		Interface("value", value).
 		Dur("expiration", expiration).

@@ -1,5 +1,6 @@
 import { cn } from "@/lib/utils";
 import { InputFieldProps } from "@/types/fields";
+import { faPencil } from "@fortawesome/pro-regular-svg-icons";
 import { useEffect, useRef, useState } from "react";
 import {
   Control,
@@ -8,6 +9,7 @@ import {
   Path,
   useController,
 } from "react-hook-form";
+import { Icon } from "../ui/icons";
 import { Input } from "../ui/input";
 import { FieldWrapper } from "./field-components";
 
@@ -26,6 +28,7 @@ export function InputField<T extends FieldValues>({
   inputClassProps,
   "aria-label": ariaLabel,
   "aria-describedby": ariaDescribedBy,
+  readOnly,
   ...props
 }: InputFieldProps<T>) {
   const inputId = `input-${name}`;
@@ -50,6 +53,7 @@ export function InputField<T extends FieldValues>({
             {...props}
             id={inputId}
             type={type}
+            readOnly={readOnly}
             disabled={disabled}
             autoComplete={autoComplete}
             placeholder={placeholder}
@@ -77,7 +81,7 @@ interface DoubleClickInputProps<T extends Record<string, any>> {
   displayClassName?: string;
 }
 
-export default function DoubleClickInput<T extends Record<string, any>>({
+export function DoubleClickInput<T extends Record<string, any>>({
   control,
   name,
   className,
@@ -86,9 +90,9 @@ export default function DoubleClickInput<T extends Record<string, any>>({
 }: DoubleClickInputProps<T>) {
   const { field } = useController({ control, name });
   const [isEditing, setIsEditing] = useState(false);
+  const [isHovered, setIsHovered] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  // Handle focus when entering edit mode
   useEffect(() => {
     if (isEditing && inputRef.current) {
       inputRef.current.focus();
@@ -96,7 +100,7 @@ export default function DoubleClickInput<T extends Record<string, any>>({
     }
   }, [isEditing]);
 
-  const handleDoubleClick = () => {
+  const handleEditClick = () => {
     setIsEditing(true);
   };
 
@@ -105,22 +109,26 @@ export default function DoubleClickInput<T extends Record<string, any>>({
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === "Enter") {
-      setIsEditing(false);
-    }
-    if (e.key === "Escape") {
+    if (e.key === "Enter" || e.key === "Escape") {
       setIsEditing(false);
     }
   };
 
   return (
-    <div className={cn("flex items-center max-h-[inherit]", className)}>
+    <div
+      className={cn(
+        "relative flex items-center max-h-[inherit] group",
+        className,
+      )}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+    >
       {isEditing ? (
         <input
           {...field}
           ref={inputRef}
           className={cn(
-            "outline-none h-6 border-muted-foreground/20 flex w-full rounded-md border px-2 py-1 text-sm",
+            "outline-none h-5 border-muted-foreground/20 flex w-full rounded-md border px-2 py-1 text-sm",
             "placeholder:text-muted-foreground",
             "disabled:cursor-not-allowed disabled:opacity-50",
             "focus-visible:border-blue-600 focus-visible:outline-hidden focus-visible:ring-4 focus-visible:ring-blue-600/20",
@@ -131,19 +139,33 @@ export default function DoubleClickInput<T extends Record<string, any>>({
           onKeyDown={handleKeyDown}
         />
       ) : (
-        <span
-          className={cn("py-1.5 text-sm cursor-pointer", displayClassName)}
-          onDoubleClick={handleDoubleClick}
-          role="textbox"
-          tabIndex={0}
-          onKeyDown={(e) => {
-            if (e.key === "Enter") {
-              handleDoubleClick();
-            }
-          }}
-        >
-          {field.value || "Click to edit"}
-        </span>
+        <div className="flex items-center w-full gap-x-1.5">
+          <span
+            className={cn(
+              "text-sm flex-grow text-blue-500 underline",
+              displayClassName,
+            )}
+            role="textbox"
+            tabIndex={0}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") {
+                handleEditClick();
+              }
+            }}
+          >
+            {field.value || "Click to edit"}
+          </span>
+          <button
+            onClick={handleEditClick}
+            className={cn(
+              "transition-opacity duration-200 cursor-pointer",
+              isHovered ? "opacity-100" : "opacity-0",
+            )}
+            aria-label="Edit"
+          >
+            <Icon icon={faPencil} className="size-3 text-muted-foreground" />
+          </button>
+        </div>
       )}
     </div>
   );

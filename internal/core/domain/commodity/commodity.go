@@ -30,9 +30,10 @@ type Commodity struct {
 	Status            domain.Status `bun:"status,type:status,default:'Active'" json:"status"`
 	Name              string        `bun:"name,notnull,type:VARCHAR(100)" json:"name"`
 	Description       string        `bun:"description,type:TEXT,notnull" json:"description"`
-	MinTemperature    *float64      `bun:"min_temperature,type:FLOAT,nullzero" json:"minTemperature"`
-	MaxTemperature    *float64      `bun:"max_temperature,type:FLOAT,nullzero" json:"maxTemperature"`
+	MinTemperature    *int16        `bun:"min_temperature,type:INTEGER,nullzero" json:"minTemperature"`
+	MaxTemperature    *int16        `bun:"max_temperature,type:INTEGER,nullzero" json:"maxTemperature"`
 	WeightPerUnit     *float64      `bun:"weight_per_unit,type:FLOAT,nullzero" json:"weightPerUnit"`
+	LinearFeetPerUnit *float64      `bun:"linear_feet_per_unit,type:FLOAT,nullzero" json:"linearFeetPerUnit"`
 	FreightClass      string        `bun:"freight_class,type:VARCHAR(100)" json:"freightClass"`
 	DOTClassification string        `bun:"dot_classification,type:VARCHAR(100)" json:"dotClassification"`
 	Stackable         bool          `bun:"stackable,type:BOOLEAN,default:false" json:"stackable"`
@@ -61,24 +62,25 @@ func (c *Commodity) Validate(ctx context.Context, multiErr *errors.MultiError) {
 		validation.Field(&c.Description,
 			validation.Required.Error("Description is required"),
 		),
+
 		// Min temperature must be less than max temperature and vice versa
 		validation.Field(&c.MinTemperature,
 			validation.When(c.MaxTemperature != nil,
 				validation.Required.Error("Min temperature is required when max temperature is provided"),
-				validation.Min(c.MaxTemperature).Error("Min temperature must be less than max temperature"),
+				validation.Min(*c.MaxTemperature).Error("Min temperature must be less than max temperature"),
 			),
 		),
 		validation.Field(&c.MaxTemperature,
 			validation.When(c.MinTemperature != nil,
 				validation.Required.Error("Max temperature is required when min temperature is provided"),
-				validation.Min(c.MinTemperature).Error("Max temperature must be greater than min temperature"),
+				validation.Min(*c.MinTemperature).Error("Max temperature must be greater than min temperature"),
 			),
 		),
 	)
 	if err != nil {
 		var validationErrs validation.Errors
 		if eris.As(err, &validationErrs) {
-			errors.FromValidationErrors(validationErrs, multiErr, "")
+			errors.FromOzzoErrors(validationErrs, multiErr)
 		}
 	}
 }
