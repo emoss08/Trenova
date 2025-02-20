@@ -117,7 +117,7 @@ export function StopDialog({
     onClose: handleClose,
   });
 
-  const mutation = useMutation({
+  const { mutateAsync } = useMutation({
     mutationFn: async (values: StopSchema) => {
       if (isEditing) {
         const response = await http.put(`/stops/${stopId}/`, values);
@@ -171,9 +171,9 @@ export function StopDialog({
 
   const onSubmit = useCallback(
     async (values: StopSchema) => {
-      await mutation.mutateAsync(values);
+      await mutateAsync(values);
     },
-    [mutation.mutateAsync],
+    [mutateAsync],
   );
 
   useEffect(() => {

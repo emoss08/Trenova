@@ -1,10 +1,19 @@
 import { APIError } from "@/types/errors";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { createSyncStoragePersister } from "@tanstack/query-sync-storage-persister";
+import { QueryClient } from "@tanstack/react-query";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
+import { PersistQueryClientProvider } from "@tanstack/react-query-persist-client";
+import { compress, decompress } from "lz-string";
 import { NuqsAdapter } from "nuqs/adapters/react-router";
 import { HelmetProvider } from "react-helmet-async";
 import { ThemeProvider } from "./theme-provider";
 import { Toaster } from "./ui/sonner";
+
+const persister = createSyncStoragePersister({
+  storage: window.localStorage,
+  serialize: (data) => compress(JSON.stringify(data)),
+  deserialize: (data) => JSON.parse(decompress(data)),
+});
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -25,7 +34,13 @@ const queryClient = new QueryClient({
 export function Providers({ children }: { children: React.ReactNode }) {
   return (
     <HelmetProvider>
-      <QueryClientProvider client={queryClient}>
+      <PersistQueryClientProvider
+        persistOptions={{
+          persister,
+          maxAge: Infinity,
+        }}
+        client={queryClient}
+      >
         <NuqsAdapter>
           <ThemeProvider defaultTheme="dark" storageKey="trenova-ui-theme">
             <ReactQueryDevtools />
@@ -33,7 +48,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
             <Toaster />
           </ThemeProvider>
         </NuqsAdapter>
-      </QueryClientProvider>
+      </PersistQueryClientProvider>
     </HelmetProvider>
   );
 }

@@ -27,7 +27,7 @@ import { cn } from "@/lib/utils";
 import { type TableSheetProps } from "@/types/data-table";
 import { type APIError } from "@/types/errors";
 import { type API_ENDPOINTS } from "@/types/server";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useCallback, useEffect } from "react";
 import {
   type FieldValues,
@@ -67,6 +67,7 @@ export function FormCreateModal<T extends FieldValues>({
   notice,
 }: FormCreateModalProps<T>) {
   const { isPopout, closePopout } = usePopoutWindow();
+  const queryClient = useQueryClient();
 
   const {
     setError,
@@ -95,7 +96,7 @@ export function FormCreateModal<T extends FieldValues>({
       const response = await http.post(url, values);
       return response.data;
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
       toast.success("Changes have been saved.", {
         description: `${title} created successfully`,
       });
@@ -109,6 +110,10 @@ export function FormCreateModal<T extends FieldValues>({
           predicate: true,
           refetchType: "all",
         },
+      });
+
+      queryClient.setQueryData([queryKey], (oldData: T[]) => {
+        return [...oldData, data];
       });
     },
     onError: (error: APIError) => {
