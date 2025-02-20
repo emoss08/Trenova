@@ -19,7 +19,6 @@ import {
 } from "@fortawesome/pro-regular-svg-icons";
 import { CaretSortIcon } from "@radix-ui/react-icons";
 import { useState } from "react";
-import { Link } from "react-router";
 import { toast } from "sonner";
 import { Theme, useTheme } from "./theme-provider";
 import {
@@ -36,6 +35,7 @@ import {
   DropdownMenuTrigger,
 } from "./ui/dropdown-menu";
 import { Icon } from "./ui/icons";
+import { ExternalLink } from "./ui/link";
 
 function UserAvatar() {
   const { user } = useAuthStore();
@@ -160,12 +160,14 @@ export function NavUser() {
               description="Sign out of your account"
               onClick={handleLogout}
             />
-            <div className="mx-2 mt-4 flex select-none items-center justify-center gap-2 text-2xs text-muted-foreground">
+            <div className="flex w-full select-none items-center justify-center gap-1 text-2xs text-muted-foreground pt-2">
               <p>Build: v{CLIENT_VERSION}</p>
               <div className="size-1 rounded-full bg-muted-foreground" />
-              <Link to="#" className="hover:underline">
-                Terms & Conditions
-              </Link>
+              <ExternalLink href="#">Terms & Conditions</ExternalLink>
+              <div className="size-1 rounded-full bg-muted-foreground" />
+              <ExternalLink href="https://github.com/emoss08/Trenova/blob/master/LICENSE">
+                License
+              </ExternalLink>
             </div>
           </DropdownMenuContent>
         </DropdownMenu>
