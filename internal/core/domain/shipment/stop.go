@@ -34,8 +34,8 @@ type Stop struct {
 	Sequence         int        `json:"sequence" bun:"sequence,notnull,type:INT"`
 	Pieces           *int       `json:"pieces" bun:"pieces,type:INTEGER,nullzero"`
 	Weight           *int       `json:"weight" bun:"weight,type:INTEGER,nullzero"`
-	PlannedArrival   int64      `json:"plannedArrival" bun:"planned_arrival,type:BIGINT,nullzero"`
-	PlannedDeparture int64      `json:"plannedDeparture" bun:"planned_departure,type:BIGINT,nullzero"`
+	PlannedArrival   int64      `json:"plannedArrival" bun:"planned_arrival,type:BIGINT "`
+	PlannedDeparture int64      `json:"plannedDeparture" bun:"planned_departure,type:BIGINT"`
 	ActualArrival    *int64     `json:"actualArrival" bun:"actual_arrival,type:BIGINT,nullzero"`
 	ActualDeparture  *int64     `json:"actualDeparture" bun:"actual_departure,type:BIGINT,nullzero"`
 	AddressLine      string     `json:"addressLine" bun:"address_line,type:VARCHAR(255),nullzero"`
@@ -117,4 +117,16 @@ func (s *Stop) BeforeAppendModel(_ context.Context, query bun.Query) error {
 	}
 
 	return nil
+}
+
+func (s *Stop) IsOriginStop() bool {
+	return s.Type == StopTypePickup || s.Type == StopTypeSplitPickup
+}
+
+func (s *Stop) StatusEquals(status StopStatus) bool {
+	return s.Status == status
+}
+
+func (s *Stop) IsDestinationStop() bool {
+	return s.Type == StopTypeDelivery || s.Type == StopTypeSplitDelivery
 }

@@ -69,7 +69,7 @@ func (r *shipmentCommodityRepository) HandleCommodityOperations(ctx context.Cont
 
 	// * Categorize commodities for different operations
 	for _, comm := range shp.Commodities {
-		// Set required fields
+		// *Set required fields
 		comm.ShipmentID = shp.ID
 		comm.OrganizationID = shp.OrganizationID
 		comm.BusinessUnitID = shp.BusinessUnitID

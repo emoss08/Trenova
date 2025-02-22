@@ -10,7 +10,6 @@ import (
 	"github.com/emoss08/trenova/internal/pkg/validator"
 	"github.com/emoss08/trenova/pkg/types/pulid"
 	"github.com/gofiber/fiber/v2"
-	"github.com/rs/zerolog/log"
 	"go.uber.org/fx"
 )
 
@@ -87,8 +86,6 @@ func (h Handler) logout(c *fiber.Ctx) error {
 	if sessionID == "" {
 		return c.JSON(fiber.Map{"error": "No session ID found"})
 	}
-
-	log.Info().Str("sessionID", sessionID).Msg("logging out")
 
 	if err := h.ah.Logout(c.UserContext(), pulid.ID(sessionID), c.IP(), c.Get("User-Agent")); err != nil {
 		return h.eh.HandleError(c, err)

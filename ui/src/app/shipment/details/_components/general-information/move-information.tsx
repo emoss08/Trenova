@@ -1,10 +1,10 @@
 import { MoveStatusBadge } from "@/components/status-badge";
 import { Button } from "@/components/ui/button";
 import {
-    DropdownMenu,
-    DropdownMenuContent,
-    DropdownMenuItem,
-    DropdownMenuTrigger,
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Icon } from "@/components/ui/icons";
 import { MoveSchema } from "@/lib/schemas/move-schema";
@@ -12,10 +12,10 @@ import { type ShipmentSchema } from "@/lib/schemas/shipment-schema";
 import { MoveStatus } from "@/types/move";
 import { StopStatus, StopType } from "@/types/stop";
 import {
-    faEllipsisVertical,
-    faRoute,
-    faTrash,
-    faUser,
+  faEllipsisVertical,
+  faRoute,
+  faTrash,
+  faUser,
 } from "@fortawesome/pro-regular-svg-icons";
 import { useCallback, useEffect, useState } from "react";
 import { useFieldArray, useFormContext } from "react-hook-form";
@@ -34,6 +34,7 @@ export function MoveInformation() {
       loaded: true,
       stops: [
         {
+          shipmentMoveId: "",
           status: StopStatus.New,
           sequence: 0,
           locationId: "",
@@ -43,6 +44,7 @@ export function MoveInformation() {
           addressLine: "",
         },
         {
+          shipmentMoveId: "",
           status: StopStatus.New,
           sequence: 1,
           locationId: "",

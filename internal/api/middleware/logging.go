@@ -136,7 +136,7 @@ func NewLogger(l *logger.Logger, config ...LogConfig) fiber.Handler {
 		formattedDuration := formatDuration(duration)
 
 		// Create log event
-		logEvent := l.Info().
+		logEvent := l.Debug().
 			Str("requestId", requestID).
 			Str("method", method).
 			Str("path", path).

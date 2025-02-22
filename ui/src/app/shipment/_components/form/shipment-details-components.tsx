@@ -27,7 +27,7 @@ export function ShipmentDetailsHeader() {
   return (
     <div className="flex flex-col gap-0.5 px-4 pb-2 border-b border-bg-sidebar-border">
       <div className="flex items-center gap-2 justify-between">
-        <h2 className="text-xl">{proNumber}</h2>
+        <h2 className="text-xl">{proNumber || "New Shipment"}</h2>
         <ShipmentStatusBadge status={status} />
       </div>
       <div className="flex items-center gap-1 text-sm">
@@ -87,7 +87,6 @@ export function ShipmentServiceDetails() {
             control={control}
             label="Tractor Type"
             link="/equipment-types/"
-            rules={{ required: true }}
             placeholder="Select Tractor Type"
             description="Select the type of tractor used, considering any special requirements (e.g., refrigeration)."
             getOptionValue={(option) => option.id || ""}

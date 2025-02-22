@@ -29,7 +29,14 @@ export const shipmentStatusChoices = [
   { value: ShipmentStatus.Assigned, label: "Assigned", color: "#b91c1c" },
   { value: ShipmentStatus.InTransit, label: "In Transit", color: "#f59e0b" },
   { value: ShipmentStatus.Delayed, label: "Delayed", color: "#0369a1" },
+  {
+    value: ShipmentStatus.PartiallyCompleted,
+    label: "Partially Completed",
+    color: "#10b981",
+  },
   { value: ShipmentStatus.Completed, label: "Completed", color: "#10b981" },
+  { value: ShipmentStatus.Billed, label: "Billed", color: "#ec4899" },
+  { value: ShipmentStatus.Canceled, label: "Canceled", color: "#b91c1c" },
 ] satisfies ReadonlyArray<ChoiceProps<ShipmentStatus>>;
 
 export const ratingMethodChoices = [

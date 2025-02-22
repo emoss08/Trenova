@@ -152,6 +152,12 @@ export function ShipmentStatusBadge({ status }: { status?: ShipmentStatus }) {
       description:
         "Equipment or worker assignments are pending for one or more moves within this shipment.",
     },
+    [ShipmentStatus.PartiallyCompleted]: {
+      variant: "indigo",
+      text: "Partially Completed",
+      description:
+        "Some moves within this shipment have been completed, but not all.",
+    },
     [ShipmentStatus.Assigned]: {
       variant: "warning",
       text: "Assigned",
