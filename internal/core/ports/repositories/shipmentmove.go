@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/pkg/types/pulid"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/rotisserie/eris"
+	"github.com/uptrace/bun"
 )
 
 type GetMoveByIDOptions struct {
@@ -123,4 +124,5 @@ type ShipmentMoveRepository interface {
 	BulkUpdateStatus(ctx context.Context, opts BulkUpdateMoveStatusRequest) ([]*shipment.ShipmentMove, error)
 	BulkInsert(ctx context.Context, moves []*shipment.ShipmentMove) ([]*shipment.ShipmentMove, error)
 	SplitMove(ctx context.Context, req *SplitMoveRequest) (*SplitMoveResponse, error)
+	HandleMoveOperations(ctx context.Context, tx bun.IDB, shp *shipment.Shipment, isCreate bool) error
 }

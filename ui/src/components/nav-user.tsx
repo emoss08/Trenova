@@ -160,7 +160,7 @@ export function NavUser() {
               description="Sign out of your account"
               onClick={handleLogout}
             />
-            <div className="flex w-full select-none items-center justify-center gap-1 text-2xs text-muted-foreground pt-2">
+            <div className="flex w-full select-none items-center justify-center gap-1 text-2xs text-muted-foreground pt-4">
               <p>Build: v{CLIENT_VERSION}</p>
               <div className="size-1 rounded-full bg-muted-foreground" />
               <ExternalLink href="#">Terms & Conditions</ExternalLink>

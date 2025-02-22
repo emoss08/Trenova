@@ -1,8 +1,12 @@
 package calculator
 
 import (
+	"context"
+
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/internal/pkg/logger"
+	"github.com/emoss08/trenova/internal/pkg/statemachine"
+	"github.com/rotisserie/eris"
 	"github.com/rs/zerolog"
 	"go.uber.org/fx"
 )
@@ -10,11 +14,13 @@ import (
 type ShipmentCalculatorParams struct {
 	fx.In
 
-	Logger *logger.Logger
+	Logger              *logger.Logger
+	StateMachineManager *statemachine.StateMachineManager
 }
 
 type ShipmentCalculator struct {
-	l *zerolog.Logger
+	l         *zerolog.Logger
+	smManager *statemachine.StateMachineManager
 }
 
 func NewShipmentCalculator(p ShipmentCalculatorParams) *ShipmentCalculator {
@@ -23,7 +29,8 @@ func NewShipmentCalculator(p ShipmentCalculatorParams) *ShipmentCalculator {
 		Logger()
 
 	return &ShipmentCalculator{
-		l: &log,
+		smManager: p.StateMachineManager,
+		l:         &log,
 	}
 }
 
@@ -64,4 +71,27 @@ func (sc *ShipmentCalculator) CalculateCommodityTotals(shp *shipment.Shipment) {
 
 	shp.Pieces = &totalPieces
 	shp.Weight = &totalWeight
+}
+
+func (sc *ShipmentCalculator) CalculateStatus(ctx context.Context, shp *shipment.Shipment) error {
+	sc.l.Debug().
+		Str("shipmentID", shp.ID.String()).
+		Msg("calculating shipment status")
+
+	// use the state machine manager to calculate the status
+	if err := sc.smManager.CalculateStatuses(ctx, shp); err != nil {
+		sc.l.Error().
+			Str("shipmentID", shp.ID.String()).
+			Err(err).
+			Msg("failed to calculate shipment status")
+
+		return eris.Wrap(err, "failed to calculate shipment status")
+	}
+
+	sc.l.Debug().
+		Str("shipmentID", shp.ID.String()).
+		Str("status", string(shp.Status)).
+		Msg("calculated shipment status")
+
+	return nil
 }

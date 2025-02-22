@@ -27,4 +27,5 @@ type GetStopByIDRequest struct {
 type StopRepository interface {
 	GetByID(ctx context.Context, req GetStopByIDRequest) (*shipment.Stop, error)
 	BulkInsert(ctx context.Context, stops []*shipment.Stop) ([]*shipment.Stop, error)
+	Update(ctx context.Context, stop *shipment.Stop, moveIdx, stopIdx int) (*shipment.Stop, error)
 }

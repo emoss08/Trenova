@@ -5,7 +5,6 @@ import (
 
 	validation "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/go-ozzo/ozzo-validation/v4/is"
-	"github.com/rs/zerolog/log"
 )
 
 type AuthService interface {
@@ -19,8 +18,6 @@ type CheckEmailRequest struct {
 }
 
 func (r *CheckEmailRequest) Validate() error {
-	log.Info().Msgf("validating email address: %s", r.EmailAddress)
-
 	return validation.ValidateStruct(r,
 		validation.Field(
 			&r.EmailAddress,

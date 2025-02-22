@@ -15,6 +15,7 @@ export enum ShipmentStatus {
   Assigned = "Assigned",
   InTransit = "InTransit",
   Delayed = "Delayed",
+  PartiallyCompleted = "PartiallyCompleted",
   Completed = "Completed",
   Billed = "Billed",
   Canceled = "Canceled",
@@ -24,6 +25,7 @@ export const mapToShipmentStatus = (status: ShipmentStatus) => {
   const statusLabels = {
     New: "New",
     PartiallyAssigned: "Partially Assigned",
+    PartiallyCompleted: "Partially Completed",
     Assigned: "Assigned",
     InTransit: "In Transit",
     Delayed: "Delayed",

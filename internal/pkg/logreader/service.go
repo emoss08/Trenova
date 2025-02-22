@@ -432,6 +432,7 @@ func (s *Service) watchLogFile(ctx context.Context) error {
 							s.l.Warn().
 								Err(err).
 								Str("line", string(line)).
+								Interface("entry", entry).
 								Msg("failed to unmarshal log entry, skipping")
 							continue
 						}

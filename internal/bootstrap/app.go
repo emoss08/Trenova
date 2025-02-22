@@ -14,6 +14,7 @@ import (
 	"github.com/emoss08/trenova/internal/bootstrap/modules/validators"
 	redisRepos "github.com/emoss08/trenova/internal/infrastructure/cache/redis/repositories"
 	postgresRepos "github.com/emoss08/trenova/internal/infrastructure/database/postgres/repositories"
+	"github.com/emoss08/trenova/internal/pkg/statemachine"
 
 	"go.uber.org/fx"
 )
@@ -23,6 +24,7 @@ func Bootstrap() error {
 	app := fx.New(
 		infrastructure.Module,
 		redisRepos.Module,
+		statemachine.Module,
 		services.CalculatorModule,
 		postgresRepos.Module,
 		external.Module,

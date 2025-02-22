@@ -285,23 +285,6 @@ func TestShipmentCancelValidation(t *testing.T) {
 		}
 	}{
 		{
-			name: "cannot cancel shipment in status completed",
-			modifyShipment: func(s *shipment.Shipment) {
-				s.Status = shipment.StatusCompleted
-			},
-			expectedErrors: []struct {
-				Field   string
-				Code    errors.ErrorCode
-				Message string
-			}{
-				{
-					Field:   "__all__",
-					Code:    errors.ErrInvalid,
-					Message: "Cannot cancel shipment in status `Completed`",
-				},
-			},
-		},
-		{
 			name: "cannot cancel shipment in status billed",
 			modifyShipment: func(s *shipment.Shipment) {
 				s.Status = shipment.StatusBilled

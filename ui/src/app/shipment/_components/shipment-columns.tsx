@@ -32,12 +32,12 @@ export function getColumns(): ColumnDef<Shipment>[] {
     {
       id: "select",
       header: ({ table }) => {
+        const isAllSelected = table.getIsAllPageRowsSelected();
+        const isSomeSelected = table.getIsSomePageRowsSelected();
+
         return (
           <Checkbox
-            checked={
-              table.getIsAllPageRowsSelected() ||
-              (table.getIsSomePageRowsSelected() && "indeterminate")
-            }
+            checked={isAllSelected || (isSomeSelected && "indeterminate")}
             onCheckedChange={(checked) =>
               table.toggleAllPageRowsSelected(!!checked)
             }

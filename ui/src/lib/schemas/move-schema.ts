@@ -11,6 +11,7 @@ import {
 import { stopSchema } from "./stop-schema";
 
 export const moveSchema = object({
+  id: string().optional(),
   organizationId: string().nullable().optional(),
   businessUnitId: string().nullable().optional(),
   // * The shipment ID will be associated on the backend

@@ -4,6 +4,7 @@ import (
 	"crypto/rand"
 	"database/sql/driver"
 	"fmt"
+	"sync"
 	"time"
 
 	"github.com/oklog/ulid/v2"
@@ -24,8 +25,11 @@ func (u ID) IsNotNil() bool { return !u.IsNil() }
 
 var Nil = ID("")
 
-// The default entropy source.
-var defaultEntropySource *ulid.MonotonicEntropy
+// The default entropy source with a mutex for thread safety
+var (
+	defaultEntropySource *ulid.MonotonicEntropy
+	entropyMutex         sync.Mutex
+)
 
 func init() {
 	// Seed the default entropy source.
@@ -34,6 +38,9 @@ func init() {
 
 // newULID returns a new ULID for time.Now() using the default entropy source.
 func newULID() ulid.ULID {
+	// Use a mutex to ensure thread-safe access to the entropy source
+	entropyMutex.Lock()
+	defer entropyMutex.Unlock()
 	return ulid.MustNew(ulid.Timestamp(time.Now()), defaultEntropySource)
 }
 

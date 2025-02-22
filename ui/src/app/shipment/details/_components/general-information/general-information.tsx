@@ -1,5 +1,5 @@
 import { AutocompleteField } from "@/components/fields/autocomplete";
-import DoubleClickInput from "@/components/fields/input-field";
+import { DoubleClickInput } from "@/components/fields/input-field";
 import { ColorOptionValue } from "@/components/fields/select-components";
 import { PlainShipmentStatusBadge } from "@/components/status-badge";
 import { Badge } from "@/components/ui/badge";

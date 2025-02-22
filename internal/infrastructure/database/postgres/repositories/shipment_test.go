@@ -6,6 +6,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/businessunit"
 	"github.com/emoss08/trenova/internal/core/domain/customer"
 	"github.com/emoss08/trenova/internal/core/domain/equipmenttype"
+	"github.com/emoss08/trenova/internal/core/domain/location"
 	"github.com/emoss08/trenova/internal/core/domain/organization"
 	"github.com/emoss08/trenova/internal/core/domain/servicetype"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
@@ -17,7 +18,7 @@ import (
 
 	repoports "github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/database/postgres/repositories"
-	"github.com/emoss08/trenova/internal/pkg/logger"
+	"github.com/emoss08/trenova/internal/pkg/statemachine"
 	"github.com/emoss08/trenova/internal/pkg/utils/timeutils"
 	"github.com/emoss08/trenova/test/testutils"
 )
@@ -30,25 +31,45 @@ func TestShipmentRepository(t *testing.T) {
 	shipmentType := ts.Fixture.MustRow("ShipmentType.ftl_shipment_type").(*shipmenttype.ShipmentType)
 	cus := ts.Fixture.MustRow("Customer.honeywell_customer").(*customer.Customer)
 	trEquipType := ts.Fixture.MustRow("EquipmentType.tractor_equip_type").(*equipmenttype.EquipmentType)
+	loc1 := ts.Fixture.MustRow("Location.test_location").(*location.Location)
+	loc2 := ts.Fixture.MustRow("Location.test_location_2").(*location.Location)
 	trlEquipType := ts.Fixture.MustRow("EquipmentType.trailer_equip_type").(*equipmenttype.EquipmentType)
 	usr := ts.Fixture.MustRow("User.test_user").(*user.User)
 
+	// Logger
+	log := testutils.NewTestLogger(t)
+
 	proNumberRepo := repositories.NewProNumberRepository(repositories.ProNumberRepositoryParams{
-		Logger: logger.NewLogger(testutils.NewTestConfig()),
+		Logger: log,
+		DB:     ts.DB,
+	})
+
+	moveRepo := repositories.NewShipmentMoveRepository(repositories.ShipmentMoveRepositoryParams{
+		Logger: log,
 		DB:     ts.DB,
 	})
 
 	shipmentCommodityRepo := repositories.NewShipmentCommodityRepository(repositories.ShipmentCommodityRepositoryParams{
-		Logger: logger.NewLogger(testutils.NewTestConfig()),
+		Logger: log,
 		DB:     ts.DB,
 	})
 
+	manager := statemachine.NewStateMachineManager(statemachine.StateMachineManagerParams{
+		Logger: log,
+	})
+
+	calc := calculator.NewShipmentCalculator(calculator.ShipmentCalculatorParams{
+		Logger:              log,
+		StateMachineManager: manager,
+	})
+
 	repo := repositories.NewShipmentRepository(repositories.ShipmentRepositoryParams{
-		Logger:                      logger.NewLogger(testutils.NewTestConfig()),
+		Logger:                      log,
 		DB:                          ts.DB,
 		ProNumberRepo:               proNumberRepo,
+		ShipmentMoveRepository:      moveRepo,
 		ShipmentCommodityRepository: shipmentCommodityRepo,
-		Calculator:                  calculator.NewShipmentCalculator(calculator.ShipmentCalculatorParams{Logger: logger.NewLogger(testutils.NewTestConfig())}),
+		Calculator:                  calc,
 	})
 
 	t.Run("list shipments", func(t *testing.T) {
@@ -169,9 +190,49 @@ func TestShipmentRepository(t *testing.T) {
 			CustomerID:     cus.ID,
 			BusinessUnitID: bu.ID,
 			OrganizationID: org.ID,
+			Status:         shipment.StatusNew,
+			Moves: []*shipment.ShipmentMove{
+				{
+					Status:   shipment.MoveStatusNew,
+					Sequence: 0,
+					Stops: []*shipment.Stop{
+						{
+							Status:           shipment.StopStatusNew,
+							Sequence:         0,
+							Type:             shipment.StopTypePickup,
+							LocationID:       loc1.ID,
+							PlannedArrival:   timeutils.NowUnix(),
+							PlannedDeparture: timeutils.NowUnix(),
+						},
+						{
+							Status:           shipment.StopStatusNew,
+							Sequence:         1,
+							Type:             shipment.StopTypeDelivery,
+							LocationID:       loc2.ID,
+							PlannedArrival:   timeutils.NowUnix(),
+							PlannedDeparture: timeutils.NowUnix(),
+						},
+					},
+				},
+			},
 		}
 
-		testutils.TestRepoCreate(ctx, t, repo, newEntity)
+		result, err := repo.Create(ctx, newEntity)
+		require.NoError(t, err)
+		require.NotNil(t, result)
+
+		t.Logf("Pro Number: %s", result.ProNumber)
+		require.NotEmpty(t, result.ProNumber)
+
+		// * Check the moves
+		require.NotEmpty(t, result.Moves)
+		require.NotEmpty(t, result.Moves[0].Stops)
+		require.NotEmpty(t, result.Moves[0].Stops[0].LocationID)
+		require.NotEmpty(t, result.Moves[0].Stops[1].LocationID)
+
+		// * Check the stops
+		require.NotEmpty(t, result.Moves[0].Stops[0].LocationID)
+		require.NotEmpty(t, result.Moves[0].Stops[1].LocationID)
 	})
 
 	t.Run("create shipment with pro number", func(t *testing.T) {

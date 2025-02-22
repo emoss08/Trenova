@@ -1,7 +1,11 @@
 package testutils
 
-import "github.com/emoss08/trenova/internal/pkg/logger"
+import (
+	"testing"
 
-func NewTestLogger() *logger.Logger {
+	"github.com/emoss08/trenova/internal/pkg/logger"
+)
+
+func NewTestLogger(t *testing.T) *logger.Logger {
 	return logger.NewLogger(NewTestConfig())
 }

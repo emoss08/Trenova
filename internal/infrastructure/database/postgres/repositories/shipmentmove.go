@@ -20,13 +20,15 @@ import (
 type ShipmentMoveRepositoryParams struct {
 	fx.In
 
-	DB     db.Connection
-	Logger *logger.Logger
+	DB             db.Connection
+	StopRepository repositories.StopRepository
+	Logger         *logger.Logger
 }
 
 type shipmentMoveRepository struct {
-	db db.Connection
-	l  *zerolog.Logger
+	db             db.Connection
+	StopRepository repositories.StopRepository
+	l              *zerolog.Logger
 }
 
 func NewShipmentMoveRepository(p ShipmentMoveRepositoryParams) repositories.ShipmentMoveRepository {
@@ -35,8 +37,9 @@ func NewShipmentMoveRepository(p ShipmentMoveRepositoryParams) repositories.Ship
 		Logger()
 
 	return &shipmentMoveRepository{
-		db: p.DB,
-		l:  &log,
+		db:             p.DB,
+		StopRepository: p.StopRepository,
+		l:              &log,
 	}
 }
 
@@ -431,4 +434,145 @@ func (sr *shipmentMoveRepository) SplitMove(ctx context.Context, req *repositori
 	}
 
 	return result, nil
+}
+
+func (sr *shipmentMoveRepository) HandleMoveOperations(ctx context.Context, tx bun.IDB, shp *shipment.Shipment, isCreate bool) error {
+	var err error
+
+	// * Get the existing moves for comparison if this is an update operation
+	existingMoves := make([]*shipment.ShipmentMove, 0)
+	if !isCreate {
+		existingMoves, err = sr.GetMovesByShipmentID(ctx, repositories.GetMovesByShipmentIDOptions{
+			ShipmentID: shp.ID,
+			OrgID:      shp.OrganizationID,
+			BuID:       shp.BusinessUnitID,
+		})
+		if err != nil {
+			sr.l.Error().Err(err).Msg("failed to get existing moves")
+			return err
+		}
+	}
+
+	// * Prepare moves for operations
+	newMoves := make([]*shipment.ShipmentMove, 0)
+	updateMoves := make([]*shipment.ShipmentMove, 0)
+	existingMoveMap := make(map[pulid.ID]*shipment.ShipmentMove)
+	updatedMoveIDs := make(map[pulid.ID]struct{})
+
+	// * Create map of existing moves for quick lookup
+	for _, move := range existingMoves {
+		sr.l.Debug().Interface("move", move).Msg("existing move")
+		existingMoveMap[move.ID] = move
+	}
+
+	// * Categorize moves for different operations
+	for _, move := range shp.Moves {
+		// * Set required fields
+		move.ShipmentID = shp.ID
+		move.OrganizationID = shp.OrganizationID
+		move.BusinessUnitID = shp.BusinessUnitID
+
+		if isCreate || move.ID.IsNil() {
+			// * We need to set an ID new moves, because it will have stops that need to be created
+			move.ID = pulid.MustNew("smv_")
+
+			// * Append new move with an ID
+			newMoves = append(newMoves, move)
+		} else {
+			if existing, ok := existingMoveMap[move.ID]; ok {
+				// * Increment version for optimistic locking
+				move.Version = existing.Version + 1
+				updateMoves = append(updateMoves, move)
+				updatedMoveIDs[move.ID] = struct{}{}
+			}
+		}
+	}
+
+	// * Handle bulk insert of new moves
+	if len(newMoves) > 0 {
+		if _, err := tx.NewInsert().Model(&newMoves).Exec(ctx); err != nil {
+			sr.l.Error().Err(err).Msg("failed to bulk insert new moves")
+			return err
+		}
+
+		for _, move := range newMoves {
+			sr.l.Debug().Interface("move", move).Msg("new move")
+			for _, stop := range move.Stops {
+				// * Set the required fields
+				stop.ShipmentMoveID = move.ID
+				stop.OrganizationID = move.OrganizationID
+				stop.BusinessUnitID = move.BusinessUnitID
+
+				// * Insert the stop
+				if _, err := tx.NewInsert().Model(stop).Exec(ctx); err != nil {
+					sr.l.Error().Err(err).Msg("failed to insert stop")
+					return err
+				}
+			}
+		}
+	}
+
+	// * Handle bulk update of new moves
+	if len(updateMoves) > 0 {
+		for moveIdx, move := range updateMoves {
+			if err := sr.handleUpdate(ctx, tx, move, moveIdx); err != nil {
+				sr.l.Error().Err(err).Msg("failed to handle bulk update of moves")
+				return err
+			}
+
+			// * Handle bulk update of stops
+			for stopIdx, stop := range move.Stops {
+				if _, err := sr.StopRepository.Update(ctx, stop, moveIdx, stopIdx); err != nil {
+					// sr.l.Error().Err(err).Msg("failed to update stop")
+					return err
+				}
+			}
+		}
+	}
+
+	// ! Moves cannot be deleted the user needs to set the status to `Canceled`
+
+	return nil
+}
+
+func (sr *shipmentMoveRepository) handleUpdate(ctx context.Context, tx bun.IDB, move *shipment.ShipmentMove, idx int) error {
+	values := tx.NewValues(move)
+
+	// * Update the moves
+	res, err := tx.NewUpdate().With("_data", values).
+		Model(move).
+		TableExpr("_data").
+		Set("shipment_id = _data.shipment_id").
+		Set("status = _data.status").
+		Set("loaded = _data.loaded").
+		Set("sequence = _data.sequence").
+		Set("distance = _data.distance").
+		Set("version = _data.version").
+		Where("sm.id = _data.id").
+		Where("sm.version = _data.version - 1").
+		Where("sm.organization_id = _data.organization_id").
+		Where("sm.business_unit_id = _data.business_unit_id").
+		Exec(ctx)
+	if err != nil {
+		sr.l.Error().Err(err).Msg("failed to bulk update moves")
+		return err
+	}
+
+	rowsAffected, err := res.RowsAffected()
+	if err != nil {
+		sr.l.Error().Err(err).Msg("failed to get rows affected for bulk update of moves")
+		return err
+	}
+
+	if rowsAffected == 0 {
+		return errors.NewValidationError(
+			fmt.Sprintf("move[%d].version", idx),
+			errors.ErrVersionMismatch,
+			fmt.Sprintf("Version mismatch. The move (%s) has been updated since your last request.", move.ID),
+		)
+	}
+
+	sr.l.Debug().Int("count", int(rowsAffected)).Msg("bulk updated moves")
+
+	return nil
 }

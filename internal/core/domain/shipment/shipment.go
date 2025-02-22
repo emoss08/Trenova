@@ -99,6 +99,7 @@ func (st *Shipment) Validate(ctx context.Context, multiErr *errors.MultiError) {
 				StatusDelayed,
 				StatusCompleted,
 				StatusBilled,
+				StatusPartiallyCompleted,
 				StatusCanceled,
 			).Error("Status must be a valid status"),
 		),
@@ -249,4 +250,8 @@ func (st *Shipment) BeforeAppendModel(_ context.Context, query bun.Query) error 
 	}
 
 	return nil
+}
+
+func (st *Shipment) StatusEquals(status Status) bool {
+	return st.Status == status
 }
