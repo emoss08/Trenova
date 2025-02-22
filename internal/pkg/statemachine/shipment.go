@@ -28,6 +28,7 @@ func (sm *ShipmentStateMachine) CanTransition(ctx context.Context, event Transit
 			EventShipmentPartiallyAssigned: true,
 			EventShipmentAssigned:          true,
 			EventShipmentInTransit:         true,
+			EventShipmentPartialCompleted:  true,
 			EventShipmentCompleted:         true, // * It's possible to complete a shipment during it's creation.
 			EventShipmentCanceled:          true,
 		},

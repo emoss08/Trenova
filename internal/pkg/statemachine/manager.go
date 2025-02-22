@@ -231,12 +231,6 @@ func (m *StateMachineManager) CalculateStatuses(ctx context.Context, shp *shipme
 
 	// Try to transition the shipment
 	if shipmentSM.CanTransition(ctx, shipmentEvent) {
-		m.logger.Debug().
-			Str("shipmentID", shp.ID.String()).
-			Str("event", string(shipmentEvent)).
-			Str("fromState", shipmentSM.CurrentState()).
-			Msg("transitioning shipment")
-
 		if err := shipmentSM.Transition(ctx, shipmentEvent); err != nil {
 			multiErr.Add(
 				"status",
@@ -244,12 +238,6 @@ func (m *StateMachineManager) CalculateStatuses(ctx context.Context, shp *shipme
 				err.Error(),
 			)
 		}
-	} else {
-		m.logger.Info().
-			Str("shipmentID", shp.ID.String()).
-			Str("event", string(shipmentEvent)).
-			Str("fromState", shipmentSM.CurrentState()).
-			Msg("shipment transition not allowed")
 	}
 
 	if multiErr.HasErrors() {

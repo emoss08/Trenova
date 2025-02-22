@@ -17,7 +17,7 @@ import (
 
 	repoports "github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/database/postgres/repositories"
-	"github.com/emoss08/trenova/internal/pkg/logger"
+	"github.com/emoss08/trenova/internal/pkg/statemachine"
 	"github.com/emoss08/trenova/internal/pkg/utils/timeutils"
 	"github.com/emoss08/trenova/test/testutils"
 )
@@ -33,22 +33,40 @@ func TestShipmentRepository(t *testing.T) {
 	trlEquipType := ts.Fixture.MustRow("EquipmentType.trailer_equip_type").(*equipmenttype.EquipmentType)
 	usr := ts.Fixture.MustRow("User.test_user").(*user.User)
 
+	// Logger
+	log := testutils.NewTestLogger(t)
+
 	proNumberRepo := repositories.NewProNumberRepository(repositories.ProNumberRepositoryParams{
-		Logger: logger.NewLogger(testutils.NewTestConfig()),
+		Logger: log,
+		DB:     ts.DB,
+	})
+
+	moveRepo := repositories.NewShipmentMoveRepository(repositories.ShipmentMoveRepositoryParams{
+		Logger: log,
 		DB:     ts.DB,
 	})
 
 	shipmentCommodityRepo := repositories.NewShipmentCommodityRepository(repositories.ShipmentCommodityRepositoryParams{
-		Logger: logger.NewLogger(testutils.NewTestConfig()),
+		Logger: log,
 		DB:     ts.DB,
 	})
 
+	manager := statemachine.NewStateMachineManager(statemachine.StateMachineManagerParams{
+		Logger: log,
+	})
+
+	calc := calculator.NewShipmentCalculator(calculator.ShipmentCalculatorParams{
+		Logger:              log,
+		StateMachineManager: manager,
+	})
+
 	repo := repositories.NewShipmentRepository(repositories.ShipmentRepositoryParams{
-		Logger:                      logger.NewLogger(testutils.NewTestConfig()),
+		Logger:                      log,
 		DB:                          ts.DB,
 		ProNumberRepo:               proNumberRepo,
+		ShipmentMoveRepository:      moveRepo,
 		ShipmentCommodityRepository: shipmentCommodityRepo,
-		Calculator:                  calculator.NewShipmentCalculator(calculator.ShipmentCalculatorParams{Logger: logger.NewLogger(testutils.NewTestConfig())}),
+		Calculator:                  calc,
 	})
 
 	t.Run("list shipments", func(t *testing.T) {
