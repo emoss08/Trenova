@@ -20,15 +20,21 @@ const cancellatedStatuses = [
   ShipmentStatus.New,
   ShipmentStatus.InTransit,
   ShipmentStatus.Delayed,
+  ShipmentStatus.PartiallyCompleted,
+  ShipmentStatus.Completed,
 ];
 
-export function ShipmentActions({ shipment }: { shipment: Shipment }) {
+export function ShipmentActions({ shipment }: { shipment?: Shipment | null }) {
   const navigate = useNavigate();
 
   const [cancellationDialogOpen, setCancellationDialogOpen] =
     useState<boolean>(false);
   const [duplicateDialogOpen, setDuplicateDialogOpen] =
     useState<boolean>(false);
+
+  if (!shipment) {
+    return null;
+  }
 
   const isCancellable = cancellatedStatuses.includes(shipment.status);
 

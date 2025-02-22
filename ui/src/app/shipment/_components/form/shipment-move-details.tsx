@@ -25,14 +25,7 @@ import { StopTimeline } from "../sidebar/stop-details/stop-timeline-content";
 import { AssignmentDetails } from "./move-assignment-details";
 
 export function ShipmentMovesDetails() {
-  const {
-    control,
-    watch,
-    formState: { errors },
-  } = useFormContext<ShipmentSchema>();
-
-  console.log("Shipment Move Errors", errors);
-  console.log("Shipment Move Values", watch("moves"));
+  const { control } = useFormContext<ShipmentSchema>();
 
   const {
     fields: moves,
@@ -109,7 +102,6 @@ const MoveInformation = memo(function MoveInformation({
               }
 
               const isLastStop = stopIdx === move.stops.length - 1;
-              console.log("Stop", stop);
 
               return (
                 <StopTimeline

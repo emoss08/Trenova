@@ -119,8 +119,8 @@ export function ShipmentBillingDetails() {
             label="Customer"
             rules={{ required: true }}
             placeholder="Select Customer"
-            description="Select the customer of the shipment"
-            getOptionValue={(option) => option.code}
+            description="Choose the customer who requested this shipment."
+            getOptionValue={(option) => option.id ?? ""}
             getDisplayValue={(option) => option.code}
             renderOption={(option) => option.code}
           />
@@ -131,8 +131,8 @@ export function ShipmentBillingDetails() {
             rules={{ required: true }}
             name="ratingMethod"
             label="Rating Method"
-            placeholder="Rating Method"
-            description="Rating Method"
+            placeholder="Select Rating Method"
+            description="Select how the shipment charges are calculated (e.g., per mile, per stop, flat rate)."
             options={ratingMethodChoices}
           />
         </FormControl>
@@ -142,8 +142,8 @@ export function ShipmentBillingDetails() {
             rules={{ required: true }}
             name="ratingUnit"
             label="Rating Unit"
-            placeholder="Rating Unit"
-            description="Rating Unit"
+            placeholder="Enter Rating Unit"
+            description="Specify the cost per selected rating method (e.g., per mile or per pallet)."
           />
         </FormControl>
         <FormControl>
@@ -151,9 +151,9 @@ export function ShipmentBillingDetails() {
             control={control}
             rules={{ required: true }}
             name="otherChargeAmount"
-            label="Other Charge Amount"
-            placeholder="Other Charge Amount"
-            description="Other Charge Amount"
+            label="Other Charges"
+            placeholder="Enter Additional Charges"
+            description="Include any extra costs not covered by the primary rating method (e.g., tolls, fees)."
           />
         </FormControl>
         <FormControl>
@@ -161,9 +161,9 @@ export function ShipmentBillingDetails() {
             control={control}
             rules={{ required: true }}
             name="freightChargeAmount"
-            label="Freight Charge Amount"
-            placeholder="Freight Charge Amount"
-            description="Freight Charge Amount"
+            label="Freight Charges"
+            placeholder="Enter Freight Charges"
+            description="Base charge for transporting the shipment, excluding additional fees."
           />
         </FormControl>
         <FormControl>
@@ -172,9 +172,9 @@ export function ShipmentBillingDetails() {
             control={control}
             rules={{ required: true }}
             name="totalChargeAmount"
-            label="Total Charge Amount"
-            placeholder="Total Charge Amount"
-            description="The total amount for the shipment, including the standard rate and additional charges."
+            label="Total Charge"
+            placeholder="Auto-calculated Total"
+            description="Automatically calculated total, including base and additional charges."
           />
         </FormControl>
       </FormGroup>

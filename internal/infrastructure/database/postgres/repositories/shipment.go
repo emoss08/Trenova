@@ -293,6 +293,12 @@ func (sr *shipmentRepository) Create(ctx context.Context, shp *shipment.Shipment
 			return err
 		}
 
+		// * Handle move operations
+		if err := sr.shipmentMoveRepository.HandleMoveOperations(c, tx, shp, true); err != nil {
+			log.Error().Err(err).Msg("failed to handle move operations")
+			return err
+		}
+
 		return nil
 	})
 	if err != nil {

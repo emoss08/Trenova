@@ -17,12 +17,13 @@ import { ShipmentMovesDetails } from "./shipment-move-details";
 // ShipmentDetails.tsx
 interface ShipmentDetailsProps {
   selectedShipment?: Shipment | null;
-  isLoading: boolean;
+  isLoading?: boolean;
   onBack: () => void;
   dimensions: {
     contentHeight: number;
     viewportHeight: number;
   };
+  isCreate: boolean;
 }
 
 export function ShipmentForm({
@@ -30,12 +31,13 @@ export function ShipmentForm({
   isLoading,
   onBack,
   dimensions,
+  isCreate,
 }: ShipmentDetailsProps) {
   if (isLoading) {
     return <ShipmentDetailsSkeleton />;
   }
 
-  if (!selectedShipment) {
+  if (!selectedShipment && !isCreate) {
     return <ShipmentNotFoundOverlay onBack={onBack} />;
   }
 

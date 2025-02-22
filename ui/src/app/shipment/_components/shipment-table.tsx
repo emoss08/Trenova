@@ -2,6 +2,7 @@ import { DataTable } from "@/components/data-table/data-table";
 import { Shipment } from "@/types/shipment";
 import { useMemo } from "react";
 import { getColumns } from "./shipment-columns";
+import { ShipmentCreateSheet } from "./shipment-create-sheet";
 import { ShipmentEditSheet } from "./shipment-edit-sheet";
 
 export default function ShipmentTable() {
@@ -16,7 +17,7 @@ export default function ShipmentTable() {
       }}
       queryKey="shipment-list"
       exportModelName="shipment"
-      //   TableModal={CreateTractorModal}
+      TableModal={ShipmentCreateSheet}
       TableEditModal={ShipmentEditSheet}
       columns={columns}
     />

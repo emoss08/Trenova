@@ -490,7 +490,7 @@ func (sr *shipmentMoveRepository) HandleMoveOperations(ctx context.Context, tx b
 
 	// * Handle bulk insert of new moves
 	if len(newMoves) > 0 {
-		if _, err := tx.NewInsert().Model(newMoves).Exec(ctx); err != nil {
+		if _, err := tx.NewInsert().Model(&newMoves).Exec(ctx); err != nil {
 			sr.l.Error().Err(err).Msg("failed to bulk insert new moves")
 			return err
 		}
@@ -498,11 +498,18 @@ func (sr *shipmentMoveRepository) HandleMoveOperations(ctx context.Context, tx b
 		for _, move := range newMoves {
 			sr.l.Debug().Interface("move", move).Msg("new move")
 			for _, stop := range move.Stops {
-				sr.l.Debug().Interface("stop", stop).Msg("stop")
+				// * Set the required fields
+				stop.ShipmentMoveID = move.ID
+				stop.OrganizationID = move.OrganizationID
+				stop.BusinessUnitID = move.BusinessUnitID
+
+				// * Insert the stop
+				if _, err := tx.NewInsert().Model(stop).Exec(ctx); err != nil {
+					sr.l.Error().Err(err).Msg("failed to insert stop")
+					return err
+				}
 			}
 		}
-
-		// TODO We also need to make sure we handle the new stops that are created with the new moves
 	}
 
 	// * Handle bulk update of new moves

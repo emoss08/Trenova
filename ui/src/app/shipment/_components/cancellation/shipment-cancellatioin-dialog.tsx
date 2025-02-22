@@ -61,7 +61,7 @@ export function ShipmentCancellationDialog({
     reset,
   } = form;
 
-  const mutation = useMutation({
+  const { mutateAsync } = useMutation({
     mutationFn: async (values: ShipmentCancellationSchema) => {
       const response = await http.post(`/shipments/cancel/`, values);
       return response.data;
@@ -105,9 +105,9 @@ export function ShipmentCancellationDialog({
 
   const onSubmit = useCallback(
     async (values: ShipmentCancellationSchema) => {
-      await mutation.mutateAsync(values);
+      await mutateAsync(values);
     },
-    [mutation.mutateAsync],
+    [mutateAsync],
   );
 
   return (

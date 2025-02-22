@@ -283,12 +283,6 @@ export const StopTimeline = memo(function StopTimeline({
     [stop.plannedArrival],
   );
 
-  console.log("Is stop the last stop?", {
-    isLast,
-    stopIdx,
-    moveIdx,
-  });
-
   return (
     <>
       <div

@@ -22,12 +22,14 @@ import { MoveStatus } from "@/types/move";
 import { StopStatus, StopType } from "@/types/stop";
 import { faInfoCircle, faXmark } from "@fortawesome/pro-solid-svg-icons";
 import { useLocalStorage } from "@uidotdev/usehooks";
-import { useCallback } from "react";
+import { useCallback, useEffect } from "react";
 import {
   UseFieldArrayRemove,
   UseFieldArrayUpdate,
   useFormContext,
+  useWatch,
 } from "react-hook-form";
+import { useLocationData } from "./queries";
 import { StopDialogForm } from "./stop-dialog-form";
 
 type StopDialogProps = TableSheetProps & {
@@ -48,7 +50,16 @@ export function StopDialog({
   stopIdx,
   remove,
 }: StopDialogProps) {
-  const { getValues, reset } = useFormContext<ShipmentSchema>();
+  const { getValues, reset, setValue, control } =
+    useFormContext<ShipmentSchema>();
+
+  const locationId = useWatch({
+    control,
+    name: `moves.${moveIdx}.stops.${stopIdx}.locationId`,
+  });
+
+  const { data: locationData, isLoading: isLoadingLocation } =
+    useLocationData(locationId);
 
   const handleSave = () => {
     const formValues = getValues();
@@ -72,8 +83,6 @@ export function StopDialog({
         shipmentMoveId: formValues?.moves?.[moveIdx]?.id || "",
       };
 
-      console.info("updatedStop", updatedStop);
-
       update(moveIdx, {
         ...formValues.moves?.[moveIdx],
         loaded: formValues.moves?.[moveIdx]?.loaded ?? false,
@@ -88,7 +97,17 @@ export function StopDialog({
 
       onOpenChange(false);
     }
+
+    console.log("unable to save");
   };
+
+  // Set the Location ID and Location
+  // When the location ID is set, set the location
+  useEffect(() => {
+    if (!isLoadingLocation && locationId && locationData) {
+      setValue(`moves.${moveIdx}.stops.${stopIdx}.location`, locationData);
+    }
+  }, [isLoadingLocation, locationId, locationData, moveIdx, setValue, stopIdx]);
 
   const handleClose = useCallback(() => {
     onOpenChange(false);
@@ -140,7 +159,7 @@ export function StopDialog({
             <TooltipProvider>
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <Button type="submit" onClick={handleSave}>
+                  <Button type="button" onClick={handleSave}>
                     {isEditing ? "Update" : "Add"}
                   </Button>
                 </TooltipTrigger>

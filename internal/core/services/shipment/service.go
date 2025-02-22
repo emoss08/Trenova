@@ -26,6 +26,7 @@ type ServiceParams struct {
 
 	Logger        *logger.Logger
 	Repo          repositories.ShipmentRepository
+	ProNumberRepo repositories.ProNumberRepository
 	PermService   services.PermissionService
 	AuditService  services.AuditService
 	SearchService *search.Service
@@ -33,12 +34,13 @@ type ServiceParams struct {
 }
 
 type Service struct {
-	l    *zerolog.Logger
-	repo repositories.ShipmentRepository
-	ps   services.PermissionService
-	as   services.AuditService
-	ss   *search.Service
-	v    *shipmentvalidator.Validator
+	l             *zerolog.Logger
+	repo          repositories.ShipmentRepository
+	proNumberRepo repositories.ProNumberRepository
+	ps            services.PermissionService
+	as            services.AuditService
+	ss            *search.Service
+	v             *shipmentvalidator.Validator
 }
 
 func NewService(p ServiceParams) *Service {
@@ -47,12 +49,13 @@ func NewService(p ServiceParams) *Service {
 		Logger()
 
 	return &Service{
-		l:    &log,
-		repo: p.Repo,
-		ps:   p.PermService,
-		as:   p.AuditService,
-		ss:   p.SearchService,
-		v:    p.Validator,
+		l:             &log,
+		repo:          p.Repo,
+		proNumberRepo: p.ProNumberRepo,
+		ps:            p.PermService,
+		as:            p.AuditService,
+		ss:            p.SearchService,
+		v:             p.Validator,
 	}
 }
 
@@ -411,4 +414,8 @@ func (s *Service) Duplicate(ctx context.Context, req *repositories.DuplicateShip
 	}
 
 	return newEntity, nil
+}
+
+func (s *Service) GetNextProNumber(ctx context.Context, orgID pulid.ID) (string, error) {
+	return s.proNumberRepo.GetNextProNumber(ctx, orgID)
 }

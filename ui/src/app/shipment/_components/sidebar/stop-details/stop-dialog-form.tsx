@@ -4,34 +4,12 @@ import { InputField } from "@/components/fields/input-field";
 import { SelectField } from "@/components/fields/select-field";
 import { FormControl, FormGroup } from "@/components/ui/form";
 import { stopStatusChoices, stopTypeChoices } from "@/lib/choices";
-import { http } from "@/lib/http-client";
 import { type LocationSchema } from "@/lib/schemas/location-schema";
 import { ShipmentSchema } from "@/lib/schemas/shipment-schema";
 import { formatLocation } from "@/lib/utils";
-import { useQuery } from "@tanstack/react-query";
 import { useEffect } from "react";
 import { useFormContext, useWatch } from "react-hook-form";
-
-function useLocationData(locationId: string) {
-  return useQuery({
-    queryKey: ["location", locationId],
-    queryFn: async () => {
-      const response = await http.get<LocationSchema>(
-        `/locations/${locationId}`,
-        {
-          params: {
-            includeCategory: "true",
-            includeState: "true",
-          },
-        },
-      );
-      return response.data;
-    },
-    enabled: !!locationId && locationId !== "",
-    staleTime: 30000,
-    gcTime: 5 * 60 * 1000,
-  });
-}
+import { useLocationData } from "./queries";
 
 export function StopDialogForm({
   moveIdx,
@@ -163,6 +141,7 @@ export function StopDialogForm({
                 <AutoCompleteDateTimeField
                   name={`moves.${moveIdx}.stops.${stopIdx}.plannedArrival`}
                   control={control}
+                  rules={{ required: true }}
                   label="Planned Arrival"
                   placeholder="Select planned arrival"
                   description="Indicates the scheduled arrival time for this stop."
@@ -172,6 +151,7 @@ export function StopDialogForm({
                 <AutoCompleteDateTimeField
                   name={`moves.${moveIdx}.stops.${stopIdx}.plannedDeparture`}
                   control={control}
+                  rules={{ required: true }}
                   label="Planned Departure"
                   placeholder="Select planned departure"
                   description="Indicates the scheduled departure time from this stop."
