@@ -41,10 +41,10 @@ func (sm *ShipmentStateMachine) CanTransition(ctx context.Context, event Transit
 			EventShipmentCanceled:  true,
 		},
 		shipment.StatusInTransit: {
-			EventShipmentDelayed:           true,
-			EventShipmentPartiallyAssigned: true,
-			EventShipmentCompleted:         true,
-			EventShipmentCanceled:          true,
+			EventShipmentDelayed:          true,
+			EventShipmentPartialCompleted: true,
+			EventShipmentCompleted:        true,
+			EventShipmentCanceled:         true,
 		},
 		shipment.StatusDelayed: {
 			EventShipmentInTransit:        true,
@@ -98,6 +98,8 @@ func (sm *ShipmentStateMachine) Transition(ctx context.Context, event Transition
 		newStatus = shipment.StatusPartiallyCompleted
 	case EventShipmentCompleted:
 		newStatus = shipment.StatusCompleted
+	case EventShipmentCanceled:
+		newStatus = shipment.StatusCanceled
 	default:
 		return newTransitionError(
 			string(sm.shipment.Status),

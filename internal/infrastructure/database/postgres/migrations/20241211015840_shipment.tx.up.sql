@@ -5,9 +5,9 @@ CREATE TYPE "shipment_status_enum" AS ENUM(
     'Assigned', -- Shipment has been assigned to a worker
     'InTransit', -- Shipment is currently being transported
     'Delayed', -- Shipment is currently delayed
+    'PartiallyCompleted', -- Shipment has been partially completed
     'Completed', -- Shipment has been delivered successfully
     'Billed', -- Shipment has been billed to the customer
-
     'Canceled' -- Shipment has been Canceled
 );
 

@@ -143,20 +143,29 @@ func (m *StateMachineManager) CalculateStatuses(ctx context.Context, shp *shipme
 		// Check stop states to determine move event
 		allStopsCompleted := len(move.Stops) > 0
 		anyStopInTransit := false
+		originCompleted := false
 
-		for _, stop := range move.Stops {
+		for i, stop := range move.Stops {
 			if stop.Status != shipment.StopStatusCompleted {
 				allStopsCompleted = false
 			}
 			if stop.Status == shipment.StopStatusInTransit {
 				anyStopInTransit = true
 			}
+
+			// Check if the origin stop (first pickup) is completed
+			if stop.StatusEquals(shipment.StopStatusCompleted) && i == 0 && stop.IsOriginStop() {
+				originCompleted = true
+			}
 		}
 
 		switch {
 		case allStopsCompleted:
 			moveEvent = EventMoveCompleted
-		case anyStopInTransit:
+		case originCompleted || anyStopInTransit:
+			// * A move is in transit if either:
+			// * 1. The origin stop is completed (vehicle has departed first pickup)
+			// * 2. Any stop is currently in transit
 			moveEvent = EventMoveStarted
 		case move.Assignment != nil:
 			moveEvent = EventMoveAssigned
@@ -164,7 +173,6 @@ func (m *StateMachineManager) CalculateStatuses(ctx context.Context, shp *shipme
 			// No transition needed
 			continue
 		}
-
 		// Try to transition the move
 		if moveSM.CanTransition(ctx, moveEvent) {
 			if err := moveSM.Transition(ctx, moveEvent); err != nil {

@@ -99,6 +99,7 @@ func (st *Shipment) Validate(ctx context.Context, multiErr *errors.MultiError) {
 				StatusDelayed,
 				StatusCompleted,
 				StatusBilled,
+				StatusPartiallyCompleted,
 				StatusCanceled,
 			).Error("Status must be a valid status"),
 		),

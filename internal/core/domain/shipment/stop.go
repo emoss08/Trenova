@@ -118,3 +118,15 @@ func (s *Stop) BeforeAppendModel(_ context.Context, query bun.Query) error {
 
 	return nil
 }
+
+func (s *Stop) IsOriginStop() bool {
+	return s.Type == StopTypePickup || s.Type == StopTypeSplitPickup
+}
+
+func (s *Stop) StatusEquals(status StopStatus) bool {
+	return s.Status == status
+}
+
+func (s *Stop) IsDestinationStop() bool {
+	return s.Type == StopTypeDelivery || s.Type == StopTypeSplitDelivery
+}
