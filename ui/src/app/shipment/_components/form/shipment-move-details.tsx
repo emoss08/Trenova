@@ -14,17 +14,30 @@ import { ShipmentSchema } from "@/lib/schemas/shipment-schema";
 import { MoveStatus, type ShipmentMove } from "@/types/move";
 import { faEllipsisVertical, faPlus } from "@fortawesome/pro-regular-svg-icons";
 import { memo, useState } from "react";
-import { useFieldArray, useFormContext } from "react-hook-form";
+import {
+  useFieldArray,
+  UseFieldArrayRemove,
+  UseFieldArrayUpdate,
+  useFormContext,
+} from "react-hook-form";
 import { AssignmentDialog } from "../assignment/assignment-dialog";
 import { StopTimeline } from "../sidebar/stop-details/stop-timeline-content";
 import { AssignmentDetails } from "./move-assignment-details";
 
 export function ShipmentMovesDetails() {
-  const { control } = useFormContext<ShipmentSchema>();
+  const {
+    control,
+    watch,
+    formState: { errors },
+  } = useFormContext<ShipmentSchema>();
+
+  console.log("Shipment Move Errors", errors);
+  console.log("Shipment Move Values", watch("moves"));
 
   const {
     fields: moves,
     append,
+    update,
     remove,
   } = useFieldArray({
     control,
@@ -46,9 +59,17 @@ export function ShipmentMovesDetails() {
         </Button>
       </div>
       <div className="flex flex-col gap-4">
-        {moves.map((move) => (
-          <MoveInformation key={move.id} move={move as ShipmentMove} />
-        ))}
+        {moves.map((move, moveIdx) => {
+          return (
+            <MoveInformation
+              key={move.id}
+              move={move as ShipmentMove}
+              moveIdx={moveIdx}
+              update={update}
+              remove={remove}
+            />
+          );
+        })}
       </div>
     </div>
   );
@@ -56,11 +77,21 @@ export function ShipmentMovesDetails() {
 
 const MoveInformation = memo(function MoveInformation({
   move,
+  moveIdx,
+  update,
+  remove,
 }: {
-  move?: ShipmentMove;
+  move: ShipmentMove;
+  moveIdx: number;
+  update: UseFieldArrayUpdate<ShipmentSchema, "moves">;
+  remove: UseFieldArrayRemove;
 }) {
   if (!move) {
     return <p>No move</p>;
+  }
+
+  if (!move.stops) {
+    return null;
   }
 
   return (
@@ -72,8 +103,13 @@ const MoveInformation = memo(function MoveInformation({
       <ScrollArea className="flex max-h-[250px] flex-col overflow-y-auto px-4 py-2 rounded-b-lg">
         <div className="relative py-4">
           <div className="space-y-6">
-            {move.stops.map((stop, index) => {
-              const isLastStop = index === move.stops.length - 1;
+            {move.stops.map((stop, stopIdx) => {
+              if (!stop) {
+                return null;
+              }
+
+              const isLastStop = stopIdx === move.stops.length - 1;
+              console.log("Stop", stop);
 
               return (
                 <StopTimeline
@@ -81,6 +117,10 @@ const MoveInformation = memo(function MoveInformation({
                   stop={stop}
                   isLast={isLastStop}
                   moveStatus={move.status}
+                  moveIdx={moveIdx}
+                  stopIdx={stopIdx}
+                  update={update}
+                  remove={remove}
                 />
               );
             })}

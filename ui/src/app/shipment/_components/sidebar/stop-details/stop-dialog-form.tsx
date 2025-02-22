@@ -6,7 +6,7 @@ import { FormControl, FormGroup } from "@/components/ui/form";
 import { stopStatusChoices, stopTypeChoices } from "@/lib/choices";
 import { http } from "@/lib/http-client";
 import { type LocationSchema } from "@/lib/schemas/location-schema";
-import { type StopSchema } from "@/lib/schemas/stop-schema";
+import { ShipmentSchema } from "@/lib/schemas/shipment-schema";
 import { formatLocation } from "@/lib/utils";
 import { useQuery } from "@tanstack/react-query";
 import { useEffect } from "react";
@@ -33,12 +33,18 @@ function useLocationData(locationId: string) {
   });
 }
 
-export function StopDialogForm() {
-  const { control, setValue } = useFormContext<StopSchema>();
+export function StopDialogForm({
+  moveIdx,
+  stopIdx,
+}: {
+  moveIdx: number;
+  stopIdx: number;
+}) {
+  const { control, setValue } = useFormContext<ShipmentSchema>();
 
   const locationId = useWatch({
     control,
-    name: "locationId",
+    name: `moves.${moveIdx}.stops.${stopIdx}.locationId`,
   });
 
   const { data: locationData, isLoading: isLoadingLocation } =
@@ -47,9 +53,12 @@ export function StopDialogForm() {
   useEffect(() => {
     if (!isLoadingLocation && locationId && locationData) {
       const formattedLocation = formatLocation(locationData);
-      setValue("addressLine", formattedLocation);
+      setValue(
+        `moves.${moveIdx}.stops.${stopIdx}.addressLine`,
+        formattedLocation,
+      );
     }
-  }, [isLoadingLocation, locationId, locationData, setValue]);
+  }, [isLoadingLocation, locationId, locationData, setValue, moveIdx, stopIdx]);
 
   return (
     <div className="space-y-2">
@@ -67,7 +76,7 @@ export function StopDialogForm() {
             <SelectField
               control={control}
               rules={{ required: true }}
-              name="type"
+              name={`moves.${moveIdx}.stops.${stopIdx}.type`}
               label="Stop Type"
               placeholder="Select type"
               description="Defines the designated category or function of this stop (read-only)."
@@ -78,8 +87,9 @@ export function StopDialogForm() {
           <FormControl>
             <SelectField
               control={control}
+              isReadOnly
               rules={{ required: true }}
-              name="status"
+              name={`moves.${moveIdx}.stops.${stopIdx}.status`}
               label="Current Status"
               placeholder="Select status"
               description="Indicates the current operational status of this stop."
@@ -89,7 +99,7 @@ export function StopDialogForm() {
 
           <FormControl>
             <InputField
-              name="pieces"
+              name={`moves.${moveIdx}.stops.${stopIdx}.pieces`}
               control={control}
               label="Pieces"
               placeholder="Enter quantity"
@@ -99,7 +109,7 @@ export function StopDialogForm() {
           </FormControl>
           <FormControl>
             <InputField
-              name="weight"
+              name={`moves.${moveIdx}.stops.${stopIdx}.weight`}
               control={control}
               label="Weight"
               placeholder="Enter weight"
@@ -109,8 +119,8 @@ export function StopDialogForm() {
           </FormControl>
 
           <FormControl cols="full">
-            <AutocompleteField<LocationSchema, StopSchema>
-              name="locationId"
+            <AutocompleteField<LocationSchema, ShipmentSchema>
+              name={`moves.${moveIdx}.stops.${stopIdx}.locationId`}
               control={control}
               link="/locations/"
               label="Location"
@@ -124,7 +134,7 @@ export function StopDialogForm() {
           </FormControl>
           <FormControl cols="full">
             <InputField
-              name="addressLine"
+              name={`moves.${moveIdx}.stops.${stopIdx}.addressLine`}
               control={control}
               label="Address"
               placeholder="Full address details"
@@ -151,7 +161,7 @@ export function StopDialogForm() {
             <FormGroup cols={2} className="gap-4">
               <FormControl>
                 <AutoCompleteDateTimeField
-                  name="plannedArrival"
+                  name={`moves.${moveIdx}.stops.${stopIdx}.plannedArrival`}
                   control={control}
                   label="Planned Arrival"
                   placeholder="Select planned arrival"
@@ -160,7 +170,7 @@ export function StopDialogForm() {
               </FormControl>
               <FormControl>
                 <AutoCompleteDateTimeField
-                  name="plannedDeparture"
+                  name={`moves.${moveIdx}.stops.${stopIdx}.plannedDeparture`}
                   control={control}
                   label="Planned Departure"
                   placeholder="Select planned departure"
@@ -177,7 +187,7 @@ export function StopDialogForm() {
             <FormGroup cols={2} className="gap-4">
               <FormControl>
                 <AutoCompleteDateTimeField
-                  name="actualArrival"
+                  name={`moves.${moveIdx}.stops.${stopIdx}.actualArrival`}
                   control={control}
                   label="Actual Arrival"
                   placeholder="Select actual arrival"
@@ -186,7 +196,7 @@ export function StopDialogForm() {
               </FormControl>
               <FormControl>
                 <AutoCompleteDateTimeField
-                  name="actualDeparture"
+                  name={`moves.${moveIdx}.stops.${stopIdx}.actualDeparture`}
                   control={control}
                   label="Actual Departure"
                   placeholder="Select actual departure"

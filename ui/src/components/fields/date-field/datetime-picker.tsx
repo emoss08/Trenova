@@ -22,7 +22,7 @@ import { CalendarIcon, Cross2Icon } from "@radix-ui/react-icons";
 import { DateTimePickerPopover } from "./datetime-picker-popover";
 
 const defaultSuggestions = [
-  "Today at 3PM",
+  "Today",
   "Tomorrow",
   "Sunday",
   "Next Monday",

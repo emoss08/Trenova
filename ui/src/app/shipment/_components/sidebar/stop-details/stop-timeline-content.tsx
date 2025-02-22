@@ -1,5 +1,6 @@
 import { Icon } from "@/components/ui/icons";
 import { formatSplitDateTime } from "@/lib/date";
+import { ShipmentSchema } from "@/lib/schemas/shipment-schema";
 import { cn } from "@/lib/utils";
 import { MoveStatus } from "@/types/move";
 import { Stop, StopStatus, StopType } from "@/types/stop";
@@ -10,6 +11,7 @@ import {
 } from "@fortawesome/pro-regular-svg-icons";
 import { faCircle, faTruck, faXmark } from "@fortawesome/pro-solid-svg-icons";
 import { memo, useMemo, useState } from "react";
+import { UseFieldArrayRemove, UseFieldArrayUpdate } from "react-hook-form";
 import { StopDialog } from "./stop-dialog";
 
 type TimingValue = {
@@ -261,10 +263,18 @@ export const StopTimeline = memo(function StopTimeline({
   stop,
   isLast,
   moveStatus,
+  moveIdx,
+  stopIdx,
+  update,
+  remove,
 }: {
   stop: Stop;
   isLast: boolean;
   moveStatus: MoveStatus;
+  moveIdx: number;
+  stopIdx: number;
+  update: UseFieldArrayUpdate<ShipmentSchema, "moves">;
+  remove: UseFieldArrayRemove;
 }) {
   const [editModalOpen, setEditModalOpen] = useState<boolean>(false);
   const lineStyles = useMemo(() => getLineStyles(stop.status), [stop.status]);
@@ -272,6 +282,12 @@ export const StopTimeline = memo(function StopTimeline({
     () => formatSplitDateTime(stop.plannedArrival),
     [stop.plannedArrival],
   );
+
+  console.log("Is stop the last stop?", {
+    isLast,
+    stopIdx,
+    moveIdx,
+  });
 
   return (
     <>
@@ -317,6 +333,10 @@ export const StopTimeline = memo(function StopTimeline({
         onOpenChange={setEditModalOpen}
         stopId={stop.id ?? ""}
         isEditing={true}
+        moveIdx={moveIdx}
+        stopIdx={stopIdx}
+        update={update}
+        remove={remove}
       />
     </>
   );

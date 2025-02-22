@@ -29,6 +29,7 @@ type ShipmentRepositoryParams struct {
 
 	DB                          db.Connection
 	Logger                      *logger.Logger
+	ShipmentMoveRepository      repositories.ShipmentMoveRepository
 	ShipmentCommodityRepository repositories.ShipmentCommodityRepository
 	ProNumberRepo               repositories.ProNumberRepository
 	Calculator                  *calculator.ShipmentCalculator
@@ -40,6 +41,7 @@ type ShipmentRepositoryParams struct {
 type shipmentRepository struct {
 	db                          db.Connection
 	l                           *zerolog.Logger
+	shipmentMoveRepository      repositories.ShipmentMoveRepository
 	shipmentCommodityRepository repositories.ShipmentCommodityRepository
 	proNumberRepo               repositories.ProNumberRepository
 	calc                        *calculator.ShipmentCalculator
@@ -61,6 +63,7 @@ func NewShipmentRepository(p ShipmentRepositoryParams) repositories.ShipmentRepo
 		db:                          p.DB,
 		l:                           &log,
 		shipmentCommodityRepository: p.ShipmentCommodityRepository,
+		shipmentMoveRepository:      p.ShipmentMoveRepository,
 		proNumberRepo:               p.ProNumberRepo,
 		calc:                        p.Calculator,
 	}
@@ -267,6 +270,12 @@ func (sr *shipmentRepository) Create(ctx context.Context, shp *shipment.Shipment
 	// * Calculate the totals for the shipment
 	sr.calc.CalculateTotals(shp)
 
+	// * Calculate the status for the shipment
+	if err := sr.calc.CalculateStatus(ctx, shp); err != nil {
+		log.Error().Err(err).Msg("failed to calculate shipment status")
+		return nil, err
+	}
+
 	err = dba.RunInTx(ctx, nil, func(c context.Context, tx bun.Tx) error {
 		shp.ProNumber = proNumber
 
@@ -319,6 +328,12 @@ func (sr *shipmentRepository) Update(ctx context.Context, shp *shipment.Shipment
 	// * Calculate the totals for the shipment
 	sr.calc.CalculateTotals(shp)
 
+	// * Calculate the status for the shipment
+	if err := sr.calc.CalculateStatus(ctx, shp); err != nil {
+		log.Error().Err(err).Msg("failed to calculate shipment status")
+		return nil, err
+	}
+
 	// * Run in a transaction
 	err = dba.RunInTx(ctx, nil, func(c context.Context, tx bun.Tx) error {
 		ov := shp.Version
@@ -359,6 +374,12 @@ func (sr *shipmentRepository) Update(ctx context.Context, shp *shipment.Shipment
 		// * Handle commodity operations
 		if err := sr.shipmentCommodityRepository.HandleCommodityOperations(c, tx, shp, false); err != nil {
 			log.Error().Err(err).Msg("failed to handle commodity operations")
+			return err
+		}
+
+		// * Handle move operations
+		if err := sr.shipmentMoveRepository.HandleMoveOperations(c, tx, shp, false); err != nil {
+			log.Error().Err(err).Msg("failed to handle move operations")
 			return err
 		}
 

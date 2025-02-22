@@ -115,6 +115,8 @@ const (
 
 	// MoveStatusInTransit indicates that the move is currently being processed
 	MoveStatusInTransit = MoveStatus("InTransit")
+
+	// MoveStatusCompleted indicates that the move has been completed
 	MoveStatusCompleted = MoveStatus("Completed")
 
 	// MoveStatusCanceled indicates that the move has been canceled

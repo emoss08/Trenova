@@ -1,11 +1,13 @@
 import { StopStatus, StopType } from "@/types/stop";
 import { type InferType, mixed, number, object, ref, string } from "yup";
+import { locationSchema } from "./location-schema";
 
 export const stopSchema = object({
   id: string().optional(),
   organizationId: string().nullable().optional(),
   businessUnitId: string().nullable().optional(),
   locationId: string().required("Location is required"),
+  shipmentMoveId: string().required("Shipment move is required"),
   status: mixed<StopStatus>()
     .required("Status is required")
     .oneOf(Object.values(StopStatus)),
@@ -63,9 +65,10 @@ export const stopSchema = object({
       return isNaN(parsed) ? undefined : parsed;
     })
     .integer("Actual arrival must be a whole number")
-    .min(0, "Actual arrival cannot be negative")
-    .max(ref("actualDeparture"), "Actual arrival must be before departure")
-    .optional(),
+    // .min(0, "Actual arrival cannot be negative")
+    // .max(ref("actualDeparture"), "Actual arrival must be before departure")
+    .optional()
+    .nullable(),
   actualDeparture: number()
     .transform((_, originalValue) => {
       if (
@@ -79,9 +82,11 @@ export const stopSchema = object({
       return isNaN(parsed) ? undefined : parsed;
     })
     .integer("Actual departure must be a whole number")
-    .min(ref("actualArrival"), "Actual departure cannot be before arrival")
-    .optional(),
+    // .min(ref("actualArrival"), "Actual departure cannot be before arrival")
+    .optional()
+    .nullable(),
   addressLine: string().required("Address line is required"),
+  location: locationSchema.optional(),
 });
 
 export type StopSchema = InferType<typeof stopSchema>;

@@ -250,3 +250,7 @@ func (st *Shipment) BeforeAppendModel(_ context.Context, query bun.Query) error 
 
 	return nil
 }
+
+func (st *Shipment) StatusEquals(status Status) bool {
+	return st.Status == status
+}
