@@ -324,7 +324,6 @@ func TestStateMachineManager_CalculateStatuses(t *testing.T) {
 
 		// Call the method under tests
 		err := manager.CalculateStatuses(t.Context(), shp)
-		t.Logf("err: %v", err)
 		require.NoError(t, err)
 
 		// Verify the stop statuses
@@ -345,4 +344,113 @@ func TestStateMachineManager_CalculateStatuses(t *testing.T) {
 		assert.Equal(t, tc.expectedMoveStatus, shp.Moves[0].Status, "Move Status incorrect. Expected %s, got %s", tc.expectedMoveStatus, shp.Moves[0].Status)
 		assert.Equal(t, tc.expectedShipStatus, shp.Status, "Shipment status incorrect. Expected %s, got %s", tc.expectedShipStatus, shp.Status)
 	}
+}
+
+// Test to ensure transition validation works correctly
+func TestStateMachine_Transitions(t *testing.T) {
+	// log := testutils.NewTestLogger(t)
+	ctx := t.Context()
+
+	t.Run("Stop Transitions", func(t *testing.T) {
+		stop := &shipment.Stop{
+			ID:     pulid.MustNew("stp_"),
+			Status: shipment.StopStatusNew,
+		}
+
+		sm := statemachine.NewStopStateMachine(stop)
+
+		// Valid transitions
+		assert.True(t, sm.CanTransition(ctx, statemachine.EventStopArrived))
+		assert.NoError(t, sm.Transition(ctx, statemachine.EventStopArrived))
+		assert.Equal(t, shipment.StopStatusInTransit, stop.Status)
+
+		assert.True(t, sm.CanTransition(ctx, statemachine.EventStopDeparted))
+		assert.NoError(t, sm.Transition(ctx, statemachine.EventStopDeparted))
+		assert.Equal(t, shipment.StopStatusCompleted, stop.Status)
+
+		// Invalid transition
+		assert.False(t, sm.CanTransition(ctx, statemachine.EventStopArrived))
+		assert.Error(t, sm.Transition(ctx, statemachine.EventStopArrived))
+	})
+
+	t.Run("Move Transitions", func(t *testing.T) {
+		move := &shipment.ShipmentMove{
+			ID:     pulid.MustNew("smv_"),
+			Status: shipment.MoveStatusNew,
+		}
+
+		sm := statemachine.NewMoveStateMachine(move)
+
+		// Valid transitions
+		assert.True(t, sm.CanTransition(ctx, statemachine.EventMoveAssigned))
+		assert.NoError(t, sm.Transition(ctx, statemachine.EventMoveAssigned))
+		assert.Equal(t, shipment.MoveStatusAssigned, move.Status)
+
+		assert.True(t, sm.CanTransition(ctx, statemachine.EventMoveStarted))
+		assert.NoError(t, sm.Transition(ctx, statemachine.EventMoveStarted))
+		assert.Equal(t, shipment.MoveStatusInTransit, move.Status)
+
+		assert.True(t, sm.CanTransition(ctx, statemachine.EventMoveCompleted))
+		assert.NoError(t, sm.Transition(ctx, statemachine.EventMoveCompleted))
+		assert.Equal(t, shipment.MoveStatusCompleted, move.Status)
+
+		// Invalid transition
+		assert.False(t, sm.CanTransition(ctx, statemachine.EventMoveAssigned))
+		assert.Error(t, sm.Transition(ctx, statemachine.EventMoveAssigned))
+	})
+
+	t.Run("Shipment Transitions", func(t *testing.T) {
+		shp := &shipment.Shipment{
+			ID:     pulid.MustNew("shp_"),
+			Status: shipment.StatusNew,
+		}
+
+		sm := statemachine.NewShipmentStateMachine(shp)
+
+		// Valid transitions
+		assert.True(t, sm.CanTransition(ctx, statemachine.EventShipmentAssigned))
+		assert.NoError(t, sm.Transition(ctx, statemachine.EventShipmentAssigned))
+		assert.Equal(t, shipment.StatusAssigned, shp.Status)
+
+		assert.True(t, sm.CanTransition(ctx, statemachine.EventShipmentInTransit))
+		assert.NoError(t, sm.Transition(ctx, statemachine.EventShipmentInTransit))
+		assert.Equal(t, shipment.StatusInTransit, shp.Status)
+
+		assert.True(t, sm.CanTransition(ctx, statemachine.EventShipmentCompleted))
+		assert.NoError(t, sm.Transition(ctx, statemachine.EventShipmentCompleted))
+		assert.Equal(t, shipment.StatusCompleted, shp.Status)
+
+		// Invalid transition
+		assert.False(t, sm.CanTransition(ctx, statemachine.EventShipmentInTransit))
+		assert.Error(t, sm.Transition(ctx, statemachine.EventShipmentInTransit))
+	})
+
+	t.Run("Terminal States", func(t *testing.T) {
+		// Test terminal states for stops
+		canceledStop := &shipment.Stop{
+			ID:     pulid.MustNew("stp_"),
+			Status: shipment.StopStatusCanceled,
+		}
+		stopSM := statemachine.NewStopStateMachine(canceledStop)
+		assert.True(t, stopSM.IsInTerminalState())
+		assert.False(t, stopSM.CanTransition(ctx, statemachine.EventStopArrived))
+
+		// Test terminal states for moves
+		canceledMove := &shipment.ShipmentMove{
+			ID:     pulid.MustNew("smv_"),
+			Status: shipment.MoveStatusCanceled,
+		}
+		moveSM := statemachine.NewMoveStateMachine(canceledMove)
+		assert.True(t, moveSM.IsInTerminalState())
+		assert.False(t, moveSM.CanTransition(ctx, statemachine.EventMoveStarted))
+
+		// Test terminal states for shipments
+		canceledShipment := &shipment.Shipment{
+			ID:     pulid.MustNew("shp_"),
+			Status: shipment.StatusCanceled,
+		}
+		shipmentSM := statemachine.NewShipmentStateMachine(canceledShipment)
+		assert.True(t, shipmentSM.IsInTerminalState())
+		assert.False(t, shipmentSM.CanTransition(ctx, statemachine.EventShipmentInTransit))
+	})
 }
