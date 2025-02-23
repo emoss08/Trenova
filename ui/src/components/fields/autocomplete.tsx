@@ -152,7 +152,6 @@ export function Autocomplete<T>({
 
       setSelectedOption(selectedOpt || null);
       onChange(newValue);
-      // Call onOptionChange here where we have access to options
       if (onOptionChange) {
         onOptionChange(selectedOpt || null);
       }
@@ -164,10 +163,16 @@ export function Autocomplete<T>({
   const handleScrollEnd = useCallback(
     (e: React.UIEvent<HTMLDivElement>) => {
       const target = e.target as HTMLDivElement;
+      const scrollBuffer = 50; // pixels before bottom to trigger load
+      const distanceFromBottom =
+        target.scrollHeight - (target.scrollTop + target.clientHeight);
+
+      // Check if we're near the bottom and not already loading
       if (
         !loading &&
         hasMore &&
-        target.scrollHeight - target.scrollTop <= target.clientHeight + 100
+        distanceFromBottom <= scrollBuffer &&
+        distanceFromBottom >= 0 // Prevent overscroll triggering
       ) {
         setPage((prev) => prev + 1);
       }
@@ -210,8 +215,8 @@ export function Autocomplete<T>({
           className,
         )}
       >
-        <Command shouldFilter={false}>
-          <div className="relative border-b w-full">
+        <Command shouldFilter={false} className="overflow-hidden">
+          <div className="border-b w-full">
             <CommandInput
               className="bg-transparent h-8 truncate"
               placeholder={`Search ${label.toLowerCase()}...`}
@@ -228,7 +233,7 @@ export function Autocomplete<T>({
                 {noResultsMessage ?? `No ${label.toLowerCase()} found.`}
               </CommandEmpty>
             )}
-            <CommandGroup className="flex flex-col gap-2">
+            <CommandGroup>
               {options.map((option) => (
                 <CommandItem
                   className="[&_svg]:size-3 cursor-pointer font-normal"

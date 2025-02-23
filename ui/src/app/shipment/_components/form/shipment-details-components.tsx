@@ -59,7 +59,14 @@ export function ShipmentServiceDetails() {
               <ColorOptionValue color={option.color} value={option.code} />
             )}
             renderOption={(option) => (
-              <ColorOptionValue color={option.color} value={option.code} />
+              <div className="flex flex-col gap-0.5 items-start size-full">
+                <ColorOptionValue color={option.color} value={option.code} />
+                {option?.description && (
+                  <span className="text-2xs text-muted-foreground truncate w-full">
+                    {option?.description}
+                  </span>
+                )}
+              </div>
             )}
           />
         </FormControl>
@@ -77,7 +84,14 @@ export function ShipmentServiceDetails() {
               <ColorOptionValue color={option.color} value={option.code} />
             )}
             renderOption={(option) => (
-              <ColorOptionValue color={option.color} value={option.code} />
+              <div className="flex flex-col gap-0.5 items-start size-full">
+                <ColorOptionValue color={option.color} value={option.code} />
+                {option?.description && (
+                  <span className="text-2xs text-muted-foreground truncate w-full">
+                    {option?.description}
+                  </span>
+                )}
+              </div>
             )}
           />
         </FormControl>
@@ -90,8 +104,19 @@ export function ShipmentServiceDetails() {
             placeholder="Select Tractor Type"
             description="Select the type of tractor used, considering any special requirements (e.g., refrigeration)."
             getOptionValue={(option) => option.id || ""}
-            getDisplayValue={(option) => option.code}
-            renderOption={(option) => option.code}
+            getDisplayValue={(option) => (
+              <ColorOptionValue color={option.color} value={option.code} />
+            )}
+            renderOption={(option) => (
+              <div className="flex flex-col gap-0.5 items-start size-full">
+                <ColorOptionValue color={option.color} value={option.code} />
+                {option?.description && (
+                  <span className="text-2xs text-muted-foreground truncate w-full">
+                    {option?.description}
+                  </span>
+                )}
+              </div>
+            )}
           />
         </FormControl>
         <FormControl>
@@ -103,8 +128,19 @@ export function ShipmentServiceDetails() {
             placeholder="Select Trailer Type"
             description="Select the type of trailer used, considering any special requirements (e.g., refrigeration)."
             getOptionValue={(option) => option.id || ""}
-            getDisplayValue={(option) => option.code}
-            renderOption={(option) => option.code}
+            getDisplayValue={(option) => (
+              <ColorOptionValue color={option.color} value={option.code} />
+            )}
+            renderOption={(option) => (
+              <div className="flex flex-col gap-0.5 items-start size-full">
+                <ColorOptionValue color={option.color} value={option.code} />
+                {option?.description && (
+                  <span className="text-2xs text-muted-foreground truncate w-full">
+                    {option?.description}
+                  </span>
+                )}
+              </div>
+            )}
           />
         </FormControl>
       </FormGroup>
