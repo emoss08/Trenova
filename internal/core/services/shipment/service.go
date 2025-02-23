@@ -415,7 +415,3 @@ func (s *Service) Duplicate(ctx context.Context, req *repositories.DuplicateShip
 
 	return newEntity, nil
 }
-
-func (s *Service) GetNextProNumber(ctx context.Context, orgID pulid.ID) (string, error) {
-	return s.proNumberRepo.GetNextProNumber(ctx, orgID)
-}

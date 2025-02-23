@@ -6,6 +6,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain"
 	"github.com/emoss08/trenova/internal/core/domain/businessunit"
 	"github.com/emoss08/trenova/internal/core/domain/organization"
+	"github.com/emoss08/trenova/internal/core/ports/infra"
 	"github.com/emoss08/trenova/internal/pkg/errors"
 	"github.com/emoss08/trenova/internal/pkg/utils/timeutils"
 	"github.com/emoss08/trenova/pkg/types/pulid"
@@ -18,6 +19,7 @@ import (
 var (
 	_ bun.BeforeAppendModelHook = (*EquipmentType)(nil)
 	_ domain.Validatable        = (*EquipmentType)(nil)
+	_ infra.PostgresSearchable  = (*EquipmentType)(nil)
 )
 
 type EquipmentType struct {
@@ -96,4 +98,30 @@ func (et *EquipmentType) BeforeAppendModel(_ context.Context, query bun.Query) e
 	}
 
 	return nil
+}
+
+func (et *EquipmentType) GetPostgresSearchConfig() infra.PostgresSearchConfig {
+	return infra.PostgresSearchConfig{
+		TableAlias: "et",
+		Fields: []infra.PostgresSearchableField{
+			{
+				Name:   "code",
+				Weight: "A",
+				Type:   infra.PostgresSearchTypeText,
+			},
+			{
+				Name:   "description",
+				Weight: "B",
+				Type:   infra.PostgresSearchTypeText,
+			},
+			{
+				Name:   "class",
+				Weight: "C",
+				Type:   infra.PostgresSearchTypeEnum,
+			},
+		},
+		MinLength:       2,
+		MaxTerms:        6,
+		UsePartialMatch: true,
+	}
 }

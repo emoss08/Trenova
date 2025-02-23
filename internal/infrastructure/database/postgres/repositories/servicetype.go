@@ -11,6 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/pkg/errors"
 	"github.com/emoss08/trenova/internal/pkg/logger"
+	"github.com/emoss08/trenova/internal/pkg/postgressearch"
 	"github.com/emoss08/trenova/internal/pkg/utils/queryutils/queryfilters"
 	"github.com/rotisserie/eris"
 	"github.com/rs/zerolog"
@@ -48,8 +49,13 @@ func (str *serviceTypeRepository) filterQuery(q *bun.SelectQuery, opts *ports.Li
 		Filter:     opts,
 	})
 
+	// * If there is a query, build the postgres search query
 	if opts.Query != "" {
-		q = q.Where("st.code ILIKE ?", "%"+opts.Query+"%")
+		q = postgressearch.BuildSearchQuery(
+			q,
+			opts.Query,
+			(*servicetype.ServiceType)(nil),
+		)
 	}
 
 	return q.Limit(opts.Limit).Offset(opts.Offset)
