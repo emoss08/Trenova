@@ -79,6 +79,7 @@ export function Autocomplete<T>({
   triggerClassName,
   noResultsMessage,
   onOptionChange,
+  isInvalid,
   clearable = true,
 }: BaseAutocompleteFieldProps<T>) {
   const [open, setOpen] = useState(false);
@@ -190,7 +191,10 @@ export function Autocomplete<T>({
           className={cn(
             "w-full font-normal gap-2 rounded border-muted-foreground/20 bg-muted px-1.5 data-[state=open]:border-blue-600 data-[state=open]:outline-hidden data-[state=open]:ring-4 data-[state=open]:ring-blue-600/20",
             "[&_svg]:size-4 justify-between",
+            "transition-[border-color,box-shadow] duration-200 ease-in-out",
             disabled && "opacity-50 cursor-not-allowed",
+            isInvalid &&
+              "border-red-500 bg-red-500/20 ring-0 ring-red-500 placeholder:text-red-500 focus:outline-hidden focus-visible:border-red-600 focus-visible:ring-4 focus-visible:ring-red-400/20 hover:border-red-500 hover:bg-red-500/20 data-[state=open]:border-red-500 data-[state=open]:bg-red-500/20 data-[state=open]:ring-red-500/20",
             triggerClassName,
           )}
           disabled={disabled}
@@ -198,7 +202,14 @@ export function Autocomplete<T>({
           {selectedOption ? (
             getDisplayValue(selectedOption)
           ) : (
-            <p className="text-muted-foreground">{placeholder}</p>
+            <p
+              className={cn(
+                "text-muted-foreground",
+                isInvalid && "text-red-500",
+              )}
+            >
+              {placeholder}
+            </p>
           )}
           <CaretSortIcon className="opacity-50 size-7" />
           {loading && (
@@ -299,6 +310,7 @@ export function AutocompleteField<TOption, TForm extends FieldValues>({
             label={label}
             value={value}
             onChange={onChange}
+            isInvalid={fieldState.invalid}
             onOptionChange={onOptionChange}
             disabled={disabled}
             clearable={clearable}
