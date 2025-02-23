@@ -11,6 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/pkg/errors"
 	"github.com/emoss08/trenova/internal/pkg/logger"
+	"github.com/emoss08/trenova/internal/pkg/postgressearch"
 	"github.com/emoss08/trenova/internal/pkg/utils/queryutils/queryfilters"
 	"github.com/rotisserie/eris"
 	"github.com/rs/zerolog"
@@ -32,7 +33,7 @@ type customerRepository struct {
 
 func NewCustomerRepository(p CustomerRepositoryParams) repositories.CustomerRepository {
 	log := p.Logger.With().
-		Str("repository", "location").
+		Str("repository", "customer").
 		Logger()
 
 	return &customerRepository{
@@ -53,7 +54,11 @@ func (cr *customerRepository) filterQuery(q *bun.SelectQuery, opts *repositories
 	}
 
 	if opts.Filter.Query != "" {
-		q = q.Where("cus.name ILIKE ? OR cus.code ILIKE ?", "%"+opts.Filter.Query+"%", "%"+opts.Filter.Query+"%")
+		q = postgressearch.BuildSearchQuery(
+			q,
+			opts.Filter.Query,
+			(*customer.Customer)(nil),
+		)
 	}
 
 	return q.Limit(opts.Filter.Limit).Offset(opts.Filter.Offset)
