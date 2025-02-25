@@ -42,6 +42,7 @@ type ServiceType struct {
 	UpdatedAt    int64  `json:"updatedAt" bun:"updated_at,notnull,default:extract(epoch from current_timestamp)::bigint"`
 	SearchVector string `json:"-" bun:"search_vector,type:TSVECTOR,scanonly"`
 	Rank         string `json:"-" bun:"rank,type:VARCHAR(100),scanonly"`
+
 	// Relationships
 	BusinessUnit *businessunit.BusinessUnit `json:"businessUnit,omitempty" bun:"rel:belongs-to,join:business_unit_id=id"`
 	Organization *organization.Organization `json:"organization,omitempty" bun:"rel:belongs-to,join:organization_id=id"`

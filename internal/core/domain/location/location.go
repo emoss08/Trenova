@@ -7,6 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/businessunit"
 	"github.com/emoss08/trenova/internal/core/domain/organization"
 	"github.com/emoss08/trenova/internal/core/domain/usstate"
+	"github.com/emoss08/trenova/internal/core/ports/infra"
 	"github.com/emoss08/trenova/internal/pkg/errors"
 	"github.com/emoss08/trenova/internal/pkg/utils/timeutils"
 	"github.com/emoss08/trenova/pkg/types/pulid"
@@ -18,6 +19,7 @@ import (
 var (
 	_ bun.BeforeAppendModelHook = (*Location)(nil)
 	_ domain.Validatable        = (*Location)(nil)
+	_ infra.PostgresSearchable  = (*Location)(nil)
 )
 
 type Location struct {
@@ -47,9 +49,11 @@ type Location struct {
 	IsGeocoded   bool          `json:"isGeocoded" bun:"is_geocoded,type:BOOLEAN,default:false"`
 
 	// Metadata
-	Version   int64 `bun:"version,type:BIGINT" json:"version"`
-	CreatedAt int64 `bun:"created_at,type:BIGINT,nullzero,notnull,default:extract(epoch from current_timestamp)::bigint" json:"createdAt"`
-	UpdatedAt int64 `bun:"updated_at,type:BIGINT,nullzero,notnull,default:extract(epoch from current_timestamp)::bigint" json:"updatedAt"`
+	Version      int64  `bun:"version,type:BIGINT" json:"version"`
+	CreatedAt    int64  `bun:"created_at,type:BIGINT,nullzero,notnull,default:extract(epoch from current_timestamp)::bigint" json:"createdAt"`
+	UpdatedAt    int64  `bun:"updated_at,type:BIGINT,nullzero,notnull,default:extract(epoch from current_timestamp)::bigint" json:"updatedAt"`
+	SearchVector string `json:"-" bun:"search_vector,type:TSVECTOR,scanonly"`
+	Rank         string `json:"-" bun:"rank,type:VARCHAR(100),scanonly"`
 
 	// Relationships
 	BusinessUnit     *businessunit.BusinessUnit `bun:"rel:belongs-to,join:business_unit_id=id" json:"-"`
@@ -94,4 +98,55 @@ func (l *Location) BeforeAppendModel(_ context.Context, query bun.Query) error {
 	}
 
 	return nil
+}
+
+func (l *Location) GetPostgresSearchConfig() infra.PostgresSearchConfig {
+	return infra.PostgresSearchConfig{
+		TableAlias: "l",
+		Fields: []infra.PostgresSearchableField{
+			{
+				Name:   "code",
+				Weight: "A",
+				Type:   infra.PostgresSearchTypeText,
+			},
+			{
+				Name:   "name",
+				Weight: "A",
+				Type:   infra.PostgresSearchTypeText,
+			},
+			{
+				Name:   "description",
+				Weight: "B",
+				Type:   infra.PostgresSearchTypeText,
+			},
+			{
+				Name:   "address_line_1",
+				Weight: "B",
+				Type:   infra.PostgresSearchTypeText,
+			},
+			{
+				Name:   "address_line_2",
+				Weight: "B",
+				Type:   infra.PostgresSearchTypeText,
+			},
+			{
+				Name:   "city",
+				Weight: "B",
+				Type:   infra.PostgresSearchTypeText,
+			},
+			{
+				Name:   "postal_code",
+				Weight: "C",
+				Type:   infra.PostgresSearchTypeText,
+			},
+			{
+				Name:   "code || ' ' || name || ' ' || description || ' ' || address_line_1 || ' ' || address_line_2 || ' ' || city || ' ' || postal_code",
+				Weight: "D",
+				Type:   infra.PostgresSearchTypeText,
+			},
+		},
+		MinLength:       2,
+		MaxTerms:        6,
+		UsePartialMatch: true,
+	}
 }
