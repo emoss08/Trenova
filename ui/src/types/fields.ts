@@ -181,6 +181,8 @@ export interface BaseAutocompleteFieldProps<TOption> {
   isInvalid?: boolean;
   /** Callback when an option is selected (Specific to AutocompleteField) */
   onOptionChange?: (option: TOption | null) => void;
+  /** Extra search params to append to the query */
+  extraSearchParams?: Record<string, string>;
 }
 
 export type AutocompleteFieldProps<TOption, TForm extends FieldValues> = Omit<

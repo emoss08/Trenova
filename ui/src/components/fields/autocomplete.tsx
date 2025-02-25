@@ -41,6 +41,7 @@ async function fetchOptions<T>(
   link: string,
   inputValue: string,
   page: number,
+  extraSearchParams?: Record<string, string>,
 ): Promise<LimitOffsetResponse<T>> {
   const limit = 10;
   const offset = (page - 1) * limit;
@@ -50,6 +51,7 @@ async function fetchOptions<T>(
       query: inputValue,
       limit: limit.toString(),
       offset: offset.toString(),
+      ...extraSearchParams,
     },
   });
 
@@ -81,6 +83,7 @@ export function Autocomplete<T>({
   onOptionChange,
   isInvalid,
   clearable = true,
+  extraSearchParams,
 }: BaseAutocompleteFieldProps<T>) {
   const [open, setOpen] = useState(false);
   const [options, setOptions] = useState<T[]>([]);
@@ -124,7 +127,12 @@ export function Autocomplete<T>({
         setLoading(true);
         setError(null);
 
-        const response = await fetchOptions<T>(link, debouncedSearchTerm, page);
+        const response = await fetchOptions<T>(
+          link,
+          debouncedSearchTerm,
+          page,
+          extraSearchParams,
+        );
 
         setOptions((prev) =>
           page === 1 ? response.results : [...prev, ...response.results],
@@ -142,7 +150,7 @@ export function Autocomplete<T>({
     if (open) {
       loadOptions();
     }
-  }, [debouncedSearchTerm, open, page, link]);
+  }, [debouncedSearchTerm, open, page, link, extraSearchParams]);
 
   const handleSelect = useCallback(
     (currentValue: string) => {
@@ -286,6 +294,7 @@ export function AutocompleteField<TOption, TForm extends FieldValues>({
   getDisplayValue,
   onOptionChange,
   clearable,
+  extraSearchParams,
   ...props
 }: AutocompleteFieldProps<TOption, TForm>) {
   return (
@@ -314,6 +323,7 @@ export function AutocompleteField<TOption, TForm extends FieldValues>({
             onOptionChange={onOptionChange}
             disabled={disabled}
             clearable={clearable}
+            extraSearchParams={extraSearchParams}
             {...props}
           />
         </FieldWrapper>

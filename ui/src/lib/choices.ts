@@ -5,6 +5,7 @@ import {
   PackingGroupChoiceProps,
 } from "@/types/hazardous-material";
 import { FacilityType, LocationCategoryType } from "@/types/location-category";
+import { MoveStatus } from "@/types/move";
 import { RatingMethod, ShipmentStatus } from "@/types/shipment";
 import { StopStatus, StopType } from "@/types/stop";
 import { EquipmentStatus } from "@/types/tractor";
@@ -74,6 +75,14 @@ export const stopStatusChoices = [
   { value: StopStatus.Completed, label: "Completed", color: "#15803d" },
   { value: StopStatus.Canceled, label: "Canceled", color: "#b91c1c" },
 ] satisfies ReadonlyArray<ChoiceProps<StopStatus>>;
+
+export const moveStatusChoices = [
+  { value: MoveStatus.New, label: "New", color: "#7e22ce" },
+  { value: MoveStatus.Assigned, label: "Assigned", color: "#1d4ed8" },
+  { value: MoveStatus.InTransit, label: "In Transit", color: "#15803d" },
+  { value: MoveStatus.Completed, label: "Completed", color: "#15803d" },
+  { value: MoveStatus.Canceled, label: "Canceled", color: "#b91c1c" },
+] satisfies ReadonlyArray<ChoiceProps<MoveStatus>>;
 
 export const stopTypeChoices = [
   { value: StopType.Pickup, label: "Pickup", color: "#1d4ed8" },

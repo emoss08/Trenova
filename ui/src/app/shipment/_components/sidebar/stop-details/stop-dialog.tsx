@@ -15,6 +15,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { moveSchema } from "@/lib/schemas/move-schema";
 import { ShipmentSchema } from "@/lib/schemas/shipment-schema";
 import { StopSchema } from "@/lib/schemas/stop-schema";
 import { type TableSheetProps } from "@/types/data-table";
@@ -29,6 +30,7 @@ import {
   useFormContext,
   useWatch,
 } from "react-hook-form";
+import { ValidationError } from "yup";
 import { useLocationData } from "./queries";
 import { StopDialogForm } from "./stop-dialog-form";
 
@@ -50,7 +52,7 @@ export function StopDialog({
   stopIdx,
   remove,
 }: StopDialogProps) {
-  const { getValues, reset, setValue, control } =
+  const { getValues, reset, setValue, control, setError, clearErrors } =
     useFormContext<ShipmentSchema>();
 
   const locationId = useWatch({
@@ -61,44 +63,80 @@ export function StopDialog({
   const { data: locationData, isLoading: isLoadingLocation } =
     useLocationData(locationId);
 
-  const handleSave = () => {
-    const formValues = getValues();
-    const stop = formValues.moves?.[moveIdx]?.stops?.[stopIdx];
+  const validateStop = async () => {
+    // Clear existing errors for this stop
+    clearErrors(`moves.${moveIdx}.stops.${stopIdx}`);
+    const pathToValidate = `moves[${moveIdx}]`;
 
-    if (stop?.locationId && stop?.location) {
-      const updatedStop: StopSchema = {
-        locationId: stop?.locationId || "",
-        location: stop?.location || "",
-        addressLine: stop?.addressLine || "",
-        type: stop?.type || StopType.Pickup,
-        status: stop?.status || StopStatus.New,
-        pieces: stop?.pieces || 1,
-        weight: stop?.weight || 0,
-        sequence: stop?.sequence || 0,
-        plannedArrival: stop?.plannedArrival || 0,
-        plannedDeparture: stop?.plannedDeparture || 0,
-        actualArrival: stop?.actualArrival || undefined,
-        actualDeparture: stop?.actualDeparture || undefined,
-        id: isEditing ? stop?.id : undefined,
-        shipmentMoveId: formValues?.moves?.[moveIdx]?.id || "",
-      };
+    try {
+      const formValues = getValues();
+      const moveWithStop = formValues.moves?.[moveIdx];
 
-      update(moveIdx, {
-        ...formValues.moves?.[moveIdx],
-        loaded: formValues.moves?.[moveIdx]?.loaded ?? false,
-        sequence: formValues.moves?.[moveIdx]?.sequence ?? 0,
-        stops: [
-          ...(formValues.moves?.[moveIdx]?.stops || []).slice(0, stopIdx),
-          updatedStop,
-          ...(formValues.moves?.[moveIdx]?.stops || []).slice(stopIdx + 1),
-        ],
-        status: formValues.moves?.[moveIdx]?.status || MoveStatus.New,
+      if (!moveWithStop) return false;
+
+      // Validate just this move with the stop using the move schema
+      await moveSchema.validateAt(`stops[${stopIdx}]`, moveWithStop, {
+        abortEarly: false,
       });
 
-      onOpenChange(false);
+      return true;
+    } catch (error) {
+      if (error instanceof ValidationError) {
+        error.inner.forEach((err) => {
+          const fieldPath = err.path;
+          if (fieldPath) {
+            const fullPath = `${pathToValidate}.${fieldPath}`;
+            setError(fullPath as any, {
+              type: "validate",
+              message: err.message,
+            });
+          }
+        });
+      }
+      return false;
     }
+  };
 
-    console.log("unable to save");
+  const handleSave = async () => {
+    const isValid = await validateStop();
+
+    if (isValid) {
+      const formValues = getValues();
+      const stop = formValues.moves?.[moveIdx]?.stops?.[stopIdx];
+
+      if (stop) {
+        const updatedStop: StopSchema = {
+          locationId: stop?.locationId,
+          location: stop?.location || null,
+          addressLine: stop.addressLine,
+          type: stop.type || StopType.Pickup,
+          status: stop.status || StopStatus.New,
+          pieces: stop.pieces,
+          weight: stop.weight,
+          sequence: stop.sequence,
+          plannedArrival: stop?.plannedArrival,
+          plannedDeparture: stop?.plannedDeparture,
+          actualArrival: stop?.actualArrival,
+          actualDeparture: stop?.actualDeparture,
+          id: isEditing ? stop.id : undefined,
+          shipmentMoveId: formValues?.moves?.[moveIdx]?.id || "",
+        };
+
+        update(moveIdx, {
+          ...formValues.moves?.[moveIdx],
+          loaded: formValues.moves?.[moveIdx]?.loaded ?? false,
+          sequence: formValues.moves?.[moveIdx]?.sequence ?? 0,
+          stops: [
+            ...(formValues.moves?.[moveIdx]?.stops || []).slice(0, stopIdx),
+            updatedStop,
+            ...(formValues.moves?.[moveIdx]?.stops || []).slice(stopIdx + 1),
+          ],
+          status: formValues.moves?.[moveIdx]?.status || MoveStatus.New,
+        });
+
+        onOpenChange(false);
+      }
+    }
   };
 
   // Set the Location ID and Location
@@ -191,12 +229,12 @@ function StopDialogNotice() {
     setNoticeVisible(false);
   };
   return noticeVisible ? (
-    <div className="bg-muted px-4 py-3 text-foreground">
+    <div className="bg-blue-500/20 px-4 py-3 text-blue-500">
       <div className="flex gap-2">
         <div className="flex grow gap-3">
           <Icon
             icon={faInfoCircle}
-            className="mt-0.5 shrink-0 text-foreground"
+            className="mt-0.5 shrink-0 text-blue-500"
             aria-hidden="true"
           />
           <div className="flex grow flex-col justify-between gap-2 md:flex-row">
@@ -207,7 +245,7 @@ function StopDialogNotice() {
           </div>
         </div>
         <Button
-          variant="secondary"
+          variant="ghost"
           className="group -my-1.5 -me-2 size-8 shrink-0 p-0 hover:bg-transparent"
           onClick={handleClose}
           aria-label="Close banner"

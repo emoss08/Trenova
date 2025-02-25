@@ -22,7 +22,7 @@ import { useFieldArray, useFormContext } from "react-hook-form";
 
 export function MoveInformation() {
   const { control } = useFormContext<ShipmentSchema>();
-  const { fields, append, prepend, remove, swap, insert } = useFieldArray({
+  const { fields, append } = useFieldArray({
     control,
     name: "moves",
   });
