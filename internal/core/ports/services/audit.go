@@ -17,12 +17,35 @@ type LogActionParams struct {
 	UserID         pulid.ID
 	OrganizationID pulid.ID
 	BusinessUnitID pulid.ID
+	Critical       bool
 }
 
 type LogOption func(*audit.Entry) error
 
+type SensitiveFieldAction int
+
+const (
+	SensitiveFieldOmit SensitiveFieldAction = iota
+	SensitiveFieldMask
+	SensitiveFieldHash
+	SensitiveFieldEncrypt // New action for field-level encryption
+)
+
+// SensitiveField is a field that is considered sensitive and should be masked.
+type SensitiveField struct {
+	Name    string
+	Action  SensitiveFieldAction
+	Pattern string // Optional regex pattern for more precise masking
+}
+
 type AuditService interface {
+	// Core functionality
 	LogAction(params *LogActionParams, opts ...LogOption) error
 	Start() error
 	Stop(ctx context.Context) error
+
+	// New methods for enhanced functionality
+	RegisterSensitiveFields(resource permission.Resource, fields []SensitiveField) error
+	SetDefaultField(key string, value any)
+	GetServiceStatus() string
 }
