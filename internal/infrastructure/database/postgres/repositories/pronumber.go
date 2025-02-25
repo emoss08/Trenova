@@ -9,6 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/ports/db"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/pkg/logger"
+	"github.com/emoss08/trenova/internal/pkg/pronumbergen"
 	"github.com/emoss08/trenova/pkg/types/pulid"
 	"github.com/rotisserie/eris"
 	"github.com/rs/zerolog"
@@ -53,6 +54,13 @@ func (r *proNumberRepository) GetNextProNumber(ctx context.Context, orgID pulid.
 	now := time.Now()
 	year := now.Year()
 	month := int(now.Month())
+
+	// Fetch the organization-specific pro number format
+	format, err := pronumbergen.GetOrganizationProNumberFormat(ctx, orgID)
+	if err != nil {
+		log.Error().Err(err).Msg("failed to get pro number format")
+		return "", eris.Wrap(err, "get pro number format")
+	}
 
 	var sequence *pronumber.Sequence
 	err = dba.RunInTx(ctx, &sql.TxOptions{Isolation: sql.LevelSerializable}, func(c context.Context, tx bun.Tx) error {
@@ -111,7 +119,8 @@ func (r *proNumberRepository) GetNextProNumber(ctx context.Context, orgID pulid.
 		return "", err
 	}
 
-	return pronumber.GenerateProNumber(sequence.CurrentSequence, int(sequence.Year), int(sequence.Month)), nil
+	// Generate pro number using the custom format
+	return pronumbergen.GenerateProNumber(format, int(sequence.CurrentSequence), year, month), nil
 }
 
 // createNewSequence creates a new sequence for the given organization, year, and month
