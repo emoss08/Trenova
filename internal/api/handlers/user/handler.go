@@ -47,7 +47,7 @@ func (h Handler) RegisterRoutes(r fiber.Router, rl *middleware.RateLimiter) {
 
 	api.Get("/me/", rl.WithRateLimit(
 		[]fiber.Handler{h.me},
-		middleware.PerSecond(20), // 20 reads per second
+		middleware.PerSecond(50), // 50 reads per second
 	)...)
 
 	api.Get("/:userID/", rl.WithRateLimit(

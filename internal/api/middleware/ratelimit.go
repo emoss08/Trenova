@@ -182,6 +182,28 @@ func (rl *RateLimiter) createLimitHandler(config RateLimitConfig) fiber.Handler 
 			return c.Next() // Allow request on error for high availability
 		}
 
+		// Ensure reset time is not in the past
+		now := time.Now().Unix()
+		if reset <= now {
+			// If reset time is in the past, set it to a small time in the future
+			reset = now + 1
+
+			// Also, we should reset the counter if the reset time was in the past
+			if !allowed {
+				log.Warn().
+					Str("ip", c.IP()).
+					Str("path", c.Path()).
+					Msg("reset time was in the past but limit was exceeded; forcing counter reset")
+
+				// Force reset the counter
+				rl.resetCounter(ctx, key, config.Strategy)
+
+				// Allow this request since we're resetting
+				allowed = true
+				remaining = maxRequests - 1
+			}
+		}
+
 		// Set rate limit headers
 		c.Set("X-RateLimit-Limit", strconv.Itoa(maxRequests))
 		c.Set("X-RateLimit-Remaining", strconv.Itoa(remaining))
@@ -216,6 +238,62 @@ func (rl *RateLimiter) createLimitHandler(config RateLimitConfig) fiber.Handler 
 
 		return c.Next()
 	}
+}
+
+// resetCounter resets the rate limit counter based on the strategy
+func (rl *RateLimiter) resetCounter(ctx context.Context, key string, strategy string) error {
+	var err error
+	switch strategy {
+	case "sliding":
+		// For sliding window, just delete the key
+		err = rl.redis.Del(ctx, key)
+	case "token":
+		// For token bucket, reset to full bucket size
+		err = rl.redis.Del(ctx, key)
+		err = rl.redis.Del(ctx, key+":timestamp")
+	default:
+		// For fixed window, delete both counter and window keys
+		err = rl.redis.Del(ctx, key)
+		err = rl.redis.Del(ctx, key+":window")
+	}
+
+	if err != nil {
+		rl.l.Error().Err(err).Str("key", key).Msg("failed to reset counter")
+	}
+
+	return err
+}
+
+// verifyCounterConsistency ensures window and counter keys are consistent
+func (rl *RateLimiter) verifyCounterConsistency(ctx context.Context, key string, windowKey string) error {
+	// Check if window exists but counter doesn't or vice versa
+	exists, err := rl.redis.Exists(ctx, windowKey)
+	if err != nil {
+		return eris.Wrap(err, "failed to check window key existence")
+	}
+
+	counterExists, err := rl.redis.Exists(ctx, key)
+	if err != nil {
+		return eris.Wrap(err, "failed to check counter key existence")
+	}
+
+	// If only one of the keys exists, delete both to ensure consistency
+	if (exists && !counterExists) || (!exists && counterExists) {
+		rl.l.Warn().
+			Str("key", key).
+			Str("windowKey", windowKey).
+			Msg("inconsistent rate limit state detected, resetting")
+
+		if err := rl.redis.Del(ctx, key); err != nil {
+			return eris.Wrap(err, "failed to delete counter key")
+		}
+
+		if err := rl.redis.Del(ctx, windowKey); err != nil {
+			return eris.Wrap(err, "failed to delete window key")
+		}
+	}
+
+	return nil
 }
 
 // defaultKeyGenerator generates a unique Redis key for the rate limit
@@ -258,9 +336,15 @@ func (rl *RateLimiter) getRoleLimits(c *fiber.Ctx, config RateLimitConfig) (int,
 	return config.MaxRequests, config.Interval
 }
 
-// checkFixedWindowLimit implements fixed window rate limiting
+// checkFixedWindowLimit implements fixed window rate limiting with consistency check
 func (rl *RateLimiter) checkFixedWindowLimit(ctx context.Context, key string, maxRequests int, interval time.Duration) (bool, int, int64, error) {
 	windowKey := key + ":window"
+
+	// First verify counter consistency
+	if err := rl.verifyCounterConsistency(ctx, key, windowKey); err != nil {
+		rl.l.Warn().Err(err).Msg("counter consistency check failed, proceeding with rate limit check")
+	}
+
 	now := time.Now().Unix()
 
 	result, err := rl.scriptLoader.EvalSHA(ctx, "fixed_window", []string{key, windowKey}, maxRequests, int(interval.Seconds()), now)
@@ -277,6 +361,26 @@ func (rl *RateLimiter) checkFixedWindowLimit(ctx context.Context, key string, ma
 	allowed := results[0].(int64) == 1
 	remaining := int(results[1].(int64))
 	reset := results[2].(int64)
+
+	// Double-check: if reset time is in the past, something is wrong
+	if reset < now {
+		rl.l.Warn().
+			Str("key", key).
+			Int64("reset", reset).
+			Int64("now", now).
+			Msg("reset time is in the past, possible clock skew or expired window")
+
+		// Force reset the window
+		err := rl.resetCounter(ctx, key, "fixed")
+		if err != nil {
+			rl.l.Error().Err(err).Msg("failed to reset counter after detecting past reset time")
+		}
+
+		// Set new reset time
+		reset = now + int64(interval.Seconds())
+		allowed = true
+		remaining = maxRequests - 1
+	}
 
 	return allowed, remaining, reset, nil
 }
