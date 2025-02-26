@@ -10,7 +10,11 @@ import {
 } from "@/components/data-table/_components/data-table-column-helpers";
 import { ShipmentStatusBadge } from "@/components/status-badge";
 import { Checkbox } from "@/components/ui/checkbox";
-import { generateDateTimeString, toDate } from "@/lib/date";
+import {
+  generateDateTimeString,
+  generateDateTimeStringFromUnixTimestamp,
+  toDate,
+} from "@/lib/date";
 import { LocationSchema } from "@/lib/schemas/location-schema";
 import {
   calculateShipmentMileage,
@@ -113,12 +117,11 @@ export function getColumns(): ColumnDef<Shipment>[] {
           return <p>-</p>;
         }
 
-        const arrivalDate = toDate(originStop.plannedArrival);
-        if (!arrivalDate) {
-          return <p>-</p>;
-        }
-
-        return <p>{generateDateTimeString(arrivalDate)}</p>;
+        return (
+          <p>
+            {generateDateTimeStringFromUnixTimestamp(originStop.plannedArrival)}
+          </p>
+        );
       },
     },
     createNestedEntityRefColumn(columnHelper, {

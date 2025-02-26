@@ -11,6 +11,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { FormControl, FormGroup } from "@/components/ui/form";
+import { Icon } from "@/components/ui/icons";
 import {
   Tooltip,
   TooltipContent,
@@ -20,21 +21,25 @@ import {
 import { moveStatusChoices } from "@/lib/choices";
 import { ShipmentSchema } from "@/lib/schemas/shipment-schema";
 import { type TableSheetProps } from "@/types/data-table";
-import { MoveStatus, type ShipmentMove } from "@/types/move";
-import { StopStatus, StopType } from "@/types/stop";
-import { useCallback, useEffect } from "react";
+import { MoveStatus } from "@/types/move";
+import { StopStatus, StopType, type Stop } from "@/types/stop";
+import { faPlus } from "@fortawesome/pro-regular-svg-icons";
+import { AnimatePresence, motion } from "framer-motion";
+import { useCallback, useEffect, useRef, useState } from "react";
 import {
+  useFieldArray,
   useFormContext,
   type UseFieldArrayRemove,
   type UseFieldArrayUpdate,
 } from "react-hook-form";
+import { CompactStopForm } from "./move-stop-form-compact";
+import { CompactStopsTable } from "./move-stops-table";
 
 type MoveDialogProps = TableSheetProps & {
   moveIdx: number;
   isEditing: boolean;
   update: UseFieldArrayUpdate<ShipmentSchema, "moves">;
   remove: UseFieldArrayRemove;
-  initialData?: ShipmentMove;
 };
 
 export function MoveDialog({
@@ -44,17 +49,42 @@ export function MoveDialog({
   isEditing,
   update,
   remove,
-  initialData,
 }: MoveDialogProps) {
-  const { getValues, setValue } = useFormContext<ShipmentSchema>();
+  const { control, getValues, setValue, reset } =
+    useFormContext<ShipmentSchema>();
+  const [editingStopIdx, setEditingStopIdx] = useState<number | null>(null);
+  const hasSavedRef = useRef(false);
 
-  // Set default values when the dialog opens and it's a new move
+  // Use field array for stops
+  const {
+    fields,
+    remove: removeStop,
+    insert,
+  } = useFieldArray({
+    control,
+    name: `moves.${moveIdx}.stops`,
+  });
+
+  // Reset saved state when dialog opens
+  useEffect(() => {
+    if (open) {
+      hasSavedRef.current = false;
+    }
+  }, [open]);
+
+  // Initialize a new move with default values
   useEffect(() => {
     if (open && !isEditing) {
       // Set default values for a new move
       setValue(`moves.${moveIdx}.status`, MoveStatus.New);
       setValue(`moves.${moveIdx}.distance`, 0);
       setValue(`moves.${moveIdx}.loaded`, true);
+      setValue(`moves.${moveIdx}.sequence`, moveIdx);
+
+      // Set the current time for defaults
+      const now = Math.floor(Date.now() / 1000);
+      const oneHour = 3600;
+
       // Append two new stops to the move
       setValue(`moves.${moveIdx}.stops`, [
         {
@@ -62,10 +92,8 @@ export function MoveDialog({
           status: StopStatus.New,
           type: StopType.Pickup,
           locationId: "",
-          // @ts-expect-error - This is a temporary fix
-          plannedDeparture: undefined,
-          // @ts-expect-error - This is a temporary fix
-          plannedArrival: undefined,
+          plannedArrival: now,
+          plannedDeparture: now + oneHour / 2,
           addressLine: "",
         },
         {
@@ -73,24 +101,52 @@ export function MoveDialog({
           status: StopStatus.New,
           type: StopType.Delivery,
           locationId: "",
-          // @ts-expect-error - This is a temporary fix
-          plannedDeparture: undefined,
-          // @ts-expect-error - This is a temporary fix
-          plannedArrival: undefined,
+          plannedArrival: now + oneHour,
+          plannedDeparture: now + oneHour + oneHour / 2,
           addressLine: "",
         },
       ]);
-      setValue(`moves.${moveIdx}.sequence`, moveIdx);
     }
   }, [open, isEditing, moveIdx, setValue]);
 
+  // Handle dialog close
   const handleClose = useCallback(() => {
-    onOpenChange(false);
-  }, [onOpenChange]);
+    // If we're adding a new move and haven't explicitly saved it, remove it
+    if (!isEditing && !hasSavedRef.current) {
+      remove(moveIdx);
+    } else if (isEditing && !hasSavedRef.current) {
+      // If we're editing an existing move but haven't saved changes, reset to original values
+      const originalValues = getValues();
+      const moves = originalValues?.moves || [];
 
+      reset(
+        {
+          moves: [
+            ...moves.slice(0, moveIdx),
+            moves[moveIdx],
+            ...moves.slice(moveIdx + 1),
+          ],
+        },
+        { keepValues: true },
+      );
+    }
+
+    // Close the dialog
+    onOpenChange(false);
+  }, [onOpenChange, getValues, moveIdx, remove, isEditing, reset]);
+
+  // Add a handler for dialog's escape key or outside click to ensure we remove unsaved moves
+  const handleOpenChange = (newOpenState: boolean) => {
+    if (!newOpenState && !hasSavedRef.current) {
+      handleClose();
+    } else {
+      onOpenChange(newOpenState);
+    }
+  };
+
+  // Handle save move
   const handleSave = useCallback(() => {
-    const formValues = getValues();
-    const move = formValues.moves?.[moveIdx];
+    const move = getValues().moves?.[moveIdx];
 
     if (move) {
       // Ensure all required fields have values
@@ -104,11 +160,10 @@ export function MoveDialog({
       };
 
       update(moveIdx, updatedMove);
+      hasSavedRef.current = true;
       onOpenChange(false);
-    } else {
-      console.error("No move data found at index", moveIdx);
     }
-  }, [getValues, moveIdx, update, onOpenChange]);
+  }, [moveIdx, update, onOpenChange, getValues]);
 
   // Handle keyboard shortcut (Ctrl+Enter) to save
   useEffect(() => {
@@ -122,90 +177,243 @@ export function MoveDialog({
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [open, handleSave]);
 
-  return (
-    <>
-      <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>{isEditing ? "Edit Move" : "Add Move"}</DialogTitle>
-            <DialogDescription>
-              {isEditing
-                ? "Edit the move details for this shipment."
-                : "Add a new move to the shipment."}
-            </DialogDescription>
-          </DialogHeader>
-          <DialogBody>
-            <MoveDialogForm moveIdx={moveIdx} />
-          </DialogBody>
-          <DialogFooter>
-            <Button type="button" variant="outline" onClick={handleClose}>
-              Cancel
-            </Button>
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button type="button" onClick={handleSave}>
-                    {isEditing ? "Update" : "Add"}
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent className="flex items-center gap-2">
-                  <kbd className="-me-1 inline-flex h-5 max-h-full items-center rounded bg-muted-foreground/60 px-1 font-[inherit] text-[0.625rem] font-medium text-foreground">
-                    Ctrl
-                  </kbd>
-                  <kbd className="-me-1 inline-flex h-5 max-h-full items-center rounded bg-muted-foreground/60 px-1 font-[inherit] text-[0.625rem] font-medium text-foreground">
-                    Enter
-                  </kbd>
-                  <p>to save and close the stop</p>
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-    </>
-  );
-}
+  const handleAddStop = () => {
+    // Insert after the first stop but before the last stop
+    const insertPosition = fields.length > 1 ? fields.length - 1 : 1;
 
-function MoveDialogForm({ moveIdx }: { moveIdx: number }) {
-  const { control } = useFormContext<ShipmentSchema>();
+    // Get the previous stop's departure time
+    const prevStop = fields[insertPosition - 1];
+
+    // Calculate times that make sense between previous and next stops
+    const prevDepartureTime =
+      prevStop?.plannedDeparture || Math.floor(Date.now() / 1000);
+
+    const oneHour = 3600;
+    const plannedArrival = Math.floor(prevDepartureTime + oneHour / 2);
+    const plannedDeparture = Math.floor(prevDepartureTime + oneHour);
+
+    // Alternate pickup/delivery for intermediate stops
+    const isEvenPosition = insertPosition % 2 === 0;
+    const stopType = isEvenPosition ? StopType.Pickup : StopType.Delivery;
+
+    // Insert the new stop at position just before the last stop
+    insert(insertPosition, {
+      sequence: insertPosition,
+      status: StopStatus.New,
+      type: stopType,
+      locationId: "",
+      plannedArrival: plannedArrival,
+      plannedDeparture: plannedDeparture,
+      addressLine: "",
+    });
+
+    // Update sequences of all stops
+    updateStopSequences();
+
+    // Start editing the new stop
+    setEditingStopIdx(insertPosition);
+  };
+
+  // Helper to update stop sequences
+  const updateStopSequences = () => {
+    const currentMoveValues = getValues(`moves.${moveIdx}`);
+
+    if (currentMoveValues.stops) {
+      // Manually update sequences of all stops
+      const updatedStops = currentMoveValues.stops.map((stop, idx) => ({
+        ...stop,
+        sequence: idx,
+      }));
+
+      // Update the entire move with properly sequenced stops
+      update(moveIdx, {
+        ...currentMoveValues,
+        stops: updatedStops,
+      });
+    }
+  };
+
+  const handleEditStop = (stopIdx: number) => {
+    setEditingStopIdx(stopIdx);
+  };
+
+  const handleStopEditCancel = () => {
+    setEditingStopIdx(null);
+  };
+
+  const handleStopEditSave = () => {
+    // Get the current form values for the stop being edited
+    const currentValues = getValues();
+    const editedStop = currentValues.moves?.[moveIdx]?.stops?.[editingStopIdx!];
+
+    if (editedStop) {
+      // Get the current move data
+      const currentMoveValues = getValues(`moves.${moveIdx}`);
+
+      // Update the specific stop in the stops array
+      if (currentMoveValues.stops) {
+        const updatedStops = [...currentMoveValues.stops];
+        updatedStops[editingStopIdx!] = editedStop;
+
+        // Update the entire move with the edited stop
+        update(moveIdx, {
+          ...currentMoveValues,
+          stops: updatedStops,
+        });
+      }
+    }
+
+    // Close the edit form
+    setEditingStopIdx(null);
+  };
+
+  const handleDeleteStop = (stopIdx: number) => {
+    // Prevent deletion of first pickup or last delivery
+    if (stopIdx === 0 || stopIdx === fields.length - 1) {
+      return;
+    }
+
+    // Remove the stop
+    removeStop(stopIdx);
+
+    // Update sequences of all remaining stops
+    updateStopSequences();
+
+    // Handle the editing state if relevant
+    if (editingStopIdx !== null) {
+      if (editingStopIdx === stopIdx) {
+        setEditingStopIdx(null);
+      } else if (editingStopIdx > stopIdx) {
+        setEditingStopIdx(editingStopIdx - 1);
+      }
+    }
+  };
 
   return (
-    <div className="space-y-2">
-      <div>
-        <div className="flex items-center gap-2 mb-1">
-          <h3 className="text-sm font-semibold text-foreground">
-            Basic Information
-          </h3>
-        </div>
-        <p className="text-2xs text-muted-foreground mb-3">
-          Define the fundamental details and current status of this move.
-        </p>
-        <FormGroup cols={2} className="gap-4">
-          <FormControl>
-            <SelectField
-              control={control}
-              name={`moves.${moveIdx}.status`}
-              label="Status"
-              placeholder="Select status"
-              isReadOnly
-              description="Indicates the current operational status of this move."
-              options={moveStatusChoices}
-            />
-          </FormControl>
-          <FormControl>
-            <InputField
-              name={`moves.${moveIdx}.distance`}
-              control={control}
-              label="Distance"
-              placeholder="Enter distance"
-              type="text"
-              description="Specifies the total distance of this move."
-              sideText="mi"
-              readOnly
-            />
-          </FormControl>
-        </FormGroup>
-      </div>
-    </div>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
+      <DialogContent className="max-w-3xl">
+        <DialogHeader>
+          <DialogTitle>{isEditing ? "Edit Move" : "Add Move"}</DialogTitle>
+          <DialogDescription>
+            {isEditing
+              ? "Edit the move details for this shipment."
+              : "Add a new move to the shipment."}
+          </DialogDescription>
+        </DialogHeader>
+        <DialogBody>
+          {/* Move Basic Information */}
+          <div className="space-y-6">
+            <FormGroup cols={2} className="gap-4">
+              <FormControl>
+                <SelectField
+                  control={control}
+                  name={`moves.${moveIdx}.status`}
+                  label="Status"
+                  placeholder="Select status"
+                  isReadOnly
+                  description="Indicates the current operational status of this move."
+                  options={moveStatusChoices}
+                />
+              </FormControl>
+              <FormControl>
+                <InputField
+                  name={`moves.${moveIdx}.distance`}
+                  control={control}
+                  label="Distance"
+                  placeholder="Enter distance"
+                  type="text"
+                  description="Specifies the total distance of this move."
+                  sideText="mi"
+                  readOnly
+                />
+              </FormControl>
+            </FormGroup>
+          </div>
+
+          {/* Stops Section */}
+          <div className="space-y-2">
+            <div className="flex justify-between items-center">
+              <div className="flex items-center gap-1">
+                <h3 className="text-sm font-medium">Stops</h3>
+                <span className="text-2xs text-muted-foreground">
+                  ({fields.length})
+                </span>
+              </div>
+              <Button
+                size="xs"
+                variant="outline"
+                onClick={handleAddStop}
+                className="flex items-center gap-1"
+                disabled={editingStopIdx !== null}
+              >
+                <Icon icon={faPlus} className="size-3.5" />
+                Add Stop
+              </Button>
+            </div>
+
+            <AnimatePresence mode="wait">
+              {editingStopIdx !== null ? (
+                <motion.div
+                  key="edit-form"
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -10 }}
+                  transition={{ duration: 0.2 }}
+                >
+                  <CompactStopForm
+                    moveIdx={moveIdx}
+                    stopIdx={editingStopIdx}
+                    onCancel={handleStopEditCancel}
+                    onSave={handleStopEditSave}
+                    isFirstOrLastStop={
+                      editingStopIdx === 0 ||
+                      editingStopIdx === fields.length - 1
+                    }
+                  />
+                </motion.div>
+              ) : (
+                <motion.div
+                  key="stops-table"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  transition={{ duration: 0.2 }}
+                >
+                  <CompactStopsTable
+                    moveIdx={moveIdx}
+                    stops={fields as Stop[]}
+                    onEdit={handleEditStop}
+                    onDelete={handleDeleteStop}
+                  />
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
+        </DialogBody>
+        <DialogFooter>
+          <Button type="button" variant="outline" onClick={handleClose}>
+            Cancel
+          </Button>
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button type="button" onClick={handleSave}>
+                  {isEditing ? "Update" : "Add"}
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent className="flex items-center gap-2">
+                <kbd className="-me-1 inline-flex h-5 max-h-full items-center rounded bg-muted-foreground/60 px-1 font-[inherit] text-[0.625rem] font-medium text-foreground">
+                  Ctrl
+                </kbd>
+                <kbd className="-me-1 inline-flex h-5 max-h-full items-center rounded bg-muted-foreground/60 px-1 font-[inherit] text-[0.625rem] font-medium text-foreground">
+                  Enter
+                </kbd>
+                <p>to save and close the move</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }

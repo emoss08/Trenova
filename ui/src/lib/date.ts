@@ -201,6 +201,18 @@ export function generateDateTimeString(
   );
 }
 
+export function generateDateTimeStringFromUnixTimestamp(
+  timestamp: number,
+  showSeconds = false,
+): string {
+  const date = toDate(timestamp);
+  if (!date) {
+    return "-";
+  }
+
+  return generateDateTimeString(date, showSeconds);
+}
+
 /**
  * Generates a Date object from a date and time string.
  *

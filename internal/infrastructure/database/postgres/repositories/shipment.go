@@ -279,12 +279,12 @@ func (sr *shipmentRepository) Create(ctx context.Context, shp *shipment.Shipment
 	err = dba.RunInTx(ctx, nil, func(c context.Context, tx bun.Tx) error {
 		shp.ProNumber = proNumber
 
-		if _, iErr := tx.NewInsert().Model(shp).Exec(c); iErr != nil {
+		if _, iErr := tx.NewInsert().Model(shp).Returning("*").Exec(c); iErr != nil {
 			log.Error().
 				Err(iErr).
 				Interface("shipment", shp).
 				Msg("failed to insert shipment")
-			return err
+			return iErr
 		}
 
 		// * Handle commodity operations
@@ -392,7 +392,7 @@ func (sr *shipmentRepository) Update(ctx context.Context, shp *shipment.Shipment
 		return nil
 	})
 	if err != nil {
-		log.Error().Err(err).Msg("failed to update shipment")
+		log.Error().Interface("shipment", shp).Err(err).Msg("failed to update shipment")
 		return nil, err
 	}
 

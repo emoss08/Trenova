@@ -24,6 +24,7 @@ import { toast } from "sonner";
 import { AssignmentDialog } from "../assignment/assignment-dialog";
 import { StopTimeline } from "../sidebar/stop-details/stop-timeline-content";
 import { AssignmentDetails } from "./move-assignment-details";
+import { MoveDeleteDialog } from "./move/move-delete-dialog";
 import { MoveDialog } from "./move/move-dialog";
 
 export function ShipmentMovesDetails() {
@@ -35,7 +36,6 @@ export function ShipmentMovesDetails() {
 
   const {
     fields: moves,
-    append,
     update,
     remove,
   } = useFieldArray({
@@ -55,7 +55,9 @@ export function ShipmentMovesDetails() {
   const handleDeleteMove = (index: number) => {
     // If there is only one move, we cannot delete it
     if (moves.length === 1) {
-      toast.error("Cannot delete the only move");
+      toast.error("Unable to proceed", {
+        description: "A shipment must have at least one move.",
+      });
       return;
     }
 
@@ -102,6 +104,8 @@ export function ShipmentMovesDetails() {
     ((editingIndex < moves.length - 1 || moves[editingIndex]?.stops?.length) ??
       0 > 0);
 
+  // const moveStops = moves.map((move) => move.stops).flat();
+
   return (
     <>
       <div className="flex flex-col gap-2 border-t border-bg-sidebar-border py-4">
@@ -144,6 +148,7 @@ export function ShipmentMovesDetails() {
           onOpenChange={handleDialogClose}
           isEditing={!!isEditing}
           moveIdx={editingIndex ?? moves.length}
+          // stops={moveStops as Stop[]}
           update={update}
           remove={remove}
           initialData={
@@ -151,6 +156,18 @@ export function ShipmentMovesDetails() {
               ? (moves[editingIndex] as ShipmentMove)
               : undefined
           }
+        />
+      )}
+      {deleteDialogOpen && (
+        <MoveDeleteDialog
+          open={deleteDialogOpen}
+          onOpenChange={(open) => {
+            setDeleteDialogOpen(open);
+            if (!open) {
+              setDeletingIndex(null);
+            }
+          }}
+          handleDelete={handleConfirmDelete}
         />
       )}
     </>
@@ -240,6 +257,7 @@ const StatusBadge = memo(function StatusBadge({
     </div>
   );
 });
+
 const AssignmentStatus = [MoveStatus.New, MoveStatus.Assigned];
 
 function MoveActions({
@@ -296,19 +314,21 @@ function MoveActions({
           />
 
           <DropdownMenuItem
-            title="Delete Move"
+            title="Cancel Move"
             color="danger"
-            description="Remove this move."
-            onClick={onDelete}
+            description="Cancel this move."
+            // onClick={onDelete}
           />
         </DropdownMenuContent>
       </DropdownMenu>
-      <AssignmentDialog
-        open={assignmentDialogOpen}
-        onOpenChange={setAssignmentDialogOpen}
-        shipmentMoveId={move.id}
-        assignmentId={assignment?.id}
-      />
+      {assignmentDialogOpen && (
+        <AssignmentDialog
+          open={assignmentDialogOpen}
+          onOpenChange={setAssignmentDialogOpen}
+          shipmentMoveId={move.id}
+          assignmentId={assignment?.id}
+        />
+      )}
     </>
   );
 }
