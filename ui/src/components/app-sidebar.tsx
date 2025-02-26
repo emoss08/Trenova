@@ -28,7 +28,7 @@ import { ChevronRightIcon } from "@radix-ui/react-icons";
 import { Link, useLocation } from "react-router";
 import { NavUser } from "./nav-user";
 import { OrganizationSwitcher } from "./organization-switcher";
-import { SearchForm } from "./site-search/site-search";
+import { SearchForm } from "./site-search/site-search-dialog";
 import { Icon } from "./ui/icons";
 import { WorkflowPlaceholder } from "./workflow";
 

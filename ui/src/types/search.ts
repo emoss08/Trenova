@@ -1,10 +1,26 @@
-import { IconProp } from "@/components/ui/icons";
 import { IconDefinition } from "@fortawesome/pro-regular-svg-icons";
+
+export type SiteSearchTab =
+  | "all"
+  | "shipments"
+  | "workers"
+  | "tractors"
+  | "customers";
+
+/**
+ * Entity types for search
+ */
+export enum SearchEntityType {
+  Shipments = "shipments",
+  Workers = "workers",
+  Tractors = "tractors",
+  Customers = "customers",
+}
 
 /**
  * Options for search operations
  */
-export interface SearchOptions {
+export type SearchOptions = {
   query: string;
   types?: string[];
   limit?: number;
@@ -12,14 +28,14 @@ export interface SearchOptions {
   highlight?: boolean;
   facets?: string[];
   filter?: string;
-}
+};
 
 /**
  * Individual search result document
  */
-export interface SearchResult {
+export type SearchResult = {
   id: string;
-  type: string;
+  type: SearchEntityType;
   title: string;
   description?: string;
   searchableText?: string;
@@ -29,85 +45,18 @@ export interface SearchResult {
   updatedAt?: number;
   businessUnitId?: string;
   organizationId?: string;
-}
+};
 
 /**
  * Search response from the API
  */
-export interface SearchResponse {
+export type SearchResponse = {
   results: SearchResult[];
   total: number;
   processedIn: string;
   query: string;
   facets?: Record<string, any>;
-}
-
-/**
- * Entity types for search
- */
-export enum SearchEntityType {
-  Shipment = "shipment",
-  Driver = "driver",
-  Equipment = "equipment",
-  Customer = "customer",
-  Location = "location",
-  Route = "route",
-  Order = "order",
-  Invoice = "invoice",
-}
-
-/**
- * Search status constants
- */
-export const SearchStatus = {
-  // General status
-  Active: "active",
-  Inactive: "inactive",
-
-  // Shipment status
-  Planned: "planned",
-  Dispatched: "dispatched",
-  InTransit: "in_transit",
-  Delivered: "delivered",
-  Cancelled: "cancelled",
-  Delayed: "delayed",
-
-  // Equipment status
-  Available: "available",
-  InUse: "in_use",
-  Maintenance: "maintenance",
-  OutOfService: "out_of_service",
-
-  // Driver status
-  OnDuty: "on_duty",
-  OffDuty: "off_duty",
-  Driving: "driving",
-  Rest: "rest",
-  Vacation: "vacation",
-  Sick: "sick",
-  Training: "training",
-} as const;
-
-export type SearchStatusType = (typeof SearchStatus)[keyof typeof SearchStatus];
-
-/**
- * Filter operators for search
- */
-export const FilterOperator = {
-  Equals: "=",
-  NotEquals: "!=",
-  GreaterThan: ">",
-  LessThan: "<",
-  GreaterThanOrEqual: ">=",
-  LessThanOrEqual: "<=",
-  In: "IN",
-  NotIn: "NOT IN",
-  Exists: "EXISTS",
-  NotExists: "NOT EXISTS",
-} as const;
-
-export type FilterOperatorType =
-  (typeof FilterOperator)[keyof typeof FilterOperator];
+};
 
 /**
  * Built-in sort options
@@ -120,22 +69,6 @@ export const SortOption = {
   TitleAsc: "title:asc",
   TitleDesc: "title:desc",
 } as const;
-
-export type SortOptionType = (typeof SortOption)[keyof typeof SortOption];
-
-export type SiteSearchTab =
-  | "all"
-  | "shipments"
-  | "workers"
-  | "equipment"
-  | "customers";
-
-export type SearchTabConfig = {
-  icon: IconProp;
-  label: string;
-  color: string;
-  filters: string[];
-};
 
 export type SearchInputProps = {
   searchQuery: string;

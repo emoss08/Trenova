@@ -1,8 +1,9 @@
 import { SidebarGroup, SidebarGroupContent } from "@/components/ui/sidebar";
 import { commandRoutes, quickActions } from "@/config/site-search";
+import { SITE_SEARCH_RECENT_SEARCHES_KEY } from "@/constants/env";
 import { useRecentSearches, useSearch } from "@/hooks/use-search";
 import { cn } from "@/lib/utils";
-import { SearchResult } from "@/types/search";
+import { SearchEntityType, SearchResult } from "@/types/search";
 import { faHistory, faXmark } from "@fortawesome/pro-regular-svg-icons";
 import * as React from "react";
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -19,15 +20,12 @@ import { Icon } from "../ui/icons";
 import { VisuallyHidden } from "../ui/visually-hidden";
 import { SiteSearchEmpty } from "./site-search-empty";
 import { SiteSearchFooter } from "./site-search-footer";
-import { SearchInputWithBadges } from "./site-search-input";
+import { SearchInputWithBadges, SiteSearchInput } from "./site-search-input";
 import { SiteSearchLoading } from "./site-search-loading";
 import {
   getResultComponent,
   SiteSearchQuickOption,
 } from "./site-search-type-components";
-
-// Local storage key for recent searches
-const RECENT_SEARCHES_KEY = "trenova-recent-searches";
 
 export function SearchForm({ ...props }: React.ComponentProps<"form">) {
   return (
@@ -63,7 +61,7 @@ export function SiteSearchDialog() {
   } = useSearch();
 
   const { recentSearches, addRecentSearch, removeRecentSearch } =
-    useRecentSearches(RECENT_SEARCHES_KEY, 5);
+    useRecentSearches(SITE_SEARCH_RECENT_SEARCHES_KEY, 5);
 
   const navigate = useNavigate();
 
@@ -115,23 +113,17 @@ export function SiteSearchDialog() {
       let link = "";
 
       switch (result.type) {
-        case "shipment":
+        case SearchEntityType.Shipments:
           link = `/shipments/management?entityId=${result.id}&modal=edit`;
           break;
-        case "driver":
-          link = `/drivers/${result.id}`;
+        case SearchEntityType.Workers:
+          link = `/dispatch/configurations/workers?entityId=${result.id}&modal=edit`;
           break;
-        case "equipment":
-          link = `/equipment/${result.id}`;
+        case SearchEntityType.Tractors:
+          link = `/equipment/configurations/tractors?entityId=${result.id}&modal=edit`;
           break;
-        case "customer":
-          link = `/customers/${result.id}`;
-          break;
-        case "location":
-          link = `/locations/${result.id}`;
-          break;
-        case "route":
-          link = `/routes/${result.id}`;
+        case SearchEntityType.Customers:
+          link = `/billing/configurations/customers?entityId=${result.id}&modal=edit`;
           break;
         default:
           // Default fallback if type is unknown
@@ -411,6 +403,7 @@ export function SiteSearchDialog() {
                     <button
                       key={route.id}
                       className="flex items-center gap-2 p-2 rounded-md hover:bg-accent/30 transition-colors cursor-pointer outline-none"
+                      onClick={() => handleNavigate(route.link)}
                     >
                       {route.icon && (
                         <Icon
@@ -432,7 +425,7 @@ export function SiteSearchDialog() {
 
   return (
     <>
-      {/* <SiteSearchInput open={open} setOpen={setOpen} /> */}
+      <SiteSearchInput open={open} setOpen={setOpen} />
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent
           className="overflow-hidden p-0 sm:max-w-[650px]"
