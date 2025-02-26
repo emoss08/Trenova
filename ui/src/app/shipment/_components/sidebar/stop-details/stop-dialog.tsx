@@ -15,6 +15,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { STOP_DIALOG_NOTICE_KEY } from "@/constants/env";
 import { moveSchema } from "@/lib/schemas/move-schema";
 import { ShipmentSchema } from "@/lib/schemas/shipment-schema";
 import { StopSchema } from "@/lib/schemas/stop-schema";
@@ -221,7 +222,7 @@ export function StopDialog({
 
 function StopDialogNotice() {
   const [noticeVisible, setNoticeVisible] = useLocalStorage(
-    "showStopDialogNotice",
+    STOP_DIALOG_NOTICE_KEY,
     true,
   );
 

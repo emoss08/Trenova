@@ -10,6 +10,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Icon } from "@/components/ui/icons";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { MOVE_DELETE_DIALOG_KEY } from "@/constants/env";
 import { ShipmentSchema } from "@/lib/schemas/shipment-schema";
 import { MoveStatus, type ShipmentMove } from "@/types/move";
 import { faEllipsisVertical, faPlus } from "@fortawesome/pro-regular-svg-icons";
@@ -62,7 +63,7 @@ export function ShipmentMovesDetails() {
     }
 
     // Always check localStorage directly
-    const showDialog = localStorage.getItem("showMoveDeleteDialog") !== "false";
+    const showDialog = localStorage.getItem(MOVE_DELETE_DIALOG_KEY) !== "false";
 
     if (showDialog) {
       setDeletingIndex(index);
@@ -77,7 +78,7 @@ export function ShipmentMovesDetails() {
       remove(deletingIndex);
 
       if (doNotShowAgain) {
-        localStorage.setItem("showMoveDeleteDialog", "false");
+        localStorage.setItem(MOVE_DELETE_DIALOG_KEY, "false");
       }
 
       setDeleteDialogOpen(false);

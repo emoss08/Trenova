@@ -1,5 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Icon } from "@/components/ui/icons";
+import { COMMODITY_DELETE_DIALOG_KEY } from "@/constants/env";
 import { ShipmentSchema } from "@/lib/schemas/shipment-schema";
 import { cn } from "@/lib/utils";
 import { ShipmentCommodity } from "@/types/shipment";
@@ -43,7 +44,7 @@ export function ShipmentCommodityDetails({
   const handleDelete = (index: number) => {
     // Always check localStorage directly
     const showDialog =
-      localStorage.getItem("showCommodityDeleteDialog") !== "false";
+      localStorage.getItem(COMMODITY_DELETE_DIALOG_KEY) !== "false";
 
     if (showDialog) {
       setDeletingIndex(index);
@@ -58,7 +59,7 @@ export function ShipmentCommodityDetails({
       remove(deletingIndex);
 
       if (doNotShowAgain) {
-        localStorage.setItem("showCommodityDeleteDialog", "false");
+        localStorage.setItem(COMMODITY_DELETE_DIALOG_KEY, "false");
       }
 
       setDeleteDialogOpen(false);
