@@ -22,11 +22,141 @@ export function SearchInputWithBadges({
   setActiveFilters = () => {},
 }: SearchInputProps) {
   const [showFilters, setShowFilters] = useState(false);
+  const [showTagSuggestions, setShowTagSuggestions] = useState(false);
+  const [tagFilter, setTagFilter] = useState("");
+  const [selectedTagIndex, setSelectedTagIndex] = useState(0);
+  const [cursorPosition, setCursorPosition] = useState(0);
+  const [atSymbolIndex, setAtSymbolIndex] = useState(-1);
 
   // Update filter visibility when tab changes
   useEffect(() => {
     setShowFilters(activeTab !== "all");
   }, [activeTab]);
+
+  // Handle tag suggestions visibility and filtering
+  useEffect(() => {
+    if (!searchQuery) {
+      setShowTagSuggestions(false);
+      return;
+    }
+
+    const atIndex = searchQuery.lastIndexOf("@");
+
+    if (atIndex === -1 || atSymbolIndex !== atIndex) {
+      // Reset tag suggestions if no @ symbol or if it's a new @ symbol
+      setShowTagSuggestions(false);
+      setTagFilter("");
+      setAtSymbolIndex(-1);
+      return;
+    }
+
+    // Check if there's a space after the @ symbol
+    const hasSpaceAfterAt = searchQuery.substring(atIndex).includes(" ");
+    if (hasSpaceAfterAt) {
+      setShowTagSuggestions(false);
+      return;
+    }
+
+    // Get the partial tag after the @ symbol
+    const partialTag = searchQuery.substring(atIndex + 1);
+    setTagFilter(partialTag.toLowerCase());
+    setShowTagSuggestions(true);
+  }, [searchQuery, atSymbolIndex]);
+
+  // Filter tabs based on tag input
+  const filteredTabs = Object.entries(tabConfig)
+    .filter(
+      ([key, config]) =>
+        key !== "all" &&
+        config.label.toLowerCase().includes(tagFilter.toLowerCase()),
+    )
+    .sort(([, configA], [, configB]) =>
+      configA.label.toLowerCase().localeCompare(configB.label.toLowerCase()),
+    );
+
+  // Reset selected index when filtered tabs change
+  useEffect(() => {
+    setSelectedTagIndex(0);
+  }, [filteredTabs.length]);
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newValue = e.target.value;
+    setSearchQuery(newValue);
+
+    // Track cursor position
+    setCursorPosition(e.target.selectionStart ?? 0);
+
+    // Check for @ symbol
+    const atIndex = newValue.lastIndexOf("@");
+    if (atIndex !== -1 && atIndex < cursorPosition) {
+      // Only set if the @ is before the current cursor position
+      setAtSymbolIndex(atIndex);
+    }
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    // Handle Ctrl+Backspace to remove tag
+    if (
+      e.key === "Backspace" &&
+      (e.ctrlKey || e.metaKey) &&
+      activeTab !== "all"
+    ) {
+      e.preventDefault();
+      setActiveTab("all");
+      setShowFilters(false);
+      // Clear filters when removing tag
+      setActiveFilters({});
+      return;
+    }
+
+    if (!showTagSuggestions) return;
+
+    switch (e.key) {
+      case "ArrowDown":
+        e.preventDefault();
+        setSelectedTagIndex((prev) =>
+          prev < filteredTabs.length - 1 ? prev + 1 : prev,
+        );
+        break;
+      case "ArrowUp":
+        e.preventDefault();
+        setSelectedTagIndex((prev) => (prev > 0 ? prev - 1 : 0));
+        break;
+      case "Enter":
+        e.preventDefault();
+        if (filteredTabs.length > 0) {
+          applyTag(filteredTabs[selectedTagIndex][0]);
+        }
+        break;
+      case "Escape":
+        e.preventDefault();
+        setShowTagSuggestions(false);
+        break;
+      case "Tab":
+        e.preventDefault();
+        if (filteredTabs.length > 0) {
+          applyTag(filteredTabs[selectedTagIndex][0]);
+        }
+        break;
+    }
+  };
+
+  const applyTag = (tabKey: string) => {
+    // Apply tag by setting active tab
+    setActiveTab(tabKey as SiteSearchTab);
+    setShowTagSuggestions(false);
+
+    // Remove the @tag part from search query
+    if (atSymbolIndex !== -1) {
+      const beforeAt = searchQuery.substring(0, atSymbolIndex);
+      const afterTag = searchQuery.substring(cursorPosition);
+      setSearchQuery(beforeAt + afterTag);
+    }
+
+    // Reset state
+    setAtSymbolIndex(-1);
+    setTagFilter("");
+  };
 
   const handleRemoveTab = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -124,11 +254,12 @@ export function SearchInputWithBadges({
             ref={inputRef}
             placeholder={
               activeTab === "all"
-                ? "Search for anything"
+                ? "Search for anything or type @ for categories"
                 : `Search in ${currentTabConfig.label.toLowerCase()}`
             }
             value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
+            onChange={handleInputChange}
+            onKeyDown={handleKeyDown}
             className="flex h-full w-full bg-transparent text-sm outline-none placeholder:text-muted-foreground border-none"
           />
         </div>
@@ -142,6 +273,40 @@ export function SearchInputWithBadges({
           </kbd>
         </div>
       </div>
+
+      {/* Tag suggestions dropdown */}
+      <AnimatePresence>
+        {showTagSuggestions && filteredTabs.length > 0 && (
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            transition={{ duration: 0.15 }}
+            className="absolute top-9 left-6 z-50 mt-1 w-64 bg-background border border-border rounded-md shadow-md max-h-60 overflow-y-auto"
+          >
+            <div className="p-1">
+              <div className="px-2 py-1.5 text-xs text-muted-foreground font-medium border-b border-border mb-1">
+                Select a category
+              </div>
+              {filteredTabs.map(([key, config], index) => (
+                <div
+                  key={key}
+                  className={cn(
+                    "flex items-center px-2 py-1.5 rounded-sm cursor-pointer",
+                    selectedTagIndex === index
+                      ? "bg-accent text-accent-foreground"
+                      : "hover:bg-accent/50",
+                  )}
+                  onClick={() => applyTag(key)}
+                >
+                  <Icon icon={config.icon} className="size-4 mr-2" />
+                  <span className="text-sm">{config.label}</span>
+                </div>
+              ))}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Tab selectors - show when no active filter tab */}
       <AnimatePresence mode="wait">

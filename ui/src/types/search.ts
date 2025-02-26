@@ -1,5 +1,3 @@
-// src/types/search.ts
-
 import { IconProp } from "@/components/ui/icons";
 
 /**
