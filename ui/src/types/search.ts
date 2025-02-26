@@ -1,4 +1,5 @@
 import { IconProp } from "@/components/ui/icons";
+import { IconDefinition } from "@fortawesome/pro-regular-svg-icons";
 
 /**
  * Options for search operations
@@ -144,4 +145,12 @@ export type SearchInputProps = {
   inputRef: React.RefObject<HTMLInputElement>;
   activeFilters?: Record<string, string>;
   setActiveFilters?: (filters: Record<string, string>) => void;
+};
+
+export type SiteSearchQuickOptionProps = {
+  icon: IconDefinition;
+  label: string;
+  description: string;
+  link?: string;
+  onClick?: () => void;
 };

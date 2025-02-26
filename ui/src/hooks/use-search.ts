@@ -23,7 +23,7 @@ export function useSearch() {
       // Determine which endpoint to use based on active tab
       let endpoint = "/search";
       if (activeTab === "shipments") endpoint = "/search/shipments";
-      else if (activeTab === "drivers") endpoint = "/search/drivers";
+      else if (activeTab === "workers") endpoint = "/search/workers";
       else if (activeTab === "equipment") endpoint = "/search/equipment";
       else if (activeTab === "customers") endpoint = "/search/customers";
 

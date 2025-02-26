@@ -1,4 +1,5 @@
 import { SidebarGroup, SidebarGroupContent } from "@/components/ui/sidebar";
+import { commandRoutes, quickActions } from "@/config/site-search";
 import { useRecentSearches, useSearch } from "@/hooks/use-search";
 import { cn } from "@/lib/utils";
 import { SearchResult } from "@/types/search";
@@ -20,7 +21,10 @@ import { SiteSearchEmpty } from "./site-search-empty";
 import { SiteSearchFooter } from "./site-search-footer";
 import { SearchInputWithBadges } from "./site-search-input";
 import { SiteSearchLoading } from "./site-search-loading";
-import { getResultComponent } from "./site-search-type-components";
+import {
+  getResultComponent,
+  SiteSearchQuickOption,
+} from "./site-search-type-components";
 
 // Local storage key for recent searches
 const RECENT_SEARCHES_KEY = "trenova-recent-searches";
@@ -94,8 +98,8 @@ export function SiteSearchDialog() {
 
   const handleNavigate = useCallback(
     (link: string) => {
-      navigate(link);
       setOpen(false);
+      navigate(link);
       setSearchQuery("");
       setActiveFilters({});
     },
@@ -112,7 +116,7 @@ export function SiteSearchDialog() {
 
       switch (result.type) {
         case "shipment":
-          link = `/shipments/${result.id}`;
+          link = `/shipments/management?entityId=${result.id}&modal=edit`;
           break;
         case "driver":
           link = `/drivers/${result.id}`;
@@ -134,8 +138,8 @@ export function SiteSearchDialog() {
           link = `/search?q=${searchQuery}`;
       }
 
-      navigate(link);
       setOpen(false);
+      navigate(link);
       setSearchQuery("");
       setActiveFilters({});
     },
@@ -271,7 +275,7 @@ export function SiteSearchDialog() {
             <div
               key={`recent-${index}`}
               className={cn(
-                "flex items-center justify-between px-4 py-2 cursor-pointer rounded-md",
+                "flex items-center justify-between p-2 cursor-pointer rounded-md",
                 highlightedIndex === index
                   ? "bg-accent/50"
                   : "hover:bg-accent/30",
@@ -289,7 +293,7 @@ export function SiteSearchDialog() {
               <Button
                 variant="ghost"
                 size="sm"
-                className="h-6 w-6 p-0 opacity-50 hover:opacity-100"
+                className="size-6 p-0 opacity-50 hover:opacity-100"
                 onClick={(e) => {
                   e.stopPropagation();
                   removeRecentSearch(search);
@@ -365,12 +369,73 @@ export function SiteSearchDialog() {
     );
   };
 
+  const renderQuickActions = () => {
+    // If there is a search query, don't show quick actions
+    if (searchQuery) return null;
+
+    return (
+      <div className="flex flex-col gap-1">
+        <h3 className="text-xs font-medium text-muted-foreground">
+          Quick Actions
+        </h3>
+        <div className="flex flex-col gap-1">
+          {Object.entries(quickActions).map(([key, action]) => (
+            <SiteSearchQuickOption
+              key={key}
+              {...action}
+              onClick={() => handleNavigate(action.link || "")}
+            />
+          ))}
+        </div>
+      </div>
+    );
+  };
+
+  const renderApplicationRoutes = () => {
+    if (searchQuery) return null;
+
+    return (
+      <div className="flex flex-col gap-1">
+        <h3 className="text-xs font-medium text-muted-foreground">
+          Navigation
+        </h3>
+        <div className="flex flex-col gap-1">
+          {commandRoutes.map((group) => {
+            return (
+              <React.Fragment key={group.id}>
+                <h4 className="text-xs font-medium text-muted-foreground">
+                  {group.label}
+                </h4>
+                <div className="flex flex-col gap-1">
+                  {group.routes.map((route) => (
+                    <button
+                      key={route.id}
+                      className="flex items-center gap-2 p-2 rounded-md hover:bg-accent/30 transition-colors cursor-pointer outline-none"
+                    >
+                      {route.icon && (
+                        <Icon
+                          icon={route.icon}
+                          className="size-4 text-muted-foreground"
+                        />
+                      )}
+                      <span className="text-sm font-medium">{route.label}</span>
+                    </button>
+                  ))}
+                </div>
+              </React.Fragment>
+            );
+          })}
+        </div>
+      </div>
+    );
+  };
+
   return (
     <>
       {/* <SiteSearchInput open={open} setOpen={setOpen} /> */}
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent
-          className="overflow-hidden p-0 sm:max-w-[600px]"
+          className="overflow-hidden p-0 sm:max-w-[650px]"
           ref={dialogRef}
           withClose={false}
         >
@@ -398,7 +463,9 @@ export function SiteSearchDialog() {
             ref={resultsRef}
           >
             {renderRecentSearches()}
+            {renderApplicationRoutes()}
             {renderSearchResults()}
+            {renderQuickActions()}
           </div>
 
           <SiteSearchFooter />

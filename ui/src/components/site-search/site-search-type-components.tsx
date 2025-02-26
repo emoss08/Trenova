@@ -1,5 +1,5 @@
 import { Icon } from "@/components/ui/icons";
-import { SearchResult } from "@/types/search";
+import { SearchResult, SiteSearchQuickOptionProps } from "@/types/search";
 import { faTruck } from "@fortawesome/pro-regular-svg-icons";
 import { ShipmentStatusBadge } from "../status-badge";
 import Highlight from "../ui/highlight";
@@ -40,6 +40,26 @@ export function ShipmentResultItem(props: SearchResultItemProps) {
         </p>
       </div>
     </div>
+  );
+}
+
+export function SiteSearchQuickOption({
+  icon,
+  label,
+  description,
+  onClick,
+}: SiteSearchQuickOptionProps) {
+  return (
+    <button
+      onClick={onClick}
+      className="flex items-center gap-2 p-2 rounded-md hover:bg-accent/50 transition-colors cursor-pointer outline-none"
+    >
+      <Icon icon={icon} className="size-4 text-muted-foreground" />
+      <div className="flex flex-col text-left">
+        <span className="text-sm font-medium">{label}</span>
+        <span className="text-2xs text-muted-foreground">{description}</span>
+      </div>
+    </button>
   );
 }
 

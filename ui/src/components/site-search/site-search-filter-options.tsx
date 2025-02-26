@@ -1,10 +1,3 @@
-import {
-  faBoxes,
-  faGrid5,
-  faTruck,
-  faUser,
-} from "@fortawesome/pro-regular-svg-icons";
-
 // Get filter options for a specific filter type, considering the entity type
 export function getFilterOptions(
   filterType: string,
@@ -161,44 +154,6 @@ export function getFilterOptions(
       return [];
   }
 }
-
-// Updated tabConfig with more comprehensive filter options per entity type
-export const tabConfig: Record<
-  string,
-  {
-    icon: any;
-    label: string;
-    filters: string[];
-    color: string;
-  }
-> = {
-  all: {
-    icon: faGrid5,
-    label: "All",
-    filters: [],
-    color: "bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-200",
-  },
-  shipments: {
-    icon: faTruck,
-    label: "Shipments",
-    filters: ["status", "priority", "date", "customer"],
-    color: "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300",
-  },
-  workers: {
-    icon: faUser,
-    label: "Workers",
-    filters: ["status", "availability", "type", "license"],
-    color:
-      "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300",
-  },
-  equipment: {
-    icon: faBoxes,
-    label: "Equipment",
-    filters: ["status", "type", "maintenance", "ownership"],
-    color:
-      "bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300",
-  },
-};
 
 // Updated SearchInputWithBadges component to use the enhanced getFilterOptions function
 export function getEntitySpecificFilterOptions(

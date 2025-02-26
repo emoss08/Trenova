@@ -1,4 +1,4 @@
-import { CommandGroupInfo, type routeInfo } from "@/types/nav-links";
+import { type routeInfo } from "@/types/nav-links";
 import {
   faDashboard,
   faFiles,
@@ -6,7 +6,6 @@ import {
   faRoad,
   faScrewdriverWrench,
   faTruck,
-  faUsers,
   faVault,
 } from "@fortawesome/pro-regular-svg-icons";
 
@@ -213,129 +212,5 @@ export const routes: routeInfo[] = [
     label: "Organization Settings",
     icon: faGear,
     link: "/organization-settings",
-  },
-];
-
-export const commandRoutes: CommandGroupInfo[] = [
-  {
-    id: "dashboard",
-    label: "Dashboard",
-    routes: [
-      {
-        id: "main-dashboard",
-        link: "/",
-        label: "Dashboard",
-        icon: faDashboard,
-      },
-    ],
-  },
-  {
-    id: "billing-management",
-    label: "Billing Management",
-    routes: [
-      {
-        id: "customers",
-        link: "/billing/configurations/customers",
-        label: "Customers",
-        icon: faUsers,
-      },
-    ],
-  },
-  {
-    id: "shipment-management",
-    label: "Shipment Management",
-    routes: [
-      {
-        id: "shipments",
-        link: "/shipments/management",
-        label: "Shipments",
-        icon: faTruck,
-      },
-
-      {
-        id: "shipment-types",
-        link: "/shipments/configurations/shipment-types",
-        label: "Shipment Types",
-        icon: faUsers,
-      },
-      {
-        id: "service-types",
-        link: "/shipments/configurations/service-types",
-        label: "Service Types",
-        icon: faTruck,
-      },
-      {
-        id: "hazardous-materials",
-        link: "/shipments/configurations/hazardous-materials",
-        label: "Hazardous Materials",
-        icon: faTruck,
-      },
-      {
-        id: "commodities",
-        link: "/shipments/configurations/commodities",
-        label: "Commodities",
-        icon: faTruck,
-      },
-    ],
-  },
-  {
-    id: "dispatch-management",
-    label: "Dispatch Management",
-    routes: [
-      {
-        id: "workers",
-        link: "/dispatch/configurations/workers",
-        label: "Workers",
-        icon: faUsers,
-      },
-      {
-        id: "fleet-codes",
-        link: "/dispatch/configurations/fleet-codes",
-        label: "Fleet Codes",
-        icon: faTruck,
-      },
-      {
-        id: "location-categories",
-        link: "/dispatch/configurations/location-categories",
-        label: "Location Categories",
-        icon: faTruck,
-      },
-      {
-        id: "locations",
-        link: "/dispatch/configurations/locations",
-        label: "Locations",
-        icon: faTruck,
-      },
-    ],
-  },
-  {
-    id: "equipment-management",
-    label: "Equipment Management",
-    routes: [
-      {
-        id: "equipment-types",
-        link: "/equipment/configurations/equipment-types",
-        label: "Equipment Types",
-        icon: faTruck,
-      },
-      {
-        id: "equipment-manufacturers",
-        link: "/equipment/configurations/equipment-manufacturers",
-        label: "Equipment Manufacturers",
-        icon: faTruck,
-      },
-      {
-        id: "tractors",
-        link: "/equipment/configurations/tractors",
-        label: "Tractors",
-        icon: faTruck,
-      },
-      {
-        id: "trailers",
-        link: "/equipment/configurations/trailers",
-        label: "Trailers",
-        icon: faTruck,
-      },
-    ],
   },
 ];

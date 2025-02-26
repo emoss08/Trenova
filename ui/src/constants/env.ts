@@ -19,3 +19,6 @@ export const STOP_DIALOG_NOTICE_KEY = import.meta.env
 
 export const GOOGLE_MAPS_API_KEY = import.meta.env
   .VITE_GOOGLE_MAPS_API_KEY as string;
+
+export const SITE_SEARCH_RECENT_SEARCHES_KEY = import.meta.env
+  .VITE_SITE_SEARCH_RECENT_SEARCHES_KEY as string;
