@@ -15,6 +15,7 @@ const (
 	CTXOrganizationID = ContextKey("organizationID")
 	CTXBusinessUnitID = ContextKey("businessUnitID")
 	CTXSessionID      = ContextKey("sessionID")
+	CTXUserRole       = ContextKey("userRole")
 )
 
 var (

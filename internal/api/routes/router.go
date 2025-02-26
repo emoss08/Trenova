@@ -64,7 +64,8 @@ type RouterParams struct {
 	Server *server.Server
 
 	// Redis
-	Redis *redis.Client
+	Redis        *redis.Client
+	ScriptLoader *redis.ScriptLoader
 
 	// Services
 	AuthService *auth.Service
@@ -121,8 +122,9 @@ func (r *Router) Setup() {
 
 	// define the rate limit middleware
 	rl := middleware.NewRateLimit(middleware.RateLimitParams{
-		Logger: r.p.Logger,
-		Redis:  r.p.Redis,
+		Logger:       r.p.Logger,
+		Redis:        r.p.Redis,
+		ScriptLoader: r.p.ScriptLoader,
 	})
 
 	// setup the global middlewares
