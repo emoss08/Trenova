@@ -19,9 +19,9 @@ import (
 
 // generateRandomDate generates a random Unix timestamp between two dates
 func generateRandomDate(start, end time.Time) int64 {
-	min := start.Unix()
-	max := end.Unix()
-	return rand.Int63n(max-min) + min
+	minimum := start.Unix()
+	maximum := end.Unix()
+	return rand.Int63n(maximum-minimum) + minimum
 }
 
 // getRandomEndorsement returns a random worker endorsement type

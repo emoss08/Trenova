@@ -19,7 +19,7 @@ type LogClient struct {
 }
 
 // SendLogEntry sends a log entry to the client
-func (c *LogClient) SendLogEntry(entry repositories.LogEntry) error {
+func (c *LogClient) SendLogEntry(entry *repositories.LogEntry) error {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 

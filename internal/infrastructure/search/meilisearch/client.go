@@ -350,30 +350,33 @@ func (c *client) Search(ctx context.Context, opts *infra.SearchOptions) ([]*infr
 
 	// Process hits
 	for _, hit := range res.Hits {
-		if doc, ok := hit.(map[string]any); ok {
-			var searchDoc infra.SearchDocument
-
-			// Use mapstructure to convert the map to our document structure
-			decoderConfig := &mapstructure.DecoderConfig{
-				Result:           &searchDoc,
-				TagName:          "json",
-				WeaklyTypedInput: true,
-			}
-
-			decoder, err := mapstructure.NewDecoder(decoderConfig)
-			if err != nil {
-				c.l.Error().Err(err).Interface("doc", doc).Msg("failed to create decoder for search result")
-				continue
-			}
-
-			if err = decoder.Decode(doc); err != nil {
-				c.l.Error().Err(err).Interface("doc", doc).Msg("failed to decode search result")
-				continue
-			}
-
-			// Add to results
-			results = append(results, &searchDoc)
+		doc, ok := hit.(map[string]any)
+		if !ok {
+			continue
 		}
+
+		var searchDoc infra.SearchDocument
+
+		// Use mapstructure to convert the map to our document structure
+		decoderConfig := &mapstructure.DecoderConfig{
+			Result:           &searchDoc,
+			TagName:          "json",
+			WeaklyTypedInput: true,
+		}
+
+		decoder, err := mapstructure.NewDecoder(decoderConfig)
+		if err != nil {
+			c.l.Error().Err(err).Interface("doc", doc).Msg("failed to create decoder for search result")
+			continue
+		}
+
+		if err = decoder.Decode(doc); err != nil {
+			c.l.Error().Err(err).Interface("doc", doc).Msg("failed to decode search result")
+			continue
+		}
+
+		// Add to results
+		results = append(results, &searchDoc)
 	}
 
 	c.l.Debug().
