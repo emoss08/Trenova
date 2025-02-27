@@ -66,7 +66,10 @@ function CommodityRow({
                 type="button"
                 variant="ghost"
                 size="xs"
-                onClick={() => onEdit(index)}
+                onClick={(e) => {
+                  e.preventDefault();
+                  onEdit(index);
+                }}
               >
                 <Icon icon={faPencil} className="size-4" />
               </Button>
@@ -83,7 +86,10 @@ function CommodityRow({
                 variant="ghost"
                 className="hover:bg-red-500/30 text-red-600 hover:text-red-600"
                 size="xs"
-                onClick={() => onDelete(index)}
+                onClick={(e) => {
+                  e.preventDefault();
+                  onDelete(index);
+                }}
               >
                 <Icon icon={faTrash} className="size-4" />
               </Button>
