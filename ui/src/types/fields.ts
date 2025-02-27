@@ -177,8 +177,12 @@ export interface BaseAutocompleteFieldProps<TOption> {
   noResultsMessage?: string;
   /** Allow clearing the selection */
   clearable?: boolean;
+  /** Whether the field is invalid */
+  isInvalid?: boolean;
   /** Callback when an option is selected (Specific to AutocompleteField) */
   onOptionChange?: (option: TOption | null) => void;
+  /** Extra search params to append to the query */
+  extraSearchParams?: Record<string, string>;
 }
 
 export type AutocompleteFieldProps<TOption, TForm extends FieldValues> = Omit<

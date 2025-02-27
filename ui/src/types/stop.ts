@@ -15,6 +15,17 @@ export enum StopType {
   SplitDelivery = "SplitDelivery",
 }
 
+export const mapToStopType = (stopType: StopType) => {
+  const stopTypeLabels = {
+    Pickup: "Pickup",
+    Delivery: "Delivery",
+    SplitPickup: "Split Pickup",
+    SplitDelivery: "Split Delivery",
+  };
+
+  return stopTypeLabels[stopType];
+};
+
 export type Stop = StopSchema & {
   location?: LocationSchema | null;
 };

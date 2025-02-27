@@ -24,7 +24,7 @@ type Entry struct {
 	UserID         pulid.ID `json:"userId" bun:",type:VARCHAR(100),notnull"`
 	BusinessUnitID pulid.ID `json:"businessUnitId" bun:",type:VARCHAR(100),notnull"`
 	OrganizationID pulid.ID `json:"organizationId" bun:",type:VARCHAR(100),notnull"`
-	CorrelationID  pulid.ID `json:"correlationId,omitempty" bun:",type:VARCHAR(100)"`
+	CorrelationID  string   `json:"correlationId,omitempty" bun:",type:VARCHAR(100)"`
 
 	// Core fields
 	Timestamp     int64               `json:"timestamp" bun:",notnull,default:extract(epoch from current_timestamp)::bigint"`
@@ -37,6 +37,11 @@ type Entry struct {
 	UserAgent     string              `json:"userAgent,omitempty" bun:",type:VARCHAR(255)"`
 	Comment       string              `json:"comment,omitempty" bun:",type:TEXT"`
 	SensitiveData bool                `json:"sensitiveData" bun:",notnull,default:false"`
+
+	// New fields
+	Category  string `json:"category" bun:",type:VARCHAR(50),notnull,default:'system'"`
+	Critical  bool   `json:"critical" bun:",notnull,default:false"`
+	IPAddress string `json:"ipAddress,omitempty" bun:",type:VARCHAR(45)"` // IPv6 addresses need space
 
 	// Relationships
 	User         *user.User                 `json:"-" bun:"rel:belongs-to,join:user_id=id"`
@@ -52,6 +57,7 @@ func (e *Entry) Validate() error {
 		validation.Field(&e.ResourceID, validation.Required.Error("Resource ID is required")),
 		validation.Field(&e.Action, validation.Required.Error("Action is required")),
 		validation.Field(&e.UserID, validation.Required.Error("User ID is required")),
+		validation.Field(&e.Category, validation.Required.Error("Category is required")),
 	)
 }
 
@@ -64,6 +70,11 @@ func (e *Entry) BeforeAppendModel(_ context.Context, query bun.Query) error {
 
 		if e.Timestamp == 0 {
 			e.Timestamp = now
+		}
+
+		// Set default category if empty
+		if e.Category == "" {
+			e.Category = "system"
 		}
 	}
 	return nil

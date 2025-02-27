@@ -51,3 +51,69 @@ ALTER TABLE "stops"
 ALTER TABLE "stops"
     ADD CONSTRAINT "fk_stops_location" FOREIGN KEY ("location_id", "business_unit_id", "organization_id") REFERENCES "locations"("id", "business_unit_id", "organization_id") ON UPDATE NO ACTION ON DELETE SET NULL;
 
+--bun:split
+ALTER TABLE "locations"
+    ADD COLUMN IF NOT EXISTS search_vector tsvector;
+
+--bun:split
+CREATE INDEX IF NOT EXISTS idx_locations_search ON locations USING GIN(search_vector);
+
+--bun:split
+CREATE OR REPLACE FUNCTION locations_search_vector_update()
+    RETURNS TRIGGER
+    AS $$
+BEGIN
+    NEW.search_vector := setweight(to_tsvector('simple', COALESCE(NEW.code, '')), 'A') || setweight(to_tsvector('simple', COALESCE(NEW.name, '')), 'A') || setweight(to_tsvector('simple', COALESCE(NEW.description, '')), 'B') || setweight(to_tsvector('simple', COALESCE(NEW.address_line_1, '')), 'B') || setweight(to_tsvector('simple', COALESCE(NEW.address_line_2, '')), 'B') || setweight(to_tsvector('simple', COALESCE(NEW.city, '')), 'B') || setweight(to_tsvector('simple', COALESCE(NEW.postal_code, '')), 'C');
+    -- Auto-update timestamps
+    NEW.updated_at := EXTRACT(EPOCH FROM CURRENT_TIMESTAMP)::bigint;
+    RETURN NEW;
+END;
+$$
+LANGUAGE plpgsql;
+
+--bun:split
+DROP TRIGGER IF EXISTS locations_search_vector_trigger ON locations;
+
+--bun:split
+CREATE TRIGGER locations_search_vector_trigger
+    BEFORE INSERT OR UPDATE ON locations
+    FOR EACH ROW
+    EXECUTE FUNCTION locations_search_vector_update();
+
+--bun:split
+ALTER TABLE locations
+    ALTER COLUMN status SET STATISTICS 1000;
+
+--bun:split
+ALTER TABLE locations
+    ALTER COLUMN organization_id SET STATISTICS 1000;
+
+--bun:split
+ALTER TABLE locations
+    ALTER COLUMN business_unit_id SET STATISTICS 1000;
+
+--bun:split
+CREATE INDEX IF NOT EXISTS idx_locations_trgm_code ON locations USING gin(code gin_trgm_ops);
+
+--bun:split
+CREATE INDEX IF NOT EXISTS idx_locations_trgm_name ON locations USING gin(name gin_trgm_ops);
+
+--bun:split
+CREATE INDEX IF NOT EXISTS idx_locations_trgm_description ON locations USING gin(description gin_trgm_ops);
+
+--bun:split
+CREATE INDEX IF NOT EXISTS idx_locations_trgm_address_line_1 ON locations USING gin(address_line_1 gin_trgm_ops);
+
+--bun:split
+CREATE INDEX IF NOT EXISTS idx_locations_trgm_address_line_2 ON locations USING gin(address_line_2 gin_trgm_ops);
+
+--bun:split
+CREATE INDEX IF NOT EXISTS idx_locations_trgm_city ON locations USING gin(city gin_trgm_ops);
+
+--bun:split
+CREATE INDEX IF NOT EXISTS idx_locations_trgm_postal_code ON locations USING gin(postal_code gin_trgm_ops);
+
+--bun:split
+CREATE INDEX IF NOT EXISTS idx_locations_trgm_code_name_description ON locations USING gin((code || ' ' || name || ' ' || description) gin_trgm_ops);
+
+--bun:split

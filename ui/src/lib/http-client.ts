@@ -11,10 +11,11 @@ export type HttpClientResponse<T> = {
 };
 
 export interface RequestConfig extends Omit<RequestInit, "method" | "body"> {
-  params?: Record<string, string>;
+  params?: Record<string, string | undefined>;
   timeout?: number;
   retries?: number;
   isFormData?: boolean;
+  responseType?: "blob";
 }
 
 type DownloadOptions = {
@@ -120,13 +121,25 @@ class HttpClient {
     return new Promise((resolve) => setTimeout(resolve, ms));
   }
 
-  private buildUrl(endpoint: string, params?: Record<string, string>): string {
+  /**
+   * Builds the URL with query parameters, filtering out undefined values
+   */
+  private buildUrl(
+    endpoint: string,
+    params?: Record<string, string | undefined>,
+  ): string {
     const url = new URL(`${API_URL}${endpoint}`);
+
     if (params) {
+      // Filter out undefined, null, and empty string values
       Object.entries(params).forEach(([key, value]) => {
-        url.searchParams.append(key, value);
+        // Only append parameters that have actual values
+        if (value !== undefined && value !== null && value !== "") {
+          url.searchParams.append(key, value);
+        }
       });
     }
+
     return url.toString();
   }
 
@@ -194,12 +207,14 @@ class HttpClient {
 
     try {
       return await this.executeWithRetry(async () => {
+        const requestUrl = this.buildUrl(endpoint, params);
+
         console.debug(
-          `%c[Trenova] HTTP ${method} Request: ${endpoint}`,
+          `%c[Trenova] Facilitating HTTP ${method} Request: ${requestUrl}`,
           "color: #34ebe5; font-weight: bold",
         );
 
-        const response = await fetch(this.buildUrl(endpoint, params), {
+        const response = await fetch(requestUrl, {
           ...options,
           method,
           signal: controller.signal,

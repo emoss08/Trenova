@@ -23,13 +23,18 @@ export default tseslint.config(
     rules: {
       "prettier/prettier": ["error", { endOfLine: "auto" }],
       "@typescript-eslint/no-explicit-any": "off",
+      "@typescript-eslint/no-non-null-assertion": "off",
       "react/react-in-jsx-scope": "off",
     },
   },
   {
     plugins: {
+      // @ts-expect-error - react-hooks is not typed
       "react-hooks": eslintPluginReactHooks,
     },
-    rules: { ...eslintPluginReactHooks.configs.recommended.rules },
+    rules: {
+      "react-hooks/rules-of-hooks": "error",
+      "react-hooks/exhaustive-deps": "warn",
+    },
   },
 );

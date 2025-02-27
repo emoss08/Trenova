@@ -2,6 +2,7 @@ package shipment
 
 import (
 	"context"
+	"fmt"
 	"strings"
 
 	"github.com/emoss08/trenova/internal/core/domain"
@@ -192,8 +193,14 @@ func (st *Shipment) ToDocument() infra.SearchDocument {
 		CreatedAt:      st.CreatedAt,
 		UpdatedAt:      st.UpdatedAt,
 		Title:          st.ProNumber,
-		Description:    st.ProNumber,
+		Description:    fmt.Sprintf("Pro Number: %s, BOL: %s, Status: %s", st.ProNumber, st.BOL, st.Status),
 		SearchableText: strings.Join(searchableText, " "),
+		Metadata: map[string]any{
+			"bol":        st.BOL,
+			"customerID": st.CustomerID.String(),
+			"proNumber":  st.ProNumber,
+			"status":     st.Status,
+		},
 	}
 }
 

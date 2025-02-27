@@ -1,119 +1,233 @@
 package audit
 
 import (
+	"crypto/aes"
+	"crypto/cipher"
+	"crypto/rand"
 	"crypto/sha256"
+	"encoding/base64"
 	"encoding/hex"
 	"fmt"
+	"io"
+	"regexp"
 	"strings"
 	"sync"
 
 	"github.com/emoss08/trenova/internal/core/domain/audit"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
+	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/go-ozzo/ozzo-validation/v4/is"
+	"github.com/rotisserie/eris"
 )
-
-type SensitiveFieldAction int
-
-const (
-	SensitiveFieldOmit SensitiveFieldAction = iota
-	SensitiveFieldMask
-	SensitiveFieldHash
-)
-
-// SensitiveField is a field that is considered sensitive and should be masked.
-type SensitiveField struct {
-	Name    string
-	Action  SensitiveFieldAction
-	Pattern string // Optional regex pattern for more precise masking
-}
 
 // SensitiveDataManager is a manager for sensitive data.
 type SensitiveDataManager struct {
-	resourceFields map[permission.Resource][]SensitiveField
+	resourceFields map[permission.Resource][]services.SensitiveField
+	encryptionKey  []byte
+	regexCache     map[string]*regexp.Regexp
 	mu             sync.RWMutex
 }
 
 func NewSensitiveDataManager() *SensitiveDataManager {
 	return &SensitiveDataManager{
-		resourceFields: make(map[permission.Resource][]SensitiveField),
+		resourceFields: make(map[permission.Resource][]services.SensitiveField),
+		regexCache:     make(map[string]*regexp.Regexp),
 	}
 }
 
-// RegisterSensitiveFields registers sensitive fields for a resource.
-func (sdm *SensitiveDataManager) RegisterSensitiveFields(resource permission.Resource, fields []SensitiveField) {
+// SetEncryptionKey sets the encryption key for field-level encryption
+// This should be called during initialization with a secure key
+func (sdm *SensitiveDataManager) SetEncryptionKey(key []byte) error {
+	if len(key) != 32 { // AES-256 requires 32 bytes
+		return eris.New("encryption key must be 32 bytes for AES-256")
+	}
+
 	sdm.mu.Lock()
 	defer sdm.mu.Unlock()
+
+	sdm.encryptionKey = make([]byte, len(key))
+	copy(sdm.encryptionKey, key)
+
+	return nil
+}
+
+// RegisterSensitiveFields registers sensitive fields for a resource.
+func (sdm *SensitiveDataManager) RegisterSensitiveFields(resource permission.Resource, fields []services.SensitiveField) error {
+	sdm.mu.Lock()
+	defer sdm.mu.Unlock()
+
+	// Precompile any regex patterns for efficiency
+	for i, field := range fields {
+		if field.Pattern != "" {
+			if _, exists := sdm.regexCache[field.Pattern]; !exists {
+				compiled, err := regexp.Compile(field.Pattern)
+				if err != nil {
+					return eris.Wrapf(err, "invalid regex pattern for field %s", field.Name)
+				}
+				sdm.regexCache[field.Pattern] = compiled
+			}
+		}
+
+		// Validate that we have an encryption key if any field uses encryption
+		if field.Action == services.SensitiveFieldEncrypt && len(sdm.encryptionKey) == 0 {
+			return eris.New("encryption key not set for encrypted fields")
+		}
+
+		// Store the validated field
+		fields[i] = field
+	}
+
 	sdm.resourceFields[resource] = fields
+	return nil
 }
 
 // GetSensitiveFields returns the sensitive fields for a resource.
-func (sdm *SensitiveDataManager) GetSensitiveFields(resource permission.Resource) []SensitiveField {
+func (sdm *SensitiveDataManager) GetSensitiveFields(resource permission.Resource) []services.SensitiveField {
 	sdm.mu.RLock()
 	defer sdm.mu.RUnlock()
-	return sdm.resourceFields[resource]
+
+	fields, ok := sdm.resourceFields[resource]
+	if !ok {
+		return nil
+	}
+
+	// Return a copy to prevent modification of internal state
+	result := make([]services.SensitiveField, len(fields))
+	copy(result, fields)
+
+	return result
 }
 
 // sanitizeData sanitizes the data in an audit entry.
-func sanitizeData(entry *audit.Entry, fields []SensitiveField) {
+func (sdm *SensitiveDataManager) sanitizeData(entry *audit.Entry) error {
+	fields := sdm.GetSensitiveFields(entry.Resource)
+	if len(fields) == 0 {
+		return nil
+	}
+
 	// Sanitize Changes
 	if entry.Changes != nil {
-		sanitizeJSONMap(entry.Changes, fields)
+		if err := sdm.sanitizeJSONMap(entry.Changes, fields); err != nil {
+			return err
+		}
 	}
 
 	// Sanitize States
 	if entry.PreviousState != nil {
-		sanitizeJSONMap(entry.PreviousState, fields)
+		if err := sdm.sanitizeJSONMap(entry.PreviousState, fields); err != nil {
+			return err
+		}
 	}
 	if entry.CurrentState != nil {
-		sanitizeJSONMap(entry.CurrentState, fields)
+		if err := sdm.sanitizeJSONMap(entry.CurrentState, fields); err != nil {
+			return err
+		}
 	}
 
 	// Sanitize Metadata
 	if entry.Metadata != nil {
-		sanitizeJSONMap(entry.Metadata, fields)
+		if err := sdm.sanitizeJSONMap(entry.Metadata, fields); err != nil {
+			return err
+		}
 	}
+
+	entry.SensitiveData = true
+	return nil
 }
 
 // sanitizeJSONMap sanitizes the data in a JSON map.
-func sanitizeJSONMap(data map[string]any, fields []SensitiveField) {
+func (sdm *SensitiveDataManager) sanitizeJSONMap(data map[string]any, fields []services.SensitiveField) error {
 	for _, field := range fields {
+		// Check for direct field match
 		if value, exists := data[field.Name]; exists {
 			switch field.Action {
-			case SensitiveFieldOmit:
+			case services.SensitiveFieldOmit:
 				delete(data, field.Name)
-			case SensitiveFieldMask:
-				data[field.Name] = maskValue(value)
-			case SensitiveFieldHash:
-				hashed, err := hashValue(value)
+			case services.SensitiveFieldMask:
+				data[field.Name] = sdm.maskValue(value)
+			case services.SensitiveFieldHash:
+				hashed, err := sdm.hashValue(value)
 				if err != nil {
-					continue
+					return eris.Wrapf(err, "failed to hash field %s", field.Name)
 				}
 				data[field.Name] = hashed
+			case services.SensitiveFieldEncrypt:
+				encrypted, err := sdm.encryptValue(value)
+				if err != nil {
+					return eris.Wrapf(err, "failed to encrypt field %s", field.Name)
+				}
+				data[field.Name] = encrypted
 			}
 		}
 
-		// Handle nested objects
-		for _, val := range data {
-			switch v := val.(type) {
-			case map[string]any:
-				sanitizeJSONMap(v, fields)
-			case []any:
-				for _, item := range v {
-					if nm, nmOK := item.(map[string]any); nmOK {
-						sanitizeJSONMap(nm, fields)
+		// Handle pattern matching if specified
+		if field.Pattern != "" {
+			sdm.mu.RLock()
+			pattern, exists := sdm.regexCache[field.Pattern]
+			sdm.mu.RUnlock()
+
+			if exists {
+				for key, value := range data {
+					if strVal, ok := value.(string); ok && pattern.MatchString(strVal) {
+						switch field.Action {
+						case services.SensitiveFieldOmit:
+							delete(data, key)
+						case services.SensitiveFieldMask:
+							data[key] = sdm.maskValue(value)
+						case services.SensitiveFieldHash:
+							hashed, err := sdm.hashValue(value)
+							if err != nil {
+								return eris.Wrapf(err, "failed to hash field %s", key)
+							}
+							data[key] = hashed
+						case services.SensitiveFieldEncrypt:
+							encrypted, err := sdm.encryptValue(value)
+							if err != nil {
+								return eris.Wrapf(err, "failed to encrypt field %s", key)
+							}
+							data[key] = encrypted
+						}
 					}
 				}
 			}
 		}
+
+		// Handle nested objects and arrays
+		for _, val := range data {
+			switch v := val.(type) {
+			case map[string]any:
+				if err := sdm.sanitizeJSONMap(v, fields); err != nil {
+					return err
+				}
+			case []any:
+				if err := sdm.sanitizeJSONArray(v, fields); err != nil {
+					return err
+				}
+			}
+		}
 	}
+
+	return nil
+}
+
+// sanitizeJSONArray sanitizes elements in a JSON array
+func (sdm *SensitiveDataManager) sanitizeJSONArray(arr []any, fields []services.SensitiveField) error {
+	for _, item := range arr {
+		if mapItem, ok := item.(map[string]any); ok {
+			if err := sdm.sanitizeJSONMap(mapItem, fields); err != nil {
+				return err
+			}
+		}
+	}
+	return nil
 }
 
 // maskValue masks the value of a sensitive field.
-func maskValue(value any) any {
+func (sdm *SensitiveDataManager) maskValue(value any) any {
 	switch v := value.(type) {
 	case string:
 		// * Handle special cases first
-		if maskedValue, handled := handleSpecialCases(v); handled {
+		if maskedValue, handled := sdm.handleSpecialCases(v); handled {
 			return maskedValue
 		}
 
@@ -133,25 +247,83 @@ func maskValue(value any) any {
 }
 
 // hashValue hashes the value of a sensitive field.
-func hashValue(value any) (string, error) {
+func (sdm *SensitiveDataManager) hashValue(value any) (string, error) {
 	hash := sha256.New()
 	_, err := fmt.Fprintf(hash, "%v", value)
 	if err != nil {
-		return "", err
+		return "", eris.Wrap(err, "failed to compute hash")
 	}
 	return hex.EncodeToString(hash.Sum(nil)), nil
 }
 
-// handleSpecialCases handles special cases for sensitive fields.
-func handleSpecialCases(value string) (string, bool) {
-	if is.URL.Validate(value) == nil {
-		return strings.Split(value, "://")[0] + "://" + DefaultMaskValue, true
+// encryptValue encrypts a value using AES-GCM
+func (sdm *SensitiveDataManager) encryptValue(value any) (string, error) {
+	sdm.mu.RLock()
+	key := sdm.encryptionKey
+	sdm.mu.RUnlock()
+
+	if len(key) == 0 {
+		return "", eris.New("encryption key not set")
 	}
 
+	// Convert value to string
+	plaintext := fmt.Sprintf("%v", value)
+
+	// Create a new AES cipher block
+	block, err := aes.NewCipher(key)
+	if err != nil {
+		return "", eris.Wrap(err, "failed to create AES cipher")
+	}
+
+	// Create a GCM mode cipher
+	gcm, err := cipher.NewGCM(block)
+	if err != nil {
+		return "", eris.Wrap(err, "failed to create GCM cipher")
+	}
+
+	// Create a nonce
+	nonce := make([]byte, gcm.NonceSize())
+	if _, err := io.ReadFull(rand.Reader, nonce); err != nil {
+		return "", eris.Wrap(err, "failed to create nonce")
+	}
+
+	// Encrypt the plaintext
+	ciphertext := gcm.Seal(nonce, nonce, []byte(plaintext), nil)
+
+	// Return base64 encoded ciphertext
+	return base64.StdEncoding.EncodeToString(ciphertext), nil
+}
+
+// handleSpecialCases handles special cases for sensitive fields.
+func (sdm *SensitiveDataManager) handleSpecialCases(value string) (string, bool) {
+	// Handle URLs
+	if is.URL.Validate(value) == nil {
+		parts := strings.Split(value, "://")
+		if len(parts) >= 2 {
+			return parts[0] + "://" + DefaultMaskValue, true
+		}
+	}
+
+	// Handle emails
 	if is.Email.Validate(value) == nil {
 		parts := strings.Split(value, "@")
-		domain := parts[1]
-		return "****@" + domain, true
+		if len(parts) == 2 {
+			domain := parts[1]
+			return "****@" + domain, true
+		}
+	}
+
+	// Handle SSN (assuming US format XXX-XX-XXXX)
+	ssnPattern := regexp.MustCompile(`^\d{3}-\d{2}-\d{4}$`)
+	if ssnPattern.MatchString(value) {
+		return "XXX-XX-" + value[7:], true
+	}
+
+	// Handle credit card numbers
+	ccPattern := regexp.MustCompile(`^\d{13,19}$`)
+	if ccPattern.MatchString(value) {
+		last4 := value[len(value)-4:]
+		return strings.Repeat("*", len(value)-4) + last4, true
 	}
 
 	return "", false

@@ -33,9 +33,11 @@ type EquipmentManufacturer struct {
 	Description string        `json:"description" bun:"description,type:VARCHAR(255)"`
 
 	// Metadata
-	Version   int64 `json:"version" bun:"version,type:BIGINT"`
-	CreatedAt int64 `json:"createdAt" bun:"created_at,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	UpdatedAt int64 `json:"updatedAt" bun:"updated_at,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	Version      int64  `json:"version" bun:"version,type:BIGINT"`
+	CreatedAt    int64  `json:"createdAt" bun:"created_at,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	UpdatedAt    int64  `json:"updatedAt" bun:"updated_at,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	SearchVector string `json:"-" bun:"search_vector,type:TSVECTOR,scanonly"`
+	Rank         string `json:"-" bun:"rank,type:VARCHAR(100),scanonly"`
 
 	// Relationships
 	BusinessUnit *businessunit.BusinessUnit `json:"businessUnit,omitempty" bun:"rel:belongs-to,join:business_unit_id=id"`

@@ -106,6 +106,11 @@ type AuditConfig struct {
 	// Defaults to 10 seconds.
 	// You may need to increase this if you're using a high-traffic service.
 	FlushInterval int `mapstructure:"flushInterval"`
+
+	// MaxRetries is the max retries.
+	// This is the maximum number of retries for the audit service.
+	// Defaults to 3.
+	MaxRetries int `mapstructure:"maxRetries"`
 }
 
 // AppConfig is the configuration for the app.

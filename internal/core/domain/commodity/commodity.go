@@ -40,9 +40,11 @@ type Commodity struct {
 	Fragile           bool          `bun:"fragile,type:BOOLEAN,default:false" json:"fragile"`
 
 	// Metadata
-	Version   int64 `bun:"version,type:BIGINT" json:"version"`
-	CreatedAt int64 `bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" json:"createdAt"`
-	UpdatedAt int64 `bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" json:"updatedAt"`
+	Version      int64  `bun:"version,type:BIGINT" json:"version"`
+	CreatedAt    int64  `bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" json:"createdAt"`
+	UpdatedAt    int64  `bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" json:"updatedAt"`
+	SearchVector string `json:"-" bun:"search_vector,type:TSVECTOR,scanonly"`
+	Rank         string `json:"-" bun:"rank,type:VARCHAR(100),scanonly"`
 
 	// Relationships
 	BusinessUnit      *businessunit.BusinessUnit           `bun:"rel:belongs-to,join:business_unit_id=id" json:"-"`
@@ -67,13 +69,13 @@ func (c *Commodity) Validate(ctx context.Context, multiErr *errors.MultiError) {
 		validation.Field(&c.MinTemperature,
 			validation.When(c.MaxTemperature != nil,
 				validation.Required.Error("Min temperature is required when max temperature is provided"),
-				validation.Min(*c.MaxTemperature).Error("Min temperature must be less than max temperature"),
+				validation.Min(c.MaxTemperature).Error("Min temperature must be less than max temperature"),
 			),
 		),
 		validation.Field(&c.MaxTemperature,
 			validation.When(c.MinTemperature != nil,
 				validation.Required.Error("Max temperature is required when min temperature is provided"),
-				validation.Min(*c.MinTemperature).Error("Max temperature must be greater than min temperature"),
+				validation.Min(c.MinTemperature).Error("Max temperature must be greater than min temperature"),
 			),
 		),
 	)

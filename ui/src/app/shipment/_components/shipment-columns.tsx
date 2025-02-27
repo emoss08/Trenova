@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/rules-of-hooks */
 import {
   DataTableColumnHeader,
   DataTableColumnHeaderWithTooltip,
@@ -10,8 +11,8 @@ import {
 import { ShipmentStatusBadge } from "@/components/status-badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
-  generateDateOnlyString,
   generateDateTimeString,
+  generateDateTimeStringFromUnixTimestamp,
   toDate,
 } from "@/lib/date";
 import { LocationSchema } from "@/lib/schemas/location-schema";
@@ -71,7 +72,7 @@ export function getColumns(): ColumnDef<Shipment>[] {
       accessorKey: "proNumber",
       getHeaderText: "Pro Number",
       getId: (shipment) => shipment.id,
-      getDisplayText: (shipment) => shipment.proNumber,
+      getDisplayText: (shipment) => shipment.proNumber || "-",
     }),
     createEntityRefColumn<Shipment, "customer">(columnHelper, "customer", {
       basePath: "/billing/configurations/customers",
@@ -116,12 +117,11 @@ export function getColumns(): ColumnDef<Shipment>[] {
           return <p>-</p>;
         }
 
-        const arrivalDate = toDate(originStop.plannedArrival);
-        if (!arrivalDate) {
-          return <p>-</p>;
-        }
-
-        return <p>{generateDateTimeString(arrivalDate)}</p>;
+        return (
+          <p>
+            {generateDateTimeStringFromUnixTimestamp(originStop.plannedArrival)}
+          </p>
+        );
       },
     },
     createNestedEntityRefColumn(columnHelper, {
@@ -186,16 +186,16 @@ export function getColumns(): ColumnDef<Shipment>[] {
         <DataTableColumnHeader column={column} title="BOL" />
       ),
     },
-    {
-      id: "createdAt",
-      header: "Created At",
-      cell: ({ row }) => {
-        const { createdAt } = row.original;
-        const date = toDate(createdAt as number);
-        if (!date) return <p>-</p>;
+    // {
+    //   id: "createdAt",
+    //   header: "Created At",
+    //   cell: ({ row }) => {
+    //     const { createdAt } = row.original;
+    //     const date = toDate(createdAt as number);
+    //     if (!date) return <p>-</p>;
 
-        return <p>{generateDateOnlyString(date)}</p>;
-      },
-    },
+    //     return <p>{generateDateOnlyString(date)}</p>;
+    //   },
+    // },
   ];
 }

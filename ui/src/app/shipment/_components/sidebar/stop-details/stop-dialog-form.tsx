@@ -74,7 +74,6 @@ export function StopDialogForm({
               options={stopStatusChoices}
             />
           </FormControl>
-
           <FormControl>
             <InputField
               name={`moves.${moveIdx}.stops.${stopIdx}.pieces`}
@@ -83,6 +82,7 @@ export function StopDialogForm({
               placeholder="Enter quantity"
               type="number"
               description="Specifies the total number of items at this stop."
+              sideText="pcs"
             />
           </FormControl>
           <FormControl>
@@ -93,9 +93,9 @@ export function StopDialogForm({
               placeholder="Enter weight"
               type="number"
               description="Specifies the total freight weight for this stop."
+              sideText="lbs"
             />
           </FormControl>
-
           <FormControl cols="full">
             <AutocompleteField<LocationSchema, ShipmentSchema>
               name={`moves.${moveIdx}.stops.${stopIdx}.locationId`}
@@ -107,12 +107,23 @@ export function StopDialogForm({
               description="Select the designated location for this stop."
               getOptionValue={(option) => option.id || ""}
               getDisplayValue={(option) => option.name}
-              renderOption={(option) => option.name}
+              renderOption={(option) => (
+                <div className="flex flex-col gap-0.5 items-start size-full">
+                  <span className="text-sm font-normal">{option.name}</span>
+                  <span className="text-2xs text-muted-foreground truncate w-full">
+                    {formatLocation(option)}
+                  </span>
+                </div>
+              )}
+              extraSearchParams={{
+                includeState: "true",
+              }}
             />
           </FormControl>
           <FormControl cols="full">
             <InputField
               name={`moves.${moveIdx}.stops.${stopIdx}.addressLine`}
+              rules={{ required: true }}
               control={control}
               label="Address"
               placeholder="Full address details"

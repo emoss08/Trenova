@@ -1,5 +1,5 @@
 import { faFingerprint, faXmark } from "@fortawesome/pro-regular-svg-icons";
-import { AnimatePresence, motion } from "motion/react";
+import { AnimatePresence, motion } from "framer-motion";
 import { ReactNode, RefObject, useEffect, useRef } from "react";
 import { Button } from "./button";
 import { Icon } from "./icons";

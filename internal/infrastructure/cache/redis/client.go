@@ -3,6 +3,7 @@ package redis
 import (
 	"context"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/bytedance/sonic"
@@ -272,13 +273,13 @@ func (c *Client) Expire(ctx context.Context, key string, expiration time.Duratio
 }
 
 // Del is a helper function to delete a key from redis
-func (c *Client) Del(ctx context.Context, key string) error {
-	if err := c.Client.Del(ctx, key).Err(); err != nil {
+func (c *Client) Del(ctx context.Context, keys ...string) error {
+	if err := c.Client.Del(ctx, keys...).Err(); err != nil {
 		return eris.Wrap(err, "failed to delete key from redis")
 	}
 
 	c.l.Debug().
-		Str("key", key).
+		Str("keys", strings.Join(keys, ", ")).
 		Msg("redis del success")
 
 	return nil

@@ -136,7 +136,15 @@ export function EquipmentStatusBadge({ status }: { status: EquipmentStatus }) {
   );
 }
 
-export function ShipmentStatusBadge({ status }: { status?: ShipmentStatus }) {
+export function ShipmentStatusBadge({
+  status,
+  withDot,
+  className,
+}: {
+  status?: ShipmentStatus;
+  withDot?: boolean;
+  className?: string;
+}) {
   if (!status) return null;
 
   const statusAttributes: Record<ShipmentStatus, BadgeAttrProps> = {
@@ -200,7 +208,11 @@ export function ShipmentStatusBadge({ status }: { status?: ShipmentStatus }) {
     <TooltipProvider>
       <Tooltip>
         <TooltipTrigger>
-          <Badge variant={statusAttributes[status].variant} className="max-h-6">
+          <Badge
+            withDot={withDot}
+            variant={statusAttributes[status].variant}
+            className={cn(className, "max-h-6")}
+          >
             {statusAttributes[status].text}
           </Badge>
         </TooltipTrigger>
@@ -253,6 +265,12 @@ export function PlainShipmentStatusBadge({
       text: "Completed",
       description:
         "All transportation activities for this shipment have been successfully completed.",
+    },
+    [ShipmentStatus.PartiallyCompleted]: {
+      className: "bg-indigo-600",
+      text: "Partially Completed",
+      description:
+        "Some moves within this shipment have been completed, but not all.",
     },
     [ShipmentStatus.Billed]: {
       className: "bg-teal-600",

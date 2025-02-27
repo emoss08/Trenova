@@ -217,7 +217,10 @@ const ReactSelectInput = React.forwardRef<any, ReactSelectInputProps>(
             ),
           placeholder: () =>
             cn("text-muted-foreground", isError && "text-red-500"),
-          container: () => cn(isReadOnly && "cursor-not-allowed opacity-60"),
+          container: () =>
+            cn(
+              isReadOnly && "cursor-not-allowed opacity-60 pointer-events-none",
+            ),
           valueContainer: () => cn("gap-1", isReadOnly && "cursor-not-allowed"),
           singleValue: () => "leading-7 ml-1",
           multiValue: () =>
