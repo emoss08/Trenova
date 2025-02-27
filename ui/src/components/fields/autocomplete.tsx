@@ -1,5 +1,5 @@
 import { useDebounce } from "@/hooks/use-debounce";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -94,6 +94,14 @@ export function Autocomplete<T>({
   const debouncedSearchTerm = useDebounce(searchTerm, preload ? 0 : 300);
   const [hasMore, setHasMore] = useState(false);
   const [page, setPage] = useState(1);
+  const commandListRef = useRef<HTMLDivElement>(null);
+
+  // Animation frame reference for smooth scrolling
+  const animationRef = useRef<number | null>(null);
+  // Target scroll position for smooth scrolling
+  const targetScrollRef = useRef<number | null>(null);
+  // Current scroll velocity
+  const velocityRef = useRef(0);
 
   // Fetch initial value if it exists
   useEffect(() => {
@@ -152,6 +160,50 @@ export function Autocomplete<T>({
     }
   }, [debouncedSearchTerm, open, page, link, extraSearchParams]);
 
+  // Clean up animation frame on unmount
+  useEffect(() => {
+    return () => {
+      if (animationRef.current !== null) {
+        cancelAnimationFrame(animationRef.current);
+      }
+    };
+  }, []);
+
+  // Smooth scrolling animation function
+  const smoothScroll = useCallback(() => {
+    if (!commandListRef.current || targetScrollRef.current === null) return;
+
+    const element = commandListRef.current;
+    const target = targetScrollRef.current;
+    const current = element.scrollTop;
+
+    // Distance to target
+    const distance = target - current;
+
+    // If we're very close to target, just set it and stop
+    if (Math.abs(distance) < 0.5) {
+      element.scrollTop = target;
+      targetScrollRef.current = null;
+      velocityRef.current = 0;
+      return;
+    }
+
+    // Calculate spring-like animation
+    // Spring factor: lower = smoother but slower
+    const spring = 0.15;
+
+    // Update velocity with spring physics
+    velocityRef.current += distance * spring;
+    // Apply damping to prevent oscillation
+    velocityRef.current *= 0.8;
+
+    // Apply velocity to scroll position
+    element.scrollTop += velocityRef.current;
+
+    // Continue animation
+    animationRef.current = requestAnimationFrame(smoothScroll);
+  }, []);
+
   const handleSelect = useCallback(
     (currentValue: string) => {
       const newValue = clearable && currentValue === value ? "" : currentValue;
@@ -187,6 +239,52 @@ export function Autocomplete<T>({
       }
     },
     [loading, hasMore],
+  );
+
+  // Handle wheel events with smooth scrolling
+  const handleWheel = useCallback(
+    (e: React.WheelEvent<HTMLDivElement>) => {
+      if (commandListRef.current) {
+        // Only intercept wheel events if the content is scrollable
+        if (
+          commandListRef.current.scrollHeight >
+          commandListRef.current.clientHeight
+        ) {
+          const { scrollTop, scrollHeight, clientHeight } =
+            commandListRef.current;
+          const isScrollingDown = e.deltaY > 0;
+          const isAtBottom = scrollTop + clientHeight >= scrollHeight - 1;
+          const isAtTop = scrollTop <= 0;
+
+          // Allow parent scrolling only if we're at the boundaries and trying to scroll beyond
+          if (
+            (isAtBottom && isScrollingDown) ||
+            (isAtTop && !isScrollingDown)
+          ) {
+            // Let the event propagate to parent
+            return;
+          }
+
+          // Otherwise handle the scroll ourselves
+          e.stopPropagation();
+          e.preventDefault();
+
+          // Apply sensitivity damping for smoother scrolling
+          const scrollSensitivity = 0.6; // Lower value = less sensitive scrolling
+          const deltaY = e.deltaY * scrollSensitivity;
+
+          // Set target scroll position
+          const currentScroll = commandListRef.current.scrollTop;
+          targetScrollRef.current = currentScroll + deltaY;
+
+          // Start animation if not already running
+          if (animationRef.current === null) {
+            animationRef.current = requestAnimationFrame(smoothScroll);
+          }
+        }
+      }
+    },
+    [smoothScroll],
   );
 
   return (
@@ -243,7 +341,12 @@ export function Autocomplete<T>({
               onValueChange={setSearchTerm}
             />
           </div>
-          <CommandList onScroll={handleScrollEnd}>
+          <CommandList
+            ref={commandListRef}
+            onScroll={handleScrollEnd}
+            onWheel={handleWheel}
+            className="max-h-[200px] overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent"
+          >
             {error && (
               <div className="p-4 text-destructive text-center">{error}</div>
             )}
@@ -272,6 +375,16 @@ export function Autocomplete<T>({
                   />
                 </CommandItem>
               ))}
+              {loading && (
+                <div className="p-2 flex justify-center">
+                  <PulsatingDots size={1} color="foreground" />
+                </div>
+              )}
+              {hasMore && !loading && (
+                <div className="p-2 text-xs text-center text-muted-foreground">
+                  Scroll for more
+                </div>
+              )}
             </CommandGroup>
           </CommandList>
         </Command>
