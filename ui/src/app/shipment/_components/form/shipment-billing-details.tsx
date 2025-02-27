@@ -108,7 +108,7 @@ export function ShipmentBillingDetails() {
   }, [watch, setValue]);
 
   return (
-    <div className="flex flex-col gap-2 border-t border-bg-sidebar-border py-4">
+    <div className="flex flex-col gap-2 border-y border-bg-sidebar-border py-4">
       <h3 className="text-sm font-medium">Billing Information</h3>
       <FormGroup cols={2} className="gap-4">
         <FormControl>

@@ -72,5 +72,6 @@ func RegisterEntities() []any {
 		&shipment.Shipment{},
 		&pcmilerconfiguration.PCMilerConfiguration{},
 		&pronumber.Sequence{},
+		&shipment.ShipmentControl{},
 	}
 }

@@ -77,7 +77,7 @@ export function FormEditModal<T extends FieldValues>({
 
   const {
     setError,
-    formState: { isDirty, isSubmitting },
+    formState: { isDirty, isSubmitting, isSubmitSuccessful },
     handleSubmit,
     reset,
   } = form;
@@ -87,7 +87,7 @@ export function FormEditModal<T extends FieldValues>({
     reset();
   }, [onOpenChange, reset]);
 
-  const mutation = useMutation({
+  const { mutateAsync } = useMutation({
     mutationFn: async (values: T) => {
       const response = await http.put(`${url}${currentRecord?.id}`, values);
       return response.data;
@@ -97,7 +97,6 @@ export function FormEditModal<T extends FieldValues>({
         description: `${title} updated successfully`,
       });
       onOpenChange(false);
-      reset();
 
       // Invalidate the query to refresh the table
       broadcastQueryInvalidation({
@@ -145,10 +144,16 @@ export function FormEditModal<T extends FieldValues>({
 
   const onSubmit = useCallback(
     async (values: T) => {
-      await mutation.mutateAsync(values);
+      await mutateAsync(values);
     },
-    [mutation.mutateAsync],
+    [mutateAsync],
   );
+
+  // Reset the form when the mutation is successful
+  // This is recommended by react-hook-form - https://react-hook-form.com/docs/useform/reset
+  useEffect(() => {
+    reset();
+  }, [isSubmitSuccessful, reset]);
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {

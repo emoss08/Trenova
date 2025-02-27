@@ -11,6 +11,7 @@ import {
   ShipmentServiceDetails,
 } from "./shipment-details-components";
 import { ShipmentDetailsSkeleton } from "./shipment-details-skeleton";
+import { ShipmentGeneralInformation } from "./shipment-general-information";
 import { ShipmentActions } from "./shipment-menu-actions";
 import { ShipmentMovesDetails } from "./shipment-move-details";
 
@@ -63,7 +64,7 @@ export function ShipmentForm({
   return (
     <div className="size-full">
       <div className="pt-4">
-        <div className="flex items-center gap-2 px-4 justify-between">
+        <div className="flex items-center px-4 justify-between">
           <Button variant="outline" size="sm" onClick={onBack}>
             <Icon icon={faChevronLeft} className="size-4" />
             <span className="text-sm">Back</span>
@@ -82,6 +83,7 @@ export function ShipmentForm({
             <div className="flex flex-col gap-4 pb-2">
               <ShipmentServiceDetails />
               <ShipmentBillingDetails />
+              <ShipmentGeneralInformation />
               <ShipmentCommodityDetails />
               <ShipmentMovesDetails />
             </div>

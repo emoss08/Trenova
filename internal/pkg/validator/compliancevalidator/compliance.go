@@ -19,16 +19,16 @@ import (
 type ValidatorParams struct {
 	fx.In
 
-	HazmatExpRepo repositories.HazmatExpirationRepository
+	HazmatExpRepo       repositories.HazmatExpirationRepository
 }
 
 type Validator struct {
-	hazExpRepo repositories.HazmatExpirationRepository
+	hazExpRepo          repositories.HazmatExpirationRepository
 }
 
 func NewValidator(p ValidatorParams) *Validator {
 	return &Validator{
-		hazExpRepo: p.HazmatExpRepo,
+		hazExpRepo:          p.HazmatExpRepo,
 	}
 }
 
