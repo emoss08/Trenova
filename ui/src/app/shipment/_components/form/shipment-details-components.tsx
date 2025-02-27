@@ -29,11 +29,13 @@ export function ShipmentDetailsHeader() {
   return (
     <div className="flex flex-col px-4 pb-2 border-b border-bg-sidebar-border">
       <div className="flex items-center justify-between">
-        <h2 className="text-xl">{proNumber || "New Shipment"}</h2>
+        <h2 className="font-semibold leading-none tracking-tight flex items-center gap-x-2">
+          {proNumber || "Add New Shipment"}
+        </h2>
         <ShipmentStatusBadge status={status} />
       </div>
       {updatedAt ? (
-        <p className="text-2xs text-muted-foreground">
+        <p className="text-2xs text-muted-foreground font-normal">
           Last updated on{" "}
           {formatToUserTimezone(updatedAt, {
             timezone: user?.timezone,
@@ -41,7 +43,7 @@ export function ShipmentDetailsHeader() {
           })}
         </p>
       ) : (
-        <p className="text-2xs text-muted-foreground">
+        <p className="text-2xs text-muted-foreground font-normal">
           Please fill out the form below to create a new shipment.
         </p>
       )}

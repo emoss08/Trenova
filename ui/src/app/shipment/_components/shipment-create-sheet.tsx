@@ -177,7 +177,7 @@ export function ShipmentCreateSheet({ open, onOpenChange }: TableSheetProps) {
     <>
       <Sheet open={open} onOpenChange={onClose}>
         <SheetContent
-          className="w-[1000px] sm:max-w-[500px] p-0"
+          className="w-[500px] sm:max-w-[540px] p-0"
           withClose={false}
           ref={sheetRef}
         >
