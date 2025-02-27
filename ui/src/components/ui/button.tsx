@@ -12,43 +12,38 @@ import {
   TooltipTrigger,
 } from "./tooltip";
 
-export interface ButtonProps
-  extends React.ButtonHTMLAttributes<HTMLButtonElement>,
-    VariantProps<typeof buttonVariants> {
-  asChild?: boolean;
-  isLoading?: boolean;
-  loadingText?: string;
+export type ButtonProps = React.ComponentProps<"button"> &
+  VariantProps<typeof buttonVariants> & {
+    asChild?: boolean;
+    isLoading?: boolean;
+    loadingText?: string;
+  };
+
+function Button({
+  className,
+  variant,
+  size,
+  asChild = false,
+  isLoading = false,
+  loadingText = "Saving Changes...",
+  children,
+  ...props
+}: ButtonProps) {
+  const Comp = asChild ? Slot : "button";
+  return (
+    <Comp
+      data-slot="button"
+      className={cn(buttonVariants({ variant, size, className }))}
+      disabled={isLoading}
+      {...props}
+    >
+      {isLoading && <PulsatingDots size={1} color="background" />}
+      {isLoading && loadingText && loadingText}
+      {!isLoading && children}
+    </Comp>
+  );
 }
 
-const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
-  (
-    {
-      className,
-      variant,
-      size,
-      isLoading,
-      children,
-      loadingText = "Saving Changes...",
-      asChild = false,
-      ...props
-    },
-    ref,
-  ) => {
-    const Comp = asChild ? Slot : "button";
-    return (
-      <Comp
-        className={cn(buttonVariants({ variant, size, className }))}
-        ref={ref}
-        disabled={isLoading}
-        {...props}
-      >
-        {isLoading && <PulsatingDots size={1} color="background" />}
-        {isLoading && loadingText && loadingText}
-        {!isLoading && children}
-      </Comp>
-    );
-  },
-);
 Button.displayName = "Button";
 
 export { Button };

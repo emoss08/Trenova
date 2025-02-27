@@ -80,30 +80,31 @@ export function ExternalLink({
   );
 }
 
-// Small Wrapper around react router <Link> to keep up with the design system
-export const InternalLink = React.forwardRef<HTMLAnchorElement, LinkProps>(
-  (props, ref) => {
-    const { children, className } = props;
+type InteralLinkProps = LinkProps & React.ComponentProps<"a">;
 
-    return (
-      <Link
-        ref={ref}
-        className={cn(
-          "inline-flex w-full items-center text-primary hover:text-primary/70 underline",
-          className,
-        )}
-        style={{
-          fontWeight: "normal",
-          width: "fit-content",
-          display: "inline-block",
-        }}
-        {...props}
-      >
-        {children}
-      </Link>
-    );
-  },
-);
+// Small Wrapper around react router <Link> to keep up with the design system
+export function InternalLink({
+  children,
+  className,
+  ...props
+}: InteralLinkProps) {
+  return (
+    <Link
+      className={cn(
+        "inline-flex w-full items-center text-primary hover:text-primary/70 underline",
+        className,
+      )}
+      style={{
+        fontWeight: "normal",
+        width: "fit-content",
+        display: "inline-block",
+      }}
+      {...props}
+    >
+      {children}
+    </Link>
+  );
+}
 
 InternalLink.displayName = "InternalLink";
 
@@ -112,54 +113,53 @@ type EntityRedirectLinkProps = Omit<LinkProps, "to"> & {
   baseUrl: string;
   modelOpen?: boolean;
   value?: string;
-};
+} & React.HTMLAttributes<HTMLDivElement>;
 
-export const EntityRedirectLink = React.forwardRef<
-  HTMLAnchorElement,
-  EntityRedirectLinkProps
->(
-  (
-    { entityId, baseUrl, modelOpen, children, className, value, ...rest },
-    ref,
-  ) => {
-    if (!entityId) {
-      return <>{children}</>;
-    }
+export function EntityRedirectLink({
+  entityId,
+  baseUrl,
+  modelOpen,
+  children,
+  className,
+  value,
+  ...rest
+}: EntityRedirectLinkProps) {
+  if (!entityId) {
+    return <>{children}</>;
+  }
 
-    let url = `${baseUrl}`;
+  let url = `${baseUrl}`;
 
-    if (modelOpen) {
-      url += `?entityId=${entityId}&modal=edit`;
-    } else {
-      url += `/${entityId}`;
-    }
+  if (modelOpen) {
+    url += `?entityId=${entityId}&modal=edit`;
+  } else {
+    url += `/${entityId}`;
+  }
 
-    return (
-      <TooltipProvider>
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <Link
-              ref={ref}
-              to={url}
-              className={cn(
-                "inline-flex w-full items-center text-primary hover:text-primary/70 underline",
-                className,
-              )}
-              style={{
-                fontWeight: "normal",
-                width: "fit-content",
-                display: "inline-block",
-              }}
-              {...rest}
-            >
-              {children}
-            </Link>
-          </TooltipTrigger>
-          <TooltipContent>Click to view {value ?? "unknown"}</TooltipContent>
-        </Tooltip>
-      </TooltipProvider>
-    );
-  },
-);
+  return (
+    <TooltipProvider>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <Link
+            to={url}
+            className={cn(
+              "inline-flex w-full items-center text-primary hover:text-primary/70 underline",
+              className,
+            )}
+            style={{
+              fontWeight: "normal",
+              width: "fit-content",
+              display: "inline-block",
+            }}
+            {...rest}
+          >
+            {children}
+          </Link>
+        </TooltipTrigger>
+        <TooltipContent>Click to view {value ?? "unknown"}</TooltipContent>
+      </Tooltip>
+    </TooltipProvider>
+  );
+}
 
 EntityRedirectLink.displayName = "EntityRedirectLink";
