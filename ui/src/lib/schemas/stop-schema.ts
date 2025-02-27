@@ -86,7 +86,7 @@ export const stopSchema = object({
     .optional()
     .nullable(),
   addressLine: string().required("Address line is required"),
-  location: locationSchema.optional(),
+  location: locationSchema.notRequired().nullable().optional(),
 });
 
 export type StopSchema = InferType<typeof stopSchema>;

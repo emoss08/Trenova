@@ -5,12 +5,12 @@ import { cn } from "@/lib/utils";
 import { CheckIcon, ChevronRightIcon, CircleIcon } from "@radix-ui/react-icons";
 const statusColors = {
   danger:
-    "text-red-500 hover:text-red-600 dark:text-red-600 dark:hover:bg-red-600/30 dark:hover:text-red-400",
+    "text-red-600 focus:text-red-600 focus:bg-red-600/10 hover:text-red-600 hover:bg-red-600/10 dark:text-red-600 dark:focus:text-red-600 dark:focus:bg-red-600/20 dark:hover:bg-red-600/20 dark:hover:text-red-400",
   warning:
-    "text-yellow-500 hover:text-yellow-600 dark:text-yellow-600 dark:hover:bg-yellow-600/30 dark:hover:text-yellow-400",
-  info: "text-blue-200 hover:text-blue-600 dark:text-blue-600 dark:hover:bg-blue-600/30 dark:hover:text-blue-400",
+    "text-yellow-500 focus:text-yellow-600 focus:bg-yellow-600/10 hover:text-yellow-600 hover:bg-yellow-600/10 dark:text-yellow-600 dark:focus:text-yellow-600 dark:focus:bg-yellow-600/20 dark:hover:bg-yellow-600/20 dark:hover:text-yellow-400",
+  info: "text-blue-600 focus:text-blue-600 focus:bg-blue-600/10 hover:text-blue-600 hover:bg-blue-600/20 dark:text-blue-600 dark:focus:text-blue-600 dark:focus:bg-blue-600/20 dark:hover:bg-blue-600/20 dark:hover:text-blue-400",
   success:
-    "text-green-500 hover:text-green-600 dark:text-green-600 dark:hover:bg-green-600/30 dark:hover:text-green-400",
+    "text-green-500 focus:text-green-600 focus:bg-green-600/10 hover:text-green-600 hover:bg-green-600/10 dark:text-green-600 dark:focus:text-green-600 dark:focus:bg-green-600/20 dark:hover:bg-green-600/20 dark:hover:text-green-400",
 };
 const DropdownMenu = DropdownMenuPrimitive.Root;
 
@@ -151,7 +151,7 @@ const DropdownMenuItem = React.forwardRef<
       ref={ref}
       disabled={disabled}
       className={cn(
-        "group relative flex cursor-pointer select-none items-center gap-2 rounded-sm px-2 py-1 text-sm outline-hidden transition-colors focus:bg-accent focus:text-accent-foreground data-disabled:opacity-50 data-disabled:pointer-events-none [&>svg]:size-3 [&>svg]:shrink-0",
+        "group relative flex cursor-pointer select-none items-center gap-2 rounded-sm px-2 py-1 text-sm outline-hidden focus:bg-accent focus:text-accent-foreground transition-colors data-disabled:opacity-50 data-disabled:pointer-events-none [&>svg]:size-3 [&>svg]:shrink-0",
         inset && "pl-8",
         color && statusColors[color],
 

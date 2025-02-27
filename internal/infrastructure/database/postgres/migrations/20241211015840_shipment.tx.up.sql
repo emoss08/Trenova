@@ -1,23 +1,37 @@
 -- Enums with documentation
 CREATE TYPE "shipment_status_enum" AS ENUM(
-    'New', -- Initial state when shipment is created
-    'PartiallyAssigned', -- Shipment has been partially assigned to a worker
-    'Assigned', -- Shipment has been assigned to a worker
-    'InTransit', -- Shipment is currently being transported
-    'Delayed', -- Shipment is currently delayed
-    'PartiallyCompleted', -- Shipment has been partially completed
-    'Completed', -- Shipment has been delivered successfully
-    'Billed', -- Shipment has been billed to the customer
+    'New',
+    -- Initial state when shipment is created
+    'PartiallyAssigned',
+    -- Shipment has been partially assigned to a worker
+    'Assigned',
+    -- Shipment has been assigned to a worker
+    'InTransit',
+    -- Shipment is currently being transported
+    'Delayed',
+    -- Shipment is currently delayed
+    'PartiallyCompleted',
+    -- Shipment has been partially completed
+    'Completed',
+    -- Shipment has been delivered successfully
+    'Billed',
+    -- Shipment has been billed to the customer
     'Canceled' -- Shipment has been Canceled
 );
 
 CREATE TYPE "rating_method_enum" AS ENUM(
-    'FlatRate', -- Fixed rate for entire shipment
-    'PerMile', -- Rate calculated per mile traveled
-    'PerStop', -- Rate calculated per stop made
-    'PerPound', -- Rate calculated by weight
-    'PerPallet', -- Rate calculated by pallet position
-    'PerLinearFoot', -- Rate calculated by linear feet of trailer space
+    'FlatRate',
+    -- Fixed rate for entire shipment
+    'PerMile',
+    -- Rate calculated per mile traveled
+    'PerStop',
+    -- Rate calculated per stop made
+    'PerPound',
+    -- Rate calculated by weight
+    'PerPallet',
+    -- Rate calculated by pallet position
+    'PerLiearFoot',
+    -- Rate calculated by linear feet of trailer space
     'Other' -- Custom rating method
 );
 
@@ -73,7 +87,6 @@ ALTER TABLE "shipments"
 
 --bun:split
 CREATE INDEX IF NOT EXISTS idx_shipments_search ON shipments USING GIN(search_vector);
-
 
 --bun:split
 CREATE INDEX IF NOT EXISTS idx_shipments_dates_brin ON shipments USING BRIN(actual_ship_date, actual_delivery_date, created_at) WITH (pages_per_range = 128);

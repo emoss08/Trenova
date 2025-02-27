@@ -7,6 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/businessunit"
 	"github.com/emoss08/trenova/internal/core/domain/organization"
 	"github.com/emoss08/trenova/internal/core/domain/usstate"
+	"github.com/emoss08/trenova/internal/core/ports/infra"
 	"github.com/emoss08/trenova/internal/pkg/errors"
 	"github.com/emoss08/trenova/internal/pkg/utils/timeutils"
 	"github.com/emoss08/trenova/pkg/types/pulid"
@@ -18,6 +19,7 @@ import (
 var (
 	_ bun.BeforeAppendModelHook = (*Customer)(nil)
 	_ domain.Validatable        = (*Customer)(nil)
+	_ infra.PostgresSearchable  = (*Customer)(nil)
 )
 
 type Customer struct {
@@ -42,9 +44,11 @@ type Customer struct {
 	AutoMarkReadyToBill bool          `json:"autoMarkReadyToBill" bun:"auto_mark_ready_to_bill,type:BOOLEAN,default:false"`
 
 	// Metadata
-	Version   int64 `json:"version" bun:"version,type:BIGINT"`
-	CreatedAt int64 `json:"createdAt" bun:"created_at,type:BIGINT,nullzero,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	UpdatedAt int64 `json:"updatedAt" bun:"updated_at,type:BIGINT,nullzero,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	Version      int64  `json:"version" bun:"version,type:BIGINT"`
+	CreatedAt    int64  `json:"createdAt" bun:"created_at,type:BIGINT,nullzero,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	UpdatedAt    int64  `json:"updatedAt" bun:"updated_at,type:BIGINT,nullzero,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	SearchVector string `json:"-" bun:"search_vector,type:TSVECTOR,scanonly"`
+	Rank         string `json:"-" bun:"rank,type:VARCHAR(100),scanonly"`
 
 	// Relationships
 	BusinessUnit *businessunit.BusinessUnit `bun:"rel:belongs-to,join:business_unit_id=id" json:"-"`
@@ -91,4 +95,25 @@ func (c *Customer) BeforeAppendModel(_ context.Context, query bun.Query) error {
 	}
 
 	return nil
+}
+
+func (c *Customer) GetPostgresSearchConfig() infra.PostgresSearchConfig {
+	return infra.PostgresSearchConfig{
+		TableAlias: "cus",
+		Fields: []infra.PostgresSearchableField{
+			{
+				Name:   "code",
+				Weight: "A",
+				Type:   infra.PostgresSearchTypeText,
+			},
+			{
+				Name:   "name",
+				Weight: "B",
+				Type:   infra.PostgresSearchTypeText,
+			},
+		},
+		MinLength:       2,
+		MaxTerms:        6,
+		UsePartialMatch: true,
+	}
 }

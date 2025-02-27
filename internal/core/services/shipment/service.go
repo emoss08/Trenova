@@ -201,6 +201,14 @@ func (s *Service) Create(ctx context.Context, shp *shipment.Shipment, userID pul
 			BusinessUnitID: createdEntity.BusinessUnitID,
 		},
 		audit.WithComment("Shipment created"),
+		audit.WithCritical(),
+		audit.WithCategory("operations"),
+		audit.WithMetadata(map[string]any{
+			"proNumber":  createdEntity.ProNumber,
+			"customerID": createdEntity.CustomerID.String(),
+			"bol":        createdEntity.BOL,
+		}),
+		audit.WithTags("shipment-creation", "customer-"+createdEntity.CustomerID.String()),
 	)
 	if err != nil {
 		log.Error().Err(err).Msg("failed to log shipment creation")
@@ -283,6 +291,13 @@ func (s *Service) Update(ctx context.Context, shp *shipment.Shipment, userID pul
 		},
 		audit.WithComment("Shipment updated"),
 		audit.WithDiff(original, updatedEntity),
+		audit.WithCategory("operations"),
+		audit.WithMetadata(map[string]any{
+			"proNumber":  updatedEntity.ProNumber,
+			"customerID": updatedEntity.CustomerID.String(),
+			"bol":        updatedEntity.BOL,
+		}),
+		audit.WithTags("shipment-update", "customer-"+updatedEntity.CustomerID.String()),
 	)
 	if err != nil {
 		log.Error().Err(err).Msg("failed to log shipment update")
@@ -352,6 +367,14 @@ func (s *Service) Cancel(ctx context.Context, req *repositories.CancelShipmentRe
 			BusinessUnitID: req.BuID,
 		},
 		audit.WithComment("Shipment canceled"),
+		audit.WithDiff(original, newEntity),
+		audit.WithCategory("operations"),
+		audit.WithMetadata(map[string]any{
+			"proNumber":  newEntity.ProNumber,
+			"customerID": newEntity.CustomerID.String(),
+			"bol":        newEntity.BOL,
+		}),
+		audit.WithTags("shipment-cancellation", "customer-"+newEntity.CustomerID.String()),
 	)
 	if err != nil {
 		log.Error().Err(err).Msg("failed to log shipment cancellation")
@@ -408,14 +431,16 @@ func (s *Service) Duplicate(ctx context.Context, req *repositories.DuplicateShip
 			BusinessUnitID: req.BuID,
 		},
 		audit.WithComment("Shipment duplicated"),
+		audit.WithCategory("operations"),
+		audit.WithMetadata(map[string]any{
+			"proNumber":  newEntity.ProNumber,
+			"customerID": newEntity.CustomerID.String(),
+		}),
+		audit.WithTags("shipment-duplication", "customer-"+newEntity.CustomerID.String()),
 	)
 	if err != nil {
 		log.Error().Err(err).Msg("failed to log shipment duplication")
 	}
 
 	return newEntity, nil
-}
-
-func (s *Service) GetNextProNumber(ctx context.Context, orgID pulid.ID) (string, error) {
-	return s.proNumberRepo.GetNextProNumber(ctx, orgID)
 }

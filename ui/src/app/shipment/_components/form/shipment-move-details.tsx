@@ -10,6 +10,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Icon } from "@/components/ui/icons";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { MOVE_DELETE_DIALOG_KEY } from "@/constants/env";
 import { ShipmentSchema } from "@/lib/schemas/shipment-schema";
 import { MoveStatus, type ShipmentMove } from "@/types/move";
 import { faEllipsisVertical, faPlus } from "@fortawesome/pro-regular-svg-icons";
@@ -20,16 +21,22 @@ import {
   UseFieldArrayUpdate,
   useFormContext,
 } from "react-hook-form";
+import { toast } from "sonner";
 import { AssignmentDialog } from "../assignment/assignment-dialog";
 import { StopTimeline } from "../sidebar/stop-details/stop-timeline-content";
 import { AssignmentDetails } from "./move-assignment-details";
+import { MoveDeleteDialog } from "./move/move-delete-dialog";
+import { MoveDialog } from "./move/move-dialog";
 
 export function ShipmentMovesDetails() {
   const { control } = useFormContext<ShipmentSchema>();
+  const [moveDialogOpen, setMoveDialogOpen] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [editingIndex, setEditingIndex] = useState<number | null>(null);
+  const [deletingIndex, setDeletingIndex] = useState<number | null>(null);
 
   const {
     fields: moves,
-    append,
     update,
     remove,
   } = useFieldArray({
@@ -37,34 +44,134 @@ export function ShipmentMovesDetails() {
     name: "moves",
   });
 
+  const handleAddMove = () => {
+    setMoveDialogOpen(true);
+  };
+
+  const handleEditMove = (index: number) => {
+    setEditingIndex(index);
+    setMoveDialogOpen(true);
+  };
+
+  const handleDeleteMove = (index: number) => {
+    // If there is only one move, we cannot delete it
+    if (moves.length === 1) {
+      toast.error("Unable to proceed", {
+        description: "A shipment must have at least one move.",
+      });
+      return;
+    }
+
+    // Always check localStorage directly
+    const showDialog = localStorage.getItem(MOVE_DELETE_DIALOG_KEY) !== "false";
+
+    if (showDialog) {
+      setDeletingIndex(index);
+      setDeleteDialogOpen(true);
+    } else {
+      remove(index);
+    }
+  };
+
+  const handleConfirmDelete = (doNotShowAgain: boolean) => {
+    if (deletingIndex !== null) {
+      remove(deletingIndex);
+
+      if (doNotShowAgain) {
+        localStorage.setItem(MOVE_DELETE_DIALOG_KEY, "false");
+      }
+
+      setDeleteDialogOpen(false);
+      setDeletingIndex(null);
+    }
+  };
+
+  const handleDialogClose = () => {
+    // If we're adding a new move and the dialog is closed without saving,
+    // remove the placeholder move
+    if (
+      editingIndex === moves.length - 1 &&
+      !moves[editingIndex]?.stops?.length
+    ) {
+      remove(editingIndex);
+    }
+
+    setMoveDialogOpen(false);
+    setEditingIndex(null);
+  };
+
+  const isEditing =
+    editingIndex !== null &&
+    ((editingIndex < moves.length - 1 || moves[editingIndex]?.stops?.length) ??
+      0 > 0);
+
+  // const moveStops = moves.map((move) => move.stops).flat();
+
   return (
-    <div className="flex flex-col gap-2 border-t border-bg-sidebar-border py-4">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-1">
-          <h3 className="text-sm font-medium">Moves</h3>
-          <span className="text-2xs text-muted-foreground">
-            ({moves?.length ?? 0})
-          </span>
+    <>
+      <div className="flex flex-col gap-2 border-t border-bg-sidebar-border py-4">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-1">
+            <h3 className="text-sm font-medium">Moves</h3>
+            <span className="text-2xs text-muted-foreground">
+              ({moves?.length ?? 0})
+            </span>
+          </div>
+          <Button
+            type="button"
+            variant="outline"
+            size="xs"
+            onClick={handleAddMove}
+          >
+            <Icon icon={faPlus} className="size-4" />
+            Add Move
+          </Button>
         </div>
-        <Button type="button" variant="outline" size="xs">
-          <Icon icon={faPlus} className="size-4" />
-          Add Move
-        </Button>
+        <div className="flex flex-col gap-4">
+          {moves.map((move, moveIdx) => {
+            return (
+              <MoveInformation
+                key={move.id}
+                move={move as ShipmentMove}
+                moveIdx={moveIdx}
+                update={update}
+                remove={remove}
+                onEdit={() => handleEditMove(moveIdx)}
+                onDelete={() => handleDeleteMove(moveIdx)}
+              />
+            );
+          })}
+        </div>
       </div>
-      <div className="flex flex-col gap-4">
-        {moves.map((move, moveIdx) => {
-          return (
-            <MoveInformation
-              key={move.id}
-              move={move as ShipmentMove}
-              moveIdx={moveIdx}
-              update={update}
-              remove={remove}
-            />
-          );
-        })}
-      </div>
-    </div>
+      {moveDialogOpen && (
+        <MoveDialog
+          open={moveDialogOpen}
+          onOpenChange={handleDialogClose}
+          isEditing={!!isEditing}
+          moveIdx={editingIndex ?? moves.length}
+          // stops={moveStops as Stop[]}
+          update={update}
+          remove={remove}
+          initialData={
+            editingIndex !== null
+              ? (moves[editingIndex] as ShipmentMove)
+              : undefined
+          }
+        />
+      )}
+      {deleteDialogOpen && (
+        <MoveDeleteDialog
+          open={deleteDialogOpen}
+          onOpenChange={(open) => {
+            setDeleteDialogOpen(open);
+            if (!open) {
+              setDeletingIndex(null);
+            }
+          }}
+          handleDelete={handleConfirmDelete}
+        />
+      )}
+    </>
   );
 }
 
@@ -73,11 +180,15 @@ const MoveInformation = memo(function MoveInformation({
   moveIdx,
   update,
   remove,
+  onEdit,
+  onDelete,
 }: {
   move: ShipmentMove;
   moveIdx: number;
   update: UseFieldArrayUpdate<ShipmentSchema, "moves">;
   remove: UseFieldArrayRemove;
+  onEdit: () => void;
+  onDelete: () => void;
 }) {
   if (!move) {
     return <p>No move</p>;
@@ -88,47 +199,53 @@ const MoveInformation = memo(function MoveInformation({
   }
 
   return (
-    <div
-      className="bg-card rounded-lg border border-bg-sidebar-border space-y-2"
-      key={move.id}
-    >
-      <StatusBadge move={move} />
-      <ScrollArea className="flex max-h-[250px] flex-col overflow-y-auto px-4 py-2 rounded-b-lg">
-        <div className="relative py-4">
-          <div className="space-y-6">
-            {move.stops.map((stop, stopIdx) => {
-              if (!stop) {
-                return null;
-              }
+    <>
+      <div
+        className="bg-card rounded-lg border border-bg-sidebar-border space-y-2"
+        key={move.id}
+      >
+        <StatusBadge move={move} onEdit={onEdit} onDelete={onDelete} />
+        <ScrollArea className="flex max-h-[250px] flex-col overflow-y-auto px-4 py-2 rounded-b-lg">
+          <div className="relative py-4">
+            <div className="space-y-6">
+              {move.stops.map((stop, stopIdx) => {
+                if (!stop) {
+                  return null;
+                }
 
-              const isLastStop = stopIdx === move.stops.length - 1;
+                const isLastStop = stopIdx === move.stops.length - 1;
 
-              return (
-                <StopTimeline
-                  key={stop.id}
-                  stop={stop}
-                  isLast={isLastStop}
-                  moveStatus={move.status}
-                  moveIdx={moveIdx}
-                  stopIdx={stopIdx}
-                  update={update}
-                  remove={remove}
-                />
-              );
-            })}
+                return (
+                  <StopTimeline
+                    key={stop.id}
+                    stop={stop}
+                    isLast={isLastStop}
+                    moveStatus={move.status}
+                    moveIdx={moveIdx}
+                    stopIdx={stopIdx}
+                    update={update}
+                    remove={remove}
+                  />
+                );
+              })}
+            </div>
           </div>
-        </div>
-        <div className="pointer-events-none absolute bottom-0 left-0 right-0 h-8 bg-gradient-to-t from-sidebar to-transparent z-50" />
-      </ScrollArea>
-      <AssignmentDetails move={move} />
-    </div>
+          <div className="pointer-events-none absolute bottom-0 left-0 right-0 h-8 bg-gradient-to-t from-sidebar to-transparent z-50" />
+        </ScrollArea>
+        <AssignmentDetails move={move} />
+      </div>
+    </>
   );
 });
 
 const StatusBadge = memo(function StatusBadge({
   move,
+  onEdit,
+  onDelete,
 }: {
   move?: ShipmentMove;
+  onEdit: () => void;
+  onDelete: () => void;
 }) {
   if (!move) {
     return <p>No move</p>;
@@ -137,14 +254,22 @@ const StatusBadge = memo(function StatusBadge({
   return (
     <div className="flex justify-between items-center p-3 border-b border-sidebar-border">
       <MoveStatusBadge status={move.status} />
-      <MoveActions move={move} />
+      <MoveActions move={move} onEdit={onEdit} onDelete={onDelete} />
     </div>
   );
 });
 
 const AssignmentStatus = [MoveStatus.New, MoveStatus.Assigned];
 
-function MoveActions({ move }: { move: ShipmentMove }) {
+function MoveActions({
+  move,
+  onEdit,
+  onDelete,
+}: {
+  move: ShipmentMove;
+  onEdit: () => void;
+  onDelete: () => void;
+}) {
   const [assignmentDialogOpen, setAssignmentDialogOpen] =
     useState<boolean>(false);
 
@@ -166,7 +291,7 @@ function MoveActions({ move }: { move: ShipmentMove }) {
             <Icon icon={faEllipsisVertical} className="size-4" />
           </Button>
         </DropdownMenuTrigger>
-        <DropdownMenuContent align="start">
+        <DropdownMenuContent side="left" align="start">
           <DropdownMenuLabel>Move Actions</DropdownMenuLabel>
           <DropdownMenuSeparator />
           <DropdownMenuItem
@@ -182,19 +307,29 @@ function MoveActions({ move }: { move: ShipmentMove }) {
           <DropdownMenuItem
             title="Edit Move"
             description="Modify move details."
+            onClick={onEdit}
           />
           <DropdownMenuItem
             title="View Audit Log"
             description="View the audit log for the move."
           />
+
+          <DropdownMenuItem
+            title="Cancel Move"
+            color="danger"
+            description="Cancel this move."
+            // onClick={onDelete}
+          />
         </DropdownMenuContent>
       </DropdownMenu>
-      <AssignmentDialog
-        open={assignmentDialogOpen}
-        onOpenChange={setAssignmentDialogOpen}
-        shipmentMoveId={move.id}
-        assignmentId={assignment?.id}
-      />
+      {assignmentDialogOpen && (
+        <AssignmentDialog
+          open={assignmentDialogOpen}
+          onOpenChange={setAssignmentDialogOpen}
+          shipmentMoveId={move.id}
+          assignmentId={assignment?.id}
+        />
+      )}
     </>
   );
 }

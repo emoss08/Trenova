@@ -40,19 +40,6 @@ const routes: RouteObject[] = [
             },
           },
           {
-            path: "/shipments/:id",
-            async lazy() {
-              let { ShipmentDetails } = await import(
-                "@/app/shipment/details/page"
-              );
-              return { Component: ShipmentDetails };
-            },
-            handle: {
-              crumb: "Shipment Details",
-              title: "Shipment Details",
-            },
-          },
-          {
             path: "/shipments/configurations/shipment-types",
             async lazy() {
               let { ShipmentTypes } = await import("@/app/shipment-types/page");

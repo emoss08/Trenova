@@ -83,8 +83,8 @@ export function ShipmentCreateSheet({ open, onOpenChange }: TableSheetProps) {
     reset,
   } = form;
 
-  console.info("watch", watch());
-  console.info("errors", errors);
+  console.info("Shipment Form Values", watch());
+  console.info("Shipment Form Errors", errors);
 
   const handleClose = useCallback(() => {
     onOpenChange(false);

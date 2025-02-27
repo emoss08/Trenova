@@ -41,6 +41,7 @@ async function fetchOptions<T>(
   link: string,
   inputValue: string,
   page: number,
+  extraSearchParams?: Record<string, string>,
 ): Promise<LimitOffsetResponse<T>> {
   const limit = 10;
   const offset = (page - 1) * limit;
@@ -50,6 +51,7 @@ async function fetchOptions<T>(
       query: inputValue,
       limit: limit.toString(),
       offset: offset.toString(),
+      ...extraSearchParams,
     },
   });
 
@@ -79,7 +81,9 @@ export function Autocomplete<T>({
   triggerClassName,
   noResultsMessage,
   onOptionChange,
+  isInvalid,
   clearable = true,
+  extraSearchParams,
 }: BaseAutocompleteFieldProps<T>) {
   const [open, setOpen] = useState(false);
   const [options, setOptions] = useState<T[]>([]);
@@ -123,7 +127,12 @@ export function Autocomplete<T>({
         setLoading(true);
         setError(null);
 
-        const response = await fetchOptions<T>(link, debouncedSearchTerm, page);
+        const response = await fetchOptions<T>(
+          link,
+          debouncedSearchTerm,
+          page,
+          extraSearchParams,
+        );
 
         setOptions((prev) =>
           page === 1 ? response.results : [...prev, ...response.results],
@@ -141,7 +150,7 @@ export function Autocomplete<T>({
     if (open) {
       loadOptions();
     }
-  }, [debouncedSearchTerm, open, page, link]);
+  }, [debouncedSearchTerm, open, page, link, extraSearchParams]);
 
   const handleSelect = useCallback(
     (currentValue: string) => {
@@ -152,7 +161,6 @@ export function Autocomplete<T>({
 
       setSelectedOption(selectedOpt || null);
       onChange(newValue);
-      // Call onOptionChange here where we have access to options
       if (onOptionChange) {
         onOptionChange(selectedOpt || null);
       }
@@ -164,10 +172,16 @@ export function Autocomplete<T>({
   const handleScrollEnd = useCallback(
     (e: React.UIEvent<HTMLDivElement>) => {
       const target = e.target as HTMLDivElement;
+      const scrollBuffer = 50; // pixels before bottom to trigger load
+      const distanceFromBottom =
+        target.scrollHeight - (target.scrollTop + target.clientHeight);
+
+      // Check if we're near the bottom and not already loading
       if (
         !loading &&
         hasMore &&
-        target.scrollHeight - target.scrollTop <= target.clientHeight + 100
+        distanceFromBottom <= scrollBuffer &&
+        distanceFromBottom >= 0 // Prevent overscroll triggering
       ) {
         setPage((prev) => prev + 1);
       }
@@ -185,7 +199,10 @@ export function Autocomplete<T>({
           className={cn(
             "w-full font-normal gap-2 rounded border-muted-foreground/20 bg-muted px-1.5 data-[state=open]:border-blue-600 data-[state=open]:outline-hidden data-[state=open]:ring-4 data-[state=open]:ring-blue-600/20",
             "[&_svg]:size-4 justify-between",
+            "transition-[border-color,box-shadow] duration-200 ease-in-out",
             disabled && "opacity-50 cursor-not-allowed",
+            isInvalid &&
+              "border-red-500 bg-red-500/20 ring-0 ring-red-500 placeholder:text-red-500 focus:outline-hidden focus-visible:border-red-600 focus-visible:ring-4 focus-visible:ring-red-400/20 hover:border-red-500 hover:bg-red-500/20 data-[state=open]:border-red-500 data-[state=open]:bg-red-500/20 data-[state=open]:ring-red-500/20",
             triggerClassName,
           )}
           disabled={disabled}
@@ -193,7 +210,14 @@ export function Autocomplete<T>({
           {selectedOption ? (
             getDisplayValue(selectedOption)
           ) : (
-            <p className="text-muted-foreground">{placeholder}</p>
+            <p
+              className={cn(
+                "text-muted-foreground",
+                isInvalid && "text-red-500",
+              )}
+            >
+              {placeholder}
+            </p>
           )}
           <CaretSortIcon className="opacity-50 size-7" />
           {loading && (
@@ -210,8 +234,8 @@ export function Autocomplete<T>({
           className,
         )}
       >
-        <Command shouldFilter={false}>
-          <div className="relative border-b w-full">
+        <Command shouldFilter={false} className="overflow-hidden">
+          <div className="border-b w-full">
             <CommandInput
               className="bg-transparent h-8 truncate"
               placeholder={`Search ${label.toLowerCase()}...`}
@@ -228,7 +252,7 @@ export function Autocomplete<T>({
                 {noResultsMessage ?? `No ${label.toLowerCase()} found.`}
               </CommandEmpty>
             )}
-            <CommandGroup className="flex flex-col gap-2">
+            <CommandGroup>
               {options.map((option) => (
                 <CommandItem
                   className="[&_svg]:size-3 cursor-pointer font-normal"
@@ -270,6 +294,7 @@ export function AutocompleteField<TOption, TForm extends FieldValues>({
   getDisplayValue,
   onOptionChange,
   clearable,
+  extraSearchParams,
   ...props
 }: AutocompleteFieldProps<TOption, TForm>) {
   return (
@@ -294,9 +319,11 @@ export function AutocompleteField<TOption, TForm extends FieldValues>({
             label={label}
             value={value}
             onChange={onChange}
+            isInvalid={fieldState.invalid}
             onOptionChange={onOptionChange}
             disabled={disabled}
             clearable={clearable}
+            extraSearchParams={extraSearchParams}
             {...props}
           />
         </FieldWrapper>

@@ -122,7 +122,16 @@ export function ShipmentBillingDetails() {
             description="Choose the customer who requested this shipment."
             getOptionValue={(option) => option.id ?? ""}
             getDisplayValue={(option) => option.code}
-            renderOption={(option) => option.code}
+            renderOption={(option) => (
+              <div className="flex flex-col gap-0.5 items-start size-full">
+                <p className="text-sm font-medium">{option.code}</p>
+                {option.name && (
+                  <p className="text-xs text-muted-foreground truncate w-full">
+                    {option.name}
+                  </p>
+                )}
+              </div>
+            )}
           />
         </FormControl>
         <FormControl>

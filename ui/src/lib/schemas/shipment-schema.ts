@@ -75,8 +75,8 @@ export const shipmentSchema = object({
     })
     .integer("Weight must be a whole number")
     .optional(),
-  temperatureMin: number().optional(),
-  temperatureMax: number().optional(),
+  temperatureMin: number().nullable().optional(),
+  temperatureMax: number().nullable().optional(),
   bol: string().required("BOL is required"),
   actualDeliveryDate: number()
     .transform((_, originalValue) => {

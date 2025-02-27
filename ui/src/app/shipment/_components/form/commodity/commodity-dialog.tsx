@@ -15,7 +15,7 @@ import { CommoditySchema } from "@/lib/schemas/commodity-schema";
 import { ShipmentSchema } from "@/lib/schemas/shipment-schema";
 import { TableSheetProps } from "@/types/data-table";
 import { ShipmentCommodity } from "@/types/shipment";
-import { useCallback } from "react";
+import { useCallback, useEffect } from "react";
 import {
   UseFieldArrayRemove,
   UseFieldArrayUpdate,
@@ -40,7 +40,7 @@ export function CommodityDialog({
 }: CommodityDialogProps) {
   const { getValues, reset } = useFormContext<ShipmentSchema>();
 
-  const handleSave = () => {
+  const handleSave = useCallback(() => {
     const formValues = getValues();
     const commodity = formValues.commodities?.[index];
 
@@ -61,7 +61,7 @@ export function CommodityDialog({
     }
 
     onOpenChange(false);
-  };
+  }, [onOpenChange, getValues, index, isEditing, update]);
 
   const handleClose = useCallback(() => {
     onOpenChange(false);
@@ -86,6 +86,18 @@ export function CommodityDialog({
       );
     }
   }, [onOpenChange, remove, index, isEditing, reset, getValues]);
+
+  // Handle keyboard shortcut (Ctrl+Enter) to save
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.ctrlKey && e.key === "Enter" && open) {
+        handleSave();
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [open, handleSave]);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>

@@ -79,3 +79,17 @@ CREATE TRIGGER enforce_audit_append_only
     FOR EACH ROW
     EXECUTE FUNCTION prevent_audit_modification();
 
+--bun:split
+ALTER TABLE audit_entries
+    ADD COLUMN IF NOT EXISTS category VARCHAR(50) NOT NULL DEFAULT 'system',
+    ADD COLUMN IF NOT EXISTS critical BOOLEAN NOT NULL DEFAULT FALSE,
+    ADD COLUMN IF NOT EXISTS ip_address VARCHAR(45);
+
+--bun:split
+-- Add indexes to improve query performance
+CREATE INDEX IF NOT EXISTS idx_audit_entries_category ON audit_entries(category);
+
+CREATE INDEX IF NOT EXISTS idx_audit_entries_critical ON audit_entries(critical);
+
+CREATE INDEX IF NOT EXISTS idx_audit_entries_timestamp ON audit_entries(timestamp);
+
