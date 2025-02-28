@@ -21,6 +21,7 @@ import {
 } from "@/components/ui/sheet";
 import { VisuallyHidden } from "@/components/ui/visually-hidden";
 import { usePopoutWindow } from "@/hooks/popout-window/use-popout-window";
+import { useApiMutation } from "@/hooks/use-api-mutation";
 import { useUnsavedChanges } from "@/hooks/use-form";
 import { broadcastQueryInvalidation } from "@/hooks/use-invalidate-query";
 import { useResponsiveDimensions } from "@/hooks/use-responsive-dimensions";
@@ -30,12 +31,10 @@ import {
   type ShipmentSchema,
 } from "@/lib/schemas/shipment-schema";
 import { EditTableSheetProps } from "@/types/data-table";
-import { type APIError } from "@/types/errors";
 import { type Shipment } from "@/types/shipment";
 import { yupResolver } from "@hookform/resolvers/yup";
-import { useMutation } from "@tanstack/react-query";
 import { useCallback, useEffect, useRef } from "react";
-import { FormProvider, type Path, useForm } from "react-hook-form";
+import { FormProvider, useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { useShipmentDetails } from "../queries/shipment";
 import { ShipmentForm } from "./form/shipment-form";
@@ -92,16 +91,23 @@ export function ShipmentEditSheet({
     }
   }, [shipmentDetails.data, isDetailsLoading, reset]);
 
-  const { mutateAsync } = useMutation({
+  const { mutateAsync } = useApiMutation<
+    Shipment, // The response data type
+    ShipmentSchema, // The variables type
+    unknown, // The context type
+    ShipmentSchema // The form values type for error handling
+  >({
     mutationFn: async (values: ShipmentSchema) => {
-      const response = await http.put(
+      const response = await http.put<Shipment>(
         `/shipments/${currentRecord?.id}`,
         values,
       );
       return response.data;
     },
     onSuccess: () => {
-      toast.success("Shipment updated successfully");
+      toast.success("Changes have been saved", {
+        description: "Shipment updated successfully",
+      });
       onOpenChange(false);
 
       broadcastQueryInvalidation({
@@ -115,22 +121,11 @@ export function ShipmentEditSheet({
         },
       });
     },
-    onError: (error: APIError) => {
-      if (error.isValidationError()) {
-        error.getFieldErrors().forEach((fieldError) => {
-          setError(fieldError.name as Path<ShipmentSchema>, {
-            message: fieldError.reason,
-          });
-        });
-      }
-
-      if (error.isRateLimitError()) {
-        toast.error("Rate limit exceeded", {
-          description:
-            "You have exceeded the rate limit. Please try again later.",
-        });
-      }
-    },
+    // Pass in the form's setError function
+    setFormError: setError,
+    // Provide a resource name for better error logging
+    resourceName: "Shipment",
+    // You can still add custom onSettled logic
     onSettled: () => {
       if (isPopout) {
         closePopout();

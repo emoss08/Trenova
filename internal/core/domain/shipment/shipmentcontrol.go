@@ -37,6 +37,7 @@ type ShipmentControl struct {
 
 	// Misc....
 	CheckForDuplicateBOLs bool `json:"checkForDuplicateBOLs" bun:"check_for_duplicate_bols,notnull,default:true"`
+	AllowMoveRemovals     bool `json:"allowMoveRemovals" bun:"allow_move_removals,notnull,default:true"`
 
 	// Metadata
 	Version   int64 `json:"version" bun:"version,type:BIGINT"`

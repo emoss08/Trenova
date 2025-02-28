@@ -16,7 +16,7 @@ import {
   DataTableCreateButtonProps,
   DataTableViewOptionsProps,
 } from "@/types/data-table";
-import { faPlusCircle } from "@fortawesome/pro-regular-svg-icons";
+import { faPlus } from "@fortawesome/pro-regular-svg-icons";
 import { faEye } from "@fortawesome/pro-solid-svg-icons";
 import { PlusIcon, UploadIcon } from "@radix-ui/react-icons";
 import React, { useCallback } from "react";
@@ -29,7 +29,6 @@ export function DataTableCreateButton({
   exportModelName,
 }: DataTableCreateButtonProps) {
   const [showImportModal, setShowImportModal] =
-    // eslint-disable-next-line react-compiler/react-compiler
     useTableStore.use("showImportModal");
 
   const handleClick = useCallback(() => {
@@ -46,7 +45,7 @@ export function DataTableCreateButton({
       <Popover>
         <PopoverTrigger asChild>
           <Button variant="default" disabled={isDisabled}>
-            <Icon icon={faPlusCircle} className="size-4 text-background" />
+            <Icon icon={faPlus} className="size-4 text-background" />
             <span>New</span>
           </Button>
         </PopoverTrigger>

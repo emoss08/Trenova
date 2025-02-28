@@ -20,15 +20,17 @@ import (
 type ShipmentMoveRepositoryParams struct {
 	fx.In
 
-	DB             db.Connection
-	StopRepository repositories.StopRepository
-	Logger         *logger.Logger
+	DB                        db.Connection
+	StopRepository            repositories.StopRepository
+	ShipmentControlRepository repositories.ShipmentControlRepository
+	Logger                    *logger.Logger
 }
 
 type shipmentMoveRepository struct {
-	db             db.Connection
-	StopRepository repositories.StopRepository
-	l              *zerolog.Logger
+	db   db.Connection
+	stpr repositories.StopRepository
+	scr  repositories.ShipmentControlRepository
+	l    *zerolog.Logger
 }
 
 func NewShipmentMoveRepository(p ShipmentMoveRepositoryParams) repositories.ShipmentMoveRepository {
@@ -37,9 +39,10 @@ func NewShipmentMoveRepository(p ShipmentMoveRepositoryParams) repositories.Ship
 		Logger()
 
 	return &shipmentMoveRepository{
-		db:             p.DB,
-		StopRepository: p.StopRepository,
-		l:              &log,
+		db:   p.DB,
+		stpr: p.StopRepository,
+		scr:  p.ShipmentControlRepository,
+		l:    &log,
 	}
 }
 
@@ -436,8 +439,20 @@ func (sr *shipmentMoveRepository) SplitMove(ctx context.Context, req *repositori
 	return result, nil
 }
 
+// HandleMoveOperations handles the operations for a shipment move
 func (sr *shipmentMoveRepository) HandleMoveOperations(ctx context.Context, tx bun.IDB, shp *shipment.Shipment, isCreate bool) error {
 	var err error
+
+	log := sr.l.With().
+		Str("operation", "HandleMoveOperations").
+		Str("shipmentID", shp.ID.String()).
+		Logger()
+
+	scr, err := sr.scr.GetByOrgID(ctx, shp.OrganizationID)
+	if err != nil {
+		log.Error().Err(err).Msg("failed to get shipment control")
+		return err
+	}
 
 	// * Get the existing moves for comparison if this is an update operation
 	existingMoves := make([]*shipment.ShipmentMove, 0)
@@ -448,7 +463,7 @@ func (sr *shipmentMoveRepository) HandleMoveOperations(ctx context.Context, tx b
 			BuID:       shp.BusinessUnitID,
 		})
 		if err != nil {
-			sr.l.Error().Err(err).Msg("failed to get existing moves")
+			log.Error().Err(err).Msg("failed to get existing moves")
 			return err
 		}
 	}
@@ -458,10 +473,11 @@ func (sr *shipmentMoveRepository) HandleMoveOperations(ctx context.Context, tx b
 	updateMoves := make([]*shipment.ShipmentMove, 0)
 	existingMoveMap := make(map[pulid.ID]*shipment.ShipmentMove)
 	updatedMoveIDs := make(map[pulid.ID]struct{})
+	moveToDelete := make([]*shipment.ShipmentMove, 0)
 
 	// * Create map of existing moves for quick lookup
 	for _, move := range existingMoves {
-		sr.l.Debug().Interface("move", move).Msg("existing move")
+		log.Debug().Interface("move", move).Msg("existing move")
 		existingMoveMap[move.ID] = move
 	}
 
@@ -491,12 +507,12 @@ func (sr *shipmentMoveRepository) HandleMoveOperations(ctx context.Context, tx b
 	// * Handle bulk insert of new moves
 	if len(newMoves) > 0 {
 		if _, err := tx.NewInsert().Model(&newMoves).Exec(ctx); err != nil {
-			sr.l.Error().Err(err).Msg("failed to bulk insert new moves")
+			log.Error().Err(err).Msg("failed to bulk insert new moves")
 			return err
 		}
 
 		for _, move := range newMoves {
-			sr.l.Debug().Interface("move", move).Msg("new move")
+			log.Debug().Interface("move", move).Msg("new move")
 			for _, stop := range move.Stops {
 				// * Set the required fields
 				stop.ShipmentMoveID = move.ID
@@ -505,7 +521,7 @@ func (sr *shipmentMoveRepository) HandleMoveOperations(ctx context.Context, tx b
 
 				// * Insert the stop
 				if _, err := tx.NewInsert().Model(stop).Exec(ctx); err != nil {
-					sr.l.Error().Err(err).Msg("failed to insert stop")
+					log.Error().Err(err).Msg("failed to insert stop")
 					return err
 				}
 			}
@@ -516,21 +532,52 @@ func (sr *shipmentMoveRepository) HandleMoveOperations(ctx context.Context, tx b
 	if len(updateMoves) > 0 {
 		for moveIdx, move := range updateMoves {
 			if err := sr.handleUpdate(ctx, tx, move, moveIdx); err != nil {
-				sr.l.Error().Err(err).Msg("failed to handle bulk update of moves")
+				log.Error().Err(err).Msg("failed to handle bulk update of moves")
 				return err
 			}
 
 			// * Handle bulk update of stops
 			for stopIdx, stop := range move.Stops {
-				if _, err := sr.StopRepository.Update(ctx, stop, moveIdx, stopIdx); err != nil {
-					// sr.l.Error().Err(err).Msg("failed to update stop")
+				if _, err := sr.stpr.Update(ctx, stop, moveIdx, stopIdx); err != nil {
+					log.Error().Err(err).Msg("failed to update stop")
 					return err
 				}
 			}
 		}
 	}
 
-	// ! Moves cannot be deleted the user needs to set the status to `Canceled`
+	// * Handle deletion of moves that are no longer present if the organization allows it
+	if !isCreate {
+		// Check if there are moves to delete
+		for moveID := range existingMoveMap {
+			if _, ok := updatedMoveIDs[moveID]; !ok {
+				// * Check if the organization allows move removals
+				if !scr.AllowMoveRemovals {
+					log.Debug().Msgf("Organization %s does not allow move removals, returning error...", shp.OrganizationID)
+					return errors.NewBusinessError(
+						"Your organization does not allow move removals",
+					)
+				}
+
+				// ! If we get here, deletions are allowed, so continue with the deletion process
+				break
+			}
+		}
+
+		// If organization allows move removals, proceed with deletion
+		if err := sr.handleMoveDeletions(ctx, tx, &repositories.HandleMoveDeletionsRequest{
+			ExistingMoveMap: existingMoveMap,
+			UpdatedMoveIDs:  updatedMoveIDs,
+			MoveToDelete:    moveToDelete,
+		}); err != nil {
+			log.Error().Err(err).Msg("failed to handle move deletions")
+			return err
+		}
+	}
+
+	log.Debug().Int("new_moves", len(newMoves)).
+		Int("updated_moves", len(updateMoves)).
+		Msg("move operations completed")
 
 	return nil
 }
@@ -574,5 +621,145 @@ func (sr *shipmentMoveRepository) handleUpdate(ctx context.Context, tx bun.IDB, 
 
 	sr.l.Debug().Int("count", int(rowsAffected)).Msg("bulk updated moves")
 
+	return nil
+}
+
+func (sr *shipmentMoveRepository) handleMoveDeletions(ctx context.Context, tx bun.IDB, req *repositories.HandleMoveDeletionsRequest) error {
+	// Create a slice to hold the IDs of moves to delete
+	moveIDsToDelete := make([]pulid.ID, 0)
+
+	// For each existing move, check if it is still present in the updated move list
+	for moveID, move := range req.ExistingMoveMap {
+		if _, ok := req.UpdatedMoveIDs[moveID]; !ok {
+			moveIDsToDelete = append(moveIDsToDelete, moveID)
+			req.MoveToDelete = append(req.MoveToDelete, move)
+		}
+	}
+
+	sr.l.Debug().
+		Interface("moveIDsToDelete", moveIDsToDelete).
+		Msg("moves to delete")
+
+	// If there are moves to delete
+	if len(moveIDsToDelete) > 0 {
+		// First, delete all stops associated with these moves
+		_, err := tx.NewDelete().
+			Model((*shipment.Stop)(nil)).
+			Where("shipment_move_id IN (?)", bun.In(moveIDsToDelete)).
+			Exec(ctx)
+		if err != nil {
+			sr.l.Error().Err(err).Interface("moveIDs", moveIDsToDelete).
+				Msg("failed to delete associated stops")
+			return err
+		}
+
+		// Delete any assignments associated with these moves
+		_, err = tx.NewDelete().
+			Model((*shipment.Assignment)(nil)).
+			Where("shipment_move_id IN (?)", bun.In(moveIDsToDelete)).
+			Exec(ctx)
+		if err != nil {
+			sr.l.Error().Err(err).Interface("moveIDs", moveIDsToDelete).
+				Msg("failed to delete associated assignments")
+			return err
+		}
+
+		// Now delete the moves themselves
+		result, err := tx.NewDelete().
+			Model((*shipment.ShipmentMove)(nil)).
+			Where("id IN (?)", bun.In(moveIDsToDelete)).
+			Exec(ctx)
+		if err != nil {
+			sr.l.Error().Err(err).Interface("moveIDs", moveIDsToDelete).
+				Msg("failed to delete moves")
+			return err
+		}
+
+		// Check that the expected number of moves were deleted
+		rowsAffected, err := result.RowsAffected()
+		if err != nil {
+			sr.l.Error().Err(err).Msg("failed to get rows affected for move deletion")
+			return err
+		}
+
+		sr.l.Info().Int64("deletedMoveCount", rowsAffected).
+			Interface("moveIDs", moveIDsToDelete).
+			Msg("successfully deleted moves")
+
+		// After deletion, resequence the remaining moves to ensure contiguous sequencing
+		if err := sr.resequenceRemainingMoves(ctx, tx, req.ExistingMoveMap[moveIDsToDelete[0]].ShipmentID); err != nil {
+			sr.l.Error().Err(err).Msg("failed to resequence remaining moves")
+			return err
+		}
+	}
+
+	return nil
+}
+
+// resequenceRemainingMoves reorders the sequence numbers of all moves for a shipment to ensure
+// they are sequential (0, 1, 2, ...) with no gaps
+func (sr *shipmentMoveRepository) resequenceRemainingMoves(ctx context.Context, tx bun.IDB, shipmentID pulid.ID) error {
+	// Get all remaining moves for this shipment, ordered by their current sequence
+	var moves []*shipment.ShipmentMove
+	err := tx.NewSelect().
+		Model(&moves).
+		Where("shipment_id = ?", shipmentID).
+		Order("sequence ASC").
+		Scan(ctx)
+	if err != nil {
+		sr.l.Error().Err(err).Str("shipmentID", shipmentID.String()).
+			Msg("failed to get remaining moves for resequencing")
+		return err
+	}
+
+	// Nothing to resequence if there are no moves or just one move
+	if len(moves) <= 1 {
+		return nil
+	}
+
+	// Check if sequences are already contiguous and start from 0
+	needsResequencing := false
+	for i, move := range moves {
+		if move.Sequence != i {
+			needsResequencing = true
+			break
+		}
+	}
+
+	// Skip resequencing if already in order
+	if !needsResequencing {
+		sr.l.Debug().Msg("moves already properly sequenced, skipping resequencing")
+		return nil
+	}
+
+	// Update each move with its new sequence number
+	for i, move := range moves {
+		if move.Sequence == i {
+			continue // Skip if already has the correct sequence
+		}
+
+		_, err := tx.NewUpdate().
+			Model(move).
+			Set("sequence = ?", i).
+			Set("version = version + 1"). // Increment version for optimistic locking
+			Where("id = ?", move.ID).
+			Exec(ctx)
+		if err != nil {
+			sr.l.Error().Err(err).
+				Str("moveID", move.ID.String()).
+				Int("oldSequence", move.Sequence).
+				Int("newSequence", i).
+				Msg("failed to update move sequence during resequencing")
+			return err
+		}
+
+		sr.l.Debug().
+			Str("moveID", move.ID.String()).
+			Int("oldSequence", move.Sequence).
+			Int("newSequence", i).
+			Msg("resequenced move")
+	}
+
+	sr.l.Info().Int("moveCount", len(moves)).Msg("successfully resequenced moves")
 	return nil
 }

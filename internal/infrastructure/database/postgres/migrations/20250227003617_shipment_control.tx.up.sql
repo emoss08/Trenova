@@ -15,6 +15,7 @@ CREATE TABLE IF NOT EXISTS "shipment_controls"(
     "detention_threshold" bigint NOT NULL DEFAULT 10,
     -- Misc
     "check_for_duplicate_bols" boolean NOT NULL DEFAULT TRUE,
+    "allow_move_removals" boolean NOT NULL DEFAULT TRUE,
     -- Metadata
     "version" bigint NOT NULL DEFAULT 0,
     "created_at" bigint NOT NULL DEFAULT EXTRACT(EPOCH FROM CURRENT_TIMESTAMP) ::bigint,

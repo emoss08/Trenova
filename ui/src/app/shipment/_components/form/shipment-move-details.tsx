@@ -11,6 +11,7 @@ import {
 import { Icon } from "@/components/ui/icons";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { MOVE_DELETE_DIALOG_KEY } from "@/constants/env";
+import { MoveSchema } from "@/lib/schemas/move-schema";
 import { ShipmentSchema } from "@/lib/schemas/shipment-schema";
 import { MoveStatus, type ShipmentMove } from "@/types/move";
 import { faEllipsisVertical, faPlus } from "@fortawesome/pro-regular-svg-icons";
@@ -28,8 +29,36 @@ import { AssignmentDetails } from "./move-assignment-details";
 import { MoveDeleteDialog } from "./move/move-delete-dialog";
 import { MoveDialog } from "./move/move-dialog";
 
+// Utility function to resequence moves after deletion
+const resequenceMoves = (
+  moves?: MoveSchema[],
+  deletedIndex?: number,
+): MoveSchema[] => {
+  if (!moves || !deletedIndex) {
+    return [];
+  }
+
+  // Create a copy of the moves array to avoid mutating the original
+  const updatedMoves = [...moves];
+
+  // Get the sequence number of the deleted move
+  const deletedSequence = moves[deletedIndex].sequence;
+
+  // Adjust sequence numbers for all moves after the deleted one
+  for (let i = 0; i < updatedMoves.length; i++) {
+    if (i !== deletedIndex && updatedMoves[i].sequence > deletedSequence) {
+      updatedMoves[i] = {
+        ...updatedMoves[i],
+        sequence: updatedMoves[i].sequence - 1,
+      };
+    }
+  }
+
+  return updatedMoves;
+};
+
 export function ShipmentMovesDetails() {
-  const { control } = useFormContext<ShipmentSchema>();
+  const { control, getValues } = useFormContext<ShipmentSchema>();
   const [moveDialogOpen, setMoveDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
@@ -53,6 +82,7 @@ export function ShipmentMovesDetails() {
     setMoveDialogOpen(true);
   };
 
+  // Modified handleDeleteMove function for the ShipmentMovesDetails component
   const handleDeleteMove = (index: number) => {
     // If there is only one move, we cannot delete it
     if (moves.length === 1) {
@@ -69,13 +99,34 @@ export function ShipmentMovesDetails() {
       setDeletingIndex(index);
       setDeleteDialogOpen(true);
     } else {
-      remove(index);
+      performDeleteMove(index);
     }
   };
 
+  // Function to perform the actual deletion with resequencing
+  const performDeleteMove = (index: number) => {
+    // Get the current moves data
+    const currentMoves = getValues("moves");
+
+    // Resequence the moves
+    const updatedMoves = resequenceMoves(currentMoves, index);
+
+    // Update all moves with their new sequences before removal
+    updatedMoves.forEach((move, idx) => {
+      if (idx !== index) {
+        // Skip the one being deleted
+        update(idx, move);
+      }
+    });
+
+    // Now remove the move at the specified index
+    remove(index);
+  };
+
+  // Modified handleConfirmDelete function
   const handleConfirmDelete = (doNotShowAgain: boolean) => {
     if (deletingIndex !== null) {
-      remove(deletingIndex);
+      performDeleteMove(deletingIndex);
 
       if (doNotShowAgain) {
         localStorage.setItem(MOVE_DELETE_DIALOG_KEY, "false");
@@ -104,8 +155,6 @@ export function ShipmentMovesDetails() {
     editingIndex !== null &&
     ((editingIndex < moves.length - 1 || moves[editingIndex]?.stops?.length) ??
       0 > 0);
-
-  // const moveStops = moves.map((move) => move.stops).flat();
 
   return (
     <>
@@ -149,14 +198,8 @@ export function ShipmentMovesDetails() {
           onOpenChange={handleDialogClose}
           isEditing={!!isEditing}
           moveIdx={editingIndex ?? moves.length}
-          // stops={moveStops as Stop[]}
           update={update}
           remove={remove}
-          initialData={
-            editingIndex !== null
-              ? (moves[editingIndex] as ShipmentMove)
-              : undefined
-          }
         />
       )}
       {deleteDialogOpen && (
@@ -302,23 +345,23 @@ function MoveActions({
           />
           <DropdownMenuItem
             title="Split Move"
-            description="Divide this move into multiple parts."
+            description="Divide this move into multiple parts"
           />
           <DropdownMenuItem
             title="Edit Move"
-            description="Modify move details."
+            description="Modify move details"
             onClick={onEdit}
           />
           <DropdownMenuItem
             title="View Audit Log"
-            description="View the audit log for the move."
+            description="View the audit log for the move"
           />
 
           <DropdownMenuItem
-            title="Cancel Move"
+            title="Delete Move"
             color="danger"
-            description="Cancel this move."
-            // onClick={onDelete}
+            description="Remove this move from the shipment"
+            onClick={onDelete}
           />
         </DropdownMenuContent>
       </DropdownMenu>
