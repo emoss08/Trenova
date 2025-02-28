@@ -19,6 +19,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { usePopoutWindow } from "@/hooks/popout-window/use-popout-window";
+import { useApiMutation } from "@/hooks/use-api-mutation";
 import { useUnsavedChanges } from "@/hooks/use-form";
 import { broadcastQueryInvalidation } from "@/hooks/use-invalidate-query";
 import { formatToUserTimezone } from "@/lib/date";
@@ -26,13 +27,10 @@ import { http } from "@/lib/http-client";
 import { cn } from "@/lib/utils";
 import { useAuthStore } from "@/stores/user-store";
 import { type EditTableSheetProps } from "@/types/data-table";
-import { APIError } from "@/types/errors";
 import { type API_ENDPOINTS } from "@/types/server";
-import { useMutation } from "@tanstack/react-query";
 import { useCallback, useEffect } from "react";
 import {
   FormProvider,
-  Path,
   type FieldValues,
   type UseFormReturn,
 } from "react-hook-form";
@@ -87,44 +85,38 @@ export function FormEditModal<T extends FieldValues>({
     reset();
   }, [onOpenChange, reset]);
 
-  const { mutateAsync } = useMutation({
+  const { mutateAsync } = useApiMutation<
+    T, // The response data type
+    T, // The variables type
+    unknown, // The context type
+    T // The form values type for error handling
+  >({
     mutationFn: async (values: T) => {
-      const response = await http.put(`${url}${currentRecord?.id}`, values);
+      const response = await http.put<T>(`${url}${currentRecord?.id}`, values);
       return response.data;
     },
     onSuccess: () => {
-      toast.success("Changes have been saved.", {
+      toast.success("Changes have been saved", {
         description: `${title} updated successfully`,
       });
       onOpenChange(false);
 
-      // Invalidate the query to refresh the table
       broadcastQueryInvalidation({
         queryKey: [queryKey],
-        options: { correlationId: `create-${queryKey}-${Date.now()}` },
+        options: {
+          correlationId: `update-${queryKey}-${Date.now()}`,
+        },
         config: {
           predicate: true,
           refetchType: "all",
         },
       });
     },
-    onError: (error: APIError) => {
-      // TODO(Wolfred): Add a standardized error handling system that catches all errors and displays them in a consistent way
-      if (error.isValidationError()) {
-        error.getFieldErrors().forEach((fieldError) => {
-          setError(fieldError.name as Path<T>, {
-            message: fieldError.reason,
-          });
-        });
-      }
-
-      if (error.isRateLimitError()) {
-        toast.error("Rate limit exceeded", {
-          description:
-            "You have exceeded the rate limit. Please try again later.",
-        });
-      }
-    },
+    // Pass in the form's setError function
+    setFormError: setError,
+    // Provide a resource name for better error logging
+    resourceName: title,
+    // You can still add custom onSettled logic
     onSettled: () => {
       if (isPopout) {
         closePopout();

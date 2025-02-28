@@ -66,6 +66,7 @@ interface SheetContentProps
   extends React.ComponentPropsWithoutRef<typeof SheetPrimitive.Content>,
     VariantProps<typeof sheetVariants> {
   withClose?: boolean;
+  ref?: React.Ref<HTMLDivElement>;
 }
 
 function SheetContent({
