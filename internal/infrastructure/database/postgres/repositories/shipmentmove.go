@@ -439,7 +439,7 @@ func (sr *shipmentMoveRepository) SplitMove(ctx context.Context, req *repositori
 	return result, nil
 }
 
-// HandleMoveOperations handles the operations for a shipment move
+// Modify the HandleMoveOperations in shipmentMoveRepository
 func (sr *shipmentMoveRepository) HandleMoveOperations(ctx context.Context, tx bun.IDB, shp *shipment.Shipment, isCreate bool) error {
 	var err error
 
@@ -528,7 +528,7 @@ func (sr *shipmentMoveRepository) HandleMoveOperations(ctx context.Context, tx b
 		}
 	}
 
-	// * Handle bulk update of new moves
+	// * Handle bulk update of existing moves
 	if len(updateMoves) > 0 {
 		for moveIdx, move := range updateMoves {
 			if err := sr.handleUpdate(ctx, tx, move, moveIdx); err != nil {
@@ -536,10 +536,48 @@ func (sr *shipmentMoveRepository) HandleMoveOperations(ctx context.Context, tx b
 				return err
 			}
 
+			// * Get existing stops for this move to check for stop removals
+			existingStops := make([]*shipment.Stop, 0)
+			err := tx.NewSelect().Model(&existingStops).
+				Where("shipment_move_id = ?", move.ID).
+				Scan(ctx)
+			if err != nil {
+				log.Error().Err(err).Str("moveID", move.ID.String()).
+					Msg("failed to get existing stops for move")
+				return err
+			}
+
+			// Track which stops are being updated
+			updatedStopIDs := make(map[pulid.ID]struct{})
+
 			// * Handle bulk update of stops
 			for stopIdx, stop := range move.Stops {
-				if _, err := sr.stpr.Update(ctx, stop, moveIdx, stopIdx); err != nil {
-					log.Error().Err(err).Msg("failed to update stop")
+				// Set the required fields
+				stop.ShipmentMoveID = move.ID
+				stop.OrganizationID = move.OrganizationID
+				stop.BusinessUnitID = move.BusinessUnitID
+
+				if stop.ID.IsNil() {
+					// This is a new stop, insert it
+					stop.ID = pulid.MustNew("stp_")
+					if _, err := tx.NewInsert().Model(stop).Exec(ctx); err != nil {
+						log.Error().Err(err).Msg("failed to insert new stop")
+						return err
+					}
+				} else {
+					// This is an existing stop, update it
+					if _, err := sr.stpr.Update(ctx, stop, moveIdx, stopIdx); err != nil {
+						log.Error().Err(err).Msg("failed to update stop")
+						return err
+					}
+					updatedStopIDs[stop.ID] = struct{}{}
+				}
+			}
+
+			// * Handle stop removals
+			if len(existingStops) > 0 {
+				if err := sr.stpr.HandleStopRemovals(ctx, tx, move, existingStops, updatedStopIDs); err != nil {
+					log.Error().Err(err).Msg("failed to handle stop removals")
 					return err
 				}
 			}

@@ -40,7 +40,7 @@ CREATE TABLE IF NOT EXISTS stops(
     "updated_at_timestamp" timestamp GENERATED ALWAYS AS (to_timestamp(updated_at)) STORED,
     CONSTRAINT "pk_stops" PRIMARY KEY ("id", "organization_id", "business_unit_id"),
     -- Added unique constraint for sequence within same shipment_move
-    CONSTRAINT "uq_stops_shipment_move_sequence" UNIQUE ("shipment_move_id", "organization_id", "business_unit_id", "sequence"),
+    -- CONSTRAINT "uq_stops_shipment_move_sequence" UNIQUE ("shipment_move_id", "organization_id", "business_unit_id", "sequence"),
     CONSTRAINT "fk_stops_business_unit" FOREIGN KEY ("business_unit_id") REFERENCES "business_units"("id") ON UPDATE NO ACTION ON DELETE CASCADE,
     CONSTRAINT "fk_stops_organization" FOREIGN KEY ("organization_id") REFERENCES "organizations"("id") ON UPDATE NO ACTION ON DELETE CASCADE,
     CONSTRAINT "fk_stops_shipment_move" FOREIGN KEY ("shipment_move_id", "organization_id", "business_unit_id") REFERENCES "shipment_moves"("id", "organization_id", "business_unit_id") ON UPDATE NO ACTION ON DELETE CASCADE,
