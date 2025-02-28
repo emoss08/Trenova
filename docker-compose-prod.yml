@@ -1,6 +1,6 @@
 x-build-args: &build-args
   DOCKER_BUILDKIT: 1
-  GO_VERSION: 1.23
+  GO_VERSION: 1.24
   ALPINE_VERSION: latest
 
 name: trenova-prod
