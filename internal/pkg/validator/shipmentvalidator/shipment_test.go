@@ -5,7 +5,9 @@ import (
 	"os"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/core/domain/organization"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
+	"github.com/emoss08/trenova/internal/infrastructure/database/postgres/repositories"
 	"github.com/emoss08/trenova/internal/pkg/errors"
 	"github.com/emoss08/trenova/internal/pkg/validator"
 	spValidator "github.com/emoss08/trenova/internal/pkg/validator/shipmentvalidator"
@@ -31,8 +33,11 @@ func TestMain(m *testing.M) {
 }
 
 func newShipment() *shipment.Shipment {
+	org := ts.Fixture.MustRow("Organization.trenova").(*organization.Organization)
+
 	return &shipment.Shipment{
 		ProNumber:           "123456",
+		OrganizationID:      org.ID,
 		Status:              shipment.StatusNew,
 		ShipmentTypeID:      pulid.MustNew("st_"),
 		CustomerID:          pulid.MustNew("cust_"),
@@ -87,9 +92,15 @@ func TestShipmentValidator(t *testing.T) { //nolint: funlen // Tests
 		StopValidator: sv,
 	})
 
+	sc := repositories.NewShipmentControlRepository(repositories.ShipmentControlRepositoryParams{
+		DB:     ts.DB,
+		Logger: testutils.NewTestLogger(t),
+	})
+
 	val := spValidator.NewValidator(spValidator.ValidatorParams{
-		DB:            ts.DB,
-		MoveValidator: mv,
+		DB:                  ts.DB,
+		MoveValidator:       mv,
+		ShipmentControlRepo: sc,
 	})
 
 	scenarios := []struct {
@@ -262,6 +273,11 @@ func TestShipmentValidator(t *testing.T) { //nolint: funlen // Tests
 }
 
 func TestShipmentCancelValidation(t *testing.T) {
+	sc := repositories.NewShipmentControlRepository(repositories.ShipmentControlRepositoryParams{
+		DB:     ts.DB,
+		Logger: testutils.NewTestLogger(t),
+	})
+
 	sv := spValidator.NewStopValidator(spValidator.StopValidatorParams{
 		DB: ts.DB,
 	})
@@ -272,9 +288,11 @@ func TestShipmentCancelValidation(t *testing.T) {
 	})
 
 	val := spValidator.NewValidator(spValidator.ValidatorParams{
-		DB:            ts.DB,
-		MoveValidator: mv,
+		DB:                  ts.DB,
+		MoveValidator:       mv,
+		ShipmentControlRepo: sc,
 	})
+
 	scenarios := []struct {
 		name           string
 		modifyShipment func(*shipment.Shipment)

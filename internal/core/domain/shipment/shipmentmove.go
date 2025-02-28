@@ -86,8 +86,6 @@ func (sm *ShipmentMove) BeforeAppendModel(_ context.Context, query bun.Query) er
 		}
 
 		sm.CreatedAt = now
-	case *bun.UpdateQuery:
-		sm.UpdatedAt = now
 	}
 
 	return nil

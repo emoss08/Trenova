@@ -35,6 +35,7 @@ func RegisterEntities() []any {
 		&usstate.UsState{},
 		&businessunit.BusinessUnit{},
 		&organization.Organization{},
+		&shipment.ShipmentControl{},
 		&resource.ResourceDefinition{},
 		&session.Event{},
 		&session.Session{},
@@ -72,6 +73,5 @@ func RegisterEntities() []any {
 		&shipment.Shipment{},
 		&pcmilerconfiguration.PCMilerConfiguration{},
 		&pronumber.Sequence{},
-		&shipment.ShipmentControl{},
 	}
 }

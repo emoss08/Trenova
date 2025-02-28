@@ -227,12 +227,14 @@ func (sr *shipmentRepository) GetByID(ctx context.Context, opts repositories.Get
 	q = sr.addOptions(q, opts.ShipmentOptions)
 
 	if err = q.Scan(ctx); err != nil {
+		// * If the query is [sql.ErrNoRows], return a not found error
 		if eris.Is(err, sql.ErrNoRows) {
+			log.Error().Err(err).Msg("failed to get shipment")
 			return nil, errors.NewNotFoundError("Shipment not found within your organization")
 		}
 
 		log.Error().Err(err).Msg("failed to get shipment")
-		return nil, err
+		return nil, eris.Wrap(err, "get shipment by id")
 	}
 
 	return entity, nil
