@@ -2,6 +2,7 @@ package repositories
 
 import (
 	"context"
+	"database/sql"
 	"fmt"
 
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
@@ -17,6 +18,8 @@ import (
 	"go.uber.org/fx"
 )
 
+// ShipmentMoveRepositoryParams defines dependencies required for initializing the ShipmentMoveRepository.
+// This includes database connection, stop repository, shipment control repository, and logger.
 type ShipmentMoveRepositoryParams struct {
 	fx.In
 
@@ -26,6 +29,9 @@ type ShipmentMoveRepositoryParams struct {
 	Logger                    *logger.Logger
 }
 
+// shipmentMoveRepository implements the ShipmentMoveRepository interface
+// and provides methods to manage moves, including CRUD operations, status updates,
+// and bulk operations.
 type shipmentMoveRepository struct {
 	db   db.Connection
 	stpr repositories.StopRepository
@@ -33,6 +39,13 @@ type shipmentMoveRepository struct {
 	l    *zerolog.Logger
 }
 
+// NewShipmentMoveRepository initializes a new instance of shipmentMoveRepository with its dependencies.
+//
+// Parameters:
+// - p: ShipmentMoveRepositoryParams containing database connection, stop repository, shipment control repository, and logger.
+//
+// Returns:
+// - A new instance of shipmentMoveRepository.
 func NewShipmentMoveRepository(p ShipmentMoveRepositoryParams) repositories.ShipmentMoveRepository {
 	log := p.Logger.With().
 		Str("repository", "shipmentmove").
@@ -46,6 +59,15 @@ func NewShipmentMoveRepository(p ShipmentMoveRepositoryParams) repositories.Ship
 	}
 }
 
+// GetByID retrieves a shipment by its unique ID, including optional expanded details
+//
+// Parameters:
+// - ctx: The context for the operation.
+// - opts: GetMoveByIDOptions containing move ID and organization ID.
+//
+// Returns:
+//   - *shipment.ShipmentMove: The shipment move if found
+//   - error: If any database operation fails.
 func (sr *shipmentMoveRepository) GetByID(ctx context.Context, opts repositories.GetMoveByIDOptions) (*shipment.ShipmentMove, error) {
 	dba, err := sr.db.DB(ctx)
 	if err != nil {
@@ -62,24 +84,38 @@ func (sr *shipmentMoveRepository) GetByID(ctx context.Context, opts repositories
 	move := new(shipment.ShipmentMove)
 
 	q := dba.NewSelect().Model(move).
-		Where("sm.id = ?", opts.MoveID).
-		Where("sm.organization_id = ?", opts.OrgID).
-		Where("sm.business_unit_id = ?", opts.BuID)
+		WhereGroup("AND", func(sq *bun.SelectQuery) *bun.SelectQuery {
+			return sq.Where("sm.id = ?", opts.MoveID).
+				Where("sm.organization_id = ?", opts.OrgID).
+				Where("sm.business_unit_id = ?", opts.BuID)
+		})
 
 	if opts.ExpandMoveDetails {
 		q.Relation("Stops")
 	}
 
 	if err = q.Scan(ctx); err != nil {
-		log.Error().Err(err).
-			Interface("move", move).
-			Msg("failed to get move by id")
-		return nil, err
+		if eris.Is(err, sql.ErrNoRows) {
+			log.Error().Err(err).Msg("failed to get shipment move")
+			return nil, errors.NewNotFoundError("Shipment move not found within your organization")
+		}
+
+		log.Error().Err(err).Msg("failed to get move")
+		return nil, eris.Wrap(err, "get move by id")
 	}
 
 	return move, nil
 }
 
+// BulkUpdateStatus updates the status of multiple shipment moves in a single database transaction.
+//
+// Parameters:
+// - ctx: The context for the operation.
+// - req: BulkUpdateMoveStatusRequest containing move IDs and status.
+//
+// Returns:
+//   - []*shipment.ShipmentMove: The updated shipment moves
+//   - error: If any database operation fails.
 func (sr *shipmentMoveRepository) BulkUpdateStatus(ctx context.Context, req repositories.BulkUpdateMoveStatusRequest) ([]*shipment.ShipmentMove, error) {
 	dba, err := sr.db.DB(ctx)
 	if err != nil {
@@ -124,6 +160,15 @@ func (sr *shipmentMoveRepository) BulkUpdateStatus(ctx context.Context, req repo
 	return moves, nil
 }
 
+// UpdateStatus updates the status of a shipment move
+//
+// Parameters:
+// - ctx: The context for the operation.
+// - opts: UpdateMoveStatusRequest containing move ID and status.
+//
+// Returns:
+//   - *shipment.ShipmentMove: The updated shipment move
+//   - error: If any database operation fails.
 func (sr *shipmentMoveRepository) UpdateStatus(ctx context.Context, opts *repositories.UpdateMoveStatusRequest) (*shipment.ShipmentMove, error) {
 	dba, err := sr.db.DB(ctx)
 	if err != nil {
@@ -139,6 +184,7 @@ func (sr *shipmentMoveRepository) UpdateStatus(ctx context.Context, opts *reposi
 	// Get the move
 	move, err := sr.GetByID(ctx, opts.GetMoveOpts)
 	if err != nil {
+		log.Error().Err(err).Msg("failed to get move")
 		return nil, err
 	}
 
@@ -188,6 +234,15 @@ func (sr *shipmentMoveRepository) UpdateStatus(ctx context.Context, opts *reposi
 	return move, nil
 }
 
+// GetMovesByShipmentID retrieves all shipment moves for a given shipment ID.
+//
+// Parameters:
+// - ctx: The context for the operation.
+// - opts: GetMovesByShipmentIDOptions containing shipment ID, organization ID, and business unit ID.
+//
+// Returns:
+//   - []*shipment.ShipmentMove: The shipment moves
+//   - error: If any database operation fails.
 func (sr *shipmentMoveRepository) GetMovesByShipmentID(ctx context.Context, opts repositories.GetMovesByShipmentIDOptions) ([]*shipment.ShipmentMove, error) {
 	dba, err := sr.db.DB(ctx)
 	if err != nil {
@@ -201,19 +256,38 @@ func (sr *shipmentMoveRepository) GetMovesByShipmentID(ctx context.Context, opts
 
 	moves := make([]*shipment.ShipmentMove, 0)
 
+	// * Craft the query using a where group to ensure all conditions are met
 	q := dba.NewSelect().Model(&moves).
-		Where("sm.shipment_id = ?", opts.ShipmentID).
-		Where("sm.organization_id = ?", opts.OrgID).
-		Where("sm.business_unit_id = ?", opts.BuID)
+		WhereGroup("AND", func(sq *bun.SelectQuery) *bun.SelectQuery {
+			return sq.Where("sm.shipment_id = ?", opts.ShipmentID).
+				Where("sm.organization_id = ?", opts.OrgID).
+				Where("sm.business_unit_id = ?", opts.BuID)
+		})
 
+	// * Execute the query
 	if err = q.Scan(ctx); err != nil {
+		// * If the query is [sql.ErrNoRows], return a not found error
+		if eris.Is(err, sql.ErrNoRows) {
+			log.Error().Err(err).Msg("failed to get moves by shipment id")
+			return nil, errors.NewNotFoundError("Moves not found within your organization")
+		}
+
 		log.Error().Err(err).Msg("failed to get moves by shipment id")
-		return nil, err
+		return nil, eris.Wrap(err, "get moves by shipment id")
 	}
 
 	return moves, nil
 }
 
+// BulkInsert inserts multiple shipment moves in a single database transaction.
+//
+// Parameters:
+// - ctx: The context for the operation.
+// - moves: The shipment moves to insert.
+//
+// Returns:
+//   - []*shipment.ShipmentMove: The inserted shipment moves
+//   - error: If any database operation fails.
 func (sr *shipmentMoveRepository) BulkInsert(ctx context.Context, moves []*shipment.ShipmentMove) ([]*shipment.ShipmentMove, error) {
 	dba, err := sr.db.DB(ctx)
 	if err != nil {
@@ -235,12 +309,21 @@ func (sr *shipmentMoveRepository) BulkInsert(ctx context.Context, moves []*shipm
 	})
 	if err != nil {
 		log.Error().Err(err).Msg("failed to bulk insert moves and stops")
-		return nil, err
+		return nil, eris.Wrap(err, "bulk insert moves")
 	}
 
 	return moves, nil
 }
 
+// SplitMove splits a shipment move into two new moves.
+//
+// Parameters:
+// - ctx: The context for the operation.
+// - req: SplitMoveRequest containing move ID, organization ID, business unit ID, split location ID, split quantities, and split delivery times.
+//
+// Returns:
+//   - *SplitMoveResponse: The response containing the original and new moves
+//   - error: If any database operation fails.
 func (sr *shipmentMoveRepository) SplitMove(ctx context.Context, req *repositories.SplitMoveRequest) (*repositories.SplitMoveResponse, error) {
 	dba, err := sr.db.DB(ctx)
 	if err != nil {
@@ -252,7 +335,7 @@ func (sr *shipmentMoveRepository) SplitMove(ctx context.Context, req *repositori
 		Str("moveID", req.MoveID.String()).
 		Logger()
 
-	// Get the original move with its stops
+	//  * Get the original move with its stops
 	originalMove, err := sr.GetByID(ctx, repositories.GetMoveByIDOptions{
 		MoveID:            req.MoveID,
 		OrgID:             req.OrgID,
@@ -265,7 +348,7 @@ func (sr *shipmentMoveRepository) SplitMove(ctx context.Context, req *repositori
 
 	var newMove *shipment.ShipmentMove
 	err = dba.RunInTx(ctx, nil, func(c context.Context, tx bun.Tx) error {
-		// First, get all moves for this shipment with sequence > originalMove.Sequence
+		// * First, get all moves for this shipment with sequence > originalMove.Sequence
 		var moves []*shipment.ShipmentMove
 		err = tx.NewSelect().
 			Model(&moves).
@@ -273,15 +356,17 @@ func (sr *shipmentMoveRepository) SplitMove(ctx context.Context, req *repositori
 			Order("sequence DESC").
 			Scan(c)
 		if err != nil {
-			sr.l.Error().
-				Err(err).
-				Str("moveID", originalMove.GetID()).
-				Int("sequence", originalMove.Sequence).
-				Msg("failed to get moves with sequence greater than original move")
-			return err
+			// * If the query is [sql.ErrNoRows], return a not found error
+			if eris.Is(err, sql.ErrNoRows) {
+				log.Error().Err(err).Msg("failed to get moves with sequence greater than original move")
+				return errors.NewNotFoundError("Moves not found within your organization")
+			}
+
+			log.Error().Err(err).Msg("failed to get moves with sequence greater than original move")
+			return eris.Wrap(err, "get moves with sequence greater than original move")
 		}
 
-		// Update sequences for existing moves, starting from the highest sequence
+		// * Update sequences for existing moves, starting from the highest sequence
 		for _, move := range moves {
 			move.Sequence++
 			if _, err = tx.NewUpdate().Model(move).
@@ -289,8 +374,7 @@ func (sr *shipmentMoveRepository) SplitMove(ctx context.Context, req *repositori
 				Set("version = version + 1").
 				WherePK().
 				Exec(c); err != nil {
-				sr.l.Error().
-					Err(err).
+				log.Error().Err(err).
 					Str("moveID", move.GetID()).
 					Int("sequence", move.Sequence).
 					Msg("failed to update move sequence")
@@ -298,19 +382,22 @@ func (sr *shipmentMoveRepository) SplitMove(ctx context.Context, req *repositori
 			}
 		}
 
-		// Delete the original delivery stop
+		// * Delete the original delivery stop
 		_, err = tx.NewDelete().Model((*shipment.Stop)(nil)).
 			Where("shipment_move_id = ? AND sequence = ?", originalMove.ID, 1).
 			Exec(c)
 		if err != nil {
-			sr.l.Error().
-				Err(err).
-				Str("moveID", originalMove.GetID()).
-				Msg("failed to delte the original delivery stop from the original move")
-			return err
+			// * If the query is [sql.ErrNoRows], return a not found error
+			if eris.Is(err, sql.ErrNoRows) {
+				log.Error().Err(err).Msg("failed to delte the original delivery stop from the original move")
+				return errors.NewNotFoundError("Original delivery stop not found within your organization")
+			}
+
+			log.Error().Err(err).Msg("failed to delte the original delivery stop from the original move")
+			return eris.Wrap(err, "delete original delivery stop")
 		}
 
-		// Create split delivery stop for the original move
+		// * Create split delivery stop for the original move
 		splitDeliveryStop := &shipment.Stop{
 			ID:               pulid.MustNew("stp_"),
 			BusinessUnitID:   originalMove.BusinessUnitID,
@@ -326,17 +413,16 @@ func (sr *shipmentMoveRepository) SplitMove(ctx context.Context, req *repositori
 			PlannedDeparture: req.SplitDeliveryTimes.PlannedDeparture,
 		}
 
-		// Insert the split delivery stop
+		// * Insert the split delivery stop
 		if _, err = tx.NewInsert().Model(splitDeliveryStop).Exec(c); err != nil {
-			sr.l.Error().
-				Err(err).
+			log.Error().Err(err).
 				Str("moveID", originalMove.GetID()).
 				Interface("splitDeliveryStop", splitDeliveryStop).
 				Msg("failed to insert the split delivery stop")
-			return err
+			return eris.Wrap(err, "insert split delivery stop")
 		}
 
-		// Create new move with sequence 1
+		// * Create new move with sequence 1
 		newMove = &shipment.ShipmentMove{
 			ID:             pulid.MustNew("smv_"),
 			BusinessUnitID: originalMove.BusinessUnitID,
@@ -348,20 +434,19 @@ func (sr *shipmentMoveRepository) SplitMove(ctx context.Context, req *repositori
 			Distance:       originalMove.Distance,
 		}
 
-		// Insert the new move
+		// * Insert the new move
 		if _, err = tx.NewInsert().Model(newMove).Exec(c); err != nil {
-			sr.l.Error().
-				Err(err).
+			log.Error().Err(err).
 				Str("moveID", originalMove.GetID()).
 				Interface("newMove", newMove).
 				Msg("failed to insert the new move")
-			return err
+			return eris.Wrap(err, "insert new move")
 		}
 
-		// Create stops for new move
+		// * Create stops for new move
 		newMoveStops := []*shipment.Stop{
 			{
-				// Split Pickup
+				// * Split Pickup
 				ID:               pulid.MustNew("stp_"),
 				BusinessUnitID:   originalMove.BusinessUnitID,
 				OrganizationID:   originalMove.OrganizationID,
@@ -376,7 +461,7 @@ func (sr *shipmentMoveRepository) SplitMove(ctx context.Context, req *repositori
 				PlannedDeparture: req.SplitPickupTimes.PlannedDeparture,
 			},
 			{
-				// Final Delivery
+				// * Final Delivery
 				ID:               pulid.MustNew("stp_"),
 				BusinessUnitID:   originalMove.BusinessUnitID,
 				OrganizationID:   originalMove.OrganizationID,
@@ -393,24 +478,25 @@ func (sr *shipmentMoveRepository) SplitMove(ctx context.Context, req *repositori
 			},
 		}
 
-		// Insert the stops for new move
+		// * Insert the stops for new move
 		if _, err = tx.NewInsert().Model(&newMoveStops).Exec(c); err != nil {
-			sr.l.Error().
-				Err(err).
+			log.Error().Err(err).
 				Str("moveID", originalMove.GetID()).
 				Interface("newMoveStops", newMoveStops).
 				Msg("failed to insert the stops for the new move")
-			return err
+			return eris.Wrap(err, "insert new move stops")
 		}
 
 		return nil
 	})
 	if err != nil {
-		log.Error().Err(err).Msg("failed to split move")
-		return nil, err
+		log.Error().Err(err).Interface("originalMove", originalMove).
+			Interface("newMove", newMove).
+			Msg("failed to split move")
+		return nil, eris.Wrap(err, "split move")
 	}
 
-	// Fetch updated moves for response
+	// * Fetch updated moves for response
 	originalMove, err = sr.GetByID(ctx, repositories.GetMoveByIDOptions{
 		MoveID:            originalMove.ID,
 		OrgID:             req.OrgID,
@@ -439,7 +525,16 @@ func (sr *shipmentMoveRepository) SplitMove(ctx context.Context, req *repositori
 	return result, nil
 }
 
-// Modify the HandleMoveOperations in shipmentMoveRepository
+// HandleMoveOperations handles the operations for a shipment move.
+//
+// Parameters:
+// - ctx: The context for the operation.
+// - tx: The database transaction.
+// - shp: The shipment to operate on.
+// - isCreate: Whether the operation is a create or update.
+//
+// Returns:
+//   - error: If any database operation fails.
 func (sr *shipmentMoveRepository) HandleMoveOperations(ctx context.Context, tx bun.IDB, shp *shipment.Shipment, isCreate bool) error {
 	var err error
 
@@ -561,13 +656,21 @@ func (sr *shipmentMoveRepository) HandleMoveOperations(ctx context.Context, tx b
 					// This is a new stop, insert it
 					stop.ID = pulid.MustNew("stp_")
 					if _, err := tx.NewInsert().Model(stop).Exec(ctx); err != nil {
-						log.Error().Err(err).Msg("failed to insert new stop")
+						log.Error().Err(err).
+							Int("moveIdx", moveIdx).
+							Int("stopIdx", stopIdx).
+							Interface("stop", stop).
+							Msg("failed to insert new stop")
 						return err
 					}
 				} else {
 					// This is an existing stop, update it
 					if _, err := sr.stpr.Update(ctx, stop, moveIdx, stopIdx); err != nil {
-						log.Error().Err(err).Msg("failed to update stop")
+						log.Error().Err(err).
+							Int("moveIdx", moveIdx).
+							Int("stopIdx", stopIdx).
+							Interface("stop", stop).
+							Msg("failed to update stop")
 						return err
 					}
 					updatedStopIDs[stop.ID] = struct{}{}
@@ -577,7 +680,9 @@ func (sr *shipmentMoveRepository) HandleMoveOperations(ctx context.Context, tx b
 			// * Handle stop removals
 			if len(existingStops) > 0 {
 				if err := sr.stpr.HandleStopRemovals(ctx, tx, move, existingStops, updatedStopIDs); err != nil {
-					log.Error().Err(err).Msg("failed to handle stop removals")
+					log.Error().Err(err).
+						Int("moveIdx", moveIdx).
+						Msg("failed to handle stop removals")
 					return err
 				}
 			}
@@ -602,7 +707,7 @@ func (sr *shipmentMoveRepository) HandleMoveOperations(ctx context.Context, tx b
 			}
 		}
 
-		// If organization allows move removals, proceed with deletion
+		// * If organization allows move removals, proceed with deletion
 		if err := sr.handleMoveDeletions(ctx, tx, &repositories.HandleMoveDeletionsRequest{
 			ExistingMoveMap: existingMoveMap,
 			UpdatedMoveIDs:  updatedMoveIDs,
@@ -620,7 +725,20 @@ func (sr *shipmentMoveRepository) HandleMoveOperations(ctx context.Context, tx b
 	return nil
 }
 
+// handleUpdate handles the update of a shipment move.
+//
+// Parameters:
+// - ctx: The context for the operation.
+// - tx: The database transaction.
+// - move: The move to update.
+// - idx: The index of the move in the update list.
 func (sr *shipmentMoveRepository) handleUpdate(ctx context.Context, tx bun.IDB, move *shipment.ShipmentMove, idx int) error {
+	log := sr.l.With().
+		Str("operation", "handleUpdate").
+		Int("idx", idx).
+		Interface("move", move).
+		Logger()
+
 	values := tx.NewValues(move)
 
 	// * Update the moves
@@ -639,13 +757,14 @@ func (sr *shipmentMoveRepository) handleUpdate(ctx context.Context, tx bun.IDB, 
 		Where("sm.business_unit_id = _data.business_unit_id").
 		Exec(ctx)
 	if err != nil {
-		sr.l.Error().Err(err).Msg("failed to bulk update moves")
+		log.Error().Err(err).Msg("failed to bulk update moves")
 		return err
 	}
 
+	// * Get the rows affected
 	rowsAffected, err := res.RowsAffected()
 	if err != nil {
-		sr.l.Error().Err(err).Msg("failed to get rows affected for bulk update of moves")
+		log.Error().Err(err).Msg("failed to get rows affected for bulk update of moves")
 		return err
 	}
 
@@ -657,16 +776,26 @@ func (sr *shipmentMoveRepository) handleUpdate(ctx context.Context, tx bun.IDB, 
 		)
 	}
 
-	sr.l.Debug().Int("count", int(rowsAffected)).Msg("bulk updated moves")
+	log.Debug().Int("count", int(rowsAffected)).Msg("bulk updated moves")
 
 	return nil
 }
 
+// handleMoveDeletions handles the deletion of moves that are no longer present.
+//
+// Parameters:
+// - ctx: The context for the operation.
+// - tx: The database transaction.
+// - req: The request containing the existing and updated moves.
 func (sr *shipmentMoveRepository) handleMoveDeletions(ctx context.Context, tx bun.IDB, req *repositories.HandleMoveDeletionsRequest) error {
-	// Create a slice to hold the IDs of moves to delete
+	log := sr.l.With().
+		Str("operation", "handleMoveDeletions").
+		Logger()
+
+	// * Create a slice to hold the IDs of moves to delete
 	moveIDsToDelete := make([]pulid.ID, 0)
 
-	// For each existing move, check if it is still present in the updated move list
+	// * For each existing move, check if it is still present in the updated move list
 	for moveID, move := range req.ExistingMoveMap {
 		if _, ok := req.UpdatedMoveIDs[moveID]; !ok {
 			moveIDsToDelete = append(moveIDsToDelete, moveID)
@@ -674,59 +803,83 @@ func (sr *shipmentMoveRepository) handleMoveDeletions(ctx context.Context, tx bu
 		}
 	}
 
-	sr.l.Debug().
+	log.Debug().
 		Interface("moveIDsToDelete", moveIDsToDelete).
 		Msg("moves to delete")
 
-	// If there are moves to delete
+	// * If there are moves to delete
 	if len(moveIDsToDelete) > 0 {
-		// First, delete all stops associated with these moves
+		// * First, delete all stops associated with these moves
 		_, err := tx.NewDelete().
 			Model((*shipment.Stop)(nil)).
 			Where("shipment_move_id IN (?)", bun.In(moveIDsToDelete)).
 			Exec(ctx)
 		if err != nil {
-			sr.l.Error().Err(err).Interface("moveIDs", moveIDsToDelete).
+			// * If the query is [sql.ErrNoRows], return a not found error
+			if eris.Is(err, sql.ErrNoRows) {
+				log.Error().Err(err).
+					Interface("moveIDs", moveIDsToDelete).
+					Msg("failed to delete associated stops")
+				return errors.NewNotFoundError("Associated stops not found within your organization")
+			}
+
+			log.Error().Err(err).
+				Interface("moveIDs", moveIDsToDelete).
 				Msg("failed to delete associated stops")
 			return err
 		}
 
-		// Delete any assignments associated with these moves
+		// * Delete any assignments associated with these moves
 		_, err = tx.NewDelete().
 			Model((*shipment.Assignment)(nil)).
 			Where("shipment_move_id IN (?)", bun.In(moveIDsToDelete)).
 			Exec(ctx)
 		if err != nil {
-			sr.l.Error().Err(err).Interface("moveIDs", moveIDsToDelete).
+			// * If the query is [sql.ErrNoRows], return a not found error
+			if eris.Is(err, sql.ErrNoRows) {
+				log.Error().Err(err).
+					Interface("moveIDs", moveIDsToDelete).
+					Msg("failed to delete associated assignments")
+				return errors.NewNotFoundError("Associated assignments not found within your organization")
+			}
+
+			log.Error().
+				Err(err).
+				Interface("moveIDs", moveIDsToDelete).
 				Msg("failed to delete associated assignments")
 			return err
 		}
 
-		// Now delete the moves themselves
+		// * Now delete the moves themselves
 		result, err := tx.NewDelete().
 			Model((*shipment.ShipmentMove)(nil)).
 			Where("id IN (?)", bun.In(moveIDsToDelete)).
 			Exec(ctx)
 		if err != nil {
-			sr.l.Error().Err(err).Interface("moveIDs", moveIDsToDelete).
+			log.Error().
+				Err(err).
+				Interface("moveIDs", moveIDsToDelete).
 				Msg("failed to delete moves")
 			return err
 		}
 
-		// Check that the expected number of moves were deleted
+		// * Check that the expected number of moves were deleted
 		rowsAffected, err := result.RowsAffected()
 		if err != nil {
-			sr.l.Error().Err(err).Msg("failed to get rows affected for move deletion")
+			log.Error().Err(err).Msg("failed to get rows affected for move deletion")
 			return err
 		}
 
-		sr.l.Info().Int64("deletedMoveCount", rowsAffected).
+		log.Info().
+			Int64("deletedMoveCount", rowsAffected).
 			Interface("moveIDs", moveIDsToDelete).
 			Msg("successfully deleted moves")
 
-		// After deletion, resequence the remaining moves to ensure contiguous sequencing
+		// * After deletion, resequence the remaining moves to ensure contiguous sequencing
 		if err := sr.resequenceRemainingMoves(ctx, tx, req.ExistingMoveMap[moveIDsToDelete[0]].ShipmentID); err != nil {
-			sr.l.Error().Err(err).Msg("failed to resequence remaining moves")
+			log.Error().Err(err).
+				Interface("moveIDs", moveIDsToDelete).
+				Msg("failed to resequence remaining moves")
 			return err
 		}
 	}
@@ -737,7 +890,12 @@ func (sr *shipmentMoveRepository) handleMoveDeletions(ctx context.Context, tx bu
 // resequenceRemainingMoves reorders the sequence numbers of all moves for a shipment to ensure
 // they are sequential (0, 1, 2, ...) with no gaps
 func (sr *shipmentMoveRepository) resequenceRemainingMoves(ctx context.Context, tx bun.IDB, shipmentID pulid.ID) error {
-	// Get all remaining moves for this shipment, ordered by their current sequence
+	log := sr.l.With().
+		Str("operation", "resequenceRemainingMoves").
+		Str("shipmentID", shipmentID.String()).
+		Logger()
+
+	// * Get all remaining moves for this shipment, ordered by their current sequence
 	var moves []*shipment.ShipmentMove
 	err := tx.NewSelect().
 		Model(&moves).
@@ -745,17 +903,18 @@ func (sr *shipmentMoveRepository) resequenceRemainingMoves(ctx context.Context, 
 		Order("sequence ASC").
 		Scan(ctx)
 	if err != nil {
-		sr.l.Error().Err(err).Str("shipmentID", shipmentID.String()).
+		log.Error().Err(err).
+			Str("shipmentID", shipmentID.String()).
 			Msg("failed to get remaining moves for resequencing")
 		return err
 	}
 
-	// Nothing to resequence if there are no moves or just one move
+	// * Nothing to resequence if there are no moves or just one move
 	if len(moves) <= 1 {
 		return nil
 	}
 
-	// Check if sequences are already contiguous and start from 0
+	// * Check if sequences are already contiguous and start from 0
 	needsResequencing := false
 	for i, move := range moves {
 		if move.Sequence != i {
@@ -764,13 +923,13 @@ func (sr *shipmentMoveRepository) resequenceRemainingMoves(ctx context.Context, 
 		}
 	}
 
-	// Skip resequencing if already in order
+	// * Skip resequencing if already in order
 	if !needsResequencing {
-		sr.l.Debug().Msg("moves already properly sequenced, skipping resequencing")
+		log.Debug().Msg("moves already properly sequenced, skipping resequencing")
 		return nil
 	}
 
-	// Update each move with its new sequence number
+	// * Update each move with its new sequence number
 	for i, move := range moves {
 		if move.Sequence == i {
 			continue // Skip if already has the correct sequence
@@ -783,7 +942,7 @@ func (sr *shipmentMoveRepository) resequenceRemainingMoves(ctx context.Context, 
 			Where("id = ?", move.ID).
 			Exec(ctx)
 		if err != nil {
-			sr.l.Error().Err(err).
+			log.Error().Err(err).
 				Str("moveID", move.ID.String()).
 				Int("oldSequence", move.Sequence).
 				Int("newSequence", i).
@@ -791,13 +950,13 @@ func (sr *shipmentMoveRepository) resequenceRemainingMoves(ctx context.Context, 
 			return err
 		}
 
-		sr.l.Debug().
+		log.Debug().
 			Str("moveID", move.ID.String()).
 			Int("oldSequence", move.Sequence).
 			Int("newSequence", i).
 			Msg("resequenced move")
 	}
 
-	sr.l.Info().Int("moveCount", len(moves)).Msg("successfully resequenced moves")
+	log.Info().Int("moveCount", len(moves)).Msg("successfully resequenced moves")
 	return nil
 }
