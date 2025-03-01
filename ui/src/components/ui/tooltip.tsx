@@ -58,5 +58,25 @@ function TooltipContent({
   );
 }
 
-export { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger };
+type ToolbarTooltipProps = {
+  content: string; // Or could be another React.ReactNode.
+  children: React.ReactNode;
+};
+
+function ToolbarTooltip({ content, children }: ToolbarTooltipProps) {
+  return (
+    <Tooltip delayDuration={0}>
+      <TooltipTrigger asChild>{children}</TooltipTrigger>
+      <TooltipContent>{content}</TooltipContent>
+    </Tooltip>
+  );
+}
+
+export {
+  ToolbarTooltip,
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger
+};
 

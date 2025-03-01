@@ -2,6 +2,7 @@ import type { InputProps } from "@/components/ui/input";
 import type { TextareaProps } from "@/components/ui/textarea";
 import { type IconDefinition } from "@fortawesome/pro-regular-svg-icons";
 import { type CheckboxProps } from "@radix-ui/react-checkbox";
+import { SwitchProps } from "@radix-ui/react-switch";
 import type {
   Control,
   FieldValues,
@@ -39,6 +40,15 @@ type BaseCheckboxFieldProps = Omit<CheckboxProps, "name"> & {
 };
 
 export type CheckboxFieldProps<T extends FieldValues> = BaseCheckboxFieldProps &
+  FormControlProps<T>;
+
+type BaseSwitchFieldProps = Omit<SwitchProps, "name"> & {
+  label: string;
+  description?: string;
+  outlined?: boolean;
+};
+
+export type SwitchFieldProps<T extends FieldValues> = BaseSwitchFieldProps &
   FormControlProps<T>;
 
 type BaseTextareaFieldProps = Omit<TextareaProps, "name"> & {

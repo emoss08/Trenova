@@ -23,11 +23,11 @@ import {
   useFormContext,
 } from "react-hook-form";
 import { toast } from "sonner";
-import { AssignmentDialog } from "../assignment/assignment-dialog";
-import { StopTimeline } from "../sidebar/stop-details/stop-timeline-content";
-import { AssignmentDetails } from "./move-assignment-details";
-import { MoveDeleteDialog } from "./move/move-delete-dialog";
-import { MoveDialog } from "./move/move-dialog";
+import { AssignmentDialog } from "../../assignment/assignment-dialog";
+import { StopTimeline } from "../../sidebar/stop-details/stop-timeline-content";
+import { AssignmentDetails } from "../move-assignment-details";
+import { MoveDeleteDialog } from "./move-delete-dialog";
+import { MoveDialog } from "./move-dialog";
 
 // Utility function to resequence moves after deletion
 const resequenceMoves = (
@@ -324,7 +324,7 @@ function MoveActions({
 
   // Move is not new, so we cannot assign equipment and workers
   const reassignEnabled = status === MoveStatus.Assigned;
-  const assignDisabled = !AssignmentStatus.includes(status);
+  const assignDisabled = AssignmentStatus.includes(status);
 
   return (
     <>

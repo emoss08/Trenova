@@ -14,14 +14,12 @@ import { mapToStopType, type Stop } from "@/types/stop";
 import { faEdit, faLock, faTrash } from "@fortawesome/pro-solid-svg-icons";
 
 type CompactStopsTableProps = {
-  moveIdx: number;
   stops: Stop[];
   onEdit: (stopIdx: number) => void;
   onDelete: (stopIdx: number) => void;
 };
 
 export function CompactStopsTable({
-  moveIdx,
   stops,
   onEdit,
   onDelete,
@@ -108,13 +106,10 @@ export function CompactStopsTable({
                           size="icon"
                           variant="ghost"
                           onClick={() => onDelete(idx)}
-                          className="h-6 w-6"
+                          className="size-6 hover:bg-red-500/30 text-red-600 hover:text-red-600"
                           title="Delete stop"
                         >
-                          <Icon
-                            icon={faTrash}
-                            className="size-3 text-destructive"
-                          />
+                          <Icon icon={faTrash} className="size-4" />
                         </Button>
                       ) : (
                         <div

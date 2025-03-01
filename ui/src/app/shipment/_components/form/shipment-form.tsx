@@ -4,7 +4,8 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { type Shipment } from "@/types/shipment";
 import { faChevronLeft } from "@fortawesome/pro-solid-svg-icons";
 import { ShipmentNotFoundOverlay } from "../sidebar/shipment-not-found-overlay";
-import { ShipmentCommodityDetails } from "./commodity/shipment-commodity-details";
+import { ShipmentCommodityDetails } from "./commodity/commodity-details";
+import { ShipmentMovesDetails } from "./move/move-details";
 import { ShipmentBillingDetails } from "./shipment-billing-details";
 import {
   ShipmentDetailsHeader,
@@ -13,7 +14,6 @@ import {
 import { ShipmentDetailsSkeleton } from "./shipment-details-skeleton";
 import { ShipmentGeneralInformation } from "./shipment-general-information";
 import { ShipmentActions } from "./shipment-menu-actions";
-import { ShipmentMovesDetails } from "./shipment-move-details";
 
 // ShipmentDetails.tsx
 interface ShipmentDetailsProps {
