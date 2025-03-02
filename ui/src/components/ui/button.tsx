@@ -52,16 +52,18 @@ export function FormSaveButton({
   title,
   isPopout,
   isSubmitting,
+  disabled = false,
 }: {
   title: string;
   isPopout: boolean;
   isSubmitting: boolean;
+  disabled?: boolean;
 }) {
   return (
     <TooltipProvider delayDuration={0}>
       <Tooltip>
         <TooltipTrigger asChild>
-          <Button type="submit" isLoading={isSubmitting}>
+          <Button type="submit" isLoading={isSubmitting} disabled={disabled}>
             Save {isPopout ? "and Close" : "Changes"}
           </Button>
         </TooltipTrigger>
