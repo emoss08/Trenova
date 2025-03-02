@@ -22,18 +22,18 @@ type ShipmentControl struct {
 
 	// Service Failure Related Fields
 	RecordServiceFailures     bool  `json:"recordServiceFailures" bun:"record_service_failures,notnull,default:true"`
-	ServiceFailureGracePeriod int64 `json:"serviceFailureGracePeriod" bun:"service_failure_grace_period,notnull,default:10"` // In minutes
+	ServiceFailureGracePeriod int16 `json:"serviceFailureGracePeriod" bun:"service_failure_grace_period,notnull,default:10"` // In minutes
 
 	// Delay Shipment Related Fields
 	AutoDelayShipments          bool  `json:"autoDelayShipments" bun:"auto_delay_shipments,notnull,default:true"`
-	AutoDelayShipmentsThreshold int64 `json:"autoDelayShipmentsThreshold" bun:"auto_delay_shipments_threshold,notnull,default:10"` // In minutes
+	AutoDelayShipmentsThreshold int16 `json:"autoDelayShipmentsThreshold" bun:"auto_delay_shipments_threshold,notnull,default:10"` // In minutes
 
 	// Compliance Controls
 	EnforceHOSCompliance bool `json:"enforceHOSCompliance" bun:"enforce_hos_compliance,notnull,default:true"`
 
 	// Detentiion Tracking
 	TrackDetentionTime bool  `json:"trackDetentionTime" bun:"track_detention_time,notnull,default:true"`
-	DetentionThreshold int64 `json:"detentionThreshold" bun:"detention_threshold,notnull,default:10"` // In minutes
+	DetentionThreshold int16 `json:"detentionThreshold" bun:"detention_threshold,notnull,default:10"` // In minutes
 
 	// Misc....
 	CheckForDuplicateBOLs bool `json:"checkForDuplicateBOLs" bun:"check_for_duplicate_bols,notnull,default:true"`
@@ -47,6 +47,14 @@ type ShipmentControl struct {
 	// Relationships
 	BusinessUnit *businessunit.BusinessUnit `json:"businessUnit,omitempty" bun:"rel:belongs-to,join:business_unit_id=id"`
 	Organization *organization.Organization `json:"organization,omitempty" bun:"rel:belongs-to,join:organization_id=id"`
+}
+
+func (sc *ShipmentControl) GetID() pulid.ID {
+	return sc.ID
+}
+
+func (sc *ShipmentControl) GetVersion() int64 {
+	return sc.Version
 }
 
 func (sc *ShipmentControl) BeforeAppendModel(_ context.Context, query bun.Query) error {

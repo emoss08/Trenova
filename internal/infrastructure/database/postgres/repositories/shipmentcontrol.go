@@ -3,6 +3,7 @@ package repositories
 import (
 	"context"
 	"database/sql"
+	"fmt"
 
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/internal/core/ports/db"
@@ -12,9 +13,12 @@ import (
 	"github.com/emoss08/trenova/pkg/types/pulid"
 	"github.com/rotisserie/eris"
 	"github.com/rs/zerolog"
+	"github.com/uptrace/bun"
 	"go.uber.org/fx"
 )
 
+// ShipmentControlRepositoryParams contains the dependencies for the ShipmentControlRepository.
+// This includes database connection and logger.
 type ShipmentControlRepositoryParams struct {
 	fx.In
 
@@ -22,11 +26,21 @@ type ShipmentControlRepositoryParams struct {
 	Logger *logger.Logger
 }
 
+// shipmentControlRepository implements the ShipmentControlRepository interface.
+//
+// It provides methods to interact with the shipment control table in the database.
 type shipmentControlRepository struct {
 	db db.Connection
 	l  *zerolog.Logger
 }
 
+// NewShipmentControlRepository initializes a new instance of shipmentControlRepository with its dependencies.
+//
+// Parameters:
+//   - p: ShipmentControlRepositoryParams containing database connection and logger.
+//
+// Returns:
+//   - A new instance of shipmentControlRepository.
 func NewShipmentControlRepository(p ShipmentControlRepositoryParams) repositories.ShipmentControlRepository {
 	log := p.Logger.With().
 		Str("repository", "shipmentcontrol").
@@ -38,7 +52,61 @@ func NewShipmentControlRepository(p ShipmentControlRepositoryParams) repositorie
 	}
 }
 
-func (r *shipmentControlRepository) GetByOrgID(ctx context.Context, orgID pulid.ID) (*shipment.ShipmentControl, error) {
+// GetByID retrieves a shipment control by ID.
+//
+// Parameters:
+//   - ctx: The context for the operation.
+//   - opts: The options for the operation containing the ID, organization ID, and business unit ID.
+//
+// Returns:
+//   - *shipment.ShipmentControl: The shipment control entity.
+//   - error: If any database operation fails.
+func (r shipmentControlRepository) GetByID(ctx context.Context, opts *repositories.GetShipmentControlRequest) (*shipment.ShipmentControl, error) {
+	dba, err := r.db.DB(ctx)
+	if err != nil {
+		return nil, eris.Wrap(err, "get database connection")
+	}
+
+	log := r.l.With().
+		Str("operation", "GetByID").
+		Str("id", opts.ID.String()).
+		Logger()
+
+	entity := new(shipment.ShipmentControl)
+
+	query := dba.NewSelect().
+		Model(entity).
+		WhereGroup(" AND ", func(q *bun.SelectQuery) *bun.SelectQuery {
+			return q.
+				Where("sc.id = ?", opts.ID).
+				Where("sc.organization_id = ?", opts.OrgID).
+				Where("sc.business_unit_id = ?", opts.BuID)
+		})
+
+	if err = query.Scan(ctx); err != nil {
+		// * If the query is [sql.ErrNoRows], return a not found error
+		if eris.Is(err, sql.ErrNoRows) {
+			log.Error().Msg("shipment control not found within your organization")
+			return nil, errors.NewNotFoundError("Shipment control not found within your organization")
+		}
+
+		log.Error().Err(err).Msg("failed to get shipment control")
+		return nil, eris.Wrap(err, "get shipment control")
+	}
+
+	return entity, nil
+}
+
+// GetByOrgID retrieves a shipment control by organization ID.
+//
+// Parameters:
+//   - ctx: The context for the operation.
+//   - orgID: The organization ID to filter by.
+//
+// Returns:
+//   - *shipment.ShipmentControl: The shipment control entity.
+//   - error: If any database operation fails.
+func (r shipmentControlRepository) GetByOrgID(ctx context.Context, orgID pulid.ID) (*shipment.ShipmentControl, error) {
 	dba, err := r.db.DB(ctx)
 	if err != nil {
 		return nil, eris.Wrap(err, "get database connection")
@@ -64,4 +132,78 @@ func (r *shipmentControlRepository) GetByOrgID(ctx context.Context, orgID pulid.
 	}
 
 	return entity, nil
+}
+
+// Update updates a singular shipment control entity.
+//
+// Parameters:
+//   - ctx: The context for the operation.
+//   - sc: The shipment control entity to update.
+//
+// Returns:
+//   - *shipment.ShipmentControl: The updated shipment control entity.
+//   - error: If any database operation fails.
+func (r shipmentControlRepository) Update(ctx context.Context, sc *shipment.ShipmentControl) (*shipment.ShipmentControl, error) {
+	dba, err := r.db.DB(ctx)
+	if err != nil {
+		return nil, eris.Wrap(err, "get database connection")
+	}
+
+	log := r.l.With().
+		Str("operation", "Update").
+		Str("id", sc.GetID().String()).
+		Int64("version", sc.GetVersion()).
+		Logger()
+
+	err = dba.RunInTx(ctx, nil, func(c context.Context, tx bun.Tx) error {
+		ov := sc.Version
+
+		sc.Version++
+
+		results, rErr := tx.NewUpdate().
+			Model(sc).
+			WherePK().
+			Where("sc.version = ?", ov).
+			Returning("*").
+			Exec(c)
+		if rErr != nil {
+			// * If the query is [sql.ErrNoRows], return a not found error
+			if eris.Is(rErr, sql.ErrNoRows) {
+				log.Error().Msg("shipment control not found within your organization")
+				return errors.NewNotFoundError("Shipment control not found within your organization")
+			}
+
+			log.Error().
+				Err(rErr).
+				Interface("shipmentcontrol", sc).
+				Msg("failed to update shipment control")
+			return err
+		}
+
+		rows, roErr := results.RowsAffected()
+		if roErr != nil {
+			log.Error().
+				Err(roErr).
+				Interface("shipmentcontrol", sc).
+				Msg("failed to get rows affected")
+			return err
+		}
+
+		if rows == 0 {
+			// * If the rows affected is 0, return a version mismatch error
+			return errors.NewValidationError(
+				"version",
+				errors.ErrVersionMismatch,
+				fmt.Sprintf("Version mismatch. The Shipment Control (%s) has either been updated or deleted since the last request.", sc.GetID()),
+			)
+		}
+
+		return nil
+	})
+	if err != nil {
+		log.Error().Err(err).Msg("failed to update shipment control")
+		return nil, err
+	}
+
+	return sc, nil
 }

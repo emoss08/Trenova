@@ -21,6 +21,7 @@ const (
 	ResourceBusinessUnit          = Resource("business_unit")           // Represents resources related to business units.
 	ResourceOrganization          = Resource("organization")            // Represents resources related to organizations.
 	ResourceDocumentQualityConfig = Resource("document_quality_config") // Represents resources related to document quality config.
+	ResourceShipmentControl       = Resource("shipment_control")        // Represents resources related to shipment control.
 
 	// Operations resources
 	ResourceWorker                = Resource("worker")                 // Represents resources related to workers.
@@ -244,6 +245,12 @@ var (
 			ActionAudit,
 		),
 		ResourceOrganization: append(
+			BaseActions,
+			ActionConfigure,
+			ActionAudit,
+			ActionModifyField,
+		),
+		ResourceShipmentControl: append(
 			BaseActions,
 			ActionConfigure,
 			ActionAudit,

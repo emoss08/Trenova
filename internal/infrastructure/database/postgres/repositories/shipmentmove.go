@@ -84,7 +84,7 @@ func (sr *shipmentMoveRepository) GetByID(ctx context.Context, opts repositories
 	move := new(shipment.ShipmentMove)
 
 	q := dba.NewSelect().Model(move).
-		WhereGroup("AND", func(sq *bun.SelectQuery) *bun.SelectQuery {
+		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
 			return sq.Where("sm.id = ?", opts.MoveID).
 				Where("sm.organization_id = ?", opts.OrgID).
 				Where("sm.business_unit_id = ?", opts.BuID)
@@ -258,7 +258,7 @@ func (sr *shipmentMoveRepository) GetMovesByShipmentID(ctx context.Context, opts
 
 	// * Craft the query using a where group to ensure all conditions are met
 	q := dba.NewSelect().Model(&moves).
-		WhereGroup("AND", func(sq *bun.SelectQuery) *bun.SelectQuery {
+		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
 			return sq.Where("sm.shipment_id = ?", opts.ShipmentID).
 				Where("sm.organization_id = ?", opts.OrgID).
 				Where("sm.business_unit_id = ?", opts.BuID)
