@@ -218,7 +218,7 @@ func (sr *shipmentRepository) GetByID(ctx context.Context, opts repositories.Get
 	entity := new(shipment.Shipment)
 
 	q := dba.NewSelect().Model(entity).
-		WhereGroup("AND", func(q *bun.SelectQuery) *bun.SelectQuery {
+		WhereGroup(" AND ", func(q *bun.SelectQuery) *bun.SelectQuery {
 			return q.Where("sp.id = ?", opts.ID).
 				Where("sp.organization_id = ?", opts.OrgID).
 				Where("sp.business_unit_id = ?", opts.BuID)

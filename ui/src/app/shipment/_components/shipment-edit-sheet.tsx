@@ -1,3 +1,4 @@
+import { FormSaveDock } from "@/components/form";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -8,21 +9,19 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Button, FormSaveButton } from "@/components/ui/button";
 import { Form } from "@/components/ui/form";
 import {
   Sheet,
   SheetBody,
   SheetContent,
   SheetDescription,
-  SheetFooter,
   SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet";
 import { VisuallyHidden } from "@/components/ui/visually-hidden";
 import { usePopoutWindow } from "@/hooks/popout-window/use-popout-window";
-import { useApiMutation } from "@/hooks/use-api-mutation";
 import { useUnsavedChanges } from "@/hooks/use-form";
+import { useFormWithSave } from "@/hooks/use-form-with-save";
 import { broadcastQueryInvalidation } from "@/hooks/use-invalidate-query";
 import { useResponsiveDimensions } from "@/hooks/use-responsive-dimensions";
 import { http } from "@/lib/http-client";
@@ -34,8 +33,7 @@ import { EditTableSheetProps } from "@/types/data-table";
 import { type Shipment } from "@/types/shipment";
 import { yupResolver } from "@hookform/resolvers/yup";
 import { useCallback, useEffect, useRef } from "react";
-import { FormProvider, useForm } from "react-hook-form";
-import { toast } from "sonner";
+import { FormProvider } from "react-hook-form";
 import { useShipmentDetails } from "../queries/shipment";
 import { ShipmentForm } from "./form/shipment-form";
 
@@ -55,21 +53,47 @@ export function ShipmentEditSheet({
 
   const isDetailsLoading = shipmentDetails.isLoading;
 
-  const form = useForm<ShipmentSchema>({
-    resolver: yupResolver(shipmentSchema),
-    defaultValues: {},
+  const form = useFormWithSave({
+    resourceName: "Shipment",
+    formOptions: {
+      resolver: yupResolver(shipmentSchema),
+      defaultValues: {},
+      mode: "onChange",
+    },
+    mutationFn: async (values: ShipmentSchema) => {
+      const response = await http.put<Shipment>(
+        `/shipments/${currentRecord?.id}`,
+        values,
+      );
+      return response.data;
+    },
+    onSuccess: () => {
+      onOpenChange(false);
+
+      broadcastQueryInvalidation({
+        queryKey: ["shipment", "shipment-list", "stop", "assignment"],
+        options: {
+          correlationId: `update-shipment-${Date.now()}`,
+        },
+        config: {
+          predicate: true,
+          refetchType: "all",
+        },
+      });
+    },
+    onSettled: () => {
+      if (isPopout) {
+        closePopout();
+      }
+    },
   });
 
   const {
-    setError,
-    formState: { isDirty, isSubmitting, isSubmitSuccessful, errors },
-    handleSubmit,
     reset,
-    watch,
+    handleSubmit,
+    onSubmit,
+    formState: { isDirty, isSubmitting, isSubmitSuccessful },
   } = form;
-
-  console.info("Shipment Form Values", watch());
-  console.info("Shipment Form Errors", errors);
 
   const handleClose = useCallback(() => {
     onOpenChange(false);
@@ -91,59 +115,10 @@ export function ShipmentEditSheet({
     }
   }, [shipmentDetails.data, isDetailsLoading, reset]);
 
-  const { mutateAsync } = useApiMutation<
-    Shipment, // The response data type
-    ShipmentSchema, // The variables type
-    unknown, // The context type
-    ShipmentSchema // The form values type for error handling
-  >({
-    mutationFn: async (values: ShipmentSchema) => {
-      const response = await http.put<Shipment>(
-        `/shipments/${currentRecord?.id}`,
-        values,
-      );
-      return response.data;
-    },
-    onSuccess: () => {
-      toast.success("Changes have been saved", {
-        description: "Shipment updated successfully",
-      });
-      onOpenChange(false);
-
-      broadcastQueryInvalidation({
-        queryKey: ["shipment", "shipment-list", "stop", "assignment"],
-        options: {
-          correlationId: `update-shipment-${Date.now()}`,
-        },
-        config: {
-          predicate: true,
-          refetchType: "all",
-        },
-      });
-    },
-    // Pass in the form's setError function
-    setFormError: setError,
-    // Provide a resource name for better error logging
-    resourceName: "Shipment",
-    // You can still add custom onSettled logic
-    onSettled: () => {
-      if (isPopout) {
-        closePopout();
-      }
-    },
-  });
-
-  const onSubmit = useCallback(
-    async (values: ShipmentSchema) => {
-      await mutateAsync(values);
-    },
-    [mutateAsync],
-  );
-
   // Reset the form when the mutation is successful
   // This is recommended by react-hook-form - https://react-hook-form.com/docs/useform/reset
   useEffect(() => {
-    reset();
+    reset(shipmentDetails.data);
   }, [isSubmitSuccessful, reset, onOpenChange]);
 
   useEffect(() => {
@@ -191,16 +166,11 @@ export function ShipmentEditSheet({
                   />
                 )}
               </SheetBody>
-              <SheetFooter className="p-3">
-                <Button type="button" variant="outline" onClick={onClose}>
-                  Cancel
-                </Button>
-                <FormSaveButton
-                  isPopout={isPopout}
-                  isSubmitting={isSubmitting}
-                  title="Shipment"
-                />
-              </SheetFooter>
+              <FormSaveDock
+                isDirty={isDirty}
+                isSubmitting={isSubmitting}
+                position="right"
+              />
             </Form>
           </FormProvider>
         </SheetContent>

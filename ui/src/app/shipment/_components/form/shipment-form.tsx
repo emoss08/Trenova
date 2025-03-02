@@ -49,11 +49,10 @@ export function ShipmentForm({
     // Constants for height calculations
     const headerHeight = 120; // Height of the header section
     const minHeight = 400; // Minimum height for the scroll area
-    const footerHeight = 60; // Height of the footer section
 
     // Use viewport height as base for calculation
     const baseHeight = Math.min(contentHeight, viewportHeight);
-    const calculatedHeight = baseHeight - headerHeight - footerHeight;
+    const calculatedHeight = baseHeight - headerHeight;
 
     // Ensure we don't go below minimum height
     return Math.max(calculatedHeight, minHeight);
@@ -80,13 +79,14 @@ export function ShipmentForm({
               minHeight: "400px",
             }}
           >
-            <div className="flex flex-col gap-4 pb-2">
+            <div className="flex flex-col gap-4 pb-16">
               <ShipmentServiceDetails />
               <ShipmentBillingDetails />
               <ShipmentGeneralInformation />
               <ShipmentCommodityDetails />
               <ShipmentMovesDetails />
             </div>
+            <div className="pointer-events-none rounded-b-lg absolute bottom-0 z-50 left-0 right-0 h-8 bg-gradient-to-t from-background to-transparent" />
           </ScrollArea>
         </div>
       </div>
