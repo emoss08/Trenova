@@ -208,9 +208,20 @@ export const routes: routeInfo[] = [
     ],
   },
   {
-    key: "organization-settings",
-    label: "Organization Settings",
+    key: "organization",
+    label: "Organization",
     icon: faGear,
-    link: "/organization-settings",
+    tree: [
+      {
+        key: "settings",
+        label: "Organization Settings",
+        link: "/organization/settings",
+      },
+      {
+        key: "system-logs",
+        label: "System Logs",
+        link: "/organization/system-logs",
+      },
+    ],
   },
 ];
