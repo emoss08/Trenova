@@ -68,14 +68,18 @@ export function useApiMutation<
 }: {
   setFormError?: UseFormSetError<TFormValues>;
   resourceName?: string;
-  onError?: (error: APIError) => void;
+  onError?: (
+    error: APIError,
+    variables: TVariables,
+    context: TContext | undefined,
+  ) => Promise<unknown> | unknown;
 } & Omit<
   UseMutationOptions<TData, APIError, TVariables, TContext>,
   "onError"
 >) {
   return useMutation<TData, APIError, TVariables, TContext>({
     ...options,
-    onError: (error: APIError) => {
+    onError: (error: APIError, variables, context) => {
       // Standard error handling
       handleMutationError<TFormValues>({
         error,
@@ -85,7 +89,7 @@ export function useApiMutation<
 
       // Custom error handling if provided
       if (onError) {
-        onError(error);
+        onError(error, variables, context);
       }
     },
   });

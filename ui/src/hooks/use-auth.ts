@@ -42,6 +42,7 @@ export function useAuth() {
       toast.error("Your session has expired. Please sign in again.");
     }
   }, [
+    navigate,
     sessionQuery.isSuccess,
     sessionQuery.isError,
     sessionQuery.data,
