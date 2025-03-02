@@ -1,7 +1,7 @@
 // src/pages/organization-form.tsx
 import { InputField } from "@/components/fields/input-field";
 import { SelectField } from "@/components/fields/select-field";
-import { FormSaveDock, LastSavedIndicator } from "@/components/form";
+import { FormSaveDock } from "@/components/form";
 import {
   Card,
   CardContent,
@@ -44,10 +44,10 @@ export default function OrganizationForm() {
     control,
     reset,
     handleSubmit,
-    formState: { isDirty },
-    isSubmitting,
+    formState: { isDirty, isSubmitting },
     onSubmit,
   } = useFormWithSave({
+    resourceName: "Organization",
     formOptions: {
       resolver: yupResolver(organizationSchema),
       defaultValues: {},
@@ -85,12 +85,7 @@ export default function OrganizationForm() {
 
   return (
     <Form onSubmit={handleSubmit(onSubmit)}>
-      <div className="flex flex-col gap-4 pb-4">
-        <div className="flex justify-between items-center mb-1">
-          <h1 className="text-2xl font-bold">Organization Settings</h1>
-          <LastSavedIndicator />
-        </div>
-
+      <div className="flex flex-col gap-4 pb-10">
         <Card>
           <CardHeader>
             <CardTitle>Organization Settings</CardTitle>
@@ -236,12 +231,7 @@ export default function OrganizationForm() {
             </FormGroup>
           </CardContent>
         </Card>
-
-        <FormSaveDock
-          isDirty={isDirty}
-          isSubmitting={isSubmitting}
-          onReset={() => reset(userOrg.data)}
-        />
+        <FormSaveDock isDirty={isDirty} isSubmitting={isSubmitting} />
       </div>
     </Form>
   );

@@ -105,12 +105,8 @@ export function ShipmentCreateSheet({ open, onOpenChange }: TableSheetProps) {
     reset,
     handleSubmit,
     onSubmit,
-    watch,
-    formState: { isDirty, isSubmitting, isSubmitSuccessful, errors },
+    formState: { isDirty, isSubmitting, isSubmitSuccessful },
   } = form;
-
-  console.info("Shipment Form Values", watch());
-  console.info("Shipment Form Errors", errors);
 
   const handleClose = useCallback(() => {
     onOpenChange(false);
