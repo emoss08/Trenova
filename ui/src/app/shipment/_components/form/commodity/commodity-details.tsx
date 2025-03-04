@@ -5,13 +5,13 @@ import { ShipmentSchema } from "@/lib/schemas/shipment-schema";
 import { cn } from "@/lib/utils";
 import { ShipmentCommodity } from "@/types/shipment";
 import { faPlus } from "@fortawesome/pro-solid-svg-icons";
-import { useState } from "react";
+import { memo, useState } from "react";
 import { useFieldArray, useFormContext } from "react-hook-form";
 import { CommodityDeleteDialog } from "./commodity-delete-dialog";
 import { CommodityDialog } from "./commodity-dialog";
 import { CommodityList } from "./commodity-list";
 
-export function ShipmentCommodityDetails({
+export default function ShipmentCommodityDetails({
   className,
 }: {
   className?: string;
@@ -42,7 +42,6 @@ export function ShipmentCommodityDetails({
   };
 
   const handleDelete = (index: number) => {
-    // Always check localStorage directly
     const showDialog =
       localStorage.getItem(COMMODITY_DELETE_DIALOG_KEY) !== "false";
 
@@ -87,15 +86,7 @@ export function ShipmentCommodityDetails({
               ({commodities?.length ?? 0})
             </span>
           </div>
-          <Button
-            type="button"
-            variant="outline"
-            size="xs"
-            onClick={handleAddCommodity}
-          >
-            <Icon icon={faPlus} className="size-4" />
-            Add Commodity
-          </Button>
+          <AddCommodityButton onClick={handleAddCommodity} />
         </div>
         <CommodityList
           commodities={commodities as ShipmentCommodity[]}
@@ -128,3 +119,16 @@ export function ShipmentCommodityDetails({
     </>
   );
 }
+
+const AddCommodityButton = memo(function AddCommodityButton({
+  onClick,
+}: {
+  onClick: () => void;
+}) {
+  return (
+    <Button type="button" variant="outline" size="xs" onClick={onClick}>
+      <Icon icon={faPlus} className="size-4" />
+      Add Commodity
+    </Button>
+  );
+});

@@ -2,7 +2,7 @@ import { InputField } from "@/components/fields/input-field";
 import { FormControl, FormGroup } from "@/components/ui/form";
 import { useFormContext } from "react-hook-form";
 
-export function ShipmentGeneralInformation() {
+export default function ShipmentGeneralInformation() {
   const { control } = useFormContext();
 
   return (

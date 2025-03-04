@@ -19,14 +19,14 @@ import {
 } from "@/lib/schemas/organization-schema";
 import { TIMEZONES } from "@/lib/timezone/timezone";
 import { updateOrganization } from "@/services/organization";
-import { useAuthStore } from "@/stores/user-store";
+import { useUser } from "@/stores/user-store";
 import { OrganizationType } from "@/types/organization";
 import { yupResolver } from "@hookform/resolvers/yup";
 import { useQuery } from "@tanstack/react-query";
 import { useEffect } from "react";
 
 export default function OrganizationForm() {
-  const { user } = useAuthStore();
+  const user = useUser();
 
   // Get the organization data
   const userOrg = useQuery({

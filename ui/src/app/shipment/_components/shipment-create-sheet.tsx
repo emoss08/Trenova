@@ -112,6 +112,10 @@ export function ShipmentCreateSheet({ open, onOpenChange }: TableSheetProps) {
     onOpenChange(false);
   }, [onOpenChange]);
 
+  const handleReset = useCallback(() => {
+    reset();
+  }, [reset]);
+
   const {
     showWarning,
     handleClose: onClose,
@@ -183,6 +187,7 @@ export function ShipmentCreateSheet({ open, onOpenChange }: TableSheetProps) {
                 isDirty={isDirty}
                 isSubmitting={isSubmitting}
                 position="right"
+                onReset={handleReset}
               />
             </Form>
           </FormProvider>

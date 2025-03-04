@@ -15,14 +15,14 @@ import { ServiceTypeSchema } from "@/lib/schemas/service-type-schema";
 import { ShipmentSchema } from "@/lib/schemas/shipment-schema";
 import { ShipmentTypeSchema } from "@/lib/schemas/shipment-type-schema";
 import { cn } from "@/lib/utils";
-import { useAuthStore } from "@/stores/user-store";
+import { useUser } from "@/stores/user-store";
 import { faCheck, faCopy } from "@fortawesome/pro-solid-svg-icons";
 import { useState } from "react";
 import { useFormContext } from "react-hook-form";
 
 export function ShipmentDetailsHeader() {
   const { getValues } = useFormContext<ShipmentSchema>();
-  const { user } = useAuthStore();
+  const user = useUser();
 
   const { proNumber, status, updatedAt } = getValues();
 

@@ -118,7 +118,7 @@ export function ShipmentEditSheet({
   // Reset the form when the mutation is successful
   // This is recommended by react-hook-form - https://react-hook-form.com/docs/useform/reset
   useEffect(() => {
-    reset(shipmentDetails.data);
+    reset();
   }, [isSubmitSuccessful, reset, onOpenChange]);
 
   useEffect(() => {

@@ -22,7 +22,7 @@ import {
   shipmentCancellationSchema,
   type ShipmentCancellationSchema,
 } from "@/lib/schemas/shipment-cancellation-schema";
-import { useAuthStore } from "@/stores/user-store";
+import { useUser } from "@/stores/user-store";
 import { APIError } from "@/types/errors";
 import { yupResolver } from "@hookform/resolvers/yup";
 import { useMutation } from "@tanstack/react-query";
@@ -42,7 +42,7 @@ export function ShipmentCancellationDialog({
   onOpenChange,
   shipmentId,
 }: ShipmentCancellationDialogProps) {
-  const { user } = useAuthStore();
+  const user = useUser();
 
   const form = useForm<ShipmentCancellationSchema>({
     resolver: yupResolver(shipmentCancellationSchema),

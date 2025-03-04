@@ -76,7 +76,7 @@ function calculateTotalChargeAmount(shipment: ShipmentSchema) {
 }
 
 /** Billing details component */
-export function ShipmentBillingDetails() {
+export default function ShipmentBillingDetails() {
   const { watch, control, setValue } = useFormContext<ShipmentSchema>();
 
   useEffect(() => {
