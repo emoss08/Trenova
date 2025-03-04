@@ -20,7 +20,7 @@ interface FormSaveDockProps {
   isSubmitting: boolean;
 
   /** Function to call when the reset button is clicked */
-  // onReset: () => void;
+  onReset?: () => void;
 
   /** Custom save button content */
   saveButtonContent?: ReactNode;
@@ -48,7 +48,7 @@ interface FormSaveDockProps {
 export function FormSaveDock({
   isDirty,
   isSubmitting,
-  // onReset,
+  onReset,
   saveButtonContent = "Save",
   unsavedText = "Unsaved changes",
   position = "center",
@@ -94,7 +94,7 @@ export function FormSaveDock({
             <Button
               type="reset"
               variant="outline"
-              // onClick={onReset}
+              onClick={onReset}
               disabled={!isDirty || isSubmitting}
               className="bg-white/20 hover:bg-white/30 dark:bg-black/20 dark:hover:bg-black/30 hover:text-background text-background border-none"
             >

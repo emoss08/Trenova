@@ -4,7 +4,7 @@ import {
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
 import { queries } from "@/lib/queries";
-import { useAuthStore } from "@/stores/user-store";
+import { useIsAuthenticated, useUser } from "@/stores/user-store";
 import { Organization } from "@/types/organization";
 import { faCheckCircle } from "@fortawesome/pro-solid-svg-icons";
 import { CaretSortIcon, DragHandleDots2Icon } from "@radix-ui/react-icons";
@@ -71,7 +71,8 @@ function OrganizationSwitcherButton({
 
 export function OrganizationSwitcher() {
   const [open, setOpen] = useState(false);
-  const { user, isAuthenticated } = useAuthStore();
+  const user = useUser();
+  const isAuthenticated = useIsAuthenticated();
   const userOrganization = useQuery({
     ...queries.organization.getOrgById(
       user?.currentOrganizationId ?? "",

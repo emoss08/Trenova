@@ -154,7 +154,7 @@ export function PasswordField<T extends FieldValues>({
               <Button
                 type="button"
                 size="icon"
-                className="absolute inset-y-0 right-0 mr-2 size-6 translate-y-1 rounded-sm bg-transparent text-muted-foreground hover:bg-foreground/10 [&>svg]:size-4"
+                className="absolute inset-y-0 right-0 mr-2 size-6 translate-y-1 rounded-sm bg-transparent text-foreground hover:bg-foreground/10 [&>svg]:size-4"
                 onClick={togglePasswordVisibility}
               >
                 {showPassword ? (

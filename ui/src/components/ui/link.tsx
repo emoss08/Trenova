@@ -83,31 +83,33 @@ export function ExternalLink({
 type InteralLinkProps = LinkProps & React.ComponentProps<"a">;
 
 // Small Wrapper around react router <Link> to keep up with the design system
-export function InternalLink({
+const internalLinkStyle = {
+  fontWeight: "normal",
+  width: "fit-content",
+  display: "inline-block",
+};
+
+// Small Wrapper around react router <Link> to keep up with the design system
+export const InternalLink = React.memo(function InternalLink({
   children,
   className,
   ...props
 }: InteralLinkProps) {
-  return (
-    <Link
-      className={cn(
+  const linkClassName = React.useMemo(
+    () =>
+      cn(
         "inline-flex w-full items-center text-primary hover:text-primary/70 underline",
         className,
-      )}
-      style={{
-        fontWeight: "normal",
-        width: "fit-content",
-        display: "inline-block",
-      }}
-      {...props}
-    >
+      ),
+    [className],
+  );
+
+  return (
+    <Link className={linkClassName} style={internalLinkStyle} {...props}>
       {children}
     </Link>
   );
-}
-
-InternalLink.displayName = "InternalLink";
-
+});
 type EntityRedirectLinkProps = Omit<LinkProps, "to"> & {
   entityId?: string;
   baseUrl: string;
@@ -115,7 +117,7 @@ type EntityRedirectLinkProps = Omit<LinkProps, "to"> & {
   value?: string;
 } & React.HTMLAttributes<HTMLDivElement>;
 
-export function EntityRedirectLink({
+export const EntityRedirectLink = React.memo(function EntityRedirectLink({
   entityId,
   baseUrl,
   modelOpen,
@@ -124,16 +126,27 @@ export function EntityRedirectLink({
   value,
   ...rest
 }: EntityRedirectLinkProps) {
+  const url = React.useMemo(() => {
+    let computedUrl = `${baseUrl}`;
+    if (modelOpen) {
+      computedUrl += `?entityId=${entityId}&modal=edit`;
+    } else {
+      computedUrl += `/${entityId}`;
+    }
+    return computedUrl;
+  }, [baseUrl, entityId, modelOpen]);
+
+  const linkClassName = React.useMemo(
+    () =>
+      cn(
+        "inline-flex w-full items-center text-primary hover:text-primary/70 underline",
+        className,
+      ),
+    [className],
+  );
+
   if (!entityId) {
     return <>{children}</>;
-  }
-
-  let url = `${baseUrl}`;
-
-  if (modelOpen) {
-    url += `?entityId=${entityId}&modal=edit`;
-  } else {
-    url += `/${entityId}`;
   }
 
   return (
@@ -142,15 +155,8 @@ export function EntityRedirectLink({
         <TooltipTrigger asChild>
           <Link
             to={url}
-            className={cn(
-              "inline-flex w-full items-center text-primary hover:text-primary/70 underline",
-              className,
-            )}
-            style={{
-              fontWeight: "normal",
-              width: "fit-content",
-              display: "inline-block",
-            }}
+            className={linkClassName}
+            style={internalLinkStyle}
             {...rest}
           >
             {children}
@@ -160,6 +166,4 @@ export function EntityRedirectLink({
       </Tooltip>
     </TooltipProvider>
   );
-}
-
-EntityRedirectLink.displayName = "EntityRedirectLink";
+});

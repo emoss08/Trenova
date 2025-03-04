@@ -1,6 +1,6 @@
 import { http } from "@/lib/http-client";
 import { validateSession } from "@/services/auth";
-import { useAuthStore } from "@/stores/user-store";
+import { useAuthActions, useUser } from "@/stores/user-store";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router";
 
@@ -10,7 +10,8 @@ const VALIDATION_INTERVAL = 5 * 60 * 1000;
 export function useSession() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const { user, setUser } = useAuthStore();
+  const user = useUser();
+  const { setUser, clearAuth } = useAuthActions();
 
   // Query to fetch current user and handle session validation
   const { isLoading } = useQuery({
@@ -31,7 +32,7 @@ export function useSession() {
   });
 
   if (!isLoading && !user) {
-    clearUser();
+    clearAuth();
     queryClient.clear();
     navigate("/auth", { replace: true });
   } else if (user) {

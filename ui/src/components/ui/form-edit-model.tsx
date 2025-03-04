@@ -25,7 +25,7 @@ import { broadcastQueryInvalidation } from "@/hooks/use-invalidate-query";
 import { formatToUserTimezone } from "@/lib/date";
 import { http } from "@/lib/http-client";
 import { cn } from "@/lib/utils";
-import { useAuthStore } from "@/stores/user-store";
+import { useUser } from "@/stores/user-store";
 import { type EditTableSheetProps } from "@/types/data-table";
 import { type API_ENDPOINTS } from "@/types/server";
 import { useCallback, useEffect } from "react";
@@ -71,7 +71,7 @@ export function FormEditModal<T extends FieldValues>({
   error,
 }: FormEditModalProps<T>) {
   const { isPopout, closePopout } = usePopoutWindow();
-  const { user } = useAuthStore();
+  const user = useUser();
 
   const {
     setError,

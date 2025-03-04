@@ -19,20 +19,26 @@ import {
 import { faPlus } from "@fortawesome/pro-regular-svg-icons";
 import { faEye } from "@fortawesome/pro-solid-svg-icons";
 import { PlusIcon, UploadIcon } from "@radix-ui/react-icons";
-import React, { useCallback } from "react";
+import React, { memo, useCallback, useState } from "react";
 import { DataTableImportModal } from "./data-table-import-modal";
 
-export function DataTableCreateButton({
+export const DataTableCreateButton = memo(function DataTableCreateButton({
   name,
   isDisabled,
   onCreateClick,
   exportModelName,
 }: DataTableCreateButtonProps) {
+  // Control popover state explicitly
+  const [isPopoverOpen, setIsPopoverOpen] = useState(false);
+
+  // Get import modal state from the store
   const [showImportModal, setShowImportModal] =
     useTableStore.use("showImportModal");
 
-  const handleClick = useCallback(() => {
-    // Handle create logic
+  // Memoized click handlers
+  const handleCreateClick = useCallback(() => {
+    setIsPopoverOpen(false);
+
     if (onCreateClick) {
       onCreateClick();
     } else {
@@ -40,9 +46,14 @@ export function DataTableCreateButton({
     }
   }, [onCreateClick]);
 
+  const handleImportClick = useCallback(() => {
+    setIsPopoverOpen(false);
+    setShowImportModal(true);
+  }, [setShowImportModal]);
+
   return (
     <>
-      <Popover>
+      <Popover open={isPopoverOpen} onOpenChange={setIsPopoverOpen}>
         <PopoverTrigger asChild>
           <Button variant="default" disabled={isDisabled}>
             <Icon icon={faPlus} className="size-4 text-background" />
@@ -54,7 +65,7 @@ export function DataTableCreateButton({
             <Button
               variant="ghost"
               className="flex size-full flex-col items-start gap-0.5 text-left"
-              onClick={handleClick}
+              onClick={handleCreateClick}
             >
               <div className="flex items-center gap-2">
                 <PlusIcon className="size-4" />
@@ -69,7 +80,7 @@ export function DataTableCreateButton({
             <Button
               variant="ghost"
               className="flex size-full flex-col items-start gap-0.5 text-left"
-              onClick={() => setShowImportModal(true)}
+              onClick={handleImportClick}
             >
               <div className="flex items-center gap-2">
                 <UploadIcon className="size-4" />
@@ -94,7 +105,7 @@ export function DataTableCreateButton({
       )}
     </>
   );
-}
+});
 
 export function DataTableViewOptions<TData>({
   table,

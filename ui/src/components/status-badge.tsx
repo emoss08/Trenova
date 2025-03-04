@@ -39,11 +39,11 @@ export type PlainBadgeAttrProps = {
 export function WorkerTypeBadge({ type }: { type: WorkerSchema["type"] }) {
   const typeAttr: Record<WorkerSchema["type"], BadgeAttrProps> = {
     Employee: {
-      variant: "active",
+      variant: "indigo",
       text: "Employee",
     },
     Contractor: {
-      variant: "purple",
+      variant: "orange",
       text: "Contractor",
     },
   };

@@ -1,4 +1,4 @@
-import { useAuthStore } from "@/stores/user-store";
+import { useAuthActions, useUser } from "@/stores/user-store";
 import { useQueryClient } from "@tanstack/react-query";
 import { useEffect } from "react";
 
@@ -10,8 +10,9 @@ import { toast } from "sonner";
 const SESSION_CHECK_INTERVAL = 5 * 60 * 1000; // 5 minutes
 
 export function useAuth() {
+  const user = useUser();
+  const { setUser, clearAuth } = useAuthActions();
   const queryClient = useQueryClient();
-  const { user, setUser, clearAuth } = useAuthStore();
   const navigate = useNavigate();
 
   const sessionQuery = useQuery({
@@ -60,7 +61,7 @@ export function useAuth() {
 
 export function useLogout() {
   const queryClient = useQueryClient();
-  const clearAuth = useAuthStore((state) => state.clearAuth);
+  const { clearAuth } = useAuthActions();
   const navigate = useNavigate();
 
   return async () => {
