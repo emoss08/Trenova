@@ -31,6 +31,7 @@ export type ColorFieldProps<TFieldValues extends FieldValues> = {
   description?: string;
   label?: string;
   className?: string;
+  disabled?: boolean;
 } & FormControlProps<TFieldValues>;
 
 type BaseCheckboxFieldProps = Omit<CheckboxProps, "name"> & {
@@ -144,6 +145,7 @@ export interface DateTimePickerProps
   clearable?: boolean;
   label?: string;
   description?: string;
+  ref?: React.Ref<HTMLInputElement>;
 }
 
 export interface AutocompleteFormControlProps<T extends FieldValues> {
