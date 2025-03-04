@@ -8,7 +8,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Button } from "@/components/ui/button";
+import { Button, FormSaveButton } from "@/components/ui/button";
 import {
   Dialog,
   DialogBody,
@@ -22,59 +22,83 @@ import { Form } from "@/components/ui/form";
 import { VisuallyHidden } from "@/components/ui/visually-hidden";
 import { usePopoutWindow } from "@/hooks/popout-window/use-popout-window";
 import { useUnsavedChanges } from "@/hooks/use-form";
+import { useFormWithSave } from "@/hooks/use-form-with-save";
+import { broadcastQueryInvalidation } from "@/hooks/use-invalidate-query";
 import { http } from "@/lib/http-client";
 import { workerSchema, WorkerSchema } from "@/lib/schemas/worker-schema";
 import { Gender, Status } from "@/types/common";
 import { TableSheetProps } from "@/types/data-table";
-import { APIError } from "@/types/errors";
 import { ComplianceStatus, Endorsement, WorkerType } from "@/types/worker";
 import { yupResolver } from "@hookform/resolvers/yup";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { useCallback } from "react";
-import { FormProvider, useForm } from "react-hook-form";
-import { toast } from "sonner";
+import { useCallback, useEffect } from "react";
+import { FormProvider } from "react-hook-form";
 import { WorkerForm } from "./workers-form";
 
 export function CreateWorkerModal({ open, onOpenChange }: TableSheetProps) {
-  const queryClient = useQueryClient();
   const { isPopout, closePopout } = usePopoutWindow();
 
-  const form = useForm<WorkerSchema>({
-    resolver: yupResolver(workerSchema),
-    defaultValues: {
-      status: Status.Active,
-      type: WorkerType.Employee,
-      gender: Gender.Male,
-      firstName: "",
-      lastName: "",
-      addressLine1: "",
-      addressLine2: "",
-      city: "",
-      stateId: "",
-      postalCode: "",
-      profile: {
-        licenseNumber: "",
-        licenseStateId: "",
-        complianceStatus: ComplianceStatus.Pending,
-        isQualified: true,
-        endorsement: Endorsement.None,
-        terminationDate: undefined,
-        physicalDueDate: undefined,
-        mvrDueDate: undefined,
-        dob: undefined,
-        hazmatExpiry: undefined,
-        hireDate: undefined,
-        licenseExpiry: undefined,
-        lastMvrCheck: undefined,
-        lastDrugTest: undefined,
+  const form = useFormWithSave({
+    resourceName: "Worker",
+    formOptions: {
+      resolver: yupResolver(workerSchema),
+      defaultValues: {
+        status: Status.Active,
+        type: WorkerType.Employee,
+        gender: Gender.Male,
+        firstName: "",
+        lastName: "",
+        addressLine1: "",
+        addressLine2: "",
+        city: "",
+        stateId: "",
+        postalCode: "",
+        profile: {
+          licenseNumber: "",
+          licenseStateId: "",
+          complianceStatus: ComplianceStatus.Pending,
+          isQualified: true,
+          endorsement: Endorsement.None,
+          terminationDate: undefined,
+          physicalDueDate: undefined,
+          mvrDueDate: undefined,
+          dob: undefined,
+          hazmatExpiry: undefined,
+          hireDate: undefined,
+          licenseExpiry: undefined,
+          lastMvrCheck: undefined,
+          lastDrugTest: undefined,
+        },
       },
+    },
+    mutationFn: async (values: WorkerSchema) => {
+      const response = await http.post("/workers", values);
+      return response.data;
+    },
+    onSuccess: () => {
+      onOpenChange(false);
+
+      broadcastQueryInvalidation({
+        queryKey: ["worker", "worker-list"],
+        options: {
+          correlationId: `create-worker-${Date.now()}`,
+        },
+        config: {
+          predicate: true,
+          refetchType: "all",
+        },
+      });
+    },
+    onSettled: () => {
+      if (isPopout) {
+        closePopout();
+      }
     },
   });
 
   const {
-    setError,
-    formState: { isDirty, isSubmitting },
+    formState: { isDirty, isSubmitting, isSubmitSuccessful },
     handleSubmit,
+    onSubmit,
     reset,
   } = form;
 
@@ -93,45 +117,11 @@ export function CreateWorkerModal({ open, onOpenChange }: TableSheetProps) {
     onClose: handleClose,
   });
 
-  const mutation = useMutation({
-    mutationFn: async (values: WorkerSchema) => {
-      const response = await http.post("/workers", values);
-      return response.data;
-    },
-    onSuccess: () => {
-      toast.success("Worker created successfully");
-      onOpenChange(false);
-      form.reset();
-
-      // Invalidate the worker list query to refresh the table
-      queryClient.invalidateQueries({ queryKey: ["worker-list"] });
-    },
-    onError: (error: APIError) => {
-      if (error.isValidationError()) {
-        error.getFieldErrors().forEach((fieldError) => {
-          setError(fieldError.name as keyof WorkerSchema, {
-            message: fieldError.reason,
-          });
-        });
-      }
-
-      toast.error("Failed to create worker", {
-        description: "Check the form for errors and try again.",
-      });
-    },
-    onSettled: () => {
-      if (isPopout) {
-        closePopout();
-      }
-    },
-  });
-
-  const onSubmit = useCallback(
-    async (values: WorkerSchema) => {
-      await mutation.mutateAsync(values);
-    },
-    [mutation.mutateAsync],
-  );
+  // Reset the form when the mutation is successful
+  // This is recommended by react-hook-form - https://react-hook-form.com/docs/useform/reset
+  useEffect(() => {
+    reset();
+  }, [isSubmitSuccessful, reset, onOpenChange]);
 
   return (
     <>
@@ -154,9 +144,11 @@ export function CreateWorkerModal({ open, onOpenChange }: TableSheetProps) {
                 <Button type="button" variant="outline" onClick={onClose}>
                   Cancel
                 </Button>
-                <Button type="submit" isLoading={isSubmitting}>
-                  Save {isPopout ? "and Close" : "Changes"}
-                </Button>
+                <FormSaveButton
+                  isPopout={isPopout}
+                  isSubmitting={isSubmitting}
+                  title="Worker"
+                />
               </DialogFooter>
             </Form>
           </FormProvider>
