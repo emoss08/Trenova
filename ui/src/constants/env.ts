@@ -6,7 +6,7 @@ export const CLIENT_VERSION = import.meta.env.VITE_CLIENT_VERSION as string;
 export const CLIENT_NAME = import.meta.env.VITE_CLIENT_NAME as string;
 export const AUTHOR_NAME = import.meta.env.VITE_AUTHOR_NAME as string;
 export const AUTHOR_EMAIL = import.meta.env.VITE_AUTHOR_EMAIL as string;
-
+export const APP_ENV = import.meta.env.VITE_APP_ENV as string;
 // Dialog constants
 export const MOVE_DELETE_DIALOG_KEY = import.meta.env
   .VITE_MOVE_DELETE_DIALOG_KEY as string;
