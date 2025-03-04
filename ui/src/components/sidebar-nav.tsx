@@ -1,7 +1,6 @@
-import { useDebouncedCallback } from "@/hooks/use-debounce";
 import { cn } from "@/lib/utils";
 import { buttonVariants } from "@/lib/variants/button";
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useMemo } from "react";
 import { Link, useLocation } from "react-router";
 import { ScrollArea } from "./ui/scroll-area";
 import { Separator } from "./ui/separator";
@@ -19,25 +18,6 @@ type SidebarNavProps = React.HTMLAttributes<HTMLElement> & {
 
 export function SidebarNav({ links, className, ...props }: SidebarNavProps) {
   const location = useLocation();
-  const [isScrolled, setIsScrolled] = useState<boolean>(false);
-
-  const debouncedHandleScroll = useDebouncedCallback(() => {
-    if (window.scrollY > 80) {
-      setIsScrolled(true);
-    } else {
-      setIsScrolled(false);
-    }
-  }, 100);
-
-  useEffect(() => {
-    const handleScroll = () => debouncedHandleScroll.setValue();
-    window.addEventListener("scroll", handleScroll);
-
-    return () => {
-      window.removeEventListener("scroll", handleScroll);
-      debouncedHandleScroll.cancel();
-    };
-  }, [debouncedHandleScroll]);
 
   const groupedLinks = useMemo(() => {
     type GroupedLinks = Record<string, SidebarLink[]>;
@@ -51,12 +31,7 @@ export function SidebarNav({ links, className, ...props }: SidebarNavProps) {
   }, [links]);
 
   return (
-    <aside
-      className={cn(
-        "transition-spacing fixed z-30 -ml-2 hidden w-full shrink-0 duration-500 md:sticky md:block",
-        isScrolled ? "pt-40 h-[calc(100vh+100px)]" : "h-[calc(100vh-5rem)]",
-      )}
-    >
+    <aside className="transition-spacing fixed z-30 -ml-2 hidden w-full shrink-0 duration-500 md:sticky md:block">
       <ScrollArea className="bg-card text-card-foreground size-full rounded-lg border p-3">
         <nav className={cn("lg:flex-col", className)} {...props}>
           {Object.entries(groupedLinks).map(
