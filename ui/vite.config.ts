@@ -126,12 +126,6 @@ export default defineConfig({
       output: {
         manualChunks: {
           ...vendorChunks,
-          // Dynamic chunks for routes
-          ...(() => {
-            return {
-              "shipment-module": ["@/app/shipment/page.tsx"],
-            };
-          })(),
         },
         chunkFileNames: (chunkInfo) => {
           const name = chunkInfo.name || "chunk";

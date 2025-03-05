@@ -3,6 +3,7 @@ package shipment
 import (
 	"context"
 
+	"github.com/emoss08/trenova/internal/core/domain"
 	"github.com/emoss08/trenova/internal/core/domain/businessunit"
 	"github.com/emoss08/trenova/internal/core/domain/organization"
 	"github.com/emoss08/trenova/internal/pkg/errors"
@@ -13,7 +14,10 @@ import (
 	"github.com/uptrace/bun"
 )
 
-var _ bun.BeforeAppendModelHook = (*ShipmentControl)(nil)
+var (
+	_ bun.BeforeAppendModelHook = (*ShipmentControl)(nil)
+	_ domain.Validatable        = (*ShipmentControl)(nil)
+)
 
 type ShipmentControl struct {
 	bun.BaseModel `bun:"table:shipment_controls,alias:sc" json:"-"`
