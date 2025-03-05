@@ -43,7 +43,7 @@ export default function ShipmentControlForm() {
     },
     onSuccess() {
       broadcastQueryInvalidation({
-        queryKey: ["shipmentControl"],
+        queryKey: ["shipmentControl", "organization", "getShipmentControl"],
         options: {
           correlationId: `update-shipment-control-${Date.now()}`,
         },
@@ -134,8 +134,9 @@ function ServiceFailureForm() {
             />
           </FormControl>
           {showGracePeriod && (
-            <FormControl>
+            <FormControl className="pl-10 min-h-[3em]">
               <InputField
+                rules={{ required: true, min: 0 }}
                 control={control}
                 name="serviceFailureGracePeriod"
                 label="Service Failure Grace Period"
