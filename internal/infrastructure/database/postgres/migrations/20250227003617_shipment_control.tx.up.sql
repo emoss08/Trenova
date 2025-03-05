@@ -1,18 +1,53 @@
+-- Enums with documentation
+CREATE TYPE "service_failure_enum" AS ENUM(
+    'Pickup',
+    'Delivery',
+    'Both'
+);
+
+--bun:split
+CREATE TYPE "auto_assignment_strategy_enum" AS ENUM(
+    'Proximity',
+    'Availability',
+    'LoadBalancing'
+);
+
+--bun:split
+CREATE TYPE "compliance_enforcement_level_enum" AS ENUM(
+    'Warning',
+    'Block',
+    'Audit'
+);
+
+--bun:split
 CREATE TABLE IF NOT EXISTS "shipment_controls"(
     "id" varchar(100) NOT NULL,
     "business_unit_id" varchar(100) NOT NULL,
     "organization_id" varchar(100) NOT NULL,
+    -- Auto Assignment Related Fields
+    "enable_auto_assignment" boolean NOT NULL DEFAULT FALSE,
+    "auto_assignment_strategy" "auto_assignment_strategy_enum" NOT NULL DEFAULT 'Proximity',
     -- Service Failure Related Fields
-    "record_service_failures" boolean NOT NULL DEFAULT TRUE,
-    "service_failure_grace_period" bigint NOT NULL DEFAULT 10,
+    "record_service_failures" boolean NOT NULL DEFAULT FALSE,
+    "service_failure_grace_period" integer DEFAULT 30,
     -- Delay Shipment Related Fields
     "auto_delay_shipments" boolean NOT NULL DEFAULT TRUE,
-    "auto_delay_shipments_threshold" bigint NOT NULL DEFAULT 10,
+    "auto_delay_shipments_threshold" integer DEFAULT 30,
     -- Compliance Controls
     "enforce_hos_compliance" boolean NOT NULL DEFAULT TRUE,
+    "enforce_driver_qualification_compliance" boolean NOT NULL DEFAULT TRUE,
+    "enforce_medical_cert_compliance" boolean NOT NULL DEFAULT TRUE,
+    "enforce_hazmat_compliance" boolean NOT NULL DEFAULT TRUE,
+    "enforce_drug_and_alcohol_compliance" boolean NOT NULL DEFAULT TRUE,
+    "compliance_enforcement_level" "compliance_enforcement_level_enum" NOT NULL DEFAULT 'Warning',
     -- Detention Tracking
     "track_detention_time" boolean NOT NULL DEFAULT TRUE,
-    "detention_threshold" bigint NOT NULL DEFAULT 10,
+    "auto_generate_detention_charges" boolean NOT NULL DEFAULT TRUE,
+    "detention_threshold" integer NOT NULL DEFAULT 30,
+    -- Performance Metrics
+    "on_time_delivery_target" float,
+    "service_failure_target" float,
+    "track_customer_rejections" boolean NOT NULL DEFAULT FALSE,
     -- Misc
     "check_for_duplicate_bols" boolean NOT NULL DEFAULT TRUE,
     "allow_move_removals" boolean NOT NULL DEFAULT TRUE,

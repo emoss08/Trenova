@@ -8,7 +8,6 @@ import (
 )
 
 type GetShipmentControlRequest struct {
-	ID     pulid.ID
 	OrgID  pulid.ID
 	BuID   pulid.ID
 	UserID pulid.ID
@@ -16,6 +15,5 @@ type GetShipmentControlRequest struct {
 
 type ShipmentControlRepository interface {
 	GetByOrgID(ctx context.Context, orgID pulid.ID) (*shipment.ShipmentControl, error)
-	GetByID(ctx context.Context, opts *GetShipmentControlRequest) (*shipment.ShipmentControl, error)
 	Update(ctx context.Context, sc *shipment.ShipmentControl) (*shipment.ShipmentControl, error)
 }

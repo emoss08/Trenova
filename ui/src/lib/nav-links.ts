@@ -209,18 +209,23 @@ export const routes: routeInfo[] = [
   },
   {
     key: "organization",
-    label: "Organization",
+    label: "Organization Settings",
     icon: faGear,
     tree: [
       {
         key: "settings",
         label: "Organization Settings",
-        link: "/organization/settings",
+        link: "/organization/settings/",
       },
       {
         key: "system-logs",
         label: "System Logs",
-        link: "/organization/system-logs",
+        link: "/organization/system-logs/",
+      },
+      {
+        key: "shipment-controls",
+        label: "Shipment Controls",
+        link: "/organization/shipment-controls/",
       },
     ],
   },

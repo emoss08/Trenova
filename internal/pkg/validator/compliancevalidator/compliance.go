@@ -20,15 +20,18 @@ type ValidatorParams struct {
 	fx.In
 
 	HazmatExpRepo       repositories.HazmatExpirationRepository
+	ShipmentControlRepo repositories.ShipmentControlRepository
 }
 
 type Validator struct {
-	hazExpRepo          repositories.HazmatExpirationRepository
+	hazExpRepo repositories.HazmatExpirationRepository
+	scp        repositories.ShipmentControlRepository
 }
 
 func NewValidator(p ValidatorParams) *Validator {
 	return &Validator{
-		hazExpRepo:          p.HazmatExpRepo,
+		hazExpRepo: p.HazmatExpRepo,
+		scp:        p.ShipmentControlRepo,
 	}
 }
 
@@ -37,17 +40,34 @@ func NewValidator(p ValidatorParams) *Validator {
 func (v *Validator) ValidateWorkerCompliance(ctx context.Context, wp *worker.WorkerProfile, multiErr *errors.MultiError) {
 	now := timeutils.NowUnix()
 
+	// Load the shipment controls for the organization
+	sc, err := v.scp.GetByOrgID(ctx, wp.OrganizationID)
+	if err != nil {
+		multiErr.Add("shipmentControl", errors.ErrSystemError, err.Error())
+		return
+	}
+
 	v.validateDOB(wp, multiErr)
 
-	v.validateMVRCompliance(wp, now, multiErr)
+	if sc.EnforceHOSCompliance {
+		v.validateMVRCompliance(wp, now, multiErr)
+	}
 
-	v.validateMedicalCertificate(wp, multiErr)
+	if sc.EnforceMedicalCertCompliance {
+		v.validateMedicalCertificate(wp, multiErr)
+	}
 
-	v.validateDrugAndAlcoholCompliance(wp, multiErr)
+	if sc.EnforceDrugAndAlcoholCompliance {
+		v.validateDrugAndAlcoholCompliance(wp, multiErr)
+	}
 
-	v.validateDriverQualification(wp, now, multiErr)
+	if sc.EnforceDriverQualificationCompliance {
+		v.validateDriverQualification(wp, now, multiErr)
+	}
 
-	v.validateHazmatCompliance(ctx, wp, now, multiErr)
+	if sc.EnforceHazmatCompliance {
+		v.validateHazmatCompliance(ctx, wp, now, multiErr)
+	}
 }
 
 // validateDOB checks if the worker meets the minimum age requirement of 21 years.

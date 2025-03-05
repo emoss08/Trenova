@@ -33,17 +33,8 @@ func NewWorkerProfileValidator(p WorkerProfileValidatorParams) *WorkerProfileVal
 func (v *WorkerProfileValidator) Validate(ctx context.Context, valCtx *validator.ValidationContext, wp *worker.WorkerProfile, multiErr *errors.MultiError) {
 	wp.Validate(ctx, multiErr)
 
-	// Load the shipment controls for the organization
-	sc, err := v.scp.GetByOrgID(ctx, wp.OrganizationID)
-	if err != nil {
-		multiErr.Add("shipmentControl", errors.ErrSystemError, err.Error())
-		return
-	}
 
-	// Validate DOT Compliance if the organization requires it
-	if sc.EnforceHOSCompliance {
-		v.compValidator.ValidateWorkerCompliance(ctx, wp, multiErr)
-	}
+	v.compValidator.ValidateWorkerCompliance(ctx, wp, multiErr)
 
 	if valCtx.IsCreate {
 		v.validateID(wp, multiErr)

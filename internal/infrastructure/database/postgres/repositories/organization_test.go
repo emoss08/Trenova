@@ -91,9 +91,6 @@ func TestOrganizationRepository(t *testing.T) {
 			ScacCode:       "TEST",
 			OrgType:        organization.TypeCarrier,
 			AddressLine1:   "1234 Main St",
-			PrimaryContact: "John Doe",
-			PrimaryEmail:   "john.doe@trenova.com",
-			PrimaryPhone:   "123-456-7890",
 			TaxID:          "1234567890",
 		}
 

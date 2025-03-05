@@ -52,51 +52,6 @@ func NewShipmentControlRepository(p ShipmentControlRepositoryParams) repositorie
 	}
 }
 
-// GetByID retrieves a shipment control by ID.
-//
-// Parameters:
-//   - ctx: The context for the operation.
-//   - opts: The options for the operation containing the ID, organization ID, and business unit ID.
-//
-// Returns:
-//   - *shipment.ShipmentControl: The shipment control entity.
-//   - error: If any database operation fails.
-func (r shipmentControlRepository) GetByID(ctx context.Context, opts *repositories.GetShipmentControlRequest) (*shipment.ShipmentControl, error) {
-	dba, err := r.db.DB(ctx)
-	if err != nil {
-		return nil, eris.Wrap(err, "get database connection")
-	}
-
-	log := r.l.With().
-		Str("operation", "GetByID").
-		Str("id", opts.ID.String()).
-		Logger()
-
-	entity := new(shipment.ShipmentControl)
-
-	query := dba.NewSelect().
-		Model(entity).
-		WhereGroup(" AND ", func(q *bun.SelectQuery) *bun.SelectQuery {
-			return q.
-				Where("sc.id = ?", opts.ID).
-				Where("sc.organization_id = ?", opts.OrgID).
-				Where("sc.business_unit_id = ?", opts.BuID)
-		})
-
-	if err = query.Scan(ctx); err != nil {
-		// * If the query is [sql.ErrNoRows], return a not found error
-		if eris.Is(err, sql.ErrNoRows) {
-			log.Error().Msg("shipment control not found within your organization")
-			return nil, errors.NewNotFoundError("Shipment control not found within your organization")
-		}
-
-		log.Error().Err(err).Msg("failed to get shipment control")
-		return nil, eris.Wrap(err, "get shipment control")
-	}
-
-	return entity, nil
-}
-
 // GetByOrgID retrieves a shipment control by organization ID.
 //
 // Parameters:
@@ -151,7 +106,7 @@ func (r shipmentControlRepository) Update(ctx context.Context, sc *shipment.Ship
 
 	log := r.l.With().
 		Str("operation", "Update").
-		Str("id", sc.GetID().String()).
+		Str("id", sc.GetID()).
 		Int64("version", sc.GetVersion()).
 		Logger()
 

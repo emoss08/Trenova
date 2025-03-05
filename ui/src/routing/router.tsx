@@ -194,8 +194,8 @@ const routes: RouteObject[] = [
             HydrateFallback: LoadingSkeleton,
             loader: protectedLoader,
             handle: {
-              crumb: "Organization",
-              title: "Organization",
+              crumb: "Organization Settings",
+              title: "Organization Settings",
             },
             children: [
               {
@@ -212,6 +212,15 @@ const routes: RouteObject[] = [
                 async lazy() {
                   let { LogReader } = await import("@/app/logreader/page");
                   return { Component: LogReader };
+                },
+              },
+              {
+                path: "shipment-controls",
+                async lazy() {
+                  let { ShipmentControl } = await import(
+                    "@/app/shipment-control/page"
+                  );
+                  return { Component: ShipmentControl };
                 },
               },
             ],

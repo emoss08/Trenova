@@ -1,4 +1,8 @@
-import { getOrgById, listOrganizations } from "@/services/organization";
+import {
+  getOrgById,
+  getShipmentControl,
+  listOrganizations,
+} from "@/services/organization";
 import { getUsStateOptions, getUsStates } from "@/services/us-state";
 import { createQueryKeyStore } from "@lukemorales/query-key-factory";
 
@@ -23,6 +27,13 @@ export const queries = createQueryKeyStore({
       queryKey: ["organization/user"],
       queryFn: async () => {
         const response = await listOrganizations();
+        return response.data;
+      },
+    }),
+    getShipmentControl: () => ({
+      queryKey: ["shipmentControl"],
+      queryFn: async () => {
+        const response = await getShipmentControl();
         return response.data;
       },
     }),

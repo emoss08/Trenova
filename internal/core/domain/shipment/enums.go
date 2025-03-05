@@ -138,3 +138,19 @@ const (
 	// AssignmentStatusCanceled indicates that the assignment has been canceled
 	AssignmentStatusCanceled = AssignmentStatus("Canceled")
 )
+
+type AutoAssignmentStrategy string
+
+const (
+	AutoAssignmentStrategyProximity     = AutoAssignmentStrategy("Proximity")
+	AutoAssignmentStrategyAvailability  = AutoAssignmentStrategy("Availability")
+	AutoAssignmentStrategyLoadBalancing = AutoAssignmentStrategy("LoadBalancing")
+)
+
+type ComplianceEnforcementLevel string
+
+const (
+	ComplianceEnforcementLevelWarning = ComplianceEnforcementLevel("Warning")
+	ComplianceEnforcementLevelBlock   = ComplianceEnforcementLevel("Block")
+	ComplianceEnforcementLevelAudit   = ComplianceEnforcementLevel("Audit")
+)

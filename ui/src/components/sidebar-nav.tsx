@@ -31,8 +31,8 @@ export function SidebarNav({ links, className, ...props }: SidebarNavProps) {
   }, [links]);
 
   return (
-    <aside className="transition-spacing fixed z-30 -ml-2 hidden w-full shrink-0 duration-500 md:sticky md:block">
-      <ScrollArea className="bg-card text-card-foreground size-full rounded-lg border p-3">
+    <aside className="sticky top-0 z-30 -ml-2 w-full shrink-0 transition-spacing duration-500 md:block md:gap-y-2 h-screen">
+      <ScrollArea className="h-full bg-sidebar text-card-foreground rounded-lg border p-3">
         <nav className={cn("lg:flex-col", className)} {...props}>
           {Object.entries(groupedLinks).map(
             ([group, groupLinks], index, array) => (
