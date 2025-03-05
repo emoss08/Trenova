@@ -45,8 +45,11 @@ export type CheckboxFieldProps<T extends FieldValues> = BaseCheckboxFieldProps &
 
 type BaseSwitchFieldProps = Omit<SwitchProps, "name"> & {
   label: string;
-  description?: string;
+  description?: string | React.ReactNode;
   outlined?: boolean;
+  position?: "left" | "right";
+  switchInputClassName?: string;
+  size?: "xs" | "sm" | "default" | "lg";
 };
 
 export type SwitchFieldProps<T extends FieldValues> = BaseSwitchFieldProps &

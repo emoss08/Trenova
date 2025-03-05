@@ -119,7 +119,7 @@ export function Option<
     <components.Option {...props}>
       <div
         className={cn(
-          "group relative flex cursor-pointer select-none items-center gap-x-3 rounded-sm px-3 py-1.5 text-xs outline-hidden",
+          "group relative flex cursor-pointer select-none items-center gap-x-3 rounded-sm px-5 py-1.5 text-xs outline-hidden",
           isSelected && "bg-accent",
           isFocused && "bg-accent",
         )}
@@ -145,7 +145,7 @@ export function Option<
             <Highlight text={label as string} highlight={inputValue} />
           </span>
           {data.description && (
-            <span className="text-wrap text-xs text-foreground/70">
+            <span className="text-wrap text-2xs text-foreground/70">
               <Highlight text={data.description} highlight={inputValue} />
             </span>
           )}

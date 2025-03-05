@@ -1,6 +1,6 @@
 import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
-import { memo } from "react";
+import React, { memo } from "react";
 import { Button } from "../ui/button";
 
 const ErrorMessage = memo(
@@ -14,11 +14,24 @@ const ErrorMessage = memo(
   (prevProps, nextProps) => prevProps.formError === nextProps.formError,
 );
 
-const FieldDescription = memo(
-  function FieldDescription({ description }: { description: string }) {
-    return description ? (
+export const FieldDescription = memo(
+  function FieldDescription({
+    description,
+  }: {
+    description: string | React.ReactNode;
+  }) {
+    if (!description) return null;
+
+    // Check if description is a React component
+    if (React.isValidElement(description)) {
+      // Render the component directly
+      return description;
+    }
+
+    // Otherwise, render as text in a paragraph
+    return (
       <p className="text-left text-2xs text-foreground/70">{description}</p>
-    ) : null;
+    );
   },
   (prevProps, nextProps) => prevProps.description === nextProps.description,
 );
