@@ -67,6 +67,11 @@ func (h Handler) RegisterRoutes(r fiber.Router, rl *middleware.RateLimiter) {
 		[]fiber.Handler{h.duplicate},
 		middleware.PerMinute(60), // 60 writes per minute
 	)...)
+
+	api.Post("/check-for-duplicate-bols/", rl.WithRateLimit(
+		[]fiber.Handler{h.checkForDuplicateBOLs},
+		middleware.PerMinute(60), // 60 writes per minute
+	)...)
 }
 
 func (h Handler) selectOptions(c *fiber.Ctx) error {
@@ -242,4 +247,59 @@ func (h Handler) duplicate(c *fiber.Ctx) error {
 	}
 
 	return c.Status(fiber.StatusOK).JSON(newEntity)
+}
+
+// BOLCheckRequest represents the request structure for BOL duplicate checking
+type BOLCheckRequest struct {
+	BOL        string    `json:"bol"`
+	ShipmentID *pulid.ID `json:"shipmentId,omitempty"` // Optional, for excluding current shipment during updates
+}
+
+// BOLCheckResponse represents the response structure for the BOL check endpoint
+type BOLCheckResponse struct {
+	Valid          bool     `json:"valid"`
+	DuplicateFound bool     `json:"duplicate_found,omitempty"`
+	DuplicateCount int      `json:"duplicate_count,omitempty"`
+	ProNumbers     []string `json:"pro_numbers,omitempty"`
+}
+
+func (h Handler) checkForDuplicateBOLs(c *fiber.Ctx) error {
+	reqCtx, err := ctx.WithRequestContext(c)
+	if err != nil {
+		return h.eh.HandleError(c, err)
+	}
+
+	// Parse request
+	req := new(BOLCheckRequest)
+	if err = c.BodyParser(req); err != nil {
+		return h.eh.HandleError(c, err)
+	}
+
+	// Skip check if BOL is empty
+	if req.BOL == "" {
+		return c.Status(fiber.StatusOK).JSON(BOLCheckResponse{
+			Valid: true,
+		})
+	}
+
+	// Create shipment with required data for the check
+	shp := new(shipmentdomain.Shipment)
+	shp.BOL = req.BOL
+	shp.OrganizationID = reqCtx.OrgID
+	shp.BusinessUnitID = reqCtx.BuID
+
+	// Set ID if provided (for excluding current shipment during updates)
+	if req.ShipmentID != nil && !req.ShipmentID.IsNil() {
+		shp.ID = *req.ShipmentID
+	}
+
+	// Check for duplicates
+	if err = h.ss.CheckForDuplicateBOLs(c.UserContext(), shp); err != nil {
+		return h.eh.HandleError(c, err)
+	}
+
+	// If no errors, the BOL is valid
+	return c.Status(fiber.StatusOK).JSON(BOLCheckResponse{
+		Valid: true,
+	})
 }

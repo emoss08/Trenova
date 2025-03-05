@@ -2,6 +2,8 @@ package shipment
 
 import (
 	"context"
+	"fmt"
+	"strings"
 
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
@@ -443,4 +445,61 @@ func (s *Service) Duplicate(ctx context.Context, req *repositories.DuplicateShip
 	}
 
 	return newEntity, nil
+}
+
+func (s *Service) CheckForDuplicateBOLs(ctx context.Context, shp *shipment.Shipment) error {
+	log := s.l.With().
+		Str("operation", "CheckForDuplicateBOLs").
+		Str("bol", shp.BOL).
+		Logger()
+
+	me := errors.NewMultiError()
+
+	// Skip check if BOL is empty
+	if shp.BOL == "" {
+		return nil
+	}
+
+	// Determine if we should exclude the current shipment ID (during updates)
+	var excludeID *pulid.ID
+	if !shp.ID.IsNil() {
+		excludeID = &shp.ID
+		log.Debug().Str("excludeID", shp.ID.String()).Msg("excluding current shipment from duplicate check")
+	}
+
+	// Call repository function to check for duplicates
+	duplicates, err := s.repo.CheckForDuplicateBOLs(
+		ctx,
+		shp.BOL,
+		shp.OrganizationID,
+		shp.BusinessUnitID,
+		excludeID,
+	)
+	if err != nil {
+		log.Error().Err(err).Msg("failed to check for duplicate BOLs")
+		return errors.NewBusinessError("Failed to check for duplicate BOLs").WithInternal(err)
+	}
+
+	// Add any duplicates found to the multi-error
+	if len(duplicates) > 0 {
+		log.Info().
+			Int("duplicateCount", len(duplicates)).
+			Msg("duplicate BOLs found")
+
+		proNumbers := make([]string, 0, len(duplicates))
+		for _, dup := range duplicates {
+			proNumbers = append(proNumbers, dup.ProNumber)
+		}
+
+		me.Add("bol", errors.ErrInvalid, fmt.Sprintf(
+			"BOL is already in use by shipment(s) with Pro Number(s): %s",
+			strings.Join(proNumbers, ", "),
+		))
+	}
+
+	if me.HasErrors() {
+		return me
+	}
+
+	return nil
 }

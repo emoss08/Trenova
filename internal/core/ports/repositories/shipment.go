@@ -97,6 +97,12 @@ func (dr *DuplicateShipmentRequest) Validate(ctx context.Context) *errors.MultiE
 	return nil
 }
 
+// DuplicateBOLsResult represents the minimal data needed when checking for duplicate BOLs
+type DuplicateBOLsResult struct {
+	ID        pulid.ID `bun:"id"`
+	ProNumber string   `bun:"pro_number"`
+}
+
 type ShipmentRepository interface {
 	List(ctx context.Context, opts *ListShipmentOptions) (*ports.ListResult[*shipment.Shipment], error)
 	GetByID(ctx context.Context, opts GetShipmentByIDOptions) (*shipment.Shipment, error)
@@ -105,4 +111,5 @@ type ShipmentRepository interface {
 	UpdateStatus(ctx context.Context, opts *UpdateShipmentStatusRequest) (*shipment.Shipment, error)
 	Cancel(ctx context.Context, req *CancelShipmentRequest) (*shipment.Shipment, error)
 	Duplicate(ctx context.Context, req *DuplicateShipmentRequest) (*shipment.Shipment, error)
+	CheckForDuplicateBOLs(ctx context.Context, currentBOL string, orgID pulid.ID, buID pulid.ID, excludeID *pulid.ID) ([]DuplicateBOLsResult, error)
 }

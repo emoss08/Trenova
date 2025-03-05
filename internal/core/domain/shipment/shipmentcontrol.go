@@ -99,10 +99,6 @@ func (sc *ShipmentControl) Validate(ctx context.Context, multiErr *errors.MultiE
 				validation.Min(1).Error("Detention threshold must be greater than 0"),
 			),
 		),
-
-		// Ensure check for duplicate BOLs is populated
-		validation.Field(&sc.CheckForDuplicateBOLs, validation.Required.Error("Check for duplicate BOLs is required")),
-		validation.Field(&sc.AllowMoveRemovals, validation.Required.Error("Allow move removals is required")),
 	)
 	if err != nil {
 		var validationErrs validation.Errors

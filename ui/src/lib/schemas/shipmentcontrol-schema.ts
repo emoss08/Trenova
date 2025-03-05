@@ -58,6 +58,12 @@ export const shipmentControlSchema = object({
     then: (schema) => schema.required("Detention threshold is required"),
     otherwise: (schema) => schema.nullable().notRequired(),
   }),
+  // Performance Metrics
+  onTimeDeliveryTarget: number().nullable().notRequired(),
+  serviceFailureTarget: number().nullable().notRequired(),
+  trackCustomerRejections: boolean().required(
+    "Track customer rejections is required",
+  ),
   // Misc....
   checkForDuplicateBOLs: boolean().required(
     "Check for duplicate BOLs is required",

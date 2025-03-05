@@ -51,7 +51,7 @@ func (v *Validator) Validate(ctx context.Context, valCtx *validator.ValidationCo
 
 	// If the organization has duplicate BOLs checking enabled, check for duplicates
 	if sc.CheckForDuplicateBOLs {
-		if err := v.checkForDuplicateBOLs(ctx, shp, multiErr); err != nil {
+		if err := v.CheckForDuplicateBOLs(ctx, shp, multiErr); err != nil {
 			multiErr.Add("duplicateBOLs", errors.ErrSystemError, err.Error())
 		}
 	}
@@ -145,18 +145,19 @@ func (v *Validator) ValidateCancellation(shp *shipment.Shipment) *errors.MultiEr
 	return nil
 }
 
-func (v *Validator) checkForDuplicateBOLs(ctx context.Context, shp *shipment.Shipment, multiErr *errors.MultiError) error {
+func (v *Validator) CheckForDuplicateBOLs(ctx context.Context, shp *shipment.Shipment, multiErr *errors.MultiError) error {
 	dba, err := v.db.DB(ctx)
 	if err != nil {
 		return eris.Wrap(err, "get database connection")
 	}
 
-	// Query to find duplicates, selecting only necessary fields for efficiency
+	// * Small struct to store the results of the query
 	var duplicates []struct {
 		ID        pulid.ID `bun:"id"`
 		ProNumber string   `bun:"pro_number"`
 	}
 
+	// * Query to find duplicates, selecting only necessary fields for efficiency
 	query := dba.NewSelect().
 		Column("sp.id").
 		Column("sp.pro_number").
@@ -165,16 +166,17 @@ func (v *Validator) checkForDuplicateBOLs(ctx context.Context, shp *shipment.Shi
 		Where("sp.business_unit_id = ?", shp.BusinessUnitID).
 		Where("sp.bol = ?", shp.BOL)
 
-	// If this is an update operation, exclude the current shipment from the check
+	// * If this is an update operation, exclude the current shipment from the check
 	if shp.ID.IsNotNil() {
 		query = query.Where("sp.id != ?", shp.ID)
 	}
 
+	// * Scan the results into the duplicates slice
 	if err := query.Scan(ctx, &duplicates); err != nil {
 		return eris.Wrapf(err, "query duplicate BOLs for BOL '%s'", shp.BOL)
 	}
 
-	// If duplicates found, construct a meaningful error message
+	// * If duplicates found, construct a meaningful error message
 	if len(duplicates) > 0 {
 		proNumbers := make([]string, 0, len(duplicates))
 		for _, dup := range duplicates {

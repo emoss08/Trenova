@@ -98,7 +98,7 @@ export default function ShipmentControlForm() {
 }
 
 function ServiceFailureForm() {
-  const { control, watch } = useFormContext();
+  const { control, watch } = useFormContext<ShipmentControlSchema>();
   const [showGracePeriod, setShowGracePeriod] = useState<boolean>(false);
 
   const recordServiceFailure = watch("recordServiceFailures");
@@ -154,7 +154,7 @@ function ServiceFailureForm() {
 }
 
 function DetentionForm() {
-  const { control, watch } = useFormContext();
+  const { control, watch } = useFormContext<ShipmentControlSchema>();
   const [showDetentionOptions, setShowDetentionOptions] =
     useState<boolean>(false);
 
@@ -223,7 +223,7 @@ function DetentionForm() {
 }
 
 function ShipmentEntryForm() {
-  const { control } = useFormContext();
+  const { control } = useFormContext<ShipmentControlSchema>();
 
   return (
     <Card>
@@ -242,7 +242,7 @@ function ShipmentEntryForm() {
           <FormControl className="min-h-[3em]">
             <SwitchField
               control={control}
-              name="CheckForDuplicateBOLs"
+              name="checkForDuplicateBOLs"
               label="Check for Duplicate Bills of Lading"
               description="When enabled, the system will verify that each BOL number is unique during shipment creation. This prevents accidental duplications that could lead to operational confusion, billing errors, and customer service issues. Recommended for most operations to maintain data integrity."
               position="left"
@@ -264,7 +264,7 @@ function ShipmentEntryForm() {
 }
 
 function ComplianceForm() {
-  const { control, watch, setValue } = useFormContext();
+  const { control, watch, setValue } = useFormContext<ShipmentControlSchema>();
   const [showComplianceOptions, setShowComplianceOptions] =
     useState<boolean>(false);
 
@@ -395,7 +395,7 @@ function ComplianceForm() {
 }
 
 function PerformanceMetricsForm() {
-  const { control } = useFormContext();
+  const { control } = useFormContext<ShipmentControlSchema>();
 
   return (
     <Card>
@@ -450,7 +450,7 @@ function PerformanceMetricsForm() {
 }
 
 function AutoAssignmentForm() {
-  const { control, watch } = useFormContext();
+  const { control, watch } = useFormContext<ShipmentControlSchema>();
 
   const [showAutoAssignmentOptions, setShowAutoAssignmentOptions] =
     useState<boolean>(false);
@@ -529,7 +529,7 @@ function AutoAssignmentForm() {
 }
 
 function DelayShipmentForm() {
-  const { control, watch } = useFormContext();
+  const { control, watch } = useFormContext<ShipmentControlSchema>();
   const [showDelayOptions, setShowDelayOptions] = useState<boolean>(false);
 
   const autoDelayShipments = watch("autoDelayShipments");
@@ -580,7 +580,7 @@ function DelayShipmentForm() {
                   className="max-w-[300px]"
                 />
               </FormControl>
-              <FormControl className="pl-8 min-h-[3em]">
+              {/* <FormControl className="pl-8 min-h-[3em]">
                 <SwitchField
                   control={control}
                   name="escalateDelayedShipments"
@@ -589,7 +589,7 @@ function DelayShipmentForm() {
                   position="left"
                   size="sm"
                 />
-              </FormControl>
+              </FormControl> */}
             </>
           )}
         </FormGroup>
