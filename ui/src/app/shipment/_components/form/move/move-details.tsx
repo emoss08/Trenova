@@ -139,7 +139,7 @@ export default function ShipmentMovesDetails() {
   const isEditing =
     editingIndex !== null &&
     ((editingIndex < moves.length - 1 || moves[editingIndex]?.stops?.length) ??
-      0 > 0);
+      false);
 
   return (
     <>
