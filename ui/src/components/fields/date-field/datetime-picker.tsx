@@ -75,7 +75,7 @@ export const DateTimePicker = memo(function DateTimePicker({
   const suggestions = generateSuggestions(inputValue, suggestion);
 
   function handleInputChange(e: React.ChangeEvent<HTMLInputElement>) {
-    const value = e.target.value;
+    const {value} = e.target;
     setInputValue(value);
 
     if (value.length > 0) {
