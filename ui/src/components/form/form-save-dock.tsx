@@ -129,7 +129,7 @@ export function FormSaveDock({
 export function LastSavedIndicator() {
   const { lastSaved } = useFormSave();
 
-  if (!lastSaved) return null;
+  if (!lastSaved) {
 
   return (
     <div className="text-sm text-muted-foreground flex items-center">
