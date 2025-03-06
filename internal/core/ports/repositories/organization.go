@@ -33,5 +33,10 @@ type OrganizationRepository interface {
 }
 
 type OrganizationCacheRepository interface {
-	
+	GetByID(ctx context.Context, orgID pulid.ID) (*organization.Organization, error)
+	GetUserOrganizations(ctx context.Context, userID pulid.ID) ([]*organization.Organization, error)
+	SetUserOrganizations(ctx context.Context, userID pulid.ID, orgs []*organization.Organization) error
+	Set(ctx context.Context, org *organization.Organization) error
+	Invalidate(ctx context.Context, orgID pulid.ID) error
+	InvalidateUserOrganizations(ctx context.Context, userID pulid.ID) error
 }

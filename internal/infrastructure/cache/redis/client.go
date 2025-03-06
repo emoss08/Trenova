@@ -26,7 +26,9 @@ const (
 type StringCmd = redis.StringCmd
 
 var (
-	Nil          = redis.Nil
+	// Nil reply returned by Redis when key does not exist.
+	Nil = redis.Nil
+	// Error returned when the redis config is nil
 	ErrConfigNil = eris.New("redis config is nil")
 )
 

@@ -22,11 +22,13 @@ type OrganizationRepositoryParams struct {
 
 	DB     db.Connection
 	Logger *logger.Logger
+	Cache  repositories.OrganizationCacheRepository
 }
 
 type organizationRepository struct {
-	db db.Connection
-	l  *zerolog.Logger
+	db    db.Connection
+	l     *zerolog.Logger
+	cache repositories.OrganizationCacheRepository
 }
 
 func NewOrganizationRepository(p OrganizationRepositoryParams) repositories.OrganizationRepository {
@@ -35,12 +37,12 @@ func NewOrganizationRepository(p OrganizationRepositoryParams) repositories.Orga
 		Logger()
 
 	return &organizationRepository{
-		db: p.DB,
-		l:  &log,
+		db:    p.DB,
+		l:     &log,
+		cache: p.Cache,
 	}
 }
 
-// TODO(Wolfred): Cache the organization because it should not change often.
 // filterQuery returns a query that filters organizations by the given options.
 func (or *organizationRepository) filterQuery(q *bun.SelectQuery, f *ports.LimitOffsetQueryOptions) *bun.SelectQuery {
 	return q.Where("org.business_unit_id = ?", f.TenantOpts.BuID).
@@ -91,8 +93,15 @@ func (or *organizationRepository) GetByID(ctx context.Context, opts repositories
 		Str("orgID", opts.OrgID.String()).
 		Logger()
 
-	org := new(organization.Organization)
+	// * Try to get from the cache first
+	cachedOrg, err := or.cache.GetByID(ctx, opts.OrgID)
+	if err == nil && cachedOrg != nil {
+		log.Debug().Str("orgID", opts.OrgID.String()).Msg("organization found in cache")
+		return cachedOrg, nil
+	}
 
+	// * If cache miss, get from database
+	org := new(organization.Organization)
 	q := dba.NewSelect().Model(org).
 		Where("org.id = ?", opts.OrgID).
 		Where("org.business_unit_id = ?", opts.BuID)
@@ -116,13 +125,17 @@ func (or *organizationRepository) GetByID(ctx context.Context, opts repositories
 		return nil, err
 	}
 
+	// * Cache the organization
+	if err := or.cache.Set(ctx, org); err != nil {
+		log.Error().Err(err).Msgf("failed to cache organization by ID %s", opts.OrgID)
+		// ! Do not return the error because it will not affect the user experience
+	}
+
 	return org, nil
 }
 
 // Create creates an organization and audits the creation.
-func (or *organizationRepository) Create(
-	ctx context.Context, org *organization.Organization,
-) (*organization.Organization, error) {
+func (or *organizationRepository) Create(ctx context.Context, org *organization.Organization) (*organization.Organization, error) {
 	dba, err := or.db.DB(ctx)
 	if err != nil {
 		return nil, err
@@ -157,9 +170,7 @@ func (or *organizationRepository) Create(
 	return org, nil
 }
 
-func (or *organizationRepository) Update(
-	ctx context.Context, org *organization.Organization,
-) (*organization.Organization, error) {
+func (or *organizationRepository) Update(ctx context.Context, org *organization.Organization) (*organization.Organization, error) {
 	dba, err := or.db.DB(ctx)
 	if err != nil {
 		return nil, err
@@ -204,6 +215,12 @@ func (or *organizationRepository) Update(
 	})
 	if err != nil {
 		return nil, err
+	}
+
+	// * Invalidate the orgnaization in the cache
+	if err := or.cache.Invalidate(ctx, org.ID); err != nil {
+		log.Error().Err(err).Msgf("failed to invalidate organization %s in cache", org.ID)
+		// ! Do not return the error because it will not affect the user experience
 	}
 
 	return org, nil
@@ -256,6 +273,12 @@ func (or *organizationRepository) SetLogo(ctx context.Context, org *organization
 		return nil, err
 	}
 
+	// * Invalidate the orgnaization in the cache
+	if err := or.cache.Invalidate(ctx, org.ID); err != nil {
+		log.Error().Err(err).Msgf("failed to invalidate organization %s in cache", org.ID)
+		// ! Do not return the error because it will not affect the user experience
+	}
+
 	return org, nil
 }
 
@@ -285,6 +308,12 @@ func (or *organizationRepository) ClearLogo(ctx context.Context, org *organizati
 		return nil, err
 	}
 
+	// * Invalidate the orgnaization in the cache
+	if err := or.cache.Invalidate(ctx, org.ID); err != nil {
+		log.Error().Err(err).Msgf("failed to invalidate organization %s in cache", org.ID)
+		// ! Do not return the error because it will not affect the user experience
+	}
+
 	return updatedOrg, nil
 }
 
@@ -295,10 +324,25 @@ func (or *organizationRepository) GetUserOrganizations(ctx context.Context, opts
 		return nil, err
 	}
 
-	orgs := make([]*organization.Organization, 0)
+	log := or.l.With().
+		Str("operation", "GetUserOrganizations").
+		Str("userID", opts.TenantOpts.UserID.String()).
+		Logger()
+
+	// * Try to get the user organizations from the cache
+	orgs, err := or.cache.GetUserOrganizations(ctx, opts.TenantOpts.UserID)
+	if err == nil && len(orgs) > 0 {
+		log.Debug().Int("count", len(orgs)).Msg("got organizations from cache")
+		return &ports.ListResult[*organization.Organization]{
+			Items: orgs,
+			Total: len(orgs),
+		}, nil
+	}
+
+	dbOrgs := make([]*organization.Organization, 0)
 
 	q := dba.NewSelect().
-		Model(&orgs).
+		Model(&dbOrgs).
 		Relation("State").
 		Join("INNER JOIN user_organizations AS uo ON uo.organization_id = org.id").
 		Where("uo.user_id = ?", opts.TenantOpts.UserID)
@@ -310,6 +354,12 @@ func (or *organizationRepository) GetUserOrganizations(ctx context.Context, opts
 	if err != nil {
 		or.l.Error().Err(err).Msg("failed to scan organizations")
 		return nil, err
+	}
+
+	// * If cache miss, set the organizations in the cache for later
+	if err := or.cache.SetUserOrganizations(ctx, opts.TenantOpts.UserID, dbOrgs); err != nil {
+		or.l.Error().Err(err).Msgf("failed to set user organizations %s in cache", opts.TenantOpts.UserID)
+		// ! Do not return the error because it will not affect the user experience
 	}
 
 	return &ports.ListResult[*organization.Organization]{
