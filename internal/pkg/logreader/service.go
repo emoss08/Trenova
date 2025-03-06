@@ -79,7 +79,7 @@ func (s *Service) GetCurrentLogs(ctx context.Context, opts *repositories.ListLog
 }
 
 // BroadcastLogEntry sends a log entry to all connected clients
-func (s *Service) BroadcastLogEntry(entry repositories.LogEntry) {
+func (s *Service) BroadcastLogEntry(entry *repositories.LogEntry) {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 
@@ -207,7 +207,7 @@ func (s *Service) listLogFiles() ([]string, error) {
 	}
 
 	// Get all log files (including compressed ones)
-	pattern := filepath.Join(s.cfg.Log.FileConfig.Path)
+	pattern := s.cfg.Log.FileConfig.Path
 	files, err := filepath.Glob(pattern)
 	if err != nil {
 		return nil, eris.Wrap(err, "glob log files")
@@ -427,7 +427,7 @@ func (s *Service) watchLogFile(ctx context.Context) error {
 							Str("line", string(line)).
 							Msg("read new log line")
 
-						var entry repositories.LogEntry
+						entry := new(repositories.LogEntry)
 						if err := sonic.Unmarshal(line, &entry); err != nil {
 							s.l.Warn().
 								Err(err).

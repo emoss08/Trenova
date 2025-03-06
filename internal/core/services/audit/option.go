@@ -1,6 +1,7 @@
 package audit
 
 import (
+	"bytes"
 	"strings"
 	"time"
 
@@ -86,11 +87,13 @@ func WithCompactDiff(before, after any) services.LogOption {
 					continue
 				}
 
-				if string(beforeFieldJSON) != string(afterFieldJSON) {
-					changes[key] = map[string]any{
-						"from": beforeValue,
-						"to":   afterValue,
-					}
+				if bytes.Equal(beforeFieldJSON, afterFieldJSON) {
+					continue
+				}
+
+				changes[key] = map[string]any{
+					"from": beforeValue,
+					"to":   afterValue,
 				}
 			} else {
 				// Added field

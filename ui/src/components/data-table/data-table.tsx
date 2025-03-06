@@ -1,6 +1,6 @@
+import { API_URL } from "@/constants/env";
 import { useDataTableQuery } from "@/hooks/use-data-table-query";
 import { useDataTableState } from "@/hooks/use-data-table-state";
-import { http } from "@/lib/http-client";
 import { DataTableProps } from "@/types/data-table";
 import { PaginationResponse } from "@/types/server";
 import { useQuery } from "@tanstack/react-query";
@@ -88,11 +88,26 @@ export function DataTable<TData extends Record<string, any>>({
 
   // Entity Query
   const entityQuery = useQuery({
-    queryKey: [queryKey, "entity", link, entityId],
+    queryKey: [queryKey, "entity", link, entityId, extraSearchParams],
     queryFn: async () => {
       if (!entityId) return null;
-      const response = await http.get(`${link}${entityId}`);
-      return response.data;
+      const fetchURL = new URL(`${API_URL}${link}${entityId}`);
+
+      if (extraSearchParams) {
+        Object.entries(extraSearchParams).forEach(([key, value]) =>
+          fetchURL.searchParams.set(key, value),
+        );
+      }
+
+      const response = await fetch(fetchURL.href, {
+        credentials: "include",
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to fetch entity");
+      }
+
+      return response.json();
     },
     enabled: !!entityId,
     staleTime: 30000, // 30 seconds

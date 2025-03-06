@@ -1,7 +1,12 @@
 import type { BaseModel } from "./common";
 import type { UsState } from "./us-state";
 
-export type OrganizationType = "Asset" | "Brokerage" | "Both";
+export enum OrganizationType {
+  Carrier = "Carrier",
+  Brokerage = "Brokerage",
+  BrokerageCarrier = "Brokerage & Carrier",
+}
+
 export type BusinessUnitStatus =
   | "Active"
   | "Inactive"

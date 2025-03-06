@@ -190,55 +190,58 @@ export function DataTablePagination<TData>({
             </SelectContent>
           </Select>
         </div>
+        {totalPages > 1 && (
+          <>
+            <div
+              aria-live="polite"
+              className="flex w-full items-center justify-center text-sm font-medium"
+            >
+              Page {currentPage} of {paginationInfo.totalPages}
+            </div>
 
-        <div
-          aria-live="polite"
-          className="flex w-full items-center justify-center text-sm font-medium"
-        >
-          Page {currentPage} of {paginationInfo.totalPages}
-        </div>
-
-        <Pagination>
-          <PaginationContent>
-            <PaginationPrevious
-              onClick={() => handlePageChange(currentPage - 1)}
-              className="h-8"
-              variant="ghost"
-              disabled={currentPage === 1 || isLoading || isTransitioning}
-            />
-
-            {paginationInfo.visiblePages.map((page, index) => {
-              if (page === "ellipsis") {
-                return <PaginationEllipsis key={`ellipsis-${index}`} />;
-              }
-
-              const isActive = page === currentPage;
-
-              return (
-                <PaginationLink
-                  key={page}
-                  onClick={() => handlePageChange(page)}
-                  isActive={isActive}
-                  disabled={isLoading || isTransitioning}
+            <Pagination>
+              <PaginationContent>
+                <PaginationPrevious
+                  onClick={() => handlePageChange(currentPage - 1)}
                   className="h-8"
-                >
-                  {page}
-                </PaginationLink>
-              );
-            })}
+                  variant="ghost"
+                  disabled={currentPage === 1 || isLoading || isTransitioning}
+                />
 
-            <PaginationNext
-              onClick={() => handlePageChange(currentPage + 1)}
-              className="h-8"
-              variant="ghost"
-              disabled={
-                currentPage === paginationInfo.totalPages ||
-                isLoading ||
-                isTransitioning
-              }
-            />
-          </PaginationContent>
-        </Pagination>
+                {paginationInfo.visiblePages.map((page, index) => {
+                  if (page === "ellipsis") {
+                    return <PaginationEllipsis key={`ellipsis-${index}`} />;
+                  }
+
+                  const isActive = page === currentPage;
+
+                  return (
+                    <PaginationLink
+                      key={page}
+                      onClick={() => handlePageChange(page)}
+                      isActive={isActive}
+                      disabled={isLoading || isTransitioning}
+                      className="h-8"
+                    >
+                      {page}
+                    </PaginationLink>
+                  );
+                })}
+
+                <PaginationNext
+                  onClick={() => handlePageChange(currentPage + 1)}
+                  className="h-8"
+                  variant="ghost"
+                  disabled={
+                    currentPage === paginationInfo.totalPages ||
+                    isLoading ||
+                    isTransitioning
+                  }
+                />
+              </PaginationContent>
+            </Pagination>
+          </>
+        )}
       </div>
     </div>
   );

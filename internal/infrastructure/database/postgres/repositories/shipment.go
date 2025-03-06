@@ -218,7 +218,7 @@ func (sr *shipmentRepository) GetByID(ctx context.Context, opts repositories.Get
 	entity := new(shipment.Shipment)
 
 	q := dba.NewSelect().Model(entity).
-		WhereGroup("AND", func(q *bun.SelectQuery) *bun.SelectQuery {
+		WhereGroup(" AND ", func(q *bun.SelectQuery) *bun.SelectQuery {
 			return q.Where("sp.id = ?", opts.ID).
 				Where("sp.organization_id = ?", opts.OrgID).
 				Where("sp.business_unit_id = ?", opts.BuID)
@@ -227,12 +227,14 @@ func (sr *shipmentRepository) GetByID(ctx context.Context, opts repositories.Get
 	q = sr.addOptions(q, opts.ShipmentOptions)
 
 	if err = q.Scan(ctx); err != nil {
+		// * If the query is [sql.ErrNoRows], return a not found error
 		if eris.Is(err, sql.ErrNoRows) {
+			log.Error().Err(err).Msg("failed to get shipment")
 			return nil, errors.NewNotFoundError("Shipment not found within your organization")
 		}
 
 		log.Error().Err(err).Msg("failed to get shipment")
-		return nil, err
+		return nil, eris.Wrap(err, "get shipment by id")
 	}
 
 	return entity, nil
@@ -829,4 +831,64 @@ func (sr *shipmentRepository) duplicateShipmentFields(ctx context.Context, origi
 	}
 
 	return shp, nil
+}
+
+// checkForDuplicateBOLs verifies if a BOL number already exists in the system
+// It returns a list of shipments with the same BOL, optionally excluding a specific shipment ID
+//
+// Parameters:
+//   - ctx: Context for request scope and cancellation
+//   - currentBOL: The BOL number to check for duplicates
+//   - orgID: Organization ID for tenant filtering
+//   - buID: Business Unit ID for tenant filtering
+//   - excludeID: Optional shipment ID to exclude from the duplicate check (can be nil)
+//
+// Returns:
+//   - []duplicateBOLsResult: List of shipments with matching BOL numbers (empty if none found)
+//   - error: If the database query fails
+func (sr *shipmentRepository) CheckForDuplicateBOLs(ctx context.Context, currentBOL string, orgID pulid.ID, buID pulid.ID, excludeID *pulid.ID) ([]repositories.DuplicateBOLsResult, error) {
+	// * Skip empty BOL checks
+	if currentBOL == "" {
+		return []repositories.DuplicateBOLsResult{}, nil
+	}
+
+	dba, err := sr.db.DB(ctx)
+	if err != nil {
+		return nil, eris.Wrap(err, "get database connection")
+	}
+
+	log := sr.l.With().
+		Str("operation", "checkForDuplicateBOLs").
+		Str("bol", currentBOL).
+		Str("orgID", orgID.String()).
+		Str("buID", buID.String()).
+		Logger()
+
+	// * Query to find duplicates, selecting only necessary fields for efficiency
+	query := dba.NewSelect().
+		Column("sp.id").
+		Column("sp.pro_number").
+		Model((*shipment.Shipment)(nil)).
+		Where("sp.organization_id = ?", orgID).
+		Where("sp.business_unit_id = ?", buID).
+		Where("sp.bol = ?", currentBOL).
+		Where("sp.status != ?", shipment.StatusCanceled) // Ignore canceled shipments
+
+	// * Exclude the specified shipment ID if provided
+	if excludeID != nil {
+		query = query.Where("sp.id != ?", *excludeID)
+		log = log.With().Str("excludeID", excludeID.String()).Logger()
+	}
+
+	// * Small struct to store the results of the query
+	var duplicates []repositories.DuplicateBOLsResult
+
+	// * Scan the results into the duplicates slice
+	if err := query.Scan(ctx, &duplicates); err != nil {
+		log.Error().Err(err).Msg("failed to query for duplicate BOLs")
+		return nil, eris.Wrapf(err, "query duplicate BOLs for BOL '%s'", currentBOL)
+	}
+
+	log.Debug().Int("duplicateCount", len(duplicates)).Msg("completed duplicate BOL check")
+	return duplicates, nil
 }

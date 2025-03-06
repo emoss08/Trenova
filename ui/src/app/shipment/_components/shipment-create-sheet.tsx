@@ -1,3 +1,4 @@
+import { FormSaveDock } from "@/components/form/form-save-dock";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -22,6 +23,7 @@ import {
 import { VisuallyHidden } from "@/components/ui/visually-hidden";
 import { usePopoutWindow } from "@/hooks/popout-window/use-popout-window";
 import { useUnsavedChanges } from "@/hooks/use-form";
+import { useFormWithSave } from "@/hooks/use-form-with-save";
 import { broadcastQueryInvalidation } from "@/hooks/use-invalidate-query";
 import { useResponsiveDimensions } from "@/hooks/use-responsive-dimensions";
 import { http } from "@/lib/http-client";
@@ -30,15 +32,12 @@ import {
   type ShipmentSchema,
 } from "@/lib/schemas/shipment-schema";
 import { TableSheetProps } from "@/types/data-table";
-import { type APIError } from "@/types/errors";
 import { MoveStatus } from "@/types/move";
 import { RatingMethod, ShipmentStatus } from "@/types/shipment";
 import { StopStatus, StopType } from "@/types/stop";
 import { yupResolver } from "@hookform/resolvers/yup";
-import { useMutation } from "@tanstack/react-query";
 import { useCallback, useEffect, useRef } from "react";
-import { FormProvider, type Path, useForm } from "react-hook-form";
-import { toast } from "sonner";
+import { FormProvider } from "react-hook-form";
 import { ShipmentForm } from "./form/shipment-form";
 
 export function ShipmentCreateSheet({ open, onOpenChange }: TableSheetProps) {
@@ -46,67 +45,42 @@ export function ShipmentCreateSheet({ open, onOpenChange }: TableSheetProps) {
   const dimensions = useResponsiveDimensions(sheetRef, open);
   const { isPopout, closePopout } = usePopoutWindow();
 
-  const form = useForm<ShipmentSchema>({
-    resolver: yupResolver(shipmentSchema),
-    defaultValues: {
-      status: ShipmentStatus.New,
-      proNumber: undefined,
-      ratingMethod: RatingMethod.FlatRate,
-      ratingUnit: 1,
-      moves: [
-        {
-          sequence: 0,
-          loaded: true,
-          status: MoveStatus.New,
-          stops: [
-            {
-              sequence: 0,
-              status: StopStatus.New,
-              type: StopType.Pickup,
-            },
-            {
-              sequence: 1,
-              status: StopStatus.New,
-              type: StopType.Delivery,
-            },
-          ],
-        },
-      ],
+  const form = useFormWithSave({
+    resourceName: "Shipment",
+    formOptions: {
+      resolver: yupResolver(shipmentSchema),
+      defaultValues: {
+        status: ShipmentStatus.New,
+        proNumber: undefined,
+        ratingMethod: RatingMethod.FlatRate,
+        ratingUnit: 1,
+        moves: [
+          {
+            sequence: 0,
+            loaded: true,
+            status: MoveStatus.New,
+            stops: [
+              {
+                sequence: 0,
+                status: StopStatus.New,
+                type: StopType.Pickup,
+              },
+              {
+                sequence: 1,
+                status: StopStatus.New,
+                type: StopType.Delivery,
+              },
+            ],
+          },
+        ],
+      },
+      mode: "onChange",
     },
-  });
-
-  const {
-    setError,
-    formState: { isDirty, isSubmitting, isSubmitSuccessful, errors },
-    handleSubmit,
-    watch,
-    reset,
-  } = form;
-
-  console.info("Shipment Form Values", watch());
-  console.info("Shipment Form Errors", errors);
-
-  const handleClose = useCallback(() => {
-    onOpenChange(false);
-  }, [onOpenChange]);
-
-  const {
-    showWarning,
-    handleClose: onClose,
-    handleConfirmClose,
-    handleCancelClose,
-  } = useUnsavedChanges({
-    isDirty,
-    onClose: handleClose,
-  });
-
-  const { mutateAsync } = useMutation({
     mutationFn: async (values: ShipmentSchema) => {
       const response = await http.post(`/shipments/`, values);
       return response.data;
     },
     onSuccess: () => {
-      toast.success("Shipment created successfully");
       onOpenChange(false);
 
       broadcastQueryInvalidation({
@@ -120,22 +94,6 @@ export function ShipmentCreateSheet({ open, onOpenChange }: TableSheetProps) {
         },
       });
     },
-    onError: (error: APIError) => {
-      if (error.isValidationError()) {
-        error.getFieldErrors().forEach((fieldError) => {
-          setError(fieldError.name as Path<ShipmentSchema>, {
-            message: fieldError.reason,
-          });
-        });
-      }
-
-      if (error.isRateLimitError()) {
-        toast.error("Rate limit exceeded", {
-          description:
-            "You have exceeded the rate limit. Please try again later.",
-        });
-      }
-    },
     onSettled: () => {
       if (isPopout) {
         closePopout();
@@ -143,12 +101,30 @@ export function ShipmentCreateSheet({ open, onOpenChange }: TableSheetProps) {
     },
   });
 
-  const onSubmit = useCallback(
-    async (values: ShipmentSchema) => {
-      await mutateAsync(values);
-    },
-    [mutateAsync],
-  );
+  const {
+    reset,
+    handleSubmit,
+    onSubmit,
+    formState: { isDirty, isSubmitting, isSubmitSuccessful },
+  } = form;
+
+  const handleClose = useCallback(() => {
+    onOpenChange(false);
+  }, [onOpenChange]);
+
+  const handleReset = useCallback(() => {
+    reset();
+  }, [reset]);
+
+  const {
+    showWarning,
+    handleClose: onClose,
+    handleConfirmClose,
+    handleCancelClose,
+  } = useUnsavedChanges({
+    isDirty,
+    onClose: handleClose,
+  });
 
   // Reset the form when the mutation is successful
   // This is recommended by react-hook-form - https://react-hook-form.com/docs/useform/reset
@@ -177,7 +153,7 @@ export function ShipmentCreateSheet({ open, onOpenChange }: TableSheetProps) {
     <>
       <Sheet open={open} onOpenChange={onClose}>
         <SheetContent
-          className="w-[1000px] sm:max-w-[500px] p-0"
+          className="w-[500px] sm:max-w-[540px] p-0"
           withClose={false}
           ref={sheetRef}
         >
@@ -207,6 +183,12 @@ export function ShipmentCreateSheet({ open, onOpenChange }: TableSheetProps) {
                   title="Shipment"
                 />
               </SheetFooter>
+              <FormSaveDock
+                isDirty={isDirty}
+                isSubmitting={isSubmitting}
+                position="right"
+                onReset={handleReset}
+              />
             </Form>
           </FormProvider>
         </SheetContent>

@@ -27,7 +27,7 @@ CREATE TABLE IF NOT EXISTS "shipment_moves"(
     CONSTRAINT "pk_shipment_moves" PRIMARY KEY ("id", "organization_id", "business_unit_id"),
     CONSTRAINT "fk_shipment_moves_business_unit" FOREIGN KEY ("business_unit_id") REFERENCES "business_units"("id") ON UPDATE NO ACTION ON DELETE CASCADE,
     CONSTRAINT "fk_shipment_moves_organization" FOREIGN KEY ("organization_id") REFERENCES "organizations"("id") ON UPDATE NO ACTION ON DELETE CASCADE,
-    CONSTRAINT "uq_shipment_moves_shipment_sequence" UNIQUE ("shipment_id", "organization_id", "sequence"),
+    -- CONSTRAINT "uq_shipment_moves_shipment_sequence" UNIQUE ("shipment_id", "organization_id", "sequence"),
     CONSTRAINT "fk_shipment_moves_shipment" FOREIGN KEY ("shipment_id", "organization_id", "business_unit_id") REFERENCES "shipments"("id", "organization_id", "business_unit_id") ON UPDATE NO ACTION ON DELETE CASCADE
 );
 

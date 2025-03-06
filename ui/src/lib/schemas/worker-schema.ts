@@ -67,7 +67,7 @@ export const workerSchema = object({
   addressLine2: string().optional(),
   city: string().required("City is required"),
   stateId: string().required("State is required"),
-  fleetCodeId: string().optional(),
+  fleetCodeId: string().nullable().optional(),
   gender: mixed<Gender>()
     .required("Gender is required")
     .oneOf(Object.values(Gender)),

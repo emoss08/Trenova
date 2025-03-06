@@ -3,7 +3,7 @@
   
   **Revolutionizing Transportation Management Through AI Innovation**
   
-  [![License: AGPL-3.0](https://img.shields.io/badge/License-AGPL-blue.svg)](https://www.gnu.org/licenses/agpl-3.0)
+  [![License](https://img.shields.io/github/license/emoss08/trenova)](LICENSE)
   [![Go Report Card](https://goreportcard.com/badge/github.com/emoss08/trenova)](https://goreportcard.com/report/github.com/emoss08/trenova)
   [![Discord](https://dcbadge.limes.pink/api/server/https://discord.gg/XDBqyvrryq?style=flat-square&theme=default-inverted)](https://discord.gg/XDBqyvrryq)
 </div>

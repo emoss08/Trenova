@@ -75,7 +75,7 @@ export type SearchInputProps = {
   setSearchQuery: (query: string) => void;
   activeTab: SiteSearchTab;
   setActiveTab: (tab: SiteSearchTab) => void;
-  inputRef: React.RefObject<HTMLInputElement>;
+  inputRef: React.RefObject<HTMLInputElement | null>;
   activeFilters?: Record<string, string>;
   setActiveFilters?: (filters: Record<string, string>) => void;
 };

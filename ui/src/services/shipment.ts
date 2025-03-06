@@ -29,3 +29,14 @@ export async function getShipmentByID(
   });
   return response.data;
 }
+
+export async function checkForDuplicateBOLs(bol: string, shipmentId?: string) {
+  const response = await http.post<{ valid: boolean }>(
+    "/shipments/check-for-duplicate-bols/",
+    {
+      bol,
+      shipmentId,
+    },
+  );
+  return response.data;
+}

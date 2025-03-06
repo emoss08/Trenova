@@ -2,6 +2,7 @@ import type { InputProps } from "@/components/ui/input";
 import type { TextareaProps } from "@/components/ui/textarea";
 import { type IconDefinition } from "@fortawesome/pro-regular-svg-icons";
 import { type CheckboxProps } from "@radix-ui/react-checkbox";
+import { SwitchProps } from "@radix-ui/react-switch";
 import type {
   Control,
   FieldValues,
@@ -30,6 +31,7 @@ export type ColorFieldProps<TFieldValues extends FieldValues> = {
   description?: string;
   label?: string;
   className?: string;
+  disabled?: boolean;
 } & FormControlProps<TFieldValues>;
 
 type BaseCheckboxFieldProps = Omit<CheckboxProps, "name"> & {
@@ -39,6 +41,18 @@ type BaseCheckboxFieldProps = Omit<CheckboxProps, "name"> & {
 };
 
 export type CheckboxFieldProps<T extends FieldValues> = BaseCheckboxFieldProps &
+  FormControlProps<T>;
+
+type BaseSwitchFieldProps = Omit<SwitchProps, "name"> & {
+  label: string;
+  description?: string | React.ReactNode;
+  outlined?: boolean;
+  position?: "left" | "right";
+  switchInputClassName?: string;
+  size?: "xs" | "sm" | "default" | "lg";
+};
+
+export type SwitchFieldProps<T extends FieldValues> = BaseSwitchFieldProps &
   FormControlProps<T>;
 
 type BaseTextareaFieldProps = Omit<TextareaProps, "name"> & {
@@ -134,6 +148,7 @@ export interface DateTimePickerProps
   clearable?: boolean;
   label?: string;
   description?: string;
+  ref?: React.Ref<HTMLInputElement>;
 }
 
 export interface AutocompleteFormControlProps<T extends FieldValues> {

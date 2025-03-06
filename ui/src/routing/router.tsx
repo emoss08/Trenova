@@ -1,4 +1,5 @@
 /* eslint-disable prefer-const */
+import { AdminLayout } from "@/components/admin-layout";
 import { RootErrorBoundary } from "@/components/error-boundary";
 import LoadingSkeleton from "@/components/loading";
 import { MainLayout } from "@/components/main-layout";
@@ -189,16 +190,37 @@ const routes: RouteObject[] = [
           // Organization Setting Links
           {
             path: "/organization/",
+            Component: AdminLayout,
+            HydrateFallback: LoadingSkeleton,
+            loader: protectedLoader,
             handle: {
-              crumb: "Organization",
-              title: "Organization",
+              crumb: "Organization Settings",
+              title: "Organization Settings",
             },
             children: [
               {
-                path: "logs",
+                path: "settings",
+                async lazy() {
+                  let { OrganizationSettings } = await import(
+                    "@/app/organization/page"
+                  );
+                  return { Component: OrganizationSettings };
+                },
+              },
+              {
+                path: "system-logs",
                 async lazy() {
                   let { LogReader } = await import("@/app/logreader/page");
                   return { Component: LogReader };
+                },
+              },
+              {
+                path: "shipment-controls",
+                async lazy() {
+                  let { ShipmentControl } = await import(
+                    "@/app/shipment-control/page"
+                  );
+                  return { Component: ShipmentControl };
                 },
               },
             ],

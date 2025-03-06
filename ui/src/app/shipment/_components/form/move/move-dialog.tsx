@@ -380,7 +380,6 @@ export function MoveDialog({
                   transition={{ duration: 0.2 }}
                 >
                   <CompactStopsTable
-                    moveIdx={moveIdx}
                     stops={fields as Stop[]}
                     onEdit={handleEditStop}
                     onDelete={handleDeleteStop}

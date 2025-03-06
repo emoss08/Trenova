@@ -66,7 +66,7 @@ func (r *proNumberRepository) GetNextProNumber(ctx context.Context, orgID pulid.
 	err = dba.RunInTx(ctx, &sql.TxOptions{Isolation: sql.LevelSerializable}, func(c context.Context, tx bun.Tx) error {
 		sequence = new(pronumber.Sequence)
 		err = tx.NewSelect().Model(sequence).
-			WhereGroup("AND", func(sq *bun.SelectQuery) *bun.SelectQuery {
+			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
 				return sq.Where("pns.organization_id = ?", orgID).
 					Where("pns.year = ?", year).
 					Where("pns.month = ?", month)

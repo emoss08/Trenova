@@ -1,4 +1,4 @@
-import { CheckboxField } from "@/components/fields/checkbox-field";
+import { SwitchField } from "@/components/fields/switch-field";
 import { FormControl, FormGroup } from "@/components/ui/form";
 import { type ShipmentDuplicateSchema } from "@/lib/schemas/shipment-duplicate-schema";
 import { useFormContext } from "react-hook-form";
@@ -9,7 +9,7 @@ export function ShipmentDuplicateForm() {
   return (
     <FormGroup cols={1}>
       <FormControl>
-        <CheckboxField
+        <SwitchField
           name="overrideDates"
           control={control}
           label="Override Dates"
@@ -18,7 +18,7 @@ export function ShipmentDuplicateForm() {
         />
       </FormControl>
       <FormControl>
-        <CheckboxField
+        <SwitchField
           name="includeCommodities"
           control={control}
           label="Include Commodities"

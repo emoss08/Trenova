@@ -109,6 +109,12 @@ func (smr *SplitMoveRequest) Validate(ctx context.Context, move *shipment.Shipme
 	}
 }
 
+type HandleMoveDeletionsRequest struct {
+	ExistingMoveMap map[pulid.ID]*shipment.ShipmentMove
+	UpdatedMoveIDs  map[pulid.ID]struct{}
+	MoveToDelete    []*shipment.ShipmentMove
+}
+
 type SplitMoveResponse struct {
 	// The original move after splitting
 	OriginalMove *shipment.ShipmentMove `json:"originalMove,omitempty"`

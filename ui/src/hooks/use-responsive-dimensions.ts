@@ -1,7 +1,7 @@
 import { RefObject, useEffect, useRef, useState } from "react";
 
 export function useResponsiveDimensions(
-  ref: RefObject<HTMLElement>,
+  ref: RefObject<HTMLDivElement | null>,
   open: boolean,
 ) {
   const [dimensions, setDimensions] = useState({

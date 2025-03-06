@@ -1,21 +1,24 @@
-import { Button } from "@/components/ui/button";
-import { Icon } from "@/components/ui/icons";
+import { SuspenseLoader } from "@/components/ui/component-loader";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { type Shipment } from "@/types/shipment";
-import { faChevronLeft } from "@fortawesome/pro-solid-svg-icons";
+import { lazy } from "react";
 import { ShipmentNotFoundOverlay } from "../sidebar/shipment-not-found-overlay";
-import { ShipmentCommodityDetails } from "./commodity/shipment-commodity-details";
-import { ShipmentBillingDetails } from "./shipment-billing-details";
-import {
-  ShipmentDetailsHeader,
-  ShipmentServiceDetails,
-} from "./shipment-details-components";
+import { ShipmentServiceDetails } from "./shipment-details-components";
 import { ShipmentDetailsSkeleton } from "./shipment-details-skeleton";
-import { ShipmentActions } from "./shipment-menu-actions";
-import { ShipmentMovesDetails } from "./shipment-move-details";
+import { ShipmentFormHeader } from "./shipment-form-header";
 
-// ShipmentDetails.tsx
-interface ShipmentDetailsProps {
+// Lazy loaded components
+const ShipmentDetailsHeader = lazy(() => import("./shipment-details-header"));
+const ShipmentBillingDetails = lazy(() => import("./shipment-billing-details"));
+const ShipmentGeneralInformation = lazy(
+  () => import("./shipment-general-information"),
+);
+const ShipmentCommodityDetails = lazy(
+  () => import("./commodity/commodity-details"),
+);
+const ShipmentMovesDetails = lazy(() => import("./move/move-details"));
+
+type ShipmentDetailsProps = {
   selectedShipment?: Shipment | null;
   isLoading?: boolean;
   onBack: () => void;
@@ -24,15 +27,30 @@ interface ShipmentDetailsProps {
     viewportHeight: number;
   };
   isCreate: boolean;
+};
+
+export function ShipmentForm({ ...props }: ShipmentDetailsProps) {
+  return (
+    <SuspenseLoader>
+      <ShipmentScrollArea {...props}>
+        <ShipmentServiceDetails />
+        <ShipmentBillingDetails />
+        <ShipmentGeneralInformation />
+        <ShipmentCommodityDetails />
+        <ShipmentMovesDetails />
+      </ShipmentScrollArea>
+    </SuspenseLoader>
+  );
 }
 
-export function ShipmentForm({
+export function ShipmentScrollArea({
   selectedShipment,
   isLoading,
   onBack,
   dimensions,
   isCreate,
-}: ShipmentDetailsProps) {
+  children,
+}: ShipmentDetailsProps & { children: React.ReactNode }) {
   if (isLoading) {
     return <ShipmentDetailsSkeleton />;
   }
@@ -48,11 +66,10 @@ export function ShipmentForm({
     // Constants for height calculations
     const headerHeight = 120; // Height of the header section
     const minHeight = 400; // Minimum height for the scroll area
-    const footerHeight = 60; // Height of the footer section
 
     // Use viewport height as base for calculation
     const baseHeight = Math.min(contentHeight, viewportHeight);
-    const calculatedHeight = baseHeight - headerHeight - footerHeight;
+    const calculatedHeight = baseHeight - headerHeight;
 
     // Ensure we don't go below minimum height
     return Math.max(calculatedHeight, minHeight);
@@ -63,13 +80,10 @@ export function ShipmentForm({
   return (
     <div className="size-full">
       <div className="pt-4">
-        <div className="flex items-center gap-2 px-4 justify-between">
-          <Button variant="outline" size="sm" onClick={onBack}>
-            <Icon icon={faChevronLeft} className="size-4" />
-            <span className="text-sm">Back</span>
-          </Button>
-          <ShipmentActions shipment={selectedShipment} />
-        </div>
+        <ShipmentFormHeader
+          onBack={onBack}
+          selectedShipment={selectedShipment}
+        />
         <div className="flex flex-col gap-2 mt-4">
           <ShipmentDetailsHeader />
           <ScrollArea
@@ -79,12 +93,8 @@ export function ShipmentForm({
               minHeight: "400px",
             }}
           >
-            <div className="flex flex-col gap-4 pb-2">
-              <ShipmentServiceDetails />
-              <ShipmentBillingDetails />
-              <ShipmentCommodityDetails />
-              <ShipmentMovesDetails />
-            </div>
+            <div className="flex flex-col gap-4 pb-16">{children}</div>
+            <div className="pointer-events-none rounded-b-lg absolute bottom-0 z-50 left-0 right-0 h-8 bg-gradient-to-t from-background to-transparent" />
           </ScrollArea>
         </div>
       </div>

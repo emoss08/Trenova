@@ -31,9 +31,7 @@ export function CommodityDeleteDialog({
     <AlertDialog open={open} onOpenChange={onOpenChange}>
       <AlertDialogContent className="sm:max-w-md p-3">
         <AlertDialogHeader>
-          <AlertDialogTitle>
-            This commodity will be permanently deleted
-          </AlertDialogTitle>
+          <AlertDialogTitle>Are you sure?</AlertDialogTitle>
           <AlertDialogDescription>
             Once you delete this commodity, there is no way to recover it.
             Please make sure you want to proceed with this action.
@@ -61,7 +59,7 @@ export function CommodityDeleteDialog({
               Cancel
             </AlertDialogCancel>
             <AlertDialogAction onClick={handleDeleteClick}>
-              Delete
+              Yes I&apos;m sure
             </AlertDialogAction>
           </div>
         </AlertDialogFooter>

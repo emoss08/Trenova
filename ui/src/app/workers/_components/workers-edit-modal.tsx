@@ -8,7 +8,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Button } from "@/components/ui/button";
+import { Button, FormSaveButton } from "@/components/ui/button";
 import {
   Dialog,
   DialogBody,
@@ -20,69 +20,61 @@ import {
 } from "@/components/ui/dialog";
 import { Form } from "@/components/ui/form";
 import { VisuallyHidden } from "@/components/ui/visually-hidden";
+import { usePopoutWindow } from "@/hooks/popout-window/use-popout-window";
 import { useUnsavedChanges } from "@/hooks/use-form";
+import { useFormWithSave } from "@/hooks/use-form-with-save";
 import { broadcastQueryInvalidation } from "@/hooks/use-invalidate-query";
 import { http } from "@/lib/http-client";
 import { workerSchema, WorkerSchema } from "@/lib/schemas/worker-schema";
 import { EditTableSheetProps } from "@/types/data-table";
-import { type APIError } from "@/types/errors";
 import { yupResolver } from "@hookform/resolvers/yup";
-import { useMutation } from "@tanstack/react-query";
-import { useCallback } from "react";
-import { FormProvider, useForm } from "react-hook-form";
-import { toast } from "sonner";
+import { useCallback, useEffect } from "react";
+import { FormProvider } from "react-hook-form";
 import { WorkerForm } from "./workers-form";
 
 function WorkerEditForm({
   currentRecord,
   onOpenChange,
 }: EditTableSheetProps<WorkerSchema>) {
-  const form = useForm<WorkerSchema>({
-    resolver: yupResolver(workerSchema),
-    defaultValues: currentRecord,
+  const { isPopout, closePopout } = usePopoutWindow();
+
+  const form = useFormWithSave({
+    resourceName: "Worker",
+    formOptions: {
+      resolver: yupResolver(workerSchema),
+      defaultValues: currentRecord,
+      mode: "onChange",
+    },
+    mutationFn: async (values: WorkerSchema) => {
+      const response = await http.put(`/workers/${currentRecord?.id}`, values);
+      return response.data;
+    },
+    onSuccess: () => {
+      onOpenChange(false);
+      broadcastQueryInvalidation({
+        queryKey: ["worker", "worker-list"],
+        options: {
+          correlationId: `update-worker-${Date.now()}`,
+        },
+        config: {
+          predicate: true,
+          refetchType: "all",
+        },
+      });
+    },
+    onSettled: () => {
+      if (isPopout) {
+        closePopout();
+      }
+    },
   });
 
   const {
     handleSubmit,
     reset,
-    setError,
-    formState: { isDirty, isSubmitting },
+    onSubmit,
+    formState: { isDirty, isSubmitting, isSubmitSuccessful },
   } = form;
-
-  const mutation = useMutation({
-    mutationFn: async (values: WorkerSchema) => {
-      const response = await http.put(`/workers/${currentRecord.id}`, values);
-      return response.data;
-    },
-    onSuccess: () => {
-      toast.success("Worker updated successfully");
-      onOpenChange(false);
-      form.reset();
-
-      // Invalidate the worker list query to refresh the table
-      broadcastQueryInvalidation({ queryKey: ["worker-list"] });
-    },
-    onError: (error: APIError) => {
-      if (error.isValidationError()) {
-        error.getFieldErrors().forEach((fieldError) => {
-          setError(fieldError.name as keyof WorkerSchema, {
-            message: fieldError.reason,
-          });
-        });
-      }
-
-      toast.error("Failed to create worker", {
-        description: "Check the form for errors and try again.",
-      });
-    },
-  });
-
-  const onSubmit = useCallback(
-    async (values: WorkerSchema) => {
-      await mutation.mutateAsync(values);
-    },
-    [mutation.mutateAsync],
-  );
 
   const handleClose = useCallback(() => {
     onOpenChange(false);
@@ -99,6 +91,35 @@ function WorkerEditForm({
     onClose: handleClose,
   });
 
+  // Make sure we populate the form with the current record
+  useEffect(() => {
+    if (currentRecord) {
+      reset(currentRecord);
+    }
+  }, [currentRecord, reset]);
+
+  // Reset the form when the mutation is successful
+  // This is recommended by react-hook-form - https://react-hook-form.com/docs/useform/reset
+  useEffect(() => {
+    reset();
+  }, [isSubmitSuccessful, currentRecord, reset, onOpenChange]);
+
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (
+        (event.ctrlKey || event.metaKey) &&
+        event.key === "Enter" &&
+        !isSubmitting
+      ) {
+        event.preventDefault();
+        handleSubmit(onSubmit)();
+      }
+    };
+
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, [isSubmitting, handleSubmit, onSubmit]);
+
   return (
     <>
       <FormProvider {...form}>
@@ -110,9 +131,11 @@ function WorkerEditForm({
             <Button type="button" variant="outline" onClick={onClose}>
               Cancel
             </Button>
-            <Button type="submit" isLoading={isSubmitting}>
-              Save Changes
-            </Button>
+            <FormSaveButton
+              isPopout={isPopout}
+              isSubmitting={isSubmitting}
+              title="Worker"
+            />
           </DialogFooter>
         </Form>
       </FormProvider>

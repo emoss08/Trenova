@@ -97,7 +97,7 @@ func (pr *permissionRepository) GetUserPermissions(ctx context.Context, userID p
 		}
 	}
 
-	// Cache the permissions
+	// * Cache the permissions
 	if err = pr.cache.SetUserPermissions(ctx, userID, permissions); err != nil {
 		log.Warn().Err(err).Msg("failed to cache user permissions")
 	}

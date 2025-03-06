@@ -1,5 +1,6 @@
 import { type User } from "@/types/user";
 import { create } from "zustand";
+import { useShallow } from "zustand/react/shallow";
 
 interface AuthState {
   user: User | null;
@@ -29,3 +30,22 @@ export const useAuthStore = create<AuthState>((set) => ({
       isAuthenticated: false,
     }),
 }));
+
+// Optimized selectors to prevent unnecessary re-renders
+export const useUser = () => useAuthStore((state) => state.user);
+
+export const useIsAuthenticated = () =>
+  useAuthStore((state) => state.isAuthenticated);
+
+export const useIsInitialized = () =>
+  useAuthStore((state) => state.isInitialized);
+
+// Use the useShallow hook to memoize the selector
+export const useAuthActions = () =>
+  useAuthStore(
+    useShallow((state) => ({
+      setUser: state.setUser,
+      setInitialized: state.setInitialized,
+      clearAuth: state.clearAuth,
+    })),
+  );

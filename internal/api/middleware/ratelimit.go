@@ -83,9 +83,9 @@ func NewRateLimit(p RateLimitParams) *RateLimiter {
 
 // WithRateLimit wraps the provided handlers with rate limiting middleware
 // Returns a slice of handlers with rate limiting applied
-func (rl *RateLimiter) WithRateLimit(handlers []fiber.Handler, config RateLimitConfig) []fiber.Handler {
+func (rl *RateLimiter) WithRateLimit(handlers []fiber.Handler, config *RateLimitConfig) []fiber.Handler {
 	// Set defaults if not provided
-	rl.setConfigDefaults(&config)
+	rl.setConfigDefaults(config)
 
 	limitHandler := rl.createLimitHandler(config)
 	result := make([]fiber.Handler, 0, len(handlers)+1)
@@ -122,7 +122,7 @@ func (rl *RateLimiter) setConfigDefaults(config *RateLimitConfig) {
 }
 
 // createLimitHandler creates a Fiber middleware handler that implements rate limiting
-func (rl *RateLimiter) createLimitHandler(config RateLimitConfig) fiber.Handler {
+func (rl *RateLimiter) createLimitHandler(config *RateLimitConfig) fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		// Skip rate limiting if skip function is provided and returns true
 		if config.Skip != nil && config.Skip(c) {
@@ -299,8 +299,7 @@ func (rl *RateLimiter) verifyCounterConsistency(ctx context.Context, key string,
 // defaultKeyGenerator generates a unique Redis key for the rate limit
 func (rl *RateLimiter) defaultKeyGenerator(c *fiber.Ctx) string {
 	parts := make([]string, 0, 5)
-	parts = append(parts, "ratelimit")
-	parts = append(parts, c.Method(), strings.Trim(c.Route().Path, "/"))
+	parts = append(parts, "ratelimit", c.Method(), strings.Trim(c.Route().Path, "/"))
 
 	ip := rl.getIP(c)
 	parts = append(parts, ip)
@@ -313,7 +312,7 @@ func (rl *RateLimiter) defaultKeyGenerator(c *fiber.Ctx) string {
 }
 
 // getRoleLimits determines the appropriate rate limits based on user role
-func (rl *RateLimiter) getRoleLimits(c *fiber.Ctx, config RateLimitConfig) (int, time.Duration) {
+func (rl *RateLimiter) getRoleLimits(c *fiber.Ctx, config *RateLimitConfig) (int, time.Duration) {
 	if len(config.RoleLimits) == 0 {
 		return config.MaxRequests, config.Interval
 	}
@@ -408,7 +407,7 @@ func (rl *RateLimiter) checkSlidingWindowLimit(ctx context.Context, key string, 
 }
 
 // checkTokenBucketLimit implements token bucket rate limiting
-func (rl *RateLimiter) checkTokenBucketLimit(ctx context.Context, key string, config RateLimitConfig) (bool, int, int64, error) {
+func (rl *RateLimiter) checkTokenBucketLimit(ctx context.Context, key string, config *RateLimitConfig) (bool, int, int64, error) {
 	if config.TokenBucketSize == 0 || config.TokenRefillRate == 0 {
 		// Fall back to fixed window if token bucket is not configured
 		return rl.checkFixedWindowLimit(ctx, key, config.MaxRequests, config.Interval)
@@ -568,40 +567,40 @@ func (rl *RateLimiter) ClearRateLimits(ctx context.Context, keyPattern string) e
 }
 
 // Pre-defined rate limit configurations
-func PerSecond(n int) RateLimitConfig {
-	return RateLimitConfig{
+func PerSecond(n int) *RateLimitConfig {
+	return &RateLimitConfig{
 		MaxRequests: n,
 		Interval:    time.Second,
 		Strategy:    "fixed",
 	}
 }
 
-func PerMinute(n int) RateLimitConfig {
-	return RateLimitConfig{
+func PerMinute(n int) *RateLimitConfig {
+	return &RateLimitConfig{
 		MaxRequests: n,
 		Interval:    time.Minute,
 		Strategy:    "fixed",
 	}
 }
 
-func PerHour(n int) RateLimitConfig {
-	return RateLimitConfig{
+func PerHour(n int) *RateLimitConfig {
+	return &RateLimitConfig{
 		MaxRequests: n,
 		Interval:    time.Hour,
 		Strategy:    "fixed",
 	}
 }
 
-func SlidingWindow(n int, t time.Duration) RateLimitConfig {
-	return RateLimitConfig{
+func SlidingWindow(n int, t time.Duration) *RateLimitConfig {
+	return &RateLimitConfig{
 		MaxRequests: n,
 		Interval:    t,
 		Strategy:    "sliding",
 	}
 }
 
-func TokenBucket(bucketSize int, refillRate float64) RateLimitConfig {
-	return RateLimitConfig{
+func TokenBucket(bucketSize int, refillRate float64) *RateLimitConfig {
+	return &RateLimitConfig{
 		TokenBucketSize: bucketSize,
 		TokenRefillRate: refillRate,
 		Strategy:        "token",
@@ -610,43 +609,43 @@ func TokenBucket(bucketSize int, refillRate float64) RateLimitConfig {
 }
 
 // WithKeyPrefix adds a custom key prefix to the rate limit configuration
-func (c RateLimitConfig) WithKeyPrefix(prefix string) RateLimitConfig {
+func (c *RateLimitConfig) WithKeyPrefix(prefix string) *RateLimitConfig {
 	c.KeyPrefix = prefix
 	return c
 }
 
 // WithCustomResponse adds a custom response handler when rate limited
-func (c RateLimitConfig) WithCustomResponse(fn func(*fiber.Ctx) error) RateLimitConfig {
+func (c *RateLimitConfig) WithCustomResponse(fn func(*fiber.Ctx) error) *RateLimitConfig {
 	c.CustomResponse = fn
 	return c
 }
 
 // WithSkipFunction adds a function to skip rate limiting for certain requests
-func (c RateLimitConfig) WithSkipFunction(fn func(*fiber.Ctx) bool) RateLimitConfig {
+func (c *RateLimitConfig) WithSkipFunction(fn func(*fiber.Ctx) bool) *RateLimitConfig {
 	c.Skip = fn
 	return c
 }
 
 // WithRoleLimits adds role-based rate limits
-func (c RateLimitConfig) WithRoleLimits(limits ...RoleLimit) RateLimitConfig {
+func (c *RateLimitConfig) WithRoleLimits(limits ...RoleLimit) *RateLimitConfig {
 	c.RoleLimits = limits
 	return c
 }
 
 // WithGroupKey adds a function to group endpoints under the same rate limit bucket
-func (c RateLimitConfig) WithGroupKey(fn func(*fiber.Ctx) string) RateLimitConfig {
+func (c *RateLimitConfig) WithGroupKey(fn func(*fiber.Ctx) string) *RateLimitConfig {
 	c.GroupKey = fn
 	return c
 }
 
 // WithMetrics enables metrics collection
-func (c RateLimitConfig) WithMetrics() RateLimitConfig {
+func (c *RateLimitConfig) WithMetrics() *RateLimitConfig {
 	c.Metrics = true
 	return c
 }
 
 // WithBypass enables bypass tokens
-func (c RateLimitConfig) WithBypass(fn func(*fiber.Ctx) bool) RateLimitConfig {
+func (c *RateLimitConfig) WithBypass(fn func(*fiber.Ctx) bool) *RateLimitConfig {
 	c.EnableBypass = true
 	c.BypassCheck = fn
 	return c
