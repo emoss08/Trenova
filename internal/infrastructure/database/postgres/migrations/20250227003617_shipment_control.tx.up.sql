@@ -25,7 +25,7 @@ CREATE TABLE IF NOT EXISTS "shipment_controls"(
     "business_unit_id" varchar(100) NOT NULL,
     "organization_id" varchar(100) NOT NULL,
     -- Auto Assignment Related Fields
-    "enable_auto_assignment" boolean NOT NULL DEFAULT FALSE,
+    "enable_auto_assignment" boolean NOT NULL DEFAULT TRUE,
     "auto_assignment_strategy" "auto_assignment_strategy_enum" NOT NULL DEFAULT 'Proximity',
     -- Service Failure Related Fields
     "record_service_failures" boolean NOT NULL DEFAULT FALSE,
