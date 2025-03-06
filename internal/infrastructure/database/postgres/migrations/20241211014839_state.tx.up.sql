@@ -1,5 +1,5 @@
 -- Create the table for US states with comments for each column
-CREATE TABLE IF NOT EXISTS "us_states"(
+CREATE TABLE IF NOT EXISTS "us_states" (
     "id" varchar(100), -- Unique identifier for the us state
     "name" varchar(100) NOT NULL, -- Name of the us state
     "abbreviation" varchar(7) NOT NULL, -- Abbreviation of the us state
@@ -12,9 +12,9 @@ CREATE TABLE IF NOT EXISTS "us_states"(
 
 --bun:split
 -- Create an index on the name column
-CREATE UNIQUE INDEX "idx_us_states_name" ON "us_states"("name");
+CREATE UNIQUE INDEX "idx_us_states_name" ON "us_states" ("name");
 
-CREATE UNIQUE INDEX "idx_us_states_abbreviation" ON "us_states"("abbreviation");
+CREATE UNIQUE INDEX "idx_us_states_abbreviation" ON "us_states" ("abbreviation");
 
 --bun:split
 -- Add comments for each column

@@ -1,4 +1,4 @@
-CREATE TABLE IF NOT EXISTS "equipment_manufacturers"(
+CREATE TABLE IF NOT EXISTS "equipment_manufacturers" (
     -- Primary identifiers
     "id" varchar(100) NOT NULL,
     "business_unit_id" varchar(100) NOT NULL,
@@ -13,19 +13,19 @@ CREATE TABLE IF NOT EXISTS "equipment_manufacturers"(
     "updated_at" bigint NOT NULL DEFAULT EXTRACT(EPOCH FROM current_timestamp) ::bigint,
     -- Constraints
     CONSTRAINT "pk_equipment_manu" PRIMARY KEY ("id", "business_unit_id", "organization_id"),
-    CONSTRAINT "fk_equipment_manu_business_unit" FOREIGN KEY ("business_unit_id") REFERENCES "business_units"("id") ON UPDATE NO ACTION ON DELETE CASCADE,
-    CONSTRAINT "fk_equipment_manu_organization" FOREIGN KEY ("organization_id") REFERENCES "organizations"("id") ON UPDATE NO ACTION ON DELETE CASCADE
+    CONSTRAINT "fk_equipment_manu_business_unit" FOREIGN KEY ("business_unit_id") REFERENCES "business_units" ("id") ON UPDATE NO ACTION ON DELETE CASCADE,
+    CONSTRAINT "fk_equipment_manu_organization" FOREIGN KEY ("organization_id") REFERENCES "organizations" ("id") ON UPDATE NO ACTION ON DELETE CASCADE
 );
 
 --bun:split
 -- Indexes for equipment_manufacturers table
-CREATE UNIQUE INDEX "idx_equipment_manu_name" ON "equipment_manufacturers"(lower("name"), "organization_id");
+CREATE UNIQUE INDEX "idx_equipment_manu_name" ON "equipment_manufacturers" (lower("name"), "organization_id");
 
-CREATE INDEX "idx_equipment_manu_business_unit" ON "equipment_manufacturers"("business_unit_id");
+CREATE INDEX "idx_equipment_manu_business_unit" ON "equipment_manufacturers" ("business_unit_id");
 
-CREATE INDEX "idx_equipment_manu_organization" ON "equipment_manufacturers"("organization_id");
+CREATE INDEX "idx_equipment_manu_organization" ON "equipment_manufacturers" ("organization_id");
 
-CREATE INDEX "idx_equipment_manu_created_updated" ON "equipment_manufacturers"("created_at", "updated_at");
+CREATE INDEX "idx_equipment_manu_created_updated" ON "equipment_manufacturers" ("created_at", "updated_at");
 
 COMMENT ON TABLE "equipment_manufacturers" IS 'Stores information about equipment manufacturers';
 
