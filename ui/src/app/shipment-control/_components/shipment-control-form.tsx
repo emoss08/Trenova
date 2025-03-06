@@ -275,7 +275,7 @@ function ComplianceForm() {
       setShowComplianceOptions(true);
     } else {
       setShowComplianceOptions(false);
-      // If the user disables the HOS compliance, we need to disable the other compliance options
+      // * If the user disables the HOS compliance, we need to disable the other compliance options
       setValue("enforceMedicalCertCompliance", false);
       setValue("enforceDriverQualificationCompliance", false);
       setValue("enforceHazmatCompliance", false);

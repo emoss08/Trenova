@@ -31,3 +31,7 @@ type OrganizationRepository interface {
 	ClearLogo(ctx context.Context, org *organization.Organization) (*organization.Organization, error)
 	GetUserOrganizations(ctx context.Context, opts *ports.LimitOffsetQueryOptions) (*ports.ListResult[*organization.Organization], error)
 }
+
+type OrganizationCacheRepository interface {
+	
+}

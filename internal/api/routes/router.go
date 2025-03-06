@@ -147,7 +147,7 @@ func (r *Router) setupMiddleware() {
 		},
 		SlowRequestThreshold: 200 * time.Millisecond,
 		LogHeaders:           []string{"X-Request-ID", "Content-Type", "Authorization"},
-		ExcludePaths:         []string{"/health", "/metrics"},
+		ExcludePaths:         []string{"/api/v1/health", "/api/v1/metrics"},
 		Skip: func(c *fiber.Ctx) bool {
 			return c.Path() == "/api/v1/auth/login"
 		},
@@ -159,7 +159,6 @@ func (r *Router) setupMiddleware() {
 		favicon.New(),
 		compress.New(),
 		helmet.New(),
-
 		middleware.NewLogger(r.p.Logger, logConfig),
 		encryptcookie.New(encryptcookie.Config{
 			Key: r.cfg.Server().SecretKey,
