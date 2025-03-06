@@ -307,6 +307,8 @@ function Nav({
 
   const handlePreviousClick = React.useCallback(() => {
     if (!previousMonth) {
+      return;
+    }
     if (navView === "years") {
       setDisplayYears((prev) => ({
         from: prev.from - (prev.to - prev.from + 1),
@@ -335,6 +337,8 @@ function Nav({
 
   const handleNextClick = React.useCallback(() => {
     if (!nextMonth) {
+      return;
+    }
     if (navView === "years") {
       setDisplayYears((prev) => ({
         from: prev.from + (prev.to - prev.from + 1),

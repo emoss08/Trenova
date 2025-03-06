@@ -21,6 +21,8 @@ export const FieldDescription = memo(
     description: string | React.ReactNode;
   }) {
     if (!description) {
+      return null;
+    }
 
     // Check if description is a React component
     if (React.isValidElement(description)) {
