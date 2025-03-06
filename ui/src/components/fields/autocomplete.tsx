@@ -244,45 +244,41 @@ export function Autocomplete<T>({
   // Handle wheel events with smooth scrolling
   const handleWheel = useCallback(
     (e: React.WheelEvent<HTMLDivElement>) => {
-      if (commandListRef.current) {
-        // Only intercept wheel events if the content is scrollable
-        if (
-          commandListRef.current.scrollHeight >
-          commandListRef.current.clientHeight
-        ) {
-          const { scrollTop, scrollHeight, clientHeight } =
-            commandListRef.current;
-          const isScrollingDown = e.deltaY > 0;
-          const isAtBottom = scrollTop + clientHeight >= scrollHeight - 1;
-          const isAtTop = scrollTop <= 0;
+      if (commandListRef.current && commandListRef.current.scrollHeight >
+                commandListRef.current.clientHeight) {
+            const { scrollTop, scrollHeight, clientHeight } =
+              commandListRef.current;
+            const isScrollingDown = e.deltaY > 0;
+            const isAtBottom = scrollTop + clientHeight >= scrollHeight - 1;
+            const isAtTop = scrollTop <= 0;
 
-          // Allow parent scrolling only if we're at the boundaries and trying to scroll beyond
-          if (
-            (isAtBottom && isScrollingDown) ||
-            (isAtTop && !isScrollingDown)
-          ) {
-            // Let the event propagate to parent
-            return;
-          }
+            // Allow parent scrolling only if we're at the boundaries and trying to scroll beyond
+            if (
+              (isAtBottom && isScrollingDown) ||
+              (isAtTop && !isScrollingDown)
+            ) {
+              // Let the event propagate to parent
+              return;
+            }
 
-          // Otherwise handle the scroll ourselves
-          e.stopPropagation();
-          e.preventDefault();
+            // Otherwise handle the scroll ourselves
+            e.stopPropagation();
+            e.preventDefault();
 
-          // Apply sensitivity damping for smoother scrolling
-          const scrollSensitivity = 0.6; // Lower value = less sensitive scrolling
-          const deltaY = e.deltaY * scrollSensitivity;
+            // Apply sensitivity damping for smoother scrolling
+            const scrollSensitivity = 0.6; // Lower value = less sensitive scrolling
+            const deltaY = e.deltaY * scrollSensitivity;
 
-          // Set target scroll position
-          const currentScroll = commandListRef.current.scrollTop;
-          targetScrollRef.current = currentScroll + deltaY;
+            // Set target scroll position
+            const currentScroll = commandListRef.current.scrollTop;
+            targetScrollRef.current = currentScroll + deltaY;
 
-          // Start animation if not already running
-          if (animationRef.current === null) {
-            animationRef.current = requestAnimationFrame(smoothScroll);
-          }
-        }
+            // Start animation if not already running
+            if (animationRef.current === null) {
+              animationRef.current = requestAnimationFrame(smoothScroll);
+            }
       }
+
     },
     [smoothScroll],
   );
