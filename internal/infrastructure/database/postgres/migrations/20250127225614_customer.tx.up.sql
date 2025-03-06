@@ -15,20 +15,10 @@ CREATE TABLE IF NOT EXISTS "customers" (
     "auto_mark_ready_to_bill" boolean NOT NULL DEFAULT FALSE,
     -- Metadata
     "version" bigint NOT NULL DEFAULT 0,
-    "created_at" bigint NOT NULL DEFAULT EXTRACT(
-        EPOCH
-        FROM current_timestamp
-    )::bigint,
-    "updated_at" bigint NOT NULL DEFAULT EXTRACT(
-        EPOCH
-        FROM current_timestamp
-    )::bigint,
+    "created_at" bigint NOT NULL DEFAULT EXTRACT(EPOCH FROM current_timestamp) ::bigint,
+    "updated_at" bigint NOT NULL DEFAULT EXTRACT(EPOCH FROM current_timestamp) ::bigint,
     -- Constraints
-    CONSTRAINT "pk_customers" PRIMARY KEY (
-        "id",
-        "business_unit_id",
-        "organization_id"
-    ),
+    CONSTRAINT "pk_customers" PRIMARY KEY ("id", "business_unit_id", "organization_id"),
     CONSTRAINT "fk_customers_business_unit" FOREIGN KEY ("business_unit_id") REFERENCES "business_units" ("id") ON UPDATE NO ACTION ON DELETE CASCADE,
     CONSTRAINT "fk_customers_organization" FOREIGN KEY ("organization_id") REFERENCES "organizations" ("id") ON UPDATE NO ACTION ON DELETE CASCADE,
     CONSTRAINT "fk_customers_state" FOREIGN KEY ("state_id") REFERENCES "us_states" ("id") ON UPDATE NO ACTION ON DELETE RESTRICT
@@ -36,17 +26,11 @@ CREATE TABLE IF NOT EXISTS "customers" (
 
 --bun:split
 -- Indexes for customers table
-CREATE UNIQUE INDEX "idx_customers_code" ON "customers" (
-    lower("code"),
-    "organization_id"
-);
+CREATE UNIQUE INDEX "idx_customers_code" ON "customers" (lower("code"), "organization_id");
 
 CREATE INDEX "idx_customers_name" ON "customers" ("name");
 
-CREATE INDEX "idx_customers_business_unit_organization" ON "customers" (
-    "business_unit_id",
-    "organization_id"
-);
+CREATE INDEX "idx_customers_business_unit_organization" ON "customers" ("business_unit_id", "organization_id");
 
 CREATE INDEX "idx_customers_created_updated" ON "customers" ("created_at", "updated_at");
 
@@ -54,73 +38,51 @@ COMMENT ON TABLE "customers" IS 'Stores information about customers';
 
 --bun:split
 ALTER TABLE "shipments"
-ADD COLUMN "customer_id" varchar(100) NOT NULL;
+    ADD COLUMN "customer_id" varchar(100) NOT NULL;
 
 ALTER TABLE "shipments"
-ADD CONSTRAINT "fk_shipments_customer" FOREIGN KEY (
-    "customer_id",
-    "organization_id",
-    "business_unit_id"
-) REFERENCES "customers" (
-    "id",
-    "organization_id",
-    "business_unit_id"
-) ON UPDATE NO ACTION ON DELETE CASCADE;
+    ADD CONSTRAINT "fk_shipments_customer" FOREIGN KEY ("customer_id", "organization_id", "business_unit_id") REFERENCES "customers" ("id", "organization_id", "business_unit_id") ON UPDATE NO ACTION ON DELETE CASCADE;
 
 --bun:split
 ALTER TABLE "customers"
-ADD COLUMN IF NOT EXISTS search_vector tsvector;
+    ADD COLUMN IF NOT EXISTS search_vector tsvector;
 
 --bun:split
 CREATE INDEX IF NOT EXISTS idx_customers_search ON customers USING GIN (search_vector);
 
 --bun:split
-CREATE
-OR REPLACE FUNCTION customers_search_vector_update() RETURNS TRIGGER AS $$ BEGIN NEW.search_vector := setweight(
-    to_tsvector('simple', COALESCE(NEW.code, '')),
-    'A'
-) || setweight(
-    to_tsvector('simple', COALESCE(NEW.name, '')),
-    'B'
-);
-
--- Auto-update timestamps
-NEW.updated_at := EXTRACT(
-    EPOCH
-    FROM
-        CURRENT_TIMESTAMP
-) :: bigint;
-
-RETURN NEW;
-
+CREATE OR REPLACE FUNCTION customers_search_vector_update ()
+    RETURNS TRIGGER
+    AS $$
+BEGIN
+    NEW.search_vector := setweight(to_tsvector('simple', COALESCE(NEW.code, '')), 'A') || setweight(to_tsvector('simple', COALESCE(NEW.name, '')), 'B');
+    -- Auto-update timestamps
+    NEW.updated_at := EXTRACT(EPOCH FROM CURRENT_TIMESTAMP)::bigint;
+    RETURN NEW;
 END;
-
-$$ LANGUAGE plpgsql;
+$$
+LANGUAGE plpgsql;
 
 --bun:split
 DROP TRIGGER IF EXISTS customers_search_vector_trigger ON customers;
 
 --bun:split
-CREATE TRIGGER customers_search_vector_trigger BEFORE
-INSERT
-    OR
-UPDATE
-    ON customers FOR EACH ROW EXECUTE FUNCTION customers_search_vector_update();
-
---bun:split
-ALTER TABLE customers ALTER COLUMN status SET STATISTICS 1000;
+CREATE TRIGGER customers_search_vector_trigger
+    BEFORE INSERT OR UPDATE ON customers
+    FOR EACH ROW
+    EXECUTE FUNCTION customers_search_vector_update ();
 
 --bun:split
 ALTER TABLE customers
-ALTER COLUMN organization_id
-SET
-    STATISTICS 1000;
+    ALTER COLUMN status SET STATISTICS 1000;
 
 --bun:split
 ALTER TABLE customers
-ALTER COLUMN business_unit_id
-SET
-    STATISTICS 1000;
+    ALTER COLUMN organization_id SET STATISTICS 1000;
+
+--bun:split
+ALTER TABLE customers
+    ALTER COLUMN business_unit_id SET STATISTICS 1000;
 
 --bun:split
 CREATE INDEX IF NOT EXISTS idx_customers_trgm_code ON customers USING gin (code gin_trgm_ops);
@@ -129,7 +91,5 @@ CREATE INDEX IF NOT EXISTS idx_customers_trgm_code ON customers USING gin (code 
 CREATE INDEX IF NOT EXISTS idx_customers_trgm_name ON customers USING gin (name gin_trgm_ops);
 
 --bun:split
-CREATE INDEX IF NOT EXISTS idx_customers_trgm_code_name ON customers USING gin (
-    (code || ' ' || name) gin_trgm_ops
-);
+CREATE INDEX IF NOT EXISTS idx_customers_trgm_code_name ON customers USING gin ((code || ' ' || name) gin_trgm_ops);
 

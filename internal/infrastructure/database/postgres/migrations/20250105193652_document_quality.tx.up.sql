@@ -1,21 +1,21 @@
-CREATE TYPE model_type_enum AS ENUM(
+CREATE TYPE model_type_enum AS ENUM (
     'DocumentQuality'
 );
 
-CREATE TYPE model_status_enum AS ENUM(
+CREATE TYPE model_status_enum AS ENUM (
     'Stable', -- Model is stable and ready for production
     'Beta', -- Model is in beta testing
     'Legacy' -- Model is deprecated and no longer in use
 );
 
-CREATE TYPE feedback_type_enum AS ENUM(
+CREATE TYPE feedback_type_enum AS ENUM (
     'Good', -- Document was correctly assessed
     'Bad', -- Document was not correctly assessed
     'Unclear' -- Document was not clear enough to assess
 );
 
 -- bun:split
-CREATE TABLE IF NOT EXISTS "pretrained_models"(
+CREATE TABLE IF NOT EXISTS "pretrained_models" (
     -- Primary identifiers
     "id" varchar(100) NOT NULL,
     "name" varchar(100) NOT NULL,
@@ -40,17 +40,17 @@ CREATE TABLE IF NOT EXISTS "pretrained_models"(
 
 -- bun:split
 -- Indexes for pretrained_models table
-CREATE INDEX "idx_pretrained_models_type" ON "pretrained_models"("type");
+CREATE INDEX "idx_pretrained_models_type" ON "pretrained_models" ("type");
 
-CREATE INDEX "idx_pretrained_models_status" ON "pretrained_models"("status");
+CREATE INDEX "idx_pretrained_models_status" ON "pretrained_models" ("status");
 
-CREATE INDEX "idx_pretrained_models_created_updated" ON "pretrained_models"("created_at", "updated_at");
+CREATE INDEX "idx_pretrained_models_created_updated" ON "pretrained_models" ("created_at", "updated_at");
 
 COMMENT ON TABLE "pretrained_models" IS 'Stores information about pretrained models';
 
 -- bun:split
 -- Document Quality Configs
-CREATE TABLE IF NOT EXISTS "document_quality_configs"(
+CREATE TABLE IF NOT EXISTS "document_quality_configs" (
     -- Primary identifiers
     "id" varchar(100) NOT NULL,
     "business_unit_id" varchar(100) NOT NULL,
@@ -78,27 +78,27 @@ CREATE TABLE IF NOT EXISTS "document_quality_configs"(
     "updated_at" bigint NOT NULL DEFAULT EXTRACT(EPOCH FROM current_timestamp) ::bigint,
     -- Constraints
     CONSTRAINT "pk_document_quality_configs" PRIMARY KEY ("id", "business_unit_id", "organization_id"),
-    CONSTRAINT "fk_document_quality_configs_business_unit" FOREIGN KEY ("business_unit_id") REFERENCES "business_units"("id") ON UPDATE NO ACTION ON DELETE CASCADE,
-    CONSTRAINT "fk_document_quality_configs_organization" FOREIGN KEY ("organization_id") REFERENCES "organizations"("id") ON UPDATE NO ACTION ON DELETE CASCADE,
-    CONSTRAINT "fk_document_quality_configs_model" FOREIGN KEY ("model_id") REFERENCES "pretrained_models"("id") ON UPDATE NO ACTION ON DELETE CASCADE,
+    CONSTRAINT "fk_document_quality_configs_business_unit" FOREIGN KEY ("business_unit_id") REFERENCES "business_units" ("id") ON UPDATE NO ACTION ON DELETE CASCADE,
+    CONSTRAINT "fk_document_quality_configs_organization" FOREIGN KEY ("organization_id") REFERENCES "organizations" ("id") ON UPDATE NO ACTION ON DELETE CASCADE,
+    CONSTRAINT "fk_document_quality_configs_model" FOREIGN KEY ("model_id") REFERENCES "pretrained_models" ("id") ON UPDATE NO ACTION ON DELETE CASCADE,
     CONSTRAINT "unique_document_quality_organization_id" UNIQUE ("organization_id") -- Ensures only one document quality config per organization
 );
 
 --bun:split
 -- indexes for document_quality_configs table
-CREATE INDEX "idx_document_quality_configs_business_unit" ON "document_quality_configs"("business_unit_id");
+CREATE INDEX "idx_document_quality_configs_business_unit" ON "document_quality_configs" ("business_unit_id");
 
-CREATE INDEX "idx_document_quality_configs_organization" ON "document_quality_configs"("organization_id");
+CREATE INDEX "idx_document_quality_configs_organization" ON "document_quality_configs" ("organization_id");
 
-CREATE INDEX "idx_document_quality_configs_model" ON "document_quality_configs"("model_id");
+CREATE INDEX "idx_document_quality_configs_model" ON "document_quality_configs" ("model_id");
 
-CREATE INDEX "idx_document_quality_configs_created_updated" ON "document_quality_configs"("created_at", "updated_at");
+CREATE INDEX "idx_document_quality_configs_created_updated" ON "document_quality_configs" ("created_at", "updated_at");
 
 COMMENT ON TABLE "document_quality_configs" IS 'Stores information about document quality configs';
 
 --bun:split
 -- Document Quality Feedback
-CREATE TABLE IF NOT EXISTS "document_quality_feedback"(
+CREATE TABLE IF NOT EXISTS "document_quality_feedback" (
     -- Primary identifiers
     "id" varchar(100) NOT NULL,
     "organization_id" varchar(100) NOT NULL,
@@ -123,20 +123,20 @@ CREATE TABLE IF NOT EXISTS "document_quality_feedback"(
     "updated_at" bigint NOT NULL DEFAULT EXTRACT(EPOCH FROM current_timestamp) ::bigint,
     -- Constraints
     CONSTRAINT "pk_document_quality_feedback" PRIMARY KEY ("id", "organization_id", "business_unit_id", "user_id"),
-    CONSTRAINT "fk_document_quality_feedback_organization" FOREIGN KEY ("organization_id") REFERENCES "organizations"("id") ON UPDATE NO ACTION ON DELETE CASCADE,
-    CONSTRAINT "fk_document_quality_feedback_business_unit" FOREIGN KEY ("business_unit_id") REFERENCES "business_units"("id") ON UPDATE NO ACTION ON DELETE CASCADE,
-    CONSTRAINT "fk_document_quality_feedback_user" FOREIGN KEY ("user_id") REFERENCES "users"("id") ON UPDATE NO ACTION ON DELETE CASCADE
+    CONSTRAINT "fk_document_quality_feedback_organization" FOREIGN KEY ("organization_id") REFERENCES "organizations" ("id") ON UPDATE NO ACTION ON DELETE CASCADE,
+    CONSTRAINT "fk_document_quality_feedback_business_unit" FOREIGN KEY ("business_unit_id") REFERENCES "business_units" ("id") ON UPDATE NO ACTION ON DELETE CASCADE,
+    CONSTRAINT "fk_document_quality_feedback_user" FOREIGN KEY ("user_id") REFERENCES "users" ("id") ON UPDATE NO ACTION ON DELETE CASCADE
 );
 
 --bun:split
 -- indexes for document_quality_feedback table
-CREATE INDEX "idx_document_quality_feedback_organization" ON "document_quality_feedback"("organization_id");
+CREATE INDEX "idx_document_quality_feedback_organization" ON "document_quality_feedback" ("organization_id");
 
-CREATE INDEX "idx_document_quality_feedback_business_unit" ON "document_quality_feedback"("business_unit_id");
+CREATE INDEX "idx_document_quality_feedback_business_unit" ON "document_quality_feedback" ("business_unit_id");
 
-CREATE INDEX "idx_document_quality_feedback_user" ON "document_quality_feedback"("user_id");
+CREATE INDEX "idx_document_quality_feedback_user" ON "document_quality_feedback" ("user_id");
 
-CREATE INDEX "idx_document_quality_feedback_created_updated" ON "document_quality_feedback"("created_at", "updated_at");
+CREATE INDEX "idx_document_quality_feedback_created_updated" ON "document_quality_feedback" ("created_at", "updated_at");
 
 COMMENT ON TABLE "document_quality_feedback" IS 'Stores information about document quality feedback';
 

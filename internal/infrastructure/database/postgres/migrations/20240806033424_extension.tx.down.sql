@@ -6,5 +6,4 @@
 --
 -- This software will be licensed under GPLv2 or later on 2026-11-16.
 -- For alternative licensing options, email: eric@trenova.app
-
 -- Nothing need to be done
