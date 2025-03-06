@@ -23,6 +23,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/servicetype"
 	"github.com/emoss08/trenova/internal/core/services/session"
 	"github.com/emoss08/trenova/internal/core/services/shipment"
+	"github.com/emoss08/trenova/internal/core/services/shipmentcontrol"
 	"github.com/emoss08/trenova/internal/core/services/shipmentmove"
 	"github.com/emoss08/trenova/internal/core/services/shipmenttype"
 	"github.com/emoss08/trenova/internal/core/services/stop"
@@ -68,6 +69,7 @@ var Module = fx.Module("services", fx.Provide(
 	shipmentmove.NewService,
 	stop.NewService,
 	logreader.NewService,
+	shipmentcontrol.NewService,
 ))
 
 var CalculatorModule = fx.Module("calculator", fx.Provide(

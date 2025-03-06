@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { login } from "@/services/auth";
-import { useAuthStore } from "@/stores/user-store";
+import { useAuthActions } from "@/stores/user-store";
 import { APIError } from "@/types/errors";
 import { faEnvelope, faLock } from "@fortawesome/pro-regular-svg-icons";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -35,7 +35,7 @@ type LoginFormProps = {
 export function LoginForm({ email, onForgotPassword }: LoginFormProps) {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const setUser = useAuthStore((state) => state.setUser);
+  const { setUser } = useAuthActions();
 
   const mutation = useMutation({
     mutationFn: async (values: LoginFormValues) => {
@@ -83,7 +83,7 @@ export function LoginForm({ email, onForgotPassword }: LoginFormProps) {
   return (
     <Form onSubmit={handleSubmit(onSubmit)}>
       <FormGroup cols={1}>
-        <FormControl>
+        <FormControl className="min-h-[4em]">
           <InputField
             icon={<Icon icon={faEnvelope} className="size-3.5" />}
             control={control}
@@ -94,7 +94,7 @@ export function LoginForm({ email, onForgotPassword }: LoginFormProps) {
           />
         </FormControl>
 
-        <FormControl>
+        <FormControl className="min-h-[4em]">
           <PasswordField
             onPasswordReset={onForgotPassword}
             icon={<Icon icon={faLock} className="size-3.5" />}
@@ -110,15 +110,15 @@ export function LoginForm({ email, onForgotPassword }: LoginFormProps) {
           <Checkbox id="rememberMe" />
           <Label>Remember me</Label>
         </div>
+        <Button
+          type="submit"
+          className="w-full"
+          isLoading={isSubmitting}
+          loadingText="Signing in..."
+        >
+          Sign in
+        </Button>
       </FormGroup>
-      <Button
-        type="submit"
-        className="w-full"
-        isLoading={isSubmitting}
-        loadingText="Signing in..."
-      >
-        Sign in
-      </Button>
     </Form>
   );
 }

@@ -1,3 +1,4 @@
+import { FormSaveDock } from "@/components/form";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -8,20 +9,19 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Button, FormSaveButton } from "@/components/ui/button";
 import { Form } from "@/components/ui/form";
 import {
   Sheet,
   SheetBody,
   SheetContent,
   SheetDescription,
-  SheetFooter,
   SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet";
 import { VisuallyHidden } from "@/components/ui/visually-hidden";
 import { usePopoutWindow } from "@/hooks/popout-window/use-popout-window";
 import { useUnsavedChanges } from "@/hooks/use-form";
+import { useFormWithSave } from "@/hooks/use-form-with-save";
 import { broadcastQueryInvalidation } from "@/hooks/use-invalidate-query";
 import { useResponsiveDimensions } from "@/hooks/use-responsive-dimensions";
 import { http } from "@/lib/http-client";
@@ -30,13 +30,10 @@ import {
   type ShipmentSchema,
 } from "@/lib/schemas/shipment-schema";
 import { EditTableSheetProps } from "@/types/data-table";
-import { type APIError } from "@/types/errors";
 import { type Shipment } from "@/types/shipment";
 import { yupResolver } from "@hookform/resolvers/yup";
-import { useMutation } from "@tanstack/react-query";
 import { useCallback, useEffect, useRef } from "react";
-import { FormProvider, type Path, useForm } from "react-hook-form";
-import { toast } from "sonner";
+import { FormProvider } from "react-hook-form";
 import { useShipmentDetails } from "../queries/shipment";
 import { ShipmentForm } from "./form/shipment-form";
 
@@ -56,21 +53,47 @@ export function ShipmentEditSheet({
 
   const isDetailsLoading = shipmentDetails.isLoading;
 
-  const form = useForm<ShipmentSchema>({
-    resolver: yupResolver(shipmentSchema),
-    defaultValues: {},
+  const form = useFormWithSave({
+    resourceName: "Shipment",
+    formOptions: {
+      resolver: yupResolver(shipmentSchema),
+      defaultValues: {},
+      mode: "onChange",
+    },
+    mutationFn: async (values: ShipmentSchema) => {
+      const response = await http.put<Shipment>(
+        `/shipments/${currentRecord?.id}`,
+        values,
+      );
+      return response.data;
+    },
+    onSuccess: () => {
+      onOpenChange(false);
+
+      broadcastQueryInvalidation({
+        queryKey: ["shipment", "shipment-list", "stop", "assignment"],
+        options: {
+          correlationId: `update-shipment-${Date.now()}`,
+        },
+        config: {
+          predicate: true,
+          refetchType: "all",
+        },
+      });
+    },
+    onSettled: () => {
+      if (isPopout) {
+        closePopout();
+      }
+    },
   });
 
   const {
-    setError,
-    formState: { isDirty, isSubmitting, isSubmitSuccessful, errors },
-    handleSubmit,
     reset,
-    watch,
+    handleSubmit,
+    onSubmit,
+    formState: { isDirty, isSubmitting, isSubmitSuccessful },
   } = form;
-
-  console.info("Shipment Form Values", watch());
-  console.info("Shipment Form Errors", errors);
 
   const handleClose = useCallback(() => {
     onOpenChange(false);
@@ -91,59 +114,6 @@ export function ShipmentEditSheet({
       reset(shipmentDetails.data);
     }
   }, [shipmentDetails.data, isDetailsLoading, reset]);
-
-  const { mutateAsync } = useMutation({
-    mutationFn: async (values: ShipmentSchema) => {
-      const response = await http.put(
-        `/shipments/${currentRecord?.id}`,
-        values,
-      );
-      return response.data;
-    },
-    onSuccess: () => {
-      toast.success("Shipment updated successfully");
-      onOpenChange(false);
-
-      broadcastQueryInvalidation({
-        queryKey: ["shipment", "shipment-list", "stop", "assignment"],
-        options: {
-          correlationId: `update-shipment-${Date.now()}`,
-        },
-        config: {
-          predicate: true,
-          refetchType: "all",
-        },
-      });
-    },
-    onError: (error: APIError) => {
-      if (error.isValidationError()) {
-        error.getFieldErrors().forEach((fieldError) => {
-          setError(fieldError.name as Path<ShipmentSchema>, {
-            message: fieldError.reason,
-          });
-        });
-      }
-
-      if (error.isRateLimitError()) {
-        toast.error("Rate limit exceeded", {
-          description:
-            "You have exceeded the rate limit. Please try again later.",
-        });
-      }
-    },
-    onSettled: () => {
-      if (isPopout) {
-        closePopout();
-      }
-    },
-  });
-
-  const onSubmit = useCallback(
-    async (values: ShipmentSchema) => {
-      await mutateAsync(values);
-    },
-    [mutateAsync],
-  );
 
   // Reset the form when the mutation is successful
   // This is recommended by react-hook-form - https://react-hook-form.com/docs/useform/reset
@@ -172,7 +142,7 @@ export function ShipmentEditSheet({
     <>
       <Sheet open={open} onOpenChange={onClose}>
         <SheetContent
-          className="w-[1000px] sm:max-w-[500px] p-0"
+          className="w-[500px] sm:max-w-[540px] p-0"
           withClose={false}
           ref={sheetRef}
         >
@@ -196,16 +166,11 @@ export function ShipmentEditSheet({
                   />
                 )}
               </SheetBody>
-              <SheetFooter className="p-3">
-                <Button type="button" variant="outline" onClick={onClose}>
-                  Cancel
-                </Button>
-                <FormSaveButton
-                  isPopout={isPopout}
-                  isSubmitting={isSubmitting}
-                  title="Shipment"
-                />
-              </SheetFooter>
+              <FormSaveDock
+                isDirty={isDirty}
+                isSubmitting={isSubmitting}
+                position="right"
+              />
             </Form>
           </FormProvider>
         </SheetContent>

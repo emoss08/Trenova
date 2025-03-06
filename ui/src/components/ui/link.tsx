@@ -80,86 +80,90 @@ export function ExternalLink({
   );
 }
 
+type InteralLinkProps = LinkProps & React.ComponentProps<"a">;
+
 // Small Wrapper around react router <Link> to keep up with the design system
-export const InternalLink = React.forwardRef<HTMLAnchorElement, LinkProps>(
-  (props, ref) => {
-    const { children, className } = props;
+const internalLinkStyle = {
+  fontWeight: "normal",
+  width: "fit-content",
+  display: "inline-block",
+};
 
-    return (
-      <Link
-        ref={ref}
-        className={cn(
-          "inline-flex w-full items-center text-primary hover:text-primary/70 underline",
-          className,
-        )}
-        style={{
-          fontWeight: "normal",
-          width: "fit-content",
-          display: "inline-block",
-        }}
-        {...props}
-      >
-        {children}
-      </Link>
-    );
-  },
-);
+// Small Wrapper around react router <Link> to keep up with the design system
+export const InternalLink = React.memo(function InternalLink({
+  children,
+  className,
+  ...props
+}: InteralLinkProps) {
+  const linkClassName = React.useMemo(
+    () =>
+      cn(
+        "inline-flex w-full items-center text-primary hover:text-primary/70 underline",
+        className,
+      ),
+    [className],
+  );
 
-InternalLink.displayName = "InternalLink";
-
+  return (
+    <Link className={linkClassName} style={internalLinkStyle} {...props}>
+      {children}
+    </Link>
+  );
+});
 type EntityRedirectLinkProps = Omit<LinkProps, "to"> & {
   entityId?: string;
   baseUrl: string;
   modelOpen?: boolean;
   value?: string;
-};
+} & React.HTMLAttributes<HTMLDivElement>;
 
-export const EntityRedirectLink = React.forwardRef<
-  HTMLAnchorElement,
-  EntityRedirectLinkProps
->(
-  (
-    { entityId, baseUrl, modelOpen, children, className, value, ...rest },
-    ref,
-  ) => {
-    if (!entityId) {
-      return <>{children}</>;
-    }
-
-    let url = `${baseUrl}`;
-
+export const EntityRedirectLink = React.memo(function EntityRedirectLink({
+  entityId,
+  baseUrl,
+  modelOpen,
+  children,
+  className,
+  value,
+  ...rest
+}: EntityRedirectLinkProps) {
+  const url = React.useMemo(() => {
+    let computedUrl = `${baseUrl}`;
     if (modelOpen) {
-      url += `?entityId=${entityId}&modal=edit`;
+      computedUrl += `?entityId=${entityId}&modal=edit`;
     } else {
-      url += `/${entityId}`;
+      computedUrl += `/${entityId}`;
     }
+    return computedUrl;
+  }, [baseUrl, entityId, modelOpen]);
 
-    return (
-      <TooltipProvider>
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <Link
-              ref={ref}
-              to={url}
-              className={cn(
-                "inline-flex w-full items-center text-primary hover:text-primary/70 underline",
-                className,
-              )}
-              style={{
-                fontWeight: "normal",
-                width: "fit-content",
-                display: "inline-block",
-              }}
-              {...rest}
-            >
-              {children}
-            </Link>
-          </TooltipTrigger>
-          <TooltipContent>Click to view {value ?? "unknown"}</TooltipContent>
-        </Tooltip>
-      </TooltipProvider>
-    );
-  },
-);
+  const linkClassName = React.useMemo(
+    () =>
+      cn(
+        "inline-flex w-full items-center text-primary hover:text-primary/70 underline",
+        className,
+      ),
+    [className],
+  );
 
-EntityRedirectLink.displayName = "EntityRedirectLink";
+  if (!entityId) {
+    return <>{children}</>;
+  }
+
+  return (
+    <TooltipProvider>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <Link
+            to={url}
+            className={linkClassName}
+            style={internalLinkStyle}
+            {...rest}
+          >
+            {children}
+          </Link>
+        </TooltipTrigger>
+        <TooltipContent>Click to view {value ?? "unknown"}</TooltipContent>
+      </Tooltip>
+    </TooltipProvider>
+  );
+});

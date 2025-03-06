@@ -5,6 +5,8 @@ import { shipmentCommoditySchema } from "./shipment-commodity-schema";
 
 export const shipmentSchema = object({
   id: string().optional(),
+  createdAt: number().nullable().optional(),
+  updatedAt: number().nullable().optional(),
   organizationId: string().nullable().optional(),
   businessUnitId: string().nullable().optional(),
   serviceTypeId: string().required("Service Type is required"),

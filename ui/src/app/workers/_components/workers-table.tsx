@@ -73,6 +73,7 @@ export default function WorkersDataTable() {
       queryKey="worker-list"
       name="Worker"
       link="/workers/"
+      exportModelName="Worker"
       columns={columns}
     />
   );

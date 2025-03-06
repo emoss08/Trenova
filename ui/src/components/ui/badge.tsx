@@ -1,5 +1,6 @@
 import { cn } from "@/lib/utils";
 import { badgeVariants } from "@/lib/variants/badge";
+import { Slot } from "@radix-ui/react-slot";
 import { type VariantProps } from "class-variance-authority";
 import * as React from "react";
 
@@ -9,9 +10,25 @@ export interface BadgeProps
   withDot?: boolean;
 }
 
-function Badge({ className, variant, withDot = true, ...props }: BadgeProps) {
+function Badge({
+  className,
+  variant,
+  withDot = true,
+  asChild = false,
+  ...props
+}: React.ComponentProps<"span"> &
+  VariantProps<typeof badgeVariants> & {
+    asChild?: boolean;
+    withDot?: boolean;
+  }) {
+  const Comp = asChild ? Slot : "span";
+
   return (
-    <div className={cn(badgeVariants({ variant }), className)} {...props}>
+    <Comp
+      data-slot="badge"
+      className={cn(badgeVariants({ variant }), className)}
+      {...props}
+    >
       {withDot && (
         <svg
           className="size-1.5 fill-current"
@@ -22,8 +39,9 @@ function Badge({ className, variant, withDot = true, ...props }: BadgeProps) {
         </svg>
       )}
       {props.children}
-    </div>
+    </Comp>
   );
 }
 
 export { Badge };
+

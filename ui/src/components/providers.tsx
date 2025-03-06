@@ -1,7 +1,7 @@
 import { APIError } from "@/types/errors";
 import { createSyncStoragePersister } from "@tanstack/query-sync-storage-persister";
 import { QueryClient } from "@tanstack/react-query";
-// import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
+import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 import { PersistQueryClientProvider } from "@tanstack/react-query-persist-client";
 import { compress, decompress } from "lz-string";
 import { NuqsAdapter } from "nuqs/adapters/react-router";
@@ -43,7 +43,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
       >
         <NuqsAdapter>
           <ThemeProvider defaultTheme="dark" storageKey="trenova-ui-theme">
-            {/* <ReactQueryDevtools /> */}
+            <ReactQueryDevtools />
             {children}
             <Toaster />
           </ThemeProvider>

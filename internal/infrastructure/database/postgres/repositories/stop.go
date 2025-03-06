@@ -9,6 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/pkg/errors"
 	"github.com/emoss08/trenova/internal/pkg/logger"
+	"github.com/emoss08/trenova/pkg/types/pulid"
 	"github.com/rotisserie/eris"
 	"github.com/rs/zerolog"
 	"github.com/uptrace/bun"
@@ -153,4 +154,214 @@ func (sr *stopRepository) Update(ctx context.Context, stop *shipment.Stop, moveI
 	}
 
 	return stop, nil
+}
+
+// HandleStopRemovals handles the removal of stops that are no longer present in the move
+func (sr *stopRepository) HandleStopRemovals(
+	ctx context.Context,
+	tx bun.IDB,
+	move *shipment.ShipmentMove,
+	existingStops []*shipment.Stop,
+	updatedStopIDs map[pulid.ID]struct{},
+) error {
+	log := sr.l.With().
+		Str("operation", "HandleStopRemovals").
+		Str("moveID", move.ID.String()).
+		Logger()
+
+	// Create a slice to hold the IDs of stops to delete
+	stopIDsToDelete := make([]pulid.ID, 0)
+
+	// Map to hold existing stops by ID for quick lookup
+	existingStopMap := make(map[pulid.ID]*shipment.Stop)
+
+	// For each existing stop, check if it is still present in the updated stops list
+	for _, stop := range existingStops {
+		existingStopMap[stop.ID] = stop
+
+		if _, ok := updatedStopIDs[stop.ID]; !ok {
+			stopIDsToDelete = append(stopIDsToDelete, stop.ID)
+			log.Debug().
+				Str("stopID", stop.ID.String()).
+				Int("sequence", stop.Sequence).
+				Str("type", string(stop.Type)).
+				Msg("stop marked for deletion")
+		}
+	}
+
+	log.Debug().
+		Interface("stopIDsToDelete", stopIDsToDelete).
+		Int("deleteCount", len(stopIDsToDelete)).
+		Int("existingCount", len(existingStops)).
+		Int("updatedCount", len(updatedStopIDs)).
+		Msg("stops to delete")
+
+	// If there are stops to delete
+	if len(stopIDsToDelete) > 0 {
+		// Get all stops for this move directly from the database to ensure we have the current state
+		var allStops []*shipment.Stop
+		err := tx.NewSelect().
+			Model(&allStops).
+			Where("shipment_move_id = ?", move.ID).
+			Scan(ctx)
+		if err != nil {
+			log.Error().Err(err).Str("moveID", move.ID.String()).
+				Msg("failed to get all stops for move")
+			return err
+		}
+
+		// If we have less than 2 stops total, we can't delete any
+		if len(allStops) < 2 {
+			log.Error().Msg("move has less than 2 stops, cannot proceed with deletion")
+			return errors.NewBusinessError(
+				"A move must have at least a pickup and delivery stop",
+			)
+		}
+
+		// Count how many pickup and delivery stops we have and will remain after deletion
+		remainingPickups := 0
+		remainingDeliveries := 0
+
+		// Check each stop to see if it's a pickup or delivery, and if it's being deleted
+		for _, stop := range allStops {
+			isBeingDeleted := false
+			for _, deleteID := range stopIDsToDelete {
+				if stop.ID == deleteID {
+					isBeingDeleted = true
+					break
+				}
+			}
+
+			// Count remaining stops by type
+			if !isBeingDeleted {
+				if stop.Type == shipment.StopTypePickup {
+					remainingPickups++
+				} else if stop.Type == shipment.StopTypeDelivery {
+					remainingDeliveries++
+				}
+			}
+		}
+
+		// Log the counts for debugging
+		log.Debug().
+			Int("remainingPickups", remainingPickups).
+			Int("remainingDeliveries", remainingDeliveries).
+			Msg("stops that will remain after deletion")
+
+		// Make sure we'll still have at least one pickup and one delivery
+		if remainingPickups == 0 {
+			return errors.NewBusinessError(
+				"Cannot delete all pickup stops. At least one pickup stop is required for the move.",
+			)
+		}
+
+		if remainingDeliveries == 0 {
+			return errors.NewBusinessError(
+				"Cannot delete all delivery stops. At least one delivery stop is required for the move.",
+			)
+		}
+
+		// Now delete the stops since we've verified at least one pickup and delivery will remain
+		result, err := tx.NewDelete().
+			Model((*shipment.Stop)(nil)).
+			Where("id IN (?)", bun.In(stopIDsToDelete)).
+			Exec(ctx)
+		if err != nil {
+			log.Error().Err(err).Interface("stopIDs", stopIDsToDelete).
+				Msg("failed to delete stops")
+			return err
+		}
+
+		// Check that the expected number of stops were deleted
+		rowsAffected, err := result.RowsAffected()
+		if err != nil {
+			log.Error().Err(err).Msg("failed to get rows affected for stop deletion")
+			return err
+		}
+
+		log.Info().Int64("deletedStopCount", rowsAffected).
+			Interface("stopIDs", stopIDsToDelete).
+			Msg("successfully deleted stops")
+
+		// After deletion, resequence the remaining stops to ensure contiguous sequencing
+		if err := sr.resequenceRemainingStops(ctx, tx, move.ID); err != nil {
+			log.Error().Err(err).Msg("failed to resequence remaining stops")
+			return err
+		}
+	}
+
+	return nil
+}
+
+// resequenceRemainingStops reorders the sequence numbers of all stops for a move to ensure
+// they are sequential with no gaps
+func (sr *stopRepository) resequenceRemainingStops(ctx context.Context, tx bun.IDB, moveID pulid.ID) error {
+	log := sr.l.With().
+		Str("operation", "resequenceRemainingStops").
+		Str("moveID", moveID.String()).
+		Logger()
+
+	// Get all remaining stops for this move, ordered by their current sequence
+	var stops []*shipment.Stop
+	err := tx.NewSelect().
+		Model(&stops).
+		Where("shipment_move_id = ?", moveID).
+		Order("sequence ASC").
+		Scan(ctx)
+	if err != nil {
+		log.Error().Err(err).Str("moveID", moveID.String()).
+			Msg("failed to get remaining stops for resequencing")
+		return err
+	}
+
+	// Nothing to resequence if there are no stops or just one stop
+	if len(stops) <= 1 {
+		return nil
+	}
+
+	// Check if sequences are already contiguous
+	needsResequencing := false
+	for i, stop := range stops {
+		if stop.Sequence != i {
+			needsResequencing = true
+			break
+		}
+	}
+
+	// Skip resequencing if already in order
+	if !needsResequencing {
+		log.Debug().Msg("stops already properly sequenced, skipping resequencing")
+		return nil
+	}
+
+	// Update each stop with its new sequence number
+	for i, stop := range stops {
+		if stop.Sequence == i {
+			continue // Skip if already has the correct sequence
+		}
+
+		_, err := tx.NewUpdate().
+			Model(stop).
+			Set("sequence = ?", i).
+			Set("version = version + 1"). // Increment version for optimistic locking
+			Where("id = ?", stop.ID).
+			Exec(ctx)
+		if err != nil {
+			log.Error().Err(err).
+				Str("stopID", stop.ID.String()).
+				Int("oldSequence", stop.Sequence).
+				Int("newSequence", i).
+				Msg("failed to update stop sequence during resequencing")
+			return err
+		}
+
+		log.Debug().
+			Str("stopID", stop.ID.String()).
+			Int("oldSequence", stop.Sequence).
+			Int("newSequence", i).
+			Msg("resequenced stop")
+	}
+
+	log.Info().Int("stopCount", len(stops)).Msg("successfully resequenced stops")
+	return nil
 }

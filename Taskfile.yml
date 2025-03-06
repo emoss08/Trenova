@@ -44,7 +44,13 @@ tasks:
   format:
     cmd: go fmt ./...
   critic:
-    cmd: gocritic check -enableAll -disable=sloppyReassign,unnamedResult,importShadow,paramTypeCombine,whyNoLint,commentedOutCode ./...
+    cmd: |
+      if ! command -v gocritic &> /dev/null
+      then
+        echo "gocritic could not be found, installing..."
+        go install github.com/go-critic/go-critic/cmd/gocritic@latest
+      fi
+      gocritic check -enableAll -disable=sloppyReassign,unnamedResult,importShadow,paramTypeCombine,whyNoLint,commentedOutCode ./...
   security:
     cmd: gosec ./...
   tidy:

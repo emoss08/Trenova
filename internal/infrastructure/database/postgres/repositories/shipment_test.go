@@ -44,9 +44,21 @@ func TestShipmentRepository(t *testing.T) {
 		DB:     ts.DB,
 	})
 
-	moveRepo := repositories.NewShipmentMoveRepository(repositories.ShipmentMoveRepositoryParams{
+	stopRepo := repositories.NewStopRepository(repositories.StopRepositoryParams{
 		Logger: log,
 		DB:     ts.DB,
+	})
+
+	shipmentControlRepo := repositories.NewShipmentControlRepository(repositories.ShipmentControlRepositoryParams{
+		Logger: log,
+		DB:     ts.DB,
+	})
+
+	moveRepo := repositories.NewShipmentMoveRepository(repositories.ShipmentMoveRepositoryParams{
+		Logger:                    log,
+		DB:                        ts.DB,
+		StopRepository:            stopRepo,
+		ShipmentControlRepository: shipmentControlRepo,
 	})
 
 	shipmentCommodityRepo := repositories.NewShipmentCommodityRepository(repositories.ShipmentCommodityRepositoryParams{

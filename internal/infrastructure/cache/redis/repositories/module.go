@@ -6,4 +6,5 @@ var Module = fx.Module("redis-repositories", fx.Provide(
 	NewPermissionRepository,
 	NewSessionRepository,
 	NewStateRepository,
+	NewOrganizationRepository,
 ))

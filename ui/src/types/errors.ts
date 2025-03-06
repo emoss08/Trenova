@@ -51,6 +51,10 @@ export class APIError extends Error {
     return this.status === 429;
   }
 
+  isBusinessError(): boolean {
+    return this.data?.type === "business-error";
+  }
+
   isAuthenticationError(): boolean {
     return this.data?.type === "authentication-error";
   }

@@ -11,7 +11,6 @@ import { Icon } from "@/components/ui/icons";
 import { ShipmentStatus, type Shipment } from "@/types/shipment";
 import { faEllipsisVertical } from "@fortawesome/pro-regular-svg-icons";
 import { useState } from "react";
-import { useNavigate } from "react-router";
 import { ShipmentCancellationDialog } from "../cancellation/shipment-cancellatioin-dialog";
 import { ShipmentDuplicateDialog } from "../duplicate/shipment-duplicate-dialog";
 
@@ -25,8 +24,6 @@ const cancellatedStatuses = [
 ];
 
 export function ShipmentActions({ shipment }: { shipment?: Shipment | null }) {
-  const navigate = useNavigate();
-
   const [cancellationDialogOpen, setCancellationDialogOpen] =
     useState<boolean>(false);
   const [duplicateDialogOpen, setDuplicateDialogOpen] =
@@ -52,13 +49,6 @@ export function ShipmentActions({ shipment }: { shipment?: Shipment | null }) {
           <DropdownMenuItem
             title="Assign"
             description="Assign this shipment to a worker(s)."
-          />
-          <DropdownMenuItem
-            title="Edit"
-            description="Modify shipment details."
-            onClick={() => {
-              navigate(`/shipments/${shipment.id}`);
-            }}
           />
           <DropdownMenuItem
             title="Duplicate"

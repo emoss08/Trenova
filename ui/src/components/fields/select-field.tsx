@@ -185,7 +185,7 @@ const ReactSelectInput = React.forwardRef<any, ReactSelectInputProps>(
             display: "flex",
             flexDirection: "column",
             padding: "0.25rem",
-            gap: "0.1rem",
+            gap: "0.2rem",
             // Change scrollbar
             "::-webkit-scrollbar": {
               width: "0.3rem",

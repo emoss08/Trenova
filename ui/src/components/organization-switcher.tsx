@@ -4,12 +4,12 @@ import {
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
 import { queries } from "@/lib/queries";
-import { useAuthStore } from "@/stores/user-store";
+import { useIsAuthenticated, useUser } from "@/stores/user-store";
 import { Organization } from "@/types/organization";
 import { faCheckCircle } from "@fortawesome/pro-solid-svg-icons";
 import { CaretSortIcon, DragHandleDots2Icon } from "@radix-ui/react-icons";
 import { useQuery } from "@tanstack/react-query";
-import React, { useState } from "react";
+import { useState } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
 import { Icon } from "./ui/icons";
 import { Popover, PopoverContent, PopoverTrigger } from "./ui/popover";
@@ -35,16 +35,16 @@ type OrganizationSwitcherButtonProps = {
   isLoading: boolean;
 };
 
-const OrganizationSwitcherButton = React.forwardRef<
-  HTMLButtonElement,
-  OrganizationSwitcherButtonProps
->(({ org, setOpen, isLoading }, ref) => {
+function OrganizationSwitcherButton({
+  org,
+  setOpen,
+  isLoading,
+}: OrganizationSwitcherButtonProps) {
   return isLoading ? (
     <OrganizationSwitcherButtonSkeleton />
   ) : (
     <SidebarMenuButton
       size="lg"
-      ref={ref}
       onClick={() => setOpen(true)}
       className="bg-sidebar data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground [&>svg]:size-5"
     >
@@ -67,11 +67,12 @@ const OrganizationSwitcherButton = React.forwardRef<
       <CaretSortIcon className="ml-auto" />
     </SidebarMenuButton>
   );
-});
+}
 
 export function OrganizationSwitcher() {
   const [open, setOpen] = useState(false);
-  const { user, isAuthenticated } = useAuthStore();
+  const user = useUser();
+  const isAuthenticated = useIsAuthenticated();
   const userOrganization = useQuery({
     ...queries.organization.getOrgById(
       user?.currentOrganizationId ?? "",

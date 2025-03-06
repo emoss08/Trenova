@@ -5,7 +5,7 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
-import { useAuthStore } from "@/stores/user-store";
+import { useUser } from "@/stores/user-store";
 
 import { CLIENT_VERSION } from "@/constants/env";
 import { useLogout } from "@/hooks/use-auth";
@@ -38,7 +38,7 @@ import { Icon } from "./ui/icons";
 import { ExternalLink } from "./ui/link";
 
 function UserAvatar() {
-  const { user } = useAuthStore();
+  const user = useUser();
 
   return (
     <div className="flex items-center gap-2 px-1 py-1.5 text-left text-sm">
@@ -158,16 +158,18 @@ export function NavUser() {
               startContent={<Icon icon={faSignOut} />}
               title="Sign out"
               description="Sign out of your account"
+              className="pb-2"
               onClick={handleLogout}
             />
-            <div className="flex w-full select-none items-center justify-center gap-1 text-2xs text-muted-foreground pt-4">
-              <p>Build: v{CLIENT_VERSION}</p>
-              <div className="size-1 rounded-full bg-muted-foreground" />
-              <ExternalLink href="#">Terms & Conditions</ExternalLink>
-              <div className="size-1 rounded-full bg-muted-foreground" />
-              <ExternalLink href="https://github.com/emoss08/Trenova/blob/master/LICENSE">
-                License
-              </ExternalLink>
+            <div className="flex flex-col w-full select-none items-center justify-center gap-1 text-2xs text-muted-foreground py-2 border-t border-input/50">
+              <p>Client Build: v{CLIENT_VERSION}</p>
+              <div className="flex items-center gap-2">
+                <ExternalLink href="#">Terms & Conditions</ExternalLink>
+                <div className="size-1 rounded-full bg-muted-foreground" />
+                <ExternalLink href="https://github.com/emoss08/Trenova/blob/master/LICENSE">
+                  License
+                </ExternalLink>
+              </div>
             </div>
           </DropdownMenuContent>
         </DropdownMenu>

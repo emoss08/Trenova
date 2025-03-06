@@ -28,11 +28,7 @@ func NewValidator(p ValidatorParams) *Validator {
 	}
 }
 
-func (v *Validator) Validate(
-	ctx context.Context,
-	valCtx *validator.ValidationContext,
-	st *servicetype.ServiceType,
-) *errors.MultiError {
+func (v *Validator) Validate(ctx context.Context, valCtx *validator.ValidationContext, st *servicetype.ServiceType) *errors.MultiError {
 	multiErr := errors.NewMultiError()
 
 	// Basic Service Type validation

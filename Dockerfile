@@ -1,4 +1,4 @@
-FROM golang:1.24rc3-alpine AS builder
+FROM golang:1.24 AS builder
 
 # Install necessary packages and librdkafka
 RUN apk add --update --no-cache alpine-sdk bash ca-certificates \
@@ -12,7 +12,6 @@ WORKDIR /app
 # Environment variables for Go build
 ENV GOOS=linux
 ENV GOARCH=amd64
-ENV HATCHET_CLIENT_TLS_STRATEGY=none
 ENV APP_ENV=production
 
 
@@ -34,7 +33,6 @@ FROM alpine:latest
 RUN apk --no-cache add ca-certificates
 
 # Set the environment variable
-ENV HATCHET_CLIENT_TLS_STRATEGY=none
 ENV APP_ENV=production
 
 WORKDIR /app

@@ -4,47 +4,50 @@ import { ButtonProps } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { buttonVariants } from "@/lib/variants/button";
 import {
-  ChevronLeftIcon,
-  ChevronRightIcon,
-  DotsHorizontalIcon,
-} from "@radix-ui/react-icons";
+  faChevronLeft,
+  faChevronRight,
+} from "@fortawesome/pro-regular-svg-icons";
+import { DotsHorizontalIcon } from "@radix-ui/react-icons";
 import { VariantProps } from "class-variance-authority";
+import { Icon } from "./icons";
 
-const Pagination = ({ className, ...props }: React.ComponentProps<"nav">) => (
-  <nav
-    role="navigation"
-    aria-label="pagination"
-    className={cn(
-      "mx-auto flex w-full justify-center flex-row items-center gap-1 aria-disabled:opacity-50",
-      className,
-    )}
-    {...props}
-  />
-);
+function Pagination({ className, ...props }: React.ComponentProps<"nav">) {
+  return (
+    <nav
+      role="navigation"
+      aria-label="pagination"
+      data-slot="pagination"
+      className={cn(
+        "mx-auto flex w-full justify-center flex-row items-center gap-1 aria-disabled:opacity-50",
+        className,
+      )}
+      {...props}
+    />
+  );
+}
 
-const PaginationContent = React.forwardRef<
-  HTMLUListElement,
-  React.ComponentProps<"ul">
->(({ className, ...props }, ref) => (
-  <ul
-    ref={ref}
-    className={cn("flex flex-row items-center gap-1 select-none", className)}
-    {...props}
-  />
-));
-PaginationContent.displayName = "PaginationContent";
+function PaginationContent({
+  className,
+  ...props
+}: React.ComponentProps<"ul">) {
+  return (
+    <ul
+      data-slot="pagination-content"
+      className={cn("flex flex-row items-center gap-1 select-none", className)}
+      {...props}
+    />
+  );
+}
 
-const PaginationItem = React.forwardRef<
-  HTMLLIElement,
-  React.ComponentProps<"li">
->(({ className, ...props }, ref) => (
-  <li
-    ref={ref}
-    className={cn("hover:cursor-pointer select-none", className)}
-    {...props}
-  />
-));
-PaginationItem.displayName = "PaginationItem";
+function PaginationItem({ className, ...props }: React.ComponentProps<"li">) {
+  return (
+    <li
+      data-slot="pagination-item"
+      className={cn("hover:cursor-pointer select-none", className)}
+      {...props}
+    />
+  );
+}
 
 type PaginationLinkProps = {
   isActive?: boolean;
@@ -53,77 +56,84 @@ type PaginationLinkProps = {
 } & Pick<ButtonProps, "size"> &
   React.ComponentProps<"a">;
 
-const PaginationLink = ({
+function PaginationLink({
   className,
   isActive,
   size = "icon",
   disabled = false,
   variant,
   ...props
-}: PaginationLinkProps) => (
-  <PaginationItem>
-    <a
-      aria-current={isActive ? "page" : undefined}
-      role="link"
-      aria-disabled={disabled}
+}: PaginationLinkProps) {
+  return (
+    <PaginationItem>
+      <a
+        aria-current={isActive ? "page" : undefined}
+        role="link"
+        aria-disabled={disabled}
+        className={cn(
+          buttonVariants({
+            variant: variant ?? (isActive ? "default" : "ghost"),
+            size,
+          }),
+          disabled &&
+            "cursor-not-allowed pointer-events-none select-none opacity-50 bg-muted",
+          className,
+        )}
+        {...props}
+      />
+    </PaginationItem>
+  );
+}
+
+function PaginationPrevious({
+  className,
+  ...props
+}: React.ComponentProps<typeof PaginationLink>) {
+  return (
+    <PaginationLink
+      aria-label="Go to previous page"
+      className={cn("gap-1 px-1.5 select-none", className)}
+      {...props}
+    >
+      <Icon icon={faChevronLeft} className="size-4" />
+    </PaginationLink>
+  );
+}
+
+function PaginationNext({
+  className,
+  ...props
+}: React.ComponentProps<typeof PaginationLink>) {
+  return (
+    <PaginationLink
+      aria-label="Go to next page"
+      className={cn("gap-1 px-1.5 select-none", className)}
+      {...props}
+    >
+      <Icon icon={faChevronRight} className="size-4" />
+    </PaginationLink>
+  );
+}
+
+function PaginationEllipsis({
+  className,
+  ...props
+}: React.ComponentProps<"span">) {
+  return (
+    <span
+      aria-hidden
+      data-slot="pagination-ellipsis"
       className={cn(
-        buttonVariants({
-          variant: variant ?? (isActive ? "default" : "ghost"),
-          size,
-        }),
-        disabled &&
-          "cursor-not-allowed pointer-events-none select-none opacity-50 bg-muted",
+        "text-foreground px-1.5 font-semibold select-none",
         className,
       )}
       {...props}
-    />
-  </PaginationItem>
-);
-PaginationLink.displayName = "PaginationLink";
-
-const PaginationPrevious = ({
-  className,
-  ...props
-}: React.ComponentProps<typeof PaginationLink>) => (
-  <PaginationLink
-    aria-label="Go to previous page"
-    className={cn("gap-1 px-1.5 select-none", className)}
-    {...props}
-  >
-    <ChevronLeftIcon className="size-4" />
-  </PaginationLink>
-);
-PaginationPrevious.displayName = "PaginationPrevious";
-
-const PaginationNext = ({
-  className,
-  ...props
-}: React.ComponentProps<typeof PaginationLink>) => (
-  <PaginationLink
-    aria-label="Go to next page"
-    className={cn("gap-1 px-1.5 select-none", className)}
-    {...props}
-  >
-    <ChevronRightIcon className="size-4" />
-  </PaginationLink>
-);
-
-const PaginationEllipsis = ({
-  className,
-  ...props
-}: React.ComponentProps<"span">) => (
-  <span
-    aria-hidden
-    className={cn(
-      "text-foreground px-1.5 font-semibold select-none",
-      className,
-    )}
-    {...props}
-  >
-    <DotsHorizontalIcon className="inline-block size-4 align-bottom" />
-    <span className="sr-only">More pages</span>
-  </span>
-);
+    >
+      <DotsHorizontalIcon className="inline-block size-4 align-bottom" />
+      <span className="sr-only">More pages</span>
+    </span>
+  );
+}
 
 export {
   Pagination,

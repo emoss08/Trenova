@@ -76,7 +76,7 @@ export function DatePickerPopover({
               mode="single"
               selected={date}
               onSelect={onSelect}
-              initialFocus
+              autoFocus
               className="self-center"
             />
           </div>
@@ -97,12 +97,7 @@ export function DatePickerPopover({
         <PopoverTrigger asChild>{children}</PopoverTrigger>
       </ToolbarTooltip>
       <PopoverContent align="center" side="bottom" className="w-auto p-0">
-        <Calendar
-          mode="single"
-          selected={date}
-          onSelect={onSelect}
-          initialFocus
-        />
+        <Calendar mode="single" selected={date} onSelect={onSelect} autoFocus />
       </PopoverContent>
     </Popover>
   );

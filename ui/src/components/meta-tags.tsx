@@ -1,5 +1,5 @@
 import { queries } from "@/lib/queries";
-import { useAuthStore } from "@/stores/user-store";
+import { useIsAuthenticated, useUser } from "@/stores/user-store";
 import { useQuery } from "@tanstack/react-query";
 import { Helmet } from "react-helmet-async";
 
@@ -10,7 +10,8 @@ export function MetaTags({
   title: string;
   description?: string;
 }) {
-  const { user, isAuthenticated } = useAuthStore();
+  const user = useUser();
+  const isAuthenticated = useIsAuthenticated();
   const userOrganization = useQuery({
     ...queries.organization.getOrgById(user?.currentOrganizationId ?? ""),
     enabled: !!user?.currentOrganizationId && isAuthenticated,

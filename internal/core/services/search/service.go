@@ -539,21 +539,22 @@ func (s *Service) checkServiceHealth() {
 	queueUtilization := float64(queueSize) / float64(queueCapacity) * 100.0
 
 	// Log based on queue utilization
-	if queueUtilization > 80.0 {
+	switch {
+	case queueUtilization > 80.0:
 		s.l.Warn().
 			Int("queueSize", queueSize).
 			Int("queueCapacity", queueCapacity).
 			Float64("utilizationPercent", queueUtilization).
 			Bool("isRunning", s.isRunning.Load()).
 			Msg("search queue near capacity")
-	} else if queueSize > 0 {
+	case queueSize > 0:
 		s.l.Info().
 			Int("queueSize", queueSize).
 			Int("queueCapacity", queueCapacity).
 			Float64("utilizationPercent", queueUtilization).
 			Bool("isRunning", s.isRunning.Load()).
 			Msg("search health check - documents pending")
-	} else {
+	default:
 		s.l.Debug().
 			Int("queueSize", queueSize).
 			Int("queueCapacity", queueCapacity).

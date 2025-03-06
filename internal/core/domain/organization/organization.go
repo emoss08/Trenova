@@ -39,21 +39,18 @@ type Organization struct {
 	StateID        pulid.ID `json:"stateId" bun:"state_id,type:VARCHAR(100),notnull"`
 
 	// Core fields
-	Name           string `json:"name" bun:"name,type:VARCHAR(100),notnull"`
-	ScacCode       string `json:"scacCode" bun:"scac_code,type:VARCHAR(4),notnull"`
-	DOTNumber      string `json:"dotNumber" bun:"dot_number,type:VARCHAR(8),notnull"`
-	LogoURL        string `json:"logoUrl" bun:"logo_url,type:VARCHAR(255)"`
-	OrgType        Type   `json:"orgType" bun:"org_type,type:org_type_enum,notnull,default:'Asset'"`
-	BucketName     string `json:"-" bun:"bucket_name,type:VARCHAR(63),notnull"`
-	AddressLine1   string `json:"addressLine1" bun:"address_line1,type:VARCHAR(150),notnull"`
-	AddressLine2   string `json:"addressLine2" bun:"address_line2,type:VARCHAR(150)"`
-	City           string `json:"city" bun:"city,type:VARCHAR(100),notnull"`
-	PostalCode     string `json:"postalCode" bun:"postal_code,type:VARCHAR(20)"`
-	Timezone       string `json:"timezone" bun:"timezone,type:VARCHAR(100),notnull,default:'America/New_York'"`
-	TaxID          string `json:"taxId" bun:"tax_id,type:VARCHAR(50)"`
-	PrimaryContact string `json:"primaryContact" bun:"primary_contact,type:VARCHAR(100)"`
-	PrimaryEmail   string `json:"primaryEmail" bun:"primary_email,type:VARCHAR(255)"`
-	PrimaryPhone   string `json:"primaryPhone" bun:"primary_phone,type:VARCHAR(20)"`
+	Name         string `json:"name" bun:"name,type:VARCHAR(100),notnull"`
+	ScacCode     string `json:"scacCode" bun:"scac_code,type:VARCHAR(4),notnull"`
+	DOTNumber    string `json:"dotNumber" bun:"dot_number,type:VARCHAR(8),notnull"`
+	LogoURL      string `json:"logoUrl" bun:"logo_url,type:VARCHAR(255)"`
+	OrgType      Type   `json:"orgType" bun:"org_type,type:org_type_enum,notnull,default:'Asset'"`
+	BucketName   string `json:"-" bun:"bucket_name,type:VARCHAR(63),notnull"`
+	AddressLine1 string `json:"addressLine1" bun:"address_line1,type:VARCHAR(150),notnull"`
+	AddressLine2 string `json:"addressLine2" bun:"address_line2,type:VARCHAR(150)"`
+	City         string `json:"city" bun:"city,type:VARCHAR(100),notnull"`
+	PostalCode   string `json:"postalCode" bun:"postal_code,type:VARCHAR(20)"`
+	Timezone     string `json:"timezone" bun:"timezone,type:VARCHAR(100),notnull,default:'America/New_York'"`
+	TaxID        string `json:"taxId" bun:"tax_id,type:VARCHAR(50)"`
 
 	// Metadata and versioning
 	Metadata  *Metadata `json:"-" bun:"metadata,type:JSONB"` // Do not expose this to the API
@@ -99,7 +96,7 @@ func (o *Organization) Validate(ctx context.Context, multiErr *errors.MultiError
 	if err != nil {
 		var validationErrs validation.Errors
 		if eris.As(err, &validationErrs) {
-			errors.FromValidationErrors(validationErrs, multiErr, "")
+			errors.FromOzzoErrors(validationErrs, multiErr)
 		}
 	}
 }

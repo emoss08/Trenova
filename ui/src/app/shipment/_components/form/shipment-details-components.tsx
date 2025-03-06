@@ -1,5 +1,4 @@
 import { AutocompleteField } from "@/components/fields/autocomplete";
-import { DoubleClickInput } from "@/components/fields/input-field";
 import { ColorOptionValue } from "@/components/fields/select-components";
 import { ShipmentStatusBadge } from "@/components/status-badge";
 import { FormControl, FormGroup } from "@/components/ui/form";
@@ -10,30 +9,44 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { formatToUserTimezone } from "@/lib/date";
 import { EquipmentTypeSchema } from "@/lib/schemas/equipment-type-schema";
 import { ServiceTypeSchema } from "@/lib/schemas/service-type-schema";
 import { ShipmentSchema } from "@/lib/schemas/shipment-schema";
 import { ShipmentTypeSchema } from "@/lib/schemas/shipment-type-schema";
 import { cn } from "@/lib/utils";
+import { useUser } from "@/stores/user-store";
 import { faCheck, faCopy } from "@fortawesome/pro-solid-svg-icons";
 import { useState } from "react";
 import { useFormContext } from "react-hook-form";
 
 export function ShipmentDetailsHeader() {
-  const { control, getValues } = useFormContext<ShipmentSchema>();
+  const { getValues } = useFormContext<ShipmentSchema>();
+  const user = useUser();
 
-  const { proNumber, status } = getValues();
+  const { proNumber, status, updatedAt } = getValues();
 
   return (
-    <div className="flex flex-col gap-0.5 px-4 pb-2 border-b border-bg-sidebar-border">
-      <div className="flex items-center gap-2 justify-between">
-        <h2 className="text-xl">{proNumber || "New Shipment"}</h2>
+    <div className="flex flex-col px-4 pb-2 border-b border-bg-sidebar-border">
+      <div className="flex items-center justify-between">
+        <h2 className="font-semibold leading-none tracking-tight flex items-center gap-x-2">
+          {proNumber || "Add New Shipment"}
+        </h2>
         <ShipmentStatusBadge status={status} />
       </div>
-      <div className="flex items-center gap-1 text-sm">
-        <span className="text-muted-foreground">Tracking ID:</span>
-        <DoubleClickInput control={control} name="bol" />
-      </div>
+      {updatedAt ? (
+        <p className="text-2xs text-muted-foreground font-normal">
+          Last updated on{" "}
+          {formatToUserTimezone(updatedAt, {
+            timezone: user?.timezone,
+            timeFormat: user?.timeFormat,
+          })}
+        </p>
+      ) : (
+        <p className="text-2xs text-muted-foreground font-normal">
+          Please fill out the form below to create a new shipment.
+        </p>
+      )}
     </div>
   );
 }

@@ -1,5 +1,7 @@
 import { nodeResolve } from "@rollup/plugin-node-resolve";
 import tailwindcss from "@tailwindcss/vite";
+import { visualizer } from "rollup-plugin-visualizer";
+
 import react from "@vitejs/plugin-react-swc";
 import path from "path";
 import { defineConfig, type PluginOption } from "vite";
@@ -30,6 +32,7 @@ const vendorChunks = {
     "@radix-ui/react-slot",
     "@radix-ui/react-tooltip",
     "@radix-ui/react-visually-hidden",
+    "react-day-picker",
   ],
 
   // Table and Query functionality
@@ -48,12 +51,16 @@ const vendorChunks = {
 
   // Icons and Assets
   icons: [
+    "@radix-ui/react-icons",
     "@fortawesome/pro-regular-svg-icons",
     "@fortawesome/pro-solid-svg-icons",
   ],
 
   // Date handling
   "date-utils": ["date-fns", "chrono-node"],
+
+  // Animation
+  animation: ["framer-motion"],
 
   // Utilities
   utils: ["clsx", "tailwind-merge", "class-variance-authority"],
@@ -97,6 +104,11 @@ export default defineConfig({
     compression({
       algorithm: "gzip",
     }),
+    visualizer({
+      open: true,
+      gzipSize: true,
+      brotliSize: true,
+    }) as PluginOption,
   ],
 
   resolve: {
@@ -114,13 +126,6 @@ export default defineConfig({
       output: {
         manualChunks: {
           ...vendorChunks,
-          // Dynamic chunks for routes
-          ...(() => {
-            const dynamicImports = {
-              "shipment-module": ["@/app/shipment/page.tsx"],
-            };
-            return dynamicImports;
-          })(),
         },
         chunkFileNames: (chunkInfo) => {
           const name = chunkInfo.name || "chunk";
@@ -146,7 +151,7 @@ export default defineConfig({
         assetFileNames: (assetInfo) => {
           const info = assetInfo.name?.split(".");
           const extType = info?.[info.length - 1];
-          if (extType && /png|jpe?g|svg|gif|tiff|bmp|ico/i.test(extType)) {
+          if (extType && /png|jpe?g|svg|webp|gif|tiff|bmp|ico/i.test(extType)) {
             return "assets/images/[name]-[hash][extname]";
           }
 

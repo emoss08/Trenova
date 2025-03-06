@@ -38,6 +38,7 @@ export function getColumns(): ColumnDef<Shipment>[] {
 
         return (
           <Checkbox
+            data-slot="select-all"
             checked={isAllSelected || (isSomeSelected && "indeterminate")}
             onCheckedChange={(checked) =>
               table.toggleAllPageRowsSelected(!!checked)
@@ -48,6 +49,7 @@ export function getColumns(): ColumnDef<Shipment>[] {
       },
       cell: ({ row }) => (
         <Checkbox
+          data-slot="select-row"
           checked={row.getIsSelected()}
           onCheckedChange={(checked) => row.toggleSelected(!!checked)}
           aria-label="Select row"

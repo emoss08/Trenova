@@ -21,9 +21,6 @@ CREATE TABLE IF NOT EXISTS "organizations"(
     "city" varchar(100) NOT NULL,
     "postal_code" varchar(20),
     "timezone" varchar(100) NOT NULL DEFAULT 'America/New_York',
-    "primary_contact" varchar(100),
-    "primary_email" varchar(255),
-    "primary_phone" varchar(20),
     "tax_id" varchar(50),
     -- Metadata and versioning
     "metadata" jsonb DEFAULT '{}' ::jsonb,
