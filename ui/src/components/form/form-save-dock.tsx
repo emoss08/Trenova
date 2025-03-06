@@ -57,6 +57,8 @@ export function FormSaveDock({
 }: FormSaveDockProps) {
   // Only render the dock if there are unsaved changes
   if (!isDirty) {
+    return null;
+  }
 
   // Position-specific classes
   const positionClasses = {
@@ -130,11 +132,11 @@ export function LastSavedIndicator() {
   const { lastSaved } = useFormSave();
 
   if (!lastSaved) {
-
-  return (
-    <div className="text-sm text-muted-foreground flex items-center">
-      <Icon icon={faClock} className="mr-1" />
-      Last saved: {lastSaved}
-    </div>
-  );
+    return (
+      <div className="text-sm text-muted-foreground flex items-center">
+        <Icon icon={faClock} className="mr-1" />
+        Last saved: {lastSaved}
+      </div>
+    );
+  }
 }
