@@ -38,8 +38,14 @@ func TestComplianceValidator(t *testing.T) {
 		DB:     ts.DB,
 	})
 
+	shipmentControlRepo := repositories.NewShipmentControlRepository(repositories.ShipmentControlRepositoryParams{
+		Logger: logger.NewLogger(testutils.NewTestConfig()),
+		DB:     ts.DB,
+	})
+
 	validator := compliancevalidator.NewValidator(compliancevalidator.ValidatorParams{
-		HazmatExpRepo: hazmatRepo,
+		HazmatExpRepo:       hazmatRepo,
+		ShipmentControlRepo: shipmentControlRepo,
 	})
 
 	scenarios := []struct {
