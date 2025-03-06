@@ -43,6 +43,16 @@ tasks:
     cmd: nilaway ./...
   format:
     cmd: go fmt ./...
+  format-sql:
+    cmd: |
+      if ! command -v pg_format &> /dev/null
+      then
+        echo "pg_format could not be found, please install pgFormatter..."
+        echo "Visit https://github.com/darold/pgFormatter for installation instructions"
+        exit 1
+      fi
+      find internal/infrastructure/database/postgres/migrations/ -name "*.sql" -type f -exec pg_format -i {} \;
+    desc: Format all SQL files in the migrations directory using pgFormatter
   critic:
     cmd: |
       if ! command -v gocritic &> /dev/null

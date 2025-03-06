@@ -1,4 +1,4 @@
-CREATE TYPE hazardous_class_enum AS ENUM(
+CREATE TYPE hazardous_class_enum AS ENUM (
     'HazardClass1And1',
     'HazardClass1And2',
     'HazardClass1And3',
@@ -21,14 +21,14 @@ CREATE TYPE hazardous_class_enum AS ENUM(
 );
 
 --bun:split
-CREATE TYPE packing_group_enum AS ENUM(
+CREATE TYPE packing_group_enum AS ENUM (
     'I',
     'II',
     'III'
 );
 
 --bun:split
-CREATE TABLE IF NOT EXISTS "hazardous_materials"(
+CREATE TABLE IF NOT EXISTS "hazardous_materials" (
     -- Primary identifiers
     "id" varchar(100) NOT NULL,
     "business_unit_id" varchar(100) NOT NULL,
@@ -54,19 +54,19 @@ CREATE TABLE IF NOT EXISTS "hazardous_materials"(
     "updated_at" bigint NOT NULL DEFAULT EXTRACT(EPOCH FROM current_timestamp) ::bigint,
     -- Constraints
     CONSTRAINT "pk_hazardous_materials" PRIMARY KEY ("id", "business_unit_id", "organization_id"),
-    CONSTRAINT "fk_hazardous_materials_business_unit" FOREIGN KEY ("business_unit_id") REFERENCES "business_units"("id") ON UPDATE NO ACTION ON DELETE CASCADE,
-    CONSTRAINT "fk_hazardous_materials_organization" FOREIGN KEY ("organization_id") REFERENCES "organizations"("id") ON UPDATE NO ACTION ON DELETE CASCADE
+    CONSTRAINT "fk_hazardous_materials_business_unit" FOREIGN KEY ("business_unit_id") REFERENCES "business_units" ("id") ON UPDATE NO ACTION ON DELETE CASCADE,
+    CONSTRAINT "fk_hazardous_materials_organization" FOREIGN KEY ("organization_id") REFERENCES "organizations" ("id") ON UPDATE NO ACTION ON DELETE CASCADE
 );
 
 --bun:split
 -- Indexes for hazardous_materials table
-CREATE UNIQUE INDEX "idx_hazardous_materials_code" ON "hazardous_materials"(lower("code"), "organization_id");
+CREATE UNIQUE INDEX "idx_hazardous_materials_code" ON "hazardous_materials" (lower("code"), "organization_id");
 
-CREATE INDEX "idx_hazardous_materials_business_unit" ON "hazardous_materials"("business_unit_id");
+CREATE INDEX "idx_hazardous_materials_business_unit" ON "hazardous_materials" ("business_unit_id");
 
-CREATE INDEX "idx_hazardous_materials_organization" ON "hazardous_materials"("organization_id");
+CREATE INDEX "idx_hazardous_materials_organization" ON "hazardous_materials" ("organization_id");
 
-CREATE INDEX "idx_hazardous_materials_created_updated" ON "hazardous_materials"("created_at", "updated_at");
+CREATE INDEX "idx_hazardous_materials_created_updated" ON "hazardous_materials" ("created_at", "updated_at");
 
 COMMENT ON TABLE "hazardous_materials" IS 'Stores information about hazardous materials';
 
