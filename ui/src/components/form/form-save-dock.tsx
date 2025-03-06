@@ -56,7 +56,7 @@ export function FormSaveDock({
   className,
 }: FormSaveDockProps) {
   // Only render the dock if there are unsaved changes
-  if (!isDirty) return null;
+  if (!isDirty) {
 
   // Position-specific classes
   const positionClasses = {
