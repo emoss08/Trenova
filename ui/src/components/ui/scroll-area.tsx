@@ -33,6 +33,9 @@ function ScrollArea({
  * Otherwise, use the ScrollArea component
  * @deprecated Use the ScrollArea component instead since React 19 does not support refs on the root element
  */
+/**
+ * @deprecated VirtualizedScrollArea is deprecated. Please use an alternative component.
+ */
 export function VirtualizedScrollArea({
   className,
   children,
