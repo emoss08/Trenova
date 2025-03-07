@@ -2,11 +2,15 @@ import { MetaTags } from "@/components/meta-tags";
 import { Button } from "@/components/ui/button";
 import { SuspenseLoader } from "@/components/ui/component-loader";
 import { Icon } from "@/components/ui/icons";
+import { queries } from "@/lib/queries";
+import { createDatabaseBackup } from "@/services/organization";
 import {
   faDownload,
   faExclamationTriangle,
 } from "@fortawesome/pro-regular-svg-icons";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { lazy, memo } from "react";
+import { toast } from "sonner";
 
 const BackupList = lazy(() => import("./_components/backup-list"));
 
@@ -43,6 +47,26 @@ const Header = memo(() => {
 Header.displayName = "Header";
 
 const BackupAlert = memo(() => {
+  const queryClient = useQueryClient();
+
+  const createBackup = useMutation({
+    mutationFn: async () => {
+      // API call to delete the backup
+      await createDatabaseBackup();
+    },
+    onSuccess: () => {
+      toast.success("Backup created successfully");
+      queryClient.invalidateQueries({
+        queryKey: queries.organization.getDatabaseBackups._def,
+      });
+    },
+    onError: (error) => {
+      toast.error(
+        `Failed to delete backup: ${error instanceof Error ? error.message : "Unknown error"}`,
+      );
+    },
+  });
+
   return (
     <div className="flex bg-amber-500/20 border border-amber-600/50 p-4 rounded-md justify-between items-center mb-4 w-full">
       <div className="flex items-center gap-2 w-full text-amber-600">
@@ -59,6 +83,10 @@ const BackupAlert = memo(() => {
         <Button
           variant="outline"
           className="flex items-center gap-2 text-amber-600 border-amber-600 hover:bg-amber-400/10 hover:text-amber-600 bg-amber-400/10"
+          onClick={() => createBackup.mutate()}
+          isLoading={createBackup.isPending}
+          disabled={createBackup.isPending}
+          loadingText="Creating backup..."
         >
           <Icon icon={faDownload} className="size-4 mb-0.5" />
           <span>Create Backup</span>
