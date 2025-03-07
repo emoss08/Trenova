@@ -412,11 +412,6 @@ func (s *BackupService) ListBackups() ([]BackupFileInfo, error) {
 	return backups, nil
 }
 
-// GetBackupDir returns the backup directory path.
-func (s *BackupService) GetBackupDir() string {
-	return s.backupDir
-}
-
 // DeleteBackup deletes a backup file.
 func (s *BackupService) DeleteBackup(backupPath string) error {
 	log := s.logger.With().
@@ -424,12 +419,12 @@ func (s *BackupService) DeleteBackup(backupPath string) error {
 		Str("backupPath", backupPath).
 		Logger()
 
-	// Verify the file exists
+	// * Verify the file exists
 	if _, err := os.Stat(backupPath); os.IsNotExist(err) {
 		return eris.New("backup file does not exist")
 	}
 
-	// Delete the file
+	// * Delete the file
 	if err := os.Remove(backupPath); err != nil {
 		log.Error().
 			Err(err).
@@ -446,4 +441,9 @@ func (s *BackupService) DeleteBackup(backupPath string) error {
 // GetRetentionDays returns the configured retention days.
 func (s *BackupService) GetRetentionDays() int {
 	return s.retentionDays
+}
+
+// GetBackupDir returns the backup directory path.
+func (s *BackupService) GetBackupDir() string {
+	return s.backupDir
 }
