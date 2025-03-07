@@ -54,3 +54,7 @@ export async function deleteDatabaseBackup(filename: string) {
 export async function restoreDatabaseBackup(fileName: string) {
   return http.post(`/database-backups/restore/`, { filename: fileName });
 }
+
+export async function createDatabaseBackup() {
+  return http.post(`/database-backups/`);
+}

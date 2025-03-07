@@ -45,7 +45,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
           <ThemeProvider defaultTheme="dark" storageKey="trenova-ui-theme">
             <ReactQueryDevtools />
             {children}
-            <Toaster />
+            <Toaster richColors />
           </ThemeProvider>
         </NuqsAdapter>
       </PersistQueryClientProvider>
