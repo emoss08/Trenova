@@ -18,9 +18,7 @@ export function Shipment() {
     <FormSaveProvider>
       <div className="space-y-6 p-6">
         <MetaTags title="Shipments" description="Shipments" />
-
         <Header />
-
         <SuspenseLoader>
           <FormProvider {...form}>
             <ShipmentTable />

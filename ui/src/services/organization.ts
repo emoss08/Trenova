@@ -1,6 +1,7 @@
 import { http } from "@/lib/http-client";
 import { OrganizationSchema } from "@/lib/schemas/organization-schema";
 import { ShipmentControlSchema } from "@/lib/schemas/shipmentcontrol-schema";
+import { DatabaseBackupListResponse } from "@/types/database-backup";
 import { type Organization } from "@/types/organization";
 import { type LimitOffsetResponse } from "@/types/server";
 
@@ -40,4 +41,16 @@ export async function updateShipmentControl(data: ShipmentControlSchema) {
 
 export async function getShipmentControl() {
   return http.get<ShipmentControlSchema>(`/shipment-controls/`);
+}
+
+export async function getDatabaseBackups() {
+  return http.get<DatabaseBackupListResponse>(`/database-backups/`);
+}
+
+export async function deleteDatabaseBackup(filename: string) {
+  return http.delete(`/database-backups/${filename}/`);
+}
+
+export async function restoreDatabaseBackup(fileName: string) {
+  return http.post(`/database-backups/restore/`, { filename: fileName });
 }

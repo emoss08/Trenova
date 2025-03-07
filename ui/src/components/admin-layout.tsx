@@ -12,21 +12,25 @@ const links: SidebarLink[] = [
     href: "/organization/accounting-controls/",
     title: "Accounting Controls",
     group: "Organization",
+    disabled: true,
   },
   {
     href: "/organization/billing-controls/",
     title: "Billing Controls",
     group: "Organization",
+    disabled: true,
   },
   {
     href: "/organization/invoice-controls/",
     title: "Invoice Controls",
     group: "Organization",
+    disabled: true,
   },
   {
     href: "/organization/dispatch-controls/",
     title: "Dispatch Controls",
     group: "Organization",
+    disabled: true,
   },
   {
     href: "/organization/shipment-controls/",
@@ -37,21 +41,25 @@ const links: SidebarLink[] = [
     href: "/organization/route-controls/",
     title: "Route Controls",
     group: "Organization",
+    disabled: true,
   },
   {
     href: "/organization/feasibility-controls/",
     title: "Feasibility Controls",
     group: "Organization",
+    disabled: true,
   },
   {
     href: "/organization/feature-management/",
     title: "Feature Management",
     group: "Organization",
+    disabled: true,
   },
   {
     href: "/organization/hazardous-rules/",
     title: "Hazmat Seg. Rules",
     group: "Organization",
+    disabled: true,
   },
   {
     href: "#",
@@ -59,7 +67,6 @@ const links: SidebarLink[] = [
     group: "Organization",
     disabled: true,
   },
-
   {
     href: "#",
     title: "Custom Reports",
@@ -76,6 +83,7 @@ const links: SidebarLink[] = [
     href: "/organization/email-controls/",
     title: "Email Controls",
     group: "Email & SMS",
+    disabled: true,
   },
   {
     href: "#",
@@ -87,6 +95,7 @@ const links: SidebarLink[] = [
     href: "/organization/email-profiles/",
     title: "Email Profile(s)",
     group: "Email & SMS",
+    disabled: true,
   },
   {
     href: "#",
@@ -109,17 +118,18 @@ const links: SidebarLink[] = [
     href: "/organization/data-retention/",
     title: "Data Retention",
     group: "Data & Integrations",
-    disabled: true,
   },
   {
     href: "/organization/table-change-alerts/",
     title: "Table Change Alerts",
     group: "Data & Integrations",
+    disabled: true,
   },
   {
     href: "/organization/google-api/",
     title: "Google Integration",
     group: "Data & Integrations",
+    disabled: true,
   },
   {
     href: "#",

@@ -8,6 +8,7 @@ import (
 	"sync"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/core/ports/db"
 	"github.com/emoss08/trenova/internal/infrastructure/database/postgres/migrations"
 	"github.com/emoss08/trenova/internal/pkg/utils/fileutils"
 	"github.com/emoss08/trenova/test/fixtures"
@@ -24,6 +25,16 @@ type TestDBConnection struct {
 
 func (t *TestDBConnection) DB(ctx context.Context) (*bun.DB, error) {
 	return t.db, nil
+}
+
+func (t *TestDBConnection) ConnectionInfo(ctx context.Context) (*db.ConnectionInfo, error) {
+	return &db.ConnectionInfo{
+		Host:     "localhost",
+		Port:     5432,
+		Database: "trenova",
+		Username: "postgres",
+		Password: "postgres",
+	}, nil
 }
 
 func (t *TestDBConnection) Close() error {

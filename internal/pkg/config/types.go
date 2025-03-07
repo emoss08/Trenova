@@ -37,6 +37,9 @@ type Config struct {
 
 	// Static is the static configuration.
 	Static StaticConfig `mapstructure:"static"`
+
+	// Backup is the backup configuration.
+	Backup BackupConfig `mapstructure:"backup"`
 }
 
 type LogConfig struct {
@@ -406,4 +409,53 @@ type SearchConfig struct {
 
 	// BatchInterval is the search batch interval.
 	BatchInterval int `mapstructure:"batchInterval"`
+}
+
+// BackupConfig is the configuration database backups
+type BackupConfig struct {
+	// Enabled determines whether the backup service is active.
+	Enabled bool `mapstructure:"enabled"`
+
+	// BackupDir is the directory where backups will be stored.
+	// Default: "./backups"
+	BackupDir string `mapstructure:"backupDir"`
+
+	// RetentionDays is the number of days to keep backups.
+	// Backups older than this will be automatically deleted.
+	// Default: 30
+	RetentionDays int `mapstructure:"retentionDays"`
+
+	// Schedule is the cron schedule for automatic backups.
+	// Examples:
+	// - "0 0 * * *" (daily at midnight)
+	// - "0 0 * * 0" (weekly on Sunday at midnight)
+	// - "0 0 1 * *" (monthly on the 1st at midnight)
+	// Default: "0 0 * * *" (daily at midnight)
+	Schedule string `mapstructure:"schedule"`
+
+	// Compression determines the compression level (1-9).
+	// Higher values result in better compression but slower speed.
+	// Default: 6
+	Compression int `mapstructure:"compression"`
+
+	// MaxConcurrentBackups is the maximum number of backup operations
+	// that can run simultaneously.
+	// Default: 1
+	MaxConcurrentBackups int `mapstructure:"maxConcurrentBackups"`
+
+	// BackupTimeout is the maximum time allowed for a backup operation.
+	// Default: 30 minutes
+	BackupTimeout time.Duration `mapstructure:"backupTimeout"`
+
+	// NotifyOnFailure determines whether to send notifications on backup failures.
+	// Default: true
+	NotifyOnFailure bool `mapstructure:"notifyOnFailure"`
+
+	// NotifyOnSuccess determines whether to send notifications on backup success.
+	// Default: false
+	NotifyOnSuccess bool `mapstructure:"notifyOnSuccess"`
+
+	// NotificationEmail is the email address to send notifications to.
+	// If empty, email notifications will be disabled.
+	NotificationEmail string `mapstructure:"notificationEmail"`
 }

@@ -223,6 +223,15 @@ const routes: RouteObject[] = [
                   return { Component: ShipmentControl };
                 },
               },
+              {
+                path: "data-retention",
+                async lazy() {
+                  let { DataRetention } = await import(
+                    "@/app/data-retention/page"
+                  );
+                  return { Component: DataRetention };
+                },
+              },
             ],
           },
         ],

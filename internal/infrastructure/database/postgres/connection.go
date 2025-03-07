@@ -146,6 +146,20 @@ func (c *connection) DB(ctx context.Context) (*bun.DB, error) {
 	return c.db, nil
 }
 
+func (c *connection) ConnectionInfo(ctx context.Context) (*db.ConnectionInfo, error) {
+	c.mu.RLock()
+	defer c.mu.RUnlock()
+
+	return &db.ConnectionInfo{
+		Host:     c.cfg.Database().Host,
+		Port:     c.cfg.Database().Port,
+		Database: c.cfg.Database().Database,
+		Username: c.cfg.Database().Username,
+		Password: c.cfg.Database().Password,
+		SSLMode:  c.cfg.Database().SSLMode,
+	}, nil
+}
+
 func (c *connection) Close() error {
 	c.mu.Lock()
 	defer c.mu.Unlock()

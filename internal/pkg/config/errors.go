@@ -12,4 +12,10 @@ var (
 	ErrInvalidDBPort = eris.New("invalid database port")
 	ErrInvalidDBName = eris.New("invalid database name")
 	ErrInvalidDBUser = eris.New("invalid database username")
+
+	// ErrInvalidBackupCompression is returned when the compression level is invalid.
+	ErrInvalidBackupCompression = eris.New("invalid backup compression level (must be between 1-9)")
+
+	// ErrInvalidBackupCronSchedule is returned when the cron schedule is invalid.
+	ErrInvalidBackupCronSchedule = eris.New("invalid backup cron schedule")
 )

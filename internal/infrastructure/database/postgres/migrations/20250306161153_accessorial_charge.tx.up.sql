@@ -80,7 +80,7 @@ CREATE TRIGGER accessorial_charges_search_vector_trigger
 -- bun:split
 CREATE INDEX IF NOT EXISTS idx_accessorial_charges_active ON accessorial_charges (created_at DESC)
 WHERE
-    status NOT IN ('Completed', 'Canceled', 'Billed');
+    status != 'Inactive';
 
 -- Statement # 13
 -- bun:split

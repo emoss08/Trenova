@@ -23,6 +23,7 @@ import (
 func Bootstrap() error {
 	app := fx.New(
 		infrastructure.Module,
+		infrastructure.BackupModule,
 		redisRepos.Module,
 		statemachine.Module,
 		services.CalculatorModule,
