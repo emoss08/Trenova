@@ -55,6 +55,7 @@ const (
 	ResourceIntegration        = Resource("integration")         // Represents resources for integrations with external systems.
 	ResourceSetting            = Resource("setting")             // Represents configuration or setting resources.
 	ResourceTemplate           = Resource("template")            // Represents resources for managing templates.
+	ResourceBackup             = Resource("backup")              // Represents resources for managing backups.
 )
 
 func (r Resource) MarshalJSON() ([]byte, error) {
@@ -383,6 +384,13 @@ var (
 			BaseActions,
 			append(DataActions, ArchivableActions...)...,
 		),
+		ResourceBackup: {
+			ActionRead,
+			ActionCreate,
+			ActionDelete,
+			ActionRestore,
+			ActionManage,
+		},
 	}
 )
 

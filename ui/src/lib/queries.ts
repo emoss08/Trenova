@@ -1,4 +1,5 @@
 import {
+  getDatabaseBackups,
   getOrgById,
   getShipmentControl,
   listOrganizations,
@@ -34,6 +35,13 @@ export const queries = createQueryKeyStore({
       queryKey: ["shipmentControl"],
       queryFn: async () => {
         const response = await getShipmentControl();
+        return response.data;
+      },
+    }),
+    getDatabaseBackups: () => ({
+      queryKey: ["databaseBackups"],
+      queryFn: async () => {
+        const response = await getDatabaseBackups();
         return response.data;
       },
     }),

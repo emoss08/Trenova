@@ -208,6 +208,7 @@ function DetentionForm() {
                   control={control}
                   name="detentionThreshold"
                   label="Detention Threshold"
+                  type="number"
                   placeholder="Enter threshold in minutes"
                   description="Defines the standard free time allowance (in minutes) at facilities before detention charges begin accruing."
                   sideText="minutes"
@@ -576,6 +577,7 @@ function DelayShipmentForm() {
                   label="Delay Status Threshold"
                   placeholder="Enter threshold in minutes"
                   description="Defines the time variance (in minutes) from scheduled delivery or transit milestones before a shipment is flagged as 'Delayed'."
+                  type="number"
                   sideText="minutes"
                   className="max-w-[300px]"
                 />

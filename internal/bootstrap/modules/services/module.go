@@ -7,6 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/calculator"
 	"github.com/emoss08/trenova/internal/core/services/commodity"
 	"github.com/emoss08/trenova/internal/core/services/customer"
+	"github.com/emoss08/trenova/internal/core/services/dbbackup"
 	"github.com/emoss08/trenova/internal/core/services/documentqualityconfig"
 	"github.com/emoss08/trenova/internal/core/services/equipmentmanufacturer"
 	"github.com/emoss08/trenova/internal/core/services/equipmenttype"
@@ -70,6 +71,7 @@ var Module = fx.Module("services", fx.Provide(
 	stop.NewService,
 	logreader.NewService,
 	shipmentcontrol.NewService,
+	dbbackup.NewService,
 ))
 
 var CalculatorModule = fx.Module("calculator", fx.Provide(
