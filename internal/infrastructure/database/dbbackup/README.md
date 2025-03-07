@@ -126,7 +126,7 @@ These endpoints require admin authorization.
 
 Trenova provides a dedicated CLI tool for managing backups. This tool can be used independently of the main application, making it ideal for scheduled jobs and automation.
 
-**For detailed CLI documentation, see: [Trenova Backup CLI Documentation](../docs/CLI_BACKUP.md)**
+**For detailed CLI documentation, see: [Trenova Backup CLI Documentation](https://github.com/emoss08/Trenova/blob/master/cmd/backup/README.md)**
 
 The CLI tool supports creating, listing, restoring, and cleaning up backups with a simple command structure.
 
