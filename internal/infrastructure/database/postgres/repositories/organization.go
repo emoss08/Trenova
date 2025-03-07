@@ -97,21 +97,39 @@ func (or *organizationRepository) GetByID(ctx context.Context, opts repositories
 	cachedOrg, err := or.cache.GetByID(ctx, opts.OrgID)
 	if err == nil && cachedOrg != nil {
 		log.Debug().Str("orgID", opts.OrgID.String()).Msg("organization found in cache")
-		return cachedOrg, nil
+
+		// * Check if we need relations that might not be in the cached version
+		needsRefresh := (opts.IncludeState && cachedOrg.State == nil) ||
+			(opts.IncludeBu && cachedOrg.BusinessUnit == nil)
+
+		if !needsRefresh {
+			log.Debug().
+				Bool("includeState", opts.IncludeState).
+				Bool("includeBu", opts.IncludeBu).
+				Msg("cached organization has all requested relations")
+
+			// * Cached version has all the relations we need
+			return cachedOrg, nil
+		}
+
+		log.Debug().
+			Bool("includeState", opts.IncludeState).
+			Bool("includeBu", opts.IncludeBu).
+			Msg("cached organization missing requested relations, fetching from database")
 	}
 
-	// * If cache miss, get from database
+	// * Get from database (cache miss or needs relations)
 	org := new(organization.Organization)
 	q := dba.NewSelect().Model(org).
 		Where("org.id = ?", opts.OrgID).
 		Where("org.business_unit_id = ?", opts.BuID)
 
-	// Include the state if requested
+	// * Include the state if requested
 	if opts.IncludeState {
 		q.Relation("State")
 	}
 
-	// Include the business unit if requested
+	// * Include the business unit if requested
 	if opts.IncludeBu {
 		q.Relation("BusinessUnit")
 	}
