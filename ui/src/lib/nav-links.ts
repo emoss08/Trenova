@@ -227,6 +227,11 @@ export const routes: routeInfo[] = [
         label: "Shipment Controls",
         link: "/organization/shipment-controls/",
       },
+      {
+        key: "data-retention",
+        label: "Data Retention",
+        link: "/organization/data-retention/",
+      },
     ],
   },
 ];

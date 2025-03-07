@@ -5,6 +5,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/api/handlers/assignment"
 	authHandler "github.com/emoss08/trenova/internal/api/handlers/auth"
+	"github.com/emoss08/trenova/internal/api/handlers/backup"
 	"github.com/emoss08/trenova/internal/api/handlers/commodity"
 	"github.com/emoss08/trenova/internal/api/handlers/customer"
 	"github.com/emoss08/trenova/internal/api/handlers/documentqualityconfig"
@@ -102,6 +103,7 @@ type RouterParams struct {
 	StopHandler                  *stop.Handler
 	LogReaderHandler             *logreader.Handler
 	ShipmentControlHandler       *shipmentcontrol.Handler
+	BackupHandler                *backup.Handler
 }
 
 type Router struct {
@@ -266,4 +268,7 @@ func (r *Router) setupProtectedRoutes(router fiber.Router, rl *middleware.RateLi
 
 	// Shipment Control
 	r.p.ShipmentControlHandler.RegisterRoutes(router, rl)
+
+	// Backup
+	r.p.BackupHandler.RegisterRoutes(router, rl)
 }
