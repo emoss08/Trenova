@@ -1,23 +1,47 @@
 import { IconDefinition } from "@fortawesome/pro-regular-svg-icons";
+import { Resource } from "./audit-entry";
 
-export type routeInfo = {
-  key: string;
+/**
+ * Route information structure for navigation
+ */
+export interface RouteInfo {
+  key: Resource;
   label: string;
-  description?: string;
   icon?: IconDefinition;
   link?: string;
-  tree?: routeInfo[];
-};
+  supportsModal?: boolean;
+  tree?: RouteInfo[];
+  isDefault?: boolean;
+}
 
-export type commandRouteInfo = {
+/**
+ * Command route information for command palette
+ */
+export interface CommandRouteInfo {
   id: string;
   link: string;
   label: string;
   icon?: IconDefinition;
-};
+}
 
-export type CommandGroupInfo = {
+/**
+ * Command group information for command palette
+ */
+export interface CommandGroupInfo {
   id: string;
   label: string;
-  routes: commandRouteInfo[];
-};
+  routes: CommandRouteInfo[];
+}
+
+export interface PageInfo {
+  path: string;
+  supportsModal: boolean;
+}
+
+// Quick lookup for routes by resource type
+export type ResourceType = string;
+
+export interface ResourcePageInfo {
+  path: string;
+  supportsModal: boolean;
+}

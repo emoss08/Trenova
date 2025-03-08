@@ -107,7 +107,6 @@ const links: SidebarLink[] = [
     href: "/organization/audit-logs/",
     title: "Audit Logs",
     group: "Data & Integrations",
-    disabled: true,
   },
   {
     href: "/organization/system-logs/",

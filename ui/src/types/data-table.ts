@@ -162,6 +162,8 @@ type DataTableProps<TData extends Record<string, any>> = {
   // permissionName: string;
   initialPageSize?: number;
   defaultSort?: SortingState;
+  includeHeader?: boolean;
+  includeOptions?: boolean;
   // onDataChange?: (data: TData[]) => void;
   pageSizeOptions?: Readonly<number[]>;
 };
