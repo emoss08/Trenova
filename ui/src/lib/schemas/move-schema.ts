@@ -38,6 +38,7 @@ export const moveSchema = object({
     .integer("Distance must be a whole number")
     .min(0, "Distance cannot be negative"),
   stops: array().of(stopSchema),
+  formId: string().optional(), // * Simply becuase react-hook-form will override the id if there is nothing for it to append to.
 });
 
 export type MoveSchema = InferType<typeof moveSchema>;

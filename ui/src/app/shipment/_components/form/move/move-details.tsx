@@ -56,6 +56,7 @@ export default function ShipmentMovesDetails() {
   } = useFieldArray({
     control,
     name: "moves",
+    keyName: "formId",
   });
 
   const handleAddMove = () => {
