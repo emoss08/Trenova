@@ -9,6 +9,7 @@ import { useUser } from "@/stores/user-store";
 
 import { CLIENT_VERSION } from "@/constants/env";
 import { useLogout } from "@/hooks/use-auth";
+import { User } from "@/types/user";
 import {
   faBell,
   faDisplay,
@@ -37,8 +38,10 @@ import {
 import { Icon } from "./ui/icons";
 import { ExternalLink } from "./ui/link";
 
-function UserAvatar() {
-  const user = useUser();
+export function UserAvatar({ user }: { user: User | null }) {
+  if (!user) {
+    return null;
+  }
 
   return (
     <div className="flex items-center gap-2 px-1 py-1.5 text-left text-sm">
@@ -58,6 +61,7 @@ export function NavUser() {
   const { theme, setTheme } = useTheme();
   const [currentTheme, setCurrentTheme] = useState(theme);
   const logout = useLogout();
+  const user = useUser();
 
   const handleLogout = async () => {
     toast.promise(logout, {
@@ -98,7 +102,7 @@ export function NavUser() {
               className="border border-input bg-background [&>svg]:size-5"
               size="lg"
             >
-              <UserAvatar />
+              <UserAvatar user={user} />
               <CaretSortIcon className="ml-auto size-5" />
             </SidebarMenuButton>
           </DropdownMenuTrigger>
@@ -108,7 +112,7 @@ export function NavUser() {
             className="w-[270px] max-w-[300px]"
           >
             <DropdownMenuLabel className="p-0 font-normal">
-              <UserAvatar />
+              <UserAvatar user={user} />
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
             <DropdownMenuItem
