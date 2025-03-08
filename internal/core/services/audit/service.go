@@ -10,6 +10,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/audit"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
+	"github.com/emoss08/trenova/internal/core/ports"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/pkg/config"
@@ -162,6 +163,41 @@ func (s *service) validateConfig(params *config.AuditConfig) error {
 	}
 
 	return nil
+}
+
+func (s *service) List(ctx context.Context, opts *ports.LimitOffsetQueryOptions) (*ports.ListResult[*audit.Entry], error) {
+	log := s.l.With().
+		Str("operation", "List").
+		Str("buID", opts.TenantOpts.BuID.String()).
+		Str("userID", opts.TenantOpts.UserID.String()).
+		Logger()
+
+	// TODO(wolfred): We need to check the permissions here.
+
+	entities, err := s.repo.List(ctx, opts)
+	if err != nil {
+		log.Error().Err(err).Msg("failed to list audit entries")
+		return nil, eris.Wrap(err, "list audit entries")
+	}
+
+	return entities, nil
+}
+
+func (s *service) GetByID(ctx context.Context, opts repositories.GetAuditEntryByIDOptions) (*audit.Entry, error) {
+	log := s.l.With().
+		Str("operation", "GetByID").
+		Str("auditEntryID", opts.ID.String()).
+		Logger()
+
+	// TODO(wolfred): We need to check the permissions here.
+
+	entity, err := s.repo.GetByID(ctx, opts)
+	if err != nil {
+		log.Error().Err(err).Str("auditEntryID", opts.ID.String()).Msg("failed to get audit entry")
+		return nil, eris.Wrap(err, "get audit entry by id")
+	}
+
+	return entity, nil
 }
 
 func (s *service) LogAction(

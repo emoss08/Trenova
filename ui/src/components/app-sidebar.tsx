@@ -23,7 +23,7 @@ import {
 } from "@/components/ui/sidebar";
 import { routes } from "@/lib/nav-links";
 import { cn } from "@/lib/utils";
-import { routeInfo } from "@/types/nav-links";
+import { RouteInfo } from "@/types/nav-links";
 import { ChevronRightIcon } from "@radix-ui/react-icons";
 import { Link, useLocation } from "react-router";
 import { NavUser } from "./nav-user";
@@ -54,7 +54,7 @@ const isRouteActive = (currentPath: string, itemPath?: string): boolean => {
 };
 
 // Helper function to check if any child route is active
-const hasActiveChild = (currentPath: string, item: routeInfo): boolean => {
+const hasActiveChild = (currentPath: string, item: RouteInfo): boolean => {
   if (isRouteActive(currentPath, item.link)) return true;
   if (!item.tree) return false;
 
@@ -65,7 +65,7 @@ const hasActiveChild = (currentPath: string, item: routeInfo): boolean => {
   );
 };
 
-function Tree({ item, currentPath }: { item: routeInfo; currentPath: string }) {
+function Tree({ item, currentPath }: { item: RouteInfo; currentPath: string }) {
   const isActive = isRouteActive(currentPath, item.link);
   const hasActive = hasActiveChild(currentPath, item);
   const [isOpen, setIsOpen] = React.useState(hasActive);

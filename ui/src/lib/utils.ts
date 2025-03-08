@@ -1,3 +1,5 @@
+import { Resource } from "@/types/audit-entry";
+import { ResourcePageInfo, ResourceType, RouteInfo } from "@/types/nav-links";
 import { clsx, type ClassValue } from "clsx";
 import { RefObject, useEffect } from "react";
 import { twMerge } from "tailwind-merge";
@@ -243,4 +245,104 @@ export function formatLocation(location?: LocationSchema) {
 export function toNumber(value: any): number {
   const num = Number(value);
   return isNaN(num) ? 0 : num; // Ensure it returns 0 if NaN
+}
+
+export function resourceToPage(resource: Resource) {
+  switch (resource) {
+    case Resource.LocationCategory:
+      return "/dispatch/configurations/location-categories";
+    case Resource.Location:
+      return "/dispatch/configurations/locations";
+    case Resource.FleetCode:
+      return "/dispatch/configurations/fleet-codes";
+    case Resource.Worker:
+      return "/dispatch/configurations/workers";
+    case Resource.Tractor:
+      return "/dispatch/configurations/tractors";
+    case Resource.Trailer:
+      return "/dispatch/configurations/trailers";
+    case Resource.Shipment:
+      return "/shipments/management";
+    case Resource.ShipmentType:
+      return "/shipments/configurations/shipment-types";
+    case Resource.ServiceType:
+      return "/shipments/configurations/service-types";
+    case Resource.HazardousMaterial:
+      return "/shipments/configurations/hazardous-materials";
+    case Resource.Commodity:
+      return "/shipments/configurations/commodities";
+    case Resource.Assignment:
+      return "/shipments/assignments";
+    case Resource.ShipmentMove:
+      return "/shipments/moves";
+    case Resource.Stop:
+      return "/shipments/stops";
+    case Resource.Customer:
+      return "/customers";
+    case Resource.Invoice:
+      return "/invoices";
+    case Resource.Dispatch:
+      return "/dispatch/management";
+    case Resource.Report:
+      return "/reports";
+    case Resource.AuditEntries:
+      return "/audit-entries";
+    case Resource.TableConfiguration:
+      return "/dispatch/configurations/table-configurations";
+    case Resource.Integration:
+      return "/dispatch/integrations";
+    case Resource.Setting:
+      return "/dispatch/settings";
+    case Resource.Template:
+      return "/dispatch/templates";
+    case Resource.Backup:
+      return "/dispatch/backups";
+    default:
+      return "/";
+  }
+}
+
+export const resourcePathMap = new Map<string, ResourcePageInfo>();
+
+// Populate the map with all routes that have links
+export function populateResourcePathMap(routeItems: RouteInfo[], prefix = "") {
+  for (const route of routeItems) {
+    if (route.link) {
+      const resourceKey = route.key.toLowerCase();
+      resourcePathMap.set(resourceKey, {
+        path: route.link,
+        supportsModal: route.supportsModal ?? false,
+      });
+    }
+
+    if (route.tree) {
+      populateResourcePathMap(route.tree, prefix);
+    }
+  }
+}
+
+/**
+ * Get page info for a specific resource type from our navigation structure
+ */
+export function getRoutePageInfo(resourceType: ResourceType): ResourcePageInfo {
+  const pageInfo = resourcePathMap.get(resourceType);
+
+  if (!pageInfo) {
+    // Default fallback
+    return { path: "/", supportsModal: false };
+  }
+
+  return pageInfo;
+}
+
+export function convertValueToDisplay(value: any) {
+  if (typeof value === "boolean") {
+    return value ? "true" : "false";
+  }
+
+  if (typeof value === "object" && value !== null) {
+    return JSON.stringify(value);
+  }
+
+  return value;
 }

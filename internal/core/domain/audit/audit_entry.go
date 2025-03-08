@@ -44,7 +44,7 @@ type Entry struct {
 	IPAddress string `json:"ipAddress,omitempty" bun:",type:VARCHAR(45)"` // IPv6 addresses need space
 
 	// Relationships
-	User         *user.User                 `json:"-" bun:"rel:belongs-to,join:user_id=id"`
+	User         *user.User                 `json:"user,omitempty" bun:"rel:belongs-to,join:user_id=id"`
 	Organization *organization.Organization `json:"-" bun:"rel:belongs-to,join:organization_id=id"`
 	BusinessUnit *businessunit.BusinessUnit `json:"-" bun:"rel:belongs-to,join:business_unit_id=id"`
 }

@@ -77,7 +77,6 @@
     "@rollup/plugin-node-resolve": "^16.0.0",
     "@tanstack/eslint-plugin-query": "^5.66.1",
     "@tanstack/react-query-devtools": "^5.67.1",
-    "@types/google.maps": "^3.58.1",
     "@types/lodash": "^4.17.16",
     "@types/node": "^22.13.9",
     "@types/react": "^19.0.10",
@@ -102,9 +101,7 @@
     "typescript-eslint": "^8.26.0",
     "vite": "^6.2.1",
     "vite-plugin-compression2": "^1.3.3",
-    "vite-plugin-pwa": "^0.21.1",
-    "workbox-core": "^7.3.0",
-    "workbox-window": "^7.3.0"
+    "vite-plugin-pwa": "^0.21.1"
   },
   "peerDependencies": {
     "react-helmet-async": "npm:@slorber/react-helmet-async@1.3.0"
