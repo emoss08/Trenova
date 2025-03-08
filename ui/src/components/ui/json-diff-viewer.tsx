@@ -14,9 +14,10 @@ import {
   DialogHeader,
   DialogTitle,
 } from "./dialog";
+import { SensitiveBadge } from "./sensitive-badge";
+
 
 function DiffLine({ line, lineNumber, type }: DiffLineProps) {
-  // * Define background colors based on type and theme
   const bgColor = useMemo(() => {
     if (type === "added") {
       return "bg-green-50 dark:bg-green-950/40";
@@ -48,6 +49,34 @@ function DiffLine({ line, lineNumber, type }: DiffLineProps) {
 
   const syntaxHighlightedLine = useMemo(() => {
     if (!line) return null;
+
+    // Check if the line contains sensitive data (masked with asterisks)
+    if (line.includes(':"****"') || line.includes(': "****"')) {
+      const parts = line.split(/(".*?"\s*:\s*"(\*+)")/).filter(Boolean);
+
+      return (
+        <>
+          {parts.map((part, index) => {
+            if (part.includes('"****"')) {
+              return (
+                <span key={index} className="inline-flex items-center">
+                  <span
+                    dangerouslySetInnerHTML={{
+                      __html: part.replace(
+                        '"****"',
+                        '<span class="text-vitess-string">"****"</span>',
+                      ),
+                    }}
+                  />
+                  <SensitiveBadge />
+                </span>
+              );
+            }
+            return <span key={index}>{part}</span>;
+          })}
+        </>
+      );
+    }
 
     const parts = [];
     let currentIndex = 0;
@@ -92,11 +121,25 @@ function DiffLine({ line, lineNumber, type }: DiffLineProps) {
         );
 
         parts.push(<span key="pre-value">{preValueText}</span>);
-        parts.push(
-          <span key="value" className="text-vitess-string">
-            {valueText}
-          </span>,
-        );
+
+        // Check if it's a sensitive value
+        if (valueText.includes('"****"')) {
+          parts.push(
+            <span key="value" className="inline-flex items-center">
+              <span className="text-vitess-string">{valueText}</span>
+              <span className="ml-2 text-xs px-1.5 py-0.5 bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-400 rounded-sm font-medium">
+                Sensitive
+              </span>
+            </span>,
+          );
+        } else {
+          parts.push(
+            <span key="value" className="text-vitess-string">
+              {valueText}
+            </span>,
+          );
+        }
+
         parts.push(<span key="post-value">{postValueText}</span>);
       } else {
         // * Highlight other values (numbers, booleans, null)
@@ -257,7 +300,7 @@ export function JsonCodeDiffViewer({
               oldLines as {
                 line: string;
                 lineNumber: number;
-                type: "removed" | "unchanged" | "added";
+                type: JsonViewerType;
               }[]
             }
           />
@@ -268,7 +311,7 @@ export function JsonCodeDiffViewer({
                 key={`old-${index}`}
                 line={line}
                 lineNumber={lineNumber}
-                type={type as "removed" | "unchanged" | "added"}
+                type={type as JsonViewerType}
               />
             ))}
           </div>
@@ -294,7 +337,7 @@ export function JsonCodeDiffViewer({
               newLines as {
                 line: string;
                 lineNumber: number;
-                type: "removed" | "unchanged" | "added";
+                type: JsonViewerType;
               }[]
             }
           />
@@ -305,7 +348,7 @@ export function JsonCodeDiffViewer({
                 key={`new-${index}`}
                 line={line}
                 lineNumber={lineNumber}
-                type={type as "removed" | "unchanged" | "added"}
+                type={type as JsonViewerType}
               />
             ))}
           </div>
