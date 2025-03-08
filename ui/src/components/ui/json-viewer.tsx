@@ -28,6 +28,7 @@ import {
   DropdownMenuTrigger,
 } from "./dropdown-menu";
 import { Icon } from "./icons";
+import { SensitiveBadge } from "./sensitive-badge";
 import {
   Table,
   TableBody,
@@ -76,7 +77,17 @@ function CollapsibleNode({
 
   if (!isObject) {
     let valueDisplay;
-    if (typeof value === "string") {
+    // Check if value appears to be masked/sensitive data
+    const isSensitiveData = typeof value === "string" && /^\*{3,}$/.test(value);
+
+    if (isSensitiveData) {
+      valueDisplay = (
+        <div className="inline-flex items-center">
+          <span className="text-vitess-string">&quot;{value}&quot;</span>
+          <SensitiveBadge />
+        </div>
+      );
+    } else if (typeof value === "string") {
       valueDisplay = (
         <span className="text-vitess-string">&quot;{value}&quot;</span>
       );
@@ -203,7 +214,8 @@ export function JsonViewer({
 }
 
 // This component handles rendering a value in the table view
-const ReadableJsonValue = ({
+// Modification for the ReadableJsonValue component
+function ReadableJsonValue({
   value,
   path = "",
   level = 0,
@@ -211,7 +223,7 @@ const ReadableJsonValue = ({
   value: any;
   path?: string;
   level?: number;
-}) => {
+}) {
   const [isExpanded, setIsExpanded] = useState(false);
 
   if (value === null)
@@ -219,14 +231,25 @@ const ReadableJsonValue = ({
   if (value === undefined)
     return <span className="text-muted-foreground">undefined</span>;
 
+  // Handle sensitive data detection
+  const isSensitiveData = typeof value === "string" && /^\*{3,}$/.test(value);
+
   // Handle primitive values
   if (typeof value !== "object") {
-    if (typeof value === "string")
+    if (isSensitiveData) {
+      return (
+        <div className="flex items-center">
+          <span className="text-vitess-string">&quot;{value}&quot;</span>
+          <SensitiveBadge />
+        </div>
+      );
+    } else if (typeof value === "string") {
       return <span className="text-vitess-string">&quot;{value}&quot;</span>;
-    if (typeof value === "number")
+    } else if (typeof value === "number") {
       return <span className="text-vitess-number">{value}</span>;
-    if (typeof value === "boolean")
+    } else if (typeof value === "boolean") {
       return <span className="text-vitess-number">{value.toString()}</span>;
+    }
     return <span>{String(value)}</span>;
   }
 
@@ -310,7 +333,7 @@ const ReadableJsonValue = ({
       )}
     </>
   );
-};
+}
 
 function JsonViewerActions({ data }: { data: any }) {
   const [error, setError] = useState<string | null>(null);

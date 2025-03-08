@@ -205,7 +205,7 @@ func (s *Service) Update(ctx context.Context, org *organization.Organization, us
 		OrgID:        org.ID,
 		BuID:         org.BusinessUnitID,
 		IncludeState: true,
-		IncludeBu:    true,
+		// IncludeBu:    true,
 	}
 
 	original, err := s.repo.GetByID(ctx, opts)
