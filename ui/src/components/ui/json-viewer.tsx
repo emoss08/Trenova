@@ -1,6 +1,10 @@
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { TableSheetProps } from "@/types/data-table";
+import type { TableSheetProps } from "@/types/data-table";
+import type {
+  CollapsibleNodeProps,
+  JsonViewerProps,
+} from "@/types/json-viewer";
 import {
   faChevronDown,
   faChevronRight,
@@ -36,20 +40,6 @@ import {
   TableHeader,
   TableRow,
 } from "./table";
-
-interface JsonViewerProps {
-  data: any;
-  className?: string;
-  initiallyExpanded?: boolean;
-}
-
-interface CollapsibleNodeProps {
-  name: string | number | null;
-  value: any;
-  isRoot?: boolean;
-  initiallyExpanded?: boolean;
-  withComma?: boolean;
-}
 
 function CollapsibleNode({
   name,
