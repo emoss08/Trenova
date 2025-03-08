@@ -1,4 +1,9 @@
 import { cn } from "@/lib/utils";
+import type {
+  DiffLineProps,
+  JsonDiffViewerProps,
+  VirtualizedDiffViewerProps,
+} from "@/types/json-viewer";
 import { useVirtualizer } from "@tanstack/react-virtual";
 import { useMemo, useRef } from "react";
 import {
@@ -11,28 +16,6 @@ import {
 } from "./dialog";
 import { SensitiveBadge } from "./sensitive-badge";
 
-type JsonViewerType = "added" | "removed" | "unchanged";
-
-interface JsonDiffViewerProps {
-  oldData: any;
-  newData: any;
-  title?: { old: string; new: string };
-  className?: string;
-}
-
-interface DiffLineProps {
-  line: string;
-  lineNumber: number;
-  type: JsonViewerType;
-}
-
-interface VirtualizedDiffViewerProps {
-  lines: Array<{
-    line: string;
-    lineNumber: number;
-    type: JsonViewerType;
-  }>;
-}
 
 function DiffLine({ line, lineNumber, type }: DiffLineProps) {
   const bgColor = useMemo(() => {
@@ -44,7 +27,7 @@ function DiffLine({ line, lineNumber, type }: DiffLineProps) {
     return "";
   }, [type]);
 
-  // Define text colors based on type
+  // * Define text colors based on type
   const textColor = useMemo(() => {
     if (type === "added") {
       return "text-green-600 dark:text-green-400";
@@ -54,7 +37,7 @@ function DiffLine({ line, lineNumber, type }: DiffLineProps) {
     return "text-foreground";
   }, [type]);
 
-  // Add a symbol at the beginning based on type
+  // * Add a symbol at the beginning based on type
   const linePrefix = useMemo(() => {
     if (type === "added") {
       return <span className="text-green-600 dark:text-green-400 mr-2">+</span>;
@@ -64,7 +47,6 @@ function DiffLine({ line, lineNumber, type }: DiffLineProps) {
     return <span className="mr-2"> </span>;
   }, [type]);
 
-  // Enhanced syntax highlighting for JSON with sensitive data detection
   const syntaxHighlightedLine = useMemo(() => {
     if (!line) return null;
 
@@ -99,12 +81,12 @@ function DiffLine({ line, lineNumber, type }: DiffLineProps) {
     const parts = [];
     let currentIndex = 0;
 
-    // Match property keys and their quotes
+    // * Match property keys and their quotes
     const keyRegex = /"([^"]+)"(?=\s*:)/g;
     let match;
 
     while ((match = keyRegex.exec(line)) !== null) {
-      // Add any text before the match
+      // * Add any text before the match
       if (match.index > currentIndex) {
         parts.push(
           <span key={`pre-${match.index}`}>
@@ -113,7 +95,7 @@ function DiffLine({ line, lineNumber, type }: DiffLineProps) {
         );
       }
 
-      // Add the property key with highlighting
+      // * Add the property key with highlighting
       parts.push(
         <span key={`key-${match.index}`} className="text-vitess-node">
           {match[0]}
@@ -123,11 +105,11 @@ function DiffLine({ line, lineNumber, type }: DiffLineProps) {
       currentIndex = match.index + match[0].length;
     }
 
-    // Add any remaining text
+    // * Add any remaining text
     if (currentIndex < line.length) {
       const remainingText = line.substring(currentIndex);
 
-      // Highlight string values
+      // * Highlight string values
       const stringValueRegex = /: "([^"]*)"/g;
       const valueMatch = stringValueRegex.exec(remainingText);
 
@@ -160,7 +142,7 @@ function DiffLine({ line, lineNumber, type }: DiffLineProps) {
 
         parts.push(<span key="post-value">{postValueText}</span>);
       } else {
-        // Highlight other values (numbers, booleans, null)
+        // * Highlight other values (numbers, booleans, null)
         const formattedText = remainingText
           .replace(
             /(: -?\d+(\.\d+)?)/g,
@@ -201,15 +183,14 @@ function DiffLine({ line, lineNumber, type }: DiffLineProps) {
   );
 }
 
-// Virtualized list component for improved performance with large diffs
 function VirtualizedDiffViewer({ lines }: VirtualizedDiffViewerProps) {
   const parentRef = useRef<HTMLDivElement>(null);
 
   const virtualizer = useVirtualizer({
     count: lines.length,
     getScrollElement: () => parentRef.current,
-    estimateSize: () => 24, // Estimated line height
-    overscan: 10, // Number of items to render before and after the visible items
+    estimateSize: () => 24, // * Estimated line height
+    overscan: 10, // * Number of items to render before and after the visible items
   });
 
   return (
@@ -254,7 +235,7 @@ export function JsonCodeDiffViewer({
   title = { old: "Previous Version", new: "Current Version" },
   className,
 }: JsonDiffViewerProps) {
-  // Format the JSON data for display
+  // * Format the JSON data for display
   const oldJson = useMemo(() => {
     if (!oldData) return [];
     try {
@@ -275,15 +256,13 @@ export function JsonCodeDiffViewer({
     }
   }, [newData]);
 
-  // Prepare data for virtualized lists
+  // * Prepare data for virtualized lists
   const oldLines = useMemo(
     () =>
       oldJson.map((line, index) => ({
         line,
         lineNumber: index + 1,
-        type: isLineRemoved(line, oldJson, newJson)
-          ? "removed"
-          : ("unchanged" as const),
+        type: isLineRemoved(line, newJson) ? "removed" : ("unchanged" as const),
       })),
     [oldJson, newJson],
   );
@@ -298,7 +277,7 @@ export function JsonCodeDiffViewer({
     [newJson, oldJson],
   );
 
-  // Check if diffs are large (to decide whether to use virtualization)
+  // * Check if diffs are large (to decide whether to use virtualization)
   const isLargeDiff = oldLines.length > 500 || newLines.length > 500;
 
   return (
@@ -379,57 +358,114 @@ export function JsonCodeDiffViewer({
   );
 }
 
-// Utility function to determine if a line was removed
-function isLineRemoved(
-  line: string,
-  oldLines: string[],
-  newLines: string[],
-): boolean {
-  // Simple approach: check if the line is in old but not in new
+function isLineRemoved(line: string, newLines: string[]): boolean {
+  // * Quick sanity check - if the exact line exists in newLines, it wasn't removed
+  if (newLines.includes(line)) {
+    return false;
+  }
+
   const trimmedLine = line.trim();
-  const containsValue =
-    trimmedLine.includes("true") ||
-    trimmedLine.includes("false") ||
-    /\d{10,}/.test(trimmedLine);
+  // * Skip lines that are just structural (brackets, commas, etc)
+  if (trimmedLine === "" || /^[{}[\],]$/.test(trimmedLine)) {
+    return false;
+  }
 
-  if (!containsValue) return false;
-
-  // For property values, we need to check if the property exists with a different value
+  // * For property values, we need to identify if the property exists with a different value
   if (trimmedLine.includes(":")) {
-    const key = trimmedLine.split(":")[0].trim();
-    const newLineWithSameKey = newLines.find((nl) => nl.includes(key));
-    if (newLineWithSameKey && newLineWithSameKey !== line) {
-      return true;
+    // * Extract the property key (removing quotes and whitespace)
+    const keyMatch = trimmedLine.match(/"([^"]+)"/);
+    if (keyMatch) {
+      const key = keyMatch[1];
+
+      // * Look for the same key in new lines
+      const keyPattern = new RegExp(`"${key}"\\s*:`);
+      const newLineWithSameKey = newLines.find((nl) => keyPattern.test(nl));
+
+      // * If the key exists in newLines but with a different value, it was modified (consider as removed)
+      if (newLineWithSameKey && newLineWithSameKey !== line) {
+        return true;
+      }
+
+      // * If the key doesn't exist at all in newLines, it was removed completely
+      if (!newLineWithSameKey) {
+        return true;
+      }
     }
   }
 
-  return !newLines.includes(line);
+  // *For other significant content (not just structural elements),
+  // *if it doesn't exist in newLines, consider it removed
+  const isSignificantContent =
+    trimmedLine.includes('"') ||
+    trimmedLine.includes("true") ||
+    trimmedLine.includes("false") ||
+    trimmedLine.includes("null") ||
+    /\d+/.test(trimmedLine);
+
+  if (
+    isSignificantContent &&
+    !newLines.some((nl) => nl.includes(trimmedLine))
+  ) {
+    return true;
+  }
+
+  return false;
 }
 
-// Utility function to determine if a line was added
 function isLineAdded(line: string, oldLines: string[]): boolean {
-  // Simple approach: check if the line is in new but not in old
+  // * Quick sanity check - if the exact line exists in oldLines, it wasn't added
+  if (oldLines.includes(line)) {
+    return false;
+  }
+
   const trimmedLine = line.trim();
-  const containsValue =
-    trimmedLine.includes("true") ||
-    trimmedLine.includes("false") ||
-    /\d{10,}/.test(trimmedLine);
+  // * Skip lines that are just structural (brackets, commas, etc)
+  if (trimmedLine === "" || /^[{}[\],]$/.test(trimmedLine)) {
+    return false;
+  }
 
-  if (!containsValue) return false;
-
-  // For property values, we need to check if the property exists with a different value
+  // * For property values, we need to identify if the property exists with a different value
   if (trimmedLine.includes(":")) {
-    const key = trimmedLine.split(":")[0].trim();
-    const oldLineWithSameKey = oldLines.find((ol) => ol.includes(key));
-    if (oldLineWithSameKey && oldLineWithSameKey !== line) {
-      return true;
+    // * Extract the property key (removing quotes and whitespace)
+    const keyMatch = trimmedLine.match(/"([^"]+)"/);
+    if (keyMatch) {
+      const key = keyMatch[1];
+
+      // * Look for the same key in old lines
+      const keyPattern = new RegExp(`"${key}"\\s*:`);
+      const oldLineWithSameKey = oldLines.find((ol) => keyPattern.test(ol));
+
+      // * If the key exists in oldLines but with a different value, it was modified (consider as added)
+      if (oldLineWithSameKey && oldLineWithSameKey !== line) {
+        return true;
+      }
+
+      // * If the key doesn't exist at all in oldLines, it was added completely
+      if (!oldLineWithSameKey) {
+        return true;
+      }
     }
   }
 
-  return !oldLines.includes(line);
+  // * For other significant content (not just structural elements),
+  // * if it doesn't exist in oldLines, consider it added
+  const isSignificantContent =
+    trimmedLine.includes('"') ||
+    trimmedLine.includes("true") ||
+    trimmedLine.includes("false") ||
+    trimmedLine.includes("null") ||
+    /\d+/.test(trimmedLine);
+
+  if (
+    isSignificantContent &&
+    !oldLines.some((ol) => ol.includes(trimmedLine))
+  ) {
+    return true;
+  }
+
+  return false;
 }
 
-// Improved ChangeDiffDialog component that uses the enhanced JsonCodeDiffViewer
 export function ChangeDiffDialog({
   changes,
   open,
@@ -439,7 +475,7 @@ export function ChangeDiffDialog({
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }) {
-  // Transform the changes object into consolidated before/after objects for comparison
+  // * Transform the changes object into consolidated before/after objects for comparison
   const { fromData, toData } = useMemo(() => {
     const fromData: Record<string, any> = {};
     const toData: Record<string, any> = {};
