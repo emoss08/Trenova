@@ -26,7 +26,6 @@ export const routes: RouteInfo[] = [
     key: Resource.BillingManagement,
     label: "Billing Management",
     icon: faVault,
-    link: "/billing",
     isDefault: true,
     tree: [
       {
@@ -90,7 +89,6 @@ export const routes: RouteInfo[] = [
     key: Resource.Dispatch,
     label: "Dispatch Management",
     icon: faRoad,
-    link: "/dispatch",
     isDefault: true,
     tree: [
       {
@@ -154,7 +152,6 @@ export const routes: RouteInfo[] = [
     key: Resource.Shipment,
     label: "Shipment Management",
     icon: faTruck,
-    link: "/shipments",
     isDefault: true,
     tree: [
       {
@@ -206,7 +203,6 @@ export const routes: RouteInfo[] = [
     key: Resource.Equipment,
     label: "Equipment Management",
     icon: faScrewdriverWrench,
-    link: "/equipment",
     isDefault: true,
     tree: [
       {
@@ -252,7 +248,6 @@ export const routes: RouteInfo[] = [
     key: Resource.Organization,
     label: "Organization Settings",
     icon: faGear,
-    link: "/organization/settings",
     supportsModal: false,
     tree: [
       {

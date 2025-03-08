@@ -46,6 +46,7 @@
  * ```
  */
 
+import { APP_ENV } from "@/constants/env";
 import { useQueryClient } from "@tanstack/react-query";
 import { useCallback, useEffect, useRef } from "react";
 
@@ -76,7 +77,7 @@ const calculateDelay = (attempt: number) =>
 
 // Debug logger with environment check
 const logDebug = (message: string, color: string = "#a742f5") => {
-  if (process.env.NODE_ENV !== "production") {
+  if (APP_ENV === "development") {
     console.debug(
       `%c[Trenova] ${message}`,
       `color: ${color}; font-weight: bold`,
@@ -96,8 +97,8 @@ const isInvalidationMessage = (data: unknown): data is InvalidationMessage =>
 export const useQueryInvalidationListener = () => {
   const queryClient = useQueryClient();
   const channelRef = useRef<BroadcastChannel | null>(null);
-  const retryTimeoutRef = useRef<number>();
-  const abortControllerRef = useRef<AbortController>();
+  const retryTimeoutRef = useRef<number>(0);
+  const abortControllerRef = useRef<AbortController | null>(null);
   const retryAttemptRef = useRef(0);
   const handleInvalidation: MessageHandler = useCallback(
     async (message) => {
@@ -133,7 +134,7 @@ export const useQueryInvalidationListener = () => {
               if (!queryKey) return;
 
               await queryClient.invalidateQueries({
-                queryKey,
+                queryKey: [queryKey],
                 exact: config.exact ?? false,
                 refetchType: config.refetchType || "all",
               });

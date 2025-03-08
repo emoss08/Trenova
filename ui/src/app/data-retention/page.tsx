@@ -22,7 +22,6 @@ export function DataRetention() {
         description="Database Backup & Data Retention"
       />
       <Header />
-
       <BackupAlert />
       <SuspenseLoader>
         <BackupList />

@@ -25,6 +25,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { useApiMutation } from "@/hooks/use-api-mutation";
 import { useUnsavedChanges } from "@/hooks/use-form";
 import { broadcastQueryInvalidation } from "@/hooks/use-invalidate-query";
 import { http } from "@/lib/http-client";
@@ -35,7 +36,7 @@ import {
 import { AssignmentStatus } from "@/types/assignment";
 import { type APIError } from "@/types/errors";
 import { yupResolver } from "@hookform/resolvers/yup";
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { useCallback, useEffect } from "react";
 import { FormProvider, type Path, useForm } from "react-hook-form";
 import { toast } from "sonner";
@@ -109,7 +110,7 @@ export function AssignmentDialog({
     onClose: handleClose,
   });
 
-  const mutation = useMutation({
+  const { mutateAsync: createAssignment } = useApiMutation({
     mutationFn: async (values: AssignmentSchema) => {
       if (isEditing) {
         const response = await http.put(
@@ -168,9 +169,9 @@ export function AssignmentDialog({
 
   const onSubmit = useCallback(
     async (values: AssignmentSchema) => {
-      await mutation.mutateAsync(values);
+      await createAssignment(values);
     },
-    [mutation.mutateAsync],
+    [createAssignment],
   );
 
   useEffect(() => {
