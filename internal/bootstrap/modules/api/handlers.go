@@ -2,6 +2,7 @@ package api
 
 import (
 	"github.com/emoss08/trenova/internal/api/handlers/assignment"
+	"github.com/emoss08/trenova/internal/api/handlers/audit"
 	"github.com/emoss08/trenova/internal/api/handlers/auth"
 	"github.com/emoss08/trenova/internal/api/handlers/backup"
 	"github.com/emoss08/trenova/internal/api/handlers/commodity"
@@ -67,4 +68,5 @@ var HandlersModule = fx.Module("api.Handlers", fx.Provide(
 	logreader.NewHandler,
 	shipmentcontrol.NewHandler,
 	backup.NewHandler,
+	audit.NewHandler,
 ))
