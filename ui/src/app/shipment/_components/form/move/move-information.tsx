@@ -1,12 +1,12 @@
 import { MoveStatusBadge } from "@/components/status-badge";
 import { Button } from "@/components/ui/button";
 import {
-    DropdownMenu,
-    DropdownMenuContent,
-    DropdownMenuItem,
-    DropdownMenuLabel,
-    DropdownMenuSeparator,
-    DropdownMenuTrigger,
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Icon } from "@/components/ui/icons";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -15,9 +15,9 @@ import { MoveStatus, type ShipmentMove } from "@/types/move";
 import { faEllipsisVertical } from "@fortawesome/pro-regular-svg-icons";
 import { memo, useState } from "react";
 import {
-    UseFieldArrayRemove,
-    UseFieldArrayUpdate,
-    type FieldArrayWithId,
+  UseFieldArrayRemove,
+  UseFieldArrayUpdate,
+  type FieldArrayWithId,
 } from "react-hook-form";
 import { AssignmentDialog } from "../../assignment/assignment-dialog";
 import { StopTimeline } from "../../sidebar/stop-details/stop-timeline-content";
@@ -180,7 +180,7 @@ function MoveActions({
             title={reassignEnabled ? "Reassign" : "Assign"}
             description="Assign equipment and worker(s) to the move"
             onClick={() => setAssignmentDialogOpen(!assignmentDialogOpen)}
-            disabled={assignDisabled}
+            disabled={!assignDisabled}
           />
           <DropdownMenuItem
             title="Split Move"
