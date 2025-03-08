@@ -41,6 +41,7 @@
   --vitess-node: oklch(72.96% 0.1179 99.91);
   --vitess-string: oklch(65.19% 0.1227 53.68);
   --vitess-number: oklch(70.03% 0.09 220.23);
+  --vitess-boolean: oklch(70.03% 0.09 220.23);
 }
 
 .dark {
@@ -95,6 +96,9 @@
   --container-8xl: 96rem;
   --container-9xl: 120rem;
 
+  --breakpoint-3xl: 120rem;
+  --breakpoint-4xl: 144rem;
+
 
   --font-*: initial;
   --font-sans: "Inter Variable", sans-serif;
@@ -148,7 +152,7 @@
   --color-vitess-node: var(--vitess-node);
   --color-vitess-string: var(--vitess-string);
   --color-vitess-number: var(--vitess-number);
-
+  --color-vitess-boolean: var(--vitess-boolean);
   --animate-flow-down: flow-down 1s linear infinite;
 
   @keyframes flow-down {

@@ -1,4 +1,4 @@
-import { ShikiJsonViewer } from "@/components/ui/json-viewer";
+import { JsonViewer } from "@/components/ui/json-viewer";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   Sheet,
@@ -11,7 +11,7 @@ import { VisuallyHidden } from "@/components/ui/visually-hidden";
 import { AuditEntry } from "@/types/audit-entry";
 import { EditTableSheetProps } from "@/types/data-table";
 import AuditDetailsHeader from "./audit-details-header";
-import { ChangesTable, DataSection } from "./audit-log-data-section";
+import { ChangesTable } from "./audit-log-data-section";
 import { AuditLogDetails } from "./audit-log-details";
 import { AuditLogHeader } from "./audit-log-header";
 
@@ -77,34 +77,43 @@ export function AuditLogDetailsContent({ entry }: { entry?: AuditEntry }) {
 
         <ChangesTable changes={entry.changes} />
 
-        <DataSection
-          title="Metadata"
-          description="Additional contextual information"
-        >
-          <ShikiJsonViewer data={entry.metadata} />
-        </DataSection>
+        <div className="flex flex-col gap-2">
+          <div className="flex flex-col">
+            <h3 className="text-sm font-normal">Metadata</h3>
+            <p className="text-2xs text-muted-foreground">
+              Additional contextual information
+            </p>
+          </div>
+          <JsonViewer data={entry.metadata} />
+        </div>
 
-        <DataSection
-          title="Previous State"
-          description="State before the operation"
-        >
-          <ShikiJsonViewer data={entry.previousState} />
-        </DataSection>
+        <div className="flex flex-col gap-2">
+          <div className="flex flex-col">
+            <h3 className="text-sm font-normal">Previous State</h3>
+            <p className="text-2xs text-muted-foreground">
+              State before the operation
+            </p>
+          </div>
+          <JsonViewer data={entry.previousState} />
+        </div>
 
-        <DataSection
-          title="Current State"
-          description="State after the operation"
-        >
-          <ShikiJsonViewer data={entry.currentState} />
-        </DataSection>
+        <div className="flex flex-col gap-2">
+          <div className="flex flex-col">
+            <h3 className="text-sm font-normal">Current State</h3>
+            <p className="text-2xs text-muted-foreground">
+              State after the operation
+            </p>
+          </div>
+          <JsonViewer data={entry.currentState} />
+        </div>
 
-        <DataSection
-          title="Full Event Data"
-          description="Complete raw data"
-          defaultCollapsed
-        >
-          <ShikiJsonViewer data={entry} />
-        </DataSection>
+        <div className="flex flex-col gap-2">
+          <div className="flex flex-col">
+            <h3 className="text-sm font-normal">Full Event Data</h3>
+            <p className="text-2xs text-muted-foreground">Complete raw data</p>
+          </div>
+          <JsonViewer data={entry} />
+        </div>
       </div>
     </ScrollArea>
   );

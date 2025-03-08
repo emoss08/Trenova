@@ -1,22 +1,43 @@
-import { useTheme } from "@/components/theme-provider";
 import { Button } from "@/components/ui/button";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
+import { TableSheetProps } from "@/types/data-table";
 import {
-  faCheck,
   faChevronDown,
   faChevronRight,
-  faCopy,
+  faEllipsis,
+  faMinus,
+  faPlus,
 } from "@fortawesome/pro-regular-svg-icons";
 import React, { useMemo, useState } from "react";
+import { toast } from "sonner";
+import {
+  Dialog,
+  DialogBody,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "./dialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuGroup,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "./dropdown-menu";
 import { Icon } from "./icons";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "./table";
 
-interface ShikiJsonViewerProps {
+interface JsonViewerProps {
   data: any;
   className?: string;
   initiallyExpanded?: boolean;
@@ -48,7 +69,7 @@ function CollapsibleNode({
 
   const displayName =
     name !== null ? (
-      <span className="text-vitess-node">
+      <span className="text-vitess-node font-medium">
         {typeof name === "string" ? `"${name}"` : name}
       </span>
     ) : null;
@@ -72,11 +93,11 @@ function CollapsibleNode({
     }
 
     return (
-      <div className="px-2 py-0.5 hover:bg-muted rounded flex">
+      <div className="px-3 py-1 hover:bg-muted/50 rounded-sm flex items-center transition-colors">
         {displayName && (
           <>
             {displayName}
-            <span className="text-foreground mx-0.5">:</span>
+            <span className="text-foreground mx-1.5">:</span>
           </>
         )}
         {valueDisplay}
@@ -89,24 +110,24 @@ function CollapsibleNode({
   const summary = isArray ? `[${childrenCount}]` : `{${childrenCount}}`;
 
   return (
-    <div className="hover:bg-muted/30 rounded">
+    <div className="hover:bg-muted/40 rounded-sm transition-colors">
       <div
-        className="flex items-center px-2 py-0.5 cursor-pointer"
+        className="flex items-center px-3 py-1 cursor-pointer"
         onClick={toggleExpand}
       >
         <Icon
           icon={isExpanded ? faChevronDown : faChevronRight}
-          className="size-3 mr-1 text-muted-foreground"
+          className="size-3.5 mr-1.5 text-muted-foreground"
         />
 
         {displayName && (
           <>
             {displayName}
-            <span className="text-foreground mx-0.5">:</span>
+            <span className="text-foreground mx-1.5">:</span>
           </>
         )}
 
-        <span className="text-muted-foreground text-xs">
+        <span className="text-muted-foreground text-xs font-medium">
           {isExpanded ? (isArray ? "[" : "{") : summary}
         </span>
 
@@ -114,7 +135,7 @@ function CollapsibleNode({
       </div>
 
       {isExpanded && (
-        <div className="ml-4 border-l border-border pl-2">
+        <div className="ml-4 border-l border-border pl-3 py-0.5">
           {isArray
             ? // Handle array rendering
               value.map((item: any, index: number) => (
@@ -134,7 +155,7 @@ function CollapsibleNode({
                   withComma={index < arr.length - 1}
                 />
               ))}
-          <div className="px-2 py-0.5">
+          <div className="px-3 py-1">
             <span className="text-muted-foreground">{isArray ? "]" : "}"}</span>
             {withComma && <span className="text-foreground">,</span>}
           </div>
@@ -144,13 +165,157 @@ function CollapsibleNode({
   );
 }
 
-export function ShikiJsonViewer({
+export function JsonViewer({
   data,
   className = "",
   initiallyExpanded = false,
-}: ShikiJsonViewerProps) {
+}: JsonViewerProps) {
+  // Handle states
+  if (!data) {
+    return (
+      <div className="text-muted-foreground italic p-4">No data available</div>
+    );
+  }
+
+  // Render the collapsible JSON viewer
+  return (
+    <>
+      <div
+        className={cn(
+          "relative rounded-md overflow-hidden border border-border bg-card",
+          className,
+        )}
+      >
+        <div className="absolute top-3 right-3 z-10">
+          <JsonViewerActions data={data} />
+        </div>
+        <div className="p-3 font-mono text-sm overflow-auto max-h-[calc(100vh-200px)]">
+          <CollapsibleNode
+            name={null}
+            value={data}
+            isRoot={true}
+            initiallyExpanded={initiallyExpanded}
+          />
+        </div>
+      </div>
+    </>
+  );
+}
+
+// This component handles rendering a value in the table view
+const ReadableJsonValue = ({
+  value,
+  path = "",
+  level = 0,
+}: {
+  value: any;
+  path?: string;
+  level?: number;
+}) => {
+  const [isExpanded, setIsExpanded] = useState(false);
+
+  if (value === null)
+    return <span className="text-muted-foreground">null</span>;
+  if (value === undefined)
+    return <span className="text-muted-foreground">undefined</span>;
+
+  // Handle primitive values
+  if (typeof value !== "object") {
+    if (typeof value === "string")
+      return <span className="text-vitess-string">&quot;{value}&quot;</span>;
+    if (typeof value === "number")
+      return <span className="text-vitess-number">{value}</span>;
+    if (typeof value === "boolean")
+      return <span className="text-vitess-number">{value.toString()}</span>;
+    return <span>{String(value)}</span>;
+  }
+
+  // Handle arrays and objects
+  const isArray = Array.isArray(value);
+  const isEmpty = isArray
+    ? value.length === 0
+    : Object.keys(value).length === 0;
+
+  if (isEmpty) {
+    return (
+      <span className="text-muted-foreground">{isArray ? "[]" : "{}"}</span>
+    );
+  }
+
+  const count = isArray ? value.length : Object.keys(value).length;
+  const itemLabel = isArray ? "items" : "properties";
+
+  return (
+    <>
+      <Button
+        variant="ghost"
+        size="sm"
+        onClick={() => setIsExpanded(!isExpanded)}
+        className="px-3 py-1 h-7 text-foreground hover:bg-muted/70"
+      >
+        <Icon icon={isExpanded ? faMinus : faPlus} className="size-3.5 mr-2" />
+        <span className="text-xs font-medium">
+          {isExpanded ? "Collapse" : "Expand"} ({count} {itemLabel})
+        </span>
+      </Button>
+
+      {isExpanded && (
+        <div className="mt-3 pl-4 border-l border-border">
+          <Table className="border border-border rounded-md">
+            <TableHeader>
+              <TableRow className="hover:bg-transparent">
+                <TableHead className="w-1/3 bg-muted/50">Key</TableHead>
+                <TableHead className="bg-muted/50">Value</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {isArray
+                ? value.map((item: any, index: number) => (
+                    <TableRow
+                      key={`${path}.${index}`}
+                      className="hover:bg-muted/30"
+                    >
+                      <TableCell className="font-mono text-xs font-medium">
+                        [{index}]
+                      </TableCell>
+                      <TableCell>
+                        <ReadableJsonValue
+                          value={item}
+                          path={`${path}.${index}`}
+                          level={level + 1}
+                        />
+                      </TableCell>
+                    </TableRow>
+                  ))
+                : Object.entries(value).map(([key, val]) => (
+                    <TableRow
+                      key={`${path}.${key}`}
+                      className="hover:bg-muted/30"
+                    >
+                      <TableCell className="font-mono text-xs font-medium">
+                        {key}
+                      </TableCell>
+                      <TableCell>
+                        <ReadableJsonValue
+                          value={val}
+                          path={`${path}.${key}`}
+                          level={level + 1}
+                        />
+                      </TableCell>
+                    </TableRow>
+                  ))}
+            </TableBody>
+          </Table>
+        </div>
+      )}
+    </>
+  );
+};
+
+function JsonViewerActions({ data }: { data: any }) {
   const [error, setError] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
+  const [readableDialogOpen, setReadableDialogOpen] = useState(false);
 
   // Format JSON data as a string for copying
   const jsonString = useMemo(() => {
@@ -186,93 +351,94 @@ export function ShikiJsonViewer({
     }
   };
 
-  // Handle states
-  if (!data) {
-    return (
-      <div className="text-muted-foreground italic">No data available</div>
-    );
-  }
-
   if (error) {
     return <div className="text-red-500 text-sm">{error}</div>;
   }
 
-  // Render the collapsible JSON viewer
+  // If copied pop up a toast
+  if (copied) {
+    toast.success("JSON copied to clipboard");
+  }
+
   return (
-    <div
-      className={cn(
-        "relative rounded-md overflow-hidden border border-border bg-card",
-        className,
-      )}
-    >
-      <div className="absolute top-2 right-2 z-10">
-        <TooltipProvider>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="size-8"
-                onClick={handleCopyToClipboard}
-              >
-                {copied ? (
-                  <Icon icon={faCheck} className="size-4 text-green-500" />
-                ) : (
-                  <Icon icon={faCopy} className="size-4" />
-                )}
-                <span className="sr-only">Copy JSON</span>
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent>
-              <p>{copied ? "Copied!" : "Copy JSON"}</p>
-            </TooltipContent>
-          </Tooltip>
-        </TooltipProvider>
-      </div>
-      <div className="p-2 font-mono text-sm overflow-auto">
-        <CollapsibleNode
-          name={null}
-          value={data}
-          isRoot={true}
-          initiallyExpanded={initiallyExpanded}
-        />
-      </div>
-    </div>
+    <>
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="size-8 hover:bg-muted/70 rounded-md"
+          >
+            <Icon icon={faEllipsis} className="size-4" />
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent side="bottom" align="end">
+          <DropdownMenuLabel>JSON Options</DropdownMenuLabel>
+          <DropdownMenuSeparator />
+          <DropdownMenuGroup>
+            <DropdownMenuItem
+              onClick={handleCopyToClipboard}
+              className="flex flex-col items-start"
+              title="Copy JSON"
+              description="Copy formatted JSON data to clipboard"
+            />
+            <DropdownMenuItem
+              title="View in structured view"
+              description="Display data in a structured tabular format"
+              onClick={() => setReadableDialogOpen(true)}
+              className="flex flex-col items-start"
+            />
+          </DropdownMenuGroup>
+        </DropdownMenuContent>
+      </DropdownMenu>
+      <JsonViewerDialog
+        data={data}
+        open={readableDialogOpen}
+        onOpenChange={setReadableDialogOpen}
+      />
+    </>
   );
 }
 
-/**
- * Component for rendering a diff between two JSON objects using ShikiJsonViewer
- */
-export function ShikiJsonDiffViewer({
-  oldData,
-  newData,
-  title = { old: "Previous", new: "Current" },
-}: {
-  oldData: any;
-  newData: any;
-  title?: { old: string; new: string };
-}) {
-  const { theme } = useTheme();
+type JsonViewerDialogProps = {
+  data: any;
+} & TableSheetProps;
 
+function JsonViewerDialog({ data, open, onOpenChange }: JsonViewerDialogProps) {
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-      <div
-        className={`p-2 rounded-md ${theme === "dark" ? "bg-red-950/30" : "bg-red-50"}`}
-      >
-        <div className="text-xs font-medium text-muted-foreground mb-1">
-          {title.old}
-        </div>
-        <ShikiJsonViewer data={oldData} />
-      </div>
-      <div
-        className={`p-2 rounded-md ${theme === "dark" ? "bg-green-950/30" : "bg-green-50"}`}
-      >
-        <div className="text-xs font-medium text-muted-foreground mb-1">
-          {title.new}
-        </div>
-        <ShikiJsonViewer data={newData} />
-      </div>
-    </div>
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-4xl">
+        <DialogHeader>
+          <DialogTitle>Data Structure View</DialogTitle>
+          <DialogDescription>
+            Structured view of JSON data for easier analysis and inspection
+          </DialogDescription>
+        </DialogHeader>
+        <DialogBody className="p-0">
+          <Table>
+            <TableHeader>
+              <TableRow className="hover:bg-transparent">
+                <TableHead className="w-1/3 bg-muted/50 font-medium">
+                  Property
+                </TableHead>
+                <TableHead className="bg-muted/50 font-medium">Value</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {Object.entries(data).map(([key, value]) => (
+                <TableRow key={key} className="hover:bg-muted/30">
+                  <TableCell className="font-mono text-xs font-medium border-r border-border/50">
+                    {key}
+                  </TableCell>
+                  <TableCell>
+                    <ReadableJsonValue value={value} path={key} />
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </DialogBody>
+      </DialogContent>
+    </Dialog>
   );
 }
