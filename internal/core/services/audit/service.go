@@ -607,7 +607,8 @@ func (s *service) registerDefaultSensitiveFields() error {
 	// Organization data
 	err = s.sdm.RegisterSensitiveFields(permission.ResourceOrganization, []services.SensitiveField{
 		{Name: "logoUrl", Action: services.SensitiveFieldMask},
-		{Name: "apiKey", Action: services.SensitiveFieldMask},
+		{Name: "taxId", Action: services.SensitiveFieldMask},
+		{Name: "dotNumber", Action: services.SensitiveFieldMask},
 	})
 
 	// Financial data
