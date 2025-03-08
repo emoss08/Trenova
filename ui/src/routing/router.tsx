@@ -206,6 +206,10 @@ const routes: RouteObject[] = [
                   );
                   return { Component: OrganizationSettings };
                 },
+                handle: {
+                  crumb: "Organization Settings",
+                  title: "Organization Settings",
+                },
               },
               {
                 path: "system-logs",
@@ -222,6 +226,10 @@ const routes: RouteObject[] = [
                   );
                   return { Component: ShipmentControl };
                 },
+                handle: {
+                  crumb: "Shipment Controls",
+                  title: "Shipment Controls",
+                },
               },
               {
                 path: "data-retention",
@@ -230,6 +238,21 @@ const routes: RouteObject[] = [
                     "@/app/data-retention/page"
                   );
                   return { Component: DataRetention };
+                },
+                handle: {
+                  crumb: "Data Retention",
+                  title: "Data Retention",
+                },
+              },
+              {
+                path: "audit-entries",
+                async lazy() {
+                  let { AuditLogs } = await import("@/app/audit-logs/page");
+                  return { Component: AuditLogs };
+                },
+                handle: {
+                  crumb: "Audit Entries",
+                  title: "Audit Entries",
                 },
               },
             ],

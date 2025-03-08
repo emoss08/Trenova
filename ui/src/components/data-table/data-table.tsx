@@ -50,6 +50,8 @@ export function DataTable<TData extends Record<string, any>>({
   TableEditModal,
   initialPageSize = DEFAULT_PAGE_SIZE,
   pageSizeOptions = DEFAULT_PAGE_SIZE_OPTIONS,
+  includeHeader = true,
+  includeOptions = true,
 }: DataTableProps<TData>) {
   const [isTransitioning, startTransition] = useTransition();
 
@@ -244,23 +246,25 @@ export function DataTable<TData extends Record<string, any>>({
 
   return (
     <div className="mt-2 flex flex-col gap-3">
-      <div className="flex justify-between">
-        <div className="flex items-center gap-2">Put something here</div>
-        <div className="flex items-center gap-2">
-          <DataTableViewOptions table={table} />
-          <Separator className="h-6 w-px bg-border" orientation="vertical" />
-          <DataTableCreateButton
-            name={name}
-            exportModelName={exportModelName}
-            onCreateClick={() => {
-              setModalType("create");
-            }}
-          />
+      {includeOptions && (
+        <div className="flex justify-between">
+          <div className="flex items-center gap-2">Put something here</div>
+          <div className="flex items-center gap-2">
+            <DataTableViewOptions table={table} />
+            <Separator className="h-6 w-px bg-border" orientation="vertical" />
+            <DataTableCreateButton
+              name={name}
+              exportModelName={exportModelName}
+              onCreateClick={() => {
+                setModalType("create");
+              }}
+            />
+          </div>
         </div>
-      </div>
+      )}
       <div className="rounded-md border border-sidebar-border">
         <Table>
-          <DataTableHeader table={table} />
+          {includeHeader && <DataTableHeader table={table} />}
           <DataTableBody table={table} />
         </Table>
       </div>

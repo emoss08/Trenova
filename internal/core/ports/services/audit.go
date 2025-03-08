@@ -5,6 +5,8 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/audit"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
+	"github.com/emoss08/trenova/internal/core/ports"
+	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/pkg/types/pulid"
 )
 
@@ -39,6 +41,10 @@ type SensitiveField struct {
 }
 
 type AuditService interface {
+	// API functionality
+	List(ctx context.Context, opts *ports.LimitOffsetQueryOptions) (*ports.ListResult[*audit.Entry], error)
+	GetByID(ctx context.Context, opts repositories.GetAuditEntryByIDOptions) (*audit.Entry, error)
+
 	// Core functionality
 	LogAction(params *LogActionParams, opts ...LogOption) error
 	Start() error

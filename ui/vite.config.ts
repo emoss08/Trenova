@@ -11,7 +11,12 @@ import { VitePWA } from "vite-plugin-pwa";
 // Define vendor chunks that should be bundled separately
 const vendorChunks = {
   // UI Framework and Core
-  "core-react": ["react", "react-dom", "react-router-dom"],
+  "core-react": [
+    "react",
+    "react-dom",
+    "react-router-dom",
+    "react-helmet-async",
+  ],
 
   // State Management and Data Fetching
   "data-management": ["@tanstack/react-query", "zustand"],
@@ -32,6 +37,7 @@ const vendorChunks = {
     "@radix-ui/react-slot",
     "@radix-ui/react-tooltip",
     "@radix-ui/react-visually-hidden",
+    "sonner",
     "react-day-picker",
   ],
 
