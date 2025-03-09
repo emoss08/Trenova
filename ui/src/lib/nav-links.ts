@@ -149,13 +149,13 @@ export const routes: RouteInfo[] = [
     ],
   },
   {
-    key: Resource.Shipment,
+    key: Resource.ShipmentManagement,
     label: "Shipment Management",
     icon: faTruck,
     isDefault: true,
     tree: [
       {
-        key: Resource.ShipmentManagement,
+        key: Resource.Shipment,
         label: "Shipment Management",
         link: "/shipments/management",
         supportsModal: true,

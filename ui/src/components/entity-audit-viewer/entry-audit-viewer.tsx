@@ -3,7 +3,12 @@ import { generateDateTimeStringFromUnixTimestamp } from "@/lib/date";
 import { getAuditEntriesByResourceID } from "@/services/audit-entry";
 import { AuditEntry } from "@/types/audit-entry";
 import { TableSheetProps } from "@/types/data-table";
-import { faEye } from "@fortawesome/pro-regular-svg-icons";
+import {
+  faEye,
+  faFileArchive,
+  faFileCircleQuestion,
+  faFileLines,
+} from "@fortawesome/pro-regular-svg-icons";
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { BetaTag } from "../ui/beta-tag";
@@ -17,8 +22,8 @@ import {
   DialogHeader,
   DialogTitle,
 } from "../ui/dialog";
+import { EmptyState } from "../ui/empty-state";
 import { Icon } from "../ui/icons";
-import { LazyImage } from "../ui/image";
 import { JsonViewerDialog } from "../ui/json-viewer";
 import {
   Table,
@@ -59,12 +64,7 @@ export function EntryAuditViewer({
         </DialogHeader>
         <DialogBody className="p-0">
           {isLoading && <ComponentLoader message="Loading audit entires..." />}
-          {data && (
-            <AuditEntryTable
-              data={data.items}
-              onOpenChange={() => onOpenChange(false)}
-            />
-          )}
+          {data && <AuditEntryTable data={data.items} />}
           {isError && (
             <div className="p-4">
               <p className="text-sm text-red-500">
@@ -78,13 +78,7 @@ export function EntryAuditViewer({
   );
 }
 
-function AuditEntryTable({
-  data,
-  onOpenChange,
-}: {
-  data: AuditEntry[];
-  onOpenChange: () => void;
-}) {
+function AuditEntryTable({ data }: { data: AuditEntry[] }) {
   const [jsonViewerOpen, setJsonViewerOpen] = useState<boolean>(false);
   const [selectedEntry, setSelectedEntry] = useState<AuditEntry | null>(null);
 
@@ -136,54 +130,13 @@ function AuditEntryTable({
           </TableBody>
         </Table>
       ) : (
-        <div className="flex flex-col items-center justify-center h-full text-center p-6 space-y-4">
-          <LazyImage
-            src="https://i.kym-cdn.com/photos/images/newsfeed/001/870/641/6c9.gif"
-            alt="Awkward monkey puppet looking away meme"
-            width={250}
-            height={250}
+        <div className="flex h-full items-center justify-center p-4">
+          <EmptyState
+            icons={[faFileLines, faFileArchive, faFileCircleQuestion]}
+            className="size-full border-none"
+            title="No audit entries found"
+            description="No audit entries were found for this resource."
           />
-          <h3 className="text-xl font-semibold text-foreground animate-pulse">
-            Well This Is Awkwaaaaard...
-          </h3>
-          <p className="text-base text-muted-foreground max-w-md">
-            You caught us with our audit logs down! This record was secretly
-            created by the system while nobody was looking.{" "}
-            <span className="italic">*Nervous cough*</span>
-          </p>
-          <div className="bg-gray-100 border border-gray-200 rounded-lg p-4 max-w-md">
-            <p className="text-sm text-gray-700">
-              <span className="font-semibold">TECHNICALLY SPEAKING:</span> When
-              records are created through backend wizardry or system gremlins,
-              they don&apos;t leave an audit trail until a human touches them.
-            </p>
-          </div>
-          <div className="flex flex-col items-center space-y-2">
-            <p className="text-sm italic text-muted-foreground">
-              Choose your reaction:
-            </p>
-            <div className="flex space-x-3">
-              <Button
-                variant="outline"
-                className="text-sm"
-                onClick={onOpenChange}
-              >
-                👀 Pretend I Didn&apos;t See This
-              </Button>
-              <Button
-                variant="outline"
-                className="text-sm"
-                onClick={onOpenChange}
-              >
-                🤷‍♂️ Back to Normal Life
-              </Button>
-            </div>
-          </div>
-          <p className="text-xs text-muted-foreground mt-2">
-            Don&apos;t worry, we&apos;ll start tracking changes as soon as
-            someone does something. Promise. Cross our hearts. For real this
-            time.
-          </p>
         </div>
       )}
 

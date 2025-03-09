@@ -6,12 +6,12 @@ import {
 } from "@/components/data-table/_components/data-table-column-helpers";
 import { DataTableDescription } from "@/components/data-table/_components/data-table-components";
 import { StatusBadge } from "@/components/status-badge";
-import { type LocationSchema } from "@/lib/schemas/location-schema";
 import { formatLocation } from "@/lib/utils";
+import { Location } from "@/types/location";
 import { createColumnHelper, type ColumnDef } from "@tanstack/react-table";
 
-export function getColumns(): ColumnDef<LocationSchema>[] {
-  const columnHelper = createColumnHelper<LocationSchema>();
+export function getColumns(): ColumnDef<Location>[] {
+  const columnHelper = createColumnHelper<Location>();
   const commonColumns = createCommonColumns(columnHelper);
 
   return [
@@ -32,7 +32,7 @@ export function getColumns(): ColumnDef<LocationSchema>[] {
       getId: (location) => location.id,
       getDisplayText: (location) => location.name,
     }),
-    createEntityRefColumn<LocationSchema, "locationCategory">(
+    createEntityRefColumn<Location, "locationCategory">(
       columnHelper,
       "locationCategory",
       {
