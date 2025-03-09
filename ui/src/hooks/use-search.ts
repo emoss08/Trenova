@@ -24,7 +24,6 @@ export function useSearch() {
       let endpoint = "/search";
       if (activeTab === "shipments") endpoint = "/search/shipments";
       else if (activeTab === "workers") endpoint = "/search/workers";
-      else if (activeTab === "equipment") endpoint = "/search/equipment";
       else if (activeTab === "customers") endpoint = "/search/customers";
 
       // Build clean params object, only including values that exist

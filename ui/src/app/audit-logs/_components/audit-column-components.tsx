@@ -235,7 +235,7 @@ export function AuditEntryResourceBadge({
       variant: "pink",
       text: "Report",
     },
-    [Resource.AuditLog]: {
+    [Resource.AuditEntries]: {
       variant: "pink",
       text: "Audit Log",
     },
@@ -258,6 +258,106 @@ export function AuditEntryResourceBadge({
     [Resource.Backup]: {
       variant: "warning",
       text: "Backup",
+    },
+    [Resource.Dashboard]: {
+      variant: undefined,
+      text: "",
+      description: undefined,
+    },
+    [Resource.BillingManagement]: {
+      variant: undefined,
+      text: "",
+      description: undefined,
+    },
+    [Resource.BillingClient]: {
+      variant: undefined,
+      text: "",
+      description: undefined,
+    },
+    [Resource.ConfigurationFiles]: {
+      variant: undefined,
+      text: "",
+      description: undefined,
+    },
+    [Resource.RateManagement]: {
+      variant: undefined,
+      text: "",
+      description: undefined,
+    },
+    [Resource.SystemLog]: {
+      variant: undefined,
+      text: "",
+      description: undefined,
+    },
+    [Resource.DataRetention]: {
+      variant: undefined,
+      text: "",
+      description: undefined,
+    },
+    [Resource.Equipment]: {
+      variant: undefined,
+      text: "",
+      description: undefined,
+    },
+    [Resource.Maintenance]: {
+      variant: undefined,
+      text: "",
+      description: undefined,
+    },
+    [Resource.FormulaTemplate]: {
+      variant: undefined,
+      text: "",
+      description: undefined,
+    },
+    [Resource.ShipmentManagement]: {
+      variant: undefined,
+      text: "",
+      description: undefined,
+    },
+    [Resource.Route]: {
+      variant: undefined,
+      text: "",
+      description: undefined,
+    },
+    [Resource.CommentType]: {
+      variant: undefined,
+      text: "",
+      description: undefined,
+    },
+    [Resource.DelayCode]: {
+      variant: undefined,
+      text: "",
+      description: undefined,
+    },
+    [Resource.ChargeType]: {
+      variant: undefined,
+      text: "",
+      description: undefined,
+    },
+    [Resource.DivisionCode]: {
+      variant: undefined,
+      text: "",
+      description: undefined,
+    },
+    [Resource.GlAccount]: {
+      variant: undefined,
+      text: "",
+      description: undefined,
+    },
+    [Resource.RevenueCode]: {
+      variant: undefined,
+      text: "",
+      description: undefined,
+    },
+    [Resource.AccessorialCharge]: {
+      variant: undefined,
+      text: "",
+      description: undefined,
+    },
+    [Resource.DocumentClassification]: {
+      variant: undefined,
+      text: "",
+      description: undefined,
     },
   };
 

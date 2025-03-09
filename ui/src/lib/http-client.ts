@@ -72,7 +72,7 @@ class HttpClient {
 
   private createAbortController(timeout?: number): {
     controller: AbortController;
-    timeoutId: NodeJS.Timeout | null;
+    timeoutId: ReturnType<typeof setTimeout> | null;
   } {
     const controller = new AbortController();
     const timeoutId = timeout

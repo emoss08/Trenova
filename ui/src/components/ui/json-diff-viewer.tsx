@@ -16,6 +16,7 @@ import {
 } from "./dialog";
 import { SensitiveBadge } from "./sensitive-badge";
 
+type JsonViewerType = "added" | "removed" | "unchanged";
 
 function DiffLine({ line, lineNumber, type }: DiffLineProps) {
   const bgColor = useMemo(() => {

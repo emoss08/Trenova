@@ -26,8 +26,8 @@ export function PopoverForm({
   position = "right",
 }: PopoverFormProps) {
   const ref = useRef<HTMLDivElement>(null);
-  const containerRef = useRef<HTMLDivElement>(null);
-  useClickOutside(ref, () => setOpen(false));
+  const containerRef = useRef<HTMLDivElement | null>(null);
+  useClickOutside(containerRef, () => setOpen(false));
 
   return (
     <div
@@ -92,7 +92,7 @@ export function PopoverForm({
 }
 
 const useClickOutside = (
-  ref: RefObject<HTMLElement>,
+  ref: RefObject<HTMLElement | null>,
   handleOnClickOutside: (event: MouseEvent | TouchEvent) => void,
 ) => {
   useEffect(() => {

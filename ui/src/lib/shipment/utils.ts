@@ -81,11 +81,11 @@ const locationCache = new WeakMap<
   }
 >();
 
-function useShipmentLocations(shipment: Shipment) {
+function useShipmentLocations(shipment?: Shipment) {
   return useMemo(
     () => ({
-      origin: calculateOriginLocation(shipment),
-      destination: calculateDestinationLocation(shipment),
+      origin: shipment ? calculateOriginLocation(shipment) : null,
+      destination: shipment ? calculateDestinationLocation(shipment) : null,
     }),
     [shipment],
   ); // React's useMemo is enough for component-level caching

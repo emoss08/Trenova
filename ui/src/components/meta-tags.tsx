@@ -18,7 +18,7 @@ export function MetaTags({
   });
 
   const defaultTitle = "Trenova";
-  const organization = userOrganization.data?.data?.name;
+  const organization = userOrganization.data?.name;
   const formattedTitle = title
     ? organization
       ? `${title} | ${organization} | ${defaultTitle}`
