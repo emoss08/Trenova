@@ -233,7 +233,7 @@ func (c *Client) SAdd(ctx context.Context, key string, members ...interface{}) e
 		return eris.Wrapf(err, "failed to add members to set: %s", key)
 	}
 
-	c.l.Debug().
+	c.l.Trace().
 		Str("key", key).
 		Interface("members", members).
 		Msg("members added to set successfully")

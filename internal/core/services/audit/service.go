@@ -183,6 +183,23 @@ func (s *service) List(ctx context.Context, opts *ports.LimitOffsetQueryOptions)
 	return entities, nil
 }
 
+func (s *service) ListByResourceID(ctx context.Context, opts repositories.ListByResourceIDRequest) (*ports.ListResult[*audit.Entry], error) {
+	log := s.l.With().
+		Str("operation", "ListByResourceID").
+		Str("resourceID", opts.ResourceID.String()).
+		Logger()
+
+	// TODO(wolfred): We need to check the permissions here.
+
+	entities, err := s.repo.ListByResourceID(ctx, opts)
+	if err != nil {
+		log.Error().Err(err).Msg("failed to list audit entries by resource id")
+		return nil, eris.Wrap(err, "list audit entries by resource id")
+	}
+
+	return entities, nil
+}
+
 func (s *service) GetByID(ctx context.Context, opts repositories.GetAuditEntryByIDOptions) (*audit.Entry, error) {
 	log := s.l.With().
 		Str("operation", "GetByID").

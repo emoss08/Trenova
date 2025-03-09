@@ -6,6 +6,7 @@ import type {
 } from "@/types/json-viewer";
 import { useVirtualizer } from "@tanstack/react-virtual";
 import { useMemo, useRef } from "react";
+import { BetaTag } from "./beta-tag";
 import {
   Dialog,
   DialogBody,
@@ -493,7 +494,9 @@ export function ChangeDiffDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-5xl 4xl:max-w-8xl">
         <DialogHeader>
-          <DialogTitle>Detailed Change Comparison</DialogTitle>
+          <DialogTitle>
+            Detailed Change Comparison <BetaTag />
+          </DialogTitle>
           <DialogDescription>
             Side-by-side view of all modified values in this record
           </DialogDescription>

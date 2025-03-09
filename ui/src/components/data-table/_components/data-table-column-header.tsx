@@ -172,7 +172,7 @@ export function DataTableColumnHeaderWithTooltip<TData, TValue>({
       >
         <TooltipProvider>
           <Tooltip>
-            <TooltipTrigger>
+            <TooltipTrigger asChild>
               <SelectTrigger
                 aria-label={
                   column.getIsSorted() === "desc"

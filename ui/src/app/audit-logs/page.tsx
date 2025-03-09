@@ -2,8 +2,9 @@ import { MetaTags } from "@/components/meta-tags";
 import { SuspenseLoader } from "@/components/ui/component-loader";
 import { Icon } from "@/components/ui/icons";
 import { faExclamationTriangle } from "@fortawesome/pro-regular-svg-icons";
-import { memo } from "react";
-import AuditLogTable from "./_components/audit-log-table";
+import { lazy, memo } from "react";
+
+const AuditLogTable = lazy(() => import("./_components/audit-log-table"));
 
 export function AuditLogs() {
   return (

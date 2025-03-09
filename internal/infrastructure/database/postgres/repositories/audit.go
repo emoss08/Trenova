@@ -53,6 +53,14 @@ func NewAuditRepository(p AuditRepositoryParams) repositories.AuditRepository {
 	}
 }
 
+// filterQuery filters the query based on the tenant options
+//
+// Parameters:
+//   - q: The query to filter.
+//   - opts: The options for the operation.
+//
+// Returns:
+//   - A filtered query.
 func (ar *auditRepository) filterQuery(q *bun.SelectQuery, opts *ports.LimitOffsetQueryOptions) *bun.SelectQuery {
 	q = queryfilters.TenantFilterQuery(&queryfilters.TenantFilterQueryOptions{
 		Query:      q,
@@ -65,6 +73,15 @@ func (ar *auditRepository) filterQuery(q *bun.SelectQuery, opts *ports.LimitOffs
 	return q
 }
 
+// GetByID fetches an audit entry by id
+//
+// Parameters:
+//   - ctx: The context for the operation.
+//   - opts: The options for the operation.
+//
+// Returns:
+//   - An audit entry.
+//   - An error if the operation fails.
 func (ar *auditRepository) GetByID(ctx context.Context, opts repositories.GetAuditEntryByIDOptions) (*audit.Entry, error) {
 	dba, err := ar.db.DB(ctx)
 	if err != nil {
@@ -101,6 +118,15 @@ func (ar *auditRepository) GetByID(ctx context.Context, opts repositories.GetAud
 	return entity, nil
 }
 
+// List fetches a lists of audit entries
+//
+// Parameters:
+//   - ctx: The context for the operation.
+//   - opts: The options for the operation.
+//
+// Returns:
+//   - A list of audit entries.
+//   - An error if the operation fails.
 func (ar *auditRepository) List(ctx context.Context, opts *ports.LimitOffsetQueryOptions) (*ports.ListResult[*audit.Entry], error) {
 	dba, err := ar.db.DB(ctx)
 	if err != nil {
@@ -121,6 +147,47 @@ func (ar *auditRepository) List(ctx context.Context, opts *ports.LimitOffsetQuer
 	total, err := q.ScanAndCount(ctx)
 	if err != nil {
 		log.Error().Err(err).Msg("failed to scan audit entries")
+		return nil, eris.Wrap(err, "scan audit entries")
+	}
+
+	return &ports.ListResult[*audit.Entry]{
+		Items: entities,
+		Total: total,
+	}, nil
+}
+
+// ListByResourceID fetches a lists of audit entries by resource id
+//
+// Parameters:
+//   - ctx: The context for the operation.
+//   - opts: The options for the operation.
+//
+// Returns:
+//   - A list of audit entries.
+//   - An error if the operation fails.
+func (ar *auditRepository) ListByResourceID(ctx context.Context, opts repositories.ListByResourceIDRequest) (*ports.ListResult[*audit.Entry], error) {
+	dba, err := ar.db.DB(ctx)
+	if err != nil {
+		return nil, eris.Wrap(err, "get database connection")
+	}
+
+	log := ar.l.With().
+		Str("operation", "ListByResourceID").
+		Str("resourceID", opts.ResourceID.String()).
+		Logger()
+
+	entities := make([]*audit.Entry, 0)
+
+	q := dba.NewSelect().Model(&entities).
+		WhereGroup(" AND ", func(q *bun.SelectQuery) *bun.SelectQuery {
+			return q.Where("ae.resource_id = ?", opts.ResourceID).
+				Where("ae.organization_id = ?", opts.OrgID).
+				Where("ae.business_unit_id = ?", opts.BuID)
+		}).Relation("User")
+
+	total, err := q.ScanAndCount(ctx)
+	if err != nil {
+		log.Error().Str("resourceID", opts.ResourceID.String()).Err(err).Msg("failed to scan audit entries")
 		return nil, eris.Wrap(err, "scan audit entries")
 	}
 
