@@ -1,8 +1,6 @@
 package routes
 
 import (
-	"time"
-
 	"github.com/emoss08/trenova/internal/api/handlers/assignment"
 	"github.com/emoss08/trenova/internal/api/handlers/audit"
 	authHandler "github.com/emoss08/trenova/internal/api/handlers/auth"
@@ -144,26 +142,11 @@ func (r *Router) Setup() {
 
 // setupMiddleware configures the global middleware stack
 func (r *Router) setupMiddleware() {
-	logConfig := middleware.LogConfig{
-		CustomTags: map[string]string{
-			"env": r.cfg.App().Environment,
-			"app": r.cfg.App().Name,
-		},
-		SlowRequestThreshold: 200 * time.Millisecond,
-		LogHeaders:           []string{"X-Request-ID", "Content-Type", "Authorization"},
-		ExcludePaths:         []string{"/api/v1/health", "/api/v1/metrics"},
-		Skip: func(c *fiber.Ctx) bool {
-			return c.Path() == "/api/v1/auth/login"
-		},
-		LogRequestBody:  true,
-		LogResponseBody: true,
-	}
-
 	r.app.Use(
 		favicon.New(),
 		compress.New(),
 		helmet.New(),
-		middleware.NewLogger(r.p.Logger, logConfig),
+		middleware.NewLogger(r.p.Logger),
 		encryptcookie.New(encryptcookie.Config{
 			Key: r.cfg.Server().SecretKey,
 		}),

@@ -403,27 +403,27 @@ func (s *Service) watchLogFile(ctx context.Context) error {
 					return
 				}
 
-				s.l.Debug().
+				s.l.Trace().
 					Str("event", event.String()).
 					Str("operation", event.Op.String()).
 					Str("path", event.Name).
 					Msg("received file event")
 
 				if event.Op&fsnotify.Write == fsnotify.Write {
-					s.l.Debug().Msg("processing write event")
+					s.l.Trace().Msg("processing write event")
 					// Read new lines
 					for {
 						line, err := reader.ReadBytes('\n')
 						if err != nil {
 							if err == io.EOF {
-								s.l.Debug().Msg("reached end of file")
+								s.l.Trace().Msg("reached end of file")
 								break
 							}
 							s.l.Error().Err(err).Msg("error reading log file")
 							break
 						}
 
-						s.l.Debug().
+						s.l.Trace().
 							Str("line", string(line)).
 							Msg("read new log line")
 
@@ -437,7 +437,7 @@ func (s *Service) watchLogFile(ctx context.Context) error {
 							continue
 						}
 
-						s.l.Debug().
+						s.l.Trace().
 							Interface("entry", entry).
 							Msg("broadcasting log entry")
 
