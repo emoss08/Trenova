@@ -64,8 +64,6 @@ export default function ShipmentControlForm() {
     onSubmit,
   } = form;
 
-  console.info("Shipment Control isDirty", isDirty);
-
   // * Load the shipment control data into the form when available
   useEffect(() => {
     if (shipmentControl.data && !shipmentControl.isLoading) {

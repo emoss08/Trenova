@@ -240,6 +240,7 @@ export function ChangesTable({
 
     try {
       // Estimate total size by stringifying all changes
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       Object.entries(changes).forEach(([_, change]) => {
         if (change.from) {
           totalJsonSize += JSON.stringify(change.from).length;
@@ -258,6 +259,16 @@ export function ChangesTable({
       return { isDataTooLarge: true, totalSize: 0 };
     }
   }, [changes]);
+
+  if (!changes) {
+    return (
+      <div className="flex flex-col gap-2 border border-border rounded-md p-4">
+        <p className="text-sm text-muted-foreground italic">
+          No changes recorded
+        </p>
+      </div>
+    );
+  }
 
   // For large data sets, show a simplified version with just a button
   if (isDataTooLarge) {

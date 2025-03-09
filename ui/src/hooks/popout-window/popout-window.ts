@@ -1,3 +1,4 @@
+import { APP_ENV } from "@/constants/env";
 import { v4 as uuidv4 } from "uuid";
 
 // Type definitions
@@ -102,7 +103,7 @@ class PopoutWindowManager {
 
       this.isInitialized = true;
 
-      if (process.env.NODE_ENV !== "production") {
+      if (APP_ENV === "development") {
         console.debug("[Trenova] PopoutWindowManager initialized");
       }
     } catch (error) {

@@ -19,12 +19,13 @@ export function ShipmentCard({
   onSelect,
   inputValue,
 }: ShipmentCardProps) {
+  const { origin } = ShipmentLocations.useLocations(shipment);
+
   if (!shipment) {
     return null;
   }
 
   const { status } = shipment;
-  const { origin } = ShipmentLocations.useLocations(shipment);
 
   if (!origin) {
     return <p>-</p>;
@@ -65,7 +66,10 @@ function ProNumber({
         }}
         className="text-primary underline hover:text-primary/70 cursor-pointer"
       >
-        <Highlight text={shipment.proNumber} highlight={inputValue} />
+        <Highlight
+          text={shipment.proNumber ?? ""}
+          highlight={inputValue ?? ""}
+        />
       </button>
     </div>
   );
