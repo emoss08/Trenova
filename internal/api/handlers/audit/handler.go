@@ -46,6 +46,11 @@ func (h *Handler) RegisterRoutes(r fiber.Router, rl *middleware.RateLimiter) {
 		[]fiber.Handler{h.get},
 		middleware.PerSecond(5), // 5 reads per second
 	)...)
+
+	api.Get("/resource/:resourceID", rl.WithRateLimit(
+		[]fiber.Handler{h.listByResourceID},
+		middleware.PerSecond(5), // 5 reads per second
+	)...)
 }
 
 func (h Handler) list(c *fiber.Ctx) error {
@@ -63,6 +68,30 @@ func (h Handler) list(c *fiber.Ctx) error {
 	}
 
 	return limitoffsetpagination.HandlePaginatedRequest(c, h.errorHandler, reqCtx, handler)
+}
+
+func (h Handler) listByResourceID(c *fiber.Ctx) error {
+	reqCtx, err := ctx.WithRequestContext(c)
+	if err != nil {
+		return h.errorHandler.HandleError(c, err)
+	}
+
+	resourceID, err := pulid.MustParse(c.Params("resourceID"))
+	if err != nil {
+		return h.errorHandler.HandleError(c, err)
+	}
+
+	entries, err := h.auditService.ListByResourceID(c.UserContext(), repositories.ListByResourceIDRequest{
+		ResourceID: resourceID,
+		OrgID:      reqCtx.OrgID,
+		BuID:       reqCtx.BuID,
+		UserID:     reqCtx.UserID,
+	})
+	if err != nil {
+		return h.errorHandler.HandleError(c, err)
+	}
+
+	return c.Status(fiber.StatusOK).JSON(entries)
 }
 
 func (h Handler) get(c *fiber.Ctx) error {

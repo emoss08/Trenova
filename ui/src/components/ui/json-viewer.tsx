@@ -10,10 +10,11 @@ import {
   faChevronRight,
   faEllipsis,
   faMinus,
-  faPlus,
+  faPlus
 } from "@fortawesome/pro-regular-svg-icons";
 import React, { useMemo, useState } from "react";
 import { toast } from "sonner";
+import { BetaTag } from "./beta-tag";
 import {
   Dialog,
   DialogBody,
@@ -203,9 +204,7 @@ export function JsonViewer({
   );
 }
 
-// This component handles rendering a value in the table view
-// Modification for the ReadableJsonValue component
-function ReadableJsonValue({
+export function ReadableJsonValue({
   value,
   path = "",
   level = 0,
@@ -417,12 +416,18 @@ type JsonViewerDialogProps = {
   data: any;
 } & TableSheetProps;
 
-function JsonViewerDialog({ data, open, onOpenChange }: JsonViewerDialogProps) {
+export function JsonViewerDialog({
+  data,
+  open,
+  onOpenChange,
+}: JsonViewerDialogProps) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-4xl">
         <DialogHeader>
-          <DialogTitle>Data Structure View</DialogTitle>
+          <DialogTitle>
+            Data Structure View <BetaTag />
+          </DialogTitle>
           <DialogDescription>
             Structured view of JSON data for easier analysis and inspection
           </DialogDescription>

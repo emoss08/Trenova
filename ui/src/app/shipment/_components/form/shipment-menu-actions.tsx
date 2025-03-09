@@ -1,3 +1,4 @@
+import { EntryAuditViewer } from "@/components/entity-audit-viewer/entry-audit-viewer";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -28,6 +29,7 @@ export function ShipmentActions({ shipment }: { shipment?: Shipment | null }) {
     useState<boolean>(false);
   const [duplicateDialogOpen, setDuplicateDialogOpen] =
     useState<boolean>(false);
+  const [auditDialogOpen, setAuditDialogOpen] = useState<boolean>(false);
 
   if (!shipment) {
     return null;
@@ -94,6 +96,7 @@ export function ShipmentActions({ shipment }: { shipment?: Shipment | null }) {
           <DropdownMenuItem
             title="View Audit Log"
             description="Track all modifications and updates to this shipment."
+            onClick={() => setAuditDialogOpen(true)}
           />
         </DropdownMenuContent>
       </DropdownMenu>
@@ -106,6 +109,11 @@ export function ShipmentActions({ shipment }: { shipment?: Shipment | null }) {
         open={cancellationDialogOpen}
         onOpenChange={setCancellationDialogOpen}
         shipmentId={shipment.id ?? ""}
+      />
+      <EntryAuditViewer
+        open={auditDialogOpen}
+        onOpenChange={setAuditDialogOpen}
+        resourceId={shipment.id ?? ""}
       />
     </>
   );
