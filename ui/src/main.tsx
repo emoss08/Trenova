@@ -1,4 +1,3 @@
-import "@fontsource-variable/inter";
 import { createRoot } from "react-dom/client";
 import { scan } from "react-scan"; // must be imported before React and React DOM
 import App from "./App.tsx";

@@ -1,6 +1,6 @@
 import { toDate, toUnixTimeStamp } from "@/lib/date";
 import { cn } from "@/lib/utils";
-import { type AutoCompleteDateTimeFieldProps } from "@/types/fields";
+import { AutoCompleteDateFieldProps } from "@/types/fields";
 import { useCallback } from "react";
 import { Controller, FieldValues } from "react-hook-form";
 import { DateTimePicker } from "./date-field/datetime-picker";
@@ -15,7 +15,7 @@ export function AutoCompleteDateTimeField<T extends FieldValues>({
   description,
   placeholder,
   ...props
-}: AutoCompleteDateTimeFieldProps<T>) {
+}: AutoCompleteDateFieldProps<T>) {
   const inputId = `input-${name}`;
   const descriptionId = `${inputId}-description`;
   const errorId = `${inputId}-error`;
@@ -28,6 +28,7 @@ export function AutoCompleteDateTimeField<T extends FieldValues>({
       render={({ field, fieldState }) => {
         const dateValue = field.value ? toDate(field.value) : undefined;
 
+        // eslint-disable-next-line react-hooks/rules-of-hooks
         const handleChange = useCallback(
           (date: Date | undefined) => {
             const formattedDate = toUnixTimeStamp(date);

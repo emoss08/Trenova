@@ -43,7 +43,7 @@ function getLabelByValue<T extends Record<string, unknown>>(
   value: PathValue<T, Path<T>>,
   options: OptionsOrGroups<SelectOption, GroupBase<SelectOption>>,
 ): string {
-  const option = options.find((opt) => opt?.value === value);
+  const option = options.find((opt) => (opt as any)?.value === value);
   return option?.label || (value as string);
 }
 
@@ -250,13 +250,14 @@ export function InputComponent(
 
 export function SingleValueComponent(props: SingleValueProps) {
   const { selectProps, data, children } = props;
+  const selectedOption = selectProps.options.find((option) => {
+    if ("value" in (option as any)) {
+      return (option as any).value === (data as SelectOption).value;
+    }
+    return false;
+  }) as SelectOption | undefined;
 
-  const selectedOption = selectProps.options.find(
-    (option: SelectOption | GroupBase<SelectOption>) =>
-      option.value === (data as SelectOption).value,
-  );
-
-  const color = selectedOption ? (selectedOption as SelectOption).color : null;
+  const color = selectedOption?.color ?? null;
 
   return (
     <components.SingleValue {...props}>

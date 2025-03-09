@@ -24,7 +24,7 @@ import { StopTimeline } from "../../sidebar/stop-details/stop-timeline-content";
 import { AssignmentDetails } from "../move-assignment-details";
 
 type MoveInformationProps = {
-  moves: FieldArrayWithId<ShipmentSchema, "moves", "id">[];
+  moves: FieldArrayWithId<ShipmentSchema, "moves", "formId">[];
   update: UseFieldArrayUpdate<ShipmentSchema, "moves">;
   remove: UseFieldArrayRemove;
   onEdit: (index: number) => void;
@@ -163,7 +163,7 @@ function MoveActions({
 
   // Move is not new, so we cannot assign equipment and workers
   const reassignEnabled = status === MoveStatus.Assigned;
-  const assignDisabled = AssignmentStatus.includes(status);
+  const assignEnabled = AssignmentStatus.includes(status);
 
   return (
     <>
@@ -180,7 +180,7 @@ function MoveActions({
             title={reassignEnabled ? "Reassign" : "Assign"}
             description="Assign equipment and worker(s) to the move"
             onClick={() => setAssignmentDialogOpen(!assignmentDialogOpen)}
-            disabled={!assignDisabled}
+            disabled={!assignEnabled}
           />
           <DropdownMenuItem
             title="Split Move"

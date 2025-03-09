@@ -1,5 +1,9 @@
 import { Icon } from "@/components/ui/icons";
-import { SearchResult, SiteSearchQuickOptionProps } from "@/types/search";
+import {
+  SearchEntityType,
+  SearchResult,
+  SiteSearchQuickOptionProps,
+} from "@/types/search";
 import { faTruck } from "@fortawesome/pro-regular-svg-icons";
 import { ShipmentStatusBadge } from "../status-badge";
 import Highlight from "../ui/highlight";
@@ -69,7 +73,7 @@ export function getResultComponent(
   props: Omit<SearchResultItemProps, "result">,
 ) {
   switch (result.type) {
-    case "shipment":
+    case SearchEntityType.Shipments:
       return <ShipmentResultItem result={result} {...props} />;
     default:
       // Fallback for unknown types
