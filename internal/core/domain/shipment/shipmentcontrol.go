@@ -58,8 +58,9 @@ type ShipmentControl struct {
 	TrackCustomerRejections bool     `json:"trackCustomerRejections" bun:"track_customer_rejections,type:BOOLEAN,notnull,default:false"`
 
 	// Misc....
-	CheckForDuplicateBOLs bool `json:"checkForDuplicateBOLs" bun:"check_for_duplicate_bols,type:BOOLEAN,notnull,default:true"`
-	AllowMoveRemovals     bool `json:"allowMoveRemovals" bun:"allow_move_removals,type:BOOLEAN,notnull,default:true"`
+	CheckForDuplicateBOLs  bool `json:"checkForDuplicateBOLs" bun:"check_for_duplicate_bols,type:BOOLEAN,notnull,default:true"`
+	AllowMoveRemovals      bool `json:"allowMoveRemovals" bun:"allow_move_removals,type:BOOLEAN,notnull,default:true"`
+	CheckHazmatSegregation bool `json:"checkHazmatSegregation" bun:"check_hazmat_segregation,type:BOOLEAN,notnull,default:true"`
 
 	// Metadata
 	Version   int64 `json:"version" bun:"version,type:BIGINT"`

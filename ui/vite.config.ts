@@ -66,7 +66,7 @@ const vendorChunks = {
   "date-utils": ["date-fns", "chrono-node"],
 
   // Animation
-  animation: ["framer-motion"],
+  animation: ["motion/react"],
 
   // Utilities
   utils: ["clsx", "tailwind-merge", "class-variance-authority"],
