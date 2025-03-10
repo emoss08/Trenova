@@ -245,6 +245,19 @@ const routes: RouteObject[] = [
                 },
               },
               {
+                path: "hazmat-segregation-rules",
+                async lazy() {
+                  let { HazmatSegregationRules } = await import(
+                    "@/app/hazmat-segregation-rules/page"
+                  );
+                  return { Component: HazmatSegregationRules };
+                },
+                handle: {
+                  crumb: "Data Retention",
+                  title: "Data Retention",
+                },
+              },
+              {
                 path: "audit-entries",
                 async lazy() {
                   let { AuditLogs } = await import("@/app/audit-logs/page");

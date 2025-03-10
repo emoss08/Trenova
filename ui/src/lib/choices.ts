@@ -4,6 +4,10 @@ import {
   HazardousClassChoiceProps,
   PackingGroupChoiceProps,
 } from "@/types/hazardous-material";
+import {
+  SegregationDistanceUnit,
+  SegregationType,
+} from "@/types/hazmat-segregation-rule";
 import { FacilityType, LocationCategoryType } from "@/types/location-category";
 import { MoveStatus } from "@/types/move";
 import { RatingMethod, ShipmentStatus } from "@/types/shipment";
@@ -90,6 +94,24 @@ export const stopTypeChoices = [
   { value: StopType.SplitPickup, label: "Split Pickup", color: "#a855f7" },
   { value: StopType.SplitDelivery, label: "Split Delivery", color: "#f59e0b" },
 ] satisfies ReadonlyArray<ChoiceProps<StopType>>;
+
+export const segregationTypeChoices = [
+  { value: SegregationType.Prohibited, label: "Prohibited", color: "#b91c1c" },
+  { value: SegregationType.Separated, label: "Separated", color: "#15803d" },
+  { value: SegregationType.Distance, label: "Distance", color: "#7e22ce" },
+  { value: SegregationType.Barrier, label: "Barrier", color: "#f59e0b" },
+] satisfies ReadonlyArray<ChoiceProps<SegregationType>>;
+
+export const segregationDistanceUnitChoices = [
+  { value: SegregationDistanceUnit.Feet, label: "Feet", color: "#15803d" },
+  { value: SegregationDistanceUnit.Meters, label: "Meters", color: "#7e22ce" },
+  { value: SegregationDistanceUnit.Inches, label: "Inches", color: "#f59e0b" },
+  {
+    value: SegregationDistanceUnit.Centimeters,
+    label: "Centimeters",
+    color: "#0369a1",
+  },
+] satisfies ReadonlyArray<ChoiceProps<SegregationDistanceUnit>>;
 
 /**
  * Returns status choices for a select input.

@@ -149,6 +149,10 @@ export function AuditEntryResourceBadge({
       variant: "orange",
       text: "Shipment Control",
     },
+    [Resource.HazmatSegregationRule]: {
+      variant: "orange",
+      text: "Hazmat Segregation Rule",
+    },
     [Resource.DocumentQualityConfig]: {
       variant: "orange",
       text: "Document Quality Config",
@@ -289,6 +293,7 @@ export function AuditEntryResourceBadge({
       text: "",
       description: undefined,
     },
+
     [Resource.DataRetention]: {
       variant: undefined,
       text: "",

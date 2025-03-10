@@ -257,6 +257,12 @@ export const routes: RouteInfo[] = [
         supportsModal: false,
       },
       {
+        key: Resource.HazmatSegregationRule,
+        label: "Hazmat Segregation Rules",
+        link: "/organization/hazmat-segregation-rules",
+        supportsModal: true,
+      },
+      {
         key: Resource.SystemLog,
         label: "System Logs",
         link: "/organization/system-logs",
