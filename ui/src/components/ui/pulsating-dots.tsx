@@ -1,5 +1,5 @@
 import { cn } from "@/lib/utils";
-import { motion } from "framer-motion";
+import { motion } from "motion/react";
 
 type SizeOptions = 0.5 | 1 | 2 | 3 | 4 | 5;
 

@@ -63,7 +63,7 @@ export function CommodityList({
               const shipmentCommodity = commodities[virtualRow.index];
               return (
                 <MemoizedCommodityRow
-                  key={shipmentCommodity.id}
+                  key={virtualRow.index} // Use virtualRow.index as key, not shipmentCommodity.id
                   shipmentCommodity={shipmentCommodity as ShipmentCommodity}
                   isLast={virtualRow.index === commodities.length - 1}
                   onEdit={handleEdit}
@@ -85,7 +85,7 @@ export function CommodityList({
         <ScrollArea className="flex max-h-40 flex-col">
           {commodities.map((shipmentCommodity, index) => (
             <MemoizedCommodityRow
-              key={shipmentCommodity.id}
+              key={index} // Use index as key, not shipmentCommodity.id
               shipmentCommodity={shipmentCommodity as ShipmentCommodity}
               isLast={index === commodities.length - 1}
               onEdit={handleEdit}
