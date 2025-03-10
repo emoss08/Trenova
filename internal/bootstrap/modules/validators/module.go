@@ -38,10 +38,10 @@ var Module = fx.Module("validators", fx.Provide(
 	tractorvalidator.NewValidator,
 	trailervalidator.NewValidator,
 	customervalidator.NewValidator,
+	hazmatsegreationrulevalidator.NewValidator,
 	shipmentvalidator.NewStopValidator,
 	shipmentvalidator.NewMoveValidator,
 	shipmentvalidator.NewValidator,
 	assignmentvalidator.NewValidator,
 	shipmentcontrolvalidator.NewValidator,
-	hazmatsegreationrulevalidator.NewValidator,
 ))
