@@ -149,13 +149,13 @@ export const routes: RouteInfo[] = [
     ],
   },
   {
-    key: Resource.Shipment,
+    key: Resource.ShipmentManagement,
     label: "Shipment Management",
     icon: faTruck,
     isDefault: true,
     tree: [
       {
-        key: Resource.ShipmentManagement,
+        key: Resource.Shipment,
         label: "Shipment Management",
         link: "/shipments/management",
         supportsModal: true,
@@ -255,6 +255,12 @@ export const routes: RouteInfo[] = [
         label: "Organization Settings",
         link: "/organization/settings",
         supportsModal: false,
+      },
+      {
+        key: Resource.HazmatSegregationRule,
+        label: "Hazmat Segregation Rules",
+        link: "/organization/hazmat-segregation-rules",
+        supportsModal: true,
       },
       {
         key: Resource.SystemLog,

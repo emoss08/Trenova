@@ -25,7 +25,7 @@ export function CreateLocationModal({ open, onOpenChange }: TableSheetProps) {
       locationCategoryId: "",
       stateId: "",
       state: null,
-      locationCategory: null,
+      // locationCategory: null,
     },
   });
 

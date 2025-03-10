@@ -24,23 +24,24 @@ const (
 	ResourceShipmentControl       = Resource("shipment_control")        // Represents resources related to shipment control.
 
 	// Operations resources
-	ResourceWorker                = Resource("worker")                 // Represents resources related to workers.
-	ResourceTractor               = Resource("tractor")                // Represents resources for managing tractors.
-	ResourceTrailer               = Resource("trailer")                // Represents resources for managing trailers.
-	ResourceShipment              = Resource("shipment")               // Represents resources for managing shipments.
-	ResourceAssignment            = Resource("assignment")             // Represents resources for managing assignments.
-	ResourceShipmentMove          = Resource("shipment_move")          // Represents resources for managing movements.
-	ResourceStop                  = Resource("stop")                   // Represents resources for managing stops.
-	ResourceFleetCode             = Resource("fleet_code")             // Represents resources for managing fleet codes.
-	ResourceEquipmentType         = Resource("equipment_type")         // Represents resources for managing equipment types.
-	ResourceEquipmentManufacturer = Resource("equipment_manufacturer") // Represents resources for managing equipment manfacturers.
-	ResourceShipmentType          = Resource("shipment_type")          // Represents resources for managing shipment type.
-	ResourceServiceType           = Resource("service_type")           // Represents resources for managing service types.
-	ResourceHazardousMaterial     = Resource("hazardous_material")     // Represents resources for managing hazardous materials.
-	ResourceCommodity             = Resource("commodity")              // Represents resources for managing commodities.
-	ResourceLocationCategory      = Resource("location_category")      // Represents resources for managing location categories.
-	ResourceLocation              = Resource("location")               // Represents resources for managing locations.
-	ResourceCustomer              = Resource("customer")               // Represents resources for managing customers.
+	ResourceWorker                = Resource("worker")                  // Represents resources related to workers.
+	ResourceTractor               = Resource("tractor")                 // Represents resources for managing tractors.
+	ResourceTrailer               = Resource("trailer")                 // Represents resources for managing trailers.
+	ResourceShipment              = Resource("shipment")                // Represents resources for managing shipments.
+	ResourceAssignment            = Resource("assignment")              // Represents resources for managing assignments.
+	ResourceShipmentMove          = Resource("shipment_move")           // Represents resources for managing movements.
+	ResourceStop                  = Resource("stop")                    // Represents resources for managing stops.
+	ResourceFleetCode             = Resource("fleet_code")              // Represents resources for managing fleet codes.
+	ResourceEquipmentType         = Resource("equipment_type")          // Represents resources for managing equipment types.
+	ResourceEquipmentManufacturer = Resource("equipment_manufacturer")  // Represents resources for managing equipment manfacturers.
+	ResourceShipmentType          = Resource("shipment_type")           // Represents resources for managing shipment type.
+	ResourceServiceType           = Resource("service_type")            // Represents resources for managing service types.
+	ResourceHazardousMaterial     = Resource("hazardous_material")      // Represents resources for managing hazardous materials.
+	ResourceCommodity             = Resource("commodity")               // Represents resources for managing commodities.
+	ResourceLocationCategory      = Resource("location_category")       // Represents resources for managing location categories.
+	ResourceLocation              = Resource("location")                // Represents resources for managing locations.
+	ResourceCustomer              = Resource("customer")                // Represents resources for managing customers.
+	ResourceHazmatSegregationRule = Resource("hazmat_segregation_rule") // Represents resources for managing hazmat segregation rules.
 
 	// Financial resources
 	ResourceInvoice = Resource("invoice") // Represents resources related to invoices.
@@ -336,6 +337,10 @@ var (
 			append(DataActions, FieldActions...)...,
 		),
 		ResourceCustomer: append(
+			BaseActions,
+			append(DataActions, FieldActions...)...,
+		),
+		ResourceHazmatSegregationRule: append(
 			BaseActions,
 			append(DataActions, FieldActions...)...,
 		),
