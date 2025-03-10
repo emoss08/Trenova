@@ -56,10 +56,9 @@ const links: SidebarLink[] = [
     disabled: true,
   },
   {
-    href: "/organization/hazardous-rules/",
+    href: "/organization/hazmat-segregation-rules/",
     title: "Hazmat Seg. Rules",
     group: "Organization",
-    disabled: true,
   },
   {
     href: "#",

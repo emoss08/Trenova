@@ -52,7 +52,7 @@ export function SidebarNav({ links, className, ...props }: SidebarNavProps) {
                         location.pathname === link.href
                           ? "bg-accent"
                           : "hover:bg-accent",
-                        link.disabled && "cursor-not-allowed opacity-50",
+                        link.disabled && "opacity-50 pointer-events-none",
                         "group justify-start flex items-center text-sm mb-1",
                       )}
                     >
