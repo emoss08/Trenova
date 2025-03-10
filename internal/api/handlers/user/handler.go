@@ -16,16 +16,16 @@ import (
 	"go.uber.org/fx"
 )
 
-type Handler struct {
-	uh *user.Service
-	eh *validator.ErrorHandler
-}
-
 type HandlerParams struct {
 	fx.In
 
 	UserService  *user.Service
 	ErrorHandler *validator.ErrorHandler
+}
+
+type Handler struct {
+	uh *user.Service
+	eh *validator.ErrorHandler
 }
 
 func NewHandler(p HandlerParams) *Handler {

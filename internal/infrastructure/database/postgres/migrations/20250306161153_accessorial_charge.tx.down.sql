@@ -1,5 +1,4 @@
-SET statement_timeout = 0;
+DROP TABLE IF EXISTS "accessorial_charges";
 
-SELECT
-    1;
+DROP TYPE IF EXISTS "accessorial_method_enum";
 

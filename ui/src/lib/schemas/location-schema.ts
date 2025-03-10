@@ -1,6 +1,6 @@
 import { Status } from "@/types/common";
 import { type InferType, boolean, mixed, number, object, string } from "yup";
-import { locationCategorySchema } from "./location-category-schema";
+// import { locationCategorySchema } from "./location-category-schema";
 import { usStateSchema } from "./us-state-schema";
 
 export const locationSchema = object({
@@ -24,7 +24,7 @@ export const locationSchema = object({
   locationCategoryId: string().required("Location category is required"),
   stateId: string().required("State is required"),
   state: usStateSchema.notRequired().optional().nullable(),
-  locationCategory: locationCategorySchema.notRequired().optional().nullable(),
+  // locationCategory: locationCategorySchema.nullable().optional(),
 });
 
 export type LocationSchema = InferType<typeof locationSchema>;

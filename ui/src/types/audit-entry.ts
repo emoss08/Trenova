@@ -104,4 +104,5 @@ export enum Resource {
   Setting = "setting",
   Template = "template",
   Backup = "backup",
+  HazmatSegregationRule = "hazmat_segregation_rule",
 }

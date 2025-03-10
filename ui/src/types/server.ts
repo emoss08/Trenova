@@ -114,7 +114,7 @@ export type BaseEndpoint =
   | "/users/notifications/"
   | "/billing/shipments-ready/"
   | "/tags/"
-  | "/hazardous-material-segregations/"
+  | "/hazmat-segregation-rules/"
   | "/formula-templates/"
   | "/finance-transactions/"
   | "/reconciliation-queue/"

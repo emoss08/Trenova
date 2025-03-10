@@ -28,11 +28,7 @@ func NewValidator(p ValidatorParams) *Validator {
 	}
 }
 
-func (v *Validator) Validate(
-	ctx context.Context,
-	valCtx *validator.ValidationContext,
-	l *location.Location,
-) *errors.MultiError {
+func (v *Validator) Validate(ctx context.Context, valCtx *validator.ValidationContext, l *location.Location) *errors.MultiError {
 	multiErr := errors.NewMultiError()
 
 	// Basic Location validation

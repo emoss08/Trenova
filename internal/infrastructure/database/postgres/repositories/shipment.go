@@ -180,8 +180,8 @@ func (sr *shipmentRepository) List(ctx context.Context, opts *repositories.ListS
 	// * Append filters to base query
 	q = sr.filterQuery(q, opts)
 
-	// * New statuses should be at the top
-	q.Order("sp.status ASC")
+	// * Order by status and created at
+	q.Order("sp.status ASC", "sp.created_at DESC")
 
 	total, err := q.ScanAndCount(ctx)
 	if err != nil {
