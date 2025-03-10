@@ -14,6 +14,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/file"
 	"github.com/emoss08/trenova/internal/core/services/fleetcode"
 	"github.com/emoss08/trenova/internal/core/services/hazardousmaterial"
+	"github.com/emoss08/trenova/internal/core/services/hazmatsegregationrule"
 	"github.com/emoss08/trenova/internal/core/services/location"
 	"github.com/emoss08/trenova/internal/core/services/locationcategory"
 	"github.com/emoss08/trenova/internal/core/services/organization"
@@ -72,6 +73,7 @@ var Module = fx.Module("services", fx.Provide(
 	logreader.NewService,
 	shipmentcontrol.NewService,
 	dbbackup.NewService,
+	hazmatsegregationrule.NewService,
 ))
 
 var CalculatorModule = fx.Module("calculator", fx.Provide(
