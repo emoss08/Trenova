@@ -3,16 +3,24 @@ package document
 import (
 	"context"
 
+	"github.com/emoss08/trenova/internal/core/domain"
 	"github.com/emoss08/trenova/internal/core/domain/businessunit"
 	"github.com/emoss08/trenova/internal/core/domain/organization"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/user"
+	"github.com/emoss08/trenova/internal/core/ports/infra"
 	"github.com/emoss08/trenova/internal/pkg/errors"
 	"github.com/emoss08/trenova/internal/pkg/utils/timeutils"
 	"github.com/emoss08/trenova/pkg/types/pulid"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/rotisserie/eris"
 	"github.com/uptrace/bun"
+)
+
+var (
+	_ bun.BeforeAppendModelHook = (*Document)(nil)
+	_ domain.Validatable        = (*Document)(nil)
+	_ infra.PostgresSearchable  = (*Document)(nil)
 )
 
 type Document struct {
@@ -183,4 +191,43 @@ func (d *Document) CheckExpiration() bool {
 // IsApproved checks if the document has been approved
 func (d *Document) IsApproved() bool {
 	return d.ApproavedByID != nil && d.ApprovedAt != nil
+}
+
+func (d *Document) GetPostgresSearchConfig() infra.PostgresSearchConfig {
+	return infra.PostgresSearchConfig{
+		TableAlias: "doc",
+		Fields: []infra.PostgresSearchableField{
+			{
+				Name:   "file_name",
+				Weight: "A",
+				Type:   infra.PostgresSearchTypeText,
+			},
+			{
+				Name:   "original_name",
+				Weight: "A",
+				Type:   infra.PostgresSearchTypeText,
+			},
+			{
+				Name:       "description",
+				Weight:     "B",
+				Type:       infra.PostgresSearchTypeText,
+				Dictionary: "english",
+			},
+			{
+				Name:       "document_type",
+				Weight:     "B",
+				Type:       infra.PostgresSearchTypeEnum,
+				Dictionary: "english",
+			},
+			{
+				Name:       "tags",
+				Weight:     "C",
+				Type:       infra.PostgresSearchTypeArray,
+				Dictionary: "english",
+			},
+		},
+		MinLength:       2,
+		MaxTerms:        6,
+		UsePartialMatch: true,
+	}
 }
