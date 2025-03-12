@@ -62,7 +62,6 @@ type Worker struct {
 	Organization *organization.Organization `json:"organization,omitempty" bun:"rel:belongs-to,join:organization_id=id"`
 	State        *usstate.UsState           `json:"state,omitempty" bun:"rel:belongs-to,join:state_id=id"`
 	Profile      *WorkerProfile             `json:"profile,omitempty" bun:"rel:has-one,join:id=worker_id"`
-	Documents    []*WorkerDocument          `json:"documents,omitempty" bun:"rel:has-many,join:id=worker_id"`
 	PTO          []*WorkerPTO               `json:"pto,omitempty" bun:"rel:has-many,join:id=worker_id"`
 }
 
