@@ -146,7 +146,7 @@ var restoreCmd = &cobra.Command{
 
 		var response string
 		fmt.Scanln(&response)
-		if strings.ToLower(response) != "y" {
+		if !strings.EqualFold(response, "y") {
 			fmt.Println("Restore cancelled.")
 			return
 		}
@@ -215,13 +215,14 @@ func init() {
 		Short: "Legacy backup command",
 		Long:  "Legacy command for compatibility with old scripts",
 		Run: func(cmd *cobra.Command, args []string) {
-			if backupList {
+			switch {
+			case backupList:
 				listCmd.Run(cmd, args)
-			} else if backupRestore != "" {
+			case backupRestore != "":
 				restoreCmd.Run(cmd, args)
-			} else if backupCleanup {
+			case backupCleanup:
 				cleanupCmd.Run(cmd, args)
-			} else {
+			default:
 				createCmd.Run(cmd, args)
 			}
 		},

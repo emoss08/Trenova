@@ -228,16 +228,22 @@ CREATE INDEX "idx_worker_pto_worker_dates" ON "worker_pto" ("worker_id", "organi
 COMMENT ON TABLE worker_pto IS 'Stores information about a worker''s PTO requests';
 
 --bun:split
-CREATE TYPE document_type_enum AS ENUM (
-    'MVRs', -- Motor Vehicle Record
-    'MedicalCert', -- Medical Certificate
-    'CDL', -- Commercial Driver's License
-    'ViolationCert', -- Violation Certificate
-    'EmploymentHistory', -- Employment History
-    'DrugTest', -- Drug Test
-    'RoadTest', -- Road Test
-    'TrainingCert' -- Training Certificate
+CREATE TYPE "document_type_enum" AS ENUM(
+    'License', -- Driver's license, business license, etc.
+    'Registration', -- Vehicle registration
+    'Insurance', -- Insurance documents
+    'Invoice', -- Customer invoices
+    'ProofOfDelivery', -- POD documents
+    'BillOfLading', -- BOL documents
+    'DriverLog', -- Driver HOS logs
+    'MedicalCertificate', -- Driver medical certificates
+    'Contract', -- Business contracts
+    'Maintenance', -- Maintenance records
+    'AccidentReport', -- Accident or incident reports
+    'TrainingRecord', -- Driver or employee training documents
+    'Other' -- Miscellaneous documents
 );
+
 
 CREATE TYPE document_requirement_type_enum AS ENUM (
     'Ongoing', -- The document needs to be renewed periodically
@@ -294,12 +300,14 @@ CREATE INDEX "idx_document_requirements_created_updated" ON "document_requiremen
 COMMENT ON TABLE document_requirements IS 'Stores information about document requirements for a business unit';
 
 --bun:split
-CREATE TYPE document_status_enum AS ENUM (
-    'Pending', -- The document is pending
-    'Active', -- The document is active
-    'Expired', -- The document is expired
-    'Rejected', -- The document is rejected
-    'Revoked' -- The document is revoked
+CREATE TYPE "document_status_enum" AS ENUM(
+    'Draft', -- Document in draft state
+    'Active', -- Document is active and valid
+    'Archived', -- Document has been archived
+    'Expired', -- Document has expired
+    'Pending', -- Document is pending
+    'Rejected', -- Document was rejected during approval
+    'PendingApproval' -- Document is awaiting approval
 );
 
 --bun:split
