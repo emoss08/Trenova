@@ -477,9 +477,9 @@ func (v *Validator) ValidateShipmentCommodityAddition(
 	}
 
 	// * Create a copy of the shipment with the new commodity added
-	tempCommodities := append(commodities, newShipmentCommodity)
+	commodities = append(commodities, newShipmentCommodity)
 	tempShipment := *shp
-	tempShipment.Commodities = tempCommodities
+	tempShipment.Commodities = commodities
 
 	// * Validate the temporary shipment
 	return v.ValidateShipment(ctx, &tempShipment)

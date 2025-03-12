@@ -1,6 +1,7 @@
 import { DataTableConfig } from "@/config/data-table";
 import { filterSchema } from "@/lib/parsers";
 import { API_ENDPOINTS } from "@/types/server";
+import { IconDefinition } from "@fortawesome/pro-regular-svg-icons";
 import type {
   ColumnDef,
   ColumnFilter,
@@ -14,6 +15,7 @@ import type {
   Table,
   VisibilityState,
 } from "@tanstack/react-table";
+import React from "react";
 import { z } from "zod";
 
 export type Prettify<T> = {
@@ -74,9 +76,18 @@ export interface QueryBuilderOpts {
   distinct?: boolean;
   nullish?: boolean;
 }
-type TableRowAction<TData> = {
-  row: Row<TData>;
-  type: "update" | "delete";
+
+type ExtraAction = {
+  key: string;
+  // * Label to be displayed
+  label: string;
+  // * Icon to be displayed before the label
+  icon?: IconDefinition;
+  // * Content to be displayed after the label
+  endContent?: React.ReactNode;
+  // * Description to be displayed below the label
+  description?: string;
+  onClick: () => void;
 };
 
 type DataTableCreateButtonProps = {
@@ -84,6 +95,7 @@ type DataTableCreateButtonProps = {
   exportModelName: string;
   isDisabled?: boolean;
   onCreateClick?: () => void;
+  extraActions?: ExtraAction[];
 };
 
 export type DataTableViewOptionsProps<TData> = {
@@ -166,6 +178,7 @@ type DataTableProps<TData extends Record<string, any>> = {
   includeOptions?: boolean;
   // onDataChange?: (data: TData[]) => void;
   pageSizeOptions?: Readonly<number[]>;
+  extraActions?: ExtraAction[];
 };
 
 type DataTableBodyProps<TData extends Record<string, any>> = {
@@ -177,6 +190,6 @@ export type {
   DataTableCreateButtonProps,
   DataTableProps,
   DataTableState,
-  TableRowAction
+  ExtraAction
 };
 

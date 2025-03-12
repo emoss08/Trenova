@@ -6,7 +6,9 @@ type AuditEntryResponse = {
   total: number;
 };
 
-export async function getAuditEntriesByResourceID(resourceId: string) {
+export async function getAuditEntriesByResourceID(
+  resourceId: AuditEntry["resourceId"],
+) {
   const response = await http.get<AuditEntryResponse>(
     `/audit-logs/resource/${resourceId}`,
   );
