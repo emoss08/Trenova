@@ -1,8 +1,10 @@
-import React from "react";
+import { QueryErrorResetBoundary } from "@tanstack/react-query";
+import { ErrorInfo } from "react";
 import { ErrorBoundary, ErrorBoundaryProps } from "react-error-boundary";
 import { useRouteError } from "react-router";
 import { Button } from "./ui/button";
 import { Card, CardDescription, CardTitle } from "./ui/card";
+import { SuspenseLoader } from "./ui/component-loader";
 
 export function RootErrorBoundary() {
   const error = useRouteError() as Error;
@@ -45,11 +47,7 @@ function LazyLoadErrorFallback({
  * LazyComponent is a wrapper component that allows for lazy loading of components
  * with error handling.
  */
-export function LazyComponent({
-  children,
-  fallback,
-  onError,
-}: ErrorBoundaryProps) {
+export function LazyComponent({ children, onError }: ErrorBoundaryProps) {
   return (
     <ErrorBoundary
       FallbackComponent={LazyLoadErrorFallback}
@@ -58,7 +56,39 @@ export function LazyComponent({
       }}
       onError={onError}
     >
-      <React.Suspense fallback={fallback}>{children}</React.Suspense>
+      <SuspenseLoader>{children}</SuspenseLoader>
     </ErrorBoundary>
+  );
+}
+
+type QueryLazyComponentProps = {
+  children: React.ReactNode;
+  onError?: (error: Error, info: ErrorInfo) => void;
+  queryKey: string[];
+};
+
+/**
+ * QueryLazyComponent is a wrapper component that allows for lazy loading of components that
+ * use react-query.
+ * It also resets the query cache when the error boundary is reset.
+ */
+export function QueryLazyComponent({
+  children,
+  onError,
+  queryKey,
+}: QueryLazyComponentProps) {
+  return (
+    <QueryErrorResetBoundary>
+      {({ reset }) => (
+        <ErrorBoundary
+          FallbackComponent={LazyLoadErrorFallback}
+          onReset={reset}
+          onError={onError}
+          resetKeys={queryKey}
+        >
+          <SuspenseLoader>{children}</SuspenseLoader>
+        </ErrorBoundary>
+      )}
+    </QueryErrorResetBoundary>
   );
 }

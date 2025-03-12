@@ -59,8 +59,14 @@ export const shipmentControlSchema = object({
     otherwise: (schema) => schema.nullable().notRequired(),
   }),
   // Performance Metrics
-  onTimeDeliveryTarget: number().nullable().notRequired(),
-  serviceFailureTarget: number().nullable().notRequired(),
+  onTimeDeliveryTarget: number()
+    .transform((value) => (Number.isNaN(value) ? undefined : value))
+    .nullable()
+    .optional(),
+  serviceFailureTarget: number()
+    .transform((value) => (Number.isNaN(value) ? undefined : value))
+    .nullable()
+    .optional(),
   trackCustomerRejections: boolean().required(
     "Track customer rejections is required",
   ),
@@ -69,6 +75,9 @@ export const shipmentControlSchema = object({
     "Check for duplicate BOLs is required",
   ),
   allowMoveRemovals: boolean().required("Allow move removals is required"),
+  checkHazmatSegregation: boolean().required(
+    "Check hazmat segregation is required",
+  ),
 });
 
 export type ShipmentControlSchema = InferType<typeof shipmentControlSchema>;

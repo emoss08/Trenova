@@ -1,5 +1,5 @@
+import { QueryLazyComponent } from "@/components/error-boundary";
 import { MetaTags } from "@/components/meta-tags";
-import { SuspenseLoader } from "@/components/ui/component-loader";
 import { Icon } from "@/components/ui/icons";
 import { faExclamationTriangle } from "@fortawesome/pro-regular-svg-icons";
 import { lazy, memo } from "react";
@@ -15,9 +15,9 @@ export function AuditLogs() {
       />
       <Header />
       <AuditAlert />
-      <SuspenseLoader>
+      <QueryLazyComponent queryKey={["audit-logs-list"]}>
         <AuditLogTable />
-      </SuspenseLoader>
+      </QueryLazyComponent>
     </div>
   );
 }
