@@ -1,6 +1,6 @@
 module github.com/emoss08/trenova
 
-go 1.24
+go 1.24.1
 
 require (
 	github.com/bytedance/sonic v1.13.1
