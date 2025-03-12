@@ -1,6 +1,10 @@
+import { LazyComponent } from "@/components/error-boundary";
 import { MetaTags } from "@/components/meta-tags";
-import { SuspenseLoader } from "@/components/ui/component-loader";
-import EquipManufacturerTable from "./_components/equip-manufacturer-table";
+import { lazy } from "react";
+
+const EquipManufacturerTable = lazy(
+  () => import("./_components/equip-manufacturer-table"),
+);
 
 export function EquipmentManufacturers() {
   return (
@@ -9,9 +13,9 @@ export function EquipmentManufacturers() {
         title="Equipment Manufacturers"
         description="Equipment Manufacturers"
       />
-      <SuspenseLoader>
+      <LazyComponent>
         <EquipManufacturerTable />
-      </SuspenseLoader>
+      </LazyComponent>
     </>
   );
 }

@@ -1,14 +1,18 @@
+import { LazyComponent } from "@/components/error-boundary";
 import { MetaTags } from "@/components/meta-tags";
-import { SuspenseLoader } from "@/components/ui/component-loader";
-import ShipmentTypesDataTable from "./_components/shipment-type-table";
+import { lazy } from "react";
+
+const ShipmentTypesDataTable = lazy(
+  () => import("./_components/shipment-type-table"),
+);
 
 export function ShipmentTypes() {
   return (
     <>
       <MetaTags title="Shipment Types" description="Shipment Types" />
-      <SuspenseLoader>
+      <LazyComponent>
         <ShipmentTypesDataTable />
-      </SuspenseLoader>
+      </LazyComponent>
     </>
   );
 }

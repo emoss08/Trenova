@@ -1,5 +1,5 @@
+import { LazyComponent } from "@/components/error-boundary";
 import { MetaTags } from "@/components/meta-tags";
-import { SuspenseLoader } from "@/components/ui/component-loader";
 import { lazy } from "react";
 
 // Lazy Loaded Components
@@ -9,9 +9,9 @@ export function Commodities() {
   return (
     <>
       <MetaTags title="Commodities" description="Commodities" />
-      <SuspenseLoader>
+      <LazyComponent>
         <CommodityTable />
-      </SuspenseLoader>
+      </LazyComponent>
     </>
   );
 }

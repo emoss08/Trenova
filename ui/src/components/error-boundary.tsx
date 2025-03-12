@@ -1,6 +1,6 @@
 import { QueryErrorResetBoundary, QueryKey } from "@tanstack/react-query";
 import { ErrorInfo } from "react";
-import { ErrorBoundary, ErrorBoundaryProps } from "react-error-boundary";
+import { ErrorBoundary } from "react-error-boundary";
 import { useRouteError } from "react-router";
 import { Button } from "./ui/button";
 import { Card, CardDescription, CardTitle } from "./ui/card";
@@ -43,11 +43,16 @@ function LazyLoadErrorFallback({
   );
 }
 
+type LazyComponentProps = {
+  children: React.ReactNode;
+  onError?: (error: Error, info: ErrorInfo) => void;
+};
+
 /**
  * LazyComponent is a wrapper component that allows for lazy loading of components
  * with error handling.
  */
-export function LazyComponent({ children, onError }: ErrorBoundaryProps) {
+export function LazyComponent({ children, onError }: LazyComponentProps) {
   return (
     <ErrorBoundary FallbackComponent={LazyLoadErrorFallback} onError={onError}>
       <SuspenseLoader>{children}</SuspenseLoader>
