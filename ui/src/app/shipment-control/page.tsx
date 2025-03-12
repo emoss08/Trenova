@@ -1,6 +1,7 @@
 import { QueryLazyComponent } from "@/components/error-boundary";
 import { FormSaveProvider } from "@/components/form";
 import { MetaTags } from "@/components/meta-tags";
+import { queries } from "@/lib/queries";
 import { lazy, memo } from "react";
 
 const ShipmentControlForm = lazy(
@@ -12,7 +13,9 @@ export function ShipmentControl() {
     <div className="flex flex-col space-y-6">
       <MetaTags title="Shipment Control" description="Shipment Control" />
       <Header />
-      <QueryLazyComponent queryKey={["shipment-control"]}>
+      <QueryLazyComponent
+        queryKey={queries.organization.getShipmentControl._def}
+      >
         <FormSaveProvider>
           <ShipmentControlForm />
         </FormSaveProvider>

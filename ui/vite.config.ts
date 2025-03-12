@@ -1,11 +1,11 @@
 import { nodeResolve } from "@rollup/plugin-node-resolve";
+// @ts-expect-error // Module does not give types
 import tailwindcss from "@tailwindcss/vite";
 import react from "@vitejs/plugin-react-swc";
 import path from "path";
 import { visualizer } from "rollup-plugin-visualizer";
 import { defineConfig, type PluginOption } from "vite";
 import { compression } from "vite-plugin-compression2";
-import dts from "vite-plugin-dts";
 import { VitePWA } from "vite-plugin-pwa";
 
 // Define vendor chunks that should be bundled separately
@@ -102,7 +102,6 @@ export default defineConfig({
         theme_color: "#000000",
       },
     }),
-    dts({ rollupTypes: true, tsconfigPath: "./tsconfig.app.json" }),
     compression({
       algorithm: "brotliCompress",
       threshold: 512,

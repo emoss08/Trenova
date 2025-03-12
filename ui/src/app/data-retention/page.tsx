@@ -1,6 +1,6 @@
+import { QueryLazyComponent } from "@/components/error-boundary";
 import { MetaTags } from "@/components/meta-tags";
 import { Button } from "@/components/ui/button";
-import { SuspenseLoader } from "@/components/ui/component-loader";
 import { Icon } from "@/components/ui/icons";
 import { queries } from "@/lib/queries";
 import { createDatabaseBackup } from "@/services/organization";
@@ -23,9 +23,11 @@ export function DataRetention() {
       />
       <Header />
       <BackupAlert />
-      <SuspenseLoader>
+      <QueryLazyComponent
+        queryKey={queries.organization.getDatabaseBackups._def}
+      >
         <BackupList />
-      </SuspenseLoader>
+      </QueryLazyComponent>
     </div>
   );
 }

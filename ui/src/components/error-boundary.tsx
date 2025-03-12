@@ -1,4 +1,4 @@
-import { QueryErrorResetBoundary } from "@tanstack/react-query";
+import { QueryErrorResetBoundary, QueryKey } from "@tanstack/react-query";
 import { ErrorInfo } from "react";
 import { ErrorBoundary, ErrorBoundaryProps } from "react-error-boundary";
 import { useRouteError } from "react-router";
@@ -49,13 +49,7 @@ function LazyLoadErrorFallback({
  */
 export function LazyComponent({ children, onError }: ErrorBoundaryProps) {
   return (
-    <ErrorBoundary
-      FallbackComponent={LazyLoadErrorFallback}
-      onReset={() => {
-        // Optional: Add any reset/cleanup logic here
-      }}
-      onError={onError}
-    >
+    <ErrorBoundary FallbackComponent={LazyLoadErrorFallback} onError={onError}>
       <SuspenseLoader>{children}</SuspenseLoader>
     </ErrorBoundary>
   );
@@ -64,7 +58,7 @@ export function LazyComponent({ children, onError }: ErrorBoundaryProps) {
 type QueryLazyComponentProps = {
   children: React.ReactNode;
   onError?: (error: Error, info: ErrorInfo) => void;
-  queryKey: string[];
+  queryKey: QueryKey;
 };
 
 /**
@@ -84,7 +78,7 @@ export function QueryLazyComponent({
           FallbackComponent={LazyLoadErrorFallback}
           onReset={reset}
           onError={onError}
-          resetKeys={queryKey}
+          resetKeys={queryKey as any}
         >
           <SuspenseLoader>{children}</SuspenseLoader>
         </ErrorBoundary>
