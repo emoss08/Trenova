@@ -29,13 +29,20 @@ const (
 	maxFileSize       = 100 * 1024 * 1024 // 100MB
 )
 
+// Config defines the configuration for the file service
 type Config struct {
-	MaxFileSize            int64
-	AllowedFileTypes       map[services.FileType][]string
-	DefaultRegion          string
+	// MaxFileSize is the maximum file size allowed for uploads
+	MaxFileSize int64
+	// AllowedFileTypes is a map of allowed file types and their corresponding extensions
+	AllowedFileTypes map[services.FileType][]string
+	// DefaultRegion is the default region for the file service
+	DefaultRegion string
+	// ClassificationPolicies is a map of classification policies and their corresponding retention periods, encryption requirements, and allowed categories
 	ClassificationPolicies map[services.FileClassification]services.ClassificationPolicy
 }
 
+// ServiceParams defines the dependencies required for initializing the Service.
+// This includes a logger, minio client, and config manager.
 type ServiceParams struct {
 	fx.In
 
@@ -44,6 +51,8 @@ type ServiceParams struct {
 	ConfigM *config.Manager
 }
 
+// service is the implementation of the FileService interface
+// It provides methods to save, get, and delete files, as well as to manage versions and buckets.
 type service struct {
 	client   *minio.Client
 	l        *zerolog.Logger
@@ -51,6 +60,13 @@ type service struct {
 	endpoint string
 }
 
+// NewService initializes a new instance of service with its dependencies.
+//
+// Parameters:
+//   - p: ServiceParams containing logger, minio client, and config manager.
+//
+// Returns:
+//   - A new instance of service.
 func NewService(p ServiceParams) services.FileService {
 	log := p.Logger.With().
 		Str("service", "file").

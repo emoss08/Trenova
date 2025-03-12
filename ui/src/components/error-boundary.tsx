@@ -1,48 +1,177 @@
+import {
+  faChevronRight,
+  faExclamationTriangle,
+  faHome,
+  faRefresh,
+} from "@fortawesome/pro-regular-svg-icons";
 import { QueryErrorResetBoundary, QueryKey } from "@tanstack/react-query";
 import { ErrorInfo } from "react";
 import { ErrorBoundary } from "react-error-boundary";
 import { useRouteError } from "react-router";
+import { Alert, AlertDescription, AlertTitle } from "./ui/alert";
 import { Button } from "./ui/button";
-import { Card, CardDescription, CardTitle } from "./ui/card";
+import {
+  Card,
+  CardContent,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "./ui/card";
 import { SuspenseLoader } from "./ui/component-loader";
+import { Icon } from "./ui/icons";
+import { Separator } from "./ui/separator";
 
+interface ErrorDetails {
+  status?: number;
+  statusText?: string;
+  message?: string;
+  stack?: string;
+}
+
+/**
+ * Root Error Boundary - Handles application-wide errors
+ *
+ * This component is used as a fallback when an error occurs at the route level.
+ * It provides clear error information and navigation options for users.
+ */
 export function RootErrorBoundary() {
-  const error = useRouteError() as Error;
+  const error = useRouteError() as Error & ErrorDetails;
+  const isHttpError = !!(error?.status && error?.statusText);
+
+  const errorMessage =
+    error?.message ||
+    (typeof error === "string" ? error : JSON.stringify(error));
+
+  const errorTitle = isHttpError
+    ? `${error.status} - ${error.statusText}`
+    : "Application Error";
+
+  const handleReload = () => {
+    window.location.href = "/";
+  };
+
+  const handleRetry = () => {
+    window.location.reload();
+  };
+
   return (
-    <div>
-      <h1>Uh oh, something went terribly wrong 😩</h1>
-      <pre>{error.message || JSON.stringify(error)}</pre>
-      <button onClick={() => (window.location.href = "/")}>
-        Click here to reload the app
-      </button>
+    <div className="min-h-screen bg-background flex flex-col items-center justify-center p-4">
+      <Card className="w-full max-w-md shadow-lg">
+        <CardHeader>
+          <div className="flex items-center gap-3">
+            <Icon
+              icon={faExclamationTriangle}
+              className="h-6 w-6 text-red-500"
+            />
+            <CardTitle className="text-red-700">{errorTitle}</CardTitle>
+          </div>
+        </CardHeader>
+
+        <CardContent className="pt-6">
+          <Alert variant="destructive" className="mb-4">
+            <AlertTitle>Something went wrong</AlertTitle>
+            <AlertDescription>
+              We&apos;ve encountered an unexpected error. Our team has been
+              notified.
+            </AlertDescription>
+          </Alert>
+
+          <div className="mt-4">
+            <h3 className="text-sm font-medium text-muted-foreground mb-2">
+              Error Details:
+            </h3>
+            <div className="bg-muted rounded-md p-3 text-sm font-mono overflow-auto max-h-32">
+              {errorMessage}
+            </div>
+          </div>
+        </CardContent>
+
+        <Separator className="my-2" />
+
+        <CardFooter className="flex justify-between pt-4">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleRetry}
+            className="flex items-center gap-2"
+          >
+            <Icon icon={faRefresh} className="h-4 w-4" />
+            Retry Current Page
+          </Button>
+
+          <Button
+            onClick={handleReload}
+            size="sm"
+            className="flex items-center gap-2"
+          >
+            <Icon icon={faHome} className="h-4 w-4" />
+            Return Home
+            <Icon icon={faChevronRight} className="h-4 w-4" />
+          </Button>
+        </CardFooter>
+      </Card>
+
+      <p className="text-gray-500 text-sm mt-8">
+        If this issue persists, please contact support.
+      </p>
     </div>
   );
 }
 
-// Specific error fallback for lazy-loaded components
-function LazyLoadErrorFallback({
-  error,
-  resetErrorBoundary,
-}: {
+/**
+ * LazyLoadErrorFallback - Handles errors in lazy-loaded components
+ *
+ * This component is used specifically when a dynamically imported component
+ * fails to load, providing a scoped error display with retry functionality.
+ */
+interface LazyLoadErrorFallbackProps {
   error: Error;
   resetErrorBoundary: () => void;
-}) {
+}
+
+export function LazyLoadErrorFallback({
+  error,
+  resetErrorBoundary,
+}: LazyLoadErrorFallbackProps) {
   return (
-    <Card className="m-4">
-      <CardTitle>Component Failed to Load</CardTitle>
-      <CardDescription className="mt-2">
-        <p>This section of the application failed to load.</p>
-        <pre className="mt-2 rounded bg-red-50 p-2 text-sm">
-          {error.message}
-        </pre>
-        <Button variant="outline" className="mt-4" onClick={resetErrorBoundary}>
+    <Card className="shadow-md overflow-hidden">
+      <CardHeader>
+        <div className="flex items-center gap-2">
+          <Icon icon={faExclamationTriangle} className="size-5" />
+          <CardTitle>Component Failed to Load</CardTitle>
+        </div>
+      </CardHeader>
+
+      <CardContent className="pt-4">
+        <p className="text-muted-foreground">
+          This section of the application couldn&apos;t be loaded. This may be
+          due to a network issue or a recent deployment.
+        </p>
+
+        <div className="mt-4 mb-2">
+          <h4 className="text-xs font-medium text-muted-foreground mb-1">
+            Technical details:
+          </h4>
+          <div className="bg-muted rounded-md p-2 text-sm font-mono overflow-auto max-h-28">
+            {error.message}
+          </div>
+        </div>
+      </CardContent>
+
+      <CardFooter className="py-3 flex justify-end">
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={resetErrorBoundary}
+          className="flex items-center gap-2"
+        >
+          <Icon icon={faRefresh} className="h-4 w-4" />
           Try Again
         </Button>
-      </CardDescription>
+      </CardFooter>
     </Card>
   );
 }
-
 type LazyComponentProps = {
   children: React.ReactNode;
   onError?: (error: Error, info: ErrorInfo) => void;
