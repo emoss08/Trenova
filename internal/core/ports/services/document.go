@@ -83,6 +83,7 @@ type DocumentService interface {
 	BulkUploadDocuments(ctx context.Context, req *BulkUploadDocumentRequest) (*BulkUploadDocumentResponse, error)
 
 	// Retrieval operations
+	List(ctx context.Context, req *repositories.ListDocumentsRequest) (*ports.ListResult[*document.Document], error)
 	GetDocumentByID(ctx context.Context, orgID, buID, docID pulid.ID) (*document.Document, error)
 	GetDocumentContent(ctx context.Context, doc *document.Document) ([]byte, error)
 	GetDocumentDownloadURL(ctx context.Context, doc *document.Document, expiryDuration time.Duration) (string, error)
@@ -98,6 +99,6 @@ type DocumentService interface {
 	GetDocumentVersions(ctx context.Context, doc *document.Document) ([]VersionInfo, error)
 	RestoreDocumentVersion(ctx context.Context, doc *document.Document, versionID string) (*document.Document, error)
 
-	// Compliance operations
+	// Compliance operation
 	CheckExpiringDocuments(ctx context.Context, daysToExpiration int) ([]*document.Document, error)
 }

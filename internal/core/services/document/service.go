@@ -48,13 +48,12 @@ type ServiceParams struct {
 // and provides methods to manage documents, including CRUD operations,
 // status updates, duplication, and cancellation.
 type service struct {
-	l            *zerolog.Logger
-	client       *minio.Client
-	endpoint     string
-	docRepo      repositories.DocumentRepository
-	permService  services.PermissionService
-	auditService services.AuditService
-	fileService  services.FileService
+	l           *zerolog.Logger
+	db          db.Connection
+	client      *minio.Client
+	endpoint    string
+	docRepo     repositories.DocumentRepository
+	fileService services.FileService
 }
 
 // NewService initializes a new DocumentService instance with the provided dependencies.
@@ -70,14 +69,25 @@ func NewService(p ServiceParams) services.DocumentService {
 		Logger()
 
 	return &service{
-		l:            &log,
-		client:       p.Client,
-		endpoint:     p.ConfigM.Minio().Endpoint,
-		docRepo:      p.DocRepo,
-		permService:  p.PermService,
-		auditService: p.AuditService,
-		fileService:  p.FileService,
+		l:           &log,
+		db:          p.DB,
+		client:      p.Client,
+		endpoint:    p.ConfigM.Minio().Endpoint,
+		docRepo:     p.DocRepo,
+		fileService: p.FileService,
 	}
+}
+
+func (s *service) List(ctx context.Context, req *repositories.ListDocumentsRequest) (*ports.ListResult[*document.Document], error) {
+	log := s.l.With().Str("operation", "List").Logger()
+
+	entities, err := s.docRepo.List(ctx, req)
+	if err != nil {
+		log.Error().Err(err).Msg("failed to list documents")
+		return nil, err
+	}
+
+	return entities, nil
 }
 
 // UploadDocument uploads a single document and stores its metadata

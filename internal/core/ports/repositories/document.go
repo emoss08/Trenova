@@ -25,17 +25,17 @@ type GetDocumentByIDOptions struct {
 // ListDocumentsRequest contains options for listing documents
 type ListDocumentsRequest struct {
 	Filter              *ports.LimitOffsetQueryOptions
-	ResourceType        permission.Resource
-	ResourceID          pulid.ID
-	DocumentType        document.DocumentType
-	Statuses            []document.DocumentStatus
-	Tags                []string
-	SortBy              string
-	SortDir             string
-	ExpirationDateStart *int64
-	ExpirationDateEnd   *int64
-	CreatedAtStart      *int64
-	CreatedAtEnd        *int64
+	ResourceType        permission.Resource       `query:"resourceType"`
+	ResourceID          *pulid.ID                 `query:"resourceID"`
+	DocumentType        document.DocumentType     `query:"documentType"`
+	Statuses            []document.DocumentStatus `query:"statuses"`
+	Tags                []string                  `query:"tags"`
+	SortBy              string                    `query:"sortBy"`
+	SortDir             string                    `query:"sortDir"`
+	ExpirationDateStart *int64                    `query:"expirationDateStart"`
+	ExpirationDateEnd   *int64                    `query:"expirationDateEnd"`
+	CreatedAtStart      *int64                    `query:"createdAtStart"`
+	CreatedAtEnd        *int64                    `query:"createdAtEnd"`
 	DocumentRequest
 }
 

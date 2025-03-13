@@ -43,7 +43,7 @@ type Document struct {
 
 	// Entity Association (polymorphic relationship)
 	ResourceID   pulid.ID            `json:"resourceId" bun:"resource_id,notnull,type:VARCHAR(100)"`
-	ResourceType permission.Resource `json:"resourceType" bun:"resource,nonull,type:VARCHAR(100)"`
+	ResourceType permission.Resource `json:"resourceType" bun:"resource_type,nonull,type:VARCHAR(100)"`
 
 	// Additional Metadata
 	ExpirationDate *int64   `json:"expirationDate" bun:"expiration_date,type:BIGINT,nullzero"`
