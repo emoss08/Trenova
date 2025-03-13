@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/commodity"
 	"github.com/emoss08/trenova/internal/core/services/customer"
 	"github.com/emoss08/trenova/internal/core/services/dbbackup"
+	"github.com/emoss08/trenova/internal/core/services/document"
 	"github.com/emoss08/trenova/internal/core/services/documentqualityconfig"
 	"github.com/emoss08/trenova/internal/core/services/equipmentmanufacturer"
 	"github.com/emoss08/trenova/internal/core/services/equipmenttype"
@@ -74,6 +75,7 @@ var Module = fx.Module("services", fx.Provide(
 	shipmentcontrol.NewService,
 	dbbackup.NewService,
 	hazmatsegregationrule.NewService,
+	document.NewService,
 ))
 
 var CalculatorModule = fx.Module("calculator", fx.Provide(

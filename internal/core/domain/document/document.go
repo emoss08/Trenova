@@ -51,9 +51,9 @@ type Document struct {
 	IsPublic       bool     `json:"isPublic" bun:"is_public,notnull,type:BOOLEAN,default:false"`
 
 	// Audit Fields
-	UploadedByID  pulid.ID  `json:"uploadedById" bun:"uploaded_by_id,notnull,type:VARCHAR(100)"`
-	ApproavedByID *pulid.ID `json:"approvedByID" bun:"approved_by_id,type:VARCHAR(100),nullzero"`
-	ApprovedAt    *int64    `json:"approvedAt" bun:"approved_at,type:BIGINT,nullzero"`
+	UploadedByID pulid.ID  `json:"uploadedById" bun:"uploaded_by_id,notnull,type:VARCHAR(100)"`
+	ApprovedByID *pulid.ID `json:"approvedByID" bun:"approved_by_id,type:VARCHAR(100),nullzero"`
+	ApprovedAt   *int64    `json:"approvedAt" bun:"approved_at,type:BIGINT,nullzero"`
 
 	// Metadata
 	Version      int64  `json:"version" bun:"version,type:BIGINT"`
@@ -190,7 +190,7 @@ func (d *Document) CheckExpiration() bool {
 
 // IsApproved checks if the document has been approved
 func (d *Document) IsApproved() bool {
-	return d.ApproavedByID != nil && d.ApprovedAt != nil
+	return d.ApprovedByID != nil && d.ApprovedAt != nil
 }
 
 func (d *Document) GetPostgresSearchConfig() infra.PostgresSearchConfig {
