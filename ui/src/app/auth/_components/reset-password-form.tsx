@@ -1,3 +1,4 @@
+import { Label } from "@/components/ui/label";
 import { resetPassword } from "@/services/auth";
 import { APIError } from "@/types/errors";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -5,7 +6,6 @@ import { useMutation } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
-import { InputField } from "../../../components/fields/input-field";
 import { Button } from "../../../components/ui/button";
 import { Form, FormControl, FormGroup } from "../../../components/ui/form";
 type ResetPasswordFormProps = {
@@ -29,7 +29,6 @@ export function ResetPasswordForm({ onBack, email }: ResetPasswordFormProps) {
   });
 
   const {
-    control,
     handleSubmit,
     formState: { isSubmitting },
   } = useForm<ResetPasswordFormValues>({
@@ -54,16 +53,13 @@ export function ResetPasswordForm({ onBack, email }: ResetPasswordFormProps) {
   }
 
   return (
-    <Form onSubmit={handleSubmit(onSubmit)}>
+    <Form className="flex flex-col gap-y-2" onSubmit={handleSubmit(onSubmit)}>
       <FormGroup cols={1}>
-        <FormControl>
-          <InputField
-            rules={{ required: true }}
-            label="Email address"
-            placeholder="Enter your email address"
-            control={control}
-            name="emailAddress"
-          />
+        <FormControl className="min-h-[3em] rounded-md bg-muted p-2">
+          <div className="flex flex-col gap-1">
+            <Label>Email address</Label>
+            <p className="text-sm text-muted-foreground">{email}</p>
+          </div>
         </FormControl>
       </FormGroup>
       <div className="flex justify-between gap-2">
