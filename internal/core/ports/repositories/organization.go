@@ -30,6 +30,7 @@ type OrganizationRepository interface {
 	SetLogo(ctx context.Context, org *organization.Organization) (*organization.Organization, error)
 	ClearLogo(ctx context.Context, org *organization.Organization) (*organization.Organization, error)
 	GetUserOrganizations(ctx context.Context, opts *ports.LimitOffsetQueryOptions) (*ports.ListResult[*organization.Organization], error)
+	GetOrganizationBucketName(ctx context.Context, orgID pulid.ID) (string, error)
 }
 
 type OrganizationCacheRepository interface {

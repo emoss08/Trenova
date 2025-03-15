@@ -1,4 +1,8 @@
+import { PasswordField } from "@/components/fields/sensitive-input-field";
 import { Button } from "@/components/ui/button";
+import { Form, FormControl, FormGroup } from "@/components/ui/form";
+import { Icon } from "@/components/ui/icons";
+import { Label } from "@/components/ui/label";
 import {
   Tooltip,
   TooltipContent,
@@ -16,10 +20,6 @@ import { useForm } from "react-hook-form";
 import { useNavigate, useSearchParams } from "react-router";
 import { toast } from "sonner";
 import { z } from "zod";
-import { PasswordField } from "../../../components/fields/sensitive-input-field";
-import { Form, FormControl, FormGroup } from "../../../components/ui/form";
-import { Icon } from "../../../components/ui/icons";
-import { Label } from "../../../components/ui/label";
 
 const loginSchema = z.object({
   emailAddress: z

@@ -113,21 +113,21 @@ type CountDocumentsRequest struct {
 type DocumentRepository interface {
 	// CRUD operations
 	Create(ctx context.Context, doc *document.Document) (*document.Document, error)
-	GetByID(ctx context.Context, opts GetDocumentByIDOptions) (*document.Document, error)
+	GetByID(ctx context.Context, req GetDocumentByIDOptions) (*document.Document, error)
 	Update(ctx context.Context, doc *document.Document) (*document.Document, error)
-	Delete(ctx context.Context, opts DeleteDocumentRequest) error
+	Delete(ctx context.Context, req DeleteDocumentRequest) error
 
 	// Query operations
-	List(ctx context.Context, opts *ListDocumentsRequest) (*ports.ListResult[*document.Document], error)
-	FindByResourceID(ctx context.Context, opts *FindDocumentsByResourceRequest) ([]*document.Document, error)
-	FindByTags(ctx context.Context, opts FindDocumentsByTagsRequest) ([]*document.Document, error)
-	FindByDocumentType(ctx context.Context, opts FindDocumentsByTypeRequest) ([]*document.Document, error)
-	FindExpiringDocuments(ctx context.Context, opts FindExpiringDocumentsRequest) ([]*document.Document, error)
+	List(ctx context.Context, req *ListDocumentsRequest) (*ports.ListResult[*document.Document], error)
+	FindByResourceID(ctx context.Context, req *FindDocumentsByResourceRequest) ([]*document.Document, error)
+	FindByTags(ctx context.Context, req *FindDocumentsByTagsRequest) ([]*document.Document, error)
+	FindByDocumentType(ctx context.Context, req *FindDocumentsByTypeRequest) ([]*document.Document, error)
+	FindExpiringDocuments(ctx context.Context, req *FindExpiringDocumentsRequest) ([]*document.Document, error)
 
 	// Status operations
-	UpdateStatus(ctx context.Context, opts UpdateDocumentStatusRequest) (*document.Document, error)
-	BulkUpdateStatus(ctx context.Context, opts BulkUpdateDocumentStatusRequest) (int, error)
+	UpdateStatus(ctx context.Context, req *UpdateDocumentStatusRequest) (*document.Document, error)
+	BulkUpdateStatus(ctx context.Context, req BulkUpdateDocumentStatusRequest) (int, error)
 
 	// Aggregation operations
-	CountDocuments(ctx context.Context, opts CountDocumentsRequest) (map[document.DocumentType]int, error)
+	CountDocuments(ctx context.Context, req *CountDocumentsRequest) (map[document.DocumentType]int, error)
 }

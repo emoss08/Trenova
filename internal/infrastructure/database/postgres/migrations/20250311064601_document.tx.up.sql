@@ -1,3 +1,31 @@
+CREATE TYPE "document_type_enum" AS ENUM(
+    'License', -- Driver's license, business license, etc.
+    'Registration', -- Vehicle registration
+    'Insurance', -- Insurance documents
+    'Invoice', -- Customer invoices
+    'ProofOfDelivery', -- POD documents
+    'BillOfLading', -- BOL documents
+    'DriverLog', -- Driver HOS logs
+    'MedicalCertificate', -- Driver medical certificates
+    'Contract', -- Business contracts
+    'Maintenance', -- Maintenance records
+    'AccidentReport', -- Accident or incident reports
+    'TrainingRecord', -- Driver or employee training documents
+    'Other' -- Miscellaneous documents
+);
+
+--bun:split
+CREATE TYPE "document_status_enum" AS ENUM(
+    'Draft', -- Document in draft state
+    'Active', -- Document is active and valid
+    'Archived', -- Document has been archived
+    'Expired', -- Document has expired
+    'Pending', -- Document is pending
+    'Rejected', -- Document was rejected during approval
+    'PendingApproval' -- Document is awaiting approval
+);
+
+--bun:split
 CREATE TABLE IF NOT EXISTS "documents"(
     "id" varchar(100) NOT NULL,
     "organization_id" varchar(100) NOT NULL,
@@ -183,3 +211,4 @@ BEGIN
 END;
 $$
 LANGUAGE plpgsql;
+

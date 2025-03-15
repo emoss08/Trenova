@@ -306,7 +306,6 @@ export const resourcePathMap = new Map<string, ResourcePageInfo>();
 
 // Populate the map with all routes that have links
 export function populateResourcePathMap(routeItems: RouteInfo[], prefix = "") {
-  console.log("routeItems", routeItems);
   for (const route of routeItems) {
     if (route.link) {
       const resourceKey = route.key.toLowerCase();
@@ -329,8 +328,6 @@ export function getRoutePageInfo(resourceType: ResourceType): ResourcePageInfo {
   console.log("resourceType", resourceType);
   const pageInfo = resourcePathMap.get(resourceType);
 
-  console.log("pageInfo", pageInfo);
-
   if (!pageInfo) {
     // Default fallback
     return { path: "/", supportsModal: false };
@@ -349,4 +346,10 @@ export function convertValueToDisplay(value: any) {
   }
 
   return value;
+}
+
+export function formatFileSize(bytes: number) {
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(2)} KB`;
+  return `${(bytes / (1024 * 1024)).toFixed(2)} MB`;
 }

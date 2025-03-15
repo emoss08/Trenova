@@ -14,6 +14,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/ports/db"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/core/services/file"
 	"github.com/emoss08/trenova/internal/infrastructure/storage/minio"
 	"github.com/emoss08/trenova/internal/pkg/config"
 	"github.com/emoss08/trenova/internal/pkg/logger"
@@ -21,11 +22,6 @@ import (
 	"github.com/rotisserie/eris"
 	"github.com/rs/zerolog"
 	"go.uber.org/fx"
-)
-
-const (
-	defaultExpiration = 24 * time.Hour
-	maxFileSize       = 100 * 1024 * 1024 // 100MB
 )
 
 // ServiceParams defines dependencies required for initializing the DocumentService.
@@ -42,6 +38,7 @@ type ServiceParams struct {
 	ConfigM      *config.Manager
 	DocRepo      repositories.DocumentRepository
 	FileService  services.FileService
+	OrgRepo      repositories.OrganizationRepository
 }
 
 // service implements the DocumentService interface
@@ -54,6 +51,7 @@ type service struct {
 	endpoint    string
 	docRepo     repositories.DocumentRepository
 	fileService services.FileService
+	orgRepo     repositories.OrganizationRepository
 }
 
 // NewService initializes a new DocumentService instance with the provided dependencies.
@@ -75,6 +73,7 @@ func NewService(p ServiceParams) services.DocumentService {
 		endpoint:    p.ConfigM.Minio().Endpoint,
 		docRepo:     p.DocRepo,
 		fileService: p.FileService,
+		orgRepo:     p.OrgRepo,
 	}
 }
 
@@ -100,19 +99,23 @@ func (s *service) List(ctx context.Context, req *repositories.ListDocumentsReque
 //   - *services.UploadDocumentResponse: The response containing the uploaded document.
 //   - error: An error if the operation fails.
 func (s *service) UploadDocument(ctx context.Context, req *services.UploadDocumentRequest) (*services.UploadDocumentResponse, error) {
+	bucketName, err := s.orgRepo.GetOrganizationBucketName(ctx, req.OrganizationID)
+	if err != nil {
+		return nil, eris.Wrap(err, "get organization bucket name")
+	}
+
 	// * Validate request
-	if err := s.validateUploadRequest(req); err != nil {
+	if err := req.Validate(ctx); err != nil {
 		return nil, err
 	}
 
 	// * Generate file storage path
 	objectKey := s.generateObjectPath(req)
-	bucketName := req.OrganizationID.String()
 
 	// * Prepare file upload request
 	fileReq := &services.SaveFileRequest{
-		BucketName:     bucketName,
 		OrgID:          req.OrganizationID.String(),
+		BucketName:     bucketName,
 		UserID:         req.UploadedByID.String(),
 		FileName:       objectKey,
 		File:           req.File,
@@ -137,7 +140,8 @@ func (s *service) UploadDocument(ctx context.Context, req *services.UploadDocume
 	// * Determine if versioning should be used
 	fileUploadResp, err := s.fileService.SaveFileVersion(ctx, fileReq)
 	if err != nil {
-		return nil, eris.Wrap(err, "save file version")
+		s.l.Error().Str("org", req.OrganizationID.String()).Err(err).Msg("save file version")
+		return nil, err
 	}
 
 	// * Create document record in the database
@@ -173,7 +177,7 @@ func (s *service) UploadDocument(ctx context.Context, req *services.UploadDocume
 	savedDoc, err := s.docRepo.Create(ctx, doc)
 	if err != nil {
 		// * Try to clean up the file if we can't save the metadata
-		_ = s.fileService.DeleteFile(ctx, bucketName, objectKey)
+		_ = s.fileService.DeleteFile(ctx, req.OrganizationID.String(), objectKey)
 		return nil, eris.Wrap(err, "create document")
 	}
 
@@ -206,22 +210,24 @@ func (s *service) BulkUploadDocuments(ctx context.Context, req *services.BulkUpl
 	}
 
 	// * Process each document in the bulk request
-	for _, docInfo := range req.Documents {
+	for i := range req.Documents {
+		docInfo := &req.Documents[i] // Use pointer to avoid copying the whole struct
 		uploadReq := &services.UploadDocumentRequest{
-			OrganizationID: req.OrganizationID,
-			BusinessUnitID: req.BusinessUnitID,
-			UploadedByID:   req.UploadedByID,
-			ResourceID:     req.ResourceID,
-			ResourceType:   req.ResourceType,
-			DocumentType:   docInfo.DocumentType,
-			File:           docInfo.File,
-			FileName:       docInfo.FileName,
-			OriginalName:   docInfo.OriginalName,
-			Description:    docInfo.Description,
-			Tags:           docInfo.Tags,
-			ExpirationDate: docInfo.ExpirationDate,
-			IsPublic:       docInfo.IsPublic,
-			Status:         document.DocumentStatusActive, // * Default for bulk uploads
+			OrganizationID:  req.OrganizationID,
+			BusinessUnitID:  req.BusinessUnitID,
+			UploadedByID:    req.UploadedByID,
+			ResourceID:      req.ResourceID,
+			ResourceType:    req.ResourceType,
+			DocumentType:    docInfo.DocumentType,
+			File:            docInfo.File,
+			FileName:        docInfo.FileName,
+			RequireApproval: docInfo.RequireApproval,
+			OriginalName:    docInfo.OriginalName,
+			Description:     docInfo.Description,
+			Tags:            docInfo.Tags,
+			ExpirationDate:  docInfo.ExpirationDate,
+			IsPublic:        docInfo.IsPublic,
+			Status:          document.DocumentStatusActive, // * Default for bulk uploads
 		}
 
 		uploadResp, err := s.UploadDocument(ctx, uploadReq)
@@ -295,7 +301,7 @@ func (s *service) GetDocumentContent(ctx context.Context, doc *document.Document
 //   - error: An error if the operation fails.
 func (s *service) GetDocumentDownloadURL(ctx context.Context, doc *document.Document, expiryDuration time.Duration) (string, error) {
 	if expiryDuration == 0 {
-		expiryDuration = defaultExpiration
+		expiryDuration = file.DefaultExpiry
 	}
 
 	bucketName := doc.OrganizationID.String()
@@ -466,7 +472,6 @@ func (s *service) RestoreDocumentVersion(ctx context.Context, doc *document.Docu
 
 	// * Create a new file save request
 	fileReq := &services.SaveFileRequest{
-		BucketName:     bucketName,
 		OrgID:          doc.OrganizationID.String(),
 		UserID:         doc.UploadedByID.String(),
 		FileName:       doc.StoragePath,
@@ -481,7 +486,8 @@ func (s *service) RestoreDocumentVersion(ctx context.Context, doc *document.Docu
 	// * Save as a new version
 	_, err = s.fileService.SaveFileVersion(ctx, fileReq)
 	if err != nil {
-		return nil, eris.Wrap(err, "save restored version")
+		s.l.Error().Str("org", doc.OrganizationID.String()).Err(err).Msg("save restored version")
+		return nil, err
 	}
 
 	// * Update document metadata
@@ -504,45 +510,9 @@ func (s *service) CheckExpiringDocuments(ctx context.Context, daysToExpiration i
 	now := time.Now().Unix()
 	expirationThreshold := now + int64(daysToExpiration*24*60*60) // Convert days to seconds
 
-	return s.docRepo.FindExpiringDocuments(ctx, repositories.FindExpiringDocumentsRequest{
+	return s.docRepo.FindExpiringDocuments(ctx, &repositories.FindExpiringDocumentsRequest{
 		ExpirationThreshold: expirationThreshold,
 	})
-}
-
-// Internal helper methods
-func (s *service) validateUploadRequest(req *services.UploadDocumentRequest) error {
-	if req.OrganizationID.IsNil() {
-		return eris.New("organization ID is required")
-	}
-	if req.BusinessUnitID.IsNil() {
-		return eris.New("business unit ID is required")
-	}
-	if req.UploadedByID.IsNil() {
-		return eris.New("uploader ID is required")
-	}
-	if req.ResourceID.IsNil() {
-		return eris.New("resource ID is required")
-	}
-	if req.ResourceType == "" {
-		return eris.New("resource type is required")
-	}
-	if req.DocumentType == "" {
-		return eris.New("document type is required")
-	}
-	if len(req.File) == 0 {
-		return eris.New("file content is required")
-	}
-	if req.FileName == "" {
-		return eris.New("file name is required")
-	}
-	if req.OriginalName == "" {
-		return eris.New("original file name is required")
-	}
-	if len(req.File) > maxFileSize {
-		return eris.Wrapf(services.ErrFileSizeExceedsMaxSize, "max size is %d bytes", maxFileSize)
-	}
-
-	return nil
 }
 
 func (s *service) validateBulkUploadRequest(req *services.BulkUploadDocumentRequest) error {
@@ -569,13 +539,12 @@ func (s *service) validateBulkUploadRequest(req *services.BulkUploadDocumentRequ
 }
 
 func (s *service) generateObjectPath(req *services.UploadDocumentRequest) string {
-	// Format: {entityType}/{entityID}/{documentType}/{timestamp}_{filename}
+	// Format: {resourceType}/{resourceID}/{documentType}/{timestamp}_{filename}
 	now := time.Now()
 	timestamp := now.Format("20060102150405")
 	sanitizedFileName := strings.ReplaceAll(req.FileName, " ", "_")
 
-	return fmt.Sprintf("%s/%s/%s/%s_%s",
-		req.ResourceType,
+	return fmt.Sprintf("%s/%s/%s_%s",
 		req.ResourceID,
 		req.DocumentType,
 		timestamp,

@@ -413,7 +413,7 @@ func (r *documentRepository) Delete(ctx context.Context, req repositories.Delete
 	return nil
 }
 
-func (r *documentRepository) FindExpiringDocuments(ctx context.Context, req repositories.FindExpiringDocumentsRequest) ([]*document.Document, error) {
+func (r *documentRepository) FindExpiringDocuments(ctx context.Context, req *repositories.FindExpiringDocumentsRequest) ([]*document.Document, error) {
 	dba, err := r.db.DB(ctx)
 	if err != nil {
 		return nil, eris.Wrap(err, "get database connection")
@@ -452,7 +452,7 @@ func (r *documentRepository) FindExpiringDocuments(ctx context.Context, req repo
 	return entities, nil
 }
 
-func (r *documentRepository) UpdateStatus(ctx context.Context, req repositories.UpdateDocumentStatusRequest) (*document.Document, error) {
+func (r *documentRepository) UpdateStatus(ctx context.Context, req *repositories.UpdateDocumentStatusRequest) (*document.Document, error) {
 	dba, err := r.db.DB(ctx)
 	if err != nil {
 		return nil, eris.Wrap(err, "get database connection")
@@ -520,7 +520,7 @@ func (r *documentRepository) UpdateStatus(ctx context.Context, req repositories.
 	return doc, nil
 }
 
-func (r *documentRepository) FindByTags(ctx context.Context, req repositories.FindDocumentsByTagsRequest) ([]*document.Document, error) {
+func (r *documentRepository) FindByTags(ctx context.Context, req *repositories.FindDocumentsByTagsRequest) ([]*document.Document, error) {
 	dba, err := r.db.DB(ctx)
 	if err != nil {
 		return nil, eris.Wrap(err, "get database connection")
@@ -561,7 +561,7 @@ func (r *documentRepository) FindByTags(ctx context.Context, req repositories.Fi
 	return entities, nil
 }
 
-func (r *documentRepository) FindByDocumentType(ctx context.Context, req repositories.FindDocumentsByTypeRequest) ([]*document.Document, error) {
+func (r *documentRepository) FindByDocumentType(ctx context.Context, req *repositories.FindDocumentsByTypeRequest) ([]*document.Document, error) {
 	dba, err := r.db.DB(ctx)
 	if err != nil {
 		return nil, eris.Wrap(err, "get database connection")
@@ -634,7 +634,7 @@ func (r *documentRepository) BulkUpdateStatus(ctx context.Context, req repositor
 	return int(rows), nil
 }
 
-func (r *documentRepository) CountDocuments(ctx context.Context, req repositories.CountDocumentsRequest) (map[document.DocumentType]int, error) {
+func (r *documentRepository) CountDocuments(ctx context.Context, req *repositories.CountDocumentsRequest) (map[document.DocumentType]int, error) {
 	dba, err := r.db.DB(ctx)
 	if err != nil {
 		return nil, eris.Wrap(err, "get database connection")
@@ -642,7 +642,7 @@ func (r *documentRepository) CountDocuments(ctx context.Context, req repositorie
 
 	log := r.l.With().
 		Str("operation", "CountDocuments").
-		Str("entityType", string(req.ResourceType)).
+		Str("resourceType", string(req.ResourceType)).
 		Logger()
 
 	type countResult struct {
