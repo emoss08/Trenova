@@ -5,6 +5,8 @@ on:
     branches: ["master"]
   push:
     branches: ["master"]
+  # Add workflow_dispatch to allow manual triggering
+  workflow_dispatch:
 
 concurrency:
   group: ${{ github.ref }}
@@ -12,11 +14,89 @@ concurrency:
 
 jobs:
   # -------------------------------------------------------
-  # 1. Build and Test job for multiple Go versions
+  # 1. Auto-format code and create PR if needed
+  # -------------------------------------------------------
+  auto-format:
+    name: Auto-Format Code
+    runs-on: ubuntu-latest
+    # Skip this job on PRs to avoid formatting loops
+    if: github.event_name != 'pull_request'
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: ${{ github.head_ref }}
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: "1.24.x"
+          cache: true
+
+      - name: Install Go tools
+        run: |
+          go install golang.org/x/tools/cmd/gofmt@latest
+          go install mvdan.cc/gofumpt@latest
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+          cache-dependency-path: "**/package-lock.json"
+
+      - name: Install frontend dependencies
+        working-directory: ./ui
+        run: npm ci
+
+      - name: Format Go Code
+        run: |
+          gofumpt -l -w .
+
+      - name: Format TypeScript/JavaScript Code
+        working-directory: ./ui
+        run: |
+          npx prettier --write "**/*.{ts,tsx,js,jsx,json,css,scss,md}"
+          npx eslint . --ext .ts,.tsx,.js,.jsx --fix
+
+      - name: Check for changes
+        id: git_status
+        run: |
+          if [[ -n $(git status --porcelain) ]]; then
+            echo "changes=true" >> $GITHUB_OUTPUT
+          else
+            echo "changes=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Commit changes
+        if: steps.git_status.outputs.changes == 'true'
+        run: |
+          git config --local user.email "actions@github.com"
+          git config --local user.name "GitHub Actions"
+          git add -A
+          git commit -m "style: auto-format code"
+
+      - name: Create Pull Request
+        if: steps.git_status.outputs.changes == 'true'
+        uses: peter-evans/create-pull-request@v6
+        with:
+          title: "style: auto-format code"
+          body: "This PR was automatically created by the GitHub Actions workflow to format code according to project standards."
+          branch: auto-format-${{ github.sha }}
+          base: ${{ github.ref_name }}
+          labels: automated-pr, formatting
+
+  # -------------------------------------------------------
+  # 2. Build and Test job for multiple Go versions
   # -------------------------------------------------------
   build-and-test:
     name: Build and Test
     runs-on: ubuntu-latest
+    needs: [auto-format]
     strategy:
       matrix:
         go-version: ["1.22.x", "1.23.x", "1.24.x"]
@@ -44,3 +124,52 @@ jobs:
         uses: codecov/codecov-action@v5
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
+
+  # -------------------------------------------------------
+  # 3. Verify formatting (in PR contexts)
+  # -------------------------------------------------------
+  verify-formatting:
+    name: Verify Code Formatting
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: "1.24.x"
+          cache: true
+
+      - name: Install Go tools
+        run: |
+          go install golang.org/x/tools/cmd/gofmt@latest
+          go install mvdan.cc/gofumpt@latest
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+          cache-dependency-path: "**/package-lock.json"
+
+      - name: Install ui dependencies
+        working-directory: ./ui
+        run: npm ci
+
+      - name: Check Go Formatting
+        run: |
+          if [ -n "$(gofumpt -l .)" ]; then
+            echo "Go code is not properly formatted. Run 'gofumpt -w .' to fix."
+            gofumpt -d .
+            exit 1
+          fi
+
+      - name: Check TypeScript/JavaScript Formatting with ESLint
+        working-directory: ./ui
+        run: |
+          if ! npx eslint . --ext .ts,.tsx,.js,.jsx; then
+            echo "ESLint issues found. Run 'npx eslint . --ext .ts,.tsx,.js,.jsx --fix' to fix."
+            exit 1
+          fi

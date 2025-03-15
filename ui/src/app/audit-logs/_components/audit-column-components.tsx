@@ -190,6 +190,10 @@ export function AuditEntryResourceBadge({
       variant: "indigo",
       text: "Fleet Code",
     },
+    [Resource.Document]: {
+      variant: "indigo",
+      text: "Document",
+    },
     [Resource.EquipmentType]: {
       variant: "indigo",
       text: "Equipment Type",
