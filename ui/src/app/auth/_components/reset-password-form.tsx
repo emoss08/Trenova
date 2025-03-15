@@ -1,44 +1,38 @@
+import { Button } from "@/components/ui/button";
+import { Form, FormControl, FormGroup } from "@/components/ui/form";
 import { Label } from "@/components/ui/label";
+import {
+  resetPasswordSchema,
+  ResetPasswordSchema,
+} from "@/lib/schemas/auth-schema";
 import { resetPassword } from "@/services/auth";
 import { APIError } from "@/types/errors";
-import { zodResolver } from "@hookform/resolvers/zod";
+import { yupResolver } from "@hookform/resolvers/yup";
 import { useMutation } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
-import { z } from "zod";
-import { Button } from "../../../components/ui/button";
-import { Form, FormControl, FormGroup } from "../../../components/ui/form";
 type ResetPasswordFormProps = {
   onBack: () => void;
   email: string;
 };
 
-const resetPasswordSchema = z.object({
-  emailAddress: z
-    .string()
-    .min(1, "Email is required")
-    .email("Invalid email address"),
-});
-
-type ResetPasswordFormValues = z.infer<typeof resetPasswordSchema>;
-
 export function ResetPasswordForm({ onBack, email }: ResetPasswordFormProps) {
   const mutation = useMutation({
-    mutationFn: (values: ResetPasswordFormValues) =>
+    mutationFn: (values: ResetPasswordSchema) =>
       resetPassword(values.emailAddress),
   });
 
   const {
     handleSubmit,
     formState: { isSubmitting },
-  } = useForm<ResetPasswordFormValues>({
-    resolver: zodResolver(resetPasswordSchema),
+  } = useForm<ResetPasswordSchema>({
+    resolver: yupResolver(resetPasswordSchema),
     defaultValues: {
       emailAddress: email,
     },
   });
 
-  async function onSubmit(data: ResetPasswordFormValues) {
+  async function onSubmit(data: ResetPasswordSchema) {
     try {
       const result = await mutation.mutateAsync(data);
       if (result.data?.message) {

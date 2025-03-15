@@ -9,28 +9,17 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { loginSchema, LoginSchema } from "@/lib/schemas/auth-schema";
 import { login } from "@/services/auth";
 import { useAuthActions } from "@/stores/user-store";
 import { APIError } from "@/types/errors";
 import { faLock } from "@fortawesome/pro-regular-svg-icons";
-import { zodResolver } from "@hookform/resolvers/zod";
+import { yupResolver } from "@hookform/resolvers/yup";
 import { useMutation } from "@tanstack/react-query";
 import { useCallback, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { useNavigate, useSearchParams } from "react-router";
 import { toast } from "sonner";
-import { z } from "zod";
-
-const loginSchema = z.object({
-  emailAddress: z
-    .string()
-    .min(1, "Email is required")
-    .email("Invalid email address"),
-  password: z.string().min(1, "Password is required"),
-  rememberMe: z.optional(z.boolean()),
-});
-
-type LoginFormValues = z.infer<typeof loginSchema>;
 
 type LoginFormProps = {
   email: string;
@@ -43,7 +32,7 @@ export function LoginForm({ email, onForgotPassword }: LoginFormProps) {
   const { setUser } = useAuthActions();
 
   const { mutateAsync } = useMutation({
-    mutationFn: async (values: LoginFormValues) => {
+    mutationFn: async (values: LoginSchema) => {
       const response = await login(values);
       return response.data;
     },
@@ -57,7 +46,7 @@ export function LoginForm({ email, onForgotPassword }: LoginFormProps) {
     onError: (error: APIError) => {
       if (error.isValidationError()) {
         error.getFieldErrors().forEach((fieldError) => {
-          setError(fieldError.name as keyof LoginFormValues, {
+          setError(fieldError.name as keyof LoginSchema, {
             message: fieldError.reason,
           });
         });
@@ -72,8 +61,8 @@ export function LoginForm({ email, onForgotPassword }: LoginFormProps) {
     handleSubmit,
     setError,
     formState: { isSubmitting },
-  } = useForm<LoginFormValues>({
-    resolver: zodResolver(loginSchema),
+  } = useForm<LoginSchema>({
+    resolver: yupResolver(loginSchema),
     defaultValues: {
       emailAddress: email,
       password: "",
@@ -82,7 +71,7 @@ export function LoginForm({ email, onForgotPassword }: LoginFormProps) {
   });
 
   const onSubmit = useCallback(
-    async (values: LoginFormValues) => {
+    async (values: LoginSchema) => {
       await mutateAsync(values);
     },
     [mutateAsync],

@@ -49,7 +49,7 @@ const vendorChunks = {
   "data-tables": ["@tanstack/react-table"],
 
   // Form Management
-  "form-handling": ["react-hook-form", "@hookform/resolvers", "zod", "yup"],
+  "form-handling": ["react-hook-form", "@hookform/resolvers", "yup"],
 
   // Drag and Drop
   "dnd-kit": [

@@ -1,5 +1,4 @@
 import { DataTableConfig } from "@/config/data-table";
-import { filterSchema } from "@/lib/parsers";
 import { API_ENDPOINTS } from "@/types/server";
 import { IconDefinition } from "@fortawesome/pro-regular-svg-icons";
 import type {
@@ -16,7 +15,6 @@ import type {
   VisibilityState,
 } from "@tanstack/react-table";
 import React from "react";
-import { z } from "zod";
 
 export type Prettify<T> = {
   [K in keyof T]: T[K];
@@ -58,12 +56,6 @@ export interface DataTableAdvancedFilterField<TData>
   extends DataTableFilterField<TData> {
   type: ColumnType;
 }
-
-export type Filter<TData> = Prettify<
-  Omit<z.infer<typeof filterSchema>, "id"> & {
-    id: StringKeyOf<TData>;
-  }
->;
 
 export interface DataTableRowAction<TData> {
   row: Row<TData>;

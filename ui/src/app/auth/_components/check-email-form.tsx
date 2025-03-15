@@ -1,24 +1,15 @@
+import { InputField } from "@/components/fields/input-field";
 import { Button } from "@/components/ui/button";
+import { Form, FormControl, FormGroup } from "@/components/ui/form";
+import { Icon } from "@/components/ui/icons";
+import { checkEmailSchema, CheckEmailSchema } from "@/lib/schemas/auth-schema";
 import { checkEmail } from "@/services/auth";
 import { APIError } from "@/types/errors";
 import { faEnvelope } from "@fortawesome/pro-regular-svg-icons";
-import { zodResolver } from "@hookform/resolvers/zod";
+import { yupResolver } from "@hookform/resolvers/yup";
 import { useMutation } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
-import { z } from "zod";
-import { InputField } from "../../../components/fields/input-field";
-import { Form, FormControl, FormGroup } from "../../../components/ui/form";
-import { Icon } from "../../../components/ui/icons";
-
-const checkEmailSchema = z.object({
-  emailAddress: z
-    .string()
-    .min(1, "Email is required")
-    .email("Invalid email address"),
-});
-
-type CheckEmailFormValues = z.infer<typeof checkEmailSchema>;
 
 type CheckEmailFormProps = {
   onEmailVerified: (email: string) => void;
@@ -26,8 +17,7 @@ type CheckEmailFormProps = {
 
 export function CheckEmailForm({ onEmailVerified }: CheckEmailFormProps) {
   const mutation = useMutation({
-    mutationFn: (values: CheckEmailFormValues) =>
-      checkEmail(values.emailAddress),
+    mutationFn: (values: CheckEmailSchema) => checkEmail(values.emailAddress),
   });
 
   const {
@@ -35,14 +25,14 @@ export function CheckEmailForm({ onEmailVerified }: CheckEmailFormProps) {
     handleSubmit,
     setError,
     formState: { isSubmitting },
-  } = useForm<CheckEmailFormValues>({
-    resolver: zodResolver(checkEmailSchema),
+  } = useForm<CheckEmailSchema>({
+    resolver: yupResolver(checkEmailSchema),
     defaultValues: {
       emailAddress: "",
     },
   });
 
-  async function onSubmit(values: CheckEmailFormValues) {
+  async function onSubmit(values: CheckEmailSchema) {
     try {
       const result = await mutation.mutateAsync(values);
       if (result.data?.valid) {
@@ -52,7 +42,7 @@ export function CheckEmailForm({ onEmailVerified }: CheckEmailFormProps) {
       const err = error as APIError;
       if (err.isValidationError()) {
         err.getFieldErrors().forEach((fieldError) => {
-          const fieldName = fieldError.name as keyof CheckEmailFormValues;
+          const fieldName = fieldError.name as keyof CheckEmailSchema;
           setError(fieldName, {
             message: fieldError.reason,
           });
