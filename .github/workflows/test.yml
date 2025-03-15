@@ -39,7 +39,6 @@ jobs:
 
       - name: Install Go tools
         run: |
-          go install golang.org/x/tools/cmd/gofmt@latest
           go install mvdan.cc/gofumpt@latest
 
       - name: Set up Node.js
