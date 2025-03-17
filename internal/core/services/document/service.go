@@ -3,7 +3,6 @@ package document
 import (
 	"context"
 	"fmt"
-	"io"
 	"path/filepath"
 	"strings"
 	"time"
@@ -14,11 +13,9 @@ import (
 	"github.com/emoss08/trenova/internal/core/ports/db"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/ports/services"
-	"github.com/emoss08/trenova/internal/core/services/file"
 	"github.com/emoss08/trenova/internal/infrastructure/storage/minio"
 	"github.com/emoss08/trenova/internal/pkg/config"
 	"github.com/emoss08/trenova/internal/pkg/logger"
-	"github.com/emoss08/trenova/pkg/types/pulid"
 	"github.com/rotisserie/eris"
 	"github.com/rs/zerolog"
 	"go.uber.org/fx"
@@ -77,16 +74,17 @@ func NewService(p ServiceParams) services.DocumentService {
 	}
 }
 
-func (s *service) List(ctx context.Context, req *repositories.ListDocumentsRequest) (*ports.ListResult[*document.Document], error) {
-	log := s.l.With().Str("operation", "List").Logger()
+// GetDocumentCountByResource gets the total number of documents per resource
+func (s *service) GetDocumentCountByResource(ctx context.Context, req ports.TenantOptions) ([]*repositories.GetDocumentCountByResourceResponse, error) {
+	return s.docRepo.GetDocumentCountByResource(ctx, &req)
+}
 
-	entities, err := s.docRepo.List(ctx, req)
-	if err != nil {
-		log.Error().Err(err).Msg("failed to list documents")
-		return nil, err
-	}
+func (s *service) GetResourceSubFolders(ctx context.Context, req repositories.GetResourceSubFoldersRequest) ([]*repositories.GetResourceSubFoldersResponse, error) {
+	return s.docRepo.GetResourceSubFolders(ctx, req)
+}
 
-	return entities, nil
+func (s *service) GetDocumentsByResourceID(ctx context.Context, req *repositories.GetDocumentsByResourceIDRequest) (*ports.ListResult[*document.Document], error) {
+	return s.docRepo.GetDocumentsByResourceID(ctx, req)
 }
 
 // UploadDocument uploads a single document and stores its metadata
@@ -200,9 +198,9 @@ func (s *service) UploadDocument(ctx context.Context, req *services.UploadDocume
 //   - *services.BulkUploadDocumentResponse: The response containing the uploaded documents.
 //   - error: An error if the operation fails.
 func (s *service) BulkUploadDocuments(ctx context.Context, req *services.BulkUploadDocumentRequest) (*services.BulkUploadDocumentResponse, error) {
-	if err := s.validateBulkUploadRequest(req); err != nil {
-		return nil, err
-	}
+	// if err := s.validateBulkUploadRequest(req); err != nil {
+	// 	return nil, err
+	// }
 
 	response := &services.BulkUploadDocumentResponse{
 		Successful: make([]services.UploadDocumentResponse, 0, len(req.Documents)),
@@ -243,299 +241,6 @@ func (s *service) BulkUploadDocuments(ctx context.Context, req *services.BulkUpl
 	}
 
 	return response, nil
-}
-
-// GetDocumentByID retrieves a document by its ID
-//
-// Parameters:
-//   - ctx: The context for the operation.
-//   - orgID: The organization ID.
-//   - buID: The business unit ID.
-//   - docID: The document ID.
-//
-// Returns:
-//   - *document.Document: The document.
-//   - error: An error if the operation fails.
-func (s *service) GetDocumentByID(ctx context.Context, orgID, buID, docID pulid.ID) (*document.Document, error) {
-	doc, err := s.docRepo.GetByID(ctx, repositories.GetDocumentByIDOptions{
-		ID:    docID,
-		OrgID: orgID,
-		BuID:  buID,
-	})
-	if err != nil {
-		return nil, eris.Wrap(err, "get document by id")
-	}
-
-	return doc, nil
-}
-
-// GetDocumentContent retrieves the content of a document
-//
-// Parameters:
-//   - ctx: The context for the operation.
-//   - doc: The document.
-//
-// Returns:
-//   - []byte: The document content.
-//   - error: An error if the operation fails.
-func (s *service) GetDocumentContent(ctx context.Context, doc *document.Document) ([]byte, error) {
-	bucketName := doc.OrganizationID.String()
-	obj, err := s.fileService.GetFileByBucketName(ctx, bucketName, doc.StoragePath)
-	if err != nil {
-		return nil, eris.Wrap(err, "get file content")
-	}
-	defer obj.Close()
-
-	return io.ReadAll(obj)
-}
-
-// GetDocumentDownloadURL generates a pre-signed URL for downloading a document
-//
-// Parameters:
-//   - ctx: The context for the operation.
-//   - doc: The document.
-//   - expiryDuration: The duration for which the URL is valid.
-//
-// Returns:
-//   - string: The pre-signed URL.
-//   - error: An error if the operation fails.
-func (s *service) GetDocumentDownloadURL(ctx context.Context, doc *document.Document, expiryDuration time.Duration) (string, error) {
-	if expiryDuration == 0 {
-		expiryDuration = file.DefaultExpiry
-	}
-
-	bucketName := doc.OrganizationID.String()
-	return s.fileService.GetFileURL(ctx, bucketName, doc.StoragePath, expiryDuration)
-}
-
-// ListEntityDocuments retrieves documents associated with a specific entity
-//
-// Parameters:
-//   - ctx: The context for the operation.
-//   - req: The request containing document details.
-//
-// Returns:
-//   - *ports.ListResult[*document.Document]: The list of documents.
-//   - error: An error if the operation fails.
-func (s *service) ListEntityDocuments(ctx context.Context, req *repositories.ListDocumentsRequest) (*ports.ListResult[*document.Document], error) {
-	return s.docRepo.List(ctx, req)
-}
-
-// ApproveDocument marks a document as approved
-//
-// Parameters:
-//   - ctx: The context for the operation.
-//   - orgID: The organization ID.
-//   - buID: The business unit ID.
-//   - docID: The document ID.
-//   - approverID: The approver ID.
-//
-// Returns:
-//   - *document.Document: The document.
-//   - error: An error if the operation fails.
-func (s *service) ApproveDocument(ctx context.Context, orgID, buID, docID, approverID pulid.ID) (*document.Document, error) {
-	doc, err := s.GetDocumentByID(ctx, orgID, buID, docID)
-	if err != nil {
-		return nil, err
-	}
-
-	if doc.Status != document.DocumentStatusPendingApproval {
-		return nil, eris.New("document is not pending approval")
-	}
-
-	doc.Status = document.DocumentStatusActive
-	doc.ApprovedByID = &approverID
-	approvedAt := time.Now().Unix()
-	doc.ApprovedAt = &approvedAt
-
-	return s.docRepo.Update(ctx, doc)
-}
-
-// RejectDocument marks a document as rejected
-//
-// Parameters:
-//   - ctx: The context for the operation.
-//   - orgID: The organization ID.
-//   - buID: The business unit ID.
-//   - docID: The document ID.
-//   - rejectorID: The rejector ID.
-//   - reason: The reason for rejection.
-//
-// Returns:
-//   - *document.Document: The document.
-//   - error: An error if the operation fails.
-func (s *service) RejectDocument(ctx context.Context, orgID, buID, docID, rejectorID pulid.ID, reason string) (*document.Document, error) {
-	doc, err := s.GetDocumentByID(ctx, orgID, buID, docID)
-	if err != nil {
-		return nil, err
-	}
-
-	if doc.Status != document.DocumentStatusPendingApproval {
-		return nil, eris.New("document is not pending approval")
-	}
-
-	doc.Status = document.DocumentStatusRejected
-	doc.Description = doc.Description + "\nRejection reason: " + reason
-
-	return s.docRepo.Update(ctx, doc)
-}
-
-// ArchiveDocument marks a document as archived
-//
-// Parameters:
-//   - ctx: The context for the operation.
-//   - orgID: The organization ID.
-//   - buID: The business unit ID.
-//   - docID: The document ID.
-//
-// Returns:
-//   - *document.Document: The document.
-//   - error: An error if the operation fails.
-func (s *service) ArchiveDocument(ctx context.Context, orgID, buID, docID pulid.ID) (*document.Document, error) {
-	doc, err := s.GetDocumentByID(ctx, orgID, buID, docID)
-	if err != nil {
-		return nil, err
-	}
-
-	doc.Status = document.DocumentStatusArchived
-
-	return s.docRepo.Update(ctx, doc)
-}
-
-// DeleteDocument deletes a document
-//
-// Parameters:
-//   - ctx: The context for the operation.
-//   - orgID: The organization ID.
-//   - buID: The business unit ID.
-//   - docID: The document ID.
-//
-// Returns:
-//   - error: An error if the operation fails.
-func (s *service) DeleteDocument(ctx context.Context, orgID, buID, docID pulid.ID) error {
-	doc, err := s.GetDocumentByID(ctx, orgID, buID, docID)
-	if err != nil {
-		return err
-	}
-
-	bucketName := doc.OrganizationID.String()
-
-	// Delete from storage
-	if err := s.fileService.DeleteFile(ctx, bucketName, doc.StoragePath); err != nil {
-		s.l.Warn().Err(err).
-			Str("docID", docID.String()).
-			Str("bucket", bucketName).
-			Str("path", doc.StoragePath).
-			Msg("failed to delete document file from storage")
-		// * Continue with database deletion even if storage deletion fails
-	}
-
-	// Delete from database
-	return s.docRepo.Delete(ctx, repositories.DeleteDocumentRequest{
-		ID:    docID,
-		OrgID: orgID,
-		BuID:  buID,
-	})
-}
-
-// GetDocumentVersions retrieves all versions of a document
-//
-// Parameters:
-//   - ctx: The context for the operation.
-//   - doc: The document.
-//
-// Returns:
-//   - []services.VersionInfo: The list of versions.
-func (s *service) GetDocumentVersions(ctx context.Context, doc *document.Document) ([]services.VersionInfo, error) {
-	bucketName := doc.OrganizationID.String()
-	return s.fileService.GetFileVersion(ctx, bucketName, doc.StoragePath)
-}
-
-// RestoreDocumentVersion restores a document to a specific version
-//
-// Parameters:
-//   - ctx: The context for the operation.
-//   - doc: The document.
-//   - versionID: The version ID.
-//
-// Returns:
-//   - *document.Document: The document.
-//   - error: An error if the operation fails.
-func (s *service) RestoreDocumentVersion(ctx context.Context, doc *document.Document, versionID string) (*document.Document, error) {
-	bucketName := doc.OrganizationID.String()
-
-	// * Get the document content from the specified version
-	data, versionInfo, err := s.fileService.GetSpecificVersion(ctx, bucketName, doc.StoragePath, versionID)
-	if err != nil {
-		return nil, eris.Wrap(err, "get specific version")
-	}
-
-	// * Create a new file save request
-	fileReq := &services.SaveFileRequest{
-		OrgID:          doc.OrganizationID.String(),
-		UserID:         doc.UploadedByID.String(),
-		FileName:       doc.StoragePath,
-		File:           data,
-		FileType:       s.determineFileType(doc.FileName),
-		Classification: s.mapDocTypeToClassification(doc.DocumentType),
-		Category:       s.mapResourceTypeToCategory(doc.ResourceType),
-		VersionComment: fmt.Sprintf("Restored from version %s", versionID),
-		Metadata:       versionInfo.Metadata,
-	}
-
-	// * Save as a new version
-	_, err = s.fileService.SaveFileVersion(ctx, fileReq)
-	if err != nil {
-		s.l.Error().Str("org", doc.OrganizationID.String()).Err(err).Msg("save restored version")
-		return nil, err
-	}
-
-	// * Update document metadata
-	doc.FileSize = int64(len(data))
-	doc.UpdatedAt = time.Now().Unix()
-	doc.Version++ // * Increment version
-
-	return s.docRepo.Update(ctx, doc)
-}
-
-// CheckExpiringDocuments finds documents that are about to expire
-//
-// Parameters:
-//   - ctx: The context for the operation.
-//   - daysToExpiration: The number of days to expiration.
-//
-// Returns:
-//   - []*document.Document: The list of documents.
-func (s *service) CheckExpiringDocuments(ctx context.Context, daysToExpiration int) ([]*document.Document, error) {
-	now := time.Now().Unix()
-	expirationThreshold := now + int64(daysToExpiration*24*60*60) // Convert days to seconds
-
-	return s.docRepo.FindExpiringDocuments(ctx, &repositories.FindExpiringDocumentsRequest{
-		ExpirationThreshold: expirationThreshold,
-	})
-}
-
-func (s *service) validateBulkUploadRequest(req *services.BulkUploadDocumentRequest) error {
-	if req.OrganizationID.IsNil() {
-		return eris.New("organization ID is required")
-	}
-	if req.BusinessUnitID.IsNil() {
-		return eris.New("business unit ID is required")
-	}
-	if req.UploadedByID.IsNil() {
-		return eris.New("uploader ID is required")
-	}
-	if req.ResourceID.IsNil() {
-		return eris.New("resource ID is required")
-	}
-	if req.ResourceType == "" {
-		return eris.New("resource type is required")
-	}
-	if len(req.Documents) == 0 {
-		return eris.New("at least one document is required")
-	}
-
-	return nil
 }
 
 func (s *service) generateObjectPath(req *services.UploadDocumentRequest) string {

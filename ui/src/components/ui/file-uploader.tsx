@@ -257,7 +257,7 @@ export function DocumentUpload({
       });
 
       // Open and send the request
-      xhr.open("POST", `${API_URL}/documents/`);
+      xhr.open("POST", `${API_URL}/documents/upload/`);
       xhr.withCredentials = true;
 
       // Set any authentication headers if needed

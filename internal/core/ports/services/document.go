@@ -2,7 +2,6 @@ package services
 
 import (
 	"context"
-	"time"
 
 	"github.com/emoss08/trenova/internal/core/domain/document"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
@@ -111,23 +110,8 @@ type DocumentService interface {
 	UploadDocument(ctx context.Context, req *UploadDocumentRequest) (*UploadDocumentResponse, error)
 	BulkUploadDocuments(ctx context.Context, req *BulkUploadDocumentRequest) (*BulkUploadDocumentResponse, error)
 
-	// Retrieval operations
-	List(ctx context.Context, req *repositories.ListDocumentsRequest) (*ports.ListResult[*document.Document], error)
-	GetDocumentByID(ctx context.Context, orgID, buID, docID pulid.ID) (*document.Document, error)
-	GetDocumentContent(ctx context.Context, doc *document.Document) ([]byte, error)
-	GetDocumentDownloadURL(ctx context.Context, doc *document.Document, expiryDuration time.Duration) (string, error)
-	ListEntityDocuments(ctx context.Context, req *repositories.ListDocumentsRequest) (*ports.ListResult[*document.Document], error)
-
-	// Document workflow operations
-	ApproveDocument(ctx context.Context, orgID, buID, docID, approverID pulid.ID) (*document.Document, error)
-	RejectDocument(ctx context.Context, orgID, buID, docID, rejectorID pulid.ID, reason string) (*document.Document, error)
-	ArchiveDocument(ctx context.Context, orgID, buID, docID pulid.ID) (*document.Document, error)
-	DeleteDocument(ctx context.Context, orgID, buID, docID pulid.ID) error
-
-	// Versioning operations
-	GetDocumentVersions(ctx context.Context, doc *document.Document) ([]VersionInfo, error)
-	RestoreDocumentVersion(ctx context.Context, doc *document.Document, versionID string) (*document.Document, error)
-
-	// Compliance operation
-	CheckExpiringDocuments(ctx context.Context, daysToExpiration int) ([]*document.Document, error)
+	// Aggregation operations
+	GetDocumentCountByResource(ctx context.Context, req ports.TenantOptions) ([]*repositories.GetDocumentCountByResourceResponse, error)
+	GetResourceSubFolders(ctx context.Context, req repositories.GetResourceSubFoldersRequest) ([]*repositories.GetResourceSubFoldersResponse, error)
+	GetDocumentsByResourceID(ctx context.Context, req *repositories.GetDocumentsByResourceIDRequest) (*ports.ListResult[*document.Document], error)
 }

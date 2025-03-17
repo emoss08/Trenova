@@ -1,10 +1,16 @@
 import {
+  getDocumentCountByResource,
+  getDocumentsByResourceID,
+  getResourceSubFolders,
+} from "@/services/document";
+import {
   getDatabaseBackups,
   getOrgById,
   getShipmentControl,
   listOrganizations,
 } from "@/services/organization";
 import { getUsStateOptions, getUsStates } from "@/services/us-state";
+import { Resource } from "@/types/audit-entry";
 import { createQueryKeyStore } from "@lukemorales/query-key-factory";
 
 export const queries = createQueryKeyStore({
@@ -55,6 +61,26 @@ export const queries = createQueryKeyStore({
       queryKey: ["us-states/options"],
       queryFn: async () => {
         return await getUsStateOptions();
+      },
+    }),
+  },
+  document: {
+    countByResource: () => ({
+      queryKey: ["document/count-by-resource"],
+      queryFn: async () => {
+        return await getDocumentCountByResource();
+      },
+    }),
+    resourceSubFolders: (resourceType: Resource) => ({
+      queryKey: ["document/resource-sub-folders", resourceType],
+      queryFn: async () => {
+        return await getResourceSubFolders(resourceType);
+      },
+    }),
+    documentsByResourceID: (resourceType: Resource, resourceId: string) => ({
+      queryKey: ["document/documents-by-resource-id", resourceType, resourceId],
+      queryFn: async () => {
+        return await getDocumentsByResourceID(resourceType, resourceId);
       },
     }),
   },

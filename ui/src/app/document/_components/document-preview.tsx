@@ -5,11 +5,11 @@ import { formatFileSize } from "@/lib/utils";
 import { Document as DocumentFile } from "@/types/document";
 import { faFileImage } from "@fortawesome/pro-regular-svg-icons";
 import {
-    faFileAlt,
-    faFileContract,
-    faFileExcel,
-    faFilePdf,
-    faFileWord,
+  faFileAlt,
+  faFileContract,
+  faFileExcel,
+  faFilePdf,
+  faFileWord,
 } from "@fortawesome/pro-solid-svg-icons";
 import { useCallback } from "react";
 

@@ -66,6 +66,10 @@ ALTER TABLE "workers"
     ADD COLUMN IF NOT EXISTS search_vector tsvector;
 
 --bun:split
+ALTER TABLE "workers"
+    ADD COLUMN IF NOT EXISTS whole_name varchar(201) GENERATED ALWAYS AS (first_name || ' ' || last_name) STORED;
+
+--bun:split
 CREATE INDEX IF NOT EXISTS idx_workers_search ON workers USING GIN(search_vector);
 
 --bun:split

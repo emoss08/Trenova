@@ -9,65 +9,37 @@ import (
 	"github.com/emoss08/trenova/pkg/types/pulid"
 )
 
-// DocumentRequest contains shared options for document repository operations
-type DocumentRequest struct {
-	ExpandDocumentDetails bool
+type GetDocumentCountByResourceResponse struct {
+	ResourceType permission.Resource `json:"resourceType"`
+	// Count is the number of `sub-folders` aka unique resource ids
+	Count        int   `json:"count"`
+	TotalSize    int64 `json:"totalSize"`
+	LastModified int64 `json:"lastModified"`
 }
 
-// GetDocumentByIDOptions contains options for retrieving a document by ID
-type GetDocumentByIDOptions struct {
-	ID    pulid.ID
-	OrgID pulid.ID
-	BuID  pulid.ID
-	DocumentRequest
+type GetResourceSubFoldersRequest struct {
+	ResourceType permission.Resource `json:"resourceType"`
+	ports.TenantOptions
 }
 
-// ListDocumentsRequest contains options for listing documents
-type ListDocumentsRequest struct {
-	Filter              *ports.LimitOffsetQueryOptions
-	ResourceType        permission.Resource       `query:"resourceType"`
-	ResourceID          *pulid.ID                 `query:"resourceID"`
-	DocumentType        document.DocumentType     `query:"documentType"`
-	Statuses            []document.DocumentStatus `query:"statuses"`
-	Tags                []string                  `query:"tags"`
-	SortBy              string                    `query:"sortBy"`
-	SortDir             string                    `query:"sortDir"`
-	ExpirationDateStart *int64                    `query:"expirationDateStart"`
-	ExpirationDateEnd   *int64                    `query:"expirationDateEnd"`
-	CreatedAtStart      *int64                    `query:"createdAtStart"`
-	CreatedAtEnd        *int64                    `query:"createdAtEnd"`
-	DocumentRequest
+type GetDocumentsByResourceIDRequest struct {
+	Filter       *ports.LimitOffsetQueryOptions
+	ResourceType permission.Resource `json:"resourceType"`
+	ResourceID   string              `json:"resourceId"`
+	ports.TenantOptions
 }
 
-// FindDocumentsByResourceRequest contains options for finding documents by entity
-type FindDocumentsByResourceRequest struct {
-	ResourceID   pulid.ID
-	ResourceType permission.Resource
-	OrgID        pulid.ID
-	BuID         pulid.ID
-	DocumentType document.DocumentType
-	Statuses     []document.DocumentStatus
-	DocumentRequest
-}
-
-// FindDocumentsByTagsRequest contains options for finding documents by tags
-type FindDocumentsByTagsRequest struct {
-	Tags         []string
-	OrgID        pulid.ID
-	BuID         pulid.ID
-	DocumentType document.DocumentType
-	Statuses     []document.DocumentStatus
-	DocumentRequest
-}
-
-// FindDocumentsByTypeRequest contains options for finding documents by type
-type FindDocumentsByTypeRequest struct {
-	DocumentType document.DocumentType
-	OrgID        pulid.ID
-	BuID         pulid.ID
-	ResourceType permission.Resource
-	Statuses     []document.DocumentStatus
-	DocumentRequest
+type GetResourceSubFoldersResponse struct {
+	// This value will change depending on the resource type
+	FolderName string `json:"folderName"`
+	// The number of documents in the sub-folder
+	Count int `json:"count"`
+	// The total size of the documents in the sub-folder
+	TotalSize int64 `json:"totalSize"`
+	// The last modified date of the documents in the sub-folder
+	LastModified int64 `json:"lastModified"`
+	// ResourceID is the ID of the resource that the sub-folder belongs to
+	ResourceID string `json:"resourceId"`
 }
 
 // DeleteDocumentRequest contains options for deleting a document
@@ -77,57 +49,17 @@ type DeleteDocumentRequest struct {
 	BuID  pulid.ID
 }
 
-// UpdateDocumentStatusRequest contains options for updating a document's status
-type UpdateDocumentStatusRequest struct {
-	ID     pulid.ID
-	OrgID  pulid.ID
-	BuID   pulid.ID
-	Status document.DocumentStatus
-}
-
-// BulkUpdateDocumentStatusRequest contains options for bulk updating document statuses
-type BulkUpdateDocumentStatusRequest struct {
-	IDs    []pulid.ID
-	OrgID  pulid.ID
-	BuID   pulid.ID
-	Status document.DocumentStatus
-}
-
-// FindExpiringDocumentsRequest contains options for finding documents nearing expiration
-type FindExpiringDocumentsRequest struct {
-	ExpirationThreshold int64
-	OrgID               pulid.ID
-	BuID                pulid.ID
-}
-
-// CountDocumentsRequest contains options for counting documents by type
-type CountDocumentsRequest struct {
-	OrgID        pulid.ID
-	BuID         pulid.ID
-	ResourceType permission.Resource
-	ResourceID   pulid.ID
-	Statuses     []document.DocumentStatus
-}
-
 // DocumentRepository defines the interface for document data access
 type DocumentRepository interface {
 	// CRUD operations
 	Create(ctx context.Context, doc *document.Document) (*document.Document, error)
-	GetByID(ctx context.Context, req GetDocumentByIDOptions) (*document.Document, error)
 	Update(ctx context.Context, doc *document.Document) (*document.Document, error)
 	Delete(ctx context.Context, req DeleteDocumentRequest) error
 
-	// Query operations
-	List(ctx context.Context, req *ListDocumentsRequest) (*ports.ListResult[*document.Document], error)
-	FindByResourceID(ctx context.Context, req *FindDocumentsByResourceRequest) ([]*document.Document, error)
-	FindByTags(ctx context.Context, req *FindDocumentsByTagsRequest) ([]*document.Document, error)
-	FindByDocumentType(ctx context.Context, req *FindDocumentsByTypeRequest) ([]*document.Document, error)
-	FindExpiringDocuments(ctx context.Context, req *FindExpiringDocumentsRequest) ([]*document.Document, error)
-
-	// Status operations
-	UpdateStatus(ctx context.Context, req *UpdateDocumentStatusRequest) (*document.Document, error)
-	BulkUpdateStatus(ctx context.Context, req BulkUpdateDocumentStatusRequest) (int, error)
+	// List operations
+	GetDocumentsByResourceID(ctx context.Context, req *GetDocumentsByResourceIDRequest) (*ports.ListResult[*document.Document], error)
 
 	// Aggregation operations
-	CountDocuments(ctx context.Context, req *CountDocumentsRequest) (map[document.DocumentType]int, error)
+	GetDocumentCountByResource(ctx context.Context, req *ports.TenantOptions) ([]*GetDocumentCountByResourceResponse, error)
+	GetResourceSubFolders(ctx context.Context, req GetResourceSubFoldersRequest) ([]*GetResourceSubFoldersResponse, error)
 }
