@@ -206,22 +206,13 @@ export function ShipmentStatusBadge({
   };
 
   return (
-    <TooltipProvider>
-      <Tooltip>
-        <TooltipTrigger>
-          <Badge
-            withDot={withDot}
-            variant={statusAttributes[status].variant}
-            className={cn(className, "max-h-6")}
-          >
-            {statusAttributes[status].text}
-          </Badge>
-        </TooltipTrigger>
-        <TooltipContent className="max-w-xs text-wrap text-center">
-          <p>{statusAttributes[status].description}</p>
-        </TooltipContent>
-      </Tooltip>
-    </TooltipProvider>
+    <Badge
+      withDot={withDot}
+      variant={statusAttributes[status].variant}
+      className={cn(className, "max-h-6")}
+    >
+      {statusAttributes[status].text}
+    </Badge>
   );
 }
 
