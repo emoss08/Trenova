@@ -61,6 +61,7 @@ type Document struct {
 	UpdatedAt    int64  `json:"updatedAt" bun:"updated_at,notnull,default:extract(epoch from current_timestamp)::bigint"`
 	SearchVector string `json:"-" bun:"search_vector,type:TSVECTOR,scanonly"`
 	Rank         string `json:"-" bun:"rank,type:VARCHAR(100),scanonly"`
+	PresignedURL string `json:"presignedURL,omitempty" bun:"presigned_url,type:TEXT,nullzero,scanonly"`
 
 	// Relationships
 	BusinessUnit *businessunit.BusinessUnit `bun:"rel:belongs-to,join:business_unit_id=id" json:"-"`

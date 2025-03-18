@@ -2,6 +2,7 @@ import { type WorkerSchema } from "@/lib/schemas/worker-schema";
 import { cn } from "@/lib/utils";
 import { badgeVariants } from "@/lib/variants/badge";
 import { type Status } from "@/types/common";
+import { DocumentType } from "@/types/document";
 import { type PackingGroupChoiceProps } from "@/types/hazardous-material";
 import { MoveStatus } from "@/types/move";
 import { ShipmentStatus } from "@/types/shipment";
@@ -221,6 +222,77 @@ export function ShipmentStatusBadge({
         </TooltipContent>
       </Tooltip>
     </TooltipProvider>
+  );
+}
+
+export function DocumentTypeBadge({
+  documentType,
+}: {
+  documentType: DocumentType;
+}) {
+  const documentTypeAttributes: Record<DocumentType, BadgeAttrProps> = {
+    [DocumentType.License]: {
+      variant: "purple",
+      text: "License",
+    },
+    [DocumentType.Registration]: {
+      variant: "indigo",
+      text: "Registration",
+    },
+    [DocumentType.Insurance]: {
+      variant: "warning",
+      text: "Insurance",
+    },
+    [DocumentType.Invoice]: {
+      variant: "teal",
+      text: "Invoice",
+    },
+    [DocumentType.ProofOfDelivery]: {
+      variant: "info",
+      text: "Proof of Delivery",
+    },
+    [DocumentType.BillOfLading]: {
+      variant: "purple",
+      text: "Bill of Lading",
+    },
+    [DocumentType.DriverLog]: {
+      variant: "info",
+      text: "Driver Log",
+    },
+    [DocumentType.MedicalCert]: {
+      variant: "purple",
+      text: "Medical Certificate",
+    },
+    [DocumentType.Contract]: {
+      variant: "purple",
+      text: "Contract",
+    },
+    [DocumentType.Maintenance]: {
+      variant: "purple",
+      text: "Maintenance",
+    },
+    [DocumentType.AccidentReport]: {
+      variant: "purple",
+      text: "Accident Report",
+    },
+    [DocumentType.TrainingRecord]: {
+      variant: "purple",
+      text: "Training Record",
+    },
+    [DocumentType.Other]: {
+      variant: "purple",
+      text: "Other",
+    },
+  };
+
+  return (
+    <Badge
+      variant={documentTypeAttributes[documentType].variant}
+      className="max-h-6"
+      withDot={false}
+    >
+      {documentTypeAttributes[documentType].text}
+    </Badge>
   );
 }
 

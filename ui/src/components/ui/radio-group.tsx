@@ -2,7 +2,7 @@ import * as RadioGroupPrimitive from "@radix-ui/react-radio-group";
 import * as React from "react";
 
 import { cn } from "@/lib/utils";
-import { faCircle } from "@fortawesome/pro-regular-svg-icons";
+import { faCircle } from "@fortawesome/pro-solid-svg-icons";
 import { Icon } from "./icons";
 
 function RadioGroup({
@@ -37,9 +37,8 @@ function RadioGroupItem({
       >
         <Icon
           icon={faCircle}
-          className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 size-3.5 fill-primary"
+          className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 size-3 fill-primary"
         />
-        ;
       </RadioGroupPrimitive.Indicator>
     </RadioGroupPrimitive.Item>
   );

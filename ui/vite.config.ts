@@ -66,6 +66,16 @@ const vendorChunks = {
     "@fortawesome/pro-solid-svg-icons",
   ],
 
+  // PDF Viewer
+  "pdf-viewer": [
+    "@react-pdf-viewer/core",
+    "pdfjs-dist",
+    "@react-pdf-viewer/print",
+    "@react-pdf-viewer/default-layout",
+    "@react-pdf-viewer/full-screen",
+    "@react-pdf-viewer/theme",
+  ],
+
   // Date handling
   "date-utils": ["date-fns", "chrono-node"],
 

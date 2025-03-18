@@ -1,4 +1,5 @@
 import { Resource } from "./audit-entry";
+import { User } from "./user";
 
 export enum DocumentType {
   License = "License",
@@ -16,6 +17,36 @@ export enum DocumentType {
   Other = "Other",
 }
 
+export function getDocumentTypeLabel(documentType: DocumentType) {
+  switch (documentType) {
+    case DocumentType.License:
+      return "License";
+    case DocumentType.Registration:
+      return "Registration";
+    case DocumentType.Insurance:
+      return "Insurance";
+    case DocumentType.Invoice:
+      return "Invoice";
+    case DocumentType.ProofOfDelivery:
+      return "Proof of Delivery";
+    case DocumentType.BillOfLading:
+      return "Bill of Lading";
+    case DocumentType.DriverLog:
+      return "Driver Log";
+    case DocumentType.MedicalCert:
+      return "Medical Certificate";
+    case DocumentType.Contract:
+      return "Contract";
+    case DocumentType.Maintenance:
+      return "Maintenance";
+    case DocumentType.AccidentReport:
+      return "Accident Report";
+    case DocumentType.TrainingRecord:
+      return "Training Record";
+    case DocumentType.Other:
+      return "Other";
+  }
+}
 export enum DocumentStatus {
   Draft = "Draft",
   Active = "Active",
@@ -38,6 +69,9 @@ export type Document = {
   status: DocumentStatus;
   description?: string;
   tags?: string[];
+  // * generated presigned URL by the server. (expires in 24 hours)
+  presignedURL?: string | null;
+  uploadedBy?: User | null;
 };
 
 export type ResourceFolder = {

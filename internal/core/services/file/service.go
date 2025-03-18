@@ -7,6 +7,7 @@ import (
 	"encoding/hex"
 	"fmt"
 	"io"
+	"maps"
 	"net/http"
 	"path/filepath"
 	"strings"
@@ -361,12 +362,6 @@ func (s *service) ValidateFile(filename string, size int64, fileType services.Fi
 	return nil
 }
 
-func (s *service) generateObjectPath(req *services.SaveFileRequest) string {
-	// Create a structured path based on classification and category
-	timestamp := time.Now().Format("2006/01/02")
-	return fmt.Sprintf("%s/%s/%s/%s", req.Classification, req.Category, timestamp, req.FileName)
-}
-
 func (s *service) createOrgBucket(ctx context.Context, bucketName string) error {
 	exists, err := s.client.BucketExists(ctx, bucketName)
 	if err != nil {
@@ -428,22 +423,19 @@ func (s *service) SaveFile(ctx context.Context, req *services.SaveFileRequest) (
 		"checksum":        []string{checksum},
 	}
 
-	// Add custom metadata and tags
-	for k, v := range req.Metadata {
-		metadata[k] = v
-	}
+	// * Copy the metadata from the request to the metadata map
+	maps.Copy(metadata, req.Metadata)
+
+	// * Add custom metadata and tags
 	for k, v := range req.Tags {
 		metadata["tag_"+k] = []string{v}
 	}
-
-	// Generate object path
-	objectName := s.generateObjectPath(req)
 
 	// Save file
 	ui, err := s.client.PutObject(
 		ctx,
 		req.BucketName,
-		objectName,
+		req.FileName,
 		bytes.NewBuffer(req.File),
 		int64(len(req.File)),
 		minio.PutObjectOptions{
@@ -464,15 +456,15 @@ func (s *service) SaveFile(ctx context.Context, req *services.SaveFileRequest) (
 	if err != nil {
 		s.l.Error().Err(err).
 			Str("bucket", req.BucketName).
-			Str("object", objectName).
+			Str("object", req.FileName).
 			Msg("failed to save file")
 		return nil, eris.Wrap(err, "save file")
 	}
 
-	fileURL := fmt.Sprintf("http://%s/%s/%s", s.endpoint, req.BucketName, objectName)
+	fileURL := fmt.Sprintf("http://%s/%s/%s", s.endpoint, req.BucketName, req.FileName)
 
 	return &services.SaveFileResponse{
-		Key:         objectName,
+		Key:         req.FileName,
 		Location:    fileURL,
 		Etag:        ui.ETag,
 		Checksum:    checksum,
@@ -536,6 +528,25 @@ func (s *service) ListFiles(ctx context.Context, bucketName, prefix, token strin
 	}
 
 	return objects, nextToken, nil
+}
+
+func (s *service) GetBucketSize(ctx context.Context, bucketName string) (int64, error) {
+	// * Get all objects in the bucket (returns a channel of minio.ObjectInfo)
+	oiC := s.client.ListObjects(ctx, bucketName, minio.ListObjectsOptions{
+		Prefix:    "",
+		Recursive: true,
+	})
+
+	// * Calculate the total size of all objects
+	var size int64
+	for object := range oiC {
+		if object.Err != nil {
+			return 0, eris.Wrap(object.Err, "list objects")
+		}
+		size += object.Size
+	}
+
+	return size, nil
 }
 
 func (s *service) generateBucketPolicy(bucketName string) string {

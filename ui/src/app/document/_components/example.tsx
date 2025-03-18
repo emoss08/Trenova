@@ -38,7 +38,7 @@ function DocumentUploadExample() {
   const [resourceType, setResourceType] = useState<Resource>(Resource.Shipment);
 
   // Example entity IDs - in a real app these would come from your state
-  const shipmentId = "shp_01JPGF87VS29AM0G0KZ7V7EJPA";
+  const shipmentId = "shp_01JPJS0RSM30Y8B4DKYSJ667XV";
   const driverId = "wrk_987654321";
 
   // Current entity ID based on selection

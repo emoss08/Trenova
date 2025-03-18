@@ -1,5 +1,13 @@
 import { Resource } from "@/types/audit-entry";
 import { ResourcePageInfo, ResourceType, RouteInfo } from "@/types/nav-links";
+import {
+  faFileAlt,
+  faFileContract,
+  faFileExcel,
+  faFileImage,
+  faFilePdf,
+  faFileWord,
+} from "@fortawesome/pro-solid-svg-icons";
 import { clsx, type ClassValue } from "clsx";
 import { RefObject, useEffect } from "react";
 import { twMerge } from "tailwind-merge";
@@ -352,4 +360,26 @@ export function formatFileSize(bytes: number) {
   if (bytes < 1024) return `${bytes} B`;
   if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(2)} KB`;
   return `${(bytes / (1024 * 1024)).toFixed(2)} MB`;
+}
+
+export function getFileIcon(fileType: string) {
+  const type = fileType.toLowerCase();
+  if (type.includes("pdf")) return faFilePdf;
+  if (
+    type.includes("image") ||
+    type.includes("jpg") ||
+    type.includes("png") ||
+    type.includes("jpeg")
+  )
+    return faFileImage;
+  if (
+    type.includes("excel") ||
+    type.includes("spreadsheet") ||
+    type.includes("csv") ||
+    type.includes("xlsx")
+  )
+    return faFileExcel;
+  if (type.includes("word") || type.includes("doc")) return faFileWord;
+  if (type.includes("contract")) return faFileContract;
+  return faFileAlt;
 }

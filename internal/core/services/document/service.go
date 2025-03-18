@@ -84,7 +84,25 @@ func (s *service) GetResourceSubFolders(ctx context.Context, req repositories.Ge
 }
 
 func (s *service) GetDocumentsByResourceID(ctx context.Context, req *repositories.GetDocumentsByResourceIDRequest) (*ports.ListResult[*document.Document], error) {
-	return s.docRepo.GetDocumentsByResourceID(ctx, req)
+	// * We need to get the documents by resource ID
+	// * and then we need to get a presigned URL for each document
+	// * so the client is able to download the document.
+	docs, err := s.docRepo.GetDocumentsByResourceID(ctx, req)
+	if err != nil {
+		return nil, err
+	}
+
+	// * Get a presigned URL for each document
+	for _, doc := range docs.Items {
+		presignedURL, err := s.fileService.GetFileURL(ctx, "org-4f3a2f6d98f14aeb47dc0ca6e99dd657", doc.StoragePath, time.Hour*24)
+		if err != nil {
+			return nil, err
+		}
+
+		doc.PresignedURL = presignedURL
+	}
+
+	return docs, nil
 }
 
 // UploadDocument uploads a single document and stores its metadata

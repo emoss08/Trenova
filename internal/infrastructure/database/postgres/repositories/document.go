@@ -147,6 +147,10 @@ func (r *documentRepository) filterResourceQuery(q *bun.SelectQuery, req *reposi
 	q = q.Where("doc.resource_id = ?", req.ResourceID).
 		Where("doc.resource_type = ?", req.ResourceType)
 
+	// * add order by created at & uploadedBy
+	q = q.Order("doc.created_at ASC").
+		Relation("UploadedBy")
+
 	return q
 }
 

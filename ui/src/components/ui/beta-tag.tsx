@@ -20,12 +20,12 @@ export function BetaTag({ label = "BETA", className }: BetaTagProps) {
         <TooltipTrigger>
           <span
             className={cn(
-              "inline-flex items-center rounded-full bg-primary/10 gap-1 px-2 py-0.5 text-2xs font-medium text-primary ring-1 ring-inset ring-primary/20",
+              "inline-flex text-center items-center rounded-full bg-primary/10 gap-1 px-2 py-0.5 text-2xs font-medium text-primary ring-1 ring-inset ring-primary/20",
               className,
             )}
           >
             <Icon icon={faSparkles} className="size-3 text-primary/70" />
-            {label}
+            <span className="text-center mt-0.5">{label}</span>
           </span>
         </TooltipTrigger>
         <TooltipContent>
