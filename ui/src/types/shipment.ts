@@ -123,3 +123,11 @@ export type ShipmentListProps = {
   onShipmentSelect: (shipmentId: string) => void;
   inputValue?: string;
 };
+
+export enum ShipmentDocumentType {
+  BillOfLading = "BillOfLading",
+  ProofOfDelivery = "ProofOfDelivery",
+  Invoice = "Invoice",
+  DeliveryReceipt = "DeliveryReceipt",
+  Other = "Other",
+}

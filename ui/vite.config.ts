@@ -136,7 +136,6 @@ export default defineConfig({
       "@": path.resolve(__dirname, "./src"),
     },
   },
-
   build: {
     target: ["es2020", "edge88", "firefox78", "chrome87", "safari14"],
     sourcemap: true,
@@ -144,8 +143,20 @@ export default defineConfig({
     chunkSizeWarningLimit: 1000, // Increase warning limit for chunks
     rollupOptions: {
       output: {
-        manualChunks: {
-          ...vendorChunks,
+        manualChunks: (id) => {
+          // Special handling for PDF modules to ensure they're split into their own chunk
+          if (id.includes("@react-pdf-viewer") || id.includes("pdfjs-dist")) {
+            return "pdf-viewer";
+          }
+
+          // Process other vendor chunks
+          for (const [chunkName, packages] of Object.entries(vendorChunks)) {
+            if (packages.some((pkg) => id.includes(`/node_modules/${pkg}/`))) {
+              return chunkName;
+            }
+          }
+
+          // Default chunk handling
         },
         chunkFileNames: (chunkInfo) => {
           const name = chunkInfo.name || "chunk";

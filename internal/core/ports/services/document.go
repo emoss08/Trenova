@@ -27,7 +27,6 @@ type UploadDocumentRequest struct {
 	Description     string                  `json:"description"`
 	Tags            []string                `json:"tags"`
 	ExpirationDate  *int64                  `json:"expirationDate"`
-	IsPublic        bool                    `json:"isPublic"`
 	Status          document.DocumentStatus `json:"status"`
 	RequireApproval bool                    `json:"requireApproval"`
 }
@@ -88,7 +87,6 @@ type BulkDocumentInfo struct {
 	Description     string                `json:"description"`
 	Tags            []string              `json:"tags"`
 	ExpirationDate  *int64                `json:"expirationDate"`
-	IsPublic        bool                  `json:"isPublic"`
 	RequireApproval bool                  `json:"requireApproval"`
 }
 

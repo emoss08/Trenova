@@ -1,24 +1,6 @@
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Progress } from "@/components/ui/progress";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Switch } from "@/components/ui/switch";
 import {
   Tooltip,
   TooltipContent,
@@ -26,16 +8,29 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { API_URL } from "@/constants/env";
-import { cn } from "@/lib/utils";
+import { DocumentUploadSchema } from "@/lib/schemas/document-schema";
+import { cn, getFileIcon } from "@/lib/utils";
 import {
   faExclamationTriangle,
-  faFile,
+  faTrash,
   faUpload,
-  faXmark,
 } from "@fortawesome/pro-regular-svg-icons";
+import { useMutation } from "@tanstack/react-query";
 import React, { useCallback, useRef, useState } from "react";
+import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { Icon } from "./icons";
+
+// File size formatting utility
+const formatFileSize = (bytes: number): string => {
+  if (bytes === 0) return "0 Bytes";
+
+  const k = 1024;
+  const sizes = ["Bytes", "KB", "MB", "GB", "TB"];
+  const i = Math.floor(Math.log(bytes) / Math.log(k));
+
+  return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + " " + sizes[i];
+};
 
 export interface DocumentType {
   value: string;
@@ -54,9 +49,9 @@ export interface FileUploadProps {
   acceptedFileTypes?: string;
   onUploadComplete?: (response: any) => void;
   onUploadError?: (error: any) => void;
+  onCancel?: () => void;
   showDocumentTypeSelection?: boolean;
   requireApproval?: boolean;
-  className?: string;
 }
 
 export interface UploadingFile {
@@ -65,6 +60,16 @@ export interface UploadingFile {
   documentType: string;
   status: "uploading" | "success" | "error";
   error?: string;
+  fileSize?: string; // Formatted file size for display
+}
+
+export interface UploadFileParams {
+  file: File;
+  resourceId: string;
+  resourceType: string;
+  documentType: string;
+  description: string;
+  onProgress: (progress: number) => void;
 }
 
 export function DocumentUpload({
@@ -76,19 +81,10 @@ export function DocumentUpload({
   acceptedFileTypes = "*",
   onUploadComplete,
   onUploadError,
+  onCancel,
   showDocumentTypeSelection = true,
-  requireApproval = false,
-  className,
 }: FileUploadProps) {
   const [uploadingFiles, setUploadingFiles] = useState<UploadingFile[]>([]);
-  const [isUploading, setIsUploading] = useState(false);
-  const [defaultDocumentType, setDefaultDocumentType] = useState(
-    documentTypes.length > 0 ? documentTypes[0].value : "Other",
-  );
-  const [description, setDescription] = useState("");
-  const [isPublic, setIsPublic] = useState(false);
-  const [needsApproval, setNeedsApproval] = useState(requireApproval);
-
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Default document types if none provided
@@ -104,6 +100,91 @@ export function DocumentUpload({
           { value: "BillOfLading", label: "Bill of Lading" },
           { value: "Other", label: "Other" },
         ];
+
+  const form = useForm<DocumentUploadSchema>({
+    defaultValues: {
+      resourceType,
+      resourceId,
+      documentType: documentTypes.length > 0 ? documentTypes[0].value : "Other",
+      description: "",
+    },
+  });
+
+  const { control, getValues, watch } = form;
+  const description = watch("description");
+
+  // File upload mutation
+  const uploadFileMutation = useMutation({
+    mutationFn: async ({
+      file,
+      resourceId,
+      resourceType,
+      documentType,
+      description,
+      onProgress,
+    }: UploadFileParams) => {
+      const formData = new FormData();
+      formData.append("file", file);
+      formData.append("resourceId", resourceId);
+      formData.append("resourceType", resourceType);
+      formData.append("documentType", documentType);
+      formData.append("description", description);
+
+      // Create XMLHttpRequest to track progress
+      const xhr = new XMLHttpRequest();
+
+      // Setup a promise to handle the async request
+      return new Promise<any>((resolve, reject) => {
+        // Track upload progress
+        xhr.upload.addEventListener("progress", (event) => {
+          if (event.lengthComputable) {
+            const progress = Math.round((event.loaded * 100) / event.total);
+            onProgress(progress);
+          }
+        });
+
+        // Handle completion
+        xhr.addEventListener("load", () => {
+          if (xhr.status >= 200 && xhr.status < 300) {
+            try {
+              const response = JSON.parse(xhr.responseText);
+              resolve(response);
+            } catch {
+              resolve(xhr.responseText);
+            }
+          } else {
+            reject(new Error(`HTTP Error: ${xhr.status}`));
+          }
+        });
+
+        // Handle errors
+        xhr.addEventListener("error", () => reject(new Error("Network Error")));
+        xhr.addEventListener("abort", () =>
+          reject(new Error("Upload Aborted")),
+        );
+
+        // Open and send the request
+        xhr.open("POST", `${API_URL}/documents/upload/`);
+        xhr.withCredentials = true;
+
+        // Set any authentication headers if needed
+        // xhr.setRequestHeader("Authorization", "Bearer your-token");
+        xhr.setRequestHeader("X-Request-ID", crypto.randomUUID());
+
+        xhr.send(formData);
+      });
+    },
+    onSuccess: (data) => {
+      if (onUploadComplete) {
+        onUploadComplete(data);
+      }
+    },
+    onError: (error) => {
+      if (onUploadError) {
+        onUploadError(error);
+      }
+    },
+  });
 
   const handleFileSelect = useCallback(
     (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -127,8 +208,9 @@ export function DocumentUpload({
         newFiles.push({
           file,
           progress: 0,
-          documentType: defaultDocumentType,
+          documentType: getValues("documentType"),
           status: "uploading",
+          fileSize: formatFileSize(file.size),
         });
       }
 
@@ -145,7 +227,7 @@ export function DocumentUpload({
         fileInputRef.current.value = "";
       }
     },
-    [allowMultiple, defaultDocumentType, maxFileSizeMB],
+    [allowMultiple, getValues, maxFileSizeMB],
   );
 
   const handleDragOver = useCallback((e: React.DragEvent<HTMLDivElement>) => {
@@ -178,7 +260,7 @@ export function DocumentUpload({
         newFiles.push({
           file,
           progress: 0,
-          documentType: defaultDocumentType,
+          documentType: getValues("documentType"),
           status: "uploading",
         });
       }
@@ -191,7 +273,7 @@ export function DocumentUpload({
         setUploadingFiles((prev) => [...prev, ...newFiles]);
       }
     },
-    [allowMultiple, defaultDocumentType, maxFileSizeMB],
+    [allowMultiple, getValues, maxFileSizeMB],
   );
 
   const removeFile = useCallback((index: number) => {
@@ -207,123 +289,75 @@ export function DocumentUpload({
     [],
   );
 
-  const uploadFile = async (fileInfo: UploadingFile, index: number) => {
-    try {
-      const formData = new FormData();
-      formData.append("file", fileInfo.file);
-      formData.append("resourceId", resourceId);
-      formData.append("resourceType", resourceType);
-      formData.append("documentType", fileInfo.documentType);
-      formData.append("description", description);
-      formData.append("isPublic", isPublic.toString());
-      formData.append("requireApproval", needsApproval.toString());
-
-      // Create XMLHttpRequest to track progress
-      const xhr = new XMLHttpRequest();
-
-      // Setup a promise to handle the async request
-      const uploadPromise = new Promise<any>((resolve, reject) => {
-        // Track upload progress
-        xhr.upload.addEventListener("progress", (event) => {
-          if (event.lengthComputable) {
-            const progress = Math.round((event.loaded * 100) / event.total);
-            setUploadingFiles((prev) =>
-              prev.map((file, i) =>
-                i === index ? { ...file, progress } : file,
-              ),
-            );
-          }
-        });
-
-        // Handle completion
-        xhr.addEventListener("load", () => {
-          if (xhr.status >= 200 && xhr.status < 300) {
-            try {
-              const response = JSON.parse(xhr.responseText);
-              resolve(response);
-            } catch {
-              resolve(xhr.responseText);
-            }
-          } else {
-            reject(new Error(`HTTP Error: ${xhr.status}`));
-          }
-        });
-
-        // Handle errors
-        xhr.addEventListener("error", () => reject(new Error("Network Error")));
-        xhr.addEventListener("abort", () =>
-          reject(new Error("Upload Aborted")),
-        );
-      });
-
-      // Open and send the request
-      xhr.open("POST", `${API_URL}/documents/upload/`);
-      xhr.withCredentials = true;
-
-      // Set any authentication headers if needed
-      // xhr.setRequestHeader("Authorization", "Bearer your-token");
-      xhr.setRequestHeader("X-Request-ID", crypto.randomUUID());
-
-      xhr.send(formData);
-
-      // Wait for the upload to complete
-      const response = await uploadPromise;
-
-      // Update file status
-      setUploadingFiles((prev) =>
-        prev.map((file, i) =>
-          i === index ? { ...file, status: "success" } : file,
-        ),
-      );
-
-      if (onUploadComplete) {
-        onUploadComplete(response);
-      }
-
-      return response;
-    } catch (error) {
-      setUploadingFiles((prev) =>
-        prev.map((file, i) =>
-          i === index
-            ? {
-                ...file,
-                status: "error",
-                error: error instanceof Error ? error.message : "Upload failed",
-              }
-            : file,
-        ),
-      );
-
-      if (onUploadError) {
-        onUploadError(error);
-      }
-
-      throw error;
-    }
-  };
-
-  // Then modify your uploadFiles function:
   const uploadFiles = async () => {
-    if (uploadingFiles.length === 0 || isUploading) return;
-
-    setIsUploading(true);
+    if (uploadingFiles.length === 0 || uploadFileMutation.isPending) return;
 
     try {
       // Upload each file in sequence to avoid overwhelming the server
       for (let i = 0; i < uploadingFiles.length; i++) {
-        await uploadFile(uploadingFiles[i], i);
+        const fileInfo = uploadingFiles[i];
+        const index = i;
+
+        // Update file status to uploading
+        setUploadingFiles((prev) =>
+          prev.map((file, i) =>
+            i === index ? { ...file, status: "uploading", progress: 0 } : file,
+          ),
+        );
+
+        try {
+          await uploadFileMutation.mutateAsync({
+            file: fileInfo.file,
+            resourceId,
+            resourceType,
+            documentType: fileInfo.documentType,
+            description: description || "",
+            onProgress: (progress) => {
+              setUploadingFiles((prev) =>
+                prev.map((file, i) =>
+                  i === index ? { ...file, progress } : file,
+                ),
+              );
+            },
+          });
+
+          // Update file status to success
+          setUploadingFiles((prev) =>
+            prev.map((file, i) =>
+              i === index ? { ...file, status: "success" } : file,
+            ),
+          );
+        } catch (error) {
+          // Update file status to error
+          setUploadingFiles((prev) =>
+            prev.map((file, i) =>
+              i === index
+                ? {
+                    ...file,
+                    status: "error",
+                    error:
+                      error instanceof Error ? error.message : "Upload failed",
+                  }
+                : file,
+            ),
+          );
+        }
       }
 
       // Show success message
-      toast.success(
-        uploadingFiles.length > 1
-          ? `Successfully uploaded ${uploadingFiles.length} documents`
-          : "Document uploaded successfully",
-      );
-    } catch {
+      const successCount = uploadingFiles.filter(
+        (f) => f.status === "success",
+      ).length;
+      if (successCount > 0) {
+        toast.success(
+          successCount > 1
+            ? `Successfully uploaded ${successCount} documents`
+            : "Document uploaded successfully",
+        );
+      }
+    } catch (error) {
+      console.error("error on upload", error);
       toast.error("One or more files failed to upload");
-    } finally {
-      setIsUploading(false);
     }
   };
 
@@ -334,225 +368,152 @@ export function DocumentUpload({
   };
 
   return (
-    <Card className={cn("w-full", className)}>
-      <CardHeader>
-        <CardTitle className="text-xl font-semibold">
-          <Icon icon={faUpload} className="mr-2" />
-          Document Upload
-        </CardTitle>
-      </CardHeader>
-      <CardContent>
-        {/* File Drop Zone */}
-        <div
-          className={cn(
-            "border-2 border-dashed rounded-lg p-6 text-center cursor-pointer transition-colors",
-            "hover:bg-muted/50 flex flex-col items-center justify-center",
-            "min-h-[200px]",
-          )}
-          onDragOver={handleDragOver}
-          onDrop={handleDrop}
-          onClick={triggerFileInput}
-        >
-          <Icon
-            icon={faUpload}
-            className="text-4xl text-muted-foreground mb-4"
-          />
-          <p className="text-lg font-medium">
-            Drop files here or click to browse
-          </p>
-          <p className="text-sm text-muted-foreground mt-2">
-            {allowMultiple
-              ? "You can upload multiple files"
-              : "You can upload one file at a time"}
-          </p>
-          <p className="text-xs text-muted-foreground mt-1">
-            Maximum file size: {maxFileSizeMB}MB
-          </p>
-          <input
-            type="file"
-            ref={fileInputRef}
-            className="hidden"
-            accept={acceptedFileTypes}
-            multiple={allowMultiple}
-            onChange={handleFileSelect}
-          />
-        </div>
-
-        {/* Document Settings */}
+    <>
+      <div
+        className={cn(
+          "border-2 border-dashed rounded-lg p-6 text-center cursor-pointer transition-colors",
+          "hover:bg-muted/50 flex flex-col items-center justify-center",
+          "min-h-[200px]",
+        )}
+        onDragOver={handleDragOver}
+        onDrop={handleDrop}
+        onClick={triggerFileInput}
+      >
+        <Icon icon={faUpload} className="text-4xl text-muted-foreground mb-4" />
+        <p className="text-lg font-medium">
+          Drop files here or click to browse
+        </p>
+        <p className="text-sm text-muted-foreground mt-2">
+          {allowMultiple
+            ? "You can upload multiple files"
+            : "You can upload one file at a time"}
+        </p>
+        <p className="text-xs text-muted-foreground mt-1">
+          Maximum file size: {maxFileSizeMB}MB
+        </p>
+        <input
+          type="file"
+          ref={fileInputRef}
+          className="hidden"
+          accept={acceptedFileTypes}
+          multiple={allowMultiple}
+          onChange={handleFileSelect}
+        />
+      </div>
+      {uploadingFiles.length > 0 && (
         <div className="mt-6 space-y-4">
-          {showDocumentTypeSelection && (
-            <div className="space-y-2">
-              <Label htmlFor="documentType">Default Document Type</Label>
-              <Select
-                value={defaultDocumentType}
-                onValueChange={setDefaultDocumentType}
+          <div className="space-y-3">
+            {uploadingFiles.map((fileInfo, index) => (
+              <div
+                key={`${fileInfo.file.name}-${index}`}
+                className="p-2 border rounded-md"
               >
-                <SelectTrigger id="documentType">
-                  <SelectValue placeholder="Select document type" />
-                </SelectTrigger>
-                <SelectContent>
-                  {effectiveDocumentTypes.map((type) => (
-                    <SelectItem key={type.value} value={type.value}>
-                      {type.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          )}
-
-          <div className="space-y-2">
-            <Label htmlFor="description">Description (Optional)</Label>
-            <Input
-              id="description"
-              placeholder="Enter document description"
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-            />
-          </div>
-
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-2">
-              <Switch
-                id="isPublic"
-                checked={isPublic}
-                onCheckedChange={setIsPublic}
-              />
-              <Label htmlFor="isPublic">Publicly accessible</Label>
-            </div>
-
-            <div className="flex items-center space-x-2">
-              <Switch
-                id="needsApproval"
-                checked={needsApproval}
-                onCheckedChange={setNeedsApproval}
-              />
-              <Label htmlFor="needsApproval">Requires approval</Label>
-            </div>
-          </div>
-        </div>
-
-        {/* File List */}
-        {uploadingFiles.length > 0 && (
-          <div className="mt-6 space-y-4">
-            <h3 className="font-medium">
-              Selected Files ({uploadingFiles.length})
-            </h3>
-            <div className="space-y-3">
-              {uploadingFiles.map((fileInfo, index) => (
-                <div
-                  key={`${fileInfo.file.name}-${index}`}
-                  className="p-3 border rounded-md"
-                >
-                  <div className="flex items-center justify-between mb-2">
-                    <div className="flex items-center space-x-2 overflow-hidden">
-                      <Icon icon={faFile} className="text-blue-500" />
+                <div className="flex items-center justify-between mb-1">
+                  <div className="flex items-center space-x-2 overflow-hidden">
+                    <div className="relative flex size-8 shrink-0 overflow-hidden rounded-sm">
+                      <div className="bg-muted flex size-full items-center justify-center rounded-sm">
+                        <Icon
+                          icon={getFileIcon(fileInfo.file.type)}
+                          className="size-4"
+                        />
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2">
                       <span
-                        className="font-medium truncate"
+                        className="text-sm font-medium truncate"
                         title={fileInfo.file.name}
                       >
                         {fileInfo.file.name}
                       </span>
-                      <Badge
-                        variant={
-                          fileInfo.status === "success"
-                            ? "active"
-                            : fileInfo.status === "error"
-                              ? "inactive"
-                              : "secondary"
-                        }
-                      >
-                        {fileInfo.status === "uploading" &&
-                          `${fileInfo.progress}%`}
-                        {fileInfo.status === "success" && "Complete"}
-                        {fileInfo.status === "error" && "Failed"}
-                      </Badge>
-                    </div>
-
-                    <div className="flex items-center space-x-2">
-                      <TooltipProvider>
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                removeFile(index);
-                              }}
-                              disabled={
-                                isUploading && fileInfo.status === "uploading"
-                              }
-                            >
-                              <Icon icon={faXmark} className="h-4 w-4" />
-                            </Button>
-                          </TooltipTrigger>
-                          <TooltipContent>Remove file</TooltipContent>
-                        </Tooltip>
-                      </TooltipProvider>
+                      <span className="text-xs text-muted-foreground">
+                        {fileInfo.fileSize ||
+                          formatFileSize(fileInfo.file.size)}
+                      </span>
                     </div>
                   </div>
 
-                  {fileInfo.status === "uploading" && (
-                    <Progress value={fileInfo.progress} className="h-2" />
-                  )}
-
-                  {fileInfo.status === "error" && fileInfo.error && (
-                    <Alert variant="destructive" className="mt-2 py-2">
-                      <Icon
-                        icon={faExclamationTriangle}
-                        className="h-4 w-4 mr-2"
-                      />
-                      <AlertDescription>{fileInfo.error}</AlertDescription>
-                    </Alert>
-                  )}
-
-                  {showDocumentTypeSelection && (
-                    <div className="mt-2">
-                      <Select
-                        value={fileInfo.documentType}
-                        onValueChange={(value) =>
-                          updateFileDocumentType(index, value)
-                        }
-                        disabled={isUploading}
-                      >
-                        <SelectTrigger id={`docType-${index}`} className="h-8">
-                          <SelectValue placeholder="Document type" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {effectiveDocumentTypes.map((type) => (
-                            <SelectItem key={type.value} value={type.value}>
-                              {type.label}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  )}
+                  <div className="flex items-center space-x-2">
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              removeFile(index);
+                            }}
+                          >
+                            <Icon icon={faTrash} className="size-4" />
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>Remove file</TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                  </div>
                 </div>
-              ))}
-            </div>
-          </div>
-        )}
-      </CardContent>
 
-      <CardFooter className="flex justify-end">
+                <div className="flex items-center gap-2">
+                  <Progress
+                    value={fileInfo.progress}
+                    className="h-2"
+                    indicatorClassName={cn({
+                      "bg-green-500": fileInfo.status === "success",
+                      "bg-red-500": fileInfo.status === "error",
+                    })}
+                  />
+                  <span className="text-xs text-muted-foreground">{`${fileInfo.progress}%`}</span>
+                </div>
+
+                {fileInfo.status === "error" && fileInfo.error && (
+                  <Alert variant="destructive" className="mt-2 py-2">
+                    <Icon
+                      icon={faExclamationTriangle}
+                      className="size-4 mr-2"
+                    />
+                    <AlertDescription>{fileInfo.error}</AlertDescription>
+                  </Alert>
+                )}
+
+                {/* {showDocumentTypeSelection && (
+                  <div className="mt-2">
+                    <Select
+                      value={fileInfo.documentType}
+                      onValueChange={(value) =>
+                        updateFileDocumentType(index, value)
+                      }
+                      disabled={uploadFileMutation.isPending}
+                    >
+                      <SelectTrigger id={`docType-${index}`} className="h-8">
+                        <SelectValue placeholder="Document type" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {effectiveDocumentTypes.map((type) => (
+                          <SelectItem key={type.value} value={type.value}>
+                            {type.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )} */}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+      <div className="flex justify-end mt-4 gap-2">
+        <Button variant="outline" onClick={onCancel}>
+          Cancel
+        </Button>
         <Button
           onClick={uploadFiles}
-          disabled={uploadingFiles.length === 0 || isUploading}
-          className="w-full sm:w-auto"
+          disabled={uploadingFiles.length === 0 || uploadFileMutation.isPending}
+          isLoading={uploadFileMutation.isPending}
         >
-          {isUploading ? (
-            <>Uploading...</>
-          ) : (
-            <>
-              <Icon icon={faUpload} className="mr-2" />
-              Upload{" "}
-              {uploadingFiles.length > 0 ? `(${uploadingFiles.length})` : ""}
-            </>
-          )}
+          Continue
         </Button>
-      </CardFooter>
-    </Card>
+      </div>
+    </>
   );
 }

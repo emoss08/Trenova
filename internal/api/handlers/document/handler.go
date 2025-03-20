@@ -217,7 +217,6 @@ func (h Handler) upload(c *fiber.Ctx) error {
 		Description:     c.FormValue("description"),
 		Tags:            tags,
 		ExpirationDate:  expirationDate,
-		IsPublic:        c.FormValue("isPublic") == "true",
 		RequireApproval: c.FormValue("requireApproval") == "true",
 	}
 
@@ -278,7 +277,6 @@ func (h Handler) bulkUpload(c *fiber.Ctx) error {
 
 			docType, _ := meta["documentType"].(string)
 			description, _ := meta["description"].(string)
-			isPublicVal, _ := meta["isPublic"].(bool)
 
 			var tags []string
 			if tagsArr, ok := meta["tags"].([]interface{}); ok {
@@ -300,7 +298,6 @@ func (h Handler) bulkUpload(c *fiber.Ctx) error {
 				Description:    description,
 				Tags:           tags,
 				ExpirationDate: expirationDate,
-				IsPublic:       isPublicVal,
 			}
 		}
 	}

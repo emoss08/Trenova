@@ -13,6 +13,7 @@ import { ShipmentStatus, type Shipment } from "@/types/shipment";
 import { faEllipsisVertical } from "@fortawesome/pro-regular-svg-icons";
 import { parseAsBoolean, useQueryState } from "nuqs";
 import { ShipmentCancellationDialog } from "../cancellation/shipment-cancellatioin-dialog";
+import { AddShipmentDocumentDialog } from "../document/add-shipment-document-dialog";
 import { ShipmentDocumentDialog } from "../document/shipment-document-dialog";
 import { ShipmentDuplicateDialog } from "../duplicate/shipment-duplicate-dialog";
 
@@ -28,6 +29,7 @@ const cancellatedStatuses = [
 const dialogs = {
   auditDialogOpen: parseAsBoolean.withDefault(false),
   documentDialogOpen: parseAsBoolean.withDefault(false),
+  addDocumentDialogOpen: parseAsBoolean.withDefault(false),
   cancellationDialogOpen: parseAsBoolean.withDefault(false),
   duplicateDialogOpen: parseAsBoolean.withDefault(false),
 };
@@ -50,6 +52,11 @@ export function ShipmentActions({ shipment }: { shipment?: Shipment | null }) {
     "auditDialogOpen",
     dialogs.auditDialogOpen.withOptions({}),
   );
+  const [addDocumentDialogOpen, setAddDocumentDialogOpen] =
+    useQueryState<boolean>(
+      "addDocumentDialogOpen",
+      dialogs.addDocumentDialogOpen.withOptions({}),
+    );
 
   if (!shipment) {
     return null;
@@ -98,6 +105,7 @@ export function ShipmentActions({ shipment }: { shipment?: Shipment | null }) {
           <DropdownMenuItem
             title="Add Document(s)"
             description="Attach relevant documents to this shipment."
+            onClick={() => setAddDocumentDialogOpen(!addDocumentDialogOpen)}
           />
           <DropdownMenuItem
             title="Add Comment(s)"
@@ -139,6 +147,11 @@ export function ShipmentActions({ shipment }: { shipment?: Shipment | null }) {
       <ShipmentDocumentDialog
         open={documentDialogOpen}
         onOpenChange={setDocumentDialogOpen}
+        shipmentId={shipment.id}
+      />
+      <AddShipmentDocumentDialog
+        open={addDocumentDialogOpen}
+        onOpenChange={setAddDocumentDialogOpen}
         shipmentId={shipment.id}
       />
     </>

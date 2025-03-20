@@ -48,7 +48,6 @@ type Document struct {
 	// Additional Metadata
 	ExpirationDate *int64   `json:"expirationDate" bun:"expiration_date,type:BIGINT,nullzero"`
 	Tags           []string `json:"tags" bun:"tags,array,type:VARCHAR(100)"`
-	IsPublic       bool     `json:"isPublic" bun:"is_public,notnull,type:BOOLEAN,default:false"`
 
 	// Audit Fields
 	UploadedByID pulid.ID  `json:"uploadedById" bun:"uploaded_by_id,notnull,type:VARCHAR(100)"`

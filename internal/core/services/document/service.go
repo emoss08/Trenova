@@ -185,7 +185,6 @@ func (s *service) UploadDocument(ctx context.Context, req *services.UploadDocume
 		ResourceType:   req.ResourceType,
 		ExpirationDate: req.ExpirationDate,
 		Tags:           req.Tags,
-		IsPublic:       req.IsPublic,
 		UploadedByID:   req.UploadedByID,
 	}
 
@@ -242,7 +241,6 @@ func (s *service) BulkUploadDocuments(ctx context.Context, req *services.BulkUpl
 			Description:     docInfo.Description,
 			Tags:            docInfo.Tags,
 			ExpirationDate:  docInfo.ExpirationDate,
-			IsPublic:        docInfo.IsPublic,
 			Status:          document.DocumentStatusActive, // * Default for bulk uploads
 		}
 
