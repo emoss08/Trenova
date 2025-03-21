@@ -28,7 +28,7 @@ export function AddShipmentDocumentDialog({
 }: AddShipmentDocumentDialogProps) {
   return (
     <Dialog {...props}>
-      <DialogContent>
+      <DialogContent className="sm:max-w-screen-sm">
         <DialogHeader>
           <DialogTitle>
             Add Shipment Document <BetaTag />

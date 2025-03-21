@@ -82,7 +82,7 @@ const vendorChunks = {
   "date-utils": ["date-fns", "chrono-node"],
 
   // Animation
-  animation: ["motion/react"],
+  animation: ["motion"],
 
   // Utilities
   utils: ["clsx", "tailwind-merge", "class-variance-authority"],

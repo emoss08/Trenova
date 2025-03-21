@@ -366,24 +366,26 @@ export function formatFileSize(bytes: number) {
   return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + " " + sizes[i];
 }
 
+const imageTypes = [
+  ".png",
+  "image/png",
+  ".jpg",
+  "image/jpeg",
+  ".gif",
+  "image/gif",
+  ".webp",
+  "image/webp",
+];
+const documentTypes = [".pdf", "application/pdf"];
+const excelTypes = [".xls", "application/excel", ".xlsx", "application/xlsx"];
+const wordTypes = [".doc", "application/word", ".docx", "application/docx"];
+
 export function getFileIcon(fileType: string) {
   const type = fileType.toLowerCase();
-  if (type.includes("pdf")) return faFilePdf;
-  if (
-    type.includes("image") ||
-    type.includes("jpg") ||
-    type.includes("png") ||
-    type.includes("jpeg")
-  )
-    return faFileImage;
-  if (
-    type.includes("excel") ||
-    type.includes("spreadsheet") ||
-    type.includes("csv") ||
-    type.includes("xlsx")
-  )
-    return faFileExcel;
-  if (type.includes("word") || type.includes("doc")) return faFileWord;
+  if (documentTypes.includes(type)) return faFilePdf;
+  if (imageTypes.includes(type)) return faFileImage;
+  if (excelTypes.includes(type)) return faFileExcel;
+  if (wordTypes.includes(type)) return faFileWord;
   if (type.includes("contract")) return faFileContract;
   return faFileAlt;
 }
@@ -396,17 +398,17 @@ type FileClass = {
 
 export function getFileClass(fileType: string): FileClass {
   const type = fileType.toLowerCase();
-  if (type.includes("pdf"))
+  if (documentTypes.includes(type))
+    return {
+      bgColor: "bg-red-600/20",
+      iconColor: "text-red-600",
+      borderColor: "border-red-600",
+    };
+  if (imageTypes.includes(type))
     return {
       bgColor: "bg-blue-600/20",
       iconColor: "text-blue-600",
       borderColor: "border-blue-600",
-    };
-  if (type.includes("image"))
-    return {
-      bgColor: "bg-violet-600/20",
-      iconColor: "text-violet-600",
-      borderColor: "border-violet-600",
     };
   return {
     bgColor: "bg-muted-foreground/20",

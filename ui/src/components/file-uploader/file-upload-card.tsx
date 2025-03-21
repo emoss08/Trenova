@@ -3,13 +3,14 @@ import { Progress } from "@/components/ui/progress";
 import {
   Tooltip,
   TooltipContent,
-  TooltipTrigger
+  TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { cn, formatFileSize, getFileClass, getFileIcon } from "@/lib/utils";
+import { cn, formatFileSize } from "@/lib/utils";
 import { type FileUploadCardProps } from "@/types/file-uploader";
-import { faTimesCircle, faTrash } from "@fortawesome/pro-regular-svg-icons";
+import { faTrash } from "@fortawesome/pro-regular-svg-icons";
 import { Badge } from "../ui/badge";
 import { Icon } from "../ui/icons";
+import { FileTypeCard } from "./file-type-card";
 
 export function FileUploadCard({
   fileInfo,
@@ -24,31 +25,10 @@ export function FileUploadCard({
       <div className="flex items-center justify-between mb-1">
         <div className="flex items-center space-x-2 overflow-hidden">
           <div className="relative flex size-8 shrink-0 overflow-hidden rounded-sm">
-            <div
-              className={cn(
-                "bg-muted border flex size-full items-center justify-center rounded-sm",
-                fileInfo.status === "error"
-                  ? "bg-red-50 dark:bg-red-950/50 "
-                  : getFileClass(fileInfo.file.type).bgColor,
-                fileInfo.status === "error"
-                  ? "border-red-500 dark:border-red-800"
-                  : getFileClass(fileInfo.file.type).borderColor,
-              )}
-            >
-              <Icon
-                icon={
-                  fileInfo.status === "error"
-                    ? faTimesCircle
-                    : getFileIcon(fileInfo.file.type)
-                }
-                className={cn(
-                  "size-4",
-                  fileInfo.status === "error"
-                    ? "text-red-500"
-                    : getFileClass(fileInfo.file.type).iconColor,
-                )}
-              />
-            </div>
+            <FileTypeCard
+              status={fileInfo.status}
+              fileType={fileInfo.file.type}
+            />
           </div>
           <div className="flex items-center justify-center gap-x-2">
             <span
@@ -57,7 +37,7 @@ export function FileUploadCard({
             >
               {fileInfo.file.name}
             </span>
-            <span className="text-xs text-muted-foreground mt-0.5">
+            <span className="text-xs text-muted-foreground">
               {fileInfo.fileSize || formatFileSize(fileInfo.file.size)}
             </span>
 

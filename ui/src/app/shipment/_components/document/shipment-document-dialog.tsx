@@ -1,4 +1,5 @@
 import { DataTableDescription } from "@/components/data-table/_components/data-table-components";
+import { FileTypeCard } from "@/components/file-uploader/file-type-card";
 import { PDFViewerDialog } from "@/components/pdf-viewer/pdf-viewer-dialog";
 import { DocumentTypeBadge } from "@/components/status-badge";
 import {
@@ -9,7 +10,6 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Icon } from "@/components/ui/icons";
 import { Separator } from "@/components/ui/separator";
 import {
   Table,
@@ -20,7 +20,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { queries } from "@/lib/queries";
-import { formatFileSize, getFileIcon } from "@/lib/utils";
+import { formatFileSize } from "@/lib/utils";
 import { Resource } from "@/types/audit-entry";
 import { TableSheetProps } from "@/types/data-table";
 import { Document } from "@/types/document";
@@ -127,18 +127,15 @@ function DocumentTableCell({
   doc: Document;
   onClick: () => void;
 }) {
+
   return (
     <div
       onClick={onClick}
       className="group flex items-center gap-2 px-1 py-1.5 text-left text-sm cursor-pointer"
     >
-      <div className="relative flex size-8 shrink-0 overflow-hidden rounded-sm">
-        <div className="bg-muted flex size-full items-center justify-center rounded-sm">
-          <Icon icon={getFileIcon(doc.fileType)} className="size-4" />
-        </div>
-      </div>
+      <FileTypeCard status="success" fileType={doc.fileType} />
       <div className="grid w-full flex-1 text-left leading-tight">
-        <span className="group-hover:underline text-sm font-semibold">
+        <span className="group-hover:underline text-sm font-semibold truncate max-w-[200px]">
           {doc.fileName}
         </span>
         <div className="flex items-center gap-2">

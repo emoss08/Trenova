@@ -92,10 +92,8 @@ export function ShipmentEditSheet({
     reset,
     handleSubmit,
     onSubmit,
-    formState: { isDirty, isSubmitting, isSubmitSuccessful, errors },
+    formState: { isDirty, isSubmitting, isSubmitSuccessful },
   } = form;
-
-  console.info("Errors", errors);
 
   const handleClose = useCallback(() => {
     onOpenChange(false);

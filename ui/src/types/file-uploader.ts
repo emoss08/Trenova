@@ -22,11 +22,13 @@ export type FileUploadProps = {
   requireApproval?: boolean;
 };
 
+export type FileStatus = "uploading" | "success" | "error";
+
 export type UploadingFile = {
   file: File;
   progress: number;
   documentType: string;
-  status: "uploading" | "success" | "error";
+  status: FileStatus;
   error?: string;
   fileSize?: string; // Formatted file size for display
 };

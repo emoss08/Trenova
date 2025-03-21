@@ -616,7 +616,7 @@ export default function DocumentUpload({
       )}
 
       {uploadingFiles.length > 0 && (
-        <div className="mt-6 space-y-2">
+        <div className="mt-6 space-y-1">
           <p className="text-sm font-medium">Uploading files</p>
           <div className="flex flex-col overflow-y-auto max-h-[350px] bg-muted/20 border border-dashed border-border p-1 rounded-md">
             <div className="flex flex-col gap-2">
