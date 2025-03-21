@@ -9,28 +9,18 @@ import {
 } from "@/components/ui/tooltip";
 import { API_URL } from "@/constants/env";
 import { DocumentUploadSchema } from "@/lib/schemas/document-schema";
-import { cn, getFileIcon } from "@/lib/utils";
+import { cn, formatFileSize, getFileIcon } from "@/lib/utils";
 import {
   faExclamationTriangle,
+  faFile,
+  faImage,
   faTrash,
-  faUpload,
 } from "@fortawesome/pro-regular-svg-icons";
 import { useMutation } from "@tanstack/react-query";
 import React, { useCallback, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { Icon } from "./icons";
-
-// File size formatting utility
-const formatFileSize = (bytes: number): string => {
-  if (bytes === 0) return "0 Bytes";
-
-  const k = 1024;
-  const sizes = ["Bytes", "KB", "MB", "GB", "TB"];
-  const i = Math.floor(Math.log(bytes) / Math.log(k));
-
-  return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + " " + sizes[i];
-};
 
 export interface DocumentType {
   value: string;
@@ -82,24 +72,11 @@ export function DocumentUpload({
   onUploadComplete,
   onUploadError,
   onCancel,
-  showDocumentTypeSelection = true,
 }: FileUploadProps) {
   const [uploadingFiles, setUploadingFiles] = useState<UploadingFile[]>([]);
+  const [isHovering, setIsHovering] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
-
-  // Default document types if none provided
-  const effectiveDocumentTypes =
-    documentTypes.length > 0
-      ? documentTypes
-      : [
-          { value: "License", label: "License" },
-          { value: "Registration", label: "Registration" },
-          { value: "Insurance", label: "Insurance" },
-          { value: "Invoice", label: "Invoice" },
-          { value: "ProofOfDelivery", label: "Proof of Delivery" },
-          { value: "BillOfLading", label: "Bill of Lading" },
-          { value: "Other", label: "Other" },
-        ];
+  const dropzoneRef = useRef<HTMLDivElement>(null);
 
   const form = useForm<DocumentUploadSchema>({
     defaultValues: {
@@ -110,7 +87,7 @@ export function DocumentUpload({
     },
   });
 
-  const { control, getValues, watch } = form;
+  const { getValues, watch } = form;
   const description = watch("description");
 
   // File upload mutation
@@ -233,12 +210,28 @@ export function DocumentUpload({
   const handleDragOver = useCallback((e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
     e.stopPropagation();
+    setIsHovering(true);
+  }, []);
+
+  const handleDragLeave = useCallback((e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsHovering(false);
+  }, []);
+
+  const handleMouseEnter = useCallback(() => {
+    setIsHovering(true);
+  }, []);
+
+  const handleMouseLeave = useCallback(() => {
+    setIsHovering(false);
   }, []);
 
   const handleDrop = useCallback(
     (e: React.DragEvent<HTMLDivElement>) => {
       e.preventDefault();
       e.stopPropagation();
+      setIsHovering(false);
 
       const { files } = e.dataTransfer;
 
@@ -262,6 +255,7 @@ export function DocumentUpload({
           progress: 0,
           documentType: getValues("documentType"),
           status: "uploading",
+          fileSize: formatFileSize(file.size),
         });
       }
 
@@ -279,15 +273,6 @@ export function DocumentUpload({
   const removeFile = useCallback((index: number) => {
     setUploadingFiles((prev) => prev.filter((_, i) => i !== index));
   }, []);
-
-  const updateFileDocumentType = useCallback(
-    (index: number, documentType: string) => {
-      setUploadingFiles((prev) =>
-        prev.map((file, i) => (i === index ? { ...file, documentType } : file)),
-      );
-    },
-    [],
-  );
 
   const uploadFiles = async () => {
     if (uploadingFiles.length === 0 || uploadFileMutation.isPending) return;
@@ -370,27 +355,39 @@ export function DocumentUpload({
   return (
     <>
       <div
+        ref={dropzoneRef}
         className={cn(
           "border-2 border-dashed rounded-lg p-6 text-center cursor-pointer transition-colors",
-          "hover:bg-muted/50 flex flex-col items-center justify-center",
+          "bg-muted/50 hover:bg-muted/70 flex flex-col items-center justify-center",
           "min-h-[200px]",
         )}
         onDragOver={handleDragOver}
+        onDragLeave={handleDragLeave}
         onDrop={handleDrop}
+        onMouseEnter={handleMouseEnter}
+        onMouseLeave={handleMouseLeave}
         onClick={triggerFileInput}
       >
-        <Icon icon={faUpload} className="text-4xl text-muted-foreground mb-4" />
-        <p className="text-lg font-medium">
-          Drop files here or click to browse
-        </p>
-        <p className="text-sm text-muted-foreground mt-2">
-          {allowMultiple
-            ? "You can upload multiple files"
-            : "You can upload one file at a time"}
-        </p>
-        <p className="text-xs text-muted-foreground mt-1">
-          Maximum file size: {maxFileSizeMB}MB
-        </p>
+        <div className="flex items-center justify-center flex-col gap-y-3">
+          <DocumentUploadSkeleton isHovering={isHovering} />
+
+          <div className="flex flex-col gap-1">
+            <div className="flex items-center gap-1 text-lg">
+              <p>Drag and drop files here, or</p>
+              <button
+                className="underline cursor-pointer text-semibold"
+                onClick={triggerFileInput}
+              >
+                Browse
+              </button>
+            </div>
+            <p className="text-xs text-muted-foreground">
+              {allowMultiple
+                ? `Supports PDFs, images, and documents up to ${maxFileSizeMB}MB`
+                : `Supports a single PDF, image, or document up to ${maxFileSizeMB}MB`}
+            </p>
+          </div>
+        </div>
         <input
           type="file"
           ref={fileInputRef}
@@ -401,7 +398,8 @@ export function DocumentUpload({
         />
       </div>
       {uploadingFiles.length > 0 && (
-        <div className="mt-6 space-y-4">
+        <div className="mt-6 space-y-2">
+          <p className="text-sm font-medium">Uploading files</p>
           <div className="space-y-3">
             {uploadingFiles.map((fileInfo, index) => (
               <div
@@ -474,29 +472,6 @@ export function DocumentUpload({
                     <AlertDescription>{fileInfo.error}</AlertDescription>
                   </Alert>
                 )}
-
-                {/* {showDocumentTypeSelection && (
-                  <div className="mt-2">
-                    <Select
-                      value={fileInfo.documentType}
-                      onValueChange={(value) =>
-                        updateFileDocumentType(index, value)
-                      }
-                      disabled={uploadFileMutation.isPending}
-                    >
-                      <SelectTrigger id={`docType-${index}`} className="h-8">
-                        <SelectValue placeholder="Document type" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {effectiveDocumentTypes.map((type) => (
-                          <SelectItem key={type.value} value={type.value}>
-                            {type.label}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                )} */}
               </div>
             ))}
           </div>
@@ -515,5 +490,55 @@ export function DocumentUpload({
         </Button>
       </div>
     </>
+  );
+}
+
+interface DocumentUploadSkeletonProps {
+  isHovering: boolean;
+}
+
+function DocumentUploadSkeleton({ isHovering }: DocumentUploadSkeletonProps) {
+  return (
+    <div className="flex items-center justify-center relative h-20 w-24 bg-background dark:bg-background/50 rounded-sm size-full">
+      {/* Left document */}
+      <div
+        className={cn(
+          "absolute z-10 bg-foreground/20 rounded-md h-7 w-24 p-1 transform duration-400",
+          isHovering
+            ? "translate-x-[-24px] translate-y-[-8px] rotate-[-5deg]"
+            : "translate-x-[-12px] translate-y-[-14px] rotate-0",
+        )}
+      >
+        <div className="flex items-center gap-x-1">
+          <div className="flex items-center justify-center bg-blue-500 rounded-sm size-5 p-1">
+            <Icon icon={faFile} className="size-4 text-white" />
+          </div>
+          <div className="flex flex-col gap-0.5 size-full">
+            <div className="w-full h-1.5 bg-muted-foreground rounded-md" />
+            <div className="w-10 h-1.5 bg-muted-foreground/50 rounded-md" />
+          </div>
+        </div>
+      </div>
+
+      {/* Right document */}
+      <div
+        className={cn(
+          "absolute z-10 bg-foreground/20 rounded-md h-7 w-24 p-1 transform duration-400",
+          isHovering
+            ? "translate-x-[24px] translate-y-[8px] rotate-[5deg]"
+            : "translate-x-[12px] translate-y-[18px] rotate-0",
+        )}
+      >
+        <div className="flex items-center gap-x-1">
+          <div className="flex items-center justify-center bg-pink-500 rounded-sm size-5 p-1">
+            <Icon icon={faImage} className="size-4 text-white" />
+          </div>
+          <div className="flex flex-col gap-0.5 size-full">
+            <div className="w-full h-1.5 bg-muted-foreground rounded-md" />
+            <div className="w-10 h-1.5 bg-muted-foreground/50 rounded-md" />
+          </div>
+        </div>
+      </div>
+    </div>
   );
 }

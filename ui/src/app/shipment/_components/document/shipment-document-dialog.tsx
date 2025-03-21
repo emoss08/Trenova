@@ -1,4 +1,5 @@
 import { DataTableDescription } from "@/components/data-table/_components/data-table-components";
+import { PDFViewerDialog } from "@/components/pdf-viewer/pdf-viewer-dialog";
 import { DocumentTypeBadge } from "@/components/status-badge";
 import {
   Dialog,
@@ -9,7 +10,6 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Icon } from "@/components/ui/icons";
-import { PDFViewerDialog } from "@/components/ui/pdf-viewer";
 import { Separator } from "@/components/ui/separator";
 import {
   Table,
@@ -68,7 +68,7 @@ function DocumentTable({ shipmentId }: { shipmentId: Shipment["id"] }) {
       setSelectedDocument(doc);
       setPdfViewerOpen(true);
     } else {
-      console.log("not a pdf", doc);
+      console.log("Document not a pdf", doc);
     }
   };
 
@@ -109,11 +109,13 @@ function DocumentTable({ shipmentId }: { shipmentId: Shipment["id"] }) {
           )}
         </TableBody>
       </Table>
-      <PDFViewerDialog
-        fileUrl={selectedDocument?.presignedURL ?? ""}
-        open={pdfViewerOpen}
-        onOpenChange={setPdfViewerOpen}
-      />
+      {pdfViewerOpen && (
+        <PDFViewerDialog
+          fileUrl={selectedDocument?.presignedURL ?? ""}
+          open={pdfViewerOpen}
+          onOpenChange={setPdfViewerOpen}
+        />
+      )}
     </>
   );
 }

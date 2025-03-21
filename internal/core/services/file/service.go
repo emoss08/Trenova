@@ -80,7 +80,7 @@ func NewService(p ServiceParams) services.FileService {
 		MaxFileSize: MaxFileSize,
 		AllowedFileTypes: map[services.FileType][]string{
 			services.ImageFile: {".jpg", ".jpeg", ".png", ".gif", ".webp"},
-			services.DocFile:   {".doc", ".docx", ".xls", ".xlsx", ".csv", ".ppt", ".pptx", ".txt", ".rtf"},
+			services.DocFile:   {".doc", ".docx", ".xls", ".xlsx", ".csv"},
 			services.PDFFile:   {".pdf"},
 		},
 		DefaultRegion: defaultRegion,

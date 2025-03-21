@@ -33,6 +33,7 @@ export function AddShipmentDocumentDialog({
             resourceId={shipmentId}
             documentTypes={shipmentDocumentTypes}
             allowMultiple
+            maxFileSizeMB={100}
           />
         </DialogBody>
       </DialogContent>

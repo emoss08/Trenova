@@ -73,7 +73,9 @@ const vendorChunks = {
     "@react-pdf-viewer/print",
     "@react-pdf-viewer/default-layout",
     "@react-pdf-viewer/full-screen",
+    "@react-pdf-viewer/search",
     "@react-pdf-viewer/theme",
+    "@react-pdf-viewer/get-file",
   ],
 
   // Date handling
