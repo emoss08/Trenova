@@ -3,15 +3,17 @@ import { faSpinnerThird } from "@fortawesome/pro-regular-svg-icons";
 import { Suspense } from "react";
 import { Icon } from "./icons";
 
+export type ComponentLoaderProps = {
+  className?: string;
+  message?: string;
+  description?: string;
+};
+
 export function ComponentLoader({
   className,
   message,
   description,
-}: {
-  className?: string;
-  message?: string;
-  description?: string;
-}) {
+}: ComponentLoaderProps) {
   return (
     <div
       className={cn("flex flex-col items-center justify-center p-2", className)}
@@ -22,15 +24,25 @@ export function ComponentLoader({
         className="text-primary motion-safe:animate-spin"
       />
       <p className="text-foreground mt-2 text-sm">
-        {message || "Loading data..."}
+        {message ?? "Loading data..."}
       </p>
       <p className="text-muted-foreground mt-2 text-sm">
-        {description || "If this takes too long, please refresh the page."}
+        {description ?? "If this takes too long, please refresh the page."}
       </p>
     </div>
   );
 }
 
-export function SuspenseLoader({ children }: { children: React.ReactNode }) {
-  return <Suspense fallback={<ComponentLoader />}>{children}</Suspense>;
+export function SuspenseLoader({
+  children,
+  componentLoaderProps,
+}: {
+  children: React.ReactNode;
+  componentLoaderProps?: ComponentLoaderProps;
+}) {
+  return (
+    <Suspense fallback={<ComponentLoader {...componentLoaderProps} />}>
+      {children}
+    </Suspense>
+  );
 }

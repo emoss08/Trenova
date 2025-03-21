@@ -17,7 +17,7 @@ import {
   CardHeader,
   CardTitle,
 } from "./ui/card";
-import { SuspenseLoader } from "./ui/component-loader";
+import { ComponentLoaderProps, SuspenseLoader } from "./ui/component-loader";
 import { Icon } from "./ui/icons";
 import { Separator } from "./ui/separator";
 
@@ -175,16 +175,23 @@ export function LazyLoadErrorFallback({
 type LazyComponentProps = {
   children: React.ReactNode;
   onError?: (error: Error, info: ErrorInfo) => void;
+  componentLoaderProps?: ComponentLoaderProps;
 };
 
 /**
  * LazyComponent is a wrapper component that allows for lazy loading of components
  * with error handling.
  */
-export function LazyComponent({ children, onError }: LazyComponentProps) {
+export function LazyComponent({
+  children,
+  onError,
+  componentLoaderProps,
+}: LazyComponentProps) {
   return (
     <ErrorBoundary FallbackComponent={LazyLoadErrorFallback} onError={onError}>
-      <SuspenseLoader>{children}</SuspenseLoader>
+      <SuspenseLoader componentLoaderProps={componentLoaderProps}>
+        {children}
+      </SuspenseLoader>
     </ErrorBoundary>
   );
 }
@@ -193,6 +200,7 @@ type QueryLazyComponentProps = {
   children: React.ReactNode;
   onError?: (error: Error, info: ErrorInfo) => void;
   queryKey: QueryKey;
+  componentLoaderProps?: ComponentLoaderProps;
 };
 
 /**
@@ -204,6 +212,7 @@ export function QueryLazyComponent({
   children,
   onError,
   queryKey,
+  componentLoaderProps,
 }: QueryLazyComponentProps) {
   return (
     <QueryErrorResetBoundary>
@@ -214,7 +223,9 @@ export function QueryLazyComponent({
           onError={onError}
           resetKeys={queryKey as any}
         >
-          <SuspenseLoader>{children}</SuspenseLoader>
+          <SuspenseLoader componentLoaderProps={componentLoaderProps}>
+            {children}
+          </SuspenseLoader>
         </ErrorBoundary>
       )}
     </QueryErrorResetBoundary>

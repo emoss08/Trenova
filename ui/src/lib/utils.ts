@@ -387,3 +387,30 @@ export function getFileIcon(fileType: string) {
   if (type.includes("contract")) return faFileContract;
   return faFileAlt;
 }
+
+type FileClass = {
+  bgColor: string;
+  iconColor: string;
+  borderColor: string;
+};
+
+export function getFileClass(fileType: string): FileClass {
+  const type = fileType.toLowerCase();
+  if (type.includes("pdf"))
+    return {
+      bgColor: "bg-blue-600/20",
+      iconColor: "text-blue-600",
+      borderColor: "border-blue-600",
+    };
+  if (type.includes("image"))
+    return {
+      bgColor: "bg-violet-600/20",
+      iconColor: "text-violet-600",
+      borderColor: "border-violet-600",
+    };
+  return {
+    bgColor: "bg-muted-foreground/20",
+    iconColor: "text-muted-foreground",
+    borderColor: "border-muted-foreground",
+  };
+}
