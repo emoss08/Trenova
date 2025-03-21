@@ -44,17 +44,17 @@ export default function DocumentUpload({
   const fileInputRef = useRef<HTMLInputElement>(null);
   const dropzoneRef = useRef<HTMLDivElement>(null);
 
-  // Track dirty state based on uploadingFiles
+  // * Track dirty state based on uploadingFiles
   useEffect(() => {
     const hasUnsavedFiles = uploadingFiles.some(
       (file) => file.status !== "success" && file.status !== "error",
     );
 
-    // Set dirty if there are any files that aren't in success or error state
+    // * Set dirty if there are any files that aren't in success or error state
     setIsDirty(hasUnsavedFiles && uploadingFiles.length > 0);
   }, [uploadingFiles]);
 
-  // Memoize default values to avoid unnecessary re-renders
+  // * Memoize default values to avoid unnecessary re-renders
   const defaultValues = useMemo(
     () => ({
       resourceType,
@@ -72,7 +72,7 @@ export default function DocumentUpload({
   const { getValues, watch } = form;
   const description = watch("description");
 
-  // Create XHR and form data only once per file upload
+  // * Create XHR and form data only once per file upload
   const createFormData = useCallback(
     (
       file: File,
@@ -92,17 +92,17 @@ export default function DocumentUpload({
     [],
   );
 
-  // Parse error messages from response
+  // * Parse error messages from response
   const parseErrorMessage = useCallback((error: any): UploadError => {
     if (error instanceof Error) {
-      // Try to parse details from HTTP error messages
+      // * Try to parse details from HTTP error messages
       const match = error.message.match(/HTTP Error: (\d+) (.+)/);
       if (match) {
         const statusCode = match[1];
         const errorMessage = match[2];
 
         try {
-          // Try to parse as JSON
+          // * Try to parse as JSON
           const errorDetails = JSON.parse(errorMessage);
 
           return {
@@ -112,7 +112,7 @@ export default function DocumentUpload({
             code: statusCode,
           };
         } catch {
-          // Not JSON, use as is
+          // * Not JSON, use as is
           return {
             fileName: "Unknown",
             message: `Server Error (${statusCode})`,
@@ -122,7 +122,7 @@ export default function DocumentUpload({
         }
       }
 
-      // Handle specific error messages
+      // * Handle specific error messages
       if (error.message.includes("file extension not allowed")) {
         return {
           fileName: "Unknown",
@@ -145,7 +145,7 @@ export default function DocumentUpload({
     };
   }, []);
 
-  // File upload mutation
+  // * File upload mutation
   const { mutateAsync: uploadFileMutation, isPending: isUploading } =
     useMutation({
       mutationFn: async ({
@@ -156,7 +156,7 @@ export default function DocumentUpload({
         description,
         onProgress,
       }: UploadFileParams) => {
-        // Create form data once
+        // * Create form data once
         const formData = createFormData(
           file,
           documentType,
@@ -165,12 +165,12 @@ export default function DocumentUpload({
           resourceType,
         );
 
-        // Create XMLHttpRequest to track progress
+        // * Create XMLHttpRequest to track progress
         const xhr = new XMLHttpRequest();
 
-        // Setup a promise to handle the async request
+        // * Setup a promise to handle the async request
         return new Promise<any>((resolve, reject) => {
-          // Track upload progress
+          // * Track upload progress
           xhr.upload.addEventListener("progress", (event) => {
             if (event.lengthComputable) {
               const progress = Math.round((event.loaded * 100) / event.total);
@@ -178,7 +178,7 @@ export default function DocumentUpload({
             }
           });
 
-          // Handle completion
+          // * Handle completion
           xhr.addEventListener("load", () => {
             if (xhr.status >= 200 && xhr.status < 300) {
               try {
@@ -194,7 +194,7 @@ export default function DocumentUpload({
             }
           });
 
-          // Handle errors
+          // * Handle errors
           xhr.addEventListener("error", () =>
             reject(new Error("Network Error")),
           );
@@ -202,7 +202,7 @@ export default function DocumentUpload({
             reject(new Error("Upload Aborted")),
           );
 
-          // Open and send the request
+          // * Open and send the request
           xhr.open("POST", `${API_URL}/documents/upload/`);
           xhr.withCredentials = true;
           xhr.setRequestHeader("X-Request-ID", crypto.randomUUID());
@@ -221,7 +221,7 @@ export default function DocumentUpload({
       },
     });
 
-  // Pre-calculate max file size in bytes for faster comparison
+  // * Pre-calculate max file size in bytes for faster comparison
   const maxFileSizeBytes = useMemo(
     () => maxFileSizeMB * 1024 * 1024,
     [maxFileSizeMB],
@@ -232,14 +232,14 @@ export default function DocumentUpload({
       const { files } = event.target;
       if (!files?.length) return;
 
-      // Process files in batch
+      // * Process files in batch
       const newFiles: UploadingFile[] = [];
       const tooLargeFiles: string[] = [];
 
       for (let i = 0; i < files.length; i++) {
         const file = files[i];
 
-        // Check file size
+        // * Check file size
         if (file.size > maxFileSizeBytes) {
           tooLargeFiles.push(file.name);
           continue;
@@ -254,9 +254,9 @@ export default function DocumentUpload({
         });
       }
 
-      // Show error messages in batch
+      // * Show error messages in batch
       if (tooLargeFiles.length) {
-        // Add to error collection instead of just toasting
+        // * Add to error collection instead of just toasting
         const newErrors = tooLargeFiles.map((fileName) => ({
           fileName,
           message: `File exceeds maximum size of ${maxFileSizeMB}MB`,
@@ -265,21 +265,21 @@ export default function DocumentUpload({
 
         setUploadErrors((prev) => [...prev, ...newErrors]);
 
-        // Show error dialog if there are errors
+        // * Show error dialog if there are errors
         if (newErrors.length > 0) {
           setShowErrorDialog(true);
         }
       }
 
-      // If we're not allowing multiple files, replace existing files
-      // Otherwise append to existing files
+      // * If we're not allowing multiple files, replace existing files
+      // * Otherwise append to existing files
       if (newFiles.length > 0) {
         setUploadingFiles((prev) =>
           allowMultiple ? [...prev, ...newFiles] : newFiles,
         );
       }
 
-      // Reset the file input so the same file can be selected again if needed
+      // * Reset the file input so the same file can be selected again if needed
       if (fileInputRef.current) {
         fileInputRef.current.value = "";
       }
@@ -287,7 +287,7 @@ export default function DocumentUpload({
     [allowMultiple, getValues, maxFileSizeBytes, maxFileSizeMB],
   );
 
-  // Memoize event handlers
+  // * Memoize event handlers
   const handleDragOver = useCallback((e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
     e.stopPropagation();
@@ -317,14 +317,14 @@ export default function DocumentUpload({
       const { files } = e.dataTransfer;
       if (!files?.length) return;
 
-      // Process files in batch
+      // * Process files in batch
       const newFiles: UploadingFile[] = [];
       const tooLargeFiles: string[] = [];
 
       for (let i = 0; i < files.length; i++) {
         const file = files[i];
 
-        // Check file size
+        // * Check file size
         if (file.size > maxFileSizeBytes) {
           tooLargeFiles.push(file.name);
           continue;
@@ -339,9 +339,9 @@ export default function DocumentUpload({
         });
       }
 
-      // Show error messages in batch
+      // * Show error messages in batch
       if (tooLargeFiles.length) {
-        // Add to error collection instead of just toasting
+        // * Add to error collection instead of just toasting
         const newErrors = tooLargeFiles.map((fileName) => ({
           fileName,
           message: `File exceeds maximum size of ${maxFileSizeMB}MB`,
@@ -350,14 +350,14 @@ export default function DocumentUpload({
 
         setUploadErrors((prev) => [...prev, ...newErrors]);
 
-        // Show error dialog if there are errors
+        // * Show error dialog if there are errors
         if (newErrors.length > 0) {
           setShowErrorDialog(true);
         }
       }
 
-      // If we're not allowing multiple files, replace existing files
-      // Otherwise append to existing files
+      // * If we're not allowing multiple files, replace existing files
+      // * Otherwise append to existing files
       if (newFiles.length > 0) {
         setUploadingFiles((prev) =>
           allowMultiple ? [...prev, ...newFiles] : newFiles,
@@ -381,7 +381,7 @@ export default function DocumentUpload({
   }, []);
 
   const handleCancelUpload = useCallback(() => {
-    // Mark all files as failed that are not already in success or error state
+    // * Mark all files as failed that are not already in success or error state
     setUploadingFiles((prev) =>
       prev.map((file) =>
         file.status !== "success" && file.status !== "error"
@@ -390,10 +390,10 @@ export default function DocumentUpload({
       ),
     );
 
-    // Since we've marked all files as "handled", this will clear the dirty state
+    // * Since we've marked all files as "handled", this will clear the dirty state
     setIsDirty(false);
 
-    // Call the onCancel callback if provided
+    // * Call the onCancel callback if provided
     if (onCancel) {
       onCancel();
     }
@@ -403,25 +403,25 @@ export default function DocumentUpload({
     if (uploadingFiles.length === 0 || isUploading) return;
 
     try {
-      // Clear any previous errors
+      // * Clear any previous errors
       setUploadErrors([]);
       setIsSubmitting(true);
 
-      // Get only files that haven't been processed yet
+      // * Get only files that haven't been processed yet
       const pendingFiles = uploadingFiles.filter(
         (file) => file.status !== "success" && file.status !== "error",
       );
 
-      // If no pending files, nothing to do
+      // * If no pending files, nothing to do
       if (pendingFiles.length === 0) {
         setIsSubmitting(false);
         return;
       }
 
-      // Upload each file in sequence to avoid overwhelming the server
+      // * Upload each file in sequence to avoid overwhelming the server
       for (let i = 0; i < pendingFiles.length; i++) {
         const fileInfo = pendingFiles[i];
-        // Find the index in the original array
+        // * Find the index in the original array
         const index = uploadingFiles.findIndex(
           (f) =>
             f.file.name === fileInfo.file.name && f.status === fileInfo.status,
@@ -429,7 +429,7 @@ export default function DocumentUpload({
 
         if (index === -1) continue; // Skip if not found (shouldn't happen)
 
-        // Update file status to uploading
+        // * Update file status to uploading
         setUploadingFiles((prev) =>
           prev.map((file, i) =>
             i === index ? { ...file, status: "uploading", progress: 0 } : file,
@@ -452,21 +452,21 @@ export default function DocumentUpload({
             },
           });
 
-          // Update file status to success
+          // * Update file status to success
           setUploadingFiles((prev) =>
             prev.map((file, i) =>
               i === index ? { ...file, status: "success" } : file,
             ),
           );
         } catch (error) {
-          // Parse error details
+          // * Parse error details
           const errorDetails = parseErrorMessage(error);
           errorDetails.fileName = fileInfo.file.name;
 
-          // Add to global error collection
+          // * Add to global error collection
           setUploadErrors((prev) => [...prev, errorDetails]);
 
-          // Update file status to error
+          // * Update file status to error
           setUploadingFiles((prev) =>
             prev.map((file, i) =>
               i === index
@@ -481,7 +481,7 @@ export default function DocumentUpload({
         }
       }
 
-      // Show success message
+      // * Show success message
       const successCount = pendingFiles.filter(
         (f) =>
           f.status === "success" ||
@@ -497,17 +497,17 @@ export default function DocumentUpload({
         );
       }
 
-      // Show error dialog if there are errors
+      // * Show error dialog if there are errors
       if (uploadErrors.length > 0) {
         setShowErrorDialog(true);
       }
 
-      // Files either succeeded or failed, so they're no longer "dirty"
+      // * Files either succeeded or failed, so they're no longer "dirty"
       setIsDirty(false);
     } catch (error) {
       console.error("error on upload", error);
 
-      // Add to error collection
+      // * Add to error collection
       const errorDetails = parseErrorMessage(error);
       setUploadErrors((prev) => [...prev, errorDetails]);
       setShowErrorDialog(true);
@@ -525,7 +525,7 @@ export default function DocumentUpload({
     uploadErrors.length,
   ]);
 
-  // Memoize classNames for better performance
+  // * Memoize classNames for better performance
   const dropzoneClassName = useMemo(
     () =>
       cn(
@@ -536,7 +536,7 @@ export default function DocumentUpload({
     [],
   );
 
-  // Group errors by type
+  // * Group errors by type
   const errorsByType = useMemo(() => {
     const grouped: Record<string, UploadError[]> = {};
 
@@ -551,7 +551,7 @@ export default function DocumentUpload({
     return grouped;
   }, [uploadErrors]);
 
-  // Count files by status
+  // * Count files by status
   const fileStats = useMemo(() => {
     const pendingCount = uploadingFiles.filter(
       (f) => f.status === "uploading",
