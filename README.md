@@ -203,4 +203,4 @@ Thank you for your understanding and continued support as we work towards making
 
 ## License
 
-Trenova is distributed under the AGPL-3.0-only License. See [LICENSE](LICENSE) file for details.
+Trenova is distributed under the FSL-1.1-ALv2 License. See [LICENSE](LICENSE) file for details.
