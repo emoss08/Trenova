@@ -116,9 +116,6 @@ export function FormSaveDock({
           </div>
         </div>
       </div>
-
-      {/* Add space at the bottom to prevent content from being covered */}
-      {/* <div className="h-16" /> */}
     </>
   );
 }

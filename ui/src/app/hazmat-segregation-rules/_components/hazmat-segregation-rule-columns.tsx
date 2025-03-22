@@ -89,7 +89,7 @@ export function getColumns(): ColumnDef<HazmatSegregationRuleSchema>[] {
         <DataTableColumnHeader column={column} title="Description" />
       ),
       cell: ({ row }) => (
-        <DataTableDescription description={row.original.description} />
+        <DataTableDescription description={row.original.description ?? ""} />
       ),
     },
     commonColumns.createdAt,

@@ -7,7 +7,7 @@ import { Status } from "@/types/common";
 import { type TableSheetProps } from "@/types/data-table";
 import { yupResolver } from "@hookform/resolvers/yup";
 import { useForm } from "react-hook-form";
-import { EquipManufacturerForm } from "./equip-menufacturer-form";
+import { EquipManufacturerForm } from "./equip-manufacturer-form";
 
 export function CreateEquipManufacturerModal({
   open,

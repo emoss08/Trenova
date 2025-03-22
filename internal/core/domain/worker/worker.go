@@ -42,6 +42,7 @@ type Worker struct {
 	ProfilePicURL     string        `json:"profilePicUrl" bun:"profile_pic_url,type:VARCHAR(255)"`
 	FirstName         string        `json:"firstName" bun:"first_name,type:VARCHAR(100),notnull"`
 	LastName          string        `json:"lastName" bun:"last_name,type:VARCHAR(100),notnull"`
+	WholeName         string        `json:"wholeName" bun:"whole_name,type:VARCHAR(201),scanonly"`
 	AddressLine1      string        `json:"addressLine1" bun:"address_line1,type:VARCHAR(150),notnull"`
 	AddressLine2      string        `json:"addressLine2" bun:"address_line2,type:VARCHAR(150)"`
 	City              string        `json:"city" bun:"city,type:VARCHAR(100),notnull"`
@@ -62,7 +63,6 @@ type Worker struct {
 	Organization *organization.Organization `json:"organization,omitempty" bun:"rel:belongs-to,join:organization_id=id"`
 	State        *usstate.UsState           `json:"state,omitempty" bun:"rel:belongs-to,join:state_id=id"`
 	Profile      *WorkerProfile             `json:"profile,omitempty" bun:"rel:has-one,join:id=worker_id"`
-	Documents    []*WorkerDocument          `json:"documents,omitempty" bun:"rel:has-many,join:id=worker_id"`
 	PTO          []*WorkerPTO               `json:"pto,omitempty" bun:"rel:has-many,join:id=worker_id"`
 }
 

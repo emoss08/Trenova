@@ -7,13 +7,13 @@ import type {
 } from "@/types/auth";
 import { User } from "@/types/user";
 
-export async function checkEmail(email: string) {
+export async function checkEmail(email: User["emailAddress"]) {
   return http.post<CheckEmailResponse>("/auth/check-email/", {
     emailAddress: email,
   });
 }
 
-export async function resetPassword(email: string) {
+export async function resetPassword(email: User["emailAddress"]) {
   return http.post<ResetPasswordResponse>("/auth/reset-password/", {
     emailAddress: email,
   });

@@ -2,6 +2,7 @@ import logo from "@/assets/logo.webp";
 import { MetaTags } from "@/components/meta-tags";
 import { LazyImage } from "@/components/ui/image";
 import { AuthForm } from "./_components/auth-form";
+
 export function LoginPage() {
   return (
     <>

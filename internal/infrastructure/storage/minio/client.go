@@ -105,7 +105,7 @@ func (c *Client) ping(ctx context.Context) error {
 // WithRetry wraps an operation with retry logic
 func (c *Client) WithRetry(ctx context.Context, operation func() error) error {
 	var lastErr error
-	for i := 0; i < c.config.MaxRetries; i++ {
+	for i := range c.config.MaxRetries {
 		select {
 		case <-ctx.Done():
 			return ctx.Err()

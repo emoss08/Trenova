@@ -7,6 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/handlers/backup"
 	"github.com/emoss08/trenova/internal/api/handlers/commodity"
 	"github.com/emoss08/trenova/internal/api/handlers/customer"
+	"github.com/emoss08/trenova/internal/api/handlers/document"
 	"github.com/emoss08/trenova/internal/api/handlers/documentqualityconfig"
 	"github.com/emoss08/trenova/internal/api/handlers/equipmentmanufacturer"
 	"github.com/emoss08/trenova/internal/api/handlers/equipmenttype"
@@ -71,4 +72,5 @@ var HandlersModule = fx.Module("api.Handlers", fx.Provide(
 	backup.NewHandler,
 	audit.NewHandler,
 	hazmatsegregationrule.NewHandler,
+	document.NewHandler,
 ))

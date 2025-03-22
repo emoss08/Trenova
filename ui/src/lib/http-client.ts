@@ -16,6 +16,7 @@ export interface RequestConfig extends Omit<RequestInit, "method" | "body"> {
   retries?: number;
   isFormData?: boolean;
   responseType?: "blob";
+  onProgress?: (progress: number) => void;
 }
 
 type DownloadOptions = {
@@ -200,6 +201,7 @@ class HttpClient {
       timeout = DEFAULT_TIMEOUT,
       retries = DEFAULT_RETRY_COUNT,
       isFormData = data instanceof FormData,
+      onProgress,
       ...options
     } = config;
 
@@ -214,6 +216,78 @@ class HttpClient {
           "color: #34ebe5; font-weight: bold",
         );
 
+        // If we have an onProgress callback and it's an upload operation, use ReadableStream
+        if (
+          onProgress &&
+          data &&
+          (method === "POST" || method === "PUT" || method === "PATCH")
+        ) {
+          const body = this.prepareRequestBody(data, isFormData);
+
+          if (body && typeof body !== "string") {
+            // Only files/blobs/buffers can be measured for upload progress
+            const contentLength =
+              body instanceof FormData
+                ? await this.calculateFormDataSize(body)
+                : body instanceof Blob
+                  ? body.size
+                  : null;
+
+            if (contentLength) {
+              let uploadedBytes = 0;
+
+              const newBody = new ReadableStream({
+                start(controller) {
+                  const reader =
+                    body instanceof FormData
+                      ? new Response(body).body!.getReader()
+                      : new Response(body as BodyInit).body!.getReader();
+
+                  // sourcery skip: avoid-function-declarations-in-blocks
+                  function push() {
+                    reader
+                      .read()
+                      .then(({ done, value }) => {
+                        if (done) {
+                          controller.close();
+                          return;
+                        }
+
+                        uploadedBytes += value.byteLength;
+                        const progress = Math.round(
+                          (uploadedBytes * 100) / (contentLength ?? 0),
+                        );
+                        onProgress?.(progress);
+
+                        controller.enqueue(value);
+                        push();
+                      })
+                      .catch((err) => {
+                        controller.error(err);
+                      });
+                  }
+
+                  push();
+                },
+              });
+
+              const response = await fetch(requestUrl, {
+                ...options,
+                method,
+                signal: controller.signal,
+                credentials: "include",
+                headers: this.getHeaders(options, isFormData),
+                body: newBody as any,
+                //@ts-expect-error - apparently this isn't a thing
+                duplex: "half",
+              });
+
+              return this.handleResponse<T>(response);
+            }
+          }
+        }
+
+        // Fall back to standard fetch if we can't track progress
         const response = await fetch(requestUrl, {
           ...options,
           method,
@@ -303,6 +377,25 @@ class HttpClient {
       console.error("Download failed:", error);
       throw error;
     }
+  }
+
+  // Helper method to calculate FormData size
+  private async calculateFormDataSize(formData: FormData): Promise<number> {
+    let size = 0;
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    for (const [_, value] of formData.entries()) {
+      if (value instanceof Blob) {
+        size += value.size;
+      } else {
+        // For string values, calculate UTF-8 byte length
+        size += new TextEncoder().encode(String(value)).length;
+      }
+
+      // Add approximate overhead for multipart boundaries and headers
+      size += 128; // Rough estimation for boundaries and headers per entry
+    }
+
+    return size;
   }
 }
 

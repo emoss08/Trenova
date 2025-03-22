@@ -6,6 +6,7 @@ const (
 	PostgresSearchTypeText      = PostgresSearchType("text")      // Regular text search
 	PostgresSearchTypeNumber    = PostgresSearchType("number")    // Number search (uses pattern matching)
 	PostgresSearchTypeEnum      = PostgresSearchType("enum")      // Enum search (exact match)
+	PostgresSearchTypeArray     = PostgresSearchType("array")     // Array search (exact match)
 	PostgresSearchTypeComposite = PostgresSearchType("composite") // Composite fields (like pro_number)
 )
 

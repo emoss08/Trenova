@@ -71,6 +71,7 @@ export enum Resource {
   DelayCode = "delay_code",
   BusinessUnit = "business_unit",
   Organization = "organization",
+  Document = "document",
   DocumentQualityConfig = "document_quality_config",
   ChargeType = "charge_type",
   DivisionCode = "division_code",

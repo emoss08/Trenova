@@ -5,6 +5,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { parseAsString, useQueryState } from "nuqs";
 import { useState } from "react";
 import { Link } from "react-router";
 import { CheckEmailForm } from "./check-email-form";
@@ -17,11 +18,19 @@ const enum AuthFormType {
   FORGOT_PASSWORD = "FORGOT_PASSWORD",
 }
 
+const searchParams = {
+  verifiedEmail: parseAsString,
+};
+
 export function AuthForm() {
   const [formType, setFormType] = useState<AuthFormType>(
     AuthFormType.CHECK_EMAIL,
   );
-  const [verifiedEmail, setVerifiedEmail] = useState<string>("");
+
+  const [verifiedEmail, setVerifiedEmail] = useQueryState(
+    "verifiedEmail",
+    searchParams.verifiedEmail.withOptions({}),
+  );
 
   function handleEmailVerified(email: string) {
     setVerifiedEmail(email);
@@ -41,13 +50,16 @@ export function AuthForm() {
       case AuthFormType.LOGIN:
         return (
           <LoginForm
-            email={verifiedEmail}
+            email={verifiedEmail ?? ""}
             onForgotPassword={handleForgotPassword}
           />
         );
       case AuthFormType.FORGOT_PASSWORD:
         return (
-          <ResetPasswordForm onBack={handleBackToLogin} email={verifiedEmail} />
+          <ResetPasswordForm
+            onBack={handleBackToLogin}
+            email={verifiedEmail ?? ""}
+          />
         );
       default:
         return <CheckEmailForm onEmailVerified={handleEmailVerified} />;
@@ -71,7 +83,7 @@ export function AuthForm() {
           </Link>
         </CardDescription>
       </CardHeader>
-      <CardContent>{renderForm()}</CardContent>
+      <CardContent className="px-6 py-4">{renderForm()}</CardContent>
     </Card>
   );
 }

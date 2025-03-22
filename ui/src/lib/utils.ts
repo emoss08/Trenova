@@ -1,5 +1,13 @@
 import { Resource } from "@/types/audit-entry";
 import { ResourcePageInfo, ResourceType, RouteInfo } from "@/types/nav-links";
+import {
+  faFileAlt,
+  faFileContract,
+  faFileExcel,
+  faFileImage,
+  faFilePdf,
+  faFileWord,
+} from "@fortawesome/pro-solid-svg-icons";
 import { clsx, type ClassValue } from "clsx";
 import { RefObject, useEffect } from "react";
 import { twMerge } from "tailwind-merge";
@@ -306,7 +314,6 @@ export const resourcePathMap = new Map<string, ResourcePageInfo>();
 
 // Populate the map with all routes that have links
 export function populateResourcePathMap(routeItems: RouteInfo[], prefix = "") {
-  console.log("routeItems", routeItems);
   for (const route of routeItems) {
     if (route.link) {
       const resourceKey = route.key.toLowerCase();
@@ -329,8 +336,6 @@ export function getRoutePageInfo(resourceType: ResourceType): ResourcePageInfo {
   console.log("resourceType", resourceType);
   const pageInfo = resourcePathMap.get(resourceType);
 
-  console.log("pageInfo", pageInfo);
-
   if (!pageInfo) {
     // Default fallback
     return { path: "/", supportsModal: false };
@@ -349,4 +354,65 @@ export function convertValueToDisplay(value: any) {
   }
 
   return value;
+}
+
+export function formatFileSize(bytes: number) {
+  if (bytes === 0) return "0 Bytes";
+
+  const k = 1024;
+  const sizes = ["Bytes", "KB", "MB", "GB", "TB"];
+  const i = Math.floor(Math.log(bytes) / Math.log(k));
+
+  return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + " " + sizes[i];
+}
+
+const imageTypes = [
+  ".png",
+  "image/png",
+  ".jpg",
+  "image/jpeg",
+  ".gif",
+  "image/gif",
+  ".webp",
+  "image/webp",
+];
+const documentTypes = [".pdf", "application/pdf"];
+const excelTypes = [".xls", "application/excel", ".xlsx", "application/xlsx"];
+const wordTypes = [".doc", "application/word", ".docx", "application/docx"];
+
+export function getFileIcon(fileType: string) {
+  const type = fileType.toLowerCase();
+  if (documentTypes.includes(type)) return faFilePdf;
+  if (imageTypes.includes(type)) return faFileImage;
+  if (excelTypes.includes(type)) return faFileExcel;
+  if (wordTypes.includes(type)) return faFileWord;
+  if (type.includes("contract")) return faFileContract;
+  return faFileAlt;
+}
+
+type FileClass = {
+  bgColor: string;
+  iconColor: string;
+  borderColor: string;
+};
+
+export function getFileClass(fileType: string): FileClass {
+  const type = fileType.toLowerCase();
+  if (documentTypes.includes(type))
+    return {
+      bgColor: "bg-red-600/20",
+      iconColor: "text-red-600",
+      borderColor: "border-red-600",
+    };
+  if (imageTypes.includes(type))
+    return {
+      bgColor: "bg-blue-600/20",
+      iconColor: "text-blue-600",
+      borderColor: "border-blue-600",
+    };
+  return {
+    bgColor: "bg-muted-foreground/20",
+    iconColor: "text-muted-foreground",
+    borderColor: "border-muted-foreground",
+  };
 }

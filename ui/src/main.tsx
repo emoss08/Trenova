@@ -6,9 +6,11 @@ import { APP_ENV } from "./constants/env.ts";
 import "./index.css";
 
 createRoot(document.getElementById("root")!).render(
+  // <StrictMode>
   <Providers>
     <App />
   </Providers>,
+  // </StrictMode>,
 );
 
 scan({

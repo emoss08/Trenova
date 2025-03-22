@@ -11,6 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/pkg/errors"
 	"github.com/emoss08/trenova/internal/pkg/logger"
+	"github.com/emoss08/trenova/pkg/types/pulid"
 	"github.com/rotisserie/eris"
 	"github.com/rs/zerolog"
 	"github.com/uptrace/bun"
@@ -384,4 +385,23 @@ func (or *organizationRepository) GetUserOrganizations(ctx context.Context, opts
 		Items: orgs,
 		Total: total,
 	}, nil
+}
+
+func (or *organizationRepository) GetOrganizationBucketName(ctx context.Context, orgID pulid.ID) (string, error) {
+	dba, err := or.db.DB(ctx)
+	if err != nil {
+		return "", err
+	}
+
+	bucketName := ""
+	q := dba.NewSelect().
+		Model((*organization.Organization)(nil)).
+		Column("org.bucket_name").
+		Where("org.id = ?", orgID)
+
+	if err := q.Scan(ctx, &bucketName); err != nil {
+		return "", err
+	}
+
+	return bucketName, nil
 }

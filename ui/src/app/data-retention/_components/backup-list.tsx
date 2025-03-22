@@ -49,7 +49,11 @@ import {
   faSpinnerThird,
   faTrash,
 } from "@fortawesome/pro-regular-svg-icons";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import {
+  useMutation,
+  useQueryClient,
+  useSuspenseQuery,
+} from "@tanstack/react-query";
 
 import { useCallback, useState } from "react";
 import { toast } from "sonner";
@@ -68,7 +72,7 @@ function convertToHumanReadableSize(size: number) {
 }
 
 export default function BackupList() {
-  const { data, isLoading, error } = useQuery({
+  const { data, isLoading, error } = useSuspenseQuery({
     ...queries.organization.getDatabaseBackups(),
   });
 

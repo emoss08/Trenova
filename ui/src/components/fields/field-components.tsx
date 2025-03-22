@@ -116,9 +116,10 @@ export function PasswordFieldWrapper({
           </Label>
           <Button
             variant="link"
+            type="button"
             size="noSize"
             onClick={onPasswordReset}
-            className="ml-auto inline-block text-sm underline"
+            className="ml-auto inline-block text-xs underline"
           >
             Forgot your password?
           </Button>

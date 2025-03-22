@@ -6,7 +6,7 @@ import { type Organization } from "@/types/organization";
 import { type LimitOffsetResponse } from "@/types/server";
 
 type GetOrgByIdOptions = {
-  orgId: string;
+  orgId: Organization["id"];
   includeState?: boolean;
   includeBu?: boolean;
 };
@@ -29,7 +29,7 @@ export async function listOrganizations() {
 }
 
 export async function updateOrganization(
-  orgId: string,
+  orgId: Organization["id"],
   data: Organization | OrganizationSchema,
 ) {
   return http.put<Organization>(`/organizations/${orgId}/`, data);
@@ -47,8 +47,8 @@ export async function getDatabaseBackups() {
   return http.get<DatabaseBackupListResponse>(`/database-backups/`);
 }
 
-export async function deleteDatabaseBackup(filename: string) {
-  return http.delete(`/database-backups/${filename}/`);
+export async function deleteDatabaseBackup(fileName: string) {
+  return http.delete(`/database-backups/${fileName}/`);
 }
 
 export async function restoreDatabaseBackup(fileName: string) {

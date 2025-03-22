@@ -6,6 +6,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/ports/infra"
 	"github.com/emoss08/trenova/internal/pkg/config"
 	apperrors "github.com/emoss08/trenova/internal/pkg/errors"
@@ -366,13 +367,13 @@ func (s *Service) Search(ctx context.Context, params *SearchRequest) (*SearchRes
 }
 
 // SearchByType performs a search operation for a specific entity type.
-func (s *Service) SearchByType(ctx context.Context, entityType string, query string, limit int, offset int) (*SearchResponse, error) {
+func (s *Service) SearchByType(ctx context.Context, resourceType permission.Resource, query string, limit int, offset int) (*SearchResponse, error) {
 	if !s.isRunning.Load() {
 		return nil, ErrServiceStopped
 	}
 
-	if entityType == "" {
-		return nil, apperrors.NewValidationError("entityType", apperrors.ErrRequired, "entity type is required")
+	if resourceType == "" {
+		return nil, apperrors.NewValidationError("resourceType", apperrors.ErrRequired, "resource type is required")
 	}
 
 	// Get request info from context
@@ -386,7 +387,7 @@ func (s *Service) SearchByType(ctx context.Context, entityType string, query str
 	// Create and execute search request
 	searchReq := &SearchRequest{
 		Query:  query,
-		Types:  []string{entityType},
+		Types:  []string{string(resourceType)},
 		Limit:  limit,
 		Offset: offset,
 		OrgID:  orgID,
@@ -397,7 +398,7 @@ func (s *Service) SearchByType(ctx context.Context, entityType string, query str
 }
 
 // DeleteDocument removes a document from the search index.
-func (s *Service) DeleteDocument(ctx context.Context, id string, entityType string) error {
+func (s *Service) DeleteDocument(ctx context.Context, id string, resourceType permission.Resource) error {
 	if !s.isRunning.Load() {
 		return ErrServiceStopped
 	}
@@ -408,7 +409,7 @@ func (s *Service) DeleteDocument(ctx context.Context, id string, entityType stri
 
 	s.l.Debug().
 		Str("id", id).
-		Str("type", entityType).
+		Str("type", string(resourceType)).
 		Msg("deleting document from search index")
 
 	// Delete from index
@@ -417,7 +418,7 @@ func (s *Service) DeleteDocument(ctx context.Context, id string, entityType stri
 		s.l.Error().
 			Err(err).
 			Str("id", id).
-			Str("type", entityType).
+			Str("type", string(resourceType)).
 			Msg("failed to delete document")
 		return eris.Wrapf(err, "failed to delete document with ID %s", id)
 	}
@@ -451,7 +452,7 @@ func (s *Service) DeleteDocument(ctx context.Context, id string, entityType stri
 
 	s.l.Debug().
 		Str("id", id).
-		Str("type", entityType).
+		Str("type", string(resourceType)).
 		Int64("taskUid", task.TaskUID).
 		Msg("document deleted successfully")
 

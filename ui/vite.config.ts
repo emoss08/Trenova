@@ -1,11 +1,11 @@
 import { nodeResolve } from "@rollup/plugin-node-resolve";
+// @ts-expect-error // Module does not give types
 import tailwindcss from "@tailwindcss/vite";
 import react from "@vitejs/plugin-react-swc";
 import path from "path";
 import { visualizer } from "rollup-plugin-visualizer";
 import { defineConfig, type PluginOption } from "vite";
 import { compression } from "vite-plugin-compression2";
-import dts from "vite-plugin-dts";
 import { VitePWA } from "vite-plugin-pwa";
 
 // Define vendor chunks that should be bundled separately
@@ -36,7 +36,11 @@ const vendorChunks = {
     "@radix-ui/react-select",
     "@radix-ui/react-slot",
     "@radix-ui/react-tooltip",
+    "@radix-ui/react-tabs",
     "@radix-ui/react-visually-hidden",
+    "@radix-ui/react-switch",
+    "@unpic/react",
+    "nuqs",
     "sonner",
     "react-day-picker",
   ],
@@ -45,7 +49,7 @@ const vendorChunks = {
   "data-tables": ["@tanstack/react-table"],
 
   // Form Management
-  "form-handling": ["react-hook-form", "@hookform/resolvers", "zod", "yup"],
+  "form-handling": ["react-hook-form", "@hookform/resolvers", "yup"],
 
   // Drag and Drop
   "dnd-kit": [
@@ -62,11 +66,23 @@ const vendorChunks = {
     "@fortawesome/pro-solid-svg-icons",
   ],
 
+  // PDF Viewer
+  "pdf-viewer": [
+    "@react-pdf-viewer/core",
+    "pdfjs-dist",
+    "@react-pdf-viewer/print",
+    "@react-pdf-viewer/default-layout",
+    "@react-pdf-viewer/full-screen",
+    "@react-pdf-viewer/search",
+    "@react-pdf-viewer/theme",
+    "@react-pdf-viewer/get-file",
+  ],
+
   // Date handling
   "date-utils": ["date-fns", "chrono-node"],
 
   // Animation
-  animation: ["motion/react"],
+  animation: ["motion"],
 
   // Utilities
   utils: ["clsx", "tailwind-merge", "class-variance-authority"],
@@ -102,7 +118,6 @@ export default defineConfig({
         theme_color: "#000000",
       },
     }),
-    dts({ rollupTypes: true, tsconfigPath: "./tsconfig.app.json" }),
     compression({
       algorithm: "brotliCompress",
       threshold: 512,
@@ -123,7 +138,6 @@ export default defineConfig({
       "@": path.resolve(__dirname, "./src"),
     },
   },
-
   build: {
     target: ["es2020", "edge88", "firefox78", "chrome87", "safari14"],
     sourcemap: true,
@@ -131,8 +145,20 @@ export default defineConfig({
     chunkSizeWarningLimit: 1000, // Increase warning limit for chunks
     rollupOptions: {
       output: {
-        manualChunks: {
-          ...vendorChunks,
+        manualChunks: (id) => {
+          // Special handling for PDF modules to ensure they're split into their own chunk
+          if (id.includes("@react-pdf-viewer") || id.includes("pdfjs-dist")) {
+            return "pdf-viewer";
+          }
+
+          // Process other vendor chunks
+          for (const [chunkName, packages] of Object.entries(vendorChunks)) {
+            if (packages.some((pkg) => id.includes(`/node_modules/${pkg}/`))) {
+              return chunkName;
+            }
+          }
+
+          // Default chunk handling
         },
         chunkFileNames: (chunkInfo) => {
           const name = chunkInfo.name || "chunk";

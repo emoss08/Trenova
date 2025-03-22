@@ -24,16 +24,16 @@ const queryClient = new QueryClient({
 
 export function Providers({ children }: { children: React.ReactNode }) {
   return (
-    <HelmetProvider>
-      <QueryClientProvider client={queryClient}>
-        <NuqsAdapter>
+    <NuqsAdapter>
+      <HelmetProvider>
+        <QueryClientProvider client={queryClient}>
           <ThemeProvider defaultTheme="dark" storageKey="trenova-ui-theme">
             <ReactQueryDevtools />
             {children}
             <Toaster richColors />
           </ThemeProvider>
-        </NuqsAdapter>
-      </QueryClientProvider>
-    </HelmetProvider>
+        </QueryClientProvider>
+      </HelmetProvider>
+    </NuqsAdapter>
   );
 }

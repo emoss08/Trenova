@@ -20,13 +20,13 @@ import {
 } from "@/lib/schemas/shipmentcontrol-schema";
 import { updateShipmentControl } from "@/services/organization";
 import { yupResolver } from "@hookform/resolvers/yup";
-import { useQuery } from "@tanstack/react-query";
+import { useSuspenseQuery } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import { FormProvider, useFormContext } from "react-hook-form";
 
 export default function ShipmentControlForm() {
   // Get the organization data
-  const shipmentControl = useQuery({
+  const shipmentControl = useSuspenseQuery({
     ...queries.organization.getShipmentControl(),
   });
 
@@ -253,6 +253,15 @@ function ShipmentEntryForm() {
               name="allowMoveRemovals"
               label="Allow Move Removals"
               description="When enabled, users can completely remove moves from shipments rather than canceling them. This affects shipment integrity, billing, and audit trails. Enable with caution as it allows permanent removal of shipment segments, which may impact financial reconciliation and historical reporting."
+              position="left"
+            />
+          </FormControl>
+          <FormControl>
+            <SwitchField
+              control={control}
+              name="checkHazmatSegregation"
+              label="Check Hazmat Segregation"
+              description="When enabled, the system will verify that hazmat shipments are properly segregated and labeled according to DOT regulations. This ensures that hazardous materials are transported safely and in compliance with all applicable laws and regulations."
               position="left"
             />
           </FormControl>
