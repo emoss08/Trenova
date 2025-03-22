@@ -13,6 +13,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { type ShipmentSchema } from "@/lib/schemas/shipment-schema";
 import { MoveStatus, type ShipmentMove } from "@/types/move";
 import { faEllipsisVertical } from "@fortawesome/pro-regular-svg-icons";
+import { nanoid } from "nanoid";
 import { memo, useState } from "react";
 import {
   UseFieldArrayRemove,
@@ -43,7 +44,7 @@ export default function MoveInformation({
       {moves.map((move, moveIdx) => {
         return (
           <MoveRow
-            key={move.id}
+            key={move.id || nanoid()}
             move={move as ShipmentMove}
             moveIdx={moveIdx}
             update={update}
@@ -99,7 +100,7 @@ const MoveRow = memo(function MoveRow({
 
                 return (
                   <StopTimeline
-                    key={stop.id}
+                    key={stop.id || nanoid()}
                     stop={stop}
                     isLast={isLastStop}
                     moveStatus={move.status}
