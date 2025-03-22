@@ -22,7 +22,7 @@ export function DataTableDescription({
   }
 
   return (
-    <TooltipProvider delayDuration={0}>
+    <TooltipProvider delayDuration={300}>
       <Tooltip>
         <TooltipTrigger>
           <span>{truncateText(description, truncateLength)}</span>

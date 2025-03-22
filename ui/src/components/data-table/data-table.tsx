@@ -52,6 +52,7 @@ export function DataTable<TData extends Record<string, any>>({
   pageSizeOptions = DEFAULT_PAGE_SIZE_OPTIONS,
   includeHeader = true,
   includeOptions = true,
+  extraActions,
 }: DataTableProps<TData>) {
   const [isTransitioning, startTransition] = useTransition();
 
@@ -255,6 +256,7 @@ export function DataTable<TData extends Record<string, any>>({
             <DataTableCreateButton
               name={name}
               exportModelName={exportModelName}
+              extraActions={extraActions}
               onCreateClick={() => {
                 setModalType("create");
               }}

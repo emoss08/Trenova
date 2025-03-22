@@ -10,7 +10,11 @@ import {
 } from "@/types/hazmat-segregation-rule";
 import { FacilityType, LocationCategoryType } from "@/types/location-category";
 import { MoveStatus } from "@/types/move";
-import { RatingMethod, ShipmentStatus } from "@/types/shipment";
+import {
+  RatingMethod,
+  ShipmentDocumentType,
+  ShipmentStatus,
+} from "@/types/shipment";
 import { StopStatus, StopType } from "@/types/stop";
 import { EquipmentStatus } from "@/types/tractor";
 import { Endorsement, PTOStatus, PTOType, WorkerType } from "@/types/worker";
@@ -323,3 +327,23 @@ export const facilityTypeChoices = [
     color: "#10b981",
   },
 ] satisfies ReadonlyArray<ChoiceProps<FacilityType>>;
+
+export const shipmentDocumentTypes = [
+  {
+    value: ShipmentDocumentType.BillOfLading,
+    label: "Bill of Lading",
+    color: "#15803d",
+  },
+  {
+    value: ShipmentDocumentType.ProofOfDelivery,
+    label: "Proof of Delivery",
+    color: "#7e22ce",
+  },
+  { value: ShipmentDocumentType.Invoice, label: "Invoice", color: "#b91c1c" },
+  {
+    value: ShipmentDocumentType.DeliveryReceipt,
+    label: "Delivery Receipt",
+    color: "#f59e0b",
+  },
+  { value: ShipmentDocumentType.Other, label: "Other", color: "#0369a1" },
+] satisfies ReadonlyArray<ChoiceProps<ShipmentDocumentType>>;

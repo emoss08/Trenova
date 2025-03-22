@@ -92,10 +92,8 @@ export function ShipmentEditSheet({
     reset,
     handleSubmit,
     onSubmit,
-    formState: { isDirty, isSubmitting, isSubmitSuccessful, errors },
+    formState: { isDirty, isSubmitting, isSubmitSuccessful },
   } = form;
-
-  console.info("Errors", errors);
 
   const handleClose = useCallback(() => {
     onOpenChange(false);
@@ -158,15 +156,13 @@ export function ShipmentEditSheet({
           <FormProvider {...form}>
             <Form className="space-y-0 p-0" onSubmit={handleSubmit(onSubmit)}>
               <SheetBody className="p-0">
-                {shipmentDetails.data && (
-                  <ShipmentForm
-                    dimensions={dimensions}
-                    selectedShipment={shipmentDetails.data}
-                    isLoading={isDetailsLoading}
-                    onBack={onClose}
-                    isCreate={false}
-                  />
-                )}
+                <ShipmentForm
+                  dimensions={dimensions}
+                  selectedShipment={shipmentDetails.data}
+                  isLoading={isDetailsLoading}
+                  onBack={onClose}
+                  isCreate={false}
+                />
               </SheetBody>
               <FormSaveDock
                 isDirty={isDirty}

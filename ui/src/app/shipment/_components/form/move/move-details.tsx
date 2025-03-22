@@ -1,5 +1,5 @@
+import { LazyComponent } from "@/components/error-boundary";
 import { Button } from "@/components/ui/button";
-import { SuspenseLoader } from "@/components/ui/component-loader";
 import { Icon } from "@/components/ui/icons";
 import { MOVE_DELETE_DIALOG_KEY } from "@/constants/env";
 import { MoveSchema } from "@/lib/schemas/move-schema";
@@ -154,7 +154,7 @@ export default function ShipmentMovesDetails() {
           </div>
           <AddMoveButton onClick={handleAddMove} />
         </div>
-        <SuspenseLoader>
+        <LazyComponent>
           <MoveInformation
             moves={moves}
             update={update}
@@ -162,7 +162,7 @@ export default function ShipmentMovesDetails() {
             onEdit={handleEditMove}
             onDelete={handleDeleteMove}
           />
-        </SuspenseLoader>
+        </LazyComponent>
       </div>
       {moveDialogOpen && (
         <MoveDialog

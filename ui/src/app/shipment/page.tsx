@@ -1,10 +1,11 @@
+import { LazyComponent } from "@/components/error-boundary";
 import { FormSaveProvider } from "@/components/form";
 import { MetaTags } from "@/components/meta-tags";
-import { SuspenseLoader } from "@/components/ui/component-loader";
 import { ShipmentFilterSchema } from "@/lib/schemas/shipment-filter-schema";
-import { memo } from "react";
+import { lazy, memo } from "react";
 import { FormProvider, useForm } from "react-hook-form";
-import ShipmentTable from "./_components/shipment-table";
+
+const ShipmentTable = lazy(() => import("./_components/shipment-table"));
 
 export function Shipment() {
   const form = useForm<ShipmentFilterSchema>({
@@ -19,11 +20,11 @@ export function Shipment() {
       <div className="space-y-6 p-6">
         <MetaTags title="Shipments" description="Shipments" />
         <Header />
-        <SuspenseLoader>
+        <LazyComponent>
           <FormProvider {...form}>
             <ShipmentTable />
           </FormProvider>
-        </SuspenseLoader>
+        </LazyComponent>
       </div>
     </FormSaveProvider>
   );

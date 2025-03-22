@@ -5,7 +5,7 @@ x-build-args: &build-args
 
 services:
   db:
-    image: postgres:latest
+    image: postgres:17-alpine
     container_name: db
     ports:
       - "5432:5432"
@@ -13,20 +13,16 @@ services:
       POSTGRES_PASSWORD: ${DB_PASSWORD:-postgres}
       POSTGRES_USER: ${DB_USER:-postgres}
       POSTGRES_DB: ${DB_NAME:-postgres}
-      POSTGRES_MULTIPLE_EXTENSIONS: pg_stat_statements
-    command:
-      - "postgres"
-      - "-c"
-      - "wal_level=logical"
-      - "-c"
-      - "shared_preload_libraries=pg_stat_statements"
-      - "-c"
-      - "pg_stat_statements.track=all"
-      - "-c"
-      - "max_replication_slots=1"
-    restart: always
+      # Postgres configs via environment
+      POSTGRES_INITDB_ARGS: "--data-checksums"
+      # Extensions
+      POSTGRES_MULTIPLE_EXTENSIONS: "pg_stat_statements,pg_trgm,btree_gin,btree_gist"
+    # Use a custom configuration file instead of command-line args
     volumes:
       - pg_data:/var/lib/postgresql/data
+      - ./config/postgresql.conf:/etc/postgresql/postgresql.conf:ro
+    command: postgres -c config_file=/etc/postgresql/postgresql.conf
+    restart: always
     deploy:
       resources:
         limits:
@@ -34,7 +30,7 @@ services:
     networks:
       - app-network
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-postgres} -d ${DB_NAME:-postgres}"]
       interval: 10s
       timeout: 5s
       retries: 5

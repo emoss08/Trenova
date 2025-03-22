@@ -7,11 +7,13 @@ import (
 	"encoding/hex"
 	"fmt"
 	"io"
+	"maps"
 	"net/http"
 	"path/filepath"
 	"strings"
 	"time"
 
+	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/infrastructure/storage/minio"
 	"github.com/emoss08/trenova/internal/pkg/config"
@@ -24,43 +26,61 @@ import (
 )
 
 const (
-	defaultRegion     = "us-east-1"
-	defaultExpiration = 24 * time.Hour
-	maxFileSize       = 100 * 1024 * 1024 // 100MB
+	defaultRegion = "us-east-1"
+	DefaultExpiry = 24 * time.Hour
+	MaxFileSize   = 100 * 1024 * 1024 // 100MB
 )
 
+// Config defines the configuration for the file service
 type Config struct {
-	MaxFileSize            int64
-	AllowedFileTypes       map[services.FileType][]string
-	DefaultRegion          string
+	// MaxFileSize is the maximum file size allowed for uploads
+	MaxFileSize int64
+	// AllowedFileTypes is a map of allowed file types and their corresponding extensions
+	AllowedFileTypes map[services.FileType][]string
+	// DefaultRegion is the default region for the file service
+	DefaultRegion string
+	// ClassificationPolicies is a map of classification policies and their corresponding retention periods, encryption requirements, and allowed categories
 	ClassificationPolicies map[services.FileClassification]services.ClassificationPolicy
 }
 
+// ServiceParams defines the dependencies required for initializing the Service.
+// This includes a logger, minio client, and config manager.
 type ServiceParams struct {
 	fx.In
 
 	Client  *minio.Client
 	Logger  *logger.Logger
 	ConfigM *config.Manager
+	OrgRepo repositories.OrganizationRepository
 }
 
+// service is the implementation of the FileService interface
+// It provides methods to save, get, and delete files, as well as to manage versions and buckets.
 type service struct {
 	client   *minio.Client
 	l        *zerolog.Logger
 	cfg      *Config
 	endpoint string
+	orgRepo  repositories.OrganizationRepository
 }
 
+// NewService initializes a new instance of service with its dependencies.
+//
+// Parameters:
+//   - p: ServiceParams containing logger, minio client, and config manager.
+//
+// Returns:
+//   - A new instance of service.
 func NewService(p ServiceParams) services.FileService {
 	log := p.Logger.With().
 		Str("service", "file").
 		Logger()
 
 	cfg := &Config{
-		MaxFileSize: maxFileSize,
+		MaxFileSize: MaxFileSize,
 		AllowedFileTypes: map[services.FileType][]string{
 			services.ImageFile: {".jpg", ".jpeg", ".png", ".gif", ".webp"},
-			services.DocFile:   {".doc", ".docx", ".xls", ".xlsx", ".csv", ".ppt", ".pptx"},
+			services.DocFile:   {".doc", ".docx", ".xls", ".xlsx", ".csv"},
 			services.PDFFile:   {".pdf"},
 		},
 		DefaultRegion: defaultRegion,
@@ -78,7 +98,7 @@ func NewService(p ServiceParams) services.FileService {
 				RetentionPeriod:    90 * 24 * time.Hour, // 90 days
 				RequiresEncryption: true,
 				AllowedCategories:  []services.FileCategory{services.CategoryShipment},
-				MaxFileSize:        maxFileSize,
+				MaxFileSize:        MaxFileSize,
 				RequireVersioning:  true,
 				MaxVersions:        5,
 				VersionRetention:   "latest-5",
@@ -96,7 +116,7 @@ func NewService(p ServiceParams) services.FileService {
 				RetentionPeriod:    3 * 365 * 24 * time.Hour, // 3 years
 				RequiresEncryption: true,
 				AllowedCategories:  []services.FileCategory{services.CategoryRegulatory},
-				MaxFileSize:        maxFileSize,
+				MaxFileSize:        MaxFileSize,
 				RequireVersioning:  true,
 				MaxVersions:        0, // Keep all versions
 				VersionRetention:   "all",
@@ -109,6 +129,7 @@ func NewService(p ServiceParams) services.FileService {
 		endpoint: p.ConfigM.Minio().Endpoint,
 		l:        &log,
 		cfg:      cfg,
+		orgRepo:  p.OrgRepo,
 	}
 }
 
@@ -117,21 +138,23 @@ func (s *service) SaveFileVersion(ctx context.Context, req *services.SaveFileReq
 	// Check if versioning is required
 	if policy.RequireVersioning {
 		// Ensure versioning is enabled on the bucket
-		if err := s.ensureVersioningEnabled(ctx, req.OrgID); err != nil {
-			return nil, eris.Wrap(err, "versioning enabled")
+		if err := s.ensureVersioningEnabled(ctx, req.BucketName); err != nil {
+			s.l.Error().Str("bucket", req.BucketName).Err(err).Msg("versioning enabled")
+			return nil, err
 		}
 	}
 
 	// continue with the save file logic
 	resp, err := s.SaveFile(ctx, req)
 	if err != nil {
-		return nil, eris.Wrap(err, "save file")
+		s.l.Error().Interface("request", req).Err(err).Msg("save file")
+		return nil, err
 	}
 
 	// if versioning is enabled, manage versions
 	if policy.RequireVersioning && policy.MaxVersions > 0 {
-		if err = s.manageVersions(ctx, req.OrgID, resp.Key, policy.MaxVersions); err != nil {
-			s.l.Warn().Err(err).Msg("failed to manage versions")
+		if err = s.manageVersions(ctx, req.BucketName, resp.Key, policy.MaxVersions); err != nil {
+			s.l.Error().Str("bucket", req.BucketName).Err(err).Msg("failed to manage versions")
 		}
 	}
 
@@ -245,7 +268,7 @@ func (s *service) GetSpecificVersion(ctx context.Context, bucketName, objectName
 
 func (s *service) RestoreVersion(ctx context.Context, req *services.SaveFileRequest, versionID string) (*services.SaveFileResponse, error) {
 	// Get the specified version
-	data, versionInfo, err := s.GetSpecificVersion(ctx, req.OrgID, req.FileName, versionID)
+	data, versionInfo, err := s.GetSpecificVersion(ctx, req.BucketName, req.FileName, versionID)
 	if err != nil {
 		return nil, eris.Wrap(err, "get version to restore")
 	}
@@ -262,13 +285,15 @@ func (s *service) RestoreVersion(ctx context.Context, req *services.SaveFileRequ
 func (s *service) ensureVersioningEnabled(ctx context.Context, bucketName string) error {
 	// First, create bucket if it doesn't exist
 	if err := s.createOrgBucket(ctx, bucketName); err != nil {
+		s.l.Error().Str("bucket", bucketName).Err(err).Msg("create org bucket")
 		return err
 	}
 
 	// Enable versioning
 	err := s.client.EnableVersioning(ctx, bucketName)
 	if err != nil {
-		return eris.Wrap(err, "enable versioning")
+		s.l.Error().Str("bucket", bucketName).Err(err).Msg("enable versioning")
+		return err
 	}
 
 	return nil
@@ -337,16 +362,11 @@ func (s *service) ValidateFile(filename string, size int64, fileType services.Fi
 	return nil
 }
 
-func (s *service) generateObjectPath(req *services.SaveFileRequest) string {
-	// Create a structured path based on classification and category
-	timestamp := time.Now().Format("2006/01/02")
-	return fmt.Sprintf("%s/%s/%s/%s", req.Classification, req.Category, timestamp, req.FileName)
-}
-
 func (s *service) createOrgBucket(ctx context.Context, bucketName string) error {
 	exists, err := s.client.BucketExists(ctx, bucketName)
 	if err != nil {
 		s.l.Error().Err(err).Msg("check if bucket exists")
+		return err
 	}
 
 	if !exists {
@@ -403,22 +423,19 @@ func (s *service) SaveFile(ctx context.Context, req *services.SaveFileRequest) (
 		"checksum":        []string{checksum},
 	}
 
-	// Add custom metadata and tags
-	for k, v := range req.Metadata {
-		metadata[k] = v
-	}
+	// * Copy the metadata from the request to the metadata map
+	maps.Copy(metadata, req.Metadata)
+
+	// * Add custom metadata and tags
 	for k, v := range req.Tags {
 		metadata["tag_"+k] = []string{v}
 	}
-
-	// Generate object path
-	objectName := s.generateObjectPath(req)
 
 	// Save file
 	ui, err := s.client.PutObject(
 		ctx,
 		req.BucketName,
-		objectName,
+		req.FileName,
 		bytes.NewBuffer(req.File),
 		int64(len(req.File)),
 		minio.PutObjectOptions{
@@ -438,16 +455,16 @@ func (s *service) SaveFile(ctx context.Context, req *services.SaveFileRequest) (
 	)
 	if err != nil {
 		s.l.Error().Err(err).
-			Str("bucket", req.OrgID).
-			Str("object", objectName).
+			Str("bucket", req.BucketName).
+			Str("object", req.FileName).
 			Msg("failed to save file")
 		return nil, eris.Wrap(err, "save file")
 	}
 
-	fileURL := fmt.Sprintf("http://%s/%s/%s", s.endpoint, req.BucketName, objectName)
+	fileURL := fmt.Sprintf("http://%s/%s/%s", s.endpoint, req.BucketName, req.FileName)
 
 	return &services.SaveFileResponse{
-		Key:         objectName,
+		Key:         req.FileName,
 		Location:    fileURL,
 		Etag:        ui.ETag,
 		Checksum:    checksum,
@@ -511,6 +528,25 @@ func (s *service) ListFiles(ctx context.Context, bucketName, prefix, token strin
 	}
 
 	return objects, nextToken, nil
+}
+
+func (s *service) GetBucketSize(ctx context.Context, bucketName string) (int64, error) {
+	// * Get all objects in the bucket (returns a channel of minio.ObjectInfo)
+	oiC := s.client.ListObjects(ctx, bucketName, minio.ListObjectsOptions{
+		Prefix:    "",
+		Recursive: true,
+	})
+
+	// * Calculate the total size of all objects
+	var size int64
+	for object := range oiC {
+		if object.Err != nil {
+			return 0, eris.Wrap(object.Err, "list objects")
+		}
+		size += object.Size
+	}
+
+	return size, nil
 }
 
 func (s *service) generateBucketPolicy(bucketName string) string {

@@ -35,6 +35,12 @@ export const routes: RouteInfo[] = [
         supportsModal: true,
       },
       {
+        key: Resource.Document,
+        label: "Document Studio",
+        link: "/billing/documents",
+        supportsModal: true,
+      },
+      {
         key: Resource.ConfigurationFiles,
         label: "Configuration Files",
         icon: faFiles,

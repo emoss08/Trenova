@@ -1,6 +1,6 @@
 import { Outlet } from "react-router";
+import { LazyComponent } from "./error-boundary";
 import { SidebarLink, SidebarNav } from "./sidebar-nav";
-import { SuspenseLoader } from "./ui/component-loader";
 
 const links: SidebarLink[] = [
   {
@@ -154,9 +154,9 @@ export function AdminLayout() {
       <SidebarNav links={links} />
       <div className="relative lg:gap-10">
         <div className="mx-auto min-w-0">
-          <SuspenseLoader>
+          <LazyComponent>
             <Outlet />
-          </SuspenseLoader>
+          </LazyComponent>
         </div>
       </div>
     </div>

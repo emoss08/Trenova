@@ -103,7 +103,7 @@ func (h Handler) list(c *fiber.Ctx) error {
 
 		return h.fs.List(fc.UserContext(), &repositories.ListFleetCodeOptions{
 			Filter:                filter,
-			IncludeManagerDetails: c.QueryBool("includeManagerDetails"),
+			IncludeManagerDetails: fc.QueryBool("includeManagerDetails"),
 		})
 	}
 

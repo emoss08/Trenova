@@ -32,6 +32,13 @@ const routes: RouteObject[] = [
               return { Component: Customers };
             },
           },
+          {
+            path: "/billing/documents",
+            async lazy() {
+              let { Document } = await import("@/app/document/page");
+              return { Component: Document };
+            },
+          },
           // Shipment Links
           {
             path: "/shipments/management",

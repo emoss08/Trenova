@@ -50,24 +50,31 @@ export { Button };
 
 export function FormSaveButton({
   title,
-  isPopout,
+  isPopout = false,
   isSubmitting,
-  disabled = false,
+  tooltipPosition = "top",
 }: {
   title: string;
-  isPopout: boolean;
   isSubmitting: boolean;
-  disabled?: boolean;
+  isPopout?: boolean;
+  tooltipPosition?: "top" | "bottom" | "left" | "right";
 }) {
   return (
-    <TooltipProvider delayDuration={0}>
+    <TooltipProvider>
       <Tooltip>
         <TooltipTrigger asChild>
-          <Button type="submit" isLoading={isSubmitting} disabled={disabled}>
+          <Button
+            type="submit"
+            isLoading={isSubmitting}
+            disabled={isSubmitting}
+          >
             Save {isPopout ? "and Close" : "Changes"}
           </Button>
         </TooltipTrigger>
-        <TooltipContent className="flex items-center gap-2 text-xs">
+        <TooltipContent
+          side={tooltipPosition}
+          className="flex items-center gap-2 text-xs"
+        >
           <kbd className="-me-1 inline-flex h-5 max-h-full items-center rounded bg-background px-1 font-[inherit] text-[0.625rem] font-medium text-foreground">
             Ctrl
           </kbd>

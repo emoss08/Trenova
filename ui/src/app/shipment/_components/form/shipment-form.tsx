@@ -1,4 +1,4 @@
-import { SuspenseLoader } from "@/components/ui/component-loader";
+import { LazyComponent } from "@/components/error-boundary";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { type Shipment } from "@/types/shipment";
 import { lazy } from "react";
@@ -31,7 +31,7 @@ type ShipmentDetailsProps = {
 
 export function ShipmentForm({ ...props }: ShipmentDetailsProps) {
   return (
-    <SuspenseLoader>
+    <LazyComponent>
       <ShipmentScrollArea {...props}>
         <ShipmentServiceDetails />
         <ShipmentBillingDetails />
@@ -39,7 +39,7 @@ export function ShipmentForm({ ...props }: ShipmentDetailsProps) {
         <ShipmentCommodityDetails />
         <ShipmentMovesDetails />
       </ShipmentScrollArea>
-    </SuspenseLoader>
+    </LazyComponent>
   );
 }
 

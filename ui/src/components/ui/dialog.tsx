@@ -163,6 +163,7 @@ function DialogDescription({
   return (
     <DialogPrimitive.Description
       data-slot="dialog-description"
+      aria-describedby="dialog-description"
       className={cn("text-2xs text-muted-foreground font-normal", className)}
       {...props}
     />

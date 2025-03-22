@@ -46,7 +46,6 @@ func RegisterEntities() []any {
 		&user.UserRole{},
 		&user.UserOrganization{},
 		&user.User{},
-		&worker.WorkerDocument{},
 		&worker.WorkerPTO{},
 		&worker.Worker{},
 		&worker.WorkerProfile{},

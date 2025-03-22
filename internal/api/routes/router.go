@@ -7,6 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/handlers/backup"
 	"github.com/emoss08/trenova/internal/api/handlers/commodity"
 	"github.com/emoss08/trenova/internal/api/handlers/customer"
+	"github.com/emoss08/trenova/internal/api/handlers/document"
 	"github.com/emoss08/trenova/internal/api/handlers/documentqualityconfig"
 	"github.com/emoss08/trenova/internal/api/handlers/equipmentmanufacturer"
 	"github.com/emoss08/trenova/internal/api/handlers/equipmenttype"
@@ -106,6 +107,7 @@ type RouterParams struct {
 	BackupHandler                *backup.Handler
 	AuditHandler                 *audit.Handler
 	HazmatSegregationRuleHandler *hazmatsegregationrule.Handler
+	DocumentHandler              *document.Handler
 }
 
 type Router struct {
@@ -264,4 +266,7 @@ func (r *Router) setupProtectedRoutes(router fiber.Router, rl *middleware.RateLi
 
 	// Hazmat Segregation Rules
 	r.p.HazmatSegregationRuleHandler.RegisterRoutes(router, rl)
+
+	// Documents
+	r.p.DocumentHandler.RegisterRoutes(router, rl)
 }

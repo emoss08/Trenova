@@ -1,14 +1,16 @@
+import { LazyComponent } from "@/components/error-boundary";
 import { MetaTags } from "@/components/meta-tags";
-import { SuspenseLoader } from "@/components/ui/component-loader";
-import TractorTable from "./_components/tractor-table";
+import { lazy } from "react";
+
+const TractorTable = lazy(() => import("./_components/tractor-table"));
 
 export function Tractor() {
   return (
     <>
       <MetaTags title="Tractors" description="Tractors" />
-      <SuspenseLoader>
+      <LazyComponent>
         <TractorTable />
-      </SuspenseLoader>
+      </LazyComponent>
     </>
   );
 }

@@ -1,0 +1,106 @@
+import { Button } from "@/components/ui/button";
+import { Progress } from "@/components/ui/progress";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import { cn, formatFileSize } from "@/lib/utils";
+import { type FileUploadCardProps } from "@/types/file-uploader";
+import { faTrash } from "@fortawesome/pro-regular-svg-icons";
+import { Badge } from "../ui/badge";
+import { Icon } from "../ui/icons";
+import { FileTypeCard } from "./file-type-card";
+
+export function FileUploadCard({
+  fileInfo,
+  index,
+  removeFile,
+}: FileUploadCardProps) {
+  return (
+    <div
+      key={`${fileInfo.file.name}-${index}`}
+      className="p-2 border border-border rounded-md bg-background"
+    >
+      <div className="flex items-center justify-between mb-1">
+        <div className="flex items-center space-x-2 overflow-hidden">
+          <div className="relative flex size-8 shrink-0 overflow-hidden rounded-sm">
+            <FileTypeCard
+              status={fileInfo.status}
+              fileType={fileInfo.file.type}
+            />
+          </div>
+          <div className="flex items-center justify-center gap-x-2">
+            <span
+              className="text-sm font-medium max-w-[150px] truncate"
+              title={fileInfo.file.name}
+            >
+              {fileInfo.file.name}
+            </span>
+            <span className="text-xs text-muted-foreground">
+              {fileInfo.fileSize || formatFileSize(fileInfo.file.size)}
+            </span>
+
+            {fileInfo.status === "error" && (
+              <Badge
+                withDot={false}
+                variant="inactive"
+                className="text-2xs font-normal"
+              >
+                Failed
+              </Badge>
+            )}
+
+            {fileInfo.status === "success" && (
+              <Badge
+                withDot={false}
+                variant="active"
+                className="text-2xs font-normal"
+              >
+                Uploaded
+              </Badge>
+            )}
+          </div>
+        </div>
+
+        <div className="flex items-center space-x-2">
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  removeFile(index);
+                }}
+              >
+                <Icon icon={faTrash} className="size-4" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>Remove file</TooltipContent>
+          </Tooltip>
+        </div>
+      </div>
+
+      <div className="flex items-center gap-2">
+        <Progress
+          value={fileInfo.progress}
+          className="h-2"
+          indicatorClassName={cn(
+            fileInfo.status === "error"
+              ? "bg-red-500"
+              : fileInfo.status === "success" && "bg-blue-500",
+          )}
+        />
+        <span
+          className={cn(
+            "text-xs",
+            fileInfo.status === "error" ? "text-red-500" : "text-foreground",
+          )}
+        >
+          {`${fileInfo.progress}%`}
+        </span>
+      </div>
+    </div>
+  );
+}

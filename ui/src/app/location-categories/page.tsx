@@ -1,14 +1,18 @@
+import { LazyComponent } from "@/components/error-boundary";
 import { MetaTags } from "@/components/meta-tags";
-import { SuspenseLoader } from "@/components/ui/component-loader";
-import LocationCategoryTable from "./_components/location-category-table";
+import { lazy } from "react";
+
+const LocationCategoryTable = lazy(
+  () => import("./_components/location-category-table"),
+);
 
 export function LocationCategories() {
   return (
     <>
       <MetaTags title="Location Categories" description="Location Categories" />
-      <SuspenseLoader>
+      <LazyComponent>
         <LocationCategoryTable />
-      </SuspenseLoader>
+      </LazyComponent>
     </>
   );
 }

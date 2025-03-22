@@ -52,7 +52,7 @@ func MustNewPtr(prefix string) *ID {
 	return &id
 }
 
-// Must return a
+// Must return a pointer to a PULID
 func Must(prefix string) *ID {
 	id := MustNew(prefix)
 	return &id

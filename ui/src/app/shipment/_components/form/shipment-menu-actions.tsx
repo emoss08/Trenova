@@ -11,8 +11,10 @@ import {
 import { Icon } from "@/components/ui/icons";
 import { ShipmentStatus, type Shipment } from "@/types/shipment";
 import { faEllipsisVertical } from "@fortawesome/pro-regular-svg-icons";
-import { useState } from "react";
+import { parseAsBoolean, useQueryState } from "nuqs";
 import { ShipmentCancellationDialog } from "../cancellation/shipment-cancellatioin-dialog";
+import { AddShipmentDocumentDialog } from "../document/add-shipment-document-dialog";
+import { ShipmentDocumentDialog } from "../document/shipment-document-dialog";
 import { ShipmentDuplicateDialog } from "../duplicate/shipment-duplicate-dialog";
 
 // Map of status that are allowed to be canceled.
@@ -24,12 +26,37 @@ const cancellatedStatuses = [
   ShipmentStatus.Completed,
 ];
 
+const dialogs = {
+  auditDialogOpen: parseAsBoolean.withDefault(false),
+  documentDialogOpen: parseAsBoolean.withDefault(false),
+  addDocumentDialogOpen: parseAsBoolean.withDefault(false),
+  cancellationDialogOpen: parseAsBoolean.withDefault(false),
+  duplicateDialogOpen: parseAsBoolean.withDefault(false),
+};
+
 export function ShipmentActions({ shipment }: { shipment?: Shipment | null }) {
   const [cancellationDialogOpen, setCancellationDialogOpen] =
-    useState<boolean>(false);
-  const [duplicateDialogOpen, setDuplicateDialogOpen] =
-    useState<boolean>(false);
-  const [auditDialogOpen, setAuditDialogOpen] = useState<boolean>(false);
+    useQueryState<boolean>(
+      "cancellationDialogOpen",
+      dialogs.cancellationDialogOpen.withOptions({}),
+    );
+  const [duplicateDialogOpen, setDuplicateDialogOpen] = useQueryState<boolean>(
+    "duplicateDialogOpen",
+    dialogs.duplicateDialogOpen.withOptions({}),
+  );
+  const [documentDialogOpen, setDocumentDialogOpen] = useQueryState<boolean>(
+    "documentDialogOpen",
+    dialogs.documentDialogOpen.withOptions({}),
+  );
+  const [auditDialogOpen, setAuditDialogOpen] = useQueryState<boolean>(
+    "auditDialogOpen",
+    dialogs.auditDialogOpen.withOptions({}),
+  );
+  const [addDocumentDialogOpen, setAddDocumentDialogOpen] =
+    useQueryState<boolean>(
+      "addDocumentDialogOpen",
+      dialogs.addDocumentDialogOpen.withOptions({}),
+    );
 
   if (!shipment) {
     return null;
@@ -55,12 +82,12 @@ export function ShipmentActions({ shipment }: { shipment?: Shipment | null }) {
           <DropdownMenuItem
             title="Duplicate"
             description="Create a copy of this shipment."
-            onClick={() => setDuplicateDialogOpen(true)}
+            onClick={() => setDuplicateDialogOpen(!duplicateDialogOpen)}
           />
           <DropdownMenuItem
             title="Cancel"
             description="Cancel this shipment and update its status."
-            onClick={() => setCancellationDialogOpen(true)}
+            onClick={() => setCancellationDialogOpen(!cancellationDialogOpen)}
             disabled={!isCancellable}
           />
           <DropdownMenuLabel>Management Actions</DropdownMenuLabel>
@@ -78,6 +105,7 @@ export function ShipmentActions({ shipment }: { shipment?: Shipment | null }) {
           <DropdownMenuItem
             title="Add Document(s)"
             description="Attach relevant documents to this shipment."
+            onClick={() => setAddDocumentDialogOpen(!addDocumentDialogOpen)}
           />
           <DropdownMenuItem
             title="Add Comment(s)"
@@ -88,6 +116,7 @@ export function ShipmentActions({ shipment }: { shipment?: Shipment | null }) {
           <DropdownMenuItem
             title="View Documents"
             description="Review attached shipment documents."
+            onClick={() => setDocumentDialogOpen(!documentDialogOpen)}
           />
           <DropdownMenuItem
             title="View Comments"
@@ -96,7 +125,7 @@ export function ShipmentActions({ shipment }: { shipment?: Shipment | null }) {
           <DropdownMenuItem
             title="View Audit Log"
             description="Track all modifications and updates to this shipment."
-            onClick={() => setAuditDialogOpen(true)}
+            onClick={() => setAuditDialogOpen(!auditDialogOpen)}
           />
         </DropdownMenuContent>
       </DropdownMenu>
@@ -114,6 +143,16 @@ export function ShipmentActions({ shipment }: { shipment?: Shipment | null }) {
         open={auditDialogOpen}
         onOpenChange={setAuditDialogOpen}
         resourceId={shipment.id ?? ""}
+      />
+      <ShipmentDocumentDialog
+        open={documentDialogOpen}
+        onOpenChange={setDocumentDialogOpen}
+        shipmentId={shipment.id}
+      />
+      <AddShipmentDocumentDialog
+        open={addDocumentDialogOpen}
+        onOpenChange={setAddDocumentDialogOpen}
+        shipmentId={shipment.id}
       />
     </>
   );

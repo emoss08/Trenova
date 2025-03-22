@@ -55,6 +55,7 @@ export function InputField<T extends FieldValues>({
             type={type}
             readOnly={readOnly}
             disabled={disabled}
+            value={field.value ?? ""} // * Handle null values by setting to empty string
             autoComplete={autoComplete}
             placeholder={placeholder}
             aria-label={ariaLabel || label}

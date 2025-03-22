@@ -49,8 +49,6 @@ function CommodityRow({
   // Create a memoization key based on the commodity data
   const memoKey = `${shipmentCommodity.commodityId}-${shipmentCommodity.pieces}-${shipmentCommodity.weight}`;
 
-  console.info("isLast", { index, isLast });
-
   return (
     <div
       key={memoKey}

@@ -1,14 +1,16 @@
+import { LazyComponent } from "@/components/error-boundary";
 import { MetaTags } from "@/components/meta-tags";
-import { SuspenseLoader } from "@/components/ui/component-loader";
-import TrailerTable from "./_components/trailer-table";
+import { lazy } from "react";
+
+const TrailerTable = lazy(() => import("./_components/trailer-table"));
 
 export function Trailers() {
   return (
     <>
       <MetaTags title="Trailers" description="Trailers" />
-      <SuspenseLoader>
+      <LazyComponent>
         <TrailerTable />
-      </SuspenseLoader>
+      </LazyComponent>
     </>
   );
 }

@@ -22,7 +22,7 @@ import { updateOrganization } from "@/services/organization";
 import { useUser } from "@/stores/user-store";
 import { OrganizationType } from "@/types/organization";
 import { yupResolver } from "@hookform/resolvers/yup";
-import { useQuery } from "@tanstack/react-query";
+import { useSuspenseQuery } from "@tanstack/react-query";
 import { useEffect } from "react";
 import { FormProvider, useFormContext } from "react-hook-form";
 
@@ -30,7 +30,7 @@ export default function OrganizationForm() {
   const user = useUser();
 
   // Get the organization data
-  const userOrg = useQuery({
+  const userOrg = useSuspenseQuery({
     ...queries.organization.getOrgById(user?.currentOrganizationId ?? ""),
   });
 
@@ -222,7 +222,7 @@ function AddressForm() {
   const { control } = useFormContext();
 
   // Get state options for the form
-  const usStates = useQuery({
+  const usStates = useSuspenseQuery({
     ...queries.usState.options(),
   });
   const usStateOptions = usStates.data?.results ?? [];

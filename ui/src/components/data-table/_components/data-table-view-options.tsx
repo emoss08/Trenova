@@ -27,6 +27,7 @@ export const DataTableCreateButton = memo(function DataTableCreateButton({
   isDisabled,
   onCreateClick,
   exportModelName,
+  extraActions,
 }: DataTableCreateButtonProps) {
   // Control popover state explicitly
   const [isPopoverOpen, setIsPopoverOpen] = useState(false);
@@ -92,6 +93,27 @@ export const DataTableCreateButton = memo(function DataTableCreateButton({
                 </p>
               </div>
             </Button>
+            {extraActions?.map((option) => (
+              <Button
+                key={option.label}
+                variant="ghost"
+                className="flex size-full flex-col items-start gap-0.5 text-left"
+                onClick={option.onClick}
+              >
+                <div className="flex items-center gap-2">
+                  {option.icon && (
+                    <Icon icon={option.icon} className="size-4" />
+                  )}
+                  <span>{option.label}</span>
+                  {React.isValidElement(option.endContent) && option.endContent}
+                </div>
+                <div>
+                  <p className="text-xs font-normal text-muted-foreground">
+                    {option.description}
+                  </p>
+                </div>
+              </Button>
+            ))}
           </div>
         </PopoverContent>
       </Popover>

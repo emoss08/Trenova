@@ -19,7 +19,7 @@ export async function getShipments(queryParams: ShipmentQueryParams) {
 }
 
 export async function getShipmentByID(
-  shipmentId: string,
+  shipmentId: Shipment["id"],
   expandShipmentDetails = false,
 ) {
   const response = await http.get<Shipment>(`/shipments/${shipmentId}`, {
@@ -30,7 +30,10 @@ export async function getShipmentByID(
   return response.data;
 }
 
-export async function checkForDuplicateBOLs(bol: string, shipmentId?: string) {
+export async function checkForDuplicateBOLs(
+  bol: Shipment["bol"],
+  shipmentId?: Shipment["id"],
+) {
   const response = await http.post<{ valid: boolean }>(
     "/shipments/check-for-duplicate-bols/",
     {
