@@ -4,7 +4,11 @@ import React from "react";
 import { Icon } from "../ui/icons";
 
 export const DocumentUploadSkeleton = React.memo(
-  function DocumentUploadSkeleton({ isHovering }: { isHovering: boolean }) {
+  function DocumentUploadSkeleton({
+    isHovering = false,
+  }: {
+    isHovering?: boolean;
+  }) {
     // Memoize class names
     const leftDocClassNames = cn(
       "absolute z-10 bg-foreground/20 rounded-md h-7 w-24 p-1 transform duration-400",

@@ -151,7 +151,7 @@ func (r *documentRepository) filterResourceQuery(q *bun.SelectQuery, req *reposi
 	q = q.Order("doc.created_at ASC").
 		Relation("UploadedBy")
 
-	return q
+	return q.Limit(req.Filter.Limit).Offset(req.Filter.Offset)
 }
 
 func (r *documentRepository) GetDocumentsByResourceID(ctx context.Context, req *repositories.GetDocumentsByResourceIDRequest) (*ports.ListResult[*document.Document], error) {
