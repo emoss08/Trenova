@@ -3,7 +3,6 @@
   
   **Revolutionizing Transportation Management Through AI Innovation**
   
-  [![License](https://img.shields.io/github/license/emoss08/trenova)](LICENSE)
   [![Go Report Card](https://goreportcard.com/badge/github.com/emoss08/trenova)](https://goreportcard.com/report/github.com/emoss08/trenova)
   [![Discord](https://dcbadge.limes.pink/api/server/https://discord.gg/XDBqyvrryq?style=flat-square&theme=default-inverted)](https://discord.gg/XDBqyvrryq)
 </div>
