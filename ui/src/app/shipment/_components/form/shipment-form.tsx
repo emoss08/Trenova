@@ -3,7 +3,6 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { type Shipment } from "@/types/shipment";
 import { lazy } from "react";
 import { ShipmentNotFoundOverlay } from "../sidebar/shipment-not-found-overlay";
-import { ShipmentServiceDetails } from "./shipment-details-components";
 import { ShipmentDetailsSkeleton } from "./shipment-details-skeleton";
 import { ShipmentFormHeader } from "./shipment-form-header";
 
@@ -17,6 +16,7 @@ const ShipmentCommodityDetails = lazy(
   () => import("./commodity/commodity-details"),
 );
 const ShipmentMovesDetails = lazy(() => import("./move/move-details"));
+const ShipmentServiceDetails = lazy(() => import("./shipment-service-details"));
 
 type ShipmentDetailsProps = {
   selectedShipment?: Shipment | null;
