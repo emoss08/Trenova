@@ -22,7 +22,7 @@ const (
 	ResourceOrganization          = Resource("organization")            // Represents resources related to organizations.
 	ResourceDocumentQualityConfig = Resource("document_quality_config") // Represents resources related to document quality config.
 	ResourceShipmentControl       = Resource("shipment_control")        // Represents resources related to shipment control.
-
+	ResourceDocument              = Resource("document")                // Represents resources related to documents.
 	// Operations resources
 	ResourceWorker                = Resource("worker")                  // Represents resources related to workers.
 	ResourceTractor               = Resource("tractor")                 // Represents resources for managing tractors.
@@ -395,6 +395,16 @@ var (
 			ActionDelete,
 			ActionRestore,
 			ActionManage,
+		},
+		ResourceDocument: {
+			ActionRead,
+			ActionCreate,
+			ActionArchive,
+			ActionApprove,
+			ActionReject,
+			ActionExport,
+			ActionManage,
+			ActionShare,
 		},
 	}
 )

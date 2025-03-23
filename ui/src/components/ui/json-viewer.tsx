@@ -179,7 +179,11 @@ export function JsonViewer({
   // Handle states
   if (!data) {
     return (
-      <div className="text-muted-foreground italic p-4">No data available</div>
+      <div className="p-4 border border-dashed border-border rounded-md">
+        <p className="text-xs text-muted-foreground italic">
+          No data available
+        </p>
+      </div>
     );
   }
 
