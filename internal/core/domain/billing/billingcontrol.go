@@ -1,9 +1,14 @@
-package billingcontrol
+package billing
 
 import (
+	"context"
+
 	"github.com/emoss08/trenova/internal/core/domain/businessunit"
 	"github.com/emoss08/trenova/internal/core/domain/organization"
+	"github.com/emoss08/trenova/internal/pkg/errors"
 	"github.com/emoss08/trenova/pkg/types/pulid"
+	validation "github.com/go-ozzo/ozzo-validation/v4"
+	"github.com/rotisserie/eris"
 	"github.com/uptrace/bun"
 )
 
@@ -54,4 +59,81 @@ type BillingControl struct {
 	// Relationships
 	BusinessUnit *businessunit.BusinessUnit `json:"businessUnit,omitempty" bun:"rel:belongs-to,join:business_unit_id=id"`
 	Organization *organization.Organization `json:"organization,omitempty" bun:"rel:belongs-to,join:organization_id=id"`
+}
+
+func (bc *BillingControl) Validate(ctx context.Context, multiErr *errors.MultiError) {
+	err := validation.ValidateStructWithContext(ctx, bc,
+		// * Ensure invoice number prefix is populated
+		validation.Field(&bc.InvoiceNumberPrefix,
+			validation.Required.Error("Invoice number prefix is required"),
+			validation.Length(3, 10).Error("Invoice number prefix must be between 3 and 10 characters"),
+		),
+
+		// * Ensure credit memo number prefix is populated
+		validation.Field(&bc.CreditMemoNumberPrefix,
+			validation.Required.Error("Credit memo number prefix is required"),
+			validation.Length(3, 10).Error("Credit memo number prefix must be between 3 and 10 characters"),
+		),
+
+		// * Ensure invoice due after days is populated
+		validation.Field(&bc.InvoiceDueAfterDays,
+			validation.Required.Error("Invoice due after days is required"),
+			validation.Min(1).Error("Invoice due after days must be greater than 0"),
+		),
+
+		// * Ensure transfer criteria is populated and a valid value
+		validation.Field(&bc.TransferCriteria,
+			validation.Required.Error("Transfer criteria is required"),
+			validation.In(
+				TransferCriteriaReadyAndCompleted,
+				TransferCriteriaCompleted,
+				TransferCriteriaReadyToBill,
+				TransferCriteriaDocumentsAttached,
+				TransferCriteriaPODReceived,
+			).Error("Invalid transfer criteria"),
+		),
+
+		// * Ensure auto bill criteria is populated and a valid value
+		validation.Field(&bc.AutoBillCriteria,
+			validation.When(bc.AutoBill,
+				validation.Required.Error("Auto Billing Criteria is required when auto bill is enabled"),
+			),
+			validation.In(
+				AutoBillCriteriaDelivered,
+				AutoBillCriteriaTransferred,
+				AutoBillCriteriaMarkedReadyToBill,
+				AutoBillCriteriaPODReceived,
+				AutoBillCriteriaDocumentsVerified,
+			).Error("Invalid auto bill criteria"),
+		),
+
+		// * Ensure billing exception handling is populated and a valid value
+		validation.Field(&bc.BillingExceptionHandling,
+			validation.Required.Error("Billing exception handling is required"),
+			validation.In(
+				BillingExceptionQueue,
+				BillingExceptionNotify,
+				BillingExceptionAutoResolve,
+				BillingExceptionReject,
+			).Error("Invalid billing exception handling"),
+		),
+
+		// * Ensure rate discrepancy threshold is populated
+		validation.Field(&bc.RateDiscrepancyThreshold,
+			validation.Required.Error("Rate discrepancy threshold is required"),
+			validation.Min(0).Error("Rate discrepancy threshold must be greater than 0"),
+		),
+
+		// * Ensure consolidation period days is populated
+		validation.Field(&bc.ConsolidationPeriodDays, validation.When(bc.AllowInvoiceConsolidation,
+			validation.Required.Error("Consolidation period days is required when invoice consolidation is enabled"),
+			validation.Min(1).Error("Consolidation period days must be greater than 0"),
+		)),
+	)
+	if err != nil {
+		var validationErrs validation.Errors
+		if eris.As(err, &validationErrs) {
+			errors.FromOzzoErrors(validationErrs, multiErr)
+		}
+	}
 }

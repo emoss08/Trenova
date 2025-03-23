@@ -1,4 +1,4 @@
-package billingcontrol
+package billing
 
 type TransferCriteria string
 
