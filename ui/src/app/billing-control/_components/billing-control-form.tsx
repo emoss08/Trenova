@@ -3,6 +3,7 @@ import { SelectField } from "@/components/fields/select-field";
 import { SwitchField } from "@/components/fields/switch-field";
 import { TextareaField } from "@/components/fields/textarea-field";
 import { FormSaveDock } from "@/components/form";
+import { BetaTag } from "@/components/ui/beta-tag";
 import {
   Card,
   CardContent,
@@ -50,7 +51,9 @@ function ShipmentTransferSettings() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Operational-to-Financial Transfer Gateway</CardTitle>
+        <CardTitle>
+          Operational-to-Financial Transfer Gateway <BetaTag />
+        </CardTitle>
         <CardDescription>
           Define the criteria that govern when completed shipments transition
           from operational status to financial processing. This critical gateway
@@ -182,7 +185,9 @@ function AutomatedBillingSettings() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Invoice Generation Automation</CardTitle>
+        <CardTitle>
+          Invoice Generation Automation <BetaTag />
+        </CardTitle>
         <CardDescription>
           Configure the intelligent automation system that determines when
           shipments are converted into customer invoices without manual
