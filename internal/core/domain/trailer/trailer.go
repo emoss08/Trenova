@@ -82,6 +82,11 @@ func (t *Trailer) Validate(ctx context.Context, multiErr *errors.MultiError) {
 			validation.Required.Error("Equipment Type is required"),
 		),
 
+		// Ensure VIN is valid.
+		validation.Field(&t.Vin,
+			validation.By(domain.ValidateVin),
+		),
+
 		// Equipment Manufacturer ID is required
 		validation.Field(&t.EquipmentManufacturerID,
 			validation.Required.Error("Equipment Manufacturer is required"),

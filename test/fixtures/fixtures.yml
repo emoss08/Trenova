@@ -975,8 +975,8 @@
       total_charge_amount: 200.00
       pieces: 1
       weight: 1000
-      temperature_min: 10.00
-      temperature_max: 20.00
+      temperature_min: 10
+      temperature_max: 20
       tractor_type_id: "{{ $.EquipmentType.tractor_equip_type.ID }}"
       trailer_type_id: "{{ $.EquipmentType.trailer_equip_type.ID }}"
 
@@ -997,8 +997,8 @@
       total_charge_amount: 200.00
       pieces: 1
       weight: 1000
-      temperature_min: 10.00
-      temperature_max: 20.00
+      temperature_min: 10
+      temperature_max: 20
       tractor_type_id: "{{ $.EquipmentType.tractor_equip_type.ID }}"
       trailer_type_id: "{{ $.EquipmentType.trailer_equip_type.ID }}"
 
@@ -1020,8 +1020,8 @@
       total_charge_amount: 500.00
       pieces: 1
       weight: 1000
-      temperature_min: 10.00
-      temperature_max: 20.00
+      temperature_min: 10
+      temperature_max: 20
 
     - _id: in_transit_shipment_2
       organization_id: "{{ $.Organization.trenova.ID }}"
@@ -1040,8 +1040,8 @@
       total_charge_amount: 500.00
       pieces: 1
       weight: 1000
-      temperature_min: 10.00
-      temperature_max: 20.00
+      temperature_min: 10
+      temperature_max: 20
 
     # Delayed Shipment
     - _id: delayed_shipment
@@ -1061,8 +1061,8 @@
       total_charge_amount: 500.00
       pieces: 1
       weight: 1000
-      temperature_min: 10.00
-      temperature_max: 20.00
+      temperature_min: 10
+      temperature_max: 20
 
     # Completed Shipment
     - _id: completed_shipment
@@ -1082,8 +1082,8 @@
       total_charge_amount: 500.00
       pieces: 1
       weight: 1000
-      temperature_min: 10.00
-      temperature_max: 20.00
+      temperature_min: 10
+      temperature_max: 20
 
     # Billed Shipment
     - _id: billed_shipment
@@ -1103,8 +1103,8 @@
       total_charge_amount: 500.00
       pieces: 1
       weight: 1000
-      temperature_min: 10.00
-      temperature_max: 20.00
+      temperature_min: 10
+      temperature_max: 20
 
     # Canceled Shipment
     - _id: canceled_shipment
@@ -1124,8 +1124,8 @@
       total_charge_amount: 500.00
       pieces: 1
       weight: 1000
-      temperature_min: 10.00
-      temperature_max: 20.00
+      temperature_min: 10
+      temperature_max: 20
       canceled_at: "{{ now.Unix }}"
       canceled_by_id: "{{ $.User.test_user.ID }}"
       cancel_reason: "Test"

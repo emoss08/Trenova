@@ -105,6 +105,7 @@ func (w *Worker) Validate(ctx context.Context, multiErr *errors.MultiError) {
 		),
 		validation.Field(&w.PostalCode,
 			validation.Required.Error("Postal Code is required"),
+			validation.By(domain.ValidatePostalCode),
 		),
 		validation.Field(&w.StateID,
 			validation.Required.Error("State is required"),
@@ -122,7 +123,7 @@ func (w *Worker) Validate(ctx context.Context, multiErr *errors.MultiError) {
 	if err != nil {
 		var validationErrs validation.Errors
 		if eris.As(err, &validationErrs) {
-			errors.FromValidationErrors(validationErrs, multiErr, "")
+			errors.FromOzzoErrors(validationErrs, multiErr)
 		}
 	}
 }

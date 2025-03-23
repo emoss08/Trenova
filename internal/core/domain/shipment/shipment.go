@@ -58,11 +58,11 @@ type Shipment struct {
 	Weight              *int64              `json:"weight" bun:"weight,type:INTEGER,nullzero"`
 
 	// Misc. Shipment Related Fields
-	TemperatureMin     decimal.NullDecimal `json:"temperatureMin" bun:"temperature_min,type:temperature_fahrenheit,nullzero"`
-	TemperatureMax     decimal.NullDecimal `json:"temperatureMax" bun:"temperature_max,type:temperature_fahrenheit,nullzero"`
-	BOL                string              `json:"bol" bun:"bol,type:VARCHAR(100),notnull"`
-	ActualDeliveryDate *int64              `json:"actualDeliveryDate" bun:"actual_delivery_date,type:BIGINT,nullzero"`
-	ActualShipDate     *int64              `json:"actualShipDate" bun:"actual_ship_date,type:BIGINT,nullzero"`
+	TemperatureMin     *int16 `json:"temperatureMin" bun:"temperature_min,type:temperature_fahrenheit,nullzero"`
+	TemperatureMax     *int16 `json:"temperatureMax" bun:"temperature_max,type:temperature_fahrenheit,nullzero"`
+	ActualDeliveryDate *int64 `json:"actualDeliveryDate" bun:"actual_delivery_date,type:BIGINT,nullzero"`
+	ActualShipDate     *int64 `json:"actualShipDate" bun:"actual_ship_date,type:BIGINT,nullzero"`
+	BOL                string `json:"bol" bun:"bol,type:VARCHAR(100),notnull"`
 
 	// Cancelation Related Fields
 	CanceledAt   *int64    `json:"canceledAt" bun:"canceled_at,type:BIGINT,nullzero"`
@@ -146,6 +146,22 @@ func (st *Shipment) Validate(ctx context.Context, multiErr *errors.MultiError) {
 		validation.Field(&st.Weight,
 			validation.When(st.RatingMethod == RatingMethodPerPound,
 				validation.Required.Error("Weight is required when rating method is Per Pound"),
+			),
+		),
+
+		// Temperature Max cannot be less than Temperature Min
+		validation.Field(&st.TemperatureMax,
+			validation.By(domain.ValidateTemperaturePointer),
+			validation.When(st.TemperatureMin != nil,
+				validation.Min(*st.TemperatureMin).Error("Temperature Max must be greater than Temperature Min"),
+			),
+		),
+
+		// Temperature Min cannot be greater than Temperature Max
+		validation.Field(&st.TemperatureMin,
+			validation.By(domain.ValidateTemperaturePointer),
+			validation.When(st.TemperatureMax != nil,
+				validation.Max(*st.TemperatureMax).Error("Temperature Min must be less than Temperature Max"),
 			),
 		),
 

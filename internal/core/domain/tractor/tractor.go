@@ -92,11 +92,16 @@ func (t *Tractor) Validate(ctx context.Context, multiErr *errors.MultiError) {
 		validation.Field(&t.EquipmentManufacturerID,
 			validation.Required.Error("Equipment Manufacturer is required"),
 		),
+
+		// Ensure VIN is valid.
+		validation.Field(&t.Vin,
+			validation.By(domain.ValidateVin),
+		),
 	)
 	if err != nil {
 		var validationErrs validation.Errors
 		if eris.As(err, &validationErrs) {
-			errors.FromValidationErrors(validationErrs, multiErr, "")
+			errors.FromOzzoErrors(validationErrs, multiErr)
 		}
 	}
 }

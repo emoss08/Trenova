@@ -3,7 +3,7 @@ CREATE DOMAIN "us_postal_code" AS text CONSTRAINT "us_postal_code_check" CHECK (
 
 CREATE DOMAIN "vin_code" AS varchar(17) CONSTRAINT "vin_code_check" CHECK (VALUE ~ '^[A-HJ-NPR-Z0-9]{17}$');
 
-CREATE DOMAIN "temperature_fahrenheit" AS numeric(5, 2) CONSTRAINT "temperature_fahrenheit_check" CHECK (VALUE BETWEEN -100.00 AND 150.00);
+CREATE DOMAIN "temperature_fahrenheit" AS smallint CONSTRAINT "temperature_fahrenheit_check" CHECK (VALUE BETWEEN -100 AND 150);
 
 
 CREATE DOMAIN "vin_code_optional" AS varchar(17) 

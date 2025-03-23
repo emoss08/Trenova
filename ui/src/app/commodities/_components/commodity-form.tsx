@@ -76,6 +76,7 @@ export function CommodityForm() {
           placeholder="Min Temperature"
           type="number"
           description="The lowest temperature (°F) at which the commodity can be safely transported."
+          sideText="°F"
         />
       </FormControl>
       <FormControl>
@@ -86,6 +87,7 @@ export function CommodityForm() {
           placeholder="Max Temperature"
           type="number"
           description="The highest temperature (°F) at which the commodity can be safely transported."
+          sideText="°F"
         />
       </FormControl>
       <FormControl>
