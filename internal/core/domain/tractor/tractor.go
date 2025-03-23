@@ -50,7 +50,7 @@ type Tractor struct {
 	Make               string                 `json:"make" bun:"make,type:VARCHAR(50)"`
 	Year               *int                   `json:"year" bun:"year,type:INTEGER,nullzero"`
 	LicensePlateNumber string                 `json:"licensePlateNumber" bun:"license_plate_number,type:VARCHAR(50)"`
-	Vin                string                 `json:"vin" bun:"vin,type:VARCHAR(50)"`
+	Vin                string                 `json:"vin" bun:"vin,type:vin_code_optional"`
 
 	// Metadata
 	Version      int64  `json:"version" bun:"version,type:BIGINT"`

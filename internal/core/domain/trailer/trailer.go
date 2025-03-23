@@ -46,7 +46,7 @@ type Trailer struct {
 	Model              string                 `json:"model" bun:"model,type:VARCHAR(50)"`
 	Make               string                 `json:"make" bun:"make,type:VARCHAR(50)"`
 	LicensePlateNumber string                 `json:"licensePlateNumber" bun:"license_plate_number,type:VARCHAR(50)"`
-	Vin                string                 `json:"vin" bun:"vin,type:VARCHAR(50)"`
+	Vin                string                 `json:"vin" bun:"vin,type:vin_code_optional"`
 	RegistrationNumber string                 `json:"registrationNumber" bun:"registration_number,type:VARCHAR(50)"`
 	Year               *int                   `json:"year" bun:"year,type:INTEGER,nullzero"`
 	MaxLoadWeight      *int                   `json:"maxLoadWeight" bun:"max_load_weight,type:INTEGER,nullzero"`

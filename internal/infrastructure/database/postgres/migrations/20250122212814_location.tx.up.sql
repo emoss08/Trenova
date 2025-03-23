@@ -13,7 +13,7 @@ CREATE TABLE IF NOT EXISTS "locations" (
     "address_line_1" varchar(150),
     "address_line_2" varchar(150),
     "city" varchar(100),
-    "postal_code" varchar(10),
+    "postal_code" us_postal_code,
     "longitude" float,
     "latitude" float,
     "place_id" varchar(100),
@@ -63,7 +63,7 @@ CREATE OR REPLACE FUNCTION locations_search_vector_update ()
     RETURNS TRIGGER
     AS $$
 BEGIN
-    NEW.search_vector := setweight(to_tsvector('simple', COALESCE(NEW.code, '')), 'A') || setweight(to_tsvector('simple', COALESCE(NEW.name, '')), 'A') || setweight(to_tsvector('simple', COALESCE(NEW.description, '')), 'B') || setweight(to_tsvector('simple', COALESCE(NEW.address_line_1, '')), 'B') || setweight(to_tsvector('simple', COALESCE(NEW.address_line_2, '')), 'B') || setweight(to_tsvector('simple', COALESCE(NEW.city, '')), 'B') || setweight(to_tsvector('simple', COALESCE(NEW.postal_code, '')), 'C');
+    NEW.search_vector := setweight(to_tsvector('simple', COALESCE(NEW.code, '')), 'A') || setweight(to_tsvector('simple', COALESCE(NEW.name, '')), 'A') || setweight(to_tsvector('simple', COALESCE(NEW.description, '')), 'B') || setweight(to_tsvector('simple', COALESCE(NEW.address_line_1, '')), 'B') || setweight(to_tsvector('simple', COALESCE(NEW.address_line_2, '')), 'B') || setweight(to_tsvector('simple', COALESCE(NEW.city, '')), 'B') || setweight(to_tsvector('simple', COALESCE(NEW.postal_code::text, '')), 'C');
     -- Auto-update timestamps
     NEW.updated_at := EXTRACT(EPOCH FROM CURRENT_TIMESTAMP)::bigint;
     RETURN NEW;

@@ -40,7 +40,7 @@ type Customer struct {
 	AddressLine1        string        `json:"addressLine1" bun:"address_line_1,type:VARCHAR(150),notnull"`
 	AddressLine2        string        `json:"addressLine2" bun:"address_line_2,type:VARCHAR(150)"`
 	City                string        `json:"city" bun:"city,type:VARCHAR(100),notnull"`
-	PostalCode          string        `json:"postalCode" bun:"postal_code,type:VARCHAR(10),notnull"`
+	PostalCode          string        `json:"postalCode" bun:"postal_code,type:us_postal_code,notnull"`
 	AutoMarkReadyToBill bool          `json:"autoMarkReadyToBill" bun:"auto_mark_ready_to_bill,type:BOOLEAN,default:false"`
 
 	// Metadata

@@ -58,8 +58,8 @@ type Shipment struct {
 	Weight              *int64              `json:"weight" bun:"weight,type:INTEGER,nullzero"`
 
 	// Misc. Shipment Related Fields
-	TemperatureMin     decimal.NullDecimal `json:"temperatureMin" bun:"temperature_min,type:NUMERIC(10,2),nullzero"`
-	TemperatureMax     decimal.NullDecimal `json:"temperatureMax" bun:"temperature_max,type:NUMERIC(10,2),nullzero"`
+	TemperatureMin     decimal.NullDecimal `json:"temperatureMin" bun:"temperature_min,type:temperature_fahrenheit,nullzero"`
+	TemperatureMax     decimal.NullDecimal `json:"temperatureMax" bun:"temperature_max,type:temperature_fahrenheit,nullzero"`
 	BOL                string              `json:"bol" bun:"bol,type:VARCHAR(100),notnull"`
 	ActualDeliveryDate *int64              `json:"actualDeliveryDate" bun:"actual_delivery_date,type:BIGINT,nullzero"`
 	ActualShipDate     *int64              `json:"actualShipDate" bun:"actual_ship_date,type:BIGINT,nullzero"`

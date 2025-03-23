@@ -15,7 +15,7 @@ CREATE TABLE IF NOT EXISTS "trailers" (
     "make" varchar(50),
     "year" int,
     "license_plate_number" varchar(50),
-    "vin" varchar(50),
+    "vin" vin_code_optional,
     "registration_number" varchar(50),
     "max_load_weight" int,
     "last_inspection_date" bigint,

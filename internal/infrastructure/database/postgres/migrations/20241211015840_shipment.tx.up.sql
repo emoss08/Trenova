@@ -45,8 +45,8 @@ CREATE TABLE IF NOT EXISTS "shipments" (
     "bol" varchar(100) NOT NULL,
     "actual_ship_date" bigint,
     "actual_delivery_date" bigint,
-    "temperature_min" numeric(10, 2),
-    "temperature_max" numeric(10, 2),
+    "temperature_min" temperature_fahrenheit,
+    "temperature_max" temperature_fahrenheit,
     -- Billing Related Fields
     "rating_unit" integer NOT NULL DEFAULT 1 CHECK ("rating_unit" > 0),
     "rating_method" rating_method_enum NOT NULL DEFAULT 'FlatRate',
