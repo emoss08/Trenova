@@ -20,3 +20,19 @@ export enum BillingExceptionHandling {
   AutoResolve = "AutoResolve",
   Reject = "Reject",
 }
+
+export enum PaymentTerm {
+  Net15 = "Net15",
+  Net30 = "Net30",
+  Net45 = "Net45",
+  Net60 = "Net60",
+  Net90 = "Net90",
+  DueOnReceipt = "DueOnReceipt",
+}
+
+export enum TransferSchedule {
+  Continuous = "Continuous",
+  Hourly = "Hourly",
+  Daily = "Daily",
+  Weekly = "Weekly",
+}

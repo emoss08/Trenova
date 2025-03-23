@@ -239,6 +239,19 @@ const routes: RouteObject[] = [
                 },
               },
               {
+                path: "billing-controls",
+                async lazy() {
+                  let { BillingControl } = await import(
+                    "@/app/billing-control/page"
+                  );
+                  return { Component: BillingControl };
+                },
+                handle: {
+                  crumb: "Billing Controls",
+                  title: "Billing Controls",
+                },
+              },
+              {
                 path: "data-retention",
                 async lazy() {
                   let { DataRetention } = await import(

@@ -4,6 +4,7 @@ import {
   getResourceSubFolders,
 } from "@/services/document";
 import {
+  getBillingControl,
   getDatabaseBackups,
   getOrgById,
   getShipmentControl,
@@ -41,6 +42,13 @@ export const queries = createQueryKeyStore({
       queryKey: ["shipmentControl"],
       queryFn: async () => {
         const response = await getShipmentControl();
+        return response.data;
+      },
+    }),
+    getBillingControl: () => ({
+      queryKey: ["billingControl"],
+      queryFn: async () => {
+        const response = await getBillingControl();
         return response.data;
       },
     }),

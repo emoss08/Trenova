@@ -4,7 +4,7 @@ import { SidebarLink, SidebarNav } from "./sidebar-nav";
 
 const links: SidebarLink[] = [
   {
-    href: "/organization/settings",
+    href: "/organization/settings/",
     title: "Organization Settings",
     group: "Organization",
   },
@@ -18,13 +18,6 @@ const links: SidebarLink[] = [
     href: "/organization/billing-controls/",
     title: "Billing Controls",
     group: "Organization",
-    disabled: true,
-  },
-  {
-    href: "/organization/invoice-controls/",
-    title: "Invoice Controls",
-    group: "Organization",
-    disabled: true,
   },
   {
     href: "/organization/dispatch-controls/",
