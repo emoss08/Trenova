@@ -9,6 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/internal/infrastructure/database/postgres/repositories"
 	"github.com/emoss08/trenova/internal/pkg/errors"
+	"github.com/emoss08/trenova/internal/pkg/utils/intutils"
 	"github.com/emoss08/trenova/internal/pkg/validator"
 	spValidator "github.com/emoss08/trenova/internal/pkg/validator/shipmentvalidator"
 	"github.com/emoss08/trenova/pkg/types/pulid"
@@ -237,8 +238,8 @@ func TestShipmentValidator(t *testing.T) { //nolint: funlen // Tests
 		{
 			name: "temperature min must be less than temperature max",
 			modifyShipment: func(shp *shipment.Shipment) {
-				shp.TemperatureMin = decimal.NewNullDecimal(decimal.NewFromInt(100))
-				shp.TemperatureMax = decimal.NewNullDecimal(decimal.NewFromInt(99))
+				shp.TemperatureMin = intutils.SafeInt16Ptr(100, true)
+				shp.TemperatureMax = intutils.SafeInt16Ptr(99, true)
 			},
 			expectedErrors: []struct {
 				Field   string

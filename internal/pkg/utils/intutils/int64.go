@@ -1,5 +1,17 @@
 package intutils
 
+// SafeInt16Ptr converts an int to a *int16.
+// If the input is 0 and returnNilOnZero is true, it returns nil.
+// Otherwise, it returns a pointer to the converted int16 value.
+func SafeInt16Ptr(i int, returnNilOnZero bool) *int16 {
+	if i == 0 && returnNilOnZero {
+		return nil
+	}
+
+	i16 := int16(i)
+	return &i16
+}
+
 // SafeInt64Ptr converts an int to a *int64.
 // If the input is 0 and returnNilOnZero is true, it returns nil.
 // Otherwise, it returns a pointer to the converted int64 value.
