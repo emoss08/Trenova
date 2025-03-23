@@ -103,8 +103,8 @@ const links: SidebarLink[] = [
     disabled: true,
   },
   {
-    href: "/organization/audit-logs/",
-    title: "Audit Logs",
+    href: "/organization/audit-entries/",
+    title: "Audit Entries",
     group: "Data & Integrations",
   },
   {
