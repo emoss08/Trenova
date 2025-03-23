@@ -33,6 +33,24 @@ CREATE TYPE "approval_requirement_enum" AS ENUM(
 );
 
 --bun:split
+CREATE TYPE "payment_term_enum" AS ENUM(
+    'Net15',
+    'Net30',
+    'Net45',
+    'Net60',
+    'Net90',
+    'DueOnReceipt'
+);
+
+--bun:split
+CREATE TYPE "transfer_schedule_enum" AS ENUM(
+    'Continuous',
+    'Hourly',
+    'Daily',
+    'Weekly'
+);
+
+--bun:split
 CREATE TABLE IF NOT EXISTS "billing_controls"(
     "id" varchar(100) NOT NULL,
     "business_unit_id" varchar(100) NOT NULL,
@@ -41,22 +59,28 @@ CREATE TABLE IF NOT EXISTS "billing_controls"(
     "invoice_number_prefix" varchar(100) NOT NULL DEFAULT 'INV-',
     "credit_memo_number_prefix" varchar(100) NOT NULL DEFAULT 'CM-',
     -- Invoice Terms
-    "invoice_due_after_days" integer NOT NULL DEFAULT 30 CHECK ("invoice_due_after_days" >= 1),
+    "payment_term" payment_term_enum NOT NULL DEFAULT 'Net30',
     "show_invoice_due_date" boolean NOT NULL DEFAULT TRUE,
     "invoice_terms" text,
     "invoice_footer" text,
     "show_amount_due" boolean NOT NULL DEFAULT TRUE,
     -- Controls for the billing process
-    "transfer_criteria" "transfer_criteria_enum" NOT NULL DEFAULT 'ReadyAndCompleted',
+    "auto_transfer" boolean NOT NULL DEFAULT TRUE,
+    "transfer_criteria" transfer_criteria_enum NOT NULL DEFAULT 'ReadyAndCompleted',
+    "transfer_schedule" transfer_schedule_enum NOT NULL DEFAULT 'Continuous',
+    "transfer_batch_size" integer NOT NULL DEFAULT 100 CHECK ("transfer_batch_size" >= 1),
+    "auto_mark_ready_to_bill" boolean NOT NULL DEFAULT TRUE,
+    -- Enforce customer billing requirements before billing
     "enforce_customer_billing_req" boolean NOT NULL DEFAULT TRUE,
     "validate_customer_rates" boolean NOT NULL DEFAULT TRUE,
-    "auto_mark_ready_to_bill" boolean NOT NULL DEFAULT TRUE,
     -- Automated billing controls
     "auto_bill" boolean NOT NULL DEFAULT TRUE,
-    "auto_bill_criteria" "auto_bill_criteria_enum" NOT NULL DEFAULT 'Delivered',
+    "auto_bill_criteria" auto_bill_criteria_enum NOT NULL DEFAULT 'Delivered',
+    "send_auto_bill_notifications" boolean NOT NULL DEFAULT TRUE,
+    "auto_bill_batch_size" integer NOT NULL DEFAULT 100 CHECK ("auto_bill_batch_size" >= 1),
     -- Exception handling
-    "billing_exception_handling" "billing_exception_handling_enum" NOT NULL DEFAULT 'Queue',
-    "rate_discrepancy_threshold" DECIMAL(10, 2) NOT NULL DEFAULT 5.00 CHECK ("rate_discrepancy_threshold" >= 0),
+    "billing_exception_handling" billing_exception_handling_enum NOT NULL DEFAULT 'Queue',
+    "rate_discrepancy_threshold" numeric(10, 2) NOT NULL DEFAULT 5.00 CHECK ("rate_discrepancy_threshold" >= 0),
     "auto_resolve_minor_discrepancies" boolean NOT NULL DEFAULT TRUE,
     -- Consolidation options
     "allow_invoice_consolidation" boolean NOT NULL DEFAULT TRUE,
@@ -114,3 +138,4 @@ ALTER TABLE billing_controls
 
 -- Add comment
 COMMENT ON COLUMN billing_controls.approval_requirement IS 'Controls the approval requirement for billing';
+

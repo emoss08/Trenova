@@ -54,3 +54,23 @@ const (
 	// * Reject the shipment
 	BillingExceptionReject = BillingExceptionHandling("Reject")
 )
+
+type PaymentTerm string
+
+const (
+	PaymentTermNet15        = PaymentTerm("Net15")
+	PaymentTermNet30        = PaymentTerm("Net30")
+	PaymentTermNet45        = PaymentTerm("Net45")
+	PaymentTermNet60        = PaymentTerm("Net60")
+	PaymentTermNet90        = PaymentTerm("Net90")
+	PaymentTermDueOnReceipt = PaymentTerm("DueOnReceipt")
+)
+
+type TransferSchedule string
+
+const (
+	TransferScheduleContinuous = TransferSchedule("Continuous")
+	TransferScheduleHourly     = TransferSchedule("Hourly")
+	TransferScheduleDaily      = TransferSchedule("Daily")
+	TransferScheduleWeekly     = TransferSchedule("Weekly")
+)

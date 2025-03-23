@@ -26,25 +26,32 @@ type BillingControl struct {
 	CreditMemoNumberPrefix string `json:"creditMemoNumberPrefix" bun:"credit_memo_number_prefix,type:VARCHAR(10),notnull,default:'CM-'"`
 
 	// Invoice Terms
-	InvoiceDueAfterDays int64  `json:"invoiceDueAfterDays" bun:"invoice_due_after_days,type:INTEGER,notnull,default:30"`
-	ShowInvoiceDueDate  bool   `json:"showInvoiceDueDate" bun:"show_invoice_due_date,type:BOOLEAN,notnull,default:true"`
-	InvoiceTerms        string `json:"invoiceTerms" bun:"invoice_terms,type:TEXT,nullzero"`
-	InvoiceFooter       string `json:"invoiceFooter" bun:"invoice_footer,type:TEXT,nullzero"`
-	ShowAmountDue       bool   `json:"showAmountDue" bun:"show_amount_due,type:BOOLEAN,notnull,default:true"`
+	PaymentTerm        PaymentTerm `json:"paymentTerm" bun:"payment_term,type:payment_term_enum,notnull,default:'Net30'"`
+	ShowInvoiceDueDate bool        `json:"showInvoiceDueDate" bun:"show_invoice_due_date,type:BOOLEAN,notnull,default:true"`
+	InvoiceTerms       string      `json:"invoiceTerms" bun:"invoice_terms,type:TEXT,nullzero"`
+	InvoiceFooter      string      `json:"invoiceFooter" bun:"invoice_footer,type:TEXT,nullzero"`
+	ShowAmountDue      bool        `json:"showAmountDue" bun:"show_amount_due,type:BOOLEAN,notnull,default:true"`
 
 	// Controls for the billing process
-	TransferCriteria          TransferCriteria `json:"transferCriteria" bun:"transfer_criteria,type:transfer_criteria_enum,notnull,default:'ReadyAndCompleted'"`
-	EnforceCustomerBillingReq bool             `json:"enforceCustomerBillingReq" bun:"enforce_customer_billing_req,type:BOOLEAN,notnull,default:true"` // * Enforce customer billing requirements before billing
-	ValidateCustomerRates     bool             `json:"validateCustomerRates" bun:"validate_customer_rates,type:BOOLEAN,notnull,default:true"`          // * Validate customer rates before billing
-	AutoMarkReadyToBill       bool             `json:"autoMarkReadyToBill" bun:"auto_mark_ready_to_bill,type:BOOLEAN,notnull,default:true"`            // * Automatically mark shipment as ready to bill if it meets billing requirements
+	AutoTransfer        bool             `json:"autoTransfer" bun:"auto_transfer,type:BOOLEAN,notnull,default:true"` // * Automatically transfer shipments if they meet billing requirements
+	TransferCriteria    TransferCriteria `json:"transferCriteria" bun:"transfer_criteria,type:transfer_criteria_enum,notnull,default:'ReadyAndCompleted'"`
+	TransferSchedule    TransferSchedule `json:"transferSchedule" bun:"transfer_schedule,type:transfer_schedule_enum,notnull,default:'Continuous'"`
+	TransferBatchSize   int              `json:"transferBatchSize" bun:"transfer_batch_size,type:INTEGER,notnull,default:100"`        // * Number of shipments to transfer at a time
+	AutoMarkReadyToBill bool             `json:"autoMarkReadyToBill" bun:"auto_mark_ready_to_bill,type:BOOLEAN,notnull,default:true"` // * Automatically mark shipment as ready to bill if it meets billing requirements
+
+	// * Enforce customer billing requirements before billing
+	EnforceCustomerBillingReq bool `json:"enforceCustomerBillingReq" bun:"enforce_customer_billing_req,type:BOOLEAN,notnull,default:true"` // * Enforce customer billing requirements before billing
+	ValidateCustomerRates     bool `json:"validateCustomerRates" bun:"validate_customer_rates,type:BOOLEAN,notnull,default:true"`          // * Validate customer rates before billing
 
 	// Automated billing controls
-	AutoBill         bool             `json:"autoBill" bun:"auto_bill,type:BOOLEAN,notnull,default:true"` // * Automatically bill shipment if it meets billing requirements
-	AutoBillCriteria AutoBillCriteria `json:"autoBillCriteria" bun:"auto_bill_criteria,type:auto_bill_criteria_enum,notnull,default:'Delivered'"`
+	AutoBill                  bool             `json:"autoBill" bun:"auto_bill,type:BOOLEAN,notnull,default:true"` // * Automatically bill shipment if it meets billing requirements
+	AutoBillCriteria          AutoBillCriteria `json:"autoBillCriteria" bun:"auto_bill_criteria,type:auto_bill_criteria_enum,notnull,default:'Delivered'"`
+	SendAutoBillNotifications bool             `json:"sendAutoBillNotifications" bun:"send_auto_bill_notifications,type:BOOLEAN,notnull,default:true"` // * Send notifications when invoices are generated through the automated billing process
+	AutoBillBatchSize         int              `json:"autoBillBatchSize" bun:"auto_bill_batch_size,type:INTEGER,notnull,default:100"`                  // * Number of shipments to bill at a time
 
 	// Exception handling
 	BillingExceptionHandling      BillingExceptionHandling `json:"billingExceptionHandling" bun:"billing_exception_handling,type:billing_exception_handling_enum,notnull,default:'Queue'"`
-	RateDiscrepancyThreshold      float64                  `json:"rateDiscrepancyThreshold" bun:"rate_discrepancy_threshold,type:DECIMAL(10,2),notnull,default:5.00"` // * Percentage threshold for rate discrepancies
+	RateDiscrepancyThreshold      float64                  `json:"rateDiscrepancyThreshold" bun:"rate_discrepancy_threshold,type:NUMERIC(10,2),notnull,default:5.00"` // * Percentage threshold for rate discrepancies
 	AutoResolveMinorDiscrepancies bool                     `json:"autoResolveMinorDiscrepancies" bun:"auto_resolve_minor_discrepancies,type:BOOLEAN,notnull,default:true"`
 
 	// Consolidation options
@@ -76,10 +83,17 @@ func (bc *BillingControl) Validate(ctx context.Context, multiErr *errors.MultiEr
 			validation.Length(3, 10).Error("Credit memo number prefix must be between 3 and 10 characters"),
 		),
 
-		// * Ensure invoice due after days is populated
-		validation.Field(&bc.InvoiceDueAfterDays,
-			validation.Required.Error("Invoice due after days is required"),
-			validation.Min(1).Error("Invoice due after days must be greater than 0"),
+		// * Ensure payment term is populated
+		validation.Field(&bc.PaymentTerm,
+			validation.Required.Error("Payment term is required"),
+			validation.In(
+				PaymentTermNet15,
+				PaymentTermNet30,
+				PaymentTermNet45,
+				PaymentTermNet60,
+				PaymentTermNet90,
+				PaymentTermDueOnReceipt,
+			).Error("Invalid payment term"),
 		),
 
 		// * Ensure transfer criteria is populated and a valid value
@@ -122,14 +136,15 @@ func (bc *BillingControl) Validate(ctx context.Context, multiErr *errors.MultiEr
 		// * Ensure rate discrepancy threshold is populated
 		validation.Field(&bc.RateDiscrepancyThreshold,
 			validation.Required.Error("Rate discrepancy threshold is required"),
-			validation.Min(0).Error("Rate discrepancy threshold must be greater than 0"),
 		),
 
 		// * Ensure consolidation period days is populated
-		validation.Field(&bc.ConsolidationPeriodDays, validation.When(bc.AllowInvoiceConsolidation,
-			validation.Required.Error("Consolidation period days is required when invoice consolidation is enabled"),
-			validation.Min(1).Error("Consolidation period days must be greater than 0"),
-		)),
+		validation.Field(&bc.ConsolidationPeriodDays,
+			validation.When(bc.AllowInvoiceConsolidation,
+				validation.Required.Error("Consolidation period days is required when invoice consolidation is enabled"),
+				validation.Min(1).Error("Consolidation period days must be greater than 0"),
+			),
+		),
 	)
 	if err != nil {
 		var validationErrs validation.Errors

@@ -22,6 +22,7 @@ const (
 	ResourceOrganization          = Resource("organization")            // Represents resources related to organizations.
 	ResourceDocumentQualityConfig = Resource("document_quality_config") // Represents resources related to document quality config.
 	ResourceShipmentControl       = Resource("shipment_control")        // Represents resources related to shipment control.
+	ResourceBillingControl        = Resource("billing_control")         // Represents resources related to billing control.
 	ResourceDocument              = Resource("document")                // Represents resources related to documents.
 	// Operations resources
 	ResourceWorker                = Resource("worker")                  // Represents resources related to workers.
@@ -253,6 +254,12 @@ var (
 			ActionModifyField,
 		),
 		ResourceShipmentControl: append(
+			BaseActions,
+			ActionConfigure,
+			ActionAudit,
+			ActionModifyField,
+		),
+		ResourceBillingControl: append(
 			BaseActions,
 			ActionConfigure,
 			ActionAudit,
