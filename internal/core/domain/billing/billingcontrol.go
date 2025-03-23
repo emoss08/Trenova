@@ -6,6 +6,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/businessunit"
 	"github.com/emoss08/trenova/internal/core/domain/organization"
 	"github.com/emoss08/trenova/internal/pkg/errors"
+	"github.com/emoss08/trenova/internal/pkg/utils/timeutils"
 	"github.com/emoss08/trenova/pkg/types/pulid"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/rotisserie/eris"
@@ -136,4 +137,33 @@ func (bc *BillingControl) Validate(ctx context.Context, multiErr *errors.MultiEr
 			errors.FromOzzoErrors(validationErrs, multiErr)
 		}
 	}
+}
+
+func (bc *BillingControl) GetID() string {
+	return bc.ID.String()
+}
+
+func (bc *BillingControl) GetTableName() string {
+	return "billing_controls"
+}
+
+func (bc *BillingControl) GetVersion() int64 {
+	return bc.Version
+}
+
+func (bc *BillingControl) BeforeAppendModel(_ context.Context, query bun.Query) error {
+	now := timeutils.NowUnix()
+
+	switch query.(type) {
+	case *bun.InsertQuery:
+		if bc.ID.IsNil() {
+			bc.ID = pulid.MustNew("bc_")
+		}
+
+		bc.CreatedAt = now
+	case *bun.UpdateQuery:
+		bc.UpdatedAt = now
+	}
+
+	return nil
 }

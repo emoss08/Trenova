@@ -54,20 +54,3 @@ const (
 	// * Reject the shipment
 	BillingExceptionReject = BillingExceptionHandling("Reject")
 )
-
-// ApprovalRequirement defines when approval is required in the billing process
-type ApprovalRequirement string
-
-const (
-	// * No approval is required
-	ApprovalRequirementNone = ApprovalRequirement("None")
-
-	// * Approval is required for all shipments
-	ApprovalRequirementAlways = ApprovalRequirement("Always")
-
-	// * Approval is required for shipments that exceed a certain threshold
-	ApprovalRequirementThresholdBased = ApprovalRequirement("ThresholdBased")
-
-	// * Approval is required only for shipments that are in exception
-	ApprovalRequirementExceptionOnly = ApprovalRequirement("ExceptionOnly")
-)
