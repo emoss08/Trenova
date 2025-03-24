@@ -33,6 +33,7 @@ import {
   DropdownMenuTrigger,
 } from "./dropdown-menu";
 import { Icon } from "./icons";
+import { ScrollArea } from "./scroll-area";
 import { SensitiveBadge } from "./sensitive-badge";
 import {
   Table,
@@ -141,7 +142,7 @@ function CollapsibleNode({
       </div>
 
       {isExpanded && (
-        <div className="ml-4 border-l border-border pl-3 py-0.5 max-h-[calc(100vh-200px)] overflow-y-auto">
+        <ScrollArea className="ml-4 border-l border-border pl-3 py-0.5 max-h-[calc(100vh-200px)] overflow-y-auto">
           {isArray
             ? // Handle array rendering
               value.map((item: any, index: number) => (
@@ -165,7 +166,7 @@ function CollapsibleNode({
             <span className="text-muted-foreground">{isArray ? "]" : "}"}</span>
             {withComma && <span className="text-foreground">,</span>}
           </div>
-        </div>
+        </ScrollArea>
       )}
     </div>
   );
@@ -199,7 +200,7 @@ export function JsonViewer({
         <div className="absolute top-3 right-3 z-10">
           <JsonViewerActions data={data} />
         </div>
-        <div className="p-3 font-mono text-sm overflow-auto max-h-[calc(100vh-200px)]">
+        <div className="p-3 font-mono text-sm">
           <CollapsibleNode
             name={null}
             value={data}
