@@ -17,6 +17,7 @@ import { broadcastQueryInvalidation } from "@/hooks/use-invalidate-query";
 import {
   autoBillCriteriaChoices,
   billingExceptionHandlingChoices,
+  paymentTermChoices,
   transferCriteriaChoices,
   transferScheduleChoices,
 } from "@/lib/choices";
@@ -26,7 +27,6 @@ import {
   billingControlSchema,
 } from "@/lib/schemas/billing-schema";
 import { updateBillingControl } from "@/services/organization";
-import { PaymentTerm } from "@/types/billing";
 import { yupResolver } from "@hookform/resolvers/yup";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
@@ -235,6 +235,7 @@ function AutomatedBillingSettings() {
                   control={control}
                   name="autoBillBatchSize"
                   type="number"
+                  rules={{ required: autoBill }}
                   label="Automated Billing Batch Size"
                   placeholder="Enter maximum invoices per batch"
                   description="Establishes the maximum number of invoices generated in a single automated billing run, optimizing system performance by balancing processing efficiency with resource utilization and preventing system slowdowns during high-volume periods."
@@ -309,40 +310,15 @@ function InvoiceSettings() {
               name="paymentTerm"
               label="Default Payment Terms"
               description="Establishes the standard timeframe for customer payment that applies when no specific terms have been negotiated."
-              options={[
-                {
-                  label: "Net 15",
-                  value: PaymentTerm.Net15,
-                },
-                {
-                  label: "Net 30",
-                  value: PaymentTerm.Net30,
-                },
-                {
-                  label: "Net 45",
-                  value: PaymentTerm.Net45,
-                },
-                {
-                  label: "Net 60",
-                  value: PaymentTerm.Net60,
-                },
-                {
-                  label: "Net 90",
-                  value: PaymentTerm.Net90,
-                },
-                {
-                  label: "Due on Receipt",
-                  value: PaymentTerm.DueOnReceipt,
-                },
-              ]}
+              options={paymentTermChoices}
             />
           </FormControl>
           <FormControl cols="full">
             <TextareaField
               control={control}
               name="invoiceTerms"
-              label="Invoice Terms"
-              placeholder="Invoice Terms"
+              label="Invoice Terms & Conditions"
+              placeholder="Invoice Terms & Conditions"
               description="Establishes the legally binding payment conditions, grace periods, penalties for late payment, and other contractual stipulations that appear on all invoices."
             />
           </FormControl>
@@ -397,6 +373,8 @@ function ExceptionHandlingSettings() {
               placeholder="Enter the rate discrepancy threshold"
               description="Establishes the monetary or percentage variance between quoted and applied rates that triggers exception handling workflows."
               rules={{ required: true, min: 0 }}
+              type="number"
+              sideText="%"
             />
           </FormControl>
           <FormControl>
@@ -474,6 +452,8 @@ function ConsolidationSettings() {
                   placeholder="Enter the consolidation period days"
                   description="Defines the timeframe (in days) during which shipments are grouped into a single invoice."
                   rules={{ required: true, min: 1, max: 30 }}
+                  type="number"
+                  sideText="days"
                 />
               </FormControl>
             </>

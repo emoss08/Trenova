@@ -138,6 +138,27 @@ func (bc *BillingControl) Validate(ctx context.Context, multiErr *errors.MultiEr
 			validation.Required.Error("Rate discrepancy threshold is required"),
 		),
 
+		// * Ensure transfer batch size is populated
+		validation.Field(&bc.TransferBatchSize,
+			validation.When(bc.AutoTransfer,
+				validation.Required.Error("Transfer batch size is required when auto transfer is enabled"),
+			),
+			validation.Min(1).Error("Transfer batch size must be greater than 0"),
+		),
+
+		// * Ensure transfer schedule is populated and a valid value
+		validation.Field(&bc.TransferSchedule,
+			validation.When(bc.AutoTransfer,
+				validation.Required.Error("Transfer schedule is required when auto transfer is enabled"),
+			),
+			validation.In(
+				TransferScheduleContinuous,
+				TransferScheduleHourly,
+				TransferScheduleDaily,
+				TransferScheduleWeekly,
+			).Error("Invalid transfer schedule"),
+		),
+
 		// * Ensure consolidation period days is populated
 		validation.Field(&bc.ConsolidationPeriodDays,
 			validation.When(bc.AllowInvoiceConsolidation,
