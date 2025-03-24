@@ -1,6 +1,7 @@
 import {
   AutoBillCriteria,
   BillingExceptionHandling,
+  PaymentTerm,
   TransferCriteria,
   TransferSchedule,
 } from "@/types/billing";
@@ -479,3 +480,42 @@ export const transferScheduleChoices = [
     color: "#f59e0b",
   },
 ] satisfies ReadonlyArray<ChoiceProps<TransferSchedule>>;
+
+export const paymentTermChoices = [
+  {
+    value: PaymentTerm.Net15,
+    label: "Net 15",
+    description: "15 days from the invoice date",
+    color: "#15803d",
+  },
+  {
+    value: PaymentTerm.Net30,
+    label: "Net 30",
+    description: "30 days from the invoice date",
+    color: "#7e22ce",
+  },
+  {
+    value: PaymentTerm.Net45,
+    label: "Net 45",
+    description: "45 days from the invoice date",
+    color: "#f59e0b",
+  },
+  {
+    value: PaymentTerm.Net60,
+    label: "Net 60",
+    description: "60 days from the invoice date",
+    color: "#0369a1",
+  },
+  {
+    value: PaymentTerm.Net90,
+    label: "Net 90",
+    description: "90 days from the invoice date",
+    color: "#10b981",
+  },
+  {
+    value: PaymentTerm.DueOnReceipt,
+    label: "Due on Receipt",
+    description: "Due on receipt of the invoice(s)",
+    color: "#ec4899",
+  },
+] satisfies ReadonlyArray<ChoiceProps<PaymentTerm>>;
