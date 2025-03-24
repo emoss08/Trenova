@@ -251,6 +251,11 @@ func TestShipmentValidator(t *testing.T) { //nolint: funlen // Tests
 					Code:    errors.ErrInvalid,
 					Message: "Temperature Min must be less than Temperature Max",
 				},
+				{
+					Field:   "temperatureMax",
+					Code:    errors.ErrInvalid,
+					Message: "Temperature Max must be greater than Temperature Min",
+				},
 			},
 		},
 	}

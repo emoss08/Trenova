@@ -15,6 +15,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/user"
 	"github.com/emoss08/trenova/internal/core/ports/infra"
 	"github.com/emoss08/trenova/internal/pkg/errors"
+	"github.com/emoss08/trenova/internal/pkg/utils/intutils"
 	"github.com/emoss08/trenova/internal/pkg/utils/timeutils"
 	"github.com/emoss08/trenova/pkg/types/pulid"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
@@ -153,7 +154,7 @@ func (st *Shipment) Validate(ctx context.Context, multiErr *errors.MultiError) {
 		validation.Field(&st.TemperatureMax,
 			validation.By(domain.ValidateTemperaturePointer),
 			validation.When(st.TemperatureMin != nil,
-				validation.Min(*st.TemperatureMin).Error("Temperature Max must be greater than Temperature Min"),
+				validation.Min(intutils.ToInt16(st.TemperatureMin)).Error("Temperature Max must be greater than Temperature Min"),
 			),
 		),
 
@@ -161,7 +162,7 @@ func (st *Shipment) Validate(ctx context.Context, multiErr *errors.MultiError) {
 		validation.Field(&st.TemperatureMin,
 			validation.By(domain.ValidateTemperaturePointer),
 			validation.When(st.TemperatureMax != nil,
-				validation.Max(*st.TemperatureMax).Error("Temperature Min must be less than Temperature Max"),
+				validation.Max(intutils.ToInt16(st.TemperatureMax)).Error("Temperature Min must be less than Temperature Max"),
 			),
 		),
 

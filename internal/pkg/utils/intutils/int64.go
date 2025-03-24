@@ -36,3 +36,10 @@ func SafeInt64PtrOrNil(i int) *int64 {
 func SafeInt64PtrNonNil(i int) *int64 {
 	return SafeInt64Ptr(i, false)
 }
+
+func ToInt16(i *int16) int16 {
+	if i == nil {
+		return 0
+	}
+	return *i
+}
