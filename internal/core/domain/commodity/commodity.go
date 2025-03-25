@@ -7,12 +7,19 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/businessunit"
 	"github.com/emoss08/trenova/internal/core/domain/hazardousmaterial"
 	"github.com/emoss08/trenova/internal/core/domain/organization"
+	"github.com/emoss08/trenova/internal/core/ports/infra"
 	"github.com/emoss08/trenova/internal/pkg/errors"
 	"github.com/emoss08/trenova/internal/pkg/utils/timeutils"
 	"github.com/emoss08/trenova/pkg/types/pulid"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/rotisserie/eris"
 	"github.com/uptrace/bun"
+)
+
+var (
+	_ bun.BeforeAppendModelHook = (*Commodity)(nil)
+	_ domain.Validatable        = (*Commodity)(nil)
+	_ infra.PostgresSearchable  = (*Commodity)(nil)
 )
 
 type Commodity struct {
@@ -113,4 +120,25 @@ func (c *Commodity) BeforeAppendModel(_ context.Context, query bun.Query) error 
 	}
 
 	return nil
+}
+
+func (c *Commodity) GetPostgresSearchConfig() infra.PostgresSearchConfig {
+	return infra.PostgresSearchConfig{
+		TableAlias: "com",
+		Fields: []infra.PostgresSearchableField{
+			{
+				Name:   "name",
+				Weight: "A",
+				Type:   infra.PostgresSearchTypeText,
+			},
+			{
+				Name:   "description",
+				Weight: "B",
+				Type:   infra.PostgresSearchTypeText,
+			},
+		},
+		MinLength:       2,
+		MaxTerms:        6,
+		UsePartialMatch: true,
+	}
 }
