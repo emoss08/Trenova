@@ -1,3 +1,9 @@
+export enum AccessorialChargeMethod {
+  Flat = "Flat",
+  Distance = "Distance",
+  Percentage = "Percentage",
+}
+
 export enum TransferCriteria {
   ReadyAndCompleted = "ReadyAndCompleted",
   Completed = "Completed",

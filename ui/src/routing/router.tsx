@@ -26,18 +26,38 @@ const routes: RouteObject[] = [
           },
           // Billing Links
           {
-            path: "/billing/configurations/customers",
-            async lazy() {
-              let { Customers } = await import("@/app/customers/page");
-              return { Component: Customers };
+            path: "/billing",
+            HydrateFallback: LoadingSkeleton,
+            loader: protectedLoader,
+            handle: {
+              crumb: "Billing",
+              title: "Billing",
             },
-          },
-          {
-            path: "/billing/documents",
-            async lazy() {
-              let { Document } = await import("@/app/document/page");
-              return { Component: Document };
-            },
+            children: [
+              {
+                path: "documents",
+                async lazy() {
+                  let { Document } = await import("@/app/document/page");
+                  return { Component: Document };
+                },
+              },
+              {
+                path: "configurations/customers",
+                async lazy() {
+                  let { Customers } = await import("@/app/customers/page");
+                  return { Component: Customers };
+                },
+              },
+              {
+                path: "configurations/accessorial-charges",
+                async lazy() {
+                  let { AccessorialCharges } = await import(
+                    "@/app/accessorial-charges/page"
+                  );
+                  return { Component: AccessorialCharges };
+                },
+              },
+            ],
           },
           // Shipment Links
           {

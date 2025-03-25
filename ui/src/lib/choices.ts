@@ -1,4 +1,5 @@
 import {
+  AccessorialChargeMethod,
   AutoBillCriteria,
   BillingExceptionHandling,
   PaymentTerm,
@@ -519,3 +520,24 @@ export const paymentTermChoices = [
     color: "#ec4899",
   },
 ] satisfies ReadonlyArray<ChoiceProps<PaymentTerm>>;
+
+export const accessorialChargeMethodChoices = [
+  {
+    value: AccessorialChargeMethod.Flat,
+    label: "Flat",
+    color: "#15803d",
+    description: "One-time fixed fee regardless of shipment details",
+  },
+  {
+    value: AccessorialChargeMethod.Distance,
+    label: "Distance",
+    color: "#7e22ce",
+    description: "Rate calculated per mile or zone traveled",
+  },
+  {
+    value: AccessorialChargeMethod.Percentage,
+    label: "Percentage",
+    color: "#f59e0b",
+    description: "Fee calculated as a percentage of the base linehaul rate",
+  },
+] satisfies ReadonlyArray<ChoiceProps<AccessorialChargeMethod>>;
