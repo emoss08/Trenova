@@ -24,6 +24,7 @@ const (
 	ResourceShipmentControl       = Resource("shipment_control")        // Represents resources related to shipment control.
 	ResourceBillingControl        = Resource("billing_control")         // Represents resources related to billing control.
 	ResourceDocument              = Resource("document")                // Represents resources related to documents.
+
 	// Operations resources
 	ResourceWorker                = Resource("worker")                  // Represents resources related to workers.
 	ResourceTractor               = Resource("tractor")                 // Represents resources for managing tractors.
@@ -45,7 +46,8 @@ const (
 	ResourceHazmatSegregationRule = Resource("hazmat_segregation_rule") // Represents resources for managing hazmat segregation rules.
 
 	// Financial resources
-	ResourceInvoice = Resource("invoice") // Represents resources related to invoices.
+	ResourceInvoice           = Resource("invoice")            // Represents resources related to invoices.
+	ResourceAccessorialCharge = Resource("accessorial_charge") // Represents resources related to accessorial charges.
 
 	// Management resources
 	ResourceDispatch = Resource("dispatch")  // Represents resources for dispatch management.
@@ -344,6 +346,10 @@ var (
 			append(DataActions, FieldActions...)...,
 		),
 		ResourceCustomer: append(
+			BaseActions,
+			append(DataActions, FieldActions...)...,
+		),
+		ResourceAccessorialCharge: append(
 			BaseActions,
 			append(DataActions, FieldActions...)...,
 		),
