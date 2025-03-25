@@ -13,7 +13,7 @@ require (
 	github.com/gofiber/fiber/v2 v2.52.6
 	github.com/google/go-querystring v1.1.0
 	github.com/imroc/req/v3 v3.50.0
-	github.com/jackc/pgx/v5 v5.7.3
+	github.com/jackc/pgx/v5 v5.7.4
 	github.com/jaswdr/faker/v2 v2.3.3
 	github.com/lib/pq v1.10.9
 	github.com/logrusorgru/aurora v2.0.3+incompatible
@@ -76,7 +76,7 @@ require (
 	github.com/dgryski/go-rendezvous v0.0.0-20200823014737-9f7001d12a5f // indirect
 	github.com/distribution/reference v0.6.0 // indirect
 	github.com/dlclark/regexp2 v1.11.4 // indirect
-	github.com/docker/docker v28.0.2+incompatible // indirect
+	github.com/docker/docker v28.0.3+incompatible // indirect
 	github.com/docker/go-units v0.5.0 // indirect
 	github.com/dominikbraun/graph v0.23.0 // indirect
 	github.com/dustin/go-humanize v1.0.1 // indirect
