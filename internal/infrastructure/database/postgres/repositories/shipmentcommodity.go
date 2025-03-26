@@ -40,7 +40,7 @@ func NewShipmentCommodityRepository(p ShipmentCommodityRepositoryParams) reposit
 func (r *shipmentCommodityRepository) HandleCommodityOperations(ctx context.Context, tx bun.IDB, shp *shipment.Shipment, isCreate bool) error {
 	var err error
 
-	// * If there are no commodites and it's create operation, we can return early
+	// * If there are no commodities and it's a create operation, we can return early
 	if len(shp.Commodities) == 0 && isCreate {
 		return nil
 	}

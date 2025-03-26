@@ -188,6 +188,7 @@ func (s *Service) Update(ctx context.Context, sc *shipment.ShipmentControl, user
 		},
 		audit.WithComment("Shipment Control updated"),
 		audit.WithDiff(original, updatedEntity),
+		audit.WithCritical(),
 	)
 	if err != nil {
 		log.Error().Err(err).Msg("failed to log action")

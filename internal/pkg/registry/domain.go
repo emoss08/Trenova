@@ -1,6 +1,7 @@
 package registry
 
 import (
+	"github.com/emoss08/trenova/internal/core/domain/billing"
 	"github.com/emoss08/trenova/internal/core/domain/businessunit"
 	"github.com/emoss08/trenova/internal/core/domain/commodity"
 	"github.com/emoss08/trenova/internal/core/domain/compliance"
@@ -37,6 +38,7 @@ func RegisterEntities() []any {
 		&businessunit.BusinessUnit{},
 		&organization.Organization{},
 		&shipment.ShipmentControl{},
+		&billing.BillingControl{},
 		&resource.ResourceDefinition{},
 		&session.Event{},
 		&session.Session{},
@@ -68,6 +70,7 @@ func RegisterEntities() []any {
 		&location.LocationCategory{},
 		&location.Location{},
 		&shipment.Stop{},
+		&shipment.AdditionalCharge{},
 		&shipment.ShipmentCommodity{},
 		&shipment.ShipmentMove{},
 		&shipment.Shipment{},

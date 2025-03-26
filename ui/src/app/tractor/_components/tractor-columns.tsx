@@ -60,13 +60,13 @@ export function getColumns(): ColumnDef<Tractor>[] {
         basePath: "/dispatch/configurations/workers",
         getHeaderText: "Assigned Workers",
         getId: (worker) => worker.id ?? undefined,
-        getDisplayText: (worker) => worker.wholeName,
+        getDisplayText: (worker) => `${worker.firstName} ${worker.lastName}`,
         getSecondaryInfo: (_, tractor) =>
           tractor.secondaryWorker
             ? {
                 label: "Co-Driver",
                 entity: tractor.secondaryWorker,
-                displayText: tractor.secondaryWorker.wholeName,
+                displayText: `${tractor.secondaryWorker.firstName} ${tractor.secondaryWorker.lastName}`,
               }
             : null,
       },

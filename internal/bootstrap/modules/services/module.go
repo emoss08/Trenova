@@ -1,9 +1,11 @@
 package services
 
 import (
+	"github.com/emoss08/trenova/internal/core/services/accessorialcharge"
 	"github.com/emoss08/trenova/internal/core/services/assignment"
 	"github.com/emoss08/trenova/internal/core/services/audit"
 	"github.com/emoss08/trenova/internal/core/services/auth"
+	"github.com/emoss08/trenova/internal/core/services/billingcontrol"
 	"github.com/emoss08/trenova/internal/core/services/calculator"
 	"github.com/emoss08/trenova/internal/core/services/commodity"
 	"github.com/emoss08/trenova/internal/core/services/customer"
@@ -73,8 +75,10 @@ var Module = fx.Module("services", fx.Provide(
 	stop.NewService,
 	logreader.NewService,
 	shipmentcontrol.NewService,
+	billingcontrol.NewService,
 	dbbackup.NewService,
 	hazmatsegregationrule.NewService,
+	accessorialcharge.NewService,
 	document.NewService,
 ))
 

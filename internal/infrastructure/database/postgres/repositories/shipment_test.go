@@ -75,6 +75,11 @@ func TestShipmentRepository(t *testing.T) {
 		StateMachineManager: manager,
 	})
 
+	additionalChargeRepo := repositories.NewAdditionalChargeRepository(repositories.AdditionalChargeRepositoryParams{
+		Logger: log,
+		DB:     ts.DB,
+	})
+
 	repo := repositories.NewShipmentRepository(repositories.ShipmentRepositoryParams{
 		Logger:                      log,
 		DB:                          ts.DB,
@@ -82,6 +87,7 @@ func TestShipmentRepository(t *testing.T) {
 		ShipmentMoveRepository:      moveRepo,
 		ShipmentCommodityRepository: shipmentCommodityRepo,
 		Calculator:                  calc,
+		AdditionalChargeRepository:  additionalChargeRepo,
 	})
 
 	t.Run("list shipments", func(t *testing.T) {

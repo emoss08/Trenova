@@ -60,13 +60,13 @@ func (h Handler) RegisterRoutes(r fiber.Router, rl *middleware.RateLimiter) {
 	// Upload document
 	api.Post("/upload/", rl.WithRateLimit(
 		[]fiber.Handler{h.upload},
-		middleware.PerSecond(2), // More restrictive for uploads
+		middleware.PerSecond(30),
 	)...)
 
 	// Bulk upload documents
 	api.Post("/bulk-upload/", rl.WithRateLimit(
 		[]fiber.Handler{h.bulkUpload},
-		middleware.PerSecond(1), // Even more restrictive for bulk operations
+		middleware.PerSecond(30),
 	)...)
 }
 

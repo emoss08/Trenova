@@ -145,21 +145,23 @@ export default function BackupList() {
           Manage your database backups and restore them as needed.
         </CardDescription>
       </CardHeader>
-      <CardContent>
+      <CardContent className="p-0">
         <Table>
-          <TableHeader>
+          <TableHeader className="bg-transparent">
             <TableRow className="hover:bg-transparent">
-              <TableHead>Database</TableHead>
-              <TableHead>Filename</TableHead>
-              <TableHead>Size</TableHead>
-              <TableHead>Created At</TableHead>
-              <TableHead className="text-right">Actions</TableHead>
+              <TableHead className="bg-transparent pl-6">Database</TableHead>
+              <TableHead className="bg-transparent">Filename</TableHead>
+              <TableHead className="bg-transparent">Size</TableHead>
+              <TableHead className="bg-transparent">Created At</TableHead>
+              <TableHead className="bg-transparent text-right pr-6">
+                Actions
+              </TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {data.backups.map((backup) => (
               <TableRow className="hover:bg-transparent" key={backup.filename}>
-                <TableCell>
+                <TableCell className="pl-6">
                   <Badge variant="indigo">{backup.database}</Badge>
                 </TableCell>
                 <TableCell className="font-mono text-xs">
@@ -169,7 +171,7 @@ export default function BackupList() {
                 <TableCell>
                   {generateDateTimeStringFromUnixTimestamp(backup.createdAt)}
                 </TableCell>
-                <TableCell className="text-right">
+                <TableCell className="text-right pr-6">
                   <BackupActions backup={backup} />
                 </TableCell>
               </TableRow>

@@ -11,7 +11,7 @@ CREATE TABLE IF NOT EXISTS "customers" (
     "address_line_1" varchar(150),
     "address_line_2" varchar(150),
     "city" varchar(100),
-    "postal_code" varchar(10),
+    "postal_code" us_postal_code NOT NULL,
     "auto_mark_ready_to_bill" boolean NOT NULL DEFAULT FALSE,
     -- Metadata
     "version" bigint NOT NULL DEFAULT 0,

@@ -56,6 +56,7 @@ export enum Resource {
   Dashboard = "dashboard",
   BillingManagement = "billing_management",
   BillingClient = "billing_client",
+  BillingControl = "billing_control",
   ConfigurationFiles = "configuration_files",
   RateManagement = "rate_management",
   SystemLog = "system_log",

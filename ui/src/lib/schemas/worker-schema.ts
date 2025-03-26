@@ -63,7 +63,6 @@ export const workerSchema = object({
     .oneOf(Object.values(WorkerType)),
   firstName: string().required("First name is required"),
   lastName: string().required("Last name is required"),
-  wholeName: string().required("Whole name is required"), // Generated from firstName and lastName on the backend.
   addressLine1: string().required("Address line 1 is required"),
   addressLine2: string().optional(),
   city: string().required("City is required"),

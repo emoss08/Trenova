@@ -357,6 +357,20 @@
       created_at: "{{ timestamp }}"
       updated_at: "{{ timestamp }}"
 
+- model: BillingControl
+  rows:
+    - _id: trenova
+      organization_id: "{{ $.Organization.trenova.ID }}"
+      business_unit_id: "{{ $.BusinessUnit.trenova.ID }}"
+      created_at: "{{ timestamp }}"
+      updated_at: "{{ timestamp }}"
+
+    - _id: trenova_2
+      organization_id: "{{ $.Organization.trenova_2.ID }}"
+      business_unit_id: "{{ $.BusinessUnit.trenova.ID }}"
+      created_at: "{{ timestamp }}"
+      updated_at: "{{ timestamp }}"
+
 - model: PCMilerConfiguration
   rows:
     - _id: pcmiler_1
@@ -936,7 +950,6 @@
       year: 2024
       fleet_code_id: "{{ $.FleetCode.fc_1.ID }}"
       license_plate_number: "TEST000000"
-      vin: "TEST000000"
       last_inspection_date: "{{ now.Unix }}"
       registration_number: "TEST000000"
       registration_expiry: "{{ now.Unix }}"
@@ -976,8 +989,8 @@
       total_charge_amount: 200.00
       pieces: 1
       weight: 1000
-      temperature_min: 10.00
-      temperature_max: 20.00
+      temperature_min: 10
+      temperature_max: 20
       tractor_type_id: "{{ $.EquipmentType.tractor_equip_type.ID }}"
       trailer_type_id: "{{ $.EquipmentType.trailer_equip_type.ID }}"
 
@@ -998,8 +1011,8 @@
       total_charge_amount: 200.00
       pieces: 1
       weight: 1000
-      temperature_min: 10.00
-      temperature_max: 20.00
+      temperature_min: 10
+      temperature_max: 20
       tractor_type_id: "{{ $.EquipmentType.tractor_equip_type.ID }}"
       trailer_type_id: "{{ $.EquipmentType.trailer_equip_type.ID }}"
 
@@ -1021,8 +1034,8 @@
       total_charge_amount: 500.00
       pieces: 1
       weight: 1000
-      temperature_min: 10.00
-      temperature_max: 20.00
+      temperature_min: 10
+      temperature_max: 20
 
     - _id: in_transit_shipment_2
       organization_id: "{{ $.Organization.trenova.ID }}"
@@ -1041,8 +1054,8 @@
       total_charge_amount: 500.00
       pieces: 1
       weight: 1000
-      temperature_min: 10.00
-      temperature_max: 20.00
+      temperature_min: 10
+      temperature_max: 20
 
     # Delayed Shipment
     - _id: delayed_shipment
@@ -1062,8 +1075,8 @@
       total_charge_amount: 500.00
       pieces: 1
       weight: 1000
-      temperature_min: 10.00
-      temperature_max: 20.00
+      temperature_min: 10
+      temperature_max: 20
 
     # Completed Shipment
     - _id: completed_shipment
@@ -1083,8 +1096,8 @@
       total_charge_amount: 500.00
       pieces: 1
       weight: 1000
-      temperature_min: 10.00
-      temperature_max: 20.00
+      temperature_min: 10
+      temperature_max: 20
 
     # Billed Shipment
     - _id: billed_shipment
@@ -1104,8 +1117,8 @@
       total_charge_amount: 500.00
       pieces: 1
       weight: 1000
-      temperature_min: 10.00
-      temperature_max: 20.00
+      temperature_min: 10
+      temperature_max: 20
 
     # Canceled Shipment
     - _id: canceled_shipment
@@ -1125,8 +1138,8 @@
       total_charge_amount: 500.00
       pieces: 1
       weight: 1000
-      temperature_min: 10.00
-      temperature_max: 20.00
+      temperature_min: 10
+      temperature_max: 20
       canceled_at: "{{ now.Unix }}"
       canceled_by_id: "{{ $.User.test_user.ID }}"
       cancel_reason: "Test"

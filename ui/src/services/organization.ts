@@ -1,7 +1,8 @@
 import { http } from "@/lib/http-client";
-import { OrganizationSchema } from "@/lib/schemas/organization-schema";
-import { ShipmentControlSchema } from "@/lib/schemas/shipmentcontrol-schema";
-import { DatabaseBackupListResponse } from "@/types/database-backup";
+import { type BillingControlSchema } from "@/lib/schemas/billing-schema";
+import { type OrganizationSchema } from "@/lib/schemas/organization-schema";
+import { type ShipmentControlSchema } from "@/lib/schemas/shipmentcontrol-schema";
+import { type DatabaseBackupListResponse } from "@/types/database-backup";
 import { type Organization } from "@/types/organization";
 import { type LimitOffsetResponse } from "@/types/server";
 
@@ -37,6 +38,14 @@ export async function updateOrganization(
 
 export async function updateShipmentControl(data: ShipmentControlSchema) {
   return http.put<ShipmentControlSchema>(`/shipment-controls/`, data);
+}
+
+export async function getBillingControl() {
+  return http.get<BillingControlSchema>(`/billing-controls/`);
+}
+
+export async function updateBillingControl(data: BillingControlSchema) {
+  return http.put<BillingControlSchema>(`/billing-controls/`, data);
 }
 
 export async function getShipmentControl() {

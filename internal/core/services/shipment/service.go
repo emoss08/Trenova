@@ -438,7 +438,7 @@ func (s *Service) Duplicate(ctx context.Context, req *repositories.DuplicateShip
 			"proNumber":  newEntity.ProNumber,
 			"customerID": newEntity.CustomerID.String(),
 		}),
-		audit.WithTags("shipment-duplication", "customer-"+newEntity.CustomerID.String()),
+		audit.WithTags("shipment-duplication", fmt.Sprintf("customer-%s", newEntity.CustomerID.String())),
 	)
 	if err != nil {
 		log.Error().Err(err).Msg("failed to log shipment duplication")

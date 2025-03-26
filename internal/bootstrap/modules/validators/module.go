@@ -1,7 +1,9 @@
 package validators
 
 import (
+	"github.com/emoss08/trenova/internal/pkg/validator/accessorialchargevalidator"
 	"github.com/emoss08/trenova/internal/pkg/validator/assignmentvalidator"
+	"github.com/emoss08/trenova/internal/pkg/validator/billingcontrolvalidator"
 	"github.com/emoss08/trenova/internal/pkg/validator/commodityvalidator"
 	"github.com/emoss08/trenova/internal/pkg/validator/compliancevalidator"
 	"github.com/emoss08/trenova/internal/pkg/validator/customervalidator"
@@ -44,4 +46,6 @@ var Module = fx.Module("validators", fx.Provide(
 	shipmentvalidator.NewValidator,
 	assignmentvalidator.NewValidator,
 	shipmentcontrolvalidator.NewValidator,
+	billingcontrolvalidator.NewValidator,
+	accessorialchargevalidator.NewValidator,
 ))

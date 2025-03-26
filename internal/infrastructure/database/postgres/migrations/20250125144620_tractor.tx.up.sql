@@ -25,7 +25,7 @@ CREATE TABLE IF NOT EXISTS "tractors" (
     "make" varchar(50),
     "year" int,
     "license_plate_number" varchar(50),
-    "vin" varchar(50),
+    "vin" vin_code_optional,
     -- Metadata
     "version" bigint NOT NULL DEFAULT 0,
     "created_at" bigint NOT NULL DEFAULT EXTRACT(EPOCH FROM current_timestamp) ::bigint,

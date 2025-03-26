@@ -30,6 +30,7 @@ CREATE TYPE "action_enum" AS ENUM (
     'archive', -- Permission to archive resources
     'restore', -- Permission to restore archived resources
     'manage', -- Full management permissions
+    'share', -- Permission to share resources
     'audit', -- Permission to view audit logs
     'delegate', -- Permission to delegate authority
     'configure', -- Permission to configure settings
