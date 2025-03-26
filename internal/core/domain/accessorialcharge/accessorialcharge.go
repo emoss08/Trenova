@@ -74,8 +74,10 @@ func (a *AccessorialCharge) Validate(ctx context.Context, multiErr *errors.Multi
 			validation.In(MethodFlat, MethodDistance, MethodPercentage).Error("Invalid method"),
 		),
 
-		validation.Field(&a.Amount,
+		// * Ensure amount is populated and is greater than 0
+		validation.Field(a.Amount.IntPart,
 			validation.Required.Error("Amount is required"),
+			validation.Min(1).Error("Amount must be greater than 1"),
 		),
 	)
 	if err != nil {

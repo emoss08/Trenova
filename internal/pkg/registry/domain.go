@@ -70,6 +70,7 @@ func RegisterEntities() []any {
 		&location.LocationCategory{},
 		&location.Location{},
 		&shipment.Stop{},
+		&shipment.AdditionalCharge{},
 		&shipment.ShipmentCommodity{},
 		&shipment.ShipmentMove{},
 		&shipment.Shipment{},
