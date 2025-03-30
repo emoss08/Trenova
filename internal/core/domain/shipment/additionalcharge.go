@@ -72,10 +72,9 @@ func (a *AdditionalCharge) Validate(ctx context.Context, multiErr *errors.MultiE
 			).Error("Invalid method"),
 		),
 
-		// * Ensure amount is populated and is greater than 1
-		validation.Field(a.Amount.IntPart,
+		// * Ensure amount is populated
+		validation.Field(&a.Amount,
 			validation.Required.Error("Amount is required"),
-			validation.Min(1).Error("Amount must be greater than 1"),
 		),
 	)
 	if err != nil {

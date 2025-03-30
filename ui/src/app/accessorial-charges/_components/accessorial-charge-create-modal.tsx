@@ -21,9 +21,9 @@ export function CreateAccessorialChargeModal({
       status: Status.Active,
       code: "",
       description: "",
-      unit: 0,
+      unit: 1,
       method: AccessorialChargeMethod.Flat,
-      amount: 0,
+      amount: 1,
     },
   });
 

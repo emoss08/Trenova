@@ -47,6 +47,7 @@ export function getDocumentTypeLabel(documentType: DocumentType) {
       return "Other";
   }
 }
+
 export enum DocumentStatus {
   Draft = "Draft",
   Active = "Active",

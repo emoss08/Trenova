@@ -233,6 +233,16 @@ func (st *Shipment) HasCommodities() bool {
 	return len(st.Commodities) > 0
 }
 
+// HasAdditionalCharge returns true if the shipment has additional charges
+func (st *Shipment) HasAdditionalCharge() bool {
+	return st.AdditionalCharges != nil && len(st.AdditionalCharges) > 0
+}
+
+// HasMoves returns true if the shipment has moves
+func (st *Shipment) HasMoves() bool {
+	return st.Moves != nil && len(st.Moves) > 0
+}
+
 func (st *Shipment) GetPostgresSearchConfig() infra.PostgresSearchConfig {
 	return infra.PostgresSearchConfig{
 		TableAlias: "sp",

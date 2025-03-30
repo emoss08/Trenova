@@ -58,7 +58,7 @@ export function AccessorialChargeForm() {
           control={control}
           rules={{ required: true }}
           name="unit"
-          label="Unit"
+          label="Units"
           type="number"
           placeholder="Unit"
           description="Quantity of units this charge applies to (number of pallets, hours of detention, etc.)"
