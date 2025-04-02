@@ -970,6 +970,14 @@
       postal_code: "90001"
       state_id: "{{ $.UsState.ca.ID }}"
 
+- model: BillingProfile
+  rows:
+    - _id: honeywell_billing_profile
+      organization_id: "{{ $.Organization.trenova.ID }}"
+      business_unit_id: "{{ $.BusinessUnit.trenova.ID }}"
+      customer_id: "{{ $.Customer.honeywell_customer.ID }}"
+      created_at: "{{ now.Unix }}"
+
 - model: Shipment
   rows:
     - _id: test_shipment
@@ -1617,3 +1625,56 @@
       commodity_id: "{{ $.Commodity.test_commodity.ID }}"
       pieces: 1
       weight: 1000
+
+- model: DocumentType
+  rows:
+    - _id: INVOICE
+      organization_id: "{{ $.Organization.trenova.ID }}"
+      business_unit_id: "{{ $.BusinessUnit.trenova.ID }}"
+      created_at: "{{ now.Unix }}"
+      code: "INVOICE"
+      name: "Invoice"
+      description: "Invoice"
+      color: "#C51D34"
+      document_classification: "Public"
+      document_category: "Invoice"
+    - _id: Credit_Memo
+      organization_id: "{{ $.Organization.trenova.ID }}"
+      business_unit_id: "{{ $.BusinessUnit.trenova.ID }}"
+      created_at: "{{ now.Unix }}"
+      code: "CM"
+      name: "Credit Memo"
+      description: "Credit Memo"
+      color: "#646B63"
+      document_classification: "Public"
+      document_category: "Invoice"
+    - _id: POD
+      organization_id: "{{ $.Organization.trenova.ID }}"
+      business_unit_id: "{{ $.BusinessUnit.trenova.ID }}"
+      created_at: "{{ now.Unix }}"
+      code: "POD"
+      name: "Proof of Delivery"
+      description: "Proof of Delivery"
+      color: "#474A51"
+      document_classification: "Public"
+      document_category: "Shipment"
+    - _id: BOL
+      organization_id: "{{ $.Organization.trenova.ID }}"
+      business_unit_id: "{{ $.BusinessUnit.trenova.ID }}"
+      created_at: "{{ now.Unix }}"
+      code: "BOL"
+      name: "Bill of Lading"
+      description: "Bill of Lading"
+      color: "#5D9B9B"
+      document_classification: "Public"
+      document_category: "Shipment"
+    - _id: LUMPER
+      organization_id: "{{ $.Organization.trenova.ID }}"
+      business_unit_id: "{{ $.BusinessUnit.trenova.ID }}"
+      created_at: "{{ now.Unix }}"
+      code: "Lumper"
+      name: "Lumper"
+      description: "Lumper"
+      color: "#4C2F27"
+      document_classification: "Public"
+      document_category: "Shipment"

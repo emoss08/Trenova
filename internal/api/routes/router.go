@@ -11,6 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/handlers/customer"
 	"github.com/emoss08/trenova/internal/api/handlers/document"
 	"github.com/emoss08/trenova/internal/api/handlers/documentqualityconfig"
+	"github.com/emoss08/trenova/internal/api/handlers/documenttype"
 	"github.com/emoss08/trenova/internal/api/handlers/equipmentmanufacturer"
 	"github.com/emoss08/trenova/internal/api/handlers/equipmenttype"
 	"github.com/emoss08/trenova/internal/api/handlers/fleetcode"
@@ -112,6 +113,7 @@ type RouterParams struct {
 	HazmatSegregationRuleHandler *hazmatsegregationrule.Handler
 	DocumentHandler              *document.Handler
 	AccessorialChargeHandler     *accessorialcharge.Handler
+	DocumentTypeHandler          *documenttype.Handler
 }
 
 type Router struct {
@@ -279,4 +281,7 @@ func (r *Router) setupProtectedRoutes(router fiber.Router, rl *middleware.RateLi
 
 	// Accessorial Charges
 	r.p.AccessorialChargeHandler.RegisterRoutes(router, rl)
+
+	// Document Types
+	r.p.DocumentTypeHandler.RegisterRoutes(router, rl)
 }

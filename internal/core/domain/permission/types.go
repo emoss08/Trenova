@@ -48,6 +48,7 @@ const (
 	// Financial resources
 	ResourceInvoice           = Resource("invoice")            // Represents resources related to invoices.
 	ResourceAccessorialCharge = Resource("accessorial_charge") // Represents resources related to accessorial charges.
+	ResourceDocumentType      = Resource("document_type")      // Represents resources related to document types.
 
 	// Management resources
 	ResourceDispatch = Resource("dispatch")  // Represents resources for dispatch management.
@@ -363,6 +364,11 @@ var (
 			append(BaseActions, WorkflowActions...),
 			append(DataActions, FieldActions...)...,
 		),
+		ResourceDocumentType: append(
+			BaseActions,
+			append(DataActions, FieldActions...)...,
+		),
+
 		// Management resources
 		ResourceDispatch: append(
 			BaseActions,

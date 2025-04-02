@@ -74,3 +74,40 @@ const (
 	TransferScheduleDaily      = TransferSchedule("Daily")
 	TransferScheduleWeekly     = TransferSchedule("Weekly")
 )
+
+type DocumentClassification string
+
+const (
+	// ClassificationPublic indicates the document is publicly available in the storage bucket
+	ClassificationPublic = DocumentClassification("Public")
+
+	// ClassificationPrivate indicates the document is private and must be shared by the owner in the storage bucket
+	ClassificationPrivate    = DocumentClassification("Private")
+
+	// ClassificationSensitive indicates the document contains sensitive information and must be shared by the owner in the storage bucket.
+	ClassificationSensitive  = DocumentClassification("Sensitive")
+	
+	// ClassificationRegulatory indicates the document contains regulatory information and must be shared by the owner in the storage bucket.
+	ClassificationRegulatory = DocumentClassification("Regulatory")
+)
+
+func (dc DocumentClassification) String() string {
+	return string(dc)
+}
+
+type DocumentCategory string
+
+const (
+	CategoryShipment   = DocumentCategory("Shipment")   // BOL, POD, etc...
+	CategoryWorker     = DocumentCategory("Worker")     // Worker docs, licenses
+	CategoryRegulatory = DocumentCategory("Regulatory") // Regulatory docs, certificates, etc...
+	CategoryProfile    = DocumentCategory("Profile")    // Profile photos, etc...
+	CategoryBranding   = DocumentCategory("Branding")   // Branding files, etc...
+	CategoryInvoice    = DocumentCategory("Invoice")    // Invoice files, etc...
+	CategoryContract   = DocumentCategory("Contract")   // Contract files, etc...
+	CategoryOther      = DocumentCategory("Other")      // Other files, etc...
+)
+
+func (dc DocumentCategory) String() string {
+	return string(dc)
+}

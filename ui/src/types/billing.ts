@@ -42,3 +42,21 @@ export enum TransferSchedule {
   Daily = "Daily",
   Weekly = "Weekly",
 }
+
+export enum DocumentClassification {
+  Public = "Public",
+  Private = "Private",
+  Sensitive = "Sensitive",
+  Regulatory = "Regulatory",
+}
+
+export enum DocumentCategory {
+  Shipment = "Shipment",
+  Worker = "Worker",
+  Regulatory = "Regulatory",
+  Profile = "Profile",
+  Branding = "Branding",
+  Invoice = "Invoice",
+  Contract = "Contract",
+  Other = "Other",
+}

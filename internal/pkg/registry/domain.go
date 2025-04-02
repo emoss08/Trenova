@@ -64,6 +64,8 @@ func RegisterEntities() []any {
 		&servicetype.ServiceType{},
 		&hazardousmaterial.HazardousMaterial{},
 		&commodity.Commodity{},
+		&customer.BillingProfileDocumentType{},
+		&customer.BillingProfile{},
 		&customer.Customer{},
 		&tractor.Tractor{},
 		&trailer.Trailer{},
@@ -77,5 +79,6 @@ func RegisterEntities() []any {
 		&pcmilerconfiguration.PCMilerConfiguration{},
 		&pronumber.Sequence{},
 		&hazmatsegregationrule.HazmatSegregationRule{},
+		&billing.DocumentType{},
 	}
 }

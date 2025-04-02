@@ -1,0 +1,37 @@
+import { FormCreateModal } from "@/components/ui/form-create-modal";
+import {
+  DocumentTypeSchema,
+  documentTypeSchema,
+} from "@/lib/schemas/document-type-schema";
+import { TableSheetProps } from "@/types/data-table";
+import { yupResolver } from "@hookform/resolvers/yup";
+import { useForm } from "react-hook-form";
+import { DocumentTypeForm } from "./document-type-form";
+
+export function DocumentTypeCreateModal({
+  open,
+  onOpenChange,
+}: TableSheetProps) {
+  const form = useForm<DocumentTypeSchema>({
+    resolver: yupResolver(documentTypeSchema),
+    defaultValues: {
+      name: "",
+      description: "",
+      code: "",
+      color: "",
+    },
+  });
+
+  return (
+    <FormCreateModal
+      open={open}
+      onOpenChange={onOpenChange}
+      title="Document Type"
+      formComponent={<DocumentTypeForm />}
+      form={form}
+      schema={documentTypeSchema}
+      url="/document-types/"
+      queryKey="document-type-list"
+    />
+  );
+}
