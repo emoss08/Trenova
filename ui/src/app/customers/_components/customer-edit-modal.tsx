@@ -23,6 +23,7 @@ export function EditCustomerModal({
       currentRecord={currentRecord}
       open={open}
       onOpenChange={onOpenChange}
+      className="max-w-xl"
       title="Customer"
       formComponent={<CustomerForm />}
       form={form}

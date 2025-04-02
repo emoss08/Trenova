@@ -49,6 +49,15 @@ const routes: RouteObject[] = [
                 },
               },
               {
+                path: "configurations/document-types",
+                async lazy() {
+                  let { DocumentTypes } = await import(
+                    "@/app/document-types/page"
+                  );
+                  return { Component: DocumentTypes };
+                },
+              },
+              {
                 path: "configurations/accessorial-charges",
                 async lazy() {
                   let { AccessorialCharges } = await import(

@@ -79,7 +79,6 @@ export enum Resource {
   GlAccount = "gl_account",
   RevenueCode = "revenue_code",
   AccessorialCharge = "accessorial_charge",
-  DocumentClassification = "document_classification",
   Worker = "worker",
   Tractor = "tractor",
   Trailer = "trailer",
@@ -107,4 +106,5 @@ export enum Resource {
   Template = "template",
   Backup = "backup",
   HazmatSegregationRule = "hazmat_segregation_rule",
+  DocumentType = "document_type",
 }

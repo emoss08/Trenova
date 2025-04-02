@@ -2,6 +2,8 @@ import {
   AccessorialChargeMethod,
   AutoBillCriteria,
   BillingExceptionHandling,
+  DocumentCategory,
+  DocumentClassification,
   PaymentTerm,
   TransferCriteria,
   TransferSchedule,
@@ -541,3 +543,81 @@ export const accessorialChargeMethodChoices = [
     description: "Fee calculated as a percentage of the base linehaul rate",
   },
 ] satisfies ReadonlyArray<ChoiceProps<AccessorialChargeMethod>>;
+
+export const documentClassificationChoices = [
+  {
+    value: DocumentClassification.Public,
+    label: "Public",
+    color: "#15803d",
+    description: "Documents that are publicly available",
+  },
+  {
+    value: DocumentClassification.Private,
+    label: "Private",
+    color: "#7e22ce",
+    description: "Documents for internal use only",
+  },
+  {
+    value: DocumentClassification.Sensitive,
+    label: "Sensitive",
+    color: "#b91c1c",
+    description: "Documents containing sensitive information",
+  },
+  {
+    value: DocumentClassification.Regulatory,
+    label: "Regulatory",
+    color: "#f59e0b",
+    description: "Documents containing regulatory information",
+  },
+] satisfies ReadonlyArray<ChoiceProps<DocumentClassification>>;
+
+export const documentCategoryChoices = [
+  {
+    value: DocumentCategory.Shipment,
+    label: "Shipment",
+    color: "#15803d",
+    description: "Documents related to shipments",
+  },
+  {
+    value: DocumentCategory.Worker,
+    label: "Worker",
+    color: "#7e22ce",
+    description: "Documents related to workers",
+  },
+  {
+    value: DocumentCategory.Regulatory,
+    label: "Regulatory",
+    color: "#f59e0b",
+    description: "Documents containing regulatory information",
+  },
+  {
+    value: DocumentCategory.Profile,
+    label: "Profile",
+    color: "#0369a1",
+    description: "Documents related to profiles",
+  },
+  {
+    value: DocumentCategory.Branding,
+    label: "Branding",
+    color: "#10b981",
+    description: "Documents related to branding",
+  },
+  {
+    value: DocumentCategory.Invoice,
+    label: "Invoice",
+    color: "#6495ed",
+    description: "Documents related to invoices",
+  },
+  {
+    value: DocumentCategory.Contract,
+    label: "Contract",
+    color: "#0369a1",
+    description: "Documents related to contracts",
+  },
+  {
+    value: DocumentCategory.Other,
+    label: "Other",
+    color: "#ec4899",
+    description: "Other documents",
+  },
+] satisfies ReadonlyArray<ChoiceProps<DocumentCategory>>;

@@ -13,6 +13,9 @@ export default function CustomersDataTable() {
       name="Customer"
       link="/customers/"
       queryKey="customer-list"
+      extraSearchParams={{
+        includeBillingProfile: true,
+      }}
       exportModelName="customer"
       TableModal={CreateCustomerModal}
       TableEditModal={EditCustomerModal}

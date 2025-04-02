@@ -53,6 +53,10 @@ func (cr *customerRepository) filterQuery(q *bun.SelectQuery, opts *repositories
 		q = q.Relation("State")
 	}
 
+	if opts.IncludeBillingProfile {
+		q = q.Relation("BillingProfile")
+	}
+
 	if opts.Filter.Query != "" {
 		q = postgressearch.BuildSearchQuery(
 			q,
@@ -113,6 +117,14 @@ func (cr *customerRepository) GetByID(ctx context.Context, opts repositories.Get
 		query = query.Relation("State")
 	}
 
+	if opts.IncludeBillingProfile {
+		query = query.RelationWithOpts("BillingProfile", bun.RelationOpts{
+			Apply: func(sq *bun.SelectQuery) *bun.SelectQuery {
+				return sq.Relation("DocumentTypes")
+			},
+		})
+	}
+
 	if err = query.Scan(ctx); err != nil {
 		if eris.Is(err, sql.ErrNoRows) {
 			return nil, errors.NewNotFoundError("Customer not found within your organization")
@@ -138,12 +150,28 @@ func (cr *customerRepository) Create(ctx context.Context, cus *customer.Customer
 		Logger()
 
 	err = dba.RunInTx(ctx, nil, func(c context.Context, tx bun.Tx) error {
-		if _, iErr := tx.NewInsert().Model(cus).Exec(c); iErr != nil {
+		if _, iErr := tx.NewInsert().Model(cus).Returning("*").Exec(c); iErr != nil {
 			log.Error().
 				Err(iErr).
 				Interface("customer", cus).
 				Msg("failed to insert customer")
 			return iErr
+		}
+
+		// * Assign the proper values to the billing profile
+		cus.BillingProfile.CustomerID = cus.ID
+		cus.BillingProfile.OrganizationID = cus.OrganizationID
+		cus.BillingProfile.BusinessUnitID = cus.BusinessUnitID
+
+		// Insert the billing profile into the database
+		if _, iErr := tx.NewInsert().Model(cus.BillingProfile).
+			Returning("*").
+			Exec(c); iErr != nil {
+			log.Error().
+				Err(iErr).
+				Interface("billingProfile", cus.BillingProfile).
+				Msg("failed to insert billing profile")
+			return eris.Wrap(iErr, "insert billing profile")
 		}
 
 		return nil
@@ -204,6 +232,12 @@ func (cr *customerRepository) Update(ctx context.Context, cus *customer.Customer
 			)
 		}
 
+		if cus.HasBillingProfile() {
+			if err = cr.updateBillingProfile(c, cus.BillingProfile); err != nil {
+				return err
+			}
+		}
+
 		return nil
 	})
 	if err != nil {
@@ -212,4 +246,62 @@ func (cr *customerRepository) Update(ctx context.Context, cus *customer.Customer
 	}
 
 	return cus, nil
+}
+
+func (cr *customerRepository) updateBillingProfile(ctx context.Context, profile *customer.BillingProfile) error {
+	dba, err := cr.db.DB(ctx)
+	if err != nil {
+		return eris.Wrap(err, "get database connection")
+	}
+
+	log := cr.l.With().
+		Str("operation", "UpdateBillingProfile").
+		Str("id", profile.GetID()).
+		Int64("version", profile.Version).
+		Logger()
+
+	err = dba.RunInTx(ctx, nil, func(c context.Context, tx bun.Tx) error {
+		ov := profile.Version
+
+		profile.Version++
+
+		results, rErr := tx.NewUpdate().
+			Model(profile).
+			Where("cbr.version = ?", ov).
+			WherePK().
+			Returning("*").
+			Exec(c)
+		if rErr != nil {
+			log.Error().
+				Err(rErr).
+				Interface("billingProfile", profile).
+				Msg("failed to update billing profile")
+			return rErr
+		}
+
+		rows, roErr := results.RowsAffected()
+		if roErr != nil {
+			log.Error().
+				Err(roErr).
+				Interface("billingProfile", profile).
+				Msg("failed to get rows affected")
+			return roErr
+		}
+
+		if rows == 0 {
+			return errors.NewValidationError(
+				"version",
+				errors.ErrVersionMismatch,
+				fmt.Sprintf("Version mismatch. The Billing Profile (%s) has either been updated or deleted since the last request.", profile.GetID()),
+			)
+		}
+
+		return nil
+	})
+	if err != nil {
+		log.Error().Err(err).Msg("failed to update billing profile")
+		return err
+	}
+
+	return nil
 }

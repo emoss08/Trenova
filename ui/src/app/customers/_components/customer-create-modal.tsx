@@ -19,7 +19,6 @@ export function CreateCustomerModal({ open, onOpenChange }: TableSheetProps) {
       city: "",
       postalCode: "",
       stateId: "",
-      autoMarkReadyToBill: false,
     },
   });
 
@@ -29,6 +28,7 @@ export function CreateCustomerModal({ open, onOpenChange }: TableSheetProps) {
       onOpenChange={onOpenChange}
       title="Customer"
       formComponent={<CustomerForm />}
+      className="max-w-xl"
       form={form}
       schema={customerSchema}
       url="/customers/"

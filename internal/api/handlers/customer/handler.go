@@ -104,8 +104,9 @@ func (h Handler) list(c *fiber.Ctx) error {
 		}
 
 		return h.cs.List(fc.UserContext(), &repositories.ListCustomerOptions{
-			Filter:       filter,
-			IncludeState: c.QueryBool("includeState"),
+			Filter:                filter,
+			IncludeState:          c.QueryBool("includeState"),
+			IncludeBillingProfile: c.QueryBool("includeBillingProfile"),
 		})
 	}
 
@@ -124,11 +125,12 @@ func (h Handler) get(c *fiber.Ctx) error {
 	}
 
 	entity, err := h.cs.Get(c.UserContext(), repositories.GetCustomerByIDOptions{
-		ID:           customerID,
-		BuID:         reqCtx.BuID,
-		OrgID:        reqCtx.OrgID,
-		UserID:       reqCtx.UserID,
-		IncludeState: c.QueryBool("includeState"),
+		ID:                    customerID,
+		BuID:                  reqCtx.BuID,
+		OrgID:                 reqCtx.OrgID,
+		UserID:                reqCtx.UserID,
+		IncludeState:          c.QueryBool("includeState"),
+		IncludeBillingProfile: c.QueryBool("includeBillingProfile"),
 	})
 	if err != nil {
 		return h.eh.HandleError(c, err)

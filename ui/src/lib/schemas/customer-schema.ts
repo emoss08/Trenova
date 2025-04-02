@@ -1,5 +1,32 @@
+import {
+  AutoBillCriteria,
+  PaymentTerm,
+  TransferCriteria,
+} from "@/types/billing";
 import { Status } from "@/types/common";
-import { boolean, type InferType, mixed, object, string } from "yup";
+import { array, boolean, type InferType, mixed, object, string } from "yup";
+
+export const billingProfileSchema = object({
+  id: string().optional(),
+  organizationId: string().nullable().optional(),
+  businessUnitId: string().nullable().optional(),
+  customerId: string().nullable().optional(),
+  hasOverrides: boolean(),
+  enforceCustomerBillingReq: boolean(),
+  validateCustomerRates: boolean(),
+  paymentTerm: mixed<PaymentTerm>().oneOf(Object.values(PaymentTerm)),
+  autoTransfer: boolean(),
+  transferCriteria: mixed<TransferCriteria>().oneOf(
+    Object.values(TransferCriteria),
+  ),
+  autoMarkReadyToBill: boolean(),
+  autoBill: boolean(),
+  autoBillCriteria: mixed<AutoBillCriteria>().oneOf(
+    Object.values(AutoBillCriteria),
+  ),
+  specialInstructions: string().optional(),
+  documentTypes: array().of(string()).optional(),
+});
 
 export const customerSchema = object({
   id: string().optional(),
@@ -16,9 +43,7 @@ export const customerSchema = object({
   city: string().required("City is required"),
   postalCode: string().required("Postal code is required"),
   stateId: string().required("State is required"),
-  autoMarkReadyToBill: boolean().required(
-    "Auto mark ready to bill is required",
-  ),
+  billingProfile: billingProfileSchema.optional(),
 });
 
 export type CustomerSchema = InferType<typeof customerSchema>;

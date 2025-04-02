@@ -82,9 +82,9 @@ export const routes: RouteInfo[] = [
             supportsModal: true,
           },
           {
-            key: Resource.DocumentClassification,
-            label: "Document Classifications",
-            link: "/billing/configurations/document-classifications",
+            key: Resource.DocumentType,
+            label: "Document Types",
+            link: "/billing/configurations/document-types",
             supportsModal: true,
           },
         ],

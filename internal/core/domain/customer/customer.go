@@ -34,14 +34,13 @@ type Customer struct {
 	StateID pulid.ID `json:"stateId" bun:"state_id,notnull,type:VARCHAR(100)"`
 
 	// Core Fields
-	Status              domain.Status `json:"status" bun:"status,type:status_enum,notnull,default:'Active'"`
-	Code                string        `json:"code" bun:"code,type:VARCHAR(10),notnull"`
-	Name                string        `json:"name" bun:"name,type:VARCHAR(255),notnull"`
-	AddressLine1        string        `json:"addressLine1" bun:"address_line_1,type:VARCHAR(150),notnull"`
-	AddressLine2        string        `json:"addressLine2" bun:"address_line_2,type:VARCHAR(150)"`
-	City                string        `json:"city" bun:"city,type:VARCHAR(100),notnull"`
-	PostalCode          string        `json:"postalCode" bun:"postal_code,type:us_postal_code,notnull"`
-	AutoMarkReadyToBill bool          `json:"autoMarkReadyToBill" bun:"auto_mark_ready_to_bill,type:BOOLEAN,default:false"`
+	Status       domain.Status `json:"status" bun:"status,type:status_enum,notnull,default:'Active'"`
+	Code         string        `json:"code" bun:"code,type:VARCHAR(10),notnull"`
+	Name         string        `json:"name" bun:"name,type:VARCHAR(255),notnull"`
+	AddressLine1 string        `json:"addressLine1" bun:"address_line_1,type:VARCHAR(150),notnull"`
+	AddressLine2 string        `json:"addressLine2" bun:"address_line_2,type:VARCHAR(150)"`
+	City         string        `json:"city" bun:"city,type:VARCHAR(100),notnull"`
+	PostalCode   string        `json:"postalCode" bun:"postal_code,type:us_postal_code,notnull"`
 
 	// Metadata
 	Version      int64  `json:"version" bun:"version,type:BIGINT"`
@@ -51,9 +50,10 @@ type Customer struct {
 	Rank         string `json:"-" bun:"rank,type:VARCHAR(100),scanonly"`
 
 	// Relationships
-	BusinessUnit *businessunit.BusinessUnit `bun:"rel:belongs-to,join:business_unit_id=id" json:"-"`
-	Organization *organization.Organization `bun:"rel:belongs-to,join:organization_id=id" json:"-"`
-	State        *usstate.UsState           `bun:"rel:belongs-to,join:state_id=id" json:"state,omitempty"`
+	BusinessUnit   *businessunit.BusinessUnit `bun:"rel:belongs-to,join:business_unit_id=id" json:"-"`
+	Organization   *organization.Organization `bun:"rel:belongs-to,join:organization_id=id" json:"-"`
+	BillingProfile *BillingProfile            `bun:"rel:has-one,join:id=customer_id" json:"billingProfile,omitempty"`
+	State          *usstate.UsState           `bun:"rel:belongs-to,join:state_id=id" json:"state,omitempty"`
 }
 
 func (c *Customer) Validate(ctx context.Context, multiErr *errors.MultiError) {
@@ -146,4 +146,9 @@ func (c *Customer) GetPostgresSearchConfig() infra.PostgresSearchConfig {
 		MaxTerms:        6,
 		UsePartialMatch: true,
 	}
+}
+
+// Miscellaneous
+func (c *Customer) HasBillingProfile() bool {
+	return c.BillingProfile != nil
 }

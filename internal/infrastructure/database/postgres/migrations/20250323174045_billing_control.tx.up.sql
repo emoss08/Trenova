@@ -1,4 +1,38 @@
+CREATE TYPE "billing_exception_handling_enum" AS ENUM(
+    'Queue',
+    'Notify',
+    'AutoResolve',
+    'Reject'
+);
+
+--bun:split
+CREATE TYPE "approval_requirement_enum" AS ENUM(
+    'None',
+    'Always',
+    'ThresholdBased',
+    'ExceptionOnly'
+);
+
+
+--bun:split
+CREATE TYPE "transfer_schedule_enum" AS ENUM(
+    'Continuous',
+    'Hourly',
+    'Daily',
+    'Weekly'
+);
+
 -- Enums with documentation
+CREATE TYPE "payment_term_enum" AS ENUM(
+    'Net15',
+    'Net30',
+    'Net45',
+    'Net60',
+    'Net90',
+    'DueOnReceipt'
+);
+
+--bun:split
 CREATE TYPE "transfer_criteria_enum" AS ENUM(
     'ReadyAndCompleted',
     'Completed',
@@ -16,39 +50,6 @@ CREATE TYPE "auto_bill_criteria_enum" AS ENUM(
     'DocumentsVerified'
 );
 
---bun:split
-CREATE TYPE "billing_exception_handling_enum" AS ENUM(
-    'Queue',
-    'Notify',
-    'AutoResolve',
-    'Reject'
-);
-
---bun:split
-CREATE TYPE "approval_requirement_enum" AS ENUM(
-    'None',
-    'Always',
-    'ThresholdBased',
-    'ExceptionOnly'
-);
-
---bun:split
-CREATE TYPE "payment_term_enum" AS ENUM(
-    'Net15',
-    'Net30',
-    'Net45',
-    'Net60',
-    'Net90',
-    'DueOnReceipt'
-);
-
---bun:split
-CREATE TYPE "transfer_schedule_enum" AS ENUM(
-    'Continuous',
-    'Hourly',
-    'Daily',
-    'Weekly'
-);
 
 --bun:split
 CREATE TABLE IF NOT EXISTS "billing_controls"(

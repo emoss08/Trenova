@@ -9,16 +9,18 @@ import (
 )
 
 type ListCustomerOptions struct {
-	Filter       *ports.LimitOffsetQueryOptions
-	IncludeState bool `query:"includeState"`
+	Filter                *ports.LimitOffsetQueryOptions
+	IncludeState          bool `query:"includeState"`
+	IncludeBillingProfile bool `query:"includeBillingProfile"`
 }
 
 type GetCustomerByIDOptions struct {
-	ID           pulid.ID
-	OrgID        pulid.ID
-	BuID         pulid.ID
-	UserID       pulid.ID
-	IncludeState bool `query:"includeState"`
+	ID                    pulid.ID
+	OrgID                 pulid.ID
+	BuID                  pulid.ID
+	UserID                pulid.ID
+	IncludeState          bool `query:"includeState"`
+	IncludeBillingProfile bool `query:"includeBillingProfile"`
 }
 
 type CustomerRepository interface {
