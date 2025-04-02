@@ -1,3 +1,4 @@
+import { LicenseInformation } from "@/components/license-information";
 import {
   Card,
   CardContent,
@@ -5,6 +6,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { licenseDialog } from "@/lib/license";
 import { parseAsString, useQueryState } from "nuqs";
 import { useState } from "react";
 import { Link } from "react-router";
@@ -25,6 +27,11 @@ const searchParams = {
 export function AuthForm() {
   const [formType, setFormType] = useState<AuthFormType>(
     AuthFormType.CHECK_EMAIL,
+  );
+
+  const [licenseDialogOpen, setLicenseDialogOpen] = useQueryState(
+    "licenseDialogOpen",
+    licenseDialog.licenseDialogOpen.withOptions({}),
   );
 
   const [verifiedEmail, setVerifiedEmail] = useQueryState(
@@ -67,23 +74,39 @@ export function AuthForm() {
   }
 
   return (
-    <Card className="mx-auto w-[400px] border-input shadow-xl">
-      <CardHeader className="text-left">
-        <CardTitle className="text-xl font-bold">
-          {formType === AuthFormType.FORGOT_PASSWORD
-            ? "Reset Password"
-            : "Welcome back!"}
-        </CardTitle>
-        <CardDescription className="flex space-x-1 text-sm">
-          <span className="text-muted-foreground">
-            Don&apos;t have an account yet?
+    <>
+      <div className="flex flex-col gap-6">
+        <Card className="mx-auto w-[400px] border-input">
+          <CardHeader className="text-left">
+            <CardTitle className="text-xl font-bold">
+              {formType === AuthFormType.FORGOT_PASSWORD
+                ? "Reset Password"
+                : "Welcome back!"}
+            </CardTitle>
+            <CardDescription className="flex space-x-1 text-sm">
+              <span className="text-muted-foreground">
+                Don&apos;t have an account yet?
+              </span>
+              <Link className="text-primary underline" to="#">
+                Create an Account
+              </Link>
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="px-6 py-4">{renderForm()}</CardContent>
+        </Card>
+        <div className="text-balance text-center text-xs text-muted-foreground [&_a]:underline [&_a]:underline-offset-4 [&_a]:hover:text-primary">
+          By clicking continue, you agree to our{" "}
+          <a href="#">Terms of Service</a> and{" "}
+          <span
+            className="cursor-pointer underline underline-offset-4 hover:text-primary"
+            onClick={() => setLicenseDialogOpen(true)}
+          >
+            License Agreement
           </span>
-          <Link className="text-primary underline" to="#">
-            Create an Account
-          </Link>
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="px-6 py-4">{renderForm()}</CardContent>
-    </Card>
+          .
+        </div>
+      </div>
+      <LicenseInformation />
+    </>
   );
 }

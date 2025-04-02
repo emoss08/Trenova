@@ -170,7 +170,7 @@ export function NavUser() {
               <div className="flex items-center gap-2">
                 <ExternalLink href="#">Terms & Conditions</ExternalLink>
                 <div className="size-1 rounded-full bg-muted-foreground" />
-                <ExternalLink href="https://github.com/emoss08/Trenova/blob/master/LICENSE">
+                <ExternalLink href="https://github.com/emoss08/Trenova/blob/master/LICENSE.md">
                   License
                 </ExternalLink>
               </div>
