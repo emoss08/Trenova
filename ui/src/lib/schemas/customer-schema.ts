@@ -1,5 +1,6 @@
 import {
   AutoBillCriteria,
+  BillingCycleType,
   PaymentTerm,
   TransferCriteria,
 } from "@/types/billing";
@@ -11,6 +12,12 @@ export const billingProfileSchema = object({
   organizationId: string().nullable().optional(),
   businessUnitId: string().nullable().optional(),
   customerId: string().nullable().optional(),
+
+  // Core Fields
+  billingCycleType: mixed<BillingCycleType>().oneOf(
+    Object.values(BillingCycleType),
+  ),
+  // Billing Control Overrides
   hasOverrides: boolean(),
   enforceCustomerBillingReq: boolean(),
   validateCustomerRates: boolean(),

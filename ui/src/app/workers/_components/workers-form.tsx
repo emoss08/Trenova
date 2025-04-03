@@ -15,9 +15,8 @@ import { cn } from "@/lib/utils";
 import {
   faBriefcase,
   faCalendar,
-  faFile,
   faIdCard,
-  faUser,
+  faUser
 } from "@fortawesome/pro-regular-svg-icons";
 import { lazy, Suspense, useState } from "react";
 import { FieldValues, Path, useFormContext } from "react-hook-form";
@@ -86,14 +85,6 @@ function createNavigationItems<T extends FieldValues>() {
       name: "PTO Management",
       icon: <Icon icon={faCalendar} />,
       component: <WorkerPTOForm />,
-      validateSection: (errors: Partial<T>) =>
-        checkSectionErrors(errors, [] as Path<T>[]),
-    },
-    {
-      id: "documents",
-      name: "Documents",
-      icon: <Icon icon={faFile} />,
-      component: <div>Coming soon</div>,
       validateSection: (errors: Partial<T>) =>
         checkSectionErrors(errors, [] as Path<T>[]),
     },

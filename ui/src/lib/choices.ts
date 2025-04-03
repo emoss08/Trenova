@@ -1,6 +1,7 @@
 import {
   AccessorialChargeMethod,
   AutoBillCriteria,
+  BillingCycleType,
   BillingExceptionHandling,
   DocumentCategory,
   DocumentClassification,
@@ -621,3 +622,36 @@ export const documentCategoryChoices = [
     description: "Other documents",
   },
 ] satisfies ReadonlyArray<ChoiceProps<DocumentCategory>>;
+
+export const billingCycleTypeChoices = [
+  {
+    value: BillingCycleType.Immediate,
+    label: "Immediate",
+    description: "Billing occurs immediately after the shipment is delivered",
+    color: "#15803d",
+  },
+  {
+    value: BillingCycleType.Daily,
+    label: "Daily",
+    description: "Billing occurs daily",
+    color: "#7e22ce",
+  },
+  {
+    value: BillingCycleType.Weekly,
+    label: "Weekly",
+    description: "Billing occurs weekly",
+    color: "#b91c1c",
+  },
+  {
+    value: BillingCycleType.Monthly,
+    label: "Monthly",
+    description: "Billing occurs monthly",
+    color: "#f59e0b",
+  },
+  {
+    value: BillingCycleType.Quarterly,
+    label: "Quarterly",
+    description: "Billing occurs quarterly",
+    color: "#0369a1",
+  },
+] satisfies ReadonlyArray<ChoiceProps<BillingCycleType>>;

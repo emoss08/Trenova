@@ -5,7 +5,6 @@ import { Outlet } from "react-router";
 // import { AIAssistant } from "./ai-assistant";
 import { AppSidebar } from "./app-sidebar";
 import { Header } from "./header";
-import { LicenseInformation } from "./license-information";
 import { AuthorVerification } from "./ui/author-verification";
 import { SidebarInset, SidebarProvider } from "./ui/sidebar";
 

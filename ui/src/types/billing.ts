@@ -60,3 +60,11 @@ export enum DocumentCategory {
   Contract = "Contract",
   Other = "Other",
 }
+
+export enum BillingCycleType {
+  Immediate = "Immediate",
+  Daily = "Daily",
+  Weekly = "Weekly",
+  Monthly = "Monthly",
+  Quarterly = "Quarterly",
+}

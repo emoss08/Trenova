@@ -41,7 +41,7 @@ export async function updateShipmentControl(data: ShipmentControlSchema) {
 }
 
 export async function getBillingControl() {
-  return http.get<BillingControlSchema>(`/billing-controls/`);
+  return http.get<BillingControlSchema>("/billing-controls/");
 }
 
 export async function updateBillingControl(data: BillingControlSchema) {
@@ -49,11 +49,11 @@ export async function updateBillingControl(data: BillingControlSchema) {
 }
 
 export async function getShipmentControl() {
-  return http.get<ShipmentControlSchema>(`/shipment-controls/`);
+  return http.get<ShipmentControlSchema>("/shipment-controls/");
 }
 
 export async function getDatabaseBackups() {
-  return http.get<DatabaseBackupListResponse>(`/database-backups/`);
+  return http.get<DatabaseBackupListResponse>("/database-backups/");
 }
 
 export async function deleteDatabaseBackup(fileName: string) {
