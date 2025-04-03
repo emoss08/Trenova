@@ -6,7 +6,6 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { licenseDialog } from "@/lib/license";
 import { parseAsString, useQueryState } from "nuqs";
 import { useState } from "react";
 import { Link } from "react-router";
@@ -29,10 +28,7 @@ export function AuthForm() {
     AuthFormType.CHECK_EMAIL,
   );
 
-  const [licenseDialogOpen, setLicenseDialogOpen] = useQueryState(
-    "licenseDialogOpen",
-    licenseDialog.licenseDialogOpen.withOptions({}),
-  );
+  const [licenseDialogOpen, setLicenseDialogOpen] = useState(false);
 
   const [verifiedEmail, setVerifiedEmail] = useQueryState(
     "verifiedEmail",
@@ -106,7 +102,12 @@ export function AuthForm() {
           .
         </div>
       </div>
-      <LicenseInformation />
+      {licenseDialogOpen && (
+        <LicenseInformation
+          open={licenseDialogOpen}
+          onOpenChange={setLicenseDialogOpen}
+        />
+      )}
     </>
   );
 }

@@ -7,7 +7,6 @@ import {
 } from "@/components/ui/sidebar";
 import { useUser } from "@/stores/user-store";
 
-import { CLIENT_VERSION } from "@/constants/env";
 import { useLogout } from "@/hooks/use-auth";
 import { User } from "@/types/user";
 import {
@@ -21,6 +20,7 @@ import {
 import { CaretSortIcon } from "@radix-ui/react-icons";
 import { useState } from "react";
 import { toast } from "sonner";
+import { LicenseInformation } from "./license-information";
 import { Theme, useTheme } from "./theme-provider";
 import {
   DropdownMenu,
@@ -36,7 +36,6 @@ import {
   DropdownMenuTrigger,
 } from "./ui/dropdown-menu";
 import { Icon } from "./ui/icons";
-import { ExternalLink } from "./ui/link";
 
 export function UserAvatar({ user }: { user: User | null }) {
   if (!user) {
@@ -62,6 +61,8 @@ export function NavUser() {
   const [currentTheme, setCurrentTheme] = useState(theme);
   const logout = useLogout();
   const user = useUser();
+
+  const [licenseDialogOpen, setLicenseDialogOpen] = useState(false);
 
   const handleLogout = async () => {
     toast.promise(logout, {
@@ -94,90 +95,102 @@ export function NavUser() {
     );
 
   return (
-    <SidebarMenu>
-      <SidebarMenuItem>
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <SidebarMenuButton
-              className="border border-input bg-background [&>svg]:size-5"
-              size="lg"
-            >
-              <UserAvatar user={user} />
-              <CaretSortIcon className="ml-auto size-5" />
-            </SidebarMenuButton>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent
-            side="right"
-            align="end"
-            className="w-[270px] max-w-[300px]"
-          >
-            <DropdownMenuLabel className="p-0 font-normal">
-              <UserAvatar user={user} />
-            </DropdownMenuLabel>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem
-              startContent={<Icon icon={faGear} />}
-              title="Account Settings"
-              description="Manage your account settings"
-            />
-            <DropdownMenuItem
-              startContent={<Icon icon={faBell} />}
-              title="Notifications"
-              description="Manage your notifications"
-            />
-            <DropdownMenuSub>
-              <DropdownMenuSubTrigger
-                startContent={themeIcon}
-                description="Switch application themes"
+    <>
+      <SidebarMenu>
+        <SidebarMenuItem>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <SidebarMenuButton
+                className="border border-input bg-background [&>svg]:size-5"
+                size="lg"
               >
-                Switch Theme
-              </DropdownMenuSubTrigger>
-              <DropdownMenuPortal>
-                <DropdownMenuSubContent sideOffset={10}>
-                  <DropdownMenuCheckboxItem
-                    checked={currentTheme === "light"}
-                    onCheckedChange={() => switchTheme("light")}
-                    className="cursor-pointer"
+                <UserAvatar user={user} />
+                <CaretSortIcon className="ml-auto size-5" />
+              </SidebarMenuButton>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent
+              side="right"
+              align="end"
+              className="w-[270px] max-w-[300px]"
+            >
+              <DropdownMenuLabel className="p-0 font-normal">
+                <UserAvatar user={user} />
+              </DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem
+                startContent={<Icon icon={faGear} />}
+                title="Account Settings"
+                description="Manage your account settings"
+              />
+              <DropdownMenuItem
+                startContent={<Icon icon={faBell} />}
+                title="Notifications"
+                description="Manage your notifications"
+              />
+              <DropdownMenuSub>
+                <DropdownMenuSubTrigger
+                  startContent={themeIcon}
+                  description="Switch application themes"
+                >
+                  Switch Theme
+                </DropdownMenuSubTrigger>
+                <DropdownMenuPortal>
+                  <DropdownMenuSubContent sideOffset={10}>
+                    <DropdownMenuCheckboxItem
+                      checked={currentTheme === "light"}
+                      onCheckedChange={() => switchTheme("light")}
+                      className="cursor-pointer"
+                    >
+                      Light
+                    </DropdownMenuCheckboxItem>
+                    <DropdownMenuCheckboxItem
+                      className="cursor-pointer"
+                      checked={currentTheme === "dark"}
+                      onCheckedChange={() => switchTheme("dark")}
+                    >
+                      Dark
+                    </DropdownMenuCheckboxItem>
+                    <DropdownMenuCheckboxItem
+                      checked={currentTheme === "system"}
+                      onCheckedChange={() => switchTheme("system")}
+                      className="cursor-pointer"
+                    >
+                      System
+                    </DropdownMenuCheckboxItem>
+                  </DropdownMenuSubContent>
+                </DropdownMenuPortal>
+              </DropdownMenuSub>
+              <DropdownMenuItem
+                startContent={<Icon icon={faSignOut} />}
+                title="Sign out"
+                description="Sign out of your account"
+                className="pb-2"
+                onClick={handleLogout}
+              />
+              <div className="flex flex-col w-full select-none items-center justify-center gap-1 text-2xs text-muted-foreground py-0.5 border-t border-input/50">
+                <div className="flex items-center gap-2">
+                  <a className="cursor-pointer underline hover:text-primary">
+                    Terms & Conditions
+                  </a>
+                  <div className="size-1 rounded-full bg-muted-foreground" />
+                  <span
+                    className="cursor-pointer underline hover:text-primary"
+                    onClick={() => setLicenseDialogOpen(true)}
                   >
-                    Light
-                  </DropdownMenuCheckboxItem>
-                  <DropdownMenuCheckboxItem
-                    className="cursor-pointer"
-                    checked={currentTheme === "dark"}
-                    onCheckedChange={() => switchTheme("dark")}
-                  >
-                    Dark
-                  </DropdownMenuCheckboxItem>
-                  <DropdownMenuCheckboxItem
-                    checked={currentTheme === "system"}
-                    onCheckedChange={() => switchTheme("system")}
-                    className="cursor-pointer"
-                  >
-                    System
-                  </DropdownMenuCheckboxItem>
-                </DropdownMenuSubContent>
-              </DropdownMenuPortal>
-            </DropdownMenuSub>
-            <DropdownMenuItem
-              startContent={<Icon icon={faSignOut} />}
-              title="Sign out"
-              description="Sign out of your account"
-              className="pb-2"
-              onClick={handleLogout}
-            />
-            <div className="flex flex-col w-full select-none items-center justify-center gap-1 text-2xs text-muted-foreground py-2 border-t border-input/50">
-              <p>Client Build: v{CLIENT_VERSION}</p>
-              <div className="flex items-center gap-2">
-                <ExternalLink href="#">Terms & Conditions</ExternalLink>
-                <div className="size-1 rounded-full bg-muted-foreground" />
-                <ExternalLink href="https://github.com/emoss08/Trenova/blob/master/LICENSE.md">
-                  License
-                </ExternalLink>
+                    License Agreement
+                  </span>
+                </div>
               </div>
-            </div>
-          </DropdownMenuContent>
-        </DropdownMenu>
-      </SidebarMenuItem>
-    </SidebarMenu>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </SidebarMenuItem>
+      </SidebarMenu>
+      {licenseDialogOpen && (
+        <LicenseInformation
+          open={licenseDialogOpen}
+          onOpenChange={setLicenseDialogOpen}
+        />
+      )}
+    </>
   );
 }

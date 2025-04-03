@@ -1,27 +1,26 @@
-import licenseConfig, { licenseDialog } from "@/lib/license";
-import { useQueryState } from "nuqs";
+import licenseConfig from "@/lib/license";
 import { useEffect, useState } from "react";
 import ReactMarkdown from "react-markdown";
 import {
-    Dialog,
-    DialogBody,
-    DialogContent,
-    DialogDescription,
-    DialogHeader,
-    DialogTitle,
+  Dialog,
+  DialogBody,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
 } from "./ui/dialog";
 
 export function LicenseInformation({
+  open,
+  onOpenChange,
   licenseUrl = "https://raw.githubusercontent.com/emoss08/Trenova/refs/heads/master/LICENSE.md",
 }: {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
   licenseUrl?: string;
 }) {
   const [licenseMarkdown, setLicenseMarkdown] = useState<string>("");
   const [isLoading, setIsLoading] = useState<boolean>(true);
-  const [licenseDialogOpen, setLicenseDialogOpen] = useQueryState(
-    "licenseDialogOpen",
-    licenseDialog.licenseDialogOpen.withOptions({}),
-  );
 
   useEffect(() => {
     const fetchLicense = async () => {
@@ -30,6 +29,7 @@ export function LicenseInformation({
         if (!response.ok) {
           throw new Error(`Failed to fetch license: ${response.status}`);
         }
+
         const text = await response.text();
         setLicenseMarkdown(text);
       } catch (error) {
@@ -46,7 +46,7 @@ export function LicenseInformation({
   }, [licenseUrl]);
 
   return (
-    <Dialog open={licenseDialogOpen} onOpenChange={setLicenseDialogOpen}>
+    <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[625px]">
         <DialogHeader>
           <DialogTitle>Trenova License Information</DialogTitle>
@@ -108,7 +108,6 @@ const styles = `
   .license-markdown h1 {
     font-size: 1.5rem;
     font-weight: 600;
-    margin-top: 1rem;
     margin-bottom: 1rem;
   }
   
