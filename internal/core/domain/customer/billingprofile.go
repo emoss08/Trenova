@@ -31,6 +31,7 @@ type BillingProfile struct {
 
 	// Core Fields
 	BillingCycleType BillingCycleType `json:"billingCycleType" bun:"billing_cycle_type,type:billing_cycle_type_enum,nullzero,default:'Immediate'"`
+	DocumentTypeIDs  []pulid.ID       `json:"documentTypeIds" bun:"document_type_ids,type:VARCHAR(100)[],default:{}"`
 
 	// Billing Control Overrides (If not set, the billing control will be used)
 	HasOverrides              bool                     `json:"hasOverrides" bun:"has_overrides,type:BOOLEAN,notnull,default:false"`

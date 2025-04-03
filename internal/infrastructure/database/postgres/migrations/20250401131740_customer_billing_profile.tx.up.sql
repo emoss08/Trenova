@@ -14,6 +14,7 @@ CREATE TABLE IF NOT EXISTS "customer_billing_profiles"(
     "business_unit_id" varchar(100) NOT NULL,
     -- Core fields
     "billing_cycle_type" billing_cycle_type_enum NOT NULL DEFAULT 'Immediate',
+    "document_type_ids" varchar(100)[] NOT NULL DEFAULT '{}',
     -- Billing Control Overrides
     "enforce_customer_billing_req" boolean NOT NULL DEFAULT TRUE,
     "validate_customer_rates" boolean NOT NULL DEFAULT TRUE,

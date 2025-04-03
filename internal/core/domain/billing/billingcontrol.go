@@ -39,7 +39,7 @@ type BillingControl struct {
 	TransferBatchSize   int              `json:"transferBatchSize" bun:"transfer_batch_size,type:INTEGER,notnull,default:100"`        // * Number of shipments to transfer at a time
 	AutoMarkReadyToBill bool             `json:"autoMarkReadyToBill" bun:"auto_mark_ready_to_bill,type:BOOLEAN,notnull,default:true"` // * Automatically mark shipment as ready to bill if it meets billing requirements
 
-	// * Enforce customer billing requirements before billing
+	// Enforce customer billing requirements before billing
 	EnforceCustomerBillingReq bool `json:"enforceCustomerBillingReq" bun:"enforce_customer_billing_req,type:BOOLEAN,notnull,default:true"` // * Enforce customer billing requirements before billing
 	ValidateCustomerRates     bool `json:"validateCustomerRates" bun:"validate_customer_rates,type:BOOLEAN,notnull,default:true"`          // * Validate customer rates before billing
 

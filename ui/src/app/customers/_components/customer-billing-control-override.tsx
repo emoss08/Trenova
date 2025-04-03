@@ -2,8 +2,15 @@ import { SelectField } from "@/components/fields/select-field";
 import { SwitchField } from "@/components/fields/switch-field";
 import { Button } from "@/components/ui/button";
 import { FormControl, FormGroup } from "@/components/ui/form";
-import { paymentTermChoices, transferCriteriaChoices } from "@/lib/choices";
+import {
+  autoBillCriteriaChoices,
+  paymentTermChoices,
+  transferCriteriaChoices,
+} from "@/lib/choices";
+import { queries } from "@/lib/queries";
+import { BillingControlSchema } from "@/lib/schemas/billing-schema";
 import { type CustomerSchema } from "@/lib/schemas/customer-schema";
+import { useQuery } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import { useFormContext } from "react-hook-form";
 
@@ -11,16 +18,21 @@ export function BillingControlOverrides() {
   const [showBillingControlOverrides, setShowBillingControlOverrides] =
     useState<boolean>(false);
 
-  const { setValue, watch } = useFormContext<CustomerSchema>();
+  const { data: billingControl, isLoading: billingControlLoading } = useQuery({
+    ...queries.organization.getBillingControl(),
+  });
 
-  // * Watch for existing value to initialize the state properly
+  const { setValue, watch, getValues } = useFormContext<CustomerSchema>();
+
+  // Watch for existing value to initialize the state properly
   const hasOverrides = watch("billingProfile.hasOverrides");
 
-  // * Initialize state from form value on component mount
+  // Initialize state from form value on component mount
   useEffect(() => {
     setShowBillingControlOverrides(!!hasOverrides);
   }, [hasOverrides]);
 
+  // Pre-populate with organization billing control settings when first enabling overrides
   const toggleBillingControlOverrides = (show: boolean) => {
     setShowBillingControlOverrides(show);
     setValue("billingProfile.hasOverrides", show, {
@@ -28,8 +40,46 @@ export function BillingControlOverrides() {
       shouldTouch: true,
       shouldValidate: true,
     });
-  };
 
+    // Only pre-populate if enabling and there's no existing data
+    if (show && billingControl && !getValues("billingProfile.paymentTerm")) {
+      // Pre-populate with organization billing control settings
+      setValue("billingProfile.paymentTerm", billingControl.paymentTerm, {
+        shouldDirty: true,
+      });
+      setValue(
+        "billingProfile.transferCriteria",
+        billingControl.transferCriteria,
+        { shouldDirty: true },
+      );
+      setValue("billingProfile.autoTransfer", billingControl.autoTransfer, {
+        shouldDirty: true,
+      });
+      setValue(
+        "billingProfile.autoMarkReadyToBill",
+        billingControl.autoMarkReadyToBill,
+        { shouldDirty: true },
+      );
+      setValue("billingProfile.autoBill", billingControl.autoBill, {
+        shouldDirty: true,
+      });
+      setValue(
+        "billingProfile.autoBillCriteria",
+        billingControl.autoBillCriteria,
+        { shouldDirty: true },
+      );
+      setValue(
+        "billingProfile.enforceCustomerBillingReq",
+        billingControl.enforceCustomerBillingReq,
+        { shouldDirty: true },
+      );
+      setValue(
+        "billingProfile.validateCustomerRates",
+        billingControl.validateCustomerRates,
+        { shouldDirty: true },
+      );
+    }
+  };
   return (
     <div className="flex flex-col gap-4 border-t pt-4">
       <div className="flex items-center justify-between">
@@ -51,13 +101,16 @@ export function BillingControlOverrides() {
         )}
       </div>
       {showBillingControlOverrides ? (
-        <BillingControlOverridesForm />
+        <BillingControlOverridesForm
+          billingControl={billingControl as BillingControlSchema}
+        />
       ) : (
         <Button
           onClick={() => toggleBillingControlOverrides(true)}
           className="w-full"
           variant="outline"
           type="button"
+          disabled={billingControlLoading}
         >
           Add Billing Control Overrides
         </Button>
@@ -66,7 +119,11 @@ export function BillingControlOverrides() {
   );
 }
 
-function BillingControlOverridesForm() {
+function BillingControlOverridesForm({
+  billingControl,
+}: {
+  billingControl: BillingControlSchema;
+}) {
   const { control } = useFormContext<CustomerSchema>();
 
   return (
@@ -87,6 +144,16 @@ function BillingControlOverridesForm() {
           label="Transfer Qualification Criteria"
           description="Establishes the primary shipment milestone that triggers eligibility for transfer to the billing system."
           options={transferCriteriaChoices}
+        />
+      </FormControl>
+      <FormControl cols="full">
+        <SelectField
+          control={control}
+          name="billingProfile.autoBillCriteria"
+          label="Auto Bill Criteria"
+          description="Defines when shipments will be automatically billed."
+          options={autoBillCriteriaChoices}
+          isDisabled={!billingControl?.autoBill}
         />
       </FormControl>
       <FormControl>
@@ -119,22 +186,13 @@ function BillingControlOverridesForm() {
       <FormControl>
         <SwitchField
           control={control}
-          name="billingProfile.autoMarkReadyToBill"
-          label="Auto Mark Ready To Bill"
-          description="Whether the shipments for this customer should automatically be marked as ready to bill"
-          position="left"
-        />
-      </FormControl>
-      <FormControl>
-        <SwitchField
-          control={control}
           name="billingProfile.enforceCustomerBillingReq"
           label="Enforce Customer-Specific Billing Requirements"
           description="When enabled, the system verifies that all customer-mandated documentation, reference numbers, and special handling instructions are fulfilled before allowing shipment transfer to billing."
           position="left"
         />
       </FormControl>
-      <FormControl>
+      <FormControl cols="full">
         <SwitchField
           control={control}
           name="billingProfile.validateCustomerRates"

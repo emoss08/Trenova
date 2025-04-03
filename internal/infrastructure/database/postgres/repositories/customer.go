@@ -137,6 +137,7 @@ func (cr *customerRepository) GetByID(ctx context.Context, opts repositories.Get
 	return entity, nil
 }
 
+// Create a customer and ensure it has a billing profile
 func (cr *customerRepository) Create(ctx context.Context, cus *customer.Customer) (*customer.Customer, error) {
 	dba, err := cr.db.DB(ctx)
 	if err != nil {
@@ -150,6 +151,7 @@ func (cr *customerRepository) Create(ctx context.Context, cus *customer.Customer
 		Logger()
 
 	err = dba.RunInTx(ctx, nil, func(c context.Context, tx bun.Tx) error {
+		// Insert the customer first
 		if _, iErr := tx.NewInsert().Model(cus).Returning("*").Exec(c); iErr != nil {
 			log.Error().
 				Err(iErr).
@@ -158,20 +160,9 @@ func (cr *customerRepository) Create(ctx context.Context, cus *customer.Customer
 			return iErr
 		}
 
-		// * Assign the proper values to the billing profile
-		cus.BillingProfile.CustomerID = cus.ID
-		cus.BillingProfile.OrganizationID = cus.OrganizationID
-		cus.BillingProfile.BusinessUnitID = cus.BusinessUnitID
-
-		// Insert the billing profile into the database
-		if _, iErr := tx.NewInsert().Model(cus.BillingProfile).
-			Returning("*").
-			Exec(c); iErr != nil {
-			log.Error().
-				Err(iErr).
-				Interface("billingProfile", cus.BillingProfile).
-				Msg("failed to insert billing profile")
-			return eris.Wrap(iErr, "insert billing profile")
+		// Create or update the billing profile
+		if iErr := cr.createOrUpdateBillingProfile(c, tx, cus); iErr != nil {
+			return iErr
 		}
 
 		return nil
@@ -182,6 +173,55 @@ func (cr *customerRepository) Create(ctx context.Context, cus *customer.Customer
 	}
 
 	return cus, nil
+}
+
+// createOrUpdateBillingProfile ensures a customer has a billing profile
+// If the customer already has a billing profile, it's used; otherwise a default one is created
+func (cr *customerRepository) createOrUpdateBillingProfile(ctx context.Context, tx bun.Tx, cus *customer.Customer) error {
+	log := cr.l.With().
+		Str("operation", "createOrUpdateBillingProfile").
+		Str("customerID", cus.ID.String()).
+		Logger()
+
+	// Check if the customer already has a billing profile
+	if cus.BillingProfile != nil {
+		// Update the billing profile with the new customer ID
+		cus.BillingProfile.CustomerID = cus.ID
+		cus.BillingProfile.OrganizationID = cus.OrganizationID
+		cus.BillingProfile.BusinessUnitID = cus.BusinessUnitID
+
+		// Insert the existing billing profile
+		if _, err := tx.NewInsert().Model(cus.BillingProfile).
+			Returning("*").
+			Exec(ctx); err != nil {
+			log.Error().
+				Err(err).
+				Interface("billingProfile", cus.BillingProfile).
+				Msg("failed to insert billing profile")
+			return eris.Wrap(err, "insert billing profile")
+		}
+
+		return nil
+	}
+
+	// Create default billing profile
+	billingProfile := new(customer.BillingProfile)
+	billingProfile.CustomerID = cus.ID
+	billingProfile.OrganizationID = cus.OrganizationID
+	billingProfile.BusinessUnitID = cus.BusinessUnitID
+
+	// Insert the default billing profile
+	if _, err := tx.NewInsert().Model(billingProfile).
+		Returning("*").
+		Exec(ctx); err != nil {
+		log.Error().
+			Err(err).
+			Interface("billingProfile", billingProfile).
+			Msg("failed to insert billing profile")
+		return eris.Wrap(err, "insert billing profile")
+	}
+
+	return nil
 }
 
 func (cr *customerRepository) Update(ctx context.Context, cus *customer.Customer) (*customer.Customer, error) {
