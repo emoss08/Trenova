@@ -184,7 +184,7 @@ func (cr *customerRepository) createOrUpdateBillingProfile(ctx context.Context, 
 		Logger()
 
 	// Check if the customer already has a billing profile
-	if cus.BillingProfile != nil {
+	if cus.HasBillingProfile() {
 		// Update the billing profile with the new customer ID
 		cus.BillingProfile.CustomerID = cus.ID
 		cus.BillingProfile.OrganizationID = cus.OrganizationID
