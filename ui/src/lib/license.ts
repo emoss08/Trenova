@@ -55,6 +55,18 @@ export const licenseConfig = {
       copyright: "Copyright (c) MinIO, Inc.",
       url: "https://github.com/minio/minio/blob/master/LICENSE",
     },
+    {
+      name: "Shadcn",
+      license: "MIT License",
+      copyright: "Copyright (c) 2023 Shadcn",
+      url: "https://github.com/shadcn-ui/ui/blob/main/LICENSE.md",
+    },
+    {
+      name: "Font Awesome",
+      license: "Font Awesome Pro License",
+      copyright: "Copyright (c) 2022 Fonticons, Inc.",
+      url: "https://fontawesome.com/license",
+    },
   ],
 };
 
