@@ -381,7 +381,7 @@ export function MultiSelectAutocomplete<T>({
             role="combobox"
             aria-expanded={open}
             className={cn(
-              "w-full font-normal gap-2 cursor-auto rounded border-muted-foreground/20 bg-muted px-1.5 h-8 data-[state=open]:border-blue-600 data-[state=open]:outline-hidden data-[state=open]:ring-4 data-[state=open]:ring-blue-600/20",
+              "w-full font-normal gap-2 cursor-auto rounded border-muted-foreground/20 bg-muted px-2 py-1.5 h-8 data-[state=open]:border-blue-600 data-[state=open]:outline-hidden data-[state=open]:ring-4 data-[state=open]:ring-blue-600/20",
               "justify-between [&_svg]:size-3.5 [&_svg]:shrink-0",
               "transition-[border-color,box-shadow] duration-200 ease-in-out",
               disabled && "opacity-50 cursor-not-allowed",
@@ -458,7 +458,7 @@ export function MultiSelectAutocomplete<T>({
                       />
                       <button
                         type="button"
-                        className="size-3 text-muted-foreground duration-200 ease-in-out transition-all cursor-pointer"
+                        className="size-3 text-muted-foreground duration-200 ease-in-out transition-all cursor-pointer items-center justify-center mr-0.5"
                         onClick={(event) => {
                           event.stopPropagation();
                           setOpen(!open);
@@ -487,7 +487,7 @@ export function MultiSelectAutocomplete<T>({
                 </p>
                 <button
                   type="button"
-                  className="size-3 text-muted-foreground duration-200 ease-in-out transition-all cursor-pointer"
+                  className="size-3 text-muted-foreground duration-200 ease-in-out transition-all cursor-pointer items-center justify-center mr-0.5"
                   onClick={(event) => {
                     event.stopPropagation();
                     setOpen(!open);

@@ -1,6 +1,7 @@
 package registry
 
 import (
+	"github.com/emoss08/trenova/internal/core/domain/accessorialcharge"
 	"github.com/emoss08/trenova/internal/core/domain/billing"
 	"github.com/emoss08/trenova/internal/core/domain/businessunit"
 	"github.com/emoss08/trenova/internal/core/domain/commodity"
@@ -79,5 +80,6 @@ func RegisterEntities() []any {
 		&pronumber.Sequence{},
 		&hazmatsegregationrule.HazmatSegregationRule{},
 		&billing.DocumentType{},
+		&accessorialcharge.AccessorialCharge{},
 	}
 }

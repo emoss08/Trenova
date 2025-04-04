@@ -1678,3 +1678,14 @@
       color: "#4C2F27"
       document_classification: "Public"
       document_category: "Shipment"
+- model: AccessorialCharge
+  rows:
+    - _id: hazmat
+      organization_id: "{{ $.Organization.trenova.ID }}"
+      business_unit_id: "{{ $.BusinessUnit.trenova.ID }}"
+      created_at: "{{ now.Unix }}"
+      code: "HAZMAT"
+      description: "Hazmat"
+      unit: 1
+      method: "Flat"
+      amount: 50
