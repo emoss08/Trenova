@@ -64,7 +64,6 @@ func RegisterEntities() []any {
 		&servicetype.ServiceType{},
 		&hazardousmaterial.HazardousMaterial{},
 		&commodity.Commodity{},
-		&customer.BillingProfileDocumentType{},
 		&customer.BillingProfile{},
 		&customer.Customer{},
 		&tractor.Tractor{},

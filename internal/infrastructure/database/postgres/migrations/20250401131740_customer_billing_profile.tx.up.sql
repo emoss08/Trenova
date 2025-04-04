@@ -14,7 +14,7 @@ CREATE TABLE IF NOT EXISTS "customer_billing_profiles"(
     "business_unit_id" varchar(100) NOT NULL,
     -- Core fields
     "billing_cycle_type" billing_cycle_type_enum NOT NULL DEFAULT 'Immediate',
-    "document_type_ids" varchar(100)[] NOT NULL DEFAULT '{}',
+    "document_type_ids" varchar(100)[] NOT NULL DEFAULT '{}', -- Array of document type ids
     -- Billing Control Overrides
     "enforce_customer_billing_req" boolean NOT NULL DEFAULT TRUE,
     "validate_customer_rates" boolean NOT NULL DEFAULT TRUE,
@@ -40,19 +40,5 @@ CREATE TABLE IF NOT EXISTS "customer_billing_profiles"(
 
 CREATE INDEX IF NOT EXISTS "idx_customer_billing_profiles_customer_id" ON "customer_billing_profiles"("customer_id", "organization_id", "business_unit_id");
 
--- bun:split
-CREATE TABLE IF NOT EXISTS "billing_profile_document_types"(
-    -- Primary identifiers
-    "billing_profile_id" varchar(100) NOT NULL,
-    "document_type_id" varchar(100) NOT NULL,
-    "organization_id" varchar(100) NOT NULL,
-    "business_unit_id" varchar(100) NOT NULL,
-    "customer_id" varchar(100) NOT NULL, -- Added this to match parent table's PK
-    -- Metadata
-    "created_at" bigint NOT NULL DEFAULT EXTRACT(EPOCH FROM current_timestamp) ::bigint,
-    -- Constraints
-    CONSTRAINT "pk_billing_profile_document_types" PRIMARY KEY ("billing_profile_id", "document_type_id"),
-    CONSTRAINT "fk_billing_profile_document_types_billing_profile" FOREIGN KEY ("billing_profile_id", "organization_id", "business_unit_id", "customer_id") REFERENCES "customer_billing_profiles"("id", "organization_id", "business_unit_id", "customer_id") ON UPDATE NO ACTION ON DELETE CASCADE,
-    CONSTRAINT "fk_billing_profile_document_types_document_type" FOREIGN KEY ("document_type_id", "organization_id", "business_unit_id") REFERENCES "document_types"("id", "organization_id", "business_unit_id") ON UPDATE NO ACTION ON DELETE CASCADE
-);
-
+-- Add GIN index for the document_type_ids array
+CREATE INDEX IF NOT EXISTS "idx_customer_billing_profiles_document_type_ids" ON "customer_billing_profiles" USING GIN ("document_type_ids");

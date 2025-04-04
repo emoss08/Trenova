@@ -1,6 +1,7 @@
 import {
   getDocumentCountByResource,
   getDocumentsByResourceID,
+  getDocumentTypes,
   getResourceSubFolders,
 } from "@/services/document";
 import {
@@ -73,6 +74,12 @@ export const queries = createQueryKeyStore({
     }),
   },
   document: {
+    getDocumentTypes: () => ({
+      queryKey: ["document/types"],
+      queryFn: async () => {
+        return await getDocumentTypes();
+      },
+    }),
     countByResource: () => ({
       queryKey: ["document/count-by-resource"],
       queryFn: async () => {

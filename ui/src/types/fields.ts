@@ -3,12 +3,14 @@ import type { TextareaProps } from "@/components/ui/textarea";
 import { type IconDefinition } from "@fortawesome/pro-regular-svg-icons";
 import { type CheckboxProps } from "@radix-ui/react-checkbox";
 import { SwitchProps } from "@radix-ui/react-switch";
+import { ComponentPropsWithoutRef } from "react";
 import type {
   Control,
   FieldValues,
   Path,
   RegisterOptions,
 } from "react-hook-form";
+import { FieldPath } from "react-hook-form";
 import type { Props as ReactSelectProps } from "react-select";
 import { type API_ENDPOINTS } from "./server";
 
@@ -207,3 +209,62 @@ export type AutocompleteFieldProps<TOption, TForm extends FieldValues> = Omit<
   AutocompleteFormControlProps<TForm> & {
     description?: string;
   };
+
+export interface Option {
+  value: string;
+  label: string;
+  disabled?: boolean;
+  description?: string;
+  icon?: React.ComponentType<{ className?: string }>;
+}
+
+export interface BaseMultiSelectAutocompleteFieldProps<TOption> {
+  link: string;
+  preload?: boolean;
+  renderOption: (option: TOption) => React.ReactNode;
+  renderBadge?: (option: TOption) => React.ReactNode;
+  getOptionValue: (option: TOption) => string | number;
+  getDisplayValue: (option: TOption) => string;
+  label: string;
+  placeholder?: string;
+  values?: string[];
+  onChange: (values: string[]) => void;
+  onOptionsChange?: (options: TOption[]) => void;
+  disabled?: boolean;
+  className?: string;
+  triggerClassName?: string;
+  noResultsMessage?: string;
+  isInvalid?: boolean;
+  maxCount?: number;
+  extraSearchParams?: Record<string, string>;
+}
+
+export interface MultiSelectAutocompleteProps<TOption>
+  extends BaseMultiSelectAutocompleteFieldProps<TOption>,
+    Omit<ComponentPropsWithoutRef<"button">, "onChange"> {}
+
+export interface MultiSelectAutocompleteFieldProps<
+  TOption,
+  TForm extends FieldValues,
+> {
+  name: FieldPath<TForm>;
+  control: Control<TForm>;
+  rules?: RegisterOptions<TForm, Path<TForm>>;
+  label: string;
+  description?: string;
+  className?: string;
+  link: string;
+  preload?: boolean;
+  renderOption: (option: TOption) => React.ReactNode;
+  renderBadge?: (option: TOption) => React.ReactNode;
+  getOptionValue: (option: TOption) => string | number;
+  getOptionLabel: (option: TOption) => string;
+  getDisplayValue: (option: TOption) => string;
+  onOptionsChange?: (options: TOption[]) => void;
+  placeholder?: string;
+  noResultsMessage?: string;
+  triggerClassName?: string;
+  maxCount?: number;
+  animation?: number;
+  extraSearchParams?: Record<string, string>;
+}

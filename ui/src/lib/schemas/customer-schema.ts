@@ -17,6 +17,8 @@ export const billingProfileSchema = object({
   billingCycleType: mixed<BillingCycleType>().oneOf(
     Object.values(BillingCycleType),
   ),
+  documentTypeIds: array().of(string()).required(),
+
   // Billing Control Overrides
   hasOverrides: boolean(),
   enforceCustomerBillingReq: boolean(),
@@ -32,7 +34,7 @@ export const billingProfileSchema = object({
     Object.values(AutoBillCriteria),
   ),
   specialInstructions: string().optional(),
-  documentTypes: array().of(string()).optional(),
+  // documentTypes: array().of(string()).optional(),
 });
 
 export const customerSchema = object({
@@ -54,3 +56,6 @@ export const customerSchema = object({
 });
 
 export type CustomerSchema = InferType<typeof customerSchema>;
+export type CustomerBillingProfileSchema = InferType<
+  typeof billingProfileSchema
+>;

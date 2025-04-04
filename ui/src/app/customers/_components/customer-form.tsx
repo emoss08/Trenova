@@ -88,7 +88,7 @@ export function CustomerForm() {
   return (
     <div className="flex size-full flex-1">
       <TooltipProvider>
-        <SidebarProvider className="h-[750px] min-h-full w-56 shrink-0 items-start">
+        <SidebarProvider className="h-auto min-h-[750px] w-56 shrink-0 items-start">
           <Sidebar
             collapsible="none"
             className="hidden w-56 rounded-tl-lg border-r border-input/50 md:flex"

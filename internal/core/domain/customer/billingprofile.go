@@ -31,7 +31,7 @@ type BillingProfile struct {
 
 	// Core Fields
 	BillingCycleType BillingCycleType `json:"billingCycleType" bun:"billing_cycle_type,type:billing_cycle_type_enum,nullzero,default:'Immediate'"`
-	DocumentTypeIDs  []pulid.ID       `json:"documentTypeIds" bun:"document_type_ids,type:VARCHAR(100)[],default:{}"`
+	DocumentTypeIDs  []string         `json:"documentTypeIds" bun:"document_type_ids,type:VARCHAR(100)[],notnull,default:{}"`
 
 	// Billing Control Overrides (If not set, the billing control will be used)
 	HasOverrides              bool                     `json:"hasOverrides" bun:"has_overrides,type:BOOLEAN,notnull,default:false"`
@@ -52,15 +52,13 @@ type BillingProfile struct {
 	// Relationships
 	BusinessUnit *businessunit.BusinessUnit `bun:"rel:belongs-to,join:business_unit_id=id" json:"-"`
 	Organization *organization.Organization `bun:"rel:belongs-to,join:organization_id=id" json:"-"`
-
-	// Document Types that are required for this customer billing profile
-	DocumentTypes []*billing.DocumentType `bun:"m2m:billing_profile_document_types,join:BillingProfile=DocumentType" json:"documentTypes,omitempty"`
 }
 
 func (b *BillingProfile) Validate(ctx context.Context, multiErr *errors.MultiError) {
 	err := validation.ValidateStructWithContext(ctx, b,
 		// * Ensure Customer ID is set
 		validation.Field(&b.CustomerID, validation.Required.Error("Customer ID is required")),
+		validation.Field(&b.DocumentTypeIDs, validation.Required.Error("Document Type IDs are required")),
 	)
 	if err != nil {
 		var validationErrs validation.Errors
@@ -90,40 +88,6 @@ func (b *BillingProfile) BeforeAppendModel(ctx context.Context, query bun.Query)
 		b.CreatedAt = now
 	case *bun.UpdateQuery:
 		b.UpdatedAt = now
-	}
-
-	return nil
-}
-
-// BillingProfileDocumentType is a many-to-many relationship between BillingProfiles and DocumentTypes
-type BillingProfileDocumentType struct {
-	bun.BaseModel `bun:"table:billing_profile_document_types,alias:bpdt" json:"-"`
-
-	// Primary keys matching your database schema
-	BillingProfileID pulid.ID        `json:"billingProfileId" bun:"billing_profile_id,pk,type:VARCHAR(100)"`
-	BillingProfile   *BillingProfile `bun:"rel:belongs-to,join:billing_profile_id=id"`
-
-	DocumentTypeID pulid.ID              `json:"documentTypeId" bun:"document_type_id,pk,type:VARCHAR(100)"`
-	DocumentType   *billing.DocumentType `bun:"rel:belongs-to,join:document_type_id=id"`
-
-	// Other fields needed for referential integrity
-	OrganizationID pulid.ID `json:"organizationId" bun:"organization_id,type:VARCHAR(100)"`
-	BusinessUnitID pulid.ID `json:"businessUnitId" bun:"business_unit_id,type:VARCHAR(100)"`
-	CustomerID     pulid.ID `json:"customerId" bun:"customer_id,type:VARCHAR(100)"`
-
-	CreatedAt int64 `bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
-}
-
-func (b *BillingProfileDocumentType) GetTableName() string {
-	return "billing_profile_document_types"
-}
-
-func (b *BillingProfileDocumentType) BeforeAppendModel(ctx context.Context, query bun.Query) error {
-	now := timeutils.NowUnix()
-
-	switch query.(type) {
-	case *bun.InsertQuery:
-		b.CreatedAt = now
 	}
 
 	return nil
