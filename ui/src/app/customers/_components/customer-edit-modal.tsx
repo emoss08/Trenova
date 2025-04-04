@@ -97,6 +97,13 @@ export function CustomerEditForm({
     onClose: handleClose,
   });
 
+  // Make sure we populate the form with the current record
+  useEffect(() => {
+    if (currentRecord) {
+      reset(currentRecord);
+    }
+  }, [currentRecord, reset]);
+
   // Reset the form when the mutation is successful
   // This is recommended by react-hook-form - https://react-hook-form.com/docs/useform/reset
   useEffect(() => {
