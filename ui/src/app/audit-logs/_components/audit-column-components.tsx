@@ -149,6 +149,10 @@ export function AuditEntryResourceBadge({
       variant: "orange",
       text: "Shipment Control",
     },
+    [Resource.BillingControl]: {
+      variant: "orange",
+      text: "Billing Control",
+    },
     [Resource.HazmatSegregationRule]: {
       variant: "orange",
       text: "Hazmat Segregation Rule",

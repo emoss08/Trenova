@@ -10,7 +10,7 @@ import (
 type LogEntry struct {
 	Level      string    `json:"level"`
 	App        string    `json:"app"`
-	Version    string    `json:"version"`
+	Version    any       `json:"version"`
 	Hostname   string    `json:"hostname"`
 	Message    string    `json:"message"`
 	Caller     string    `json:"caller"`

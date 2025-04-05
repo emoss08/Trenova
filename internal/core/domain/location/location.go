@@ -42,7 +42,7 @@ type Location struct {
 	AddressLine1 string        `json:"addressLine1" bun:"address_line_1,type:VARCHAR(150),notnull"`
 	AddressLine2 string        `json:"addressLine2" bun:"address_line_2,type:VARCHAR(150)"`
 	City         string        `json:"city" bun:"city,type:VARCHAR(100),notnull"`
-	PostalCode   string        `json:"postalCode" bun:"postal_code,type:VARCHAR(10),notnull"`
+	PostalCode   string        `json:"postalCode" bun:"postal_code,type:us_postal_code,notnull"`
 	Longitude    *float64      `json:"longitude" bun:"longitude,type:FLOAT,nullzero"`
 	Latitude     *float64      `json:"latitude" bun:"latitude,type:FLOAT,nullzero"`
 	PlaceID      string        `json:"placeId" bun:"place_id,type:VARCHAR(100)"`

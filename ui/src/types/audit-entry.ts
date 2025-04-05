@@ -56,6 +56,7 @@ export enum Resource {
   Dashboard = "dashboard",
   BillingManagement = "billing_management",
   BillingClient = "billing_client",
+  BillingControl = "billing_control",
   ConfigurationFiles = "configuration_files",
   RateManagement = "rate_management",
   SystemLog = "system_log",
@@ -78,7 +79,6 @@ export enum Resource {
   GlAccount = "gl_account",
   RevenueCode = "revenue_code",
   AccessorialCharge = "accessorial_charge",
-  DocumentClassification = "document_classification",
   Worker = "worker",
   Tractor = "tractor",
   Trailer = "trailer",
@@ -106,4 +106,5 @@ export enum Resource {
   Template = "template",
   Backup = "backup",
   HazmatSegregationRule = "hazmat_segregation_rule",
+  DocumentType = "document_type",
 }

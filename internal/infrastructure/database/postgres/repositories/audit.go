@@ -70,7 +70,7 @@ func (ar *auditRepository) filterQuery(q *bun.SelectQuery, opts *ports.LimitOffs
 
 	q = q.Relation("User")
 
-	return q
+	return q.Limit(opts.Limit).Offset(opts.Offset)
 }
 
 // GetByID fetches an audit entry by id

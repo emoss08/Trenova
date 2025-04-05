@@ -1,3 +1,5 @@
+import { AccessorialChargeSchema } from "@/lib/schemas/accessorial-charge-schema";
+import { AdditionalChargeSchema } from "@/lib/schemas/additional-charge-schema";
 import { type CommoditySchema } from "@/lib/schemas/commodity-schema";
 import { type CustomerSchema } from "@/lib/schemas/customer-schema";
 import { type EquipmentTypeSchema } from "@/lib/schemas/equipment-type-schema";
@@ -68,6 +70,11 @@ export enum EntryMethod {
 
 export type ShipmentCommodity = ShipmentCommoditySchema & {
   commodity: CommoditySchema;
+  shipment: ShipmentSchema;
+};
+
+export type AdditionalCharge = AdditionalChargeSchema & {
+  accessorialCharge: AccessorialChargeSchema;
   shipment: ShipmentSchema;
 };
 

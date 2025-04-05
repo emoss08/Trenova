@@ -96,3 +96,11 @@ func (sc *ShipmentCommodity) BeforeAppendModel(_ context.Context, query bun.Quer
 
 	return nil
 }
+
+func (sc *ShipmentCommodity) MeetsLinearFeetPerUnitRequirement() bool {
+	if sc.Commodity == nil || sc.Commodity.LinearFeetPerUnit == nil {
+		return false
+	}
+
+	return sc.Pieces > 0 && *sc.Commodity.LinearFeetPerUnit > 0
+}

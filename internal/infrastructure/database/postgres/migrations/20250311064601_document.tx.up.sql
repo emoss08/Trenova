@@ -155,39 +155,37 @@ ALTER TABLE documents
 ALTER TABLE documents
     ALTER COLUMN resource_type SET STATISTICS 1000;
 
---bun:split
 -- Create view for expired documents (compliance reporting)
-CREATE OR REPLACE VIEW vw_expired_documents AS
-SELECT
-    d.*,
-    o.name AS organization_name,
-    bu.name AS business_unit_name,
-    u.name AS uploaded_by_name
-FROM
-    documents d
-    JOIN organizations o ON d.organization_id = o.id
-    JOIN business_units bu ON d.business_unit_id = bu.id
-    JOIN users u ON d.uploaded_by_id = u.id
-WHERE
-    d.expiration_date IS NOT NULL
-    AND d.expiration_date <= EXTRACT(EPOCH FROM CURRENT_TIMESTAMP)::bigint
-    AND d.status != 'Expired';
+-- CREATE OR REPLACE VIEW vw_expired_documents AS
+-- SELECT
+--     d.*,
+--     o.name AS organization_name,
+--     bu.name AS business_unit_name,
+--     u.name AS uploaded_by_name
+-- FROM
+--     documents d
+--     JOIN organizations o ON d.organization_id = o.id
+--     JOIN business_units bu ON d.business_unit_id = bu.id
+--     JOIN users u ON d.uploaded_by_id = u.id
+-- WHERE
+--     d.expiration_date IS NOT NULL
+--     AND d.expiration_date <= EXTRACT(EPOCH FROM CURRENT_TIMESTAMP)::bigint
+--     AND d.status != 'Expired';
 
---bun:split
 -- Create view for documents needing approval
-CREATE OR REPLACE VIEW vw_pending_approval_documents AS
-SELECT
-    d.*,
-    o.name AS organization_name,
-    bu.name AS business_unit_name,
-    u.name AS uploaded_by_name
-FROM
-    documents d
-    JOIN organizations o ON d.organization_id = o.id
-    JOIN business_units bu ON d.business_unit_id = bu.id
-    JOIN users u ON d.uploaded_by_id = u.id
-WHERE
-    d.status = 'PendingApproval';
+-- CREATE OR REPLACE VIEW vw_pending_approval_documents AS
+-- SELECT
+--     d.*,
+--     o.name AS organization_name,
+--     bu.name AS business_unit_name,
+--     u.name AS uploaded_by_name
+-- FROM
+--     documents d
+--     JOIN organizations o ON d.organization_id = o.id
+--     JOIN business_units bu ON d.business_unit_id = bu.id
+--     JOIN users u ON d.uploaded_by_id = u.id
+-- WHERE
+--     d.status = 'PendingApproval';
 
 --bun:split
 -- Create function to set document status to expired automatically

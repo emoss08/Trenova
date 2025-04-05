@@ -1,5 +1,57 @@
+import {
+  AutoBillCriteria,
+  BillingCycleType,
+  PaymentTerm,
+  TransferCriteria,
+} from "@/types/billing";
 import { Status } from "@/types/common";
-import { boolean, type InferType, mixed, object, string } from "yup";
+import { array, boolean, type InferType, mixed, object, string } from "yup";
+
+export const emailProfileSchema = object({
+  id: string().optional(),
+  organizationId: string().nullable().optional(),
+  businessUnitId: string().nullable().optional(),
+  customerId: string().nullable().optional(),
+
+  // Core Fields
+  subject: string().optional(),
+  comment: string().optional(),
+  fromEmail: string().optional(),
+  blindCopy: string().optional(),
+  readReceipt: boolean(),
+  attachmentName: string().optional(),
+});
+
+export const billingProfileSchema = object({
+  id: string().optional(),
+  organizationId: string().nullable().optional(),
+  businessUnitId: string().nullable().optional(),
+  customerId: string().nullable().optional(),
+
+  // Core Fields
+  billingCycleType: mixed<BillingCycleType>().oneOf(
+    Object.values(BillingCycleType),
+  ),
+  documentTypeIds: array()
+    .of(string())
+    .required("Document Type IDs are required"),
+
+  // Billing Control Overrides
+  hasOverrides: boolean(),
+  enforceCustomerBillingReq: boolean(),
+  validateCustomerRates: boolean(),
+  paymentTerm: mixed<PaymentTerm>().oneOf(Object.values(PaymentTerm)),
+  autoTransfer: boolean(),
+  transferCriteria: mixed<TransferCriteria>().oneOf(
+    Object.values(TransferCriteria),
+  ),
+  autoMarkReadyToBill: boolean(),
+  autoBill: boolean(),
+  autoBillCriteria: mixed<AutoBillCriteria>().oneOf(
+    Object.values(AutoBillCriteria),
+  ),
+  specialInstructions: string().optional(),
+});
 
 export const customerSchema = object({
   id: string().optional(),
@@ -16,9 +68,11 @@ export const customerSchema = object({
   city: string().required("City is required"),
   postalCode: string().required("Postal code is required"),
   stateId: string().required("State is required"),
-  autoMarkReadyToBill: boolean().required(
-    "Auto mark ready to bill is required",
-  ),
+  billingProfile: billingProfileSchema.optional(),
+  emailProfile: emailProfileSchema.optional(),
 });
 
 export type CustomerSchema = InferType<typeof customerSchema>;
+export type CustomerBillingProfileSchema = InferType<
+  typeof billingProfileSchema
+>;

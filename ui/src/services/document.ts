@@ -1,4 +1,5 @@
 import { http } from "@/lib/http-client";
+import { DocumentTypeSchema } from "@/lib/schemas/document-type-schema";
 import { Resource } from "@/types/audit-entry";
 import { Document, DocumentStatus, DocumentType } from "@/types/document";
 import { LimitOffsetResponse } from "@/types/server";
@@ -74,5 +75,13 @@ export async function getDocumentsByResourceID(
   const response = await http.get<LimitOffsetResponse<Document>>(
     `/documents/${resourceType}/${resourceId}/`,
   );
+  return response.data;
+}
+
+export async function getDocumentTypes(): Promise<
+  LimitOffsetResponse<DocumentTypeSchema>
+> {
+  const response =
+    await http.get<LimitOffsetResponse<DocumentTypeSchema>>(`/document-types`);
   return response.data;
 }

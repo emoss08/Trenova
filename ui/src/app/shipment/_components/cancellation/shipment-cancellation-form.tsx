@@ -1,4 +1,4 @@
-import { TextareaField } from "@/components/fields/textarea-field";
+import { AutoResizeTextareaField } from "@/components/fields/textarea-field";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -60,15 +60,16 @@ export function ShipmentCancellationForm() {
     <FormGroup cols={1}>
       <FormControl cols="full">
         <div className="relative">
-          <TextareaField
+          <AutoResizeTextareaField
             control={control}
             rules={{ required: true }}
             name="cancelReason"
             label="Cancel Reason"
             placeholder="Cancel Reason"
             description="Provide a reason for cancelling the shipment."
+            className="pb-5"
           />
-          <div className="absolute top-5 right-1">
+          <div className="absolute bottom-5 right-1">
             <DropdownMenu>
               <DropdownMenuTrigger className="outline-none">
                 <TooltipProvider>

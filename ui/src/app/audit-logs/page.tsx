@@ -37,9 +37,9 @@ function Header() {
 
 const AuditAlert = memo(() => {
   return (
-    <div className="flex bg-red-500/20 border border-red-600/50 p-4 rounded-md justify-between items-center mb-4 w-full">
-      <div className="flex items-center gap-2 w-full text-red-600">
-        <Icon icon={faExclamationTriangle} className="size-4" />
+    <div className="flex bg-red-500/10 border border-red-600/50 p-4 rounded-md justify-between items-center mb-4 w-full">
+      <div className="flex items-center gap-3 w-full text-red-600">
+        <Icon icon={faExclamationTriangle} className="size-5" />
         <div className="flex flex-col">
           <p className="text-sm font-medium">Audit Logs Processing</p>
           <p className="text-xs dark:text-red-100">

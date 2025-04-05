@@ -3,7 +3,7 @@ import { PDFViewerDialog } from "@/components/pdf-viewer/pdf-viewer-dialog";
 import { Document } from "@/types/document";
 import { API_ENDPOINTS } from "@/types/server";
 import { Shipment } from "@/types/shipment";
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { getColumns } from "./shipment-document-columns";
 
 export default function ShipmentDocumentTable({
@@ -16,9 +16,23 @@ export default function ShipmentDocumentTable({
   );
   const [pdfViewerOpen, setPdfViewerOpen] = useState(false);
 
+  // Add debugging for the presignedURL
+  useEffect(() => {
+    if (selectedDocument) {
+      console.log("Selected document:", selectedDocument);
+      console.log("Presigned URL:", selectedDocument.presignedURL);
+      
+      // Check if the URL is valid
+      if (!selectedDocument.presignedURL) {
+        console.error("No presigned URL available for this document");
+      }
+    }
+  }, [selectedDocument]);
+
   const handleDocumentClick = useCallback(
     (doc: Document) => {
       if (doc.fileType === ".pdf") {
+        console.log("Opening PDF document:", doc.fileName);
         setSelectedDocument(doc);
         setPdfViewerOpen(true);
       } else {
@@ -49,7 +63,7 @@ export default function ShipmentDocumentTable({
         // includeHeader={false}
         includeOptions={false}
       />
-      {pdfViewerOpen && (
+      {pdfViewerOpen && selectedDocument && (
         <PDFViewerDialog
           fileUrl={selectedDocument?.presignedURL ?? ""}
           open={pdfViewerOpen}

@@ -7,20 +7,13 @@ import {
 } from "@/components/ui/sidebar";
 import { useUser } from "@/stores/user-store";
 
-import { CLIENT_VERSION } from "@/constants/env";
 import { useLogout } from "@/hooks/use-auth";
 import { User } from "@/types/user";
-import {
-  faBell,
-  faDisplay,
-  faGear,
-  faMoon,
-  faSignOut,
-  faSunBright,
-} from "@fortawesome/pro-regular-svg-icons";
+import { faUpRightFromSquare } from "@fortawesome/pro-regular-svg-icons";
 import { CaretSortIcon } from "@radix-ui/react-icons";
 import { useState } from "react";
 import { toast } from "sonner";
+import { LicenseInformation } from "./license-information";
 import { Theme, useTheme } from "./theme-provider";
 import {
   DropdownMenu,
@@ -36,7 +29,6 @@ import {
   DropdownMenuTrigger,
 } from "./ui/dropdown-menu";
 import { Icon } from "./ui/icons";
-import { ExternalLink } from "./ui/link";
 
 export function UserAvatar({ user }: { user: User | null }) {
   if (!user) {
@@ -63,6 +55,8 @@ export function NavUser() {
   const logout = useLogout();
   const user = useUser();
 
+  const [licenseDialogOpen, setLicenseDialogOpen] = useState(false);
+
   const handleLogout = async () => {
     toast.promise(logout, {
       loading: "Logging out...",
@@ -84,100 +78,100 @@ export function NavUser() {
     setTheme(selectedTheme);
   };
 
-  const themeIcon =
-    currentTheme === "system" ? (
-      <Icon icon={faDisplay} />
-    ) : currentTheme === "light" ? (
-      <Icon icon={faSunBright} />
-    ) : (
-      <Icon icon={faMoon} />
-    );
-
   return (
-    <SidebarMenu>
-      <SidebarMenuItem>
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <SidebarMenuButton
-              className="border border-input bg-background [&>svg]:size-5"
-              size="lg"
-            >
-              <UserAvatar user={user} />
-              <CaretSortIcon className="ml-auto size-5" />
-            </SidebarMenuButton>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent
-            side="right"
-            align="end"
-            className="w-[270px] max-w-[300px]"
-          >
-            <DropdownMenuLabel className="p-0 font-normal">
-              <UserAvatar user={user} />
-            </DropdownMenuLabel>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem
-              startContent={<Icon icon={faGear} />}
-              title="Account Settings"
-              description="Manage your account settings"
-            />
-            <DropdownMenuItem
-              startContent={<Icon icon={faBell} />}
-              title="Notifications"
-              description="Manage your notifications"
-            />
-            <DropdownMenuSub>
-              <DropdownMenuSubTrigger
-                startContent={themeIcon}
-                description="Switch application themes"
+    <>
+      <SidebarMenu>
+        <SidebarMenuItem>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <SidebarMenuButton
+                className="border border-input bg-background [&>svg]:size-5"
+                size="lg"
               >
-                Switch Theme
-              </DropdownMenuSubTrigger>
-              <DropdownMenuPortal>
-                <DropdownMenuSubContent sideOffset={10}>
-                  <DropdownMenuCheckboxItem
-                    checked={currentTheme === "light"}
-                    onCheckedChange={() => switchTheme("light")}
-                    className="cursor-pointer"
-                  >
-                    Light
-                  </DropdownMenuCheckboxItem>
-                  <DropdownMenuCheckboxItem
-                    className="cursor-pointer"
-                    checked={currentTheme === "dark"}
-                    onCheckedChange={() => switchTheme("dark")}
-                  >
-                    Dark
-                  </DropdownMenuCheckboxItem>
-                  <DropdownMenuCheckboxItem
-                    checked={currentTheme === "system"}
-                    onCheckedChange={() => switchTheme("system")}
-                    className="cursor-pointer"
-                  >
-                    System
-                  </DropdownMenuCheckboxItem>
-                </DropdownMenuSubContent>
-              </DropdownMenuPortal>
-            </DropdownMenuSub>
-            <DropdownMenuItem
-              startContent={<Icon icon={faSignOut} />}
-              title="Sign out"
-              description="Sign out of your account"
-              className="pb-2"
-              onClick={handleLogout}
-            />
-            <div className="flex flex-col w-full select-none items-center justify-center gap-1 text-2xs text-muted-foreground py-2 border-t border-input/50">
-              <p>Client Build: v{CLIENT_VERSION}</p>
-              <div className="flex items-center gap-2">
-                <ExternalLink href="#">Terms & Conditions</ExternalLink>
-                <div className="size-1 rounded-full bg-muted-foreground" />
-                <ExternalLink href="https://github.com/emoss08/Trenova/blob/master/LICENSE">
-                  License
-                </ExternalLink>
-              </div>
-            </div>
-          </DropdownMenuContent>
-        </DropdownMenu>
-      </SidebarMenuItem>
-    </SidebarMenu>
+                <UserAvatar user={user} />
+                <CaretSortIcon className="ml-auto size-5" />
+              </SidebarMenuButton>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent
+              side="top"
+              align="start"
+              className="w-[270px] max-w-[300px]"
+            >
+              <DropdownMenuLabel className="p-0 font-normal">
+                <UserAvatar user={user} />
+              </DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem title="Account Settings" />
+              <DropdownMenuItem title="Notifications" />
+              <DropdownMenuSub>
+                <DropdownMenuSubTrigger>Switch Theme</DropdownMenuSubTrigger>
+                <DropdownMenuPortal>
+                  <DropdownMenuSubContent sideOffset={5}>
+                    <DropdownMenuCheckboxItem
+                      checked={currentTheme === "light"}
+                      onCheckedChange={() => switchTheme("light")}
+                      className="cursor-pointer"
+                    >
+                      Light
+                    </DropdownMenuCheckboxItem>
+                    <DropdownMenuCheckboxItem
+                      className="cursor-pointer"
+                      checked={currentTheme === "dark"}
+                      onCheckedChange={() => switchTheme("dark")}
+                    >
+                      Dark
+                    </DropdownMenuCheckboxItem>
+                    <DropdownMenuCheckboxItem
+                      checked={currentTheme === "system"}
+                      onCheckedChange={() => switchTheme("system")}
+                      className="cursor-pointer"
+                    >
+                      System
+                    </DropdownMenuCheckboxItem>
+                  </DropdownMenuSubContent>
+                </DropdownMenuPortal>
+              </DropdownMenuSub>
+              <DropdownMenuSub>
+                <DropdownMenuSubTrigger>Learn More</DropdownMenuSubTrigger>
+                <DropdownMenuPortal>
+                  <DropdownMenuSubContent sideOffset={5}>
+                    <DropdownMenuItem
+                      endContent={<Icon icon={faUpRightFromSquare} />}
+                      title="About Trenova"
+                      className="cursor-pointer"
+                    />
+                    <DropdownMenuItem
+                      endContent={<Icon icon={faUpRightFromSquare} />}
+                      title="User Guide & Documentation"
+                      className="cursor-pointer"
+                    />
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem
+                      endContent={<Icon icon={faUpRightFromSquare} />}
+                      onClick={() => setLicenseDialogOpen(true)}
+                      title="License Agreement"
+                      className="cursor-pointer"
+                    />
+                    <DropdownMenuItem
+                      endContent={<Icon icon={faUpRightFromSquare} />}
+                      title="Terms & Conditions"
+                      className="cursor-pointer"
+                    />
+                  </DropdownMenuSubContent>
+                </DropdownMenuPortal>
+              </DropdownMenuSub>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem title="Log out" onClick={handleLogout} />
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </SidebarMenuItem>
+      </SidebarMenu>
+      {licenseDialogOpen && (
+        <LicenseInformation
+          open={licenseDialogOpen}
+          onOpenChange={setLicenseDialogOpen}
+        />
+      )}
+    </>
   );
 }

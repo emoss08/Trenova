@@ -1,57 +1,13 @@
 import { AutocompleteField } from "@/components/fields/autocomplete";
 import { ColorOptionValue } from "@/components/fields/select-components";
-import { ShipmentStatusBadge } from "@/components/status-badge";
 import { FormControl, FormGroup } from "@/components/ui/form";
-import { Icon } from "@/components/ui/icons";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
-import { formatToUserTimezone } from "@/lib/date";
 import { EquipmentTypeSchema } from "@/lib/schemas/equipment-type-schema";
 import { ServiceTypeSchema } from "@/lib/schemas/service-type-schema";
 import { ShipmentSchema } from "@/lib/schemas/shipment-schema";
 import { ShipmentTypeSchema } from "@/lib/schemas/shipment-type-schema";
-import { cn } from "@/lib/utils";
-import { useUser } from "@/stores/user-store";
-import { faCheck, faCopy } from "@fortawesome/pro-solid-svg-icons";
-import { useState } from "react";
 import { useFormContext } from "react-hook-form";
 
-export function ShipmentDetailsHeader() {
-  const { getValues } = useFormContext<ShipmentSchema>();
-  const user = useUser();
-
-  const { proNumber, status, updatedAt } = getValues();
-
-  return (
-    <div className="flex flex-col px-4 pb-2 border-b border-bg-sidebar-border">
-      <div className="flex items-center justify-between">
-        <h2 className="font-semibold leading-none tracking-tight flex items-center gap-x-2">
-          {proNumber || "Add New Shipment"}
-        </h2>
-        <ShipmentStatusBadge status={status} />
-      </div>
-      {updatedAt ? (
-        <p className="text-2xs text-muted-foreground font-normal">
-          Last updated on{" "}
-          {formatToUserTimezone(updatedAt, {
-            timezone: user?.timezone,
-            timeFormat: user?.timeFormat,
-          })}
-        </p>
-      ) : (
-        <p className="text-2xs text-muted-foreground font-normal">
-          Please fill out the form below to create a new shipment.
-        </p>
-      )}
-    </div>
-  );
-}
-
-export function ShipmentServiceDetails() {
+export default function ShipmentServiceDetails() {
   const { control } = useFormContext<ShipmentSchema>();
 
   return (
@@ -157,79 +113,6 @@ export function ShipmentServiceDetails() {
           />
         </FormControl>
       </FormGroup>
-    </div>
-  );
-}
-
-export function ShipmentDetailsBOL({
-  bol,
-  className,
-  label,
-}: {
-  bol: string;
-  className?: string;
-  label?: string;
-}) {
-  const [copied, setCopied] = useState(false);
-
-  const handleCopy = async () => {
-    try {
-      await navigator.clipboard.writeText(bol);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 1500);
-    } catch (error) {
-      console.error("Failed to copy BOL:", error);
-    }
-  };
-  return (
-    <div className={cn("flex items-center gap-2 text-sm", className)}>
-      <span className="text-muted-foreground">{label}</span>
-      <div className="flex items-center gap-1">
-        <div className="relative inline-block">
-          <span
-            className={cn(
-              "font-medium underline transition-colors duration-300",
-              copied ? "text-green-600" : "text-blue-500",
-            )}
-          >
-            {!copied ? bol : "Copied to clipboard"}
-          </span>
-        </div>
-        <TooltipProvider delayDuration={0}>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <button
-                onClick={handleCopy}
-                className="inline-flex items-center justify-center h-5 cursor-pointer"
-                disabled={copied}
-                aria-label={copied ? "Copied" : "Copy BOL number"}
-              >
-                <div className="relative flex items-center justify-center w-3 h-3">
-                  <div
-                    className={cn(
-                      "absolute inset-0 flex items-center justify-center transition-all duration-300",
-                      copied ? "opacity-100 scale-100" : "opacity-0 scale-0",
-                    )}
-                  >
-                    <Icon icon={faCheck} className="text-green-600 size-3" />
-                  </div>
-                  <div
-                    className={cn(
-                      "absolute inset-0 flex items-center justify-center transition-all duration-300",
-                      copied ? "opacity-0 scale-0" : "opacity-100 scale-100",
-                    )}
-                  >
-                    <Icon icon={faCopy} className="text-blue-500 size-3" />
-                  </div>
-                </div>
-              </button>
-            </TooltipTrigger>
-            <TooltipContent className="px-2 py-1 text-xs">
-              {copied ? "Copied!" : "Copy to clipboard"}
-            </TooltipContent>
-          </Tooltip>
-        </TooltipProvider>
-      </div>
     </div>
   );
 }

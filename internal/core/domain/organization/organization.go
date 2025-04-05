@@ -48,7 +48,7 @@ type Organization struct {
 	AddressLine1 string `json:"addressLine1" bun:"address_line1,type:VARCHAR(150),notnull"`
 	AddressLine2 string `json:"addressLine2" bun:"address_line2,type:VARCHAR(150)"`
 	City         string `json:"city" bun:"city,type:VARCHAR(100),notnull"`
-	PostalCode   string `json:"postalCode" bun:"postal_code,type:VARCHAR(20)"`
+	PostalCode   string `json:"postalCode" bun:"postal_code,type:us_postal_code,notnull"`
 	Timezone     string `json:"timezone" bun:"timezone,type:VARCHAR(100),notnull,default:'America/New_York'"`
 	TaxID        string `json:"taxId" bun:"tax_id,type:VARCHAR(50)"`
 

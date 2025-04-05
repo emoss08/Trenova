@@ -37,7 +37,6 @@ export function MainLayout() {
             </SidebarInset>
           </SidebarProvider>
         </div>
-        {/* <BottomRightPopup /> */}
       </div>
     </>
   );

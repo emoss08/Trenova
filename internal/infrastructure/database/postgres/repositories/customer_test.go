@@ -20,7 +20,8 @@ import (
 func TestCustomerRepository(t *testing.T) {
 	org := ts.Fixture.MustRow("Organization.trenova").(*organization.Organization)
 	bu := ts.Fixture.MustRow("BusinessUnit.trenova").(*businessunit.BusinessUnit)
-	loc := ts.Fixture.MustRow("Customer.honeywell_customer").(*customer.Customer)
+	cus := ts.Fixture.MustRow("Customer.honeywell_customer").(*customer.Customer)
+	cusBillProfile := ts.Fixture.MustRow("BillingProfile.honeywell_billing_profile").(*customer.BillingProfile)
 	usState := ts.Fixture.MustRow("UsState.ca").(*usstate.UsState)
 
 	repo := repositories.NewCustomerRepository(repositories.CustomerRepositoryParams{
@@ -81,7 +82,7 @@ func TestCustomerRepository(t *testing.T) {
 
 	t.Run("get customer by id", func(t *testing.T) {
 		testutils.TestRepoGetByID(ctx, t, repo, repoports.GetCustomerByIDOptions{
-			ID:    loc.ID,
+			ID:    cus.ID,
 			OrgID: org.ID,
 			BuID:  bu.ID,
 		})
@@ -100,7 +101,7 @@ func TestCustomerRepository(t *testing.T) {
 
 	t.Run("get customer by id with state", func(t *testing.T) {
 		result, err := repo.GetByID(ctx, repoports.GetCustomerByIDOptions{
-			ID:           loc.ID,
+			ID:           cus.ID,
 			OrgID:        org.ID,
 			BuID:         bu.ID,
 			IncludeState: true,
@@ -125,7 +126,7 @@ func TestCustomerRepository(t *testing.T) {
 
 	t.Run("create customer", func(t *testing.T) {
 		// Test Data
-		l := &customer.Customer{
+		c := &customer.Customer{
 			Name:           "Test customer 2",
 			AddressLine1:   "1234 Main St",
 			Code:           "TEST000001",
@@ -137,7 +138,33 @@ func TestCustomerRepository(t *testing.T) {
 			OrganizationID: org.ID,
 		}
 
-		testutils.TestRepoCreate(ctx, t, repo, l)
+		testutils.TestRepoCreate(ctx, t, repo, c)
+	})
+
+	t.Run("create customer with billing profile", func(t *testing.T) {
+		// Test Data
+		c := &customer.Customer{
+			Name:           "Test customer 2",
+			AddressLine1:   "1234 Main St",
+			Code:           "TEST000002",
+			City:           "Los Angeles",
+			PostalCode:     "90001",
+			Status:         domain.StatusActive,
+			StateID:        usState.ID,
+			BusinessUnitID: bu.ID,
+			OrganizationID: org.ID,
+			BillingProfile: &customer.BillingProfile{
+				BusinessUnitID:   bu.ID,
+				OrganizationID:   org.ID,
+				BillingCycleType: customer.BillingCycleTypeMonthly,
+			},
+		}
+
+		result, err := repo.Create(ctx, c)
+		require.NoError(t, err)
+		require.NotNil(t, result)
+		require.NotNil(t, result.BillingProfile)
+		require.Equal(t, c.BillingProfile.BillingCycleType, result.BillingProfile.BillingCycleType)
 	})
 
 	t.Run("create customer failure", func(t *testing.T) {
@@ -161,25 +188,51 @@ func TestCustomerRepository(t *testing.T) {
 	})
 
 	t.Run("update customer", func(t *testing.T) {
-		loc.Name = "Test Customer 3"
-		testutils.TestRepoUpdate(ctx, t, repo, loc)
+		cus.Name = "Test Customer 3"
+		testutils.TestRepoUpdate(ctx, t, repo, cus)
+	})
+
+	t.Run("update customer with billing profile", func(t *testing.T) {
+		cus.BillingProfile = cusBillProfile
+		cusBillProfile.BillingCycleType = customer.BillingCycleTypeMonthly
+		testutils.TestRepoUpdate(ctx, t, repo, cus)
 	})
 
 	t.Run("update customer version lock failure", func(t *testing.T) {
-		loc.Name = "Test Customer 3"
-		loc.Version = 0
+		cus.Name = "Test Customer 3"
+		cus.Version = 0
 
-		results, err := repo.Update(ctx, loc)
+		results, err := repo.Update(ctx, cus)
+
+		require.Error(t, err)
+		require.Nil(t, results)
+	})
+
+	t.Run("update customer billing profile version lock failure", func(t *testing.T) {
+		cus.BillingProfile = cusBillProfile
+		cusBillProfile.BillingCycleType = customer.BillingCycleTypeMonthly
+		cusBillProfile.Version = 0
+
+		results, err := repo.Update(ctx, cus)
+
+		require.Error(t, err)
+		require.Nil(t, results)
+	})
+
+	t.Run("update customer with invalid billing profile", func(t *testing.T) {
+		cus.BillingProfile.BillingCycleType = "invalid-billing-cycle-type"
+
+		results, err := repo.Update(ctx, cus)
 
 		require.Error(t, err)
 		require.Nil(t, results)
 	})
 
 	t.Run("update customer with invalid information", func(t *testing.T) {
-		loc.Name = "Test customer 3"
-		loc.StateID = "invalid-id"
+		cus.Name = "Test customer 3"
+		cus.StateID = "invalid-id"
 
-		results, err := repo.Update(ctx, loc)
+		results, err := repo.Update(ctx, cus)
 
 		require.Error(t, err)
 		require.Nil(t, results)

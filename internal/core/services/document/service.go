@@ -13,9 +13,12 @@ import (
 	"github.com/emoss08/trenova/internal/core/ports/db"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/core/services/audit"
 	"github.com/emoss08/trenova/internal/infrastructure/storage/minio"
 	"github.com/emoss08/trenova/internal/pkg/config"
+	"github.com/emoss08/trenova/internal/pkg/errors"
 	"github.com/emoss08/trenova/internal/pkg/logger"
+	"github.com/emoss08/trenova/internal/pkg/utils/jsonutils"
 	"github.com/rotisserie/eris"
 	"github.com/rs/zerolog"
 	"go.uber.org/fx"
@@ -49,6 +52,8 @@ type service struct {
 	docRepo     repositories.DocumentRepository
 	fileService services.FileService
 	orgRepo     repositories.OrganizationRepository
+	ps          services.PermissionService
+	as          services.AuditService
 }
 
 // NewService initializes a new DocumentService instance with the provided dependencies.
@@ -71,31 +76,105 @@ func NewService(p ServiceParams) services.DocumentService {
 		docRepo:     p.DocRepo,
 		fileService: p.FileService,
 		orgRepo:     p.OrgRepo,
+		ps:          p.PermService,
+		as:          p.AuditService,
 	}
 }
 
 // GetDocumentCountByResource gets the total number of documents per resource
 func (s *service) GetDocumentCountByResource(ctx context.Context, req ports.TenantOptions) ([]*repositories.GetDocumentCountByResourceResponse, error) {
+	log := s.l.With().
+		Str("operation", "GetDocumentCountByResource").
+		Logger()
+
+	result, err := s.ps.HasAnyPermissions(ctx, []*services.PermissionCheck{
+		{
+			UserID:         req.UserID,
+			Resource:       permission.ResourceDocument,
+			Action:         permission.ActionRead,
+			BusinessUnitID: req.BuID,
+			OrganizationID: req.OrgID,
+		},
+	})
+	if err != nil {
+		log.Error().Err(err).Msg("failed to check permissions")
+		return nil, err
+	}
+
+	if !result.Allowed {
+		return nil, errors.NewAuthorizationError("You do not have permission to read documents")
+	}
+
 	return s.docRepo.GetDocumentCountByResource(ctx, &req)
 }
 
 func (s *service) GetResourceSubFolders(ctx context.Context, req repositories.GetResourceSubFoldersRequest) ([]*repositories.GetResourceSubFoldersResponse, error) {
+	log := s.l.With().
+		Str("operation", "GetResourceSubFolders").
+		Logger()
+
+	result, err := s.ps.HasAnyPermissions(ctx, []*services.PermissionCheck{
+		{
+			UserID:         req.UserID,
+			Resource:       permission.ResourceDocument,
+			Action:         permission.ActionRead,
+			BusinessUnitID: req.BuID,
+			OrganizationID: req.OrgID,
+		},
+	})
+	if err != nil {
+		log.Error().Err(err).Msg("failed to check permissions")
+		return nil, err
+	}
+
+	if !result.Allowed {
+		return nil, errors.NewAuthorizationError("You do not have permission to read documents")
+	}
+
 	return s.docRepo.GetResourceSubFolders(ctx, req)
 }
 
 func (s *service) GetDocumentsByResourceID(ctx context.Context, req *repositories.GetDocumentsByResourceIDRequest) (*ports.ListResult[*document.Document], error) {
-	// * We need to get the documents by resource ID
-	// * and then we need to get a presigned URL for each document
-	// * so the client is able to download the document.
+	log := s.l.With().
+		Str("operation", "GetDocumentsByResourceID").
+		Logger()
+
+	result, err := s.ps.HasAnyPermissions(ctx, []*services.PermissionCheck{
+		{
+			UserID:         req.UserID,
+			Resource:       permission.ResourceDocument,
+			Action:         permission.ActionRead,
+			BusinessUnitID: req.BuID,
+			OrganizationID: req.OrgID,
+		},
+	})
+	if err != nil {
+		log.Error().Err(err).Msg("failed to check permissions")
+		return nil, err
+	}
+
+	if !result.Allowed {
+		return nil, errors.NewAuthorizationError("You do not have permission to read documents")
+	}
+
+	// * Get the organization bucket name
+	bucketName, err := s.orgRepo.GetOrganizationBucketName(ctx, req.OrgID)
+	if err != nil {
+		log.Error().Err(err).Msg("failed to get organization bucket name")
+		return nil, eris.Wrap(err, "get organization bucket name")
+	}
+
 	docs, err := s.docRepo.GetDocumentsByResourceID(ctx, req)
 	if err != nil {
+		log.Error().Err(err).Msg("failed to get documents by resource ID")
 		return nil, err
 	}
 
 	// * Get a presigned URL for each document
 	for _, doc := range docs.Items {
-		presignedURL, err := s.fileService.GetFileURL(ctx, "org-4f3a2f6d98f14aeb47dc0ca6e99dd657", doc.StoragePath, time.Hour*24)
+		presignedURL, err := s.fileService.GetFileURL(ctx, bucketName, doc.StoragePath, time.Hour*24)
 		if err != nil {
+			log.Error().Err(err).Msg("failed to get presigned URL for document")
 			return nil, err
 		}
 
@@ -115,8 +194,31 @@ func (s *service) GetDocumentsByResourceID(ctx context.Context, req *repositorie
 //   - *services.UploadDocumentResponse: The response containing the uploaded document.
 //   - error: An error if the operation fails.
 func (s *service) UploadDocument(ctx context.Context, req *services.UploadDocumentRequest) (*services.UploadDocumentResponse, error) {
+	log := s.l.With().
+		Str("operation", "UploadDocument").
+		Logger()
+
+	result, err := s.ps.HasAnyPermissions(ctx, []*services.PermissionCheck{
+		{
+			UserID:         req.UploadedByID,
+			Resource:       permission.ResourceDocument,
+			Action:         permission.ActionCreate,
+			BusinessUnitID: req.BusinessUnitID,
+			OrganizationID: req.OrganizationID,
+		},
+	})
+	if err != nil {
+		log.Error().Err(err).Msg("failed to check permissions")
+		return nil, err
+	}
+
+	if !result.Allowed {
+		return nil, errors.NewAuthorizationError("You do not have permission to create documents")
+	}
+
 	bucketName, err := s.orgRepo.GetOrganizationBucketName(ctx, req.OrganizationID)
 	if err != nil {
+		log.Error().Err(err).Msg("failed to get organization bucket name")
 		return nil, eris.Wrap(err, "get organization bucket name")
 	}
 
@@ -156,7 +258,7 @@ func (s *service) UploadDocument(ctx context.Context, req *services.UploadDocume
 	// * Determine if versioning should be used
 	fileUploadResp, err := s.fileService.SaveFileVersion(ctx, fileReq)
 	if err != nil {
-		s.l.Error().Str("org", req.OrganizationID.String()).Err(err).Msg("save file version")
+		log.Error().Err(err).Msg("failed to save file version")
 		return nil, err
 	}
 
@@ -170,6 +272,7 @@ func (s *service) UploadDocument(ctx context.Context, req *services.UploadDocume
 		}
 	}
 
+	// * Create document record in the database
 	doc := &document.Document{
 		OrganizationID: req.OrganizationID,
 		BusinessUnitID: req.BusinessUnitID,
@@ -180,7 +283,6 @@ func (s *service) UploadDocument(ctx context.Context, req *services.UploadDocume
 		StoragePath:    objectKey,
 		DocumentType:   req.DocumentType,
 		Status:         docStatus,
-		Description:    req.Description,
 		ResourceID:     req.ResourceID,
 		ResourceType:   req.ResourceType,
 		ExpirationDate: req.ExpirationDate,
@@ -191,9 +293,26 @@ func (s *service) UploadDocument(ctx context.Context, req *services.UploadDocume
 	// * Save document to database
 	savedDoc, err := s.docRepo.Create(ctx, doc)
 	if err != nil {
+		log.Error().Err(err).Msg("failed to create document")
 		// * Try to clean up the file if we can't save the metadata
 		_ = s.fileService.DeleteFile(ctx, req.OrganizationID.String(), objectKey)
 		return nil, eris.Wrap(err, "create document")
+	}
+
+	err = s.as.LogAction(
+		&services.LogActionParams{
+			Resource:       permission.ResourceDocument,
+			ResourceID:     savedDoc.ID.String(),
+			Action:         permission.ActionCreate,
+			UserID:         req.UploadedByID,
+			CurrentState:   jsonutils.MustToJSON(savedDoc),
+			OrganizationID: savedDoc.OrganizationID,
+			BusinessUnitID: savedDoc.BusinessUnitID,
+		},
+		audit.WithComment("Document created"),
+	)
+	if err != nil {
+		log.Error().Err(err).Msg("failed to log document creation")
 	}
 
 	return &services.UploadDocumentResponse{
@@ -215,9 +334,27 @@ func (s *service) UploadDocument(ctx context.Context, req *services.UploadDocume
 //   - *services.BulkUploadDocumentResponse: The response containing the uploaded documents.
 //   - error: An error if the operation fails.
 func (s *service) BulkUploadDocuments(ctx context.Context, req *services.BulkUploadDocumentRequest) (*services.BulkUploadDocumentResponse, error) {
-	// if err := s.validateBulkUploadRequest(req); err != nil {
-	// 	return nil, err
-	// }
+	log := s.l.With().
+		Str("operation", "BulkUploadDocuments").
+		Logger()
+
+	result, err := s.ps.HasAnyPermissions(ctx, []*services.PermissionCheck{
+		{
+			UserID:         req.UploadedByID,
+			Resource:       permission.ResourceDocument,
+			Action:         permission.ActionCreate,
+			BusinessUnitID: req.BusinessUnitID,
+			OrganizationID: req.OrganizationID,
+		},
+	})
+	if err != nil {
+		log.Error().Err(err).Msg("failed to check permissions")
+		return nil, err
+	}
+
+	if !result.Allowed {
+		return nil, errors.NewAuthorizationError("You do not have permission to create documents")
+	}
 
 	response := &services.BulkUploadDocumentResponse{
 		Successful: make([]services.UploadDocumentResponse, 0, len(req.Documents)),
@@ -254,6 +391,22 @@ func (s *service) BulkUploadDocuments(ctx context.Context, req *services.BulkUpl
 		}
 
 		response.Successful = append(response.Successful, *uploadResp)
+	}
+
+	err = s.as.LogAction(
+		&services.LogActionParams{
+			Resource:       permission.ResourceDocument,
+			ResourceID:     req.ResourceID.String(),
+			Action:         permission.ActionCreate,
+			UserID:         req.UploadedByID,
+			CurrentState:   jsonutils.MustToJSON(response),
+			OrganizationID: req.OrganizationID,
+			BusinessUnitID: req.BusinessUnitID,
+		},
+		audit.WithComment("Documents uploaded"),
+	)
+	if err != nil {
+		log.Error().Err(err).Msg("failed to log document creation")
 	}
 
 	return response, nil

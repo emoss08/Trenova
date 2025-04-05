@@ -63,7 +63,7 @@ export function EntryAuditViewer({
           </DialogDescription>
         </DialogHeader>
         <DialogBody className="p-0">
-          {isLoading && <ComponentLoader message="Loading audit entires..." />}
+          {isLoading && <ComponentLoader message="Loading audit entries..." />}
           {data && <AuditEntryTable data={data.items} />}
           {isError && (
             <div className="p-4">

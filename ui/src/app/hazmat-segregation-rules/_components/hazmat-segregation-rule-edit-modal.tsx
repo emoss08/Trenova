@@ -1,7 +1,7 @@
 import { FormEditModal } from "@/components/ui/form-edit-model";
 import {
-    hazmatSegregationRuleSchema,
-    type HazmatSegregationRuleSchema,
+  hazmatSegregationRuleSchema,
+  type HazmatSegregationRuleSchema,
 } from "@/lib/schemas/hazmat-segregation-rule-schema";
 import { type EditTableSheetProps } from "@/types/data-table";
 import { yupResolver } from "@hookform/resolvers/yup";

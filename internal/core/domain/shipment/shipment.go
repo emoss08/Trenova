@@ -15,6 +15,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/user"
 	"github.com/emoss08/trenova/internal/core/ports/infra"
 	"github.com/emoss08/trenova/internal/pkg/errors"
+	"github.com/emoss08/trenova/internal/pkg/utils/intutils"
 	"github.com/emoss08/trenova/internal/pkg/utils/timeutils"
 	"github.com/emoss08/trenova/pkg/types/pulid"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
@@ -58,11 +59,11 @@ type Shipment struct {
 	Weight              *int64              `json:"weight" bun:"weight,type:INTEGER,nullzero"`
 
 	// Misc. Shipment Related Fields
-	TemperatureMin     decimal.NullDecimal `json:"temperatureMin" bun:"temperature_min,type:NUMERIC(10,2),nullzero"`
-	TemperatureMax     decimal.NullDecimal `json:"temperatureMax" bun:"temperature_max,type:NUMERIC(10,2),nullzero"`
-	BOL                string              `json:"bol" bun:"bol,type:VARCHAR(100),notnull"`
-	ActualDeliveryDate *int64              `json:"actualDeliveryDate" bun:"actual_delivery_date,type:BIGINT,nullzero"`
-	ActualShipDate     *int64              `json:"actualShipDate" bun:"actual_ship_date,type:BIGINT,nullzero"`
+	TemperatureMin     *int16 `json:"temperatureMin" bun:"temperature_min,type:temperature_fahrenheit,nullzero"`
+	TemperatureMax     *int16 `json:"temperatureMax" bun:"temperature_max,type:temperature_fahrenheit,nullzero"`
+	ActualDeliveryDate *int64 `json:"actualDeliveryDate" bun:"actual_delivery_date,type:BIGINT,nullzero"`
+	ActualShipDate     *int64 `json:"actualShipDate" bun:"actual_ship_date,type:BIGINT,nullzero"`
+	BOL                string `json:"bol" bun:"bol,type:VARCHAR(100),notnull"`
 
 	// Cancelation Related Fields
 	CanceledAt   *int64    `json:"canceledAt" bun:"canceled_at,type:BIGINT,nullzero"`
@@ -77,16 +78,17 @@ type Shipment struct {
 	Rank         string `json:"-" bun:"rank,type:VARCHAR(100),scanonly"`
 
 	// Relationships
-	BusinessUnit *businessunit.BusinessUnit   `json:"businessUnit,omitempty" bun:"rel:belongs-to,join:business_unit_id=id"`
-	Organization *organization.Organization   `json:"organization,omitempty" bun:"rel:belongs-to,join:organization_id=id"`
-	ShipmentType *shipmenttype.ShipmentType   `json:"shipmentType,omitempty" bun:"rel:belongs-to,join:shipment_type_id=id"`
-	ServiceType  *servicetype.ServiceType     `json:"serviceType,omitempty" bun:"rel:belongs-to,join:service_type_id=id"`
-	Customer     *customer.Customer           `json:"customer,omitempty" bun:"rel:belongs-to,join:customer_id=id"`
-	TractorType  *equipmenttype.EquipmentType `json:"tractorType,omitempty" bun:"rel:belongs-to,join:tractor_type_id=id"`
-	TrailerType  *equipmenttype.EquipmentType `json:"trailerType,omitempty" bun:"rel:belongs-to,join:trailer_type_id=id"`
-	CanceledBy   *user.User                   `json:"canceledBy,omitempty" bun:"rel:belongs-to,join:canceled_by_id=id"`
-	Moves        []*ShipmentMove              `json:"moves,omitempty" bun:"rel:has-many,join:id=shipment_id"`
-	Commodities  []*ShipmentCommodity         `json:"commodities,omitempty" bun:"rel:has-many,join:id=shipment_id"`
+	BusinessUnit      *businessunit.BusinessUnit   `json:"businessUnit,omitempty" bun:"rel:belongs-to,join:business_unit_id=id"`
+	Organization      *organization.Organization   `json:"organization,omitempty" bun:"rel:belongs-to,join:organization_id=id"`
+	ShipmentType      *shipmenttype.ShipmentType   `json:"shipmentType,omitempty" bun:"rel:belongs-to,join:shipment_type_id=id"`
+	ServiceType       *servicetype.ServiceType     `json:"serviceType,omitempty" bun:"rel:belongs-to,join:service_type_id=id"`
+	Customer          *customer.Customer           `json:"customer,omitempty" bun:"rel:belongs-to,join:customer_id=id"`
+	TractorType       *equipmenttype.EquipmentType `json:"tractorType,omitempty" bun:"rel:belongs-to,join:tractor_type_id=id"`
+	TrailerType       *equipmenttype.EquipmentType `json:"trailerType,omitempty" bun:"rel:belongs-to,join:trailer_type_id=id"`
+	CanceledBy        *user.User                   `json:"canceledBy,omitempty" bun:"rel:belongs-to,join:canceled_by_id=id"`
+	Moves             []*ShipmentMove              `json:"moves,omitempty" bun:"rel:has-many,join:id=shipment_id"`
+	Commodities       []*ShipmentCommodity         `json:"commodities,omitempty" bun:"rel:has-many,join:id=shipment_id"`
+	AdditionalCharges []*AdditionalCharge          `json:"additionalCharges,omitempty" bun:"rel:has-many,join:id=shipment_id"`
 }
 
 func (st *Shipment) Validate(ctx context.Context, multiErr *errors.MultiError) {
@@ -146,6 +148,22 @@ func (st *Shipment) Validate(ctx context.Context, multiErr *errors.MultiError) {
 		validation.Field(&st.Weight,
 			validation.When(st.RatingMethod == RatingMethodPerPound,
 				validation.Required.Error("Weight is required when rating method is Per Pound"),
+			),
+		),
+
+		// Temperature Max cannot be less than Temperature Min
+		validation.Field(&st.TemperatureMax,
+			validation.By(domain.ValidateTemperaturePointer),
+			validation.When(st.TemperatureMin != nil,
+				validation.Min(intutils.ToInt16(st.TemperatureMin)).Error("Temperature Max must be greater than Temperature Min"),
+			),
+		),
+
+		// Temperature Min cannot be greater than Temperature Max
+		validation.Field(&st.TemperatureMin,
+			validation.By(domain.ValidateTemperaturePointer),
+			validation.When(st.TemperatureMax != nil,
+				validation.Max(intutils.ToInt16(st.TemperatureMax)).Error("Temperature Min must be less than Temperature Max"),
 			),
 		),
 
@@ -213,6 +231,16 @@ func (st *Shipment) HasCommodities() bool {
 
 	// Check if the shipment has any commodities
 	return len(st.Commodities) > 0
+}
+
+// HasAdditionalCharge returns true if the shipment has additional charges
+func (st *Shipment) HasAdditionalCharge() bool {
+	return st.AdditionalCharges != nil && len(st.AdditionalCharges) > 0
+}
+
+// HasMoves returns true if the shipment has moves
+func (st *Shipment) HasMoves() bool {
+	return st.Moves != nil && len(st.Moves) > 0
 }
 
 func (st *Shipment) GetPostgresSearchConfig() infra.PostgresSearchConfig {

@@ -262,8 +262,8 @@ export function ChangesTable({
 
   if (!changes) {
     return (
-      <div className="flex flex-col gap-2 border border-border rounded-md p-4">
-        <p className="text-sm text-muted-foreground italic">
+      <div className="flex flex-col gap-2 border border-dashed border-border rounded-md p-4">
+        <p className="text-xs text-muted-foreground italic">
           No changes recorded
         </p>
       </div>

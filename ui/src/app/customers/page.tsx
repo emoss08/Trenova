@@ -1,4 +1,5 @@
 import { LazyComponent } from "@/components/error-boundary";
+import { FormSaveProvider } from "@/components/form";
 import { MetaTags } from "@/components/meta-tags";
 import { lazy } from "react";
 
@@ -8,9 +9,11 @@ export function Customers() {
   return (
     <>
       <MetaTags title="Customers" description="Customers" />
-      <LazyComponent>
-        <CustomersDataTable />
-      </LazyComponent>
+      <FormSaveProvider>
+        <LazyComponent>
+          <CustomersDataTable />
+        </LazyComponent>
+      </FormSaveProvider>
     </>
   );
 }

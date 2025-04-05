@@ -26,18 +26,47 @@ const routes: RouteObject[] = [
           },
           // Billing Links
           {
-            path: "/billing/configurations/customers",
-            async lazy() {
-              let { Customers } = await import("@/app/customers/page");
-              return { Component: Customers };
+            path: "/billing",
+            HydrateFallback: LoadingSkeleton,
+            loader: protectedLoader,
+            handle: {
+              crumb: "Billing",
+              title: "Billing",
             },
-          },
-          {
-            path: "/billing/documents",
-            async lazy() {
-              let { Document } = await import("@/app/document/page");
-              return { Component: Document };
-            },
+            children: [
+              {
+                path: "documents",
+                async lazy() {
+                  let { Document } = await import("@/app/document/page");
+                  return { Component: Document };
+                },
+              },
+              {
+                path: "configurations/customers",
+                async lazy() {
+                  let { Customers } = await import("@/app/customers/page");
+                  return { Component: Customers };
+                },
+              },
+              {
+                path: "configurations/document-types",
+                async lazy() {
+                  let { DocumentTypes } = await import(
+                    "@/app/document-types/page"
+                  );
+                  return { Component: DocumentTypes };
+                },
+              },
+              {
+                path: "configurations/accessorial-charges",
+                async lazy() {
+                  let { AccessorialCharges } = await import(
+                    "@/app/accessorial-charges/page"
+                  );
+                  return { Component: AccessorialCharges };
+                },
+              },
+            ],
           },
           // Shipment Links
           {
@@ -236,6 +265,19 @@ const routes: RouteObject[] = [
                 handle: {
                   crumb: "Shipment Controls",
                   title: "Shipment Controls",
+                },
+              },
+              {
+                path: "billing-controls",
+                async lazy() {
+                  let { BillingControl } = await import(
+                    "@/app/billing-control/page"
+                  );
+                  return { Component: BillingControl };
+                },
+                handle: {
+                  crumb: "Billing Controls",
+                  title: "Billing Controls",
                 },
               },
               {

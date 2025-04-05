@@ -7,4 +7,3 @@ CREATE TYPE gender_enum AS ENUM (
     'Female',
     'Other'
 );
-

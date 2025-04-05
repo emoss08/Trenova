@@ -2,8 +2,8 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Icon } from "@/components/ui/icons";
 import {
-    faChevronLeft,
-    faCircleXmark,
+  faChevronLeft,
+  faCircleXmark,
 } from "@fortawesome/pro-regular-svg-icons";
 
 interface ShipmentNotFoundOverlayProps {
@@ -15,7 +15,7 @@ export function ShipmentNotFoundOverlay({
 }: ShipmentNotFoundOverlayProps) {
   return (
     <div className="relative size-full rounded-md">
-      <div className="absolute inset-0 flex items-center justify-center bg-background/50 backdrop-blur-[2px]">
+      <div className="flex absolute inset-0 items-center justify-center bg-background/50 backdrop-blur-[2px]">
         <Card className="w-[400px] p-6 shadow-lg border">
           <div className="flex flex-col items-center mb-4">
             <div className="relative mb-2">

@@ -3,7 +3,6 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { type Shipment } from "@/types/shipment";
 import { lazy } from "react";
 import { ShipmentNotFoundOverlay } from "../sidebar/shipment-not-found-overlay";
-import { ShipmentServiceDetails } from "./shipment-details-components";
 import { ShipmentDetailsSkeleton } from "./shipment-details-skeleton";
 import { ShipmentFormHeader } from "./shipment-form-header";
 
@@ -17,6 +16,7 @@ const ShipmentCommodityDetails = lazy(
   () => import("./commodity/commodity-details"),
 );
 const ShipmentMovesDetails = lazy(() => import("./move/move-details"));
+const ShipmentServiceDetails = lazy(() => import("./shipment-service-details"));
 
 type ShipmentDetailsProps = {
   selectedShipment?: Shipment | null;
@@ -31,7 +31,12 @@ type ShipmentDetailsProps = {
 
 export function ShipmentForm({ ...props }: ShipmentDetailsProps) {
   return (
-    <LazyComponent>
+    <LazyComponent
+      componentLoaderProps={{
+        message: "Loading Shipment Details...",
+        description: "Please wait while we load the shipment details.",
+      }}
+    >
       <ShipmentScrollArea {...props}>
         <ShipmentServiceDetails />
         <ShipmentBillingDetails />
@@ -52,11 +57,19 @@ export function ShipmentScrollArea({
   children,
 }: ShipmentDetailsProps & { children: React.ReactNode }) {
   if (isLoading) {
-    return <ShipmentDetailsSkeleton />;
+    return (
+      <div className="flex size-full items-center justify-center pt-96">
+        <ShipmentDetailsSkeleton />
+      </div>
+    );
   }
 
   if (!selectedShipment && !isCreate) {
-    return <ShipmentNotFoundOverlay onBack={onBack} />;
+    return (
+      <div className="flex size-full items-center justify-center">
+        <ShipmentNotFoundOverlay onBack={onBack} />
+      </div>
+    );
   }
 
   // Calculate the optimal height for the scroll area

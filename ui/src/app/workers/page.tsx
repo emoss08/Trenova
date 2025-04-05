@@ -9,11 +9,11 @@ export function Workers() {
   return (
     <>
       <MetaTags title="Workers" description="Workers" />
-      <LazyComponent>
-        <FormSaveProvider>
+      <FormSaveProvider>
+        <LazyComponent>
           <WorkersDataTable />
-        </FormSaveProvider>
-      </LazyComponent>
+        </LazyComponent>
+      </FormSaveProvider>
     </>
   );
 }

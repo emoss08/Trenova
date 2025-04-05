@@ -20,7 +20,7 @@ CREATE TABLE IF NOT EXISTS "workers"(
     "address_line1" varchar(150) NOT NULL,
     "address_line2" varchar(150),
     "city" varchar(100) NOT NULL,
-    "postal_code" varchar(20) NOT NULL,
+    "postal_code" us_postal_code NOT NULL,
     "gender" gender_enum NOT NULL,
     "can_be_assigned" boolean NOT NULL DEFAULT FALSE,
     "assignment_blocked" varchar(255),

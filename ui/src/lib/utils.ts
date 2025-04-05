@@ -281,12 +281,14 @@ export function resourceToPage(resource: Resource) {
       return "/shipments/configurations/commodities";
     case Resource.Assignment:
       return "/shipments/assignments";
+    case Resource.DocumentType:
+      return "/billing/configurations/document-types";
     case Resource.ShipmentMove:
       return "/shipments/moves";
     case Resource.Stop:
-      return "/shipments/stops";
+      return "/shipments/stops"; // Doesn't map to a page, need to change to something else.
     case Resource.Customer:
-      return "/customers";
+      return "/billing/configurations/customers";
     case Resource.Invoice:
       return "/invoices";
     case Resource.Dispatch:

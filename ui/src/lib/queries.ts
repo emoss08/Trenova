@@ -1,9 +1,11 @@
 import {
   getDocumentCountByResource,
   getDocumentsByResourceID,
+  getDocumentTypes,
   getResourceSubFolders,
 } from "@/services/document";
 import {
+  getBillingControl,
   getDatabaseBackups,
   getOrgById,
   getShipmentControl,
@@ -44,6 +46,13 @@ export const queries = createQueryKeyStore({
         return response.data;
       },
     }),
+    getBillingControl: () => ({
+      queryKey: ["billingControl"],
+      queryFn: async () => {
+        const response = await getBillingControl();
+        return response.data;
+      },
+    }),
     getDatabaseBackups: () => ({
       queryKey: ["databaseBackups"],
       queryFn: async () => {
@@ -65,6 +74,12 @@ export const queries = createQueryKeyStore({
     }),
   },
   document: {
+    getDocumentTypes: () => ({
+      queryKey: ["document/types"],
+      queryFn: async () => {
+        return await getDocumentTypes();
+      },
+    }),
     countByResource: () => ({
       queryKey: ["document/count-by-resource"],
       queryFn: async () => {

@@ -42,7 +42,7 @@ export function HazmatSegregationRuleForm() {
           name="status"
           label="Status"
           placeholder="Status"
-          description="The status of the hazardous material"
+          description="The status of the segregation rule"
           options={statusChoices}
         />
       </FormControl>

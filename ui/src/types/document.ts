@@ -47,6 +47,7 @@ export function getDocumentTypeLabel(documentType: DocumentType) {
       return "Other";
   }
 }
+
 export enum DocumentStatus {
   Draft = "Draft",
   Active = "Active",
@@ -67,7 +68,6 @@ export type Document = {
   resourceId: string;
   createdAt: number;
   status: DocumentStatus;
-  description?: string;
   tags?: string[];
   // * generated presigned URL by the server. (expires in 24 hours)
   presignedURL?: string | null;

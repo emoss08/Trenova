@@ -3,7 +3,6 @@ import {
   createCommonColumns,
   createEntityColumn,
 } from "@/components/data-table/_components/data-table-column-helpers";
-import { BooleanBadge } from "@/components/data-table/_components/data-table-components";
 import { StatusBadge } from "@/components/status-badge";
 import { type CustomerSchema } from "@/lib/schemas/customer-schema";
 import { createColumnHelper, type ColumnDef } from "@tanstack/react-table";
@@ -34,19 +33,6 @@ export function getColumns(): ColumnDef<CustomerSchema>[] {
       accessorKey: "name",
       header: ({ column }) => (
         <DataTableColumnHeader column={column} title="Name" />
-      ),
-    },
-    {
-      id: "autoMarkReadyToBill",
-      accessorKey: "autoMarkReadyToBill",
-      header: ({ column }) => (
-        <DataTableColumnHeader
-          column={column}
-          title="Auto Mark Ready To Bill"
-        />
-      ),
-      cell: ({ row }) => (
-        <BooleanBadge value={row.original.autoMarkReadyToBill} />
       ),
     },
     commonColumns.createdAt,
