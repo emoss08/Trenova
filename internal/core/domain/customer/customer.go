@@ -53,6 +53,7 @@ type Customer struct {
 	BusinessUnit   *businessunit.BusinessUnit `bun:"rel:belongs-to,join:business_unit_id=id" json:"-"`
 	Organization   *organization.Organization `bun:"rel:belongs-to,join:organization_id=id" json:"-"`
 	BillingProfile *BillingProfile            `bun:"rel:has-one,join:id=customer_id" json:"billingProfile,omitempty"`
+	EmailProfile   *CustomerEmailProfile      `bun:"rel:has-one,join:id=customer_id" json:"emailProfile,omitempty"`
 	State          *usstate.UsState           `bun:"rel:belongs-to,join:state_id=id" json:"state,omitempty"`
 }
 
@@ -151,4 +152,8 @@ func (c *Customer) GetPostgresSearchConfig() infra.PostgresSearchConfig {
 // Miscellaneous
 func (c *Customer) HasBillingProfile() bool {
 	return c.BillingProfile != nil
+}
+
+func (c *Customer) HasEmailProfile() bool {
+	return c.EmailProfile != nil
 }

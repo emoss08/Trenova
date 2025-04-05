@@ -2,8 +2,10 @@ package domain
 
 import (
 	"regexp"
+	"strings"
 	"time"
 
+	"github.com/asaskevich/govalidator"
 	"github.com/rotisserie/eris"
 )
 
@@ -76,4 +78,24 @@ func ValidateTemperaturePointer(value any) error {
 	}
 
 	return ValidateTemperature(*temperature)
+}
+
+func ValidateCommaSeparatedEmails(value any) error {
+	emails, _ := value.(string)
+	if emails == "" {
+		return nil
+	}
+
+	// Take out the commas and split the string into a slice of strings
+	emails = strings.ReplaceAll(emails, ",", "")
+	emailSlice := strings.Split(emails, ",")
+
+	// Validate each email in the slice
+	for _, email := range emailSlice {
+		if !govalidator.IsEmail(email) {
+			return eris.New("Invalid email address. Please provide a valid email address")
+		}
+	}
+
+	return nil
 }

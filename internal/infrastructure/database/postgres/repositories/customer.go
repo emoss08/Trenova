@@ -125,6 +125,10 @@ func (cr *customerRepository) GetByID(ctx context.Context, opts repositories.Get
 		})
 	}
 
+	if opts.IncludeEmailProfile {
+		query = query.Relation("EmailProfile")
+	}
+
 	if err = query.Scan(ctx); err != nil {
 		if eris.Is(err, sql.ErrNoRows) {
 			return nil, errors.NewNotFoundError("Customer not found within your organization")
@@ -162,6 +166,11 @@ func (cr *customerRepository) Create(ctx context.Context, cus *customer.Customer
 
 		// Create or update the billing profile
 		if iErr := cr.createOrUpdateBillingProfile(c, tx, cus); iErr != nil {
+			return iErr
+		}
+
+		// Create or update the email profile
+		if iErr := cr.createOrUpdateEmailProfile(c, tx, cus); iErr != nil {
 			return iErr
 		}
 
@@ -224,6 +233,55 @@ func (cr *customerRepository) createOrUpdateBillingProfile(ctx context.Context, 
 	return nil
 }
 
+// createOrUpdateEmailProfile ensures a customer has an email profile
+// If the customer already has an email profile, it's used; otherwise a default one is created
+func (cr *customerRepository) createOrUpdateEmailProfile(ctx context.Context, tx bun.Tx, cus *customer.Customer) error {
+	log := cr.l.With().
+		Str("operation", "createOrUpdateEmailProfile").
+		Str("customerID", cus.ID.String()).
+		Logger()
+
+	// Check if the customer already has an email profile
+	if cus.HasEmailProfile() {
+		// Update the email profile with the new customer ID
+		cus.EmailProfile.CustomerID = cus.ID
+		cus.EmailProfile.OrganizationID = cus.OrganizationID
+		cus.EmailProfile.BusinessUnitID = cus.BusinessUnitID
+
+		// Insert the existing email profile
+		if _, err := tx.NewInsert().Model(cus.EmailProfile).
+			Returning("*").
+			Exec(ctx); err != nil {
+			log.Error().
+				Err(err).
+				Interface("emailProfile", cus.EmailProfile).
+				Msg("failed to insert email profile")
+			return eris.Wrap(err, "insert email profile")
+		}
+
+		return nil
+	}
+
+	// Create default email profile
+	emailProfile := new(customer.CustomerEmailProfile)
+	emailProfile.CustomerID = cus.ID
+	emailProfile.OrganizationID = cus.OrganizationID
+	emailProfile.BusinessUnitID = cus.BusinessUnitID
+
+	// Insert the default email profile
+	if _, err := tx.NewInsert().Model(emailProfile).
+		Returning("*").
+		Exec(ctx); err != nil {
+		log.Error().
+			Err(err).
+			Interface("emailProfile", emailProfile).
+			Msg("failed to insert email profile")
+		return eris.Wrap(err, "insert email profile")
+	}
+
+	return nil
+}
+
 func (cr *customerRepository) Update(ctx context.Context, cus *customer.Customer) (*customer.Customer, error) {
 	dba, err := cr.db.DB(ctx)
 	if err != nil {
@@ -274,6 +332,12 @@ func (cr *customerRepository) Update(ctx context.Context, cus *customer.Customer
 
 		if cus.HasBillingProfile() {
 			if err = cr.updateBillingProfile(c, cus.BillingProfile); err != nil {
+				return err
+			}
+		}
+
+		if cus.HasEmailProfile() {
+			if err = cr.updateEmailProfile(c, cus.EmailProfile); err != nil {
 				return err
 			}
 		}
@@ -344,6 +408,68 @@ func (cr *customerRepository) updateBillingProfile(ctx context.Context, profile 
 	})
 	if err != nil {
 		log.Error().Err(err).Msg("failed to update billing profile")
+		return err
+	}
+
+	return nil
+}
+
+func (cr *customerRepository) updateEmailProfile(ctx context.Context, profile *customer.CustomerEmailProfile) error {
+	dba, err := cr.db.DB(ctx)
+	if err != nil {
+		return eris.Wrap(err, "get database connection")
+	}
+
+	log := cr.l.With().
+		Str("operation", "UpdateEmailProfile").
+		Str("id", profile.GetID()).
+		Int64("version", profile.Version).
+		Logger()
+
+	log.Info().
+		Interface("emailProfile", profile).
+		Msg("updating email profile")
+
+	err = dba.RunInTx(ctx, nil, func(c context.Context, tx bun.Tx) error {
+		ov := profile.Version
+
+		profile.Version++
+
+		results, rErr := tx.NewUpdate().
+			Model(profile).
+			Where("cem.version = ?", ov).
+			WherePK().
+			Returning("*").
+			Exec(c)
+		if rErr != nil {
+			log.Error().
+				Err(rErr).
+				Interface("emailProfile", profile).
+				Msg("failed to update email profile")
+			return rErr
+		}
+
+		rows, roErr := results.RowsAffected()
+		if roErr != nil {
+			log.Error().
+				Err(roErr).
+				Interface("emailProfile", profile).
+				Msg("failed to get rows affected")
+			return roErr
+		}
+
+		if rows == 0 {
+			return errors.NewValidationError(
+				"version",
+				errors.ErrVersionMismatch,
+				fmt.Sprintf("Version mismatch. The Email Profile (%s) has either been updated or deleted since the last request.", profile.GetID()),
+			)
+		}
+
+		return nil
+	})
+	if err != nil {
+		log.Error().Err(err).Msg("failed to update email profile")
 		return err
 	}
 

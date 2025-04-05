@@ -61,7 +61,20 @@ function createNavigationItems<T extends FieldValues>() {
       icon: <Icon icon={faCreditCard} />,
       component: <BillingProfileForm />,
       validateSection: (errors: Partial<T>) =>
-        checkSectionErrors(errors, [] as Path<T>[]),
+        checkSectionErrors(errors, [
+          "billingProfile.billingCycleType",
+          "billingProfile.documentTypeIds",
+          "billingProfile.hasOverrides",
+          "billingProfile.enforceCustomerBillingReq",
+          "billingProfile.validateCustomerRates",
+          "billingProfile.paymentTerm",
+          "billingProfile.autoTransfer",
+          "billingProfile.transferCriteria",
+          "billingProfile.autoMarkReadyToBill",
+          "billingProfile.autoBill",
+          "billingProfile.autoBillCriteria",
+          "billingProfile.specialInstructions",
+        ] as Path<T>[]),
     },
     {
       id: "email-profile",
@@ -70,7 +83,14 @@ function createNavigationItems<T extends FieldValues>() {
       icon: <Icon icon={faEnvelope} />,
       component: <div>Coming soon</div>,
       validateSection: (errors: Partial<T>) =>
-        checkSectionErrors(errors, [] as Path<T>[]),
+        checkSectionErrors(errors, [
+          "emailProfile.subject",
+          "emailProfile.comment",
+          "emailProfile.fromEmail",
+          "emailProfile.blindCopy",
+          "emailProfile.readReceipt",
+          "emailProfile.attachmentName",
+        ] as Path<T>[]),
     },
   ];
 }

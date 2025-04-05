@@ -7,6 +7,21 @@ import {
 import { Status } from "@/types/common";
 import { array, boolean, type InferType, mixed, object, string } from "yup";
 
+export const emailProfileSchema = object({
+  id: string().optional(),
+  organizationId: string().nullable().optional(),
+  businessUnitId: string().nullable().optional(),
+  customerId: string().nullable().optional(),
+
+  // Core Fields
+  subject: string().optional(),
+  comment: string().optional(),
+  fromEmail: string().optional(),
+  blindCopy: string().optional(),
+  readReceipt: boolean(),
+  attachmentName: string().optional(),
+});
+
 export const billingProfileSchema = object({
   id: string().optional(),
   organizationId: string().nullable().optional(),
@@ -17,7 +32,9 @@ export const billingProfileSchema = object({
   billingCycleType: mixed<BillingCycleType>().oneOf(
     Object.values(BillingCycleType),
   ),
-  documentTypeIds: array().of(string()).required(),
+  documentTypeIds: array()
+    .of(string())
+    .required("Document Type IDs are required"),
 
   // Billing Control Overrides
   hasOverrides: boolean(),
@@ -34,7 +51,6 @@ export const billingProfileSchema = object({
     Object.values(AutoBillCriteria),
   ),
   specialInstructions: string().optional(),
-  // documentTypes: array().of(string()).optional(),
 });
 
 export const customerSchema = object({
@@ -53,6 +69,7 @@ export const customerSchema = object({
   postalCode: string().required("Postal code is required"),
   stateId: string().required("State is required"),
   billingProfile: billingProfileSchema.optional(),
+  emailProfile: emailProfileSchema.optional(),
 });
 
 export type CustomerSchema = InferType<typeof customerSchema>;
