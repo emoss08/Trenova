@@ -30,8 +30,8 @@ import { type FieldValues, type Path, useFormContext } from "react-hook-form";
 const GeneralInformationForm = lazy(
   () => import("./customer-general-information"),
 );
-
 const BillingProfileForm = lazy(() => import("./customer-billing-profile"));
+const CustomerEmailProfile = lazy(() => import("./customer-email-profile"));
 
 function createNavigationItems<T extends FieldValues>() {
   return [
@@ -81,7 +81,7 @@ function createNavigationItems<T extends FieldValues>() {
       name: "Email Profile",
       description: "Configure email settings for the customer.",
       icon: <Icon icon={faEnvelope} />,
-      component: <div>Coming soon</div>,
+      component: <CustomerEmailProfile />,
       validateSection: (errors: Partial<T>) =>
         checkSectionErrors(errors, [
           "emailProfile.subject",

@@ -34,8 +34,8 @@ type CustomerEmailProfile struct {
 	Comment        string `json:"comment" bun:"comment,type:TEXT"`
 	FromEmail      string `json:"fromEmail" bun:"from_email,type:VARCHAR(255)"`
 	BlindCopy      string `json:"blindCopy" bun:"blind_copy,type:VARCHAR(255)"`
-	ReadReceipt    bool   `json:"readReceipt" bun:"read_receipt,type:BOOLEAN,notnull,default:false"`
 	AttachmentName string `json:"attachmentName" bun:"attachment_name,type:VARCHAR(255)"`
+	ReadReceipt    bool   `json:"readReceipt" bun:"read_receipt,type:BOOLEAN,notnull,default:false"`
 
 	// Metadata
 	Version   int64 `json:"version" bun:"version,type:BIGINT"`

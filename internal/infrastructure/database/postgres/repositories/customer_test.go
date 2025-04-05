@@ -227,6 +227,7 @@ func TestCustomerRepository(t *testing.T) {
 		require.Error(t, err)
 		require.Nil(t, results)
 	})
+
 	t.Run("update customer with invalid information", func(t *testing.T) {
 		cus.Name = "Test customer 3"
 		cus.StateID = "invalid-id"

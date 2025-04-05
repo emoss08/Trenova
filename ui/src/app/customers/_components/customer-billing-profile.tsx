@@ -10,11 +10,7 @@ import { useFormContext } from "react-hook-form";
 import { BillingControlOverrides } from "./customer-billing-control-override";
 
 export default function CustomerBillingProfile() {
-  const { control, watch } = useFormContext<CustomerSchema>();
-
-  const billingProfile = watch("billingProfile");
-
-  console.info("billingProfile", billingProfile);
+  const { control } = useFormContext<CustomerSchema>();
 
   return (
     <div className="size-full">

@@ -57,6 +57,10 @@ func (cr *customerRepository) filterQuery(q *bun.SelectQuery, opts *repositories
 		q = q.Relation("BillingProfile")
 	}
 
+	if opts.IncludeEmailProfile {
+		q = q.Relation("EmailProfile")
+	}
+
 	if opts.Filter.Query != "" {
 		q = postgressearch.BuildSearchQuery(
 			q,
@@ -118,11 +122,7 @@ func (cr *customerRepository) GetByID(ctx context.Context, opts repositories.Get
 	}
 
 	if opts.IncludeBillingProfile {
-		query = query.RelationWithOpts("BillingProfile", bun.RelationOpts{
-			Apply: func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return sq.Relation("DocumentTypes")
-			},
-		})
+		query = query.Relation("BillingProfile")
 	}
 
 	if opts.IncludeEmailProfile {

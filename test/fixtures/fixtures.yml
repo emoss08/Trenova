@@ -978,6 +978,14 @@
       customer_id: "{{ $.Customer.honeywell_customer.ID }}"
       created_at: "{{ now.Unix }}"
 
+- model: CustomerEmailProfile
+  rows:
+    - _id: honeywell_email_profile
+      organization_id: "{{ $.Organization.trenova.ID }}"
+      business_unit_id: "{{ $.BusinessUnit.trenova.ID }}"
+      customer_id: "{{ $.Customer.honeywell_customer.ID }}"
+      created_at: "{{ now.Unix }}"
+
 - model: Shipment
   rows:
     - _id: test_shipment
@@ -1678,6 +1686,7 @@
       color: "#4C2F27"
       document_classification: "Public"
       document_category: "Shipment"
+
 - model: AccessorialCharge
   rows:
     - _id: hazmat

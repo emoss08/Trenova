@@ -58,6 +58,14 @@ export function CreateCustomerModal({ open, onOpenChange }: TableSheetProps) {
           billingCycleType: BillingCycleType.Immediate,
           hasOverrides: false,
         },
+        emailProfile: {
+          subject: "",
+          comment: "",
+          fromEmail: "",
+          blindCopy: "",
+          attachmentName: "",
+          readReceipt: false,
+        },
       },
     },
     mutationFn: async (values: CustomerSchema) => {
