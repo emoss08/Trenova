@@ -6,7 +6,7 @@ import { DatabaseBackup } from "@/types/database-backup";
 import { APIError } from "@/types/errors";
 import { faMinus, faServer } from "@fortawesome/pro-regular-svg-icons";
 import { faSort, faX } from "@fortawesome/pro-solid-svg-icons";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 const asciiArt = `
@@ -148,7 +148,6 @@ function TerminalRestoreDialog({
   onOpenChange: (open: boolean) => void;
   restoreMutation: any;
 }) {
-  const queryClient = useQueryClient();
   const [status, setStatus] = useState<RestoreStatus>("idle");
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [_, setErrorDetails] = useState<ErrorDetails | null>(null);
