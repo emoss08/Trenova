@@ -1,14 +1,17 @@
 package api
 
 import (
+	"github.com/emoss08/trenova/internal/api/handlers/accessorialcharge"
 	"github.com/emoss08/trenova/internal/api/handlers/assignment"
 	"github.com/emoss08/trenova/internal/api/handlers/audit"
 	"github.com/emoss08/trenova/internal/api/handlers/auth"
 	"github.com/emoss08/trenova/internal/api/handlers/backup"
+	"github.com/emoss08/trenova/internal/api/handlers/billingcontrol"
 	"github.com/emoss08/trenova/internal/api/handlers/commodity"
 	"github.com/emoss08/trenova/internal/api/handlers/customer"
 	"github.com/emoss08/trenova/internal/api/handlers/document"
 	"github.com/emoss08/trenova/internal/api/handlers/documentqualityconfig"
+	"github.com/emoss08/trenova/internal/api/handlers/documenttype"
 	"github.com/emoss08/trenova/internal/api/handlers/equipmentmanufacturer"
 	"github.com/emoss08/trenova/internal/api/handlers/equipmenttype"
 	"github.com/emoss08/trenova/internal/api/handlers/fleetcode"
@@ -69,8 +72,11 @@ var HandlersModule = fx.Module("api.Handlers", fx.Provide(
 	stop.NewHandler,
 	logreader.NewHandler,
 	shipmentcontrol.NewHandler,
+	billingcontrol.NewHandler,
 	backup.NewHandler,
 	audit.NewHandler,
 	hazmatsegregationrule.NewHandler,
+	accessorialcharge.NewHandler,
 	document.NewHandler,
+	documenttype.NewHandler,
 ))

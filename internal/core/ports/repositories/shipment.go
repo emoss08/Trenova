@@ -68,10 +68,13 @@ type DuplicateShipmentRequest struct {
 	UserID pulid.ID `json:"userId"`
 
 	// Optional parameter to override the dates of the new shipment
-	OverrideDates bool `json:"overrideDates"`
+	OverrideDates bool `json:"overrideDates" query:"overrideDates"`
 
 	// Optional parameter to include commodities in the new shipment
-	IncludeCommodities bool `json:"includeCommodities"`
+	IncludeCommodities bool `json:"includeCommodities" query:"includeCommodities"`
+
+	// Optional parameter to include additional charges in the new shipment
+	IncludeAdditionalCharges bool `json:"includeAdditionalCharges" query:"includeAdditionalCharges"`
 }
 
 func (dr *DuplicateShipmentRequest) Validate(ctx context.Context) *errors.MultiError {

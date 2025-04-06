@@ -87,7 +87,7 @@ func (v *Validator) Validate(ctx context.Context, valCtx *validator.ValidationCo
 	v.validateID(shp, valCtx, multiErr)
 
 	// * Validate Temperature
-	v.validateTemperature(shp, multiErr)
+	// v.validateTemperature(shp, multiErr)
 
 	// * Validate Moves
 	v.ValidateMoves(ctx, valCtx, shp, multiErr)
@@ -191,11 +191,11 @@ func (v *Validator) validateID(shp *shipment.Shipment, valCtx *validator.Validat
 //
 // Returns:
 //   - *errors.MultiError: A list of validation errors.
-func (v *Validator) validateTemperature(shp *shipment.Shipment, multiErr *errors.MultiError) {
-	if shp.TemperatureMin.Valid && shp.TemperatureMax.Valid && shp.TemperatureMin.Decimal.GreaterThan(shp.TemperatureMax.Decimal) {
-		multiErr.Add("temperatureMin", errors.ErrInvalid, "Temperature Min must be less than Temperature Max")
-	}
-}
+// func (v *Validator) validateTemperature(shp *shipment.Shipment, multiErr *errors.MultiError) {
+// 	if shp.TemperatureMin.Valid && shp.TemperatureMax.Valid && shp.TemperatureMin.Decimal.GreaterThan(shp.TemperatureMax.Decimal) {
+// 		multiErr.Add("temperatureMin", errors.ErrInvalid, "Temperature Min must be less than Temperature Max")
+// 	}
+// }
 
 // ValidateCancellation validates the cancellation of a shipment.
 //

@@ -31,7 +31,7 @@ func NewHandler(p HandlerParams) *Handler {
 	return &Handler{cs: p.CustomerService, eh: p.ErrorHandler}
 }
 
-func (h Handler) RegisterRoutes(r fiber.Router, rl *middleware.RateLimiter) {
+func (h *Handler) RegisterRoutes(r fiber.Router, rl *middleware.RateLimiter) {
 	api := r.Group("/customers")
 
 	api.Get("/", rl.WithRateLimit(
@@ -60,7 +60,7 @@ func (h Handler) RegisterRoutes(r fiber.Router, rl *middleware.RateLimiter) {
 	)...)
 }
 
-func (h Handler) selectOptions(c *fiber.Ctx) error {
+func (h *Handler) selectOptions(c *fiber.Ctx) error {
 	reqCtx, err := ctx.WithRequestContext(c)
 	if err != nil {
 		return h.eh.HandleError(c, err)
@@ -92,7 +92,7 @@ func (h Handler) selectOptions(c *fiber.Ctx) error {
 	})
 }
 
-func (h Handler) list(c *fiber.Ctx) error {
+func (h *Handler) list(c *fiber.Ctx) error {
 	reqCtx, err := ctx.WithRequestContext(c)
 	if err != nil {
 		return h.eh.HandleError(c, err)
@@ -104,15 +104,17 @@ func (h Handler) list(c *fiber.Ctx) error {
 		}
 
 		return h.cs.List(fc.UserContext(), &repositories.ListCustomerOptions{
-			Filter:       filter,
-			IncludeState: c.QueryBool("includeState"),
+			Filter:                filter,
+			IncludeState:          c.QueryBool("includeState"),
+			IncludeBillingProfile: c.QueryBool("includeBillingProfile"),
+			IncludeEmailProfile:   c.QueryBool("includeEmailProfile"),
 		})
 	}
 
 	return limitoffsetpagination.HandlePaginatedRequest(c, h.eh, reqCtx, handler)
 }
 
-func (h Handler) get(c *fiber.Ctx) error {
+func (h *Handler) get(c *fiber.Ctx) error {
 	reqCtx, err := ctx.WithRequestContext(c)
 	if err != nil {
 		return h.eh.HandleError(c, err)
@@ -124,11 +126,13 @@ func (h Handler) get(c *fiber.Ctx) error {
 	}
 
 	entity, err := h.cs.Get(c.UserContext(), repositories.GetCustomerByIDOptions{
-		ID:           customerID,
-		BuID:         reqCtx.BuID,
-		OrgID:        reqCtx.OrgID,
-		UserID:       reqCtx.UserID,
-		IncludeState: c.QueryBool("includeState"),
+		ID:                    customerID,
+		BuID:                  reqCtx.BuID,
+		OrgID:                 reqCtx.OrgID,
+		UserID:                reqCtx.UserID,
+		IncludeState:          c.QueryBool("includeState"),
+		IncludeBillingProfile: c.QueryBool("includeBillingProfile"),
+		IncludeEmailProfile:   c.QueryBool("includeEmailProfile"),
 	})
 	if err != nil {
 		return h.eh.HandleError(c, err)
@@ -137,7 +141,7 @@ func (h Handler) get(c *fiber.Ctx) error {
 	return c.Status(fiber.StatusOK).JSON(entity)
 }
 
-func (h Handler) create(c *fiber.Ctx) error {
+func (h *Handler) create(c *fiber.Ctx) error {
 	reqCtx, err := ctx.WithRequestContext(c)
 	if err != nil {
 		return h.eh.HandleError(c, err)
@@ -159,7 +163,7 @@ func (h Handler) create(c *fiber.Ctx) error {
 	return c.Status(fiber.StatusOK).JSON(createEntity)
 }
 
-func (h Handler) update(c *fiber.Ctx) error {
+func (h *Handler) update(c *fiber.Ctx) error {
 	reqCtx, err := ctx.WithRequestContext(c)
 	if err != nil {
 		return h.eh.HandleError(c, err)

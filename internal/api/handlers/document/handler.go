@@ -39,7 +39,7 @@ func NewHandler(p HandlerParams) *Handler {
 	return &Handler{ds: p.DocumentService, eh: p.ErrorHandler}
 }
 
-func (h Handler) RegisterRoutes(r fiber.Router, rl *middleware.RateLimiter) {
+func (h *Handler) RegisterRoutes(r fiber.Router, rl *middleware.RateLimiter) {
 	api := r.Group("/documents")
 
 	api.Get("/count-by-resource/", rl.WithRateLimit(
@@ -60,17 +60,17 @@ func (h Handler) RegisterRoutes(r fiber.Router, rl *middleware.RateLimiter) {
 	// Upload document
 	api.Post("/upload/", rl.WithRateLimit(
 		[]fiber.Handler{h.upload},
-		middleware.PerSecond(2), // More restrictive for uploads
+		middleware.PerSecond(30),
 	)...)
 
 	// Bulk upload documents
 	api.Post("/bulk-upload/", rl.WithRateLimit(
 		[]fiber.Handler{h.bulkUpload},
-		middleware.PerSecond(1), // Even more restrictive for bulk operations
+		middleware.PerSecond(30),
 	)...)
 }
 
-func (h Handler) getDocumentCountByResource(c *fiber.Ctx) error {
+func (h *Handler) getDocumentCountByResource(c *fiber.Ctx) error {
 	reqCtx, err := ctx.WithRequestContext(c)
 	if err != nil {
 		return h.eh.HandleError(c, err)
@@ -88,7 +88,7 @@ func (h Handler) getDocumentCountByResource(c *fiber.Ctx) error {
 	return c.JSON(resp)
 }
 
-func (h Handler) getResourceSubFolders(c *fiber.Ctx) error {
+func (h *Handler) getResourceSubFolders(c *fiber.Ctx) error {
 	reqCtx, err := ctx.WithRequestContext(c)
 	if err != nil {
 		return h.eh.HandleError(c, err)
@@ -109,7 +109,7 @@ func (h Handler) getResourceSubFolders(c *fiber.Ctx) error {
 	return c.JSON(resp)
 }
 
-func (h Handler) getDocumentsByResourceID(c *fiber.Ctx) error {
+func (h *Handler) getDocumentsByResourceID(c *fiber.Ctx) error {
 	reqCtx, err := ctx.WithRequestContext(c)
 	if err != nil {
 		return h.eh.HandleError(c, err)
@@ -135,7 +135,7 @@ func (h Handler) getDocumentsByResourceID(c *fiber.Ctx) error {
 	return limitoffsetpagination.HandlePaginatedRequest(c, h.eh, reqCtx, handler)
 }
 
-func (h Handler) upload(c *fiber.Ctx) error {
+func (h *Handler) upload(c *fiber.Ctx) error {
 	reqCtx, err := ctx.WithRequestContext(c)
 	if err != nil {
 		return h.eh.HandleError(c, err)
@@ -229,7 +229,7 @@ func (h Handler) upload(c *fiber.Ctx) error {
 	return c.Status(fiber.StatusCreated).JSON(resp)
 }
 
-func (h Handler) bulkUpload(c *fiber.Ctx) error {
+func (h *Handler) bulkUpload(c *fiber.Ctx) error {
 	reqCtx, err := ctx.WithRequestContext(c)
 	if err != nil {
 		return h.eh.HandleError(c, err)

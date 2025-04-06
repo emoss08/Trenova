@@ -31,7 +31,7 @@ type BusinessUnit struct {
 	AddressLine1   string   `json:"addressLine1" bun:"address_line1,type:VARCHAR(100)"`
 	AddressLine2   string   `json:"addressLine2" bun:"address_line2,type:VARCHAR(100)"`
 	City           string   `json:"city" bun:"city,type:VARCHAR(100)"`
-	PostalCode     string   `json:"postalCode" bun:"postal_code,type:VARCHAR(20)"`
+	PostalCode     string   `json:"postalCode" bun:"postal_code,type:us_postal_code,notnull"`
 	Timezone       string   `json:"timezone" bun:"timezone,type:VARCHAR(50),notnull,default:'America/New_York'"`
 	Locale         string   `json:"locale" bun:"locale,type:VARCHAR(10),notnull,default:'en-US'"`
 	TaxID          string   `json:"taxId" bun:"tax_id,type:VARCHAR(50)"`

@@ -39,7 +39,6 @@ type Document struct {
 	StoragePath  string         `json:"storagePath" bun:"storage_path,notnull,type:TEXT"`
 	DocumentType DocumentType   `json:"documentType" bun:"document_type,notnull,type:document_type_enum"`
 	Status       DocumentStatus `json:"status" bun:"status,notnull,type:document_status_enum"`
-	Description  string         `json:"description" bun:"description,type:TEXT"`
 
 	// Entity Association (polymorphic relationship)
 	ResourceID   pulid.ID            `json:"resourceId" bun:"resource_id,notnull,type:VARCHAR(100)"`

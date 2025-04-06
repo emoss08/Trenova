@@ -25,7 +25,6 @@ import { useEffect, useState } from "react";
 import { FormProvider, useFormContext } from "react-hook-form";
 
 export default function ShipmentControlForm() {
-  // Get the organization data
   const shipmentControl = useSuspenseQuery({
     ...queries.organization.getShipmentControl(),
   });
@@ -71,8 +70,8 @@ export default function ShipmentControlForm() {
     }
   }, [shipmentControl.data, shipmentControl.isLoading, reset]);
 
-  // Reset the form when the mutation is successful
-  // This is recommended by react-hook-form - https://react-hook-form.com/docs/useform/reset
+  // * Reset the form when the mutation is successful
+  // * This is recommended by react-hook-form - https://react-hook-form.com/docs/useform/reset
   useEffect(() => {
     reset();
   }, [isSubmitSuccessful, reset]);

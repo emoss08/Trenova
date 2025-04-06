@@ -50,7 +50,7 @@ type Tractor struct {
 	Make               string                 `json:"make" bun:"make,type:VARCHAR(50)"`
 	Year               *int                   `json:"year" bun:"year,type:INTEGER,nullzero"`
 	LicensePlateNumber string                 `json:"licensePlateNumber" bun:"license_plate_number,type:VARCHAR(50)"`
-	Vin                string                 `json:"vin" bun:"vin,type:VARCHAR(50)"`
+	Vin                string                 `json:"vin" bun:"vin,type:vin_code_optional"`
 
 	// Metadata
 	Version      int64  `json:"version" bun:"version,type:BIGINT"`
@@ -92,11 +92,16 @@ func (t *Tractor) Validate(ctx context.Context, multiErr *errors.MultiError) {
 		validation.Field(&t.EquipmentManufacturerID,
 			validation.Required.Error("Equipment Manufacturer is required"),
 		),
+
+		// Ensure VIN is valid.
+		validation.Field(&t.Vin,
+			validation.By(domain.ValidateVin),
+		),
 	)
 	if err != nil {
 		var validationErrs validation.Errors
 		if eris.As(err, &validationErrs) {
-			errors.FromValidationErrors(validationErrs, multiErr, "")
+			errors.FromOzzoErrors(validationErrs, multiErr)
 		}
 	}
 }

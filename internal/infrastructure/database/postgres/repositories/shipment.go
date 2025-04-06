@@ -31,6 +31,7 @@ type ShipmentRepositoryParams struct {
 	Logger                      *logger.Logger
 	ShipmentMoveRepository      repositories.ShipmentMoveRepository
 	ShipmentCommodityRepository repositories.ShipmentCommodityRepository
+	AdditionalChargeRepository  repositories.AdditionalChargeRepository
 	ProNumberRepo               repositories.ProNumberRepository
 	Calculator                  *calculator.ShipmentCalculator
 }
@@ -43,6 +44,7 @@ type shipmentRepository struct {
 	l                           *zerolog.Logger
 	shipmentMoveRepository      repositories.ShipmentMoveRepository
 	shipmentCommodityRepository repositories.ShipmentCommodityRepository
+	additionalChargeRepository  repositories.AdditionalChargeRepository
 	proNumberRepo               repositories.ProNumberRepository
 	calc                        *calculator.ShipmentCalculator
 }
@@ -63,6 +65,7 @@ func NewShipmentRepository(p ShipmentRepositoryParams) repositories.ShipmentRepo
 		db:                          p.DB,
 		l:                           &log,
 		shipmentCommodityRepository: p.ShipmentCommodityRepository,
+		additionalChargeRepository:  p.AdditionalChargeRepository,
 		shipmentMoveRepository:      p.ShipmentMoveRepository,
 		proNumberRepo:               p.ProNumberRepo,
 		calc:                        p.Calculator,
@@ -104,6 +107,12 @@ func (sr *shipmentRepository) addOptions(q *bun.SelectQuery, opts repositories.S
 		q = q.RelationWithOpts("Commodities", bun.RelationOpts{
 			Apply: func(sq *bun.SelectQuery) *bun.SelectQuery {
 				return sq.Relation("Commodity")
+			},
+		})
+
+		q = q.RelationWithOpts("AdditionalCharges", bun.RelationOpts{
+			Apply: func(sq *bun.SelectQuery) *bun.SelectQuery {
+				return sq.Relation("AccessorialCharge")
 			},
 		})
 
@@ -301,6 +310,12 @@ func (sr *shipmentRepository) Create(ctx context.Context, shp *shipment.Shipment
 			return err
 		}
 
+		// * Handle additional charge operations
+		if err := sr.additionalChargeRepository.HandleAdditionalChargeOperations(c, tx, shp, true); err != nil {
+			log.Error().Err(err).Msg("failed to handle additional charge operations")
+			return err
+		}
+
 		return nil
 	})
 	if err != nil {
@@ -388,6 +403,12 @@ func (sr *shipmentRepository) Update(ctx context.Context, shp *shipment.Shipment
 		// * Handle move operations
 		if err := sr.shipmentMoveRepository.HandleMoveOperations(c, tx, shp, false); err != nil {
 			log.Error().Err(err).Msg("failed to handle move operations")
+			return err
+		}
+
+		// * Handle additional charge operations
+		if err := sr.additionalChargeRepository.HandleAdditionalChargeOperations(c, tx, shp, false); err != nil {
+			log.Error().Err(err).Msg("failed to handle additional charge operations")
 			return err
 		}
 
@@ -665,6 +686,7 @@ func (sr *shipmentRepository) Duplicate(ctx context.Context, req *repositories.D
 		// * Prepare moves and stops
 		moves, stops := sr.prepareMovesAndStops(originalShipment, newShipment, req.OverrideDates)
 		commodities := sr.prepareCommodities(originalShipment, newShipment)
+		additionalCharges, err := sr.prepareAdditionalCharges(originalShipment, newShipment)
 
 		// * Bulk insert moves directly with the transaction
 		if len(moves) > 0 {
@@ -690,6 +712,16 @@ func (sr *shipmentRepository) Duplicate(ctx context.Context, req *repositories.D
 			log.Debug().Interface("commodities", commodities).Msg("bulk inserting commodities")
 			if _, err = tx.NewInsert().Model(&commodities).Exec(c); err != nil {
 				log.Error().Err(err).Msg("failed to bulk insert commodities")
+				return err
+			}
+		}
+
+		// * Bulk insert additional charges directly with the transaction
+		// * Only duplicate if the include additional charges flag is true
+		if len(additionalCharges) > 0 && req.IncludeAdditionalCharges {
+			log.Debug().Interface("additional charges", additionalCharges).Msg("bulk inserting additional charges")
+			if _, err = tx.NewInsert().Model(&additionalCharges).Exec(c); err != nil {
+				log.Error().Err(err).Msg("failed to bulk insert additional charges")
 				return err
 			}
 		}
@@ -795,6 +827,29 @@ func (sr *shipmentRepository) prepareCommodities(original *shipment.Shipment, ne
 	}
 
 	return commodities
+}
+
+func (sr *shipmentRepository) prepareAdditionalCharges(original *shipment.Shipment, newShipment *shipment.Shipment) ([]*shipment.AdditionalCharge, error) {
+	additionalCharges := make([]*shipment.AdditionalCharge, 0, len(original.AdditionalCharges))
+
+	// * Loop through each additional charge and prepare the new additional charge
+	for _, additionalCharge := range original.AdditionalCharges {
+		newAdditionalCharge := &shipment.AdditionalCharge{
+			ID:                  pulid.MustNew("ac_"),
+			BusinessUnitID:      original.BusinessUnitID,
+			OrganizationID:      original.OrganizationID,
+			ShipmentID:          newShipment.ID,
+			AccessorialChargeID: additionalCharge.AccessorialChargeID,
+			Unit:                additionalCharge.Unit,
+			Method:              additionalCharge.Method,
+			Amount:              additionalCharge.Amount,
+		}
+
+		// * Append the new additional charge to the slice
+		additionalCharges = append(additionalCharges, newAdditionalCharge)
+	}
+
+	return additionalCharges, nil
 }
 
 // duplicateShipmentFields duplicates the fields of a shipment

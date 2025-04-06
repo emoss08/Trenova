@@ -22,7 +22,7 @@ func NewHandler(os *organization.Service, eh *validator.ErrorHandler) *Handler {
 	return &Handler{os: os, eh: eh}
 }
 
-func (h Handler) RegisterRoutes(r fiber.Router, rl *middleware.RateLimiter) {
+func (h *Handler) RegisterRoutes(r fiber.Router, rl *middleware.RateLimiter) {
 	api := r.Group("/organizations")
 
 	api.Get("/select-options/", rl.WithRateLimit(
@@ -66,7 +66,7 @@ func (h Handler) RegisterRoutes(r fiber.Router, rl *middleware.RateLimiter) {
 	)...)
 }
 
-func (h Handler) selectOptions(c *fiber.Ctx) error {
+func (h *Handler) selectOptions(c *fiber.Ctx) error {
 	reqCtx, err := ctx.WithRequestContext(c)
 	if err != nil {
 		return h.eh.HandleError(c, err)
@@ -96,7 +96,7 @@ func (h Handler) selectOptions(c *fiber.Ctx) error {
 // but by joining user_organizations and filtering by user_id
 // There may be instance where business units have multiple administrators
 // and they don't have access to all organizations within a business unit
-func (h Handler) list(c *fiber.Ctx) error {
+func (h *Handler) list(c *fiber.Ctx) error {
 	reqCtx, err := ctx.WithRequestContext(c)
 	if err != nil {
 		return h.eh.HandleError(c, err)
@@ -113,7 +113,7 @@ func (h Handler) list(c *fiber.Ctx) error {
 	return limitoffsetpagination.HandlePaginatedRequest(c, h.eh, reqCtx, handler)
 }
 
-func (h Handler) get(c *fiber.Ctx) error {
+func (h *Handler) get(c *fiber.Ctx) error {
 	reqCtx, err := ctx.WithRequestContext(c)
 	if err != nil {
 		return h.eh.HandleError(c, err)
@@ -137,7 +137,7 @@ func (h Handler) get(c *fiber.Ctx) error {
 	return c.Status(fiber.StatusOK).JSON(org)
 }
 
-func (h Handler) create(c *fiber.Ctx) error {
+func (h *Handler) create(c *fiber.Ctx) error {
 	reqCtx, err := ctx.WithRequestContext(c)
 	if err != nil {
 		return h.eh.HandleError(c, err)
@@ -159,7 +159,7 @@ func (h Handler) create(c *fiber.Ctx) error {
 	return c.Status(fiber.StatusCreated).JSON(createdOrg)
 }
 
-func (h Handler) update(c *fiber.Ctx) error {
+func (h *Handler) update(c *fiber.Ctx) error {
 	reqCtx, err := ctx.WithRequestContext(c)
 	if err != nil {
 		return h.eh.HandleError(c, err)
@@ -186,7 +186,7 @@ func (h Handler) update(c *fiber.Ctx) error {
 	return c.Status(fiber.StatusOK).JSON(updatedOrg)
 }
 
-func (h Handler) uploadLogo(c *fiber.Ctx) error {
+func (h *Handler) uploadLogo(c *fiber.Ctx) error {
 	reqCtx, err := ctx.WithRequestContext(c)
 	if err != nil {
 		return h.eh.HandleError(c, err)
@@ -210,7 +210,7 @@ func (h Handler) uploadLogo(c *fiber.Ctx) error {
 	return c.Status(fiber.StatusOK).JSON(org)
 }
 
-func (h Handler) clearLogo(c *fiber.Ctx) error {
+func (h *Handler) clearLogo(c *fiber.Ctx) error {
 	reqCtx, err := ctx.WithRequestContext(c)
 	if err != nil {
 		return h.eh.HandleError(c, err)
@@ -229,7 +229,7 @@ func (h Handler) clearLogo(c *fiber.Ctx) error {
 	return c.Status(fiber.StatusOK).JSON(org)
 }
 
-func (h Handler) getUserOrganizations(c *fiber.Ctx) error {
+func (h *Handler) getUserOrganizations(c *fiber.Ctx) error {
 	reqCtx, err := ctx.WithRequestContext(c)
 	if err != nil {
 		return h.eh.HandleError(c, err)

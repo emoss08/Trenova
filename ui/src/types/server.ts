@@ -123,6 +123,7 @@ export type BaseEndpoint =
   | "/us-states/"
   | "/analytics/new-shipment-count/"
   | "/audit-logs/"
-  | "/accounting-control/";
+  | "/accounting-control/"
+  | "/document-types/";
 
 export type API_ENDPOINTS = `${BaseEndpoint}${"" | `?${string}`}`;

@@ -1,3 +1,14 @@
+import {
+  AccessorialChargeMethod,
+  AutoBillCriteria,
+  BillingCycleType,
+  BillingExceptionHandling,
+  DocumentCategory,
+  DocumentClassification,
+  PaymentTerm,
+  TransferCriteria,
+  TransferSchedule,
+} from "@/types/billing";
 import { type ChoiceProps, Gender, Status } from "@/types/common";
 import { EquipmentClass } from "@/types/equipment-type";
 import {
@@ -347,3 +358,300 @@ export const shipmentDocumentTypes = [
   },
   { value: ShipmentDocumentType.Other, label: "Other", color: "#0369a1" },
 ] satisfies ReadonlyArray<ChoiceProps<ShipmentDocumentType>>;
+
+export const transferCriteriaChoices = [
+  {
+    value: TransferCriteria.ReadyAndCompleted,
+    label: "Ready and Completed",
+    description:
+      "Transfer when the shipment is ready and all activities are completed.",
+    color: "#15803d",
+  },
+  {
+    value: TransferCriteria.Completed,
+    label: "Completed",
+    description: "Transfer when the shipment is completed.",
+    color: "#7e22ce",
+  },
+  {
+    value: TransferCriteria.ReadyToBill,
+    label: "Ready to Bill",
+    description: "Transfer when the shipment is ready to be billed.",
+    color: "#b91c1c",
+  },
+  {
+    value: TransferCriteria.DocumentsAttached,
+    label: "Documents Attached",
+    description:
+      "Transfer when all required documents are attached to the shipment.",
+    color: "#f59e0b",
+  },
+  {
+    value: TransferCriteria.PODReceived,
+    label: "POD Received",
+    description:
+      "Transfer when the proof of delivery is received for the shipment.",
+    color: "#0369a1",
+  },
+] satisfies ReadonlyArray<ChoiceProps<TransferCriteria>>;
+
+export const autoBillCriteriaChoices = [
+  {
+    value: AutoBillCriteria.Delivered,
+    label: "Delivered",
+    description: "Automatically bill when the shipment is delivered.",
+    color: "#15803d",
+  },
+  {
+    value: AutoBillCriteria.Transferred,
+    label: "Transferred",
+    description: "Automatically bill when the shipment is transferred.",
+    color: "#7e22ce",
+  },
+  {
+    value: AutoBillCriteria.MarkedReadyToBill,
+    label: "Marked Ready to Bill",
+    description:
+      "Automatically bill when the shipment is marked as ready to bill.",
+    color: "#b91c1c",
+  },
+  {
+    value: AutoBillCriteria.PODReceived,
+    label: "POD Received",
+    description:
+      "Automatically bill when the proof of delivery is received for the shipment.",
+    color: "#f59e0b",
+  },
+  {
+    value: AutoBillCriteria.DocumentsVerified,
+    label: "Documents Verified",
+    description:
+      "Automatically bill when all required documents are attached to the shipment.",
+    color: "#0369a1",
+  },
+] satisfies ReadonlyArray<ChoiceProps<AutoBillCriteria>>;
+
+export const billingExceptionHandlingChoices = [
+  {
+    value: BillingExceptionHandling.Queue,
+    label: "Queue",
+    description: "Queue the shipment for billing when an exception occurs.",
+    color: "#15803d",
+  },
+  {
+    value: BillingExceptionHandling.Notify,
+    label: "Notify",
+    description: "Notify the user when an exception occurs.",
+    color: "#7e22ce",
+  },
+  {
+    value: BillingExceptionHandling.AutoResolve,
+    label: "Auto Resolve",
+    description: "Automatically resolve the exception.",
+    color: "#b91c1c",
+  },
+  {
+    value: BillingExceptionHandling.Reject,
+    label: "Reject",
+    description: "Reject the shipment when an exception occurs.",
+    color: "#f59e0b",
+  },
+] satisfies ReadonlyArray<ChoiceProps<BillingExceptionHandling>>;
+
+export const transferScheduleChoices = [
+  {
+    value: TransferSchedule.Continuous,
+    label: "Continuous",
+    description: "Transfers occur continuously as new shipments are processed.",
+    color: "#15803d",
+  },
+  {
+    value: TransferSchedule.Hourly,
+    label: "Hourly",
+    description: "Transfers occur hourly based on the configured batch size.",
+    color: "#7e22ce",
+  },
+  {
+    value: TransferSchedule.Daily,
+    label: "Daily",
+    description: "Transfers occur daily based on the configured batch size.",
+    color: "#b91c1c",
+  },
+  {
+    value: TransferSchedule.Weekly,
+    label: "Weekly",
+    description: "Transfers occur weekly based on the configured batch size.",
+    color: "#f59e0b",
+  },
+] satisfies ReadonlyArray<ChoiceProps<TransferSchedule>>;
+
+export const paymentTermChoices = [
+  {
+    value: PaymentTerm.Net15,
+    label: "Net 15",
+    description: "15 days from the invoice date",
+    color: "#15803d",
+  },
+  {
+    value: PaymentTerm.Net30,
+    label: "Net 30",
+    description: "30 days from the invoice date",
+    color: "#7e22ce",
+  },
+  {
+    value: PaymentTerm.Net45,
+    label: "Net 45",
+    description: "45 days from the invoice date",
+    color: "#f59e0b",
+  },
+  {
+    value: PaymentTerm.Net60,
+    label: "Net 60",
+    description: "60 days from the invoice date",
+    color: "#0369a1",
+  },
+  {
+    value: PaymentTerm.Net90,
+    label: "Net 90",
+    description: "90 days from the invoice date",
+    color: "#10b981",
+  },
+  {
+    value: PaymentTerm.DueOnReceipt,
+    label: "Due on Receipt",
+    description: "Due on receipt of the invoice(s)",
+    color: "#ec4899",
+  },
+] satisfies ReadonlyArray<ChoiceProps<PaymentTerm>>;
+
+export const accessorialChargeMethodChoices = [
+  {
+    value: AccessorialChargeMethod.Flat,
+    label: "Flat",
+    color: "#15803d",
+    description: "One-time fixed fee regardless of shipment details",
+  },
+  {
+    value: AccessorialChargeMethod.Distance,
+    label: "Distance",
+    color: "#7e22ce",
+    description: "Rate calculated per mile or zone traveled",
+  },
+  {
+    value: AccessorialChargeMethod.Percentage,
+    label: "Percentage",
+    color: "#f59e0b",
+    description: "Fee calculated as a percentage of the base linehaul rate",
+  },
+] satisfies ReadonlyArray<ChoiceProps<AccessorialChargeMethod>>;
+
+export const documentClassificationChoices = [
+  {
+    value: DocumentClassification.Public,
+    label: "Public",
+    color: "#15803d",
+    description: "Documents that are publicly available",
+  },
+  {
+    value: DocumentClassification.Private,
+    label: "Private",
+    color: "#7e22ce",
+    description: "Documents for internal use only",
+  },
+  {
+    value: DocumentClassification.Sensitive,
+    label: "Sensitive",
+    color: "#b91c1c",
+    description: "Documents containing sensitive information",
+  },
+  {
+    value: DocumentClassification.Regulatory,
+    label: "Regulatory",
+    color: "#f59e0b",
+    description: "Documents containing regulatory information",
+  },
+] satisfies ReadonlyArray<ChoiceProps<DocumentClassification>>;
+
+export const documentCategoryChoices = [
+  {
+    value: DocumentCategory.Shipment,
+    label: "Shipment",
+    color: "#15803d",
+    description: "Documents related to shipments",
+  },
+  {
+    value: DocumentCategory.Worker,
+    label: "Worker",
+    color: "#7e22ce",
+    description: "Documents related to workers",
+  },
+  {
+    value: DocumentCategory.Regulatory,
+    label: "Regulatory",
+    color: "#f59e0b",
+    description: "Documents containing regulatory information",
+  },
+  {
+    value: DocumentCategory.Profile,
+    label: "Profile",
+    color: "#0369a1",
+    description: "Documents related to profiles",
+  },
+  {
+    value: DocumentCategory.Branding,
+    label: "Branding",
+    color: "#10b981",
+    description: "Documents related to branding",
+  },
+  {
+    value: DocumentCategory.Invoice,
+    label: "Invoice",
+    color: "#6495ed",
+    description: "Documents related to invoices",
+  },
+  {
+    value: DocumentCategory.Contract,
+    label: "Contract",
+    color: "#0369a1",
+    description: "Documents related to contracts",
+  },
+  {
+    value: DocumentCategory.Other,
+    label: "Other",
+    color: "#ec4899",
+    description: "Other documents",
+  },
+] satisfies ReadonlyArray<ChoiceProps<DocumentCategory>>;
+
+export const billingCycleTypeChoices = [
+  {
+    value: BillingCycleType.Immediate,
+    label: "Immediate",
+    description: "Billing occurs immediately after the shipment is delivered",
+    color: "#15803d",
+  },
+  {
+    value: BillingCycleType.Daily,
+    label: "Daily",
+    description: "Billing occurs daily",
+    color: "#7e22ce",
+  },
+  {
+    value: BillingCycleType.Weekly,
+    label: "Weekly",
+    description: "Billing occurs weekly",
+    color: "#b91c1c",
+  },
+  {
+    value: BillingCycleType.Monthly,
+    label: "Monthly",
+    description: "Billing occurs monthly",
+    color: "#f59e0b",
+  },
+  {
+    value: BillingCycleType.Quarterly,
+    label: "Quarterly",
+    description: "Billing occurs quarterly",
+    color: "#0369a1",
+  },
+] satisfies ReadonlyArray<ChoiceProps<BillingCycleType>>;

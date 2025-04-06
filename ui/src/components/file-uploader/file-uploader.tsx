@@ -30,7 +30,8 @@ export default function DocumentUpload({
   allowMultiple = false,
   documentTypes = [],
   maxFileSizeMB = 100,
-  acceptedFileTypes = "*",
+  // * Only accept PDF, JPG, JPEG, PNG, excel, csv, and DOCX files
+  acceptedFileTypes = "application/pdf,image/jpeg,image/jpg,image/png,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.ms-excel,text/csv",
   onUploadComplete,
   onUploadError,
   onCancel,
@@ -69,15 +70,13 @@ export default function DocumentUpload({
     defaultValues,
   });
 
-  const { getValues, watch } = form;
-  const description = watch("description");
+  const { getValues } = form;
 
   // * Create XHR and form data only once per file upload
   const createFormData = useCallback(
     (
       file: File,
       documentType: string,
-      description: string,
       resourceId: string,
       resourceType: string,
     ) => {
@@ -86,7 +85,6 @@ export default function DocumentUpload({
       formData.append("resourceId", resourceId);
       formData.append("resourceType", resourceType);
       formData.append("documentType", documentType);
-      formData.append("description", description);
       return formData;
     },
     [],
@@ -131,6 +129,14 @@ export default function DocumentUpload({
         };
       }
 
+      if (error.message.includes("file size exceeds")) {
+        return {
+          fileName: "Unknown",
+          message: "File size exceeds maximum limit",
+          details: "The file size exceeds the maximum limit of 100MB.",
+        };
+      }
+
       return {
         fileName: "Unknown",
         message: error.message,
@@ -153,14 +159,12 @@ export default function DocumentUpload({
         resourceId,
         resourceType,
         documentType,
-        description,
         onProgress,
       }: UploadFileParams) => {
         // * Create form data once
         const formData = createFormData(
           file,
           documentType,
-          description,
           resourceId,
           resourceType,
         );
@@ -235,6 +239,7 @@ export default function DocumentUpload({
       // * Process files in batch
       const newFiles: UploadingFile[] = [];
       const tooLargeFiles: string[] = [];
+      const invalidFiles: string[] = [];
 
       for (let i = 0; i < files.length; i++) {
         const file = files[i];
@@ -242,6 +247,13 @@ export default function DocumentUpload({
         // * Check file size
         if (file.size > maxFileSizeBytes) {
           tooLargeFiles.push(file.name);
+          continue;
+        }
+
+        // * Check file extension
+        const fileExtension = file.name.split(".").pop();
+        if (!fileExtension || !acceptedFileTypes.includes(fileExtension)) {
+          invalidFiles.push(file.name);
           continue;
         }
 
@@ -271,6 +283,22 @@ export default function DocumentUpload({
         }
       }
 
+      if (invalidFiles.length) {
+        // * Add to error collection instead of just toasting
+        const newErrors = invalidFiles.map((fileName) => ({
+          fileName,
+          message: "File type not allowed",
+          details: `Please use a different file.`,
+        }));
+
+        setUploadErrors((prev) => [...prev, ...newErrors]);
+
+        // * Show error dialog if there are errors
+        if (newErrors.length > 0) {
+          setShowErrorDialog(true);
+        }
+      }
+
       // * If we're not allowing multiple files, replace existing files
       // * Otherwise append to existing files
       if (newFiles.length > 0) {
@@ -284,7 +312,13 @@ export default function DocumentUpload({
         fileInputRef.current.value = "";
       }
     },
-    [allowMultiple, getValues, maxFileSizeBytes, maxFileSizeMB],
+    [
+      allowMultiple,
+      getValues,
+      maxFileSizeBytes,
+      maxFileSizeMB,
+      acceptedFileTypes,
+    ],
   );
 
   // * Memoize event handlers
@@ -320,7 +354,7 @@ export default function DocumentUpload({
       // * Process files in batch
       const newFiles: UploadingFile[] = [];
       const tooLargeFiles: string[] = [];
-
+      const invalidFiles: string[] = [];
       for (let i = 0; i < files.length; i++) {
         const file = files[i];
 
@@ -346,6 +380,22 @@ export default function DocumentUpload({
           fileName,
           message: `File exceeds maximum size of ${maxFileSizeMB}MB`,
           details: `Please reduce the file size or use a different file.`,
+        }));
+
+        setUploadErrors((prev) => [...prev, ...newErrors]);
+
+        // * Show error dialog if there are errors
+        if (newErrors.length > 0) {
+          setShowErrorDialog(true);
+        }
+      }
+
+      if (invalidFiles.length) {
+        // * Add to error collection instead of just toasting
+        const newErrors = invalidFiles.map((fileName) => ({
+          fileName,
+          message: "File type not allowed",
+          details: `Please use a different file.`,
         }));
 
         setUploadErrors((prev) => [...prev, ...newErrors]);
@@ -442,7 +492,6 @@ export default function DocumentUpload({
             resourceId,
             resourceType,
             documentType: fileInfo.documentType,
-            description: description || "",
             onProgress: (progress) => {
               setUploadingFiles((prev) =>
                 prev.map((file, i) =>
@@ -520,7 +569,6 @@ export default function DocumentUpload({
     uploadFileMutation,
     resourceId,
     resourceType,
-    description,
     parseErrorMessage,
     uploadErrors.length,
   ]);

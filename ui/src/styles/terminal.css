@@ -1,0 +1,122 @@
+/* Terminal lines */
+.terminal-line {
+    padding: 1px 0;
+    white-space: pre-wrap;
+    word-break: break-word;
+    line-height: 1.4;
+    opacity: 1;
+}
+
+/* Terminal cursor */
+.terminal-blink {
+    animation: blink 1s step-end infinite;
+}
+
+/* Typing animation */
+.terminal-typing {
+    overflow: hidden;
+    border-right: 2px solid transparent;
+    white-space: nowrap;
+    animation: typing 1.5s steps(40, end), blink-caret 0.75s step-end infinite;
+    display: inline-block;
+}
+
+/* Fade in animation */
+.terminal-fade-in {
+    animation: fadeIn 0.3s ease-in-out forwards;
+}
+
+/* Animation keyframes */
+@keyframes typing {
+    from {
+        width: 0
+    }
+
+    to {
+        width: 100%
+    }
+}
+
+@keyframes blink-caret {
+
+    from,
+    to {
+        border-color: transparent
+    }
+
+    50% {
+        border-color: #d4d4d8
+    }
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
+}
+
+@keyframes blink {
+
+    0%,
+    100% {
+        opacity: 1;
+    }
+
+    50% {
+        opacity: 0;
+    }
+}
+
+/* Line types - colors are also defined in the component for better SSR */
+.terminal-line.text-emerald-400 {
+    color: #34d399;
+    font-weight: 600;
+}
+
+.terminal-line.text-red-400 {
+    color: #f87171;
+}
+
+.terminal-line.text-green-400 {
+    color: #4ade80;
+}
+
+.terminal-line.text-blue-400 {
+    color: #60a5fa;
+}
+
+.terminal-line.text-amber-400 {
+    color: #fbbf24;
+    font-style: italic;
+}
+
+.terminal-line.text-gray-400 {
+    color: #9ca3af;
+    font-style: italic;
+}
+
+.terminal-line.text-fuchsia-400 {
+    color: #e879f9;
+    font-weight: 700;
+    font-size: 1.125rem;
+}
+
+.terminal-line.text-amber-300 {
+    color: #fcd34d;
+}
+
+.terminal-line.text-emerald-300 {
+    color: #6ee7b7;
+}
+
+.terminal-line.text-cyan-300 {
+    color: #67e8f9;
+}
+
+.terminal-line.text-gray-200 {
+    color: #e5e7eb;
+}

@@ -1,7 +1,10 @@
 import { DataTableColumnHeader } from "@/components/data-table/_components/data-table-column-header";
-import { DataTableDescription } from "@/components/data-table/_components/data-table-components";
 import { FileTypeCard } from "@/components/file-uploader/file-type-card";
-import { DocumentTypeBadge } from "@/components/status-badge";
+import { UserAvatar } from "@/components/nav-user";
+import {
+  DocumentStatusBadge,
+  DocumentTypeBadge,
+} from "@/components/status-badge";
 import { Separator } from "@/components/ui/separator";
 import { generateDateOnlyString, toDate } from "@/lib/date";
 import { formatFileSize } from "@/lib/utils";
@@ -22,7 +25,7 @@ function DocumentTableCell({
     >
       <FileTypeCard status="success" fileType={doc.fileType} />
       <div className="grid w-full flex-1 text-left leading-tight">
-        <span className="group-hover:underline text-sm font-semibold truncate max-w-[200px]">
+        <span className="group-hover:underline text-sm font-semibold truncate max-w-[250px]">
           {doc.fileName}
         </span>
         <div className="flex items-center gap-2">
@@ -42,10 +45,19 @@ export function getColumns({
 }): ColumnDef<Document>[] {
   return [
     {
-      id: "document",
+      id: "status",
+      accessorKey: "status",
       header: ({ column }) => (
-        <DataTableColumnHeader column={column} title="Document" />
+        <DataTableColumnHeader column={column} title="Status" />
       ),
+      cell: ({ row }) => {
+        const { status } = row.original;
+        return <DocumentStatusBadge status={status} />;
+      },
+    },
+    {
+      id: "document",
+      header: "Document",
       cell: ({ row }) => {
         return (
           <DocumentTableCell
@@ -66,26 +78,19 @@ export function getColumns({
       },
     },
     {
-      accessorKey: "description",
-      header: ({ column }) => (
-        <DataTableColumnHeader column={column} title="Description" />
-      ),
-      cell: ({ row }) => {
-        const { description } = row.original;
-        return <DataTableDescription description={description} />;
-      },
-    },
-    {
       id: "uploadedBy",
       header: "Uploaded By",
       cell: ({ row }) => {
         const { uploadedBy } = row.original;
-        return <p>{uploadedBy?.name || "-"}</p>;
+        if (!uploadedBy) return <p>-</p>;
+        return <UserAvatar user={uploadedBy} />;
       },
     },
     {
       id: "createdAt",
-      header: "Created At",
+      header: ({ column }) => (
+        <DataTableColumnHeader column={column} title="Created At" />
+      ),
       cell: ({ row }) => {
         const { createdAt } = row.original;
         const date = toDate(createdAt as number);

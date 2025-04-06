@@ -262,8 +262,8 @@ export function ChangesTable({
 
   if (!changes) {
     return (
-      <div className="flex flex-col gap-2 border border-border rounded-md p-4">
-        <p className="text-sm text-muted-foreground italic">
+      <div className="flex flex-col gap-2 border border-dashed border-border rounded-md p-4">
+        <p className="text-xs text-muted-foreground italic">
           No changes recorded
         </p>
       </div>
@@ -315,11 +315,17 @@ export function ChangesTable({
       </div>
       <div className="overflow-x-auto">
         <Table>
-          <TableHeader>
+          <TableHeader className="bg-transparent">
             <TableRow className="hover:bg-transparent">
-              <TableHead className="font-medium">Field</TableHead>
-              <TableHead className="font-medium">Previous Value</TableHead>
-              <TableHead className="font-medium">Current Value</TableHead>
+              <TableHead className="font-medium bg-transparent">
+                Field
+              </TableHead>
+              <TableHead className="font-medium bg-transparent">
+                Previous Value
+              </TableHead>
+              <TableHead className="font-medium bg-transparent">
+                Current Value
+              </TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>

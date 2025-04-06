@@ -31,7 +31,7 @@ func NewHandler(p HandlerParams) *Handler {
 	}
 }
 
-func (h Handler) RegisterRoutes(r fiber.Router, rl *middleware.RateLimiter) {
+func (h *Handler) RegisterRoutes(r fiber.Router, rl *middleware.RateLimiter) {
 	api := r.Group("/assignments")
 	api.Post("/single/", rl.WithRateLimit(
 		[]fiber.Handler{h.assign},
@@ -54,7 +54,7 @@ func (h Handler) RegisterRoutes(r fiber.Router, rl *middleware.RateLimiter) {
 	)...)
 }
 
-func (h Handler) get(c *fiber.Ctx) error {
+func (h *Handler) get(c *fiber.Ctx) error {
 	reqCtx, err := ctx.WithRequestContext(c)
 	if err != nil {
 		return h.eh.HandleError(c, err)
@@ -78,7 +78,7 @@ func (h Handler) get(c *fiber.Ctx) error {
 	return c.Status(fiber.StatusOK).JSON(entity)
 }
 
-func (h Handler) assign(c *fiber.Ctx) error {
+func (h *Handler) assign(c *fiber.Ctx) error {
 	reqCtx, err := ctx.WithRequestContext(c)
 	if err != nil {
 		return h.eh.HandleError(c, err)
@@ -100,7 +100,7 @@ func (h Handler) assign(c *fiber.Ctx) error {
 	return c.Status(fiber.StatusOK).JSON(entity)
 }
 
-func (h Handler) reassign(c *fiber.Ctx) error {
+func (h *Handler) reassign(c *fiber.Ctx) error {
 	reqCtx, err := ctx.WithRequestContext(c)
 	if err != nil {
 		return h.eh.HandleError(c, err)
@@ -128,7 +128,7 @@ func (h Handler) reassign(c *fiber.Ctx) error {
 	return c.Status(fiber.StatusOK).JSON(entity)
 }
 
-func (h Handler) bulkAssign(c *fiber.Ctx) error {
+func (h *Handler) bulkAssign(c *fiber.Ctx) error {
 	reqCtx, err := ctx.WithRequestContext(c)
 	if err != nil {
 		return h.eh.HandleError(c, err)
