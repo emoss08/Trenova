@@ -234,9 +234,11 @@ func (s *Service) Update(ctx context.Context, cus *customer.Customer, userID pul
 	}
 
 	original, err := s.repo.GetByID(ctx, repositories.GetCustomerByIDOptions{
-		ID:    cus.ID,
-		OrgID: cus.OrganizationID,
-		BuID:  cus.BusinessUnitID,
+		ID:                    cus.ID,
+		OrgID:                 cus.OrganizationID,
+		BuID:                  cus.BusinessUnitID,
+		IncludeBillingProfile: true,
+		IncludeEmailProfile:   true,
 	})
 	if err != nil {
 		return nil, err

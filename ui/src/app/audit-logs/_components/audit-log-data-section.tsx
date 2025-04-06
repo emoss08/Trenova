@@ -315,11 +315,17 @@ export function ChangesTable({
       </div>
       <div className="overflow-x-auto">
         <Table>
-          <TableHeader>
+          <TableHeader className="bg-transparent">
             <TableRow className="hover:bg-transparent">
-              <TableHead className="font-medium">Field</TableHead>
-              <TableHead className="font-medium">Previous Value</TableHead>
-              <TableHead className="font-medium">Current Value</TableHead>
+              <TableHead className="font-medium bg-transparent">
+                Field
+              </TableHead>
+              <TableHead className="font-medium bg-transparent">
+                Previous Value
+              </TableHead>
+              <TableHead className="font-medium bg-transparent">
+                Current Value
+              </TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>

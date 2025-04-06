@@ -32,6 +32,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { TerminalRestoreDialog } from "@/components/ui/terminal";
 import { API_URL } from "@/constants/env";
 import { generateDateTimeStringFromUnixTimestamp } from "@/lib/date";
 import { queries } from "@/lib/queries";
@@ -39,9 +40,9 @@ import {
   deleteDatabaseBackup,
   restoreDatabaseBackup,
 } from "@/services/organization";
+import "@/styles/terminal.css";
 import { DatabaseBackup } from "@/types/database-backup";
 import {
-  faDatabase,
   faDownload,
   faEllipsis,
   faExclamationTriangle,
@@ -54,7 +55,6 @@ import {
   useQueryClient,
   useSuspenseQuery,
 } from "@tanstack/react-query";
-
 import { useCallback, useState } from "react";
 import { toast } from "sonner";
 
@@ -133,9 +133,9 @@ export default function BackupList() {
     );
   }
 
-  if (!data?.backups || data.backups.length === 0) {
-    return <BackupEmptyState />;
-  }
+  // if (!data?.backups || data.backups.length === 0) {
+  //   return <BackupEmptyState />;
+  // }
 
   return (
     <Card>
@@ -212,16 +212,22 @@ function BackupActions({ backup }: { backup: DatabaseBackup }) {
   const restoreMutation = useMutation({
     mutationFn: async () => {
       // API call to restore the backup
-      await restoreDatabaseBackup(backup.filename);
+      try {
+        return await restoreDatabaseBackup(backup.filename);
+      } catch (error) {
+        // Ensure we capture the full error object
+        console.error("Full restore error:", error);
+        throw error; // Re-throw to be handled by the dialog
+      }
     },
     onSuccess: () => {
       toast.success("Database restored successfully");
       setRestoreDialogOpen(false);
     },
     onError: (error) => {
-      toast.error(
-        `Failed to restore database: ${error instanceof Error ? error.message : "Unknown error"}`,
-      );
+      // We'll handle errors in the dialog component
+      // But log it here too for debugging
+      console.error("Restore mutation error handler:", error);
     },
   });
 
@@ -265,37 +271,12 @@ function BackupActions({ backup }: { backup: DatabaseBackup }) {
         </DropdownMenuContent>
       </DropdownMenu>
 
-      <AlertDialog open={restoreDialogOpen} onOpenChange={setRestoreDialogOpen}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle className="flex items-center gap-2">
-              Restore Database
-            </AlertDialogTitle>
-            <AlertDialogDescription>
-              You are about to restore the database from this backup. This
-              action will overwrite your current database with the data from
-              this backup file.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel onClick={() => setRestoreDialogOpen(false)}>
-              Cancel
-            </AlertDialogCancel>
-            <AlertDialogAction
-              onClick={() => restoreMutation.mutate()}
-              disabled={restoreMutation.isPending}
-            >
-              {restoreMutation.isPending && (
-                <Icon
-                  icon={faSpinnerThird}
-                  className="mr-2 h-4 w-4 animate-spin"
-                />
-              )}
-              Restore Database
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      <TerminalRestoreDialog
+        backup={backup}
+        open={restoreDialogOpen}
+        onOpenChange={setRestoreDialogOpen}
+        restoreMutation={restoreMutation}
+      />
 
       {/* Delete Confirmation Dialog */}
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
@@ -331,34 +312,5 @@ function BackupActions({ backup }: { backup: DatabaseBackup }) {
         </AlertDialogContent>
       </AlertDialog>
     </>
-  );
-}
-
-function BackupEmptyState() {
-  return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Database Backups</CardTitle>
-        <CardDescription>
-          Manage your database backups and restore them as needed.
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-        <div className="flex items-center justify-center py-10 border rounded-md border-dashed">
-          <div className="flex flex-col items-center gap-2 text-foreground max-w-md text-center">
-            <Icon icon={faDatabase} className="size-12" />
-            <h3 className="text-lg font-medium">No backups found</h3>
-            <p className="text-sm text-muted-foreground">
-              No database backups have been created yet. Configure automatic
-              backups or create your first backup manually.
-            </p>
-            <Button className="mt-2">
-              <Icon icon={faDownload} className="mr-1 mb-0.5 size-4" />
-              Create First Backup
-            </Button>
-          </div>
-        </div>
-      </CardContent>
-    </Card>
   );
 }
