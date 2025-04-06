@@ -1,10 +1,12 @@
 import { Dialog, DialogBody, DialogContent } from "@/components/ui/dialog";
 import { Icon } from "@/components/ui/icons";
+import { queries } from "@/lib/queries";
 import { cn } from "@/lib/utils";
 import { DatabaseBackup } from "@/types/database-backup";
 import { APIError } from "@/types/errors";
 import { faMinus, faServer } from "@fortawesome/pro-regular-svg-icons";
 import { faSort, faX } from "@fortawesome/pro-solid-svg-icons";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 const asciiArt = `
@@ -53,7 +55,6 @@ interface ErrorDetails {
   detail?: string;
 }
 
-// Memoized terminal line component for better performance
 const TerminalLineComponent = memo(function TerminalLineComponent({
   line,
 }: {
@@ -147,6 +148,7 @@ function TerminalRestoreDialog({
   onOpenChange: (open: boolean) => void;
   restoreMutation: any;
 }) {
+  const queryClient = useQueryClient();
   const [status, setStatus] = useState<RestoreStatus>("idle");
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [_, setErrorDetails] = useState<ErrorDetails | null>(null);
@@ -160,6 +162,10 @@ function TerminalRestoreDialog({
   const lineProcessorRef = useRef<number | null>(null);
   const linesQueue = useRef<TerminalLine[]>([]);
   const autoScrollerRef = useRef<HTMLDivElement>(null);
+
+  const { data: backupData } = useQuery({
+    ...queries.organization.getDatabaseBackups(),
+  });
 
   // Database connection config
   const dbConfig = useMemo(
@@ -428,7 +434,7 @@ drwxr-xr-x 12 postgres postgres 4096 Apr  5 15:29 ..
 -rw-r--r--  1 postgres postgres  220 Apr  5 15:20 .bash_logout
 -rw-r--r--  1 postgres postgres 3526 Apr  5 15:20 .bashrc
 -rw-r--r--  1 postgres postgres  807 Apr  5 15:20 .profile
--rw-r--r--  1 postgres postgres   15 Apr  5 15:30 ${backup.filename}`,
+${backupData?.backups.map((backup) => `-rw-r--r--  1 postgres postgres   15 Apr  5 15:30 ${backup.filename}`).join("\n")}`,
               "output",
               "none",
               50,
@@ -511,6 +517,7 @@ drwxr-xr-x 12 postgres postgres 4096 Apr  5 15:29 ..
       handleOpenChange,
       toggleAsciiArt,
       helpText,
+      backupData?.backups,
     ],
   );
 
