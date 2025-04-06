@@ -3,6 +3,7 @@ module github.com/emoss08/trenova
 go 1.24.1
 
 require (
+	github.com/asaskevich/govalidator v0.0.0-20230301143203-a9d515a09cc2
 	github.com/bytedance/sonic v1.13.2
 	github.com/docker/go-connections v0.5.0
 	github.com/fatih/color v1.18.0
@@ -56,7 +57,6 @@ require (
 	github.com/air-verse/air v1.61.7 // indirect
 	github.com/alecthomas/chroma/v2 v2.14.0 // indirect
 	github.com/andybalholm/brotli v1.1.1 // indirect
-	github.com/asaskevich/govalidator v0.0.0-20230301143203-a9d515a09cc2 // indirect
 	github.com/bep/godartsass/v2 v2.3.2 // indirect
 	github.com/bep/golibsass v1.2.0 // indirect
 	github.com/bytedance/sonic/loader v0.2.4 // indirect
@@ -189,12 +189,12 @@ require (
 	go.uber.org/mock v0.5.0 // indirect
 	go.uber.org/multierr v1.11.0 // indirect
 	go.uber.org/zap v1.27.0 // indirect
-	golang.org/x/arch v0.15.0 // indirect
+	golang.org/x/arch v0.16.0 // indirect
 	golang.org/x/mod v0.24.0 // indirect
-	golang.org/x/sync v0.12.0 // indirect
-	golang.org/x/sys v0.31.0 // indirect
+	golang.org/x/sync v0.13.0 // indirect
+	golang.org/x/sys v0.32.0 // indirect
 	golang.org/x/term v0.30.0 // indirect
-	golang.org/x/text v0.23.0 // indirect
+	golang.org/x/text v0.24.0 // indirect
 	golang.org/x/tools v0.31.0 // indirect
 	google.golang.org/protobuf v1.36.1 // indirect
 	gopkg.in/warnings.v0 v0.1.2 // indirect
