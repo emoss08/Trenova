@@ -5,7 +5,6 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/ports/services"
-	"github.com/emoss08/trenova/internal/infrastructure/database/dbbackup"
 	"github.com/emoss08/trenova/internal/pkg/errors"
 	"github.com/emoss08/trenova/internal/pkg/logger"
 	"github.com/rotisserie/eris"
@@ -17,15 +16,15 @@ type ServiceParams struct {
 	fx.In
 
 	Logger            *logger.Logger
-	BackupService     *dbbackup.BackupService
-	BackupScheduler   *dbbackup.BackupScheduler
+	BackupService     services.BackupService
+	BackupScheduler   services.BackupScheduler
 	PermissionService services.PermissionService
 }
 
 type Service struct {
 	l   *zerolog.Logger
-	bs  *dbbackup.BackupService
-	bss *dbbackup.BackupScheduler
+	bs  services.BackupService
+	bss services.BackupScheduler
 	ps  services.PermissionService
 }
 

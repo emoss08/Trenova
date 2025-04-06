@@ -17,14 +17,14 @@ func NewHandler(ss *session.Service, eh *validator.ErrorHandler) *Handler {
 	return &Handler{ss: ss, eh: eh}
 }
 
-func (h Handler) RegisterRoutes(r fiber.Router) {
+func (h *Handler) RegisterRoutes(r fiber.Router) {
 	api := r.Group("/sessions")
 
 	api.Get("/me/", h.get)
 	api.Delete("/:sessID/", h.revoke)
 }
 
-func (h Handler) get(c *fiber.Ctx) error {
+func (h *Handler) get(c *fiber.Ctx) error {
 	reqCtx, err := ctx.WithRequestContext(c)
 	if err != nil {
 		return h.eh.HandleError(c, err)
@@ -38,7 +38,7 @@ func (h Handler) get(c *fiber.Ctx) error {
 	return c.Status(fiber.StatusOK).JSON(sessions)
 }
 
-func (h Handler) revoke(c *fiber.Ctx) error {
+func (h *Handler) revoke(c *fiber.Ctx) error {
 	_, err := ctx.WithRequestContext(c)
 	if err != nil {
 		return h.eh.HandleError(c, err)

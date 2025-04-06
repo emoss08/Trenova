@@ -31,7 +31,7 @@ func NewHandler(p HandlerParams) *Handler {
 	return &Handler{ts: p.TractorService, eh: p.ErrorHandler}
 }
 
-func (h Handler) RegisterRoutes(r fiber.Router, rl *middleware.RateLimiter) {
+func (h *Handler) RegisterRoutes(r fiber.Router, rl *middleware.RateLimiter) {
 	api := r.Group("/tractors")
 
 	api.Get("/select-options/", rl.WithRateLimit(
@@ -65,7 +65,7 @@ func (h Handler) RegisterRoutes(r fiber.Router, rl *middleware.RateLimiter) {
 	)...)
 }
 
-func (h Handler) selectOptions(c *fiber.Ctx) error {
+func (h *Handler) selectOptions(c *fiber.Ctx) error {
 	reqCtx, err := ctx.WithRequestContext(c)
 	if err != nil {
 		return h.eh.HandleError(c, err)
@@ -96,7 +96,7 @@ func (h Handler) selectOptions(c *fiber.Ctx) error {
 	})
 }
 
-func (h Handler) list(c *fiber.Ctx) error {
+func (h *Handler) list(c *fiber.Ctx) error {
 	reqCtx, err := ctx.WithRequestContext(c)
 	if err != nil {
 		return h.eh.HandleError(c, err)
@@ -114,7 +114,7 @@ func (h Handler) list(c *fiber.Ctx) error {
 	return limitoffsetpagination.HandlePaginatedRequest(c, h.eh, reqCtx, handler)
 }
 
-func (h Handler) get(c *fiber.Ctx) error {
+func (h *Handler) get(c *fiber.Ctx) error {
 	reqCtx, err := ctx.WithRequestContext(c)
 	if err != nil {
 		return h.eh.HandleError(c, err)
@@ -141,7 +141,7 @@ func (h Handler) get(c *fiber.Ctx) error {
 	return c.Status(fiber.StatusOK).JSON(tr)
 }
 
-func (h Handler) create(c *fiber.Ctx) error {
+func (h *Handler) create(c *fiber.Ctx) error {
 	reqCtx, err := ctx.WithRequestContext(c)
 	if err != nil {
 		return h.eh.HandleError(c, err)
@@ -163,7 +163,7 @@ func (h Handler) create(c *fiber.Ctx) error {
 	return c.Status(fiber.StatusOK).JSON(createdTractor)
 }
 
-func (h Handler) update(c *fiber.Ctx) error {
+func (h *Handler) update(c *fiber.Ctx) error {
 	reqCtx, err := ctx.WithRequestContext(c)
 	if err != nil {
 		return h.eh.HandleError(c, err)
@@ -191,7 +191,7 @@ func (h Handler) update(c *fiber.Ctx) error {
 	return c.Status(fiber.StatusOK).JSON(updatedTractor)
 }
 
-func (h Handler) assignment(c *fiber.Ctx) error {
+func (h *Handler) assignment(c *fiber.Ctx) error {
 	reqCtx, err := ctx.WithRequestContext(c)
 	if err != nil {
 		return h.eh.HandleError(c, err)

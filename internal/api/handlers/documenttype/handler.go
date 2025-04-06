@@ -31,7 +31,7 @@ func NewHandler(p HandlerParams) *Handler {
 	return &Handler{dts: p.DocumentTypeService, eh: p.ErrorHandler}
 }
 
-func (h Handler) RegisterRoutes(r fiber.Router, rl *middleware.RateLimiter) {
+func (h *Handler) RegisterRoutes(r fiber.Router, rl *middleware.RateLimiter) {
 	api := r.Group("/document-types")
 
 	api.Get("/", rl.WithRateLimit(
@@ -60,7 +60,7 @@ func (h Handler) RegisterRoutes(r fiber.Router, rl *middleware.RateLimiter) {
 	)...)
 }
 
-func (h Handler) selectOptions(c *fiber.Ctx) error {
+func (h *Handler) selectOptions(c *fiber.Ctx) error {
 	reqCtx, err := ctx.WithRequestContext(c)
 	if err != nil {
 		return h.eh.HandleError(c, err)
@@ -94,7 +94,7 @@ func (h Handler) selectOptions(c *fiber.Ctx) error {
 	})
 }
 
-func (h Handler) list(c *fiber.Ctx) error {
+func (h *Handler) list(c *fiber.Ctx) error {
 	reqCtx, err := ctx.WithRequestContext(c)
 	if err != nil {
 		return h.eh.HandleError(c, err)
@@ -111,7 +111,7 @@ func (h Handler) list(c *fiber.Ctx) error {
 	return limitoffsetpagination.HandlePaginatedRequest(c, h.eh, reqCtx, handler)
 }
 
-func (h Handler) get(c *fiber.Ctx) error {
+func (h *Handler) get(c *fiber.Ctx) error {
 	reqCtx, err := ctx.WithRequestContext(c)
 	if err != nil {
 		return h.eh.HandleError(c, err)
@@ -135,7 +135,7 @@ func (h Handler) get(c *fiber.Ctx) error {
 	return c.Status(fiber.StatusOK).JSON(entity)
 }
 
-func (h Handler) create(c *fiber.Ctx) error {
+func (h *Handler) create(c *fiber.Ctx) error {
 	reqCtx, err := ctx.WithRequestContext(c)
 	if err != nil {
 		return h.eh.HandleError(c, err)
@@ -157,7 +157,7 @@ func (h Handler) create(c *fiber.Ctx) error {
 	return c.Status(fiber.StatusOK).JSON(createEntity)
 }
 
-func (h Handler) update(c *fiber.Ctx) error {
+func (h *Handler) update(c *fiber.Ctx) error {
 	reqCtx, err := ctx.WithRequestContext(c)
 	if err != nil {
 		return h.eh.HandleError(c, err)

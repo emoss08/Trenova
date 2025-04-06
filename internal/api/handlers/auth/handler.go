@@ -35,7 +35,7 @@ func NewHandler(p HandlerParams) *Handler {
 	}
 }
 
-func (h Handler) RegisterRoutes(r fiber.Router) {
+func (h *Handler) RegisterRoutes(r fiber.Router) {
 	api := r.Group("/auth")
 
 	api.Post("/login/", h.login)
@@ -44,7 +44,7 @@ func (h Handler) RegisterRoutes(r fiber.Router) {
 	api.Post("/validate-session/", h.validateSession)
 }
 
-func (h Handler) login(c *fiber.Ctx) error {
+func (h *Handler) login(c *fiber.Ctx) error {
 	var req services.LoginRequest
 	if err := c.BodyParser(&req); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
@@ -80,7 +80,7 @@ func (h Handler) login(c *fiber.Ctx) error {
 	return c.Status(fiber.StatusOK).JSON(sess)
 }
 
-func (h Handler) logout(c *fiber.Ctx) error {
+func (h *Handler) logout(c *fiber.Ctx) error {
 	// Get the session ID from cookies
 	sessionID := c.Cookies(h.cfg.SessionCookieName)
 	if sessionID == "" {
@@ -115,7 +115,7 @@ func (h Handler) logout(c *fiber.Ctx) error {
 	return c.SendStatus(fiber.StatusNoContent)
 }
 
-func (h Handler) checkEmail(c *fiber.Ctx) error {
+func (h *Handler) checkEmail(c *fiber.Ctx) error {
 	var req services.CheckEmailRequest
 	if err := c.BodyParser(&req); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
@@ -133,7 +133,7 @@ func (h Handler) checkEmail(c *fiber.Ctx) error {
 	return c.Status(fiber.StatusOK).JSON(fiber.Map{"valid": resp})
 }
 
-func (h Handler) validateSession(c *fiber.Ctx) error {
+func (h *Handler) validateSession(c *fiber.Ctx) error {
 	sessionID := c.Cookies(h.cfg.SessionCookieName)
 
 	if sessionID == "" {

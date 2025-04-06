@@ -17,7 +17,7 @@ func NewHandler(os *usstate.Service, eh *validator.ErrorHandler) *Handler {
 	return &Handler{os: os, eh: eh}
 }
 
-func (h Handler) RegisterRoutes(r fiber.Router, rl *middleware.RateLimiter) {
+func (h *Handler) RegisterRoutes(r fiber.Router, rl *middleware.RateLimiter) {
 	api := r.Group("/us-states")
 
 	api.Get("/select-options/", rl.WithRateLimit(
@@ -26,7 +26,7 @@ func (h Handler) RegisterRoutes(r fiber.Router, rl *middleware.RateLimiter) {
 	)...)
 }
 
-func (h Handler) selectOptions(c *fiber.Ctx) error {
+func (h *Handler) selectOptions(c *fiber.Ctx) error {
 	_, err := ctx.WithRequestContext(c)
 	if err != nil {
 		return h.eh.HandleError(c, err)

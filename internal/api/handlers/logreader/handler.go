@@ -44,7 +44,7 @@ func NewHandler(p HandlerParams) *Handler {
 	}
 }
 
-func (h Handler) RegisterRoutes(r fiber.Router, rl *middleware.RateLimiter) {
+func (h *Handler) RegisterRoutes(r fiber.Router, rl *middleware.RateLimiter) {
 	api := r.Group("/logs")
 
 	api.Get("/", rl.WithRateLimit(
@@ -84,7 +84,7 @@ func (h Handler) RegisterRoutes(r fiber.Router, rl *middleware.RateLimiter) {
 	api.Get("/stream", websocket.New(h.handleWebSocket))
 }
 
-func (h Handler) getCurrentLogs(c *fiber.Ctx) error {
+func (h *Handler) getCurrentLogs(c *fiber.Ctx) error {
 	reqCtx, err := ctx.GetRequestContext(c)
 	if err != nil {
 		return h.eh.HandleError(c, err)
@@ -128,7 +128,7 @@ func (h Handler) getCurrentLogs(c *fiber.Ctx) error {
 	})
 }
 
-func (h Handler) getLogFiles(c *fiber.Ctx) error {
+func (h *Handler) getLogFiles(c *fiber.Ctx) error {
 	reqCtx, err := ctx.GetRequestContext(c)
 	if err != nil {
 		return h.eh.HandleError(c, err)

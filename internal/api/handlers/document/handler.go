@@ -39,7 +39,7 @@ func NewHandler(p HandlerParams) *Handler {
 	return &Handler{ds: p.DocumentService, eh: p.ErrorHandler}
 }
 
-func (h Handler) RegisterRoutes(r fiber.Router, rl *middleware.RateLimiter) {
+func (h *Handler) RegisterRoutes(r fiber.Router, rl *middleware.RateLimiter) {
 	api := r.Group("/documents")
 
 	api.Get("/count-by-resource/", rl.WithRateLimit(
@@ -70,7 +70,7 @@ func (h Handler) RegisterRoutes(r fiber.Router, rl *middleware.RateLimiter) {
 	)...)
 }
 
-func (h Handler) getDocumentCountByResource(c *fiber.Ctx) error {
+func (h *Handler) getDocumentCountByResource(c *fiber.Ctx) error {
 	reqCtx, err := ctx.WithRequestContext(c)
 	if err != nil {
 		return h.eh.HandleError(c, err)
@@ -88,7 +88,7 @@ func (h Handler) getDocumentCountByResource(c *fiber.Ctx) error {
 	return c.JSON(resp)
 }
 
-func (h Handler) getResourceSubFolders(c *fiber.Ctx) error {
+func (h *Handler) getResourceSubFolders(c *fiber.Ctx) error {
 	reqCtx, err := ctx.WithRequestContext(c)
 	if err != nil {
 		return h.eh.HandleError(c, err)
@@ -109,7 +109,7 @@ func (h Handler) getResourceSubFolders(c *fiber.Ctx) error {
 	return c.JSON(resp)
 }
 
-func (h Handler) getDocumentsByResourceID(c *fiber.Ctx) error {
+func (h *Handler) getDocumentsByResourceID(c *fiber.Ctx) error {
 	reqCtx, err := ctx.WithRequestContext(c)
 	if err != nil {
 		return h.eh.HandleError(c, err)
@@ -135,7 +135,7 @@ func (h Handler) getDocumentsByResourceID(c *fiber.Ctx) error {
 	return limitoffsetpagination.HandlePaginatedRequest(c, h.eh, reqCtx, handler)
 }
 
-func (h Handler) upload(c *fiber.Ctx) error {
+func (h *Handler) upload(c *fiber.Ctx) error {
 	reqCtx, err := ctx.WithRequestContext(c)
 	if err != nil {
 		return h.eh.HandleError(c, err)
@@ -229,7 +229,7 @@ func (h Handler) upload(c *fiber.Ctx) error {
 	return c.Status(fiber.StatusCreated).JSON(resp)
 }
 
-func (h Handler) bulkUpload(c *fiber.Ctx) error {
+func (h *Handler) bulkUpload(c *fiber.Ctx) error {
 	reqCtx, err := ctx.WithRequestContext(c)
 	if err != nil {
 		return h.eh.HandleError(c, err)

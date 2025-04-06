@@ -4,6 +4,7 @@ import (
 	"context"
 	"time"
 
+	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/pkg/config"
 	"github.com/emoss08/trenova/internal/pkg/logger"
 	"github.com/go-co-op/gocron"
@@ -18,19 +19,19 @@ type BackupSchedulerParams struct {
 
 	LC            fx.Lifecycle
 	Logger        *logger.Logger
-	BackupService *BackupService
+	BackupService services.BackupService
 	Config        *config.Manager
 }
 
-type BackupScheduler struct {
+type backupScheduler struct {
 	logger    *zerolog.Logger
-	bs        *BackupService
+	bs        services.BackupService
 	cfg       *config.BackupConfig
 	scheduler *gocron.Scheduler
 }
 
 // NewBackupScheduler creates a new backup scheduler.
-func NewBackupScheduler(p BackupSchedulerParams) (*BackupScheduler, error) {
+func NewBackupScheduler(p BackupSchedulerParams) (services.BackupScheduler, error) {
 	log := p.Logger.With().
 		Str("component", "backup_scheduler").
 		Logger()
@@ -50,7 +51,7 @@ func NewBackupScheduler(p BackupSchedulerParams) (*BackupScheduler, error) {
 
 	scheduler := gocron.NewScheduler(time.UTC)
 
-	bs := &BackupScheduler{
+	bs := &backupScheduler{
 		logger:    &log,
 		bs:        p.BackupService,
 		cfg:       backupCfg,
@@ -71,26 +72,26 @@ func NewBackupScheduler(p BackupSchedulerParams) (*BackupScheduler, error) {
 }
 
 // Start starts the backup scheduler.
-func (s *BackupScheduler) Start(ctx context.Context) error {
-	if s.cfg == nil || !s.cfg.Enabled || s.bs == nil {
+func (bs *backupScheduler) Start(ctx context.Context) error {
+	if bs.cfg == nil || !bs.cfg.Enabled || bs.bs == nil {
 		return nil // Skip if backups are disabled
 	}
 
 	// Get backup schedule from config
-	schedule := s.cfg.Schedule
+	schedule := bs.cfg.Schedule
 	if schedule == "" {
 		schedule = "0 0 * * *" // Default: daily at midnight
 	}
 
-	s.logger.Info().
+	bs.logger.Info().
 		Str("schedule", schedule).
-		Int("retentionDays", s.cfg.RetentionDays).
+		Int("retentionDays", bs.cfg.RetentionDays).
 		Msg("starting backup scheduler")
 
 	// Schedule backup job with cron expression
-	_, err := s.scheduler.Cron(schedule).Do(func() {
+	_, err := bs.scheduler.Cron(schedule).Do(func() {
 		// Create a new context with timeout for the backup operation
-		timeout := s.cfg.BackupTimeout
+		timeout := bs.cfg.BackupTimeout
 		if timeout <= 0 {
 			timeout = 30 * time.Minute
 		}
@@ -98,43 +99,43 @@ func (s *BackupScheduler) Start(ctx context.Context) error {
 		c, cancel := context.WithTimeout(context.Background(), timeout)
 		defer cancel()
 
-		s.logger.Info().Msg("running scheduled backup")
-		if err := s.bs.ScheduledBackup(c, s.cfg.RetentionDays); err != nil {
-			s.logger.Error().Err(err).Msg("scheduled backup failed")
+		bs.logger.Info().Msg("running scheduled backup")
+		if err := bs.bs.ScheduledBackup(c, bs.cfg.RetentionDays); err != nil {
+			bs.logger.Error().Err(err).Msg("scheduled backup failed")
 			// * TODO(Wolfred): If notifications are enabled, this would be a good place to send an alert
 		}
 	})
 	if err != nil {
-		s.logger.Error().Err(err).Msg("failed to schedule backup job")
+		bs.logger.Error().Err(err).Msg("failed to schedule backup job")
 		return err
 	}
 
 	// Start the scheduler in a background goroutine
-	s.scheduler.StartAsync()
+	bs.scheduler.StartAsync()
 
 	return nil
 }
 
 // Stop stops the backup scheduler.
-func (s *BackupScheduler) Stop(ctx context.Context) error {
-	if s.scheduler != nil {
-		s.logger.Info().Msg("stopping backup scheduler")
-		s.scheduler.Stop()
+func (bs *backupScheduler) Stop(ctx context.Context) error {
+	if bs.scheduler != nil {
+		bs.logger.Info().Msg("stopping backup scheduler")
+		bs.scheduler.Stop()
 	}
 	return nil
 }
 
 // RunNow triggers an immediate backup.
-func (s *BackupScheduler) RunNow(ctx context.Context) error {
-	if s.bs == nil {
+func (bs *backupScheduler) RunNow(ctx context.Context) error {
+	if bs.bs == nil {
 		return eris.New("backup service not initialized")
 	}
 
-	s.logger.Info().Msg("running manual backup")
+	bs.logger.Info().Msg("running manual backup")
 	retentionDays := 30
-	if s.cfg != nil {
-		retentionDays = s.cfg.RetentionDays
+	if bs.cfg != nil {
+		retentionDays = bs.cfg.RetentionDays
 	}
 
-	return s.bs.ScheduledBackup(ctx, retentionDays)
+	return bs.bs.ScheduledBackup(ctx, retentionDays)
 }
