@@ -34,14 +34,13 @@ type Customer struct {
 	StateID pulid.ID `json:"stateId" bun:"state_id,notnull,type:VARCHAR(100)"`
 
 	// Core Fields
-	Status              domain.Status `json:"status" bun:"status,type:status_enum,notnull,default:'Active'"`
-	Code                string        `json:"code" bun:"code,type:VARCHAR(10),notnull"`
-	Name                string        `json:"name" bun:"name,type:VARCHAR(255),notnull"`
-	AddressLine1        string        `json:"addressLine1" bun:"address_line_1,type:VARCHAR(150),notnull"`
-	AddressLine2        string        `json:"addressLine2" bun:"address_line_2,type:VARCHAR(150)"`
-	City                string        `json:"city" bun:"city,type:VARCHAR(100),notnull"`
-	PostalCode          string        `json:"postalCode" bun:"postal_code,type:VARCHAR(10),notnull"`
-	AutoMarkReadyToBill bool          `json:"autoMarkReadyToBill" bun:"auto_mark_ready_to_bill,type:BOOLEAN,default:false"`
+	Status       domain.Status `json:"status" bun:"status,type:status_enum,notnull,default:'Active'"`
+	Code         string        `json:"code" bun:"code,type:VARCHAR(10),notnull"`
+	Name         string        `json:"name" bun:"name,type:VARCHAR(255),notnull"`
+	AddressLine1 string        `json:"addressLine1" bun:"address_line_1,type:VARCHAR(150),notnull"`
+	AddressLine2 string        `json:"addressLine2" bun:"address_line_2,type:VARCHAR(150)"`
+	City         string        `json:"city" bun:"city,type:VARCHAR(100),notnull"`
+	PostalCode   string        `json:"postalCode" bun:"postal_code,type:us_postal_code,notnull"`
 
 	// Metadata
 	Version      int64  `json:"version" bun:"version,type:BIGINT"`
@@ -51,22 +50,54 @@ type Customer struct {
 	Rank         string `json:"-" bun:"rank,type:VARCHAR(100),scanonly"`
 
 	// Relationships
-	BusinessUnit *businessunit.BusinessUnit `bun:"rel:belongs-to,join:business_unit_id=id" json:"-"`
-	Organization *organization.Organization `bun:"rel:belongs-to,join:organization_id=id" json:"-"`
-	State        *usstate.UsState           `bun:"rel:belongs-to,join:state_id=id" json:"state,omitempty"`
+	BusinessUnit   *businessunit.BusinessUnit `bun:"rel:belongs-to,join:business_unit_id=id" json:"-"`
+	Organization   *organization.Organization `bun:"rel:belongs-to,join:organization_id=id" json:"-"`
+	BillingProfile *BillingProfile            `bun:"rel:has-one,join:id=customer_id" json:"billingProfile,omitempty"`
+	EmailProfile   *CustomerEmailProfile      `bun:"rel:has-one,join:id=customer_id" json:"emailProfile,omitempty"`
+	State          *usstate.UsState           `bun:"rel:belongs-to,join:state_id=id" json:"state,omitempty"`
 }
 
 func (c *Customer) Validate(ctx context.Context, multiErr *errors.MultiError) {
 	err := validation.ValidateStructWithContext(ctx, c,
+		// * Code is required and must be within 1 and 10 characters.
 		validation.Field(&c.Code,
 			validation.Required.Error("Code is required"),
 			validation.Length(1, 10).Error("Code must be between 1 and 100 characters"),
+		),
+
+		// * Name is required and must be within 1 and 255 characters.
+		validation.Field(&c.Name,
+			validation.Required.Error("Name is required"),
+			validation.Length(1, 255).Error("Name must be between 1 and 255 characters"),
+		),
+
+		// * Address Line 1 is required and must be within 1 and 150 characters.
+		validation.Field(&c.AddressLine1,
+			validation.Required.Error("Address Line 1 is required"),
+			validation.Length(1, 150).Error("Address Line 1 must be between 1 and 150 characters"),
+		),
+
+		// * City is required and must be within 1 and 100 characters.
+		validation.Field(&c.City,
+			validation.Required.Error("City is required"),
+			validation.Length(1, 100).Error("City must be between 1 and 100 characters"),
+		),
+
+		// * State is required.
+		validation.Field(&c.StateID,
+			validation.Required.Error("State is required"),
+		),
+
+		// * Postal Code is required and must be a valid US or Canadian postal code.
+		validation.Field(&c.PostalCode,
+			validation.Required.Error("Postal Code is required"),
+			validation.By(domain.ValidatePostalCode),
 		),
 	)
 	if err != nil {
 		var validationErrs validation.Errors
 		if eris.As(err, &validationErrs) {
-			errors.FromValidationErrors(validationErrs, multiErr, "")
+			errors.FromOzzoErrors(validationErrs, multiErr)
 		}
 	}
 }
@@ -116,4 +147,13 @@ func (c *Customer) GetPostgresSearchConfig() infra.PostgresSearchConfig {
 		MaxTerms:        6,
 		UsePartialMatch: true,
 	}
+}
+
+// Miscellaneous
+func (c *Customer) HasBillingProfile() bool {
+	return c.BillingProfile != nil
+}
+
+func (c *Customer) HasEmailProfile() bool {
+	return c.EmailProfile != nil
 }

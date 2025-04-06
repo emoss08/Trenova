@@ -26,7 +26,7 @@ func NewHandler(p HandlerParams) *Handler {
 	return &Handler{ds: p.DocumentQualityConfigService, eh: p.ErrorHandler}
 }
 
-func (h Handler) RegisterRoutes(r fiber.Router, rl *middleware.RateLimiter) {
+func (h *Handler) RegisterRoutes(r fiber.Router, rl *middleware.RateLimiter) {
 	api := r.Group("/document-quality-configs")
 
 	api.Get("/", rl.WithRateLimit(
@@ -35,7 +35,7 @@ func (h Handler) RegisterRoutes(r fiber.Router, rl *middleware.RateLimiter) {
 	)...)
 }
 
-func (h Handler) get(c *fiber.Ctx) error {
+func (h *Handler) get(c *fiber.Ctx) error {
 	reqCtx, err := ctx.WithRequestContext(c)
 	if err != nil {
 		return h.eh.HandleError(c, err)

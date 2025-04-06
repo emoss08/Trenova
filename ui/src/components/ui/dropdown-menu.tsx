@@ -127,6 +127,7 @@ const DropdownMenuItem = React.forwardRef<
     inset?: boolean;
     color?: "danger" | "warning" | "info" | "success";
     startContent?: React.ReactNode;
+    endContent?: React.ReactNode;
     description?: string;
     titleClassProps?: string;
     descriptionClassProps?: string;
@@ -143,6 +144,7 @@ const DropdownMenuItem = React.forwardRef<
       description,
       titleClassProps,
       descriptionClassProps,
+      endContent,
       ...props
     },
     ref,
@@ -175,6 +177,9 @@ const DropdownMenuItem = React.forwardRef<
           </span>
         )}
       </span>
+      {endContent && (
+        <span className="ml-auto flex items-center">{endContent}</span>
+      )}
     </DropdownMenuPrimitive.Item>
   ),
 );

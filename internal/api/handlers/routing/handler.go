@@ -29,7 +29,7 @@ func NewHandler(p HandlerParams) *Handler {
 	}
 }
 
-func (h Handler) RegisterRoutes(r fiber.Router, rl *middleware.RateLimiter) {
+func (h *Handler) RegisterRoutes(r fiber.Router, rl *middleware.RateLimiter) {
 	api := r.Group("/routing")
 
 	api.Get("/single-search/", rl.WithRateLimit(
@@ -38,7 +38,7 @@ func (h Handler) RegisterRoutes(r fiber.Router, rl *middleware.RateLimiter) {
 	)...)
 }
 
-func (h Handler) singleSearch(c *fiber.Ctx) error {
+func (h *Handler) singleSearch(c *fiber.Ctx) error {
 	reqCtx, err := ctx.WithRequestContext(c)
 	if err != nil {
 		return h.eh.HandleError(c, err)

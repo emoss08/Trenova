@@ -2,7 +2,7 @@ import { type WorkerSchema } from "@/lib/schemas/worker-schema";
 import { cn } from "@/lib/utils";
 import { badgeVariants } from "@/lib/variants/badge";
 import { type Status } from "@/types/common";
-import { DocumentType } from "@/types/document";
+import { DocumentStatus, DocumentType } from "@/types/document";
 import { type PackingGroupChoiceProps } from "@/types/hazardous-material";
 import { MoveStatus } from "@/types/move";
 import { ShipmentStatus } from "@/types/shipment";
@@ -137,6 +137,40 @@ export function EquipmentStatusBadge({ status }: { status: EquipmentStatus }) {
   );
 }
 
+export function DocumentStatusBadge({ status }: { status: DocumentStatus }) {
+  const statusAttributes: Record<DocumentStatus, BadgeAttrProps> = {
+    [DocumentStatus.Draft]: {
+      variant: "purple",
+      text: "Draft",
+    },
+    [DocumentStatus.Active]: {
+      variant: "active",
+      text: "Active",
+    },
+    [DocumentStatus.Archived]: {
+      variant: "inactive",
+      text: "Archived",
+    },
+    [DocumentStatus.Expired]: {
+      variant: "warning",
+      text: "Expired",
+    },
+    [DocumentStatus.Rejected]: {
+      variant: "warning",
+      text: "Rejected",
+    },
+    [DocumentStatus.PendingApproval]: {
+      variant: "orange",
+      text: "Pending Approval",
+    },
+  };
+
+  return (
+    <Badge variant={statusAttributes[status].variant} className="max-h-6">
+      {statusAttributes[status].text}
+    </Badge>
+  );
+}
 export function ShipmentStatusBadge({
   status,
   withDot,

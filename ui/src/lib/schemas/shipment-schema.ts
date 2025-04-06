@@ -1,5 +1,6 @@
 import { RatingMethod, ShipmentStatus } from "@/types/shipment";
 import { array, type InferType, mixed, number, object, string } from "yup";
+import { additionalChargeSchema } from "./additional-charge-schema";
 import { moveSchema } from "./move-schema";
 import { shipmentCommoditySchema } from "./shipment-commodity-schema";
 
@@ -110,5 +111,7 @@ export const shipmentSchema = object({
     .optional(),
   moves: array().of(moveSchema),
   commodities: array().of(shipmentCommoditySchema),
+  additionalCharges: array().of(additionalChargeSchema),
 });
+
 export type ShipmentSchema = InferType<typeof shipmentSchema>;

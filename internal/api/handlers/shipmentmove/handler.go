@@ -26,7 +26,7 @@ func NewHandler(p HandlerParams) *Handler {
 	return &Handler{ss: p.ShipmentMoveService, eh: p.ErrorHandler}
 }
 
-func (h Handler) RegisterRoutes(r fiber.Router, rl *middleware.RateLimiter) {
+func (h *Handler) RegisterRoutes(r fiber.Router, rl *middleware.RateLimiter) {
 	api := r.Group("/shipment-moves")
 
 	api.Post("/split/", rl.WithRateLimit(
@@ -35,7 +35,7 @@ func (h Handler) RegisterRoutes(r fiber.Router, rl *middleware.RateLimiter) {
 	)...)
 }
 
-func (h Handler) split(c *fiber.Ctx) error {
+func (h *Handler) split(c *fiber.Ctx) error {
 	reqCtx, err := ctx.WithRequestContext(c)
 	if err != nil {
 		return h.eh.HandleError(c, err)

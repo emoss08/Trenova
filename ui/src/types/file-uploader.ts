@@ -38,7 +38,6 @@ export type UploadFileParams = {
   resourceId: string;
   resourceType: string;
   documentType: string;
-  description: string;
   onProgress: (progress: number) => void;
 };
 

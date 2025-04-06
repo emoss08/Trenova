@@ -357,6 +357,20 @@
       created_at: "{{ timestamp }}"
       updated_at: "{{ timestamp }}"
 
+- model: BillingControl
+  rows:
+    - _id: trenova
+      organization_id: "{{ $.Organization.trenova.ID }}"
+      business_unit_id: "{{ $.BusinessUnit.trenova.ID }}"
+      created_at: "{{ timestamp }}"
+      updated_at: "{{ timestamp }}"
+
+    - _id: trenova_2
+      organization_id: "{{ $.Organization.trenova_2.ID }}"
+      business_unit_id: "{{ $.BusinessUnit.trenova.ID }}"
+      created_at: "{{ timestamp }}"
+      updated_at: "{{ timestamp }}"
+
 - model: PCMilerConfiguration
   rows:
     - _id: pcmiler_1
@@ -936,7 +950,6 @@
       year: 2024
       fleet_code_id: "{{ $.FleetCode.fc_1.ID }}"
       license_plate_number: "TEST000000"
-      vin: "TEST000000"
       last_inspection_date: "{{ now.Unix }}"
       registration_number: "TEST000000"
       registration_expiry: "{{ now.Unix }}"
@@ -957,6 +970,22 @@
       postal_code: "90001"
       state_id: "{{ $.UsState.ca.ID }}"
 
+- model: BillingProfile
+  rows:
+    - _id: honeywell_billing_profile
+      organization_id: "{{ $.Organization.trenova.ID }}"
+      business_unit_id: "{{ $.BusinessUnit.trenova.ID }}"
+      customer_id: "{{ $.Customer.honeywell_customer.ID }}"
+      created_at: "{{ now.Unix }}"
+
+- model: CustomerEmailProfile
+  rows:
+    - _id: honeywell_email_profile
+      organization_id: "{{ $.Organization.trenova.ID }}"
+      business_unit_id: "{{ $.BusinessUnit.trenova.ID }}"
+      customer_id: "{{ $.Customer.honeywell_customer.ID }}"
+      created_at: "{{ now.Unix }}"
+
 - model: Shipment
   rows:
     - _id: test_shipment
@@ -976,8 +1005,8 @@
       total_charge_amount: 200.00
       pieces: 1
       weight: 1000
-      temperature_min: 10.00
-      temperature_max: 20.00
+      temperature_min: 10
+      temperature_max: 20
       tractor_type_id: "{{ $.EquipmentType.tractor_equip_type.ID }}"
       trailer_type_id: "{{ $.EquipmentType.trailer_equip_type.ID }}"
 
@@ -998,8 +1027,8 @@
       total_charge_amount: 200.00
       pieces: 1
       weight: 1000
-      temperature_min: 10.00
-      temperature_max: 20.00
+      temperature_min: 10
+      temperature_max: 20
       tractor_type_id: "{{ $.EquipmentType.tractor_equip_type.ID }}"
       trailer_type_id: "{{ $.EquipmentType.trailer_equip_type.ID }}"
 
@@ -1021,8 +1050,8 @@
       total_charge_amount: 500.00
       pieces: 1
       weight: 1000
-      temperature_min: 10.00
-      temperature_max: 20.00
+      temperature_min: 10
+      temperature_max: 20
 
     - _id: in_transit_shipment_2
       organization_id: "{{ $.Organization.trenova.ID }}"
@@ -1041,8 +1070,8 @@
       total_charge_amount: 500.00
       pieces: 1
       weight: 1000
-      temperature_min: 10.00
-      temperature_max: 20.00
+      temperature_min: 10
+      temperature_max: 20
 
     # Delayed Shipment
     - _id: delayed_shipment
@@ -1062,8 +1091,8 @@
       total_charge_amount: 500.00
       pieces: 1
       weight: 1000
-      temperature_min: 10.00
-      temperature_max: 20.00
+      temperature_min: 10
+      temperature_max: 20
 
     # Completed Shipment
     - _id: completed_shipment
@@ -1083,8 +1112,8 @@
       total_charge_amount: 500.00
       pieces: 1
       weight: 1000
-      temperature_min: 10.00
-      temperature_max: 20.00
+      temperature_min: 10
+      temperature_max: 20
 
     # Billed Shipment
     - _id: billed_shipment
@@ -1104,8 +1133,8 @@
       total_charge_amount: 500.00
       pieces: 1
       weight: 1000
-      temperature_min: 10.00
-      temperature_max: 20.00
+      temperature_min: 10
+      temperature_max: 20
 
     # Canceled Shipment
     - _id: canceled_shipment
@@ -1125,8 +1154,8 @@
       total_charge_amount: 500.00
       pieces: 1
       weight: 1000
-      temperature_min: 10.00
-      temperature_max: 20.00
+      temperature_min: 10
+      temperature_max: 20
       canceled_at: "{{ now.Unix }}"
       canceled_by_id: "{{ $.User.test_user.ID }}"
       cancel_reason: "Test"
@@ -1604,3 +1633,68 @@
       commodity_id: "{{ $.Commodity.test_commodity.ID }}"
       pieces: 1
       weight: 1000
+
+- model: DocumentType
+  rows:
+    - _id: INVOICE
+      organization_id: "{{ $.Organization.trenova.ID }}"
+      business_unit_id: "{{ $.BusinessUnit.trenova.ID }}"
+      created_at: "{{ now.Unix }}"
+      code: "INVOICE"
+      name: "Invoice"
+      description: "Invoice"
+      color: "#C51D34"
+      document_classification: "Public"
+      document_category: "Invoice"
+    - _id: Credit_Memo
+      organization_id: "{{ $.Organization.trenova.ID }}"
+      business_unit_id: "{{ $.BusinessUnit.trenova.ID }}"
+      created_at: "{{ now.Unix }}"
+      code: "CM"
+      name: "Credit Memo"
+      description: "Credit Memo"
+      color: "#646B63"
+      document_classification: "Public"
+      document_category: "Invoice"
+    - _id: POD
+      organization_id: "{{ $.Organization.trenova.ID }}"
+      business_unit_id: "{{ $.BusinessUnit.trenova.ID }}"
+      created_at: "{{ now.Unix }}"
+      code: "POD"
+      name: "Proof of Delivery"
+      description: "Proof of Delivery"
+      color: "#474A51"
+      document_classification: "Public"
+      document_category: "Shipment"
+    - _id: BOL
+      organization_id: "{{ $.Organization.trenova.ID }}"
+      business_unit_id: "{{ $.BusinessUnit.trenova.ID }}"
+      created_at: "{{ now.Unix }}"
+      code: "BOL"
+      name: "Bill of Lading"
+      description: "Bill of Lading"
+      color: "#5D9B9B"
+      document_classification: "Public"
+      document_category: "Shipment"
+    - _id: LUMPER
+      organization_id: "{{ $.Organization.trenova.ID }}"
+      business_unit_id: "{{ $.BusinessUnit.trenova.ID }}"
+      created_at: "{{ now.Unix }}"
+      code: "Lumper"
+      name: "Lumper"
+      description: "Lumper"
+      color: "#4C2F27"
+      document_classification: "Public"
+      document_category: "Shipment"
+
+- model: AccessorialCharge
+  rows:
+    - _id: hazmat
+      organization_id: "{{ $.Organization.trenova.ID }}"
+      business_unit_id: "{{ $.BusinessUnit.trenova.ID }}"
+      created_at: "{{ now.Unix }}"
+      code: "HAZMAT"
+      description: "Hazmat"
+      unit: 1
+      method: "Flat"
+      amount: 50

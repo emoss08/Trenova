@@ -28,7 +28,7 @@ func NewHandler(p HandlerParams) *Handler {
 	return &Handler{ts: p.TableConfigurationService, eh: p.ErrorHandler}
 }
 
-func (h Handler) RegisterRoutes(r fiber.Router, rl *middleware.RateLimiter) {
+func (h *Handler) RegisterRoutes(r fiber.Router, rl *middleware.RateLimiter) {
 	api := r.Group("/table-configurations")
 
 	api.Get("/", rl.WithRateLimit(
@@ -42,7 +42,7 @@ func (h Handler) RegisterRoutes(r fiber.Router, rl *middleware.RateLimiter) {
 	)...)
 }
 
-func (h Handler) list(c *fiber.Ctx) error {
+func (h *Handler) list(c *fiber.Ctx) error {
 	reqCtx, err := ctx.WithRequestContext(c)
 	if err != nil {
 		return h.eh.HandleError(c, err)
@@ -69,7 +69,7 @@ func (h Handler) list(c *fiber.Ctx) error {
 	return c.Status(fiber.StatusOK).JSON(result)
 }
 
-func (h Handler) create(c *fiber.Ctx) error {
+func (h *Handler) create(c *fiber.Ctx) error {
 	reqCtx, err := ctx.WithRequestContext(c)
 	if err != nil {
 		return h.eh.HandleError(c, err)

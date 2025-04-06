@@ -53,7 +53,7 @@ func (h *Handler) RegisterRoutes(r fiber.Router, rl *middleware.RateLimiter) {
 	)...)
 }
 
-func (h Handler) list(c *fiber.Ctx) error {
+func (h *Handler) list(c *fiber.Ctx) error {
 	reqCtx, err := ctx.WithRequestContext(c)
 	if err != nil {
 		return h.errorHandler.HandleError(c, err)
@@ -70,7 +70,7 @@ func (h Handler) list(c *fiber.Ctx) error {
 	return limitoffsetpagination.HandlePaginatedRequest(c, h.errorHandler, reqCtx, handler)
 }
 
-func (h Handler) listByResourceID(c *fiber.Ctx) error {
+func (h *Handler) listByResourceID(c *fiber.Ctx) error {
 	reqCtx, err := ctx.WithRequestContext(c)
 	if err != nil {
 		return h.errorHandler.HandleError(c, err)
@@ -94,7 +94,7 @@ func (h Handler) listByResourceID(c *fiber.Ctx) error {
 	return c.Status(fiber.StatusOK).JSON(entries)
 }
 
-func (h Handler) get(c *fiber.Ctx) error {
+func (h *Handler) get(c *fiber.Ctx) error {
 	reqCtx, err := ctx.WithRequestContext(c)
 	if err != nil {
 		return h.errorHandler.HandleError(c, err)

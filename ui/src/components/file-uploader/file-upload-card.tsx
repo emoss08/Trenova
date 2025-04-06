@@ -22,7 +22,7 @@ export function FileUploadCard({
       key={`${fileInfo.file.name}-${index}`}
       className="p-2 border border-border rounded-md bg-background"
     >
-      <div className="flex items-center justify-between mb-1">
+      <div className="flex items-center justify-between">
         <div className="flex items-center space-x-2 overflow-hidden">
           <div className="relative flex size-8 shrink-0 overflow-hidden rounded-sm">
             <FileTypeCard
@@ -81,6 +81,7 @@ export function FileUploadCard({
           </Tooltip>
         </div>
       </div>
+      {/* TODO(Wolfred): Add dropdown for document classification */}
 
       <div className="flex items-center gap-2">
         <Progress
@@ -89,7 +90,7 @@ export function FileUploadCard({
           indicatorClassName={cn(
             fileInfo.status === "error"
               ? "bg-red-500"
-              : fileInfo.status === "success" && "bg-blue-500",
+              : fileInfo.status === "success" && "bg-green-500",
           )}
         />
         <span

@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/core/ports/db"
+	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/pkg/config"
 	"github.com/emoss08/trenova/internal/pkg/logger"
 	"github.com/emoss08/trenova/internal/pkg/utils/fileutils"
@@ -27,7 +28,7 @@ type BackupServiceParams struct {
 	Config *config.Manager
 }
 
-type BackupService struct {
+type backupService struct {
 	logger           *zerolog.Logger
 	db               db.Connection
 	cfg              *config.BackupConfig
@@ -45,7 +46,7 @@ type BackupConfig struct {
 	CompressionOpt string `yaml:"compression"`
 }
 
-func NewBackupService(p BackupServiceParams) (*BackupService, error) {
+func NewBackupService(p BackupServiceParams) (services.BackupService, error) {
 	log := p.Logger.With().Str("component", "dbbackup_service").Logger()
 
 	// * Check if backup is enabled
@@ -98,7 +99,7 @@ func NewBackupService(p BackupServiceParams) (*BackupService, error) {
 		Int("retentionDays", retentionDays).
 		Msg("🚀 Backup service initialized successfully")
 
-	return &BackupService{
+	return &backupService{
 		logger:           &log,
 		db:               p.DB,
 		cfg:              cfg,
@@ -111,7 +112,7 @@ func NewBackupService(p BackupServiceParams) (*BackupService, error) {
 }
 
 // CreateBackup performs a full database backup using pg_dump
-func (s *BackupService) CreateBackup(ctx context.Context) (string, error) {
+func (s *backupService) CreateBackup(ctx context.Context) (string, error) {
 	log := s.logger.With().
 		Str("operation", "CreateBackup").
 		Logger()
@@ -172,7 +173,7 @@ func (s *BackupService) CreateBackup(ctx context.Context) (string, error) {
 
 // ScheduledBackup performs a backup and handles retention.
 // If retentionDays is set to 0, it will use the configured retention period.
-func (s *BackupService) ScheduledBackup(ctx context.Context, retentionDays int) error {
+func (s *backupService) ScheduledBackup(ctx context.Context, retentionDays int) error {
 	// * Use configured retention days if not explicitly specified
 	if retentionDays <= 0 {
 		retentionDays = s.retentionDays
@@ -205,7 +206,7 @@ func (s *BackupService) ScheduledBackup(ctx context.Context, retentionDays int) 
 
 // ApplyRetentionPolicy deletes backups older than the retention period.
 // This can be called directly or used by the scheduler.
-func (s *BackupService) ApplyRetentionPolicy(retentionDays int) error {
+func (s *backupService) ApplyRetentionPolicy(retentionDays int) error {
 	log := s.logger.With().
 		Str("operation", "applyRetentionPolicy").
 		Int("retentionDays", retentionDays).
@@ -270,7 +271,7 @@ func (s *BackupService) ApplyRetentionPolicy(retentionDays int) error {
 }
 
 // RestoreBackup restores a database from a backup file.
-func (s *BackupService) RestoreBackup(ctx context.Context, backupFile string) error {
+func (s *backupService) RestoreBackup(ctx context.Context, backupFile string) error {
 	log := s.logger.With().
 		Str("operation", "RestoreBackup").
 		Str("backupFile", backupFile).
@@ -337,17 +338,8 @@ func (s *BackupService) RestoreBackup(ctx context.Context, backupFile string) er
 	return nil
 }
 
-// BackupFileInfo contains information about a backup file
-type BackupFileInfo struct {
-	Filename  string    `json:"filename"`
-	Path      string    `json:"path"`
-	SizeBytes int64     `json:"sizeBytes"`
-	CreatedAt time.Time `json:"createdAt"`
-	Database  string    `json:"database"`
-}
-
 // ListBackups returns detailed information about available backup files.
-func (s *BackupService) ListBackups() ([]BackupFileInfo, error) {
+func (s *backupService) ListBackups() ([]services.BackupFileInfo, error) {
 	log := s.logger.With().
 		Str("operation", "ListBackups").
 		Logger()
@@ -363,7 +355,7 @@ func (s *BackupService) ListBackups() ([]BackupFileInfo, error) {
 	}
 
 	// * Filter and collect backup file information
-	backups := make([]BackupFileInfo, 0, len(files))
+	backups := make([]services.BackupFileInfo, 0, len(files))
 	for _, file := range files {
 		if file.IsDir() {
 			continue
@@ -391,7 +383,7 @@ func (s *BackupService) ListBackups() ([]BackupFileInfo, error) {
 			dbName = parts[0]
 		}
 
-		backups = append(backups, BackupFileInfo{
+		backups = append(backups, services.BackupFileInfo{
 			Filename:  filename,
 			Path:      filePath,
 			SizeBytes: fileInfo.Size(),
@@ -413,7 +405,7 @@ func (s *BackupService) ListBackups() ([]BackupFileInfo, error) {
 }
 
 // DeleteBackup deletes a backup file.
-func (s *BackupService) DeleteBackup(backupPath string) error {
+func (s *backupService) DeleteBackup(backupPath string) error {
 	log := s.logger.With().
 		Str("operation", "DeleteBackup").
 		Str("backupPath", backupPath).
@@ -439,11 +431,11 @@ func (s *BackupService) DeleteBackup(backupPath string) error {
 }
 
 // GetRetentionDays returns the configured retention days.
-func (s *BackupService) GetRetentionDays() int {
+func (s *backupService) GetRetentionDays() int {
 	return s.retentionDays
 }
 
 // GetBackupDir returns the backup directory path.
-func (s *BackupService) GetBackupDir() string {
+func (s *backupService) GetBackupDir() string {
 	return s.backupDir
 }

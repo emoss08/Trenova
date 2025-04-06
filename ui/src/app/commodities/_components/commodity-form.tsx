@@ -1,7 +1,7 @@
 import { AutocompleteField } from "@/components/fields/autocomplete";
-import { CheckboxField } from "@/components/fields/checkbox-field";
 import { InputField } from "@/components/fields/input-field";
 import { SelectField } from "@/components/fields/select-field";
+import { SwitchField } from "@/components/fields/switch-field";
 import { TextareaField } from "@/components/fields/textarea-field";
 import { FormControl, FormGroup } from "@/components/ui/form";
 import { statusChoices } from "@/lib/choices";
@@ -76,6 +76,7 @@ export function CommodityForm() {
           placeholder="Min Temperature"
           type="number"
           description="The lowest temperature (°F) at which the commodity can be safely transported."
+          sideText="°F"
         />
       </FormControl>
       <FormControl>
@@ -86,6 +87,7 @@ export function CommodityForm() {
           placeholder="Max Temperature"
           type="number"
           description="The highest temperature (°F) at which the commodity can be safely transported."
+          sideText="°F"
         />
       </FormControl>
       <FormControl>
@@ -119,7 +121,7 @@ export function CommodityForm() {
         />
       </FormControl>
       <FormControl cols="full">
-        <CheckboxField
+        <SwitchField
           name="stackable"
           control={control}
           label="Stackable"
@@ -128,7 +130,7 @@ export function CommodityForm() {
         />
       </FormControl>
       <FormControl cols="full">
-        <CheckboxField
+        <SwitchField
           name="fragile"
           control={control}
           label="Fragile"

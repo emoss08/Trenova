@@ -21,7 +21,7 @@ CREATE TABLE IF NOT EXISTS "business_units" (
     "address_line1" varchar(100),
     "address_line2" varchar(100),
     "city" varchar(100),
-    "postal_code" varchar(20),
+    "postal_code" us_postal_code NOT NULL,
     "timezone" varchar(50) NOT NULL DEFAULT 'America/New_York',
     "locale" varchar(10) NOT NULL DEFAULT 'en-US',
     "tax_id" varchar(50),

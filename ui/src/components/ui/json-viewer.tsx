@@ -10,7 +10,7 @@ import {
   faChevronRight,
   faEllipsis,
   faMinus,
-  faPlus
+  faPlus,
 } from "@fortawesome/pro-regular-svg-icons";
 import React, { useMemo, useState } from "react";
 import { toast } from "sonner";
@@ -33,6 +33,7 @@ import {
   DropdownMenuTrigger,
 } from "./dropdown-menu";
 import { Icon } from "./icons";
+import { ScrollArea } from "./scroll-area";
 import { SensitiveBadge } from "./sensitive-badge";
 import {
   Table,
@@ -74,13 +75,17 @@ function CollapsibleNode({
     if (isSensitiveData) {
       valueDisplay = (
         <div className="inline-flex items-center">
-          <span className="text-vitess-string">&quot;{value}&quot;</span>
+          <span className="max-w-[450px] truncate text-vitess-string">
+            &quot;{value}&quot;
+          </span>
           <SensitiveBadge />
         </div>
       );
     } else if (typeof value === "string") {
       valueDisplay = (
-        <span className="text-vitess-string">&quot;{value}&quot;</span>
+        <span className="max-w-[450px] truncate text-vitess-string">
+          &quot;{value}&quot;
+        </span>
       );
     } else if (typeof value === "number") {
       valueDisplay = <span className="text-vitess-number">{value}</span>;
@@ -95,7 +100,7 @@ function CollapsibleNode({
     }
 
     return (
-      <div className="px-3 py-1 hover:bg-muted/50 rounded-sm flex items-center transition-colors">
+      <div className="px-3 py-1 hover:bg-muted rounded-sm flex items-center transition-colors">
         {displayName && (
           <>
             {displayName}
@@ -112,7 +117,7 @@ function CollapsibleNode({
   const summary = isArray ? `[${childrenCount}]` : `{${childrenCount}}`;
 
   return (
-    <div className="hover:bg-muted/40 rounded-sm transition-colors">
+    <div className="rounded-sm transition-colors overflow-hidden">
       <div
         className="flex items-center px-3 py-1 cursor-pointer"
         onClick={toggleExpand}
@@ -137,7 +142,7 @@ function CollapsibleNode({
       </div>
 
       {isExpanded && (
-        <div className="ml-4 border-l border-border pl-3 py-0.5">
+        <ScrollArea className="ml-4 border-l border-border pl-3 py-0.5 max-h-[calc(100vh-200px)] overflow-y-auto">
           {isArray
             ? // Handle array rendering
               value.map((item: any, index: number) => (
@@ -161,7 +166,7 @@ function CollapsibleNode({
             <span className="text-muted-foreground">{isArray ? "]" : "}"}</span>
             {withComma && <span className="text-foreground">,</span>}
           </div>
-        </div>
+        </ScrollArea>
       )}
     </div>
   );
@@ -175,7 +180,11 @@ export function JsonViewer({
   // Handle states
   if (!data) {
     return (
-      <div className="text-muted-foreground italic p-4">No data available</div>
+      <div className="p-4 border border-dashed border-border rounded-md">
+        <p className="text-xs text-muted-foreground italic">
+          No data available
+        </p>
+      </div>
     );
   }
 
@@ -191,7 +200,7 @@ export function JsonViewer({
         <div className="absolute top-3 right-3 z-10">
           <JsonViewerActions data={data} />
         </div>
-        <div className="p-3 font-mono text-sm overflow-auto max-h-[calc(100vh-200px)]">
+        <div className="p-3 font-mono text-sm">
           <CollapsibleNode
             name={null}
             value={data}
@@ -228,12 +237,18 @@ export function ReadableJsonValue({
     if (isSensitiveData) {
       return (
         <div className="flex items-center">
-          <span className="text-vitess-string">&quot;{value}&quot;</span>
+          <span className="max-w-[450px] truncate text-vitess-string">
+            &quot;{value}&quot;
+          </span>
           <SensitiveBadge />
         </div>
       );
     } else if (typeof value === "string") {
-      return <span className="text-vitess-string">&quot;{value}&quot;</span>;
+      return (
+        <span className="max-w-[450px] truncate text-vitess-string">
+          &quot;{value}&quot;
+        </span>
+      );
     } else if (typeof value === "number") {
       return <span className="text-vitess-number">{value}</span>;
     } else if (typeof value === "boolean") {
