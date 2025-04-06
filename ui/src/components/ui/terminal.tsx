@@ -7,8 +7,6 @@ import { faMinus, faServer } from "@fortawesome/pro-regular-svg-icons";
 import { faSort, faX } from "@fortawesome/pro-solid-svg-icons";
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 
-// ASCII art in basic characters that will render properly in any terminal
-// Each line has the exact same length for consistent display
 const asciiArt = `
  ████████╗██████╗ ███████╗███╗   ██╗ ██████╗ ██╗   ██╗  █████╗ 
  ╚══██╔══╝██╔══██╗██╔════╝████╗  ██║██╔═══██╗██║   ██║  ██╔══██╗
@@ -959,7 +957,7 @@ drwxr-xr-x 12 postgres postgres 4096 Apr  5 15:29 ..
             <div
               ref={terminalRef}
               className="h-[400px] rounded-b-md bg-zinc-900 border border-t-0 border-zinc-700 p-4 font-mono text-sm overflow-auto relative"
-              onClick={focusInput} // Add click handler to focus input
+              onClick={focusInput}
             >
               <div className="terminal-content space-y-0.5">
                 {terminalLines.map((line) => (
@@ -987,7 +985,6 @@ drwxr-xr-x 12 postgres postgres 4096 Apr  5 15:29 ..
                     </>
                   )}
                 </div>
-                {/* Element for automatic scrolling */}
                 <div ref={autoScrollerRef} />
               </div>
             </div>
