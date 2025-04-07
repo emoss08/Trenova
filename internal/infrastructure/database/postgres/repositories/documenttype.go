@@ -160,6 +160,39 @@ func (dt *documentTypeRepository) GetByID(ctx context.Context, opts repositories
 	return entity, nil
 }
 
+// GetByIDs retrieves a list of document types by their IDs.
+//
+// Parameters:
+//   - ctx: The context for the operation.
+//   - docIDs: A slice of document IDs to retrieve.
+//
+// Returns:
+//   - []*billing.DocumentType: A list of document types.
+//   - error: An error if the operation fails.
+func (dt *documentTypeRepository) GetByIDs(ctx context.Context, docIDs []string) ([]*billing.DocumentType, error) {
+	dba, err := dt.db.DB(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	log := dt.l.With().
+		Str("operation", "GetByIDs").
+		Logger()
+
+	// Create an empty slice with the capacity to hold all potential results
+	entities := make([]*billing.DocumentType, 0, len(docIDs))
+
+	query := dba.NewSelect().Model(&entities).
+		Where("dt.id IN (?)", bun.In(docIDs))
+
+	if err := query.Scan(ctx); err != nil {
+		log.Error().Err(err).Msg("failed to get document types")
+		return nil, err
+	}
+
+	return entities, nil
+}
+
 // Create inserts a new document type into the database.
 //
 // Parameters:

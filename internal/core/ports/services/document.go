@@ -20,7 +20,7 @@ type UploadDocumentRequest struct {
 	UploadedByID    pulid.ID                `json:"uploadedById"`
 	ResourceID      pulid.ID                `json:"resourceId"`
 	ResourceType    permission.Resource     `json:"resourceType"`
-	DocumentType    document.DocumentType   `json:"documentType"`
+	DocumentTypeID  pulid.ID                `json:"documentTypeId"`
 	File            []byte                  `json:"file"`
 	FileName        string                  `json:"fileName"`
 	OriginalName    string                  `json:"originalName"`
@@ -40,7 +40,7 @@ func (r *UploadDocumentRequest) Validate(ctx context.Context) error {
 		validation.Field(&r.UploadedByID, validation.Required.Error("Uploaded By ID is required")),
 		validation.Field(&r.ResourceID, validation.Required.Error("Resource ID is required")),
 		validation.Field(&r.ResourceType, validation.Required.Error("Resource Type is required")),
-		validation.Field(&r.DocumentType, validation.Required.Error("Document Type is required")),
+		validation.Field(&r.DocumentTypeID, validation.Required.Error("Document Type ID is required")),
 		validation.Field(&r.File, validation.Required.Error("File is required")),
 		validation.Field(&r.FileName, validation.Required.Error("File Name is required")),
 		validation.Field(&r.OriginalName, validation.Required.Error("Original Name is required")),
@@ -68,34 +68,6 @@ type UploadDocumentResponse struct {
 	VersionID string             `json:"versionId"`
 }
 
-// BulkUploadDocumentRequest contains multiple document upload requests
-type BulkUploadDocumentRequest struct {
-	OrganizationID pulid.ID            `json:"organizationId"`
-	BusinessUnitID pulid.ID            `json:"businessUnitId"`
-	UploadedByID   pulid.ID            `json:"uploadedById"`
-	ResourceID     pulid.ID            `json:"resourceId"`
-	ResourceType   permission.Resource `json:"resourceType"`
-	Documents      []BulkDocumentInfo  `json:"documents"`
-}
-
-// BulkDocumentInfo contains information for a single document in a bulk upload
-type BulkDocumentInfo struct {
-	DocumentType    document.DocumentType `json:"documentType"`
-	File            []byte                `json:"file"`
-	FileName        string                `json:"fileName"`
-	OriginalName    string                `json:"originalName"`
-	Description     string                `json:"description"`
-	Tags            []string              `json:"tags"`
-	ExpirationDate  *int64                `json:"expirationDate"`
-	RequireApproval bool                  `json:"requireApproval"`
-}
-
-// BulkUploadResponse contains the results of a bulk document upload
-type BulkUploadDocumentResponse struct {
-	Successful []UploadDocumentResponse `json:"successful"`
-	Failed     []FailedUpload           `json:"failed"`
-}
-
 // FailedUpload contains information about a failed document upload
 type FailedUpload struct {
 	FileName string `json:"fileName"`
@@ -104,11 +76,7 @@ type FailedUpload struct {
 
 // DocumentService defines the interface for document management operations
 type DocumentService interface {
-	// Upload operations
 	UploadDocument(ctx context.Context, req *UploadDocumentRequest) (*UploadDocumentResponse, error)
-	BulkUploadDocuments(ctx context.Context, req *BulkUploadDocumentRequest) (*BulkUploadDocumentResponse, error)
-
-	// Aggregation operations
 	GetDocumentCountByResource(ctx context.Context, req ports.TenantOptions) ([]*repositories.GetDocumentCountByResourceResponse, error)
 	GetResourceSubFolders(ctx context.Context, req repositories.GetResourceSubFoldersRequest) ([]*repositories.GetResourceSubFoldersResponse, error)
 	GetDocumentsByResourceID(ctx context.Context, req *repositories.GetDocumentsByResourceIDRequest) (*ports.ListResult[*document.Document], error)

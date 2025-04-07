@@ -1,3 +1,4 @@
+import { getCustomerDocumentRequirements } from "@/services/customer";
 import {
   getDocumentCountByResource,
   getDocumentsByResourceID,
@@ -92,11 +93,33 @@ export const queries = createQueryKeyStore({
         return await getResourceSubFolders(resourceType);
       },
     }),
-    documentsByResourceID: (resourceType: Resource, resourceId: string) => ({
-      queryKey: ["document/documents-by-resource-id", resourceType, resourceId],
+    documentsByResourceID: (
+      resourceType: Resource,
+      resourceId: string,
+      limit?: number,
+      offset?: number,
+    ) => ({
+      queryKey: [
+        "document/documents-by-resource-id",
+        resourceType,
+        resourceId,
+        limit,
+        offset,
+      ],
       queryFn: async () => {
-        return await getDocumentsByResourceID(resourceType, resourceId);
+        return await getDocumentsByResourceID(
+          resourceType,
+          resourceId,
+          limit,
+          offset,
+        );
       },
+    }),
+  },
+  customer: {
+    getDocumentRequirements: (customerId: string) => ({
+      queryKey: ["customer/document-requirements", customerId],
+      queryFn: async () => getCustomerDocumentRequirements(customerId),
     }),
   },
 });

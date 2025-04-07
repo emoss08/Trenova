@@ -18,6 +18,7 @@ type GetDocumentTypeByIDRequest struct {
 type DocumentTypeRepository interface {
 	List(ctx context.Context, opts *ports.LimitOffsetQueryOptions) (*ports.ListResult[*billing.DocumentType], error)
 	GetByID(ctx context.Context, opts GetDocumentTypeByIDRequest) (*billing.DocumentType, error)
+	GetByIDs(ctx context.Context, docIDs []string) ([]*billing.DocumentType, error)
 	Create(ctx context.Context, dt *billing.DocumentType) (*billing.DocumentType, error)
 	Update(ctx context.Context, dt *billing.DocumentType) (*billing.DocumentType, error)
 }

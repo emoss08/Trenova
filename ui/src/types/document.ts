@@ -63,7 +63,7 @@ export type Document = {
   originalName: string;
   fileType: string;
   fileSize: number;
-  documentType: DocumentType;
+  documentTypeId: string;
   resourceType: Resource;
   resourceId: string;
   createdAt: number;

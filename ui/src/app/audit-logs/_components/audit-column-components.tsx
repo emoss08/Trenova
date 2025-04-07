@@ -137,6 +137,7 @@ export function AuditEntryResourceBadge({
       variant: "orange",
       text: "User",
     },
+
     [Resource.BusinessUnit]: {
       variant: "orange",
       text: "Business Unit",
@@ -177,6 +178,10 @@ export function AuditEntryResourceBadge({
     [Resource.Shipment]: {
       variant: "indigo",
       text: "Shipment",
+    },
+    [Resource.DocumentType]: {
+      variant: "indigo",
+      text: "Document Type",
     },
     [Resource.Assignment]: {
       variant: "indigo",
@@ -363,11 +368,6 @@ export function AuditEntryResourceBadge({
       description: undefined,
     },
     [Resource.AccessorialCharge]: {
-      variant: undefined,
-      text: "",
-      description: undefined,
-    },
-    [Resource.DocumentClassification]: {
       variant: undefined,
       text: "",
       description: undefined,

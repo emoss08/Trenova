@@ -19,6 +19,7 @@ import (
 	"github.com/emoss08/trenova/internal/pkg/errors"
 	"github.com/emoss08/trenova/internal/pkg/logger"
 	"github.com/emoss08/trenova/internal/pkg/utils/jsonutils"
+	"github.com/emoss08/trenova/pkg/types/pulid"
 	"github.com/rotisserie/eris"
 	"github.com/rs/zerolog"
 	"go.uber.org/fx"
@@ -39,6 +40,7 @@ type ServiceParams struct {
 	DocRepo      repositories.DocumentRepository
 	FileService  services.FileService
 	OrgRepo      repositories.OrganizationRepository
+	DocTypeRepo  repositories.DocumentTypeRepository
 }
 
 // service implements the DocumentService interface
@@ -52,6 +54,7 @@ type service struct {
 	docRepo     repositories.DocumentRepository
 	fileService services.FileService
 	orgRepo     repositories.OrganizationRepository
+	docTypeRepo repositories.DocumentTypeRepository
 	ps          services.PermissionService
 	as          services.AuditService
 }
@@ -76,6 +79,7 @@ func NewService(p ServiceParams) services.DocumentService {
 		docRepo:     p.DocRepo,
 		fileService: p.FileService,
 		orgRepo:     p.OrgRepo,
+		docTypeRepo: p.DocTypeRepo,
 		ps:          p.PermService,
 		as:          p.AuditService,
 	}
@@ -227,8 +231,19 @@ func (s *service) UploadDocument(ctx context.Context, req *services.UploadDocume
 		return nil, err
 	}
 
+	// * Fetch document type information
+	docType, err := s.docTypeRepo.GetByID(ctx, repositories.GetDocumentTypeByIDRequest{
+		ID:    req.DocumentTypeID,
+		OrgID: req.OrganizationID,
+		BuID:  req.BusinessUnitID,
+	})
+	if err != nil {
+		log.Error().Err(err).Msg("failed to get document type by ID")
+		return nil, eris.Wrap(err, "get document type by ID")
+	}
+
 	// * Generate file storage path
-	objectKey := s.generateObjectPath(req)
+	objectKey := s.generateObjectPath(req, docType.Name)
 
 	// * Prepare file upload request
 	fileReq := &services.SaveFileRequest{
@@ -238,12 +253,12 @@ func (s *service) UploadDocument(ctx context.Context, req *services.UploadDocume
 		FileName:       objectKey,
 		File:           req.File,
 		FileType:       s.determineFileType(req.FileName),
-		Classification: s.mapDocTypeToClassification(req.DocumentType),
+		Classification: s.mapDocTypeToClassification(req.DocumentTypeID),
 		Category:       s.mapResourceTypeToCategory(req.ResourceType),
 		Tags: map[string]string{
 			"resource_id":   req.ResourceID.String(),
 			"resource_type": string(req.ResourceType),
-			"doc_type":      string(req.DocumentType),
+			"doc_type":      docType.Name,
 		},
 		Metadata: map[string][]string{
 			"description": {req.Description},
@@ -281,7 +296,7 @@ func (s *service) UploadDocument(ctx context.Context, req *services.UploadDocume
 		FileSize:       int64(len(req.File)),
 		FileType:       filepath.Ext(req.FileName),
 		StoragePath:    objectKey,
-		DocumentType:   req.DocumentType,
+		DocumentTypeID: req.DocumentTypeID,
 		Status:         docStatus,
 		ResourceID:     req.ResourceID,
 		ResourceType:   req.ResourceType,
@@ -324,95 +339,7 @@ func (s *service) UploadDocument(ctx context.Context, req *services.UploadDocume
 	}, nil
 }
 
-// BulkUploadDocuments uploads multiple documents in a single operation
-//
-// Parameters:
-//   - ctx: The context for the operation.
-//   - req: The request containing document details.
-//
-// Returns:
-//   - *services.BulkUploadDocumentResponse: The response containing the uploaded documents.
-//   - error: An error if the operation fails.
-func (s *service) BulkUploadDocuments(ctx context.Context, req *services.BulkUploadDocumentRequest) (*services.BulkUploadDocumentResponse, error) {
-	log := s.l.With().
-		Str("operation", "BulkUploadDocuments").
-		Logger()
-
-	result, err := s.ps.HasAnyPermissions(ctx, []*services.PermissionCheck{
-		{
-			UserID:         req.UploadedByID,
-			Resource:       permission.ResourceDocument,
-			Action:         permission.ActionCreate,
-			BusinessUnitID: req.BusinessUnitID,
-			OrganizationID: req.OrganizationID,
-		},
-	})
-	if err != nil {
-		log.Error().Err(err).Msg("failed to check permissions")
-		return nil, err
-	}
-
-	if !result.Allowed {
-		return nil, errors.NewAuthorizationError("You do not have permission to create documents")
-	}
-
-	response := &services.BulkUploadDocumentResponse{
-		Successful: make([]services.UploadDocumentResponse, 0, len(req.Documents)),
-		Failed:     make([]services.FailedUpload, 0),
-	}
-
-	// * Process each document in the bulk request
-	for i := range req.Documents {
-		docInfo := &req.Documents[i] // Use pointer to avoid copying the whole struct
-		uploadReq := &services.UploadDocumentRequest{
-			OrganizationID:  req.OrganizationID,
-			BusinessUnitID:  req.BusinessUnitID,
-			UploadedByID:    req.UploadedByID,
-			ResourceID:      req.ResourceID,
-			ResourceType:    req.ResourceType,
-			DocumentType:    docInfo.DocumentType,
-			File:            docInfo.File,
-			FileName:        docInfo.FileName,
-			RequireApproval: docInfo.RequireApproval,
-			OriginalName:    docInfo.OriginalName,
-			Description:     docInfo.Description,
-			Tags:            docInfo.Tags,
-			ExpirationDate:  docInfo.ExpirationDate,
-			Status:          document.DocumentStatusActive, // * Default for bulk uploads
-		}
-
-		uploadResp, err := s.UploadDocument(ctx, uploadReq)
-		if err != nil {
-			response.Failed = append(response.Failed, services.FailedUpload{
-				FileName: docInfo.FileName,
-				Error:    err,
-			})
-			continue
-		}
-
-		response.Successful = append(response.Successful, *uploadResp)
-	}
-
-	err = s.as.LogAction(
-		&services.LogActionParams{
-			Resource:       permission.ResourceDocument,
-			ResourceID:     req.ResourceID.String(),
-			Action:         permission.ActionCreate,
-			UserID:         req.UploadedByID,
-			CurrentState:   jsonutils.MustToJSON(response),
-			OrganizationID: req.OrganizationID,
-			BusinessUnitID: req.BusinessUnitID,
-		},
-		audit.WithComment("Documents uploaded"),
-	)
-	if err != nil {
-		log.Error().Err(err).Msg("failed to log document creation")
-	}
-
-	return response, nil
-}
-
-func (s *service) generateObjectPath(req *services.UploadDocumentRequest) string {
+func (s *service) generateObjectPath(req *services.UploadDocumentRequest, docTypeName string) string {
 	// Format: {resourceType}/{resourceID}/{documentType}/{timestamp}_{filename}
 	now := time.Now()
 	timestamp := now.Format("20060102150405")
@@ -420,7 +347,7 @@ func (s *service) generateObjectPath(req *services.UploadDocumentRequest) string
 
 	return fmt.Sprintf("%s/%s/%s_%s",
 		req.ResourceID,
-		req.DocumentType,
+		docTypeName,
 		timestamp,
 		sanitizedFileName)
 }
@@ -440,19 +367,21 @@ func (s *service) determineFileType(filename string) services.FileType {
 	}
 }
 
-func (s *service) mapDocTypeToClassification(docType document.DocumentType) services.FileClassification {
-	switch docType {
-	case document.DocumentTypeLicense, document.DocumentTypeRegistration,
-		document.DocumentTypeInsurance, document.DocumentTypeMedicalCert:
-		return services.ClassificationRegulatory
-	case document.DocumentTypeDriverLog, document.DocumentTypeAccidentReport:
-		return services.ClassificationSensitive
-	case document.DocumentTypeProofOfDelivery, document.DocumentTypeInvoice,
-		document.DocumentTypeBillOfLading, document.DocumentTypeContract:
-		return services.ClassificationPrivate
-	default:
-		return services.ClassificationPublic
-	}
+func (s *service) mapDocTypeToClassification(docTypeID pulid.ID) services.FileClassification {
+	// switch docTypeID {
+	// case document.DocumentTypeLicense, document.DocumentTypeRegistration,
+	// 	document.DocumentTypeInsurance, document.DocumentTypeMedicalCert:
+	// 	return services.ClassificationRegulatory
+	// case document.DocumentTypeDriverLog, document.DocumentTypeAccidentReport:
+	// 	return services.ClassificationSensitive
+	// case document.DocumentTypeProofOfDelivery, document.DocumentTypeInvoice,
+	// 	document.DocumentTypeBillOfLading, document.DocumentTypeContract:
+	// 	return services.ClassificationPrivate
+	// default:
+	// 	return services.ClassificationPublic
+	// }
+
+	return services.ClassificationPublic
 }
 
 func (s *service) mapResourceTypeToCategory(resourceType permission.Resource) services.FileCategory {

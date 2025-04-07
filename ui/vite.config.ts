@@ -209,13 +209,15 @@ export default defineConfig({
     include: ["@tanstack/react-query", "zustand"],
     exclude: ["@vite/client", "@vite/env"],
   },
-
   server: {
     fs: {
       strict: true,
     },
     hmr: {
       overlay: true,
+    },
+    warmup: {
+      clientFiles: ["./src/lib/utils.ts"],
     },
   },
 });
