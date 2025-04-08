@@ -1,20 +1,3 @@
-CREATE TYPE "document_type_enum" AS ENUM(
-    'License', -- Driver's license, business license, etc.
-    'Registration', -- Vehicle registration
-    'Insurance', -- Insurance documents
-    'Invoice', -- Customer invoices
-    'ProofOfDelivery', -- POD documents
-    'BillOfLading', -- BOL documents
-    'DriverLog', -- Driver HOS logs
-    'MedicalCertificate', -- Driver medical certificates
-    'Contract', -- Business contracts
-    'Maintenance', -- Maintenance records
-    'AccidentReport', -- Accident or incident reports
-    'TrainingRecord', -- Driver or employee training documents
-    'Other' -- Miscellaneous documents
-);
-
---bun:split
 CREATE TYPE "document_status_enum" AS ENUM(
     'Draft', -- Document in draft state
     'Active', -- Document is active and valid
@@ -37,7 +20,6 @@ CREATE TABLE IF NOT EXISTS "documents"(
     "file_type" varchar(100) NOT NULL,
     "storage_path" varchar(500) NOT NULL,
     -- Document classification
-    "document_type" document_type_enum NOT NULL,
     "status" document_status_enum NOT NULL DEFAULT 'Active',
     "description" text,
     -- Entity association (polymorphic relationship)
@@ -71,9 +53,6 @@ COMMENT ON TABLE documents IS 'Centralized document repository for all entity-re
 -- Create required indexes for performance
 -- Index for polymorphic relationship queries (the most common query pattern)
 CREATE INDEX IF NOT EXISTS "idx_documents_resource" ON "documents"("resource_type", "resource_id");
-
--- Index for document classification
-CREATE INDEX IF NOT EXISTS "idx_documents_type_status" ON "documents"("document_type", "status");
 
 -- Index for expiration tracking (compliance management)
 CREATE INDEX IF NOT EXISTS "idx_documents_expiration" ON "documents"("expiration_date")
@@ -110,7 +89,7 @@ CREATE OR REPLACE FUNCTION documents_search_vector_update()
     RETURNS TRIGGER
     AS $$
 BEGIN
-    NEW.search_vector := setweight(to_tsvector('simple', COALESCE(NEW.file_name, '')), 'A') || setweight(to_tsvector('simple', COALESCE(NEW.original_name, '')), 'A') || setweight(to_tsvector('english', COALESCE(NEW.description, '')), 'B') || setweight(to_tsvector('english', COALESCE(CAST(NEW.document_type AS text), '')), 'B') || setweight(to_tsvector('english', COALESCE(array_to_string(NEW.tags, ' '), '')), 'C');
+    NEW.search_vector := setweight(to_tsvector('simple', COALESCE(NEW.file_name, '')), 'A') || setweight(to_tsvector('simple', COALESCE(NEW.original_name, '')), 'A') || setweight(to_tsvector('english', COALESCE(NEW.description, '')), 'B') || setweight(to_tsvector('english', COALESCE(array_to_string(NEW.tags, ' '), '')), 'C');
     -- Auto-update timestamps
     NEW.updated_at := EXTRACT(EPOCH FROM CURRENT_TIMESTAMP)::bigint;
     -- Auto-expire documents
@@ -144,9 +123,6 @@ ALTER TABLE documents
     ALTER COLUMN status SET STATISTICS 1000;
 
 ALTER TABLE documents
-    ALTER COLUMN document_type SET STATISTICS 1000;
-
-ALTER TABLE documents
     ALTER COLUMN organization_id SET STATISTICS 1000;
 
 ALTER TABLE documents
@@ -154,38 +130,6 @@ ALTER TABLE documents
 
 ALTER TABLE documents
     ALTER COLUMN resource_type SET STATISTICS 1000;
-
--- Create view for expired documents (compliance reporting)
--- CREATE OR REPLACE VIEW vw_expired_documents AS
--- SELECT
---     d.*,
---     o.name AS organization_name,
---     bu.name AS business_unit_name,
---     u.name AS uploaded_by_name
--- FROM
---     documents d
---     JOIN organizations o ON d.organization_id = o.id
---     JOIN business_units bu ON d.business_unit_id = bu.id
---     JOIN users u ON d.uploaded_by_id = u.id
--- WHERE
---     d.expiration_date IS NOT NULL
---     AND d.expiration_date <= EXTRACT(EPOCH FROM CURRENT_TIMESTAMP)::bigint
---     AND d.status != 'Expired';
-
--- Create view for documents needing approval
--- CREATE OR REPLACE VIEW vw_pending_approval_documents AS
--- SELECT
---     d.*,
---     o.name AS organization_name,
---     bu.name AS business_unit_name,
---     u.name AS uploaded_by_name
--- FROM
---     documents d
---     JOIN organizations o ON d.organization_id = o.id
---     JOIN business_units bu ON d.business_unit_id = bu.id
---     JOIN users u ON d.uploaded_by_id = u.id
--- WHERE
---     d.status = 'PendingApproval';
 
 --bun:split
 -- Create function to set document status to expired automatically

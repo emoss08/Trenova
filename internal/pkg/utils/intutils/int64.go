@@ -8,8 +8,28 @@ func SafeInt16Ptr(i int, returnNilOnZero bool) *int16 {
 		return nil
 	}
 
+	// Check for int16 bounds to prevent overflow
+	if i > 32767 || i < -32768 {
+		// Return max or min int16 value as appropriate
+		var val int16
+		if i > 32767 {
+			val = 32767 // max int16
+		} else {
+			val = -32768 // min int16
+		}
+		return &val
+	}
+
 	i16 := int16(i)
 	return &i16
+}
+
+func SafeUint64Ptr(i uint64, returnNilOnZero bool) *uint64 {
+	if i == 0 && returnNilOnZero {
+		return nil
+	}
+
+	return &i
 }
 
 // SafeInt64Ptr converts an int to a *int64.

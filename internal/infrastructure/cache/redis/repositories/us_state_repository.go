@@ -52,7 +52,7 @@ func (sr *stateRepository) Get(ctx context.Context) (*ports.ListResult[*usstate.
 	states := make([]*usstate.UsState, 0)
 
 	if err := sr.cache.GetJSON(ctx, stateKeyPrefix, &states); err != nil {
-		if eris.Is(err, redis.Nil) {
+		if eris.Is(err, redis.ErrNil) {
 			log.Debug().Msg("no states found in cache")
 			return nil, eris.New("no states found in cache")
 		}

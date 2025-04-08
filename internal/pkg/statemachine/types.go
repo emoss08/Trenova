@@ -1,34 +1,56 @@
 package statemachine
 
 import (
-	"context"
 	"fmt"
 )
 
-type TransitionEvent string
+type StopTransitionEvent string
 
 const (
-	// * Stop Events
-	EventStopArrived  = TransitionEvent("StopArrived")
-	EventStopDeparted = TransitionEvent("StopDeparted")
-	EventStopCanceled = TransitionEvent("StopCanceled")
-
-	// * Move Events
-	EventMoveAssigned  = TransitionEvent("MoveAssigned")
-	EventMoveStarted   = TransitionEvent("MoveStarted")
-	EventMoveCompleted = TransitionEvent("MoveCompleted")
-	EventMoveCanceled  = TransitionEvent("MoveCanceled")
-
-	// * Shipment Events
-	EventShipmentAssigned          = TransitionEvent("ShipmentAssigned")
-	EventShipmentPartiallyAssigned = TransitionEvent("ShipmentPartiallyAssigned")
-	EventShipmentInTransit         = TransitionEvent("ShipmentInTransit")
-	EventShipmentCompleted         = TransitionEvent("ShipmentCompleted")
-	EventShipmentCanceled          = TransitionEvent("ShipmentCanceled")
-	EventShipmentDelayed           = TransitionEvent("ShipmentDelayed")
-	EventShipmentPartialCompleted  = TransitionEvent("ShipmentPartialCompleted")
-	EventShipmentMarkedForBilling  = TransitionEvent("ShipmentMarkedForBilling")
+	EventStopArrived  = StopTransitionEvent("StopArrived")
+	EventStopDeparted = StopTransitionEvent("StopDeparted")
+	EventStopCanceled = StopTransitionEvent("StopCanceled")
 )
+
+type MoveTransitionEvent string
+
+const (
+	EventMoveAssigned  = MoveTransitionEvent("MoveAssigned")
+	EventMoveStarted   = MoveTransitionEvent("MoveStarted")
+	EventMoveCompleted = MoveTransitionEvent("MoveCompleted")
+	EventMoveCanceled  = MoveTransitionEvent("MoveCanceled")
+)
+
+type ShipmentTransitionEvent string
+
+const (
+	EventShipmentAssigned          = ShipmentTransitionEvent("ShipmentAssigned")
+	EventShipmentPartiallyAssigned = ShipmentTransitionEvent("ShipmentPartiallyAssigned")
+	EventShipmentInTransit         = ShipmentTransitionEvent("ShipmentInTransit")
+	EventShipmentCompleted         = ShipmentTransitionEvent("ShipmentCompleted")
+	EventShipmentCanceled          = ShipmentTransitionEvent("ShipmentCanceled")
+	EventShipmentDelayed           = ShipmentTransitionEvent("ShipmentDelayed")
+	EventShipmentPartialCompleted  = ShipmentTransitionEvent("ShipmentPartialCompleted")
+	EventShipmentMarkedForBilling  = ShipmentTransitionEvent("ShipmentMarkedForBilling")
+)
+
+// TransitionEvent is a common interface for all transition event types
+type TransitionEvent interface {
+	EventType() string
+}
+
+// Implement the TransitionEvent interface for each event type
+func (e StopTransitionEvent) EventType() string {
+	return string(e)
+}
+
+func (e MoveTransitionEvent) EventType() string {
+	return string(e)
+}
+
+func (e ShipmentTransitionEvent) EventType() string {
+	return string(e)
+}
 
 type TransitionError struct {
 	CurrentState string `json:"currentState"`
@@ -39,13 +61,13 @@ type TransitionError struct {
 
 func (e *TransitionError) Error() string {
 	return fmt.Sprintf("invalid transition from %s --[%s]--> %s: %s",
-		e.CurrentState, string(e.Event), e.TargetState, e.Message)
+		e.CurrentState, e.Event.EventType(), e.TargetState, e.Message)
 }
 
-func newTransitionError(current, target string, event TransitionEvent, msg string) *TransitionError {
+func newTransitionError(current string, event TransitionEvent, msg string) *TransitionError {
 	return &TransitionError{
 		CurrentState: current,
-		TargetState:  target,
+		TargetState:  "<unknown>",
 		Event:        event,
 		Message:      msg,
 	}
@@ -56,10 +78,10 @@ type StateMachine interface {
 	CurrentState() string
 
 	// CanTransition checks if a transition is possible given an event
-	CanTransition(ctx context.Context, event TransitionEvent) bool
+	CanTransition(event TransitionEvent) bool
 
 	// Transition attempts to transition to a new state based on an event
-	Transition(ctx context.Context, event TransitionEvent) error
+	Transition(event TransitionEvent) error
 
 	// IsInTerminalState returns true if current is terminal
 	IsInTerminalState() bool

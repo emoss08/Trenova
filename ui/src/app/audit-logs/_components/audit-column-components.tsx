@@ -137,6 +137,7 @@ export function AuditEntryResourceBadge({
       variant: "orange",
       text: "User",
     },
+
     [Resource.BusinessUnit]: {
       variant: "orange",
       text: "Business Unit",
@@ -178,6 +179,10 @@ export function AuditEntryResourceBadge({
       variant: "indigo",
       text: "Shipment",
     },
+    [Resource.DocumentType]: {
+      variant: "indigo",
+      text: "Document Type",
+    },
     [Resource.Assignment]: {
       variant: "indigo",
       text: "Assignment",
@@ -217,6 +222,10 @@ export function AuditEntryResourceBadge({
     [Resource.LocationCategory]: {
       variant: "indigo",
       text: "Location Category",
+    },
+    [Resource.AccessorialCharge]: {
+      variant: "indigo",
+      text: "Accessorial Charge",
     },
     [Resource.Location]: {
       variant: "indigo",
@@ -358,16 +367,6 @@ export function AuditEntryResourceBadge({
       description: undefined,
     },
     [Resource.RevenueCode]: {
-      variant: undefined,
-      text: "",
-      description: undefined,
-    },
-    [Resource.AccessorialCharge]: {
-      variant: undefined,
-      text: "",
-      description: undefined,
-    },
-    [Resource.DocumentClassification]: {
       variant: undefined,
       text: "",
       description: undefined,

@@ -14,6 +14,7 @@ import (
 var (
 	ErrScanningNil   = eris.New("pulid: scanning nil into PULID")
 	ErrInvalidLength = eris.New("pulid: invalid length")
+	ErrNil           = eris.New("pulid: nil value")
 )
 
 // ID implements a PULID - a prefixed ULID.
@@ -75,11 +76,10 @@ func (u *ID) Scan(src any) error {
 }
 
 // Value implements the driver Valuer interface.
-// Value implements the driver.Valuer interface.
 // Returns the string representation of the ID that can be used in SQL queries.
 func (u ID) Value() (driver.Value, error) {
 	if u.IsNil() {
-		return nil, nil
+		return nil, ErrNil
 	}
 	return string(u), nil
 }

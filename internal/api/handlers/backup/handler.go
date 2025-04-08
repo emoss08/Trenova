@@ -104,6 +104,9 @@ func (h *Handler) createBackup(c *fiber.Ctx) error {
 		BuID:   reqCtx.BuID,
 		OrgID:  reqCtx.OrgID,
 	})
+	if err != nil {
+		return h.errorHandler.HandleError(c, err)
+	}
 
 	return c.Status(fiber.StatusCreated).JSON(resp)
 }
@@ -128,6 +131,9 @@ func (h *Handler) downloadBackup(c *fiber.Ctx) error {
 		OrgID:    reqCtx.OrgID,
 		Filename: filename,
 	})
+	if err != nil {
+		return h.errorHandler.HandleError(c, err)
+	}
 
 	// Set appropriate headers for file download
 	c.Set("Content-Disposition", "attachment; filename="+filename)
@@ -152,7 +158,7 @@ func (h *Handler) deleteBackup(c *fiber.Ctx) error {
 	}
 
 	// Delete the file
-	if err := h.backupService.DeleteBackup(c.UserContext(), &dbbackup.DeleteBackupRequest{
+	if err = h.backupService.DeleteBackup(c.UserContext(), &dbbackup.DeleteBackupRequest{
 		UserID:   reqCtx.UserID,
 		BuID:     reqCtx.BuID,
 		OrgID:    reqCtx.OrgID,
@@ -179,7 +185,7 @@ func (h *Handler) restoreBackup(c *fiber.Ctx) error {
 	req.BuID = reqCtx.BuID
 	req.OrgID = reqCtx.OrgID
 
-	if err := c.BodyParser(req); err != nil {
+	if err = c.BodyParser(req); err != nil {
 		return h.errorHandler.HandleError(c, err)
 	}
 
@@ -189,7 +195,7 @@ func (h *Handler) restoreBackup(c *fiber.Ctx) error {
 		})
 	}
 
-	if err := h.backupService.RestoreBackup(c.UserContext(), req); err != nil {
+	if err = h.backupService.RestoreBackup(c.UserContext(), req); err != nil {
 		return h.errorHandler.HandleError(c, err)
 	}
 
@@ -208,7 +214,7 @@ func (h *Handler) cleanupBackups(c *fiber.Ctx) error {
 	// Parse retention days
 	retentionDays := c.QueryInt("retentionDays", 0)
 
-	if err := h.backupService.ApplyRetentionPolicy(c.UserContext(), &dbbackup.ApplyRetentionPolicyRequest{
+	if err = h.backupService.ApplyRetentionPolicy(c.UserContext(), &dbbackup.ApplyRetentionPolicyRequest{
 		UserID:        reqCtx.UserID,
 		BuID:          reqCtx.BuID,
 		OrgID:         reqCtx.OrgID,

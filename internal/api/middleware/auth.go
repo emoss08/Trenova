@@ -109,17 +109,17 @@ func (m *AuthMiddleware) Authenticate() fiber.Handler {
 // handleSessionError handles different types of session errors
 func (m *AuthMiddleware) handleSessionError(c *fiber.Ctx, err error, sessionID pulid.ID, log *zerolog.Logger) error {
 	switch {
-	case eris.Is(err, session.SessionExpired), eris.Is(err, session.SessionNotActive):
+	case eris.Is(err, session.ErrExpired), eris.Is(err, session.ErrNotActive):
 		log.Info().Str("sessionId", sessionID.String()).Msg("session expired or inactive")
 		m.clearSessionCookie(c)
 		return m.handleAuthError(c, fiber.StatusUnauthorized, "session expired")
 
-	case eris.Is(err, session.SessionNotFound):
+	case eris.Is(err, session.ErrNotFound):
 		log.Info().Str("sessionId", sessionID.String()).Msg("session not found")
 		m.clearSessionCookie(c)
 		return m.handleAuthError(c, fiber.StatusUnauthorized, "session not found")
 
-	case eris.Is(err, session.SessionIPMismatch):
+	case eris.Is(err, session.ErrIPMismatch):
 		log.Warn().
 			Str("sessionId", sessionID.String()).
 			Str("expectedIP", c.IP()).

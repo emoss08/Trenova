@@ -61,7 +61,7 @@ func ValidateTemperature(value any) error {
 		return nil
 	}
 
-	if int16(temperature) > temperatureMax || int16(temperature) < temperatureMin {
+	if temperature > temperatureMax || temperature < temperatureMin {
 		return eris.New("Invalid temperature. Please provide a valid temperature")
 	}
 	return nil

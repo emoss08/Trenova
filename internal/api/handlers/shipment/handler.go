@@ -257,10 +257,7 @@ type BOLCheckRequest struct {
 
 // BOLCheckResponse represents the response structure for the BOL check endpoint
 type BOLCheckResponse struct {
-	Valid          bool     `json:"valid"`
-	DuplicateFound bool     `json:"duplicate_found,omitempty"`
-	DuplicateCount int      `json:"duplicate_count,omitempty"`
-	ProNumbers     []string `json:"pro_numbers,omitempty"`
+	Valid bool `json:"valid"`
 }
 
 func (h *Handler) checkForDuplicateBOLs(c *fiber.Ctx) error {

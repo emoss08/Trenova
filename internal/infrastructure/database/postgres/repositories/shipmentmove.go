@@ -348,146 +348,19 @@ func (sr *shipmentMoveRepository) SplitMove(ctx context.Context, req *repositori
 
 	var newMove *shipment.ShipmentMove
 	err = dba.RunInTx(ctx, nil, func(c context.Context, tx bun.Tx) error {
-		// * First, get all moves for this shipment with sequence > originalMove.Sequence
-		var moves []*shipment.ShipmentMove
-		err = tx.NewSelect().
-			Model(&moves).
-			Where("shipment_id = ? AND sequence > ?", originalMove.ShipmentID, originalMove.Sequence).
-			Order("sequence DESC").
-			Scan(c)
-		if err != nil {
-			// * If the query is [sql.ErrNoRows], return a not found error
-			if eris.Is(err, sql.ErrNoRows) {
-				log.Error().Err(err).Msg("failed to get moves with sequence greater than original move")
-				return errors.NewNotFoundError("Moves not found within your organization")
-			}
-
-			log.Error().Err(err).Msg("failed to get moves with sequence greater than original move")
-			return eris.Wrap(err, "get moves with sequence greater than original move")
+		// Update sequences for subsequent moves
+		if err = sr.updateMoveSequences(c, tx, log, originalMove); err != nil {
+			return err
 		}
 
-		// * Update sequences for existing moves, starting from the highest sequence
-		for _, move := range moves {
-			move.Sequence++
-			if _, err = tx.NewUpdate().Model(move).
-				Set("sequence = ?", move.Sequence).
-				Set("version = version + 1").
-				WherePK().
-				Exec(c); err != nil {
-				log.Error().Err(err).
-					Str("moveID", move.GetID()).
-					Int("sequence", move.Sequence).
-					Msg("failed to update move sequence")
-				return err
-			}
+		// Handle original move modifications
+		if err = sr.modifyOriginalMove(c, tx, log, originalMove, req); err != nil {
+			return err
 		}
 
-		// * Delete the original delivery stop
-		_, err = tx.NewDelete().Model((*shipment.Stop)(nil)).
-			Where("shipment_move_id = ? AND sequence = ?", originalMove.ID, 1).
-			Exec(c)
-		if err != nil {
-			// * If the query is [sql.ErrNoRows], return a not found error
-			if eris.Is(err, sql.ErrNoRows) {
-				log.Error().Err(err).Msg("failed to delte the original delivery stop from the original move")
-				return errors.NewNotFoundError("Original delivery stop not found within your organization")
-			}
-
-			log.Error().Err(err).Msg("failed to delte the original delivery stop from the original move")
-			return eris.Wrap(err, "delete original delivery stop")
-		}
-
-		// * Create split delivery stop for the original move
-		splitDeliveryStop := &shipment.Stop{
-			ID:               pulid.MustNew("stp_"),
-			BusinessUnitID:   originalMove.BusinessUnitID,
-			OrganizationID:   originalMove.OrganizationID,
-			ShipmentMoveID:   originalMove.ID, // Keep it on original move
-			LocationID:       req.SplitLocationID,
-			Status:           shipment.StopStatusNew,
-			Type:             shipment.StopTypeSplitDelivery,
-			Sequence:         1,
-			Pieces:           req.SplitQuantities.Pieces,
-			Weight:           req.SplitQuantities.Weight,
-			PlannedArrival:   req.SplitDeliveryTimes.PlannedArrival,
-			PlannedDeparture: req.SplitDeliveryTimes.PlannedDeparture,
-		}
-
-		// * Insert the split delivery stop
-		if _, err = tx.NewInsert().Model(splitDeliveryStop).Exec(c); err != nil {
-			log.Error().Err(err).
-				Str("moveID", originalMove.GetID()).
-				Interface("splitDeliveryStop", splitDeliveryStop).
-				Msg("failed to insert the split delivery stop")
-			return eris.Wrap(err, "insert split delivery stop")
-		}
-
-		// * Create new move with sequence 1
-		newMove = &shipment.ShipmentMove{
-			ID:             pulid.MustNew("smv_"),
-			BusinessUnitID: originalMove.BusinessUnitID,
-			OrganizationID: originalMove.OrganizationID,
-			ShipmentID:     originalMove.ShipmentID,
-			Status:         shipment.MoveStatusNew,
-			Loaded:         true,
-			Sequence:       1, // Explicitly set to 1
-			Distance:       originalMove.Distance,
-		}
-
-		// * Insert the new move
-		if _, err = tx.NewInsert().Model(newMove).Exec(c); err != nil {
-			log.Error().Err(err).
-				Str("moveID", originalMove.GetID()).
-				Interface("newMove", newMove).
-				Msg("failed to insert the new move")
-			return eris.Wrap(err, "insert new move")
-		}
-
-		// * Create stops for new move
-		newMoveStops := []*shipment.Stop{
-			{
-				// * Split Pickup
-				ID:               pulid.MustNew("stp_"),
-				BusinessUnitID:   originalMove.BusinessUnitID,
-				OrganizationID:   originalMove.OrganizationID,
-				ShipmentMoveID:   newMove.ID,
-				LocationID:       req.SplitLocationID,
-				Status:           shipment.StopStatusNew,
-				Type:             shipment.StopTypeSplitPickup,
-				Sequence:         0,
-				Pieces:           req.SplitQuantities.Pieces,
-				Weight:           req.SplitQuantities.Weight,
-				PlannedArrival:   req.SplitPickupTimes.PlannedArrival,
-				PlannedDeparture: req.SplitPickupTimes.PlannedDeparture,
-			},
-			{
-				// * Final Delivery
-				ID:               pulid.MustNew("stp_"),
-				BusinessUnitID:   originalMove.BusinessUnitID,
-				OrganizationID:   originalMove.OrganizationID,
-				ShipmentMoveID:   newMove.ID,
-				LocationID:       originalMove.Stops[1].LocationID,
-				Status:           shipment.StopStatusNew,
-				Type:             shipment.StopTypeDelivery,
-				Sequence:         1,
-				Pieces:           req.SplitQuantities.Pieces,
-				Weight:           req.SplitQuantities.Weight,
-				PlannedArrival:   originalMove.Stops[1].PlannedArrival,
-				PlannedDeparture: originalMove.Stops[1].PlannedDeparture,
-				AddressLine:      originalMove.Stops[1].AddressLine,
-			},
-		}
-
-		// * Insert the stops for new move
-		if _, err = tx.NewInsert().Model(&newMoveStops).Exec(c); err != nil {
-			log.Error().Err(err).
-				Str("moveID", originalMove.GetID()).
-				Interface("newMoveStops", newMoveStops).
-				Msg("failed to insert the stops for the new move")
-			return eris.Wrap(err, "insert new move stops")
-		}
-
-		return nil
+		// Create new split move
+		newMove, err = sr.createSplitMove(c, tx, log, originalMove, req)
+		return err
 	})
 	if err != nil {
 		log.Error().Err(err).Interface("originalMove", originalMove).
@@ -496,8 +369,170 @@ func (sr *shipmentMoveRepository) SplitMove(ctx context.Context, req *repositori
 		return nil, eris.Wrap(err, "split move")
 	}
 
-	// * Fetch updated moves for response
-	originalMove, err = sr.GetByID(ctx, repositories.GetMoveByIDOptions{
+	// Fetch updated moves for response
+	return sr.prepareSplitMoveResponse(ctx, req, originalMove, newMove)
+}
+
+// updateMoveSequences updates the sequence numbers of moves after the original move
+func (sr *shipmentMoveRepository) updateMoveSequences(ctx context.Context, tx bun.Tx, log zerolog.Logger, originalMove *shipment.ShipmentMove) error {
+	// Get all moves for this shipment with sequence > originalMove.Sequence
+	var moves []*shipment.ShipmentMove
+	err := tx.NewSelect().
+		Model(&moves).
+		Where("shipment_id = ? AND sequence > ?", originalMove.ShipmentID, originalMove.Sequence).
+		Order("sequence DESC").
+		Scan(ctx)
+	if err != nil {
+		if eris.Is(err, sql.ErrNoRows) {
+			log.Error().Err(err).Msg("failed to get moves with sequence greater than original move")
+			return errors.NewNotFoundError("Moves not found within your organization")
+		}
+
+		log.Error().Err(err).Msg("failed to get moves with sequence greater than original move")
+		return eris.Wrap(err, "get moves with sequence greater than original move")
+	}
+
+	// Update sequences for existing moves, starting from the highest sequence
+	for _, move := range moves {
+		move.Sequence++
+		if _, err = tx.NewUpdate().Model(move).
+			Set("sequence = ?", move.Sequence).
+			Set("version = version + 1").
+			WherePK().
+			Exec(ctx); err != nil {
+			log.Error().Err(err).
+				Str("moveID", move.GetID()).
+				Int("sequence", move.Sequence).
+				Msg("failed to update move sequence")
+			return err
+		}
+	}
+
+	return nil
+}
+
+// modifyOriginalMove removes the original delivery stop and adds a split delivery stop
+func (sr *shipmentMoveRepository) modifyOriginalMove(ctx context.Context, tx bun.Tx, log zerolog.Logger, originalMove *shipment.ShipmentMove, req *repositories.SplitMoveRequest) error {
+	// Delete the original delivery stop
+	_, err := tx.NewDelete().Model((*shipment.Stop)(nil)).
+		Where("shipment_move_id = ? AND sequence = ?", originalMove.ID, 1).
+		Exec(ctx)
+	if err != nil {
+		if eris.Is(err, sql.ErrNoRows) {
+			log.Error().Err(err).Msg("failed to delete the original delivery stop from the original move")
+			return errors.NewNotFoundError("Original delivery stop not found within your organization")
+		}
+
+		log.Error().Err(err).Msg("failed to delete the original delivery stop from the original move")
+		return eris.Wrap(err, "delete original delivery stop")
+	}
+
+	// Create and insert split delivery stop for the original move
+	splitDeliveryStop := &shipment.Stop{
+		ID:               pulid.MustNew("stp_"),
+		BusinessUnitID:   originalMove.BusinessUnitID,
+		OrganizationID:   originalMove.OrganizationID,
+		ShipmentMoveID:   originalMove.ID,
+		LocationID:       req.SplitLocationID,
+		Status:           shipment.StopStatusNew,
+		Type:             shipment.StopTypeSplitDelivery,
+		Sequence:         1,
+		Pieces:           req.SplitQuantities.Pieces,
+		Weight:           req.SplitQuantities.Weight,
+		PlannedArrival:   req.SplitDeliveryTimes.PlannedArrival,
+		PlannedDeparture: req.SplitDeliveryTimes.PlannedDeparture,
+	}
+
+	if _, err = tx.NewInsert().Model(splitDeliveryStop).Exec(ctx); err != nil {
+		log.Error().Err(err).
+			Str("moveID", originalMove.GetID()).
+			Interface("splitDeliveryStop", splitDeliveryStop).
+			Msg("failed to insert the split delivery stop")
+		return eris.Wrap(err, "insert split delivery stop")
+	}
+
+	return nil
+}
+
+// createSplitMove creates a new move with split pickup and final delivery stops
+func (sr *shipmentMoveRepository) createSplitMove(ctx context.Context, tx bun.Tx, log zerolog.Logger, originalMove *shipment.ShipmentMove, req *repositories.SplitMoveRequest) (*shipment.ShipmentMove, error) {
+	// Create new move with sequence 1
+	newMove := &shipment.ShipmentMove{
+		ID:             pulid.MustNew("smv_"),
+		BusinessUnitID: originalMove.BusinessUnitID,
+		OrganizationID: originalMove.OrganizationID,
+		ShipmentID:     originalMove.ShipmentID,
+		Status:         shipment.MoveStatusNew,
+		Loaded:         true,
+		Sequence:       1, // Explicitly set to 1
+		Distance:       originalMove.Distance,
+	}
+
+	// Insert the new move
+	if _, err := tx.NewInsert().Model(newMove).Exec(ctx); err != nil {
+		log.Error().Err(err).
+			Str("moveID", originalMove.GetID()).
+			Interface("newMove", newMove).
+			Msg("failed to insert the new move")
+		return nil, eris.Wrap(err, "insert new move")
+	}
+
+	// Create stops for new move
+	newMoveStops := sr.createSplitMoveStops(newMove, originalMove, req)
+
+	// Insert the stops for new move
+	if _, err := tx.NewInsert().Model(&newMoveStops).Exec(ctx); err != nil {
+		log.Error().Err(err).
+			Str("moveID", originalMove.GetID()).
+			Interface("newMoveStops", newMoveStops).
+			Msg("failed to insert the stops for the new move")
+		return nil, eris.Wrap(err, "insert new move stops")
+	}
+
+	return newMove, nil
+}
+
+// createSplitMoveStops creates the stops for the new split move
+func (sr *shipmentMoveRepository) createSplitMoveStops(newMove, originalMove *shipment.ShipmentMove, req *repositories.SplitMoveRequest) []*shipment.Stop {
+	return []*shipment.Stop{
+		{
+			// Split Pickup
+			ID:               pulid.MustNew("stp_"),
+			BusinessUnitID:   originalMove.BusinessUnitID,
+			OrganizationID:   originalMove.OrganizationID,
+			ShipmentMoveID:   newMove.ID,
+			LocationID:       req.SplitLocationID,
+			Status:           shipment.StopStatusNew,
+			Type:             shipment.StopTypeSplitPickup,
+			Sequence:         0,
+			Pieces:           req.SplitQuantities.Pieces,
+			Weight:           req.SplitQuantities.Weight,
+			PlannedArrival:   req.SplitPickupTimes.PlannedArrival,
+			PlannedDeparture: req.SplitPickupTimes.PlannedDeparture,
+		},
+		{
+			// Final Delivery
+			ID:               pulid.MustNew("stp_"),
+			BusinessUnitID:   originalMove.BusinessUnitID,
+			OrganizationID:   originalMove.OrganizationID,
+			ShipmentMoveID:   newMove.ID,
+			LocationID:       originalMove.Stops[1].LocationID,
+			Status:           shipment.StopStatusNew,
+			Type:             shipment.StopTypeDelivery,
+			Sequence:         1,
+			Pieces:           req.SplitQuantities.Pieces,
+			Weight:           req.SplitQuantities.Weight,
+			PlannedArrival:   originalMove.Stops[1].PlannedArrival,
+			PlannedDeparture: originalMove.Stops[1].PlannedDeparture,
+			AddressLine:      originalMove.Stops[1].AddressLine,
+		},
+	}
+}
+
+// prepareSplitMoveResponse fetches the updated moves and prepares the response
+func (sr *shipmentMoveRepository) prepareSplitMoveResponse(ctx context.Context, req *repositories.SplitMoveRequest, originalMove, newMove *shipment.ShipmentMove) (*repositories.SplitMoveResponse, error) {
+	// Fetch updated original move
+	updatedOriginalMove, err := sr.GetByID(ctx, repositories.GetMoveByIDOptions{
 		MoveID:            originalMove.ID,
 		OrgID:             req.OrgID,
 		BuID:              req.BuID,
@@ -507,7 +542,8 @@ func (sr *shipmentMoveRepository) SplitMove(ctx context.Context, req *repositori
 		return nil, err
 	}
 
-	newMove, err = sr.GetByID(ctx, repositories.GetMoveByIDOptions{
+	// Fetch updated new move
+	updatedNewMove, err := sr.GetByID(ctx, repositories.GetMoveByIDOptions{
 		MoveID:            newMove.ID,
 		OrgID:             req.OrgID,
 		BuID:              req.BuID,
@@ -517,12 +553,10 @@ func (sr *shipmentMoveRepository) SplitMove(ctx context.Context, req *repositori
 		return nil, err
 	}
 
-	result := &repositories.SplitMoveResponse{
-		OriginalMove: originalMove,
-		NewMove:      newMove,
-	}
-
-	return result, nil
+	return &repositories.SplitMoveResponse{
+		OriginalMove: updatedOriginalMove,
+		NewMove:      updatedNewMove,
+	}, nil
 }
 
 // HandleMoveOperations handles the operations for a shipment move.
@@ -536,191 +570,290 @@ func (sr *shipmentMoveRepository) SplitMove(ctx context.Context, req *repositori
 // Returns:
 //   - error: If any database operation fails.
 func (sr *shipmentMoveRepository) HandleMoveOperations(ctx context.Context, tx bun.IDB, shp *shipment.Shipment, isCreate bool) error {
-	var err error
-
 	log := sr.l.With().
 		Str("operation", "HandleMoveOperations").
 		Str("shipmentID", shp.ID.String()).
 		Logger()
 
+	// Check organization settings
 	scr, err := sr.scr.GetByOrgID(ctx, shp.OrganizationID)
 	if err != nil {
 		log.Error().Err(err).Msg("failed to get shipment control")
 		return err
 	}
 
-	// * Get the existing moves for comparison if this is an update operation
-	existingMoves := make([]*shipment.ShipmentMove, 0)
+	// Prepare data for operations
+	movesData, err := sr.prepareMovesData(ctx, shp, isCreate)
+	if err != nil {
+		return err
+	}
+
+	// Handle operations in sequence
+	if err = sr.processNewMoves(ctx, tx, movesData.newMoves); err != nil {
+		return err
+	}
+
+	if err = sr.processUpdateMoves(ctx, tx, movesData.updateMoves); err != nil {
+		return err
+	}
+
 	if !isCreate {
-		existingMoves, err = sr.GetMovesByShipmentID(ctx, repositories.GetMovesByShipmentIDOptions{
+		if err = sr.checkAndHandleMoveDeletions(ctx, tx, shp, scr, movesData); err != nil {
+			return err
+		}
+	}
+
+	log.Debug().Int("new_moves", len(movesData.newMoves)).
+		Int("updated_moves", len(movesData.updateMoves)).
+		Msg("move operations completed")
+
+	return nil
+}
+
+// movesOperationData contains the data needed for move operations
+type movesOperationData struct {
+	newMoves        []*shipment.ShipmentMove
+	updateMoves     []*shipment.ShipmentMove
+	existingMoveMap map[pulid.ID]*shipment.ShipmentMove
+	updatedMoveIDs  map[pulid.ID]struct{}
+	moveToDelete    []*shipment.ShipmentMove
+	existingMoves   []*shipment.ShipmentMove
+}
+
+// prepareMovesData prepares the data needed for move operations
+func (sr *shipmentMoveRepository) prepareMovesData(ctx context.Context, shp *shipment.Shipment, isCreate bool) (*movesOperationData, error) {
+	log := sr.l.With().
+		Str("operation", "prepareMovesData").
+		Str("shipmentID", shp.ID.String()).
+		Logger()
+
+	data := &movesOperationData{
+		newMoves:        make([]*shipment.ShipmentMove, 0),
+		updateMoves:     make([]*shipment.ShipmentMove, 0),
+		existingMoveMap: make(map[pulid.ID]*shipment.ShipmentMove),
+		updatedMoveIDs:  make(map[pulid.ID]struct{}),
+		moveToDelete:    make([]*shipment.ShipmentMove, 0),
+		existingMoves:   make([]*shipment.ShipmentMove, 0),
+	}
+
+	// Get existing moves if this is an update operation
+	if !isCreate {
+		var err error
+		data.existingMoves, err = sr.GetMovesByShipmentID(ctx, repositories.GetMovesByShipmentIDOptions{
 			ShipmentID: shp.ID,
 			OrgID:      shp.OrganizationID,
 			BuID:       shp.BusinessUnitID,
 		})
 		if err != nil {
 			log.Error().Err(err).Msg("failed to get existing moves")
-			return err
+			return nil, err
+		}
+
+		// Create map of existing moves for quick lookup
+		for _, move := range data.existingMoves {
+			log.Debug().Interface("move", move).Msg("existing move")
+			data.existingMoveMap[move.ID] = move
 		}
 	}
 
-	// * Prepare moves for operations
-	newMoves := make([]*shipment.ShipmentMove, 0)
-	updateMoves := make([]*shipment.ShipmentMove, 0)
-	existingMoveMap := make(map[pulid.ID]*shipment.ShipmentMove)
-	updatedMoveIDs := make(map[pulid.ID]struct{})
-	moveToDelete := make([]*shipment.ShipmentMove, 0)
+	// Categorize moves for different operations
+	sr.categorizeMoves(shp, data, isCreate)
 
-	// * Create map of existing moves for quick lookup
-	for _, move := range existingMoves {
-		log.Debug().Interface("move", move).Msg("existing move")
-		existingMoveMap[move.ID] = move
-	}
+	return data, nil
+}
 
-	// * Categorize moves for different operations
+// categorizeMoves categorizes moves for different operations
+func (sr *shipmentMoveRepository) categorizeMoves(shp *shipment.Shipment, data *movesOperationData, isCreate bool) {
 	for _, move := range shp.Moves {
-		// * Set required fields
+		// Set required fields
 		move.ShipmentID = shp.ID
 		move.OrganizationID = shp.OrganizationID
 		move.BusinessUnitID = shp.BusinessUnitID
 
 		if isCreate || move.ID.IsNil() {
-			// * We need to set an ID new moves, because it will have stops that need to be created
+			// Set ID for new moves
 			move.ID = pulid.MustNew("smv_")
-
-			// * Append new move with an ID
-			newMoves = append(newMoves, move)
+			data.newMoves = append(data.newMoves, move)
 		} else {
-			if existing, ok := existingMoveMap[move.ID]; ok {
-				// * Increment version for optimistic locking
+			if existing, ok := data.existingMoveMap[move.ID]; ok {
+				// Increment version for optimistic locking
 				move.Version = existing.Version + 1
-				updateMoves = append(updateMoves, move)
-				updatedMoveIDs[move.ID] = struct{}{}
+				data.updateMoves = append(data.updateMoves, move)
+				data.updatedMoveIDs[move.ID] = struct{}{}
 			}
 		}
 	}
+}
 
-	// * Handle bulk insert of new moves
-	if len(newMoves) > 0 {
-		if _, err := tx.NewInsert().Model(&newMoves).Exec(ctx); err != nil {
-			log.Error().Err(err).Msg("failed to bulk insert new moves")
+// processNewMoves handles the insertion of new moves and their stops
+func (sr *shipmentMoveRepository) processNewMoves(ctx context.Context, tx bun.IDB, newMoves []*shipment.ShipmentMove) error {
+	if len(newMoves) == 0 {
+		return nil
+	}
+
+	log := sr.l.With().Str("operation", "processNewMoves").Logger()
+
+	// Insert new moves
+	if _, err := tx.NewInsert().Model(&newMoves).Exec(ctx); err != nil {
+		log.Error().Err(err).Msg("failed to bulk insert new moves")
+		return err
+	}
+
+	// Insert stops for each new move
+	for _, move := range newMoves {
+		log.Debug().Interface("move", move).Msg("new move")
+		if err := sr.insertStopsForMove(ctx, tx, move); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+// insertStopsForMove inserts stops for a new move
+func (sr *shipmentMoveRepository) insertStopsForMove(ctx context.Context, tx bun.IDB, move *shipment.ShipmentMove) error {
+	log := sr.l.With().
+		Str("operation", "insertStopsForMove").
+		Str("moveID", move.ID.String()).
+		Logger()
+
+	for _, stop := range move.Stops {
+		// Set required fields
+		stop.ShipmentMoveID = move.ID
+		stop.OrganizationID = move.OrganizationID
+		stop.BusinessUnitID = move.BusinessUnitID
+
+		// Insert the stop
+		if _, err := tx.NewInsert().Model(stop).Exec(ctx); err != nil {
+			log.Error().Err(err).Msg("failed to insert stop")
+			return err
+		}
+	}
+	return nil
+}
+
+// processUpdateMoves handles updates to existing moves and their stops
+func (sr *shipmentMoveRepository) processUpdateMoves(ctx context.Context, tx bun.IDB, updateMoves []*shipment.ShipmentMove) error {
+	if len(updateMoves) == 0 {
+		return nil
+	}
+
+	log := sr.l.With().Str("operation", "processUpdateMoves").Logger()
+
+	for moveIdx, move := range updateMoves {
+		if err := sr.handleUpdate(ctx, tx, move, moveIdx); err != nil {
+			log.Error().Err(err).Msg("failed to handle bulk update of moves")
 			return err
 		}
 
-		for _, move := range newMoves {
-			log.Debug().Interface("move", move).Msg("new move")
-			for _, stop := range move.Stops {
-				// * Set the required fields
-				stop.ShipmentMoveID = move.ID
-				stop.OrganizationID = move.OrganizationID
-				stop.BusinessUnitID = move.BusinessUnitID
-
-				// * Insert the stop
-				if _, err := tx.NewInsert().Model(stop).Exec(ctx); err != nil {
-					log.Error().Err(err).Msg("failed to insert stop")
-					return err
-				}
-			}
+		if err := sr.processStopsForExistingMove(ctx, tx, move, moveIdx); err != nil {
+			return err
 		}
 	}
 
-	// * Handle bulk update of existing moves
-	if len(updateMoves) > 0 {
-		for moveIdx, move := range updateMoves {
-			if err := sr.handleUpdate(ctx, tx, move, moveIdx); err != nil {
-				log.Error().Err(err).Msg("failed to handle bulk update of moves")
+	return nil
+}
+
+// processStopsForExistingMove processes stops for an existing move
+func (sr *shipmentMoveRepository) processStopsForExistingMove(ctx context.Context, tx bun.IDB, move *shipment.ShipmentMove, moveIdx int) error {
+	log := sr.l.With().
+		Str("operation", "processStopsForExistingMove").
+		Str("moveID", move.ID.String()).
+		Logger()
+
+	// Get existing stops for this move
+	existingStops := make([]*shipment.Stop, 0)
+	err := tx.NewSelect().Model(&existingStops).
+		Where("shipment_move_id = ?", move.ID).
+		Scan(ctx)
+	if err != nil {
+		log.Error().Err(err).Str("moveID", move.ID.String()).
+			Msg("failed to get existing stops for move")
+		return err
+	}
+
+	// Track which stops are being updated
+	updatedStopIDs := make(map[pulid.ID]struct{})
+
+	// Process each stop
+	for stopIdx, stop := range move.Stops {
+		// Set required fields
+		stop.ShipmentMoveID = move.ID
+		stop.OrganizationID = move.OrganizationID
+		stop.BusinessUnitID = move.BusinessUnitID
+
+		if stop.ID.IsNil() {
+			// New stop
+			stop.ID = pulid.MustNew("stp_")
+			if _, err = tx.NewInsert().Model(stop).Exec(ctx); err != nil {
+				log.Error().Err(err).
+					Int("moveIdx", moveIdx).
+					Int("stopIdx", stopIdx).
+					Interface("stop", stop).
+					Msg("failed to insert new stop")
 				return err
 			}
-
-			// * Get existing stops for this move to check for stop removals
-			existingStops := make([]*shipment.Stop, 0)
-			err := tx.NewSelect().Model(&existingStops).
-				Where("shipment_move_id = ?", move.ID).
-				Scan(ctx)
-			if err != nil {
-				log.Error().Err(err).Str("moveID", move.ID.String()).
-					Msg("failed to get existing stops for move")
+		} else {
+			// Existing stop
+			if _, err = sr.stpr.Update(ctx, stop, moveIdx, stopIdx); err != nil {
+				log.Error().Err(err).
+					Int("moveIdx", moveIdx).
+					Int("stopIdx", stopIdx).
+					Interface("stop", stop).
+					Msg("failed to update stop")
 				return err
 			}
-
-			// Track which stops are being updated
-			updatedStopIDs := make(map[pulid.ID]struct{})
-
-			// * Handle bulk update of stops
-			for stopIdx, stop := range move.Stops {
-				// Set the required fields
-				stop.ShipmentMoveID = move.ID
-				stop.OrganizationID = move.OrganizationID
-				stop.BusinessUnitID = move.BusinessUnitID
-
-				if stop.ID.IsNil() {
-					// This is a new stop, insert it
-					stop.ID = pulid.MustNew("stp_")
-					if _, err := tx.NewInsert().Model(stop).Exec(ctx); err != nil {
-						log.Error().Err(err).
-							Int("moveIdx", moveIdx).
-							Int("stopIdx", stopIdx).
-							Interface("stop", stop).
-							Msg("failed to insert new stop")
-						return err
-					}
-				} else {
-					// This is an existing stop, update it
-					if _, err := sr.stpr.Update(ctx, stop, moveIdx, stopIdx); err != nil {
-						log.Error().Err(err).
-							Int("moveIdx", moveIdx).
-							Int("stopIdx", stopIdx).
-							Interface("stop", stop).
-							Msg("failed to update stop")
-						return err
-					}
-					updatedStopIDs[stop.ID] = struct{}{}
-				}
-			}
-
-			// * Handle stop removals
-			if len(existingStops) > 0 {
-				if err := sr.stpr.HandleStopRemovals(ctx, tx, move, existingStops, updatedStopIDs); err != nil {
-					log.Error().Err(err).
-						Int("moveIdx", moveIdx).
-						Msg("failed to handle stop removals")
-					return err
-				}
-			}
+			updatedStopIDs[stop.ID] = struct{}{}
 		}
 	}
 
-	// * Handle deletion of moves that are no longer present if the organization allows it
-	if !isCreate {
-		// Check if there are moves to delete
-		for moveID := range existingMoveMap {
-			if _, ok := updatedMoveIDs[moveID]; !ok {
-				// * Check if the organization allows move removals
-				if !scr.AllowMoveRemovals {
-					log.Debug().Msgf("Organization %s does not allow move removals, returning error...", shp.OrganizationID)
-					return errors.NewBusinessError(
-						"Your organization does not allow move removals",
-					)
-				}
-
-				// ! If we get here, deletions are allowed, so continue with the deletion process
-				break
-			}
+	// Handle stop removals if needed
+	if len(existingStops) > 0 {
+		if err = sr.stpr.HandleStopRemovals(ctx, tx, move, existingStops, updatedStopIDs); err != nil {
+			log.Error().Err(err).
+				Int("moveIdx", moveIdx).
+				Msg("failed to handle stop removals")
+			return err
 		}
+	}
 
-		// * If organization allows move removals, proceed with deletion
+	return nil
+}
+
+// checkAndHandleMoveDeletions checks if moves can be deleted and handles the deletion
+func (sr *shipmentMoveRepository) checkAndHandleMoveDeletions(ctx context.Context, tx bun.IDB, shp *shipment.Shipment, scr *shipment.ShipmentControl, data *movesOperationData) error {
+	log := sr.l.With().
+		Str("operation", "checkAndHandleMoveDeletions").
+		Logger()
+
+	// Check if there are moves to delete and if organization allows it
+	deletionRequired := false
+	for moveID := range data.existingMoveMap {
+		if _, ok := data.updatedMoveIDs[moveID]; !ok {
+			deletionRequired = true
+
+			// Check if the organization allows move removals
+			if !scr.AllowMoveRemovals {
+				log.Debug().Msgf("Organization %s does not allow move removals, returning error...", shp.OrganizationID)
+				return errors.NewBusinessError(
+					"Your organization does not allow move removals",
+				)
+			}
+			break
+		}
+	}
+
+	// If no deletion needed or already checked permission above
+	if deletionRequired {
 		if err := sr.handleMoveDeletions(ctx, tx, &repositories.HandleMoveDeletionsRequest{
-			ExistingMoveMap: existingMoveMap,
-			UpdatedMoveIDs:  updatedMoveIDs,
-			MoveToDelete:    moveToDelete,
+			ExistingMoveMap: data.existingMoveMap,
+			UpdatedMoveIDs:  data.updatedMoveIDs,
+			MoveToDelete:    data.moveToDelete,
 		}); err != nil {
 			log.Error().Err(err).Msg("failed to handle move deletions")
 			return err
 		}
 	}
-
-	log.Debug().Int("new_moves", len(newMoves)).
-		Int("updated_moves", len(updateMoves)).
-		Msg("move operations completed")
 
 	return nil
 }
@@ -809,80 +942,112 @@ func (sr *shipmentMoveRepository) handleMoveDeletions(ctx context.Context, tx bu
 
 	// * If there are moves to delete
 	if len(moveIDsToDelete) > 0 {
-		// * First, delete all stops associated with these moves
-		_, err := tx.NewDelete().
-			Model((*shipment.Stop)(nil)).
-			Where("shipment_move_id IN (?)", bun.In(moveIDsToDelete)).
-			Exec(ctx)
-		if err != nil {
-			// * If the query is [sql.ErrNoRows], return a not found error
-			if eris.Is(err, sql.ErrNoRows) {
-				log.Error().Err(err).
-					Interface("moveIDs", moveIDsToDelete).
-					Msg("failed to delete associated stops")
-				return errors.NewNotFoundError("Associated stops not found within your organization")
-			}
+		// Get the shipment ID from the first move (all moves being deleted are from the same shipment)
+		shipmentID := req.ExistingMoveMap[moveIDsToDelete[0]].ShipmentID
 
-			log.Error().Err(err).
-				Interface("moveIDs", moveIDsToDelete).
-				Msg("failed to delete associated stops")
+		// Delete associated data and the moves themselves
+		if err := sr.deleteMovesAndAssociatedData(ctx, tx, log, moveIDsToDelete); err != nil {
 			return err
 		}
 
-		// * Delete any assignments associated with these moves
-		_, err = tx.NewDelete().
-			Model((*shipment.Assignment)(nil)).
-			Where("shipment_move_id IN (?)", bun.In(moveIDsToDelete)).
-			Exec(ctx)
-		if err != nil {
-			// * If the query is [sql.ErrNoRows], return a not found error
-			if eris.Is(err, sql.ErrNoRows) {
-				log.Error().Err(err).
-					Interface("moveIDs", moveIDsToDelete).
-					Msg("failed to delete associated assignments")
-				return errors.NewNotFoundError("Associated assignments not found within your organization")
-			}
-
-			log.Error().
-				Err(err).
-				Interface("moveIDs", moveIDsToDelete).
-				Msg("failed to delete associated assignments")
-			return err
-		}
-
-		// * Now delete the moves themselves
-		result, err := tx.NewDelete().
-			Model((*shipment.ShipmentMove)(nil)).
-			Where("id IN (?)", bun.In(moveIDsToDelete)).
-			Exec(ctx)
-		if err != nil {
-			log.Error().
-				Err(err).
-				Interface("moveIDs", moveIDsToDelete).
-				Msg("failed to delete moves")
-			return err
-		}
-
-		// * Check that the expected number of moves were deleted
-		rowsAffected, err := result.RowsAffected()
-		if err != nil {
-			log.Error().Err(err).Msg("failed to get rows affected for move deletion")
-			return err
-		}
-
-		log.Info().
-			Int64("deletedMoveCount", rowsAffected).
-			Interface("moveIDs", moveIDsToDelete).
-			Msg("successfully deleted moves")
-
-		// * After deletion, resequence the remaining moves to ensure contiguous sequencing
-		if err := sr.resequenceRemainingMoves(ctx, tx, req.ExistingMoveMap[moveIDsToDelete[0]].ShipmentID); err != nil {
+		// Resequence the remaining moves
+		if err := sr.resequenceRemainingMoves(ctx, tx, shipmentID); err != nil {
 			log.Error().Err(err).
 				Interface("moveIDs", moveIDsToDelete).
 				Msg("failed to resequence remaining moves")
 			return err
 		}
 	}
+
+	return nil
+}
+
+// deleteMovesAndAssociatedData deletes moves and their associated data (stops and assignments)
+func (sr *shipmentMoveRepository) deleteMovesAndAssociatedData(ctx context.Context, tx bun.IDB, log zerolog.Logger, moveIDsToDelete []pulid.ID) error {
+	// Delete associated stops
+	if err := sr.deleteAssociatedStops(ctx, tx, log, moveIDsToDelete); err != nil {
+		return err
+	}
+
+	// Delete associated assignments
+	if err := sr.deleteAssociatedAssignments(ctx, tx, log, moveIDsToDelete); err != nil {
+		return err
+	}
+
+	// Delete the moves themselves
+	return sr.deleteMoves(ctx, tx, log, moveIDsToDelete)
+}
+
+// deleteAssociatedStops deletes all stops associated with the specified moves
+func (sr *shipmentMoveRepository) deleteAssociatedStops(ctx context.Context, tx bun.IDB, log zerolog.Logger, moveIDs []pulid.ID) error {
+	_, err := tx.NewDelete().
+		Model((*shipment.Stop)(nil)).
+		Where("shipment_move_id IN (?)", bun.In(moveIDs)).
+		Exec(ctx)
+	if err != nil {
+		if eris.Is(err, sql.ErrNoRows) {
+			log.Error().Err(err).
+				Interface("moveIDs", moveIDs).
+				Msg("failed to delete associated stops")
+			return errors.NewNotFoundError("Associated stops not found within your organization")
+		}
+
+		log.Error().Err(err).
+			Interface("moveIDs", moveIDs).
+			Msg("failed to delete associated stops")
+		return err
+	}
+	return nil
+}
+
+// deleteAssociatedAssignments deletes all assignments associated with the specified moves
+func (sr *shipmentMoveRepository) deleteAssociatedAssignments(ctx context.Context, tx bun.IDB, log zerolog.Logger, moveIDs []pulid.ID) error {
+	_, err := tx.NewDelete().
+		Model((*shipment.Assignment)(nil)).
+		Where("shipment_move_id IN (?)", bun.In(moveIDs)).
+		Exec(ctx)
+	if err != nil {
+		if eris.Is(err, sql.ErrNoRows) {
+			log.Error().Err(err).
+				Interface("moveIDs", moveIDs).
+				Msg("failed to delete associated assignments")
+			return errors.NewNotFoundError("Associated assignments not found within your organization")
+		}
+
+		log.Error().
+			Err(err).
+			Interface("moveIDs", moveIDs).
+			Msg("failed to delete associated assignments")
+		return err
+	}
+	return nil
+}
+
+// deleteMoves deletes the specified moves and logs the result
+func (sr *shipmentMoveRepository) deleteMoves(ctx context.Context, tx bun.IDB, log zerolog.Logger, moveIDs []pulid.ID) error {
+	result, err := tx.NewDelete().
+		Model((*shipment.ShipmentMove)(nil)).
+		Where("id IN (?)", bun.In(moveIDs)).
+		Exec(ctx)
+	if err != nil {
+		log.Error().
+			Err(err).
+			Interface("moveIDs", moveIDs).
+			Msg("failed to delete moves")
+		return err
+	}
+
+	// Check that the expected number of moves were deleted
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		log.Error().Err(err).Msg("failed to get rows affected for move deletion")
+		return err
+	}
+
+	log.Info().
+		Int64("deletedMoveCount", rowsAffected).
+		Interface("moveIDs", moveIDs).
+		Msg("successfully deleted moves")
 
 	return nil
 }
@@ -935,7 +1100,7 @@ func (sr *shipmentMoveRepository) resequenceRemainingMoves(ctx context.Context, 
 			continue // Skip if already has the correct sequence
 		}
 
-		_, err := tx.NewUpdate().
+		_, err = tx.NewUpdate().
 			Model(move).
 			Set("sequence = ?", i).
 			Set("version = version + 1"). // Increment version for optimistic locking

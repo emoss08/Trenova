@@ -26,8 +26,8 @@ type ProblemDetail struct {
 	Status        int            `json:"status"`
 	Detail        string         `json:"detail"`
 	Instance      string         `json:"instance,omitempty"`
-	InvalidParams []InvalidParam `json:"invalid-params,omitempty"`
-	TraceID       string         `json:"trace_id,omitempty"`
+	InvalidParams []InvalidParam `json:"invalidParams,omitempty"`
+	TraceID       string         `json:"traceId,omitempty"`
 }
 
 type InvalidParam struct {
@@ -204,115 +204,178 @@ func (h *ErrorHandler) getErrorTitle(et ErrorType) string {
 func (h *ErrorHandler) extractValidationParams(err error) []InvalidParam {
 	var params []InvalidParam
 
-	// Handle MultiError
-	var multiErr *errors.MultiError
-	if eris.As(err, &multiErr) {
-		for _, validErr := range multiErr.Errors {
-			params = append(params, InvalidParam{
-				Name:     validErr.Field,
-				Reason:   validErr.Message,
-				Code:     string(validErr.Code),
-				Location: "body", // Default to body, can be enhanced
-			})
-		}
+	// Process each error type using specialized handlers
+	if params = h.extractMultiError(err); params != nil {
 		return params
 	}
 
-	// Handle single validation error
-	var validErr *errors.Error
-	if eris.As(err, &validErr) {
-		params = append(params, InvalidParam{
-			Name:     validErr.Field,
-			Reason:   validErr.Message,
-			Code:     string(validErr.Code),
-			Location: "body",
-		})
+	if params = h.extractValidationError(err); params != nil {
 		return params
 	}
 
-	// Handle business error
-	var businessErr *errors.BusinessError
-	if eris.As(err, &businessErr) {
-		param := InvalidParam{
-			Name:     "business",
-			Reason:   businessErr.Message,
-			Code:     string(businessErr.Code),
-			Location: "business",
-		}
-		if businessErr.Details != "" {
-			param.Reason = fmt.Sprintf("%s: %s", businessErr.Message, businessErr.Details)
-		}
-		params = append(params, param)
+	if params = h.extractBusinessError(err); params != nil {
 		return params
 	}
 
-	// Handle database error
-	var dbErr *errors.DatabaseError
-	if eris.As(err, &dbErr) {
-		params = append(params, InvalidParam{
-			Name:     "database",
-			Reason:   dbErr.Message,
-			Code:     string(dbErr.Code),
-			Location: "database",
-		})
+	if params = h.extractDatabaseError(err); params != nil {
 		return params
 	}
 
-	// Handle authentication error
-	var authErr *errors.AuthenticationError
-	if eris.As(err, &authErr) {
-		params = append(params, InvalidParam{
-			Name:     "authentication",
-			Reason:   authErr.Message,
-			Code:     string(authErr.Code),
-			Location: "authentication",
-		})
+	if params = h.extractAuthenticationError(err); params != nil {
 		return params
 	}
 
-	// Handle authorization error
-	var authzErr *errors.AuthorizationError
-	if eris.As(err, &authzErr) {
-		params = append(params, InvalidParam{
-			Name:     "authorization",
-			Reason:   authzErr.Message,
-			Code:     string(authzErr.Code),
-			Location: "authorization",
-		})
+	if params = h.extractAuthorizationError(err); params != nil {
 		return params
 	}
 
-	// Handle not found error
-	var notFoundErr *errors.NotFoundError
-	if eris.As(err, &notFoundErr) {
-		params = append(params, InvalidParam{
-			Name:     "notFound",
-			Reason:   notFoundErr.Message,
-			Code:     string(notFoundErr.Code),
-			Location: "resource",
-		})
+	if params = h.extractNotFoundError(err); params != nil {
 		return params
 	}
 
-	// Handle rate limit error
-	var rateLimitErr *errors.RateLimitError
-	if eris.As(err, &rateLimitErr) {
-		params = append(params, InvalidParam{
-			Name:     rateLimitErr.Field,
-			Reason:   rateLimitErr.Message,
-			Code:     string(rateLimitErr.Code),
-			Location: "rate-limit",
-		})
+	if params = h.extractRateLimitError(err); params != nil {
 		return params
 	}
 
 	// Default case: generic error
-	params = append(params, InvalidParam{
-		Name:     "error",
-		Reason:   err.Error(),
-		Code:     string(errors.ErrSystemError),
-		Location: "system",
-	})
+	return []InvalidParam{
+		{
+			Name:     "error",
+			Reason:   err.Error(),
+			Code:     string(errors.ErrSystemError),
+			Location: "system",
+		},
+	}
+}
 
+func (h *ErrorHandler) extractMultiError(err error) []InvalidParam {
+	var multiErr *errors.MultiError
+	if !eris.As(err, &multiErr) {
+		return nil
+	}
+
+	var params []InvalidParam
+	for _, validErr := range multiErr.Errors {
+		params = append(params, InvalidParam{
+			Name:     validErr.Field,
+			Reason:   validErr.Message,
+			Code:     string(validErr.Code),
+			Location: "body", // Default to body, can be enhanced
+		})
+	}
 	return params
+}
+
+func (h *ErrorHandler) extractValidationError(err error) []InvalidParam {
+	var validErr *errors.Error
+	if !eris.As(err, &validErr) {
+		return nil
+	}
+
+	return []InvalidParam{
+		{
+			Name:     validErr.Field,
+			Reason:   validErr.Message,
+			Code:     string(validErr.Code),
+			Location: "body",
+		},
+	}
+}
+
+func (h *ErrorHandler) extractBusinessError(err error) []InvalidParam {
+	var businessErr *errors.BusinessError
+	if !eris.As(err, &businessErr) {
+		return nil
+	}
+
+	param := InvalidParam{
+		Name:     "business",
+		Reason:   businessErr.Message,
+		Code:     string(businessErr.Code),
+		Location: "business",
+	}
+	if businessErr.Details != "" {
+		param.Reason = fmt.Sprintf("%s: %s", businessErr.Message, businessErr.Details)
+	}
+	return []InvalidParam{param}
+}
+
+func (h *ErrorHandler) extractDatabaseError(err error) []InvalidParam {
+	var dbErr *errors.DatabaseError
+	if !eris.As(err, &dbErr) {
+		return nil
+	}
+
+	return []InvalidParam{
+		{
+			Name:     "database",
+			Reason:   dbErr.Message,
+			Code:     string(dbErr.Code),
+			Location: "database",
+		},
+	}
+}
+
+func (h *ErrorHandler) extractAuthenticationError(err error) []InvalidParam {
+	var authErr *errors.AuthenticationError
+	if !eris.As(err, &authErr) {
+		return nil
+	}
+
+	return []InvalidParam{
+		{
+			Name:     "authentication",
+			Reason:   authErr.Message,
+			Code:     string(authErr.Code),
+			Location: "authentication",
+		},
+	}
+}
+
+func (h *ErrorHandler) extractAuthorizationError(err error) []InvalidParam {
+	var authzErr *errors.AuthorizationError
+	if !eris.As(err, &authzErr) {
+		return nil
+	}
+
+	return []InvalidParam{
+		{
+			Name:     "authorization",
+			Reason:   authzErr.Message,
+			Code:     string(authzErr.Code),
+			Location: "authorization",
+		},
+	}
+}
+
+func (h *ErrorHandler) extractNotFoundError(err error) []InvalidParam {
+	var notFoundErr *errors.NotFoundError
+	if !eris.As(err, &notFoundErr) {
+		return nil
+	}
+
+	return []InvalidParam{
+		{
+			Name:     "notFound",
+			Reason:   notFoundErr.Message,
+			Code:     string(notFoundErr.Code),
+			Location: "resource",
+		},
+	}
+}
+
+func (h *ErrorHandler) extractRateLimitError(err error) []InvalidParam {
+	var rateLimitErr *errors.RateLimitError
+	if !eris.As(err, &rateLimitErr) {
+		return nil
+	}
+
+	return []InvalidParam{
+		{
+			Name:     rateLimitErr.Field,
+			Reason:   rateLimitErr.Message,
+			Code:     string(rateLimitErr.Code),
+			Location: "rate-limit",
+		},
+	}
 }

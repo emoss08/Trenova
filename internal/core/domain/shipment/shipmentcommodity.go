@@ -20,6 +20,7 @@ var (
 	_ domain.Validatable        = (*ShipmentCommodity)(nil)
 )
 
+//nolint:revive // valid struct name
 type ShipmentCommodity struct {
 	bun.BaseModel `bun:"table:shipment_commodities,alias:sc" json:"-"`
 

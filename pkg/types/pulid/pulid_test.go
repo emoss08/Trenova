@@ -83,7 +83,7 @@ func TestMust(t *testing.T) {
 func TestID_Scan(t *testing.T) {
 	tests := []struct {
 		name    string
-		input   interface{}
+		input   any
 		wantErr bool
 		want    pulid.ID
 	}{
@@ -142,9 +142,9 @@ func TestID_Value(t *testing.T) {
 		},
 		{
 			name:    "nil ID",
-			id:      pulid.ID(""),
+			id:      pulid.Nil,
 			want:    nil,
-			wantErr: false,
+			wantErr: true,
 		},
 	}
 

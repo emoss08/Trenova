@@ -49,6 +49,11 @@ func (h *Handler) RegisterRoutes(r fiber.Router, rl *middleware.RateLimiter) {
 		middleware.PerMinute(60), // 60 writes per minute
 	)...)
 
+	api.Get("/:customerID/document-requirements", rl.WithRateLimit(
+		[]fiber.Handler{h.getDocumentRequirements},
+		middleware.PerMinute(120), // 120 reads per minute
+	)...)
+
 	api.Get("/:customerID/", rl.WithRateLimit(
 		[]fiber.Handler{h.get},
 		middleware.PerMinute(60), // 60 reads per minute
@@ -139,6 +144,20 @@ func (h *Handler) get(c *fiber.Ctx) error {
 	}
 
 	return c.Status(fiber.StatusOK).JSON(entity)
+}
+
+func (h *Handler) getDocumentRequirements(c *fiber.Ctx) error {
+	customerID, err := pulid.MustParse(c.Params("customerID"))
+	if err != nil {
+		return h.eh.HandleError(c, err)
+	}
+
+	requirements, err := h.cs.GetDocumentRequirements(c.UserContext(), customerID)
+	if err != nil {
+		return h.eh.HandleError(c, err)
+	}
+
+	return c.Status(fiber.StatusOK).JSON(requirements)
 }
 
 func (h *Handler) create(c *fiber.Ctx) error {

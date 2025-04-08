@@ -20,10 +20,10 @@ export default function ShipmentDocumentTable({
   useEffect(() => {
     if (selectedDocument) {
       console.log("Selected document:", selectedDocument);
-      console.log("Presigned URL:", selectedDocument.presignedURL);
-      
+      console.log("Presigned URL:", selectedDocument.presignedUrl);
+
       // Check if the URL is valid
-      if (!selectedDocument.presignedURL) {
+      if (!selectedDocument.presignedUrl) {
         console.error("No presigned URL available for this document");
       }
     }
@@ -65,7 +65,7 @@ export default function ShipmentDocumentTable({
       />
       {pdfViewerOpen && selectedDocument && (
         <PDFViewerDialog
-          fileUrl={selectedDocument?.presignedURL ?? ""}
+          fileUrl={selectedDocument?.presignedUrl ?? ""}
           open={pdfViewerOpen}
           onOpenChange={setPdfViewerOpen}
         />

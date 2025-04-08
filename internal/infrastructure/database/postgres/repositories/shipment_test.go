@@ -66,7 +66,7 @@ func TestShipmentRepository(t *testing.T) {
 		DB:     ts.DB,
 	})
 
-	manager := statemachine.NewStateMachineManager(statemachine.StateMachineManagerParams{
+	manager := statemachine.NewManager(statemachine.ManagerParams{
 		Logger: log,
 	})
 

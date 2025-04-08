@@ -11,6 +11,7 @@ import (
 
 var _ bun.BeforeAppendModelHook = (*ResourceDefinition)(nil)
 
+//nolint:revive // Valid struct name
 type ResourceDefinition struct {
 	bun.BaseModel `bun:"table:resource_definitions,alias:rd" json:"-"`
 

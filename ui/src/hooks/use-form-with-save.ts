@@ -2,7 +2,7 @@
 import { useFormSave } from "@/components/form/form-save-context";
 import { handleMutationError, useApiMutation } from "@/hooks/use-api-mutation";
 import { APIError } from "@/types/errors";
-import { useCallback } from "react";
+import { useCallback, useMemo } from "react";
 import {
   FieldValues,
   useForm,
@@ -148,9 +148,12 @@ export function useFormWithSave<
     [mutateAsync, onBeforeSubmit],
   );
 
-  return {
-    ...form,
-    isSubmitting: isPending,
-    onSubmit: handleSubmit,
-  };
+  // Memoize the returned object to avoid unnecessary re-renders
+  return useMemo(() => {
+    return {
+      ...form,
+      isSubmitting: isPending,
+      onSubmit: handleSubmit,
+    };
+  }, [form, isPending, handleSubmit]);
 }

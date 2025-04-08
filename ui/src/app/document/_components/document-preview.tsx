@@ -79,7 +79,7 @@ export function DocumentPreview({
         </div>
         <div className="flex justify-between items-center">
           <Badge withDot={false} variant="purple" className="text-xs">
-            {doc.documentType}
+            {doc.documentTypeId}
           </Badge>
           <span className="text-xs text-gray-500">
             {formatFileSize(doc.fileSize)}

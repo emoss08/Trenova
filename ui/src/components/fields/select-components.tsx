@@ -261,7 +261,7 @@ export function SingleValueComponent(props: SingleValueProps) {
 
   return (
     <components.SingleValue {...props}>
-      <div className="flex items-center">
+      <div className="flex items-center gap-0.5">
         {color && (
           <span
             style={{
@@ -270,7 +270,7 @@ export function SingleValueComponent(props: SingleValueProps) {
               width: "10px",
               borderRadius: "50%",
               display: "inline-block",
-              marginRight: "8px",
+              marginRight: "4px",
             }}
           ></span>
         )}

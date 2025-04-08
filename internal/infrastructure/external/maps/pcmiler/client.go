@@ -93,6 +93,6 @@ type RouteReportParams struct {
 	Reports string `url:"reports"`
 }
 
-// func (c *client) RouteReport(ctx context.Context, params *RouteReportParams) (interface{}, error) {
+// func (c *client) RouteReport(ctx context.Context, params *RouteReportParams) (any, error) {
 
 // }

@@ -40,7 +40,7 @@ func NewBackupScheduler(p BackupSchedulerParams) (services.BackupScheduler, erro
 	backupCfg := p.Config.Backup()
 	if backupCfg == nil || !backupCfg.Enabled {
 		log.Info().Msg("backup scheduler is disabled because backup service is disabled")
-		return nil, nil
+		return nil, eris.New("backup scheduler is disabled because backup service is disabled")
 	}
 
 	// Check if backup service was successfully initialized
@@ -72,7 +72,7 @@ func NewBackupScheduler(p BackupSchedulerParams) (services.BackupScheduler, erro
 }
 
 // Start starts the backup scheduler.
-func (bs *backupScheduler) Start(ctx context.Context) error {
+func (bs *backupScheduler) Start(_ context.Context) error {
 	if bs.cfg == nil || !bs.cfg.Enabled || bs.bs == nil {
 		return nil // Skip if backups are disabled
 	}
@@ -117,7 +117,7 @@ func (bs *backupScheduler) Start(ctx context.Context) error {
 }
 
 // Stop stops the backup scheduler.
-func (bs *backupScheduler) Stop(ctx context.Context) error {
+func (bs *backupScheduler) Stop(_ context.Context) error {
 	if bs.scheduler != nil {
 		bs.logger.Info().Msg("stopping backup scheduler")
 		bs.scheduler.Stop()

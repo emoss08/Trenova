@@ -5,8 +5,10 @@ import (
 	"fmt"
 	"path/filepath"
 	"strings"
+	"sync"
 	"time"
 
+	"github.com/emoss08/trenova/internal/core/domain/billing"
 	"github.com/emoss08/trenova/internal/core/domain/document"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/ports"
@@ -19,9 +21,11 @@ import (
 	"github.com/emoss08/trenova/internal/pkg/errors"
 	"github.com/emoss08/trenova/internal/pkg/logger"
 	"github.com/emoss08/trenova/internal/pkg/utils/jsonutils"
+	"github.com/emoss08/trenova/pkg/types/pulid"
 	"github.com/rotisserie/eris"
 	"github.com/rs/zerolog"
 	"go.uber.org/fx"
+	"golang.org/x/sync/errgroup"
 )
 
 // ServiceParams defines dependencies required for initializing the DocumentService.
@@ -39,6 +43,7 @@ type ServiceParams struct {
 	DocRepo      repositories.DocumentRepository
 	FileService  services.FileService
 	OrgRepo      repositories.OrganizationRepository
+	DocTypeRepo  repositories.DocumentTypeRepository
 }
 
 // service implements the DocumentService interface
@@ -52,6 +57,7 @@ type service struct {
 	docRepo     repositories.DocumentRepository
 	fileService services.FileService
 	orgRepo     repositories.OrganizationRepository
+	docTypeRepo repositories.DocumentTypeRepository
 	ps          services.PermissionService
 	as          services.AuditService
 }
@@ -76,6 +82,7 @@ func NewService(p ServiceParams) services.DocumentService {
 		docRepo:     p.DocRepo,
 		fileService: p.FileService,
 		orgRepo:     p.OrgRepo,
+		docTypeRepo: p.DocTypeRepo,
 		ps:          p.PermService,
 		as:          p.AuditService,
 	}
@@ -170,15 +177,32 @@ func (s *service) GetDocumentsByResourceID(ctx context.Context, req *repositorie
 		return nil, err
 	}
 
-	// * Get a presigned URL for each document
-	for _, doc := range docs.Items {
-		presignedURL, err := s.fileService.GetFileURL(ctx, bucketName, doc.StoragePath, time.Hour*24)
-		if err != nil {
-			log.Error().Err(err).Msg("failed to get presigned URL for document")
-			return nil, err
-		}
+	// * Use goroutines and errgroup to parallelize the presigned URL generation
+	g, ctx := errgroup.WithContext(ctx)
 
-		doc.PresignedURL = presignedURL
+	var mu sync.Mutex
+
+	for i := range docs.Items {
+		idx := i // Use different name to avoid shadowing
+		doc := docs.Items[idx]
+
+		g.Go(func() error {
+			presignedURL, iErr := s.fileService.GetFileURL(ctx, bucketName, doc.StoragePath, time.Hour*24)
+			if iErr != nil {
+				return iErr
+			}
+
+			mu.Lock()
+			doc.PresignedURL = presignedURL
+			mu.Unlock()
+
+			return nil
+		})
+	}
+
+	if wErr := g.Wait(); wErr != nil {
+		log.Error().Err(wErr).Msg("failed to generate presigned URLs")
+		return nil, wErr
 	}
 
 	return docs, nil
@@ -198,120 +222,43 @@ func (s *service) UploadDocument(ctx context.Context, req *services.UploadDocume
 		Str("operation", "UploadDocument").
 		Logger()
 
-	result, err := s.ps.HasAnyPermissions(ctx, []*services.PermissionCheck{
-		{
-			UserID:         req.UploadedByID,
-			Resource:       permission.ResourceDocument,
-			Action:         permission.ActionCreate,
-			BusinessUnitID: req.BusinessUnitID,
-			OrganizationID: req.OrganizationID,
-		},
-	})
-	if err != nil {
-		log.Error().Err(err).Msg("failed to check permissions")
+	// Check permissions
+	if err := s.checkUploadPermissions(ctx, req); err != nil {
 		return nil, err
 	}
 
-	if !result.Allowed {
-		return nil, errors.NewAuthorizationError("You do not have permission to create documents")
-	}
-
+	// Get bucket name
 	bucketName, err := s.orgRepo.GetOrganizationBucketName(ctx, req.OrganizationID)
 	if err != nil {
 		log.Error().Err(err).Msg("failed to get organization bucket name")
 		return nil, eris.Wrap(err, "get organization bucket name")
 	}
 
-	// * Validate request
-	if err := req.Validate(ctx); err != nil {
+	// Validate request
+	if err = req.Validate(ctx); err != nil {
 		return nil, err
 	}
 
-	// * Generate file storage path
-	objectKey := s.generateObjectPath(req)
-
-	// * Prepare file upload request
-	fileReq := &services.SaveFileRequest{
-		OrgID:          req.OrganizationID.String(),
-		BucketName:     bucketName,
-		UserID:         req.UploadedByID.String(),
-		FileName:       objectKey,
-		File:           req.File,
-		FileType:       s.determineFileType(req.FileName),
-		Classification: s.mapDocTypeToClassification(req.DocumentType),
-		Category:       s.mapResourceTypeToCategory(req.ResourceType),
-		Tags: map[string]string{
-			"resource_id":   req.ResourceID.String(),
-			"resource_type": string(req.ResourceType),
-			"doc_type":      string(req.DocumentType),
-		},
-		Metadata: map[string][]string{
-			"description": {req.Description},
-		},
-	}
-
-	// * Add tags to metadata
-	if len(req.Tags) > 0 {
-		fileReq.Metadata["tags"] = req.Tags
-	}
-
-	// * Determine if versioning should be used
-	fileUploadResp, err := s.fileService.SaveFileVersion(ctx, fileReq)
+	// Fetch document type and prepare file storage
+	docType, objectKey, err := s.prepareDocumentStorage(ctx, req)
 	if err != nil {
-		log.Error().Err(err).Msg("failed to save file version")
 		return nil, err
 	}
 
-	// * Create document record in the database
-	docStatus := req.Status
-	if docStatus == "" {
-		if req.RequireApproval {
-			docStatus = document.DocumentStatusPendingApproval
-		} else {
-			docStatus = document.DocumentStatusActive
-		}
-	}
-
-	// * Create document record in the database
-	doc := &document.Document{
-		OrganizationID: req.OrganizationID,
-		BusinessUnitID: req.BusinessUnitID,
-		FileName:       filepath.Base(objectKey),
-		OriginalName:   req.OriginalName,
-		FileSize:       int64(len(req.File)),
-		FileType:       filepath.Ext(req.FileName),
-		StoragePath:    objectKey,
-		DocumentType:   req.DocumentType,
-		Status:         docStatus,
-		ResourceID:     req.ResourceID,
-		ResourceType:   req.ResourceType,
-		ExpirationDate: req.ExpirationDate,
-		Tags:           req.Tags,
-		UploadedByID:   req.UploadedByID,
-	}
-
-	// * Save document to database
-	savedDoc, err := s.docRepo.Create(ctx, doc)
+	// Upload file to storage
+	fileUploadResp, err := s.uploadDocumentFile(ctx, req, bucketName, objectKey, docType)
 	if err != nil {
-		log.Error().Err(err).Msg("failed to create document")
-		// * Try to clean up the file if we can't save the metadata
-		_ = s.fileService.DeleteFile(ctx, req.OrganizationID.String(), objectKey)
-		return nil, eris.Wrap(err, "create document")
+		return nil, err
 	}
 
-	err = s.as.LogAction(
-		&services.LogActionParams{
-			Resource:       permission.ResourceDocument,
-			ResourceID:     savedDoc.ID.String(),
-			Action:         permission.ActionCreate,
-			UserID:         req.UploadedByID,
-			CurrentState:   jsonutils.MustToJSON(savedDoc),
-			OrganizationID: savedDoc.OrganizationID,
-			BusinessUnitID: savedDoc.BusinessUnitID,
-		},
-		audit.WithComment("Document created"),
-	)
+	// Create and save document record
+	savedDoc, err := s.createDocumentRecord(ctx, req, objectKey, bucketName)
 	if err != nil {
+		return nil, err
+	}
+
+	// Log the action
+	if err = s.logDocumentCreation(savedDoc, req); err != nil {
 		log.Error().Err(err).Msg("failed to log document creation")
 	}
 
@@ -324,20 +271,8 @@ func (s *service) UploadDocument(ctx context.Context, req *services.UploadDocume
 	}, nil
 }
 
-// BulkUploadDocuments uploads multiple documents in a single operation
-//
-// Parameters:
-//   - ctx: The context for the operation.
-//   - req: The request containing document details.
-//
-// Returns:
-//   - *services.BulkUploadDocumentResponse: The response containing the uploaded documents.
-//   - error: An error if the operation fails.
-func (s *service) BulkUploadDocuments(ctx context.Context, req *services.BulkUploadDocumentRequest) (*services.BulkUploadDocumentResponse, error) {
-	log := s.l.With().
-		Str("operation", "BulkUploadDocuments").
-		Logger()
-
+// checkUploadPermissions checks if the user has permission to upload documents
+func (s *service) checkUploadPermissions(ctx context.Context, req *services.UploadDocumentRequest) error {
 	result, err := s.ps.HasAnyPermissions(ctx, []*services.PermissionCheck{
 		{
 			UserID:         req.UploadedByID,
@@ -348,71 +283,216 @@ func (s *service) BulkUploadDocuments(ctx context.Context, req *services.BulkUpl
 		},
 	})
 	if err != nil {
-		log.Error().Err(err).Msg("failed to check permissions")
-		return nil, err
+		s.l.Error().Err(err).Msg("failed to check permissions")
+		return err
 	}
 
 	if !result.Allowed {
-		return nil, errors.NewAuthorizationError("You do not have permission to create documents")
+		return errors.NewAuthorizationError("You do not have permission to create documents")
 	}
 
-	response := &services.BulkUploadDocumentResponse{
-		Successful: make([]services.UploadDocumentResponse, 0, len(req.Documents)),
-		Failed:     make([]services.FailedUpload, 0),
+	return nil
+}
+
+// prepareDocumentStorage fetches document type and generates a storage path
+func (s *service) prepareDocumentStorage(ctx context.Context, req *services.UploadDocumentRequest) (*billing.DocumentType, string, error) {
+	docType, err := s.docTypeRepo.GetByID(ctx, repositories.GetDocumentTypeByIDRequest{
+		ID:    req.DocumentTypeID,
+		OrgID: req.OrganizationID,
+		BuID:  req.BusinessUnitID,
+	})
+	if err != nil {
+		s.l.Error().Err(err).Msg("failed to get document type by ID")
+		return nil, "", eris.Wrap(err, "get document type by ID")
 	}
 
-	// * Process each document in the bulk request
-	for i := range req.Documents {
-		docInfo := &req.Documents[i] // Use pointer to avoid copying the whole struct
-		uploadReq := &services.UploadDocumentRequest{
-			OrganizationID:  req.OrganizationID,
-			BusinessUnitID:  req.BusinessUnitID,
-			UploadedByID:    req.UploadedByID,
-			ResourceID:      req.ResourceID,
-			ResourceType:    req.ResourceType,
-			DocumentType:    docInfo.DocumentType,
-			File:            docInfo.File,
-			FileName:        docInfo.FileName,
-			RequireApproval: docInfo.RequireApproval,
-			OriginalName:    docInfo.OriginalName,
-			Description:     docInfo.Description,
-			Tags:            docInfo.Tags,
-			ExpirationDate:  docInfo.ExpirationDate,
-			Status:          document.DocumentStatusActive, // * Default for bulk uploads
+	objectKey := s.generateObjectPath(req, docType.Name)
+	return docType, objectKey, nil
+}
+
+// uploadDocumentFile handles uploading the file to storage
+func (s *service) uploadDocumentFile(ctx context.Context, req *services.UploadDocumentRequest, bucketName, objectKey string, docType *billing.DocumentType) (*services.SaveFileResponse, error) {
+	fileReq := &services.SaveFileRequest{
+		OrgID:          req.OrganizationID.String(),
+		BucketName:     bucketName,
+		UserID:         req.UploadedByID.String(),
+		FileName:       objectKey,
+		File:           req.File,
+		FileType:       s.determineFileType(req.FileName),
+		Classification: s.mapDocTypeToClassification(req.DocumentTypeID),
+		Category:       s.mapResourceTypeToCategory(req.ResourceType),
+		Tags: map[string]string{
+			"resource_id":   req.ResourceID.String(),
+			"resource_type": string(req.ResourceType),
+			"doc_type":      docType.Name,
+		},
+		Metadata: map[string][]string{
+			"description": {req.Description},
+		},
+	}
+
+	// Add tags to metadata
+	if len(req.Tags) > 0 {
+		fileReq.Metadata["tags"] = req.Tags
+	}
+
+	// Upload file
+	fileUploadResp, err := s.fileService.SaveFileVersion(ctx, fileReq)
+	if err != nil {
+		s.l.Error().Err(err).Msg("failed to save file version")
+		return nil, err
+	}
+
+	return fileUploadResp, nil
+}
+
+// createDocumentRecord creates and saves the document record in the database
+func (s *service) createDocumentRecord(ctx context.Context, req *services.UploadDocumentRequest, objectKey string, bucketName string) (*document.Document, error) {
+	// Determine document status
+	docStatus := req.Status
+	if docStatus == "" {
+		if req.RequireApproval {
+			docStatus = document.StatusPendingApproval
+		} else {
+			docStatus = document.StatusActive
 		}
-
-		uploadResp, err := s.UploadDocument(ctx, uploadReq)
-		if err != nil {
-			response.Failed = append(response.Failed, services.FailedUpload{
-				FileName: docInfo.FileName,
-				Error:    err,
-			})
-			continue
-		}
-
-		response.Successful = append(response.Successful, *uploadResp)
 	}
 
+	// Create document record
+	doc := &document.Document{
+		OrganizationID: req.OrganizationID,
+		BusinessUnitID: req.BusinessUnitID,
+		FileName:       filepath.Base(objectKey),
+		OriginalName:   req.OriginalName,
+		FileSize:       int64(len(req.File)),
+		FileType:       filepath.Ext(req.FileName),
+		StoragePath:    objectKey,
+		DocumentTypeID: req.DocumentTypeID,
+		Status:         docStatus,
+		ResourceID:     req.ResourceID,
+		ResourceType:   req.ResourceType,
+		ExpirationDate: req.ExpirationDate,
+		Tags:           req.Tags,
+		UploadedByID:   req.UploadedByID,
+	}
+
+	// Save document to database
+	savedDoc, err := s.docRepo.Create(ctx, doc)
+	if err != nil {
+		s.l.Error().Err(err).Msg("failed to create document")
+		// Try to clean up the file if we can't save the metadata
+		_ = s.fileService.DeleteFile(ctx, bucketName, objectKey)
+		return nil, eris.Wrap(err, "create document")
+	}
+
+	return savedDoc, nil
+}
+
+// logDocumentCreation logs the document creation action
+func (s *service) logDocumentCreation(doc *document.Document, req *services.UploadDocumentRequest) error {
+	return s.as.LogAction(
+		&services.LogActionParams{
+			Resource:       permission.ResourceDocument,
+			ResourceID:     doc.ID.String(),
+			Action:         permission.ActionCreate,
+			UserID:         req.UploadedByID,
+			CurrentState:   jsonutils.MustToJSON(doc),
+			OrganizationID: doc.OrganizationID,
+			BusinessUnitID: doc.BusinessUnitID,
+		},
+		audit.WithComment("Document created"),
+	)
+}
+
+// DeleteDocument deletes a document from the database and file storage
+//
+// Parameters:
+//   - ctx: The context for the operation.
+//   - req: The request containing document details.
+//
+// Returns:
+//   - error: An error if the operation fails.
+func (s *service) DeleteDocument(ctx context.Context, req *services.DeleteDocumentRequest) error {
+	log := s.l.With().
+		Str("operation", "DeleteDocument").
+		Str("docID", req.DocID.String()).
+		Logger()
+
+	result, err := s.ps.HasAnyPermissions(ctx, []*services.PermissionCheck{
+		{
+			OrganizationID: req.OrgID,
+			BusinessUnitID: req.BuID,
+			UserID:         req.UploadedByID,
+			Resource:       permission.ResourceDocument,
+			Action:         permission.ActionDelete,
+		},
+	})
+	if err != nil {
+		log.Error().Err(err).Msg("failed to check permissions")
+		return err
+	}
+
+	if !result.Allowed {
+		return errors.NewAuthorizationError("You do not have permission to delete documents")
+	}
+
+	// * Get the document from the database
+	doc, err := s.docRepo.GetByID(ctx, repositories.GetDocumentByIDRequest{
+		ID:    req.DocID,
+		OrgID: req.OrgID,
+		BuID:  req.BuID,
+	})
+	if err != nil {
+		log.Error().Err(err).Msg("failed to get document by ID")
+		return err
+	}
+
+	// * Get the organization bucket name
+	bucketName, err := s.orgRepo.GetOrganizationBucketName(ctx, req.OrgID)
+	if err != nil {
+		log.Error().Err(err).Msg("failed to get organization bucket name")
+		return eris.Wrap(err, "get organization bucket name")
+	}
+
+	// * Remove the document from file storage
+	err = s.fileService.DeleteFile(ctx, bucketName, doc.StoragePath)
+	if err != nil {
+		log.Error().Err(err).Msg("failed to delete file from storage")
+		return err
+	}
+
+	// * Delete the document from the database
+	err = s.docRepo.Delete(ctx, repositories.DeleteDocumentRequest{
+		ID:    req.DocID,
+		OrgID: req.OrgID,
+		BuID:  req.BuID,
+	})
+	if err != nil {
+		log.Error().Err(err).Msg("failed to delete document")
+		return err
+	}
+
+	// Log the deletion
 	err = s.as.LogAction(
 		&services.LogActionParams{
 			Resource:       permission.ResourceDocument,
-			ResourceID:     req.ResourceID.String(),
-			Action:         permission.ActionCreate,
+			ResourceID:     doc.ID.String(),
+			Action:         permission.ActionDelete,
 			UserID:         req.UploadedByID,
-			CurrentState:   jsonutils.MustToJSON(response),
-			OrganizationID: req.OrganizationID,
-			BusinessUnitID: req.BusinessUnitID,
+			CurrentState:   jsonutils.MustToJSON(doc),
+			OrganizationID: doc.OrganizationID,
+			BusinessUnitID: doc.BusinessUnitID,
 		},
-		audit.WithComment("Documents uploaded"),
+		audit.WithComment("Document deleted"),
 	)
 	if err != nil {
-		log.Error().Err(err).Msg("failed to log document creation")
+		log.Error().Err(err).Msg("failed to log document deletion")
 	}
 
-	return response, nil
+	return nil
 }
 
-func (s *service) generateObjectPath(req *services.UploadDocumentRequest) string {
+func (s *service) generateObjectPath(req *services.UploadDocumentRequest, docTypeName string) string {
 	// Format: {resourceType}/{resourceID}/{documentType}/{timestamp}_{filename}
 	now := time.Now()
 	timestamp := now.Format("20060102150405")
@@ -420,7 +500,7 @@ func (s *service) generateObjectPath(req *services.UploadDocumentRequest) string
 
 	return fmt.Sprintf("%s/%s/%s_%s",
 		req.ResourceID,
-		req.DocumentType,
+		docTypeName,
 		timestamp,
 		sanitizedFileName)
 }
@@ -440,22 +520,25 @@ func (s *service) determineFileType(filename string) services.FileType {
 	}
 }
 
-func (s *service) mapDocTypeToClassification(docType document.DocumentType) services.FileClassification {
-	switch docType {
-	case document.DocumentTypeLicense, document.DocumentTypeRegistration,
-		document.DocumentTypeInsurance, document.DocumentTypeMedicalCert:
-		return services.ClassificationRegulatory
-	case document.DocumentTypeDriverLog, document.DocumentTypeAccidentReport:
-		return services.ClassificationSensitive
-	case document.DocumentTypeProofOfDelivery, document.DocumentTypeInvoice,
-		document.DocumentTypeBillOfLading, document.DocumentTypeContract:
-		return services.ClassificationPrivate
-	default:
-		return services.ClassificationPublic
-	}
+func (s *service) mapDocTypeToClassification(docTypeID pulid.ID) services.FileClassification {
+	// switch docTypeID {
+	// case document.DocumentTypeLicense, document.DocumentTypeRegistration,
+	// 	document.DocumentTypeInsurance, document.DocumentTypeMedicalCert:
+	// 	return services.ClassificationRegulatory
+	// case document.DocumentTypeDriverLog, document.DocumentTypeAccidentReport:
+	// 	return services.ClassificationSensitive
+	// case document.DocumentTypeProofOfDelivery, document.DocumentTypeInvoice,
+	// 	document.DocumentTypeBillOfLading, document.DocumentTypeContract:
+	// 	return services.ClassificationPrivate
+	// default:
+	// 	return services.ClassificationPublic
+	// }
+
+	return services.ClassificationPublic
 }
 
 func (s *service) mapResourceTypeToCategory(resourceType permission.Resource) services.FileCategory {
+	//nolint:exhaustive // not all cases are implemented
 	switch resourceType {
 	case permission.ResourceShipment:
 		return services.CategoryShipment

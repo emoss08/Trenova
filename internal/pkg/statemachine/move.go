@@ -1,8 +1,6 @@
 package statemachine
 
 import (
-	"context"
-
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/rs/zerolog/log"
 )
@@ -21,7 +19,7 @@ func (sm *MoveStateMachine) CurrentState() string {
 	return string(sm.move.Status)
 }
 
-func (sm *MoveStateMachine) CanTransition(ctx context.Context, event TransitionEvent) bool {
+func (sm *MoveStateMachine) CanTransition(event TransitionEvent) bool {
 	currentState := sm.move.Status
 
 	// Define valid transitions based on current state and event
@@ -53,18 +51,17 @@ func (sm *MoveStateMachine) CanTransition(ctx context.Context, event TransitionE
 
 	log.Info().
 		Str("moveID", sm.move.ID.String()).
-		Str("event", string(event)).
+		Str("event", event.EventType()).
 		Str("currentState", string(currentState)).
 		Msg("move transition not allowed")
 
 	return false
 }
 
-func (sm *MoveStateMachine) Transition(ctx context.Context, event TransitionEvent) error {
-	if !sm.CanTransition(ctx, event) {
+func (sm *MoveStateMachine) Transition(event TransitionEvent) error {
+	if !sm.CanTransition(event) {
 		return newTransitionError(
 			string(sm.move.Status),
-			"<unknown>",
 			event,
 			"transition not allowed",
 		)
@@ -84,7 +81,6 @@ func (sm *MoveStateMachine) Transition(ctx context.Context, event TransitionEven
 	default:
 		return newTransitionError(
 			string(sm.move.Status),
-			"<unknown>",
 			event,
 			"unsupport event",
 		)

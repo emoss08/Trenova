@@ -20,6 +20,7 @@ var (
 	_ domain.Validatable        = (*LocationCategory)(nil)
 )
 
+//nolint:revive // validate struct name
 type LocationCategory struct {
 	bun.BaseModel `bun:"table:location_categories,alias:lc" json:"-"`
 
@@ -29,15 +30,15 @@ type LocationCategory struct {
 	OrganizationID pulid.ID `bun:"organization_id,pk,notnull,type:VARCHAR(100)" json:"organizationId"`
 
 	// Core Fields
-	Name                string               `json:"name" bun:"name,type:VARCHAR(100),notnull"`
-	Description         string               `json:"description" bun:"description,type:VARCHAR(255)"`
-	Type                LocationCategoryType `json:"type" bun:"type,type:location_category_type,notnull"`
-	FacilityType        FacilityType         `json:"facilityType" bun:"facility_type,type:facility_type,nullzero"`
-	Color               string               `json:"color" bun:"color,type:VARCHAR(10)"`
-	HasSecureParking    bool                 `json:"hasSecureParking" bun:"has_secure_parking,type:BOOLEAN,default:false"`
-	RequiresAppointment bool                 `json:"requiresAppointment" bun:"requires_appointment,type:BOOLEAN,default:false"`
-	AllowsOvernight     bool                 `json:"allowsOvernight" bun:"allows_overnight,type:BOOLEAN,default:false"`
-	HasRestroom         bool                 `json:"hasRestroom" bun:"has_restroom,type:BOOLEAN,default:false"`
+	Name                string       `json:"name" bun:"name,type:VARCHAR(100),notnull"`
+	Description         string       `json:"description" bun:"description,type:VARCHAR(255)"`
+	Type                Category     `json:"type" bun:"type,type:location_category_type,notnull"`
+	FacilityType        FacilityType `json:"facilityType" bun:"facility_type,type:facility_type,nullzero"`
+	Color               string       `json:"color" bun:"color,type:VARCHAR(10)"`
+	HasSecureParking    bool         `json:"hasSecureParking" bun:"has_secure_parking,type:BOOLEAN,default:false"`
+	RequiresAppointment bool         `json:"requiresAppointment" bun:"requires_appointment,type:BOOLEAN,default:false"`
+	AllowsOvernight     bool         `json:"allowsOvernight" bun:"allows_overnight,type:BOOLEAN,default:false"`
+	HasRestroom         bool         `json:"hasRestroom" bun:"has_restroom,type:BOOLEAN,default:false"`
 
 	// Metadata
 	Version      int64  `bun:"version,type:BIGINT" json:"version"`
@@ -62,15 +63,15 @@ func (lc *LocationCategory) Validate(ctx context.Context, multiErr *errors.Multi
 		validation.Field(&lc.Type,
 			validation.Required.Error("Type is required"),
 			validation.In(
-				LocationCategoryTypeTerminal,
-				LocationCategoryTypeWarehouse,
-				LocationCategoryTypeDistributionCenter,
-				LocationCategoryTypeTruckStop,
-				LocationCategoryTypeRestArea,
-				LocationCategoryTypeCustomerLocation,
-				LocationCategoryTypePort,
-				LocationCategoryTypeRailYard,
-				LocationCategoryTypeMaintenanceFacility,
+				CategoryTerminal,
+				CategoryWarehouse,
+				CategoryDistributionCenter,
+				CategoryTruckStop,
+				CategoryRestArea,
+				CategoryCustomerLocation,
+				CategoryPort,
+				CategoryRailYard,
+				CategoryMaintenanceFacility,
 			).Error("Invalid type"),
 		),
 
@@ -92,7 +93,7 @@ func (lc *LocationCategory) Validate(ctx context.Context, multiErr *errors.Multi
 	if err != nil {
 		var validationErrs validation.Errors
 		if eris.As(err, &validationErrs) {
-			errors.FromValidationErrors(validationErrs, multiErr, "")
+			errors.FromOzzoErrors(validationErrs, multiErr)
 		}
 	}
 }

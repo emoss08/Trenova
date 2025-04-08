@@ -5,6 +5,7 @@ import (
 	"os"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/core/domain/businessunit"
 	"github.com/emoss08/trenova/internal/core/domain/organization"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/internal/infrastructure/database/postgres/repositories"
@@ -35,10 +36,12 @@ func TestMain(m *testing.M) {
 
 func newShipment() *shipment.Shipment {
 	org := ts.Fixture.MustRow("Organization.trenova").(*organization.Organization)
+	bu := ts.Fixture.MustRow("BusinessUnit.trenova").(*businessunit.BusinessUnit)
 
 	return &shipment.Shipment{
 		ProNumber:           "123456",
 		OrganizationID:      org.ID,
+		BusinessUnitID:      bu.ID,
 		Status:              shipment.StatusNew,
 		ShipmentTypeID:      pulid.MustNew("st_"),
 		CustomerID:          pulid.MustNew("cust_"),
@@ -262,7 +265,7 @@ func TestShipmentValidator(t *testing.T) { //nolint: funlen // Tests
 
 	for _, scenario := range scenarios {
 		t.Run(scenario.name, func(t *testing.T) {
-			vCtx := validator.NewValidationContext(ctx, &validator.ValidationContext{
+			vCtx := validator.NewValidationContext(&validator.ValidationContext{
 				IsCreate: true,
 			})
 

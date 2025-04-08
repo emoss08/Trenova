@@ -1,32 +1,13 @@
 package document
 
-// DocumentType categorize the document
-type DocumentType string
+// Status represents the current status of a document
+type Status string
 
 const (
-	DocumentTypeLicense         = DocumentType("License")
-	DocumentTypeRegistration    = DocumentType("Registration")
-	DocumentTypeInsurance       = DocumentType("Insurance")
-	DocumentTypeInvoice         = DocumentType("Invoice")
-	DocumentTypeProofOfDelivery = DocumentType("ProofOfDelivery")
-	DocumentTypeBillOfLading    = DocumentType("BillOfLading")
-	DocumentTypeDriverLog       = DocumentType("DriverLog")
-	DocumentTypeMedicalCert     = DocumentType("MedicalCert")
-	DocumentTypeContract        = DocumentType("Contract")
-	DocumentTypeMaintenance     = DocumentType("Maintenance")
-	DocumentTypeAccidentReport  = DocumentType("AccidentReport")
-	DocumentTypeTrainingRecord  = DocumentType("TrainingRecord")
-	DocumentTypeOther           = DocumentType("Other")
-)
-
-// DocumentStatus represents the current status of a document
-type DocumentStatus string
-
-const (
-	DocumentStatusDraft           = DocumentStatus("Draft")
-	DocumentStatusActive          = DocumentStatus("Active")
-	DocumentStatusArchived        = DocumentStatus("Archived")
-	DocumentStatusExpired         = DocumentStatus("Expired")
-	DocumentStatusRejected        = DocumentStatus("Rejected")
-	DocumentStatusPendingApproval = DocumentStatus("PendingApproval")
+	StatusDraft           = Status("Draft")
+	StatusActive          = Status("Active")
+	StatusArchived        = Status("Archived")
+	StatusExpired         = Status("Expired")
+	StatusRejected        = Status("Rejected")
+	StatusPendingApproval = Status("PendingApproval")
 )

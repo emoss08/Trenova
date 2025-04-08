@@ -119,16 +119,16 @@ func (pnc *ProNumberConfig) BeforeAppendModel(_ context.Context, query bun.Query
 }
 
 // ToProNumberFormat converts the config to a ProNumberFormat
-func (p *ProNumberConfig) ToProNumberFormat() *pronumbergen.ProNumberFormat {
+func (pnc *ProNumberConfig) ToProNumberFormat() *pronumbergen.ProNumberFormat {
 	return &pronumbergen.ProNumberFormat{
-		Prefix:              p.Prefix,
-		IncludeYear:         p.IncludeYear,
-		YearDigits:          p.YearDigits,
-		IncludeMonth:        p.IncludeMonth,
-		SequenceDigits:      p.SequenceDigits,
-		IncludeLocationCode: p.IncludeLocationCode,
-		LocationCode:        p.LocationCode,
-		IncludeRandomDigits: p.IncludeRandomDigits,
-		RandomDigitsCount:   p.RandomDigitsCount,
+		Prefix:              pnc.Prefix,
+		IncludeYear:         pnc.IncludeYear,
+		YearDigits:          pnc.YearDigits,
+		IncludeMonth:        pnc.IncludeMonth,
+		SequenceDigits:      pnc.SequenceDigits,
+		IncludeLocationCode: pnc.IncludeLocationCode,
+		LocationCode:        pnc.LocationCode,
+		IncludeRandomDigits: pnc.IncludeRandomDigits,
+		RandomDigitsCount:   pnc.RandomDigitsCount,
 	}
 }

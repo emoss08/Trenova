@@ -3,7 +3,6 @@ package logreader
 import (
 	"bufio"
 	"context"
-	"encoding/json"
 	"fmt"
 	"io"
 	"os"
@@ -14,7 +13,6 @@ import (
 	"time"
 
 	"github.com/bytedance/sonic"
-	"github.com/emoss08/trenova/internal/core/ports"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/pkg/config"
@@ -94,7 +92,7 @@ func (s *Service) BroadcastLogEntry(entry *repositories.LogEntry) {
 }
 
 // GetAvailableLogFiles returns a list of available log files
-func (s *Service) GetAvailableLogFiles(ctx context.Context, opts *ports.LimitOffsetQueryOptions) ([]string, error) {
+func (s *Service) GetAvailableLogFiles() ([]string, error) {
 	log := s.l.With().
 		Str("operation", "GetAvailableLogFiles").
 		Logger()
@@ -115,17 +113,45 @@ func (s *Service) readLogs(ctx context.Context, opts *repositories.ListLogOption
 		Time("endDate", opts.EndDate).
 		Logger()
 
+	// Open and prepare log file
+	file, err := s.openLogFile(log)
+	if err != nil {
+		return nil, err
+	}
+	defer file.Close()
+
+	// Scan and parse log entries
+	entries, err := s.scanLogEntries(ctx, file, opts, log)
+	if err != nil {
+		return nil, err
+	}
+
+	// Sort and paginate results
+	return s.processResults(entries, opts), nil
+}
+
+// openLogFile opens the current log file
+func (s *Service) openLogFile(log zerolog.Logger) (*os.File, error) {
 	currentLogFile := filepath.Join(s.cfg.Log.FileConfig.Path, s.cfg.Log.FileConfig.FileName)
 
 	file, err := os.Open(currentLogFile)
 	if err != nil {
 		if os.IsNotExist(err) {
 			log.Info().Str("file", currentLogFile).Msg("log file does not exist")
-			return []repositories.LogEntry{}, nil
+			return nil, eris.Wrap(err, "open log file")
 		}
 		return nil, eris.Wrap(err, "open log file")
 	}
-	defer file.Close()
+
+	return file, nil
+}
+
+// scanLogEntries scans and parses log entries from the file
+func (s *Service) scanLogEntries(ctx context.Context, file *os.File, opts *repositories.ListLogOptions, log zerolog.Logger) ([]repositories.LogEntry, error) {
+	// Handle case where file doesn't exist
+	if file == nil {
+		return []repositories.LogEntry{}, nil
+	}
 
 	var entries []repositories.LogEntry
 	scanner := bufio.NewScanner(file)
@@ -140,21 +166,12 @@ func (s *Service) readLogs(ctx context.Context, opts *repositories.ListLogOption
 		case <-ctx.Done():
 			return entries, ctx.Err()
 		default:
-			line := scanner.Bytes()
-			var entry repositories.LogEntry
-			if err := json.Unmarshal(line, &entry); err != nil {
-				log.Warn().
-					Err(err).
-					Str("line", string(line)).
-					Msg("failed to parse log entry, skipping")
+			entry, ok := s.parseLogEntry(scanner.Bytes(), log)
+			if !ok {
 				continue
 			}
 
-			// Apply time filter if specified
-			if !opts.StartDate.IsZero() && entry.Time.Before(opts.StartDate) {
-				continue
-			}
-			if !opts.EndDate.IsZero() && entry.Time.After(opts.EndDate) {
+			if s.shouldSkipEntry(entry, opts) {
 				continue
 			}
 
@@ -174,6 +191,40 @@ func (s *Service) readLogs(ctx context.Context, opts *repositories.ListLogOption
 		return nil, eris.Wrap(err, "scan log file")
 	}
 
+	return entries, nil
+}
+
+// parseLogEntry attempts to parse a log entry from a line
+func (s *Service) parseLogEntry(line []byte, log zerolog.Logger) (repositories.LogEntry, bool) {
+	var entry repositories.LogEntry
+	if err := sonic.Unmarshal(line, &entry); err != nil {
+		log.Warn().
+			Err(err).
+			Str("line", string(line)).
+			Msg("failed to parse log entry, skipping")
+		return repositories.LogEntry{}, false
+	}
+	return entry, true
+}
+
+// shouldSkipEntry checks if an entry should be skipped based on filters
+func (s *Service) shouldSkipEntry(entry repositories.LogEntry, opts *repositories.ListLogOptions) bool {
+	// Apply time filter if specified
+	if !opts.StartDate.IsZero() && entry.Time.Before(opts.StartDate) {
+		return true
+	}
+	if !opts.EndDate.IsZero() && entry.Time.After(opts.EndDate) {
+		return true
+	}
+	return false
+}
+
+// processResults sorts and applies pagination to log entries
+func (s *Service) processResults(entries []repositories.LogEntry, opts *repositories.ListLogOptions) []repositories.LogEntry {
+	if len(entries) == 0 {
+		return entries
+	}
+
 	// Sort entries by timestamp in descending order (newest first)
 	sort.Slice(entries, func(i, j int) bool {
 		return entries[i].Time.After(entries[j].Time)
@@ -181,19 +232,25 @@ func (s *Service) readLogs(ctx context.Context, opts *repositories.ListLogOption
 
 	// Apply limit and offset if specified
 	if opts.LimitOffsetQueryOptions != nil {
-		start := opts.Offset
-		end := opts.Offset + opts.Limit
-
-		if start >= len(entries) {
-			return []repositories.LogEntry{}, nil
-		}
-		if end > len(entries) {
-			end = len(entries)
-		}
-		entries = entries[start:end]
+		return s.applyPagination(entries, opts)
 	}
 
-	return entries, nil
+	return entries
+}
+
+// applyPagination applies pagination parameters to the result set
+func (s *Service) applyPagination(entries []repositories.LogEntry, opts *repositories.ListLogOptions) []repositories.LogEntry {
+	start := opts.Offset
+	end := opts.Offset + opts.Limit
+
+	if start >= len(entries) {
+		return []repositories.LogEntry{}
+	}
+	if end > len(entries) {
+		end = len(entries)
+	}
+
+	return entries[start:end]
 }
 
 func (s *Service) listLogFiles() ([]string, error) {
@@ -221,10 +278,10 @@ func (s *Service) listLogFiles() ([]string, error) {
 
 	fileInfos := make([]fileInfo, 0, len(files))
 	for _, file := range files {
-		info, err := os.Stat(file)
-		if err != nil {
+		info, sErr := os.Stat(file)
+		if sErr != nil {
 			log.Warn().
-				Err(err).
+				Err(sErr).
 				Str("file", file).
 				Msg("failed to stat file, skipping")
 			continue
@@ -245,10 +302,10 @@ func (s *Service) listLogFiles() ([]string, error) {
 	result := make([]string, len(fileInfos))
 	for i, fi := range fileInfos {
 		// Convert to relative path for better presentation
-		relPath, err := filepath.Rel(s.cfg.Log.FileConfig.Path, fi.path)
-		if err != nil {
+		relPath, rErr := filepath.Rel(s.cfg.Log.FileConfig.Path, fi.path)
+		if rErr != nil {
 			log.Warn().
-				Err(err).
+				Err(rErr).
 				Str("file", fi.path).
 				Msg("failed to get relative path, using absolute")
 			result[i] = fi.path
@@ -287,19 +344,19 @@ func (s *Service) CleanupOldLogs(ctx context.Context) error {
 			return ctx.Err()
 		default:
 			fullPath := filepath.Join(s.cfg.Log.FileConfig.Path, file)
-			info, err := os.Stat(fullPath)
-			if err != nil {
+			info, iErr := os.Stat(fullPath)
+			if iErr != nil {
 				log.Warn().
-					Err(err).
+					Err(iErr).
 					Str("file", fullPath).
 					Msg("failed to stat file, skipping")
 				continue
 			}
 
 			if info.ModTime().Before(cutoffTime) {
-				if err := os.Remove(fullPath); err != nil {
+				if rErr := os.Remove(fullPath); rErr != nil {
 					log.Error().
-						Err(err).
+						Err(rErr).
 						Str("file", fullPath).
 						Msg("failed to remove old log file")
 					continue
@@ -316,7 +373,7 @@ func (s *Service) CleanupOldLogs(ctx context.Context) error {
 }
 
 // GetLogFileInfo returns detailed information about a specific log file
-func (s *Service) GetLogFileInfo(ctx context.Context, filename string) (*repositories.LogFileInfo, error) {
+func (s *Service) GetLogFileInfo(filename string) (*repositories.LogFileInfo, error) {
 	fullPath := filepath.Join(s.cfg.Log.FileConfig.Path, filename)
 
 	// Prevent directory traversal
@@ -349,9 +406,26 @@ func (s *Service) watchLogFile(ctx context.Context) error {
 		Str("fileName", s.cfg.Log.FileConfig.FileName).
 		Msg("starting log file watcher")
 
+	// Setup file watcher
+	watcher, file, reader, err := s.setupFileWatcher()
+	if err != nil {
+		return err
+	}
+
+	// Start goroutine to handle file events
+	go s.handleFileEvents(ctx, watcher, file, reader)
+
+	// Start goroutine to handle file rotation
+	go s.checkFileRotation(ctx, file, reader)
+
+	return nil
+}
+
+// setupFileWatcher initializes the file watcher and opens the log file
+func (s *Service) setupFileWatcher() (*fsnotify.Watcher, *os.File, *bufio.Reader, error) {
 	watcher, err := fsnotify.NewWatcher()
 	if err != nil {
-		return eris.Wrap(err, "create file watcher")
+		return nil, nil, nil, eris.Wrap(err, "create file watcher")
 	}
 
 	// Watch the log directory for changes
@@ -360,9 +434,9 @@ func (s *Service) watchLogFile(ctx context.Context) error {
 		Str("watchPath", logPath).
 		Msg("adding path to watcher")
 
-	if err := watcher.Add(logPath); err != nil {
+	if err = watcher.Add(logPath); err != nil {
 		watcher.Close()
-		return eris.Wrap(err, "add log directory to watcher")
+		return nil, nil, nil, eris.Wrap(err, "add log directory to watcher")
 	}
 
 	// Open the file for reading
@@ -374,121 +448,155 @@ func (s *Service) watchLogFile(ctx context.Context) error {
 	file, err := os.Open(fullPath)
 	if err != nil {
 		watcher.Close()
-		return eris.Wrap(err, "open log file")
+		return nil, nil, nil, eris.Wrap(err, "open log file")
 	}
+
 	// Seek to the end of the file
-	if _, err := file.Seek(0, io.SeekEnd); err != nil {
+	if _, err = file.Seek(0, io.SeekEnd); err != nil {
 		file.Close()
 		watcher.Close()
-		return eris.Wrap(err, "seek to end of file")
+		return nil, nil, nil, eris.Wrap(err, "seek to end of file")
 	}
 
 	reader := bufio.NewReader(file)
+	return watcher, file, reader, nil
+}
 
-	go func() {
-		defer func() {
-			file.Close()
-			watcher.Close()
-		}()
-
-		for {
-			select {
-			case <-ctx.Done():
-				s.l.Info().Msg("stopping file watcher due to context cancellation")
-				return
-
-			case event, ok := <-watcher.Events:
-				if !ok {
-					s.l.Info().Msg("watcher events channel closed")
-					return
-				}
-
-				s.l.Trace().
-					Str("event", event.String()).
-					Str("operation", event.Op.String()).
-					Str("path", event.Name).
-					Msg("received file event")
-
-				if event.Op&fsnotify.Write == fsnotify.Write {
-					s.l.Trace().Msg("processing write event")
-					// Read new lines
-					for {
-						line, err := reader.ReadBytes('\n')
-						if err != nil {
-							if err == io.EOF {
-								s.l.Trace().Msg("reached end of file")
-								break
-							}
-							s.l.Error().Err(err).Msg("error reading log file")
-							break
-						}
-
-						s.l.Trace().
-							Str("line", string(line)).
-							Msg("read new log line")
-
-						entry := new(repositories.LogEntry)
-						if err := sonic.Unmarshal(line, &entry); err != nil {
-							s.l.Warn().
-								Err(err).
-								Str("line", string(line)).
-								Interface("entry", entry).
-								Msg("failed to unmarshal log entry, skipping")
-							continue
-						}
-
-						s.l.Trace().
-							Interface("entry", entry).
-							Msg("broadcasting log entry")
-
-						// Broadcast directly to all clients
-						s.BroadcastLogEntry(entry)
-					}
-				}
-
-			case err, ok := <-watcher.Errors:
-				if !ok {
-					s.l.Info().Msg("watcher errors channel closed")
-					return
-				}
-				if err != nil {
-					s.l.Error().Err(err).Msg("file watcher error")
-				}
-			}
-		}
+// handleFileEvents processes events from the file watcher
+func (s *Service) handleFileEvents(ctx context.Context, watcher *fsnotify.Watcher, file *os.File, reader *bufio.Reader) {
+	defer func() {
+		file.Close()
+		watcher.Close()
 	}()
 
-	// Start file rotation check
-	go func() {
-		ticker := time.NewTicker(10 * time.Second)
-		defer ticker.Stop()
+	for {
+		select {
+		case <-ctx.Done():
+			s.l.Info().Msg("stopping file watcher due to context cancellation")
+			return
 
-		for {
-			select {
-			case <-ctx.Done():
+		case event, ok := <-watcher.Events:
+			if !ok {
+				s.l.Info().Msg("watcher events channel closed")
 				return
-			case <-ticker.C:
-				// Check if the file has been rotated
-				if _, err := os.Stat(filepath.Join(s.cfg.Log.FileConfig.Path, s.cfg.Log.FileConfig.FileName)); err != nil {
-					if os.IsNotExist(err) {
-						// File has been rotated, reopen it
-						newFile, err := os.Open(filepath.Join(s.cfg.Log.FileConfig.Path, s.cfg.Log.FileConfig.FileName))
-						if err != nil {
-							s.l.Error().
-								Err(err).
-								Msg("failed to open rotated log file")
-							continue
-						}
-						file.Close()
-						file = newFile
-						reader = bufio.NewReader(file)
-					}
-				}
+			}
+
+			s.handleWatcherEvent(event, reader)
+
+		case wErr, ok := <-watcher.Errors:
+			if !ok {
+				s.l.Info().Msg("watcher errors channel closed")
+				return
+			}
+			if wErr != nil {
+				s.l.Error().Err(wErr).Msg("file watcher error")
 			}
 		}
-	}()
+	}
+}
 
-	return nil
+// handleWatcherEvent processes a single file watcher event
+func (s *Service) handleWatcherEvent(event fsnotify.Event, reader *bufio.Reader) {
+	s.l.Trace().
+		Str("event", event.String()).
+		Str("operation", event.Op.String()).
+		Str("path", event.Name).
+		Msg("received file event")
+
+	if event.Op&fsnotify.Write == fsnotify.Write {
+		s.l.Trace().Msg("processing write event")
+		s.processNewLogLines(reader)
+	}
+}
+
+// processNewLogLines reads and processes new lines from the log file
+func (s *Service) processNewLogLines(reader *bufio.Reader) {
+	for {
+		line, err := reader.ReadBytes('\n')
+		if err != nil {
+			if eris.As(err, io.EOF) {
+				// EOF is expected, not an error condition
+				s.l.Trace().Msg("reached end of file")
+				break
+			}
+			break
+		}
+
+		s.l.Trace().
+			Str("line", string(line)).
+			Msg("read new log line")
+
+		entry, ok := s.parseLogLine(line)
+		if !ok {
+			continue
+		}
+
+		s.l.Trace().
+			Interface("entry", entry).
+			Msg("broadcasting log entry")
+
+		// Broadcast directly to all clients
+		s.BroadcastLogEntry(entry)
+	}
+}
+
+// parseLogLine parses a log line into a LogEntry
+func (s *Service) parseLogLine(line []byte) (*repositories.LogEntry, bool) {
+	entry := new(repositories.LogEntry)
+	if err := sonic.Unmarshal(line, entry); err != nil {
+		s.l.Warn().
+			Err(err).
+			Str("line", string(line)).
+			Interface("entry", entry).
+			Msg("failed to unmarshal log entry, skipping")
+		return nil, false
+	}
+	return entry, true
+}
+
+// checkFileRotation periodically checks if the log file has been rotated
+func (s *Service) checkFileRotation(ctx context.Context, file *os.File, reader *bufio.Reader) {
+	ticker := time.NewTicker(10 * time.Second)
+	defer ticker.Stop()
+
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case <-ticker.C:
+			s.handlePossibleRotation(file, reader)
+		}
+	}
+}
+
+// handlePossibleRotation checks and handles log file rotation
+func (s *Service) handlePossibleRotation(file *os.File, reader *bufio.Reader) {
+	logFilePath := filepath.Join(s.cfg.Log.FileConfig.Path, s.cfg.Log.FileConfig.FileName)
+
+	if _, err := os.Stat(logFilePath); err != nil {
+		if os.IsNotExist(err) {
+			// File has been rotated, reopen it
+			newFile, nErr := os.Open(logFilePath)
+			if nErr != nil {
+				s.l.Error().
+					Err(nErr).
+					Msg("failed to open rotated log file")
+				return
+			}
+
+			// Get the current file descriptor for cleanup
+			oldFile := *file
+
+			// Replace the pointer values with the new file and reader
+			*file = *newFile
+			*reader = *bufio.NewReader(file)
+
+			// Close the old file descriptor to prevent leaks
+			oldFile.Close()
+
+			s.l.Info().Msg("log file rotation detected, reopened new file")
+		}
+	}
 }
 
 func (s *Service) RegisterClient(lc *LogClient) error {

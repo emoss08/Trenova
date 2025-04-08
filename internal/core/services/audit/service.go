@@ -37,15 +37,15 @@ const (
 	DefaultAuditCategory = "system"
 )
 
-// AuditServiceState represents the state of the audit service
-type AuditServiceState string
+// ServiceState represents the state of the audit service
+type ServiceState string
 
 const (
-	ServiceStateInitializing AuditServiceState = "initializing"
-	ServiceStateRunning      AuditServiceState = "running"
-	ServiceStateDegraded     AuditServiceState = "degraded"
-	ServiceStateStopping     AuditServiceState = "stopping"
-	ServiceStateStopped      AuditServiceState = "stopped"
+	ServiceStateInitializing ServiceState = "initializing"
+	ServiceStateRunning      ServiceState = "running"
+	ServiceStateDegraded     ServiceState = "degraded"
+	ServiceStateStopping     ServiceState = "stopping"
+	ServiceStateStopped      ServiceState = "stopped"
 )
 
 type ServiceParams struct {
@@ -567,7 +567,7 @@ func (s *service) performFinalFlush(ctx context.Context) error {
 	// * Also flush any emergency logs
 	close(s.emergencyLog) // * Close channel to signal no more entries
 	for entry := range s.emergencyLog {
-		if err := s.repo.InsertAuditEntries(ctx, []*audit.Entry{entry}); err != nil {
+		if err = s.repo.InsertAuditEntries(ctx, []*audit.Entry{entry}); err != nil {
 			s.l.Error().Err(err).Msg("failed to insert critical audit entry during shutdown")
 		}
 	}
@@ -608,10 +608,8 @@ func (s *service) GetServiceStatus() string {
 
 // registerDefaultSensitiveFields registers default sensitive fields
 func (s *service) registerDefaultSensitiveFields() error {
-	var err error
-
 	// User-related sensitive data
-	err = s.sdm.RegisterSensitiveFields(permission.ResourceUser, []services.SensitiveField{
+	if err := s.sdm.RegisterSensitiveFields(permission.ResourceUser, []services.SensitiveField{
 		{Name: "password", Action: services.SensitiveFieldOmit},
 		{Name: "hashedPassword", Action: services.SensitiveFieldOmit},
 		{Name: "email", Action: services.SensitiveFieldMask},
@@ -619,29 +617,27 @@ func (s *service) registerDefaultSensitiveFields() error {
 		{Name: "ssn", Action: services.SensitiveFieldMask, Pattern: `^\d{3}-\d{2}-\d{4}$`},
 		{Name: "address", Action: services.SensitiveFieldMask},
 		{Name: "creditCardNumber", Action: services.SensitiveFieldMask, Pattern: `^(?:\d[ -]*?){13,16}$`},
-	})
+	}); err != nil {
+		s.l.Error().Err(err).Msg("failed to register user sensitive fields")
+		return err
+	}
 
 	// Organization data
-	err = s.sdm.RegisterSensitiveFields(permission.ResourceOrganization, []services.SensitiveField{
+	if err := s.sdm.RegisterSensitiveFields(permission.ResourceOrganization, []services.SensitiveField{
 		{Name: "logoUrl", Action: services.SensitiveFieldMask},
 		{Name: "taxId", Action: services.SensitiveFieldMask},
 		{Name: "dotNumber", Action: services.SensitiveFieldMask},
-	})
-
-	// Financial data
-	// err = s.sdm.RegisterSensitiveFields(permission.ResourceFinancial, []SensitiveField{
-	// 	{Name: "accountNumber", Action: SensitiveFieldMask},
-	// 	{Name: "routingNumber", Action: SensitiveFieldMask},
-	// 	{Name: "taxId", Action: SensitiveFieldMask},
-	// })
+	}); err != nil {
+		s.l.Error().Err(err).Msg("failed to register organization sensitive fields")
+		return err
+	}
 
 	// Driver sensitive data for FMCSA compliance
-	err = s.sdm.RegisterSensitiveFields(permission.ResourceWorker, []services.SensitiveField{
+	if err := s.sdm.RegisterSensitiveFields(permission.ResourceWorker, []services.SensitiveField{
 		{Name: "licenseNumber", Action: services.SensitiveFieldMask},
 		{Name: "dateOfBirth", Action: services.SensitiveFieldMask},
-	})
-	if err != nil {
-		s.l.Error().Err(err).Msg("failed to register default sensitive fields")
+	}); err != nil {
+		s.l.Error().Err(err).Msg("failed to register worker sensitive fields")
 		return err
 	}
 

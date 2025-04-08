@@ -49,6 +49,13 @@ type DeleteDocumentRequest struct {
 	BuID  pulid.ID
 }
 
+// GetDocumentByIDRequest contains options for getting a document by ID
+type GetDocumentByIDRequest struct {
+	ID    pulid.ID
+	OrgID pulid.ID
+	BuID  pulid.ID
+}
+
 // DocumentRepository defines the interface for document data access
 type DocumentRepository interface {
 	// CRUD operations
@@ -58,6 +65,7 @@ type DocumentRepository interface {
 
 	// List operations
 	GetDocumentsByResourceID(ctx context.Context, req *GetDocumentsByResourceIDRequest) (*ports.ListResult[*document.Document], error)
+	GetByID(ctx context.Context, req GetDocumentByIDRequest) (*document.Document, error)
 
 	// Aggregation operations
 	GetDocumentCountByResource(ctx context.Context, req *ports.TenantOptions) ([]*GetDocumentCountByResourceResponse, error)

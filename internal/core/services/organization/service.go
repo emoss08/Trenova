@@ -311,8 +311,11 @@ func (s *Service) SetLogo(ctx context.Context, orgID, buID, userID pulid.ID, log
 			"file_type":       []string{string(services.ImageFile)},
 		},
 	})
+	if err != nil {
+		return nil, err
+	}
 
-	err = s.as.LogAction(
+	logErr := s.as.LogAction(
 		&services.LogActionParams{
 			Resource:       permission.ResourceOrganization,
 			ResourceID:     org.ID.String(),
@@ -326,11 +329,11 @@ func (s *Service) SetLogo(ctx context.Context, orgID, buID, userID pulid.ID, log
 		audit.WithComment("Organization logo set"),
 		audit.WithDiff(original, org),
 	)
-	if err != nil {
-		s.l.Error().Err(err).Msg("failed to log organization logo set")
+	if logErr != nil {
+		s.l.Error().Err(logErr).Msg("failed to log organization logo set")
 	}
 
-	return updatedOrg, err
+	return updatedOrg, nil
 }
 
 func (s *Service) uploadLogo(ctx context.Context, org *organization.Organization, userID pulid.ID, params *services.SaveFileRequest) (*organization.Organization, error) {

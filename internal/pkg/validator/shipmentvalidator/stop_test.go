@@ -127,7 +127,7 @@ func TestStopValidator(t *testing.T) {
 			stop := newStop()
 			scenario.modifyStop(stop)
 
-			vCtx := validator.NewValidationContext(ctx, &validator.ValidationContext{
+			vCtx := validator.NewValidationContext(&validator.ValidationContext{
 				IsCreate: true,
 			})
 

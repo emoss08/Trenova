@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 export function useUnsavedChanges({
   isDirty,
@@ -8,17 +8,27 @@ export function useUnsavedChanges({
   onClose: () => void;
 }) {
   const [showWarning, setShowWarning] = useState(false);
+  const isDirtyRef = useRef(isDirty);
+
+  // Keep ref updated with latest isDirty value for use in event handlers
+  useEffect(() => {
+    isDirtyRef.current = isDirty;
+  }, [isDirty]);
 
   useEffect(() => {
     const handleBeforeUnload = (event: BeforeUnloadEvent) => {
-      if (isDirty) {
+      if (isDirtyRef.current) {
+        // For modern browsers
         event.preventDefault();
+        event.returnValue = "";
+        // For older browsers
+        return "";
       }
     };
 
     window.addEventListener("beforeunload", handleBeforeUnload);
     return () => window.removeEventListener("beforeunload", handleBeforeUnload);
-  }, [isDirty]);
+  }, []);
 
   const handleClose = useCallback(() => {
     if (isDirty) {

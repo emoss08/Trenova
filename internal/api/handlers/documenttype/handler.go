@@ -77,7 +77,7 @@ func (h *Handler) selectOptions(c *fiber.Ctx) error {
 		Query:  c.Query("search"),
 	}
 
-	if err := c.QueryParser(opts); err != nil {
+	if err = c.QueryParser(opts); err != nil {
 		return h.eh.HandleError(c, err)
 	}
 

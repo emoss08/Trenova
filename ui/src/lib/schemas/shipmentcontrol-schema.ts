@@ -27,7 +27,7 @@ export const shipmentControlSchema = object({
     otherwise: (schema) => schema.nullable().notRequired(),
   }),
   // Compliance Controls
-  enforceHOSCompliance: boolean().required(
+  enforceHosCompliance: boolean().required(
     "Enforce HOS compliance is required",
   ),
   enforceDriverQualificationCompliance: boolean().required(
@@ -71,7 +71,7 @@ export const shipmentControlSchema = object({
     "Track customer rejections is required",
   ),
   // Misc....
-  checkForDuplicateBOLs: boolean().required(
+  checkForDuplicateBols: boolean().required(
     "Check for duplicate BOLs is required",
   ),
   allowMoveRemovals: boolean().required("Allow move removals is required"),
