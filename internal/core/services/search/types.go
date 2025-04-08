@@ -41,7 +41,7 @@ type SearchResponse struct {
 	Total       int                     `json:"total"`            // Total number of matching documents
 	ProcessedIn time.Duration           `json:"processedIn"`      // Time taken to process the search
 	Query       string                  `json:"query"`            // The original query
-	Facets      map[string]interface{}  `json:"facets,omitempty"` // Facet results if requested
+	Facets      map[string]any          `json:"facets,omitempty"` // Facet results if requested
 }
 
 // batchOpt represents a batch operation for document indexing.

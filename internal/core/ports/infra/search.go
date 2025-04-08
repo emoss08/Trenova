@@ -126,7 +126,7 @@ type SearchClient interface {
 	// Monitoring
 
 	// GetStats returns statistics about the search index
-	GetStats() (map[string]interface{}, error)
+	GetStats() (map[string]any, error)
 
 	// Advanced search operations
 

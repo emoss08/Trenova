@@ -198,7 +198,7 @@ func (c *Client) IncrBy(ctx context.Context, key string, value int64) (int64, er
 }
 
 // HSet sets a field in a Redis hash to a specified value.
-func (c *Client) HSet(ctx context.Context, key, field string, value interface{}) error {
+func (c *Client) HSet(ctx context.Context, key, field string, value any) error {
 	err := c.Client.HSet(ctx, key, field, value).Err()
 	if err != nil {
 		return eris.Wrapf(err, "failed to set hash field: %s.%s", key, field)
@@ -227,7 +227,7 @@ func (c *Client) HGet(ctx context.Context, key, field string) (string, error) {
 }
 
 // SAdd adds one or more members to a Redis set.
-func (c *Client) SAdd(ctx context.Context, key string, members ...interface{}) error {
+func (c *Client) SAdd(ctx context.Context, key string, members ...any) error {
 	err := c.Client.SAdd(ctx, key, members...).Err()
 	if err != nil {
 		return eris.Wrapf(err, "failed to add members to set: %s", key)
@@ -242,7 +242,7 @@ func (c *Client) SAdd(ctx context.Context, key string, members ...interface{}) e
 }
 
 // SRem removes one or more members from a Redis set.
-func (c *Client) SRem(ctx context.Context, key string, members ...interface{}) error {
+func (c *Client) SRem(ctx context.Context, key string, members ...any) error {
 	err := c.Client.SRem(ctx, key, members...).Err()
 	if err != nil {
 		return eris.Wrapf(err, "failed to remove members from set: %s", key)

@@ -200,7 +200,7 @@ func (s *Service) Delete(ctx context.Context, id pulid.ID, opts *repositories.Ge
 			BusinessUnitID: opts.BuID,
 			OrganizationID: opts.OrgID,
 			ResourceID:     id,
-			CustomData: map[string]interface{}{
+			CustomData: map[string]any{
 				"userId": existing.UserID,
 			},
 		})
@@ -247,7 +247,7 @@ func (s *Service) ShareConfiguration(ctx context.Context, share *tableconfigurat
 			BusinessUnitID: existing.BusinessUnitID,
 			OrganizationID: existing.OrganizationID,
 			ResourceID:     existing.ID,
-			CustomData: map[string]interface{}{
+			CustomData: map[string]any{
 				"userId": existing.UserID,
 			},
 		})

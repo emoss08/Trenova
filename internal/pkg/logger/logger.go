@@ -112,7 +112,7 @@ func configureConsoleWriter(env string) zerolog.ConsoleWriter {
 		NoColor:    env != "development",
 	}
 
-	output.FormatLevel = func(i interface{}) string {
+	output.FormatLevel = func(i any) string {
 		var l string
 		if ll, ok := i.(string); ok {
 			level := strings.ToUpper(ll)
@@ -138,7 +138,7 @@ func configureConsoleWriter(env string) zerolog.ConsoleWriter {
 		return fmt.Sprintf("| %-6s |", l)
 	}
 
-	output.FormatMessage = func(i interface{}) string {
+	output.FormatMessage = func(i any) string {
 		return fmt.Sprintf("message=%s", i)
 	}
 
