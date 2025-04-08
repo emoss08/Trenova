@@ -4,7 +4,6 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
-	"reflect"
 
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/internal/core/ports"
@@ -714,25 +713,25 @@ func (sr *shipmentRepository) performDuplication(
 	additionalCharges := sr.prepareAdditionalCharges(originalShipment, newShipment)
 
 	// Insert moves
-	if err = sr.insertEntities(ctx, tx, log, "moves", moves); err != nil {
+	if err = sr.insertEntities(ctx, tx, log, "moves", &moves); err != nil {
 		return nil, err
 	}
 
 	// Insert stops
-	if err = sr.insertEntities(ctx, tx, log, "stops", stops); err != nil {
+	if err = sr.insertEntities(ctx, tx, log, "stops", &stops); err != nil {
 		return nil, err
 	}
 
 	// Insert commodities if requested
 	if req.IncludeCommodities && len(commodities) > 0 {
-		if err = sr.insertEntities(ctx, tx, log, "commodities", commodities); err != nil {
+		if err = sr.insertEntities(ctx, tx, log, "commodities", &commodities); err != nil {
 			return nil, err
 		}
 	}
 
 	// Insert additional charges if requested
 	if req.IncludeAdditionalCharges && len(additionalCharges) > 0 {
-		if err = sr.insertEntities(ctx, tx, log, "additional charges", additionalCharges); err != nil {
+		if err = sr.insertEntities(ctx, tx, log, "additional charges", &additionalCharges); err != nil {
 			return nil, err
 		}
 	}
@@ -746,12 +745,8 @@ func (sr *shipmentRepository) insertEntities(
 	tx bun.Tx,
 	log zerolog.Logger,
 	entityType string,
-	entities interface{},
+	entities any,
 ) error {
-	if reflect.ValueOf(entities).Len() == 0 {
-		return nil
-	}
-
 	log.Debug().Interface(entityType, entities).Msgf("bulk inserting %s", entityType)
 	_, err := tx.NewInsert().Model(entities).Exec(ctx)
 	if err != nil {
