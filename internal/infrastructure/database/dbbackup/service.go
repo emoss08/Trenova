@@ -108,7 +108,7 @@ func NewBackupService(p BackupServiceParams) (services.BackupService, error) {
 // validateConnectionInfo validates database connection parameters to prevent command injection
 func validateConnectionInfo(info *db.ConnectionInfo) error {
 	// Validate host (allow alphanumeric, dots, hyphens, and colons for IPv6)
-	hostRegex := regexp.MustCompile(`^[a-zA-Z0-9.-:]+$`)
+	hostRegex := regexp.MustCompile(`^[a-zA-Z0-9.:\-]+$`)
 	if !hostRegex.MatchString(info.Host) {
 		return eris.New("invalid database host")
 	}
@@ -119,13 +119,13 @@ func validateConnectionInfo(info *db.ConnectionInfo) error {
 	}
 
 	// Validate username (allow alphanumeric and some special chars)
-	userRegex := regexp.MustCompile(`^[a-zA-Z0-9_.-]+$`)
+	userRegex := regexp.MustCompile(`^[a-zA-Z0-9_.\-]+$`)
 	if !userRegex.MatchString(info.Username) {
 		return eris.New("invalid database username")
 	}
 
 	// Validate database name (allow alphanumeric and some special chars)
-	dbRegex := regexp.MustCompile(`^[a-zA-Z0-9_.-]+$`)
+	dbRegex := regexp.MustCompile(`^[a-zA-Z0-9_.\-]+$`)
 	if !dbRegex.MatchString(info.Database) {
 		return eris.New("invalid database name")
 	}
