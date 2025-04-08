@@ -538,13 +538,13 @@ function DocumentPreview({ document }: { document: Document }) {
   if (document.fileType.includes("pdf")) {
     return (
       <Worker workerUrl="https://unpkg.com/pdfjs-dist@3.11.174/build/pdf.worker.min.js">
-        <Viewer fileUrl={document.presignedURL || ""} />
+        <Viewer fileUrl={document.presignedUrl || ""} />
       </Worker>
     );
   }
 
   if (document.fileType.includes("image")) {
-    return <img src={document.presignedURL || ""} alt={document.fileName} />;
+    return <img src={document.presignedUrl || ""} alt={document.fileName} />;
   }
 
   return <div>Document Type Not Supported</div>;

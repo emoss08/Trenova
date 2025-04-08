@@ -1,10 +1,7 @@
 import { DataTableColumnHeader } from "@/components/data-table/_components/data-table-column-header";
 import { FileTypeCard } from "@/components/file-uploader/file-type-card";
 import { UserAvatar } from "@/components/nav-user";
-import {
-  DocumentStatusBadge,
-  DocumentTypeBadge,
-} from "@/components/status-badge";
+import { DocumentStatusBadge } from "@/components/status-badge";
 import { Separator } from "@/components/ui/separator";
 import { generateDateOnlyString, toDate } from "@/lib/date";
 import { formatFileSize } from "@/lib/utils";
@@ -65,16 +62,6 @@ export function getColumns({
             onClick={() => handleDocumentClick(row.original)}
           />
         );
-      },
-    },
-    {
-      accessorKey: "documentType",
-      header: ({ column }) => (
-        <DataTableColumnHeader column={column} title="Document Type" />
-      ),
-      cell: ({ row }) => {
-        const { documentType } = row.original;
-        return <DocumentTypeBadge documentType={documentType} />;
       },
     },
     {

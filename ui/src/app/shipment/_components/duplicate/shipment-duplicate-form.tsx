@@ -26,6 +26,15 @@ export function ShipmentDuplicateForm() {
           description="Include all commodities from the original shipment in the new shipment. (Pieces, Weight, etc.)"
         />
       </FormControl>
+      <FormControl>
+        <SwitchField
+          name="includeAdditionalCharges"
+          control={control}
+          label="Include Additional Charges"
+          outlined
+          description="Include all additional charges from the original shipment in the new shipment."
+        />
+      </FormControl>
     </FormGroup>
   );
 }

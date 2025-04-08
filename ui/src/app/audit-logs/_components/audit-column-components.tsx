@@ -223,6 +223,10 @@ export function AuditEntryResourceBadge({
       variant: "indigo",
       text: "Location Category",
     },
+    [Resource.AccessorialCharge]: {
+      variant: "indigo",
+      text: "Accessorial Charge",
+    },
     [Resource.Location]: {
       variant: "indigo",
       text: "Location",
@@ -363,11 +367,6 @@ export function AuditEntryResourceBadge({
       description: undefined,
     },
     [Resource.RevenueCode]: {
-      variant: undefined,
-      text: "",
-      description: undefined,
-    },
-    [Resource.AccessorialCharge]: {
       variant: undefined,
       text: "",
       description: undefined,

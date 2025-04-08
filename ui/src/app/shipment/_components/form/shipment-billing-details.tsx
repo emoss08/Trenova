@@ -205,7 +205,7 @@ export default function ShipmentBillingDetails() {
           // Update the otherChargeAmount field with the sum of additional charges
           setValue("otherChargeAmount", additionalChargesTotal, {
             shouldValidate: true,
-            shouldDirty: true,
+            shouldDirty: false,
           });
         } catch (error) {
           console.error("Error updating otherChargeAmount:", error);
@@ -257,13 +257,14 @@ export default function ShipmentBillingDetails() {
       if (shipment.additionalCharges && shipment.additionalCharges.length > 0) {
         setValue("otherChargeAmount", additionalChargesTotal, {
           shouldValidate: true,
-          shouldDirty: true,
+          shouldDirty: false,
         });
       }
 
       // Calculate and set the total charge amount
       setValue("totalChargeAmount", calculateTotalChargeAmount(shipment), {
         shouldValidate: true,
+        shouldDirty: false,
       });
     } catch (error) {
       console.error("Error initializing billing calculations:", error);
@@ -320,6 +321,7 @@ export default function ShipmentBillingDetails() {
         </FormControl>
         <FormControl>
           <InputField
+            readOnly
             control={control}
             rules={{ required: true }}
             name="otherChargeAmount"

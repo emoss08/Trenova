@@ -58,7 +58,7 @@ export default function ShipmentGeneralInformation() {
   // Use watch subscription to observe BOL changes
   useEffect(() => {
     // Only set up subscription if duplicate BOL checking is enabled
-    if (!shipmentControl?.checkForDuplicateBOLs) {
+    if (!shipmentControl?.checkForDuplicateBols) {
       return;
     }
 
@@ -76,7 +76,7 @@ export default function ShipmentGeneralInformation() {
 
     // Cleanup subscription when component unmounts
     return () => subscription.unsubscribe();
-  }, [watch, isDirty, shipmentControl?.checkForDuplicateBOLs]);
+  }, [watch, isDirty, shipmentControl?.checkForDuplicateBols]);
 
   return (
     <div className="flex flex-col gap-2">

@@ -662,10 +662,10 @@ func (sr *shipmentRepository) Duplicate(ctx context.Context, req *repositories.D
 		return nil, err
 	}
 
-	// Create a new shipment
+	// * Create a new shipment
 	newShipment := new(shipment.Shipment)
 
-	// Run in a transaction
+	// * Run in a transaction
 	err = dba.RunInTx(ctx, nil, func(c context.Context, tx bun.Tx) error {
 		var dupErr error
 		newShipment, dupErr = sr.performDuplication(c, tx, originalShipment, req)
@@ -691,7 +691,7 @@ func (sr *shipmentRepository) performDuplication(
 		Str("originalShipmentID", originalShipment.GetID()).
 		Logger()
 
-	// Duplicate the original shipment fields
+	// * Duplicate the original shipment fields
 	newShipment, err := sr.duplicateShipmentFields(ctx, originalShipment)
 	if err != nil {
 		log.Error().
@@ -701,35 +701,35 @@ func (sr *shipmentRepository) performDuplication(
 		return nil, err
 	}
 
-	// Insert the new shipment
+	// * Insert the new shipment
 	if _, err = tx.NewInsert().Model(newShipment).Exec(ctx); err != nil {
 		log.Error().Err(err).Msg("failed to insert new shipment")
 		return nil, err
 	}
 
-	// Prepare related entities
+	// * Prepare related entities
 	moves, stops := sr.prepareMovesAndStops(originalShipment, newShipment, req.OverrideDates)
 	commodities := sr.prepareCommodities(originalShipment, newShipment)
 	additionalCharges := sr.prepareAdditionalCharges(originalShipment, newShipment)
 
-	// Insert moves
+	// * Insert moves
 	if err = sr.insertEntities(ctx, tx, log, "moves", &moves); err != nil {
 		return nil, err
 	}
 
-	// Insert stops
+	// * Insert stops
 	if err = sr.insertEntities(ctx, tx, log, "stops", &stops); err != nil {
 		return nil, err
 	}
 
-	// Insert commodities if requested
+	// * Insert commodities if requested
 	if req.IncludeCommodities && len(commodities) > 0 {
 		if err = sr.insertEntities(ctx, tx, log, "commodities", &commodities); err != nil {
 			return nil, err
 		}
 	}
 
-	// Insert additional charges if requested
+	// * Insert additional charges if requested
 	if req.IncludeAdditionalCharges && len(additionalCharges) > 0 {
 		if err = sr.insertEntities(ctx, tx, log, "additional charges", &additionalCharges); err != nil {
 			return nil, err
@@ -753,6 +753,7 @@ func (sr *shipmentRepository) insertEntities(
 		log.Error().Err(err).Msgf("failed to bulk insert %s", entityType)
 		return err
 	}
+
 	return nil
 }
 
@@ -947,7 +948,7 @@ func (sr *shipmentRepository) CheckForDuplicateBOLs(ctx context.Context, current
 		Where("sp.organization_id = ?", orgID).
 		Where("sp.business_unit_id = ?", buID).
 		Where("sp.bol = ?", currentBOL).
-		Where("sp.status != ?", shipment.StatusCanceled) // Ignore canceled shipments
+		Where("sp.status != ?", shipment.StatusCanceled)
 
 	// * Exclude the specified shipment ID if provided
 	if excludeID != nil {

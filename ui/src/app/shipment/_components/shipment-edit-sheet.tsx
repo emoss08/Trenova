@@ -45,19 +45,22 @@ export function ShipmentEditSheet({
   const sheetRef = useRef<HTMLDivElement>(null);
   const dimensions = useResponsiveDimensions(sheetRef, open);
   const { isPopout, closePopout } = usePopoutWindow();
+  const initialLoadRef = useRef(false);
 
-  const shipmentDetails = useShipmentDetails({
+  const {
+    data: shipmentDetails,
+    isLoading: isDetailsLoading,
+    isError: isDetailsError,
+  } = useShipmentDetails({
     shipmentId: currentRecord?.id ?? "",
-    enabled: !!currentRecord?.id,
+    enabled: !!currentRecord?.id && open, // * Only fetch data if the sheet is open
   });
-
-  const isDetailsLoading = shipmentDetails.isLoading;
 
   const form = useFormWithSave({
     resourceName: "Shipment",
     formOptions: {
       resolver: yupResolver(shipmentSchema),
-      defaultValues: {},
+      defaultValues: shipmentDetails || {}, // * use data if available
       mode: "onChange",
     },
     mutationFn: async (values: ShipmentSchema) => {
@@ -99,27 +102,35 @@ export function ShipmentEditSheet({
     onOpenChange(false);
   }, [onOpenChange]);
 
+  useEffect(() => {
+    if (shipmentDetails && !isDetailsLoading && !initialLoadRef.current) {
+      reset(shipmentDetails, {
+        keepDirty: false, // Don't keep dirty state
+        keepValues: false, // Don't keep current values
+      });
+      initialLoadRef.current = true;
+    }
+  }, [shipmentDetails, isDetailsLoading, reset]);
+
+  const effectiveIsDirty = initialLoadRef.current && isDirty;
+
+  console.log("effectiveIsDirty", effectiveIsDirty);
+
   const {
     showWarning,
     handleClose: onClose,
     handleConfirmClose,
     handleCancelClose,
   } = useUnsavedChanges({
-    isDirty,
+    isDirty: effectiveIsDirty,
     onClose: handleClose,
   });
-
-  useEffect(() => {
-    if (shipmentDetails.data && !isDetailsLoading) {
-      reset(shipmentDetails.data);
-    }
-  }, [shipmentDetails.data, isDetailsLoading, reset]);
 
   // Reset the form when the mutation is successful
   // This is recommended by react-hook-form - https://react-hook-form.com/docs/useform/reset
   useEffect(() => {
     reset();
-  }, [isSubmitSuccessful, reset, onOpenChange]);
+  }, [isSubmitSuccessful, reset]);
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
@@ -150,7 +161,7 @@ export function ShipmentEditSheet({
             <SheetHeader>
               <SheetTitle>Shipment Details</SheetTitle>
             </SheetHeader>
-            <SheetDescription>Test</SheetDescription>
+            <SheetDescription>{shipmentDetails?.bol}</SheetDescription>
           </VisuallyHidden>
 
           <FormProvider {...form}>
@@ -158,14 +169,14 @@ export function ShipmentEditSheet({
               <SheetBody className="p-0">
                 <ShipmentForm
                   dimensions={dimensions}
-                  selectedShipment={shipmentDetails.data}
+                  selectedShipment={shipmentDetails}
                   isLoading={isDetailsLoading}
                   onBack={onClose}
-                  isCreate={false}
+                  isError={isDetailsError}
                 />
               </SheetBody>
               <FormSaveDock
-                isDirty={isDirty}
+                isDirty={effectiveIsDirty}
                 isSubmitting={isSubmitting}
                 position="right"
               />
