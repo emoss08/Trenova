@@ -140,73 +140,90 @@ func (sdm *SensitiveDataManager) sanitizeJSONMap(data map[string]any, fields []s
 	for _, field := range fields {
 		// Check for direct field match
 		if value, exists := data[field.Name]; exists {
-			switch field.Action {
-			case services.SensitiveFieldOmit:
-				delete(data, field.Name)
-			case services.SensitiveFieldMask:
-				data[field.Name] = sdm.maskValue(value)
-			case services.SensitiveFieldHash:
-				hashed, err := sdm.hashValue(value)
-				if err != nil {
-					return eris.Wrapf(err, "failed to hash field %s", field.Name)
-				}
-				data[field.Name] = hashed
-			case services.SensitiveFieldEncrypt:
-				encrypted, err := sdm.encryptValue(value)
-				if err != nil {
-					return eris.Wrapf(err, "failed to encrypt field %s", field.Name)
-				}
-				data[field.Name] = encrypted
+			if err := sdm.applySanitizationAction(data, field.Name, value, field.Action); err != nil {
+				return err
 			}
 		}
 
 		// Handle pattern matching if specified
-		if field.Pattern != "" {
-			sdm.mu.RLock()
-			pattern, exists := sdm.regexCache[field.Pattern]
-			sdm.mu.RUnlock()
-
-			if exists {
-				for key, value := range data {
-					if strVal, ok := value.(string); ok && pattern.MatchString(strVal) {
-						switch field.Action {
-						case services.SensitiveFieldOmit:
-							delete(data, key)
-						case services.SensitiveFieldMask:
-							data[key] = sdm.maskValue(value)
-						case services.SensitiveFieldHash:
-							hashed, err := sdm.hashValue(value)
-							if err != nil {
-								return eris.Wrapf(err, "failed to hash field %s", key)
-							}
-							data[key] = hashed
-						case services.SensitiveFieldEncrypt:
-							encrypted, err := sdm.encryptValue(value)
-							if err != nil {
-								return eris.Wrapf(err, "failed to encrypt field %s", key)
-							}
-							data[key] = encrypted
-						}
-					}
-				}
-			}
+		if err := sdm.handlePatternMatching(data, field); err != nil {
+			return err
 		}
 
 		// Handle nested objects and arrays
-		for _, val := range data {
-			switch v := val.(type) {
-			case map[string]any:
-				if err := sdm.sanitizeJSONMap(v, fields); err != nil {
-					return err
-				}
-			case []any:
-				if err := sdm.sanitizeJSONArray(v, fields); err != nil {
-					return err
-				}
-			}
+		if err := sdm.handleNestedStructures(data, fields); err != nil {
+			return err
 		}
 	}
 
+	return nil
+}
+
+// handlePatternMatching handles pattern matching for sensitive fields
+func (sdm *SensitiveDataManager) handlePatternMatching(data map[string]any, field services.SensitiveField) error {
+	if field.Pattern == "" {
+		return nil
+	}
+
+	sdm.mu.RLock()
+	pattern, exists := sdm.regexCache[field.Pattern]
+	sdm.mu.RUnlock()
+
+	if !exists {
+		return nil
+	}
+
+	for key, value := range data {
+		strVal, ok := value.(string)
+		if !ok || !pattern.MatchString(strVal) {
+			continue
+		}
+
+		if err := sdm.applySanitizationAction(data, key, value, field.Action); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+// handleNestedStructures recursively processes nested maps and arrays
+func (sdm *SensitiveDataManager) handleNestedStructures(data map[string]any, fields []services.SensitiveField) error {
+	for _, val := range data {
+		switch v := val.(type) {
+		case map[string]any:
+			if err := sdm.sanitizeJSONMap(v, fields); err != nil {
+				return err
+			}
+		case []any:
+			if err := sdm.sanitizeJSONArray(v, fields); err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
+// applySanitizationAction applies the specified sanitization action to a field
+func (sdm *SensitiveDataManager) applySanitizationAction(data map[string]any, key string, value any, action services.SensitiveFieldAction) error {
+	switch action {
+	case services.SensitiveFieldOmit:
+		delete(data, key)
+	case services.SensitiveFieldMask:
+		data[key] = sdm.maskValue(value)
+	case services.SensitiveFieldHash:
+		hashed, err := sdm.hashValue(value)
+		if err != nil {
+			return eris.Wrapf(err, "failed to hash field %s", key)
+		}
+		data[key] = hashed
+	case services.SensitiveFieldEncrypt:
+		encrypted, err := sdm.encryptValue(value)
+		if err != nil {
+			return eris.Wrapf(err, "failed to encrypt field %s", key)
+		}
+		data[key] = encrypted
+	}
 	return nil
 }
 
@@ -283,7 +300,7 @@ func (sdm *SensitiveDataManager) encryptValue(value any) (string, error) {
 
 	// Create a nonce
 	nonce := make([]byte, gcm.NonceSize())
-	if _, err := io.ReadFull(rand.Reader, nonce); err != nil {
+	if _, err = io.ReadFull(rand.Reader, nonce); err != nil {
 		return "", eris.Wrap(err, "failed to create nonce")
 	}
 

@@ -145,7 +145,7 @@ func (or *organizationRepository) GetByID(ctx context.Context, opts repositories
 	}
 
 	// * Cache the organization
-	if err := or.cache.Set(ctx, org); err != nil {
+	if err = or.cache.Set(ctx, org); err != nil {
 		log.Error().Err(err).Msgf("failed to cache organization by ID %s", opts.OrgID)
 		// ! Do not return the error because it will not affect the user experience
 	}
@@ -237,7 +237,7 @@ func (or *organizationRepository) Update(ctx context.Context, org *organization.
 	}
 
 	// * Invalidate the orgnaization in the cache
-	if err := or.cache.Invalidate(ctx, org.ID); err != nil {
+	if err = or.cache.Invalidate(ctx, org.ID); err != nil {
 		log.Error().Err(err).Msgf("failed to invalidate organization %s in cache", org.ID)
 		// ! Do not return the error because it will not affect the user experience
 	}
@@ -293,7 +293,7 @@ func (or *organizationRepository) SetLogo(ctx context.Context, org *organization
 	}
 
 	// * Invalidate the orgnaization in the cache
-	if err := or.cache.Invalidate(ctx, org.ID); err != nil {
+	if err = or.cache.Invalidate(ctx, org.ID); err != nil {
 		log.Error().Err(err).Msgf("failed to invalidate organization %s in cache", org.ID)
 		// ! Do not return the error because it will not affect the user experience
 	}
@@ -328,7 +328,7 @@ func (or *organizationRepository) ClearLogo(ctx context.Context, org *organizati
 	}
 
 	// * Invalidate the orgnaization in the cache
-	if err := or.cache.Invalidate(ctx, org.ID); err != nil {
+	if err = or.cache.Invalidate(ctx, org.ID); err != nil {
 		log.Error().Err(err).Msgf("failed to invalidate organization %s in cache", org.ID)
 		// ! Do not return the error because it will not affect the user experience
 	}
@@ -376,7 +376,7 @@ func (or *organizationRepository) GetUserOrganizations(ctx context.Context, opts
 	}
 
 	// * If cache miss, set the organizations in the cache for later
-	if err := or.cache.SetUserOrganizations(ctx, opts.TenantOpts.UserID, dbOrgs); err != nil {
+	if err = or.cache.SetUserOrganizations(ctx, opts.TenantOpts.UserID, dbOrgs); err != nil {
 		or.l.Error().Err(err).Msgf("failed to set user organizations %s in cache", opts.TenantOpts.UserID)
 		// ! Do not return the error because it will not affect the user experience
 	}
@@ -399,7 +399,7 @@ func (or *organizationRepository) GetOrganizationBucketName(ctx context.Context,
 		Column("org.bucket_name").
 		Where("org.id = ?", orgID)
 
-	if err := q.Scan(ctx, &bucketName); err != nil {
+	if err = q.Scan(ctx, &bucketName); err != nil {
 		return "", err
 	}
 

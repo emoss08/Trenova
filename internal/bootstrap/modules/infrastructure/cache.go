@@ -15,8 +15,8 @@ var CacheModule = fx.Module("cache",
 			OnStart: func(ctx context.Context) error {
 				return scriptLoader.LoadScripts(ctx)
 			},
-			OnStop: func(ctx context.Context) error {
-				return nil
+			OnStop: func(context.Context) error {
+				return scriptLoader.UnloadScripts()
 			},
 		})
 

@@ -29,9 +29,9 @@ type ConnectionParams struct {
 }
 
 var (
-	DBConnStringEmpty = eris.New("database connection string is empty")
-	DBConfigNil       = eris.New("database config is nil")
-	AppConfigNil      = eris.New("application config is nil")
+	ErrDBConnStringEmpty = eris.New("database connection string is empty")
+	ErrDBConfigNil       = eris.New("database config is nil")
+	ErrAppConfigNil      = eris.New("application config is nil")
 )
 
 type connection struct {
@@ -88,17 +88,17 @@ func (c *connection) DB(ctx context.Context) (*bun.DB, error) {
 
 	dsn := c.cfg.GetDSN()
 	if dsn == "" {
-		return nil, DBConnStringEmpty
+		return nil, ErrDBConnStringEmpty
 	}
 
 	appCfg := c.cfg.App()
 	if appCfg == nil {
-		return nil, AppConfigNil
+		return nil, ErrAppConfigNil
 	}
 
 	dbCfg := c.cfg.Database()
 	if dbCfg == nil {
-		return nil, DBConfigNil
+		return nil, ErrDBConfigNil
 	}
 
 	// Parse the database connection string
@@ -146,7 +146,7 @@ func (c *connection) DB(ctx context.Context) (*bun.DB, error) {
 	return c.db, nil
 }
 
-func (c *connection) ConnectionInfo(ctx context.Context) (*db.ConnectionInfo, error) {
+func (c *connection) ConnectionInfo() (*db.ConnectionInfo, error) {
 	c.mu.RLock()
 	defer c.mu.RUnlock()
 

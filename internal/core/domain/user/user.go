@@ -88,7 +88,7 @@ func (u *User) Validate(multiErr *errors.MultiError) *errors.MultiError {
 	if err != nil {
 		var validationErrs validation.Errors
 		if eris.As(err, &validationErrs) {
-			errors.FromValidationErrors(validationErrs, multiErr, "")
+			errors.FromOzzoErrors(validationErrs, multiErr)
 		}
 	}
 
@@ -171,6 +171,7 @@ func (u *User) BeforeAppendModel(_ context.Context, q bun.Query) error {
 	return nil
 }
 
+//nolint:revive // valid struct name
 type UserRole struct {
 	bun.BaseModel  `bun:"table:user_roles,alias:ur" json:"-"`
 	BusinessUnitID pulid.ID         `json:"businessUnitId" bun:"business_unit_id,pk,type:VARCHAR(100),notnull"`

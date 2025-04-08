@@ -267,7 +267,7 @@ func (cr *customerRepository) getBillingProfile(ctx context.Context, cusID pulid
 		query = query.Column(fields...)
 	}
 
-	if err := query.Scan(ctx); err != nil {
+	if err = query.Scan(ctx); err != nil {
 		log.Error().Err(err).Msg("failed to get billing profile")
 		return nil, err
 	}

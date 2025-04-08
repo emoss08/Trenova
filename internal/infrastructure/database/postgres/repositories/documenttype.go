@@ -185,7 +185,7 @@ func (dt *documentTypeRepository) GetByIDs(ctx context.Context, docIDs []string)
 	query := dba.NewSelect().Model(&entities).
 		Where("dt.id IN (?)", bun.In(docIDs))
 
-	if err := query.Scan(ctx); err != nil {
+	if err = query.Scan(ctx); err != nil {
 		log.Error().Err(err).Msg("failed to get document types")
 		return nil, err
 	}

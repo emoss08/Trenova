@@ -15,6 +15,7 @@ import (
 
 var _ bun.BeforeAppendModelHook = (*ShipmentMove)(nil)
 
+//nolint:revive // valid struct name
 type ShipmentMove struct {
 	bun.BaseModel `bun:"table:shipment_moves,alias:sm" json:"-"`
 

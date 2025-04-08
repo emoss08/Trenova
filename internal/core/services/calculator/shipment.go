@@ -1,8 +1,6 @@
 package calculator
 
 import (
-	"context"
-
 	"github.com/emoss08/trenova/internal/core/domain/accessorialcharge"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/internal/pkg/logger"
@@ -17,12 +15,12 @@ type ShipmentCalculatorParams struct {
 	fx.In
 
 	Logger              *logger.Logger
-	StateMachineManager *statemachine.StateMachineManager
+	StateMachineManager *statemachine.Manager
 }
 
 type ShipmentCalculator struct {
 	l         *zerolog.Logger
-	smManager *statemachine.StateMachineManager
+	smManager *statemachine.Manager
 }
 
 func NewShipmentCalculator(p ShipmentCalculatorParams) *ShipmentCalculator {
@@ -134,7 +132,7 @@ func (sc *ShipmentCalculator) calculateBaseCharge(shp *shipment.Shipment) decima
 
 // calculatePerStopRate calculates the charge based on number of stops
 func (sc *ShipmentCalculator) calculatePerStopRate(shp *shipment.Shipment) decimal.Decimal {
-	if shp.Moves == nil || len(shp.Moves) == 0 {
+	if len(shp.Moves) == 0 {
 		return decimal.Zero
 	}
 
@@ -257,13 +255,13 @@ func (sc *ShipmentCalculator) CalculateCommodityTotals(shp *shipment.Shipment) {
 	shp.Weight = &totalWeight
 }
 
-func (sc *ShipmentCalculator) CalculateStatus(ctx context.Context, shp *shipment.Shipment) error {
+func (sc *ShipmentCalculator) CalculateStatus(shp *shipment.Shipment) error {
 	sc.l.Debug().
 		Str("shipmentID", shp.ID.String()).
 		Msg("calculating shipment status")
 
-	// use the state machine manager to calculate the status
-	if err := sc.smManager.CalculateStatuses(ctx, shp); err != nil {
+	// * use the state machine manager to calculate the status
+	if err := sc.smManager.CalculateStatuses(shp); err != nil {
 		sc.l.Error().
 			Str("shipmentID", shp.ID.String()).
 			Err(err).

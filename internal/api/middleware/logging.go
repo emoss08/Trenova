@@ -2,13 +2,13 @@ package middleware
 
 import (
 	"crypto/rand"
-	"encoding/json"
 	"fmt"
 	"strings"
 	"sync"
 	"time"
 	"unicode/utf8"
 
+	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/pkg/logger"
 	"github.com/gofiber/fiber/v2"
 	"github.com/oklog/ulid/v2"
@@ -63,13 +63,10 @@ func DefaultLogConfig() LogConfig {
 	}
 }
 
-// entryCacheSize defines the size of the sync.Pool for log entries
-const entryCacheSize = 1000
-
 // entryPool is a pool of log entry maps to reduce allocations
 var entryPool = sync.Pool{
-	New: func() interface{} {
-		return make(map[string]interface{}, 16) // Pre-allocate with reasonable size
+	New: func() any {
+		return make(map[string]any, 16) // Pre-allocate with reasonable size
 	},
 }
 
@@ -105,54 +102,72 @@ func safelyTruncateJSON(s string, maxLen int) string {
 	}
 
 	// Try to parse as JSON to intelligently truncate
-	var parsed interface{}
-	if err := json.Unmarshal([]byte(s), &parsed); err == nil {
-		// For JSON objects or arrays, create a "truncated" version
-		truncated := map[string]interface{}{
-			"truncated": true,
-			"message":   "Content exceeded max length and was truncated",
-		}
-
-		// Include the content type if we can determine it
-		switch v := parsed.(type) {
-		case map[string]interface{}:
-			truncated["type"] = "object"
-
-			// Include a few fields from the original if it's not too big
-			if len(v) <= 3 {
-				truncated["partial"] = v
-			} else {
-				sample := make(map[string]interface{}, 3)
-				count := 0
-				for k, val := range v {
-					sample[k] = val
-					count++
-					if count >= 3 {
-						break
-					}
-				}
-				truncated["partial"] = sample
-			}
-		case []interface{}:
-			truncated["type"] = "array"
-			truncated["length"] = len(v)
-			if len(v) > 0 && len(v) <= 2 {
-				truncated["partial"] = v
-			} else if len(v) > 2 {
-				truncated["partial"] = v[:2]
-			}
-		default:
-			truncated["type"] = fmt.Sprintf("%T", parsed)
-		}
+	var parsed any
+	if err := sonic.Unmarshal([]byte(s), &parsed); err == nil {
+		truncated := createTruncatedObject(parsed)
 
 		// Convert back to JSON
-		if bytes, err := json.Marshal(truncated); err == nil && len(bytes) <= maxLen {
+		if bytes, bErr := sonic.Marshal(truncated); bErr == nil && len(bytes) <= maxLen {
 			return string(bytes)
 		}
 	}
 
 	// If not valid JSON or can't intelligently truncate, use safe UTF-8 truncation
 	return safelyTruncateString(s, maxLen)
+}
+
+// createTruncatedObject creates a truncated representation of the parsed JSON
+func createTruncatedObject(parsed any) map[string]any {
+	truncated := map[string]any{
+		"truncated": true,
+		"message":   "Content exceeded max length and was truncated",
+	}
+
+	// Include the content type if we can determine it
+	switch v := parsed.(type) {
+	case map[string]any:
+		truncated["type"] = "object"
+		truncated["partial"] = truncateMapSample(v)
+	case []any:
+		truncated["type"] = "array"
+		truncated["length"] = len(v)
+		truncated["partial"] = truncateArraySample(v)
+	default:
+		truncated["type"] = fmt.Sprintf("%T", parsed)
+	}
+
+	return truncated
+}
+
+// truncateMapSample takes a sample of a map for truncation
+func truncateMapSample(m map[string]any) any {
+	if len(m) <= 3 {
+		return m
+	}
+
+	sample := make(map[string]any, 3)
+	count := 0
+	for k, val := range m {
+		sample[k] = val
+		count++
+		if count >= 3 {
+			break
+		}
+	}
+	return sample
+}
+
+// truncateArraySample takes a sample of an array for truncation
+func truncateArraySample(arr []any) any {
+	if len(arr) == 0 {
+		return arr
+	}
+
+	if len(arr) <= 2 {
+		return arr
+	}
+
+	return arr[:2]
 }
 
 // safelyTruncateString truncates a string ensuring it doesn't break UTF-8 characters
@@ -243,7 +258,7 @@ func shouldSample(rate float64) bool {
 
 // Logger represents an asynchronous logger that buffers log entries
 type Logger struct {
-	logChan   chan map[string]interface{}
+	logChan   chan map[string]any
 	logger    *logger.Logger
 	wg        sync.WaitGroup
 	closeOnce sync.Once
@@ -253,7 +268,7 @@ type Logger struct {
 // NewAsyncLogger creates a new asynchronous logger
 func NewAsyncLogger(l *logger.Logger, bufferSize int) *Logger {
 	log := &Logger{
-		logChan: make(chan map[string]interface{}, bufferSize),
+		logChan: make(chan map[string]any, bufferSize),
 		logger:  l,
 	}
 
@@ -297,7 +312,7 @@ func (l *Logger) processLogs() {
 }
 
 // Log adds a log entry to the channel
-func (l *Logger) Log(entry map[string]interface{}) {
+func (l *Logger) Log(entry map[string]any) {
 	if l.closed {
 		return
 	}
@@ -334,38 +349,21 @@ func NewLogger(l *logger.Logger, config ...LogConfig) fiber.Handler {
 	entropy := ulid.Monotonic(rand.Reader, 0)
 
 	return func(c *fiber.Ctx) error {
-		// Skip logging for excluded paths - cheap operation first
-		if shouldSkipPath(c.Path(), cfg.ExcludePaths) {
+		// Check if we should skip logging this request
+		if shouldSkipLogging(c, cfg) {
 			return c.Next()
 		}
 
-		// Skip if custom skip function returns true
-		if cfg.Skip != nil && cfg.Skip(c) {
-			return c.Next()
-		}
+		// Ensure request ID exists
+		requestID := ensureRequestID(c, entropy)
 
-		// Apply sampling if configured
-		if !shouldSample(cfg.SamplingRate) {
-			return c.Next()
-		}
-
-		// Generate request ID if not present
-		requestID := c.Get("X-Request-ID")
-		if requestID == "" {
-			requestID = ulid.MustNew(ulid.Timestamp(time.Now()), entropy).String()
-			c.Set("X-Request-ID", requestID)
-		}
-
+		// Capture timing and request info
 		start := time.Now()
 		path := c.Path()
 		method := c.Method()
 
-		// Extract request body if configured (skip for gzipped content)
-		var reqBody string
-		if cfg.LogRequestBody && len(c.Body()) > 0 && !(cfg.DetectGzip && isGzipped(c)) {
-			contentType := c.Get("Content-Type")
-			reqBody = truncateBodySafely(c.Body(), contentType, cfg.MaxBodySize)
-		}
+		// Extract request body if configured
+		reqBody := extractRequestBody(c, cfg)
 
 		// Process request
 		err := c.Next()
@@ -373,67 +371,141 @@ func NewLogger(l *logger.Logger, config ...LogConfig) fiber.Handler {
 		// Calculate duration
 		duration := time.Since(start)
 		formattedDuration := formatDuration(duration)
-		statusCode := c.Response().StatusCode()
 
-		// Get a log entry from the pool
-		entry := entryPool.Get().(map[string]interface{})
-
-		// Basic info every log will have
-		entry["requestId"] = requestID
-		entry["method"] = method
-		entry["path"] = path
-		entry["status"] = statusCode
-		entry["ip"] = c.IP()
-		entry["latency"] = formattedDuration
-		entry["userAgent"] = c.Get("User-Agent")
-		entry["message"] = "HTTP Request"
-
-		// Add query params if they exist
-		if queries := c.Queries(); len(queries) > 0 {
-			entry["queryParams"] = queries
-		}
-
-		// Add headers if configured
-		if len(cfg.LogHeaders) > 0 {
-			if headers := extractHeaders(c, cfg.LogHeaders); len(headers) > 0 {
-				entry["headers"] = headers
-			}
-		}
-
-		// Add request body if configured and available
-		if cfg.LogRequestBody && reqBody != "" {
-			entry["requestBody"] = reqBody
-		}
-
-		// Add response body if configured and not gzipped
-		if cfg.LogResponseBody && len(c.Response().Body()) > 0 &&
-			!(cfg.DetectGzip && strings.Contains(strings.ToLower(c.GetRespHeader("Content-Encoding")), "gzip")) {
-
-			// log the size of the response body in bytes
-			entry["responseBodySize"] = len(c.Response().Body())
-
-			contentType := c.GetRespHeader("Content-Type")
-			respBody := truncateBodySafely(c.Response().Body(), contentType, cfg.MaxBodySize)
-			entry["responseBody"] = respBody
-		}
-
-		// Add custom tags
-		for key, value := range cfg.CustomTags {
-			entry[key] = value
-		}
-
-		// Mark as warning if request is slow
-		if duration > cfg.SlowRequestThreshold {
-			entry["isWarn"] = true
-			entry["message"] = "Slow HTTP Request"
-		} else {
-			entry["isWarn"] = false
-			entry["status"] = "OK"
-		}
+		// Create and populate log entry
+		entry := createLogEntry(c, cfg, requestID, method, path, duration, formattedDuration, reqBody)
 
 		// Send to async logger
 		asyncLogger.Log(entry)
 
 		return err
 	}
+}
+
+// shouldSkipLogging determines if request logging should be skipped
+func shouldSkipLogging(c *fiber.Ctx, cfg LogConfig) bool {
+	// Skip logging for excluded paths - cheap operation first
+	if shouldSkipPath(c.Path(), cfg.ExcludePaths) {
+		return true
+	}
+
+	// Skip if custom skip function returns true
+	if cfg.Skip != nil && cfg.Skip(c) {
+		return true
+	}
+
+	// Apply sampling if configured
+	if !shouldSample(cfg.SamplingRate) {
+		return true
+	}
+
+	return false
+}
+
+// ensureRequestID ensures a request ID exists, generating one if needed
+func ensureRequestID(c *fiber.Ctx, entropy *ulid.MonotonicEntropy) string {
+	requestID := c.Get("X-Request-ID")
+	if requestID == "" {
+		requestID = ulid.MustNew(ulid.Timestamp(time.Now()), entropy).String()
+		c.Set("X-Request-ID", requestID)
+	}
+	return requestID
+}
+
+// extractRequestBody extracts and truncates the request body if configured
+func extractRequestBody(c *fiber.Ctx, cfg LogConfig) string {
+	if !cfg.LogRequestBody || len(c.Body()) == 0 || (cfg.DetectGzip && isGzipped(c)) {
+		return ""
+	}
+
+	contentType := c.Get("Content-Type")
+	return truncateBodySafely(c.Body(), contentType, cfg.MaxBodySize)
+}
+
+// createLogEntry creates and populates a log entry with request details
+func createLogEntry(c *fiber.Ctx, cfg LogConfig, requestID, method, path string, duration time.Duration, formattedDuration, reqBody string) map[string]any {
+	// Get a log entry from the pool
+	entryObj := entryPool.Get()
+	entry, ok := entryObj.(map[string]any)
+	if !ok {
+		// If type assertion fails, create a new map
+		entry = make(map[string]any, 16)
+	}
+	statusCode := c.Response().StatusCode()
+
+	// Add basic info
+	populateBasicInfo(entry, requestID, method, path, statusCode, c.IP(), formattedDuration, c.Get("User-Agent"))
+
+	// Add optional info
+	addOptionalInfo(c, cfg, entry, reqBody, duration)
+
+	return entry
+}
+
+// populateBasicInfo adds basic request information to the log entry
+func populateBasicInfo(entry map[string]any, requestID, method, path string, statusCode int, ip, latency, userAgent string) {
+	entry["requestId"] = requestID
+	entry["method"] = method
+	entry["path"] = path
+	entry["status"] = statusCode
+	entry["ip"] = ip
+	entry["latency"] = latency
+	entry["userAgent"] = userAgent
+	entry["message"] = "HTTP Request"
+}
+
+// addOptionalInfo adds optional information to the log entry based on configuration
+func addOptionalInfo(c *fiber.Ctx, cfg LogConfig, entry map[string]any, reqBody string, duration time.Duration) {
+	// Add query params if they exist
+	if queries := c.Queries(); len(queries) > 0 {
+		entry["queryParams"] = queries
+	}
+
+	// Add headers if configured
+	if len(cfg.LogHeaders) > 0 {
+		if headers := extractHeaders(c, cfg.LogHeaders); len(headers) > 0 {
+			entry["headers"] = headers
+		}
+	}
+
+	// Add request body if configured and available
+	if cfg.LogRequestBody && reqBody != "" {
+		entry["requestBody"] = reqBody
+	}
+
+	// Add response body if configured
+	addResponseBody(c, cfg, entry)
+
+	// Add custom tags
+	for key, value := range cfg.CustomTags {
+		entry[key] = value
+	}
+
+	// Mark as warning if request is slow
+	if duration > cfg.SlowRequestThreshold {
+		entry["isWarn"] = true
+		entry["message"] = "Slow HTTP Request"
+	} else {
+		entry["isWarn"] = false
+		entry["status"] = "OK"
+	}
+}
+
+// addResponseBody adds response body to the log entry if configured
+func addResponseBody(c *fiber.Ctx, cfg LogConfig, entry map[string]any) {
+	if !cfg.LogResponseBody || len(c.Response().Body()) == 0 {
+		return
+	}
+
+	gzipCondition := cfg.DetectGzip && strings.Contains(strings.ToLower(c.GetRespHeader("Content-Encoding")), "gzip")
+	if gzipCondition {
+		return
+	}
+
+	// Log the size of the response body in bytes
+	entry["responseBodySize"] = len(c.Response().Body())
+
+	contentType := c.GetRespHeader("Content-Type")
+	respBody := truncateBodySafely(c.Response().Body(), contentType, cfg.MaxBodySize)
+	entry["responseBody"] = respBody
 }

@@ -38,21 +38,21 @@ const (
 	AutoBillCriteriaDocumentsVerified = AutoBillCriteria("DocumentsVerified")
 )
 
-// BillingExceptionHandling defines how to handle exceptions in the billing process
-type BillingExceptionHandling string
+// ExceptionHandling defines how to handle exceptions in the billing process
+type ExceptionHandling string
 
 const (
 	// * Queue the shipment for billing
-	BillingExceptionQueue = BillingExceptionHandling("Queue")
+	BillingExceptionQueue = ExceptionHandling("Queue")
 
 	// * Notify the user that the shipment is in exception
-	BillingExceptionNotify = BillingExceptionHandling("Notify")
+	BillingExceptionNotify = ExceptionHandling("Notify")
 
 	// * Automatically resolve the exception
-	BillingExceptionAutoResolve = BillingExceptionHandling("AutoResolve")
+	BillingExceptionAutoResolve = ExceptionHandling("AutoResolve")
 
 	// * Reject the shipment
-	BillingExceptionReject = BillingExceptionHandling("Reject")
+	BillingExceptionReject = ExceptionHandling("Reject")
 )
 
 type PaymentTerm string
@@ -82,11 +82,11 @@ const (
 	ClassificationPublic = DocumentClassification("Public")
 
 	// ClassificationPrivate indicates the document is private and must be shared by the owner in the storage bucket
-	ClassificationPrivate    = DocumentClassification("Private")
+	ClassificationPrivate = DocumentClassification("Private")
 
 	// ClassificationSensitive indicates the document contains sensitive information and must be shared by the owner in the storage bucket.
-	ClassificationSensitive  = DocumentClassification("Sensitive")
-	
+	ClassificationSensitive = DocumentClassification("Sensitive")
+
 	// ClassificationRegulatory indicates the document contains regulatory information and must be shared by the owner in the storage bucket.
 	ClassificationRegulatory = DocumentClassification("Regulatory")
 )

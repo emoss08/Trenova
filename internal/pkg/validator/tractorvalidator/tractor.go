@@ -63,7 +63,7 @@ func (v *Validator) Validate(
 	t.Validate(ctx, multiErr)
 
 	// Validate uniqueness
-	if err := v.ValidateUniqueness(ctx, dba, valCtx, t, multiErr); err != nil {
+	if err = v.ValidateUniqueness(ctx, dba, valCtx, t, multiErr); err != nil {
 		multiErr.Add("uniqueness", errors.ErrSystemError, err.Error())
 	}
 

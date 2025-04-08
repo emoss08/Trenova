@@ -104,13 +104,13 @@ func (h *Handler) getCurrentLogs(c *fiber.Ctx) error {
 
 	// Parse optional date filters
 	if startDate := c.Query("startDate"); startDate != "" {
-		if t, err := time.Parse(time.RFC3339, startDate); err == nil {
+		if t, tErr := time.Parse(time.RFC3339, startDate); tErr == nil {
 			opts.StartDate = t
 		}
 	}
 
 	if endDate := c.Query("endDate"); endDate != "" {
-		if t, err := time.Parse(time.RFC3339, endDate); err == nil {
+		if t, tErr := time.Parse(time.RFC3339, endDate); tErr == nil {
 			opts.EndDate = t
 		}
 	}
@@ -129,22 +129,7 @@ func (h *Handler) getCurrentLogs(c *fiber.Ctx) error {
 }
 
 func (h *Handler) getLogFiles(c *fiber.Ctx) error {
-	reqCtx, err := ctx.GetRequestContext(c)
-	if err != nil {
-		return h.eh.HandleError(c, err)
-	}
-
-	opts := &ports.LimitOffsetQueryOptions{
-		TenantOpts: &ports.TenantOptions{
-			OrgID:  reqCtx.OrgID,
-			BuID:   reqCtx.BuID,
-			UserID: reqCtx.UserID,
-		},
-		Limit:  c.QueryInt("limit", 100),
-		Offset: c.QueryInt("offset", 0),
-	}
-
-	files, err := h.ls.GetAvailableLogFiles(c.UserContext(), opts)
+	files, err := h.ls.GetAvailableLogFiles()
 	if err != nil {
 		return h.eh.HandleError(c, err)
 	}
@@ -169,7 +154,7 @@ func (h *Handler) getLogFileInfo(c *fiber.Ctx) error {
 		return h.eh.HandleError(c, fiber.ErrBadRequest)
 	}
 
-	info, err := h.ls.GetLogFileInfo(c.Context(), filename)
+	info, err := h.ls.GetLogFileInfo(filename)
 	if err != nil {
 		return h.eh.HandleError(c, err)
 	}
@@ -203,6 +188,7 @@ func (h *Handler) handleWebSocket(c *websocket.Conn) {
 		OrgID:  orgID,
 		BuID:   buID,
 		Conn:   c,
+		Logger: h.l,
 	}
 
 	// Register the client with the service

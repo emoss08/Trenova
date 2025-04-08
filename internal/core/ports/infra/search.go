@@ -7,6 +7,15 @@ import (
 	"github.com/meilisearch/meilisearch-go"
 )
 
+type TaskStatus string
+
+const (
+	TaskStatusPending    TaskStatus = "pending"
+	TaskStatusProcessing TaskStatus = "processing"
+	TaskStatusSucceeded  TaskStatus = "succeeded"
+	TaskStatusFailed     TaskStatus = "failed"
+)
+
 // SearchOptions defines parameters for a search operation.
 type SearchOptions struct {
 	Query       string   `json:"query"`                 // The search query text
@@ -54,7 +63,7 @@ type SearchTaskError struct {
 
 // SearchTask represents the status and details of an asynchronous search operation.
 type SearchTask struct {
-	Status     string              `json:"status"`
+	Status     TaskStatus          `json:"status"`
 	TaskUID    int64               `json:"taskUid"`
 	IndexUID   string              `json:"indexUid"`
 	Type       string              `json:"type"`

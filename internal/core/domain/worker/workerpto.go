@@ -17,6 +17,7 @@ import (
 
 var _ bun.BeforeAppendModelHook = (*WorkerPTO)(nil)
 
+//nolint:revive // struct should keep this name
 type WorkerPTO struct {
 	bun.BaseModel `bun:"table:worker_pto,alias:wpto" json:"-"`
 

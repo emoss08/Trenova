@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"reflect"
 
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/internal/core/ports"
@@ -282,7 +283,7 @@ func (sr *shipmentRepository) Create(ctx context.Context, shp *shipment.Shipment
 	sr.calc.CalculateTotals(shp)
 
 	// * Calculate the status for the shipment
-	if err := sr.calc.CalculateStatus(ctx, shp); err != nil {
+	if err = sr.calc.CalculateStatus(shp); err != nil {
 		log.Error().Err(err).Msg("failed to calculate shipment status")
 		return nil, err
 	}
@@ -299,19 +300,19 @@ func (sr *shipmentRepository) Create(ctx context.Context, shp *shipment.Shipment
 		}
 
 		// * Handle commodity operations
-		if err := sr.shipmentCommodityRepository.HandleCommodityOperations(c, tx, shp, true); err != nil {
+		if err = sr.shipmentCommodityRepository.HandleCommodityOperations(c, tx, shp, true); err != nil {
 			log.Error().Err(err).Msg("failed to handle commodity operations")
 			return err
 		}
 
 		// * Handle move operations
-		if err := sr.shipmentMoveRepository.HandleMoveOperations(c, tx, shp, true); err != nil {
+		if err = sr.shipmentMoveRepository.HandleMoveOperations(c, tx, shp, true); err != nil {
 			log.Error().Err(err).Msg("failed to handle move operations")
 			return err
 		}
 
 		// * Handle additional charge operations
-		if err := sr.additionalChargeRepository.HandleAdditionalChargeOperations(c, tx, shp, true); err != nil {
+		if err = sr.additionalChargeRepository.HandleAdditionalChargeOperations(c, tx, shp, true); err != nil {
 			log.Error().Err(err).Msg("failed to handle additional charge operations")
 			return err
 		}
@@ -352,7 +353,7 @@ func (sr *shipmentRepository) Update(ctx context.Context, shp *shipment.Shipment
 	sr.calc.CalculateTotals(shp)
 
 	// * Calculate the status for the shipment
-	if err := sr.calc.CalculateStatus(ctx, shp); err != nil {
+	if err = sr.calc.CalculateStatus(shp); err != nil {
 		log.Error().Err(err).Msg("failed to calculate shipment status")
 		return nil, err
 	}
@@ -395,19 +396,19 @@ func (sr *shipmentRepository) Update(ctx context.Context, shp *shipment.Shipment
 		}
 
 		// * Handle commodity operations
-		if err := sr.shipmentCommodityRepository.HandleCommodityOperations(c, tx, shp, false); err != nil {
+		if err = sr.shipmentCommodityRepository.HandleCommodityOperations(c, tx, shp, false); err != nil {
 			log.Error().Err(err).Msg("failed to handle commodity operations")
 			return err
 		}
 
 		// * Handle move operations
-		if err := sr.shipmentMoveRepository.HandleMoveOperations(c, tx, shp, false); err != nil {
+		if err = sr.shipmentMoveRepository.HandleMoveOperations(c, tx, shp, false); err != nil {
 			log.Error().Err(err).Msg("failed to handle move operations")
 			return err
 		}
 
 		// * Handle additional charge operations
-		if err := sr.additionalChargeRepository.HandleAdditionalChargeOperations(c, tx, shp, false); err != nil {
+		if err = sr.additionalChargeRepository.HandleAdditionalChargeOperations(c, tx, shp, false); err != nil {
 			log.Error().Err(err).Msg("failed to handle additional charge operations")
 			return err
 		}
@@ -661,72 +662,15 @@ func (sr *shipmentRepository) Duplicate(ctx context.Context, req *repositories.D
 		log.Error().Err(err).Msg("failed to get original shipment")
 		return nil, err
 	}
-	// * Create a new shipment
+
+	// Create a new shipment
 	newShipment := new(shipment.Shipment)
 
-	// * Run in a transaction
+	// Run in a transaction
 	err = dba.RunInTx(ctx, nil, func(c context.Context, tx bun.Tx) error {
-		// * Dupllicate the original shipment fields
-		newShipment, err = sr.duplicateShipmentFields(c, originalShipment)
-		if err != nil {
-			log.Error().
-				Interface("originalShipment", originalShipment).
-				Err(err).
-				Msgf("failed to duplicate shipment fields for shipment %s", originalShipment.GetID())
-			return err
-		}
-
-		// * Insert the new shipment directly with the transaction
-		log.Debug().Interface("new shipment", newShipment).Msg("inserting new shipment")
-		if _, err = tx.NewInsert().Model(newShipment).Exec(c); err != nil {
-			log.Error().Err(err).Msg("failed to insert new shipment")
-			return err
-		}
-
-		// * Prepare moves and stops
-		moves, stops := sr.prepareMovesAndStops(originalShipment, newShipment, req.OverrideDates)
-		commodities := sr.prepareCommodities(originalShipment, newShipment)
-		additionalCharges, err := sr.prepareAdditionalCharges(originalShipment, newShipment)
-
-		// * Bulk insert moves directly with the transaction
-		if len(moves) > 0 {
-			log.Debug().Interface("moves", moves).Msg("bulk inserting moves")
-			if _, err = tx.NewInsert().Model(&moves).Exec(c); err != nil {
-				log.Error().Err(err).Msg("failed to bulk insert moves")
-				return err
-			}
-		}
-
-		// * Bulk insert stops directly with the transaction
-		if len(stops) > 0 {
-			log.Debug().Interface("stops", stops).Msg("bulk inserting stops")
-			if _, err = tx.NewInsert().Model(&stops).Exec(c); err != nil {
-				log.Error().Err(err).Msg("failed to bulk insert stops")
-				return err
-			}
-		}
-
-		// * Bulk insert commodities directly with the transaction
-		// * Only duplicate if the include commodities flag is true
-		if len(commodities) > 0 && req.IncludeCommodities {
-			log.Debug().Interface("commodities", commodities).Msg("bulk inserting commodities")
-			if _, err = tx.NewInsert().Model(&commodities).Exec(c); err != nil {
-				log.Error().Err(err).Msg("failed to bulk insert commodities")
-				return err
-			}
-		}
-
-		// * Bulk insert additional charges directly with the transaction
-		// * Only duplicate if the include additional charges flag is true
-		if len(additionalCharges) > 0 && req.IncludeAdditionalCharges {
-			log.Debug().Interface("additional charges", additionalCharges).Msg("bulk inserting additional charges")
-			if _, err = tx.NewInsert().Model(&additionalCharges).Exec(c); err != nil {
-				log.Error().Err(err).Msg("failed to bulk insert additional charges")
-				return err
-			}
-		}
-
-		return nil
+		var dupErr error
+		newShipment, dupErr = sr.performDuplication(c, tx, originalShipment, req)
+		return dupErr
 	})
 	if err != nil {
 		log.Error().Err(err).Msg("failed to duplicate shipment")
@@ -734,6 +678,87 @@ func (sr *shipmentRepository) Duplicate(ctx context.Context, req *repositories.D
 	}
 
 	return newShipment, nil
+}
+
+// performDuplication handles the actual duplication process within a transaction
+func (sr *shipmentRepository) performDuplication(
+	ctx context.Context,
+	tx bun.Tx,
+	originalShipment *shipment.Shipment,
+	req *repositories.DuplicateShipmentRequest,
+) (*shipment.Shipment, error) {
+	log := sr.l.With().
+		Str("operation", "performDuplication").
+		Str("originalShipmentID", originalShipment.GetID()).
+		Logger()
+
+	// Duplicate the original shipment fields
+	newShipment, err := sr.duplicateShipmentFields(ctx, originalShipment)
+	if err != nil {
+		log.Error().
+			Interface("originalShipment", originalShipment).
+			Err(err).
+			Msgf("failed to duplicate shipment fields for shipment %s", originalShipment.GetID())
+		return nil, err
+	}
+
+	// Insert the new shipment
+	if _, err = tx.NewInsert().Model(newShipment).Exec(ctx); err != nil {
+		log.Error().Err(err).Msg("failed to insert new shipment")
+		return nil, err
+	}
+
+	// Prepare related entities
+	moves, stops := sr.prepareMovesAndStops(originalShipment, newShipment, req.OverrideDates)
+	commodities := sr.prepareCommodities(originalShipment, newShipment)
+	additionalCharges := sr.prepareAdditionalCharges(originalShipment, newShipment)
+
+	// Insert moves
+	if err = sr.insertEntities(ctx, tx, log, "moves", moves); err != nil {
+		return nil, err
+	}
+
+	// Insert stops
+	if err = sr.insertEntities(ctx, tx, log, "stops", stops); err != nil {
+		return nil, err
+	}
+
+	// Insert commodities if requested
+	if req.IncludeCommodities && len(commodities) > 0 {
+		if err = sr.insertEntities(ctx, tx, log, "commodities", commodities); err != nil {
+			return nil, err
+		}
+	}
+
+	// Insert additional charges if requested
+	if req.IncludeAdditionalCharges && len(additionalCharges) > 0 {
+		if err = sr.insertEntities(ctx, tx, log, "additional charges", additionalCharges); err != nil {
+			return nil, err
+		}
+	}
+
+	return newShipment, nil
+}
+
+// insertEntities is a helper function to insert entities within a transaction
+func (sr *shipmentRepository) insertEntities(
+	ctx context.Context,
+	tx bun.Tx,
+	log zerolog.Logger,
+	entityType string,
+	entities interface{},
+) error {
+	if reflect.ValueOf(entities).Len() == 0 {
+		return nil
+	}
+
+	log.Debug().Interface(entityType, entities).Msgf("bulk inserting %s", entityType)
+	_, err := tx.NewInsert().Model(entities).Exec(ctx)
+	if err != nil {
+		log.Error().Err(err).Msgf("failed to bulk insert %s", entityType)
+		return err
+	}
+	return nil
 }
 
 // prepareMovesAndStops prepares the moves and stops for the new shipment
@@ -829,7 +854,7 @@ func (sr *shipmentRepository) prepareCommodities(original *shipment.Shipment, ne
 	return commodities
 }
 
-func (sr *shipmentRepository) prepareAdditionalCharges(original *shipment.Shipment, newShipment *shipment.Shipment) ([]*shipment.AdditionalCharge, error) {
+func (sr *shipmentRepository) prepareAdditionalCharges(original *shipment.Shipment, newShipment *shipment.Shipment) []*shipment.AdditionalCharge {
 	additionalCharges := make([]*shipment.AdditionalCharge, 0, len(original.AdditionalCharges))
 
 	// * Loop through each additional charge and prepare the new additional charge
@@ -849,7 +874,7 @@ func (sr *shipmentRepository) prepareAdditionalCharges(original *shipment.Shipme
 		additionalCharges = append(additionalCharges, newAdditionalCharge)
 	}
 
-	return additionalCharges, nil
+	return additionalCharges
 }
 
 // duplicateShipmentFields duplicates the fields of a shipment
@@ -939,7 +964,7 @@ func (sr *shipmentRepository) CheckForDuplicateBOLs(ctx context.Context, current
 	var duplicates []repositories.DuplicateBOLsResult
 
 	// * Scan the results into the duplicates slice
-	if err := query.Scan(ctx, &duplicates); err != nil {
+	if err = query.Scan(ctx, &duplicates); err != nil {
 		log.Error().Err(err).Msg("failed to query for duplicate BOLs")
 		return nil, eris.Wrapf(err, "query duplicate BOLs for BOL '%s'", currentBOL)
 	}

@@ -86,7 +86,7 @@ func NewService(p ServiceParams) (*Service, error) {
 }
 
 // Start initializes and starts the search service
-func (s *Service) Start(ctx context.Context) error {
+func (s *Service) Start(_ context.Context) error {
 	if !s.isRunning.CompareAndSwap(false, true) {
 		s.l.Warn().Msg("search service is already running")
 		return nil
@@ -398,7 +398,7 @@ func (s *Service) SearchByType(ctx context.Context, resourceType permission.Reso
 }
 
 // DeleteDocument removes a document from the search index.
-func (s *Service) DeleteDocument(ctx context.Context, id string, resourceType permission.Resource) error {
+func (s *Service) DeleteDocument(_ context.Context, id string, resourceType permission.Resource) error {
 	if !s.isRunning.Load() {
 		return ErrServiceStopped
 	}
@@ -434,7 +434,7 @@ func (s *Service) DeleteDocument(ctx context.Context, id string, resourceType pe
 		return eris.Wrap(err, "waiting for delete task")
 	}
 
-	if task.Status != "succeeded" {
+	if task.Status != infra.TaskStatusSucceeded {
 		errMsg := fmt.Sprintf("delete task failed with status: %s", task.Status)
 		if task.Error.Message != "" {
 			errMsg = fmt.Sprintf("%s - %s", errMsg, task.Error.Message)
@@ -444,7 +444,7 @@ func (s *Service) DeleteDocument(ctx context.Context, id string, resourceType pe
 			Err(err).
 			Str("id", id).
 			Int64("taskUid", task.TaskUID).
-			Str("status", task.Status).
+			Str("status", string(task.Status)).
 			Interface("error", task.Error).
 			Msg("document deletion failed")
 		return err
@@ -480,9 +480,9 @@ func (s *Service) GetSuggestions(ctx context.Context, prefix string, limit int, 
 }
 
 // GetHealth returns the current health status of the search service.
-func (s *Service) GetHealth(ctx context.Context) (map[string]interface{}, error) {
+func (s *Service) GetHealth(_ context.Context) (map[string]any, error) {
 	if !s.isRunning.Load() {
-		return map[string]interface{}{
+		return map[string]any{
 			"status":  "stopped",
 			"healthy": false,
 		}, nil
@@ -492,7 +492,7 @@ func (s *Service) GetHealth(ctx context.Context) (map[string]interface{}, error)
 	stats, err := s.client.GetStats()
 	if err != nil {
 		s.l.Error().Err(err).Msg("failed to get search stats")
-		return map[string]interface{}{
+		return map[string]any{
 			"status":  "degraded",
 			"healthy": false,
 			"error":   err.Error(),
@@ -505,7 +505,7 @@ func (s *Service) GetHealth(ctx context.Context) (map[string]interface{}, error)
 	queueUtilization := float64(queueSize) / float64(queueCapacity) * 100.0
 
 	// Build health response
-	health := map[string]interface{}{
+	health := map[string]any{
 		"status":           "running",
 		"healthy":          true,
 		"queueSize":        queueSize,
@@ -684,22 +684,9 @@ func (s *Service) processBatch(docs []*infra.SearchDocument, callbacks []func(er
 
 	// Check task status
 	if task.Status != "succeeded" {
-		errMsg := fmt.Sprintf("task failed with status: %s", task.Status)
-		if task.Error.Message != "" {
-			errMsg = fmt.Sprintf("%s - %s", errMsg, task.Error.Message)
-		}
-		err = eris.New(errMsg)
-		s.l.Error().
-			Err(err).
-			Int64("taskUid", task.TaskUID).
-			Str("status", task.Status).
-			Interface("error", task.Error).
-			Msg("indexing task failed")
-		for _, cb := range callbacks {
-			if cb != nil {
-				cb(err)
-			}
-		}
+		err = s.createTaskErrorFromStatus(task)
+		// Notify callbacks of failure
+		s.notifyCallbacks(callbacks, err)
 		return
 	}
 
@@ -707,24 +694,35 @@ func (s *Service) processBatch(docs []*infra.SearchDocument, callbacks []func(er
 	s.l.Debug().
 		Int("batchSize", len(docs)).
 		Int64("taskUid", task.TaskUID).
-		Str("status", task.Status).
+		Str("status", string(task.Status)).
 		Str("duration", task.Duration).
 		Float64("processingTimeMs", float64(time.Since(start).Milliseconds())).
 		Msg("batch processed successfully")
 
 	// Call callbacks with success
-	for _, cb := range callbacks {
-		if cb != nil {
-			cb(nil)
-		}
-	}
+	s.notifyCallbacks(callbacks, nil)
 }
 
 // flushBatch processes any remaining documents in the queue before shutdown.
 func (s *Service) flushBatch(ctx context.Context) error {
 	s.l.Debug().Msg("performing final batch flush")
 
-	// Try to drain the batch queue
+	documents, callbacks, err := s.drainBatchQueue(ctx)
+	if err != nil {
+		return err
+	}
+
+	if len(documents) == 0 {
+		s.l.Debug().Msg("no documents to flush")
+		return nil
+	}
+
+	s.l.Info().Int("batchSize", len(documents)).Msg("flushing remaining documents")
+	return s.processDocumentBatch(documents, callbacks)
+}
+
+// drainBatchQueue collects all pending documents from the queue
+func (s *Service) drainBatchQueue(ctx context.Context) ([]*infra.SearchDocument, []func(error), error) {
 	documents := make([]*infra.SearchDocument, 0)
 	var callbacks []func(error)
 
@@ -756,14 +754,11 @@ drainLoop:
 		}
 	}
 
-	if len(documents) == 0 {
-		s.l.Debug().Msg("no documents to flush")
-		return nil
-	}
+	return documents, callbacks, nil
+}
 
-	s.l.Info().Int("batchSize", len(documents)).Msg("flushing remaining documents")
-
-	// Process the final batch
+// processDocumentBatch processes a batch of documents and notifies callbacks
+func (s *Service) processDocumentBatch(documents []*infra.SearchDocument, callbacks []func(error)) error {
 	indexName := s.client.GetIndexName()
 	taskInfo, err := s.client.IndexDocuments(indexName, documents)
 	if err != nil {
@@ -773,59 +768,37 @@ drainLoop:
 			Msg("failed to flush final batch")
 
 		// Notify callbacks of failure
-		for _, cb := range callbacks {
-			if cb != nil {
-				cb(eris.Wrap(err, "final batch indexing"))
-			}
-		}
+		s.notifyCallbacks(callbacks, eris.Wrap(err, "final batch indexing"))
 		return eris.Wrap(err, "flush final batch")
 	}
 
+	return s.waitForBatchTaskCompletion(taskInfo.TaskUID, documents, callbacks)
+}
+
+// waitForBatchTaskCompletion waits for a search task to complete and handles the result
+func (s *Service) waitForBatchTaskCompletion(taskUID int64, documents []*infra.SearchDocument, callbacks []func(error)) error {
 	// Wait with a shorter timeout since we're shutting down
-	task, err := s.client.WaitForTask(taskInfo.TaskUID, 5*time.Second)
+	task, err := s.client.WaitForTask(taskUID, 5*time.Second)
 	if err != nil {
 		s.l.Error().
 			Err(err).
-			Int64("taskUid", taskInfo.TaskUID).
+			Int64("taskUid", taskUID).
 			Msg("failed waiting for final batch task")
 
 		// Notify callbacks of failure
-		for _, cb := range callbacks {
-			if cb != nil {
-				cb(eris.Wrap(err, "waiting for final task"))
-			}
-		}
+		s.notifyCallbacks(callbacks, eris.Wrap(err, "waiting for final task"))
 		return eris.Wrap(err, "wait for final task")
 	}
 
 	if task.Status != "succeeded" {
-		errMsg := fmt.Sprintf("final task failed with status: %s", task.Status)
-		if task.Error.Message != "" {
-			errMsg = fmt.Sprintf("%s - %s", errMsg, task.Error.Message)
-		}
-		err = eris.New(errMsg)
-		s.l.Error().
-			Err(err).
-			Int64("taskUid", task.TaskUID).
-			Str("status", task.Status).
-			Interface("error", task.Error).
-			Msg("final indexing task failed")
-
+		err = s.createTaskErrorFromStatus(task)
 		// Notify callbacks of failure
-		for _, cb := range callbacks {
-			if cb != nil {
-				cb(err)
-			}
-		}
+		s.notifyCallbacks(callbacks, err)
 		return eris.Wrap(err, "final task failed")
 	}
 
 	// Notify callbacks of success
-	for _, cb := range callbacks {
-		if cb != nil {
-			cb(nil)
-		}
-	}
+	s.notifyCallbacks(callbacks, nil)
 
 	s.l.Info().
 		Int("batchSize", len(documents)).
@@ -833,4 +806,30 @@ drainLoop:
 		Msg("final batch flushed successfully")
 
 	return nil
+}
+
+// notifyCallbacks calls all the provided callbacks with the given error
+func (s *Service) notifyCallbacks(callbacks []func(error), err error) {
+	for _, cb := range callbacks {
+		if cb != nil {
+			cb(err)
+		}
+	}
+}
+
+// createTaskErrorFromStatus creates an error message from the task status
+func (s *Service) createTaskErrorFromStatus(task *infra.SearchTask) error {
+	errMsg := fmt.Sprintf("final task failed with status: %s", task.Status)
+	if task.Error.Message != "" {
+		errMsg = fmt.Sprintf("%s - %s", errMsg, task.Error.Message)
+	}
+	err := eris.New(errMsg)
+	s.l.Error().
+		Err(err).
+		Int64("taskUid", task.TaskUID).
+		Str("status", string(task.Status)).
+		Interface("error", task.Error).
+		Msg("final indexing task failed")
+
+	return err
 }

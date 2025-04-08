@@ -1,8 +1,6 @@
 package statemachine
 
 import (
-	"context"
-
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
 )
 
@@ -20,7 +18,7 @@ func (sm *ShipmentStateMachine) CurrentState() string {
 	return string(sm.shipment.Status)
 }
 
-func (sm *ShipmentStateMachine) CanTransition(ctx context.Context, event TransitionEvent) bool {
+func (sm *ShipmentStateMachine) CanTransition(event TransitionEvent) bool {
 	currState := sm.shipment.Status
 
 	validTransitions := map[shipment.Status]map[TransitionEvent]bool{
@@ -73,11 +71,10 @@ func (sm *ShipmentStateMachine) CanTransition(ctx context.Context, event Transit
 	return false
 }
 
-func (sm *ShipmentStateMachine) Transition(ctx context.Context, event TransitionEvent) error {
-	if !sm.CanTransition(ctx, event) {
+func (sm *ShipmentStateMachine) Transition(event TransitionEvent) error {
+	if !sm.CanTransition(event) {
 		return newTransitionError(
 			string(sm.shipment.Status),
-			"<unknown>",
 			event,
 			"transition not allowed",
 		)
@@ -104,7 +101,6 @@ func (sm *ShipmentStateMachine) Transition(ctx context.Context, event Transition
 	default:
 		return newTransitionError(
 			string(sm.shipment.Status),
-			"<unknown>",
 			event,
 			"unsupported event",
 		)

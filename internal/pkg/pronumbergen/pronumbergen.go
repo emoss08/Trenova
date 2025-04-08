@@ -2,12 +2,14 @@ package pronumbergen
 
 import (
 	"context"
+	"crypto/rand"
 	"errors"
 	"fmt"
+	"math/big"
+	"strconv"
 	"time"
 
 	"github.com/emoss08/trenova/pkg/types/pulid"
-	"golang.org/x/exp/rand"
 )
 
 // Errors
@@ -65,9 +67,8 @@ func DefaultProNumberFormat() *ProNumberFormat {
 
 // GetOrganizationProNumberFormat should retrieve the pro number format configuration for a specific organization
 // from the database or configuration system. For now, it returns the default format.
-func GetOrganizationProNumberFormat(ctx context.Context, orgID pulid.ID) (*ProNumberFormat, error) {
-	// In a real implementation, you'd fetch the organization-specific format from the database
-	// For now, return the default format
+func GetOrganizationProNumberFormat(_ context.Context, _ pulid.ID) (*ProNumberFormat, error) {
+	// TODO: Implement
 	return DefaultProNumberFormat(), nil
 }
 
@@ -80,7 +81,7 @@ func GenerateProNumber(format *ProNumberFormat, sequence int, year int, month in
 
 	// Add year digits if configured
 	if format.IncludeYear {
-		yearStr := fmt.Sprintf("%d", year)
+		yearStr := strconv.Itoa(year)
 		if len(yearStr) > format.YearDigits {
 			// Take only the last n digits
 			yearStr = yearStr[len(yearStr)-format.YearDigits:]
@@ -104,13 +105,21 @@ func GenerateProNumber(format *ProNumberFormat, sequence int, year int, month in
 
 	// Add random digits if configured
 	if format.IncludeRandomDigits && format.RandomDigitsCount > 0 {
-		r := rand.New(rand.NewSource(uint64(time.Now().UnixNano())))
+		// Use cryptographically secure random number generation
 		maxRandom := 1
 		for i := 0; i < format.RandomDigitsCount; i++ {
 			maxRandom *= 10
 		}
+
+		// Generate cryptographically secure random number
+		n, err := rand.Int(rand.Reader, big.NewInt(int64(maxRandom)))
+		if err != nil {
+			// Fallback to timestamp if random generation fails
+			n = big.NewInt(time.Now().UnixNano() % int64(maxRandom))
+		}
+
 		randomFmt := fmt.Sprintf("%%0%dd", format.RandomDigitsCount)
-		result += fmt.Sprintf(randomFmt, r.Intn(maxRandom))
+		result += fmt.Sprintf(randomFmt, n.Int64())
 	}
 
 	return result

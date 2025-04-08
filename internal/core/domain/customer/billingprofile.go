@@ -76,7 +76,7 @@ func (b *BillingProfile) GetTableName() string {
 	return "customer_billing_profiles"
 }
 
-func (b *BillingProfile) BeforeAppendModel(ctx context.Context, query bun.Query) error {
+func (b *BillingProfile) BeforeAppendModel(_ context.Context, query bun.Query) error {
 	now := timeutils.NowUnix()
 
 	switch query.(type) {

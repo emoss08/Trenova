@@ -1,13 +1,13 @@
 package document
 
-// DocumentStatus represents the current status of a document
-type DocumentStatus string
+// Status represents the current status of a document
+type Status string
 
 const (
-	DocumentStatusDraft           = DocumentStatus("Draft")
-	DocumentStatusActive          = DocumentStatus("Active")
-	DocumentStatusArchived        = DocumentStatus("Archived")
-	DocumentStatusExpired         = DocumentStatus("Expired")
-	DocumentStatusRejected        = DocumentStatus("Rejected")
-	DocumentStatusPendingApproval = DocumentStatus("PendingApproval")
+	StatusDraft           = Status("Draft")
+	StatusActive          = Status("Active")
+	StatusArchived        = Status("Archived")
+	StatusExpired         = Status("Expired")
+	StatusRejected        = Status("Rejected")
+	StatusPendingApproval = Status("PendingApproval")
 )

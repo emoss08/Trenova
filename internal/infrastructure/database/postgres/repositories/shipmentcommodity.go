@@ -89,7 +89,7 @@ func (r *shipmentCommodityRepository) HandleCommodityOperations(ctx context.Cont
 
 	// * Handle bulk insert of new commodities
 	if len(newCommodities) > 0 {
-		if _, err := tx.NewInsert().Model(&newCommodities).Exec(ctx); err != nil {
+		if _, err = tx.NewInsert().Model(&newCommodities).Exec(ctx); err != nil {
 			r.l.Error().Err(err).Msg("failed to bulk insert new commodities")
 			return err
 		}
@@ -97,7 +97,7 @@ func (r *shipmentCommodityRepository) HandleCommodityOperations(ctx context.Cont
 
 	// * Handle bulk update of new commodities
 	if len(updateCommodities) > 0 {
-		if err := r.handleBulkUpdate(ctx, tx, updateCommodities); err != nil {
+		if err = r.handleBulkUpdate(ctx, tx, updateCommodities); err != nil {
 			r.l.Error().Err(err).Msg("failed to handle bulk update of commodities")
 			return err
 		}
@@ -105,7 +105,7 @@ func (r *shipmentCommodityRepository) HandleCommodityOperations(ctx context.Cont
 
 	// * Handle deletion of commodities that are no longer present
 	if !isCreate {
-		if err := r.handleCommodityDeletions(ctx, tx, &repositories.CommodityDeletionRequest{
+		if err = r.handleCommodityDeletions(ctx, tx, &repositories.CommodityDeletionRequest{
 			ExistingCommodityMap: existingCommodityMap,
 			UpdatedCommodityIDs:  updatedCommodityIDs,
 			CommoditiesToDelete:  commoditiesToDelete,

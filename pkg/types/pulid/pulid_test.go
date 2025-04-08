@@ -142,9 +142,9 @@ func TestID_Value(t *testing.T) {
 		},
 		{
 			name:    "nil ID",
-			id:      pulid.ID(""),
+			id:      pulid.Nil,
 			want:    nil,
-			wantErr: false,
+			wantErr: true,
 		},
 	}
 

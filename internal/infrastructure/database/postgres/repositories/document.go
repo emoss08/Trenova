@@ -90,6 +90,7 @@ func (r *documentRepository) GetDocumentCountByResource(ctx context.Context, req
 }
 
 func (r *documentRepository) addJoinToResourceTable(q *bun.SelectQuery, req repositories.GetResourceSubFoldersRequest) *bun.SelectQuery {
+	//nolint:exhaustive // not all cases are implemented
 	switch req.ResourceType {
 	case permission.ResourceShipment:
 		q = q.Join("LEFT JOIN shipments as s ON s.id = doc.resource_id").
@@ -104,6 +105,15 @@ func (r *documentRepository) addJoinToResourceTable(q *bun.SelectQuery, req repo
 	return q
 }
 
+// GetResourceSubFolders gets the sub-folders for a resource
+//
+// Parameters:
+//   - ctx: The context for the operation.
+//   - req: The request containing resource details.
+//
+// Returns:
+//   - []*repositories.GetResourceSubFoldersResponse: The sub-folders for a resource.
+//   - error: An error if the operation fails.
 func (r *documentRepository) GetResourceSubFolders(ctx context.Context, req repositories.GetResourceSubFoldersRequest) ([]*repositories.GetResourceSubFoldersResponse, error) {
 	dba, err := r.db.DB(ctx)
 	if err != nil {
@@ -137,6 +147,45 @@ func (r *documentRepository) GetResourceSubFolders(ctx context.Context, req repo
 	return results, nil
 }
 
+// GetByID gets a document by its ID
+//
+// Parameters:
+//   - ctx: The context for the operation.
+//   - req: The request containing document details.
+//
+// Returns:
+//   - *document.Document: The document.
+//   - error: An error if the operation fails.
+func (r *documentRepository) GetByID(ctx context.Context, req repositories.GetDocumentByIDRequest) (*document.Document, error) {
+	dba, err := r.db.DB(ctx)
+	if err != nil {
+		return nil, eris.Wrap(err, "get database connection")
+	}
+
+	log := r.l.With().
+		Str("operation", "GetDocumentByID").
+		Str("docID", req.ID.String()).
+		Str("orgID", req.OrgID.String()).
+		Str("buID", req.BuID.String()).
+		Logger()
+
+	doc := new(document.Document)
+
+	if err = dba.NewSelect().
+		Model(doc).
+		WherePK().
+		Scan(ctx, doc); err != nil {
+		if eris.Is(err, sql.ErrNoRows) {
+			return nil, errors.NewNotFoundError("Document not found")
+		}
+
+		log.Error().Err(err).Msg("failed to get document by ID")
+		return nil, err
+	}
+
+	return doc, nil
+}
+
 func (r *documentRepository) filterResourceQuery(q *bun.SelectQuery, req *repositories.GetDocumentsByResourceIDRequest) *bun.SelectQuery {
 	q = queryfilters.TenantFilterQuery(&queryfilters.TenantFilterQueryOptions{
 		Query:      q,
@@ -147,13 +196,21 @@ func (r *documentRepository) filterResourceQuery(q *bun.SelectQuery, req *reposi
 	q = q.Where("doc.resource_id = ?", req.ResourceID).
 		Where("doc.resource_type = ?", req.ResourceType)
 
-	// * add order by created at & uploadedBy
 	q = q.Order("doc.created_at ASC").
 		Relation("UploadedBy")
 
 	return q.Limit(req.Filter.Limit).Offset(req.Filter.Offset)
 }
 
+// GetDocumentsByResourceID gets documents by resource ID
+//
+// Parameters:
+//   - ctx: The context for the operation.
+//   - req: The request containing document details.
+//
+// Returns:
+//   - *ports.ListResult[*document.Document]: The documents.
+//   - error: An error if the operation fails.
 func (r *documentRepository) GetDocumentsByResourceID(ctx context.Context, req *repositories.GetDocumentsByResourceIDRequest) (*ports.ListResult[*document.Document], error) {
 	dba, err := r.db.DB(ctx)
 	if err != nil {
@@ -227,6 +284,15 @@ func (r *documentRepository) Create(ctx context.Context, doc *document.Document)
 	return doc, nil
 }
 
+// Update updates a document in the database
+//
+// Parameters:
+//   - ctx: The context for the operation.
+//   - doc: The document entity to be updated.
+//
+// Returns:
+//   - *document.Document: The updated document.
+//   - error: An error if the operation fails.
 func (r *documentRepository) Update(ctx context.Context, doc *document.Document) (*document.Document, error) {
 	dba, err := r.db.DB(ctx)
 	if err != nil {
@@ -239,6 +305,7 @@ func (r *documentRepository) Update(ctx context.Context, doc *document.Document)
 		Int64("version", doc.Version).
 		Logger()
 
+	//nolint:dupl // Service code is similar to each other
 	err = dba.RunInTx(ctx, nil, func(c context.Context, tx bun.Tx) error {
 		ov := doc.Version
 
@@ -285,6 +352,14 @@ func (r *documentRepository) Update(ctx context.Context, doc *document.Document)
 	return doc, nil
 }
 
+// Delete deletes a document from the database
+//
+// Parameters:
+//   - ctx: The context for the operation.
+//   - req: The request containing document details.
+//
+// Returns:
+//   - error: An error if the operation fails.
 func (r *documentRepository) Delete(ctx context.Context, req repositories.DeleteDocumentRequest) error {
 	dba, err := r.db.DB(ctx)
 	if err != nil {

@@ -113,59 +113,64 @@ func (v *WorkerPTOValidator) validatePTOOverlaps(wrk *worker.Worker, multiErr *e
 				continue
 			}
 
-			startDate := time.Unix(otherPTO.StartDate, 0).Format("2006-01-02")
-			endDate := time.Unix(otherPTO.EndDate, 0).Format("2006-01-02")
-
-			// Complete overlap (both dates fall within another request)
-			if pto.StartDate >= otherPTO.StartDate && pto.EndDate <= otherPTO.EndDate {
-				multiErr.Add(
-					fmt.Sprintf("pto[%d].startDate", i),
-					errors.ErrAlreadyExists,
-					fmt.Sprintf("Start date falls within an existing PTO request (%s to %s)", startDate, endDate),
-				)
-				multiErr.Add(
-					fmt.Sprintf("pto[%d].endDate", i),
-					errors.ErrAlreadyExists,
-					fmt.Sprintf("End date falls within an existing PTO request (%s to %s)", startDate, endDate),
-				)
-				break
-			}
-
-			// Start date overlaps with another request
-			if pto.StartDate >= otherPTO.StartDate && pto.StartDate <= otherPTO.EndDate {
-				multiErr.Add(
-					fmt.Sprintf("pto[%d].startDate", i),
-					errors.ErrAlreadyExists,
-					fmt.Sprintf("Start date overlaps with an existing PTO request (%s to %s)", startDate, endDate),
-				)
-				break
-			}
-
-			// End date overlaps with another request
-			if pto.EndDate >= otherPTO.StartDate && pto.EndDate <= otherPTO.EndDate {
-				multiErr.Add(
-					fmt.Sprintf("pto[%d].endDate", i),
-					errors.ErrAlreadyExists,
-					fmt.Sprintf("End date overlaps with an existing PTO request (%s to %s)", startDate, endDate),
-				)
-				break
-			}
-
-			// Another request falls completely within this request
-			if otherPTO.StartDate >= pto.StartDate && otherPTO.EndDate <= pto.EndDate {
-				multiErr.Add(
-					fmt.Sprintf("pto[%d].startDate", i),
-					errors.ErrAlreadyExists,
-					fmt.Sprintf("Request overlaps with an existing PTO request (%s to %s)", startDate, endDate),
-				)
-				multiErr.Add(
-					fmt.Sprintf("pto[%d].endDate", i),
-					errors.ErrAlreadyExists,
-					fmt.Sprintf("Request overlaps with an existing PTO request (%s to %s)", startDate, endDate),
-				)
-				break
-			}
+			v.checkPTOOverlap(i, pto, otherPTO, multiErr)
 		}
+	}
+}
+
+// checkPTOOverlap checks if two PTO requests overlap and adds appropriate errors
+func (v *WorkerPTOValidator) checkPTOOverlap(index int, pto, otherPTO *worker.WorkerPTO, multiErr *errors.MultiError) {
+	startDate := time.Unix(otherPTO.StartDate, 0).Format("2006-01-02")
+	endDate := time.Unix(otherPTO.EndDate, 0).Format("2006-01-02")
+	dateRange := fmt.Sprintf("(%s to %s)", startDate, endDate)
+
+	// Complete overlap (both dates fall within another request)
+	if pto.StartDate >= otherPTO.StartDate && pto.EndDate <= otherPTO.EndDate {
+		multiErr.Add(
+			fmt.Sprintf("pto[%d].startDate", index),
+			errors.ErrAlreadyExists,
+			fmt.Sprintf("Start date falls within an existing PTO request %s", dateRange),
+		)
+		multiErr.Add(
+			fmt.Sprintf("pto[%d].endDate", index),
+			errors.ErrAlreadyExists,
+			fmt.Sprintf("End date falls within an existing PTO request %s", dateRange),
+		)
+		return
+	}
+
+	// Start date overlaps with another request
+	if pto.StartDate >= otherPTO.StartDate && pto.StartDate <= otherPTO.EndDate {
+		multiErr.Add(
+			fmt.Sprintf("pto[%d].startDate", index),
+			errors.ErrAlreadyExists,
+			fmt.Sprintf("Start date overlaps with an existing PTO request %s", dateRange),
+		)
+		return
+	}
+
+	// End date overlaps with another request
+	if pto.EndDate >= otherPTO.StartDate && pto.EndDate <= otherPTO.EndDate {
+		multiErr.Add(
+			fmt.Sprintf("pto[%d].endDate", index),
+			errors.ErrAlreadyExists,
+			fmt.Sprintf("End date overlaps with an existing PTO request %s", dateRange),
+		)
+		return
+	}
+
+	// Another request falls completely within this request
+	if otherPTO.StartDate >= pto.StartDate && otherPTO.EndDate <= pto.EndDate {
+		multiErr.Add(
+			fmt.Sprintf("pto[%d].startDate", index),
+			errors.ErrAlreadyExists,
+			fmt.Sprintf("Request overlaps with an existing PTO request %s", dateRange),
+		)
+		multiErr.Add(
+			fmt.Sprintf("pto[%d].endDate", index),
+			errors.ErrAlreadyExists,
+			fmt.Sprintf("Request overlaps with an existing PTO request %s", dateRange),
+		)
 	}
 }
 

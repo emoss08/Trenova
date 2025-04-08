@@ -1,5 +1,5 @@
-
 package repositories
+
 import (
 	"context"
 	"fmt"
@@ -58,7 +58,7 @@ func (pc *permissionRepository) GetUserRoles(ctx context.Context, userID pulid.I
 	key := pc.formatRolesKey(userID)
 
 	if err := pc.cache.GetJSON(ctx, key, &roles); err != nil {
-		if eris.Is(err, redis.Nil) {
+		if eris.Is(err, redis.ErrNil) {
 			log.Debug().Msg("no roles found in cache")
 			return nil, eris.New("no roles found in cache")
 		}
@@ -102,7 +102,7 @@ func (pc *permissionRepository) GetUserPermissions(ctx context.Context, userID p
 	key := pc.formatKey(userID)
 
 	if err := pc.cache.GetJSON(ctx, key, &permissions); err != nil {
-		if eris.Is(err, redis.Nil) {
+		if eris.Is(err, redis.ErrNil) {
 			log.Debug().Msg("no permissions found in cache")
 			return nil, nil
 		}

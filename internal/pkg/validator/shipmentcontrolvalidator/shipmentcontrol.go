@@ -26,7 +26,7 @@ func NewValidator(p ValidatorParams) *Validator {
 	}
 }
 
-func (v *Validator) Validate(ctx context.Context, valCtx *validator.ValidationContext, sc *shipment.ShipmentControl) *errors.MultiError {
+func (v *Validator) Validate(ctx context.Context, _ *validator.ValidationContext, sc *shipment.ShipmentControl) *errors.MultiError {
 	multiErr := errors.NewMultiError()
 
 	// Basic Shipment Control validation

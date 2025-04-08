@@ -14,19 +14,24 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Skeleton } from "@/components/ui/skeleton";
 import { VisuallyHidden } from "@/components/ui/visually-hidden";
 import { API_URL } from "@/constants/env";
-import { generateDateTimeStringFromUnixTimestamp } from "@/lib/date";
 import { queries } from "@/lib/queries";
-import { cn, formatFileSize, truncateText } from "@/lib/utils";
+import { cn, truncateText } from "@/lib/utils";
 import { Resource } from "@/types/audit-entry";
 import { CustomerDocumentRequirement } from "@/types/customer";
 import { TableSheetProps } from "@/types/data-table";
 import { Document } from "@/types/document";
 import { Shipment } from "@/types/shipment";
-import { faCheck } from "@fortawesome/pro-solid-svg-icons";
+import {
+  faArrowRight,
+  faCheck,
+  faDownload,
+  faEye,
+} from "@fortawesome/pro-solid-svg-icons";
+import { Viewer, Worker } from "@react-pdf-viewer/core";
 import { useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
+import { motion } from "framer-motion";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
-
 type DocumentCategory = {
   id: string;
   name: string;
@@ -73,18 +78,19 @@ export function ShipmentDocumentWorkflow({
   });
 
   useEffect(() => {
-    if (documents) {
-      if (offset === 0) {
-        setAllDocuments(documents.results);
-      } else {
-        const existingIds = new Set(allDocuments.map((doc) => doc.id));
-        const newDocs = documents.results.filter(
-          (doc) => !existingIds.has(doc.id),
-        );
-        setAllDocuments((prev) => [...prev, ...newDocs]);
-      }
-      setTotalCount(documents.count);
+    if (!documents) return;
+
+    if (offset === 0) {
+      setAllDocuments(documents.results);
+    } else {
+      const existingIds = new Set(allDocuments.map((doc) => doc.id));
+      const newDocs = documents.results.filter(
+        (doc) => !existingIds.has(doc.id),
+      );
+      setAllDocuments((prev) => [...prev, ...newDocs]);
     }
+
+    setTotalCount(documents.count);
   }, [documents, offset, allDocuments]);
 
   const documentCategories = useMemo(() => {
@@ -115,6 +121,12 @@ export function ShipmentDocumentWorkflow({
         return a.name.localeCompare(b.name);
       });
   }, [docRequirements, allDocuments]);
+
+  useEffect(() => {
+    if (documentCategories.length > 0 && !activeCategory) {
+      setActiveCategory(documentCategories[0].id);
+    }
+  }, [documentCategories, activeCategory]);
 
   const filteredDocuments = useMemo(() => {
     if (!allDocuments || !activeCategory) return [];
@@ -266,14 +278,19 @@ export function ShipmentDocumentWorkflow({
                   Complete all document requirements to process the shipment
                 </p>
                 {billingReadiness.total > 0 && (
-                  <div className="mt-3 p-2 rounded-md bg-muted border border-border">
+                  <div className="mt-3 p-2 rounded-md bg-background border border-border">
                     <div className="flex items-center justify-between mb-1">
                       <span className="text-sm font-medium">Billing Ready</span>
                       {billingReadiness.ready ? (
-                        <Icon
-                          icon={faCheck}
-                          className="size-4 text-green-600"
-                        />
+                        <Button
+                          title="Transfer to Billing"
+                          aria-label="Transfer to Billing"
+                          variant="outline"
+                          size="xs"
+                        >
+                          Transfer to Billing
+                          <Icon icon={faArrowRight} className="size-4" />
+                        </Button>
                       ) : (
                         <Badge withDot={false} variant="outline">
                           {billingReadiness.completed}/{billingReadiness.total}
@@ -335,12 +352,6 @@ export function ShipmentDocumentWorkflow({
                         "Upload and manage shipment documents"}
                     </p>
                   </div>
-                  {activeCategoryData && (
-                    <Badge variant="outline" className="ml-2">
-                      {filteredDocuments.length} Document
-                      {filteredDocuments.length !== 1 ? "s" : ""}
-                    </Badge>
-                  )}
                 </div>
               </div>
 
@@ -350,13 +361,13 @@ export function ShipmentDocumentWorkflow({
                 ) : filteredDocuments.length > 0 ? (
                   <div className="space-y-4">
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                      {filteredDocuments.map((doc) => (
-                        <DocumentCard key={doc.id} document={doc} />
-                      ))}
                       <AddDocumentCard
                         onUpload={triggerFileUpload}
                         isUploading={isUploading}
                       />
+                      {filteredDocuments.map((doc) => (
+                        <DocumentCard key={doc.id} document={doc} />
+                      ))}
                     </div>
                     {isLoadingMore && (
                       <div className="flex justify-center py-4">
@@ -462,51 +473,81 @@ function CategoryCard({
 }
 
 function DocumentCard({ document }: { document: Document }) {
+  const [isHovering, setIsHovering] = useState(false);
+
+  console.log(document);
+
   return (
-    <div className="border border-border rounded-md overflow-hidden hover:shadow-md transition-shadow">
-      <div className="p-3 border-b border-border bg-muted/20">
-        <div className="flex justify-between items-start">
-          <h3 className="font-medium truncate" title={document.fileName}>
-            {truncateText(document.fileName, 24)}
-          </h3>
+    <div
+      className="border border-border rounded-md overflow-hidden bg-card relative h-[200px] cursor-pointer"
+      onMouseEnter={() => setIsHovering(true)}
+      onMouseLeave={() => setIsHovering(false)}
+    >
+      {/* Document preview area */}
+      <div className="h-full w-full flex items-center justify-center p-2">
+        <div className="bg-muted/40 p-3 rounded-md">
+          <DocumentPreview document={document} />
         </div>
       </div>
 
-      <div className="p-3">
-        <div className="flex flex-col gap-2">
-          <div className="flex justify-between text-xs">
-            <span className="text-muted-foreground">Type:</span>
-            <span>{document.documentTypeId}</span>
-          </div>
-          <div className="flex justify-between text-xs">
-            <span className="text-muted-foreground">Size:</span>
-            <span>{formatFileSize(document.fileSize)}</span>
-          </div>
-          <div className="flex justify-between text-xs">
-            <span className="text-muted-foreground">Uploaded:</span>
-            <span>
-              {generateDateTimeStringFromUnixTimestamp(document.createdAt)}
+      {/* Footer that slides up on hover */}
+      <motion.div
+        className="absolute bottom-0 left-0 right-0 bg-card border-t border-border p-3"
+        initial={{ y: "100%" }}
+        animate={{ y: isHovering ? 0 : "100%" }}
+        transition={{ duration: 0.2 }}
+      >
+        <div className="space-y-2">
+          <div className="flex justify-between items-center">
+            <span className="text-xs text-muted-foreground">Uploaded</span>
+            <span className="text-xs font-medium">
+              {new Date(document.createdAt).toLocaleDateString()}
             </span>
           </div>
-          {document.uploadedBy && (
-            <div className="flex justify-between text-xs">
-              <span className="text-muted-foreground">By:</span>
-              <span>{document.uploadedBy.name}</span>
-            </div>
-          )}
+          <div className="flex justify-between items-center">
+            <span className="text-xs text-muted-foreground">Type</span>
+            <span className="text-xs font-medium">
+              {document.documentTypeId || "Document"}
+            </span>
+          </div>
+          <div className="flex justify-between items-center">
+            <span className="text-xs text-muted-foreground">Size</span>
+            <span className="text-xs font-medium">
+              {document.fileSize
+                ? `${Math.round(document.fileSize / 1024)} KB`
+                : "Unknown"}
+            </span>
+          </div>
+          <div className="flex gap-2 pt-1">
+            <Button size="sm" variant="outline" className="w-full text-xs">
+              <Icon icon={faDownload} className="mr-1 size-3" />
+              Download
+            </Button>
+            <Button size="sm" variant="outline" className="w-full text-xs">
+              <Icon icon={faEye} className="mr-1 size-3" />
+              View
+            </Button>
+          </div>
         </div>
-      </div>
-
-      <div className="p-3 bg-muted/10 flex justify-between">
-        <Button variant="ghost" size="sm">
-          Preview
-        </Button>
-        <Button variant="outline" size="sm">
-          Download
-        </Button>
-      </div>
+      </motion.div>
     </div>
   );
+}
+
+function DocumentPreview({ document }: { document: Document }) {
+  if (document.fileType.includes("pdf")) {
+    return (
+      <Worker workerUrl="https://unpkg.com/pdfjs-dist@3.11.174/build/pdf.worker.min.js">
+        <Viewer fileUrl={document.presignedURL || ""} />
+      </Worker>
+    );
+  }
+
+  if (document.fileType.includes("image")) {
+    return <img src={document.presignedURL || ""} alt={document.fileName} />;
+  }
+
+  return <div>Document Type Not Supported</div>;
 }
 
 function CategoryListSkeleton() {

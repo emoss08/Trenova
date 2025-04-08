@@ -15,20 +15,20 @@ import (
 
 // UploadDocumentRequest contains the details needed to upload a document
 type UploadDocumentRequest struct {
-	OrganizationID  pulid.ID                `json:"organizationId"`
-	BusinessUnitID  pulid.ID                `json:"businessUnitId"`
-	UploadedByID    pulid.ID                `json:"uploadedById"`
-	ResourceID      pulid.ID                `json:"resourceId"`
-	ResourceType    permission.Resource     `json:"resourceType"`
-	DocumentTypeID  pulid.ID                `json:"documentTypeId"`
-	File            []byte                  `json:"file"`
-	FileName        string                  `json:"fileName"`
-	OriginalName    string                  `json:"originalName"`
-	Description     string                  `json:"description"`
-	Tags            []string                `json:"tags"`
-	ExpirationDate  *int64                  `json:"expirationDate"`
-	Status          document.DocumentStatus `json:"status"`
-	RequireApproval bool                    `json:"requireApproval"`
+	OrganizationID  pulid.ID            `json:"organizationId"`
+	BusinessUnitID  pulid.ID            `json:"businessUnitId"`
+	UploadedByID    pulid.ID            `json:"uploadedById"`
+	ResourceID      pulid.ID            `json:"resourceId"`
+	ResourceType    permission.Resource `json:"resourceType"`
+	DocumentTypeID  pulid.ID            `json:"documentTypeId"`
+	File            []byte              `json:"file"`
+	FileName        string              `json:"fileName"`
+	OriginalName    string              `json:"originalName"`
+	Description     string              `json:"description"`
+	Tags            []string            `json:"tags"`
+	ExpirationDate  *int64              `json:"expirationDate"`
+	Status          document.Status     `json:"status"`
+	RequireApproval bool                `json:"requireApproval"`
 }
 
 func (r *UploadDocumentRequest) Validate(ctx context.Context) error {
@@ -68,6 +68,13 @@ type UploadDocumentResponse struct {
 	VersionID string             `json:"versionId"`
 }
 
+type DeleteDocumentRequest struct {
+	OrgID        pulid.ID `json:"orgId"`
+	BuID         pulid.ID `json:"buId"`
+	DocID        pulid.ID `json:"docId"`
+	UploadedByID pulid.ID `json:"uploadedById"`
+}
+
 // FailedUpload contains information about a failed document upload
 type FailedUpload struct {
 	FileName string `json:"fileName"`
@@ -80,4 +87,5 @@ type DocumentService interface {
 	GetDocumentCountByResource(ctx context.Context, req ports.TenantOptions) ([]*repositories.GetDocumentCountByResourceResponse, error)
 	GetResourceSubFolders(ctx context.Context, req repositories.GetResourceSubFoldersRequest) ([]*repositories.GetResourceSubFoldersResponse, error)
 	GetDocumentsByResourceID(ctx context.Context, req *repositories.GetDocumentsByResourceIDRequest) (*ports.ListResult[*document.Document], error)
+	DeleteDocument(ctx context.Context, req *DeleteDocumentRequest) error
 }

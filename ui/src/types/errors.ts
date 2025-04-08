@@ -25,8 +25,8 @@ export interface ApiErrorResponse {
   status: number;
   detail: string;
   instance: string;
-  "invalid-params": InvalidParam[];
-  trace_id?: string;
+  invalidParams: InvalidParam[];
+  traceId?: string;
 }
 
 export type FieldErrors<T extends Record<string, unknown>> = Partial<
@@ -64,6 +64,6 @@ export class APIError extends Error {
   }
 
   getFieldErrors(): InvalidParam[] {
-    return this.data?.["invalid-params"] || [];
+    return this.data?.invalidParams || [];
   }
 }

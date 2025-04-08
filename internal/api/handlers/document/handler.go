@@ -61,6 +61,12 @@ func (h *Handler) RegisterRoutes(r fiber.Router, rl *middleware.RateLimiter) {
 		[]fiber.Handler{h.upload},
 		middleware.PerSecond(30),
 	)...)
+
+	// Delete document
+	api.Delete("/:docID/", rl.WithRateLimit(
+		[]fiber.Handler{h.delete},
+		middleware.PerSecond(30),
+	)...)
 }
 
 func (h *Handler) getDocumentCountByResource(c *fiber.Ctx) error {
@@ -225,4 +231,28 @@ func (h *Handler) upload(c *fiber.Ctx) error {
 	}
 
 	return c.Status(fiber.StatusCreated).JSON(resp)
+}
+
+func (h *Handler) delete(c *fiber.Ctx) error {
+	reqCtx, err := ctx.WithRequestContext(c)
+	if err != nil {
+		return h.eh.HandleError(c, err)
+	}
+
+	docID, err := pulid.MustParse(c.Params("docID"))
+	if err != nil {
+		return h.eh.HandleError(c, err)
+	}
+
+	err = h.ds.DeleteDocument(c.UserContext(), &services.DeleteDocumentRequest{
+		DocID:        docID,
+		OrgID:        reqCtx.OrgID,
+		BuID:         reqCtx.BuID,
+		UploadedByID: reqCtx.UserID,
+	})
+	if err != nil {
+		return h.eh.HandleError(c, err)
+	}
+
+	return c.Status(fiber.StatusNoContent).Send(nil)
 }

@@ -73,13 +73,13 @@ func (v *Validator) Validate(ctx context.Context, valCtx *validator.ValidationCo
 
 	// * If the organization has duplicate BOLs checking enabled, check for duplicates
 	if sc.CheckForDuplicateBOLs {
-		if err := v.CheckForDuplicateBOLs(ctx, shp, multiErr); err != nil {
+		if err = v.CheckForDuplicateBOLs(ctx, shp, multiErr); err != nil {
 			multiErr.Add("duplicateBOLs", errors.ErrSystemError, err.Error())
 		}
 	}
 
 	// * Validate uniqueness
-	if err := v.ValidateUniqueness(ctx, valCtx, shp, multiErr); err != nil {
+	if err = v.ValidateUniqueness(ctx, valCtx, shp, multiErr); err != nil {
 		multiErr.Add("uniqueness", errors.ErrSystemError, err.Error())
 	}
 
@@ -258,7 +258,7 @@ func (v *Validator) CheckForDuplicateBOLs(ctx context.Context, shp *shipment.Shi
 	}
 
 	// * Scan the results into the duplicates slice
-	if err := query.Scan(ctx, &duplicates); err != nil {
+	if err = query.Scan(ctx, &duplicates); err != nil {
 		return eris.Wrapf(err, "query duplicate BOLs for BOL '%s'", shp.BOL)
 	}
 

@@ -93,3 +93,7 @@ export async function getDocumentTypes(): Promise<
     await http.get<LimitOffsetResponse<DocumentTypeSchema>>(`/document-types`);
   return response.data;
 }
+
+export async function deleteDocument(docID: string): Promise<void> {
+  await http.delete(`/documents/${docID}`);
+}

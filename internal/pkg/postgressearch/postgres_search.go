@@ -104,12 +104,15 @@ func buildSearchConditions(config infra.PostgresSearchConfig, tableAliasWithDot,
 
 		for _, field := range config.Fields {
 			switch field.Type {
+			case infra.PostgresSearchTypeArray:
+				whereParts = append(whereParts,
+					fmt.Sprintf("%s%s @> ?", tableAliasWithDot, field.Name))
+				whereArgs = append(whereArgs, queryWithWildcards)
 			case infra.PostgresSearchTypeComposite, infra.PostgresSearchTypeNumber:
 				// Use ILIKE for pattern matching
 				whereParts = append(whereParts,
 					fmt.Sprintf("%s%s ILIKE ?", tableAliasWithDot, field.Name))
 				whereArgs = append(whereArgs, queryWithWildcards)
-
 			case infra.PostgresSearchTypeText:
 				// Use both ILIKE and similarity for text fields
 				whereParts = append(whereParts,

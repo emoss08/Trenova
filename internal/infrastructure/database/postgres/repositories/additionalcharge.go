@@ -88,7 +88,7 @@ func (r *additionalChargeRepository) HandleAdditionalChargeOperations(ctx contex
 
 	// * Handle bulk insert of new additional charges
 	if len(newAdditionalCharges) > 0 {
-		if _, err := tx.NewInsert().Model(&newAdditionalCharges).Exec(ctx); err != nil {
+		if _, err = tx.NewInsert().Model(&newAdditionalCharges).Exec(ctx); err != nil {
 			r.l.Error().Err(err).Msg("failed to bulk insert new additional charges")
 			return err
 		}
@@ -96,7 +96,7 @@ func (r *additionalChargeRepository) HandleAdditionalChargeOperations(ctx contex
 
 	// * Handle bulk update of new additional charges
 	if len(updateAdditionalCharges) > 0 {
-		if err := r.handleBulkUpdate(ctx, tx, updateAdditionalCharges); err != nil {
+		if err = r.handleBulkUpdate(ctx, tx, updateAdditionalCharges); err != nil {
 			r.l.Error().Err(err).Msg("failed to handle bulk update of additional charges")
 			return err
 		}
@@ -104,7 +104,7 @@ func (r *additionalChargeRepository) HandleAdditionalChargeOperations(ctx contex
 
 	// * Handle deletion of additional charges that are no longer present
 	if !isCreate {
-		if err := r.handleAdditionalChargeDeletions(ctx, tx, &repositories.AdditionalChargeDeletionRequest{
+		if err = r.handleAdditionalChargeDeletions(ctx, tx, &repositories.AdditionalChargeDeletionRequest{
 			ExistingAdditionalChargeMap: existingAdditionalChargeMap,
 			UpdatedAdditionalChargeIDs:  updatedAdditionalChargeIDs,
 			AdditionalChargesToDelete:   additionalChargesToDelete,

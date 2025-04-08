@@ -26,7 +26,7 @@ func NewValidator(p ValidatorParams) *Validator {
 	}
 }
 
-func (v *Validator) Validate(ctx context.Context, valCtx *validator.ValidationContext, bc *billing.BillingControl) *errors.MultiError {
+func (v *Validator) Validate(ctx context.Context, _ *validator.ValidationContext, bc *billing.BillingControl) *errors.MultiError {
 	multiErr := errors.NewMultiError()
 
 	bc.Validate(ctx, multiErr)

@@ -183,7 +183,7 @@ func (h *Handler) AdvancedSearch(c *fiber.Ctx) error {
 		Options   map[string]any `json:"options,omitempty"`
 	}
 
-	if err := c.BodyParser(&req); err != nil {
+	if err = c.BodyParser(&req); err != nil {
 		h.log.Error().Err(err).Msg("failed to parse advanced search request body")
 		return h.eh.HandleError(c, errors.NewBusinessError("invalid request body"))
 	}

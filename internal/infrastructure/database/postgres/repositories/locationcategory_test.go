@@ -75,7 +75,7 @@ func TestLocationCategoryRepository(t *testing.T) {
 		newEntity := &location.LocationCategory{
 			Name:                "Test Location Category",
 			Description:         "Test Location Category Description",
-			Type:                location.LocationCategoryTypeWarehouse,
+			Type:                location.CategoryWarehouse,
 			FacilityType:        location.FacilityTypeColdStorage,
 			Color:               "#000000",
 			HasSecureParking:    false,
