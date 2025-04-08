@@ -198,97 +198,163 @@ func (sr *stopRepository) HandleStopRemovals(
 
 	// If there are stops to delete
 	if len(stopIDsToDelete) > 0 {
-		// Get all stops for this move directly from the database to ensure we have the current state
-		var allStops []*shipment.Stop
-		err := tx.NewSelect().
-			Model(&allStops).
-			Where("shipment_move_id = ?", move.ID).
-			Scan(ctx)
-		if err != nil {
-			log.Error().Err(err).Str("moveID", move.ID.String()).
-				Msg("failed to get all stops for move")
-			return err
-		}
-
-		// If we have less than 2 stops total, we can't delete any
-		if len(allStops) < 2 {
-			log.Error().Msg("move has less than 2 stops, cannot proceed with deletion")
-			return errors.NewBusinessError(
-				"A move must have at least a pickup and delivery stop",
-			)
-		}
-
-		// Count how many pickup and delivery stops we have and will remain after deletion
-		remainingPickups := 0
-		remainingDeliveries := 0
-
-		// Check each stop to see if it's a pickup or delivery, and if it's being deleted
-		for _, stop := range allStops {
-			isBeingDeleted := false
-			for _, deleteID := range stopIDsToDelete {
-				if stop.ID == deleteID {
-					isBeingDeleted = true
-					break
-				}
-			}
-
-			// Count remaining stops by type
-			if !isBeingDeleted {
-				if stop.Type == shipment.StopTypePickup {
-					remainingPickups++
-				} else if stop.Type == shipment.StopTypeDelivery {
-					remainingDeliveries++
-				}
-			}
-		}
-
-		// Log the counts for debugging
-		log.Debug().
-			Int("remainingPickups", remainingPickups).
-			Int("remainingDeliveries", remainingDeliveries).
-			Msg("stops that will remain after deletion")
-
-		// Make sure we'll still have at least one pickup and one delivery
-		if remainingPickups == 0 {
-			return errors.NewBusinessError(
-				"Cannot delete all pickup stops. At least one pickup stop is required for the move.",
-			)
-		}
-
-		if remainingDeliveries == 0 {
-			return errors.NewBusinessError(
-				"Cannot delete all delivery stops. At least one delivery stop is required for the move.",
-			)
-		}
-
-		// Now delete the stops since we've verified at least one pickup and delivery will remain
-		result, err := tx.NewDelete().
-			Model((*shipment.Stop)(nil)).
-			Where("id IN (?)", bun.In(stopIDsToDelete)).
-			Exec(ctx)
-		if err != nil {
-			log.Error().Err(err).Interface("stopIDs", stopIDsToDelete).
-				Msg("failed to delete stops")
-			return err
-		}
-
-		// Check that the expected number of stops were deleted
-		rowsAffected, err := result.RowsAffected()
-		if err != nil {
-			log.Error().Err(err).Msg("failed to get rows affected for stop deletion")
-			return err
-		}
-
-		log.Info().Int64("deletedStopCount", rowsAffected).
-			Interface("stopIDs", stopIDsToDelete).
-			Msg("successfully deleted stops")
-
-		// After deletion, resequence the remaining stops to ensure contiguous sequencing
-		if err := sr.resequenceRemainingStops(ctx, tx, move.ID); err != nil {
-			log.Error().Err(err).Msg("failed to resequence remaining stops")
+		// Process the deletion with appropriate validations
+		if err := sr.processStopDeletions(ctx, tx, move.ID, stopIDsToDelete); err != nil {
 			return err
 		}
 	}
+
+	return nil
+}
+
+// processStopDeletions handles the actual deletion process after validating requirements
+func (sr *stopRepository) processStopDeletions(ctx context.Context, tx bun.IDB, moveID pulid.ID, stopIDsToDelete []pulid.ID) error {
+	log := sr.l.With().
+		Str("operation", "processStopDeletions").
+		Str("moveID", moveID.String()).
+		Logger()
+
+	// Get all stops for this move directly from the database to ensure we have the current state
+	allStops, err := sr.getAllStopsForMove(ctx, tx, moveID)
+	if err != nil {
+		return err
+	}
+
+	// Validate minimum stop requirements
+	if err = sr.validateMinimumStops(allStops); err != nil {
+		return err
+	}
+
+	// Validate that we'll have required stop types after deletion
+	if err = sr.validateRemainingStopTypes(allStops, stopIDsToDelete); err != nil {
+		return err
+	}
+
+	// Now delete the stops since we've verified all requirements
+	if err = sr.deleteStops(ctx, tx, stopIDsToDelete); err != nil {
+		return err
+	}
+
+	// After deletion, resequence the remaining stops to ensure contiguous sequencing
+	if err = sr.resequenceRemainingStops(ctx, tx, moveID); err != nil {
+		log.Error().Err(err).Msg("failed to resequence remaining stops")
+		return err
+	}
+
+	return nil
+}
+
+// getAllStopsForMove fetches all stops for the given move
+func (sr *stopRepository) getAllStopsForMove(ctx context.Context, tx bun.IDB, moveID pulid.ID) ([]*shipment.Stop, error) {
+	log := sr.l.With().
+		Str("operation", "getAllStopsForMove").
+		Str("moveID", moveID.String()).
+		Logger()
+
+	var allStops []*shipment.Stop
+	err := tx.NewSelect().
+		Model(&allStops).
+		Where("shipment_move_id = ?", moveID).
+		Scan(ctx)
+	if err != nil {
+		log.Error().Err(err).Str("moveID", moveID.String()).
+			Msg("failed to get all stops for move")
+		return nil, err
+	}
+
+	return allStops, nil
+}
+
+// validateMinimumStops ensures there are enough stops in total
+func (sr *stopRepository) validateMinimumStops(allStops []*shipment.Stop) error {
+	log := sr.l.With().Str("operation", "validateMinimumStops").Logger()
+
+	// If we have less than 2 stops total, we can't delete any
+	if len(allStops) < 2 {
+		log.Error().Msg("move has less than 2 stops, cannot proceed with deletion")
+		return errors.NewBusinessError(
+			"A move must have at least a pickup and delivery stop",
+		)
+	}
+
+	return nil
+}
+
+// validateRemainingStopTypes ensures at least one pickup and delivery stop will remain
+func (sr *stopRepository) validateRemainingStopTypes(allStops []*shipment.Stop, stopIDsToDelete []pulid.ID) error {
+	log := sr.l.With().Str("operation", "validateRemainingStopTypes").Logger()
+
+	// Count how many pickup and delivery stops we have and will remain after deletion
+	remainingPickups := 0
+	remainingDeliveries := 0
+
+	// Create a map for faster lookup of stops to delete
+	stopsToDelete := make(map[pulid.ID]struct{})
+	for _, id := range stopIDsToDelete {
+		stopsToDelete[id] = struct{}{}
+	}
+
+	// Check each stop to see if it's a pickup or delivery, and if it's being deleted
+	for _, stop := range allStops {
+		_, isBeingDeleted := stopsToDelete[stop.ID]
+		if !isBeingDeleted {
+			if stop.Type == shipment.StopTypePickup {
+				remainingPickups++
+			} else if stop.Type == shipment.StopTypeDelivery {
+				remainingDeliveries++
+			}
+		}
+	}
+
+	// Log the counts for debugging
+	log.Debug().
+		Int("remainingPickups", remainingPickups).
+		Int("remainingDeliveries", remainingDeliveries).
+		Msg("stops that will remain after deletion")
+
+	// Make sure we'll still have at least one pickup and one delivery
+	if remainingPickups == 0 {
+		return errors.NewBusinessError(
+			"Cannot delete all pickup stops. At least one pickup stop is required for the move.",
+		)
+	}
+
+	if remainingDeliveries == 0 {
+		return errors.NewBusinessError(
+			"Cannot delete all delivery stops. At least one delivery stop is required for the move.",
+		)
+	}
+
+	return nil
+}
+
+// deleteStops performs the actual deletion of stops
+func (sr *stopRepository) deleteStops(ctx context.Context, tx bun.IDB, stopIDsToDelete []pulid.ID) error {
+	log := sr.l.With().
+		Str("operation", "deleteStops").
+		Interface("stopIDsToDelete", stopIDsToDelete).
+		Logger()
+
+	result, err := tx.NewDelete().
+		Model((*shipment.Stop)(nil)).
+		Where("id IN (?)", bun.In(stopIDsToDelete)).
+		Exec(ctx)
+	if err != nil {
+		log.Error().Err(err).Interface("stopIDs", stopIDsToDelete).
+			Msg("failed to delete stops")
+		return err
+	}
+
+	// Check that the expected number of stops were deleted
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		log.Error().Err(err).Msg("failed to get rows affected for stop deletion")
+		return err
+	}
+
+	log.Info().Int64("deletedStopCount", rowsAffected).
+		Interface("stopIDs", stopIDsToDelete).
+		Msg("successfully deleted stops")
 
 	return nil
 }
@@ -340,7 +406,7 @@ func (sr *stopRepository) resequenceRemainingStops(ctx context.Context, tx bun.I
 			continue // Skip if already has the correct sequence
 		}
 
-		_, err := tx.NewUpdate().
+		_, err = tx.NewUpdate().
 			Model(stop).
 			Set("sequence = ?", i).
 			Set("version = version + 1"). // Increment version for optimistic locking

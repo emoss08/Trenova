@@ -13,35 +13,59 @@ import (
 	"github.com/emoss08/trenova/internal/pkg/logger"
 	"github.com/emoss08/trenova/internal/pkg/postgressearch"
 	"github.com/emoss08/trenova/internal/pkg/utils/queryutils/queryfilters"
+	"github.com/emoss08/trenova/pkg/types/pulid"
 	"github.com/rotisserie/eris"
 	"github.com/rs/zerolog"
 	"github.com/uptrace/bun"
 	"go.uber.org/fx"
 )
 
+// CustomerRepositoryParams defines dependencies required for initializing the CustomerRepository.
+// This includes database connection, document type repository, and logger.
 type CustomerRepositoryParams struct {
 	fx.In
 
-	DB     db.Connection
-	Logger *logger.Logger
+	DB      db.Connection
+	DocRepo repositories.DocumentTypeRepository
+	Logger  *logger.Logger
 }
 
+// customerRepository implements the CustomerRepository interface
+// and provides methods to manage customer data, including CRUD operations.
 type customerRepository struct {
-	db db.Connection
-	l  *zerolog.Logger
+	db      db.Connection
+	docRepo repositories.DocumentTypeRepository
+	l       *zerolog.Logger
 }
 
+// NewCustomerRepository initializes a new instance of customerRepository with its dependencies.
+//
+// Parameters:
+//   - p: CustomerRepositoryParams containing dependencies.
+//
+// Returns:
+//   - repositories.CustomerRepository: A ready-to-use customer repository instance.
 func NewCustomerRepository(p CustomerRepositoryParams) repositories.CustomerRepository {
 	log := p.Logger.With().
 		Str("repository", "customer").
 		Logger()
 
 	return &customerRepository{
-		db: p.DB,
-		l:  &log,
+		db:      p.DB,
+		docRepo: p.DocRepo,
+		l:       &log,
 	}
 }
 
+// filterQuery applies filters and pagination to the customer query.
+// It includes tenant-based filtering and full-text search when provided.
+//
+// Parameters:
+//   - q: The base select query.
+//   - opts: ListCustomerOptions containing filter and pagination details.
+//
+// Returns:
+//   - *bun.SelectQuery: The filtered and paginated query.
 func (cr *customerRepository) filterQuery(q *bun.SelectQuery, opts *repositories.ListCustomerOptions) *bun.SelectQuery {
 	q = queryfilters.TenantFilterQuery(&queryfilters.TenantFilterQueryOptions{
 		Query:      q,
@@ -72,6 +96,15 @@ func (cr *customerRepository) filterQuery(q *bun.SelectQuery, opts *repositories
 	return q.Limit(opts.Filter.Limit).Offset(opts.Filter.Offset)
 }
 
+// List retrieves a list of customers based on the provided options.
+//
+// Parameters:
+//   - ctx: The context for the operation.
+//   - opts: ListCustomerOptions containing filter and pagination details.
+//
+// Returns:
+//   - *ports.ListResult[*customer.Customer]: A list of customers.
+//   - error: An error if the operation fails.
 func (cr *customerRepository) List(ctx context.Context, opts *repositories.ListCustomerOptions) (*ports.ListResult[*customer.Customer], error) {
 	dba, err := cr.db.DB(ctx)
 	if err != nil {
@@ -101,6 +134,15 @@ func (cr *customerRepository) List(ctx context.Context, opts *repositories.ListC
 	}, nil
 }
 
+// GetByID retrieves a customer by their ID.
+//
+// Parameters:
+//   - ctx: The context for the operation.
+//   - opts: GetCustomerByIDOptions containing customer ID and tenant options.
+//
+// Returns:
+//   - *customer.Customer: The customer entity.
+//   - error: An error if the operation fails.
 func (cr *customerRepository) GetByID(ctx context.Context, opts repositories.GetCustomerByIDOptions) (*customer.Customer, error) {
 	dba, err := cr.db.DB(ctx)
 	if err != nil {
@@ -115,16 +157,24 @@ func (cr *customerRepository) GetByID(ctx context.Context, opts repositories.Get
 	entity := new(customer.Customer)
 
 	query := dba.NewSelect().Model(entity).
-		Where("cus.id = ? AND cus.organization_id = ? AND cus.business_unit_id = ?", opts.ID, opts.OrgID, opts.BuID)
+		WhereGroup(" AND ", func(q *bun.SelectQuery) *bun.SelectQuery {
+			return q.
+				Where("cus.id = ?", opts.ID).
+				Where("cus.organization_id = ?", opts.OrgID).
+				Where("cus.business_unit_id = ?", opts.BuID)
+		})
 
+	// * Include the state if requested
 	if opts.IncludeState {
 		query = query.Relation("State")
 	}
 
+	// * Include the billing profile if requested
 	if opts.IncludeBillingProfile {
 		query = query.Relation("BillingProfile")
 	}
 
+	// * Include the email profile if requested
 	if opts.IncludeEmailProfile {
 		query = query.Relation("EmailProfile")
 	}
@@ -141,7 +191,99 @@ func (cr *customerRepository) GetByID(ctx context.Context, opts repositories.Get
 	return entity, nil
 }
 
-// Create a customer and ensure it has a billing profile
+// GetDocumentRequirements retrieves the document requirements for a customer.
+//
+// Parameters:
+//   - ctx: The context for the operation.
+//   - cusID: The ID of the customer.
+//
+// Returns:
+//   - []*repositories.CustomerDocRequirementResponse: A list of document requirements.
+//   - error: An error if the operation fails.
+func (cr *customerRepository) GetDocumentRequirements(ctx context.Context, cusID pulid.ID) ([]*repositories.CustomerDocRequirementResponse, error) {
+	log := cr.l.With().
+		Str("operation", "GetDocumentRequirements").
+		Str("customerID", cusID.String()).
+		Logger()
+
+	// * Get the customer billing profile
+	billingProfile, err := cr.getBillingProfile(ctx, cusID, "document_type_ids")
+	if err != nil {
+		log.Error().Err(err).Msg("failed to get customer billing profile")
+		return nil, err
+	}
+
+	// * Get the document types
+	docTypes, err := cr.docRepo.GetByIDs(ctx, billingProfile.DocumentTypeIDs)
+	if err != nil {
+		log.Error().Err(err).Msg("failed to get document types")
+		return nil, err
+	}
+
+	// * Create the response with the exact capacity needed
+	response := make([]*repositories.CustomerDocRequirementResponse, 0, len(docTypes))
+
+	// * Iterate over the document types and create the response
+	for _, docType := range docTypes {
+		response = append(response, &repositories.CustomerDocRequirementResponse{
+			Name:        docType.Name,
+			DocID:       docType.ID.String(),
+			Description: docType.Description,
+			Color:       docType.Color,
+		})
+	}
+
+	return response, nil
+}
+
+// getBillingProfile gets and returns a billing profile for a customer.
+// If fields are provided, only the specified fields are retrieved.
+//
+// Parameters:
+//   - ctx: The context for the operation.
+//   - cusID: The ID of the customer.
+//   - fields: Optional fields to retrieve from the billing profile.
+//
+// Returns:
+//   - *customer.BillingProfile: The billing profile entity.
+//   - error: An error if the operation fails.
+func (cr *customerRepository) getBillingProfile(ctx context.Context, cusID pulid.ID, fields ...string) (*customer.BillingProfile, error) {
+	dba, err := cr.db.DB(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	log := cr.l.With().
+		Str("operation", "getBillingProfile").
+		Str("customerID", cusID.String()).
+		Logger()
+
+	profile := new(customer.BillingProfile)
+	query := dba.NewSelect().Model(profile).
+		Where("cbr.customer_id = ?", cusID)
+
+	// If specific fields are requested, only select those
+	if len(fields) > 0 {
+		query = query.Column(fields...)
+	}
+
+	if err = query.Scan(ctx); err != nil {
+		log.Error().Err(err).Msg("failed to get billing profile")
+		return nil, err
+	}
+
+	return profile, nil
+}
+
+// Create a customer and ensure it has a billing profile and email profile
+//
+// Parameters:
+//   - ctx: The context for the operation.
+//   - cus: The customer entity to create.
+//
+// Returns:
+//   - *customer.Customer: The created customer entity.
+//   - error: An error if the operation fails.
 func (cr *customerRepository) Create(ctx context.Context, cus *customer.Customer) (*customer.Customer, error) {
 	dba, err := cr.db.DB(ctx)
 	if err != nil {
@@ -186,6 +328,14 @@ func (cr *customerRepository) Create(ctx context.Context, cus *customer.Customer
 
 // createOrUpdateBillingProfile ensures a customer has a billing profile
 // If the customer already has a billing profile, it's used; otherwise a default one is created
+//
+// Parameters:
+//   - ctx: The context for the operation.
+//   - tx: The database transaction.
+//   - cus: The customer entity to create.
+//
+// Returns:
+//   - error: An error if the operation fails.
 func (cr *customerRepository) createOrUpdateBillingProfile(ctx context.Context, tx bun.Tx, cus *customer.Customer) error {
 	log := cr.l.With().
 		Str("operation", "createOrUpdateBillingProfile").
@@ -235,6 +385,14 @@ func (cr *customerRepository) createOrUpdateBillingProfile(ctx context.Context, 
 
 // createOrUpdateEmailProfile ensures a customer has an email profile
 // If the customer already has an email profile, it's used; otherwise a default one is created
+//
+// Parameters:
+//   - ctx: The context for the operation.
+//   - tx: The database transaction.
+//   - cus: The customer entity to create.
+//
+// Returns:
+//   - error: An error if the operation fails.
 func (cr *customerRepository) createOrUpdateEmailProfile(ctx context.Context, tx bun.Tx, cus *customer.Customer) error {
 	log := cr.l.With().
 		Str("operation", "createOrUpdateEmailProfile").
@@ -282,6 +440,15 @@ func (cr *customerRepository) createOrUpdateEmailProfile(ctx context.Context, tx
 	return nil
 }
 
+// Update updates a customer and ensures it has a billing profile and email profile
+//
+// Parameters:
+//   - ctx: The context for the operation.
+//   - cus: The customer entity to update.
+//
+// Returns:
+//   - *customer.Customer: The updated customer entity.
+//   - error: An error if the operation fails.
 func (cr *customerRepository) Update(ctx context.Context, cus *customer.Customer) (*customer.Customer, error) {
 	dba, err := cr.db.DB(ctx)
 	if err != nil {
@@ -352,6 +519,14 @@ func (cr *customerRepository) Update(ctx context.Context, cus *customer.Customer
 	return cus, nil
 }
 
+// updateBillingProfile updates a billing profile
+//
+// Parameters:
+//   - ctx: The context for the operation.
+//   - profile: The billing profile entity to update.
+//
+// Returns:
+//   - error: An error if the operation fails.
 func (cr *customerRepository) updateBillingProfile(ctx context.Context, profile *customer.BillingProfile) error {
 	dba, err := cr.db.DB(ctx)
 	if err != nil {
@@ -414,6 +589,14 @@ func (cr *customerRepository) updateBillingProfile(ctx context.Context, profile 
 	return nil
 }
 
+// updateEmailProfile updates an email profile
+//
+// Parameters:
+//   - ctx: The context for the operation.
+//   - profile: The email profile entity to update.
+//
+// Returns:
+//   - error: An error if the operation fails.
 func (cr *customerRepository) updateEmailProfile(ctx context.Context, profile *customer.CustomerEmailProfile) error {
 	dba, err := cr.db.DB(ctx)
 	if err != nil {

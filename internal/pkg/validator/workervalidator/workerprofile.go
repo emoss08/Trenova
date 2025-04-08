@@ -33,7 +33,6 @@ func NewWorkerProfileValidator(p WorkerProfileValidatorParams) *WorkerProfileVal
 func (v *WorkerProfileValidator) Validate(ctx context.Context, valCtx *validator.ValidationContext, wp *worker.WorkerProfile, multiErr *errors.MultiError) {
 	wp.Validate(ctx, multiErr)
 
-
 	v.compValidator.ValidateWorkerCompliance(ctx, wp, multiErr)
 
 	if valCtx.IsCreate {

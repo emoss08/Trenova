@@ -2,12 +2,12 @@ package middleware
 
 import (
 	"context"
-	"encoding/json"
 	"net"
 	"strconv"
 	"strings"
 	"time"
 
+	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/infrastructure/cache/redis"
 	tCtx "github.com/emoss08/trenova/internal/pkg/ctx"
 	"github.com/emoss08/trenova/internal/pkg/errors"
@@ -64,7 +64,7 @@ type RateLimitConfig struct {
 type RateLimitMetrics struct {
 	Allowed     int64     `json:"allowed"`
 	Blocked     int64     `json:"blocked"`
-	LastBlocked time.Time `json:"last_blocked"`
+	LastBlocked time.Time `json:"lastBlocked"`
 }
 
 // NewRateLimit creates a new rate limiter instance with the provided dependencies
@@ -125,22 +125,12 @@ func (rl *RateLimiter) setConfigDefaults(config *RateLimitConfig) {
 func (rl *RateLimiter) createLimitHandler(config *RateLimitConfig) fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		// Skip rate limiting if skip function is provided and returns true
-		if config.Skip != nil && config.Skip(c) {
-			return c.Next()
-		}
-
-		// Check for bypass token if enabled
-		if config.EnableBypass && config.BypassCheck != nil && config.BypassCheck(c) {
-			c.Set("X-RateLimit-Bypassed", "true")
+		if rl.shouldSkipRateLimiting(c, config) {
 			return c.Next()
 		}
 
 		// Create a context-specific logger
-		log := rl.l.With().
-			Str("path", c.Path()).
-			Str("method", c.Method()).
-			Str("ip", c.IP()).
-			Logger()
+		log := rl.createContextLogger(c)
 
 		// Get appropriate rate limit for this user/role
 		maxRequests, interval := rl.getRoleLimits(c, config)
@@ -150,85 +140,24 @@ func (rl *RateLimiter) createLimitHandler(config *RateLimitConfig) fiber.Handler
 		defer cancel()
 
 		// Build unique key for this rate limit
-		var key string
-		if config.GroupKey != nil {
-			key = config.GroupKey(c)
-		} else {
-			key = config.KeyGenerator(c)
-		}
+		key := rl.generateRateLimitKey(c, config)
 
-		var allowed bool
-		var remaining int
-		var reset int64
-		var err error
-
-		// Choose strategy based on configuration
-		switch config.Strategy {
-		case "sliding":
-			allowed, remaining, reset, err = rl.checkSlidingWindowLimit(ctx, key, maxRequests, interval)
-		case "token":
-			allowed, remaining, reset, err = rl.checkTokenBucketLimit(ctx, key, config)
-		default:
-			allowed, remaining, reset, err = rl.checkFixedWindowLimit(ctx, key, maxRequests, interval)
-		}
-
+		// Check rate limit according to strategy
+		allowed, remaining, reset, err := rl.checkRateLimit(ctx, key, maxRequests, interval, config)
+		// Handle errors in rate limit check
 		if err != nil {
-			log.Error().Err(err).Msg("rate limit check failed")
-			// Determine what to do on failure
-			if config.FallbackBehavior == "deny" {
-				rlErr := errors.NewRateLimitError(c.Path(), "Rate limiting unavailable. Please try again later.")
-				return c.Status(fiber.StatusServiceUnavailable).JSON(rlErr)
-			}
-			return c.Next() // Allow request on error for high availability
+			return rl.handleRateLimitError(c, config, log, err)
 		}
 
-		// Ensure reset time is not in the past
-		now := time.Now().Unix()
-		if reset <= now {
-			// If reset time is in the past, set it to a small time in the future
-			reset = now + 1
-
-			// Also, we should reset the counter if the reset time was in the past
-			if !allowed {
-				log.Warn().
-					Str("ip", c.IP()).
-					Str("path", c.Path()).
-					Msg("reset time was in the past but limit was exceeded; forcing counter reset")
-
-				// Force reset the counter
-				rl.resetCounter(ctx, key, config.Strategy)
-
-				// Allow this request since we're resetting
-				allowed = true
-				remaining = maxRequests - 1
-			}
-		}
+		// Handle reset time edge cases
+		allowed, remaining, reset = rl.handleResetTimeEdgeCases(ctx, c, key, config, allowed, remaining, reset, maxRequests, log)
 
 		// Set rate limit headers
-		c.Set("X-RateLimit-Limit", strconv.Itoa(maxRequests))
-		c.Set("X-RateLimit-Remaining", strconv.Itoa(remaining))
-		c.Set("X-RateLimit-Reset", strconv.FormatInt(reset, 10))
-		c.Set("X-RateLimit-Strategy", config.Strategy)
+		rl.setRateLimitHeaders(c, maxRequests, remaining, reset, config.Strategy)
 
+		// Handle the case when rate limit is exceeded
 		if !allowed {
-			log.Warn().
-				Str("ip", c.IP()).
-				Str("path", c.Path()).
-				Int("limit", maxRequests).
-				Msg("rate limit exceeded")
-
-			// Update metrics if enabled
-			if config.Metrics {
-				rl.updateBlockMetrics(ctx, key)
-			}
-
-			// Use custom response if provided, otherwise use default
-			if config.CustomResponse != nil {
-				return config.CustomResponse(c)
-			}
-
-			rlErr := errors.NewRateLimitError(c.Path(), "Rate limit exceeded. Please try again later.")
-			return c.Status(fiber.StatusTooManyRequests).JSON(rlErr)
+			return rl.handleRateLimitExceeded(ctx, c, key, config, maxRequests, log)
 		}
 
 		// Update metrics if enabled
@@ -240,6 +169,123 @@ func (rl *RateLimiter) createLimitHandler(config *RateLimitConfig) fiber.Handler
 	}
 }
 
+// shouldSkipRateLimiting determines if rate limiting should be skipped for this request
+func (rl *RateLimiter) shouldSkipRateLimiting(c *fiber.Ctx, config *RateLimitConfig) bool {
+	// Skip if skip function is provided and returns true
+	if config.Skip != nil && config.Skip(c) {
+		return true
+	}
+
+	// Skip if bypass is enabled and check returns true
+	if config.EnableBypass && config.BypassCheck != nil && config.BypassCheck(c) {
+		c.Set("X-RateLimit-Bypassed", "true")
+		return true
+	}
+
+	return false
+}
+
+// createContextLogger creates a context-specific logger with request details
+func (rl *RateLimiter) createContextLogger(c *fiber.Ctx) zerolog.Logger {
+	return rl.l.With().
+		Str("path", c.Path()).
+		Str("method", c.Method()).
+		Str("ip", c.IP()).
+		Logger()
+}
+
+// generateRateLimitKey generates the key for rate limiting
+func (rl *RateLimiter) generateRateLimitKey(c *fiber.Ctx, config *RateLimitConfig) string {
+	if config.GroupKey != nil {
+		return config.GroupKey(c)
+	}
+	return config.KeyGenerator(c)
+}
+
+// checkRateLimit checks if the request is allowed based on the rate limit strategy
+func (rl *RateLimiter) checkRateLimit(ctx context.Context, key string, maxRequests int, interval time.Duration, config *RateLimitConfig) (bool, int, int64, error) {
+	switch config.Strategy {
+	case "sliding":
+		return rl.checkSlidingWindowLimit(ctx, key, maxRequests, interval)
+	case "token":
+		return rl.checkTokenBucketLimit(ctx, key, config)
+	default:
+		return rl.checkFixedWindowLimit(ctx, key, maxRequests, interval)
+	}
+}
+
+// handleRateLimitError handles errors that occur during rate limit checking
+func (rl *RateLimiter) handleRateLimitError(c *fiber.Ctx, config *RateLimitConfig, log zerolog.Logger, err error) error {
+	log.Error().Err(err).Msg("rate limit check failed")
+
+	// Determine what to do on failure
+	if config.FallbackBehavior == "deny" {
+		rlErr := errors.NewRateLimitError(c.Path(), "Rate limiting unavailable. Please try again later.")
+		return c.Status(fiber.StatusServiceUnavailable).JSON(rlErr)
+	}
+
+	return c.Next() // Allow request on error for high availability
+}
+
+// handleResetTimeEdgeCases handles the case when reset time is in the past
+func (rl *RateLimiter) handleResetTimeEdgeCases(ctx context.Context, c *fiber.Ctx, key string, config *RateLimitConfig, allowed bool, remaining int, reset int64, maxRequests int, log zerolog.Logger) (bool, int, int64) {
+	now := time.Now().Unix()
+	if reset <= now {
+		// If reset time is in the past, set it to a small time in the future
+		reset = now + 1
+
+		// Also, we should reset the counter if the reset time was in the past
+		if !allowed {
+			log.Warn().
+				Str("ip", c.IP()).
+				Str("path", c.Path()).
+				Msg("reset time was in the past but limit was exceeded; forcing counter reset")
+
+			// Force reset the counter
+			if err := rl.resetCounter(ctx, key, config.Strategy); err != nil {
+				log.Error().Err(err).Msg("failed to reset rate limit counter")
+				// Continue despite error - we'll try to allow the request anyway
+			}
+
+			// Allow this request since we're resetting
+			allowed = true
+			remaining = maxRequests - 1
+		}
+	}
+
+	return allowed, remaining, reset
+}
+
+// setRateLimitHeaders sets the rate limit headers in the response
+func (rl *RateLimiter) setRateLimitHeaders(c *fiber.Ctx, maxRequests int, remaining int, reset int64, strategy string) {
+	c.Set("X-RateLimit-Limit", strconv.Itoa(maxRequests))
+	c.Set("X-RateLimit-Remaining", strconv.Itoa(remaining))
+	c.Set("X-RateLimit-Reset", strconv.FormatInt(reset, 10))
+	c.Set("X-RateLimit-Strategy", strategy)
+}
+
+// handleRateLimitExceeded handles the case when rate limit is exceeded
+func (rl *RateLimiter) handleRateLimitExceeded(ctx context.Context, c *fiber.Ctx, key string, config *RateLimitConfig, maxRequests int, log zerolog.Logger) error {
+	log.Warn().
+		Str("ip", c.IP()).
+		Str("path", c.Path()).
+		Int("limit", maxRequests).
+		Msg("rate limit exceeded")
+
+	// Update metrics if enabled
+	if config.Metrics {
+		rl.updateBlockMetrics(ctx, key)
+	}
+
+	// Use custom response if provided, otherwise use default
+	if config.CustomResponse != nil {
+		return config.CustomResponse(c)
+	}
+
+	rlErr := errors.NewRateLimitError(c.Path(), "Rate limit exceeded. Please try again later.")
+	return c.Status(fiber.StatusTooManyRequests).JSON(rlErr)
+}
+
 // resetCounter resets the rate limit counter based on the strategy
 func (rl *RateLimiter) resetCounter(ctx context.Context, key string, strategy string) error {
 	var err error
@@ -249,11 +295,15 @@ func (rl *RateLimiter) resetCounter(ctx context.Context, key string, strategy st
 		err = rl.redis.Del(ctx, key)
 	case "token":
 		// For token bucket, reset to full bucket size
-		err = rl.redis.Del(ctx, key)
+		if err = rl.redis.Del(ctx, key); err != nil {
+			return err
+		}
 		err = rl.redis.Del(ctx, key+":timestamp")
 	default:
 		// For fixed window, delete both counter and window keys
-		err = rl.redis.Del(ctx, key)
+		if err = rl.redis.Del(ctx, key); err != nil {
+			return err
+		}
 		err = rl.redis.Del(ctx, key+":window")
 	}
 
@@ -284,11 +334,11 @@ func (rl *RateLimiter) verifyCounterConsistency(ctx context.Context, key string,
 			Str("windowKey", windowKey).
 			Msg("inconsistent rate limit state detected, resetting")
 
-		if err := rl.redis.Del(ctx, key); err != nil {
+		if err = rl.redis.Del(ctx, key); err != nil {
 			return eris.Wrap(err, "failed to delete counter key")
 		}
 
-		if err := rl.redis.Del(ctx, windowKey); err != nil {
+		if err = rl.redis.Del(ctx, windowKey); err != nil {
 			return eris.Wrap(err, "failed to delete window key")
 		}
 	}
@@ -357,9 +407,22 @@ func (rl *RateLimiter) checkFixedWindowLimit(ctx context.Context, key string, ma
 	}
 
 	// Parse results
-	allowed := results[0].(int64) == 1
-	remaining := int(results[1].(int64))
-	reset := results[2].(int64)
+	allowed, ok := results[0].(int64)
+	if !ok {
+		return false, 0, 0, eris.New("invalid allowed value from fixed window script")
+	}
+	remainingVal, ok := results[1].(int64)
+	if !ok {
+		return false, 0, 0, eris.New("invalid remaining value from fixed window script")
+	}
+	resetVal, ok := results[2].(int64)
+	if !ok {
+		return false, 0, 0, eris.New("invalid reset value from fixed window script")
+	}
+
+	isAllowed := allowed == 1
+	remaining := int(remainingVal)
+	reset := resetVal
 
 	// Double-check: if reset time is in the past, something is wrong
 	if reset < now {
@@ -370,18 +433,18 @@ func (rl *RateLimiter) checkFixedWindowLimit(ctx context.Context, key string, ma
 			Msg("reset time is in the past, possible clock skew or expired window")
 
 		// Force reset the window
-		err := rl.resetCounter(ctx, key, "fixed")
+		err = rl.resetCounter(ctx, key, "fixed")
 		if err != nil {
 			rl.l.Error().Err(err).Msg("failed to reset counter after detecting past reset time")
 		}
 
 		// Set new reset time
 		reset = now + int64(interval.Seconds())
-		allowed = true
+		isAllowed = true
 		remaining = maxRequests - 1
 	}
 
-	return allowed, remaining, reset, nil
+	return isAllowed, remaining, reset, nil
 }
 
 // checkSlidingWindowLimit implements sliding window rate limiting
@@ -399,11 +462,24 @@ func (rl *RateLimiter) checkSlidingWindowLimit(ctx context.Context, key string, 
 	}
 
 	// Parse results
-	allowed := results[0].(int64) == 1
-	remaining := int(results[1].(int64))
-	reset := results[2].(int64)
+	allowed, ok := results[0].(int64)
+	if !ok {
+		return false, 0, 0, eris.New("invalid allowed value from sliding window script")
+	}
+	remainingVal, ok := results[1].(int64)
+	if !ok {
+		return false, 0, 0, eris.New("invalid remaining value from sliding window script")
+	}
+	resetVal, ok := results[2].(int64)
+	if !ok {
+		return false, 0, 0, eris.New("invalid reset value from sliding window script")
+	}
 
-	return allowed, remaining, reset, nil
+	isAllowed := allowed == 1
+	remaining := int(remainingVal)
+	reset := resetVal
+
+	return isAllowed, remaining, reset, nil
 }
 
 // checkTokenBucketLimit implements token bucket rate limiting
@@ -434,11 +510,24 @@ func (rl *RateLimiter) checkTokenBucketLimit(ctx context.Context, key string, co
 	}
 
 	// Parse results
-	allowed := results[0].(int64) == 1
-	remaining := int(results[1].(int64))
-	reset := results[2].(int64)
+	allowed, ok := results[0].(int64)
+	if !ok {
+		return false, 0, 0, eris.New("invalid allowed value from token bucket script")
+	}
+	remainingVal, ok := results[1].(int64)
+	if !ok {
+		return false, 0, 0, eris.New("invalid remaining value from token bucket script")
+	}
+	resetVal, ok := results[2].(int64)
+	if !ok {
+		return false, 0, 0, eris.New("invalid reset value from token bucket script")
+	}
 
-	return allowed, remaining, reset, nil
+	isAllowed := allowed == 1
+	remaining := int(remainingVal)
+	reset := resetVal
+
+	return isAllowed, remaining, reset, nil
 }
 
 // updateAllowMetrics updates metrics for allowed requests
@@ -453,15 +542,14 @@ func (rl *RateLimiter) updateAllowMetrics(ctx context.Context, key string) {
 	val, err := rl.redis.Get(ctx, metricsKey)
 	if err == nil {
 		// Unmarshal existing metrics
-		if err := json.Unmarshal([]byte(val), metrics); err == nil {
+		if err = sonic.Unmarshal([]byte(val), metrics); err == nil {
 			metrics.Allowed++
 		}
 	}
 
 	// Marshal and save metrics
-	if data, err := json.Marshal(metrics); err == nil {
-		err = rl.redis.Set(ctx, metricsKey, string(data), 24*time.Hour)
-		if err != nil {
+	if data, dErr := sonic.Marshal(metrics); dErr == nil {
+		if err = rl.redis.Set(ctx, metricsKey, string(data), 24*time.Hour); err != nil {
 			rl.l.Error().Err(err).Msg("failed to update allow metrics")
 		}
 	}
@@ -480,16 +568,15 @@ func (rl *RateLimiter) updateBlockMetrics(ctx context.Context, key string) {
 	val, err := rl.redis.Get(ctx, metricsKey)
 	if err == nil {
 		// Unmarshal existing metrics
-		if err := json.Unmarshal([]byte(val), metrics); err == nil {
+		if err = sonic.Unmarshal([]byte(val), metrics); err == nil {
 			metrics.Blocked++
 			metrics.LastBlocked = time.Now()
 		}
 	}
 
 	// Marshal and save metrics
-	if data, err := json.Marshal(metrics); err == nil {
-		err = rl.redis.Set(ctx, metricsKey, string(data), 24*time.Hour)
-		if err != nil {
+	if data, dErr := sonic.Marshal(metrics); dErr == nil {
+		if err = rl.redis.Set(ctx, metricsKey, string(data), 24*time.Hour); err != nil {
 			rl.l.Error().Err(err).Msg("failed to update block metrics")
 		}
 	}
@@ -501,14 +588,14 @@ func (rl *RateLimiter) GetMetrics(ctx context.Context, key string) (*RateLimitMe
 
 	val, err := rl.redis.Get(ctx, metricsKey)
 	if err != nil {
-		if eris.Is(err, redis.Nil) {
+		if eris.Is(err, redis.ErrNil) {
 			return &RateLimitMetrics{}, nil
 		}
 		return nil, err
 	}
 
 	metrics := &RateLimitMetrics{}
-	if err := json.Unmarshal([]byte(val), metrics); err != nil {
+	if err = sonic.Unmarshal([]byte(val), metrics); err != nil {
 		return nil, err
 	}
 

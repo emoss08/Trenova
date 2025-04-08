@@ -141,15 +141,15 @@ type SingleSearchParams struct {
 
 	// Sets whether the house number should be returned as a separate field from the rest of the street address.
 	// Default is false. (Not Required)
-	SeparateHN bool `json:"separateHN,omitempty" url:"separateHN,omitempty"`
+	SeparateHN bool `json:"separateHn,omitempty" url:"separateHn,omitempty"`
 
 	// If set to true, all potential house number ranges will be returned for a particular street match.
 	// Default is false. (Not Required)
-	GetAllHNRanges bool `json:"getAllHNRanges,omitempty" url:"getAllHNRanges,omitempty"`
+	GetAllHNRanges bool `json:"getAllHnRanges,omitempty" url:"getAllHnRanges,omitempty"`
 
 	// Set to true to return the TrimblePlaceId, PlaceName and SiteName for a location, if they exist.
 	// Default is false. (Not Required)
-	IncludeTrimblePlaceIds bool `json:"includeTrimblePlaceIds,omitempty" url:"includeTrimblePlaceIds,omitempty"`
+	IncludeTrimblePlaceIDs bool `json:"includeTrimblePlaceIds,omitempty" url:"includeTrimblePlaceIds,omitempty"`
 
 	// The language to use in results. U.S. English is the default.
 	Lang string `json:"lang,omitempty" url:"lang,omitempty"`

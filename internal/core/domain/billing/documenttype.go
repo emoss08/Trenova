@@ -110,7 +110,7 @@ func (dt *DocumentType) GetTableName() string {
 	return "document_types"
 }
 
-func (dt *DocumentType) BeforeAppendModel(ctx context.Context, query bun.Query) error {
+func (dt *DocumentType) BeforeAppendModel(_ context.Context, query bun.Query) error {
 	now := timeutils.NowUnix()
 
 	switch query.(type) {

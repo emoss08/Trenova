@@ -1,7 +1,6 @@
 package errors
 
 import (
-	"encoding/json"
 	"fmt"
 	"strings"
 
@@ -158,7 +157,7 @@ func (m *MultiError) MarshalJSON() ([]byte, error) {
 	if m == nil || len(m.Errors) == 0 {
 		return []byte("null"), nil
 	}
-	return json.Marshal(struct {
+	return sonic.Marshal(struct {
 		Errors []*Error `json:"errors"`
 	}{
 		Errors: m.Errors,

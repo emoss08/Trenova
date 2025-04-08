@@ -112,7 +112,7 @@ func (sr *sessionRepository) GetUserActiveSessions(ctx context.Context, userID p
 		// Get session without IP validation since we're just listing
 		var sess session.Session
 		if err = sr.redis.GetJSON(ctx, sr.sessionKey(sessionID), &sess); err != nil {
-			if eris.Is(err, redis.Nil) {
+			if eris.Is(err, redis.ErrNil) {
 				log.Error().
 					Err(err).
 					Str("sessionId", sid).
@@ -162,8 +162,8 @@ func (sr *sessionRepository) GetValidSession(ctx context.Context, sessionID puli
 
 	var sess session.Session
 	if err := sr.redis.GetJSON(ctx, sr.sessionKey(sessionID), &sess); err != nil {
-		if eris.Is(err, redis.Nil) {
-			return nil, session.SessionNotFound
+		if eris.Is(err, redis.ErrNil) {
+			return nil, session.ErrNotFound
 		}
 		log.Error().Err(err).Msg("failed to get session")
 		return nil, eris.Wrap(err, "failed to get session")

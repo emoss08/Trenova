@@ -25,9 +25,17 @@ type GetCustomerByIDOptions struct {
 	IncludeEmailProfile   bool `query:"includeEmailProfile"`
 }
 
+type CustomerDocRequirementResponse struct {
+	Name        string `json:"name"`
+	DocID       string `json:"docId"`
+	Description string `json:"description"`
+	Color       string `json:"color"`
+}
+
 type CustomerRepository interface {
 	List(ctx context.Context, opts *ListCustomerOptions) (*ports.ListResult[*customer.Customer], error)
 	GetByID(ctx context.Context, opts GetCustomerByIDOptions) (*customer.Customer, error)
+	GetDocumentRequirements(ctx context.Context, cusID pulid.ID) ([]*CustomerDocRequirementResponse, error)
 	Create(ctx context.Context, c *customer.Customer) (*customer.Customer, error)
 	Update(ctx context.Context, c *customer.Customer) (*customer.Customer, error)
 }

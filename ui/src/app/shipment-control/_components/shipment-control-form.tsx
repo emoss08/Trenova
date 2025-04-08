@@ -240,7 +240,7 @@ function ShipmentEntryForm() {
           <FormControl className="min-h-[3em]">
             <SwitchField
               control={control}
-              name="checkForDuplicateBOLs"
+              name="checkForDuplicateBols"
               label="Check for Duplicate Bills of Lading"
               description="When enabled, the system will verify that each BOL number is unique during shipment creation. This prevents accidental duplications that could lead to operational confusion, billing errors, and customer service issues. Recommended for most operations to maintain data integrity."
               position="left"
@@ -275,7 +275,7 @@ function ComplianceForm() {
   const [showComplianceOptions, setShowComplianceOptions] =
     useState<boolean>(false);
 
-  const enforceHOSCompliance = watch("enforceHOSCompliance");
+  const enforceHOSCompliance = watch("enforceHosCompliance");
 
   useEffect(() => {
     if (enforceHOSCompliance) {
@@ -314,7 +314,7 @@ function ComplianceForm() {
           <FormControl className="min-h-[3em]">
             <SwitchField
               control={control}
-              name="enforceHOSCompliance"
+              name="enforceHosCompliance"
               label="Enable DOT Compliance Enforcement"
               description="When enabled, the system performs comprehensive validation across all major DOT compliance domains to prevent violations before they occur. This protection helps maintain your safety rating, reduce violation risk during roadside inspections, and minimize potential liability exposure from non-compliant operations."
               position="left"

@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/core/domain"
+	"github.com/emoss08/trenova/internal/core/domain/billing"
 	"github.com/emoss08/trenova/internal/core/domain/businessunit"
 	"github.com/emoss08/trenova/internal/core/domain/organization"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
@@ -32,13 +33,13 @@ type Document struct {
 	OrganizationID pulid.ID `bun:"organization_id,type:VARCHAR(100),pk,notnull" json:"organizationId"`
 
 	// Core Properties
-	FileName     string         `json:"fileName" bun:"file_name,notnull,type:VARCHAR(255)"`
-	OriginalName string         `json:"originalName" bun:"original_name,notnull,type:VARCHAR(255)"`
-	FileSize     int64          `json:"fileSize" bun:"file_size,notnull,type:BIGINT"`
-	FileType     string         `json:"fileType" bun:"file_type,notnull,type:VARCHAR(100)"`
-	StoragePath  string         `json:"storagePath" bun:"storage_path,notnull,type:TEXT"`
-	DocumentType DocumentType   `json:"documentType" bun:"document_type,notnull,type:document_type_enum"`
-	Status       DocumentStatus `json:"status" bun:"status,notnull,type:document_status_enum"`
+	FileName       string   `json:"fileName" bun:"file_name,notnull,type:VARCHAR(255)"`
+	OriginalName   string   `json:"originalName" bun:"original_name,notnull,type:VARCHAR(255)"`
+	FileSize       int64    `json:"fileSize" bun:"file_size,notnull,type:BIGINT"`
+	FileType       string   `json:"fileType" bun:"file_type,notnull,type:VARCHAR(100)"`
+	StoragePath    string   `json:"storagePath" bun:"storage_path,notnull,type:TEXT"`
+	DocumentTypeID pulid.ID `json:"documentTypeId" bun:"document_type_id,notnull,type:VARCHAR(100)"`
+	Status         Status   `json:"status" bun:"status,notnull,type:document_status_enum"`
 
 	// Entity Association (polymorphic relationship)
 	ResourceID   pulid.ID            `json:"resourceId" bun:"resource_id,notnull,type:VARCHAR(100)"`
@@ -50,7 +51,7 @@ type Document struct {
 
 	// Audit Fields
 	UploadedByID pulid.ID  `json:"uploadedById" bun:"uploaded_by_id,notnull,type:VARCHAR(100)"`
-	ApprovedByID *pulid.ID `json:"approvedByID" bun:"approved_by_id,type:VARCHAR(100),nullzero"`
+	ApprovedByID *pulid.ID `json:"approvedById" bun:"approved_by_id,type:VARCHAR(100),nullzero"`
 	ApprovedAt   *int64    `json:"approvedAt" bun:"approved_at,type:BIGINT,nullzero"`
 
 	// Metadata
@@ -59,11 +60,13 @@ type Document struct {
 	UpdatedAt    int64  `json:"updatedAt" bun:"updated_at,notnull,default:extract(epoch from current_timestamp)::bigint"`
 	SearchVector string `json:"-" bun:"search_vector,type:TSVECTOR,scanonly"`
 	Rank         string `json:"-" bun:"rank,type:VARCHAR(100),scanonly"`
-	PresignedURL string `json:"presignedURL,omitempty" bun:"presigned_url,type:TEXT,nullzero,scanonly"`
+	PresignedURL string `json:"presignedUrl,omitempty" bun:"presigned_url,type:TEXT,nullzero,scanonly"`
+	PreviewURL   string `json:"previewUrl,omitempty" bun:"preview_url,type:TEXT,nullzero,scanonly"`
 
 	// Relationships
 	BusinessUnit *businessunit.BusinessUnit `bun:"rel:belongs-to,join:business_unit_id=id" json:"-"`
 	Organization *organization.Organization `bun:"rel:belongs-to,join:organization_id=id" json:"-"`
+	DT           *billing.DocumentType      `bun:"rel:belongs-to,join:document_type_id=id" json:"-"`
 	UploadedBy   *user.User                 `bun:"rel:belongs-to,join:uploaded_by_id=id" json:"uploadedBy,omitempty"`
 	ApprovedBy   *user.User                 `bun:"rel:belongs-to,join:approved_by_id=id" json:"approvedBy,omitempty"`
 }
@@ -101,34 +104,16 @@ func (d *Document) Validate(ctx context.Context, multiErr *errors.MultiError) {
 			validation.Length(1, 500).Error("Storage path must be between 1 and 500 characters"),
 		),
 
-		// * Document classification validations
-		validation.Field(&d.DocumentType,
-			validation.Required.Error("Document type is required"),
-			validation.In(
-				DocumentTypeLicense,
-				DocumentTypeRegistration,
-				DocumentTypeInsurance,
-				DocumentTypeInvoice,
-				DocumentTypeProofOfDelivery,
-				DocumentTypeBillOfLading,
-				DocumentTypeDriverLog,
-				DocumentTypeMedicalCert,
-				DocumentTypeContract,
-				DocumentTypeMaintenance,
-				DocumentTypeAccidentReport,
-				DocumentTypeTrainingRecord,
-				DocumentTypeOther,
-			).Error("Document type must be valid"),
-		),
+		// * Ensure status is required and valid
 		validation.Field(&d.Status,
 			validation.Required.Error("Status is required"),
 			validation.In(
-				DocumentStatusDraft,
-				DocumentStatusActive,
-				DocumentStatusArchived,
-				DocumentStatusExpired,
-				DocumentStatusRejected,
-				DocumentStatusPendingApproval,
+				StatusDraft,
+				StatusActive,
+				StatusArchived,
+				StatusExpired,
+				StatusRejected,
+				StatusPendingApproval,
 			).Error("Status must be valid"),
 		),
 

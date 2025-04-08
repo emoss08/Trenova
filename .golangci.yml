@@ -224,7 +224,6 @@ linters:
     - wastedassign # finds wasted assignment statements
     - whitespace # detects leading and trailing whitespace
     - gosec # inspects source code for security problems
-    - dupl # finds duplicate code
     - funlen # tool for detection of long functions
 
 issues:

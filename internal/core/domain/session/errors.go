@@ -3,8 +3,8 @@ package session
 import "github.com/rotisserie/eris"
 
 var (
-	SessionNotFound   = eris.New("session not found")
-	SessionNotActive  = eris.New("session is not active")
-	SessionExpired    = eris.New("session is expired")
-	SessionIPMismatch = eris.New("session ip mismatch")
+	ErrNotFound   = eris.New("session not found")
+	ErrNotActive  = eris.New("session is not active")
+	ErrExpired    = eris.New("session is expired")
+	ErrIPMismatch = eris.New("session ip mismatch")
 )

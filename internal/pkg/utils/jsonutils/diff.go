@@ -101,6 +101,18 @@ func compareObjects(before, after map[string]any, path string, diff map[string]F
 	}
 
 	// Check for created and updated fields
+	if err := compareCreatedAndUpdated(before, after, path, diff, opts, depth); err != nil {
+		return err
+	}
+
+	// Check for deleted fields
+	compareDeleted(before, after, path, diff, opts)
+
+	return nil
+}
+
+// compareCreatedAndUpdated handles fields that were created or updated in the after object
+func compareCreatedAndUpdated(before, after map[string]any, path string, diff map[string]FieldChange, opts *DiffOptions, depth int) error {
 	for key, afterValue := range after {
 		if shouldIgnoreField(key, opts.IgnoreFields) {
 			continue
@@ -110,52 +122,70 @@ func compareObjects(before, after map[string]any, path string, diff map[string]F
 		beforeValue, exists := before[key]
 
 		if !exists {
-			// Field was created
-			diff[currentPath] = FieldChange{
-				To:        afterValue,
-				Type:      ChangeTypeCreated,
-				FieldType: determineFieldType(afterValue),
-				Path:      currentPath,
-			}
+			recordCreatedField(currentPath, afterValue, diff)
 			continue
 		}
 
-		// Check if there's a custom comparator for this field
-		if comparator, ok := opts.CustomComparors[key]; ok {
-			equal, err := comparator(beforeValue, afterValue)
-			if err != nil {
-				return eris.Wrapf(err, "custom comparison failed for field %s", key)
-			}
-			if !equal {
-				diff[currentPath] = createFieldChange(beforeValue, afterValue, currentPath)
-			}
-			continue
-		}
-
-		// Handle nested objects
-		if isObject(beforeValue) && isObject(afterValue) {
-			beforeMap, afterMap := toMap(beforeValue), toMap(afterValue)
-			if err := compareObjects(beforeMap, afterMap, currentPath, diff, opts, depth+1); err != nil {
-				return err
-			}
-			continue
-		}
-
-		// Handle arrays
-		if isArray(beforeValue) && isArray(afterValue) {
-			if !reflect.DeepEqual(beforeValue, afterValue) {
-				diff[currentPath] = createFieldChange(beforeValue, afterValue, currentPath)
-			}
-			continue
-		}
-
-		// Handle primitive values
-		if !compareValues(beforeValue, afterValue, opts.IgnoreCase) {
-			diff[currentPath] = createFieldChange(beforeValue, afterValue, currentPath)
+		if err := compareExistingField(beforeValue, afterValue, key, currentPath, diff, opts, depth); err != nil {
+			return err
 		}
 	}
+	return nil
+}
 
-	// Check for deleted fields
+// recordCreatedField adds a created field to the diff
+func recordCreatedField(path string, value any, diff map[string]FieldChange) {
+	diff[path] = FieldChange{
+		To:        value,
+		Type:      ChangeTypeCreated,
+		FieldType: determineFieldType(value),
+		Path:      path,
+	}
+}
+
+// compareExistingField compares a field that exists in both before and after objects
+func compareExistingField(beforeValue, afterValue any, key, path string, diff map[string]FieldChange, opts *DiffOptions, depth int) error {
+	// Check if there's a custom comparator for this field
+	if comparator, ok := opts.CustomComparors[key]; ok {
+		return handleCustomComparison(comparator, beforeValue, afterValue, key, path, diff)
+	}
+
+	// Handle nested objects
+	if isObject(beforeValue) && isObject(afterValue) {
+		beforeMap, afterMap := toMap(beforeValue), toMap(afterValue)
+		return compareObjects(beforeMap, afterMap, path, diff, opts, depth+1)
+	}
+
+	// Handle arrays
+	if isArray(beforeValue) && isArray(afterValue) {
+		if !reflect.DeepEqual(beforeValue, afterValue) {
+			diff[path] = createFieldChange(beforeValue, afterValue, path)
+		}
+		return nil
+	}
+
+	// Handle primitive values
+	if !compareValues(beforeValue, afterValue, opts.IgnoreCase) {
+		diff[path] = createFieldChange(beforeValue, afterValue, path)
+	}
+
+	return nil
+}
+
+// handleCustomComparison applies a custom comparator and records changes if needed
+func handleCustomComparison(comparator Comparator, beforeValue, afterValue any, key, path string, diff map[string]FieldChange) error {
+	equal, err := comparator(beforeValue, afterValue)
+	if err != nil {
+		return eris.Wrapf(err, "custom comparison failed for field %s", key)
+	}
+	if !equal {
+		diff[path] = createFieldChange(beforeValue, afterValue, path)
+	}
+	return nil
+}
+
+// compareDeleted identifies and records fields that were deleted
+func compareDeleted(before, after map[string]any, path string, diff map[string]FieldChange, opts *DiffOptions) {
 	for key, beforeValue := range before {
 		if shouldIgnoreField(key, opts.IgnoreFields) {
 			continue
@@ -171,8 +201,6 @@ func compareObjects(before, after map[string]any, path string, diff map[string]F
 			}
 		}
 	}
-
-	return nil
 }
 
 func createFieldChange(before, after any, path string) FieldChange {
@@ -208,11 +236,20 @@ func determineFieldType(value any) FieldType {
 		if rt == nil {
 			return FieldTypeUndefined
 		}
+		//nolint:exhaustive // we want to handle all the cases
 		switch rt.Kind() {
 		case reflect.Slice, reflect.Array:
 			return FieldTypeArray
 		case reflect.Map, reflect.Struct:
 			return FieldTypeObject
+		case reflect.Bool:
+			return FieldTypeBoolean
+		case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64,
+			reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64,
+			reflect.Uintptr, reflect.Float32, reflect.Float64, reflect.Complex64, reflect.Complex128:
+			return FieldTypeNumber
+		case reflect.String:
+			return FieldTypeString
 		default:
 			return FieldTypeString
 		}

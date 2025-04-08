@@ -13,6 +13,7 @@ import (
 	"github.com/uptrace/bun"
 )
 
+//nolint:revive // validate struct name
 type BillingControl struct {
 	bun.BaseModel `json:"-" bun:"table:billing_controls,alias:bc"`
 
@@ -50,9 +51,9 @@ type BillingControl struct {
 	AutoBillBatchSize         int              `json:"autoBillBatchSize" bun:"auto_bill_batch_size,type:INTEGER,notnull,default:100"`                  // * Number of shipments to bill at a time
 
 	// Exception handling
-	BillingExceptionHandling      BillingExceptionHandling `json:"billingExceptionHandling" bun:"billing_exception_handling,type:billing_exception_handling_enum,notnull,default:'Queue'"`
-	RateDiscrepancyThreshold      float64                  `json:"rateDiscrepancyThreshold" bun:"rate_discrepancy_threshold,type:NUMERIC(10,2),notnull,default:5.00"` // * Percentage threshold for rate discrepancies
-	AutoResolveMinorDiscrepancies bool                     `json:"autoResolveMinorDiscrepancies" bun:"auto_resolve_minor_discrepancies,type:BOOLEAN,notnull,default:true"`
+	BillingExceptionHandling      ExceptionHandling `json:"billingExceptionHandling" bun:"billing_exception_handling,type:billing_exception_handling_enum,notnull,default:'Queue'"`
+	RateDiscrepancyThreshold      float64           `json:"rateDiscrepancyThreshold" bun:"rate_discrepancy_threshold,type:NUMERIC(10,2),notnull,default:5.00"` // * Percentage threshold for rate discrepancies
+	AutoResolveMinorDiscrepancies bool              `json:"autoResolveMinorDiscrepancies" bun:"auto_resolve_minor_discrepancies,type:BOOLEAN,notnull,default:true"`
 
 	// Consolidation options
 	AllowInvoiceConsolidation bool `json:"allowInvoiceConsolidation" bun:"allow_invoice_consolidation,type:BOOLEAN,notnull,default:true"` // * Allow combining multiple shipments in one invoice
@@ -69,6 +70,7 @@ type BillingControl struct {
 	Organization *organization.Organization `json:"organization,omitempty" bun:"rel:belongs-to,join:organization_id=id"`
 }
 
+//nolint:funlen // Validations method is long but it's not a problem
 func (bc *BillingControl) Validate(ctx context.Context, multiErr *errors.MultiError) {
 	err := validation.ValidateStructWithContext(ctx, bc,
 		// * Ensure invoice number prefix is populated

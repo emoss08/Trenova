@@ -137,79 +137,30 @@ func (v *Validator) validateID(hsr *hazmatsegregationrule.HazmatSegregationRule,
 func (v *Validator) ValidateShipment(ctx context.Context, shp *shipment.Shipment) (*errors.MultiError, []*SegregationViolation) {
 	multiErr := errors.NewMultiError()
 
-	// * Skip validation if shipment has no commodities or only one commodity
+	// Skip validation if shipment has no commodities or only one commodity
 	if !shp.HasCommodities() || len(shp.Commodities) < 2 {
 		return nil, nil
 	}
 
-	// * Extract hazmat IDs from the request commodities
-	commoditiesWithHazmat := make([]*shipment.ShipmentCommodity, 0)
-	hazmatIDs := make([]pulid.ID, 0)
+	// Get commodities with hazmat and their IDs
+	commoditiesWithHazmat, hazmatIDs := v.extractHazmatCommodities(shp)
 
-	for _, com := range shp.Commodities {
-		if com.Commodity != nil && com.Commodity.HazardousMaterialID != nil {
-			hazmatIDs = append(hazmatIDs, *com.Commodity.HazardousMaterialID)
-			commoditiesWithHazmat = append(commoditiesWithHazmat, com)
-		}
-	}
-
-	// * Skip if no hazmat materials or only one
+	// Skip if no hazmat materials or only one
 	if len(hazmatIDs) < 2 {
 		return nil, nil
 	}
 
-	// * Fetch hazmat data for all IDs in a single query
-	dba, err := v.db.DB(ctx)
+	// Fetch hazmat data and rules
+	hazmatMap, ruleMap, err := v.fetchHazmatDataAndRules(ctx, shp, hazmatIDs)
 	if err != nil {
-		multiErr.Add("hazmatSegregation", errors.ErrSystemError, "Failed to get database connection")
+		multiErr.Add("hazmatSegregation", errors.ErrSystemError, err.Error())
 		return multiErr, nil
 	}
 
-	hazmatMaterials := make([]*hazardousmaterial.HazardousMaterial, 0)
-	err = dba.NewSelect().
-		Model(&hazmatMaterials).
-		Where("hm.id IN (?)", bun.In(hazmatIDs)).
-		Where("hm.organization_id = ?", shp.OrganizationID).
-		Where("hm.business_unit_id = ?", shp.BusinessUnitID).
-		Scan(ctx)
-	if err != nil {
-		multiErr.Add("hazmatSegregation", errors.ErrSystemError, "Failed to fetch hazardous materials")
-		return multiErr, nil
-	}
+	// Attach hazmat data to commodities
+	v.attachHazmatDataToCommodities(commoditiesWithHazmat, hazmatMap)
 
-	// * Create a map for quick lookup
-	hazmatMap := make(map[string]*hazardousmaterial.HazardousMaterial)
-	for _, hm := range hazmatMaterials {
-		hazmatMap[hm.ID.String()] = hm
-	}
-
-	// * Attach hazmat data to commodities for validation
-	for _, com := range commoditiesWithHazmat {
-		if com.Commodity != nil && com.Commodity.HazardousMaterialID != nil {
-			hazmatID := com.Commodity.HazardousMaterialID.String()
-			if hazmat, ok := hazmatMap[hazmatID]; ok {
-				// Set hazmat info directly
-				com.Commodity.HazardousMaterial = hazmat
-			}
-		}
-	}
-
-	// * Get all segregation rules
-	rules := make([]*hazmatsegregationrule.HazmatSegregationRule, 0)
-	err = dba.NewSelect().
-		Model(&rules).
-		Where("hsr.organization_id = ? AND hsr.business_unit_id = ?", shp.OrganizationID, shp.BusinessUnitID).
-		Where("hsr.status = ?", "Active").
-		Scan(ctx)
-	if err != nil {
-		multiErr.Add("hazmatSegregation", errors.ErrSystemError, "Failed to fetch segregation rules")
-		return multiErr, nil
-	}
-
-	// * Build lookup maps for rules
-	ruleMap := buildRuleMap(rules)
-
-	// * Check each pair of commodities with hazmat for violations
+	// Check for violations
 	violations := checkCommodityPairs(commoditiesWithHazmat, ruleMap)
 
 	// Add validation errors for any violations
@@ -222,6 +173,75 @@ func (v *Validator) ValidateShipment(ctx context.Context, shp *shipment.Shipment
 	}
 
 	return nil, nil
+}
+
+// extractHazmatCommodities extracts commodities with hazmat and their IDs
+func (v *Validator) extractHazmatCommodities(shp *shipment.Shipment) ([]*shipment.ShipmentCommodity, []pulid.ID) {
+	commoditiesWithHazmat := make([]*shipment.ShipmentCommodity, 0)
+	hazmatIDs := make([]pulid.ID, 0)
+
+	for _, com := range shp.Commodities {
+		if com.Commodity != nil && com.Commodity.HazardousMaterialID != nil {
+			hazmatIDs = append(hazmatIDs, *com.Commodity.HazardousMaterialID)
+			commoditiesWithHazmat = append(commoditiesWithHazmat, com)
+		}
+	}
+
+	return commoditiesWithHazmat, hazmatIDs
+}
+
+// fetchHazmatDataAndRules fetches hazmat data and rules from database
+func (v *Validator) fetchHazmatDataAndRules(ctx context.Context, shp *shipment.Shipment, hazmatIDs []pulid.ID) (map[string]*hazardousmaterial.HazardousMaterial, map[hazmatPair]*hazmatsegregationrule.HazmatSegregationRule, error) {
+	dba, err := v.db.DB(ctx)
+	if err != nil {
+		return nil, nil, eris.Wrap(err, "get database connection")
+	}
+
+	// Fetch hazmat materials
+	hazmatMaterials := make([]*hazardousmaterial.HazardousMaterial, 0)
+	err = dba.NewSelect().
+		Model(&hazmatMaterials).
+		Where("hm.id IN (?)", bun.In(hazmatIDs)).
+		Where("hm.organization_id = ?", shp.OrganizationID).
+		Where("hm.business_unit_id = ?", shp.BusinessUnitID).
+		Scan(ctx)
+	if err != nil {
+		return nil, nil, eris.Wrap(err, "fetch hazardous materials")
+	}
+
+	// Create a map for quick lookup
+	hazmatMap := make(map[string]*hazardousmaterial.HazardousMaterial)
+	for _, hm := range hazmatMaterials {
+		hazmatMap[hm.ID.String()] = hm
+	}
+
+	// Get all segregation rules
+	rules := make([]*hazmatsegregationrule.HazmatSegregationRule, 0)
+	err = dba.NewSelect().
+		Model(&rules).
+		Where("hsr.organization_id = ? AND hsr.business_unit_id = ?", shp.OrganizationID, shp.BusinessUnitID).
+		Where("hsr.status = ?", "Active").
+		Scan(ctx)
+	if err != nil {
+		return nil, nil, eris.Wrap(err, "fetch segregation rules")
+	}
+
+	// Build rule map
+	ruleMap := buildRuleMap(rules)
+
+	return hazmatMap, ruleMap, nil
+}
+
+// attachHazmatDataToCommodities attaches hazmat data to commodities
+func (v *Validator) attachHazmatDataToCommodities(commodities []*shipment.ShipmentCommodity, hazmatMap map[string]*hazardousmaterial.HazardousMaterial) {
+	for _, com := range commodities {
+		if com.Commodity != nil && com.Commodity.HazardousMaterialID != nil {
+			hazmatID := com.Commodity.HazardousMaterialID.String()
+			if hazmat, ok := hazmatMap[hazmatID]; ok {
+				com.Commodity.HazardousMaterial = hazmat
+			}
+		}
+	}
 }
 
 // Helper function to build rule lookup map
@@ -386,6 +406,12 @@ func createViolation(
 	switch rule.SegregationType {
 	case hazmatsegregationrule.SegregationTypeProhibited:
 		message = fmt.Sprintf("Hazardous materials %s (%s) and %s (%s) cannot be transported together",
+			comA.Name, hazA.Class, comB.Name, hazB.Class)
+	case hazmatsegregationrule.SegregationTypeBarrier:
+		message = fmt.Sprintf("Hazardous materials %s (%s) and %s (%s) must be separated by a barrier",
+			comA.Name, hazA.Class, comB.Name, hazB.Class)
+	case hazmatsegregationrule.SegregationTypeSeparated:
+		message = fmt.Sprintf("Hazardous materials %s (%s) and %s (%s) must be separated from each other",
 			comA.Name, hazA.Class, comB.Name, hazB.Class)
 	case hazmatsegregationrule.SegregationTypeDistance:
 		distance := "unknown distance"

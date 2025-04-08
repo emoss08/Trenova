@@ -22,7 +22,7 @@ type Connection interface {
 	DB(ctx context.Context) (*bun.DB, error)
 
 	// ConnectionInfo returns information about the database connection
-	ConnectionInfo(ctx context.Context) (*ConnectionInfo, error)
+	ConnectionInfo() (*ConnectionInfo, error)
 
 	// Close closes the database connection.
 	Close() error

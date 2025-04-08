@@ -27,7 +27,7 @@ func (t *TestDBConnection) DB(ctx context.Context) (*bun.DB, error) {
 	return t.db, nil
 }
 
-func (t *TestDBConnection) ConnectionInfo(ctx context.Context) (*db.ConnectionInfo, error) {
+func (t *TestDBConnection) ConnectionInfo() (*db.ConnectionInfo, error) {
 	return &db.ConnectionInfo{
 		Host:     "localhost",
 		Port:     5432,

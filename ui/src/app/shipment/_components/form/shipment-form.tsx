@@ -1,7 +1,6 @@
-import { LazyComponent } from "@/components/error-boundary";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { type Shipment } from "@/types/shipment";
-import { lazy } from "react";
+import { lazy, memo, Suspense } from "react";
 import { ShipmentNotFoundOverlay } from "../sidebar/shipment-not-found-overlay";
 import { ShipmentDetailsSkeleton } from "./shipment-details-skeleton";
 import { ShipmentFormHeader } from "./shipment-form-header";
@@ -21,22 +20,27 @@ const ShipmentServiceDetails = lazy(() => import("./shipment-service-details"));
 type ShipmentDetailsProps = {
   selectedShipment?: Shipment | null;
   isLoading?: boolean;
+  isError?: boolean;
   onBack: () => void;
   dimensions: {
     contentHeight: number;
     viewportHeight: number;
   };
-  isCreate: boolean;
 };
 
-export function ShipmentForm({ ...props }: ShipmentDetailsProps) {
+// Wrap the component with memo to prevent unnecessary re-renders
+export const ShipmentForm = memo(function ShipmentForm({
+  isLoading,
+  ...props
+}: ShipmentDetailsProps) {
+  // Handle data loading state separately from component loading state
+  if (isLoading) {
+    return <ShipmentDetailsSkeleton />;
+  }
+
+  // Only use Suspense for component loading, not data loading
   return (
-    <LazyComponent
-      componentLoaderProps={{
-        message: "Loading Shipment Details...",
-        description: "Please wait while we load the shipment details.",
-      }}
-    >
+    <Suspense fallback={<ShipmentDetailsSkeleton />}>
       <ShipmentScrollArea {...props}>
         <ShipmentServiceDetails />
         <ShipmentBillingDetails />
@@ -44,27 +48,20 @@ export function ShipmentForm({ ...props }: ShipmentDetailsProps) {
         <ShipmentCommodityDetails />
         <ShipmentMovesDetails />
       </ShipmentScrollArea>
-    </LazyComponent>
+    </Suspense>
   );
-}
+});
 
-export function ShipmentScrollArea({
+// Memoize the ShipmentScrollArea to prevent unnecessary re-renders
+export const ShipmentScrollArea = memo(function ShipmentScrollArea({
   selectedShipment,
-  isLoading,
+  isError,
   onBack,
   dimensions,
-  isCreate,
   children,
-}: ShipmentDetailsProps & { children: React.ReactNode }) {
-  if (isLoading) {
-    return (
-      <div className="flex size-full items-center justify-center pt-96">
-        <ShipmentDetailsSkeleton />
-      </div>
-    );
-  }
-
-  if (!selectedShipment && !isCreate) {
+}: Omit<ShipmentDetailsProps, "isLoading"> & { children: React.ReactNode }) {
+  // Handle error state
+  if (isError) {
     return (
       <div className="flex size-full items-center justify-center">
         <ShipmentNotFoundOverlay onBack={onBack} />
@@ -113,4 +110,4 @@ export function ShipmentScrollArea({
       </div>
     </div>
   );
-}
+});

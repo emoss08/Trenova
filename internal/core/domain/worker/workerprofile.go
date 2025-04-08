@@ -16,7 +16,8 @@ import (
 
 var _ bun.BeforeAppendModelHook = (*WorkerProfile)(nil)
 
-type WorkerProfile struct { //nolint:revive struct should keep this name
+//nolint:revive // struct should keep this name
+type WorkerProfile struct {
 	bun.BaseModel `bun:"table:worker_profiles,alias:wp" json:"-"`
 
 	// Primary identifiers

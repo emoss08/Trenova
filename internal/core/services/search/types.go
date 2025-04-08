@@ -18,6 +18,8 @@ var (
 )
 
 // SearchRequest defines parameters for a search request.
+//
+//nolint:revive // Valid struct name
 type SearchRequest struct {
 	Query     string   `json:"query" validate:"required"` // The search query text
 	Types     []string `json:"types,omitempty"`           // Filter by entity types
@@ -32,12 +34,14 @@ type SearchRequest struct {
 }
 
 // SearchResponse contains search results and metadata.
+//
+//nolint:revive // Valid struct name
 type SearchResponse struct {
 	Results     []*infra.SearchDocument `json:"results"`          // The search results
 	Total       int                     `json:"total"`            // Total number of matching documents
 	ProcessedIn time.Duration           `json:"processedIn"`      // Time taken to process the search
 	Query       string                  `json:"query"`            // The original query
-	Facets      map[string]interface{}  `json:"facets,omitempty"` // Facet results if requested
+	Facets      map[string]any          `json:"facets,omitempty"` // Facet results if requested
 }
 
 // batchOpt represents a batch operation for document indexing.

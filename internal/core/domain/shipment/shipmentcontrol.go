@@ -19,6 +19,7 @@ var (
 	_ domain.Validatable        = (*ShipmentControl)(nil)
 )
 
+//nolint:revive // valid struct name
 type ShipmentControl struct {
 	bun.BaseModel `bun:"table:shipment_controls,alias:sc" json:"-"`
 
@@ -40,7 +41,7 @@ type ShipmentControl struct {
 	AutoDelayShipmentsThreshold *int16 `json:"autoDelayShipmentsThreshold" bun:"auto_delay_shipments_threshold,type:INTEGER,default:30,nullzero"` // In minutes
 
 	// Compliance Controls
-	EnforceHOSCompliance                 bool                       `json:"enforceHOSCompliance" bun:"enforce_hos_compliance,type:BOOLEAN,notnull,default:true"`
+	EnforceHOSCompliance                 bool                       `json:"enforceHosCompliance" bun:"enforce_hos_compliance,type:BOOLEAN,notnull,default:true"`
 	EnforceDriverQualificationCompliance bool                       `json:"enforceDriverQualificationCompliance" bun:"enforce_driver_qualification_compliance,type:BOOLEAN,notnull,default:true"`
 	EnforceMedicalCertCompliance         bool                       `json:"enforceMedicalCertCompliance" bun:"enforce_medical_cert_compliance,type:BOOLEAN,notnull,default:true"`
 	EnforceHazmatCompliance              bool                       `json:"enforceHazmatCompliance" bun:"enforce_hazmat_compliance,type:BOOLEAN,notnull,default:true"`
@@ -58,7 +59,7 @@ type ShipmentControl struct {
 	TrackCustomerRejections bool     `json:"trackCustomerRejections" bun:"track_customer_rejections,type:BOOLEAN,notnull,default:false"`
 
 	// Misc....
-	CheckForDuplicateBOLs  bool `json:"checkForDuplicateBOLs" bun:"check_for_duplicate_bols,type:BOOLEAN,notnull,default:true"`
+	CheckForDuplicateBOLs  bool `json:"checkForDuplicateBols" bun:"check_for_duplicate_bols,type:BOOLEAN,notnull,default:true"`
 	AllowMoveRemovals      bool `json:"allowMoveRemovals" bun:"allow_move_removals,type:BOOLEAN,notnull,default:true"`
 	CheckHazmatSegregation bool `json:"checkHazmatSegregation" bun:"check_hazmat_segregation,type:BOOLEAN,notnull,default:true"`
 

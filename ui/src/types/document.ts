@@ -63,14 +63,16 @@ export type Document = {
   originalName: string;
   fileType: string;
   fileSize: number;
-  documentType: DocumentType;
+  documentTypeId: string;
   resourceType: Resource;
   resourceId: string;
   createdAt: number;
   status: DocumentStatus;
   tags?: string[];
   // * generated presigned URL by the server. (expires in 24 hours)
-  presignedURL?: string | null;
+  presignedUrl?: string | null;
+  // * generated preview URL by the server. (expires in 24 hours)
+  previewUrl?: string | null;
   uploadedBy?: User | null;
 };
 

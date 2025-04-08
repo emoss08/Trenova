@@ -71,7 +71,7 @@ func (or *organizationRepository) GetByID(ctx context.Context, orgID pulid.ID) (
 	// * get the organization from the cache
 	if err := or.cache.GetJSON(ctx, key, org); err != nil {
 		// * If the organization is not found in the cache, we need to fetch it from the database
-		if eris.Is(err, redis.Nil) {
+		if eris.Is(err, redis.ErrNil) {
 			log.Debug().Str("key", key).Msg("no organization found in cache")
 			return nil, eris.New("organization not found in cache")
 		}
@@ -102,7 +102,7 @@ func (or *organizationRepository) GetUserOrganizations(ctx context.Context, user
 	key := or.formatUserOrgKey(userID)
 
 	if err := or.cache.GetJSON(ctx, key, &orgs); err != nil {
-		if eris.Is(err, redis.Nil) {
+		if eris.Is(err, redis.ErrNil) {
 			log.Debug().Str("key", key).Msg("no organizations found in cache")
 		}
 	}

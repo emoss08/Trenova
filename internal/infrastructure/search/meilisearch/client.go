@@ -85,126 +85,144 @@ func (c *client) InitializeIndexes() error {
 		defer c.indexMutex.Unlock()
 
 		// Check if index exists
-		_, err := c.meili.GetIndex(idxName)
-		if err != nil {
-			// Create index if it doesn't exist
-			c.l.Debug().Str("index", idxName).Msg("index not found, creating...")
-
-			createTask, err := c.meili.CreateIndex(&meilisearch.IndexConfig{
-				Uid:        idxName,
-				PrimaryKey: "id",
-			})
-			if err != nil {
-				c.indexInitErr = eris.Wrapf(err, "failed to create index %s", idxName)
-				return
-			}
-
-			// Wait for index creation to complete
-			_, err = c.meili.WaitForTask(createTask.TaskUID, 30*time.Second)
-			if err != nil {
-				c.indexInitErr = eris.Wrapf(err, "failed to wait for index creation task %d", createTask.TaskUID)
-				return
-			}
+		c.createIndexIfNotExists(idxName)
+		if c.indexInitErr != nil {
+			return
 		}
 
 		// Configure index settings
-		settings := &meilisearch.Settings{
-			// Attributes that can be searched
-			SearchableAttributes: []string{
-				"title",
-				"description",
-				"searchableText",
-				"metadata.routeNumber",
-				"metadata.customerName",
-				"metadata.shipmentNumbers",
-				"metadata.equipmentNumber",
-				"metadata.driverName",
-				"metadata.tags",
-			},
-
-			// Attributes that can be filtered
-			FilterableAttributes: []string{
-				"type",
-				"organizationId",
-				"businessUnitId",
-				"createdAt",
-				"updatedAt",
-				"metadata.status",
-				"metadata.priority",
-				"metadata.assignedTo",
-				"metadata.tags",
-				"metadata.customerType",
-				"metadata.equipmentType",
-				"metadata.departmentCode",
-			},
-
-			// Attributes that can be sorted
-			SortableAttributes: []string{
-				"createdAt",
-				"updatedAt",
-				"metadata.priority",
-				"metadata.dueDate",
-				"metadata.pickupTime",
-				"metadata.deliveryTime",
-			},
-
-			// Ranking rules in order of importance
-			RankingRules: []string{
-				"words",
-				"typo",
-				"proximity",
-				"attribute",
-				"sort",
-				"exactness",
-			},
-
-			// Attributes for faceting (filtering and aggregations)
-			Faceting: &meilisearch.Faceting{
-				MaxValuesPerFacet: 100,
-				SortFacetValuesBy: map[string]meilisearch.SortFacetType{
-					"count": meilisearch.SortFacetTypeCount,
-				},
-			},
-
-			// Synonyms to improve search relevance
-			Synonyms: map[string][]string{
-				"shipment":  {"load", "freight", "cargo"},
-				"customer":  {"client", "shipper", "consignee"},
-				"driver":    {"operator", "trucker"},
-				"equipment": {"truck", "vehicle", "trailer", "asset"},
-				"route":     {"trip", "journey", "path"},
-			},
-
-			// Typo tolerance settings
-			TypoTolerance: &meilisearch.TypoTolerance{
-				Enabled: true,
-				MinWordSizeForTypos: meilisearch.MinWordSizeForTypos{
-					OneTypo:  4,
-					TwoTypos: 8,
-				},
-				DisableOnWords:      []string{},
-				DisableOnAttributes: []string{},
-			},
-		}
-
-		// Update index settings
-		settingsTask, err := c.meili.Index(idxName).UpdateSettings(settings)
-		if err != nil {
-			c.indexInitErr = eris.Wrapf(err, "failed to update index settings for %s", idxName)
-			return
-		}
-
-		// Wait for settings update to complete
-		_, err = c.meili.WaitForTask(settingsTask.TaskUID, 30*time.Second)
-		if err != nil {
-			c.indexInitErr = eris.Wrapf(err, "failed to wait for settings update task %d", settingsTask.TaskUID)
-			return
-		}
-
-		c.l.Info().Str("index", idxName).Msg("search index initialized successfully")
+		c.configureIndexSettings(idxName)
 	})
 
 	return c.indexInitErr
+}
+
+// createIndexIfNotExists creates the search index if it doesn't already exist
+func (c *client) createIndexIfNotExists(idxName string) {
+	_, err := c.meili.GetIndex(idxName)
+	if err != nil {
+		// Create index if it doesn't exist
+		c.l.Debug().Str("index", idxName).Msg("index not found, creating...")
+
+		createTask, cErr := c.meili.CreateIndex(&meilisearch.IndexConfig{
+			Uid:        idxName,
+			PrimaryKey: "id",
+		})
+		if cErr != nil {
+			c.indexInitErr = eris.Wrapf(cErr, "failed to create index %s", idxName)
+			return
+		}
+
+		// Wait for index creation to complete
+		_, cErr = c.meili.WaitForTask(createTask.TaskUID, 30*time.Second)
+		if cErr != nil {
+			c.indexInitErr = eris.Wrapf(cErr, "failed to wait for index creation task %d", createTask.TaskUID)
+			return
+		}
+	}
+}
+
+// configureIndexSettings applies the search configuration settings to the index
+func (c *client) configureIndexSettings(idxName string) {
+	settings := c.buildIndexSettings()
+
+	// Update index settings
+	settingsTask, err := c.meili.Index(idxName).UpdateSettings(settings)
+	if err != nil {
+		c.indexInitErr = eris.Wrapf(err, "failed to update index settings for %s", idxName)
+		return
+	}
+
+	// Wait for settings update to complete
+	_, err = c.meili.WaitForTask(settingsTask.TaskUID, 30*time.Second)
+	if err != nil {
+		c.indexInitErr = eris.Wrapf(err, "failed to wait for settings update task %d", settingsTask.TaskUID)
+		return
+	}
+
+	c.l.Info().Str("index", idxName).Msg("search index initialized successfully")
+}
+
+// buildIndexSettings creates the Meilisearch index settings configuration
+func (c *client) buildIndexSettings() *meilisearch.Settings {
+	return &meilisearch.Settings{
+		// Attributes that can be searched
+		SearchableAttributes: []string{
+			"title",
+			"description",
+			"searchableText",
+			"metadata.routeNumber",
+			"metadata.customerName",
+			"metadata.shipmentNumbers",
+			"metadata.equipmentNumber",
+			"metadata.driverName",
+			"metadata.tags",
+		},
+
+		// Attributes that can be filtered
+		FilterableAttributes: []string{
+			"type",
+			"organizationId",
+			"businessUnitId",
+			"createdAt",
+			"updatedAt",
+			"metadata.status",
+			"metadata.priority",
+			"metadata.assignedTo",
+			"metadata.tags",
+			"metadata.customerType",
+			"metadata.equipmentType",
+			"metadata.departmentCode",
+		},
+
+		// Attributes that can be sorted
+		SortableAttributes: []string{
+			"createdAt",
+			"updatedAt",
+			"metadata.priority",
+			"metadata.dueDate",
+			"metadata.pickupTime",
+			"metadata.deliveryTime",
+		},
+
+		// Ranking rules in order of importance
+		RankingRules: []string{
+			"words",
+			"typo",
+			"proximity",
+			"attribute",
+			"sort",
+			"exactness",
+		},
+
+		// Attributes for faceting (filtering and aggregations)
+		Faceting: &meilisearch.Faceting{
+			MaxValuesPerFacet: 100,
+			SortFacetValuesBy: map[string]meilisearch.SortFacetType{
+				"count": meilisearch.SortFacetTypeCount,
+			},
+		},
+
+		// Synonyms to improve search relevance
+		Synonyms: map[string][]string{
+			"shipment":  {"load", "freight", "cargo"},
+			"customer":  {"client", "shipper", "consignee"},
+			"driver":    {"operator", "trucker"},
+			"equipment": {"truck", "vehicle", "trailer", "asset"},
+			"route":     {"trip", "journey", "path"},
+		},
+
+		// Typo tolerance settings
+		TypoTolerance: &meilisearch.TypoTolerance{
+			Enabled: true,
+			MinWordSizeForTypos: meilisearch.MinWordSizeForTypos{
+				OneTypo:  4,
+				TwoTypos: 8,
+			},
+			DisableOnWords:      []string{},
+			DisableOnAttributes: []string{},
+		},
+	}
 }
 
 // IndexDocuments indexes a batch of documents.
@@ -253,7 +271,7 @@ func (c *client) WaitForTask(taskUID int64, timeout time.Duration) (*infra.Searc
 
 	// Convert to our task structure
 	return &infra.SearchTask{
-		Status:     string(task.Status),
+		Status:     infra.TaskStatus(task.Status),
 		TaskUID:    task.TaskUID,
 		IndexUID:   task.IndexUID,
 		Type:       string(task.Type),
@@ -283,14 +301,51 @@ func (c *client) Search(ctx context.Context, opts *infra.SearchOptions) ([]*infr
 	}
 
 	// Apply default values
+	c.normalizeSearchOptions(opts)
+
+	// Build the search request
+	searchRequest := c.buildSearchRequest(opts)
+
+	// Log the search request (in debug mode only)
+	c.l.Debug().
+		Str("query", opts.Query).
+		Int("limit", opts.Limit).
+		Int("offset", opts.Offset).
+		Strs("types", opts.Types).
+		Interface("filter", searchRequest.Filter).
+		Msg("executing search request")
+
+	// Execute the search with context
+	res, err := c.meili.Index(c.GetIndexName()).SearchWithContext(ctx, opts.Query, searchRequest)
+	if err != nil {
+		return nil, eris.Wrap(err, "failed to execute search request")
+	}
+
+	// Parse the results
+	results := c.processSearchResults(res)
+
+	c.l.Debug().
+		Int64("totalHits", res.EstimatedTotalHits).
+		Int("processedHits", len(results)).
+		Int("offset", opts.Offset).
+		Int64("processingTimeMs", res.ProcessingTimeMs).
+		Msg("search completed")
+
+	return results, nil
+}
+
+// normalizeSearchOptions applies default values to search options
+func (c *client) normalizeSearchOptions(opts *infra.SearchOptions) {
 	if opts.Limit <= 0 {
 		opts.Limit = 20
 	}
 	if opts.Limit > 100 {
 		opts.Limit = 100 // Prevent too many results at once
 	}
+}
 
-	// Build the search request
+// buildSearchRequest creates a Meilisearch search request from our options
+func (c *client) buildSearchRequest(opts *infra.SearchOptions) *meilisearch.SearchRequest {
 	searchRequest := &meilisearch.SearchRequest{
 		Query:                opts.Query,
 		Limit:                int64(opts.Limit),
@@ -299,7 +354,17 @@ func (c *client) Search(ctx context.Context, opts *infra.SearchOptions) ([]*infr
 		Sort:                 opts.SortBy,
 	}
 
-	// Build filters
+	// Add filters if present
+	filter := c.buildSearchFilters(opts)
+	if filter != "" {
+		searchRequest.Filter = filter
+	}
+
+	return searchRequest
+}
+
+// buildSearchFilters constructs filter expressions from search options
+func (c *client) buildSearchFilters(opts *infra.SearchOptions) string {
 	filters := []string{}
 
 	// Add organization and business unit filters
@@ -327,25 +392,14 @@ func (c *client) Search(ctx context.Context, opts *infra.SearchOptions) ([]*infr
 
 	// Combine all filters with AND
 	if len(filters) > 0 {
-		searchRequest.Filter = strings.Join(filters, " AND ")
+		return strings.Join(filters, " AND ")
 	}
 
-	// Log the search request (in debug mode only)
-	c.l.Debug().
-		Str("query", opts.Query).
-		Int("limit", opts.Limit).
-		Int("offset", opts.Offset).
-		Strs("types", opts.Types).
-		Interface("filter", searchRequest.Filter).
-		Msg("executing search request")
+	return ""
+}
 
-	// Execute the search with context
-	res, err := c.meili.Index(c.GetIndexName()).SearchWithContext(ctx, opts.Query, searchRequest)
-	if err != nil {
-		return nil, eris.Wrap(err, "failed to execute search request")
-	}
-
-	// Parse the results
+// processSearchResults converts Meilisearch hits to our document format
+func (c *client) processSearchResults(res *meilisearch.SearchResponse) []*infra.SearchDocument {
 	results := make([]*infra.SearchDocument, 0, len(res.Hits))
 
 	// Process hits
@@ -364,14 +418,14 @@ func (c *client) Search(ctx context.Context, opts *infra.SearchOptions) ([]*infr
 			WeaklyTypedInput: true,
 		}
 
-		decoder, err := mapstructure.NewDecoder(decoderConfig)
-		if err != nil {
-			c.l.Error().Err(err).Interface("doc", doc).Msg("failed to create decoder for search result")
+		decoder, dErr := mapstructure.NewDecoder(decoderConfig)
+		if dErr != nil {
+			c.l.Error().Err(dErr).Interface("doc", doc).Msg("failed to create decoder for search result")
 			continue
 		}
 
-		if err = decoder.Decode(doc); err != nil {
-			c.l.Error().Err(err).Interface("doc", doc).Msg("failed to decode search result")
+		if dErr = decoder.Decode(doc); dErr != nil {
+			c.l.Error().Err(dErr).Interface("doc", doc).Msg("failed to decode search result")
 			continue
 		}
 
@@ -379,14 +433,7 @@ func (c *client) Search(ctx context.Context, opts *infra.SearchOptions) ([]*infr
 		results = append(results, &searchDoc)
 	}
 
-	c.l.Debug().
-		Int64("totalHits", res.EstimatedTotalHits).
-		Int("processedHits", len(results)).
-		Int("offset", opts.Offset).
-		Int64("processingTimeMs", res.ProcessingTimeMs).
-		Msg("search completed")
-
-	return results, nil
+	return results
 }
 
 // GetStats returns index statistics for monitoring.

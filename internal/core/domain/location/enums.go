@@ -1,17 +1,17 @@
 package location
 
-type LocationCategoryType string
+type Category string
 
 const (
-	LocationCategoryTypeTerminal            = LocationCategoryType("Terminal")
-	LocationCategoryTypeWarehouse           = LocationCategoryType("Warehouse")
-	LocationCategoryTypeDistributionCenter  = LocationCategoryType("DistributionCenter")
-	LocationCategoryTypeTruckStop           = LocationCategoryType("TruckStop")
-	LocationCategoryTypeRestArea            = LocationCategoryType("RestArea")
-	LocationCategoryTypeCustomerLocation    = LocationCategoryType("CustomerLocation")
-	LocationCategoryTypePort                = LocationCategoryType("Port")
-	LocationCategoryTypeRailYard            = LocationCategoryType("RailYard")
-	LocationCategoryTypeMaintenanceFacility = LocationCategoryType("MaintenanceFacility")
+	CategoryTerminal            = Category("Terminal")
+	CategoryWarehouse           = Category("Warehouse")
+	CategoryDistributionCenter  = Category("DistributionCenter")
+	CategoryTruckStop           = Category("TruckStop")
+	CategoryRestArea            = Category("RestArea")
+	CategoryCustomerLocation    = Category("CustomerLocation")
+	CategoryPort                = Category("Port")
+	CategoryRailYard            = Category("RailYard")
+	CategoryMaintenanceFacility = Category("MaintenanceFacility")
 )
 
 type FacilityType string

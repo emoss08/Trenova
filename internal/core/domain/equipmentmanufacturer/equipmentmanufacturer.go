@@ -55,7 +55,7 @@ func (em *EquipmentManufacturer) Validate(ctx context.Context, multiErr *errors.
 	if err != nil {
 		var validationErrs validation.Errors
 		if eris.As(err, &validationErrs) {
-			errors.FromValidationErrors(validationErrs, multiErr, "")
+			errors.FromOzzoErrors(validationErrs, multiErr)
 		}
 	}
 }

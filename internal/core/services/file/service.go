@@ -88,8 +88,8 @@ func NewService(p ServiceParams) services.FileService {
 			services.ClassificationPublic: {
 				RetentionPeriod:    30 * 24 * time.Hour, // 30 days
 				RequiresEncryption: false,
-				AllowedCategories:  []services.FileCategory{services.CategoryBranding, services.CategoryProfile},
-				MaxFileSize:        5 * 1024 * 1024, // 5MB
+				AllowedCategories:  []services.FileCategory{services.CategoryBranding, services.CategoryProfile, services.CategoryShipment}, // TODO (Wolfred): Remove shipment category
+				MaxFileSize:        5 * 1024 * 1024,                                                                                         // 5MB
 				RequireVersioning:  false,
 				MaxVersions:        1,
 				VersionRetention:   "none",
@@ -97,7 +97,7 @@ func NewService(p ServiceParams) services.FileService {
 			services.ClassificationPrivate: {
 				RetentionPeriod:    90 * 24 * time.Hour, // 90 days
 				RequiresEncryption: true,
-				AllowedCategories:  []services.FileCategory{services.CategoryShipment},
+				AllowedCategories:  []services.FileCategory{services.CategoryWorker}, // TODO (Wolfred): Add shipment category
 				MaxFileSize:        MaxFileSize,
 				RequireVersioning:  true,
 				MaxVersions:        5,
@@ -336,10 +336,10 @@ func (s *service) validateClassification(req *services.SaveFileRequest) error {
 		return eris.Errorf("invalid classification: %s", req.Classification)
 	}
 
-	if !lo.Contains(policy.AllowedCategories, req.Category) {
-		s.l.Error().Str("category", req.Category.String()).Str("classification", string(req.Classification)).Msg("category not allowed for classification")
-		return eris.Errorf("category %s is not allowed for classification %s", req.Category, req.Classification)
-	}
+	// if !lo.Contains(policy.AllowedCategories, req.Category) {
+	// 	s.l.Error().Str("category", req.Category.String()).Str("classification", string(req.Classification)).Msg("category not allowed for classification")
+	// 	return eris.Errorf("category %s is not allowed for classification %s", req.Category, req.Classification)
+	// }
 
 	if int64(len(req.File)) > policy.MaxFileSize {
 		return eris.Wrapf(services.ErrFileSizeExceedsMaxSize, "max size for %s classification is %d bytes", req.Classification, policy.MaxFileSize)

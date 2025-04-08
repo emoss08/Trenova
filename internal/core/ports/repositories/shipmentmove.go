@@ -94,7 +94,7 @@ type SplitMoveRequest struct {
 	SplitPickupTimes SplitStopTimes `json:"splitPickupTimes"`
 }
 
-func (smr *SplitMoveRequest) Validate(ctx context.Context, move *shipment.ShipmentMove, multiErr *errors.MultiError) {
+func (smr *SplitMoveRequest) Validate(ctx context.Context, multiErr *errors.MultiError) {
 	err := validation.ValidateStructWithContext(ctx, smr,
 		validation.Field(&smr.MoveID, validation.Required.Error("Move ID is required")),
 		validation.Field(&smr.OrgID, validation.Required.Error("Organization ID is required")),

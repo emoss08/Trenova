@@ -1,4 +1,4 @@
-import { RefObject, useEffect, useRef, useState } from "react";
+import { RefObject, useEffect, useMemo, useRef, useState } from "react";
 
 export function useResponsiveDimensions(
   ref: RefObject<HTMLDivElement | null>,
@@ -10,6 +10,29 @@ export function useResponsiveDimensions(
   });
   const isMountedRef = useRef(false);
 
+  // Add debounce timer ref
+  const debounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Debounce function to prevent too many updates
+  const debouncedSetDimensions = (newDimensions: typeof dimensions) => {
+    if (debounceTimerRef.current) {
+      clearTimeout(debounceTimerRef.current);
+    }
+
+    debounceTimerRef.current = setTimeout(() => {
+      setDimensions((prev) => {
+        // Only update if dimensions actually changed
+        if (
+          prev.contentHeight !== newDimensions.contentHeight ||
+          prev.viewportHeight !== newDimensions.viewportHeight
+        ) {
+          return newDimensions;
+        }
+        return prev;
+      });
+    }, 100);
+  };
+
   useEffect(() => {
     if (!open) return;
 
@@ -18,7 +41,7 @@ export function useResponsiveDimensions(
         const contentHeight = ref.current.getBoundingClientRect().height;
         const viewportHeight = window.innerHeight;
         if (contentHeight > 0 && viewportHeight > 0) {
-          setDimensions({ contentHeight, viewportHeight });
+          debouncedSetDimensions({ contentHeight, viewportHeight });
         }
       }
     };
@@ -45,11 +68,18 @@ export function useResponsiveDimensions(
 
     return () => {
       clearTimeout(initialTimer);
+      if (debounceTimerRef.current) {
+        clearTimeout(debounceTimerRef.current);
+      }
       resizeObserver.disconnect();
       window.removeEventListener("resize", handleResize);
       isMountedRef.current = false;
     };
   }, [open, ref]);
 
-  return dimensions;
+  // Memoize the returned dimensions object to prevent unnecessary re-renders
+  return useMemo(
+    () => dimensions,
+    [dimensions.contentHeight, dimensions.viewportHeight],
+  );
 }

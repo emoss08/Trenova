@@ -6,7 +6,6 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/api/middleware"
 	"github.com/emoss08/trenova/internal/core/domain/document"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
@@ -63,9 +62,9 @@ func (h *Handler) RegisterRoutes(r fiber.Router, rl *middleware.RateLimiter) {
 		middleware.PerSecond(30),
 	)...)
 
-	// Bulk upload documents
-	api.Post("/bulk-upload/", rl.WithRateLimit(
-		[]fiber.Handler{h.bulkUpload},
+	// Delete document
+	api.Delete("/:docID/", rl.WithRateLimit(
+		[]fiber.Handler{h.delete},
 		middleware.PerSecond(30),
 	)...)
 }
@@ -203,6 +202,11 @@ func (h *Handler) upload(c *fiber.Ctx) error {
 		return h.eh.HandleError(c, errors.NewBusinessError("Failed to read file content"))
 	}
 
+	docTypeID, err := pulid.MustParse(c.FormValue("documentTypeId"))
+	if err != nil {
+		return h.eh.HandleError(c, err)
+	}
+
 	// * Create the upload request
 	uploadReq := &services.UploadDocumentRequest{
 		OrganizationID:  reqCtx.OrgID,
@@ -210,7 +214,7 @@ func (h *Handler) upload(c *fiber.Ctx) error {
 		UploadedByID:    reqCtx.UserID,
 		ResourceID:      resourceID,
 		ResourceType:    permission.Resource(c.FormValue("resourceType")),
-		DocumentType:    document.DocumentType(c.FormValue("documentType")),
+		DocumentTypeID:  docTypeID,
 		File:            fileContent,
 		FileName:        fh.Filename,
 		OriginalName:    fh.Filename,
@@ -229,129 +233,26 @@ func (h *Handler) upload(c *fiber.Ctx) error {
 	return c.Status(fiber.StatusCreated).JSON(resp)
 }
 
-func (h *Handler) bulkUpload(c *fiber.Ctx) error {
+func (h *Handler) delete(c *fiber.Ctx) error {
 	reqCtx, err := ctx.WithRequestContext(c)
 	if err != nil {
 		return h.eh.HandleError(c, err)
 	}
 
-	// * Get common fields
-	resourceID, err := pulid.MustParse(c.FormValue("resourceId"))
+	docID, err := pulid.MustParse(c.Params("docID"))
 	if err != nil {
 		return h.eh.HandleError(c, err)
 	}
 
-	// * Parse the files
-	form, err := c.MultipartForm()
+	err = h.ds.DeleteDocument(c.UserContext(), &services.DeleteDocumentRequest{
+		DocID:        docID,
+		OrgID:        reqCtx.OrgID,
+		BuID:         reqCtx.BuID,
+		UploadedByID: reqCtx.UserID,
+	})
 	if err != nil {
 		return h.eh.HandleError(c, err)
 	}
 
-	// * Get all of the files from "files" key
-	files := form.File["files"]
-	if len(files) == 0 {
-		return h.eh.HandleError(c, errors.NewValidationError(
-			"files",
-			errors.ErrRequired,
-			"No files provided",
-		))
-	}
-
-	// * Parse metadata for each file
-	fileMetadata := make(map[string]services.BulkDocumentInfo)
-	if metadataJSON := c.FormValue("metadata"); metadataJSON != "" {
-		var metadata []map[string]any
-		if err := sonic.Unmarshal([]byte(metadataJSON), &metadata); err != nil {
-			return h.eh.HandleError(c, errors.NewValidationError(
-				"metadata",
-				errors.ErrInvalid,
-				"Invalid metadata JSON",
-			))
-		}
-
-		for _, meta := range metadata {
-			fileName, ok := meta["fileName"].(string)
-			if !ok {
-				continue
-			}
-
-			docType, _ := meta["documentType"].(string)
-			description, _ := meta["description"].(string)
-
-			var tags []string
-			if tagsArr, ok := meta["tags"].([]interface{}); ok {
-				for _, t := range tagsArr {
-					if tagStr, ok := t.(string); ok {
-						tags = append(tags, tagStr)
-					}
-				}
-			}
-
-			var expirationDate *int64
-			if expDateVal, ok := meta["expirationDate"].(float64); ok {
-				expDateInt := int64(expDateVal)
-				expirationDate = &expDateInt
-			}
-
-			fileMetadata[fileName] = services.BulkDocumentInfo{
-				DocumentType:   document.DocumentType(docType),
-				Description:    description,
-				Tags:           tags,
-				ExpirationDate: expirationDate,
-			}
-		}
-	}
-
-	// * Process each file
-	bulkReq := &services.BulkUploadDocumentRequest{
-		OrganizationID: reqCtx.OrgID,
-		BusinessUnitID: reqCtx.BuID,
-		UploadedByID:   reqCtx.UserID,
-		ResourceID:     resourceID,
-		ResourceType:   permission.Resource(c.FormValue("resourceType")),
-		Documents:      make([]services.BulkDocumentInfo, 0, len(files)),
-	}
-
-	for _, fh := range files {
-		if fh.Size > file.MaxFileSize {
-			return h.eh.HandleError(c, errors.NewValidationError(
-				"file",
-				errors.ErrInvalid,
-				fmt.Sprintf("File %s exceeds the maximum size limit", fh.Filename),
-			))
-		}
-
-		fileHandle, err := fh.Open()
-		if err != nil {
-			return h.eh.HandleError(c, errors.NewBusinessError(fmt.Sprintf("Failed to open file %s", fh.Filename)))
-		}
-
-		fileContent, err := io.ReadAll(fileHandle)
-		fileHandle.Close()
-		if err != nil {
-			return h.eh.HandleError(c, errors.NewBusinessError(fmt.Sprintf("Failed to read file %s", fh.Filename)))
-		}
-
-		// * Get metadata for this file or use defaults
-		meta, exists := fileMetadata[fh.Filename]
-		if !exists {
-			meta = services.BulkDocumentInfo{
-				DocumentType: document.DocumentTypeOther,
-			}
-		}
-
-		meta.File = fileContent
-		meta.FileName = fh.Filename
-		meta.OriginalName = fh.Filename
-
-		bulkReq.Documents = append(bulkReq.Documents, meta)
-	}
-
-	// * Upload the documents
-	resp, err := h.ds.BulkUploadDocuments(c.UserContext(), bulkReq)
-	if err != nil {
-		return h.eh.HandleError(c, err)
-	}
-
-	return c.Status(fiber.StatusCreated).JSON(resp)
+	return c.Status(fiber.StatusNoContent).Send(nil)
 }

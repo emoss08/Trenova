@@ -58,12 +58,12 @@ func (s *Service) SelectOptions(ctx context.Context, opts *repositories.ListCust
 		return nil, err
 	}
 
-	options := make([]*types.SelectOption, len(result.Items))
-	for i, loc := range result.Items {
-		options[i] = &types.SelectOption{
+	options := make([]*types.SelectOption, 0, len(result.Items))
+	for _, loc := range result.Items {
+		options = append(options, &types.SelectOption{
 			Value: loc.GetID(),
 			Label: loc.Name,
-		}
+		})
 	}
 
 	return options, nil
@@ -137,6 +137,24 @@ func (s *Service) Get(ctx context.Context, opts repositories.GetCustomerByIDOpti
 	}
 
 	return entity, nil
+}
+
+func (s *Service) GetDocumentRequirements(ctx context.Context, cusID pulid.ID) ([]*repositories.CustomerDocRequirementResponse, error) {
+	log := s.l.With().
+		Str("operation", "GetDocumentRequirements").
+		Str("customerID", cusID.String()).
+		Logger()
+
+	requirements, err := s.repo.GetDocumentRequirements(ctx, cusID)
+	if err != nil {
+		log.Error().Err(err).Msg("failed to get document requirements")
+		return nil, err
+	}
+
+	// ! We don't need to check permissions here because their may be times where a user doesn't have permission to read a customer but
+	// ! they should be able to see the document requirements
+
+	return requirements, nil
 }
 
 func (s *Service) Create(ctx context.Context, cus *customer.Customer, userID pulid.ID) (*customer.Customer, error) {

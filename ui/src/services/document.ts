@@ -71,9 +71,17 @@ export async function getResourceSubFolders(
 export async function getDocumentsByResourceID(
   resourceType: Resource,
   resourceId: string,
+  limit?: number,
+  offset?: number,
 ): Promise<LimitOffsetResponse<Document>> {
   const response = await http.get<LimitOffsetResponse<Document>>(
     `/documents/${resourceType}/${resourceId}/`,
+    {
+      params: {
+        limit: limit?.toString(),
+        offset: offset?.toString(),
+      },
+    },
   );
   return response.data;
 }
@@ -84,4 +92,8 @@ export async function getDocumentTypes(): Promise<
   const response =
     await http.get<LimitOffsetResponse<DocumentTypeSchema>>(`/document-types`);
   return response.data;
+}
+
+export async function deleteDocument(docID: string): Promise<void> {
+  await http.delete(`/documents/${docID}`);
 }

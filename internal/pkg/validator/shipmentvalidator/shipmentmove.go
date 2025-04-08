@@ -47,7 +47,7 @@ func (v *MoveValidator) ValidateSplitRequest(
 ) *errors.MultiError {
 	me := errors.NewMultiError()
 
-	req.Validate(ctx, m, me)
+	req.Validate(ctx, me)
 
 	// Validate the stop length
 	v.validateStopLength(m, me)

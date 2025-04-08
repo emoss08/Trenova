@@ -6,6 +6,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/pkg/types/pulid"
 	"github.com/gofiber/contrib/websocket"
+	"github.com/rs/zerolog"
 )
 
 // LogClient represents a WebSocket client connection
@@ -13,6 +14,7 @@ type LogClient struct {
 	UserID    pulid.ID
 	OrgID     pulid.ID
 	BuID      pulid.ID
+	Logger    *zerolog.Logger
 	Conn      *websocket.Conn
 	isClosing bool
 	mu        sync.Mutex
@@ -29,8 +31,12 @@ func (c *LogClient) SendLogEntry(entry *repositories.LogEntry) error {
 
 	if err := c.Conn.WriteJSON(entry); err != nil {
 		c.isClosing = true
-		c.Conn.WriteMessage(websocket.CloseMessage, []byte{})
-		c.Conn.Close()
+		if err = c.Conn.WriteMessage(websocket.CloseMessage, []byte{}); err != nil {
+			c.Logger.Error().Err(err).Msg("failed to send close message")
+		}
+		if closeErr := c.Conn.Close(); closeErr != nil {
+			c.Logger.Error().Err(closeErr).Msg("failed to close connection")
+		}
 		return err
 	}
 
@@ -44,7 +50,11 @@ func (c *LogClient) Close() {
 
 	if !c.isClosing {
 		c.isClosing = true
-		c.Conn.WriteMessage(websocket.CloseMessage, []byte{})
-		c.Conn.Close()
+		if err := c.Conn.WriteMessage(websocket.CloseMessage, []byte{}); err != nil {
+			c.Logger.Error().Err(err).Msg("failed to send close message")
+		}
+		if err := c.Conn.Close(); err != nil {
+			c.Logger.Error().Err(err).Msg("failed to close connection")
+		}
 	}
 }

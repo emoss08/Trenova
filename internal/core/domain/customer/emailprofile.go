@@ -20,6 +20,7 @@ var (
 	_ domain.Validatable        = (*CustomerEmailProfile)(nil)
 )
 
+//nolint:revive // This is a valid struct name
 type CustomerEmailProfile struct {
 	bun.BaseModel `bun:"table:customer_email_profiles,alias:cem" json:"-"`
 
@@ -74,7 +75,7 @@ func (c *CustomerEmailProfile) GetTableName() string {
 	return "customer_email_profiles"
 }
 
-func (c *CustomerEmailProfile) BeforeAppendModel(ctx context.Context, query bun.Query) error {
+func (c *CustomerEmailProfile) BeforeAppendModel(_ context.Context, query bun.Query) error {
 	now := timeutils.NowUnix()
 
 	switch query.(type) {

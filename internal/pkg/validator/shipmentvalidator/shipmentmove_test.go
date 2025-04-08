@@ -230,7 +230,7 @@ func TestMoveValidator(t *testing.T) {
 			move := newMovement()
 			scenario.modifyMove(move)
 
-			vCtx := validator.NewValidationContext(ctx, &validator.ValidationContext{
+			vCtx := validator.NewValidationContext(&validator.ValidationContext{
 				IsCreate: true,
 			})
 

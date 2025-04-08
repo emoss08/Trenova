@@ -6,6 +6,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"regexp"
 	"sort"
 	"strings"
 	"time"
@@ -39,13 +40,6 @@ type backupService struct {
 	retentionDays    int
 }
 
-// BackupConfig holds configuration for the backup service.
-type BackupConfig struct {
-	BackupDir      string `yaml:"backup_dir"`
-	Retention      int    `yaml:"retention_days"`
-	CompressionOpt string `yaml:"compression"`
-}
-
 func NewBackupService(p BackupServiceParams) (services.BackupService, error) {
 	log := p.Logger.With().Str("component", "dbbackup_service").Logger()
 
@@ -53,7 +47,7 @@ func NewBackupService(p BackupServiceParams) (services.BackupService, error) {
 	cfg := p.Config.Backup()
 	if cfg == nil || !cfg.Enabled {
 		log.Info().Msg("backup is disabled")
-		return nil, nil
+		return nil, eris.New("backup is disabled")
 	}
 
 	// * Get backup directory from config
@@ -111,6 +105,34 @@ func NewBackupService(p BackupServiceParams) (services.BackupService, error) {
 	}, nil
 }
 
+// validateConnectionInfo validates database connection parameters to prevent command injection
+func validateConnectionInfo(info *db.ConnectionInfo) error {
+	// Validate host (allow alphanumeric, dots, hyphens, and colons for IPv6)
+	hostRegex := regexp.MustCompile(`^[a-zA-Z0-9.:\-]+$`)
+	if !hostRegex.MatchString(info.Host) {
+		return eris.New("invalid database host")
+	}
+
+	// Validate port range
+	if info.Port < 1 || info.Port > 65535 {
+		return eris.New("invalid database port")
+	}
+
+	// Validate username (allow alphanumeric and some special chars)
+	userRegex := regexp.MustCompile(`^[a-zA-Z0-9_.\-]+$`)
+	if !userRegex.MatchString(info.Username) {
+		return eris.New("invalid database username")
+	}
+
+	// Validate database name (allow alphanumeric and some special chars)
+	dbRegex := regexp.MustCompile(`^[a-zA-Z0-9_.\-]+$`)
+	if !dbRegex.MatchString(info.Database) {
+		return eris.New("invalid database name")
+	}
+
+	return nil
+}
+
 // CreateBackup performs a full database backup using pg_dump
 func (s *backupService) CreateBackup(ctx context.Context) (string, error) {
 	log := s.logger.With().
@@ -118,10 +140,16 @@ func (s *backupService) CreateBackup(ctx context.Context) (string, error) {
 		Logger()
 
 	// * Get database connection parameters
-	dbInfo, err := s.db.ConnectionInfo(ctx)
+	dbInfo, err := s.db.ConnectionInfo()
 	if err != nil {
 		log.Error().Err(err).Msg("failed to get database connection info")
 		return "", eris.Wrap(err, "failed to get database connection info")
+	}
+
+	// * Validate connection info to prevent command injection
+	if err = validateConnectionInfo(dbInfo); err != nil {
+		log.Error().Err(err).Msg("invalid database connection info")
+		return "", err
 	}
 
 	// * Create timestamp for backup file
@@ -130,19 +158,20 @@ func (s *backupService) CreateBackup(ctx context.Context) (string, error) {
 	fp := filepath.Join(s.backupDir, filename)
 
 	// * Build the pg_dump command with full path
-	cmd := exec.CommandContext(
-		ctx,
-		s.pgDumpPath,
-		fmt.Sprintf("--host=%s", dbInfo.Host),
+	args := []string{
+		"--host=" + dbInfo.Host,
 		fmt.Sprintf("--port=%d", dbInfo.Port),
-		fmt.Sprintf("--username=%s", dbInfo.Username),
+		"--username=" + dbInfo.Username,
 		"--format=custom",
 		fmt.Sprintf("--compress=%d", s.compressionLevel),
 		"--no-owner",
 		"--no-privileges",
-		fmt.Sprintf("--file=%s", fp),
+		"--file=" + fp,
 		dbInfo.Database,
-	)
+	}
+
+	// #nosec G204 - inputs are validated by validateConnectionInfo function
+	cmd := exec.CommandContext(ctx, s.pgDumpPath, args...)
 
 	// * Set the PGPASSWORD environment variable
 	cmd.Env = append(os.Environ(), fmt.Sprintf("PGPASSWORD=%s", dbInfo.Password))
@@ -190,7 +219,7 @@ func (s *backupService) ScheduledBackup(ctx context.Context, retentionDays int) 
 	}
 
 	// * Apply retention policy
-	if err := s.ApplyRetentionPolicy(retentionDays); err != nil {
+	if err = s.ApplyRetentionPolicy(retentionDays); err != nil {
 		log.Error().
 			Err(err).
 			Msg("failed to apply retention policy")
@@ -289,10 +318,16 @@ func (s *backupService) RestoreBackup(ctx context.Context, backupFile string) er
 	}
 
 	// * Get database connection parameters
-	dbInfo, err := s.db.ConnectionInfo(ctx)
+	dbInfo, err := s.db.ConnectionInfo()
 	if err != nil {
 		log.Error().Err(err).Msg("failed to get database connection info")
 		return eris.Wrap(err, "failed to get database connection info for restore")
+	}
+
+	// * Validate connection info to prevent command injection
+	if err = validateConnectionInfo(dbInfo); err != nil {
+		log.Error().Err(err).Msg("invalid database connection info")
+		return err
 	}
 
 	// * Log warning about restore operation
@@ -302,20 +337,21 @@ func (s *backupService) RestoreBackup(ctx context.Context, backupFile string) er
 		Msg("starting database restore - this will overwrite existing data")
 
 	// * Build the pg_restore command with full path
-	cmd := exec.CommandContext(
-		ctx,
-		s.pgRestorePath,
-		fmt.Sprintf("--host=%s", dbInfo.Host),
+	args := []string{
+		"--host=" + dbInfo.Host,
 		fmt.Sprintf("--port=%d", dbInfo.Port),
-		fmt.Sprintf("--username=%s", dbInfo.Username),
+		"--username=" + dbInfo.Username,
 		"--clean",
 		"--if-exists",
 		"--no-owner",
 		"--no-privileges",
 		"--verbose",
-		fmt.Sprintf("--dbname=%s", dbInfo.Database),
+		"--dbname=" + dbInfo.Database,
 		backupFile,
-	)
+	}
+
+	// #nosec G204 - inputs are validated by validateConnectionInfo function and backupFile is checked
+	cmd := exec.CommandContext(ctx, s.pgRestorePath, args...)
 
 	// * Set the PGPASSWORD environment variable
 	cmd.Env = append(os.Environ(), fmt.Sprintf("PGPASSWORD=%s", dbInfo.Password))
@@ -367,10 +403,10 @@ func (s *backupService) ListBackups() ([]services.BackupFileInfo, error) {
 		}
 
 		filePath := filepath.Join(s.backupDir, filename)
-		fileInfo, err := file.Info()
-		if err != nil {
+		fileInfo, fErr := file.Info()
+		if fErr != nil {
 			log.Warn().
-				Err(err).
+				Err(fErr).
 				Str("filename", filename).
 				Msg("failed to get file info")
 			continue

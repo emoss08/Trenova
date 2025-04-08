@@ -1,5 +1,6 @@
 package worker
 
+//nolint:revive // This is a custom type for the worker type
 type WorkerType string
 
 const (

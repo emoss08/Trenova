@@ -202,7 +202,7 @@ func (s *Service) DeleteBackup(ctx context.Context, req *DeleteBackupRequest) er
 	backupDir := s.bs.GetBackupDir()
 	backupPath := backupDir + "/" + req.Filename
 
-	if err := s.bs.DeleteBackup(backupPath); err != nil {
+	if err = s.bs.DeleteBackup(backupPath); err != nil {
 		return eris.Wrap(err, "delete backup")
 	}
 
@@ -238,7 +238,7 @@ func (s *Service) RestoreBackup(ctx context.Context, req *RestoreRequest) error 
 	backupPath := backupDir + "/" + req.Filename
 
 	// * Restore the backup
-	if err := s.bs.RestoreBackup(ctx, backupPath); err != nil {
+	if err = s.bs.RestoreBackup(ctx, backupPath); err != nil {
 		return eris.Wrap(err, "restore backup")
 	}
 
@@ -278,7 +278,7 @@ func (s *Service) ApplyRetentionPolicy(ctx context.Context, req *ApplyRetentionP
 	}
 
 	// * Apply the retention policy
-	if err := s.bs.ApplyRetentionPolicy(retentionDays); err != nil {
+	if err = s.bs.ApplyRetentionPolicy(retentionDays); err != nil {
 		return eris.Wrap(err, "apply retention policy")
 	}
 

@@ -56,7 +56,7 @@ export function ShipmentDuplicateDialog({
     reset,
   } = form;
 
-  const mutation = useMutation({
+  const { mutateAsync: duplicateShipment } = useMutation({
     mutationFn: async (values: ShipmentDuplicateSchema) => {
       const response = await http.post(`/shipments/duplicate/`, values);
 
@@ -99,9 +99,9 @@ export function ShipmentDuplicateDialog({
 
   const onSubmit = useCallback(
     async (values: ShipmentDuplicateSchema) => {
-      await mutation.mutateAsync(values);
+      await duplicateShipment(values);
     },
-    [mutation.mutateAsync],
+    [duplicateShipment],
   );
 
   return (
@@ -130,7 +130,8 @@ export function ShipmentDuplicateDialog({
                 <Tooltip>
                   <TooltipTrigger asChild>
                     <Button
-                      type="submit"
+                      type="button"
+                      onClick={() => handleSubmit(onSubmit)()}
                       isLoading={isSubmitting}
                       loadingText="Duplicating..."
                     >

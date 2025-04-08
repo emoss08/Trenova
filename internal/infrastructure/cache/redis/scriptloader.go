@@ -38,11 +38,19 @@ func (sl *ScriptLoader) LoadScripts(ctx context.Context) error {
 	}
 
 	for _, entry := range entries {
-		if err := sl.loadScript(ctx, entry); err != nil {
+		if err = sl.loadScript(ctx, entry); err != nil {
 			return err
 		}
 	}
 
+	return nil
+}
+
+func (sl *ScriptLoader) UnloadScripts() error {
+	sl.mu.Lock()
+	defer sl.mu.Unlock()
+	sl.scripts = make(map[string]string)
+	sl.scriptNames = make(map[string]string)
 	return nil
 }
 
@@ -83,38 +91,46 @@ func (sl *ScriptLoader) EvalSHA(ctx context.Context, scriptName string, keys []s
 	}
 
 	result, err := sl.redis.EvalSha(ctx, sha, keys, args...).Result()
+	if err != nil && isNoScriptError(err) {
+		// Script not found in Redis, try to reload it
+		sha, err = sl.reloadScript(ctx, scriptName)
+		if err != nil {
+			return nil, err
+		}
+
+		// Retry with the reloaded script
+		result, err = sl.redis.EvalSha(ctx, sha, keys, args...).Result()
+	}
+
+	return result, err
+}
+
+// reloadScript attempts to reload a script into Redis
+func (sl *ScriptLoader) reloadScript(ctx context.Context, scriptName string) (string, error) {
+	entries, err := scriptsF5.ReadDir("scripts")
 	if err != nil {
-		// Handle NOSCRIPT error by reloading the script
-		if isNoScriptError(err) {
-			entries, err := scriptsF5.ReadDir("scripts")
-			if err != nil {
-				return nil, eris.Wrap(err, "failed to read scripts directory")
+		return "", eris.Wrap(err, "failed to read scripts directory")
+	}
+
+	for _, entry := range entries {
+		sm := strings.TrimSuffix(entry.Name(), ".lua")
+		if sm == scriptName {
+			if err = sl.loadScript(ctx, entry); err != nil {
+				return "", err
 			}
-
-			for _, entry := range entries {
-				sm := strings.TrimSuffix(entry.Name(), ".lua")
-				if sm == scriptName {
-					if err := sl.loadScript(ctx, entry); err != nil {
-						return nil, err
-					}
-					break
-				}
-			}
-
-			sl.mu.RLock()
-			sha, exists = sl.scripts[scriptName]
-			sl.mu.RUnlock()
-
-			if !exists {
-				return nil, eris.Errorf("script %s not found after reload", scriptName)
-			}
-
-			result, err = sl.redis.EvalSha(ctx, sha, keys, args...).Result()
-
+			break
 		}
 	}
 
-	return result, nil
+	sl.mu.RLock()
+	sha, exists := sl.scripts[scriptName]
+	sl.mu.RUnlock()
+
+	if !exists {
+		return "", eris.Errorf("script %s not found after reload", scriptName)
+	}
+
+	return sha, nil
 }
 
 // GetScriptSHA returns the SHA for a script name

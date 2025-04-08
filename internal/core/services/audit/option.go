@@ -1,11 +1,9 @@
 package audit
 
 import (
-	"bytes"
 	"strings"
 	"time"
 
-	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/core/domain/audit"
 	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/pkg/utils/jsonutils"
@@ -54,63 +52,20 @@ func WithDiff(before, after any) services.LogOption {
 // Useful for situations where the full diff would be too large
 func WithCompactDiff(before, after any) services.LogOption {
 	return func(entry *audit.Entry) error {
-		// Convert to JSON and back to normalize the objects
-		beforeJSON, err := sonic.Marshal(before)
+		results, err := jsonutils.JSONDiff(before, after, jsonutils.DefaultOptions())
 		if err != nil {
-			return eris.Wrap(err, "failed to marshal 'before' object")
-		}
-
-		afterJSON, err := sonic.Marshal(after)
-		if err != nil {
-			return eris.Wrap(err, "failed to marshal 'after' object")
-		}
-
-		var beforeMap, afterMap map[string]any
-		if err := sonic.Unmarshal(beforeJSON, &beforeMap); err != nil {
-			return eris.Wrap(err, "failed to unmarshal 'before' object")
-		}
-
-		if err := sonic.Unmarshal(afterJSON, &afterMap); err != nil {
-			return eris.Wrap(err, "failed to unmarshal 'after' object")
+			return eris.Wrap(err, "failed to compute diff")
 		}
 
 		// Find changed fields
 		changes := make(map[string]any)
-		for key, afterValue := range afterMap {
-			if beforeValue, exists := beforeMap[key]; exists {
-				// Compare values by marshaling to JSON and comparing strings
-				beforeFieldJSON, err1 := sonic.Marshal(beforeValue)
-				afterFieldJSON, err2 := sonic.Marshal(afterValue)
-
-				if err1 != nil || err2 != nil {
-					// Handle error or skip this field
-					continue
-				}
-
-				if bytes.Equal(beforeFieldJSON, afterFieldJSON) {
-					continue
-				}
-
-				changes[key] = map[string]any{
-					"from": beforeValue,
-					"to":   afterValue,
-				}
-			} else {
-				// Added field
-				changes[key] = map[string]any{
-					"from": nil,
-					"to":   afterValue,
-				}
-			}
-		}
-
-		// Find removed fields
-		for key, beforeValue := range beforeMap {
-			if _, exists := afterMap[key]; !exists {
-				changes[key] = map[string]any{
-					"from": beforeValue,
-					"to":   nil,
-				}
+		for key, change := range results {
+			changes[key] = map[string]any{
+				"from":      change.From,
+				"to":        change.To,
+				"type":      change.Type,
+				"fieldType": change.FieldType,
+				"path":      change.Path,
 			}
 		}
 
