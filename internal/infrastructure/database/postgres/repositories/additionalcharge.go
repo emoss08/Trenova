@@ -38,86 +38,124 @@ func NewAdditionalChargeRepository(p AdditionalChargeRepositoryParams) repositor
 }
 
 func (r *additionalChargeRepository) HandleAdditionalChargeOperations(ctx context.Context, tx bun.IDB, shp *shipment.Shipment, isCreate bool) error {
-	var err error
-
+	// Early return for create with no charges
 	if len(shp.AdditionalCharges) == 0 && isCreate {
 		return nil
 	}
 
-	// * Get the existing additional charges for comparison if this is an update operation
-	existingAdditionalCharges := make([]*shipment.AdditionalCharge, 0)
-	if !isCreate {
-		existingAdditionalCharges, err = r.getExistingAdditionalCharges(ctx, tx, shp)
-		if err != nil {
-			r.l.Error().Err(err).Msg("failed to get existing additional charges")
-			return err
-		}
+	// Prepare operation data
+	opData, err := r.prepareOperationData(ctx, tx, shp, isCreate)
+	if err != nil {
+		return err
 	}
 
-	// * Prepare additional charges for operations
-	newAdditionalCharges := make([]*shipment.AdditionalCharge, 0)
-	updateAdditionalCharges := make([]*shipment.AdditionalCharge, 0)
-	existingAdditionalChargeMap := make(map[pulid.ID]*shipment.AdditionalCharge)
-	updatedAdditionalChargeIDs := make(map[pulid.ID]struct{})
-	additionalChargesToDelete := make([]*shipment.AdditionalCharge, 0)
-
-	// * Create map of existing additional charges for quick lookup
-	for _, ac := range existingAdditionalCharges {
-		existingAdditionalChargeMap[ac.ID] = ac
+	// Process insert operations
+	if err = r.processInserts(ctx, tx, opData.NewCharges); err != nil {
+		return err
 	}
 
-	// * Categorize additional charges for different operations
-	for _, ac := range shp.AdditionalCharges {
-		// * Set required fields
-		ac.ShipmentID = shp.ID
-		ac.OrganizationID = shp.OrganizationID
-		ac.BusinessUnitID = shp.BusinessUnitID
-
-		if isCreate || ac.ID.IsNil() {
-			// * Append new additional charges
-			newAdditionalCharges = append(newAdditionalCharges, ac)
-		} else {
-			if existing, ok := existingAdditionalChargeMap[ac.ID]; ok {
-				// * Increment version for optimistic locking
-				ac.Version = existing.Version + 1
-				updateAdditionalCharges = append(updateAdditionalCharges, ac)
-				updatedAdditionalChargeIDs[ac.ID] = struct{}{}
-			}
-		}
+	// Process update operations
+	if err = r.processUpdates(ctx, tx, opData.UpdateCharges); err != nil {
+		return err
 	}
 
-	// * Handle bulk insert of new additional charges
-	if len(newAdditionalCharges) > 0 {
-		if _, err = tx.NewInsert().Model(&newAdditionalCharges).Exec(ctx); err != nil {
-			r.l.Error().Err(err).Msg("failed to bulk insert new additional charges")
-			return err
-		}
-	}
-
-	// * Handle bulk update of new additional charges
-	if len(updateAdditionalCharges) > 0 {
-		if err = r.handleBulkUpdate(ctx, tx, updateAdditionalCharges); err != nil {
-			r.l.Error().Err(err).Msg("failed to handle bulk update of additional charges")
-			return err
-		}
-	}
-
-	// * Handle deletion of additional charges that are no longer present
+	// Process delete operations
 	if !isCreate {
 		if err = r.handleAdditionalChargeDeletions(ctx, tx, &repositories.AdditionalChargeDeletionRequest{
-			ExistingAdditionalChargeMap: existingAdditionalChargeMap,
-			UpdatedAdditionalChargeIDs:  updatedAdditionalChargeIDs,
-			AdditionalChargesToDelete:   additionalChargesToDelete,
+			ExistingAdditionalChargeMap: opData.ExistingMap,
+			UpdatedAdditionalChargeIDs:  opData.UpdatedIDs,
+			AdditionalChargesToDelete:   opData.DeleteCharges,
 		}); err != nil {
 			r.l.Error().Err(err).Msg("failed to handle additional charge deletions")
 			return err
 		}
 	}
 
-	r.l.Debug().Int("new_additional_charges", len(newAdditionalCharges)).
-		Int("updated_additional_charges", len(updateAdditionalCharges)).
-		Int("deleted_additional_charges", len(additionalChargesToDelete)).
-		Msg("additional charge operations completed")
+	r.l.Debug().Int("newAdditionalCharges", len(opData.NewCharges)).
+		Int("updatedAdditionalCharges", len(opData.UpdateCharges)).
+		Int("deletedAdditionalCharges", len(opData.DeleteCharges)).
+		Msg("Additional Charge operations completed")
+
+	return nil
+}
+
+// OperationData holds prepared data for CRUD operations
+type operationData struct {
+	ExistingMap   map[pulid.ID]*shipment.AdditionalCharge
+	UpdatedIDs    map[pulid.ID]struct{}
+	NewCharges    []*shipment.AdditionalCharge
+	UpdateCharges []*shipment.AdditionalCharge
+	DeleteCharges []*shipment.AdditionalCharge
+}
+
+func (r *additionalChargeRepository) prepareOperationData(ctx context.Context, tx bun.IDB, shp *shipment.Shipment, isCreate bool) (*operationData, error) {
+	data := &operationData{
+		ExistingMap:   make(map[pulid.ID]*shipment.AdditionalCharge),
+		UpdatedIDs:    make(map[pulid.ID]struct{}),
+		NewCharges:    make([]*shipment.AdditionalCharge, 0),
+		UpdateCharges: make([]*shipment.AdditionalCharge, 0),
+		DeleteCharges: make([]*shipment.AdditionalCharge, 0),
+	}
+
+	// Get existing charges for updates
+	if !isCreate {
+		existingCharges, err := r.getExistingAdditionalCharges(ctx, tx, shp)
+		if err != nil {
+			r.l.Error().Err(err).Msg("failed to get existing additional charges")
+			return nil, err
+		}
+
+		// Map existing charges by ID
+		for _, ac := range existingCharges {
+			data.ExistingMap[ac.ID] = ac
+		}
+	}
+
+	// Categorize charges for operations
+	r.categorizeCharges(shp, data, isCreate)
+
+	return data, nil
+}
+
+func (r *additionalChargeRepository) categorizeCharges(shp *shipment.Shipment, data *operationData, isCreate bool) {
+	for _, ac := range shp.AdditionalCharges {
+		// Set required fields
+		ac.ShipmentID = shp.ID
+		ac.OrganizationID = shp.OrganizationID
+		ac.BusinessUnitID = shp.BusinessUnitID
+
+		if isCreate || ac.ID.IsNil() {
+			data.NewCharges = append(data.NewCharges, ac)
+		} else if existing, ok := data.ExistingMap[ac.ID]; ok {
+			ac.Version = existing.Version + 1
+			data.UpdateCharges = append(data.UpdateCharges, ac)
+			data.UpdatedIDs[ac.ID] = struct{}{}
+		}
+	}
+}
+
+func (r *additionalChargeRepository) processInserts(ctx context.Context, tx bun.IDB, newCharges []*shipment.AdditionalCharge) error {
+	if len(newCharges) == 0 {
+		return nil
+	}
+
+	if _, err := tx.NewInsert().Model(&newCharges).Exec(ctx); err != nil {
+		r.l.Error().Err(err).Msg("failed to bulk insert new additional charges")
+		return err
+	}
+
+	return nil
+}
+
+func (r *additionalChargeRepository) processUpdates(ctx context.Context, tx bun.IDB, updateCharges []*shipment.AdditionalCharge) error {
+	if len(updateCharges) == 0 {
+		return nil
+	}
+
+	if err := r.handleBulkUpdate(ctx, tx, updateCharges); err != nil {
+		r.l.Error().Err(err).Msg("failed to handle bulk update of additional charges")
+		return err
+	}
 
 	return nil
 }

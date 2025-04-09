@@ -78,6 +78,7 @@ func NewService(p ServiceParams) services.FileService {
 
 	cfg := &Config{
 		MaxFileSize: MaxFileSize,
+		//nolint:exhaustive // This is a map of allowed file types and their corresponding extensions
 		AllowedFileTypes: map[services.FileType][]string{
 			services.ImageFile: {".jpg", ".jpeg", ".png", ".gif", ".webp"},
 			services.DocFile:   {".doc", ".docx", ".xls", ".xlsx", ".csv"},

@@ -21,7 +21,7 @@ func init() {
 }
 
 // Setup initializes migrations with proper configuration
-func Setup(db *bun.DB) *migrate.Migrations {
+func Setup() *migrate.Migrations {
 	migrations := migrate.NewMigrations()
 
 	if err := migrations.Discover(sqlMigrations); err != nil {
@@ -33,7 +33,7 @@ func Setup(db *bun.DB) *migrate.Migrations {
 
 // Run executes all pending migrations
 func Run(ctx context.Context, db *bun.DB) error {
-	migrations := Setup(db)
+	migrations := Setup()
 
 	migrator := migrate.NewMigrator(db, migrations)
 
@@ -59,7 +59,7 @@ func Run(ctx context.Context, db *bun.DB) error {
 
 // Reset drops all tables and re-runs migrations
 func Reset(ctx context.Context, db *bun.DB) error {
-	migrations := Setup(db)
+	migrations := Setup()
 
 	migrator := migrate.NewMigrator(db, migrations)
 

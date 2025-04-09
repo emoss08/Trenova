@@ -80,8 +80,7 @@ func (sm *ShipmentMove) GetTableName() string {
 func (sm *ShipmentMove) BeforeAppendModel(_ context.Context, query bun.Query) error {
 	now := timeutils.NowUnix()
 
-	switch query.(type) {
-	case *bun.InsertQuery:
+	if _, ok := query.(*bun.InsertQuery); ok {
 		if sm.ID.IsNil() {
 			sm.ID = pulid.MustNew("smv_")
 		}

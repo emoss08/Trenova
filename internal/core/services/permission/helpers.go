@@ -346,9 +346,17 @@ func evaluateOwnershipCondition(c *permission.Condition, ctx *services.Permissio
 	case permission.OpIn:
 		switch c.Field {
 		case "business_unit_id":
-			return ctx.BuID.String() == c.Value.(string)
+			strValue, ok := c.Value.(string)
+			if !ok {
+				return false
+			}
+			return ctx.BuID.String() == strValue
 		case "organization_id":
-			return ctx.OrgID.String() == c.Value.(string)
+			strValue, ok := c.Value.(string)
+			if !ok {
+				return false
+			}
+			return ctx.OrgID.String() == strValue
 		default:
 			return false
 		}

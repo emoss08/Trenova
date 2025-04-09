@@ -86,7 +86,7 @@ func newShipment() *shipment.Shipment {
 	}
 }
 
-func TestShipmentValidator(t *testing.T) { //nolint: funlen // Tests
+func TestShipmentValidator(t *testing.T) {
 	sv := spValidator.NewStopValidator(spValidator.StopValidatorParams{
 		DB: ts.DB,
 	})
