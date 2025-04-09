@@ -173,7 +173,11 @@ func (r *documentRepository) GetByID(ctx context.Context, req repositories.GetDo
 
 	if err = dba.NewSelect().
 		Model(doc).
-		WherePK().
+		WhereGroup(" AND ", func(q *bun.SelectQuery) *bun.SelectQuery {
+			return q.Where("doc.id = ?", req.ID).
+				Where("doc.organization_id = ?", req.OrgID).
+				Where("doc.business_unit_id = ?", req.BuID)
+		}).
 		Scan(ctx, doc); err != nil {
 		if eris.Is(err, sql.ErrNoRows) {
 			return nil, errors.NewNotFoundError("Document not found")
