@@ -18,14 +18,6 @@ import (
 	"go.uber.org/fx"
 )
 
-const (
-	largeFileSizeThreshold = 5 * 1024 * 1024 // 5MB
-
-	// Job Status polling settings
-	maxStatusChecks     = 60
-	statusCheckInterval = 1 * time.Second
-)
-
 type ServiceParams struct {
 	fx.In
 
