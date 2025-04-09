@@ -3,7 +3,6 @@ import { InternalLink } from "@/components/ui/link";
 import {
   Tooltip,
   TooltipContent,
-  TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { generateDateOnlyString, toDate } from "@/lib/date";
@@ -107,7 +106,7 @@ export function createEntityRefColumn<
     id: accessorKey as string,
     header: ({ column }) => (
       <DataTableColumnHeader
-        column={column}
+        column={column as any}
         title={config.getHeaderText ?? ""}
       />
     ),
@@ -128,75 +127,71 @@ export function createEntityRefColumn<
 
       return (
         <div className="flex flex-col gap-0.5">
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <InternalLink
-                  to={{
-                    pathname: config.basePath,
-                    search: `?entityId=${id}&modal=edit`,
-                  }}
-                  state={{
-                    isNavigatingToModal: true,
-                  }}
-                  className={config.className}
-                  replace
-                  preventScrollReset
-                >
-                  {color ? (
-                    <div className="flex items-center gap-x-1.5 text-sm font-normal text-foreground underline hover:text-foreground/70">
-                      <div
-                        className="size-2 rounded-full"
-                        style={{
-                          backgroundColor: color,
-                        }}
-                      />
-                      <p>{displayText}</p>
-                    </div>
-                  ) : (
-                    <span className="text-sm font-normal underline hover:text-foreground/70">
-                      {displayText}
-                    </span>
-                  )}
-                </InternalLink>
-              </TooltipTrigger>
-              <TooltipContent>
-                <p>Click to view {displayText}</p>
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
+          <Tooltip delayDuration={300}>
+            <TooltipTrigger asChild>
+              <InternalLink
+                to={{
+                  pathname: config.basePath,
+                  search: `?entityId=${id}&modal=edit`,
+                }}
+                state={{
+                  isNavigatingToModal: true,
+                }}
+                className={config.className}
+                replace
+                preventScrollReset
+              >
+                {color ? (
+                  <div className="flex items-center gap-x-1.5 text-sm font-normal text-foreground underline hover:text-foreground/70">
+                    <div
+                      className="size-2 rounded-full"
+                      style={{
+                        backgroundColor: color,
+                      }}
+                    />
+                    <p>{displayText}</p>
+                  </div>
+                ) : (
+                  <span className="text-sm font-normal underline hover:text-foreground/70">
+                    {displayText}
+                  </span>
+                )}
+              </InternalLink>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>Click to view {displayText}</p>
+            </TooltipContent>
+          </Tooltip>
 
           {secondaryInfo && (
             <div className="flex items-center gap-1 text-muted-foreground text-2xs">
               {secondaryInfo.label && <span>{secondaryInfo.label}:</span>}
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    {clickable ? (
-                      <InternalLink
-                        to={{
-                          pathname: config.basePath,
-                          search: `?entityId=${config.getId(secondaryInfo.entity)}&modal=edit`,
-                        }}
-                        state={{
-                          isNavigatingToModal: true,
-                        }}
-                        className="text-2xs text-muted-foreground underline hover:text-muted-foreground/70"
-                        replace
-                        preventScrollReset
-                        viewTransition
-                      >
-                        {secondaryInfo.displayText}
-                      </InternalLink>
-                    ) : (
-                      <p>{secondaryInfo.displayText}</p>
-                    )}
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p>Click to view {secondaryInfo.displayText}</p>
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
+              <Tooltip delayDuration={300}>
+                <TooltipTrigger asChild>
+                  {clickable ? (
+                    <InternalLink
+                      to={{
+                        pathname: config.basePath,
+                        search: `?entityId=${config.getId(secondaryInfo.entity)}&modal=edit`,
+                      }}
+                      state={{
+                        isNavigatingToModal: true,
+                      }}
+                      className="text-2xs text-muted-foreground underline hover:text-muted-foreground/70"
+                      replace
+                      preventScrollReset
+                      viewTransition
+                    >
+                      {secondaryInfo.displayText}
+                    </InternalLink>
+                  ) : (
+                    <p>{secondaryInfo.displayText}</p>
+                  )}
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Click to view {secondaryInfo.displayText}</p>
+                </TooltipContent>
+              </Tooltip>
             </div>
           )}
         </div>
@@ -223,7 +218,7 @@ export function createEntityColumn<T extends Record<string, any>>(
     id: accessorKey as string,
     header: ({ column }) => (
       <DataTableColumnHeader
-        column={column}
+        column={column as any}
         title={config.getHeaderText ?? ""}
       />
     ),
@@ -282,7 +277,7 @@ export function createNestedEntityRefColumn<
     id: config.columnId ?? v4(),
     header: ({ column }) => (
       <DataTableColumnHeader
-        column={column}
+        column={column as any}
         title={config.getHeaderText ?? ""}
       />
     ),
@@ -303,75 +298,71 @@ export function createNestedEntityRefColumn<
 
       return (
         <div className="flex flex-col gap-0.5">
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <InternalLink
-                  to={{
-                    pathname: config.basePath,
-                    search: `?entityId=${id}&modal=edit`,
-                  }}
-                  state={{
-                    isNavigatingToModal: true,
-                  }}
-                  className={config.className}
-                  replace
-                  preventScrollReset
-                >
-                  {color ? (
-                    <div className="flex items-center gap-x-1.5 text-sm font-normal text-foreground underline hover:text-foreground/70">
-                      <div
-                        className="size-2 rounded-full"
-                        style={{
-                          backgroundColor: color,
-                        }}
-                      />
-                      <p>{displayText}</p>
-                    </div>
-                  ) : (
-                    <span className="text-sm font-normal underline hover:text-foreground/70">
-                      {displayText}
-                    </span>
-                  )}
-                </InternalLink>
-              </TooltipTrigger>
-              <TooltipContent>
-                <p>Click to view {displayText}</p>
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
+          <Tooltip delayDuration={300}>
+            <TooltipTrigger asChild>
+              <InternalLink
+                to={{
+                  pathname: config.basePath,
+                  search: `?entityId=${id}&modal=edit`,
+                }}
+                state={{
+                  isNavigatingToModal: true,
+                }}
+                className={config.className}
+                replace
+                preventScrollReset
+              >
+                {color ? (
+                  <div className="flex items-center gap-x-1.5 text-sm font-normal text-foreground underline hover:text-foreground/70">
+                    <div
+                      className="size-2 rounded-full"
+                      style={{
+                        backgroundColor: color,
+                      }}
+                    />
+                    <p>{displayText}</p>
+                  </div>
+                ) : (
+                  <span className="text-sm font-normal underline hover:text-foreground/70">
+                    {displayText}
+                  </span>
+                )}
+              </InternalLink>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>Click to view {displayText}</p>
+            </TooltipContent>
+          </Tooltip>
 
           {secondaryInfo && (
             <div className="flex items-center gap-1 text-muted-foreground text-2xs">
               {secondaryInfo.label && <span>{secondaryInfo.label}:</span>}
               {clickable ? (
-                <TooltipProvider>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <InternalLink
-                        to={{
-                          pathname: config.basePath,
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <InternalLink
+                      to={{
+                        pathname: config.basePath,
 
-                          search: `?entityId=${config.getId(
-                            secondaryInfo.entity,
-                          )}&modal=edit`,
-                        }}
-                        state={{
-                          isNavigatingToModal: true,
-                        }}
-                        className="text-2xs text-muted-foreground underline hover:text-muted-foreground/70"
-                        replace
-                        preventScrollReset
-                        viewTransition
-                      >
-                        {secondaryInfo.displayText}
-                      </InternalLink>
-                    </TooltipTrigger>
-                    <TooltipContent>
-                      <p>Click to view {secondaryInfo.displayText}</p>
-                    </TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
+                        search: `?entityId=${config.getId(
+                          secondaryInfo.entity,
+                        )}&modal=edit`,
+                      }}
+                      state={{
+                        isNavigatingToModal: true,
+                      }}
+                      className="text-2xs text-muted-foreground underline hover:text-muted-foreground/70"
+                      replace
+                      preventScrollReset
+                      viewTransition
+                    >
+                      {secondaryInfo.displayText}
+                    </InternalLink>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>Click to view {secondaryInfo.displayText}</p>
+                  </TooltipContent>
+                </Tooltip>
               ) : (
                 <p>{secondaryInfo.displayText}</p>
               )}

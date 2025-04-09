@@ -114,8 +114,6 @@ export function ShipmentEditSheet({
 
   const effectiveIsDirty = initialLoadRef.current && isDirty;
 
-  console.log("effectiveIsDirty", effectiveIsDirty);
-
   const {
     showWarning,
     handleClose: onClose,

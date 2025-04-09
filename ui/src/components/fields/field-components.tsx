@@ -1,6 +1,6 @@
 import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
-import React, { memo } from "react";
+import React, { memo, useMemo } from "react";
 import { Button } from "../ui/button";
 
 const ErrorMessage = memo(
@@ -63,75 +63,127 @@ const FieldLabel = memo(
       </Label>
     ) : null;
   },
-  (prevProps, nextProps) => prevProps.label === nextProps.label,
+  (prevProps, nextProps) =>
+    prevProps.label === nextProps.label &&
+    prevProps.required === nextProps.required,
 );
 
-export function FieldWrapper({
-  label,
-  description,
-  required,
-  className,
-  children,
-  error,
-}: FieldWrapperProps) {
-  return (
-    <div className={className}>
-      {label && (
-        <div className="mb-0.5 flex items-center">
-          <FieldLabel label={label} required={required} />
-        </div>
-      )}
-      {children}
-      <div className="flex justify-start">
-        {description && !error && (
-          <FieldDescription description={description} />
+// Memoize the FieldWrapper component
+export const FieldWrapper = memo(
+  function FieldWrapper({
+    label,
+    description,
+    required,
+    className,
+    children,
+    error,
+  }: FieldWrapperProps) {
+    // Use useMemo for the description and error components to avoid unnecessary re-renders
+    const descriptionElement = useMemo(() => {
+      return description && !error ? (
+        <FieldDescription description={description} />
+      ) : null;
+    }, [description, error]);
+
+    const errorElement = useMemo(() => {
+      return error ? <ErrorMessage formError={error} /> : null;
+    }, [error]);
+
+    return (
+      <div className={className}>
+        {label && (
+          <div className="mb-0.5 flex items-center">
+            <FieldLabel label={label} required={required} />
+          </div>
         )}
-        {error && <ErrorMessage formError={error} />}
+        {children}
+        <div className="flex justify-start">
+          {descriptionElement}
+          {errorElement}
+        </div>
       </div>
-    </div>
-  );
-}
+    );
+  },
+  (prevProps, nextProps) => {
+    // Custom comparison function to optimize re-renders
+    return (
+      prevProps.label === nextProps.label &&
+      prevProps.description === nextProps.description &&
+      prevProps.required === nextProps.required &&
+      prevProps.className === nextProps.className &&
+      prevProps.error === nextProps.error &&
+      prevProps.children === nextProps.children
+    );
+  },
+);
 
 type PasswordFieldWrapperProps = FieldWrapperProps & {
   onPasswordReset: () => void;
 };
 
-export function PasswordFieldWrapper({
-  label,
-  description,
-  required,
-  className,
-  children,
-  error,
-  onPasswordReset,
-}: PasswordFieldWrapperProps) {
-  return (
-    <div className={className}>
-      {label && (
-        <div className="mb-1 flex items-center">
-          <Label
-            className={cn("block text-sm font-medium", required && "required")}
-          >
-            {label}
-          </Label>
-          <Button
-            variant="link"
-            type="button"
-            size="noSize"
-            onClick={onPasswordReset}
-            className="ml-auto inline-block text-xs underline"
-          >
-            Forgot your password?
-          </Button>
-        </div>
-      )}
-      {children}
-      <div className="flex justify-start">
-        {description && !error && (
-          <FieldDescription description={description} />
+// Also memoize PasswordFieldWrapper since it's derived from FieldWrapper
+export const PasswordFieldWrapper = memo(
+  function PasswordFieldWrapper({
+    label,
+    description,
+    required,
+    className,
+    children,
+    error,
+    onPasswordReset,
+  }: PasswordFieldWrapperProps) {
+    // Use useMemo for the description and error components to avoid unnecessary re-renders
+    const descriptionElement = useMemo(() => {
+      return description && !error ? (
+        <FieldDescription description={description} />
+      ) : null;
+    }, [description, error]);
+
+    const errorElement = useMemo(() => {
+      return error ? <ErrorMessage formError={error} /> : null;
+    }, [error]);
+
+    return (
+      <div className={className}>
+        {label && (
+          <div className="mb-1 flex items-center">
+            <Label
+              className={cn(
+                "block text-sm font-medium",
+                required && "required",
+              )}
+            >
+              {label}
+            </Label>
+            <Button
+              variant="link"
+              type="button"
+              size="noSize"
+              onClick={onPasswordReset}
+              className="ml-auto inline-block text-xs underline"
+            >
+              Forgot your password?
+            </Button>
+          </div>
         )}
-        {error && <ErrorMessage formError={error} />}
+        {children}
+        <div className="flex justify-start">
+          {descriptionElement}
+          {errorElement}
+        </div>
       </div>
-    </div>
-  );
-}
+    );
+  },
+  (prevProps, nextProps) => {
+    // Custom comparison function to optimize re-renders
+    return (
+      prevProps.label === nextProps.label &&
+      prevProps.description === nextProps.description &&
+      prevProps.required === nextProps.required &&
+      prevProps.className === nextProps.className &&
+      prevProps.error === nextProps.error &&
+      prevProps.children === nextProps.children &&
+      prevProps.onPasswordReset === nextProps.onPasswordReset
+    );
+  },
+);

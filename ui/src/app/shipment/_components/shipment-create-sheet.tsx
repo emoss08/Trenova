@@ -167,11 +167,7 @@ export function ShipmentCreateSheet({ open, onOpenChange }: TableSheetProps) {
           <FormProvider {...form}>
             <Form className="space-y-0 p-0" onSubmit={handleSubmit(onSubmit)}>
               <SheetBody className="p-0">
-                <ShipmentForm
-                  dimensions={dimensions}
-                  onBack={onClose}
-                  isCreate={true}
-                />
+                <ShipmentForm dimensions={dimensions} onBack={onClose} />
               </SheetBody>
               <SheetFooter className="p-3">
                 <Button type="button" variant="outline" onClick={onClose}>

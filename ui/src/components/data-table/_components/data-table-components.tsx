@@ -2,7 +2,6 @@ import { Badge } from "@/components/ui/badge";
 import {
   Tooltip,
   TooltipContent,
-  TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { generateDateOnlyString, toDate } from "@/lib/date";
@@ -22,16 +21,14 @@ export function DataTableDescription({
   }
 
   return (
-    <TooltipProvider delayDuration={300}>
-      <Tooltip>
-        <TooltipTrigger>
-          <span>{truncateText(description, truncateLength)}</span>
-        </TooltipTrigger>
-        <TooltipContent>
-          <p className="max-w-[300px] text-wrap">{description}</p>
-        </TooltipContent>
-      </Tooltip>
-    </TooltipProvider>
+    <Tooltip>
+      <TooltipTrigger>
+        <span>{truncateText(description, truncateLength)}</span>
+      </TooltipTrigger>
+      <TooltipContent>
+        <p className="max-w-[300px] text-wrap">{description}</p>
+      </TooltipContent>
+    </Tooltip>
   );
 }
 

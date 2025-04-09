@@ -159,7 +159,7 @@ func (h *Handler) upload(c *fiber.Ctx) error {
 		))
 	}
 
-	// * Check file size
+	// * TODO(Wolfred): Create a validator for file uploads
 	if fh.Size > file.MaxFileSize {
 		return h.eh.HandleError(c, errors.NewValidationError(
 			"file",
@@ -230,7 +230,7 @@ func (h *Handler) upload(c *fiber.Ctx) error {
 		return h.eh.HandleError(c, err)
 	}
 
-	return c.Status(fiber.StatusCreated).JSON(resp)
+	return c.Status(fiber.StatusOK).JSON(resp)
 }
 
 func (h *Handler) delete(c *fiber.Ctx) error {

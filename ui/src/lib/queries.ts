@@ -12,6 +12,7 @@ import {
   getShipmentControl,
   listOrganizations,
 } from "@/services/organization";
+import { getShipmentByID } from "@/services/shipment";
 import { getUsStateOptions, getUsStates } from "@/services/us-state";
 import { Resource } from "@/types/audit-entry";
 import { createQueryKeyStore } from "@lukemorales/query-key-factory";
@@ -114,6 +115,15 @@ export const queries = createQueryKeyStore({
           offset,
         );
       },
+    }),
+  },
+  shipment: {
+    getShipment: (shipmentId: string, enabled: boolean = true) => ({
+      queryKey: ["shipment", shipmentId],
+      queryFn: async () => {
+        return await getShipmentByID(shipmentId, true);
+      },
+      enabled,
     }),
   },
   customer: {

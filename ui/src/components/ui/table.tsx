@@ -75,7 +75,12 @@ function TableHead({ className, ...props }: React.ComponentProps<"th">) {
   );
 }
 
-function TableCell({ className, ...props }: React.ComponentProps<"td">) {
+// Memoize TableCell to prevent unnecessary re-renders
+const TableCell = React.memo(function TableCellInner({
+  className,
+  children,
+  ...props
+}: React.ComponentProps<"td">) {
   return (
     <td
       data-slot="table-cell"
@@ -84,9 +89,12 @@ function TableCell({ className, ...props }: React.ComponentProps<"td">) {
         className,
       )}
       {...props}
-    />
+    >
+      {children}
+    </td>
   );
-}
+});
+TableCell.displayName = "TableCell";
 
 function TableCaption({
   className,
