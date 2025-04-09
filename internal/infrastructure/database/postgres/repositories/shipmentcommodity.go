@@ -38,74 +38,31 @@ func NewShipmentCommodityRepository(p ShipmentCommodityRepositoryParams) reposit
 }
 
 func (r *shipmentCommodityRepository) HandleCommodityOperations(ctx context.Context, tx bun.IDB, shp *shipment.Shipment, isCreate bool) error {
-	var err error
-
-	// * If there are no commodities and it's a create operation, we can return early
+	// Early return for create operation with no commodities
 	if len(shp.Commodities) == 0 && isCreate {
 		return nil
 	}
 
-	// * Get the existing commodities for comparison if this is an update operation
-	existingCommodities := make([]*shipment.ShipmentCommodity, 0)
-	if !isCreate {
-		existingCommodities, err = r.getExistingCommodities(ctx, tx, shp)
-		if err != nil {
-			r.l.Error().Err(err).Msg("failed to get existing commodities")
-			return err
-		}
-	}
-
-	// * Prepare commodities for operations
-	newCommodities := make([]*shipment.ShipmentCommodity, 0)
-	updateCommodities := make([]*shipment.ShipmentCommodity, 0)
+	// Get existing commodities for update operations
 	existingCommodityMap := make(map[pulid.ID]*shipment.ShipmentCommodity)
-	updatedCommodityIDs := make(map[pulid.ID]struct{})
-	commoditiesToDelete := make([]*shipment.ShipmentCommodity, 0)
-
-	// * Create map of existing commodities for quick lookup
-	for _, comm := range existingCommodities {
-		existingCommodityMap[comm.ID] = comm
-	}
-
-	// * Categorize commodities for different operations
-	for _, comm := range shp.Commodities {
-		// *Set required fields
-		comm.ShipmentID = shp.ID
-		comm.OrganizationID = shp.OrganizationID
-		comm.BusinessUnitID = shp.BusinessUnitID
-
-		if isCreate || comm.ID.IsNil() {
-			// * Append new commodities
-			newCommodities = append(newCommodities, comm)
-		} else {
-			if existing, ok := existingCommodityMap[comm.ID]; ok {
-				// * Increment version for optimistic locking
-				comm.Version = existing.Version + 1
-				updateCommodities = append(updateCommodities, comm)
-				updatedCommodityIDs[comm.ID] = struct{}{}
-			}
-		}
-	}
-
-	// * Handle bulk insert of new commodities
-	if len(newCommodities) > 0 {
-		if _, err = tx.NewInsert().Model(&newCommodities).Exec(ctx); err != nil {
-			r.l.Error().Err(err).Msg("failed to bulk insert new commodities")
-			return err
-		}
-	}
-
-	// * Handle bulk update of new commodities
-	if len(updateCommodities) > 0 {
-		if err = r.handleBulkUpdate(ctx, tx, updateCommodities); err != nil {
-			r.l.Error().Err(err).Msg("failed to handle bulk update of commodities")
-			return err
-		}
-	}
-
-	// * Handle deletion of commodities that are no longer present
 	if !isCreate {
-		if err = r.handleCommodityDeletions(ctx, tx, &repositories.CommodityDeletionRequest{
+		if err := r.loadExistingCommoditiesMap(ctx, tx, shp, existingCommodityMap); err != nil {
+			return err
+		}
+	}
+
+	// Categorize commodities and prepare for database operations
+	newCommodities, updateCommodities, updatedCommodityIDs := r.categorizeCommodities(shp, existingCommodityMap, isCreate)
+
+	// Process database operations
+	if err := r.processOperations(ctx, tx, newCommodities, updateCommodities); err != nil {
+		return err
+	}
+
+	// Handle deletions for update operations
+	if !isCreate {
+		commoditiesToDelete := make([]*shipment.ShipmentCommodity, 0)
+		if err := r.handleCommodityDeletions(ctx, tx, &repositories.CommodityDeletionRequest{
 			ExistingCommodityMap: existingCommodityMap,
 			UpdatedCommodityIDs:  updatedCommodityIDs,
 			CommoditiesToDelete:  commoditiesToDelete,
@@ -113,12 +70,90 @@ func (r *shipmentCommodityRepository) HandleCommodityOperations(ctx context.Cont
 			r.l.Error().Err(err).Msg("failed to handle commodity deletions")
 			return err
 		}
+
+		r.l.Debug().Int("newCommodities", len(newCommodities)).
+			Int("updatedCommodities", len(updateCommodities)).
+			Int("deletedCommodities", len(commoditiesToDelete)).
+			Msg("commodity operations completed")
+	} else {
+		r.l.Debug().Int("newCommodities", len(newCommodities)).
+			Int("updatedCommodities", len(updateCommodities)).
+			Msg("commodity operations completed")
 	}
 
-	r.l.Debug().Int("new_commodities", len(newCommodities)).
-		Int("updated_commodities", len(updateCommodities)).
-		Int("deleted_commodities", len(commoditiesToDelete)).
-		Msg("commodity operations completed")
+	return nil
+}
+
+// loadExistingCommoditiesMap loads existing commodities into a map for lookup
+func (r *shipmentCommodityRepository) loadExistingCommoditiesMap(
+	ctx context.Context,
+	tx bun.IDB,
+	shp *shipment.Shipment,
+	commodityMap map[pulid.ID]*shipment.ShipmentCommodity,
+) error {
+	existingCommodities, err := r.getExistingCommodities(ctx, tx, shp)
+	if err != nil {
+		r.l.Error().Err(err).Msg("failed to get existing commodities")
+		return err
+	}
+
+	for _, comm := range existingCommodities {
+		commodityMap[comm.ID] = comm
+	}
+
+	return nil
+}
+
+// categorizeCommodities categorizes commodities for different operations
+func (r *shipmentCommodityRepository) categorizeCommodities(
+	shp *shipment.Shipment,
+	existingCommodityMap map[pulid.ID]*shipment.ShipmentCommodity,
+	isCreate bool,
+) ([]*shipment.ShipmentCommodity, []*shipment.ShipmentCommodity, map[pulid.ID]struct{}) {
+	newCommodities := make([]*shipment.ShipmentCommodity, 0)
+	updateCommodities := make([]*shipment.ShipmentCommodity, 0)
+	updatedCommodityIDs := make(map[pulid.ID]struct{})
+
+	for _, comm := range shp.Commodities {
+		// Set required fields
+		comm.ShipmentID = shp.ID
+		comm.OrganizationID = shp.OrganizationID
+		comm.BusinessUnitID = shp.BusinessUnitID
+
+		if isCreate || comm.ID.IsNil() {
+			newCommodities = append(newCommodities, comm)
+		} else if existing, ok := existingCommodityMap[comm.ID]; ok {
+			comm.Version = existing.Version + 1
+			updateCommodities = append(updateCommodities, comm)
+			updatedCommodityIDs[comm.ID] = struct{}{}
+		}
+	}
+
+	return newCommodities, updateCommodities, updatedCommodityIDs
+}
+
+// processOperations handles database insert and update operations
+func (r *shipmentCommodityRepository) processOperations(
+	ctx context.Context,
+	tx bun.IDB,
+	newCommodities []*shipment.ShipmentCommodity,
+	updateCommodities []*shipment.ShipmentCommodity,
+) error {
+	// Handle bulk insert of new commodities
+	if len(newCommodities) > 0 {
+		if _, err := tx.NewInsert().Model(&newCommodities).Exec(ctx); err != nil {
+			r.l.Error().Err(err).Msg("failed to bulk insert new commodities")
+			return err
+		}
+	}
+
+	// Handle bulk update of commodities
+	if len(updateCommodities) > 0 {
+		if err := r.handleBulkUpdate(ctx, tx, updateCommodities); err != nil {
+			r.l.Error().Err(err).Msg("failed to handle bulk update of commodities")
+			return err
+		}
+	}
 
 	return nil
 }

@@ -520,7 +520,7 @@ func (s *service) determineFileType(filename string) services.FileType {
 	}
 }
 
-func (s *service) mapDocTypeToClassification(docTypeID pulid.ID) services.FileClassification {
+func (s *service) mapDocTypeToClassification(_ pulid.ID) services.FileClassification {
 	// switch docTypeID {
 	// case document.DocumentTypeLicense, document.DocumentTypeRegistration,
 	// 	document.DocumentTypeInsurance, document.DocumentTypeMedicalCert:

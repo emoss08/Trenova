@@ -465,8 +465,14 @@ func (s *Service) setupFileWatcher() (*fsnotify.Watcher, *os.File, *bufio.Reader
 // handleFileEvents processes events from the file watcher
 func (s *Service) handleFileEvents(ctx context.Context, watcher *fsnotify.Watcher, file *os.File, reader *bufio.Reader) {
 	defer func() {
-		file.Close()
-		watcher.Close()
+		err := file.Close()
+		if err != nil {
+			s.l.Error().Err(err).Msg("failed to close log file")
+		}
+		err = watcher.Close()
+		if err != nil {
+			s.l.Error().Err(err).Msg("failed to close watcher")
+		}
 	}()
 
 	for {
@@ -573,30 +579,37 @@ func (s *Service) checkFileRotation(ctx context.Context, file *os.File, reader *
 func (s *Service) handlePossibleRotation(file *os.File, reader *bufio.Reader) {
 	logFilePath := filepath.Join(s.cfg.Log.FileConfig.Path, s.cfg.Log.FileConfig.FileName)
 
-	if _, err := os.Stat(logFilePath); err != nil {
-		if os.IsNotExist(err) {
-			// File has been rotated, reopen it
-			newFile, nErr := os.Open(logFilePath)
-			if nErr != nil {
-				s.l.Error().
-					Err(nErr).
-					Msg("failed to open rotated log file")
-				return
-			}
-
-			// Get the current file descriptor for cleanup
-			oldFile := *file
-
-			// Replace the pointer values with the new file and reader
-			*file = *newFile
-			*reader = *bufio.NewReader(file)
-
-			// Close the old file descriptor to prevent leaks
-			oldFile.Close()
-
-			s.l.Info().Msg("log file rotation detected, reopened new file")
-		}
+	// Check if file exists
+	_, err := os.Stat(logFilePath)
+	if err == nil || !os.IsNotExist(err) {
+		// File exists or error is not "not exist"
+		return
 	}
+
+	// File has been rotated, reopen it
+	newFile, nErr := os.Open(logFilePath)
+	if nErr != nil {
+		s.l.Error().
+			Err(nErr).
+			Msg("failed to open rotated log file")
+		return
+	}
+
+	// Close the old file before replacing
+	if err = file.Close(); err != nil {
+		s.l.Error().Err(err).Msg("failed to close old log file")
+		err = newFile.Close() // Close the new file to prevent leaks
+		if err != nil {
+			s.l.Error().Err(err).Msg("failed to close new log file")
+		}
+		return
+	}
+
+	// Replace the file and reader safely
+	*file = *newFile
+	*reader = *bufio.NewReader(file)
+
+	s.l.Info().Msg("log file rotation detected, reopened new file")
 }
 
 func (s *Service) RegisterClient(lc *LogClient) error {

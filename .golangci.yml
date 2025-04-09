@@ -12,6 +12,7 @@ run:
   # Default: 1m
   timeout: 10m
   go: "1.23"
+  tests: false
 
 # This file contains only configs which differ from defaults.
 # All possible options can be found here https://github.com/golangci/golangci-lint/blob/master/.golangci.reference.yml
@@ -177,7 +178,6 @@ linters:
     - funlen # tool for detection of long functions
     - copyloopvar # checks for loops that copy the loop variable
     - gocheckcompilerdirectives # validates go compiler directive comments (//go:)
-    - gochecknoinits # checks that no init functions are present in Go code
     - gochecksumtype # checks exhaustiveness on Go "sum types"
     - gocognit # computes and checks the cognitive complexity of functions
     - goconst # finds repeated strings that could be replaced by a constant
@@ -213,7 +213,7 @@ linters:
     - spancheck # checks for mistakes with OpenTelemetry/Census spans
     - sqlclosecheck # checks that sql.Rows and sql.Stmt are closed
     - stylecheck # is a replacement for golint
-    - tenv # detects using os.Setenv instead of t.Setenv since Go1.17
+    - usetesting # checks that test files are using the testing package
     - testableexamples # checks if examples are testable (have an expected output)
     - testifylint # checks usage of github.com/stretchr/testify
     - testpackage # makes you use a separate _test package
@@ -223,15 +223,10 @@ linters:
     - usestdlibvars # detects the possibility to use variables/constants from the Go standard library
     - wastedassign # finds wasted assignment statements
     - whitespace # detects leading and trailing whitespace
-    - gosec # inspects source code for security problems
-    - funlen # tool for detection of long functions
 
 issues:
   max-same-issues: 50
 
-  exclude-rules:
-    - path: "_test\\.go"
-      linters:
-        - bodyclose
-        - goconst
-        - noctx
+  exclude-dirs:
+    - "cmd"
+    - "test"

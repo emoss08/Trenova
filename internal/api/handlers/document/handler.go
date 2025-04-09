@@ -183,8 +183,8 @@ func (h *Handler) upload(c *fiber.Ctx) error {
 	// * Parse expiration date if provided
 	var expirationDate *int64
 	if expDateStr := c.FormValue("expirationDate"); expDateStr != "" {
-		expDateInt, err := strconv.ParseInt(expDateStr, 10, 64)
-		if err == nil {
+		expDateInt, expErr := strconv.ParseInt(expDateStr, 10, 64)
+		if expErr == nil {
 			expirationDate = &expDateInt
 		}
 	}

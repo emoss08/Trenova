@@ -97,8 +97,7 @@ func (a *AdditionalCharge) GetTableName() string {
 func (a *AdditionalCharge) BeforeAppendModel(_ context.Context, query bun.Query) error {
 	now := timeutils.NowUnix()
 
-	switch query.(type) {
-	case *bun.InsertQuery:
+	if _, ok := query.(*bun.InsertQuery); ok {
 		if a.ID.IsNil() {
 			a.ID = pulid.MustNew("ac_")
 		}

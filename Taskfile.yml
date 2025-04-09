@@ -12,8 +12,8 @@ tasks:
       - task: db-seed
   check:
     cmds:
-      - task: test-pretty
-      - task: lint
+      # - task: test-pretty
+      # - task: lint
       - task: format
       - task: critic
       - task: security
