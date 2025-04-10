@@ -204,6 +204,13 @@ func (m *Manager) Redis() *RedisConfig {
 	return &m.Cfg.Redis
 }
 
+func (m *Manager) RabbitMQ() *RabbitMQConfig {
+	if m.Cfg == nil {
+		return nil
+	}
+	return &m.Cfg.RabbitMQ
+}
+
 func (m *Manager) Auth() *AuthConfig {
 	if m.Cfg == nil {
 		return nil
