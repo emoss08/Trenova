@@ -25,6 +25,9 @@ require (
 	github.com/mitchellh/mapstructure v1.5.1-0.20231216201459-8508981c8b6c
 	github.com/oklog/ulid/v2 v2.1.0
 	github.com/redis/go-redis/v9 v9.7.3
+	github.com/riverqueue/river v0.20.2
+	github.com/riverqueue/river/riverdriver/riverpgxv5 v0.20.2
+	github.com/riverqueue/river/rivertype v0.20.2
 	github.com/robfig/cron/v3 v3.0.1
 	github.com/rotisserie/eris v0.5.4
 	github.com/rs/zerolog v1.34.0
@@ -156,6 +159,8 @@ require (
 	github.com/quic-go/quic-go v0.50.1 // indirect
 	github.com/radovskyb/watcher v1.0.7 // indirect
 	github.com/refraction-networking/utls v1.6.7 // indirect
+	github.com/riverqueue/river/riverdriver v0.20.2 // indirect
+	github.com/riverqueue/river/rivershared v0.20.2 // indirect
 	github.com/rivo/uniseg v0.4.7 // indirect
 	github.com/rs/xid v1.6.0 // indirect
 	github.com/sagikazarmark/locafero v0.9.0 // indirect
@@ -170,6 +175,10 @@ require (
 	github.com/spf13/pflag v1.0.6 // indirect
 	github.com/subosito/gotenv v1.6.0 // indirect
 	github.com/tdewolff/parse/v2 v2.7.15 // indirect
+	github.com/tidwall/gjson v1.18.0 // indirect
+	github.com/tidwall/match v1.1.1 // indirect
+	github.com/tidwall/pretty v1.2.1 // indirect
+	github.com/tidwall/sjson v1.2.5 // indirect
 	github.com/tinylib/msgp v1.2.5 // indirect
 	github.com/tklauser/go-sysconf v0.3.15 // indirect
 	github.com/tklauser/numcpus v0.10.0 // indirect
@@ -190,6 +199,7 @@ require (
 	go.opentelemetry.io/otel/trace v1.35.0 // indirect
 	go.opentelemetry.io/proto/otlp v1.0.0 // indirect
 	go.uber.org/dig v1.18.1 // indirect
+	go.uber.org/goleak v1.3.0 // indirect
 	go.uber.org/mock v0.5.0 // indirect
 	go.uber.org/multierr v1.11.0 // indirect
 	go.uber.org/zap v1.27.0 // indirect

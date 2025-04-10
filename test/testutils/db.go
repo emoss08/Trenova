@@ -2,6 +2,7 @@ package testutils
 
 import (
 	"context"
+	"database/sql"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -35,6 +36,10 @@ func (t *TestDBConnection) ConnectionInfo() (*db.ConnectionInfo, error) {
 		Username: "postgres",
 		Password: "postgres",
 	}, nil
+}
+
+func (t *TestDBConnection) SQLDB(ctx context.Context) (*sql.DB, error) {
+	return t.db.DB, nil
 }
 
 func (t *TestDBConnection) Close() error {
