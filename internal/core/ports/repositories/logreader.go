@@ -1,6 +1,7 @@
 package repositories
 
 import (
+	"encoding/json"
 	"time"
 
 	"github.com/emoss08/trenova/internal/core/ports"
@@ -8,18 +9,18 @@ import (
 
 // LogEntry represents a structured log entry
 type LogEntry struct {
-	Level      string    `json:"level"`
-	App        string    `json:"app"`
-	Version    any       `json:"version"`
-	Hostname   string    `json:"hostname"`
-	Message    string    `json:"message"`
-	Caller     string    `json:"caller"`
-	Time       time.Time `json:"time"`
-	GoVersion  string    `json:"goVersion,omitempty"`
-	GoRoutines int       `json:"goRoutines,omitempty"`
-	CPU        int       `json:"cpu,omitempty"`
-	Method     string    `json:"method,omitempty"`
-	Path       string    `json:"path,omitempty"`
+	Level      string          `json:"level"`
+	App        string          `json:"app"`
+	Version    any             `json:"version"`
+	Hostname   string          `json:"hostname"`
+	Message    json.RawMessage `json:"message"`
+	Caller     string          `json:"caller"`
+	Time       time.Time       `json:"time"`
+	GoVersion  string          `json:"goVersion,omitempty"`
+	GoRoutines int             `json:"goRoutines,omitempty"`
+	CPU        int             `json:"cpu,omitempty"`
+	Method     string          `json:"method,omitempty"`
+	Path       string          `json:"path,omitempty"`
 
 	// Common service fields
 	Service   string `json:"service,omitempty"`
