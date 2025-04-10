@@ -9,10 +9,10 @@ var Module = fx.Module("infrastructure",
 	ConfigModule,
 	LoggerModule,
 	DatabaseModule,
-	QueueModule,
 	StorageModule,
 	CacheModule,
 	SearchModule,
+	MessagingModule,
 )
 
 var BackupModule = fx.Module("db_backup",
