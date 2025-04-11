@@ -1,3 +1,4 @@
+import { LazyComponent } from "@/components/error-boundary";
 import { MoveStatusBadge } from "@/components/status-badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -14,14 +15,13 @@ import { type ShipmentSchema } from "@/lib/schemas/shipment-schema";
 import { MoveStatus, type ShipmentMove } from "@/types/move";
 import { faEllipsisVertical } from "@fortawesome/pro-regular-svg-icons";
 import { nanoid } from "nanoid";
-import { memo, useState } from "react";
+import { lazy, memo, useState } from "react";
 import {
   UseFieldArrayRemove,
   UseFieldArrayUpdate,
   type FieldArrayWithId,
 } from "react-hook-form";
 import { AssignmentDialog } from "../../assignment/assignment-dialog";
-import { StopTimeline } from "../../sidebar/stop-details/stop-timeline-content";
 import { AssignmentDetails } from "../move-assignment-details";
 
 type MoveInformationProps = {
@@ -31,6 +31,13 @@ type MoveInformationProps = {
   onEdit: (index: number) => void;
   onDelete: (index: number) => void;
 };
+
+const StopTimeline = lazy(
+  () =>
+    import(
+      "@/app/shipment/_components/sidebar/stop-details/stop-timeline-content"
+    ),
+);
 
 export default function MoveInformation({
   moves,
@@ -97,18 +104,21 @@ const MoveRow = memo(function MoveRow({
                 }
 
                 const isLastStop = stopIdx === move.stops.length - 1;
+                const nextStop = !isLastStop ? move.stops[stopIdx + 1] : null;
 
                 return (
-                  <StopTimeline
-                    key={stop.id || nanoid()}
-                    stop={stop}
-                    isLast={isLastStop}
-                    moveStatus={move.status}
-                    moveIdx={moveIdx}
-                    stopIdx={stopIdx}
-                    update={update}
-                    remove={remove}
-                  />
+                  <LazyComponent key={stop.id || nanoid()}>
+                    <StopTimeline
+                      stop={stop}
+                      nextStop={nextStop}
+                      isLast={isLastStop}
+                      moveStatus={move.status}
+                      moveIdx={moveIdx}
+                      stopIdx={stopIdx}
+                      update={update}
+                      remove={remove}
+                    />
+                  </LazyComponent>
                 );
               })}
             </div>

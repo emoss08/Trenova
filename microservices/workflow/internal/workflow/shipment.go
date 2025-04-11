@@ -29,7 +29,7 @@ func (r *Registry) registerDelayShipmentsWorkflow() error {
 		&worker.WorkflowJob{
 			Name:        "delay-shipments-workflow",
 			Description: "Delay shipments based on the shipment control settings",
-			On:          worker.Cron("* * * * 10"), // Every 10 minutes
+			On:          worker.Cron("*/10 * * * *"), // Every 10 minutes
 			Steps: []*worker.WorkflowStep{
 				worker.Fn(delayshipmentworkflow.QueryShipmentControls(r.db)).
 					SetName("get-shipment-controls"),

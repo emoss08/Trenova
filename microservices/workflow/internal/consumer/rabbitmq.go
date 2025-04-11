@@ -70,7 +70,7 @@ func (c *RabbitMQConsumer) Start(ctx context.Context) error {
 func (c *RabbitMQConsumer) connect() error {
 	var err error
 
-	// Try to connect to RabbitMQ with retries
+	// * Try to connect to RabbitMQ with retries
 	for range make([]struct{}, 5) {
 		c.conn, err = amqp.Dial(c.config.URL())
 		if err == nil {
@@ -86,7 +86,7 @@ func (c *RabbitMQConsumer) connect() error {
 		return eris.Wrap(err, "failed to connect to RabbitMQ")
 	}
 
-	// Create a channel AFTER successful connection
+	// * Create a channel AFTER successful connection
 	c.ch, err = c.conn.Channel()
 	if err != nil {
 		return eris.Wrap(err, "failed to open channel")
