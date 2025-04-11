@@ -2,10 +2,12 @@ package main
 
 import (
 	"context"
+	"database/sql"
 	"log"
 	"os"
 	"os/signal"
 	"syscall"
+	"time"
 
 	"github.com/emoss08/trenova/microservices/workflow/internal/config"
 	"github.com/emoss08/trenova/microservices/workflow/internal/consumer"
@@ -14,6 +16,10 @@ import (
 	"github.com/hatchet-dev/hatchet/pkg/client"
 	"github.com/hatchet-dev/hatchet/pkg/worker"
 	"github.com/joho/godotenv"
+	"github.com/uptrace/bun"
+	"github.com/uptrace/bun/dialect/pgdialect"
+	"github.com/uptrace/bun/driver/pgdriver"
+	"github.com/uptrace/bun/extra/bundebug"
 )
 
 func main() {
@@ -33,6 +39,10 @@ func main() {
 	signalCh := make(chan os.Signal, 1)
 	signal.Notify(signalCh, syscall.SIGINT, syscall.SIGTERM)
 
+	// Setup database connection
+	db := setupDB(cfg)
+	defer db.Close()
+
 	// Create Hatchet client
 	hatchetClient, err := client.New()
 	if err != nil {
@@ -48,14 +58,10 @@ func main() {
 	}
 
 	// Register workflows
-	registry := workflow.NewRegistry(hatchetWorker)
+	registry := workflow.NewRegistry(hatchetWorker, db)
 	if err = registry.RegisterAllWorkflows(); err != nil {
 		log.Printf("Failed to register workflows: %v", err)
 	}
-
-	// Create and configure scheduler
-	// schedulerComponent := scheduler.NewScheduler(hatchetClient)
-	// schedulerService := service.NewSchedulerService(schedulerComponent)
 
 	// Create and configure RabbitMQ consumer
 	rabbitConsumer, err := consumer.NewRabbitMQConsumer(cfg.RabbitMQ)
@@ -84,22 +90,6 @@ func main() {
 		log.Printf("Failed to start RabbitMQ consumer: %v", err)
 	}
 
-	// Schedule an example maintenance task for 1 minute from now
-	// maintenanceTime := time.Now().Add(1 * time.Minute)
-	// taskID, err := schedulerService.ScheduleShipmentMaintenance(
-	// 	ctx,
-	// 	"cleanup",
-	// 	"org_12345", // Example tenant ID
-	// 	100,         // Batch size
-	// 	maintenanceTime,
-	// )
-	// if err != nil {
-	// 	log.Printf("Warning: Failed to schedule maintenance task: %v", err)
-	// } else {
-	// 	log.Printf("Scheduled maintenance task with ID: %s at %s",
-	// 		taskID, maintenanceTime.Format(time.RFC3339))
-	// }
-
 	log.Printf("Workflow service started. Environment: %s", cfg.Environment)
 
 	// Wait for termination signal
@@ -115,4 +105,24 @@ func main() {
 	}
 
 	log.Println("Service shutdown complete")
+}
+
+func setupDB(cfg *config.AppConfig) *bun.DB {
+	pgconn := pgdriver.NewConnector(
+		pgdriver.WithDSN(cfg.DB.DSN()),
+		pgdriver.WithTimeout(30*time.Second),
+		pgdriver.WithWriteTimeout(30*time.Second),
+	)
+
+	sqldb := sql.OpenDB(pgconn)
+	sqldb.SetMaxOpenConns(cfg.DB.MaxConnections)
+	sqldb.SetMaxIdleConns(cfg.DB.MaxIdleConns)
+
+	db := bun.NewDB(sqldb, pgdialect.New(), bun.WithDiscardUnknownColumns())
+	db.AddQueryHook(bundebug.NewQueryHook(
+		bundebug.WithVerbose(cfg.DB.Debug),
+		bundebug.WithEnabled(cfg.DB.Debug),
+	))
+
+	return db
 }

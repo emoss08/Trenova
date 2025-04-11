@@ -26,10 +26,30 @@ func (c *RabbitMQConfig) URL() string {
 	return fmt.Sprintf("amqp://%s:%s@%s/%s", c.Username, c.Password, hostPort, c.VHost)
 }
 
+type DBConfig struct {
+	Host            string
+	Port            int
+	Database        string
+	Username        string
+	Password        string
+	SSLMode         string
+	MaxConnections  int
+	MaxIdleConns    int
+	ConnMaxLifetime time.Duration
+	ConnMaxIdleTime time.Duration
+	Debug           bool
+}
+
+func (c *DBConfig) DSN() string {
+	hostPort := net.JoinHostPort(c.Host, strconv.Itoa(c.Port))
+	return fmt.Sprintf("postgres://%s:%s@%s/%s?sslmode=%s", c.Username, c.Password, hostPort, c.Database, c.SSLMode)
+}
+
 type AppConfig struct {
 	LogLevel    string
 	Environment string
 	RabbitMQ    *RabbitMQConfig
+	DB          *DBConfig
 }
 
 // LoadConfig loads configuration from environment variables
@@ -38,6 +58,7 @@ func LoadConfig() *AppConfig {
 		LogLevel:    getEnvOrDefault("LOG_LEVEL", "info"),
 		Environment: getEnvOrDefault("ENVIRONMENT", "development"),
 		RabbitMQ:    loadRabbitMQConfig(),
+		DB:          loadDBConfig(),
 	}
 }
 
@@ -57,6 +78,29 @@ func loadRabbitMQConfig() *RabbitMQConfig {
 		QueueName:     getEnvOrDefault("RABBITMQ_QUEUE", "trenovas"),
 		PrefetchCount: prefetchCount,
 		Timeout:       time.Duration(timeoutSec) * time.Second,
+	}
+}
+
+func loadDBConfig() *DBConfig {
+	port, _ := strconv.Atoi(getEnvOrDefault("DB_PORT", "5432"))
+	maxConnections, _ := strconv.Atoi(getEnvOrDefault("DB_MAX_CONNECTIONS", "10"))
+	maxIdleConns, _ := strconv.Atoi(getEnvOrDefault("DB_MAX_IDLE_CONNS", "10"))
+	connMaxLifetime, _ := strconv.Atoi(getEnvOrDefault("DB_CONN_MAX_LIFETIME", "10"))
+	connMaxIdleTime, _ := strconv.Atoi(getEnvOrDefault("DB_CONN_MAX_IDLE_TIME", "10"))
+	debug, _ := strconv.ParseBool(getEnvOrDefault("DB_DEBUG", "false"))
+
+	return &DBConfig{
+		Host:            getEnvOrDefault("DB_HOST", "localhost"),
+		Port:            port,
+		Database:        getEnvOrDefault("DB_DATABASE", "trenova"),
+		Username:        getEnvOrDefault("DB_USERNAME", "user"),
+		Password:        getEnvOrDefault("DB_PASSWORD", "password"),
+		SSLMode:         getEnvOrDefault("DB_SSLMODE", "disable"),
+		MaxConnections:  maxConnections,
+		MaxIdleConns:    maxIdleConns,
+		ConnMaxLifetime: time.Duration(connMaxLifetime) * time.Second,
+		ConnMaxIdleTime: time.Duration(connMaxIdleTime) * time.Second,
+		Debug:           debug,
 	}
 }
 

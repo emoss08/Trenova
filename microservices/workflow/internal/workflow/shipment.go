@@ -6,6 +6,7 @@ import (
 	"log"
 
 	"github.com/emoss08/trenova/microservices/workflow/internal/model"
+	"github.com/emoss08/trenova/microservices/workflow/internal/workflow/steps/delayshipmentworkflow"
 	"github.com/hatchet-dev/hatchet/pkg/worker"
 )
 
@@ -16,7 +17,31 @@ func (r *Registry) registerShipmentWorkflows() error {
 		return err
 	}
 
+	if err := r.registerDelayShipmentsWorkflow(); err != nil {
+		return err
+	}
+
 	return nil
+}
+
+func (r *Registry) registerDelayShipmentsWorkflow() error {
+	return r.worker.RegisterWorkflow(
+		&worker.WorkflowJob{
+			Name:        "delay-shipments-workflow",
+			Description: "Delay shipments based on the shipment control settings",
+			On:          worker.Cron("* * * * 10"), // Every 10 minutes
+			Steps: []*worker.WorkflowStep{
+				worker.Fn(delayshipmentworkflow.QueryShipmentControls(r.db)).
+					SetName("get-shipment-controls"),
+				worker.Fn(delayshipmentworkflow.QueryStops(r.db)).
+					SetName("query-stops").
+					AddParents("get-shipment-controls"),
+				worker.Fn(delayshipmentworkflow.DelayShipments(r.db)).
+					SetName("delay-shipments").
+					AddParents("query-stops"),
+			},
+		},
+	)
 }
 
 // registerShipmentUpdatedWorkflow registers the workflow for shipment updates
@@ -80,26 +105,6 @@ func (r *Registry) registerShipmentUpdatedWorkflow() error {
 						EntityID: result.EntityID,
 					}, nil
 				}).SetName("send-notifications").AddParents("process-shipment-update"),
-			},
-		},
-	)
-
-	return err
-}
-
-func (r *Registry) registerAliveWorkflow() error {
-	err := r.worker.RegisterWorkflow(
-		&worker.WorkflowJob{
-			On:   worker.Cron("* * * * *"), // Every Minute
-			Name: "alive-workflow",
-			Steps: []*worker.WorkflowStep{
-				worker.Fn(func(worker.HatchetContext) (*model.WorkflowResult, error) {
-					log.Println("Alive workflow executed")
-					return &model.WorkflowResult{
-						Success: true,
-						Message: "Alive workflow executed",
-					}, nil
-				}).SetName("alive-step"),
 			},
 		},
 	)

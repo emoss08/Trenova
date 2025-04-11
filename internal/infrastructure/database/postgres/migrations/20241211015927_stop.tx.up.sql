@@ -15,7 +15,7 @@ CREATE TYPE stop_type_enum AS ENUM (
 );
 
 --bun:split
-CREATE TABLE IF NOT EXISTS stops (
+CREATE TABLE IF NOT EXISTS "stops" (
     -- Primary identifiers
     "id" varchar(100) NOT NULL,
     "organization_id" varchar(100) NOT NULL,
