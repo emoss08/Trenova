@@ -77,6 +77,8 @@ export function StopDialog({
       // Create a simplified object with only the fields we want to validate
       // This prevents location schema fields from being validated
       const stopToValidate = {
+        organizationId: stop.organizationId,
+        businessUnitId: stop.businessUnitId,
         locationId: stop.locationId,
         status: stop.status,
         type: stop.type,
@@ -135,6 +137,8 @@ export function StopDialog({
 
       if (stop) {
         const updatedStop: Stop = {
+          organizationId: stop?.organizationId,
+          businessUnitId: stop?.businessUnitId,
           locationId: stop?.locationId,
           location: stop?.location || null,
           addressLine: stop.addressLine,

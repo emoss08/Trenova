@@ -1,3 +1,4 @@
+"use no memo";
 import { Icon } from "@/components/ui/icons";
 import { formatSplitDateTime } from "@/lib/date";
 import { type ShipmentSchema } from "@/lib/schemas/shipment-schema";
@@ -53,7 +54,7 @@ const StopCircle = memo(function StopCircle({
   prevStopStatus?: StopStatus;
 }) {
   const stopIcon = getStatusIcon(status, isLast, moveStatus);
-  const bgColor = hasErrors ? "bg-destructive" : getStopStatusBgColor(status);
+  const bgColor = getStopStatusBgColor(status);
 
   // Get border color from previous stop status if available
   const borderColor = prevStopStatus
@@ -73,8 +74,8 @@ const StopCircle = memo(function StopCircle({
         <Icon icon={stopIcon} className="size-3.5 text-white" />
       </div>
       {hasErrors && (
-        <div className="absolute -top-1 -right-1 size-3 rounded-full bg-destructive border border-white flex items-center justify-center">
-          <span className="text-[8px] font-bold text-white">!</span>
+        <div className="absolute -top-1 -right-1 size-3 rounded-full bg-destructive flex items-center justify-center">
+          <span className="text-[8px] font-bold text-red-200">!</span>
         </div>
       )}
     </div>
@@ -107,27 +108,26 @@ const StopTimeline = memo(function StopTimeline({
     () => getLineStyles(stop.status, prevStopStatus),
     [stop.status, prevStopStatus],
   );
-  const { formState } = useFormContext<ShipmentSchema>();
+  const {
+    formState: { errors },
+  } = useFormContext<ShipmentSchema>();
   const plannedArrival = useMemo(
     () => formatSplitDateTime(stop.plannedArrival),
     [stop.plannedArrival],
   );
 
-  const hasErrors = useMemo(() => {
-    const errors = formState.errors;
-
-    // Check if there are any errors for the current stop
-    const moveErrors = errors.moves?.[moveIdx];
-    if (!moveErrors) return false;
-
-    const stopErrors = moveErrors.stops?.[stopIdx];
-    return !!stopErrors && typeof stopErrors === "object";
-  }, [formState.errors, moveIdx, stopIdx]);
+  // Access errors directly without useMemo to ensure we're always getting fresh values
+  const moveErrors = errors.moves?.[moveIdx];
+  const stopErrors = moveErrors?.stops?.[stopIdx];
+  const hasErrors = !!stopErrors && Object.keys(stopErrors).length > 0;
 
   const hasStopInfo = stop.location?.addressLine1 || stop.plannedArrival;
   const nextStopHasInfo =
     nextStop?.location?.addressLine1 || nextStop?.plannedArrival;
   const shouldShowLine = !isLast && hasStopInfo && nextStopHasInfo;
+
+  console.info("has errors", hasErrors);
+  console.log("form state", errors);
 
   return (
     <>
@@ -171,13 +171,6 @@ const StopTimeline = memo(function StopTimeline({
               <div className="flex-1">
                 <LocationDisplay location={stop.location} type={stop.type} />
               </div>
-              {hasErrors && (
-                <div className="flex-1">
-                  <span className="mt-1 text-2xs text-destructive">
-                    Please fix the errors before saving.
-                  </span>
-                </div>
-              )}
             </div>
           </>
         ) : (
