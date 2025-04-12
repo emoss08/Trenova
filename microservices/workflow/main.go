@@ -124,5 +124,10 @@ func setupDB(cfg *config.AppConfig) *bun.DB {
 		bundebug.WithEnabled(cfg.DB.Debug),
 	))
 
+	// * Ping the database to ensure connection
+	if err := db.PingContext(context.Background()); err != nil {
+		log.Fatalf("Failed to ping database: %v", err)
+	}
+
 	return db
 }
