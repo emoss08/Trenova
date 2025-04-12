@@ -7,6 +7,8 @@ import (
 	"os"
 	"strconv"
 	"time"
+
+	"github.com/emoss08/trenova/microservices/workflow/internal/model"
 )
 
 type RabbitMQConfig struct {
@@ -46,10 +48,11 @@ func (c *DBConfig) DSN() string {
 }
 
 type AppConfig struct {
-	LogLevel    string
-	Environment string
-	RabbitMQ    *RabbitMQConfig
-	DB          *DBConfig
+	LogLevel      string
+	Environment   string
+	RabbitMQ      *RabbitMQConfig
+	DB            *DBConfig
+	WorkflowTypes []model.WorkflowType
 }
 
 // LoadConfig loads configuration from environment variables

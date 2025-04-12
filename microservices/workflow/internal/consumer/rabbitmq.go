@@ -139,9 +139,8 @@ func (c *RabbitMQConsumer) setupTopology() error {
 }
 
 func (c *RabbitMQConsumer) registerWorkflowBindings() {
-	workflowTypes := []model.WorkflowType{
-		model.WorkflowTypeShipmentUpdated,
-	}
+	// Get all available workflow types
+	workflowTypes := c.getAvailableWorkflowTypes()
 
 	for _, wType := range workflowTypes {
 		// * Use the workflow type as the routing keys
@@ -157,6 +156,14 @@ func (c *RabbitMQConsumer) registerWorkflowBindings() {
 			continue
 		}
 		log.Printf("Bound queue %v to exchange %v for workflow type %v", c.config.QueueName, c.config.ExchangeName, wType)
+	}
+}
+
+// getAvailableWorkflowTypes returns all available workflow types
+// This makes it easy to add new workflow types without modifying the binding code
+func (c *RabbitMQConsumer) getAvailableWorkflowTypes() []model.WorkflowType {
+	return []model.WorkflowType{
+		model.WorkflowTypeShipmentUpdated,
 	}
 }
 
