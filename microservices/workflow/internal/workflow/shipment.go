@@ -48,7 +48,7 @@ func (r *Registry) registerDelayShipmentsWorkflow() error {
 func (r *Registry) registerShipmentUpdatedWorkflow() error {
 	err := r.worker.RegisterWorkflow(
 		&worker.WorkflowJob{
-			On:          worker.Events(string(model.WorkflowTypeShipmentUpdated)),
+			On:          worker.Events(string(model.TypeShipmentUpdated)),
 			Name:        "shipment-updated-workflow",
 			Description: "Handles shipment update events and associated processes",
 			Concurrency: worker.Expression("input.entityId"),

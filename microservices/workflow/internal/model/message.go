@@ -2,11 +2,11 @@ package model
 
 import "time"
 
-type WorkflowType string
+type Type string
 
 const (
 	// * Shipment Workflow
-	WorkflowTypeShipmentUpdated = ("shipment_updated")
+	TypeShipmentUpdated = ("shipment_updated")
 )
 
 // * Message is the message that is sent to the workflow service
@@ -14,7 +14,7 @@ const (
 // ! Should match the same message struct in `internal/pkg/workflow/message.go`
 type Message struct {
 	ID          string       `json:"id"`
-	Type        WorkflowType `json:"type"`
+	Type        Type `json:"type"`
 	EntityID    string       `json:"entityId"`
 	EntityType  string       `json:"entityType"`
 	TenantID    string       `json:"tenantId"`

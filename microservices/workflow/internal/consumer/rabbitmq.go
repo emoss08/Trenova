@@ -19,7 +19,7 @@ type RabbitMQConsumer struct {
 	config         *config.RabbitMQConfig
 	conn           *amqp.Connection
 	ch             *amqp.Channel
-	handlers       map[model.WorkflowType]MessageHandler
+	handlers       map[model.Type]MessageHandler
 	reconnectDelay time.Duration
 	mu             sync.RWMutex
 	done           chan struct{}
@@ -28,7 +28,7 @@ type RabbitMQConsumer struct {
 func NewRabbitMQConsumer(cfg *config.RabbitMQConfig) (*RabbitMQConsumer, error) {
 	consumer := &RabbitMQConsumer{
 		config:         cfg,
-		handlers:       make(map[model.WorkflowType]MessageHandler),
+		handlers:       make(map[model.Type]MessageHandler),
 		reconnectDelay: 5 * time.Second,
 		done:           make(chan struct{}),
 	}
@@ -36,7 +36,7 @@ func NewRabbitMQConsumer(cfg *config.RabbitMQConfig) (*RabbitMQConsumer, error) 
 	return consumer, nil
 }
 
-func (c *RabbitMQConsumer) RegisterHandler(workflowType model.WorkflowType, handler MessageHandler) {
+func (c *RabbitMQConsumer) RegisterHandler(workflowType model.Type, handler MessageHandler) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
@@ -161,9 +161,9 @@ func (c *RabbitMQConsumer) registerWorkflowBindings() {
 
 // getAvailableWorkflowTypes returns all available workflow types
 // This makes it easy to add new workflow types without modifying the binding code
-func (c *RabbitMQConsumer) getAvailableWorkflowTypes() []model.WorkflowType {
-	return []model.WorkflowType{
-		model.WorkflowTypeShipmentUpdated,
+func (c *RabbitMQConsumer) getAvailableWorkflowTypes() []model.Type {
+	return []model.Type{
+		model.TypeShipmentUpdated,
 	}
 }
 

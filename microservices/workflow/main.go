@@ -73,7 +73,7 @@ func main() {
 	handler := consumer.NewHatchetHandler(hatchetClient)
 
 	// Register handlers for different workflow types
-	rabbitConsumer.RegisterHandler(model.WorkflowTypeShipmentUpdated, handler.HandleShipmentMessage)
+	rabbitConsumer.RegisterHandler(model.TypeShipmentUpdated, handler.HandleShipmentMessage)
 
 	workerCleanup, err := hatchetWorker.Start()
 	if err != nil {
