@@ -15,7 +15,6 @@ import (
 	"github.com/emoss08/trenova/internal/pkg/postgressearch"
 	"github.com/emoss08/trenova/internal/pkg/utils/queryutils/queryfilters"
 	"github.com/emoss08/trenova/internal/pkg/utils/timeutils"
-	"github.com/emoss08/trenova/internal/pkg/workflow"
 	"github.com/emoss08/trenova/pkg/types/pulid"
 	"github.com/rotisserie/eris"
 	"github.com/rs/zerolog"
@@ -35,7 +34,6 @@ type ShipmentRepositoryParams struct {
 	AdditionalChargeRepository  repositories.AdditionalChargeRepository
 	ProNumberRepo               repositories.ProNumberRepository
 	Calculator                  *calculator.ShipmentCalculator
-	WorkflowService             *workflow.Service
 }
 
 // shipmentRepository implements the ShipmentRepository interface
@@ -49,7 +47,6 @@ type shipmentRepository struct {
 	additionalChargeRepository  repositories.AdditionalChargeRepository
 	proNumberRepo               repositories.ProNumberRepository
 	calc                        *calculator.ShipmentCalculator
-	workflowService             *workflow.Service
 }
 
 // NewShipmentRepository initializes a new instance of shipmentRepository with its dependencies.
@@ -72,7 +69,6 @@ func NewShipmentRepository(p ShipmentRepositoryParams) repositories.ShipmentRepo
 		shipmentMoveRepository:      p.ShipmentMoveRepository,
 		proNumberRepo:               p.ProNumberRepo,
 		calc:                        p.Calculator,
-		workflowService:             p.WorkflowService,
 	}
 }
 
@@ -421,14 +417,6 @@ func (sr *shipmentRepository) Update(ctx context.Context, shp *shipment.Shipment
 	if err != nil {
 		log.Error().Interface("shipment", shp).Err(err).Msg("failed to update shipment")
 		return nil, err
-	}
-
-	// * Trigger the shipment workflow
-	if err = sr.workflowService.TriggerShipmentWorkflow(ctx, workflow.TypeShipmentUpdated, shp.ID, shp.OrganizationID, &workflow.ShipmentWorkflowPayload{
-		ProNumber: shp.ProNumber,
-		Status:    string(shp.Status),
-	}); err != nil {
-		log.Error().Interface("shipment", shp).Err(err).Msg("failed to trigger shipment workflow")
 	}
 
 	return shp, nil
