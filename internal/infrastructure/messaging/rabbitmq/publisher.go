@@ -62,6 +62,21 @@ func NewWorkflowPublisher(p WorkflowParams) *WorkflowPublisher {
 		return nil
 	}
 
+	// * Declare dead letter exchange
+	err = ch.ExchangeDeclare(
+		cfg.ExchangeName+".dlx", // name
+		"direct",                // type
+		true,                    // durable
+		false,                   // auto-deleted
+		false,                   // internal
+		false,                   // no-wait
+		nil,                     // arguments
+	)
+	if err != nil {
+		l.Fatal().Err(err).Msg("failed to declare dead letter exchange")
+		return nil
+	}
+
 	// * Declare queue
 	_, err = ch.QueueDeclare(
 		cfg.QueueName, // name
@@ -69,7 +84,9 @@ func NewWorkflowPublisher(p WorkflowParams) *WorkflowPublisher {
 		false,         // delete when unused
 		false,         // exclusive
 		false,         // no-wait
-		nil,           // arguments
+		amqp.Table{
+			"x-dead-letter-exchange": cfg.ExchangeName + ".dlx",
+		}, // arguments
 	)
 	if err != nil {
 		l.Fatal().Err(err).Msg("failed to declare queue")
