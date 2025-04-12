@@ -16,6 +16,7 @@ import (
 
 type MessageHandler func(ctx context.Context, msg *model.Message) error
 
+// RabbitMQConsumer is a consumer for RabbitMQ messages
 type RabbitMQConsumer struct {
 	config         *config.RabbitMQConfig
 	conn           *amqp.Connection
@@ -27,18 +28,31 @@ type RabbitMQConsumer struct {
 	maxRetries     int
 }
 
+// NewRabbitMQConsumer creates a new RabbitMQ consumer.
+//
+// Params:
+// - cfg: The RabbitMQ configuration
+//
+// Returns:
+// - A new RabbitMQ consumer
+// - An error if the consumer fails to start
 func NewRabbitMQConsumer(cfg *config.RabbitMQConfig) (*RabbitMQConsumer, error) {
 	consumer := &RabbitMQConsumer{
 		config:         cfg,
 		handlers:       make(map[model.Type]MessageHandler),
 		reconnectDelay: 5 * time.Second,
 		done:           make(chan struct{}),
-		maxRetries:     3, // Default max retries before message goes to DLX
+		maxRetries:     3, // * Default max retries before message goes to DLX
 	}
 
 	return consumer, nil
 }
 
+// RegisterHandler registers a handler for a workflow type.
+//
+// Params:
+// - workflowType: The workflow type to register the handler for
+// - handler: The handler to register for the workflow type
 func (c *RabbitMQConsumer) RegisterHandler(workflowType model.Type, handler MessageHandler) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
@@ -47,7 +61,13 @@ func (c *RabbitMQConsumer) RegisterHandler(workflowType model.Type, handler Mess
 	log.Printf("Registered handler for workflow type: %s", workflowType)
 }
 
-// Start begins consuming messages from RabbitMQ
+// Start begins consuming messages from RabbitMQ.
+//
+// Params:
+// - ctx: The context for the consumer
+//
+// Returns:
+// - An error if the consumer fails to start
 func (c *RabbitMQConsumer) Start(ctx context.Context) error {
 	var err error
 
@@ -95,7 +115,7 @@ func (c *RabbitMQConsumer) connect() error {
 		return eris.Wrap(err, "failed to open channel")
 	}
 
-	// Set QoS prefetch AFTER creating the channel
+	// * Set QoS prefetch AFTER creating the channel
 	err = c.ch.Qos(
 		c.config.PrefetchCount,
 		0,
@@ -114,8 +134,40 @@ func (c *RabbitMQConsumer) setupTopology() error {
 }
 
 // setupTopologyWithRetry sets up the topology with an option to delete and recreate the queue
+//
+// Params:
+// - deleteQueue: Whether to delete and recreate the queue
+//
+// Returns:
+// - An error if the topology fails to set up
 func (c *RabbitMQConsumer) setupTopologyWithRetry(deleteQueue bool) error {
-	// Declare the main exchange
+	// * Set up exchanges and DLQ
+	if err := c.setupExchangesAndDLQ(); err != nil {
+		return err
+	}
+
+	// * Handle queue deletion if requested
+	if deleteQueue {
+		c.tryDeleteQueue()
+	}
+
+	// * Try to declare main queue with dead letter configuration
+	err := c.declareMainQueue()
+
+	// * Handle precondition failures
+	if err != nil && isPreConditionFailedError(err) {
+		return c.handleQueuePreconditionFailure(deleteQueue)
+	} else if err != nil {
+		return eris.Wrap(err, "failed to declare queue")
+	}
+
+	c.logTopologySetup()
+	return nil
+}
+
+// setupExchangesAndDLQ sets up the exchanges and dead letter queue
+func (c *RabbitMQConsumer) setupExchangesAndDLQ() error {
+	// * Declare the main exchange
 	err := c.ch.ExchangeDeclare(
 		c.config.ExchangeName,
 		"direct",
@@ -129,7 +181,7 @@ func (c *RabbitMQConsumer) setupTopologyWithRetry(deleteQueue bool) error {
 		return eris.Wrap(err, "failed to declare exchange")
 	}
 
-	// Declare the Dead Letter Exchange (DLX)
+	// * Declare the Dead Letter Exchange (DLX)
 	dlxName := c.config.ExchangeName + ".dlx"
 	err = c.ch.ExchangeDeclare(
 		dlxName,
@@ -144,7 +196,7 @@ func (c *RabbitMQConsumer) setupTopologyWithRetry(deleteQueue bool) error {
 		return eris.Wrap(err, "failed to declare dead letter exchange")
 	}
 
-	// Declare the Dead Letter Queue
+	// * Declare the Dead Letter Queue
 	dlqName := c.config.QueueName + ".dlq"
 	dlq, err := c.ch.QueueDeclare(
 		dlqName,
@@ -158,7 +210,7 @@ func (c *RabbitMQConsumer) setupTopologyWithRetry(deleteQueue bool) error {
 		return eris.Wrap(err, "failed to declare dead letter queue")
 	}
 
-	// Bind the DLQ to the DLX
+	// * Bind the DLQ to the DLX
 	err = c.ch.QueueBind(
 		dlq.Name,
 		"#", // Catch all routing keys
@@ -170,28 +222,33 @@ func (c *RabbitMQConsumer) setupTopologyWithRetry(deleteQueue bool) error {
 		return eris.Wrap(err, "failed to bind dead letter queue")
 	}
 
-	// If deleteQueue is true, try to delete the queue first
-	if deleteQueue {
-		log.Printf("Attempting to delete existing queue '%s'", c.config.QueueName)
-		_, err = c.ch.QueueDelete(
-			c.config.QueueName,
-			false, // ifUnused
-			false, // ifEmpty
-			false, // noWait
-		)
-		if err != nil {
-			log.Printf("Warning: Failed to delete queue '%s': %v", c.config.QueueName, err)
-			// Continue anyway, as the queue might not exist
-		}
-	}
+	return nil
+}
 
-	// Declare main queue with dead letter configuration
+// tryDeleteQueue attempts to delete the queue, logging any errors
+func (c *RabbitMQConsumer) tryDeleteQueue() {
+	log.Printf("Attempting to delete existing queue '%s'", c.config.QueueName)
+	_, err := c.ch.QueueDelete(
+		c.config.QueueName,
+		false, // ifUnused
+		false, // ifEmpty
+		false, // noWait
+	)
+	if err != nil {
+		log.Printf("Warning: Failed to delete queue '%s': %v", c.config.QueueName, err)
+		// ! Continue anyway, as the queue might not exist
+	}
+}
+
+// declareMainQueue declares the main queue with dead letter configuration
+func (c *RabbitMQConsumer) declareMainQueue() error {
+	// * Declare main queue with dead letter configuration
 	args := amqp.Table{
-		"x-dead-letter-exchange": dlxName,
+		"x-dead-letter-exchange": c.config.ExchangeName + ".dlx",
 	}
 
-	// Try to declare the queue with DLX configuration
-	_, err = c.ch.QueueDeclare(
+	// * Try to declare the queue with DLX configuration
+	_, err := c.ch.QueueDeclare(
 		c.config.QueueName,
 		true,
 		false,
@@ -199,58 +256,66 @@ func (c *RabbitMQConsumer) setupTopologyWithRetry(deleteQueue bool) error {
 		false,
 		args,
 	)
-	
-	// If queue exists with different arguments, try different approach
-	if err != nil && isPreConditionFailedError(err) {
-		log.Printf("Queue '%s' already exists with different parameters.", c.config.QueueName)
-		
-		// The channel might be closed after the precondition failure, so reconnect
-		if err = c.reconnect(); err != nil {
-			return eris.Wrap(err, "failed to reconnect")
-		}
-		
-		// If this is our first attempt, try again with queue deletion enabled
-		if !deleteQueue {
-			log.Printf("Retrying with queue deletion...")
-			return c.setupTopologyWithRetry(true)
-		}
-		
-		// If we've already tried deleting, fall back to using the existing queue
-		log.Printf("Using existing queue as-is (without dead letter exchange configuration)")
-		
-		// Try to bind the existing queue
-		err = c.ch.QueueBind(
-			c.config.QueueName,
-			"#", // Catch all routing keys
-			c.config.ExchangeName,
-			false,
-			nil,
-		)
-		if err != nil {
-			return eris.Wrap(err, "failed to bind existing queue")
-		}
-		
-	} else if err != nil {
-		return eris.Wrap(err, "failed to declare queue")
+	if err != nil {
+		return eris.Wrap(err, "failed to declare main queue")
 	}
 
+	return nil
+}
+
+// handleQueuePreconditionFailure handles the case where queue exists with different params
+func (c *RabbitMQConsumer) handleQueuePreconditionFailure(alreadyTriedDelete bool) error {
+	log.Printf("Queue '%s' already exists with different parameters.", c.config.QueueName)
+
+	// * The channel might be closed after the precondition failure, so reconnect
+	if err := c.reconnect(); err != nil {
+		return eris.Wrap(err, "failed to reconnect")
+	}
+
+	// * If this is our first attempt, try again with queue deletion enabled
+	if !alreadyTriedDelete {
+		log.Printf("Retrying with queue deletion...")
+		return c.setupTopologyWithRetry(true)
+	}
+
+	// * If we've already tried deleting, fall back to using the existing queue
+	log.Printf("Using existing queue as-is (without dead letter exchange configuration)")
+
+	// * Try to bind the existing queue
+	err := c.ch.QueueBind(
+		c.config.QueueName,
+		"#", // Catch all routing keys
+		c.config.ExchangeName,
+		false,
+		nil,
+	)
+	if err != nil {
+		return eris.Wrap(err, "failed to bind existing queue")
+	}
+
+	return nil
+}
+
+// logTopologySetup logs successful topology setup
+func (c *RabbitMQConsumer) logTopologySetup() {
+	dlxName := c.config.ExchangeName + ".dlx"
+	dlqName := c.config.QueueName + ".dlq"
 	log.Printf("Setup RabbitMQ topology with exchange %v, queue %v, and dead letter exchange %v with queue %v",
 		c.config.ExchangeName, c.config.QueueName, dlxName, dlqName)
-	return nil
 }
 
 // reconnect closes existing connections and reconnects to RabbitMQ
 func (c *RabbitMQConsumer) reconnect() error {
-	// Close existing channel and connection to ensure clean state
+	// * Close existing channel and connection to ensure clean state
 	if c.ch != nil {
-		c.ch.Close() // Ignore errors as channel might already be closed
+		c.ch.Close() // ! Ignore errors as channel might already be closed
 	}
-	
+
 	if c.conn != nil {
-		c.conn.Close() // Ignore errors as connection might already be closed
+		c.conn.Close() // ! Ignore errors as connection might already be closed
 	}
-	
-	// Reconnect to RabbitMQ
+
+	// * Reconnect to RabbitMQ
 	return c.connect()
 }
 
@@ -259,17 +324,17 @@ func isPreConditionFailedError(err error) bool {
 	if err == nil {
 		return false
 	}
-	
+
 	errMsg := err.Error()
-	
-	// Check if the error contains both "PRECONDITION_FAILED" and "x-dead-letter-exchange"
-	// This covers the specific error we're seeing
-	return strings.Contains(errMsg, "PRECONDITION_FAILED") && 
-	       strings.Contains(errMsg, "x-dead-letter-exchange")
+
+	// * Check if the error contains both "PRECONDITION_FAILED" and "x-dead-letter-exchange"
+	// * This covers the specific error we're seeing
+	return strings.Contains(errMsg, "PRECONDITION_FAILED") &&
+		strings.Contains(errMsg, "x-dead-letter-exchange")
 }
 
 func (c *RabbitMQConsumer) registerWorkflowBindings() {
-	// Get all available workflow types
+	// * Get all available workflow types
 	workflowTypes := c.getAvailableWorkflowTypes()
 
 	for _, wType := range workflowTypes {
@@ -355,7 +420,7 @@ func (c *RabbitMQConsumer) consumeMessages(ctx context.Context) {
 				continue
 			}
 
-			// Process the message
+			// * Process the message
 			go c.processMessage(ctx, msg)
 		}
 	}
@@ -372,32 +437,32 @@ func (c *RabbitMQConsumer) processMessage(ctx context.Context, msg amqp.Delivery
 
 	log.Printf("Received message with routing key: %s", msg.RoutingKey)
 
-	// Parse the message
+	// * Parse the message
 	message, err := deserializeMessage(msg.Body)
 	if err != nil {
 		log.Printf("Failed to deserialize message: %v", err)
-		// Nack the message without requeue as it's malformed
+		// * Nack the message without requeue as it's malformed
 		if err = msg.Nack(false, false); err != nil {
 			log.Printf("Failed to nack message: %v", err)
 		}
 		return
 	}
 
-	// Find the appropriate handler
+	// * Find the appropriate handler
 	c.mu.RLock()
 	handler, exists := c.handlers[message.Type]
 	c.mu.RUnlock()
 
 	if !exists {
 		log.Printf("No handler registered for workflow type: %s", message.Type)
-		// Ack the message since we can't process it
+		// * Ack the message since we can't process it
 		if err = msg.Ack(false); err != nil {
 			log.Printf("Failed to ack message: %v", err)
 		}
 		return
 	}
 
-	// Execute the handler
+	// * Execute the handler
 	err = handler(ctx, message)
 	if err != nil {
 		log.Printf("Error handling message: %v", err)
@@ -405,7 +470,7 @@ func (c *RabbitMQConsumer) processMessage(ctx context.Context, msg amqp.Delivery
 		return
 	}
 
-	// Acknowledge the message
+	// * Acknowledge the message
 	if err = msg.Ack(false); err != nil {
 		log.Printf("Failed to ack message: %v", err)
 	}
@@ -415,16 +480,16 @@ func (c *RabbitMQConsumer) processMessage(ctx context.Context, msg amqp.Delivery
 func (c *RabbitMQConsumer) handleMessageRetry(ctx context.Context, msg amqp.Delivery, processingErr error) {
 	retryCount := c.getRetryCount(msg)
 
-	// Increment retry count
+	// * Increment retry count
 	retryCount++
 
-	// Check if we've exceeded max retries
+	// * Check if we've exceeded max retries
 	if retryCount > c.maxRetries {
 		c.sendToDeadLetterQueue(msg)
 		return
 	}
 
-	// Republish with updated retry count
+	// * Republish with updated retry count
 	c.republishWithRetryCount(ctx, msg, retryCount)
 }
 
@@ -481,13 +546,13 @@ func (c *RabbitMQConsumer) republishWithRetryCount(ctx context.Context, msg amqp
 
 	if publishErr != nil {
 		log.Printf("Failed to republish message with retry count: %v", publishErr)
-		// Fallback to regular nack if republish fails
+		// * Fallback to regular nack if republish fails
 		if nackErr := msg.Nack(false, true); nackErr != nil {
 			log.Printf("Failed to nack message: %v", nackErr)
 		}
 	} else {
 		log.Printf("Republished message with retry count: %d", retryCount)
-		// Ack the original message since we've republished it
+		// * Ack the original message since we've republished it
 		if ackErr := msg.Ack(false); ackErr != nil {
 			log.Printf("Failed to ack original message after republishing: %v", ackErr)
 		}
