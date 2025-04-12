@@ -13,11 +13,11 @@ const (
 //
 // ! Should match the same message struct in `internal/pkg/workflow/message.go`
 type Message struct {
-	ID          string       `json:"id"`
-	Type        Type `json:"type"`
-	EntityID    string       `json:"entityId"`
-	EntityType  string       `json:"entityType"`
-	TenantID    string       `json:"tenantId"`
-	RequestedAt time.Time    `json:"requestedAt"`
-	Payload     any          `json:"payload"`
+	ID          string    `json:"id"`
+	Type        Type      `json:"type"`
+	EntityID    string    `json:"entityId"`
+	EntityType  string    `json:"entityType"`
+	TenantID    string    `json:"tenantId"`
+	RequestedAt time.Time `json:"requestedAt"`
+	Payload     any       `json:"payload"`
 }

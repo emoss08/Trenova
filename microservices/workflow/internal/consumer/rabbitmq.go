@@ -284,67 +284,7 @@ func (c *RabbitMQConsumer) processMessage(ctx context.Context, msg amqp.Delivery
 	defer func() {
 		if r := recover(); r != nil {
 			log.Printf("Recovered from panic in message processing: %v", r)
-
-			// Get current retry count from headers or initialize to 0
-			retryCount := 0
-			if msg.Headers != nil {
-				if count, exists := msg.Headers["x-retry-count"]; exists {
-					if countInt, ok := count.(int); ok {
-						retryCount = countInt
-					}
-				}
-			}
-
-			// Increment retry count
-			retryCount++
-
-			// Check if we've exceeded max retries
-			if retryCount > c.maxRetries {
-				log.Printf("Message exceeded maximum retry count (%d). Sending to dead letter queue.", c.maxRetries)
-				// Reject without requeuing, will go to DLX
-				if err := msg.Nack(false, false); err != nil {
-					log.Printf("Failed to nack message to dead letter queue: %v", err)
-				}
-				return
-			}
-
-			// Republish with updated retry count
-			headers := amqp.Table{}
-			if msg.Headers != nil {
-				headers = msg.Headers
-			}
-			headers["x-retry-count"] = retryCount
-
-			// Publish to the same exchange with the same routing key
-			publishErr := c.ch.PublishWithContext(
-				ctx,
-				c.config.ExchangeName,
-				msg.RoutingKey,
-				false, // mandatory
-				false, // immediate
-				amqp.Publishing{
-					Headers:         headers,
-					ContentType:     msg.ContentType,
-					ContentEncoding: msg.ContentEncoding,
-					Body:            msg.Body,
-					DeliveryMode:    msg.DeliveryMode,
-					Priority:        msg.Priority,
-				},
-			)
-
-			if publishErr != nil {
-				log.Printf("Failed to republish message with retry count: %v", publishErr)
-				// Fallback to regular nack if republish fails
-				if nackErr := msg.Nack(false, true); nackErr != nil {
-					log.Printf("Failed to nack message: %v", nackErr)
-				}
-			} else {
-				log.Printf("Republished message with retry count: %d", retryCount)
-				// Ack the original message since we've republished it
-				if ackErr := msg.Ack(false); ackErr != nil {
-					log.Printf("Failed to ack original message after republishing: %v", ackErr)
-				}
-			}
+			c.handleMessageRetry(ctx, msg, nil)
 		}
 	}()
 
@@ -379,73 +319,96 @@ func (c *RabbitMQConsumer) processMessage(ctx context.Context, msg amqp.Delivery
 	err = handler(ctx, message)
 	if err != nil {
 		log.Printf("Error handling message: %v", err)
-
-		// Get current retry count from headers or initialize to 0
-		retryCount := 0
-		if msg.Headers != nil {
-			if count, exists := msg.Headers["x-retry-count"]; exists {
-				if countInt, ok := count.(int); ok {
-					retryCount = countInt
-				}
-			}
-		}
-
-		// Increment retry count
-		retryCount++
-
-		// Check if we've exceeded max retries
-		if retryCount > c.maxRetries {
-			log.Printf("Message exceeded maximum retry count (%d). Sending to dead letter queue.", c.maxRetries)
-			// Reject without requeuing, will go to DLX
-			if err := msg.Nack(false, false); err != nil {
-				log.Printf("Failed to nack message to dead letter queue: %v", err)
-			}
-			return
-		}
-
-		// Republish with updated retry count
-		headers := amqp.Table{}
-		if msg.Headers != nil {
-			headers = msg.Headers
-		}
-		headers["x-retry-count"] = retryCount
-
-		// Publish to the same exchange with the same routing key
-		publishErr := c.ch.PublishWithContext(
-			ctx,
-			c.config.ExchangeName,
-			msg.RoutingKey,
-			false, // mandatory
-			false, // immediate
-			amqp.Publishing{
-				Headers:         headers,
-				ContentType:     msg.ContentType,
-				ContentEncoding: msg.ContentEncoding,
-				Body:            msg.Body,
-				DeliveryMode:    msg.DeliveryMode,
-				Priority:        msg.Priority,
-			},
-		)
-
-		if publishErr != nil {
-			log.Printf("Failed to republish message with retry count: %v", publishErr)
-			// Fallback to regular nack if republish fails
-			if nackErr := msg.Nack(false, true); nackErr != nil {
-				log.Printf("Failed to nack message: %v", nackErr)
-			}
-		} else {
-			log.Printf("Republished message with retry count: %d", retryCount)
-			// Ack the original message since we've republished it
-			if ackErr := msg.Ack(false); ackErr != nil {
-				log.Printf("Failed to ack original message after republishing: %v", ackErr)
-			}
-		}
+		c.handleMessageRetry(ctx, msg, err)
 		return
 	}
 
 	// Acknowledge the message
 	if err = msg.Ack(false); err != nil {
 		log.Printf("Failed to ack message: %v", err)
+	}
+}
+
+// handleMessageRetry manages the retry logic for failed messages
+func (c *RabbitMQConsumer) handleMessageRetry(ctx context.Context, msg amqp.Delivery, processingErr error) {
+	retryCount := c.getRetryCount(msg)
+
+	// Increment retry count
+	retryCount++
+
+	// Check if we've exceeded max retries
+	if retryCount > c.maxRetries {
+		c.sendToDeadLetterQueue(msg)
+		return
+	}
+
+	// Republish with updated retry count
+	c.republishWithRetryCount(ctx, msg, retryCount)
+}
+
+// getRetryCount extracts the retry count from message headers
+func (c *RabbitMQConsumer) getRetryCount(msg amqp.Delivery) int {
+	if msg.Headers == nil {
+		return 0
+	}
+
+	count, exists := msg.Headers["x-retry-count"]
+	if !exists {
+		return 0
+	}
+
+	countInt, ok := count.(int)
+	if !ok {
+		return 0
+	}
+
+	return countInt
+}
+
+// sendToDeadLetterQueue rejects a message to send it to the DLQ
+func (c *RabbitMQConsumer) sendToDeadLetterQueue(msg amqp.Delivery) {
+	log.Printf("Message exceeded maximum retry count (%d). Sending to dead letter queue.", c.maxRetries)
+	if err := msg.Nack(false, false); err != nil {
+		log.Printf("Failed to nack message to dead letter queue: %v", err)
+	}
+}
+
+// republishWithRetryCount republishes a message with updated retry count
+func (c *RabbitMQConsumer) republishWithRetryCount(ctx context.Context, msg amqp.Delivery, retryCount int) {
+	headers := amqp.Table{}
+	if msg.Headers != nil {
+		headers = msg.Headers
+	}
+	headers["x-retry-count"] = retryCount
+
+	publishErr := c.ch.PublishWithContext(
+		ctx,
+		c.config.ExchangeName,
+		msg.RoutingKey,
+		false, // mandatory
+		false, // immediate
+		amqp.Publishing{
+			Headers:         headers,
+			ContentType:     msg.ContentType,
+			ContentEncoding: msg.ContentEncoding,
+			Body:            msg.Body,
+			DeliveryMode:    msg.DeliveryMode,
+			Priority:        msg.Priority,
+		},
+	)
+
+	if publishErr != nil {
+		log.Printf("Failed to republish message with retry count: %v", publishErr)
+		// Fallback to regular nack if republish fails
+		if nackErr := msg.Nack(false, true); nackErr != nil {
+			log.Printf("Failed to nack message: %v", nackErr)
+		}
+	} else {
+		log.Printf("Republished message with retry count: %d", retryCount)
+		// Ack the original message since we've republished it
+		if ackErr := msg.Ack(false); ackErr != nil {
+			log.Printf("Failed to ack original message after republishing: %v", ackErr)
+		}
 	}
 }
 

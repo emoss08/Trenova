@@ -34,6 +34,8 @@ tasks:
     silent: true
   update-go-deps:
     cmd: go get -u ./... && go mod tidy
+  fix:
+    cmd: goimports -w ./.. && go mod tidy
   run-client:
     dir: ui
     cmd: pnpm run dev
