@@ -23,6 +23,7 @@ type RabbitMQConsumer struct {
 	reconnectDelay time.Duration
 	mu             sync.RWMutex
 	done           chan struct{}
+	maxRetries     int
 }
 
 func NewRabbitMQConsumer(cfg *config.RabbitMQConfig) (*RabbitMQConsumer, error) {
@@ -31,6 +32,7 @@ func NewRabbitMQConsumer(cfg *config.RabbitMQConfig) (*RabbitMQConsumer, error) 
 		handlers:       make(map[model.Type]MessageHandler),
 		reconnectDelay: 5 * time.Second,
 		done:           make(chan struct{}),
+		maxRetries:     3, // Default max retries before message goes to DLX
 	}
 
 	return consumer, nil
@@ -107,10 +109,10 @@ func (c *RabbitMQConsumer) connect() error {
 }
 
 func (c *RabbitMQConsumer) setupTopology() error {
-	// * Declare exchange with type "direct" to match existing exchange
+	// Declare the main exchange
 	err := c.ch.ExchangeDeclare(
 		c.config.ExchangeName,
-		"direct", // Changed from "topic" to match existing exchange
+		"direct",
 		true,
 		false,
 		false,
@@ -121,20 +123,66 @@ func (c *RabbitMQConsumer) setupTopology() error {
 		return eris.Wrap(err, "failed to declare exchange")
 	}
 
-	// Declare queue if not already done
+	// Declare the Dead Letter Exchange (DLX)
+	dlxName := c.config.ExchangeName + ".dlx"
+	err = c.ch.ExchangeDeclare(
+		dlxName,
+		"direct",
+		true,
+		false,
+		false,
+		false,
+		nil,
+	)
+	if err != nil {
+		return eris.Wrap(err, "failed to declare dead letter exchange")
+	}
+
+	// Declare the Dead Letter Queue
+	dlqName := c.config.QueueName + ".dlq"
+	dlq, err := c.ch.QueueDeclare(
+		dlqName,
+		true,
+		false,
+		false,
+		false,
+		nil,
+	)
+	if err != nil {
+		return eris.Wrap(err, "failed to declare dead letter queue")
+	}
+
+	// Bind the DLQ to the DLX
+	err = c.ch.QueueBind(
+		dlq.Name,
+		"#", // Catch all routing keys
+		dlxName,
+		false,
+		nil,
+	)
+	if err != nil {
+		return eris.Wrap(err, "failed to bind dead letter queue")
+	}
+
+	// Declare main queue with dead letter configuration
+	args := amqp.Table{
+		"x-dead-letter-exchange": dlxName,
+	}
+
 	_, err = c.ch.QueueDeclare(
-		c.config.QueueName, // name
-		true,               // durable
-		false,              // delete when unused
-		false,              // exclusive
-		false,              // no-wait
-		nil,                // arguments
+		c.config.QueueName,
+		true,
+		false,
+		false,
+		false,
+		args,
 	)
 	if err != nil {
 		return eris.Wrap(err, "failed to declare queue")
 	}
 
-	log.Printf("Setup RabbitMQ topology with exchange %v and queue %v", c.config.ExchangeName, c.config.QueueName)
+	log.Printf("Setup RabbitMQ topology with exchange %v, queue %v, and dead letter exchange %v with queue %v",
+		c.config.ExchangeName, c.config.QueueName, dlxName, dlqName)
 	return nil
 }
 
@@ -236,9 +284,66 @@ func (c *RabbitMQConsumer) processMessage(ctx context.Context, msg amqp.Delivery
 	defer func() {
 		if r := recover(); r != nil {
 			log.Printf("Recovered from panic in message processing: %v", r)
-			// Nack the message with requeue=true to try again later
-			if err := msg.Nack(false, true); err != nil {
-				log.Printf("Failed to nack message: %v", err)
+
+			// Get current retry count from headers or initialize to 0
+			retryCount := 0
+			if msg.Headers != nil {
+				if count, exists := msg.Headers["x-retry-count"]; exists {
+					if countInt, ok := count.(int); ok {
+						retryCount = countInt
+					}
+				}
+			}
+
+			// Increment retry count
+			retryCount++
+
+			// Check if we've exceeded max retries
+			if retryCount > c.maxRetries {
+				log.Printf("Message exceeded maximum retry count (%d). Sending to dead letter queue.", c.maxRetries)
+				// Reject without requeuing, will go to DLX
+				if err := msg.Nack(false, false); err != nil {
+					log.Printf("Failed to nack message to dead letter queue: %v", err)
+				}
+				return
+			}
+
+			// Republish with updated retry count
+			headers := amqp.Table{}
+			if msg.Headers != nil {
+				headers = msg.Headers
+			}
+			headers["x-retry-count"] = retryCount
+
+			// Publish to the same exchange with the same routing key
+			publishErr := c.ch.PublishWithContext(
+				ctx,
+				c.config.ExchangeName,
+				msg.RoutingKey,
+				false, // mandatory
+				false, // immediate
+				amqp.Publishing{
+					Headers:         headers,
+					ContentType:     msg.ContentType,
+					ContentEncoding: msg.ContentEncoding,
+					Body:            msg.Body,
+					DeliveryMode:    msg.DeliveryMode,
+					Priority:        msg.Priority,
+				},
+			)
+
+			if publishErr != nil {
+				log.Printf("Failed to republish message with retry count: %v", publishErr)
+				// Fallback to regular nack if republish fails
+				if nackErr := msg.Nack(false, true); nackErr != nil {
+					log.Printf("Failed to nack message: %v", nackErr)
+				}
+			} else {
+				log.Printf("Republished message with retry count: %d", retryCount)
+				// Ack the original message since we've republished it
+				if ackErr := msg.Ack(false); ackErr != nil {
+					log.Printf("Failed to ack original message after republishing: %v", ackErr)
+				}
 			}
 		}
 	}()
@@ -274,9 +379,66 @@ func (c *RabbitMQConsumer) processMessage(ctx context.Context, msg amqp.Delivery
 	err = handler(ctx, message)
 	if err != nil {
 		log.Printf("Error handling message: %v", err)
-		// Nack the message with requeue=true to try again later
-		if err = msg.Nack(false, true); err != nil {
-			log.Printf("Failed to nack message: %v", err)
+
+		// Get current retry count from headers or initialize to 0
+		retryCount := 0
+		if msg.Headers != nil {
+			if count, exists := msg.Headers["x-retry-count"]; exists {
+				if countInt, ok := count.(int); ok {
+					retryCount = countInt
+				}
+			}
+		}
+
+		// Increment retry count
+		retryCount++
+
+		// Check if we've exceeded max retries
+		if retryCount > c.maxRetries {
+			log.Printf("Message exceeded maximum retry count (%d). Sending to dead letter queue.", c.maxRetries)
+			// Reject without requeuing, will go to DLX
+			if err := msg.Nack(false, false); err != nil {
+				log.Printf("Failed to nack message to dead letter queue: %v", err)
+			}
+			return
+		}
+
+		// Republish with updated retry count
+		headers := amqp.Table{}
+		if msg.Headers != nil {
+			headers = msg.Headers
+		}
+		headers["x-retry-count"] = retryCount
+
+		// Publish to the same exchange with the same routing key
+		publishErr := c.ch.PublishWithContext(
+			ctx,
+			c.config.ExchangeName,
+			msg.RoutingKey,
+			false, // mandatory
+			false, // immediate
+			amqp.Publishing{
+				Headers:         headers,
+				ContentType:     msg.ContentType,
+				ContentEncoding: msg.ContentEncoding,
+				Body:            msg.Body,
+				DeliveryMode:    msg.DeliveryMode,
+				Priority:        msg.Priority,
+			},
+		)
+
+		if publishErr != nil {
+			log.Printf("Failed to republish message with retry count: %v", publishErr)
+			// Fallback to regular nack if republish fails
+			if nackErr := msg.Nack(false, true); nackErr != nil {
+				log.Printf("Failed to nack message: %v", nackErr)
+			}
+		} else {
+			log.Printf("Republished message with retry count: %d", retryCount)
+			// Ack the original message since we've republished it
+			if ackErr := msg.Ack(false); ackErr != nil {
+				log.Printf("Failed to ack original message after republishing: %v", ackErr)
+			}
 		}
 		return
 	}
