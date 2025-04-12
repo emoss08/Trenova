@@ -1,3 +1,4 @@
+"use no memo";
 import { InputField } from "@/components/fields/input-field";
 import { SelectField } from "@/components/fields/select-field";
 import { SwitchField } from "@/components/fields/switch-field";
@@ -588,16 +589,6 @@ function DelayShipmentForm() {
                   className="max-w-[300px]"
                 />
               </FormControl>
-              {/* <FormControl className="pl-8 min-h-[3em]">
-                <SwitchField
-                  control={control}
-                  name="escalateDelayedShipments"
-                  label="Escalate Critical Delays"
-                  description="When enabled, shipments that exceed the delay threshold by a significant margin will trigger higher-priority notifications and be escalated to management."
-                  position="left"
-                  size="sm"
-                />
-              </FormControl> */}
             </>
           )}
         </FormGroup>

@@ -16,7 +16,7 @@ import {
   faBriefcase,
   faCalendar,
   faIdCard,
-  faUser
+  faUser,
 } from "@fortawesome/pro-regular-svg-icons";
 import { lazy, Suspense, useState } from "react";
 import { FieldValues, Path, useFormContext } from "react-hook-form";

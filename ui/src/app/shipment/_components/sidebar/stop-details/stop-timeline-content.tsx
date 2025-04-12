@@ -1,11 +1,15 @@
 import { Icon } from "@/components/ui/icons";
 import { formatSplitDateTime } from "@/lib/date";
-import { ShipmentSchema } from "@/lib/schemas/shipment-schema";
+import { type ShipmentSchema } from "@/lib/schemas/shipment-schema";
 import { cn } from "@/lib/utils";
 import { MoveStatus } from "@/types/move";
 import { Stop, StopStatus, StopType } from "@/types/stop";
 import { memo, useMemo, useState } from "react";
-import { UseFieldArrayRemove, UseFieldArrayUpdate } from "react-hook-form";
+import {
+  UseFieldArrayRemove,
+  UseFieldArrayUpdate,
+  useFormContext,
+} from "react-hook-form";
 import { StopDialog } from "./stop-dialog";
 import {
   getLineStyles,
@@ -38,22 +42,31 @@ const StopCircle = memo(function StopCircle({
   status,
   isLast,
   moveStatus,
+  hasErrors,
 }: {
   status: StopStatus;
   isLast: boolean;
   moveStatus: MoveStatus;
+  hasErrors?: boolean;
 }) {
   const stopIcon = getStatusIcon(status, isLast, moveStatus);
-  const bgColor = getStopStatusBgColor(status);
+  const bgColor = hasErrors ? "bg-destructive" : getStopStatusBgColor(status);
 
   return (
-    <div
-      className={cn(
-        "rounded-full size-6 flex items-center justify-center",
-        bgColor,
+    <div className="relative">
+      <div
+        className={cn(
+          "rounded-full size-6 flex items-center justify-center",
+          bgColor,
+        )}
+      >
+        <Icon icon={stopIcon} className="size-3.5 text-white" />
+      </div>
+      {hasErrors && (
+        <div className="absolute -top-1 -right-1 size-3 rounded-full bg-destructive border border-white flex items-center justify-center">
+          <span className="text-[8px] font-bold text-white">!</span>
+        </div>
       )}
-    >
-      <Icon icon={stopIcon} className="size-3.5 text-white" />
     </div>
   );
 });
@@ -79,21 +92,40 @@ const StopTimeline = memo(function StopTimeline({
 }) {
   const [editModalOpen, setEditModalOpen] = useState<boolean>(false);
   const lineStyles = useMemo(() => getLineStyles(stop.status), [stop.status]);
+  const { formState } = useFormContext<ShipmentSchema>();
   const plannedArrival = useMemo(
     () => formatSplitDateTime(stop.plannedArrival),
     [stop.plannedArrival],
   );
+
+  const hasErrors = useMemo(() => {
+    const errors = formState.errors;
+
+    // Check if there are any errors for the current stop
+    const moveErrors = errors.moves?.[moveIdx];
+    if (!moveErrors) return false;
+
+    const stopErrors = moveErrors.stops?.[stopIdx];
+    return !!stopErrors && typeof stopErrors === "object";
+  }, [formState.errors, moveIdx, stopIdx]);
 
   const hasStopInfo = stop.location?.addressLine1 || stop.plannedArrival;
   const nextStopHasInfo =
     nextStop?.location?.addressLine1 || nextStop?.plannedArrival;
   const shouldShowLine = !isLast && hasStopInfo && nextStopHasInfo;
 
+  console.info("formState.errors", formState.errors);
+
+  console.info("hasErrors", hasErrors);
+
   return (
     <>
       <div
         key={stop.id}
-        className="relative h-[60px] rounded-lg cursor-pointer select-none bg-muted/50 pt-2 border border-border"
+        className={cn(
+          "relative h-[60px] rounded-lg cursor-pointer select-none bg-muted/50 pt-2 border border-border",
+          hasErrors && "border-destructive bg-destructive/10",
+        )}
         onClick={() => setEditModalOpen(!editModalOpen)}
       >
         {hasStopInfo ? (
@@ -126,17 +158,37 @@ const StopTimeline = memo(function StopTimeline({
               <div className="flex-1">
                 <LocationDisplay location={stop.location} type={stop.type} />
               </div>
+              {hasErrors && (
+                <div className="flex-1">
+                  <span className="mt-1 text-2xs text-destructive">
+                    Please fix the errors before saving.
+                  </span>
+                </div>
+              )}
             </div>
           </>
         ) : (
           <div className="flex flex-col items-center justify-center text-center">
-            <div className="text-foreground text-sm">
-              Enter {getStopTypeLabel(stop.type)} Information
-            </div>
-            <p className="text-muted-foreground text-xs">
-              {getStopTypeLabel(stop.type)} information is required to create a
-              shipment.
-            </p>
+            {hasErrors ? (
+              <div className="flex flex-col items-center justify-center">
+                <span className="mt-1 text-sm text-red-500">
+                  Error in &apos;{getStopTypeLabel(stop.type)}&apos; stop
+                </span>
+                <p className="text-red-500 text-xs">
+                  Please click to edit and fix the errors.
+                </p>
+              </div>
+            ) : (
+              <>
+                <div className="text-foreground text-sm">
+                  Enter {getStopTypeLabel(stop.type)} Information
+                </div>
+                <p className="text-muted-foreground text-xs">
+                  {getStopTypeLabel(stop.type)} information is required to
+                  create a shipment. shipment.
+                </p>
+              </>
+            )}
           </div>
         )}
       </div>

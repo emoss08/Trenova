@@ -3,7 +3,7 @@ import eslint from "@eslint/js";
 import pluginQuery from "@tanstack/eslint-plugin-query";
 import eslintPluginPrettierRecommended from "eslint-plugin-prettier/recommended";
 import react from "eslint-plugin-react";
-import reactCompiler from 'eslint-plugin-react-compiler';
+import reactCompiler from "eslint-plugin-react-compiler";
 import eslintPluginReactHooks from "eslint-plugin-react-hooks";
 import reactRefresh from "eslint-plugin-react-refresh";
 import tseslint from "typescript-eslint";
@@ -30,10 +30,8 @@ export default tseslint.config(
   },
   {
     plugins: {
-      // @ts-expect-error - react-hooks is not typed
       "react-hooks": eslintPluginReactHooks,
-      'react-compiler': reactCompiler,
-
+      "react-compiler": reactCompiler,
     },
     rules: {
       "react-hooks/rules-of-hooks": "error",

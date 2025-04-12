@@ -32,7 +32,7 @@ import {
 import { EditTableSheetProps } from "@/types/data-table";
 import { type Shipment } from "@/types/shipment";
 import { yupResolver } from "@hookform/resolvers/yup";
-import { useCallback, useEffect, useRef } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { FormProvider } from "react-hook-form";
 import { useShipmentDetails } from "../queries/shipment";
 import { ShipmentForm } from "./form/shipment-form";
@@ -46,6 +46,7 @@ export function ShipmentEditSheet({
   const dimensions = useResponsiveDimensions(sheetRef, open);
   const { isPopout, closePopout } = usePopoutWindow();
   const initialLoadRef = useRef(false);
+  const [effectiveIsDirty, setEffectiveIsDirty] = useState(false);
 
   const {
     data: shipmentDetails,
@@ -112,7 +113,9 @@ export function ShipmentEditSheet({
     }
   }, [shipmentDetails, isDetailsLoading, reset]);
 
-  const effectiveIsDirty = initialLoadRef.current && isDirty;
+  useEffect(() => {
+    setEffectiveIsDirty(initialLoadRef.current && isDirty);
+  }, [isDirty]);
 
   const {
     showWarning,

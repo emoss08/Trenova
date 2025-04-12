@@ -16,12 +16,11 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { STOP_DIALOG_NOTICE_KEY } from "@/constants/env";
-import { moveSchema } from "@/lib/schemas/move-schema";
 import { ShipmentSchema } from "@/lib/schemas/shipment-schema";
-import { StopSchema } from "@/lib/schemas/stop-schema";
+import { stopSchema } from "@/lib/schemas/stop-schema";
 import { type TableSheetProps } from "@/types/data-table";
 import { MoveStatus } from "@/types/move";
-import { StopStatus, StopType } from "@/types/stop";
+import { StopStatus, StopType, type Stop } from "@/types/stop";
 import { faInfoCircle, faXmark } from "@fortawesome/pro-solid-svg-icons";
 import { useLocalStorage } from "@uidotdev/usehooks";
 import { useCallback, useEffect } from "react";
@@ -65,18 +64,34 @@ export function StopDialog({
     useLocationData(locationId);
 
   const validateStop = async () => {
-    // Clear existing errors for this stop
+    // Clear existing errors only for this stop
     clearErrors(`moves.${moveIdx}.stops.${stopIdx}`);
-    const pathToValidate = `moves[${moveIdx}]`;
 
     try {
       const formValues = getValues();
       const moveWithStop = formValues.moves?.[moveIdx];
+      const stop = moveWithStop?.stops?.[stopIdx];
 
-      if (!moveWithStop) return false;
+      if (!moveWithStop || !stop) return false;
 
-      // Validate just this move with the stop using the move schema
-      await moveSchema.validateAt(`stops[${stopIdx}]`, moveWithStop, {
+      // Create a simplified object with only the fields we want to validate
+      // This prevents location schema fields from being validated
+      const stopToValidate = {
+        locationId: stop.locationId,
+        status: stop.status,
+        type: stop.type,
+        sequence: stop.sequence || 0,
+        pieces: stop.pieces,
+        weight: stop.weight,
+        plannedArrival: stop.plannedArrival,
+        plannedDeparture: stop.plannedDeparture,
+        actualArrival: stop.actualArrival,
+        actualDeparture: stop.actualDeparture,
+        addressLine: stop.addressLine,
+      };
+
+      // Validate against the stopSchema directly instead of using moveSchema.validateAt
+      await stopSchema.validate(stopToValidate, {
         abortEarly: false,
       });
 
@@ -86,13 +101,26 @@ export function StopDialog({
         error.inner.forEach((err) => {
           const fieldPath = err.path;
           if (fieldPath) {
-            const fullPath = `${pathToValidate}.${fieldPath}`;
+            // Just use the direct field path without splitting
+            const fullPath = `moves.${moveIdx}.stops.${stopIdx}.${fieldPath}`;
+            console.info("Setting error", fullPath, err.message);
             setError(fullPath as any, {
-              type: "validate",
+              type: "manual",
               message: err.message,
             });
           }
         });
+
+        // Force a re-render to show the errors
+        setValue(
+          // @ts-expect-error // This is a temporary field to force a re-render
+          `moves.${moveIdx}.stops.${stopIdx}._lastValidated`,
+          Date.now(),
+          {
+            shouldValidate: false,
+            shouldDirty: false,
+          },
+        );
       }
       return false;
     }
@@ -103,10 +131,10 @@ export function StopDialog({
 
     if (isValid) {
       const formValues = getValues();
-      const stop = formValues.moves?.[moveIdx]?.stops?.[stopIdx];
+      const stop = formValues.moves?.[moveIdx]?.stops?.[stopIdx] as Stop;
 
       if (stop) {
-        const updatedStop: StopSchema = {
+        const updatedStop: Stop = {
           locationId: stop?.locationId,
           location: stop?.location || null,
           addressLine: stop.addressLine,
@@ -144,6 +172,7 @@ export function StopDialog({
   // When the location ID is set, set the location
   useEffect(() => {
     if (!isLoadingLocation && locationId && locationData) {
+      // @ts-expect-error // Location information is not required, but exists
       setValue(`moves.${moveIdx}.stops.${stopIdx}.location`, locationData);
     }
   }, [isLoadingLocation, locationId, locationData, moveIdx, setValue, stopIdx]);

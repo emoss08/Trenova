@@ -1,3 +1,4 @@
+"use no memo";
 import { AutocompleteField } from "@/components/fields/autocomplete";
 import { AutoCompleteDateTimeField } from "@/components/fields/datetime-field";
 import { InputField } from "@/components/fields/input-field";
@@ -18,8 +19,9 @@ export function StopDialogForm({
   moveIdx: number;
   stopIdx: number;
 }) {
-  const { control, setValue } = useFormContext<ShipmentSchema>();
+  const { control, setValue, watch } = useFormContext<ShipmentSchema>();
 
+  console.info("watch", watch());
   const locationId = useWatch({
     control,
     name: `moves.${moveIdx}.stops.${stopIdx}.locationId`,
@@ -34,6 +36,9 @@ export function StopDialogForm({
       setValue(
         `moves.${moveIdx}.stops.${stopIdx}.addressLine`,
         formattedLocation,
+        {
+          shouldValidate: true,
+        },
       );
     }
   }, [isLoadingLocation, locationId, locationData, setValue, moveIdx, stopIdx]);
@@ -53,7 +58,6 @@ export function StopDialogForm({
           <FormControl>
             <SelectField
               control={control}
-              rules={{ required: true }}
               name={`moves.${moveIdx}.stops.${stopIdx}.type`}
               label="Stop Type"
               placeholder="Select type"
@@ -66,7 +70,6 @@ export function StopDialogForm({
             <SelectField
               control={control}
               isReadOnly
-              rules={{ required: true }}
               name={`moves.${moveIdx}.stops.${stopIdx}.status`}
               label="Current Status"
               placeholder="Select status"
