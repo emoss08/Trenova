@@ -95,10 +95,12 @@ export function ShipmentActions({ shipment }: { shipment?: Shipment | null }) {
           <DropdownMenuItem
             title="Merge Shipment"
             description="Combine multiple shipments into one."
+            disabled
           />
           <DropdownMenuItem
             title="Send to Worker"
             description="Assign this shipment for processing."
+            disabled
           />
           <DropdownMenuLabel>Documentation & Communication</DropdownMenuLabel>
           <DropdownMenuSeparator />
@@ -110,6 +112,7 @@ export function ShipmentActions({ shipment }: { shipment?: Shipment | null }) {
           <DropdownMenuItem
             title="Add Comment(s)"
             description="Leave internal notes or comments on this shipment."
+            disabled
           />
           <DropdownMenuLabel>View Actions</DropdownMenuLabel>
           <DropdownMenuSeparator />
@@ -121,6 +124,7 @@ export function ShipmentActions({ shipment }: { shipment?: Shipment | null }) {
           <DropdownMenuItem
             title="View Comments"
             description="Check comments and notes related to this shipment."
+            disabled
           />
           <DropdownMenuItem
             title="View Audit Log"

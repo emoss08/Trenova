@@ -91,7 +91,19 @@ func (sr *shipmentMoveRepository) GetByID(ctx context.Context, opts repositories
 		})
 
 	if opts.ExpandMoveDetails {
-		q.Relation("Stops")
+		q.RelationWithOpts("Stops", bun.RelationOpts{
+			Apply: func(sq *bun.SelectQuery) *bun.SelectQuery {
+				return sq.Relation("Location").
+					Relation("Location.State")
+			},
+		})
+
+		// * Expand the assignment details
+		q.Relation("Assignment").
+			Relation("Assignment.Tractor").
+			Relation("Assignment.Trailer").
+			Relation("Assignment.PrimaryWorker").
+			Relation("Assignment.SecondaryWorker")
 	}
 
 	if err = q.Scan(ctx); err != nil {

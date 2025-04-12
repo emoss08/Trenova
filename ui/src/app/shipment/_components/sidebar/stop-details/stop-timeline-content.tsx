@@ -15,6 +15,7 @@ import {
   getLineStyles,
   getStatusIcon,
   getStopStatusBgColor,
+  getStopStatusBorderColor,
   getStopTypeLabel,
 } from "./stop-utils";
 
@@ -43,14 +44,21 @@ const StopCircle = memo(function StopCircle({
   isLast,
   moveStatus,
   hasErrors,
+  prevStopStatus,
 }: {
   status: StopStatus;
   isLast: boolean;
   moveStatus: MoveStatus;
   hasErrors?: boolean;
+  prevStopStatus?: StopStatus;
 }) {
   const stopIcon = getStatusIcon(status, isLast, moveStatus);
   const bgColor = hasErrors ? "bg-destructive" : getStopStatusBgColor(status);
+
+  // Get border color from previous stop status if available
+  const borderColor = prevStopStatus
+    ? getStopStatusBorderColor(prevStopStatus)
+    : "";
 
   return (
     <div className="relative">
@@ -58,6 +66,8 @@ const StopCircle = memo(function StopCircle({
         className={cn(
           "rounded-full size-6 flex items-center justify-center",
           bgColor,
+          prevStopStatus && "border-t-2",
+          borderColor,
         )}
       >
         <Icon icon={stopIcon} className="size-3.5 text-white" />
@@ -80,6 +90,7 @@ const StopTimeline = memo(function StopTimeline({
   stopIdx,
   update,
   remove,
+  prevStopStatus,
 }: {
   stop: Stop;
   nextStop: Stop | null;
@@ -89,9 +100,13 @@ const StopTimeline = memo(function StopTimeline({
   stopIdx: number;
   update: UseFieldArrayUpdate<ShipmentSchema, "moves">;
   remove: UseFieldArrayRemove;
+  prevStopStatus?: StopStatus;
 }) {
   const [editModalOpen, setEditModalOpen] = useState<boolean>(false);
-  const lineStyles = useMemo(() => getLineStyles(stop.status), [stop.status]);
+  const lineStyles = useMemo(
+    () => getLineStyles(stop.status, prevStopStatus),
+    [stop.status, prevStopStatus],
+  );
   const { formState } = useFormContext<ShipmentSchema>();
   const plannedArrival = useMemo(
     () => formatSplitDateTime(stop.plannedArrival),
@@ -113,10 +128,6 @@ const StopTimeline = memo(function StopTimeline({
   const nextStopHasInfo =
     nextStop?.location?.addressLine1 || nextStop?.plannedArrival;
   const shouldShowLine = !isLast && hasStopInfo && nextStopHasInfo;
-
-  console.info("formState.errors", formState.errors);
-
-  console.info("hasErrors", hasErrors);
 
   return (
     <>
@@ -153,6 +164,8 @@ const StopTimeline = memo(function StopTimeline({
                   status={stop.status}
                   isLast={isLast}
                   moveStatus={moveStatus}
+                  hasErrors={hasErrors}
+                  prevStopStatus={prevStopStatus}
                 />
               </div>
               <div className="flex-1">

@@ -22,7 +22,7 @@ type GetMoveByIDOptions struct {
 	BuID pulid.ID
 
 	// Expand move details (Optional)
-	ExpandMoveDetails bool
+	ExpandMoveDetails bool `query:"expandMoveDetails"`
 }
 
 type UpdateMoveStatusRequest struct {

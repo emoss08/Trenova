@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/core/domain/permission"
+	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/audit"
@@ -47,6 +48,21 @@ func NewService(p ServiceParams) *Service {
 	}
 }
 
+func (s *Service) Get(ctx context.Context, req repositories.GetMoveByIDOptions) (*shipment.ShipmentMove, error) {
+	log := s.l.With().
+		Str("operaiton", "GetByID").
+		Str("moveID", req.MoveID.String()).
+		Logger()
+
+	// ! We don't need to check permissions here
+	entity, err := s.repo.GetByID(ctx, req)
+	if err != nil {
+		log.Error().Err(err).Msg("failed to get shipment move")
+		return nil, err
+	}
+
+	return entity, nil
+}
 func (s *Service) Split(ctx context.Context, req *repositories.SplitMoveRequest, userID pulid.ID) (*repositories.SplitMoveResponse, error) {
 	log := s.l.With().
 		Str("operation", "Split").
