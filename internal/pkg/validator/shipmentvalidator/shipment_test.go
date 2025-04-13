@@ -2,16 +2,21 @@ package shipmentvalidator_test
 
 import (
 	"context"
+	"fmt"
+	"math/rand"
 	"os"
 	"testing"
+	"time"
 
-	"github.com/emoss08/trenova/internal/core/domain/businessunit"
-	"github.com/emoss08/trenova/internal/core/domain/organization"
+	"github.com/emoss08/trenova/internal/core/domain/customer"
+	"github.com/emoss08/trenova/internal/core/domain/servicetype"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
+	"github.com/emoss08/trenova/internal/core/domain/shipmenttype"
 	"github.com/emoss08/trenova/internal/infrastructure/database/postgres/repositories"
 	"github.com/emoss08/trenova/internal/pkg/errors"
 	"github.com/emoss08/trenova/internal/pkg/utils/intutils"
 	"github.com/emoss08/trenova/internal/pkg/validator"
+	"github.com/emoss08/trenova/internal/pkg/validator/hazmatsegreationrulevalidator"
 	spValidator "github.com/emoss08/trenova/internal/pkg/validator/shipmentvalidator"
 	"github.com/emoss08/trenova/pkg/types/pulid"
 	"github.com/emoss08/trenova/test/testutils"
@@ -35,60 +40,92 @@ func TestMain(m *testing.M) {
 }
 
 func newShipment() *shipment.Shipment {
-	org := ts.Fixture.MustRow("Organization.trenova").(*organization.Organization)
-	bu := ts.Fixture.MustRow("BusinessUnit.trenova").(*businessunit.BusinessUnit)
+	shp := ts.Fixture.MustRow("Shipment.test_shipment").(*shipment.Shipment)
 
-	return &shipment.Shipment{
-		ProNumber:           "123456",
-		OrganizationID:      org.ID,
-		BusinessUnitID:      bu.ID,
-		Status:              shipment.StatusNew,
-		ShipmentTypeID:      pulid.MustNew("st_"),
-		CustomerID:          pulid.MustNew("cust_"),
-		BOL:                 "1234567890",
-		RatingMethod:        shipment.RatingMethodFlatRate,
-		FreightChargeAmount: decimal.NewNullDecimal(decimal.NewFromInt(1000)),
-		Moves: []*shipment.ShipmentMove{
-			{
-				Status: shipment.MoveStatusNew,
-				Stops: []*shipment.Stop{
-					{
-						Type:             shipment.StopTypePickup,
-						Sequence:         0,
-						Status:           shipment.StopStatusNew,
-						PlannedArrival:   100,
-						PlannedDeparture: 200,
-					},
-					{
-						Type:             shipment.StopTypePickup,
-						Sequence:         1,
-						Status:           shipment.StopStatusNew,
-						PlannedArrival:   300,
-						PlannedDeparture: 400,
-					},
-					{
-						Type:             shipment.StopTypeDelivery,
-						Sequence:         2,
-						Status:           shipment.StopStatusNew,
-						PlannedArrival:   500,
-						PlannedDeparture: 600,
-					},
-					{
-						Type:             shipment.StopTypeDelivery,
-						Sequence:         3,
-						Status:           shipment.StopStatusNew,
-						PlannedArrival:   700,
-						PlannedDeparture: 800,
-					},
-				},
-			},
-		},
-	}
+	// * Set Random data on the shipment
+	shp.ProNumber = fmt.Sprintf("S%d", rand.Intn(100000))
+	shp.RatingUnit = 100
+	shp.BOL = fmt.Sprintf("TEST%d", rand.Intn(100000))
+	shp.CustomerID = ts.Fixture.MustRow("Customer.honeywell_customer").(*customer.Customer).ID
+	shp.ShipmentTypeID = ts.Fixture.MustRow("ShipmentType.ftl_shipment_type").(*shipmenttype.ShipmentType).ID
+	shp.ServiceTypeID = ts.Fixture.MustRow("ServiceType.std_service_type").(*servicetype.ServiceType).ID
+
+	// * Get all of the moves for the shipment
+	move1 := ts.Fixture.MustRow("ShipmentMove.test_shipment_move").(*shipment.ShipmentMove)
+	move2 := ts.Fixture.MustRow("ShipmentMove.test_shipment_move_2").(*shipment.ShipmentMove)
+	move3 := ts.Fixture.MustRow("ShipmentMove.test_shipment_move_3").(*shipment.ShipmentMove)
+
+	// * Set the moves on the shipment
+	shp.Moves = []*shipment.ShipmentMove{move1, move2, move3}
+
+	// * Get all of the stops for the first move
+	stop1 := ts.Fixture.MustRow("Stop.test_stop").(*shipment.Stop)
+	stop2 := ts.Fixture.MustRow("Stop.test_stop_2").(*shipment.Stop)
+	move1.Stops = []*shipment.Stop{stop1, stop2}
+
+	// * Get all of the stops for the second move
+	stop3 := ts.Fixture.MustRow("Stop.test_stop_3").(*shipment.Stop)
+	stop4 := ts.Fixture.MustRow("Stop.test_stop_4").(*shipment.Stop)
+	stop5 := ts.Fixture.MustRow("Stop.test_stop_5").(*shipment.Stop)
+	stop6 := ts.Fixture.MustRow("Stop.test_stop_6").(*shipment.Stop)
+	move2.Stops = []*shipment.Stop{stop3, stop4, stop5, stop6}
+
+	// * Get all of the stops for the third move
+	stop7 := ts.Fixture.MustRow("Stop.test_stop_7").(*shipment.Stop)
+	stop8 := ts.Fixture.MustRow("Stop.test_stop_8").(*shipment.Stop)
+
+	// Fix the timing issue between stop7 and stop8
+	// In the fixture, stop7 uses daysAgo and stop8 uses daysFromNow
+	// which creates a validation issue due to how Unix timestamps work
+	// Adjust the timestamps to ensure stop7's departure is before stop8's arrival
+	now := time.Now().Unix()
+	stop7.PlannedArrival = now - 172800   // 2 days ago
+	stop7.PlannedDeparture = now - 86400  // 1 day ago
+	stop8.PlannedArrival = now + 86400    // 1 day from now
+	stop8.PlannedDeparture = now + 172800 // 2 days from now
+
+	move3.Stops = []*shipment.Stop{stop7, stop8}
+
+	return shp
 }
 
 func TestShipmentValidator(t *testing.T) {
+	log := testutils.NewTestLogger(t)
+
+	stopRepo := repositories.NewStopRepository(repositories.StopRepositoryParams{
+		Logger: log,
+		DB:     ts.DB,
+	})
+
+	shipmentControlRepo := repositories.NewShipmentControlRepository(repositories.ShipmentControlRepositoryParams{
+		Logger: log,
+		DB:     ts.DB,
+	})
+
+	moveRepo := repositories.NewShipmentMoveRepository(repositories.ShipmentMoveRepositoryParams{
+		Logger:                    log,
+		DB:                        ts.DB,
+		StopRepository:            stopRepo,
+		ShipmentControlRepository: shipmentControlRepo,
+	})
+
+	shipmentRepo := repositories.NewShipmentRepository(repositories.ShipmentRepositoryParams{
+		Logger: log,
+		DB:     ts.DB,
+	})
+
+	assignmentRepo := repositories.NewAssignmentRepository(repositories.AssignmentRepositoryParams{
+		DB:           ts.DB,
+		Logger:       log,
+		MoveRepo:     moveRepo,
+		ShipmentRepo: shipmentRepo,
+	})
+
 	sv := spValidator.NewStopValidator(spValidator.StopValidatorParams{
-		DB: ts.DB,
+		DB:             ts.DB,
+		MoveRepo:       moveRepo,
+		Logger:         log,
+		AssignmentRepo: assignmentRepo,
 	})
 
 	mv := spValidator.NewMoveValidator(spValidator.MoveValidatorParams{
@@ -96,15 +133,15 @@ func TestShipmentValidator(t *testing.T) {
 		StopValidator: sv,
 	})
 
-	sc := repositories.NewShipmentControlRepository(repositories.ShipmentControlRepositoryParams{
-		DB:     ts.DB,
-		Logger: testutils.NewTestLogger(t),
+	hs := hazmatsegreationrulevalidator.NewValidator(hazmatsegreationrulevalidator.ValidatorParams{
+		DB: ts.DB,
 	})
 
 	val := spValidator.NewValidator(spValidator.ValidatorParams{
-		DB:                  ts.DB,
-		MoveValidator:       mv,
-		ShipmentControlRepo: sc,
+		DB:                         ts.DB,
+		MoveValidator:              mv,
+		ShipmentControlRepo:        shipmentControlRepo,
+		HazmatSegregationValidator: hs,
 	})
 
 	scenarios := []struct {
@@ -222,7 +259,7 @@ func TestShipmentValidator(t *testing.T) {
 			},
 		},
 		{
-			name: "shipment must have at last one move",
+			name: "shipment must have at least one move",
 			modifyShipment: func(shp *shipment.Shipment) {
 				shp.Moves = []*shipment.ShipmentMove{}
 			},
@@ -282,13 +319,42 @@ func TestShipmentValidator(t *testing.T) {
 }
 
 func TestShipmentCancelValidation(t *testing.T) {
-	sc := repositories.NewShipmentControlRepository(repositories.ShipmentControlRepositoryParams{
+	log := testutils.NewTestLogger(t)
+
+	stopRepo := repositories.NewStopRepository(repositories.StopRepositoryParams{
+		Logger: log,
 		DB:     ts.DB,
-		Logger: testutils.NewTestLogger(t),
+	})
+
+	shipmentControlRepo := repositories.NewShipmentControlRepository(repositories.ShipmentControlRepositoryParams{
+		Logger: log,
+		DB:     ts.DB,
+	})
+
+	moveRepo := repositories.NewShipmentMoveRepository(repositories.ShipmentMoveRepositoryParams{
+		Logger:                    log,
+		DB:                        ts.DB,
+		StopRepository:            stopRepo,
+		ShipmentControlRepository: shipmentControlRepo,
+	})
+
+	shipmentRepo := repositories.NewShipmentRepository(repositories.ShipmentRepositoryParams{
+		Logger: log,
+		DB:     ts.DB,
+	})
+
+	assignmentRepo := repositories.NewAssignmentRepository(repositories.AssignmentRepositoryParams{
+		DB:           ts.DB,
+		Logger:       log,
+		MoveRepo:     moveRepo,
+		ShipmentRepo: shipmentRepo,
 	})
 
 	sv := spValidator.NewStopValidator(spValidator.StopValidatorParams{
-		DB: ts.DB,
+		DB:             ts.DB,
+		MoveRepo:       moveRepo,
+		Logger:         log,
+		AssignmentRepo: assignmentRepo,
 	})
 
 	mv := spValidator.NewMoveValidator(spValidator.MoveValidatorParams{
@@ -296,10 +362,15 @@ func TestShipmentCancelValidation(t *testing.T) {
 		StopValidator: sv,
 	})
 
+	hs := hazmatsegreationrulevalidator.NewValidator(hazmatsegreationrulevalidator.ValidatorParams{
+		DB: ts.DB,
+	})
+
 	val := spValidator.NewValidator(spValidator.ValidatorParams{
-		DB:                  ts.DB,
-		MoveValidator:       mv,
-		ShipmentControlRepo: sc,
+		DB:                         ts.DB,
+		MoveValidator:              mv,
+		ShipmentControlRepo:        shipmentControlRepo,
+		HazmatSegregationValidator: hs,
 	})
 
 	scenarios := []struct {

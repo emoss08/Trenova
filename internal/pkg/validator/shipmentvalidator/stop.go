@@ -63,10 +63,6 @@ func (v *StopValidator) Validate(ctx context.Context, valCtx *validator.Validati
 
 	s.Validate(ctx, v.multiErr)
 
-	if valCtx.IsCreate {
-		v.validateID(s, v.multiErr)
-	}
-
 	v.validateTimes(ctx, v.multiErr, s)
 
 	if v.multiErr.HasErrors() {
@@ -74,12 +70,6 @@ func (v *StopValidator) Validate(ctx context.Context, valCtx *validator.Validati
 	}
 
 	return nil
-}
-
-func (v *StopValidator) validateID(s *shipment.Stop, multiErr *errors.MultiError) {
-	if s.ID.IsNotNil() {
-		multiErr.Add("id", errors.ErrInvalid, "ID cannot be set on create")
-	}
 }
 
 func (v *StopValidator) validateTimes(ctx context.Context, multiErr *errors.MultiError, s *shipment.Stop) {

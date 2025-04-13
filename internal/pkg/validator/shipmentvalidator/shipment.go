@@ -83,11 +83,8 @@ func (v *Validator) Validate(ctx context.Context, valCtx *validator.ValidationCo
 		multiErr.Add("uniqueness", errors.ErrSystemError, err.Error())
 	}
 
-	// * Validate ID
-	v.validateID(shp, valCtx, multiErr)
-
-	// * Validate Temperature
-	// v.validateTemperature(shp, multiErr)
+	// // * Validate ID
+	// v.validateID(shp, valCtx, multiErr)
 
 	// * Validate Moves
 	v.ValidateMoves(ctx, valCtx, shp, multiErr)

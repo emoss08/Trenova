@@ -3,27 +3,72 @@ package shipmentvalidator_test
 import (
 	"testing"
 
+	"github.com/emoss08/trenova/internal/core/domain/businessunit"
+	"github.com/emoss08/trenova/internal/core/domain/organization"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
+	"github.com/emoss08/trenova/internal/infrastructure/database/postgres/repositories"
 	"github.com/emoss08/trenova/internal/pkg/errors"
+	"github.com/emoss08/trenova/internal/pkg/utils/intutils"
 	"github.com/emoss08/trenova/internal/pkg/validator"
 	spValidator "github.com/emoss08/trenova/internal/pkg/validator/shipmentvalidator"
-	"github.com/emoss08/trenova/pkg/types/pulid"
 	"github.com/emoss08/trenova/test/testutils"
 )
 
 func newStop() *shipment.Stop {
+	org := ts.Fixture.MustRow("Organization.trenova").(*organization.Organization)
+	bu := ts.Fixture.MustRow("BusinessUnit.trenova").(*businessunit.BusinessUnit)
+	sm := ts.Fixture.MustRow("ShipmentMove.test_shipment_move").(*shipment.ShipmentMove)
+
 	return &shipment.Stop{
+		OrganizationID:   org.ID,
+		BusinessUnitID:   bu.ID,
 		Type:             shipment.StopTypePickup,
 		Sequence:         1,
 		Status:           shipment.StopStatusNew,
+		ShipmentMoveID:   sm.ID,
+		ShipmentMove:     sm,
 		PlannedArrival:   100,
 		PlannedDeparture: 200,
 	}
 }
 
 func TestStopValidator(t *testing.T) {
+	log := testutils.NewTestLogger(t)
+
+	stopRepo := repositories.NewStopRepository(repositories.StopRepositoryParams{
+		Logger: log,
+		DB:     ts.DB,
+	})
+
+	shipmentRepo := repositories.NewShipmentRepository(repositories.ShipmentRepositoryParams{
+		Logger: log,
+		DB:     ts.DB,
+	})
+
+	shipmentControlRepo := repositories.NewShipmentControlRepository(repositories.ShipmentControlRepositoryParams{
+		Logger: log,
+		DB:     ts.DB,
+	})
+
+	moveRepo := repositories.NewShipmentMoveRepository(repositories.ShipmentMoveRepositoryParams{
+		Logger:                    log,
+		DB:                        ts.DB,
+		StopRepository:            stopRepo,
+		ShipmentControlRepository: shipmentControlRepo,
+	})
+
+	assignmentRepo := repositories.NewAssignmentRepository(repositories.AssignmentRepositoryParams{
+		DB:           ts.DB,
+		Logger:       log,
+		MoveRepo:     moveRepo,
+		ShipmentRepo: shipmentRepo,
+	})
+
 	val := spValidator.NewStopValidator(spValidator.StopValidatorParams{
-		DB: ts.DB,
+		DB:             ts.DB,
+		MoveRepo:       moveRepo,
+		Logger:         log,
+		AssignmentRepo: assignmentRepo,
 	})
 
 	scenarios := []struct {
@@ -105,19 +150,21 @@ func TestStopValidator(t *testing.T) {
 			}{
 				{Field: "stops[0].actualArrival", Code: errors.ErrInvalid, Message: "Actual arrival must be before actual departure"},
 				{Field: "stops[0].actualDeparture", Code: errors.ErrInvalid, Message: "Actual departure must be after actual arrival"},
+				{Field: "stops[0].actualArrival", Code: errors.ErrInvalid, Message: "Actual arrival cannot be set on a move with no assignment"},
 			},
 		},
 		{
-			name: "no id on create",
+			name: "actual times cannot be set on a stop with no assignment",
 			modifyStop: func(s *shipment.Stop) {
-				s.ID = pulid.MustNew("stp_")
+				s.ActualArrival = intutils.SafeInt64Ptr(100, true)
+				s.ActualDeparture = intutils.SafeInt64Ptr(200, true)
 			},
 			expectedErrors: []struct {
 				Field   string
 				Code    errors.ErrorCode
 				Message string
 			}{
-				{Field: "stops[0].id", Code: errors.ErrInvalid, Message: "ID cannot be set on create"},
+				{Field: "stops[0].actualArrival", Code: errors.ErrInvalid, Message: "Actual arrival cannot be set on a move with no assignment"},
 			},
 		},
 	}
