@@ -66,13 +66,16 @@ func NewWorkerPTOValidator(p WorkerPTOValidatorParams) *WorkerPTOValidator {
 //   - pto: The PTO to validate.
 //   - multiErr: The MultiError to add validation errors to.
 //   - index: The index of the PTO in the worker's PTO array.
-func (v *WorkerPTOValidator) Validate(ctx context.Context, valCtx *validator.ValidationContext, wrk *worker.Worker, pto *worker.WorkerPTO, multiErr *errors.MultiError, index int) {
-	engine := v.vef.CreateEngine()
+func (v *WorkerPTOValidator) Validate(ctx context.Context, valCtx *validator.ValidationContext, wrk *worker.Worker, pto *worker.WorkerPTO, multiErr *errors.MultiError, idx int) {
+	engine := v.vef.CreateEngine().
+		ForField("pto").
+		AtIndex(idx).
+		WithParent(multiErr)
 
 	// * Basic validation rules (field presence, format, etc.)
 	engine.AddRule(framework.NewValidationRule(framework.ValidationStageBasic, framework.ValidationPriorityHigh,
 		func(ctx context.Context, multiErr *errors.MultiError) error {
-			pto.Validate(ctx, multiErr, index)
+			pto.Validate(ctx, multiErr)
 			return nil
 		}))
 
@@ -80,7 +83,7 @@ func (v *WorkerPTOValidator) Validate(ctx context.Context, valCtx *validator.Val
 	if valCtx.IsUpdate {
 		engine.AddRule(framework.NewValidationRule(framework.ValidationStageBusinessRules, framework.ValidationPriorityHigh,
 			func(ctx context.Context, multiErr *errors.MultiError) error {
-				v.validatePTOStatusTransition(ctx, wrk, pto, multiErr, index)
+				v.validatePTOStatusTransition(ctx, wrk, pto, multiErr)
 				return nil
 			}))
 
@@ -97,7 +100,7 @@ func (v *WorkerPTOValidator) Validate(ctx context.Context, valCtx *validator.Val
 		engine.AddRule(framework.NewValidationRule(framework.ValidationStageBusinessRules, framework.ValidationPriorityHigh,
 			func(_ context.Context, multiErr *errors.MultiError) error {
 				if pto.ID.IsNotNil() {
-					multiErr.Add(fmt.Sprintf("pto[%d].id", index), errors.ErrInvalid, "ID cannot be set on create")
+					multiErr.Add("id", errors.ErrInvalid, "ID cannot be set on create")
 				}
 				return nil
 			}))
@@ -107,7 +110,7 @@ func (v *WorkerPTOValidator) Validate(ctx context.Context, valCtx *validator.Val
 	engine.ValidateInto(ctx, multiErr)
 }
 
-func (v *WorkerPTOValidator) validatePTOStatusTransition(ctx context.Context, wrk *worker.Worker, pto *worker.WorkerPTO, multiErr *errors.MultiError, index int) {
+func (v *WorkerPTOValidator) validatePTOStatusTransition(ctx context.Context, wrk *worker.Worker, pto *worker.WorkerPTO, multiErr *errors.MultiError) {
 	oldPTO, err := v.repo.GetWorkerPTO(ctx, pto.ID, wrk.ID, wrk.BusinessUnitID, wrk.OrganizationID)
 	if err != nil {
 		return
@@ -121,7 +124,7 @@ func (v *WorkerPTOValidator) validatePTOStatusTransition(ctx context.Context, wr
 	allowedTransitions, ok := validPTOStatusTransitions[oldPTO.Status]
 	if !ok {
 		multiErr.Add(
-			fmt.Sprintf("pto[%d].status", index), errors.ErrInvalid,
+			"status", errors.ErrInvalid,
 			fmt.Sprintf("Invalid status transition from %s to %s", oldPTO.Status, pto.Status),
 		)
 		return
@@ -138,7 +141,7 @@ func (v *WorkerPTOValidator) validatePTOStatusTransition(ctx context.Context, wr
 
 	if !isAllowed {
 		multiErr.Add(
-			fmt.Sprintf("pto[%d].status", index), errors.ErrInvalid,
+			"status", errors.ErrInvalid,
 			fmt.Sprintf("Invalid status transition from %s to %s", oldPTO.Status, pto.Status),
 		)
 	}
@@ -164,7 +167,7 @@ func (v *WorkerPTOValidator) validatePTOOverlaps(wrk *worker.Worker, multiErr *e
 				continue
 			}
 
-			v.checkPTOOverlap(i, pto, otherPTO, multiErr)
+			v.checkPTOOverlap(pto, otherPTO, multiErr)
 		}
 	}
 }
@@ -176,7 +179,7 @@ func (v *WorkerPTOValidator) validatePTOOverlaps(wrk *worker.Worker, multiErr *e
 //   - pto: The PTO to check for overlap.
 //   - otherPTO: The other PTO to check against.
 //   - multiErr: The MultiError to add validation errors to.
-func (v *WorkerPTOValidator) checkPTOOverlap(index int, pto, otherPTO *worker.WorkerPTO, multiErr *errors.MultiError) {
+func (v *WorkerPTOValidator) checkPTOOverlap(pto, otherPTO *worker.WorkerPTO, multiErr *errors.MultiError) {
 	startDate := time.Unix(otherPTO.StartDate, 0).Format("2006-01-02")
 	endDate := time.Unix(otherPTO.EndDate, 0).Format("2006-01-02")
 	dateRange := fmt.Sprintf("(%s to %s)", startDate, endDate)
@@ -184,12 +187,12 @@ func (v *WorkerPTOValidator) checkPTOOverlap(index int, pto, otherPTO *worker.Wo
 	// Complete overlap (both dates fall within another request)
 	if pto.StartDate >= otherPTO.StartDate && pto.EndDate <= otherPTO.EndDate {
 		multiErr.Add(
-			fmt.Sprintf("pto[%d].startDate", index),
+			"startDate",
 			errors.ErrAlreadyExists,
 			fmt.Sprintf("Start date falls within an existing PTO request %s", dateRange),
 		)
 		multiErr.Add(
-			fmt.Sprintf("pto[%d].endDate", index),
+			"endDate",
 			errors.ErrAlreadyExists,
 			fmt.Sprintf("End date falls within an existing PTO request %s", dateRange),
 		)
@@ -199,7 +202,7 @@ func (v *WorkerPTOValidator) checkPTOOverlap(index int, pto, otherPTO *worker.Wo
 	// Start date overlaps with another request
 	if pto.StartDate >= otherPTO.StartDate && pto.StartDate <= otherPTO.EndDate {
 		multiErr.Add(
-			fmt.Sprintf("pto[%d].startDate", index),
+			"startDate",
 			errors.ErrAlreadyExists,
 			fmt.Sprintf("Start date overlaps with an existing PTO request %s", dateRange),
 		)
@@ -209,7 +212,7 @@ func (v *WorkerPTOValidator) checkPTOOverlap(index int, pto, otherPTO *worker.Wo
 	// End date overlaps with another request
 	if pto.EndDate >= otherPTO.StartDate && pto.EndDate <= otherPTO.EndDate {
 		multiErr.Add(
-			fmt.Sprintf("pto[%d].endDate", index),
+			"endDate",
 			errors.ErrAlreadyExists,
 			fmt.Sprintf("End date overlaps with an existing PTO request %s", dateRange),
 		)
@@ -219,12 +222,12 @@ func (v *WorkerPTOValidator) checkPTOOverlap(index int, pto, otherPTO *worker.Wo
 	// Another request falls completely within this request
 	if otherPTO.StartDate >= pto.StartDate && otherPTO.EndDate <= pto.EndDate {
 		multiErr.Add(
-			fmt.Sprintf("pto[%d].startDate", index),
+			"startDate",
 			errors.ErrAlreadyExists,
 			fmt.Sprintf("Request overlaps with an existing PTO request %s", dateRange),
 		)
 		multiErr.Add(
-			fmt.Sprintf("pto[%d].endDate", index),
+			"endDate",
 			errors.ErrAlreadyExists,
 			fmt.Sprintf("Request overlaps with an existing PTO request %s", dateRange),
 		)

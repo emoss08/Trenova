@@ -137,6 +137,8 @@ func (s *service) convertPDFToImage(pdfPath, outputPath string, options *service
 }
 
 // convertDocToImage converts a Word document to an image
+//
+//nolint:revive // Not implemented yet
 func (s *service) convertDocToImage(ctx context.Context, docPath, outputPath string, options *services.ConversionOptions) error {
 	// Implementation for Word documents
 	// This would typically involve a library like unidoc, libreoffice headless, etc.
@@ -144,18 +146,24 @@ func (s *service) convertDocToImage(ctx context.Context, docPath, outputPath str
 }
 
 // convertSpreadsheetToImage converts a spreadsheet to an image
+//
+//nolint:revive // Not implemented yet
 func (s *service) convertSpreadsheetToImage(ctx context.Context, spreadsheetPath, outputPath string, options *services.ConversionOptions) error {
 	// Implementation for spreadsheets
 	return errors.NewBusinessError("Spreadsheet conversion not yet implemented")
 }
 
 // convertPresentationToImage converts a presentation to an image
+//
+//nolint:revive // Not implemented yet
 func (s *service) convertPresentationToImage(ctx context.Context, presentationPath, outputPath string, options *services.ConversionOptions) error {
 	// Implementation for presentations
 	return errors.NewBusinessError("Presentation conversion not yet implemented")
 }
 
 // ResizeImage resizes an image to specified dimensions
+//
+//nolint:revive // Not implemented yet
 func (s *service) ResizeImage(ctx context.Context, req *services.ResizeImageRequest) (*services.ResizeImageResponse, error) {
 	// Implementation for image resizing
 	// This could use imaging library or similar
@@ -163,6 +171,8 @@ func (s *service) ResizeImage(ctx context.Context, req *services.ResizeImageRequ
 }
 
 // OptimizeImage compresses an image with specified quality
+//
+//nolint:revive // Not implemented yet
 func (s *service) OptimizeImage(ctx context.Context, req *services.OptimizeImageRequest) (*services.OptimizeImageResponse, error) {
 	// Implementation for image optimization
 	return nil, errors.NewBusinessError("Image optimization not yet implemented")

@@ -1,7 +1,7 @@
 package repositories
 
 import (
-	"encoding/json"
+	"encoding/json" //nolint:depguard // This is a dependency for the log reader
 	"time"
 
 	"github.com/emoss08/trenova/internal/core/ports"

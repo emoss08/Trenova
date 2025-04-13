@@ -30,14 +30,14 @@ func ProvideValidationEngineFactory() ValidationEngineFactory {
 type EngineLifecycle struct{}
 
 // OnStart logs that the validation engine is starting
-func (l *EngineLifecycle) OnStart(ctx context.Context) error {
-	log.Info().Msg("Starting validation framework engine")
+func (l *EngineLifecycle) OnStart(_ context.Context) error {
+	log.Info().Msg("🚀 Starting validation framework engine")
 	return nil
 }
 
 // OnStop logs that the validation engine is stopping
-func (l *EngineLifecycle) OnStop(ctx context.Context) error {
-	log.Info().Msg("Stopping validation framework engine")
+func (l *EngineLifecycle) OnStop(_ context.Context) error {
+	log.Info().Msg("🔴 Stopping validation framework engine")
 	return nil
 }
 

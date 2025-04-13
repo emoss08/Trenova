@@ -16,7 +16,7 @@ import (
 type ValidatorParams struct {
 	fx.In
 
-	DB                     db.Connection
+	DB                      db.Connection
 	ValidationEngineFactory framework.ValidationEngineFactory
 }
 
@@ -48,14 +48,6 @@ func (v *Validator) Validate(
 	// Data integrity validation (uniqueness)
 	engine.AddRule(framework.NewValidationRule(framework.ValidationStageDataIntegrity, framework.ValidationPriorityHigh, func(ctx context.Context, multiErr *errors.MultiError) error {
 		return v.ValidateUniqueness(ctx, valCtx, st, multiErr)
-	}))
-
-	// Business rules validation
-	engine.AddRule(framework.NewValidationRule(framework.ValidationStageBusinessRules, framework.ValidationPriorityHigh, func(ctx context.Context, multiErr *errors.MultiError) error {
-		if valCtx.IsCreate && st.ID.IsNotNil() {
-			multiErr.Add("id", errors.ErrInvalid, "ID cannot be set on create")
-		}
-		return nil
 	}))
 
 	return engine.Validate(ctx)

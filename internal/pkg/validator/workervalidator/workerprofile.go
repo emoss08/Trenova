@@ -53,7 +53,9 @@ func NewWorkerProfileValidator(p WorkerProfileValidatorParams) *WorkerProfileVal
 //   - wp: The worker profile to validate.
 //   - multiErr: The MultiError to add validation errors to.
 func (v *WorkerProfileValidator) Validate(ctx context.Context, valCtx *validator.ValidationContext, wp *worker.WorkerProfile, multiErr *errors.MultiError) {
-	engine := v.vef.CreateEngine()
+	engine := v.vef.CreateEngine().
+		ForField("profile").
+		WithParent(multiErr)
 
 	// Basic validation rules
 	engine.AddRule(framework.NewValidationRule(framework.ValidationStageBasic, framework.ValidationPriorityHigh,
@@ -74,7 +76,7 @@ func (v *WorkerProfileValidator) Validate(ctx context.Context, valCtx *validator
 		engine.AddRule(framework.NewValidationRule(framework.ValidationStageBusinessRules, framework.ValidationPriorityHigh,
 			func(_ context.Context, multiErr *errors.MultiError) error {
 				if wp.ID.IsNotNil() {
-					multiErr.Add("profile.id", errors.ErrInvalid, "ID cannot be set on create")
+					multiErr.Add("id", errors.ErrInvalid, "ID cannot be set on create")
 				}
 				return nil
 			}))

@@ -183,7 +183,7 @@ func (c *connection) Close() error {
 	return nil
 }
 
-func (c *connection) SQLDB(ctx context.Context) (*sql.DB, error) {
+func (c *connection) SQLDB(_ context.Context) (*sql.DB, error) {
 	c.mu.RLock()
 	defer c.mu.RUnlock()
 

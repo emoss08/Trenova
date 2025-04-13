@@ -122,7 +122,7 @@ func (v *MoveValidator) ValidateSplitRequest(
 
 	// * Validate business rules
 	engine.AddRule(framework.NewValidationRule(framework.ValidationStageBusinessRules, framework.ValidationPriorityHigh,
-		func(ctx context.Context, multiErr *errors.MultiError) error {
+		func(_ context.Context, multiErr *errors.MultiError) error {
 			// * Validate the stop length
 			v.validateStopLength(m, multiErr)
 
