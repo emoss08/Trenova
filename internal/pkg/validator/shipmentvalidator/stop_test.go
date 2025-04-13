@@ -9,7 +9,6 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/database/postgres/repositories"
 	"github.com/emoss08/trenova/internal/pkg/errors"
 	"github.com/emoss08/trenova/internal/pkg/utils/intutils"
-	"github.com/emoss08/trenova/internal/pkg/validator"
 	spValidator "github.com/emoss08/trenova/internal/pkg/validator/shipmentvalidator"
 	"github.com/emoss08/trenova/test/testutils"
 )
@@ -174,13 +173,9 @@ func TestStopValidator(t *testing.T) {
 			stop := newStop()
 			scenario.modifyStop(stop)
 
-			vCtx := validator.NewValidationContext(&validator.ValidationContext{
-				IsCreate: true,
-			})
-
 			me := errors.NewMultiError()
 
-			val.Validate(ctx, vCtx, stop, spValidator.WithIndexedMultiError(me, 0))
+			val.Validate(ctx, stop, spValidator.WithIndexedMultiError(me, 0))
 
 			matcher := testutils.NewErrorMatcher(t, me)
 			matcher.HasExactErrors(scenario.expectedErrors)

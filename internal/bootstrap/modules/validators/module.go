@@ -11,6 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/pkg/validator/equipmentmanufacturervalidator"
 	"github.com/emoss08/trenova/internal/pkg/validator/equipmenttypevalidator"
 	"github.com/emoss08/trenova/internal/pkg/validator/fleetcodevalidator"
+	"github.com/emoss08/trenova/internal/pkg/validator/framework"
 	"github.com/emoss08/trenova/internal/pkg/validator/hazardousmaterialvalidator"
 	"github.com/emoss08/trenova/internal/pkg/validator/hazmatsegreationrulevalidator"
 	"github.com/emoss08/trenova/internal/pkg/validator/locationvalidator"
@@ -24,30 +25,37 @@ import (
 	"go.uber.org/fx"
 )
 
-var Module = fx.Module("validators", fx.Provide(
-	compliancevalidator.NewValidator,
-	workervalidator.NewWorkerProfileValidator,
-	workervalidator.NewWorkerPTOValidator,
-	workervalidator.NewValidator,
-	fleetcodevalidator.NewValidator,
-	equipmenttypevalidator.NewValidator,
-	equipmentmanufacturervalidator.NewValidator,
-	shipmenttypevalidator.NewValidator,
-	servicetypevalidator.NewValidator,
-	hazardousmaterialvalidator.NewValidator,
-	commodityvalidator.NewValidator,
-	locationvalidator.NewLocationCategoryValidator,
-	locationvalidator.NewValidator,
-	tractorvalidator.NewValidator,
-	trailervalidator.NewValidator,
-	customervalidator.NewValidator,
-	hazmatsegreationrulevalidator.NewValidator,
-	shipmentvalidator.NewStopValidator,
-	shipmentvalidator.NewMoveValidator,
-	shipmentvalidator.NewValidator,
-	assignmentvalidator.NewValidator,
-	shipmentcontrolvalidator.NewValidator,
-	billingcontrolvalidator.NewValidator,
-	accessorialchargevalidator.NewValidator,
-	documenttypevalidator.NewValidator,
-))
+var Module = fx.Module("validators",
+	fx.Provide(
+		compliancevalidator.NewValidator,
+		workervalidator.NewWorkerProfileValidator,
+		workervalidator.NewWorkerPTOValidator,
+		workervalidator.NewValidator,
+		fleetcodevalidator.NewValidator,
+		equipmenttypevalidator.NewValidator,
+		equipmentmanufacturervalidator.NewValidator,
+		shipmenttypevalidator.NewValidator,
+		servicetypevalidator.NewValidator,
+		hazardousmaterialvalidator.NewValidator,
+		commodityvalidator.NewValidator,
+		locationvalidator.NewLocationCategoryValidator,
+		locationvalidator.NewValidator,
+		tractorvalidator.NewValidator,
+		trailervalidator.NewValidator,
+		customervalidator.NewValidator,
+		hazmatsegreationrulevalidator.NewValidator,
+		shipmentvalidator.NewStopValidator,
+		shipmentvalidator.NewMoveValidator,
+		shipmentvalidator.NewValidator,
+		assignmentvalidator.NewValidator,
+		shipmentcontrolvalidator.NewValidator,
+		billingcontrolvalidator.NewValidator,
+		accessorialchargevalidator.NewValidator,
+		documenttypevalidator.NewValidator,
+		framework.ProvideValidationEngineFactory,
+		framework.ProvideLifecycle,
+	),
+	fx.Options(
+		framework.Module,
+	),
+)

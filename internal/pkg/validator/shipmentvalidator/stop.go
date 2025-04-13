@@ -9,7 +9,6 @@ import (
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/pkg/errors"
 	"github.com/emoss08/trenova/internal/pkg/logger"
-	"github.com/emoss08/trenova/internal/pkg/validator"
 	"github.com/rs/zerolog"
 	"go.uber.org/fx"
 )
@@ -52,7 +51,7 @@ func WithIndexedMultiError(multiErr *errors.MultiError, idx int) StopValidatorOp
 	}
 }
 
-func (v *StopValidator) Validate(ctx context.Context, valCtx *validator.ValidationContext, s *shipment.Stop, opts ...StopValidatorOption) *errors.MultiError {
+func (v *StopValidator) Validate(ctx context.Context, s *shipment.Stop, opts ...StopValidatorOption) *errors.MultiError {
 	if v.multiErr == nil {
 		v.multiErr = errors.NewMultiError()
 	}

@@ -16,6 +16,7 @@ import (
 	"github.com/emoss08/trenova/internal/pkg/errors"
 	"github.com/emoss08/trenova/internal/pkg/utils/intutils"
 	"github.com/emoss08/trenova/internal/pkg/validator"
+	"github.com/emoss08/trenova/internal/pkg/validator/framework"
 	"github.com/emoss08/trenova/internal/pkg/validator/hazmatsegreationrulevalidator"
 	spValidator "github.com/emoss08/trenova/internal/pkg/validator/shipmentvalidator"
 	"github.com/emoss08/trenova/pkg/types/pulid"
@@ -27,6 +28,14 @@ var (
 	ts  *testutils.TestSetup
 	ctx = context.Background()
 )
+
+// mockValidationEngineFactory is a test implementation of ValidationEngineFactory
+type mockValidationEngineFactory struct{}
+
+// CreateEngine creates a new validation engine for testing
+func (f *mockValidationEngineFactory) CreateEngine() *framework.ValidationEngine {
+	return framework.NewValidationEngine()
+}
 
 func TestMain(m *testing.M) {
 	setup, err := testutils.NewTestSetup(ctx)
@@ -137,11 +146,15 @@ func TestShipmentValidator(t *testing.T) {
 		DB: ts.DB,
 	})
 
+	// Create a mock validation engine factory
+	mockVef := &mockValidationEngineFactory{}
+
 	val := spValidator.NewValidator(spValidator.ValidatorParams{
 		DB:                         ts.DB,
 		MoveValidator:              mv,
 		ShipmentControlRepo:        shipmentControlRepo,
 		HazmatSegregationValidator: hs,
+		ValidationEngineFactory:    mockVef,
 	})
 
 	scenarios := []struct {
@@ -366,11 +379,15 @@ func TestShipmentCancelValidation(t *testing.T) {
 		DB: ts.DB,
 	})
 
+	// Create a mock validation engine factory
+	mockVef := &mockValidationEngineFactory{}
+
 	val := spValidator.NewValidator(spValidator.ValidatorParams{
 		DB:                         ts.DB,
 		MoveValidator:              mv,
 		ShipmentControlRepo:        shipmentControlRepo,
 		HazmatSegregationValidator: hs,
+		ValidationEngineFactory:    mockVef,
 	})
 
 	scenarios := []struct {

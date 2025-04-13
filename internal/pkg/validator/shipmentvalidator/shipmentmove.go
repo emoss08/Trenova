@@ -8,7 +8,6 @@ import (
 	"github.com/emoss08/trenova/internal/core/ports/db"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/pkg/errors"
-	"github.com/emoss08/trenova/internal/pkg/validator"
 	"go.uber.org/fx"
 )
 
@@ -31,11 +30,11 @@ func NewMoveValidator(p MoveValidatorParams) *MoveValidator {
 	}
 }
 
-func (v *MoveValidator) Validate(ctx context.Context, valCtx *validator.ValidationContext, m *shipment.ShipmentMove, multiErr *errors.MultiError, idx int) {
+func (v *MoveValidator) Validate(ctx context.Context, m *shipment.ShipmentMove, multiErr *errors.MultiError, idx int) {
 	moveMultiErr := multiErr.WithIndex("moves", idx)
 
 	m.Validate(ctx, moveMultiErr)
-	v.validateStops(ctx, valCtx, m, moveMultiErr)
+	v.validateStops(ctx, m, moveMultiErr)
 }
 
 func (v *MoveValidator) ValidateSplitRequest(
@@ -64,13 +63,13 @@ func (v *MoveValidator) ValidateSplitRequest(
 	return nil
 }
 
-func (v *MoveValidator) validateStops(ctx context.Context, valCtx *validator.ValidationContext, m *shipment.ShipmentMove, multiErr *errors.MultiError) {
+func (v *MoveValidator) validateStops(ctx context.Context, m *shipment.ShipmentMove, multiErr *errors.MultiError) {
 	v.validateStopLength(m, multiErr)
 	v.validateStopTimes(m, multiErr)
 	v.validateStopSequence(m, multiErr)
 
 	for idx, stop := range m.Stops {
-		stopMultiErr := v.sv.Validate(ctx, valCtx, stop, WithIndexedMultiError(multiErr, idx))
+		stopMultiErr := v.sv.Validate(ctx, stop, WithIndexedMultiError(multiErr, idx))
 		if stopMultiErr != nil {
 			multiErr.Add("stops", errors.ErrInvalid, stopMultiErr.Error())
 		}

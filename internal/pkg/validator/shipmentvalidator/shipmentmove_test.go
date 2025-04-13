@@ -6,7 +6,6 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/internal/infrastructure/database/postgres/repositories"
 	"github.com/emoss08/trenova/internal/pkg/errors"
-	"github.com/emoss08/trenova/internal/pkg/validator"
 	spValidator "github.com/emoss08/trenova/internal/pkg/validator/shipmentvalidator"
 	"github.com/emoss08/trenova/test/testutils"
 )
@@ -275,13 +274,9 @@ func TestMoveValidator(t *testing.T) {
 			move := newMovement()
 			scenario.modifyMove(move)
 
-			vCtx := validator.NewValidationContext(&validator.ValidationContext{
-				IsCreate: true,
-			})
-
 			me := errors.NewMultiError()
 
-			val.Validate(ctx, vCtx, move, me, 0)
+			val.Validate(ctx, move, me, 0)
 
 			matcher := testutils.NewErrorMatcher(t, me)
 			matcher.HasExactErrors(scenario.expectedErrors)
