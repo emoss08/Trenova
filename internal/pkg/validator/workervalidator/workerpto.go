@@ -9,6 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/pkg/errors"
 	"github.com/emoss08/trenova/internal/pkg/validator"
+	"github.com/emoss08/trenova/internal/pkg/validator/framework"
 	"go.uber.org/fx"
 )
 
@@ -20,45 +21,90 @@ var validPTOStatusTransitions = map[worker.PTOStatus][]worker.PTOStatus{
 	},
 	worker.PTOStatusApproved: {
 		worker.PTOStatusCancelled,
-		// TODO(Wolfred): allow transitioning Approved -> Rejected or
-		// just keep it limited to Cancelled depending on your business logic.
 	},
 	worker.PTOStatusRejected:  {}, // No transitions allowed once Rejected.
 	worker.PTOStatusCancelled: {}, // No transitions allowed once Cancelled.
 }
 
+// WorkerPTOValidatorParams defines the dependencies required for initializing the WorkerPTOValidator.
+// This includes the worker repository and validation engine factory.
 type WorkerPTOValidatorParams struct {
 	fx.In
 
-	Repo repositories.WorkerRepository
+	Repo                    repositories.WorkerRepository
+	ValidationEngineFactory framework.ValidationEngineFactory
 }
 
+// WorkerPTOValidator is a validator for worker PTOs.
+// It validates worker PTOs, including status transitions and overlaps.
 type WorkerPTOValidator struct {
 	repo repositories.WorkerRepository
+	vef  framework.ValidationEngineFactory
 }
 
+// NewWorkerPTOValidator initializes a new WorkerPTOValidator with the provided dependencies.
+//
+// Parameters:
+//   - p: WorkerPTOValidatorParams containing dependencies.
+//
+// Returns:
+//   - *WorkerPTOValidator: A new WorkerPTOValidator instance.
 func NewWorkerPTOValidator(p WorkerPTOValidatorParams) *WorkerPTOValidator {
 	return &WorkerPTOValidator{
 		repo: p.Repo,
+		vef:  p.ValidationEngineFactory,
 	}
 }
 
 // ValidatePTO validates a worker's PTO and returns a MultiError if there are any validation errors
 // This is a wrapper for the individual PTO checks
+//
+// Parameters:
+//   - ctx: The context of the request.
+//   - valCtx: The validation context.
+//   - wrk: The worker to validate.
+//   - pto: The PTO to validate.
+//   - multiErr: The MultiError to add validation errors to.
+//   - index: The index of the PTO in the worker's PTO array.
 func (v *WorkerPTOValidator) Validate(ctx context.Context, valCtx *validator.ValidationContext, wrk *worker.Worker, pto *worker.WorkerPTO, multiErr *errors.MultiError, index int) {
-	// Common PTO validation
-	pto.Validate(ctx, multiErr, index)
+	engine := v.vef.CreateEngine()
 
-	// Validate PTO overlaps
+	// * Basic validation rules (field presence, format, etc.)
+	engine.AddRule(framework.NewValidationRule(framework.ValidationStageBasic, framework.ValidationPriorityHigh,
+		func(ctx context.Context, multiErr *errors.MultiError) error {
+			pto.Validate(ctx, multiErr, index)
+			return nil
+		}))
+
+	// * Status transition validation
 	if valCtx.IsUpdate {
-		v.validatePTOStatusTransition(ctx, wrk, pto, multiErr, index)
-		v.validatePTOOverlaps(wrk, multiErr)
+		engine.AddRule(framework.NewValidationRule(framework.ValidationStageBusinessRules, framework.ValidationPriorityHigh,
+			func(ctx context.Context, multiErr *errors.MultiError) error {
+				v.validatePTOStatusTransition(ctx, wrk, pto, multiErr, index)
+				return nil
+			}))
+
+		// * PTO overlap validation
+		engine.AddRule(framework.NewValidationRule(framework.ValidationStageBusinessRules, framework.ValidationPriorityMedium,
+			func(_ context.Context, multiErr *errors.MultiError) error {
+				v.validatePTOOverlaps(wrk, multiErr)
+				return nil
+			}))
 	}
 
-	// Validate ID
+	// * ID validation on create
 	if valCtx.IsCreate {
-		v.validateID(wrk, multiErr)
+		engine.AddRule(framework.NewValidationRule(framework.ValidationStageBusinessRules, framework.ValidationPriorityHigh,
+			func(_ context.Context, multiErr *errors.MultiError) error {
+				if pto.ID.IsNotNil() {
+					multiErr.Add(fmt.Sprintf("pto[%d].id", index), errors.ErrInvalid, "ID cannot be set on create")
+				}
+				return nil
+			}))
 	}
+
+	// * Execute validation rules and add errors to the provided multiErr
+	engine.ValidateInto(ctx, multiErr)
 }
 
 func (v *WorkerPTOValidator) validatePTOStatusTransition(ctx context.Context, wrk *worker.Worker, pto *worker.WorkerPTO, multiErr *errors.MultiError, index int) {
@@ -67,7 +113,7 @@ func (v *WorkerPTOValidator) validatePTOStatusTransition(ctx context.Context, wr
 		return
 	}
 
-	// If there is no change in status, no need to validate transitions
+	// * If there is no change in status, no need to validate transitions
 	if oldPTO.Status == pto.Status {
 		return
 	}
@@ -81,7 +127,7 @@ func (v *WorkerPTOValidator) validatePTOStatusTransition(ctx context.Context, wr
 		return
 	}
 
-	// Check if the new status is one of the allowed next states
+	// * Check if the new status is one of the allowed next states
 	isAllowed := false
 	for _, next := range allowedTransitions {
 		if pto.Status == next {
@@ -98,6 +144,11 @@ func (v *WorkerPTOValidator) validatePTOStatusTransition(ctx context.Context, wr
 	}
 }
 
+// validatePTOOverlaps checks if any PTO requests overlap and adds appropriate errors
+//
+// Parameters:
+//   - wrk: The worker to validate.
+//   - multiErr: The MultiError to add validation errors to.
 func (v *WorkerPTOValidator) validatePTOOverlaps(wrk *worker.Worker, multiErr *errors.MultiError) {
 	if len(wrk.PTO) <= 1 {
 		return
@@ -119,6 +170,12 @@ func (v *WorkerPTOValidator) validatePTOOverlaps(wrk *worker.Worker, multiErr *e
 }
 
 // checkPTOOverlap checks if two PTO requests overlap and adds appropriate errors
+//
+// Parameters:
+//   - index: The index of the PTO in the worker's PTO array.
+//   - pto: The PTO to check for overlap.
+//   - otherPTO: The other PTO to check against.
+//   - multiErr: The MultiError to add validation errors to.
 func (v *WorkerPTOValidator) checkPTOOverlap(index int, pto, otherPTO *worker.WorkerPTO, multiErr *errors.MultiError) {
 	startDate := time.Unix(otherPTO.StartDate, 0).Format("2006-01-02")
 	endDate := time.Unix(otherPTO.EndDate, 0).Format("2006-01-02")
@@ -171,14 +228,5 @@ func (v *WorkerPTOValidator) checkPTOOverlap(index int, pto, otherPTO *worker.Wo
 			errors.ErrAlreadyExists,
 			fmt.Sprintf("Request overlaps with an existing PTO request %s", dateRange),
 		)
-	}
-}
-
-func (v *WorkerPTOValidator) validateID(wrk *worker.Worker, multiErr *errors.MultiError) {
-	// Loop through all of the PTOs and validate that the ID is not set
-	for idx, pto := range wrk.PTO {
-		if pto.ID.IsNotNil() {
-			multiErr.Add(fmt.Sprintf("pto[%d].id", idx), errors.ErrInvalid, "ID cannot be set on create")
-		}
 	}
 }

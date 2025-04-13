@@ -9,6 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/database/postgres/repositories"
 	"github.com/emoss08/trenova/internal/pkg/errors"
 	"github.com/emoss08/trenova/internal/pkg/utils/intutils"
+	"github.com/emoss08/trenova/internal/pkg/validator/framework"
 	spValidator "github.com/emoss08/trenova/internal/pkg/validator/shipmentvalidator"
 	"github.com/emoss08/trenova/test/testutils"
 )
@@ -33,6 +34,9 @@ func newStop() *shipment.Stop {
 
 func TestStopValidator(t *testing.T) {
 	log := testutils.NewTestLogger(t)
+
+	// Create a real validation engine factory (not mock)
+	vef := framework.ProvideValidationEngineFactory()
 
 	stopRepo := repositories.NewStopRepository(repositories.StopRepositoryParams{
 		Logger: log,
@@ -64,10 +68,11 @@ func TestStopValidator(t *testing.T) {
 	})
 
 	val := spValidator.NewStopValidator(spValidator.StopValidatorParams{
-		DB:             ts.DB,
-		MoveRepo:       moveRepo,
-		Logger:         log,
-		AssignmentRepo: assignmentRepo,
+		DB:                      ts.DB,
+		MoveRepo:                moveRepo,
+		Logger:                  log,
+		AssignmentRepo:          assignmentRepo,
+		ValidationEngineFactory: vef,
 	})
 
 	scenarios := []struct {
@@ -130,7 +135,6 @@ func TestStopValidator(t *testing.T) {
 			}{
 				{Field: "stops[0].plannedDeparture", Code: errors.ErrRequired, Message: "Planned departure is required"},
 				{Field: "stops[0].plannedArrival", Code: errors.ErrInvalid, Message: "Planned arrival must be before planned departure"},
-				{Field: "stops[0].plannedDeparture", Code: errors.ErrInvalid, Message: "Planned departure must be after planned arrival"},
 			},
 		},
 		{
@@ -147,9 +151,8 @@ func TestStopValidator(t *testing.T) {
 				Code    errors.ErrorCode
 				Message string
 			}{
-				{Field: "stops[0].actualArrival", Code: errors.ErrInvalid, Message: "Actual arrival must be before actual departure"},
-				{Field: "stops[0].actualDeparture", Code: errors.ErrInvalid, Message: "Actual departure must be after actual arrival"},
-				{Field: "stops[0].actualArrival", Code: errors.ErrInvalid, Message: "Actual arrival cannot be set on a move with no assignment"},
+				{Field: "stops[0].actualTimes", Code: errors.ErrInvalid, Message: "Actual arrival must be before actual departure"},
+				{Field: "stops[0].actualTimes", Code: errors.ErrInvalid, Message: "Actual arrival and departure times cannot be set on a move with no assignment"},
 			},
 		},
 		{
@@ -163,7 +166,7 @@ func TestStopValidator(t *testing.T) {
 				Code    errors.ErrorCode
 				Message string
 			}{
-				{Field: "stops[0].actualArrival", Code: errors.ErrInvalid, Message: "Actual arrival cannot be set on a move with no assignment"},
+				{Field: "stops[0].actualTimes", Code: errors.ErrInvalid, Message: "Actual arrival and departure times cannot be set on a move with no assignment"},
 			},
 		},
 	}
@@ -175,7 +178,7 @@ func TestStopValidator(t *testing.T) {
 
 			me := errors.NewMultiError()
 
-			val.Validate(ctx, stop, spValidator.WithIndexedMultiError(me, 0))
+			val.Validate(ctx, stop, 0, me)
 
 			matcher := testutils.NewErrorMatcher(t, me)
 			matcher.HasExactErrors(scenario.expectedErrors)

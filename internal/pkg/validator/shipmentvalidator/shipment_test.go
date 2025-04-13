@@ -6,7 +6,6 @@ import (
 	"math/rand"
 	"os"
 	"testing"
-	"time"
 
 	"github.com/emoss08/trenova/internal/core/domain/customer"
 	"github.com/emoss08/trenova/internal/core/domain/servicetype"
@@ -15,11 +14,12 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/database/postgres/repositories"
 	"github.com/emoss08/trenova/internal/pkg/errors"
 	"github.com/emoss08/trenova/internal/pkg/utils/intutils"
+	"github.com/emoss08/trenova/internal/pkg/utils/timeutils"
 	"github.com/emoss08/trenova/internal/pkg/validator"
-	"github.com/emoss08/trenova/internal/pkg/validator/framework"
 	"github.com/emoss08/trenova/internal/pkg/validator/hazmatsegreationrulevalidator"
 	spValidator "github.com/emoss08/trenova/internal/pkg/validator/shipmentvalidator"
 	"github.com/emoss08/trenova/pkg/types/pulid"
+	"github.com/emoss08/trenova/test/mocks"
 	"github.com/emoss08/trenova/test/testutils"
 	"github.com/shopspring/decimal"
 )
@@ -28,14 +28,6 @@ var (
 	ts  *testutils.TestSetup
 	ctx = context.Background()
 )
-
-// mockValidationEngineFactory is a test implementation of ValidationEngineFactory
-type mockValidationEngineFactory struct{}
-
-// CreateEngine creates a new validation engine for testing
-func (f *mockValidationEngineFactory) CreateEngine() *framework.ValidationEngine {
-	return framework.NewValidationEngine()
-}
 
 func TestMain(m *testing.M) {
 	setup, err := testutils.NewTestSetup(ctx)
@@ -87,7 +79,7 @@ func newShipment() *shipment.Shipment {
 	// In the fixture, stop7 uses daysAgo and stop8 uses daysFromNow
 	// which creates a validation issue due to how Unix timestamps work
 	// Adjust the timestamps to ensure stop7's departure is before stop8's arrival
-	now := time.Now().Unix()
+	now := timeutils.NowUnix()
 	stop7.PlannedArrival = now - 172800   // 2 days ago
 	stop7.PlannedDeparture = now - 86400  // 1 day ago
 	stop8.PlannedArrival = now + 86400    // 1 day from now
@@ -100,6 +92,7 @@ func newShipment() *shipment.Shipment {
 
 func TestShipmentValidator(t *testing.T) {
 	log := testutils.NewTestLogger(t)
+	mockVef := &mocks.MockValidationEngineFactory{}
 
 	stopRepo := repositories.NewStopRepository(repositories.StopRepositoryParams{
 		Logger: log,
@@ -131,23 +124,22 @@ func TestShipmentValidator(t *testing.T) {
 	})
 
 	sv := spValidator.NewStopValidator(spValidator.StopValidatorParams{
-		DB:             ts.DB,
-		MoveRepo:       moveRepo,
-		Logger:         log,
-		AssignmentRepo: assignmentRepo,
+		DB:                      ts.DB,
+		MoveRepo:                moveRepo,
+		Logger:                  log,
+		AssignmentRepo:          assignmentRepo,
+		ValidationEngineFactory: mockVef,
 	})
 
 	mv := spValidator.NewMoveValidator(spValidator.MoveValidatorParams{
-		DB:            ts.DB,
-		StopValidator: sv,
+		DB:                      ts.DB,
+		StopValidator:           sv,
+		ValidationEngineFactory: mockVef,
 	})
 
 	hs := hazmatsegreationrulevalidator.NewValidator(hazmatsegreationrulevalidator.ValidatorParams{
 		DB: ts.DB,
 	})
-
-	// Create a mock validation engine factory
-	mockVef := &mockValidationEngineFactory{}
 
 	val := spValidator.NewValidator(spValidator.ValidatorParams{
 		DB:                         ts.DB,
@@ -380,7 +372,7 @@ func TestShipmentCancelValidation(t *testing.T) {
 	})
 
 	// Create a mock validation engine factory
-	mockVef := &mockValidationEngineFactory{}
+	mockVef := &mocks.MockValidationEngineFactory{}
 
 	val := spValidator.NewValidator(spValidator.ValidatorParams{
 		DB:                         ts.DB,

@@ -6,12 +6,14 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/internal/infrastructure/database/postgres/repositories"
 	"github.com/emoss08/trenova/internal/pkg/errors"
+	"github.com/emoss08/trenova/internal/pkg/utils/timeutils"
+	"github.com/emoss08/trenova/internal/pkg/validator/framework"
 	spValidator "github.com/emoss08/trenova/internal/pkg/validator/shipmentvalidator"
 	"github.com/emoss08/trenova/test/testutils"
 )
 
 func newMovement() *shipment.ShipmentMove {
-	move := ts.Fixture.MustRow("ShipmentMove.test_shipment_move_2").(*shipment.ShipmentMove)
+	move := ts.Fixture.MustRow("ShipmentMove.test_shipment_move").(*shipment.ShipmentMove)
 	move.Status = shipment.MoveStatusNew
 
 	// * Get all of the stops for the second move
@@ -48,6 +50,12 @@ func newMovement() *shipment.ShipmentMove {
 	stop4.ActualArrival = nil
 	stop4.ActualDeparture = nil
 
+	now := timeutils.NowUnix()
+	stop1.PlannedArrival = now - 172800   // 2 days ago
+	stop1.PlannedDeparture = now - 86400  // 1 day ago
+	stop2.PlannedArrival = now + 86400    // 1 day from now
+	stop2.PlannedDeparture = now + 172800 // 2 days from now
+
 	move.Stops = []*shipment.Stop{stop1, stop2, stop3, stop4}
 
 	return move
@@ -55,6 +63,9 @@ func newMovement() *shipment.ShipmentMove {
 
 func TestMoveValidator(t *testing.T) {
 	log := testutils.NewTestLogger(t)
+
+	// Use a real validation engine factory instead of a mock
+	vef := framework.ProvideValidationEngineFactory()
 
 	stopRepo := repositories.NewStopRepository(repositories.StopRepositoryParams{
 		Logger: log,
@@ -87,15 +98,17 @@ func TestMoveValidator(t *testing.T) {
 
 	stpValidator := spValidator.NewStopValidator(
 		spValidator.StopValidatorParams{
-			DB:             ts.DB,
-			Logger:         log,
-			MoveRepo:       moveRepo,
-			AssignmentRepo: assignmentRepo,
+			DB:                      ts.DB,
+			Logger:                  log,
+			MoveRepo:                moveRepo,
+			AssignmentRepo:          assignmentRepo,
+			ValidationEngineFactory: vef,
 		},
 	)
 	val := spValidator.NewMoveValidator(spValidator.MoveValidatorParams{
-		DB:            ts.DB,
-		StopValidator: stpValidator,
+		DB:                      ts.DB,
+		StopValidator:           stpValidator,
+		ValidationEngineFactory: vef,
 	})
 
 	scenarios := []struct {
@@ -133,7 +146,6 @@ func TestMoveValidator(t *testing.T) {
 			}{
 				{Field: "moves[0].stops[0].plannedDeparture", Code: errors.ErrInvalid, Message: "Planned departure must be before next stop's planned arrival"},
 				{Field: "moves[0].stops[0].plannedArrival", Code: errors.ErrInvalid, Message: "Planned arrival must be before planned departure"},
-				{Field: "moves[0].stops[0].plannedDeparture", Code: errors.ErrInvalid, Message: "Planned departure must be after planned arrival"},
 			},
 		},
 		{
@@ -148,8 +160,8 @@ func TestMoveValidator(t *testing.T) {
 				Message string
 			}{
 				{Field: "moves[0].stops[0].actualDeparture", Code: errors.ErrInvalid, Message: "Actual departure must be before next stop's actual arrival"},
-				{Field: "moves[0].stops[0].actualArrival", Code: errors.ErrInvalid, Message: "Actual arrival cannot be set on a move with no assignment"},
-				{Field: "moves[0].stops[1].actualArrival", Code: errors.ErrInvalid, Message: "Actual arrival cannot be set on a move with no assignment"},
+				{Field: "moves[0].stops[0].actualTimes", Code: errors.ErrInvalid, Message: "Actual arrival and departure times cannot be set on a move with no assignment"},
+				{Field: "moves[0].stops[1].actualTimes", Code: errors.ErrInvalid, Message: "Actual arrival and departure times cannot be set on a move with no assignment"},
 			},
 		},
 		{
@@ -165,7 +177,6 @@ func TestMoveValidator(t *testing.T) {
 			}{
 				{Field: "moves[0].stops[0].plannedDeparture", Code: errors.ErrInvalid, Message: "Planned departure must be before next stop's planned arrival"},
 				{Field: "moves[0].stops[0].plannedArrival", Code: errors.ErrInvalid, Message: "Planned arrival must be before planned departure"},
-				{Field: "moves[0].stops[0].plannedDeparture", Code: errors.ErrInvalid, Message: "Planned departure must be after planned arrival"},
 			},
 		},
 		{
@@ -213,6 +224,7 @@ func TestMoveValidator(t *testing.T) {
 				Code    errors.ErrorCode
 				Message string
 			}{
+				{Field: "moves[0].stops[1].type", Code: "INVALID", Message: "Type must be a valid stop type"},
 				{Field: "moves[0].stops[0].type", Code: errors.ErrInvalid, Message: "First stop must be a pickup or split pickup"},
 				{Field: "moves[0].stops[3].type", Code: errors.ErrInvalid, Message: "Last stop must be a delivery or split delivery"},
 				{Field: "moves[0].stops[0].type", Code: errors.ErrInvalid, Message: "Delivery stop must be preceded by a pickup or split pickup"},

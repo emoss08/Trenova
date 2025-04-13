@@ -23,64 +23,67 @@ var StandardWeightLimits = struct {
 
 // AddWeightComplianceRules adds weight compliance validation rules to the validation engine
 func AddWeightComplianceRules(engine *framework.ValidationEngine, shp *shipment.Shipment) {
-	engine.AddRule(framework.NewValidationRule(framework.ValidationStageCompliance, framework.ValidationPriorityHigh, func(ctx context.Context, multiErr *errors.MultiError) error {
-		// Calculate total weight from commodities if available
-		var totalWeight int64
-		if shp.Commodities != nil {
-			for _, comm := range shp.Commodities {
-				totalWeight += comm.Weight
+	engine.AddRule(framework.NewValidationRule(framework.ValidationStageCompliance, framework.ValidationPriorityHigh,
+		func(_ context.Context, multiErr *errors.MultiError) error {
+			// Calculate total weight from commodities if available
+			var totalWeight int64
+			if shp.Commodities != nil {
+				for _, comm := range shp.Commodities {
+					totalWeight += comm.Weight
+				}
+			} else if shp.Weight != nil {
+				totalWeight = *shp.Weight
 			}
-		} else if shp.Weight != nil {
-			totalWeight = *shp.Weight
-		}
 
-		// Validate gross vehicle weight
-		if totalWeight > 0 && decimal.NewFromInt(totalWeight).GreaterThan(StandardWeightLimits.MaxGrossWeight) {
-			multiErr.Add(
-				"weight",
-				errors.ErrInvalid,
-				fmt.Sprintf("Total weight exceeds maximum allowed (80,000 lbs) for interstate transport. Current: %d lbs", totalWeight),
-			)
-		}
-		return nil
-	}))
+			// Validate gross vehicle weight
+			if totalWeight > 0 && decimal.NewFromInt(totalWeight).GreaterThan(StandardWeightLimits.MaxGrossWeight) {
+				multiErr.Add(
+					"weight",
+					errors.ErrInvalid,
+					fmt.Sprintf("Total weight exceeds maximum allowed (80,000 lbs) for interstate transport. Current: %d lbs", totalWeight),
+				)
+			}
+			return nil
+		}))
 }
 
 // AddHOSComplianceRules adds Hours of Service compliance validation rules to the validation engine
-func AddHOSComplianceRules(engine *framework.ValidationEngine, shp *shipment.Shipment) {
-	engine.AddRule(framework.NewValidationRule(framework.ValidationStageCompliance, framework.ValidationPriorityHigh, func(ctx context.Context, multiErr *errors.MultiError) error {
-		// This would check if the planned moves could potentially cause HOS violations
-		// For example, by calculating total driving time and comparing to available driver hours
-		// This is a placeholder for future implementation
-		return nil
-	}))
+func AddHOSComplianceRules(engine *framework.ValidationEngine, _ *shipment.Shipment) {
+	engine.AddRule(framework.NewValidationRule(framework.ValidationStageCompliance, framework.ValidationPriorityHigh,
+		func(_ context.Context, _ *errors.MultiError) error {
+			// This would check if the planned moves could potentially cause HOS violations
+			// For example, by calculating total driving time and comparing to available driver hours
+			// This is a placeholder for future implementation
+			return nil
+		}))
 }
 
 // AddHazmatComplianceRules adds hazardous materials compliance validation rules to the validation engine
 func AddHazmatComplianceRules(engine *framework.ValidationEngine, shp *shipment.Shipment) {
-	engine.AddRule(framework.NewValidationRule(framework.ValidationStageCompliance, framework.ValidationPriorityHigh, func(ctx context.Context, multiErr *errors.MultiError) error {
-		// Check if shipment has hazmat commodities
-		hasHazmat := false
-		if shp.Commodities != nil {
-			for _, comm := range shp.Commodities {
-				if comm.Commodity != nil && comm.Commodity.HazardousMaterialID != nil {
-					hasHazmat = true
-					break
+	engine.AddRule(framework.NewValidationRule(framework.ValidationStageCompliance, framework.ValidationPriorityHigh,
+		func(_ context.Context, multiErr *errors.MultiError) error {
+			// Check if shipment has hazmat commodities
+			hasHazmat := false
+			if shp.Commodities != nil {
+				for _, comm := range shp.Commodities {
+					if comm.Commodity != nil && comm.Commodity.HazardousMaterialID != nil {
+						hasHazmat = true
+						break
+					}
 				}
 			}
-		}
 
-		// If it has hazmat, validate required documentation
-		if hasHazmat {
-			// Currently, there are no specific hazmat documentation fields in the Shipment struct
-			// This is a placeholder for future implementation when those fields are added
-			multiErr.Add(
-				"hazmat",
-				errors.ErrInvalid,
-				"Hazardous materials documentation is required for shipments containing hazardous materials",
-			)
-		}
+			// If it has hazmat, validate required documentation
+			if hasHazmat {
+				// Currently, there are no specific hazmat documentation fields in the Shipment struct
+				// This is a placeholder for future implementation when those fields are added
+				multiErr.Add(
+					"hazmat",
+					errors.ErrInvalid,
+					"Hazardous materials documentation is required for shipments containing hazardous materials",
+				)
+			}
 
-		return nil
-	}))
+			return nil
+		}))
 }
