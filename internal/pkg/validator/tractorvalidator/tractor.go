@@ -172,7 +172,7 @@ func (v *Validator) validateWorkerAssignment(ctx context.Context, valCtx *valida
 			q.Where("(tr.primary_worker_id = ? OR tr.secondary_worker_id = ?) AND id != ?", workerID, workerID, t.ID)
 		}
 
-		err := q.Scan(ctx)
+		err = q.Scan(ctx)
 		if err != nil {
 			if eris.Is(err, sql.ErrNoRows) {
 				v.l.Debug().
