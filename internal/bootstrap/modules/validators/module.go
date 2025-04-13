@@ -52,8 +52,6 @@ var Module = fx.Module("validators",
 		billingcontrolvalidator.NewValidator,
 		accessorialchargevalidator.NewValidator,
 		documenttypevalidator.NewValidator,
-		framework.ProvideValidationEngineFactory,
-		framework.ProvideLifecycle,
 	),
 	fx.Options(
 		framework.Module,

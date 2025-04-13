@@ -50,6 +50,7 @@ func ProvideLifecycle() *EngineLifecycle {
 var Module = fx.Module("validation-framework",
 	fx.Provide(
 		ProvideValidationEngineFactory,
+		ProvideLifecycle,
 	),
 	fx.Invoke(
 		func(lc fx.Lifecycle, lifecycle *EngineLifecycle) {
