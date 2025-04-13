@@ -8,49 +8,69 @@ import (
 	"github.com/emoss08/trenova/internal/pkg/errors"
 	"github.com/emoss08/trenova/internal/pkg/utils/queryutils"
 	"github.com/emoss08/trenova/internal/pkg/validator"
+	"github.com/emoss08/trenova/internal/pkg/validator/framework"
 	"github.com/rotisserie/eris"
 	"go.uber.org/fx"
 )
 
+// ValidatorParams defines the dependencies required for initializing the Validator.
+// This includes the database connection and validation engine factory.
 type ValidatorParams struct {
 	fx.In
 
-	DB db.Connection
+	DB                      db.Connection
+	ValidationEngineFactory framework.ValidationEngineFactory
 }
 
+// Validator is a struct that contains the database connection and the validator.
+// It provides methods to validate commodities and other related entities.
 type Validator struct {
-	db db.Connection
+	db  db.Connection
+	vef framework.ValidationEngineFactory
 }
 
+// NewValidator initializes a new Validator with the provided dependencies.
+//
+// Parameters:
+//   - p: ValidatorParams containing dependencies.
+//
+// Returns:
+//   - *Validator: A new Validator instance.
 func NewValidator(p ValidatorParams) *Validator {
 	return &Validator{
-		db: p.DB,
+		db:  p.DB,
+		vef: p.ValidationEngineFactory,
 	}
 }
 
+// Validate validates a commodity.
+//
+// Parameters:
+//   - ctx: The context of the request.
+//   - valCtx: The validation context.
+//   - com: The commodity to validate.
+//
+// Returns:
+//   - *errors.MultiError: A MultiError containing validation errors.
 func (v *Validator) Validate(
-	ctx context.Context,
-	valCtx *validator.ValidationContext,
-	com *commodity.Commodity,
+	ctx context.Context, valCtx *validator.ValidationContext, com *commodity.Commodity,
 ) *errors.MultiError {
-	multiErr := errors.NewMultiError()
+	engine := v.vef.CreateEngine()
 
-	// Basic Commodity validation
-	com.Validate(ctx, multiErr)
+	// * Basic validation rules (field presence, format, etc.)
+	engine.AddRule(framework.NewValidationRule(framework.ValidationStageBasic, framework.ValidationPriorityHigh,
+		func(ctx context.Context, multiErr *errors.MultiError) error {
+			com.Validate(ctx, multiErr)
+			return nil
+		}))
 
-	// Validate uniqueness
-	if err := v.ValidateUniqueness(ctx, valCtx, com, multiErr); err != nil {
-		multiErr.Add("uniqueness", errors.ErrSystemError, err.Error())
-	}
+	// * Data integrity validation (uniqueness, references, etc.)
+	engine.AddRule(framework.NewValidationRule(framework.ValidationStageDataIntegrity, framework.ValidationPriorityHigh,
+		func(ctx context.Context, multiErr *errors.MultiError) error {
+			return v.ValidateUniqueness(ctx, valCtx, com, multiErr)
+		}))
 
-	// Validate ID
-	v.validateID(com, valCtx, multiErr)
-
-	if multiErr.HasErrors() {
-		return multiErr
-	}
-
-	return nil
+	return engine.Validate(ctx)
 }
 
 func (v *Validator) ValidateUniqueness(ctx context.Context, valCtx *validator.ValidationContext, com *commodity.Commodity, multiErr *errors.MultiError) error {
@@ -78,11 +98,4 @@ func (v *Validator) ValidateUniqueness(ctx context.Context, valCtx *validator.Va
 	queryutils.CheckFieldUniqueness(ctx, dba, vb.Build(), multiErr)
 
 	return nil
-}
-
-func (v *Validator) validateID(com *commodity.Commodity, valCtx *validator.ValidationContext, multiErr *errors.MultiError) {
-	if valCtx.IsCreate && com.ID.IsNotNil() {
-		multiErr.Add("id", errors.ErrInvalid, "ID cannot be set on create")
-		return
-	}
 }

@@ -13,27 +13,40 @@ import (
 	"github.com/emoss08/trenova/internal/pkg/logger"
 	"github.com/emoss08/trenova/internal/pkg/utils/queryutils"
 	"github.com/emoss08/trenova/internal/pkg/validator"
+	"github.com/emoss08/trenova/internal/pkg/validator/framework"
 	"github.com/emoss08/trenova/pkg/types/pulid"
 	"github.com/rotisserie/eris"
 	"github.com/rs/zerolog"
-	"github.com/uptrace/bun"
 	"go.uber.org/fx"
 )
 
+// ValidatorParams defines the dependencies required for initializing the Validator.
+// This includes the database connection and validation engine factory, equipment type repository, and logger.
 type ValidatorParams struct {
 	fx.In
 
-	DB            db.Connection
-	EquipTypeRepo repositories.EquipmentTypeRepository
-	Logger        *logger.Logger
+	DB                      db.Connection
+	EquipTypeRepo           repositories.EquipmentTypeRepository
+	ValidationEngineFactory framework.ValidationEngineFactory
+	Logger                  *logger.Logger
 }
 
+// Validator is a struct that contains the database connection and the validator.
+// It provides methods to validate tractors and other related entities.
 type Validator struct {
 	db            db.Connection
 	equipTypeRepo repositories.EquipmentTypeRepository
+	vef           framework.ValidationEngineFactory
 	l             *zerolog.Logger
 }
 
+// NewValidator initializes a new Validator with the provided dependencies.
+//
+// Parameters:
+//   - p: ValidatorParams containing dependencies.
+//
+// Returns:
+//   - *Validator: A new Validator instance.
 func NewValidator(p ValidatorParams) *Validator {
 	log := p.Logger.With().
 		Str("validator", "tractor").
@@ -42,51 +55,52 @@ func NewValidator(p ValidatorParams) *Validator {
 	return &Validator{
 		db:            p.DB,
 		equipTypeRepo: p.EquipTypeRepo,
+		vef:           p.ValidationEngineFactory,
 		l:             &log,
 	}
 }
 
-func (v *Validator) Validate(
-	ctx context.Context,
-	valCtx *validator.ValidationContext,
-	t *tractor.Tractor,
+func (v *Validator) Validate(ctx context.Context, valCtx *validator.ValidationContext, t *tractor.Tractor,
 ) *errors.MultiError {
-	multiErr := errors.NewMultiError()
+	engine := v.vef.CreateEngine()
 
-	dba, err := v.db.DB(ctx)
-	if err != nil {
-		multiErr.Add("database", errors.ErrSystemError, err.Error())
-		return multiErr
-	}
+	// * Basic validation rules (field presence, format, etc.)
+	engine.AddRule(framework.NewValidationRule(framework.ValidationStageBasic, framework.ValidationPriorityHigh,
+		func(ctx context.Context, multiErr *errors.MultiError) error {
+			t.Validate(ctx, multiErr)
+			return nil
+		}))
 
-	// Basic Location validation
-	t.Validate(ctx, multiErr)
+	// * Data integrity validation (uniqueness, references, etc.)
+	engine.AddRule(framework.NewValidationRule(framework.ValidationStageDataIntegrity, framework.ValidationPriorityHigh,
+		func(ctx context.Context, multiErr *errors.MultiError) error {
+			return v.ValidateUniqueness(ctx, valCtx, t, multiErr)
+		}))
 
-	// Validate uniqueness
-	if err = v.ValidateUniqueness(ctx, dba, valCtx, t, multiErr); err != nil {
-		multiErr.Add("uniqueness", errors.ErrSystemError, err.Error())
-	}
+	// * Business rules validation (domain-specific rules)
+	engine.AddRule(framework.NewValidationRule(framework.ValidationStageBusinessRules, framework.ValidationPriorityHigh,
+		func(ctx context.Context, multiErr *errors.MultiError) error {
+			// Validate equipment class
+			v.validateEquipmentClass(ctx, t, multiErr)
 
-	// Validate ID
-	v.validateID(t, valCtx, multiErr)
+			// Validate secondary worker
+			v.validateSecondaryWorker(t, multiErr)
 
-	// Validate equipment class
-	v.validateEquipmentClass(ctx, t, multiErr)
+			// Validate worker assignment
+			v.validateWorkerAssignment(ctx, valCtx, t, multiErr)
 
-	// Validate secondary worker
-	v.validateSecondaryWorker(t, multiErr)
+			return nil
+		}))
 
-	// Validate worker assignment
-	v.validateWorkerAssignment(ctx, dba, valCtx, t, multiErr)
-
-	if multiErr.HasErrors() {
-		return multiErr
-	}
-
-	return nil
+	return engine.Validate(ctx)
 }
 
-func (v *Validator) ValidateUniqueness(ctx context.Context, dba bun.IDB, valCtx *validator.ValidationContext, t *tractor.Tractor, multiErr *errors.MultiError) error {
+func (v *Validator) ValidateUniqueness(ctx context.Context, valCtx *validator.ValidationContext, t *tractor.Tractor, multiErr *errors.MultiError) error {
+	dba, err := v.db.DB(ctx)
+	if err != nil {
+		return eris.Wrap(err, "get database connection")
+	}
+
 	vb := queryutils.NewUniquenessValidator(t.GetTableName()).
 		WithTenant(t.OrganizationID, t.BusinessUnitID).
 		WithModelName("Tractor").
@@ -106,12 +120,6 @@ func (v *Validator) ValidateUniqueness(ctx context.Context, dba bun.IDB, valCtx 
 	queryutils.CheckFieldUniqueness(ctx, dba, vb.Build(), multiErr)
 
 	return nil
-}
-
-func (v *Validator) validateID(t *tractor.Tractor, valCtx *validator.ValidationContext, multiErr *errors.MultiError) {
-	if valCtx.IsCreate && t.ID.IsNotNil() {
-		multiErr.Add("id", errors.ErrInvalid, "ID cannot be set on create")
-	}
 }
 
 func (v *Validator) validateEquipmentClass(ctx context.Context, t *tractor.Tractor, multiErr *errors.MultiError) {
@@ -138,7 +146,13 @@ func (v *Validator) validateSecondaryWorker(t *tractor.Tractor, multiErr *errors
 	}
 }
 
-func (v *Validator) validateWorkerAssignment(ctx context.Context, dba bun.IDB, valCtx *validator.ValidationContext, t *tractor.Tractor, multiErr *errors.MultiError) {
+func (v *Validator) validateWorkerAssignment(ctx context.Context, valCtx *validator.ValidationContext, t *tractor.Tractor, multiErr *errors.MultiError) {
+	dba, err := v.db.DB(ctx)
+	if err != nil {
+		multiErr.Add("database", errors.ErrSystemError, err.Error())
+		return
+	}
+
 	v.l.Debug().
 		Str("tractorID", t.ID.String()).
 		Msg("Validating worker assignment")

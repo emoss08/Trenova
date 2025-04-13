@@ -74,20 +74,20 @@ func (v *Validator) Validate(ctx context.Context, valCtx *validator.ValidationCo
 			return nil
 		}))
 
-	// Data integrity validation (uniqueness, references, etc.)
+	// * Data integrity validation (uniqueness, references, etc.)
 	engine.AddRule(framework.NewValidationRule(framework.ValidationStageDataIntegrity, framework.ValidationPriorityHigh,
 		func(ctx context.Context, multiErr *errors.MultiError) error {
 			return v.ValidateUniqueness(ctx, valCtx, shp, multiErr)
 		}))
 
-	// Business rules validation (domain-specific rules)
+	// * Business rules validation (domain-specific rules)
 	engine.AddRule(framework.NewValidationRule(framework.ValidationStageBusinessRules, framework.ValidationPriorityHigh,
 		func(ctx context.Context, multiErr *errors.MultiError) error {
 			v.ValidateMoves(ctx, shp, multiErr)
 			return nil
 		}))
 
-	// Load shipment control for further validations
+	// * Load shipment control for further validations
 	var sc *shipment.ShipmentControl
 	engine.AddRule(framework.NewValidationRule(framework.ValidationStageBasic, framework.ValidationPriorityHigh,
 		func(ctx context.Context, multiErr *errors.MultiError) error {
@@ -333,11 +333,9 @@ func (v *Validator) validateHazmatSegregation(ctx context.Context, shp *shipment
 
 // validateHazmatSegregationForCommodityAddition validates the hazmat segregation rules
 // when adding a new commodity to a shipment.
-func (v *Validator) validateHazmatSegregationForCommodityAddition(ctx context.Context, shp *shipment.Shipment,
-	commodityID pulid.ID, multiErr *errors.MultiError) {
-	log.Info().Interface("shipment", shp).Str("commodityID", commodityID.String()).
-		Msg("Validating hazmat segregation for commodity addition")
-
+func (v *Validator) validateHazmatSegregationForCommodityAddition(
+	ctx context.Context, shp *shipment.Shipment, commodityID pulid.ID, multiErr *errors.MultiError,
+) {
 	segregationErr, _ := v.hsr.ValidateShipmentCommodityAddition(ctx, shp, commodityID)
 	if segregationErr != nil && segregationErr.HasErrors() {
 		for _, err := range segregationErr.Errors {

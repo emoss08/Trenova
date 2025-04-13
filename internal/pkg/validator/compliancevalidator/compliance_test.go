@@ -11,6 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/pkg/logger"
 	"github.com/emoss08/trenova/internal/pkg/utils/timeutils"
 	"github.com/emoss08/trenova/internal/pkg/validator/compliancevalidator"
+	"github.com/emoss08/trenova/test/mocks"
 	"github.com/emoss08/trenova/test/testutils"
 )
 
@@ -32,6 +33,7 @@ func TestMain(m *testing.M) {
 
 func TestComplianceValidator(t *testing.T) {
 	workerProfile := ts.Fixture.MustRow("WorkerProfile.wp_1").(*worker.WorkerProfile)
+	mockVef := &mocks.MockValidationEngineFactory{}
 
 	hazmatRepo := repositories.NewHazmatExpirationRepository(repositories.HazmatExpirationRepositoryParams{
 		Logger: logger.NewLogger(testutils.NewTestConfig()),
@@ -44,8 +46,9 @@ func TestComplianceValidator(t *testing.T) {
 	})
 
 	validator := compliancevalidator.NewValidator(compliancevalidator.ValidatorParams{
-		HazmatExpRepo:       hazmatRepo,
-		ShipmentControlRepo: shipmentControlRepo,
+		HazmatExpRepo:           hazmatRepo,
+		ShipmentControlRepo:     shipmentControlRepo,
+		ValidationEngineFactory: mockVef,
 	})
 
 	scenarios := []struct {
@@ -133,11 +136,9 @@ func TestComplianceValidator(t *testing.T) {
 
 	for _, scenario := range scenarios {
 		t.Run(scenario.name, func(t *testing.T) {
-			me := errors.NewMultiError()
-
 			scenario.modifyProfile(workerProfile)
 
-			validator.ValidateWorkerCompliance(ctx, workerProfile, me)
+			me := validator.Validate(ctx, workerProfile)
 
 			matcher := testutils.NewErrorMatcher(t, me)
 			matcher.HasExactErrors(scenario.expectedErrors)
