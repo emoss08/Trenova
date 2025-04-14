@@ -15,7 +15,6 @@ import (
 	"github.com/emoss08/trenova/internal/pkg/validator/hazmatsegreationrulevalidator"
 	"github.com/emoss08/trenova/pkg/types/pulid"
 	"github.com/rotisserie/eris"
-	"github.com/rs/zerolog/log"
 	"go.uber.org/fx"
 )
 
@@ -119,8 +118,8 @@ func (v *Validator) Validate(ctx context.Context, valCtx *validator.ValidationCo
 		}))
 
 	// Add FMCSA compliance validation rules
-	AddWeightComplianceRules(engine, shp)
-	AddHazmatComplianceRules(engine, shp)
+	// AddWeightComplianceRules(engine, shp)
+	// AddHazmatComplianceRules(engine, shp)
 
 	// Only add HOS compliance rules if the shipment has moves assigned
 	if shp.HasMoves() {
@@ -322,7 +321,6 @@ func (v *Validator) ValidateCommodityAddition(ctx context.Context, shp *shipment
 // validateHazmatSegregation validates the hazmat segregation rules for a shipment
 // and adds any validation errors to the multiErr object.
 func (v *Validator) validateHazmatSegregation(ctx context.Context, shp *shipment.Shipment, multiErr *errors.MultiError) {
-	log.Info().Interface("shipment", shp).Msg("Validating hazmat segregation")
 	segregationErr, _ := v.hsr.ValidateShipment(ctx, shp)
 	if segregationErr != nil && segregationErr.HasErrors() {
 		for _, err := range segregationErr.Errors {

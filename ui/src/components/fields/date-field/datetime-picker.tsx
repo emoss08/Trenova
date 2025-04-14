@@ -1,5 +1,5 @@
 import * as chrono from "chrono-node";
-import { memo, useEffect, useImperativeHandle, useRef, useState } from "react";
+import { useEffect, useImperativeHandle, useRef, useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -52,7 +52,7 @@ function generateSuggestions(
   return [suggestion].filter((suggestion) => suggestion !== null);
 }
 
-export const DateTimePicker = memo(function DateTimePicker({
+export function DateTimePicker({
   dateTime,
   setDateTime,
   isInvalid,
@@ -75,7 +75,7 @@ export const DateTimePicker = memo(function DateTimePicker({
   const suggestions = generateSuggestions(inputValue, suggestion);
 
   function handleInputChange(e: React.ChangeEvent<HTMLInputElement>) {
-    const {value} = e.target;
+    const { value } = e.target;
     setInputValue(value);
 
     if (value.length > 0) {
@@ -263,4 +263,4 @@ export const DateTimePicker = memo(function DateTimePicker({
       )}
     </div>
   );
-});
+}

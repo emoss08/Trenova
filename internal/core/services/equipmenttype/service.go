@@ -54,34 +54,38 @@ func NewService(p ServiceParams) *Service {
 }
 
 func (s *Service) SelectOptions(ctx context.Context, opts *ports.LimitOffsetQueryOptions) ([]*types.SelectOption, error) {
-	result, err := s.repo.List(ctx, opts)
+	result, err := s.repo.List(ctx, &repositories.ListEquipmentTypeRequest{
+		Filter: opts,
+	})
 	if err != nil {
 		return nil, eris.Wrap(err, "select equipment types")
 	}
 
-	options := make([]*types.SelectOption, len(result.Items))
-	for i, et := range result.Items {
-		options[i] = &types.SelectOption{
-			Value: et.ID.String(),
+	options := make([]*types.SelectOption, 0, len(result.Items))
+	for _, et := range result.Items {
+		options = append(options, &types.SelectOption{
+			Value: et.GetID(),
 			Label: et.Code,
 			Color: et.Color,
-		}
+		})
 	}
 
 	return options, nil
 }
 
-func (s *Service) List(ctx context.Context, opts *ports.LimitOffsetQueryOptions) (*ports.ListResult[*equipmenttype.EquipmentType], error) {
-	log := s.l.With().Str("operation", "List").Logger()
+func (s *Service) List(ctx context.Context, opts *repositories.ListEquipmentTypeRequest) (*ports.ListResult[*equipmenttype.EquipmentType], error) {
+	log := s.l.With().
+		Str("operation", "List").
+		Logger()
 
 	result, err := s.ps.HasAnyPermissions(ctx,
 		[]*services.PermissionCheck{
 			{
-				UserID:         opts.TenantOpts.UserID,
+				UserID:         opts.Filter.TenantOpts.UserID,
 				Resource:       permission.ResourceEquipmentType,
 				Action:         permission.ActionRead,
-				BusinessUnitID: opts.TenantOpts.BuID,
-				OrganizationID: opts.TenantOpts.OrgID,
+				BusinessUnitID: opts.Filter.TenantOpts.BuID,
+				OrganizationID: opts.Filter.TenantOpts.OrgID,
 			},
 		},
 	)

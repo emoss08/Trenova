@@ -151,8 +151,8 @@ func TestStopValidator(t *testing.T) {
 				Code    errors.ErrorCode
 				Message string
 			}{
-				{Field: "stops[0].actualTimes", Code: errors.ErrInvalid, Message: "Actual arrival must be before actual departure"},
-				{Field: "stops[0].actualTimes", Code: errors.ErrInvalid, Message: "Actual arrival and departure times cannot be set on a move with no assignment"},
+				{Field: "stops[0].actualArrival", Code: errors.ErrInvalid, Message: "Actual arrival must be before actual departure"},
+				{Field: "stops[0].actualArrival", Code: errors.ErrInvalid, Message: "Actual arrival and departure times cannot be set on a move with no assignment"},
 			},
 		},
 		{
@@ -166,7 +166,7 @@ func TestStopValidator(t *testing.T) {
 				Code    errors.ErrorCode
 				Message string
 			}{
-				{Field: "stops[0].actualTimes", Code: errors.ErrInvalid, Message: "Actual arrival and departure times cannot be set on a move with no assignment"},
+				{Field: "stops[0].actualArrival", Code: errors.ErrInvalid, Message: "Actual arrival and departure times cannot be set on a move with no assignment"},
 			},
 		},
 	}

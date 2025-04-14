@@ -199,7 +199,7 @@ export interface BaseAutocompleteFieldProps<TOption> {
   /** Callback when an option is selected (Specific to AutocompleteField) */
   onOptionChange?: (option: TOption | null) => void;
   /** Extra search params to append to the query */
-  extraSearchParams?: Record<string, string>;
+  extraSearchParams?: Record<string, string | string[]>;
 }
 
 export type AutocompleteFieldProps<TOption, TForm extends FieldValues> = Omit<

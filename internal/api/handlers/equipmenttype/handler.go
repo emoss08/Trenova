@@ -1,6 +1,8 @@
 package equipmenttype
 
 import (
+	"strings"
+
 	"github.com/emoss08/trenova/internal/api/middleware"
 	equiptypedomain "github.com/emoss08/trenova/internal/core/domain/equipmenttype"
 	"github.com/emoss08/trenova/internal/core/ports"
@@ -100,7 +102,16 @@ func (h *Handler) list(c *fiber.Ctx) error {
 			return nil, h.eh.HandleError(fc, err)
 		}
 
-		return h.ets.List(fc.UserContext(), filter)
+		classes := []string{}
+		classesQuery := fc.Query("classes", "")
+		if classesQuery != "" {
+			classes = strings.Split(classesQuery, ",")
+		}
+
+		return h.ets.List(fc.UserContext(), &repositories.ListEquipmentTypeRequest{
+			Filter:  filter,
+			Classes: classes,
+		})
 	}
 
 	return limitoffsetpagination.HandlePaginatedRequest(c, h.eh, reqCtx, handler)

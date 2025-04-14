@@ -32,7 +32,19 @@ type ProNumberConfig struct {
 	LocationCode        string `json:"locationCode" bun:"location_code,type:VARCHAR(10),notnull"`
 	IncludeRandomDigits bool   `json:"includeRandomDigits" bun:"include_random_digits,type:BOOLEAN,notnull,default:false"`
 	RandomDigitsCount   int    `json:"randomDigitsCount" bun:"random_digits_count,type:INTEGER,notnull,default:4"`
-	IsActive            bool   `json:"isActive" bun:"is_active,type:BOOLEAN,notnull,default:true"`
+
+	// New configuration settings matching ProNumberFormat enhancements
+	IncludeCheckDigit       bool   `json:"includeCheckDigit" bun:"include_check_digit,type:BOOLEAN,notnull,default:false"`
+	IncludeBusinessUnitCode bool   `json:"includeBusinessUnitCode" bun:"include_business_unit_code,type:BOOLEAN,notnull,default:false"`
+	BusinessUnitCode        string `json:"businessUnitCode" bun:"business_unit_code,type:VARCHAR(10),notnull"`
+	UseSeparators           bool   `json:"useSeparators" bun:"use_separators,type:BOOLEAN,notnull,default:false"`
+	SeparatorChar           string `json:"separatorChar" bun:"separator_char,type:VARCHAR(1),notnull"`
+	IncludeWeekNumber       bool   `json:"includeWeekNumber" bun:"include_week_number,type:BOOLEAN,notnull,default:false"`
+	IncludeDay              bool   `json:"includeDay" bun:"include_day,type:BOOLEAN,notnull,default:false"`
+	AllowCustomFormat       bool   `json:"allowCustomFormat" bun:"allow_custom_format,type:BOOLEAN,notnull,default:false"`
+	CustomFormat            string `json:"customFormat" bun:"custom_format,type:VARCHAR(100),notnull"`
+
+	IsActive bool `json:"isActive" bun:"is_active,type:BOOLEAN,notnull,default:true"`
 
 	// Metadata
 	Version   int64 `bun:"version,type:BIGINT" json:"version"`
@@ -84,6 +96,43 @@ func (pnc *ProNumberConfig) Validate(ctx context.Context, multiErr *errors.Multi
 				validation.Max(10).Error("Random digits count must be at most 10"),
 			),
 		),
+
+		// BusinessUnitCode Validation
+		validation.Field(&pnc.BusinessUnitCode,
+			validation.When(pnc.IncludeBusinessUnitCode,
+				validation.Required.Error("Business unit code is required when including business unit code"),
+				validation.Length(1, 10).Error("Business unit code must be between 1 and 10 characters"),
+			),
+		),
+
+		// SeparatorChar Validation
+		validation.Field(&pnc.SeparatorChar,
+			validation.When(pnc.UseSeparators,
+				validation.Required.Error("Separator character is required when using separators"),
+				validation.Length(1, 1).Error("Separator character must be exactly 1 character"),
+			),
+		),
+
+		// CustomFormat Validation
+		validation.Field(&pnc.CustomFormat,
+			validation.When(pnc.AllowCustomFormat,
+				validation.Required.Error("Custom format is required when allowing custom format"),
+				validation.Length(1, 100).Error("Custom format must be between 1 and 100 characters"),
+			),
+		),
+
+		// Conflicting options
+		validation.Field(&pnc.IncludeMonth,
+			validation.When(pnc.IncludeWeekNumber,
+				validation.NotIn(true).Error("Cannot include both month and week number"),
+			),
+		),
+
+		validation.Field(&pnc.IncludeWeekNumber,
+			validation.When(pnc.IncludeMonth,
+				validation.NotIn(true).Error("Cannot include both week number and month"),
+			),
+		),
 	)
 	if err != nil {
 		var validationErrs validation.Errors
@@ -121,14 +170,23 @@ func (pnc *ProNumberConfig) BeforeAppendModel(_ context.Context, query bun.Query
 // ToProNumberFormat converts the config to a ProNumberFormat
 func (pnc *ProNumberConfig) ToProNumberFormat() *pronumbergen.ProNumberFormat {
 	return &pronumbergen.ProNumberFormat{
-		Prefix:              pnc.Prefix,
-		IncludeYear:         pnc.IncludeYear,
-		YearDigits:          pnc.YearDigits,
-		IncludeMonth:        pnc.IncludeMonth,
-		SequenceDigits:      pnc.SequenceDigits,
-		IncludeLocationCode: pnc.IncludeLocationCode,
-		LocationCode:        pnc.LocationCode,
-		IncludeRandomDigits: pnc.IncludeRandomDigits,
-		RandomDigitsCount:   pnc.RandomDigitsCount,
+		Prefix:                  pnc.Prefix,
+		IncludeYear:             pnc.IncludeYear,
+		YearDigits:              pnc.YearDigits,
+		IncludeMonth:            pnc.IncludeMonth,
+		SequenceDigits:          pnc.SequenceDigits,
+		IncludeLocationCode:     pnc.IncludeLocationCode,
+		LocationCode:            pnc.LocationCode,
+		IncludeRandomDigits:     pnc.IncludeRandomDigits,
+		RandomDigitsCount:       pnc.RandomDigitsCount,
+		IncludeCheckDigit:       pnc.IncludeCheckDigit,
+		IncludeBusinessUnitCode: pnc.IncludeBusinessUnitCode,
+		BusinessUnitCode:        pnc.BusinessUnitCode,
+		UseSeparators:           pnc.UseSeparators,
+		SeparatorChar:           pnc.SeparatorChar,
+		IncludeWeekNumber:       pnc.IncludeWeekNumber,
+		IncludeDay:              pnc.IncludeDay,
+		AllowCustomFormat:       pnc.AllowCustomFormat,
+		CustomFormat:            pnc.CustomFormat,
 	}
 }

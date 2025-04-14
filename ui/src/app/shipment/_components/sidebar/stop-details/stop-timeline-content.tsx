@@ -1,46 +1,65 @@
-"use no memo";
+import { StopDialog } from "@/app/shipment/_components/sidebar/stop-details/stop-dialog";
 import { Icon } from "@/components/ui/icons";
 import { formatSplitDateTime } from "@/lib/date";
 import { type ShipmentSchema } from "@/lib/schemas/shipment-schema";
 import { cn } from "@/lib/utils";
 import { MoveStatus } from "@/types/move";
 import { Stop, StopStatus, StopType } from "@/types/stop";
-import { memo, useMemo, useState } from "react";
+import { useCallback, useState } from "react";
 import {
-  UseFieldArrayRemove,
-  UseFieldArrayUpdate,
-  useFormContext,
+    UseFieldArrayRemove,
+    UseFieldArrayUpdate,
+    useFormContext,
 } from "react-hook-form";
-import { StopDialog } from "./stop-dialog";
+import { useLocationData } from "./queries";
 import {
-  getLineStyles,
-  getStatusIcon,
-  getStopStatusBgColor,
-  getStopStatusBorderColor,
-  getStopTypeLabel,
+    getLineStyles,
+    getStatusIcon,
+    getStopStatusBgColor,
+    getStopStatusBorderColor,
+    getStopTypeLabel,
 } from "./stop-utils";
 
-const LocationDisplay = memo(function LocationDisplay({
+// Display component for location
+function LocationDisplay({
   location,
   type,
+  locationId,
 }: {
-  location: Stop["location"];
+  location?: Stop["location"] | null;
   type: StopType;
+  locationId?: string;
 }) {
+  // If we have a locationId but no location, fetch the location data directly
+  const { data: fetchedLocation } = useLocationData(locationId || "");
+  
+  // Use fetchedLocation if available, otherwise fallback to the passed location
+  const displayLocation = fetchedLocation || location;
+  
+  // If we don't have any location data, display the stop type only
+  if (!displayLocation) {
+    return (
+      <div className="text-sm text-primary">
+        <span>{getStopTypeLabel(type)}</span>
+      </div>
+    );
+  }
+  
   return (
     <>
       <div className="flex items-center gap-1 text-sm text-primary">
-        <span className="text-xs">{location?.addressLine1}</span>
+        <span className="text-xs">{displayLocation.addressLine1}</span>
         <span className="text-2xs">({getStopTypeLabel(type)})</span>
       </div>
       <div className="text-2xs text-muted-foreground">
-        {location?.city}, {location?.state?.abbreviation} {location?.postalCode}
+        {displayLocation.city}, {displayLocation.state?.abbreviation} {displayLocation.postalCode}
       </div>
     </>
   );
-});
+}
 
-const StopCircle = memo(function StopCircle({
+// Status indicator circle
+function StopCircle({
   status,
   isLast,
   moveStatus,
@@ -55,8 +74,6 @@ const StopCircle = memo(function StopCircle({
 }) {
   const stopIcon = getStatusIcon(status, isLast, moveStatus);
   const bgColor = getStopStatusBgColor(status);
-
-  // Get border color from previous stop status if available
   const borderColor = prevStopStatus
     ? getStopStatusBorderColor(prevStopStatus)
     : "";
@@ -80,9 +97,9 @@ const StopCircle = memo(function StopCircle({
       )}
     </div>
   );
-});
+}
 
-const StopTimeline = memo(function StopTimeline({
+export default function StopTimeline({
   stop,
   nextStop,
   isLast,
@@ -103,41 +120,47 @@ const StopTimeline = memo(function StopTimeline({
   remove: UseFieldArrayRemove;
   prevStopStatus?: StopStatus;
 }) {
-  const [editModalOpen, setEditModalOpen] = useState<boolean>(false);
-  const lineStyles = useMemo(
-    () => getLineStyles(stop.status, prevStopStatus),
-    [stop.status, prevStopStatus],
-  );
+  // Dialog open/close state
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+
+  // Form context for errors
   const {
     formState: { errors },
   } = useFormContext<ShipmentSchema>();
-  const plannedArrival = useMemo(
-    () => formatSplitDateTime(stop.plannedArrival),
-    [stop.plannedArrival],
-  );
 
-  // Access errors directly without useMemo to ensure we're always getting fresh values
-  const moveErrors = errors.moves?.[moveIdx];
-  const stopErrors = moveErrors?.stops?.[stopIdx];
-  const hasErrors = !!stopErrors && Object.keys(stopErrors).length > 0;
+  // Get stop details
+  const lineStyles = getLineStyles(stop.status, prevStopStatus);
+  const plannedArrival = formatSplitDateTime(stop.plannedArrival);
 
+  // Check for errors
+  const stopErrors = errors.moves?.[moveIdx]?.stops?.[stopIdx];
+  const hasErrors = stopErrors && Object.keys(stopErrors).length > 0;
+
+  // Check if we have stop info
   const hasStopInfo = stop.location?.addressLine1 || stop.plannedArrival;
   const nextStopHasInfo =
     nextStop?.location?.addressLine1 || nextStop?.plannedArrival;
   const shouldShowLine = !isLast && hasStopInfo && nextStopHasInfo;
 
-  console.info("has errors", hasErrors);
-  console.log("form state", errors);
+  // Handler to open dialog
+  const openDialog = useCallback(() => {
+    setIsDialogOpen(true);
+  }, []);
+
+  // Handle dialog state changes
+  const handleDialogChange = useCallback((open: boolean) => {
+    setIsDialogOpen(open);
+  }, []);
 
   return (
-    <>
+    <div>
+      {/* Clickable stop display */}
       <div
-        key={stop.id}
         className={cn(
           "relative h-[60px] rounded-lg cursor-pointer select-none bg-muted/50 pt-2 border border-border",
           hasErrors && "border-destructive bg-destructive/10",
         )}
-        onClick={() => setEditModalOpen(!editModalOpen)}
+        onClick={openDialog}
       >
         {hasStopInfo ? (
           <>
@@ -169,7 +192,11 @@ const StopTimeline = memo(function StopTimeline({
                 />
               </div>
               <div className="flex-1">
-                <LocationDisplay location={stop.location} type={stop.type} />
+                <LocationDisplay 
+                  location={stop.location} 
+                  type={stop.type}
+                  locationId={stop.locationId} 
+                />
               </div>
             </div>
           </>
@@ -191,7 +218,7 @@ const StopTimeline = memo(function StopTimeline({
                 </div>
                 <p className="text-muted-foreground text-xs">
                   {getStopTypeLabel(stop.type)} information is required to
-                  create a shipment. shipment.
+                  create a shipment.
                 </p>
               </>
             )}
@@ -199,18 +226,16 @@ const StopTimeline = memo(function StopTimeline({
         )}
       </div>
 
+      {/* The dialog */}
       <StopDialog
-        open={editModalOpen}
-        onOpenChange={setEditModalOpen}
-        stopId={stop.id ?? ""}
+        open={isDialogOpen}
+        onOpenChange={handleDialogChange}
         isEditing={true}
         moveIdx={moveIdx}
         stopIdx={stopIdx}
         update={update}
         remove={remove}
       />
-    </>
+    </div>
   );
-});
-
-export default StopTimeline;
+}

@@ -92,7 +92,7 @@ func (v *StopValidator) validateTimes(s *shipment.Stop, multiErr *errors.MultiEr
 	// Validate actual arrival/departure times if both are set
 	if s.ActualArrival != nil && s.ActualDeparture != nil {
 		if *s.ActualArrival > *s.ActualDeparture {
-			multiErr.Add("actualTimes", errors.ErrInvalid, "Actual arrival must be before actual departure")
+			multiErr.Add("actualArrival", errors.ErrInvalid, "Actual arrival must be before actual departure")
 		}
 	}
 }
@@ -111,7 +111,7 @@ func (v *StopValidator) validateAssignment(ctx context.Context, s *shipment.Stop
 		return
 	}
 
-	if move.Assignment == nil {
-		multiErr.Add("actualTimes", errors.ErrInvalid, "Actual arrival and departure times cannot be set on a move with no assignment")
+	if move.Assignment == nil && (s.ActualArrival != nil || s.ActualDeparture != nil) {
+		multiErr.Add("actualArrival", errors.ErrInvalid, "Actual arrival and departure times cannot be set on a move with no assignment")
 	}
 }

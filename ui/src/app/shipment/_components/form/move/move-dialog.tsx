@@ -25,7 +25,7 @@ import { MoveStatus } from "@/types/move";
 import { StopStatus, StopType, type Stop } from "@/types/stop";
 import { faPlus } from "@fortawesome/pro-regular-svg-icons";
 import { AnimatePresence, motion } from "motion/react";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   useFieldArray,
   useFormContext,
@@ -42,14 +42,14 @@ type MoveDialogProps = TableSheetProps & {
   remove: UseFieldArrayRemove;
 };
 
-export function MoveDialog({
+const MoveDialogComponent = ({
   open,
   onOpenChange,
   moveIdx,
   isEditing,
   update,
   remove,
-}: MoveDialogProps) {
+}: MoveDialogProps) => {
   const { control, getValues, setValue, reset } =
     useFormContext<ShipmentSchema>();
   const [editingStopIdx, setEditingStopIdx] = useState<number | null>(null);
@@ -72,42 +72,66 @@ export function MoveDialog({
     }
   }, [open]);
 
-  // Initialize a new move with default values
-  useEffect(() => {
-    if (open && !isEditing) {
-      // Set default values for a new move
-      setValue(`moves.${moveIdx}.status`, MoveStatus.New);
-      setValue(`moves.${moveIdx}.distance`, 0);
-      setValue(`moves.${moveIdx}.loaded`, true);
-      setValue(`moves.${moveIdx}.sequence`, moveIdx);
+  // Helper to update stop sequences - memoize to prevent recreation
+  const updateStopSequences = useCallback(() => {
+    const currentMoveValues = getValues(`moves.${moveIdx}`);
 
-      // Set the current time for defaults
-      const now = Math.floor(Date.now() / 1000);
-      const oneHour = 3600;
+    if (currentMoveValues.stops) {
+      // Manually update sequences of all stops
+      const updatedStops = currentMoveValues.stops.map((stop, idx) => ({
+        ...stop,
+        sequence: idx,
+      }));
 
-      // Append two new stops to the move
-      setValue(`moves.${moveIdx}.stops`, [
-        {
-          sequence: 0,
-          status: StopStatus.New,
-          type: StopType.Pickup,
-          locationId: "",
-          plannedArrival: now,
-          plannedDeparture: now + oneHour / 2,
-          addressLine: "",
-        },
-        {
-          sequence: 1,
-          status: StopStatus.New,
-          type: StopType.Delivery,
-          locationId: "",
-          plannedArrival: now + oneHour,
-          plannedDeparture: now + oneHour + oneHour / 2,
-          addressLine: "",
-        },
-      ]);
+      // Update the entire move with properly sequenced stops
+      update(moveIdx, {
+        ...currentMoveValues,
+        stops: updatedStops,
+      });
     }
+  }, [getValues, moveIdx, update]);
+
+  // Initialize a new move with default values - memoize this function
+  const initializeNewMove = useCallback(() => {
+    if (!open || isEditing) return;
+    
+    // Set default values for a new move
+    setValue(`moves.${moveIdx}.status`, MoveStatus.New);
+    setValue(`moves.${moveIdx}.distance`, 0);
+    setValue(`moves.${moveIdx}.loaded`, true);
+    setValue(`moves.${moveIdx}.sequence`, moveIdx);
+
+    // Set the current time for defaults
+    const now = Math.floor(Date.now() / 1000);
+    const oneHour = 3600;
+
+    // Append two new stops to the move
+    setValue(`moves.${moveIdx}.stops`, [
+      {
+        sequence: 0,
+        status: StopStatus.New,
+        type: StopType.Pickup,
+        locationId: "",
+        plannedArrival: now,
+        plannedDeparture: now + oneHour / 2,
+        addressLine: "",
+      },
+      {
+        sequence: 1,
+        status: StopStatus.New,
+        type: StopType.Delivery,
+        locationId: "",
+        plannedArrival: now + oneHour,
+        plannedDeparture: now + oneHour + oneHour / 2,
+        addressLine: "",
+      },
+    ]);
   }, [open, isEditing, moveIdx, setValue]);
+
+  // Call the initialization function
+  useEffect(() => {
+    initializeNewMove();
+  }, [initializeNewMove]);
 
   // Handle dialog close
   const handleClose = useCallback(() => {
@@ -136,25 +160,26 @@ export function MoveDialog({
   }, [onOpenChange, getValues, moveIdx, remove, isEditing, reset]);
 
   // Add a handler for dialog's escape key or outside click to ensure we remove unsaved moves
-  const handleOpenChange = (newOpenState: boolean) => {
+  const handleOpenChange = useCallback((newOpenState: boolean) => {
     if (!newOpenState && !hasSavedRef.current) {
       handleClose();
     } else {
       onOpenChange(newOpenState);
     }
-  };
+  }, [handleClose, onOpenChange, hasSavedRef]);
 
   // Handle save move
   const handleSave = useCallback(() => {
     const move = getValues().moves?.[moveIdx];
 
     if (move) {
-      // Ensure all required fields have values
+      // Ensure all required fields have values and preserve location data in stops
       const updatedMove = {
         ...move,
         status: move.status || MoveStatus.New,
         distance: move.distance ?? 0,
         loaded: move.loaded ?? true,
+        // Make sure we preserve all stop data
         stops: move.stops || [],
         sequence: move.sequence ?? moveIdx,
       };
@@ -177,7 +202,8 @@ export function MoveDialog({
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [open, handleSave]);
 
-  const handleAddStop = () => {
+  // Memoize this function to prevent recreation on every render
+  const handleAddStop = useCallback(() => {
     // Insert after the first stop but before the last stop
     const insertPosition = fields.length > 1 ? fields.length - 1 : 1;
 
@@ -212,36 +238,17 @@ export function MoveDialog({
 
     // Start editing the new stop
     setEditingStopIdx(insertPosition);
-  };
+  }, [fields, insert, updateStopSequences, setEditingStopIdx]);
 
-  // Helper to update stop sequences
-  const updateStopSequences = () => {
-    const currentMoveValues = getValues(`moves.${moveIdx}`);
-
-    if (currentMoveValues.stops) {
-      // Manually update sequences of all stops
-      const updatedStops = currentMoveValues.stops.map((stop, idx) => ({
-        ...stop,
-        sequence: idx,
-      }));
-
-      // Update the entire move with properly sequenced stops
-      update(moveIdx, {
-        ...currentMoveValues,
-        stops: updatedStops,
-      });
-    }
-  };
-
-  const handleEditStop = (stopIdx: number) => {
+  const handleEditStop = useCallback((stopIdx: number) => {
     setEditingStopIdx(stopIdx);
-  };
+  }, []);
 
-  const handleStopEditCancel = () => {
+  const handleStopEditCancel = useCallback(() => {
     setEditingStopIdx(null);
-  };
+  }, []);
 
-  const handleStopEditSave = () => {
+  const handleStopEditSave = useCallback(() => {
     // Get the current form values for the stop being edited
     const currentValues = getValues();
     const editedStop = currentValues.moves?.[moveIdx]?.stops?.[editingStopIdx!];
@@ -265,9 +272,9 @@ export function MoveDialog({
 
     // Close the edit form
     setEditingStopIdx(null);
-  };
+  }, [editingStopIdx, getValues, moveIdx, update]);
 
-  const handleDeleteStop = (stopIdx: number) => {
+  const handleDeleteStop = useCallback((stopIdx: number) => {
     // Prevent deletion of first pickup or last delivery
     if (stopIdx === 0 || stopIdx === fields.length - 1) {
       return;
@@ -287,17 +294,26 @@ export function MoveDialog({
         setEditingStopIdx(editingStopIdx - 1);
       }
     }
-  };
+  }, [fields.length, removeStop, updateStopSequences, editingStopIdx]);
+
+  // Memoize the dialog title and description
+  const dialogInfo = useMemo(() => ({
+    title: isEditing ? "Edit Move" : "Add Move",
+    description: isEditing
+      ? "Edit the move details for this shipment."
+      : "Add a new move to the shipment."
+  }), [isEditing]);
+
+  // Memoize the save button text
+  const saveButtonText = useMemo(() => isEditing ? "Update" : "Add", [isEditing]);
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent className="max-w-3xl">
         <DialogHeader>
-          <DialogTitle>{isEditing ? "Edit Move" : "Add Move"}</DialogTitle>
+          <DialogTitle>{dialogInfo.title}</DialogTitle>
           <DialogDescription>
-            {isEditing
-              ? "Edit the move details for this shipment."
-              : "Add a new move to the shipment."}
+            {dialogInfo.description}
           </DialogDescription>
         </DialogHeader>
         <DialogBody>
@@ -397,7 +413,7 @@ export function MoveDialog({
             <Tooltip>
               <TooltipTrigger asChild>
                 <Button type="button" onClick={handleSave}>
-                  {isEditing ? "Update" : "Add"}
+                  {saveButtonText}
                 </Button>
               </TooltipTrigger>
               <TooltipContent className="flex items-center gap-2">
@@ -415,4 +431,6 @@ export function MoveDialog({
       </DialogContent>
     </Dialog>
   );
-}
+};
+
+export const MoveDialog = memo(MoveDialogComponent);

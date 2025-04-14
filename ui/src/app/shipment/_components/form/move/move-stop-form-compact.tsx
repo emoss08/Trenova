@@ -12,7 +12,7 @@ import { ShipmentSchema } from "@/lib/schemas/shipment-schema";
 import { cn, formatLocation } from "@/lib/utils";
 import { StopType } from "@/types/stop";
 import { faInfoCircle, faLocationDot } from "@fortawesome/pro-solid-svg-icons";
-import { useEffect } from "react";
+import { memo, useEffect, useMemo } from "react";
 import { useFormContext } from "react-hook-form";
 import { useLocationData } from "../../sidebar/stop-details/queries";
 
@@ -25,15 +25,16 @@ type CompactStopFormProps = {
   isFirstOrLastStop?: boolean;
 };
 
-export function CompactStopForm({
+const CompactStopFormComponent = ({
   moveIdx,
   stopIdx,
   onCancel,
   onSave,
   isInlineForm = false,
   isFirstOrLastStop = false,
-}: CompactStopFormProps) {
-  const { control, watch, setValue } = useFormContext<ShipmentSchema>();
+}: CompactStopFormProps) => {
+  const { control, watch, setValue, getValues } =
+    useFormContext<ShipmentSchema>();
   const stopType = watch(`moves.${moveIdx}.stops.${stopIdx}.type`);
   const stopsLength = watch(`moves.${moveIdx}.stops`)?.length || 0;
   const locationId = watch(`moves.${moveIdx}.stops.${stopIdx}.locationId`);
@@ -42,16 +43,17 @@ export function CompactStopForm({
   const isFirstStop = stopIdx === 0;
   const isLastStop = stopIdx === stopsLength - 1;
 
-  // Determine appropriate title
-  const getStopTitle = () => {
+  // Memoize the stop title to prevent recalculation on each render
+  const stopTitle = useMemo(() => {
     if (isFirstStop) return "Origin Stop (Pickup)";
     if (isLastStop) return "Destination Stop (Delivery)";
     return `Intermediate Stop ${stopIdx + 1}`;
-  };
+  }, [isFirstStop, isLastStop, stopIdx]);
 
   const { data: locationData, isLoading: isLoadingLocation } =
     useLocationData(locationId);
 
+  // Set address when location changes
   useEffect(() => {
     if (!isLoadingLocation && locationId && locationData) {
       const formattedLocation = formatLocation(locationData);
@@ -59,11 +61,41 @@ export function CompactStopForm({
         `moves.${moveIdx}.stops.${stopIdx}.addressLine`,
         formattedLocation,
       );
+
+      // Get current move values
+      const currentValues = getValues();
+      const currentMove = currentValues.moves?.[moveIdx];
+
+      if (currentMove && currentMove.stops && currentMove.stops[stopIdx]) {
+        // Update the stop with location data
+        const updatedStop = {
+          ...currentMove.stops[stopIdx],
+          location: locationData,
+        };
+
+        // Update all the stops
+        const updatedStops = [...currentMove.stops];
+        updatedStops[stopIdx] = updatedStop;
+
+        // Update the entire move
+        setValue(`moves.${moveIdx}`, {
+          ...currentMove,
+          stops: updatedStops,
+        });
+      }
     }
-  }, [isLoadingLocation, locationId, locationData, setValue, moveIdx, stopIdx]);
+  }, [
+    isLoadingLocation,
+    locationId,
+    locationData,
+    setValue,
+    moveIdx,
+    stopIdx,
+    getValues,
+  ]);
 
   return (
-    <Card className={`border ${isInlineForm ? "p-4" : "p-5"}`}>
+    <Card className={cn("border", isInlineForm ? "p-4" : "p-5")}>
       <div className="flex justify-between items-center mb-4">
         <div className="flex items-center gap-2">
           <div
@@ -76,9 +108,7 @@ export function CompactStopForm({
           >
             <Icon icon={faLocationDot} className="size-4" />
           </div>
-          <h3 className="text-sm font-semibold text-foreground">
-            {getStopTitle()}
-          </h3>
+          <h3 className="text-sm font-semibold text-foreground">{stopTitle}</h3>
         </div>
         <div className="flex gap-2">
           <Button size="sm" variant="outline" onClick={onCancel}>
@@ -90,21 +120,18 @@ export function CompactStopForm({
         </div>
       </div>
 
-      {isFirstOrLastStop && (
-        <div className="bg-blue-50 border border-blue-100 rounded-md p-3 mb-4 flex items-start gap-2">
-          <Icon icon={faInfoCircle} className="size-4 text-blue-500 mt-0.5" />
-          <div className="text-sm text-blue-700">
-            <p>
-              {isFirstStop
-                ? "This is the origin pickup stop for this move. The stop type cannot be changed."
-                : "This is the destination delivery stop for this move. The stop type cannot be changed."}
-            </p>
-          </div>
+      <div className="bg-blue-50 border border-blue-100 rounded-md p-3 mb-4 flex items-start gap-2">
+        <Icon icon={faInfoCircle} className="size-4 text-blue-500 mt-0.5" />
+        <div className="text-sm text-blue-700">
+          <p>
+            {isFirstStop
+              ? "This is the origin pickup stop for this move. The stop type cannot be changed."
+              : "This is the destination delivery stop for this move. The stop type cannot be changed."}
+          </p>
         </div>
-      )}
+      </div>
 
       <div className="space-y-2">
-        {/* Basic Information Row */}
         <div>
           <div className="flex items-center gap-2 mb-1">
             <h3 className="text-sm font-semibold text-foreground">
@@ -197,7 +224,6 @@ export function CompactStopForm({
             </FormControl>
           </FormGroup>
         </div>
-
         <div className="pt-2">
           <div className="flex items-center gap-2 mb-1">
             <h3 className="text-sm font-semibold text-foreground">
@@ -235,7 +261,6 @@ export function CompactStopForm({
                 </FormControl>
               </FormGroup>
             </div>
-
             <div className="rounded-lg bg-accent/50 p-4">
               <h4 className="text-sm font-medium text-foreground mb-3">
                 Actual Times
@@ -266,4 +291,6 @@ export function CompactStopForm({
       </div>
     </Card>
   );
-}
+};
+
+export const CompactStopForm = memo(CompactStopFormComponent);
