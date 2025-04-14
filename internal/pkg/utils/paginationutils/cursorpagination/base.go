@@ -76,7 +76,7 @@ func ProcessResponse[T BaseModel](
 		},
 	}
 	// Copy data with proper pointer handling
-	for i := 0; i < dataLen; i++ {
+	for i := range dataLen {
 		tmp := entities[i]
 		response.Data[i] = &tmp
 	}

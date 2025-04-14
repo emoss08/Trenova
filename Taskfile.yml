@@ -21,6 +21,10 @@ tasks:
     cmds:
       - task: swag-fmt
       - task: swag-init
+  lint:
+    cmds:
+      - task: ci-lint
+      - task: modernize
   test:
     cmd: go test ./... -v
   test-pretty:
@@ -36,8 +40,10 @@ tasks:
     cmd: go get -u ./... && go mod tidy
   fix:
     cmd: goimports -w ./.. && go mod tidy
-  lint:
+  ci-lint:
     cmd: golangci-lint run --timeout 5m
+  modernize:
+    cmd: go run golang.org/x/tools/gopls/internal/analysis/modernize/cmd/modernize@latest -test ./...
   format:
     cmd: go fmt ./...
   format-sql:

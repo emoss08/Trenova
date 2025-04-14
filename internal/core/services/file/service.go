@@ -313,7 +313,7 @@ func (s *service) manageVersions(ctx context.Context, bucketName, objectName str
 		})
 
 		// Delete oldest version that exceed the limit
-		for i := 0; i < len(versions)-maxVersions; i++ {
+		for i := range len(versions) - maxVersions {
 			err = s.client.RemoveObject(ctx, bucketName, objectName, minio.RemoveObjectOptions{
 				VersionID: versions[i].VersionID,
 			})

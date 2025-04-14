@@ -58,7 +58,7 @@ func LoadWorkers(ctx context.Context, db *bun.DB, fixture *dbfixture.Fixture) er
 	now := time.Now()
 
 	// Generate worker data
-	for i := 0; i < numWorkers; i++ {
+	for range numWorkers {
 		// Generate random state for both address and license
 
 		workerID := pulid.MustNew("wrk_")

@@ -5,6 +5,8 @@ import (
 	"sort"
 	"strings"
 
+	"slices"
+
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/pkg/utils/timeutils"
@@ -88,12 +90,7 @@ func getAllResourceActions(resource permission.Resource) []permission.Action {
 
 func supportsAction(resource permission.Resource, action permission.Action) bool {
 	actions := getAllResourceActions(resource)
-	for _, a := range actions {
-		if a == action {
-			return true
-		}
-	}
-	return false
+	return slices.Contains(actions, action)
 }
 
 func findFieldPermission(permissions []*permission.FieldPermission, field string) (*permission.FieldPermission, bool) {
@@ -106,12 +103,7 @@ func findFieldPermission(permissions []*permission.FieldPermission, field string
 }
 
 func hasAction(actions []permission.Action, target permission.Action) bool {
-	for _, action := range actions {
-		if action == target {
-			return true
-		}
-	}
-	return false
+	return slices.Contains(actions, target)
 }
 
 func evaluateConditions(conditions []*permission.Condition, ctx *services.PermissionContext) bool {
@@ -223,19 +215,9 @@ func evaluateFieldCondition(c *permission.Condition, ctx *services.PermissionCon
 	case permission.OpNotEquals:
 		return fieldValue != c.Value
 	case permission.OpIn:
-		for _, v := range c.Values {
-			if v == fieldValue {
-				return true
-			}
-		}
-		return false
+		return slices.Contains(c.Values, fieldValue)
 	case permission.OpNotIn:
-		for _, v := range c.Values {
-			if v == fieldValue {
-				return false
-			}
-		}
-		return true
+		return !slices.Contains(c.Values, fieldValue)
 	case permission.OpContains:
 		strField, ok := fieldValue.(string)
 		if !ok {

@@ -276,7 +276,7 @@ func buildRuleMap(rules []*hazmatsegregationrule.HazmatSegregationRule) map[hazm
 func checkCommodityPairs(commodities []*shipment.ShipmentCommodity, ruleMap map[hazmatPair]*hazmatsegregationrule.HazmatSegregationRule) []*SegregationViolation {
 	violations := make([]*SegregationViolation, 0)
 
-	for i := 0; i < len(commodities); i++ {
+	for i := range commodities {
 		for j := i + 1; j < len(commodities); j++ {
 			comA := commodities[i]
 			comB := commodities[j]

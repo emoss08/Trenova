@@ -4,6 +4,8 @@ import (
 	"strings"
 	"time"
 
+	"maps"
+
 	"github.com/emoss08/trenova/internal/core/domain/audit"
 	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/pkg/utils/jsonutils"
@@ -80,9 +82,7 @@ func WithMetadata(metadata map[string]any) services.LogOption {
 		if entry.Metadata == nil {
 			entry.Metadata = make(map[string]any)
 		}
-		for k, v := range metadata {
-			entry.Metadata[k] = v
-		}
+		maps.Copy(entry.Metadata, metadata)
 		return nil
 	}
 }

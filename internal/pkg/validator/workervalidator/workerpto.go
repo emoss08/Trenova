@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"time"
 
+	"slices"
+
 	"github.com/emoss08/trenova/internal/core/domain/worker"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/pkg/errors"
@@ -131,13 +133,7 @@ func (v *WorkerPTOValidator) validatePTOStatusTransition(ctx context.Context, wr
 	}
 
 	// * Check if the new status is one of the allowed next states
-	isAllowed := false
-	for _, next := range allowedTransitions {
-		if pto.Status == next {
-			isAllowed = true
-			break
-		}
-	}
+	isAllowed := slices.Contains(allowedTransitions, pto.Status)
 
 	if !isAllowed {
 		multiErr.Add(

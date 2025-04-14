@@ -8,6 +8,8 @@ import (
 	"strings"
 	"time"
 
+	"slices"
+
 	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/infrastructure/storage/minio"
 	"github.com/emoss08/trenova/internal/pkg/config"
@@ -211,11 +213,5 @@ func (s *service) isPreviewSupported(fileName string) bool {
 		// Can easily add more supported types here
 	}
 
-	for _, supported := range supportedExt {
-		if ext == supported {
-			return true
-		}
-	}
-
-	return false
+	return slices.Contains(supportedExt, ext)
 }
