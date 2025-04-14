@@ -3,11 +3,11 @@ package imagegen
 import (
 	"context"
 	"fmt"
+	"image/jpeg"
 	"os"
 	"path/filepath"
 	"strings"
 
-	"github.com/chai2010/webp"
 	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/pkg/errors"
 	"github.com/emoss08/trenova/internal/pkg/logger"
@@ -127,8 +127,8 @@ func (s *service) convertPDFToImage(pdfPath, outputPath string, options *service
 		quality = *options.Quality
 	}
 
-	// Encode to WebP for better compression while maintaining quality
-	if err = webp.Encode(out, img, &webp.Options{Quality: float32(quality)}); err != nil {
+	// Encode to JPEG with specified quality
+	if err = jpeg.Encode(out, img, &jpeg.Options{Quality: quality}); err != nil {
 		s.l.Error().Err(err).Msg("failed to encode image")
 		return err
 	}
