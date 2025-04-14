@@ -9,12 +9,6 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Icon } from "@/components/ui/icons";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
 import { STOP_DIALOG_NOTICE_KEY } from "@/constants/env";
 import { ShipmentSchema } from "@/lib/schemas/shipment-schema";
 import { stopSchema } from "@/lib/schemas/stop-schema";
@@ -23,7 +17,7 @@ import { MoveStatus } from "@/types/move";
 import { StopStatus, StopType, type Stop } from "@/types/stop";
 import { faInfoCircle, faXmark } from "@fortawesome/pro-solid-svg-icons";
 import { useLocalStorage } from "@uidotdev/usehooks";
-import { useCallback, useEffect } from "react";
+import { memo, useCallback, useEffect, useMemo } from "react";
 import {
   UseFieldArrayRemove,
   UseFieldArrayUpdate,
@@ -35,7 +29,6 @@ import { useLocationData } from "./queries";
 import { StopDialogForm } from "./stop-dialog-form";
 
 type StopDialogProps = TableSheetProps & {
-  stopId: string;
   isEditing: boolean;
   update: UseFieldArrayUpdate<ShipmentSchema, `moves`>;
   moveIdx: number;
@@ -43,7 +36,7 @@ type StopDialogProps = TableSheetProps & {
   remove: UseFieldArrayRemove;
 };
 
-export function StopDialog({
+export const StopDialog = memo(function StopDialog({
   open,
   onOpenChange,
   isEditing,
@@ -52,7 +45,7 @@ export function StopDialog({
   stopIdx,
   remove,
 }: StopDialogProps) {
-  const { getValues, reset, setValue, control, setError, clearErrors } =
+  const { getValues, setValue, control, setError, clearErrors } =
     useFormContext<ShipmentSchema>();
 
   const locationId = useWatch({
@@ -63,7 +56,38 @@ export function StopDialog({
   const { data: locationData, isLoading: isLoadingLocation } =
     useLocationData(locationId);
 
-  const validateStop = async () => {
+  // Initialize a new stop with empty values when adding a new stop - only runs when dialog opens
+  useEffect(() => {
+    if (open && !isEditing) {
+      // Initialize with default empty values
+      const now = Math.floor(Date.now() / 1000);
+      const oneHour = 3600;
+
+      setValue(`moves.${moveIdx}.stops.${stopIdx}`, {
+        status: StopStatus.New,
+        // Provide a default type that users can change
+        type: StopType.Pickup,
+        sequence: stopIdx,
+        locationId: "",
+        addressLine: "",
+        plannedArrival: now,
+        plannedDeparture: now + oneHour,
+        // Copy organization and business unit from the move
+        organizationId: getValues().moves?.[moveIdx]?.organizationId,
+        businessUnitId: getValues().moves?.[moveIdx]?.businessUnitId,
+      });
+    }
+  }, [open, isEditing, moveIdx, stopIdx, setValue, getValues]);
+
+  // Set the Location ID and Location data
+  useEffect(() => {
+    if (!isLoadingLocation && locationId && locationData) {
+      // @ts-expect-error // Location information is not required, but exists
+      setValue(`moves.${moveIdx}.stops.${stopIdx}.location`, locationData);
+    }
+  }, [isLoadingLocation, locationId, locationData, moveIdx, setValue, stopIdx]);
+
+  const validateStop = useCallback(async () => {
     // Clear existing errors only for this stop
     clearErrors(`moves.${moveIdx}.stops.${stopIdx}`);
 
@@ -105,7 +129,6 @@ export function StopDialog({
           if (fieldPath) {
             // Just use the direct field path without splitting
             const fullPath = `moves.${moveIdx}.stops.${stopIdx}.${fieldPath}`;
-            console.info("Setting error", fullPath, err.message);
             setError(fullPath as any, {
               type: "manual",
               message: err.message,
@@ -126,9 +149,9 @@ export function StopDialog({
       }
       return false;
     }
-  };
+  }, [clearErrors, getValues, moveIdx, setError, setValue, stopIdx]);
 
-  const handleSave = async () => {
+  const handleSave = useCallback(async () => {
     const isValid = await validateStop();
 
     if (isValid) {
@@ -155,6 +178,7 @@ export function StopDialog({
           shipmentMoveId: formValues?.moves?.[moveIdx]?.id || "",
         };
 
+        // Always use the update function to update the move with the new stop data
         update(moveIdx, {
           ...formValues.moves?.[moveIdx],
           loaded: formValues.moves?.[moveIdx]?.loaded ?? false,
@@ -167,102 +191,95 @@ export function StopDialog({
           status: formValues.moves?.[moveIdx]?.status || MoveStatus.New,
         });
 
+        // Close the dialog after successful save
         onOpenChange(false);
       }
     }
-  };
-
-  // Set the Location ID and Location
-  // When the location ID is set, set the location
-  useEffect(() => {
-    if (!isLoadingLocation && locationId && locationData) {
-      // @ts-expect-error // Location information is not required, but exists
-      setValue(`moves.${moveIdx}.stops.${stopIdx}.location`, locationData);
-    }
-  }, [isLoadingLocation, locationId, locationData, moveIdx, setValue, stopIdx]);
+  }, [
+    validateStop,
+    getValues,
+    moveIdx,
+    stopIdx,
+    update,
+    onOpenChange,
+    isEditing,
+  ]);
 
   const handleClose = useCallback(() => {
     onOpenChange(false);
 
     if (!isEditing) {
+      // When adding a new stop and canceling, remove it
       remove(stopIdx);
     } else {
+      // When editing an existing stop and canceling, reset to original values
+      // but don't remove anything
       const originalValues = getValues();
-      const stops = originalValues?.moves?.[moveIdx]?.stops || [];
+      const moves = originalValues?.moves || [];
+      const stops = moves[moveIdx]?.stops || [];
 
-      reset(
-        {
-          moves: [
-            ...(originalValues?.moves || []).slice(0, moveIdx),
-            {
-              ...(originalValues?.moves || [])[moveIdx],
-              stops: stops.slice(0, stopIdx),
-            },
-            ...(originalValues?.moves || []).slice(moveIdx + 1),
-          ],
-        },
-        {
-          keepValues: true,
-        },
-      );
+      // Only reset if we have the original stop data
+      if (moves.length > moveIdx && stops.length > stopIdx) {
+        const originalStop = stops[stopIdx];
+
+        if (originalStop) {
+          // Reset only this specific stop's values
+          setValue(`moves.${moveIdx}.stops.${stopIdx}`, originalStop, {
+            shouldValidate: false,
+          });
+        }
+      }
     }
-  }, [onOpenChange, remove, stopIdx, isEditing, reset, getValues, moveIdx]);
+  }, [onOpenChange, remove, stopIdx, isEditing, getValues, moveIdx, setValue]);
+
+  const dialogContent = useMemo(
+    () => (
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>{isEditing ? "Edit Stop" : "Add Stop"}</DialogTitle>
+          <DialogDescription>
+            {isEditing
+              ? "Edit the stop details for this shipment."
+              : "Add a new stop to the shipment."}
+          </DialogDescription>
+        </DialogHeader>
+        <StopDialogNotice />
+        <DialogBody>
+          <StopDialogForm moveIdx={moveIdx} stopIdx={stopIdx} />
+        </DialogBody>
+        <DialogFooter>
+          <Button type="button" variant="outline" onClick={handleClose}>
+            Cancel
+          </Button>
+          <Button type="button" onClick={handleSave}>
+            {isEditing ? "Update" : "Add"}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    ),
+    [handleClose, handleSave, isEditing, moveIdx, stopIdx],
+  );
 
   return (
-    <>
-      <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>{isEditing ? "Edit Stop" : "Add Stop"}</DialogTitle>
-            <DialogDescription>
-              {isEditing
-                ? "Edit the stop details for this shipment."
-                : "Add a new stop to the shipment."}
-            </DialogDescription>
-          </DialogHeader>
-          <StopDialogNotice />
-          <DialogBody>
-            <StopDialogForm moveIdx={moveIdx} stopIdx={stopIdx} />
-          </DialogBody>
-          <DialogFooter>
-            <Button type="button" variant="outline" onClick={handleClose}>
-              Cancel
-            </Button>
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button type="button" onClick={handleSave}>
-                    {isEditing ? "Update" : "Add"}
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent className="flex items-center gap-2">
-                  <kbd className="-me-1 inline-flex h-5 max-h-full items-center rounded bg-muted-foreground/60 px-1 font-[inherit] text-[0.625rem] font-medium text-foreground">
-                    Ctrl
-                  </kbd>
-                  <kbd className="-me-1 inline-flex h-5 max-h-full items-center rounded bg-muted-foreground/60 px-1 font-[inherit] text-[0.625rem] font-medium text-foreground">
-                    Enter
-                  </kbd>
-                  <p>to save and close the stop</p>
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-    </>
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      {dialogContent}
+    </Dialog>
   );
-}
+});
 
-function StopDialogNotice() {
+const StopDialogNotice = memo(function StopDialogNotice() {
   const [noticeVisible, setNoticeVisible] = useLocalStorage(
     STOP_DIALOG_NOTICE_KEY,
     true,
   );
 
-  const handleClose = () => {
+  const handleClose = useCallback(() => {
     setNoticeVisible(false);
-  };
-  return noticeVisible ? (
+  }, [setNoticeVisible]);
+
+  if (!noticeVisible) return null;
+
+  return (
     <div className="bg-blue-500/20 px-4 py-3 text-blue-500">
       <div className="flex gap-2">
         <div className="flex grow gap-3">
@@ -292,5 +309,5 @@ function StopDialogNotice() {
         </Button>
       </div>
     </div>
-  ) : null;
-}
+  );
+});

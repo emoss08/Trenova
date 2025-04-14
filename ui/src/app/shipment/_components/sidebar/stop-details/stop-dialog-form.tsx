@@ -7,20 +7,20 @@ import { stopStatusChoices, stopTypeChoices } from "@/lib/choices";
 import { type LocationSchema } from "@/lib/schemas/location-schema";
 import { ShipmentSchema } from "@/lib/schemas/shipment-schema";
 import { formatLocation } from "@/lib/utils";
-import { useEffect } from "react";
+import { memo, useCallback, useEffect, useMemo } from "react";
 import { useFormContext, useWatch } from "react-hook-form";
 import { useLocationData } from "./queries";
 
-export function StopDialogForm({
-  moveIdx,
-  stopIdx,
-}: {
+interface StopDialogFormProps {
   moveIdx: number;
   stopIdx: number;
-}) {
-  const { control, setValue, watch } = useFormContext<ShipmentSchema>();
+}
 
-  console.info("watch", watch());
+export const StopDialogForm = memo(function StopDialogForm({
+  moveIdx,
+  stopIdx,
+}: StopDialogFormProps) {
+  const { control, setValue } = useFormContext<ShipmentSchema>();
   const locationId = useWatch({
     control,
     name: `moves.${moveIdx}.stops.${stopIdx}.locationId`,
@@ -29,6 +29,7 @@ export function StopDialogForm({
   const { data: locationData, isLoading: isLoadingLocation } =
     useLocationData(locationId);
 
+  // Keep the address prefill functionality when a location is selected
   useEffect(() => {
     if (!isLoadingLocation && locationId && locationData) {
       const formattedLocation = formatLocation(locationData);
@@ -42,8 +43,22 @@ export function StopDialogForm({
     }
   }, [isLoadingLocation, locationId, locationData, setValue, moveIdx, stopIdx]);
 
-  return (
-    <div className="space-y-2">
+  // Memoize the render option function to prevent recreation on every render
+  const renderLocationOption = useCallback(
+    (option: LocationSchema) => (
+      <div className="flex flex-col gap-0.5 items-start size-full">
+        <span className="text-sm font-normal">{option.name}</span>
+        <span className="text-2xs text-muted-foreground truncate w-full">
+          {formatLocation(option)}
+        </span>
+      </div>
+    ),
+    [],
+  );
+
+  // Memoize form sections to prevent unnecessary re-renders
+  const basicInformationSection = useMemo(
+    () => (
       <div>
         <div className="flex items-center gap-2 mb-1">
           <h3 className="text-sm font-semibold text-foreground">
@@ -60,8 +75,7 @@ export function StopDialogForm({
               name={`moves.${moveIdx}.stops.${stopIdx}.type`}
               label="Stop Type"
               placeholder="Select type"
-              description="Defines the designated category or function of this stop (read-only)."
-              isReadOnly
+              description="Defines the designated category or function of this stop."
               options={stopTypeChoices}
             />
           </FormControl>
@@ -109,14 +123,7 @@ export function StopDialogForm({
               description="Select the designated location for this stop."
               getOptionValue={(option) => option.id || ""}
               getDisplayValue={(option) => option.name}
-              renderOption={(option) => (
-                <div className="flex flex-col gap-0.5 items-start size-full">
-                  <span className="text-sm font-normal">{option.name}</span>
-                  <span className="text-2xs text-muted-foreground truncate w-full">
-                    {formatLocation(option)}
-                  </span>
-                </div>
-              )}
+              renderOption={renderLocationOption}
               extraSearchParams={{
                 includeState: "true",
               }}
@@ -134,6 +141,77 @@ export function StopDialogForm({
           </FormControl>
         </FormGroup>
       </div>
+    ),
+    [control, moveIdx, stopIdx, renderLocationOption],
+  );
+
+  const plannedTimesSection = useMemo(
+    () => (
+      <div className="rounded-lg bg-accent/50 p-4">
+        <h4 className="text-sm font-medium text-foreground mb-3">
+          Planned Times
+        </h4>
+        <FormGroup cols={2} className="gap-4">
+          <FormControl>
+            <AutoCompleteDateTimeField
+              name={`moves.${moveIdx}.stops.${stopIdx}.plannedArrival`}
+              control={control}
+              rules={{ required: true }}
+              label="Planned Arrival"
+              placeholder="Select planned arrival"
+              description="Indicates the scheduled arrival time for this stop."
+            />
+          </FormControl>
+          <FormControl>
+            <AutoCompleteDateTimeField
+              name={`moves.${moveIdx}.stops.${stopIdx}.plannedDeparture`}
+              control={control}
+              rules={{ required: true }}
+              label="Planned Departure"
+              placeholder="Select planned departure"
+              description="Indicates the scheduled departure time from this stop."
+            />
+          </FormControl>
+        </FormGroup>
+      </div>
+    ),
+    [control, moveIdx, stopIdx],
+  );
+
+  const actualTimesSection = useMemo(
+    () => (
+      <div className="rounded-lg bg-accent/50 p-4">
+        <h4 className="text-sm font-medium text-foreground mb-3">
+          Actual Times
+        </h4>
+        <FormGroup cols={2} className="gap-4">
+          <FormControl>
+            <AutoCompleteDateTimeField
+              name={`moves.${moveIdx}.stops.${stopIdx}.actualArrival`}
+              control={control}
+              label="Actual Arrival"
+              placeholder="Select actual arrival"
+              description="Records the actual arrival time at this stop."
+            />
+          </FormControl>
+          <FormControl>
+            <AutoCompleteDateTimeField
+              name={`moves.${moveIdx}.stops.${stopIdx}.actualDeparture`}
+              control={control}
+              label="Actual Departure"
+              placeholder="Select actual departure"
+              description="Records the actual departure time from this stop."
+            />
+          </FormControl>
+        </FormGroup>
+      </div>
+    ),
+    [control, moveIdx, stopIdx],
+  );
+
+  return (
+    <div className="space-y-2">
+      {basicInformationSection}
 
       <div className="pt-2">
         <div className="flex items-center gap-2 mb-1">
@@ -145,61 +223,10 @@ export function StopDialogForm({
           Manage planned and actual arrival/departure times for this stop.
         </p>
         <div className="space-y-4">
-          <div className="rounded-lg bg-accent/50 p-4">
-            <h4 className="text-sm font-medium text-foreground mb-3">
-              Planned Times
-            </h4>
-            <FormGroup cols={2} className="gap-4">
-              <FormControl>
-                <AutoCompleteDateTimeField
-                  name={`moves.${moveIdx}.stops.${stopIdx}.plannedArrival`}
-                  control={control}
-                  rules={{ required: true }}
-                  label="Planned Arrival"
-                  placeholder="Select planned arrival"
-                  description="Indicates the scheduled arrival time for this stop."
-                />
-              </FormControl>
-              <FormControl>
-                <AutoCompleteDateTimeField
-                  name={`moves.${moveIdx}.stops.${stopIdx}.plannedDeparture`}
-                  control={control}
-                  rules={{ required: true }}
-                  label="Planned Departure"
-                  placeholder="Select planned departure"
-                  description="Indicates the scheduled departure time from this stop."
-                />
-              </FormControl>
-            </FormGroup>
-          </div>
-
-          <div className="rounded-lg bg-accent/50 p-4">
-            <h4 className="text-sm font-medium text-foreground mb-3">
-              Actual Times
-            </h4>
-            <FormGroup cols={2} className="gap-4">
-              <FormControl>
-                <AutoCompleteDateTimeField
-                  name={`moves.${moveIdx}.stops.${stopIdx}.actualArrival`}
-                  control={control}
-                  label="Actual Arrival"
-                  placeholder="Select actual arrival"
-                  description="Records the actual arrival time at this stop."
-                />
-              </FormControl>
-              <FormControl>
-                <AutoCompleteDateTimeField
-                  name={`moves.${moveIdx}.stops.${stopIdx}.actualDeparture`}
-                  control={control}
-                  label="Actual Departure"
-                  placeholder="Select actual departure"
-                  description="Records the actual departure time from this stop."
-                />
-              </FormControl>
-            </FormGroup>
-          </div>
+          {plannedTimesSection}
+          {actualTimesSection}
         </div>
       </div>
     </div>
   );
-}
+});
