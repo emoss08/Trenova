@@ -17,15 +17,13 @@ import { MoveStatus } from "@/types/move";
 import { StopStatus, StopType, type Stop } from "@/types/stop";
 import { faInfoCircle, faXmark } from "@fortawesome/pro-solid-svg-icons";
 import { useLocalStorage } from "@uidotdev/usehooks";
-import { memo, useCallback, useEffect, useMemo } from "react";
+import { memo, useCallback, useEffect } from "react";
 import {
   UseFieldArrayRemove,
   UseFieldArrayUpdate,
   useFormContext,
-  useWatch,
 } from "react-hook-form";
 import { ValidationError } from "yup";
-import { useLocationData } from "./queries";
 import { StopDialogForm } from "./stop-dialog-form";
 
 type StopDialogProps = TableSheetProps & {
@@ -36,7 +34,7 @@ type StopDialogProps = TableSheetProps & {
   remove: UseFieldArrayRemove;
 };
 
-export const StopDialog = memo(function StopDialog({
+export function StopDialog({
   open,
   onOpenChange,
   isEditing,
@@ -45,16 +43,8 @@ export const StopDialog = memo(function StopDialog({
   stopIdx,
   remove,
 }: StopDialogProps) {
-  const { getValues, setValue, control, setError, clearErrors } =
+  const { getValues, setValue, setError, clearErrors } =
     useFormContext<ShipmentSchema>();
-
-  const locationId = useWatch({
-    control,
-    name: `moves.${moveIdx}.stops.${stopIdx}.locationId`,
-  });
-
-  const { data: locationData, isLoading: isLoadingLocation } =
-    useLocationData(locationId);
 
   // Initialize a new stop with empty values when adding a new stop - only runs when dialog opens
   useEffect(() => {
@@ -63,29 +53,25 @@ export const StopDialog = memo(function StopDialog({
       const now = Math.floor(Date.now() / 1000);
       const oneHour = 3600;
 
-      setValue(`moves.${moveIdx}.stops.${stopIdx}`, {
-        status: StopStatus.New,
-        // Provide a default type that users can change
-        type: StopType.Pickup,
-        sequence: stopIdx,
-        locationId: "",
-        addressLine: "",
-        plannedArrival: now,
-        plannedDeparture: now + oneHour,
-        // Copy organization and business unit from the move
-        organizationId: getValues().moves?.[moveIdx]?.organizationId,
-        businessUnitId: getValues().moves?.[moveIdx]?.businessUnitId,
-      });
+      const currentValues = getValues(`moves.${moveIdx}.stops.${stopIdx}`);
+      // Only set values if they're missing or this is a new stop
+      if (!currentValues || !currentValues.status) {
+        setValue(`moves.${moveIdx}.stops.${stopIdx}`, {
+          status: StopStatus.New,
+          // Provide a default type that users can change
+          type: StopType.Pickup,
+          sequence: stopIdx,
+          locationId: "",
+          addressLine: "",
+          plannedArrival: now,
+          plannedDeparture: now + oneHour,
+          // Copy organization and business unit from the move
+          organizationId: getValues().moves?.[moveIdx]?.organizationId,
+          businessUnitId: getValues().moves?.[moveIdx]?.businessUnitId,
+        });
+      }
     }
   }, [open, isEditing, moveIdx, stopIdx, setValue, getValues]);
-
-  // Set the Location ID and Location data
-  useEffect(() => {
-    if (!isLoadingLocation && locationId && locationData) {
-      // @ts-expect-error // Location information is not required, but exists
-      setValue(`moves.${moveIdx}.stops.${stopIdx}.location`, locationData);
-    }
-  }, [isLoadingLocation, locationId, locationData, moveIdx, setValue, stopIdx]);
 
   const validateStop = useCallback(async () => {
     // Clear existing errors only for this stop
@@ -232,8 +218,8 @@ export const StopDialog = memo(function StopDialog({
     }
   }, [onOpenChange, remove, stopIdx, isEditing, getValues, moveIdx, setValue]);
 
-  const dialogContent = useMemo(
-    () => (
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange} modal={true}>
       <DialogContent>
         <DialogHeader>
           <DialogTitle>{isEditing ? "Edit Stop" : "Add Stop"}</DialogTitle>
@@ -256,16 +242,9 @@ export const StopDialog = memo(function StopDialog({
           </Button>
         </DialogFooter>
       </DialogContent>
-    ),
-    [handleClose, handleSave, isEditing, moveIdx, stopIdx],
-  );
-
-  return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      {dialogContent}
     </Dialog>
   );
-});
+}
 
 const StopDialogNotice = memo(function StopDialogNotice() {
   const [noticeVisible, setNoticeVisible] = useLocalStorage(

@@ -5,7 +5,7 @@ import { MOVE_DELETE_DIALOG_KEY } from "@/constants/env";
 import { MoveSchema } from "@/lib/schemas/move-schema";
 import { ShipmentSchema } from "@/lib/schemas/shipment-schema";
 import { faPlus } from "@fortawesome/pro-regular-svg-icons";
-import { lazy, memo, useState } from "react";
+import { lazy, memo, useCallback, useMemo, useState } from "react";
 import { useFieldArray, useFormContext } from "react-hook-form";
 import { toast } from "sonner";
 import { MoveDeleteDialog } from "./move-delete-dialog";
@@ -42,7 +42,7 @@ const resequenceMoves = (
   return updatedMoves;
 };
 
-export default function ShipmentMovesDetails() {
+const ShipmentMovesDetailsComponent = () => {
   const { control, getValues } = useFormContext<ShipmentSchema>();
   const [moveDialogOpen, setMoveDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
@@ -59,17 +59,17 @@ export default function ShipmentMovesDetails() {
     keyName: "formId",
   });
 
-  const handleAddMove = () => {
+  const handleAddMove = useCallback(() => {
     setMoveDialogOpen(true);
-  };
+  }, []);
 
-  const handleEditMove = (index: number) => {
+  const handleEditMove = useCallback((index: number) => {
     setEditingIndex(index);
     setMoveDialogOpen(true);
-  };
+  }, []);
 
   // Modified handleDeleteMove function for the ShipmentMovesDetails component
-  const handleDeleteMove = (index: number) => {
+  const handleDeleteMove = useCallback((index: number) => {
     // If there is only one move, we cannot delete it
     if (moves.length === 1) {
       toast.error("Unable to proceed", {
@@ -87,10 +87,10 @@ export default function ShipmentMovesDetails() {
     } else {
       performDeleteMove(index);
     }
-  };
+  }, [moves.length]);
 
   // Function to perform the actual deletion with resequencing
-  const performDeleteMove = (index: number) => {
+  const performDeleteMove = useCallback((index: number) => {
     // Get the current moves data
     const currentMoves = getValues("moves");
 
@@ -107,10 +107,10 @@ export default function ShipmentMovesDetails() {
 
     // Now remove the move at the specified index
     remove(index);
-  };
+  }, [getValues, update, remove]);
 
   // Modified handleConfirmDelete function
-  const handleConfirmDelete = (doNotShowAgain: boolean) => {
+  const handleConfirmDelete = useCallback((doNotShowAgain: boolean) => {
     if (deletingIndex !== null) {
       performDeleteMove(deletingIndex);
 
@@ -121,9 +121,9 @@ export default function ShipmentMovesDetails() {
       setDeleteDialogOpen(false);
       setDeletingIndex(null);
     }
-  };
+  }, [deletingIndex, performDeleteMove]);
 
-  const handleDialogClose = () => {
+  const handleDialogClose = useCallback(() => {
     // If we're adding a new move and the dialog is closed without saving,
     // remove the placeholder move
     if (
@@ -135,12 +135,13 @@ export default function ShipmentMovesDetails() {
 
     setMoveDialogOpen(false);
     setEditingIndex(null);
-  };
+  }, [editingIndex, moves, remove]);
 
-  const isEditing =
+  const isEditing = useMemo(() => 
     editingIndex !== null &&
     ((editingIndex < moves.length - 1 || moves[editingIndex]?.stops?.length) ??
-      false);
+      false)
+  , [editingIndex, moves]);
 
   return (
     <>
@@ -188,7 +189,9 @@ export default function ShipmentMovesDetails() {
       )}
     </>
   );
-}
+};
+
+export default memo(ShipmentMovesDetailsComponent);
 
 const AddMoveButton = memo(function AddMoveButton({
   onClick,

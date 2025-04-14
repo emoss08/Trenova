@@ -7,34 +7,52 @@ import { MoveStatus } from "@/types/move";
 import { Stop, StopStatus, StopType } from "@/types/stop";
 import { useCallback, useState } from "react";
 import {
-  UseFieldArrayRemove,
-  UseFieldArrayUpdate,
-  useFormContext,
+    UseFieldArrayRemove,
+    UseFieldArrayUpdate,
+    useFormContext,
 } from "react-hook-form";
+import { useLocationData } from "./queries";
 import {
-  getLineStyles,
-  getStatusIcon,
-  getStopStatusBgColor,
-  getStopStatusBorderColor,
-  getStopTypeLabel,
+    getLineStyles,
+    getStatusIcon,
+    getStopStatusBgColor,
+    getStopStatusBorderColor,
+    getStopTypeLabel,
 } from "./stop-utils";
 
 // Display component for location
 function LocationDisplay({
   location,
   type,
+  locationId,
 }: {
-  location: Stop["location"];
+  location?: Stop["location"] | null;
   type: StopType;
+  locationId?: string;
 }) {
+  // If we have a locationId but no location, fetch the location data directly
+  const { data: fetchedLocation } = useLocationData(locationId || "");
+  
+  // Use fetchedLocation if available, otherwise fallback to the passed location
+  const displayLocation = fetchedLocation || location;
+  
+  // If we don't have any location data, display the stop type only
+  if (!displayLocation) {
+    return (
+      <div className="text-sm text-primary">
+        <span>{getStopTypeLabel(type)}</span>
+      </div>
+    );
+  }
+  
   return (
     <>
       <div className="flex items-center gap-1 text-sm text-primary">
-        <span className="text-xs">{location?.addressLine1}</span>
+        <span className="text-xs">{displayLocation.addressLine1}</span>
         <span className="text-2xs">({getStopTypeLabel(type)})</span>
       </div>
       <div className="text-2xs text-muted-foreground">
-        {location?.city}, {location?.state?.abbreviation} {location?.postalCode}
+        {displayLocation.city}, {displayLocation.state?.abbreviation} {displayLocation.postalCode}
       </div>
     </>
   );
@@ -174,7 +192,11 @@ export default function StopTimeline({
                 />
               </div>
               <div className="flex-1">
-                <LocationDisplay location={stop.location} type={stop.type} />
+                <LocationDisplay 
+                  location={stop.location} 
+                  type={stop.type}
+                  locationId={stop.locationId} 
+                />
               </div>
             </div>
           </>

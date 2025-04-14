@@ -69,53 +69,40 @@ const FieldLabel = memo(
 );
 
 // Memoize the FieldWrapper component
-export const FieldWrapper = memo(
-  function FieldWrapper({
-    label,
-    description,
-    required,
-    className,
-    children,
-    error,
-  }: FieldWrapperProps) {
-    // Use useMemo for the description and error components to avoid unnecessary re-renders
-    const descriptionElement = useMemo(() => {
-      return description && !error ? (
-        <FieldDescription description={description} />
-      ) : null;
-    }, [description, error]);
+export function FieldWrapper({
+  label,
+  description,
+  required,
+  className,
+  children,
+  error,
+}: FieldWrapperProps) {
+  // Use useMemo for the description and error components to avoid unnecessary re-renders
+  const descriptionElement = useMemo(() => {
+    return description && !error ? (
+      <FieldDescription description={description} />
+    ) : null;
+  }, [description, error]);
 
-    const errorElement = useMemo(() => {
-      return error ? <ErrorMessage formError={error} /> : null;
-    }, [error]);
+  const errorElement = useMemo(() => {
+    return error ? <ErrorMessage formError={error} /> : null;
+  }, [error]);
 
-    return (
-      <div className={className}>
-        {label && (
-          <div className="mb-0.5 flex items-center">
-            <FieldLabel label={label} required={required} />
-          </div>
-        )}
-        {children}
-        <div className="flex justify-start">
-          {descriptionElement}
-          {errorElement}
+  return (
+    <div className={className}>
+      {label && (
+        <div className="mb-0.5 flex items-center">
+          <FieldLabel label={label} required={required} />
         </div>
+      )}
+      {children}
+      <div className="flex justify-start">
+        {descriptionElement}
+        {errorElement}
       </div>
-    );
-  },
-  (prevProps, nextProps) => {
-    // Custom comparison function to optimize re-renders
-    return (
-      prevProps.label === nextProps.label &&
-      prevProps.description === nextProps.description &&
-      prevProps.required === nextProps.required &&
-      prevProps.className === nextProps.className &&
-      prevProps.error === nextProps.error &&
-      prevProps.children === nextProps.children
-    );
-  },
-);
+    </div>
+  );
+}
 
 type PasswordFieldWrapperProps = FieldWrapperProps & {
   onPasswordReset: () => void;

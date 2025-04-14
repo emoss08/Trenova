@@ -1,5 +1,5 @@
 import { useDebounce } from "@/hooks/use-debounce";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -41,7 +41,7 @@ async function fetchOptions<T>(
   link: string,
   inputValue: string,
   page: number,
-  extraSearchParams?: Record<string, string>,
+  extraSearchParams?: Record<string, string | string[]>,
 ): Promise<LimitOffsetResponse<T>> {
   const limit = 10;
   const offset = (page - 1) * limit;
@@ -103,62 +103,66 @@ export function Autocomplete<T>({
   // Current scroll velocity
   const velocityRef = useRef(0);
 
-  // Fetch initial value if it exists
-  useEffect(() => {
-    const fetchInitialValue = async () => {
-      if (value) {
-        try {
-          setLoading(true);
-          const option = await fetchOptionById<T>(link, value);
-          setSelectedOption(option);
-        } catch (err) {
-          setError(
-            err instanceof Error
-              ? err.message
-              : "Failed to fetch initial value",
-          );
-        } finally {
-          setLoading(false);
-        }
-      } else {
-        setSelectedOption(null);
-      }
-    };
-
-    fetchInitialValue();
-  }, [value, link]);
-
-  // Fetch options based on search term
-  useEffect(() => {
-    const loadOptions = async () => {
+  // Memoize the fetch functions to prevent unnecessary recreation
+  const fetchInitialValueFn = useCallback(async () => {
+    if (value) {
       try {
         setLoading(true);
-        setError(null);
-
-        const response = await fetchOptions<T>(
-          link,
-          debouncedSearchTerm,
-          page,
-          extraSearchParams,
-        );
-
-        setOptions((prev) =>
-          page === 1 ? response.results : [...prev, ...response.results],
-        );
-        setHasMore(!!response.next);
+        const option = await fetchOptionById<T>(link, value);
+        setSelectedOption(option);
       } catch (err) {
         setError(
-          err instanceof Error ? err.message : "Failed to fetch options",
+          err instanceof Error
+            ? err.message
+            : "Failed to fetch initial value",
         );
       } finally {
         setLoading(false);
       }
-    };
+    } else {
+      setSelectedOption(null);
+    }
+  }, [value, link]);
 
-    if (open) {
-      loadOptions();
+  // Fetch initial value if it exists
+  useEffect(() => {
+    fetchInitialValueFn();
+  }, [fetchInitialValueFn]);
+
+  // Memoize the load options function
+  const loadOptionsFn = useCallback(async () => {
+    if (!open) return;
+    
+    try {
+      setLoading(true);
+      setError(null);
+
+      const response = await fetchOptions<T>(
+        link,
+        debouncedSearchTerm,
+        page,
+        extraSearchParams,
+      );
+
+      setOptions((prev) =>
+        page === 1 ? response.results : [...prev, ...response.results],
+      );
+      setHasMore(!!response.next);
+    } catch (err) {
+      setError(
+        err instanceof Error ? err.message : "Failed to fetch options",
+      );
+    } finally {
+      setLoading(false);
     }
   }, [debouncedSearchTerm, open, page, link, extraSearchParams]);
+
+  // Fetch options based on search term
+  useEffect(() => {
+    if (open) {
+      loadOptionsFn();
+    }
+  }, [open, loadOptionsFn]);
 
   // Clean up animation frame on unmount
   useEffect(() => {
@@ -388,6 +392,9 @@ export function Autocomplete<T>({
   );
 }
 
+// Create a memoized version that preserves the generic type
+export const MemoizedAutocomplete = memo(Autocomplete) as typeof Autocomplete;
+
 export function AutocompleteField<TOption, TForm extends FieldValues>({
   label,
   name,
@@ -410,32 +417,55 @@ export function AutocompleteField<TOption, TForm extends FieldValues>({
       name={name}
       control={control}
       rules={rules}
-      render={({ field: { onChange, value, disabled }, fieldState }) => (
-        <FieldWrapper
-          label={label}
-          description={description}
-          required={!!rules?.required}
-          error={fieldState.error?.message}
-          className={className}
-        >
-          <Autocomplete<TOption>
-            link={link}
-            preload={preload}
-            renderOption={renderOption}
-            getDisplayValue={getDisplayValue}
-            getOptionValue={getOptionValue}
+      render={({ field: { onChange, value, disabled }, fieldState }) => {
+        // Memoize the wrapped component props to prevent unnecessary renders
+        const autocompleteProps = useMemo(() => ({
+          link,
+          preload,
+          renderOption,
+          getDisplayValue,
+          getOptionValue,
+          label,
+          value,
+          onChange,
+          isInvalid: fieldState.invalid,
+          onOptionChange,
+          disabled,
+          clearable,
+          extraSearchParams,
+          ...props
+        }), [
+          link,
+          preload,
+          renderOption,
+          getDisplayValue,
+          getOptionValue,
+          label,
+          value,
+          onChange,
+          fieldState.invalid,
+          onOptionChange,
+          disabled,
+          clearable,
+          extraSearchParams,
+          props
+        ]);
+
+        return (
+          <FieldWrapper
             label={label}
-            value={value}
-            onChange={onChange}
-            isInvalid={fieldState.invalid}
-            onOptionChange={onOptionChange}
-            disabled={disabled}
-            clearable={clearable}
-            extraSearchParams={extraSearchParams}
-            {...props}
-          />
-        </FieldWrapper>
-      )}
+            description={description}
+            required={!!rules?.required}
+            error={fieldState.error?.message}
+            className={className}
+          >
+            <MemoizedAutocomplete<TOption> {...autocompleteProps} />
+          </FieldWrapper>
+        );
+      }}
     />
   );
 }
+
+// Add memoization to the FieldWrapper component
+export const MemoizedAutocompleteField = memo(AutocompleteField) as typeof AutocompleteField;
