@@ -76,10 +76,11 @@ func ProcessResponse[T BaseModel](
 		},
 	}
 	// Copy data with proper pointer handling
-	for i := range dataLen {
+	for i := range entities[:dataLen] {
 		tmp := entities[i]
 		response.Data[i] = &tmp
 	}
+
 	// Handle next cursor if there are more records
 	if hasMore {
 		lastEntity := entities[pageSize-1]
