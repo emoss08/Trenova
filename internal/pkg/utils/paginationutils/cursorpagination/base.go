@@ -90,6 +90,7 @@ func ProcessResponse[T BaseModel](
 		}
 		response.Cursors.Next = &nextCursor
 	}
+
 	// Add previous cursor if we're not on the first page
 	if opts.Cursor != nil && *opts.Cursor != "" {
 		if len(entities) > 0 {
