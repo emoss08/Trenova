@@ -27,16 +27,41 @@ func TestEquipmentTypeRepository(t *testing.T) {
 	})
 
 	t.Run("list equipment types", func(t *testing.T) {
-		opts := &ports.LimitOffsetQueryOptions{
-			Limit:  10,
-			Offset: 0,
-			TenantOpts: &ports.TenantOptions{
-				OrgID: org.ID,
-				BuID:  bu.ID,
+		opts := &repoports.ListEquipmentTypeRequest{
+			Filter: &ports.LimitOffsetQueryOptions{
+				Limit:  10,
+				Offset: 0,
+				TenantOpts: &ports.TenantOptions{
+					OrgID: org.ID,
+					BuID:  bu.ID,
+				},
 			},
 		}
 
 		testutils.TestRepoList(ctx, t, repo, opts)
+	})
+
+	t.Run("list equipment types with trailer class filter", func(t *testing.T) {
+		opts := &repoports.ListEquipmentTypeRequest{
+			Filter: &ports.LimitOffsetQueryOptions{
+				TenantOpts: &ports.TenantOptions{
+					OrgID: org.ID,
+					BuID:  bu.ID,
+				},
+				Limit:  10,
+				Offset: 0,
+			},
+			Classes: []equipmenttype.Class{equipmenttype.ClassTrailer},
+		}
+
+		result, err := repo.List(ctx, opts)
+		require.NoError(t, err)
+		require.NotNil(t, result)
+		require.NotEmpty(t, result.Items)
+
+		for _, et := range result.Items {
+			require.Equal(t, equipmenttype.ClassTrailer, et.Class)
+		}
 	})
 
 	t.Run("get equipment type by id", func(t *testing.T) {

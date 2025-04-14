@@ -5,6 +5,7 @@ import { EquipmentTypeSchema } from "@/lib/schemas/equipment-type-schema";
 import { ServiceTypeSchema } from "@/lib/schemas/service-type-schema";
 import { ShipmentSchema } from "@/lib/schemas/shipment-schema";
 import { ShipmentTypeSchema } from "@/lib/schemas/shipment-type-schema";
+import { EquipmentClass } from "@/types/equipment-type";
 import { useFormContext } from "react-hook-form";
 
 export default function ShipmentServiceDetails() {
@@ -76,6 +77,9 @@ export default function ShipmentServiceDetails() {
             getDisplayValue={(option) => (
               <ColorOptionValue color={option.color} value={option.code} />
             )}
+            extraSearchParams={{
+              classes: [EquipmentClass.Tractor],
+            }}
             renderOption={(option) => (
               <div className="flex flex-col gap-0.5 items-start size-full">
                 <ColorOptionValue color={option.color} value={option.code} />
@@ -97,6 +101,9 @@ export default function ShipmentServiceDetails() {
             placeholder="Select Trailer Type"
             description="Select the type of trailer used, considering any special requirements (e.g., refrigeration)."
             getOptionValue={(option) => option.id || ""}
+            extraSearchParams={{
+              classes: [EquipmentClass.Trailer, EquipmentClass.Container],
+            }}
             getDisplayValue={(option) => (
               <ColorOptionValue color={option.color} value={option.code} />
             )}

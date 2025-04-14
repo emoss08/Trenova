@@ -8,6 +8,11 @@ import (
 	"github.com/emoss08/trenova/pkg/types/pulid"
 )
 
+type ListEquipmentTypeRequest struct {
+	Filter  *ports.LimitOffsetQueryOptions
+	Classes []string `query:"classes"`
+}
+
 type GetEquipmentTypeByIDOptions struct {
 	ID     pulid.ID
 	OrgID  pulid.ID
@@ -16,7 +21,7 @@ type GetEquipmentTypeByIDOptions struct {
 }
 
 type EquipmentTypeRepository interface {
-	List(ctx context.Context, opts *ports.LimitOffsetQueryOptions) (*ports.ListResult[*equipmenttype.EquipmentType], error)
+	List(ctx context.Context, opts *ListEquipmentTypeRequest) (*ports.ListResult[*equipmenttype.EquipmentType], error)
 	GetByID(ctx context.Context, opts GetEquipmentTypeByIDOptions) (*equipmenttype.EquipmentType, error)
 	Create(ctx context.Context, et *equipmenttype.EquipmentType) (*equipmenttype.EquipmentType, error)
 	Update(ctx context.Context, et *equipmenttype.EquipmentType) (*equipmenttype.EquipmentType, error)
