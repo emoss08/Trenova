@@ -8,8 +8,8 @@ import { faPlus } from "@fortawesome/pro-regular-svg-icons";
 import { memo, useState } from "react";
 import { useFieldArray, useFormContext } from "react-hook-form";
 import { AdditionalChargeDeleteDialog } from "./additional-charge-delete-dialog";
-import { AdditionalChargeList } from "./additional-charge-list";
 import { AdditionalChargeDialog } from "./additional-charge-dialog";
+import { AdditionalChargeList } from "./additional-charge-list";
 
 export default function AdditionalChargeDetails({
   className,

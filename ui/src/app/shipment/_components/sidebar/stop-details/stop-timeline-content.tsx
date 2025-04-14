@@ -1,4 +1,3 @@
-"use no memo";
 import { Icon } from "@/components/ui/icons";
 import { formatSplitDateTime } from "@/lib/date";
 import { type ShipmentSchema } from "@/lib/schemas/shipment-schema";

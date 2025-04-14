@@ -1,4 +1,3 @@
-"use no memo";
 import { AutocompleteField } from "@/components/fields/autocomplete";
 import { AutoCompleteDateTimeField } from "@/components/fields/datetime-field";
 import { InputField } from "@/components/fields/input-field";
