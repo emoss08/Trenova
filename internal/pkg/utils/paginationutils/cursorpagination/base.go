@@ -13,21 +13,26 @@ func BuildPaginatedQuery(opts *BuildPaginatedQueryOptions) error {
 	if opts.PaginationOpts.PageSize <= 0 {
 		opts.PaginationOpts.PageSize = DefaultPageSize
 	}
+
 	if opts.PaginationOpts.PageSize > MaxPageSize {
 		opts.PaginationOpts.PageSize = MaxPageSize
 	}
+
 	// Apply cursor pagination if cursor is provided
 	if opts.PaginationOpts.Cursor != nil && *opts.PaginationOpts.Cursor != "" {
 		cursor, err := DecodeCursor(*opts.PaginationOpts.Cursor)
 		if err != nil {
 			return eris.Wrap(err, "decode cursor")
 		}
+
 		pk := opts.Model.GetPrimaryKey()
 		conditions, params := buildCursorConditions(opts.Model.GetTableAlias(), pk, cursor)
+
 		if conditions != "" {
 			opts.Query.Where(conditions, params...)
 		}
 	}
+
 	// Add limit for pagination
 	opts.Query.Limit(opts.PaginationOpts.PageSize + 1)
 	return nil
@@ -37,6 +42,7 @@ func BuildPaginatedQuery(opts *BuildPaginatedQueryOptions) error {
 func buildCursorConditions(tableAlias string, pk PrimaryKey, cursor *Cursor) (string, []any) {
 	var conditions []string
 	var params []any
+
 	for _, field := range pk.Fields {
 		if value, ok := cursor.Values[field]; ok {
 			conditions = append(conditions,
@@ -44,9 +50,11 @@ func buildCursorConditions(tableAlias string, pk PrimaryKey, cursor *Cursor) (st
 			params = append(params, value)
 		}
 	}
+
 	if len(conditions) == 0 {
 		return "", nil
 	}
+
 	return fmt.Sprintf("(%s)", strings.Join(conditions, " OR ")), params
 }
 
@@ -108,5 +116,6 @@ func ProcessResponse[T BaseModel](
 			response.Cursors.Previous = &prevCursor
 		}
 	}
+
 	return response, nil
 }
