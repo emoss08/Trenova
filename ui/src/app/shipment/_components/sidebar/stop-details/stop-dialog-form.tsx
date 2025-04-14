@@ -1,4 +1,3 @@
-"use no memo";
 import { AutocompleteField } from "@/components/fields/autocomplete";
 import { AutoCompleteDateTimeField } from "@/components/fields/datetime-field";
 import { InputField } from "@/components/fields/input-field";
@@ -12,16 +11,13 @@ import { useEffect } from "react";
 import { useFormContext, useWatch } from "react-hook-form";
 import { useLocationData } from "./queries";
 
-export function StopDialogForm({
-  moveIdx,
-  stopIdx,
-}: {
+interface StopDialogFormProps {
   moveIdx: number;
   stopIdx: number;
-}) {
-  const { control, setValue, watch } = useFormContext<ShipmentSchema>();
+}
 
-  console.info("watch", watch());
+export function StopDialogForm({ moveIdx, stopIdx }: StopDialogFormProps) {
+  const { control, setValue, getValues } = useFormContext<ShipmentSchema>();
   const locationId = useWatch({
     control,
     name: `moves.${moveIdx}.stops.${stopIdx}.locationId`,
@@ -30,6 +26,7 @@ export function StopDialogForm({
   const { data: locationData, isLoading: isLoadingLocation } =
     useLocationData(locationId);
 
+  // Keep the address prefill functionality when a location is selected
   useEffect(() => {
     if (!isLoadingLocation && locationId && locationData) {
       const formattedLocation = formatLocation(locationData);
@@ -40,8 +37,30 @@ export function StopDialogForm({
           shouldValidate: true,
         },
       );
+      
+      // Get current move values
+      const currentValues = getValues();
+      const currentMove = currentValues.moves?.[moveIdx];
+      
+      if (currentMove && currentMove.stops && currentMove.stops[stopIdx]) {
+        // Update the stop with location data
+        const updatedStop = {
+          ...currentMove.stops[stopIdx],
+          location: locationData
+        };
+        
+        // Update all the stops
+        const updatedStops = [...currentMove.stops];
+        updatedStops[stopIdx] = updatedStop;
+        
+        // Update the entire move
+        setValue(`moves.${moveIdx}`, {
+          ...currentMove,
+          stops: updatedStops
+        });
+      }
     }
-  }, [isLoadingLocation, locationId, locationData, setValue, moveIdx, stopIdx]);
+  }, [isLoadingLocation, locationId, locationData, setValue, moveIdx, stopIdx, getValues]);
 
   return (
     <div className="space-y-2">
@@ -61,8 +80,7 @@ export function StopDialogForm({
               name={`moves.${moveIdx}.stops.${stopIdx}.type`}
               label="Stop Type"
               placeholder="Select type"
-              description="Defines the designated category or function of this stop (read-only)."
-              isReadOnly
+              description="Defines the designated category or function of this stop."
               options={stopTypeChoices}
             />
           </FormControl>
@@ -135,7 +153,6 @@ export function StopDialogForm({
           </FormControl>
         </FormGroup>
       </div>
-
       <div className="pt-2">
         <div className="flex items-center gap-2 mb-1">
           <h3 className="text-sm font-semibold text-foreground">
@@ -173,7 +190,6 @@ export function StopDialogForm({
               </FormControl>
             </FormGroup>
           </div>
-
           <div className="rounded-lg bg-accent/50 p-4">
             <h4 className="text-sm font-medium text-foreground mb-3">
               Actual Times

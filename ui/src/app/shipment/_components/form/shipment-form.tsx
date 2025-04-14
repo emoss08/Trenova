@@ -1,6 +1,6 @@
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { type Shipment } from "@/types/shipment";
-import { lazy, memo, Suspense } from "react";
+import { lazy, memo, Suspense, useMemo } from "react";
 import { ShipmentNotFoundOverlay } from "../sidebar/shipment-not-found-overlay";
 import { ShipmentDetailsSkeleton } from "./shipment-details-skeleton";
 import { ShipmentFormHeader } from "./shipment-form-header";
@@ -29,14 +29,13 @@ type ShipmentDetailsProps = {
 };
 
 // Wrap the component with memo to prevent unnecessary re-renders
-export const ShipmentForm = memo(function ShipmentForm({
-  isLoading,
-  ...props
-}: ShipmentDetailsProps) {
+const ShipmentFormComponent = ({ isLoading, ...props }: ShipmentDetailsProps) => {
   // Handle data loading state separately from component loading state
   if (isLoading) {
     return <ShipmentDetailsSkeleton />;
   }
+
+  console.info("Rendering ShipmentForm");
 
   // Only use Suspense for component loading, not data loading
   return (
@@ -50,16 +49,18 @@ export const ShipmentForm = memo(function ShipmentForm({
       </ShipmentScrollArea>
     </Suspense>
   );
-});
+};
+
+export const ShipmentForm = memo(ShipmentFormComponent);
 
 // Memoize the ShipmentScrollArea to prevent unnecessary re-renders
-export const ShipmentScrollArea = memo(function ShipmentScrollArea({
+const ShipmentScrollAreaComponent = ({
   selectedShipment,
   isError,
   onBack,
   dimensions,
   children,
-}: Omit<ShipmentDetailsProps, "isLoading"> & { children: React.ReactNode }) {
+}: Omit<ShipmentDetailsProps, "isLoading"> & { children: React.ReactNode }) => {
   // Handle error state
   if (isError) {
     return (
@@ -70,7 +71,7 @@ export const ShipmentScrollArea = memo(function ShipmentScrollArea({
   }
 
   // Calculate the optimal height for the scroll area
-  const calculateScrollAreaHeight = () => {
+  const scrollAreaHeight = useMemo(() => {
     const { contentHeight, viewportHeight } = dimensions;
 
     // Constants for height calculations
@@ -82,10 +83,8 @@ export const ShipmentScrollArea = memo(function ShipmentScrollArea({
     const calculatedHeight = baseHeight - headerHeight;
 
     // Ensure we don't go below minimum height
-    return Math.max(calculatedHeight, minHeight);
-  };
-
-  const scrollAreaHeight = `${calculateScrollAreaHeight()}px`;
+    return `${Math.max(calculatedHeight, minHeight)}px`;
+  }, [dimensions]);
 
   return (
     <div className="size-full">
@@ -110,4 +109,6 @@ export const ShipmentScrollArea = memo(function ShipmentScrollArea({
       </div>
     </div>
   );
-});
+};
+
+export const ShipmentScrollArea = memo(ShipmentScrollAreaComponent);

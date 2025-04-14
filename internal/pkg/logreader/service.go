@@ -3,6 +3,7 @@ package logreader
 import (
 	"bufio"
 	"context"
+	"encoding/json" //nolint:depguard // We have to use this because sonic doesn't work here
 	"fmt"
 	"io"
 	"os"
@@ -12,7 +13,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/pkg/config"
@@ -197,7 +197,7 @@ func (s *Service) scanLogEntries(ctx context.Context, file *os.File, opts *repos
 // parseLogEntry attempts to parse a log entry from a line
 func (s *Service) parseLogEntry(line []byte, log zerolog.Logger) (repositories.LogEntry, bool) {
 	var entry repositories.LogEntry
-	if err := sonic.Unmarshal(line, &entry); err != nil {
+	if err := json.Unmarshal(line, &entry); err != nil {
 		log.Warn().
 			Err(err).
 			Str("line", string(line)).
@@ -549,7 +549,7 @@ func (s *Service) processNewLogLines(reader *bufio.Reader) {
 // parseLogLine parses a log line into a LogEntry
 func (s *Service) parseLogLine(line []byte) (*repositories.LogEntry, bool) {
 	entry := new(repositories.LogEntry)
-	if err := sonic.Unmarshal(line, entry); err != nil {
+	if err := json.Unmarshal(line, entry); err != nil {
 		s.l.Warn().
 			Err(err).
 			Str("line", string(line)).

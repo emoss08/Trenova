@@ -42,25 +42,41 @@ func NewEquipmentTypeRepository(p EquipmentTypeRespositoryParams) repositories.E
 	}
 }
 
-func (fcr *equipmentTypeRepository) filterQuery(q *bun.SelectQuery, opts *ports.LimitOffsetQueryOptions) *bun.SelectQuery {
+func (fcr *equipmentTypeRepository) filterQuery(q *bun.SelectQuery, req *repositories.ListEquipmentTypeRequest) *bun.SelectQuery {
 	q = queryfilters.TenantFilterQuery(&queryfilters.TenantFilterQueryOptions{
 		Query:      q,
 		TableAlias: "et",
-		Filter:     opts,
+		Filter:     req.Filter,
 	})
 
-	if opts.Query != "" {
+	fcr.l.Info().Int("classes", len(req.Classes)).Msg("filtering equipment types")
+	// * If the class is provided, add a filter to the query
+	if len(req.Classes) > 0 {
+		// Filter out any empty strings
+		var validClasses []string
+		for _, class := range req.Classes {
+			if class != "" {
+				validClasses = append(validClasses, class)
+			}
+		}
+
+		if len(validClasses) > 0 {
+			q = q.Where("et.class IN (?)", bun.In(validClasses))
+		}
+	}
+
+	if req.Filter.Query != "" {
 		q = postgressearch.BuildSearchQuery(
 			q,
-			opts.Query,
+			req.Filter.Query,
 			(*equipmenttype.EquipmentType)(nil),
 		)
 	}
 
-	return q.Limit(opts.Limit).Offset(opts.Offset)
+	return q.Limit(req.Filter.Limit).Offset(req.Filter.Offset)
 }
 
-func (fcr *equipmentTypeRepository) List(ctx context.Context, opts *ports.LimitOffsetQueryOptions) (*ports.ListResult[*equipmenttype.EquipmentType], error) {
+func (fcr *equipmentTypeRepository) List(ctx context.Context, req *repositories.ListEquipmentTypeRequest) (*ports.ListResult[*equipmenttype.EquipmentType], error) {
 	dba, err := fcr.db.DB(ctx)
 	if err != nil {
 		return nil, eris.Wrap(err, "get database connection")
@@ -68,14 +84,14 @@ func (fcr *equipmentTypeRepository) List(ctx context.Context, opts *ports.LimitO
 
 	log := fcr.l.With().
 		Str("operation", "List").
-		Str("buID", opts.TenantOpts.BuID.String()).
-		Str("userID", opts.TenantOpts.UserID.String()).
+		Str("buID", req.Filter.TenantOpts.BuID.String()).
+		Str("userID", req.Filter.TenantOpts.UserID.String()).
 		Logger()
 
 	ets := make([]*equipmenttype.EquipmentType, 0)
 
 	q := dba.NewSelect().Model(&ets)
-	q = fcr.filterQuery(q, opts)
+	q = fcr.filterQuery(q, req)
 
 	total, err := q.ScanAndCount(ctx)
 	if err != nil {
