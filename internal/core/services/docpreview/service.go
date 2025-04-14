@@ -125,7 +125,7 @@ func (s *service) createTempFiles(fileName string, log zerolog.Logger) (string, 
 	tmpFile.Close()
 
 	// Create a temporary file for the preview image
-	tmpImageFile, err := os.CreateTemp("", "preview-*.webp")
+	tmpImageFile, err := os.CreateTemp("", "preview-*.jpeg")
 	if err != nil {
 		os.Remove(tmpFilePath)
 		log.Error().Err(err).Msg("failed to create temporary preview image file")
@@ -151,7 +151,7 @@ func (s *service) savePreviewImage(ctx context.Context, req *services.GeneratePr
 	// Generate a consistent preview path
 	timestamp := time.Now().Format("20060102150405")
 	safeResourceType := strings.ToLower(string(req.ResourceType))
-	previewFileName := fmt.Sprintf("previews/%s/%s/%s_preview.webp",
+	previewFileName := fmt.Sprintf("previews/%s/%s/%s_preview.jpeg",
 		safeResourceType,
 		req.ResourceID.String(),
 		timestamp)

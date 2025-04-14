@@ -5,7 +5,6 @@ go 1.24.2
 require (
 	github.com/asaskevich/govalidator v0.0.0-20230301143203-a9d515a09cc2
 	github.com/bytedance/sonic v1.13.2
-	github.com/chai2010/webp v1.4.0
 	github.com/docker/go-connections v0.5.0
 	github.com/fatih/color v1.18.0
 	github.com/fsnotify/fsnotify v1.9.0
