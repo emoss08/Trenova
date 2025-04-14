@@ -57,17 +57,22 @@ func ProcessResponse[T BaseModel](
 	opts Query,
 ) (*Response[T], error) {
 	pageSize := opts.PageSize
+
 	if pageSize <= 0 {
 		pageSize = DefaultPageSize
 	}
+
 	if pageSize > MaxPageSize {
 		pageSize = MaxPageSize
 	}
+
 	hasMore := len(entities) > pageSize
 	dataLen := len(entities)
+
 	if hasMore {
 		dataLen = pageSize
 	}
+
 	response := &Response[T]{
 		Data: make([]*T, dataLen),
 		Meta: Meta{
@@ -75,6 +80,7 @@ func ProcessResponse[T BaseModel](
 			HasMore:    hasMore,
 		},
 	}
+
 	// Copy data with proper pointer handling
 	for i := range entities[:dataLen] {
 		tmp := entities[i]
