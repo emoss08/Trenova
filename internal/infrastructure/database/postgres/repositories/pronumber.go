@@ -237,9 +237,11 @@ func (r *proNumberRepository) getSequence(
 
 	// Fetch the inserted sequence to get the ID and other fields
 	err = tx.NewSelect().Model(newSequence).
-		Where("pns.organization_id = ?", orgID).
-		Where("pns.year = ?", year).
-		Where("pns.month = ?", month).
+		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+			return sq.Where("pns.organization_id = ?", orgID).
+				Where("pns.year = ?", year).
+				Where("pns.month = ?", month)
+		}).
 		Scan(ctx)
 	if err != nil {
 		log.Error().Err(err).Msg("failed to fetch inserted sequence")
@@ -329,7 +331,10 @@ func (r *proNumberRepository) getOrCreateAndIncrementSequenceBatch(
 
 		// Update the sequence in the database
 		result, updateErr := tx.NewUpdate().Model(sequence).
-			Where("pns.id = ? AND pns.version = ?", sequence.ID, sequence.Version-1).
+			WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
+				return uq.Where("pns.id = ?", sequence.ID).
+					Where("pns.version = ?", sequence.Version-1)
+			}).
 			Returning("*").Exec(c)
 		if updateErr != nil {
 			log.Error().Err(updateErr).Msg("failed to update sequence batch")

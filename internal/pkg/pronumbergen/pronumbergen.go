@@ -191,47 +191,47 @@ func GenerateProNumber(format *ProNumberFormat, sequence int, year int, month in
 	var parts []string
 	var numericPart string
 
-	// Add prefix
+	// * Add prefix
 	if format.Prefix != "" {
 		parts = append(parts, format.Prefix)
 	}
 
-	// Add business unit code if configured
+	// * Add business unit code if configured
 	if format.IncludeBusinessUnitCode && format.BusinessUnitCode != "" {
 		parts = append(parts, format.BusinessUnitCode)
 	}
 
-	// Create date component
+	// * Create date component
 	var dateComponent string
-	// Add year digits if configured
+	// * Add year digits if configured
 	if format.IncludeYear {
 		yearStr := strconv.Itoa(year)
 		if len(yearStr) > format.YearDigits {
-			// Take only the last n digits
+			// * Take only the last n digits
 			yearStr = yearStr[len(yearStr)-format.YearDigits:]
 		}
 		dateComponent += yearStr
 		numericPart += yearStr
 	}
 
-	// Add week if configured (takes precedence over month)
+	// * Add week if configured (takes precedence over month)
 	if format.IncludeWeekNumber {
-		// Calculate the ISO week number
+		// * Calculate the ISO week number
 		_, week := time.Date(year, time.Month(month), 1, 0, 0, 0, 0, time.UTC).ISOWeek()
 		weekStr := fmt.Sprintf("%02d", week)
 		dateComponent += weekStr
 		numericPart += weekStr
 	} else if format.IncludeMonth {
-		// Add month if configured (zero-padded to 2 digits)
+		// * Add month if configured (zero-padded to 2 digits)
 		monthStr := fmt.Sprintf("%02d", month)
 		dateComponent += monthStr
 		numericPart += monthStr
 	}
 
-	// Add day if configured
+	// * Add day if configured
 	if format.IncludeDay {
-		// Use the first day of the month for simplicity
-		// In a real implementation, you might want to pass the actual day
+		// * Use the first day of the month for simplicity
+		// * In a real implementation, you might want to pass the actual day
 		dayStr := "01"
 		dateComponent += dayStr
 		numericPart += dayStr
@@ -241,19 +241,19 @@ func GenerateProNumber(format *ProNumberFormat, sequence int, year int, month in
 		parts = append(parts, dateComponent)
 	}
 
-	// Add location code if configured
+	// * Add location code if configured
 	if format.IncludeLocationCode && format.LocationCode != "" {
 		parts = append(parts, format.LocationCode)
 		numericPart += format.LocationCode
 	}
 
-	// Add sequence number (zero-padded to configured number of digits)
+	// * Add sequence number (zero-padded to configured number of digits)
 	sequenceFmt := fmt.Sprintf("%%0%dd", format.SequenceDigits)
 	sequenceStr := fmt.Sprintf(sequenceFmt, sequence)
 	parts = append(parts, sequenceStr)
 	numericPart += sequenceStr
 
-	// Add random digits if configured
+	// * Add random digits if configured
 	var randomStr string
 	if format.IncludeRandomDigits && format.RandomDigitsCount > 0 {
 		randomStr = generateRandomDigits(format.RandomDigitsCount)
@@ -261,18 +261,18 @@ func GenerateProNumber(format *ProNumberFormat, sequence int, year int, month in
 		numericPart += randomStr
 	}
 
-	// Add check digit if configured
+	// * Add check digit if configured
 	if format.IncludeCheckDigit {
 		checkDigit := calculateCheckDigit(numericPart)
 		parts = append(parts, strconv.Itoa(checkDigit))
 	}
 
-	// Join parts with separator if configured
+	// * Join parts with separator if configured
 	if format.UseSeparators && format.SeparatorChar != "" {
 		return strings.Join(parts, format.SeparatorChar)
 	}
 
-	// Otherwise join without separator
+	// * Otherwise join without separator
 	return strings.Join(parts, "")
 }
 
@@ -280,11 +280,11 @@ func GenerateProNumber(format *ProNumberFormat, sequence int, year int, month in
 func generateCustomFormat(format *ProNumberFormat, sequence int, year int, month int) string {
 	result := format.CustomFormat
 
-	// Replace placeholders with actual values
-	// Prefix
+	// * Replace placeholders with actual values
+	// * Prefix
 	result = strings.ReplaceAll(result, "{P}", format.Prefix)
 
-	// Year
+	// * Year
 	if strings.Contains(result, "{Y}") {
 		yearStr := strconv.Itoa(year)
 		if len(yearStr) > format.YearDigits {
@@ -293,46 +293,46 @@ func generateCustomFormat(format *ProNumberFormat, sequence int, year int, month
 		result = strings.ReplaceAll(result, "{Y}", yearStr)
 	}
 
-	// Month
+	// * Month
 	if strings.Contains(result, "{M}") {
 		result = strings.ReplaceAll(result, "{M}", fmt.Sprintf("%02d", month))
 	}
 
-	// Week
+	// * Week
 	if strings.Contains(result, "{W}") {
 		_, week := time.Date(year, time.Month(month), 1, 0, 0, 0, 0, time.UTC).ISOWeek()
 		result = strings.ReplaceAll(result, "{W}", fmt.Sprintf("%02d", week))
 	}
 
-	// Day - placeholder for now
+	// * Day - placeholder for now
 	if strings.Contains(result, "{D}") {
 		result = strings.ReplaceAll(result, "{D}", "01")
 	}
 
-	// Location code
+	// * Location code
 	if strings.Contains(result, "{L}") {
 		result = strings.ReplaceAll(result, "{L}", format.LocationCode)
 	}
 
-	// Business unit code
+	// * Business unit code
 	if strings.Contains(result, "{B}") {
 		result = strings.ReplaceAll(result, "{B}", format.BusinessUnitCode)
 	}
 
-	// Sequence
+	// * Sequence
 	if strings.Contains(result, "{S}") {
 		sequenceFmt := fmt.Sprintf("%%0%dd", format.SequenceDigits)
 		result = strings.ReplaceAll(result, "{S}", fmt.Sprintf(sequenceFmt, sequence))
 	}
 
-	// Random digits
+	// * Random digits
 	if strings.Contains(result, "{R}") {
 		result = strings.ReplaceAll(result, "{R}", generateRandomDigits(format.RandomDigitsCount))
 	}
 
-	// Calculate and add check digit if needed
+	// * Calculate and add check digit if needed
 	if strings.Contains(result, "{C}") {
-		// Extract numbers from the current result for checksum calculation
+		// * Extract numbers from the current result for checksum calculation
 		re := regexp.MustCompile(`\d+`)
 		numericParts := re.FindAllString(result, -1)
 		numericPart := strings.Join(numericParts, "")
@@ -350,16 +350,16 @@ func generateRandomDigits(count int) string {
 		return ""
 	}
 
-	// Use cryptographically secure random number generation
+	// * Use cryptographically secure random number generation
 	maxRandom := 1
 	for range count {
 		maxRandom *= 10
 	}
 
-	// Generate cryptographically secure random number
+	// * Generate cryptographically secure random number
 	n, err := rand.Int(rand.Reader, big.NewInt(int64(maxRandom)))
 	if err != nil {
-		// Fallback to timestamp if random generation fails
+		// * Fallback to timestamp if random generation fails
 		n = big.NewInt(time.Now().UnixNano() % int64(maxRandom))
 	}
 
@@ -369,15 +369,15 @@ func generateRandomDigits(count int) string {
 
 // calculateCheckDigit calculates a check digit for a numeric string using the Luhn algorithm
 func calculateCheckDigit(input string) int {
-	// Remove any non-digit characters
+	// * Remove any non-digit characters
 	re := regexp.MustCompile(`\D`)
 	digits := re.ReplaceAllString(input, "")
 
-	// Luhn algorithm
+	// * Luhn algorithm
 	sum := 0
 	alternate := false
 
-	// Process from right to left
+	// * Process from right to left
 	for i := len(digits) - 1; i >= 0; i-- {
 		digit, _ := strconv.Atoi(string(digits[i]))
 
@@ -392,7 +392,7 @@ func calculateCheckDigit(input string) int {
 		alternate = !alternate
 	}
 
-	// The check digit is the number needed to make the sum a multiple of 10
+	// * The check digit is the number needed to make the sum a multiple of 10
 	return (10 - (sum % 10)) % 10
 }
 
@@ -400,7 +400,7 @@ func calculateCheckDigit(input string) int {
 // Returns true if the pro number is valid, false otherwise
 func ValidateProNumber(proNumber string, format *ProNumberFormat) bool {
 	if format.IncludeCheckDigit {
-		// Extract the check digit (last digit)
+		// * Extract the check digit (last digit)
 		if len(proNumber) < 1 {
 			return false
 		}
@@ -410,23 +410,23 @@ func ValidateProNumber(proNumber string, format *ProNumberFormat) bool {
 			return false
 		}
 
-		// Calculate the expected check digit using all but the last character
+		// * Calculate the expected check digit using all but the last character
 		numericPart := proNumber[:len(proNumber)-1]
 		expectedCheckDigit := calculateCheckDigit(numericPart)
 
 		return checkDigit == expectedCheckDigit
 	}
 
-	// If no check digit, just verify it matches the expected pattern
-	// This would be more complex in a real implementation
+	// * If no check digit, just verify it matches the expected pattern
+	// * This would be more complex in a real implementation
 	return true
 }
 
 // ParseProNumber attempts to parse a pro number string into its components
 // Returns a map of component names to values
 func ParseProNumber(proNumber string, format *ProNumberFormat) (map[string]string, error) {
-	// This is a simplistic implementation that would need to be expanded
-	// based on the specific format rules in a real implementation
+	// * This is a simplistic implementation that would need to be expanded
+	// * based on the specific format rules in a real implementation
 
 	if !ValidateProNumber(proNumber, format) {
 		return nil, ErrInvalidProNumber
@@ -434,10 +434,10 @@ func ParseProNumber(proNumber string, format *ProNumberFormat) (map[string]strin
 
 	result := make(map[string]string)
 
-	// Basic parsing - in a real implementation, this would be more sophisticated
-	// and would handle the custom format properly
+	// * Basic parsing - in a real implementation, this would be more sophisticated
+	// * and would handle the custom format properly
 
-	// For now, just return the whole pro number
+	// * For now, just return the whole pro number
 	result["full"] = proNumber
 
 	return result, nil
@@ -449,26 +449,26 @@ func GenerateBatch(ctx context.Context, orgID pulid.ID, count int) ([]string, er
 		return []string{}, nil
 	}
 
-	// Get the organization format
+	// * Get the organization format
 	format, err := GetOrganizationProNumberFormat(ctx, orgID)
 	if err != nil {
 		return nil, err
 	}
 
-	// Current date components
+	// * Current date components
 	now := time.Now()
 	year := now.Year()
 	month := int(now.Month())
 
-	// Results slice
+	// * Results slice
 	results := make([]string, 0, count)
 
-	// In a real implementation, we'd use a single database transaction to:
+	// * In a real implementation, we'd use a single database transaction to:
 	// 1. Get the current sequence
 	// 2. Increment it by count
 	// 3. Generate all pro numbers in the range
 	//
-	// For now, we'll simulate this by incrementing a local counter
+	// * For now, we'll simulate this by incrementing a local counter
 	startSequence := 1 // In practice, this would come from the database
 
 	for i := range count {
@@ -487,18 +487,18 @@ func DetectFormat(proNumber string) (*ProNumberFormat, error) {
 		return nil, ErrInvalidProNumber
 	}
 
-	// This is a simplistic implementation that guesses the format
-	// A real implementation would be much more sophisticated
+	// * This is a simplistic implementation that guesses the format
+	// * A real implementation would be much more sophisticated
 	format := &ProNumberFormat{}
 
-	// Detect prefix (assume first character is alphabetic)
+	// * Detect prefix (assume first character is alphabetic)
 	if first := proNumber[0]; first >= 'A' && first <= 'Z' {
 		format.Prefix = string(first)
 		proNumber = proNumber[1:]
 	}
 
-	// Rough detection of components
-	// This is very simplistic and would need to be improved
+	// * Rough detection of components
+	// * This is very simplistic and would need to be improved
 	hasYear := len(proNumber) > 2
 	hasMonth := len(proNumber) > 4
 	hasLocationCode := len(proNumber) > 6
@@ -517,7 +517,7 @@ func DetectFormat(proNumber string) (*ProNumberFormat, error) {
 
 // NormalizeProNumber normalizes a pro number by removing separators and spaces
 func NormalizeProNumber(proNumber string) string {
-	// Remove common separators and spaces
+	// * Remove common separators and spaces
 	proNumber = strings.ReplaceAll(proNumber, "-", "")
 	proNumber = strings.ReplaceAll(proNumber, " ", "")
 	proNumber = strings.ReplaceAll(proNumber, ".", "")
@@ -531,43 +531,43 @@ func FormatProNumber(proNumber string, format *ProNumberFormat) string {
 		return proNumber
 	}
 
-	// This is a simplistic implementation that just adds separators
-	// at fixed positions. A real implementation would be format-aware.
+	// * This is a simplistic implementation that just adds separators
+	// * at fixed positions. A real implementation would be format-aware.
 	var result strings.Builder
 
-	// Prefix is separate
+	// * Prefix is separate
 	if len(proNumber) > 0 && format.Prefix != "" {
 		result.WriteString(proNumber[:1])
 		result.WriteString(format.SeparatorChar)
 		proNumber = proNumber[1:]
 	}
 
-	// Add year-month block
+	// * Add year-month block
 	if format.IncludeYear && format.IncludeMonth && len(proNumber) >= 4 {
 		result.WriteString(proNumber[:4])
 		result.WriteString(format.SeparatorChar)
 		proNumber = proNumber[4:]
 	}
 
-	// Add location code
+	// * Add location code
 	if format.IncludeLocationCode && len(proNumber) >= 2 {
 		result.WriteString(proNumber[:2])
 		result.WriteString(format.SeparatorChar)
 		proNumber = proNumber[2:]
 	}
 
-	// Add sequence
+	// * Add sequence
 	if len(proNumber) >= format.SequenceDigits {
 		result.WriteString(proNumber[:format.SequenceDigits])
 		proNumber = proNumber[format.SequenceDigits:]
 
-		// If anything remains, add another separator
+		// * If anything remains, add another separator
 		if len(proNumber) > 0 {
 			result.WriteString(format.SeparatorChar)
 		}
 	}
 
-	// Add the rest
+	// * Add the rest
 	result.WriteString(proNumber)
 
 	return result.String()
@@ -588,9 +588,9 @@ func GetProNumberComponents(proNumber string, format *ProNumberFormat) (map[stri
 	offset := 0
 	var err error
 
-	// Extract components based on format
+	// * Extract components based on format
 	extractorFns := []func() error{
-		// Extract prefix
+		// * Extract prefix
 		func() error {
 			if format.Prefix != "" {
 				offset, err = extractComponent(proNumber, offset, len(format.Prefix), "prefix", result)
@@ -598,7 +598,7 @@ func GetProNumberComponents(proNumber string, format *ProNumberFormat) (map[stri
 			}
 			return nil
 		},
-		// Extract business unit code
+		// * Extract business unit code
 		func() error {
 			if format.IncludeBusinessUnitCode && format.BusinessUnitCode != "" {
 				offset, err = extractComponent(proNumber, offset, len(format.BusinessUnitCode), "businessUnit", result)
@@ -606,7 +606,7 @@ func GetProNumberComponents(proNumber string, format *ProNumberFormat) (map[stri
 			}
 			return nil
 		},
-		// Extract year
+		// * Extract year
 		func() error {
 			if format.IncludeYear && format.YearDigits > 0 {
 				offset, err = extractComponent(proNumber, offset, format.YearDigits, "year", result)
@@ -614,7 +614,7 @@ func GetProNumberComponents(proNumber string, format *ProNumberFormat) (map[stri
 			}
 			return nil
 		},
-		// Extract month or week
+		// * Extract month or week
 		func() error {
 			if format.IncludeMonth {
 				offset, err = extractComponent(proNumber, offset, 2, "month", result)
@@ -625,7 +625,7 @@ func GetProNumberComponents(proNumber string, format *ProNumberFormat) (map[stri
 			}
 			return nil
 		},
-		// Extract day
+		// * Extract day
 		func() error {
 			if format.IncludeDay {
 				offset, err = extractComponent(proNumber, offset, 2, "day", result)
@@ -633,7 +633,7 @@ func GetProNumberComponents(proNumber string, format *ProNumberFormat) (map[stri
 			}
 			return nil
 		},
-		// Extract location code
+		// * Extract location code
 		func() error {
 			if format.IncludeLocationCode {
 				offset, err = extractComponent(proNumber, offset, len(format.LocationCode), "location", result)
@@ -641,7 +641,7 @@ func GetProNumberComponents(proNumber string, format *ProNumberFormat) (map[stri
 			}
 			return nil
 		},
-		// Extract sequence
+		// * Extract sequence
 		func() error {
 			if format.SequenceDigits > 0 {
 				offset, err = extractComponent(proNumber, offset, format.SequenceDigits, "sequence", result)
@@ -649,7 +649,7 @@ func GetProNumberComponents(proNumber string, format *ProNumberFormat) (map[stri
 			}
 			return nil
 		},
-		// Extract random part
+		// * Extract random part
 		func() error {
 			if format.IncludeRandomDigits && format.RandomDigitsCount > 0 {
 				offset, err = extractComponent(proNumber, offset, format.RandomDigitsCount, "random", result)
@@ -657,7 +657,7 @@ func GetProNumberComponents(proNumber string, format *ProNumberFormat) (map[stri
 			}
 			return nil
 		},
-		// Extract check digit
+		// * Extract check digit
 		func() error {
 			if format.IncludeCheckDigit {
 				offset, err = extractComponent(proNumber, offset, 1, "checkDigit", result)
@@ -684,5 +684,6 @@ func extractComponent(proNumber string, offset, length int, key string, result m
 		return offset, ErrInvalidProNumber
 	}
 	result[key] = proNumber[offset : offset+length]
+
 	return offset + length, nil
 }
