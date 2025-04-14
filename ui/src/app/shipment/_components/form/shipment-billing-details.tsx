@@ -323,7 +323,6 @@ export default function ShipmentBillingDetails() {
           <InputField
             readOnly
             control={control}
-            rules={{ required: true }}
             name="otherChargeAmount"
             label="Other Charges"
             placeholder="Enter Additional Charges"

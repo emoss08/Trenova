@@ -1,4 +1,5 @@
 import { http } from "@/lib/http-client";
+import { CustomerSchema } from "@/lib/schemas/customer-schema";
 import { type CustomerDocumentRequirement } from "@/types/customer";
 
 export async function getCustomerDocumentRequirements(
@@ -7,5 +8,12 @@ export async function getCustomerDocumentRequirements(
   const response = await http.get<CustomerDocumentRequirement[]>(
     `/customers/${customerId}/document-requirements`,
   );
+  return response.data;
+}
+
+export async function getCustomerById(
+  customerId: string,
+): Promise<CustomerSchema> {
+  const response = await http.get<CustomerSchema>(`/customers/${customerId}`);
   return response.data;
 }

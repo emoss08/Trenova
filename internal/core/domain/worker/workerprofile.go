@@ -116,7 +116,7 @@ func (p *WorkerProfile) Validate(ctx context.Context, multiErr *errors.MultiErro
 	if err != nil {
 		var validationErrs validation.Errors
 		if eris.As(err, &validationErrs) {
-			errors.FromValidationErrors(validationErrs, multiErr, "profile")
+			errors.FromOzzoErrors(validationErrs, multiErr)
 		}
 	}
 }

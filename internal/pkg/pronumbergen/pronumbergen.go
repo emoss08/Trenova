@@ -107,7 +107,7 @@ func GenerateProNumber(format *ProNumberFormat, sequence int, year int, month in
 	if format.IncludeRandomDigits && format.RandomDigitsCount > 0 {
 		// Use cryptographically secure random number generation
 		maxRandom := 1
-		for i := 0; i < format.RandomDigitsCount; i++ {
+		for range format.RandomDigitsCount {
 			maxRandom *= 10
 		}
 

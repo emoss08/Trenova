@@ -25,6 +25,7 @@ import { useUnsavedChanges } from "@/hooks/use-form";
 import { useFormWithSave } from "@/hooks/use-form-with-save";
 import { broadcastQueryInvalidation } from "@/hooks/use-invalidate-query";
 import { http } from "@/lib/http-client";
+import { queries } from "@/lib/queries";
 import {
   customerSchema,
   type CustomerSchema,
@@ -58,7 +59,11 @@ export function CustomerEditForm({
     onSuccess: () => {
       onOpenChange(false);
       broadcastQueryInvalidation({
-        queryKey: ["customer", "customer-list"],
+        queryKey: [
+          "customer",
+          "customer-list",
+          ...queries.customer.getDocumentRequirements._def,
+        ],
         options: {
           correlationId: `update-customer-${Date.now()}`,
         },

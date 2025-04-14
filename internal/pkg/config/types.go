@@ -1,6 +1,11 @@
 package config
 
-import "time"
+import (
+	"fmt"
+	"net"
+	"strconv"
+	"time"
+)
 
 // Config is the configuration for the app.
 type Config struct {
@@ -18,6 +23,9 @@ type Config struct {
 
 	// Redis is the redis configuration.
 	Redis RedisConfig `mapstructure:"redis"`
+
+	// RabbitMQ is the rabbitmq configuration.
+	RabbitMQ RabbitMQConfig `mapstructure:"rabbitmq"`
 
 	// Auth is the auth configuration.
 	Auth AuthConfig `mapstructure:"auth"`
@@ -287,6 +295,36 @@ type RedisConfig struct {
 	// This is the minimum number of idle connections in the redis connection pool.
 	// Defaults to 10. If you're using a high-traffic service, you may want to increase this.
 	MinIdleConns int `mapstructure:"minIdleConns"`
+}
+
+type RabbitMQConfig struct {
+	// Host is the rabbitmq host.
+	Host string `mapstructure:"host"`
+
+	// Port is the rabbitmq port.
+	Port int `mapstructure:"port"`
+
+	// Username is the rabbitmq username.
+	Username string `mapstructure:"username"`
+
+	// Password is the rabbitmq password.
+	Password string `mapstructure:"password"`
+
+	// VHost is the rabbitmq vhost.
+	VHost string `mapstructure:"vhost"`
+
+	// ExchangeName is the rabbitmq exchange name.
+	ExchangeName string `mapstructure:"exchangeName"`
+
+	// QueueName is the rabbitmq queue name.
+	QueueName string `mapstructure:"queueName"`
+
+	// Timeout is the rabbitmq timeout.
+	Timeout time.Duration `mapstructure:"timeout"`
+}
+
+func (c *RabbitMQConfig) URL() string {
+	return fmt.Sprintf("amqp://%s:%s@%s/%s", c.Username, c.Password, net.JoinHostPort(c.Host, strconv.Itoa(c.Port)), c.VHost)
 }
 
 // AuthConfig is the configuration for the auth.

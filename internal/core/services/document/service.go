@@ -34,32 +34,34 @@ import (
 type ServiceParams struct {
 	fx.In
 
-	DB           db.Connection
-	Client       *minio.Client
-	Logger       *logger.Logger
-	PermService  services.PermissionService
-	AuditService services.AuditService
-	ConfigM      *config.Manager
-	DocRepo      repositories.DocumentRepository
-	FileService  services.FileService
-	OrgRepo      repositories.OrganizationRepository
-	DocTypeRepo  repositories.DocumentTypeRepository
+	DB             db.Connection
+	Client         *minio.Client
+	Logger         *logger.Logger
+	PermService    services.PermissionService
+	AuditService   services.AuditService
+	ConfigM        *config.Manager
+	DocRepo        repositories.DocumentRepository
+	FileService    services.FileService
+	OrgRepo        repositories.OrganizationRepository
+	DocTypeRepo    repositories.DocumentTypeRepository
+	PreviewService services.PreviewService
 }
 
 // service implements the DocumentService interface
 // and provides methods to manage documents, including CRUD operations,
 // status updates, duplication, and cancellation.
 type service struct {
-	l           *zerolog.Logger
-	db          db.Connection
-	client      *minio.Client
-	endpoint    string
-	docRepo     repositories.DocumentRepository
-	fileService services.FileService
-	orgRepo     repositories.OrganizationRepository
-	docTypeRepo repositories.DocumentTypeRepository
-	ps          services.PermissionService
-	as          services.AuditService
+	l              *zerolog.Logger
+	db             db.Connection
+	client         *minio.Client
+	endpoint       string
+	docRepo        repositories.DocumentRepository
+	fileService    services.FileService
+	orgRepo        repositories.OrganizationRepository
+	docTypeRepo    repositories.DocumentTypeRepository
+	ps             services.PermissionService
+	as             services.AuditService
+	previewService services.PreviewService
 }
 
 // NewService initializes a new DocumentService instance with the provided dependencies.
@@ -75,16 +77,17 @@ func NewService(p ServiceParams) services.DocumentService {
 		Logger()
 
 	return &service{
-		l:           &log,
-		db:          p.DB,
-		client:      p.Client,
-		endpoint:    p.ConfigM.Minio().Endpoint,
-		docRepo:     p.DocRepo,
-		fileService: p.FileService,
-		orgRepo:     p.OrgRepo,
-		docTypeRepo: p.DocTypeRepo,
-		ps:          p.PermService,
-		as:          p.AuditService,
+		l:              &log,
+		db:             p.DB,
+		client:         p.Client,
+		endpoint:       p.ConfigM.Minio().Endpoint,
+		docRepo:        p.DocRepo,
+		fileService:    p.FileService,
+		orgRepo:        p.OrgRepo,
+		docTypeRepo:    p.DocTypeRepo,
+		ps:             p.PermService,
+		as:             p.AuditService,
+		previewService: p.PreviewService,
 	}
 }
 
@@ -187,6 +190,7 @@ func (s *service) GetDocumentsByResourceID(ctx context.Context, req *repositorie
 		doc := docs.Items[idx]
 
 		g.Go(func() error {
+			// Generate presigned URL for the document
 			presignedURL, iErr := s.fileService.GetFileURL(ctx, bucketName, doc.StoragePath, time.Hour*24)
 			if iErr != nil {
 				return iErr
@@ -194,6 +198,19 @@ func (s *service) GetDocumentsByResourceID(ctx context.Context, req *repositorie
 
 			mu.Lock()
 			doc.PresignedURL = presignedURL
+
+			// Generate presigned URL for the preview if we have one
+			if doc.PreviewStoragePath != "" {
+				previewURL, pErr := s.previewService.GetPreviewURL(ctx, &services.GetPreviewURLRequest{
+					PreviewPath: doc.PreviewStoragePath,
+					BucketName:  bucketName,
+					OrgID:       req.OrgID,
+					ExpiryTime:  time.Hour * 24,
+				})
+				if pErr == nil {
+					doc.PreviewURL = previewURL
+				}
+			}
 			mu.Unlock()
 
 			return nil
@@ -227,6 +244,11 @@ func (s *service) UploadDocument(ctx context.Context, req *services.UploadDocume
 		return nil, err
 	}
 
+	// // * Validate the request and file size
+	// if err := req.Validate(ctx); err != nil {
+	// 	return nil, err
+	// }
+
 	// Get bucket name
 	bucketName, err := s.orgRepo.GetOrganizationBucketName(ctx, req.OrganizationID)
 	if err != nil {
@@ -246,13 +268,13 @@ func (s *service) UploadDocument(ctx context.Context, req *services.UploadDocume
 	}
 
 	// Upload file to storage
-	fileUploadResp, err := s.uploadDocumentFile(ctx, req, bucketName, objectKey, docType)
+	fileUploadResp, previewPath, err := s.uploadDocumentFile(ctx, req, bucketName, objectKey, docType)
 	if err != nil {
 		return nil, err
 	}
 
 	// Create and save document record
-	savedDoc, err := s.createDocumentRecord(ctx, req, objectKey, bucketName)
+	savedDoc, err := s.createDocumentRecord(ctx, req, objectKey, bucketName, previewPath)
 	if err != nil {
 		return nil, err
 	}
@@ -311,7 +333,12 @@ func (s *service) prepareDocumentStorage(ctx context.Context, req *services.Uplo
 }
 
 // uploadDocumentFile handles uploading the file to storage
-func (s *service) uploadDocumentFile(ctx context.Context, req *services.UploadDocumentRequest, bucketName, objectKey string, docType *billing.DocumentType) (*services.SaveFileResponse, error) {
+func (s *service) uploadDocumentFile(ctx context.Context, req *services.UploadDocumentRequest, bucketName, objectKey string, docType *billing.DocumentType) (*services.SaveFileResponse, string, error) {
+	log := s.l.With().
+		Str("operation", "uploadDocumentFile").
+		Str("fileName", req.FileName).
+		Logger()
+
 	fileReq := &services.SaveFileRequest{
 		OrgID:          req.OrganizationID.String(),
 		BucketName:     bucketName,
@@ -339,15 +366,30 @@ func (s *service) uploadDocumentFile(ctx context.Context, req *services.UploadDo
 	// Upload file
 	fileUploadResp, err := s.fileService.SaveFileVersion(ctx, fileReq)
 	if err != nil {
-		s.l.Error().Err(err).Msg("failed to save file version")
-		return nil, err
+		log.Error().Err(err).Msg("failed to save file version")
+		return nil, "", err
 	}
 
-	return fileUploadResp, nil
+	// * Generate a preview image if the file is a PDF
+	previewResp, err := s.previewService.GeneratePreview(ctx, &services.GeneratePreviewRequest{
+		File:         req.File,
+		FileName:     req.FileName,
+		OrgID:        req.OrganizationID,
+		UserID:       req.UploadedByID.String(),
+		ResourceID:   req.ResourceID,
+		ResourceType: req.ResourceType,
+		BucketName:   bucketName,
+	})
+	if err != nil {
+		log.Error().Err(err).Msg("failed to generate preview")
+		return nil, "", err
+	}
+
+	return fileUploadResp, previewResp.PreviewPath, nil
 }
 
 // createDocumentRecord creates and saves the document record in the database
-func (s *service) createDocumentRecord(ctx context.Context, req *services.UploadDocumentRequest, objectKey string, bucketName string) (*document.Document, error) {
+func (s *service) createDocumentRecord(ctx context.Context, req *services.UploadDocumentRequest, objectKey, bucketName, previewPath string) (*document.Document, error) {
 	// Determine document status
 	docStatus := req.Status
 	if docStatus == "" {
@@ -360,20 +402,21 @@ func (s *service) createDocumentRecord(ctx context.Context, req *services.Upload
 
 	// Create document record
 	doc := &document.Document{
-		OrganizationID: req.OrganizationID,
-		BusinessUnitID: req.BusinessUnitID,
-		FileName:       filepath.Base(objectKey),
-		OriginalName:   req.OriginalName,
-		FileSize:       int64(len(req.File)),
-		FileType:       filepath.Ext(req.FileName),
-		StoragePath:    objectKey,
-		DocumentTypeID: req.DocumentTypeID,
-		Status:         docStatus,
-		ResourceID:     req.ResourceID,
-		ResourceType:   req.ResourceType,
-		ExpirationDate: req.ExpirationDate,
-		Tags:           req.Tags,
-		UploadedByID:   req.UploadedByID,
+		OrganizationID:     req.OrganizationID,
+		BusinessUnitID:     req.BusinessUnitID,
+		FileName:           filepath.Base(objectKey),
+		OriginalName:       req.OriginalName,
+		FileSize:           int64(len(req.File)),
+		FileType:           filepath.Ext(req.FileName),
+		StoragePath:        objectKey,
+		DocumentTypeID:     req.DocumentTypeID,
+		Status:             docStatus,
+		ResourceID:         req.ResourceID,
+		ResourceType:       req.ResourceType,
+		ExpirationDate:     req.ExpirationDate,
+		Tags:               req.Tags,
+		UploadedByID:       req.UploadedByID,
+		PreviewStoragePath: previewPath,
 	}
 
 	// Save document to database
@@ -459,6 +502,18 @@ func (s *service) DeleteDocument(ctx context.Context, req *services.DeleteDocume
 	if err != nil {
 		log.Error().Err(err).Msg("failed to delete file from storage")
 		return err
+	}
+
+	// * Delete the preview from file storage
+	if doc.PreviewStoragePath != "" {
+		if err = s.previewService.DeletePreview(ctx, &services.DeletePreviewRequest{
+			PreviewPath: doc.PreviewStoragePath,
+			BucketName:  bucketName,
+			OrgID:       req.OrgID,
+		}); err != nil {
+			log.Error().Err(err).Msg("failed to delete preview from storage")
+			// ! Continue with the deletion even if preview deletion fails
+		}
 	}
 
 	// * Delete the document from the database

@@ -6,6 +6,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/shipmentmove"
 	"github.com/emoss08/trenova/internal/pkg/ctx"
 	"github.com/emoss08/trenova/internal/pkg/validator"
+	"github.com/emoss08/trenova/pkg/types/pulid"
 	"github.com/gofiber/fiber/v2"
 	"go.uber.org/fx"
 )
@@ -33,6 +34,35 @@ func (h *Handler) RegisterRoutes(r fiber.Router, rl *middleware.RateLimiter) {
 		[]fiber.Handler{h.split},
 		middleware.PerMinute(60), // 60 reads per minute
 	)...)
+
+	api.Get("/:moveID/", rl.WithRateLimit(
+		[]fiber.Handler{h.get},
+		middleware.PerMinute(60), // 60 reads per minute
+	)...)
+}
+
+func (h *Handler) get(c *fiber.Ctx) error {
+	reqCtx, err := ctx.WithRequestContext(c)
+	if err != nil {
+		return h.eh.HandleError(c, err)
+	}
+
+	moveID, err := pulid.MustParse(c.Params("moveID"))
+	if err != nil {
+		return h.eh.HandleError(c, err)
+	}
+
+	move, err := h.ss.Get(c.UserContext(), repositories.GetMoveByIDOptions{
+		MoveID:            moveID,
+		OrgID:             reqCtx.OrgID,
+		BuID:              reqCtx.BuID,
+		ExpandMoveDetails: c.QueryBool("expandMoveDetails", false),
+	})
+	if err != nil {
+		return h.eh.HandleError(c, err)
+	}
+
+	return c.Status(fiber.StatusOK).JSON(move)
 }
 
 func (h *Handler) split(c *fiber.Ctx) error {

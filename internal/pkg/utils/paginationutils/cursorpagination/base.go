@@ -76,10 +76,11 @@ func ProcessResponse[T BaseModel](
 		},
 	}
 	// Copy data with proper pointer handling
-	for i := 0; i < dataLen; i++ {
+	for i := range entities[:dataLen] {
 		tmp := entities[i]
 		response.Data[i] = &tmp
 	}
+
 	// Handle next cursor if there are more records
 	if hasMore {
 		lastEntity := entities[pageSize-1]
@@ -89,6 +90,7 @@ func ProcessResponse[T BaseModel](
 		}
 		response.Cursors.Next = &nextCursor
 	}
+
 	// Add previous cursor if we're not on the first page
 	if opts.Cursor != nil && *opts.Cursor != "" {
 		if len(entities) > 0 {

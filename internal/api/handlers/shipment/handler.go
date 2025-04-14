@@ -144,7 +144,7 @@ func (h *Handler) get(c *fiber.Ctx) error {
 		OrgID:  reqCtx.OrgID,
 		UserID: reqCtx.UserID,
 		ShipmentOptions: repositories.ShipmentOptions{
-			ExpandShipmentDetails: c.QueryBool("expandShipmentDetails"),
+			ExpandShipmentDetails: c.QueryBool("expandShipmentDetails", false),
 		},
 	})
 	if err != nil {

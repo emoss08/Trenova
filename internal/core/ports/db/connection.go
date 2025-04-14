@@ -2,6 +2,7 @@ package db
 
 import (
 	"context"
+	"database/sql"
 
 	"github.com/uptrace/bun"
 )
@@ -23,6 +24,9 @@ type Connection interface {
 
 	// ConnectionInfo returns information about the database connection
 	ConnectionInfo() (*ConnectionInfo, error)
+
+	// SQLDB returns a database connection.
+	SQLDB(ctx context.Context) (*sql.DB, error)
 
 	// Close closes the database connection.
 	Close() error

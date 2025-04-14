@@ -90,7 +90,7 @@ func NewService(p ServiceParams) services.FileService {
 				RetentionPeriod:    30 * 24 * time.Hour, // 30 days
 				RequiresEncryption: false,
 				AllowedCategories:  []services.FileCategory{services.CategoryBranding, services.CategoryProfile, services.CategoryShipment}, // TODO (Wolfred): Remove shipment category
-				MaxFileSize:        5 * 1024 * 1024,                                                                                         // 5MB
+				MaxFileSize:        MaxFileSize,
 				RequireVersioning:  false,
 				MaxVersions:        1,
 				VersionRetention:   "none",
@@ -108,7 +108,7 @@ func NewService(p ServiceParams) services.FileService {
 				RetentionPeriod:    365 * 24 * time.Hour, // 1 year
 				RequiresEncryption: true,
 				AllowedCategories:  []services.FileCategory{services.CategoryWorker},
-				MaxFileSize:        50 * 1024 * 1024, // 50MB
+				MaxFileSize:        MaxFileSize,
 				RequireVersioning:  true,
 				MaxVersions:        10,
 				VersionRetention:   "all",
@@ -313,7 +313,7 @@ func (s *service) manageVersions(ctx context.Context, bucketName, objectName str
 		})
 
 		// Delete oldest version that exceed the limit
-		for i := 0; i < len(versions)-maxVersions; i++ {
+		for i := range len(versions) - maxVersions {
 			err = s.client.RemoveObject(ctx, bucketName, objectName, minio.RemoveObjectOptions{
 				VersionID: versions[i].VersionID,
 			})

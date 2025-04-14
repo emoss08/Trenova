@@ -8,45 +8,67 @@ import (
 	"github.com/emoss08/trenova/internal/pkg/errors"
 	"github.com/emoss08/trenova/internal/pkg/utils/queryutils"
 	"github.com/emoss08/trenova/internal/pkg/validator"
+	"github.com/emoss08/trenova/internal/pkg/validator/framework"
 	"github.com/rotisserie/eris"
 	"go.uber.org/fx"
 )
 
+// ValidatorParams defines the dependencies required for initializing the Validator.
+// This includes the database connection and validation engine factory.
 type ValidatorParams struct {
 	fx.In
 
-	DB db.Connection
+	DB                      db.Connection
+	ValidationEngineFactory framework.ValidationEngineFactory
 }
 
+// Validator is a struct that contains the database connection and the validator.
+// It provides methods to validate document types and other related entities.
 type Validator struct {
-	db db.Connection
+	db  db.Connection
+	vef framework.ValidationEngineFactory
 }
 
+// NewValidator initializes a new Validator with the provided dependencies.
+//
+// Parameters:
+//   - p: ValidatorParams containing dependencies.
+//
+// Returns:
+//   - *Validator: A new Validator instance.
 func NewValidator(p ValidatorParams) *Validator {
 	return &Validator{
-		db: p.DB,
+		db:  p.DB,
+		vef: p.ValidationEngineFactory,
 	}
 }
 
+// Validate validates a document type.
+//
+// Parameters:
+//   - ctx: The context of the request.
+//   - valCtx: The validation context.
+//   - dt: The document type to validate.
+//
+// Returns:
+//   - *errors.MultiError: A list of validation errors.
 func (v *Validator) Validate(ctx context.Context, valCtx *validator.ValidationContext, dt *billing.DocumentType) *errors.MultiError {
-	multiErr := errors.NewMultiError()
+	engine := v.vef.CreateEngine()
 
-	// * Basic Document Type validation
-	dt.Validate(ctx, multiErr)
+	// * Basic validation rules (field presence, format, etc.)
+	engine.AddRule(framework.NewValidationRule(framework.ValidationStageBasic, framework.ValidationPriorityHigh,
+		func(ctx context.Context, multiErr *errors.MultiError) error {
+			dt.Validate(ctx, multiErr)
+			return nil
+		}))
 
-	// * Validate uniqueness
-	if err := v.ValidateUniqueness(ctx, valCtx, dt, multiErr); err != nil {
-		multiErr.Add("uniqueness", errors.ErrSystemError, err.Error())
-	}
+	// * Data Integrity Validation (uniqueness, references, etc.)
+	engine.AddRule(framework.NewValidationRule(framework.ValidationStageDataIntegrity, framework.ValidationPriorityHigh,
+		func(ctx context.Context, multiErr *errors.MultiError) error {
+			return v.ValidateUniqueness(ctx, valCtx, dt, multiErr)
+		}))
 
-	// * Validate ID
-	v.validateID(dt, valCtx, multiErr)
-
-	if multiErr.HasErrors() {
-		return multiErr
-	}
-
-	return nil
+	return engine.Validate(ctx)
 }
 
 func (v *Validator) ValidateUniqueness(ctx context.Context, valCtx *validator.ValidationContext, dt *billing.DocumentType, multiErr *errors.MultiError) error {
@@ -74,10 +96,4 @@ func (v *Validator) ValidateUniqueness(ctx context.Context, valCtx *validator.Va
 	queryutils.CheckFieldUniqueness(ctx, dba, vb.Build(), multiErr)
 
 	return nil
-}
-
-func (v *Validator) validateID(dt *billing.DocumentType, valCtx *validator.ValidationContext, multiErr *errors.MultiError) {
-	if valCtx.IsCreate && dt.ID.IsNotNil() {
-		multiErr.Add("id", errors.ErrInvalid, "ID cannot be set on create")
-	}
 }

@@ -47,7 +47,7 @@ export const shipmentSchema = object({
   ratingMethod: mixed<RatingMethod>()
     .required("Rating Method is required")
     .oneOf(Object.values(RatingMethod)),
-  otherChargeAmount: number().required("Other Charge Amount is required"),
+  otherChargeAmount: number().optional(),
   freightChargeAmount: number().required("Freight Charge Amount is required"),
   totalChargeAmount: number().required("Total Charge Amount is required"),
   pieces: number()

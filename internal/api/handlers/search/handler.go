@@ -438,10 +438,7 @@ func (h *Handler) Suggest(c *fiber.Ctx) error {
 	if c.Query("limit") != "" {
 		limitVal, err := strconv.Atoi(c.Query("limit"))
 		if err == nil && limitVal > 0 {
-			limit = limitVal
-			if limit > 50 {
-				limit = 50 // Cap suggestions at 50
-			}
+			limit = min(limitVal, 50)
 		}
 	}
 

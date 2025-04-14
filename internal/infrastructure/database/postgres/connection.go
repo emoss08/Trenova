@@ -2,6 +2,7 @@ package postgres
 
 import (
 	"context"
+	"database/sql"
 	"sync"
 	"time"
 
@@ -38,6 +39,7 @@ type connection struct {
 	cfg  *config.Manager
 	log  *zerolog.Logger
 	db   *bun.DB
+	sql  *sql.DB
 	pool *pgxpool.Pool
 	mu   sync.RWMutex
 }
@@ -117,6 +119,8 @@ func (c *connection) DB(ctx context.Context) (*bun.DB, error) {
 	c.pool = pool
 
 	sqldb := stdlib.OpenDBFromPool(pool)
+	c.sql = sqldb
+
 	bunDB := bun.NewDB(sqldb, pgdialect.New(), bun.WithDiscardUnknownColumns())
 
 	// If the environment is development and debug is enabled, add a query hook to the database
@@ -177,4 +181,15 @@ func (c *connection) Close() error {
 	}
 
 	return nil
+}
+
+func (c *connection) SQLDB(_ context.Context) (*sql.DB, error) {
+	c.mu.RLock()
+	defer c.mu.RUnlock()
+
+	if c.db == nil {
+		return nil, eris.New("database connection is not initialized")
+	}
+
+	return c.db.DB, nil
 }

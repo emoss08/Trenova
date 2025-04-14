@@ -95,10 +95,7 @@ func GetPrevPageURL(c *fiber.Ctx, limit, offset int) string {
 	if offset == 0 {
 		return ""
 	}
-	prevOffset := offset - limit
-	if prevOffset < 0 {
-		prevOffset = 0
-	}
+	prevOffset := max(offset-limit, 0)
 	if limit < 1 || limit > 100 {
 		limit = 10
 	}

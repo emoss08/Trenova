@@ -73,8 +73,8 @@ export function getColumns(): ColumnDef<Shipment>[] {
     createEntityColumn(columnHelper, "proNumber", {
       accessorKey: "proNumber",
       getHeaderText: "Pro Number",
-      getId: (shipment) => shipment.id,
-      getDisplayText: (shipment) => shipment.proNumber || "-",
+      getId: (shipment) => shipment?.id,
+      getDisplayText: (shipment) => shipment?.proNumber || "-",
     }),
     createEntityRefColumn<Shipment, "customer">(columnHelper, "customer", {
       basePath: "/billing/configurations/customers",

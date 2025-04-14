@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/pkg/errors"
 	"github.com/emoss08/trenova/internal/pkg/utils/queryutils"
 	"github.com/emoss08/trenova/internal/pkg/validator"
+	"github.com/emoss08/trenova/internal/pkg/validator/framework"
 	"github.com/rotisserie/eris"
 	"go.uber.org/fx"
 )
@@ -15,16 +16,19 @@ import (
 type ValidatorParams struct {
 	fx.In
 
-	DB db.Connection
+	DB                      db.Connection
+	ValidationEngineFactory framework.ValidationEngineFactory
 }
 
 type Validator struct {
-	db db.Connection
+	db  db.Connection
+	vef framework.ValidationEngineFactory
 }
 
 func NewValidator(p ValidatorParams) *Validator {
 	return &Validator{
-		db: p.DB,
+		db:  p.DB,
+		vef: p.ValidationEngineFactory,
 	}
 }
 
@@ -33,24 +37,20 @@ func (v *Validator) Validate(
 	valCtx *validator.ValidationContext,
 	st *shipmenttype.ShipmentType,
 ) *errors.MultiError {
-	multiErr := errors.NewMultiError()
+	engine := v.vef.CreateEngine()
 
-	// Basic Shipment Type validation
-	st.Validate(ctx, multiErr)
+	// Basic validation rules
+	engine.AddRule(framework.NewValidationRule(framework.ValidationStageBasic, framework.ValidationPriorityHigh, func(ctx context.Context, multiErr *errors.MultiError) error {
+		st.Validate(ctx, multiErr)
+		return nil
+	}))
 
-	// Validate uniqueness
-	if err := v.ValidateUniqueness(ctx, valCtx, st, multiErr); err != nil {
-		multiErr.Add("uniqueness", errors.ErrSystemError, err.Error())
-	}
+	// Data integrity validation (uniqueness)
+	engine.AddRule(framework.NewValidationRule(framework.ValidationStageDataIntegrity, framework.ValidationPriorityHigh, func(ctx context.Context, multiErr *errors.MultiError) error {
+		return v.ValidateUniqueness(ctx, valCtx, st, multiErr)
+	}))
 
-	// Validate ID
-	v.validateID(st, valCtx, multiErr)
-
-	if multiErr.HasErrors() {
-		return multiErr
-	}
-
-	return nil
+	return engine.Validate(ctx)
 }
 
 func (v *Validator) ValidateUniqueness(
@@ -83,10 +83,4 @@ func (v *Validator) ValidateUniqueness(
 	queryutils.CheckFieldUniqueness(ctx, dba, vb.Build(), multiErr)
 
 	return nil
-}
-
-func (v *Validator) validateID(st *shipmenttype.ShipmentType, valCtx *validator.ValidationContext, multiErr *errors.MultiError) {
-	if valCtx.IsCreate && st.ID.IsNotNil() {
-		multiErr.Add("id", errors.ErrInvalid, "ID cannot be set on create")
-	}
 }

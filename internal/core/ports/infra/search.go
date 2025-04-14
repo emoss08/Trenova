@@ -70,9 +70,9 @@ type SearchTask struct {
 	Error      SearchTaskError     `json:"error"`
 	Duration   string              `json:"duration,omitempty"`
 	EnqueuedAt time.Time           `json:"enqueuedAt"`
-	StartedAt  time.Time           `json:"startedAt,omitempty"`
-	FinishedAt time.Time           `json:"finishedAt,omitempty"`
-	Details    meilisearch.Details `json:"details,omitempty"`
+	StartedAt  time.Time           `json:"startedAt"`
+	FinishedAt time.Time           `json:"finishedAt"`
+	Details    meilisearch.Details `json:"details"`
 	CanceledBy int64               `json:"canceledBy,omitempty"`
 }
 
