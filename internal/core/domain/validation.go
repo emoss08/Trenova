@@ -86,13 +86,14 @@ func ValidateCommaSeparatedEmails(value any) error {
 		return nil
 	}
 
-	// Take out the commas and split the string into a slice of strings
-	emails = strings.ReplaceAll(emails, ",", "")
-	emailSlice := strings.Split(emails, ",")
+	// Use range with SplitSeq
+	for email := range strings.SplitSeq(emails, ",") {
+		trimmedEmail := strings.TrimSpace(email)
+		if trimmedEmail == "" {
+			continue
+		}
 
-	// Validate each email in the slice
-	for _, email := range emailSlice {
-		if !govalidator.IsEmail(email) {
+		if !govalidator.IsEmail(trimmedEmail) {
 			return eris.New("Invalid email address. Please provide a valid email address")
 		}
 	}

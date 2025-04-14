@@ -11,33 +11,70 @@ import (
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/pkg/errors"
 	"github.com/emoss08/trenova/internal/pkg/utils/timeutils"
+	"github.com/emoss08/trenova/internal/pkg/validator/framework"
 	"github.com/rotisserie/eris"
 	"github.com/rs/zerolog/log"
 	"go.uber.org/fx"
 )
 
+// ValidatorParams defines the dependencies required for initializing the Validator.
+// This includes the database connection and validation engine factory.
 type ValidatorParams struct {
 	fx.In
 
-	HazmatExpRepo       repositories.HazmatExpirationRepository
-	ShipmentControlRepo repositories.ShipmentControlRepository
+	HazmatExpRepo           repositories.HazmatExpirationRepository
+	ShipmentControlRepo     repositories.ShipmentControlRepository
+	ValidationEngineFactory framework.ValidationEngineFactory
 }
 
+// Validator is a struct that contains the database connection and the validator.
+// It provides methods to validate worker compliance and other related entities.
 type Validator struct {
 	hazExpRepo repositories.HazmatExpirationRepository
 	scp        repositories.ShipmentControlRepository
+	vef        framework.ValidationEngineFactory
 }
 
+// NewValidator initializes a new Validator with the provided dependencies.
+//
+// Parameters:
+//   - p: ValidatorParams containing dependencies.
+//
+// Returns:
+//   - *Validator: A new Validator instance.
 func NewValidator(p ValidatorParams) *Validator {
 	return &Validator{
 		hazExpRepo: p.HazmatExpRepo,
 		scp:        p.ShipmentControlRepo,
+		vef:        p.ValidationEngineFactory,
 	}
 }
 
-// ValidateWorkerCompliance validates the overall DOT compliance for a worker's profile.
+// Validate validates the worker's compliance.
+//
+// Parameters:
+//   - ctx: The context of the request.
+//   - valCtx: The validation context.
+//   - wp: The worker profile to validate.
+//
+// Returns:
+//   - *errors.MultiError: A list of validation errors.
+func (v *Validator) Validate(ctx context.Context, wp *worker.WorkerProfile) *errors.MultiError {
+	engine := v.vef.CreateEngine()
+
+	// * Business rules validation (domain-specific rules)
+	engine.AddRule(framework.NewValidationRule(framework.ValidationStageBusinessRules, framework.ValidationPriorityHigh,
+		func(ctx context.Context, multiErr *errors.MultiError) error {
+			v.validateWorkerCompliance(ctx, wp, multiErr)
+			return nil
+		}))
+
+	return engine.Validate(ctx)
+}
+
+// validateWorkerCompliance validates the overall DOT compliance for a worker's profile.
 // This method orchestrates multiple specific validation checks and accumulates any errors in a MultiError.
-func (v *Validator) ValidateWorkerCompliance(ctx context.Context, wp *worker.WorkerProfile, multiErr *errors.MultiError) {
+func (v *Validator) validateWorkerCompliance(ctx context.Context, wp *worker.WorkerProfile, multiErr *errors.MultiError) {
 	now := timeutils.NowUnix()
 
 	// Load the shipment controls for the organization

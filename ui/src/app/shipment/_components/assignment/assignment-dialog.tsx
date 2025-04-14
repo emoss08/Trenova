@@ -36,7 +36,7 @@ import {
 import { AssignmentStatus } from "@/types/assignment";
 import { type APIError } from "@/types/errors";
 import { yupResolver } from "@hookform/resolvers/yup";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useCallback, useEffect } from "react";
 import { FormProvider, type Path, useForm } from "react-hook-form";
 import { toast } from "sonner";
@@ -110,6 +110,8 @@ export function AssignmentDialog({
     onClose: handleClose,
   });
 
+  const queryClient = useQueryClient();
+
   const { mutateAsync: createAssignment } = useApiMutation({
     mutationFn: async (values: AssignmentSchema) => {
       if (isEditing) {
@@ -139,7 +141,7 @@ export function AssignmentDialog({
 
       // Invalidate the query to refresh the table
       broadcastQueryInvalidation({
-        queryKey: ["assignment", "shipment"],
+        queryKey: ["shipment", "shipment-list", "stop", "assignment", "move"],
         options: {
           correlationId: `${isEditing ? "update" : "create"}-shipment-move-assignment-${Date.now()}`,
         },
@@ -147,6 +149,11 @@ export function AssignmentDialog({
           predicate: true,
           refetchType: "all",
         },
+      });
+
+      // Also directly invalidate the specific move query
+      queryClient.invalidateQueries({
+        queryKey: ["moves", shipmentMoveId],
       });
     },
     onError: (error: APIError) => {
@@ -224,7 +231,8 @@ export function AssignmentDialog({
                   <Tooltip>
                     <TooltipTrigger asChild>
                       <Button
-                        type="submit"
+                        type="button"
+                        onClick={() => handleSubmit(onSubmit)()}
                         isLoading={isSubmitting}
                         loadingText={
                           isEditing ? "Reassigning..." : "Assigning..."

@@ -8,47 +8,79 @@ import (
 	"github.com/emoss08/trenova/internal/pkg/errors"
 	"github.com/emoss08/trenova/internal/pkg/utils/queryutils"
 	"github.com/emoss08/trenova/internal/pkg/validator"
+	"github.com/emoss08/trenova/internal/pkg/validator/framework"
 	"github.com/rotisserie/eris"
 	"go.uber.org/fx"
 )
 
+// ValidatorParams defines the dependencies required for initializing the Validator.
+// This includes the database connection and validation engine factory.
 type ValidatorParams struct {
 	fx.In
 
-	DB db.Connection
+	DB                      db.Connection
+	ValidationEngineFactory framework.ValidationEngineFactory
 }
 
+// Validator is a validator for service types.
+// It validates service types, and other related entities.
 type Validator struct {
-	db db.Connection
+	db  db.Connection
+	vef framework.ValidationEngineFactory
 }
 
+// NewValidator initializes a new Validator with the provided dependencies.
+//
+// Parameters:
+//   - p: ValidatorParams containing dependencies.
+//
+// Returns:
+//   - *Validator: A new Validator instance.
 func NewValidator(p ValidatorParams) *Validator {
 	return &Validator{
-		db: p.DB,
+		db:  p.DB,
+		vef: p.ValidationEngineFactory,
 	}
 }
 
+// Validate validates a service type.
+//
+// Parameters:
+//   - ctx: The context of the request.
+//   - valCtx: The validation context.
+//   - st: The service type to validate.
+//
+// Returns:
+//   - *errors.MultiError: A MultiError containing validation errors.
 func (v *Validator) Validate(ctx context.Context, valCtx *validator.ValidationContext, st *servicetype.ServiceType) *errors.MultiError {
-	multiErr := errors.NewMultiError()
+	engine := v.vef.CreateEngine()
 
-	// Basic Service Type validation
-	st.Validate(ctx, multiErr)
+	// * Basic validation rules (field presence, format, etc.)
+	engine.AddRule(framework.NewValidationRule(framework.ValidationStageBasic, framework.ValidationPriorityHigh,
+		func(ctx context.Context, multiErr *errors.MultiError) error {
+			st.Validate(ctx, multiErr)
+			return nil
+		}))
 
-	// Validate uniqueness
-	if err := v.ValidateUniqueness(ctx, valCtx, st, multiErr); err != nil {
-		multiErr.Add("uniqueness", errors.ErrSystemError, err.Error())
-	}
+	// * Data integrity validation (uniqueness, references, etc.)
+	engine.AddRule(framework.NewValidationRule(framework.ValidationStageDataIntegrity, framework.ValidationPriorityHigh,
+		func(ctx context.Context, multiErr *errors.MultiError) error {
+			return v.ValidateUniqueness(ctx, valCtx, st, multiErr)
+		}))
 
-	// Validate ID
-	v.validateID(st, valCtx, multiErr)
-
-	if multiErr.HasErrors() {
-		return multiErr
-	}
-
-	return nil
+	return engine.Validate(ctx)
 }
 
+// ValidateUniqueness validates the uniqueness of a service type.
+//
+// Parameters:
+//   - ctx: The context of the request.
+//   - valCtx: The validation context.
+//   - st: The service type to validate.
+//   - multiErr: The MultiError to add validation errors to.
+//
+// Returns:
+//   - error: An error if the validation fails.
 func (v *Validator) ValidateUniqueness(ctx context.Context, valCtx *validator.ValidationContext, st *servicetype.ServiceType, multiErr *errors.MultiError) error {
 	dba, err := v.db.DB(ctx)
 	if err != nil {
@@ -74,10 +106,4 @@ func (v *Validator) ValidateUniqueness(ctx context.Context, valCtx *validator.Va
 	queryutils.CheckFieldUniqueness(ctx, dba, vb.Build(), multiErr)
 
 	return nil
-}
-
-func (v *Validator) validateID(st *servicetype.ServiceType, valCtx *validator.ValidationContext, multiErr *errors.MultiError) {
-	if valCtx.IsCreate && st.ID.IsNotNil() {
-		multiErr.Add("id", errors.ErrInvalid, "ID cannot be set on create")
-	}
 }

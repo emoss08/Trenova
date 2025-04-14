@@ -33,6 +33,8 @@ CREATE TABLE IF NOT EXISTS "documents"(
     "uploaded_by_id" varchar(100) NOT NULL,
     "approved_by_id" varchar(100),
     "approved_at" bigint,
+    -- Preview image
+    "preview_storage_path" varchar(500),
     -- Standard metadata
     "version" bigint NOT NULL DEFAULT 0,
     "created_at" bigint NOT NULL DEFAULT EXTRACT(EPOCH FROM CURRENT_TIMESTAMP) ::bigint,

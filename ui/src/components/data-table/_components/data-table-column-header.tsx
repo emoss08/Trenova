@@ -11,7 +11,6 @@ import {
 import {
   Tooltip,
   TooltipContent,
-  TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
@@ -170,49 +169,47 @@ export function DataTableColumnHeaderWithTooltip<TData, TValue>({
           else if (value === hideValue) column.toggleVisibility(false);
         }}
       >
-        <TooltipProvider>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <SelectTrigger
-                aria-label={
-                  column.getIsSorted() === "desc"
-                    ? "Sorted descending. Click to sort ascending."
-                    : column.getIsSorted() === "asc"
-                      ? "Sorted ascending. Click to sort descending."
-                      : "Not sorted. Click to sort ascending."
-                }
-                className="inline-flex items-center justify-center -ml-3 h-8 w-fit border-transparent bg-transparent text-xs hover:bg-accent hover:text-accent-foreground data-[state=open]:bg-accent data-[state=open]:text-accent-foreground [&>svg:last-child]:hidden"
-              >
-                <div className="inline-flex items-center gap-1">
-                  {startContent}
-                  {title}
-                  <SelectIcon asChild className="inline-flex items-center">
-                    {column.getCanSort() && column.getIsSorted() === "desc" ? (
-                      <Icon
-                        icon={faArrowDown}
-                        className="size-3 translate-y-[0.5px]"
-                        aria-hidden="true"
-                      />
-                    ) : column.getIsSorted() === "asc" ? (
-                      <Icon
-                        icon={faArrowUp}
-                        className="size-3 translate-y-[0.5px]"
-                        aria-hidden="true"
-                      />
-                    ) : (
-                      <Icon
-                        icon={faArrowUpArrowDown}
-                        className="size-3 translate-y-[0.5px]"
-                        aria-hidden="true"
-                      />
-                    )}
-                  </SelectIcon>
-                </div>
-              </SelectTrigger>
-            </TooltipTrigger>
-            <TooltipContent>{tooltipContent}</TooltipContent>
-          </Tooltip>
-        </TooltipProvider>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <SelectTrigger
+              aria-label={
+                column.getIsSorted() === "desc"
+                  ? "Sorted descending. Click to sort ascending."
+                  : column.getIsSorted() === "asc"
+                    ? "Sorted ascending. Click to sort descending."
+                    : "Not sorted. Click to sort ascending."
+              }
+              className="inline-flex items-center justify-center -ml-3 h-8 w-fit border-transparent bg-transparent text-xs hover:bg-accent hover:text-accent-foreground data-[state=open]:bg-accent data-[state=open]:text-accent-foreground [&>svg:last-child]:hidden"
+            >
+              <div className="inline-flex items-center gap-1">
+                {startContent}
+                {title}
+                <SelectIcon asChild className="inline-flex items-center">
+                  {column.getCanSort() && column.getIsSorted() === "desc" ? (
+                    <Icon
+                      icon={faArrowDown}
+                      className="size-3 translate-y-[0.5px]"
+                      aria-hidden="true"
+                    />
+                  ) : column.getIsSorted() === "asc" ? (
+                    <Icon
+                      icon={faArrowUp}
+                      className="size-3 translate-y-[0.5px]"
+                      aria-hidden="true"
+                    />
+                  ) : (
+                    <Icon
+                      icon={faArrowUpArrowDown}
+                      className="size-3 translate-y-[0.5px]"
+                      aria-hidden="true"
+                    />
+                  )}
+                </SelectIcon>
+              </div>
+            </SelectTrigger>
+          </TooltipTrigger>
+          <TooltipContent>{tooltipContent}</TooltipContent>
+        </Tooltip>
 
         <SelectContent align="start">
           {column.getCanSort() && (

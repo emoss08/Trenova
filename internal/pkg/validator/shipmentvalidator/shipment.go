@@ -11,6 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/pkg/errors"
 	"github.com/emoss08/trenova/internal/pkg/utils/queryutils"
 	"github.com/emoss08/trenova/internal/pkg/validator"
+	"github.com/emoss08/trenova/internal/pkg/validator/framework"
 	"github.com/emoss08/trenova/internal/pkg/validator/hazmatsegreationrulevalidator"
 	"github.com/emoss08/trenova/pkg/types/pulid"
 	"github.com/rotisserie/eris"
@@ -27,6 +28,7 @@ type ValidatorParams struct {
 	MoveValidator              *MoveValidator
 	ShipmentControlRepo        repositories.ShipmentControlRepository
 	HazmatSegregationValidator *hazmatsegreationrulevalidator.Validator
+	ValidationEngineFactory    framework.ValidationEngineFactory
 }
 
 // Validator is a validator for shipments.
@@ -36,6 +38,7 @@ type Validator struct {
 	mv  *MoveValidator
 	scp repositories.ShipmentControlRepository
 	hsr *hazmatsegreationrulevalidator.Validator
+	vef framework.ValidationEngineFactory
 }
 
 // NewValidator initializes a new Validator with the provided dependencies.
@@ -51,6 +54,7 @@ func NewValidator(p ValidatorParams) *Validator {
 		mv:  p.MoveValidator,
 		scp: p.ShipmentControlRepo,
 		hsr: p.HazmatSegregationValidator,
+		vef: p.ValidationEngineFactory,
 	}
 }
 
@@ -61,73 +65,88 @@ func NewValidator(p ValidatorParams) *Validator {
 //   - valCtx: The validation context.
 //   - shp: The shipment to validate.
 func (v *Validator) Validate(ctx context.Context, valCtx *validator.ValidationContext, shp *shipment.Shipment) *errors.MultiError {
-	multiErr := errors.NewMultiError()
+	engine := v.vef.CreateEngine()
 
-	shp.Validate(ctx, multiErr)
+	// * Basic validation rules (field presence, format, etc.)
+	engine.AddRule(framework.NewValidationRule(framework.ValidationStageBasic, framework.ValidationPriorityHigh,
+		func(ctx context.Context, multiErr *errors.MultiError) error {
+			shp.Validate(ctx, multiErr)
+			return nil
+		}))
 
-	sc, err := v.scp.GetByOrgID(ctx, shp.OrganizationID)
-	if err != nil {
-		multiErr.Add("shipmentControl", errors.ErrSystemError, err.Error())
-		return multiErr
-	}
+	// * Data integrity validation (uniqueness, references, etc.)
+	engine.AddRule(framework.NewValidationRule(framework.ValidationStageDataIntegrity, framework.ValidationPriorityHigh,
+		func(ctx context.Context, multiErr *errors.MultiError) error {
+			return v.ValidateUniqueness(ctx, valCtx, shp, multiErr)
+		}))
 
-	// * If the organization has duplicate BOLs checking enabled, check for duplicates
-	if sc.CheckForDuplicateBOLs {
-		if err = v.CheckForDuplicateBOLs(ctx, shp, multiErr); err != nil {
-			multiErr.Add("duplicateBOLs", errors.ErrSystemError, err.Error())
-		}
-	}
+	// * Business rules validation (domain-specific rules)
+	engine.AddRule(framework.NewValidationRule(framework.ValidationStageBusinessRules, framework.ValidationPriorityHigh,
+		func(ctx context.Context, multiErr *errors.MultiError) error {
+			v.ValidateMoves(ctx, shp, multiErr)
+			return nil
+		}))
 
-	// * Validate uniqueness
-	if err = v.ValidateUniqueness(ctx, valCtx, shp, multiErr); err != nil {
-		multiErr.Add("uniqueness", errors.ErrSystemError, err.Error())
-	}
-
-	// * Validate ID
-	v.validateID(shp, valCtx, multiErr)
-
-	// * Validate Temperature
-	// v.validateTemperature(shp, multiErr)
-
-	// * Validate Moves
-	v.ValidateMoves(ctx, valCtx, shp, multiErr)
-
-	// * Validate Hazmat Segregation
-	if sc.CheckHazmatSegregation && shp.HasCommodities() {
-		log.Info().Interface("shipment", shp).Msg("Validating hazmat segregation")
-		segregationErr, _ := v.hsr.ValidateShipment(ctx, shp)
-		if segregationErr != nil && segregationErr.HasErrors() {
-			for _, err := range segregationErr.Errors {
-				multiErr.Add(err.Field, err.Code, err.Message)
+	// * Load shipment control for further validations
+	var sc *shipment.ShipmentControl
+	engine.AddRule(framework.NewValidationRule(framework.ValidationStageBasic, framework.ValidationPriorityHigh,
+		func(ctx context.Context, multiErr *errors.MultiError) error {
+			var err error
+			sc, err = v.scp.GetByOrgID(ctx, shp.OrganizationID)
+			if err != nil {
+				multiErr.Add("shipmentControl", errors.ErrSystemError, err.Error())
+				return err
 			}
-		}
+			return nil
+		}))
+
+	// Check for duplicate BOLs if enabled
+	engine.AddRule(framework.NewValidationRule(framework.ValidationStageDataIntegrity, framework.ValidationPriorityMedium,
+		func(ctx context.Context, multiErr *errors.MultiError) error {
+			if sc != nil && sc.CheckForDuplicateBOLs {
+				return v.CheckForDuplicateBOLs(ctx, shp, multiErr)
+			}
+			return nil
+		}))
+
+	// Validate hazmat segregation if enabled
+	engine.AddRule(framework.NewValidationRule(framework.ValidationStageCompliance, framework.ValidationPriorityHigh,
+		func(ctx context.Context, multiErr *errors.MultiError) error {
+			if sc != nil && sc.CheckHazmatSegregation && shp.HasCommodities() {
+				v.validateHazmatSegregation(ctx, shp, multiErr)
+			}
+			return nil
+		}))
+
+	// Add FMCSA compliance validation rules
+	AddWeightComplianceRules(engine, shp)
+	AddHazmatComplianceRules(engine, shp)
+
+	// Only add HOS compliance rules if the shipment has moves assigned
+	if shp.HasMoves() {
+		AddHOSComplianceRules(engine, shp)
 	}
 
-	if multiErr.HasErrors() {
-		return multiErr
-	}
-
-	return nil
+	return engine.Validate(ctx)
 }
 
 // ValidateMoves validates the moves of a shipment.
 //
 // Parameters:
 //   - ctx: The context of the request.
-//   - valCtx: The validation context.
 //   - shp: The shipment to validate.
 //   - multiErr: The multi error to add errors to.
 //
 // Returns:
 //   - *errors.MultiError: A list of validation errors.
-func (v *Validator) ValidateMoves(ctx context.Context, valCtx *validator.ValidationContext, shp *shipment.Shipment, multiErr *errors.MultiError) {
+func (v *Validator) ValidateMoves(ctx context.Context, shp *shipment.Shipment, multiErr *errors.MultiError) {
 	if len(shp.Moves) == 0 {
 		multiErr.Add("moves", errors.ErrInvalid, "Shipment must have at least one move")
 		return
 	}
 
 	for idx, move := range shp.Moves {
-		v.mv.Validate(ctx, valCtx, move, multiErr, idx)
+		v.mv.Validate(ctx, move, multiErr, idx)
 	}
 }
 
@@ -168,35 +187,6 @@ func (v *Validator) ValidateUniqueness(ctx context.Context, valCtx *validator.Va
 	return nil
 }
 
-// validateID validates the ID of a shipment.
-//
-// Parameters:
-//   - shp: The shipment to validate.
-//   - valCtx: The validation context.
-//   - multiErr: The multi error to add errors to.
-//
-// Returns:
-//   - *errors.MultiError: A list of validation errors.
-func (v *Validator) validateID(shp *shipment.Shipment, valCtx *validator.ValidationContext, multiErr *errors.MultiError) {
-	if valCtx.IsCreate && shp.ID.IsNotNil() {
-		multiErr.Add("id", errors.ErrInvalid, "ID cannot be set on create")
-	}
-}
-
-// validateTemperature validates the temperature of a shipment.
-//
-// Parameters:
-//   - shp: The shipment to validate.
-//   - multiErr: The multi error to add errors to.
-//
-// Returns:
-//   - *errors.MultiError: A list of validation errors.
-// func (v *Validator) validateTemperature(shp *shipment.Shipment, multiErr *errors.MultiError) {
-// 	if shp.TemperatureMin.Valid && shp.TemperatureMax.Valid && shp.TemperatureMin.Decimal.GreaterThan(shp.TemperatureMax.Decimal) {
-// 		multiErr.Add("temperatureMin", errors.ErrInvalid, "Temperature Min must be less than Temperature Max")
-// 	}
-// }
-
 // ValidateCancellation validates the cancellation of a shipment.
 //
 // Parameters:
@@ -205,21 +195,22 @@ func (v *Validator) validateID(shp *shipment.Shipment, valCtx *validator.Validat
 // Returns:
 //   - *errors.MultiError: A list of validation errors.
 func (v *Validator) ValidateCancellation(shp *shipment.Shipment) *errors.MultiError {
-	multiErr := errors.NewMultiError()
+	engine := v.vef.CreateEngine()
 
-	if !cancelableShipmentStatuses[shp.Status] {
-		multiErr.Add(
-			"__all__",
-			errors.ErrInvalid,
-			fmt.Sprintf("Cannot cancel shipment in status `%s`", shp.Status),
-		)
-	}
+	// Validate the shipment can be cancelled based on status
+	engine.AddRule(framework.NewValidationRule(framework.ValidationStageBusinessRules, framework.ValidationPriorityHigh, func(_ context.Context, multiErr *errors.MultiError) error {
+		if !cancelableShipmentStatuses[shp.Status] {
+			multiErr.Add(
+				"__all__",
+				errors.ErrInvalid,
+				fmt.Sprintf("Cannot cancel shipment in status `%s`", shp.Status),
+			)
+		}
+		return nil
+	}))
 
-	if multiErr.HasErrors() {
-		return multiErr
-	}
-
-	return nil
+	// Use background context since this validation doesn't need any specific context
+	return engine.Validate(context.Background())
 }
 
 // CheckForDuplicateBOLs checks for duplicate BOLs in the database.
@@ -230,10 +221,16 @@ func (v *Validator) ValidateCancellation(shp *shipment.Shipment) *errors.MultiEr
 //   - multiErr: The multi error to add errors to.
 //
 // Returns:
-//   - error: An error if the validation fails.
+//   - error: An error if database operations fail.
 func (v *Validator) CheckForDuplicateBOLs(ctx context.Context, shp *shipment.Shipment, multiErr *errors.MultiError) error {
+	// * Skip validation if BOL is empty
+	if shp.BOL == "" {
+		return nil
+	}
+
 	dba, err := v.db.DB(ctx)
 	if err != nil {
+		multiErr.Add("database", errors.ErrSystemError, "Failed to connect to database")
 		return eris.Wrap(err, "get database connection")
 	}
 
@@ -259,6 +256,7 @@ func (v *Validator) CheckForDuplicateBOLs(ctx context.Context, shp *shipment.Shi
 
 	// * Scan the results into the duplicates slice
 	if err = query.Scan(ctx, &duplicates); err != nil {
+		multiErr.Add("database", errors.ErrSystemError, "Failed to query database")
 		return eris.Wrapf(err, "query duplicate BOLs for BOL '%s'", shp.BOL)
 	}
 
@@ -275,7 +273,7 @@ func (v *Validator) CheckForDuplicateBOLs(ctx context.Context, shp *shipment.Shi
 			strings.Join(proNumbers, ", "),
 		)
 
-		multiErr.Add("bol", errors.ErrInvalid, errorMsg)
+		multiErr.Add("bol", errors.ErrDuplicate, errorMsg)
 	}
 
 	return nil
@@ -292,30 +290,56 @@ func (v *Validator) CheckForDuplicateBOLs(ctx context.Context, shp *shipment.Shi
 // Returns:
 //   - *errors.MultiError: A list of validation errors.
 func (v *Validator) ValidateCommodityAddition(ctx context.Context, shp *shipment.Shipment, commodityID pulid.ID) *errors.MultiError {
-	multiErr := errors.NewMultiError()
+	engine := v.vef.CreateEngine()
 
-	sc, err := v.scp.GetByOrgID(ctx, shp.OrganizationID)
-	if err != nil {
-		multiErr.Add("shipmentControl", errors.ErrSystemError, err.Error())
-		return multiErr
-	}
-
-	// * Skip hazmat validation if not enabled
-	if !sc.CheckHazmatSegregation {
+	// Load shipment control for further validations
+	var sc *shipment.ShipmentControl
+	engine.AddRule(framework.NewValidationRule(framework.ValidationStageBasic, framework.ValidationPriorityHigh, func(ctx context.Context, multiErr *errors.MultiError) error {
+		var err error
+		sc, err = v.scp.GetByOrgID(ctx, shp.OrganizationID)
+		if err != nil {
+			multiErr.Add("shipmentControl", errors.ErrSystemError, err.Error())
+			return err
+		}
 		return nil
-	}
+	}))
 
-	// * Validate hazmat segregation for the new commodity
+	// Validate hazmat segregation if enabled
+	engine.AddRule(framework.NewValidationRule(framework.ValidationStageCompliance, framework.ValidationPriorityHigh, func(ctx context.Context, multiErr *errors.MultiError) error {
+		// Skip hazmat validation if not enabled
+		if sc == nil || !sc.CheckHazmatSegregation {
+			return nil
+		}
+
+		// Validate hazmat segregation for the new commodity
+		v.validateHazmatSegregationForCommodityAddition(ctx, shp, commodityID, multiErr)
+		return nil
+	}))
+
+	return engine.Validate(ctx)
+}
+
+// validateHazmatSegregation validates the hazmat segregation rules for a shipment
+// and adds any validation errors to the multiErr object.
+func (v *Validator) validateHazmatSegregation(ctx context.Context, shp *shipment.Shipment, multiErr *errors.MultiError) {
+	log.Info().Interface("shipment", shp).Msg("Validating hazmat segregation")
+	segregationErr, _ := v.hsr.ValidateShipment(ctx, shp)
+	if segregationErr != nil && segregationErr.HasErrors() {
+		for _, err := range segregationErr.Errors {
+			multiErr.Add(err.Field, err.Code, err.Message)
+		}
+	}
+}
+
+// validateHazmatSegregationForCommodityAddition validates the hazmat segregation rules
+// when adding a new commodity to a shipment.
+func (v *Validator) validateHazmatSegregationForCommodityAddition(
+	ctx context.Context, shp *shipment.Shipment, commodityID pulid.ID, multiErr *errors.MultiError,
+) {
 	segregationErr, _ := v.hsr.ValidateShipmentCommodityAddition(ctx, shp, commodityID)
 	if segregationErr != nil && segregationErr.HasErrors() {
 		for _, err := range segregationErr.Errors {
 			multiErr.Add(err.Field, err.Code, err.Message)
 		}
 	}
-
-	if multiErr.HasErrors() {
-		return multiErr
-	}
-
-	return nil
 }

@@ -994,7 +994,7 @@
       created_at: "{{ now.Unix }}"
       status: "New"
       pro_number: "S121094129213012"
-      bol: "S121094129213012"
+      bol: "123456231"
       shipment_type_id: "{{ $.ShipmentType.ftl_shipment_type.ID }}"
       service_type_id: "{{ $.ServiceType.std_service_type.ID }}"
       customer_id: "{{ $.Customer.honeywell_customer.ID }}"
@@ -1016,7 +1016,7 @@
       created_at: "{{ now.Unix }}"
       status: "New"
       pro_number: "S121096129213212"
-      bol: "S121094129213012"
+      bol: "S121094129223131"
       shipment_type_id: "{{ $.ShipmentType.ftl_shipment_type.ID }}"
       service_type_id: "{{ $.ServiceType.std_service_type.ID }}"
       customer_id: "{{ $.Customer.honeywell_customer.ID }}"
@@ -1271,8 +1271,8 @@
       address_line: "8626 Firestone Blvd, Downey, CA 90242"
       pieces: 1
       weight: 1000
-      planned_arrival: "{{ daysAgo 10 }}"
-      planned_departure: "{{ daysAgo 10 }}"
+      planned_arrival: "{{ daysAgo 20 }}"
+      planned_departure: "{{ daysAgo 19 }}"
 
     - _id: test_stop_2
       organization_id: "{{ $.Organization.trenova.ID }}"
@@ -1286,8 +1286,8 @@
       address_line: "1101 Summit Ave, Greensboro, NC 27410"
       pieces: 1
       weight: 1000
-      planned_arrival: "{{ daysFromNow 1 }}"
-      planned_departure: "{{ daysFromNow 2 }}"
+      planned_arrival: "{{ daysAgo 17 }}"
+      planned_departure: "{{ daysAgo 16 }}"
 
     - _id: test_stop_3
       organization_id: "{{ $.Organization.trenova.ID }}"
@@ -1301,8 +1301,8 @@
       address_line: "1101 Summit Ave, Greensboro, NC 27410"
       pieces: 1
       weight: 1000
-      planned_arrival: "{{ daysFromNow 3 }}"
-      planned_departure: "{{ daysFromNow 4 }}"
+      planned_arrival: "{{ daysAgo 14 }}"
+      planned_departure: "{{ daysAgo 13 }}"
 
     - _id: test_stop_4
       organization_id: "{{ $.Organization.trenova.ID }}"
@@ -1316,8 +1316,8 @@
       address_line: "6185 Retail Rd, Dallas, TX 75231"
       pieces: 1
       weight: 1000
-      planned_arrival: "{{ daysFromNow 5 }}"
-      planned_departure: "{{ daysFromNow 6 }}"
+      planned_arrival: "{{ daysAgo 11 }}"
+      planned_departure: "{{ daysAgo 10 }}"
 
     - _id: test_stop_5
       organization_id: "{{ $.Organization.trenova.ID }}"
@@ -1331,8 +1331,8 @@
       address_line: "6185 Retail Rd, Dallas, TX 75231"
       pieces: 1
       weight: 1000
-      planned_arrival: "{{ daysFromNow 7 }}"
-      planned_departure: "{{ daysFromNow 8 }}"
+      planned_arrival: "{{ daysAgo 8 }}"
+      planned_departure: "{{ daysAgo 7 }}"
 
     - _id: test_stop_6
       organization_id: "{{ $.Organization.trenova.ID }}"
@@ -1346,8 +1346,8 @@
       address_line: "8626 Firestone Blvd, Downey, CA 90242"
       pieces: 1
       weight: 1000
-      planned_arrival: "{{ daysFromNow 9 }}"
-      planned_departure: "{{ daysFromNow 10 }}"
+      planned_arrival: "{{ daysAgo 5 }}"
+      planned_departure: "{{ daysAgo 4 }}"
 
     - _id: test_stop_7
       organization_id: "{{ $.Organization.trenova.ID }}"
@@ -1361,8 +1361,8 @@
       address_line: "8626 Firestone Blvd, Downey, CA 90242"
       pieces: 1
       weight: 1000
-      planned_arrival: "{{ daysFromNow 11 }}"
-      planned_departure: "{{ daysFromNow 12 }}"
+      planned_arrival: "{{ daysAgo 2 }}"
+      planned_departure: "{{ daysAgo 1 }}"
 
     - _id: test_stop_8
       organization_id: "{{ $.Organization.trenova.ID }}"
@@ -1376,8 +1376,8 @@
       address_line: "1101 Summit Ave, Greensboro, NC 27410"
       pieces: 1
       weight: 1000
-      planned_arrival: "{{ daysFromNow 13 }}"
-      planned_departure: "{{ daysFromNow 14 }}"
+      planned_arrival: "{{ daysFromNow 1 }}"
+      planned_departure: "{{ daysFromNow 2 }}"
 
     # In Transit Shipment Move Stops
     - _id: in_transit_stop_1

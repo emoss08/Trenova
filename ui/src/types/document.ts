@@ -1,4 +1,5 @@
 import { Resource } from "./audit-entry";
+import { CustomerDocumentRequirement } from "./customer";
 import { User } from "./user";
 
 export enum DocumentType {
@@ -16,6 +17,16 @@ export enum DocumentType {
   TrainingRecord = "TrainingRecord",
   Other = "Other",
 }
+
+export type DocumentCategory = {
+  id: string;
+  name: string;
+  description: string;
+  color: string;
+  requirements: CustomerDocumentRequirement[];
+  complete: boolean;
+  documentsCount: number;
+};
 
 export function getDocumentTypeLabel(documentType: DocumentType) {
   switch (documentType) {

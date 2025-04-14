@@ -153,7 +153,7 @@
   --color-vitess-string: var(--vitess-string);
   --color-vitess-number: var(--vitess-number);
   --color-vitess-boolean: var(--vitess-boolean);
-  --animate-flow-down: flow-down 1s linear infinite;
+  --animate-flow-down: flow-down 1.5s linear infinite;
 
   @keyframes flow-down {
     0% {

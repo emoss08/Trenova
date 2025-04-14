@@ -1,3 +1,4 @@
+import { LazyComponent } from "@/components/error-boundary";
 import { MoveStatusBadge } from "@/components/status-badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -10,18 +11,19 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Icon } from "@/components/ui/icons";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { http } from "@/lib/http-client";
 import { type ShipmentSchema } from "@/lib/schemas/shipment-schema";
 import { MoveStatus, type ShipmentMove } from "@/types/move";
 import { faEllipsisVertical } from "@fortawesome/pro-regular-svg-icons";
+import { useQueryClient } from "@tanstack/react-query";
 import { nanoid } from "nanoid";
-import { memo, useState } from "react";
+import { lazy, memo, useEffect, useState } from "react";
 import {
   UseFieldArrayRemove,
   UseFieldArrayUpdate,
   type FieldArrayWithId,
 } from "react-hook-form";
 import { AssignmentDialog } from "../../assignment/assignment-dialog";
-import { StopTimeline } from "../../sidebar/stop-details/stop-timeline-content";
 import { AssignmentDetails } from "../move-assignment-details";
 
 type MoveInformationProps = {
@@ -32,6 +34,13 @@ type MoveInformationProps = {
   onDelete: (index: number) => void;
 };
 
+const StopTimeline = lazy(
+  () =>
+    import(
+      "@/app/shipment/_components/sidebar/stop-details/stop-timeline-content"
+    ),
+);
+
 export default function MoveInformation({
   moves,
   update,
@@ -39,6 +48,27 @@ export default function MoveInformation({
   onEdit,
   onDelete,
 }: MoveInformationProps) {
+  const queryClient = useQueryClient();
+
+  // Listen for query invalidations that might affect the moves
+  useEffect(() => {
+    const unsubscribe = queryClient.getQueryCache().subscribe(() => {
+      // When queries are invalidated or updated, we need to force a rerender
+      // This ensures the component shows the latest assignment data
+      // This is a lightweight way to cause a rerender without fetching data
+      setTimeout(() => {
+        queryClient.invalidateQueries({
+          queryKey: ["force-rerender-move-information"],
+          refetchType: "none",
+        });
+      }, 100);
+    });
+
+    return () => {
+      unsubscribe();
+    };
+  }, [queryClient]);
+
   return (
     <div className="flex flex-col gap-4">
       {moves.map((move, moveIdx) => {
@@ -87,7 +117,13 @@ const MoveRow = memo(function MoveRow({
         className="bg-card rounded-lg border border-bg-sidebar-border space-y-2"
         key={move.id}
       >
-        <StatusBadge move={move} onEdit={onEdit} onDelete={onDelete} />
+        <StatusBadge
+          move={move}
+          moveIdx={moveIdx}
+          update={update}
+          onEdit={onEdit}
+          onDelete={onDelete}
+        />
         <ScrollArea className="flex max-h-[250px] flex-col overflow-y-auto px-4 py-2 rounded-b-lg">
           <div className="relative py-4">
             <div className="space-y-6">
@@ -97,18 +133,24 @@ const MoveRow = memo(function MoveRow({
                 }
 
                 const isLastStop = stopIdx === move.stops.length - 1;
+                const nextStop = !isLastStop ? move.stops[stopIdx + 1] : null;
+                const prevStopStatus =
+                  stopIdx > 0 ? move.stops[stopIdx - 1]?.status : undefined;
 
                 return (
-                  <StopTimeline
-                    key={stop.id || nanoid()}
-                    stop={stop}
-                    isLast={isLastStop}
-                    moveStatus={move.status}
-                    moveIdx={moveIdx}
-                    stopIdx={stopIdx}
-                    update={update}
-                    remove={remove}
-                  />
+                  <LazyComponent key={stop.id || nanoid()}>
+                    <StopTimeline
+                      stop={stop}
+                      nextStop={nextStop}
+                      isLast={isLastStop}
+                      moveStatus={move.status}
+                      moveIdx={moveIdx}
+                      stopIdx={stopIdx}
+                      update={update}
+                      remove={remove}
+                      prevStopStatus={prevStopStatus}
+                    />
+                  </LazyComponent>
                 );
               })}
             </div>
@@ -123,10 +165,14 @@ const MoveRow = memo(function MoveRow({
 
 const StatusBadge = memo(function StatusBadge({
   move,
+  moveIdx,
+  update,
   onEdit,
   onDelete,
 }: {
   move?: ShipmentMove;
+  moveIdx: number;
+  update: UseFieldArrayUpdate<ShipmentSchema, "moves">;
   onEdit: () => void;
   onDelete: () => void;
 }) {
@@ -137,7 +183,13 @@ const StatusBadge = memo(function StatusBadge({
   return (
     <div className="flex justify-between items-center p-3 border-b border-sidebar-border">
       <MoveStatusBadge status={move.status} />
-      <MoveActions move={move} onEdit={onEdit} onDelete={onDelete} />
+      <MoveActions
+        move={move}
+        moveIdx={moveIdx}
+        update={update}
+        onEdit={onEdit}
+        onDelete={onDelete}
+      />
     </div>
   );
 });
@@ -146,15 +198,20 @@ const AssignmentStatus = [MoveStatus.New, MoveStatus.Assigned];
 
 function MoveActions({
   move,
+  moveIdx,
+  update,
   onEdit,
   onDelete,
 }: {
   move: ShipmentMove;
+  moveIdx: number;
+  update: UseFieldArrayUpdate<ShipmentSchema, "moves">;
   onEdit: () => void;
   onDelete: () => void;
 }) {
   const [assignmentDialogOpen, setAssignmentDialogOpen] =
     useState<boolean>(false);
+  const queryClient = useQueryClient();
 
   if (!move) {
     return null;
@@ -165,6 +222,38 @@ function MoveActions({
   // Move is not new, so we cannot assign equipment and workers
   const reassignEnabled = status === MoveStatus.Assigned;
   const assignEnabled = AssignmentStatus.includes(status);
+
+  const handleOpenAssignmentDialog = () => {
+    setAssignmentDialogOpen(true);
+  };
+
+  const handleCloseAssignmentDialog = async (open: boolean) => {
+    setAssignmentDialogOpen(open);
+
+    if (!open && move.id) {
+      // Invalidate queries to ensure other components have the latest data
+      queryClient.invalidateQueries({
+        queryKey: ["shipment", "stop", "assignment", "move"],
+      });
+
+      // Wait briefly for the server to process the assignment
+      setTimeout(async () => {
+        try {
+          // Fetch the latest move data directly
+          const response = await http.get(
+            `/shipment-moves/${move.id}?expandMoveDetails=true`,
+          );
+          if (response.data) {
+            // Update the move data in the form
+            const updatedMove = { ...move, ...response.data };
+            update(moveIdx, updatedMove);
+          }
+        } catch (error) {
+          console.error("Failed to fetch updated move data:", error);
+        }
+      }, 300); // Small delay to ensure server has processed the assignment
+    }
+  };
 
   return (
     <>
@@ -180,7 +269,7 @@ function MoveActions({
           <DropdownMenuItem
             title={reassignEnabled ? "Reassign" : "Assign"}
             description="Assign equipment and worker(s) to the move"
-            onClick={() => setAssignmentDialogOpen(!assignmentDialogOpen)}
+            onClick={handleOpenAssignmentDialog}
             disabled={!assignEnabled}
           />
           <DropdownMenuItem
@@ -193,11 +282,6 @@ function MoveActions({
             onClick={onEdit}
           />
           <DropdownMenuItem
-            title="View Audit Log"
-            description="View the audit log for the move"
-          />
-
-          <DropdownMenuItem
             title="Delete Move"
             color="danger"
             description="Remove this move from the shipment"
@@ -208,7 +292,7 @@ function MoveActions({
       {assignmentDialogOpen && (
         <AssignmentDialog
           open={assignmentDialogOpen}
-          onOpenChange={setAssignmentDialogOpen}
+          onOpenChange={handleCloseAssignmentDialog}
           shipmentMoveId={move.id}
           assignmentId={assignment?.id}
         />

@@ -9,14 +9,12 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Button, FormSaveButton } from "@/components/ui/button";
 import { Form } from "@/components/ui/form";
 import {
   Sheet,
   SheetBody,
   SheetContent,
   SheetDescription,
-  SheetFooter,
   SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet";
@@ -167,22 +165,8 @@ export function ShipmentCreateSheet({ open, onOpenChange }: TableSheetProps) {
           <FormProvider {...form}>
             <Form className="space-y-0 p-0" onSubmit={handleSubmit(onSubmit)}>
               <SheetBody className="p-0">
-                <ShipmentForm
-                  dimensions={dimensions}
-                  onBack={onClose}
-                  isCreate={true}
-                />
+                <ShipmentForm dimensions={dimensions} onBack={onClose} />
               </SheetBody>
-              <SheetFooter className="p-3">
-                <Button type="button" variant="outline" onClick={onClose}>
-                  Cancel
-                </Button>
-                <FormSaveButton
-                  isPopout={isPopout}
-                  isSubmitting={isSubmitting}
-                  title="Shipment"
-                />
-              </SheetFooter>
               <FormSaveDock
                 isDirty={isDirty}
                 isSubmitting={isSubmitting}

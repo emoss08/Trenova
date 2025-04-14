@@ -1,6 +1,5 @@
 import { StopStatus, StopType } from "@/types/stop";
 import { type InferType, mixed, number, object, ref, string } from "yup";
-import { locationSchema } from "./location-schema";
 
 export const stopSchema = object({
   id: string().optional(),
@@ -86,7 +85,7 @@ export const stopSchema = object({
     .optional()
     .nullable(),
   addressLine: string().required("Address line is required"),
-  location: locationSchema.notRequired().nullable().optional(),
+  // location: locationSchema.notRequired().nullable().optional(),
 });
 
 export type StopSchema = InferType<typeof stopSchema>;

@@ -33,13 +33,14 @@ type Document struct {
 	OrganizationID pulid.ID `bun:"organization_id,type:VARCHAR(100),pk,notnull" json:"organizationId"`
 
 	// Core Properties
-	FileName       string   `json:"fileName" bun:"file_name,notnull,type:VARCHAR(255)"`
-	OriginalName   string   `json:"originalName" bun:"original_name,notnull,type:VARCHAR(255)"`
-	FileSize       int64    `json:"fileSize" bun:"file_size,notnull,type:BIGINT"`
-	FileType       string   `json:"fileType" bun:"file_type,notnull,type:VARCHAR(100)"`
-	StoragePath    string   `json:"storagePath" bun:"storage_path,notnull,type:TEXT"`
-	DocumentTypeID pulid.ID `json:"documentTypeId" bun:"document_type_id,notnull,type:VARCHAR(100)"`
-	Status         Status   `json:"status" bun:"status,notnull,type:document_status_enum"`
+	FileName           string   `json:"fileName" bun:"file_name,notnull,type:VARCHAR(255)"`
+	OriginalName       string   `json:"originalName" bun:"original_name,notnull,type:VARCHAR(255)"`
+	FileSize           int64    `json:"fileSize" bun:"file_size,notnull,type:BIGINT"`
+	FileType           string   `json:"fileType" bun:"file_type,notnull,type:VARCHAR(100)"`
+	PreviewStoragePath string   `json:"previewStoragePath,omitempty" bun:"preview_storage_path,type:TEXT"`
+	StoragePath        string   `json:"storagePath" bun:"storage_path,notnull,type:TEXT"`
+	DocumentTypeID     pulid.ID `json:"documentTypeId" bun:"document_type_id,notnull,type:VARCHAR(100)"`
+	Status             Status   `json:"status" bun:"status,notnull,type:document_status_enum"`
 
 	// Entity Association (polymorphic relationship)
 	ResourceID   pulid.ID            `json:"resourceId" bun:"resource_id,notnull,type:VARCHAR(100)"`

@@ -81,6 +81,24 @@ services:
       timeout: 5s
       retries: 5
 
+  rabbitmq:
+    image: "rabbitmq:3-management"
+    hostname: "rabbitmq"
+    ports:
+      - "5674:5672" # RabbitMQ
+      - "15674:15672" # Management UI
+    environment:
+      RABBITMQ_DEFAULT_USER: "user"
+      RABBITMQ_DEFAULT_PASS: "password"
+    volumes:
+      - "rabbitmq_data:/var/lib/rabbitmq"
+      - "rabbitmq.conf:/etc/rabbitmq/rabbitmq.conf" # Configuration file mount
+    healthcheck:
+      test: ["CMD", "rabbitmqctl", "status"]
+      interval: 10s
+      timeout: 10s
+      retries: 5
+
   minio:
     image: quay.io/minio/minio
     container_name: minio
@@ -111,6 +129,8 @@ volumes:
   redis_data: {}
   minio_data: {}
   meilisearch_data: {}
+  rabbitmq_data: {}
+  rabbitmq.conf: {}
 
 networks:
   app-network:

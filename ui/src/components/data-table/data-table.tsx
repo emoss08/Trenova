@@ -18,6 +18,7 @@ import { useCallback, useEffect, useMemo, useTransition } from "react";
 import { Separator } from "../ui/separator";
 import { Skeleton } from "../ui/skeleton";
 import { Table } from "../ui/table";
+import { TooltipProvider } from "../ui/tooltip";
 import { DataTableBody } from "./_components/data-table-body";
 import { DataTableHeader } from "./_components/data-table-header";
 import { DataTablePagination } from "./_components/data-table-pagination";
@@ -246,57 +247,62 @@ export function DataTable<TData extends Record<string, any>>({
   const isEntityError = entityQuery.error;
 
   return (
-    <div className="mt-2 flex flex-col gap-3">
-      {includeOptions && (
-        <div className="flex justify-between">
-          <div className="flex items-center gap-2">Put something here</div>
-          <div className="flex items-center gap-2">
-            <DataTableViewOptions table={table} />
-            <Separator className="h-6 w-px bg-border" orientation="vertical" />
-            <DataTableCreateButton
-              name={name}
-              exportModelName={exportModelName}
-              extraActions={extraActions}
-              onCreateClick={() => {
-                setModalType("create");
-              }}
-            />
+    <TooltipProvider>
+      <div className="mt-2 flex flex-col gap-3">
+        {includeOptions && (
+          <div className="flex justify-between">
+            <div className="flex items-center gap-2">Put something here</div>
+            <div className="flex items-center gap-2">
+              <DataTableViewOptions table={table} />
+              <Separator
+                className="h-6 w-px bg-border"
+                orientation="vertical"
+              />
+              <DataTableCreateButton
+                name={name}
+                exportModelName={exportModelName}
+                extraActions={extraActions}
+                onCreateClick={() => {
+                  setModalType("create");
+                }}
+              />
+            </div>
           </div>
+        )}
+        <div className="rounded-md border border-sidebar-border">
+          <Table>
+            {includeHeader && <DataTableHeader table={table} />}
+            <DataTableBody table={table as any} />
+          </Table>
         </div>
-      )}
-      <div className="rounded-md border border-sidebar-border">
-        <Table>
-          {includeHeader && <DataTableHeader table={table} />}
-          <DataTableBody table={table} />
-        </Table>
+        <DataTablePagination
+          table={table}
+          totalCount={dataQuery.data?.count ?? 0}
+          pageSizeOptions={pageSizeOptions}
+          isLoading={isLoading}
+          onPageChange={handlePageChange}
+          onPageSizeChange={handlePageSizeChange}
+        />
+        {isCreateModalOpen && TableModal && (
+          <TableModal
+            open={isCreateModalOpen}
+            onOpenChange={() => {
+              handleCreateModalClose();
+            }}
+          />
+        )}
+        {isEditModalOpen && TableEditModal && (
+          <TableEditModal
+            open={isEditModalOpen}
+            onOpenChange={() => {
+              handleEditModalClose();
+            }}
+            currentRecord={(entityQuery.data as TData) || undefined}
+            isLoading={isEntityLoading}
+            error={isEntityError}
+          />
+        )}
       </div>
-      <DataTablePagination
-        table={table}
-        totalCount={dataQuery.data?.count ?? 0}
-        pageSizeOptions={pageSizeOptions}
-        isLoading={isLoading}
-        onPageChange={handlePageChange}
-        onPageSizeChange={handlePageSizeChange}
-      />
-      {isCreateModalOpen && TableModal && (
-        <TableModal
-          open={isCreateModalOpen}
-          onOpenChange={() => {
-            handleCreateModalClose();
-          }}
-        />
-      )}
-      {isEditModalOpen && TableEditModal && (
-        <TableEditModal
-          open={isEditModalOpen}
-          onOpenChange={() => {
-            handleEditModalClose();
-          }}
-          currentRecord={(entityQuery.data as TData) || undefined}
-          isLoading={isEntityLoading}
-          error={isEntityError}
-        />
-      )}
-    </div>
+    </TooltipProvider>
   );
 }

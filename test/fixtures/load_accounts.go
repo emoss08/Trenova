@@ -91,7 +91,7 @@ func LoadFakeAccounts(ctx context.Context, db *bun.DB, fixture *dbfixture.Fixtur
 
 	fake := faker.New()
 
-	for i := 0; i < numAccounts; i++ {
+	for range numAccounts {
 		email := fake.Internet().Email()
 		name := fake.Person().Name()
 		username := fake.RandomStringWithLength(19) // This sometimes will generate the same username for multiple users so re-generate if it already exists

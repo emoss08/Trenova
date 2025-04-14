@@ -10,6 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/commodity"
 	"github.com/emoss08/trenova/internal/core/services/customer"
 	"github.com/emoss08/trenova/internal/core/services/dbbackup"
+	"github.com/emoss08/trenova/internal/core/services/docpreview"
 	"github.com/emoss08/trenova/internal/core/services/document"
 	"github.com/emoss08/trenova/internal/core/services/documentqualityconfig"
 	"github.com/emoss08/trenova/internal/core/services/documenttype"
@@ -19,6 +20,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/fleetcode"
 	"github.com/emoss08/trenova/internal/core/services/hazardousmaterial"
 	"github.com/emoss08/trenova/internal/core/services/hazmatsegregationrule"
+	"github.com/emoss08/trenova/internal/core/services/imagegen"
 	"github.com/emoss08/trenova/internal/core/services/location"
 	"github.com/emoss08/trenova/internal/core/services/locationcategory"
 	"github.com/emoss08/trenova/internal/core/services/organization"
@@ -80,6 +82,8 @@ var Module = fx.Module("services", fx.Provide(
 	dbbackup.NewService,
 	hazmatsegregationrule.NewService,
 	accessorialcharge.NewService,
+	imagegen.NewService,
+	docpreview.NewService,
 	document.NewService,
 	documenttype.NewService,
 ))

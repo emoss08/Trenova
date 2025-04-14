@@ -2,7 +2,6 @@ package worker
 
 import (
 	"context"
-	"fmt"
 	"time"
 
 	"github.com/emoss08/trenova/internal/core/domain/businessunit"
@@ -50,7 +49,7 @@ type WorkerPTO struct {
 }
 
 // Validation
-func (w *WorkerPTO) Validate(ctx context.Context, multiErr *errors.MultiError, index int) {
+func (w *WorkerPTO) Validate(ctx context.Context, multiErr *errors.MultiError) {
 	err := validation.ValidateStructWithContext(ctx, w,
 		// Status is required and must be a valid PTO status
 		validation.Field(&w.Status,
@@ -105,7 +104,7 @@ func (w *WorkerPTO) Validate(ctx context.Context, multiErr *errors.MultiError, i
 	if err != nil {
 		var validationErrs validation.Errors
 		if eris.As(err, &validationErrs) {
-			errors.FromValidationErrors(validationErrs, multiErr, fmt.Sprintf("pto[%d]", index))
+			errors.FromOzzoErrors(validationErrs, multiErr)
 		}
 	}
 }

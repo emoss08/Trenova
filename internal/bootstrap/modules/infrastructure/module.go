@@ -12,6 +12,7 @@ var Module = fx.Module("infrastructure",
 	StorageModule,
 	CacheModule,
 	SearchModule,
+	MessagingModule,
 )
 
 var BackupModule = fx.Module("db_backup",

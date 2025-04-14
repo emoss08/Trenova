@@ -5,6 +5,8 @@ import (
 	"reflect"
 	"time"
 
+	"slices"
+
 	"github.com/bytedance/sonic"
 	"github.com/rotisserie/eris"
 )
@@ -257,12 +259,7 @@ func determineFieldType(value any) FieldType {
 }
 
 func shouldIgnoreField(field string, ignoreFields []string) bool {
-	for _, f := range ignoreFields {
-		if f == field {
-			return true
-		}
-	}
-	return false
+	return slices.Contains(ignoreFields, field)
 }
 
 func compareValues(before, after any, ignoreCase bool) bool {

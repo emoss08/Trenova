@@ -277,7 +277,7 @@ func TestEquals(t *testing.T) {
 func TestDefaultEntropySource(t *testing.T) {
 	// Test that multiple IDs generated in quick succession are unique
 	ids := make(map[pulid.ID]bool)
-	for i := 0; i < 1000; i++ {
+	for range 1000 {
 		id := pulid.MustNew("test")
 		assert.False(t, ids[id], "Generated duplicate ID: %s", id)
 		ids[id] = true
