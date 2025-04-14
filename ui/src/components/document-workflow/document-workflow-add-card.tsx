@@ -1,3 +1,4 @@
+import { cn } from "@/lib/utils";
 import { useCallback, useEffect, useState } from "react";
 import { DocumentUploadSkeleton } from "../file-uploader/file-upload-skeleton";
 
@@ -113,11 +114,10 @@ export function AddDocumentCard({
 
   return (
     <div
-      className={`flex justify-center items-center border border-dashed rounded-md overflow-hidden transition-all cursor-pointer ${
-        isHovering
-          ? "border-foreground/50 shadow-lg"
-          : "border-border hover:bg-muted/50"
-      }`}
+      className={cn(
+        "flex justify-center items-center border border-dashed rounded-md overflow-hidden transition-all cursor-pointer",
+        isHovering ? "bg-muted" : "border-border hover:bg-muted/50",
+      )}
       onClick={onUpload}
       onDragOver={handleDragOver}
       onDragEnter={handleDragEnter}
