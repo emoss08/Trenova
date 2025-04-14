@@ -51,7 +51,7 @@ func TestEquipmentTypeRepository(t *testing.T) {
 				Limit:  10,
 				Offset: 0,
 			},
-			Classes: []equipmenttype.Class{equipmenttype.ClassTrailer},
+			Classes: []string{string(equipmenttype.ClassTrailer)},
 		}
 
 		result, err := repo.List(ctx, opts)
