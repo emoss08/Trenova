@@ -1,7 +1,7 @@
-import { CheckboxField } from "@/components/fields/checkbox-field";
 import { ColorField } from "@/components/fields/color-field";
 import { InputField } from "@/components/fields/input-field";
 import { SelectField } from "@/components/fields/select-field";
+import { SwitchField } from "@/components/fields/switch-field";
 import { TextareaField } from "@/components/fields/textarea-field";
 import { FormControl, FormGroup } from "@/components/ui/form";
 import {
@@ -65,16 +65,18 @@ export function LocationCategoryForm() {
         />
       </FormControl>
       <FormControl>
-        <CheckboxField
-          name="allowsOvernight"
+        <SwitchField
+          size="xs"
+          name="hasRestroom"
           control={control}
-          label="Allows Overnight"
+          label="Has Restroom"
           outlined
-          description="Specifies whether the location allows overnight parking."
+          description="Specifies whether the location has a restroom."
         />
       </FormControl>
       <FormControl>
-        <CheckboxField
+        <SwitchField
+          size="xs"
           name="hasSecureParking"
           control={control}
           label="Has Secure Parking"
@@ -83,21 +85,23 @@ export function LocationCategoryForm() {
         />
       </FormControl>
       <FormControl>
-        <CheckboxField
+        <SwitchField
+          size="xs"
+          name="allowsOvernight"
+          control={control}
+          label="Allows Overnight"
+          outlined
+          description="Specifies whether the location allows overnight parking."
+        />
+      </FormControl>
+      <FormControl>
+        <SwitchField
+          size="xs"
           name="requiresAppointment"
           control={control}
           label="Requires Appointment"
           outlined
           description="Specifies whether the location requires an appointment."
-        />
-      </FormControl>
-      <FormControl>
-        <CheckboxField
-          name="hasRestroom"
-          control={control}
-          label="Has Restroom"
-          outlined
-          description="Specifies whether the location has a restroom."
         />
       </FormControl>
     </FormGroup>
