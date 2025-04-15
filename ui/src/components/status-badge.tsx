@@ -8,8 +8,18 @@ import { MoveStatus } from "@/types/move";
 import { ShipmentStatus } from "@/types/shipment";
 import { StopStatus } from "@/types/stop";
 import { EquipmentStatus } from "@/types/tractor";
+import {
+  faBadgeCheck,
+  faCheck,
+  faClock,
+  faPaperPlane,
+  faSparkles,
+  faSpinner,
+  faXmark,
+} from "@fortawesome/pro-solid-svg-icons";
 import { type VariantProps } from "class-variance-authority";
 import { Badge } from "./ui/badge";
+import { Icon, type IconProp } from "./ui/icons";
 import {
   Tooltip,
   TooltipContent,
@@ -19,7 +29,12 @@ import {
 
 export function StatusBadge({ status }: { status: Status }) {
   return (
-    <Badge variant={status === "Active" ? "active" : "inactive"}>
+    <Badge
+      withDot={false}
+      variant={status === "Active" ? "active" : "inactive"}
+      className="[&_svg]:size-2.5"
+    >
+      {status === "Active" ? <Icon icon={faCheck} /> : <Icon icon={faXmark} />}
       {status}
     </Badge>
   );
@@ -29,6 +44,7 @@ export type BadgeAttrProps = {
   variant: VariantProps<typeof badgeVariants>["variant"];
   text: string;
   description?: string;
+  icon?: IconProp;
 };
 
 export type PlainBadgeAttrProps = {
@@ -92,19 +108,36 @@ export function MoveStatusBadge({ status }: { status: MoveStatus }) {
     [StopStatus.InTransit]: {
       variant: "info",
       text: "In Transit",
+      icon: faSpinner,
     },
     [StopStatus.Completed]: {
       variant: "active",
       text: "Completed",
+      icon: faBadgeCheck,
     },
     [StopStatus.Canceled]: {
       variant: "inactive",
       text: "Canceled",
+      icon: faXmark,
     },
   };
 
   return (
-    <Badge variant={moveStatusAttributes[status].variant} className="max-h-6">
+    <Badge
+      withDot={moveStatusAttributes[status].icon ? false : true}
+      variant={moveStatusAttributes[status].variant}
+      className="max-h-6"
+    >
+      {moveStatusAttributes[status].icon && (
+        <Icon
+          icon={moveStatusAttributes[status].icon}
+          className={cn(
+            "!size-3",
+            status === MoveStatus.InTransit &&
+              "motion-safe:animate-[spin_0.6s_linear_infinite]",
+          )}
+        />
+      )}
       {moveStatusAttributes[status].text}
     </Badge>
   );
@@ -171,9 +204,10 @@ export function DocumentStatusBadge({ status }: { status: DocumentStatus }) {
     </Badge>
   );
 }
+
 export function ShipmentStatusBadge({
   status,
-  withDot,
+  withDot = false,
   className,
 }: {
   status?: ShipmentStatus;
@@ -186,6 +220,7 @@ export function ShipmentStatusBadge({
     [ShipmentStatus.New]: {
       variant: "purple",
       text: "New",
+      icon: faSparkles,
       description:
         "Shipment has been created and is pending initial assignment.",
     },
@@ -210,30 +245,35 @@ export function ShipmentStatusBadge({
     [ShipmentStatus.InTransit]: {
       variant: "info",
       text: "In Transit",
+      icon: faSpinner,
       description:
         "Active shipment with cargo currently in transport between designated locations.",
     },
     [ShipmentStatus.Delayed]: {
       variant: "orange",
       text: "Delayed",
+      icon: faClock,
       description:
         "Shipment has exceeded scheduled arrival or delivery timeframes at one or more stops.",
     },
     [ShipmentStatus.Completed]: {
       variant: "active",
       text: "Completed",
+      icon: faCheck,
       description:
         "All transportation activities for this shipment have been successfully completed.",
     },
     [ShipmentStatus.Billed]: {
       variant: "teal",
       text: "Billed",
+      icon: faPaperPlane,
       description:
         "Invoice has been generated and posted for completed transportation services.",
     },
     [ShipmentStatus.Canceled]: {
       variant: "inactive",
       text: "Canceled",
+      icon: faXmark,
       description:
         "Shipment has been terminated and will not be completed as originally planned.",
     },
@@ -245,6 +285,16 @@ export function ShipmentStatusBadge({
       variant={statusAttributes[status].variant}
       className={cn(className, "max-h-6")}
     >
+      {statusAttributes[status].icon && (
+        <Icon
+          icon={statusAttributes[status].icon}
+          className={cn(
+            "!size-3",
+            status === ShipmentStatus.InTransit &&
+              "motion-safe:animate-[spin_0.6s_linear_infinite]",
+          )}
+        />
+      )}
       {statusAttributes[status].text}
     </Badge>
   );
