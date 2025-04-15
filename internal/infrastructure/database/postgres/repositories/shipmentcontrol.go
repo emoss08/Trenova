@@ -74,7 +74,8 @@ func (r shipmentControlRepository) GetByOrgID(ctx context.Context, orgID pulid.I
 
 	entity := new(shipment.ShipmentControl)
 
-	query := dba.NewSelect().Model(entity).Where("sc.organization_id = ?", orgID)
+	query := dba.NewSelect().Model(entity).
+		Where("sc.organization_id = ?", orgID)
 
 	if err = query.Scan(ctx); err != nil {
 		if eris.Is(err, sql.ErrNoRows) {
