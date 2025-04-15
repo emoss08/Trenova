@@ -7,7 +7,7 @@ const locationCache = new Map<string, LocationSchema>();
 
 export function useLocationData(locationId: string) {
   const queryClient = useQueryClient();
-  
+
   const result = useQuery({
     queryKey: ["location", locationId],
     queryFn: async () => {
@@ -15,14 +15,17 @@ export function useLocationData(locationId: string) {
       if (locationCache.has(locationId)) {
         return locationCache.get(locationId)!;
       }
-      
+
       // Use the query cache if available
-      const cachedData = queryClient.getQueryData<LocationSchema>(["location", locationId]);
+      const cachedData = queryClient.getQueryData<LocationSchema>([
+        "location",
+        locationId,
+      ]);
       if (cachedData) {
         locationCache.set(locationId, cachedData);
         return cachedData;
       }
-      
+
       // Fetch from server if not cached
       const response = await http.get<LocationSchema>(
         `/locations/${locationId}`,
@@ -33,16 +36,16 @@ export function useLocationData(locationId: string) {
           },
         },
       );
-      
+
       // Store in local cache and update the query client cache
       locationCache.set(locationId, response.data);
       queryClient.setQueryData(["location", locationId], response.data);
-      
+
       return response.data;
     },
     enabled: !!locationId && locationId !== "",
     staleTime: 5 * 60 * 1000, // 5 minutes
-    gcTime: 10 * 60 * 1000,   // 10 minutes
+    gcTime: 10 * 60 * 1000, // 10 minutes
     // Prevent refetching on window focus to avoid unnecessary requests
     refetchOnWindowFocus: false,
   });
@@ -50,7 +53,10 @@ export function useLocationData(locationId: string) {
   // When the component mounts or the locationId changes, ensure we have the data from cache
   if (locationId && locationCache.has(locationId) && !result.data) {
     // Force an update of the data from our local cache to React Query cache
-    queryClient.setQueryData(["location", locationId], locationCache.get(locationId));
+    queryClient.setQueryData(
+      ["location", locationId],
+      locationCache.get(locationId),
+    );
   }
 
   return result;

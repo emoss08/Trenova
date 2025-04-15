@@ -112,9 +112,7 @@ export function Autocomplete<T>({
         setSelectedOption(option);
       } catch (err) {
         setError(
-          err instanceof Error
-            ? err.message
-            : "Failed to fetch initial value",
+          err instanceof Error ? err.message : "Failed to fetch initial value",
         );
       } finally {
         setLoading(false);
@@ -132,7 +130,7 @@ export function Autocomplete<T>({
   // Memoize the load options function
   const loadOptionsFn = useCallback(async () => {
     if (!open) return;
-    
+
     try {
       setLoading(true);
       setError(null);
@@ -149,9 +147,7 @@ export function Autocomplete<T>({
       );
       setHasMore(!!response.next);
     } catch (err) {
-      setError(
-        err instanceof Error ? err.message : "Failed to fetch options",
-      );
+      setError(err instanceof Error ? err.message : "Failed to fetch options");
     } finally {
       setLoading(false);
     }
@@ -419,37 +415,42 @@ export function AutocompleteField<TOption, TForm extends FieldValues>({
       rules={rules}
       render={({ field: { onChange, value, disabled }, fieldState }) => {
         // Memoize the wrapped component props to prevent unnecessary renders
-        const autocompleteProps = useMemo(() => ({
-          link,
-          preload,
-          renderOption,
-          getDisplayValue,
-          getOptionValue,
-          label,
-          value,
-          onChange,
-          isInvalid: fieldState.invalid,
-          onOptionChange,
-          disabled,
-          clearable,
-          extraSearchParams,
-          ...props
-        }), [
-          link,
-          preload,
-          renderOption,
-          getDisplayValue,
-          getOptionValue,
-          label,
-          value,
-          onChange,
-          fieldState.invalid,
-          onOptionChange,
-          disabled,
-          clearable,
-          extraSearchParams,
-          props
-        ]);
+        // eslint-disable-next-line react-hooks/rules-of-hooks
+        const autocompleteProps = useMemo(
+          () => ({
+            link,
+            preload,
+            renderOption,
+            getDisplayValue,
+            getOptionValue,
+            label,
+            value,
+            onChange,
+            isInvalid: fieldState.invalid,
+            onOptionChange,
+            disabled,
+            clearable,
+            extraSearchParams,
+            ...props,
+          }),
+          // eslint-disable-next-line react-hooks/exhaustive-deps
+          [
+            link,
+            preload,
+            renderOption,
+            getDisplayValue,
+            getOptionValue,
+            label,
+            value,
+            onChange,
+            fieldState.invalid,
+            onOptionChange,
+            disabled,
+            clearable,
+            extraSearchParams,
+            props,
+          ],
+        );
 
         return (
           <FieldWrapper
@@ -468,4 +469,6 @@ export function AutocompleteField<TOption, TForm extends FieldValues>({
 }
 
 // Add memoization to the FieldWrapper component
-export const MemoizedAutocompleteField = memo(AutocompleteField) as typeof AutocompleteField;
+export const MemoizedAutocompleteField = memo(
+  AutocompleteField,
+) as typeof AutocompleteField;

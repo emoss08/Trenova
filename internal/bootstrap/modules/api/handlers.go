@@ -15,6 +15,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/handlers/equipmentmanufacturer"
 	"github.com/emoss08/trenova/internal/api/handlers/equipmenttype"
 	"github.com/emoss08/trenova/internal/api/handlers/fleetcode"
+	"github.com/emoss08/trenova/internal/api/handlers/googlemaps"
 	"github.com/emoss08/trenova/internal/api/handlers/hazardousmaterial"
 	"github.com/emoss08/trenova/internal/api/handlers/hazmatsegregationrule"
 	"github.com/emoss08/trenova/internal/api/handlers/location"
@@ -79,4 +80,5 @@ var HandlersModule = fx.Module("api.Handlers", fx.Provide(
 	accessorialcharge.NewHandler,
 	document.NewHandler,
 	documenttype.NewHandler,
+	googlemaps.NewHandler,
 ))

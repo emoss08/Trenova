@@ -412,6 +412,17 @@
       trained_at: "{{ timestamp }}"
       created_at: "{{ timestamp }}"
 
+- model: GoogleMapsConfig
+  rows:
+    - _id: gmaps_1
+      organization_id: "{{ $.Organization.trenova.ID }}"
+      business_unit_id: "{{ $.BusinessUnit.trenova.ID }}"
+      created_at: "{{ timestamp }}"
+    - _id: gmaps_2
+      organization_id: "{{ $.Organization.trenova_2.ID }}"
+      business_unit_id: "{{ $.BusinessUnit.trenova.ID }}"
+      created_at: "{{ timestamp }}"
+
 - model: DocumentQualityConfig
   rows:
     - _id: dqc_1

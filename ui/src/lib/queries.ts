@@ -5,6 +5,7 @@ import {
   getDocumentTypes,
   getResourceSubFolders,
 } from "@/services/document";
+import { checkAPIKey } from "@/services/google-maps";
 import {
   getBillingControl,
   getDatabaseBackups,
@@ -130,6 +131,12 @@ export const queries = createQueryKeyStore({
     getDocumentRequirements: (customerId: string) => ({
       queryKey: ["customer/document-requirements", customerId],
       queryFn: async () => getCustomerDocumentRequirements(customerId),
+    }),
+  },
+  googleMaps: {
+    checkAPIKey: () => ({
+      queryKey: ["google-maps/check-api-key"],
+      queryFn: async () => checkAPIKey(),
     }),
   },
 });
