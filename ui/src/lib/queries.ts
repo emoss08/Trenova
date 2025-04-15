@@ -5,7 +5,7 @@ import {
   getDocumentTypes,
   getResourceSubFolders,
 } from "@/services/document";
-import { checkAPIKey } from "@/services/google-maps";
+import { checkAPIKey, locationAutocomplete } from "@/services/google-maps";
 import {
   getBillingControl,
   getDatabaseBackups,
@@ -137,6 +137,16 @@ export const queries = createQueryKeyStore({
     checkAPIKey: () => ({
       queryKey: ["google-maps/check-api-key"],
       queryFn: async () => checkAPIKey(),
+    }),
+    locationAutocomplete: (input: string) => ({
+      queryKey: ["google-maps/location-autocomplete", input],
+      queryFn: async () => {
+        if (!input || input.length < 3) {
+          return { data: { details: [], count: 0 } };
+        }
+        return locationAutocomplete(input);
+      },
+      enabled: input.length >= 3,
     }),
   },
 });

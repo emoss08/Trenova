@@ -28,13 +28,11 @@ import { queries } from "@/lib/queries";
 import { LocationCategorySchema } from "@/lib/schemas/location-category-schema";
 import { type LocationSchema } from "@/lib/schemas/location-schema";
 import { cn } from "@/lib/utils";
-import { locationAutocomplete } from "@/services/google-maps";
 import type { APIError } from "@/types/errors";
-import { AutoCompleteLocationResult } from "@/types/google-maps";
 import { faSearch } from "@fortawesome/pro-regular-svg-icons";
 import { CheckIcon } from "@radix-ui/react-icons";
 import { useQuery } from "@tanstack/react-query";
-import { useEffect, useState } from "react";
+import { useMemo, useState } from "react";
 import { useFormContext } from "react-hook-form";
 
 export function LocationForm() {
@@ -160,55 +158,45 @@ function AddressLineWithSearch({ control }: { control: any }) {
   const { setValue } = useFormContext<LocationSchema>();
   const [open, setOpen] = useState(false);
   const [searchValue, setSearchValue] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
-  const [locations, setLocations] = useState<
-    AutoCompleteLocationResult["details"]
-  >([]);
   const [selectedLocation, setSelectedLocation] = useState<string | null>(null);
-  const [apiKeyError, setApiKeyError] = useState<string | null>(null);
   const debouncedInput = useDebounce(searchValue, 400);
 
+  // Check if Google Maps API key is configured
   const { data: apiKeyCheck, isLoading: apiKeyCheckLoading } = useQuery({
     ...queries.googleMaps.checkAPIKey(),
   });
 
-  // Fetch locations when search changes
-  useEffect(() => {
-    const fetchLocations = async () => {
-      if (!debouncedInput || debouncedInput.length < 3) {
-        setLocations([]);
-        return;
-      }
+  // Fetch locations when search changes using React Query
+  const {
+    data: locationsData,
+    isLoading,
+    error,
+  } = useQuery({
+    ...queries.googleMaps.locationAutocomplete(debouncedInput),
+  });
 
-      setIsLoading(true);
-      try {
-        const { data } = await locationAutocomplete(debouncedInput);
-        // Filter out null or undefined locations and ensure required fields exist
-        const validLocations = (data.details || []).filter(
-          (loc) =>
-            loc && loc.placeId && loc.addressLine1 && loc.city && loc.state,
-        );
-        setLocations(validLocations);
-      } catch (error) {
-        console.error("Failed to fetch locations:", error);
-        setApiKeyError((error as APIError)?.data?.detail || "Unknown error");
-        setLocations([]);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchLocations();
-  }, [debouncedInput]);
+  // Parse locations data and filter out invalid locations
+  const locations = useMemo(() => {
+    if (!locationsData?.data?.details) return [];
+    return (locationsData.data.details || []).filter(
+      (loc): loc is NonNullable<typeof loc> =>
+        !!loc &&
+        !!loc.placeId &&
+        !!loc.addressLine1 &&
+        !!loc.city &&
+        !!loc.state,
+    );
+  }, [locationsData]);
 
   // Fill in address details when a location is selected
   const handleSelect = (locationId: string) => {
     if (!locationId) return;
 
-    const location = locations.find((loc) => loc && loc.placeId === locationId);
+    const location = locations.find((loc) => loc.placeId === locationId);
 
     if (!location) return;
 
+    setValue("name", location.name || "");
     setValue("addressLine1", location.addressLine1 || "");
     setValue("addressLine2", location.addressLine2 || "");
     setValue("city", location.city || "");
@@ -221,6 +209,11 @@ function AddressLineWithSearch({ control }: { control: any }) {
     setSelectedLocation(locationId);
     setOpen(false);
   };
+
+  // Get API key error message if there's an error
+  const apiKeyError = error
+    ? (error as APIError)?.data?.detail || "Unknown error"
+    : null;
 
   return (
     <div className="flex flex-col space-y-1.5">
@@ -270,41 +263,34 @@ function AddressLineWithSearch({ control }: { control: any }) {
                       )}
                     </CommandEmpty>
                     <CommandGroup>
-                      {locations
-                        .filter(
-                          (location) =>
-                            location &&
-                            location.placeId &&
-                            location.addressLine1,
-                        )
-                        .map((location) => (
-                          <CommandItem
-                            key={location.placeId}
-                            value={`${location.placeId} ${location.addressLine1}`}
-                            onSelect={() =>
-                              location.placeId && handleSelect(location.placeId)
-                            }
-                          >
-                            <CheckIcon
-                              className={cn(
-                                "mr-2 h-4 w-4",
-                                selectedLocation === location.placeId
-                                  ? "opacity-100"
-                                  : "opacity-0",
-                              )}
-                            />
-                            <div className="flex flex-col">
-                              <span>{location.name || "Unknown Location"}</span>
-                              <span className="text-sm text-muted-foreground">
-                                {location.addressLine1}, {location.city || ""},
-                                {location.state ? ` ${location.state}` : ""}
-                                {location.postalCode
-                                  ? ` ${location.postalCode}`
-                                  : ""}
-                              </span>
-                            </div>
-                          </CommandItem>
-                        ))}
+                      {locations.map((location) => (
+                        <CommandItem
+                          key={location.placeId}
+                          value={`${location.placeId} ${location.addressLine1} ${location.name}`}
+                          onSelect={() =>
+                            location.placeId && handleSelect(location.placeId)
+                          }
+                        >
+                          <CheckIcon
+                            className={cn(
+                              "mr-2 h-4 w-4",
+                              selectedLocation === location.placeId
+                                ? "opacity-100"
+                                : "opacity-0",
+                            )}
+                          />
+                          <div className="flex flex-col">
+                            <span>{location.name || "Unknown Location"}</span>
+                            <span className="text-sm text-muted-foreground">
+                              {location.addressLine1}, {location.city || ""},
+                              {location.state ? ` ${location.state}` : ""}
+                              {location.postalCode
+                                ? ` ${location.postalCode}`
+                                : ""}
+                            </span>
+                          </div>
+                        </CommandItem>
+                      ))}
                     </CommandGroup>
                   </CommandList>
                 </Command>
