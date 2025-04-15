@@ -264,6 +264,11 @@ func (c *client) AutocompleteWithDetails(ctx context.Context, orgID pulid.ID, re
 	// * Create a request
 	paReq := maps.PlaceAutocompleteRequest{
 		Input: req.Input,
+		// * Add country component to restrict results to the United States
+		//nolint:exhaustive // We only want to restrict to the United States
+		Components: map[maps.Component][]string{
+			maps.ComponentCountry: {"us"},
+		},
 	}
 
 	// * Get autocomplete predictions first
