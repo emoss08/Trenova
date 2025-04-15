@@ -1,3 +1,4 @@
+import { AddressField } from "@/components/fields/address-field";
 import { InputField } from "@/components/fields/input-field";
 import { SelectField } from "@/components/fields/select-field";
 import { TextareaField } from "@/components/fields/textarea-field";
@@ -71,14 +72,7 @@ export default function CustomerForm() {
             />
           </FormControl>
           <FormControl cols="full">
-            <InputField
-              control={control}
-              rules={{ required: true }}
-              name="addressLine1"
-              label="Address Line 1"
-              placeholder="Address Line 1"
-              description="The primary address for the customer."
-            />
+            <AddressField control={control} />
           </FormControl>
           <FormControl cols="full">
             <InputField
