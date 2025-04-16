@@ -18,6 +18,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/handlers/googlemaps"
 	"github.com/emoss08/trenova/internal/api/handlers/hazardousmaterial"
 	"github.com/emoss08/trenova/internal/api/handlers/hazmatsegregationrule"
+	"github.com/emoss08/trenova/internal/api/handlers/integration"
 	"github.com/emoss08/trenova/internal/api/handlers/location"
 	"github.com/emoss08/trenova/internal/api/handlers/locationcategory"
 	"github.com/emoss08/trenova/internal/api/handlers/logreader"
@@ -116,6 +117,7 @@ type RouterParams struct {
 	AccessorialChargeHandler     *accessorialcharge.Handler
 	DocumentTypeHandler          *documenttype.Handler
 	GoogleMapsHandler            *googlemaps.Handler
+	IntegrationHandler           *integration.Handler
 }
 
 type Router struct {
@@ -291,4 +293,7 @@ func (r *Router) setupProtectedRoutes(router fiber.Router, rl *middleware.RateLi
 
 	// Google Maps
 	r.p.GoogleMapsHandler.RegisterRoutes(router, rl)
+
+	// Integrations
+	r.p.IntegrationHandler.RegisterRoutes(router, rl)
 }

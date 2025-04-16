@@ -28,7 +28,7 @@ CREATE TABLE IF NOT EXISTS "table_configurations" (
     CONSTRAINT "pk_table_configurations" PRIMARY KEY ("id", "organization_id", "business_unit_id"),
     CONSTRAINT "fk_table_configurations_business_unit" FOREIGN KEY ("business_unit_id") REFERENCES "business_units" ("id") ON UPDATE NO ACTION ON DELETE CASCADE,
     CONSTRAINT "fk_table_configurations_organization" FOREIGN KEY ("organization_id") REFERENCES "organizations" ("id") ON UPDATE NO ACTION ON DELETE CASCADE,
-    CONSTRAINT "fk_table_configurations_user_id" FOREIGN KEY ("user_id") REFERENCES "users" ("id") ON UPDATE NO ACTION ON DELETE CASCADE,
+    CONSTRAINT "fk_table_configurations_user" FOREIGN KEY ("user_id") REFERENCES "users" ("id") ON UPDATE NO ACTION ON DELETE CASCADE,
     CONSTRAINT "check_filter_config_format" CHECK (jsonb_typeof(filter_config) = 'object')
 );
 

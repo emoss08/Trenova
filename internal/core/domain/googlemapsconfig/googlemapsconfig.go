@@ -20,7 +20,7 @@ var (
 )
 
 type GoogleMapsConfig struct {
-	bun.BaseModel `bun:"table:googlemaps_config,alias:gmc" json:"-"`
+	bun.BaseModel `bun:"table:google_maps_config,alias:gmc" json:"-"`
 
 	// Primary identifiers
 	ID             pulid.ID `bun:"id,type:VARCHAR(100),pk,notnull" json:"id"`
@@ -57,7 +57,7 @@ func (gmc *GoogleMapsConfig) GetID() string {
 }
 
 func (gmc *GoogleMapsConfig) GetTableName() string {
-	return "googlemaps_config"
+	return "google_maps_config"
 }
 
 func (gmc *GoogleMapsConfig) GetVersion() int64 {

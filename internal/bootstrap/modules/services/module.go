@@ -21,6 +21,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/hazardousmaterial"
 	"github.com/emoss08/trenova/internal/core/services/hazmatsegregationrule"
 	"github.com/emoss08/trenova/internal/core/services/imagegen"
+	"github.com/emoss08/trenova/internal/core/services/integration"
 	"github.com/emoss08/trenova/internal/core/services/location"
 	"github.com/emoss08/trenova/internal/core/services/locationcategory"
 	"github.com/emoss08/trenova/internal/core/services/organization"
@@ -86,6 +87,7 @@ var Module = fx.Module("services", fx.Provide(
 	docpreview.NewService,
 	document.NewService,
 	documenttype.NewService,
+	integration.NewService,
 ))
 
 var CalculatorModule = fx.Module("calculator", fx.Provide(

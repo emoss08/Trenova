@@ -18,6 +18,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/handlers/googlemaps"
 	"github.com/emoss08/trenova/internal/api/handlers/hazardousmaterial"
 	"github.com/emoss08/trenova/internal/api/handlers/hazmatsegregationrule"
+	"github.com/emoss08/trenova/internal/api/handlers/integration"
 	"github.com/emoss08/trenova/internal/api/handlers/location"
 	"github.com/emoss08/trenova/internal/api/handlers/locationcategory"
 	"github.com/emoss08/trenova/internal/api/handlers/logreader"
@@ -81,4 +82,5 @@ var HandlersModule = fx.Module("api.Handlers", fx.Provide(
 	document.NewHandler,
 	documenttype.NewHandler,
 	googlemaps.NewHandler,
+	integration.NewHandler,
 ))

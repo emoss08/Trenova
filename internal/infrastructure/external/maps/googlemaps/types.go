@@ -34,6 +34,6 @@ type AutoCompleteRequest struct {
 }
 
 type Client interface {
-	CheckAPIKey(ctx context.Context, orgID pulid.ID) (bool, error)
-	AutocompleteWithDetails(ctx context.Context, orgID pulid.ID, req *AutoCompleteRequest) (*AutocompleteLocationResult, error)
+	CheckAPIKey(ctx context.Context, orgID pulid.ID, buID pulid.ID) (bool, error)
+	AutocompleteWithDetails(ctx context.Context, orgID pulid.ID, buID pulid.ID, req *AutoCompleteRequest) (*AutocompleteLocationResult, error)
 }

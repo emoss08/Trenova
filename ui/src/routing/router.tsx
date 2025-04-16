@@ -294,6 +294,19 @@ const routes: RouteObject[] = [
                 },
               },
               {
+                path: "integrations",
+                async lazy() {
+                  let { IntegrationsPage } = await import(
+                    "@/app/integrations/page"
+                  );
+                  return { Component: IntegrationsPage };
+                },
+                handle: {
+                  crumb: "Integrations",
+                  title: "Integrations",
+                },
+              },
+              {
                 path: "hazmat-segregation-rules",
                 async lazy() {
                   let { HazmatSegregationRules } = await import(
@@ -302,8 +315,8 @@ const routes: RouteObject[] = [
                   return { Component: HazmatSegregationRules };
                 },
                 handle: {
-                  crumb: "Data Retention",
-                  title: "Data Retention",
+                  crumb: "Hazmat Segregation Rules",
+                  title: "Hazmat Segregation Rules",
                 },
               },
               {
@@ -346,4 +359,3 @@ const routes: RouteObject[] = [
 const router = createBrowserRouter(routes);
 
 export { router, routes };
-

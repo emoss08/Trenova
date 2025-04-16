@@ -4,6 +4,7 @@ import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 import { NuqsAdapter } from "nuqs/adapters/react-router";
 import { HelmetProvider } from "react-helmet-async";
 import { ThemeProvider } from "./theme-provider";
+import { TourProvider } from "./tour/tour-provider";
 import { Toaster } from "./ui/sonner";
 
 const queryClient = new QueryClient({
@@ -28,9 +29,11 @@ export function Providers({ children }: { children: React.ReactNode }) {
       <HelmetProvider>
         <QueryClientProvider client={queryClient}>
           <ThemeProvider defaultTheme="dark" storageKey="trenova-ui-theme">
-            <ReactQueryDevtools />
-            {children}
-            <Toaster richColors />
+            <TourProvider>
+              <ReactQueryDevtools />
+              {children}
+              <Toaster richColors />
+            </TourProvider>
           </ThemeProvider>
         </QueryClientProvider>
       </HelmetProvider>

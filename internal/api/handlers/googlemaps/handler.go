@@ -53,7 +53,7 @@ func (h *Handler) PlaceAutocomplete(c *fiber.Ctx) error {
 		return h.errorHandler.HandleError(c, err)
 	}
 
-	resp, err := h.gmapsClient.AutocompleteWithDetails(c.UserContext(), reqCtx.OrgID, req)
+	resp, err := h.gmapsClient.AutocompleteWithDetails(c.UserContext(), reqCtx.OrgID, reqCtx.BuID, req)
 	if err != nil {
 		return h.errorHandler.HandleError(c, err)
 	}
@@ -67,7 +67,7 @@ func (h *Handler) CheckAPIKey(c *fiber.Ctx) error {
 		return h.errorHandler.HandleError(c, err)
 	}
 
-	valid, err := h.gmapsClient.CheckAPIKey(c.UserContext(), reqCtx.OrgID)
+	valid, err := h.gmapsClient.CheckAPIKey(c.UserContext(), reqCtx.OrgID, reqCtx.BuID)
 	if err != nil {
 		return h.errorHandler.HandleError(c, err)
 	}

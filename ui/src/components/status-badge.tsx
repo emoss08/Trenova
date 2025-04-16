@@ -4,6 +4,7 @@ import { badgeVariants } from "@/lib/variants/badge";
 import { type Status } from "@/types/common";
 import { DocumentStatus, DocumentType } from "@/types/document";
 import { type PackingGroupChoiceProps } from "@/types/hazardous-material";
+import { IntegrationCategory } from "@/types/integrations/integration";
 import { MoveStatus } from "@/types/move";
 import { ShipmentStatus } from "@/types/shipment";
 import { StopStatus } from "@/types/stop";
@@ -91,6 +92,35 @@ export function StopStatusBadge({ status }: { status: StopStatus }) {
   return (
     <Badge variant={stopStatusAttributes[status].variant} className="max-h-6">
       {stopStatusAttributes[status].text}
+    </Badge>
+  );
+}
+
+export function IntegrationCategoryBadge({
+  category,
+}: {
+  category: IntegrationCategory;
+}) {
+  const integrationCategoryAttributes: Record<
+    IntegrationCategory,
+    BadgeAttrProps
+  > = {
+    [IntegrationCategory.MappingRouting]: {
+      variant: "purple",
+      text: "Mapping & Routing",
+    },
+    [IntegrationCategory.FreightLogistics]: {
+      variant: "indigo",
+      text: "Freight Logistics",
+    },
+  };
+
+  return (
+    <Badge
+      variant={integrationCategoryAttributes[category].variant}
+      className="max-h-6"
+    >
+      {integrationCategoryAttributes[category].text}
     </Badge>
   );
 }

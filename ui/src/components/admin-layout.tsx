@@ -43,6 +43,11 @@ const links: SidebarLink[] = [
     disabled: true,
   },
   {
+    href: "/organization/integrations/",
+    title: "Apps & Integrations",
+    group: "Organization",
+  },
+  {
     href: "/organization/feature-management/",
     title: "Feature Management",
     group: "Organization",

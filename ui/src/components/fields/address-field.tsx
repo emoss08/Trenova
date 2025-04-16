@@ -21,6 +21,7 @@ import { useDebounce } from "@/hooks/use-debounce";
 import { queries } from "@/lib/queries";
 import { cn } from "@/lib/utils";
 import type { APIError } from "@/types/errors";
+import { IntegrationType } from "@/types/integrations/integration";
 import { faSearch } from "@fortawesome/pro-regular-svg-icons";
 import { CheckIcon } from "@radix-ui/react-icons";
 import { useQuery } from "@tanstack/react-query";
@@ -75,9 +76,9 @@ export function AddressField({
   const [selectedLocation, setSelectedLocation] = useState<string | null>(null);
   const debouncedInput = useDebounce(searchValue, 400);
 
-  // Check if Google Maps API key is configured
-  const { data: apiKeyCheck, isLoading: apiKeyCheckLoading } = useQuery({
-    ...queries.googleMaps.checkAPIKey(),
+  // Get integration by type
+  const { data: integration, isLoading: integrationLoading } = useQuery({
+    ...queries.integration.getIntegrationByType(IntegrationType.GoogleMaps),
   });
 
   // Fetch locations when search changes using React Query
@@ -148,15 +149,16 @@ export function AddressField({
           placeholder="Address Line 1"
           description="The primary address line."
         />
-        {apiKeyCheckLoading ? (
+        {integrationLoading ? (
           <div className="absolute right-0 top-6 inset-y-0 mr-2 flex items-center size-6">
             <PulsatingDots size={1} color="foreground" />
           </div>
-        ) : apiKeyCheck?.data?.valid ? (
+        ) : integration?.configuration?.apiKey ? (
           <div className="absolute right-0 top-6 inset-y-0 mr-2 flex items-center size-6">
             <Popover open={open} onOpenChange={setOpen}>
               <PopoverTrigger asChild>
                 <Button
+                  id="address-search-button"
                   variant="outline"
                   size="sm"
                   type="button"

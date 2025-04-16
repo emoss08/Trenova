@@ -1,1 +1,1 @@
-DROP TABLE IF EXISTS "googlemaps_config";
+DROP TABLE IF EXISTS "google_maps_config";

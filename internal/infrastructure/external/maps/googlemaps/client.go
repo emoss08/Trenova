@@ -3,6 +3,7 @@ package googlemaps
 import (
 	"context"
 
+	"github.com/emoss08/trenova/internal/core/domain/integration"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/pkg/logger"
 	"github.com/emoss08/trenova/pkg/types/pulid"
@@ -18,16 +19,16 @@ var ErrAPIKeyBlank = eris.New("API Key is blank")
 type ClientParams struct {
 	fx.In
 
-	GCrepo      repositories.GoogleMapsConfigRepository
-	UsStateRepo repositories.UsStateRepository
-	Logger      *logger.Logger
+	IntegrationRepo repositories.IntegrationRepository
+	UsStateRepo     repositories.UsStateRepository
+	Logger          *logger.Logger
 }
 
 // client is the Google Maps client implementation
 type client struct {
-	l           *zerolog.Logger
-	gcRepo      repositories.GoogleMapsConfigRepository
-	usStateRepo repositories.UsStateRepository
+	l               *zerolog.Logger
+	integrationRepo repositories.IntegrationRepository
+	usStateRepo     repositories.UsStateRepository
 }
 
 // NewClient creates a new Google Maps client
@@ -43,9 +44,9 @@ func NewClient(p ClientParams) Client {
 		Logger()
 
 	return &client{
-		l:           &log,
-		gcRepo:      p.GCrepo,
-		usStateRepo: p.UsStateRepo,
+		l:               &log,
+		integrationRepo: p.IntegrationRepo,
+		usStateRepo:     p.UsStateRepo,
 	}
 }
 
@@ -54,13 +55,18 @@ func NewClient(p ClientParams) Client {
 // Parameters:
 //   - ctx[context.Context]: The context of the request
 //   - orgID[pulid.ID]: The organization ID
+//   - buID[pulid.ID]: The business unit ID
 //
 // Returns:
 //   - gc[*maps.Client]: The Google Maps client
 //   - err[error]: The error
-func (c *client) getClient(ctx context.Context, orgID pulid.ID) (*maps.Client, error) {
+func (c *client) getClient(ctx context.Context, orgID pulid.ID, buID pulid.ID) (*maps.Client, error) {
 	// * Get the API key from the database
-	apiKey, err := c.gcRepo.GetAPIKeyByOrgID(ctx, orgID)
+	integration, err := c.integrationRepo.GetByType(ctx, repositories.GetIntegrationByTypeRequest{
+		Type:  integration.GoogleMapsIntegrationType,
+		OrgID: orgID,
+		BuID:  buID,
+	})
 	if err != nil {
 		c.l.Error().
 			Err(err).
@@ -69,13 +75,19 @@ func (c *client) getClient(ctx context.Context, orgID pulid.ID) (*maps.Client, e
 		return nil, err
 	}
 
-	// * Check if the API Key is an empty string
-	if apiKey == "" {
+	apiKey, ok := integration.Configuration["apiKey"]
+	if !ok {
+		return nil, ErrAPIKeyBlank
+	}
+
+	// * convert the api key to a string
+	apiKeyStr, ok := apiKey.(string)
+	if !ok {
 		return nil, ErrAPIKeyBlank
 	}
 
 	// * Initialize the Google Maps client
-	gc, err := maps.NewClient(maps.WithAPIKey(apiKey))
+	gc, err := maps.NewClient(maps.WithAPIKey(apiKeyStr))
 	if err != nil {
 		return nil, err
 	}
@@ -92,8 +104,8 @@ func (c *client) getClient(ctx context.Context, orgID pulid.ID) (*maps.Client, e
 // Returns:
 //   - valid[bool]: Whether the API key is valid
 //   - err[error]: The error
-func (c *client) CheckAPIKey(ctx context.Context, orgID pulid.ID) (bool, error) {
-	_, err := c.getClient(ctx, orgID)
+func (c *client) CheckAPIKey(ctx context.Context, orgID pulid.ID, buID pulid.ID) (bool, error) {
+	_, err := c.getClient(ctx, orgID, buID)
 	if err != nil {
 		return false, err
 	}
@@ -111,14 +123,14 @@ func (c *client) CheckAPIKey(ctx context.Context, orgID pulid.ID) (bool, error) 
 // Returns:
 //   - resp[*maps.AutocompleteResponse]: The place autocomplete response
 //   - err[error]: The error
-func (c *client) placeAutocomplete(ctx context.Context, orgID pulid.ID, req *maps.PlaceAutocompleteRequest) (*maps.AutocompleteResponse, error) {
+func (c *client) placeAutocomplete(ctx context.Context, orgID pulid.ID, buID pulid.ID, req *maps.PlaceAutocompleteRequest) (*maps.AutocompleteResponse, error) {
 	log := c.l.With().
 		Str("operation", "PlaceAutocomplete").
 		Str("orgID", orgID.String()).
 		Logger()
 
 	// * Get the client
-	gc, err := c.getClient(ctx, orgID)
+	gc, err := c.getClient(ctx, orgID, buID)
 	if err != nil {
 		log.Error().
 			Err(err).
@@ -148,7 +160,7 @@ func (c *client) placeAutocomplete(ctx context.Context, orgID pulid.ID, req *map
 // Returns:
 //   - details[*LocationDetails]: The location details
 //   - err[error]: The error
-func (c *client) getPlaceDetails(ctx context.Context, orgID pulid.ID, placeID string) (*LocationDetails, error) {
+func (c *client) getPlaceDetails(ctx context.Context, orgID pulid.ID, buID pulid.ID, placeID string) (*LocationDetails, error) {
 	log := c.l.With().
 		Str("operation", "GetPlaceDetails").
 		Str("orgID", orgID.String()).
@@ -156,7 +168,7 @@ func (c *client) getPlaceDetails(ctx context.Context, orgID pulid.ID, placeID st
 		Logger()
 
 	// * Get the client
-	gc, err := c.getClient(ctx, orgID)
+	gc, err := c.getClient(ctx, orgID, buID)
 	if err != nil {
 		log.Error().
 			Err(err).
@@ -255,7 +267,7 @@ func (c *client) getPlaceDetails(ctx context.Context, orgID pulid.ID, placeID st
 // Returns:
 //   - result[*AutocompleteLocationResult]: Combined autocomplete predictions and location details
 //   - err[error]: The error
-func (c *client) AutocompleteWithDetails(ctx context.Context, orgID pulid.ID, req *AutoCompleteRequest) (*AutocompleteLocationResult, error) {
+func (c *client) AutocompleteWithDetails(ctx context.Context, orgID pulid.ID, buID pulid.ID, req *AutoCompleteRequest) (*AutocompleteLocationResult, error) {
 	log := c.l.With().
 		Str("operation", "AutocompleteWithDetails").
 		Str("orgID", orgID.String()).
@@ -272,7 +284,7 @@ func (c *client) AutocompleteWithDetails(ctx context.Context, orgID pulid.ID, re
 	}
 
 	// * Get autocomplete predictions first
-	autocompleteResp, err := c.placeAutocomplete(ctx, orgID, &paReq)
+	autocompleteResp, err := c.placeAutocomplete(ctx, orgID, buID, &paReq)
 	if err != nil {
 		log.Error().
 			Err(err).
@@ -286,7 +298,7 @@ func (c *client) AutocompleteWithDetails(ctx context.Context, orgID pulid.ID, re
 
 	// * Fetch details for each prediction
 	for _, prediction := range autocompleteResp.Predictions {
-		details, dErr := c.getPlaceDetails(ctx, orgID, prediction.PlaceID)
+		details, dErr := c.getPlaceDetails(ctx, orgID, buID, prediction.PlaceID)
 		if dErr != nil {
 			log.Error().
 				Err(dErr).

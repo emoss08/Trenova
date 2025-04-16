@@ -15,6 +15,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/googlemapsconfig"
 	"github.com/emoss08/trenova/internal/core/domain/hazardousmaterial"
 	"github.com/emoss08/trenova/internal/core/domain/hazmatsegregationrule"
+	"github.com/emoss08/trenova/internal/core/domain/integration"
 	"github.com/emoss08/trenova/internal/core/domain/location"
 	"github.com/emoss08/trenova/internal/core/domain/organization"
 	"github.com/emoss08/trenova/internal/core/domain/pcmilerconfiguration"
@@ -84,5 +85,6 @@ func RegisterEntities() []any {
 		&billing.DocumentType{},
 		&accessorialcharge.AccessorialCharge{},
 		&googlemapsconfig.GoogleMapsConfig{},
+		&integration.Integration{},
 	}
 }

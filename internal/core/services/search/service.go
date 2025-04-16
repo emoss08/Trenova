@@ -581,8 +581,6 @@ func (s *Service) startBatchProcessor() {
 	ticker := time.NewTicker(batchInterval)
 	defer ticker.Stop()
 
-	s.l.Debug().Str("interval", batchInterval.String()).Msg("batch processor started")
-
 	// Function to process the current batch
 	processBatch := func(reason string) {
 		if len(batch) == 0 {

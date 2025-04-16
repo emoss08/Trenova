@@ -144,6 +144,12 @@
       country_name: United States
       country_iso3: USA
       created_at: "{{ timestamp }}"
+    - _id: dc
+      name: District of Columbia
+      abbreviation: DC
+      country_name: United States
+      country_iso3: USA
+      created_at: "{{ timestamp }}"
     - _id: mo
       name: Missouri
       abbreviation: MO
@@ -317,6 +323,7 @@
       description: "Trenova Transportation"
       created_at: "{{ timestamp }}"
 
+
 - model: Organization
   rows:
     - _id: trenova
@@ -386,6 +393,38 @@
       created_at: "{{ timestamp }}"
       updated_at: "{{ timestamp }}"
 
+- model: GoogleMapsConfig
+  rows:
+    - _id: gmaps_1
+      organization_id: "{{ $.Organization.trenova.ID }}"
+      business_unit_id: "{{ $.BusinessUnit.trenova.ID }}"
+      created_at: "{{ timestamp }}"
+    - _id: gmaps_2
+      organization_id: "{{ $.Organization.trenova_2.ID }}"
+      business_unit_id: "{{ $.BusinessUnit.trenova.ID }}"
+      created_at: "{{ timestamp }}"
+
+- model: Integration
+  rows:
+    - _id: google_maps
+      name: Google Maps
+      type: GoogleMaps
+      description: "Automatically geocode addresses using Google Maps API"
+      category: MappingRouting
+      built_by: "Trenova"
+      organization_id: "{{ $.Organization.trenova.ID }}"
+      business_unit_id: "{{ $.BusinessUnit.trenova.ID }}"
+      created_at: "{{ timestamp }}"
+    - _id: pcmiler
+      name: PCMiler
+      type: PCMiler
+      description: "Automatically route shipments and get directions using PCMiler API"
+      category: MappingRouting
+      built_by: "Trenova"
+      organization_id: "{{ $.Organization.trenova.ID }}"
+      business_unit_id: "{{ $.BusinessUnit.trenova.ID }}"
+      created_at: "{{ timestamp }}"
+
 - model: User
   rows:
     - _id: test_user
@@ -410,17 +449,6 @@
       is_default: true
       is_active: true
       trained_at: "{{ timestamp }}"
-      created_at: "{{ timestamp }}"
-
-- model: GoogleMapsConfig
-  rows:
-    - _id: gmaps_1
-      organization_id: "{{ $.Organization.trenova.ID }}"
-      business_unit_id: "{{ $.BusinessUnit.trenova.ID }}"
-      created_at: "{{ timestamp }}"
-    - _id: gmaps_2
-      organization_id: "{{ $.Organization.trenova_2.ID }}"
-      business_unit_id: "{{ $.BusinessUnit.trenova.ID }}"
       created_at: "{{ timestamp }}"
 
 - model: DocumentQualityConfig
