@@ -78,17 +78,24 @@ func (r *usStateRepository) List(ctx context.Context) (*ports.ListResult[*usstat
 }
 
 func (r *usStateRepository) GetByAbbreviation(ctx context.Context, abbreviation string) (*usstate.UsState, error) {
-	dba, err := r.db.DB(ctx)
-	if err != nil {
-		return nil, eris.Wrap(err, "get database connection")
-	}
-
 	log := r.l.With().
 		Str("operation", "GetByAbbreviation").
 		Str("abbreviation", abbreviation).
 		Logger()
 
-	state := new(usstate.UsState)
+	// Try to get from cache first
+	state, err := r.cache.GetByAbbreviation(ctx, abbreviation)
+	if err == nil {
+		log.Debug().Msg("got state from cache")
+		return state, nil
+	}
+
+	dba, err := r.db.DB(ctx)
+	if err != nil {
+		return nil, eris.Wrap(err, "get database connection")
+	}
+
+	state = new(usstate.UsState)
 
 	if err = dba.NewSelect().
 		Model(state).
@@ -97,6 +104,9 @@ func (r *usStateRepository) GetByAbbreviation(ctx context.Context, abbreviation 
 		log.Error().Err(err).Msg("failed to get us state by abbreviation")
 		return nil, eris.Wrap(err, "failed to get us state by abbreviation")
 	}
+
+	// Don't need to explicitly cache this single state as it's already cached
+	// as part of the full state list when List() is called
 
 	return state, nil
 }

@@ -17,6 +17,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/handlers/fleetcode"
 	"github.com/emoss08/trenova/internal/api/handlers/hazardousmaterial"
 	"github.com/emoss08/trenova/internal/api/handlers/hazmatsegregationrule"
+	"github.com/emoss08/trenova/internal/api/handlers/integration"
 	"github.com/emoss08/trenova/internal/api/handlers/location"
 	"github.com/emoss08/trenova/internal/api/handlers/locationcategory"
 	"github.com/emoss08/trenova/internal/api/handlers/logreader"
@@ -114,6 +115,7 @@ type RouterParams struct {
 	DocumentHandler              *document.Handler
 	AccessorialChargeHandler     *accessorialcharge.Handler
 	DocumentTypeHandler          *documenttype.Handler
+	IntegrationHandler           *integration.Handler
 }
 
 type Router struct {
@@ -286,4 +288,7 @@ func (r *Router) setupProtectedRoutes(router fiber.Router, rl *middleware.RateLi
 
 	// Document Types
 	r.p.DocumentTypeHandler.RegisterRoutes(router, rl)
+
+	// Integrations
+	r.p.IntegrationHandler.RegisterRoutes(router, rl)
 }

@@ -60,10 +60,6 @@ func (sr *stateRepository) Get(ctx context.Context) (*ports.ListResult[*usstate.
 		return nil, eris.Wrap(err, "failed to get states from cache")
 	}
 
-	log.Debug().
-		Int("stateCount", len(states)).
-		Msg("retrieved states from cache")
-
 	return &ports.ListResult[*usstate.UsState]{
 		Items: states,
 		Total: len(states),
@@ -94,4 +90,34 @@ func (sr *stateRepository) Invalidate(ctx context.Context) error {
 
 	log.Debug().Msg("invalidated states in cache")
 	return nil
+}
+
+// GetByAbbreviation retrieves a state by its abbreviation from the cache
+func (sr *stateRepository) GetByAbbreviation(ctx context.Context, abbreviation string) (*usstate.UsState, error) {
+	log := sr.l.With().
+		Str("operation", "GetByAbbreviation").
+		Str("abbreviation", abbreviation).
+		Logger()
+
+	states := make([]*usstate.UsState, 0)
+
+	if err := sr.cache.GetJSON(ctx, stateKeyPrefix, &states); err != nil {
+		if eris.Is(err, redis.ErrNil) {
+			log.Debug().Msg("no states found in cache")
+			return nil, eris.New("no states found in cache")
+		}
+
+		return nil, eris.Wrap(err, "failed to get states from cache")
+	}
+
+	// Find the state by abbreviation
+	for _, state := range states {
+		if state.Abbreviation == abbreviation {
+			log.Debug().Msg("found state in cache")
+			return state, nil
+		}
+	}
+
+	log.Debug().Msg("state not found in cache")
+	return nil, eris.New("state not found in cache")
 }

@@ -1,4 +1,5 @@
 import { LazyComponent } from "@/components/error-boundary";
+import { TourProvider } from "@/components/tour/tour-provider";
 import { Icon } from "@/components/ui/icons";
 import {
   Sidebar,
@@ -106,65 +107,68 @@ export function CustomerForm() {
   )?.component;
 
   return (
-    <div className="flex size-full flex-1">
-      <TooltipProvider>
-        <SidebarProvider className="h-auto min-h-[750px] w-56 shrink-0 items-start">
-          <Sidebar
-            collapsible="none"
-            className="hidden w-56 rounded-tl-lg border-r border-input/50 md:flex"
-          >
-            <SidebarContent>
-              <SidebarGroup>
-                <SidebarGroupContent>
-                  <SidebarMenu>
-                    {navigationItems.map((item) => {
-                      const hasError = item.validateSection(errors as any);
+    <TourProvider>
+      <div className="flex size-full flex-1">
+        <TooltipProvider>
+          <SidebarProvider className="h-auto min-h-[750px] w-56 shrink-0 items-start">
+            <Sidebar
+              collapsible="none"
+              className="hidden w-56 rounded-tl-lg border-r border-input/50 md:flex"
+            >
+              <SidebarContent>
+                <SidebarGroup>
+                  <SidebarGroupContent>
+                    <SidebarMenu>
+                      {navigationItems.map((item) => {
+                        const hasError = item.validateSection(errors as any);
 
-                      return (
-                        <Tooltip delayDuration={400} key={item.id}>
-                          <TooltipTrigger asChild>
-                            <SidebarMenuItem key={item.id}>
-                              <SidebarMenuButton
-                                asChild
-                                isActive={activeSection === item.id}
-                                onClick={() => setActiveSection(item.id)}
-                                className={cn(
-                                  "hover:bg-transparent text-muted-foreground size-full gap-0.5",
-                                  hasError && "hover:text-red-500 text-red-600",
-                                )}
-                              >
-                                <div className="flex flex-col items-start">
-                                  <div className="flex items-center gap-2">
-                                    {item.icon}
-                                    {item.name}
+                        return (
+                          <Tooltip delayDuration={400} key={item.id}>
+                            <TooltipTrigger asChild>
+                              <SidebarMenuItem key={item.id}>
+                                <SidebarMenuButton
+                                  asChild
+                                  isActive={activeSection === item.id}
+                                  onClick={() => setActiveSection(item.id)}
+                                  className={cn(
+                                    "hover:bg-transparent text-muted-foreground size-full gap-0.5",
+                                    hasError &&
+                                      "hover:text-red-500 text-red-600",
+                                  )}
+                                >
+                                  <div className="flex flex-col items-start">
+                                    <div className="flex items-center gap-2">
+                                      {item.icon}
+                                      {item.name}
+                                    </div>
+                                    <div className="w-[190px] truncate text-2xs text-muted-foreground">
+                                      {item.description}
+                                    </div>
                                   </div>
-                                  <div className="w-[190px] truncate text-2xs text-muted-foreground">
-                                    {item.description}
-                                  </div>
-                                </div>
-                              </SidebarMenuButton>
-                            </SidebarMenuItem>
-                          </TooltipTrigger>
-                          <TooltipContent
-                            side="right"
-                            className="flex items-center gap-2 text-xs"
-                          >
-                            <p>{item.description}</p>
-                          </TooltipContent>
-                        </Tooltip>
-                      );
-                    })}
-                  </SidebarMenu>
-                </SidebarGroupContent>
-              </SidebarGroup>
-            </SidebarContent>
-          </Sidebar>
-        </SidebarProvider>
-      </TooltipProvider>
+                                </SidebarMenuButton>
+                              </SidebarMenuItem>
+                            </TooltipTrigger>
+                            <TooltipContent
+                              side="right"
+                              className="flex items-center gap-2 text-xs"
+                            >
+                              <p>{item.description}</p>
+                            </TooltipContent>
+                          </Tooltip>
+                        );
+                      })}
+                    </SidebarMenu>
+                  </SidebarGroupContent>
+                </SidebarGroup>
+              </SidebarContent>
+            </Sidebar>
+          </SidebarProvider>
+        </TooltipProvider>
 
-      <main className="flex size-full">
-        <LazyComponent>{activeComponent}</LazyComponent>
-      </main>
-    </div>
+        <main className="flex size-full">
+          <LazyComponent>{activeComponent}</LazyComponent>
+        </main>
+      </div>
+    </TourProvider>
   );
 }

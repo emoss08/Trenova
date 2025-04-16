@@ -5,6 +5,8 @@ import {
   getDocumentTypes,
   getResourceSubFolders,
 } from "@/services/document";
+import { checkAPIKey, locationAutocomplete } from "@/services/google-maps";
+import { getIntegrationByType, getIntegrations } from "@/services/integration";
 import {
   getBillingControl,
   getDatabaseBackups,
@@ -15,6 +17,7 @@ import {
 import { getShipmentByID } from "@/services/shipment";
 import { getUsStateOptions, getUsStates } from "@/services/us-state";
 import { Resource } from "@/types/audit-entry";
+import type { IntegrationType } from "@/types/integration";
 import { createQueryKeyStore } from "@lukemorales/query-key-factory";
 
 export const queries = createQueryKeyStore({
@@ -130,6 +133,32 @@ export const queries = createQueryKeyStore({
     getDocumentRequirements: (customerId: string) => ({
       queryKey: ["customer/document-requirements", customerId],
       queryFn: async () => getCustomerDocumentRequirements(customerId),
+    }),
+  },
+  integration: {
+    getIntegrations: () => ({
+      queryKey: ["integrations"],
+      queryFn: async () => getIntegrations(),
+    }),
+    getIntegrationByType: (type: IntegrationType) => ({
+      queryKey: ["integrations/type", type],
+      queryFn: async () => getIntegrationByType(type),
+    }),
+  },
+  googleMaps: {
+    checkAPIKey: () => ({
+      queryKey: ["google-maps/check-api-key"],
+      queryFn: async () => checkAPIKey(),
+    }),
+    locationAutocomplete: (input: string) => ({
+      queryKey: ["google-maps/location-autocomplete", input],
+      queryFn: async () => {
+        if (!input || input.length < 3) {
+          return { data: { details: [], count: 0 } };
+        }
+        return locationAutocomplete(input);
+      },
+      enabled: input.length >= 3,
     }),
   },
 });

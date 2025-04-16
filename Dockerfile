@@ -29,8 +29,8 @@ RUN CGO_ENABLED=0 go build -o apiserver cmd/api/main.go
 
 FROM alpine:latest
 
-# Install CA certificates
-RUN apk --no-cache add ca-certificates
+# Install CA certificates and PostgreSQL 17 client
+RUN apk --no-cache add ca-certificates postgresql-client~=17
 
 # Set the environment variable
 ENV APP_ENV=production

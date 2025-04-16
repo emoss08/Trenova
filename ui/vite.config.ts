@@ -1,7 +1,7 @@
 import { nodeResolve } from "@rollup/plugin-node-resolve";
 // @ts-expect-error // Module does not give types
 import tailwindcss from "@tailwindcss/vite";
-import react from "@vitejs/plugin-react";
+import react from "@vitejs/plugin-react-swc";
 import path from "path";
 import { visualizer } from "rollup-plugin-visualizer";
 import { defineConfig, type PluginOption } from "vite";
