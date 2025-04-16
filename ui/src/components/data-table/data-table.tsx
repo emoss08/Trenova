@@ -271,7 +271,7 @@ export function DataTable<TData extends Record<string, any>>({
         )}
         <div className="rounded-md border border-sidebar-border">
           <Table>
-            {includeHeader && <DataTableHeader table={table} />}
+            {includeHeader && <DataTableHeader table={table as any} />}
             <DataTableBody table={table as any} />
           </Table>
         </div>
