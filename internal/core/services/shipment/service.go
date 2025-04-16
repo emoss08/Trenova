@@ -107,10 +107,7 @@ func (s *Service) List(ctx context.Context, opts *repositories.ListShipmentOptio
 		return nil, err
 	}
 
-	return &ports.ListResult[*shipment.Shipment]{
-		Items: entities.Items,
-		Total: entities.Total,
-	}, nil
+	return entities, nil
 }
 
 func (s *Service) Get(ctx context.Context, opts repositories.GetShipmentByIDOptions) (*shipment.Shipment, error) {

@@ -16,7 +16,7 @@ CREATE TABLE IF NOT EXISTS "locations" (
     "postal_code" us_postal_code,
     "longitude" float,
     "latitude" float,
-    "place_id" varchar(100),
+    "place_id" text,
     "is_geocoded" boolean NOT NULL DEFAULT FALSE,
     -- Metadata
     "version" bigint NOT NULL DEFAULT 0,

@@ -1,12 +1,23 @@
+import { integrationImages } from "@/app/integrations/_utils/integration";
+import { AddressField } from "@/components/fields/address-field";
 import { InputField } from "@/components/fields/input-field";
 import { SelectField } from "@/components/fields/select-field";
 import { TextareaField } from "@/components/fields/textarea-field";
+import { Tour } from "@/components/tour/tour";
+import { useTour } from "@/components/tour/tour-provider";
+import { Button } from "@/components/ui/button";
 import { FormControl, FormGroup } from "@/components/ui/form";
+import { Icon } from "@/components/ui/icons";
+import { LazyImage } from "@/components/ui/image";
 import { Separator } from "@/components/ui/separator";
+import { GOOGLE_MAPS_NOTICE_KEY } from "@/constants/env";
 import { statusChoices } from "@/lib/choices";
 import { queries } from "@/lib/queries";
 import { type CustomerSchema } from "@/lib/schemas/customer-schema";
+import { IntegrationType } from "@/types/integration";
+import { faLightbulbOn, faXmark } from "@fortawesome/pro-regular-svg-icons";
 import { useQuery } from "@tanstack/react-query";
+import { useLocalStorage } from "@uidotdev/usehooks";
 import { useFormContext } from "react-hook-form";
 
 export default function CustomerForm() {
@@ -28,6 +39,8 @@ export default function CustomerForm() {
         </p>
       </div>
       <Separator className="mt-2" />
+      <GoogleMapsNotice />
+
       <div className="p-4">
         <FormGroup cols={2}>
           <FormControl>
@@ -70,15 +83,8 @@ export default function CustomerForm() {
               description="Additional details or notes about the customer."
             />
           </FormControl>
-          <FormControl cols="full">
-            <InputField
-              control={control}
-              rules={{ required: true }}
-              name="addressLine1"
-              label="Address Line 1"
-              placeholder="Address Line 1"
-              description="The primary address for the customer."
-            />
+          <FormControl cols="full" id="address-field-container">
+            <AddressField control={control} />
           </FormControl>
           <FormControl cols="full">
             <InputField
@@ -125,6 +131,214 @@ export default function CustomerForm() {
           </FormControl>
         </FormGroup>
       </div>
+      <Tour />
     </div>
   );
+}
+
+function GoogleMapsNotice() {
+  const [noticeVisible, setNoticeVisible] = useLocalStorage(
+    GOOGLE_MAPS_NOTICE_KEY,
+    true,
+  );
+
+  // Access tour context
+  const { openTour } = useTour();
+
+  // Get integration by type
+  const { data: integration } = useQuery({
+    ...queries.integration.getIntegrationByType(IntegrationType.GoogleMaps),
+  });
+
+  const handleClose = () => {
+    setNoticeVisible(false);
+  };
+
+  // Google Maps tour steps
+  const googleMapsTourSteps = [
+    {
+      target: "#address-field-container",
+      title: "Address Field with Google Maps",
+      content:
+        "The Address Line 1 field now features Google Maps integration. Click the search icon to access the address search functionality.",
+      position: "right" as const,
+    },
+    {
+      target: "#address-search-button",
+      title: "Address Search",
+      content:
+        "Click this search icon to open the Google Maps address search tool.",
+      position: "top" as const,
+      action: () => {
+        // Find and click the search button to open the popover
+        const searchButton = document.querySelector("#address-search-button");
+        if (searchButton && searchButton instanceof HTMLButtonElement) {
+          // Check if popover is already open
+          const popoverContent = document.querySelector(
+            "[data-radix-popper-content-wrapper]",
+          );
+          if (!popoverContent) {
+            searchButton.click();
+          }
+        }
+      },
+    },
+    {
+      target: "[data-radix-popper-content-wrapper]",
+      title: "Search for Addresses",
+      content:
+        "Type an address in the search box to see suggestions from Google Maps. Select an address to auto-fill all your address fields.",
+      position: "bottom" as const,
+      action: () => {
+        // Make sure the popover is open
+        const popoverContent = document.querySelector(
+          "[data-radix-popper-content-wrapper]",
+        );
+        if (!popoverContent) {
+          const searchButton = document.querySelector("#address-search-button");
+          if (searchButton && searchButton instanceof HTMLButtonElement) {
+            searchButton.click();
+          }
+        }
+
+        setTimeout(() => {
+          const searchInput = document.querySelector(
+            "[data-radix-popper-content-wrapper] input",
+          );
+          if (searchInput && searchInput instanceof HTMLInputElement) {
+            const simulatedEvent = new Event("input", { bubbles: true });
+
+            searchInput.value = "123 Main Street";
+
+            searchInput.dispatchEvent(simulatedEvent);
+
+            searchInput.focus();
+          }
+        }, 500);
+      },
+    },
+    {
+      target: "#address-field-container",
+      title: "Auto-fill Address Details",
+      content:
+        "When you select an address from Google Maps, it automatically fills in all address fields including city, state, and postal code.",
+      position: "bottom" as const,
+    },
+    {
+      target: "#address-field-container",
+      title: "Geocoding Benefits",
+      content:
+        "Using Google Maps addresses provides accurate geocoding data, which improves routing and distance calculations in shipments.",
+      position: "left" as const,
+    },
+  ];
+
+  const handleTakeTour = () => {
+    const addressLine1Input = document.querySelector(
+      'input[name="addressLine1"]',
+    ) as HTMLInputElement | null;
+    const addressLine2Input = document.querySelector(
+      'input[name="addressLine2"]',
+    ) as HTMLInputElement | null;
+    const cityInput = document.querySelector(
+      'input[name="city"]',
+    ) as HTMLInputElement | null;
+    const postalCodeInput = document.querySelector(
+      'input[name="postalCode"]',
+    ) as HTMLInputElement | null;
+
+    // Save original values
+    const originalValues = {
+      addressLine1: addressLine1Input?.value || "",
+      addressLine2: addressLine2Input?.value || "",
+      city: cityInput?.value || "",
+      postalCode: postalCodeInput?.value || "",
+    };
+
+    const cleanup = () => {
+      const searchButton = document.querySelector("#address-search-button");
+      const popoverContent = document.querySelector(
+        "[data-radix-popper-content-wrapper]",
+      );
+
+      // remove the notice
+      setNoticeVisible(false);
+
+      if (popoverContent && searchButton instanceof HTMLButtonElement) {
+        searchButton.click();
+        setTimeout(() => {
+          if (addressLine1Input)
+            addressLine1Input.value = originalValues.addressLine1;
+          if (addressLine2Input)
+            addressLine2Input.value = originalValues.addressLine2;
+          if (cityInput) cityInput.value = originalValues.city;
+          if (postalCodeInput)
+            postalCodeInput.value = originalValues.postalCode;
+        }, 300);
+      } else {
+        if (addressLine1Input)
+          addressLine1Input.value = originalValues.addressLine1;
+        if (addressLine2Input)
+          addressLine2Input.value = originalValues.addressLine2;
+        if (cityInput) cityInput.value = originalValues.city;
+        if (postalCodeInput) postalCodeInput.value = originalValues.postalCode;
+      }
+    };
+
+    openTour(googleMapsTourSteps, cleanup);
+  };
+
+  const showNotice = noticeVisible && integration?.enabled;
+
+  return showNotice ? (
+    <div className="flex bg-blue-500/20 border border-blue-600 p-4 rounded-md justify-between items-center m-2">
+      <div className="flex items-center gap-2 w-full text-blue-600 pr-2">
+        <LazyImage
+          src={integrationImages[IntegrationType.GoogleMaps]}
+          layout="fixed"
+          width={10}
+          height={10}
+          className="size-6"
+        />
+        <div className="flex flex-col">
+          <p className="text-sm font-medium">Google Maps API</p>
+          <p className="text-xs text-blue-600 dark:text-blue-300">
+            Your organization has configured the Google Maps API! Take a tour to
+            learn how to use it.
+          </p>
+        </div>
+      </div>
+      <div className="flex gap-2">
+        <div className="flex grow gap-3">
+          <div className="flex grow flex-col justify-between gap-2 md:flex-row">
+            <Button
+              variant="outline"
+              size="sm"
+              type="button"
+              className="text-blue-600 border-blue-600 hover:bg-blue-400/10 hover:text-blue-600 bg-blue-600/10"
+              onClick={handleTakeTour}
+            >
+              <Icon icon={faLightbulbOn} className="size-3" />
+              Take a Tour
+            </Button>
+          </div>
+        </div>
+        <div className="absolute top-23.5 right-5">
+          <Button
+            variant="ghost"
+            type="button"
+            className="group -my-1.5 -me-2 size-6 shrink-0 p-0 text-blue-600 hover:text-blue-400 hover:bg-blue-600/10"
+            onClick={handleClose}
+            aria-label="Close banner"
+          >
+            <Icon
+              icon={faXmark}
+              className="opacity-60 transition-opacity group-hover:opacity-100"
+              aria-hidden="true"
+            />
+          </Button>
+        </div>
+      </div>
+    </div>
+  ) : null;
 }

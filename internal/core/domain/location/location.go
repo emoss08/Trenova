@@ -45,7 +45,7 @@ type Location struct {
 	PostalCode   string        `json:"postalCode" bun:"postal_code,type:us_postal_code,notnull"`
 	Longitude    *float64      `json:"longitude" bun:"longitude,type:FLOAT,nullzero"`
 	Latitude     *float64      `json:"latitude" bun:"latitude,type:FLOAT,nullzero"`
-	PlaceID      string        `json:"placeId" bun:"place_id,type:VARCHAR(100)"`
+	PlaceID      string        `json:"placeId" bun:"place_id,type:TEXT"`
 	IsGeocoded   bool          `json:"isGeocoded" bun:"is_geocoded,type:BOOLEAN,default:false"`
 
 	// Metadata

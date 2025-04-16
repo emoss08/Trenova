@@ -22,7 +22,7 @@ const (
 	ResourceOrganization          = Resource("organization")            // Represents resources related to organizations.
 	ResourceDocumentQualityConfig = Resource("document_quality_config") // Represents resources related to document quality config.
 	ResourceShipmentControl       = Resource("shipment_control")        // Represents resources related to shipment control.
-	ResourceGoogleMapsConfig      = Resource("googlemaps_config")       // Represents resources related to google maps config.
+	ResourceGoogleMapsConfig      = Resource("google_maps_config")      // Represents resources related to google maps config.
 	ResourceBillingControl        = Resource("billing_control")         // Represents resources related to billing control.
 	ResourceDocument              = Resource("document")                // Represents resources related to documents.
 

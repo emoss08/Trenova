@@ -1,3 +1,4 @@
+import { AddressField } from "@/components/fields/address-field";
 import { AutocompleteField } from "@/components/fields/autocomplete";
 import { InputField } from "@/components/fields/input-field";
 import { ColorOptionValue } from "@/components/fields/select-components";
@@ -82,14 +83,7 @@ export function LocationForm() {
         />
       </FormControl>
       <FormControl cols="full">
-        <InputField
-          control={control}
-          rules={{ required: true }}
-          name="addressLine1"
-          label="Address Line 1"
-          placeholder="Address Line 1"
-          description="The primary address for the location."
-        />
+        <AddressField control={control} />
       </FormControl>
       <FormControl cols="full">
         <InputField

@@ -3,6 +3,7 @@ package googlemaps
 import (
 	"context"
 
+	"github.com/emoss08/trenova/internal/core/domain/integration"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/pkg/logger"
 	"github.com/emoss08/trenova/pkg/types/pulid"
@@ -14,46 +15,20 @@ import (
 
 var ErrAPIKeyBlank = eris.New("API Key is blank")
 
-// LocationDetails contains the details of a location returned from the Google Maps API
-type LocationDetails struct {
-	Name         string   `json:"name"`
-	AddressLine1 string   `json:"addressLine1"`
-	AddressLine2 string   `json:"addressLine2"`
-	City         string   `json:"city"`
-	State        string   `json:"state"`
-	PostalCode   string   `json:"postalCode"`
-	Longitude    float64  `json:"longitude"`
-	Latitude     float64  `json:"latitude"`
-	PlaceID      string   `json:"placeId"`
-	Types        []string `json:"types"`
-}
-
-// AutocompleteLocationResult combines autocomplete prediction with full location details
-type AutocompleteLocationResult struct {
-	// Predictions from the autocomplete API
-	Predictions []maps.AutocompletePrediction `json:"predictions"`
-	// Location details for each prediction (same order as predictions)
-	Details []*LocationDetails `json:"details"`
-}
-
-type Client interface {
-	PlaceAutocomplete(ctx context.Context, orgID pulid.ID, req *maps.PlaceAutocompleteRequest) (*maps.AutocompleteResponse, error)
-	GetPlaceDetails(ctx context.Context, orgID pulid.ID, placeID string) (*LocationDetails, error)
-	AutocompleteWithDetails(ctx context.Context, orgID pulid.ID, req *maps.PlaceAutocompleteRequest) (*AutocompleteLocationResult, error)
-}
-
 // ClientParams contains the dependencies for the Google Maps client
 type ClientParams struct {
 	fx.In
 
-	GCrepo repositories.GoogleMapsConfigRepository
-	Logger *logger.Logger
+	IntegrationRepo repositories.IntegrationRepository
+	UsStateRepo     repositories.UsStateRepository
+	Logger          *logger.Logger
 }
 
 // client is the Google Maps client implementation
 type client struct {
-	l      *zerolog.Logger
-	gcRepo repositories.GoogleMapsConfigRepository
+	l               *zerolog.Logger
+	integrationRepo repositories.IntegrationRepository
+	usStateRepo     repositories.UsStateRepository
 }
 
 // NewClient creates a new Google Maps client
@@ -69,8 +44,9 @@ func NewClient(p ClientParams) Client {
 		Logger()
 
 	return &client{
-		l:      &log,
-		gcRepo: p.GCrepo,
+		l:               &log,
+		integrationRepo: p.IntegrationRepo,
+		usStateRepo:     p.UsStateRepo,
 	}
 }
 
@@ -79,13 +55,18 @@ func NewClient(p ClientParams) Client {
 // Parameters:
 //   - ctx[context.Context]: The context of the request
 //   - orgID[pulid.ID]: The organization ID
+//   - buID[pulid.ID]: The business unit ID
 //
 // Returns:
 //   - gc[*maps.Client]: The Google Maps client
 //   - err[error]: The error
-func (c *client) getClient(ctx context.Context, orgID pulid.ID) (*maps.Client, error) {
+func (c *client) getClient(ctx context.Context, orgID pulid.ID, buID pulid.ID) (*maps.Client, error) {
 	// * Get the API key from the database
-	apiKey, err := c.gcRepo.GetAPIKeyByOrgID(ctx, orgID)
+	integration, err := c.integrationRepo.GetByType(ctx, repositories.GetIntegrationByTypeRequest{
+		Type:  integration.GoogleMapsIntegrationType,
+		OrgID: orgID,
+		BuID:  buID,
+	})
 	if err != nil {
 		c.l.Error().
 			Err(err).
@@ -94,18 +75,42 @@ func (c *client) getClient(ctx context.Context, orgID pulid.ID) (*maps.Client, e
 		return nil, err
 	}
 
-	// * Check if the API Key is an empty string
-	if apiKey == "" {
+	apiKey, ok := integration.Configuration["apiKey"]
+	if !ok {
+		return nil, ErrAPIKeyBlank
+	}
+
+	// * convert the api key to a string
+	apiKeyStr, ok := apiKey.(string)
+	if !ok {
 		return nil, ErrAPIKeyBlank
 	}
 
 	// * Initialize the Google Maps client
-	gc, err := maps.NewClient(maps.WithAPIKey(apiKey))
+	gc, err := maps.NewClient(maps.WithAPIKey(apiKeyStr))
 	if err != nil {
 		return nil, err
 	}
 
 	return gc, nil
+}
+
+// CheckAPIKey checks if the API key is valid
+//
+// Parameters:
+//   - ctx[context.Context]: The context of the request
+//   - orgID[pulid.ID]: The organization ID
+//
+// Returns:
+//   - valid[bool]: Whether the API key is valid
+//   - err[error]: The error
+func (c *client) CheckAPIKey(ctx context.Context, orgID pulid.ID, buID pulid.ID) (bool, error) {
+	_, err := c.getClient(ctx, orgID, buID)
+	if err != nil {
+		return false, err
+	}
+
+	return true, nil
 }
 
 // PlaceAutocomplete performs a place autocomplete request to the Google Maps API
@@ -118,14 +123,14 @@ func (c *client) getClient(ctx context.Context, orgID pulid.ID) (*maps.Client, e
 // Returns:
 //   - resp[*maps.AutocompleteResponse]: The place autocomplete response
 //   - err[error]: The error
-func (c *client) PlaceAutocomplete(ctx context.Context, orgID pulid.ID, req *maps.PlaceAutocompleteRequest) (*maps.AutocompleteResponse, error) {
+func (c *client) placeAutocomplete(ctx context.Context, orgID pulid.ID, buID pulid.ID, req *maps.PlaceAutocompleteRequest) (*maps.AutocompleteResponse, error) {
 	log := c.l.With().
 		Str("operation", "PlaceAutocomplete").
 		Str("orgID", orgID.String()).
 		Logger()
 
 	// * Get the client
-	gc, err := c.getClient(ctx, orgID)
+	gc, err := c.getClient(ctx, orgID, buID)
 	if err != nil {
 		log.Error().
 			Err(err).
@@ -155,7 +160,7 @@ func (c *client) PlaceAutocomplete(ctx context.Context, orgID pulid.ID, req *map
 // Returns:
 //   - details[*LocationDetails]: The location details
 //   - err[error]: The error
-func (c *client) GetPlaceDetails(ctx context.Context, orgID pulid.ID, placeID string) (*LocationDetails, error) {
+func (c *client) getPlaceDetails(ctx context.Context, orgID pulid.ID, buID pulid.ID, placeID string) (*LocationDetails, error) {
 	log := c.l.With().
 		Str("operation", "GetPlaceDetails").
 		Str("orgID", orgID.String()).
@@ -163,7 +168,7 @@ func (c *client) GetPlaceDetails(ctx context.Context, orgID pulid.ID, placeID st
 		Logger()
 
 	// * Get the client
-	gc, err := c.getClient(ctx, orgID)
+	gc, err := c.getClient(ctx, orgID, buID)
 	if err != nil {
 		log.Error().
 			Err(err).
@@ -237,6 +242,17 @@ func (c *client) GetPlaceDetails(ctx context.Context, orgID pulid.ID, placeID st
 		details.AddressLine1 = resp.FormattedAddress
 	}
 
+	// * Get the state ID by abbreviation
+	state, err := c.usStateRepo.GetByAbbreviation(ctx, details.State)
+	if err != nil {
+		log.Error().
+			Err(err).
+			Msg("failed to get state by abbreviation")
+		return nil, err
+	}
+
+	details.StateID = state.ID
+
 	return details, nil
 }
 
@@ -251,14 +267,24 @@ func (c *client) GetPlaceDetails(ctx context.Context, orgID pulid.ID, placeID st
 // Returns:
 //   - result[*AutocompleteLocationResult]: Combined autocomplete predictions and location details
 //   - err[error]: The error
-func (c *client) AutocompleteWithDetails(ctx context.Context, orgID pulid.ID, req *maps.PlaceAutocompleteRequest) (*AutocompleteLocationResult, error) {
+func (c *client) AutocompleteWithDetails(ctx context.Context, orgID pulid.ID, buID pulid.ID, req *AutoCompleteRequest) (*AutocompleteLocationResult, error) {
 	log := c.l.With().
 		Str("operation", "AutocompleteWithDetails").
 		Str("orgID", orgID.String()).
 		Logger()
 
+	// * Create a request
+	paReq := maps.PlaceAutocompleteRequest{
+		Input: req.Input,
+		// * Add country component to restrict results to the United States
+		//nolint:exhaustive // We only want to restrict to the United States
+		Components: map[maps.Component][]string{
+			maps.ComponentCountry: {"us"},
+		},
+	}
+
 	// * Get autocomplete predictions first
-	autocompleteResp, err := c.PlaceAutocomplete(ctx, orgID, req)
+	autocompleteResp, err := c.placeAutocomplete(ctx, orgID, buID, &paReq)
 	if err != nil {
 		log.Error().
 			Err(err).
@@ -267,13 +293,12 @@ func (c *client) AutocompleteWithDetails(ctx context.Context, orgID pulid.ID, re
 	}
 
 	result := &AutocompleteLocationResult{
-		Predictions: autocompleteResp.Predictions,
-		Details:     make([]*LocationDetails, 0, len(autocompleteResp.Predictions)),
+		Details: make([]*LocationDetails, 0, len(autocompleteResp.Predictions)),
 	}
 
 	// * Fetch details for each prediction
 	for _, prediction := range autocompleteResp.Predictions {
-		details, dErr := c.GetPlaceDetails(ctx, orgID, prediction.PlaceID)
+		details, dErr := c.getPlaceDetails(ctx, orgID, buID, prediction.PlaceID)
 		if dErr != nil {
 			log.Error().
 				Err(dErr).
@@ -285,6 +310,9 @@ func (c *client) AutocompleteWithDetails(ctx context.Context, orgID pulid.ID, re
 		}
 		result.Details = append(result.Details, details)
 	}
+
+	// * Append the count of predictions
+	result.Count = len(result.Details)
 
 	return result, nil
 }

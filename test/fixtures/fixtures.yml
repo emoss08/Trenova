@@ -144,6 +144,12 @@
       country_name: United States
       country_iso3: USA
       created_at: "{{ timestamp }}"
+    - _id: dc
+      name: District of Columbia
+      abbreviation: DC
+      country_name: United States
+      country_iso3: USA
+      created_at: "{{ timestamp }}"
     - _id: mo
       name: Missouri
       abbreviation: MO
@@ -317,6 +323,7 @@
       description: "Trenova Transportation"
       created_at: "{{ timestamp }}"
 
+
 - model: Organization
   rows:
     - _id: trenova
@@ -371,20 +378,26 @@
       created_at: "{{ timestamp }}"
       updated_at: "{{ timestamp }}"
 
-- model: PCMilerConfiguration
+- model: Integration
   rows:
-    - _id: pcmiler_1
+    - _id: google_maps
+      name: Google Maps
+      type: GoogleMaps
+      description: "Automatically geocode addresses using Google Maps API"
+      category: MappingRouting
+      built_by: "Trenova"
       organization_id: "{{ $.Organization.trenova.ID }}"
       business_unit_id: "{{ $.BusinessUnit.trenova.ID }}"
-      api_key: "1234567890"
       created_at: "{{ timestamp }}"
-      updated_at: "{{ timestamp }}"
-    - _id: pcmiler_2
-      organization_id: "{{ $.Organization.trenova_2.ID }}"
+    - _id: pcmiler
+      name: PCMiler
+      type: PCMiler
+      description: "Automatically route shipments and get directions using PCMiler API"
+      category: MappingRouting
+      built_by: "Trenova"
+      organization_id: "{{ $.Organization.trenova.ID }}"
       business_unit_id: "{{ $.BusinessUnit.trenova.ID }}"
-      api_key: "1234567890"
       created_at: "{{ timestamp }}"
-      updated_at: "{{ timestamp }}"
 
 - model: User
   rows:

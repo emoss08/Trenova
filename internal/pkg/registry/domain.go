@@ -14,6 +14,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/fleetcode"
 	"github.com/emoss08/trenova/internal/core/domain/hazardousmaterial"
 	"github.com/emoss08/trenova/internal/core/domain/hazmatsegregationrule"
+	"github.com/emoss08/trenova/internal/core/domain/integration"
 	"github.com/emoss08/trenova/internal/core/domain/location"
 	"github.com/emoss08/trenova/internal/core/domain/organization"
 	"github.com/emoss08/trenova/internal/core/domain/pcmilerconfiguration"
@@ -82,5 +83,6 @@ func RegisterEntities() []any {
 		&hazmatsegregationrule.HazmatSegregationRule{},
 		&billing.DocumentType{},
 		&accessorialcharge.AccessorialCharge{},
+		&integration.Integration{},
 	}
 }

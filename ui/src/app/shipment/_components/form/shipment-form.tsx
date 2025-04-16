@@ -29,13 +29,14 @@ type ShipmentDetailsProps = {
 };
 
 // Wrap the component with memo to prevent unnecessary re-renders
-const ShipmentFormComponent = ({ isLoading, ...props }: ShipmentDetailsProps) => {
+const ShipmentFormComponent = ({
+  isLoading,
+  ...props
+}: ShipmentDetailsProps) => {
   // Handle data loading state separately from component loading state
   if (isLoading) {
     return <ShipmentDetailsSkeleton />;
   }
-
-  console.info("Rendering ShipmentForm");
 
   // Only use Suspense for component loading, not data loading
   return (
@@ -71,6 +72,7 @@ const ShipmentScrollAreaComponent = ({
   }
 
   // Calculate the optimal height for the scroll area
+  // eslint-disable-next-line react-hooks/rules-of-hooks
   const scrollAreaHeight = useMemo(() => {
     const { contentHeight, viewportHeight } = dimensions;
 

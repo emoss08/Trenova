@@ -134,48 +134,44 @@ export function CustomerEditForm({
   return (
     <>
       <FormProvider {...form}>
-        <>
-          <FormProvider {...form}>
-            <Form className="space-y-0 p-0" onSubmit={handleSubmit(onSubmit)}>
-              <DialogBody className="p-0">
-                <CustomerForm />
-              </DialogBody>
-              <DialogFooter>
-                <Button type="button" variant="outline" onClick={onClose}>
-                  Cancel
-                </Button>
-                <FormSaveButton
-                  isPopout={isPopout}
-                  isSubmitting={isSubmitting}
-                  title="Customer"
-                />
-              </DialogFooter>
-            </Form>
-          </FormProvider>
-
-          {showWarning && (
-            <AlertDialog open={showWarning} onOpenChange={handleCancelClose}>
-              <AlertDialogContent>
-                <AlertDialogHeader>
-                  <AlertDialogTitle>Unsaved Changes</AlertDialogTitle>
-                  <AlertDialogDescription>
-                    You have unsaved changes. Are you sure you want to close
-                    this form? All changes will be lost.
-                  </AlertDialogDescription>
-                </AlertDialogHeader>
-                <AlertDialogFooter>
-                  <AlertDialogCancel onClick={handleCancelClose}>
-                    Continue Editing
-                  </AlertDialogCancel>
-                  <AlertDialogAction onClick={handleConfirmClose}>
-                    Discard Changes
-                  </AlertDialogAction>
-                </AlertDialogFooter>
-              </AlertDialogContent>
-            </AlertDialog>
-          )}
-        </>
+        <Form className="space-y-0 p-0" onSubmit={handleSubmit(onSubmit)}>
+          <DialogBody className="p-0">
+            <CustomerForm />
+          </DialogBody>
+          <DialogFooter>
+            <Button type="button" variant="outline" onClick={onClose}>
+              Cancel
+            </Button>
+            <FormSaveButton
+              isPopout={isPopout}
+              isSubmitting={isSubmitting}
+              title="Customer"
+            />
+          </DialogFooter>
+        </Form>
       </FormProvider>
+
+      {showWarning && (
+        <AlertDialog open={showWarning} onOpenChange={handleCancelClose}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Unsaved Changes</AlertDialogTitle>
+              <AlertDialogDescription>
+                You have unsaved changes. Are you sure you want to close this
+                form? All changes will be lost.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel onClick={handleCancelClose}>
+                Continue Editing
+              </AlertDialogCancel>
+              <AlertDialogAction onClick={handleConfirmClose}>
+                Discard Changes
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+      )}
     </>
   );
 }

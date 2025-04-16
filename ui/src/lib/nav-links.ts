@@ -275,6 +275,12 @@ export const routes: RouteInfo[] = [
         supportsModal: false,
       },
       {
+        key: Resource.Integration,
+        label: "Apps & Integrations",
+        link: "/organization/integrations/",
+        supportsModal: false,
+      },
+      {
         key: Resource.ShipmentControl,
         label: "Shipment Controls",
         link: "/organization/shipment-controls/",

@@ -1,3 +1,5 @@
+/* eslint-disable react-refresh/only-export-components */
+/* eslint-disable react/display-name */
 import { Checkbox } from "@/components/ui/checkbox";
 import { InternalLink } from "@/components/ui/link";
 import {
@@ -8,36 +10,258 @@ import {
 import { generateDateOnlyString, toDate } from "@/lib/date";
 import { BaseModel } from "@/types/common";
 import { ColumnDef, ColumnHelper } from "@tanstack/react-table";
+import { memo, useMemo } from "react";
 import { v4 } from "uuid";
 import { DataTableColumnHeader } from "./data-table-column-header";
+import {
+  EntityColumnConfig,
+  EntityRefConfig,
+  NestedEntityRefConfig,
+} from "./data-table-column-types";
 
-type EntityRefConfig<TEntity, TParent> = {
-  basePath: string;
-  getId: (entity: TEntity) => string | undefined;
-  getDisplayText: (entity: TEntity) => string;
-  getHeaderText?: string;
-  getSecondaryInfo?: (
-    entity: TEntity,
-    parent: TParent,
-  ) => {
-    label?: string;
-    entity: TEntity;
+// Memoized EntityRefLink component to avoid re-renders
+const EntityRefLink = memo(
+  ({
+    basePath,
+    id,
+    displayText,
+    className,
+    color,
+  }: {
+    basePath: string;
+    id: string | undefined;
     displayText: string;
-    clickable?: boolean;
-  } | null;
-  className?: string;
-  color?: {
-    getColor: (entity: TEntity) => string | undefined;
-  };
-};
+    className?: string;
+    color?: string;
+  }) => {
+    // Create search params object once
+    const linkTo = useMemo(
+      () => ({
+        pathname: basePath,
+        search: `?entityId=${id}&modal=edit`,
+      }),
+      [basePath, id],
+    );
 
-type NestedEntityRefConfig<TEntity, TParent> = EntityRefConfig<
-  TEntity,
-  TParent
-> & {
-  getEntity: (parent: TParent) => TEntity | null | undefined;
-  columnId?: string;
-};
+    const linkState = useMemo(
+      () => ({
+        isNavigatingToModal: true,
+      }),
+      [],
+    );
+
+    return (
+      <InternalLink
+        to={linkTo}
+        state={linkState}
+        className={className}
+        replace
+        preventScrollReset
+      >
+        {color ? (
+          <div className="flex items-center gap-x-1.5 text-sm font-normal text-foreground underline hover:text-foreground/70">
+            <div
+              className="size-2 rounded-full"
+              style={{
+                backgroundColor: color,
+              }}
+            />
+            <p>{displayText}</p>
+          </div>
+        ) : (
+          <span className="text-sm font-normal underline hover:text-foreground/70">
+            {displayText}
+          </span>
+        )}
+      </InternalLink>
+    );
+  },
+);
+
+// Memoized SecondaryInfoLink component
+const SecondaryInfoLink = memo(
+  ({
+    basePath,
+    id,
+    displayText,
+    clickable,
+  }: {
+    basePath: string;
+    id: string | undefined;
+    displayText: string;
+    clickable: boolean;
+  }) => {
+    // Create search params object once
+    const linkTo = useMemo(
+      () => ({
+        pathname: basePath,
+        search: `?entityId=${id}&modal=edit`,
+      }),
+      [basePath, id],
+    );
+
+    const linkState = useMemo(
+      () => ({
+        isNavigatingToModal: true,
+      }),
+      [],
+    );
+
+    if (!clickable) {
+      return <p>{displayText}</p>;
+    }
+
+    return (
+      <InternalLink
+        to={linkTo}
+        state={linkState}
+        className="text-2xs text-muted-foreground underline hover:text-muted-foreground/70"
+        replace
+        preventScrollReset
+        viewTransition
+      >
+        {displayText}
+      </InternalLink>
+    );
+  },
+);
+
+// Define the EntityRefCell component type first, then memoize it
+interface EntityRefCellProps<TEntity, TParent> {
+  entity: TEntity;
+  config: EntityRefConfig<TEntity, TParent>;
+  parent: TParent;
+}
+
+function EntityRefCellBase<TEntity, TParent extends Record<string, any>>(
+  props: EntityRefCellProps<TEntity, TParent>,
+) {
+  const { entity, config, parent } = props;
+
+  if (!entity) {
+    return <p className="text-muted-foreground">-</p>;
+  }
+
+  const id = config.getId(entity);
+  const displayText = config.getDisplayText(entity);
+  const secondaryInfo = config.getSecondaryInfo?.(entity, parent);
+  const color = config.color?.getColor(entity);
+
+  // clickable should default to true unless otherwise specified
+  const clickable = secondaryInfo?.clickable ?? true;
+
+  return (
+    <div className="flex flex-col gap-0.5">
+      <Tooltip delayDuration={300}>
+        <TooltipTrigger asChild>
+          <EntityRefLink
+            basePath={config.basePath}
+            id={id}
+            displayText={displayText}
+            className={config.className}
+            color={color}
+          />
+        </TooltipTrigger>
+        <TooltipContent>
+          <p>Click to view {displayText}</p>
+        </TooltipContent>
+      </Tooltip>
+
+      {secondaryInfo && (
+        <div className="flex items-center gap-1 text-muted-foreground text-2xs">
+          {secondaryInfo.label && <span>{secondaryInfo.label}:</span>}
+          <Tooltip delayDuration={300}>
+            <TooltipTrigger asChild>
+              <SecondaryInfoLink
+                basePath={config.basePath}
+                id={config.getId(secondaryInfo.entity)}
+                displayText={secondaryInfo.displayText}
+                clickable={clickable}
+              />
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>Click to view {secondaryInfo.displayText}</p>
+            </TooltipContent>
+          </Tooltip>
+        </div>
+      )}
+    </div>
+  );
+}
+
+const EntityRefCell = memo(EntityRefCellBase) as typeof EntityRefCellBase;
+
+// Define the NestedEntityRefCell component type first, then memoize it
+interface NestedEntityRefCellProps<TEntity, TParent> {
+  getValue: () => TEntity | null | undefined;
+  row: { original: TParent };
+  config: NestedEntityRefConfig<TEntity, TParent>;
+}
+
+function NestedEntityRefCellBase<TEntity, TParent extends Record<string, any>>(
+  props: NestedEntityRefCellProps<TEntity, TParent>,
+) {
+  const { getValue, row, config } = props;
+  const entity = getValue();
+
+  if (!entity) {
+    return <p className="text-muted-foreground">-</p>;
+  }
+
+  const id = config.getId(entity);
+  const displayText = config.getDisplayText(entity);
+  const secondaryInfo = config.getSecondaryInfo?.(entity, row.original);
+  const color = config.color?.getColor(entity);
+
+  // clickable should default to true unless otherwise specified
+  const clickable = secondaryInfo?.clickable ?? true;
+
+  return (
+    <div className="flex flex-col gap-0.5">
+      <Tooltip delayDuration={300}>
+        <TooltipTrigger asChild>
+          <EntityRefLink
+            basePath={config.basePath}
+            id={id}
+            displayText={displayText}
+            className={config.className}
+            color={color}
+          />
+        </TooltipTrigger>
+        <TooltipContent>
+          <p>Click to view {displayText}</p>
+        </TooltipContent>
+      </Tooltip>
+
+      {secondaryInfo && (
+        <div className="flex items-center gap-1 text-muted-foreground text-2xs">
+          {secondaryInfo.label && <span>{secondaryInfo.label}:</span>}
+          {clickable ? (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <SecondaryInfoLink
+                  basePath={config.basePath}
+                  id={config.getId(secondaryInfo.entity)}
+                  displayText={secondaryInfo.displayText}
+                  clickable={clickable}
+                />
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>Click to view {secondaryInfo.displayText}</p>
+              </TooltipContent>
+            </Tooltip>
+          ) : (
+            <p>{secondaryInfo.displayText}</p>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+const NestedEntityRefCell = memo(
+  NestedEntityRefCellBase,
+) as typeof NestedEntityRefCellBase;
 
 export function createCommonColumns<T extends Record<string, unknown>>(
   columnHelper: ColumnHelper<T>,
@@ -112,102 +336,19 @@ export function createEntityRefColumn<
     ),
     cell: ({ getValue, row }) => {
       const entity = getValue();
-
       if (!entity) {
         return <p className="text-muted-foreground">-</p>;
       }
-
-      const id = config.getId(entity);
-      const displayText = config.getDisplayText(entity);
-      const secondaryInfo = config.getSecondaryInfo?.(entity, row.original);
-      const color = config.color?.getColor(entity);
-
-      // clickable should default to true unless otherwise specified
-      const clickable = secondaryInfo?.clickable ?? true;
-
       return (
-        <div className="flex flex-col gap-0.5">
-          <Tooltip delayDuration={300}>
-            <TooltipTrigger asChild>
-              <InternalLink
-                to={{
-                  pathname: config.basePath,
-                  search: `?entityId=${id}&modal=edit`,
-                }}
-                state={{
-                  isNavigatingToModal: true,
-                }}
-                className={config.className}
-                replace
-                preventScrollReset
-              >
-                {color ? (
-                  <div className="flex items-center gap-x-1.5 text-sm font-normal text-foreground underline hover:text-foreground/70">
-                    <div
-                      className="size-2 rounded-full"
-                      style={{
-                        backgroundColor: color,
-                      }}
-                    />
-                    <p>{displayText}</p>
-                  </div>
-                ) : (
-                  <span className="text-sm font-normal underline hover:text-foreground/70">
-                    {displayText}
-                  </span>
-                )}
-              </InternalLink>
-            </TooltipTrigger>
-            <TooltipContent>
-              <p>Click to view {displayText}</p>
-            </TooltipContent>
-          </Tooltip>
-
-          {secondaryInfo && (
-            <div className="flex items-center gap-1 text-muted-foreground text-2xs">
-              {secondaryInfo.label && <span>{secondaryInfo.label}:</span>}
-              <Tooltip delayDuration={300}>
-                <TooltipTrigger asChild>
-                  {clickable ? (
-                    <InternalLink
-                      to={{
-                        pathname: config.basePath,
-                        search: `?entityId=${config.getId(secondaryInfo.entity)}&modal=edit`,
-                      }}
-                      state={{
-                        isNavigatingToModal: true,
-                      }}
-                      className="text-2xs text-muted-foreground underline hover:text-muted-foreground/70"
-                      replace
-                      preventScrollReset
-                      viewTransition
-                    >
-                      {secondaryInfo.displayText}
-                    </InternalLink>
-                  ) : (
-                    <p>{secondaryInfo.displayText}</p>
-                  )}
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p>Click to view {secondaryInfo.displayText}</p>
-                </TooltipContent>
-              </Tooltip>
-            </div>
-          )}
-        </div>
+        <EntityRefCell<NonNullable<TValue>, T>
+          entity={entity as NonNullable<TValue>}
+          config={config}
+          parent={row.original}
+        />
       );
     },
   }) as ColumnDef<T>;
 }
-
-type EntityColumnConfig<T extends Record<string, any>, K extends keyof T> = {
-  accessorKey: K;
-  getHeaderText?: string;
-  getId: (entity: T) => string | undefined;
-  getDisplayText: (entity: T) => string;
-  className?: string;
-  getColor?: (entity: T) => string | undefined;
-};
 
 export function createEntityColumn<T extends Record<string, any>>(
   columnHelper: ColumnHelper<T>,
@@ -234,33 +375,13 @@ export function createEntityColumn<T extends Record<string, any>>(
       const color = config.getColor?.(row.original);
 
       return (
-        <InternalLink
-          to={{
-            search: `?entityId=${id}&modal=edit`,
-          }}
-          state={{
-            isNavigatingToModal: true,
-          }}
+        <EntityRefLink
+          basePath=""
+          id={id}
+          displayText={displayText}
           className={config.className}
-          replace
-          preventScrollReset
-        >
-          {color ? (
-            <div className="flex items-center gap-x-1.5 text-sm font-normal text-foreground hover:text-foreground/70 w-fit underline">
-              <div
-                className="size-2 rounded-full"
-                style={{
-                  backgroundColor: color,
-                }}
-              />
-              <p>{displayText}</p>
-            </div>
-          ) : (
-            <span className="text-sm font-normal underline text-foreground hover:text-foreground/70">
-              {displayText}
-            </span>
-          )}
-        </InternalLink>
+          color={color}
+        />
       );
     },
   }) as ColumnDef<T>;
@@ -281,95 +402,8 @@ export function createNestedEntityRefColumn<
         title={config.getHeaderText ?? ""}
       />
     ),
-    cell: ({ getValue, row }) => {
-      const entity = getValue();
-
-      if (!entity) {
-        return <p className="text-muted-foreground">-</p>;
-      }
-
-      const id = config.getId(entity);
-      const displayText = config.getDisplayText(entity);
-      const secondaryInfo = config.getSecondaryInfo?.(entity, row.original);
-      const color = config.color?.getColor(entity);
-
-      // clickable should default to true unless otherwise specified
-      const clickable = secondaryInfo?.clickable ?? true;
-
-      return (
-        <div className="flex flex-col gap-0.5">
-          <Tooltip delayDuration={300}>
-            <TooltipTrigger asChild>
-              <InternalLink
-                to={{
-                  pathname: config.basePath,
-                  search: `?entityId=${id}&modal=edit`,
-                }}
-                state={{
-                  isNavigatingToModal: true,
-                }}
-                className={config.className}
-                replace
-                preventScrollReset
-              >
-                {color ? (
-                  <div className="flex items-center gap-x-1.5 text-sm font-normal text-foreground underline hover:text-foreground/70">
-                    <div
-                      className="size-2 rounded-full"
-                      style={{
-                        backgroundColor: color,
-                      }}
-                    />
-                    <p>{displayText}</p>
-                  </div>
-                ) : (
-                  <span className="text-sm font-normal underline hover:text-foreground/70">
-                    {displayText}
-                  </span>
-                )}
-              </InternalLink>
-            </TooltipTrigger>
-            <TooltipContent>
-              <p>Click to view {displayText}</p>
-            </TooltipContent>
-          </Tooltip>
-
-          {secondaryInfo && (
-            <div className="flex items-center gap-1 text-muted-foreground text-2xs">
-              {secondaryInfo.label && <span>{secondaryInfo.label}:</span>}
-              {clickable ? (
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <InternalLink
-                      to={{
-                        pathname: config.basePath,
-
-                        search: `?entityId=${config.getId(
-                          secondaryInfo.entity,
-                        )}&modal=edit`,
-                      }}
-                      state={{
-                        isNavigatingToModal: true,
-                      }}
-                      className="text-2xs text-muted-foreground underline hover:text-muted-foreground/70"
-                      replace
-                      preventScrollReset
-                      viewTransition
-                    >
-                      {secondaryInfo.displayText}
-                    </InternalLink>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p>Click to view {secondaryInfo.displayText}</p>
-                  </TooltipContent>
-                </Tooltip>
-              ) : (
-                <p>{secondaryInfo.displayText}</p>
-              )}
-            </div>
-          )}
-        </div>
-      );
-    },
+    cell: (info) => (
+      <NestedEntityRefCell<TValue, T> {...info} config={config} />
+    ),
   }) as ColumnDef<T>;
 }

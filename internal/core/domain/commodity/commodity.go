@@ -71,22 +71,6 @@ func (c *Commodity) Validate(ctx context.Context, multiErr *errors.MultiError) {
 		validation.Field(&c.Description,
 			validation.Required.Error("Description is required"),
 		),
-
-		// Temperature Max cannot be less than Temperature Min
-		validation.Field(&c.MaxTemperature,
-			validation.By(domain.ValidateTemperaturePointer),
-			validation.When(c.MinTemperature != nil,
-				validation.Min(*c.MinTemperature).Error("Temperature Max must be greater than Temperature Min"),
-			),
-		),
-
-		// Temperature Min cannot be greater than Temperature Max
-		validation.Field(&c.MinTemperature,
-			validation.By(domain.ValidateTemperaturePointer),
-			validation.When(c.MaxTemperature != nil,
-				validation.Max(*c.MaxTemperature).Error("Temperature Min must be less than Temperature Max"),
-			),
-		),
 	)
 	if err != nil {
 		var validationErrs validation.Errors

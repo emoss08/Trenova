@@ -14,15 +14,14 @@ export const COMMODITY_DELETE_DIALOG_KEY = import.meta.env
   .VITE_COMMODITY_DELETE_DIALOG_KEY as string;
 export const HAZARDOUS_MATERIAL_NOTICE_KEY = import.meta.env
   .VITE_HAZARDOUS_MATERIAL_NOTICE_KEY as string;
+export const GOOGLE_MAPS_NOTICE_KEY = import.meta.env
+  .VITE_GOOGLE_MAPS_NOTICE_KEY as string;
 export const HAZMAT_SEGREGATION_RULE_NOTICE_KEY = import.meta.env
   .VITE_HAZMAT_SEGREGATION_RULE_NOTICE_KEY as string;
 export const STOP_DIALOG_NOTICE_KEY = import.meta.env
   .VITE_STOP_DIALOG_NOTICE_KEY as string;
 export const ADDITIONAL_CHARGE_DELETE_DIALOG_KEY = import.meta.env
   .VITE_ADDITIONAL_CHARGE_DELETE_DIALOG_KEY as string;
-
-export const GOOGLE_MAPS_API_KEY = import.meta.env
-  .VITE_GOOGLE_MAPS_API_KEY as string;
 
 export const SITE_SEARCH_RECENT_SEARCHES_KEY = import.meta.env
   .VITE_SITE_SEARCH_RECENT_SEARCHES_KEY as string;
