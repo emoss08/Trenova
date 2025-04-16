@@ -3,27 +3,15 @@ import { DialogBody, DialogFooter } from "@/components/ui/dialog";
 import { Form } from "@/components/ui/form";
 import { useFormWithSave } from "@/hooks/use-form-with-save";
 import { broadcastQueryInvalidation } from "@/hooks/use-invalidate-query";
-import { http } from "@/lib/http-client";
 import { queries } from "@/lib/queries";
 import { upperFirst } from "@/lib/utils";
+import { updateIntegration } from "@/services/integration";
 import { useUser } from "@/stores/user-store";
 import { Integration, IntegrationType } from "@/types/integration";
 import { useEffect } from "react";
 import { FormProvider } from "react-hook-form";
 import { GoogleMapsForm } from "../_forms/google-maps";
 import { PCMilerForm } from "../_forms/pc-miler";
-
-async function configureIntegration(
-  integrationId: string,
-  data: Record<string, any>,
-  userId: string,
-) {
-  return http.put(`/integrations/${integrationId}`, {
-    enabled: true, // * We want to set the integration to enabled if it's not already
-    configuration: data,
-    enabledById: userId,
-  });
-}
 
 // Helper function to get default values for each integration type
 function getDefaultValues(integrationType: string): Record<string, any> {
@@ -61,8 +49,14 @@ export function IntegrationConfigForm({
         integration.configuration || getDefaultValues(integration.type),
       mode: "onChange",
     },
-    mutationFn: (data: Record<string, any>) =>
-      configureIntegration(integration.id, data, user?.id || ""),
+    mutationFn: async (data: Record<string, any>) => {
+      const response = await updateIntegration(
+        integration.id,
+        data,
+        user?.id || "",
+      );
+      return response.data;
+    },
     onSuccess: () => {
       onOpenChange(false);
       broadcastQueryInvalidation({

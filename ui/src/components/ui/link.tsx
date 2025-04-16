@@ -55,6 +55,7 @@ function ExternalLinkDialog({
 export function ExternalLink({
   href,
   children,
+  className,
   ...props
 }: {
   href: string;
@@ -65,7 +66,10 @@ export function ExternalLink({
     <>
       <div
         onClick={() => setOpen(true)}
-        className="inline-flex cursor-pointer gap-x-0.5 font-semibold text-blue-500 hover:underline"
+        className={cn(
+          "inline-flex cursor-pointer gap-x-0.5 font-semibold text-blue-500 hover:underline",
+          className,
+        )}
         {...props}
       >
         {children}
