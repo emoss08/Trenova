@@ -153,7 +153,7 @@ export function AddressField({
           <div className="absolute right-0 top-6 inset-y-0 mr-2 flex items-center size-6">
             <PulsatingDots size={1} color="foreground" />
           </div>
-        ) : integration?.configuration?.apiKey ? (
+        ) : integration?.enabled ? (
           <div className="absolute right-0 top-6 inset-y-0 mr-2 flex items-center size-6">
             <Popover open={open} onOpenChange={setOpen}>
               <PopoverTrigger asChild>
