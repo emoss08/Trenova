@@ -1,7 +1,7 @@
 import {
   IntegrationCategory,
   IntegrationType,
-} from "@/types/integrations/integration";
+} from "@/types/integration";
 
 export const integrationImages: Record<IntegrationType, string> = {
   [IntegrationType.GoogleMaps]:

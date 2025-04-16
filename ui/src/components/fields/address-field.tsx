@@ -21,7 +21,7 @@ import { useDebounce } from "@/hooks/use-debounce";
 import { queries } from "@/lib/queries";
 import { cn } from "@/lib/utils";
 import type { APIError } from "@/types/errors";
-import { IntegrationType } from "@/types/integrations/integration";
+import { IntegrationType } from "@/types/integration";
 import { faSearch } from "@fortawesome/pro-regular-svg-icons";
 import { CheckIcon } from "@radix-ui/react-icons";
 import { useQuery } from "@tanstack/react-query";

@@ -1,0 +1,149 @@
+import { Button, FormSaveButton } from "@/components/ui/button";
+import { DialogBody, DialogFooter } from "@/components/ui/dialog";
+import { Form } from "@/components/ui/form";
+import { useFormWithSave } from "@/hooks/use-form-with-save";
+import { broadcastQueryInvalidation } from "@/hooks/use-invalidate-query";
+import { http } from "@/lib/http-client";
+import { queries } from "@/lib/queries";
+import { upperFirst } from "@/lib/utils";
+import { useUser } from "@/stores/user-store";
+import { Integration, IntegrationType } from "@/types/integration";
+import { useEffect } from "react";
+import { FormProvider } from "react-hook-form";
+import { GoogleMapsForm } from "../_forms/google-maps";
+import { PCMilerForm } from "../_forms/pc-miler";
+
+async function configureIntegration(
+  integrationId: string,
+  data: Record<string, any>,
+  userId: string,
+) {
+  return http.put(`/integrations/${integrationId}`, {
+    enabled: true, // * We want to set the integration to enabled if it's not already
+    configuration: data,
+    enabledById: userId,
+  });
+}
+
+// Helper function to get default values for each integration type
+function getDefaultValues(integrationType: string): Record<string, any> {
+  switch (integrationType) {
+    case "google_maps":
+      return { apiKey: "" };
+    case "pcmiler":
+      return { username: "", password: "", licenseKey: "" };
+    case "stripe":
+      return { secretKey: "", publishableKey: "" };
+    case "auth0":
+      return { domain: "", clientId: "", clientSecret: "" };
+    case "tracking":
+      return { apiKey: "", endpoint: "" };
+    default:
+      return {};
+  }
+}
+
+type IntegrationConfigFormProps = {
+  integration: Integration;
+  onOpenChange: (open: boolean) => void;
+};
+
+export function IntegrationConfigForm({
+  integration,
+  onOpenChange,
+}: IntegrationConfigFormProps) {
+  const user = useUser();
+
+  const form = useFormWithSave({
+    resourceName: "Integration",
+    formOptions: {
+      defaultValues:
+        integration.configuration || getDefaultValues(integration.type),
+      mode: "onChange",
+    },
+    mutationFn: (data: Record<string, any>) =>
+      configureIntegration(integration.id, data, user?.id || ""),
+    onSuccess: () => {
+      onOpenChange(false);
+      broadcastQueryInvalidation({
+        queryKey: [...queries.integration.getIntegrations._def],
+        options: {
+          correlationId: `update-integration-${Date.now()}`,
+        },
+        config: {
+          predicate: true,
+          refetchType: "all",
+        },
+      });
+    },
+  });
+
+  const {
+    handleSubmit,
+    reset,
+    onSubmit,
+    formState: { isSubmitting, isSubmitSuccessful },
+  } = form;
+
+  // Reset the form when the mutation is successful
+  // This is recommended by react-hook-form - https://react-hook-form.com/docs/useform/reset
+  useEffect(() => {
+    reset();
+  }, [isSubmitSuccessful, integration, reset]);
+
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (
+        (event.ctrlKey || event.metaKey) &&
+        event.key === "Enter" &&
+        !isSubmitting
+      ) {
+        event.preventDefault();
+        handleSubmit(onSubmit)();
+      }
+    };
+
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, [isSubmitting, handleSubmit, onSubmit]);
+
+  return (
+    <>
+      <FormProvider {...form}>
+        <Form onSubmit={handleSubmit(onSubmit)}>
+          <DialogBody>
+            <ConfigurationForm integrationType={integration.type} />
+          </DialogBody>
+          <DialogFooter className="mt-6">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => onOpenChange(!open)}
+            >
+              Cancel
+            </Button>
+            <FormSaveButton
+              isSubmitting={isSubmitting}
+              title={`${upperFirst(integration.name)} Integration`}
+            />
+          </DialogFooter>
+        </Form>
+      </FormProvider>
+    </>
+  );
+}
+
+function ConfigurationForm({
+  integrationType,
+}: {
+  integrationType: IntegrationType;
+}) {
+  switch (integrationType) {
+    case IntegrationType.GoogleMaps:
+      return <GoogleMapsForm />;
+    case IntegrationType.PCMiler:
+      return <PCMilerForm />;
+    default:
+      return null;
+  }
+}

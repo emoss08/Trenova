@@ -1,13 +1,10 @@
 import { InputField } from "@/components/fields/input-field";
 import { FormControl } from "@/components/ui/form";
-import { Icon } from "@/components/ui/icons";
 import type { GoogleMapsConfigData } from "@/types/integrations/google-maps";
-import { faInfoCircle } from "@fortawesome/pro-regular-svg-icons";
 import { useFormContext } from "react-hook-form";
 
 export function GoogleMapsForm() {
-  const { control, formState } = useFormContext<GoogleMapsConfigData>();
-  const { dirtyFields } = formState;
+  const { control } = useFormContext<GoogleMapsConfigData>();
 
   return (
     <>
@@ -18,6 +15,7 @@ export function GoogleMapsForm() {
           label="API Key"
           rules={{ required: true }}
           placeholder="Enter your Google Maps API Key"
+          autoComplete="off"
           type="password"
           description="Enter your Google Maps API key from the Google Cloud Console."
         />
@@ -33,14 +31,6 @@ export function GoogleMapsForm() {
           Google Cloud Console
         </a>
       </p>
-      {Object.keys(dirtyFields).length > 0 && (
-        <div className="mt-2 rounded-md bg-blue-50 p-2">
-          <p className="text-xs text-blue-700">
-            <Icon icon={faInfoCircle} className="mr-1 h-3 w-3" />
-            Changes will be saved when you click Update Configuration.
-          </p>
-        </div>
-      )}
     </>
   );
 }

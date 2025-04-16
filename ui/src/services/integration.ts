@@ -2,7 +2,7 @@ import { http } from "@/lib/http-client";
 import type {
   Integration,
   IntegrationType,
-} from "@/types/integrations/integration";
+} from "@/types/integration";
 import type { LimitOffsetResponse } from "@/types/server";
 
 export async function getIntegrations() {

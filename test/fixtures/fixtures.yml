@@ -378,32 +378,6 @@
       created_at: "{{ timestamp }}"
       updated_at: "{{ timestamp }}"
 
-- model: PCMilerConfiguration
-  rows:
-    - _id: pcmiler_1
-      organization_id: "{{ $.Organization.trenova.ID }}"
-      business_unit_id: "{{ $.BusinessUnit.trenova.ID }}"
-      api_key: "1234567890"
-      created_at: "{{ timestamp }}"
-      updated_at: "{{ timestamp }}"
-    - _id: pcmiler_2
-      organization_id: "{{ $.Organization.trenova_2.ID }}"
-      business_unit_id: "{{ $.BusinessUnit.trenova.ID }}"
-      api_key: "1234567890"
-      created_at: "{{ timestamp }}"
-      updated_at: "{{ timestamp }}"
-
-- model: GoogleMapsConfig
-  rows:
-    - _id: gmaps_1
-      organization_id: "{{ $.Organization.trenova.ID }}"
-      business_unit_id: "{{ $.BusinessUnit.trenova.ID }}"
-      created_at: "{{ timestamp }}"
-    - _id: gmaps_2
-      organization_id: "{{ $.Organization.trenova_2.ID }}"
-      business_unit_id: "{{ $.BusinessUnit.trenova.ID }}"
-      created_at: "{{ timestamp }}"
-
 - model: Integration
   rows:
     - _id: google_maps

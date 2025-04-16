@@ -27,9 +27,4 @@ type IntegrationRepository interface {
 	GetByID(ctx context.Context, opts GetIntegrationByIDOptions) (*integration.Integration, error)
 	GetByType(ctx context.Context, req GetIntegrationByTypeRequest) (*integration.Integration, error)
 	Update(ctx context.Context, i *integration.Integration) (*integration.Integration, error)
-
-	// Additional methods for integration metrics
-	RecordUsage(ctx context.Context, id, orgID, buID pulid.ID) error
-	RecordError(ctx context.Context, id, orgID, buID pulid.ID, errorMessage string) error
-	ClearError(ctx context.Context, id, orgID, buID pulid.ID) error
 }

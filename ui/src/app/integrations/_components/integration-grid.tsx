@@ -1,6 +1,6 @@
 import { queries } from "@/lib/queries";
-import type { Integration } from "@/types/integrations/integration";
-import { IntegrationCategory } from "@/types/integrations/integration";
+import type { Integration } from "@/types/integration";
+import { IntegrationCategory } from "@/types/integration";
 import { useQuery } from "@tanstack/react-query";
 import { lazy, Suspense, useMemo, useState } from "react";
 import { getCategoryDisplayName } from "../_utils/integration";
@@ -68,7 +68,7 @@ export function IntegrationGrid() {
         <IntegrationConfigDialog
           integration={selectedIntegration}
           open={!!selectedIntegration}
-          onClose={() => setSelectedIntegration(null)}
+          onOpenChange={() => setSelectedIntegration(null)}
         />
       )}
     </>

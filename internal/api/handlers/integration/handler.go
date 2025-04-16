@@ -14,28 +14,6 @@ import (
 	"go.uber.org/fx"
 )
 
-// Request types for API operations
-type (
-	// LinkIntegrationRequest is used to link an integration to a config
-	LinkIntegrationRequest struct {
-		ConfigID pulid.ID `json:"configId" validate:"required"`
-	}
-
-	// TestConnectionRequest is used to test an integration connection
-	TestConnectionRequest struct {
-		ID pulid.ID `json:"id" validate:"required"`
-	}
-
-	// TestConnectionResponse is the response for a test connection request
-	TestConnectionResponse struct {
-		IsValid   bool   `json:"isValid"`
-		Message   string `json:"message"`
-		Status    bool   `json:"status"`
-		LastError string `json:"lastError,omitempty"`
-	}
-)
-
-// HandlerParams contains the dependencies for the IntegrationHandler
 type HandlerParams struct {
 	fx.In
 
@@ -43,13 +21,11 @@ type HandlerParams struct {
 	ErrorHandler       *validator.ErrorHandler
 }
 
-// Handler is the API handler for integrations
 type Handler struct {
 	integrationService services.IntegrationService
 	errorHandler       *validator.ErrorHandler
 }
 
-// NewHandler creates a new integration handler
 func NewHandler(p HandlerParams) *Handler {
 	return &Handler{
 		integrationService: p.IntegrationService,
@@ -57,11 +33,8 @@ func NewHandler(p HandlerParams) *Handler {
 	}
 }
 
-// RegisterRoutes registers the API routes for integrations
 func (h *Handler) RegisterRoutes(router fiber.Router, rl *middleware.RateLimiter) {
 	api := router.Group("/integrations")
-
-	// List and CRUD operations
 	api.Get("/", rl.WithRateLimit(
 		[]fiber.Handler{h.list},
 		middleware.PerMinute(60),
@@ -80,7 +53,6 @@ func (h *Handler) RegisterRoutes(router fiber.Router, rl *middleware.RateLimiter
 	)...)
 }
 
-// List returns a paginated list of integrations
 func (h *Handler) list(c *fiber.Ctx) error {
 	reqCtx, err := ctx.WithRequestContext(c)
 	if err != nil {
@@ -116,7 +88,6 @@ func (h *Handler) getByType(c *fiber.Ctx) error {
 	return c.Status(fiber.StatusOK).JSON(result)
 }
 
-// GetByID returns an integration by ID
 func (h *Handler) get(c *fiber.Ctx) error {
 	reqCtx, err := ctx.WithRequestContext(c)
 	if err != nil {

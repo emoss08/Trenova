@@ -4,7 +4,7 @@ import { badgeVariants } from "@/lib/variants/badge";
 import { type Status } from "@/types/common";
 import { DocumentStatus, DocumentType } from "@/types/document";
 import { type PackingGroupChoiceProps } from "@/types/hazardous-material";
-import { IntegrationCategory } from "@/types/integrations/integration";
+import { IntegrationCategory } from "@/types/integration";
 import { MoveStatus } from "@/types/move";
 import { ShipmentStatus } from "@/types/shipment";
 import { StopStatus } from "@/types/stop";

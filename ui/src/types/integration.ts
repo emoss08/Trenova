@@ -93,3 +93,13 @@ export type Integration = {
   createdAt: number;
   updatedAt: number;
 };
+
+export type GoogleMapsConfigData = {
+  apiKey: string;
+};
+
+export type PCMilerConfigData = {
+  username: string;
+  password: string;
+  licenseKey: string;
+};

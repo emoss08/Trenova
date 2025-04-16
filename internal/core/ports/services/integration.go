@@ -16,8 +16,4 @@ type IntegrationService interface {
 	GetByID(ctx context.Context, req repositories.GetIntegrationByIDOptions) (*integration.Integration, error)
 	GetByType(ctx context.Context, req repositories.GetIntegrationByTypeRequest) (*integration.Integration, error)
 	Update(ctx context.Context, i *integration.Integration, userID pulid.ID) (*integration.Integration, error)
-
-	// Usage tracking
-	RecordUsage(ctx context.Context, intID, orgID, buID pulid.ID) error
-	RecordError(ctx context.Context, intID, orgID, buID pulid.ID, errorMessage string) error
 }

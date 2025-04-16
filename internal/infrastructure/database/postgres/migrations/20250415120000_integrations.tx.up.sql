@@ -20,23 +20,8 @@ CREATE TABLE IF NOT EXISTS "integrations"(
     "description" text,
     "enabled" boolean NOT NULL DEFAULT FALSE,
     "built_by" varchar(100),
-    -- UI and documentation enhancements
-    "overview" text,
-    "screenshots" jsonb DEFAULT '[]' ::jsonb,
-    "features" jsonb DEFAULT '[]' ::jsonb,
     "category" integration_category NOT NULL,
-    -- Type-specific configuration fields
-    "config_fields" jsonb DEFAULT '{}' ::jsonb,
-    "event_triggers" jsonb DEFAULT '[]' ::jsonb,
-    "webhook_endpoints" jsonb DEFAULT '[]' ::jsonb,
-    -- Configuration stored as JSON
     "configuration" jsonb DEFAULT '{}' ::jsonb,
-    -- Usage statistics
-    "last_used" bigint,
-    "usage_count" bigint NOT NULL DEFAULT 0,
-    "error_count" bigint NOT NULL DEFAULT 0,
-    "last_error" text,
-    "last_error_at" bigint,
     "enabled_by_id" varchar(100),
     -- Metadata
     "version" bigint NOT NULL DEFAULT 0,
@@ -59,31 +44,8 @@ CREATE INDEX IF NOT EXISTS "idx_integrations_created_at" ON "integrations"("crea
 
 CREATE INDEX IF NOT EXISTS "idx_integrations_configuration" ON "integrations" USING gin("configuration");
 
-CREATE INDEX IF NOT EXISTS "idx_integrations_config_fields" ON "integrations" USING gin("config_fields");
-
-CREATE INDEX IF NOT EXISTS "idx_integrations_event_triggers" ON "integrations" USING gin("event_triggers");
-
 -- Add comment to describe the table purpose
 COMMENT ON TABLE integrations IS 'Stores configuration for external service integrations';
-
---bun:split
-CREATE OR REPLACE FUNCTION integrations_update_timestamp()
-    RETURNS TRIGGER
-    AS $$
-BEGIN
-    NEW.updated_at := EXTRACT(EPOCH FROM CURRENT_TIMESTAMP)::bigint;
-    RETURN NEW;
-END;
-$$
-LANGUAGE plpgsql;
-
---bun:split
-DROP TRIGGER IF EXISTS "integrations_update_timestamp_trigger" ON "integrations";
-
-CREATE TRIGGER "integrations_update_timestamp_trigger"
-    BEFORE UPDATE ON "integrations"
-    FOR EACH ROW
-    EXECUTE FUNCTION "integrations_update_timestamp"();
 
 --bun:split
 ALTER TABLE "integrations"

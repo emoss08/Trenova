@@ -25,7 +25,6 @@ type ServiceParams struct {
 	Repo             repositories.IntegrationRepository
 	PermService      services.PermissionService
 	AuditService     services.AuditService
-	GoogleMapsRepo   repositories.GoogleMapsConfigRepository
 	PCMilerRepo      repositories.PCMilerConfigurationRepository
 	GoogleMapsClient googlemaps.Client
 }
@@ -36,7 +35,6 @@ type Service struct {
 	repo             repositories.IntegrationRepository
 	ps               services.PermissionService
 	as               services.AuditService
-	googleMapsRepo   repositories.GoogleMapsConfigRepository
 	pcMilerRepo      repositories.PCMilerConfigurationRepository
 	googleMapsClient googlemaps.Client
 }
@@ -52,7 +50,6 @@ func NewService(p ServiceParams) services.IntegrationService {
 		repo:             p.Repo,
 		ps:               p.PermService,
 		as:               p.AuditService,
-		googleMapsRepo:   p.GoogleMapsRepo,
 		pcMilerRepo:      p.PCMilerRepo,
 		googleMapsClient: p.GoogleMapsClient,
 	}
@@ -221,46 +218,4 @@ func (s *Service) Update(ctx context.Context, i *integration.Integration, userID
 	}
 
 	return updatedEntity, nil
-}
-
-// RecordUsage records usage for an integration.
-func (s *Service) RecordUsage(ctx context.Context, intID, orgID, buID pulid.ID) error {
-	log := s.l.With().
-		Str("operation", "RecordUsage").
-		Logger()
-
-	// Get the integration by type
-	i, err := s.repo.GetByID(ctx, repositories.GetIntegrationByIDOptions{
-		ID:    intID,
-		OrgID: orgID,
-		BuID:  buID,
-	})
-	if err != nil {
-		log.Error().Err(err).Msg("failed to get integration by type")
-		return err
-	}
-
-	// Record usage
-	return s.repo.RecordUsage(ctx, i.ID, orgID, buID)
-}
-
-// RecordError records an error for an integration.
-func (s *Service) RecordError(ctx context.Context, intID, orgID, buID pulid.ID, errorMessage string) error {
-	log := s.l.With().
-		Str("operation", "RecordError").
-		Logger()
-
-	// Get the integration by type
-	i, err := s.repo.GetByID(ctx, repositories.GetIntegrationByIDOptions{
-		ID:    intID,
-		OrgID: orgID,
-		BuID:  buID,
-	})
-	if err != nil {
-		log.Error().Err(err).Msg("failed to get integration by type")
-		return err
-	}
-
-	// Record error
-	return s.repo.RecordError(ctx, i.ID, orgID, buID, errorMessage)
 }

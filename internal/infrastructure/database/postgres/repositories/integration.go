@@ -12,14 +12,12 @@ import (
 	"github.com/emoss08/trenova/internal/pkg/errors"
 	"github.com/emoss08/trenova/internal/pkg/logger"
 	"github.com/emoss08/trenova/internal/pkg/utils/queryutils/queryfilters"
-	"github.com/emoss08/trenova/pkg/types/pulid"
 	"github.com/rotisserie/eris"
 	"github.com/rs/zerolog"
 	"github.com/uptrace/bun"
 	"go.uber.org/fx"
 )
 
-// IntegrationRepositoryParams contains the dependencies for the IntegrationRepository.
 type IntegrationRepositoryParams struct {
 	fx.In
 
@@ -27,13 +25,11 @@ type IntegrationRepositoryParams struct {
 	Logger *logger.Logger
 }
 
-// integrationRepository implements the IntegrationRepository interface.
 type integrationRepository struct {
 	db db.Connection
 	l  *zerolog.Logger
 }
 
-// NewIntegrationRepository initializes a new instance of integrationRepository.
 func NewIntegrationRepository(p IntegrationRepositoryParams) repositories.IntegrationRepository {
 	log := p.Logger.With().
 		Str("repository", "integration").
@@ -52,10 +48,11 @@ func (r *integrationRepository) filterQuery(q *bun.SelectQuery, opts *ports.Limi
 		Filter:     opts,
 	})
 
+	q.Relation("EnabledBy")
+
 	return q.Limit(opts.Limit).Offset(opts.Offset)
 }
 
-// List returns a paginated list of integrations.
 func (r *integrationRepository) List(ctx context.Context, opts *ports.LimitOffsetQueryOptions) (*ports.ListResult[*integration.Integration], error) {
 	dba, err := r.db.DB(ctx)
 	if err != nil {
@@ -88,7 +85,6 @@ func (r *integrationRepository) List(ctx context.Context, opts *ports.LimitOffse
 	}, nil
 }
 
-// GetByID returns an integration by ID.
 func (r *integrationRepository) GetByID(ctx context.Context, opts repositories.GetIntegrationByIDOptions) (*integration.Integration, error) {
 	dba, err := r.db.DB(ctx)
 	if err != nil {
@@ -111,6 +107,8 @@ func (r *integrationRepository) GetByID(ctx context.Context, opts repositories.G
 				Where("i.organization_id = ?", opts.OrgID).
 				Where("i.business_unit_id = ?", opts.BuID)
 		})
+
+	q.Relation("EnabledBy")
 
 	if err = q.Scan(ctx); err != nil {
 		// * If the query is [sql.ErrNoRows], return a not found error
@@ -160,7 +158,6 @@ func (r *integrationRepository) GetByType(ctx context.Context, req repositories.
 	return entity, nil
 }
 
-// Update updates an integration.
 func (r *integrationRepository) Update(ctx context.Context, i *integration.Integration) (*integration.Integration, error) {
 	dba, err := r.db.DB(ctx)
 	if err != nil {
@@ -187,6 +184,8 @@ func (r *integrationRepository) Update(ctx context.Context, i *integration.Integ
 			}).
 			// * Just set the configuration field, not the entire integration
 			Set("configuration = ?", i.Configuration).
+			Set("enabled = ?", i.Enabled).
+			Set("enabled_by_id = ?", i.EnabledByID).
 			Returning("*").
 			Exec(c)
 		if rErr != nil {
@@ -220,134 +219,4 @@ func (r *integrationRepository) Update(ctx context.Context, i *integration.Integ
 	}
 
 	return i, nil
-}
-
-// RecordUsage increments the usage count and updates the last used timestamp.
-func (r *integrationRepository) RecordUsage(ctx context.Context, id, orgID, buID pulid.ID) error {
-	dba, err := r.db.DB(ctx)
-	if err != nil {
-		return eris.Wrap(err, "get database connection")
-	}
-
-	log := r.l.With().
-		Str("operation", "RecordUsage").
-		Str("id", id.String()).
-		Str("orgID", orgID.String()).
-		Str("buID", buID.String()).
-		Logger()
-
-	result, err := dba.NewUpdate().
-		Table("integrations").
-		Set("usage_count = usage_count + 1").
-		Set("last_used = extract(epoch from current_timestamp)::bigint").
-		WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-			return uq.Where("i.id = ?", id).
-				Where("i.organization_id = ?", orgID).
-				Where("i.business_unit_id = ?", buID)
-		}).
-		Exec(ctx)
-	if err != nil {
-		log.Error().Err(err).Msg("failed to record integration usage")
-		return eris.Wrap(err, "record integration usage")
-	}
-
-	rows, err := result.RowsAffected()
-	if err != nil {
-		log.Error().Err(err).Msg("failed to get rows affected")
-		return eris.Wrap(err, "get rows affected")
-	}
-
-	if rows == 0 {
-		return errors.NewNotFoundError("Integration not found")
-	}
-
-	return nil
-}
-
-// RecordError records an error occurrence.
-func (r *integrationRepository) RecordError(ctx context.Context, id, orgID, buID pulid.ID, errorMessage string) error {
-	dba, err := r.db.DB(ctx)
-	if err != nil {
-		return eris.Wrap(err, "get database connection")
-	}
-
-	log := r.l.With().
-		Str("operation", "RecordError").
-		Str("id", id.String()).
-		Str("orgID", orgID.String()).
-		Str("buID", buID.String()).
-		Logger()
-
-	// Update status to "error" and increment error count
-	result, err := dba.NewUpdate().
-		Table("integrations").
-		Set("enabled = ?", false).
-		Set("error_count = error_count + 1").
-		Set("last_error = ?", errorMessage).
-		Set("last_error_at = extract(epoch from current_timestamp)::bigint").
-		WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-			return uq.Where("i.id = ?", id).
-				Where("i.organization_id = ?", orgID).
-				Where("i.business_unit_id = ?", buID)
-		}).
-		Exec(ctx)
-	if err != nil {
-		log.Error().Err(err).Msg("failed to record integration error")
-		return eris.Wrap(err, "record integration error")
-	}
-
-	rows, err := result.RowsAffected()
-	if err != nil {
-		log.Error().Err(err).Msg("failed to get rows affected")
-		return eris.Wrap(err, "get rows affected")
-	}
-
-	if rows == 0 {
-		return errors.NewNotFoundError("Integration not found")
-	}
-
-	return nil
-}
-
-// ClearError clears the error state.
-func (r *integrationRepository) ClearError(ctx context.Context, id, orgID, buID pulid.ID) error {
-	dba, err := r.db.DB(ctx)
-	if err != nil {
-		return eris.Wrap(err, "get database connection")
-	}
-
-	log := r.l.With().
-		Str("operation", "ClearError").
-		Str("id", id.String()).
-		Str("orgID", orgID.String()).
-		Str("buID", buID.String()).
-		Logger()
-
-	// Update status to "active" and clear error info
-	result, err := dba.NewUpdate().
-		Table("integrations").
-		Set("enabled = ?", true).
-		Set("last_error = NULL").
-		WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-			return uq.Where("i.id = ?", id).
-				Where("i.organization_id = ?", orgID).
-				Where("i.business_unit_id = ?", buID)
-		}).
-		Exec(ctx)
-	if err != nil {
-		log.Error().Err(err).Msg("failed to clear integration error")
-		return eris.Wrap(err, "clear integration error")
-	}
-
-	rows, err := result.RowsAffected()
-	if err != nil {
-		log.Error().Err(err).Msg("failed to get rows affected")
-		return eris.Wrap(err, "get rows affected")
-	}
-
-	if rows == 0 {
-		return errors.NewNotFoundError("Integration not found")
-	}
-
-	return nil
 }

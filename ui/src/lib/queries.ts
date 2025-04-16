@@ -17,7 +17,7 @@ import {
 import { getShipmentByID } from "@/services/shipment";
 import { getUsStateOptions, getUsStates } from "@/services/us-state";
 import { Resource } from "@/types/audit-entry";
-import type { IntegrationType } from "@/types/integrations/integration";
+import type { IntegrationType } from "@/types/integration";
 import { createQueryKeyStore } from "@lukemorales/query-key-factory";
 
 export const queries = createQueryKeyStore({

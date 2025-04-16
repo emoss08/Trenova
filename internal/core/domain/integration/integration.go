@@ -2,7 +2,6 @@ package integration
 
 import (
 	"context"
-	"time"
 
 	"github.com/emoss08/trenova/internal/core/domain"
 	"github.com/emoss08/trenova/internal/core/domain/businessunit"
@@ -30,33 +29,17 @@ type Integration struct {
 	BusinessUnitID pulid.ID `bun:"business_unit_id,type:VARCHAR(100),pk,notnull" json:"businessUnitId"`
 	OrganizationID pulid.ID `bun:"organization_id,type:VARCHAR(100),pk,notnull" json:"organizationId"`
 
-	// Integration details
-	Type        Type     `bun:"type,type:integration_type,notnull" json:"type"`
-	Name        string   `bun:"name,type:VARCHAR(100),notnull" json:"name"`
-	Description string   `bun:"description,type:TEXT" json:"description"`
-	Enabled     bool     `bun:"enabled,type:BOOLEAN,notnull,default:true" json:"enabled"`
-	BuiltBy     string   `bun:"built_by,type:VARCHAR(100)" json:"builtBy"`
-	Overview    string   `bun:"overview,type:TEXT" json:"overview"`
-	Screenshots []string `bun:"screenshots,type:JSONB" json:"screenshots"`
-	Features    []string `bun:"features,type:JSONB" json:"features"`
-	Category    Category `bun:"category,type:integration_category,notnull" json:"category"`
-
-	// Type-specific configuration options and settings
-	ConfigFields     map[string]Field  `bun:"config_fields,type:JSONB" json:"configFields"`
-	EventTriggers    []EventTrigger    `bun:"event_triggers,type:JSONB" json:"eventTriggers"`
-	WebhookEndpoints []WebhookEndpoint `bun:"webhook_endpoints,type:JSONB" json:"webhookEndpoints"`
-
-	// Configuration stored as JSON
-	Configuration map[string]any `bun:"configuration,type:JSONB,default:'{}'::jsonb" json:"configuration"`
-
-	// Usage statistics
-	LastUsed    int64  `bun:"last_used,type:BIGINT" json:"lastUsed"`
-	UsageCount  int64  `bun:"usage_count,type:BIGINT,notnull,default:0" json:"usageCount"`
-	ErrorCount  int64  `bun:"error_count,type:BIGINT,notnull,default:0" json:"errorCount"`
-	LastError   string `bun:"last_error,type:TEXT" json:"lastError"`
-	LastErrorAt int64  `bun:"last_error_at,type:BIGINT" json:"lastErrorAt"`
-
+	// Relationship identifiers (Non-Primary-Keys)
 	EnabledByID *pulid.ID `bun:"enabled_by_id,type:VARCHAR(100)" json:"enabledById"`
+
+	// Core fields
+	Type          Type           `bun:"type,type:integration_type,notnull" json:"type"`
+	Name          string         `bun:"name,type:VARCHAR(100),notnull" json:"name"`
+	Description   string         `bun:"description,type:TEXT" json:"description"`
+	BuiltBy       string         `bun:"built_by,type:VARCHAR(100)" json:"builtBy"`
+	Enabled       bool           `bun:"enabled,type:BOOLEAN,notnull,default:true" json:"enabled"`
+	Category      Category       `bun:"category,type:integration_category,notnull" json:"category"`
+	Configuration map[string]any `bun:"configuration,type:JSONB,default:'{}'::jsonb" json:"configuration"`
 
 	// Metadata
 	Version   int64 `json:"version" bun:"version,type:BIGINT"`
@@ -112,42 +95,4 @@ func (i *Integration) BeforeAppendModel(_ context.Context, query bun.Query) erro
 	}
 
 	return nil
-}
-
-// GetLastUsedTime returns the last used time as a time.Time
-func (i *Integration) GetLastUsedTime() time.Time {
-	if i.LastUsed == 0 {
-		return time.Time{}
-	}
-	return time.Unix(i.LastUsed, 0)
-}
-
-// GetLastErrorTime returns the last error time as a time.Time
-func (i *Integration) GetLastErrorTime() time.Time {
-	if i.LastErrorAt == 0 {
-		return time.Time{}
-	}
-	return time.Unix(i.LastErrorAt, 0)
-}
-
-// RecordUsage increments the usage count and updates the LastUsed timestamp
-func (i *Integration) RecordUsage() {
-	i.UsageCount++
-	i.LastUsed = timeutils.NowUnix()
-}
-
-// RecordError records an error occurrence
-func (i *Integration) RecordError(errorMessage string) {
-	i.ErrorCount++
-	i.LastError = errorMessage
-	i.LastErrorAt = timeutils.NowUnix()
-
-	// If there's an error, change status to error
-	i.Enabled = false
-}
-
-// ClearError clears the error state
-func (i *Integration) ClearError() {
-	i.LastError = ""
-	i.Enabled = true
 }
