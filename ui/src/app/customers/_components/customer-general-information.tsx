@@ -167,8 +167,61 @@ function GoogleMapsNotice() {
       target: "#address-search-button",
       title: "Address Search",
       content:
-        "Click this search icon to open the Google Maps address search tool. It allows you to find and select verified addresses.",
+        "Click this search icon to open the Google Maps address search tool.",
       position: "top" as const,
+      action: () => {
+        // Find and click the search button to open the popover
+        const searchButton = document.querySelector("#address-search-button");
+        if (searchButton && searchButton instanceof HTMLButtonElement) {
+          // Check if popover is already open
+          const popoverContent = document.querySelector(
+            "[data-radix-popper-content-wrapper]",
+          );
+          if (!popoverContent) {
+            searchButton.click();
+          }
+        }
+      },
+    },
+    {
+      target: "[data-radix-popper-content-wrapper]",
+      title: "Search for Addresses",
+      content:
+        "Type an address in the search box to see suggestions from Google Maps. Select an address to auto-fill all your address fields.",
+      position: "bottom" as const,
+      action: () => {
+        // Make sure the popover is open
+        const popoverContent = document.querySelector(
+          "[data-radix-popper-content-wrapper]",
+        );
+        if (!popoverContent) {
+          // If not open, open it
+          const searchButton = document.querySelector("#address-search-button");
+          if (searchButton && searchButton instanceof HTMLButtonElement) {
+            searchButton.click();
+          }
+        }
+
+        // Find the search input and simulate typing
+        setTimeout(() => {
+          const searchInput = document.querySelector(
+            "[data-radix-popper-content-wrapper] input",
+          );
+          if (searchInput && searchInput instanceof HTMLInputElement) {
+            // Create a fake input event to simulate typing
+            const simulatedEvent = new Event("input", { bubbles: true });
+
+            // Update the value property
+            searchInput.value = "123 Main Street";
+
+            // Dispatch the event
+            searchInput.dispatchEvent(simulatedEvent);
+
+            // Focus the input
+            searchInput.focus();
+          }
+        }, 500); // Allow time for the popover to fully open
+      },
     },
     {
       target: "#address-field-container",
@@ -186,11 +239,67 @@ function GoogleMapsNotice() {
     },
   ];
 
-  console.info("render");
-
   const handleTakeTour = () => {
+    // Track original form values
+    const addressLine1Input = document.querySelector(
+      'input[name="addressLine1"]',
+    ) as HTMLInputElement | null;
+    const addressLine2Input = document.querySelector(
+      'input[name="addressLine2"]',
+    ) as HTMLInputElement | null;
+    const cityInput = document.querySelector(
+      'input[name="city"]',
+    ) as HTMLInputElement | null;
+    const postalCodeInput = document.querySelector(
+      'input[name="postalCode"]',
+    ) as HTMLInputElement | null;
+
+    // Save original values
+    const originalValues = {
+      addressLine1: addressLine1Input?.value || "",
+      addressLine2: addressLine2Input?.value || "",
+      city: cityInput?.value || "",
+      postalCode: postalCodeInput?.value || "",
+    };
+
+    // Define a cleanup function that restores original values
+    const cleanup = () => {
+      // Close any open popovers
+      const searchButton = document.querySelector("#address-search-button");
+      const popoverContent = document.querySelector(
+        "[data-radix-popper-content-wrapper]",
+      );
+
+      // remove the notice
+      setNoticeVisible(false);
+
+      if (popoverContent && searchButton instanceof HTMLButtonElement) {
+        searchButton.click(); // Click to close if open
+
+        // Add a short delay to ensure the popover is closed before resetting values
+        setTimeout(() => {
+          // Restore original form values
+          if (addressLine1Input)
+            addressLine1Input.value = originalValues.addressLine1;
+          if (addressLine2Input)
+            addressLine2Input.value = originalValues.addressLine2;
+          if (cityInput) cityInput.value = originalValues.city;
+          if (postalCodeInput)
+            postalCodeInput.value = originalValues.postalCode;
+        }, 300);
+      } else {
+        // If no popover is open, restore values immediately
+        if (addressLine1Input)
+          addressLine1Input.value = originalValues.addressLine1;
+        if (addressLine2Input)
+          addressLine2Input.value = originalValues.addressLine2;
+        if (cityInput) cityInput.value = originalValues.city;
+        if (postalCodeInput) postalCodeInput.value = originalValues.postalCode;
+      }
+    };
+
     // Start the tour with our defined steps
-    openTour(googleMapsTourSteps);
+    openTour(googleMapsTourSteps, cleanup);
     // Optionally hide the notice when tour starts
     // setNoticeVisible(false);
   };
