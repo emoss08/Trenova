@@ -19,4 +19,7 @@ const (
 
 	// Freight & Logistics category
 	FreightLogisticsCategory = Category("FreightLogistics")
+
+	// Telematics category
+	TelematicsCategory = Category("Telematics")
 )

@@ -6,7 +6,8 @@ CREATE TYPE integration_type AS ENUM(
 --bun:split
 CREATE TYPE integration_category AS ENUM(
     'MappingRouting',
-    'FreightLogistics'
+    'FreightLogistics',
+    'Telematics'
 );
 
 --bun:split
