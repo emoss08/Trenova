@@ -11,6 +11,7 @@ import (
 
 	"github.com/emoss08/trenova/microservices/workflow/internal/config"
 	"github.com/emoss08/trenova/microservices/workflow/internal/consumer"
+	"github.com/emoss08/trenova/microservices/workflow/internal/email"
 	"github.com/emoss08/trenova/microservices/workflow/internal/model"
 	"github.com/emoss08/trenova/microservices/workflow/internal/workflow"
 	"github.com/hatchet-dev/hatchet/pkg/client"
@@ -57,8 +58,16 @@ func main() {
 		log.Printf("Failed to create Hatchet worker: %v", err)
 	}
 
+	// Initialize email client
+	emailClient, err := email.NewClient(cfg.RabbitMQ)
+	if err != nil {
+		log.Printf("Failed to create email client: %v", err)
+	} else {
+		defer emailClient.Close()
+	}
+
 	// Register workflows
-	registry := workflow.NewRegistry(hatchetWorker, db)
+	registry := workflow.NewRegistry(hatchetWorker, db, emailClient)
 	if err = registry.RegisterAllWorkflows(); err != nil {
 		log.Printf("Failed to register workflows: %v", err)
 	}
