@@ -21,6 +21,7 @@ import (
 	"github.com/uptrace/bun/dialect/pgdialect"
 	"github.com/uptrace/bun/driver/pgdriver"
 	"github.com/uptrace/bun/extra/bundebug"
+	"go.uber.org/fx"
 )
 
 func main() {
@@ -29,94 +30,46 @@ func main() {
 		log.Println("No .env file found, using environment variables")
 	}
 
-	// Load configuration
-	cfg := config.LoadConfig()
+	// Use fx for dependency injection
+	app := fx.New(
+		// Provide all the constructors
+		fx.Provide(
+			config.LoadConfig,
+			provideDB,
+			provideHatchetClient,
+			provideHatchetWorker,
+			provideEmailClient,
+			workflow.NewRegistry,
+			provideRabbitMQConsumer,
+			provideHatchetHandler,
+		),
+		// Register lifecycle hooks
+		fx.Invoke(setupApplication),
+	)
 
-	// Setup context with cancellation
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
+	// Start the application
+	if err := app.Start(context.Background()); err != nil {
+		log.Fatalf("Failed to start application: %v", err)
+	}
 
 	// Set up signal handling for graceful shutdown
 	signalCh := make(chan os.Signal, 1)
 	signal.Notify(signalCh, syscall.SIGINT, syscall.SIGTERM)
 
-	// Setup database connection
-	db := setupDB(cfg)
-	defer db.Close()
-
-	// Create Hatchet client
-	hatchetClient, err := client.New()
-	if err != nil {
-		log.Printf("Failed to create Hatchet client: %v", err)
-	}
-
-	// Create and configure Hatchet worker
-	hatchetWorker, err := worker.NewWorker(
-		worker.WithClient(hatchetClient),
-	)
-	if err != nil {
-		log.Printf("Failed to create Hatchet worker: %v", err)
-	}
-
-	// Initialize email client
-	emailClient, err := email.NewClient(cfg.RabbitMQ)
-	if err != nil {
-		log.Printf("Failed to create email client: %v", err)
-	} else {
-		defer emailClient.Close()
-	}
-
-	// Register workflows
-	registry := workflow.NewRegistry(hatchetWorker, db, emailClient)
-	if err = registry.RegisterAllWorkflows(); err != nil {
-		log.Printf("Failed to register workflows: %v", err)
-	}
-
-	// Create and configure RabbitMQ consumer
-	rabbitConsumer, err := consumer.NewRabbitMQConsumer(cfg.RabbitMQ)
-	if err != nil {
-		log.Printf("Failed to create RabbitMQ consumer: %v", err)
-	}
-
-	// Create message handler
-	handler := consumer.NewHatchetHandler(hatchetClient)
-
-	// Register handlers for different workflow types
-	rabbitConsumer.RegisterHandler(model.TypeShipmentUpdated, handler.HandleShipmentMessage)
-
-	workerCleanup, err := hatchetWorker.Start()
-	if err != nil {
-		log.Printf("Failed to start Hatchet worker: %v", err)
-	}
-	defer func() {
-		if err = workerCleanup(); err != nil {
-			log.Printf("Error during Hatchet worker cleanup: %v", err)
-		}
-	}()
-
-	// Start the RabbitMQ consumer
-	if err = rabbitConsumer.Start(ctx); err != nil {
-		log.Printf("Failed to start RabbitMQ consumer: %v", err)
-	}
-
-	log.Printf("Workflow service started. Environment: %s", cfg.Environment)
-
 	// Wait for termination signal
 	<-signalCh
 	log.Println("Received termination signal, shutting down...")
 
-	// Trigger context cancellation
-	cancel()
-
-	// Clean up resources
-	if err = rabbitConsumer.Stop(); err != nil {
-		log.Printf("Error stopping RabbitMQ consumer: %v", err)
+	// Stop the application
+	if err := app.Stop(context.Background()); err != nil {
+		log.Fatalf("Failed to stop application: %v", err)
 	}
 
-	log.Println("Service shutdown complete")
+	log.Println("Workflow service shutdown complete")
 }
 
-func setupDB(cfg *config.AppConfig) *bun.DB {
+// provideDB creates and configures the database connection
+func provideDB(cfg *config.AppConfig) *bun.DB {
 	pgconn := pgdriver.NewConnector(
 		pgdriver.WithDSN(cfg.DB.DSN()),
 		pgdriver.WithTimeout(30*time.Second),
@@ -133,10 +86,96 @@ func setupDB(cfg *config.AppConfig) *bun.DB {
 		bundebug.WithEnabled(cfg.DB.Debug),
 	))
 
-	// * Ping the database to ensure connection
+	// Ping the database to ensure connection
 	if err := db.PingContext(context.Background()); err != nil {
 		log.Fatalf("Failed to ping database: %v", err)
 	}
 
 	return db
+}
+
+// provideHatchetClient creates a new Hatchet client
+func provideHatchetClient() (client.Client, error) {
+	return client.New()
+}
+
+// provideHatchetWorker creates and configures a Hatchet worker
+func provideHatchetWorker(hatchetClient client.Client) (*worker.Worker, error) {
+	return worker.NewWorker(
+		worker.WithClient(hatchetClient),
+	)
+}
+
+// provideEmailClient creates a new email client
+func provideEmailClient(cfg *config.AppConfig) (*email.Client, error) {
+	return email.NewClient(cfg.RabbitMQ)
+}
+
+// provideRabbitMQConsumer creates a new RabbitMQ consumer
+func provideRabbitMQConsumer(cfg *config.AppConfig) (*consumer.RabbitMQConsumer, error) {
+	return consumer.NewRabbitMQConsumer(cfg.RabbitMQ)
+}
+
+// provideHatchetHandler creates a new Hatchet handler
+func provideHatchetHandler(hatchetClient client.Client) *consumer.HatchetHandler {
+	return consumer.NewHatchetHandler(hatchetClient)
+}
+
+// setupApplication registers handlers and initializes services
+func setupApplication(
+	lc fx.Lifecycle,
+	cfg *config.AppConfig,
+	hatchetWorker *worker.Worker,
+	emailClient *email.Client,
+	registry *workflow.Registry,
+	rabbitConsumer *consumer.RabbitMQConsumer,
+	handler *consumer.HatchetHandler,
+) {
+	// Register workflows
+	if err := registry.RegisterAllWorkflows(); err != nil {
+		log.Printf("Failed to register workflows: %v", err)
+	}
+
+	// Register handlers for different workflow types
+	rabbitConsumer.RegisterHandler(model.TypeShipmentUpdated, handler.HandleShipmentMessage)
+
+	// Add lifecycle hooks
+	lc.Append(fx.Hook{
+		OnStart: func(ctx context.Context) error {
+			// Start Hatchet worker
+			workerCleanup, err := hatchetWorker.Start()
+			if err != nil {
+				return err
+			}
+
+			// When application stops, cleanup the worker
+			lc.Append(fx.Hook{
+				OnStop: func(context.Context) error {
+					log.Println("Stopping Hatchet worker")
+					return workerCleanup()
+				},
+			})
+
+			// Start RabbitMQ consumer
+			if err = rabbitConsumer.Start(ctx); err != nil {
+				return err
+			}
+
+			log.Printf("Workflow service started. Environment: %s", cfg.Environment)
+			return nil
+		},
+		OnStop: func(context.Context) error {
+			log.Println("Stopping RabbitMQ consumer")
+			if err := rabbitConsumer.Stop(); err != nil {
+				log.Printf("Error stopping RabbitMQ consumer: %v", err)
+			}
+
+			log.Println("Closing email client")
+			if err := emailClient.Close(); err != nil {
+				log.Printf("Error closing email client: %v", err)
+			}
+
+			return nil
+		},
+	})
 }
