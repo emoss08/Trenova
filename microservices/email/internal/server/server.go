@@ -12,7 +12,6 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/microservices/email/internal/email"
-	"github.com/emoss08/trenova/microservices/email/internal/server/templates"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/go-chi/cors"
@@ -127,12 +126,11 @@ func (s *Server) Start() error {
 
 // registerRoutes registers all routes for the server
 func (s *Server) registerRoutes() {
-	// Serve static assets
-	assetsDir := http.Dir("internal/server/assets")
-	s.router.Handle("/assets/*", http.StripPrefix("/assets/", http.FileServer(assetsDir)))
+	// Serve static assets from the Svelte build
+	s.router.Handle("/assets/*", http.StripPrefix("/assets/", http.FileServer(http.Dir("internal/server/assets"))))
+	s.router.Handle("/ui/assets/*", http.StripPrefix("/ui/assets/", http.FileServer(http.Dir("ui/build/assets"))))
 
 	// API routes
-	s.router.Get("/", s.handleIndex)
 	s.router.Route("/api/templates", func(r chi.Router) {
 		r.Get("/", s.handleListTemplates)
 		r.Get("/{name}", s.handleGetTemplate)
@@ -149,17 +147,23 @@ func (s *Server) registerRoutes() {
 
 	// WebSocket endpoint for live updates
 	s.router.Get("/ws", s.handleWebSocket)
-}
 
-// handleIndex handles the root path
-func (s *Server) handleIndex(w http.ResponseWriter, r *http.Request) {
-	// Render the template manager using templates.html
-	component := templates.TemplateManager()
-	err := component.Render(r.Context(), w)
-	if err != nil {
-		http.Error(w, "Failed to render template: "+err.Error(), http.StatusInternalServerError)
-		return
-	}
+	// Serve Svelte app for the root path - must be last to catch all other routes
+	s.router.Get("/*", func(w http.ResponseWriter, r *http.Request) {
+		path := r.URL.Path
+
+		// First check for exact file match (for assets and other static files)
+		if strings.HasSuffix(path, ".js") || strings.HasSuffix(path, ".css") || strings.HasSuffix(path, ".ico") {
+			file := filepath.Join("ui/build", path)
+			if _, err := os.Stat(file); err == nil {
+				http.ServeFile(w, r, file)
+				return
+			}
+		}
+
+		// Otherwise serve the index.html for client-side routing
+		http.ServeFile(w, r, "ui/build/index.html")
+	})
 }
 
 // handleListTemplates handles the template listing endpoint
@@ -248,8 +252,21 @@ func (s *Server) handlePreviewTemplate(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// DEBUGGING: Log the template name and content length
+	log.Info().
+		Str("template", name).
+		Int("content_length", len(content)).
+		Msg("Processing preview request")
+
 	// Create sample data for the preview based on template name
 	data := s.loadSampleData(name)
+
+	// DEBUGGING: Log the sample data being used
+	dataBytes, _ := json.Marshal(data)
+	log.Info().
+		Str("template", name).
+		RawJSON("sample_data", dataBytes).
+		Msg("Using sample data for preview")
 
 	// Render the template with sample data
 	renderedHTML, err := s.templateService.RenderInlineTemplate(string(content), data)
@@ -390,19 +407,27 @@ func listTemplateFiles(templatesDir string) ([]string, error) {
 
 // loadSampleData loads sample data for a template
 func (s *Server) loadSampleData(templateName string) map[string]any {
+	// Log the template name we're loading sample data for
+	log.Info().Str("template", templateName).Msg("Loading sample data for template")
+
 	// First try to load template-specific sample
 	data, err := s.loadSampleDataMap(templateName)
 	if err == nil {
+		log.Info().Str("template", templateName).Msg("Found template-specific sample data")
 		return data
 	}
+	log.Warn().Str("template", templateName).Err(err).Msg("Could not find specific sample data")
 
 	// Fall back to default sample
 	defaultData, err := s.loadSampleDataMap("default")
 	if err == nil {
+		log.Info().Str("template", templateName).Msg("Using default sample data")
 		return defaultData
 	}
+	log.Warn().Str("template", templateName).Err(err).Msg("Could not find default sample data")
 
 	// Last resort: return basic data
+	log.Info().Str("template", templateName).Msg("Using hardcoded fallback sample data")
 	return map[string]any{
 		"Year":     time.Now().Year(),
 		"Name":     "John Doe",
@@ -413,16 +438,23 @@ func (s *Server) loadSampleData(templateName string) map[string]any {
 
 // loadSampleDataMap loads and unmarshals a sample data file
 func (s *Server) loadSampleDataMap(name string) (map[string]any, error) {
+	// Log the sample name we're attempting to load
+	filePath := filepath.Join(s.samplesDir, name+".json")
+	log.Info().Str("sample", name).Str("path", filePath).Msg("Attempting to load sample data file")
+
 	data, err := s.loadSampleDataRaw(name)
 	if err != nil {
+		log.Warn().Str("sample", name).Str("path", filePath).Err(err).Msg("Failed to load sample data file")
 		return nil, err
 	}
 
 	var result map[string]any
 	if err := json.Unmarshal(data, &result); err != nil {
+		log.Error().Str("sample", name).Err(err).Msg("Failed to parse sample data JSON")
 		return nil, err
 	}
 
+	log.Info().Str("sample", name).Int("fields", len(result)).Msg("Successfully loaded sample data")
 	return result, nil
 }
 
