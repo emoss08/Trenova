@@ -3,8 +3,12 @@ module github.com/emoss08/trenova/microservices/email
 go 1.24.2
 
 require (
+	github.com/a-h/templ v0.3.857
 	github.com/bytedance/sonic v1.13.2
+	github.com/go-chi/chi/v5 v5.2.1
+	github.com/go-chi/cors v1.2.1
 	github.com/google/uuid v1.6.0
+	github.com/gorilla/websocket v1.5.3
 	github.com/joho/godotenv v1.5.1
 	github.com/rabbitmq/amqp091-go v1.10.0
 	github.com/rotisserie/eris v0.5.4

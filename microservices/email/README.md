@@ -16,6 +16,7 @@ A microservice for handling email sending operations across the Trenova applicat
 - Attachment support
 - Configurable TLS policies (mandatory, opportunistic, none)
 - Includes MailHog for local email testing
+- Template management interface for development
 
 ## Architecture
 
@@ -124,6 +125,29 @@ EMAIL_SENDGRID_API_KEY=your-api-key
 2. Create a `.env` file with the required configuration
 3. Run `go mod download` to download dependencies
 4. Run `go run main.go` to start the service
+
+### Template Management (Development Only)
+
+When running in development mode, the email service provides a web-based template management interface for editing and previewing email templates without sending actual emails.
+
+To access this interface:
+
+1. Ensure the service is running in development mode (`EMAIL_ENV=development` or unset)
+2. Open a web browser and navigate to http://localhost:8083
+3. From there, you can:
+   - View a list of all available templates
+   - Edit template HTML content
+   - Preview templates with sample data
+   - Save changes to template files
+
+The interface uses a single consolidated template layout that provides:
+- A sidebar template navigation menu
+- Interactive editor with theme support
+- Live preview capabilities
+- Sample data management
+- Real-time template editing
+
+This simplifies the template development process by allowing immediate visual feedback without sending test emails.
 
 ### Local Testing with MailHog
 

@@ -13,13 +13,15 @@ import (
 
 // SendGridProvider implements the EmailProvider interface for SendGrid
 type SendGridProvider struct {
-	cfg *config.SendGridConfig
+	cfg             *config.SendGridConfig
+	templateService model.TemplateRenderer
 }
 
 // NewSendGridProvider creates a new SendGrid provider
-func NewSendGridProvider(cfg *config.AppConfig) *SendGridProvider {
+func NewSendGridProvider(cfg *config.AppConfig, templateService model.TemplateRenderer) *SendGridProvider {
 	return &SendGridProvider{
-		cfg: &cfg.SendGrid,
+		cfg:             &cfg.SendGrid,
+		templateService: templateService,
 	}
 }
 
@@ -57,9 +59,23 @@ func (p *SendGridProvider) Send(ctx context.Context, email *model.Email) error {
 
 	message.AddPersonalizations(personalization)
 
+	// Generate HTML content using template if available
+	var htmlContent string
+	if p.templateService != nil {
+		renderedBody, err := email.RenderHTMLBody(p.templateService)
+		if err != nil {
+			// Log the error but continue with the fallback method
+			htmlContent = email.GetHTMLBody()
+		} else {
+			htmlContent = renderedBody
+		}
+	} else {
+		htmlContent = email.GetHTMLBody()
+	}
+
 	// Add HTML content
-	htmlContent := mail.NewContent("text/html", email.GetHTMLBody())
-	message.AddContent(htmlContent)
+	content := mail.NewContent("text/html", htmlContent)
+	message.AddContent(content)
 
 	// Add attachments if any
 	if data, ok := email.Data.(map[string]any); ok {

@@ -287,7 +287,7 @@ func (c *RabbitMQConsumer) processMessage(ctx context.Context, msg amqp.Delivery
 	defer func() {
 		if r := recover(); r != nil {
 			log.Printf("Recovered from panic in message processing: %v", r)
-			c.handleMessageRetry(ctx, msg, nil)
+			c.handleMessageRetry(ctx, msg)
 		}
 	}()
 
@@ -328,7 +328,7 @@ func (c *RabbitMQConsumer) processMessage(ctx context.Context, msg amqp.Delivery
 	err = handler(ctx, message)
 	if err != nil {
 		log.Printf("Error handling message: %v", err)
-		c.handleMessageRetry(ctx, msg, err)
+		c.handleMessageRetry(ctx, msg)
 		return
 	}
 
@@ -339,7 +339,7 @@ func (c *RabbitMQConsumer) processMessage(ctx context.Context, msg amqp.Delivery
 }
 
 // handleMessageRetry manages the retry logic for failed messages
-func (c *RabbitMQConsumer) handleMessageRetry(ctx context.Context, msg amqp.Delivery, processingErr error) {
+func (c *RabbitMQConsumer) handleMessageRetry(ctx context.Context, msg amqp.Delivery) {
 	retryCount := c.getRetryCount(msg)
 
 	// Increment retry count

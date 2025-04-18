@@ -2,6 +2,7 @@ package config
 
 import (
 	"fmt"
+	"net"
 	"os"
 	"strconv"
 	"time"
@@ -44,8 +45,8 @@ type RabbitMQConfig struct {
 
 // URL returns the RabbitMQ connection URL
 func (c *RabbitMQConfig) URL() string {
-	return fmt.Sprintf("amqp://%s:%s@%s:%d/%s",
-		c.User, c.Password, c.Host, c.Port, c.VHost)
+	return fmt.Sprintf("amqp://%s:%s@%s/%s",
+		c.User, c.Password, net.JoinHostPort(c.Host, strconv.Itoa(c.Port)), c.VHost)
 }
 
 // SMTPConfig holds the SMTP configuration

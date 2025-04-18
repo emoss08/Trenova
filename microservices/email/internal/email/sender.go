@@ -12,6 +12,15 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
+var (
+	ErrInvalidPayloadFormat = eris.New("invalid email payload format")
+	ErrTemplateRequired     = eris.New("template is required")
+	ErrSubjectRequired      = eris.New("subject is required")
+	ErrFileNameRequired     = eris.New("filename is required")
+	ErrContentRequired      = eris.New("content is required")
+	ErrContentTypeRequired  = eris.New("contentType is required")
+)
+
 // SenderService handles sending emails through providers
 type SenderService struct {
 	templateService *TemplateService
@@ -64,99 +73,9 @@ func (s *SenderService) SendEmail(ctx context.Context, payload *model.EmailPaylo
 // SendEmailFromMessage sends an email from a RabbitMQ message
 func (s *SenderService) SendEmailFromMessage(ctx context.Context, msg *model.Message) error {
 	// Extract the email payload from the message
-	payload, ok := msg.Payload.(*model.EmailPayload)
-	if !ok {
-		// Try to convert the payload to an EmailPayload
-		mapPayload, ok := msg.Payload.(map[string]any)
-		if !ok {
-			return eris.New("invalid email payload format")
-		}
-
-		// Create a new payload from the map
-		payload = &model.EmailPayload{
-			Template: mapPayload["template"].(string),
-			Subject:  mapPayload["subject"].(string),
-		}
-
-		// Handle recipient lists
-		if to, ok := mapPayload["to"].([]any); ok {
-			payload.To = make([]string, len(to))
-			for i, v := range to {
-				if email, ok := v.(string); ok && email != "" {
-					payload.To[i] = email
-				}
-			}
-			// Filter out empty strings
-			validEmails := make([]string, 0, len(payload.To))
-			for _, email := range payload.To {
-				if email != "" {
-					validEmails = append(validEmails, email)
-				}
-			}
-			payload.To = validEmails
-		}
-
-		if cc, ok := mapPayload["cc"].([]any); ok {
-			payload.Cc = make([]string, len(cc))
-			for i, v := range cc {
-				if email, ok := v.(string); ok && email != "" {
-					payload.Cc[i] = email
-				}
-			}
-			// Filter out empty strings
-			validEmails := make([]string, 0, len(payload.Cc))
-			for _, email := range payload.Cc {
-				if email != "" {
-					validEmails = append(validEmails, email)
-				}
-			}
-			payload.Cc = validEmails
-		}
-
-		if bcc, ok := mapPayload["bcc"].([]any); ok {
-			payload.Bcc = make([]string, len(bcc))
-			for i, v := range bcc {
-				if email, ok := v.(string); ok && email != "" {
-					payload.Bcc[i] = email
-				}
-			}
-			// Filter out empty strings
-			validEmails := make([]string, 0, len(payload.Bcc))
-			for _, email := range payload.Bcc {
-				if email != "" {
-					validEmails = append(validEmails, email)
-				}
-			}
-			payload.Bcc = validEmails
-		}
-
-		// Handle data and attachments
-		if data, ok := mapPayload["data"].(map[string]any); ok {
-			payload.Data = data
-		}
-
-		if attachments, ok := mapPayload["attachments"].([]any); ok {
-			payload.Attachments = make([]model.EmailAttachment, len(attachments))
-			for i, v := range attachments {
-				attachment := v.(map[string]any)
-				payload.Attachments[i] = model.EmailAttachment{
-					Filename:    attachment["filename"].(string),
-					Content:     attachment["content"].(string),
-					ContentType: attachment["contentType"].(string),
-				}
-			}
-		}
-	} else {
-		// Filter out empty emails from the payload if it's already the correct type
-		if payload.To != nil {
-			validEmails := make([]string, 0, len(payload.To))
-			for _, email := range payload.To {
-				if email != "" {
-					validEmails = append(validEmails, email)
-				}
-			}
-			payload.To = validEmails
-		}
+	payload, err := s.extractEmailPayload(msg)
+	if err != nil {
+		return err
 	}
 
 	// Validate we have at least one recipient
@@ -177,6 +96,86 @@ func (s *SenderService) SendEmailFromMessage(ctx context.Context, msg *model.Mes
 		Msg("Email sent successfully")
 
 	return nil
+}
+
+// extractEmailPayload extracts and validates an EmailPayload from a Message
+func (s *SenderService) extractEmailPayload(msg *model.Message) (*model.EmailPayload, error) {
+	// Try direct type assertion first
+	if payload, ok := msg.Payload.(*model.EmailPayload); ok {
+		return s.sanitizePayload(payload), nil
+	}
+
+	// Try to convert from map
+	mapPayload, ok := msg.Payload.(map[string]any)
+	if !ok {
+		return nil, ErrInvalidPayloadFormat
+	}
+
+	template, ok := mapPayload["template"].(string)
+	if !ok {
+		return nil, ErrTemplateRequired
+	}
+
+	subject, ok := mapPayload["subject"].(string)
+	if !ok {
+		return nil, ErrSubjectRequired
+	}
+
+	// Create a new payload from the map
+	payload := &model.EmailPayload{
+		Template: template,
+		Subject:  subject,
+	}
+
+	// Process recipient lists
+	payload.To = s.extractEmailList(mapPayload, "to")
+	payload.Cc = s.extractEmailList(mapPayload, "cc")
+	payload.Bcc = s.extractEmailList(mapPayload, "bcc")
+
+	// Handle data
+	if data, dataOk := mapPayload["data"].(map[string]any); dataOk {
+		payload.Data = data
+	}
+
+	// Handle attachments
+	if attachments, attachmentsOk := mapPayload["attachments"].([]any); attachmentsOk {
+		var err error
+		payload.Attachments, err = s.extractAttachments(attachments)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	return payload, nil
+}
+
+// extractEmailList extracts and filters email lists from payload maps
+func (s *SenderService) extractEmailList(mapPayload map[string]any, key string) []string {
+	var validEmails []string
+
+	if list, ok := mapPayload[key].([]any); ok {
+		for _, v := range list {
+			if email, emailOk := v.(string); emailOk && email != "" {
+				validEmails = append(validEmails, email)
+			}
+		}
+	}
+
+	return validEmails
+}
+
+// sanitizePayload ensures the payload is properly formatted
+func (s *SenderService) sanitizePayload(payload *model.EmailPayload) *model.EmailPayload {
+	if payload.To != nil {
+		validEmails := make([]string, 0, len(payload.To))
+		for _, email := range payload.To {
+			if email != "" {
+				validEmails = append(validEmails, email)
+			}
+		}
+		payload.To = validEmails
+	}
+	return payload
 }
 
 // sendViaProvider sends an email via the configured provider
@@ -214,4 +213,39 @@ func (s *SenderService) sendViaProvider(ctx context.Context, email *model.Email)
 	}
 
 	return nil
+}
+
+// extractAttachments processes attachment data from a slice of interfaces
+func (s *SenderService) extractAttachments(attachments []any) ([]model.EmailAttachment, error) {
+	result := make([]model.EmailAttachment, 0, len(attachments))
+
+	for _, v := range attachments {
+		attachment, attachmentOk := v.(map[string]any)
+		if !attachmentOk {
+			continue
+		}
+
+		fileName, fileNameOk := attachment["filename"].(string)
+		if !fileNameOk {
+			return nil, ErrFileNameRequired
+		}
+
+		content, contentOk := attachment["content"].(string)
+		if !contentOk {
+			return nil, ErrContentRequired
+		}
+
+		contentType, contentTypeOk := attachment["contentType"].(string)
+		if !contentTypeOk {
+			return nil, ErrContentTypeRequired
+		}
+
+		result = append(result, model.EmailAttachment{
+			Filename:    fileName,
+			Content:     content,
+			ContentType: contentType,
+		})
+	}
+
+	return result, nil
 }

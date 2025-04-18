@@ -14,13 +14,15 @@ import (
 
 // SMTPProvider implements the EmailProvider interface for SMTP
 type SMTPProvider struct {
-	cfg *config.SMTPConfig
+	cfg             *config.SMTPConfig
+	templateService model.TemplateRenderer
 }
 
 // NewSMTPProvider creates a new SMTP provider
-func NewSMTPProvider(cfg *config.AppConfig) *SMTPProvider {
+func NewSMTPProvider(cfg *config.AppConfig, templateService model.TemplateRenderer) *SMTPProvider {
 	return &SMTPProvider{
-		cfg: &cfg.SMTP,
+		cfg:             &cfg.SMTP,
+		templateService: templateService,
 	}
 }
 
@@ -65,8 +67,19 @@ func (p *SMTPProvider) Send(ctx context.Context, email *model.Email) error {
 	// Set subject
 	msg.Subject(email.Subject)
 
-	// Set HTML body
-	htmlBody := email.GetHTMLBody()
+	// Set HTML body - use template renderer if available
+	var htmlBody string
+	if p.templateService != nil {
+		renderedBody, err := email.RenderHTMLBody(p.templateService)
+		if err != nil {
+			// Log the error but continue with the fallback method
+			htmlBody = email.GetHTMLBody()
+		} else {
+			htmlBody = renderedBody
+		}
+	} else {
+		htmlBody = email.GetHTMLBody()
+	}
 	msg.SetBodyString(mail.TypeTextHTML, htmlBody)
 
 	// Add attachments if any

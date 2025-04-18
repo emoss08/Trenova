@@ -12,9 +12,20 @@ import (
 	"github.com/emoss08/trenova/microservices/email/internal/email"
 	"github.com/emoss08/trenova/microservices/email/internal/model"
 	"github.com/emoss08/trenova/microservices/email/internal/provider"
+	"github.com/emoss08/trenova/microservices/email/internal/server"
 	"github.com/joho/godotenv"
 	"go.uber.org/fx"
 )
+
+// SMTPProviderConstructor creates a new SMTP provider with the template service
+func SMTPProviderConstructor(cfg *config.AppConfig, templateService *email.TemplateService) *provider.SMTPProvider {
+	return provider.NewSMTPProvider(cfg, templateService)
+}
+
+// SendGridProviderConstructor creates a new SendGrid provider with the template service
+func SendGridProviderConstructor(cfg *config.AppConfig, templateService *email.TemplateService) *provider.SendGridProvider {
+	return provider.NewSendGridProvider(cfg, templateService)
+}
 
 func main() {
 	// Load .env file if it exists
@@ -22,20 +33,35 @@ func main() {
 		log.Println("No .env file found, using environment variables")
 	}
 
+	// Set up providers and configuration
+	providers := []any{
+		config.LoadConfig,
+		email.NewTemplateService,
+		SMTPProviderConstructor,
+		SendGridProviderConstructor,
+		provider.NewFactory,
+		email.NewSenderService,
+		consumer.NewRabbitMQConsumer,
+	}
+
+	// Create invokers for lifecycle hooks
+	invokers := []any{
+		setupConsumer,
+	}
+
+	// Add template management server in development mode
+	if os.Getenv("EMAIL_ENV") == "development" || os.Getenv("EMAIL_ENV") == "" {
+		invokers = append(invokers, setupTemplateServer)
+	}
+
 	// Use fx for dependency injection
 	app := fx.New(
 		// Provide all the constructors
-		fx.Provide(
-			config.LoadConfig,
-			provider.NewSMTPProvider,
-			provider.NewSendGridProvider,
-			provider.NewFactory,
-			email.NewTemplateService,
-			email.NewSenderService,
-			consumer.NewRabbitMQConsumer,
-		),
+		fx.Provide(providers...),
 		// Register lifecycle hooks
-		fx.Invoke(setupConsumer),
+		fx.Invoke(invokers...),
+		// Disable verbose logging
+		fx.NopLogger,
 	)
 
 	// Start the application
@@ -81,6 +107,33 @@ func setupConsumer(
 		OnStop: func(context.Context) error {
 			log.Println("Stopping email service")
 			return consumer.Stop()
+		},
+	})
+}
+
+// setupTemplateServer configures and starts the template management server (development only)
+func setupTemplateServer(
+	lc fx.Lifecycle,
+	templateService *email.TemplateService,
+) {
+	// Create the template server
+	srv := server.NewServer(":3002", templateService, "templates")
+
+	// Register lifecycle hooks
+	lc.Append(fx.Hook{
+		OnStart: func(context.Context) error {
+			// Start the template server in a separate goroutine
+			go func() {
+				log.Printf("Starting template management server on http://localhost:3002 (DEV MODE ONLY)")
+				if err := srv.Start(); err != nil {
+					log.Printf("Template server error: %v", err)
+				}
+			}()
+			return nil
+		},
+		OnStop: func(context.Context) error {
+			log.Println("Stopping template management server")
+			return nil // No explicit stop needed for the HTTP server
 		},
 	})
 }
