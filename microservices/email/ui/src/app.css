@@ -1,0 +1,9 @@
+@import "tailwindcss";
+
+@import '@skeletonlabs/skeleton';
+@import '@skeletonlabs/skeleton/optional/presets';
+@import '@skeletonlabs/skeleton/themes/cerberus';
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+@source '../node_modules/@skeletonlabs/skeleton-svelte/dist';
