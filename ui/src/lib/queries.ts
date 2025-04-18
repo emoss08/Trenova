@@ -1,3 +1,4 @@
+import { getAnalytics } from "@/services/analytics";
 import { getCustomerDocumentRequirements } from "@/services/customer";
 import {
   getDocumentCountByResource,
@@ -16,6 +17,7 @@ import {
 } from "@/services/organization";
 import { getShipmentByID } from "@/services/shipment";
 import { getUsStateOptions, getUsStates } from "@/services/us-state";
+import type { AnalyticsPage } from "@/types/analytics";
 import { Resource } from "@/types/audit-entry";
 import type { IntegrationType } from "@/types/integration";
 import { createQueryKeyStore } from "@lukemorales/query-key-factory";
@@ -159,6 +161,12 @@ export const queries = createQueryKeyStore({
         return locationAutocomplete(input);
       },
       enabled: input.length >= 3,
+    }),
+  },
+  analytics: {
+    getAnalytics: (page: AnalyticsPage) => ({
+      queryKey: ["analytics", page],
+      queryFn: async () => getAnalytics({ page }),
     }),
   },
 });

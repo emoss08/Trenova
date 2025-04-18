@@ -162,9 +162,12 @@ export function AddressField({
                   variant="outline"
                   size="sm"
                   type="button"
-                  className="size-6 [&>svg]:size-3"
+                  className="group size-6 bg-transparent hover:bg-muted-foreground/30"
                 >
-                  <Icon icon={faSearch} className="size-4" />
+                  <Icon
+                    icon={faSearch}
+                    className="size-4 text-muted-foreground group-hover:text-foreground"
+                  />
                   <span className="sr-only">Search addresses</span>
                 </Button>
               </PopoverTrigger>

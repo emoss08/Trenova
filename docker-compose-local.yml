@@ -6,7 +6,6 @@ x-build-args: &build-args
 services:
   db:
     image: postgres:17-alpine
-    container_name: db
     ports:
       - "5432:5432"
     environment:
@@ -30,14 +29,13 @@ services:
     networks:
       - app-network
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-postgres} -d ${DB_NAME:-postgres}"]
+      test: [ "CMD-SHELL", "pg_isready -U ${DB_USER:-postgres} -d ${DB_NAME:-postgres}" ]
       interval: 10s
       timeout: 5s
       retries: 5
 
   meilisearch:
     image: getmeili/meilisearch:v1.11.3
-    container_name: meilisearch
     ports:
       - "7700:7700"
     environment:
@@ -61,7 +59,6 @@ services:
 
   redis:
     image: redis/redis-stack:latest
-    container_name: redis
     ports:
       - "6379:6379"
     environment:
@@ -76,14 +73,13 @@ services:
         limits:
           memory: 1G
     healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
+      test: [ "CMD", "redis-cli", "ping" ]
       interval: 10s
       timeout: 5s
       retries: 5
 
   rabbitmq:
     image: "rabbitmq:3-management"
-    hostname: "rabbitmq"
     ports:
       - "5674:5672" # RabbitMQ
       - "15674:15672" # Management UI
@@ -94,14 +90,15 @@ services:
       - "rabbitmq_data:/var/lib/rabbitmq"
       - "rabbitmq.conf:/etc/rabbitmq/rabbitmq.conf" # Configuration file mount
     healthcheck:
-      test: ["CMD", "rabbitmqctl", "status"]
+      test: [ "CMD", "rabbitmqctl", "status" ]
       interval: 10s
       timeout: 10s
       retries: 5
+    networks:
+      - app-network
 
   minio:
     image: quay.io/minio/minio
-    container_name: minio
     command: server /data --console-address ":9001"
     environment:
       - MINIO_ROOT_USER=${MINIO_ROOT_USER:-minioadmin}
@@ -119,10 +116,64 @@ services:
         limits:
           memory: 512M
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      test: [ "CMD", "curl", "-f", "http://localhost:9000/minio/health/live" ]
       interval: 30s
       timeout: 20s
       retries: 3
+
+  dozzle:
+    image: amir20/dozzle:latest
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    ports:
+      - 8084:8080
+    networks:
+      - app-network
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+
+  email-service:
+    build:
+      context: ./microservices/email
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    env_file:
+      - ./microservices/email/.env
+    environment:
+      - EMAIL_SMTP_HOST=mailhog
+      - EMAIL_SMTP_PORT=1025
+      - EMAIL_SMTP_USER=
+      - EMAIL_SMTP_PASSWORD=
+      - EMAIL_SMTP_TLS_POLICY=none
+    ports:
+      - "${EMAIL_PORT:-8082}:${EMAIL_PORT:-8082}"
+    volumes:
+      - ./microservices/email/templates:/app/templates
+    depends_on:
+      - rabbitmq
+      - mailhog
+    networks:
+      - app-network
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: '0.3' # Limit CPU usage to 10%
+
+  mailhog:
+    image: mailhog/mailhog:latest
+    restart: unless-stopped
+    ports:
+      - "1025:1025" # SMTP port
+      - "8025:8025" # Web UI port
+    networks:
+      - app-network
+    deploy:
+      resources:
+        limits:
+          memory: 512M
 
 volumes:
   pg_data: {}

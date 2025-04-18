@@ -261,16 +261,15 @@ func (c *client) getPlaceDetails(ctx context.Context, orgID pulid.ID, buID pulid
 //
 // Parameters:
 //   - ctx[context.Context]: The context of the request
-//   - orgID[pulid.ID]: The organization ID
-//   - req[*maps.PlaceAutocompleteRequest]: The place autocomplete request
+//   - req[*AutoCompleteRequest]: The place autocomplete request
 //
 // Returns:
 //   - result[*AutocompleteLocationResult]: Combined autocomplete predictions and location details
 //   - err[error]: The error
-func (c *client) AutocompleteWithDetails(ctx context.Context, orgID pulid.ID, buID pulid.ID, req *AutoCompleteRequest) (*AutocompleteLocationResult, error) {
+func (c *client) AutocompleteWithDetails(ctx context.Context, req *AutoCompleteRequest) (*AutocompleteLocationResult, error) {
 	log := c.l.With().
 		Str("operation", "AutocompleteWithDetails").
-		Str("orgID", orgID.String()).
+		Str("orgID", req.OrgID.String()).
 		Logger()
 
 	// * Create a request
@@ -284,7 +283,7 @@ func (c *client) AutocompleteWithDetails(ctx context.Context, orgID pulid.ID, bu
 	}
 
 	// * Get autocomplete predictions first
-	autocompleteResp, err := c.placeAutocomplete(ctx, orgID, buID, &paReq)
+	autocompleteResp, err := c.placeAutocomplete(ctx, req.OrgID, req.BuID, &paReq)
 	if err != nil {
 		log.Error().
 			Err(err).
@@ -298,7 +297,7 @@ func (c *client) AutocompleteWithDetails(ctx context.Context, orgID pulid.ID, bu
 
 	// * Fetch details for each prediction
 	for _, prediction := range autocompleteResp.Predictions {
-		details, dErr := c.getPlaceDetails(ctx, orgID, buID, prediction.PlaceID)
+		details, dErr := c.getPlaceDetails(ctx, req.OrgID, req.BuID, prediction.PlaceID)
 		if dErr != nil {
 			log.Error().
 				Err(dErr).

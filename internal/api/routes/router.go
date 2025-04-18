@@ -2,6 +2,7 @@ package routes
 
 import (
 	"github.com/emoss08/trenova/internal/api/handlers/accessorialcharge"
+	"github.com/emoss08/trenova/internal/api/handlers/analytics"
 	"github.com/emoss08/trenova/internal/api/handlers/assignment"
 	"github.com/emoss08/trenova/internal/api/handlers/audit"
 	authHandler "github.com/emoss08/trenova/internal/api/handlers/auth"
@@ -116,6 +117,7 @@ type RouterParams struct {
 	AccessorialChargeHandler     *accessorialcharge.Handler
 	DocumentTypeHandler          *documenttype.Handler
 	IntegrationHandler           *integration.Handler
+	AnalyticsHandler             *analytics.Handler
 }
 
 type Router struct {
@@ -291,4 +293,7 @@ func (r *Router) setupProtectedRoutes(router fiber.Router, rl *middleware.RateLi
 
 	// Integrations
 	r.p.IntegrationHandler.RegisterRoutes(router, rl)
+
+	// Analytics
+	r.p.AnalyticsHandler.RegisterRoutes(router, rl)
 }

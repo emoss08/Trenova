@@ -12,6 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/bootstrap/modules/infrastructure"
 	"github.com/emoss08/trenova/internal/bootstrap/modules/services"
 	"github.com/emoss08/trenova/internal/bootstrap/modules/validators"
+	"github.com/emoss08/trenova/internal/core/services/analytics"
 	redisRepos "github.com/emoss08/trenova/internal/infrastructure/cache/redis/repositories"
 	postgresRepos "github.com/emoss08/trenova/internal/infrastructure/database/postgres/repositories"
 	"github.com/emoss08/trenova/internal/pkg/statemachine"
@@ -30,6 +31,7 @@ func Bootstrap() error {
 		postgresRepos.Module,
 		external.Module,
 		validators.Module,
+		analytics.Module,
 		services.Module,
 		api.Module,
 	)

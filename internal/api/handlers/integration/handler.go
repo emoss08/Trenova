@@ -6,6 +6,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/ports"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/infrastructure/external/maps/googlemaps"
 	"github.com/emoss08/trenova/internal/pkg/ctx"
 	"github.com/emoss08/trenova/internal/pkg/utils/paginationutils/limitoffsetpagination"
 	"github.com/emoss08/trenova/internal/pkg/validator"
@@ -18,17 +19,20 @@ type HandlerParams struct {
 	fx.In
 
 	IntegrationService services.IntegrationService
+	GoogleMapsClient   googlemaps.Client
 	ErrorHandler       *validator.ErrorHandler
 }
 
 type Handler struct {
 	integrationService services.IntegrationService
+	googleMapsClient   googlemaps.Client
 	errorHandler       *validator.ErrorHandler
 }
 
 func NewHandler(p HandlerParams) *Handler {
 	return &Handler{
 		integrationService: p.IntegrationService,
+		googleMapsClient:   p.GoogleMapsClient,
 		errorHandler:       p.ErrorHandler,
 	}
 }
@@ -37,6 +41,10 @@ func (h *Handler) RegisterRoutes(router fiber.Router, rl *middleware.RateLimiter
 	api := router.Group("/integrations")
 	api.Get("/", rl.WithRateLimit(
 		[]fiber.Handler{h.list},
+		middleware.PerMinute(60),
+	)...)
+	api.Post("/google-maps/autocomplete", rl.WithRateLimit(
+		[]fiber.Handler{h.googleAutocomplete},
 		middleware.PerMinute(60),
 	)...)
 	api.Get("/:type/", rl.WithRateLimit(
@@ -138,4 +146,27 @@ func (h *Handler) update(c *fiber.Ctx) error {
 	}
 
 	return c.Status(fiber.StatusOK).JSON(result)
+}
+
+func (h *Handler) googleAutocomplete(c *fiber.Ctx) error {
+	reqCtx, err := ctx.WithRequestContext(c)
+	if err != nil {
+		return h.errorHandler.HandleError(c, err)
+	}
+
+	req := new(googlemaps.AutoCompleteRequest)
+	if err = c.BodyParser(req); err != nil {
+		return h.errorHandler.HandleError(c, err)
+	}
+
+	// * Set the org and bu ids
+	req.OrgID = reqCtx.OrgID
+	req.BuID = reqCtx.BuID
+
+	resp, err := h.googleMapsClient.AutocompleteWithDetails(c.UserContext(), req)
+	if err != nil {
+		return h.errorHandler.HandleError(c, err)
+	}
+
+	return c.Status(fiber.StatusOK).JSON(resp)
 }

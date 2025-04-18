@@ -36,7 +36,7 @@ func (r *Registry) registerDelayShipmentsWorkflow() error {
 				worker.Fn(delayshipmentworkflow.QueryStops(r.db)).
 					SetName("query-stops").
 					AddParents("get-shipment-controls"),
-				worker.Fn(delayshipmentworkflow.DelayShipments(r.db)).
+				worker.Fn(delayshipmentworkflow.DelayShipments(r.db, r.emailClient)).
 					SetName("delay-shipments").
 					AddParents("query-stops"),
 			},
@@ -46,7 +46,7 @@ func (r *Registry) registerDelayShipmentsWorkflow() error {
 
 // registerShipmentUpdatedWorkflow registers the workflow for shipment updates
 func (r *Registry) registerShipmentUpdatedWorkflow() error {
-	err := r.worker.RegisterWorkflow(
+	return r.worker.RegisterWorkflow(
 		&worker.WorkflowJob{
 			On:          worker.Events(string(model.TypeShipmentUpdated)),
 			Name:        "shipment-updated-workflow",
@@ -108,6 +108,4 @@ func (r *Registry) registerShipmentUpdatedWorkflow() error {
 			},
 		},
 	)
-
-	return err
 }
