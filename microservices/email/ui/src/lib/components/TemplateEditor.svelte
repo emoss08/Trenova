@@ -44,34 +44,36 @@
 
 				// Set up custom themes if needed
 				await registerCustomThemes(monaco);
-				
+
 				monacoInitialized = true;
 			}
-			
+
 			await createEditor();
 		} catch (error) {
 			console.error('Failed to initialize Monaco editor:', error);
 		}
 	}
-	
+
 	// Create a new editor instance
 	async function createEditor() {
 		if (!monaco || !editorContainer) return;
-		
+
 		// Log the first 50 chars of content we're initializing with
-		console.log('[TemplateEditor] Creating editor with content:', 
-			value.substring(0, 50) + (value.length > 50 ? '...' : ''));
-			
+		console.log(
+			'[TemplateEditor] Creating editor with content:',
+			value.substring(0, 50) + (value.length > 50 ? '...' : '')
+		);
+
 		// Dispose of previous editor if exists
 		if (editor) {
 			console.log('[TemplateEditor] Disposing previous editor instance');
 			editor.dispose();
 			editor = null;
 		}
-		
+
 		// Setting initializing flag to prevent change events during setup
 		initializing = true;
-		
+
 		// Create a new editor instance
 		editor = monaco.editor.create(editorContainer, {
 			value,
@@ -87,7 +89,7 @@
 			lineNumbersMinChars: 3,
 			wordWrap: 'on'
 		});
-		
+
 		// Load saved theme preference if available
 		const savedTheme = localStorage.getItem('editorTheme');
 		if (savedTheme && monaco) {
@@ -106,7 +108,7 @@
 				} else {
 					// User input - update bound value and call onChange
 					const newValue = editor?.getValue() ?? '';
-					
+
 					// Only update if not initializing and value has changed
 					if (!initializing && value !== newValue) {
 						console.log('[TemplateEditor] Content changed by user, updating');
@@ -117,7 +119,7 @@
 				}
 			}, 100)
 		);
-		
+
 		// Mark initialization as complete
 		initializing = false;
 		console.log('[TemplateEditor] Editor initialization complete');
@@ -126,12 +128,12 @@
 	// Watch for value changes from outside - recreate editor for significant changes
 	$effect(() => {
 		if (!monacoInitialized) return;
-		
+
 		// Check if we have a significant content change (more than just typing)
 		// This is a heuristic to detect template switches vs normal typing
-		const hasSignificantChange = !editor || 
-			Math.abs(value.length - (editor.getValue()?.length || 0)) > 50;
-			
+		const hasSignificantChange =
+			!editor || Math.abs(value.length - (editor.getValue()?.length || 0)) > 50;
+
 		if (hasSignificantChange) {
 			console.log('[TemplateEditor] Significant content change detected, recreating editor');
 			createEditor();
@@ -156,23 +158,23 @@
 				'brilliance-black',
 				brillianceBlack as Monaco.editor.IStandaloneThemeData
 			);
-			
+
 			// Other themes
 			const dracula = (await import('monaco-themes/themes/Dracula.json')).default;
 			monaco.editor.defineTheme('dracula', dracula as Monaco.editor.IStandaloneThemeData);
-			
+
 			const monokai = (await import('monaco-themes/themes/Monokai.json')).default;
 			monaco.editor.defineTheme('monokai', monokai as Monaco.editor.IStandaloneThemeData);
-			
+
 			const github = (await import('monaco-themes/themes/GitHub.json')).default;
 			monaco.editor.defineTheme('github', github as Monaco.editor.IStandaloneThemeData);
-			
+
 			const solarizedDark = (await import('monaco-themes/themes/Solarized-dark.json')).default;
 			monaco.editor.defineTheme(
 				'solarized-dark',
 				solarizedDark as Monaco.editor.IStandaloneThemeData
 			);
-			
+
 			const nord = (await import('monaco-themes/themes/Nord.json')).default;
 			monaco.editor.defineTheme('nord', nord as Monaco.editor.IStandaloneThemeData);
 		} catch (error) {
@@ -198,7 +200,7 @@
 			timeout = setTimeout(() => func(...args), wait);
 		};
 	}
-	
+
 	// Handle theme change in Svelte 5 style
 	function handleThemeChange(e: Event) {
 		const target = e.target as HTMLSelectElement;
@@ -216,7 +218,7 @@
 		<div class="flex items-center space-x-2">
 			<select
 				id="theme-selector"
-				class="rounded border border-zinc-700 bg-zinc-800 px-2 py-1 text-xs text-zinc-200 focus:outline-none focus:ring-1 focus:ring-zinc-600"
+				class="rounded border border-zinc-700 bg-zinc-800 px-2 py-1 text-xs text-zinc-200 focus:ring-1 focus:ring-zinc-600 focus:outline-none"
 				onchange={handleThemeChange}
 				value={theme}
 			>
@@ -230,4 +232,4 @@
 		</div>
 	</div>
 	<div bind:this={editorContainer} class="flex-1"></div>
-</div> 
+</div>

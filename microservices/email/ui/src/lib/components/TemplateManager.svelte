@@ -1,10 +1,10 @@
 <script lang="ts">
+	import { toaster } from '$lib/toaster';
 	import { onDestroy, onMount } from 'svelte';
 	import SampleDataEditor from './SampleDataEditor.svelte';
 	import TemplateEditor from './TemplateEditor.svelte';
 	import TemplateList from './TemplateList.svelte';
 	import TemplatePreview from './TemplatePreview.svelte';
-	import { toast } from './Toast.svelte';
 
 	// State
 	let templates: string[] = [];
@@ -66,10 +66,16 @@
 				const data = JSON.parse(event.data) as WebSocketMessage;
 
 				if (data.type === 'template_updated' && data.templateName === currentTemplate) {
-					toast.info(`Template "${data.templateName}" was updated by another user`);
+					toaster.info({
+						title: `Template "${data.templateName}" was updated by another user`,
+						description: 'Please refresh the page'
+					});
 					fetchTemplateContent(currentTemplate);
 				} else if (data.type === 'sample_updated' && data.sampleName === currentTemplate) {
-					toast.info(`Sample data for "${data.sampleName}" was updated by another user`);
+					toaster.info({
+						title: `Sample data for "${data.sampleName}" was updated by another user`,
+						description: 'Please refresh the page'
+					});
 					if (activeTab === 'samples') {
 						fetchSampleData(currentTemplate);
 					}
@@ -94,59 +100,68 @@
 
 			// Select first template by default if we don't have one selected
 			if (templates.length > 0 && !currentTemplate) {
-				console.log('[fetchTemplates] No template selected, selecting first template:', templates[0]);
+				console.log(
+					'[fetchTemplates] No template selected, selecting first template:',
+					templates[0]
+				);
 				// Force set to editor tab
 				activeTab = 'editor';
-				
+
 				// Directly select the template (which will fetch content and update preview)
 				await selectTemplate(templates[0]);
 			}
 		} catch (error) {
 			console.error('Failed to fetch templates:', error);
-			toast.error('Failed to load templates');
+			toaster.error({
+				title: 'Failed to load templates',
+				description: 'Please try again'
+			});
 		}
 	}
 
 	// Select a template and load its content
 	async function selectTemplate(name: string): Promise<void> {
 		console.log(`Selecting template: ${name}`);
-		
+
 		try {
 			// Fetch the template content
 			const response = await fetch(`http://localhost:3002/api/templates/${name}`);
 			const content = await response.text();
 			console.log(`[selectTemplate] Fetched template content: ${name}, length: ${content.length}`);
-			
+
 			// First update the current template name
 			currentTemplate = name;
-			
+
 			// Hide the editor during the update
 			showEditor = false;
-			
+
 			// Reset template content
 			templateContent = '';
-			
+
 			// Update content and show editor in the next frame
 			setTimeout(() => {
 				// Set the actual content
 				console.log(`[selectTemplate] Setting template content for: ${name}`);
 				templateContent = content;
-				
+
 				// Show the editor again
 				showEditor = true;
-				
+
 				// Force an immediate preview refresh
 				console.log(`[selectTemplate] Updating preview for: ${name}`);
 				updatePreview();
 			}, 150); // Give more time for DOM updates to process
-			
+
 			// If we're in samples tab, load the sample data as well
 			if (activeTab === 'samples') {
 				await fetchSampleData(name);
 			}
 		} catch (error) {
 			console.error(`Failed to select template ${name}:`, error);
-			toast.error(`Failed to select template ${name}`);
+			toaster.error({
+				title: `Failed to select template ${name}`,
+				description: 'Please try again'
+			});
 		}
 	}
 
@@ -156,12 +171,17 @@
 			console.log(`[fetchTemplateContent] Fetching content for template: ${name}`);
 			const response = await fetch(`http://localhost:3002/api/templates/${name}`);
 			const content = await response.text();
-			console.log(`[fetchTemplateContent] Received template content for ${name}, ${content.length} bytes`);
+			console.log(
+				`[fetchTemplateContent] Received template content for ${name}, ${content.length} bytes`
+			);
 			// Force update the templateContent to trigger reactivity
 			templateContent = content;
 		} catch (error) {
 			console.error(`Failed to fetch template ${name}:`, error);
-			toast.error(`Failed to load template ${name}`);
+			toaster.error({
+				title: `Failed to load template ${name}`,
+				description: 'Please try again'
+			});
 		}
 	}
 
@@ -172,7 +192,10 @@
 			sampleData = await response.json();
 		} catch (error) {
 			console.error(`Failed to fetch sample data for ${name}:`, error);
-			toast.error(`Failed to load sample data for ${name}`);
+			toaster.error({
+				title: `Failed to load sample data for ${name}`,
+				description: 'Please try again'
+			});
 		}
 	}
 
@@ -187,13 +210,19 @@
 			});
 
 			if (response.ok) {
-				toast.success(`Template ${currentTemplate} saved successfully`);
+				toaster.success({
+					title: `Template ${currentTemplate} saved successfully`,
+					description: 'Your template has been saved successfully'
+				});
 			} else {
 				throw new Error(`Server returned ${response.status}`);
 			}
 		} catch (error) {
 			console.error(`Failed to save template ${currentTemplate}:`, error);
-			toast.error(`Failed to save template ${currentTemplate}`);
+			toaster.error({
+				title: `Failed to save template ${currentTemplate}`,
+				description: 'Please try again'
+			});
 		}
 	}
 
@@ -211,13 +240,19 @@
 			});
 
 			if (response.ok) {
-				toast.success(`Sample data for ${currentTemplate} saved successfully`);
+				toaster.success({
+					title: `Sample data for ${currentTemplate} saved successfully`,
+					description: 'Your sample data has been saved successfully'
+				});
 			} else {
 				throw new Error(`Server returned ${response.status}`);
 			}
 		} catch (error) {
 			console.error(`Failed to save sample data for ${currentTemplate}:`, error);
-			toast.error(`Failed to save sample data for ${currentTemplate}`);
+			toaster.error({
+				title: `Failed to save sample data for ${currentTemplate}`,
+				description: 'Please try again'
+			});
 		}
 	}
 
@@ -243,7 +278,10 @@
 	// Toggle live preview
 	function toggleLivePreview(): void {
 		livePreviewEnabled = !livePreviewEnabled;
-		toast.info(livePreviewEnabled ? 'Live preview enabled' : 'Live preview disabled');
+		toaster.info({
+			title: livePreviewEnabled ? 'Live preview enabled' : 'Live preview disabled',
+			description: 'Your preview has been updated'
+		});
 	}
 
 	// Update the preview immediately
@@ -282,7 +320,10 @@
 			return html;
 		} catch (error) {
 			console.error(`Failed to preview template ${currentTemplate}:`, error);
-			toast.error(`Failed to preview template ${currentTemplate}`);
+			toaster.error({
+				title: `Failed to preview template ${currentTemplate}`,
+				description: 'Please try again'
+			});
 			return '';
 		}
 	}
@@ -320,7 +361,7 @@
 			<div class="border-b border-zinc-800 bg-zinc-950">
 				<div class="flex">
 					<button
-						class="whitespace-nowrap border-b-2 px-6 py-4 text-sm font-medium {activeTab ===
+						class="border-b-2 px-6 py-4 text-sm font-medium whitespace-nowrap {activeTab ===
 						'editor'
 							? 'border-zinc-500 text-zinc-200'
 							: 'border-transparent text-zinc-500 hover:border-zinc-400 hover:text-zinc-400'}"
@@ -329,7 +370,7 @@
 						Template Editor
 					</button>
 					<button
-						class="whitespace-nowrap border-b-2 px-6 py-4 text-sm font-medium {activeTab ===
+						class="border-b-2 px-6 py-4 text-sm font-medium whitespace-nowrap {activeTab ===
 						'samples'
 							? 'border-zinc-500 text-zinc-200'
 							: 'border-transparent text-zinc-500 hover:border-zinc-400 hover:text-zinc-400'}"
@@ -351,20 +392,20 @@
 						</h2>
 						<div class="flex gap-2">
 							<button
-								class="rounded bg-zinc-100 px-3 py-1 text-xs font-medium text-zinc-700 transition-colors hover:bg-zinc-200 focus:outline-none focus:ring-2 focus:ring-zinc-300 focus:ring-offset-1"
+								class="rounded bg-zinc-100 px-3 py-1 text-xs font-medium text-zinc-700 transition-colors hover:bg-zinc-200 focus:ring-2 focus:ring-zinc-300 focus:ring-offset-1 focus:outline-none"
 								on:click={toggleLivePreview}
 							>
 								{livePreviewEnabled ? 'Disable Live Preview' : 'Enable Live Preview'}
 							</button>
 							<button
-								class="rounded bg-zinc-100 px-3 py-1 text-xs font-medium text-zinc-700 transition-colors hover:bg-zinc-200 focus:outline-none focus:ring-2 focus:ring-zinc-300 focus:ring-offset-1"
+								class="rounded bg-zinc-100 px-3 py-1 text-xs font-medium text-zinc-700 transition-colors hover:bg-zinc-200 focus:ring-2 focus:ring-zinc-300 focus:ring-offset-1 focus:outline-none"
 								on:click={updatePreview}
 								disabled={!currentTemplate}
 							>
 								Force Refresh Preview
 							</button>
 							<button
-								class="rounded-md bg-zinc-700/50 px-4 py-2 text-sm font-medium text-zinc-200 shadow-sm transition-colors hover:bg-zinc-700/80 focus:outline-none focus:ring-2 focus:ring-zinc-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+								class="rounded-md bg-zinc-700/50 px-4 py-2 text-sm font-medium text-zinc-200 shadow-sm transition-colors hover:bg-zinc-700/80 focus:ring-2 focus:ring-zinc-500 focus:ring-offset-2 focus:outline-none disabled:cursor-not-allowed disabled:opacity-50"
 								on:click={saveTemplate}
 								disabled={!currentTemplate}
 							>
@@ -383,11 +424,13 @@
 							/>
 						{:else}
 							<div class="flex w-1/2 flex-col overflow-hidden border-r border-zinc-800">
-								<div class="flex items-center justify-between border-b border-zinc-800 bg-zinc-950 px-4 py-2">
+								<div
+									class="flex items-center justify-between border-b border-zinc-800 bg-zinc-950 px-4 py-2"
+								>
 									<h3 class="text-sm font-medium text-zinc-200">Template Code</h3>
-									<div class="animate-pulse h-5 w-32 bg-zinc-800 rounded"></div>
+									<div class="h-5 w-32 animate-pulse rounded bg-zinc-800"></div>
 								</div>
-								<div class="flex-1 bg-zinc-900 flex items-center justify-center">
+								<div class="flex flex-1 items-center justify-center bg-zinc-900">
 									<div class="text-zinc-500">Loading template...</div>
 								</div>
 							</div>
@@ -406,19 +449,19 @@
 					>
 						<h2 class="text-lg font-medium text-zinc-200">Sample Data</h2>
 						<button
-							class="rounded-md bg-zinc-700/50 px-4 py-2 text-sm font-medium text-zinc-200 shadow-sm transition-colors hover:bg-zinc-700/80 focus:outline-none focus:ring-2 focus:ring-zinc-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+							class="rounded-md bg-zinc-700/50 px-4 py-2 text-sm font-medium text-zinc-200 shadow-sm transition-colors hover:bg-zinc-700/80 focus:ring-2 focus:ring-zinc-500 focus:ring-offset-2 focus:outline-none disabled:cursor-not-allowed disabled:opacity-50"
 							on:click={saveSampleData}
 							disabled={!currentTemplate}
 						>
 							Save
 						</button>
 					</div>
-					<SampleDataEditor 
-						value={sampleData} 
-						on:change={(e: { detail: Record<string, any> }) => (sampleData = e.detail)} 
+					<SampleDataEditor
+						value={sampleData}
+						on:change={(e: { detail: Record<string, any> }) => (sampleData = e.detail)}
 					/>
 				</div>
 			{/if}
 		</div>
 	</main>
-</div> 
+</div>

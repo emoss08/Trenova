@@ -82,7 +82,7 @@
 	<div class="flex items-center justify-between border-b border-zinc-800 bg-zinc-950 px-4 py-2">
 		<h3 class="text-sm font-medium text-zinc-200">Preview ({currentTemplate || 'none'})</h3>
 		<button
-			class="rounded bg-zinc-100 px-3 py-1 text-xs font-medium text-zinc-700 transition-colors hover:bg-zinc-200 focus:outline-none focus:ring-2 focus:ring-zinc-300 focus:ring-offset-1"
+			class="rounded bg-zinc-100 px-3 py-1 text-xs font-medium text-zinc-700 transition-colors hover:bg-zinc-200 focus:ring-2 focus:ring-zinc-300 focus:ring-offset-1 focus:outline-none"
 			onclick={refreshPreview}
 			disabled={!currentTemplate}
 		>
@@ -93,4 +93,4 @@
 		<iframe bind:this={previewFrame} title="Template Preview" class="h-full w-full border-none"
 		></iframe>
 	</div>
-</div> 
+</div>

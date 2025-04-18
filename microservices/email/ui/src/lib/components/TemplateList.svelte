@@ -2,7 +2,7 @@
 	export let templates: string[] = [];
 	export let currentTemplate: string | null = null;
 	export let onSelectTemplate: (name: string) => void = () => {};
-	
+
 	// Handle template selection with added debugging
 	function handleTemplateSelection(template: string) {
 		console.log(`[TemplateList] Template selected: ${template}`);
@@ -10,7 +10,9 @@
 			console.log(`[TemplateList] Calling onSelectTemplate for: ${template}`);
 			onSelectTemplate(template);
 		} else {
-			console.log(`[TemplateList] Template ${template} already selected, not calling onSelectTemplate`);
+			console.log(
+				`[TemplateList] Template ${template} already selected, not calling onSelectTemplate`
+			);
 		}
 	}
 </script>
@@ -45,4 +47,4 @@
 			</ul>
 		{/if}
 	</div>
-</div> 
+</div>
