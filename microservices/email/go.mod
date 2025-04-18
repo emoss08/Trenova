@@ -3,7 +3,6 @@ module github.com/emoss08/trenova/microservices/email
 go 1.24.2
 
 require (
-	github.com/a-h/templ v0.3.857
 	github.com/bytedance/sonic v1.13.2
 	github.com/go-chi/chi/v5 v5.2.1
 	github.com/go-chi/cors v1.2.1
@@ -32,6 +31,7 @@ require (
 	go.uber.org/zap v1.27.0 // indirect
 	golang.org/x/arch v0.16.0 // indirect
 	golang.org/x/crypto v0.37.0 // indirect
+	golang.org/x/net v0.37.0 // indirect
 	golang.org/x/sys v0.32.0 // indirect
 	golang.org/x/text v0.24.0 // indirect
 )
