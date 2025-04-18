@@ -1,11 +1,9 @@
 import { boolean, InferType, object, string } from "yup";
 
 export const shipmentDuplicateSchema = object({
-  overrideDates: boolean().required("Override Dates is required"),
-  includeCommodities: boolean().required("Include Commodities is required"),
-  includeAdditionalCharges: boolean().required(
-    "Include Additional Charges is required",
-  ),
+  overrideDates: boolean(),
+  includeCommodities: boolean(),
+  includeAdditionalCharges: boolean(),
   shipmentID: string().required("Shipment ID is required"),
 });
 

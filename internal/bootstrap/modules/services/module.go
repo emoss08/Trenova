@@ -88,7 +88,8 @@ var Module = fx.Module("services", fx.Provide(
 	document.NewService,
 	documenttype.NewService,
 	integration.NewService,
-))
+),
+)
 
 var CalculatorModule = fx.Module("calculator", fx.Provide(
 	calculator.NewShipmentCalculator,

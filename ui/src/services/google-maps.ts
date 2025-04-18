@@ -5,9 +5,12 @@ import type {
 } from "@/types/google-maps";
 
 export async function locationAutocomplete(input: string) {
-  return http.post<AutoCompleteLocationResult>(`/google-maps/autocomplete/`, {
-    input,
-  });
+  return http.post<AutoCompleteLocationResult>(
+    `/integrations/google-maps/autocomplete/`,
+    {
+      input,
+    },
+  );
 }
 
 export async function checkAPIKey() {
