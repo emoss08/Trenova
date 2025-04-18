@@ -1,7 +1,10 @@
 import { LazyComponent } from "@/components/error-boundary";
 import { FormSaveProvider } from "@/components/form";
 import { MetaTags } from "@/components/meta-tags";
+import { queries } from "@/lib/queries";
 import { ShipmentFilterSchema } from "@/lib/schemas/shipment-filter-schema";
+import { AnalyticsPage } from "@/types/analytics";
+import { useQuery } from "@tanstack/react-query";
 import { lazy, memo } from "react";
 import { FormProvider, useForm } from "react-hook-form";
 
@@ -14,6 +17,12 @@ export function Shipment() {
       status: undefined,
     },
   });
+
+  const { data: analytics } = useQuery({
+    ...queries.analytics.getAnalytics(AnalyticsPage.ShipmentManagement),
+  });
+
+  console.log(analytics);
 
   return (
     <FormSaveProvider>

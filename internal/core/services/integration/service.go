@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/ports"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/core/services/audit"
 	"github.com/emoss08/trenova/internal/infrastructure/external/maps/googlemaps"
 	"github.com/emoss08/trenova/internal/pkg/errors"
 	"github.com/emoss08/trenova/internal/pkg/logger"
@@ -147,26 +148,26 @@ func (s *Service) Update(ctx context.Context, i *integration.Integration, userID
 		Str("operation", "Update").
 		Logger()
 
-	// // Check permissions
-	// result, err := s.ps.HasAnyPermissions(ctx,
-	// 	[]*services.PermissionCheck{
-	// 		{
-	// 			UserID:         i.OrganizationID,
-	// 			Resource:       permission.ResourceIntegration,
-	// 			Action:         permission.ActionUpdate,
-	// 			BusinessUnitID: i.BusinessUnitID,
-	// 			OrganizationID: i.OrganizationID,
-	// 		},
-	// 	},
-	// )
-	// if err != nil {
-	// 	log.Error().Err(err).Msg("failed to check permissions")
-	// 	return nil, err
-	// }
+	// Check permissions
+	result, err := s.ps.HasAnyPermissions(ctx,
+		[]*services.PermissionCheck{
+			{
+				UserID:         i.OrganizationID,
+				Resource:       permission.ResourceIntegration,
+				Action:         permission.ActionUpdate,
+				BusinessUnitID: i.BusinessUnitID,
+				OrganizationID: i.OrganizationID,
+			},
+		},
+	)
+	if err != nil {
+		log.Error().Err(err).Msg("failed to check permissions")
+		return nil, err
+	}
 
-	// if !result.Allowed {
-	// 	return nil, errors.NewAuthorizationError("You do not have permission to update integrations")
-	// }
+	if !result.Allowed {
+		return nil, errors.NewAuthorizationError("You do not have permission to update integrations")
+	}
 
 	// Get the existing integration
 	original, err := s.repo.GetByID(ctx, repositories.GetIntegrationByIDOptions{
@@ -195,22 +196,8 @@ func (s *Service) Update(ctx context.Context, i *integration.Integration, userID
 			OrganizationID: updatedEntity.OrganizationID,
 			BusinessUnitID: updatedEntity.BusinessUnitID,
 		},
-	)
-	if err != nil {
-		log.Error().Err(err).Msg("failed to log action")
-		return nil, err
-	}
-
-	err = s.as.LogAction(
-		&services.LogActionParams{
-			Resource:       permission.ResourceIntegration,
-			ResourceID:     updatedEntity.GetID(),
-			Action:         permission.ActionUpdate,
-			UserID:         userID,
-			CurrentState:   jsonutils.MustToJSON(updatedEntity),
-			OrganizationID: updatedEntity.OrganizationID,
-			BusinessUnitID: updatedEntity.BusinessUnitID,
-		},
+		audit.WithComment("Integration updated"),
+		audit.WithDiff(original, updatedEntity),
 	)
 	if err != nil {
 		log.Error().Err(err).Msg("failed to log action")
