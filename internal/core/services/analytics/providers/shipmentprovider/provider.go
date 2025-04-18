@@ -44,7 +44,7 @@ func (p *Provider) GetPage() services.AnalyticsPage {
 }
 
 // GetAnalyticsData returns the analytics data for the shipment management page
-func (p *Provider) GetAnalyticsData(ctx context.Context, opts *services.AnalyticsRequestOptions) (services.AnalyticsData, error) {
+func (p *Provider) GetAnalyticsData(ctx context.Context, _ *services.AnalyticsRequestOptions) (services.AnalyticsData, error) {
 	log := p.l.With().
 		Str("operation", "GetAnalyticsData").
 		Logger()
