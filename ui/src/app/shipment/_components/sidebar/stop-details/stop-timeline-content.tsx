@@ -7,17 +7,17 @@ import { MoveStatus } from "@/types/move";
 import { Stop, StopStatus, StopType } from "@/types/stop";
 import { useCallback, useState } from "react";
 import {
-    UseFieldArrayRemove,
-    UseFieldArrayUpdate,
-    useFormContext,
+  UseFieldArrayRemove,
+  UseFieldArrayUpdate,
+  useFormContext,
 } from "react-hook-form";
 import { useLocationData } from "./queries";
 import {
-    getLineStyles,
-    getStatusIcon,
-    getStopStatusBgColor,
-    getStopStatusBorderColor,
-    getStopTypeLabel,
+  getLineStyles,
+  getStatusIcon,
+  getStopStatusBgColor,
+  getStopStatusBorderColor,
+  getStopTypeLabel,
 } from "./stop-utils";
 
 // Display component for location
@@ -32,10 +32,10 @@ function LocationDisplay({
 }) {
   // If we have a locationId but no location, fetch the location data directly
   const { data: fetchedLocation } = useLocationData(locationId || "");
-  
+
   // Use fetchedLocation if available, otherwise fallback to the passed location
   const displayLocation = fetchedLocation || location;
-  
+
   // If we don't have any location data, display the stop type only
   if (!displayLocation) {
     return (
@@ -44,7 +44,7 @@ function LocationDisplay({
       </div>
     );
   }
-  
+
   return (
     <>
       <div className="flex items-center gap-1 text-sm text-primary">
@@ -52,7 +52,8 @@ function LocationDisplay({
         <span className="text-2xs">({getStopTypeLabel(type)})</span>
       </div>
       <div className="text-2xs text-muted-foreground">
-        {displayLocation.city}, {displayLocation.state?.abbreviation} {displayLocation.postalCode}
+        {displayLocation.city}, {displayLocation.state?.abbreviation}{" "}
+        {displayLocation.postalCode}
       </div>
     </>
   );
@@ -157,7 +158,7 @@ export default function StopTimeline({
       {/* Clickable stop display */}
       <div
         className={cn(
-          "relative h-[60px] rounded-lg cursor-pointer select-none bg-muted/50 pt-2 border border-border",
+          "relative h-[60px] rounded-lg cursor-pointer select-none bg-muted pt-2 border border-border",
           hasErrors && "border-destructive bg-destructive/10",
         )}
         onClick={openDialog}
@@ -192,10 +193,10 @@ export default function StopTimeline({
                 />
               </div>
               <div className="flex-1">
-                <LocationDisplay 
-                  location={stop.location} 
+                <LocationDisplay
+                  location={stop.location}
                   type={stop.type}
-                  locationId={stop.locationId} 
+                  locationId={stop.locationId}
                 />
               </div>
             </div>

@@ -1,5 +1,7 @@
 package shipment
 
+import "errors"
+
 type Status string
 
 const (
@@ -33,6 +35,31 @@ const (
 	// StatusCanceled indicates that the shipment has been canceled
 	StatusCanceled = Status("Canceled")
 )
+
+func StatusFromString(status string) (Status, error) {
+	switch status {
+	case "New":
+		return StatusNew, nil
+	case "PartiallyAssigned":
+		return StatusPartiallyAssigned, nil
+	case "Assigned":
+		return StatusAssigned, nil
+	case "InTransit":
+		return StatusInTransit, nil
+	case "Delayed":
+		return StatusDelayed, nil
+	case "PartiallyCompleted":
+		return StatusPartiallyCompleted, nil
+	case "Completed":
+		return StatusCompleted, nil
+	case "Billed":
+		return StatusBilled, nil
+	case "Canceled":
+		return StatusCanceled, nil
+	default:
+		return "", errors.New("invalid status")
+	}
+}
 
 type RatingMethod string
 

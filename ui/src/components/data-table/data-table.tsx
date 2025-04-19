@@ -3,6 +3,7 @@ import { useDataTableQuery } from "@/hooks/use-data-table-query";
 import { useDataTableState } from "@/hooks/use-data-table-state";
 import { DataTableProps } from "@/types/data-table";
 import { PaginationResponse } from "@/types/server";
+import { faSearch } from "@fortawesome/pro-solid-svg-icons";
 import { useQuery } from "@tanstack/react-query";
 import {
   getCoreRowModel,
@@ -15,6 +16,8 @@ import {
 } from "@tanstack/react-table";
 import { parseAsInteger, parseAsString, useQueryState } from "nuqs";
 import { useCallback, useEffect, useMemo, useTransition } from "react";
+import { Icon } from "../ui/icons";
+import { Input } from "../ui/input";
 import { Separator } from "../ui/separator";
 import { Skeleton } from "../ui/skeleton";
 import { Table } from "../ui/table";
@@ -251,7 +254,18 @@ export function DataTable<TData extends Record<string, any>>({
       <div className="mt-2 flex flex-col gap-3">
         {includeOptions && (
           <div className="flex justify-between">
-            <div className="flex items-center gap-2">Put something here</div>
+            <div className="flex items-center gap-2">
+              <Input
+                icon={
+                  <Icon
+                    icon={faSearch}
+                    className="size-3 text-muted-foreground"
+                  />
+                }
+                placeholder="Filter..."
+                className="w-full"
+              />
+            </div>
             <div className="flex items-center gap-2">
               <DataTableViewOptions table={table} />
               <Separator

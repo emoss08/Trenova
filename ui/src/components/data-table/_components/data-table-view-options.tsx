@@ -16,9 +16,9 @@ import {
   DataTableCreateButtonProps,
   DataTableViewOptionsProps,
 } from "@/types/data-table";
-import { faPlus } from "@fortawesome/pro-regular-svg-icons";
-import { faEye } from "@fortawesome/pro-solid-svg-icons";
-import { PlusIcon, UploadIcon } from "@radix-ui/react-icons";
+import { faPlus, faSearch } from "@fortawesome/pro-regular-svg-icons";
+import { faColumns } from "@fortawesome/pro-solid-svg-icons";
+import { ChevronDownIcon, PlusIcon, UploadIcon } from "@radix-ui/react-icons";
 import React, { memo, useCallback, useState } from "react";
 import { DataTableImportModal } from "./data-table-import-modal";
 
@@ -158,9 +158,6 @@ export function DataTableViewOptions<TData>({
     [columns, searchQuery],
   );
 
-  // Get visible columns count from table state
-  const visibleColumnsCount = table.getVisibleLeafColumns().length;
-
   const handleToggleVisibility = React.useCallback(
     (columnId: string, isVisible: boolean) => {
       table.getColumn(columnId)?.toggleVisibility(!isVisible);
@@ -176,21 +173,23 @@ export function DataTableViewOptions<TData>({
           className="h-8 border-dashed"
           aria-label="Toggle column visibility"
         >
-          <Icon icon={faEye} className="size-4" />
-          View
-          <div className="size-4 text-2xs rounded-sm bg-foreground text-background">
-            {visibleColumnsCount}
-          </div>
+          <Icon icon={faColumns} className="size-4" />
+          <span className="hidden lg:inline">Customize Columns</span>
+          <span className="lg:hidden">Columns</span>
           <span className="sr-only">Toggle column visibility options</span>
+          <ChevronDownIcon />
         </Button>
       </PopoverTrigger>
       <PopoverContent align="end" side="bottom" className="w-[200px] p-2">
         <div className="space-y-2">
           <Input
+            icon={
+              <Icon icon={faSearch} className="size-3 text-muted-foreground" />
+            }
             placeholder="Search columns..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="h-8 text-sm"
+            className="h-8 text-sm bg-background"
           />
           <div className="my-3 border-dashed border-t border-border" />
           <ScrollArea className="h-72">
@@ -212,6 +211,7 @@ export function DataTableViewOptions<TData>({
                       <Switch
                         id={column.id}
                         checked={isVisible}
+                        size="sm"
                         onCheckedChange={() =>
                           handleToggleVisibility(column.id, isVisible)
                         }

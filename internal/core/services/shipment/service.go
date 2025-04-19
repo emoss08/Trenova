@@ -11,7 +11,6 @@ import (
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/audit"
-	"github.com/emoss08/trenova/internal/core/services/search"
 	"github.com/emoss08/trenova/internal/pkg/errors"
 	"github.com/emoss08/trenova/internal/pkg/logger"
 	"github.com/emoss08/trenova/internal/pkg/utils/jsonutils"
@@ -31,7 +30,6 @@ type ServiceParams struct {
 	ProNumberRepo repositories.ProNumberRepository
 	PermService   services.PermissionService
 	AuditService  services.AuditService
-	SearchService *search.Service
 	Validator     *shipmentvalidator.Validator
 }
 
@@ -41,7 +39,6 @@ type Service struct {
 	proNumberRepo repositories.ProNumberRepository
 	ps            services.PermissionService
 	as            services.AuditService
-	ss            *search.Service
 	v             *shipmentvalidator.Validator
 }
 
@@ -56,7 +53,6 @@ func NewService(p ServiceParams) *Service {
 		proNumberRepo: p.ProNumberRepo,
 		ps:            p.PermService,
 		as:            p.AuditService,
-		ss:            p.SearchService,
 		v:             p.Validator,
 	}
 }
@@ -185,10 +181,6 @@ func (s *Service) Create(ctx context.Context, shp *shipment.Shipment, userID pul
 		return nil, err
 	}
 
-	if err = s.ss.Index(ctx, createdEntity); err != nil {
-		log.Error().Err(err).Msg("failed to update search index")
-	}
-
 	err = s.as.LogAction(
 		&services.LogActionParams{
 			Resource:       permission.ResourceShipment,
@@ -267,13 +259,6 @@ func (s *Service) Update(ctx context.Context, shp *shipment.Shipment, userID pul
 	if err != nil {
 		log.Error().Err(err).Msg("failed to update shipment")
 		return nil, err
-	}
-
-	if err = s.ss.Index(ctx, updatedEntity); err != nil {
-		log.Error().
-			Err(err).
-			Interface("shipment", updatedEntity).
-			Msg("failed to update search index")
 	}
 
 	// Log the update if the insert was successful

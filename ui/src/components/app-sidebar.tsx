@@ -157,7 +157,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 
   // TODO(wolfred): Allow for the sidebar to be configurable by the user.
   return (
-    <Sidebar variant="sidebar" {...props}>
+    <Sidebar variant="floating" {...props}>
       <SidebarHeader className="gap-4">
         <OrganizationSwitcher />
         <SearchForm />

@@ -5,20 +5,20 @@ import { tabConfig } from "@/config/site-search";
 import { cn } from "@/lib/utils";
 import { SearchInputProps, SiteSearchTab } from "@/types/search";
 import {
-  faChevronDown,
-  faChevronUp,
-  faCommand,
-  faMagnifyingGlass,
-  faSearch,
-  faXmark,
+    faChevronDown,
+    faChevronUp,
+    faCommand,
+    faMagnifyingGlass,
+    faSearch,
+    faXmark,
 } from "@fortawesome/pro-regular-svg-icons";
 import { AnimatePresence, motion } from "motion/react";
 import React, { useEffect, useRef, useState } from "react";
 import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
+    Tooltip,
+    TooltipContent,
+    TooltipProvider,
+    TooltipTrigger,
 } from "../ui/tooltip";
 import { getFilterOptions } from "./site-search-filter-options";
 
@@ -380,7 +380,7 @@ export function SearchInputWithBadges({
                       "relative text-xs flex items-center gap-1 px-1.5 py-0.5 rounded-md cursor-pointer flex-shrink-0 mr-2.5",
                       showFilterDropdown
                         ? "bg-accent/50 text-accent-foreground"
-                        : "bg-muted/50 text-muted-foreground hover:bg-muted/80",
+                        : "bg-muted text-muted-foreground hover:bg-muted/80",
                     )}
                   >
                     <span>{hiddenFilterCount} more...</span>

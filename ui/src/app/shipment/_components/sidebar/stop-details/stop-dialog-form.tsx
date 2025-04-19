@@ -37,30 +37,38 @@ export function StopDialogForm({ moveIdx, stopIdx }: StopDialogFormProps) {
           shouldValidate: true,
         },
       );
-      
+
       // Get current move values
       const currentValues = getValues();
       const currentMove = currentValues.moves?.[moveIdx];
-      
+
       if (currentMove && currentMove.stops && currentMove.stops[stopIdx]) {
         // Update the stop with location data
         const updatedStop = {
           ...currentMove.stops[stopIdx],
-          location: locationData
+          location: locationData,
         };
-        
+
         // Update all the stops
         const updatedStops = [...currentMove.stops];
         updatedStops[stopIdx] = updatedStop;
-        
+
         // Update the entire move
         setValue(`moves.${moveIdx}`, {
           ...currentMove,
-          stops: updatedStops
+          stops: updatedStops,
         });
       }
     }
-  }, [isLoadingLocation, locationId, locationData, setValue, moveIdx, stopIdx, getValues]);
+  }, [
+    isLoadingLocation,
+    locationId,
+    locationData,
+    setValue,
+    moveIdx,
+    stopIdx,
+    getValues,
+  ]);
 
   return (
     <div className="space-y-2">

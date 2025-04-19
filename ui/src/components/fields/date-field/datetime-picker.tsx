@@ -208,7 +208,8 @@ export function DateTimePicker({
           <Button
             type="button"
             size="icon"
-            className="absolute right-2 top-1/2 size-5 -translate-y-1/2 rounded-sm bg-transparent text-muted-foreground hover:bg-foreground/10 [&>svg]:size-4"
+            variant="outline"
+            className="absolute right-2 top-1/2 size-5 -translate-y-1/2"
           >
             <span className="sr-only">Open normal date time picker</span>
             <CalendarIcon className="size-4" />

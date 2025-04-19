@@ -155,12 +155,29 @@ func (p *WorkflowPublisher) Publish(ctx context.Context, routingKey string, mess
 
 // Close closes the RabbitMQ connection and channel
 func (p *WorkflowPublisher) Close() error {
-	if err := p.channel.Close(); err != nil {
-		return eris.Wrap(err, "failed to close channel")
+	p.l.Info().Msg("closing RabbitMQ publisher connections")
+
+	// Close the channel first
+	if p.channel != nil {
+		p.l.Debug().Msg("closing RabbitMQ channel")
+		if err := p.channel.Close(); err != nil {
+			p.l.Error().Err(err).Msg("failed to close RabbitMQ channel")
+		} else {
+			p.l.Debug().Msg("RabbitMQ channel closed successfully")
+		}
 	}
-	if err := p.connection.Close(); err != nil {
-		return eris.Wrap(err, "failed to close connection")
+
+	// Then close the connection
+	if p.connection != nil {
+		p.l.Debug().Msg("closing RabbitMQ connection")
+		if err := p.connection.Close(); err != nil {
+			p.l.Error().Err(err).Msg("failed to close RabbitMQ connection")
+			return eris.Wrap(err, "failed to close connection")
+		}
+		p.l.Debug().Msg("RabbitMQ connection closed successfully")
 	}
+
+	p.l.Info().Msg("RabbitMQ publisher connections closed successfully")
 	return nil
 }
 
@@ -168,8 +185,33 @@ func (p *WorkflowPublisher) Close() error {
 func (p *WorkflowPublisher) RegisterHooks() fx.Hook {
 	return fx.Hook{
 		OnStop: func(context.Context) error {
-			p.l.Info().Msg("🔴 Closing RabbitMQ publisher")
-			return p.Close()
+			p.l.Info().Msg("🔴 Shutting down RabbitMQ publisher")
+
+			// Use a short timeout to prevent hanging
+			closeCtx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+			defer cancel()
+
+			// Channel to signal completion
+			done := make(chan error, 1)
+
+			// Close in a goroutine to respect timeout
+			go func() {
+				done <- p.Close()
+			}()
+
+			// Wait for close to complete or timeout
+			select {
+			case err := <-done:
+				if err != nil {
+					p.l.Error().Err(err).Msg("error during RabbitMQ publisher shutdown")
+					return nil // Return nil anyway to allow shutdown to continue
+				}
+				p.l.Info().Msg("RabbitMQ publisher shut down successfully")
+			case <-closeCtx.Done():
+				p.l.Warn().Msg("RabbitMQ publisher shutdown timed out, forcing exit")
+			}
+
+			return nil
 		},
 	}
 }

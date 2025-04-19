@@ -35,6 +35,10 @@ const (
 	MinBufferSize        = 50
 	MinFlushInterval     = 5
 	DefaultAuditCategory = "system"
+
+	// Compression constants
+	DefaultCompressionLevel     = 6  // Medium compression level (balance between speed and size)
+	DefaultCompressionThreshold = 10 // KB - only compress if payload exceeds this size
 )
 
 // ServiceState represents the state of the audit service
@@ -73,12 +77,26 @@ type service struct {
 	startTime     time.Time
 	defaultFields map[string]any
 
-	// Channels for goroutine control
-	stopFlusher  chan struct{}
-	flusherDone  chan struct{}
-	stopMonitor  chan struct{}
-	monitorDone  chan struct{}
-	emergencyLog chan *audit.Entry
+	// Channels for goroutine control - optimized structure
+	control struct {
+		stopCh chan struct{}  // Single channel for stopping all goroutines
+		wg     sync.WaitGroup // Wait group for all goroutines
+	}
+
+	// Emergency log handling
+	emergencyLog struct {
+		ch    chan *audit.Entry
+		mutex sync.RWMutex
+		count atomic.Int64
+	}
+}
+
+var entryPool = sync.Pool{
+	New: func() any {
+		return &audit.Entry{
+			Metadata: make(map[string]any),
+		}
+	},
 }
 
 func NewService(p ServiceParams) services.AuditService {
@@ -93,11 +111,6 @@ func NewService(p ServiceParams) services.AuditService {
 		config:        &p.Config.Get().Audit,
 		sdm:           NewSensitiveDataManager(),
 		wg:            conc.NewWaitGroup(),
-		stopFlusher:   make(chan struct{}),
-		flusherDone:   make(chan struct{}),
-		stopMonitor:   make(chan struct{}),
-		monitorDone:   make(chan struct{}),
-		emergencyLog:  make(chan *audit.Entry, 10), // * Small buffer for critical audit events
 		defaultFields: make(map[string]any),
 	}
 
@@ -124,11 +137,65 @@ func NewService(p ServiceParams) services.AuditService {
 			return auditService.Start()
 		},
 		OnStop: func(ctx context.Context) error {
-			return auditService.Stop(ctx)
+			return auditService.Stop()
 		},
 	})
 
 	return auditService
+}
+
+func (s *service) Stop() error {
+	// Ensure we're currently running
+	if !s.isRunning.CompareAndSwap(true, false) {
+		s.l.Warn().Msg("audit service is already stopped")
+		return nil
+	}
+
+	s.serviceState.Store(string(ServiceStateStopping))
+	s.l.Info().Msg("stopping audit service")
+
+	// Signal all goroutines to stop
+	close(s.control.stopCh)
+
+	// Create a timeout context
+	ctx, cancel := context.WithTimeout(context.Background(), DefaultFlushTimeout)
+	defer cancel()
+
+	// Create a done channel for WaitGroup completion
+	done := make(chan struct{})
+
+	// Wait for goroutines to finish in a separate goroutine
+	go func() {
+		s.control.wg.Wait()
+		close(done)
+	}()
+
+	// Wait for completion or timeout
+	select {
+	case <-ctx.Done():
+		s.serviceState.Store(string(ServiceStateDegraded))
+		s.l.Error().Msg("timeout waiting for workers to stop")
+		// continue with shutdown despite timeout
+	case <-done:
+		s.l.Debug().Msg("all goroutines stopped")
+	}
+
+	// Perform final flush
+	if err := s.performFinalFlush(ctx); err != nil {
+		s.l.Error().Err(err).Msg("final flush failed")
+		s.serviceState.Store(string(ServiceStateDegraded))
+	}
+
+	s.serviceState.Store(string(ServiceStateStopped))
+	s.l.Info().
+		Int64("total_entries", s.entryCount.Load()).
+		Int64("total_flushes", s.flushCount.Load()).
+		Int64("total_errors", s.errorCount.Load()).
+		Int64("emergency_entries", s.emergencyLog.count.Load()).
+		Str("uptime", time.Since(s.startTime).String()).
+		Msg("audit service stopped successfully")
+
+	return nil
 }
 
 func (s *service) applyDefaultConfig() {
@@ -172,8 +239,6 @@ func (s *service) List(ctx context.Context, opts *ports.LimitOffsetQueryOptions)
 		Str("userID", opts.TenantOpts.UserID.String()).
 		Logger()
 
-	// TODO(wolfred): We need to check the permissions here.
-
 	entities, err := s.repo.List(ctx, opts)
 	if err != nil {
 		log.Error().Err(err).Msg("failed to list audit entries")
@@ -188,8 +253,6 @@ func (s *service) ListByResourceID(ctx context.Context, opts repositories.ListBy
 		Str("operation", "ListByResourceID").
 		Str("resourceID", opts.ResourceID.String()).
 		Logger()
-
-	// TODO(wolfred): We need to check the permissions here.
 
 	entities, err := s.repo.ListByResourceID(ctx, opts)
 	if err != nil {
@@ -227,8 +290,18 @@ func (s *service) LogAction(
 		return ErrServiceStopped
 	}
 
-	// * Create base audit entry
-	entry := &audit.Entry{
+	// Get entry from pool
+	entryObj := entryPool.Get()
+	entry, ok := entryObj.(*audit.Entry)
+	if !ok {
+		// Fallback if type assertion fails
+		entry = &audit.Entry{
+			Metadata: make(map[string]any),
+		}
+	}
+
+	// Reset and initialize the entry
+	*entry = audit.Entry{
 		ID:             pulid.MustNew("ae_"),
 		Resource:       params.Resource,
 		ResourceID:     params.ResourceID,
@@ -246,6 +319,8 @@ func (s *service) LogAction(
 	// * Apply options
 	for _, opt := range opts {
 		if err := opt(entry); err != nil {
+			// Return to pool if there's an error
+			entryPool.Put(entry)
 			return eris.Wrap(err, "failed to apply audit option")
 		}
 	}
@@ -253,12 +328,14 @@ func (s *service) LogAction(
 	// * Validate the entry
 	if err := entry.Validate(); err != nil {
 		s.l.Error().Err(err).Msg("invalid audit entry")
+		entryPool.Put(entry) // Return to pool
 		return eris.Wrap(ErrInvalidEntry, err.Error())
 	}
 
 	// * Handle sensitive data
 	if err := s.sdm.sanitizeData(entry); err != nil {
 		s.l.Error().Err(err).Msg("failed to sanitize sensitive data")
+		entryPool.Put(entry) // Return to pool
 		return eris.Wrap(ErrSanitizationFailed, err.Error())
 	}
 
@@ -267,15 +344,17 @@ func (s *service) LogAction(
 		// * Handle rejection (circuit open) - log to emergency buffer if it's a critical audit
 		if params.Critical {
 			select {
-			case s.emergencyLog <- entry:
+			case s.emergencyLog.ch <- entry:
 				s.l.Warn().Msg("added critical audit to emergency buffer due to circuit breaker")
 			default:
 				s.l.Error().Msg("emergency buffer full, dropping critical audit entry")
 				s.errorCount.Inc()
+				entryPool.Put(entry) // Return to pool on rejection
 			}
 		} else {
 			s.l.Warn().Msg("audit entry rejected due to circuit breaker")
 			s.errorCount.Inc()
+			entryPool.Put(entry) // Return to pool on rejection
 		}
 		return nil
 	}
@@ -317,24 +396,36 @@ func (s *service) Start() error {
 		return nil
 	}
 
+	// Initialize the control channel
+	s.control.stopCh = make(chan struct{})
+
+	// Initialize emergency log channel
+	s.emergencyLog.ch = make(chan *audit.Entry, 10)
+
 	// * Update state
 	s.serviceState.Store(string(ServiceStateRunning))
 	s.startTime = time.Now()
 
 	// * Start the flusher
+	s.control.wg.Add(1)
 	go func() {
-		defer close(s.flusherDone)
+		defer s.control.wg.Done()
 		s.startFlusher()
 	}()
 
 	// * Start the monitor
+	s.control.wg.Add(1)
 	go func() {
-		defer close(s.monitorDone)
+		defer s.control.wg.Done()
 		s.monitor()
 	}()
 
 	// * Start the emergency log processor
-	go s.processEmergencyLogs()
+	s.control.wg.Add(1)
+	go func() {
+		defer s.control.wg.Done()
+		s.processEmergencyLogs()
+	}()
 
 	s.l.Info().
 		Int("buffer_size", s.config.BufferSize).
@@ -345,159 +436,64 @@ func (s *service) Start() error {
 	return nil
 }
 
+// Optimized emergency log processor with retry capability
 func (s *service) processEmergencyLogs() {
+	const maxRetries = 2 // Maximum retry attempts for emergency log processing
+
 	for {
 		select {
-		case <-s.stopFlusher: // * Reuse the flusher stop signal
+		case <-s.control.stopCh:
 			s.l.Debug().Msg("emergency log processor stopped")
 			return
-		case entry := <-s.emergencyLog:
-			// * Direct insert of critical audit entries, bypassing the buffer
-			ctx, cancel := context.WithTimeout(context.Background(), DefaultWorkerTimeout)
-			err := s.repo.InsertAuditEntries(ctx, []*audit.Entry{entry})
-			cancel()
+		case entry := <-s.emergencyLog.ch:
+			// Process with retries for resilience
+			var err error
+			var processed bool
 
-			if err != nil {
-				s.l.Error().Err(err).Msg("failed to insert critical audit entry")
+			// Try a few times with increasing backoff
+			for retry := 0; retry <= maxRetries; retry++ {
+				if retry > 0 {
+					// Add backoff between retries
+					backoffTime := time.Duration(retry*150) * time.Millisecond
+					time.Sleep(backoffTime)
+				}
+
+				ctx, cancel := context.WithTimeout(context.Background(), DefaultWorkerTimeout)
+				err = s.repo.InsertAuditEntries(ctx, []*audit.Entry{entry})
+				cancel()
+
+				if err == nil {
+					processed = true
+					s.emergencyLog.count.Inc()
+					if retry > 0 {
+						s.l.Debug().Int("retry", retry).Msg("critical audit entry processed after retry")
+					} else {
+						s.l.Debug().Msg("critical audit entry processed")
+					}
+					break
+				}
+			}
+
+			if !processed {
+				s.l.Error().Err(err).Msg("failed to process critical audit entry after all retries")
 				s.errorCount.Inc()
-			} else {
-				s.l.Debug().Msg("critical audit entry inserted directly")
 			}
 		}
 	}
 }
 
-func (s *service) Stop(ctx context.Context) error {
-	// * Ensure we're currently running
-	if !s.isRunning.CompareAndSwap(true, false) {
-		s.l.Warn().Msg("audit service is already stopped")
-		return nil
-	}
-
-	s.serviceState.Store(string(ServiceStateStopping))
-	s.l.Info().Msg("stopping audit service")
-
-	// * Signal goroutines to stop
-	close(s.stopFlusher)
-	close(s.stopMonitor)
-
-	// * Wait for goroutines to finish with timeout
-	shutdownCtx, cancel := context.WithTimeout(ctx, DefaultFlushTimeout)
-	defer cancel()
-
-	// * Create channels to signal completion of each wait
-	flusherOK := make(chan struct{})
-	monitorOK := make(chan struct{})
-
-	// * Wait for flusher
-	go func() {
-		<-s.flusherDone
-		close(flusherOK)
-	}()
-
-	// * Wait for monitor
-	go func() {
-		<-s.monitorDone
-		close(monitorOK)
-	}()
-
-	// * Wait for both goroutines or timeout
-	select {
-	case <-shutdownCtx.Done():
-		s.serviceState.Store(string(ServiceStateDegraded))
-		return eris.Wrap(ErrTimeoutWaitingStop, "workers failed to stop")
-	case <-flusherOK:
-		s.l.Debug().Msg("flusher stopped")
-		select {
-		case <-shutdownCtx.Done():
-			s.serviceState.Store(string(ServiceStateDegraded))
-			return eris.Wrap(ErrTimeoutWaitingStop, "monitor failed to stop")
-		case <-monitorOK:
-			s.l.Debug().Msg("monitor stopped")
-		}
-	}
-
-	// * Perform final flush
-	if err := s.performFinalFlush(ctx); err != nil {
-		s.l.Error().Err(err).Msg("final flush failed")
-		s.serviceState.Store(string(ServiceStateDegraded))
-		return err
-	}
-
-	s.serviceState.Store(string(ServiceStateStopped))
-	s.l.Info().
-		Int64("total_entries", s.entryCount.Load()).
-		Int64("total_flushes", s.flushCount.Load()).
-		Int64("total_errors", s.errorCount.Load()).
-		Str("uptime", time.Since(s.startTime).String()).
-		Msg("audit service stopped successfully")
-
-	return nil
-}
-
-func (s *service) monitor() {
-	ticker := time.NewTicker(30 * time.Second)
-	defer ticker.Stop()
-
-	for {
-		select {
-		case <-s.stopMonitor:
-			s.l.Debug().Msg("monitor stopped due to service shutdown")
-			return
-		case <-ticker.C:
-			s.checkServiceHealth()
-		}
-	}
-}
-
-func (s *service) checkServiceHealth() {
-	bufferSize := s.buffer.Size()
-	state := s.buffer.GetState()
-
-	// * Log the current status
-	s.l.Debug().
-		Int("buffer_size", bufferSize).
-		Int64("entries_processed", s.entryCount.Load()).
-		Int64("flushes", s.flushCount.Load()).
-		Int64("errors", s.errorCount.Load()).
-		Str("circuit_state", circuitStateToString(state)).
-		Bool("is_running", s.isRunning.Load()).
-		Str("service_state", s.serviceState.Load()).
-		Msg("audit service health check")
-
-	// * Check for degraded state conditions
-	if s.errorCount.Load() > 5 && state == CircuitOpen {
-		if s.serviceState.Load() != string(ServiceStateDegraded) {
-			s.serviceState.Store(string(ServiceStateDegraded))
-			s.l.Warn().Msg("audit service entering degraded state due to repeated errors")
-		}
-	} else if s.serviceState.Load() == string(ServiceStateDegraded) && state == CircuitClosed {
-		// * Auto-recover from degraded state if circuit is closed again
-		s.serviceState.Store(string(ServiceStateRunning))
-		s.l.Info().Msg("audit service recovered from degraded state")
-	}
-}
-
-func circuitStateToString(state CircuitState) string {
-	switch state {
-	case CircuitClosed:
-		return "closed"
-	case CircuitOpen:
-		return "open"
-	case CircuitHalfOpen:
-		return "half-open"
-	default:
-		return "unknown"
-	}
-}
-
+// Optimized flusher with adaptive intervals
 func (s *service) startFlusher() {
-	ticker := time.NewTicker(time.Duration(s.config.FlushInterval) * time.Second)
+	baseInterval := time.Duration(s.config.FlushInterval) * time.Second
+	ticker := time.NewTicker(baseInterval)
 	defer ticker.Stop()
+
+	// Track consecutive empty flushes
+	emptyFlushes := 0
 
 	for {
 		select {
-		case <-s.stopFlusher:
+		case <-s.control.stopCh:
 			s.l.Debug().Msg("flusher stopped due to service shutdown")
 			return
 		case <-ticker.C:
@@ -505,6 +501,28 @@ func (s *service) startFlusher() {
 				return
 			}
 
+			// Skip flushing if buffer is empty to reduce load
+			if s.buffer.Size() == 0 {
+				emptyFlushes++
+				// After several empty flushes, adjust the interval to reduce system load
+				if emptyFlushes > 3 {
+					newInterval := min(baseInterval*2, 60*time.Second)
+					ticker.Reset(newInterval)
+					s.l.Debug().
+						Dur("interval", newInterval).
+						Msg("increased flush interval due to inactivity")
+				}
+				continue
+			}
+
+			// Reset back to normal interval if we were previously inactive
+			if emptyFlushes > 3 {
+				ticker.Reset(baseInterval)
+				s.l.Debug().Msg("reset to normal flush interval due to activity")
+			}
+			emptyFlushes = 0
+
+			// Perform the flush
 			if err := s.flushBuffer(context.Background()); err != nil && !eris.Is(err, ErrEmptyBuffer) {
 				s.l.Error().Err(err).Msg("failed to flush audit entries")
 				s.errorCount.Inc()
@@ -517,6 +535,7 @@ func (s *service) startFlusher() {
 	}
 }
 
+// Optimized buffer flushing with improved chunk sizing and error handling
 func (s *service) flushBuffer(ctx context.Context) error {
 	entries := s.buffer.FlushAndReset()
 	if len(entries) == 0 {
@@ -525,10 +544,38 @@ func (s *service) flushBuffer(ctx context.Context) error {
 
 	s.l.Debug().Int("entries", len(entries)).Msg("flushing buffer")
 
-	// * Process entries in chunks for better performance and reliability
-	for i := 0; i < len(entries); i += DefaultChunkSize {
-		end := min(i+DefaultChunkSize, len(entries))
+	// * Determine optimal chunk size based on entry count
+	// Small batches: use smaller chunks to reduce overhead
+	// Large batches: use larger chunks for throughput
+	var chunkSize int
+	switch {
+	case len(entries) < 20:
+		chunkSize = 10
+	case len(entries) < 100:
+		chunkSize = len(entries) / 2
+	case len(entries) < 500:
+		chunkSize = DefaultChunkSize
+	default:
+		chunkSize = DefaultChunkSize * 2 // Increase for very large batches
+	}
 
+	// * Process entries in chunks for better performance and reliability
+	for i := 0; i < len(entries); i += chunkSize {
+		// Check if context is cancelled
+		if ctx.Err() != nil {
+			// Put unprocessed entries back into the buffer
+			remainingEntries := entries[i:]
+			s.l.Warn().
+				Int("remaining", len(remainingEntries)).
+				Msg("context cancelled, returning entries to buffer")
+
+			for _, entry := range remainingEntries {
+				s.buffer.Add(entry)
+			}
+			return eris.Wrap(ctx.Err(), "flush interrupted")
+		}
+
+		end := min(i+chunkSize, len(entries))
 		chunk := entries[i:end]
 
 		// * Insert the chunk into the database
@@ -555,38 +602,195 @@ func (s *service) flushBuffer(ctx context.Context) error {
 	return nil
 }
 
+// Optimized chunk insertion with exponential backoff
+func (s *service) insertChunk(ctx context.Context, entries []*audit.Entry) error {
+	var err error
+	// Use exponential backoff for retries
+	backoffs := []time.Duration{
+		100 * time.Millisecond,
+		250 * time.Millisecond,
+		500 * time.Millisecond,
+	}
+
+	for retry := 0; retry < DefaultMaxRetries; retry++ {
+		// Check if context has been cancelled
+		if ctx.Err() != nil {
+			return eris.Wrap(ctx.Err(), "context cancelled during insert")
+		}
+
+		if err = s.repo.InsertAuditEntries(ctx, entries); err == nil {
+			return nil
+		}
+
+		// Don't sleep on the last retry
+		if retry < DefaultMaxRetries-1 {
+			// Use backoff if available, otherwise use a simple formula
+			var backoff time.Duration
+			if retry < len(backoffs) {
+				backoff = backoffs[retry]
+			} else {
+				backoff = time.Duration(retry+1) * 200 * time.Millisecond
+			}
+
+			s.l.Warn().Err(err).Int("retry", retry+1).
+				Dur("backoff", backoff).
+				Msg("retrying chunk insert")
+
+			time.Sleep(backoff)
+		}
+	}
+
+	return eris.Wrap(ErrMaxRetriesExceeded, err.Error())
+}
+
+// Improved final flush with better emergency entry handling
 func (s *service) performFinalFlush(ctx context.Context) error {
 	flushCtx, cancel := context.WithTimeout(ctx, DefaultFlushTimeout)
 	defer cancel()
 
+	// Attempt to flush the buffer
 	err := s.flushBuffer(flushCtx)
 	if err != nil && !eris.Is(err, ErrEmptyBuffer) {
-		return eris.Wrap(err, "final flush failed")
+		s.l.Error().Err(err).Msg("error during final buffer flush")
+		// Continue to try to process emergency entries despite buffer flush error
 	}
 
-	// * Also flush any emergency logs
-	close(s.emergencyLog) // * Close channel to signal no more entries
-	for entry := range s.emergencyLog {
-		if err = s.repo.InsertAuditEntries(ctx, []*audit.Entry{entry}); err != nil {
-			s.l.Error().Err(err).Msg("failed to insert critical audit entry during shutdown")
+	// Handle remaining emergency logs
+	var emergencyEntries []*audit.Entry
+
+	// Drain channel in a non-blocking way
+	drainDone := false
+	for !drainDone {
+		select {
+		case entry, ok := <-s.emergencyLog.ch:
+			if !ok {
+				drainDone = true
+				break
+			}
+			emergencyEntries = append(emergencyEntries, entry)
+		default:
+			drainDone = true
+		}
+	}
+
+	// Close the channel to prevent more entries
+	close(s.emergencyLog.ch)
+
+	// Process emergency entries in batches if any were collected
+	if len(emergencyEntries) > 0 {
+		s.l.Info().Int("count", len(emergencyEntries)).Msg("processing emergency entries during shutdown")
+
+		// Process in batches of 10 for better efficiency
+		for i := 0; i < len(emergencyEntries); i += 10 {
+			end := min(i+10, len(emergencyEntries))
+			batch := emergencyEntries[i:end]
+
+			insertCtx, insertCancel := context.WithTimeout(ctx, DefaultWorkerTimeout)
+			insertErr := s.repo.InsertAuditEntries(insertCtx, batch)
+			insertCancel()
+
+			if insertErr != nil {
+				s.l.Error().Err(insertErr).
+					Int("count", len(batch)).
+					Msg("failed to insert emergency entries during shutdown")
+			} else {
+				s.l.Info().Int("count", len(batch)).Msg("flushed emergency entries")
+			}
 		}
 	}
 
 	return nil
 }
 
-func (s *service) insertChunk(ctx context.Context, entries []*audit.Entry) error {
-	var err error
+// Enhanced health check that returns health status
+func (s *service) checkServiceHealth() bool {
+	bufferSize := s.buffer.Size()
+	state := s.buffer.GetState()
+	errorCount := s.errorCount.Load()
 
-	for retry := range DefaultMaxRetries {
-		if err = s.repo.InsertAuditEntries(ctx, entries); err == nil {
-			return nil
+	// Calculate buffer utilization
+	utilization := float64(bufferSize) / float64(s.buffer.limit) * 100
+
+	// * Log the current status
+	s.l.Debug().
+		Int("buffer_size", bufferSize).
+		Float64("buffer_utilization_pct", utilization).
+		Int64("entries_processed", s.entryCount.Load()).
+		Int64("flushes", s.flushCount.Load()).
+		Int64("errors", errorCount).
+		Str("circuit_state", circuitStateToString(state)).
+		Bool("is_running", s.isRunning.Load()).
+		Str("service_state", s.serviceState.Load()).
+		Msg("audit service health check")
+
+	isHealthy := true
+
+	// * Check for degraded state conditions
+	if errorCount > 5 && state == CircuitOpen {
+		if s.serviceState.Load() != string(ServiceStateDegraded) {
+			s.serviceState.Store(string(ServiceStateDegraded))
+			s.l.Warn().Msg("audit service entering degraded state due to repeated errors")
 		}
-		s.l.Warn().Err(err).Int("retry", retry+1).Msg("retrying chunk insert")
-		time.Sleep(time.Duration(retry+1) * 100 * time.Millisecond)
+		isHealthy = false
+	} else if s.serviceState.Load() == string(ServiceStateDegraded) && state == CircuitClosed {
+		// * Auto-recover from degraded state if circuit is closed again
+		s.serviceState.Store(string(ServiceStateRunning))
+		s.l.Info().Msg("audit service recovered from degraded state")
+		isHealthy = true
 	}
 
-	return eris.Wrap(ErrMaxRetriesExceeded, err.Error())
+	// Warn if buffer utilization is high
+	if utilization > 80 {
+		s.l.Warn().Float64("utilization_pct", utilization).Msg("audit buffer utilization high")
+		isHealthy = false
+	}
+
+	return isHealthy
+}
+
+// Adaptive health check monitor
+func (s *service) monitor() {
+	ticker := time.NewTicker(30 * time.Second)
+	defer ticker.Stop()
+
+	// Track consecutively healthy checks to reduce frequency when stable
+	healthyChecks := 0
+
+	for {
+		select {
+		case <-s.control.stopCh:
+			s.l.Debug().Msg("monitor stopped due to service shutdown")
+			return
+		case <-ticker.C:
+			isHealthy := s.checkServiceHealth()
+
+			// If healthy for a while, check less frequently to reduce overhead
+			if isHealthy {
+				healthyChecks++
+				if healthyChecks > 5 {
+					// Less frequent checks when stable
+					ticker.Reset(60 * time.Second)
+				}
+			} else {
+				// Reset to more frequent checks when issues detected
+				healthyChecks = 0
+				ticker.Reset(30 * time.Second)
+			}
+		}
+	}
+}
+
+func circuitStateToString(state CircuitState) string {
+	switch state {
+	case CircuitClosed:
+		return "closed"
+	case CircuitOpen:
+		return "open"
+	case CircuitHalfOpen:
+		return "half-open"
+	default:
+		return "unknown"
+	}
 }
 
 // RegisterSensitiveFields registers sensitive fields for a resource

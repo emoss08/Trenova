@@ -136,7 +136,7 @@ const MoveRow = memo(function MoveRow({
   return (
     <>
       <div
-        className="bg-card rounded-lg border border-bg-sidebar-border space-y-2"
+        className="bg-background rounded-lg border border-bg-sidebar-border space-y-2"
         key={move.id}
       >
         <StatusBadge

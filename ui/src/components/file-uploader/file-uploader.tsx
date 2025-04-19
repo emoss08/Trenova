@@ -2,18 +2,18 @@ import { API_URL } from "@/constants/env";
 import { type DocumentUploadSchema } from "@/lib/schemas/document-schema";
 import { cn, formatFileSize } from "@/lib/utils";
 import type {
-  FileUploadProps,
-  UploadError,
-  UploadFileParams,
-  UploadingFile,
+    FileUploadProps,
+    UploadError,
+    UploadFileParams,
+    UploadingFile,
 } from "@/types/file-uploader";
 import { useMutation } from "@tanstack/react-query";
 import React, {
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
+    useCallback,
+    useEffect,
+    useMemo,
+    useRef,
+    useState,
 } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
@@ -578,7 +578,7 @@ export default function DocumentUpload({
     () =>
       cn(
         "border-2 border-dashed rounded-lg p-6 text-center cursor-pointer transition-colors",
-        "bg-muted/20 hover:bg-muted/50 flex flex-col items-center justify-center",
+        "bg-muted/20 hover:bg-muted flex flex-col items-center justify-center",
         "min-h-[200px]",
       ),
     [],

@@ -1,23 +1,28 @@
 import { cva } from "class-variance-authority";
 
 export const badgeVariants = cva(
-  "inline-flex select-none items-center gap-x-1.5 px-2.5 py-0.5 rounded-md text-xs font-normal transition-colors focus:outline-hidden focus:ring-2 focus:ring-ring focus:ring-offset-2 [&_svg]:size-2",
+  "inline-flex select-none items-center border gap-x-1.5 px-2.5 py-0.5 rounded-md text-xs font-normal transition-colors focus:outline-hidden focus:ring-2 focus:ring-ring focus:ring-offset-2",
   {
     variants: {
       variant: {
-        default:
-          "border-transparent bg-primary text-primary-foreground hover:bg-primary/80",
+        default: "bg-primary text-primary-foreground hover:bg-primary/80",
         secondary:
-          "border-transparent bg-secondary text-secondary-foreground hover:bg-secondary/80",
-        active: "text-green-600 bg-green-600/20 dark:text-green-400",
-        inactive: "text-red-600 bg-red-600/20 dark:text-red-400",
-        info: "text-blue-600 bg-blue-600/20 dark:text-blue-400",
-        purple: "text-purple-600 bg-purple-600/20 dark:text-purple-400",
-        orange: "text-orange-600 bg-orange-600/20 dark:text-orange-400",
-        indigo: "text-indigo-600 bg-indigo-600/20 dark:text-indigo-400",
-        pink: "text-pink-600 bg-pink-600/20 dark:text-pink-400",
-        teal: "text-teal-600 bg-teal-600/20 dark:text-teal-400",
-        warning: "text-yellow-600 bg-yellow-600/20 dark:text-yellow-400",
+          "bg-secondary text-secondary-foreground hover:bg-secondary/80",
+        active:
+          "text-green-600 bg-green-600/20 border-green-600/30 dark:text-green-400",
+        inactive:
+          "text-red-600 bg-red-600/20 border-red-600/30 dark:text-red-400",
+        info: "text-blue-600 bg-blue-600/20 border-blue-600/30 dark:text-blue-400",
+        purple:
+          "text-purple-600 bg-purple-600/20 border-purple-600/30 dark:text-purple-400",
+        orange:
+          "text-orange-600 bg-orange-600/20 border-orange-600/30 dark:text-orange-400",
+        indigo:
+          "text-indigo-600 bg-indigo-600/20 border-indigo-600/30 dark:text-indigo-400",
+        pink: "text-pink-600 bg-pink-600/20 border-pink-600/30 dark:text-pink-400",
+        teal: "text-teal-600 bg-teal-600/20 border-teal-600/30 dark:text-teal-400",
+        warning:
+          "text-yellow-600 bg-yellow-600/20 border-yellow-600/30 dark:text-yellow-400",
         outline: "text-muted-foreground",
       },
     },

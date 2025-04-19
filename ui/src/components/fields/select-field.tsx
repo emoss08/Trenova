@@ -178,7 +178,7 @@ const ReactSelectInput = React.forwardRef<any, ReactSelectInputProps>(
         styles={{
           control: () => ({
             cursor: "pointer",
-            minHeight: "2rem",
+            // minHeight: "2rem",
           }),
           menuList: (base) => ({
             ...base,
@@ -205,7 +205,7 @@ const ReactSelectInput = React.forwardRef<any, ReactSelectInputProps>(
         classNames={{
           control: (state) =>
             cn(
-              "flex h-8 w-full rounded-md border border-muted-foreground/20 px-2 py-1.5 bg-muted text-sm",
+              "flex items-center h-7 w-full rounded-md border border-muted-foreground/20 px-2 py-1.5 bg-muted text-sm",
               "transition-[border-color,box-shadow] outline-hidden  duration-200 ease-in-out",
               state.isFocused && "border-blue-600 ring-4 ring-blue-600/20",
               // Invalid and focused state

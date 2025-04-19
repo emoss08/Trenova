@@ -2,46 +2,46 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import type { TableSheetProps } from "@/types/data-table";
 import type {
-  CollapsibleNodeProps,
-  JsonViewerProps,
+    CollapsibleNodeProps,
+    JsonViewerProps,
 } from "@/types/json-viewer";
 import {
-  faChevronDown,
-  faChevronRight,
-  faEllipsis,
-  faMinus,
-  faPlus,
+    faChevronDown,
+    faChevronRight,
+    faEllipsis,
+    faMinus,
+    faPlus,
 } from "@fortawesome/pro-regular-svg-icons";
 import React, { useMemo, useState } from "react";
 import { toast } from "sonner";
 import { BetaTag } from "./beta-tag";
 import {
-  Dialog,
-  DialogBody,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
+    Dialog,
+    DialogBody,
+    DialogContent,
+    DialogDescription,
+    DialogHeader,
+    DialogTitle,
 } from "./dialog";
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuGroup,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuGroup,
+    DropdownMenuItem,
+    DropdownMenuLabel,
+    DropdownMenuSeparator,
+    DropdownMenuTrigger,
 } from "./dropdown-menu";
 import { Icon } from "./icons";
 import { ScrollArea } from "./scroll-area";
 import { SensitiveBadge } from "./sensitive-badge";
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
+    Table,
+    TableBody,
+    TableCell,
+    TableHead,
+    TableHeader,
+    TableRow,
 } from "./table";
 
 function CollapsibleNode({
@@ -291,8 +291,8 @@ export function ReadableJsonValue({
           <Table className="border border-border rounded-md">
             <TableHeader>
               <TableRow className="hover:bg-transparent">
-                <TableHead className="w-1/3 bg-muted/50">Key</TableHead>
-                <TableHead className="bg-muted/50">Value</TableHead>
+                <TableHead className="w-1/3 bg-muted">Key</TableHead>
+                <TableHead className="bg-muted">Value</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -451,10 +451,10 @@ export function JsonViewerDialog({
           <Table>
             <TableHeader>
               <TableRow className="hover:bg-transparent">
-                <TableHead className="w-1/3 bg-muted/50 font-medium">
+                <TableHead className="w-1/3 bg-muted font-medium">
                   Property
                 </TableHead>
-                <TableHead className="bg-muted/50 font-medium">Value</TableHead>
+                <TableHead className="bg-muted font-medium">Value</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>

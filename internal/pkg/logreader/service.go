@@ -30,6 +30,7 @@ type ServiceParams struct {
 	Logger      *logger.Logger
 	Config      *config.Config
 	PermService services.PermissionService
+	LC          fx.Lifecycle
 }
 
 // Service provides methods to read and stream logs
@@ -39,6 +40,10 @@ type Service struct {
 	maxEntries int
 	mu         sync.RWMutex
 	clients    map[*LogClient]bool
+
+	// Channels for controlling background goroutines
+	cancel context.CancelFunc
+	ctx    context.Context
 }
 
 // NewService creates a new log reader service
@@ -47,16 +52,51 @@ func NewService(p ServiceParams) *Service {
 		Str("service", "logreader").
 		Logger()
 
+	// Create a context with cancel function for managing shutdown
+	ctx, cancel := context.WithCancel(context.Background())
+
 	service := &Service{
 		l:          &log,
 		cfg:        p.Config,
 		maxEntries: 1000,
 		clients:    make(map[*LogClient]bool),
+		ctx:        ctx,
+		cancel:     cancel,
 	}
 
-	if err := service.watchLogFile(context.Background()); err != nil {
-		log.Error().Err(err).Msg("failed to watch log file")
-	}
+	// Register lifecycle hooks
+	p.LC.Append(fx.Hook{
+		OnStart: func(context.Context) error {
+			log.Info().Msg("starting log reader service")
+			return service.watchLogFile(service.ctx)
+		},
+		OnStop: func(context.Context) error {
+			log.Info().Msg("stopping log reader service")
+
+			// Create a channel to wait for proper shutdown
+			done := make(chan struct{})
+
+			// Cancel the context to signal all goroutines to stop
+			service.cancel()
+
+			// Wait for a short time to ensure goroutines notice the cancellation
+			go func() {
+				time.Sleep(500 * time.Millisecond)
+				log.Info().Msg("log reader service stopped successfully")
+				close(done)
+			}()
+
+			// Wait for completion or timeout
+			select {
+			case <-done:
+				// Normal shutdown
+			case <-time.After(2 * time.Second):
+				log.Warn().Msg("log reader service shutdown timed out, forcing exit")
+			}
+
+			return nil
+		},
+	})
 
 	return service
 }

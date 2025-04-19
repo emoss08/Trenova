@@ -1,44 +1,44 @@
 import { Button } from "@/components/ui/button";
 import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
+    Card,
+    CardContent,
+    CardDescription,
+    CardHeader,
+    CardTitle,
 } from "@/components/ui/card";
 import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
+    Collapsible,
+    CollapsibleContent,
+    CollapsibleTrigger,
 } from "@/components/ui/collapsible";
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuGroup,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuGroup,
+    DropdownMenuItem,
+    DropdownMenuLabel,
+    DropdownMenuSeparator,
+    DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Icon } from "@/components/ui/icons";
 import { ChangeDiffDialog } from "@/components/ui/json-diff-viewer";
 import { JsonViewer } from "@/components/ui/json-viewer";
 import { Separator } from "@/components/ui/separator";
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
+    Table,
+    TableBody,
+    TableCell,
+    TableHead,
+    TableHeader,
+    TableRow,
 } from "@/components/ui/table";
 import {
-  faArrowUpRightFromSquare,
-  faChevronDown,
-  faChevronRight,
-  faEllipsis,
-  faMinus,
-  faPlus,
+    faArrowUpRightFromSquare,
+    faChevronDown,
+    faChevronRight,
+    faEllipsis,
+    faMinus,
+    faPlus,
 } from "@fortawesome/pro-solid-svg-icons";
 import { useMemo, useState } from "react";
 
@@ -108,7 +108,7 @@ export function ChangesContent({
           <Collapsible key={key} defaultOpen={true}>
             <div className="border rounded-md shadow-sm">
               <CollapsibleTrigger asChild>
-                <div className="flex items-center p-3 cursor-pointer hover:bg-muted/50 transition-colors">
+                <div className="flex items-center p-3 cursor-pointer hover:bg-muted transition-colors">
                   <Icon
                     icon={faChevronDown}
                     className="mr-2 h-3 w-3 text-muted-foreground"

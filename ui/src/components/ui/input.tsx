@@ -32,7 +32,7 @@ function Input({
           type={type}
           readOnly={readOnly}
           className={cn(
-            "border-muted-foreground/20 bg-muted flex h-8 w-full rounded-md border px-2 py-1 text-sm",
+            "border-muted-foreground/20 bg-muted flex h-7 w-full rounded-md border px-2 py-1 text-xs",
             "file:border-0 file:bg-transparent file:text-sm file:font-medium",
             "placeholder:text-muted-foreground",
             "disabled:cursor-not-allowed disabled:opacity-50",
@@ -61,4 +61,3 @@ function Input({
 }
 
 export { Input };
-
