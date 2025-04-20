@@ -308,7 +308,7 @@ export function LogReader() {
 
             <Separator className="my-4" />
 
-            <div className="border rounded-lg overflow-hidden bg-muted/30">
+            <div className="border rounded-lg overflow-hidden bg-muted">
               <VirtualLogViewer
                 logs={logs}
                 autoScroll={autoScroll}

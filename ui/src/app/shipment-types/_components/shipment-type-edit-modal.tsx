@@ -4,7 +4,7 @@ import {
   ShipmentTypeSchema,
 } from "@/lib/schemas/shipment-type-schema";
 import { type EditTableSheetProps } from "@/types/data-table";
-import { yupResolver } from "@hookform/resolvers/yup";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { ShipmentTypeForm } from "./shipment-type-form";
 
@@ -13,8 +13,8 @@ export function EditShipmentTypeModal({
   onOpenChange,
   currentRecord,
 }: EditTableSheetProps<ShipmentTypeSchema>) {
-  const form = useForm<ShipmentTypeSchema>({
-    resolver: yupResolver(shipmentTypeSchema),
+  const form = useForm({
+    resolver: zodResolver(shipmentTypeSchema),
     defaultValues: currentRecord,
   });
 
@@ -29,7 +29,6 @@ export function EditShipmentTypeModal({
       formComponent={<ShipmentTypeForm />}
       fieldKey="code"
       form={form}
-      schema={shipmentTypeSchema}
     />
   );
 }

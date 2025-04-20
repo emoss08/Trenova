@@ -5,20 +5,20 @@ import { tabConfig } from "@/config/site-search";
 import { cn } from "@/lib/utils";
 import { SearchInputProps, SiteSearchTab } from "@/types/search";
 import {
-    faChevronDown,
-    faChevronUp,
-    faCommand,
-    faMagnifyingGlass,
-    faSearch,
-    faXmark,
+  faChevronDown,
+  faChevronUp,
+  faCommand,
+  faMagnifyingGlass,
+  faSearch,
+  faXmark,
 } from "@fortawesome/pro-regular-svg-icons";
 import { AnimatePresence, motion } from "motion/react";
 import React, { useEffect, useRef, useState } from "react";
 import {
-    Tooltip,
-    TooltipContent,
-    TooltipProvider,
-    TooltipTrigger,
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
 } from "../ui/tooltip";
 import { getFilterOptions } from "./site-search-filter-options";
 
@@ -351,7 +351,7 @@ export function SearchInputWithBadges({
                       stiffness: 500,
                       damping: 30,
                     }}
-                    className="text-xs bg-accent/50 text-accent-foreground flex items-center gap-1 px-1.5 py-0.5 rounded-md flex-shrink-0"
+                    className="text-xs bg-muted text-accent-foreground flex items-center gap-1 px-1.5 py-0.5 rounded-md flex-shrink-0"
                   >
                     <span className="capitalize text-muted-foreground">
                       {filter}:
@@ -379,8 +379,8 @@ export function SearchInputWithBadges({
                     className={cn(
                       "relative text-xs flex items-center gap-1 px-1.5 py-0.5 rounded-md cursor-pointer flex-shrink-0 mr-2.5",
                       showFilterDropdown
-                        ? "bg-accent/50 text-accent-foreground"
-                        : "bg-muted text-muted-foreground hover:bg-muted/80",
+                        ? "bg-muted text-accent-foreground"
+                        : "bg-muted text-muted-foreground hover:bg-muted",
                     )}
                   >
                     <span>{hiddenFilterCount} more...</span>
@@ -407,7 +407,7 @@ export function SearchInputWithBadges({
                             {hiddenFilters.map(([filter, filterValue]) => (
                               <div
                                 key={filter}
-                                className="flex items-center justify-between px-2 py-1.5 text-sm hover:bg-accent/50 rounded-sm cursor-auto"
+                                className="flex items-center justify-between px-2 py-1.5 text-sm hover:bg-muted rounded-sm cursor-auto"
                               >
                                 <div className="flex items-center gap-1">
                                   <span className="capitalize text-xs text-muted-foreground">
@@ -483,8 +483,8 @@ export function SearchInputWithBadges({
                   className={cn(
                     "flex items-center px-2 py-1.5 rounded-sm cursor-pointer",
                     selectedTagIndex === index
-                      ? "bg-accent text-accent-foreground"
-                      : "hover:bg-accent/50",
+                      ? "bg-muted text-accent-foreground"
+                      : "hover:bg-muted",
                   )}
                   onClick={() => applyTag(key)}
                 >
@@ -528,7 +528,7 @@ export function SearchInputWithBadges({
                     <TabsTrigger
                       key={key}
                       value={key}
-                      className="data-[state=active]:bg-muted data-[state=active]:ring-2 data-[state=active]:ring-blue-600/20 data-[state=active]:border-blue-600 data-[state=active]:text- data-[state=active]:shadow-none bg-background border border-border hover:bg-accent/50 cursor-pointer"
+                      className="data-[state=active]:bg-muted data-[state=active]:ring-2 data-[state=active]:ring-blue-600/20 data-[state=active]:border-blue-600 data-[state=active]:text- data-[state=active]:shadow-none bg-background border border-border hover:bg-muted cursor-pointer"
                     >
                       <div className="flex items-center gap-1.5">
                         <Icon icon={config.icon} className="size-3.5" />

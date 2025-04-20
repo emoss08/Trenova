@@ -234,7 +234,7 @@ const CompactStopFormComponent = ({
             Manage planned and actual arrival/departure times for this stop.
           </p>
           <div className="space-y-4">
-            <div className="rounded-lg bg-accent/50 p-4">
+            <div className="rounded-lg bg-muted p-4">
               <h4 className="text-sm font-medium text-foreground mb-3">
                 Planned Times
               </h4>
@@ -261,7 +261,7 @@ const CompactStopFormComponent = ({
                 </FormControl>
               </FormGroup>
             </div>
-            <div className="rounded-lg bg-accent/50 p-4">
+            <div className="rounded-lg bg-muted p-4">
               <h4 className="text-sm font-medium text-foreground mb-3">
                 Actual Times
               </h4>

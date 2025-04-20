@@ -224,7 +224,7 @@ const ReactSelectInput = React.forwardRef<any, ReactSelectInputProps>(
           valueContainer: () => cn("gap-1", isReadOnly && "cursor-not-allowed"),
           singleValue: () => "leading-7 ml-1",
           multiValue: () =>
-            "bg-accent rounded items-center py-0.5 pl-2 pr-1 gap-0.5 h-6",
+            "bg-muted rounded items-center py-0.5 pl-2 pr-1 gap-0.5 h-6",
           multiValueLabel: () => "text-xs leading-4",
           multiValueRemove: () =>
             "hover:text-foreground/50 text-foreground rounded-md h-4 w-4",

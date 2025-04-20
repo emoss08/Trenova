@@ -44,7 +44,7 @@ export default function IntegrationCard({
       </div>
       <div className="mt-2">
         <div className="h-[80px] text-wrap truncate text-sm text-muted-foreground">
-          {integration.overview || integration.description}
+          {integration.description}
         </div>
       </div>
 

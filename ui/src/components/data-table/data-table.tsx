@@ -1,4 +1,3 @@
-import { API_URL } from "@/constants/env";
 import { useDataTableQuery } from "@/hooks/use-data-table-query";
 import { useDataTableState } from "@/hooks/use-data-table-state";
 import { DataTableProps } from "@/types/data-table";
@@ -29,6 +28,7 @@ import {
   DataTableCreateButton,
   DataTableViewOptions,
 } from "./_components/data-table-view-options";
+import { API_URL } from "@/constants/env";
 
 const DEFAULT_PAGE_SIZE = 10;
 const DEFAULT_PAGE_SIZE_OPTIONS = [10, 20, 30, 40, 50] as const;

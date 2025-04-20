@@ -362,7 +362,7 @@ export function Autocomplete<T>({
                   <Icon
                     icon={faCheck}
                     className={cn(
-                      "ml-auto",
+                      "ml-auto size-3",
                       value === getOptionValue(option).toString()
                         ? "opacity-100"
                         : "opacity-0",

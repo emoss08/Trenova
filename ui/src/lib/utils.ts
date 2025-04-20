@@ -1,12 +1,12 @@
 import { Resource } from "@/types/audit-entry";
 import { ResourcePageInfo, ResourceType, RouteInfo } from "@/types/nav-links";
 import {
-  faFileAlt,
-  faFileContract,
-  faFileExcel,
-  faFileImage,
-  faFilePdf,
-  faFileWord,
+    faFileAlt,
+    faFileContract,
+    faFileExcel,
+    faFileImage,
+    faFilePdf,
+    faFileWord,
 } from "@fortawesome/pro-solid-svg-icons";
 import { clsx, type ClassValue } from "clsx";
 import { RefObject, useEffect } from "react";
@@ -413,7 +413,7 @@ export function getFileClass(fileType: string): FileClass {
       borderColor: "border-blue-600",
     };
   return {
-    bgColor: "bg-muted-foreground/20",
+    bgColor: "bg-muted-foreground/10",
     iconColor: "text-muted-foreground",
     borderColor: "border-muted-foreground",
   };

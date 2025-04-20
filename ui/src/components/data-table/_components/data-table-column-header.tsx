@@ -3,22 +3,22 @@ import { type Column } from "@tanstack/react-table";
 
 import { Icon } from "@/components/ui/icons";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
 } from "@/components/ui/select";
 import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
+    Tooltip,
+    TooltipContent,
+    TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 import {
-  faArrowDown,
-  faArrowUp,
-  faArrowUpArrowDown,
-  faCircleInfo,
+    faArrowDown,
+    faArrowUp,
+    faArrowUpArrowDown,
+    faCircleInfo,
 } from "@fortawesome/pro-regular-svg-icons";
 import { ArrowDownIcon, ArrowUpIcon, EyeNoneIcon } from "@radix-ui/react-icons";
 
@@ -65,7 +65,7 @@ export function DataTableColumnHeader<TData, TValue>({
                 ? "Sorted ascending. Click to sort descending."
                 : "Not sorted. Click to sort ascending."
           }
-          className="inline-flex items-center justify-between -ml-3 h-8 w-fit border-transparent bg-transparent text-xs hover:bg-accent hover:text-accent-foreground data-[state=open]:bg-accent data-[state=open]:text-accent-foreground [&>svg:last-child]:hidden"
+          className="inline-flex items-center justify-between -ml-3 h-8 w-fit border-transparent bg-transparent text-xs hover:bg-muted hover:text-accent-foreground data-[state=open]:bg-muted data-[state=open]:text-accent-foreground [&>svg:last-child]:hidden"
         >
           <div className="inline-flex items-center gap-1">
             {title}
@@ -154,7 +154,7 @@ export function DataTableColumnHeaderWithTooltip<TData, TValue>({
     <div className={cn("flex items-center gap-2", className)}>
       <Tooltip>
         <TooltipTrigger asChild>
-          <div className="inline-flex items-center justify-center cursor-normal -ml-3 h-8 px-3 py-2 text-sm rounded-md w-fit border-transparent bg-transparent text-xs hover:bg-accent hover:text-accent-foreground data-[state=open]:bg-accent data-[state=open]:text-accent-foreground [&>svg:last-child]:hidden">
+          <div className="inline-flex items-center justify-center cursor-normal -ml-3 h-8 px-3 py-2 text-sm rounded-md w-fit border-transparent bg-transparent text-xs hover:bg-muted hover:text-accent-foreground data-[state=open]:bg-muted data-[state=open]:text-accent-foreground [&>svg:last-child]:hidden">
             <div className="inline-flex items-center gap-1">
               {startContent}
               {title}

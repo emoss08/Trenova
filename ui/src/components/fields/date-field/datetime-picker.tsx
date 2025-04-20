@@ -209,7 +209,7 @@ export function DateTimePicker({
             type="button"
             size="icon"
             variant="outline"
-            className="absolute right-2 top-1/2 size-5 -translate-y-1/2"
+            className="absolute right-2 top-1/2 size-5 -translate-y-1/2 rounded-sm bg-transparent text-muted-foreground hover:bg-foreground/10 [&>svg]:size-4"
           >
             <span className="sr-only">Open normal date time picker</span>
             <CalendarIcon className="size-4" />
@@ -240,7 +240,7 @@ export function DateTimePicker({
                 aria-selected={selectedIndex === index}
                 className={cn(
                   "flex cursor-pointer items-center justify-between gap-1 rounded-sm px-3 py-1.5 text-xs",
-                  index === selectedIndex && "bg-accent text-accent-foreground",
+                  index === selectedIndex && "bg-muted text-accent-foreground",
                 )}
                 onClick={() => {
                   const dateStr = generateDateTimeString(suggestion.date);

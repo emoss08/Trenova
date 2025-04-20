@@ -1,44 +1,44 @@
 import { Button } from "@/components/ui/button";
 import {
-    Card,
-    CardContent,
-    CardDescription,
-    CardHeader,
-    CardTitle,
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
 } from "@/components/ui/card";
 import {
-    Collapsible,
-    CollapsibleContent,
-    CollapsibleTrigger,
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
 } from "@/components/ui/collapsible";
 import {
-    DropdownMenu,
-    DropdownMenuContent,
-    DropdownMenuGroup,
-    DropdownMenuItem,
-    DropdownMenuLabel,
-    DropdownMenuSeparator,
-    DropdownMenuTrigger,
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuGroup,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Icon } from "@/components/ui/icons";
 import { ChangeDiffDialog } from "@/components/ui/json-diff-viewer";
 import { JsonViewer } from "@/components/ui/json-viewer";
 import { Separator } from "@/components/ui/separator";
 import {
-    Table,
-    TableBody,
-    TableCell,
-    TableHead,
-    TableHeader,
-    TableRow,
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
 } from "@/components/ui/table";
 import {
-    faArrowUpRightFromSquare,
-    faChevronDown,
-    faChevronRight,
-    faEllipsis,
-    faMinus,
-    faPlus,
+  faArrowUpRightFromSquare,
+  faChevronDown,
+  faChevronRight,
+  faEllipsis,
+  faMinus,
+  faPlus,
 } from "@fortawesome/pro-solid-svg-icons";
 import { useMemo, useState } from "react";
 
@@ -209,7 +209,7 @@ function DisplayValue({ value }: { value: any }) {
         variant="ghost"
         size="sm"
         onClick={() => setIsExpanded(!isExpanded)}
-        className="px-2 py-1 h-7 text-foreground hover:bg-muted/70"
+        className="px-2 py-1 h-7 text-foreground hover:bg-muted"
       >
         <Icon icon={isExpanded ? faMinus : faPlus} className="size-3.5 mr-2" />
         <span className="text-xs font-medium">{summary}</span>
@@ -369,7 +369,7 @@ function ChangeActions({
           <Button
             variant="ghost"
             size="icon"
-            className="size-8 hover:bg-muted/70 rounded-md"
+            className="size-8 hover:bg-muted rounded-md"
           >
             <Icon icon={faEllipsis} className="size-4" />
           </Button>

@@ -68,6 +68,7 @@ export function CheckEmailForm({ onEmailVerified }: CheckEmailFormProps) {
         </FormControl>
       </FormGroup>
       <Button
+        size="lg"
         type="submit"
         className="w-full"
         isLoading={isSubmitting}

@@ -6,6 +6,7 @@ export type InputProps = React.ComponentProps<"input"> & {
   isInvalid?: boolean;
   icon?: React.ReactNode;
   sideText?: string;
+  rightElement?: React.ReactNode;
 };
 
 function Input({
@@ -15,6 +16,7 @@ function Input({
   icon,
   sideText,
   readOnly,
+  rightElement,
   ...props
 }: InputProps) {
   return (
@@ -45,7 +47,7 @@ function Input({
             isInvalid &&
               "border-red-500 bg-red-500/20 ring-0 ring-red-500 placeholder:text-red-500 focus:outline-hidden focus-visible:border-red-600 focus-visible:ring-4 focus-visible:ring-red-400/20",
             icon && "pl-8",
-            sideText && "pr-12",
+            (sideText || rightElement) && "pr-12",
             className,
           )}
           {...props}
@@ -55,9 +57,15 @@ function Input({
             {sideText}
           </div>
         )}
+        {rightElement && (
+          <div className="absolute inset-y-0 right-0 flex items-center pr-1">
+            {rightElement}
+          </div>
+        )}
       </div>
     </div>
   );
 }
 
 export { Input };
+

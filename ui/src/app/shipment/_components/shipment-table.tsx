@@ -138,7 +138,7 @@ function ShipmentTabs({
             >
               {formatStatusText(statusItem.status)}{" "}
               {count > 0 && (
-                <div className="text-xs text-muted-foreground bg-muted rounded-md px-1.5 items-center justify-center py-0.5 size-full group-data-[state=active]:bg-primary group-data-[state=active]:text-white">
+                <div className="text-xs text-muted-foreground bg-muted rounded-md px-1.5 items-center justify-center py-0.5 size-full group-data-[state=active]:bg-primary group-data-[state=active]:text-background">
                   {count}
                 </div>
               )}

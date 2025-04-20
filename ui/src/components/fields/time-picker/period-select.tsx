@@ -6,17 +6,17 @@
 import * as React from "react";
 
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
 } from "@/components/ui/select";
 
 import {
-  display12HourValue,
-  setDateByType,
-  type Period,
+    display12HourValue,
+    setDateByType,
+    type Period,
 } from "./time-picker-utils";
 
 export interface PeriodSelectorProps {
@@ -67,7 +67,7 @@ export const TimePeriodSelect = React.forwardRef<
         <SelectTrigger
           id="period"
           ref={ref}
-          className="w-[65px] focus:bg-accent focus:text-accent-foreground"
+          className="w-[65px] focus:bg-muted focus:text-accent-foreground"
           onKeyDown={handleKeyDown}
         >
           <SelectValue />

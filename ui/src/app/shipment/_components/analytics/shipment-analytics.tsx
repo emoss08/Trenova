@@ -5,7 +5,7 @@ import { AnalyticsPage } from "@/types/analytics";
 import { useSuspenseQuery } from "@tanstack/react-query";
 
 export function ShipmentAnalytics() {
-  const { data: analytics, isLoading: isLoadingAnalytics } = useSuspenseQuery({
+  const { data: analytics } = useSuspenseQuery({
     ...queries.analytics.getAnalytics(AnalyticsPage.ShipmentManagement),
   });
 

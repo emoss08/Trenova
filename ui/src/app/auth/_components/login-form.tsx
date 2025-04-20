@@ -118,6 +118,7 @@ export function LoginForm({ email, onForgotPassword }: LoginFormProps) {
           <Tooltip delayDuration={400}>
             <TooltipTrigger asChild>
               <Button
+                size="lg"
                 type="submit"
                 isLoading={isSubmitting}
                 disabled={isSubmitting}

@@ -101,7 +101,7 @@ export function DocumentListSkeleton() {
               </div>
             </div>
           </div>
-          <div className="p-3 bg-muted/10 flex justify-between">
+          <div className="p-3 bg-muted flex justify-between">
             <Skeleton className="h-8 w-20" />
             <Skeleton className="h-8 w-20" />
           </div>

@@ -113,6 +113,10 @@ export function IntegrationCategoryBadge({
       variant: "indigo",
       text: "Freight Logistics",
     },
+    [IntegrationCategory.Telematics]: {
+      variant: "teal",
+      text: "Telematics",
+    },
   };
 
   return (

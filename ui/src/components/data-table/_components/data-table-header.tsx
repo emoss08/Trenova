@@ -1,41 +1,45 @@
+"use no memo";
 import { TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { flexRender, Table } from "@tanstack/react-table";
-import { memo } from "react";
+import {
+  flexRender,
+  type Header,
+  type HeaderGroup,
+  type Table,
+} from "@tanstack/react-table";
 
-// Memoized header cell component to prevent unnecessary re-renders
-const HeaderCell = memo(
-  ({ header }: { header: any }) => (
-    <TableHead colSpan={header.colSpan}>
+function HeaderCell<K extends Record<string, any>>({
+  header,
+}: {
+  header: Header<K, unknown>;
+}) {
+  return (
+    <TableHead key={header.id}>
       {header.isPlaceholder
         ? null
         : flexRender(header.column.columnDef.header, header.getContext())}
     </TableHead>
-  ),
-  // Custom compare function to prevent unnecessary re-renders
-  (prev, next) => prev.header.id === next.header.id,
-);
-
-HeaderCell.displayName = "HeaderCell";
-
-// Memoized header row component
-const HeaderRow = memo(
-  ({ headerGroup }: { headerGroup: any }) => (
+  );
+}
+function HeaderRow<K extends Record<string, any>>({
+  headerGroup,
+}: {
+  headerGroup: HeaderGroup<K>;
+}) {
+  return (
     <TableRow>
-      {headerGroup.headers.map((header: any) => (
+      {headerGroup.headers.map((header) => (
         <HeaderCell key={header.id} header={header} />
       ))}
     </TableRow>
-  ),
-  // Only re-render if the header group ID changes
-  (prev, next) => prev.headerGroup.id === next.headerGroup.id,
-);
+  );
+}
 
-HeaderRow.displayName = "HeaderRow";
-
-// Memoize the entire header component
-export const DataTableHeader = memo(function DataTableHeaderInner<
-  K extends Record<string, any>,
->({ table }: { table: Table<K> }) {
+// Main header component
+export function DataTableHeader<TData extends Record<string, any>>({
+  table,
+}: {
+  table: Table<TData>;
+}) {
   return (
     <TableHeader>
       {table.getHeaderGroups().map((headerGroup) => (
@@ -43,6 +47,4 @@ export const DataTableHeader = memo(function DataTableHeaderInner<
       ))}
     </TableHeader>
   );
-});
-
-DataTableHeader.displayName = "DataTableHeader";
+}

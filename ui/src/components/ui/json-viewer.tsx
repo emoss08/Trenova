@@ -2,46 +2,46 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import type { TableSheetProps } from "@/types/data-table";
 import type {
-    CollapsibleNodeProps,
-    JsonViewerProps,
+  CollapsibleNodeProps,
+  JsonViewerProps,
 } from "@/types/json-viewer";
 import {
-    faChevronDown,
-    faChevronRight,
-    faEllipsis,
-    faMinus,
-    faPlus,
+  faChevronDown,
+  faChevronRight,
+  faEllipsis,
+  faMinus,
+  faPlus,
 } from "@fortawesome/pro-regular-svg-icons";
 import React, { useMemo, useState } from "react";
 import { toast } from "sonner";
 import { BetaTag } from "./beta-tag";
 import {
-    Dialog,
-    DialogBody,
-    DialogContent,
-    DialogDescription,
-    DialogHeader,
-    DialogTitle,
+  Dialog,
+  DialogBody,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
 } from "./dialog";
 import {
-    DropdownMenu,
-    DropdownMenuContent,
-    DropdownMenuGroup,
-    DropdownMenuItem,
-    DropdownMenuLabel,
-    DropdownMenuSeparator,
-    DropdownMenuTrigger,
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuGroup,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
 } from "./dropdown-menu";
 import { Icon } from "./icons";
 import { ScrollArea } from "./scroll-area";
 import { SensitiveBadge } from "./sensitive-badge";
 import {
-    Table,
-    TableBody,
-    TableCell,
-    TableHead,
-    TableHeader,
-    TableRow,
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
 } from "./table";
 
 function CollapsibleNode({
@@ -278,7 +278,7 @@ export function ReadableJsonValue({
         variant="ghost"
         size="sm"
         onClick={() => setIsExpanded(!isExpanded)}
-        className="px-3 py-1 h-7 text-foreground hover:bg-muted/70"
+        className="px-3 py-1 h-7 text-foreground hover:bg-muted"
       >
         <Icon icon={isExpanded ? faMinus : faPlus} className="size-3.5 mr-2" />
         <span className="text-xs font-medium">
@@ -300,7 +300,7 @@ export function ReadableJsonValue({
                 ? value.map((item: any, index: number) => (
                     <TableRow
                       key={`${path}.${index}`}
-                      className="hover:bg-muted/30"
+                      className="hover:bg-muted"
                     >
                       <TableCell className="font-mono text-xs font-medium">
                         [{index}]
@@ -315,10 +315,7 @@ export function ReadableJsonValue({
                     </TableRow>
                   ))
                 : Object.entries(value).map(([key, val]) => (
-                    <TableRow
-                      key={`${path}.${key}`}
-                      className="hover:bg-muted/30"
-                    >
+                    <TableRow key={`${path}.${key}`} className="hover:bg-muted">
                       <TableCell className="font-mono text-xs font-medium">
                         {key}
                       </TableCell>
@@ -394,7 +391,7 @@ function JsonViewerActions({ data }: { data: any }) {
           <Button
             variant="ghost"
             size="icon"
-            className="size-8 hover:bg-muted/70 rounded-md"
+            className="size-8 hover:bg-muted rounded-md"
           >
             <Icon icon={faEllipsis} className="size-4" />
           </Button>
@@ -459,7 +456,7 @@ export function JsonViewerDialog({
             </TableHeader>
             <TableBody>
               {Object.entries(data).map(([key, value]) => (
-                <TableRow key={key} className="hover:bg-muted/30">
+                <TableRow key={key} className="hover:bg-muted">
                   <TableCell className="font-mono text-xs font-medium border-r border-border/50">
                     {key}
                   </TableCell>
