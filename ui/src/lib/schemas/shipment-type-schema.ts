@@ -5,9 +5,12 @@ export const shipmentTypeSchema = z.object({
   id: z.string().optional(),
   organizationId: z.string().optional(),
   businessUnitId: z.string().optional(),
-  status: z.nativeEnum(Status, {
-    message: "Status is required",
-  }),
+  version: z.number().optional(),
+  createdAt: z.number().optional(),
+  updatedAt: z.number().optional(),
+
+  // * Core Fields
+  status: z.nativeEnum(Status),
   code: z.string().min(1, "Code is required"),
   description: z.string().optional(),
   color: z.string().optional(),

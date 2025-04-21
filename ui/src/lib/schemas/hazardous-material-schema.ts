@@ -3,32 +3,31 @@ import {
   HazardousClassChoiceProps,
   PackingGroupChoiceProps,
 } from "@/types/hazardous-material";
-import { boolean, type InferType, mixed, object, string } from "yup";
+import { z } from "zod";
 
-export const hazardousMaterialSchema = object({
-  id: string().optional(),
-  organizationId: string().nullable().optional(),
-  businessUnitId: string().nullable().optional(),
-  status: mixed<Status>()
-    .required("Status is required")
-    .oneOf(Object.values(Status)),
-  code: string().required("Code is required"),
-  name: string().required("Name is required"),
-  description: string().required("Description is required"),
-  class: mixed<HazardousClassChoiceProps>()
-    .required("Class is required")
-    .oneOf(Object.values(HazardousClassChoiceProps)),
-  unNumber: string().optional(),
-  ergNumber: string().optional(),
-  packingGroup: mixed<PackingGroupChoiceProps>()
-    .required("Packing Group is required")
-    .oneOf(Object.values(PackingGroupChoiceProps)),
-  properShippingName: string().optional(),
-  handlingInstructions: string().optional(),
-  emergencyContact: string().optional(),
-  emergencyContactPhoneNumber: string().optional(),
-  placardRequired: boolean().optional(),
-  isReportableQuantity: boolean().optional(),
+export const hazardousMaterialSchema = z.object({
+  id: z.string().optional(),
+  organizationId: z.string().optional(),
+  businessUnitId: z.string().optional(),
+  version: z.number().optional(),
+  createdAt: z.number().optional(),
+  updatedAt: z.number().optional(),
+
+  // * Core Fields
+  status: z.nativeEnum(Status),
+  code: z.string().min(1, "Code is required"),
+  name: z.string().min(1, "Name is required"),
+  description: z.string().min(1, "Description is required"),
+  class: z.nativeEnum(HazardousClassChoiceProps),
+  unNumber: z.string().optional(),
+  ergNumber: z.string().optional(),
+  packingGroup: z.nativeEnum(PackingGroupChoiceProps),
+  properShippingName: z.string().optional(),
+  handlingInstructions: z.string().optional(),
+  emergencyContact: z.string().optional(),
+  emergencyContactPhoneNumber: z.string().optional(),
+  placardRequired: z.boolean().optional(),
+  isReportableQuantity: z.boolean().optional(),
 });
 
-export type HazardousMaterialSchema = InferType<typeof hazardousMaterialSchema>;
+export type HazardousMaterialSchema = z.infer<typeof hazardousMaterialSchema>;

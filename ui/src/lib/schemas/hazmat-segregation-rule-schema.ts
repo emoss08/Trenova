@@ -1,50 +1,76 @@
 import { Status } from "@/types/common";
 import { HazardousClassChoiceProps } from "@/types/hazardous-material";
 import { SegregationType } from "@/types/hazmat-segregation-rule";
-import { boolean, type InferType, mixed, number, object, string } from "yup";
+import { z } from "zod";
 
-export const hazmatSegregationRuleSchema = object({
-  id: string().optional(),
-  organizationId: string().nullable().optional(),
-  businessUnitId: string().nullable().optional(),
-  status: mixed<Status>()
-    .required("Status is required")
-    .oneOf(Object.values(Status)),
-  name: string().required("Name is required"),
-  description: string().notRequired(),
-  classA: mixed<HazardousClassChoiceProps>()
-    .required("Class A is required")
-    .oneOf(Object.values(HazardousClassChoiceProps)),
-  classB: mixed<HazardousClassChoiceProps>()
-    .required("Class B is required")
-    .oneOf(Object.values(HazardousClassChoiceProps)),
-  hazmatAId: string().nullable().optional(),
-  hazmatBId: string().nullable().optional(),
-  segregationType: mixed<SegregationType>()
-    .required("Segregation Type is required")
-    .oneOf(Object.values(SegregationType)),
-  minimumDistance: number()
-    .when("segregationType", {
-      is: SegregationType.Distance,
-      then: (schema) => schema.required("Minimum Distance is required"),
-      otherwise: (schema) => schema.nullable().notRequired(),
-    })
-    .transform((value) => (Number.isNaN(value) ? undefined : value)),
-  distanceUnit: string().when("segregationType", {
-    is: SegregationType.Distance,
-    then: (schema) => schema.required("Distance Unit is required"),
-    otherwise: (schema) => schema.nullable().notRequired(),
-  }),
-  hasExceptions: boolean().optional(),
-  exceptionNotes: string().when("hasExceptions", {
-    is: true,
-    then: (schema) => schema.required("Exception Notes are required"),
-    otherwise: (schema) => schema.notRequired(),
-  }),
-  referenceCode: string().optional(),
-  regulationSource: string().optional(),
-});
+export const hazmatSegregationRuleSchema = z
+  .object({
+    id: z.string().optional(),
+    organizationId: z.string().optional(),
+    businessUnitId: z.string().optional(),
+    version: z.number().optional(),
+    createdAt: z.number().optional(),
+    updatedAt: z.number().optional(),
 
-export type HazmatSegregationRuleSchema = InferType<
+    // * Core Fields
+    status: z.nativeEnum(Status),
+    name: z.string().min(1, "Name is required"),
+    description: z.string().optional(),
+    classA: z.nativeEnum(HazardousClassChoiceProps),
+    classB: z.nativeEnum(HazardousClassChoiceProps),
+    hazmatAId: z.string().nullable().optional(),
+    hazmatBId: z.string().nullable().optional(),
+    segregationType: z.nativeEnum(SegregationType),
+    minimumDistance: z.preprocess((val) => {
+      if (val === "" || val === null || val === undefined) {
+        return undefined;
+      }
+      const parsed = parseFloat(String(val));
+      return isNaN(parsed) ? undefined : parsed;
+    }, z.number().optional()),
+    distanceUnit: z.string(),
+    hasExceptions: z.boolean().optional(),
+    exceptionNotes: z.string().optional(),
+    referenceCode: z.string().optional(),
+    regulationSource: z.string().optional(),
+  })
+  .refine(
+    (data) => {
+      if (data.segregationType === SegregationType.Distance) {
+        return data.minimumDistance !== undefined;
+      }
+      return true;
+    },
+    {
+      message: "Minimum Distance is required when segregation type is distance",
+      path: ["minimumDistance"],
+    },
+  )
+  .refine(
+    (data) => {
+      if (data.hasExceptions) {
+        return data.exceptionNotes !== undefined;
+      }
+      return true;
+    },
+    {
+      message: "Exception Notes are required when has exceptions is true",
+      path: ["exceptionNotes"],
+    },
+  )
+  .refine(
+    (data) => {
+      if (data.segregationType === SegregationType.Distance) {
+        return data.distanceUnit !== undefined;
+      }
+      return true;
+    },
+    {
+      message: "Distance Unit is required when segregation type is distance",
+      path: ["distanceUnit"],
+    },
+  );
+
+export type HazmatSegregationRuleSchema = z.infer<
   typeof hazmatSegregationRuleSchema
 >;

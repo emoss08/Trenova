@@ -1,25 +1,30 @@
 import { EquipmentStatus } from "@/types/tractor";
-import { type InferType, mixed, number, object, string } from "yup";
+import { z } from "zod";
 
-export const tractorSchema = object({
-  id: string().optional(),
-  organizationId: string().nullable().optional(),
-  businessUnitId: string().nullable().optional(),
-  equipmentTypeId: string().required("Equipment Type is required"),
-  primaryWorkerId: string().required("Primary Worker is required"),
-  secondaryWorkerId: string().nullable().optional(),
-  equipmentManufacturerId: string().nullable().optional(),
-  stateId: string().nullable().optional(),
-  fleetCodeId: string().nullable().optional(),
-  status: mixed<EquipmentStatus>()
-    .required("Status is required")
-    .oneOf(Object.values(EquipmentStatus)),
-  code: string().required("Code is required"),
-  model: string().optional(),
-  make: string().optional(),
-  year: number().nullable().optional(),
-  licensePlateNumber: string().optional(),
-  vin: string().optional(),
+export const tractorSchema = z.object({
+  id: z.string().optional(),
+  organizationId: z.string().optional(),
+  businessUnitId: z.string().optional(),
+  version: z.number().optional(),
+  createdAt: z.number().optional(),
+  updatedAt: z.number().optional(),
+
+  // * Core Fields
+  equipmentTypeId: z.string().min(1, "Equipment Type is required"),
+  primaryWorkerId: z.string().min(1, "Primary Worker is required"),
+  secondaryWorkerId: z.string().nullable().optional(),
+  equipmentManufacturerId: z.string().nullable().optional(),
+  stateId: z.string().nullable().optional(),
+  fleetCodeId: z.string().nullable().optional(),
+  status: z.nativeEnum(EquipmentStatus, {
+    message: "Status is required",
+  }),
+  code: z.string().min(1, "Code is required"),
+  model: z.string().optional(),
+  make: z.string().optional(),
+  year: z.number().nullable().optional(),
+  licensePlateNumber: z.string().optional(),
+  vin: z.string().optional(),
 });
 
-export type TractorSchema = InferType<typeof tractorSchema>;
+export type TractorSchema = z.infer<typeof tractorSchema>;

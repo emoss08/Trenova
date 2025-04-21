@@ -1,27 +1,30 @@
-import { boolean, InferType, object, string } from "yup";
+import { z } from "zod";
 
-export const loginSchema = object({
-  emailAddress: string()
+export const loginSchema = z.object({
+  emailAddress: z
+    .string()
     .email("Invalid email address")
-    .required("Email is required"),
-  password: string().required("Password is required"),
-  rememberMe: boolean().optional(),
+    .min(1, "Email is required"),
+  password: z.string().min(1, "Password is required"),
+  rememberMe: z.boolean().optional(),
 });
 
-export type LoginSchema = InferType<typeof loginSchema>;
+export type LoginSchema = z.infer<typeof loginSchema>;
 
-export const checkEmailSchema = object({
-  emailAddress: string()
+export const checkEmailSchema = z.object({
+  emailAddress: z
+    .string()
     .email("Invalid email address")
-    .required("Email is required"),
+    .min(1, "Email is required"),
 });
 
-export type CheckEmailSchema = InferType<typeof checkEmailSchema>;
+export type CheckEmailSchema = z.infer<typeof checkEmailSchema>;
 
-export const resetPasswordSchema = object({
-  emailAddress: string()
+export const resetPasswordSchema = z.object({
+  emailAddress: z
+    .string()
     .email("Invalid email address")
-    .required("Email is required"),
+    .min(1, "Email is required"),
 });
 
-export type ResetPasswordSchema = InferType<typeof resetPasswordSchema>;
+export type ResetPasswordSchema = z.infer<typeof resetPasswordSchema>;
