@@ -4,7 +4,7 @@ import {
   type LocationSchema,
 } from "@/lib/schemas/location-schema";
 import { type EditTableSheetProps } from "@/types/data-table";
-import { yupResolver } from "@hookform/resolvers/yup";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { LocationForm } from "./location-form";
 
@@ -13,8 +13,8 @@ export function EditLocationModal({
   onOpenChange,
   currentRecord,
 }: EditTableSheetProps<LocationSchema>) {
-  const form = useForm<LocationSchema>({
-    resolver: yupResolver(locationSchema),
+  const form = useForm({
+    resolver: zodResolver(locationSchema),
     defaultValues: currentRecord,
   });
 
@@ -26,7 +26,6 @@ export function EditLocationModal({
       title="Location"
       formComponent={<LocationForm />}
       form={form}
-      schema={locationSchema}
       url="/locations/"
       queryKey="location-list"
       fieldKey="name"

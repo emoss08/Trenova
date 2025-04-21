@@ -3,10 +3,7 @@ import { FormCreateModal } from "@/components/ui/form-create-modal";
 import { Icon } from "@/components/ui/icons";
 import { ExternalLink } from "@/components/ui/link";
 import { HAZARDOUS_MATERIAL_NOTICE_KEY } from "@/constants/env";
-import {
-  hazardousMaterialSchema,
-  type HazardousMaterialSchema,
-} from "@/lib/schemas/hazardous-material-schema";
+import { hazardousMaterialSchema } from "@/lib/schemas/hazardous-material-schema";
 import { Status } from "@/types/common";
 import { type TableSheetProps } from "@/types/data-table";
 import {
@@ -14,7 +11,7 @@ import {
   PackingGroupChoiceProps,
 } from "@/types/hazardous-material";
 import { faInfoCircle, faXmark } from "@fortawesome/pro-regular-svg-icons";
-import { yupResolver } from "@hookform/resolvers/yup";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { useLocalStorage } from "@uidotdev/usehooks";
 import { useForm } from "react-hook-form";
 import { HazardousMaterialForm } from "./hazardous-material-form";
@@ -23,8 +20,8 @@ export function CreateHazardousMaterialModal({
   open,
   onOpenChange,
 }: TableSheetProps) {
-  const form = useForm<HazardousMaterialSchema>({
-    resolver: yupResolver(hazardousMaterialSchema),
+  const form = useForm({
+    resolver: zodResolver(hazardousMaterialSchema),
     defaultValues: {
       code: "",
       status: Status.Active,
@@ -46,7 +43,6 @@ export function CreateHazardousMaterialModal({
       title="Hazardous Material"
       formComponent={<HazardousMaterialForm />}
       form={form}
-      schema={hazardousMaterialSchema}
       url="/hazardous-materials/"
       queryKey="hazardous-material-list"
       className="max-w-[550px]"

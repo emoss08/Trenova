@@ -1,14 +1,14 @@
 import { FormCreateModal } from "@/components/ui/form-create-modal";
-import { TrailerSchema, trailerSchema } from "@/lib/schemas/trailer-schema";
+import { trailerSchema } from "@/lib/schemas/trailer-schema";
 import { type TableSheetProps } from "@/types/data-table";
 import { EquipmentStatus } from "@/types/tractor";
-import { yupResolver } from "@hookform/resolvers/yup";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { TrailerForm } from "./trailer-form";
 
 export function CreateTrailerModal({ open, onOpenChange }: TableSheetProps) {
-  const form = useForm<TrailerSchema>({
-    resolver: yupResolver(trailerSchema),
+  const form = useForm({
+    resolver: zodResolver(trailerSchema),
     defaultValues: {
       status: EquipmentStatus.Available,
       code: "",
@@ -35,7 +35,6 @@ export function CreateTrailerModal({ open, onOpenChange }: TableSheetProps) {
       title="Trailer"
       formComponent={<TrailerForm />}
       form={form}
-      schema={trailerSchema}
       url="/trailers/"
       queryKey="trailer-list"
       className="max-w-[500px]"

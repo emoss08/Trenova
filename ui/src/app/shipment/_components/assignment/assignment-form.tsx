@@ -38,7 +38,7 @@ export function AssignmentForm() {
   useEffect(() => {
     if (assignmentData && tractorId) {
       setValue("primaryWorkerId", assignmentData.primaryWorkerId || "");
-      setValue("secondaryWorkerId", assignmentData.secondaryWorkerId || null);
+      setValue("secondaryWorkerId", assignmentData.secondaryWorkerId || "");
     }
   }, [tractorId, assignmentData, setValue, getValues]);
 

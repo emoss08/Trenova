@@ -1,17 +1,14 @@
 import { FormCreateModal } from "@/components/ui/form-create-modal";
-import {
-  commoditySchema,
-  type CommoditySchema,
-} from "@/lib/schemas/commodity-schema";
+import { commoditySchema } from "@/lib/schemas/commodity-schema";
 import { Status } from "@/types/common";
 import { type TableSheetProps } from "@/types/data-table";
-import { yupResolver } from "@hookform/resolvers/yup";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { CommodityForm } from "./commodity-form";
 
 export function CreateCommodityModal({ open, onOpenChange }: TableSheetProps) {
-  const form = useForm<CommoditySchema>({
-    resolver: yupResolver(commoditySchema),
+  const form = useForm({
+    resolver: zodResolver(commoditySchema),
     defaultValues: {
       status: Status.Active,
       name: "",
@@ -34,7 +31,6 @@ export function CreateCommodityModal({ open, onOpenChange }: TableSheetProps) {
       title="Commodity"
       formComponent={<CommodityForm />}
       form={form}
-      schema={commoditySchema}
       url="/commodities/"
       queryKey="commodity-list"
       className="max-w-[500px]"

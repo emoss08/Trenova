@@ -3,16 +3,13 @@ import { FormCreateModal } from "@/components/ui/form-create-modal";
 import { Icon } from "@/components/ui/icons";
 import { ExternalLink } from "@/components/ui/link";
 import { HAZMAT_SEGREGATION_RULE_NOTICE_KEY } from "@/constants/env";
-import {
-  hazmatSegregationRuleSchema,
-  type HazmatSegregationRuleSchema,
-} from "@/lib/schemas/hazmat-segregation-rule-schema";
+import { hazmatSegregationRuleSchema } from "@/lib/schemas/hazmat-segregation-rule-schema";
 import { Status } from "@/types/common";
 import { type TableSheetProps } from "@/types/data-table";
 import { HazardousClassChoiceProps } from "@/types/hazardous-material";
 import { SegregationType } from "@/types/hazmat-segregation-rule";
 import { faInfoCircle, faXmark } from "@fortawesome/pro-regular-svg-icons";
-import { yupResolver } from "@hookform/resolvers/yup";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { useLocalStorage } from "@uidotdev/usehooks";
 import { useForm } from "react-hook-form";
 import { HazmatSegregationRuleForm } from "./hazmat-segregation-rule-form";
@@ -21,8 +18,8 @@ export function CreateHazmatSegregationRuleModal({
   open,
   onOpenChange,
 }: TableSheetProps) {
-  const form = useForm<HazmatSegregationRuleSchema>({
-    resolver: yupResolver(hazmatSegregationRuleSchema),
+  const form = useForm({
+    resolver: zodResolver(hazmatSegregationRuleSchema),
     defaultValues: {
       status: Status.Active,
       name: "",
@@ -41,7 +38,6 @@ export function CreateHazmatSegregationRuleModal({
       title="Hazmat Segregation Rule"
       formComponent={<HazmatSegregationRuleForm />}
       form={form}
-      schema={hazmatSegregationRuleSchema}
       url="/hazmat-segregation-rules/"
       queryKey="hazmat-segregation-rule-list"
       className="max-w-[550px]"

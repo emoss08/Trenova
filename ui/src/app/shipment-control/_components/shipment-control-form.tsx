@@ -11,7 +11,6 @@ import {
 } from "@/components/ui/card";
 import { Form, FormControl, FormGroup } from "@/components/ui/form";
 import { ExternalLink } from "@/components/ui/link";
-import { useFormWithSave } from "@/hooks/use-form-with-save";
 import { broadcastQueryInvalidation } from "@/hooks/use-invalidate-query";
 import { queries } from "@/lib/queries";
 import {
@@ -19,28 +18,67 @@ import {
   shipmentControlSchema,
 } from "@/lib/schemas/shipmentcontrol-schema";
 import { updateShipmentControl } from "@/services/organization";
-import { yupResolver } from "@hookform/resolvers/yup";
-import { useSuspenseQuery } from "@tanstack/react-query";
-import { useEffect, useState } from "react";
-import { FormProvider, useFormContext } from "react-hook-form";
+import type { APIError } from "@/types/errors";
+import { zodResolver } from "@hookform/resolvers/zod";
+import {
+  useMutation,
+  useQueryClient,
+  useSuspenseQuery,
+} from "@tanstack/react-query";
+import { useCallback, useEffect, useState } from "react";
+import {
+  FormProvider,
+  useForm,
+  useFormContext,
+  type Path,
+} from "react-hook-form";
+import { toast } from "sonner";
 
 export default function ShipmentControlForm() {
+  const queryClient = useQueryClient();
   const shipmentControl = useSuspenseQuery({
     ...queries.organization.getShipmentControl(),
   });
 
-  const form = useFormWithSave({
-    resourceName: "Shipment Control",
-    formOptions: {
-      resolver: yupResolver(shipmentControlSchema),
-      defaultValues: {},
-      mode: "onChange",
-    },
+  const form = useForm({
+    resolver: zodResolver(shipmentControlSchema),
+    defaultValues: shipmentControl.data,
+  });
+
+  const {
+    handleSubmit,
+    formState: { isDirty, isSubmitting },
+    setError,
+  } = form;
+
+  const { mutateAsync } = useMutation({
     mutationFn: async (values: ShipmentControlSchema) => {
       const response = await updateShipmentControl(values);
+
       return response.data;
     },
-    onSuccess() {
+    onMutate: async (newValues) => {
+      // * Cancel any outgoing refetches so they don't overwrite our optimistic update
+      await queryClient.cancelQueries({
+        queryKey: queries.organization.getShipmentControl._def,
+      });
+
+      // * Snapshot the previous value
+      const previousShipmentControl = queryClient.getQueryData([
+        queries.organization.getShipmentControl._def,
+      ]);
+
+      // * Optimistically update to the new value
+      queryClient.setQueryData(
+        [queries.organization.getShipmentControl._def],
+        newValues,
+      );
+
+      return { previousShipmentControl, newValues };
+    },
+    onSuccess: () => {
+      toast.success("Shipment control updated successfully");
+
       broadcastQueryInvalidation({
         queryKey: ["shipmentControl", "organization", "getShipmentControl"],
         options: {
@@ -52,29 +90,42 @@ export default function ShipmentControlForm() {
         },
       });
     },
-    successMessage: "Changes have been saved",
-    successDescription: "Shipment control updated successfully",
+    onError: (error: APIError, _, context) => {
+      // * Rollback the optimistic update
+      queryClient.setQueryData(
+        [queries.organization.getShipmentControl._def],
+        context?.previousShipmentControl,
+      );
+
+      if (error.isValidationError()) {
+        error.getFieldErrors().forEach((fieldError) => {
+          setError(fieldError.name as Path<ShipmentControlSchema>, {
+            message: fieldError.reason,
+          });
+        });
+      }
+
+      if (error.isRateLimitError()) {
+        toast.error("Rate limit exceeded", {
+          description:
+            "You have exceeded the rate limit. Please try again later.",
+        });
+      }
+    },
+    onSettled: () => {
+      // * Invalidate the query to refresh the data
+      queryClient.invalidateQueries({
+        queryKey: queries.organization.getShipmentControl._def,
+      });
+    },
   });
 
-  const {
-    reset,
-    handleSubmit,
-    formState: { isDirty, isSubmitting, isSubmitSuccessful },
-    onSubmit,
-  } = form;
-
-  // * Load the shipment control data into the form when available
-  useEffect(() => {
-    if (shipmentControl.data && !shipmentControl.isLoading) {
-      reset(shipmentControl.data);
-    }
-  }, [shipmentControl.data, shipmentControl.isLoading, reset]);
-
-  // * Reset the form when the mutation is successful
-  // * This is recommended by react-hook-form - https://react-hook-form.com/docs/useform/reset
-  useEffect(() => {
-    reset();
-  }, [isSubmitSuccessful, reset]);
+  const onSubmit = useCallback(
+    async (values: ShipmentControlSchema) => {
+      await mutateAsync(values);
+    },
+    [mutateAsync],
+  );
 
   return (
     <FormProvider {...form}>

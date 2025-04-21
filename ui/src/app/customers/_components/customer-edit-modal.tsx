@@ -31,7 +31,7 @@ import {
   type CustomerSchema,
 } from "@/lib/schemas/customer-schema";
 import { type EditTableSheetProps } from "@/types/data-table";
-import { yupResolver } from "@hookform/resolvers/yup";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { useCallback, useEffect } from "react";
 import { FormProvider } from "react-hook-form";
 import { CustomerForm } from "./customer-form";
@@ -45,7 +45,7 @@ export function CustomerEditForm({
   const form = useFormWithSave<CustomerSchema>({
     resourceName: "Customer",
     formOptions: {
-      resolver: yupResolver(customerSchema),
+      resolver: zodResolver(customerSchema),
       defaultValues: currentRecord,
       mode: "onChange",
     },

@@ -103,9 +103,7 @@ export function StopDialog({
       };
 
       // Validate against the stopSchema directly instead of using moveSchema.validateAt
-      await stopSchema.validate(stopToValidate, {
-        abortEarly: false,
-      });
+      await stopSchema.safeParseAsync(stopToValidate);
 
       return true;
     } catch (error) {
@@ -149,7 +147,7 @@ export function StopDialog({
           organizationId: stop?.organizationId,
           businessUnitId: stop?.businessUnitId,
           locationId: stop?.locationId,
-          location: stop?.location || null,
+          location: stop?.location || undefined,
           addressLine: stop.addressLine,
           type: stop.type || StopType.Pickup,
           status: stop.status || StopStatus.New,

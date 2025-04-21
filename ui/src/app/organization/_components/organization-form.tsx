@@ -10,46 +10,81 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Form, FormControl, FormGroup } from "@/components/ui/form";
-import { useFormWithSave } from "@/hooks/use-form-with-save";
 import { broadcastQueryInvalidation } from "@/hooks/use-invalidate-query";
 import { queries } from "@/lib/queries";
 import {
-  OrganizationSchema,
   organizationSchema,
+  type OrganizationSchema,
 } from "@/lib/schemas/organization-schema";
 import { TIMEZONES } from "@/lib/timezone/timezone";
 import { updateOrganization } from "@/services/organization";
 import { useUser } from "@/stores/user-store";
+import type { APIError } from "@/types/errors";
 import { OrganizationType } from "@/types/organization";
-import { yupResolver } from "@hookform/resolvers/yup";
-import { useSuspenseQuery } from "@tanstack/react-query";
-import { useEffect } from "react";
-import { FormProvider, useFormContext } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import {
+  useMutation,
+  useQueryClient,
+  useSuspenseQuery,
+} from "@tanstack/react-query";
+import { useCallback } from "react";
+import {
+  FormProvider,
+  useForm,
+  useFormContext,
+  type Path,
+} from "react-hook-form";
+import { toast } from "sonner";
 
 export default function OrganizationForm() {
   const user = useUser();
-
-  // Get the organization data
+  const queryClient = useQueryClient();
   const userOrg = useSuspenseQuery({
     ...queries.organization.getOrgById(user?.currentOrganizationId ?? ""),
   });
 
-  // Set up the form with save functionality
-  const form = useFormWithSave({
-    resourceName: "Organization",
-    formOptions: {
-      resolver: yupResolver(organizationSchema),
-      defaultValues: {},
-      mode: "onChange",
-    },
+  const form = useForm({
+    resolver: zodResolver(organizationSchema),
+    defaultValues: userOrg.data,
+  });
+
+  const {
+    handleSubmit,
+    formState: { isDirty, isSubmitting },
+    setError,
+  } = form;
+
+  const { mutateAsync } = useMutation({
     mutationFn: async (values: OrganizationSchema) => {
       const response = await updateOrganization(
         user?.currentOrganizationId ?? "",
         values,
       );
+
       return response.data;
     },
+    onMutate: async (newValues) => {
+      // * Cancel any outgoing refetches so they don't overwrite our optimistic update
+      await queryClient.cancelQueries({
+        queryKey: queries.organization.getShipmentControl._def,
+      });
+
+      // * Snapshot the previous value
+      const previousShipmentControl = queryClient.getQueryData([
+        queries.organization.getShipmentControl._def,
+      ]);
+
+      // * Optimistically update to the new value
+      queryClient.setQueryData(
+        [queries.organization.getShipmentControl._def],
+        newValues,
+      );
+
+      return { previousShipmentControl, newValues };
+    },
     onSuccess: () => {
+      toast.success("Organization updated successfully");
+
       broadcastQueryInvalidation({
         queryKey: ["organization", "getUserOrganizations", "getOrgById"],
         options: {
@@ -61,23 +96,42 @@ export default function OrganizationForm() {
         },
       });
     },
-    successMessage: "Changes have been saved",
-    successDescription: "Organization updated successfully",
+    onError: (error: APIError, _, context) => {
+      // * Rollback the optimistic update
+      queryClient.setQueryData(
+        [queries.organization.getShipmentControl._def],
+        context?.previousShipmentControl,
+      );
+
+      if (error.isValidationError()) {
+        error.getFieldErrors().forEach((fieldError) => {
+          setError(fieldError.name as Path<OrganizationSchema>, {
+            message: fieldError.reason,
+          });
+        });
+      }
+
+      if (error.isRateLimitError()) {
+        toast.error("Rate limit exceeded", {
+          description:
+            "You have exceeded the rate limit. Please try again later.",
+        });
+      }
+    },
+    onSettled: () => {
+      // * Invalidate the query to refresh the data
+      queryClient.invalidateQueries({
+        queryKey: queries.organization.getOrgById._def,
+      });
+    },
   });
 
-  const {
-    reset,
-    handleSubmit,
-    formState: { isDirty, isSubmitting },
-    onSubmit,
-  } = form;
-
-  // Load organization data into the form when available
-  useEffect(() => {
-    if (userOrg.data && !userOrg.isLoading) {
-      reset(userOrg.data);
-    }
-  }, [userOrg.data, userOrg.isLoading, reset]);
+  const onSubmit = useCallback(
+    async (values: OrganizationSchema) => {
+      await mutateAsync(values);
+    },
+    [mutateAsync],
+  );
 
   return (
     <FormProvider {...form}>

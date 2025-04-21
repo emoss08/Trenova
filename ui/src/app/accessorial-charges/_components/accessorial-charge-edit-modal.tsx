@@ -4,7 +4,7 @@ import {
   type AccessorialChargeSchema,
 } from "@/lib/schemas/accessorial-charge-schema";
 import { type EditTableSheetProps } from "@/types/data-table";
-import { yupResolver } from "@hookform/resolvers/yup";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { AccessorialChargeForm } from "./accessorial-charge-form";
 
@@ -13,8 +13,8 @@ export function EditAccessorialChargeModal({
   onOpenChange,
   currentRecord,
 }: EditTableSheetProps<AccessorialChargeSchema>) {
-  const form = useForm<AccessorialChargeSchema>({
-    resolver: yupResolver(accessorialChargeSchema),
+  const form = useForm({
+    resolver: zodResolver(accessorialChargeSchema),
     defaultValues: currentRecord,
   });
 
@@ -28,9 +28,7 @@ export function EditAccessorialChargeModal({
       queryKey="accessorial-charge-list"
       formComponent={<AccessorialChargeForm />}
       fieldKey="code"
-      className="max-w-[500px]"
       form={form}
-      schema={accessorialChargeSchema}
     />
   );
 }

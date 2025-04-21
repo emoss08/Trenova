@@ -27,7 +27,7 @@ import { broadcastQueryInvalidation } from "@/hooks/use-invalidate-query";
 import { http } from "@/lib/http-client";
 import { workerSchema, WorkerSchema } from "@/lib/schemas/worker-schema";
 import { EditTableSheetProps } from "@/types/data-table";
-import { yupResolver } from "@hookform/resolvers/yup";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { useCallback, useEffect } from "react";
 import { FormProvider } from "react-hook-form";
 import { WorkerForm } from "./workers-form";
@@ -41,7 +41,7 @@ function WorkerEditForm({
   const form = useFormWithSave({
     resourceName: "Worker",
     formOptions: {
-      resolver: yupResolver(workerSchema),
+      resolver: zodResolver(workerSchema),
       defaultValues: currentRecord,
       mode: "onChange",
     },

@@ -4,7 +4,7 @@ import {
   ServiceTypeSchema,
 } from "@/lib/schemas/service-type-schema";
 import { type EditTableSheetProps } from "@/types/data-table";
-import { yupResolver } from "@hookform/resolvers/yup";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { ServiceTypeForm } from "./service-type-form";
 
@@ -13,8 +13,8 @@ export function EditServiceTypeModal({
   onOpenChange,
   currentRecord,
 }: EditTableSheetProps<ServiceTypeSchema>) {
-  const form = useForm<ServiceTypeSchema>({
-    resolver: yupResolver(serviceTypeSchema),
+  const form = useForm({
+    resolver: zodResolver(serviceTypeSchema),
     defaultValues: currentRecord,
   });
 
@@ -29,7 +29,6 @@ export function EditServiceTypeModal({
       formComponent={<ServiceTypeForm />}
       fieldKey="code"
       form={form}
-      schema={serviceTypeSchema}
     />
   );
 }

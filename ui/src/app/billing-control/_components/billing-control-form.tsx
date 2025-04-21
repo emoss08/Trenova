@@ -12,7 +12,6 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Form, FormControl, FormGroup } from "@/components/ui/form";
-import { useFormWithSave } from "@/hooks/use-form-with-save";
 import { broadcastQueryInvalidation } from "@/hooks/use-invalidate-query";
 import {
   autoBillCriteriaChoices,
@@ -27,10 +26,21 @@ import {
   billingControlSchema,
 } from "@/lib/schemas/billing-schema";
 import { updateBillingControl } from "@/services/organization";
-import { yupResolver } from "@hookform/resolvers/yup";
-import { useSuspenseQuery } from "@tanstack/react-query";
-import { useEffect, useState } from "react";
-import { FormProvider, useFormContext } from "react-hook-form";
+import type { APIError } from "@/types/errors";
+import { zodResolver } from "@hookform/resolvers/zod";
+import {
+  useMutation,
+  useQueryClient,
+  useSuspenseQuery,
+} from "@tanstack/react-query";
+import { useCallback, useEffect, useState } from "react";
+import {
+  FormProvider,
+  useForm,
+  useFormContext,
+  type Path,
+} from "react-hook-form";
+import { toast } from "sonner";
 
 function ShipmentTransferSettings() {
   const { control, watch } = useFormContext<BillingControlSchema>();
@@ -465,23 +475,50 @@ function ConsolidationSettings() {
 }
 
 export default function BillingControlForm() {
-  // * Get the billing control data
+  const queryClient = useQueryClient();
   const billingControl = useSuspenseQuery({
     ...queries.organization.getBillingControl(),
   });
 
-  const form = useFormWithSave({
-    resourceName: "Billing Control",
-    formOptions: {
-      resolver: yupResolver(billingControlSchema),
-      defaultValues: {},
-      mode: "onChange",
-    },
+  const form = useForm({
+    resolver: zodResolver(billingControlSchema),
+    defaultValues: billingControl.data,
+  });
+
+  const {
+    handleSubmit,
+    formState: { isDirty, isSubmitting },
+    setError,
+  } = form;
+
+  const { mutateAsync } = useMutation({
     mutationFn: async (values: BillingControlSchema) => {
       const response = await updateBillingControl(values);
+
       return response.data;
     },
-    onSuccess() {
+    onMutate: async (newValues) => {
+      // * Cancel any outgoing refetches so they don't overwrite our optimistic update
+      await queryClient.cancelQueries({
+        queryKey: queries.organization.getBillingControl._def,
+      });
+
+      // * Snapshot the previous value
+      const previousShipmentControl = queryClient.getQueryData([
+        queries.organization.getBillingControl._def,
+      ]);
+
+      // * Optimistically update to the new value
+      queryClient.setQueryData(
+        [queries.organization.getBillingControl._def],
+        newValues,
+      );
+
+      return { previousShipmentControl, newValues };
+    },
+    onSuccess: () => {
+      toast.success("Billing control updated successfully");
+
       broadcastQueryInvalidation({
         queryKey: ["billingControl", "organization", "getBillingControl"],
         options: {
@@ -493,29 +530,42 @@ export default function BillingControlForm() {
         },
       });
     },
-    successMessage: "Changes have been saved",
-    successDescription: "Billing control configuration updated successfully",
+    onError: (error: APIError, _, context) => {
+      // * Rollback the optimistic update
+      queryClient.setQueryData(
+        [queries.organization.getShipmentControl._def],
+        context?.previousShipmentControl,
+      );
+
+      if (error.isValidationError()) {
+        error.getFieldErrors().forEach((fieldError) => {
+          setError(fieldError.name as Path<BillingControlSchema>, {
+            message: fieldError.reason,
+          });
+        });
+      }
+
+      if (error.isRateLimitError()) {
+        toast.error("Rate limit exceeded", {
+          description:
+            "You have exceeded the rate limit. Please try again later.",
+        });
+      }
+    },
+    onSettled: () => {
+      // * Invalidate the query to refresh the data
+      queryClient.invalidateQueries({
+        queryKey: queries.organization.getShipmentControl._def,
+      });
+    },
   });
 
-  const {
-    reset,
-    handleSubmit,
-    formState: { isDirty, isSubmitting, isSubmitSuccessful },
-    onSubmit,
-  } = form;
-
-  // * Load the billing control data into the form when available
-  useEffect(() => {
-    if (billingControl.data && !billingControl.isLoading) {
-      reset(billingControl.data);
-    }
-  }, [billingControl.data, billingControl.isLoading, reset]);
-
-  // * Reset the form when the mutation is successful
-  // * This is recommended by react-hook-form - https://react-hook-form.com/docs/useform/reset
-  useEffect(() => {
-    reset();
-  }, [isSubmitSuccessful, reset]);
+  const onSubmit = useCallback(
+    async (values: BillingControlSchema) => {
+      await mutateAsync(values);
+    },
+    [mutateAsync],
+  );
 
   return (
     <FormProvider {...form}>
