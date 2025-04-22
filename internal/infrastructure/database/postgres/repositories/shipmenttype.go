@@ -108,7 +108,7 @@ func (str *shipmentTypeRepository) List(ctx context.Context, opts *ports.LimitOf
 	q = str.filterQuery(q, opts)
 
 	// * Order by status and created at
-	q.Order("st.status ASC", "st.created_at DESC")
+	q.Order("st.status ASC", "st.code ASC", "st.created_at DESC")
 
 	total, err := q.ScanAndCount(ctx)
 	if err != nil {
