@@ -49,6 +49,7 @@ export default function ShipmentControlForm() {
     handleSubmit,
     formState: { isDirty, isSubmitting },
     setError,
+    reset,
   } = form;
 
   const { mutateAsync } = useMutation({
@@ -76,11 +77,12 @@ export default function ShipmentControlForm() {
 
       return { previousShipmentControl, newValues };
     },
-    onSuccess: () => {
+    onSuccess: (newValues) => {
       toast.success("Shipment control updated successfully");
 
       broadcastQueryInvalidation({
-        queryKey: ["shipmentControl", "organization", "getShipmentControl"],
+        queryKey: queries.organization.getShipmentControl
+          ._def as unknown as string[],
         options: {
           correlationId: `update-shipment-control-${Date.now()}`,
         },
@@ -89,6 +91,9 @@ export default function ShipmentControlForm() {
           refetchType: "all",
         },
       });
+
+      // * Reset the form to the new values
+      reset(newValues);
     },
     onError: (error: APIError, _, context) => {
       // * Rollback the optimistic update
@@ -111,6 +116,9 @@ export default function ShipmentControlForm() {
             "You have exceeded the rate limit. Please try again later.",
         });
       }
+
+      // * Regardless of the error, reset the form to the previous state
+      reset();
     },
     onSettled: () => {
       // * Invalidate the query to refresh the data

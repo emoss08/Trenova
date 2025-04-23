@@ -1,4 +1,4 @@
-// src/pages/organization-form.tsx
+import { AddressField } from "@/components/fields/address-field";
 import { InputField } from "@/components/fields/input-field";
 import { SelectField } from "@/components/fields/select-field";
 import { FormSaveDock } from "@/components/form";
@@ -49,6 +49,7 @@ export default function OrganizationForm() {
   });
 
   const {
+    reset,
     handleSubmit,
     formState: { isDirty, isSubmitting },
     setError,
@@ -66,27 +67,27 @@ export default function OrganizationForm() {
     onMutate: async (newValues) => {
       // * Cancel any outgoing refetches so they don't overwrite our optimistic update
       await queryClient.cancelQueries({
-        queryKey: queries.organization.getShipmentControl._def,
+        queryKey: queries.organization.getOrgById._def,
       });
 
       // * Snapshot the previous value
-      const previousShipmentControl = queryClient.getQueryData([
-        queries.organization.getShipmentControl._def,
+      const previousOrganization = queryClient.getQueryData([
+        queries.organization.getOrgById._def,
       ]);
 
       // * Optimistically update to the new value
       queryClient.setQueryData(
-        [queries.organization.getShipmentControl._def],
+        [queries.organization.getOrgById._def],
         newValues,
       );
 
-      return { previousShipmentControl, newValues };
+      return { previousOrganization, newValues };
     },
-    onSuccess: () => {
+    onSuccess: (newValues) => {
       toast.success("Organization updated successfully");
 
       broadcastQueryInvalidation({
-        queryKey: ["organization", "getUserOrganizations", "getOrgById"],
+        queryKey: queries.organization.getOrgById._def as unknown as string[],
         options: {
           correlationId: `update-organization-${Date.now()}`,
         },
@@ -95,12 +96,15 @@ export default function OrganizationForm() {
           refetchType: "all",
         },
       });
+
+      // * Reset the form to the new values
+      reset(newValues);
     },
     onError: (error: APIError, _, context) => {
       // * Rollback the optimistic update
       queryClient.setQueryData(
-        [queries.organization.getShipmentControl._def],
-        context?.previousShipmentControl,
+        [queries.organization.getOrgById._def],
+        context?.previousOrganization,
       );
 
       if (error.isValidationError()) {
@@ -117,6 +121,9 @@ export default function OrganizationForm() {
             "You have exceeded the rate limit. Please try again later.",
         });
       }
+
+      // * Regardless of the error, reset the form to the previous state
+      reset();
     },
     onSettled: () => {
       // * Invalidate the query to refresh the data
@@ -293,14 +300,7 @@ function AddressForm() {
       <CardContent className="max-w-prose">
         <FormGroup cols={2}>
           <FormControl cols="full">
-            <InputField
-              control={control}
-              rules={{ required: true }}
-              name="addressLine1"
-              label="Street Address"
-              placeholder="Enter street address"
-              description="Primary business location for official correspondence"
-            />
+            <AddressField control={control} rules={{ required: true }} />
           </FormControl>
           <FormControl cols="full">
             <InputField

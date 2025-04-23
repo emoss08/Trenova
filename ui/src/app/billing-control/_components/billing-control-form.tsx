@@ -42,6 +42,124 @@ import {
 } from "react-hook-form";
 import { toast } from "sonner";
 
+export default function BillingControlForm() {
+  const queryClient = useQueryClient();
+  const billingControl = useSuspenseQuery({
+    ...queries.organization.getBillingControl(),
+  });
+
+  const form = useForm({
+    resolver: zodResolver(billingControlSchema),
+    defaultValues: billingControl.data,
+  });
+
+  const {
+    handleSubmit,
+    formState: { isDirty, isSubmitting },
+    setError,
+    reset,
+  } = form;
+
+  const { mutateAsync } = useMutation({
+    mutationFn: async (values: BillingControlSchema) => {
+      const response = await updateBillingControl(values);
+
+      return response.data;
+    },
+    onMutate: async (newValues) => {
+      // * Cancel any outgoing refetches so they don't overwrite our optimistic update
+      await queryClient.cancelQueries({
+        queryKey: queries.organization.getBillingControl._def,
+      });
+
+      // * Snapshot the previous value
+      const previousShipmentControl = queryClient.getQueryData([
+        queries.organization.getBillingControl._def,
+      ]);
+
+      // * Optimistically update to the new value
+      queryClient.setQueryData(
+        [queries.organization.getBillingControl._def],
+        newValues,
+      );
+
+      return { previousShipmentControl, newValues };
+    },
+    onSuccess: (newValues) => {
+      toast.success("Billing control updated successfully");
+
+      broadcastQueryInvalidation({
+        queryKey: queries.organization.getBillingControl
+          ._def as unknown as string[],
+        options: {
+          correlationId: `update-billing-control-${Date.now()}`,
+        },
+        config: {
+          predicate: true,
+          refetchType: "all",
+        },
+      });
+
+      // * Reset the form to the new values
+      reset(newValues);
+    },
+    onError: (error: APIError, _, context) => {
+      // * Rollback the optimistic update
+      queryClient.setQueryData(
+        [queries.organization.getShipmentControl._def],
+        context?.previousShipmentControl,
+      );
+
+      if (error.isValidationError()) {
+        error.getFieldErrors().forEach((fieldError) => {
+          setError(fieldError.name as Path<BillingControlSchema>, {
+            message: fieldError.reason,
+          });
+        });
+      }
+
+      if (error.isRateLimitError()) {
+        toast.error("Rate limit exceeded", {
+          description:
+            "You have exceeded the rate limit. Please try again later.",
+        });
+      }
+
+      // * Regardless of the error, reset the form to the previous state
+      reset();
+    },
+    onSettled: () => {
+      // * Invalidate the query to refresh the data
+      queryClient.invalidateQueries({
+        queryKey: queries.organization.getShipmentControl._def,
+      });
+    },
+  });
+
+  const onSubmit = useCallback(
+    async (values: BillingControlSchema) => {
+      await mutateAsync(values);
+    },
+    [mutateAsync],
+  );
+
+  return (
+    <FormProvider {...form}>
+      <Form onSubmit={handleSubmit(onSubmit)}>
+        <div className="flex flex-col gap-4 pb-14">
+          <InvoiceSettings />
+          <BillingValidationSettings />
+          <ShipmentTransferSettings />
+          <AutomatedBillingSettings />
+          <ExceptionHandlingSettings />
+          <ConsolidationSettings />
+          <FormSaveDock isDirty={isDirty} isSubmitting={isSubmitting} />
+        </div>
+      </Form>
+    </FormProvider>
+  );
+}
+
 function ShipmentTransferSettings() {
   const { control, watch } = useFormContext<BillingControlSchema>();
 
@@ -471,115 +589,5 @@ function ConsolidationSettings() {
         </FormGroup>
       </CardContent>
     </Card>
-  );
-}
-
-export default function BillingControlForm() {
-  const queryClient = useQueryClient();
-  const billingControl = useSuspenseQuery({
-    ...queries.organization.getBillingControl(),
-  });
-
-  const form = useForm({
-    resolver: zodResolver(billingControlSchema),
-    defaultValues: billingControl.data,
-  });
-
-  const {
-    handleSubmit,
-    formState: { isDirty, isSubmitting },
-    setError,
-  } = form;
-
-  const { mutateAsync } = useMutation({
-    mutationFn: async (values: BillingControlSchema) => {
-      const response = await updateBillingControl(values);
-
-      return response.data;
-    },
-    onMutate: async (newValues) => {
-      // * Cancel any outgoing refetches so they don't overwrite our optimistic update
-      await queryClient.cancelQueries({
-        queryKey: queries.organization.getBillingControl._def,
-      });
-
-      // * Snapshot the previous value
-      const previousShipmentControl = queryClient.getQueryData([
-        queries.organization.getBillingControl._def,
-      ]);
-
-      // * Optimistically update to the new value
-      queryClient.setQueryData(
-        [queries.organization.getBillingControl._def],
-        newValues,
-      );
-
-      return { previousShipmentControl, newValues };
-    },
-    onSuccess: () => {
-      toast.success("Billing control updated successfully");
-
-      broadcastQueryInvalidation({
-        queryKey: ["billingControl", "organization", "getBillingControl"],
-        options: {
-          correlationId: `update-billing-control-${Date.now()}`,
-        },
-        config: {
-          predicate: true,
-          refetchType: "all",
-        },
-      });
-    },
-    onError: (error: APIError, _, context) => {
-      // * Rollback the optimistic update
-      queryClient.setQueryData(
-        [queries.organization.getShipmentControl._def],
-        context?.previousShipmentControl,
-      );
-
-      if (error.isValidationError()) {
-        error.getFieldErrors().forEach((fieldError) => {
-          setError(fieldError.name as Path<BillingControlSchema>, {
-            message: fieldError.reason,
-          });
-        });
-      }
-
-      if (error.isRateLimitError()) {
-        toast.error("Rate limit exceeded", {
-          description:
-            "You have exceeded the rate limit. Please try again later.",
-        });
-      }
-    },
-    onSettled: () => {
-      // * Invalidate the query to refresh the data
-      queryClient.invalidateQueries({
-        queryKey: queries.organization.getShipmentControl._def,
-      });
-    },
-  });
-
-  const onSubmit = useCallback(
-    async (values: BillingControlSchema) => {
-      await mutateAsync(values);
-    },
-    [mutateAsync],
-  );
-
-  return (
-    <FormProvider {...form}>
-      <Form onSubmit={handleSubmit(onSubmit)}>
-        <div className="flex flex-col gap-4 pb-14">
-          <InvoiceSettings />
-          <BillingValidationSettings />
-          <ShipmentTransferSettings />
-          <AutomatedBillingSettings />
-          <ExceptionHandlingSettings />
-          <ConsolidationSettings />
-          <FormSaveDock isDirty={isDirty} isSubmitting={isSubmitting} />
-        </div>
-      </Form>
-    </FormProvider>
   );
 }
