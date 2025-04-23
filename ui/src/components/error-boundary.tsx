@@ -8,6 +8,7 @@ import { QueryErrorResetBoundary, QueryKey } from "@tanstack/react-query";
 import { ErrorInfo } from "react";
 import { ErrorBoundary } from "react-error-boundary";
 import { useRouteError } from "react-router";
+import { NotFoundPage } from "./boundaries/not-found";
 import { Alert, AlertDescription, AlertTitle } from "./ui/alert";
 import { Button } from "./ui/button";
 import {
@@ -53,6 +54,10 @@ export function RootErrorBoundary() {
   const handleRetry = () => {
     window.location.reload();
   };
+
+  if (error.status === 404) {
+    return <NotFoundPage />;
+  }
 
   return (
     <div className="min-h-screen bg-background flex flex-col items-center justify-center p-4">
