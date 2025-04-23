@@ -152,7 +152,7 @@ func (s *Service) Update(ctx context.Context, i *integration.Integration, userID
 	result, err := s.ps.HasAnyPermissions(ctx,
 		[]*services.PermissionCheck{
 			{
-				UserID:         i.OrganizationID,
+				UserID:         userID,
 				Resource:       permission.ResourceIntegration,
 				Action:         permission.ActionUpdate,
 				BusinessUnitID: i.BusinessUnitID,
