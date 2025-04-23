@@ -1,27 +1,24 @@
 import { FacilityType, LocationCategoryType } from "@/types/location-category";
-import { type InferType, boolean, mixed, object, string } from "yup";
+import { z } from "zod";
 
-export const locationCategorySchema = object({
-  id: string().optional(),
-  organizationId: string().nullable().optional(),
-  businessUnitId: string().nullable().optional(),
-  name: string().required("Name is required"),
-  description: string().optional(),
-  type: mixed<LocationCategoryType>()
-    .required("Type is required")
-    .oneOf(Object.values(LocationCategoryType)),
-  facilityType: mixed<FacilityType>().optional().nullable(),
-  hasSecureParking: boolean()
-    .required("Has Secure Parking is required")
-    .default(false),
-  requiresAppointment: boolean()
-    .required("Requires Appointment is required")
-    .default(false),
-  allowsOvernight: boolean()
-    .required("Allows Overnight is required")
-    .default(false),
-  hasRestroom: boolean().required("Has Restroom is required").default(false),
-  color: string().optional(),
+export const locationCategorySchema = z.object({
+  id: z.string().optional(),
+  organizationId: z.string().optional(),
+  businessUnitId: z.string().optional(),
+  version: z.number().optional(),
+  createdAt: z.number().optional(),
+  updatedAt: z.number().optional(),
+
+  // * Core Fields
+  name: z.string().min(1, "Name is required"),
+  description: z.string().optional(),
+  type: z.nativeEnum(LocationCategoryType),
+  facilityType: z.nativeEnum(FacilityType),
+  hasSecureParking: z.boolean().default(false),
+  requiresAppointment: z.boolean().default(false),
+  allowsOvernight: z.boolean().default(false),
+  hasRestroom: z.boolean().default(false),
+  color: z.string().optional(),
 });
 
-export type LocationCategorySchema = InferType<typeof locationCategorySchema>;
+export type LocationCategorySchema = z.infer<typeof locationCategorySchema>;

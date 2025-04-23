@@ -6,13 +6,13 @@ import {
 import { Status } from "@/types/common";
 import { type TableSheetProps } from "@/types/data-table";
 import { EquipmentClass } from "@/types/equipment-type";
-import { yupResolver } from "@hookform/resolvers/yup";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { EquipTypeForm } from "./equip-type-form";
 
 export function CreateEquipTypeModal({ open, onOpenChange }: TableSheetProps) {
   const form = useForm<EquipmentTypeSchema>({
-    resolver: yupResolver(equipmentTypeSchema),
+    resolver: zodResolver(equipmentTypeSchema),
     defaultValues: {
       code: "",
       status: Status.Active,
@@ -29,7 +29,6 @@ export function CreateEquipTypeModal({ open, onOpenChange }: TableSheetProps) {
       title="Equipment Type"
       formComponent={<EquipTypeForm />}
       form={form}
-      schema={equipmentTypeSchema}
       url="/equipment-types/"
       queryKey="equipment-type-list"
     />

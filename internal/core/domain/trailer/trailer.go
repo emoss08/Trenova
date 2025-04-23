@@ -2,7 +2,6 @@ package trailer
 
 import (
 	"context"
-	"strings"
 
 	"github.com/emoss08/trenova/internal/core/domain"
 	"github.com/emoss08/trenova/internal/core/domain/businessunit"
@@ -11,7 +10,6 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/fleetcode"
 	"github.com/emoss08/trenova/internal/core/domain/organization"
 	"github.com/emoss08/trenova/internal/core/domain/usstate"
-	"github.com/emoss08/trenova/internal/core/ports/infra"
 	"github.com/emoss08/trenova/internal/pkg/errors"
 	"github.com/emoss08/trenova/internal/pkg/utils/timeutils"
 	"github.com/emoss08/trenova/pkg/types/pulid"
@@ -22,43 +20,35 @@ import (
 
 var (
 	_ bun.BeforeAppendModelHook = (*Trailer)(nil)
-	_ infra.SearchableEntity    = (*Trailer)(nil)
 	_ domain.Validatable        = (*Trailer)(nil)
 )
 
 type Trailer struct {
 	bun.BaseModel `bun:"table:trailers,alias:tr" json:"-"`
 
-	// Primary identifiers
-	ID             pulid.ID `bun:"id,type:VARCHAR(100),pk,notnull" json:"id"`
-	BusinessUnitID pulid.ID `bun:"business_unit_id,type:VARCHAR(100),pk,notnull" json:"businessUnitId"`
-	OrganizationID pulid.ID `bun:"organization_id,type:VARCHAR(100),pk,notnull" json:"organizationId"`
-
-	// Relationship identifiers (Non-Primary-Keys)
-	EquipmentTypeID         pulid.ID  `bun:"equipment_type_id,type:VARCHAR(100),notnull" json:"equipmentTypeId"`
-	EquipmentManufacturerID pulid.ID  `bun:"equipment_manufacturer_id,type:VARCHAR(100),notnull" json:"equipmentManufacturerId"`
-	FleetCodeID             *pulid.ID `bun:"fleet_code_id,type:VARCHAR(100),nullzero" json:"fleetCodeId"`
-	RegistrationStateID     *pulid.ID `bun:"registration_state_id,type:VARCHAR(100),nullzero" json:"registrationStateId"`
-
-	// Core Fields
-	Status             domain.EquipmentStatus `json:"status" bun:"status,type:equipment_status_enum,notnull,default:'Available'"`
-	Code               string                 `json:"code" bun:"code,type:VARCHAR(50),notnull"`
-	Model              string                 `json:"model" bun:"model,type:VARCHAR(50)"`
-	Make               string                 `json:"make" bun:"make,type:VARCHAR(50)"`
-	LicensePlateNumber string                 `json:"licensePlateNumber" bun:"license_plate_number,type:VARCHAR(50)"`
-	Vin                string                 `json:"vin" bun:"vin,type:vin_code_optional"`
-	RegistrationNumber string                 `json:"registrationNumber" bun:"registration_number,type:VARCHAR(50)"`
-	Year               *int                   `json:"year" bun:"year,type:INTEGER,nullzero"`
-	MaxLoadWeight      *int                   `json:"maxLoadWeight" bun:"max_load_weight,type:INTEGER,nullzero"`
-	LastInspectionDate *int64                 `json:"lastInspectionDate" bun:"last_inspection_date,type:INTEGER,nullzero"`
-	RegistrationExpiry *int64                 `json:"registrationExpiry" bun:"registration_expiry,type:INTEGER,nullzero"`
-
-	// Metadata
-	Version      int64  `json:"version" bun:"version,type:BIGINT"`
-	CreatedAt    int64  `json:"createdAt" bun:"created_at,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	UpdatedAt    int64  `json:"updatedAt" bun:"updated_at,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	SearchVector string `json:"-" bun:"search_vector,type:TSVECTOR,scanonly"`
-	Rank         string `json:"-" bun:"rank,type:VARCHAR(100),scanonly"`
+	ID                      pulid.ID               `bun:"id,type:VARCHAR(100),pk,notnull" json:"id"`
+	BusinessUnitID          pulid.ID               `bun:"business_unit_id,type:VARCHAR(100),pk,notnull" json:"businessUnitId"`
+	OrganizationID          pulid.ID               `bun:"organization_id,type:VARCHAR(100),pk,notnull" json:"organizationId"`
+	EquipmentTypeID         pulid.ID               `bun:"equipment_type_id,type:VARCHAR(100),notnull" json:"equipmentTypeId"`
+	EquipmentManufacturerID pulid.ID               `bun:"equipment_manufacturer_id,type:VARCHAR(100),notnull" json:"equipmentManufacturerId"`
+	FleetCodeID             *pulid.ID              `bun:"fleet_code_id,type:VARCHAR(100),nullzero" json:"fleetCodeId"`
+	RegistrationStateID     *pulid.ID              `bun:"registration_state_id,type:VARCHAR(100),nullzero" json:"registrationStateId"`
+	Status                  domain.EquipmentStatus `json:"status" bun:"status,type:equipment_status_enum,notnull,default:'Available'"`
+	Code                    string                 `json:"code" bun:"code,type:VARCHAR(50),notnull"`
+	Model                   string                 `json:"model" bun:"model,type:VARCHAR(50)"`
+	Make                    string                 `json:"make" bun:"make,type:VARCHAR(50)"`
+	LicensePlateNumber      string                 `json:"licensePlateNumber" bun:"license_plate_number,type:VARCHAR(50)"`
+	Vin                     string                 `json:"vin" bun:"vin,type:vin_code_optional"`
+	RegistrationNumber      string                 `json:"registrationNumber" bun:"registration_number,type:VARCHAR(50)"`
+	SearchVector            string                 `json:"-" bun:"search_vector,type:TSVECTOR,scanonly"`
+	Rank                    string                 `json:"-" bun:"rank,type:VARCHAR(100),scanonly"`
+	Year                    *int                   `json:"year" bun:"year,type:INTEGER,nullzero"`
+	MaxLoadWeight           *int                   `json:"maxLoadWeight" bun:"max_load_weight,type:INTEGER,nullzero"`
+	LastInspectionDate      *int64                 `json:"lastInspectionDate" bun:"last_inspection_date,type:INTEGER,nullzero"`
+	RegistrationExpiry      *int64                 `json:"registrationExpiry" bun:"registration_expiry,type:INTEGER,nullzero"`
+	Version                 int64                  `json:"version" bun:"version,type:BIGINT"`
+	CreatedAt               int64                  `json:"createdAt" bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	UpdatedAt               int64                  `json:"updatedAt" bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
 
 	// Relationships
 	BusinessUnit          *businessunit.BusinessUnit                   `json:"businessUnit,omitempty" bun:"rel:belongs-to,join:business_unit_id=id"`
@@ -107,31 +97,6 @@ func (t *Trailer) GetID() string {
 
 func (t *Trailer) GetTableName() string {
 	return "trailers"
-}
-
-// Search Configuration
-func (t *Trailer) GetSearchType() string {
-	return "trailer"
-}
-
-func (t *Trailer) ToDocument() infra.SearchDocument {
-	searchableText := []string{
-		t.Code,
-		t.Vin,
-		t.LicensePlateNumber,
-	}
-
-	return infra.SearchDocument{
-		ID:             t.ID.String(),
-		Type:           "trailer",
-		BusinessUnitID: t.BusinessUnitID.String(),
-		OrganizationID: t.OrganizationID.String(),
-		CreatedAt:      t.CreatedAt,
-		UpdatedAt:      t.UpdatedAt,
-		Title:          t.Code,
-		Description:    t.Code,
-		SearchableText: strings.Join(searchableText, " "),
-	}
 }
 
 func (t *Trailer) BeforeAppendModel(_ context.Context, query bun.Query) error {

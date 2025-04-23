@@ -122,6 +122,21 @@ type AuditConfig struct {
 	// This is the maximum number of retries for the audit service.
 	// Defaults to 3.
 	MaxRetries int `mapstructure:"maxRetries"`
+
+	// CompressionEnabled enables compression of large audit entries.
+	// When enabled, large state data will be compressed to reduce storage requirements.
+	// Defaults to false.
+	CompressionEnabled bool `mapstructure:"compressionEnabled"`
+
+	// CompressionLevel sets the compression level (1-9).
+	// 1 is fastest but least compression, 9 is slowest but best compression.
+	// Defaults to 6 (medium compression).
+	CompressionLevel int `mapstructure:"compressionLevel"`
+
+	// CompressionThreshold is the size in KB before compression is applied.
+	// State data smaller than this threshold will not be compressed.
+	// Defaults to 10 KB.
+	CompressionThreshold int `mapstructure:"compressionThreshold"`
 }
 
 // AppConfig is the configuration for the app.

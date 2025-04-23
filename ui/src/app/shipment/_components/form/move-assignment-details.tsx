@@ -62,7 +62,7 @@ export const AssignmentDetails = memo(function AssignmentDetails({
   if (!hasAnyAssignment) return null;
 
   return (
-    <div className="grid grid-cols-2 gap-x-6 gap-y-2 items-center p-3 border-t border-sidebar-border bg-muted/30 rounded-b-md">
+    <div className="grid grid-cols-2 gap-x-6 gap-y-2 items-center p-3 border-t border-sidebar-border bg-muted rounded-b-md">
       <AssignmentDetailItem
         label="Tractor"
         entityId={assignment.tractor?.id}

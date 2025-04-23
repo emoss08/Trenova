@@ -15,17 +15,12 @@ var _ bun.BeforeAppendModelHook = (*HazmatExpiration)(nil)
 type HazmatExpiration struct {
 	bun.BaseModel `bun:"table:hazmat_expirations,alias:he" json:"-"`
 
-	// Primary identifiers
-	ID      pulid.ID `bun:"id,type:VARCHAR(100),pk,notnull" json:"id"`
-	StateID pulid.ID `bun:"state_id,type:VARCHAR(100),pk,notnull" json:"stateId"`
-
-	// Core fields
-	Years int8 `bun:"years,type:SMALLINT,notnull" json:"years"`
-
-	// Metadata
-	Version   int64 `bun:"version,type:BIGINT,notnull" json:"version"`
-	CreatedAt int64 `bun:"created_at,nullzero,notnull,default:extract(epoch from current_timestamp)::bigint" json:"createdAt"`
-	UpdatedAt int64 `bun:"updated_at,nullzero,notnull,default:extract(epoch from current_timestamp)::bigint" json:"updatedAt"`
+	ID        pulid.ID `json:"id" bun:"id,type:VARCHAR(100),pk,notnull"`
+	StateID   pulid.ID `json:"stateId" bun:"state_id,type:VARCHAR(100),pk,notnull"`
+	Years     int8     `json:"years" bun:"years,type:SMALLINT,notnull"`
+	Version   int64    `json:"version" bun:"version,type:BIGINT,notnull"`
+	CreatedAt int64    `bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" json:"createdAt"`
+	UpdatedAt int64    `bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" json:"updatedAt"`
 
 	// Relationships
 	State *usstate.UsState `json:"state,omitempty" bun:"rel:belongs-to,join:state_id=id"`

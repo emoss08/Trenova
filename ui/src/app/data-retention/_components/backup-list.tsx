@@ -33,7 +33,6 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { TerminalRestoreDialog } from "@/components/ui/terminal";
-import { API_URL } from "@/constants/env";
 import { generateDateTimeStringFromUnixTimestamp } from "@/lib/date";
 import { queries } from "@/lib/queries";
 import {
@@ -233,7 +232,7 @@ function BackupActions({ backup }: { backup: DatabaseBackup }) {
 
   // Download handler
   const handleDownload = () => {
-    window.location.href = `${API_URL}/database-backups/${backup.filename}`;
+    window.location.href = `/api/v1/database-backups/${backup.filename}`;
   };
 
   return (

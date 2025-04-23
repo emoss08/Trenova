@@ -14,7 +14,7 @@ import { login } from "@/services/auth";
 import { useAuthActions } from "@/stores/user-store";
 import { APIError } from "@/types/errors";
 import { faLock } from "@fortawesome/pro-regular-svg-icons";
-import { yupResolver } from "@hookform/resolvers/yup";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation } from "@tanstack/react-query";
 import { useCallback, useEffect } from "react";
 import { useForm } from "react-hook-form";
@@ -62,7 +62,7 @@ export function LoginForm({ email, onForgotPassword }: LoginFormProps) {
     setError,
     formState: { isSubmitting },
   } = useForm<LoginSchema>({
-    resolver: yupResolver(loginSchema),
+    resolver: zodResolver(loginSchema),
     defaultValues: {
       emailAddress: email,
       password: "",
@@ -118,6 +118,7 @@ export function LoginForm({ email, onForgotPassword }: LoginFormProps) {
           <Tooltip delayDuration={400}>
             <TooltipTrigger asChild>
               <Button
+                size="lg"
                 type="submit"
                 isLoading={isSubmitting}
                 disabled={isSubmitting}

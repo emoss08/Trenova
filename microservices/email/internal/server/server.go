@@ -92,7 +92,7 @@ func NewServer(addr string, templateService *email.TemplateService, templatesDir
 	// Create the samples directory if it doesn't exist
 	samplesDir := "data/samples"
 	if _, err := os.Stat(samplesDir); os.IsNotExist(err) {
-		if err := os.MkdirAll(samplesDir, 0755); err != nil {
+		if err = os.MkdirAll(samplesDir, 0755); err != nil {
 			log.Error().Err(err).Str("path", samplesDir).Msg("Failed to create samples directory")
 		}
 	}
@@ -121,7 +121,16 @@ func NewServer(addr string, templateService *email.TemplateService, templatesDir
 // Start starts the HTTP server
 func (s *Server) Start() error {
 	log.Info().Str("addr", s.addr).Msg("Starting template management server (DEV MODE ONLY)")
-	return http.ListenAndServe(s.addr, s.router)
+
+	srv := &http.Server{
+		Addr:         s.addr,
+		Handler:      s.router,
+		ReadTimeout:  15 * time.Second,
+		WriteTimeout: 15 * time.Second,
+		IdleTimeout:  60 * time.Second,
+	}
+
+	return srv.ListenAndServe()
 }
 
 // registerRoutes registers all routes for the server
@@ -326,7 +335,7 @@ func (s *Server) handleUpdateSample(w http.ResponseWriter, r *http.Request) {
 
 	// Validate JSON
 	var testData map[string]any
-	if err := json.Unmarshal(content, &testData); err != nil {
+	if err = json.Unmarshal(content, &testData); err != nil {
 		http.Error(w, "Invalid JSON format: "+err.Error(), http.StatusBadRequest)
 		return
 	}
@@ -378,7 +387,7 @@ func (s *Server) handleWebSocket(w http.ResponseWriter, r *http.Request) {
 
 		for {
 			// Read message (only to detect disconnection)
-			if _, _, err := conn.ReadMessage(); err != nil {
+			if _, _, err = conn.ReadMessage(); err != nil {
 				break
 			}
 		}
@@ -449,7 +458,7 @@ func (s *Server) loadSampleDataMap(name string) (map[string]any, error) {
 	}
 
 	var result map[string]any
-	if err := json.Unmarshal(data, &result); err != nil {
+	if err = json.Unmarshal(data, &result); err != nil {
 		log.Error().Str("sample", name).Err(err).Msg("Failed to parse sample data JSON")
 		return nil, err
 	}

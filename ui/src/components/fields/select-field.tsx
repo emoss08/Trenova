@@ -178,7 +178,7 @@ const ReactSelectInput = React.forwardRef<any, ReactSelectInputProps>(
         styles={{
           control: () => ({
             cursor: "pointer",
-            minHeight: "2rem",
+            // minHeight: "2rem",
           }),
           menuList: (base) => ({
             ...base,
@@ -205,8 +205,8 @@ const ReactSelectInput = React.forwardRef<any, ReactSelectInputProps>(
         classNames={{
           control: (state) =>
             cn(
-              "flex h-8 w-full rounded-md border border-muted-foreground/20 px-2 py-1.5 bg-muted text-sm",
-              "transition-[border-color,box-shadow] outline-hidden  duration-200 ease-in-out",
+              "flex items-center h-7 w-full rounded-md border border-muted-foreground/20 px-2 py-1.5 bg-muted text-xs",
+              "transition-[border-color,box-shadow] outline-hidden duration-200 ease-in-out",
               state.isFocused && "border-blue-600 ring-4 ring-blue-600/20",
               // Invalid and focused state
               state.isFocused &&
@@ -224,7 +224,7 @@ const ReactSelectInput = React.forwardRef<any, ReactSelectInputProps>(
           valueContainer: () => cn("gap-1", isReadOnly && "cursor-not-allowed"),
           singleValue: () => "leading-7 ml-1",
           multiValue: () =>
-            "bg-accent rounded items-center py-0.5 pl-2 pr-1 gap-0.5 h-6",
+            "bg-muted rounded items-center py-0.5 pl-2 pr-1 gap-0.5 h-6",
           multiValueLabel: () => "text-xs leading-4",
           multiValueRemove: () =>
             "hover:text-foreground/50 text-foreground rounded-md h-4 w-4",
@@ -376,7 +376,7 @@ export function DoubleClickSelectField<T extends FieldValues>({
             </PopoverTrigger>
             <PopoverContent className="w-auto p-0">
               <Command>
-                <CommandInput className="h-8" placeholder={placeholder} />
+                <CommandInput className="h-7" placeholder={placeholder} />
                 <CommandList>
                   <CommandEmpty>No results found</CommandEmpty>
                   <CommandGroup>

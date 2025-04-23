@@ -1,26 +1,47 @@
 import { AccessorialChargeMethod } from "@/types/billing";
 import { Status } from "@/types/common";
-import { InferType, mixed, number, object, string } from "yup";
+import { z } from "zod";
 
-export const accessorialChargeSchema = object({
-  id: string().optional(),
-  organizationId: string().nullable().optional(),
-  businessUnitId: string().nullable().optional(),
-  status: mixed<Status>()
-    .required("Status is required")
-    .oneOf(Object.values(Status)),
-  code: string()
+export const accessorialChargeSchema = z.object({
+  id: z.string().optional(),
+  organizationId: z.string().optional(),
+  businessUnitId: z.string().optional(),
+  version: z.number().optional(),
+  createdAt: z.number().optional(),
+  updatedAt: z.number().optional(),
+
+  // * Core Fields
+  status: z.nativeEnum(Status),
+  code: z
+    .string()
     .min(3, "Code must be at least 3 characters")
-    .max(10, "Code must be less than 10 characters")
-    .required("Code is required"),
-  description: string().required("Description is required"),
-  unit: number().required("Unit is required"),
-  method: mixed<AccessorialChargeMethod>()
-    .required("Method is required")
-    .oneOf(Object.values(AccessorialChargeMethod)),
-  amount: number()
-    .min(1, "Amount must be greater than 0")
-    .required("Amount is required"),
+    .max(10, "Code must be less than 10 characters"),
+  description: z.string().min(1, "Description is required"),
+  unit: z.preprocess(
+    (val) => {
+      if (val === "" || val === null || val === undefined) {
+        return undefined;
+      }
+      const parsed = parseInt(String(val), 10);
+      return isNaN(parsed) ? undefined : parsed;
+    },
+    z.number({
+      required_error: "Unit is required",
+    }),
+  ),
+  method: z.nativeEnum(AccessorialChargeMethod, {
+    message: "Method is required",
+  }),
+  amount: z.preprocess(
+    (val) => {
+      if (val === "" || val === null || val === undefined) {
+        return undefined;
+      }
+      const parsed = parseFloat(String(val));
+      return isNaN(parsed) ? undefined : parsed;
+    },
+    z.number().min(1, "Amount is required"),
+  ),
 });
 
-export type AccessorialChargeSchema = InferType<typeof accessorialChargeSchema>;
+export type AccessorialChargeSchema = z.infer<typeof accessorialChargeSchema>;

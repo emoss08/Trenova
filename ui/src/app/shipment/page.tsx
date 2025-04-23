@@ -1,38 +1,20 @@
 import { LazyComponent } from "@/components/error-boundary";
 import { FormSaveProvider } from "@/components/form";
 import { MetaTags } from "@/components/meta-tags";
-import { queries } from "@/lib/queries";
-import { ShipmentFilterSchema } from "@/lib/schemas/shipment-filter-schema";
-import { AnalyticsPage } from "@/types/analytics";
-import { useQuery } from "@tanstack/react-query";
 import { lazy, memo } from "react";
-import { FormProvider, useForm } from "react-hook-form";
+import { ShipmentAnalytics } from "./_components/analytics/shipment-analytics";
 
 const ShipmentTable = lazy(() => import("./_components/shipment-table"));
 
 export function Shipment() {
-  const form = useForm<ShipmentFilterSchema>({
-    defaultValues: {
-      search: undefined,
-      status: undefined,
-    },
-  });
-
-  const { data: analytics } = useQuery({
-    ...queries.analytics.getAnalytics(AnalyticsPage.ShipmentManagement),
-  });
-
-  console.log(analytics);
-
   return (
     <FormSaveProvider>
       <div className="space-y-6 p-6">
         <MetaTags title="Shipments" description="Shipments" />
         <Header />
+        <ShipmentAnalytics />
         <LazyComponent>
-          <FormProvider {...form}>
-            <ShipmentTable />
-          </FormProvider>
+          <ShipmentTable />
         </LazyComponent>
       </div>
     </FormSaveProvider>

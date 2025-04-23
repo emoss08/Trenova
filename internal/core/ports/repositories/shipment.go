@@ -12,7 +12,8 @@ import (
 )
 
 type ShipmentOptions struct {
-	ExpandShipmentDetails bool `query:"expandShipmentDetails"`
+	ExpandShipmentDetails bool   `query:"expandShipmentDetails"`
+	Status                string `query:"status"`
 }
 
 type ListShipmentOptions struct {

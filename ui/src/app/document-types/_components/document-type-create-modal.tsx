@@ -4,7 +4,7 @@ import {
   documentTypeSchema,
 } from "@/lib/schemas/document-type-schema";
 import { TableSheetProps } from "@/types/data-table";
-import { yupResolver } from "@hookform/resolvers/yup";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { DocumentTypeForm } from "./document-type-form";
 
@@ -13,7 +13,7 @@ export function DocumentTypeCreateModal({
   onOpenChange,
 }: TableSheetProps) {
   const form = useForm<DocumentTypeSchema>({
-    resolver: yupResolver(documentTypeSchema),
+    resolver: zodResolver(documentTypeSchema),
     defaultValues: {
       name: "",
       description: "",
@@ -29,7 +29,6 @@ export function DocumentTypeCreateModal({
       title="Document Type"
       formComponent={<DocumentTypeForm />}
       form={form}
-      schema={documentTypeSchema}
       url="/document-types/"
       queryKey="document-type-list"
     />

@@ -49,7 +49,7 @@ const vendorChunks = {
   "data-tables": ["@tanstack/react-table"],
 
   // Form Management
-  "form-handling": ["react-hook-form", "@hookform/resolvers", "yup"],
+  "form-handling": ["react-hook-form", "@hookform/resolvers", "zod"],
 
   // Drag and Drop
   "dnd-kit": [
@@ -64,18 +64,6 @@ const vendorChunks = {
     "@radix-ui/react-icons",
     "@fortawesome/pro-regular-svg-icons",
     "@fortawesome/pro-solid-svg-icons",
-  ],
-
-  // PDF Viewer
-  "pdf-viewer": [
-    "@react-pdf-viewer/core",
-    "pdfjs-dist",
-    "@react-pdf-viewer/print",
-    "@react-pdf-viewer/default-layout",
-    "@react-pdf-viewer/full-screen",
-    "@react-pdf-viewer/search",
-    "@react-pdf-viewer/theme",
-    "@react-pdf-viewer/get-file",
   ],
 
   // Date handling
@@ -146,11 +134,6 @@ export default defineConfig({
     rollupOptions: {
       output: {
         manualChunks: (id) => {
-          // Special handling for PDF modules to ensure they're split into their own chunk
-          if (id.includes("@react-pdf-viewer") || id.includes("pdfjs-dist")) {
-            return "pdf-viewer";
-          }
-
           // Process other vendor chunks
           for (const [chunkName, packages] of Object.entries(vendorChunks)) {
             if (packages.some((pkg) => id.includes(`/node_modules/${pkg}/`))) {
@@ -217,7 +200,7 @@ export default defineConfig({
       overlay: true,
     },
     warmup: {
-      clientFiles: ["./src/lib/utils.ts"],
+      clientFiles: ["./src/lib/utils.ts", "./src/lib/http-client.ts"],
     },
   },
 });

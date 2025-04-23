@@ -3,7 +3,6 @@ package worker
 import (
 	"context"
 	"fmt"
-	"strings"
 
 	"github.com/emoss08/trenova/internal/core/domain"
 	"github.com/emoss08/trenova/internal/core/domain/businessunit"
@@ -21,7 +20,6 @@ import (
 
 var (
 	_ bun.BeforeAppendModelHook = (*Worker)(nil)
-	_ infra.SearchableEntity    = (*Worker)(nil)
 	_ domain.Validatable        = (*Worker)(nil)
 	_ infra.PostgresSearchable  = (*Worker)(nil)
 )
@@ -135,28 +133,6 @@ func (w *Worker) GetTableName() string {
 // Search Configuration
 func (w *Worker) GetID() string {
 	return w.ID.String()
-}
-
-func (w *Worker) GetSearchType() string {
-	return "worker"
-}
-
-func (w *Worker) ToDocument() infra.SearchDocument {
-	searchableText := []string{
-		w.FullName(),
-	}
-
-	return infra.SearchDocument{
-		ID:             w.ID.String(),
-		Type:           "worker",
-		BusinessUnitID: w.BusinessUnitID.String(),
-		OrganizationID: w.OrganizationID.String(),
-		CreatedAt:      w.CreatedAt,
-		UpdatedAt:      w.UpdatedAt,
-		Title:          w.FullName(),
-		Description:    w.FullName(),
-		SearchableText: strings.Join(searchableText, " "),
-	}
 }
 
 func (w *Worker) GetPostgresSearchConfig() infra.PostgresSearchConfig {

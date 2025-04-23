@@ -1,12 +1,12 @@
-import { InferType, number, object, string } from "yup";
+import { z } from "zod";
 
-export const shipmentCancellationSchema = object({
-  cancelReason: string().required("Cancel Reason is required"),
-  shipmentId: string().required("Shipment ID is required"),
-  canceledById: string().required("Canceled By is required"),
-  canceledAt: number().required("Canceled At is required"),
+export const shipmentCancellationSchema = z.object({
+  cancelReason: z.string().min(1, "Cancel Reason is required"),
+  shipmentId: z.string().min(1, "Shipment ID is required"),
+  canceledById: z.string().min(1, "Canceled By is required"),
+  canceledAt: z.number().min(1, "Canceled At is required"),
 });
 
-export type ShipmentCancellationSchema = InferType<
+export type ShipmentCancellationSchema = z.infer<
   typeof shipmentCancellationSchema
 >;

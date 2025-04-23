@@ -23,7 +23,6 @@ import {
   UseFieldArrayUpdate,
   useFormContext,
 } from "react-hook-form";
-import { ValidationError } from "yup";
 import { StopDialogForm } from "./stop-dialog-form";
 
 type StopDialogProps = TableSheetProps & {
@@ -103,13 +102,12 @@ export function StopDialog({
       };
 
       // Validate against the stopSchema directly instead of using moveSchema.validateAt
-      await stopSchema.validate(stopToValidate, {
-        abortEarly: false,
-      });
+      await stopSchema.safeParseAsync(stopToValidate);
 
       return true;
     } catch (error) {
-      if (error instanceof ValidationError) {
+      console.log("Error Type", typeof error);
+      if (error) {
         error.inner.forEach((err) => {
           const fieldPath = err.path;
           if (fieldPath) {
@@ -149,7 +147,7 @@ export function StopDialog({
           organizationId: stop?.organizationId,
           businessUnitId: stop?.businessUnitId,
           locationId: stop?.locationId,
-          location: stop?.location || null,
+          location: stop?.location || undefined,
           addressLine: stop.addressLine,
           type: stop.type || StopType.Pickup,
           status: stop.status || StopStatus.New,

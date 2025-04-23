@@ -38,7 +38,7 @@ export function AssignmentForm() {
   useEffect(() => {
     if (assignmentData && tractorId) {
       setValue("primaryWorkerId", assignmentData.primaryWorkerId || "");
-      setValue("secondaryWorkerId", assignmentData.secondaryWorkerId || null);
+      setValue("secondaryWorkerId", assignmentData.secondaryWorkerId || "");
     }
   }, [tractorId, assignmentData, setValue, getValues]);
 
@@ -92,6 +92,7 @@ export function AssignmentForm() {
           control={control}
           link="/workers/"
           label="Secondary Worker"
+          clearable={true}
           placeholder="Select Secondary Worker"
           description="Select the secondary worker for the assignment."
           getOptionValue={(option) => option.id || ""}

@@ -6,7 +6,7 @@ import { checkEmailSchema, CheckEmailSchema } from "@/lib/schemas/auth-schema";
 import { checkEmail } from "@/services/auth";
 import { APIError } from "@/types/errors";
 import { faEnvelope } from "@fortawesome/pro-regular-svg-icons";
-import { yupResolver } from "@hookform/resolvers/yup";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
@@ -26,7 +26,7 @@ export function CheckEmailForm({ onEmailVerified }: CheckEmailFormProps) {
     setError,
     formState: { isSubmitting },
   } = useForm<CheckEmailSchema>({
-    resolver: yupResolver(checkEmailSchema),
+    resolver: zodResolver(checkEmailSchema),
     defaultValues: {
       emailAddress: "",
     },
@@ -68,6 +68,7 @@ export function CheckEmailForm({ onEmailVerified }: CheckEmailFormProps) {
         </FormControl>
       </FormGroup>
       <Button
+        size="lg"
         type="submit"
         className="w-full"
         isLoading={isSubmitting}

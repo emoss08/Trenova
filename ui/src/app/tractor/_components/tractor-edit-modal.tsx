@@ -4,7 +4,7 @@ import {
   type TractorSchema,
 } from "@/lib/schemas/tractor-schema";
 import { type EditTableSheetProps } from "@/types/data-table";
-import { yupResolver } from "@hookform/resolvers/yup";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { TractorForm } from "./tractor-form";
 
@@ -13,8 +13,8 @@ export function EditTractorModal({
   onOpenChange,
   currentRecord,
 }: EditTableSheetProps<TractorSchema>) {
-  const form = useForm<TractorSchema>({
-    resolver: yupResolver(tractorSchema),
+  const form = useForm({
+    resolver: zodResolver(tractorSchema),
     defaultValues: currentRecord,
   });
 
@@ -29,7 +29,6 @@ export function EditTractorModal({
       formComponent={<TractorForm />}
       fieldKey="code"
       form={form}
-      schema={tractorSchema}
     />
   );
 }

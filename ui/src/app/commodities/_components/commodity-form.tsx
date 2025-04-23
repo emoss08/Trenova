@@ -1,12 +1,11 @@
-import { AutocompleteField } from "@/components/fields/autocomplete";
 import { InputField } from "@/components/fields/input-field";
 import { SelectField } from "@/components/fields/select-field";
 import { SwitchField } from "@/components/fields/switch-field";
 import { TextareaField } from "@/components/fields/textarea-field";
+import { HazardousMaterialAutocompleteField } from "@/components/ui/autocomplete-fields";
 import { FormControl, FormGroup } from "@/components/ui/form";
 import { statusChoices } from "@/lib/choices";
 import { type CommoditySchema } from "@/lib/schemas/commodity-schema";
-import { HazardousMaterialSchema } from "@/lib/schemas/hazardous-material-schema";
 import { useFormContext } from "react-hook-form";
 
 export function CommodityForm() {
@@ -46,17 +45,13 @@ export function CommodityForm() {
         />
       </FormControl>
       <FormControl>
-        <AutocompleteField<HazardousMaterialSchema, CommoditySchema>
+        <HazardousMaterialAutocompleteField<CommoditySchema>
           name="hazardousMaterialId"
           control={control}
           link="/hazardous-materials/"
           label="Hazardous Material"
           clearable
-          placeholder="Select Hazardous Material"
           description="Select the hazardous material classification if this commodity contains regulated substances."
-          getOptionValue={(option) => option.id || ""}
-          getDisplayValue={(option) => `${option.code}`}
-          renderOption={(option) => `${option.code}`}
         />
       </FormControl>
       <FormControl>
@@ -110,7 +105,6 @@ export function CommodityForm() {
           description="The linear feet (in feet) of a single unit of this commodity. Used for calculating total load linear feet."
         />
       </FormControl>
-
       <FormControl cols="full">
         <InputField
           name="dotClassification"
@@ -126,6 +120,7 @@ export function CommodityForm() {
           control={control}
           label="Stackable"
           outlined
+          size="sm"
           description="Indicates if the commodity can be safely stacked during transport or storage."
         />
       </FormControl>
@@ -135,6 +130,7 @@ export function CommodityForm() {
           control={control}
           label="Fragile"
           outlined
+          size="sm"
           description="Specifies whether the commodity is fragile and requires special handling."
         />
       </FormControl>

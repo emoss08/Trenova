@@ -1,11 +1,19 @@
-import { boolean, InferType, object, string } from "yup";
+import { z } from "zod";
 
-export const documentUploadSchema = object({
-  resourceType: string().required("Resource type is required"),
-  resourceId: string().required("Resource ID is required"),
-  documentType: string().required("Document type is required"),
-  isPublic: boolean().required("Is public is required"),
-  requireApproval: boolean().required("Require approval is required"),
+export const documentUploadSchema = z.object({
+  id: z.string().optional(),
+  organizationId: z.string().optional(),
+  businessUnitId: z.string().optional(),
+  version: z.number().optional(),
+  createdAt: z.number().optional(),
+  updatedAt: z.number().optional(),
+
+  // * Core Fields
+  resourceType: z.string().min(1, "Resource type is required"),
+  resourceId: z.string().min(1, "Resource ID is required"),
+  documentType: z.string().min(1, "Document type is required"),
+  isPublic: z.boolean(),
+  requireApproval: z.boolean(),
 });
 
-export type DocumentUploadSchema = InferType<typeof documentUploadSchema>;
+export type DocumentUploadSchema = z.infer<typeof documentUploadSchema>;

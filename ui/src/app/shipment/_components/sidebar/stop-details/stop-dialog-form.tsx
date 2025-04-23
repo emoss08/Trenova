@@ -37,30 +37,38 @@ export function StopDialogForm({ moveIdx, stopIdx }: StopDialogFormProps) {
           shouldValidate: true,
         },
       );
-      
+
       // Get current move values
       const currentValues = getValues();
       const currentMove = currentValues.moves?.[moveIdx];
-      
+
       if (currentMove && currentMove.stops && currentMove.stops[stopIdx]) {
         // Update the stop with location data
         const updatedStop = {
           ...currentMove.stops[stopIdx],
-          location: locationData
+          location: locationData,
         };
-        
+
         // Update all the stops
         const updatedStops = [...currentMove.stops];
         updatedStops[stopIdx] = updatedStop;
-        
+
         // Update the entire move
         setValue(`moves.${moveIdx}`, {
           ...currentMove,
-          stops: updatedStops
+          stops: updatedStops,
         });
       }
     }
-  }, [isLoadingLocation, locationId, locationData, setValue, moveIdx, stopIdx, getValues]);
+  }, [
+    isLoadingLocation,
+    locationId,
+    locationData,
+    setValue,
+    moveIdx,
+    stopIdx,
+    getValues,
+  ]);
 
   return (
     <div className="space-y-2">
@@ -163,7 +171,7 @@ export function StopDialogForm({ moveIdx, stopIdx }: StopDialogFormProps) {
           Manage planned and actual arrival/departure times for this stop.
         </p>
         <div className="space-y-4">
-          <div className="rounded-lg bg-accent/50 p-4">
+          <div className="rounded-lg bg-muted p-4">
             <h4 className="text-sm font-medium text-foreground mb-3">
               Planned Times
             </h4>
@@ -190,7 +198,7 @@ export function StopDialogForm({ moveIdx, stopIdx }: StopDialogFormProps) {
               </FormControl>
             </FormGroup>
           </div>
-          <div className="rounded-lg bg-accent/50 p-4">
+          <div className="rounded-lg bg-muted p-4">
             <h4 className="text-sm font-medium text-foreground mb-3">
               Actual Times
             </h4>

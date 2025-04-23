@@ -1,13 +1,11 @@
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-
 import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
-import { useUser } from "@/stores/user-store";
-
 import { useLogout } from "@/hooks/use-auth";
+import { useUser } from "@/stores/user-store";
 import { User } from "@/types/user";
 import { faUpRightFromSquare } from "@fortawesome/pro-regular-svg-icons";
 import { CaretSortIcon } from "@radix-ui/react-icons";

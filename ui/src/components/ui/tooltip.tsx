@@ -65,7 +65,7 @@ type ToolbarTooltipProps = {
 
 function ToolbarTooltip({ content, children }: ToolbarTooltipProps) {
   return (
-    <Tooltip delayDuration={0}>
+    <Tooltip delayDuration={500}>
       <TooltipTrigger asChild>{children}</TooltipTrigger>
       <TooltipContent>{content}</TooltipContent>
     </Tooltip>

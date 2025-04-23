@@ -4,7 +4,7 @@ import {
   type DocumentTypeSchema,
 } from "@/lib/schemas/document-type-schema";
 import { type EditTableSheetProps } from "@/types/data-table";
-import { yupResolver } from "@hookform/resolvers/yup";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { DocumentTypeForm } from "./document-type-form";
 
@@ -14,7 +14,7 @@ export function EditDocumentTypeModal({
   currentRecord,
 }: EditTableSheetProps<DocumentTypeSchema>) {
   const form = useForm<DocumentTypeSchema>({
-    resolver: yupResolver(documentTypeSchema),
+    resolver: zodResolver(documentTypeSchema),
     defaultValues: currentRecord,
   });
 
@@ -29,7 +29,6 @@ export function EditDocumentTypeModal({
       formComponent={<DocumentTypeForm />}
       fieldKey="name"
       form={form}
-      schema={documentTypeSchema}
     />
   );
 }

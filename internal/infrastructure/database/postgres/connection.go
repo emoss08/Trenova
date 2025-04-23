@@ -168,16 +168,51 @@ func (c *connection) Close() error {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
-	// Close the connection pool
-	if c.pool != nil {
-		c.pool.Close()
-	}
+	c.log.Info().Msg("closing PostgreSQL database connection")
 
-	// Close the database connection
-	if c.db != nil {
-		if err := c.db.Close(); err != nil {
-			return eris.Wrap(err, "failed to close database connection")
+	// First, we'll mark everything as nil after we're done to prevent any lingering references
+	defer func() {
+		c.db = nil
+		c.sql = nil
+		c.pool = nil
+		c.log.Info().Msg("PostgreSQL database connection resources cleared")
+	}()
+
+	// Use a very short timeout for the whole close operation
+	closeCtx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+
+	// Create a channel to signal completion
+	done := make(chan struct{})
+
+	// Do all closing operations in a goroutine
+	go func() {
+		defer close(done)
+
+		// Close the database connection first
+		if c.db != nil {
+			c.log.Debug().Msg("closing database connection")
+			if err := c.db.Close(); err != nil {
+				c.log.Error().Err(err).Msg("error closing database connection")
+			} else {
+				c.log.Debug().Msg("database connection closed successfully")
+			}
 		}
+
+		// Then close the connection pool
+		if c.pool != nil {
+			c.log.Debug().Msg("closing connection pool")
+			c.pool.Close()
+			c.log.Debug().Msg("connection pool closed")
+		}
+	}()
+
+	// Wait for completion or timeout
+	select {
+	case <-done:
+		c.log.Info().Msg("PostgreSQL database connection closed successfully")
+	case <-closeCtx.Done():
+		c.log.Warn().Msg("PostgreSQL database connection close timed out, forcing shutdown")
 	}
 
 	return nil

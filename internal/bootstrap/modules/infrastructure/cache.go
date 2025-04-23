@@ -22,4 +22,11 @@ var CacheModule = fx.Module("cache",
 
 		return scriptLoader, nil
 	}),
+	fx.Invoke(func(lc fx.Lifecycle, client *redis.Client) {
+		lc.Append(fx.Hook{
+			OnStop: func(context.Context) error {
+				return client.Close()
+			},
+		})
+	}),
 )

@@ -1,4 +1,4 @@
-// src/pages/organization-form.tsx
+import { AddressField } from "@/components/fields/address-field";
 import { InputField } from "@/components/fields/input-field";
 import { SelectField } from "@/components/fields/select-field";
 import { FormSaveDock } from "@/components/form";
@@ -10,48 +10,84 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Form, FormControl, FormGroup } from "@/components/ui/form";
-import { useFormWithSave } from "@/hooks/use-form-with-save";
 import { broadcastQueryInvalidation } from "@/hooks/use-invalidate-query";
 import { queries } from "@/lib/queries";
 import {
-  OrganizationSchema,
   organizationSchema,
+  type OrganizationSchema,
 } from "@/lib/schemas/organization-schema";
 import { TIMEZONES } from "@/lib/timezone/timezone";
 import { updateOrganization } from "@/services/organization";
 import { useUser } from "@/stores/user-store";
+import type { APIError } from "@/types/errors";
 import { OrganizationType } from "@/types/organization";
-import { yupResolver } from "@hookform/resolvers/yup";
-import { useSuspenseQuery } from "@tanstack/react-query";
-import { useEffect } from "react";
-import { FormProvider, useFormContext } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import {
+  useMutation,
+  useQueryClient,
+  useSuspenseQuery,
+} from "@tanstack/react-query";
+import { useCallback } from "react";
+import {
+  FormProvider,
+  useForm,
+  useFormContext,
+  type Path,
+} from "react-hook-form";
+import { toast } from "sonner";
 
 export default function OrganizationForm() {
   const user = useUser();
-
-  // Get the organization data
+  const queryClient = useQueryClient();
   const userOrg = useSuspenseQuery({
     ...queries.organization.getOrgById(user?.currentOrganizationId ?? ""),
   });
 
-  // Set up the form with save functionality
-  const form = useFormWithSave({
-    resourceName: "Organization",
-    formOptions: {
-      resolver: yupResolver(organizationSchema),
-      defaultValues: {},
-      mode: "onChange",
-    },
+  const form = useForm({
+    resolver: zodResolver(organizationSchema),
+    defaultValues: userOrg.data,
+  });
+
+  const {
+    reset,
+    handleSubmit,
+    formState: { isDirty, isSubmitting },
+    setError,
+  } = form;
+
+  const { mutateAsync } = useMutation({
     mutationFn: async (values: OrganizationSchema) => {
       const response = await updateOrganization(
         user?.currentOrganizationId ?? "",
         values,
       );
+
       return response.data;
     },
-    onSuccess: () => {
+    onMutate: async (newValues) => {
+      // * Cancel any outgoing refetches so they don't overwrite our optimistic update
+      await queryClient.cancelQueries({
+        queryKey: queries.organization.getOrgById._def,
+      });
+
+      // * Snapshot the previous value
+      const previousOrganization = queryClient.getQueryData([
+        queries.organization.getOrgById._def,
+      ]);
+
+      // * Optimistically update to the new value
+      queryClient.setQueryData(
+        [queries.organization.getOrgById._def],
+        newValues,
+      );
+
+      return { previousOrganization, newValues };
+    },
+    onSuccess: (newValues) => {
+      toast.success("Organization updated successfully");
+
       broadcastQueryInvalidation({
-        queryKey: ["organization", "getUserOrganizations", "getOrgById"],
+        queryKey: queries.organization.getOrgById._def as unknown as string[],
         options: {
           correlationId: `update-organization-${Date.now()}`,
         },
@@ -60,24 +96,49 @@ export default function OrganizationForm() {
           refetchType: "all",
         },
       });
+
+      // * Reset the form to the new values
+      reset(newValues);
     },
-    successMessage: "Changes have been saved",
-    successDescription: "Organization updated successfully",
+    onError: (error: APIError, _, context) => {
+      // * Rollback the optimistic update
+      queryClient.setQueryData(
+        [queries.organization.getOrgById._def],
+        context?.previousOrganization,
+      );
+
+      if (error.isValidationError()) {
+        error.getFieldErrors().forEach((fieldError) => {
+          setError(fieldError.name as Path<OrganizationSchema>, {
+            message: fieldError.reason,
+          });
+        });
+      }
+
+      if (error.isRateLimitError()) {
+        toast.error("Rate limit exceeded", {
+          description:
+            "You have exceeded the rate limit. Please try again later.",
+        });
+      }
+
+      // * Regardless of the error, reset the form to the previous state
+      reset();
+    },
+    onSettled: () => {
+      // * Invalidate the query to refresh the data
+      queryClient.invalidateQueries({
+        queryKey: queries.organization.getOrgById._def,
+      });
+    },
   });
 
-  const {
-    reset,
-    handleSubmit,
-    formState: { isDirty, isSubmitting },
-    onSubmit,
-  } = form;
-
-  // Load organization data into the form when available
-  useEffect(() => {
-    if (userOrg.data && !userOrg.isLoading) {
-      reset(userOrg.data);
-    }
-  }, [userOrg.data, userOrg.isLoading, reset]);
+  const onSubmit = useCallback(
+    async (values: OrganizationSchema) => {
+      await mutateAsync(values);
+    },
+    [mutateAsync],
+  );
 
   return (
     <FormProvider {...form}>
@@ -239,14 +300,7 @@ function AddressForm() {
       <CardContent className="max-w-prose">
         <FormGroup cols={2}>
           <FormControl cols="full">
-            <InputField
-              control={control}
-              rules={{ required: true }}
-              name="addressLine1"
-              label="Street Address"
-              placeholder="Enter street address"
-              description="Primary business location for official correspondence"
-            />
+            <AddressField control={control} rules={{ required: true }} />
           </FormControl>
           <FormControl cols="full">
             <InputField

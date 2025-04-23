@@ -1,6 +1,6 @@
-import { CheckboxField } from "@/components/fields/checkbox-field";
 import { InputField } from "@/components/fields/input-field";
 import { SelectField } from "@/components/fields/select-field";
+import { SwitchField } from "@/components/fields/switch-field";
 import { TextareaField } from "@/components/fields/textarea-field";
 import { FormControl, FormGroup } from "@/components/ui/form";
 import {
@@ -64,15 +64,17 @@ export function HazardousMaterialForm() {
           label="UN Number"
           placeholder="UN Number"
           description="The UN number of the hazardous material"
+          maxLength={4}
         />
       </FormControl>
       <FormControl>
         <InputField
           control={control}
-          name="ergNumber"
-          label="ERG Number"
-          placeholder="ERG Number"
-          description="The ERG number of the hazardous material"
+          name="casNumber"
+          label="CAS Number"
+          placeholder="CAS Number"
+          description="The CAS number of the hazardous material"
+          maxLength={10}
         />
       </FormControl>
       <FormControl>
@@ -134,8 +136,9 @@ export function HazardousMaterialForm() {
         />
       </FormControl>
       <FormControl>
-        <CheckboxField
+        <SwitchField
           outlined
+          size="sm"
           control={control}
           name="placardRequired"
           label="Placard Required"
@@ -143,8 +146,9 @@ export function HazardousMaterialForm() {
         />
       </FormControl>
       <FormControl>
-        <CheckboxField
+        <SwitchField
           outlined
+          size="sm"
           control={control}
           name="isReportableQuantity"
           label="Is Reportable Quantity"

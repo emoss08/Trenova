@@ -4,7 +4,7 @@ import {
   EquipmentManufacturerSchema,
 } from "@/lib/schemas/equipment-manufacturer-schema";
 import { type EditTableSheetProps } from "@/types/data-table";
-import { yupResolver } from "@hookform/resolvers/yup";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { EquipManufacturerForm } from "./equip-manufacturer-form";
 
@@ -14,7 +14,7 @@ export function EditEquipManufacturerModal({
   currentRecord,
 }: EditTableSheetProps<EquipmentManufacturerSchema>) {
   const form = useForm<EquipmentManufacturerSchema>({
-    resolver: yupResolver(equipmentManufacturerSchema),
+    resolver: zodResolver(equipmentManufacturerSchema),
     defaultValues: currentRecord,
   });
 
@@ -29,7 +29,6 @@ export function EditEquipManufacturerModal({
       formComponent={<EquipManufacturerForm />}
       fieldKey="name"
       form={form}
-      schema={equipmentManufacturerSchema}
     />
   );
 }

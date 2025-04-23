@@ -28,31 +28,41 @@ type ShipmentDetailsProps = {
   };
 };
 
-// Wrap the component with memo to prevent unnecessary re-renders
 const ShipmentFormComponent = ({
   isLoading,
   ...props
 }: ShipmentDetailsProps) => {
-  // Handle data loading state separately from component loading state
   if (isLoading) {
     return <ShipmentDetailsSkeleton />;
   }
 
-  // Only use Suspense for component loading, not data loading
   return (
     <Suspense fallback={<ShipmentDetailsSkeleton />}>
       <ShipmentScrollArea {...props}>
-        <ShipmentServiceDetails />
-        <ShipmentBillingDetails />
-        <ShipmentGeneralInformation />
-        <ShipmentCommodityDetails />
-        <ShipmentMovesDetails />
+        <ShipmentSections />
       </ShipmentScrollArea>
     </Suspense>
   );
 };
 
+ShipmentFormComponent.displayName = "ShipmentForm";
 export const ShipmentForm = memo(ShipmentFormComponent);
+
+// Separate component for the sections to prevent re-renders of the scroll area container
+const ShipmentSectionsComponent = () => {
+  return (
+    <>
+      <ShipmentServiceDetails />
+      <ShipmentBillingDetails />
+      <ShipmentGeneralInformation />
+      <ShipmentCommodityDetails />
+      <ShipmentMovesDetails />
+    </>
+  );
+};
+
+ShipmentSectionsComponent.displayName = "ShipmentSections";
+const ShipmentSections = memo(ShipmentSectionsComponent);
 
 // Memoize the ShipmentScrollArea to prevent unnecessary re-renders
 const ShipmentScrollAreaComponent = ({
@@ -96,7 +106,9 @@ const ShipmentScrollAreaComponent = ({
           selectedShipment={selectedShipment}
         />
         <div className="flex flex-col gap-2 mt-4">
-          <ShipmentDetailsHeader />
+          <ShipmentHeaderContainer>
+            <ShipmentDetailsHeader />
+          </ShipmentHeaderContainer>
           <ScrollArea
             className="flex flex-col overflow-y-auto px-4"
             style={{
@@ -112,5 +124,19 @@ const ShipmentScrollAreaComponent = ({
     </div>
   );
 };
+
+ShipmentScrollAreaComponent.displayName = "ShipmentScrollAreaComponent";
+
+// Container for the header to prevent re-renders
+const ShipmentHeaderContainerComponent = ({
+  children,
+}: {
+  children: React.ReactNode;
+}) => {
+  return <>{children}</>;
+};
+
+ShipmentHeaderContainerComponent.displayName = "ShipmentHeaderContainer";
+const ShipmentHeaderContainer = memo(ShipmentHeaderContainerComponent);
 
 export const ShipmentScrollArea = memo(ShipmentScrollAreaComponent);

@@ -12,7 +12,6 @@ import { BaseModel } from "@/types/common";
 import { ColumnDef, ColumnHelper } from "@tanstack/react-table";
 import { memo, useMemo } from "react";
 import { v4 } from "uuid";
-import { DataTableColumnHeader } from "./data-table-column-header";
 import {
   EntityColumnConfig,
   EntityRefConfig,
@@ -328,12 +327,7 @@ export function createEntityRefColumn<
 ): ColumnDef<T> {
   return columnHelper.accessor((row) => row[accessorKey], {
     id: accessorKey as string,
-    header: ({ column }) => (
-      <DataTableColumnHeader
-        column={column as any}
-        title={config.getHeaderText ?? ""}
-      />
-    ),
+    header: config.getHeaderText ?? "",
     cell: ({ getValue, row }) => {
       const entity = getValue();
       if (!entity) {
@@ -357,12 +351,7 @@ export function createEntityColumn<T extends Record<string, any>>(
 ): ColumnDef<T> {
   return columnHelper.accessor((row) => row[accessorKey], {
     id: accessorKey as string,
-    header: ({ column }) => (
-      <DataTableColumnHeader
-        column={column as any}
-        title={config.getHeaderText ?? ""}
-      />
-    ),
+    header: config.getHeaderText ?? "",
     cell: ({ row }) => {
       const entity = row.original;
 
@@ -396,12 +385,7 @@ export function createNestedEntityRefColumn<
 ): ColumnDef<T> {
   return columnHelper.accessor((row) => config.getEntity(row), {
     id: config.columnId ?? v4(),
-    header: ({ column }) => (
-      <DataTableColumnHeader
-        column={column as any}
-        title={config.getHeaderText ?? ""}
-      />
-    ),
+    header: config.getHeaderText ?? "",
     cell: (info) => (
       <NestedEntityRefCell<TValue, T> {...info} config={config} />
     ),

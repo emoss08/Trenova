@@ -1,8 +1,8 @@
 import { Icon } from "@/components/ui/icons";
 import {
-  SearchEntityType,
-  SearchResult,
-  SiteSearchQuickOptionProps,
+    SearchEntityType,
+    SearchResult,
+    SiteSearchQuickOptionProps,
 } from "@/types/search";
 import { faTruck } from "@fortawesome/pro-regular-svg-icons";
 import { ShipmentStatusBadge } from "../status-badge";
@@ -21,10 +21,10 @@ export function ShipmentResultItem(props: SearchResultItemProps) {
 
   return (
     <div
-      className="flex items-center gap-3 p-1 cursor-pointer rounded-md transition-colors hover:bg-accent"
+      className="flex items-center gap-3 p-1 cursor-pointer rounded-md transition-colors hover:bg-muted"
       onClick={() => onClick(result)}
     >
-      <div className="flex-shrink-0 flex items-center justify-center size-10 rounded-full bg-accent/30">
+      <div className="flex-shrink-0 flex items-center justify-center size-10 rounded-full bg-muted">
         <div className="flex items-center justify-center bg-transparent border border-border size-8 rounded-md">
           <Icon icon={faTruck} className="size-5 text-foreground" />
         </div>
@@ -56,7 +56,7 @@ export function SiteSearchQuickOption({
   return (
     <button
       onClick={onClick}
-      className="flex items-center gap-2 p-2 rounded-md hover:bg-accent/50 transition-colors cursor-pointer outline-none"
+      className="flex items-center gap-2 p-2 rounded-md hover:bg-muted transition-colors cursor-pointer outline-none"
     >
       <Icon icon={icon} className="size-4 text-muted-foreground" />
       <div className="flex flex-col text-left">
@@ -78,7 +78,7 @@ export function getResultComponent(
     default:
       // Fallback for unknown types
       return (
-        <div className="px-4 py-2 hover:bg-accent/30 cursor-pointer rounded-md">
+        <div className="px-4 py-2 hover:bg-muted cursor-pointer rounded-md">
           {result.title}
         </div>
       );

@@ -21,11 +21,9 @@ import (
 	"github.com/emoss08/trenova/internal/api/handlers/integration"
 	"github.com/emoss08/trenova/internal/api/handlers/location"
 	"github.com/emoss08/trenova/internal/api/handlers/locationcategory"
-	"github.com/emoss08/trenova/internal/api/handlers/logreader"
 	organizationHandler "github.com/emoss08/trenova/internal/api/handlers/organization"
 	"github.com/emoss08/trenova/internal/api/handlers/reporting"
 	"github.com/emoss08/trenova/internal/api/handlers/routing"
-	"github.com/emoss08/trenova/internal/api/handlers/search"
 	"github.com/emoss08/trenova/internal/api/handlers/servicetype"
 	"github.com/emoss08/trenova/internal/api/handlers/session"
 	"github.com/emoss08/trenova/internal/api/handlers/shipment"
@@ -85,7 +83,6 @@ type RouterParams struct {
 	AuthHandler                  *authHandler.Handler
 	UserHandler                  *user.Handler
 	SessionHandler               *session.Handler
-	SearchHandler                *search.Handler
 	WorkerHandler                *worker.Handler
 	TableConfigurationHandler    *tableconfiguration.Handler
 	FleetCodeHandler             *fleetcode.Handler
@@ -107,7 +104,6 @@ type RouterParams struct {
 	AssignmentHandler            *assignment.Handler
 	ShipmentMoveHandler          *shipmentmove.Handler
 	StopHandler                  *stop.Handler
-	LogReaderHandler             *logreader.Handler
 	ShipmentControlHandler       *shipmentcontrol.Handler
 	BillingControlHandler        *billingcontrol.Handler
 	BackupHandler                *backup.Handler
@@ -198,9 +194,6 @@ func (r *Router) setupProtectedRoutes(router fiber.Router, rl *middleware.RateLi
 	// Sessions
 	r.p.SessionHandler.RegisterRoutes(router)
 
-	// Search
-	r.p.SearchHandler.RegisterRoutes(router)
-
 	// Workers
 	r.p.WorkerHandler.RegisterRoutes(router, rl)
 
@@ -263,9 +256,6 @@ func (r *Router) setupProtectedRoutes(router fiber.Router, rl *middleware.RateLi
 
 	// Stops
 	r.p.StopHandler.RegisterRoutes(router, rl)
-
-	// Log Reader
-	r.p.LogReaderHandler.RegisterRoutes(router, rl)
 
 	// Shipment Control
 	r.p.ShipmentControlHandler.RegisterRoutes(router, rl)

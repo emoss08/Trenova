@@ -519,7 +519,7 @@ export function MultiSelectAutocomplete<T>({
           <Command shouldFilter={false} className="overflow-hidden">
             <div className="border-b w-full">
               <CommandInput
-                className="bg-transparent h-8 [&_[cmdk-input]]:h-8 truncate"
+                className="bg-transparent h-7 [&_[cmdk-input]]:h-7 truncate"
                 placeholder={`Search ${label.toLowerCase()}...`}
                 value={searchTerm}
                 onValueChange={setSearchTerm}

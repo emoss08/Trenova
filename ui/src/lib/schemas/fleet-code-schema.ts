@@ -1,25 +1,34 @@
 import { Status } from "@/types/common";
-import { type InferType, mixed, number, object, string } from "yup";
+import { z } from "zod";
 
-export const fleetCodeSchema = object({
-  id: string().optional(),
-  organizationId: string().nullable().optional(),
-  businessUnitId: string().nullable().optional(),
-  status: mixed<Status>()
-    .required("Status is required")
-    .oneOf(Object.values(Status)),
-  name: string().required("Name is required"),
-  description: string().optional(),
-  revenueGoal: number()
-    .transform((value) => (Number.isNaN(value) ? undefined : value))
-    .nullable()
-    .optional(),
-  deadheadGoal: number()
-    .transform((value) => (Number.isNaN(value) ? undefined : value))
-    .nullable()
-    .optional(),
-  color: string().optional(),
-  managerId: string().nullable(),
+export const fleetCodeSchema = z.object({
+  id: z.string().optional(),
+  organizationId: z.string().optional(),
+  businessUnitId: z.string().optional(),
+  version: z.number().optional(),
+  createdAt: z.number().optional(),
+  updatedAt: z.number().optional(),
+
+  // * Core Fields
+  status: z.nativeEnum(Status),
+  name: z.string().min(1, "Name is required"),
+  description: z.string().optional(),
+  revenueGoal: z.preprocess((val) => {
+    if (val === "" || val === null || val === undefined) {
+      return undefined;
+    }
+    const parsed = parseFloat(String(val));
+    return isNaN(parsed) ? undefined : parsed;
+  }, z.number().optional()),
+  deadheadGoal: z.preprocess((val) => {
+    if (val === "" || val === null || val === undefined) {
+      return undefined;
+    }
+    const parsed = parseFloat(String(val));
+    return isNaN(parsed) ? undefined : parsed;
+  }, z.number().optional()),
+  color: z.string().optional(),
+  managerId: z.string().nullable(),
 });
 
-export type FleetCodeSchema = InferType<typeof fleetCodeSchema>;
+export type FleetCodeSchema = z.infer<typeof fleetCodeSchema>;

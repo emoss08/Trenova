@@ -70,6 +70,9 @@ func (ar *auditRepository) filterQuery(q *bun.SelectQuery, opts *ports.LimitOffs
 
 	q = q.Relation("User")
 
+	// * Order by the created at date
+	q = q.Order("ae.timestamp DESC")
+
 	return q.Limit(opts.Limit).Offset(opts.Offset)
 }
 

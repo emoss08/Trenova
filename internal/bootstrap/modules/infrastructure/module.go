@@ -11,7 +11,6 @@ var Module = fx.Module("infrastructure",
 	DatabaseModule,
 	StorageModule,
 	CacheModule,
-	SearchModule,
 	MessagingModule,
 )
 

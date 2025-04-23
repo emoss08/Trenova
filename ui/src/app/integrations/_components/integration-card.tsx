@@ -23,7 +23,7 @@ export default function IntegrationCard({
   return (
     <div
       key={integration.id}
-      className="overflow-hidden border border-input rounded-md transition-all p-4"
+      className="overflow-hidden border border-input rounded-md transition-all p-4 bg-card"
     >
       <div className="flex flex-row items-center justify-between gap-4">
         <div className="flex flex-col">
@@ -32,7 +32,7 @@ export default function IntegrationCard({
             By {integration.builtBy}
           </div>
         </div>
-        <div className="flex-shrink-0 rounded-full flex items-center justify-center p-2 border border-input">
+        <div className="flex-shrink-0 rounded-full flex items-center justify-center p-2 border border-input bg-background">
           <LazyImage
             src={integrationImages[integration.type]}
             layout="fixed"
@@ -44,7 +44,7 @@ export default function IntegrationCard({
       </div>
       <div className="mt-2">
         <div className="h-[80px] text-wrap truncate text-sm text-muted-foreground">
-          {integration.overview || integration.description}
+          {integration.description}
         </div>
       </div>
 
