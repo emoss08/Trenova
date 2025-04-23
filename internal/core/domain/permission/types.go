@@ -409,6 +409,7 @@ var (
 		ResourceIntegration: append(
 			BaseActions,
 			ActionConfigure,
+			ActionAudit,
 			ActionDelegate,
 		),
 		ResourceTemplate: append(

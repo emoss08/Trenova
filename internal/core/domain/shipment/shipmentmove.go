@@ -19,24 +19,17 @@ var _ bun.BeforeAppendModelHook = (*ShipmentMove)(nil)
 type ShipmentMove struct {
 	bun.BaseModel `bun:"table:shipment_moves,alias:sm" json:"-"`
 
-	// Primary identifiers
-	ID             pulid.ID `bun:",pk,type:VARCHAR(100),notnull" json:"id"`
-	BusinessUnitID pulid.ID `bun:"business_unit_id,pk,notnull,type:VARCHAR(100)" json:"businessUnitId"`
-	OrganizationID pulid.ID `bun:"organization_id,pk,notnull,type:VARCHAR(100)" json:"organizationId"`
-
-	// Relationship identifiers (Non-Primary-Keys)
-	ShipmentID pulid.ID `bun:"shipment_id,type:VARCHAR(100),notnull" json:"shipmentId"`
-
-	// Core Fields
-	Status   MoveStatus `json:"status" bun:"status,type:move_status_enum,notnull,default:'New'"`
-	Loaded   bool       `json:"loaded" bun:"loaded,type:BOOLEAN,notnull,default:true"`
-	Sequence int        `json:"sequence" bun:"sequence,type:INTEGER,notnull,default:0"`
-	Distance *float64   `json:"distance" bun:"distance,type:FLOAT,nullzero"`
-
-	// Metadata
-	Version   int64 `bun:"version,type:BIGINT" json:"version"`
-	CreatedAt int64 `json:"createdAt" bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	UpdatedAt int64 `json:"updatedAt" bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	ID             pulid.ID   `json:"id" bun:",pk,type:VARCHAR(100),notnull"`
+	BusinessUnitID pulid.ID   `json:"businessUnitId" bun:"business_unit_id,pk,notnull,type:VARCHAR(100)"`
+	OrganizationID pulid.ID   `json:"organizationId" bun:"organization_id,pk,notnull,type:VARCHAR(100)"`
+	ShipmentID     pulid.ID   `json:"shipmentId" bun:"shipment_id,type:VARCHAR(100),notnull"`
+	Status         MoveStatus `json:"status" bun:"status,type:move_status_enum,notnull,default:'New'"`
+	Loaded         bool       `json:"loaded" bun:"loaded,type:BOOLEAN,notnull,default:true"`
+	Sequence       int        `json:"sequence" bun:"sequence,type:INTEGER,notnull,default:0"`
+	Distance       *float64   `json:"distance" bun:"distance,type:FLOAT,nullzero"`
+	Version        int64      `json:"version" bun:"version,type:BIGINT"`
+	CreatedAt      int64      `json:"createdAt" bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	UpdatedAt      int64      `json:"updatedAt" bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
 
 	// Relationships
 	BusinessUnit *businessunit.BusinessUnit `bun:"rel:belongs-to,join:business_unit_id=id" json:"-"`

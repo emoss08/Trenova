@@ -17,31 +17,26 @@ var _ bun.BeforeAppendModelHook = (*BusinessUnit)(nil)
 type BusinessUnit struct {
 	bun.BaseModel `bun:"table:business_units,alias:bu" json:"-"`
 
-	// Primary Identifiers
-	ID                   pulid.ID  `json:"id" bun:",pk,type:VARCHAR(100)"`
-	ParentBusinessUnitID *pulid.ID `json:"parentBusinessUnitId" bun:"parent_business_unit_id,type:VARCHAR(100),nullzero"`
-
-	// Core Fields
-	Name           string   `json:"name" bun:"name,type:VARCHAR(100),notnull"`
-	Code           string   `json:"code" bun:"code,type:VARCHAR(10),notnull"`
-	Description    string   `json:"description" bun:"description,type:TEXT,notnull"`
-	PrimaryContact string   `json:"primaryContact" bun:"primary_contact,type:VARCHAR(100)"`
-	PrimaryEmail   string   `json:"primaryEmail" bun:"primary_email,type:VARCHAR(255)"`
-	PrimaryPhone   string   `json:"primaryPhone" bun:"primary_phone,type:VARCHAR(20)"`
-	AddressLine1   string   `json:"addressLine1" bun:"address_line1,type:VARCHAR(100)"`
-	AddressLine2   string   `json:"addressLine2" bun:"address_line2,type:VARCHAR(100)"`
-	City           string   `json:"city" bun:"city,type:VARCHAR(100)"`
-	PostalCode     string   `json:"postalCode" bun:"postal_code,type:us_postal_code,notnull"`
-	Timezone       string   `json:"timezone" bun:"timezone,type:VARCHAR(50),notnull,default:'America/New_York'"`
-	Locale         string   `json:"locale" bun:"locale,type:VARCHAR(10),notnull,default:'en-US'"`
-	TaxID          string   `json:"taxId" bun:"tax_id,type:VARCHAR(50)"`
-	StateID        pulid.ID `json:"stateId" bun:"state_id,type:VARCHAR(100)"`
-
-	// Metadata & Versioning
-	Metadata  map[string]any `json:"-" bun:"metadata,type:JSONB,default:'{}'::jsonb"`
-	Version   int64          `json:"version" bun:"version,type:BIGINT"`
-	CreatedAt int64          `json:"createdAt" bun:"created_at,nullzero,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	UpdatedAt int64          `json:"updatedAt" bun:"updated_at,nullzero,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	ID                   pulid.ID       `json:"id" bun:",pk,type:VARCHAR(100)"`
+	ParentBusinessUnitID *pulid.ID      `json:"parentBusinessUnitId" bun:"parent_business_unit_id,type:VARCHAR(100),nullzero"`
+	StateID              pulid.ID       `json:"stateId" bun:"state_id,type:VARCHAR(100)"`
+	Name                 string         `json:"name" bun:"name,type:VARCHAR(100),notnull"`
+	Code                 string         `json:"code" bun:"code,type:VARCHAR(10),notnull"`
+	Description          string         `json:"description" bun:"description,type:TEXT,notnull"`
+	PrimaryContact       string         `json:"primaryContact" bun:"primary_contact,type:VARCHAR(100)"`
+	PrimaryEmail         string         `json:"primaryEmail" bun:"primary_email,type:VARCHAR(255)"`
+	PrimaryPhone         string         `json:"primaryPhone" bun:"primary_phone,type:VARCHAR(20)"`
+	AddressLine1         string         `json:"addressLine1" bun:"address_line1,type:VARCHAR(100)"`
+	AddressLine2         string         `json:"addressLine2" bun:"address_line2,type:VARCHAR(100)"`
+	City                 string         `json:"city" bun:"city,type:VARCHAR(100)"`
+	PostalCode           string         `json:"postalCode" bun:"postal_code,type:us_postal_code,notnull"`
+	Timezone             string         `json:"timezone" bun:"timezone,type:VARCHAR(50),notnull,default:'America/New_York'"`
+	Locale               string         `json:"locale" bun:"locale,type:VARCHAR(10),notnull,default:'en-US'"`
+	TaxID                string         `json:"taxId" bun:"tax_id,type:VARCHAR(50)"`
+	Metadata             map[string]any `json:"-" bun:"metadata,type:JSONB,default:'{}'::jsonb"`
+	Version              int64          `json:"version" bun:"version,type:BIGINT"`
+	CreatedAt            int64          `json:"createdAt" bun:"created_at,nullzero,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	UpdatedAt            int64          `json:"updatedAt" bun:"updated_at,nullzero,notnull,default:extract(epoch from current_timestamp)::bigint"`
 
 	// Relationships
 	ParentBusinessUnit *BusinessUnit    `json:"parentBusinessUnit" bun:"rel:belongs-to,join:parent_business_unit_id=id"`

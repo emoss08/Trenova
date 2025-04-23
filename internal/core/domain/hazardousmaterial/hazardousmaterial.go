@@ -22,33 +22,28 @@ var (
 type HazardousMaterial struct {
 	bun.BaseModel `bun:"table:hazardous_materials,alias:hm" json:"-"`
 
-	// Primary identifiers
-	ID             pulid.ID `bun:",pk,type:VARCHAR(100)" json:"id"`
-	BusinessUnitID pulid.ID `bun:"business_unit_id,notnull,type:VARCHAR(100),pk" json:"businessUnitId"`
-	OrganizationID pulid.ID `bun:"organization_id,notnull,type:VARCHAR(100),pk" json:"organizationId"`
-
-	// Core Fields
+	ID                          pulid.ID       `bun:",pk,type:VARCHAR(100)" json:"id"`
+	BusinessUnitID              pulid.ID       `bun:"business_unit_id,notnull,type:VARCHAR(100),pk" json:"businessUnitId"`
+	OrganizationID              pulid.ID       `bun:"organization_id,notnull,type:VARCHAR(100),pk" json:"organizationId"`
 	Status                      domain.Status  `bun:"status,type:status,default:'Active'" json:"status"`
 	Code                        string         `bun:"code,notnull,type:VARCHAR(100)" json:"code"`
 	Name                        string         `bun:"name,notnull,type:VARCHAR(100)" json:"name"`
 	Description                 string         `bun:"description,type:TEXT,notnull" json:"description"`
 	Class                       HazardousClass `bun:"class,type:hazardous_class_enum,notnull" json:"class"`
-	UNNumber                    string         `bun:"un_number,type:VARCHAR(100)" json:"unNumber"`
-	ERGNumber                   string         `bun:"erg_number,type:VARCHAR(100)" json:"ergNumber"`
+	UNNumber                    string         `bun:"un_number,type:VARCHAR(4)" json:"unNumber"`
+	CASNumber                   string         `bun:"cas_number,type:VARCHAR(10)" json:"casNumber"`
 	PackingGroup                PackingGroup   `bun:"packing_group,type:packing_group_enum,notnull" json:"packingGroup"`
 	ProperShippingName          string         `bun:"proper_shipping_name,type:TEXT" json:"properShippingName"`
 	HandlingInstructions        string         `bun:"handling_instructions,type:TEXT" json:"handlingInstructions"`
 	EmergencyContact            string         `bun:"emergency_contact,type:TEXT" json:"emergencyContact"`
 	EmergencyContactPhoneNumber string         `bun:"emergency_contact_phone_number,type:TEXT" json:"emergencyContactPhoneNumber"`
+	SearchVector                string         `json:"-" bun:"search_vector,type:TSVECTOR,scanonly"`
+	Rank                        string         `json:"-" bun:"rank,type:VARCHAR(100),scanonly"`
 	PlacardRequired             bool           `bun:"placard_required,type:BOOLEAN,default:false" json:"placardRequired"`
 	IsReportableQuantity        bool           `bun:"is_reportable_quantity,type:BOOLEAN,default:false" json:"isReportableQuantity"`
-
-	// Metadata
-	Version      int64  `bun:"version,type:BIGINT" json:"version"`
-	CreatedAt    int64  `json:"createdAt" bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	UpdatedAt    int64  `json:"updatedAt" bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	SearchVector string `json:"-" bun:"search_vector,type:TSVECTOR,scanonly"`
-	Rank         string `json:"-" bun:"rank,type:VARCHAR(100),scanonly"`
+	Version                     int64          `bun:"version,type:BIGINT" json:"version"`
+	CreatedAt                   int64          `json:"createdAt" bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	UpdatedAt                   int64          `json:"updatedAt" bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
 
 	// Relationships
 	BusinessUnit *businessunit.BusinessUnit `bun:"rel:belongs-to,join:business_unit_id=id" json:"-"`
@@ -62,6 +57,16 @@ func (hm *HazardousMaterial) Validate(ctx context.Context, multiErr *errors.Mult
 		validation.Field(&hm.Code,
 			validation.Required.Error("Code is required"),
 			validation.Length(1, 100).Error("Code must be between 1 and 100 characters"),
+		),
+
+		// UN Number must be between 1 and 4 characters
+		validation.Field(&hm.UNNumber,
+			validation.Length(1, 4).Error("UN Number must be between 1 and 4 characters"),
+		),
+
+		// CAS Number must be between 1 and 10 characters
+		validation.Field(&hm.CASNumber,
+			validation.Length(1, 10).Error("CAS Number must be between 1 and 10 characters"),
 		),
 
 		// Name is required and must be between 1 and 100 characters
