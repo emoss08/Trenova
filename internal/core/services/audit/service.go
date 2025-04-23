@@ -816,11 +816,8 @@ func (s *service) registerDefaultSensitiveFields() error {
 	if err := s.sdm.RegisterSensitiveFields(permission.ResourceUser, []services.SensitiveField{
 		{Name: "password", Action: services.SensitiveFieldOmit},
 		{Name: "hashedPassword", Action: services.SensitiveFieldOmit},
-		{Name: "email", Action: services.SensitiveFieldMask},
-		{Name: "phone", Action: services.SensitiveFieldMask},
-		{Name: "ssn", Action: services.SensitiveFieldMask, Pattern: `^\d{3}-\d{2}-\d{4}$`},
+		{Name: "emailAddress", Action: services.SensitiveFieldMask},
 		{Name: "address", Action: services.SensitiveFieldMask},
-		{Name: "creditCardNumber", Action: services.SensitiveFieldMask, Pattern: `^(?:\d[ -]*?){13,16}$`},
 	}); err != nil {
 		s.l.Error().Err(err).Msg("failed to register user sensitive fields")
 		return err
@@ -830,7 +827,6 @@ func (s *service) registerDefaultSensitiveFields() error {
 	if err := s.sdm.RegisterSensitiveFields(permission.ResourceOrganization, []services.SensitiveField{
 		{Name: "logoUrl", Action: services.SensitiveFieldMask},
 		{Name: "taxId", Action: services.SensitiveFieldMask},
-		{Name: "dotNumber", Action: services.SensitiveFieldMask},
 	}); err != nil {
 		s.l.Error().Err(err).Msg("failed to register organization sensitive fields")
 		return err
