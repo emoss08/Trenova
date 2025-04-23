@@ -136,7 +136,7 @@ func NewService(p ServiceParams) services.AuditService {
 		OnStart: func(context.Context) error {
 			return auditService.Start()
 		},
-		OnStop: func(ctx context.Context) error {
+		OnStop: func(context.Context) error {
 			return auditService.Stop()
 		},
 	})
@@ -446,40 +446,51 @@ func (s *service) processEmergencyLogs() {
 			s.l.Debug().Msg("emergency log processor stopped")
 			return
 		case entry := <-s.emergencyLog.ch:
-			// Process with retries for resilience
-			var err error
-			var processed bool
-
-			// Try a few times with increasing backoff
-			for retry := 0; retry <= maxRetries; retry++ {
-				if retry > 0 {
-					// Add backoff between retries
-					backoffTime := time.Duration(retry*150) * time.Millisecond
-					time.Sleep(backoffTime)
-				}
-
-				ctx, cancel := context.WithTimeout(context.Background(), DefaultWorkerTimeout)
-				err = s.repo.InsertAuditEntries(ctx, []*audit.Entry{entry})
-				cancel()
-
-				if err == nil {
-					processed = true
-					s.emergencyLog.count.Inc()
-					if retry > 0 {
-						s.l.Debug().Int("retry", retry).Msg("critical audit entry processed after retry")
-					} else {
-						s.l.Debug().Msg("critical audit entry processed")
-					}
-					break
-				}
-			}
-
-			if !processed {
-				s.l.Error().Err(err).Msg("failed to process critical audit entry after all retries")
-				s.errorCount.Inc()
-			}
+			s.processEmergencyEntry(entry, maxRetries)
 		}
 	}
+}
+
+// processEmergencyEntry handles a single emergency audit entry with retries
+func (s *service) processEmergencyEntry(entry *audit.Entry, maxRetries int) {
+	success, err := s.attemptInsertWithRetry(entry, maxRetries)
+
+	if success {
+		s.emergencyLog.count.Inc()
+	} else {
+		s.l.Error().Err(err).Msg("failed to process critical audit entry after all retries")
+		s.errorCount.Inc()
+	}
+}
+
+// attemptInsertWithRetry tries to insert an entry with exponential backoff
+func (s *service) attemptInsertWithRetry(entry *audit.Entry, maxRetries int) (bool, error) {
+	var err error
+
+	for retry := 0; retry <= maxRetries; retry++ {
+		// Apply backoff for retries
+		if retry > 0 {
+			backoffTime := time.Duration(retry*150) * time.Millisecond
+			time.Sleep(backoffTime)
+		}
+
+		// Try to insert the entry
+		ctx, cancel := context.WithTimeout(context.Background(), DefaultWorkerTimeout)
+		err = s.repo.InsertAuditEntries(ctx, []*audit.Entry{entry})
+		cancel()
+
+		// On success, log and return
+		if err == nil {
+			if retry > 0 {
+				s.l.Debug().Int("retry", retry).Msg("critical audit entry processed after retry")
+			} else {
+				s.l.Debug().Msg("critical audit entry processed")
+			}
+			return true, nil
+		}
+	}
+
+	return false, err
 }
 
 // Optimized flusher with adaptive intervals
@@ -501,37 +512,54 @@ func (s *service) startFlusher() {
 				return
 			}
 
-			// Skip flushing if buffer is empty to reduce load
-			if s.buffer.Size() == 0 {
-				emptyFlushes++
-				// After several empty flushes, adjust the interval to reduce system load
-				if emptyFlushes > 3 {
-					newInterval := min(baseInterval*2, 60*time.Second)
-					ticker.Reset(newInterval)
-					s.l.Debug().
-						Dur("interval", newInterval).
-						Msg("increased flush interval due to inactivity")
-				}
-				continue
-			}
-
-			// Reset back to normal interval if we were previously inactive
-			if emptyFlushes > 3 {
-				ticker.Reset(baseInterval)
-				s.l.Debug().Msg("reset to normal flush interval due to activity")
-			}
-			emptyFlushes = 0
-
-			// Perform the flush
-			if err := s.flushBuffer(context.Background()); err != nil && !eris.Is(err, ErrEmptyBuffer) {
-				s.l.Error().Err(err).Msg("failed to flush audit entries")
-				s.errorCount.Inc()
-				s.buffer.RecordFailure()
-			} else if !eris.Is(err, ErrEmptyBuffer) {
-				// Reset failures on successful flush
-				s.buffer.ResetFailures()
-			}
+			emptyFlushes = s.handleTick(baseInterval, ticker, emptyFlushes)
 		}
+	}
+}
+
+// handleTick processes a single tick of the flusher timer
+func (s *service) handleTick(baseInterval time.Duration, ticker *time.Ticker, emptyFlushes int) int {
+	// Skip flushing if buffer is empty to reduce load
+	if s.buffer.Size() == 0 {
+		return s.handleEmptyBuffer(baseInterval, ticker, emptyFlushes)
+	}
+
+	// Reset back to normal interval if we were previously inactive
+	if emptyFlushes > 3 {
+		ticker.Reset(baseInterval)
+		s.l.Debug().Msg("reset to normal flush interval due to activity")
+	}
+
+	// Attempt to flush and handle result
+	s.performFlush()
+	return 0 // Reset empty flushes counter
+}
+
+// handleEmptyBuffer adjusts ticker interval based on inactivity
+func (s *service) handleEmptyBuffer(baseInterval time.Duration, ticker *time.Ticker, emptyFlushes int) int {
+	emptyFlushes++
+	// After several empty flushes, adjust the interval to reduce system load
+	if emptyFlushes > 3 {
+		newInterval := min(baseInterval*2, 60*time.Second)
+		ticker.Reset(newInterval)
+		s.l.Debug().
+			Dur("interval", newInterval).
+			Msg("increased flush interval due to inactivity")
+	}
+	return emptyFlushes
+}
+
+// performFlush executes the flush operation and handles errors
+func (s *service) performFlush() {
+	err := s.flushBuffer(context.Background())
+
+	if err != nil && !eris.Is(err, ErrEmptyBuffer) {
+		s.l.Error().Err(err).Msg("failed to flush audit entries")
+		s.errorCount.Inc()
+		s.buffer.RecordFailure()
+	} else if !eris.Is(err, ErrEmptyBuffer) {
+		// Reset failures on successful flush
+		s.buffer.ResetFailures()
 	}
 }
 
@@ -612,7 +640,7 @@ func (s *service) insertChunk(ctx context.Context, entries []*audit.Entry) error
 		500 * time.Millisecond,
 	}
 
-	for retry := 0; retry < DefaultMaxRetries; retry++ {
+	for retry := range DefaultMaxRetries {
 		// Check if context has been cancelled
 		if ctx.Err() != nil {
 			return eris.Wrap(ctx.Err(), "context cancelled during insert")
