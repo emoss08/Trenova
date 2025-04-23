@@ -205,8 +205,8 @@ const ReactSelectInput = React.forwardRef<any, ReactSelectInputProps>(
         classNames={{
           control: (state) =>
             cn(
-              "flex items-center h-7 w-full rounded-md border border-muted-foreground/20 px-2 py-1.5 bg-muted text-sm",
-              "transition-[border-color,box-shadow] outline-hidden  duration-200 ease-in-out",
+              "flex items-center h-7 w-full rounded-md border border-muted-foreground/20 px-2 py-1.5 bg-muted text-xs",
+              "transition-[border-color,box-shadow] outline-hidden duration-200 ease-in-out",
               state.isFocused && "border-blue-600 ring-4 ring-blue-600/20",
               // Invalid and focused state
               state.isFocused &&
@@ -376,7 +376,7 @@ export function DoubleClickSelectField<T extends FieldValues>({
             </PopoverTrigger>
             <PopoverContent className="w-auto p-0">
               <Command>
-                <CommandInput className="h-8" placeholder={placeholder} />
+                <CommandInput className="h-7" placeholder={placeholder} />
                 <CommandList>
                   <CommandEmpty>No results found</CommandEmpty>
                   <CommandGroup>

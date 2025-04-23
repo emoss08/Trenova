@@ -10,14 +10,18 @@ export const trailerSchema = z.object({
   updatedAt: z.number().optional(),
 
   // * Core Fields
-  equipmentTypeId: z.string().min(1, "Equipment Type is required"),
+  code: z.string().min(1, {
+    message: "Code is required",
+  }),
+  equipmentTypeId: z.string().min(1, {
+    message: "Equipment Type is required",
+  }),
   equipmentManufacturerId: z.string().nullable().optional(),
   fleetCodeId: z.string().nullable().optional(),
   registrationStateId: z.string().nullable().optional(),
   status: z.nativeEnum(EquipmentStatus, {
-    message: "Status is required",
+    required_error: "Status is required",
   }),
-  code: z.string().min(1, "Code is required"),
   model: z.string().optional(),
   make: z.string().optional(),
   year: z.number().nullable().optional(),

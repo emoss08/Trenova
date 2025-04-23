@@ -1,6 +1,5 @@
 import googleLogo from "@/assets/brand-icons/google-ar21.svg";
 import { InputField } from "@/components/fields/input-field";
-import { Button } from "@/components/ui/button";
 import {
   Command,
   CommandEmpty,
@@ -26,7 +25,11 @@ import { faSearch } from "@fortawesome/pro-regular-svg-icons";
 import { CheckIcon } from "@radix-ui/react-icons";
 import { useQuery } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
-import { type Control, useFormContext } from "react-hook-form";
+import {
+  type Control,
+  type RegisterOptions,
+  useFormContext,
+} from "react-hook-form";
 
 interface AddressLocationData {
   placeId?: string;
@@ -54,6 +57,7 @@ interface AddressFieldProps {
   placeIdField?: string;
   longitudeField?: string;
   latitudeField?: string;
+  rules?: RegisterOptions<any, any>;
 }
 
 export function AddressField({
@@ -69,6 +73,7 @@ export function AddressField({
   placeIdField = "placeId",
   longitudeField = "longitude",
   latitudeField = "latitude",
+  rules,
 }: AddressFieldProps) {
   const { setValue } = useFormContext();
   const [open, setOpen] = useState(false);
@@ -114,15 +119,45 @@ export function AddressField({
     if (populateFields) {
       if (nameField) setValue(nameField, location.name || "");
       if (addressLine1Field)
-        setValue(addressLine1Field, location.addressLine1 || "");
+        setValue(addressLine1Field, location.addressLine1 || "", {
+          shouldDirty: true,
+          shouldValidate: true,
+        });
       if (addressLine2Field)
-        setValue(addressLine2Field, location.addressLine2 || "");
-      if (cityField) setValue(cityField, location.city || "");
-      if (postalCodeField) setValue(postalCodeField, location.postalCode || "");
-      if (stateIdField) setValue(stateIdField, location.stateId || "");
-      if (placeIdField) setValue(placeIdField, locationId);
-      if (longitudeField) setValue(longitudeField, location.longitude || 0);
-      if (latitudeField) setValue(latitudeField, location.latitude || 0);
+        setValue(addressLine2Field, location.addressLine2 || "", {
+          shouldDirty: true,
+          shouldValidate: true,
+        });
+      if (cityField)
+        setValue(cityField, location.city || "", {
+          shouldDirty: true,
+          shouldValidate: true,
+        });
+      if (postalCodeField)
+        setValue(postalCodeField, location.postalCode || "", {
+          shouldDirty: true,
+          shouldValidate: true,
+        });
+      if (stateIdField)
+        setValue(stateIdField, location.stateId || "", {
+          shouldDirty: true,
+          shouldValidate: true,
+        });
+      if (placeIdField)
+        setValue(placeIdField, locationId, {
+          shouldDirty: true,
+          shouldValidate: true,
+        });
+      if (longitudeField)
+        setValue(longitudeField, location.longitude || 0, {
+          shouldDirty: true,
+          shouldValidate: true,
+        });
+      if (latitudeField)
+        setValue(latitudeField, location.latitude || 0, {
+          shouldDirty: true,
+          shouldValidate: true,
+        });
     }
 
     if (onLocationSelect) {
@@ -143,97 +178,95 @@ export function AddressField({
       <div className="relative">
         <InputField
           control={control}
-          rules={{ required: true }}
+          rules={rules}
           name={addressLine1Field}
           label="Address Line 1"
           placeholder="Address Line 1"
           description="The primary address line."
         />
         {integrationLoading ? (
-          <div className="absolute right-0 top-6 inset-y-0 mr-2 flex items-center size-6">
+          <div className="absolute right-3.5 top-1/2 -translate-y-1/2">
             <PulsatingDots size={1} color="foreground" />
           </div>
         ) : integration?.enabled ? (
-          <div className="absolute right-0 top-6 inset-y-0 mr-2 flex items-center size-6">
-            <Popover open={open} onOpenChange={setOpen}>
-              <PopoverTrigger asChild>
-                <Button
+          <Popover open={open} onOpenChange={setOpen}>
+            <PopoverTrigger asChild>
+              <div className="absolute right-2 top-1/2 mt-0.5 -translate-y-1/2">
+                <button
                   id="address-search-button"
-                  variant="outline"
-                  size="sm"
+                  className="flex items-center gap-1 text-muted-foreground hover:text-foreground hover:bg-muted-foreground/10 p-1 rounded-md cursor-pointer"
                   type="button"
-                  className="group size-6 bg-transparent hover:bg-muted-foreground/30"
                 >
                   <Icon
                     icon={faSearch}
-                    className="size-4 text-muted-foreground group-hover:text-foreground"
+                    className="text-muted-foreground size-3"
                   />
                   <span className="sr-only">Search addresses</span>
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-96 p-0">
-                <Command>
-                  <CommandInput
-                    placeholder="Search for an address..."
-                    value={searchValue}
-                    onValueChange={setSearchValue}
-                    className="h-9"
-                  />
-                  <CommandList>
-                    <CommandEmpty>
-                      {isLoading ? (
-                        <PulsatingDots size={2} color="foreground" />
-                      ) : apiKeyError ? (
-                        <LocationSearchError error={apiKeyError} />
-                      ) : (
-                        "No locations found."
-                      )}
-                    </CommandEmpty>
-                    <CommandGroup>
-                      {locations.map((location) => (
-                        <CommandItem
-                          key={location.placeId}
-                          value={`${location.placeId} ${location.addressLine1} ${location.name}`}
-                          onSelect={() =>
-                            location.placeId && handleSelect(location.placeId)
-                          }
-                        >
-                          <CheckIcon
-                            className={cn(
-                              "mr-2 h-4 w-4",
-                              selectedLocation === location.placeId
-                                ? "opacity-100"
-                                : "opacity-0",
-                            )}
-                          />
-                          <div className="flex flex-col">
-                            <span>{location.name || "Unknown Location"}</span>
-                            <span className="text-sm text-muted-foreground">
-                              {location.addressLine1}, {location.city || ""},
-                              {location.state ? ` ${location.state}` : ""}
-                              {location.postalCode
-                                ? ` ${location.postalCode}`
-                                : ""}
-                            </span>
-                          </div>
-                        </CommandItem>
-                      ))}
-                    </CommandGroup>
-                  </CommandList>
-                </Command>
-                <div className="flex items-center gap-0.5 p-1 text-xs text-muted-foreground border-t">
-                  Powered by{" "}
-                  <LazyImage
-                    src={googleLogo}
-                    layout="constrained"
-                    objectFit="contain"
-                    width={50}
-                    height={10}
-                  />
-                </div>
-              </PopoverContent>
-            </Popover>
-          </div>
+                </button>
+              </div>
+            </PopoverTrigger>
+            <PopoverContent className="w-96 p-0">
+              <Command>
+                <CommandInput
+                  placeholder="Search for an address..."
+                  value={searchValue}
+                  onValueChange={setSearchValue}
+                  className="h-9"
+                />
+                <CommandList>
+                  <CommandEmpty>
+                    {isLoading ? (
+                      <PulsatingDots size={2} color="foreground" />
+                    ) : apiKeyError ? (
+                      <LocationSearchError error={apiKeyError} />
+                    ) : (
+                      "No locations found."
+                    )}
+                  </CommandEmpty>
+                  <CommandGroup>
+                    {locations.map((location) => (
+                      <CommandItem
+                        key={location.placeId}
+                        value={`${location.placeId} ${location.addressLine1} ${location.name}`}
+                        onSelect={() =>
+                          location.placeId && handleSelect(location.placeId)
+                        }
+                      >
+                        <CheckIcon
+                          className={cn(
+                            "mr-2 h-4 w-4",
+                            selectedLocation === location.placeId
+                              ? "opacity-100"
+                              : "opacity-0",
+                          )}
+                        />
+                        <div className="flex flex-col">
+                          <span>{location.name || "Unknown Location"}</span>
+                          <span className="text-sm text-muted-foreground">
+                            {location.addressLine1}, {location.city || ""},
+                            {location.state ? ` ${location.state}` : ""}
+                            {location.postalCode
+                              ? ` ${location.postalCode}`
+                              : ""}
+                          </span>
+                        </div>
+                      </CommandItem>
+                    ))}
+                  </CommandGroup>
+                </CommandList>
+              </Command>
+              <div className="flex items-center gap-0.5 p-1 text-xs text-muted-foreground border-t">
+                Powered by{" "}
+                <LazyImage
+                  src={googleLogo}
+                  layout="constrained"
+                  objectFit="contain"
+                  width={50}
+                  height={10}
+                />
+              </div>
+            </PopoverContent>
+          </Popover>
         ) : null}
       </div>
     </div>

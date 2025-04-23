@@ -104,7 +104,7 @@ export function FormSaveDock({
             </Button>
             <Button type="submit" disabled={!isDirty || isSubmitting}>
               {isSubmitting ? (
-                <PulsatingDots size={1} color="foreground" />
+                <PulsatingDots size={1} color="white" />
               ) : (
                 saveButtonContent
               )}

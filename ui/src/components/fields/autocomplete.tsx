@@ -1,5 +1,5 @@
 import { useDebounce } from "@/hooks/use-debounce";
-import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -23,7 +23,7 @@ import {
 } from "@/types/fields";
 import { LimitOffsetResponse } from "@/types/server";
 import { faCheck } from "@fortawesome/pro-regular-svg-icons";
-import { CaretSortIcon } from "@radix-ui/react-icons";
+import { ChevronDownIcon, Cross2Icon } from "@radix-ui/react-icons";
 import { Controller, FieldValues } from "react-hook-form";
 import { Icon } from "../ui/icons";
 import { PulsatingDots } from "../ui/pulsating-dots";
@@ -82,7 +82,7 @@ export function Autocomplete<T>({
   noResultsMessage,
   onOptionChange,
   isInvalid,
-  clearable = true,
+  clearable = false,
   extraSearchParams,
 }: BaseAutocompleteFieldProps<T>) {
   const [open, setOpen] = useState(false);
@@ -100,8 +100,10 @@ export function Autocomplete<T>({
   const animationRef = useRef<number | null>(null);
   // Target scroll position for smooth scrolling
   const targetScrollRef = useRef<number | null>(null);
-  // Current scroll velocity
+  // Scroll acceleration and velocity tracking
   const velocityRef = useRef(0);
+  // Last wheel event timestamp for inertia calculation
+  const lastWheelTimeRef = useRef(0);
 
   // Memoize the fetch functions to prevent unnecessary recreation
   const fetchInitialValueFn = useCallback(async () => {
@@ -188,17 +190,15 @@ export function Autocomplete<T>({
       return;
     }
 
-    // Calculate spring-like animation
-    // Spring factor: lower = smoother but slower
-    const spring = 0.15;
+    // Gentle easing - much less springy than before
+    // This gives a smooth feel without the bounciness
+    const easeFactor = 0.25;
 
-    // Update velocity with spring physics
-    velocityRef.current += distance * spring;
-    // Apply damping to prevent oscillation
-    velocityRef.current *= 0.8;
+    // Move a percentage of the distance each frame
+    const movement = distance * easeFactor;
 
-    // Apply velocity to scroll position
-    element.scrollTop += velocityRef.current;
+    // Apply movement
+    element.scrollTop += movement;
 
     // Continue animation
     animationRef.current = requestAnimationFrame(smoothScroll);
@@ -241,155 +241,186 @@ export function Autocomplete<T>({
     [loading, hasMore],
   );
 
-  // Handle wheel events with smooth scrolling
+  // Handle wheel events with better smooth scrolling
   const handleWheel = useCallback(
     (e: React.WheelEvent<HTMLDivElement>) => {
-      if (
-        commandListRef.current &&
-        commandListRef.current.scrollHeight >
-          commandListRef.current.clientHeight
-      ) {
-        const { scrollTop, scrollHeight, clientHeight } =
-          commandListRef.current;
-        const isScrollingDown = e.deltaY > 0;
-        const isAtBottom = scrollTop + clientHeight >= scrollHeight - 1;
-        const isAtTop = scrollTop <= 0;
+      if (!commandListRef.current) return;
 
-        // Allow parent scrolling only if we're at the boundaries and trying to scroll beyond
-        if ((isAtBottom && isScrollingDown) || (isAtTop && !isScrollingDown)) {
-          // Let the event propagate to parent
-          return;
-        }
+      const { scrollTop, scrollHeight, clientHeight } = commandListRef.current;
+      const isScrollingDown = e.deltaY > 0;
+      const isAtBottom = scrollTop + clientHeight >= scrollHeight - 1;
+      const isAtTop = scrollTop <= 0;
 
-        // Otherwise handle the scroll ourselves
-        e.stopPropagation();
-        e.preventDefault();
+      // Allow parent scrolling only if we're at the boundaries and trying to scroll beyond
+      if ((isAtBottom && isScrollingDown) || (isAtTop && !isScrollingDown)) {
+        return; // Let the event propagate to parent
+      }
 
-        // Apply sensitivity damping for smoother scrolling
-        const scrollSensitivity = 0.6; // Lower value = less sensitive scrolling
-        const deltaY = e.deltaY * scrollSensitivity;
+      // Otherwise handle the scroll ourselves
+      e.stopPropagation();
+      e.preventDefault();
 
-        // Set target scroll position
-        const currentScroll = commandListRef.current.scrollTop;
-        targetScrollRef.current = currentScroll + deltaY;
+      // Calculate scroll speed with gentle acceleration/deceleration
+      const now = performance.now();
+      lastWheelTimeRef.current = now;
 
-        // Start animation if not already running
-        if (animationRef.current === null) {
-          animationRef.current = requestAnimationFrame(smoothScroll);
-        }
+      // Adjust sensitivity - higher is more responsive but less smooth
+      const scrollSensitivity = 0.8;
+
+      // Apply the scroll delta with sensitivity adjustment
+      const delta = e.deltaY * scrollSensitivity;
+
+      // Get current scroll position
+      const currentScroll = commandListRef.current.scrollTop;
+
+      // Set target scroll position with momentum
+      // This creates a smoother feeling without being too springy
+      targetScrollRef.current = currentScroll + delta;
+
+      // Start animation if not already running
+      if (animationRef.current === null) {
+        animationRef.current = requestAnimationFrame(smoothScroll);
       }
     },
     [smoothScroll],
   );
 
+  const handleClear = useCallback(() => {
+    onChange("");
+    setSelectedOption(null);
+  }, [onChange]);
+
   return (
-    <Popover open={open} onOpenChange={setOpen}>
-      <PopoverTrigger asChild>
-        <Button
-          variant="outline"
-          role="combobox"
-          aria-expanded={open}
-          className={cn(
-            "w-full font-normal gap-2 rounded border-muted-foreground/20 bg-muted px-1.5 data-[state=open]:border-blue-600 data-[state=open]:outline-hidden data-[state=open]:ring-4 data-[state=open]:ring-blue-600/20",
-            "[&_svg]:size-4 justify-between",
-            "transition-[border-color,box-shadow] duration-200 ease-in-out",
-            disabled && "opacity-50 cursor-not-allowed",
-            isInvalid &&
-              "border-red-500 bg-red-500/20 ring-0 ring-red-500 placeholder:text-red-500 focus:outline-hidden focus-visible:border-red-600 focus-visible:ring-4 focus-visible:ring-red-400/20 hover:border-red-500 hover:bg-red-500/20 data-[state=open]:border-red-500 data-[state=open]:bg-red-500/20 data-[state=open]:ring-red-500/20",
-            triggerClassName,
-          )}
-          disabled={disabled}
-        >
-          {selectedOption ? (
-            getDisplayValue(selectedOption)
-          ) : (
-            <p
-              className={cn(
-                "text-muted-foreground",
-                isInvalid && "text-red-500",
-              )}
-            >
-              {placeholder}
-            </p>
-          )}
-          <CaretSortIcon className="opacity-50 size-7" />
-          {loading && (
-            <div className="absolute right-7">
-              <PulsatingDots size={1} color="foreground" />
-            </div>
-          )}
-        </Button>
-      </PopoverTrigger>
-      <PopoverContent
-        sideOffset={7}
-        className={cn(
-          "p-0 rounded-md w-[var(--radix-popover-trigger-width)]",
-          className,
-        )}
-      >
-        <Command shouldFilter={false} className="overflow-hidden">
-          <div className="border-b w-full">
-            <CommandInput
-              className="bg-transparent h-8 truncate"
-              placeholder={`Search ${label.toLowerCase()}...`}
-              value={searchTerm}
-              onValueChange={setSearchTerm}
-            />
-          </div>
-          <CommandList
-            ref={commandListRef}
-            onScroll={handleScrollEnd}
-            onWheel={handleWheel}
-            className="max-h-[200px] overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent"
+    <div className="relative">
+      <Popover open={open} onOpenChange={setOpen}>
+        <PopoverTrigger asChild>
+          <Button
+            variant="outline"
+            role="combobox"
+            aria-expanded={open}
+            className={cn(
+              "w-full font-normal gap-2 rounded border-muted-foreground/20 text-xs bg-muted px-1.5 data-[state=open]:border-blue-600 data-[state=open]:outline-hidden data-[state=open]:ring-4 data-[state=open]:ring-blue-600/20",
+              "[&_svg]:size-3 justify-between hover:bg-muted",
+              "transition-[border-color,box-shadow] duration-200 ease-in-out",
+              disabled && "opacity-50 cursor-not-allowed",
+              isInvalid &&
+                "border-red-500 bg-red-500/20 ring-0 ring-red-500 placeholder:text-red-500 focus:outline-hidden focus-visible:border-red-600 focus-visible:ring-4 focus-visible:ring-red-400/20 hover:border-red-500 hover:bg-red-500/20 data-[state=open]:border-red-500 data-[state=open]:bg-red-500/20 data-[state=open]:ring-red-500/20",
+              triggerClassName,
+            )}
+            disabled={disabled}
           >
-            {error && (
-              <div className="p-4 text-destructive text-center">{error}</div>
+            {selectedOption ? (
+              getDisplayValue(selectedOption)
+            ) : (
+              <p
+                className={cn(
+                  "text-muted-foreground",
+                  isInvalid && "text-red-500",
+                )}
+              >
+                {placeholder}
+              </p>
             )}
-            {!loading && !error && options.length === 0 && (
-              <CommandEmpty>
-                {noResultsMessage ?? `No ${label.toLowerCase()} found.`}
-              </CommandEmpty>
-            )}
-            <CommandGroup>
-              {options.map((option) => (
-                <CommandItem
-                  className="[&_svg]:size-3 cursor-pointer font-normal"
-                  key={getOptionValue(option).toString()}
-                  value={getOptionValue(option).toString()}
-                  onSelect={handleSelect}
-                >
-                  {renderOption(option)}
-                  <Icon
-                    icon={faCheck}
-                    className={cn(
-                      "ml-auto size-3",
-                      value === getOptionValue(option).toString()
-                        ? "opacity-100"
-                        : "opacity-0",
-                    )}
-                  />
-                </CommandItem>
-              ))}
+            <div className="flex items-center gap-1">
+              <ChevronDownIcon
+                className={cn(
+                  "opacity-50 size-7 duration-200 ease-in-out transition-all",
+                  open && "-rotate-180",
+                )}
+              />
               {loading && (
-                <div className="p-2 flex justify-center">
+                <div className="absolute right-7">
                   <PulsatingDots size={1} color="foreground" />
                 </div>
               )}
-              {hasMore && !loading && (
-                <div className="p-2 text-xs text-center text-muted-foreground">
-                  Scroll for more
+              {clearable && value && (
+                <div className="absolute right-3.5 top-1/2 -translate-y-1/2">
+                  <Button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleClear();
+                    }}
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    className="[&>svg]:size-3"
+                  >
+                    <span className="sr-only">Clear</span>
+                    <Cross2Icon className="size-4 text-muted-foreground" />
+                  </Button>
                 </div>
               )}
-            </CommandGroup>
-          </CommandList>
-        </Command>
-      </PopoverContent>
-    </Popover>
+            </div>
+          </Button>
+        </PopoverTrigger>
+        <PopoverContent
+          sideOffset={7}
+          className={cn(
+            "p-0 rounded-md w-[var(--radix-popover-trigger-width)]",
+            className,
+          )}
+        >
+          <Command shouldFilter={false} className="overflow-hidden">
+            <div className="border-b w-full">
+              <CommandInput
+                className="bg-transparent h-7 truncate"
+                placeholder={`Search ${label.toLowerCase()}...`}
+                value={searchTerm}
+                onValueChange={setSearchTerm}
+              />
+            </div>
+            <CommandList
+              ref={commandListRef}
+              onScroll={handleScrollEnd}
+              onWheel={handleWheel}
+              className="max-h-[200px] overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent"
+            >
+              {error && (
+                <div className="p-4 text-destructive text-center">{error}</div>
+              )}
+              {!loading && !error && options.length === 0 && (
+                <CommandEmpty>
+                  {noResultsMessage ?? `No ${label.toLowerCase()} found.`}
+                </CommandEmpty>
+              )}
+              <CommandGroup>
+                {options.map((option) => (
+                  <CommandItem
+                    className="[&_svg]:size-3 cursor-pointer"
+                    key={getOptionValue(option).toString()}
+                    value={getOptionValue(option).toString()}
+                    onSelect={handleSelect}
+                  >
+                    {renderOption(option)}
+                    <Icon
+                      icon={faCheck}
+                      className={cn(
+                        "ml-auto size-3",
+                        value === getOptionValue(option).toString()
+                          ? "opacity-100"
+                          : "opacity-0",
+                      )}
+                    />
+                  </CommandItem>
+                ))}
+                {loading && (
+                  <div className="p-2 flex justify-center">
+                    <PulsatingDots size={1} color="foreground" />
+                  </div>
+                )}
+                {hasMore && !loading && (
+                  <div className="p-2 text-xs text-center text-muted-foreground">
+                    Scroll for more
+                  </div>
+                )}
+              </CommandGroup>
+            </CommandList>
+          </Command>
+        </PopoverContent>
+      </Popover>
+    </div>
   );
 }
-
-// Create a memoized version that preserves the generic type
-export const MemoizedAutocomplete = memo(Autocomplete) as typeof Autocomplete;
 
 export function AutocompleteField<TOption, TForm extends FieldValues>({
   label,
@@ -406,6 +437,7 @@ export function AutocompleteField<TOption, TForm extends FieldValues>({
   onOptionChange,
   clearable,
   extraSearchParams,
+  placeholder,
   ...props
 }: AutocompleteFieldProps<TOption, TForm>) {
   return (
@@ -414,44 +446,6 @@ export function AutocompleteField<TOption, TForm extends FieldValues>({
       control={control}
       rules={rules}
       render={({ field: { onChange, value, disabled }, fieldState }) => {
-        // Memoize the wrapped component props to prevent unnecessary renders
-        // eslint-disable-next-line react-hooks/rules-of-hooks
-        const autocompleteProps = useMemo(
-          () => ({
-            link,
-            preload,
-            renderOption,
-            getDisplayValue,
-            getOptionValue,
-            label,
-            value,
-            onChange,
-            isInvalid: fieldState.invalid,
-            onOptionChange,
-            disabled,
-            clearable,
-            extraSearchParams,
-            ...props,
-          }),
-          // eslint-disable-next-line react-hooks/exhaustive-deps
-          [
-            link,
-            preload,
-            renderOption,
-            getDisplayValue,
-            getOptionValue,
-            label,
-            value,
-            onChange,
-            fieldState.invalid,
-            onOptionChange,
-            disabled,
-            clearable,
-            extraSearchParams,
-            props,
-          ],
-        );
-
         return (
           <FieldWrapper
             label={label}
@@ -460,15 +454,26 @@ export function AutocompleteField<TOption, TForm extends FieldValues>({
             error={fieldState.error?.message}
             className={className}
           >
-            <MemoizedAutocomplete<TOption> {...autocompleteProps} />
+            <Autocomplete<TOption>
+              link={link}
+              preload={preload}
+              renderOption={renderOption}
+              getOptionValue={getOptionValue}
+              getDisplayValue={getDisplayValue}
+              onOptionChange={onOptionChange}
+              clearable={clearable}
+              extraSearchParams={extraSearchParams}
+              label={label}
+              placeholder={placeholder}
+              value={value}
+              onChange={onChange}
+              disabled={disabled}
+              isInvalid={fieldState.invalid}
+              {...props}
+            />
           </FieldWrapper>
         );
       }}
     />
   );
 }
-
-// Add memoization to the FieldWrapper component
-export const MemoizedAutocompleteField = memo(
-  AutocompleteField,
-) as typeof AutocompleteField;

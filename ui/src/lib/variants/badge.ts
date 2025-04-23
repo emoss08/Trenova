@@ -9,20 +9,20 @@ export const badgeVariants = cva(
         secondary:
           "bg-secondary text-secondary-foreground hover:bg-secondary/80",
         active:
-          "text-green-600 bg-green-600/20 border-green-600/30 dark:text-green-400",
+          "text-green-700 bg-green-600/20 border-green-600/30 dark:text-green-400",
         inactive:
-          "text-red-600 bg-red-600/20 border-red-600/30 dark:text-red-400",
-        info: "text-blue-600 bg-blue-600/20 border-blue-600/30 dark:text-blue-400",
+          "text-red-700 bg-red-600/20 border-red-600/30 dark:text-red-400",
+        info: "text-blue-700 bg-blue-600/20 border-blue-600/30 dark:text-blue-400",
         purple:
-          "text-purple-600 bg-purple-600/20 border-purple-600/30 dark:text-purple-400",
+          "text-purple-700 bg-purple-600/20 border-purple-600/30 dark:text-purple-400",
         orange:
-          "text-orange-600 bg-orange-600/20 border-orange-600/30 dark:text-orange-400",
+          "text-orange-700 bg-orange-600/20 border-orange-600/30 dark:text-orange-400",
         indigo:
-          "text-indigo-600 bg-indigo-600/20 border-indigo-600/30 dark:text-indigo-400",
-        pink: "text-pink-600 bg-pink-600/20 border-pink-600/30 dark:text-pink-400",
-        teal: "text-teal-600 bg-teal-600/20 border-teal-600/30 dark:text-teal-400",
+          "text-indigo-700 bg-indigo-600/20 border-indigo-600/30 dark:text-indigo-400",
+        pink: "text-pink-700 bg-pink-600/20 border-pink-600/30 dark:text-pink-400",
+        teal: "text-teal-700 bg-teal-600/20 border-teal-600/30 dark:text-teal-400",
         warning:
-          "text-yellow-600 bg-yellow-600/20 border-yellow-600/30 dark:text-yellow-400",
+          "text-yellow-700 bg-yellow-600/20 border-yellow-600/30 dark:text-yellow-400",
         outline: "text-muted-foreground",
       },
     },

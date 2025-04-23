@@ -119,7 +119,7 @@ export function Option<
     <components.Option {...props}>
       <div
         className={cn(
-          "group relative flex cursor-pointer select-none items-center gap-x-3 rounded-sm px-5 py-1.5 text-xs outline-hidden",
+          "group relative flex cursor-pointer select-none items-center gap-x-2 rounded-sm px-2 py-1.5 text-2xs outline-hidden",
           isSelected && "bg-muted-foreground/10",
           isFocused && "bg-muted-foreground/10",
         )}
@@ -352,10 +352,12 @@ export function ColorOptionValue({
   color,
   value,
   className,
+  textClassName,
 }: {
   value: any;
   color?: string;
   className?: string;
+  textClassName?: string;
 }) {
   const isColor = !!color;
 
@@ -373,7 +375,7 @@ export function ColorOptionValue({
           backgroundColor: color,
         }}
       />
-      <p>{value}</p>
+      <p className={cn("text-xs font-medium", textClassName)}>{value}</p>
     </div>
   ) : (
     value

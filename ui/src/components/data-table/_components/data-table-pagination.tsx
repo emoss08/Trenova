@@ -152,45 +152,47 @@ export function DataTablePagination<TData>({
   const totalRows = table.getFilteredRowModel().rows.length;
 
   return (
-    <div className="flex w-full flex-col-reverse items-center justify-between gap-4 overflow-auto sm:flex-row sm:gap-8">
-      <div className="flex-1 whitespace-nowrap text-sm text-muted-foreground">
-        {selectedRows > 0 ? (
-          <span>
-            {selectedRows} of {totalRows} row(s) selected
-          </span>
-        ) : (
-          <span>
-            Showing {paginationInfo.firstRow} to {paginationInfo.lastRow} of{" "}
-            {totalCount} entries
-          </span>
-        )}
-      </div>
-
-      <div className="flex flex-col-reverse items-center gap-4 sm:flex-row sm:gap-6 lg:gap-8">
-        <div className="flex items-center space-x-2">
-          <p className="whitespace-nowrap text-sm font-medium">Rows per page</p>
-          <Select
-            defaultValue={String(pageSize)}
-            onValueChange={handlePageSizeChange}
-            disabled={isLoading || isTransitioning}
-          >
-            <SelectTrigger className="h-8 w-16">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent align="center" side="top">
-              {normalizedPageSizeOptions.map((size) => (
-                <SelectItem
-                  key={size}
-                  value={String(size)}
-                  className="cursor-pointer"
-                >
-                  {size}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+    totalPages > 1 && (
+      <div className="flex w-full flex-col-reverse items-center justify-between gap-4 overflow-auto sm:flex-row sm:gap-8">
+        <div className="flex-1 whitespace-nowrap text-sm text-muted-foreground">
+          {selectedRows > 0 ? (
+            <span>
+              {selectedRows} of {totalRows} row(s) selected
+            </span>
+          ) : (
+            <span>
+              Showing {paginationInfo.firstRow} to {paginationInfo.lastRow} of{" "}
+              {totalCount} entries
+            </span>
+          )}
         </div>
-        {totalPages > 1 && (
+
+        <div className="flex flex-col-reverse items-center gap-4 sm:flex-row sm:gap-6 lg:gap-8">
+          <div className="flex items-center space-x-2">
+            <p className="whitespace-nowrap text-sm font-medium">
+              Rows per page
+            </p>
+            <Select
+              defaultValue={String(pageSize)}
+              onValueChange={handlePageSizeChange}
+              disabled={isLoading || isTransitioning}
+            >
+              <SelectTrigger className="h-8 w-16">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent align="center" side="top">
+                {normalizedPageSizeOptions.map((size) => (
+                  <SelectItem
+                    key={size}
+                    value={String(size)}
+                    className="cursor-pointer"
+                  >
+                    {size}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
           <>
             <div
               aria-live="polite"
@@ -241,8 +243,8 @@ export function DataTablePagination<TData>({
               </PaginationContent>
             </Pagination>
           </>
-        )}
+        </div>
       </div>
-    </div>
+    )
   );
 }

@@ -10,7 +10,8 @@ type ColorOptions =
   | "red"
   | "blue"
   | "green"
-  | "yellow";
+  | "yellow"
+  | "white";
 
 type DotsProps = {
   size?: SizeOptions;
@@ -30,6 +31,7 @@ const colors: Record<ColorOptions, string> = {
   foreground: "bg-foreground",
   primary: "bg-primary",
   background: "bg-background",
+  white: "bg-white",
   red: "bg-red-500",
   blue: "bg-blue-500",
   green: "bg-green-500",

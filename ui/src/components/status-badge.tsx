@@ -491,8 +491,12 @@ export function PlainShipmentStatusBadge({
 
 export function PackingGroupBadge({
   group,
+  withDot = false,
+  className,
 }: {
   group: PackingGroupChoiceProps;
+  withDot?: boolean;
+  className?: string;
 }) {
   const packingGroupAttributes: Record<
     PackingGroupChoiceProps,
@@ -513,7 +517,11 @@ export function PackingGroupBadge({
   };
 
   return (
-    <Badge variant={packingGroupAttributes[group].variant} className="max-h-6">
+    <Badge
+      variant={packingGroupAttributes[group].variant}
+      className={cn(className, "max-h-6")}
+      withDot={withDot}
+    >
       {packingGroupAttributes[group].text}
     </Badge>
   );
