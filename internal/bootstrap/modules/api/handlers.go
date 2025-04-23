@@ -70,7 +70,6 @@ var HandlersModule = fx.Module("api.Handlers", fx.Provide(
 	assignment.NewHandler,
 	shipmentmove.NewHandler,
 	stop.NewHandler,
-	// logreader.NewHandler,
 	shipmentcontrol.NewHandler,
 	billingcontrol.NewHandler,
 	backup.NewHandler,

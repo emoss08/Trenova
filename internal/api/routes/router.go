@@ -104,7 +104,6 @@ type RouterParams struct {
 	AssignmentHandler            *assignment.Handler
 	ShipmentMoveHandler          *shipmentmove.Handler
 	StopHandler                  *stop.Handler
-	// LogReaderHandler             *logreader.Handler
 	ShipmentControlHandler       *shipmentcontrol.Handler
 	BillingControlHandler        *billingcontrol.Handler
 	BackupHandler                *backup.Handler
@@ -257,9 +256,6 @@ func (r *Router) setupProtectedRoutes(router fiber.Router, rl *middleware.RateLi
 
 	// Stops
 	r.p.StopHandler.RegisterRoutes(router, rl)
-
-	// Log Reader
-	// r.p.LogReaderHandler.RegisterRoutes(router, rl)
 
 	// Shipment Control
 	r.p.ShipmentControlHandler.RegisterRoutes(router, rl)
