@@ -119,9 +119,9 @@ export function Option<
     <components.Option {...props}>
       <div
         className={cn(
-          "group relative flex cursor-pointer select-none items-center gap-x-3 rounded-sm px-5 py-1.5 text-xs outline-hidden",
-          isSelected && "bg-accent",
-          isFocused && "bg-accent",
+          "group relative flex cursor-pointer select-none items-center gap-x-2 rounded-sm px-2 py-1.5 text-2xs outline-hidden",
+          isSelected && "bg-muted-foreground/10",
+          isFocused && "bg-muted-foreground/10",
         )}
       >
         {data.icon ? (
@@ -303,7 +303,7 @@ function AddNewButton({ label, popoutLink }: AddNewButtonProps) {
 
   return (
     <span
-      className="flex h-7 w-full cursor-pointer items-center justify-between rounded-sm bg-transparent px-2 py-3.5 pl-3 text-xs font-normal text-foreground shadow-none hover:bg-accent hover:text-foreground/90"
+      className="flex h-7 w-full cursor-pointer items-center justify-between rounded-sm bg-transparent px-2 py-3.5 pl-3 text-xs font-normal text-foreground shadow-none hover:bg-muted hover:text-foreground/90"
       onClick={handleClick}
     >
       <span className="mr-2">{label} Entry</span>
@@ -352,10 +352,12 @@ export function ColorOptionValue({
   color,
   value,
   className,
+  textClassName,
 }: {
   value: any;
   color?: string;
   className?: string;
+  textClassName?: string;
 }) {
   const isColor = !!color;
 
@@ -373,7 +375,7 @@ export function ColorOptionValue({
           backgroundColor: color,
         }}
       />
-      <p>{value}</p>
+      <p className={cn("text-xs font-medium", textClassName)}>{value}</p>
     </div>
   ) : (
     value

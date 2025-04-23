@@ -4,12 +4,6 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 import { ColorFieldProps } from "@/types/fields";
 import { faPaintBrush } from "@fortawesome/pro-solid-svg-icons";
@@ -68,7 +62,7 @@ const solids = [
   { color: "#ffdab9", name: "Peach puff" },
   { color: "#87cefa", name: "Light sky blue" },
 ];
-// Memoized color grid component to prevent re-rendering
+
 const ColorGrid = memo(function ColorGrid({
   handleChange,
 }: {
@@ -76,19 +70,13 @@ const ColorGrid = memo(function ColorGrid({
 }) {
   return (
     <div className="grid grid-cols-[repeat(auto-fill,minmax(20px,1fr))] gap-1.5">
-      {solids.map(({ color, name }) => (
-        <Tooltip key={color} delayDuration={0}>
-          <TooltipTrigger asChild>
-            <div
-              style={{ background: color }}
-              className="size-6 cursor-pointer rounded-md active:scale-105"
-              onClick={() => handleChange(color)}
-            />
-          </TooltipTrigger>
-          <TooltipContent>
-            <p>{name}</p>
-          </TooltipContent>
-        </Tooltip>
+      {solids.map(({ color }) => (
+        <div
+          key={color}
+          style={{ background: color }}
+          className="size-6 cursor-pointer rounded-md active:scale-105"
+          onClick={() => handleChange(color)}
+        />
       ))}
     </div>
   );
@@ -127,7 +115,7 @@ const ColorFieldInput = memo(function ColorFieldInput<T extends FieldValues>({
           type="button"
           className={cn(
             "w-full font-normal gap-2 justify-start text-left items-center rounded border-muted-foreground/20 bg-muted px-1.5 data-[state=open]:border-blue-600 data-[state=open]:outline-hidden data-[state=open]:ring-4 data-[state=open]:ring-blue-600/20",
-            "[&_svg]:size-4 justify-between",
+            "[&_svg]:size-3 justify-between",
             "transition-[border-color,box-shadow] duration-200 ease-in-out",
             disabled && "opacity-50 cursor-not-allowed",
             fieldState.invalid &&
@@ -152,26 +140,22 @@ const ColorFieldInput = memo(function ColorFieldInput<T extends FieldValues>({
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-(--radix-popover-trigger-width) p-2">
-        <TooltipProvider>
-          <div className="flex flex-col gap-1">
-            <div className="mb-2 flex items-center justify-between border-b border-border">
-              <p className="text-left text-2xs font-normal">
-                Predefined Colors
-              </p>
-              <p className="text-2xs text-muted-foreground">
-                Click to select a color
-              </p>
-            </div>
-            <ColorGrid handleChange={handleChange} />
+        <div className="flex flex-col gap-1">
+          <div className="mb-2 flex items-center justify-between border-b border-border">
+            <p className="text-left text-2xs font-normal">Predefined Colors</p>
+            <p className="text-2xs text-muted-foreground">
+              Click to select a color
+            </p>
           </div>
-          <Input
-            id="custom"
-            value={value || ""}
-            className="col-span-2 mt-4 h-7"
-            placeholder="Enter a custom color (e.g. #000000)"
-            onChange={(e) => onChange(e.target.value)}
-          />
-        </TooltipProvider>
+          <ColorGrid handleChange={handleChange} />
+        </div>
+        <Input
+          id="custom"
+          value={value || ""}
+          className="col-span-2 mt-4 h-7"
+          placeholder="Enter a custom color (e.g. #000000)"
+          onChange={(e) => onChange(e.target.value)}
+        />
       </PopoverContent>
     </Popover>
   );

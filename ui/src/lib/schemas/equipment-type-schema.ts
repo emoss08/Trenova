@@ -1,20 +1,23 @@
 import { Status } from "@/types/common";
 import { EquipmentClass } from "@/types/equipment-type";
-import { type InferType, mixed, object, string } from "yup";
+import { z } from "zod";
 
-export const equipmentTypeSchema = object({
-  id: string().optional(),
-  organizationId: string().nullable().optional(),
-  businessUnitId: string().nullable().optional(),
-  status: mixed<Status>()
-    .required("Status is required")
-    .oneOf(Object.values(Status)),
-  code: string().required("Code is required"),
-  description: string().optional(),
-  class: mixed<EquipmentClass>()
-    .required("Class is required")
-    .oneOf(Object.values(EquipmentClass)),
-  color: string().optional(),
+export const equipmentTypeSchema = z.object({
+  id: z.string().optional(),
+  organizationId: z.string().optional(),
+  businessUnitId: z.string().optional(),
+  version: z.number().optional(),
+  createdAt: z.number().optional(),
+  updatedAt: z.number().optional(),
+
+  // * Core Fields
+  status: z.nativeEnum(Status),
+  code: z.string().min(1, "Code is required"),
+  description: z.string().optional(),
+  class: z.nativeEnum(EquipmentClass, {
+    message: "Class is required",
+  }),
+  color: z.string().optional(),
 });
 
-export type EquipmentTypeSchema = InferType<typeof equipmentTypeSchema>;
+export type EquipmentTypeSchema = z.infer<typeof equipmentTypeSchema>;

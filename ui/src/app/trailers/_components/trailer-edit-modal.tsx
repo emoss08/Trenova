@@ -4,7 +4,7 @@ import {
   type TrailerSchema,
 } from "@/lib/schemas/trailer-schema";
 import { type EditTableSheetProps } from "@/types/data-table";
-import { yupResolver } from "@hookform/resolvers/yup";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { TrailerForm } from "./trailer-form";
 
@@ -13,8 +13,8 @@ export function EditTrailerModal({
   onOpenChange,
   currentRecord,
 }: EditTableSheetProps<TrailerSchema>) {
-  const form = useForm<TrailerSchema>({
-    resolver: yupResolver(trailerSchema),
+  const form = useForm({
+    resolver: zodResolver(trailerSchema),
     defaultValues: currentRecord,
   });
 
@@ -29,7 +29,6 @@ export function EditTrailerModal({
       formComponent={<TrailerForm />}
       fieldKey="code"
       form={form}
-      schema={trailerSchema}
       className="max-w-[500px]"
     />
   );

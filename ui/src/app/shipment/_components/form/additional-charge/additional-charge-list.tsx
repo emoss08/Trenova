@@ -74,7 +74,7 @@ export function AdditionalChargeList({
 
   return !additionalCharges.length ? (
     <EmptyState
-      className="max-h-[200px] p-4 border rounded-lg border-bg-sidebar-border bg-card"
+      className="max-h-[200px] p-4 border rounded-lg border-bg-sidebar-border"
       title="No Additional Charges"
       description="Shipment has no associated additional charges"
       icons={[faMoneyBill, faBoxesStacked, faTruckContainer]}

@@ -15,7 +15,7 @@ export function CategoryCard({
   onClick: () => void;
 }) {
   const categoryStyle = useMemo(() => {
-    const bgColor = isActive ? "bg-accent/50" : "bg-background";
+    const bgColor = isActive ? "bg-muted" : "bg-background";
 
     return `border-border ${bgColor}`;
   }, [isActive]);
@@ -24,9 +24,9 @@ export function CategoryCard({
     <div
       className={cn(
         "p-3 rounded-md mb-2 cursor-pointer transition-all",
-        "border hover:bg-accent/30",
+        "border hover:bg-muted",
         categoryStyle,
-        !category.complete && "bg-muted/20",
+        !category.complete && "bg-muted",
       )}
       onClick={onClick}
       style={{

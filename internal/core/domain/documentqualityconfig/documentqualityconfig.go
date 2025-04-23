@@ -22,38 +22,25 @@ var (
 type DocumentQualityConfig struct {
 	bun.BaseModel `bun:"table:document_quality_configs,alias:dqc" json:"-"`
 
-	// Primary identifiers
-	ID             pulid.ID `json:"id" bun:"id,pk,type:VARCHAR(100)"`
-	BusinessUnitID pulid.ID `json:"businessUnitId" bun:"business_unit_id,type:VARCHAR(100),pk,notnull"`
-	OrganizationID pulid.ID `json:"organizationId" bun:"organization_id,type:VARCHAR(100),pk,notnull"`
-
-	// Core Fields
-	IsActive bool `json:"isActive" bun:"is_active,type:BOOLEAN,notnull,default:true"`
-
-	// Quality Thresholds
-	MinDPI        int     `json:"minDpi" bun:"min_dpi,type:INTEGER,notnull,default:200"`
-	MinBrightness float64 `json:"minBrightness" bun:"min_brightness,type:NUMERIC(5,2),notnull,default:40"`
-	MaxBrightness float64 `json:"maxBrightness" bun:"max_brightness,type:NUMERIC(5,2),notnull,default:220"`
-	MinContrast   float64 `json:"minContrast" bun:"min_contrast,type:NUMERIC(5,2),notnull,default:40"`
-	MinSharpness  float64 `json:"minSharpness" bun:"min_sharpness,type:NUMERIC(5,2),notnull,default:50"`
-
-	// OCR Configuration
-	MinWordCount   int     `json:"minWordCount" bun:"min_word_count,type:INTEGER,notnull,default:50"`
-	MinTextDensity float64 `json:"minTextDensity" bun:"min_text_density,type:NUMERIC(5,2),notnull,default:0.1"`
-
-	// Model Settings
-	ModelID       pulid.ID `json:"modelId" bun:"model_id,type:VARCHAR(100),notnull"`
-	AllowTraining bool     `json:"allowTraining" bun:"allow_training,type:BOOLEAN,notnull,default:true"`
-
-	// Business Rules
-	AutoRejectScore   float64 `json:"autoRejectScore" bun:"auto_reject_score,type:NUMERIC(3,2),notnull,default:0.2"`
-	ManualReviewScore float64 `json:"manualReviewScore" bun:"manual_review_score,type:NUMERIC(3,2),notnull,default:0.4"`
-	MinConfidence     float64 `json:"minConfidence" bun:"min_confidence,type:NUMERIC(3,2),notnull,default:0.7"`
-
-	// Metadata
-	Version   int64 `json:"version" bun:"version,type:BIGINT"`
-	CreatedAt int64 `json:"createdAt" bun:"created_at,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	UpdatedAt int64 `json:"updatedAt" bun:"updated_at,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	ID                pulid.ID `json:"id" bun:"id,pk,type:VARCHAR(100)"`
+	BusinessUnitID    pulid.ID `json:"businessUnitId" bun:"business_unit_id,type:VARCHAR(100),pk,notnull"`
+	OrganizationID    pulid.ID `json:"organizationId" bun:"organization_id,type:VARCHAR(100),pk,notnull"`
+	IsActive          bool     `json:"isActive" bun:"is_active,type:BOOLEAN,notnull,default:true"`
+	MinWordCount      int      `json:"minWordCount" bun:"min_word_count,type:INTEGER,notnull,default:50"`
+	MinDPI            int      `json:"minDpi" bun:"min_dpi,type:INTEGER,notnull,default:200"`
+	MinBrightness     float64  `json:"minBrightness" bun:"min_brightness,type:NUMERIC(5,2),notnull,default:40"`
+	MaxBrightness     float64  `json:"maxBrightness" bun:"max_brightness,type:NUMERIC(5,2),notnull,default:220"`
+	MinContrast       float64  `json:"minContrast" bun:"min_contrast,type:NUMERIC(5,2),notnull,default:40"`
+	MinSharpness      float64  `json:"minSharpness" bun:"min_sharpness,type:NUMERIC(5,2),notnull,default:50"`
+	AutoRejectScore   float64  `json:"autoRejectScore" bun:"auto_reject_score,type:NUMERIC(3,2),notnull,default:0.2"`
+	ManualReviewScore float64  `json:"manualReviewScore" bun:"manual_review_score,type:NUMERIC(3,2),notnull,default:0.4"`
+	MinConfidence     float64  `json:"minConfidence" bun:"min_confidence,type:NUMERIC(3,2),notnull,default:0.7"`
+	MinTextDensity    float64  `json:"minTextDensity" bun:"min_text_density,type:NUMERIC(5,2),notnull,default:0.1"`
+	ModelID           pulid.ID `json:"modelId" bun:"model_id,type:VARCHAR(100),notnull"`
+	AllowTraining     bool     `json:"allowTraining" bun:"allow_training,type:BOOLEAN,notnull,default:true"`
+	Version           int64    `json:"version" bun:"version,type:BIGINT"`
+	CreatedAt         int64    `json:"createdAt" bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	UpdatedAt         int64    `json:"updatedAt" bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
 
 	// Relationships
 	Model *pretrainedmodels.PretrainedModel `json:"model,omitempty" bun:"rel:belongs-to,join:model_id=id"`

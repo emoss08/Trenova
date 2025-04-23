@@ -35,7 +35,7 @@ import {
 } from "@/lib/schemas/assignment-schema";
 import { AssignmentStatus } from "@/types/assignment";
 import { type APIError } from "@/types/errors";
-import { yupResolver } from "@hookform/resolvers/yup";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useCallback, useEffect } from "react";
 import { FormProvider, type Path, useForm } from "react-hook-form";
@@ -70,8 +70,8 @@ export function AssignmentDialog({
     },
   );
 
-  const form = useForm<AssignmentSchema>({
-    resolver: yupResolver(assignmentSchema),
+  const form = useForm({
+    resolver: zodResolver(assignmentSchema),
     defaultValues: {
       status: AssignmentStatus.New,
       shipmentMoveId: shipmentMoveId,

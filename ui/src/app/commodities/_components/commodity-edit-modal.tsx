@@ -4,7 +4,7 @@ import {
   CommoditySchema,
 } from "@/lib/schemas/commodity-schema";
 import { type EditTableSheetProps } from "@/types/data-table";
-import { yupResolver } from "@hookform/resolvers/yup";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { CommodityForm } from "./commodity-form";
 
@@ -13,8 +13,8 @@ export function EditCommodityModal({
   onOpenChange,
   currentRecord,
 }: EditTableSheetProps<CommoditySchema>) {
-  const form = useForm<CommoditySchema>({
-    resolver: yupResolver(commoditySchema),
+  const form = useForm({
+    resolver: zodResolver(commoditySchema),
     defaultValues: currentRecord,
   });
 
@@ -30,7 +30,6 @@ export function EditCommodityModal({
       fieldKey="name"
       className="max-w-[500px]"
       form={form}
-      schema={commoditySchema}
     />
   );
 }

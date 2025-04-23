@@ -1,8 +1,8 @@
-import { AutocompleteField } from "@/components/fields/autocomplete";
 import { InputField } from "@/components/fields/input-field";
 import { SelectField } from "@/components/fields/select-field";
 import { SwitchField } from "@/components/fields/switch-field";
 import { TextareaField } from "@/components/fields/textarea-field";
+import { HazardousMaterialAutocompleteField } from "@/components/ui/autocomplete-fields";
 import { FormControl, FormGroup } from "@/components/ui/form";
 import {
   hazardousClassChoices,
@@ -10,7 +10,6 @@ import {
   segregationTypeChoices,
   statusChoices,
 } from "@/lib/choices";
-import { HazardousMaterialSchema } from "@/lib/schemas/hazardous-material-schema";
 import { type HazmatSegregationRuleSchema } from "@/lib/schemas/hazmat-segregation-rule-schema";
 import { SegregationType } from "@/types/hazmat-segregation-rule";
 import { useEffect, useState } from "react";
@@ -88,7 +87,7 @@ export function HazmatSegregationRuleForm() {
         />
       </FormControl>
       <FormControl>
-        <AutocompleteField<HazardousMaterialSchema, HazmatSegregationRuleSchema>
+        <HazardousMaterialAutocompleteField<HazmatSegregationRuleSchema>
           name="hazmatAId"
           control={control}
           link="/hazardous-materials/"
@@ -96,13 +95,10 @@ export function HazmatSegregationRuleForm() {
           clearable
           placeholder="Select Hazardous Material A"
           description="Optional specific hazardous material identifier (used when rule applies to specific materials rather than entire classes)"
-          getOptionValue={(option) => option.id || ""}
-          getDisplayValue={(option) => `${option.code}`}
-          renderOption={(option) => `${option.code}`}
         />
       </FormControl>
       <FormControl>
-        <AutocompleteField<HazardousMaterialSchema, HazmatSegregationRuleSchema>
+        <HazardousMaterialAutocompleteField<HazmatSegregationRuleSchema>
           name="hazmatBId"
           control={control}
           link="/hazardous-materials/"
@@ -110,9 +106,6 @@ export function HazmatSegregationRuleForm() {
           clearable
           placeholder="Select Hazardous Material B"
           description="Optional specific hazardous material identifier (used when rule applies to specific materials rather than entire classes)"
-          getOptionValue={(option) => option.id || ""}
-          getDisplayValue={(option) => `${option.code}`}
-          renderOption={(option) => `${option.code}`}
         />
       </FormControl>
       <FormControl cols="full">

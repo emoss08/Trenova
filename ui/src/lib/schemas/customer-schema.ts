@@ -5,74 +5,71 @@ import {
   TransferCriteria,
 } from "@/types/billing";
 import { Status } from "@/types/common";
-import { array, boolean, type InferType, mixed, object, string } from "yup";
+import { z } from "zod";
 
-export const emailProfileSchema = object({
-  id: string().optional(),
-  organizationId: string().nullable().optional(),
-  businessUnitId: string().nullable().optional(),
-  customerId: string().nullable().optional(),
+export const emailProfileSchema = z.object({
+  id: z.string().optional(),
+  organizationId: z.string().optional(),
+  businessUnitId: z.string().optional(),
+  version: z.number().optional(),
+  createdAt: z.number().optional(),
+  updatedAt: z.number().optional(),
 
-  // Core Fields
-  subject: string().optional(),
-  comment: string().optional(),
-  fromEmail: string().optional(),
-  blindCopy: string().optional(),
-  readReceipt: boolean(),
-  attachmentName: string().optional(),
+  // * Core Fields
+  customerId: z.string().nullable().optional(),
+  subject: z.string().optional(),
+  comment: z.string().optional(),
+  fromEmail: z.string().optional(),
+  blindCopy: z.string().optional(),
+  readReceipt: z.boolean(),
+  attachmentName: z.string().optional(),
 });
 
-export const billingProfileSchema = object({
-  id: string().optional(),
-  organizationId: string().nullable().optional(),
-  businessUnitId: string().nullable().optional(),
-  customerId: string().nullable().optional(),
+export const billingProfileSchema = z.object({
+  id: z.string().optional(),
+  organizationId: z.string().optional(),
+  businessUnitId: z.string().optional(),
+  version: z.number().optional(),
+  createdAt: z.number().optional(),
+  updatedAt: z.number().optional(),
 
-  // Core Fields
-  billingCycleType: mixed<BillingCycleType>().oneOf(
-    Object.values(BillingCycleType),
-  ),
-  documentTypeIds: array()
-    .of(string())
-    .required("Document Type IDs are required"),
-
-  // Billing Control Overrides
-  hasOverrides: boolean(),
-  enforceCustomerBillingReq: boolean(),
-  validateCustomerRates: boolean(),
-  paymentTerm: mixed<PaymentTerm>().oneOf(Object.values(PaymentTerm)),
-  autoTransfer: boolean(),
-  transferCriteria: mixed<TransferCriteria>().oneOf(
-    Object.values(TransferCriteria),
-  ),
-  autoMarkReadyToBill: boolean(),
-  autoBill: boolean(),
-  autoBillCriteria: mixed<AutoBillCriteria>().oneOf(
-    Object.values(AutoBillCriteria),
-  ),
-  specialInstructions: string().optional(),
+  // * Core Fields
+  customerId: z.string().nullable().optional(),
+  billingCycleType: z.nativeEnum(BillingCycleType),
+  documentTypeIds: z.array(z.string()).min(1, "Document Type IDs are required"),
+  hasOverrides: z.boolean(),
+  enforceCustomerBillingReq: z.boolean(),
+  validateCustomerRates: z.boolean(),
+  paymentTerm: z.nativeEnum(PaymentTerm),
+  autoTransfer: z.boolean(),
+  transferCriteria: z.nativeEnum(TransferCriteria),
+  autoMarkReadyToBill: z.boolean(),
+  autoBill: z.boolean(),
+  autoBillCriteria: z.nativeEnum(AutoBillCriteria).optional(),
+  specialInstructions: z.string().optional(),
 });
 
-export const customerSchema = object({
-  id: string().optional(),
-  organizationId: string().nullable().optional(),
-  businessUnitId: string().nullable().optional(),
-  status: mixed<Status>()
-    .required("Status is required")
-    .oneOf(Object.values(Status)),
-  name: string().required("Name is required"),
-  code: string().required("Code is required"),
-  description: string().optional(),
-  addressLine1: string().required("Address line 1 is required"),
-  addressLine2: string().optional(),
-  city: string().required("City is required"),
-  postalCode: string().required("Postal code is required"),
-  stateId: string().required("State is required"),
+export const customerSchema = z.object({
+  id: z.string().optional(),
+  organizationId: z.string().optional(),
+  businessUnitId: z.string().optional(),
+  version: z.number().optional(),
+  createdAt: z.number().optional(),
+  updatedAt: z.number().optional(),
+
+  // * Core Fields
+  status: z.nativeEnum(Status),
+  name: z.string().min(1, "Name is required"),
+  code: z.string().min(1, "Code is required"),
+  description: z.string().optional(),
+  addressLine1: z.string().min(1, "Address line 1 is required"),
+  addressLine2: z.string().optional(),
+  city: z.string().min(1, "City is required"),
+  postalCode: z.string().min(1, "Postal code is required"),
+  stateId: z.string().min(1, "State is required"),
   billingProfile: billingProfileSchema.optional(),
   emailProfile: emailProfileSchema.optional(),
 });
 
-export type CustomerSchema = InferType<typeof customerSchema>;
-export type CustomerBillingProfileSchema = InferType<
-  typeof billingProfileSchema
->;
+export type CustomerSchema = z.infer<typeof customerSchema>;
+export type CustomerBillingProfileSchema = z.infer<typeof billingProfileSchema>;

@@ -24,7 +24,7 @@ import {
 } from "@/lib/schemas/shipment-cancellation-schema";
 import { useUser } from "@/stores/user-store";
 import { APIError } from "@/types/errors";
-import { yupResolver } from "@hookform/resolvers/yup";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation } from "@tanstack/react-query";
 import { useCallback } from "react";
 import { FormProvider, type Path, useForm } from "react-hook-form";
@@ -44,13 +44,13 @@ export function ShipmentCancellationDialog({
 }: ShipmentCancellationDialogProps) {
   const user = useUser();
 
-  const form = useForm<ShipmentCancellationSchema>({
-    resolver: yupResolver(shipmentCancellationSchema),
+  const form = useForm({
+    resolver: zodResolver(shipmentCancellationSchema),
     defaultValues: {
       cancelReason: "",
-      shipmentId: shipmentId,
-      canceledById: user?.id,
-      canceledAt: toUnixTimeStamp(new Date()),
+      shipmentId: shipmentId || "",
+      canceledById: user?.id || "",
+      canceledAt: toUnixTimeStamp(new Date()) || 0,
     },
   });
 

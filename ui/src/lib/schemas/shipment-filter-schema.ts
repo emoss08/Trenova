@@ -1,11 +1,13 @@
 import { ShipmentStatus } from "@/types/shipment";
-import { type InferType, mixed, object, string } from "yup";
+import { z } from "zod";
 
-export const shipmentFilterSchema = object({
-  search: string().optional(),
-  status: mixed<ShipmentStatus>()
-    .optional()
-    .oneOf(Object.values(ShipmentStatus)),
+export const shipmentFilterSchema = z.object({
+  search: z.string().optional(),
+  status: z
+    .nativeEnum(ShipmentStatus, {
+      message: "Status is required",
+    })
+    .optional(),
 });
 
-export type ShipmentFilterSchema = InferType<typeof shipmentFilterSchema>;
+export type ShipmentFilterSchema = z.infer<typeof shipmentFilterSchema>;

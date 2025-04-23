@@ -72,7 +72,7 @@ export function AuthForm() {
   return (
     <>
       <div className="flex flex-col gap-6">
-        <Card className="mx-auto w-[400px] border-input">
+        <Card className="bg-transparent mx-auto w-[400px] border-input">
           <CardHeader className="text-left">
             <CardTitle className="text-xl font-bold">
               {formType === AuthFormType.FORGOT_PASSWORD

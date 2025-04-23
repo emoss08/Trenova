@@ -1,11 +1,11 @@
-import { type InferType, object, string } from "yup";
+import { z } from "zod";
 
-export const usStateSchema = object({
-  id: string().optional(),
-  name: string().required("Name is required"),
-  abbreviation: string().required("Abbreviation is required"),
-  countryName: string().required("Country name is required"),
-  countryIso3: string().required("Country ISO 3 is required"),
+export const usStateSchema = z.object({
+  id: z.string().optional(),
+  name: z.string().min(1, "Name is required"),
+  abbreviation: z.string().min(1, "Abbreviation is required"),
+  countryName: z.string().min(1, "Country name is required"),
+  countryIso3: z.string().min(1, "Country ISO 3 is required"),
 });
 
-export type UsStateSchema = InferType<typeof usStateSchema>;
+export type UsStateSchema = z.infer<typeof usStateSchema>;

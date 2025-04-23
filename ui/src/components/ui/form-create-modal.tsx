@@ -36,7 +36,6 @@ import {
   type UseFormReturn,
 } from "react-hook-form";
 import { toast } from "sonner";
-import { type ObjectSchema } from "yup";
 
 type FormCreateModalProps<T extends FieldValues> = TableSheetProps & {
   url: API_ENDPOINTS;
@@ -44,7 +43,6 @@ type FormCreateModalProps<T extends FieldValues> = TableSheetProps & {
   queryKey: string;
   formComponent: React.ReactNode;
   form: UseFormReturn<T>;
-  schema: ObjectSchema<T>;
   className?: string;
   notice?: React.ReactNode;
 };

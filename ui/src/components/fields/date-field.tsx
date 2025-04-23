@@ -15,7 +15,7 @@ import {
 import { CalendarIcon } from "@radix-ui/react-icons";
 import { format } from "date-fns";
 import { useCallback, useState } from "react";
-import { Controller, FieldValues } from "react-hook-form";
+import { Controller, FieldValues, useController } from "react-hook-form";
 import {
   Tooltip,
   TooltipContent,
@@ -197,52 +197,43 @@ export function AutoCompleteDateField<T extends FieldValues>({
   const inputId = `input-${name}`;
   const descriptionId = `${inputId}-description`;
   const errorId = `${inputId}-error`;
+  const { field, fieldState } = useController({ name, control });
+  const dateValue = field.value ? toDate(field.value) : undefined;
+
+  const handleChange = useCallback(
+    (date: Date | undefined) => {
+      const formattedDate = toUnixTimeStamp(date);
+      field.onChange(formattedDate);
+    },
+    [field],
+  );
 
   return (
-    <Controller<T>
-      name={name}
-      control={control}
-      rules={rules}
-      render={({ field, fieldState }) => {
-        const dateValue = field.value ? toDate(field.value) : undefined;
-
-        const handleChange = useCallback(
-          (date: Date | undefined) => {
-            const formattedDate = toUnixTimeStamp(date);
-            field.onChange(formattedDate);
-          },
-          [field],
-        );
-
-        return (
-          <FieldWrapper
-            label={label}
-            description={description}
-            required={!!rules?.required}
-            error={fieldState.error?.message}
-            className={className}
-          >
-            <AutoCompleteDatePicker
-              {...props}
-              {...field}
-              name={name}
-              id={inputId}
-              aria-label={label}
-              date={dateValue}
-              placeholder={placeholder}
-              setDate={handleChange}
-              onBlur={field.onBlur}
-              className={className}
-              isInvalid={fieldState.invalid}
-              autoComplete="off"
-              aria-describedby={cn(
-                description && descriptionId,
-                fieldState.error && errorId,
-              )}
-            />
-          </FieldWrapper>
-        );
-      }}
-    />
+    <FieldWrapper
+      label={label}
+      description={description}
+      required={!!rules?.required}
+      error={fieldState.error?.message}
+      className={className}
+    >
+      <AutoCompleteDatePicker
+        {...props}
+        {...field}
+        name={name}
+        id={inputId}
+        aria-label={label}
+        date={dateValue}
+        placeholder={placeholder}
+        setDate={handleChange}
+        onBlur={field.onBlur}
+        className={className}
+        isInvalid={fieldState.invalid}
+        autoComplete="off"
+        aria-describedby={cn(
+          description && descriptionId,
+          fieldState.error && errorId,
+        )}
+      />
+    </FieldWrapper>
   );
 }

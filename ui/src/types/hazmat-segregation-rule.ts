@@ -6,8 +6,8 @@ export enum SegregationType {
 }
 
 export enum SegregationDistanceUnit {
-  Feet = "ft",
-  Meters = "m",
-  Inches = "in",
-  Centimeters = "cm",
+  Feet = "Feet",
+  Meters = "Meters",
+  Inches = "Inches",
+  Centimeters = "Centimeters",
 }

@@ -67,6 +67,7 @@ function GeneralInformationSection({
           label="Equip. Manufacturer"
           placeholder="Equip. Manufacturer"
           description="The manufacturer of the trailer's equipment."
+          clearable
           getOptionValue={(option) => option.id || ""}
           getDisplayValue={(option) => option.name}
           renderOption={(option) => option.name}
@@ -118,7 +119,6 @@ function GeneralInformationSection({
           label="Fleet Code"
           placeholder="Fleet Code"
           description="The fleet code associated with the trailer."
-          rules={{ required: true }}
           getOptionValue={(option) => option.id || ""}
           getDisplayValue={(option) => (
             <ColorOptionValue color={option.color} value={option.name} />

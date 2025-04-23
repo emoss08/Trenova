@@ -49,7 +49,7 @@ type AuditService interface {
 	// Core functionality
 	LogAction(params *LogActionParams, opts ...LogOption) error
 	Start() error
-	Stop(ctx context.Context) error
+	Stop() error
 
 	// New methods for enhanced functionality
 	RegisterSensitiveFields(resource permission.Resource, fields []SensitiveField) error

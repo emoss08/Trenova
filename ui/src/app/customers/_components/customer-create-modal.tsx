@@ -32,7 +32,7 @@ import {
 import { BillingCycleType } from "@/types/billing";
 import { Status } from "@/types/common";
 import { type TableSheetProps } from "@/types/data-table";
-import { yupResolver } from "@hookform/resolvers/yup";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { useCallback, useEffect } from "react";
 import { FormProvider } from "react-hook-form";
 import { CustomerForm } from "./customer-form";
@@ -43,7 +43,7 @@ export function CreateCustomerModal({ open, onOpenChange }: TableSheetProps) {
   const form = useFormWithSave({
     resourceName: "Customer",
     formOptions: {
-      resolver: yupResolver(customerSchema),
+      resolver: zodResolver(customerSchema),
       defaultValues: {
         status: Status.Active,
         name: "",

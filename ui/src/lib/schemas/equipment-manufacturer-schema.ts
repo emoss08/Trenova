@@ -1,17 +1,20 @@
 import { Status } from "@/types/common";
-import { type InferType, mixed, object, string } from "yup";
+import { z } from "zod";
 
-export const equipmentManufacturerSchema = object({
-  id: string().optional(),
-  organizationId: string().nullable().optional(),
-  businessUnitId: string().nullable().optional(),
-  status: mixed<Status>()
-    .required("Status is required")
-    .oneOf(Object.values(Status)),
-  name: string().required("Name is required"),
-  description: string().optional(),
+export const equipmentManufacturerSchema = z.object({
+  id: z.string().optional(),
+  organizationId: z.string().optional(),
+  businessUnitId: z.string().optional(),
+  version: z.number().optional(),
+  createdAt: z.number().optional(),
+  updatedAt: z.number().optional(),
+
+  // * Core Fields
+  status: z.nativeEnum(Status),
+  name: z.string().min(1, "Name is required"),
+  description: z.string().optional(),
 });
 
-export type EquipmentManufacturerSchema = InferType<
+export type EquipmentManufacturerSchema = z.infer<
   typeof equipmentManufacturerSchema
 >;

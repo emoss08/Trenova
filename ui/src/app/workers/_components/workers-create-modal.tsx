@@ -29,7 +29,7 @@ import { workerSchema, WorkerSchema } from "@/lib/schemas/worker-schema";
 import { Gender, Status } from "@/types/common";
 import { TableSheetProps } from "@/types/data-table";
 import { ComplianceStatus, Endorsement, WorkerType } from "@/types/worker";
-import { yupResolver } from "@hookform/resolvers/yup";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { useCallback, useEffect } from "react";
 import { FormProvider } from "react-hook-form";
 import { WorkerForm } from "./workers-form";
@@ -40,7 +40,7 @@ export function CreateWorkerModal({ open, onOpenChange }: TableSheetProps) {
   const form = useFormWithSave({
     resourceName: "Worker",
     formOptions: {
-      resolver: yupResolver(workerSchema),
+      resolver: zodResolver(workerSchema),
       defaultValues: {
         status: Status.Active,
         type: WorkerType.Employee,

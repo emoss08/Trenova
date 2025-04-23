@@ -9,11 +9,11 @@ import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 
 import {
-  getArrowByType,
-  getDateByType,
-  setDateByType,
-  type Period,
-  type TimePickerType,
+    getArrowByType,
+    getDateByType,
+    setDateByType,
+    type Period,
+    type TimePickerType,
 } from "./time-picker-utils";
 
 export interface TimePickerInputProps
@@ -112,7 +112,7 @@ const TimePickerInput = React.forwardRef<
         id={id || picker}
         name={name || picker}
         className={cn(
-          "w-[48px] text-center font-mono text-sm tabular-nums caret-transparent focus:bg-accent focus:text-accent-foreground [&::-webkit-inner-spin-button]:appearance-none",
+          "w-[48px] text-center font-mono text-sm tabular-nums caret-transparent focus:bg-muted focus:text-accent-foreground [&::-webkit-inner-spin-button]:appearance-none",
           className,
         )}
         value={value || calculatedValue}
@@ -135,3 +135,4 @@ const TimePickerInput = React.forwardRef<
 TimePickerInput.displayName = "TimePickerInput";
 
 export { TimePickerInput };
+

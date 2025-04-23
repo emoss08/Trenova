@@ -10,11 +10,11 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router";
 import { Button } from "../ui/button";
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogHeader,
+    DialogTitle,
 } from "../ui/dialog";
 import { Icon } from "../ui/icons";
 import { VisuallyHidden } from "../ui/visually-hidden";
@@ -23,8 +23,8 @@ import { SiteSearchFooter } from "./site-search-footer";
 import { SearchInputWithBadges, SiteSearchInput } from "./site-search-input";
 import { SiteSearchLoading } from "./site-search-loading";
 import {
-  getResultComponent,
-  SiteSearchQuickOption,
+    getResultComponent,
+    SiteSearchQuickOption,
 } from "./site-search-type-components";
 
 export function SearchForm({ ...props }: React.ComponentProps<"form">) {
@@ -269,8 +269,8 @@ export function SiteSearchDialog() {
               className={cn(
                 "flex items-center justify-between p-2 cursor-pointer rounded-md",
                 highlightedIndex === index
-                  ? "bg-accent/50"
-                  : "hover:bg-accent/30",
+                  ? "bg-muted"
+                  : "hover:bg-muted",
               )}
               onClick={() => setSearchQuery(search)}
               data-highlighted={highlightedIndex === index}
@@ -402,7 +402,7 @@ export function SiteSearchDialog() {
                   {group.routes.map((route) => (
                     <button
                       key={route.id}
-                      className="flex items-center gap-2 p-2 rounded-md hover:bg-accent/30 transition-colors cursor-pointer outline-none"
+                      className="flex items-center gap-2 p-2 rounded-md hover:bg-muted transition-colors cursor-pointer outline-none"
                       onClick={() => handleNavigate(route.link)}
                     >
                       {route.icon && (

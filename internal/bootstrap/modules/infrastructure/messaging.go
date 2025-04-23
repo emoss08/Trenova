@@ -8,8 +8,8 @@ import (
 
 var MessagingModule = fx.Module("messaging",
 	fx.Provide(rabbitmq.NewWorkflowPublisher),
-	fx.Invoke(func(p *rabbitmq.WorkflowPublisher) {
-		p.RegisterHooks()
+	fx.Invoke(func(lc fx.Lifecycle, p *rabbitmq.WorkflowPublisher) {
+		lc.Append(p.RegisterHooks())
 	}),
 	fx.Provide(workflow.NewService),
 )

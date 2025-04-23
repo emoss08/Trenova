@@ -45,7 +45,7 @@ export function CommodityList({
 
   return !commodities.length ? (
     <EmptyState
-      className="max-h-[200px] p-4 border rounded-lg border-bg-sidebar-border bg-card"
+      className="max-h-[200px] p-4 border rounded-lg border-bg-sidebar-border"
       title="No Commodities"
       description="Shipment has no associated commodities"
       icons={[faTrailer, faBoxesStacked, faTruckContainer]}

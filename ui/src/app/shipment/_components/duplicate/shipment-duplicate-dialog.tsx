@@ -24,7 +24,7 @@ import {
 import { type TableSheetProps } from "@/types/data-table";
 import { type APIError } from "@/types/errors";
 import { type Shipment } from "@/types/shipment";
-import { yupResolver } from "@hookform/resolvers/yup";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation } from "@tanstack/react-query";
 import { useCallback } from "react";
 import { FormProvider, type Path, useForm } from "react-hook-form";
@@ -40,8 +40,8 @@ export function ShipmentDuplicateDialog({
   onOpenChange,
   shipment,
 }: ShipmentDuplicateDialogProps) {
-  const form = useForm<ShipmentDuplicateSchema>({
-    resolver: yupResolver(shipmentDuplicateSchema),
+  const form = useForm({
+    resolver: zodResolver(shipmentDuplicateSchema),
     defaultValues: {
       shipmentID: shipment?.id,
       overrideDates: false,

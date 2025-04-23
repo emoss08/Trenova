@@ -7,7 +7,7 @@ import {
 } from "@/lib/schemas/auth-schema";
 import { resetPassword } from "@/services/auth";
 import { APIError } from "@/types/errors";
-import { yupResolver } from "@hookform/resolvers/yup";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
@@ -26,7 +26,7 @@ export function ResetPasswordForm({ onBack, email }: ResetPasswordFormProps) {
     handleSubmit,
     formState: { isSubmitting },
   } = useForm<ResetPasswordSchema>({
-    resolver: yupResolver(resetPasswordSchema),
+    resolver: zodResolver(resetPasswordSchema),
     defaultValues: {
       emailAddress: email,
     },

@@ -274,7 +274,7 @@ export function ShipmentDocumentWorkflow({
         </VisuallyHidden>
         <DialogBody className="p-0">
           <div className="flex h-[calc(100vh-100px)] max-h-[800px]">
-            <div className="w-1/4 bg-muted/20 border-r border-border">
+            <div className="w-1/4 bg-muted border-r border-border">
               <div className="p-4 border-b border-border">
                 <h2 className="text-lg font-semibold">Document Requirements</h2>
                 <p className="text-sm text-muted-foreground">

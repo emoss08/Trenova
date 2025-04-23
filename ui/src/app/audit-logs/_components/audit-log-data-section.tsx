@@ -108,7 +108,7 @@ export function ChangesContent({
           <Collapsible key={key} defaultOpen={true}>
             <div className="border rounded-md shadow-sm">
               <CollapsibleTrigger asChild>
-                <div className="flex items-center p-3 cursor-pointer hover:bg-muted/50 transition-colors">
+                <div className="flex items-center p-3 cursor-pointer hover:bg-muted transition-colors">
                   <Icon
                     icon={faChevronDown}
                     className="mr-2 h-3 w-3 text-muted-foreground"
@@ -209,7 +209,7 @@ function DisplayValue({ value }: { value: any }) {
         variant="ghost"
         size="sm"
         onClick={() => setIsExpanded(!isExpanded)}
-        className="px-2 py-1 h-7 text-foreground hover:bg-muted/70"
+        className="px-2 py-1 h-7 text-foreground hover:bg-muted"
       >
         <Icon icon={isExpanded ? faMinus : faPlus} className="size-3.5 mr-2" />
         <span className="text-xs font-medium">{summary}</span>
@@ -369,7 +369,7 @@ function ChangeActions({
           <Button
             variant="ghost"
             size="icon"
-            className="size-8 hover:bg-muted/70 rounded-md"
+            className="size-8 hover:bg-muted rounded-md"
           >
             <Icon icon={faEllipsis} className="size-4" />
           </Button>

@@ -248,13 +248,6 @@ const routes: RouteObject[] = [
                 },
               },
               {
-                path: "system-logs",
-                async lazy() {
-                  let { LogReader } = await import("@/app/logreader/page");
-                  return { Component: LogReader };
-                },
-              },
-              {
                 path: "shipment-controls",
                 async lazy() {
                   let { ShipmentControl } = await import(
@@ -359,3 +352,4 @@ const routes: RouteObject[] = [
 const router = createBrowserRouter(routes);
 
 export { router, routes };
+

@@ -286,7 +286,7 @@ export function JsonCodeDiffViewer({
     <div className={cn("grid grid-cols-1 md:grid-cols-2 gap-4", className)}>
       {/* Old Data Panel */}
       <div className="overflow-hidden rounded-md border border-border bg-card">
-        <div className="p-2 border-b border-border bg-muted/30">
+        <div className="p-2 border-b border-border bg-muted">
           <div className="flex justify-between items-center">
             <span className="text-sm font-medium text-foreground">
               {title.old}
@@ -322,7 +322,7 @@ export function JsonCodeDiffViewer({
 
       {/* New Data Panel */}
       <div className="overflow-hidden rounded-md border border-border bg-card">
-        <div className="p-2 border-b border-border bg-muted/30">
+        <div className="p-2 border-b border-border bg-muted">
           <div className="flex justify-between items-center">
             <span className="text-sm font-medium text-foreground">
               {title.new}

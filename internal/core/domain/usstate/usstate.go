@@ -24,8 +24,8 @@ type UsState struct {
 	CountryIso3  string `json:"countryIso3" bun:"country_iso3,notnull,default:'USA'"`
 
 	// Metadata and versioning
-	CreatedAt int64 `json:"createdAt" bun:"created_at,type:BIGINT,nullzero,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	UpdatedAt int64 `json:"updatedAt" bun:"updated_at,type:BIGINT,nullzero,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	CreatedAt int64 `json:"createdAt" bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	UpdatedAt int64 `json:"updatedAt" bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
 }
 
 // BeforeAppendModel implements the bun.BeforeAppendModelHook interface.

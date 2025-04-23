@@ -1,9 +1,5 @@
 /* eslint-disable react-hooks/rules-of-hooks */
 import {
-  DataTableColumnHeader,
-  DataTableColumnHeaderWithTooltip,
-} from "@/components/data-table/_components/data-table-column-header";
-import {
   createEntityColumn,
   createEntityRefColumn,
   createNestedEntityRefColumn,
@@ -17,10 +13,9 @@ import {
 } from "@/lib/date";
 import { LocationSchema } from "@/lib/schemas/location-schema";
 import {
-  calculateShipmentMileage,
   getDestinationStopInfo,
   getOriginStopInfo,
-  ShipmentLocations,
+  ShipmentLocations
 } from "@/lib/shipment/utils";
 import { formatLocation } from "@/lib/utils";
 import { Shipment } from "@/types/shipment";
@@ -61,9 +56,7 @@ export function getColumns(): ColumnDef<Shipment>[] {
     },
     {
       accessorKey: "status",
-      header: ({ column }) => (
-        <DataTableColumnHeader column={column} title="Status" />
-      ),
+      header: "Status",
       cell: ({ row }) => {
         const status = row.original.status;
         return <ShipmentStatusBadge status={status} />;
@@ -105,13 +98,7 @@ export function getColumns(): ColumnDef<Shipment>[] {
     }),
     {
       id: "originPickup",
-      header: ({ column }) => (
-        <DataTableColumnHeaderWithTooltip
-          column={column}
-          title="Origin Date"
-          tooltipContent="The date and time the shipment is expected to arrive at the origin location."
-        />
-      ),
+      header: "Origin Date",
       cell: ({ row }) => {
         const shipment = row.original;
         const originStop = getOriginStopInfo(shipment);
@@ -149,13 +136,7 @@ export function getColumns(): ColumnDef<Shipment>[] {
     }),
     {
       id: "destinationPickup",
-      header: ({ column }) => (
-        <DataTableColumnHeaderWithTooltip
-          column={column}
-          title="Destination Date"
-          tooltipContent="The date and time the shipment is expected to arrive at the destination location."
-        />
-      ),
+      header: "Destination Date",
       cell: ({ row }) => {
         const shipment = row.original;
         const destinationStop = getDestinationStopInfo(shipment);
@@ -171,33 +152,5 @@ export function getColumns(): ColumnDef<Shipment>[] {
         return <p>{generateDateTimeString(arrivalDate)}</p>;
       },
     },
-    {
-      id: "totalDistance",
-      header: ({ column }) => (
-        <DataTableColumnHeader column={column} title="Total Distance" />
-      ),
-      cell: ({ row }) => {
-        const shipment = row.original;
-        const mileage = calculateShipmentMileage(shipment);
-        return `${mileage} mi.`;
-      },
-    },
-    {
-      accessorKey: "bol",
-      header: ({ column }) => (
-        <DataTableColumnHeader column={column} title="BOL" />
-      ),
-    },
-    // {
-    //   id: "createdAt",
-    //   header: "Created At",
-    //   cell: ({ row }) => {
-    //     const { createdAt } = row.original;
-    //     const date = toDate(createdAt as number);
-    //     if (!date) return <p>-</p>;
-
-    //     return <p>{generateDateOnlyString(date)}</p>;
-    //   },
-    // },
   ];
 }
