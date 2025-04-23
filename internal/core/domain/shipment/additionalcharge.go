@@ -24,30 +24,23 @@ var (
 type AdditionalCharge struct {
 	bun.BaseModel `bun:"table:additional_charges,alias:ac" json:"-"`
 
-	// Primary identifiers
-	ID             pulid.ID `json:"id" bun:",pk,type:VARCHAR(100),notnull"`
-	BusinessUnitID pulid.ID `json:"businessUnitId" bun:"business_unit_id,pk,notnull,type:VARCHAR(100)"`
-	OrganizationID pulid.ID `json:"organizationId" bun:"organization_id,pk,notnull,type:VARCHAR(100)"`
-
-	// Relationship identifiers (Non-Primary-Keys)
-	ShipmentID          pulid.ID `bun:"shipment_id,type:VARCHAR(100),notnull" json:"shipmentId"`
-	AccessorialChargeID pulid.ID `bun:"accessorial_charge_id,type:VARCHAR(100),notnull" json:"accessorialChargeId"`
-
-	// Core Fields
-	Unit   int16                    `json:"unit" bun:"unit,type:INTEGER,notnull"`
-	Method accessorialcharge.Method `json:"method" bun:"method,type:accessorial_method_enum,notnull"`
-	Amount decimal.Decimal          `json:"amount" bun:"amount,type:NUMERIC(19,4),notnull"`
-
-	// Metadata
-	Version   int64 `bun:"version,type:BIGINT" json:"version"`
-	CreatedAt int64 `bun:"created_at,type:BIGINT,nullzero,notnull,default:extract(epoch from current_timestamp)::bigint" json:"createdAt"`
-	UpdatedAt int64 `bun:"updated_at,type:BIGINT,nullzero,notnull,default:extract(epoch from current_timestamp)::bigint" json:"updatedAt"`
+	ID                  pulid.ID                 `json:"id" bun:",pk,type:VARCHAR(100),notnull"`
+	BusinessUnitID      pulid.ID                 `json:"businessUnitId" bun:"business_unit_id,pk,notnull,type:VARCHAR(100)"`
+	OrganizationID      pulid.ID                 `json:"organizationId" bun:"organization_id,pk,notnull,type:VARCHAR(100)"`
+	ShipmentID          pulid.ID                 `json:"shipmentId" bun:"shipment_id,type:VARCHAR(100),notnull"`
+	AccessorialChargeID pulid.ID                 `json:"accessorialChargeId" bun:"accessorial_charge_id,type:VARCHAR(100),notnull"`
+	Method              accessorialcharge.Method `json:"method" bun:"method,type:accessorial_method_enum,notnull"`
+	Amount              decimal.Decimal          `json:"amount" bun:"amount,type:NUMERIC(19,4),notnull"`
+	Unit                int16                    `json:"unit" bun:"unit,type:INTEGER,notnull"`
+	Version             int64                    `json:"version" bun:"version,type:BIGINT"`
+	CreatedAt           int64                    `json:"createdAt" bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	UpdatedAt           int64                    `json:"updatedAt" bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
 
 	// Relationships
-	BusinessUnit      *businessunit.BusinessUnit           `bun:"rel:belongs-to,join:business_unit_id=id" json:"-"`
-	Organization      *organization.Organization           `bun:"rel:belongs-to,join:organization_id=id" json:"-"`
-	Shipment          *Shipment                            `bun:"rel:belongs-to,join:shipment_id=id" json:"shipment,omitempty"`
-	AccessorialCharge *accessorialcharge.AccessorialCharge `bun:"rel:belongs-to,join:accessorial_charge_id=id" json:"accessorialCharge,omitempty"`
+	BusinessUnit      *businessunit.BusinessUnit           `json:"-" bun:"rel:belongs-to,join:business_unit_id=id"`
+	Organization      *organization.Organization           `json:"-" bun:"rel:belongs-to,join:organization_id=id"`
+	Shipment          *Shipment                            `json:"-" bun:"rel:belongs-to,join:shipment_id=id"`
+	AccessorialCharge *accessorialcharge.AccessorialCharge `json:"accessorialCharge,omitempty" bun:"rel:belongs-to,join:accessorial_charge_id=id"`
 }
 
 func (a *AdditionalCharge) Validate(ctx context.Context, multiErr *errors.MultiError) {

@@ -33,7 +33,7 @@ import { TableSheetProps } from "@/types/data-table";
 import { MoveStatus } from "@/types/move";
 import { RatingMethod, ShipmentStatus } from "@/types/shipment";
 import { StopStatus, StopType } from "@/types/stop";
-import { yupResolver } from "@hookform/resolvers/yup";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { useCallback, useEffect, useRef } from "react";
 import { FormProvider } from "react-hook-form";
 import { ShipmentForm } from "./form/shipment-form";
@@ -46,7 +46,7 @@ export function ShipmentCreateSheet({ open, onOpenChange }: TableSheetProps) {
   const form = useFormWithSave({
     resourceName: "Shipment",
     formOptions: {
-      resolver: yupResolver(shipmentSchema),
+      resolver: zodResolver(shipmentSchema),
       defaultValues: {
         status: ShipmentStatus.New,
         proNumber: undefined,

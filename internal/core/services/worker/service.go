@@ -9,7 +9,6 @@ import (
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/audit"
-	"github.com/emoss08/trenova/internal/core/services/search"
 	"github.com/emoss08/trenova/internal/pkg/errors"
 	"github.com/emoss08/trenova/internal/pkg/logger"
 	"github.com/emoss08/trenova/internal/pkg/utils/jsonutils"
@@ -25,12 +24,11 @@ import (
 type ServiceParams struct {
 	fx.In
 
-	Logger        *logger.Logger
-	Repo          repositories.WorkerRepository
-	PermService   services.PermissionService
-	AuditService  services.AuditService
-	SearchService *search.Service
-	Validator     *workervalidator.Validator
+	Logger       *logger.Logger
+	Repo         repositories.WorkerRepository
+	PermService  services.PermissionService
+	AuditService services.AuditService
+	Validator    *workervalidator.Validator
 }
 
 type Service struct {
@@ -38,7 +36,6 @@ type Service struct {
 	l    *zerolog.Logger
 	ps   services.PermissionService
 	as   services.AuditService
-	ss   *search.Service
 	v    *workervalidator.Validator
 }
 
@@ -51,7 +48,6 @@ func NewService(p ServiceParams) *Service {
 		repo: p.Repo,
 		ps:   p.PermService,
 		as:   p.AuditService,
-		ss:   p.SearchService,
 		l:    &log,
 		v:    p.Validator,
 	}
@@ -182,11 +178,6 @@ func (s *Service) Create(ctx context.Context, wrk *worker.Worker, userID pulid.I
 		return nil, eris.Wrap(err, "create worker")
 	}
 
-	// Update the search index
-	if err = s.ss.Index(ctx, createdWorker); err != nil {
-		log.Error().Err(err).Msg("failed to update search index")
-	}
-
 	// Log the create if the insert was successful
 	if err = s.as.LogAction(
 		&services.LogActionParams{
@@ -254,14 +245,6 @@ func (s *Service) Update(ctx context.Context, wrk *worker.Worker, userID pulid.I
 	if err != nil {
 		log.Error().Err(err).Msg("failed to update worker")
 		return nil, eris.Wrap(err, "update worker")
-	}
-
-	// Update the search index
-	if err = s.ss.Index(ctx, updatedWorker); err != nil {
-		log.Error().
-			Err(err).
-			Interface("worker", updatedWorker).
-			Msg("failed to index worker")
 	}
 
 	// Log the update if the insert was successful

@@ -1,10 +1,10 @@
-import { boolean, InferType, object, string } from "yup";
+import { z } from "zod";
 
-export const shipmentDuplicateSchema = object({
-  overrideDates: boolean(),
-  includeCommodities: boolean(),
-  includeAdditionalCharges: boolean(),
-  shipmentID: string().required("Shipment ID is required"),
+export const shipmentDuplicateSchema = z.object({
+  overrideDates: z.boolean(),
+  includeCommodities: z.boolean(),
+  includeAdditionalCharges: z.boolean(),
+  shipmentID: z.string().min(1, "Shipment ID is required"),
 });
 
-export type ShipmentDuplicateSchema = InferType<typeof shipmentDuplicateSchema>;
+export type ShipmentDuplicateSchema = z.infer<typeof shipmentDuplicateSchema>;

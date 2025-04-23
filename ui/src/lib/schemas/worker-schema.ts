@@ -6,76 +6,92 @@ import {
   PTOType,
   WorkerType,
 } from "@/types/worker";
-import { array, boolean, InferType, mixed, number, object, string } from "yup";
+import { z } from "zod";
 
 /* Worker Profile Schema */
-const workerProfileSchema = object({
-  dob: number().required("Date of birth is required"),
-  licenseNumber: string().required("License number is required"),
-  endorsement: mixed<Endorsement>()
-    .required("Endorsement is required")
-    .oneOf(Object.values(Endorsement)),
-  hazmatExpiry: number().when("endorsement", {
-    is: (value: Endorsement) =>
-      value === Endorsement.Hazmat || value === Endorsement.TankerHazmat,
-    then: (schema) => schema.required("Hazmat expiry is required"),
-    otherwise: (schema) => schema.optional(),
-  }),
-  complianceStatus: mixed<ComplianceStatus>()
-    .required("Compliance status is required")
-    .oneOf(Object.values(ComplianceStatus)),
-  isQualified: boolean().required("Is qualified is required"),
-  licenseExpiry: number().required("License expiry is required"),
-  hireDate: number().required("Hire date is required"),
-  licenseStateId: string().required("License state is required"),
-  terminationDate: number().optional().nullable(),
-  physicalDueDate: number().optional().nullable(),
-  mvrDueDate: number().optional().nullable(),
-  lastMvrCheck: number().required("Last MVR check is required"),
-  lastDrugTest: number().required("Last drug test is required"),
+const workerProfileSchema = z.object({
+  id: z.string().optional(),
+  organizationId: z.string().optional(),
+  businessUnitId: z.string().optional(),
+  version: z.number().optional(),
+  createdAt: z.number().optional(),
+  updatedAt: z.number().optional(),
+
+  // * Core Fields
+  dob: z.number(),
+  licenseNumber: z.string(),
+  endorsement: z.nativeEnum(Endorsement),
+  hazmatExpiry: z.number().optional(),
+  complianceStatus: z.nativeEnum(ComplianceStatus),
+  isQualified: z.boolean(),
+  licenseExpiry: z.number(),
+  hireDate: z.number(),
+  licenseStateId: z.string(),
+  terminationDate: z.number().nullable().optional(),
+  physicalDueDate: z.number().nullable().optional(),
+  mvrDueDate: z.number().nullable().optional(),
+  lastMvrCheck: z.number(),
+  lastDrugTest: z.number(),
 });
 
 /* Worker PTO Schema */
-const workerPTOSchema = object({
-  status: mixed<PTOStatus>()
-    .required("Status is required")
-    .oneOf(Object.values(PTOStatus)),
-  type: mixed<PTOType>()
-    .required("Type is required")
-    .oneOf(Object.values(PTOType)),
-  startDate: number().min(1, "Start date is required"),
-  endDate: number().min(1, "End date is required"),
-  reason: string().optional(),
+const workerPTOSchema = z.object({
+  id: z.string().optional(),
+  organizationId: z.string().optional(),
+  businessUnitId: z.string().optional(),
+  version: z.number().optional(),
+  createdAt: z.number().optional(),
+  updatedAt: z.number().optional(),
+
+  // * Core Fields
+  status: z.nativeEnum(PTOStatus),
+  type: z.nativeEnum(PTOType),
+  startDate: z.number().min(1, "Start date is required"),
+  endDate: z.number().min(1, "End date is required"),
+  reason: z.string().optional(),
 });
 
 /* Worker Schema */
-export const workerSchema = object({
-  // Id is optional because it is not required when creating a new worker
-  id: string().optional(),
-  organizationId: string().optional(),
-  businessUnitId: string().optional(),
-  profilePictureUrl: string().optional(),
-  status: mixed<Status>()
-    .required("Status is required")
-    .oneOf(Object.values(Status)),
-  type: mixed<WorkerType>()
-    .required("Type is required")
-    .oneOf(Object.values(WorkerType)),
-  firstName: string().required("First name is required"),
-  lastName: string().required("Last name is required"),
-  addressLine1: string().required("Address line 1 is required"),
-  addressLine2: string().optional(),
-  city: string().required("City is required"),
-  stateId: string().required("State is required"),
-  fleetCodeId: string().nullable().optional(),
-  gender: mixed<Gender>()
-    .required("Gender is required")
-    .oneOf(Object.values(Gender)),
-  postalCode: string().required("Postal code is required"),
-  profile: workerProfileSchema,
-  pto: array().of(workerPTOSchema),
-  createdAt: number().optional(),
-  updatedAt: number().optional(),
-});
+export const workerSchema = z
+  .object({
+    id: z.string().optional(),
+    organizationId: z.string().optional(),
+    businessUnitId: z.string().optional(),
+    version: z.number().optional(),
+    createdAt: z.number().optional(),
+    updatedAt: z.number().optional(),
 
-export type WorkerSchema = InferType<typeof workerSchema>;
+    // * Core Fields
+    profilePictureUrl: z.string().optional(),
+    status: z.nativeEnum(Status),
+    type: z.nativeEnum(WorkerType),
+    firstName: z.string(),
+    lastName: z.string(),
+    addressLine1: z.string(),
+    addressLine2: z.string().optional(),
+    city: z.string(),
+    stateId: z.string(),
+    fleetCodeId: z.string().nullable().optional(),
+    gender: z.nativeEnum(Gender),
+    postalCode: z.string(),
+    profile: workerProfileSchema,
+    pto: z.array(workerPTOSchema),
+  })
+  .refine(
+    (data) => {
+      const hasHazmatEndorsement =
+        data.profile.endorsement === Endorsement.Hazmat ||
+        data.profile.endorsement === Endorsement.TankerHazmat;
+
+      if (hasHazmatEndorsement && !data.profile.hazmatExpiry) {
+        return false;
+      }
+      return true;
+    },
+    {
+      message: "Hazmat expiry is required when endorsement includes Hazmat",
+      path: ["profile", "hazmatExpiry"],
+    },
+  );
+
+export type WorkerSchema = z.infer<typeof workerSchema>;

@@ -2,6 +2,7 @@ package bootstrap
 
 import (
 	"context"
+	"fmt"
 	"os"
 	"os/signal"
 	"syscall"
@@ -18,6 +19,8 @@ import (
 	"github.com/emoss08/trenova/internal/pkg/statemachine"
 
 	"go.uber.org/fx"
+	"go.uber.org/fx/fxevent"
+	"go.uber.org/zap"
 )
 
 // Bootstrap initializes and starts the application
@@ -34,6 +37,9 @@ func Bootstrap() error {
 		analytics.Module,
 		services.Module,
 		api.Module,
+		fx.WithLogger(func() fxevent.Logger {
+			return &fxevent.ZapLogger{Logger: zap.NewExample()}
+		}),
 	)
 
 	startCtx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
@@ -48,9 +54,31 @@ func Bootstrap() error {
 	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
 	<-quit
 
-	// Graceful shutdown
-	stopCtx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
+	fmt.Println("Shutdown initiated, closing resources...")
+
+	// Graceful shutdown with a deadline warning
+	stopCtx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 
-	return app.Stop(stopCtx)
+	// Set up a deadline warning
+	go func() {
+		select {
+		case <-stopCtx.Done():
+			// Context deadline exceeded, but we still want to continue shutdown
+			fmt.Println("WARNING: Shutdown is taking longer than expected, some resources may not be properly cleaned up")
+		case <-time.After(5 * time.Second):
+			// This will only trigger if stopCtx doesn't finish within 5 seconds
+			fmt.Println("Shutdown in progress, waiting for resources to clean up...")
+		}
+	}()
+
+	err := app.Stop(stopCtx)
+	if err != nil {
+		fmt.Printf("Error during shutdown: %v\n", err)
+		// Even if we have an error, we return nil to ensure the process exits cleanly
+		return nil
+	}
+
+	fmt.Println("Shutdown completed successfully")
+	return nil
 }

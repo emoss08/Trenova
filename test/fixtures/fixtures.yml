@@ -807,8 +807,6 @@
       name: "Test Hazardous Material"
       description: "Test Hazardous Material"
       class: "HazardClass1And1"
-      un_number: "123456"
-      erg_number: "123456"
       packing_group: "III"
       proper_shipping_name: "Test Proper Shipping Name"
       handling_instructions: "Test Handling Instructions"

@@ -355,3 +355,9 @@ func (c *Client) Keys(ctx context.Context, pattern string) ([]string, error) {
 	}
 	return keys, nil
 }
+
+// Close closes the underlying Redis client connection
+func (c *Client) Close() error {
+	c.l.Info().Msg("closing Redis client connection")
+	return c.Client.Close()
+}

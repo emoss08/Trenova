@@ -116,7 +116,7 @@ export function AddDocumentCard({
     <div
       className={cn(
         "flex justify-center items-center border border-dashed rounded-md overflow-hidden transition-all cursor-pointer",
-        isHovering ? "bg-muted" : "border-border hover:bg-muted/50",
+        isHovering ? "bg-muted" : "border-border hover:bg-muted",
       )}
       onClick={onUpload}
       onDragOver={handleDragOver}

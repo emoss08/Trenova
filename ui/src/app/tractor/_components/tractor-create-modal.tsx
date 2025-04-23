@@ -1,14 +1,14 @@
 import { FormCreateModal } from "@/components/ui/form-create-modal";
-import { TractorSchema, tractorSchema } from "@/lib/schemas/tractor-schema";
+import { tractorSchema } from "@/lib/schemas/tractor-schema";
 import { type TableSheetProps } from "@/types/data-table";
 import { EquipmentStatus } from "@/types/tractor";
-import { yupResolver } from "@hookform/resolvers/yup";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { TractorForm } from "./tractor-form";
 
 export function CreateTractorModal({ open, onOpenChange }: TableSheetProps) {
-  const form = useForm<TractorSchema>({
-    resolver: yupResolver(tractorSchema),
+  const form = useForm({
+    resolver: zodResolver(tractorSchema),
     defaultValues: {
       status: EquipmentStatus.Available,
       vin: "",
@@ -24,7 +24,6 @@ export function CreateTractorModal({ open, onOpenChange }: TableSheetProps) {
       title="Tractor"
       formComponent={<TractorForm />}
       form={form}
-      schema={tractorSchema}
       url="/tractors/"
       queryKey="tractor-list"
     />

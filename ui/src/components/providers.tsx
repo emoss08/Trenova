@@ -1,6 +1,6 @@
 import { APIError } from "@/types/errors";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
+// import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 import { NuqsAdapter } from "nuqs/adapters/react-router";
 import { HelmetProvider } from "react-helmet-async";
 import { ThemeProvider } from "./theme-provider";
@@ -28,7 +28,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
       <HelmetProvider>
         <QueryClientProvider client={queryClient}>
           <ThemeProvider defaultTheme="dark" storageKey="trenova-ui-theme">
-            <ReactQueryDevtools />
+            {/* <ReactQueryDevtools /> */}
             {children}
             <Toaster richColors />
           </ThemeProvider>

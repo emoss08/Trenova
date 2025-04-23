@@ -1,3 +1,4 @@
+import type { SidebarLink } from "@/components/sidebar-nav";
 import { Resource } from "@/types/audit-entry";
 import { RouteInfo } from "@/types/nav-links";
 import {
@@ -10,6 +11,128 @@ import {
   faVault,
 } from "@fortawesome/pro-regular-svg-icons";
 import { populateResourcePathMap } from "./utils";
+
+export const adminLinks: SidebarLink[] = [
+  {
+    href: "/organization/settings/",
+    title: "Organization Settings",
+    group: "Organization",
+  },
+  {
+    href: "/organization/accounting-controls/",
+    title: "Accounting Controls",
+    group: "Organization",
+    disabled: true,
+  },
+  {
+    href: "/organization/billing-controls/",
+    title: "Billing Controls",
+    group: "Organization",
+  },
+  {
+    href: "/organization/dispatch-controls/",
+    title: "Dispatch Controls",
+    group: "Organization",
+    disabled: true,
+  },
+  {
+    href: "/organization/shipment-controls/",
+    title: "Shipment Controls",
+    group: "Organization",
+  },
+  {
+    href: "/organization/route-controls/",
+    title: "Route Controls",
+    group: "Organization",
+    disabled: true,
+  },
+  {
+    href: "/organization/feasibility-controls/",
+    title: "Feasibility Controls",
+    group: "Organization",
+    disabled: true,
+  },
+  {
+    href: "/organization/hazmat-segregation-rules/",
+    title: "Hazmat Seg. Rules",
+    group: "Organization",
+  },
+  {
+    href: "#",
+    title: "Users & Roles",
+    group: "Organization",
+    disabled: true,
+  },
+  {
+    href: "#",
+    title: "Custom Reports",
+    group: "Reporting & Analytics",
+    disabled: true,
+  },
+  {
+    href: "#",
+    title: "Scheduled Reports",
+    group: "Reporting & Analytics",
+    disabled: true,
+  },
+  {
+    href: "/organization/email-controls/",
+    title: "Email Controls",
+    group: "Email & SMS",
+    disabled: true,
+  },
+  {
+    href: "#",
+    title: "Email Logs",
+    group: "Email & SMS",
+    disabled: true,
+  },
+  {
+    href: "/organization/email-profiles/",
+    title: "Email Profile(s)",
+    group: "Email & SMS",
+    disabled: true,
+  },
+  {
+    href: "#",
+    title: "Notification Types",
+    group: "Notifications",
+    disabled: true,
+  },
+  {
+    href: "/organization/audit-entries/",
+    title: "Audit Entries",
+    group: "Data & Integrations",
+  },
+  {
+    href: "/organization/integrations/",
+    title: "Apps & Integrations",
+    group: "Data & Integrations",
+  },
+  {
+    href: "/organization/data-retention/",
+    title: "Data Retention",
+    group: "Data & Integrations",
+  },
+  {
+    href: "/organization/table-change-alerts/",
+    title: "Table Change Alerts",
+    group: "Data & Integrations",
+    disabled: true,
+  },
+  {
+    href: "#",
+    title: "Document Templates",
+    group: "Document Management",
+    disabled: true,
+  },
+  {
+    href: "#",
+    title: "Document Themes",
+    group: "Document Management",
+    disabled: true,
+  },
+];
 
 /**
  * Main navigation routes

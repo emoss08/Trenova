@@ -88,7 +88,6 @@ export default function WorkersLicenseInformationForm() {
           <FormControl>
             <AutoCompleteDateField
               control={control}
-              // if the hazmat is not required, then the field is clearable
               clearable={!hazmatCheck}
               placeholder="Hazmat Expiry"
               rules={{

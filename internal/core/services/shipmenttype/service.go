@@ -59,13 +59,13 @@ func (s *Service) SelectOptions(ctx context.Context, opts *ports.LimitOffsetQuer
 		return nil, eris.Wrap(err, "select shipment types")
 	}
 
-	options := make([]*types.SelectOption, len(result.Items))
-	for i, st := range result.Items {
-		options[i] = &types.SelectOption{
+	options := make([]*types.SelectOption, 0, len(result.Items))
+	for _, st := range result.Items {
+		options = append(options, &types.SelectOption{
 			Value: st.GetID(),
 			Label: st.Code,
 			Color: st.Color,
-		}
+		})
 	}
 
 	return options, nil

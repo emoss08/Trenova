@@ -5,7 +5,7 @@ import {
 } from "@/lib/schemas/equipment-manufacturer-schema";
 import { Status } from "@/types/common";
 import { type TableSheetProps } from "@/types/data-table";
-import { yupResolver } from "@hookform/resolvers/yup";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { EquipManufacturerForm } from "./equip-manufacturer-form";
 
@@ -14,7 +14,7 @@ export function CreateEquipManufacturerModal({
   onOpenChange,
 }: TableSheetProps) {
   const form = useForm<EquipmentManufacturerSchema>({
-    resolver: yupResolver(equipmentManufacturerSchema),
+    resolver: zodResolver(equipmentManufacturerSchema),
     defaultValues: {
       name: "",
       status: Status.Active,
@@ -29,7 +29,6 @@ export function CreateEquipManufacturerModal({
       title="Equipment Manufacturer"
       formComponent={<EquipManufacturerForm />}
       form={form}
-      schema={equipmentManufacturerSchema}
       url="/equipment-manufacturers/"
       queryKey="equip-manufacturer-list"
       className="max-w-[400px]"

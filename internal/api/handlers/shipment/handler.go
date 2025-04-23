@@ -119,6 +119,7 @@ func (h *Handler) list(c *fiber.Ctx) error {
 		return h.ss.List(fc.UserContext(), &repositories.ListShipmentOptions{
 			ShipmentOptions: repositories.ShipmentOptions{
 				ExpandShipmentDetails: c.QueryBool("expandShipmentDetails"),
+				Status:                c.Query("status"),
 			},
 			Filter: filter,
 		})

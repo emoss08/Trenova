@@ -278,7 +278,7 @@ export function ReadableJsonValue({
         variant="ghost"
         size="sm"
         onClick={() => setIsExpanded(!isExpanded)}
-        className="px-3 py-1 h-7 text-foreground hover:bg-muted/70"
+        className="px-3 py-1 h-7 text-foreground hover:bg-muted"
       >
         <Icon icon={isExpanded ? faMinus : faPlus} className="size-3.5 mr-2" />
         <span className="text-xs font-medium">
@@ -291,8 +291,8 @@ export function ReadableJsonValue({
           <Table className="border border-border rounded-md">
             <TableHeader>
               <TableRow className="hover:bg-transparent">
-                <TableHead className="w-1/3 bg-muted/50">Key</TableHead>
-                <TableHead className="bg-muted/50">Value</TableHead>
+                <TableHead className="w-1/3 bg-muted">Key</TableHead>
+                <TableHead className="bg-muted">Value</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -300,7 +300,7 @@ export function ReadableJsonValue({
                 ? value.map((item: any, index: number) => (
                     <TableRow
                       key={`${path}.${index}`}
-                      className="hover:bg-muted/30"
+                      className="hover:bg-muted"
                     >
                       <TableCell className="font-mono text-xs font-medium">
                         [{index}]
@@ -315,10 +315,7 @@ export function ReadableJsonValue({
                     </TableRow>
                   ))
                 : Object.entries(value).map(([key, val]) => (
-                    <TableRow
-                      key={`${path}.${key}`}
-                      className="hover:bg-muted/30"
-                    >
+                    <TableRow key={`${path}.${key}`} className="hover:bg-muted">
                       <TableCell className="font-mono text-xs font-medium">
                         {key}
                       </TableCell>
@@ -394,7 +391,7 @@ function JsonViewerActions({ data }: { data: any }) {
           <Button
             variant="ghost"
             size="icon"
-            className="size-8 hover:bg-muted/70 rounded-md"
+            className="size-8 hover:bg-muted rounded-md"
           >
             <Icon icon={faEllipsis} className="size-4" />
           </Button>
@@ -451,15 +448,15 @@ export function JsonViewerDialog({
           <Table>
             <TableHeader>
               <TableRow className="hover:bg-transparent">
-                <TableHead className="w-1/3 bg-muted/50 font-medium">
+                <TableHead className="w-1/3 bg-muted font-medium">
                   Property
                 </TableHead>
-                <TableHead className="bg-muted/50 font-medium">Value</TableHead>
+                <TableHead className="bg-muted font-medium">Value</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {Object.entries(data).map(([key, value]) => (
-                <TableRow key={key} className="hover:bg-muted/30">
+                <TableRow key={key} className="hover:bg-muted">
                   <TableCell className="font-mono text-xs font-medium border-r border-border/50">
                     {key}
                   </TableCell>

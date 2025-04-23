@@ -2,7 +2,6 @@ package tractor
 
 import (
 	"context"
-	"strings"
 
 	"github.com/emoss08/trenova/internal/core/domain"
 	"github.com/emoss08/trenova/internal/core/domain/businessunit"
@@ -12,7 +11,6 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/organization"
 	"github.com/emoss08/trenova/internal/core/domain/usstate"
 	"github.com/emoss08/trenova/internal/core/domain/worker"
-	"github.com/emoss08/trenova/internal/core/ports/infra"
 	"github.com/emoss08/trenova/internal/pkg/errors"
 	"github.com/emoss08/trenova/internal/pkg/utils/timeutils"
 	"github.com/emoss08/trenova/pkg/types/pulid"
@@ -23,7 +21,6 @@ import (
 
 var (
 	_ bun.BeforeAppendModelHook = (*Tractor)(nil)
-	_ infra.SearchableEntity    = (*Tractor)(nil)
 	_ domain.Validatable        = (*Tractor)(nil)
 )
 
@@ -113,31 +110,6 @@ func (t *Tractor) GetID() string {
 
 func (t *Tractor) GetTableName() string {
 	return "tractors"
-}
-
-// Search Configuration
-func (t *Tractor) GetSearchType() string {
-	return "tractor"
-}
-
-func (t *Tractor) ToDocument() infra.SearchDocument {
-	searchableText := []string{
-		t.Code,
-		t.Vin,
-		t.LicensePlateNumber,
-	}
-
-	return infra.SearchDocument{
-		ID:             t.ID.String(),
-		Type:           "tractor",
-		BusinessUnitID: t.BusinessUnitID.String(),
-		OrganizationID: t.OrganizationID.String(),
-		CreatedAt:      t.CreatedAt,
-		UpdatedAt:      t.UpdatedAt,
-		Title:          t.Code,
-		Description:    t.Code,
-		SearchableText: strings.Join(searchableText, " "),
-	}
 }
 
 func (t *Tractor) BeforeAppendModel(_ context.Context, query bun.Query) error {

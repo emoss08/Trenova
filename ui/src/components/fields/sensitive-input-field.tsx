@@ -62,22 +62,24 @@ export function SensitiveInputField<T extends FieldValues>({
                 fieldState.error && errorId,
                 ariaDescribedBy,
               )}
+              rightElement={
+                field.value && !fieldState.invalid ? (
+                  <Button
+                    type="button"
+                    size="icon"
+                    variant="ghost"
+                    className="size-5 mr-0.5 rounded-sm"
+                    onClick={togglePasswordVisibility}
+                  >
+                    {showPassword ? (
+                      <Icon icon={faEyeSlash} className="size-3.5" />
+                    ) : (
+                      <Icon icon={faEye} className="size-3.5" />
+                    )}
+                  </Button>
+                ) : undefined
+              }
             />
-            {field.value && !fieldState.invalid && (
-              <Button
-                type="button"
-                size="icon"
-                variant="ghost"
-                className="absolute inset-y-0 right-0 mr-2 size-6 translate-y-1.5 rounded-md"
-                onClick={togglePasswordVisibility}
-              >
-                {showPassword ? (
-                  <Icon icon={faEyeSlash} className="size-4" />
-                ) : (
-                  <Icon icon={faEye} className="size-4" />
-                )}
-              </Button>
-            )}
           </div>
         </FieldWrapper>
       )}
@@ -144,26 +146,30 @@ export function PasswordField<T extends FieldValues>({
               aria-label={ariaLabel || label}
               isInvalid={fieldState.invalid}
               icon={icon}
+              className="items-center justify-center"
               aria-describedby={cn(
                 description && descriptionId,
                 fieldState.error && errorId,
                 ariaDescribedBy,
               )}
+              rightElement={
+                field.value && !fieldState.invalid ? (
+                  <Button
+                    type="button"
+                    size="icon"
+                    variant="ghost"
+                    className="size-5 mr-0.5 rounded-sm"
+                    onClick={togglePasswordVisibility}
+                  >
+                    {showPassword ? (
+                      <Icon icon={faEyeSlash} className="size-3" />
+                    ) : (
+                      <Icon icon={faEye} className="size-3" />
+                    )}
+                  </Button>
+                ) : undefined
+              }
             />
-            {field.value && !fieldState.invalid && (
-              <Button
-                type="button"
-                size="icon"
-                className="absolute inset-y-0 right-0 mr-2 size-6 translate-y-1 rounded-sm bg-transparent text-foreground hover:bg-foreground/10 [&>svg]:size-4"
-                onClick={togglePasswordVisibility}
-              >
-                {showPassword ? (
-                  <Icon icon={faEyeSlash} className="size-4" />
-                ) : (
-                  <Icon icon={faEye} className="size-4" />
-                )}
-              </Button>
-            )}
           </div>
         </PasswordFieldWrapper>
       )}

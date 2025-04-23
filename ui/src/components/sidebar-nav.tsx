@@ -50,8 +50,8 @@ export function SidebarNav({ links, className, ...props }: SidebarNavProps) {
                       className={cn(
                         buttonVariants({ variant: "ghost" }),
                         location.pathname === link.href
-                          ? "bg-accent"
-                          : "hover:bg-accent",
+                          ? "bg-muted"
+                          : "hover:bg-muted",
                         link.disabled && "opacity-50 pointer-events-none",
                         "group justify-start flex items-center text-sm mb-1",
                       )}

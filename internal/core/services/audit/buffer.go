@@ -23,8 +23,8 @@ type Buffer struct {
 	mu           sync.RWMutex
 	limit        int
 	failureCount *atomic.Int64
-	circuitState CircuitState
-	lastFailure  time.Time
+	circuitState atomic.Int32 // Using atomic for faster state checks without locking
+	lastFailure  atomic.Int64 // Store as Unix timestamp for atomic access
 	cooldownTime time.Duration
 }
 
@@ -33,7 +33,8 @@ func NewBuffer(limit int) *Buffer {
 		entries:      make([]*audit.Entry, 0, limit),
 		limit:        limit,
 		failureCount: atomic.NewInt64(0),
-		circuitState: CircuitClosed,
+		circuitState: *atomic.NewInt32(int32(CircuitClosed)),
+		lastFailure:  *atomic.NewInt64(0),
 		cooldownTime: 30 * time.Second, // Default cooldown time
 	}
 }
@@ -41,25 +42,34 @@ func NewBuffer(limit int) *Buffer {
 // Add adds an audit entry to the buffer.
 // Returns true if the entry was added, false if rejected due to circuit breaker
 func (b *Buffer) Add(entry *audit.Entry) bool {
-	b.mu.Lock()
-	defer b.mu.Unlock()
-
-	// Check circuit breaker state
-	if b.circuitState == CircuitOpen {
-		// Check if cooldown period has elapsed
-		if time.Since(b.lastFailure) > b.cooldownTime {
-			b.circuitState = CircuitHalfOpen
+	// Fast path: check circuit state without lock
+	currentState := CircuitState(b.circuitState.Load())
+	if currentState == CircuitOpen {
+		// Use atomic operations for timestamp comparison to avoid lock
+		lastFailureTime := time.Unix(b.lastFailure.Load(), 0)
+		if time.Since(lastFailureTime) > b.cooldownTime {
+			// Try to transition to half-open
+			b.circuitState.CompareAndSwap(int32(CircuitOpen), int32(CircuitHalfOpen))
 		} else {
 			return false // Reject entry while circuit is open
 		}
 	}
 
-	// Add entry to buffer
+	// Only lock for the actual buffer manipulation
+	b.mu.Lock()
+	defer b.mu.Unlock()
+
+	// Final capacity check under lock
+	if len(b.entries) >= b.limit {
+		return false
+	}
+
+	// Add entry to buffer - use append with pre-allocated slice when possible
 	b.entries = append(b.entries, entry)
 
 	// If we're in half-open state and successfully added, reset to closed
-	if b.circuitState == CircuitHalfOpen {
-		b.circuitState = CircuitClosed
+	if CircuitState(b.circuitState.Load()) == CircuitHalfOpen {
+		b.circuitState.Store(int32(CircuitClosed))
 		b.failureCount.Store(0)
 	}
 
@@ -75,10 +85,12 @@ func (b *Buffer) FlushAndReset() []*audit.Entry {
 		return nil
 	}
 
+	// Create new slice with exact capacity needed
 	entries := make([]*audit.Entry, len(b.entries))
 	copy(entries, b.entries)
 
-	// Reset the buffer
+	// Reset the buffer more efficiently by creating a new slice
+	// This allows the old one to be garbage collected if no longer referenced
 	b.entries = make([]*audit.Entry, 0, b.limit)
 
 	return entries
@@ -86,25 +98,25 @@ func (b *Buffer) FlushAndReset() []*audit.Entry {
 
 // RecordFailure records a failure and potentially opens the circuit
 func (b *Buffer) RecordFailure() {
-	b.mu.Lock()
-	defer b.mu.Unlock()
-
 	count := b.failureCount.Inc()
-	b.lastFailure = time.Now()
+	b.lastFailure.Store(time.Now().Unix())
 
 	// If we've had too many consecutive failures, open the circuit
-	if count >= 3 && b.circuitState == CircuitClosed {
-		b.circuitState = CircuitOpen
+	// Only take a lock if we're actually going to change state
+	if count >= 3 && CircuitState(b.circuitState.Load()) == CircuitClosed {
+		b.mu.Lock()
+		// Double-check state after acquiring lock
+		if CircuitState(b.circuitState.Load()) == CircuitClosed {
+			b.circuitState.Store(int32(CircuitOpen))
+		}
+		b.mu.Unlock()
 	}
 }
 
 // ResetFailures resets the failure count and closes the circuit
 func (b *Buffer) ResetFailures() {
-	b.mu.Lock()
-	defer b.mu.Unlock()
-
 	b.failureCount.Store(0)
-	b.circuitState = CircuitClosed
+	b.circuitState.Store(int32(CircuitClosed))
 }
 
 // IsFull returns true if the buffer is full.
@@ -123,9 +135,7 @@ func (b *Buffer) Size() int {
 
 // GetState returns the current circuit state
 func (b *Buffer) GetState() CircuitState {
-	b.mu.RLock()
-	defer b.mu.RUnlock()
-	return b.circuitState
+	return CircuitState(b.circuitState.Load())
 }
 
 // SetCooldownTime sets the cooldown time for the circuit breaker

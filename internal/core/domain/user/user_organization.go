@@ -19,7 +19,7 @@ type UserOrganization struct { //nolint:revive // This is a domain object
 	OrganizationID pulid.ID `json:"organizationId" bun:",pk,type:VARCHAR(100)"`
 
 	// Timestamps
-	CreatedAt int64 `json:"createdAt" bun:"created_at,type:BIGINT,nullzero,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	CreatedAt int64 `json:"createdAt" bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
 
 	// Relationships
 	User         *User                      `json:"user,omitempty" bun:"rel:belongs-to,join:user_id=id"`

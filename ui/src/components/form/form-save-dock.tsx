@@ -102,13 +102,9 @@ export function FormSaveDock({
             >
               Reset
             </Button>
-            <Button
-              type="submit"
-              disabled={!isDirty || isSubmitting}
-              className="bg-background text-foreground hover:bg-background/80 min-w-14"
-            >
+            <Button type="submit" disabled={!isDirty || isSubmitting}>
               {isSubmitting ? (
-                <PulsatingDots size={1} color="foreground" />
+                <PulsatingDots size={1} color="white" />
               ) : (
                 saveButtonContent
               )}

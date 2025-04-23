@@ -24,27 +24,24 @@ var (
 type ShipmentCommodity struct {
 	bun.BaseModel `bun:"table:shipment_commodities,alias:sc" json:"-"`
 
-	// Primary identifiers
-	ID             pulid.ID `bun:",pk,type:VARCHAR(100),notnull" json:"id"`
-	BusinessUnitID pulid.ID `bun:"business_unit_id,pk,notnull,type:VARCHAR(100)" json:"businessUnitId"`
-	OrganizationID pulid.ID `bun:"organization_id,pk,notnull,type:VARCHAR(100)" json:"organizationId"`
-	ShipmentID     pulid.ID `bun:"shipment_id,pk,notnull,type:VARCHAR(100)" json:"shipmentId"`
-	CommodityID    pulid.ID `bun:"commodity_id,pk,notnull,type:VARCHAR(100)" json:"commodityId"`
-
-	// Core Fields
-	Weight int64 `bun:"weight,type:INTEGER,notnull" json:"weight"`
-	Pieces int64 `bun:"pieces,type:INTEGER,notnull" json:"pieces"`
+	ID             pulid.ID `json:"id" bun:",pk,type:VARCHAR(100),notnull"`
+	BusinessUnitID pulid.ID `json:"businessUnitId" bun:"business_unit_id,pk,notnull,type:VARCHAR(100)"`
+	OrganizationID pulid.ID `json:"organizationId" bun:"organization_id,pk,notnull,type:VARCHAR(100)"`
+	ShipmentID     pulid.ID `json:"shipmentId" bun:"shipment_id,pk,notnull,type:VARCHAR(100)"`
+	CommodityID    pulid.ID `json:"commodityId" bun:"commodity_id,pk,notnull,type:VARCHAR(100)"`
+	Weight         int64    `json:"weight" bun:"weight,type:INTEGER,notnull"`
+	Pieces         int64    `json:"pieces" bun:"pieces,type:INTEGER,notnull"`
 
 	// Metadata
-	Version   int64 `bun:"version,type:BIGINT" json:"version"`
-	CreatedAt int64 `bun:"created_at,type:BIGINT,nullzero,notnull,default:extract(epoch from current_timestamp)::bigint" json:"createdAt"`
-	UpdatedAt int64 `bun:"updated_at,type:BIGINT,nullzero,notnull,default:extract(epoch from current_timestamp)::bigint" json:"updatedAt"`
+	Version   int64 `json:"version" bun:"version,type:BIGINT"`
+	CreatedAt int64 `json:"createdAt" bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	UpdatedAt int64 `json:"updatedAt" bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
 
 	// Relationships
-	Shipment     *Shipment                  `bun:"rel:belongs-to,join:shipment_id=id" json:"-"`
-	Commodity    *commodity.Commodity       `bun:"rel:belongs-to,join:commodity_id=id" json:"commodity,omitempty"`
-	BusinessUnit *businessunit.BusinessUnit `bun:"rel:belongs-to,join:business_unit_id=id" json:"-"`
-	Organization *organization.Organization `bun:"rel:belongs-to,join:organization_id=id" json:"-"`
+	Shipment     *Shipment                  `json:"-" bun:"rel:belongs-to,join:shipment_id=id"`
+	Commodity    *commodity.Commodity       `json:"commodity,omitempty" bun:"rel:belongs-to,join:commodity_id=id"`
+	BusinessUnit *businessunit.BusinessUnit `json:"-" bun:"rel:belongs-to,join:business_unit_id=id"`
+	Organization *organization.Organization `json:"-" bun:"rel:belongs-to,join:organization_id=id"`
 }
 
 func (sc *ShipmentCommodity) Validate(ctx context.Context, multiErr *errors.MultiError) {

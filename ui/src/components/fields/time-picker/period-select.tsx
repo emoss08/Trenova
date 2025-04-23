@@ -3,8 +3,6 @@
 // Licensed under the MIT License
 // Source: https://github.com/openstatusHQ/time-picker
 
-import * as React from "react";
-
 import {
   Select,
   SelectContent,
@@ -12,7 +10,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-
+import * as React from "react";
 import {
   display12HourValue,
   setDateByType,
@@ -67,7 +65,7 @@ export const TimePeriodSelect = React.forwardRef<
         <SelectTrigger
           id="period"
           ref={ref}
-          className="w-[65px] focus:bg-accent focus:text-accent-foreground"
+          className="w-[65px] focus:bg-muted focus:text-accent-foreground"
           onKeyDown={handleKeyDown}
         >
           <SelectValue />

@@ -4,7 +4,7 @@ import {
   type FleetCodeSchema,
 } from "@/lib/schemas/fleet-code-schema";
 import { type EditTableSheetProps } from "@/types/data-table";
-import { yupResolver } from "@hookform/resolvers/yup";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { FleetCodeForm } from "./fleet-code-form";
 
@@ -13,8 +13,8 @@ export function EditFleetCodeModal({
   onOpenChange,
   currentRecord,
 }: EditTableSheetProps<FleetCodeSchema>) {
-  const form = useForm<FleetCodeSchema>({
-    resolver: yupResolver(fleetCodeSchema),
+  const form = useForm({
+    resolver: zodResolver(fleetCodeSchema),
     defaultValues: currentRecord,
   });
 
@@ -29,7 +29,6 @@ export function EditFleetCodeModal({
       formComponent={<FleetCodeForm />}
       fieldKey="name"
       form={form}
-      schema={fleetCodeSchema}
     />
   );
 }

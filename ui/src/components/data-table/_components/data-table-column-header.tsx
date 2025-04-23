@@ -3,21 +3,22 @@ import { type Column } from "@tanstack/react-table";
 
 import { Icon } from "@/components/ui/icons";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
 } from "@/components/ui/select";
 import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
+    Tooltip,
+    TooltipContent,
+    TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 import {
-  faArrowDown,
-  faArrowUp,
-  faArrowUpArrowDown,
+    faArrowDown,
+    faArrowUp,
+    faArrowUpArrowDown,
+    faCircleInfo,
 } from "@fortawesome/pro-regular-svg-icons";
 import { ArrowDownIcon, ArrowUpIcon, EyeNoneIcon } from "@radix-ui/react-icons";
 
@@ -64,7 +65,7 @@ export function DataTableColumnHeader<TData, TValue>({
                 ? "Sorted ascending. Click to sort descending."
                 : "Not sorted. Click to sort ascending."
           }
-          className="inline-flex items-center justify-between -ml-3 h-8 w-fit border-transparent bg-transparent text-xs hover:bg-accent hover:text-accent-foreground data-[state=open]:bg-accent data-[state=open]:text-accent-foreground [&>svg:last-child]:hidden"
+          className="inline-flex items-center justify-between -ml-3 h-8 w-fit border-transparent bg-transparent text-xs hover:bg-muted hover:text-accent-foreground data-[state=open]:bg-muted data-[state=open]:text-accent-foreground [&>svg:last-child]:hidden"
         >
           <div className="inline-flex items-center gap-1">
             {title}
@@ -149,104 +150,24 @@ export function DataTableColumnHeaderWithTooltip<TData, TValue>({
     return <div className={cn(className)}>{title}</div>;
   }
 
-  const ascValue = `${column.id}-asc`;
-  const descValue = `${column.id}-desc`;
-  const hideValue = `${column.id}-hide`;
-
   return (
     <div className={cn("flex items-center gap-2", className)}>
-      <Select
-        value={
-          column.getIsSorted() === "desc"
-            ? descValue
-            : column.getIsSorted() === "asc"
-              ? ascValue
-              : undefined
-        }
-        onValueChange={(value) => {
-          if (value === ascValue) column.toggleSorting(false);
-          else if (value === descValue) column.toggleSorting(true);
-          else if (value === hideValue) column.toggleVisibility(false);
-        }}
-      >
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <SelectTrigger
-              aria-label={
-                column.getIsSorted() === "desc"
-                  ? "Sorted descending. Click to sort ascending."
-                  : column.getIsSorted() === "asc"
-                    ? "Sorted ascending. Click to sort descending."
-                    : "Not sorted. Click to sort ascending."
-              }
-              className="inline-flex items-center justify-center -ml-3 h-8 w-fit border-transparent bg-transparent text-xs hover:bg-accent hover:text-accent-foreground data-[state=open]:bg-accent data-[state=open]:text-accent-foreground [&>svg:last-child]:hidden"
-            >
-              <div className="inline-flex items-center gap-1">
-                {startContent}
-                {title}
-                <SelectIcon asChild className="inline-flex items-center">
-                  {column.getCanSort() && column.getIsSorted() === "desc" ? (
-                    <Icon
-                      icon={faArrowDown}
-                      className="size-3 translate-y-[0.5px]"
-                      aria-hidden="true"
-                    />
-                  ) : column.getIsSorted() === "asc" ? (
-                    <Icon
-                      icon={faArrowUp}
-                      className="size-3 translate-y-[0.5px]"
-                      aria-hidden="true"
-                    />
-                  ) : (
-                    <Icon
-                      icon={faArrowUpArrowDown}
-                      className="size-3 translate-y-[0.5px]"
-                      aria-hidden="true"
-                    />
-                  )}
-                </SelectIcon>
-              </div>
-            </SelectTrigger>
-          </TooltipTrigger>
-          <TooltipContent>{tooltipContent}</TooltipContent>
-        </Tooltip>
-
-        <SelectContent align="start">
-          {column.getCanSort() && (
-            <>
-              <SelectItem value={ascValue}>
-                <span className="flex items-center">
-                  <ArrowUpIcon
-                    className="mr-2 size-3.5 text-muted-foreground/70"
-                    aria-hidden="true"
-                  />
-                  Asc
-                </span>
-              </SelectItem>
-              <SelectItem value={descValue}>
-                <span className="flex items-center">
-                  <ArrowDownIcon
-                    className="mr-2 size-3.5 text-muted-foreground/70"
-                    aria-hidden="true"
-                  />
-                  Desc
-                </span>
-              </SelectItem>
-            </>
-          )}
-          {column.getCanHide() && (
-            <SelectItem value={hideValue}>
-              <span className="flex items-center">
-                <EyeNoneIcon
-                  className="mr-2 size-3.5 text-muted-foreground/70"
-                  aria-hidden="true"
-                />
-                Hide
-              </span>
-            </SelectItem>
-          )}
-        </SelectContent>
-      </Select>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <div className="inline-flex items-center justify-center cursor-normal -ml-3 h-8 px-3 py-2 text-sm rounded-md w-fit border-transparent bg-transparent text-xs hover:bg-muted hover:text-accent-foreground data-[state=open]:bg-muted data-[state=open]:text-accent-foreground [&>svg:last-child]:hidden">
+            <div className="inline-flex items-center gap-1">
+              {startContent}
+              {title}
+              <Icon
+                icon={faCircleInfo}
+                className="inline-flex items-center size-3"
+                aria-hidden="true"
+              />
+            </div>
+          </div>
+        </TooltipTrigger>
+        <TooltipContent>{tooltipContent}</TooltipContent>
+      </Tooltip>
     </div>
   );
 }

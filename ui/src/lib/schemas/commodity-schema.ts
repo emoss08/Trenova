@@ -1,24 +1,39 @@
 import { Status } from "@/types/common";
-import { boolean, type InferType, mixed, number, object, string } from "yup";
+import { object, z } from "zod";
 
 export const commoditySchema = object({
-  id: string().optional(),
-  organizationId: string().nullable().optional(),
-  businessUnitId: string().nullable().optional(),
-  hazardousMaterialId: string().nullable().optional(),
-  status: mixed<Status>()
-    .required("Status is required")
-    .oneOf(Object.values(Status)),
-  name: string().required("Name is required"),
-  description: string().required("Description is required"),
-  minTemperature: number().nullable().optional(),
-  maxTemperature: number().nullable().optional(),
-  weightPerUnit: number().optional().nullable(),
-  linearFeetPerUnit: number().optional().nullable(),
-  freightClass: string().optional(),
-  dotClassification: string().optional(),
-  stackable: boolean().required("Stackable is required"),
-  fragile: boolean().required("Fragile is required"),
+  id: z.string().optional(),
+  organizationId: z.string().optional(),
+  businessUnitId: z.string().optional(),
+  version: z.number().optional(),
+  createdAt: z.number().optional(),
+  updatedAt: z.number().optional(),
+
+  // * Core Fields
+  hazardousMaterialId: z.string().nullable().optional(),
+  status: z.nativeEnum(Status),
+  name: z.string().min(1, "Name is required"),
+  description: z.string().min(1, "Description is required"),
+  minTemperature: z.number().nullable().optional(),
+  maxTemperature: z.number().nullable().optional(),
+  weightPerUnit: z.preprocess((val) => {
+    if (val === "" || val === null || val === undefined) {
+      return undefined;
+    }
+    const parsed = parseFloat(String(val));
+    return isNaN(parsed) ? undefined : parsed;
+  }, z.number().optional()),
+  linearFeetPerUnit: z.preprocess((val) => {
+    if (val === "" || val === null || val === undefined) {
+      return undefined;
+    }
+    const parsed = parseFloat(String(val));
+    return isNaN(parsed) ? undefined : parsed;
+  }, z.number().optional()),
+  freightClass: z.string().optional(),
+  dotClassification: z.string().optional(),
+  stackable: z.boolean(),
+  fragile: z.boolean(),
 });
 
-export type CommoditySchema = InferType<typeof commoditySchema>;
+export type CommoditySchema = z.infer<typeof commoditySchema>;

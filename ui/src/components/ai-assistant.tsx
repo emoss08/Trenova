@@ -1,8 +1,8 @@
 import {
-  faArrowUp,
-  faFingerprint,
-  faRefresh,
-  faSparkles,
+    faArrowUp,
+    faFingerprint,
+    faRefresh,
+    faSparkles,
 } from "@fortawesome/pro-regular-svg-icons";
 import { useEffect, useState } from "react";
 import { Button } from "./ui/button";
@@ -140,16 +140,16 @@ export function AIAssistantHeader() {
             Powered by advanced AI, I can help you with:
           </p>
           <div className="grid grid-cols-2 gap-2 text-center text-2xs text-muted-foreground">
-            <Button variant="ghost" className="rounded-md bg-muted/50 p-2">
+            <Button variant="ghost" className="rounded-md bg-muted p-2">
               Shipment Tracking
             </Button>
-            <Button variant="ghost" className="rounded-md bg-muted/50 p-2">
+            <Button variant="ghost" className="rounded-md bg-muted p-2">
               Billing Inquiries
             </Button>
-            <Button variant="ghost" className="rounded-md bg-muted/50 p-2">
+            <Button variant="ghost" className="rounded-md bg-muted p-2">
               Data Analysis
             </Button>
-            <Button variant="ghost" className="rounded-md bg-muted/50 p-2">
+            <Button variant="ghost" className="rounded-md bg-muted p-2">
               Real-time Updates
             </Button>
           </div>

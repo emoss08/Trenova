@@ -1,16 +1,19 @@
 import { Status } from "@/types/common";
-import { type InferType, mixed, object, string } from "yup";
+import { z } from "zod";
 
-export const serviceTypeSchema = object({
-  id: string().optional(),
-  organizationId: string().nullable().optional(),
-  businessUnitId: string().nullable().optional(),
-  status: mixed<Status>()
-    .required("Status is required")
-    .oneOf(Object.values(Status)),
-  code: string().required("Code is required"),
-  description: string().optional(),
-  color: string().optional(),
+export const serviceTypeSchema = z.object({
+  id: z.string().optional(),
+  organizationId: z.string().optional(),
+  businessUnitId: z.string().optional(),
+  version: z.number().optional(),
+  createdAt: z.number().optional(),
+  updatedAt: z.number().optional(),
+
+  // * Core Fields
+  status: z.nativeEnum(Status),
+  code: z.string().min(1, "Code is required"),
+  description: z.string().optional(),
+  color: z.string().optional(),
 });
 
-export type ServiceTypeSchema = InferType<typeof serviceTypeSchema>;
+export type ServiceTypeSchema = z.infer<typeof serviceTypeSchema>;

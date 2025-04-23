@@ -23,18 +23,13 @@ var (
 type DocumentType struct {
 	bun.BaseModel `bun:"table:document_types,alias:dt" json:"-"`
 
-	// Primary identifiers
-	ID             pulid.ID `json:"id" bun:",pk,type:VARCHAR(100),notnull"`
-	BusinessUnitID pulid.ID `json:"businessUnitId" bun:"business_unit_id,pk,notnull,type:VARCHAR(100)"`
-	OrganizationID pulid.ID `json:"organizationId" bun:"organization_id,pk,notnull,type:VARCHAR(100)"`
-
-	// Core fields
-	Code        string `json:"code" bun:"code,type:VARCHAR(10),notnull"`
-	Name        string `json:"name" bun:"name,type:VARCHAR(100),notnull"`
-	Description string `json:"description" bun:"description,type:TEXT,nullzero"`
-	Color       string `json:"color" bun:"color,type:VARCHAR(10)"`
-
-	// Bucket Metadata
+	ID                     pulid.ID               `json:"id" bun:",pk,type:VARCHAR(100),notnull"`
+	BusinessUnitID         pulid.ID               `json:"businessUnitId" bun:"business_unit_id,pk,notnull,type:VARCHAR(100)"`
+	OrganizationID         pulid.ID               `json:"organizationId" bun:"organization_id,pk,notnull,type:VARCHAR(100)"`
+	Code                   string                 `json:"code" bun:"code,type:VARCHAR(10),notnull"`
+	Name                   string                 `json:"name" bun:"name,type:VARCHAR(100),notnull"`
+	Description            string                 `json:"description" bun:"description,type:TEXT,nullzero"`
+	Color                  string                 `json:"color" bun:"color,type:VARCHAR(10)"`
 	DocumentClassification DocumentClassification `json:"documentClassification" bun:"document_classification,type:document_classification_enum,notnull,default:'Public'"`
 	DocumentCategory       DocumentCategory       `json:"documentCategory" bun:"document_category,type:document_category_enum,notnull,default:'Other'"`
 

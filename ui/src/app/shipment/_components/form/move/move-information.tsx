@@ -136,7 +136,7 @@ const MoveRow = memo(function MoveRow({
   return (
     <>
       <div
-        className="bg-card rounded-lg border border-bg-sidebar-border space-y-2"
+        className="bg-background rounded-lg border border-bg-sidebar-border space-y-2"
         key={move.id}
       >
         <StatusBadge
@@ -180,7 +180,7 @@ const MoveRow = memo(function MoveRow({
               })}
             </div>
           </div>
-          <div className="pointer-events-none absolute bottom-0 left-0 right-0 h-8 bg-gradient-to-t from-sidebar to-transparent z-50" />
+          <div className="pointer-events-none absolute bottom-0 left-0 right-0 h-8 bg-gradient-to-t from-background to-transparent z-50" />
         </ScrollArea>
         <AssignmentDetails move={move} />
       </div>

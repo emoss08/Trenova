@@ -125,6 +125,15 @@ func (sr *shipmentRepository) addOptions(q *bun.SelectQuery, opts repositories.S
 		q = q.Relation("CanceledBy")
 	}
 
+	if opts.Status != "" {
+		status, err := shipment.StatusFromString(opts.Status)
+		if err != nil {
+			return q
+		}
+
+		q = q.Where("sp.status = ?", status)
+	}
+
 	return q
 }
 

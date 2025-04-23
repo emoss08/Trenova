@@ -1,12 +1,11 @@
-import { AutocompleteField } from "@/components/fields/autocomplete";
 import { ColorField } from "@/components/fields/color-field";
 import { InputField } from "@/components/fields/input-field";
 import { SelectField } from "@/components/fields/select-field";
 import { TextareaField } from "@/components/fields/textarea-field";
+import { UserAutocompleteField } from "@/components/ui/autocomplete-fields";
 import { FormControl, FormGroup } from "@/components/ui/form";
 import { statusChoices } from "@/lib/choices";
 import { type FleetCodeSchema } from "@/lib/schemas/fleet-code-schema";
-import { User } from "@/types/user";
 import { useFormContext } from "react-hook-form";
 
 export function FleetCodeForm() {
@@ -73,16 +72,13 @@ export function FleetCodeForm() {
         />
       </FormControl>
       <FormControl>
-        <AutocompleteField<User, FleetCodeSchema>
+        <UserAutocompleteField<FleetCodeSchema>
           name="managerId"
           control={control}
           link="/users/"
           label="Manager"
           placeholder="Select Manager"
           description="Select the manager of the fleet code"
-          getOptionValue={(option) => option.id || ""}
-          getDisplayValue={(option) => option.name}
-          renderOption={(option) => option.name}
         />
       </FormControl>
     </FormGroup>

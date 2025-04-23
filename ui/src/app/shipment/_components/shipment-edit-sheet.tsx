@@ -31,7 +31,7 @@ import {
 } from "@/lib/schemas/shipment-schema";
 import { EditTableSheetProps } from "@/types/data-table";
 import { type Shipment } from "@/types/shipment";
-import { yupResolver } from "@hookform/resolvers/yup";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { FormProvider } from "react-hook-form";
 import { useShipmentDetails } from "../queries/shipment";
@@ -60,7 +60,7 @@ export function ShipmentEditSheet({
   const form = useFormWithSave({
     resourceName: "Shipment",
     formOptions: {
-      resolver: yupResolver(shipmentSchema),
+      resolver: zodResolver(shipmentSchema),
       defaultValues: shipmentDetails || {}, // * use data if available
       mode: "onChange",
     },

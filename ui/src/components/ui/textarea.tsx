@@ -10,48 +10,19 @@ import * as React from "react";
 import { useState } from "react";
 import { Icon } from "./icons";
 
-const ITEMS = [
-  {
-    text: "Summary",
-    icon: faText,
-    colors: {
-      icon: "text-orange-600",
-      border: "border-orange-500",
-      bg: "bg-orange-500/10",
-    },
-  },
-  {
-    text: "Fix Spelling and Grammar",
-    icon: faCheck,
-    colors: {
-      icon: "text-emerald-600",
-      border: "border-emerald-500",
-      bg: "bg-emerald-500/10",
-    },
-  },
-  {
-    text: "Make shorter",
-    icon: faArrowDown,
-    colors: {
-      icon: "text-purple-600",
-      border: "border-purple-500",
-      bg: "bg-purple-500/10",
-    },
-  },
-];
-
 export type TextareaProps = React.ComponentProps<"textarea"> & {
   isInvalid?: boolean;
 };
 
-function Textarea({ className, isInvalid, ...props }: TextareaProps) {
+function Textarea({ className, isInvalid, rows = 3, ...props }: TextareaProps) {
   return (
     <textarea
       data-slot="textarea"
+      rows={rows}
       className={cn(
-        "flex w-full rounded-md border border-muted-foreground/20 bg-muted px-3 py-2 text-base",
+        "flex w-full rounded-md border border-muted-foreground/20 bg-muted px-2 py-1 text-base",
         "shadow-xs placeholder:text-muted-foreground focus-visible:outline-hidden",
-        "focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 md:text-sm",
+        "focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 md:text-xs",
         "focus-visible:border-blue-600 focus-visible:outline-hidden focus-visible:ring-4 focus-visible:ring-blue-600/20",
         "transition-[border-color,box-shadow] duration-200 ease-in-out",
         isInvalid &&
@@ -84,7 +55,7 @@ function AutoResizeTextarea({
   return (
     <Textarea
       ref={textareaRef}
-      className={cn("resize-none min-h-[70px] max-h-[200px] pr", className)}
+      className={cn("resize-none min-h-[70px] max-h-[200px]", className)}
       isInvalid={isInvalid}
       onChange={handleChange}
       {...props}
@@ -93,6 +64,36 @@ function AutoResizeTextarea({
 }
 
 export { AutoResizeTextarea };
+
+const ITEMS = [
+  {
+    text: "Summary",
+    icon: faText,
+    colors: {
+      icon: "text-orange-600",
+      border: "border-orange-500",
+      bg: "bg-orange-500/10",
+    },
+  },
+  {
+    text: "Fix Spelling and Grammar",
+    icon: faCheck,
+    colors: {
+      icon: "text-emerald-600",
+      border: "border-emerald-500",
+      bg: "bg-emerald-500/10",
+    },
+  },
+  {
+    text: "Make shorter",
+    icon: faArrowDown,
+    colors: {
+      icon: "text-purple-600",
+      border: "border-purple-500",
+      bg: "bg-purple-500/10",
+    },
+  },
+];
 
 function AITextarea({
   className,
@@ -164,7 +165,6 @@ function AITextarea({
                 {...rest}
               />
             </div>
-
             <div className="h-12 bg-transparent">
               {currentItem && (
                 <div className="absolute left-3 bottom-3 z-10">

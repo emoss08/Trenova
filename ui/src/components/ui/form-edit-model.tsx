@@ -35,7 +35,6 @@ import {
   type UseFormReturn,
 } from "react-hook-form";
 import { toast } from "sonner";
-import { type ObjectSchema } from "yup";
 import { ComponentLoader } from "./component-loader";
 import { Form } from "./form";
 import {
@@ -51,7 +50,6 @@ type FormEditModalProps<T extends FieldValues> = EditTableSheetProps<T> & {
   queryKey: string;
   formComponent: React.ReactNode;
   form: UseFormReturn<T>;
-  schema: ObjectSchema<T>;
   className?: string;
   fieldKey?: keyof T;
 };

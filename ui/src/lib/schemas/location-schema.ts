@@ -1,30 +1,33 @@
 import { Status } from "@/types/common";
-import { type InferType, boolean, mixed, number, object, string } from "yup";
-// import { locationCategorySchema } from "./location-category-schema";
+import { z } from "zod";
+import { locationCategorySchema } from "./location-category-schema";
 import { usStateSchema } from "./us-state-schema";
 
-export const locationSchema = object({
-  id: string().optional(),
-  organizationId: string().nullable().optional(),
-  businessUnitId: string().nullable().optional(),
-  status: mixed<Status>()
-    .required("Status is required")
-    .oneOf(Object.values(Status)),
-  name: string().required("Name is required"),
-  code: string().required("Code is required"),
-  description: string().optional(),
-  addressLine1: string().required("Address line 1 is required"),
-  addressLine2: string().optional(),
-  city: string().required("City is required"),
-  postalCode: string().required("Postal code is required"),
-  longitude: number().optional().nullable(),
-  latitude: number().optional().nullable(),
-  placeId: string().optional(),
-  isGeocoded: boolean().required("Is geocoded is required"),
-  locationCategoryId: string().required("Location category is required"),
-  stateId: string().required("State is required"),
-  state: usStateSchema.notRequired().optional().nullable(),
-  // locationCategory: locationCategorySchema.nullable().optional(),
+export const locationSchema = z.object({
+  id: z.string().optional(),
+  organizationId: z.string().optional(),
+  businessUnitId: z.string().optional(),
+  version: z.number().optional(),
+  createdAt: z.number().optional(),
+  updatedAt: z.number().optional(),
+
+  // * Core Fields
+  status: z.nativeEnum(Status),
+  name: z.string().min(1, "Name is required"),
+  code: z.string().min(1, "Code is required"),
+  description: z.string().optional(),
+  addressLine1: z.string().min(1, "Address line 1 is required"),
+  addressLine2: z.string().optional(),
+  city: z.string().min(1, "City is required"),
+  postalCode: z.string().min(1, "Postal code is required"),
+  longitude: z.number().optional().nullable(),
+  latitude: z.number().optional().nullable(),
+  placeId: z.string().optional(),
+  isGeocoded: z.boolean().default(false),
+  locationCategoryId: z.string().min(1, "Location category is required"),
+  stateId: z.string().min(1, "State is required"),
+  state: usStateSchema.optional(),
+  locationCategory: locationCategorySchema.optional(),
 });
 
-export type LocationSchema = InferType<typeof locationSchema>;
+export type LocationSchema = z.infer<typeof locationSchema>;

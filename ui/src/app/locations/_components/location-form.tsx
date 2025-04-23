@@ -1,13 +1,11 @@
 import { AddressField } from "@/components/fields/address-field";
-import { AutocompleteField } from "@/components/fields/autocomplete";
 import { InputField } from "@/components/fields/input-field";
-import { ColorOptionValue } from "@/components/fields/select-components";
 import { SelectField } from "@/components/fields/select-field";
 import { TextareaField } from "@/components/fields/textarea-field";
+import { LocationCategoryAutocompleteField } from "@/components/ui/autocomplete-fields";
 import { FormControl, FormGroup } from "@/components/ui/form";
 import { statusChoices } from "@/lib/choices";
 import { queries } from "@/lib/queries";
-import { LocationCategorySchema } from "@/lib/schemas/location-category-schema";
 import { type LocationSchema } from "@/lib/schemas/location-schema";
 import { useQuery } from "@tanstack/react-query";
 import { useFormContext } from "react-hook-form";
@@ -55,7 +53,7 @@ export function LocationForm() {
       </FormControl>
       <FormControl cols="full">
         <FormControl>
-          <AutocompleteField<LocationCategorySchema, LocationSchema>
+          <LocationCategoryAutocompleteField<LocationSchema>
             name="locationCategoryId"
             control={control}
             rules={{ required: true }}
@@ -63,13 +61,6 @@ export function LocationForm() {
             label="Location Category"
             placeholder="Select Location Category"
             description="Select the location category for the location."
-            getOptionValue={(option) => option.id || ""}
-            getDisplayValue={(option) => (
-              <ColorOptionValue color={option.color} value={option.name} />
-            )}
-            renderOption={(option) => (
-              <ColorOptionValue color={option.color} value={option.name} />
-            )}
           />
         </FormControl>
       </FormControl>

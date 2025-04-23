@@ -28,7 +28,6 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/permission"
 	"github.com/emoss08/trenova/internal/core/services/reporting"
 	"github.com/emoss08/trenova/internal/core/services/routing"
-	"github.com/emoss08/trenova/internal/core/services/search"
 	"github.com/emoss08/trenova/internal/core/services/servicetype"
 	"github.com/emoss08/trenova/internal/core/services/session"
 	"github.com/emoss08/trenova/internal/core/services/shipment"
@@ -42,13 +41,11 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/user"
 	"github.com/emoss08/trenova/internal/core/services/usstate"
 	"github.com/emoss08/trenova/internal/core/services/worker"
-	"github.com/emoss08/trenova/internal/pkg/logreader"
 	"go.uber.org/fx"
 )
 
 var Module = fx.Module("services", fx.Provide(
 	permission.NewService,
-	search.NewService,
 	file.NewService,
 	audit.NewService,
 	auth.NewService,
@@ -77,7 +74,6 @@ var Module = fx.Module("services", fx.Provide(
 	assignment.NewService,
 	shipmentmove.NewService,
 	stop.NewService,
-	logreader.NewService,
 	shipmentcontrol.NewService,
 	billingcontrol.NewService,
 	dbbackup.NewService,
