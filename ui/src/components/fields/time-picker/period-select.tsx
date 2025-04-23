@@ -3,20 +3,18 @@
 // Licensed under the MIT License
 // Source: https://github.com/openstatusHQ/time-picker
 
-import * as React from "react";
-
 import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
 } from "@/components/ui/select";
-
+import * as React from "react";
 import {
-    display12HourValue,
-    setDateByType,
-    type Period,
+  display12HourValue,
+  setDateByType,
+  type Period,
 } from "./time-picker-utils";
 
 export interface PeriodSelectorProps {
