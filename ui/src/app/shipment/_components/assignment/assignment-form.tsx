@@ -92,6 +92,7 @@ export function AssignmentForm() {
           control={control}
           link="/workers/"
           label="Secondary Worker"
+          clearable={true}
           placeholder="Select Secondary Worker"
           description="Select the secondary worker for the assignment."
           getOptionValue={(option) => option.id || ""}
