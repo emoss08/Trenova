@@ -21,10 +21,10 @@ export function CreateTrailerModal({ open, onOpenChange }: TableSheetProps) {
       maxLoadWeight: undefined,
       lastInspectionDate: undefined,
       registrationExpiry: undefined,
-      equipmentTypeId: undefined,
-      equipmentManufacturerId: undefined,
-      fleetCodeId: undefined,
-      registrationStateId: undefined,
+      equipmentTypeId: "",
+      equipmentManufacturerId: "",
+      fleetCodeId: "",
+      registrationStateId: "",
     },
   });
 

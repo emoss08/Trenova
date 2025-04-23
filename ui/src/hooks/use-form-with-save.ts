@@ -2,12 +2,7 @@ import { useFormSave } from "@/components/form/form-save-context";
 import { handleMutationError, useApiMutation } from "@/hooks/use-api-mutation";
 import { APIError } from "@/types/errors";
 import { useCallback } from "react";
-import {
-  FieldValues,
-  useForm,
-  UseFormProps,
-  UseFormReturn,
-} from "react-hook-form";
+import { FieldValues, useForm, UseFormProps } from "react-hook-form";
 import { toast } from "sonner";
 
 interface UseFormWithSaveOptions<
@@ -19,7 +14,7 @@ interface UseFormWithSaveOptions<
   resourceName: string;
 
   /** react-hook-form options */
-  formOptions: UseFormProps<TFormValues>;
+  formOptions: UseFormProps<any>;
 
   /** Mutation function to call when the form is submitted */
   mutationFn: (data: TFormValues) => Promise<TData>;
@@ -76,17 +71,10 @@ export function useFormWithSave<
   onSettled,
   successMessage = "Changes have been saved",
   successDescription = "Your changes have been saved successfully",
-}: UseFormWithSaveOptions<
-  TFormValues,
-  TData,
-  TContext
->): UseFormReturn<TFormValues> & {
-  isSubmitting: boolean;
-  onSubmit: (values: TFormValues) => Promise<void>;
-} {
+}: UseFormWithSaveOptions<TFormValues, TData, TContext>) {
   const { setLastSavedNow } = useFormSave();
 
-  const form = useForm<TFormValues>({
+  const form = useForm({
     ...formOptions,
     mode: formOptions.mode || "onChange",
   });

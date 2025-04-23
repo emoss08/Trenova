@@ -19,8 +19,14 @@ export const hazardousMaterialSchema = z.object({
   name: z.string().min(1, "Name is required"),
   description: z.string().min(1, "Description is required"),
   class: z.nativeEnum(HazardousClassChoiceProps),
-  unNumber: z.string().optional(),
-  ergNumber: z.string().optional(),
+  unNumber: z
+    .string()
+    .max(4, "UN Number must be 4 characters or less")
+    .optional(),
+  casNumber: z
+    .string()
+    .max(10, "CAS Number must be 10 characters or less")
+    .optional(),
   packingGroup: z.nativeEnum(PackingGroupChoiceProps),
   properShippingName: z.string().optional(),
   handlingInstructions: z.string().optional(),

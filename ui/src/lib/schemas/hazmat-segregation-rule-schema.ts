@@ -28,7 +28,7 @@ export const hazmatSegregationRuleSchema = z
       const parsed = parseFloat(String(val));
       return isNaN(parsed) ? undefined : parsed;
     }, z.number().optional()),
-    distanceUnit: z.string(),
+    distanceUnit: z.string().optional(),
     hasExceptions: z.boolean().optional(),
     exceptionNotes: z.string().optional(),
     referenceCode: z.string().optional(),

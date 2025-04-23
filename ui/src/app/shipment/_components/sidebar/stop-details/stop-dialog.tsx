@@ -23,7 +23,6 @@ import {
   UseFieldArrayUpdate,
   useFormContext,
 } from "react-hook-form";
-import { ValidationError } from "yup";
 import { StopDialogForm } from "./stop-dialog-form";
 
 type StopDialogProps = TableSheetProps & {
@@ -107,7 +106,8 @@ export function StopDialog({
 
       return true;
     } catch (error) {
-      if (error instanceof ValidationError) {
+      console.log("Error Type", typeof error);
+      if (error) {
         error.inner.forEach((err) => {
           const fieldPath = err.path;
           if (fieldPath) {
