@@ -65,7 +65,7 @@ func TestTractorRepository(t *testing.T) {
 
 	t.Run("list tractors with workers", func(t *testing.T) {
 		opts := &repoports.ListTractorRequest{
-			FilterOptions: &repoports.TractorFilterOptions{
+			FilterOptions: repoports.TractorFilterOptions{
 				IncludeWorkerDetails: true,
 			},
 			Filter: &ports.LimitOffsetQueryOptions{
@@ -88,7 +88,7 @@ func TestTractorRepository(t *testing.T) {
 
 	t.Run("list tractors with equipment details", func(t *testing.T) {
 		opts := &repoports.ListTractorRequest{
-			FilterOptions: &repoports.TractorFilterOptions{
+			FilterOptions: repoports.TractorFilterOptions{
 				IncludeEquipmentDetails: true,
 			},
 			Filter: &ports.LimitOffsetQueryOptions{
@@ -111,7 +111,7 @@ func TestTractorRepository(t *testing.T) {
 
 	t.Run("list tractors with fleet details", func(t *testing.T) {
 		opts := &repoports.ListTractorRequest{
-			FilterOptions: &repoports.TractorFilterOptions{
+			FilterOptions: repoports.TractorFilterOptions{
 				IncludeFleetDetails: true,
 			},
 			Filter: &ports.LimitOffsetQueryOptions{
@@ -155,7 +155,7 @@ func TestTractorRepository(t *testing.T) {
 			TractorID: trk.ID,
 			OrgID:     org.ID,
 			BuID:      bu.ID,
-			FilterOptions: &repoports.TractorFilterOptions{
+			FilterOptions: repoports.TractorFilterOptions{
 				IncludeWorkerDetails: true,
 			},
 		})
@@ -171,7 +171,7 @@ func TestTractorRepository(t *testing.T) {
 			TractorID: trk.ID,
 			OrgID:     org.ID,
 			BuID:      bu.ID,
-			FilterOptions: &repoports.TractorFilterOptions{
+			FilterOptions: repoports.TractorFilterOptions{
 				IncludeEquipmentDetails: true,
 			},
 		})
@@ -187,7 +187,7 @@ func TestTractorRepository(t *testing.T) {
 			TractorID: trk.ID,
 			OrgID:     org.ID,
 			BuID:      bu.ID,
-			FilterOptions: &repoports.TractorFilterOptions{
+			FilterOptions: repoports.TractorFilterOptions{
 				IncludeFleetDetails: true,
 			},
 		})
