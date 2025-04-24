@@ -137,8 +137,9 @@ func TestComplianceValidator(t *testing.T) {
 	for _, scenario := range scenarios {
 		t.Run(scenario.name, func(t *testing.T) {
 			scenario.modifyProfile(workerProfile)
+			me := errors.NewMultiError()
 
-			me := validator.Validate(ctx, workerProfile)
+			validator.Validate(ctx, workerProfile, me)
 
 			matcher := testutils.NewErrorMatcher(t, me)
 			matcher.HasExactErrors(scenario.expectedErrors)

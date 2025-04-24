@@ -54,13 +54,12 @@ func NewValidator(p ValidatorParams) *Validator {
 //
 // Parameters:
 //   - ctx: The context of the request.
-//   - valCtx: The validation context.
 //   - wp: The worker profile to validate.
-//
-// Returns:
-//   - *errors.MultiError: A list of validation errors.
-func (v *Validator) Validate(ctx context.Context, wp *worker.WorkerProfile) *errors.MultiError {
-	engine := v.vef.CreateEngine()
+//   - multiErr: The MultiError to add validation errors to.
+func (v *Validator) Validate(ctx context.Context, wp *worker.WorkerProfile, multiErr *errors.MultiError) {
+	engine := v.vef.CreateEngine().
+		ForField("compliance").
+		WithParent(multiErr)
 
 	// * Business rules validation (domain-specific rules)
 	engine.AddRule(framework.NewValidationRule(framework.ValidationStageBusinessRules, framework.ValidationPriorityHigh,
@@ -69,7 +68,8 @@ func (v *Validator) Validate(ctx context.Context, wp *worker.WorkerProfile) *err
 			return nil
 		}))
 
-	return engine.Validate(ctx)
+	// Execute validation rules and add errors to the provided multiErr
+	engine.ValidateInto(ctx, multiErr)
 }
 
 // validateWorkerCompliance validates the overall DOT compliance for a worker's profile.
