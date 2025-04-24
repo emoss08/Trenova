@@ -66,8 +66,10 @@ func (v *WorkerProfileValidator) Validate(ctx context.Context, valCtx *validator
 
 	// Compliance validation
 	engine.AddRule(framework.NewValidationRule(framework.ValidationStageCompliance, framework.ValidationPriorityHigh,
-		func(ctx context.Context, _ *errors.MultiError) error {
-			return v.compValidator.Validate(ctx, wp)
+		func(ctx context.Context, multiErr *errors.MultiError) error {
+			// Use the compliance validator with the current multiErr
+			v.compValidator.Validate(ctx, wp, multiErr)
+			return nil
 		}))
 
 	// ID validation for create operations
