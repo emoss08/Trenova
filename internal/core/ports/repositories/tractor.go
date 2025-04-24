@@ -17,7 +17,7 @@ type TractorFilterOptions struct {
 
 type ListTractorRequest struct {
 	Filter        *ports.LimitOffsetQueryOptions
-	FilterOptions *TractorFilterOptions `query:"filterOptions"`
+	FilterOptions TractorFilterOptions `query:"filterOptions"`
 }
 
 type GetTractorByIDRequest struct {
@@ -25,7 +25,7 @@ type GetTractorByIDRequest struct {
 	OrgID         pulid.ID
 	BuID          pulid.ID
 	UserID        pulid.ID
-	FilterOptions *TractorFilterOptions `query:"filterOptions"`
+	FilterOptions TractorFilterOptions `query:"filterOptions"`
 }
 
 type TractorAssignmentRequest struct {

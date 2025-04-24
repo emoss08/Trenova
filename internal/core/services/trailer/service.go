@@ -59,12 +59,12 @@ func (s *Service) SelectOptions(ctx context.Context, opts *repositories.ListTrai
 		return nil, err
 	}
 
-	options := make([]*types.SelectOption, len(result.Items))
-	for i, t := range result.Items {
-		options[i] = &types.SelectOption{
+	options := make([]*types.SelectOption, 0, len(result.Items))
+	for _, t := range result.Items {
+		options = append(options, &types.SelectOption{
 			Value: t.GetID(),
 			Label: t.Code,
-		}
+		})
 	}
 
 	return options, nil
@@ -140,10 +140,10 @@ func (s *Service) Get(ctx context.Context, opts repositories.GetTrailerByIDOptio
 	return entity, nil
 }
 
-func (s *Service) Create(ctx context.Context, lc *trailer.Trailer, userID pulid.ID) (*trailer.Trailer, error) {
+func (s *Service) Create(ctx context.Context, tr *trailer.Trailer, userID pulid.ID) (*trailer.Trailer, error) {
 	log := s.l.With().
 		Str("operation", "Create").
-		Str("code", lc.Code).
+		Str("code", tr.Code).
 		Logger()
 
 	result, err := s.ps.HasAnyPermissions(ctx,
@@ -152,8 +152,8 @@ func (s *Service) Create(ctx context.Context, lc *trailer.Trailer, userID pulid.
 				UserID:         userID,
 				Resource:       permission.ResourceTrailer,
 				Action:         permission.ActionCreate,
-				BusinessUnitID: lc.BusinessUnitID,
-				OrganizationID: lc.OrganizationID,
+				BusinessUnitID: tr.BusinessUnitID,
+				OrganizationID: tr.OrganizationID,
 			},
 		},
 	)
@@ -171,11 +171,11 @@ func (s *Service) Create(ctx context.Context, lc *trailer.Trailer, userID pulid.
 		IsUpdate: false,
 	}
 
-	if err := s.v.Validate(ctx, valCtx, lc); err != nil {
+	if err := s.v.Validate(ctx, valCtx, tr); err != nil {
 		return nil, err
 	}
 
-	createdEntity, err := s.repo.Create(ctx, lc)
+	createdEntity, err := s.repo.Create(ctx, tr)
 	if err != nil {
 		return nil, err
 	}
