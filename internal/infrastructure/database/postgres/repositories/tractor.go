@@ -62,7 +62,7 @@ func NewTractorRepository(p TractorRepositoryParams) repositories.TractorReposit
 //
 // Returns:
 //   - *bun.SelectQuery: The updated query with the necessary relations.
-func (tr *tractorRepository) addOptions(q *bun.SelectQuery, opts *repositories.TractorFilterOptions) *bun.SelectQuery {
+func (tr *tractorRepository) addOptions(q *bun.SelectQuery, opts repositories.TractorFilterOptions) *bun.SelectQuery {
 	// * Include the worker details if requested
 	if opts.IncludeWorkerDetails {
 		q = q.RelationWithOpts("PrimaryWorker", bun.RelationOpts{
