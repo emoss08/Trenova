@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"fmt"
 
+	"github.com/emoss08/trenova/internal/core/domain"
 	"github.com/emoss08/trenova/internal/core/domain/worker"
 	"github.com/emoss08/trenova/internal/core/ports"
 	"github.com/emoss08/trenova/internal/core/ports/db"
@@ -43,43 +44,54 @@ func NewWorkerRepository(p WorkerRepositoryParams) repositories.WorkerRepository
 	}
 }
 
-func (wr *workerRepository) filterQuery(q *bun.SelectQuery, opts *repositories.ListWorkerOptions) *bun.SelectQuery {
-	q = queryfilters.TenantFilterQuery(&queryfilters.TenantFilterQueryOptions{
-		Query:      q,
-		Filter:     opts.Filter,
-		TableAlias: "wrk",
-	})
-
+func (wr *workerRepository) addOptions(q *bun.SelectQuery, opts repositories.WorkerFilterOptions) *bun.SelectQuery {
+	// * Include the profile if requested
 	if opts.IncludeProfile {
 		q = q.Relation("Profile")
 	}
 
-	if opts.Filter.Query != "" {
-		q = postgressearch.BuildSearchQuery(
-			q,
-			opts.Filter.Query,
-			(*worker.Worker)(nil),
-		)
-	}
-
-	// If we are requesting a single item, we can use the ID to filter
-	// This is useful for select options ,but ensure the query is empty
-	// because we will use the ID to filter
-	if opts.Filter.ID.IsNotNil() && opts.Filter.Query == "" {
-		q = q.Where("wrk.id = ?", opts.Filter.ID)
-	}
-
+	// * Include the PTO if requested
 	if opts.IncludePTO {
+		wr.l.Info().Msg("Including Paid Time Off")
 		q = q.Relation("PTO", func(sq *bun.SelectQuery) *bun.SelectQuery {
 			return sq.Order("start_date ASC")
 		})
 	}
 
-	return q.Order("wrk.created_at DESC").Limit(opts.Filter.Limit).Offset(opts.Filter.Offset)
+	if opts.Status != "" {
+		status, err := domain.StatusFromString(opts.Status)
+		if err != nil {
+			return q
+		}
+
+		q = q.Where("wrk.status = ?", status)
+	}
+
+	return q.Order("wrk.created_at DESC", "wrk.first_name ASC", "wrk.last_name ASC")
+}
+
+func (wr *workerRepository) filterQuery(q *bun.SelectQuery, req *repositories.ListWorkerRequest) *bun.SelectQuery {
+	q = queryfilters.TenantFilterQuery(&queryfilters.TenantFilterQueryOptions{
+		Query:      q,
+		Filter:     req.Filter,
+		TableAlias: "wrk",
+	})
+
+	if req.Filter.Query != "" {
+		q = postgressearch.BuildSearchQuery(
+			q,
+			req.Filter.Query,
+			(*worker.Worker)(nil),
+		)
+	}
+
+	q = wr.addOptions(q, req.FilterOptions)
+
+	return q.Limit(req.Filter.Limit).Offset(req.Filter.Offset)
 }
 
 // List returns a list of workers in the database
-func (wr *workerRepository) List(ctx context.Context, opts *repositories.ListWorkerOptions) (*ports.ListResult[*worker.Worker], error) {
+func (wr *workerRepository) List(ctx context.Context, req *repositories.ListWorkerRequest) (*ports.ListResult[*worker.Worker], error) {
 	dba, err := wr.db.DB(ctx)
 	if err != nil {
 		return nil, eris.Wrap(err, "get database connection")
@@ -87,14 +99,14 @@ func (wr *workerRepository) List(ctx context.Context, opts *repositories.ListWor
 
 	log := wr.l.With().
 		Str("operation", "List").
-		Str("buID", opts.Filter.TenantOpts.BuID.String()).
-		Str("userID", opts.Filter.TenantOpts.UserID.String()).
+		Str("buID", req.Filter.TenantOpts.BuID.String()).
+		Str("userID", req.Filter.TenantOpts.UserID.String()).
 		Logger()
 
 	workers := make([]*worker.Worker, 0)
 
 	q := dba.NewSelect().Model(&workers)
-	q = wr.filterQuery(q, opts)
+	q = wr.filterQuery(q, req)
 
 	total, err := q.ScanAndCount(ctx)
 	if err != nil {
@@ -108,7 +120,7 @@ func (wr *workerRepository) List(ctx context.Context, opts *repositories.ListWor
 	}, nil
 }
 
-func (wr *workerRepository) GetByID(ctx context.Context, opts repositories.GetWorkerByIDOptions) (*worker.Worker, error) {
+func (wr *workerRepository) GetByID(ctx context.Context, req *repositories.GetWorkerByIDRequest) (*worker.Worker, error) {
 	dba, err := wr.db.DB(ctx)
 	if err != nil {
 		return nil, eris.Wrap(err, "get database connection")
@@ -116,25 +128,19 @@ func (wr *workerRepository) GetByID(ctx context.Context, opts repositories.GetWo
 
 	log := wr.l.With().
 		Str("operation", "GetByID").
-		Str("id", opts.WorkerID.String()).
+		Str("id", req.WorkerID.String()).
 		Logger()
 
 	wkr := new(worker.Worker)
 
 	query := dba.NewSelect().Model(wkr).
-		Where("wrk.id = ? AND wrk.organization_id = ? AND wrk.business_unit_id = ?", opts.WorkerID, opts.OrgID, opts.BuID)
-
-	// Include the profile and PTO relations if requested
-	if opts.IncludeProfile {
-		query = query.Relation("Profile")
-	}
-
-	if opts.IncludePTO {
-		query = query.Relation("PTO", func(sq *bun.SelectQuery) *bun.SelectQuery {
-			// Order by start date
-			return sq.Order("start_date ASC")
+		WhereGroup(" AND ", func(q *bun.SelectQuery) *bun.SelectQuery {
+			return q.Where("wrk.id = ?", req.WorkerID).
+				Where("wrk.organization_id = ?", req.OrgID).
+				Where("wrk.business_unit_id = ?", req.BuID)
 		})
-	}
+
+	query = wr.addOptions(query, req.FilterOptions)
 
 	if err = query.Scan(ctx); err != nil {
 		if eris.Is(err, sql.ErrNoRows) {
@@ -424,8 +430,7 @@ func (wr *workerRepository) handlePTOOperations( //nolint:funlen,gocognit,cyclop
 			Where("wpto.version = _data.version - 1").
 			Where("wpto.worker_id = _data.worker_id").
 			Where("wpto.organization_id = _data.organization_id").
-			Where("wpto.business_unit_id = _data.business_unit_id").
-			Exec(ctx)
+			Where("wpto.business_unit_id = _data.business_unit_id").Exec(ctx)
 		if err != nil {
 			log.Error().Err(err).Msg("failed to bulk update PTOs")
 			return eris.Wrap(err, "bulk update PTOs")

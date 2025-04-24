@@ -29,7 +29,7 @@ func TestWorkerRepository(t *testing.T) {
 	})
 
 	t.Run("list workers", func(t *testing.T) {
-		opts := &repoports.ListWorkerOptions{
+		opts := &repoports.ListWorkerRequest{
 			Filter: &ports.LimitOffsetQueryOptions{
 				Limit:  10,
 				Offset: 0,
@@ -44,7 +44,7 @@ func TestWorkerRepository(t *testing.T) {
 	})
 
 	t.Run("list workers with query", func(t *testing.T) {
-		opts := &repoports.ListWorkerOptions{
+		opts := &repoports.ListWorkerRequest{
 			Filter: &ports.LimitOffsetQueryOptions{
 				Limit:  10,
 				Offset: 0,
@@ -60,7 +60,7 @@ func TestWorkerRepository(t *testing.T) {
 	})
 
 	t.Run("list workers with filter id", func(t *testing.T) {
-		opts := &repoports.ListWorkerOptions{
+		opts := &repoports.ListWorkerRequest{
 			Filter: &ports.LimitOffsetQueryOptions{
 				Limit:  10,
 				Offset: 0,
@@ -76,8 +76,10 @@ func TestWorkerRepository(t *testing.T) {
 	})
 
 	t.Run("list workers with profiles", func(t *testing.T) {
-		opts := &repoports.ListWorkerOptions{
-			IncludeProfile: true,
+		opts := &repoports.ListWorkerRequest{
+			FilterOptions: repoports.WorkerFilterOptions{
+				IncludeProfile: true,
+			},
 			Filter: &ports.LimitOffsetQueryOptions{
 				Limit:  10,
 				Offset: 0,
@@ -96,8 +98,11 @@ func TestWorkerRepository(t *testing.T) {
 	})
 
 	t.Run("list workers with pto", func(t *testing.T) {
-		opts := &repoports.ListWorkerOptions{
-			IncludePTO: true,
+		opts := &repoports.ListWorkerRequest{
+			FilterOptions: repoports.WorkerFilterOptions{
+				IncludePTO:     true,
+				IncludeProfile: true,
+			},
 			Filter: &ports.LimitOffsetQueryOptions{
 				Limit:  10,
 				Offset: 0,
@@ -112,11 +117,11 @@ func TestWorkerRepository(t *testing.T) {
 		require.NoError(t, err)
 		require.NotNil(t, result)
 		require.NotEmpty(t, result.Items)
-		require.NotEmpty(t, result.Items[0].PTO)
+		require.NotEmpty(t, result.Items[1].PTO)
 	})
 
 	t.Run("get by id", func(t *testing.T) {
-		testutils.TestRepoGetByID(ctx, t, repo, repoports.GetWorkerByIDOptions{
+		testutils.TestRepoGetByID(ctx, t, repo, &repoports.GetWorkerByIDRequest{
 			WorkerID: wrk.ID,
 			OrgID:    org.ID,
 			BuID:     bu.ID,
@@ -124,7 +129,7 @@ func TestWorkerRepository(t *testing.T) {
 	})
 
 	t.Run("get with invalid id", func(t *testing.T) {
-		entity, err := repo.GetByID(ctx, repoports.GetWorkerByIDOptions{
+		entity, err := repo.GetByID(ctx, &repoports.GetWorkerByIDRequest{
 			WorkerID: "invalid-id",
 			OrgID:    org.ID,
 			BuID:     bu.ID,
