@@ -16,9 +16,11 @@ export function handleMutationError<TFormValues extends FieldValues>({
   setFormError?: UseFormSetError<TFormValues>;
   resourceName?: string;
 }): void {
+  const apiError = error instanceof APIError ? error : null;
+
   // Handle validation errors by setting form errors
-  if (error.isValidationError() && setFormError) {
-    error.getFieldErrors().forEach((fieldError) => {
+  if (apiError?.isValidationError() && setFormError) {
+    apiError.getFieldErrors().forEach((fieldError) => {
       try {
         setFormError(fieldError.name as Path<TFormValues>, {
           message: fieldError.reason,
@@ -33,22 +35,22 @@ export function handleMutationError<TFormValues extends FieldValues>({
   }
 
   // Handle rate limit errors
-  if (error.isRateLimitError()) {
+  if (apiError?.isRateLimitError()) {
     toast.error("Rate limit exceeded", {
       description: "You have exceeded the rate limit. Please try again later.",
     });
   }
 
   // Handle business errors
-  if (error.isBusinessError()) {
+  if (apiError?.isBusinessError()) {
     toast.error("Invalid Operation", {
-      description: error.data?.detail,
+      description: apiError.data?.detail,
     });
   }
 
   // Log with context if resourceName is provided
   if (resourceName) {
-    console.error(`Error handling ${resourceName}:`, error);
+    console.error(`Error handling ${resourceName}:`, apiError);
   }
 }
 
