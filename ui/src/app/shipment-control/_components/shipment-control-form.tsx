@@ -30,6 +30,7 @@ import {
   FormProvider,
   useForm,
   useFormContext,
+  useWatch,
   type Path,
 } from "react-hook-form";
 import { toast } from "sonner";
@@ -154,10 +155,13 @@ export default function ShipmentControlForm() {
 }
 
 function ServiceFailureForm() {
-  const { control, watch } = useFormContext<ShipmentControlSchema>();
+  const { control } = useFormContext<ShipmentControlSchema>();
   const [showGracePeriod, setShowGracePeriod] = useState<boolean>(false);
 
-  const recordServiceFailure = watch("recordServiceFailures");
+  const recordServiceFailure = useWatch({
+    control,
+    name: "recordServiceFailures",
+  });
 
   useEffect(() => {
     if (recordServiceFailure) {
@@ -210,11 +214,14 @@ function ServiceFailureForm() {
 }
 
 function DetentionForm() {
-  const { control, watch } = useFormContext<ShipmentControlSchema>();
+  const { control } = useFormContext<ShipmentControlSchema>();
   const [showDetentionOptions, setShowDetentionOptions] =
     useState<boolean>(false);
 
-  const trackDetentionTime = watch("trackDetentionTime");
+  const trackDetentionTime = useWatch({
+    control,
+    name: "trackDetentionTime",
+  });
 
   useEffect(() => {
     if (trackDetentionTime) {
@@ -330,11 +337,14 @@ function ShipmentEntryForm() {
 }
 
 function ComplianceForm() {
-  const { control, watch, setValue } = useFormContext<ShipmentControlSchema>();
+  const { control, setValue } = useFormContext<ShipmentControlSchema>();
   const [showComplianceOptions, setShowComplianceOptions] =
     useState<boolean>(false);
 
-  const enforceHOSCompliance = watch("enforceHosCompliance");
+  const enforceHOSCompliance = useWatch({
+    control,
+    name: "enforceHosCompliance",
+  });
 
   useEffect(() => {
     if (enforceHOSCompliance) {
@@ -342,10 +352,22 @@ function ComplianceForm() {
     } else {
       setShowComplianceOptions(false);
       // * If the user disables the HOS compliance, we need to disable the other compliance options
-      setValue("enforceMedicalCertCompliance", false);
-      setValue("enforceDriverQualificationCompliance", false);
-      setValue("enforceHazmatCompliance", false);
-      setValue("enforceDrugAndAlcoholCompliance", false);
+      setValue("enforceMedicalCertCompliance", false, {
+        shouldDirty: true,
+        shouldValidate: true,
+      });
+      setValue("enforceDriverQualificationCompliance", false, {
+        shouldDirty: true,
+        shouldValidate: true,
+      });
+      setValue("enforceHazmatCompliance", false, {
+        shouldDirty: true,
+        shouldValidate: true,
+      });
+      setValue("enforceDrugAndAlcoholCompliance", false, {
+        shouldDirty: true,
+        shouldValidate: true,
+      });
     }
   }, [enforceHOSCompliance, setValue]);
 
@@ -516,12 +538,15 @@ function PerformanceMetricsForm() {
 }
 
 function AutoAssignmentForm() {
-  const { control, watch } = useFormContext<ShipmentControlSchema>();
+  const { control } = useFormContext<ShipmentControlSchema>();
 
   const [showAutoAssignmentOptions, setShowAutoAssignmentOptions] =
     useState<boolean>(false);
 
-  const enableAutoAssignment = watch("enableAutoAssignment");
+  const enableAutoAssignment = useWatch({
+    control,
+    name: "enableAutoAssignment",
+  });
 
   useEffect(() => {
     if (enableAutoAssignment) {
@@ -595,10 +620,13 @@ function AutoAssignmentForm() {
 }
 
 function DelayShipmentForm() {
-  const { control, watch } = useFormContext<ShipmentControlSchema>();
+  const { control } = useFormContext<ShipmentControlSchema>();
   const [showDelayOptions, setShowDelayOptions] = useState<boolean>(false);
 
-  const autoDelayShipments = watch("autoDelayShipments");
+  const autoDelayShipments = useWatch({
+    control,
+    name: "autoDelayShipments",
+  });
 
   useEffect(() => {
     if (autoDelayShipments) {

@@ -1,7 +1,7 @@
 import { nodeResolve } from "@rollup/plugin-node-resolve";
 // @ts-expect-error // Module does not give types
 import tailwindcss from "@tailwindcss/vite";
-import react from "@vitejs/plugin-react-swc";
+import react from "@vitejs/plugin-react";
 import path from "path";
 import { visualizer } from "rollup-plugin-visualizer";
 import { defineConfig, type PluginOption } from "vite";
@@ -76,9 +76,17 @@ const vendorChunks = {
   utils: ["clsx", "tailwind-merge", "class-variance-authority"],
 };
 
+const ReactCompilerConfig = {
+  /* ... */
+};
+
 export default defineConfig({
   plugins: [
-    react(),
+    react({
+      babel: {
+        plugins: [["babel-plugin-react-compiler", ReactCompilerConfig]],
+      },
+    }),
     tailwindcss(),
     nodeResolve() as PluginOption,
     VitePWA({
