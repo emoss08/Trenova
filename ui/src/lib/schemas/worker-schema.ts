@@ -15,6 +15,8 @@ const workerProfileSchema = z.object({
   createdAt: z.number().optional(),
   updatedAt: z.number().optional(),
   workerId: z.string().optional(),
+  organizationId: z.string().optional(),
+  businessUnitId: z.string().optional(),
 
   // * Core Fields
   dob: z.number(),

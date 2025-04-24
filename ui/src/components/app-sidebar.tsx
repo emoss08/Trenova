@@ -28,7 +28,6 @@ import { ChevronRightIcon } from "@radix-ui/react-icons";
 import { Link, useLocation } from "react-router";
 import { NavUser } from "./nav-user";
 import { OrganizationSwitcher } from "./organization-switcher";
-import { SearchForm } from "./site-search/site-search-dialog";
 import { Icon } from "./ui/icons";
 import { WorkflowPlaceholder } from "./workflow";
 
@@ -160,7 +159,6 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     <Sidebar variant="floating" {...props}>
       <SidebarHeader className="gap-4">
         <OrganizationSwitcher />
-        <SearchForm />
         <WorkflowPlaceholder />
       </SidebarHeader>
       <SidebarContent>

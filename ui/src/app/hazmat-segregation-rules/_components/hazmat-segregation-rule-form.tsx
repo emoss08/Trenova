@@ -90,7 +90,6 @@ export function HazmatSegregationRuleForm() {
         <HazardousMaterialAutocompleteField<HazmatSegregationRuleSchema>
           name="hazmatAId"
           control={control}
-          link="/hazardous-materials/"
           label="Hazardous Material A"
           clearable
           placeholder="Select Hazardous Material A"
@@ -101,7 +100,6 @@ export function HazmatSegregationRuleForm() {
         <HazardousMaterialAutocompleteField<HazmatSegregationRuleSchema>
           name="hazmatBId"
           control={control}
-          link="/hazardous-materials/"
           label="Hazardous Material B"
           clearable
           placeholder="Select Hazardous Material B"

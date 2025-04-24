@@ -55,7 +55,11 @@ export const tractorSchema = z
   })
   .refine(
     (data) => {
-      if (data.primaryWorkerId === data.secondaryWorkerId) {
+      // * if there is a primary worker and the primary worker is the same as the secondary worker
+      if (
+        data.primaryWorkerId &&
+        data.primaryWorkerId === data.secondaryWorkerId
+      ) {
         return false;
       }
       return true;

@@ -1,4 +1,3 @@
-/* eslint-disable react-compiler/react-compiler */
 import { Button } from "@/components/ui/button";
 import { Icon } from "@/components/ui/icons";
 import {

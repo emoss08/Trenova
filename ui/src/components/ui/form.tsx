@@ -105,7 +105,7 @@ export const FormControl = React.forwardRef<HTMLDivElement, FormControlProps>(
       <div
         ref={ref}
         className={cn(
-          "relative min-h-[5em]",
+          "relative min-h-[4em]",
           colSpanClass,
           error && "has-error",
           disabled && "opacity-60",
@@ -131,7 +131,7 @@ export const FormSection = React.forwardRef<HTMLDivElement, FormSectionProps>(
   ({ className, title, description, children, ...props }, ref) => (
     <div
       ref={ref}
-      className={cn("space-y-4", className)}
+      className={cn("mt-2 space-y-4", className)}
       role="group"
       aria-labelledby={title ? `section-${title}` : undefined}
       {...props}

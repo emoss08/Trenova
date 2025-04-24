@@ -43,13 +43,6 @@ func NewTestConfig() *config.Config {
 			AllowCredentials: true,
 			MaxAge:           300,
 		},
-		Search: config.SearchConfig{
-			Host:          "http://localhost:7700",
-			APIKey:        "ufp2vpm0CRRCpTY-IxpiwLPQNLBKIlGYxI5vNHHbCMQ",
-			IndexPrefix:   "trv",
-			MaxBatchSize:  100,
-			BatchInterval: 30,
-		},
 		Server: config.ServerConfig{
 			SecretKey:               "test",
 			ListenAddress:           ":3001",

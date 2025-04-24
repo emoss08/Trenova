@@ -109,7 +109,7 @@ func (h *Handler) list(c *fiber.Ctx) error {
 
 		return h.ts.List(fc.UserContext(), &repositories.ListTractorRequest{
 			Filter: filter,
-			FilterOptions: &repositories.TractorFilterOptions{
+			FilterOptions: repositories.TractorFilterOptions{
 				Status:                  fc.Query("status"),
 				IncludeWorkerDetails:    fc.QueryBool("includeWorkerDetails"),
 				IncludeEquipmentDetails: fc.QueryBool("includeEquipmentDetails"),
@@ -137,7 +137,7 @@ func (h *Handler) get(c *fiber.Ctx) error {
 		BuID:      reqCtx.BuID,
 		OrgID:     reqCtx.OrgID,
 		UserID:    reqCtx.UserID,
-		FilterOptions: &repositories.TractorFilterOptions{
+		FilterOptions: repositories.TractorFilterOptions{
 			IncludeWorkerDetails:    c.QueryBool("includeWorkerDetails"),
 			IncludeEquipmentDetails: c.QueryBool("includeEquipmentDetails"),
 			IncludeFleetDetails:     c.QueryBool("includeFleetDetails"),
