@@ -437,6 +437,7 @@ var (
 )
 
 type RolesAndPermissions struct {
-	Roles       []*string
-	Permissions []*Permission
+	Roles         []*string
+	Permissions   []*Permission
+	CompleteRoles []*Role // Full role objects with embedded permissions
 }
