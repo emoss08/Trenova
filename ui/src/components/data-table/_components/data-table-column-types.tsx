@@ -11,6 +11,7 @@ export type EntityRefConfig<TEntity, TParent> = {
     entity: TEntity;
     displayText: string;
     clickable?: boolean;
+    basePath?: string;
   } | null;
   className?: string;
   color?: {

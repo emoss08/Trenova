@@ -15,6 +15,7 @@ import {
 } from "@tanstack/react-table";
 import { parseAsString, useQueryState } from "nuqs";
 import { useCallback, useEffect, useMemo } from "react";
+import { useLocation } from "react-router";
 import { toast } from "sonner";
 import { Skeleton } from "../ui/skeleton";
 import { Table } from "../ui/table";
@@ -48,6 +49,7 @@ export function DataTable<TData extends Record<string, any>>({
   extraActions,
 }: DataTableProps<TData>) {
   // Use URL state as single source of truth
+  const location = useLocation();
   const [page] = useQueryState(
     "page",
     DataTableSearchParams.page.withOptions({
@@ -75,6 +77,25 @@ export function DataTable<TData extends Record<string, any>>({
       shallow: false,
     }),
   );
+
+  // Process any pending entityId from navigation state
+  useEffect(() => {
+    const state = location.state as { pendingEntityId?: string } | null;
+    if (state?.pendingEntityId) {
+      // Set the entityId and modal parameters if we have a pending entityId
+      Promise.all([
+        setEntityId(state.pendingEntityId, { shallow: false }),
+        setModalType("edit", { shallow: false }),
+      ]).catch(console.error);
+
+      // Clear the state to prevent reprocessing
+      window.history.replaceState(
+        { ...state, pendingEntityId: undefined },
+        "",
+        window.location.href,
+      );
+    }
+  }, [location, setEntityId, setModalType]);
 
   // Entity Query
   const entityQuery = useQuery({
@@ -107,24 +128,24 @@ export function DataTable<TData extends Record<string, any>>({
   // Update the handleModalClose function to properly clear both parameters
   const handleEditModalClose = useCallback(async () => {
     await Promise.all([
-      setEntityId(null, { shallow: true }),
-      setModalType(null, { shallow: true }),
+      setEntityId(null, { shallow: false }),
+      setModalType(null, { shallow: false }),
     ]);
   }, [setEntityId, setModalType]);
 
   const handleCreateModalClose = useCallback(async () => {
-    await setModalType(null, { shallow: true });
+    await setModalType(null, { shallow: false });
   }, [setModalType]);
 
   useEffect(() => {
     // Only handle edit modal consistency
     if (entityId && !modalType) {
-      setModalType("edit", { shallow: true }).catch(console.error);
+      setModalType("edit", { shallow: false }).catch(console.error);
     }
 
     // Only clear modal if we're in edit mode and lose the entityId
     if (!entityId && modalType === "edit") {
-      setModalType(null, { shallow: true }).catch(console.error);
+      setModalType(null, { shallow: false }).catch(console.error);
     }
   }, [entityId, modalType, setModalType]);
 
@@ -207,7 +228,7 @@ export function DataTable<TData extends Record<string, any>>({
             name={name}
             exportModelName={exportModelName}
             extraActions={extraActions}
-            setModalType={(type) => setModalType(type, { shallow: true })}
+            setModalType={(type) => setModalType(type, { shallow: false })}
           />
         </DataTableOptions>
       )}
