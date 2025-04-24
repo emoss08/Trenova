@@ -40,9 +40,6 @@ type Config struct {
 	// Cors is the cors configuration.
 	Cors CorsConfig `mapstructure:"cors"`
 
-	// Search is the search configuration.
-	Search SearchConfig `mapstructure:"search"`
-
 	// Static is the static configuration.
 	Static StaticConfig `mapstructure:"static"`
 
@@ -441,27 +438,6 @@ type CorsConfig struct {
 	// This is the max age for the cors.
 	// Defaults to 0.
 	MaxAge int `mapstructure:"maxAge"`
-}
-
-// SearchConfig is the configuration for the search client.
-// Note: Some of these options may be irrelevant depending on the search client you are using.
-// These configurations are for Meilisearch, but can be used for other search clients.
-// You may need to adjust the configurations based on the search client you are using.
-type SearchConfig struct {
-	// Host is the search host.
-	Host string `mapstructure:"host"`
-
-	// APIKey is the search API key.
-	APIKey string `mapstructure:"apiKey"`
-
-	// IndexPrefix is the search index prefix.
-	IndexPrefix string `mapstructure:"indexPrefix"`
-
-	// MaxBatchSize is the search max batch size.
-	MaxBatchSize int `mapstructure:"maxBatchSize"`
-
-	// BatchInterval is the search batch interval.
-	BatchInterval int `mapstructure:"batchInterval"`
 }
 
 // BackupConfig is the configuration database backups
