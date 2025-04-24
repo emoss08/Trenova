@@ -20,19 +20,18 @@ import {
 } from "@/components/ui/dialog";
 import { Form } from "@/components/ui/form";
 import { usePopoutWindow } from "@/hooks/popout-window/use-popout-window";
+import { useApiMutation } from "@/hooks/use-api-mutation";
 import { useUnsavedChanges } from "@/hooks/use-form";
 import { broadcastQueryInvalidation } from "@/hooks/use-invalidate-query";
 import { http } from "@/lib/http-client";
 import { cn } from "@/lib/utils";
 import { type TableSheetProps } from "@/types/data-table";
-import { type APIError } from "@/types/errors";
 import { type API_ENDPOINTS } from "@/types/server";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQueryClient } from "@tanstack/react-query";
 import { useCallback, useEffect } from "react";
 import {
   type FieldValues,
   FormProvider,
-  type Path,
   type UseFormReturn,
 } from "react-hook-form";
 import { toast } from "sonner";
@@ -83,7 +82,7 @@ export function FormCreateModal<T extends FieldValues>({
     onClose: handleClose,
   });
 
-  const { mutateAsync } = useMutation({
+  const { mutateAsync } = useApiMutation({
     mutationFn: async (values: T) => {
       const response = await http.post(url, values);
       return response.data;
@@ -104,26 +103,10 @@ export function FormCreateModal<T extends FieldValues>({
         },
       });
 
-      queryClient.setQueryData([queryKey], (oldData: T[]) => {
-        return [...oldData, data];
-      });
+      queryClient.setQueryData([queryKey], data);
     },
-    onError: (error: APIError) => {
-      if (error.isValidationError()) {
-        error.getFieldErrors().forEach((fieldError) => {
-          setError(fieldError.name as Path<T>, {
-            message: fieldError.reason,
-          });
-        });
-      }
-
-      if (error.isRateLimitError()) {
-        toast.error("Rate limit exceeded", {
-          description:
-            "You have exceeded the rate limit. Please try again later.",
-        });
-      }
-    },
+    setFormError: setError,
+    resourceName: title,
     onSettled: () => {
       if (isPopout) {
         closePopout();
