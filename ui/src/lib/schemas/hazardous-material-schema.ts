@@ -7,8 +7,6 @@ import { z } from "zod";
 
 export const hazardousMaterialSchema = z.object({
   id: z.string().optional(),
-  organizationId: z.string().optional(),
-  businessUnitId: z.string().optional(),
   version: z.number().optional(),
   createdAt: z.number().optional(),
   updatedAt: z.number().optional(),

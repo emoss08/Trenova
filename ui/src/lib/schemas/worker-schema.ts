@@ -11,11 +11,10 @@ import { z } from "zod";
 /* Worker Profile Schema */
 const workerProfileSchema = z.object({
   id: z.string().optional(),
-  organizationId: z.string().optional(),
-  businessUnitId: z.string().optional(),
   version: z.number().optional(),
   createdAt: z.number().optional(),
   updatedAt: z.number().optional(),
+  workerId: z.string().optional(),
 
   // * Core Fields
   dob: z.number(),
@@ -37,8 +36,6 @@ const workerProfileSchema = z.object({
 /* Worker PTO Schema */
 const workerPTOSchema = z.object({
   id: z.string().optional(),
-  organizationId: z.string().optional(),
-  businessUnitId: z.string().optional(),
   version: z.number().optional(),
   createdAt: z.number().optional(),
   updatedAt: z.number().optional(),
@@ -55,8 +52,6 @@ const workerPTOSchema = z.object({
 export const workerSchema = z
   .object({
     id: z.string().optional(),
-    organizationId: z.string().optional(),
-    businessUnitId: z.string().optional(),
     version: z.number().optional(),
     createdAt: z.number().optional(),
     updatedAt: z.number().optional(),
@@ -75,7 +70,7 @@ export const workerSchema = z
     gender: z.nativeEnum(Gender),
     postalCode: z.string(),
     profile: workerProfileSchema,
-    pto: z.array(workerPTOSchema),
+    pto: z.array(workerPTOSchema).optional(),
   })
   .refine(
     (data) => {
