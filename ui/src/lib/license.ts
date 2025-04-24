@@ -38,12 +38,6 @@ export const licenseConfig = {
       url: "https://www.postgresql.org/about/licence/",
     },
     {
-      name: "Meilisearch",
-      license: "MIT License",
-      copyright: "Copyright (c) 2018-present, Meilisearch.",
-      url: "https://github.com/meilisearch/meilisearch/blob/main/LICENSE",
-    },
-    {
       name: "Redis",
       license: "Redis Source Available License v2 (RSALv2)",
       copyright: "Copyright (c) Redis Ltd.",
