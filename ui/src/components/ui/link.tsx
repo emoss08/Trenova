@@ -132,11 +132,29 @@ export const EntityRedirectLink = React.memo(function EntityRedirectLink({
 }: EntityRedirectLinkProps) {
   const url = React.useMemo(() => {
     let computedUrl = `${baseUrl}`;
+
     if (modelOpen) {
-      computedUrl += `?entityId=${entityId}&modal=edit`;
+      // Get current URL parameters to preserve them
+      const currentParams = new URLSearchParams(window.location.search);
+      const preservedParams = new URLSearchParams();
+
+      // Preserve pagination parameters
+      if (currentParams.has("page")) {
+        preservedParams.set("page", currentParams.get("page")!);
+      }
+      if (currentParams.has("pageSize")) {
+        preservedParams.set("pageSize", currentParams.get("pageSize")!);
+      }
+
+      // Add entity modal parameters
+      preservedParams.set("entityId", entityId || "");
+      preservedParams.set("modal", "edit");
+
+      computedUrl += `?${preservedParams.toString()}`;
     } else {
       computedUrl += `/${entityId}`;
     }
+
     return computedUrl;
   }, [baseUrl, entityId, modelOpen]);
 
