@@ -1,9 +1,8 @@
 import { API_URL } from "@/constants/env";
 import { useDataTableQuery } from "@/hooks/use-data-table-query";
-import { useDataTableState } from "@/hooks/use-data-table-state";
+import { DataTableSearchParams } from "@/hooks/use-data-table-state";
 import { DataTableProps } from "@/types/data-table";
 import { PaginationResponse } from "@/types/server";
-import { faSearch } from "@fortawesome/pro-solid-svg-icons";
 import { useQuery } from "@tanstack/react-query";
 import {
   getCoreRowModel,
@@ -14,29 +13,20 @@ import {
   getSortedRowModel,
   useReactTable,
 } from "@tanstack/react-table";
-import { parseAsInteger, parseAsString, useQueryState } from "nuqs";
-import { useCallback, useEffect, useMemo, useTransition } from "react";
-import { Icon } from "../ui/icons";
-import { Input } from "../ui/input";
-import { Separator } from "../ui/separator";
+import { parseAsString, useQueryState } from "nuqs";
+import { useCallback, useEffect, useMemo } from "react";
+import { toast } from "sonner";
 import { Skeleton } from "../ui/skeleton";
 import { Table } from "../ui/table";
-import { TooltipProvider } from "../ui/tooltip";
 import { DataTableBody } from "./_components/data-table-body";
+import { DataTableFilter } from "./_components/data-table-filters";
 import { DataTableHeader } from "./_components/data-table-header";
-import { DataTablePagination } from "./_components/data-table-pagination";
+import { DataTableOptions } from "./_components/data-table-options";
 import {
-  DataTableCreateButton,
-  DataTableViewOptions,
-} from "./_components/data-table-view-options";
-
-const DEFAULT_PAGE_SIZE = 10;
-const DEFAULT_PAGE_SIZE_OPTIONS = [10, 20, 30, 40, 50] as const;
-
-const searchParams = {
-  page: parseAsInteger.withDefault(1),
-  pageSize: parseAsInteger.withDefault(10),
-};
+  DataTablePagination,
+  PaginationInner,
+} from "./_components/data-table-pagination";
+import { DataTableSearch } from "./_components/data-table-search";
 
 const entityParams = {
   entityId: parseAsString,
@@ -52,27 +42,22 @@ export function DataTable<TData extends Record<string, any>>({
   exportModelName,
   TableModal,
   TableEditModal,
-  initialPageSize = DEFAULT_PAGE_SIZE,
-  pageSizeOptions = DEFAULT_PAGE_SIZE_OPTIONS,
+  initialPageSize = 10,
   includeHeader = true,
   includeOptions = true,
   extraActions,
 }: DataTableProps<TData>) {
-  const [isTransitioning, startTransition] = useTransition();
-
   // Use URL state as single source of truth
-  const [page, setPage] = useQueryState(
+  const [page] = useQueryState(
     "page",
-    searchParams.page.withOptions({
-      startTransition,
+    DataTableSearchParams.page.withOptions({
       shallow: false,
     }),
   );
 
-  const [pageSize, setPageSize] = useQueryState(
+  const [pageSize] = useQueryState(
     "pageSize",
-    searchParams.pageSize.withOptions({
-      startTransition,
+    DataTableSearchParams.pageSize.withOptions({
       shallow: false,
     }),
   );
@@ -81,14 +66,12 @@ export function DataTable<TData extends Record<string, any>>({
   const [entityId, setEntityId] = useQueryState(
     "entityId",
     entityParams.entityId.withOptions({
-      startTransition,
       shallow: false,
     }),
   );
   const [modalType, setModalType] = useQueryState(
     "modal",
     entityParams.modal.withOptions({
-      startTransition,
       shallow: false,
     }),
   );
@@ -111,6 +94,7 @@ export function DataTable<TData extends Record<string, any>>({
       });
 
       if (!response.ok) {
+        toast.error("Failed to fetch entity");
         throw new Error("Failed to fetch entity");
       }
 
@@ -122,22 +106,25 @@ export function DataTable<TData extends Record<string, any>>({
 
   // Update the handleModalClose function to properly clear both parameters
   const handleEditModalClose = useCallback(async () => {
-    await Promise.all([setEntityId(null), setModalType(null)]);
+    await Promise.all([
+      setEntityId(null, { shallow: true }),
+      setModalType(null, { shallow: true }),
+    ]);
   }, [setEntityId, setModalType]);
 
   const handleCreateModalClose = useCallback(async () => {
-    await setModalType(null);
+    await setModalType(null, { shallow: true });
   }, [setModalType]);
 
   useEffect(() => {
     // Only handle edit modal consistency
     if (entityId && !modalType) {
-      setModalType("edit").catch(console.error);
+      setModalType("edit", { shallow: true }).catch(console.error);
     }
 
     // Only clear modal if we're in edit mode and lose the entityId
     if (!entityId && modalType === "edit") {
-      setModalType(null).catch(console.error);
+      setModalType(null, { shallow: true }).catch(console.error);
     }
   }, [entityId, modalType, setModalType]);
 
@@ -149,19 +136,6 @@ export function DataTable<TData extends Record<string, any>>({
     }),
     [page, pageSize, initialPageSize],
   );
-
-  const {
-    rowSelection,
-    setRowSelection,
-    columnVisibility,
-    setColumnVisibility,
-    columnFilters,
-    setColumnFilters,
-    sorting,
-    // setSorting,
-    // showFilterDialog,
-    // setShowFilterDialog,
-  } = useDataTableState<TData>();
 
   const dataQuery = useDataTableQuery<PaginationResponse<TData>>(
     queryKey,
@@ -191,50 +165,25 @@ export function DataTable<TData extends Record<string, any>>({
     [dataQuery.isLoading, columns],
   );
 
-  // Memoize handlers to prevent unnecessary re-renders
-  const handlePageChange = useCallback(
-    (newPage: number) => {
-      startTransition(() => {
-        setPage(newPage);
-      });
-    },
-    [setPage],
-  );
-
-  const handlePageSizeChange = useCallback(
-    (newPageSize: number) => {
-      startTransition(() => {
-        setPage(1);
-        setPageSize(newPageSize);
-      });
-    },
-    [setPage, setPageSize],
-  );
-
   const table = useReactTable({
     data: placeholderData as TData[],
     columns: displayColumns,
     pageCount: Math.ceil(
       (dataQuery.data?.count ?? 0) / (pageSize ?? initialPageSize),
     ),
+    rowCount: dataQuery.data?.count ?? 0,
     state: {
       pagination,
-      sorting,
-      columnFilters,
-      rowSelection,
-      columnVisibility,
+      // sorting,
+      // columnFilters,
+      // rowSelection,
+      // columnVisibility,
     },
     manualPagination: true,
     enableRowSelection: true,
-    onRowSelectionChange: setRowSelection,
-    // onSortingChange: setSorting,
-    defaultColumn: {
-      size: 200,
-      minSize: 10,
-      maxSize: 300,
-    },
-    onColumnFiltersChange: setColumnFilters,
-    onColumnVisibilityChange: setColumnVisibility,
+    // onRowSelectionChange: setRowSelection,
+    // onColumnFiltersChange: setColumnFilters,
+    // onColumnVisibilityChange: setColumnVisibility,
     getCoreRowModel: getCoreRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
@@ -245,78 +194,47 @@ export function DataTable<TData extends Record<string, any>>({
 
   const isEditModalOpen = Boolean(entityId && modalType === "edit");
   const isCreateModalOpen = Boolean(modalType === "create");
-  const isLoading = dataQuery.isLoading || isTransitioning;
   const isEntityLoading = entityQuery.isLoading;
   const isEntityError = entityQuery.error;
 
   return (
-    <TooltipProvider>
-      <div className="mt-2 flex flex-col gap-3">
-        {includeOptions && (
-          <div className="flex justify-between">
-            <div className="flex items-center gap-2">
-              <Input
-                icon={
-                  <Icon
-                    icon={faSearch}
-                    className="size-3 text-muted-foreground"
-                  />
-                }
-                placeholder="Filter..."
-                className="w-full"
-              />
-            </div>
-            <div className="flex items-center gap-2">
-              <DataTableViewOptions table={table} />
-              <Separator
-                className="h-6 w-px bg-border"
-                orientation="vertical"
-              />
-              <DataTableCreateButton
-                name={name}
-                exportModelName={exportModelName}
-                extraActions={extraActions}
-                onCreateClick={() => {
-                  setModalType("create");
-                }}
-              />
-            </div>
-          </div>
-        )}
-        <div className="rounded-md border border-sidebar-border">
-          <Table>
-            {includeHeader && <DataTableHeader table={table as any} />}
-            <DataTableBody table={table as any} />
-          </Table>
-        </div>
-        <DataTablePagination
-          table={table}
-          totalCount={dataQuery.data?.count ?? 0}
-          pageSizeOptions={pageSizeOptions}
-          isLoading={isLoading}
-          onPageChange={handlePageChange}
-          onPageSizeChange={handlePageSizeChange}
-        />
-        {isCreateModalOpen && TableModal && (
-          <TableModal
-            open={isCreateModalOpen}
-            onOpenChange={() => {
-              handleCreateModalClose();
-            }}
+    <div className="mt-2 flex flex-col gap-3">
+      {includeOptions && (
+        <DataTableOptions>
+          <DataTableSearch />
+          <DataTableFilter
+            table={table}
+            name={name}
+            exportModelName={exportModelName}
+            extraActions={extraActions}
+            setModalType={(type) => setModalType(type, { shallow: true })}
           />
-        )}
-        {isEditModalOpen && TableEditModal && (
-          <TableEditModal
-            open={isEditModalOpen}
-            onOpenChange={() => {
-              handleEditModalClose();
-            }}
-            currentRecord={entityQuery.data}
-            isLoading={isEntityLoading}
-            error={isEntityError}
-          />
-        )}
+        </DataTableOptions>
+      )}
+      <div className="rounded-md border border-sidebar-border">
+        <Table>
+          {includeHeader && <DataTableHeader table={table as any} />}
+          <DataTableBody table={table as any} />
+        </Table>
       </div>
-    </TooltipProvider>
+      <DataTablePagination>
+        <PaginationInner table={table} />
+      </DataTablePagination>
+      {TableModal && isCreateModalOpen && (
+        <TableModal
+          open={isCreateModalOpen}
+          onOpenChange={handleCreateModalClose}
+        />
+      )}
+      {TableEditModal && isEditModalOpen && (
+        <TableEditModal
+          open={isEditModalOpen}
+          onOpenChange={handleEditModalClose}
+          isLoading={isEntityLoading}
+          currentRecord={entityQuery.data}
+          error={isEntityError}
+        />
+      )}
+    </div>
   );
 }
