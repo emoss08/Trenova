@@ -6,9 +6,12 @@ import { Button } from "../ui/button";
 const ErrorMessage = memo(
   function ErrorMessage({ formError }: { formError?: string }) {
     return (
-      <div className="mt-1 inline-block rounded bg-red-50 px-2 py-1 text-left text-2xs leading-tight text-red-500 dark:bg-red-500/40 dark:text-red-50">
+      <span
+        role="alert"
+        className="mt-1 inline-block rounded bg-red-50 px-2 py-1 text-left text-2xs leading-tight text-red-500 dark:bg-red-500/40 dark:text-red-50"
+      >
         {formError ? formError : "An Error has occurred. Please try again."}
-      </div>
+      </span>
     );
   },
   (prevProps, nextProps) => prevProps.formError === nextProps.formError,
