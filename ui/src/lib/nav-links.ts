@@ -392,12 +392,6 @@ export const routes: RouteInfo[] = [
         supportsModal: true,
       },
       {
-        key: Resource.SystemLog,
-        label: "System Logs",
-        link: "/organization/system-logs/",
-        supportsModal: false,
-      },
-      {
         key: Resource.Integration,
         label: "Apps & Integrations",
         link: "/organization/integrations/",
