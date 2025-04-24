@@ -11,6 +11,7 @@ import { BaseModel } from "@/types/common";
 import { ColumnDef, ColumnHelper } from "@tanstack/react-table";
 import { parseAsString, useQueryState } from "nuqs";
 import { memo, useCallback, useTransition } from "react";
+import { useNavigate } from "react-router";
 import { v4 } from "uuid";
 import {
   EntityColumnConfig,
@@ -31,13 +32,16 @@ const EntityRefLink = memo(
     displayText,
     className,
     color,
+    basePath,
   }: {
     id: string | undefined;
     displayText: string;
     className?: string;
     color?: string;
+    basePath?: string;
   }) => {
     const [, startTransition] = useTransition();
+    const navigate = useNavigate();
 
     // Use the nuqs hooks directly
     const [, setEntityId] = useQueryState(
@@ -60,13 +64,21 @@ const EntityRefLink = memo(
     const handleClick = useCallback(
       (e: React.MouseEvent) => {
         e.preventDefault();
-        // Set both parameters with shallow:true to preserve page and pageSize
-        Promise.all([
-          setEntityId(id || "", { shallow: true }),
-          setModalType("edit", { shallow: true }),
-        ]).catch(console.error);
+        if (basePath && id) {
+          // If basePath is provided, navigate to the base URL first, then set params after navigation
+          navigate(basePath, {
+            replace: true, // Use replace to avoid adding to history stack
+            state: { pendingEntityId: id }, // Pass the entity ID through state
+          });
+        } else {
+          // Otherwise use the existing behavior with URL params
+          Promise.all([
+            setEntityId(id || "", { shallow: true }),
+            setModalType("edit", { shallow: true }),
+          ]).catch(console.error);
+        }
       },
-      [id, setEntityId, setModalType],
+      [id, setEntityId, setModalType, basePath, navigate],
     );
 
     return (
@@ -100,12 +112,15 @@ const SecondaryInfoLink = memo(
     id,
     displayText,
     clickable,
+    basePath,
   }: {
     id: string | undefined;
     displayText: string;
     clickable: boolean;
+    basePath?: string;
   }) => {
     const [, startTransition] = useTransition();
+    const navigate = useNavigate();
 
     // Use the nuqs hooks directly
     const [, setEntityId] = useQueryState(
@@ -128,13 +143,21 @@ const SecondaryInfoLink = memo(
     const handleClick = useCallback(
       (e: React.MouseEvent) => {
         e.preventDefault();
-        // Set both parameters with shallow:true to preserve page and pageSize
-        Promise.all([
-          setEntityId(id || "", { shallow: true }),
-          setModalType("edit", { shallow: true }),
-        ]).catch(console.error);
+        if (basePath && id) {
+          // If basePath is provided, navigate to the base URL first, then set params after navigation
+          navigate(basePath, {
+            replace: true, // Use replace to avoid adding to history stack
+            state: { pendingEntityId: id }, // Pass the entity ID through state
+          });
+        } else {
+          // Set both parameters with shallow:true to preserve page and pageSize
+          Promise.all([
+            setEntityId(id || "", { shallow: true }),
+            setModalType("edit", { shallow: true }),
+          ]).catch(console.error);
+        }
       },
-      [id, setEntityId, setModalType],
+      [id, setEntityId, setModalType, basePath, navigate],
     );
 
     if (!clickable) {
@@ -172,6 +195,7 @@ function EntityRefCellBase<TEntity, TParent extends Record<string, any>>(
   const displayText = config.getDisplayText(entity);
   const secondaryInfo = config.getSecondaryInfo?.(entity, parent);
   const color = config.color?.getColor(entity);
+  const basePath = config.basePath;
 
   // clickable should default to true unless otherwise specified
   const clickable = secondaryInfo?.clickable ?? true;
@@ -185,6 +209,7 @@ function EntityRefCellBase<TEntity, TParent extends Record<string, any>>(
             displayText={displayText}
             className={config.className}
             color={color}
+            basePath={basePath}
           />
         </TooltipTrigger>
         <TooltipContent>
@@ -201,6 +226,7 @@ function EntityRefCellBase<TEntity, TParent extends Record<string, any>>(
                 id={config.getId(secondaryInfo.entity)}
                 displayText={secondaryInfo.displayText}
                 clickable={clickable}
+                basePath={secondaryInfo.basePath || basePath}
               />
             </TooltipTrigger>
             <TooltipContent>
@@ -236,6 +262,7 @@ function NestedEntityRefCellBase<TEntity, TParent extends Record<string, any>>(
   const displayText = config.getDisplayText(entity);
   const secondaryInfo = config.getSecondaryInfo?.(entity, row.original);
   const color = config.color?.getColor(entity);
+  const basePath = config.basePath;
 
   // clickable should default to true unless otherwise specified
   const clickable = secondaryInfo?.clickable ?? true;
@@ -249,6 +276,7 @@ function NestedEntityRefCellBase<TEntity, TParent extends Record<string, any>>(
             displayText={displayText}
             className={config.className}
             color={color}
+            basePath={basePath}
           />
         </TooltipTrigger>
         <TooltipContent>
@@ -266,6 +294,7 @@ function NestedEntityRefCellBase<TEntity, TParent extends Record<string, any>>(
                   id={config.getId(secondaryInfo.entity)}
                   displayText={secondaryInfo.displayText}
                   clickable={clickable}
+                  basePath={secondaryInfo.basePath || basePath}
                 />
               </TooltipTrigger>
               <TooltipContent>
@@ -353,9 +382,11 @@ export function createEntityRefColumn<
     header: config.getHeaderText ?? "",
     cell: ({ getValue, row }) => {
       const entity = getValue();
+
       if (!entity) {
         return <p className="text-muted-foreground">-</p>;
       }
+
       return (
         <EntityRefCell<NonNullable<TValue>, T>
           entity={entity as NonNullable<TValue>}
