@@ -1,9 +1,9 @@
 import { AutocompleteField } from "@/components/fields/autocomplete";
+import { WorkerAutocompleteField } from "@/components/ui/autocomplete-fields";
 import { FormControl, FormGroup } from "@/components/ui/form";
 import { AssignmentSchema } from "@/lib/schemas/assignment-schema";
 import { TractorSchema } from "@/lib/schemas/tractor-schema";
 import { TrailerSchema } from "@/lib/schemas/trailer-schema";
-import { WorkerSchema } from "@/lib/schemas/worker-schema";
 import { getTractorAssignments } from "@/services/tractor";
 import { useQuery } from "@tanstack/react-query";
 import { useEffect } from "react";
@@ -73,31 +73,23 @@ export function AssignmentForm() {
         />
       </FormControl>
       <FormControl>
-        <AutocompleteField<WorkerSchema, AssignmentSchema>
+        <WorkerAutocompleteField<AssignmentSchema>
           name="primaryWorkerId"
           control={control}
-          link="/workers/"
           label="Primary Worker"
           rules={{ required: true }}
           placeholder="Select Primary Worker"
           description="Select the primary worker for the assignment."
-          getOptionValue={(option) => option.id || ""}
-          getDisplayValue={(option) => `${option.firstName} ${option.lastName}`}
-          renderOption={(option) => `${option.firstName} ${option.lastName}`}
         />
       </FormControl>
       <FormControl>
-        <AutocompleteField<WorkerSchema, AssignmentSchema>
+        <WorkerAutocompleteField<AssignmentSchema>
           name="secondaryWorkerId"
           control={control}
-          link="/workers/"
           label="Secondary Worker"
           clearable={true}
           placeholder="Select Secondary Worker"
           description="Select the secondary worker for the assignment."
-          getOptionValue={(option) => option.id || ""}
-          getDisplayValue={(option) => `${option.firstName} ${option.lastName}`}
-          renderOption={(option) => `${option.firstName} ${option.lastName}`}
         />
       </FormControl>
     </FormGroup>
