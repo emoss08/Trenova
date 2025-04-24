@@ -1,7 +1,6 @@
 /* eslint-disable react-refresh/only-export-components */
 /* eslint-disable react/display-name */
 import { Checkbox } from "@/components/ui/checkbox";
-import { InternalLink } from "@/components/ui/link";
 import {
   Tooltip,
   TooltipContent,
@@ -10,7 +9,8 @@ import {
 import { generateDateOnlyString, toDate } from "@/lib/date";
 import { BaseModel } from "@/types/common";
 import { ColumnDef, ColumnHelper } from "@tanstack/react-table";
-import { memo, useMemo } from "react";
+import { parseAsString, useQueryState } from "nuqs";
+import { memo, useCallback, useTransition } from "react";
 import { v4 } from "uuid";
 import {
   EntityColumnConfig,
@@ -18,44 +18,61 @@ import {
   NestedEntityRefConfig,
 } from "./data-table-column-types";
 
+// Entity parameter definitions - same as in data-table.tsx
+const entityParams = {
+  entityId: parseAsString,
+  modal: parseAsString,
+};
+
 // Memoized EntityRefLink component to avoid re-renders
 const EntityRefLink = memo(
   ({
-    basePath,
     id,
     displayText,
     className,
     color,
   }: {
-    basePath: string;
     id: string | undefined;
     displayText: string;
     className?: string;
     color?: string;
   }) => {
-    // Create search params object once
-    const linkTo = useMemo(
-      () => ({
-        pathname: basePath,
-        search: `?entityId=${id}&modal=edit`,
+    const [, startTransition] = useTransition();
+
+    // Use the nuqs hooks directly
+    const [, setEntityId] = useQueryState(
+      "entityId",
+      entityParams.entityId.withOptions({
+        startTransition,
+        shallow: true, // This is key - shallow:true preserves other URL params
       }),
-      [basePath, id],
     );
 
-    const linkState = useMemo(
-      () => ({
-        isNavigatingToModal: true,
+    const [, setModalType] = useQueryState(
+      "modal",
+      entityParams.modal.withOptions({
+        startTransition,
+        shallow: true, // This is key - shallow:true preserves other URL params
       }),
-      [],
+    );
+
+    // Create a click handler for opening the modal
+    const handleClick = useCallback(
+      (e: React.MouseEvent) => {
+        e.preventDefault();
+        // Set both parameters with shallow:true to preserve page and pageSize
+        Promise.all([
+          setEntityId(id || "", { shallow: true }),
+          setModalType("edit", { shallow: true }),
+        ]).catch(console.error);
+      },
+      [id, setEntityId, setModalType],
     );
 
     return (
-      <InternalLink
-        to={linkTo}
-        state={linkState}
-        className={className}
-        replace
-        preventScrollReset
+      <span
+        onClick={handleClick}
+        className={`${className || ""} cursor-pointer`}
       >
         {color ? (
           <div className="flex items-center gap-x-1.5 text-sm font-normal text-foreground underline hover:text-foreground/70">
@@ -72,7 +89,7 @@ const EntityRefLink = memo(
             {displayText}
           </span>
         )}
-      </InternalLink>
+      </span>
     );
   },
 );
@@ -80,30 +97,44 @@ const EntityRefLink = memo(
 // Memoized SecondaryInfoLink component
 const SecondaryInfoLink = memo(
   ({
-    basePath,
     id,
     displayText,
     clickable,
   }: {
-    basePath: string;
     id: string | undefined;
     displayText: string;
     clickable: boolean;
   }) => {
-    // Create search params object once
-    const linkTo = useMemo(
-      () => ({
-        pathname: basePath,
-        search: `?entityId=${id}&modal=edit`,
+    const [, startTransition] = useTransition();
+
+    // Use the nuqs hooks directly
+    const [, setEntityId] = useQueryState(
+      "entityId",
+      entityParams.entityId.withOptions({
+        startTransition,
+        shallow: true,
       }),
-      [basePath, id],
     );
 
-    const linkState = useMemo(
-      () => ({
-        isNavigatingToModal: true,
+    const [, setModalType] = useQueryState(
+      "modal",
+      entityParams.modal.withOptions({
+        startTransition,
+        shallow: true,
       }),
-      [],
+    );
+
+    // Create a click handler for opening the modal
+    const handleClick = useCallback(
+      (e: React.MouseEvent) => {
+        e.preventDefault();
+        // Set both parameters with shallow:true to preserve page and pageSize
+        Promise.all([
+          setEntityId(id || "", { shallow: true }),
+          setModalType("edit", { shallow: true }),
+        ]).catch(console.error);
+      },
+      [id, setEntityId, setModalType],
     );
 
     if (!clickable) {
@@ -111,16 +142,12 @@ const SecondaryInfoLink = memo(
     }
 
     return (
-      <InternalLink
-        to={linkTo}
-        state={linkState}
-        className="text-2xs text-muted-foreground underline hover:text-muted-foreground/70"
-        replace
-        preventScrollReset
-        viewTransition
+      <span
+        onClick={handleClick}
+        className="text-2xs text-muted-foreground underline hover:text-muted-foreground/70 cursor-pointer"
       >
         {displayText}
-      </InternalLink>
+      </span>
     );
   },
 );
@@ -154,7 +181,6 @@ function EntityRefCellBase<TEntity, TParent extends Record<string, any>>(
       <Tooltip delayDuration={300}>
         <TooltipTrigger asChild>
           <EntityRefLink
-            basePath={config.basePath}
             id={id}
             displayText={displayText}
             className={config.className}
@@ -172,7 +198,6 @@ function EntityRefCellBase<TEntity, TParent extends Record<string, any>>(
           <Tooltip delayDuration={300}>
             <TooltipTrigger asChild>
               <SecondaryInfoLink
-                basePath={config.basePath}
                 id={config.getId(secondaryInfo.entity)}
                 displayText={secondaryInfo.displayText}
                 clickable={clickable}
@@ -220,7 +245,6 @@ function NestedEntityRefCellBase<TEntity, TParent extends Record<string, any>>(
       <Tooltip delayDuration={300}>
         <TooltipTrigger asChild>
           <EntityRefLink
-            basePath={config.basePath}
             id={id}
             displayText={displayText}
             className={config.className}
@@ -239,7 +263,6 @@ function NestedEntityRefCellBase<TEntity, TParent extends Record<string, any>>(
             <Tooltip>
               <TooltipTrigger asChild>
                 <SecondaryInfoLink
-                  basePath={config.basePath}
                   id={config.getId(secondaryInfo.entity)}
                   displayText={secondaryInfo.displayText}
                   clickable={clickable}
@@ -365,7 +388,6 @@ export function createEntityColumn<T extends Record<string, any>>(
 
       return (
         <EntityRefLink
-          basePath=""
           id={id}
           displayText={displayText}
           className={config.className}

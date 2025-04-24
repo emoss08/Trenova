@@ -1,3 +1,4 @@
+"use no memo";
 import { TableBody, TableCell, TableRow } from "@/components/ui/table";
 import { DataTableBodyProps } from "@/types/data-table";
 import { flexRender, type Cell, type Row } from "@tanstack/react-table";

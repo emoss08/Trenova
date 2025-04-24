@@ -195,19 +195,16 @@ export function DataTableViewOptions<TData>({
             className="h-7 text-sm bg-background"
           />
           <div className="my-3 border-dashed border-t border-border" />
-          <div className="space-y-1.5">
+          <div className="flex flex-col gap-3">
             {filteredColumns.length > 0 ? (
               filteredColumns.map((column) => {
                 const isVisible = column.getIsVisible();
                 return (
                   <div
                     key={column.id}
-                    className="flex items-center justify-between space-x-2 rounded-md px-2 py-1"
+                    className="flex items-center justify-between"
                   >
-                    <Label
-                      htmlFor={column.id}
-                      className="flex-grow text-sm font-normal"
-                    >
+                    <Label htmlFor={column.id} className="flex-grow text-xs">
                       {toTitleCase(column.id)}
                     </Label>
                     <Switch
