@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"fmt"
 
+	"github.com/emoss08/trenova/internal/core/domain"
 	"github.com/emoss08/trenova/internal/core/domain/tractor"
 	"github.com/emoss08/trenova/internal/core/ports"
 	"github.com/emoss08/trenova/internal/core/ports/db"
@@ -18,6 +19,8 @@ import (
 	"go.uber.org/fx"
 )
 
+// TractorRepositoryParams defines dependencies required for initializing the TractorRepository.
+// This includes database connection and logger.
 type TractorRepositoryParams struct {
 	fx.In
 
@@ -25,11 +28,20 @@ type TractorRepositoryParams struct {
 	Logger *logger.Logger
 }
 
+// tractorRepository implements the TractorRepository interface
+// and provides methods to manage tractor data, including CRUD operations.
 type tractorRepository struct {
 	db db.Connection
 	l  *zerolog.Logger
 }
 
+// NewTractorRepository initalizes a new instance of tractorRepository with its dependencies.
+//
+// Parameters:
+//   - p: TractorRepositoryParams containing dependencies.
+//
+// Returns:
+//   - repositories.TractorRepository: A ready-to-use tractor repository instance.
 func NewTractorRepository(p TractorRepositoryParams) repositories.TractorRepository {
 	log := p.Logger.With().
 		Str("repository", "tractor").
@@ -41,34 +53,88 @@ func NewTractorRepository(p TractorRepositoryParams) repositories.TractorReposit
 	}
 }
 
-func (tr *tractorRepository) filterQuery(q *bun.SelectQuery, opts *repositories.ListTractorOptions) *bun.SelectQuery {
-	q = queryfilters.TenantFilterQuery(&queryfilters.TenantFilterQueryOptions{
-		Query:      q,
-		TableAlias: "tr",
-		Filter:     opts.Filter,
-	})
-
-	if opts.IncludeEquipmentDetails {
-		q = q.Relation("EquipmentType").Relation("EquipmentManufacturer")
-	}
-
+// addOptions expands the query with related entities based on TractorFilterOptions.
+// This allows eager loading of related data like primary and secondary workers, fleet code, and equipment type.
+//
+// Parameters:
+//   - q: The base select query.
+//   - opts: Options to determine which related data to include.
+//
+// Returns:
+//   - *bun.SelectQuery: The updated query with the necessary relations.
+func (tr *tractorRepository) addOptions(q *bun.SelectQuery, opts *repositories.TractorFilterOptions) *bun.SelectQuery {
+	// * Include the worker details if requested
 	if opts.IncludeWorkerDetails {
-		q = q.Relation("PrimaryWorker").Relation("PrimaryWorker.Profile")
-		q = q.Relation("SecondaryWorker").Relation("SecondaryWorker.Profile")
+		q = q.RelationWithOpts("PrimaryWorker", bun.RelationOpts{
+			Apply: func(sq *bun.SelectQuery) *bun.SelectQuery {
+				return sq.Relation("WorkerProfile")
+			},
+		})
+
+		q = q.RelationWithOpts("SecondaryWorker", bun.RelationOpts{
+			Apply: func(sq *bun.SelectQuery) *bun.SelectQuery {
+				return sq.Relation("WorkerProfile")
+			},
+		})
 	}
 
+	// * Include the fleet details if requested
 	if opts.IncludeFleetDetails {
 		q = q.Relation("FleetCode")
 	}
 
-	if opts.Filter.Query != "" {
-		q = q.Where("tr.code ILIKE ? OR tr.vin ILIKE ?", "%"+opts.Filter.Query+"%", "%"+opts.Filter.Query+"%")
+	// * Include the equipment details if requested
+	if opts.IncludeEquipmentDetails {
+		q = q.Relation("EquipmentType").Relation("EquipmentManufacturer")
 	}
 
-	return q.Limit(opts.Filter.Limit).Offset(opts.Filter.Offset)
+	if opts.Status != "" {
+		status, err := domain.EquipmentStatusFromString(opts.Status)
+		if err != nil {
+			return q
+		}
+
+		q = q.Where("tr.status = ?", status)
+	}
+
+	return q
 }
 
-func (tr *tractorRepository) List(ctx context.Context, opts *repositories.ListTractorOptions) (*ports.ListResult[*tractor.Tractor], error) {
+// filterQuery applies filters and pagination to the tractor query.
+// It includes tenant-based filtering and full-text search when provided.
+//
+// Parameters:
+//   - q: The base select query.
+//   - req: ListTractorRequest containing filter and pagination details.
+//
+// Returns:
+//   - *bun.SelectQuery: The filtered and paginated query.
+func (tr *tractorRepository) filterQuery(q *bun.SelectQuery, req *repositories.ListTractorRequest) *bun.SelectQuery {
+	q = queryfilters.TenantFilterQuery(&queryfilters.TenantFilterQueryOptions{
+		Query:      q,
+		TableAlias: "tr",
+		Filter:     req.Filter,
+	})
+
+	q = tr.addOptions(q, req.FilterOptions)
+
+	if req.Filter.Query != "" {
+		q = q.Where("tr.code ILIKE ? OR tr.vin ILIKE ?", "%"+req.Filter.Query+"%", "%"+req.Filter.Query+"%")
+	}
+
+	return q.Order("tr.created_at DESC").Limit(req.Filter.Limit).Offset(req.Filter.Offset)
+}
+
+// List retrieves a list of tractors based on the previous options.
+//
+// Parameters:
+//   - ctx: The context for the operation.
+//   - req: ListTractorRequest containing filter and pagination details.
+//
+// Returns:
+//   - *ports.ListResult[*tractor.Tractor]: A list of tractors.
+//   - error: An error if the operation fails.
+func (tr *tractorRepository) List(ctx context.Context, req *repositories.ListTractorRequest) (*ports.ListResult[*tractor.Tractor], error) {
 	dba, err := tr.db.DB(ctx)
 	if err != nil {
 		return nil, eris.Wrap(err, "get database connection")
@@ -76,14 +142,14 @@ func (tr *tractorRepository) List(ctx context.Context, opts *repositories.ListTr
 
 	log := tr.l.With().
 		Str("operation", "List").
-		Str("buID", opts.Filter.TenantOpts.BuID.String()).
-		Str("userID", opts.Filter.TenantOpts.UserID.String()).
+		Str("buID", req.Filter.TenantOpts.BuID.String()).
+		Str("userID", req.Filter.TenantOpts.UserID.String()).
 		Logger()
 
 	entities := make([]*tractor.Tractor, 0)
 
 	q := dba.NewSelect().Model(&entities)
-	q = tr.filterQuery(q, opts)
+	q = tr.filterQuery(q, req)
 
 	total, err := q.ScanAndCount(ctx)
 	if err != nil {
@@ -97,7 +163,16 @@ func (tr *tractorRepository) List(ctx context.Context, opts *repositories.ListTr
 	}, nil
 }
 
-func (tr *tractorRepository) GetByID(ctx context.Context, opts repositories.GetTractorByIDOptions) (*tractor.Tractor, error) {
+// GetByID retrieves a tractor by its ID.
+//
+// Parameters:
+//   - ctx: The context for the operation.
+//   - req: GetTractorByIDRequest containing the tractor ID and filter options.
+//
+// Returns:
+//   - *tractor.Tractor: The tractor entity.
+//   - error: An error if the operation fails.
+func (tr *tractorRepository) GetByID(ctx context.Context, req *repositories.GetTractorByIDRequest) (*tractor.Tractor, error) {
 	dba, err := tr.db.DB(ctx)
 	if err != nil {
 		return nil, eris.Wrap(err, "get database connection")
@@ -105,33 +180,19 @@ func (tr *tractorRepository) GetByID(ctx context.Context, opts repositories.GetT
 
 	log := tr.l.With().
 		Str("operation", "GetByID").
-		Str("tractorID", opts.ID.String()).
+		Str("tractorID", req.TractorID.String()).
 		Logger()
 
 	entity := new(tractor.Tractor)
 
 	query := dba.NewSelect().Model(entity).
-		Where("tr.id = ? AND tr.organization_id = ? AND tr.business_unit_id = ?", opts.ID, opts.OrgID, opts.BuID)
-
-	// Include the worker details if requested
-	if opts.IncludeWorkerDetails {
-		query = query.Relation("PrimaryWorker", func(sq *bun.SelectQuery) *bun.SelectQuery {
-			return sq.Relation("PrimaryWorker.WorkerProfile")
+		WhereGroup(" AND ", func(q *bun.SelectQuery) *bun.SelectQuery {
+			return q.Where("tr.id = ?", req.TractorID).
+				Where("tr.organization_id = ?", req.OrgID).
+				Where("tr.business_unit_id = ?", req.BuID)
 		})
 
-		query = query.Relation("SecondaryWorker", func(sq *bun.SelectQuery) *bun.SelectQuery {
-			return sq.Relation("SecondaryWorker.WorkerProfile")
-		})
-	}
-
-	if opts.IncludeFleetDetails {
-		query = query.Relation("FleetCode")
-	}
-
-	// Include the equipment details if requested
-	if opts.IncludeEquipmentDetails {
-		query = query.Relation("EquipmentType").Relation("EquipmentManufacturer")
-	}
+	query = tr.addOptions(query, req.FilterOptions)
 
 	if err = query.Scan(ctx); err != nil {
 		if eris.Is(err, sql.ErrNoRows) {
@@ -145,6 +206,15 @@ func (tr *tractorRepository) GetByID(ctx context.Context, opts repositories.GetT
 	return entity, nil
 }
 
+// Create creates a new tractor.
+//
+// Parameters:
+//   - ctx: The context for the operation.
+//   - t: The tractor entity to create.
+//
+// Returns:
+//   - *tractor.Tractor: The created tractor entity.
+//   - error: An error if the operation fails.
 func (tr *tractorRepository) Create(ctx context.Context, t *tractor.Tractor) (*tractor.Tractor, error) {
 	dba, err := tr.db.DB(ctx)
 	if err != nil {
@@ -176,6 +246,15 @@ func (tr *tractorRepository) Create(ctx context.Context, t *tractor.Tractor) (*t
 	return t, nil
 }
 
+// Update updates a tractor.
+//
+// Parameters:
+//   - ctx: The context for the operation.
+//   - t: The tractor entity to update.
+//
+// Returns:
+//   - *tractor.Tractor: The updated tractor entity.
+//   - error: An error if the operation fails.
 func (tr *tractorRepository) Update(ctx context.Context, t *tractor.Tractor) (*tractor.Tractor, error) {
 	dba, err := tr.db.DB(ctx)
 	if err != nil {
@@ -234,7 +313,16 @@ func (tr *tractorRepository) Update(ctx context.Context, t *tractor.Tractor) (*t
 	return t, nil
 }
 
-func (tr *tractorRepository) Assignment(ctx context.Context, opts repositories.AssignmentOptions) (*repositories.AssignmentResponse, error) {
+// Assignment assigns a primary and secondary worker to a tractor.
+//
+// Parameters:
+//   - ctx: The context for the operation.
+//   - opts: AssignmentOptions containing the tractor ID and organization ID.
+//
+// Returns:
+//   - *repositories.AssignmentResponse: The assignment response.
+//   - error: An error if the operation fails.
+func (tr *tractorRepository) Assignment(ctx context.Context, opts repositories.TractorAssignmentRequest) (*repositories.AssignmentResponse, error) {
 	dba, err := tr.db.DB(ctx)
 	if err != nil {
 		return nil, eris.Wrap(err, "get database connection")
@@ -249,7 +337,11 @@ func (tr *tractorRepository) Assignment(ctx context.Context, opts repositories.A
 
 	q := dba.NewSelect().Model(entity).
 		Column("tr.primary_worker_id", "tr.secondary_worker_id").
-		Where("tr.id = ? AND tr.organization_id = ? AND tr.business_unit_id = ?", opts.TractorID, opts.OrgID, opts.BuID)
+		WhereGroup(" AND ", func(q *bun.SelectQuery) *bun.SelectQuery {
+			return q.Where("tr.id = ?", opts.TractorID).
+				Where("tr.organization_id = ?", opts.OrgID).
+				Where("tr.business_unit_id = ?", opts.BuID)
+		})
 
 	if err = q.Scan(ctx); err != nil {
 		log.Error().Err(err).Msg("failed to get tractor")

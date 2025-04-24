@@ -54,14 +54,14 @@ func (h *Handler) RegisterRoutes(r fiber.Router, rl *middleware.RateLimiter) {
 		middleware.PerMinute(60), // 60 reads per minute
 	)...)
 
-	api.Get("/:tractorID/assignment/", rl.WithRateLimit(
-		[]fiber.Handler{h.assignment},
-		middleware.PerMinute(60), // 60 reads per minute
-	)...)
-
 	api.Put("/:tractorID/", rl.WithRateLimit(
 		[]fiber.Handler{h.update},
 		middleware.PerMinute(60), // 60 writes per minute
+	)...)
+
+	api.Get("/:tractorID/assignment/", rl.WithRateLimit(
+		[]fiber.Handler{h.assignment},
+		middleware.PerMinute(60), // 60 reads per minute
 	)...)
 }
 
@@ -71,7 +71,7 @@ func (h *Handler) selectOptions(c *fiber.Ctx) error {
 		return h.eh.HandleError(c, err)
 	}
 
-	opts := &repositories.ListTractorOptions{
+	req := &repositories.ListTractorRequest{
 		Filter: &ports.LimitOffsetQueryOptions{
 			TenantOpts: &ports.TenantOptions{
 				OrgID:  reqCtx.OrgID,
@@ -83,7 +83,7 @@ func (h *Handler) selectOptions(c *fiber.Ctx) error {
 		},
 	}
 
-	options, err := h.ts.SelectOptions(c.UserContext(), opts)
+	options, err := h.ts.SelectOptions(c.UserContext(), req)
 	if err != nil {
 		return h.eh.HandleError(c, err)
 	}
@@ -103,11 +103,18 @@ func (h *Handler) list(c *fiber.Ctx) error {
 	}
 
 	handler := func(fc *fiber.Ctx, filter *ports.LimitOffsetQueryOptions) (*ports.ListResult[*tractordomain.Tractor], error) {
-		return h.ts.List(fc.UserContext(), &repositories.ListTractorOptions{
-			Filter:                  filter,
-			IncludeWorkerDetails:    c.QueryBool("includeWorkerDetails"),
-			IncludeEquipmentDetails: c.QueryBool("includeEquipmentDetails"),
-			IncludeFleetDetails:     c.QueryBool("includeFleetDetails"),
+		if err = fc.QueryParser(filter); err != nil {
+			return nil, h.eh.HandleError(fc, err)
+		}
+
+		return h.ts.List(fc.UserContext(), &repositories.ListTractorRequest{
+			Filter: filter,
+			FilterOptions: &repositories.TractorFilterOptions{
+				Status:                  fc.Query("status"),
+				IncludeWorkerDetails:    fc.QueryBool("includeWorkerDetails"),
+				IncludeEquipmentDetails: fc.QueryBool("includeEquipmentDetails"),
+				IncludeFleetDetails:     fc.QueryBool("includeFleetDetails"),
+			},
 		})
 	}
 
@@ -125,14 +132,16 @@ func (h *Handler) get(c *fiber.Ctx) error {
 		return h.eh.HandleError(c, err)
 	}
 
-	tr, err := h.ts.Get(c.UserContext(), repositories.GetTractorByIDOptions{
-		ID:                      tractorID,
-		BuID:                    reqCtx.BuID,
-		OrgID:                   reqCtx.OrgID,
-		UserID:                  reqCtx.UserID,
-		IncludeWorkerDetails:    c.QueryBool("includeWorkerDetails"),
-		IncludeEquipmentDetails: c.QueryBool("includeEquipmentDetails"),
-		IncludeFleetDetails:     c.QueryBool("includeFleetDetails"),
+	tr, err := h.ts.Get(c.UserContext(), &repositories.GetTractorByIDRequest{
+		TractorID: tractorID,
+		BuID:      reqCtx.BuID,
+		OrgID:     reqCtx.OrgID,
+		UserID:    reqCtx.UserID,
+		FilterOptions: &repositories.TractorFilterOptions{
+			IncludeWorkerDetails:    c.QueryBool("includeWorkerDetails"),
+			IncludeEquipmentDetails: c.QueryBool("includeEquipmentDetails"),
+			IncludeFleetDetails:     c.QueryBool("includeFleetDetails"),
+		},
 	})
 	if err != nil {
 		return h.eh.HandleError(c, err)
@@ -155,12 +164,12 @@ func (h *Handler) create(c *fiber.Ctx) error {
 		return h.eh.HandleError(c, err)
 	}
 
-	createdTractor, err := h.ts.Create(c.UserContext(), tr, reqCtx.UserID)
+	entity, err := h.ts.Create(c.UserContext(), tr, reqCtx.UserID)
 	if err != nil {
 		return h.eh.HandleError(c, err)
 	}
 
-	return c.Status(fiber.StatusOK).JSON(createdTractor)
+	return c.Status(fiber.StatusOK).JSON(entity)
 }
 
 func (h *Handler) update(c *fiber.Ctx) error {
@@ -183,12 +192,12 @@ func (h *Handler) update(c *fiber.Ctx) error {
 		return h.eh.HandleError(c, err)
 	}
 
-	updatedTractor, err := h.ts.Update(c.UserContext(), tr, reqCtx.UserID)
+	entity, err := h.ts.Update(c.UserContext(), tr, reqCtx.UserID)
 	if err != nil {
 		return h.eh.HandleError(c, err)
 	}
 
-	return c.Status(fiber.StatusOK).JSON(updatedTractor)
+	return c.Status(fiber.StatusOK).JSON(entity)
 }
 
 func (h *Handler) assignment(c *fiber.Ctx) error {
@@ -202,7 +211,7 @@ func (h *Handler) assignment(c *fiber.Ctx) error {
 		return h.eh.HandleError(c, err)
 	}
 
-	assignment, err := h.ts.Assignment(c.UserContext(), repositories.AssignmentOptions{
+	assignment, err := h.ts.Assignment(c.UserContext(), repositories.TractorAssignmentRequest{
 		TractorID: tractorID,
 		OrgID:     reqCtx.OrgID,
 		BuID:      reqCtx.BuID,

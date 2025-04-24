@@ -29,6 +29,7 @@ export function EditTractorModal({
       formComponent={<TractorForm />}
       fieldKey="code"
       form={form}
+      className="max-w-[500px]"
     />
   );
 }

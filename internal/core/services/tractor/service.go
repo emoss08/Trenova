@@ -33,10 +33,10 @@ type ServiceParams struct {
 
 type Service struct {
 	l    *zerolog.Logger
+	v    *tractorvalidator.Validator
 	repo repositories.TractorRepository
 	ps   services.PermissionService
 	as   services.AuditService
-	v    *tractorvalidator.Validator
 }
 
 func NewService(p ServiceParams) *Service {
@@ -53,34 +53,34 @@ func NewService(p ServiceParams) *Service {
 	}
 }
 
-func (s *Service) SelectOptions(ctx context.Context, opts *repositories.ListTractorOptions) ([]*types.SelectOption, error) {
-	result, err := s.repo.List(ctx, opts)
+func (s *Service) SelectOptions(ctx context.Context, req *repositories.ListTractorRequest) ([]*types.SelectOption, error) {
+	result, err := s.repo.List(ctx, req)
 	if err != nil {
 		return nil, err
 	}
 
-	options := make([]*types.SelectOption, len(result.Items))
-	for i, t := range result.Items {
-		options[i] = &types.SelectOption{
+	options := make([]*types.SelectOption, 0, len(result.Items))
+	for _, t := range result.Items {
+		options = append(options, &types.SelectOption{
 			Value: t.GetID(),
 			Label: t.Code,
-		}
+		})
 	}
 
 	return options, nil
 }
 
-func (s *Service) List(ctx context.Context, opts *repositories.ListTractorOptions) (*ports.ListResult[*tractor.Tractor], error) {
+func (s *Service) List(ctx context.Context, req *repositories.ListTractorRequest) (*ports.ListResult[*tractor.Tractor], error) {
 	log := s.l.With().Str("operation", "List").Logger()
 
 	result, err := s.ps.HasAnyPermissions(ctx,
 		[]*services.PermissionCheck{
 			{
-				UserID:         opts.Filter.TenantOpts.UserID,
+				UserID:         req.Filter.TenantOpts.UserID,
 				Resource:       permission.ResourceTractor,
 				Action:         permission.ActionRead,
-				BusinessUnitID: opts.Filter.TenantOpts.BuID,
-				OrganizationID: opts.Filter.TenantOpts.OrgID,
+				BusinessUnitID: req.Filter.TenantOpts.BuID,
+				OrganizationID: req.Filter.TenantOpts.OrgID,
 			},
 		},
 	)
@@ -93,7 +93,7 @@ func (s *Service) List(ctx context.Context, opts *repositories.ListTractorOption
 		return nil, errors.NewAuthorizationError("You do not have permission to read tractors")
 	}
 
-	entities, err := s.repo.List(ctx, opts)
+	entities, err := s.repo.List(ctx, req)
 	if err != nil {
 		log.Error().Err(err).Msg("failed to list tractors")
 		return nil, err
@@ -105,20 +105,20 @@ func (s *Service) List(ctx context.Context, opts *repositories.ListTractorOption
 	}, nil
 }
 
-func (s *Service) Get(ctx context.Context, opts repositories.GetTractorByIDOptions) (*tractor.Tractor, error) {
+func (s *Service) Get(ctx context.Context, req *repositories.GetTractorByIDRequest) (*tractor.Tractor, error) {
 	log := s.l.With().
 		Str("operation", "GetByID").
-		Str("tractorID", opts.ID.String()).
+		Str("tractorID", req.TractorID.String()).
 		Logger()
 
 	result, err := s.ps.HasAnyPermissions(ctx,
 		[]*services.PermissionCheck{
 			{
-				UserID:         opts.UserID,
+				UserID:         req.UserID,
 				Resource:       permission.ResourceTractor,
 				Action:         permission.ActionRead,
-				BusinessUnitID: opts.BuID,
-				OrganizationID: opts.OrgID,
+				BusinessUnitID: req.BuID,
+				OrganizationID: req.OrgID,
 			},
 		},
 	)
@@ -131,7 +131,7 @@ func (s *Service) Get(ctx context.Context, opts repositories.GetTractorByIDOptio
 		return nil, errors.NewAuthorizationError("You do not have permission to read this tractor")
 	}
 
-	entity, err := s.repo.GetByID(ctx, opts)
+	entity, err := s.repo.GetByID(ctx, req)
 	if err != nil {
 		log.Error().Err(err).Msg("failed to get tractor")
 		return nil, err
@@ -234,12 +234,18 @@ func (s *Service) Update(ctx context.Context, t *tractor.Tractor, userID pulid.I
 		return nil, err
 	}
 
-	original, err := s.repo.GetByID(ctx, repositories.GetTractorByIDOptions{
-		ID:    t.ID,
-		OrgID: t.OrganizationID,
-		BuID:  t.BusinessUnitID,
+	original, err := s.repo.GetByID(ctx, &repositories.GetTractorByIDRequest{
+		TractorID: t.ID,
+		OrgID:     t.OrganizationID,
+		BuID:      t.BusinessUnitID,
+		FilterOptions: &repositories.TractorFilterOptions{
+			IncludeWorkerDetails:    true,
+			IncludeEquipmentDetails: true,
+			IncludeFleetDetails:     true,
+		},
 	})
 	if err != nil {
+		log.Error().Err(err).Msg("failed to get tractor")
 		return nil, err
 	}
 
@@ -271,15 +277,14 @@ func (s *Service) Update(ctx context.Context, t *tractor.Tractor, userID pulid.I
 	return updatedEntity, nil
 }
 
-func (s *Service) Assignment(ctx context.Context, opts repositories.AssignmentOptions) (*repositories.AssignmentResponse, error) {
+func (s *Service) Assignment(ctx context.Context, req repositories.TractorAssignmentRequest) (*repositories.AssignmentResponse, error) {
 	log := s.l.With().
 		Str("operation", "Assignment").
-		Str("tractorID", opts.TractorID.String()).
+		Str("tractorID", req.TractorID.String()).
 		Logger()
 
 	// ! We do not need to check permissions for this operation
-
-	assignment, err := s.repo.Assignment(ctx, opts)
+	assignment, err := s.repo.Assignment(ctx, req)
 	if err != nil {
 		log.Error().Err(err).Msg("failed to get tractor assignment")
 		return nil, err
