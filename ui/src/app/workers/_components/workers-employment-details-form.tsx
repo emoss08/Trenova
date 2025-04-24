@@ -1,15 +1,32 @@
-import { AutocompleteField } from "@/components/fields/autocomplete";
 import { AutoCompleteDateField } from "@/components/fields/date-field";
 import { SelectField } from "@/components/fields/select-field";
+import { FleetCodeAutocompleteField } from "@/components/ui/autocomplete-fields";
 import { FormControl, FormGroup } from "@/components/ui/form";
 import { Separator } from "@/components/ui/separator";
 import { genderChoices, statusChoices, workerTypeChoices } from "@/lib/choices";
-import { FleetCodeSchema } from "@/lib/schemas/fleet-code-schema";
+import { getTodayDate } from "@/lib/date";
 import { type WorkerSchema } from "@/lib/schemas/worker-schema";
+import { useEffect } from "react";
 import { useFormContext } from "react-hook-form";
 
 export default function WorkersEmploymentDetailsForm() {
-  const { control } = useFormContext<WorkerSchema>();
+  const { control, watch, setValue } = useFormContext<WorkerSchema>();
+
+  // * If the status is inactive, then set the termination date to the current date
+  useEffect(() => {
+    const subscription = watch((formValues, { name }) => {
+      const today = getTodayDate();
+
+      if (name === "status") {
+        const status = formValues.status;
+        if (status === "Inactive") {
+          setValue("profile.terminationDate", today);
+        }
+      }
+    });
+
+    return () => subscription.unsubscribe();
+  }, [watch, setValue]);
 
   return (
     <div className="size-full">
@@ -79,6 +96,7 @@ export default function WorkersEmploymentDetailsForm() {
           <FormControl>
             <AutoCompleteDateField
               control={control}
+              clearable
               name="profile.terminationDate"
               label="Termination Date"
               description="The date of termination of the worker"
@@ -86,16 +104,13 @@ export default function WorkersEmploymentDetailsForm() {
             />
           </FormControl>
           <FormControl>
-            <AutocompleteField<FleetCodeSchema, WorkerSchema>
+            <FleetCodeAutocompleteField<WorkerSchema>
               name="fleetCodeId"
               control={control}
-              link="/fleet-codes/"
               label="Fleet Code"
+              clearable
               placeholder="Select Fleet Code"
               description="Select the fleet code of the worker"
-              getOptionValue={(option) => option.id || ""}
-              getDisplayValue={(option) => option.name}
-              renderOption={(option) => option.name}
             />
           </FormControl>
         </FormGroup>
