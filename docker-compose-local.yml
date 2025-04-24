@@ -34,29 +34,6 @@ services:
       timeout: 5s
       retries: 5
 
-  meilisearch:
-    image: getmeili/meilisearch:v1.11.3
-    ports:
-      - "7700:7700"
-    environment:
-      - MEILI_MASTER_KEY=${MEILI_MASTER_KEY:-masterKey}
-      - MEILI_NO_ANALYTICS=${MEILI_NO_ANALYTICS:-true}
-      - MEILI_DB_PATH=${MEILI_DB_PATH:-/data.ms}
-      - MEILI_ENV=${MEILI_ENV:-development}
-    restart: always
-    networks:
-      - app-network
-    volumes:
-      - meilisearch_data:/data.ms
-    deploy:
-      resources:
-        limits:
-          memory: 512M
-    healthcheck:
-      test: set -o pipefail;curl -fsS http://localhost:7700/health | grep -q '{"status":"available"}'
-      retries: 3
-      timeout: 5s
-
   redis:
     image: redis/redis-stack:latest
     ports:
@@ -179,7 +156,6 @@ volumes:
   pg_data: {}
   redis_data: {}
   minio_data: {}
-  meilisearch_data: {}
   rabbitmq_data: {}
   rabbitmq.conf: {}
 
