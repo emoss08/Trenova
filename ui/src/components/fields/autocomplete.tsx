@@ -243,7 +243,7 @@ export function Autocomplete<T>({
 
   // Handle wheel events with better smooth scrolling
   const handleWheel = useCallback(
-    (e: React.WheelEvent<HTMLDivElement>) => {
+    (e: React.WheelEvent) => {
       if (!commandListRef.current) return;
 
       const { scrollTop, scrollHeight, clientHeight } = commandListRef.current;
@@ -285,6 +285,26 @@ export function Autocomplete<T>({
     [smoothScroll],
   );
 
+  // Add non-passive wheel event listener
+  useEffect(() => {
+    const commandList = commandListRef.current;
+    if (!commandList) return;
+
+    // Add wheel event listener with { passive: false } option
+    const wheelHandler = (e: WheelEvent) => {
+      handleWheel(e as unknown as React.WheelEvent);
+    };
+
+    commandList.addEventListener("wheel", wheelHandler, { passive: false });
+
+    return () => {
+      commandList.removeEventListener("wheel", wheelHandler);
+      if (animationRef.current !== null) {
+        cancelAnimationFrame(animationRef.current);
+      }
+    };
+  }, [handleWheel]);
+
   const handleClear = useCallback(() => {
     onChange("");
     setSelectedOption(null);
@@ -321,34 +341,33 @@ export function Autocomplete<T>({
                 {placeholder}
               </p>
             )}
-            <div className="flex items-center gap-1">
-              <ChevronDownIcon
-                className={cn(
-                  "opacity-50 size-7 duration-200 ease-in-out transition-all",
-                  open && "-rotate-180",
-                )}
-              />
-              {loading && (
-                <div className="absolute right-7">
+            <div className="flex items-center gap-1 ml-auto">
+              {clearable && value && (
+                <Button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleClear();
+                  }}
+                  type="button"
+                  size="icon"
+                  variant="ghost"
+                  className="[&>svg]:size-3 size-5 rounded-md flex items-center justify-center hover:bg-muted-foreground/30 text-muted-foreground hover:text-foreground transition-colors duration-200 ease-in-out cursor-pointer"
+                >
+                  <span className="sr-only">Clear</span>
+                  <Cross2Icon className="size-4" />
+                </Button>
+              )}
+              {loading ? (
+                <div className="mr-1">
                   <PulsatingDots size={1} color="foreground" />
                 </div>
-              )}
-              {clearable && value && (
-                <div className="absolute right-3.5 top-1/2 -translate-y-1/2">
-                  <Button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleClear();
-                    }}
-                    type="button"
-                    variant="ghost"
-                    size="icon"
-                    className="[&>svg]:size-3"
-                  >
-                    <span className="sr-only">Clear</span>
-                    <Cross2Icon className="size-4 text-muted-foreground" />
-                  </Button>
-                </div>
+              ) : (
+                <ChevronDownIcon
+                  className={cn(
+                    "opacity-50 size-7 duration-200 ease-in-out transition-all",
+                    open && "-rotate-180",
+                  )}
+                />
               )}
             </div>
           </Button>
@@ -361,7 +380,7 @@ export function Autocomplete<T>({
           )}
         >
           <Command shouldFilter={false} className="overflow-hidden">
-            <div className="border-b w-full">
+            <div className="w-full">
               <CommandInput
                 className="bg-transparent h-7 truncate"
                 placeholder={`Search ${label.toLowerCase()}...`}
@@ -372,7 +391,6 @@ export function Autocomplete<T>({
             <CommandList
               ref={commandListRef}
               onScroll={handleScrollEnd}
-              onWheel={handleWheel}
               className="max-h-[200px] overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent"
             >
               {error && (
