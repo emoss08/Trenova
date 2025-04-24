@@ -148,12 +148,12 @@ func (h *Handler) create(c *fiber.Ctx) error {
 		return h.eh.HandleError(c, err)
 	}
 
-	createdTrailer, err := h.ts.Create(c.UserContext(), tr, reqCtx.UserID)
+	entity, err := h.ts.Create(c.UserContext(), tr, reqCtx.UserID)
 	if err != nil {
 		return h.eh.HandleError(c, err)
 	}
 
-	return c.Status(fiber.StatusOK).JSON(createdTrailer)
+	return c.Status(fiber.StatusOK).JSON(entity)
 }
 
 func (h *Handler) update(c *fiber.Ctx) error {

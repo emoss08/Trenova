@@ -11,6 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/pkg/errors"
 	"github.com/emoss08/trenova/internal/pkg/logger"
+	"github.com/emoss08/trenova/internal/pkg/postgressearch"
 	"github.com/emoss08/trenova/internal/pkg/utils/queryutils/queryfilters"
 	"github.com/rotisserie/eris"
 	"github.com/rs/zerolog"
@@ -18,6 +19,8 @@ import (
 	"go.uber.org/fx"
 )
 
+// TrailerRepositoryParams defines dependencies required for initializing the TrailerRepository.
+// This includes database connection and logger.
 type TrailerRepositoryParams struct {
 	fx.In
 
@@ -25,11 +28,20 @@ type TrailerRepositoryParams struct {
 	Logger *logger.Logger
 }
 
+// trailerRepository implements the TrailerRepository interface
+// and provides methods to manage trailer data, including CRUD operations.
 type trailerRepository struct {
 	db db.Connection
 	l  *zerolog.Logger
 }
 
+// NewTrailerRepository initalizes a new instance of trailerRepository with its dependencies.
+//
+// Parameters:
+//   - p: TrailerRepositoryParams containing dependencies.
+//
+// Returns:
+//   - repositories.TrailerRepository: A ready-to-use trailer repository instance.
 func NewTrailerRepository(p TrailerRepositoryParams) repositories.TrailerRepository {
 	log := p.Logger.With().
 		Str("repository", "trailer").
@@ -41,6 +53,15 @@ func NewTrailerRepository(p TrailerRepositoryParams) repositories.TrailerReposit
 	}
 }
 
+// filterQuery applies filters and pagination to the trailer query.
+// It includes tenant-based filtering and full-text search when provided.
+//
+// Parameters:
+//   - q: The base select query.
+//   - opts: ListTrailerOptions containing filter and pagination details.
+//
+// Returns:
+//   - *bun.SelectQuery: The filtered and paginated query.
 func (tr *trailerRepository) filterQuery(q *bun.SelectQuery, opts *repositories.ListTrailerOptions) *bun.SelectQuery {
 	q = queryfilters.TenantFilterQuery(&queryfilters.TenantFilterQueryOptions{
 		Query:      q,
@@ -57,12 +78,25 @@ func (tr *trailerRepository) filterQuery(q *bun.SelectQuery, opts *repositories.
 	}
 
 	if opts.Filter.Query != "" {
-		q = q.Where("tr.code ILIKE ?", "%"+opts.Filter.Query+"%")
+		q = postgressearch.BuildSearchQuery(
+			q,
+			opts.Filter.Query,
+			(*trailer.Trailer)(nil),
+		)
 	}
 
 	return q.Limit(opts.Filter.Limit).Offset(opts.Filter.Offset)
 }
 
+// List retrieves a list of trailers based on the previous options.
+//
+// Parameters:
+//   - ctx: The context for the operation.
+//   - opts: ListTrailerOptions containing filter and pagination details.
+//
+// Returns:
+//   - *ports.ListResult[*trailer.Trailer]: A list of trailers.
+//   - error: An error if the operation fails.
 func (tr *trailerRepository) List(ctx context.Context, opts *repositories.ListTrailerOptions) (*ports.ListResult[*trailer.Trailer], error) {
 	dba, err := tr.db.DB(ctx)
 	if err != nil {
@@ -92,6 +126,15 @@ func (tr *trailerRepository) List(ctx context.Context, opts *repositories.ListTr
 	}, nil
 }
 
+// GetByID retrieves a trailer by its ID.
+//
+// Parameters:
+//   - ctx : The context for the operation.
+//   - opts: GetTrailerByIDOptions containing Trailer ID and tentant options.
+//
+// Returns:
+//   - *trailer.Trailer: The trailer entity.
+//   - error: An error if the operation fails.
 func (tr *trailerRepository) GetByID(ctx context.Context, opts repositories.GetTrailerByIDOptions) (*trailer.Trailer, error) {
 	dba, err := tr.db.DB(ctx)
 	if err != nil {
@@ -128,6 +171,15 @@ func (tr *trailerRepository) GetByID(ctx context.Context, opts repositories.GetT
 	return entity, nil
 }
 
+// Create a trailer
+//
+// Parameters:
+//   - ctx: the context for the operation.
+//   - t: The trailer entity to create
+//
+// Returns:
+//   - *trailer.Trailer: The created trailer entity.
+//   - error: An error if the operation fails.
 func (tr *trailerRepository) Create(ctx context.Context, t *trailer.Trailer) (*trailer.Trailer, error) {
 	dba, err := tr.db.DB(ctx)
 	if err != nil {
@@ -159,6 +211,15 @@ func (tr *trailerRepository) Create(ctx context.Context, t *trailer.Trailer) (*t
 	return t, nil
 }
 
+// Update a trailer
+//
+// Parameters:
+//   - ctx: the context for the operation.
+//   - t: The trailer entity to update
+//
+// Returns:
+//   - *trailer.Trailer: The updated trailer entity.
+//   - error: An error if the operation fails.
 func (tr *trailerRepository) Update(ctx context.Context, t *trailer.Trailer) (*trailer.Trailer, error) {
 	dba, err := tr.db.DB(ctx)
 	if err != nil {

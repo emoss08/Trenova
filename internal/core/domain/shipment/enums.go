@@ -1,6 +1,6 @@
 package shipment
 
-import "errors"
+import "github.com/rotisserie/eris"
 
 type Status string
 
@@ -57,7 +57,7 @@ func StatusFromString(status string) (Status, error) {
 	case "Canceled":
 		return StatusCanceled, nil
 	default:
-		return "", errors.New("invalid status")
+		return "", eris.New("invalid shipment status")
 	}
 }
 

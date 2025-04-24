@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/pkg/errors"
+	"github.com/rotisserie/eris"
 )
 
 type Status string
@@ -12,6 +13,17 @@ const (
 	StatusActive   = Status("Active")
 	StatusInactive = Status("Inactive")
 )
+
+func StatusFromString(s string) (Status, error) {
+	switch s {
+	case "Active":
+		return StatusActive, nil
+	case "Inactive":
+		return StatusInactive, nil
+	default:
+		return "", eris.New("invalid status")
+	}
+}
 
 type Gender string
 
@@ -38,6 +50,21 @@ const (
 	// EquipmentStatusSold is the equipment is sold
 	EquipmentStatusSold = EquipmentStatus("Sold")
 )
+
+func EquipmentStatusFromString(s string) (EquipmentStatus, error) {
+	switch s {
+	case "Available":
+		return EquipmentStatusAvailable, nil
+	case "OutOfService":
+		return EquipmentStatusOOS, nil
+	case "AtMaintenance":
+		return EquipmentStatusAtMaintenance, nil
+	case "Sold":
+		return EquipmentStatusSold, nil
+	default:
+		return "", eris.New("invalid equipment status")
+	}
+}
 
 type RoutingProvider string
 

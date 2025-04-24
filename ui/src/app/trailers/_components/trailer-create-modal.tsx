@@ -25,6 +25,10 @@ export function CreateTrailerModal({ open, onOpenChange }: TableSheetProps) {
       equipmentManufacturerId: "",
       fleetCodeId: "",
       registrationStateId: "",
+      createdAt: undefined,
+      updatedAt: undefined,
+      id: undefined,
+      version: undefined,
     },
   });
 

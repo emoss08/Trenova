@@ -10,6 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/fleetcode"
 	"github.com/emoss08/trenova/internal/core/domain/organization"
 	"github.com/emoss08/trenova/internal/core/domain/usstate"
+	"github.com/emoss08/trenova/internal/core/ports/infra"
 	"github.com/emoss08/trenova/internal/pkg/errors"
 	"github.com/emoss08/trenova/internal/pkg/utils/timeutils"
 	"github.com/emoss08/trenova/pkg/types/pulid"
@@ -21,6 +22,7 @@ import (
 var (
 	_ bun.BeforeAppendModelHook = (*Trailer)(nil)
 	_ domain.Validatable        = (*Trailer)(nil)
+	_ infra.PostgresSearchable  = (*Trailer)(nil)
 )
 
 type Trailer struct {
@@ -61,23 +63,39 @@ type Trailer struct {
 
 func (t *Trailer) Validate(ctx context.Context, multiErr *errors.MultiError) {
 	err := validation.ValidateStructWithContext(ctx, t,
-		// Code is required and must be between 1 and 100 characters
+		// * Code is required and must be between 1 and 50 characters
 		validation.Field(&t.Code,
 			validation.Required.Error("Code is required"),
-			validation.Length(1, 100).Error("Code must be between 1 and 100 characters"),
+			validation.Length(1, 50).Error("Code must be between 1 and 50 characters"),
 		),
 
-		// Equipment Type ID is required
+		// * Equipment Type ID is required
 		validation.Field(&t.EquipmentTypeID,
 			validation.Required.Error("Equipment Type is required"),
 		),
 
-		// Ensure VIN is valid.
+		// * Make must be between 1 and 50 characters
+		validation.Field(&t.Make,
+			validation.Length(1, 50).Error("Make must be between 1 and 50 characters"),
+		),
+
+		// * Year must be between 1900 and 2099
+		validation.Field(&t.Year,
+			validation.Min(1900).Error("Year must be between 1900 and 2099"),
+			validation.Max(2099).Error("Year must be between 1900 and 2099"),
+		),
+
+		// * Model is required and must be between 1 and 50 characters
+		validation.Field(&t.Model,
+			validation.Length(1, 50).Error("Model must be between 1 and 50 characters"),
+		),
+
+		// * Ensure VIN is valid.
 		validation.Field(&t.Vin,
 			validation.By(domain.ValidateVin),
 		),
 
-		// Equipment Manufacturer ID is required
+		// * Equipment Manufacturer ID is required
 		validation.Field(&t.EquipmentManufacturerID,
 			validation.Required.Error("Equipment Manufacturer is required"),
 		),
@@ -114,4 +132,35 @@ func (t *Trailer) BeforeAppendModel(_ context.Context, query bun.Query) error {
 	}
 
 	return nil
+}
+
+func (t *Trailer) GetPostgresSearchConfig() infra.PostgresSearchConfig {
+	return infra.PostgresSearchConfig{
+		TableAlias: "tr",
+		Fields: []infra.PostgresSearchableField{
+			{
+				Name:   "code",
+				Weight: "A",
+				Type:   infra.PostgresSearchTypeText,
+			},
+			{
+				Name:   "vin",
+				Weight: "B",
+				Type:   infra.PostgresSearchTypeText,
+			},
+			{
+				Name:   "license_plate_number",
+				Weight: "C",
+				Type:   infra.PostgresSearchTypeText,
+			},
+			{
+				Name:   "registration_number",
+				Weight: "D",
+				Type:   infra.PostgresSearchTypeText,
+			},
+		},
+		MinLength:       2,
+		MaxTerms:        6,
+		UsePartialMatch: true,
+	}
 }

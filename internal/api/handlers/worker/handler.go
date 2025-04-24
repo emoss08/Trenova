@@ -66,7 +66,7 @@ func (h *Handler) selectOptions(c *fiber.Ctx) error {
 		return h.eh.HandleError(c, err)
 	}
 
-	opts := &repositories.ListWorkerOptions{
+	req := &repositories.ListWorkerRequest{
 		Filter: &ports.LimitOffsetQueryOptions{
 			Query: c.Query("query"),
 			TenantOpts: &ports.TenantOptions{
@@ -79,7 +79,7 @@ func (h *Handler) selectOptions(c *fiber.Ctx) error {
 		},
 	}
 
-	options, err := h.ws.SelectOptions(c.UserContext(), opts)
+	options, err := h.ws.SelectOptions(c.UserContext(), req)
 	if err != nil {
 		return h.eh.HandleError(c, err)
 	}
@@ -103,10 +103,13 @@ func (h *Handler) list(c *fiber.Ctx) error {
 			return nil, h.eh.HandleError(fc, err)
 		}
 
-		return h.ws.List(fc.UserContext(), &repositories.ListWorkerOptions{
-			Filter:         filter,
-			IncludeProfile: c.QueryBool("includeProfile"),
-			IncludePTO:     c.QueryBool("includePTO"),
+		return h.ws.List(fc.UserContext(), &repositories.ListWorkerRequest{
+			Filter: filter,
+			FilterOptions: repositories.WorkerFilterOptions{
+				Status:         fc.Query("status"),
+				IncludeProfile: fc.QueryBool("includeProfile"),
+				IncludePTO:     fc.QueryBool("includePTO"),
+			},
 		})
 	}
 
@@ -124,13 +127,15 @@ func (h *Handler) get(c *fiber.Ctx) error {
 		return h.eh.HandleError(c, err)
 	}
 
-	wrk, err := h.ws.Get(c.UserContext(), repositories.GetWorkerByIDOptions{
-		WorkerID:       workerID,
-		BuID:           reqCtx.BuID,
-		OrgID:          reqCtx.OrgID,
-		UserID:         reqCtx.UserID,
-		IncludeProfile: c.QueryBool("includeProfile"),
-		IncludePTO:     c.QueryBool("includePTO"),
+	wrk, err := h.ws.Get(c.UserContext(), &repositories.GetWorkerByIDRequest{
+		WorkerID: workerID,
+		BuID:     reqCtx.BuID,
+		OrgID:    reqCtx.OrgID,
+		UserID:   reqCtx.UserID,
+		FilterOptions: repositories.WorkerFilterOptions{
+			IncludeProfile: c.QueryBool("includeProfile"),
+			IncludePTO:     c.QueryBool("includePTO"),
+		},
 	})
 	if err != nil {
 		return h.eh.HandleError(c, err)
@@ -153,12 +158,12 @@ func (h *Handler) create(c *fiber.Ctx) error {
 		return h.eh.HandleError(c, err)
 	}
 
-	createdWorker, err := h.ws.Create(c.UserContext(), wkr, reqCtx.UserID)
+	entity, err := h.ws.Create(c.UserContext(), wkr, reqCtx.UserID)
 	if err != nil {
 		return h.eh.HandleError(c, err)
 	}
 
-	return c.Status(fiber.StatusOK).JSON(createdWorker)
+	return c.Status(fiber.StatusOK).JSON(entity)
 }
 
 func (h *Handler) update(c *fiber.Ctx) error {
@@ -181,10 +186,10 @@ func (h *Handler) update(c *fiber.Ctx) error {
 		return h.eh.HandleError(c, err)
 	}
 
-	updatedWorker, err := h.ws.Update(c.UserContext(), wkr, reqCtx.UserID)
+	entity, err := h.ws.Update(c.UserContext(), wkr, reqCtx.UserID)
 	if err != nil {
 		return h.eh.HandleError(c, err)
 	}
 
-	return c.Status(fiber.StatusOK).JSON(updatedWorker)
+	return c.Status(fiber.StatusOK).JSON(entity)
 }
