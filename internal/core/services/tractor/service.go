@@ -238,7 +238,7 @@ func (s *Service) Update(ctx context.Context, t *tractor.Tractor, userID pulid.I
 		TractorID: t.ID,
 		OrgID:     t.OrganizationID,
 		BuID:      t.BusinessUnitID,
-		FilterOptions: &repositories.TractorFilterOptions{
+		FilterOptions: repositories.TractorFilterOptions{
 			IncludeWorkerDetails:    true,
 			IncludeEquipmentDetails: true,
 			IncludeFleetDetails:     true,

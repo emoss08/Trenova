@@ -22,20 +22,11 @@ type ListShipmentOptions struct {
 }
 
 type GetShipmentByIDOptions struct {
-	// The ID of the shipment
-	ID pulid.ID
-
-	// The ID of the organization
-	OrgID pulid.ID
-
-	// The ID of the business unit
-	BuID pulid.ID
-
-	// The ID of the user (Optional)
-	UserID pulid.ID
-
-	// Shipment options (Optional)
-	ShipmentOptions ShipmentOptions
+	ID              pulid.ID
+	OrgID           pulid.ID
+	BuID            pulid.ID
+	UserID          pulid.ID
+	ShipmentOptions ShipmentOptions `query:"shipmentOptions"`
 }
 
 type UpdateShipmentStatusRequest struct {

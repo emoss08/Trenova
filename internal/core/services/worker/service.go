@@ -25,18 +25,18 @@ type ServiceParams struct {
 	fx.In
 
 	Logger       *logger.Logger
+	Validator    *workervalidator.Validator
 	Repo         repositories.WorkerRepository
 	PermService  services.PermissionService
 	AuditService services.AuditService
-	Validator    *workervalidator.Validator
 }
 
 type Service struct {
-	repo repositories.WorkerRepository
 	l    *zerolog.Logger
+	v    *workervalidator.Validator
+	repo repositories.WorkerRepository
 	ps   services.PermissionService
 	as   services.AuditService
-	v    *workervalidator.Validator
 }
 
 func NewService(p ServiceParams) *Service {
@@ -53,34 +53,34 @@ func NewService(p ServiceParams) *Service {
 	}
 }
 
-func (s *Service) SelectOptions(ctx context.Context, opts *repositories.ListWorkerOptions) ([]*types.SelectOption, error) {
-	result, err := s.repo.List(ctx, opts)
+func (s *Service) SelectOptions(ctx context.Context, req *repositories.ListWorkerRequest) ([]*types.SelectOption, error) {
+	result, err := s.repo.List(ctx, req)
 	if err != nil {
 		return nil, eris.Wrap(err, "failed to list workers")
 	}
 
-	options := make([]*types.SelectOption, len(result.Items))
-	for i, worker := range result.Items {
-		options[i] = &types.SelectOption{
+	options := make([]*types.SelectOption, 0, len(result.Items))
+	for _, worker := range result.Items {
+		options = append(options, &types.SelectOption{
 			Value: worker.ID.String(),
 			Label: worker.FullName(),
-		}
+		})
 	}
 
 	return options, nil
 }
 
-func (s *Service) List(ctx context.Context, opts *repositories.ListWorkerOptions) (*ports.ListResult[*worker.Worker], error) {
+func (s *Service) List(ctx context.Context, req *repositories.ListWorkerRequest) (*ports.ListResult[*worker.Worker], error) {
 	log := s.l.With().Str("operation", "List").Logger()
 
 	result, err := s.ps.HasAnyPermissions(ctx,
 		[]*services.PermissionCheck{
 			{
-				UserID:         opts.Filter.TenantOpts.UserID,
+				UserID:         req.Filter.TenantOpts.UserID,
 				Resource:       permission.ResourceWorker,
 				Action:         permission.ActionRead,
-				BusinessUnitID: opts.Filter.TenantOpts.BuID,
-				OrganizationID: opts.Filter.TenantOpts.OrgID,
+				BusinessUnitID: req.Filter.TenantOpts.BuID,
+				OrganizationID: req.Filter.TenantOpts.OrgID,
 			},
 		})
 	if err != nil {
@@ -92,7 +92,7 @@ func (s *Service) List(ctx context.Context, opts *repositories.ListWorkerOptions
 		return nil, errors.NewAuthorizationError("You do not have permission to read workers")
 	}
 
-	entities, err := s.repo.List(ctx, opts)
+	entities, err := s.repo.List(ctx, req)
 	if err != nil {
 		log.Error().Err(err).Msg("failed to list workers")
 		return nil, eris.Wrap(err, "failed to list workers")
@@ -104,20 +104,20 @@ func (s *Service) List(ctx context.Context, opts *repositories.ListWorkerOptions
 	}, nil
 }
 
-func (s *Service) Get(ctx context.Context, opts repositories.GetWorkerByIDOptions) (*worker.Worker, error) {
+func (s *Service) Get(ctx context.Context, req *repositories.GetWorkerByIDRequest) (*worker.Worker, error) {
 	log := s.l.With().
 		Str("operation", "GetByID").
-		Str("id", opts.WorkerID.String()).
+		Str("id", req.WorkerID.String()).
 		Logger()
 
 	result, err := s.ps.HasAnyPermissions(ctx,
 		[]*services.PermissionCheck{
 			{
-				UserID:         opts.UserID,
+				UserID:         req.UserID,
 				Resource:       permission.ResourceWorker,
 				Action:         permission.ActionRead,
-				BusinessUnitID: opts.BuID,
-				OrganizationID: opts.OrgID,
+				BusinessUnitID: req.BuID,
+				OrganizationID: req.OrgID,
 			},
 		},
 	)
@@ -130,7 +130,7 @@ func (s *Service) Get(ctx context.Context, opts repositories.GetWorkerByIDOption
 		return nil, errors.NewAuthorizationError("You do not have permission to read this worker")
 	}
 
-	entity, err := s.repo.GetByID(ctx, opts)
+	entity, err := s.repo.GetByID(ctx, req)
 	if err != nil {
 		log.Error().Err(err).Msg("failed to get worker")
 		return nil, eris.Wrap(err, "failed to get worker")
@@ -232,10 +232,14 @@ func (s *Service) Update(ctx context.Context, wrk *worker.Worker, userID pulid.I
 		return nil, err
 	}
 
-	original, err := s.repo.GetByID(ctx, repositories.GetWorkerByIDOptions{
+	original, err := s.repo.GetByID(ctx, &repositories.GetWorkerByIDRequest{
+		WorkerID: wrk.ID,
 		OrgID:    wrk.OrganizationID,
 		BuID:     wrk.BusinessUnitID,
-		WorkerID: wrk.ID,
+		FilterOptions: repositories.WorkerFilterOptions{
+			IncludeProfile: true,
+			IncludePTO:     true,
+		},
 	})
 	if err != nil {
 		return nil, eris.Wrap(err, "get worker")
