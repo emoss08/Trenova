@@ -100,22 +100,6 @@ func (s *Service) Get(ctx context.Context, opts repositories.GetUserByIDOptions)
 		Str("shipmentID", opts.UserID.String()).
 		Logger()
 
-	// result, err := s.ps.HasPermission(ctx, &services.PermissionCheck{
-	// 	UserID:         opts.UserID,
-	// 	BusinessUnitID: opts.BuID,
-	// 	OrganizationID: opts.OrgID,
-	// 	Resource:       permission.ResourceUser,
-	// 	Action:         permission.ActionRead,
-	// })
-	// if err != nil {
-	// 	return nil, eris.Wrap(err, "check permission")
-	// }
-
-	// if !result.Allowed {
-	// 	s.l.Error().Msg("user does not have permission to view user")
-	// 	return nil, errors.NewAuthorizationError("You do not have permission to view this user")
-	// }
-
 	entity, err := s.repo.GetByID(ctx, opts)
 	if err != nil {
 		log.Error().Err(err).Msg("failed to get user")
