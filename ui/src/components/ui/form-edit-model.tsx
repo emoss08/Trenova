@@ -8,7 +8,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Button } from "@/components/ui/button";
+import { Button, FormSaveButton } from "@/components/ui/button";
 import {
   Dialog,
   DialogBody,
@@ -28,7 +28,8 @@ import { cn } from "@/lib/utils";
 import { useUser } from "@/stores/user-store";
 import { type EditTableSheetProps } from "@/types/data-table";
 import { type API_ENDPOINTS } from "@/types/server";
-import { useCallback, useEffect } from "react";
+import { useQueryClient } from "@tanstack/react-query";
+import { useCallback, useEffect, useRef } from "react";
 import {
   FormProvider,
   type FieldValues,
@@ -37,12 +38,6 @@ import {
 import { toast } from "sonner";
 import { ComponentLoader } from "./component-loader";
 import { Form } from "./form";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "./tooltip";
 
 type FormEditModalProps<T extends FieldValues> = EditTableSheetProps<T> & {
   url: API_ENDPOINTS;
@@ -68,15 +63,30 @@ export function FormEditModal<T extends FieldValues>({
   isLoading,
   error,
 }: FormEditModalProps<T>) {
+  const queryClient = useQueryClient();
+
   const { isPopout, closePopout } = usePopoutWindow();
   const user = useUser();
+  const previousRecordIdRef = useRef<string | number | null>(null);
 
   const {
     setError,
-    formState: { isDirty, isSubmitting, isSubmitSuccessful },
+    formState: { isDirty, isSubmitting },
     handleSubmit,
     reset,
   } = form;
+
+  // Update form values when currentRecord changes and is not loading
+  useEffect(() => {
+    if (
+      !isLoading &&
+      currentRecord &&
+      currentRecord.id !== previousRecordIdRef.current
+    ) {
+      reset(currentRecord);
+      previousRecordIdRef.current = currentRecord.id;
+    }
+  }, [currentRecord, isLoading, reset]);
 
   const handleClose = useCallback(() => {
     onOpenChange(false);
@@ -93,12 +103,29 @@ export function FormEditModal<T extends FieldValues>({
       const response = await http.put<T>(`${url}${currentRecord?.id}`, values);
       return response.data;
     },
-    onSuccess: () => {
+    onMutate: async (newValues) => {
+      // * Cancel any outgoing refetches so they don't overwrite our optmistic update
+      await queryClient.cancelQueries({
+        queryKey: [queryKey],
+      });
+
+      // * Snapshot the previous value
+      const previousRecord = queryClient.getQueryData([queryKey]);
+
+      // * Optimistically update to the new value
+      queryClient.setQueryData([queryKey], newValues);
+
+      return { previousRecord, newValues };
+    },
+    onSuccess: (newValues) => {
       toast.success("Changes have been saved", {
         description: `${title} updated successfully`,
       });
+
+      // * Close the modal on success
       onOpenChange(false);
 
+      // * Invalidate the query
       broadcastQueryInvalidation({
         queryKey: [queryKey],
         options: {
@@ -109,6 +136,9 @@ export function FormEditModal<T extends FieldValues>({
           refetchType: "all",
         },
       });
+
+      // * Reset the form to the new values
+      reset(newValues);
     },
     // Pass in the form's setError function
     setFormError: setError,
@@ -139,12 +169,6 @@ export function FormEditModal<T extends FieldValues>({
     [mutateAsync],
   );
 
-  // Reset the form when the mutation is successful
-  // This is recommended by react-hook-form - https://react-hook-form.com/docs/useform/reset
-  useEffect(() => {
-    reset();
-  }, [isSubmitSuccessful, reset]);
-
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
       if (
@@ -161,12 +185,6 @@ export function FormEditModal<T extends FieldValues>({
     document.addEventListener("keydown", handleKeyDown);
     return () => document.removeEventListener("keydown", handleKeyDown);
   }, [open, isSubmitting, handleSubmit, onSubmit]);
-
-  useEffect(() => {
-    if (!isLoading && currentRecord) {
-      reset(currentRecord);
-    }
-  }, [currentRecord, isLoading, reset]);
 
   // If there's an error, show a toast and close the modal
   useEffect(() => {
@@ -203,41 +221,27 @@ export function FormEditModal<T extends FieldValues>({
           </DialogDescription>
         )}
       </DialogHeader>
-
-      {isLoading ? (
-        <DialogBody>
-          <ComponentLoader />
-        </DialogBody>
-      ) : (
-        <FormProvider {...form}>
-          <Form onSubmit={handleSubmit(onSubmit)}>
-            <DialogBody>{formComponent}</DialogBody>
-            <DialogFooter>
-              <Button type="button" variant="outline" onClick={onClose}>
-                Cancel
-              </Button>
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button type="submit" isLoading={isSubmitting}>
-                      Save {isPopout ? "and Close" : "Changes"}
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent className="flex items-center gap-2">
-                    <kbd className="inline-flex h-5 max-h-full items-center rounded bg-muted-foreground/60 px-1 font-[inherit] text-[0.625rem] font-medium text-background">
-                      Ctrl
-                    </kbd>
-                    <kbd className="inline-flex h-5 max-h-full items-center rounded bg-muted-foreground/60 px-1 font-[inherit] text-[0.625rem] font-medium text-background">
-                      Enter
-                    </kbd>
-                    <p>to save and close the {title}</p>
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
-            </DialogFooter>
-          </Form>
-        </FormProvider>
-      )}
+      <FormProvider {...form}>
+        <Form onSubmit={handleSubmit(onSubmit)}>
+          <DialogBody>
+            {isLoading ? (
+              <ComponentLoader message={`Loading ${title}...`} />
+            ) : (
+              formComponent
+            )}
+          </DialogBody>
+          <DialogFooter>
+            <Button type="button" variant="outline" onClick={onClose}>
+              Cancel
+            </Button>
+            <FormSaveButton
+              isPopout={isPopout}
+              isSubmitting={isSubmitting}
+              title={title}
+            />
+          </DialogFooter>
+        </Form>
+      </FormProvider>
     </DialogContent>
   );
 
