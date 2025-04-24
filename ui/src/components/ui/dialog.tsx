@@ -5,12 +5,7 @@ import { cn } from "@/lib/utils";
 import { faXmark } from "@fortawesome/pro-regular-svg-icons";
 import { Button } from "./button";
 import { Icon } from "./icons";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "./tooltip";
+import { Tooltip, TooltipContent, TooltipTrigger } from "./tooltip";
 
 function Dialog({
   ...props
@@ -79,34 +74,29 @@ function DialogContent({
         >
           {children}
           {withClose && (
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <DialogPrimitive.Close
-                    asChild
-                    className="absolute right-2 top-2"
-                  >
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="rounded-sm px-1.5 transition-[border-color,box-shadow] duration-100 ease-in-out focus:border focus:border-blue-600 focus:outline-hidden focus:ring-4 focus:ring-blue-600/20 disabled:pointer-events-none [&_svg]:size-4 "
-                    >
-                      <Icon icon={faXmark} className="size-4" />
-                      <span className="sr-only">Close</span>
-                    </Button>
-                  </DialogPrimitive.Close>
-                </TooltipTrigger>
-                <TooltipContent
-                  className="flex items-center gap-2"
-                  side="right"
+            <Tooltip delayDuration={500}>
+              <TooltipTrigger asChild>
+                <DialogPrimitive.Close
+                  asChild
+                  className="absolute right-2 top-2"
                 >
-                  <kbd className="-me-1 inline-flex h-5 max-h-full items-center rounded bg-background px-1 font-[inherit] text-[0.625rem] font-medium text-foreground">
-                    Esc
-                  </kbd>
-                  <p>to close the dialog</p>
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="rounded-sm px-1.5 transition-[border-color,box-shadow] duration-100 ease-in-out focus:border focus:border-blue-600 focus:outline-hidden focus:ring-4 focus:ring-blue-600/20 disabled:pointer-events-none [&_svg]:size-4 "
+                  >
+                    <Icon icon={faXmark} className="size-4" />
+                    <span className="sr-only">Close</span>
+                  </Button>
+                </DialogPrimitive.Close>
+              </TooltipTrigger>
+              <TooltipContent className="flex items-center gap-2" side="bottom">
+                <kbd className="-me-1 inline-flex h-5 max-h-full items-center rounded bg-background px-1 font-[inherit] text-[0.625rem] font-medium text-foreground">
+                  Esc
+                </kbd>
+                <p>to close the dialog</p>
+              </TooltipContent>
+            </Tooltip>
           )}
         </DialogPrimitive.Content>
       </DialogOverlay>
