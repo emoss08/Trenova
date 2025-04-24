@@ -33,7 +33,7 @@ func TestTractorRepository(t *testing.T) {
 	})
 
 	t.Run("list tractors", func(t *testing.T) {
-		opts := &repoports.ListTractorOptions{
+		opts := &repoports.ListTractorRequest{
 			Filter: &ports.LimitOffsetQueryOptions{
 				Limit:  10,
 				Offset: 0,
@@ -48,7 +48,7 @@ func TestTractorRepository(t *testing.T) {
 	})
 
 	t.Run("list tractors with query", func(t *testing.T) {
-		opts := &repoports.ListTractorOptions{
+		opts := &repoports.ListTractorRequest{
 			Filter: &ports.LimitOffsetQueryOptions{
 				Limit:  10,
 				Offset: 0,
@@ -64,8 +64,10 @@ func TestTractorRepository(t *testing.T) {
 	})
 
 	t.Run("list tractors with workers", func(t *testing.T) {
-		opts := &repoports.ListTractorOptions{
-			IncludeWorkerDetails: true,
+		opts := &repoports.ListTractorRequest{
+			FilterOptions: &repoports.TractorFilterOptions{
+				IncludeWorkerDetails: true,
+			},
 			Filter: &ports.LimitOffsetQueryOptions{
 				Limit:  10,
 				Offset: 0,
@@ -85,8 +87,10 @@ func TestTractorRepository(t *testing.T) {
 	})
 
 	t.Run("list tractors with equipment details", func(t *testing.T) {
-		opts := &repoports.ListTractorOptions{
-			IncludeEquipmentDetails: true,
+		opts := &repoports.ListTractorRequest{
+			FilterOptions: &repoports.TractorFilterOptions{
+				IncludeEquipmentDetails: true,
+			},
 			Filter: &ports.LimitOffsetQueryOptions{
 				Limit:  10,
 				Offset: 0,
@@ -106,8 +110,10 @@ func TestTractorRepository(t *testing.T) {
 	})
 
 	t.Run("list tractors with fleet details", func(t *testing.T) {
-		opts := &repoports.ListTractorOptions{
-			IncludeFleetDetails: true,
+		opts := &repoports.ListTractorRequest{
+			FilterOptions: &repoports.TractorFilterOptions{
+				IncludeFleetDetails: true,
+			},
 			Filter: &ports.LimitOffsetQueryOptions{
 				Limit:  10,
 				Offset: 0,
@@ -126,18 +132,18 @@ func TestTractorRepository(t *testing.T) {
 	})
 
 	t.Run("get tractor by id", func(t *testing.T) {
-		testutils.TestRepoGetByID(ctx, t, repo, repoports.GetTractorByIDOptions{
-			ID:    trk.ID,
-			OrgID: org.ID,
-			BuID:  bu.ID,
+		testutils.TestRepoGetByID(ctx, t, repo, &repoports.GetTractorByIDRequest{
+			TractorID: trk.ID,
+			OrgID:     org.ID,
+			BuID:      bu.ID,
 		})
 	})
 
 	t.Run("get tractor with invalid id", func(t *testing.T) {
-		entity, err := repo.GetByID(ctx, repoports.GetTractorByIDOptions{
-			ID:    "invalid-id",
-			OrgID: org.ID,
-			BuID:  bu.ID,
+		entity, err := repo.GetByID(ctx, &repoports.GetTractorByIDRequest{
+			TractorID: "invalid-id",
+			OrgID:     org.ID,
+			BuID:      bu.ID,
 		})
 
 		require.Error(t, err)
@@ -145,11 +151,13 @@ func TestTractorRepository(t *testing.T) {
 	})
 
 	t.Run("get tractor by id with workers", func(t *testing.T) {
-		entity, err := repo.GetByID(ctx, repoports.GetTractorByIDOptions{
-			ID:                   trk.ID,
-			OrgID:                org.ID,
-			BuID:                 bu.ID,
-			IncludeWorkerDetails: true,
+		entity, err := repo.GetByID(ctx, &repoports.GetTractorByIDRequest{
+			TractorID: trk.ID,
+			OrgID:     org.ID,
+			BuID:      bu.ID,
+			FilterOptions: &repoports.TractorFilterOptions{
+				IncludeWorkerDetails: true,
+			},
 		})
 
 		require.NoError(t, err)
@@ -159,11 +167,13 @@ func TestTractorRepository(t *testing.T) {
 	})
 
 	t.Run("get tractor by id with equipment details", func(t *testing.T) {
-		entity, err := repo.GetByID(ctx, repoports.GetTractorByIDOptions{
-			ID:                      trk.ID,
-			OrgID:                   org.ID,
-			BuID:                    bu.ID,
-			IncludeEquipmentDetails: true,
+		entity, err := repo.GetByID(ctx, &repoports.GetTractorByIDRequest{
+			TractorID: trk.ID,
+			OrgID:     org.ID,
+			BuID:      bu.ID,
+			FilterOptions: &repoports.TractorFilterOptions{
+				IncludeEquipmentDetails: true,
+			},
 		})
 
 		require.NoError(t, err)
@@ -173,11 +183,13 @@ func TestTractorRepository(t *testing.T) {
 	})
 
 	t.Run("get tractor by id with fleet details", func(t *testing.T) {
-		entity, err := repo.GetByID(ctx, repoports.GetTractorByIDOptions{
-			ID:                  trk.ID,
-			OrgID:               org.ID,
-			BuID:                bu.ID,
-			IncludeFleetDetails: true,
+		entity, err := repo.GetByID(ctx, &repoports.GetTractorByIDRequest{
+			TractorID: trk.ID,
+			OrgID:     org.ID,
+			BuID:      bu.ID,
+			FilterOptions: &repoports.TractorFilterOptions{
+				IncludeFleetDetails: true,
+			},
 		})
 
 		require.NoError(t, err)
@@ -186,10 +198,10 @@ func TestTractorRepository(t *testing.T) {
 	})
 
 	t.Run("get tractor by id failure", func(t *testing.T) {
-		result, err := repo.GetByID(ctx, repoports.GetTractorByIDOptions{
-			ID:    "invalid-id",
-			OrgID: org.ID,
-			BuID:  bu.ID,
+		result, err := repo.GetByID(ctx, &repoports.GetTractorByIDRequest{
+			TractorID: "invalid-id",
+			OrgID:     org.ID,
+			BuID:      bu.ID,
 		})
 
 		require.Error(t, err)

@@ -12,8 +12,23 @@ export function CreateTractorModal({ open, onOpenChange }: TableSheetProps) {
     defaultValues: {
       status: EquipmentStatus.Available,
       vin: "",
-      equipmentManufacturerId: undefined,
-      secondaryWorkerId: undefined,
+      equipmentManufacturerId: "",
+      secondaryWorkerId: "",
+      equipmentTypeId: "",
+      primaryWorkerId: "",
+      fleetCodeId: "",
+      stateId: "",
+      code: "",
+      model: "",
+      make: "",
+      year: undefined,
+      registrationNumber: "",
+      licensePlateNumber: "",
+      registrationExpiry: undefined,
+      createdAt: undefined,
+      updatedAt: undefined,
+      version: undefined,
+      id: undefined,
     },
   });
 
@@ -26,6 +41,7 @@ export function CreateTractorModal({ open, onOpenChange }: TableSheetProps) {
       form={form}
       url="/tractors/"
       queryKey="tractor-list"
+      className="max-w-[500px]"
     />
   );
 }

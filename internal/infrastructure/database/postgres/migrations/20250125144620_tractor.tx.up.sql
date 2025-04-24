@@ -25,6 +25,8 @@ CREATE TABLE IF NOT EXISTS "tractors" (
     "make" varchar(50),
     "year" int,
     "license_plate_number" varchar(50),
+    "registration_number" varchar(50),
+    "registration_expiry" bigint,
     "vin" vin_code_optional,
     -- Metadata
     "version" bigint NOT NULL DEFAULT 0,

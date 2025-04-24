@@ -8,24 +8,27 @@ import (
 	"github.com/emoss08/trenova/pkg/types/pulid"
 )
 
-type ListTractorOptions struct {
-	Filter                  *ports.LimitOffsetQueryOptions
-	IncludeWorkerDetails    bool `query:"includeWorkerDetails"`
-	IncludeEquipmentDetails bool `query:"includeEquipmentDetails"`
-	IncludeFleetDetails     bool `query:"includeFleetDetails"`
+type TractorFilterOptions struct {
+	IncludeWorkerDetails    bool   `query:"includeWorkerDetails"`
+	IncludeEquipmentDetails bool   `query:"includeEquipmentDetails"`
+	IncludeFleetDetails     bool   `query:"includeFleetDetails"`
+	Status                  string `query:"status"`
 }
 
-type GetTractorByIDOptions struct {
-	ID                      pulid.ID
-	OrgID                   pulid.ID
-	BuID                    pulid.ID
-	UserID                  pulid.ID
-	IncludeWorkerDetails    bool `query:"includeWorkerDetails"`
-	IncludeEquipmentDetails bool `query:"includeEquipmentDetails"`
-	IncludeFleetDetails     bool `query:"includeFleetDetails"`
+type ListTractorRequest struct {
+	Filter        *ports.LimitOffsetQueryOptions
+	FilterOptions *TractorFilterOptions `query:"filterOptions"`
 }
 
-type AssignmentOptions struct {
+type GetTractorByIDRequest struct {
+	TractorID     pulid.ID
+	OrgID         pulid.ID
+	BuID          pulid.ID
+	UserID        pulid.ID
+	FilterOptions *TractorFilterOptions `query:"filterOptions"`
+}
+
+type TractorAssignmentRequest struct {
 	TractorID pulid.ID `json:"tractorId"`
 	OrgID     pulid.ID `json:"orgId"`
 	BuID      pulid.ID `json:"buId"`
@@ -37,9 +40,9 @@ type AssignmentResponse struct {
 }
 
 type TractorRepository interface {
-	Assignment(ctx context.Context, opts AssignmentOptions) (*AssignmentResponse, error)
-	List(ctx context.Context, opts *ListTractorOptions) (*ports.ListResult[*tractor.Tractor], error)
-	GetByID(ctx context.Context, opts GetTractorByIDOptions) (*tractor.Tractor, error)
+	Assignment(ctx context.Context, req TractorAssignmentRequest) (*AssignmentResponse, error)
+	List(ctx context.Context, req *ListTractorRequest) (*ports.ListResult[*tractor.Tractor], error)
+	GetByID(ctx context.Context, req *GetTractorByIDRequest) (*tractor.Tractor, error)
 	Create(ctx context.Context, t *tractor.Tractor) (*tractor.Tractor, error)
 	Update(ctx context.Context, t *tractor.Tractor) (*tractor.Tractor, error)
 }

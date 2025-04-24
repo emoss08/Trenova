@@ -27,34 +27,29 @@ var (
 type Tractor struct {
 	bun.BaseModel `bun:"table:tractors,alias:tr" json:"-"`
 
-	// Primary identifiers
-	ID             pulid.ID `bun:"id,type:VARCHAR(100),pk,notnull" json:"id"`
-	BusinessUnitID pulid.ID `bun:"business_unit_id,type:VARCHAR(100),pk,notnull" json:"businessUnitId"`
-	OrganizationID pulid.ID `bun:"organization_id,type:VARCHAR(100),pk,notnull" json:"organizationId"`
-
-	// Relationship identifiers (Non-Primary-Keys)
-	EquipmentTypeID         pulid.ID  `bun:"equipment_type_id,type:VARCHAR(100),notnull" json:"equipmentTypeId"`
-	PrimaryWorkerID         pulid.ID  `bun:"primary_worker_id,type:VARCHAR(100),notnull" json:"primaryWorkerId"`
-	EquipmentManufacturerID pulid.ID  `bun:"equipment_manufacturer_id,type:VARCHAR(100),notnull" json:"equipmentManufacturerId"`
-	StateID                 *pulid.ID `bun:"state_id,type:VARCHAR(100),nullzero" json:"stateId"`
-	FleetCodeID             *pulid.ID `bun:"fleet_code_id,type:VARCHAR(100),nullzero" json:"fleetCodeId"`
-	SecondaryWorkerID       *pulid.ID `bun:"secondary_worker_id,type:VARCHAR(100),nullzero" json:"secondaryWorkerId"`
-
-	// Core Fields
-	Status             domain.EquipmentStatus `json:"status" bun:"status,type:equipment_status_enum,notnull,default:'Available'"`
-	Code               string                 `json:"code" bun:"code,type:VARCHAR(50),notnull"`
-	Model              string                 `json:"model" bun:"model,type:VARCHAR(50)"`
-	Make               string                 `json:"make" bun:"make,type:VARCHAR(50)"`
-	Year               *int                   `json:"year" bun:"year,type:INTEGER,nullzero"`
-	LicensePlateNumber string                 `json:"licensePlateNumber" bun:"license_plate_number,type:VARCHAR(50)"`
-	Vin                string                 `json:"vin" bun:"vin,type:vin_code_optional"`
-
-	// Metadata
-	Version      int64  `json:"version" bun:"version,type:BIGINT"`
-	CreatedAt    int64  `json:"createdAt" bun:"created_at,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	UpdatedAt    int64  `json:"updatedAt" bun:"updated_at,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	SearchVector string `json:"-" bun:"search_vector,type:TSVECTOR,scanonly"`
-	Rank         string `json:"-" bun:"rank,type:VARCHAR(100),scanonly"`
+	ID                      pulid.ID               `bun:"id,type:VARCHAR(100),pk,notnull" json:"id"`
+	BusinessUnitID          pulid.ID               `bun:"business_unit_id,type:VARCHAR(100),pk,notnull" json:"businessUnitId"`
+	OrganizationID          pulid.ID               `bun:"organization_id,type:VARCHAR(100),pk,notnull" json:"organizationId"`
+	EquipmentTypeID         pulid.ID               `bun:"equipment_type_id,type:VARCHAR(100),notnull" json:"equipmentTypeId"`
+	PrimaryWorkerID         pulid.ID               `bun:"primary_worker_id,type:VARCHAR(100),notnull" json:"primaryWorkerId"`
+	EquipmentManufacturerID pulid.ID               `bun:"equipment_manufacturer_id,type:VARCHAR(100),notnull" json:"equipmentManufacturerId"`
+	StateID                 *pulid.ID              `bun:"state_id,type:VARCHAR(100),nullzero" json:"stateId"`
+	FleetCodeID             *pulid.ID              `bun:"fleet_code_id,type:VARCHAR(100),nullzero" json:"fleetCodeId"`
+	SecondaryWorkerID       *pulid.ID              `bun:"secondary_worker_id,type:VARCHAR(100),nullzero" json:"secondaryWorkerId"`
+	Status                  domain.EquipmentStatus `json:"status" bun:"status,type:equipment_status_enum,notnull,default:'Available'"`
+	Code                    string                 `json:"code" bun:"code,type:VARCHAR(50),notnull"`
+	Model                   string                 `json:"model" bun:"model,type:VARCHAR(50)"`
+	Make                    string                 `json:"make" bun:"make,type:VARCHAR(50)"`
+	SearchVector            string                 `json:"-" bun:"search_vector,type:TSVECTOR,scanonly"`
+	Rank                    string                 `json:"-" bun:"rank,type:VARCHAR(100),scanonly"`
+	RegistrationNumber      string                 `json:"registrationNumber" bun:"registration_number,type:VARCHAR(50)"`
+	LicensePlateNumber      string                 `json:"licensePlateNumber" bun:"license_plate_number,type:VARCHAR(50)"`
+	Vin                     string                 `json:"vin" bun:"vin,type:vin_code_optional"`
+	Year                    *int                   `json:"year" bun:"year,type:INTEGER,nullzero"`
+	RegistrationExpiry      *int64                 `json:"registrationExpiry" bun:"registration_expiry,type:INTEGER,nullzero"`
+	Version                 int64                  `json:"version" bun:"version,type:BIGINT"`
+	CreatedAt               int64                  `json:"createdAt" bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	UpdatedAt               int64                  `json:"updatedAt" bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
 
 	// Relationships
 	BusinessUnit          *businessunit.BusinessUnit                   `json:"businessUnit,omitempty" bun:"rel:belongs-to,join:business_unit_id=id"`
@@ -69,30 +64,46 @@ type Tractor struct {
 
 func (t *Tractor) Validate(ctx context.Context, multiErr *errors.MultiError) {
 	err := validation.ValidateStructWithContext(ctx, t,
-		// Code is required and must be between 1 and 100 characters
+		// * Code is required and must be between 1 and 100 characters
 		validation.Field(&t.Code,
 			validation.Required.Error("Code is required"),
-			validation.Length(1, 100).Error("Code must be between 1 and 100 characters"),
+			validation.Length(1, 50).Error("Code must be between 1 and 50 characters"),
 		),
 
-		// Equipment Type ID is required
+		// * Equipment Type ID is required
 		validation.Field(&t.EquipmentTypeID,
 			validation.Required.Error("Equipment Type is required"),
 		),
 
-		// Primary Worker ID is required
+		// * Primary Worker ID is required
 		validation.Field(&t.PrimaryWorkerID,
 			validation.Required.Error("Primary Worker is required"),
 		),
 
-		// Equipment Manufacturer ID is required
-		validation.Field(&t.EquipmentManufacturerID,
-			validation.Required.Error("Equipment Manufacturer is required"),
+		// * Make must be between 1 and 50 characters
+		validation.Field(&t.Make,
+			validation.Length(1, 50).Error("Make must be between 1 and 50 characters"),
 		),
 
-		// Ensure VIN is valid.
+		// * Year must be between 1900 and 2099
+		validation.Field(&t.Year,
+			validation.Min(1900).Error("Year must be between 1900 and 2099"),
+			validation.Max(2099).Error("Year must be between 1900 and 2099"),
+		),
+
+		// * Model is required and must be between 1 and 50 characters
+		validation.Field(&t.Model,
+			validation.Length(1, 50).Error("Model must be between 1 and 50 characters"),
+		),
+
+		// * Ensure VIN is valid.
 		validation.Field(&t.Vin,
 			validation.By(domain.ValidateVin),
+		),
+
+		// * Equipment Manufacturer ID is required
+		validation.Field(&t.EquipmentManufacturerID,
+			validation.Required.Error("Equipment Manufacturer is required"),
 		),
 	)
 	if err != nil {
