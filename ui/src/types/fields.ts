@@ -159,7 +159,10 @@ export interface AutocompleteFormControlProps<T extends FieldValues> {
   rules?: RegisterOptions<T, Path<T>>;
 }
 
-export interface BaseAutocompleteFieldProps<TOption> {
+export interface BaseAutocompleteFieldProps<
+  TOption,
+  TForm extends FieldValues,
+> {
   /** Link to fetch options */
   link: API_ENDPOINTS;
   /** Preload all data ahead of time */
@@ -203,7 +206,7 @@ export interface BaseAutocompleteFieldProps<TOption> {
 }
 
 export type AutocompleteFieldProps<TOption, TForm extends FieldValues> = Omit<
-  BaseAutocompleteFieldProps<TOption>,
+  BaseAutocompleteFieldProps<TOption, TForm>,
   "onChange" | "value"
 > &
   AutocompleteFormControlProps<TForm> & {
