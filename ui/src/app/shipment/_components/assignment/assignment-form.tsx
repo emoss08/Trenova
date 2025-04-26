@@ -1,9 +1,10 @@
-import { AutocompleteField } from "@/components/fields/autocomplete";
-import { WorkerAutocompleteField } from "@/components/ui/autocomplete-fields";
+import {
+  TractorAutocompleteField,
+  TrailerAutocompleteField,
+  WorkerAutocompleteField,
+} from "@/components/ui/autocomplete-fields";
 import { FormControl, FormGroup } from "@/components/ui/form";
 import { AssignmentSchema } from "@/lib/schemas/assignment-schema";
-import { TractorSchema } from "@/lib/schemas/tractor-schema";
-import { TrailerSchema } from "@/lib/schemas/trailer-schema";
 import { getTractorAssignments } from "@/services/tractor";
 import { useQuery } from "@tanstack/react-query";
 import { useEffect } from "react";
@@ -45,31 +46,23 @@ export function AssignmentForm() {
   return (
     <FormGroup cols={2}>
       <FormControl>
-        <AutocompleteField<TractorSchema, AssignmentSchema>
+        <TractorAutocompleteField<AssignmentSchema>
           name="tractorId"
           control={control}
-          link="/tractors/"
           label="Tractor"
           rules={{ required: true }}
           placeholder="Select Tractor"
           description="Select the tractor for the assignment."
-          getOptionValue={(option) => option.id || ""}
-          getDisplayValue={(option) => `${option.code}`}
-          renderOption={(option) => `${option.code}`}
         />
       </FormControl>
       <FormControl>
-        <AutocompleteField<TrailerSchema, AssignmentSchema>
+        <TrailerAutocompleteField<AssignmentSchema>
           name="trailerId"
           control={control}
-          link="/trailers/"
           label="Trailer"
           rules={{ required: true }}
           placeholder="Select Trailer"
           description="Select the trailer for the assignment."
-          getOptionValue={(option) => option.id || ""}
-          getDisplayValue={(option) => `${option.code}`}
-          renderOption={(option) => `${option.code}`}
         />
       </FormControl>
       <FormControl>

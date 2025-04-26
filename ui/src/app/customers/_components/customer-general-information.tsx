@@ -295,9 +295,6 @@ function GoogleMapsNotice() {
       <div className="flex items-center gap-2 w-full text-blue-600 pr-2">
         <LazyImage
           src={integrationImages[IntegrationType.GoogleMaps]}
-          layout="fixed"
-          width={10}
-          height={10}
           className="size-6"
         />
         <div className="flex flex-col">
