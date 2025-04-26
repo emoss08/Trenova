@@ -257,13 +257,7 @@ export function AddressField({
               </Command>
               <div className="flex items-center gap-0.5 p-1 text-xs text-muted-foreground border-t">
                 Powered by{" "}
-                <LazyImage
-                  src={googleLogo}
-                  layout="constrained"
-                  objectFit="contain"
-                  width={50}
-                  height={10}
-                />
+                <LazyImage src={googleLogo} className="max-w-[45px]" />
               </div>
             </PopoverContent>
           </Popover>
