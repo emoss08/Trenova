@@ -38,13 +38,7 @@ export function GoogleMapsFormHeader() {
   return (
     <div className="flex flex-col gap-2">
       <div className="flex gap-4 items-center justify-center">
-        <LazyImage
-          src={logo}
-          alt="Google Maps Logo"
-          className="size-8"
-          width={10}
-          height={10}
-        />
+        <LazyImage src={logo} alt="Google Maps Logo" className="size-8" />
         <div className="flex items-center justify-center gap-1">
           <div className="size-1 rounded-full bg-muted-foreground" />
           <div className="size-1 rounded-full bg-muted-foreground" />
@@ -52,9 +46,6 @@ export function GoogleMapsFormHeader() {
         </div>
         <LazyImage
           src={integrationImages[IntegrationType.GoogleMaps]}
-          layout="fixed"
-          width={10}
-          height={10}
           className="size-8"
         />
       </div>

@@ -39,7 +39,7 @@ const vendorChunks = {
     "@radix-ui/react-tabs",
     "@radix-ui/react-visually-hidden",
     "@radix-ui/react-switch",
-    "@unpic/react",
+    "react-lazy-load-image-component",
     "nuqs",
     "sonner",
     "react-day-picker",

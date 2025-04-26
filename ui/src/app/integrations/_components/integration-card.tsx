@@ -35,9 +35,6 @@ export default function IntegrationCard({
         <div className="flex-shrink-0 rounded-full flex items-center justify-center p-2 border border-input bg-background">
           <LazyImage
             src={integrationImages[integration.type]}
-            layout="fixed"
-            width={10}
-            height={10}
             className="size-6"
           />
         </div>
