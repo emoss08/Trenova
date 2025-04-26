@@ -11,7 +11,6 @@ import (
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/pkg/errors"
 	"github.com/emoss08/trenova/internal/pkg/logger"
-	"github.com/emoss08/trenova/internal/pkg/utils/queryutils/queryfilters"
 	"github.com/emoss08/trenova/pkg/types/pulid"
 	"github.com/rotisserie/eris"
 	"github.com/rs/zerolog"
@@ -66,10 +65,9 @@ func NewUserRepository(p UserRepositoryParams) repositories.UserRepository {
 // Returns:
 //   - *bun.SelectQuery: The filtered and paginated query.
 func (ur *userRepository) filterQuery(q *bun.SelectQuery, opts *ports.LimitOffsetQueryOptions) *bun.SelectQuery {
-	q = queryfilters.TenantFilterQuery(&queryfilters.TenantFilterQueryOptions{
-		Query:      q,
-		TableAlias: "usr",
-		Filter:     opts,
+	q = q.WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+		return sq.Where("usr.business_unit_id = ?", opts.TenantOpts.BuID).
+			Where("usr.current_organization_id = ?", opts.TenantOpts.OrgID)
 	})
 
 	if opts.Query != "" {

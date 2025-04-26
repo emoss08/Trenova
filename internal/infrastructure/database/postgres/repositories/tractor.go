@@ -122,7 +122,7 @@ func (tr *tractorRepository) filterQuery(q *bun.SelectQuery, req *repositories.L
 		q = q.Where("tr.code ILIKE ? OR tr.vin ILIKE ?", "%"+req.Filter.Query+"%", "%"+req.Filter.Query+"%")
 	}
 
-	return q.Order("tr.created_at DESC").Limit(req.Filter.Limit).Offset(req.Filter.Offset)
+	return q.Order("tr.code ASC", "tr.created_at ASC").Limit(req.Filter.Limit).Offset(req.Filter.Offset)
 }
 
 // List retrieves a list of tractors based on the previous options.
