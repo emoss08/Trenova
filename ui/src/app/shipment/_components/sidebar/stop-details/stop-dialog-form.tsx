@@ -1,10 +1,9 @@
-import { AutocompleteField } from "@/components/fields/autocomplete";
 import { AutoCompleteDateTimeField } from "@/components/fields/datetime-field";
 import { InputField } from "@/components/fields/input-field";
 import { SelectField } from "@/components/fields/select-field";
+import { LocationAutocompleteField } from "@/components/ui/autocomplete-fields";
 import { FormControl, FormGroup } from "@/components/ui/form";
 import { stopStatusChoices, stopTypeChoices } from "@/lib/choices";
-import { type LocationSchema } from "@/lib/schemas/location-schema";
 import { ShipmentSchema } from "@/lib/schemas/shipment-schema";
 import { formatLocation } from "@/lib/utils";
 import { useEffect } from "react";
@@ -126,24 +125,13 @@ export function StopDialogForm({ moveIdx, stopIdx }: StopDialogFormProps) {
             />
           </FormControl>
           <FormControl cols="full">
-            <AutocompleteField<LocationSchema, ShipmentSchema>
+            <LocationAutocompleteField<ShipmentSchema>
               name={`moves.${moveIdx}.stops.${stopIdx}.locationId`}
               control={control}
-              link="/locations/"
               label="Location"
               rules={{ required: true }}
               placeholder="Select location"
               description="Select the designated location for this stop."
-              getOptionValue={(option) => option.id || ""}
-              getDisplayValue={(option) => option.name}
-              renderOption={(option) => (
-                <div className="flex flex-col gap-0.5 items-start size-full">
-                  <span className="text-sm font-normal">{option.name}</span>
-                  <span className="text-2xs text-muted-foreground truncate w-full">
-                    {formatLocation(option)}
-                  </span>
-                </div>
-              )}
               extraSearchParams={{
                 includeState: "true",
               }}

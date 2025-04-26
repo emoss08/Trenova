@@ -1,11 +1,18 @@
+import type { AccessorialChargeSchema } from "@/lib/schemas/accessorial-charge-schema";
+import type { CommoditySchema } from "@/lib/schemas/commodity-schema";
+import type { CustomerSchema } from "@/lib/schemas/customer-schema";
 import type { EquipmentManufacturerSchema } from "@/lib/schemas/equipment-manufacturer-schema";
 import type { EquipmentTypeSchema } from "@/lib/schemas/equipment-type-schema";
 import type { FleetCodeSchema } from "@/lib/schemas/fleet-code-schema";
 import type { HazardousMaterialSchema } from "@/lib/schemas/hazardous-material-schema";
 import type { LocationCategorySchema } from "@/lib/schemas/location-category-schema";
+import type { LocationSchema } from "@/lib/schemas/location-schema";
+import type { ServiceTypeSchema } from "@/lib/schemas/service-type-schema";
+import type { ShipmentTypeSchema } from "@/lib/schemas/shipment-type-schema";
+import type { TractorSchema } from "@/lib/schemas/tractor-schema";
+import type { TrailerSchema } from "@/lib/schemas/trailer-schema";
 import type { WorkerSchema } from "@/lib/schemas/worker-schema";
-import { truncateText } from "@/lib/utils";
-import { Status } from "@/types/common";
+import { formatLocation, truncateText } from "@/lib/utils";
 import type { User } from "@/types/user";
 import type {
   Control,
@@ -18,36 +25,24 @@ import { ColorOptionValue } from "../fields/select-components";
 import { PackingGroupBadge } from "../status-badge";
 import { LazyImage } from "./image";
 
-type BaseAutocompleteFieldProps<T extends FieldValues> = {
-  control: Control<T>;
-  name: Path<T>;
+type BaseAutocompleteFieldProps<TOption, TForm extends FieldValues> = {
+  control: Control<TForm>;
+  name: Path<TForm>;
   label: string;
-  rules?: RegisterOptions<T, Path<T>>;
+  rules?: RegisterOptions<TForm, Path<TForm>>;
   description: string;
   clearable?: boolean;
   placeholder?: string;
   extraSearchParams?: Record<string, string | string[]>;
+  onOptionChange?: (option: TOption | null) => void;
 };
 
 export function HazardousMaterialAutocompleteField<T extends FieldValues>({
-  control,
-  name,
-  label,
-  clearable,
-  description,
-  placeholder,
-  rules,
-}: BaseAutocompleteFieldProps<T>) {
+  ...props
+}: BaseAutocompleteFieldProps<HazardousMaterialSchema, T>) {
   return (
     <AutocompleteField<HazardousMaterialSchema, T>
-      name={name}
-      control={control}
-      rules={rules}
       link="/hazardous-materials/"
-      label={label}
-      clearable={clearable}
-      placeholder={placeholder || "Select Hazardous Material"}
-      description={description}
       getOptionValue={(option) => option.id || ""}
       getDisplayValue={(option) => `${option.name}`}
       renderOption={(option) => (
@@ -68,29 +63,17 @@ export function HazardousMaterialAutocompleteField<T extends FieldValues>({
           )}
         </div>
       )}
+      {...props}
     />
   );
 }
 
 export function UserAutocompleteField<T extends FieldValues>({
-  control,
-  name,
-  label,
-  clearable,
-  description,
-  placeholder,
-  rules,
-}: BaseAutocompleteFieldProps<T>) {
+  ...props
+}: BaseAutocompleteFieldProps<User, T>) {
   return (
     <AutocompleteField<User, T>
-      name={name}
-      control={control}
-      rules={rules}
       link="/users/"
-      label={label}
-      clearable={clearable}
-      placeholder={placeholder || "Select User"}
-      description={description}
       getOptionValue={(option) => option.id || ""}
       getDisplayValue={(option) => (
         <div className="flex flex-row items-center gap-1.5">
@@ -101,7 +84,6 @@ export function UserAutocompleteField<T extends FieldValues>({
             }
             alt={option.name}
             className="size-3 rounded-full"
-            layout="fullWidth"
           />
           <span className="text-xs font-medium">
             {truncateText(option.name, 20)}
@@ -118,7 +100,6 @@ export function UserAutocompleteField<T extends FieldValues>({
               }
               alt={option.name}
               className="size-4 rounded-full"
-              layout="fullWidth"
             />
             <span className="text-xs font-medium">
               {truncateText(option.name, 15)}
@@ -129,29 +110,17 @@ export function UserAutocompleteField<T extends FieldValues>({
           </span>
         </div>
       )}
+      {...props}
     />
   );
 }
 
 export function LocationCategoryAutocompleteField<T extends FieldValues>({
-  control,
-  name,
-  label,
-  clearable,
-  description,
-  placeholder,
-  rules,
-}: BaseAutocompleteFieldProps<T>) {
+  ...props
+}: BaseAutocompleteFieldProps<LocationCategorySchema, T>) {
   return (
     <AutocompleteField<LocationCategorySchema, T>
-      name={name}
-      control={control}
-      rules={rules}
       link="/location-categories/"
-      label={label}
-      clearable={clearable}
-      placeholder={placeholder || "Select Location Category"}
-      description={description}
       getOptionValue={(option) => option.id || ""}
       getDisplayValue={(option) => (
         <ColorOptionValue
@@ -170,32 +139,18 @@ export function LocationCategoryAutocompleteField<T extends FieldValues>({
           )}
         </div>
       )}
+      {...props}
     />
   );
 }
 
 export function EquipmentTypeAutocompleteField<T extends FieldValues>({
-  control,
-  name,
-  label,
-  clearable,
-  description,
-  placeholder,
-  extraSearchParams,
-  rules,
-}: BaseAutocompleteFieldProps<T>) {
+  ...props
+}: BaseAutocompleteFieldProps<EquipmentTypeSchema, T>) {
   return (
     <AutocompleteField<EquipmentTypeSchema, T>
-      name={name}
-      control={control}
-      rules={rules}
-      label={label}
       link="/equipment-types/"
-      clearable={clearable}
-      placeholder={placeholder || "Select Equipment Type"}
-      description={description}
       getOptionValue={(option) => option.id || ""}
-      extraSearchParams={extraSearchParams}
       getDisplayValue={(option) => (
         <ColorOptionValue color={option.color} value={option.code} />
       )}
@@ -209,54 +164,30 @@ export function EquipmentTypeAutocompleteField<T extends FieldValues>({
           )}
         </div>
       )}
+      {...props}
     />
   );
 }
 export function EquipmentManufacturerAutocompleteField<T extends FieldValues>({
-  control,
-  name,
-  label,
-  clearable,
-  description,
-  placeholder,
-  rules,
-}: BaseAutocompleteFieldProps<T>) {
+  ...props
+}: BaseAutocompleteFieldProps<EquipmentManufacturerSchema, T>) {
   return (
     <AutocompleteField<EquipmentManufacturerSchema, T>
-      name={name}
-      control={control}
-      rules={rules}
       link="/equipment-manufacturers/"
-      label={label}
-      placeholder={placeholder || "Select Equipment Manufacturer"}
-      description={description}
-      clearable={clearable}
       getOptionValue={(option) => option.id || ""}
       getDisplayValue={(option) => option.name}
       renderOption={(option) => option.name}
+      {...props}
     />
   );
 }
 
 export function FleetCodeAutocompleteField<T extends FieldValues>({
-  control,
-  name,
-  label,
-  clearable,
-  description,
-  placeholder,
-  rules,
-}: BaseAutocompleteFieldProps<T>) {
+  ...props
+}: BaseAutocompleteFieldProps<FleetCodeSchema, T>) {
   return (
     <AutocompleteField<FleetCodeSchema, T>
-      name={name}
-      control={control}
-      rules={rules}
       link="/fleet-codes/"
-      label={label}
-      placeholder={placeholder || "Select Fleet Code"}
-      description={description}
-      clearable={clearable}
       getOptionValue={(option) => option.id || ""}
       getDisplayValue={(option) => (
         <ColorOptionValue color={option.color} value={option.name} />
@@ -271,37 +202,180 @@ export function FleetCodeAutocompleteField<T extends FieldValues>({
           )}
         </div>
       )}
+      {...props}
     />
   );
 }
 
 export function WorkerAutocompleteField<T extends FieldValues>({
-  control,
-  name,
-  label,
-  clearable,
-  description,
-  placeholder,
-  rules,
-  extraSearchParams,
-}: BaseAutocompleteFieldProps<T>) {
+  ...props
+}: BaseAutocompleteFieldProps<WorkerSchema, T>) {
   return (
     <AutocompleteField<WorkerSchema, T>
-      name={name}
-      control={control}
-      rules={rules}
       link="/workers/"
-      label={label}
-      placeholder={placeholder || "Select Worker"}
-      description={description}
-      extraSearchParams={{
-        status: [Status.Active], // * By default, only active workers are shown
-        ...extraSearchParams, // * Include any additional search parameters
-      }}
-      clearable={clearable}
       getOptionValue={(option) => option.id || ""}
       getDisplayValue={(option) => `${option.firstName} ${option.lastName}`}
       renderOption={(option) => `${option.firstName} ${option.lastName}`}
+      {...props}
+    />
+  );
+}
+
+export function TractorAutocompleteField<T extends FieldValues>({
+  ...props
+}: BaseAutocompleteFieldProps<TractorSchema, T>) {
+  return (
+    <AutocompleteField<TractorSchema, T>
+      link="/tractors/"
+      getOptionValue={(option) => option.id || ""}
+      getDisplayValue={(option) => `${option.code}`}
+      renderOption={(option) => `${option.code}`}
+      {...props}
+    />
+  );
+}
+
+export function TrailerAutocompleteField<T extends FieldValues>({
+  ...props
+}: BaseAutocompleteFieldProps<TrailerSchema, T>) {
+  return (
+    <AutocompleteField<TrailerSchema, T>
+      link="/trailers/"
+      getOptionValue={(option) => option.id || ""}
+      getDisplayValue={(option) => `${option.code}`}
+      renderOption={(option) => `${option.code}`}
+      {...props}
+    />
+  );
+}
+
+export function ShipmentTypeAutocompleteField<T extends FieldValues>({
+  ...props
+}: BaseAutocompleteFieldProps<ShipmentTypeSchema, T>) {
+  return (
+    <AutocompleteField<ShipmentTypeSchema, T>
+      link="/shipment-types/"
+      getOptionValue={(option) => option.id || ""}
+      getDisplayValue={(option) => (
+        <ColorOptionValue color={option.color} value={option.code} />
+      )}
+      renderOption={(option) => (
+        <div className="flex flex-col gap-0.5 items-start size-full">
+          <ColorOptionValue color={option.color} value={option.code} />
+          {option?.description && (
+            <span className="text-2xs text-muted-foreground truncate w-full">
+              {option?.description}
+            </span>
+          )}
+        </div>
+      )}
+      {...props}
+    />
+  );
+}
+
+export function ServiceTypeAutocompleteField<T extends FieldValues>({
+  ...props
+}: BaseAutocompleteFieldProps<ServiceTypeSchema, T>) {
+  return (
+    <AutocompleteField<ServiceTypeSchema, T>
+      link="/service-types/"
+      getOptionValue={(option) => option.id || ""}
+      getDisplayValue={(option) => (
+        <ColorOptionValue color={option.color} value={option.code} />
+      )}
+      renderOption={(option) => (
+        <div className="flex flex-col gap-0.5 items-start size-full">
+          <ColorOptionValue color={option.color} value={option.code} />
+          {option?.description && (
+            <span className="text-2xs text-muted-foreground truncate w-full">
+              {option?.description}
+            </span>
+          )}
+        </div>
+      )}
+      {...props}
+    />
+  );
+}
+
+export function LocationAutocompleteField<T extends FieldValues>({
+  ...props
+}: BaseAutocompleteFieldProps<LocationSchema, T>) {
+  return (
+    <AutocompleteField<LocationSchema, T>
+      link="/locations/"
+      getOptionValue={(option) => option.id || ""}
+      getDisplayValue={(option) => option.name}
+      renderOption={(option) => (
+        <div className="flex flex-col gap-0.5 items-start size-full">
+          <span className="text-sm font-normal">{option.name}</span>
+          <span className="text-2xs text-muted-foreground truncate w-full">
+            {formatLocation(option)}
+          </span>
+        </div>
+      )}
+      {...props}
+    />
+  );
+}
+
+export function AccessorialChargeAutocompleteField<T extends FieldValues>({
+  ...props
+}: BaseAutocompleteFieldProps<AccessorialChargeSchema, T>) {
+  return (
+    <AutocompleteField<AccessorialChargeSchema, T>
+      link="/accessorial-charges/"
+      getOptionValue={(option) => option.id || ""}
+      getDisplayValue={(option) => option.code}
+      renderOption={(option) => (
+        <div className="flex flex-col gap-0.5 items-start size-full">
+          <p className="text-sm font-medium">{option.code}</p>
+          {option.description && (
+            <p className="text-xs text-muted-foreground truncate w-full">
+              {option.description}
+            </p>
+          )}
+        </div>
+      )}
+      {...props}
+    />
+  );
+}
+
+export function CommodityAutocompleteField<T extends FieldValues>({
+  ...props
+}: BaseAutocompleteFieldProps<CommoditySchema, T>) {
+  return (
+    <AutocompleteField<CommoditySchema, T>
+      link="/commodities/"
+      getOptionValue={(option) => option.id || ""}
+      getDisplayValue={(option) => option.name}
+      renderOption={(option) => option.name}
+      {...props}
+    />
+  );
+}
+
+export function CustomerAutocompleteField<T extends FieldValues>({
+  ...props
+}: BaseAutocompleteFieldProps<CustomerSchema, T>) {
+  return (
+    <AutocompleteField<CustomerSchema, T>
+      link="/customers/"
+      getOptionValue={(option) => option.id ?? ""}
+      getDisplayValue={(option) => option.code}
+      renderOption={(option) => (
+        <div className="flex flex-col gap-0.5 items-start size-full">
+          <p className="text-sm font-medium">{option.code}</p>
+          {option.name && (
+            <p className="text-xs text-muted-foreground truncate w-full">
+              {option.name}
+            </p>
+          )}
+        </div>
+      )}
+      {...props}
     />
   );
 }

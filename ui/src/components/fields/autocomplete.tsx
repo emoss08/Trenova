@@ -66,7 +66,7 @@ async function fetchOptionById<T>(
   return data;
 }
 
-export function Autocomplete<T>({
+export function Autocomplete<TOption, TForm extends FieldValues>({
   link,
   preload = false,
   renderOption,
@@ -84,13 +84,13 @@ export function Autocomplete<T>({
   isInvalid,
   clearable = false,
   extraSearchParams,
-}: BaseAutocompleteFieldProps<T>) {
+}: BaseAutocompleteFieldProps<TOption, TForm>) {
   const [open, setOpen] = useState(false);
-  const [options, setOptions] = useState<T[]>([]);
+  const [options, setOptions] = useState<TOption[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
-  const [selectedOption, setSelectedOption] = useState<T | null>(null);
+  const [selectedOption, setSelectedOption] = useState<TOption | null>(null);
   const debouncedSearchTerm = useDebounce(searchTerm, preload ? 0 : 300);
   const [hasMore, setHasMore] = useState(false);
   const [page, setPage] = useState(1);
@@ -110,7 +110,7 @@ export function Autocomplete<T>({
     if (value) {
       try {
         setLoading(true);
-        const option = await fetchOptionById<T>(link, value);
+        const option = await fetchOptionById<TOption>(link, value);
         setSelectedOption(option);
       } catch (err) {
         setError(
@@ -137,7 +137,7 @@ export function Autocomplete<T>({
       setLoading(true);
       setError(null);
 
-      const response = await fetchOptions<T>(
+      const response = await fetchOptions<TOption>(
         link,
         debouncedSearchTerm,
         page,
@@ -472,7 +472,7 @@ export function AutocompleteField<TOption, TForm extends FieldValues>({
             error={fieldState.error?.message}
             className={className}
           >
-            <Autocomplete<TOption>
+            <Autocomplete<TOption, TForm>
               link={link}
               preload={preload}
               renderOption={renderOption}

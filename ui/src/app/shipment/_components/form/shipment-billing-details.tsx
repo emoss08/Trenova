@@ -1,11 +1,10 @@
 import { LazyComponent } from "@/components/error-boundary";
-import { AutocompleteField } from "@/components/fields/autocomplete";
 import { InputField } from "@/components/fields/input-field";
 import { SelectField } from "@/components/fields/select-field";
+import { CustomerAutocompleteField } from "@/components/ui/autocomplete-fields";
 import { FormControl, FormGroup } from "@/components/ui/form";
 import { ratingMethodChoices } from "@/lib/choices";
 import { AdditionalChargeSchema } from "@/lib/schemas/additional-charge-schema";
-import { CustomerSchema } from "@/lib/schemas/customer-schema";
 import { ShipmentCommoditySchema } from "@/lib/schemas/shipment-commodity-schema";
 import { ShipmentSchema } from "@/lib/schemas/shipment-schema";
 import { toNumber } from "@/lib/utils";
@@ -276,26 +275,13 @@ export default function ShipmentBillingDetails() {
       <h3 className="text-sm font-medium">Billing Information</h3>
       <FormGroup cols={2} className="gap-4">
         <FormControl>
-          <AutocompleteField<CustomerSchema, ShipmentSchema>
+          <CustomerAutocompleteField<ShipmentSchema>
             name="customerId"
             control={control}
-            link="/customers/"
             label="Customer"
             rules={{ required: true }}
             placeholder="Select Customer"
             description="Choose the customer who requested this shipment."
-            getOptionValue={(option) => option.id ?? ""}
-            getDisplayValue={(option) => option.code}
-            renderOption={(option) => (
-              <div className="flex flex-col gap-0.5 items-start size-full">
-                <p className="text-sm font-medium">{option.code}</p>
-                {option.name && (
-                  <p className="text-xs text-muted-foreground truncate w-full">
-                    {option.name}
-                  </p>
-                )}
-              </div>
-            )}
           />
         </FormControl>
         <FormControl>

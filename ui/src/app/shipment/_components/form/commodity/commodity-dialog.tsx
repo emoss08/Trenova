@@ -1,5 +1,5 @@
-import { AutocompleteField } from "@/components/fields/autocomplete";
 import { InputField } from "@/components/fields/input-field";
+import { CommodityAutocompleteField } from "@/components/ui/autocomplete-fields";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -11,7 +11,6 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { FormControl, FormGroup } from "@/components/ui/form";
-import { CommoditySchema } from "@/lib/schemas/commodity-schema";
 import { ShipmentSchema } from "@/lib/schemas/shipment-schema";
 import { TableSheetProps } from "@/types/data-table";
 import { ShipmentCommodity } from "@/types/shipment";
@@ -132,18 +131,14 @@ function CommodityForm({ index }: { index: number }) {
   return (
     <FormGroup>
       <FormControl>
-        <AutocompleteField<CommoditySchema, ShipmentSchema>
+        <CommodityAutocompleteField<ShipmentSchema>
           name={`commodities.${index}.commodityId`}
           control={control}
-          link="/commodities/"
           label="Commodity"
           clearable
           rules={{ required: true }}
           placeholder="Select Commodity"
           description="Select the commodity to include in the shipment."
-          getOptionValue={(option) => option.id || ""}
-          getDisplayValue={(option) => option.name}
-          renderOption={(option) => option.name}
           onOptionChange={(option) => {
             if (option) {
               setValue(`commodities.${index}.commodityId`, option.id || "");

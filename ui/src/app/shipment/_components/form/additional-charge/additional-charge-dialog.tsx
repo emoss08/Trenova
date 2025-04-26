@@ -1,6 +1,6 @@
-import { AutocompleteField } from "@/components/fields/autocomplete";
 import { InputField } from "@/components/fields/input-field";
 import { SelectField } from "@/components/fields/select-field";
+import { AccessorialChargeAutocompleteField } from "@/components/ui/autocomplete-fields";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -13,7 +13,6 @@ import {
 } from "@/components/ui/dialog";
 import { FormControl, FormGroup } from "@/components/ui/form";
 import { accessorialChargeMethodChoices } from "@/lib/choices";
-import { AccessorialChargeSchema } from "@/lib/schemas/accessorial-charge-schema";
 import { type ShipmentSchema } from "@/lib/schemas/shipment-schema";
 import { type TableSheetProps } from "@/types/data-table";
 import { AdditionalCharge } from "@/types/shipment";
@@ -165,27 +164,14 @@ function AdditionalChargeForm({ index }: { index: number }) {
   return (
     <FormGroup cols={2}>
       <FormControl cols="full">
-        <AutocompleteField<AccessorialChargeSchema, ShipmentSchema>
+        <AccessorialChargeAutocompleteField<ShipmentSchema>
           name={`additionalCharges.${index}.accessorialChargeId`}
           control={control}
-          link="/accessorial-charges/"
           label="Accessorial Charge"
           clearable
           rules={{ required: true }}
           placeholder="Select Accessorial Charge"
           description="Accessorial charges are additional fees charged for services such as detention, fuel surcharge, and more."
-          getOptionValue={(option) => option.id || ""}
-          getDisplayValue={(option) => option.code}
-          renderOption={(option) => (
-            <div className="flex flex-col gap-0.5 items-start size-full">
-              <p className="text-sm font-medium">{option.code}</p>
-              {option.description && (
-                <p className="text-xs text-muted-foreground truncate w-full">
-                  {option.description}
-                </p>
-              )}
-            </div>
-          )}
           onOptionChange={(option) => {
             if (option) {
               setValue(
