@@ -19,15 +19,15 @@ type BackupSchedulerParams struct {
 
 	LC            fx.Lifecycle
 	Logger        *logger.Logger
-	BackupService services.BackupService
 	Config        *config.Manager
+	BackupService services.BackupService
 }
 
 type backupScheduler struct {
 	logger    *zerolog.Logger
-	bs        services.BackupService
 	cfg       *config.BackupConfig
 	scheduler *gocron.Scheduler
+	bs        services.BackupService
 }
 
 // NewBackupScheduler creates a new backup scheduler.
