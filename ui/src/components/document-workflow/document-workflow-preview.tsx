@@ -22,7 +22,6 @@ function DocumentPreview({ document }: { document: Document }) {
       <LazyImage
         src={document.previewUrl || ""}
         alt={document.fileName}
-        layout="constrained"
         width={200}
         height={200}
         className="w-full h-full object-cover"

@@ -1,8 +1,9 @@
 import {
-    Image as UnpicImage,
-    ImageProps as UnpicImageProps,
-} from "@unpic/react";
+  LazyLoadImage,
+  type LazyLoadImageProps,
+} from "react-lazy-load-image-component";
+import "react-lazy-load-image-component/src/effects/blur.css";
 
-export function LazyImage({ ...props }: UnpicImageProps) {
-  return <UnpicImage {...props} />;
+export function LazyImage({ ...props }: LazyLoadImageProps) {
+  return <LazyLoadImage {...props} effect="blur" />;
 }

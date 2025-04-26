@@ -9,13 +9,7 @@ export function LoginPage() {
       <MetaTags title="Login" description="Login to your account" />
       <div className="flex min-h-svh flex-col items-center justify-center gap-6 p-6 md:p-10">
         <div className="flex w-full max-w-sm flex-col items-center gap-6">
-          <LazyImage
-            src={logo}
-            alt="Trenova Logo"
-            width={40}
-            height={40}
-            layout="constrained"
-          />
+          <LazyImage src={logo} alt="Trenova Logo" width={40} height={40} />
           <AuthForm />
         </div>
       </div>
