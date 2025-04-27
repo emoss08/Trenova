@@ -48,7 +48,6 @@ export function CommodityForm() {
         <HazardousMaterialAutocompleteField<CommoditySchema>
           name="hazardousMaterialId"
           control={control}
-          link="/hazardous-materials/"
           label="Hazardous Material"
           clearable
           description="Select the hazardous material classification if this commodity contains regulated substances."

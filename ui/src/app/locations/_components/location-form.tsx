@@ -57,7 +57,6 @@ export function LocationForm() {
             name="locationCategoryId"
             control={control}
             rules={{ required: true }}
-            link="/location-categories/"
             label="Location Category"
             placeholder="Select Location Category"
             description="Select the location category for the location."

@@ -75,7 +75,6 @@ export function FleetCodeForm() {
         <UserAutocompleteField<FleetCodeSchema>
           name="managerId"
           control={control}
-          link="/users/"
           label="Manager"
           placeholder="Select Manager"
           description="Select the manager of the fleet code"
