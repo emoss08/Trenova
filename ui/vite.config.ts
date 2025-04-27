@@ -2,11 +2,13 @@ import { nodeResolve } from "@rollup/plugin-node-resolve";
 // @ts-expect-error // Module does not give types
 import tailwindcss from "@tailwindcss/vite";
 import react from "@vitejs/plugin-react";
+import { createRequire } from "node:module";
 import path from "path";
 import { visualizer } from "rollup-plugin-visualizer";
-import { defineConfig, type PluginOption } from "vite";
+import { defineConfig, normalizePath, type PluginOption } from "vite";
 import { compression } from "vite-plugin-compression2";
 import { VitePWA } from "vite-plugin-pwa";
+import { viteStaticCopy } from "vite-plugin-static-copy";
 
 // Define vendor chunks that should be bundled separately
 const vendorChunks = {
@@ -76,6 +78,17 @@ const vendorChunks = {
   utils: ["clsx", "tailwind-merge", "class-variance-authority"],
 };
 
+const require = createRequire(import.meta.url);
+const cMapsDir = normalizePath(
+  path.join(path.dirname(require.resolve("pdfjs-dist/package.json")), "cmaps"),
+);
+const standardFontsDir = normalizePath(
+  path.join(
+    path.dirname(require.resolve("pdfjs-dist/package.json")),
+    "standard_fonts",
+  ),
+);
+
 const ReactCompilerConfig = {
   /* ... */
 };
@@ -113,6 +126,12 @@ export default defineConfig({
           "An Open Source AI-driven asset based transportation management system",
         theme_color: "#000000",
       },
+    }),
+    viteStaticCopy({
+      targets: [
+        { src: cMapsDir, dest: "" },
+        { src: standardFontsDir, dest: "" },
+      ],
     }),
     compression({
       algorithm: "brotliCompress",

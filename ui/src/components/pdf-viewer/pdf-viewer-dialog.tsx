@@ -1,9 +1,5 @@
 import { TableSheetProps } from "@/types/data-table";
-import "@react-pdf-viewer/core/lib/styles/index.css";
-import "@react-pdf-viewer/full-screen/lib/styles/index.css";
-import "@react-pdf-viewer/print/lib/styles/index.css";
-import "@react-pdf-viewer/search/lib/styles/index.css";
-import { lazy } from "react";
+import { pdfjs } from "react-pdf";
 import { LazyComponent } from "../error-boundary";
 import {
   Dialog,
@@ -14,8 +10,12 @@ import {
   DialogTitle,
 } from "../ui/dialog";
 import { VisuallyHidden } from "../ui/visually-hidden";
+import PDFViewer from "./pdf-viewer";
 
-const PDFViewer = lazy(() => import("./pdf-viewer"));
+pdfjs.GlobalWorkerOptions.workerSrc = new URL(
+  "pdfjs-dist/build/pdf.worker.min.mjs",
+  import.meta.url,
+).toString();
 
 type PDFViewerDialogProps = {
   fileUrl: string;
