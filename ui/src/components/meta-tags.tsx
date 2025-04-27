@@ -1,7 +1,7 @@
 import { queries } from "@/lib/queries";
 import { useIsAuthenticated, useUser } from "@/stores/user-store";
 import { useQuery } from "@tanstack/react-query";
-import { Helmet } from "react-helmet-async";
+import { Helmet } from "@dr.pogodin/react-helmet";
 
 export function MetaTags({
   title,
