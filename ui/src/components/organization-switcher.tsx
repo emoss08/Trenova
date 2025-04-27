@@ -4,8 +4,8 @@ import {
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
 import { queries } from "@/lib/queries";
+import type { OrganizationSchema } from "@/lib/schemas/organization-schema";
 import { useIsAuthenticated, useUser } from "@/stores/user-store";
-import { Organization } from "@/types/organization";
 import { faCheckCircle } from "@fortawesome/pro-solid-svg-icons";
 import { CaretSortIcon, DragHandleDots2Icon } from "@radix-ui/react-icons";
 import { useQuery } from "@tanstack/react-query";
@@ -30,7 +30,7 @@ function OrganizationSwitcherButtonSkeleton() {
 }
 
 type OrganizationSwitcherButtonProps = {
-  org: Organization | undefined;
+  org: OrganizationSchema | undefined;
   setOpen: (open: boolean) => void;
   isLoading: boolean;
 };
@@ -128,7 +128,7 @@ function OrganizationContent({
   org,
   currentOrgId,
 }: {
-  org: Organization;
+  org: OrganizationSchema;
   currentOrgId: string;
 }) {
   return (

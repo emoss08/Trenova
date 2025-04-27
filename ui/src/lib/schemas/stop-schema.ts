@@ -8,6 +8,8 @@ export const stopSchema = z
     version: z.number().optional(),
     createdAt: z.number().optional(),
     updatedAt: z.number().optional(),
+    organizationId: z.string().optional(),
+    businessUnitId: z.string().optional(),
 
     // * Core Fields
     locationId: z.string().min(1, "Location is required"),
@@ -18,7 +20,7 @@ export const stopSchema = z
     type: z.nativeEnum(StopType, {
       message: "Type is required",
     }),
-    sequence: z.number().min(1, "Sequence is required"),
+    sequence: z.number(),
     pieces: z.preprocess((val) => {
       if (val === null || val === undefined) {
         return undefined;

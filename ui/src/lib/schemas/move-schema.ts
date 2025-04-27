@@ -7,6 +7,8 @@ export const moveSchema = z.object({
   version: z.number().optional(),
   createdAt: z.number().optional(),
   updatedAt: z.number().optional(),
+  organizationId: z.string().optional(),
+  businessUnitId: z.string().optional(),
 
   // * Core Fields
   // * The shipment ID will be associated on the backend

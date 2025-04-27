@@ -23,6 +23,7 @@ import {
   UseFieldArrayUpdate,
   useFormContext,
 } from "react-hook-form";
+import { z } from "zod";
 import { StopDialogForm } from "./stop-dialog-form";
 
 type StopDialogProps = TableSheetProps & {
@@ -107,9 +108,9 @@ export function StopDialog({
       return true;
     } catch (error) {
       console.log("Error Type", typeof error);
-      if (error) {
-        error.inner.forEach((err) => {
-          const fieldPath = err.path;
+      if (error instanceof z.ZodError) {
+        error.errors.forEach((err) => {
+          const fieldPath = err.path.join(".");
           if (fieldPath) {
             // Just use the direct field path without splitting
             const fullPath = `moves.${moveIdx}.stops.${stopIdx}.${fieldPath}`;

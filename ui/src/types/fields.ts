@@ -161,7 +161,8 @@ export interface AutocompleteFormControlProps<T extends FieldValues> {
 
 export interface BaseAutocompleteFieldProps<
   TOption,
-  TForm extends FieldValues,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  _TForm extends FieldValues,
 > {
   /** Link to fetch options */
   link: API_ENDPOINTS;
