@@ -20,7 +20,7 @@ export const stopSchema = z
     type: z.nativeEnum(StopType, {
       message: "Type is required",
     }),
-    sequence: z.number(),
+    sequence: z.number().min(0, "Sequence cannot be negative"),
     pieces: z.preprocess((val) => {
       if (val === null || val === undefined) {
         return undefined;
