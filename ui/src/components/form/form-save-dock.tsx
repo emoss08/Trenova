@@ -7,6 +7,7 @@ import {
   faClock,
 } from "@fortawesome/pro-regular-svg-icons";
 import { ReactNode } from "react";
+import { useFormState, type Control } from "react-hook-form";
 import { PulsatingDots } from "../ui/pulsating-dots";
 import { useFormSave } from "./form-save-context";
 
@@ -14,7 +15,7 @@ type DockPosition = "center" | "left" | "right";
 
 interface FormSaveDockProps {
   /** Whether the form has unsaved changes */
-  isDirty: boolean;
+  control: Control;
 
   /** Whether the form is currently submitting */
   isSubmitting: boolean;
@@ -46,8 +47,7 @@ interface FormSaveDockProps {
  * and displays a notification about unsaved changes.
  */
 export function FormSaveDock({
-  isDirty,
-  isSubmitting,
+  control,
   onReset,
   saveButtonContent = "Save",
   unsavedText = "Unsaved changes",
@@ -55,6 +55,8 @@ export function FormSaveDock({
   width = "350px",
   className,
 }: FormSaveDockProps) {
+  const { isDirty, isSubmitting } = useFormState({ control });
+
   // Only render the dock if there are unsaved changes
   if (!isDirty) {
     return null;
