@@ -6,26 +6,53 @@ import { ShipmentSchema } from "@/lib/schemas/shipment-schema";
 import { checkForDuplicateBOLs } from "@/services/shipment";
 import { APIError } from "@/types/errors";
 import { useMutation, useQuery } from "@tanstack/react-query";
-import debounce from "lodash/debounce";
-import { useEffect, useRef } from "react";
-import { useFormContext } from "react-hook-form";
+import { useDebouncedEffect } from "@wojtekmaj/react-hooks";
+import { useFormContext, useWatch } from "react-hook-form";
 
 export default function ShipmentGeneralInformation() {
-  const { control, watch, getValues, setError, getFieldState } =
-    useFormContext();
+  return (
+    <ShipmentGeneralInformationInner>
+      <GeneralInformationFormGroup>
+        <BOLField />
+        <TemperatureFields />
+      </GeneralInformationFormGroup>
+    </ShipmentGeneralInformationInner>
+  );
+}
 
-  const { isDirty } = getFieldState("bol");
+function ShipmentGeneralInformationInner({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="flex flex-col gap-2">
+      <h3 className="text-sm font-medium">General Information</h3>
+      {children}
+    </div>
+  );
+}
 
-  // Create refs for state that shouldn't trigger re-renders
-  const debouncedFnRef = useRef<ReturnType<typeof debounce> | null>(null);
-  const lastCheckedBolRef = useRef<string | null>(null);
+function GeneralInformationFormGroup({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  return <FormGroup cols={2}>{children}</FormGroup>;
+}
 
-  // If the user fills out the BOL, and tabs to the next field
-  // We need to send a request to the server to check if the BOL is valid
-  // But only if the Shipment Control has duplicate BOLs checking enabled
-  const { data: shipmentControl } = useQuery({
-    ...queries.organization.getShipmentControl(),
+function BOLField() {
+  const { control, getValues, setError } = useFormContext<ShipmentSchema>();
+
+  const bolChanged = useWatch({
+    control,
+    name: "bol",
   });
+
+  const { data: shipmentControl, isLoading: isShipmentControlLoading } =
+    useQuery({
+      ...queries.organization.getShipmentControl(),
+    });
 
   const { mutate: checkBols } = useMutation({
     mutationFn: async (bol: string) => {
@@ -41,80 +68,59 @@ export default function ShipmentGeneralInformation() {
     },
   });
 
-  // Create the debounced function once when component mounts
-  useEffect(() => {
-    debouncedFnRef.current = debounce((bol: string) => {
-      if (bol && bol !== lastCheckedBolRef.current) {
-        lastCheckedBolRef.current = bol;
-        checkBols(bol);
+  useDebouncedEffect(
+    () => {
+      if (isShipmentControlLoading || !shipmentControl?.checkForDuplicateBols) {
+        return;
       }
-    }, 500);
 
-    return () => {
-      debouncedFnRef.current?.cancel();
-    };
-  }, [checkBols]);
-
-  // Use watch subscription to observe BOL changes
-  useEffect(() => {
-    // Only set up subscription if duplicate BOL checking is enabled
-    if (!shipmentControl?.checkForDuplicateBols) {
-      return;
-    }
-
-    // Subscribe to BOL field changes
-    const subscription = watch((formValues, { name }) => {
-      // Only react to BOL field changes
-      if (name === "bol" || name === undefined) {
-        const bol = formValues.bol as string | undefined;
-
-        if (bol && isDirty && debouncedFnRef.current) {
-          debouncedFnRef.current(bol);
-        }
-      }
-    });
-
-    // Cleanup subscription when component unmounts
-    return () => subscription.unsubscribe();
-  }, [watch, isDirty, shipmentControl?.checkForDuplicateBols]);
+      checkBols(bolChanged);
+    },
+    [bolChanged],
+    1000, // * 1 second delay
+  );
 
   return (
-    <div className="flex flex-col gap-2">
-      <h3 className="text-sm font-medium">General Information</h3>
-      <FormGroup cols={2}>
-        <FormControl cols="full">
-          <InputField
-            control={control}
-            name="bol"
-            label="BOL"
-            rules={{ required: true }}
-            description="The BOL is the bill of lading number for the shipment."
-            placeholder="Enter BOL"
-          />
-        </FormControl>
-        <FormControl>
-          <InputField
-            control={control}
-            name="temperatureMin"
-            label="Temperature Min"
-            type="number"
-            description="The minimum temperature for the shipment."
-            placeholder="Enter Temperature Min"
-            sideText="°F"
-          />
-        </FormControl>
-        <FormControl>
-          <InputField
-            control={control}
-            name="temperatureMax"
-            label="Temperature Max"
-            type="number"
-            description="The maximum temperature for the shipment."
-            placeholder="Enter Temperature Max"
-            sideText="°F"
-          />
-        </FormControl>
-      </FormGroup>
-    </div>
+    <FormControl cols="full">
+      <InputField
+        control={control}
+        name="bol"
+        label="BOL"
+        rules={{ required: true }}
+        description="The BOL is the bill of lading number for the shipment."
+        placeholder="Enter BOL"
+      />
+    </FormControl>
+  );
+}
+
+function TemperatureFields() {
+  const { control } = useFormContext<ShipmentSchema>();
+
+  return (
+    <>
+      <FormControl>
+        <InputField
+          control={control}
+          name="temperatureMin"
+          label="Temperature Min"
+          type="number"
+          description="The minimum temperature for the shipment."
+          placeholder="Enter Temperature Min"
+          sideText="°F"
+        />
+      </FormControl>
+      <FormControl>
+        <InputField
+          control={control}
+          name="temperatureMax"
+          label="Temperature Max"
+          type="number"
+          description="The maximum temperature for the shipment."
+          placeholder="Enter Temperature Max"
+          sideText="°F"
+        />
+      </FormControl>
+    </>
   );
 }
