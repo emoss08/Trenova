@@ -539,10 +539,6 @@ func (cr *customerRepository) updateBillingProfile(ctx context.Context, profile 
 		Int64("version", profile.Version).
 		Logger()
 
-	log.Info().
-		Interface("billingProfile", profile).
-		Msg("updating billing profile")
-
 	err = dba.RunInTx(ctx, nil, func(c context.Context, tx bun.Tx) error {
 		ov := profile.Version
 
