@@ -1,374 +1,393 @@
-import { PDF_STORAGE_KEY } from "@/constants/env";
-import { PrintPages } from "@/types/pdf";
-import { DndContext, DragEndEvent } from "@dnd-kit/core";
-import { faFilePdf } from "@fortawesome/pro-solid-svg-icons";
-import {
-  OpenFile,
-  SpecialZoomLevel,
-  Viewer,
-  Worker,
-} from "@react-pdf-viewer/core";
-import "@react-pdf-viewer/core/lib/styles/index.css";
-import { fullScreenPlugin } from "@react-pdf-viewer/full-screen";
-import "@react-pdf-viewer/full-screen/lib/styles/index.css";
-import { getFilePlugin } from "@react-pdf-viewer/get-file";
-import {
-  getAllPagesNumbers,
-  getCustomPagesNumbers,
-  printPlugin,
-} from "@react-pdf-viewer/print";
-import "@react-pdf-viewer/print/lib/styles/index.css";
-import { propertiesPlugin } from "@react-pdf-viewer/properties";
-import { searchPlugin } from "@react-pdf-viewer/search";
-import "@react-pdf-viewer/search/lib/styles/index.css";
-import { themePlugin } from "@react-pdf-viewer/theme";
+import { useResizeObserver } from "@wojtekmaj/react-hooks";
+import type { PDFDocumentProxy } from "pdfjs-dist";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { useTheme } from "../theme-provider";
-import { BetaTag } from "../ui/beta-tag";
-import { Button } from "../ui/button";
-import {
-  Dialog,
-  DialogBody,
-  DialogContent,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "../ui/dialog";
-import { Icon } from "../ui/icons";
-import { Progress } from "../ui/progress";
-import { ScrollArea } from "../ui/scroll-area";
-import { PDFFloatingBar } from "./pdf-floating-bar";
-import { PDFPrintDialog } from "./pdf-print-dialog";
+import { pdfjs } from "react-pdf";
+import "react-pdf/dist/esm/Page/AnnotationLayer.css";
+import "react-pdf/dist/esm/Page/TextLayer.css";
+import { PDFDocumentOutline } from "./pdf-document-outline";
+import { PDFDocumentViewer } from "./pdf-document-viewer";
+import { PDFFooter } from "./pdf-footer";
+import { PDFNavigationBar, PDFSearchBar } from "./pdf-toolbar";
+import { PDFViewerInner } from "./pdf-viewer-inner";
+import type { PDFFile } from "./types";
 
-export default function PDFViewer({ fileUrl }: { fileUrl: string }) {
-  const { theme } = useTheme();
+pdfjs.GlobalWorkerOptions.workerSrc = new URL(
+  "pdfjs-dist/build/pdf.worker.min.mjs",
+  import.meta.url,
+).toString();
 
-  // * Plugins
-  const fullScreenPluginInstance = fullScreenPlugin();
-  const { EnterFullScreen } = fullScreenPluginInstance;
-  const themePluginInstance = themePlugin();
-  const getFilePluginInstance = getFilePlugin({
-    fileNameGenerator: (file: OpenFile) => {
-      // `file.name` is the URL of opened file
-      const fileName = file.name.substring(file.name.lastIndexOf("/") + 1);
-      return `a-copy-of-${fileName}`;
+const options = {
+  cMapUrl: "/cmaps/",
+  standardFontDataUrl: "/standard_fonts/",
+};
+
+const resizeObserverOptions = {};
+
+interface PDFViewerProps {
+  fileUrl: PDFFile;
+  className?: string;
+}
+
+/**
+ * Highlights search text in the PDF document
+ * @param text Text to highlight
+ * @param pattern Search pattern
+ * @returns Text with highlighted pattern
+ */
+function highlightPattern(text: string, pattern: string | RegExp): string {
+  if (!pattern || pattern === "") return text;
+
+  try {
+    // Create a case-insensitive RegExp if the pattern is a string
+    const regExp =
+      typeof pattern === "string"
+        ? new RegExp(
+            `(${pattern.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")})`,
+            "gi",
+          )
+        : pattern;
+
+    return text.replace(regExp, "<mark>$1</mark>");
+  } catch (error) {
+    console.error("Error highlighting pattern:", error);
+    return text;
+  }
+}
+
+export default function PDFViewer({ fileUrl, className = "" }: PDFViewerProps) {
+  const [numPages, setNumPages] = useState<number>(0);
+  const [pageNumber, setPageNumber] = useState<number>(1);
+  const [containerRef, setContainerRef] = useState<HTMLElement | null>(null);
+  const [containerWidth, setContainerWidth] = useState<number>();
+  const [scale, setScale] = useState<number>(0.6);
+  const [rotation, setRotation] = useState<number>(0);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [showOutline, setShowOutline] = useState<boolean>(false);
+  const [hasOutline, setHasOutline] = useState<boolean>(false);
+  const viewerRef = useRef<HTMLDivElement>(null);
+  const outlineRef = useRef<HTMLDivElement>(null);
+
+  // Search state
+  const [searchText, setSearchText] = useState<string>("");
+  const [showSearch, setShowSearch] = useState<boolean>(false);
+  const [currentMatchIndex, setCurrentMatchIndex] = useState<number>(0);
+  const [totalMatches, setTotalMatches] = useState<number>(0);
+
+  const onResize = useCallback<ResizeObserverCallback>((entries) => {
+    const [entry] = entries;
+
+    if (entry) {
+      setContainerWidth(entry.contentRect.width);
+    }
+  }, []);
+
+  useResizeObserver(containerRef, resizeObserverOptions, onResize);
+
+  function onDocumentLoadSuccess(pdf: PDFDocumentProxy) {
+    setNumPages(pdf.numPages);
+    setIsLoading(false);
+
+    // Check if the document has an outline
+    pdf
+      .getOutline()
+      .then((outline) => {
+        setHasOutline(outline !== null && outline.length > 0);
+      })
+      .catch(() => {
+        setHasOutline(false);
+      });
+  }
+
+  function onDocumentLoadError() {
+    setIsLoading(false);
+  }
+
+  const changePage = useCallback(
+    (offset: number) => {
+      setPageNumber((prevPageNumber) => {
+        const newPageNumber = prevPageNumber + offset;
+        return Math.max(1, Math.min(numPages, newPageNumber));
+      });
     },
-  });
-  const { Download } = getFilePluginInstance;
-  const searchPluginInstance = searchPlugin();
-  const { Search } = searchPluginInstance;
-  const propertiesPluginInstance = propertiesPlugin();
-  const { ShowProperties } = propertiesPluginInstance;
-
-  // Reference to the floating bar element
-  const floatingBarRef = useRef<HTMLDivElement | null>(null);
-
-  // Utility functions for storage operations
-  const savePositionToStorage = useCallback(
-    (position: { x: number; y: number }) => {
-      try {
-        // Ensure we're explicitly setting x and y properties to avoid any reference issues
-        const positionData = {
-          x: Number(position.x),
-          y: Number(position.y),
-        };
-
-        const positionJson = JSON.stringify(positionData);
-        localStorage.setItem(PDF_STORAGE_KEY, positionJson);
-        console.log(
-          "🔄 Floating bar position saved:",
-          positionData,
-          "JSON:",
-          positionJson,
-        );
-      } catch (error) {
-        console.error("❌ Failed to save floating bar position:", error);
-      }
-    },
-    [],
+    [numPages],
   );
 
-  const getPositionFromStorage = useCallback(() => {
-    try {
-      const positionJson = localStorage.getItem(PDF_STORAGE_KEY);
-      console.log("📋 Raw localStorage value:", positionJson);
+  const previousPage = useCallback(() => changePage(-1), [changePage]);
+  const nextPage = useCallback(() => changePage(1), [changePage]);
 
-      if (!positionJson) return null;
+  const goToPage = useCallback(
+    (pageNum: number) => {
+      const page = Math.max(1, Math.min(numPages, pageNum));
+      setPageNumber(page);
+    },
+    [numPages],
+  );
 
-      const position = JSON.parse(positionJson);
+  const zoomIn = () => setScale((prevScale) => Math.min(3, prevScale + 0.1));
+  const zoomOut = () => setScale((prevScale) => Math.max(0.5, prevScale - 0.1));
+  const resetZoom = () => setScale(1);
 
-      // Validate the loaded data has numeric x and y properties
-      if (typeof position.x === "number" && typeof position.y === "number") {
-        console.log("✅ Loaded valid floating bar position:", position);
-        return position;
-      } else {
-        console.warn(
-          "⚠️ Invalid floating bar position data structure:",
-          position,
-        );
-        return null;
-      }
-    } catch (error) {
-      console.error("❌ Error loading floating bar position:", error);
-      return null;
+  const rotate = (angle: number) => {
+    setRotation((prevRotation) => (prevRotation + angle) % 360);
+  };
+
+  // Handler for when an outline item is clicked
+  const onItemClick = useCallback((data: { pageNumber: number }) => {
+    // Navigate to the page
+    setPageNumber(data.pageNumber);
+
+    // Close the outline
+    setShowOutline(false);
+
+    // Scroll to top of viewer
+    if (viewerRef.current) {
+      viewerRef.current.scrollTop = 0;
     }
   }, []);
 
-  // * State
-  const [printPages, setPrintPages] = useState<PrintPages>(PrintPages.All);
-  const [customPages, setCustomPages] = useState<string>("");
-  const [customPagesInvalid, setCustomPagesInvalid] = useState<boolean>(false);
-  const [printDialogOpen, setPrintDialogOpen] = useState<boolean>(false);
+  // Handler for outline load success
+  const onOutlineLoadSuccess = useCallback((outline: unknown) => {
+    setHasOutline(!!outline && Array.isArray(outline) && outline.length > 0);
+  }, []);
 
-  // Set initial position from localStorage or default to bottom center
-  const [floatingBarPosition, setFloatingBarPosition] = useState(() => {
-    // Try to get saved position from localStorage
-    const savedPosition = getPositionFromStorage();
+  // Handler for outline load error
+  const onOutlineLoadError = useCallback((error: Error) => {
+    console.error("Error loading outline:", error);
+    setHasOutline(false);
+  }, []);
 
-    if (savedPosition) {
-      return savedPosition;
-    }
+  const handleKeyDown = useCallback(
+    (e: KeyboardEvent) => {
+      switch (e.key) {
+        case "ArrowRight":
+        case "ArrowDown":
+          nextPage();
+          break;
+        case "ArrowLeft":
+        case "ArrowUp":
+          previousPage();
+          break;
+        case "Home":
+          goToPage(1);
+          break;
+        case "End":
+          goToPage(numPages);
+          break;
+        case "+":
+        case "=":
+          zoomIn();
+          break;
+        case "-":
+          zoomOut();
+          break;
+        case "0":
+          resetZoom();
+          break;
+        case "r":
+          rotate(90);
+          break;
+        case "f":
+          if (e.ctrlKey || e.metaKey) {
+            e.preventDefault();
+            setShowSearch(true);
+          }
+          break;
+        case "Escape":
+          if (showSearch) {
+            setShowSearch(false);
+            setSearchText("");
+          }
+          break;
+      }
+    },
+    [numPages, goToPage, nextPage, previousPage, showSearch],
+  );
 
-    // Default position if nothing found in localStorage
-    return {
-      x: window.innerWidth / 2 - 150, // Approximate center
-      y: window.innerHeight - 100, // Near the bottom of the screen
+  useEffect(() => {
+    window.addEventListener("keydown", handleKeyDown);
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
     };
-  });
+  }, [handleKeyDown]);
 
-  // Position the floating bar initially
-  useEffect(() => {
-    if (floatingBarRef.current) {
-      // If position was loaded from localStorage, validate it's still within viewport
-      const viewportWidth = window.innerWidth;
-      const viewportHeight = window.innerHeight;
-      const barWidth = floatingBarRef.current.offsetWidth;
-      const barHeight = floatingBarRef.current.offsetHeight;
+  // Text renderer for highlighting search text
+  const textRenderer = useCallback(
+    (textItem: { str: string }) => highlightPattern(textItem.str, searchText),
+    [searchText],
+  );
 
-      const newPosition = { ...floatingBarPosition };
-      let needsUpdate = false;
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchText(e.target.value);
+    // Reset match tracking when search changes
+    setCurrentMatchIndex(0);
+    setTotalMatches(0);
+  };
 
-      // Check if the bar is outside viewport boundaries and adjust if needed
-      if (newPosition.x < 0 || newPosition.x > viewportWidth - barWidth) {
-        newPosition.x = Math.max(0, viewportWidth / 2 - barWidth / 2);
-        needsUpdate = true;
+  // Function to count matches in text content
+  const updateMatchCount = useCallback(
+    (textContent: string) => {
+      if (!searchText) {
+        setTotalMatches(0);
+        return;
       }
 
-      if (newPosition.y < 0 || newPosition.y > viewportHeight - barHeight) {
-        newPosition.y = viewportHeight - 100; // 100px from the bottom
-        needsUpdate = true;
+      try {
+        const regExp = new RegExp(
+          searchText.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"),
+          "gi",
+        );
+        const matches = textContent.match(regExp);
+        setTotalMatches(matches ? matches.length : 0);
+      } catch (error) {
+        console.error("Error counting matches:", error);
+        setTotalMatches(0);
+      }
+    },
+    [searchText],
+  );
+
+  // Function to navigate between matches
+  const navigateMatches = useCallback(
+    (direction: "next" | "prev") => {
+      if (totalMatches === 0) return;
+
+      if (direction === "next") {
+        setCurrentMatchIndex((prev) => (prev + 1) % totalMatches);
+      } else {
+        setCurrentMatchIndex(
+          (prev) => (prev - 1 + totalMatches) % totalMatches,
+        );
       }
 
-      // Update position if needed
-      if (needsUpdate) {
-        setFloatingBarPosition(newPosition);
-        savePositionToStorage(newPosition);
-      }
-    }
-  }, [savePositionToStorage, floatingBarPosition]);
-
-  // Effect to save position whenever it changes
-  useEffect(() => {
-    savePositionToStorage(floatingBarPosition);
-  }, [floatingBarPosition, savePositionToStorage]);
-
-  // Handle drag end event to update position
-  const handleDragEnd = useCallback((event: DragEndEvent) => {
-    const { delta } = event;
-
-    // Update position with constraints to keep within viewport
-    setFloatingBarPosition((prev: { x: number; y: number }) => {
-      // Get the viewport dimensions
-      const viewportWidth = window.innerWidth;
-      const viewportHeight = window.innerHeight;
-
-      // Get the floating bar element to calculate its dimensions
-      const floatingBar = document.getElementById("pdf-floating-bar");
-      const barWidth = floatingBar?.offsetWidth || 0;
-      const barHeight = floatingBar?.offsetHeight || 0;
-
-      // Calculate new position with constraints
-      const newX = Math.max(
-        0,
-        Math.min(prev.x + delta.x, viewportWidth - barWidth),
-      );
-      const newY = Math.max(
-        0,
-        Math.min(prev.y + delta.y, viewportHeight - barHeight),
-      );
-
-      return { x: newX, y: newY };
-    });
-  }, []);
-
-  // Handle window resize to ensure the floating bar stays in bounds
-  useEffect(() => {
-    const handleResize = () => {
-      if (floatingBarRef.current) {
-        const viewportWidth = window.innerWidth;
-        const viewportHeight = window.innerHeight;
-        const barWidth = floatingBarRef.current.offsetWidth;
-        const barHeight = floatingBarRef.current.offsetHeight;
-
-        setFloatingBarPosition((prev: { x: number; y: number }) => {
-          // Adjust position if needed due to viewport size change
-          const newX = Math.max(0, Math.min(prev.x, viewportWidth - barWidth));
-          const newY = Math.max(
-            0,
-            Math.min(prev.y, viewportHeight - barHeight),
-          );
-
-          return { x: newX, y: newY };
+      // Find and scroll to the match
+      const marks = document.getElementsByTagName("mark");
+      if (marks.length > 0) {
+        const nextIndex =
+          direction === "next"
+            ? (currentMatchIndex + 1) % totalMatches
+            : (currentMatchIndex - 1 + totalMatches) % totalMatches;
+        marks[nextIndex]?.scrollIntoView({
+          behavior: "smooth",
+          block: "center",
         });
       }
-    };
-
-    window.addEventListener("resize", handleResize);
-
-    return () => {
-      window.removeEventListener("resize", handleResize);
-    };
-  }, [savePositionToStorage]);
-
-  const renderProgressBar = useCallback(
-    (numLoadedPages: number, numPages: number, onCancel: () => void) => (
-      <Dialog open={true} onOpenChange={() => {}}>
-        <DialogContent withClose={false}>
-          <DialogHeader>
-            <DialogTitle>Printing...</DialogTitle>
-          </DialogHeader>
-          <DialogBody>
-            <div className="flex flex-col space-y-3">
-              <p className="text-sm text-muted-foreground">
-                Preparing {numLoadedPages}/{numPages} pages ...
-              </p>
-              <Progress value={(numLoadedPages / numPages) * 100} />
-            </div>
-          </DialogBody>
-          <DialogFooter>
-            <Button variant="outline" onClick={onCancel}>
-              Cancel
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-    ),
-    [],
+    },
+    [totalMatches, currentMatchIndex],
   );
 
-  const printPluginInstance = printPlugin({
-    renderProgressBar,
-  });
-  const { print, setPages } = printPluginInstance;
-
-  const handlePrintAllPages = () => {
-    setPrintPages(PrintPages.All);
-    setPages(getAllPagesNumbers);
+  const handleInputKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Enter") {
+      if (e.shiftKey) {
+        navigateMatches("prev");
+      } else {
+        navigateMatches("next");
+      }
+    }
   };
 
-  const handleSetCustomPages = (value: string) => {
-    setCustomPages(value);
-    if (!/^([0-9,-\s])+$/.test(value)) {
-      setCustomPagesInvalid(true);
+  // Update match count when page content changes
+  useEffect(() => {
+    const updateMatchesFromPage = () => {
+      const textLayer = document.querySelector(".react-pdf__Page__textContent");
+      if (textLayer) {
+        updateMatchCount(textLayer.textContent || "");
+      }
+    };
+
+    // Small delay to ensure text layer is rendered
+    const timeoutId = setTimeout(updateMatchesFromPage, 100);
+    return () => clearTimeout(timeoutId);
+  }, [searchText, pageNumber, updateMatchCount]);
+
+  const toggleSearch = () => {
+    setShowSearch(!showSearch);
+    if (!showSearch) {
+      // Focus the search input when opened
+      setTimeout(() => {
+        const searchInput = document.getElementById("pdf-search-input");
+        if (searchInput) {
+          searchInput.focus();
+        }
+      }, 100);
     } else {
-      setCustomPagesInvalid(false);
-      setPages(getCustomPagesNumbers(value));
-    }
-  };
-
-  const handlePrintPages = () => {
-    if (printPages === PrintPages.All) {
-      setPages(getAllPagesNumbers);
-    } else if (printPages === PrintPages.CustomPages && !customPagesInvalid) {
-      setPages(getCustomPagesNumbers(customPages));
-    }
-    print();
-  };
-
-  const handleValueChange = (value: string) => {
-    const newPrintPages = value as PrintPages;
-    setPrintPages(newPrintPages);
-
-    if (newPrintPages === PrintPages.All) {
-      setPages(getAllPagesNumbers);
-    } else if (
-      newPrintPages === PrintPages.CustomPages &&
-      !customPagesInvalid &&
-      customPages
-    ) {
-      setPages(getCustomPagesNumbers(customPages));
+      // Clear search when closing
+      setSearchText("");
     }
   };
 
   return (
-    <>
-      <div className="h-full w-full flex flex-col relative">
-        <div className="p-2 flex justify-between items-center">
-          <div className="flex items-center gap-2">
-            <Icon icon={faFilePdf} className="size-4 text-foreground" />
-            <div className="flex flex-col">
-              <span className="font-semibold leading-none tracking-tight flex items-center gap-x-1">
-                Document Viewer
-                <BetaTag />
-              </span>
-              <span className="text-2xs text-muted-foreground font-normal">
-                View and print PDF documents.
-              </span>
-            </div>
-          </div>
-        </div>
-
-        <div className="flex-1 border-t border-border">
-          <Worker workerUrl="https://unpkg.com/pdfjs-dist@3.11.174/build/pdf.worker.min.js">
-            <ScrollArea className="flex max-h-[80vh] flex-col overflow-y-auto rounded-b-lg p-2">
-              <Viewer
-                fileUrl={fileUrl}
-                theme={theme}
-                defaultScale={SpecialZoomLevel.PageFit}
-                plugins={[
-                  getFilePluginInstance,
-                  printPluginInstance,
-                  fullScreenPluginInstance,
-                  themePluginInstance,
-                  searchPluginInstance,
-                  propertiesPluginInstance,
-                ]}
-                renderLoader={(percentages: number) => (
-                  <div className="flex flex-col items-center justify-center h-full">
-                    <Progress value={percentages} />
-                  </div>
-                )}
-              />
-            </ScrollArea>
-          </Worker>
-        </div>
-
-        <DndContext onDragEnd={handleDragEnd}>
-          <PDFFloatingBar
-            ShowProperties={ShowProperties}
-            ref={floatingBarRef}
-            EnterFullScreen={EnterFullScreen}
-            Download={Download}
-            Search={Search}
-            setPrintDialogOpen={setPrintDialogOpen}
-            printDialogOpen={printDialogOpen}
-            position={floatingBarPosition}
-          />
-        </DndContext>
-      </div>
-      {printDialogOpen && (
-        <PDFPrintDialog
-          printDialogOpen={printDialogOpen}
-          setPrintDialogOpen={setPrintDialogOpen}
-          printPages={printPages}
-          handleValueChange={handleValueChange}
-          handlePrintAllPages={handlePrintAllPages}
-          handleSetCustomPages={handleSetCustomPages}
-          handlePrintPages={handlePrintPages}
-          customPages={customPages}
-          customPagesInvalid={customPagesInvalid}
+    <PDFViewerInner className={className} setContainerRef={setContainerRef}>
+      {showSearch && (
+        <PDFSearchBar
+          searchText={searchText}
+          handleSearchChange={handleSearchChange}
+          handleInputKeyDown={handleInputKeyDown}
         />
       )}
-    </>
+
+      {/* Toolbar */}
+      <PDFNavigationBar
+        showOutline={showOutline}
+        setShowOutline={setShowOutline}
+        hasOutline={hasOutline}
+        previousPage={previousPage}
+        nextPage={nextPage}
+        pageNumber={pageNumber}
+        numPages={numPages}
+        zoomOut={zoomOut}
+        zoomIn={zoomIn}
+        rotate={rotate}
+        toggleSearch={toggleSearch}
+        searchText={searchText}
+        showSearch={showSearch}
+        totalMatches={totalMatches}
+        currentMatchIndex={currentMatchIndex}
+        navigateMatches={navigateMatches}
+        scale={scale}
+      />
+
+      {/* Document viewer area with optional outline */}
+      <div className="flex flex-1 overflow-hidden">
+        {/* Sidebar for outline when shown */}
+        {showOutline && (
+          <PDFDocumentOutline
+            setShowOutline={setShowOutline}
+            hasOutline={hasOutline}
+          />
+        )}
+
+        {/* PDF Document */}
+        <PDFDocumentViewer
+          viewerRef={viewerRef}
+          showOutline={showOutline}
+          hasOutline={hasOutline}
+          isLoading={isLoading}
+          numPages={numPages}
+          onDocumentLoadSuccess={onDocumentLoadSuccess}
+          onDocumentLoadError={onDocumentLoadError}
+          onItemClick={onItemClick}
+          onOutlineLoadSuccess={onOutlineLoadSuccess}
+          onOutlineLoadError={onOutlineLoadError}
+          outlineRef={outlineRef}
+          pageNumber={pageNumber}
+          scale={scale}
+          rotation={rotation}
+          containerWidth={containerWidth}
+          fileUrl={fileUrl}
+          options={options}
+          searchText={searchText}
+          textRenderer={textRenderer}
+        />
+      </div>
+
+      {/* Bottom toolbar/status bar - now sticky at the bottom */}
+      <PDFFooter
+        numPages={numPages}
+        pageNumber={pageNumber}
+        scale={scale}
+        rotation={rotation}
+        searchText={searchText}
+      />
+    </PDFViewerInner>
   );
 }
