@@ -147,7 +147,7 @@ export default function ShipmentControlForm() {
           <ComplianceForm />
           <DelayShipmentForm />
           <DetentionForm />
-          <FormSaveDock isDirty={isDirty} isSubmitting={isSubmitting} />
+          <FormSaveDock />
         </div>
       </Form>
     </FormProvider>

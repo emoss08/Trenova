@@ -147,7 +147,7 @@ export default function OrganizationForm() {
           <GeneralForm />
           <ComplianceForm />
           <AddressForm />
-          <FormSaveDock isDirty={isDirty} isSubmitting={isSubmitting} />
+          <FormSaveDock />
         </div>
       </Form>
     </FormProvider>

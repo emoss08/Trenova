@@ -153,7 +153,7 @@ export default function BillingControlForm() {
           <AutomatedBillingSettings />
           <ExceptionHandlingSettings />
           <ConsolidationSettings />
-          <FormSaveDock isDirty={isDirty} isSubmitting={isSubmitting} />
+          <FormSaveDock />
         </div>
       </Form>
     </FormProvider>

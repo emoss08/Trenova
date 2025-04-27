@@ -165,14 +165,13 @@ export function ShipmentCreateSheet({ open, onOpenChange }: TableSheetProps) {
           <FormProvider {...form}>
             <Form className="space-y-0 p-0" onSubmit={handleSubmit(onSubmit)}>
               <SheetBody className="p-0">
-                <ShipmentForm dimensions={dimensions} onBack={onClose} />
+                <ShipmentForm
+                  onBack={onClose}
+                  open={open}
+                  sheetRef={sheetRef}
+                />
               </SheetBody>
-              <FormSaveDock
-                isDirty={isDirty}
-                isSubmitting={isSubmitting}
-                position="right"
-                onReset={handleReset}
-              />
+              <FormSaveDock />
             </Form>
           </FormProvider>
         </SheetContent>

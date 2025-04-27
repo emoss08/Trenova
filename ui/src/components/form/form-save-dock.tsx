@@ -2,27 +2,14 @@
 import { Button } from "@/components/ui/button";
 import { Icon } from "@/components/ui/icons";
 import { cn } from "@/lib/utils";
-import {
-  faCircleExclamation,
-  faClock,
-} from "@fortawesome/pro-regular-svg-icons";
-import { ReactNode } from "react";
-import { useFormState, type Control } from "react-hook-form";
+import { faCircleExclamation } from "@fortawesome/pro-regular-svg-icons";
+import { ReactNode, useCallback } from "react";
+import { useFormContext, useFormState } from "react-hook-form";
 import { PulsatingDots } from "../ui/pulsating-dots";
-import { useFormSave } from "./form-save-context";
 
 type DockPosition = "center" | "left" | "right";
 
 interface FormSaveDockProps {
-  /** Whether the form has unsaved changes */
-  control: Control;
-
-  /** Whether the form is currently submitting */
-  isSubmitting: boolean;
-
-  /** Function to call when the reset button is clicked */
-  onReset?: () => void;
-
   /** Custom save button content */
   saveButtonContent?: ReactNode;
 
@@ -45,22 +32,27 @@ interface FormSaveDockProps {
  * This component should be placed inside a Form component and will automatically
  * appear when the form has unsaved changes. It provides save and reset buttons
  * and displays a notification about unsaved changes.
+ *
+ * Note: Make sure this is wrapped in a FormProvider
+ *
+ * @example
+ * <FormProvider {...form}>
+ *   <FormSaveDock />
+ * </FormProvider>
  */
 export function FormSaveDock({
-  control,
-  onReset,
   saveButtonContent = "Save",
   unsavedText = "Unsaved changes",
   position = "center",
   width = "350px",
   className,
 }: FormSaveDockProps) {
+  const { control, reset } = useFormContext();
   const { isDirty, isSubmitting } = useFormState({ control });
 
-  // Only render the dock if there are unsaved changes
-  if (!isDirty) {
-    return null;
-  }
+  const handleReset = useCallback(() => {
+    reset();
+  }, [reset]);
 
   // Position-specific classes
   const positionClasses = {
@@ -69,7 +61,7 @@ export function FormSaveDock({
     right: "right-20",
   };
 
-  return (
+  return isDirty ? (
     <>
       <div
         className={cn(
@@ -98,7 +90,7 @@ export function FormSaveDock({
             <Button
               type="reset"
               variant="outline"
-              onClick={onReset}
+              onClick={handleReset}
               disabled={!isDirty || isSubmitting}
               className="bg-white/20 hover:bg-white/30 dark:bg-black/20 dark:hover:bg-black/30 hover:text-background text-background border-none"
             >
@@ -115,23 +107,5 @@ export function FormSaveDock({
         </div>
       </div>
     </>
-  );
-}
-
-/**
- * LastSavedIndicator - Shows when the form was last saved
- *
- * This component should be placed wherever you want to display the last saved timestamp.
- */
-export function LastSavedIndicator() {
-  const { lastSaved } = useFormSave();
-
-  if (!lastSaved) {
-    return (
-      <div className="text-sm text-muted-foreground flex items-center">
-        <Icon icon={faClock} className="mr-1" />
-        Last saved: {lastSaved}
-      </div>
-    );
-  }
+  ) : null;
 }
