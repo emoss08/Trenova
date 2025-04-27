@@ -381,7 +381,7 @@ export function MultiSelectAutocomplete<T>({
             role="combobox"
             aria-expanded={open}
             className={cn(
-              "w-full font-normal gap-2 cursor-auto rounded border-muted-foreground/20 bg-muted px-2 py-1.5 h-8 data-[state=open]:border-blue-600 data-[state=open]:outline-hidden data-[state=open]:ring-4 data-[state=open]:ring-blue-600/20",
+              "w-full font-normal gap-2 cursor-auto rounded border-muted-foreground/20 bg-muted px-2 py-1.5 h-7 data-[state=open]:border-blue-600 data-[state=open]:outline-hidden data-[state=open]:ring-4 data-[state=open]:ring-blue-600/20",
               "justify-between [&_svg]:size-3.5 [&_svg]:shrink-0",
               "transition-[border-color,box-shadow] duration-200 ease-in-out",
               disabled && "opacity-50 cursor-not-allowed",
@@ -399,7 +399,7 @@ export function MultiSelectAutocomplete<T>({
                       withDot={false}
                       key={getOptionValue(option).toString()}
                       className={cn(
-                        "max-h-6 h-auto",
+                        "max-h-5 h-auto",
                         multiSelectVariants({ variant: "default" }),
                       )}
                     >
@@ -422,7 +422,7 @@ export function MultiSelectAutocomplete<T>({
                     <Badge
                       withDot={false}
                       className={cn(
-                        "max-h-6 h-auto bg-transparent text-foreground border-foreground/10 hover:bg-transparent",
+                        "max-h-5 h-auto bg-transparent text-foreground border-foreground/10 hover:bg-transparent",
                         multiSelectVariants({ variant: "default" }),
                       )}
                     >
