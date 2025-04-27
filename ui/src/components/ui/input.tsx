@@ -29,7 +29,7 @@ function Input({
           {icon}
         </div>
       )}
-      <div className="relative flex rounded-md shadow-xs">
+      <div className="relative flex rounded-md">
         <input
           type={type}
           readOnly={readOnly}
