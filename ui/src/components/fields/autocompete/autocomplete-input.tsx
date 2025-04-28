@@ -3,8 +3,8 @@ import { PulsatingDots } from "@/components/ui/pulsating-dots";
 import { http } from "@/lib/http-client";
 import { cn } from "@/lib/utils";
 import { ChevronDownIcon, Cross2Icon } from "@radix-ui/react-icons";
+import { useQuery } from "@tanstack/react-query";
 import type React from "react";
-import { useCallback, useEffect } from "react";
 
 type AutocompleteTriggerProps<TOption> = {
   open: boolean;
@@ -16,10 +16,7 @@ type AutocompleteTriggerProps<TOption> = {
   getDisplayValue: (option: TOption) => React.ReactNode;
   placeholder: string;
   handleClear: () => void;
-  loading: boolean;
-  setLoading: (loading: boolean) => void;
   isInvalid?: boolean;
-  setError: (error: string | null) => void;
   setSelectedOption: (option: TOption | null) => void;
   link: string;
 } & React.ComponentProps<"button">;
@@ -28,7 +25,9 @@ async function fetchOptionById<T>(
   link: string,
   id: string | number,
 ): Promise<T> {
-  const { data } = await http.get<T>(`${link}${id}/`);
+  const url = link.endsWith("/") ? `${link}${id}/` : `${link}/${id}/`;
+
+  const { data } = await http.get<T>(url);
   return data;
 }
 
@@ -43,36 +42,26 @@ export function AutocompleteTrigger<TOption>({
   getDisplayValue,
   placeholder,
   handleClear,
-  loading,
-  setLoading,
-  setError,
   setSelectedOption,
   link,
   ...props
 }: AutocompleteTriggerProps<TOption>) {
-  // Memoize the fetch functions to prevent unnecessary recreation
-  const fetchInitialValueFn = useCallback(async () => {
-    if (value) {
-      try {
-        setLoading(true);
-        const option = await fetchOptionById<TOption>(link, value);
-        setSelectedOption(option);
-      } catch (err) {
-        setError(
-          err instanceof Error ? err.message : "Failed to fetch initial value",
-        );
-      } finally {
-        setLoading(false);
-      }
-    } else {
-      setSelectedOption(null);
-    }
-  }, [value, link, setSelectedOption, setLoading, setError]);
+  const { isLoading, isError } = useQuery({
+    queryKey: ["autocomplete-item", link, value],
+    queryFn: async () => {
+      const option = await fetchOptionById<TOption>(link, value);
 
-  // Fetch initial value if it exists
-  useEffect(() => {
-    fetchInitialValueFn();
-  }, [fetchInitialValueFn]);
+      // * Set the selected option
+      setSelectedOption(option);
+
+      return option;
+    },
+    enabled: !!value && !selectedOption,
+    retry: 1,
+    staleTime: 0, // Always consider data stale
+    refetchOnMount: "always",
+    refetchOnWindowFocus: true,
+  });
 
   return (
     <Button
@@ -95,14 +84,14 @@ export function AutocompleteTrigger<TOption>({
       <AutocompleteInputInner
         selectedOption={selectedOption}
         getDisplayValue={getDisplayValue}
-        isInvalid={isInvalid}
+        isInvalid={isInvalid || isError}
         placeholder={placeholder}
       />
       <AutocompleteInputActions
         clearable={clearable}
         value={value}
         handleClear={handleClear}
-        loading={loading}
+        loading={isLoading}
         open={open}
       />
     </Button>

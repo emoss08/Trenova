@@ -12,6 +12,7 @@ import { http } from "@/lib/http-client";
 import { cn } from "@/lib/utils";
 import type { LimitOffsetResponse } from "@/types/server";
 import { faCheck } from "@fortawesome/pro-regular-svg-icons";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useDebounce } from "@uidotdev/usehooks";
 import type React from "react";
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -41,8 +42,6 @@ export function AutocompleteCommandContent<TOption>({
   link,
   preload,
   label,
-  loading,
-  setLoading,
   getOptionValue,
   renderOption,
   setSelectedOption,
@@ -53,15 +52,11 @@ export function AutocompleteCommandContent<TOption>({
   onOptionChange,
   extraSearchParams,
   onChange,
-  error,
-  setError,
 }: {
   link: string;
   preload: boolean;
   label: string;
   clearable: boolean;
-  loading: boolean;
-  setLoading: (loading: boolean) => void;
   value: string;
   setOpen: (open: boolean) => void;
   noResultsMessage?: string;
@@ -70,10 +65,9 @@ export function AutocompleteCommandContent<TOption>({
   renderOption: (option: TOption) => React.ReactNode;
   setSelectedOption: (option: TOption | null) => void;
   onOptionChange?: (option: TOption | null) => void;
-  error: string | null;
-  setError: (error: string | null) => void;
   extraSearchParams?: Record<string, string | string[]>;
 }) {
+  const queryClient = useQueryClient();
   const [options, setOptions] = useState<TOption[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const debouncedSearchTerm = useDebounce(searchTerm, preload ? 0 : 300);
@@ -81,21 +75,24 @@ export function AutocompleteCommandContent<TOption>({
   const [page, setPage] = useState(1);
   const commandListRef = useRef<HTMLDivElement>(null);
 
-  // Animation frame reference for smooth scrolling
+  // * Animation frame reference for smooth scrolling
   const animationRef = useRef<number | null>(null);
-  // Target scroll position for smooth scrolling
+  // * Target scroll position for smooth scrolling
   const targetScrollRef = useRef<number | null>(null);
-  // Scroll acceleration and velocity tracking
+  // * Scroll acceleration and velocity tracking
   const velocityRef = useRef(0);
-  // Last wheel event timestamp for inertia calculation
+  // * Last wheel event timestamp for inertia calculation
   const lastWheelTimeRef = useRef(0);
 
-  // Memoize the load options function
-  const loadOptionsFn = useCallback(async () => {
-    try {
-      setLoading(true);
-      setError(null);
-
+  const { isLoading, isError } = useQuery({
+    queryKey: [
+      "autocomplete",
+      link,
+      debouncedSearchTerm,
+      page,
+      extraSearchParams,
+    ],
+    queryFn: async () => {
       const response = await fetchOptions<TOption>(
         link,
         debouncedSearchTerm,
@@ -103,28 +100,29 @@ export function AutocompleteCommandContent<TOption>({
         extraSearchParams,
       );
 
+      // * Update options state
       setOptions((prev) =>
         page === 1 ? response.results : [...prev, ...response.results],
       );
       setHasMore(!!response.next);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to fetch options");
-    } finally {
-      setLoading(false);
-    }
-  }, [
-    debouncedSearchTerm,
-    page,
-    link,
-    extraSearchParams,
-    setLoading,
-    setError,
-  ]);
 
-  // Fetch options based on search term
+      return response;
+    },
+    placeholderData: () => {
+      return queryClient.getQueryData([
+        "autocomplete",
+        link,
+        debouncedSearchTerm,
+        page,
+        extraSearchParams,
+      ]);
+    },
+  });
+
+  // * Reset the page when the search term changes
   useEffect(() => {
-    loadOptionsFn();
-  }, [loadOptionsFn]);
+    setPage(1);
+  }, [debouncedSearchTerm]);
 
   const handleScrollEnd = useCallback(
     (e: React.UIEvent<HTMLDivElement>) => {
@@ -133,9 +131,9 @@ export function AutocompleteCommandContent<TOption>({
       const distanceFromBottom =
         target.scrollHeight - (target.scrollTop + target.clientHeight);
 
-      // Check if we're near the bottom and not already loading
+      // * Check if we're near the bottom and not already loading
       if (
-        !loading &&
+        !isLoading &&
         hasMore &&
         distanceFromBottom <= scrollBuffer &&
         distanceFromBottom >= 0 // Prevent overscroll triggering
@@ -143,10 +141,10 @@ export function AutocompleteCommandContent<TOption>({
         setPage((prev) => prev + 1);
       }
     },
-    [loading, hasMore],
+    [isLoading, hasMore],
   );
 
-  // Clean up animation frame on unmount
+  // * Clean up animation frame on unmount
   useEffect(() => {
     return () => {
       if (animationRef.current !== null) {
@@ -155,7 +153,7 @@ export function AutocompleteCommandContent<TOption>({
     };
   }, []);
 
-  // Smooth scrolling animation function
+  // * Smooth scrolling animation function
   const smoothScroll = useCallback(() => {
     if (!commandListRef.current || targetScrollRef.current === null) return;
 
@@ -163,10 +161,10 @@ export function AutocompleteCommandContent<TOption>({
     const target = targetScrollRef.current;
     const current = element.scrollTop;
 
-    // Distance to target
+    // * Distance to target
     const distance = target - current;
 
-    // If we're very close to target, just set it and stop
+    // * If we're very close to target, just set it and stop
     if (Math.abs(distance) < 0.5) {
       element.scrollTop = target;
       targetScrollRef.current = null;
@@ -174,17 +172,17 @@ export function AutocompleteCommandContent<TOption>({
       return;
     }
 
-    // Gentle easing - much less springy than before
-    // This gives a smooth feel without the bounciness
+    // * Gentle easing - much less springy than before
+    // * This gives a smooth feel without the bounciness
     const easeFactor = 0.25;
 
-    // Move a percentage of the distance each frame
+    // * Move a percentage of the distance each frame
     const movement = distance * easeFactor;
 
-    // Apply movement
+    // * Apply movement
     element.scrollTop += movement;
 
-    // Continue animation
+    // * Continue animation
     animationRef.current = requestAnimationFrame(smoothScroll);
   }, []);
 
@@ -214,7 +212,7 @@ export function AutocompleteCommandContent<TOption>({
     ],
   );
 
-  // Handle wheel events with better smooth scrolling
+  // * Handle wheel events with better smooth scrolling
   const handleWheel = useCallback(
     (e: React.WheelEvent) => {
       if (!commandListRef.current) return;
@@ -224,33 +222,33 @@ export function AutocompleteCommandContent<TOption>({
       const isAtBottom = scrollTop + clientHeight >= scrollHeight - 1;
       const isAtTop = scrollTop <= 0;
 
-      // Allow parent scrolling only if we're at the boundaries and trying to scroll beyond
+      // * Allow parent scrolling only if we're at the boundaries and trying to scroll beyond
       if ((isAtBottom && isScrollingDown) || (isAtTop && !isScrollingDown)) {
-        return; // Let the event propagate to parent
+        return; // * Let the event propagate to parent
       }
 
-      // Otherwise handle the scroll ourselves
+      // * Otherwise handle the scroll ourselves
       e.stopPropagation();
       e.preventDefault();
 
-      // Calculate scroll speed with gentle acceleration/deceleration
+      // * Calculate scroll speed with gentle acceleration/deceleration
       const now = performance.now();
       lastWheelTimeRef.current = now;
 
-      // Adjust sensitivity - higher is more responsive but less smooth
+      // * Adjust sensitivity - higher is more responsive but less smooth
       const scrollSensitivity = 0.8;
 
-      // Apply the scroll delta with sensitivity adjustment
+      // * Apply the scroll delta with sensitivity adjustment
       const delta = e.deltaY * scrollSensitivity;
 
-      // Get current scroll position
+      // * Get current scroll position
       const currentScroll = commandListRef.current.scrollTop;
 
-      // Set target scroll position with momentum
-      // This creates a smoother feeling without being too springy
+      // * Set target scroll position with momentum
+      // * This creates a smoother feeling without being too springy
       targetScrollRef.current = currentScroll + delta;
 
-      // Start animation if not already running
+      // * Start animation if not already running
       if (animationRef.current === null) {
         animationRef.current = requestAnimationFrame(smoothScroll);
       }
@@ -258,12 +256,12 @@ export function AutocompleteCommandContent<TOption>({
     [smoothScroll],
   );
 
-  // Add non-passive wheel event listener
+  // * Add non-passive wheel event listener
   useEffect(() => {
     const commandList = commandListRef.current;
     if (!commandList) return;
 
-    // Add wheel event listener with { passive: false } option
+    // * Add wheel event listener with { passive: false } option
     const wheelHandler = (e: WheelEvent) => {
       handleWheel(e as unknown as React.WheelEvent);
     };
@@ -293,10 +291,12 @@ export function AutocompleteCommandContent<TOption>({
         onScroll={handleScrollEnd}
         className="max-h-[200px] overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent"
       >
-        {error && (
-          <div className="p-4 text-destructive text-center">{error}</div>
+        {isError && (
+          <div className="p-4 text-destructive text-center">
+            Failed to fetch options
+          </div>
         )}
-        {!loading && !error && options.length === 0 && (
+        {!isLoading && options.length === 0 && (
           <CommandEmpty>
             {noResultsMessage ?? `No ${label.toLowerCase()} found.`}
           </CommandEmpty>
@@ -312,12 +312,12 @@ export function AutocompleteCommandContent<TOption>({
               value={value}
             />
           ))}
-          {loading && (
+          {isLoading && (
             <div className="p-2 flex justify-center">
               <PulsatingDots size={1} color="foreground" />
             </div>
           )}
-          {hasMore && !loading && (
+          {hasMore && !isLoading && (
             <div className="p-2 text-xs text-center text-muted-foreground">
               Scroll for more
             </div>

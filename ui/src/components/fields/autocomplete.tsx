@@ -43,8 +43,6 @@ export function Autocomplete<TOption, TForm extends FieldValues>({
 }: BaseAutocompleteFieldProps<TOption, TForm>) {
   const [open, setOpen] = useState(false);
   const [selectedOption, setSelectedOption] = useState<TOption | null>(null);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
 
   const handleClear = useCallback(() => {
     onChange("");
@@ -66,9 +64,6 @@ export function Autocomplete<TOption, TForm extends FieldValues>({
             getDisplayValue={getDisplayValue}
             placeholder={placeholder}
             handleClear={handleClear}
-            loading={loading}
-            setLoading={setLoading}
-            setError={setError}
             setSelectedOption={setSelectedOption}
             link={link}
           />
@@ -84,16 +79,12 @@ export function Autocomplete<TOption, TForm extends FieldValues>({
             link={link}
             preload={preload}
             label={label}
-            loading={loading}
-            setLoading={setLoading}
             getOptionValue={getOptionValue}
             renderOption={renderOption}
             setOpen={setOpen}
             setSelectedOption={setSelectedOption}
             onOptionChange={onOptionChange}
             onChange={onChange}
-            error={error}
-            setError={setError}
             clearable={clearable}
             value={value}
             noResultsMessage={noResultsMessage}
