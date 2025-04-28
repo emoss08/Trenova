@@ -48,12 +48,7 @@ export default function OrganizationForm() {
     defaultValues: userOrg.data,
   });
 
-  const {
-    reset,
-    handleSubmit,
-    formState: { isDirty, isSubmitting },
-    setError,
-  } = form;
+  const { reset, handleSubmit, setError } = form;
 
   const { mutateAsync } = useMutation({
     mutationFn: async (values: OrganizationSchema) => {
