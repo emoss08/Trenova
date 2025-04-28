@@ -76,6 +76,7 @@ export function Autocomplete<TOption, TForm extends FieldValues>({
           )}
         >
           <AutocompleteCommandContent
+            open={open}
             link={link}
             preload={preload}
             label={label}

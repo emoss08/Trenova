@@ -32,11 +32,8 @@ export function CommodityRow({
   // const commodityError = errors.commodities?.[index]?.commodityId?.message;
   // const hasError = !!commodityError;
 
-  // Create a memoization key based on the commodity data
-  const memoKey = `${shipmentCommodity.commodityId}-${shipmentCommodity.pieces}-${shipmentCommodity.weight}`;
-
   return (
-    <CommodityRowInner key={memoKey} isLast={isLast}>
+    <CommodityRowInner isLast={isLast}>
       <CommodityRowContent>
         <CommodityRedirectLink shipmentCommodity={shipmentCommodity} />
         {/* {hasError && (

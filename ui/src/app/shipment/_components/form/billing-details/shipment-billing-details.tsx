@@ -177,8 +177,8 @@ function ShipmentBillingDetailsForm() {
           control={control}
           name="otherChargeAmount"
           label="Other Charges"
-          placeholder="Enter Additional Charges"
-          description="Include any extra costs not covered by the primary rating method (e.g., tolls, fees)."
+          placeholder="Auto-calculated Additional Charges"
+          description="Sum of all additional charges (tolls, fees, etc.) – updated automatically."
         />
       </FormControl>
       <FormControl>

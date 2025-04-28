@@ -41,23 +41,26 @@ function Button({
 
 Button.displayName = "Button";
 
+type FormSaveButtonProps = {
+  title: string;
+  isPopout?: boolean;
+  isSubmitting: boolean;
+  tooltipPosition?: "top" | "bottom" | "left" | "right";
+  type?: React.ButtonHTMLAttributes<HTMLButtonElement>["type"];
+  text?: string;
+  onClick?: () => void;
+} & React.ComponentProps<"button">;
+
 function FormSaveButton({
   title,
   isPopout = false,
   isSubmitting,
   tooltipPosition = "top",
   type = "submit",
-  text = "Save Changes",
+  text,
   onClick,
-}: {
-  title: string;
-  isSubmitting: boolean;
-  isPopout?: boolean;
-  tooltipPosition?: "top" | "bottom" | "left" | "right";
-  type?: React.ButtonHTMLAttributes<HTMLButtonElement>["type"];
-  text?: string;
-  onClick?: () => void;
-}) {
+  ...props
+}: FormSaveButtonProps) {
   return (
     <Tooltip delayDuration={500}>
       <TooltipTrigger asChild>
@@ -66,6 +69,7 @@ function FormSaveButton({
           isLoading={isSubmitting}
           disabled={isSubmitting}
           onClick={onClick}
+          {...props}
         >
           {text ? text : `Save ${isPopout ? "and Close" : "Changes"}`}
         </Button>

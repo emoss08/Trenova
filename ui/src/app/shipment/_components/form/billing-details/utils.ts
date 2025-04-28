@@ -51,7 +51,8 @@ export function calculatePerLinearFoot(commodities: ShipmentCommoditySchema[]) {
 
 /** Per stop rate calculation */
 export function calculatePerStopRate(shipment: ShipmentSchema) {
-  if (!shipment.moves || !shipment.moves.length) return 0;
+  if (!shipment.moves || !shipment.moves.length || !shipment.ratingUnit)
+    return 0;
 
   const totalStops = shipment.moves.reduce(
     (total, move) => total + (move.stops?.length ?? 0),
@@ -76,7 +77,7 @@ export function calculatePerLinearFootRate(shipment: ShipmentSchema) {
  * @param shipment The shipment to calculate the base charge for
  * @returns The calculated base charge
  */
-export function calculateBaseCharge(shipment: ShipmentSchema): number {
+export function calculateBaseCharge(shipment: ShipmentSchema) {
   // * If the shipment is new, the rating method will be undefined
   if (!shipment.ratingMethod) return 0;
 
@@ -124,7 +125,7 @@ export function calculateBaseCharge(shipment: ShipmentSchema): number {
 export function calculateTotalAdditionalCharges(
   shipment: ShipmentSchema,
   baseCharge: number,
-): number {
+) {
   if (
     !shipment ||
     !shipment.additionalCharges ||
@@ -154,7 +155,7 @@ export function calculateTotalAdditionalCharges(
  * @param shipment The shipment to calculate the total charge for
  * @returns The total charge amount including base, other, and additional charges
  */
-export function calculateTotalChargeAmount(shipment: ShipmentSchema): number {
+export function calculateTotalChargeAmount(shipment: ShipmentSchema) {
   if (!shipment) return 0;
 
   const baseCharge = calculateBaseCharge(shipment);

@@ -1,13 +1,3 @@
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
 import { Button, FormSaveButton } from "@/components/ui/button";
 import {
   Dialog,
@@ -20,7 +10,6 @@ import {
 } from "@/components/ui/dialog";
 import { usePopoutWindow } from "@/hooks/popout-window/use-popout-window";
 import { useApiMutation } from "@/hooks/use-api-mutation";
-import { useUnsavedChanges } from "@/hooks/use-form";
 import { broadcastQueryInvalidation } from "@/hooks/use-invalidate-query";
 import { formatToUserTimezone } from "@/lib/date";
 import { http } from "@/lib/http-client";
@@ -71,7 +60,7 @@ export function FormEditModal<T extends FieldValues>({
 
   const {
     setError,
-    formState: { isDirty, isSubmitting },
+    formState: { isSubmitting },
     handleSubmit,
     reset,
   } = form;
@@ -139,27 +128,14 @@ export function FormEditModal<T extends FieldValues>({
 
       // * Reset the form to the new values
       reset(newValues);
-    },
-    // Pass in the form's setError function
-    setFormError: setError,
-    // Provide a resource name for better error logging
-    resourceName: title,
-    // You can still add custom onSettled logic
-    onSettled: () => {
+
+      // * If the page is a popout, close it
       if (isPopout) {
         closePopout();
       }
     },
-  });
-
-  const {
-    showWarning,
-    handleClose: onClose,
-    handleConfirmClose,
-    handleCancelClose,
-  } = useUnsavedChanges({
-    isDirty,
-    onClose: handleClose,
+    setFormError: setError,
+    resourceName: title,
   });
 
   const onSubmit = useCallback(
@@ -231,7 +207,7 @@ export function FormEditModal<T extends FieldValues>({
             )}
           </DialogBody>
           <DialogFooter>
-            <Button type="button" variant="outline" onClick={onClose}>
+            <Button type="button" variant="outline" onClick={handleClose}>
               Cancel
             </Button>
             <FormSaveButton
@@ -247,11 +223,11 @@ export function FormEditModal<T extends FieldValues>({
 
   return (
     <>
-      <Dialog open={open} onOpenChange={onClose}>
+      <Dialog open={open} onOpenChange={onOpenChange}>
         {dialogContent}
       </Dialog>
 
-      {showWarning && (
+      {/* {showWarning && (
         <AlertDialog open={showWarning} onOpenChange={handleCancelClose}>
           <AlertDialogContent>
             <AlertDialogHeader>
@@ -271,7 +247,7 @@ export function FormEditModal<T extends FieldValues>({
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>
-      )}
+      )} */}
     </>
   );
 }

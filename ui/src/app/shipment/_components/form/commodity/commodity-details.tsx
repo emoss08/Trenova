@@ -117,14 +117,5 @@ function CommodityDetailsInner({
   children: React.ReactNode;
   className?: string;
 }) {
-  return (
-    <div
-      className={cn(
-        "flex flex-col gap-2 border-t border-bg-sidebar-border py-4",
-        className,
-      )}
-    >
-      {children}
-    </div>
-  );
+  return <div className={className}>{children}</div>;
 }

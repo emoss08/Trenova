@@ -39,6 +39,7 @@ async function fetchOptions<T>(
 }
 
 export function AutocompleteCommandContent<TOption>({
+  open,
   link,
   preload,
   label,
@@ -53,6 +54,7 @@ export function AutocompleteCommandContent<TOption>({
   extraSearchParams,
   onChange,
 }: {
+  open: boolean;
   link: string;
   preload: boolean;
   label: string;
@@ -79,10 +81,6 @@ export function AutocompleteCommandContent<TOption>({
   const animationRef = useRef<number | null>(null);
   // * Target scroll position for smooth scrolling
   const targetScrollRef = useRef<number | null>(null);
-  // * Scroll acceleration and velocity tracking
-  const velocityRef = useRef(0);
-  // * Last wheel event timestamp for inertia calculation
-  const lastWheelTimeRef = useRef(0);
 
   const { isLoading, isError } = useQuery({
     queryKey: [
@@ -117,6 +115,10 @@ export function AutocompleteCommandContent<TOption>({
         extraSearchParams,
       ]);
     },
+    enabled: open,
+    staleTime: 0,
+    refetchOnMount: "always",
+    refetchOnWindowFocus: true,
   });
 
   // * Reset the page when the search term changes
@@ -168,7 +170,6 @@ export function AutocompleteCommandContent<TOption>({
     if (Math.abs(distance) < 0.5) {
       element.scrollTop = target;
       targetScrollRef.current = null;
-      velocityRef.current = 0;
       return;
     }
 
@@ -231,10 +232,6 @@ export function AutocompleteCommandContent<TOption>({
       e.stopPropagation();
       e.preventDefault();
 
-      // * Calculate scroll speed with gentle acceleration/deceleration
-      const now = performance.now();
-      lastWheelTimeRef.current = now;
-
       // * Adjust sensitivity - higher is more responsive but less smooth
       const scrollSensitivity = 0.8;
 
@@ -266,6 +263,8 @@ export function AutocompleteCommandContent<TOption>({
       handleWheel(e as unknown as React.WheelEvent);
     };
 
+    // Using non-passive listener to allow preventDefault() for custom scroll behavior
+    // This is necessary to prevent parent scrolling while implementing momentum scrolling
     commandList.addEventListener("wheel", wheelHandler, { passive: false });
 
     return () => {

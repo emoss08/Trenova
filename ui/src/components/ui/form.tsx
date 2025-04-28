@@ -44,6 +44,7 @@ interface FormControlProps extends React.HTMLAttributes<HTMLDivElement> {
   cols?: ColSpan;
   error?: boolean;
   disabled?: boolean;
+  children: React.ReactNode;
 }
 
 // Column span mapping
@@ -64,16 +65,15 @@ const colSpanClasses: Record<ColSpan, string> = {
   auto: "col-auto",
 } as const;
 
-// Form Components
-export const Form = React.forwardRef<HTMLFormElement, FormProps>(
-  ({ className, onSubmit, children, ...props }, ref) => {
+export const Form = React.memo(
+  ({ className, onSubmit, children, ...props }: FormProps) => {
     const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
       e.preventDefault();
       onSubmit?.(e);
     };
 
     return (
-      <form ref={ref} onSubmit={handleSubmit} className={className} {...props}>
+      <form onSubmit={handleSubmit} className={className} {...props}>
         {children}
       </form>
     );
@@ -82,10 +82,9 @@ export const Form = React.forwardRef<HTMLFormElement, FormProps>(
 
 Form.displayName = "Form";
 
-export const FormGroup = React.forwardRef<HTMLDivElement, FormGroupProps>(
-  ({ className, cols, dense, children, ...props }, ref) => (
+export const FormGroup = React.memo(
+  ({ className, cols, dense, children, ...props }: FormGroupProps) => (
     <div
-      ref={ref}
       className={cn(formGroupVariants({ cols, dense }), className)}
       role="group"
       {...props}
@@ -97,13 +96,20 @@ export const FormGroup = React.forwardRef<HTMLDivElement, FormGroupProps>(
 
 FormGroup.displayName = "FormGroup";
 
-export const FormControl = React.forwardRef<HTMLDivElement, FormControlProps>(
-  ({ className, cols = 1, error, disabled, children, ...props }, ref) => {
+export const FormControl = React.memo(
+  ({
+    className,
+    cols = 1,
+    error,
+    disabled,
+    children,
+    ...props
+  }: FormControlProps) => {
     const colSpanClass = colSpanClasses[cols];
 
     return (
       <div
-        ref={ref}
+        data-slot="form-control"
         className={cn(
           "relative min-h-[4em]",
           colSpanClass,
@@ -127,10 +133,9 @@ interface FormSectionProps extends React.HTMLAttributes<HTMLDivElement> {
   description?: string;
 }
 
-export const FormSection = React.forwardRef<HTMLDivElement, FormSectionProps>(
-  ({ className, title, description, children, ...props }, ref) => (
+export const FormSection = React.memo(
+  ({ className, title, description, children, ...props }: FormSectionProps) => (
     <div
-      ref={ref}
       className={cn("mt-2 space-y-4", className)}
       role="group"
       aria-labelledby={title ? `section-${title}` : undefined}
