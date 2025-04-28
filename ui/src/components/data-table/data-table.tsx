@@ -232,12 +232,12 @@ export function DataTable<TData extends Record<string, any>>({
           />
         </DataTableOptions>
       )}
-      <div className="rounded-md border border-sidebar-border">
+      <DataTableInner>
         <Table>
           {includeHeader && <DataTableHeader table={table as any} />}
           <DataTableBody table={table as any} />
         </Table>
-      </div>
+      </DataTableInner>
       <DataTablePagination>
         <PaginationInner table={table} />
       </DataTablePagination>
@@ -257,5 +257,11 @@ export function DataTable<TData extends Record<string, any>>({
         />
       )}
     </div>
+  );
+}
+
+export function DataTableInner({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="rounded-md border border-sidebar-border">{children}</div>
   );
 }
