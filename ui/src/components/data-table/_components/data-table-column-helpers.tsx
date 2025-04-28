@@ -1,11 +1,7 @@
 /* eslint-disable react-refresh/only-export-components */
 /* eslint-disable react/display-name */
 import { Checkbox } from "@/components/ui/checkbox";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
+
 import { generateDateOnlyString, toDate } from "@/lib/date";
 import { BaseModel } from "@/types/common";
 import { ColumnDef, ColumnHelper } from "@tanstack/react-table";
@@ -85,6 +81,7 @@ const EntityRefLink = memo(
       <span
         onClick={handleClick}
         className={`${className || ""} cursor-pointer`}
+        title={`Click to view ${displayText}`}
       >
         {color ? (
           <div className="flex items-center gap-x-1.5 text-sm font-normal text-foreground underline hover:text-foreground/70">
@@ -167,7 +164,8 @@ const SecondaryInfoLink = memo(
     return (
       <span
         onClick={handleClick}
-        className="text-2xs text-muted-foreground underline hover:text-muted-foreground/70 cursor-pointer"
+        className="text-2xs text-foreground underline hover:text-foreground/70 cursor-pointer"
+        title={`Click to view ${displayText}`}
       >
         {displayText}
       </span>
@@ -202,37 +200,22 @@ function EntityRefCellBase<TEntity, TParent extends Record<string, any>>(
 
   return (
     <div className="flex flex-col gap-0.5">
-      <Tooltip delayDuration={300}>
-        <TooltipTrigger asChild>
-          <EntityRefLink
-            id={id}
-            displayText={displayText}
-            className={config.className}
-            color={color}
-            basePath={basePath}
-          />
-        </TooltipTrigger>
-        <TooltipContent>
-          <p>Click to view {displayText}</p>
-        </TooltipContent>
-      </Tooltip>
-
+      <EntityRefLink
+        id={id}
+        displayText={displayText}
+        className={config.className}
+        color={color}
+        basePath={basePath}
+      />
       {secondaryInfo && (
         <div className="flex items-center gap-1 text-muted-foreground text-2xs">
           {secondaryInfo.label && <span>{secondaryInfo.label}:</span>}
-          <Tooltip delayDuration={300}>
-            <TooltipTrigger asChild>
-              <SecondaryInfoLink
-                id={config.getId(secondaryInfo.entity)}
-                displayText={secondaryInfo.displayText}
-                clickable={clickable}
-                basePath={secondaryInfo.basePath || basePath}
-              />
-            </TooltipTrigger>
-            <TooltipContent>
-              <p>Click to view {secondaryInfo.displayText}</p>
-            </TooltipContent>
-          </Tooltip>
+          <SecondaryInfoLink
+            id={config.getId(secondaryInfo.entity)}
+            displayText={secondaryInfo.displayText}
+            clickable={clickable}
+            basePath={secondaryInfo.basePath || basePath}
+          />
         </div>
       )}
     </div>
@@ -269,38 +252,24 @@ function NestedEntityRefCellBase<TEntity, TParent extends Record<string, any>>(
 
   return (
     <div className="flex flex-col gap-0.5">
-      <Tooltip delayDuration={300}>
-        <TooltipTrigger asChild>
-          <EntityRefLink
-            id={id}
-            displayText={displayText}
-            className={config.className}
-            color={color}
-            basePath={basePath}
-          />
-        </TooltipTrigger>
-        <TooltipContent>
-          <p>Click to view {displayText}</p>
-        </TooltipContent>
-      </Tooltip>
+      <EntityRefLink
+        id={id}
+        displayText={displayText}
+        className={config.className}
+        color={color}
+        basePath={basePath}
+      />
 
       {secondaryInfo && (
         <div className="flex items-center gap-1 text-muted-foreground text-2xs">
           {secondaryInfo.label && <span>{secondaryInfo.label}:</span>}
           {clickable ? (
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <SecondaryInfoLink
-                  id={config.getId(secondaryInfo.entity)}
-                  displayText={secondaryInfo.displayText}
-                  clickable={clickable}
-                  basePath={secondaryInfo.basePath || basePath}
-                />
-              </TooltipTrigger>
-              <TooltipContent>
-                <p>Click to view {secondaryInfo.displayText}</p>
-              </TooltipContent>
-            </Tooltip>
+            <SecondaryInfoLink
+              id={config.getId(secondaryInfo.entity)}
+              displayText={secondaryInfo.displayText}
+              clickable={clickable}
+              basePath={secondaryInfo.basePath || basePath}
+            />
           ) : (
             <p>{secondaryInfo.displayText}</p>
           )}

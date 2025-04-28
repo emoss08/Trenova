@@ -19,6 +19,7 @@ function HeaderCell<K extends Record<string, any>>({
     </TableHead>
   );
 }
+
 function HeaderRow<K extends Record<string, any>>({
   headerGroup,
 }: {

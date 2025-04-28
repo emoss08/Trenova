@@ -20,11 +20,9 @@ const DataTableCell = memo(function DataTableCell<
   );
 });
 
-function DataTableRow<TData extends Record<string, any>>({
-  row,
-}: {
-  row: Row<TData>;
-}) {
+const DataTableRow = memo(function DataTableRow<
+  TData extends Record<string, any>,
+>({ row }: { row: Row<TData> }) {
   return (
     <TableRow
       key={row.id}
@@ -38,7 +36,7 @@ function DataTableRow<TData extends Record<string, any>>({
       ))}
     </TableRow>
   );
-}
+});
 
 const EmptyTableBody = memo(() => (
   <TableBody>

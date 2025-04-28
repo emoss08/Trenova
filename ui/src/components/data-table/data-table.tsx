@@ -14,7 +14,7 @@ import {
   useReactTable,
 } from "@tanstack/react-table";
 import { parseAsString, useQueryState } from "nuqs";
-import { useCallback, useEffect, useMemo } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useLocation } from "react-router";
 import { toast } from "sonner";
 import { Skeleton } from "../ui/skeleton";
@@ -68,34 +68,47 @@ export function DataTable<TData extends Record<string, any>>({
   const [entityId, setEntityId] = useQueryState(
     "entityId",
     entityParams.entityId.withOptions({
-      shallow: false,
+      shallow: true,
     }),
   );
   const [modalType, setModalType] = useQueryState(
     "modal",
     entityParams.modal.withOptions({
-      shallow: false,
+      shallow: true,
     }),
   );
+
+  // Local state to track pending state updates
+  const [isPendingUpdate, setIsPendingUpdate] = useState(false);
 
   // Process any pending entityId from navigation state
   useEffect(() => {
     const state = location.state as { pendingEntityId?: string } | null;
-    if (state?.pendingEntityId) {
-      // Set the entityId and modal parameters if we have a pending entityId
-      Promise.all([
-        setEntityId(state.pendingEntityId, { shallow: false }),
-        setModalType("edit", { shallow: false }),
-      ]).catch(console.error);
+    if (state?.pendingEntityId && !isPendingUpdate) {
+      setIsPendingUpdate(true);
 
-      // Clear the state to prevent reprocessing
-      window.history.replaceState(
-        { ...state, pendingEntityId: undefined },
-        "",
-        window.location.href,
-      );
+      // Update URL params sequentially instead of in parallel
+      const updateParams = async () => {
+        try {
+          await setEntityId(state.pendingEntityId || "");
+          await setModalType("edit");
+
+          // Clear the state to prevent reprocessing
+          window.history.replaceState(
+            { ...state, pendingEntityId: undefined },
+            "",
+            window.location.href,
+          );
+        } catch (error) {
+          console.error(error);
+        } finally {
+          setIsPendingUpdate(false);
+        }
+      };
+
+      updateParams();
     }
-  }, [location, setEntityId, setModalType]);
+  }, [location, setEntityId, setModalType, isPendingUpdate]);
 
   // Entity Query
   const entityQuery = useQuery({
@@ -125,29 +138,52 @@ export function DataTable<TData extends Record<string, any>>({
     staleTime: 30000, // 30 seconds
   });
 
-  // Update the handleModalClose function to properly clear both parameters
+  // Update the handleModalClose function to properly clear parameters sequentially
   const handleEditModalClose = useCallback(async () => {
-    await Promise.all([
-      setEntityId(null, { shallow: false }),
-      setModalType(null, { shallow: false }),
-    ]);
-  }, [setEntityId, setModalType]);
+    if (isPendingUpdate) return;
+
+    setIsPendingUpdate(true);
+    try {
+      await setModalType(null);
+      await setEntityId(null);
+    } finally {
+      setIsPendingUpdate(false);
+    }
+  }, [setEntityId, setModalType, isPendingUpdate]);
 
   const handleCreateModalClose = useCallback(async () => {
-    await setModalType(null, { shallow: false });
-  }, [setModalType]);
+    if (isPendingUpdate) return;
 
+    setIsPendingUpdate(true);
+    try {
+      await setModalType(null);
+    } finally {
+      setIsPendingUpdate(false);
+    }
+  }, [setModalType, isPendingUpdate]);
+
+  // Ensure modal state consistency
   useEffect(() => {
-    // Only handle edit modal consistency
-    if (entityId && !modalType) {
-      setModalType("edit", { shallow: false }).catch(console.error);
-    }
+    if (isPendingUpdate) return;
 
-    // Only clear modal if we're in edit mode and lose the entityId
-    if (!entityId && modalType === "edit") {
-      setModalType(null, { shallow: false }).catch(console.error);
-    }
-  }, [entityId, modalType, setModalType]);
+    const updateState = async () => {
+      // Only handle if we need to make changes
+      if ((entityId && !modalType) || (!entityId && modalType === "edit")) {
+        setIsPendingUpdate(true);
+        try {
+          if (entityId && !modalType) {
+            await setModalType("edit");
+          } else if (!entityId && modalType === "edit") {
+            await setModalType(null);
+          }
+        } finally {
+          setIsPendingUpdate(false);
+        }
+      }
+    };
+
+    updateState();
+  }, [entityId, modalType, setModalType, isPendingUpdate]);
 
   // Derive pagination state from URL
   const pagination = useMemo(
@@ -228,14 +264,19 @@ export function DataTable<TData extends Record<string, any>>({
             name={name}
             exportModelName={exportModelName}
             extraActions={extraActions}
-            setModalType={(type) => setModalType(type, { shallow: false })}
+            setModalType={(type) => {
+              if (!isPendingUpdate) {
+                setIsPendingUpdate(true);
+                setModalType(type).finally(() => setIsPendingUpdate(false));
+              }
+            }}
           />
         </DataTableOptions>
       )}
       <DataTableInner>
         <Table>
-          {includeHeader && <DataTableHeader table={table as any} />}
-          <DataTableBody table={table as any} />
+          {includeHeader && <DataTableHeader table={table} />}
+          <DataTableBody table={table} />
         </Table>
       </DataTableInner>
       <DataTablePagination>
