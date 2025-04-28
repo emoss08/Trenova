@@ -32,7 +32,7 @@ function Button({
       disabled={isLoading}
       {...props}
     >
-      {isLoading && <PulsatingDots size={1} color="white" />}
+      {isLoading && <PulsatingDots size={1} color="foreground" />}
       {isLoading && loadingText && loadingText}
       {!isLoading && children}
     </Comp>
@@ -41,24 +41,33 @@ function Button({
 
 Button.displayName = "Button";
 
-export { Button };
-
-export function FormSaveButton({
+function FormSaveButton({
   title,
   isPopout = false,
   isSubmitting,
   tooltipPosition = "top",
+  type = "submit",
+  text = "Save Changes",
+  onClick,
 }: {
   title: string;
   isSubmitting: boolean;
   isPopout?: boolean;
   tooltipPosition?: "top" | "bottom" | "left" | "right";
+  type?: React.ButtonHTMLAttributes<HTMLButtonElement>["type"];
+  text?: string;
+  onClick?: () => void;
 }) {
   return (
     <Tooltip delayDuration={500}>
       <TooltipTrigger asChild>
-        <Button type="submit" isLoading={isSubmitting} disabled={isSubmitting}>
-          Save {isPopout ? "and Close" : "Changes"}
+        <Button
+          type={type}
+          isLoading={isSubmitting}
+          disabled={isSubmitting}
+          onClick={onClick}
+        >
+          {text ? text : `Save ${isPopout ? "and Close" : "Changes"}`}
         </Button>
       </TooltipTrigger>
       <TooltipContent
@@ -76,3 +85,6 @@ export function FormSaveButton({
     </Tooltip>
   );
 }
+
+export { Button, FormSaveButton };
+
