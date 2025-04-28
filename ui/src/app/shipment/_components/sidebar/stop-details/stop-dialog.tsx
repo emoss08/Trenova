@@ -107,7 +107,6 @@ export function StopDialog({
 
       return true;
     } catch (error) {
-      console.log("Error Type", typeof error);
       if (error instanceof z.ZodError) {
         error.errors.forEach((err) => {
           const fieldPath = err.path.join(".");

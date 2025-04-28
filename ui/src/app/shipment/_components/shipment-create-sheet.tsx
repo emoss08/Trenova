@@ -20,10 +20,8 @@ import {
 } from "@/components/ui/sheet";
 import { VisuallyHidden } from "@/components/ui/visually-hidden";
 import { usePopoutWindow } from "@/hooks/popout-window/use-popout-window";
-import { useUnsavedChanges } from "@/hooks/use-form";
 import { useFormWithSave } from "@/hooks/use-form-with-save";
 import { broadcastQueryInvalidation } from "@/hooks/use-invalidate-query";
-import { useResponsiveDimensions } from "@/hooks/use-responsive-dimensions";
 import { http } from "@/lib/http-client";
 import {
   shipmentSchema,
@@ -40,7 +38,6 @@ import { ShipmentForm } from "./form/shipment-form";
 
 export function ShipmentCreateSheet({ open, onOpenChange }: TableSheetProps) {
   const sheetRef = useRef<HTMLDivElement>(null);
-  const dimensions = useResponsiveDimensions(sheetRef, open);
   const { isPopout, closePopout } = usePopoutWindow();
 
   const form = useFormWithSave({
@@ -103,26 +100,22 @@ export function ShipmentCreateSheet({ open, onOpenChange }: TableSheetProps) {
     reset,
     handleSubmit,
     onSubmit,
-    formState: { isDirty, isSubmitting, isSubmitSuccessful },
+    formState: { isSubmitting, isSubmitSuccessful },
   } = form;
 
   const handleClose = useCallback(() => {
     onOpenChange(false);
   }, [onOpenChange]);
 
-  const handleReset = useCallback(() => {
-    reset();
-  }, [reset]);
-
-  const {
-    showWarning,
-    handleClose: onClose,
-    handleConfirmClose,
-    handleCancelClose,
-  } = useUnsavedChanges({
-    isDirty,
-    onClose: handleClose,
-  });
+  // const {
+  //   showWarning,
+  //   handleClose: onClose,
+  //   handleConfirmClose,
+  //   handleCancelClose,
+  // } = useUnsavedChanges({
+  //   isDirty,
+  //   onClose: handleClose,
+  // });
 
   // Reset the form when the mutation is successful
   // This is recommended by react-hook-form - https://react-hook-form.com/docs/useform/reset

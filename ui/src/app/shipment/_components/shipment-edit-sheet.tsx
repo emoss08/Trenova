@@ -1,14 +1,4 @@
 import { FormSaveDock } from "@/components/form";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
 import { Form } from "@/components/ui/form";
 import {
   Sheet,
@@ -20,10 +10,8 @@ import {
 } from "@/components/ui/sheet";
 import { VisuallyHidden } from "@/components/ui/visually-hidden";
 import { usePopoutWindow } from "@/hooks/popout-window/use-popout-window";
-import { useUnsavedChanges } from "@/hooks/use-form";
 import { useFormWithSave } from "@/hooks/use-form-with-save";
 import { broadcastQueryInvalidation } from "@/hooks/use-invalidate-query";
-import { useResponsiveDimensions } from "@/hooks/use-responsive-dimensions";
 import { http } from "@/lib/http-client";
 import {
   shipmentSchema,
@@ -32,7 +20,7 @@ import {
 import { EditTableSheetProps } from "@/types/data-table";
 import { type Shipment } from "@/types/shipment";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef } from "react";
 import { FormProvider } from "react-hook-form";
 import { useShipmentDetails } from "../queries/shipment";
 import { ShipmentForm } from "./form/shipment-form";
@@ -43,10 +31,8 @@ export function ShipmentEditSheet({
   currentRecord,
 }: EditTableSheetProps<Shipment>) {
   const sheetRef = useRef<HTMLDivElement>(null);
-  const dimensions = useResponsiveDimensions(sheetRef, open);
   const { isPopout, closePopout } = usePopoutWindow();
   const initialLoadRef = useRef(false);
-  const [effectiveIsDirty, setEffectiveIsDirty] = useState(false);
 
   const {
     data: shipmentDetails,
@@ -61,7 +47,7 @@ export function ShipmentEditSheet({
     resourceName: "Shipment",
     formOptions: {
       resolver: zodResolver(shipmentSchema),
-      defaultValues: shipmentDetails || {}, // * use data if available
+      defaultValues: shipmentDetails,
       mode: "onChange",
     },
     mutationFn: async (values: ShipmentSchema) => {
@@ -96,10 +82,8 @@ export function ShipmentEditSheet({
     reset,
     handleSubmit,
     onSubmit,
-    formState: { isDirty, isSubmitting, isSubmitSuccessful, errors },
+    formState: { isSubmitting, isSubmitSuccessful },
   } = form;
-
-  console.info("errors", errors);
 
   const handleClose = useCallback(() => {
     onOpenChange(false);
@@ -115,24 +99,22 @@ export function ShipmentEditSheet({
     }
   }, [shipmentDetails, isDetailsLoading, reset]);
 
-  useEffect(() => {
-    setEffectiveIsDirty(initialLoadRef.current && isDirty);
-  }, [isDirty]);
-
-  const {
-    showWarning,
-    handleClose: onClose,
-    handleConfirmClose,
-    handleCancelClose,
-  } = useUnsavedChanges({
-    isDirty: effectiveIsDirty,
-    onClose: handleClose,
-  });
+  // const {
+  //   showWarning,
+  //   handleClose: onClose,
+  //   handleConfirmClose,
+  //   handleCancelClose,
+  // } = useUnsavedChanges({
+  //   control: control,
+  //   onClose: handleClose,
+  // });
 
   // Reset the form when the mutation is successful
   // This is recommended by react-hook-form - https://react-hook-form.com/docs/useform/reset
   useEffect(() => {
-    reset();
+    if (isSubmitSuccessful) {
+      reset();
+    }
   }, [isSubmitSuccessful, reset]);
 
   useEffect(() => {
@@ -154,7 +136,7 @@ export function ShipmentEditSheet({
 
   return (
     <>
-      <Sheet open={open} onOpenChange={onClose}>
+      <Sheet open={open} onOpenChange={handleClose}>
         <SheetContent
           className="w-[500px] sm:max-w-[540px] p-0"
           withClose={false}
@@ -171,25 +153,21 @@ export function ShipmentEditSheet({
             <Form className="space-y-0 p-0" onSubmit={handleSubmit(onSubmit)}>
               <SheetBody className="p-0">
                 <ShipmentForm
-                  dimensions={dimensions}
+                  open={open}
+                  sheetRef={sheetRef}
                   selectedShipment={shipmentDetails}
                   isLoading={isDetailsLoading}
-                  onBack={onClose}
+                  onBack={handleClose}
                   isError={isDetailsError}
                 />
               </SheetBody>
-              <FormSaveDock
-                isDirty={effectiveIsDirty}
-                isSubmitting={isSubmitting}
-                position="right"
-              />
+              <FormSaveDock position="right" />
             </Form>
           </FormProvider>
         </SheetContent>
       </Sheet>
-
-      {showWarning && (
-        <AlertDialog open={showWarning} onOpenChange={handleCancelClose}>
+      {/* {showWarning && (
+        <AlertDialog open={showWarning} onOpenChange={onClose}>
           <AlertDialogContent>
             <AlertDialogHeader>
               <AlertDialogTitle>Unsaved Changes</AlertDialogTitle>
@@ -199,7 +177,7 @@ export function ShipmentEditSheet({
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
-              <AlertDialogCancel onClick={handleCancelClose}>
+              <AlertDialogCancel onClick={onClose}>
                 Continue Editing
               </AlertDialogCancel>
               <AlertDialogAction onClick={handleConfirmClose}>
@@ -208,7 +186,7 @@ export function ShipmentEditSheet({
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>
-      )}
+      )} */}
     </>
   );
 }

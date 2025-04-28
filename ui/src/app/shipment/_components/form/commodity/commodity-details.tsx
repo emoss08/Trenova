@@ -1,15 +1,12 @@
-import { Button } from "@/components/ui/button";
-import { Icon } from "@/components/ui/icons";
 import { COMMODITY_DELETE_DIALOG_KEY } from "@/constants/env";
 import { ShipmentSchema } from "@/lib/schemas/shipment-schema";
 import { cn } from "@/lib/utils";
-import { ShipmentCommodity } from "@/types/shipment";
-import { faPlus } from "@fortawesome/pro-solid-svg-icons";
-import { memo, useState } from "react";
+import { useState } from "react";
 import { useFieldArray, useFormContext } from "react-hook-form";
 import { CommodityDeleteDialog } from "./commodity-delete-dialog";
 import { CommodityDialog } from "./commodity-dialog";
 import { CommodityList } from "./commodity-list";
+import { CommodityListHeader } from "./commodity-list-header";
 
 export default function ShipmentCommodityDetails({
   className,
@@ -72,28 +69,21 @@ export default function ShipmentCommodityDetails({
   };
 
   return (
-    <>
-      <div
-        className={cn(
-          "flex flex-col gap-2 border-t border-bg-sidebar-border py-4",
-          className,
-        )}
-      >
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-1">
-            <h3 className="text-sm font-medium">Commodities</h3>
-            <span className="text-2xs text-muted-foreground">
-              ({commodities?.length ?? 0})
-            </span>
-          </div>
-          <AddCommodityButton onClick={handleAddCommodity} />
-        </div>
-        <CommodityList
-          commodities={commodities as ShipmentCommodity[]}
-          handleEdit={handleEdit}
-          handleDelete={handleDelete}
-        />
-      </div>
+    <CommodityDetailsInner
+      className={cn(
+        "flex flex-col gap-2 border-t border-bg-sidebar-border py-4",
+        className,
+      )}
+    >
+      <CommodityListHeader
+        commodities={commodities}
+        handleAddCommodity={handleAddCommodity}
+      />
+      <CommodityList
+        commodities={commodities}
+        handleEdit={handleEdit}
+        handleDelete={handleDelete}
+      />
       {commodityDialogOpen && (
         <CommodityDialog
           open={commodityDialogOpen}
@@ -116,19 +106,25 @@ export default function ShipmentCommodityDetails({
           handleDelete={handleConfirmDelete}
         />
       )}
-    </>
+    </CommodityDetailsInner>
   );
 }
 
-const AddCommodityButton = memo(function AddCommodityButton({
-  onClick,
+function CommodityDetailsInner({
+  children,
+  className,
 }: {
-  onClick: () => void;
+  children: React.ReactNode;
+  className?: string;
 }) {
   return (
-    <Button type="button" variant="outline" size="xs" onClick={onClick}>
-      <Icon icon={faPlus} className="size-4" />
-      Add Commodity
-    </Button>
+    <div
+      className={cn(
+        "flex flex-col gap-2 border-t border-bg-sidebar-border py-4",
+        className,
+      )}
+    >
+      {children}
+    </div>
   );
-});
+}
