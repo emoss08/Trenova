@@ -12,12 +12,6 @@ import {
   AlertDialogTitle,
 } from "./alert-dialog";
 import { Icon } from "./icons";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "./tooltip";
 
 function ExternalLinkDialog({
   open,
@@ -118,7 +112,6 @@ type EntityRedirectLinkProps = Omit<LinkProps, "to"> & {
   entityId?: string;
   baseUrl: string;
   modelOpen?: boolean;
-  value?: string;
 } & React.HTMLAttributes<HTMLDivElement>;
 
 export const EntityRedirectLink = React.memo(function EntityRedirectLink({
@@ -127,7 +120,6 @@ export const EntityRedirectLink = React.memo(function EntityRedirectLink({
   modelOpen,
   children,
   className,
-  value,
   ...rest
 }: EntityRedirectLinkProps) {
   const url = React.useMemo(() => {
@@ -172,20 +164,15 @@ export const EntityRedirectLink = React.memo(function EntityRedirectLink({
   }
 
   return (
-    <TooltipProvider>
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <Link
-            to={url}
-            className={linkClassName}
-            style={internalLinkStyle}
-            {...rest}
-          >
-            {children}
-          </Link>
-        </TooltipTrigger>
-        <TooltipContent>Click to view {value ?? "unknown"}</TooltipContent>
-      </Tooltip>
-    </TooltipProvider>
+    <Link
+      to={url}
+      className={linkClassName}
+      title={`View ${entityId}`}
+      aria-label={`View ${entityId}`}
+      style={internalLinkStyle}
+      {...rest}
+    >
+      {children}
+    </Link>
   );
 });
