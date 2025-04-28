@@ -4,11 +4,10 @@ import { DataTableBodyProps } from "@/types/data-table";
 import { flexRender, type Cell, type Row } from "@tanstack/react-table";
 import { memo } from "react";
 
-function DataTableCell<TData extends Record<string, any>, TValue>({
-  cell,
-}: {
-  cell: Cell<TData, TValue>;
-}) {
+const DataTableCell = memo(function DataTableCell<
+  TData extends Record<string, any>,
+  TValue,
+>({ cell }: { cell: Cell<TData, TValue> }) {
   return (
     <TableCell
       key={cell.id}
@@ -19,7 +18,7 @@ function DataTableCell<TData extends Record<string, any>, TValue>({
       {flexRender(cell.column.columnDef.cell, cell.getContext())}
     </TableCell>
   );
-}
+});
 
 function DataTableRow<TData extends Record<string, any>>({
   row,
@@ -35,7 +34,7 @@ function DataTableRow<TData extends Record<string, any>>({
       aria-selected={row.getIsSelected()}
     >
       {row.getVisibleCells().map((cell) => (
-        <DataTableCell key={cell.id} cell={cell} />
+        <DataTableCell key={cell.id} cell={cell as any} />
       ))}
     </TableRow>
   );
