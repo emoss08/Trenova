@@ -1,7 +1,7 @@
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useResponsiveDimensions } from "@/hooks/use-responsive-dimensions";
 import { type Shipment } from "@/types/shipment";
-import { lazy, memo, Suspense, useMemo } from "react";
+import { lazy, memo, Suspense, useEffect, useMemo, useState } from "react";
 import { ShipmentNotFoundOverlay } from "../sidebar/shipment-not-found-overlay";
 import { ShipmentDetailsSkeleton } from "./shipment-details-skeleton";
 import { ShipmentFormHeader } from "./shipment-form-header";
@@ -106,13 +106,19 @@ function ShipmentScrollArea({
   children: React.ReactNode;
 }) {
   const dimensions = useResponsiveDimensions(sheetRef, open);
+  const [prevHeight, setPrevHeight] = useState<string>("400px");
 
   const scrollAreaHeight = useMemo(() => {
-    const { contentHeight, viewportHeight } = dimensions;
-
     // Constants for height calculations
-    const headerHeight = 120; // Height of the header section
+    const headerHeight = sheetRef.current
+      ? (sheetRef.current.querySelector("header")?.getBoundingClientRect()
+          .height ?? 120)
+      : 120;
     const minHeight = 400; // Minimum height for the scroll area
+
+    // Use measured dimensions or fallback to window height if not ready
+    const contentHeight = dimensions.contentHeight ?? 0;
+    const viewportHeight = dimensions.viewportHeight ?? window.innerHeight;
 
     // Use viewport height as base for calculation
     const baseHeight = Math.min(contentHeight, viewportHeight);
@@ -120,13 +126,20 @@ function ShipmentScrollArea({
 
     // Ensure we don't go below minimum height
     return `${Math.max(calculatedHeight, minHeight)}px`;
-  }, [dimensions]);
+  }, [dimensions, sheetRef]);
+
+  // Store the last valid height to prevent flicker
+  useEffect(() => {
+    if (dimensions.isReady && scrollAreaHeight !== "400px") {
+      setPrevHeight(scrollAreaHeight);
+    }
+  }, [dimensions.isReady, scrollAreaHeight]);
 
   return (
     <ScrollArea
-      className="flex flex-col overflow-y-auto"
+      className="relative flex flex-col overflow-y-auto"
       style={{
-        height: scrollAreaHeight,
+        height: dimensions.isReady ? scrollAreaHeight : prevHeight,
         minHeight: "400px",
       }}
     >
