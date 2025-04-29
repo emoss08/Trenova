@@ -1,4 +1,4 @@
-import * as React from "react";
+import React, { memo } from "react";
 
 import {
   Collapsible,
@@ -150,7 +150,9 @@ function Tree({ item, currentPath }: { item: RouteInfo; currentPath: string }) {
   );
 }
 
-export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
+export const AppSidebar = memo(function AppSidebar({
+  ...props
+}: React.ComponentProps<typeof Sidebar>) {
   const location = useLocation();
   const currentPath = location.pathname;
 
@@ -178,4 +180,4 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       </SidebarFooter>
     </Sidebar>
   );
-}
+});
