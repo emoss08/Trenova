@@ -1,5 +1,6 @@
 import { MoveStatus } from "@/types/move";
 import { z } from "zod";
+import { assignmentSchema } from "./assignment-schema";
 import { stopSchema } from "./stop-schema";
 
 export const moveSchema = z.object({
@@ -29,6 +30,7 @@ export const moveSchema = z.object({
     z.number().min(0, "Distance cannot be negative"),
   ),
   stops: z.array(stopSchema),
+  assignment: assignmentSchema.nullable().optional(),
   formId: z.string().optional(), // * Simply becuase react-hook-form will override the id if there is nothing for it to append to.
 });
 
