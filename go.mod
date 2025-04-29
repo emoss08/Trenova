@@ -25,6 +25,8 @@ require (
 	github.com/rotisserie/eris v0.5.4
 	github.com/rs/zerolog v1.34.0
 	github.com/samber/lo v1.50.0
+	github.com/samber/oops v1.17.0
+	github.com/samber/oops/loggers/zerolog v0.0.0-20250427171417-d155b2535137
 	github.com/shopspring/decimal v1.4.0
 	github.com/sourcegraph/conc v0.3.0
 	github.com/spf13/cobra v1.9.1
