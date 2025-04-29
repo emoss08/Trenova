@@ -197,7 +197,7 @@ export function ClearIndicator(props: ClearIndicatorProps) {
 export function ValueContainer({ children, ...rest }: ValueContainerProps) {
   const selectedCount = rest.getValue().length;
   const conditional = selectedCount < 3;
-  const { ValueContainer } = components;
+  const { ValueContainer: ValueContainerComponent } = components;
 
   let firstChild: React.ReactNode[] | null = [];
 
@@ -206,10 +206,10 @@ export function ValueContainer({ children, ...rest }: ValueContainerProps) {
   }
 
   return (
-    <ValueContainer {...rest}>
+    <ValueContainerComponent {...rest}>
       {conditional ? children : firstChild}
       {!conditional && ` and ${selectedCount - 1} others`}
-    </ValueContainer>
+    </ValueContainerComponent>
   );
 }
 
