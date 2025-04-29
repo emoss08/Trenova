@@ -1,3 +1,4 @@
+import { API_URL } from "@/constants/env";
 import { type DocumentUploadSchema } from "@/lib/schemas/document-schema";
 import { cn, formatFileSize } from "@/lib/utils";
 import type {
@@ -16,13 +17,11 @@ import React, {
 } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
-import { TooltipProvider } from "../ui/tooltip";
 import { FileUploadCard } from "./file-upload-card";
 import { FileUploadErrorCard } from "./file-upload-error-card";
 import { FileUploadErrorDialog } from "./file-upload-error-dialog";
 import { FileUploadDock } from "./file-upload-save-dock";
 import { DocumentUploadSkeleton } from "./file-upload-skeleton";
-import { API_URL } from "@/constants/env";
 
 export default function DocumentUpload({
   resourceType,
@@ -668,16 +667,14 @@ export default function DocumentUpload({
           <p className="text-sm font-medium">Uploading files</p>
           <div className="flex flex-col overflow-y-auto max-h-[350px] bg-muted border border-dashed border-border p-1 rounded-md">
             <div className="flex flex-col gap-2">
-              <TooltipProvider>
-                {uploadingFiles.map((fileInfo, index) => (
-                  <FileUploadCard
-                    key={fileInfo.file.name}
-                    fileInfo={fileInfo}
-                    index={index}
-                    removeFile={removeFile}
-                  />
-                ))}
-              </TooltipProvider>
+              {uploadingFiles.map((fileInfo, index) => (
+                <FileUploadCard
+                  key={fileInfo.file.name}
+                  fileInfo={fileInfo}
+                  index={index}
+                  removeFile={removeFile}
+                />
+              ))}
             </div>
           </div>
         </div>

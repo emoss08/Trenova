@@ -44,12 +44,13 @@ Button.displayName = "Button";
 type FormSaveButtonProps = {
   title: string;
   isPopout?: boolean;
-  isSubmitting: boolean;
+  isSubmitting?: boolean;
   tooltipPosition?: "top" | "bottom" | "left" | "right";
   type?: React.ButtonHTMLAttributes<HTMLButtonElement>["type"];
   text?: string;
   onClick?: () => void;
-} & React.ComponentProps<"button">;
+} & VariantProps<typeof buttonVariants> &
+  React.ComponentProps<"button">;
 
 function FormSaveButton({
   title,

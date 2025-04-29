@@ -19,8 +19,8 @@ import { useLocation } from "react-router";
 import { toast } from "sonner";
 import { Skeleton } from "../ui/skeleton";
 import { Table } from "../ui/table";
+import { DataTableActions } from "./_components/data-table-actions";
 import { DataTableBody } from "./_components/data-table-body";
-import { DataTableFilter } from "./_components/data-table-filters";
 import { DataTableHeader } from "./_components/data-table-header";
 import { DataTableOptions } from "./_components/data-table-options";
 import {
@@ -261,22 +261,21 @@ export function DataTable<TData extends Record<string, any>>({
   const isEntityLoading = entityQuery.isLoading;
   const isEntityError = entityQuery.error;
 
+  const handleCreateClick = useCallback(() => {
+    setModalType("create");
+  }, [setModalType]);
+
   return (
     <div className="mt-2 flex flex-col gap-3">
       {includeOptions && (
         <DataTableOptions>
           <DataTableSearch />
-          <DataTableFilter
+          <DataTableActions
             table={table}
             name={name}
             exportModelName={exportModelName}
             extraActions={extraActions}
-            setModalType={(type) => {
-              if (!isPendingUpdate) {
-                setIsPendingUpdate(true);
-                setModalType(type).finally(() => setIsPendingUpdate(false));
-              }
-            }}
+            handleCreateClick={handleCreateClick}
           />
         </DataTableOptions>
       )}

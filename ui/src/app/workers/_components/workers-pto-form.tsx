@@ -6,12 +6,6 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { FormControl } from "@/components/ui/form";
 import { Icon } from "@/components/ui/icons";
 import { Separator } from "@/components/ui/separator";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
 import { ptoStatusChoices, ptoTypeChoices } from "@/lib/choices";
 import { WorkerSchema } from "@/lib/schemas/worker-schema";
 import { cn } from "@/lib/utils";
@@ -66,23 +60,15 @@ function WorkerPTOContent({
 
   return (
     <div className="relative grid size-full rounded-md border border-input p-2">
-      <TooltipProvider>
-        <Tooltip delayDuration={0}>
-          <TooltipTrigger asChild>
-            <Button
-              type="button"
-              variant="ghost"
-              className="absolute right-2 top-2 z-50"
-              onClick={() => remove(index)}
-            >
-              <Icon icon={faTrash} className="size-4" />
-            </Button>
-          </TooltipTrigger>
-          <TooltipContent>
-            <p>Remove</p>
-          </TooltipContent>
-        </Tooltip>
-      </TooltipProvider>
+      <Button
+        title="Remove PTO"
+        type="button"
+        variant="ghost"
+        className="absolute right-2 top-2 z-50"
+        onClick={() => remove(index)}
+      >
+        <Icon icon={faTrash} className="size-4" />
+      </Button>
 
       <div className="grid grid-cols-2 gap-1">
         <FormControl className="min-h-[3em]">

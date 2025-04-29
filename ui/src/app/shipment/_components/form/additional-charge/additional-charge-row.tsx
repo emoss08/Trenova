@@ -1,12 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Icon } from "@/components/ui/icons";
 import { EntityRedirectLink } from "@/components/ui/link";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 import { type AdditionalCharge } from "@/types/shipment";
 import {
@@ -60,26 +54,16 @@ function AdditionalChargeRow({
           entityId={additionalCharge.accessorialCharge.id}
           baseUrl="/billing/configurations/accessorial-charges"
           modelOpen
-          value={additionalCharge.accessorialCharge.code}
         >
           {additionalCharge.accessorialCharge.code}
         </EntityRedirectLink>
         {isDuplicate && (
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <span className="text-yellow-600">
-                  <Icon
-                    icon={faTriangleExclamation}
-                    className="size-3 mb-0.5"
-                  />
-                </span>
-              </TooltipTrigger>
-              <TooltipContent>
-                <p>Possible duplicate charge detected</p>
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
+          <span
+            title="Possible duplicate charge detected"
+            className="text-yellow-600"
+          >
+            <Icon icon={faTriangleExclamation} className="size-3 mb-0.5" />
+          </span>
         )}
       </div>
       <div className="col-span-2 text-left">{additionalCharge.unit}</div>

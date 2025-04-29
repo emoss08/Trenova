@@ -17,12 +17,6 @@ import {
   CommandList,
 } from "../ui/command";
 import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "../ui/tooltip";
 import { FieldWrapper } from "./field-components";
 import {
   ClearIndicator,
@@ -342,37 +336,28 @@ export function DoubleClickSelectField<T extends FieldValues>({
         return (
           <Popover open={isOpen} onOpenChange={setIsOpen}>
             <PopoverTrigger>
-              <TooltipProvider>
-                <Tooltip delayDuration={0}>
-                  <TooltipTrigger asChild>
-                    <span className="flex flex-col text-left text-xs">
-                      <div
-                        className={cn(
-                          "cursor-text",
-                          fieldState.invalid && "text-red-500",
-                        )}
-                      >
-                        {field.value}
-                      </div>
-                      {isOpen ? (
-                        <span
-                          onClick={() => setIsOpen(false)}
-                          className="cursor-pointer select-none text-xs text-muted-foreground"
-                        >
-                          Cancel
-                        </span>
-                      ) : (
-                        <span className="cursor-pointer select-none text-xs text-muted-foreground">
-                          Click to edit
-                        </span>
-                      )}
-                    </span>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p>{placeholder}</p>
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
+              <span className="flex flex-col text-left text-xs">
+                <div
+                  className={cn(
+                    "cursor-text",
+                    fieldState.invalid && "text-red-500",
+                  )}
+                >
+                  {field.value}
+                </div>
+                {isOpen ? (
+                  <span
+                    onClick={() => setIsOpen(false)}
+                    className="cursor-pointer select-none text-xs text-muted-foreground"
+                  >
+                    Cancel
+                  </span>
+                ) : (
+                  <span className="cursor-pointer select-none text-xs text-muted-foreground">
+                    Click to edit
+                  </span>
+                )}
+              </span>
             </PopoverTrigger>
             <PopoverContent className="w-auto p-0">
               <Command>

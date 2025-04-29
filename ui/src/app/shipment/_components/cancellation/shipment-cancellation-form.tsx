@@ -8,12 +8,6 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { FormControl, FormGroup } from "@/components/ui/form";
 import { Icon } from "@/components/ui/icons";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
 import { faChevronDown } from "@fortawesome/pro-regular-svg-icons";
 import { useFormContext } from "react-hook-form";
 
@@ -72,21 +66,13 @@ export function ShipmentCancellationForm() {
           <div className="absolute bottom-5 right-1">
             <DropdownMenu>
               <DropdownMenuTrigger className="outline-none">
-                <TooltipProvider>
-                  <Tooltip>
-                    <TooltipTrigger>
-                      <Button
-                        variant="ghost"
-                        className="text-2xs gap-1 h-5 w-16 hover:bg-background"
-                      >
-                        Presets <Icon icon={faChevronDown} />
-                      </Button>
-                    </TooltipTrigger>
-                    <TooltipContent>
-                      <p>Select a preset reason</p>
-                    </TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
+                <Button
+                  title="Select a preset reason"
+                  variant="ghost"
+                  className="text-2xs gap-1 h-5 w-16 hover:bg-background"
+                >
+                  Presets <Icon icon={faChevronDown} />
+                </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-[240px]">
                 {CANCELLATION_PRESETS.map((preset) => (
