@@ -2,11 +2,16 @@
 /* eslint-disable react/display-name */
 import { Checkbox } from "@/components/ui/checkbox";
 
+import {
+  EntityRefLinkColor,
+  EntityRefLinkDisplayText,
+  EntityRefLinkInner,
+} from "@/components/entity-refs/entity-ref-link";
 import { generateDateOnlyString, toDate } from "@/lib/date";
 import { BaseModel } from "@/types/common";
 import { ColumnDef, ColumnHelper } from "@tanstack/react-table";
 import { parseAsString, useQueryState } from "nuqs";
-import { memo, useCallback, useTransition } from "react";
+import { memo, useCallback, useMemo, useTransition } from "react";
 import { useNavigate } from "react-router";
 import { v4 } from "uuid";
 import {
@@ -38,6 +43,14 @@ const EntityRefLink = memo(
   }) => {
     const [, startTransition] = useTransition();
     const navigate = useNavigate();
+
+    console.info("EntityRefLink debug information", {
+      id,
+      displayText,
+      className,
+      color,
+      basePath,
+    });
 
     // Use the nuqs hooks directly
     const [, setEntityId] = useQueryState(
@@ -78,27 +91,17 @@ const EntityRefLink = memo(
     );
 
     return (
-      <span
+      <EntityRefLinkInner
         onClick={handleClick}
         className={`${className || ""} cursor-pointer`}
         title={`Click to view ${displayText}`}
       >
         {color ? (
-          <div className="flex items-center gap-x-1.5 text-sm font-normal text-foreground underline hover:text-foreground/70">
-            <div
-              className="size-2 rounded-full"
-              style={{
-                backgroundColor: color,
-              }}
-            />
-            <p>{displayText}</p>
-          </div>
+          <EntityRefLinkColor color={color} displayText={displayText} />
         ) : (
-          <span className="text-sm font-normal underline hover:text-foreground/70">
-            {displayText}
-          </span>
+          <EntityRefLinkDisplayText>{displayText}</EntityRefLinkDisplayText>
         )}
-      </span>
+      </EntityRefLinkInner>
     );
   },
 );
@@ -376,24 +379,32 @@ export function createEntityColumn<T extends Record<string, any>>(
     id: accessorKey as string,
     header: config.getHeaderText ?? "",
     cell: ({ row }) => {
-      const entity = row.original;
+      return useMemo(() => {
+        const entity = row.original;
 
-      if (!entity) {
-        return <p>-</p>;
-      }
+        if (!entity) {
+          return <p>-</p>;
+        }
 
-      const id = config.getId(row.original);
-      const displayText = config.getDisplayText(row.original);
-      const color = config.getColor?.(row.original);
+        const id = config.getId(row.original);
+        const displayText = config.getDisplayText(row.original);
+        const color = config.getColor?.(row.original);
 
-      return (
-        <EntityRefLink
-          id={id}
-          displayText={displayText}
-          className={config.className}
-          color={color}
-        />
-      );
+        return (
+          <EntityRefLink
+            id={id}
+            displayText={displayText}
+            className={config.className}
+            color={color}
+          />
+        );
+      }, [
+        row.original,
+        config.getId,
+        config.getDisplayText,
+        config.getColor,
+        config.className,
+      ]);
     },
   }) as ColumnDef<T>;
 }

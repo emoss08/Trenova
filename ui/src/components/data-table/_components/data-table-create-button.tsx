@@ -29,12 +29,7 @@ export const DataTableCreateButton = memo(function DataTableCreateButton({
   // Memoized click handlers
   const handleCreateClick = useCallback(() => {
     setIsPopoverOpen(false);
-
-    if (onCreateClick) {
-      onCreateClick();
-    } else {
-      useTableStore.set("showCreateModal", true);
-    }
+    onCreateClick();
   }, [onCreateClick]);
 
   return (

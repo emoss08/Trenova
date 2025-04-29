@@ -85,8 +85,8 @@ type ExtraAction = {
 type DataTableCreateButtonProps = {
   name: string;
   exportModelName: string;
+  onCreateClick: () => void;
   isDisabled?: boolean;
-  onCreateClick?: () => void;
   extraActions?: ExtraAction[];
 };
 
