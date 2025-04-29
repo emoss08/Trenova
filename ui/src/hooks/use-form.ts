@@ -1,26 +1,22 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
+import { useFormState, type Control, type FieldValues } from "react-hook-form";
 
-export function useUnsavedChanges({
-  isDirty,
+export function useUnsavedChanges<TFieldValues extends FieldValues>({
+  control,
   onClose,
 }: {
-  isDirty: boolean;
+  control: Control<TFieldValues>;
   onClose: () => void;
 }) {
-  const [showWarning, setShowWarning] = useState(false);
-  const isDirtyRef = useRef(isDirty);
+  const { isDirty } = useFormState({ control });
 
-  // Keep ref updated with latest isDirty value for use in event handlers
-  useEffect(() => {
-    isDirtyRef.current = isDirty;
-  }, [isDirty]);
+  const [showWarning, setShowWarning] = useState(false);
 
   useEffect(() => {
     const handleBeforeUnload = (event: BeforeUnloadEvent) => {
-      if (isDirtyRef.current) {
+      if (isDirty) {
         // For modern browsers
         event.preventDefault();
-        event.returnValue = "";
         // For older browsers
         return "";
       }
@@ -28,7 +24,7 @@ export function useUnsavedChanges({
 
     window.addEventListener("beforeunload", handleBeforeUnload);
     return () => window.removeEventListener("beforeunload", handleBeforeUnload);
-  }, []);
+  }, [isDirty]);
 
   const handleClose = useCallback(() => {
     if (isDirty) {
