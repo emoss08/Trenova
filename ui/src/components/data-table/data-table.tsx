@@ -14,7 +14,7 @@ import {
   useReactTable,
 } from "@tanstack/react-table";
 import { parseAsString, useQueryState } from "nuqs";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useLocation } from "react-router";
 import { toast } from "sonner";
 import { Skeleton } from "../ui/skeleton";
@@ -82,10 +82,17 @@ export function DataTable<TData extends Record<string, any>>({
   const [isPendingUpdate, setIsPendingUpdate] = useState(false);
 
   // Process any pending entityId from navigation state
+  const processedEntityRef = useRef<string | null>(null);
+
   useEffect(() => {
     const state = location.state as { pendingEntityId?: string } | null;
-    if (state?.pendingEntityId && !isPendingUpdate) {
+    if (
+      state?.pendingEntityId &&
+      !isPendingUpdate &&
+      processedEntityRef.current !== state.pendingEntityId
+    ) {
       setIsPendingUpdate(true);
+      processedEntityRef.current = state.pendingEntityId;
 
       // Update URL params sequentially instead of in parallel
       const updateParams = async () => {
