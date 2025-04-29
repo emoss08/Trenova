@@ -1,8 +1,4 @@
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
+import { cn } from "@/lib/utils";
 import { parseAsString, useQueryState } from "nuqs";
 import { memo, useCallback, useTransition } from "react";
 import {
@@ -63,10 +59,7 @@ export const EntityRefLink = memo(
     );
 
     return (
-      <span
-        onClick={handleClick}
-        className={`${className || ""} cursor-pointer`}
-      >
+      <span onClick={handleClick} className={cn("cursor-pointer", className)}>
         {color ? (
           <div className="flex items-center gap-x-1.5 text-sm font-normal text-foreground underline hover:text-foreground/70">
             <div
@@ -172,36 +165,22 @@ export const EntityRefCell = memo(
 
     return (
       <div className="flex flex-col gap-0.5">
-        <Tooltip delayDuration={300}>
-          <TooltipTrigger asChild>
-            <EntityRefLink
-              basePath={config.basePath}
-              id={id}
-              displayText={displayText}
-              className={config.className}
-              color={color}
-            />
-          </TooltipTrigger>
-          <TooltipContent>
-            <p>Click to view {displayText}</p>
-          </TooltipContent>
-        </Tooltip>
+        <EntityRefLink
+          basePath={config.basePath}
+          id={id}
+          displayText={displayText}
+          className={config.className}
+          color={color}
+        />
 
         {secondaryInfo && (
           <div className="flex items-center gap-1 text-muted-foreground text-2xs">
             {secondaryInfo.label && <span>{secondaryInfo.label}:</span>}
-            <Tooltip delayDuration={300}>
-              <TooltipTrigger asChild>
-                <SecondaryInfoLink
-                  id={config.getId(secondaryInfo.entity)}
-                  displayText={secondaryInfo.displayText}
-                  clickable={clickable}
-                />
-              </TooltipTrigger>
-              <TooltipContent>
-                <p>Click to view {secondaryInfo.displayText}</p>
-              </TooltipContent>
-            </Tooltip>
+            <SecondaryInfoLink
+              id={config.getId(secondaryInfo.entity)}
+              displayText={secondaryInfo.displayText}
+              clickable={clickable}
+            />
           </div>
         )}
       </div>
@@ -237,37 +216,23 @@ export const NestedEntityRefCell = memo(
 
     return (
       <div className="flex flex-col gap-0.5">
-        <Tooltip delayDuration={300}>
-          <TooltipTrigger asChild>
-            <EntityRefLink
-              basePath={config.basePath}
-              id={id}
-              displayText={displayText}
-              className={config.className}
-              color={color}
-            />
-          </TooltipTrigger>
-          <TooltipContent>
-            <p>Click to view {displayText}</p>
-          </TooltipContent>
-        </Tooltip>
+        <EntityRefLink
+          basePath={config.basePath}
+          id={id}
+          displayText={displayText}
+          className={config.className}
+          color={color}
+        />
 
         {secondaryInfo && (
           <div className="flex items-center gap-1 text-muted-foreground text-2xs">
             {secondaryInfo.label && <span>{secondaryInfo.label}:</span>}
             {clickable ? (
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <SecondaryInfoLink
-                    id={config.getId(secondaryInfo.entity)}
-                    displayText={secondaryInfo.displayText}
-                    clickable={clickable}
-                  />
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p>Click to view {secondaryInfo.displayText}</p>
-                </TooltipContent>
-              </Tooltip>
+              <SecondaryInfoLink
+                id={config.getId(secondaryInfo.entity)}
+                displayText={secondaryInfo.displayText}
+                clickable={clickable}
+              />
             ) : (
               <p>{secondaryInfo.displayText}</p>
             )}
