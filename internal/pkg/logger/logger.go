@@ -14,6 +14,7 @@ import (
 	"github.com/logrusorgru/aurora"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/diode"
+	oopszerolog "github.com/samber/oops/loggers/zerolog"
 	"gopkg.in/natefinch/lumberjack.v2"
 )
 
@@ -62,6 +63,8 @@ func NewLogger(cfg *config.Config) *Logger {
 	zerolog.SetGlobalLevel(level)
 	zerolog.TimeFieldFormat = time.RFC3339Nano
 	zerolog.CallerMarshalFunc = customCallerFormatter
+	zerolog.ErrorStackMarshaler = oopszerolog.OopsStackMarshaller
+	zerolog.ErrorMarshalFunc = oopszerolog.OopsMarshalFunc
 
 	baseLogger := zerolog.New(asyncWriter).
 		Hook(newContextHook()).
