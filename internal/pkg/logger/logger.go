@@ -63,7 +63,9 @@ func NewLogger(cfg *config.Config) *Logger {
 	zerolog.SetGlobalLevel(level)
 	zerolog.TimeFieldFormat = time.RFC3339Nano
 	zerolog.CallerMarshalFunc = customCallerFormatter
+	//nolint:reassign // This is a custom function
 	zerolog.ErrorStackMarshaler = oopszerolog.OopsStackMarshaller
+	//nolint:reassign // This is a custom function
 	zerolog.ErrorMarshalFunc = oopszerolog.OopsMarshalFunc
 
 	baseLogger := zerolog.New(asyncWriter).
