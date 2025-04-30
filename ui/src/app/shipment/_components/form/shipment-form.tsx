@@ -23,7 +23,6 @@ const ShipmentServiceDetails = lazy(
 );
 
 type ShipmentDetailsProps = {
-  onBack: () => void;
   open: boolean;
   sheetRef: React.RefObject<HTMLDivElement | null>;
   selectedShipment?: ShipmentSchema | null;

@@ -12,8 +12,8 @@ import {
 } from "@/components/ui/sheet";
 import { VisuallyHidden } from "@/components/ui/visually-hidden";
 import { usePopoutWindow } from "@/hooks/popout-window/use-popout-window";
+import { useApiMutation } from "@/hooks/use-api-mutation";
 import { searchParamsParser } from "@/hooks/use-data-table-state";
-import { useFormWithSave } from "@/hooks/use-form-with-save";
 import { broadcastQueryInvalidation } from "@/hooks/use-invalidate-query";
 import { http } from "@/lib/http-client";
 import {
@@ -23,9 +23,11 @@ import {
 import { EditTableSheetProps } from "@/types/data-table";
 import { type Shipment } from "@/types/shipment";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useQueryClient } from "@tanstack/react-query";
 import { useQueryStates } from "nuqs";
-import { useCallback, useEffect, useMemo, useRef } from "react";
-import { FormProvider } from "react-hook-form";
+import { memo, useCallback, useEffect, useMemo, useRef } from "react";
+import { FormProvider, useForm } from "react-hook-form";
+import { toast } from "sonner";
 import { useShipmentDetails } from "../queries/shipment";
 import { ShipmentForm } from "./form/shipment-form";
 
@@ -33,6 +35,7 @@ export function ShipmentEditSheet({
   currentRecord,
 }: EditTableSheetProps<Shipment>) {
   const { table, rowSelection, isLoading } = useDataTable();
+  const queryClient = useQueryClient();
   const sheetRef = useRef<HTMLDivElement>(null);
   const [searchParams, setSearchParams] = useQueryStates(searchParamsParser);
   const { isPopout, closePopout } = usePopoutWindow();
@@ -103,13 +106,20 @@ export function ShipmentEditSheet({
     enabled: !!currentRecord?.id && searchParams.modalType === "edit", // * Only fetch data if the sheet is open
   });
 
-  const form = useFormWithSave({
-    resourceName: "Shipment",
-    formOptions: {
-      resolver: zodResolver(shipmentSchema),
-      defaultValues: shipmentDetails,
-      mode: "onChange",
-    },
+  const form = useForm({
+    resolver: zodResolver(shipmentSchema),
+    defaultValues: shipmentDetails,
+    mode: "onChange",
+  });
+
+  const {
+    setError,
+    reset,
+    handleSubmit,
+    formState: { isSubmitting },
+  } = form;
+
+  const { mutateAsync } = useApiMutation({
     mutationFn: async (values: ShipmentSchema) => {
       const response = await http.put<Shipment>(
         `/shipments/${currentRecord?.id}`,
@@ -117,7 +127,27 @@ export function ShipmentEditSheet({
       );
       return response.data;
     },
-    onSuccess: () => {
+    onMutate: async (newValues) => {
+      await queryClient.cancelQueries({
+        queryKey: ["shipment", currentRecord?.id],
+      });
+
+      // * snapshot of the previous value
+      const previousShipment = queryClient.getQueryData([
+        "shipment",
+        currentRecord?.id,
+      ]);
+
+      // * optimistically update to the new value
+      queryClient.setQueryData(["shipment", currentRecord?.id], newValues);
+
+      return { previousShipment, newValues };
+    },
+    onSuccess: (newValues) => {
+      toast.success("Changes have been saved", {
+        description: `Shipment updated successfully`,
+      });
+
       broadcastQueryInvalidation({
         queryKey: ["shipment", "shipment-list", "stop", "assignment"],
         options: {
@@ -128,6 +158,8 @@ export function ShipmentEditSheet({
           refetchType: "all",
         },
       });
+
+      reset(newValues);
 
       // * Reset the row selection
       table.resetRowSelection();
@@ -140,14 +172,16 @@ export function ShipmentEditSheet({
         closePopout();
       }
     },
+    setFormError: setError,
+    resourceName: "Shipment",
   });
 
-  const {
-    reset,
-    handleSubmit,
-    onSubmit,
-    formState: { isSubmitting, isSubmitSuccessful },
-  } = form;
+  const onSubmit = useCallback(
+    async (values: ShipmentSchema) => {
+      await mutateAsync(values);
+    },
+    [mutateAsync],
+  );
 
   // Update form values when currentRecord changes and is not loading
   useEffect(() => {
@@ -180,14 +214,6 @@ export function ShipmentEditSheet({
   //   control: control,
   //   onClose: handleClose,
   // });
-
-  // Reset the form when the mutation is successful
-  // This is recommended by react-hook-form - https://react-hook-form.com/docs/useform/reset
-  useEffect(() => {
-    if (isSubmitSuccessful) {
-      reset();
-    }
-  }, [isSubmitSuccessful, reset]);
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
@@ -234,18 +260,13 @@ export function ShipmentEditSheet({
 
           <FormProvider {...form}>
             <Form className="space-y-0 p-0" onSubmit={handleSubmit(onSubmit)}>
-              <SheetBody className="p-0">
-                <ShipmentForm
-                  open={!!selectedRowKey}
-                  sheetRef={sheetRef}
-                  selectedShipment={shipmentDetails}
-                  isLoading={isDetailsLoading}
-                  onBack={() =>
-                    setSearchParams({ modalType: null, entityId: null })
-                  }
-                  isError={isDetailsError}
-                />
-              </SheetBody>
+              <MemoizedShipmentSheetBody
+                open={!!selectedRowKey}
+                sheetRef={sheetRef}
+                selectedShipment={shipmentDetails}
+                isLoading={isDetailsLoading}
+                isError={isDetailsError}
+              />
               <FormSaveDock position="right" />
             </Form>
           </FormProvider>
@@ -254,3 +275,34 @@ export function ShipmentEditSheet({
     </>
   );
 }
+
+function ShipmentSheetBody({
+  open,
+  sheetRef,
+  isLoading,
+  isError,
+  selectedShipment,
+}: {
+  open: boolean;
+  sheetRef: React.RefObject<HTMLDivElement | null>;
+  isLoading: boolean;
+  isError: boolean;
+  selectedShipment?: ShipmentSchema | null;
+}) {
+  return (
+    <SheetBody className="p-0">
+      <ShipmentForm
+        open={open}
+        sheetRef={sheetRef}
+        selectedShipment={selectedShipment}
+        isLoading={isLoading}
+        isError={isError}
+      />
+    </SheetBody>
+  );
+}
+
+const MemoizedShipmentSheetBody = memo(ShipmentSheetBody, (prev, next) => {
+  // * we only check if the selectedShipment is the same, rest is useless
+  return prev.selectedShipment === next.selectedShipment;
+}) as typeof ShipmentSheetBody;
