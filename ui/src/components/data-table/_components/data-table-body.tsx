@@ -12,15 +12,15 @@ function DataTableRow<TData>({
   row: Row<TData>;
   selected?: boolean;
 }) {
+  console.info("DataTableRow debug info", {
+    row,
+    selected,
+  });
   return (
     <TableRow
       id={row.id}
       tabIndex={0}
       data-state={selected && "selected"}
-      className={cn(
-        "[&>:not(:last-child)]:border-r",
-        "outline-1 -outline-offset-1 outline-primary transition-colors focus-visible:bg-muted/50 focus-visible:outline data-[state=selected]:outline",
-      )}
       onClick={() => row.toggleSelected()}
       onKeyDown={(event) => {
         if (event.key === "Enter") {
@@ -28,13 +28,17 @@ function DataTableRow<TData>({
           row.toggleSelected();
         }
       }}
+      className={cn(
+        "[&>:not(:last-child)]:border-r border-border",
+        "-outline-offset-1 outline-primary transition-colors focus-visible:bg-muted/50 focus-visible:outline data-[state=selected]:outline",
+      )}
     >
       {row.getVisibleCells().map((cell) => (
         <TableCell
           key={cell.id}
           role="cell"
           aria-label={`${cell.column.id} cell`}
-          className="truncate border-b border-border"
+          className={cn("border-b border-border")}
         >
           {flexRender(cell.column.columnDef.cell, cell.getContext())}
         </TableCell>
@@ -54,11 +58,7 @@ export function DataTableBody<TData extends Record<string, any>>({
   columns,
 }: DataTableBodyProps<TData>) {
   return (
-    <TableBody
-      id="content"
-      tabIndex={-1}
-      className="outline-1 -outline-offset-1 outline-primary transition-colors focus-visible:outline"
-    >
+    <TableBody id="content" tabIndex={-1}>
       {table.getRowModel().rows?.length ? (
         table
           .getRowModel()

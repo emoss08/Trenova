@@ -71,6 +71,7 @@ export function DataTable<TData extends Record<string, any>>({
     rowCount: dataQuery.data?.count ?? 0,
     state: {
       pagination,
+      rowSelection,
     },
     enableMultiRowSelection: false,
     columnResizeMode: "onChange",
@@ -158,12 +159,10 @@ export function DataTable<TData extends Record<string, any>>({
             />
           </DataTableOptions>
         )}
-        <DataTableInner>
-          <Table className="border-separate border-spacing-0">
-            {includeHeader && <DataTableHeader table={table} />}
-            <DataTableBody table={table} columns={columns} />
-          </Table>
-        </DataTableInner>
+        <Table className="rounded-md border-x border-border border-separate border-spacing-0">
+          {includeHeader && <DataTableHeader table={table} />}
+          <DataTableBody table={table} columns={columns} />
+        </Table>
         <DataTablePagination>
           <PaginationInner table={table} />
         </DataTablePagination>
@@ -180,11 +179,5 @@ export function DataTable<TData extends Record<string, any>>({
         />
       </div>
     </DataTableProvider>
-  );
-}
-
-export function DataTableInner({ children }: { children: React.ReactNode }) {
-  return (
-    <div className="rounded-md border border-sidebar-border">{children}</div>
   );
 }
