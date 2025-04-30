@@ -47,11 +47,18 @@ function DataTableRow<TData>({
   );
 }
 
-const MemoizedRow = React.memo(
-  DataTableRow,
-  (prev, next) =>
-    prev.row.id === next.row.id && prev.selected === next.selected,
-) as typeof DataTableRow;
+const MemoizedRow = React.memo(DataTableRow, (prev, next) => {
+  // Check ID and selection state first (fast checks)
+  if (prev.row.id !== next.row.id || prev.selected !== next.selected) {
+    return false;
+  }
+
+  const prevOriginal = prev.row.original as Record<string, any>;
+  const nextOriginal = next.row.original as Record<string, any>;
+
+  // Compare updatedAt timestamps for data changes
+  return prevOriginal.updatedAt === nextOriginal.updatedAt;
+}) as typeof DataTableRow;
 
 export function DataTableBody<TData extends Record<string, any>>({
   table,
