@@ -1,4 +1,4 @@
-import { FormEditModal } from "@/components/ui/form-edit-model";
+import { FormEditModal } from "@/components/ui/form-edit-modal";
 import {
   trailerSchema,
   type TrailerSchema,
