@@ -14,7 +14,6 @@ import {
 } from "@fortawesome/pro-regular-svg-icons";
 import React, { useMemo, useState } from "react";
 import { toast } from "sonner";
-import SuperJSON from "superjson";
 import { BetaTag } from "./beta-tag";
 import {
   Dialog,
@@ -349,7 +348,7 @@ function JsonViewerActions({ data }: { data: any }) {
     }
 
     try {
-      return SuperJSON.stringify(data);
+      return JSON.stringify(data);
     } catch (err) {
       console.error("Error stringifying JSON:", err);
       setError("Failed to format JSON data");

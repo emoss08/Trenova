@@ -41,7 +41,6 @@ import {
   faPlus,
 } from "@fortawesome/pro-solid-svg-icons";
 import { useMemo, useState } from "react";
-import { SuperJSON } from "superjson";
 
 /**
  * Component for displaying a collapsible data section with a consistent header
@@ -243,10 +242,10 @@ export function ChangesTable({
       // Estimate total size by stringifying all changes
       Object.entries(changes).forEach(([, change]) => {
         if (change.from) {
-          totalJsonSize += SuperJSON.stringify(change.from).length;
+          totalJsonSize += JSON.stringify(change.from).length;
         }
         if (change.to) {
-          totalJsonSize += SuperJSON.stringify(change.to).length;
+          totalJsonSize += JSON.stringify(change.to).length;
         }
       });
 
