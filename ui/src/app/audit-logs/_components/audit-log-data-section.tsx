@@ -41,6 +41,7 @@ import {
   faPlus,
 } from "@fortawesome/pro-solid-svg-icons";
 import { useMemo, useState } from "react";
+import { SuperJSON } from "superjson";
 
 /**
  * Component for displaying a collapsible data section with a consistent header
@@ -240,13 +241,12 @@ export function ChangesTable({
 
     try {
       // Estimate total size by stringifying all changes
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      Object.entries(changes).forEach(([_, change]) => {
+      Object.entries(changes).forEach(([, change]) => {
         if (change.from) {
-          totalJsonSize += JSON.stringify(change.from).length;
+          totalJsonSize += SuperJSON.stringify(change.from).length;
         }
         if (change.to) {
-          totalJsonSize += JSON.stringify(change.to).length;
+          totalJsonSize += SuperJSON.stringify(change.to).length;
         }
       });
 
@@ -255,7 +255,6 @@ export function ChangesTable({
         totalSize: totalJsonSize,
       };
     } catch {
-      // If we can't stringify, it's probably too large
       return { isDataTooLarge: true, totalSize: 0 };
     }
   }, [changes]);

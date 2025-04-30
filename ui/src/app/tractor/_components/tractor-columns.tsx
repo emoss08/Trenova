@@ -5,6 +5,7 @@ import {
   createEntityRefColumn,
 } from "@/components/data-table/_components/data-table-column-helpers";
 import { EquipmentStatusBadge } from "@/components/status-badge";
+import { Checkbox } from "@/components/ui/checkbox";
 import { type Tractor } from "@/types/tractor";
 import { createColumnHelper, type ColumnDef } from "@tanstack/react-table";
 
@@ -13,9 +14,37 @@ export function getColumns(): ColumnDef<Tractor>[] {
   const commonColumns = createCommonColumns(columnHelper);
 
   return [
-    commonColumns.selection,
-    {
-      accessorKey: "status",
+    columnHelper.display({
+      id: "select",
+      header: ({ table }) => {
+        const isAllSelected = table.getIsAllPageRowsSelected();
+        const isSomeSelected = table.getIsSomePageRowsSelected();
+
+        return (
+          <Checkbox
+            data-slot="select-all"
+            checked={isAllSelected || (isSomeSelected && "indeterminate")}
+            onCheckedChange={(checked) =>
+              table.toggleAllPageRowsSelected(!!checked)
+            }
+            aria-label="Select all"
+          />
+        );
+      },
+      cell: ({ row }) => (
+        <Checkbox
+          data-slot="select-row"
+          checked={row.getIsSelected()}
+          onCheckedChange={(checked) => row.toggleSelected(!!checked)}
+          aria-label="Select row"
+        />
+      ),
+      enableSorting: false,
+      enableHiding: false,
+      minSize: 50,
+    }),
+    columnHelper.display({
+      id: "status",
       header: ({ column }) => (
         <DataTableColumnHeader column={column} title="Status" />
       ),
@@ -23,7 +52,7 @@ export function getColumns(): ColumnDef<Tractor>[] {
         const status = row.original.status;
         return <EquipmentStatusBadge status={status} />;
       },
-    },
+    }),
     createEntityColumn(columnHelper, "code", {
       accessorKey: "code",
       getHeaderText: "Code",

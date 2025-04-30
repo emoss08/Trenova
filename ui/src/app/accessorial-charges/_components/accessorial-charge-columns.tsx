@@ -14,7 +14,7 @@ export function getColumns(): ColumnDef<AccessorialChargeSchema>[] {
   const commonColumns = createCommonColumns(columnHelper);
 
   return [
-    {
+    columnHelper.display({
       id: "select",
       header: ({ table }) => {
         const isAllSelected = table.getIsAllPageRowsSelected();
@@ -39,12 +39,12 @@ export function getColumns(): ColumnDef<AccessorialChargeSchema>[] {
           aria-label="Select row"
         />
       ),
-      size: 50,
       enableSorting: false,
       enableHiding: false,
-    },
-    {
-      accessorKey: "status",
+      minSize: 50,
+    }),
+    columnHelper.display({
+      id: "status",
       header: ({ column }) => (
         <DataTableColumnHeader column={column} title="Status" />
       ),
@@ -52,7 +52,7 @@ export function getColumns(): ColumnDef<AccessorialChargeSchema>[] {
         const status = row.original.status;
         return <StatusBadge status={status} />;
       },
-    },
+    }),
     createEntityColumn(columnHelper, "code", {
       accessorKey: "code",
       getHeaderText: "Code",
