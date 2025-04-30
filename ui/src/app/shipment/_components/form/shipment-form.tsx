@@ -63,7 +63,6 @@ const ShipmentSections = memo(ShipmentSectionsComponent);
 export function ShipmentFormBody({
   selectedShipment,
   isError,
-  onBack,
   children,
   open,
   sheetRef,
@@ -72,7 +71,7 @@ export function ShipmentFormBody({
   if (isError) {
     return (
       <div className="flex size-full items-center justify-center">
-        <ShipmentNotFoundOverlay onBack={onBack} />
+        <ShipmentNotFoundOverlay />
       </div>
     );
   }

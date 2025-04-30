@@ -6,13 +6,7 @@ import {
   faCircleXmark,
 } from "@fortawesome/pro-regular-svg-icons";
 
-interface ShipmentNotFoundOverlayProps {
-  onBack: () => void;
-}
-
-export function ShipmentNotFoundOverlay({
-  onBack,
-}: ShipmentNotFoundOverlayProps) {
+export function ShipmentNotFoundOverlay() {
   return (
     <div className="relative size-full rounded-md">
       <div className="flex absolute inset-0 items-center justify-center bg-background/50 backdrop-blur-[2px]">
@@ -29,12 +23,7 @@ export function ShipmentNotFoundOverlay({
               Shipment Not Found
             </h3>
           </div>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={onBack}
-            className="w-full gap-2"
-          >
+          <Button variant="outline" size="sm" className="w-full gap-2">
             <Icon icon={faChevronLeft} className="size-4" />
             Return to Shipments
           </Button>

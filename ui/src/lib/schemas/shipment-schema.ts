@@ -110,8 +110,8 @@ export const shipmentSchema = z.object({
     return isNaN(parsed) ? undefined : parsed;
   }, z.number().int("Actual Ship Date must be a whole number").optional()),
   moves: z.array(moveSchema),
-  commodities: z.array(shipmentCommoditySchema),
-  additionalCharges: z.array(additionalChargeSchema),
+  commodities: z.array(shipmentCommoditySchema).nullable().optional(),
+  additionalCharges: z.array(additionalChargeSchema).nullable().optional(),
 });
 
 export type ShipmentSchema = z.infer<typeof shipmentSchema>;
