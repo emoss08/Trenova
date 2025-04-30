@@ -17,16 +17,16 @@ import {
 } from "@/lib/schemas/shipment-duplicate-schema";
 import { type TableSheetProps } from "@/types/data-table";
 import { type APIError } from "@/types/errors";
-import { type Shipment } from "@/types/shipment";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation } from "@tanstack/react-query";
 import { useCallback } from "react";
 import { FormProvider, type Path, useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { ShipmentDuplicateForm } from "./shipment-duplicate-form";
+import type { ShipmentSchema } from "@/lib/schemas/shipment-schema";
 
 type ShipmentDuplicateDialogProps = TableSheetProps & {
-  shipment: Shipment;
+  shipment: ShipmentSchema;
 };
 
 export function ShipmentDuplicateDialog({

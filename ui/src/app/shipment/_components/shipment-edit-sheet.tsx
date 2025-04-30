@@ -1,3 +1,5 @@
+/* eslint-disable react-hooks/exhaustive-deps */
+import { useDataTable } from "@/components/data-table/data-table-provider";
 import { FormSaveDock } from "@/components/form";
 import { Form } from "@/components/ui/form";
 import {
@@ -10,6 +12,7 @@ import {
 } from "@/components/ui/sheet";
 import { VisuallyHidden } from "@/components/ui/visually-hidden";
 import { usePopoutWindow } from "@/hooks/popout-window/use-popout-window";
+import { searchParamsParser } from "@/hooks/use-data-table-state";
 import { useFormWithSave } from "@/hooks/use-form-with-save";
 import { broadcastQueryInvalidation } from "@/hooks/use-invalidate-query";
 import { http } from "@/lib/http-client";
@@ -20,19 +23,76 @@ import {
 import { EditTableSheetProps } from "@/types/data-table";
 import { type Shipment } from "@/types/shipment";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useCallback, useEffect, useRef } from "react";
+import { useQueryStates } from "nuqs";
+import { useCallback, useEffect, useMemo, useRef } from "react";
 import { FormProvider } from "react-hook-form";
 import { useShipmentDetails } from "../queries/shipment";
 import { ShipmentForm } from "./form/shipment-form";
 
 export function ShipmentEditSheet({
-  open,
-  onOpenChange,
   currentRecord,
 }: EditTableSheetProps<Shipment>) {
+  const { table, rowSelection, isLoading } = useDataTable();
   const sheetRef = useRef<HTMLDivElement>(null);
+  const [searchParams, setSearchParams] = useQueryStates(searchParamsParser);
   const { isPopout, closePopout } = usePopoutWindow();
   const initialLoadRef = useRef(false);
+
+  const previousRecordIdRef = useRef<string | number | null>(null);
+  const selectedRowKey = Object.keys(rowSelection)[0];
+
+  const selectedRow = useMemo(() => {
+    if (isLoading && !selectedRowKey) return;
+    return table
+      .getCoreRowModel()
+      .flatRows.find((row) => row.id === selectedRowKey);
+  }, [selectedRowKey, isLoading]);
+
+  const index = table
+    .getCoreRowModel()
+    .flatRows.findIndex((row) => row.id === selectedRow?.id);
+
+  const nextId = useMemo(
+    () => table.getCoreRowModel().flatRows[index + 1]?.id,
+    [index, isLoading],
+  );
+
+  const prevId = useMemo(
+    () => table.getCoreRowModel().flatRows[index - 1]?.id,
+    [index, isLoading],
+  );
+
+  const onPrev = useCallback(() => {
+    if (prevId) table.setRowSelection({ [prevId]: true });
+  }, [prevId, isLoading]);
+
+  const onNext = useCallback(() => {
+    if (nextId) table.setRowSelection({ [nextId]: true });
+  }, [nextId, isLoading, table]);
+
+  useEffect(() => {
+    const down = (e: KeyboardEvent) => {
+      if (!selectedRowKey) return;
+
+      // REMINDER: prevent dropdown navigation inside of sheet to change row selection
+      const activeElement = document.activeElement;
+      const isMenuActive = activeElement?.closest('[role="menu"]');
+
+      if (isMenuActive) return;
+
+      if (e.key === "ArrowUp") {
+        e.preventDefault();
+        onPrev();
+      }
+      if (e.key === "ArrowDown") {
+        e.preventDefault();
+        onNext();
+      }
+    };
+
+    document.addEventListener("keydown", down);
+    return () => document.removeEventListener("keydown", down);
+  }, [selectedRowKey, onNext, onPrev]);
 
   const {
     data: shipmentDetails,
@@ -40,7 +100,7 @@ export function ShipmentEditSheet({
     isError: isDetailsError,
   } = useShipmentDetails({
     shipmentId: currentRecord?.id ?? "",
-    enabled: !!currentRecord?.id && open, // * Only fetch data if the sheet is open
+    enabled: !!currentRecord?.id && searchParams.modalType === "edit", // * Only fetch data if the sheet is open
   });
 
   const form = useFormWithSave({
@@ -58,8 +118,6 @@ export function ShipmentEditSheet({
       return response.data;
     },
     onSuccess: () => {
-      onOpenChange(false);
-
       broadcastQueryInvalidation({
         queryKey: ["shipment", "shipment-list", "stop", "assignment"],
         options: {
@@ -70,8 +128,14 @@ export function ShipmentEditSheet({
           refetchType: "all",
         },
       });
-    },
-    onSettled: () => {
+
+      // * Reset the row selection
+      table.resetRowSelection();
+
+      // * Close the sheet
+      setSearchParams({ modalType: null, entityId: null });
+
+      // * If the page is a popout, close it
       if (isPopout) {
         closePopout();
       }
@@ -85,9 +149,17 @@ export function ShipmentEditSheet({
     formState: { isSubmitting, isSubmitSuccessful },
   } = form;
 
-  const handleClose = useCallback(() => {
-    onOpenChange(false);
-  }, [onOpenChange]);
+  // Update form values when currentRecord changes and is not loading
+  useEffect(() => {
+    if (
+      !isLoading &&
+      currentRecord &&
+      currentRecord.id !== previousRecordIdRef.current
+    ) {
+      reset(currentRecord);
+      previousRecordIdRef.current = currentRecord.id;
+    }
+  }, [currentRecord, isLoading, reset]);
 
   useEffect(() => {
     if (shipmentDetails && !isDetailsLoading && !initialLoadRef.current) {
@@ -120,7 +192,6 @@ export function ShipmentEditSheet({
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
       if (
-        open &&
         (event.ctrlKey || event.metaKey) &&
         event.key === "Enter" &&
         !isSubmitting
@@ -136,7 +207,19 @@ export function ShipmentEditSheet({
 
   return (
     <>
-      <Sheet open={open} onOpenChange={handleClose}>
+      <Sheet
+        open={!!selectedRowKey}
+        onOpenChange={(open) => {
+          if (!open) {
+            const el = selectedRowKey
+              ? document.getElementById(selectedRowKey)
+              : null;
+            table.resetRowSelection();
+
+            setTimeout(() => el?.focus(), 0);
+          }
+        }}
+      >
         <SheetContent
           className="w-[500px] sm:max-w-[540px] p-0"
           withClose={false}
@@ -153,11 +236,13 @@ export function ShipmentEditSheet({
             <Form className="space-y-0 p-0" onSubmit={handleSubmit(onSubmit)}>
               <SheetBody className="p-0">
                 <ShipmentForm
-                  open={open}
+                  open={!!selectedRowKey}
                   sheetRef={sheetRef}
                   selectedShipment={shipmentDetails}
                   isLoading={isDetailsLoading}
-                  onBack={handleClose}
+                  onBack={() =>
+                    setSearchParams({ modalType: null, entityId: null })
+                  }
                   isError={isDetailsError}
                 />
               </SheetBody>
@@ -166,27 +251,6 @@ export function ShipmentEditSheet({
           </FormProvider>
         </SheetContent>
       </Sheet>
-      {/* {showWarning && (
-        <AlertDialog open={showWarning} onOpenChange={onClose}>
-          <AlertDialogContent>
-            <AlertDialogHeader>
-              <AlertDialogTitle>Unsaved Changes</AlertDialogTitle>
-              <AlertDialogDescription>
-                You have unsaved changes. Are you sure you want to close this
-                form? All changes will be lost.
-              </AlertDialogDescription>
-            </AlertDialogHeader>
-            <AlertDialogFooter>
-              <AlertDialogCancel onClick={onClose}>
-                Continue Editing
-              </AlertDialogCancel>
-              <AlertDialogAction onClick={handleConfirmClose}>
-                Discard Changes
-              </AlertDialogAction>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialog>
-      )} */}
     </>
   );
 }

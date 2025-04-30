@@ -2,13 +2,16 @@ import { ShipmentStatusBadge } from "@/components/status-badge";
 import { formatToUserTimezone } from "@/lib/date";
 import { ShipmentSchema } from "@/lib/schemas/shipment-schema";
 import { useUser } from "@/stores/user-store";
-import { useFormContext } from "react-hook-form";
 
-export default function ShipmentDetailsHeader() {
+export default function ShipmentDetailsHeader({
+  selectedShipment,
+}: {
+  selectedShipment?: ShipmentSchema | null;
+}) {
   return (
     <ShipmentDetailsHeaderInner>
-      <ShipmentDetailsHeaderTitle />
-      <ShipmentDetailsHeaderDescription />
+      <ShipmentDetailsHeaderTitle selectedShipment={selectedShipment} />
+      <ShipmentDetailsHeaderDescription selectedShipment={selectedShipment} />
     </ShipmentDetailsHeaderInner>
   );
 }
@@ -25,9 +28,12 @@ function ShipmentDetailsHeaderInner({
   );
 }
 
-function ShipmentDetailsHeaderTitle() {
-  const { getValues } = useFormContext<ShipmentSchema>();
-  const { proNumber, status } = getValues();
+function ShipmentDetailsHeaderTitle({
+  selectedShipment,
+}: {
+  selectedShipment?: ShipmentSchema | null;
+}) {
+  const { proNumber, status } = selectedShipment ?? {};
 
   return (
     <div className="flex items-center justify-between">
@@ -39,10 +45,12 @@ function ShipmentDetailsHeaderTitle() {
   );
 }
 
-function ShipmentDetailsHeaderDescription() {
-  const { getValues } = useFormContext<ShipmentSchema>();
-
-  const { updatedAt } = getValues();
+function ShipmentDetailsHeaderDescription({
+  selectedShipment,
+}: {
+  selectedShipment?: ShipmentSchema | null;
+}) {
+  const { updatedAt } = selectedShipment ?? {};
 
   const user = useUser();
 

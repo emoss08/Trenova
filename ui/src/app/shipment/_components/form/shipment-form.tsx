@@ -1,6 +1,6 @@
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useResponsiveDimensions } from "@/hooks/use-responsive-dimensions";
-import { type Shipment } from "@/types/shipment";
+import type { ShipmentSchema } from "@/lib/schemas/shipment-schema";
 import { lazy, memo, Suspense, useEffect, useMemo, useState } from "react";
 import { ShipmentNotFoundOverlay } from "../sidebar/shipment-not-found-overlay";
 import { ShipmentDetailsSkeleton } from "./shipment-details-skeleton";
@@ -26,7 +26,7 @@ type ShipmentDetailsProps = {
   onBack: () => void;
   open: boolean;
   sheetRef: React.RefObject<HTMLDivElement | null>;
-  selectedShipment?: Shipment | null;
+  selectedShipment?: ShipmentSchema | null;
   isLoading?: boolean;
   isError?: boolean;
 };
@@ -80,9 +80,9 @@ export function ShipmentFormBody({
 
   return (
     <div className="size-full">
-      <ShipmentFormHeader onBack={onBack} selectedShipment={selectedShipment} />
+      <ShipmentFormHeader selectedShipment={selectedShipment} />
       <ShipmentScrollAreaOuter>
-        <ShipmentDetailsHeader />
+        <ShipmentDetailsHeader selectedShipment={selectedShipment} />
         <ShipmentScrollArea sheetRef={sheetRef} open={open}>
           <div className="flex flex-col gap-4 p-4 pb-16">{children}</div>
           <div className="pointer-events-none rounded-b-lg absolute bottom-0 z-50 left-0 right-0 h-8 bg-gradient-to-t from-background to-transparent" />

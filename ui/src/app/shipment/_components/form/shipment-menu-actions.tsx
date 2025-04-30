@@ -9,7 +9,8 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Icon } from "@/components/ui/icons";
-import { ShipmentStatus, type Shipment } from "@/types/shipment";
+import type { ShipmentSchema } from "@/lib/schemas/shipment-schema";
+import { ShipmentStatus } from "@/types/shipment";
 import { faEllipsisVertical } from "@fortawesome/pro-regular-svg-icons";
 import { parseAsBoolean, useQueryState } from "nuqs";
 import { ShipmentCancellationDialog } from "../cancellation/shipment-cancellatioin-dialog";
@@ -33,7 +34,11 @@ const dialogs = {
   duplicateDialogOpen: parseAsBoolean.withDefault(false),
 };
 
-export function ShipmentActions({ shipment }: { shipment?: Shipment | null }) {
+export function ShipmentActions({
+  shipment,
+}: {
+  shipment?: ShipmentSchema | null;
+}) {
   const [cancellationDialogOpen, setCancellationDialogOpen] =
     useQueryState<boolean>(
       "cancellationDialogOpen",
@@ -67,7 +72,7 @@ export function ShipmentActions({ shipment }: { shipment?: Shipment | null }) {
     <>
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <Button variant="outline" size="sm" className="p-2">
+          <Button variant="outline" size="icon" className="p-2">
             <Icon icon={faEllipsisVertical} className="size-4" />
           </Button>
         </DropdownMenuTrigger>
