@@ -205,16 +205,6 @@ export function ShipmentEditSheet({
     }
   }, [shipmentDetails, isDetailsLoading, reset]);
 
-  // const {
-  //   showWarning,
-  //   handleClose: onClose,
-  //   handleConfirmClose,
-  //   handleCancelClose,
-  // } = useUnsavedChanges({
-  //   control: control,
-  //   onClose: handleClose,
-  // });
-
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
       if (
