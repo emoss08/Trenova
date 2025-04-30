@@ -182,9 +182,6 @@ export function FormEditModal<T extends FieldValues>({
         description: `${title} updated successfully`,
       });
 
-      // * Close the modal on success
-      // onOpenChange(false);
-
       // * Invalidate the query
       broadcastQueryInvalidation({
         queryKey: [queryKey],
