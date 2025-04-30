@@ -8,10 +8,9 @@ import {
   EntityRefLinkInner,
 } from "@/components/entity-refs/entity-ref-link";
 import { generateDateOnlyString, toDate } from "@/lib/date";
-import { BaseModel } from "@/types/common";
 import { ColumnDef, ColumnHelper } from "@tanstack/react-table";
 import { parseAsString, useQueryState } from "nuqs";
-import { memo, useCallback, useMemo, useTransition } from "react";
+import { memo, useCallback, useTransition } from "react";
 import { useNavigate } from "react-router";
 import { v4 } from "uuid";
 import {
@@ -324,20 +323,17 @@ export function createCommonColumns<T extends Record<string, unknown>>(
 function createdAtColumn<T extends Record<string, unknown>>(
   columnHelper: ColumnHelper<T>,
 ) {
-  return columnHelper.accessor(
-    (row) => (row.original as unknown as BaseModel).createdAt,
-    {
-      id: "createdAt",
-      header: "Created At",
-      cell: ({ row }) => {
-        const { createdAt } = row.original;
-        const date = toDate(createdAt as number);
-        if (!date) return <p>-</p>;
+  return columnHelper.display({
+    id: "createdAt",
+    header: "Created At",
+    cell: ({ row }) => {
+      const { createdAt } = row.original;
+      const date = toDate(createdAt as number);
+      if (!date) return <p>-</p>;
 
-        return <p>{generateDateOnlyString(date)}</p>;
-      },
+      return <p>{generateDateOnlyString(date)}</p>;
     },
-  );
+  }) as ColumnDef<T>;
 }
 
 export function createEntityRefColumn<
@@ -349,11 +345,11 @@ export function createEntityRefColumn<
   accessorKey: K,
   config: EntityRefConfig<NonNullable<TValue>, T>,
 ): ColumnDef<T> {
-  return columnHelper.accessor((row) => row[accessorKey], {
+  return columnHelper.display({
     id: accessorKey as string,
     header: config.getHeaderText ?? "",
-    cell: ({ getValue, row }) => {
-      const entity = getValue();
+    cell: ({ row }) => {
+      const entity = row.original[accessorKey];
 
       if (!entity) {
         return <p className="text-muted-foreground">-</p>;
@@ -375,36 +371,28 @@ export function createEntityColumn<T extends Record<string, any>>(
   accessorKey: keyof T,
   config: EntityColumnConfig<T, keyof T>,
 ): ColumnDef<T> {
-  return columnHelper.accessor((row) => row[accessorKey], {
+  return columnHelper.display({
     id: accessorKey as string,
     header: config.getHeaderText ?? "",
     cell: ({ row }) => {
-      return useMemo(() => {
-        const entity = row.original;
+      const entity = row.original;
 
-        if (!entity) {
-          return <p>-</p>;
-        }
+      if (!entity) {
+        return <p>-</p>;
+      }
 
-        const id = config.getId(row.original);
-        const displayText = config.getDisplayText(row.original);
-        const color = config.getColor?.(row.original);
+      const id = config.getId(row.original);
+      const displayText = config.getDisplayText(row.original);
+      const color = config.getColor?.(row.original);
 
-        return (
-          <EntityRefLink
-            id={id}
-            displayText={displayText}
-            className={config.className}
-            color={color}
-          />
-        );
-      }, [
-        row.original,
-        config.getId,
-        config.getDisplayText,
-        config.getColor,
-        config.className,
-      ]);
+      return (
+        <EntityRefLink
+          id={id}
+          displayText={displayText}
+          className={config.className}
+          color={color}
+        />
+      );
     },
   }) as ColumnDef<T>;
 }
