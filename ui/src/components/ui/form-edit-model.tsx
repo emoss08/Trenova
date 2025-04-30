@@ -18,13 +18,14 @@ import { useUser } from "@/stores/user-store";
 import { type EditTableSheetProps } from "@/types/data-table";
 import { type API_ENDPOINTS } from "@/types/server";
 import { useQueryClient } from "@tanstack/react-query";
-import { useCallback, useEffect, useRef } from "react";
+import React, { useCallback, useEffect, useRef } from "react";
 import {
   FormProvider,
   type FieldValues,
   type UseFormReturn,
 } from "react-hook-form";
 import { toast } from "sonner";
+import { useDataTable } from "../data-table/data-table-provider";
 import { ComponentLoader } from "./component-loader";
 import { Form } from "./form";
 
@@ -39,8 +40,6 @@ type FormEditModalProps<T extends FieldValues> = EditTableSheetProps<T> & {
 };
 
 export function FormEditModal<T extends FieldValues>({
-  open,
-  onOpenChange,
   currentRecord,
   url,
   title,
@@ -49,11 +48,11 @@ export function FormEditModal<T extends FieldValues>({
   fieldKey,
   form,
   className,
-  isLoading,
-  error,
 }: FormEditModalProps<T>) {
-  const queryClient = useQueryClient();
+  const { table, rowSelection, isLoading } = useDataTable();
+  const selectedRowKey = Object.keys(rowSelection)[0];
 
+  const queryClient = useQueryClient();
   const { isPopout, closePopout } = usePopoutWindow();
   const user = useUser();
   const previousRecordIdRef = useRef<string | number | null>(null);
@@ -78,9 +77,8 @@ export function FormEditModal<T extends FieldValues>({
   }, [currentRecord, isLoading, reset]);
 
   const handleClose = useCallback(() => {
-    onOpenChange(false);
     reset();
-  }, [onOpenChange, reset]);
+  }, [reset]);
 
   const { mutateAsync } = useApiMutation<
     T, // The response data type
@@ -112,7 +110,7 @@ export function FormEditModal<T extends FieldValues>({
       });
 
       // * Close the modal on success
-      onOpenChange(false);
+      // onOpenChange(false);
 
       // * Invalidate the query
       broadcastQueryInvalidation({
@@ -145,32 +143,32 @@ export function FormEditModal<T extends FieldValues>({
     [mutateAsync],
   );
 
-  useEffect(() => {
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (
-        open &&
-        (event.ctrlKey || event.metaKey) &&
-        event.key === "Enter" &&
-        !isSubmitting
-      ) {
-        event.preventDefault();
-        handleSubmit(onSubmit)();
-      }
-    };
+  // useEffect(() => {
+  //   const handleKeyDown = (event: KeyboardEvent) => {
+  //     if (
+  //       open &&
+  //       (event.ctrlKey || event.metaKey) &&
+  //       event.key === "Enter" &&
+  //       !isSubmitting
+  //     ) {
+  //       event.preventDefault();
+  //       handleSubmit(onSubmit)();
+  //     }
+  //   };
 
-    document.addEventListener("keydown", handleKeyDown);
-    return () => document.removeEventListener("keydown", handleKeyDown);
-  }, [open, isSubmitting, handleSubmit, onSubmit]);
+  //   document.addEventListener("keydown", handleKeyDown);
+  //   return () => document.removeEventListener("keydown", handleKeyDown);
+  // }, [open, isSubmitting, handleSubmit, onSubmit]);
 
-  // If there's an error, show a toast and close the modal
-  useEffect(() => {
-    if (error) {
-      toast.error("Failed to load record", {
-        description: "Please try again in a moment",
-      });
-      onOpenChange(false);
-    }
-  }, [error, onOpenChange]);
+  // // If there's an error, show a toast and close the modal
+  // useEffect(() => {
+  //   if (error) {
+  //     toast.error("Failed to load record", {
+  //       description: "Please try again in a moment",
+  //     });
+  //     onOpenChange(false);
+  //   }
+  // }, [error, onOpenChange]);
 
   const dialogContent = (
     <DialogContent
@@ -222,32 +220,18 @@ export function FormEditModal<T extends FieldValues>({
   );
 
   return (
-    <>
-      <Dialog open={open} onOpenChange={onOpenChange}>
-        {dialogContent}
-      </Dialog>
+    <Dialog
+      open={!!selectedRowKey}
+      onOpenChange={() => {
+        const el = selectedRowKey
+          ? document.getElementById(selectedRowKey)
+          : null;
+        table.resetRowSelection();
 
-      {/* {showWarning && (
-        <AlertDialog open={showWarning} onOpenChange={handleCancelClose}>
-          <AlertDialogContent>
-            <AlertDialogHeader>
-              <AlertDialogTitle>Unsaved Changes</AlertDialogTitle>
-              <AlertDialogDescription>
-                You have unsaved changes. Are you sure you want to close this
-                form? All changes will be lost.
-              </AlertDialogDescription>
-            </AlertDialogHeader>
-            <AlertDialogFooter>
-              <AlertDialogCancel onClick={handleCancelClose}>
-                Continue Editing
-              </AlertDialogCancel>
-              <AlertDialogAction onClick={handleConfirmClose}>
-                Discard Changes
-              </AlertDialogAction>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialog>
-      )} */}
-    </>
+        setTimeout(() => el?.focus(), 0);
+      }}
+    >
+      {dialogContent}
+    </Dialog>
   );
 }

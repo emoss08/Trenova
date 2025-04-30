@@ -34,8 +34,6 @@ export function MoveListScrollAreaInner({
 export function MoveList({
   move,
   moveIdx,
-  update,
-  remove,
 }: {
   move: ShipmentMove;
   moveIdx: number;
@@ -51,7 +49,14 @@ export function MoveList({
               description: "If this issue persists, please contact support.",
             });
 
-            throw new Error("Unable to render stop timeline");
+            return (
+              <div
+                key={`stop-${moveIdx}-${stopIdx}`}
+                className="p-4 text-destructive"
+              >
+                Failed to load stop timeline
+              </div>
+            );
           }
 
           const isLastStop = stopIdx === move.stops.length - 1;
@@ -70,8 +75,6 @@ export function MoveList({
                 moveStatus={move.status}
                 moveIdx={moveIdx}
                 stopIdx={stopIdx}
-                update={update}
-                remove={remove}
                 prevStopStatus={prevStopStatus}
               />
             </LazyComponent>

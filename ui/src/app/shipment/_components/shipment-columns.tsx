@@ -15,7 +15,7 @@ import { LocationSchema } from "@/lib/schemas/location-schema";
 import {
   getDestinationStopInfo,
   getOriginStopInfo,
-  ShipmentLocations
+  ShipmentLocations,
 } from "@/lib/shipment/utils";
 import { formatLocation } from "@/lib/utils";
 import { Shipment } from "@/types/shipment";

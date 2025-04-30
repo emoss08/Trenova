@@ -34,9 +34,10 @@ export function AssignmentDialog({
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  shipmentMoveId: string;
+  shipmentMoveId?: string;
   assignmentId?: string;
 }) {
+  // * TODO(Wolfred): We need to disable this in the actions, if the move id is undefined.
   const isEditing = !!assignmentId;
 
   const { data: existingAssignment, isLoading: isLoadingAssignment } = useQuery(

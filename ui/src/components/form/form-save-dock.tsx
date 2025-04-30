@@ -48,7 +48,13 @@ export function FormSaveDock({
   className,
 }: FormSaveDockProps) {
   const { control, reset } = useFormContext();
-  const { isDirty, isSubmitting } = useFormState({ control });
+  const { isDirty, isSubmitting, dirtyFields } = useFormState({ control });
+
+  console.info("form-save-dock debug info", {
+    isDirty,
+    isSubmitting,
+    dirtyFields,
+  });
 
   const handleReset = useCallback(() => {
     reset();

@@ -1,72 +1,81 @@
 "use no memo";
 import { TableBody, TableCell, TableRow } from "@/components/ui/table";
+import { cn } from "@/lib/utils";
 import { DataTableBodyProps } from "@/types/data-table";
-import { flexRender, type Cell, type Row } from "@tanstack/react-table";
-import { memo } from "react";
+import { flexRender, type Row } from "@tanstack/react-table";
+import React from "react";
 
-const DataTableCell = memo(function DataTableCell<
-  TData extends Record<string, any>,
-  TValue,
->({ cell }: { cell: Cell<TData, TValue> }) {
-  return (
-    <TableCell
-      key={cell.id}
-      role="cell"
-      aria-label={`${cell.column.id} cell`}
-      tabIndex={0}
-    >
-      {flexRender(cell.column.columnDef.cell, cell.getContext())}
-    </TableCell>
-  );
-});
-
-const DataTableRow = memo(function DataTableRow<
-  TData extends Record<string, any>,
->({ row }: { row: Row<TData> }) {
+function DataTableRow<TData>({
+  row,
+  selected,
+}: {
+  row: Row<TData>;
+  selected?: boolean;
+}) {
   return (
     <TableRow
-      key={row.id}
-      data-state={row.getIsSelected() ? "selected" : undefined}
-      className="hover:bg-muted transition-colors duration-200"
-      role="row"
-      aria-selected={row.getIsSelected()}
+      id={row.id}
+      tabIndex={0}
+      data-state={selected && "selected"}
+      className={cn(
+        "[&>:not(:last-child)]:border-r",
+        "outline-1 -outline-offset-1 outline-primary transition-colors focus-visible:bg-muted/50 focus-visible:outline data-[state=selected]:outline",
+      )}
+      onClick={() => row.toggleSelected()}
+      onKeyDown={(event) => {
+        if (event.key === "Enter") {
+          event.preventDefault();
+          row.toggleSelected();
+        }
+      }}
     >
       {row.getVisibleCells().map((cell) => (
-        <DataTableCell key={cell.id} cell={cell as any} />
+        <TableCell
+          key={cell.id}
+          role="cell"
+          aria-label={`${cell.column.id} cell`}
+          className="truncate border-b border-border"
+        >
+          {flexRender(cell.column.columnDef.cell, cell.getContext())}
+        </TableCell>
       ))}
     </TableRow>
   );
-});
+}
 
-const EmptyTableBody = memo(() => (
-  <TableBody>
-    <TableRow>
-      <TableCell
-        colSpan={100}
-        className="h-24 text-center"
-        role="cell"
-        aria-label="No results available"
-      >
-        No results.
-      </TableCell>
-    </TableRow>
-  </TableBody>
-));
-
-EmptyTableBody.displayName = "EmptyTableBody";
+const MemoizedRow = React.memo(
+  DataTableRow,
+  (prev, next) =>
+    prev.row.id === next.row.id && prev.selected === next.selected,
+) as typeof DataTableRow;
 
 export function DataTableBody<TData extends Record<string, any>>({
   table,
+  columns,
 }: DataTableBodyProps<TData>) {
-  if (!table.getRowModel().rows?.length) {
-    return <EmptyTableBody />;
-  }
-
   return (
-    <TableBody>
-      {table.getRowModel().rows.map((row) => (
-        <DataTableRow key={row.id} row={row} />
-      ))}
+    <TableBody
+      id="content"
+      tabIndex={-1}
+      className="outline-1 -outline-offset-1 outline-primary transition-colors focus-visible:outline"
+    >
+      {table.getRowModel().rows?.length ? (
+        table
+          .getRowModel()
+          .rows.map((row) => (
+            <MemoizedRow
+              key={row.id}
+              row={row}
+              selected={row.getIsSelected()}
+            />
+          ))
+      ) : (
+        <TableRow>
+          <TableCell colSpan={columns.length} className="h-24 text-center">
+            No results.
+          </TableCell>
+        </TableRow>
+      )}
     </TableBody>
   );
 }

@@ -14,7 +14,6 @@ import { faEllipsisVertical } from "@fortawesome/pro-regular-svg-icons";
 import { parseAsBoolean, useQueryState } from "nuqs";
 import { ShipmentCancellationDialog } from "../cancellation/shipment-cancellatioin-dialog";
 import { ShipmentDocumentDialog } from "../document/shipment-document-dialog";
-import { ShipmentDocumentWorkflow } from "../document/shipment-document-workflow";
 import { ShipmentDuplicateDialog } from "../duplicate/shipment-duplicate-dialog";
 
 // Map of status that are allowed to be canceled.
@@ -153,12 +152,12 @@ export function ShipmentActions({ shipment }: { shipment?: Shipment | null }) {
         onOpenChange={setDocumentDialogOpen}
         shipmentId={shipment.id}
       />
-      <ShipmentDocumentWorkflow
+      {/* <ShipmentDocumentWorkflow
         open={addDocumentDialogOpen}
         onOpenChange={setAddDocumentDialogOpen}
         shipmentId={shipment.id}
         customerId={shipment.customerId}
-      />
+      /> */}
     </>
   );
 }

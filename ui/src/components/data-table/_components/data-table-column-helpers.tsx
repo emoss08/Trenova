@@ -43,14 +43,6 @@ const EntityRefLink = memo(
     const [, startTransition] = useTransition();
     const navigate = useNavigate();
 
-    console.info("EntityRefLink debug information", {
-      id,
-      displayText,
-      className,
-      color,
-      basePath,
-    });
-
     // Use the nuqs hooks directly
     const [, setEntityId] = useQueryState(
       "entityId",

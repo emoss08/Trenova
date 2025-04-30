@@ -1,12 +1,10 @@
 import { DataTableColumnHeader } from "@/components/data-table/_components/data-table-column-header";
 import {
   createCommonColumns,
-  createEntityColumn,
   createEntityRefColumn,
 } from "@/components/data-table/_components/data-table-column-helpers";
 import { LastInspectionDateBadge } from "@/components/data-table/_components/data-table-components";
 import { EquipmentStatusBadge } from "@/components/status-badge";
-import { Checkbox } from "@/components/ui/checkbox";
 import { type Trailer } from "@/types/trailer";
 import { createColumnHelper, type ColumnDef } from "@tanstack/react-table";
 
@@ -15,35 +13,6 @@ export function getColumns(): ColumnDef<Trailer>[] {
   const commonColumns = createCommonColumns(columnHelper);
 
   return [
-    columnHelper.display({
-      id: "select",
-      header: ({ table }) => {
-        const isAllSelected = table.getIsAllPageRowsSelected();
-        const isSomeSelected = table.getIsSomePageRowsSelected();
-
-        return (
-          <Checkbox
-            data-slot="select-all"
-            checked={isAllSelected || (isSomeSelected && "indeterminate")}
-            onCheckedChange={(checked) =>
-              table.toggleAllPageRowsSelected(!!checked)
-            }
-            aria-label="Select all"
-          />
-        );
-      },
-      cell: ({ row }) => (
-        <Checkbox
-          data-slot="select-row"
-          checked={row.getIsSelected()}
-          onCheckedChange={(checked) => row.toggleSelected(!!checked)}
-          aria-label="Select row"
-        />
-      ),
-      enableSorting: false,
-      enableHiding: false,
-      minSize: 50,
-    }),
     {
       accessorKey: "status",
       header: ({ column }) => (
@@ -54,11 +23,13 @@ export function getColumns(): ColumnDef<Trailer>[] {
         return <EquipmentStatusBadge status={status} />;
       },
     },
-    createEntityColumn(columnHelper, "code", {
-      accessorKey: "code",
-      getHeaderText: "Code",
-      getId: (trailer) => trailer.id,
-      getDisplayText: (trailer) => trailer.code,
+    columnHelper.display({
+      id: "code",
+      header: "Code",
+      cell: ({ row }) => {
+        const code = row.original.code;
+        return <p>{code}</p>;
+      },
     }),
     createEntityRefColumn<Trailer, "equipmentType">(
       columnHelper,

@@ -69,59 +69,69 @@ const ShipmentMovesDetailsComponent = () => {
   }, []);
 
   // Modified handleDeleteMove function for the ShipmentMovesDetails component
-  const handleDeleteMove = useCallback((index: number) => {
-    // If there is only one move, we cannot delete it
-    if (moves.length === 1) {
-      toast.error("Unable to proceed", {
-        description: "A shipment must have at least one move.",
-      });
-      return;
-    }
+  const handleDeleteMove = useCallback(
+    (index: number) => {
+      // If there is only one move, we cannot delete it
+      if (moves.length === 1) {
+        toast.error("Unable to proceed", {
+          description: "A shipment must have at least one move.",
+        });
+        return;
+      }
 
-    // Always check localStorage directly
-    const showDialog = localStorage.getItem(MOVE_DELETE_DIALOG_KEY) !== "false";
+      // Always check localStorage directly
+      const showDialog =
+        localStorage.getItem(MOVE_DELETE_DIALOG_KEY) !== "false";
 
-    if (showDialog) {
-      setDeletingIndex(index);
-      setDeleteDialogOpen(true);
-    } else {
-      performDeleteMove(index);
-    }
-  }, [moves.length]);
+      if (showDialog) {
+        setDeletingIndex(index);
+        setDeleteDialogOpen(true);
+      } else {
+        performDeleteMove(index);
+      }
+    },
+    [moves.length],
+  );
 
   // Function to perform the actual deletion with resequencing
-  const performDeleteMove = useCallback((index: number) => {
-    // Get the current moves data
-    const currentMoves = getValues("moves");
+  const performDeleteMove = useCallback(
+    (index: number) => {
+      // Get the current moves data
+      const currentMoves = getValues("moves");
 
-    // Resequence the moves
-    const updatedMoves = resequenceMoves(currentMoves, index);
+      // Resequence the moves
+      const updatedMoves = resequenceMoves(currentMoves, index);
 
-    // Update all moves with their new sequences before removal
-    updatedMoves.forEach((move, idx) => {
-      if (idx !== index) {
-        // Skip the one being deleted
-        update(idx, move);
-      }
-    });
+      // Update all moves with their new sequences before removal
+      updatedMoves.forEach((move, idx) => {
+        if (idx !== index) {
+          // Skip the one being deleted
+          update(idx, move);
+        }
+      });
 
-    // Now remove the move at the specified index
-    remove(index);
-  }, [getValues, update, remove]);
+      // Now remove the move at the specified index
+      remove(index);
+    },
+    [getValues, update, remove],
+  );
 
   // Modified handleConfirmDelete function
-  const handleConfirmDelete = useCallback((doNotShowAgain: boolean) => {
-    if (deletingIndex !== null) {
-      performDeleteMove(deletingIndex);
+  const handleConfirmDelete = useCallback(
+    (doNotShowAgain: boolean) => {
+      if (deletingIndex !== null) {
+        performDeleteMove(deletingIndex);
 
-      if (doNotShowAgain) {
-        localStorage.setItem(MOVE_DELETE_DIALOG_KEY, "false");
+        if (doNotShowAgain) {
+          localStorage.setItem(MOVE_DELETE_DIALOG_KEY, "false");
+        }
+
+        setDeleteDialogOpen(false);
+        setDeletingIndex(null);
       }
-
-      setDeleteDialogOpen(false);
-      setDeletingIndex(null);
-    }
-  }, [deletingIndex, performDeleteMove]);
+    },
+    [deletingIndex, performDeleteMove],
+  );
 
   const handleDialogClose = useCallback(() => {
     // If we're adding a new move and the dialog is closed without saving,
@@ -137,11 +147,14 @@ const ShipmentMovesDetailsComponent = () => {
     setEditingIndex(null);
   }, [editingIndex, moves, remove]);
 
-  const isEditing = useMemo(() => 
-    editingIndex !== null &&
-    ((editingIndex < moves.length - 1 || moves[editingIndex]?.stops?.length) ??
-      false)
-  , [editingIndex, moves]);
+  const isEditing = useMemo(
+    () =>
+      editingIndex !== null &&
+      ((editingIndex < moves.length - 1 ||
+        moves[editingIndex]?.stops?.length) ??
+        false),
+    [editingIndex, moves],
+  );
 
   return (
     <>
