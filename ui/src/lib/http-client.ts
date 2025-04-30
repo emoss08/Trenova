@@ -1,5 +1,6 @@
 import { API_URL } from "@/constants/env";
 import { APIError } from "@/types/errors";
+import SuperJSON from "superjson";
 
 export type HttpMethod = "GET" | "POST" | "PUT" | "DELETE" | "PATCH";
 
@@ -171,7 +172,7 @@ class HttpClient {
       return formData;
     }
 
-    return JSON.stringify(data);
+    return SuperJSON.stringify(data);
   }
 
   private getHeaders(options: RequestConfig, isFormData: boolean): HeadersInit {

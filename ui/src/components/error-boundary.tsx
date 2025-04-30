@@ -8,6 +8,7 @@ import { QueryErrorResetBoundary, QueryKey } from "@tanstack/react-query";
 import { ErrorInfo } from "react";
 import { ErrorBoundary } from "react-error-boundary";
 import { useRouteError } from "react-router";
+import SuperJSON from "superjson";
 import { NotFoundPage } from "./boundaries/not-found";
 import { Alert, AlertDescription, AlertTitle } from "./ui/alert";
 import { Button } from "./ui/button";
@@ -41,7 +42,7 @@ export function RootErrorBoundary() {
 
   const errorMessage =
     error?.message ||
-    (typeof error === "string" ? error : JSON.stringify(error));
+    (typeof error === "string" ? error : SuperJSON.stringify(error));
 
   const errorTitle = isHttpError
     ? `${error.status} - ${error.statusText}`
