@@ -61,16 +61,6 @@ export function FormCreateModal<T extends FieldValues>({
     reset();
   }, [onOpenChange, reset]);
 
-  // const {
-  //   showWarning,
-  //   handleClose: onClose,
-  //   handleConfirmClose,
-  //   handleCancelClose,
-  // } = useUnsavedChanges({
-  //   isDirty,
-  //   onClose: handleClose,
-  // });
-
   const { mutateAsync } = useApiMutation({
     mutationFn: async (values: T) => {
       const response = await http.post<T>(url, values);
@@ -163,28 +153,6 @@ export function FormCreateModal<T extends FieldValues>({
           </FormProvider>
         </DialogContent>
       </Dialog>
-
-      {/* {showWarning && (
-        <AlertDialog open={showWarning} onOpenChange={handleCancelClose}>
-          <AlertDialogContent>
-            <AlertDialogHeader>
-              <AlertDialogTitle>Unsaved Changes</AlertDialogTitle>
-              <AlertDialogDescription>
-                You have unsaved changes. Are you sure you want to close this
-                form? All changes will be lost.
-              </AlertDialogDescription>
-            </AlertDialogHeader>
-            <AlertDialogFooter>
-              <AlertDialogCancel onClick={handleCancelClose}>
-                Continue Editing
-              </AlertDialogCancel>
-              <AlertDialogAction onClick={handleConfirmClose}>
-                Discard Changes
-              </AlertDialogAction>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialog>
-      )} */}
     </>
   );
 }

@@ -33,6 +33,7 @@ export function DataTable<TData extends Record<string, any>>({
   queryKey,
   name,
   exportModelName,
+  TableModal,
   TableEditModal,
   initialPageSize = 10,
   includeHeader = true,
@@ -41,15 +42,9 @@ export function DataTable<TData extends Record<string, any>>({
 }: DataTableProps<TData>) {
   const [searchParams, setSearchParams] = useQueryStates(searchParamsParser);
   const { page, pageSize, entityId, modalType } = searchParams;
-
   const [rowSelection, setRowSelection] = useState<RowSelectionState>(
     entityId ? { [entityId]: true } : {},
   );
-
-  console.info("rowSelection debug info", {
-    rowSelection,
-    entityId,
-  });
 
   // Derive pagination state from URL
   const pagination = useMemo(
@@ -113,6 +108,7 @@ export function DataTable<TData extends Record<string, any>>({
 
   useEffect(() => {
     if (dataQuery.isLoading || dataQuery.isFetching) return;
+    if (modalType === "create") return; // * Don't override "create" modalType
     if (Object.keys(rowSelection)?.length && !selectedRow) {
       setSearchParams({ entityId: null, modalType: null });
       setRowSelection({});
@@ -132,8 +128,14 @@ export function DataTable<TData extends Record<string, any>>({
   ]);
 
   const handleCreateClick = useCallback(() => {
-    setSearchParams({ modalType: "create" });
+    setSearchParams({ modalType: "create", entityId: null });
   }, [setSearchParams]);
+
+  const handleCreateModalClose = useCallback(() => {
+    setSearchParams({ modalType: null, entityId: null });
+  }, [setSearchParams]);
+
+  const isCreateModalOpen = Boolean(modalType === "create");
 
   return (
     <DataTableProvider
@@ -165,12 +167,12 @@ export function DataTable<TData extends Record<string, any>>({
         <DataTablePagination>
           <PaginationInner table={table} />
         </DataTablePagination>
-        {/* {/* {TableModal && isCreateModalOpen && (
+        {TableModal && isCreateModalOpen && (
           <TableModal
             open={isCreateModalOpen}
             onOpenChange={handleCreateModalClose}
           />
-        )} */}
+        )}
         <TableEditModal
           isLoading={dataQuery.isFetching || dataQuery.isLoading}
           currentRecord={selectedRow?.original}
