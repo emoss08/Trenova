@@ -78,7 +78,10 @@ export function DataTableBody<TData extends Record<string, any>>({
           ))
       ) : (
         <TableRow>
-          <TableCell colSpan={columns.length} className="h-24 text-center">
+          <TableCell
+            colSpan={columns.length}
+            className="h-24 text-center border-b rounded-b-md"
+          >
             No results.
           </TableCell>
         </TableRow>

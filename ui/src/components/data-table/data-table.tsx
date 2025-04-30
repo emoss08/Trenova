@@ -1,3 +1,4 @@
+"use no memo";
 import { DEBUG_TABLE } from "@/constants/env";
 import { useDataTableQuery } from "@/hooks/use-data-table-query";
 import { searchParamsParser } from "@/hooks/use-data-table-state";
