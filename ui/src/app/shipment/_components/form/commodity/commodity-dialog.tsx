@@ -13,7 +13,6 @@ import {
 import { FormControl, FormGroup } from "@/components/ui/form";
 import { ShipmentSchema } from "@/lib/schemas/shipment-schema";
 import { TableSheetProps } from "@/types/data-table";
-import { ShipmentCommodity } from "@/types/shipment";
 import { useCallback, useEffect } from "react";
 import {
   UseFieldArrayRemove,
@@ -26,7 +25,6 @@ interface CommodityDialogProps extends TableSheetProps {
   isEditing: boolean;
   update: UseFieldArrayUpdate<ShipmentSchema, "commodities">;
   remove: UseFieldArrayRemove;
-  initialData?: ShipmentCommodity;
 }
 
 export function CommodityDialog({

@@ -23,19 +23,17 @@ export const accessorialChargeSchema = z.object({
       const parsed = parseInt(String(val), 10);
       return isNaN(parsed) ? undefined : parsed;
     },
-    z.number({
-      required_error: "Unit is required",
-    }),
+    z.number().int("Unit must be a whole number").min(1, "Unit is required"),
   ),
   method: z.nativeEnum(AccessorialChargeMethod, {
-    message: "Method is required",
+    required_error: "Method is required",
   }),
   amount: z.preprocess(
     (val) => {
       if (val === "" || val === null || val === undefined) {
         return undefined;
       }
-      const parsed = parseFloat(String(val));
+      const parsed = parseInt(String(val), 10);
       return isNaN(parsed) ? undefined : parsed;
     },
     z.number().min(1, "Amount is required"),

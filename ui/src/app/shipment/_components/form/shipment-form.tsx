@@ -52,7 +52,7 @@ const ShipmentSectionsComponent = () => {
       <ShipmentBillingDetails />
       <ShipmentGeneralInformation />
       <ShipmentCommodityDetails />
-      <ShipmentMovesDetails />
+      {/* <ShipmentMovesDetails /> */}
     </>
   );
 };

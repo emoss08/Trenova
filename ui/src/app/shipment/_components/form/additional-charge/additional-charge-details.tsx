@@ -1,15 +1,12 @@
-import { Button } from "@/components/ui/button";
-import { Icon } from "@/components/ui/icons";
 import { ADDITIONAL_CHARGE_DELETE_DIALOG_KEY } from "@/constants/env";
 import { type ShipmentSchema } from "@/lib/schemas/shipment-schema";
 import { cn } from "@/lib/utils";
-import { AdditionalCharge } from "@/types/shipment";
-import { faPlus } from "@fortawesome/pro-regular-svg-icons";
-import { memo, useState } from "react";
+import { useState } from "react";
 import { useFieldArray, useFormContext } from "react-hook-form";
 import { AdditionalChargeDeleteDialog } from "./additional-charge-delete-dialog";
 import { AdditionalChargeDialog } from "./additional-charge-dialog";
 import { AdditionalChargeList } from "./additional-charge-list";
+import { AdditionalChargeListHeader } from "./additional-charge-list-header";
 
 export default function AdditionalChargeDetails({
   className,
@@ -72,23 +69,21 @@ export default function AdditionalChargeDetails({
   };
 
   return (
-    <>
-      <div className={cn("flex flex-col gap-2 py-4", className)}>
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-1">
-            <h3 className="text-sm font-medium">Additional Charges</h3>
-            <span className="text-2xs text-muted-foreground">
-              ({additionalCharges?.length ?? 0})
-            </span>
-          </div>
-          <AddAdditionalChargeButton onClick={handleAddAdditionalCharge} />
-        </div>
-        <AdditionalChargeList
-          additionalCharges={additionalCharges as AdditionalCharge[]}
-          handleEdit={handleEdit}
-          handleDelete={handleDelete}
-        />
-      </div>
+    <AdditionalChargeDetailsInner
+      className={cn(
+        "flex flex-col gap-2 border-t border-bg-sidebar-border py-4",
+        className,
+      )}
+    >
+      <AdditionalChargeListHeader
+        additionalCharges={additionalCharges}
+        handleAddAdditionalCharge={handleAddAdditionalCharge}
+      />
+      <AdditionalChargeList
+        additionalCharges={additionalCharges}
+        handleEdit={handleEdit}
+        handleDelete={handleDelete}
+      />
       {additionalChargeDialogOpen && (
         <AdditionalChargeDialog
           open={additionalChargeDialogOpen}
@@ -111,21 +106,16 @@ export default function AdditionalChargeDetails({
           handleDelete={handleConfirmDelete}
         />
       )}
-    </>
+    </AdditionalChargeDetailsInner>
   );
 }
 
-const AddAdditionalChargeButton = memo(function AddAdditionalChargeButton({
-  onClick,
+function AdditionalChargeDetailsInner({
+  children,
+  className,
 }: {
-  onClick: () => void;
+  children: React.ReactNode;
+  className?: string;
 }) {
-  return (
-    <Button type="button" variant="outline" size="xs" onClick={onClick}>
-      <Icon icon={faPlus} className="size-4" />
-      Add Additional Charge
-    </Button>
-  );
-});
-
-AddAdditionalChargeButton.displayName = "AddAdditionalChargeButton";
+  return <div className={className}>{children}</div>;
+}

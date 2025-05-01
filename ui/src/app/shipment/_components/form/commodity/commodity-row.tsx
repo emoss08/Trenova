@@ -6,8 +6,6 @@ import { ShipmentCommodity } from "@/types/shipment";
 import { faPencil, faTrash } from "@fortawesome/pro-solid-svg-icons";
 import { memo } from "react";
 
-const ROW_HEIGHT = 38;
-
 export function CommodityRow({
   index,
   shipmentCommodity,
@@ -28,31 +26,10 @@ export function CommodityRow({
       </div>
     );
 
-  // Check for errors specific to this commodity
-  // const commodityError = errors.commodities?.[index]?.commodityId?.message;
-  // const hasError = !!commodityError;
-
   return (
     <CommodityRowInner isLast={isLast}>
       <CommodityRowContent>
         <CommodityRedirectLink shipmentCommodity={shipmentCommodity} />
-        {/* {hasError && (
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <span className="text-red-600">
-                <Icon icon={faTriangleExclamation} className="size-4 mb-0.5" />
-              </span>
-            </TooltipTrigger>
-            <TooltipContent className="py-3">
-              <div className="space-y-1">
-                <p className="text-[13px] font-medium">
-                  Hazardous Material Segregation Violation
-                </p>
-                <p className="text-xs">{commodityError}</p>
-              </div>
-            </TooltipContent>
-          </Tooltip>
-        )} */}
       </CommodityRowContent>
       <CommodityRowInformation
         pieces={shipmentCommodity.pieces}
@@ -100,11 +77,9 @@ const CommodityRowInformation = memo(function CommodityRowInformation({
 
 function CommodityRowInner({
   isLast,
-  // hasError,
   children,
 }: {
   isLast: boolean;
-  // hasError: boolean;
   children: React.ReactNode;
 }) {
   return (
@@ -112,9 +87,7 @@ function CommodityRowInner({
       className={cn(
         "grid grid-cols-10 gap-4 p-2 text-sm",
         !isLast && "border-b",
-        // hasError && "bg-red-600/30",
       )}
-      style={{ height: ROW_HEIGHT }}
     >
       {children}
     </div>

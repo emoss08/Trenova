@@ -30,8 +30,8 @@ import { DataTableProvider } from "./data-table-provider";
 export function DataTable<TData extends Record<string, any>>({
   columns,
   link,
-  extraSearchParams,
   queryKey,
+  extraSearchParams,
   name,
   exportModelName,
   TableModal,

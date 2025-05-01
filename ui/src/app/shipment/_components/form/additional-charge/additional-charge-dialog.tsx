@@ -15,8 +15,7 @@ import { FormControl, FormGroup } from "@/components/ui/form";
 import { accessorialChargeMethodChoices } from "@/lib/choices";
 import { type ShipmentSchema } from "@/lib/schemas/shipment-schema";
 import { type TableSheetProps } from "@/types/data-table";
-import { AdditionalCharge } from "@/types/shipment";
-import { useCallback, useEffect, useRef } from "react";
+import { useCallback, useEffect } from "react";
 import {
   type UseFieldArrayRemove,
   type UseFieldArrayUpdate,
@@ -28,7 +27,6 @@ interface AdditionalChargeDialogProps extends TableSheetProps {
   isEditing: boolean;
   update: UseFieldArrayUpdate<ShipmentSchema, "additionalCharges">;
   remove: UseFieldArrayRemove;
-  initialData?: AdditionalCharge;
 }
 
 export function AdditionalChargeDialog({
@@ -127,42 +125,42 @@ export function AdditionalChargeDialog({
 }
 
 function AdditionalChargeForm({ index }: { index: number }) {
-  const { control, setValue, watch } = useFormContext<ShipmentSchema>();
+  const { control, setValue } = useFormContext<ShipmentSchema>();
 
-  const additionalCharge = watch(`additionalCharges.${index}`);
+  // const additionalCharge = watch(`additionalCharges.${index}`);
 
-  // Add a ref to track previous accessorialChargeId to detect changes
-  const prevAccessorialChargeIdRef = useRef<string | undefined>(
-    additionalCharge?.accessorialChargeId,
-  );
+  // // Add a ref to track previous accessorialChargeId to detect changes
+  // const prevAccessorialChargeIdRef = useRef<string | undefined>(
+  //   additionalCharge?.accessorialChargeId,
+  // );
 
-  useEffect(() => {
-    // Only set default values when the accessorialChargeId changes or when it's first selected
-    const currentAccessorialChargeId = additionalCharge?.accessorialChargeId;
-    const accessorialCharge = additionalCharge?.accessorialCharge;
+  // useEffect(() => {
+  //   // Only set default values when the accessorialChargeId changes or when it's first selected
+  //   const currentAccessorialChargeId = additionalCharge?.accessorialChargeId;
+  //   const accessorialCharge = additionalCharge?.accessorialCharge;
 
-    if (
-      currentAccessorialChargeId &&
-      accessorialCharge &&
-      currentAccessorialChargeId !== prevAccessorialChargeIdRef.current
-    ) {
-      // Only set default values from the accessorial charge when it's newly selected
-      setValue(`additionalCharges.${index}.unit`, accessorialCharge.unit);
-      setValue(`additionalCharges.${index}.method`, accessorialCharge.method);
-      setValue(`additionalCharges.${index}.amount`, accessorialCharge.amount);
+  //   if (
+  //     currentAccessorialChargeId &&
+  //     accessorialCharge &&
+  //     currentAccessorialChargeId !== prevAccessorialChargeIdRef.current
+  //   ) {
+  //     // Only set default values from the accessorial charge when it's newly selected
+  //     setValue(`additionalCharges.${index}.unit`, accessorialCharge.unit);
+  //     setValue(`additionalCharges.${index}.method`, accessorialCharge.method);
+  //     setValue(`additionalCharges.${index}.amount`, accessorialCharge.amount);
 
-      // Update the ref to the current ID
-      prevAccessorialChargeIdRef.current = currentAccessorialChargeId;
-    }
-  }, [
-    additionalCharge?.accessorialChargeId,
-    additionalCharge?.accessorialCharge,
-    setValue,
-    index,
-  ]);
+  //     // Update the ref to the current ID
+  //     prevAccessorialChargeIdRef.current = currentAccessorialChargeId;
+  //   }
+  // }, [
+  //   additionalCharge?.accessorialChargeId,
+  //   additionalCharge?.accessorialCharge,
+  //   setValue,
+  //   index,
+  // ]);
 
   return (
-    <FormGroup cols={2}>
+    <AdditionalChargeFormInner>
       <FormControl cols="full">
         <AccessorialChargeAutocompleteField<ShipmentSchema>
           name={`additionalCharges.${index}.accessorialChargeId`}
@@ -217,6 +215,14 @@ function AdditionalChargeForm({ index }: { index: number }) {
           description="Dollar value per unit for this accessorial service, used to calculate total charges for billing and settlement"
         />
       </FormControl>
-    </FormGroup>
+    </AdditionalChargeFormInner>
   );
+}
+
+function AdditionalChargeFormInner({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  return <FormGroup cols={2}>{children}</FormGroup>;
 }

@@ -45,9 +45,7 @@ function BOLField() {
   const { control, getValues, setError, getFieldState } =
     useFormContext<ShipmentSchema>();
 
-  const bolFieldState = getFieldState("bol");
-
-  console.info("bolFieldState", bolFieldState);
+  const { isDirty: isBolDirty } = getFieldState("bol");
 
   const bolChanged = useWatch({
     control,
@@ -79,7 +77,7 @@ function BOLField() {
         return;
       }
 
-      if (bolChanged && bolFieldState.isDirty) {
+      if (bolChanged && isBolDirty) {
         checkBols(bolChanged);
       }
     },
