@@ -42,7 +42,12 @@ function GeneralInformationFormGroup({
 }
 
 function BOLField() {
-  const { control, getValues, setError } = useFormContext<ShipmentSchema>();
+  const { control, getValues, setError, getFieldState } =
+    useFormContext<ShipmentSchema>();
+
+  const bolFieldState = getFieldState("bol");
+
+  console.info("bolFieldState", bolFieldState);
 
   const bolChanged = useWatch({
     control,
@@ -74,7 +79,9 @@ function BOLField() {
         return;
       }
 
-      checkBols(bolChanged);
+      if (bolChanged && bolFieldState.isDirty) {
+        checkBols(bolChanged);
+      }
     },
     [bolChanged],
     1000, // * 1 second delay
