@@ -51,62 +51,62 @@ function ShipmentBillingDetailsForm() {
   const { watch, control, setValue, getValues } =
     useFormContext<ShipmentSchema>();
 
-  // Handle changes to the form that affect billing calculations
-  useEffect(() => {
-    const subscription = watch((value, { name }) => {
-      // Check if additionalCharges have been modified
-      if (
-        name?.startsWith("additionalCharges") ||
-        name === "additionalCharges"
-      ) {
-        try {
-          const shipment = value as ShipmentSchema;
-          const baseCharge = calculateBaseCharge(shipment);
+  // // Handle changes to the form that affect billing calculations
+  // useEffect(() => {
+  //   const subscription = watch((value, { name }) => {
+  //     // Check if additionalCharges have been modified
+  //     if (
+  //       name?.startsWith("additionalCharges") ||
+  //       name === "additionalCharges"
+  //     ) {
+  //       try {
+  //         const shipment = value as ShipmentSchema;
+  //         const baseCharge = calculateBaseCharge(shipment);
 
-          // Calculate the total of all additional charges
-          const additionalChargesTotal = calculateTotalAdditionalCharges(
-            shipment,
-            baseCharge,
-          );
+  //         // Calculate the total of all additional charges
+  //         const additionalChargesTotal = calculateTotalAdditionalCharges(
+  //           shipment,
+  //           baseCharge,
+  //         );
 
-          // Update the otherChargeAmount field with the sum of additional charges
-          setValue("otherChargeAmount", additionalChargesTotal, {
-            shouldValidate: true,
-            shouldDirty: false,
-          });
-        } catch (error) {
-          console.error("Error updating otherChargeAmount:", error);
-        }
-      }
+  //         // Update the otherChargeAmount field with the sum of additional charges
+  //         setValue("otherChargeAmount", additionalChargesTotal, {
+  //           shouldValidate: true,
+  //           shouldDirty: false,
+  //         });
+  //       } catch (error) {
+  //         console.error("Error updating otherChargeAmount:", error);
+  //       }
+  //     }
 
-      // Update the total charge amount if any relevant fields change
-      if (
-        [
-          "ratingMethod",
-          "ratingUnit",
-          "commodities",
-          "weight",
-          "pieces",
-          "moves",
-          "otherChargeAmount",
-          "freightChargeAmount",
-          "additionalCharges",
-        ].includes(name ?? "") ||
-        name?.startsWith("additionalCharges")
-      ) {
-        try {
-          const shipment = value as ShipmentSchema;
-          setValue("totalChargeAmount", calculateTotalChargeAmount(shipment), {
-            shouldValidate: true,
-          });
-        } catch (error) {
-          console.error("Error updating totalChargeAmount:", error);
-        }
-      }
-    });
+  //     // Update the total charge amount if any relevant fields change
+  //     if (
+  //       [
+  //         "ratingMethod",
+  //         "ratingUnit",
+  //         "commodities",
+  //         "weight",
+  //         "pieces",
+  //         "moves",
+  //         "otherChargeAmount",
+  //         "freightChargeAmount",
+  //         "additionalCharges",
+  //       ].includes(name ?? "") ||
+  //       name?.startsWith("additionalCharges")
+  //     ) {
+  //       try {
+  //         const shipment = value as ShipmentSchema;
+  //         setValue("totalChargeAmount", calculateTotalChargeAmount(shipment), {
+  //           shouldValidate: true,
+  //         });
+  //       } catch (error) {
+  //         console.error("Error updating totalChargeAmount:", error);
+  //       }
+  //     }
+  //   });
 
-    return () => subscription.unsubscribe();
-  }, [watch, setValue]);
+  //   return () => subscription.unsubscribe();
+  // }, [watch, setValue]);
 
   // Initialize calculations when the component mounts
   useEffect(() => {
