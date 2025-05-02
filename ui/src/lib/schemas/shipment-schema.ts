@@ -92,8 +92,20 @@ export const shipmentSchema = z.object({
     const parsed = parseInt(String(val), 10);
     return isNaN(parsed) ? undefined : parsed;
   }, z.number().int("Weight must be a whole number").optional()),
-  temperatureMin: z.number().nullable().optional(),
-  temperatureMax: z.number().nullable().optional(),
+  temperatureMin: z.preprocess((val) => {
+    if (val === "" || val === null || val === undefined) {
+      return undefined;
+    }
+    const parsed = parseInt(String(val), 10);
+    return isNaN(parsed) ? undefined : parsed;
+  }, z.number().int("Temperature Min must be a whole number").optional()),
+  temperatureMax: z.preprocess((val) => {
+    if (val === "" || val === null || val === undefined) {
+      return undefined;
+    }
+    const parsed = parseInt(String(val), 10);
+    return isNaN(parsed) ? undefined : parsed;
+  }, z.number().int("Temperature Max must be a whole number").optional()),
   bol: z.string().min(1, "BOL is required"),
   actualDeliveryDate: z.preprocess((val) => {
     if (val === "" || val === null || val === undefined) {
