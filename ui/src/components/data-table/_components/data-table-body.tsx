@@ -12,10 +12,6 @@ function DataTableRow<TData>({
   row: Row<TData>;
   selected?: boolean;
 }) {
-  console.info("DataTableRow debug info", {
-    row,
-    selected,
-  });
   return (
     <TableRow
       id={row.id}
@@ -38,7 +34,13 @@ function DataTableRow<TData>({
           key={cell.id}
           role="cell"
           aria-label={`${cell.column.id} cell`}
-          className={cn("border-b border-border")}
+          className={cn(
+            "border-b border-border",
+            cell.column.getIndex() === 0 ? "rounded-l-md" : "",
+            cell.column.getIndex() === row.getVisibleCells().length - 1
+              ? "rounded-r-md"
+              : "",
+          )}
         >
           {flexRender(cell.column.columnDef.cell, cell.getContext())}
         </TableCell>

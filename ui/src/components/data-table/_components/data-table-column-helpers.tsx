@@ -1,13 +1,14 @@
 /* eslint-disable react-refresh/only-export-components */
 /* eslint-disable react/display-name */
-import { Checkbox } from "@/components/ui/checkbox";
 
 import {
   EntityRefLinkColor,
   EntityRefLinkDisplayText,
   EntityRefLinkInner,
 } from "@/components/entity-refs/entity-ref-link";
+import { StatusBadge } from "@/components/status-badge";
 import { generateDateOnlyString, toDate } from "@/lib/date";
+import type { Status } from "@/types/common";
 import { ColumnDef, ColumnHelper } from "@tanstack/react-table";
 import { parseAsString, useQueryState } from "nuqs";
 import { memo, useCallback, useTransition } from "react";
@@ -18,6 +19,7 @@ import {
   EntityRefConfig,
   NestedEntityRefConfig,
 } from "./data-table-column-types";
+import { DataTableDescription } from "./data-table-components";
 
 // Entity parameter definitions - same as in data-table.tsx
 const entityParams = {
@@ -281,33 +283,24 @@ export function createCommonColumns<T extends Record<string, unknown>>(
   columnHelper: ColumnHelper<T>,
 ) {
   return {
-    selection: columnHelper.display({
-      id: "select",
-      header: ({ table }) => {
-        return (
-          <Checkbox
-            checked={
-              table.getIsAllPageRowsSelected() ||
-              (table.getIsSomePageRowsSelected() && "indeterminate")
-            }
-            onCheckedChange={(checked) =>
-              table.toggleAllPageRowsSelected(!!checked)
-            }
-            aria-label="Select all"
-          />
-        );
+    status: columnHelper.display({
+      id: "status",
+      header: "Status",
+      cell: ({ row }) => {
+        const status = row.original.status;
+        return <StatusBadge status={status as Status} />;
       },
+    }),
+    description: columnHelper.display({
+      id: "description",
+      header: "Description",
       cell: ({ row }) => (
-        <Checkbox
-          checked={row.getIsSelected()}
-          onCheckedChange={(checked) => row.toggleSelected(!!checked)}
-          aria-label="Select row"
+        <DataTableDescription
+          description={row.original.description as string | undefined}
         />
       ),
-      size: 50,
-      enableSorting: false,
-      enableHiding: false,
     }),
+
     createdAt: createdAtColumn(columnHelper) as ColumnDef<T>,
   };
 }

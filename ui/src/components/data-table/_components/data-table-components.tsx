@@ -31,7 +31,7 @@ export function DataTableColorColumn({
   return isColor ? (
     <div
       className={cn(
-        "flex items-center gap-x-1.5 text-sm font-medium text-foreground",
+        "flex items-center gap-x-1.5 text-sm font-normal text-foreground",
         className,
       )}
     >

@@ -4,7 +4,6 @@ import {
   createEntityRefColumn,
 } from "@/components/data-table/_components/data-table-column-helpers";
 import { LastInspectionDateBadge } from "@/components/data-table/_components/data-table-components";
-import { EquipmentStatusBadge } from "@/components/status-badge";
 import { type Trailer } from "@/types/trailer";
 import { createColumnHelper, type ColumnDef } from "@tanstack/react-table";
 
@@ -13,16 +12,7 @@ export function getColumns(): ColumnDef<Trailer>[] {
   const commonColumns = createCommonColumns(columnHelper);
 
   return [
-    {
-      accessorKey: "status",
-      header: ({ column }) => (
-        <DataTableColumnHeader column={column} title="Status" />
-      ),
-      cell: ({ row }) => {
-        const status = row.original.status;
-        return <EquipmentStatusBadge status={status} />;
-      },
-    },
+    commonColumns.status,
     columnHelper.display({
       id: "code",
       header: "Code",

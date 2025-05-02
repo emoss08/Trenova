@@ -4,13 +4,13 @@ import { flexRender, type Table } from "@tanstack/react-table";
 
 export function DataTableHeader<TData>({ table }: { table: Table<TData> }) {
   return (
-    <TableHeader className={cn("sticky top-0 rounded-t-md z-20 bg-background")}>
+    <TableHeader className={cn("sticky top-0 z-20 rounded-t-md bg-background")}>
       {table.getHeaderGroups().map((headerGroup) => (
         <TableRow
           key={headerGroup.id}
           className={cn(
             "bg-muted/50 hover:bg-muted/50",
-            "[&>:not(:last-child)]:border-r",
+            "[&>*]:border-t [&>:not(:last-child)]:border-r",
           )}
         >
           {headerGroup.headers.map((header) => {
@@ -18,7 +18,7 @@ export function DataTableHeader<TData>({ table }: { table: Table<TData> }) {
               <TableHead
                 key={header.id}
                 className={cn(
-                  "relative select-none truncate border-t border-b border-border [&>.cursor-col-resize]:last:opacity-0",
+                  "relative select-none truncate [&>.cursor-col-resize]:last:opacity-0",
                   header.index === 0 ? "rounded-tl-md" : "",
                   header.index === headerGroup.headers.length - 1
                     ? "rounded-tr-md"
@@ -44,8 +44,7 @@ export function DataTableHeader<TData>({ table }: { table: Table<TData> }) {
                     onMouseDown={header.getResizeHandler()}
                     onTouchStart={header.getResizeHandler()}
                     className={cn(
-                      "user-select-none absolute -right-2 top-0 z-10 flex h-full w-4 cursor-col-resize touch-none justify-center",
-                      "before:absolute before:inset-y-0 before:w-px before:translate-x-px before:bg-border",
+                      "user-select-none absolute -right-2 top-0 z-10 flex h-full w-4 cursor-col-resize touch-none justify-center before:absolute before:inset-y-0 before:w-px before:translate-x-px before:bg-border",
                     )}
                   />
                 )}
