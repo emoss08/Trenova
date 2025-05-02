@@ -1,7 +1,6 @@
 import { DataTableColumnHeaderWithTooltip } from "@/components/data-table/_components/data-table-column-header";
 import { createEntityColumn } from "@/components/data-table/_components/data-table-column-helpers";
 import { UserAvatar } from "@/components/nav-user";
-import { Checkbox } from "@/components/ui/checkbox";
 import { generateDateTimeStringFromUnixTimestamp } from "@/lib/date";
 import { type AuditEntry } from "@/types/audit-entry";
 import { createColumnHelper, type ColumnDef } from "@tanstack/react-table";
@@ -14,35 +13,6 @@ export function getColumns(): ColumnDef<AuditEntry>[] {
   const columnHelper = createColumnHelper<AuditEntry>();
 
   return [
-    columnHelper.display({
-      id: "select",
-      header: ({ table }) => {
-        const isAllSelected = table.getIsAllPageRowsSelected();
-        const isSomeSelected = table.getIsSomePageRowsSelected();
-
-        return (
-          <Checkbox
-            data-slot="select-all"
-            checked={isAllSelected || (isSomeSelected && "indeterminate")}
-            onCheckedChange={(checked) =>
-              table.toggleAllPageRowsSelected(!!checked)
-            }
-            aria-label="Select all"
-          />
-        );
-      },
-      cell: ({ row }) => (
-        <Checkbox
-          data-slot="select-row"
-          checked={row.getIsSelected()}
-          onCheckedChange={(checked) => row.toggleSelected(!!checked)}
-          aria-label="Select row"
-        />
-      ),
-      enableSorting: false,
-      enableHiding: false,
-      minSize: 50,
-    }),
     createEntityColumn(columnHelper, "resourceId", {
       accessorKey: "resourceId",
       getHeaderText: "Resource ID",
