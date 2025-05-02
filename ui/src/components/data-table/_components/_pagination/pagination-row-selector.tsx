@@ -5,8 +5,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { DataTableSearchParams } from "@/hooks/use-data-table-state";
-import { useQueryState } from "nuqs";
+import { searchParamsParser } from "@/hooks/use-data-table-state";
+import { useQueryStates } from "nuqs";
 import React, { useCallback } from "react";
 import { toast } from "sonner";
 
@@ -15,21 +15,9 @@ const MIN_PAGE_SIZE = 1;
 const MAX_PAGE_SIZE = 100;
 
 export function PaginationRowSelector() {
-  const [pageSize, setPageSize] = useQueryState(
-    "pageSize",
-    DataTableSearchParams.pageSize.withOptions({
-      shallow: false,
-    }),
-  );
+  const [searchParams, setSearchParams] = useQueryStates(searchParamsParser);
 
-  // Use URL state as single source of truth
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const [_, setPage] = useQueryState(
-    "page",
-    DataTableSearchParams.page.withOptions({
-      shallow: false,
-    }),
-  );
+  const { pageSize } = searchParams;
 
   const normalizedPageSizeOptions = React.useMemo(() => {
     return [...new Set(DEFAULT_PAGE_SIZE_OPTIONS)]
@@ -38,19 +26,18 @@ export function PaginationRowSelector() {
   }, []);
 
   const onPageSizeChange = useCallback(
-    (newPageSize: number) => {
-      setPage(1);
-      setPageSize(newPageSize);
+    (newPageSize: (typeof DEFAULT_PAGE_SIZE_OPTIONS)[number]) => {
+      setSearchParams({ page: 1, pageSize: newPageSize });
     },
-    [setPage, setPageSize],
+    [setSearchParams],
   );
 
   // Memoize handlers to prevent unnecessary re-renders
   const onPageChange = useCallback(
     (newPage: number) => {
-      setPage(newPage);
+      setSearchParams({ page: newPage });
     },
-    [setPage],
+    [setSearchParams],
   );
 
   const handlePageSizeChange = React.useCallback(

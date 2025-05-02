@@ -1,7 +1,6 @@
 import { DataTableColumnHeaderWithTooltip } from "@/components/data-table/_components/data-table-column-header";
 import { createEntityColumn } from "@/components/data-table/_components/data-table-column-helpers";
 import { UserAvatar } from "@/components/nav-user";
-import { Checkbox } from "@/components/ui/checkbox";
 import { generateDateTimeStringFromUnixTimestamp } from "@/lib/date";
 import { type AuditEntry } from "@/types/audit-entry";
 import { createColumnHelper, type ColumnDef } from "@tanstack/react-table";
@@ -14,44 +13,14 @@ export function getColumns(): ColumnDef<AuditEntry>[] {
   const columnHelper = createColumnHelper<AuditEntry>();
 
   return [
-    {
-      id: "select",
-      header: ({ table }) => {
-        const isAllSelected = table.getIsAllPageRowsSelected();
-        const isSomeSelected = table.getIsSomePageRowsSelected();
-
-        return (
-          <Checkbox
-            data-slot="select-all"
-            checked={isAllSelected || (isSomeSelected && "indeterminate")}
-            onCheckedChange={(checked) =>
-              table.toggleAllPageRowsSelected(!!checked)
-            }
-            aria-label="Select all"
-          />
-        );
-      },
-      cell: ({ row }) => (
-        <Checkbox
-          data-slot="select-row"
-          checked={row.getIsSelected()}
-          onCheckedChange={(checked) => row.toggleSelected(!!checked)}
-          aria-label="Select row"
-        />
-      ),
-      size: 50,
-      enableSorting: false,
-      enableHiding: false,
-    },
     createEntityColumn(columnHelper, "resourceId", {
       accessorKey: "resourceId",
       getHeaderText: "Resource ID",
       getId: (auditEntry) => auditEntry.id,
       getDisplayText: (auditEntry) => auditEntry.resourceId || "-",
     }),
-    {
+    columnHelper.display({
       id: "comment",
-      accessorKey: "comment",
       header: ({ column }) => (
         <DataTableColumnHeaderWithTooltip
           column={column}
@@ -59,8 +28,13 @@ export function getColumns(): ColumnDef<AuditEntry>[] {
           tooltipContent="The description of the audit log."
         />
       ),
-    },
-    {
+      cell: ({ row }) => {
+        const { comment } = row.original;
+
+        return <p>{comment}</p>;
+      },
+    }),
+    columnHelper.display({
       id: "resource",
       header: ({ column }) => (
         <DataTableColumnHeaderWithTooltip
@@ -76,8 +50,8 @@ export function getColumns(): ColumnDef<AuditEntry>[] {
           <AuditEntryResourceBadge withDot={false} resource={entry.resource} />
         );
       },
-    },
-    {
+    }),
+    columnHelper.display({
       id: "action",
       header: ({ column }) => (
         <DataTableColumnHeaderWithTooltip
@@ -91,8 +65,8 @@ export function getColumns(): ColumnDef<AuditEntry>[] {
 
         return <AuditEntryActionBadge withDot={false} action={entry.action} />;
       },
-    },
-    {
+    }),
+    columnHelper.display({
       id: "timestamp",
       header: ({ column }) => (
         <DataTableColumnHeaderWithTooltip
@@ -108,8 +82,8 @@ export function getColumns(): ColumnDef<AuditEntry>[] {
           <p>{generateDateTimeStringFromUnixTimestamp(entry.timestamp)}</p>
         );
       },
-    },
-    {
+    }),
+    columnHelper.display({
       id: "user",
       header: ({ column }) => (
         <DataTableColumnHeaderWithTooltip
@@ -123,6 +97,6 @@ export function getColumns(): ColumnDef<AuditEntry>[] {
 
         return <UserAvatar user={user} />;
       },
-    },
+    }),
   ];
 }

@@ -1,13 +1,16 @@
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { type Shipment } from "@/types/shipment";
-import { lazy, memo, Suspense, useMemo } from "react";
+import { useResponsiveDimensions } from "@/hooks/use-responsive-dimensions";
+import type { ShipmentSchema } from "@/lib/schemas/shipment-schema";
+import { lazy, memo, Suspense, useEffect, useMemo, useState } from "react";
 import { ShipmentNotFoundOverlay } from "../sidebar/shipment-not-found-overlay";
 import { ShipmentDetailsSkeleton } from "./shipment-details-skeleton";
 import { ShipmentFormHeader } from "./shipment-form-header";
 
 // Lazy loaded components
 const ShipmentDetailsHeader = lazy(() => import("./shipment-details-header"));
-const ShipmentBillingDetails = lazy(() => import("./shipment-billing-details"));
+const ShipmentBillingDetails = lazy(
+  () => import("./billing-details/shipment-billing-details"),
+);
 const ShipmentGeneralInformation = lazy(
   () => import("./shipment-general-information"),
 );
@@ -15,47 +18,40 @@ const ShipmentCommodityDetails = lazy(
   () => import("./commodity/commodity-details"),
 );
 const ShipmentMovesDetails = lazy(() => import("./move/move-details"));
-const ShipmentServiceDetails = lazy(() => import("./shipment-service-details"));
+const ShipmentServiceDetails = lazy(
+  () => import("./service-details/shipment-service-details"),
+);
 
 type ShipmentDetailsProps = {
-  selectedShipment?: Shipment | null;
+  open: boolean;
+  sheetRef: React.RefObject<HTMLDivElement | null>;
+  selectedShipment?: ShipmentSchema | null;
   isLoading?: boolean;
   isError?: boolean;
-  onBack: () => void;
-  dimensions: {
-    contentHeight: number;
-    viewportHeight: number;
-  };
 };
 
-const ShipmentFormComponent = ({
-  isLoading,
-  ...props
-}: ShipmentDetailsProps) => {
+export function ShipmentForm({ isLoading, ...props }: ShipmentDetailsProps) {
   if (isLoading) {
     return <ShipmentDetailsSkeleton />;
   }
 
   return (
     <Suspense fallback={<ShipmentDetailsSkeleton />}>
-      <ShipmentScrollArea {...props}>
+      <ShipmentFormBody {...props}>
         <ShipmentSections />
-      </ShipmentScrollArea>
+      </ShipmentFormBody>
     </Suspense>
   );
-};
-
-ShipmentFormComponent.displayName = "ShipmentForm";
-export const ShipmentForm = memo(ShipmentFormComponent);
+}
 
 // Separate component for the sections to prevent re-renders of the scroll area container
 const ShipmentSectionsComponent = () => {
   return (
     <>
-      <ShipmentServiceDetails />
-      <ShipmentBillingDetails />
+      {/* <ShipmentServiceDetails /> */}
+      {/* <ShipmentBillingDetails /> */}
       <ShipmentGeneralInformation />
-      <ShipmentCommodityDetails />
+      {/* <ShipmentCommodityDetails /> */}
       <ShipmentMovesDetails />
     </>
   );
@@ -64,31 +60,63 @@ const ShipmentSectionsComponent = () => {
 ShipmentSectionsComponent.displayName = "ShipmentSections";
 const ShipmentSections = memo(ShipmentSectionsComponent);
 
-// Memoize the ShipmentScrollArea to prevent unnecessary re-renders
-const ShipmentScrollAreaComponent = ({
+export function ShipmentFormBody({
   selectedShipment,
   isError,
-  onBack,
-  dimensions,
   children,
-}: Omit<ShipmentDetailsProps, "isLoading"> & { children: React.ReactNode }) => {
+  open,
+  sheetRef,
+}: Omit<ShipmentDetailsProps, "isLoading"> & { children: React.ReactNode }) {
   // Handle error state
   if (isError) {
     return (
       <div className="flex size-full items-center justify-center">
-        <ShipmentNotFoundOverlay onBack={onBack} />
+        <ShipmentNotFoundOverlay />
       </div>
     );
   }
 
-  // Calculate the optimal height for the scroll area
-  // eslint-disable-next-line react-hooks/rules-of-hooks
-  const scrollAreaHeight = useMemo(() => {
-    const { contentHeight, viewportHeight } = dimensions;
+  return (
+    <div className="size-full">
+      <ShipmentFormHeader selectedShipment={selectedShipment} />
+      <ShipmentScrollAreaOuter>
+        <ShipmentDetailsHeader selectedShipment={selectedShipment} />
+        <ShipmentScrollArea sheetRef={sheetRef} open={open}>
+          <div className="flex flex-col gap-4 p-4 pb-16">{children}</div>
+          <div className="pointer-events-none rounded-b-lg absolute bottom-0 z-50 left-0 right-0 h-8 bg-gradient-to-t from-background to-transparent" />
+        </ShipmentScrollArea>
+      </ShipmentScrollAreaOuter>
+    </div>
+  );
+}
 
+function ShipmentScrollAreaOuter({ children }: { children: React.ReactNode }) {
+  return <div className="flex flex-col">{children}</div>;
+}
+
+function ShipmentScrollArea({
+  sheetRef,
+  open,
+  children,
+}: {
+  sheetRef: React.RefObject<HTMLDivElement | null>;
+  open: boolean;
+  children: React.ReactNode;
+}) {
+  const dimensions = useResponsiveDimensions(sheetRef, open);
+  const [prevHeight, setPrevHeight] = useState<string>("400px");
+
+  const scrollAreaHeight = useMemo(() => {
     // Constants for height calculations
-    const headerHeight = 120; // Height of the header section
+    const headerHeight = sheetRef.current
+      ? (sheetRef.current.querySelector("header")?.getBoundingClientRect()
+          .height ?? 120)
+      : 120;
     const minHeight = 400; // Minimum height for the scroll area
+
+    // Use measured dimensions or fallback to window height if not ready
+    const contentHeight = dimensions.contentHeight ?? 0;
+    const viewportHeight = dimensions.viewportHeight ?? window.innerHeight;
 
     // Use viewport height as base for calculation
     const baseHeight = Math.min(contentHeight, viewportHeight);
@@ -96,47 +124,24 @@ const ShipmentScrollAreaComponent = ({
 
     // Ensure we don't go below minimum height
     return `${Math.max(calculatedHeight, minHeight)}px`;
-  }, [dimensions]);
+  }, [dimensions, sheetRef]);
+
+  // Store the last valid height to prevent flicker
+  useEffect(() => {
+    if (dimensions.isReady && scrollAreaHeight !== "400px") {
+      setPrevHeight(scrollAreaHeight);
+    }
+  }, [dimensions.isReady, scrollAreaHeight]);
 
   return (
-    <div className="size-full">
-      <div className="pt-4">
-        <ShipmentFormHeader
-          onBack={onBack}
-          selectedShipment={selectedShipment}
-        />
-        <div className="flex flex-col gap-2 mt-4">
-          <ShipmentHeaderContainer>
-            <ShipmentDetailsHeader />
-          </ShipmentHeaderContainer>
-          <ScrollArea
-            className="flex flex-col overflow-y-auto px-4"
-            style={{
-              height: scrollAreaHeight,
-              minHeight: "400px",
-            }}
-          >
-            <div className="flex flex-col gap-4 pb-16">{children}</div>
-            <div className="pointer-events-none rounded-b-lg absolute bottom-0 z-50 left-0 right-0 h-8 bg-gradient-to-t from-background to-transparent" />
-          </ScrollArea>
-        </div>
-      </div>
-    </div>
+    <ScrollArea
+      className="relative flex flex-col overflow-y-auto"
+      style={{
+        height: dimensions.isReady ? scrollAreaHeight : prevHeight,
+        minHeight: "400px",
+      }}
+    >
+      {children}
+    </ScrollArea>
   );
-};
-
-ShipmentScrollAreaComponent.displayName = "ShipmentScrollAreaComponent";
-
-// Container for the header to prevent re-renders
-const ShipmentHeaderContainerComponent = ({
-  children,
-}: {
-  children: React.ReactNode;
-}) => {
-  return <>{children}</>;
-};
-
-ShipmentHeaderContainerComponent.displayName = "ShipmentHeaderContainer";
-const ShipmentHeaderContainer = memo(ShipmentHeaderContainerComponent);
-
-export const ShipmentScrollArea = memo(ShipmentScrollAreaComponent);
+}

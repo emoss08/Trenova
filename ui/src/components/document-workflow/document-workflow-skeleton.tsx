@@ -40,7 +40,7 @@ export function NoDocumentRequirements({ customerId }: { customerId: string }) {
           </p>
         </div>
         <Link
-          to={`/billing/configurations/customers?entityId=${customerId}&modal=edit`}
+          to={`/billing/configurations/customers?entityId=${customerId}&modalType=edit`}
           state={{
             isNavigatingToModal: true,
           }}

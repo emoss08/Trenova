@@ -6,29 +6,37 @@ import {
   DataTableViewOptions,
 } from "./data-table-view-options";
 
-export function DataTableFilter<TData>({
+export function DataTableActions<TData>({
   table,
   name,
   exportModelName,
   extraActions,
-  setModalType,
+  handleCreateClick,
 }: {
   table: Table<TData>;
   name: string;
   exportModelName: string;
-  setModalType: (modalType: "create" | "edit") => void;
+  handleCreateClick: () => void;
   extraActions?: ExtraAction[];
 }) {
   return (
-    <div className="flex items-center gap-2">
+    <DataTableActionsInner>
       <DataTableViewOptions table={table} />
       <Separator className="h-6 w-px bg-border" orientation="vertical" />
       <DataTableCreateButton
         name={name}
         exportModelName={exportModelName}
         extraActions={extraActions}
-        onCreateClick={() => setModalType("create")}
+        onCreateClick={handleCreateClick}
       />
-    </div>
+    </DataTableActionsInner>
   );
+}
+
+export function DataTableActionsInner({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  return <div className="flex items-center gap-2">{children}</div>;
 }

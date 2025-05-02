@@ -1,14 +1,4 @@
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
-import { Button } from "@/components/ui/button";
+import { Button, FormSaveButton } from "@/components/ui/button";
 import {
   Dialog,
   DialogBody,
@@ -19,14 +9,8 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Form } from "@/components/ui/form";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
+import { Icon } from "@/components/ui/icons";
 import { useApiMutation } from "@/hooks/use-api-mutation";
-import { useUnsavedChanges } from "@/hooks/use-form";
 import { broadcastQueryInvalidation } from "@/hooks/use-invalidate-query";
 import { http } from "@/lib/http-client";
 import {
@@ -34,27 +18,26 @@ import {
   type AssignmentSchema,
 } from "@/lib/schemas/assignment-schema";
 import { AssignmentStatus } from "@/types/assignment";
-import { type APIError } from "@/types/errors";
+import { faLoader } from "@fortawesome/pro-solid-svg-icons";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useCallback, useEffect } from "react";
-import { FormProvider, type Path, useForm } from "react-hook-form";
+import { FormProvider, useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { AssignmentForm } from "./assignment-form";
-
-type AssignmentDialogProps = {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  shipmentMoveId: string;
-  assignmentId?: string;
-};
 
 export function AssignmentDialog({
   open,
   onOpenChange,
   shipmentMoveId,
   assignmentId,
-}: AssignmentDialogProps) {
+}: {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  shipmentMoveId?: string;
+  assignmentId?: string;
+}) {
+  // * TODO(Wolfred): We need to disable this in the actions, if the move id is undefined.
   const isEditing = !!assignmentId;
 
   const { data: existingAssignment, isLoading: isLoadingAssignment } = useQuery(
@@ -79,12 +62,16 @@ export function AssignmentDialog({
       secondaryWorkerId: "",
       tractorId: "",
       trailerId: "",
+      createdAt: undefined,
+      updatedAt: undefined,
+      id: undefined,
+      version: undefined,
     },
   });
 
   const {
     setError,
-    formState: { isDirty, isSubmitting },
+    formState: { isSubmitting, isSubmitSuccessful },
     handleSubmit,
     reset,
   } = form;
@@ -99,16 +86,6 @@ export function AssignmentDialog({
     onOpenChange(false);
     reset();
   }, [onOpenChange, reset]);
-
-  const {
-    showWarning,
-    handleClose: onClose,
-    handleConfirmClose,
-    handleCancelClose,
-  } = useUnsavedChanges({
-    isDirty,
-    onClose: handleClose,
-  });
 
   const queryClient = useQueryClient();
 
@@ -136,8 +113,6 @@ export function AssignmentDialog({
             : "The movement has been assigned to the selected equipment and worker(s)",
         },
       );
-      onOpenChange(false);
-      reset();
 
       // Invalidate the query to refresh the table
       broadcastQueryInvalidation({
@@ -156,23 +131,16 @@ export function AssignmentDialog({
         queryKey: ["moves", shipmentMoveId],
       });
     },
-    onError: (error: APIError) => {
-      if (error.isValidationError()) {
-        error.getFieldErrors().forEach((fieldError) => {
-          setError(fieldError.name as Path<AssignmentSchema>, {
-            message: fieldError.reason,
-          });
-        });
-      }
-
-      if (error.isRateLimitError()) {
-        toast.error("Rate limit exceeded", {
-          description:
-            "You have exceeded the rate limit. Please try again later.",
-        });
-      }
-    },
+    setFormError: setError,
+    resourceName: "Assignment",
   });
+
+  // Reset the form when the mutation is successful
+  useEffect(() => {
+    if (isSubmitSuccessful) {
+      reset();
+    }
+  }, [isSubmitSuccessful, reset]);
 
   const onSubmit = useCallback(
     async (values: AssignmentSchema) => {
@@ -216,69 +184,46 @@ export function AssignmentDialog({
             <Form className="space-y-0 p-0" onSubmit={handleSubmit(onSubmit)}>
               <DialogBody>
                 {isLoadingAssignment ? (
-                  <div className="flex items-center justify-center p-4">
-                    Loading assignment details...
-                  </div>
+                  <AssignmentLoading />
                 ) : (
                   <AssignmentForm />
                 )}
               </DialogBody>
               <DialogFooter>
-                <Button type="button" variant="outline" onClick={onClose}>
+                <Button type="button" variant="outline" onClick={handleClose}>
                   Cancel
                 </Button>
-                <TooltipProvider>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Button
-                        type="button"
-                        onClick={() => handleSubmit(onSubmit)()}
-                        isLoading={isSubmitting}
-                        loadingText={
-                          isEditing ? "Reassigning..." : "Assigning..."
-                        }
-                      >
-                        {isEditing ? "Reassign" : "Assign"}
-                      </Button>
-                    </TooltipTrigger>
-                    <TooltipContent className="flex items-center gap-2">
-                      <kbd className="-me-1 inline-flex h-5 max-h-full items-center rounded bg-muted-foreground/60 px-1 font-[inherit] text-[0.625rem] font-medium text-foreground">
-                        Ctrl
-                      </kbd>
-                      <kbd className="-me-1 inline-flex h-5 max-h-full items-center rounded bg-muted-foreground/60 px-1 font-[inherit] text-[0.625rem] font-medium text-foreground">
-                        Enter
-                      </kbd>
-                      <p>to save and close the assignment</p>
-                    </TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
+                <FormSaveButton
+                  type="button"
+                  onClick={() => handleSubmit(onSubmit)()}
+                  isSubmitting={isSubmitting}
+                  title={isEditing ? "Reassign" : "Assign"}
+                  text={isEditing ? "Reassign" : "Assign"}
+                />
               </DialogFooter>
             </Form>
           </FormProvider>
         </DialogContent>
       </Dialog>
-
-      {showWarning && (
-        <AlertDialog open={showWarning} onOpenChange={handleCancelClose}>
-          <AlertDialogContent>
-            <AlertDialogHeader>
-              <AlertDialogTitle>Unsaved Changes</AlertDialogTitle>
-              <AlertDialogDescription>
-                You have unsaved changes. Are you sure you want to close this
-                form? All changes will be lost.
-              </AlertDialogDescription>
-            </AlertDialogHeader>
-            <AlertDialogFooter>
-              <AlertDialogCancel onClick={handleCancelClose}>
-                Continue Editing
-              </AlertDialogCancel>
-              <AlertDialogAction onClick={handleConfirmClose}>
-                Discard Changes
-              </AlertDialogAction>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialog>
-      )}
     </>
+  );
+}
+
+function AssignmentLoading() {
+  return (
+    <div className="w-full px-6 py-10">
+      <div className="flex flex-col gap-2 items-center justify-center text-center">
+        <Icon icon={faLoader} className="animate-spin size-8 text-blue-500" />
+        <div className="flex flex-col">
+          <p className="mt-2 text-sm text-foreground">
+            Loading Assignment details...
+          </p>
+          <p className="mt-2 text-2xs text-muted-foreground">
+            If this takes longer than a few seconds, please check your internet
+            connection.
+          </p>
+        </div>
+      </div>
+    </div>
   );
 }

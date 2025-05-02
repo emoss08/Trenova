@@ -5,8 +5,8 @@ import { Document, Outline, Page } from "react-pdf";
 import "react-pdf/dist/esm/Page/AnnotationLayer.css";
 import "react-pdf/dist/esm/Page/TextLayer.css";
 import type {
-    CustomTextRenderer,
-    OnItemClickArgs,
+  CustomTextRenderer,
+  OnItemClickArgs,
 } from "react-pdf/dist/esm/shared/types.js";
 import { Icon } from "../ui/icons";
 import type { PDFFile } from "./types";

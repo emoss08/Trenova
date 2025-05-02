@@ -3,12 +3,6 @@ import { useEffect, useImperativeHandle, useRef, useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
 import { generateDateTime, generateDateTimeString } from "@/lib/date";
 import { cn } from "@/lib/utils";
 import type { DateTimePickerProps, Suggestion } from "@/types/fields";
@@ -177,27 +171,18 @@ export function DateTimePicker({
           onClick={() => setIsOpen(true)}
         />
         {clearable && inputValue && (
-          <TooltipProvider>
-            <Tooltip delayDuration={0}>
-              <TooltipTrigger asChild>
-                <Button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleClear();
-                  }}
-                  type="button"
-                  size="icon"
-                  className="absolute right-8 top-1/2 size-5 -translate-y-1/2 rounded-sm bg-transparent text-muted-foreground hover:bg-foreground/10"
-                >
-                  <span className="sr-only">Clear date</span>
-                  <Cross2Icon className="size-4" />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>
-                <p>Clear date</p>
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
+          <Button
+            onClick={(e) => {
+              e.stopPropagation();
+              handleClear();
+            }}
+            type="button"
+            size="icon"
+            className="absolute right-8 top-1/2 size-5 -translate-y-1/2 rounded-sm bg-transparent text-muted-foreground hover:bg-foreground/10"
+          >
+            <span className="sr-only">Clear date</span>
+            <Cross2Icon className="size-4" />
+          </Button>
         )}
         <DateTimePickerPopover
           onOpen={() => setSuggestion(null)}

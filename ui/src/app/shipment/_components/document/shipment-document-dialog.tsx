@@ -7,12 +7,12 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import type { ShipmentSchema } from "@/lib/schemas/shipment-schema";
 import { type TableSheetProps } from "@/types/data-table";
-import { type Shipment } from "@/types/shipment";
 import { lazy } from "react";
 
 type ShipmentDocumentDialogProps = {
-  shipmentId: Shipment["id"];
+  shipmentId: ShipmentSchema["id"];
 } & TableSheetProps;
 
 const ShipmentDocumentTable = lazy(() => import("./shipment-document-table"));

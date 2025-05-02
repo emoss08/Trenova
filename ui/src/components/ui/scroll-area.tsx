@@ -31,10 +31,6 @@ function ScrollArea({
  * Only use this if you're using a virtualized list
  * and want to use a scrollarea as the parent
  * Otherwise, use the ScrollArea component
- * @deprecated Use the ScrollArea component instead since React 19 does not support refs on the root element
- */
-/**
- * @deprecated VirtualizedScrollArea is deprecated. Please use an alternative component.
  */
 export function VirtualizedScrollArea({
   className,

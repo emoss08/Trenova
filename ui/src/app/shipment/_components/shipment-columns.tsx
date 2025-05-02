@@ -1,11 +1,9 @@
 /* eslint-disable react-hooks/rules-of-hooks */
 import {
-  createEntityColumn,
   createEntityRefColumn,
-  createNestedEntityRefColumn,
+  createNestedEntityRefColumn
 } from "@/components/data-table/_components/data-table-column-helpers";
 import { ShipmentStatusBadge } from "@/components/status-badge";
-import { Checkbox } from "@/components/ui/checkbox";
 import {
   generateDateTimeString,
   generateDateTimeStringFromUnixTimestamp,
@@ -15,7 +13,7 @@ import { LocationSchema } from "@/lib/schemas/location-schema";
 import {
   getDestinationStopInfo,
   getOriginStopInfo,
-  ShipmentLocations
+  ShipmentLocations,
 } from "@/lib/shipment/utils";
 import { formatLocation } from "@/lib/utils";
 import { Shipment } from "@/types/shipment";
@@ -25,49 +23,23 @@ export function getColumns(): ColumnDef<Shipment>[] {
   const columnHelper = createColumnHelper<Shipment>();
 
   return [
-    {
-      id: "select",
-      header: ({ table }) => {
-        const isAllSelected = table.getIsAllPageRowsSelected();
-        const isSomeSelected = table.getIsSomePageRowsSelected();
-
-        return (
-          <Checkbox
-            data-slot="select-all"
-            checked={isAllSelected || (isSomeSelected && "indeterminate")}
-            onCheckedChange={(checked) =>
-              table.toggleAllPageRowsSelected(!!checked)
-            }
-            aria-label="Select all"
-          />
-        );
-      },
-      cell: ({ row }) => (
-        <Checkbox
-          data-slot="select-row"
-          checked={row.getIsSelected()}
-          onCheckedChange={(checked) => row.toggleSelected(!!checked)}
-          aria-label="Select row"
-        />
-      ),
-      size: 50,
-      enableSorting: false,
-      enableHiding: false,
-    },
-    {
-      accessorKey: "status",
+    columnHelper.display({
+      id: "status",
       header: "Status",
       cell: ({ row }) => {
         const status = row.original.status;
         return <ShipmentStatusBadge status={status} />;
       },
       size: 100,
-    },
-    createEntityColumn(columnHelper, "proNumber", {
-      accessorKey: "proNumber",
-      getHeaderText: "Pro Number",
-      getId: (shipment) => shipment?.id,
-      getDisplayText: (shipment) => shipment?.proNumber || "-",
+    }),
+    columnHelper.display({
+      id: "proNumber",
+      header: "Pro Number",
+      cell: ({ row }) => {
+        const proNumber = row.original.proNumber;
+        return <p>{proNumber}</p>;
+      },
+      size: 100,
     }),
     createEntityRefColumn<Shipment, "customer">(columnHelper, "customer", {
       basePath: "/billing/configurations/customers",
@@ -134,7 +106,7 @@ export function getColumns(): ColumnDef<Shipment>[] {
         }
       },
     }),
-    {
+    columnHelper.display({
       id: "destinationPickup",
       header: "Destination Date",
       cell: ({ row }) => {
@@ -151,6 +123,6 @@ export function getColumns(): ColumnDef<Shipment>[] {
 
         return <p>{generateDateTimeString(arrivalDate)}</p>;
       },
-    },
+    }),
   ];
 }

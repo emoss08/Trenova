@@ -1,4 +1,4 @@
-import { FormEditModal } from "@/components/ui/form-edit-model";
+import { FormEditModal } from "@/components/ui/form-edit-modal";
 import {
   trailerSchema,
   type TrailerSchema,
@@ -9,8 +9,6 @@ import { useForm } from "react-hook-form";
 import { TrailerForm } from "./trailer-form";
 
 export function EditTrailerModal({
-  open,
-  onOpenChange,
   currentRecord,
 }: EditTableSheetProps<TrailerSchema>) {
   const form = useForm({
@@ -21,8 +19,6 @@ export function EditTrailerModal({
   return (
     <FormEditModal
       currentRecord={currentRecord}
-      open={open}
-      onOpenChange={onOpenChange}
       url="/trailers/"
       title="Trailer"
       queryKey="trailer-list"

@@ -1,12 +1,19 @@
 import { RefObject, useEffect, useMemo, useRef, useState } from "react";
 
+export interface Dimensions {
+  contentHeight: number | null;
+  viewportHeight: number | null;
+  isReady: boolean;
+}
+
 export function useResponsiveDimensions(
   ref: RefObject<HTMLDivElement | null>,
   open: boolean,
-) {
-  const [dimensions, setDimensions] = useState({
-    contentHeight: 0,
-    viewportHeight: 0,
+): Dimensions {
+  const [dimensions, setDimensions] = useState<Dimensions>({
+    contentHeight: null,
+    viewportHeight: null,
+    isReady: false,
   });
   const isMountedRef = useRef(false);
 
@@ -14,7 +21,9 @@ export function useResponsiveDimensions(
   const debounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Debounce function to prevent too many updates
-  const debouncedSetDimensions = (newDimensions: typeof dimensions) => {
+  const debouncedSetDimensions = (
+    newDimensions: Omit<Dimensions, "isReady">,
+  ) => {
     if (debounceTimerRef.current) {
       clearTimeout(debounceTimerRef.current);
     }
@@ -26,7 +35,7 @@ export function useResponsiveDimensions(
           prev.contentHeight !== newDimensions.contentHeight ||
           prev.viewportHeight !== newDimensions.viewportHeight
         ) {
-          return newDimensions;
+          return { ...newDimensions, isReady: true };
         }
         return prev;
       });
@@ -35,6 +44,18 @@ export function useResponsiveDimensions(
 
   useEffect(() => {
     if (!open) return;
+
+    // Initialize with window height on first render to avoid layout shift
+    if (!dimensions.isReady) {
+      const viewportHeight = window.innerHeight;
+      // Use a reasonable initial contentHeight based on viewport
+      const estimatedContentHeight = viewportHeight * 0.8;
+      setDimensions({
+        contentHeight: estimatedContentHeight,
+        viewportHeight,
+        isReady: false,
+      });
+    }
 
     const updateDimensions = () => {
       if (ref.current) {
@@ -75,11 +96,11 @@ export function useResponsiveDimensions(
       window.removeEventListener("resize", handleResize);
       isMountedRef.current = false;
     };
-  }, [open, ref]);
+  }, [open, ref, dimensions.isReady]);
 
   // Memoize the returned dimensions object to prevent unnecessary re-renders
   return useMemo(
     () => dimensions,
-    [dimensions.contentHeight, dimensions.viewportHeight],
+    [dimensions.contentHeight, dimensions.viewportHeight, dimensions.isReady],
   );
 }

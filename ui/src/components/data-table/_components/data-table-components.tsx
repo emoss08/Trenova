@@ -1,9 +1,4 @@
 import { Badge } from "@/components/ui/badge";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
 import { generateDateOnlyString, toDate } from "@/lib/date";
 import { cn, truncateText } from "@/lib/utils";
 
@@ -20,16 +15,7 @@ export function DataTableDescription({
     return <span>-</span>;
   }
 
-  return (
-    <Tooltip delayDuration={500}>
-      <TooltipTrigger>
-        <span>{truncateText(description, truncateLength)}</span>
-      </TooltipTrigger>
-      <TooltipContent>
-        <p className="max-w-[300px] text-wrap">{description}</p>
-      </TooltipContent>
-    </Tooltip>
-  );
+  return <span>{truncateText(description, truncateLength)}</span>;
 }
 
 export function DataTableColorColumn({
@@ -45,7 +31,7 @@ export function DataTableColorColumn({
   return isColor ? (
     <div
       className={cn(
-        "flex items-center gap-x-1.5 text-sm font-medium text-foreground",
+        "flex items-center gap-x-1.5 text-sm font-normal text-foreground",
         className,
       )}
     >

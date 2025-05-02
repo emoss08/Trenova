@@ -1,15 +1,15 @@
 import { DataTable } from "@/components/data-table/data-table";
 import { PDFViewerDialog } from "@/components/pdf-viewer/pdf-viewer-dialog";
+import type { ShipmentSchema } from "@/lib/schemas/shipment-schema";
 import { Document } from "@/types/document";
 import { API_ENDPOINTS } from "@/types/server";
-import { Shipment } from "@/types/shipment";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { getColumns } from "./shipment-document-columns";
 
 export default function ShipmentDocumentTable({
   shipmentId,
 }: {
-  shipmentId: Shipment["id"];
+  shipmentId: ShipmentSchema["id"];
 }) {
   const [selectedDocument, setSelectedDocument] = useState<Document | null>(
     null,

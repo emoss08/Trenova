@@ -348,7 +348,7 @@ function JsonViewerActions({ data }: { data: any }) {
     }
 
     try {
-      return JSON.stringify(data, null, 2);
+      return JSON.stringify(data);
     } catch (err) {
       console.error("Error stringifying JSON:", err);
       setError("Failed to format JSON data");

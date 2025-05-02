@@ -85,8 +85,8 @@ type ExtraAction = {
 type DataTableCreateButtonProps = {
   name: string;
   exportModelName: string;
+  onCreateClick: () => void;
   isDisabled?: boolean;
-  onCreateClick?: () => void;
   extraActions?: ExtraAction[];
 };
 
@@ -118,12 +118,11 @@ export type TableSheetProps = {
   onOpenChange: (open: boolean) => void;
 };
 
-export type EditTableSheetProps<TData extends Record<string, any>> =
-  TableSheetProps & {
-    currentRecord?: TData;
-    isLoading?: boolean;
-    error?: Error | null;
-  };
+export type EditTableSheetProps<TData extends Record<string, any>> = {
+  currentRecord?: TData;
+  isLoading?: boolean;
+  error?: Error | null;
+};
 
 type CurrentRecord<TData extends Record<string, unknown>> = TData | undefined;
 type SetCurrentRecord<TData extends Record<string, unknown>> = (
@@ -160,7 +159,7 @@ type DataTableProps<TData extends Record<string, any>> = {
   // filterFields: DataTableAdvancedFilterField<TData>[];
   // filterColumn: string;
   TableModal?: React.ComponentType<TableSheetProps>;
-  TableEditModal?: React.ComponentType<EditTableSheetProps<TData>>;
+  TableEditModal: React.ComponentType<EditTableSheetProps<TData>>;
   exportModelName: string;
   extraSearchParams?: Record<string, any>;
   // permissionName: string;
@@ -175,6 +174,7 @@ type DataTableProps<TData extends Record<string, any>> = {
 
 type DataTableBodyProps<TData extends Record<string, any>> = {
   table: Table<TData>;
+  columns: ColumnDef<TData>[];
 };
 
 export type {

@@ -1,6 +1,6 @@
 import { InputField } from "@/components/fields/input-field";
 import { SelectField } from "@/components/fields/select-field";
-import { Button } from "@/components/ui/button";
+import { Button, FormSaveButton } from "@/components/ui/button";
 import {
   Dialog,
   DialogBody,
@@ -12,12 +12,6 @@ import {
 } from "@/components/ui/dialog";
 import { FormControl, FormGroup } from "@/components/ui/form";
 import { Icon } from "@/components/ui/icons";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
 import { moveStatusChoices } from "@/lib/choices";
 import { ShipmentSchema } from "@/lib/schemas/shipment-schema";
 import { type TableSheetProps } from "@/types/data-table";
@@ -94,7 +88,7 @@ const MoveDialogComponent = ({
   // Initialize a new move with default values - memoize this function
   const initializeNewMove = useCallback(() => {
     if (!open || isEditing) return;
-    
+
     // Set default values for a new move
     setValue(`moves.${moveIdx}.status`, MoveStatus.New);
     setValue(`moves.${moveIdx}.distance`, 0);
@@ -160,13 +154,16 @@ const MoveDialogComponent = ({
   }, [onOpenChange, getValues, moveIdx, remove, isEditing, reset]);
 
   // Add a handler for dialog's escape key or outside click to ensure we remove unsaved moves
-  const handleOpenChange = useCallback((newOpenState: boolean) => {
-    if (!newOpenState && !hasSavedRef.current) {
-      handleClose();
-    } else {
-      onOpenChange(newOpenState);
-    }
-  }, [handleClose, onOpenChange, hasSavedRef]);
+  const handleOpenChange = useCallback(
+    (newOpenState: boolean) => {
+      if (!newOpenState && !hasSavedRef.current) {
+        handleClose();
+      } else {
+        onOpenChange(newOpenState);
+      }
+    },
+    [handleClose, onOpenChange, hasSavedRef],
+  );
 
   // Handle save move
   const handleSave = useCallback(() => {
@@ -274,47 +271,54 @@ const MoveDialogComponent = ({
     setEditingStopIdx(null);
   }, [editingStopIdx, getValues, moveIdx, update]);
 
-  const handleDeleteStop = useCallback((stopIdx: number) => {
-    // Prevent deletion of first pickup or last delivery
-    if (stopIdx === 0 || stopIdx === fields.length - 1) {
-      return;
-    }
-
-    // Remove the stop
-    removeStop(stopIdx);
-
-    // Update sequences of all remaining stops
-    updateStopSequences();
-
-    // Handle the editing state if relevant
-    if (editingStopIdx !== null) {
-      if (editingStopIdx === stopIdx) {
-        setEditingStopIdx(null);
-      } else if (editingStopIdx > stopIdx) {
-        setEditingStopIdx(editingStopIdx - 1);
+  const handleDeleteStop = useCallback(
+    (stopIdx: number) => {
+      // Prevent deletion of first pickup or last delivery
+      if (stopIdx === 0 || stopIdx === fields.length - 1) {
+        return;
       }
-    }
-  }, [fields.length, removeStop, updateStopSequences, editingStopIdx]);
+
+      // Remove the stop
+      removeStop(stopIdx);
+
+      // Update sequences of all remaining stops
+      updateStopSequences();
+
+      // Handle the editing state if relevant
+      if (editingStopIdx !== null) {
+        if (editingStopIdx === stopIdx) {
+          setEditingStopIdx(null);
+        } else if (editingStopIdx > stopIdx) {
+          setEditingStopIdx(editingStopIdx - 1);
+        }
+      }
+    },
+    [fields.length, removeStop, updateStopSequences, editingStopIdx],
+  );
 
   // Memoize the dialog title and description
-  const dialogInfo = useMemo(() => ({
-    title: isEditing ? "Edit Move" : "Add Move",
-    description: isEditing
-      ? "Edit the move details for this shipment."
-      : "Add a new move to the shipment."
-  }), [isEditing]);
+  const dialogInfo = useMemo(
+    () => ({
+      title: isEditing ? "Edit Move" : "Add Move",
+      description: isEditing
+        ? "Edit the move details for this shipment."
+        : "Add a new move to the shipment.",
+    }),
+    [isEditing],
+  );
 
   // Memoize the save button text
-  const saveButtonText = useMemo(() => isEditing ? "Update" : "Add", [isEditing]);
+  const saveButtonText = useMemo(
+    () => (isEditing ? "Update" : "Add"),
+    [isEditing],
+  );
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent className="max-w-3xl">
         <DialogHeader>
           <DialogTitle>{dialogInfo.title}</DialogTitle>
-          <DialogDescription>
-            {dialogInfo.description}
-          </DialogDescription>
+          <DialogDescription>{dialogInfo.description}</DialogDescription>
         </DialogHeader>
         <DialogBody>
           {/* Move Basic Information */}
@@ -409,24 +413,9 @@ const MoveDialogComponent = ({
           <Button type="button" variant="outline" onClick={handleClose}>
             Cancel
           </Button>
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button type="button" onClick={handleSave}>
-                  {saveButtonText}
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent className="flex items-center gap-2">
-                <kbd className="-me-1 inline-flex h-5 max-h-full items-center rounded bg-muted-foreground/60 px-1 font-[inherit] text-[0.625rem] font-medium text-foreground">
-                  Ctrl
-                </kbd>
-                <kbd className="-me-1 inline-flex h-5 max-h-full items-center rounded bg-muted-foreground/60 px-1 font-[inherit] text-[0.625rem] font-medium text-foreground">
-                  Enter
-                </kbd>
-                <p>to save and close the move</p>
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
+          <FormSaveButton title="move" type="button" onClick={handleSave}>
+            {saveButtonText}
+          </FormSaveButton>
         </DialogFooter>
       </DialogContent>
     </Dialog>

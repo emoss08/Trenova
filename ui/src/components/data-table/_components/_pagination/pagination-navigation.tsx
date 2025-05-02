@@ -6,7 +6,7 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from "@/components/ui/pagination";
-import { DataTableSearchParams } from "@/hooks/use-data-table-state";
+import { searchParamsParser } from "@/hooks/use-data-table-state";
 import type { Table } from "@tanstack/react-table";
 import { useQueryState } from "nuqs";
 import React, { useCallback } from "react";
@@ -57,12 +57,8 @@ export function PaginationNavigation<TData>({
 }) {
   // Use URL state as single source of truth
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const [_, setPage] = useQueryState(
-    "page",
-    DataTableSearchParams.page.withOptions({
-      shallow: false,
-    }),
-  );
+  const [_, setPage] = useQueryState("page", searchParamsParser.page);
+
   const { pageIndex, pageSize } = table.getState().pagination;
   const currentPage = pageIndex + 1;
   const totalCount = table.getRowCount();

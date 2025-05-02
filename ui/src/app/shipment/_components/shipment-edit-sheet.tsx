@@ -1,14 +1,6 @@
+/* eslint-disable react-hooks/exhaustive-deps */
+import { useDataTable } from "@/components/data-table/data-table-provider";
 import { FormSaveDock } from "@/components/form";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
 import { Form } from "@/components/ui/form";
 import {
   Sheet,
@@ -20,10 +12,9 @@ import {
 } from "@/components/ui/sheet";
 import { VisuallyHidden } from "@/components/ui/visually-hidden";
 import { usePopoutWindow } from "@/hooks/popout-window/use-popout-window";
-import { useUnsavedChanges } from "@/hooks/use-form";
-import { useFormWithSave } from "@/hooks/use-form-with-save";
+import { useApiMutation } from "@/hooks/use-api-mutation";
+import { searchParamsParser } from "@/hooks/use-data-table-state";
 import { broadcastQueryInvalidation } from "@/hooks/use-invalidate-query";
-import { useResponsiveDimensions } from "@/hooks/use-responsive-dimensions";
 import { http } from "@/lib/http-client";
 import {
   shipmentSchema,
@@ -32,21 +23,79 @@ import {
 import { EditTableSheetProps } from "@/types/data-table";
 import { type Shipment } from "@/types/shipment";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useCallback, useEffect, useRef, useState } from "react";
-import { FormProvider } from "react-hook-form";
+import { useQueryClient } from "@tanstack/react-query";
+import { useQueryStates } from "nuqs";
+import { memo, useCallback, useEffect, useMemo, useRef } from "react";
+import { FormProvider, useForm } from "react-hook-form";
+import { toast } from "sonner";
 import { useShipmentDetails } from "../queries/shipment";
 import { ShipmentForm } from "./form/shipment-form";
 
 export function ShipmentEditSheet({
-  open,
-  onOpenChange,
   currentRecord,
 }: EditTableSheetProps<Shipment>) {
+  const { table, rowSelection, isLoading } = useDataTable();
+  const queryClient = useQueryClient();
   const sheetRef = useRef<HTMLDivElement>(null);
-  const dimensions = useResponsiveDimensions(sheetRef, open);
+  const [searchParams, setSearchParams] = useQueryStates(searchParamsParser);
   const { isPopout, closePopout } = usePopoutWindow();
   const initialLoadRef = useRef(false);
-  const [effectiveIsDirty, setEffectiveIsDirty] = useState(false);
+
+  const previousRecordIdRef = useRef<string | number | null>(null);
+  const selectedRowKey = Object.keys(rowSelection)[0];
+
+  const selectedRow = useMemo(() => {
+    if (isLoading && !selectedRowKey) return;
+    return table
+      .getCoreRowModel()
+      .flatRows.find((row) => row.id === selectedRowKey);
+  }, [selectedRowKey, isLoading]);
+
+  const index = table
+    .getCoreRowModel()
+    .flatRows.findIndex((row) => row.id === selectedRow?.id);
+
+  const nextId = useMemo(
+    () => table.getCoreRowModel().flatRows[index + 1]?.id,
+    [index, isLoading],
+  );
+
+  const prevId = useMemo(
+    () => table.getCoreRowModel().flatRows[index - 1]?.id,
+    [index, isLoading],
+  );
+
+  const onPrev = useCallback(() => {
+    if (prevId) table.setRowSelection({ [prevId]: true });
+  }, [prevId, isLoading]);
+
+  const onNext = useCallback(() => {
+    if (nextId) table.setRowSelection({ [nextId]: true });
+  }, [nextId, isLoading, table]);
+
+  useEffect(() => {
+    const down = (e: KeyboardEvent) => {
+      if (!selectedRowKey) return;
+
+      // REMINDER: prevent dropdown navigation inside of sheet to change row selection
+      const activeElement = document.activeElement;
+      const isMenuActive = activeElement?.closest('[role="menu"]');
+
+      if (isMenuActive) return;
+
+      if (e.key === "ArrowUp") {
+        e.preventDefault();
+        onPrev();
+      }
+      if (e.key === "ArrowDown") {
+        e.preventDefault();
+        onNext();
+      }
+    };
+
+    document.addEventListener("keydown", down);
+    return () => document.removeEventListener("keydown", down);
+  }, [selectedRowKey, onNext, onPrev]);
 
   const {
     data: shipmentDetails,
@@ -54,16 +103,23 @@ export function ShipmentEditSheet({
     isError: isDetailsError,
   } = useShipmentDetails({
     shipmentId: currentRecord?.id ?? "",
-    enabled: !!currentRecord?.id && open, // * Only fetch data if the sheet is open
+    enabled: !!currentRecord?.id && searchParams.modalType === "edit", // * Only fetch data if the sheet is open
   });
 
-  const form = useFormWithSave({
-    resourceName: "Shipment",
-    formOptions: {
-      resolver: zodResolver(shipmentSchema),
-      defaultValues: shipmentDetails || {}, // * use data if available
-      mode: "onChange",
-    },
+  const form = useForm({
+    resolver: zodResolver(shipmentSchema),
+    defaultValues: shipmentDetails,
+    mode: "onChange",
+  });
+
+  const {
+    setError,
+    reset,
+    handleSubmit,
+    formState: { isSubmitting },
+  } = form;
+
+  const { mutateAsync } = useApiMutation({
     mutationFn: async (values: ShipmentSchema) => {
       const response = await http.put<Shipment>(
         `/shipments/${currentRecord?.id}`,
@@ -71,8 +127,26 @@ export function ShipmentEditSheet({
       );
       return response.data;
     },
-    onSuccess: () => {
-      onOpenChange(false);
+    onMutate: async (newValues) => {
+      await queryClient.cancelQueries({
+        queryKey: ["shipment", currentRecord?.id],
+      });
+
+      // * snapshot of the previous value
+      const previousShipment = queryClient.getQueryData([
+        "shipment",
+        currentRecord?.id,
+      ]);
+
+      // * optimistically update to the new value
+      queryClient.setQueryData(["shipment", currentRecord?.id], newValues);
+
+      return { previousShipment, newValues };
+    },
+    onSuccess: (newValues) => {
+      toast.success("Changes have been saved", {
+        description: `Shipment updated successfully`,
+      });
 
       broadcastQueryInvalidation({
         queryKey: ["shipment", "shipment-list", "stop", "assignment"],
@@ -84,24 +158,42 @@ export function ShipmentEditSheet({
           refetchType: "all",
         },
       });
-    },
-    onSettled: () => {
+
+      reset(newValues);
+
+      // * Reset the row selection
+      table.resetRowSelection();
+
+      // * Close the sheet
+      setSearchParams({ modalType: null, entityId: null });
+
+      // * If the page is a popout, close it
       if (isPopout) {
         closePopout();
       }
     },
+    setFormError: setError,
+    resourceName: "Shipment",
   });
 
-  const {
-    reset,
-    handleSubmit,
-    onSubmit,
-    formState: { isDirty, isSubmitting, isSubmitSuccessful },
-  } = form;
+  const onSubmit = useCallback(
+    async (values: ShipmentSchema) => {
+      await mutateAsync(values);
+    },
+    [mutateAsync],
+  );
 
-  const handleClose = useCallback(() => {
-    onOpenChange(false);
-  }, [onOpenChange]);
+  // Update form values when currentRecord changes and is not loading
+  useEffect(() => {
+    if (
+      !isLoading &&
+      currentRecord &&
+      currentRecord.id !== previousRecordIdRef.current
+    ) {
+      reset(currentRecord);
+      previousRecordIdRef.current = currentRecord.id;
+    }
+  }, [currentRecord, isLoading, reset]);
 
   useEffect(() => {
     if (shipmentDetails && !isDetailsLoading && !initialLoadRef.current) {
@@ -114,29 +206,8 @@ export function ShipmentEditSheet({
   }, [shipmentDetails, isDetailsLoading, reset]);
 
   useEffect(() => {
-    setEffectiveIsDirty(initialLoadRef.current && isDirty);
-  }, [isDirty]);
-
-  const {
-    showWarning,
-    handleClose: onClose,
-    handleConfirmClose,
-    handleCancelClose,
-  } = useUnsavedChanges({
-    isDirty: effectiveIsDirty,
-    onClose: handleClose,
-  });
-
-  // Reset the form when the mutation is successful
-  // This is recommended by react-hook-form - https://react-hook-form.com/docs/useform/reset
-  useEffect(() => {
-    reset();
-  }, [isSubmitSuccessful, reset]);
-
-  useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
       if (
-        open &&
         (event.ctrlKey || event.metaKey) &&
         event.key === "Enter" &&
         !isSubmitting
@@ -152,7 +223,19 @@ export function ShipmentEditSheet({
 
   return (
     <>
-      <Sheet open={open} onOpenChange={onClose}>
+      <Sheet
+        open={!!selectedRowKey}
+        onOpenChange={(open) => {
+          if (!open) {
+            const el = selectedRowKey
+              ? document.getElementById(selectedRowKey)
+              : null;
+            table.resetRowSelection();
+
+            setTimeout(() => el?.focus(), 0);
+          }
+        }}
+      >
         <SheetContent
           className="w-[500px] sm:max-w-[540px] p-0"
           withClose={false}
@@ -167,46 +250,49 @@ export function ShipmentEditSheet({
 
           <FormProvider {...form}>
             <Form className="space-y-0 p-0" onSubmit={handleSubmit(onSubmit)}>
-              <SheetBody className="p-0">
-                <ShipmentForm
-                  dimensions={dimensions}
-                  selectedShipment={shipmentDetails}
-                  isLoading={isDetailsLoading}
-                  onBack={onClose}
-                  isError={isDetailsError}
-                />
-              </SheetBody>
-              <FormSaveDock
-                isDirty={effectiveIsDirty}
-                isSubmitting={isSubmitting}
-                position="right"
+              <MemoizedShipmentSheetBody
+                open={!!selectedRowKey}
+                sheetRef={sheetRef}
+                selectedShipment={shipmentDetails}
+                isLoading={isDetailsLoading}
+                isError={isDetailsError}
               />
+              <FormSaveDock position="right" />
             </Form>
           </FormProvider>
         </SheetContent>
       </Sheet>
-
-      {showWarning && (
-        <AlertDialog open={showWarning} onOpenChange={handleCancelClose}>
-          <AlertDialogContent>
-            <AlertDialogHeader>
-              <AlertDialogTitle>Unsaved Changes</AlertDialogTitle>
-              <AlertDialogDescription>
-                You have unsaved changes. Are you sure you want to close this
-                form? All changes will be lost.
-              </AlertDialogDescription>
-            </AlertDialogHeader>
-            <AlertDialogFooter>
-              <AlertDialogCancel onClick={handleCancelClose}>
-                Continue Editing
-              </AlertDialogCancel>
-              <AlertDialogAction onClick={handleConfirmClose}>
-                Discard Changes
-              </AlertDialogAction>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialog>
-      )}
     </>
   );
 }
+
+function ShipmentSheetBody({
+  open,
+  sheetRef,
+  isLoading,
+  isError,
+  selectedShipment,
+}: {
+  open: boolean;
+  sheetRef: React.RefObject<HTMLDivElement | null>;
+  isLoading: boolean;
+  isError: boolean;
+  selectedShipment?: ShipmentSchema | null;
+}) {
+  return (
+    <SheetBody className="p-0">
+      <ShipmentForm
+        open={open}
+        sheetRef={sheetRef}
+        selectedShipment={selectedShipment}
+        isLoading={isLoading}
+        isError={isError}
+      />
+    </SheetBody>
+  );
+}
+
+const MemoizedShipmentSheetBody = memo(ShipmentSheetBody, (prev, next) => {
+  // * we only check if the selectedShipment is the same, rest is useless
+  return prev.selectedShipment === next.selectedShipment;
+}) as typeof ShipmentSheetBody;

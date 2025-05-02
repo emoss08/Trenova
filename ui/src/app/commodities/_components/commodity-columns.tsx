@@ -1,10 +1,5 @@
-import { DataTableColumnHeader } from "@/components/data-table/_components/data-table-column-header";
-import {
-  createCommonColumns,
-  createEntityColumn,
-} from "@/components/data-table/_components/data-table-column-helpers";
-import { DataTableDescription } from "@/components/data-table/_components/data-table-components";
-import { HazmatBadge, StatusBadge } from "@/components/status-badge";
+import { createCommonColumns } from "@/components/data-table/_components/data-table-column-helpers";
+import { HazmatBadge } from "@/components/status-badge";
 import { type CommoditySchema } from "@/lib/schemas/commodity-schema";
 import { createColumnHelper, type ColumnDef } from "@tanstack/react-table";
 
@@ -13,37 +8,15 @@ export function getColumns(): ColumnDef<CommoditySchema>[] {
   const commonColumns = createCommonColumns(columnHelper);
 
   return [
-    commonColumns.selection,
-    {
-      accessorKey: "status",
-      header: ({ column }) => (
-        <DataTableColumnHeader column={column} title="Status" />
-      ),
-      cell: ({ row }) => {
-        const status = row.original.status;
-        return <StatusBadge status={status} />;
-      },
-    },
-    createEntityColumn(columnHelper, "name", {
-      accessorKey: "name",
-      getHeaderText: "Name",
-      getId: (commodity) => commodity.id,
-      getDisplayText: (commodity) => commodity.name,
+    commonColumns.status,
+    columnHelper.display({
+      id: "name",
+      header: "Name",
+      cell: ({ row }) => <p>{row.original.name}</p>,
     }),
-    {
-      accessorKey: "description",
-      header: ({ column }) => (
-        <DataTableColumnHeader column={column} title="Description" />
-      ),
-      cell: ({ row }) => (
-        <DataTableDescription description={row.original.description} />
-      ),
-    },
-    {
+    commonColumns.description,
+    columnHelper.display({
       id: "temperatureRange",
-      accessorFn: (row) => {
-        return `${row.minTemperature}°F - ${row.maxTemperature}°F`;
-      },
       header: "Temperature Range",
       cell: ({ row }) => {
         if (row.original?.minTemperature && row.original?.maxTemperature) {
@@ -57,15 +30,14 @@ export function getColumns(): ColumnDef<CommoditySchema>[] {
 
         return "No Temperature Range";
       },
-    },
-    {
+    }),
+    columnHelper.display({
       id: "isHazmat",
-      accessorKey: "hazardousMaterialId",
       header: "Is Hazmat",
       cell: ({ row }) => (
         <HazmatBadge isHazmat={!!row.original.hazardousMaterialId} />
       ),
-    },
+    }),
     commonColumns.createdAt,
   ];
 }

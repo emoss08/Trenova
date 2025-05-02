@@ -21,12 +21,6 @@ import {
 import { type VariantProps } from "class-variance-authority";
 import { Badge } from "./ui/badge";
 import { Icon, type IconProp } from "./ui/icons";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "./ui/tooltip";
 
 export function StatusBadge({ status }: { status: Status }) {
   return (
@@ -468,24 +462,15 @@ export function PlainShipmentStatusBadge({
   };
 
   return (
-    <TooltipProvider>
-      <Tooltip>
-        <TooltipTrigger>
-          <div className="flex items-center gap-x-1">
-            <div
-              className={cn(
-                "size-2 rounded-full",
-                statusAttributes[status].className,
-              )}
-            />
-            <p>{statusAttributes[status].text}</p>
-          </div>
-        </TooltipTrigger>
-        <TooltipContent className="max-w-xs text-wrap text-center">
-          <p>{statusAttributes[status].description}</p>
-        </TooltipContent>
-      </Tooltip>
-    </TooltipProvider>
+    <div className="flex items-center gap-x-1">
+      <div
+        className={cn(
+          "size-2 rounded-full",
+          statusAttributes[status].className,
+        )}
+      />
+      <p>{statusAttributes[status].text}</p>
+    </div>
   );
 }
 

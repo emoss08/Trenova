@@ -13,7 +13,6 @@ import {
 import { FormControl, FormGroup } from "@/components/ui/form";
 import { ShipmentSchema } from "@/lib/schemas/shipment-schema";
 import { TableSheetProps } from "@/types/data-table";
-import { ShipmentCommodity } from "@/types/shipment";
 import { useCallback, useEffect } from "react";
 import {
   UseFieldArrayRemove,
@@ -26,7 +25,6 @@ interface CommodityDialogProps extends TableSheetProps {
   isEditing: boolean;
   update: UseFieldArrayUpdate<ShipmentSchema, "commodities">;
   remove: UseFieldArrayRemove;
-  initialData?: ShipmentCommodity;
 }
 
 export function CommodityDialog({
@@ -129,7 +127,7 @@ function CommodityForm({ index }: { index: number }) {
   const { control, setValue } = useFormContext<ShipmentSchema>();
 
   return (
-    <FormGroup>
+    <CommodityFormInner>
       <FormControl>
         <CommodityAutocompleteField<ShipmentSchema>
           name={`commodities.${index}.commodityId`}
@@ -169,6 +167,10 @@ function CommodityForm({ index }: { index: number }) {
           description="Enter the weight of a single piece of this commodity."
         />
       </FormControl>
-    </FormGroup>
+    </CommodityFormInner>
   );
+}
+
+function CommodityFormInner({ children }: { children: React.ReactNode }) {
+  return <FormGroup>{children}</FormGroup>;
 }

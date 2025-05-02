@@ -1,10 +1,5 @@
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
 import { cn, formatFileSize } from "@/lib/utils";
 import { type FileUploadCardProps } from "@/types/file-uploader";
 import { faTrash } from "@fortawesome/pro-regular-svg-icons";
@@ -64,21 +59,17 @@ export function FileUploadCard({
         </div>
 
         <div className="flex items-center space-x-2">
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  removeFile(index);
-                }}
-              >
-                <Icon icon={faTrash} className="size-4" />
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent>Remove file</TooltipContent>
-          </Tooltip>
+          <Button
+            title="Remove file"
+            variant="ghost"
+            size="icon"
+            onClick={(e) => {
+              e.stopPropagation();
+              removeFile(index);
+            }}
+          >
+            <Icon icon={faTrash} className="size-4" />
+          </Button>
         </div>
       </div>
       {/* TODO(Wolfred): Add dropdown for document classification */}
