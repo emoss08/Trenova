@@ -73,7 +73,6 @@ export function AdditionalChargeList({
             <AdditionalChargeRow
               key={index}
               additionalCharge={additionalCharge as AdditionalCharge}
-              isLast={index === additionalCharges.length - 1}
               isDuplicate={isDuplicate}
               onEdit={handleEdit}
               onDelete={handleDelete}

@@ -14,14 +14,12 @@ import React, { memo } from "react";
 export function AdditionalChargeRow({
   index,
   additionalCharge,
-  isLast,
   isDuplicate,
   onEdit,
   onDelete,
 }: {
   index: number;
   additionalCharge: AdditionalCharge;
-  isLast: boolean;
   isDuplicate?: boolean;
   onEdit: (index: number) => void;
   onDelete: (index: number) => void;
@@ -35,21 +33,21 @@ export function AdditionalChargeRow({
   }
 
   return (
-    <AdditionalChargeInner isLast={isLast} isDuplicate={isDuplicate}>
+    <AdditionalChargeInner isDuplicate={isDuplicate}>
       <AdditionalChargeContent>
         <AdditionalChargeAccessorialCharge
           accessorialCharge={additionalCharge.accessorialCharge}
           isDuplicate={isDuplicate}
         />
-        <AdditionalChargeRowInformation
-          unit={additionalCharge.unit}
-          amount={additionalCharge.amount}
-        />
-        <AdditionalChargeAction
-          onEdit={() => onEdit(index)}
-          onDelete={() => onDelete(index)}
-        />
       </AdditionalChargeContent>
+      <AdditionalChargeRowInformation
+        unit={additionalCharge.unit}
+        amount={additionalCharge.amount}
+      />
+      <AdditionalChargeAction
+        onEdit={() => onEdit(index)}
+        onDelete={() => onDelete(index)}
+      />
     </AdditionalChargeInner>
   );
 }
@@ -76,11 +74,9 @@ const AdditionalChargeRowInformation = memo(
 );
 
 function AdditionalChargeInner({
-  isLast,
   isDuplicate,
   children,
 }: {
-  isLast: boolean;
   children: React.ReactNode;
   isDuplicate?: boolean;
 }) {
@@ -88,8 +84,6 @@ function AdditionalChargeInner({
     <div
       className={cn(
         "grid grid-cols-10 gap-4 p-2 text-sm",
-        !isLast && "border-b border-border",
-        isLast && "rounded-b-md",
         isDuplicate && "bg-yellow-500/20 border-yellow-500/30 border",
       )}
     >
