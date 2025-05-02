@@ -1,5 +1,6 @@
 import { InputField } from "@/components/fields/input-field";
 import { FormControl, FormGroup } from "@/components/ui/form";
+import { NumberField } from "@/components/ui/number-input";
 import { handleMutationError } from "@/hooks/use-api-mutation";
 import { queries } from "@/lib/queries";
 import { ShipmentSchema } from "@/lib/schemas/shipment-schema";
@@ -105,22 +106,20 @@ function TemperatureFields() {
   return (
     <>
       <FormControl>
-        <InputField
+        <NumberField
           control={control}
           name="temperatureMin"
-          label="Temperature Min"
-          type="number"
           description="The minimum temperature for the shipment."
+          label="Temperature Min"
           placeholder="Enter Temperature Min"
           sideText="°F"
         />
       </FormControl>
       <FormControl>
-        <InputField
+        <NumberField
           control={control}
           name="temperatureMax"
           label="Temperature Max"
-          type="number"
           description="The maximum temperature for the shipment."
           placeholder="Enter Temperature Max"
           sideText="°F"
