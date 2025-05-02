@@ -7,7 +7,7 @@ export const buttonVariants = cva(
       variant: {
         default:
           "border bg-blue-700 border-blue-500/60 hover:bg-blue-600 hover:border-blue-400 text-white [&_svg]:text-white",
-        destructive: "bg-destructive text-foreground hover:bg-destructive/90",
+        destructive: "bg-destructive text-white hover:bg-destructive/90",
         outline:
           "border border-input bg-background hover:bg-accent hover:text-accent-foreground",
         secondary:
