@@ -247,7 +247,7 @@ function NestedEntityRefCellBase<TEntity, TParent extends Record<string, any>>(
   const clickable = secondaryInfo?.clickable ?? true;
 
   return (
-    <div className="flex flex-col gap-0.5">
+    <div className="flex flex-col">
       <EntityRefLink
         id={id}
         displayText={displayText}

@@ -1,7 +1,7 @@
 /* eslint-disable react-hooks/rules-of-hooks */
 import {
   createEntityRefColumn,
-  createNestedEntityRefColumn
+  createNestedEntityRefColumn,
 } from "@/components/data-table/_components/data-table-column-helpers";
 import { ShipmentStatusBadge } from "@/components/status-badge";
 import {
