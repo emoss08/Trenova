@@ -8,9 +8,11 @@ import React from "react";
 function DataTableRow<TData>({
   row,
   selected,
+  isLastRow = false,
 }: {
   row: Row<TData>;
   selected?: boolean;
+  isLastRow?: boolean;
 }) {
   return (
     <TableRow
@@ -29,29 +31,36 @@ function DataTableRow<TData>({
         "-outline-offset-1 outline-primary transition-colors focus-visible:bg-muted/50 focus-visible:outline data-[state=selected]:outline",
       )}
     >
-      {row.getVisibleCells().map((cell) => (
-        <TableCell
-          key={cell.id}
-          role="cell"
-          aria-label={`${cell.column.id} cell`}
-          className={cn(
-            "border-b border-border",
-            cell.column.getIndex() === 0 ? "rounded-l-md" : "",
-            cell.column.getIndex() === row.getVisibleCells().length - 1
-              ? "rounded-r-md"
-              : "",
-          )}
-        >
-          {flexRender(cell.column.columnDef.cell, cell.getContext())}
-        </TableCell>
-      ))}
+      {row.getVisibleCells().map((cell, index) => {
+        const isFirstCell = index === 0;
+        const isLastCell = index === row.getVisibleCells().length - 1;
+
+        return (
+          <TableCell
+            key={cell.id}
+            role="cell"
+            aria-label={`${cell.column.id} cell`}
+            className={cn(
+              "border-b border-border bg-transparent",
+              isLastRow && isFirstCell && "rounded-bl-md",
+              isLastRow && isLastCell && "rounded-br-md",
+            )}
+          >
+            {flexRender(cell.column.columnDef.cell, cell.getContext())}
+          </TableCell>
+        );
+      })}
     </TableRow>
   );
 }
 
 const MemoizedRow = React.memo(DataTableRow, (prev, next) => {
   // Check ID and selection state first (fast checks)
-  if (prev.row.id !== next.row.id || prev.selected !== next.selected) {
+  if (
+    prev.row.id !== next.row.id ||
+    prev.selected !== next.selected ||
+    prev.isLastRow !== next.isLastRow
+  ) {
     return false;
   }
 
@@ -69,15 +78,17 @@ export function DataTableBody<TData extends Record<string, any>>({
   return (
     <TableBody id="content" tabIndex={-1}>
       {table.getRowModel().rows?.length ? (
-        table
-          .getRowModel()
-          .rows.map((row) => (
+        table.getRowModel().rows.map((row, index) => {
+          const isLastRow = index === table.getRowModel().rows.length - 1;
+          return (
             <MemoizedRow
               key={row.id}
               row={row}
               selected={row.getIsSelected()}
+              isLastRow={isLastRow}
             />
-          ))
+          );
+        })
       ) : (
         <TableRow>
           <TableCell
