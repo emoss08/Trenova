@@ -1,32 +1,17 @@
-import { useDebounce } from "@/hooks/use-debounce";
-import { useCallback, useEffect, useRef, useState } from "react";
-
-import { Button } from "@/components/ui/button";
-import {
-  Command,
-  CommandEmpty,
-  CommandGroup,
-  CommandInput,
-  CommandItem,
-  CommandList,
-} from "@/components/ui/command";
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { http } from "@/lib/http-client";
 import { cn } from "@/lib/utils";
 import {
   AutocompleteFieldProps,
   BaseAutocompleteFieldProps,
 } from "@/types/fields";
-import { LimitOffsetResponse } from "@/types/server";
-import { faCheck } from "@fortawesome/pro-regular-svg-icons";
-import { ChevronDownIcon, Cross2Icon } from "@radix-ui/react-icons";
+import { useCallback, useState } from "react";
 import { Controller, FieldValues } from "react-hook-form";
-import { Icon } from "../ui/icons";
-import { PulsatingDots } from "../ui/pulsating-dots";
+import { AutocompleteCommandContent } from "./autocompete/autocomplete-content";
+import { AutocompleteTrigger } from "./autocompete/autocomplete-input";
 import { FieldWrapper } from "./field-components";
 
 export interface Option {
@@ -35,35 +20,6 @@ export interface Option {
   disabled?: boolean;
   description?: string;
   icon?: React.ReactNode;
-}
-
-async function fetchOptions<T>(
-  link: string,
-  inputValue: string,
-  page: number,
-  extraSearchParams?: Record<string, string | string[]>,
-): Promise<LimitOffsetResponse<T>> {
-  const limit = 10;
-  const offset = (page - 1) * limit;
-
-  const { data } = await http.get<LimitOffsetResponse<T>>(link, {
-    params: {
-      query: inputValue,
-      limit: limit.toString(),
-      offset: offset.toString(),
-      ...extraSearchParams,
-    },
-  });
-
-  return data;
-}
-
-async function fetchOptionById<T>(
-  link: string,
-  id: string | number,
-): Promise<T> {
-  const { data } = await http.get<T>(`${link}${id}/`);
-  return data;
 }
 
 export function Autocomplete<TOption, TForm extends FieldValues>({
@@ -86,224 +42,7 @@ export function Autocomplete<TOption, TForm extends FieldValues>({
   extraSearchParams,
 }: BaseAutocompleteFieldProps<TOption, TForm>) {
   const [open, setOpen] = useState(false);
-  const [options, setOptions] = useState<TOption[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [searchTerm, setSearchTerm] = useState("");
   const [selectedOption, setSelectedOption] = useState<TOption | null>(null);
-  const debouncedSearchTerm = useDebounce(searchTerm, preload ? 0 : 300);
-  const [hasMore, setHasMore] = useState(false);
-  const [page, setPage] = useState(1);
-  const commandListRef = useRef<HTMLDivElement>(null);
-
-  // Animation frame reference for smooth scrolling
-  const animationRef = useRef<number | null>(null);
-  // Target scroll position for smooth scrolling
-  const targetScrollRef = useRef<number | null>(null);
-  // Scroll acceleration and velocity tracking
-  const velocityRef = useRef(0);
-  // Last wheel event timestamp for inertia calculation
-  const lastWheelTimeRef = useRef(0);
-
-  // Memoize the fetch functions to prevent unnecessary recreation
-  const fetchInitialValueFn = useCallback(async () => {
-    if (value) {
-      try {
-        setLoading(true);
-        const option = await fetchOptionById<TOption>(link, value);
-        setSelectedOption(option);
-      } catch (err) {
-        setError(
-          err instanceof Error ? err.message : "Failed to fetch initial value",
-        );
-      } finally {
-        setLoading(false);
-      }
-    } else {
-      setSelectedOption(null);
-    }
-  }, [value, link]);
-
-  // Fetch initial value if it exists
-  useEffect(() => {
-    fetchInitialValueFn();
-  }, [fetchInitialValueFn]);
-
-  // Memoize the load options function
-  const loadOptionsFn = useCallback(async () => {
-    if (!open) return;
-
-    try {
-      setLoading(true);
-      setError(null);
-
-      const response = await fetchOptions<TOption>(
-        link,
-        debouncedSearchTerm,
-        page,
-        extraSearchParams,
-      );
-
-      setOptions((prev) =>
-        page === 1 ? response.results : [...prev, ...response.results],
-      );
-      setHasMore(!!response.next);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to fetch options");
-    } finally {
-      setLoading(false);
-    }
-  }, [debouncedSearchTerm, open, page, link, extraSearchParams]);
-
-  // Fetch options based on search term
-  useEffect(() => {
-    if (open) {
-      loadOptionsFn();
-    }
-  }, [open, loadOptionsFn]);
-
-  // Clean up animation frame on unmount
-  useEffect(() => {
-    return () => {
-      if (animationRef.current !== null) {
-        cancelAnimationFrame(animationRef.current);
-      }
-    };
-  }, []);
-
-  // Smooth scrolling animation function
-  const smoothScroll = useCallback(() => {
-    if (!commandListRef.current || targetScrollRef.current === null) return;
-
-    const element = commandListRef.current;
-    const target = targetScrollRef.current;
-    const current = element.scrollTop;
-
-    // Distance to target
-    const distance = target - current;
-
-    // If we're very close to target, just set it and stop
-    if (Math.abs(distance) < 0.5) {
-      element.scrollTop = target;
-      targetScrollRef.current = null;
-      velocityRef.current = 0;
-      return;
-    }
-
-    // Gentle easing - much less springy than before
-    // This gives a smooth feel without the bounciness
-    const easeFactor = 0.25;
-
-    // Move a percentage of the distance each frame
-    const movement = distance * easeFactor;
-
-    // Apply movement
-    element.scrollTop += movement;
-
-    // Continue animation
-    animationRef.current = requestAnimationFrame(smoothScroll);
-  }, []);
-
-  const handleSelect = useCallback(
-    (currentValue: string) => {
-      const newValue = clearable && currentValue === value ? "" : currentValue;
-      const selectedOpt = options.find(
-        (opt) => getOptionValue(opt).toString() === currentValue,
-      );
-
-      setSelectedOption(selectedOpt || null);
-      onChange(newValue);
-      if (onOptionChange) {
-        onOptionChange(selectedOpt || null);
-      }
-      setOpen(false);
-    },
-    [value, onChange, onOptionChange, clearable, options, getOptionValue],
-  );
-
-  const handleScrollEnd = useCallback(
-    (e: React.UIEvent<HTMLDivElement>) => {
-      const target = e.target as HTMLDivElement;
-      const scrollBuffer = 50; // pixels before bottom to trigger load
-      const distanceFromBottom =
-        target.scrollHeight - (target.scrollTop + target.clientHeight);
-
-      // Check if we're near the bottom and not already loading
-      if (
-        !loading &&
-        hasMore &&
-        distanceFromBottom <= scrollBuffer &&
-        distanceFromBottom >= 0 // Prevent overscroll triggering
-      ) {
-        setPage((prev) => prev + 1);
-      }
-    },
-    [loading, hasMore],
-  );
-
-  // Handle wheel events with better smooth scrolling
-  const handleWheel = useCallback(
-    (e: React.WheelEvent) => {
-      if (!commandListRef.current) return;
-
-      const { scrollTop, scrollHeight, clientHeight } = commandListRef.current;
-      const isScrollingDown = e.deltaY > 0;
-      const isAtBottom = scrollTop + clientHeight >= scrollHeight - 1;
-      const isAtTop = scrollTop <= 0;
-
-      // Allow parent scrolling only if we're at the boundaries and trying to scroll beyond
-      if ((isAtBottom && isScrollingDown) || (isAtTop && !isScrollingDown)) {
-        return; // Let the event propagate to parent
-      }
-
-      // Otherwise handle the scroll ourselves
-      e.stopPropagation();
-      e.preventDefault();
-
-      // Calculate scroll speed with gentle acceleration/deceleration
-      const now = performance.now();
-      lastWheelTimeRef.current = now;
-
-      // Adjust sensitivity - higher is more responsive but less smooth
-      const scrollSensitivity = 0.8;
-
-      // Apply the scroll delta with sensitivity adjustment
-      const delta = e.deltaY * scrollSensitivity;
-
-      // Get current scroll position
-      const currentScroll = commandListRef.current.scrollTop;
-
-      // Set target scroll position with momentum
-      // This creates a smoother feeling without being too springy
-      targetScrollRef.current = currentScroll + delta;
-
-      // Start animation if not already running
-      if (animationRef.current === null) {
-        animationRef.current = requestAnimationFrame(smoothScroll);
-      }
-    },
-    [smoothScroll],
-  );
-
-  // Add non-passive wheel event listener
-  useEffect(() => {
-    const commandList = commandListRef.current;
-    if (!commandList) return;
-
-    // Add wheel event listener with { passive: false } option
-    const wheelHandler = (e: WheelEvent) => {
-      handleWheel(e as unknown as React.WheelEvent);
-    };
-
-    commandList.addEventListener("wheel", wheelHandler, { passive: false });
-
-    return () => {
-      commandList.removeEventListener("wheel", wheelHandler);
-      if (animationRef.current !== null) {
-        cancelAnimationFrame(animationRef.current);
-      }
-    };
-  }, [handleWheel]);
 
   const handleClear = useCallback(() => {
     onChange("");
@@ -314,63 +53,20 @@ export function Autocomplete<TOption, TForm extends FieldValues>({
     <div className="relative">
       <Popover open={open} onOpenChange={setOpen}>
         <PopoverTrigger asChild>
-          <Button
-            variant="outline"
-            role="combobox"
-            aria-expanded={open}
-            className={cn(
-              "w-full font-normal gap-2 rounded border-muted-foreground/20 text-xs bg-muted px-1.5 data-[state=open]:border-blue-600 data-[state=open]:outline-hidden data-[state=open]:ring-4 data-[state=open]:ring-blue-600/20",
-              "[&_svg]:size-3 justify-between hover:bg-muted",
-              "transition-[border-color,box-shadow] duration-200 ease-in-out",
-              disabled && "opacity-50 cursor-not-allowed",
-              isInvalid &&
-                "border-red-500 bg-red-500/20 ring-0 ring-red-500 placeholder:text-red-500 focus:outline-hidden focus-visible:border-red-600 focus-visible:ring-4 focus-visible:ring-red-400/20 hover:border-red-500 hover:bg-red-500/20 data-[state=open]:border-red-500 data-[state=open]:bg-red-500/20 data-[state=open]:ring-red-500/20",
-              triggerClassName,
-            )}
+          <AutocompleteTrigger
+            open={open}
             disabled={disabled}
-          >
-            {selectedOption ? (
-              getDisplayValue(selectedOption)
-            ) : (
-              <p
-                className={cn(
-                  "text-muted-foreground",
-                  isInvalid && "text-red-500",
-                )}
-              >
-                {placeholder}
-              </p>
-            )}
-            <div className="flex items-center gap-1 ml-auto">
-              {clearable && value && (
-                <Button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleClear();
-                  }}
-                  type="button"
-                  size="icon"
-                  variant="ghost"
-                  className="[&>svg]:size-3 size-5 rounded-md flex items-center justify-center hover:bg-muted-foreground/30 text-muted-foreground hover:text-foreground transition-colors duration-200 ease-in-out cursor-pointer"
-                >
-                  <span className="sr-only">Clear</span>
-                  <Cross2Icon className="size-4" />
-                </Button>
-              )}
-              {loading ? (
-                <div className="mr-1">
-                  <PulsatingDots size={1} color="foreground" />
-                </div>
-              ) : (
-                <ChevronDownIcon
-                  className={cn(
-                    "opacity-50 size-7 duration-200 ease-in-out transition-all",
-                    open && "-rotate-180",
-                  )}
-                />
-              )}
-            </div>
-          </Button>
+            isInvalid={isInvalid}
+            triggerClassName={triggerClassName}
+            clearable={clearable}
+            value={value}
+            selectedOption={selectedOption}
+            getDisplayValue={getDisplayValue}
+            placeholder={placeholder}
+            handleClear={handleClear}
+            setSelectedOption={setSelectedOption}
+            link={link}
+          />
         </PopoverTrigger>
         <PopoverContent
           sideOffset={7}
@@ -379,61 +75,22 @@ export function Autocomplete<TOption, TForm extends FieldValues>({
             className,
           )}
         >
-          <Command shouldFilter={false} className="overflow-hidden">
-            <div className="w-full">
-              <CommandInput
-                className="bg-transparent h-7 truncate"
-                placeholder={`Search ${label.toLowerCase()}...`}
-                value={searchTerm}
-                onValueChange={setSearchTerm}
-              />
-            </div>
-            <CommandList
-              ref={commandListRef}
-              onScroll={handleScrollEnd}
-              className="max-h-[200px] overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent"
-            >
-              {error && (
-                <div className="p-4 text-destructive text-center">{error}</div>
-              )}
-              {!loading && !error && options.length === 0 && (
-                <CommandEmpty>
-                  {noResultsMessage ?? `No ${label.toLowerCase()} found.`}
-                </CommandEmpty>
-              )}
-              <CommandGroup>
-                {options.map((option) => (
-                  <CommandItem
-                    className="[&_svg]:size-3 cursor-pointer"
-                    key={getOptionValue(option).toString()}
-                    value={getOptionValue(option).toString()}
-                    onSelect={handleSelect}
-                  >
-                    {renderOption(option)}
-                    <Icon
-                      icon={faCheck}
-                      className={cn(
-                        "ml-auto size-3",
-                        value === getOptionValue(option).toString()
-                          ? "opacity-100"
-                          : "opacity-0",
-                      )}
-                    />
-                  </CommandItem>
-                ))}
-                {loading && (
-                  <div className="p-2 flex justify-center">
-                    <PulsatingDots size={1} color="foreground" />
-                  </div>
-                )}
-                {hasMore && !loading && (
-                  <div className="p-2 text-xs text-center text-muted-foreground">
-                    Scroll for more
-                  </div>
-                )}
-              </CommandGroup>
-            </CommandList>
-          </Command>
+          <AutocompleteCommandContent
+            open={open}
+            link={link}
+            preload={preload}
+            label={label}
+            getOptionValue={getOptionValue}
+            renderOption={renderOption}
+            setOpen={setOpen}
+            setSelectedOption={setSelectedOption}
+            onOptionChange={onOptionChange}
+            onChange={onChange}
+            clearable={clearable}
+            value={value}
+            noResultsMessage={noResultsMessage}
+            extraSearchParams={extraSearchParams}
+          />
         </PopoverContent>
       </Popover>
     </div>

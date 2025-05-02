@@ -1,13 +1,14 @@
 /* eslint-disable react-refresh/only-export-components */
 /* eslint-disable react/display-name */
-import { Checkbox } from "@/components/ui/checkbox";
+
 import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
+  EntityRefLinkColor,
+  EntityRefLinkDisplayText,
+  EntityRefLinkInner,
+} from "@/components/entity-refs/entity-ref-link";
+import { StatusBadge } from "@/components/status-badge";
 import { generateDateOnlyString, toDate } from "@/lib/date";
-import { BaseModel } from "@/types/common";
+import type { Status } from "@/types/common";
 import { ColumnDef, ColumnHelper } from "@tanstack/react-table";
 import { parseAsString, useQueryState } from "nuqs";
 import { memo, useCallback, useTransition } from "react";
@@ -18,6 +19,7 @@ import {
   EntityRefConfig,
   NestedEntityRefConfig,
 } from "./data-table-column-types";
+import { DataTableDescription } from "./data-table-components";
 
 // Entity parameter definitions - same as in data-table.tsx
 const entityParams = {
@@ -82,26 +84,17 @@ const EntityRefLink = memo(
     );
 
     return (
-      <span
+      <EntityRefLinkInner
         onClick={handleClick}
         className={`${className || ""} cursor-pointer`}
+        title={`Click to view ${displayText}`}
       >
         {color ? (
-          <div className="flex items-center gap-x-1.5 text-sm font-normal text-foreground underline hover:text-foreground/70">
-            <div
-              className="size-2 rounded-full"
-              style={{
-                backgroundColor: color,
-              }}
-            />
-            <p>{displayText}</p>
-          </div>
+          <EntityRefLinkColor color={color} displayText={displayText} />
         ) : (
-          <span className="text-sm font-normal underline hover:text-foreground/70">
-            {displayText}
-          </span>
+          <EntityRefLinkDisplayText>{displayText}</EntityRefLinkDisplayText>
         )}
-      </span>
+      </EntityRefLinkInner>
     );
   },
 );
@@ -167,7 +160,8 @@ const SecondaryInfoLink = memo(
     return (
       <span
         onClick={handleClick}
-        className="text-2xs text-muted-foreground underline hover:text-muted-foreground/70 cursor-pointer"
+        className="text-2xs text-foreground underline hover:text-foreground/70 cursor-pointer"
+        title={`Click to view ${displayText}`}
       >
         {displayText}
       </span>
@@ -202,37 +196,22 @@ function EntityRefCellBase<TEntity, TParent extends Record<string, any>>(
 
   return (
     <div className="flex flex-col gap-0.5">
-      <Tooltip delayDuration={300}>
-        <TooltipTrigger asChild>
-          <EntityRefLink
-            id={id}
-            displayText={displayText}
-            className={config.className}
-            color={color}
-            basePath={basePath}
-          />
-        </TooltipTrigger>
-        <TooltipContent>
-          <p>Click to view {displayText}</p>
-        </TooltipContent>
-      </Tooltip>
-
+      <EntityRefLink
+        id={id}
+        displayText={displayText}
+        className={config.className}
+        color={color}
+        basePath={basePath}
+      />
       {secondaryInfo && (
         <div className="flex items-center gap-1 text-muted-foreground text-2xs">
           {secondaryInfo.label && <span>{secondaryInfo.label}:</span>}
-          <Tooltip delayDuration={300}>
-            <TooltipTrigger asChild>
-              <SecondaryInfoLink
-                id={config.getId(secondaryInfo.entity)}
-                displayText={secondaryInfo.displayText}
-                clickable={clickable}
-                basePath={secondaryInfo.basePath || basePath}
-              />
-            </TooltipTrigger>
-            <TooltipContent>
-              <p>Click to view {secondaryInfo.displayText}</p>
-            </TooltipContent>
-          </Tooltip>
+          <SecondaryInfoLink
+            id={config.getId(secondaryInfo.entity)}
+            displayText={secondaryInfo.displayText}
+            clickable={clickable}
+            basePath={secondaryInfo.basePath || basePath}
+          />
         </div>
       )}
     </div>
@@ -269,38 +248,24 @@ function NestedEntityRefCellBase<TEntity, TParent extends Record<string, any>>(
 
   return (
     <div className="flex flex-col gap-0.5">
-      <Tooltip delayDuration={300}>
-        <TooltipTrigger asChild>
-          <EntityRefLink
-            id={id}
-            displayText={displayText}
-            className={config.className}
-            color={color}
-            basePath={basePath}
-          />
-        </TooltipTrigger>
-        <TooltipContent>
-          <p>Click to view {displayText}</p>
-        </TooltipContent>
-      </Tooltip>
+      <EntityRefLink
+        id={id}
+        displayText={displayText}
+        className={config.className}
+        color={color}
+        basePath={basePath}
+      />
 
       {secondaryInfo && (
         <div className="flex items-center gap-1 text-muted-foreground text-2xs">
           {secondaryInfo.label && <span>{secondaryInfo.label}:</span>}
           {clickable ? (
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <SecondaryInfoLink
-                  id={config.getId(secondaryInfo.entity)}
-                  displayText={secondaryInfo.displayText}
-                  clickable={clickable}
-                  basePath={secondaryInfo.basePath || basePath}
-                />
-              </TooltipTrigger>
-              <TooltipContent>
-                <p>Click to view {secondaryInfo.displayText}</p>
-              </TooltipContent>
-            </Tooltip>
+            <SecondaryInfoLink
+              id={config.getId(secondaryInfo.entity)}
+              displayText={secondaryInfo.displayText}
+              clickable={clickable}
+              basePath={secondaryInfo.basePath || basePath}
+            />
           ) : (
             <p>{secondaryInfo.displayText}</p>
           )}
@@ -318,33 +283,24 @@ export function createCommonColumns<T extends Record<string, unknown>>(
   columnHelper: ColumnHelper<T>,
 ) {
   return {
-    selection: columnHelper.display({
-      id: "select",
-      header: ({ table }) => {
-        return (
-          <Checkbox
-            checked={
-              table.getIsAllPageRowsSelected() ||
-              (table.getIsSomePageRowsSelected() && "indeterminate")
-            }
-            onCheckedChange={(checked) =>
-              table.toggleAllPageRowsSelected(!!checked)
-            }
-            aria-label="Select all"
-          />
-        );
+    status: columnHelper.display({
+      id: "status",
+      header: "Status",
+      cell: ({ row }) => {
+        const status = row.original.status;
+        return <StatusBadge status={status as Status} />;
       },
+    }),
+    description: columnHelper.display({
+      id: "description",
+      header: "Description",
       cell: ({ row }) => (
-        <Checkbox
-          checked={row.getIsSelected()}
-          onCheckedChange={(checked) => row.toggleSelected(!!checked)}
-          aria-label="Select row"
+        <DataTableDescription
+          description={row.original.description as string | undefined}
         />
       ),
-      size: 50,
-      enableSorting: false,
-      enableHiding: false,
     }),
+
     createdAt: createdAtColumn(columnHelper) as ColumnDef<T>,
   };
 }
@@ -352,20 +308,17 @@ export function createCommonColumns<T extends Record<string, unknown>>(
 function createdAtColumn<T extends Record<string, unknown>>(
   columnHelper: ColumnHelper<T>,
 ) {
-  return columnHelper.accessor(
-    (row) => (row.original as unknown as BaseModel).createdAt,
-    {
-      id: "createdAt",
-      header: "Created At",
-      cell: ({ row }) => {
-        const { createdAt } = row.original;
-        const date = toDate(createdAt as number);
-        if (!date) return <p>-</p>;
+  return columnHelper.display({
+    id: "createdAt",
+    header: "Created At",
+    cell: ({ row }) => {
+      const { createdAt } = row.original;
+      const date = toDate(createdAt as number);
+      if (!date) return <p>-</p>;
 
-        return <p>{generateDateOnlyString(date)}</p>;
-      },
+      return <p>{generateDateOnlyString(date)}</p>;
     },
-  );
+  }) as ColumnDef<T>;
 }
 
 export function createEntityRefColumn<
@@ -377,11 +330,11 @@ export function createEntityRefColumn<
   accessorKey: K,
   config: EntityRefConfig<NonNullable<TValue>, T>,
 ): ColumnDef<T> {
-  return columnHelper.accessor((row) => row[accessorKey], {
+  return columnHelper.display({
     id: accessorKey as string,
     header: config.getHeaderText ?? "",
-    cell: ({ getValue, row }) => {
-      const entity = getValue();
+    cell: ({ row }) => {
+      const entity = row.original[accessorKey];
 
       if (!entity) {
         return <p className="text-muted-foreground">-</p>;
@@ -403,7 +356,7 @@ export function createEntityColumn<T extends Record<string, any>>(
   accessorKey: keyof T,
   config: EntityColumnConfig<T, keyof T>,
 ): ColumnDef<T> {
-  return columnHelper.accessor((row) => row[accessorKey], {
+  return columnHelper.display({
     id: accessorKey as string,
     header: config.getHeaderText ?? "",
     cell: ({ row }) => {

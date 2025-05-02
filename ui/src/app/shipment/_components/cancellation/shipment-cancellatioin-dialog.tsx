@@ -1,4 +1,4 @@
-import { Button } from "@/components/ui/button";
+import { Button, FormSaveButton } from "@/components/ui/button";
 import {
   Dialog,
   DialogBody,
@@ -9,12 +9,6 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Form } from "@/components/ui/form";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
 import { broadcastQueryInvalidation } from "@/hooks/use-invalidate-query";
 import { toUnixTimeStamp } from "@/lib/date";
 import { http } from "@/lib/http-client";
@@ -132,29 +126,14 @@ export function ShipmentCancellationDialog({
               >
                 Cancel
               </Button>
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button
-                      type="submit"
-                      isLoading={isSubmitting}
-                      loadingText="Cancelling..."
-                      variant="destructive"
-                    >
-                      Confirm Cancellation
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent className="flex items-center gap-2">
-                    <kbd className="-me-1 inline-flex h-5 max-h-full items-center rounded bg-background px-1 font-[inherit] text-[0.625rem] font-medium text-foreground">
-                      Ctrl
-                    </kbd>
-                    <kbd className="-me-1 inline-flex h-5 max-h-full items-center rounded bg-background px-1 font-[inherit] text-[0.625rem] font-medium text-foreground z-[100]">
-                      Enter
-                    </kbd>
-                    <p>to save and close the shipment cancellation</p>
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
+              <FormSaveButton
+                type="submit"
+                isSubmitting={isSubmitting}
+                title="shipment cancellation"
+                variant="destructive"
+              >
+                Confirm Cancellation
+              </FormSaveButton>
             </DialogFooter>
           </Form>
         </FormProvider>

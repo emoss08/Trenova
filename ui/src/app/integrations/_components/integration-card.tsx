@@ -1,11 +1,6 @@
 import { IntegrationCategoryBadge } from "@/components/status-badge";
 import { Button } from "@/components/ui/button";
 import { LazyImage } from "@/components/ui/image";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
 import type { Integration } from "@/types/integration";
 import { integrationImages } from "../_utils/integration";
 
@@ -46,25 +41,16 @@ export default function IntegrationCard({
       </div>
 
       <div className="flex items-center justify-between">
-        <Tooltip delayDuration={300}>
-          <TooltipTrigger asChild>
-            <Button
-              onClick={(e) => {
-                e.stopPropagation();
-                handleConfigureClick(integration);
-              }}
-              type="button"
-              variant={integration.enabled ? "outline" : "default"}
-            >
-              {getButtonText(integration)}
-            </Button>
-          </TooltipTrigger>
-          <TooltipContent>
-            {integration.enabled
-              ? `Manage ${integration.name} configuration`
-              : `Enable ${integration.name} integration`}
-          </TooltipContent>
-        </Tooltip>
+        <Button
+          onClick={(e) => {
+            e.stopPropagation();
+            handleConfigureClick(integration);
+          }}
+          type="button"
+          variant={integration.enabled ? "outline" : "default"}
+        >
+          {getButtonText(integration)}
+        </Button>
 
         <IntegrationCategoryBadge category={integration.category} />
       </div>

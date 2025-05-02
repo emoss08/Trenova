@@ -1,48 +1,57 @@
 import { TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import {
-  flexRender,
-  type Header,
-  type HeaderGroup,
-  type Table,
-} from "@tanstack/react-table";
+import { cn } from "@/lib/utils";
+import { flexRender, type Table } from "@tanstack/react-table";
 
-function HeaderCell<K extends Record<string, any>>({
-  header,
-}: {
-  header: Header<K, unknown>;
-}) {
+export function DataTableHeader<TData>({ table }: { table: Table<TData> }) {
   return (
-    <TableHead key={header.id}>
-      {header.isPlaceholder
-        ? null
-        : flexRender(header.column.columnDef.header, header.getContext())}
-    </TableHead>
-  );
-}
-function HeaderRow<K extends Record<string, any>>({
-  headerGroup,
-}: {
-  headerGroup: HeaderGroup<K>;
-}) {
-  return (
-    <TableRow>
-      {headerGroup.headers.map((header) => (
-        <HeaderCell key={header.id} header={header} />
-      ))}
-    </TableRow>
-  );
-}
-
-// Main header component
-export function DataTableHeader<TData extends Record<string, any>>({
-  table,
-}: {
-  table: Table<TData>;
-}) {
-  return (
-    <TableHeader>
+    <TableHeader className={cn("sticky top-0 z-20 rounded-t-md bg-background")}>
       {table.getHeaderGroups().map((headerGroup) => (
-        <HeaderRow key={headerGroup.id} headerGroup={headerGroup} />
+        <TableRow
+          key={headerGroup.id}
+          className={cn(
+            "bg-muted/50 hover:bg-muted/50",
+            "[&>*]:border-t [&>:not(:last-child)]:border-r",
+          )}
+        >
+          {headerGroup.headers.map((header) => {
+            return (
+              <TableHead
+                key={header.id}
+                className={cn(
+                  "relative select-none truncate [&>.cursor-col-resize]:last:opacity-0",
+                  header.index === 0 ? "rounded-tl-md" : "",
+                  header.index === headerGroup.headers.length - 1
+                    ? "rounded-tr-md"
+                    : "",
+                )}
+                aria-sort={
+                  header.column.getIsSorted() === "asc"
+                    ? "ascending"
+                    : header.column.getIsSorted() === "desc"
+                      ? "descending"
+                      : "none"
+                }
+              >
+                {header.isPlaceholder
+                  ? null
+                  : flexRender(
+                      header.column.columnDef.header,
+                      header.getContext(),
+                    )}
+                {header.column.getCanResize() && (
+                  <div
+                    onDoubleClick={() => header.column.resetSize()}
+                    onMouseDown={header.getResizeHandler()}
+                    onTouchStart={header.getResizeHandler()}
+                    className={cn(
+                      "user-select-none absolute -right-2 top-0 z-10 flex h-full w-4 cursor-col-resize touch-none justify-center before:absolute before:inset-y-0 before:w-px before:translate-x-px before:bg-border",
+                    )}
+                  />
+                )}
+              </TableHead>
+            );
+          })}
+        </TableRow>
       ))}
     </TableHeader>
   );

@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"time"
 
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/internal/core/ports"
@@ -18,6 +19,7 @@ import (
 	"github.com/emoss08/trenova/pkg/types/pulid"
 	"github.com/rotisserie/eris"
 	"github.com/rs/zerolog"
+	"github.com/samber/oops"
 	"github.com/uptrace/bun"
 	"go.uber.org/fx"
 )
@@ -180,7 +182,10 @@ func (sr *shipmentRepository) filterQuery(q *bun.SelectQuery, opts *repositories
 func (sr *shipmentRepository) List(ctx context.Context, opts *repositories.ListShipmentOptions) (*ports.ListResult[*shipment.Shipment], error) {
 	dba, err := sr.db.DB(ctx)
 	if err != nil {
-		return nil, eris.Wrap(err, "get database connection")
+		return nil, oops.
+			In("shipment_repository").
+			Time(time.Now()).
+			Wrapf(err, "get database connection")
 	}
 
 	log := sr.l.With().
@@ -225,7 +230,10 @@ func (sr *shipmentRepository) List(ctx context.Context, opts *repositories.ListS
 func (sr *shipmentRepository) GetByID(ctx context.Context, opts repositories.GetShipmentByIDOptions) (*shipment.Shipment, error) {
 	dba, err := sr.db.DB(ctx)
 	if err != nil {
-		return nil, eris.Wrap(err, "get database connection")
+		return nil, oops.
+			In("shipment_repository").
+			Time(time.Now()).
+			Wrapf(err, "get database connection")
 	}
 
 	log := sr.l.With().
@@ -271,7 +279,10 @@ func (sr *shipmentRepository) GetByID(ctx context.Context, opts repositories.Get
 func (sr *shipmentRepository) Create(ctx context.Context, shp *shipment.Shipment) (*shipment.Shipment, error) {
 	dba, err := sr.db.DB(ctx)
 	if err != nil {
-		return nil, eris.Wrap(err, "get database connection")
+		return nil, oops.
+			In("shipment_repository").
+			Time(time.Now()).
+			Wrapf(err, "get database connection")
 	}
 
 	log := sr.l.With().
@@ -348,7 +359,10 @@ func (sr *shipmentRepository) Create(ctx context.Context, shp *shipment.Shipment
 func (sr *shipmentRepository) Update(ctx context.Context, shp *shipment.Shipment) (*shipment.Shipment, error) {
 	dba, err := sr.db.DB(ctx)
 	if err != nil {
-		return nil, eris.Wrap(err, "get database connection")
+		return nil, oops.
+			In("shipment_repository").
+			Time(time.Now()).
+			Wrapf(err, "get database connection")
 	}
 
 	log := sr.l.With().
@@ -444,7 +458,10 @@ func (sr *shipmentRepository) Update(ctx context.Context, shp *shipment.Shipment
 func (sr *shipmentRepository) UpdateStatus(ctx context.Context, opts *repositories.UpdateShipmentStatusRequest) (*shipment.Shipment, error) {
 	dba, err := sr.db.DB(ctx)
 	if err != nil {
-		return nil, eris.Wrap(err, "get database connection")
+		return nil, oops.
+			In("shipment_repository").
+			Time(time.Now()).
+			Wrapf(err, "get database connection")
 	}
 
 	log := sr.l.With().
@@ -518,7 +535,10 @@ func (sr *shipmentRepository) UpdateStatus(ctx context.Context, opts *repositori
 func (sr *shipmentRepository) Cancel(ctx context.Context, req *repositories.CancelShipmentRequest) (*shipment.Shipment, error) {
 	dba, err := sr.db.DB(ctx)
 	if err != nil {
-		return nil, eris.Wrap(err, "get database connection")
+		return nil, oops.
+			In("shipment_repository").
+			Time(time.Now()).
+			Wrapf(err, "get database connection")
 	}
 
 	log := sr.l.With().
@@ -649,7 +669,10 @@ func (sr *shipmentRepository) cancelShipmentComponents(ctx context.Context, tx b
 func (sr *shipmentRepository) Duplicate(ctx context.Context, req *repositories.DuplicateShipmentRequest) (*shipment.Shipment, error) {
 	dba, err := sr.db.DB(ctx)
 	if err != nil {
-		return nil, eris.Wrap(err, "get database connection")
+		return nil, oops.
+			In("shipment_repository").
+			Time(time.Now()).
+			Wrapf(err, "get database connection")
 	}
 
 	log := sr.l.With().
@@ -760,7 +783,12 @@ func (sr *shipmentRepository) insertEntities(
 	_, err := tx.NewInsert().Model(entities).Exec(ctx)
 	if err != nil {
 		log.Error().Err(err).Msgf("failed to bulk insert %s", entityType)
-		return err
+		return oops.
+			In("shipment_repository").
+			Time(time.Now()).
+			With("entityType", entityType).
+			WithContext(ctx).
+			Wrap(err)
 	}
 
 	return nil
@@ -937,11 +965,6 @@ func (sr *shipmentRepository) CheckForDuplicateBOLs(ctx context.Context, current
 		return []repositories.DuplicateBOLsResult{}, nil
 	}
 
-	dba, err := sr.db.DB(ctx)
-	if err != nil {
-		return nil, eris.Wrap(err, "get database connection")
-	}
-
 	log := sr.l.With().
 		Str("operation", "checkForDuplicateBOLs").
 		Str("bol", currentBOL).
@@ -949,20 +972,29 @@ func (sr *shipmentRepository) CheckForDuplicateBOLs(ctx context.Context, current
 		Str("buID", buID.String()).
 		Logger()
 
+	dba, err := sr.db.DB(ctx)
+	if err != nil {
+		return nil, oops.
+			In("shipment_repository").
+			Time(time.Now()).
+			Wrapf(err, "get database connection")
+	}
+
 	// * Query to find duplicates, selecting only necessary fields for efficiency
 	query := dba.NewSelect().
 		Column("sp.id").
 		Column("sp.pro_number").
 		Model((*shipment.Shipment)(nil)).
-		Where("sp.organization_id = ?", orgID).
-		Where("sp.business_unit_id = ?", buID).
-		Where("sp.bol = ?", currentBOL).
-		Where("sp.status != ?", shipment.StatusCanceled)
+		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+			return sq.Where("sp.organization_id = ?", orgID).
+				Where("sp.business_unit_id = ?", buID).
+				Where("sp.bol = ?", currentBOL).
+				Where("sp.status != ?", shipment.StatusCanceled)
+		})
 
 	// * Exclude the specified shipment ID if provided
 	if excludeID != nil {
 		query = query.Where("sp.id != ?", *excludeID)
-		log = log.With().Str("excludeID", excludeID.String()).Logger()
 	}
 
 	// * Small struct to store the results of the query
@@ -971,9 +1003,12 @@ func (sr *shipmentRepository) CheckForDuplicateBOLs(ctx context.Context, current
 	// * Scan the results into the duplicates slice
 	if err = query.Scan(ctx, &duplicates); err != nil {
 		log.Error().Err(err).Msg("failed to query for duplicate BOLs")
-		return nil, eris.Wrapf(err, "query duplicate BOLs for BOL '%s'", currentBOL)
+		return nil, oops.
+			In("shipment_repository").
+			Time(time.Now()).
+			With("currentBOL", currentBOL).
+			Wrap(err)
 	}
 
-	log.Debug().Int("duplicateCount", len(duplicates)).Msg("completed duplicate BOL check")
 	return duplicates, nil
 }

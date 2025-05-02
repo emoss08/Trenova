@@ -1,11 +1,9 @@
 import { DataTableColumnHeader } from "@/components/data-table/_components/data-table-column-header";
 import {
   createCommonColumns,
-  createEntityColumn,
   createEntityRefColumn,
 } from "@/components/data-table/_components/data-table-column-helpers";
 import { LastInspectionDateBadge } from "@/components/data-table/_components/data-table-components";
-import { EquipmentStatusBadge } from "@/components/status-badge";
 import { type Trailer } from "@/types/trailer";
 import { createColumnHelper, type ColumnDef } from "@tanstack/react-table";
 
@@ -14,22 +12,14 @@ export function getColumns(): ColumnDef<Trailer>[] {
   const commonColumns = createCommonColumns(columnHelper);
 
   return [
-    commonColumns.selection,
-    {
-      accessorKey: "status",
-      header: ({ column }) => (
-        <DataTableColumnHeader column={column} title="Status" />
-      ),
+    commonColumns.status,
+    columnHelper.display({
+      id: "code",
+      header: "Code",
       cell: ({ row }) => {
-        const status = row.original.status;
-        return <EquipmentStatusBadge status={status} />;
+        const code = row.original.code;
+        return <p>{code}</p>;
       },
-    },
-    createEntityColumn(columnHelper, "code", {
-      accessorKey: "code",
-      getHeaderText: "Code",
-      getId: (trailer) => trailer.id,
-      getDisplayText: (trailer) => trailer.code,
     }),
     createEntityRefColumn<Trailer, "equipmentType">(
       columnHelper,
@@ -63,8 +53,8 @@ export function getColumns(): ColumnDef<Trailer>[] {
         getColor: (fleetCode) => fleetCode.color,
       },
     }),
-    {
-      accessorKey: "lastInspectionDate",
+    columnHelper.display({
+      id: "lastInspectionDate",
       header: ({ column }) => (
         <DataTableColumnHeader column={column} title="Last Inspection Date" />
       ),
@@ -72,7 +62,7 @@ export function getColumns(): ColumnDef<Trailer>[] {
         const { lastInspectionDate } = row.original;
         return <LastInspectionDateBadge value={lastInspectionDate} />;
       },
-    },
+    }),
     commonColumns.createdAt,
   ];
 }

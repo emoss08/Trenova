@@ -5,7 +5,12 @@ import * as React from "react";
 import { cn } from "@/lib/utils";
 import { buttonVariants } from "@/lib/variants/button";
 import { PulsatingDots } from "./pulsating-dots";
-import { Tooltip, TooltipContent, TooltipTrigger } from "./tooltip";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "./tooltip";
 
 export type ButtonProps = React.ComponentProps<"button"> &
   VariantProps<typeof buttonVariants> & {
@@ -32,7 +37,7 @@ function Button({
       disabled={isLoading}
       {...props}
     >
-      {isLoading && <PulsatingDots size={1} color="white" />}
+      {isLoading && <PulsatingDots size={1} color="foreground" />}
       {isLoading && loadingText && loadingText}
       {!isLoading && children}
     </Comp>
@@ -41,38 +46,57 @@ function Button({
 
 Button.displayName = "Button";
 
-export { Button };
+type FormSaveButtonProps = {
+  title: string;
+  isPopout?: boolean;
+  isSubmitting?: boolean;
+  tooltipPosition?: "top" | "bottom" | "left" | "right";
+  type?: React.ButtonHTMLAttributes<HTMLButtonElement>["type"];
+  text?: string;
+  onClick?: () => void;
+} & VariantProps<typeof buttonVariants> &
+  React.ComponentProps<"button">;
 
-export function FormSaveButton({
+function FormSaveButton({
   title,
   isPopout = false,
   isSubmitting,
   tooltipPosition = "top",
-}: {
-  title: string;
-  isSubmitting: boolean;
-  isPopout?: boolean;
-  tooltipPosition?: "top" | "bottom" | "left" | "right";
-}) {
+  type = "submit",
+  text,
+  onClick,
+  ...props
+}: FormSaveButtonProps) {
   return (
-    <Tooltip delayDuration={500}>
-      <TooltipTrigger asChild>
-        <Button type="submit" isLoading={isSubmitting} disabled={isSubmitting}>
-          Save {isPopout ? "and Close" : "Changes"}
-        </Button>
-      </TooltipTrigger>
-      <TooltipContent
-        side={tooltipPosition}
-        className="flex items-center gap-2 text-xs"
-      >
-        <kbd className="-me-1 inline-flex h-5 max-h-full items-center rounded bg-background px-1 font-[inherit] text-[0.625rem] font-medium text-foreground">
-          Ctrl
-        </kbd>
-        <kbd className="-me-1 inline-flex h-5 max-h-full items-center rounded bg-background px-1 font-[inherit] text-[0.625rem] font-medium text-foreground">
-          Enter
-        </kbd>
-        <p>to save and close the {title}</p>
-      </TooltipContent>
-    </Tooltip>
+    <TooltipProvider>
+      <Tooltip delayDuration={500}>
+        <TooltipTrigger asChild>
+          <Button
+            type={type}
+            isLoading={isSubmitting}
+            disabled={isSubmitting}
+            onClick={onClick}
+            {...props}
+          >
+            {text ? text : `Save ${isPopout ? "and Close" : "Changes"}`}
+          </Button>
+        </TooltipTrigger>
+        <TooltipContent
+          side={tooltipPosition}
+          className="flex items-center gap-2 text-xs"
+        >
+          <kbd className="-me-1 inline-flex h-5 max-h-full items-center rounded bg-background px-1 font-[inherit] text-[0.625rem] font-medium text-foreground">
+            Ctrl
+          </kbd>
+          <kbd className="-me-1 inline-flex h-5 max-h-full items-center rounded bg-background px-1 font-[inherit] text-[0.625rem] font-medium text-foreground">
+            Enter
+          </kbd>
+          <p>to save and close the {title}</p>
+        </TooltipContent>
+      </Tooltip>
+    </TooltipProvider>
   );
 }
+
+export { Button, FormSaveButton };
+

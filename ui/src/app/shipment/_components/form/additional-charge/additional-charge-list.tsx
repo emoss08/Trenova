@@ -1,54 +1,44 @@
 import { EmptyState } from "@/components/ui/empty-state";
-import { ScrollArea, VirtualizedScrollArea } from "@/components/ui/scroll-area";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import type { ShipmentSchema } from "@/lib/schemas/shipment-schema";
 import { AdditionalCharge } from "@/types/shipment";
 import {
   faBoxesStacked,
   faMoneyBill,
   faTruckContainer,
 } from "@fortawesome/pro-solid-svg-icons";
-import { useVirtualizer } from "@tanstack/react-virtual";
-import { memo, useCallback, useMemo, useRef } from "react";
-import { MemoizedAdditionalChargeRow } from "./additional-charge-row";
+import { useMemo } from "react";
+import { AdditionalChargeRow } from "./additional-charge-row";
 
-const ROW_HEIGHT = 30;
-const OVERSCAN = 5;
-
-const ListHeader = memo(() => (
-  <div className="sticky top-0 z-10 grid grid-cols-10 gap-4 p-2 text-sm text-muted-foreground bg-card border-b border-border rounded-t-lg">
-    <div className="col-span-4">Accessorial Charge</div>
-    <div className="col-span-2 text-left">Unit</div>
-    <div className="col-span-2 text-left">Amount</div>
-    <div className="col-span-2" />
-  </div>
-));
-
-ListHeader.displayName = "ListHeader";
-
-// Utility to create a unique key for comparing additional charges
-const createChargeKey = (charge: AdditionalCharge): string => {
-  return `${charge.accessorialChargeId}-${charge.unit}-${charge.method}-${charge.amount}`;
-};
+function AdditionalChargeRowHeader() {
+  return (
+    <div className="sticky top-0 z-10 grid grid-cols-10 gap-4 p-2 text-sm text-muted-foreground bg-card border-b border-border rounded-t-lg">
+      <div className="col-span-4">Accessorial Charge</div>
+      <div className="col-span-2 text-left">Unit</div>
+      <div className="col-span-2 text-left">Amount</div>
+      <div className="col-span-2" />
+    </div>
+  );
+}
 
 export function AdditionalChargeList({
   additionalCharges,
   handleEdit,
   handleDelete,
 }: {
-  additionalCharges: AdditionalCharge[];
+  additionalCharges: ShipmentSchema["additionalCharges"];
   handleEdit: (index: number) => void;
   handleDelete: (index: number) => void;
 }) {
-  const parentRef = useRef<HTMLDivElement>(null);
-
   // Find duplicate charges by creating a frequency map
   const duplicateIndices = useMemo(() => {
     const chargeFrequency = new Map<string, number[]>();
     const duplicates = new Set<number>();
 
-    additionalCharges.forEach((charge, index) => {
+    additionalCharges?.forEach((charge, index) => {
       if (!charge.accessorialCharge) return;
 
-      const key = createChargeKey(charge);
+      const key = `${charge.accessorialChargeId}-${charge.unit}-${charge.method}-${charge.amount}`;
       const indices = chargeFrequency.get(key) || [];
 
       // If this is the second or later occurrence, mark all occurrences as duplicates
@@ -64,13 +54,7 @@ export function AdditionalChargeList({
     return duplicates;
   }, [additionalCharges]);
 
-  const virtualizer = useVirtualizer({
-    count: additionalCharges?.length ?? 0,
-    getScrollElement: () => parentRef.current,
-    estimateSize: useCallback(() => ROW_HEIGHT, []),
-    overscan: OVERSCAN,
-    enabled: !!additionalCharges?.length,
-  });
+  if (!additionalCharges) return null;
 
   return !additionalCharges.length ? (
     <EmptyState
@@ -80,59 +64,44 @@ export function AdditionalChargeList({
       icons={[faMoneyBill, faBoxesStacked, faTruckContainer]}
     />
   ) : (
+    <AdditionalChargeListInner>
+      <AdditionalChargeRowHeader />
+      <AdditionalChargeListScrollArea>
+        {additionalCharges.map((additionalCharge, index) => {
+          const isDuplicate = duplicateIndices.has(index);
+          return (
+            <AdditionalChargeRow
+              key={index}
+              additionalCharge={additionalCharge as AdditionalCharge}
+              isLast={index === additionalCharges.length - 1}
+              isDuplicate={isDuplicate}
+              onEdit={handleEdit}
+              onDelete={handleDelete}
+              index={index}
+            />
+          );
+        })}
+      </AdditionalChargeListScrollArea>
+    </AdditionalChargeListInner>
+  );
+}
+
+export function AdditionalChargeListScrollArea({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  return <ScrollArea className="flex max-h-40 flex-col">{children}</ScrollArea>;
+}
+
+function AdditionalChargeListInner({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  return (
     <div className="rounded-lg border border-bg-sidebar-border bg-card">
-      <ListHeader />
-      {additionalCharges.length > 20 ? (
-        <VirtualizedScrollArea
-          ref={parentRef}
-          className="flex max-h-40 flex-col"
-        >
-          <div style={{ height: `${virtualizer.getTotalSize()}px` }}>
-            {virtualizer.getVirtualItems().map((virtualRow) => {
-              const additionalCharge = additionalCharges[virtualRow.index];
-              const isDuplicate = duplicateIndices.has(virtualRow.index);
-
-              return (
-                <MemoizedAdditionalChargeRow
-                  key={virtualRow.index}
-                  additionalCharge={additionalCharge as AdditionalCharge}
-                  isLast={virtualRow.index === additionalCharges.length - 1}
-                  isDuplicate={isDuplicate}
-                  onEdit={handleEdit}
-                  onDelete={handleDelete}
-                  index={virtualRow.index}
-                  style={{
-                    position: "absolute",
-                    top: 0,
-                    left: 0,
-                    width: "100%",
-                    transform: `translateY(${virtualRow.start}px)`,
-                  }}
-                />
-              );
-            })}
-          </div>
-        </VirtualizedScrollArea>
-      ) : (
-        <ScrollArea className="flex max-h-40 flex-col">
-          {additionalCharges.map((additionalCharge, index) => {
-            const isDuplicate = duplicateIndices.has(index);
-
-            return (
-              <MemoizedAdditionalChargeRow
-                key={index}
-                additionalCharge={additionalCharge as AdditionalCharge}
-                isLast={index === additionalCharges.length - 1}
-                isDuplicate={isDuplicate}
-                onEdit={handleEdit}
-                onDelete={handleDelete}
-                index={index}
-                style={{ height: ROW_HEIGHT }}
-              />
-            );
-          })}
-        </ScrollArea>
-      )}
+      {children}
     </div>
   );
 }

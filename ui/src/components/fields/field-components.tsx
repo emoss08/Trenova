@@ -72,7 +72,7 @@ const FieldLabel = memo(
 );
 
 // Memoize the FieldWrapper component
-export function FieldWrapper({
+export const FieldWrapper = memo(function FieldWrapper({
   label,
   description,
   required,
@@ -105,7 +105,7 @@ export function FieldWrapper({
       </div>
     </div>
   );
-}
+});
 
 type PasswordFieldWrapperProps = FieldWrapperProps & {
   onPasswordReset: () => void;

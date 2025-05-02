@@ -1,13 +1,3 @@
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
 import { Button, FormSaveButton } from "@/components/ui/button";
 import {
   Dialog,
@@ -21,7 +11,6 @@ import {
 import { Form } from "@/components/ui/form";
 import { usePopoutWindow } from "@/hooks/popout-window/use-popout-window";
 import { useApiMutation } from "@/hooks/use-api-mutation";
-import { useUnsavedChanges } from "@/hooks/use-form";
 import { broadcastQueryInvalidation } from "@/hooks/use-invalidate-query";
 import { http } from "@/lib/http-client";
 import { cn } from "@/lib/utils";
@@ -62,7 +51,7 @@ export function FormCreateModal<T extends FieldValues>({
 
   const {
     setError,
-    formState: { isDirty, isSubmitting, isSubmitSuccessful },
+    formState: { isSubmitting, isSubmitSuccessful },
     handleSubmit,
     reset,
   } = form;
@@ -72,19 +61,9 @@ export function FormCreateModal<T extends FieldValues>({
     reset();
   }, [onOpenChange, reset]);
 
-  const {
-    showWarning,
-    handleClose: onClose,
-    handleConfirmClose,
-    handleCancelClose,
-  } = useUnsavedChanges({
-    isDirty,
-    onClose: handleClose,
-  });
-
   const { mutateAsync } = useApiMutation({
     mutationFn: async (values: T) => {
-      const response = await http.post(url, values);
+      const response = await http.post<T>(url, values);
       return response.data;
     },
     onSuccess: (data) => {
@@ -104,14 +83,14 @@ export function FormCreateModal<T extends FieldValues>({
       });
 
       queryClient.setQueryData([queryKey], data);
-    },
-    setFormError: setError,
-    resourceName: title,
-    onSettled: () => {
+
+      // * If the page is a popout, close it
       if (isPopout) {
         closePopout();
       }
     },
+    setFormError: setError,
+    resourceName: title,
   });
 
   const onSubmit = useCallback(
@@ -124,7 +103,9 @@ export function FormCreateModal<T extends FieldValues>({
   // Reset the form when the mutation is successful
   // This is recommended by react-hook-form - https://react-hook-form.com/docs/useform/reset
   useEffect(() => {
-    reset();
+    if (isSubmitSuccessful) {
+      reset();
+    }
   }, [isSubmitSuccessful, reset]);
 
   useEffect(() => {
@@ -146,7 +127,7 @@ export function FormCreateModal<T extends FieldValues>({
 
   return (
     <>
-      <Dialog open={open} onOpenChange={onClose}>
+      <Dialog open={open} onOpenChange={onOpenChange}>
         <DialogContent className={cn("max-w-[450px]", className)}>
           <DialogHeader>
             <DialogTitle>Add New {title}</DialogTitle>
@@ -159,7 +140,7 @@ export function FormCreateModal<T extends FieldValues>({
             <Form onSubmit={handleSubmit(onSubmit)}>
               <DialogBody>{formComponent}</DialogBody>
               <DialogFooter>
-                <Button type="button" variant="outline" onClick={onClose}>
+                <Button type="button" variant="outline" onClick={handleClose}>
                   Cancel
                 </Button>
                 <FormSaveButton
@@ -172,28 +153,6 @@ export function FormCreateModal<T extends FieldValues>({
           </FormProvider>
         </DialogContent>
       </Dialog>
-
-      {showWarning && (
-        <AlertDialog open={showWarning} onOpenChange={handleCancelClose}>
-          <AlertDialogContent>
-            <AlertDialogHeader>
-              <AlertDialogTitle>Unsaved Changes</AlertDialogTitle>
-              <AlertDialogDescription>
-                You have unsaved changes. Are you sure you want to close this
-                form? All changes will be lost.
-              </AlertDialogDescription>
-            </AlertDialogHeader>
-            <AlertDialogFooter>
-              <AlertDialogCancel onClick={handleCancelClose}>
-                Continue Editing
-              </AlertDialogCancel>
-              <AlertDialogAction onClick={handleConfirmClose}>
-                Discard Changes
-              </AlertDialogAction>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialog>
-      )}
     </>
   );
 }

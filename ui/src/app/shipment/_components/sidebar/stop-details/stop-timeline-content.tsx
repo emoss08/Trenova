@@ -6,11 +6,7 @@ import { cn } from "@/lib/utils";
 import { MoveStatus } from "@/types/move";
 import { Stop, StopStatus, StopType } from "@/types/stop";
 import { useCallback, useState } from "react";
-import {
-  UseFieldArrayRemove,
-  UseFieldArrayUpdate,
-  useFormContext,
-} from "react-hook-form";
+import { useFormContext } from "react-hook-form";
 import { useLocationData } from "./queries";
 import {
   getLineStyles,
@@ -107,8 +103,6 @@ export default function StopTimeline({
   moveStatus,
   moveIdx,
   stopIdx,
-  update,
-  remove,
   prevStopStatus,
 }: {
   stop: Stop;
@@ -117,8 +111,6 @@ export default function StopTimeline({
   moveStatus: MoveStatus;
   moveIdx: number;
   stopIdx: number;
-  update: UseFieldArrayUpdate<ShipmentSchema, "moves">;
-  remove: UseFieldArrayRemove;
   prevStopStatus?: StopStatus;
 }) {
   // Dialog open/close state
@@ -155,7 +147,6 @@ export default function StopTimeline({
 
   return (
     <div>
-      {/* Clickable stop display */}
       <div
         className={cn(
           "relative h-[60px] rounded-lg cursor-pointer select-none bg-muted pt-2 border border-border",
@@ -227,16 +218,14 @@ export default function StopTimeline({
         )}
       </div>
 
-      {/* The dialog */}
-      <StopDialog
-        open={isDialogOpen}
-        onOpenChange={handleDialogChange}
-        isEditing={true}
-        moveIdx={moveIdx}
-        stopIdx={stopIdx}
-        update={update}
-        remove={remove}
-      />
+      {isDialogOpen && (
+        <StopDialog
+          open={isDialogOpen}
+          onOpenChange={handleDialogChange}
+          moveIdx={moveIdx}
+          stopIdx={stopIdx}
+        />
+      )}
     </div>
   );
 }

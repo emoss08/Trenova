@@ -1,6 +1,5 @@
 import { FormSaveProvider } from "@/components/form";
 import { MetaTags } from "@/components/meta-tags";
-import { TooltipProvider } from "@/components/ui/tooltip";
 import { IntegrationGrid } from "./_components/integration-grid";
 
 export function IntegrationsPage() {
@@ -15,9 +14,7 @@ export function IntegrationsPage() {
         </p>
       </div>
       <FormSaveProvider>
-        <TooltipProvider>
-          <IntegrationGrid />
-        </TooltipProvider>
+        <IntegrationGrid />
       </FormSaveProvider>
     </>
   );

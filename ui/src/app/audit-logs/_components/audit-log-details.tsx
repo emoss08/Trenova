@@ -30,7 +30,7 @@ export function AuditLogDetails({ entry }: { entry: AuditEntry }) {
 
     // Otherwise, build a link with modal parameters
     return {
-      to: `${baseLink}?entityId=${entry.resourceId}&modal=edit`,
+      to: `${baseLink}?entityId=${entry.resourceId}&modalType=edit`,
       state: {
         isNavigatingToModal: true,
       },

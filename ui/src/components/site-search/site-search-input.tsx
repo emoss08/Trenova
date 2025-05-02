@@ -14,12 +14,6 @@ import {
 } from "@fortawesome/pro-regular-svg-icons";
 import { AnimatePresence, motion } from "motion/react";
 import React, { useEffect, useRef, useState } from "react";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "../ui/tooltip";
 import { getFilterOptions } from "./site-search-filter-options";
 
 export function SiteSearchInput({
@@ -30,34 +24,26 @@ export function SiteSearchInput({
   setOpen: (open: boolean) => void;
 }) {
   return (
-    <TooltipProvider>
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <span
-            aria-label="Open site search"
-            aria-expanded={open}
-            onClick={() => setOpen(true)}
-            className="group hidden h-8 items-center justify-between rounded-md border border-muted-foreground/20 bg-background px-3 py-2 text-sm hover:cursor-pointer hover:border-muted-foreground/80 xl:flex"
-          >
-            <div className="flex items-center">
-              <Icon
-                icon={faMagnifyingGlass}
-                className="mr-2 size-3.5 text-muted-foreground group-hover:text-foreground"
-              />
-              <span className="text-muted-foreground">Search...</span>
-            </div>
-            <div className="pointer-events-none inline-flex select-none">
-              <kbd className="-me-1 ms-12 inline-flex h-5 max-h-full items-center rounded border border-border bg-background px-1 font-[inherit] text-[0.625rem] font-medium text-muted-foreground/70">
-                ⌘K
-              </kbd>
-            </div>
-          </span>
-        </TooltipTrigger>
-        <TooltipContent>
-          <span>Site Search</span>
-        </TooltipContent>
-      </Tooltip>
-    </TooltipProvider>
+    <span
+      aria-label="Open site search"
+      aria-expanded={open}
+      title="Open site search"
+      onClick={() => setOpen(true)}
+      className="group hidden h-8 items-center justify-between rounded-md border border-muted-foreground/20 bg-background px-3 py-2 text-sm hover:cursor-pointer hover:border-muted-foreground/80 xl:flex"
+    >
+      <div className="flex items-center">
+        <Icon
+          icon={faMagnifyingGlass}
+          className="mr-2 size-3.5 text-muted-foreground group-hover:text-foreground"
+        />
+        <span className="text-muted-foreground">Search...</span>
+      </div>
+      <div className="pointer-events-none inline-flex select-none">
+        <kbd className="-me-1 ms-12 inline-flex h-5 max-h-full items-center rounded border border-border bg-background px-1 font-[inherit] text-[0.625rem] font-medium text-muted-foreground/70">
+          ⌘K
+        </kbd>
+      </div>
+    </span>
   );
 }
 

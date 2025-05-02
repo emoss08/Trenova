@@ -114,16 +114,16 @@ export function SiteSearchDialog() {
 
       switch (result.type) {
         case SearchEntityType.Shipments:
-          link = `/shipments/management?entityId=${result.id}&modal=edit`;
+          link = `/shipments/management?entityId=${result.id}&modalType=edit`;
           break;
         case SearchEntityType.Workers:
-          link = `/dispatch/configurations/workers?entityId=${result.id}&modal=edit`;
+          link = `/dispatch/configurations/workers?entityId=${result.id}&modalType=edit`;
           break;
         case SearchEntityType.Tractors:
-          link = `/equipment/configurations/tractors?entityId=${result.id}&modal=edit`;
+          link = `/equipment/configurations/tractors?entityId=${result.id}&modalType=edit`;
           break;
         case SearchEntityType.Customers:
-          link = `/billing/configurations/customers?entityId=${result.id}&modal=edit`;
+          link = `/billing/configurations/customers?entityId=${result.id}&modalType=edit`;
           break;
         default:
           // Default fallback if type is unknown

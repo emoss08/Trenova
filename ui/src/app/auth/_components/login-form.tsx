@@ -1,14 +1,8 @@
 import { PasswordField } from "@/components/fields/sensitive-input-field";
-import { Button } from "@/components/ui/button";
+import { FormSaveButton } from "@/components/ui/button";
 import { Form, FormControl, FormGroup } from "@/components/ui/form";
 import { Icon } from "@/components/ui/icons";
 import { Label } from "@/components/ui/label";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
 import { loginSchema, LoginSchema } from "@/lib/schemas/auth-schema";
 import { login } from "@/services/auth";
 import { useAuthActions } from "@/stores/user-store";
@@ -114,32 +108,15 @@ export function LoginForm({ email, onForgotPassword }: LoginFormProps) {
             placeholder="Password"
           />
         </FormControl>
-        <TooltipProvider>
-          <Tooltip delayDuration={400}>
-            <TooltipTrigger asChild>
-              <Button
-                size="lg"
-                type="submit"
-                isLoading={isSubmitting}
-                disabled={isSubmitting}
-              >
-                Sign In
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent
-              side="bottom"
-              className="flex items-center gap-2 text-xs"
-            >
-              <kbd className="-me-1 inline-flex h-5 max-h-full items-center rounded bg-background px-1 font-[inherit] text-[0.625rem] font-medium text-foreground">
-                Ctrl
-              </kbd>
-              <kbd className="-me-1 inline-flex h-5 max-h-full items-center rounded bg-background px-1 font-[inherit] text-[0.625rem] font-medium text-foreground z-[100]">
-                Enter
-              </kbd>
-              <p>to sign in</p>
-            </TooltipContent>
-          </Tooltip>
-        </TooltipProvider>
+        <FormSaveButton
+          size="lg"
+          type="submit"
+          title="login"
+          isSubmitting={isSubmitting}
+          disabled={isSubmitting}
+        >
+          Sign In
+        </FormSaveButton>
       </FormGroup>
     </Form>
   );

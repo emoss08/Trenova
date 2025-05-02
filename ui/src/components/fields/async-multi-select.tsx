@@ -34,12 +34,6 @@ import {
 import { Controller, FieldValues } from "react-hook-form";
 import { Icon } from "../ui/icons";
 import { PulsatingDots } from "../ui/pulsating-dots";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "../ui/tooltip";
 import { FieldWrapper } from "./field-components";
 
 async function fetchOptions<T>(
@@ -433,31 +427,24 @@ export function MultiSelectAutocomplete<T>({
                 <div className="flex items-center">
                   {selectedOptions.length > 0 && (
                     <div className="flex items-center gap-0.5">
-                      <TooltipProvider>
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <button
-                              type="button"
-                              className="size-3 text-muted-foreground duration-200 ease-in-out transition-all mx-1 cursor-pointer"
-                              onClick={(event) => {
-                                event.stopPropagation();
-                                handleClearAll();
-                              }}
-                            >
-                              <Cross2Icon />
-                            </button>
-                          </TooltipTrigger>
-                          <TooltipContent>
-                            <p>Clear all</p>
-                          </TooltipContent>
-                        </Tooltip>
-                      </TooltipProvider>
+                      <button
+                        type="button"
+                        title="Clear all"
+                        className="size-3 text-muted-foreground duration-200 ease-in-out transition-all mx-1 cursor-pointer"
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          handleClearAll();
+                        }}
+                      >
+                        <Cross2Icon />
+                      </button>
                       <Separator
                         orientation="vertical"
                         className="min-h-4 h-full bg-foreground/10"
                       />
                       <button
                         type="button"
+                        title="Toggle dropdown"
                         className="size-3 text-muted-foreground duration-200 ease-in-out transition-all cursor-pointer items-center justify-center mr-0.5"
                         onClick={(event) => {
                           event.stopPropagation();

@@ -40,9 +40,10 @@ export const DataTableCreateButton = memo(function DataTableCreateButton({
     setIsPopoverOpen(false);
 
     if (onCreateClick) {
+      console.info("onCreateClick debug info", {
+        onCreateClick,
+      });
       onCreateClick();
-    } else {
-      useTableStore.set("showCreateModal", true);
     }
   }, [onCreateClick]);
 

@@ -8,11 +8,6 @@ import {
   SelectItem,
   SelectTrigger,
 } from "@/components/ui/select";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 import {
   faArrowDown,
@@ -152,22 +147,20 @@ export function DataTableColumnHeaderWithTooltip<TData, TValue>({
 
   return (
     <div className={cn("flex items-center gap-2", className)}>
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <div className="inline-flex items-center justify-center cursor-normal -ml-3 h-8 px-3 py-2 rounded-md w-fit border-transparent bg-transparent text-xs hover:bg-muted hover:text-accent-foreground data-[state=open]:bg-muted data-[state=open]:text-accent-foreground [&>svg:last-child]:hidden">
-            <div className="inline-flex items-center gap-1">
-              {startContent}
-              {title}
-              <Icon
-                icon={faCircleInfo}
-                className="inline-flex items-center size-3"
-                aria-hidden="true"
-              />
-            </div>
-          </div>
-        </TooltipTrigger>
-        <TooltipContent>{tooltipContent}</TooltipContent>
-      </Tooltip>
+      <div
+        title={tooltipContent}
+        className="inline-flex items-center justify-center cursor-normal -ml-3 h-8 px-3 py-2 rounded-md w-fit border-transparent bg-transparent text-xs hover:bg-muted hover:text-accent-foreground data-[state=open]:bg-muted data-[state=open]:text-accent-foreground [&>svg:last-child]:hidden"
+      >
+        <div className="inline-flex items-center gap-1">
+          {startContent}
+          {title}
+          <Icon
+            icon={faCircleInfo}
+            className="inline-flex items-center size-3"
+            aria-hidden="true"
+          />
+        </div>
+      </div>
     </div>
   );
 }

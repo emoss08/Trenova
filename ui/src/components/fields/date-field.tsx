@@ -16,12 +16,6 @@ import { CalendarIcon } from "@radix-ui/react-icons";
 import { format } from "date-fns";
 import { useCallback, useState } from "react";
 import { Controller, FieldValues, useController } from "react-hook-form";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "../ui/tooltip";
 import { AutoCompleteDatePicker } from "./date-field/date-picker";
 import { FieldWrapper } from "./field-components";
 
@@ -100,6 +94,7 @@ export function DateField<T extends FieldValues>({
   );
 }
 
+// TODO(Wolfred): Change this to useController
 export function DoubleClickEditDate<T extends FieldValues>({
   name,
   control,
@@ -128,46 +123,32 @@ export function DoubleClickEditDate<T extends FieldValues>({
         return (
           <Popover open={isOpen} onOpenChange={setIsOpen}>
             <PopoverTrigger>
-              <TooltipProvider>
-                <Tooltip delayDuration={0}>
-                  <TooltipTrigger asChild>
-                    <span className="flex flex-col text-left text-xs">
-                      <div
-                        className={cn(
-                          "cursor-text",
-                          fieldState.invalid && "text-red-500",
-                        )}
-                      >
-                        {dateValue ? (
-                          format(dateValue, "PPP")
-                        ) : (
-                          <span>{placeholder || "Pick a date"}</span>
-                        )}
-                      </div>
-                      {isOpen ? (
-                        <span
-                          onClick={() => setIsOpen(false)}
-                          className="cursor-pointer select-none text-xs text-muted-foreground"
-                        >
-                          Cancel
-                        </span>
-                      ) : (
-                        <span className="cursor-pointer select-none text-xs text-muted-foreground">
-                          Click to edit
-                        </span>
-                      )}
-                    </span>
-                  </TooltipTrigger>
-                  <TooltipContent
-                    className={cn(
-                      error &&
-                        "bg-red-50 text-red-500 dark:bg-red-900 dark:text-red-50",
-                    )}
+              <span className="flex flex-col text-left text-xs">
+                <div
+                  className={cn(
+                    "cursor-text",
+                    fieldState.invalid && "text-red-500",
+                  )}
+                >
+                  {dateValue ? (
+                    format(dateValue, "PPP")
+                  ) : (
+                    <span>{placeholder || "Pick a date"}</span>
+                  )}
+                </div>
+                {isOpen ? (
+                  <span
+                    onClick={() => setIsOpen(false)}
+                    className="cursor-pointer select-none text-xs text-muted-foreground"
                   >
-                    <p>{error ? error : placeholder}</p>
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
+                    Cancel
+                  </span>
+                ) : (
+                  <span className="cursor-pointer select-none text-xs text-muted-foreground">
+                    Click to edit
+                  </span>
+                )}
+              </span>
             </PopoverTrigger>
             <PopoverContent className="w-auto p-0">
               <Calendar

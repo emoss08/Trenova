@@ -1,12 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { Icon } from "@/components/ui/icons";
 import { EntityRedirectLink } from "@/components/ui/link";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
+import type { AccessorialChargeSchema } from "@/lib/schemas/accessorial-charge-schema";
 import { cn } from "@/lib/utils";
 import { type AdditionalCharge } from "@/types/shipment";
 import {
@@ -14,12 +9,11 @@ import {
   faTrash,
   faTriangleExclamation,
 } from "@fortawesome/pro-solid-svg-icons";
-import { memo, type CSSProperties } from "react";
+import React, { memo } from "react";
 
-function AdditionalChargeRow({
+export function AdditionalChargeRow({
   index,
   additionalCharge,
-  style,
   isLast,
   isDuplicate,
   onEdit,
@@ -27,7 +21,6 @@ function AdditionalChargeRow({
 }: {
   index: number;
   additionalCharge: AdditionalCharge;
-  style: CSSProperties;
   isLast: boolean;
   isDuplicate?: boolean;
   onEdit: (index: number) => void;
@@ -41,96 +34,133 @@ function AdditionalChargeRow({
     );
   }
 
-  // Create a memoization key based on the additional charge data
-  const memoKey = `${additionalCharge.accessorialChargeId}-${additionalCharge.unit}-${additionalCharge.method}-${additionalCharge.amount}`;
+  return (
+    <AdditionalChargeInner isLast={isLast} isDuplicate={isDuplicate}>
+      <AdditionalChargeContent>
+        <AdditionalChargeAccessorialCharge
+          accessorialCharge={additionalCharge.accessorialCharge}
+          isDuplicate={isDuplicate}
+        />
+        <AdditionalChargeRowInformation
+          unit={additionalCharge.unit}
+          amount={additionalCharge.amount}
+        />
+        <AdditionalChargeAction
+          onEdit={() => onEdit(index)}
+          onDelete={() => onDelete(index)}
+        />
+      </AdditionalChargeContent>
+    </AdditionalChargeInner>
+  );
+}
 
+function AdditionalChargeContent({ children }: { children: React.ReactNode }) {
+  return <div className="flex gap-2 col-span-4">{children}</div>;
+}
+
+const AdditionalChargeRowInformation = memo(
+  function AdditionalChargeRowInformation({
+    unit,
+    amount,
+  }: {
+    unit: number;
+    amount: number;
+  }) {
+    return (
+      <>
+        <div className="col-span-2 text-left">{unit}</div>
+        <div className="col-span-2 text-left">{amount}</div>
+      </>
+    );
+  },
+);
+
+function AdditionalChargeInner({
+  isLast,
+  isDuplicate,
+  children,
+}: {
+  isLast: boolean;
+  children: React.ReactNode;
+  isDuplicate?: boolean;
+}) {
   return (
     <div
-      key={memoKey}
       className={cn(
-        "grid grid-cols-10 gap-4 px-2 items-center text-sm ",
+        "grid grid-cols-10 gap-4 p-2 text-sm",
         !isLast && "border-b border-border",
         isLast && "rounded-b-md",
         isDuplicate && "bg-yellow-500/20 border-yellow-500/30 border",
       )}
-      style={style}
     >
-      <div className="flex col-span-4 gap-2">
-        <EntityRedirectLink
-          entityId={additionalCharge.accessorialCharge.id}
-          baseUrl="/billing/configurations/accessorial-charges"
-          modelOpen
-          value={additionalCharge.accessorialCharge.code}
-        >
-          {additionalCharge.accessorialCharge.code}
-        </EntityRedirectLink>
-        {isDuplicate && (
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <span className="text-yellow-600">
-                  <Icon
-                    icon={faTriangleExclamation}
-                    className="size-3 mb-0.5"
-                  />
-                </span>
-              </TooltipTrigger>
-              <TooltipContent>
-                <p>Possible duplicate charge detected</p>
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
-        )}
-      </div>
-      <div className="col-span-2 text-left">{additionalCharge.unit}</div>
-      <div className="col-span-2 text-left">{additionalCharge.amount}</div>
-      <div className="col-span-2 flex gap-0.5 justify-end">
-        <Button
-          type="button"
-          variant="ghost"
-          size="xs"
-          title="Edit Additional Charge"
-          onClick={(e) => {
-            e.preventDefault();
-            onEdit(index);
-          }}
-        >
-          <Icon icon={faPencil} className="size-3" />
-        </Button>
-
-        <Button
-          type="button"
-          variant="ghost"
-          className="hover:bg-red-500/30 text-red-600 hover:text-red-600"
-          size="xs"
-          title="Delete Additional Charge"
-          onClick={(e) => {
-            e.preventDefault();
-            onDelete(index);
-          }}
-        >
-          <Icon icon={faTrash} className="size-3" />
-        </Button>
-      </div>
+      {children}
     </div>
   );
 }
 
-AdditionalChargeRow.displayName = "AdditionalChargeRow";
+function AdditionalChargeAccessorialCharge({
+  accessorialCharge,
+  isDuplicate,
+}: {
+  accessorialCharge: AccessorialChargeSchema;
+  isDuplicate?: boolean;
+}) {
+  return (
+    <div className="flex col-span-4 gap-2">
+      <EntityRedirectLink
+        entityId={accessorialCharge.id}
+        baseUrl="/billing/configurations/accessorial-charges"
+        modelOpen
+      >
+        {accessorialCharge.code}
+      </EntityRedirectLink>
+      {isDuplicate && (
+        <span
+          title="Possible duplicate charge detected"
+          className="text-yellow-600"
+        >
+          <Icon icon={faTriangleExclamation} className="size-3 mb-0.5" />
+        </span>
+      )}
+    </div>
+  );
+}
 
-export const MemoizedAdditionalChargeRow = memo(
-  AdditionalChargeRow,
-  (prevProps, nextProps) => {
-    const prevAdditionalCharge = prevProps.additionalCharge;
-    const nextAdditionalCharge = nextProps.additionalCharge;
+function AdditionalChargeAction({
+  onEdit,
+  onDelete,
+}: {
+  onEdit: () => void;
+  onDelete: () => void;
+}) {
+  return (
+    <div className="col-span-2 flex gap-0.5 justify-end">
+      <Button
+        type="button"
+        variant="ghost"
+        size="xs"
+        title="Edit Additional Charge"
+        onClick={(e) => {
+          e.preventDefault();
+          onEdit();
+        }}
+      >
+        <Icon icon={faPencil} className="size-3" />
+      </Button>
 
-    return (
-      prevProps.isLast === nextProps.isLast &&
-      prevProps.isDuplicate === nextProps.isDuplicate &&
-      prevAdditionalCharge.accessorialChargeId ===
-        nextAdditionalCharge.accessorialChargeId &&
-      prevAdditionalCharge.unit === nextAdditionalCharge.unit &&
-      prevAdditionalCharge.amount === nextAdditionalCharge.amount
-    );
-  },
-);
+      <Button
+        type="button"
+        variant="ghost"
+        className="hover:bg-red-500/30 text-red-600 hover:text-red-600"
+        size="xs"
+        title="Delete Additional Charge"
+        onClick={(e) => {
+          e.preventDefault();
+          onDelete();
+        }}
+      >
+        <Icon icon={faTrash} className="size-3" />
+      </Button>
+    </div>
+  );
+}

@@ -240,8 +240,7 @@ export function ChangesTable({
 
     try {
       // Estimate total size by stringifying all changes
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      Object.entries(changes).forEach(([_, change]) => {
+      Object.entries(changes).forEach(([, change]) => {
         if (change.from) {
           totalJsonSize += JSON.stringify(change.from).length;
         }
@@ -255,7 +254,6 @@ export function ChangesTable({
         totalSize: totalJsonSize,
       };
     } catch {
-      // If we can't stringify, it's probably too large
       return { isDataTooLarge: true, totalSize: 0 };
     }
   }, [changes]);
