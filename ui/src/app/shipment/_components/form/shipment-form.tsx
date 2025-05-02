@@ -48,10 +48,10 @@ export function ShipmentForm({ isLoading, ...props }: ShipmentDetailsProps) {
 const ShipmentSectionsComponent = () => {
   return (
     <>
-      {/* <ShipmentServiceDetails /> */}
-      {/* <ShipmentBillingDetails /> */}
+      <ShipmentServiceDetails />
+      <ShipmentBillingDetails />
       <ShipmentGeneralInformation />
-      {/* <ShipmentCommodityDetails /> */}
+      <ShipmentCommodityDetails />
       <ShipmentMovesDetails />
     </>
   );
