@@ -1,35 +1,30 @@
 import { LazyComponent } from "@/components/error-boundary";
-import { Button } from "@/components/ui/button";
-import { Icon } from "@/components/ui/icons";
 import { MOVE_DELETE_DIALOG_KEY } from "@/constants/env";
-import { MoveSchema } from "@/lib/schemas/move-schema";
 import { ShipmentSchema } from "@/lib/schemas/shipment-schema";
-import { faPlus } from "@fortawesome/pro-regular-svg-icons";
 import { lazy, memo, useCallback, useMemo, useState } from "react";
 import { useFieldArray, useFormContext } from "react-hook-form";
 import { toast } from "sonner";
 import { MoveDeleteDialog } from "./move-delete-dialog";
 import { MoveDialog } from "./move-dialog";
+import { MoveListHeader } from "./move-list-header";
 
-// Lazy loaded components
 const MoveInformation = lazy(() => import("./move-information"));
 
-// Utility function to resequence moves after deletion
 const resequenceMoves = (
-  moves?: MoveSchema[],
+  moves?: ShipmentSchema["moves"],
   deletedIndex?: number,
-): MoveSchema[] => {
+): ShipmentSchema["moves"] => {
   if (!moves || !deletedIndex) {
     return [];
   }
 
-  // Create a copy of the moves array to avoid mutating the original
+  // * Create a copy of the moves array to avoid mutating the original
   const updatedMoves = [...moves];
 
-  // Get the sequence number of the deleted move
+  // * Get the sequence number of the deleted move
   const deletedSequence = moves[deletedIndex].sequence;
 
-  // Adjust sequence numbers for all moves after the deleted one
+  // * Adjust sequence numbers for all moves after the deleted one
   for (let i = 0; i < updatedMoves.length; i++) {
     if (i !== deletedIndex && updatedMoves[i].sequence > deletedSequence) {
       updatedMoves[i] = {
@@ -68,10 +63,28 @@ const ShipmentMovesDetailsComponent = () => {
     setMoveDialogOpen(true);
   }, []);
 
-  // Modified handleDeleteMove function for the ShipmentMovesDetails component
+  const performDeleteMove = useCallback(
+    (index: number) => {
+      const currentMoves = getValues("moves");
+
+      const updatedMoves = resequenceMoves(currentMoves, index);
+
+      // * Update all moves with their new sequences before removal
+      updatedMoves.forEach((move, idx) => {
+        if (idx !== index) {
+          // * Skip the one being deleted
+          update(idx, move);
+        }
+      });
+
+      remove(index);
+    },
+    [getValues, update, remove],
+  );
+
   const handleDeleteMove = useCallback(
     (index: number) => {
-      // If there is only one move, we cannot delete it
+      // * If there is only one move, we cannot delete it
       if (moves.length === 1) {
         toast.error("Unable to proceed", {
           description: "A shipment must have at least one move.",
@@ -79,7 +92,6 @@ const ShipmentMovesDetailsComponent = () => {
         return;
       }
 
-      // Always check localStorage directly
       const showDialog =
         localStorage.getItem(MOVE_DELETE_DIALOG_KEY) !== "false";
 
@@ -90,33 +102,9 @@ const ShipmentMovesDetailsComponent = () => {
         performDeleteMove(index);
       }
     },
-    [moves.length],
+    [moves.length, performDeleteMove],
   );
 
-  // Function to perform the actual deletion with resequencing
-  const performDeleteMove = useCallback(
-    (index: number) => {
-      // Get the current moves data
-      const currentMoves = getValues("moves");
-
-      // Resequence the moves
-      const updatedMoves = resequenceMoves(currentMoves, index);
-
-      // Update all moves with their new sequences before removal
-      updatedMoves.forEach((move, idx) => {
-        if (idx !== index) {
-          // Skip the one being deleted
-          update(idx, move);
-        }
-      });
-
-      // Now remove the move at the specified index
-      remove(index);
-    },
-    [getValues, update, remove],
-  );
-
-  // Modified handleConfirmDelete function
   const handleConfirmDelete = useCallback(
     (doNotShowAgain: boolean) => {
       if (deletingIndex !== null) {
@@ -134,8 +122,8 @@ const ShipmentMovesDetailsComponent = () => {
   );
 
   const handleDialogClose = useCallback(() => {
-    // If we're adding a new move and the dialog is closed without saving,
-    // remove the placeholder move
+    // * If we're adding a new move and the dialog is closed without saving,
+    // * remove the placeholder move
     if (
       editingIndex === moves.length - 1 &&
       !moves[editingIndex]?.stops?.length
@@ -157,27 +145,17 @@ const ShipmentMovesDetailsComponent = () => {
   );
 
   return (
-    <>
-      <div className="flex flex-col gap-2 border-t border-bg-sidebar-border py-4">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-1">
-            <h3 className="text-sm font-medium">Moves</h3>
-            <span className="text-2xs text-muted-foreground">
-              ({moves?.length ?? 0})
-            </span>
-          </div>
-          <AddMoveButton onClick={handleAddMove} />
-        </div>
-        <LazyComponent>
-          <MoveInformation
-            moves={moves}
-            update={update}
-            remove={remove}
-            onEdit={handleEditMove}
-            onDelete={handleDeleteMove}
-          />
-        </LazyComponent>
-      </div>
+    <ShipmentMovesDetailsInner className="flex flex-col gap-2 border-t border-bg-sidebar-border py-4">
+      <MoveListHeader moves={moves} handleAddMove={handleAddMove} />
+      <LazyComponent>
+        <MoveInformation
+          moves={moves}
+          update={update}
+          remove={remove}
+          onEdit={handleEditMove}
+          onDelete={handleDeleteMove}
+        />
+      </LazyComponent>
       {moveDialogOpen && (
         <MoveDialog
           open={moveDialogOpen}
@@ -200,21 +178,18 @@ const ShipmentMovesDetailsComponent = () => {
           handleDelete={handleConfirmDelete}
         />
       )}
-    </>
+    </ShipmentMovesDetailsInner>
   );
 };
 
 export default memo(ShipmentMovesDetailsComponent);
 
-const AddMoveButton = memo(function AddMoveButton({
-  onClick,
+function ShipmentMovesDetailsInner({
+  children,
+  className,
 }: {
-  onClick: () => void;
+  children: React.ReactNode;
+  className?: string;
 }) {
-  return (
-    <Button type="button" variant="outline" size="xs" onClick={onClick}>
-      <Icon icon={faPlus} className="size-4" />
-      Add Move
-    </Button>
-  );
-});
+  return <div className={className}>{children}</div>;
+}
