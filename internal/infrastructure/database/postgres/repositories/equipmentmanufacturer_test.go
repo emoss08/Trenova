@@ -47,34 +47,44 @@ func TestEquipmentManufacturerRepository(t *testing.T) {
 	})
 
 	t.Run("list equipment manufacturers", func(t *testing.T) {
-		opts := &ports.LimitOffsetQueryOptions{
-			Limit:  10,
-			Offset: 0,
-			TenantOpts: &ports.TenantOptions{
-				OrgID: org.ID,
-				BuID:  bu.ID,
+		opts := repoports.ListEquipmentManufacturerOptions{
+			Filter: &ports.LimitOffsetQueryOptions{
+				Limit:  10,
+				Offset: 0,
+				TenantOpts: &ports.TenantOptions{
+					OrgID: org.ID,
+					BuID:  bu.ID,
+				},
 			},
 		}
 
-		testutils.TestRepoList(ctx, t, repo, opts)
+		result, err := repo.List(ctx, opts)
+		require.NoError(t, err)
+		require.NotNil(t, result)
+		require.NotEmpty(t, result.Items)
 	})
 
 	t.Run("list locations with query", func(t *testing.T) {
-		opts := &ports.LimitOffsetQueryOptions{
-			Limit:  10,
-			Offset: 0,
-			Query:  "Kenworth",
-			TenantOpts: &ports.TenantOptions{
-				OrgID: org.ID,
-				BuID:  bu.ID,
+		opts := repoports.ListEquipmentManufacturerOptions{
+			Filter: &ports.LimitOffsetQueryOptions{
+				Limit:  10,
+				Offset: 0,
+				Query:  "Kenworth",
+				TenantOpts: &ports.TenantOptions{
+					OrgID: org.ID,
+					BuID:  bu.ID,
+				},
 			},
 		}
 
-		testutils.TestRepoList(ctx, t, repo, opts)
+		result, err := repo.List(ctx, opts)
+		require.NoError(t, err)
+		require.NotNil(t, result)
+		require.NotEmpty(t, result.Items)
 	})
 
 	t.Run("get equipment manufacturer by id", func(t *testing.T) {
-		testutils.TestRepoGetByID(ctx, t, repo, repoports.GetEquipManufacturerByIDOptions{
+		testutils.TestRepoGetByID(ctx, t, repo, repoports.GetEquipmentManufacturerByIDOptions{
 			ID:    emf1.ID,
 			OrgID: org.ID,
 			BuID:  bu.ID,
@@ -82,7 +92,7 @@ func TestEquipmentManufacturerRepository(t *testing.T) {
 	})
 
 	t.Run("get equipment manufacturer id failure", func(t *testing.T) {
-		equipManu, err := repo.GetByID(ctx, repoports.GetEquipManufacturerByIDOptions{
+		equipManu, err := repo.GetByID(ctx, repoports.GetEquipmentManufacturerByIDOptions{
 			ID:    "invalid-id",
 			OrgID: org.ID,
 			BuID:  bu.ID,
