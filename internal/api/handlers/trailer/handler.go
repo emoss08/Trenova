@@ -98,10 +98,17 @@ func (h *Handler) list(c *fiber.Ctx) error {
 	}
 
 	handler := func(fc *fiber.Ctx, filter *ports.LimitOffsetQueryOptions) (*ports.ListResult[*trailerdomain.Trailer], error) {
+		if err = fc.QueryParser(filter); err != nil {
+			return nil, h.eh.HandleError(fc, err)
+		}
+
 		return h.ts.List(fc.UserContext(), &repositories.ListTrailerOptions{
-			Filter:                  filter,
-			IncludeEquipmentDetails: c.QueryBool("includeEquipmentDetails"),
-			IncludeFleetDetails:     c.QueryBool("includeFleetDetails"),
+			Filter: filter,
+			FilterOptions: repositories.TrailerFilterOptions{
+				IncludeEquipmentDetails: fc.QueryBool("includeEquipmentDetails"),
+				IncludeFleetDetails:     fc.QueryBool("includeFleetDetails"),
+				Status:                  fc.Query("status"),
+			},
 		})
 	}
 
@@ -120,12 +127,14 @@ func (h *Handler) get(c *fiber.Ctx) error {
 	}
 
 	tr, err := h.ts.Get(c.UserContext(), repositories.GetTrailerByIDOptions{
-		ID:                      trailerID,
-		BuID:                    reqCtx.BuID,
-		OrgID:                   reqCtx.OrgID,
-		UserID:                  reqCtx.UserID,
-		IncludeEquipmentDetails: c.QueryBool("includeEquipmentDetails"),
-		IncludeFleetDetails:     c.QueryBool("includeFleetDetails"),
+		ID:     trailerID,
+		BuID:   reqCtx.BuID,
+		OrgID:  reqCtx.OrgID,
+		UserID: reqCtx.UserID,
+		FilterOptions: repositories.TrailerFilterOptions{
+			IncludeEquipmentDetails: c.QueryBool("includeEquipmentDetails"),
+			IncludeFleetDetails:     c.QueryBool("includeFleetDetails"),
+		},
 	})
 	if err != nil {
 		return h.eh.HandleError(c, err)

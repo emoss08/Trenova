@@ -118,6 +118,7 @@ func (tr *tractorRepository) filterQuery(q *bun.SelectQuery, req *repositories.L
 
 	q = tr.addOptions(q, req.FilterOptions)
 
+	// TODO(Wolfred: Add postgres search support.
 	if req.Filter.Query != "" {
 		q = q.Where("tr.code ILIKE ? OR tr.vin ILIKE ?", "%"+req.Filter.Query+"%", "%"+req.Filter.Query+"%")
 	}

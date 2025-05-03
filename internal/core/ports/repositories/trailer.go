@@ -8,19 +8,23 @@ import (
 	"github.com/emoss08/trenova/pkg/types/pulid"
 )
 
+type TrailerFilterOptions struct {
+	IncludeEquipmentDetails bool   `query:"includeEquipmentDetails"`
+	IncludeFleetDetails     bool   `query:"includeFleetDetails"`
+	Status                  string `query:"status"`
+}
+
 type ListTrailerOptions struct {
-	Filter                  *ports.LimitOffsetQueryOptions
-	IncludeEquipmentDetails bool `query:"includeEquipmentDetails"`
-	IncludeFleetDetails     bool `query:"includeFleetDetails"`
+	Filter        *ports.LimitOffsetQueryOptions
+	FilterOptions TrailerFilterOptions `query:"filterOptions"`
 }
 
 type GetTrailerByIDOptions struct {
-	ID                      pulid.ID
-	OrgID                   pulid.ID
-	BuID                    pulid.ID
-	UserID                  pulid.ID
-	IncludeEquipmentDetails bool `query:"includeEquipmentDetails"`
-	IncludeFleetDetails     bool `query:"includeFleetDetails"`
+	ID            pulid.ID
+	OrgID         pulid.ID
+	BuID          pulid.ID
+	UserID        pulid.ID
+	FilterOptions TrailerFilterOptions `query:"filterOptions"`
 }
 
 type TrailerRepository interface {

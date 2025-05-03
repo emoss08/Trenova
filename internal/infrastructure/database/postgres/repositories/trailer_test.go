@@ -62,7 +62,9 @@ func TestTrailerRepository(t *testing.T) {
 
 	t.Run("list trailers with equipment details", func(t *testing.T) {
 		opts := &repoports.ListTrailerOptions{
-			IncludeEquipmentDetails: true,
+			FilterOptions: repoports.TrailerFilterOptions{
+				IncludeEquipmentDetails: true,
+			},
 			Filter: &ports.LimitOffsetQueryOptions{
 				Limit:  10,
 				Offset: 0,
@@ -83,7 +85,9 @@ func TestTrailerRepository(t *testing.T) {
 
 	t.Run("list trailers with fleet details", func(t *testing.T) {
 		opts := &repoports.ListTrailerOptions{
-			IncludeFleetDetails: true,
+			FilterOptions: repoports.TrailerFilterOptions{
+				IncludeFleetDetails: true,
+			},
 			Filter: &ports.LimitOffsetQueryOptions{
 				Limit:  10,
 				Offset: 0,
@@ -122,10 +126,12 @@ func TestTrailerRepository(t *testing.T) {
 
 	t.Run("get trailer by id with equipment details", func(t *testing.T) {
 		entity, err := repo.GetByID(ctx, repoports.GetTrailerByIDOptions{
-			ID:                      trail.ID,
-			OrgID:                   org.ID,
-			BuID:                    bu.ID,
-			IncludeEquipmentDetails: true,
+			ID:    trail.ID,
+			OrgID: org.ID,
+			BuID:  bu.ID,
+			FilterOptions: repoports.TrailerFilterOptions{
+				IncludeEquipmentDetails: true,
+			},
 		})
 
 		require.NoError(t, err)
@@ -136,10 +142,12 @@ func TestTrailerRepository(t *testing.T) {
 
 	t.Run("get trailer by id with fleet details", func(t *testing.T) {
 		entity, err := repo.GetByID(ctx, repoports.GetTrailerByIDOptions{
-			ID:                  trail.ID,
-			OrgID:               org.ID,
-			BuID:                bu.ID,
-			IncludeFleetDetails: true,
+			ID:    trail.ID,
+			OrgID: org.ID,
+			BuID:  bu.ID,
+			FilterOptions: repoports.TrailerFilterOptions{
+				IncludeFleetDetails: true,
+			},
 		})
 
 		require.NoError(t, err)
