@@ -2,6 +2,7 @@ package billing
 
 import (
 	"context"
+	"regexp"
 
 	"github.com/emoss08/trenova/internal/core/domain/businessunit"
 	"github.com/emoss08/trenova/internal/core/domain/organization"
@@ -60,12 +61,16 @@ func (bc *BillingControl) Validate(ctx context.Context, multiErr *errors.MultiEr
 		validation.Field(&bc.InvoiceNumberPrefix,
 			validation.Required.Error("Invoice number prefix is required"),
 			validation.Length(3, 10).Error("Invoice number prefix must be between 3 and 10 characters"),
+			// * Disallow spaces and special characters other than hyphens
+			validation.Match(regexp.MustCompile(`^[a-zA-Z0-9-]+$`)).Error("Invoice number prefix must be alphanumeric and can only contain hyphens"),
 		),
 
 		// * Ensure credit memo number prefix is populated
 		validation.Field(&bc.CreditMemoNumberPrefix,
 			validation.Required.Error("Credit memo number prefix is required"),
 			validation.Length(3, 10).Error("Credit memo number prefix must be between 3 and 10 characters"),
+			// * Disallow spaces and special characters other than hyphens
+			validation.Match(regexp.MustCompile(`^[a-zA-Z0-9-]+$`)).Error("Credit memo number prefix must be alphanumeric and can only contain hyphens"),
 		),
 
 		// * Ensure payment term is populated
