@@ -99,6 +99,7 @@ function GeneralInformationSection({
           control={control}
           name="maxLoadWeight"
           label="Max Load Weight"
+          sideText="lbs"
           placeholder="Max Load Weight"
           description="The maximum load weight the trailer can carry."
         />

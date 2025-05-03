@@ -1,9 +1,6 @@
 import { DataTableColumnHeader } from "@/components/data-table/_components/data-table-column-header";
-import {
-  createCommonColumns,
-  createEntityColumn,
-} from "@/components/data-table/_components/data-table-column-helpers";
-import { DataTableDescription } from "@/components/data-table/_components/data-table-components";
+import { createCommonColumns } from "@/components/data-table/_components/data-table-column-helpers";
+import { DataTableColorColumn } from "@/components/data-table/_components/data-table-components";
 import { type LocationCategorySchema } from "@/lib/schemas/location-category-schema";
 import {
   mapToFacilityType,
@@ -16,19 +13,17 @@ export function getColumns(): ColumnDef<LocationCategorySchema>[] {
   const commonColumns = createCommonColumns(columnHelper);
 
   return [
-    commonColumns.selection,
-    createEntityColumn(columnHelper, "name", {
-      accessorKey: "name",
-      getHeaderText: "Name",
-      getId: (locationCategory) => locationCategory.id,
-      getDisplayText: (locationCategory) => locationCategory.name,
-      getColor: (locationCategory) => locationCategory.color,
+    columnHelper.display({
+      id: "name",
+      header: "Name",
+      cell: ({ row }) => {
+        const { color, name } = row.original;
+        return <DataTableColorColumn text={name} color={color} />;
+      },
     }),
     {
       accessorKey: "type",
-      header: ({ column }) => (
-        <DataTableColumnHeader column={column} title="Type" />
-      ),
+      header: "Type",
       cell: ({ row }) => <p>{mapToLocationCategoryType(row.original.type)}</p>,
     },
     {
@@ -44,15 +39,7 @@ export function getColumns(): ColumnDef<LocationCategorySchema>[] {
         </p>
       ),
     },
-    {
-      accessorKey: "description",
-      header: ({ column }) => (
-        <DataTableColumnHeader column={column} title="Description" />
-      ),
-      cell: ({ row }) => (
-        <DataTableDescription description={row.original.description} />
-      ),
-    },
+    commonColumns.description,
     commonColumns.createdAt,
   ];
 }

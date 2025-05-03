@@ -12,7 +12,6 @@ export function getColumns(): ColumnDef<CustomerSchema>[] {
   const commonColumns = createCommonColumns(columnHelper);
 
   return [
-    commonColumns.selection,
     {
       accessorKey: "status",
       header: ({ column }) => (
