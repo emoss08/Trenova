@@ -89,8 +89,9 @@ func (tr *tractorRepository) addOptions(q *bun.SelectQuery, opts repositories.Tr
 	}
 
 	if opts.Status != "" {
-		status, err := domain.EquipmentStatusFromString(opts.Status)
+		status, err := domain.StatusFromString(opts.Status)
 		if err != nil {
+			tr.l.Error().Err(err).Msg("failed to convert status to equipment status")
 			return q
 		}
 

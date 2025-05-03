@@ -54,39 +54,41 @@ func NewService(p ServiceParams) *Service {
 }
 
 func (s *Service) SelectOptions(ctx context.Context, opts *ports.LimitOffsetQueryOptions) ([]*types.SelectOption, error) {
-	result, err := s.repo.List(ctx, opts)
+	result, err := s.repo.List(ctx, repositories.ListEquipmentManufacturerOptions{
+		Filter: opts,
+	})
 	if err != nil {
 		return nil, eris.Wrap(err, "select equipment manufacturers")
 	}
 
-	options := make([]*types.SelectOption, len(result.Items))
-	for i, em := range result.Items {
-		options[i] = &types.SelectOption{
+	options := make([]*types.SelectOption, 0, len(result.Items))
+	for _, em := range result.Items {
+		options = append(options, &types.SelectOption{
 			Value: em.ID.String(),
 			Label: em.Name,
-		}
+		})
 	}
 
 	return options, nil
 }
 
-func (s *Service) List(ctx context.Context, opts *ports.LimitOffsetQueryOptions) (*ports.ListResult[*equipmentmanufacturer.EquipmentManufacturer], error) {
+func (s *Service) List(ctx context.Context, opts repositories.ListEquipmentManufacturerOptions) (*ports.ListResult[*equipmentmanufacturer.EquipmentManufacturer], error) {
 	log := s.l.With().Str("operation", "List").Logger()
 
 	result, err := s.ps.HasAnyPermissions(ctx,
 		[]*services.PermissionCheck{
 			{
-				UserID:         opts.TenantOpts.UserID,
+				UserID:         opts.Filter.TenantOpts.UserID,
 				Resource:       permission.ResourceEquipmentManufacturer,
 				Action:         permission.ActionRead,
-				BusinessUnitID: opts.TenantOpts.BuID,
-				OrganizationID: opts.TenantOpts.OrgID,
+				BusinessUnitID: opts.Filter.TenantOpts.BuID,
+				OrganizationID: opts.Filter.TenantOpts.OrgID,
 			},
 		},
 	)
 	if err != nil {
 		s.l.Error().Err(err).Msg("failed to check permissions")
-		return nil, eris.Wrap(err, "failed to check permissions")
+		return nil, eris.Wrap(err, "check permissions")
 	}
 
 	if !result.Allowed {
@@ -96,7 +98,7 @@ func (s *Service) List(ctx context.Context, opts *ports.LimitOffsetQueryOptions)
 	entities, err := s.repo.List(ctx, opts)
 	if err != nil {
 		log.Error().Err(err).Msg("failed to list equipment manufacturers")
-		return nil, eris.Wrap(err, "failed to list equipment manufacturers")
+		return nil, err
 	}
 
 	return &ports.ListResult[*equipmentmanufacturer.EquipmentManufacturer]{
@@ -105,7 +107,7 @@ func (s *Service) List(ctx context.Context, opts *ports.LimitOffsetQueryOptions)
 	}, nil
 }
 
-func (s *Service) Get(ctx context.Context, opts repositories.GetEquipManufacturerByIDOptions) (*equipmentmanufacturer.EquipmentManufacturer, error) {
+func (s *Service) Get(ctx context.Context, opts repositories.GetEquipmentManufacturerByIDOptions) (*equipmentmanufacturer.EquipmentManufacturer, error) {
 	log := s.l.With().
 		Str("operation", "GetByID").
 		Str("equipManuID", opts.ID.String()).
@@ -124,7 +126,7 @@ func (s *Service) Get(ctx context.Context, opts repositories.GetEquipManufacture
 	)
 	if err != nil {
 		log.Error().Err(err).Msg("failed to check permissions")
-		return nil, eris.Wrap(err, "failed to check read equipment manufacturer permissions")
+		return nil, err
 	}
 
 	if !result.Allowed {
@@ -134,7 +136,7 @@ func (s *Service) Get(ctx context.Context, opts repositories.GetEquipManufacture
 	entity, err := s.repo.GetByID(ctx, opts)
 	if err != nil {
 		log.Error().Err(err).Msg("failed to get equipment manufacturer")
-		return nil, eris.Wrap(err, "failed to get equipment manufacturer")
+		return nil, err
 	}
 
 	return entity, nil
@@ -159,7 +161,7 @@ func (s *Service) Create(ctx context.Context, et *equipmentmanufacturer.Equipmen
 	)
 	if err != nil {
 		log.Error().Err(err).Msg("failed to check permissions")
-		return nil, eris.Wrap(err, "check create equipment manufacturer permissions")
+		return nil, err
 	}
 
 	if !result.Allowed {
@@ -177,7 +179,7 @@ func (s *Service) Create(ctx context.Context, et *equipmentmanufacturer.Equipmen
 
 	createdEntity, err := s.repo.Create(ctx, et)
 	if err != nil {
-		return nil, eris.Wrap(err, "create equipment manufacturer")
+		return nil, err
 	}
 
 	err = s.as.LogAction(
@@ -218,7 +220,7 @@ func (s *Service) Update(ctx context.Context, et *equipmentmanufacturer.Equipmen
 	)
 	if err != nil {
 		log.Error().Err(err).Msg("failed to check permissions")
-		return nil, eris.Wrap(err, "check update equipment manufacturer permissions")
+		return nil, err
 	}
 
 	if !result.Allowed {
@@ -235,19 +237,20 @@ func (s *Service) Update(ctx context.Context, et *equipmentmanufacturer.Equipmen
 		return nil, err
 	}
 
-	original, err := s.repo.GetByID(ctx, repositories.GetEquipManufacturerByIDOptions{
-		ID:    et.ID,
-		OrgID: et.OrganizationID,
-		BuID:  et.BusinessUnitID,
+	original, err := s.repo.GetByID(ctx, repositories.GetEquipmentManufacturerByIDOptions{
+		ID:     et.ID,
+		OrgID:  et.OrganizationID,
+		BuID:   et.BusinessUnitID,
+		UserID: userID,
 	})
 	if err != nil {
-		return nil, eris.Wrap(err, "get equipment manufacturer")
+		return nil, err
 	}
 
 	updatedEntity, err := s.repo.Update(ctx, et)
 	if err != nil {
 		log.Error().Err(err).Msg("failed to update equipment manufacturer")
-		return nil, eris.Wrap(err, "update equipment manufacturer")
+		return nil, err
 	}
 
 	// Log the update if the insert was successful
