@@ -1,15 +1,18 @@
+/* eslint-disable react-refresh/only-export-components */
 import { ControlsProvider } from "@/app/providers/controls";
 import type {
   ColumnDef,
   PaginationState,
   RowSelectionState,
   Table,
+  VisibilityState,
 } from "@tanstack/react-table";
 import { createContext, useContext, useMemo } from "react";
 
 interface DataTableStateContextType {
   rowSelection: RowSelectionState;
   pagination: PaginationState;
+  columnVisibility: VisibilityState;
 }
 
 interface DataTableBaseContextType<TData = unknown, TValue = unknown> {
@@ -38,13 +41,16 @@ export function DataTableProvider<TData, TValue>({
       ...props,
       pagination: props.pagination ?? { pageIndex: 0, pageSize: 10 },
       rowSelection: props.rowSelection ?? {},
+      columnVisibility: props.columnVisibility ?? {},
     }),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     [
       props.table,
       props.pagination,
       props.isLoading,
       props.columns,
       props.rowSelection,
+      props.columnVisibility,
     ],
   );
 

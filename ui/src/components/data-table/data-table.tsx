@@ -5,14 +5,12 @@ import { searchParamsParser } from "@/hooks/use-data-table-state";
 import { DataTableProps } from "@/types/data-table";
 import {
   getCoreRowModel,
-  getFacetedRowModel,
-  getFacetedUniqueValues,
-  getFilteredRowModel,
   getPaginationRowModel,
-  getSortedRowModel,
   RowSelectionState,
   useReactTable,
+  VisibilityState,
 } from "@tanstack/react-table";
+import { useLocalStorage } from "@uidotdev/usehooks";
 import { useQueryStates } from "nuqs";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Table } from "../ui/table";
@@ -46,6 +44,11 @@ export function DataTable<TData extends Record<string, any>>({
   const [rowSelection, setRowSelection] = useState<RowSelectionState>(
     entityId ? { [entityId]: true } : {},
   );
+  const [columnVisibility, setColumnVisibility] =
+    useLocalStorage<VisibilityState>(
+      `${name.toLowerCase()}-column-visibility`,
+      {},
+    );
 
   // Derive pagination state from URL
   const pagination = useMemo(
@@ -73,7 +76,9 @@ export function DataTable<TData extends Record<string, any>>({
     state: {
       pagination,
       rowSelection,
+      columnVisibility,
     },
+    onColumnVisibilityChange: setColumnVisibility,
     enableMultiRowSelection: false,
     columnResizeMode: "onChange",
     manualPagination: true,
@@ -81,11 +86,7 @@ export function DataTable<TData extends Record<string, any>>({
     getRowId: (row) => row.id,
     onRowSelectionChange: setRowSelection,
     getCoreRowModel: getCoreRowModel(),
-    getFilteredRowModel: getFilteredRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
-    getSortedRowModel: getSortedRowModel(),
-    getFacetedRowModel: getFacetedRowModel(),
-    getFacetedUniqueValues: getFacetedUniqueValues(),
     debugAll: DEBUG_TABLE,
   });
 
@@ -146,6 +147,7 @@ export function DataTable<TData extends Record<string, any>>({
       isLoading={dataQuery.isFetching || dataQuery.isLoading}
       pagination={pagination}
       rowSelection={rowSelection}
+      columnVisibility={columnVisibility}
     >
       <div className="mt-2 flex flex-col gap-3">
         {includeOptions && (

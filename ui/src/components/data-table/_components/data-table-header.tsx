@@ -1,3 +1,4 @@
+"use no memo";
 import { TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { cn } from "@/lib/utils";
 import { flexRender, type Table } from "@tanstack/react-table";

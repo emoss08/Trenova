@@ -9,10 +9,15 @@ function DataTableRow<TData>({
   row,
   selected,
   isLastRow = false,
+  // We don't actually use columnVisibility in the component,
+  // but we need it for the memo comparison
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  columnVisibility,
 }: {
   row: Row<TData>;
   selected?: boolean;
   isLastRow?: boolean;
+  columnVisibility: Record<string, boolean>;
 }) {
   return (
     <TableRow
@@ -56,12 +61,22 @@ function DataTableRow<TData>({
 
 const MemoizedRow = React.memo(DataTableRow, (prev, next) => {
   // Check ID and selection state first (fast checks)
-  if (
-    prev.row.id !== next.row.id ||
-    prev.selected !== next.selected ||
-    prev.isLastRow !== next.isLastRow
-  ) {
+  if (prev.row.id !== next.row.id || prev.selected !== next.selected) {
     return false;
+  }
+
+  // Check for column visibility changes
+  const prevKeys = Object.keys(prev.columnVisibility);
+  const nextKeys = Object.keys(next.columnVisibility);
+
+  if (prevKeys.length !== nextKeys.length) {
+    return false;
+  }
+
+  for (const key of prevKeys) {
+    if (prev.columnVisibility[key] !== next.columnVisibility[key]) {
+      return false;
+    }
   }
 
   const prevOriginal = prev.row.original as Record<string, any>;
@@ -86,6 +101,7 @@ export function DataTableBody<TData extends Record<string, any>>({
               row={row}
               selected={row.getIsSelected()}
               isLastRow={isLastRow}
+              columnVisibility={table.getState().columnVisibility}
             />
           );
         })
