@@ -4,12 +4,6 @@ import { format, fromUnixTime } from "date-fns";
 
 type DateFormatOptions = {
   /**
-   * The timezone to format the date in
-   * @default 'UTC'
-   */
-  timezone?: string;
-
-  /**
    * The time format to use (12-hour or 24-hour)
    * @default '24-hour'
    */
@@ -255,16 +249,13 @@ export function formatToUserTimezone(
   timestamp: number,
   options: DateFormatOptions = {},
 ): string {
+  const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+
   if (!timestamp || isNaN(timestamp)) {
     return "N/A";
   }
 
-  const {
-    timezone = "UTC",
-    showSeconds = false,
-    showTimeZone = true,
-    showDate = true,
-  } = options;
+  const { showSeconds = false, showTimeZone = true, showDate = true } = options;
 
   const date = fromUnixTime(timestamp);
 

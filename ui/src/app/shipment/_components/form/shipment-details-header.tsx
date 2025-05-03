@@ -58,7 +58,6 @@ function ShipmentDetailsHeaderDescription({
     <p className="text-2xs text-muted-foreground font-normal">
       Last updated on{" "}
       {formatToUserTimezone(updatedAt, {
-        timezone: user?.timezone,
         timeFormat: user?.timeFormat,
       })}
     </p>

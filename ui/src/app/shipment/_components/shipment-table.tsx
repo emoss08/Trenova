@@ -1,6 +1,8 @@
 import { DataTable } from "@/components/data-table/data-table";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { queries } from "@/lib/queries";
+import { getShipmentStatusRowClassName } from "@/lib/table-styles";
+import { cn } from "@/lib/utils";
 import { AnalyticsPage } from "@/types/analytics";
 import { Shipment, ShipmentStatus } from "@/types/shipment";
 import { useSuspenseQuery } from "@tanstack/react-query";
@@ -28,6 +30,10 @@ export default function ShipmentTable() {
         TableModal={ShipmentCreateSheet}
         TableEditModal={ShipmentEditSheet}
         columns={columns}
+        getRowClassName={(row) => {
+          console.log("row.original.status", row.original.status);
+          return cn(getShipmentStatusRowClassName(row.original.status));
+        }}
         // extraActions={[
         //   {
         //     key: "import-from-rate",

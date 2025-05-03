@@ -38,3 +38,5 @@ export enum Gender {
   Male = "Male",
   Female = "Female",
 }
+
+export type HasField<T, K extends keyof T> = K extends keyof T ? true : false;

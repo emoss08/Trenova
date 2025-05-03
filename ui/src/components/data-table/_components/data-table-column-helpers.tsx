@@ -7,9 +7,8 @@ import {
   EntityRefLinkInner,
 } from "@/components/entity-refs/entity-ref-link";
 import { StatusBadge } from "@/components/status-badge";
-import { generateDateOnlyString, toDate } from "@/lib/date";
 import type { Status } from "@/types/common";
-import { ColumnDef, ColumnHelper } from "@tanstack/react-table";
+import { ColumnDef, ColumnHelper, type Row } from "@tanstack/react-table";
 import { parseAsString, useQueryState } from "nuqs";
 import { memo, useCallback, useTransition } from "react";
 import { useNavigate } from "react-router";
@@ -19,7 +18,10 @@ import {
   EntityRefConfig,
   NestedEntityRefConfig,
 } from "./data-table-column-types";
-import { DataTableDescription } from "./data-table-components";
+import {
+  DataTableDescription,
+  HoverCardTimestamp,
+} from "./data-table-components";
 
 // Entity parameter definitions - same as in data-table.tsx
 const entityParams = {
@@ -279,46 +281,34 @@ const NestedEntityRefCell = memo(
   NestedEntityRefCellBase,
 ) as typeof NestedEntityRefCellBase;
 
-export function createCommonColumns<T extends Record<string, unknown>>(
-  columnHelper: ColumnHelper<T>,
-) {
+export function createCommonColumns<T extends Record<string, unknown>>() {
   return {
-    status: columnHelper.display({
-      id: "status",
+    status: {
+      accessorKey: "status",
       header: "Status",
-      cell: ({ row }) => {
+      cell: ({ row }: { row: Row<T> }) => {
         const status = row.original.status;
         return <StatusBadge status={status as Status} />;
       },
-    }),
-    description: columnHelper.display({
-      id: "description",
+    },
+    description: {
+      accessorKey: "description",
       header: "Description",
-      cell: ({ row }) => (
+      cell: ({ row }: { row: Row<T> }) => (
         <DataTableDescription
           description={row.original.description as string | undefined}
         />
       ),
-    }),
-
-    createdAt: createdAtColumn(columnHelper) as ColumnDef<T>,
-  };
-}
-
-function createdAtColumn<T extends Record<string, unknown>>(
-  columnHelper: ColumnHelper<T>,
-) {
-  return columnHelper.display({
-    id: "createdAt",
-    header: "Created At",
-    cell: ({ row }) => {
-      const { createdAt } = row.original;
-      const date = toDate(createdAt as number);
-      if (!date) return <p>-</p>;
-
-      return <p>{generateDateOnlyString(date)}</p>;
     },
-  }) as ColumnDef<T>;
+    createdAt: {
+      id: "createdAt",
+      header: "Created At",
+      cell: ({ row }: { row: Row<T> }) => {
+        const { createdAt } = row.original;
+        return <HoverCardTimestamp timestamp={createdAt as number} />;
+      },
+    },
+  };
 }
 
 export function createEntityRefColumn<

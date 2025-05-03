@@ -170,6 +170,7 @@ type DataTableProps<TData extends Record<string, any>> = {
   // onDataChange?: (data: TData[]) => void;
   pageSizeOptions?: Readonly<number[]>;
   extraActions?: ExtraAction[];
+  getRowClassName?: (row: Row<TData>) => string;
 };
 
 type DataTableBodyProps<TData extends Record<string, any>> = {
