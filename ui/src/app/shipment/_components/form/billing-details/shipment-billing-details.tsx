@@ -178,7 +178,7 @@ function ShipmentBillingDetailsForm() {
           name="otherChargeAmount"
           label="Other Charges"
           placeholder="Auto-calculated Additional Charges"
-          description="Sum of all additional charges (tolls, fees, etc.) – updated automatically."
+          description="Sum of all additional charges (tolls, fees, etc.)."
         />
       </FormControl>
       <FormControl>

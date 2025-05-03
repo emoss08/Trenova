@@ -16,6 +16,7 @@ export function getColumns(): ColumnDef<HazardousMaterialSchema>[] {
     columnHelper.display({
       id: "code",
       header: "Code",
+      cell: ({ row }) => row.original.code,
     }),
     {
       accessorKey: "class",
