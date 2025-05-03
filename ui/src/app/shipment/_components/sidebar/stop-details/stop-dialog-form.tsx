@@ -3,6 +3,7 @@ import { InputField } from "@/components/fields/input-field";
 import { SelectField } from "@/components/fields/select-field";
 import { LocationAutocompleteField } from "@/components/ui/autocomplete-fields";
 import { FormControl, FormGroup } from "@/components/ui/form";
+import { NumberField } from "@/components/ui/number-input";
 import { stopStatusChoices, stopTypeChoices } from "@/lib/choices";
 import { ShipmentSchema } from "@/lib/schemas/shipment-schema";
 import { useFormContext } from "react-hook-form";
@@ -12,7 +13,7 @@ export function StopDialogForm({
   stopIdx,
 }: {
   moveIdx: number;
-  stopIdx?: number;
+  stopIdx: number;
 }) {
   const { control, setValue, getValues } = useFormContext<ShipmentSchema>();
 
@@ -106,23 +107,21 @@ export function StopDialogForm({
             />
           </FormControl>
           <FormControl>
-            <InputField
+            <NumberField
               name={`moves.${moveIdx}.stops.${stopIdx}.pieces`}
               control={control}
               label="Pieces"
               placeholder="Enter quantity"
-              type="number"
               description="Specifies the total number of items at this stop."
               sideText="pcs"
             />
           </FormControl>
           <FormControl>
-            <InputField
+            <NumberField
               name={`moves.${moveIdx}.stops.${stopIdx}.weight`}
               control={control}
               label="Weight"
               placeholder="Enter weight"
-              type="number"
               description="Specifies the total freight weight for this stop."
               sideText="lbs"
             />

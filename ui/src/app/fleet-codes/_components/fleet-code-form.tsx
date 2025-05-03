@@ -4,6 +4,7 @@ import { SelectField } from "@/components/fields/select-field";
 import { TextareaField } from "@/components/fields/textarea-field";
 import { UserAutocompleteField } from "@/components/ui/autocomplete-fields";
 import { FormControl, FormGroup } from "@/components/ui/form";
+import { NumberField } from "@/components/ui/number-input";
 import { statusChoices } from "@/lib/choices";
 import { type FleetCodeSchema } from "@/lib/schemas/fleet-code-schema";
 import { useFormContext } from "react-hook-form";
@@ -44,20 +45,18 @@ export function FleetCodeForm() {
         />
       </FormControl>
       <FormControl>
-        <InputField
+        <NumberField
           control={control}
           name="deadheadGoal"
-          type="number"
           label="Deadhead Goal"
           placeholder="Deadhead Goal"
           description="The deadhead goal of the fleet code"
         />
       </FormControl>
       <FormControl>
-        <InputField
+        <NumberField
           control={control}
           name="revenueGoal"
-          type="number"
           label="Revenue Goal"
           placeholder="Revenue Goal"
           description="The revenue goal of the fleet code"

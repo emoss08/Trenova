@@ -12,6 +12,8 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Form, FormControl, FormGroup } from "@/components/ui/form";
+import { NumberField } from "@/components/ui/number-input";
+import { useApiMutation } from "@/hooks/use-api-mutation";
 import { broadcastQueryInvalidation } from "@/hooks/use-invalidate-query";
 import {
   autoBillCriteriaChoices,
@@ -26,20 +28,10 @@ import {
   billingControlSchema,
 } from "@/lib/schemas/billing-schema";
 import { updateBillingControl } from "@/services/organization";
-import type { APIError } from "@/types/errors";
 import { zodResolver } from "@hookform/resolvers/zod";
-import {
-  useMutation,
-  useQueryClient,
-  useSuspenseQuery,
-} from "@tanstack/react-query";
+import { useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
 import { useCallback, useEffect, useState } from "react";
-import {
-  FormProvider,
-  useForm,
-  useFormContext,
-  type Path,
-} from "react-hook-form";
+import { FormProvider, useForm, useFormContext } from "react-hook-form";
 import { toast } from "sonner";
 
 export default function BillingControlForm() {
@@ -55,7 +47,7 @@ export default function BillingControlForm() {
 
   const { handleSubmit, setError, reset } = form;
 
-  const { mutateAsync } = useMutation({
+  const { mutateAsync } = useApiMutation({
     mutationFn: async (values: BillingControlSchema) => {
       const response = await updateBillingControl(values);
 
@@ -98,37 +90,14 @@ export default function BillingControlForm() {
       // * Reset the form to the new values
       reset(newValues);
     },
-    onError: (error: APIError, _, context) => {
-      // * Rollback the optimistic update
-      queryClient.setQueryData(
-        [queries.organization.getShipmentControl._def],
-        context?.previousShipmentControl,
-      );
-
-      if (error.isValidationError()) {
-        error.getFieldErrors().forEach((fieldError) => {
-          setError(fieldError.name as Path<BillingControlSchema>, {
-            message: fieldError.reason,
-          });
-        });
-      }
-
-      if (error.isRateLimitError()) {
-        toast.error("Rate limit exceeded", {
-          description:
-            "You have exceeded the rate limit. Please try again later.",
-        });
-      }
-
-      // * Regardless of the error, reset the form to the previous state
-      reset();
-    },
     onSettled: () => {
       // * Invalidate the query to refresh the data
       queryClient.invalidateQueries({
         queryKey: queries.organization.getShipmentControl._def,
       });
     },
+    setFormError: setError,
+    resourceName: "Billing Control",
   });
 
   const onSubmit = useCallback(
@@ -219,11 +188,10 @@ function ShipmentTransferSettings() {
           {showTransferCriteria && (
             <>
               <FormControl className="pl-10">
-                <InputField
+                <NumberField
                   control={control}
-                  name="transferBatchSize"
                   rules={{ required: autoTransfer }}
-                  type="number"
+                  name="transferBatchSize"
                   label="Transfer Batch Size"
                   placeholder="Enter maximum number of shipments per batch"
                   description="Defines the maximum number of shipments processed in a single transfer operation, optimizing system performance by balancing transfer efficiency with resource utilization while preventing processing bottlenecks during high-volume periods."
@@ -354,10 +322,9 @@ function AutomatedBillingSettings() {
                 />
               </FormControl>
               <FormControl className="pl-10">
-                <InputField
+                <NumberField
                   control={control}
                   name="autoBillBatchSize"
-                  type="number"
                   rules={{ required: autoBill }}
                   label="Automated Billing Batch Size"
                   placeholder="Enter maximum invoices per batch"
@@ -489,14 +456,13 @@ function ExceptionHandlingSettings() {
             />
           </FormControl>
           <FormControl>
-            <InputField
+            <NumberField
               control={control}
               name="rateDiscrepancyThreshold"
               label="Rate Discrepancy Threshold"
               placeholder="Enter the rate discrepancy threshold"
               description="Establishes the monetary or percentage variance between quoted and applied rates that triggers exception handling workflows."
               rules={{ required: true, min: 0 }}
-              type="number"
               sideText="%"
             />
           </FormControl>
@@ -568,14 +534,13 @@ function ConsolidationSettings() {
                 />
               </FormControl>
               <FormControl className="pl-10 min-h-[3em]">
-                <InputField
+                <NumberField
                   control={control}
                   name="consolidationPeriodDays"
                   label="Consolidation Period Duration"
                   placeholder="Enter the consolidation period days"
                   description="Defines the timeframe (in days) during which shipments are grouped into a single invoice."
                   rules={{ required: true, min: 1, max: 30 }}
-                  type="number"
                   sideText="days"
                 />
               </FormControl>

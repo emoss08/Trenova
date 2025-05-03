@@ -7,6 +7,7 @@ import {
   FleetCodeAutocompleteField,
 } from "@/components/ui/autocomplete-fields";
 import { FormControl, FormGroup, FormSection } from "@/components/ui/form";
+import { NumberField } from "@/components/ui/number-input";
 import { equipmentStatusChoices } from "@/lib/choices";
 import { queries } from "@/lib/queries";
 import { type TrailerSchema } from "@/lib/schemas/trailer-schema";
@@ -85,9 +86,8 @@ function GeneralInformationSection({
         />
       </FormControl>
       <FormControl>
-        <InputField
+        <NumberField
           control={control}
-          type="number"
           name="year"
           label="Year"
           placeholder="Year"
@@ -95,10 +95,9 @@ function GeneralInformationSection({
         />
       </FormControl>
       <FormControl>
-        <InputField
+        <NumberField
           control={control}
           name="maxLoadWeight"
-          type="number"
           label="Max Load Weight"
           placeholder="Max Load Weight"
           description="The maximum load weight the trailer can carry."

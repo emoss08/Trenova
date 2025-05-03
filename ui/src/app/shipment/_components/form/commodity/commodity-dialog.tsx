@@ -1,4 +1,3 @@
-import { InputField } from "@/components/fields/input-field";
 import { CommodityAutocompleteField } from "@/components/ui/autocomplete-fields";
 import { Button } from "@/components/ui/button";
 import {
@@ -11,6 +10,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { FormControl, FormGroup } from "@/components/ui/form";
+import { NumberField } from "@/components/ui/number-input";
 import { ShipmentSchema } from "@/lib/schemas/shipment-schema";
 import { TableSheetProps } from "@/types/data-table";
 import { useCallback, useEffect } from "react";
@@ -146,23 +146,21 @@ function CommodityForm({ index }: { index: number }) {
         />
       </FormControl>
       <FormControl>
-        <InputField
+        <NumberField
           control={control}
           name={`commodities.${index}.pieces`}
           label="Pieces"
-          type="number"
           rules={{ required: true, min: 1 }}
           placeholder="Pieces"
           description="Specify the number of pieces for this commodity."
         />
       </FormControl>
       <FormControl>
-        <InputField
+        <NumberField
           control={control}
           name={`commodities.${index}.weight`}
           placeholder="Weight"
           label="Weight"
-          type="number"
           rules={{ required: true, min: 1 }}
           description="Enter the weight of a single piece of this commodity."
         />

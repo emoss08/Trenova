@@ -2,6 +2,7 @@ import { InputField } from "@/components/fields/input-field";
 import { SelectField } from "@/components/fields/select-field";
 import { TextareaField } from "@/components/fields/textarea-field";
 import { FormControl, FormGroup } from "@/components/ui/form";
+import { NumberField } from "@/components/ui/number-input";
 import { accessorialChargeMethodChoices, statusChoices } from "@/lib/choices";
 import { type AccessorialChargeSchema } from "@/lib/schemas/accessorial-charge-schema";
 import { useFormContext } from "react-hook-form";
@@ -54,23 +55,21 @@ export function AccessorialChargeForm() {
         />
       </FormControl>
       <FormControl>
-        <InputField
+        <NumberField
           control={control}
           rules={{ required: true }}
           name="unit"
           label="Units"
-          type="number"
           placeholder="Unit"
           description="Quantity of units this charge applies to (number of pallets, hours of detention, etc.)"
           sideText="unit(s)"
         />
       </FormControl>
       <FormControl cols="full">
-        <InputField
+        <NumberField
           control={control}
           rules={{ required: true }}
           name="amount"
-          type="number"
           label="Amount"
           placeholder="Amount"
           description="Dollar value per unit for this accessorial service, used to calculate total charges for billing and settlement"

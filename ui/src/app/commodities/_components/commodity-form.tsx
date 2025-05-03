@@ -4,6 +4,7 @@ import { SwitchField } from "@/components/fields/switch-field";
 import { TextareaField } from "@/components/fields/textarea-field";
 import { HazardousMaterialAutocompleteField } from "@/components/ui/autocomplete-fields";
 import { FormControl, FormGroup } from "@/components/ui/form";
+import { NumberField } from "@/components/ui/number-input";
 import { statusChoices } from "@/lib/choices";
 import { type CommoditySchema } from "@/lib/schemas/commodity-schema";
 import { useFormContext } from "react-hook-form";
@@ -63,44 +64,40 @@ export function CommodityForm() {
         />
       </FormControl>
       <FormControl>
-        <InputField
+        <NumberField
           name="minTemperature"
           control={control}
           label="Min Temperature"
           placeholder="Min Temperature"
-          type="number"
           description="The lowest temperature (°F) at which the commodity can be safely transported."
           sideText="°F"
         />
       </FormControl>
       <FormControl>
-        <InputField
+        <NumberField
           name="maxTemperature"
           control={control}
           label="Max Temperature"
           placeholder="Max Temperature"
-          type="number"
           description="The highest temperature (°F) at which the commodity can be safely transported."
           sideText="°F"
         />
       </FormControl>
       <FormControl>
-        <InputField
+        <NumberField
           name="weightPerUnit"
           control={control}
           label="Weight Per Unit"
           placeholder="Weight Per Unit"
-          type="number"
           description="The weight (in pounds) of a single unit of this commodity. Used for calculating total load weight."
         />
       </FormControl>
       <FormControl>
-        <InputField
+        <NumberField
           name="linearFeetPerUnit"
           control={control}
           label="Linear Feet Per Unit"
           placeholder="Linear Feet Per Unit"
-          type="number"
           description="The linear feet (in feet) of a single unit of this commodity. Used for calculating total load linear feet."
         />
       </FormControl>

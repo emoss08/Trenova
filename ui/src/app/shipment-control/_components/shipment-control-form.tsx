@@ -11,6 +11,7 @@ import {
 } from "@/components/ui/card";
 import { Form, FormControl, FormGroup } from "@/components/ui/form";
 import { ExternalLink } from "@/components/ui/link";
+import { NumberField } from "@/components/ui/number-input";
 import { broadcastQueryInvalidation } from "@/hooks/use-invalidate-query";
 import { queries } from "@/lib/queries";
 import {
@@ -46,7 +47,9 @@ export default function ShipmentControlForm() {
     defaultValues: shipmentControl.data,
   });
 
-  const { handleSubmit, setError, reset } = form;
+  const { handleSubmit, setError, reset, watch } = form;
+
+  console.info(watch());
 
   const { mutateAsync } = useMutation({
     mutationFn: async (values: ShipmentControlSchema) => {
@@ -262,11 +265,10 @@ function DetentionForm() {
                 />
               </FormControl>
               <FormControl className="pl-10 min-h-[3em]">
-                <InputField
+                <NumberField
                   control={control}
                   name="detentionThreshold"
                   label="Detention Threshold"
-                  type="number"
                   placeholder="Enter threshold in minutes"
                   description="Defines the standard free time allowance (in minutes) at facilities before detention charges begin accruing."
                   sideText="minutes"
@@ -496,10 +498,9 @@ function PerformanceMetricsForm() {
       <CardContent className="max-w-prose">
         <FormGroup cols={2}>
           <FormControl>
-            <InputField
+            <NumberField
               control={control}
               name="onTimeDeliveryTarget"
-              type="number"
               label="On-Time Delivery Target"
               placeholder="Enter target in percentage"
               description="Sets the organizational benchmark for on-time delivery performance, typically 95-98% for premium service carriers."
@@ -507,10 +508,9 @@ function PerformanceMetricsForm() {
             />
           </FormControl>
           <FormControl>
-            <InputField
+            <NumberField
               control={control}
               name="serviceFailureTarget"
-              type="number"
               label="Service Failure Target"
               placeholder="Enter target in percentage"
               description="Defines the maximum acceptable percentage of service failures, establishing your company's service failure tolerance threshold."
@@ -659,13 +659,12 @@ function DelayShipmentForm() {
           {showDelayOptions && (
             <>
               <FormControl className="pl-10 min-h-[3em]">
-                <InputField
+                <NumberField
                   control={control}
                   name="autoDelayShipmentsThreshold"
                   label="Delay Status Threshold"
                   placeholder="Enter threshold in minutes"
                   description="Defines the time variance (in minutes) from scheduled delivery or transit milestones before a shipment is flagged as 'Delayed'."
-                  type="number"
                   sideText="minutes"
                   className="max-w-[300px]"
                 />
