@@ -2,13 +2,14 @@
 import { TableBody, TableCell, TableRow } from "@/components/ui/table";
 import { cn } from "@/lib/utils";
 import { DataTableBodyProps } from "@/types/data-table";
-import { flexRender, type Row } from "@tanstack/react-table";
+import { flexRender, type Row, type Table } from "@tanstack/react-table";
 import React from "react";
 
 function DataTableRow<TData>({
   row,
   selected,
   isLastRow = false,
+  table,
   // We don't actually use columnVisibility in the component,
   // but we need it for the memo comparison
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -18,6 +19,7 @@ function DataTableRow<TData>({
   selected?: boolean;
   isLastRow?: boolean;
   columnVisibility: Record<string, boolean>;
+  table: Table<TData>;
 }) {
   return (
     <TableRow
@@ -34,6 +36,7 @@ function DataTableRow<TData>({
       className={cn(
         "[&>:not(:last-child)]:border-r border-border",
         "-outline-offset-1 outline-primary transition-colors focus-visible:bg-muted/50 focus-visible:outline data-[state=selected]:outline",
+        table.options.meta?.getRowClassName?.(row),
       )}
     >
       {row.getVisibleCells().map((cell, index) => {
@@ -47,6 +50,7 @@ function DataTableRow<TData>({
             aria-label={`${cell.column.id} cell`}
             className={cn(
               "border-b border-border bg-transparent",
+              cell.column.columnDef.meta?.cellClassName,
               isLastRow && isFirstCell && "rounded-bl-md",
               isLastRow && isLastCell && "rounded-br-md",
             )}
@@ -102,6 +106,7 @@ export function DataTableBody<TData extends Record<string, any>>({
               selected={row.getIsSelected()}
               isLastRow={isLastRow}
               columnVisibility={table.getState().columnVisibility}
+              table={table}
             />
           );
         })

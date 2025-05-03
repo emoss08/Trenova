@@ -3,12 +3,8 @@ import {
   createEntityRefColumn,
   createNestedEntityRefColumn,
 } from "@/components/data-table/_components/data-table-column-helpers";
+import { HoverCardTimestamp } from "@/components/data-table/_components/data-table-components";
 import { ShipmentStatusBadge } from "@/components/status-badge";
-import {
-  generateDateTimeString,
-  generateDateTimeStringFromUnixTimestamp,
-  toDate,
-} from "@/lib/date";
 import { LocationSchema } from "@/lib/schemas/location-schema";
 import {
   getDestinationStopInfo,
@@ -74,15 +70,8 @@ export function getColumns(): ColumnDef<Shipment>[] {
       cell: ({ row }) => {
         const shipment = row.original;
         const originStop = getOriginStopInfo(shipment);
-        if (!originStop) {
-          return <p>-</p>;
-        }
 
-        return (
-          <p>
-            {generateDateTimeStringFromUnixTimestamp(originStop.plannedArrival)}
-          </p>
-        );
+        return <HoverCardTimestamp timestamp={originStop?.plannedArrival} />;
       },
     },
     createNestedEntityRefColumn(columnHelper, {
@@ -112,16 +101,10 @@ export function getColumns(): ColumnDef<Shipment>[] {
       cell: ({ row }) => {
         const shipment = row.original;
         const destinationStop = getDestinationStopInfo(shipment);
-        if (!destinationStop) {
-          return <p>-</p>;
-        }
 
-        const arrivalDate = toDate(destinationStop.plannedArrival);
-        if (!arrivalDate) {
-          return <p>-</p>;
-        }
-
-        return <p>{generateDateTimeString(arrivalDate)}</p>;
+        return (
+          <HoverCardTimestamp timestamp={destinationStop?.plannedArrival} />
+        );
       },
     }),
   ];

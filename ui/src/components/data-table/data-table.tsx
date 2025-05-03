@@ -38,6 +38,7 @@ export function DataTable<TData extends Record<string, any>>({
   includeHeader = true,
   includeOptions = true,
   extraActions,
+  getRowClassName,
 }: DataTableProps<TData>) {
   const [searchParams, setSearchParams] = useQueryStates(searchParamsParser);
   const { page, pageSize, entityId, modalType } = searchParams;
@@ -88,6 +89,7 @@ export function DataTable<TData extends Record<string, any>>({
     getCoreRowModel: getCoreRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
     debugAll: DEBUG_TABLE,
+    meta: { getRowClassName },
   });
 
   const selectedRow = useMemo(() => {

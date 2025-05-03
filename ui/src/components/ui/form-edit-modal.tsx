@@ -253,7 +253,6 @@ export function FormEditModal<T extends FieldValues>({
               <DialogDescription>
                 Last updated on{" "}
                 {formatToUserTimezone(currentRecord.updatedAt, {
-                  timezone: user?.timezone,
                   timeFormat: user?.timeFormat,
                 })}
               </DialogDescription>
