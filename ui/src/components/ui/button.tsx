@@ -55,7 +55,7 @@ type FormSaveButtonProps = {
   text?: string;
   onClick?: () => void;
 } & VariantProps<typeof buttonVariants> &
-  React.ComponentProps<"button">;
+  Omit<React.ComponentProps<"button">, "children">;
 
 function FormSaveButton({
   title,
