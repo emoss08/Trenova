@@ -75,8 +75,9 @@ func (tr *trailerRepository) addOptions(q *bun.SelectQuery, opts repositories.Tr
 	}
 
 	if opts.Status != "" {
-		status, err := domain.EquipmentStatusFromString(opts.Status)
+		status, err := domain.StatusFromString(opts.Status)
 		if err != nil {
+			tr.l.Error().Err(err).Msg("failed to convert status to equipment status")
 			return q
 		}
 
@@ -224,7 +225,7 @@ func (tr *trailerRepository) Create(ctx context.Context, t *trailer.Trailer) (*t
 				Err(iErr).
 				Interface("trailer", t).
 				Msg("failed to insert trailer")
-			return err
+			return iErr
 		}
 
 		return nil

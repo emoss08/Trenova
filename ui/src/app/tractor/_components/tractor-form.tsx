@@ -12,6 +12,7 @@ import { NumberField } from "@/components/ui/number-input";
 import { equipmentStatusChoices } from "@/lib/choices";
 import { queries } from "@/lib/queries";
 import { type TractorSchema } from "@/lib/schemas/tractor-schema";
+import { Status } from "@/types/common";
 import { EquipmentClass } from "@/types/equipment-type";
 import { useQuery } from "@tanstack/react-query";
 import { useFormContext } from "react-hook-form";
@@ -64,6 +65,9 @@ export function TractorForm() {
             placeholder="Equip. Manufacturer"
             description="The manufacturer of the tractor's equipment."
             rules={{ required: true }}
+            extraSearchParams={{
+              status: [Status.Active],
+            }}
           />
         </FormControl>
         <FormControl>

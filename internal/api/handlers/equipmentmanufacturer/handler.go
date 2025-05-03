@@ -100,7 +100,12 @@ func (h *Handler) list(c *fiber.Ctx) error {
 			return nil, h.eh.HandleError(fc, err)
 		}
 
-		return h.ems.List(fc.UserContext(), filter)
+		return h.ems.List(fc.UserContext(), repositories.ListEquipmentManufacturerOptions{
+			Filter: filter,
+			FilterOptions: repositories.EquipmentManufacturerFilterOptions{
+				Status: fc.Query("status"),
+			},
+		})
 	}
 
 	return limitoffsetpagination.HandlePaginatedRequest(c, h.eh, reqCtx, handler)
@@ -117,7 +122,7 @@ func (h *Handler) get(c *fiber.Ctx) error {
 		return h.eh.HandleError(c, err)
 	}
 
-	em, err := h.ems.Get(c.UserContext(), repositories.GetEquipManufacturerByIDOptions{
+	em, err := h.ems.Get(c.UserContext(), repositories.GetEquipmentManufacturerByIDOptions{
 		ID:     equipManuID,
 		BuID:   reqCtx.BuID,
 		OrgID:  reqCtx.OrgID,
