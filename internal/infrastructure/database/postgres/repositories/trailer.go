@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"fmt"
 
+	"github.com/emoss08/trenova/internal/core/domain"
 	"github.com/emoss08/trenova/internal/core/domain/trailer"
 	"github.com/emoss08/trenova/internal/core/ports"
 	"github.com/emoss08/trenova/internal/core/ports/db"
@@ -53,6 +54,38 @@ func NewTrailerRepository(p TrailerRepositoryParams) repositories.TrailerReposit
 	}
 }
 
+// addOptions expands the query with related entities based on TrailerFilterOptions.
+// This allows eager loading of related data like equipment type and fleet code.
+//
+// Parameters:
+//   - q: The base select query.
+//   - opts: TrailerFilterOptions containing filter options.
+//
+// Returns:
+//   - *bun.SelectQuery: The updated query with the necessary relations.
+func (tr *trailerRepository) addOptions(q *bun.SelectQuery, opts repositories.TrailerFilterOptions) *bun.SelectQuery {
+	// * Include the equipment details if requested
+	if opts.IncludeEquipmentDetails {
+		q = q.Relation("EquipmentType").Relation("EquipmentManufacturer")
+	}
+
+	// * Include the fleet details if requested
+	if opts.IncludeFleetDetails {
+		q = q.Relation("FleetCode")
+	}
+
+	if opts.Status != "" {
+		status, err := domain.EquipmentStatusFromString(opts.Status)
+		if err != nil {
+			return q
+		}
+
+		q = q.Where("tr.status = ?", status)
+	}
+
+	return q
+}
+
 // filterQuery applies filters and pagination to the trailer query.
 // It includes tenant-based filtering and full-text search when provided.
 //
@@ -69,13 +102,7 @@ func (tr *trailerRepository) filterQuery(q *bun.SelectQuery, opts *repositories.
 		Filter:     opts.Filter,
 	})
 
-	if opts.IncludeEquipmentDetails {
-		q = q.Relation("EquipmentType").Relation("EquipmentManufacturer")
-	}
-
-	if opts.IncludeFleetDetails {
-		q = q.Relation("FleetCode")
-	}
+	q = tr.addOptions(q, opts.FilterOptions)
 
 	if opts.Filter.Query != "" {
 		q = postgressearch.BuildSearchQuery(
@@ -149,15 +176,14 @@ func (tr *trailerRepository) GetByID(ctx context.Context, opts repositories.GetT
 	entity := new(trailer.Trailer)
 
 	query := dba.NewSelect().Model(entity).
-		Where("tr.id = ? AND tr.organization_id = ? AND tr.business_unit_id = ?", opts.ID, opts.OrgID, opts.BuID)
+		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+			return sq.
+				Where("tr.id = ?", opts.ID).
+				Where("tr.organization_id = ?", opts.OrgID).
+				Where("tr.business_unit_id = ?", opts.BuID)
+		})
 
-	if opts.IncludeEquipmentDetails {
-		query = query.Relation("EquipmentType").Relation("EquipmentManufacturer")
-	}
-
-	if opts.IncludeFleetDetails {
-		query = query.Relation("FleetCode")
-	}
+	query = tr.addOptions(query, opts.FilterOptions)
 
 	if err = query.Scan(ctx); err != nil {
 		if eris.Is(err, sql.ErrNoRows) {
