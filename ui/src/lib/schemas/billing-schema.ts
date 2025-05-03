@@ -9,7 +9,7 @@ import { z } from "zod";
 
 export const billingControlSchema = z
   .object({
-    id: z.string().optional(),
+    id: z.string(),
     version: z.number().optional(),
     createdAt: z.number().optional(),
     updatedAt: z.number().optional(),
@@ -36,28 +36,43 @@ export const billingControlSchema = z
     autoTransfer: z.boolean(),
     transferCriteria: z.nativeEnum(TransferCriteria),
     transferSchedule: z.nativeEnum(TransferSchedule),
-    transferBatchSize: z
-      .number()
-      .min(1, "Transfer batch size must be greater than 0"),
+    transferBatchSize: z.preprocess((val) => {
+      if (val === "" || val === null || val === undefined) {
+        return undefined;
+      }
+      const parsed = parseInt(String(val), 10);
+      return isNaN(parsed) ? undefined : parsed;
+    }, z.number().optional()),
     autoMarkReadyToBill: z.boolean(),
     enforceCustomerBillingReq: z.boolean(),
     validateCustomerRates: z.boolean(),
     autoBill: z.boolean(),
     autoBillCriteria: z.nativeEnum(AutoBillCriteria).optional(),
     sendAutoBillNotifications: z.boolean(),
-    autoBillBatchSize: z
-      .number()
-      .min(1, "Auto bill batch size must be greater than 0"),
+    autoBillBatchSize: z.preprocess((val) => {
+      if (val === "" || val === null || val === undefined) {
+        return undefined;
+      }
+      const parsed = parseInt(String(val), 10);
+      return isNaN(parsed) ? undefined : parsed;
+    }, z.number().optional()),
     billingExceptionHandling: z.nativeEnum(BillingExceptionHandling),
-    rateDiscrepancyThreshold: z
-      .number()
-      .min(0, "Rate discrepancy threshold must be greater than 0"),
+    rateDiscrepancyThreshold: z.preprocess((val) => {
+      if (val === "" || val === null || val === undefined) {
+        return undefined;
+      }
+      const parsed = parseFloat(String(val));
+      return isNaN(parsed) ? undefined : parsed;
+    }, z.number().optional()),
     autoResolveMinorDiscrepancies: z.boolean(),
     allowInvoiceConsolidation: z.boolean(),
-    consolidationPeriodDays: z
-      .number()
-      .min(1, "Consolidation period days must be greater than 0")
-      .optional(),
+    consolidationPeriodDays: z.preprocess((val) => {
+      if (val === "" || val === null || val === undefined) {
+        return undefined;
+      }
+      const parsed = parseInt(String(val), 10);
+      return isNaN(parsed) ? undefined : parsed;
+    }, z.number().optional()),
     groupConsolidatedInvoices: z.boolean(),
   })
   .refine(
