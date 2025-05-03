@@ -47,9 +47,7 @@ export default function ShipmentControlForm() {
     defaultValues: shipmentControl.data,
   });
 
-  const { handleSubmit, setError, reset, watch } = form;
-
-  console.info(watch());
+  const { handleSubmit, setError, reset } = form;
 
   const { mutateAsync } = useMutation({
     mutationFn: async (values: ShipmentControlSchema) => {
