@@ -43,7 +43,7 @@ function NumberInputField({ className, ...props }: ArkNumberInput.InputProps) {
     <ArkNumberInput.Input
       data-slot="number-input-input"
       className={cn(
-        "border-transparent border-none bg-transparent outline-none",
+        "border-transparent border-none bg-transparent outline-none w-full",
         className,
       )}
       {...props}
