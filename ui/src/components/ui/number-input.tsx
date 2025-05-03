@@ -146,12 +146,12 @@ export function NumberField<T extends FieldValues>({
               )}
               <NumberInputIncrementTrigger asChild>
                 <ark.button className="hover:bg-muted focus:bg-muted cursor-pointer rounded-tr-md">
-                  <ChevronUpIcon className="size-4" />
+                  <ChevronUpIcon className="size-3" />
                 </ark.button>
               </NumberInputIncrementTrigger>
               <NumberInputDecrementTrigger asChild>
                 <ark.button className="hover:bg-muted focus:bg-muted cursor-pointer rounded-br-md">
-                  <ChevronDownIcon className="size-4" />
+                  <ChevronDownIcon className="size-3" />
                 </ark.button>
               </NumberInputDecrementTrigger>
             </NumberInputControl>
