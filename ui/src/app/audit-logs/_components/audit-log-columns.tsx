@@ -1,5 +1,4 @@
 import { DataTableColumnHeaderWithTooltip } from "@/components/data-table/_components/data-table-column-header";
-import { createEntityColumn } from "@/components/data-table/_components/data-table-column-helpers";
 import { UserAvatar } from "@/components/nav-user";
 import { generateDateTimeStringFromUnixTimestamp } from "@/lib/date";
 import { type AuditEntry } from "@/types/audit-entry";
@@ -13,11 +12,20 @@ export function getColumns(): ColumnDef<AuditEntry>[] {
   const columnHelper = createColumnHelper<AuditEntry>();
 
   return [
-    createEntityColumn(columnHelper, "resourceId", {
-      accessorKey: "resourceId",
-      getHeaderText: "Resource ID",
-      getId: (auditEntry) => auditEntry.id,
-      getDisplayText: (auditEntry) => auditEntry.resourceId || "-",
+    columnHelper.display({
+      id: "resourceId",
+      header: ({ column }) => (
+        <DataTableColumnHeaderWithTooltip
+          column={column}
+          title="Resource ID"
+          tooltipContent="The ID of the resource that was affected."
+        />
+      ),
+      cell: ({ row }) => {
+        const { resourceId } = row.original;
+
+        return <p>{resourceId}</p>;
+      },
     }),
     columnHelper.display({
       id: "comment",

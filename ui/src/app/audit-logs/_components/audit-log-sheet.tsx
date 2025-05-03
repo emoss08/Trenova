@@ -1,5 +1,11 @@
+/* eslint-disable react-hooks/exhaustive-deps */
+import { useDataTable } from "@/components/data-table/data-table-provider";
+import { Kbd } from "@/components/kbd";
+import { Button } from "@/components/ui/button";
+import { Icon } from "@/components/ui/icons";
 import { JsonViewer } from "@/components/ui/json-viewer";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Separator } from "@/components/ui/separator";
 import {
   Sheet,
   SheetContent,
@@ -7,20 +13,88 @@ import {
   SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { VisuallyHidden } from "@/components/ui/visually-hidden";
+import { formatToUserTimezone } from "@/lib/date";
+import { useUser } from "@/stores/user-store";
 import { AuditEntry } from "@/types/audit-entry";
 import { EditTableSheetProps } from "@/types/data-table";
-import AuditDetailsHeader from "./audit-details-header";
+import {
+  faChevronDown,
+  faChevronLeft,
+  faChevronUp,
+} from "@fortawesome/pro-solid-svg-icons";
+import { memo, useCallback, useEffect, useMemo } from "react";
+import { AuditActions } from "./audit-actions";
+import { AuditEntryActionBadge } from "./audit-column-components";
 import { ChangesTable } from "./audit-log-data-section";
 import { AuditLogDetails } from "./audit-log-details";
-import { AuditLogHeader } from "./audit-log-header";
 
 export function AuditLogDetailsSheet({
   currentRecord,
-  open,
-  onOpenChange,
 }: EditTableSheetProps<AuditEntry>) {
-  const handleExport = () => {
+  const { table, rowSelection, isLoading } = useDataTable();
+  const selectedRowKey = Object.keys(rowSelection)[0];
+
+  const selectedRow = useMemo(() => {
+    if (isLoading && !selectedRowKey) return;
+    return table
+      .getCoreRowModel()
+      .flatRows.find((row) => row.id === selectedRowKey);
+  }, [selectedRowKey, isLoading]);
+
+  const index = table
+    .getCoreRowModel()
+    .flatRows.findIndex((row) => row.id === selectedRow?.id);
+
+  const nextId = useMemo(
+    () => table.getCoreRowModel().flatRows[index + 1]?.id,
+    [index, isLoading],
+  );
+
+  const prevId = useMemo(
+    () => table.getCoreRowModel().flatRows[index - 1]?.id,
+    [index, isLoading],
+  );
+
+  const onPrev = useCallback(() => {
+    if (prevId) table.setRowSelection({ [prevId]: true });
+  }, [prevId, isLoading]);
+
+  const onNext = useCallback(() => {
+    if (nextId) table.setRowSelection({ [nextId]: true });
+  }, [nextId, isLoading, table]);
+
+  useEffect(() => {
+    const down = (e: KeyboardEvent) => {
+      if (!selectedRowKey) return;
+
+      // REMINDER: prevent dropdown navigation inside of sheet to change row selection
+      const activeElement = document.activeElement;
+      const isMenuActive = activeElement?.closest('[role="menu"]');
+
+      if (isMenuActive) return;
+
+      if (e.key === "ArrowUp") {
+        e.preventDefault();
+        onPrev();
+      }
+      if (e.key === "ArrowDown") {
+        e.preventDefault();
+        onNext();
+      }
+    };
+
+    document.addEventListener("keydown", down);
+    return () => document.removeEventListener("keydown", down);
+  }, [selectedRowKey, onNext, onPrev]);
+
+  const handleExport = useCallback(() => {
     if (!currentRecord) return;
 
     // Create a JSON blob and download it
@@ -37,10 +111,22 @@ export function AuditLogDetailsSheet({
     // Clean up
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
-  };
+  }, [currentRecord]);
 
   return (
-    <Sheet open={open} onOpenChange={onOpenChange}>
+    <Sheet
+      open={!!selectedRowKey}
+      onOpenChange={(open) => {
+        if (!open) {
+          const el = selectedRowKey
+            ? document.getElementById(selectedRowKey)
+            : null;
+          table.resetRowSelection();
+
+          setTimeout(() => el?.focus(), 0);
+        }
+      }}
+    >
       <SheetContent className="flex flex-col sm:max-w-2xl" withClose={false}>
         <VisuallyHidden>
           <SheetHeader>
@@ -48,16 +134,57 @@ export function AuditLogDetailsSheet({
             <SheetDescription>Audit log details</SheetDescription>
           </SheetHeader>
         </VisuallyHidden>
-        <div className="size-full">
-          <div className="pt-4">
-            <AuditLogHeader
-              onBack={() => onOpenChange(false)}
-              onExport={handleExport}
-            />
-            <div className="flex flex-col gap-2 mt-4">
-              <AuditDetailsHeader entry={currentRecord} />
-              <AuditLogDetailsContent entry={currentRecord} />
+        <div className="size-full pt-4">
+          <div className="flex items-center px-4 justify-between">
+            <HeaderBackButton onBack={() => table.resetRowSelection()} />
+            <div className="flex h-7 items-center gap-1">
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      size="icon"
+                      variant="ghost"
+                      className="h-7 w-7"
+                      disabled={!prevId}
+                      onClick={onPrev}
+                    >
+                      <Icon icon={faChevronUp} className="h-5 w-5" />
+                      <span className="sr-only">Previous</span>
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>
+                      Navigate <Kbd variant="outline">↑</Kbd>
+                    </p>
+                  </TooltipContent>
+                </Tooltip>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      size="icon"
+                      variant="ghost"
+                      className="h-7 w-7"
+                      disabled={!nextId}
+                      onClick={onNext}
+                    >
+                      <Icon icon={faChevronDown} className="h-5 w-5" />
+                      <span className="sr-only">Next</span>
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>
+                      Navigate <Kbd variant="outline">↓</Kbd>
+                    </p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+              <Separator orientation="vertical" className="mx-1" />
+              <AuditActions onExport={handleExport} />
             </div>
+          </div>
+          <div className="flex flex-col gap-2 mt-4">
+            <MemoizedAuditDetailsHeader entry={currentRecord} />
+            <MemoizedAuditLogDetailsContent entry={currentRecord} />
           </div>
         </div>
       </SheetContent>
@@ -65,7 +192,7 @@ export function AuditLogDetailsSheet({
   );
 }
 
-export function AuditLogDetailsContent({ entry }: { entry?: AuditEntry }) {
+function AuditLogDetailsContent({ entry }: { entry?: AuditEntry }) {
   if (!entry) {
     return null;
   }
@@ -116,5 +243,53 @@ export function AuditLogDetailsContent({ entry }: { entry?: AuditEntry }) {
         </div>
       </div>
     </ScrollArea>
+  );
+}
+
+const MemoizedAuditLogDetailsContent = memo(
+  AuditLogDetailsContent,
+  (prev, next) => {
+    return prev.entry === next.entry;
+  },
+) as typeof AuditLogDetailsContent;
+
+function AuditDetailsHeader({ entry }: { entry?: AuditEntry }) {
+  const user = useUser();
+
+  if (!entry) {
+    return null;
+  }
+
+  const { timestamp, comment, action } = entry;
+
+  return (
+    <div className="flex flex-col px-4 pb-2 border-b border-bg-sidebar-border">
+      <div className="flex items-center justify-between">
+        <h2 className="font-semibold leading-none tracking-tight flex items-center gap-x-2">
+          {comment || "-"}
+        </h2>
+        <AuditEntryActionBadge action={action} />
+      </div>
+      <p className="text-2xs text-muted-foreground font-normal">
+        Entry created on{" "}
+        {formatToUserTimezone(timestamp, {
+          timezone: user?.timezone,
+          timeFormat: user?.timeFormat,
+        })}
+      </p>
+    </div>
+  );
+}
+
+const MemoizedAuditDetailsHeader = memo(AuditDetailsHeader, (prev, next) => {
+  return prev.entry === next.entry;
+}) as typeof AuditDetailsHeader;
+
+function HeaderBackButton({ onBack }: { onBack: () => void }) {
+  return (
+    <Button variant="outline" size="sm" onClick={onBack}>
+      <Icon icon={faChevronLeft} className="size-4" />
+      <span className="text-sm">Back</span>
+    </Button>
   );
 }
