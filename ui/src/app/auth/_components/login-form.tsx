@@ -111,12 +111,11 @@ export function LoginForm({ email, onForgotPassword }: LoginFormProps) {
         <FormSaveButton
           size="lg"
           type="submit"
-          title="login"
+          title="Login"
+          text="Sign In"
           isSubmitting={isSubmitting}
           disabled={isSubmitting}
-        >
-          Sign In
-        </FormSaveButton>
+        />
       </FormGroup>
     </Form>
   );
