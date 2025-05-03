@@ -6,6 +6,7 @@ import {
 import { FormControl, FormGroup } from "@/components/ui/form";
 import { AssignmentSchema } from "@/lib/schemas/assignment-schema";
 import { getTractorAssignments } from "@/services/tractor";
+import { EquipmentStatus } from "@/types/tractor";
 import { useQuery } from "@tanstack/react-query";
 import { useEffect } from "react";
 import { useFormContext, useWatch } from "react-hook-form";
@@ -53,6 +54,9 @@ export function AssignmentForm() {
           rules={{ required: true }}
           placeholder="Select Tractor"
           description="Select the tractor for the assignment."
+          extraSearchParams={{
+            status: EquipmentStatus.Available,
+          }}
         />
       </FormControl>
       <FormControl>
@@ -63,6 +67,9 @@ export function AssignmentForm() {
           rules={{ required: true }}
           placeholder="Select Trailer"
           description="Select the trailer for the assignment."
+          extraSearchParams={{
+            status: EquipmentStatus.Available,
+          }}
         />
       </FormControl>
       <FormControl>
