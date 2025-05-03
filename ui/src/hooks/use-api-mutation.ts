@@ -20,6 +20,15 @@ export function handleMutationError<TFormValues extends FieldValues>({
 
   // Handle validation errors by setting form errors
   if (apiError?.isValidationError() && setFormError) {
+    // * if it is a version mismatch error, we don't need to set the form error
+    if (apiError.isVersionMismatchError()) {
+      toast.error("Version mismatch", {
+        description:
+          "The version of the resource you are trying to update is outdated. Please refresh the page and try again.",
+      });
+      return;
+    }
+
     apiError.getFieldErrors().forEach((fieldError) => {
       try {
         setFormError(fieldError.name as Path<TFormValues>, {
