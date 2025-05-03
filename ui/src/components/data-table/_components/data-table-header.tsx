@@ -9,7 +9,7 @@ export function DataTableHeader<TData>({ table }: { table: Table<TData> }) {
         <TableRow
           key={headerGroup.id}
           className={cn(
-            "bg-muted/50 hover:bg-muted/50",
+            "bg-muted hover:bg-muted/50",
             "[&>*]:border-t [&>:not(:last-child)]:border-r",
           )}
         >
