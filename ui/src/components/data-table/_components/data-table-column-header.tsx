@@ -149,7 +149,7 @@ export function DataTableColumnHeaderWithTooltip<TData, TValue>({
     <div className={cn("flex items-center gap-2", className)}>
       <div
         title={tooltipContent}
-        className="inline-flex items-center justify-center cursor-normal -ml-3 h-8 px-3 py-2 rounded-md w-fit border-transparent bg-transparent text-xs hover:bg-muted hover:text-accent-foreground data-[state=open]:bg-muted data-[state=open]:text-accent-foreground [&>svg:last-child]:hidden"
+        className="inline-flex items-center justify-center cursor-normal -ml-3 h-8 px-3 py-2 rounded-md w-fit border-transparent bg-transparent text-xs [&>svg:last-child]:hidden"
       >
         <div className="inline-flex items-center gap-1">
           {startContent}
