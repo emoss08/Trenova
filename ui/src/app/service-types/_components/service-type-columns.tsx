@@ -1,10 +1,5 @@
-import { DataTableColumnHeader } from "@/components/data-table/_components/data-table-column-header";
-import {
-  createCommonColumns,
-  createEntityColumn,
-} from "@/components/data-table/_components/data-table-column-helpers";
-import { DataTableDescription } from "@/components/data-table/_components/data-table-components";
-import { StatusBadge } from "@/components/status-badge";
+import { createCommonColumns } from "@/components/data-table/_components/data-table-column-helpers";
+import { DataTableColorColumn } from "@/components/data-table/_components/data-table-components";
 import { type ServiceTypeSchema } from "@/lib/schemas/service-type-schema";
 import { createColumnHelper, type ColumnDef } from "@tanstack/react-table";
 
@@ -13,33 +8,16 @@ export function getColumns(): ColumnDef<ServiceTypeSchema>[] {
   const commonColumns = createCommonColumns(columnHelper);
 
   return [
-    commonColumns.selection,
-    {
-      accessorKey: "status",
-      header: ({ column }) => (
-        <DataTableColumnHeader column={column} title="Status" />
-      ),
+    commonColumns.status,
+    columnHelper.display({
+      id: "code",
+      header: "Code",
       cell: ({ row }) => {
-        const status = row.original.status;
-        return <StatusBadge status={status} />;
+        const { color, code } = row.original;
+        return <DataTableColorColumn text={code} color={color} />;
       },
-    },
-    createEntityColumn(columnHelper, "code", {
-      accessorKey: "code",
-      getHeaderText: "Code",
-      getId: (shipmentType) => shipmentType.id,
-      getDisplayText: (shipmentType) => shipmentType.code,
-      getColor: (shipmentType) => shipmentType.color,
     }),
-    {
-      accessorKey: "description",
-      header: ({ column }) => (
-        <DataTableColumnHeader column={column} title="Description" />
-      ),
-      cell: ({ row }) => (
-        <DataTableDescription description={row.original.description} />
-      ),
-    },
+    commonColumns.description,
     commonColumns.createdAt,
   ];
 }

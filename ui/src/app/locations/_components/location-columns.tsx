@@ -1,11 +1,7 @@
-import { DataTableColumnHeader } from "@/components/data-table/_components/data-table-column-header";
 import {
   createCommonColumns,
-  createEntityColumn,
   createEntityRefColumn,
 } from "@/components/data-table/_components/data-table-column-helpers";
-import { DataTableDescription } from "@/components/data-table/_components/data-table-components";
-import { StatusBadge } from "@/components/status-badge";
 import { formatLocation } from "@/lib/utils";
 import { Location } from "@/types/location";
 import { createColumnHelper, type ColumnDef } from "@tanstack/react-table";
@@ -15,22 +11,14 @@ export function getColumns(): ColumnDef<Location>[] {
   const commonColumns = createCommonColumns(columnHelper);
 
   return [
-    commonColumns.selection,
-    {
-      accessorKey: "status",
-      header: ({ column }) => (
-        <DataTableColumnHeader column={column} title="Status" />
-      ),
+    commonColumns.status,
+    columnHelper.display({
+      id: "name",
+      header: "Name",
       cell: ({ row }) => {
-        const status = row.original.status;
-        return <StatusBadge status={status} />;
+        const { name } = row.original;
+        return <p>{name}</p>;
       },
-    },
-    createEntityColumn(columnHelper, "name", {
-      accessorKey: "name",
-      getHeaderText: "Name",
-      getId: (location) => location.id,
-      getDisplayText: (location) => location.name,
     }),
     createEntityRefColumn<Location, "locationCategory">(
       columnHelper,
@@ -45,20 +33,10 @@ export function getColumns(): ColumnDef<Location>[] {
         },
       },
     ),
-    {
-      accessorKey: "description",
-      header: ({ column }) => (
-        <DataTableColumnHeader column={column} title="Description" />
-      ),
-      cell: ({ row }) => (
-        <DataTableDescription description={row.original.description} />
-      ),
-    },
+    commonColumns.description,
     {
       id: "addressLine",
-      header: ({ column }) => (
-        <DataTableColumnHeader column={column} title="Address Line" />
-      ),
+      header: "Address Line",
       cell: ({ row }) => {
         return <p>{formatLocation(row.original)}</p>;
       },

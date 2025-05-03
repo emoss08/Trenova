@@ -1,10 +1,5 @@
-import { DataTableColumnHeader } from "@/components/data-table/_components/data-table-column-header";
-import {
-  createCommonColumns,
-  createEntityColumn,
-} from "@/components/data-table/_components/data-table-column-helpers";
-import { DataTableDescription } from "@/components/data-table/_components/data-table-components";
-import { PackingGroupBadge, StatusBadge } from "@/components/status-badge";
+import { createCommonColumns } from "@/components/data-table/_components/data-table-column-helpers";
+import { PackingGroupBadge } from "@/components/status-badge";
 import { type HazardousMaterialSchema } from "@/lib/schemas/hazardous-material-schema";
 import {
   HazardousClassChoiceProps,
@@ -17,47 +12,23 @@ export function getColumns(): ColumnDef<HazardousMaterialSchema>[] {
   const commonColumns = createCommonColumns(columnHelper);
 
   return [
-    commonColumns.selection,
-    {
-      accessorKey: "status",
-      header: ({ column }) => (
-        <DataTableColumnHeader column={column} title="Status" />
-      ),
-      cell: ({ row }) => {
-        const status = row.original.status;
-        return <StatusBadge status={status} />;
-      },
-    },
-    createEntityColumn(columnHelper, "code", {
-      accessorKey: "code",
-      getHeaderText: "Code",
-      getId: (hazardousMaterial) => hazardousMaterial.id,
-      getDisplayText: (hazardousMaterial) => hazardousMaterial.code,
+    commonColumns.status,
+    columnHelper.display({
+      id: "code",
+      header: "Code",
     }),
     {
       accessorKey: "class",
-      header: ({ column }) => (
-        <DataTableColumnHeader column={column} title="Class" />
-      ),
+      header: "Class",
       cell: ({ row }) =>
         mapToHazardousClassChoice(
           row.original.class as HazardousClassChoiceProps,
         ),
     },
-    {
-      accessorKey: "description",
-      header: ({ column }) => (
-        <DataTableColumnHeader column={column} title="Description" />
-      ),
-      cell: ({ row }) => (
-        <DataTableDescription description={row.original.description} />
-      ),
-    },
+    commonColumns.description,
     {
       accessorKey: "packingGroup",
-      header: ({ column }) => (
-        <DataTableColumnHeader column={column} title="Packing Group" />
-      ),
+      header: "Packing Group",
       cell: ({ row }) => (
         <PackingGroupBadge group={row.original.packingGroup} />
       ),

@@ -37,7 +37,7 @@ function Button({
       disabled={isLoading}
       {...props}
     >
-      {isLoading && <PulsatingDots size={1} color="foreground" />}
+      {isLoading && <PulsatingDots size={1} color="white" />}
       {isLoading && loadingText && loadingText}
       {!isLoading && children}
     </Comp>

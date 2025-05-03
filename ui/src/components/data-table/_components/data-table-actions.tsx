@@ -1,3 +1,4 @@
+"use no memo";
 import { Separator } from "@/components/ui/separator";
 import type { ExtraAction } from "@/types/data-table";
 import type { Table } from "@tanstack/react-table";
