@@ -7,7 +7,7 @@ import { createColumnHelper, type ColumnDef } from "@tanstack/react-table";
 
 export function getColumns(): ColumnDef<WorkerSchema>[] {
   const columnHelper = createColumnHelper<WorkerSchema>();
-  const commonColumns = createCommonColumns(columnHelper);
+  const commonColumns = createCommonColumns();
 
   return [
     commonColumns.status,
