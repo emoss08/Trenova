@@ -8,7 +8,7 @@ import { createColumnHelper, type ColumnDef } from "@tanstack/react-table";
 
 export function getColumns(): ColumnDef<Tractor>[] {
   const columnHelper = createColumnHelper<Tractor>();
-  const commonColumns = createCommonColumns(columnHelper);
+  const commonColumns = createCommonColumns();
 
   return [
     columnHelper.display({
