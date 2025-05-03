@@ -4,6 +4,7 @@ import { SwitchField } from "@/components/fields/switch-field";
 import { TextareaField } from "@/components/fields/textarea-field";
 import { HazardousMaterialAutocompleteField } from "@/components/ui/autocomplete-fields";
 import { FormControl, FormGroup } from "@/components/ui/form";
+import { NumberField } from "@/components/ui/number-input";
 import {
   hazardousClassChoices,
   segregationDistanceUnitChoices,
@@ -120,11 +121,10 @@ export function HazmatSegregationRuleForm() {
       {showDistanceOptions && (
         <>
           <FormControl>
-            <InputField
+            <NumberField
               rules={{ required: showDistanceOptions }}
               control={control}
               name="minimumDistance"
-              type="number"
               label="Minimum Distance"
               placeholder="Minimum Distance"
               description="Required minimum distance between materials when segregation type is 'Distance'"

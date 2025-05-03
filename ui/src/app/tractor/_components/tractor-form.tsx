@@ -8,6 +8,7 @@ import {
   WorkerAutocompleteField,
 } from "@/components/ui/autocomplete-fields";
 import { FormControl, FormGroup, FormSection } from "@/components/ui/form";
+import { NumberField } from "@/components/ui/number-input";
 import { equipmentStatusChoices } from "@/lib/choices";
 import { queries } from "@/lib/queries";
 import { type TractorSchema } from "@/lib/schemas/tractor-schema";
@@ -84,9 +85,8 @@ export function TractorForm() {
           />
         </FormControl>
         <FormControl>
-          <InputField
+          <NumberField
             control={control}
-            type="number"
             name="year"
             label="Year"
             placeholder="Year"

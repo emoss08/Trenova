@@ -1,4 +1,3 @@
-import { InputField } from "@/components/fields/input-field";
 import { SelectField } from "@/components/fields/select-field";
 import { AccessorialChargeAutocompleteField } from "@/components/ui/autocomplete-fields";
 import { Button } from "@/components/ui/button";
@@ -12,6 +11,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { FormControl, FormGroup } from "@/components/ui/form";
+import { NumberField } from "@/components/ui/number-input";
 import { accessorialChargeMethodChoices } from "@/lib/choices";
 import { type ShipmentSchema } from "@/lib/schemas/shipment-schema";
 import { type TableSheetProps } from "@/types/data-table";
@@ -182,11 +182,10 @@ function AdditionalChargeForm({ index }: { index: number }) {
         />
       </FormControl>
       <FormControl>
-        <InputField
+        <NumberField
           control={control}
           name={`additionalCharges.${index}.unit`}
           label="Unit"
-          type="number"
           rules={{ required: true, min: 1 }}
           placeholder="Unit"
           description="Quantity of units this charge applies to (number of pallets, hours of detention, etc.)"
@@ -205,11 +204,10 @@ function AdditionalChargeForm({ index }: { index: number }) {
         />
       </FormControl>
       <FormControl cols="full">
-        <InputField
+        <NumberField
           control={control}
           name={`additionalCharges.${index}.amount`}
           label="Amount"
-          type="number"
           rules={{ required: true, min: 1 }}
           placeholder="Amount"
           description="Dollar value per unit for this accessorial service, used to calculate total charges for billing and settlement"

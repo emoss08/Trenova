@@ -14,6 +14,7 @@ import { faInfoCircle, faLocationDot } from "@fortawesome/pro-solid-svg-icons";
 import { memo, useEffect, useMemo } from "react";
 import { useFormContext } from "react-hook-form";
 import { useLocationData } from "../../sidebar/stop-details/queries";
+import { NumberField } from "@/components/ui/number-input";
 
 type CompactStopFormProps = {
   moveIdx: number;
@@ -166,23 +167,21 @@ const CompactStopFormComponent = ({
               />
             </FormControl>
             <FormControl>
-              <InputField
+              <NumberField
                 name={`moves.${moveIdx}.stops.${stopIdx}.pieces`}
                 control={control}
                 label="Pieces"
                 placeholder="Enter quantity"
-                type="number"
                 description="Specifies the total number of items at this stop."
                 sideText="pcs"
               />
             </FormControl>
             <FormControl>
-              <InputField
+              <NumberField
                 name={`moves.${moveIdx}.stops.${stopIdx}.weight`}
                 control={control}
                 label="Weight"
                 placeholder="Enter weight"
-                type="number"
                 description="Specifies the total freight weight for this stop."
                 sideText="lbs"
               />
