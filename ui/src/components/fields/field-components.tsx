@@ -94,18 +94,30 @@ export const FieldWrapper = memo(function FieldWrapper({
   return (
     <div className={className}>
       {label && (
-        <div className="mb-0.5 flex items-center">
+        <FieldWrapperInner>
           <FieldLabel label={label} required={required} />
-        </div>
+        </FieldWrapperInner>
       )}
       {children}
-      <div className="flex justify-start">
+      <FieldWrapperDescriptionInner>
         {descriptionElement}
         {errorElement}
-      </div>
+      </FieldWrapperDescriptionInner>
     </div>
   );
 });
+
+function FieldWrapperInner({ children }: { children: React.ReactNode }) {
+  return <div className="flex items-center mb-0.5">{children}</div>;
+}
+
+function FieldWrapperDescriptionInner({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  return <div className="flex justify-start">{children}</div>;
+}
 
 type PasswordFieldWrapperProps = FieldWrapperProps & {
   onPasswordReset: () => void;
