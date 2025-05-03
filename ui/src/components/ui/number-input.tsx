@@ -95,6 +95,7 @@ export function NumberField<T extends FieldValues>({
   inputMode = "numeric",
   placeholder = "Enter Valid Number",
   sideText,
+  rules,
   ...props
 }: NumberFieldProps<T>) {
   const inputId = `input-${name}`;
@@ -105,10 +106,12 @@ export function NumberField<T extends FieldValues>({
     <Controller<T>
       name={name}
       control={control}
+      rules={rules}
       render={({ field, fieldState }) => (
         <FieldWrapper
           label={label}
           description={description}
+          required={!!rules?.required}
           error={fieldState.error?.message}
           className={className}
         >
