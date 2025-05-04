@@ -44,21 +44,23 @@ export function DocumentActions({ document }: { document: Document }) {
   };
 
   return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button variant="outline" size="sm" className="p-2">
-          <Icon icon={faEllipsis} className="size-4" />
-        </Button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent>
-        <DropdownMenuItem
-          title="Delete"
-          description="Delete the document"
-          color="danger"
-          onClick={handleDelete}
-          disabled={isPending}
-        />
-      </DropdownMenuContent>
-    </DropdownMenu>
+    <div className="absolute top-2 right-2">
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button variant="outline" size="icon">
+            <Icon icon={faEllipsis} className="size-4" />
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent>
+          <DropdownMenuItem
+            title="Delete"
+            description="Delete the document"
+            color="danger"
+            onClick={handleDelete}
+            disabled={isPending}
+          />
+        </DropdownMenuContent>
+      </DropdownMenu>
+    </div>
   );
 }

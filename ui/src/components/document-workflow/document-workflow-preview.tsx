@@ -4,15 +4,12 @@ import { DocumentActions } from "./document-workflow-actions";
 
 export function DocumentCard({ document }: { document: Document }) {
   return (
-    <div className="border border-border rounded-md overflow-hidden bg-card relative min-h-[200px] cursor-pointer">
-      <div className="size-full flex items-center justify-center p-2 bg-muted">
-        <div className="absolute top-2 right-2">
-          <DocumentActions document={document} />
-        </div>
-
+    <DocumentCardOuter>
+      <DocumentCardInner>
+        <DocumentActions document={document} />
         <DocumentPreview document={document} />
-      </div>
-    </div>
+      </DocumentCardInner>
+    </DocumentCardOuter>
   );
 }
 
@@ -26,6 +23,22 @@ function DocumentPreview({ document }: { document: Document }) {
         height={200}
         className="w-full h-full object-cover"
       />
+    </div>
+  );
+}
+
+function DocumentCardOuter({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="border border-border rounded-md overflow-hidden bg-card relative min-h-[200px] cursor-pointer">
+      {children}
+    </div>
+  );
+}
+
+function DocumentCardInner({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="size-full flex items-center justify-center p-2 bg-muted">
+      {children}
     </div>
   );
 }
