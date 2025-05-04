@@ -33,7 +33,7 @@ import { ShipmentForm } from "./form/shipment-form";
 
 export function ShipmentEditSheet({
   currentRecord,
-}: EditTableSheetProps<Shipment>) {
+}: EditTableSheetProps<ShipmentSchema>) {
   const { table, rowSelection, isLoading } = useDataTable();
   const queryClient = useQueryClient();
   const sheetRef = useRef<HTMLDivElement>(null);
@@ -191,7 +191,7 @@ export function ShipmentEditSheet({
       currentRecord.id !== previousRecordIdRef.current
     ) {
       reset(currentRecord);
-      previousRecordIdRef.current = currentRecord.id;
+      previousRecordIdRef.current = currentRecord.id ?? null;
     }
   }, [currentRecord, isLoading, reset]);
 
