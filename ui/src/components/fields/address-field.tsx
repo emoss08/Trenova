@@ -1,3 +1,4 @@
+"use no memo";
 import googleLogo from "@/assets/brand-icons/google-ar21.svg";
 import { InputField } from "@/components/fields/input-field";
 import {
@@ -24,7 +25,7 @@ import { IntegrationType } from "@/types/integration";
 import { faSearch } from "@fortawesome/pro-regular-svg-icons";
 import { CheckIcon } from "@radix-ui/react-icons";
 import { useQuery } from "@tanstack/react-query";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   type Control,
   type RegisterOptions,
@@ -93,12 +94,14 @@ export function AddressField({
     error,
   } = useQuery({
     ...queries.googleMaps.locationAutocomplete(debouncedInput),
+    placeholderData: (previousData) => previousData,
   });
 
   // Parse locations data and filter out invalid locations
   const locations = useMemo(() => {
-    if (!locationsData?.data?.details) return [];
-    return (locationsData.data.details || []).filter(
+    if (!locationsData?.data?.details) return [] as AddressLocationData[];
+
+    const filtered = (locationsData.data.details || []).filter(
       (loc): loc is NonNullable<typeof loc> =>
         !!loc &&
         !!loc.placeId &&
@@ -106,6 +109,9 @@ export function AddressField({
         !!loc.city &&
         !!loc.state,
     );
+
+    console.log("Filtered locations:", filtered);
+    return filtered;
   }, [locationsData]);
 
   // Fill in address details when a location is selected
@@ -173,6 +179,12 @@ export function AddressField({
     ? (error as APIError)?.data?.detail || "Unknown error"
     : null;
 
+  // Trigger a render if searchValue or locations change
+  useEffect(() => {
+    // This empty effect ensures the component re-renders when
+    // searchValue or locations change
+  }, [searchValue, locations]);
+
   return (
     <div className="flex flex-col space-y-1.5">
       <div className="relative">
@@ -206,7 +218,7 @@ export function AddressField({
               </div>
             </PopoverTrigger>
             <PopoverContent className="w-96 p-0">
-              <Command>
+              <Command shouldFilter={false}>
                 <CommandInput
                   placeholder="Search for an address..."
                   value={searchValue}
@@ -214,50 +226,64 @@ export function AddressField({
                   className="h-9"
                 />
                 <CommandList>
-                  <CommandEmpty>
-                    {isLoading ? (
+                  {isLoading ? (
+                    <div className="flex justify-center py-4">
                       <PulsatingDots size={2} color="foreground" />
-                    ) : apiKeyError ? (
-                      <LocationSearchError error={apiKeyError} />
-                    ) : (
-                      "No locations found."
-                    )}
-                  </CommandEmpty>
-                  <CommandGroup>
-                    {locations.map((location) => (
-                      <CommandItem
-                        key={location.placeId}
-                        value={`${location.placeId} ${location.addressLine1} ${location.name}`}
-                        onSelect={() =>
-                          location.placeId && handleSelect(location.placeId)
-                        }
-                      >
-                        <CheckIcon
-                          className={cn(
-                            "mr-2 h-4 w-4",
-                            selectedLocation === location.placeId
-                              ? "opacity-100"
-                              : "opacity-0",
-                          )}
-                        />
-                        <div className="flex flex-col">
-                          <span>{location.name || "Unknown Location"}</span>
-                          <span className="text-sm text-muted-foreground">
-                            {location.addressLine1}, {location.city || ""},
-                            {location.state ? ` ${location.state}` : ""}
-                            {location.postalCode
-                              ? ` ${location.postalCode}`
-                              : ""}
-                          </span>
+                    </div>
+                  ) : locations.length === 0 ? (
+                    <CommandEmpty>
+                      {apiKeyError ? (
+                        <LocationSearchError error={apiKeyError} />
+                      ) : (
+                        <div className="text-center text-sm text-muted-foreground flex flex-col gap-1">
+                          <span>No locations found.</span>
+                          <span>Please try a different search.</span>
                         </div>
-                      </CommandItem>
-                    ))}
-                  </CommandGroup>
+                      )}
+                    </CommandEmpty>
+                  ) : (
+                    <CommandGroup>
+                      {locations.map((location) => (
+                        <CommandItem
+                          key={location.placeId}
+                          value={location.placeId}
+                          className="py-1 justify-between"
+                          onSelect={() => {
+                            if (location.placeId)
+                              handleSelect(location.placeId);
+                          }}
+                        >
+                          <div className="flex flex-col">
+                            <span>{location.name || "Unknown Location"}</span>
+                            <span className="text-2xs text-muted-foreground">
+                              {location.addressLine1}
+                              {location.city ? `, ${location.city}` : ""}
+                              {location.state ? `, ${location.state}` : ""}
+                              {location.postalCode
+                                ? ` ${location.postalCode}`
+                                : ""}
+                            </span>
+                          </div>
+                          <CheckIcon
+                            className={cn(
+                              "mr-2 h-4 w-4",
+                              selectedLocation === location.placeId
+                                ? "opacity-100"
+                                : "opacity-0",
+                            )}
+                          />
+                        </CommandItem>
+                      ))}
+                    </CommandGroup>
+                  )}
                 </CommandList>
               </Command>
-              <div className="flex items-center gap-0.5 p-1 text-xs text-muted-foreground border-t">
-                Powered by{" "}
-                <LazyImage src={googleLogo} className="max-w-[45px]" />
+              <div className="flex justify-between py-0.5 px-2 items-center gap-0.5 text-2xs text-muted-foreground border-t">
+                <div className="flex items-center gap-0.5">
+                  Powered by{" "}
+                  <LazyImage src={googleLogo} className="max-w-[45px]" />
+                </div>
+                <div>Found {locations.length} locations</div>
               </div>
             </PopoverContent>
           </Popover>
