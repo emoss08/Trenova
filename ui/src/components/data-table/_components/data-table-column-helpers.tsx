@@ -202,25 +202,28 @@ export function createCommonColumns<T extends Record<string, unknown>>() {
       accessorKey: "status",
       header: "Status",
       cell: ({ row }: { row: Row<T> }) => {
-        const status = row.original.status;
+        const status = row.getValue<Status | undefined>("status");
         return <StatusBadge status={status as Status} />;
       },
     },
     description: {
       accessorKey: "description",
       header: "Description",
-      cell: ({ row }: { row: Row<T> }) => (
-        <DataTableDescription
-          description={row.original.description as string | undefined}
-        />
-      ),
+      cell: ({ row }: { row: Row<T> }) => {
+        const description = row.getValue<string | undefined>("description");
+        return (
+          <DataTableDescription
+            description={description as string | undefined}
+          />
+        );
+      },
     },
     createdAt: {
-      id: "createdAt",
+      accessorKey: "createdAt",
       header: "Created At",
       cell: ({ row }: { row: Row<T> }) => {
-        const { createdAt } = row.original;
-        return <HoverCardTimestamp timestamp={createdAt as number} />;
+        const createdAt = row.getValue<number | undefined>("createdAt");
+        return <HoverCardTimestamp timestamp={createdAt} />;
       },
     },
   };
