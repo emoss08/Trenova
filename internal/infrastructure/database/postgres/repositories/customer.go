@@ -540,14 +540,11 @@ func (cr *customerRepository) updateBillingProfile(ctx context.Context, profile 
 		Logger()
 
 	err = dba.RunInTx(ctx, nil, func(c context.Context, tx bun.Tx) error {
-		ov := profile.Version
-
-		profile.Version++
-
-		results, rErr := tx.NewUpdate().
+		_, rErr := tx.NewUpdate().
 			Model(profile).
-			Where("cbr.version = ?", ov).
-			WherePK().
+			Where("cbr.customer_id = ?", profile.CustomerID).
+			Where("cbr.organization_id = ?", profile.OrganizationID).
+			Where("cbr.business_unit_id = ?", profile.BusinessUnitID).
 			Returning("*").
 			Exec(c)
 		if rErr != nil {
@@ -556,23 +553,6 @@ func (cr *customerRepository) updateBillingProfile(ctx context.Context, profile 
 				Interface("billingProfile", profile).
 				Msg("failed to update billing profile")
 			return rErr
-		}
-
-		rows, roErr := results.RowsAffected()
-		if roErr != nil {
-			log.Error().
-				Err(roErr).
-				Interface("billingProfile", profile).
-				Msg("failed to get rows affected")
-			return roErr
-		}
-
-		if rows == 0 {
-			return errors.NewValidationError(
-				"version",
-				errors.ErrVersionMismatch,
-				fmt.Sprintf("Version mismatch. The Billing Profile (%s) has either been updated or deleted since the last request.", profile.GetID()),
-			)
 		}
 
 		return nil
@@ -610,14 +590,11 @@ func (cr *customerRepository) updateEmailProfile(ctx context.Context, profile *c
 		Msg("updating email profile")
 
 	err = dba.RunInTx(ctx, nil, func(c context.Context, tx bun.Tx) error {
-		ov := profile.Version
-
-		profile.Version++
-
-		results, rErr := tx.NewUpdate().
+		_, rErr := tx.NewUpdate().
 			Model(profile).
-			Where("cem.version = ?", ov).
-			WherePK().
+			Where("cem.customer_id = ?", profile.CustomerID).
+			Where("cem.organization_id = ?", profile.OrganizationID).
+			Where("cem.business_unit_id = ?", profile.BusinessUnitID).
 			Returning("*").
 			Exec(c)
 		if rErr != nil {
@@ -626,23 +603,6 @@ func (cr *customerRepository) updateEmailProfile(ctx context.Context, profile *c
 				Interface("emailProfile", profile).
 				Msg("failed to update email profile")
 			return rErr
-		}
-
-		rows, roErr := results.RowsAffected()
-		if roErr != nil {
-			log.Error().
-				Err(roErr).
-				Interface("emailProfile", profile).
-				Msg("failed to get rows affected")
-			return roErr
-		}
-
-		if rows == 0 {
-			return errors.NewValidationError(
-				"version",
-				errors.ErrVersionMismatch,
-				fmt.Sprintf("Version mismatch. The Email Profile (%s) has either been updated or deleted since the last request.", profile.GetID()),
-			)
 		}
 
 		return nil
