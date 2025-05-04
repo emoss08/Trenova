@@ -9,8 +9,6 @@ import { useForm } from "react-hook-form";
 import { LocationForm } from "./location-form";
 
 export function EditLocationModal({
-  open,
-  onOpenChange,
   currentRecord,
 }: EditTableSheetProps<LocationSchema>) {
   const form = useForm({
@@ -21,8 +19,6 @@ export function EditLocationModal({
   return (
     <FormEditModal
       currentRecord={currentRecord}
-      open={open}
-      onOpenChange={onOpenChange}
       title="Location"
       formComponent={<LocationForm />}
       form={form}
