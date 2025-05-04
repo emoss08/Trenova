@@ -117,6 +117,7 @@ export function NumberField<T extends FieldValues>({
         >
           <NumberInputRoot
             {...props}
+            {...field}
             formatOptions={formattedOptions}
             className={cn(className)}
             inputMode={inputMode}
@@ -129,7 +130,6 @@ export function NumberField<T extends FieldValues>({
           >
             <NumberInputControl>
               <NumberInputField
-                {...field}
                 id={inputId}
                 placeholder={placeholder}
                 aria-label={label}
