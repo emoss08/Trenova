@@ -68,7 +68,6 @@ export enum Resource {
   FormulaTemplate = "formula_template",
   ShipmentManagement = "shipment_management",
   Route = "route",
-  CommentType = "comment_type",
   DelayCode = "delay_code",
   BusinessUnit = "business_unit",
   Organization = "organization",
