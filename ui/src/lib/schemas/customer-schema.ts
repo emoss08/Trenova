@@ -12,6 +12,8 @@ export const emailProfileSchema = z.object({
   version: z.number().optional(),
   createdAt: z.number().optional(),
   updatedAt: z.number().optional(),
+  organizationId: z.string().optional(),
+  businessUnitId: z.string().optional(),
 
   // * Core Fields
   customerId: z.string().nullable().optional(),
@@ -28,6 +30,8 @@ export const billingProfileSchema = z.object({
   version: z.number().optional(),
   createdAt: z.number().optional(),
   updatedAt: z.number().optional(),
+  organizationId: z.string().optional(),
+  businessUnitId: z.string().optional(),
 
   // * Core Fields
   customerId: z.string().nullable().optional(),
@@ -50,6 +54,8 @@ export const customerSchema = z.object({
   version: z.number().optional(),
   createdAt: z.number().optional(),
   updatedAt: z.number().optional(),
+  organizationId: z.string().optional(),
+  businessUnitId: z.string().optional(),
 
   // * Core Fields
   status: z.nativeEnum(Status),
