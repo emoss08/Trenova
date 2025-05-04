@@ -1,9 +1,4 @@
-import { DataTableColumnHeader } from "@/components/data-table/_components/data-table-column-header";
-import {
-  createCommonColumns,
-  createEntityColumn,
-} from "@/components/data-table/_components/data-table-column-helpers";
-import { StatusBadge } from "@/components/status-badge";
+import { createCommonColumns } from "@/components/data-table/_components/data-table-column-helpers";
 import { type CustomerSchema } from "@/lib/schemas/customer-schema";
 import { createColumnHelper, type ColumnDef } from "@tanstack/react-table";
 
@@ -12,28 +7,17 @@ export function getColumns(): ColumnDef<CustomerSchema>[] {
   const commonColumns = createCommonColumns();
 
   return [
-    {
-      accessorKey: "status",
-      header: ({ column }) => (
-        <DataTableColumnHeader column={column} title="Status" />
-      ),
-      cell: ({ row }) => {
-        const status = row.original.status;
-        return <StatusBadge status={status} />;
-      },
-    },
-    createEntityColumn(columnHelper, "code", {
-      accessorKey: "code",
-      getHeaderText: "Code",
-      getId: (customer) => customer.id,
-      getDisplayText: (customer) => customer.code,
+    commonColumns.status,
+    columnHelper.display({
+      id: "code",
+      header: "Code",
+      cell: ({ row }) => <p>{row.original.code}</p>,
     }),
-    {
-      accessorKey: "name",
-      header: ({ column }) => (
-        <DataTableColumnHeader column={column} title="Name" />
-      ),
-    },
+    columnHelper.display({
+      id: "name",
+      header: "Name",
+      cell: ({ row }) => <p>{row.original.name}</p>,
+    }),
     commonColumns.createdAt,
   ];
 }

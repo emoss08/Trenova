@@ -232,12 +232,6 @@ export const routes: RouteInfo[] = [
         icon: faFiles,
         tree: [
           {
-            key: Resource.CommentType,
-            label: "Comment Types",
-            link: "/dispatch/configurations/comment-types",
-            supportsModal: true,
-          },
-          {
             key: Resource.DelayCode,
             label: "Delay Codes",
             link: "/dispatch/configurations/delay-codes",

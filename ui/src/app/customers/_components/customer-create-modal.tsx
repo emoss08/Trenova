@@ -1,13 +1,3 @@
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
 import { Button, FormSaveButton } from "@/components/ui/button";
 import {
   Dialog,
@@ -21,7 +11,6 @@ import {
 import { Form } from "@/components/ui/form";
 import { VisuallyHidden } from "@/components/ui/visually-hidden";
 import { usePopoutWindow } from "@/hooks/popout-window/use-popout-window";
-import { useUnsavedChanges } from "@/hooks/use-form";
 import { useFormWithSave } from "@/hooks/use-form-with-save";
 import { broadcastQueryInvalidation } from "@/hooks/use-invalidate-query";
 import { http } from "@/lib/http-client";
@@ -94,87 +83,55 @@ export function CreateCustomerModal({ open, onOpenChange }: TableSheetProps) {
   });
 
   const {
-    formState: { isDirty, isSubmitting, isSubmitSuccessful },
+    formState: { isSubmitting, isSubmitSuccessful },
     handleSubmit,
     onSubmit,
     reset,
   } = form;
+
+  // Reset the form when the mutation is successful
+  // This is recommended by react-hook-form - https://react-hook-form.com/docs/useform/reset
+  useEffect(() => {
+    if (isSubmitSuccessful) {
+      reset();
+    }
+  }, [isSubmitSuccessful, reset]);
 
   const handleClose = useCallback(() => {
     onOpenChange(false);
     reset();
   }, [onOpenChange, reset]);
 
-  const {
-    showWarning,
-    handleClose: onClose,
-    handleConfirmClose,
-    handleCancelClose,
-  } = useUnsavedChanges({
-    isDirty,
-    onClose: handleClose,
-  });
-
-  // Reset the form when the mutation is successful
-  // This is recommended by react-hook-form - https://react-hook-form.com/docs/useform/reset
-  useEffect(() => {
-    reset();
-  }, [isSubmitSuccessful, reset, onOpenChange]);
-
   return (
-    <>
-      <Dialog open={open} onOpenChange={onClose}>
-        <DialogContent className="md:max-w-[700px] lg:max-w-[900px]">
-          <VisuallyHidden>
-            <DialogHeader>
-              <DialogTitle>Create Customer</DialogTitle>
-              <DialogDescription>
-                Create a new customer to manage their billing and other
-                information.
-              </DialogDescription>
-            </DialogHeader>
-          </VisuallyHidden>
-          <FormProvider {...form}>
-            <Form className="space-y-0 p-0" onSubmit={handleSubmit(onSubmit)}>
-              <DialogBody className="p-0">
-                <CustomerForm />
-              </DialogBody>
-              <DialogFooter>
-                <Button type="button" variant="outline" onClick={onClose}>
-                  Cancel
-                </Button>
-                <FormSaveButton
-                  isPopout={isPopout}
-                  isSubmitting={isSubmitting}
-                  title="Customer"
-                />
-              </DialogFooter>
-            </Form>
-          </FormProvider>
-        </DialogContent>
-      </Dialog>
-
-      {showWarning && (
-        <AlertDialog open={showWarning} onOpenChange={handleCancelClose}>
-          <AlertDialogContent>
-            <AlertDialogHeader>
-              <AlertDialogTitle>Unsaved Changes</AlertDialogTitle>
-              <AlertDialogDescription>
-                You have unsaved changes. Are you sure you want to close this
-                form? All changes will be lost.
-              </AlertDialogDescription>
-            </AlertDialogHeader>
-            <AlertDialogFooter>
-              <AlertDialogCancel onClick={handleCancelClose}>
-                Continue Editing
-              </AlertDialogCancel>
-              <AlertDialogAction onClick={handleConfirmClose}>
-                Discard Changes
-              </AlertDialogAction>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialog>
-      )}
-    </>
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="md:max-w-[700px] lg:max-w-[900px]">
+        <VisuallyHidden>
+          <DialogHeader>
+            <DialogTitle>Create Customer</DialogTitle>
+            <DialogDescription>
+              Create a new customer to manage their billing and other
+              information.
+            </DialogDescription>
+          </DialogHeader>
+        </VisuallyHidden>
+        <FormProvider {...form}>
+          <Form className="space-y-0 p-0" onSubmit={handleSubmit(onSubmit)}>
+            <DialogBody className="p-0">
+              <CustomerForm />
+            </DialogBody>
+            <DialogFooter>
+              <Button type="button" variant="outline" onClick={handleClose}>
+                Cancel
+              </Button>
+              <FormSaveButton
+                isPopout={isPopout}
+                isSubmitting={isSubmitting}
+                title="Customer"
+              />
+            </DialogFooter>
+          </Form>
+        </FormProvider>
+      </DialogContent>
+    </Dialog>
   );
 }
