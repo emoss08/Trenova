@@ -16,10 +16,8 @@ import { NumberField } from "@/components/ui/number-input";
 import { useApiMutation } from "@/hooks/use-api-mutation";
 import { broadcastQueryInvalidation } from "@/hooks/use-invalidate-query";
 import {
-  autoBillCriteriaChoices,
   billingExceptionHandlingChoices,
   paymentTermChoices,
-  transferCriteriaChoices,
   transferScheduleChoices,
 } from "@/lib/choices";
 import { queries } from "@/lib/queries";
@@ -159,15 +157,6 @@ function ShipmentTransferSettings() {
       <CardContent className="max-w-prose">
         <FormGroup cols={1}>
           <FormControl>
-            <SelectField
-              control={control}
-              name="transferCriteria"
-              label="Transfer Qualification Criteria"
-              description="Establishes the primary shipment milestone that triggers eligibility for transfer to the billing system."
-              options={transferCriteriaChoices}
-            />
-          </FormControl>
-          <FormControl>
             <SwitchField
               control={control}
               name="autoMarkReadyToBill"
@@ -301,16 +290,6 @@ function AutomatedBillingSettings() {
           </FormControl>
           {showAutoBillCriteria && (
             <>
-              <FormControl className="pl-10 min-h-[3em]">
-                <SelectField
-                  control={control}
-                  name="autoBillCriteria"
-                  label="Automatic Billing Qualification Criteria"
-                  description="Establishes the specific conditions that must be satisfied before the system generates invoices automatically."
-                  rules={{ required: autoBill }}
-                  options={autoBillCriteriaChoices}
-                />
-              </FormControl>
               <FormControl className="pl-10">
                 <SwitchField
                   control={control}

@@ -4,3 +4,9 @@ export type CustomerDocumentRequirement = {
   description: string;
   color: string;
 };
+
+export type GetCustomerByIDParams = {
+  customerId: string;
+  includeBillingProfile?: boolean;
+  enabled?: boolean;
+};

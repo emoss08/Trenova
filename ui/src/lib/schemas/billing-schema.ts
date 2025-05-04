@@ -1,8 +1,6 @@
 import {
-  AutoBillCriteria,
   BillingExceptionHandling,
   PaymentTerm,
-  TransferCriteria,
   TransferSchedule,
 } from "@/types/billing";
 import { z } from "zod";
@@ -34,7 +32,6 @@ export const billingControlSchema = z
     invoiceFooter: z.string().optional(),
     showAmountDue: z.boolean(),
     autoTransfer: z.boolean(),
-    transferCriteria: z.nativeEnum(TransferCriteria),
     transferSchedule: z.nativeEnum(TransferSchedule),
     transferBatchSize: z.preprocess((val) => {
       if (val === "" || val === null || val === undefined) {
@@ -47,7 +44,6 @@ export const billingControlSchema = z
     enforceCustomerBillingReq: z.boolean(),
     validateCustomerRates: z.boolean(),
     autoBill: z.boolean(),
-    autoBillCriteria: z.nativeEnum(AutoBillCriteria).optional(),
     sendAutoBillNotifications: z.boolean(),
     autoBillBatchSize: z.preprocess((val) => {
       if (val === "" || val === null || val === undefined) {
@@ -75,19 +71,6 @@ export const billingControlSchema = z
     }, z.number().optional()),
     groupConsolidatedInvoices: z.boolean(),
   })
-  .refine(
-    (data) => {
-      // * If autoBill is true, autoBillCriteria must be provided
-      if (data.autoBill && !data.autoBillCriteria) {
-        return false;
-      }
-      return true;
-    },
-    {
-      message: "Auto bill criteria is required when auto bill is enabled",
-      path: ["autoBillCriteria"],
-    },
-  )
   .refine(
     (data) => {
       // If allowInvoiceConsolidation is true, consolidationPeriodDays must be provided

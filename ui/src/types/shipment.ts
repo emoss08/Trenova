@@ -20,6 +20,7 @@ export enum ShipmentStatus {
   PartiallyCompleted = "PartiallyCompleted",
   Completed = "Completed",
   Billed = "Billed",
+  ReadyToBill = "ReadyToBill",
   Canceled = "Canceled",
 }
 
@@ -33,6 +34,7 @@ export const mapToShipmentStatus = (status: ShipmentStatus) => {
     Delayed: "Delayed",
     Completed: "Completed",
     Billed: "Billed",
+    ReadyToBill: "Ready to Bill",
     Canceled: "Canceled",
   };
 

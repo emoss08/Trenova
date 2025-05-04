@@ -1,5 +1,8 @@
 import { getAnalytics } from "@/services/analytics";
-import { getCustomerDocumentRequirements } from "@/services/customer";
+import {
+  getCustomerById,
+  getCustomerDocumentRequirements,
+} from "@/services/customer";
 import {
   getDocumentCountByResource,
   getDocumentsByResourceID,
@@ -19,6 +22,7 @@ import { getShipmentByID } from "@/services/shipment";
 import { getUsStateOptions, getUsStates } from "@/services/us-state";
 import type { AnalyticsPage } from "@/types/analytics";
 import { Resource } from "@/types/audit-entry";
+import type { GetCustomerByIDParams } from "@/types/customer";
 import type { IntegrationType } from "@/types/integration";
 import { createQueryKeyStore } from "@lukemorales/query-key-factory";
 
@@ -53,12 +57,15 @@ export const queries = createQueryKeyStore({
         return response.data;
       },
     }),
-    getBillingControl: () => ({
+    getBillingControl: (
+      { enabled }: { enabled: boolean } = { enabled: true },
+    ) => ({
       queryKey: ["billingControl"],
       queryFn: async () => {
         const response = await getBillingControl();
         return response.data;
       },
+      enabled,
     }),
     getDatabaseBackups: () => ({
       queryKey: ["databaseBackups"],
@@ -135,6 +142,16 @@ export const queries = createQueryKeyStore({
     getDocumentRequirements: (customerId: string) => ({
       queryKey: ["customer/document-requirements", customerId],
       queryFn: async () => getCustomerDocumentRequirements(customerId),
+    }),
+    getById: ({
+      customerId,
+      includeBillingProfile = false,
+      enabled,
+    }: GetCustomerByIDParams) => ({
+      queryKey: ["customer/by-id", customerId, includeBillingProfile],
+      queryFn: async () =>
+        getCustomerById(customerId, { includeBillingProfile }),
+      enabled,
     }),
   },
   integration: {

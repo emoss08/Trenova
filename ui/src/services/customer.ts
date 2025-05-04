@@ -13,7 +13,12 @@ export async function getCustomerDocumentRequirements(
 
 export async function getCustomerById(
   customerId: string,
+  { includeBillingProfile = false }: { includeBillingProfile?: boolean },
 ): Promise<CustomerSchema> {
-  const response = await http.get<CustomerSchema>(`/customers/${customerId}`);
+  const response = await http.get<CustomerSchema>(`/customers/${customerId}`, {
+    params: {
+      includeBillingProfile: includeBillingProfile.toString(),
+    },
+  });
   return response.data;
 }

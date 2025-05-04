@@ -10,7 +10,9 @@ export function NoDocumentRequirements({ customerId }: { customerId: string }) {
   const { data, isLoading } = useQuery({
     queryKey: ["customer", customerId],
     queryFn: async () => {
-      return await getCustomerById(customerId);
+      return await getCustomerById(customerId, {
+        includeBillingProfile: false,
+      });
     },
     enabled: !!customerId,
   });

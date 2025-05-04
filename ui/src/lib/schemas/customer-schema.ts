@@ -1,9 +1,4 @@
-import {
-  AutoBillCriteria,
-  BillingCycleType,
-  PaymentTerm,
-  TransferCriteria,
-} from "@/types/billing";
+import { BillingCycleType, PaymentTerm } from "@/types/billing";
 import { Status } from "@/types/common";
 import { z } from "zod";
 
@@ -42,10 +37,8 @@ export const billingProfileSchema = z.object({
   validateCustomerRates: z.boolean(),
   paymentTerm: z.nativeEnum(PaymentTerm),
   autoTransfer: z.boolean(),
-  transferCriteria: z.nativeEnum(TransferCriteria),
   autoMarkReadyToBill: z.boolean(),
   autoBill: z.boolean(),
-  autoBillCriteria: z.nativeEnum(AutoBillCriteria).optional(),
   specialInstructions: z.string().optional(),
 });
 
