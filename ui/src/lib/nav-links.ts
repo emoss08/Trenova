@@ -256,12 +256,6 @@ export const routes: RouteInfo[] = [
             supportsModal: true,
           },
           {
-            key: Resource.Route,
-            label: "Routes",
-            link: "/dispatch/configurations/routes",
-            supportsModal: true,
-          },
-          {
             key: Resource.Worker,
             label: "Workers",
             link: "/dispatch/configurations/workers",
