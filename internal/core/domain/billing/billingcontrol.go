@@ -25,9 +25,7 @@ type BillingControl struct {
 	CreditMemoNumberPrefix        string            `json:"creditMemoNumberPrefix" bun:"credit_memo_number_prefix,type:VARCHAR(10),notnull,default:'CM-'"`
 	InvoiceTerms                  string            `json:"invoiceTerms" bun:"invoice_terms,type:TEXT"`
 	InvoiceFooter                 string            `json:"invoiceFooter" bun:"invoice_footer,type:TEXT"`
-	TransferCriteria              TransferCriteria  `json:"transferCriteria" bun:"transfer_criteria,type:transfer_criteria_enum,notnull,default:'ReadyAndCompleted'"`
 	TransferSchedule              TransferSchedule  `json:"transferSchedule" bun:"transfer_schedule,type:transfer_schedule_enum,notnull,default:'Continuous'"`
-	AutoBillCriteria              AutoBillCriteria  `json:"autoBillCriteria" bun:"auto_bill_criteria,type:auto_bill_criteria_enum,notnull,default:'Delivered'"`
 	BillingExceptionHandling      ExceptionHandling `json:"billingExceptionHandling" bun:"billing_exception_handling,type:billing_exception_handling_enum,notnull,default:'Queue'"`
 	PaymentTerm                   PaymentTerm       `json:"paymentTerm" bun:"payment_term,type:payment_term_enum,notnull,default:'Net30'"`
 	ShowInvoiceDueDate            bool              `json:"showInvoiceDueDate" bun:"show_invoice_due_date,type:BOOLEAN,notnull,default:true"`
@@ -54,7 +52,6 @@ type BillingControl struct {
 	Organization *organization.Organization `json:"organization,omitempty" bun:"rel:belongs-to,join:organization_id=id"`
 }
 
-//nolint:funlen // Validations method is long but it's not a problem
 func (bc *BillingControl) Validate(ctx context.Context, multiErr *errors.MultiError) {
 	err := validation.ValidateStructWithContext(ctx, bc,
 		// * Ensure invoice number prefix is populated
@@ -84,32 +81,6 @@ func (bc *BillingControl) Validate(ctx context.Context, multiErr *errors.MultiEr
 				PaymentTermNet90,
 				PaymentTermDueOnReceipt,
 			).Error("Invalid payment term"),
-		),
-
-		// * Ensure transfer criteria is populated and a valid value
-		validation.Field(&bc.TransferCriteria,
-			validation.Required.Error("Transfer criteria is required"),
-			validation.In(
-				TransferCriteriaReadyAndCompleted,
-				TransferCriteriaCompleted,
-				TransferCriteriaReadyToBill,
-				TransferCriteriaDocumentsAttached,
-				TransferCriteriaPODReceived,
-			).Error("Invalid transfer criteria"),
-		),
-
-		// * Ensure auto bill criteria is populated and a valid value
-		validation.Field(&bc.AutoBillCriteria,
-			validation.When(bc.AutoBill,
-				validation.Required.Error("Auto Billing Criteria is required when auto bill is enabled"),
-			),
-			validation.In(
-				AutoBillCriteriaDelivered,
-				AutoBillCriteriaTransferred,
-				AutoBillCriteriaMarkedReadyToBill,
-				AutoBillCriteriaPODReceived,
-				AutoBillCriteriaDocumentsVerified,
-			).Error("Invalid auto bill criteria"),
 		),
 
 		// * Ensure billing exception handling is populated and a valid value
