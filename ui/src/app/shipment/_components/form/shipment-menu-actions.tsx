@@ -16,6 +16,7 @@ import { parseAsBoolean, useQueryState } from "nuqs";
 import { ShipmentCancellationDialog } from "../cancellation/shipment-cancellatioin-dialog";
 import { ShipmentDocumentDialog } from "../document/shipment-document-dialog";
 import { ShipmentDuplicateDialog } from "../duplicate/shipment-duplicate-dialog";
+import { ShipmentDocumentWorkflow } from "../document/shipment-document-workflow";
 
 // Map of status that are allowed to be canceled.
 const cancellatedStatuses = [
@@ -157,12 +158,12 @@ export function ShipmentActions({
         onOpenChange={setDocumentDialogOpen}
         shipmentId={shipment.id}
       />
-      {/* <ShipmentDocumentWorkflow
+      <ShipmentDocumentWorkflow
         open={addDocumentDialogOpen}
         onOpenChange={setAddDocumentDialogOpen}
         shipmentId={shipment.id}
         customerId={shipment.customerId}
-      /> */}
+      />
     </>
   );
 }
