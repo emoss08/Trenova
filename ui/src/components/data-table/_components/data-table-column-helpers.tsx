@@ -9,9 +9,8 @@ import {
 import { StatusBadge } from "@/components/status-badge";
 import type { Status } from "@/types/common";
 import { ColumnDef, ColumnHelper, type Row } from "@tanstack/react-table";
-import { parseAsString, useQueryState } from "nuqs";
-import { memo, useCallback, useTransition } from "react";
-import { useNavigate } from "react-router";
+import { memo } from "react";
+import { Link } from "react-router";
 import { v4 } from "uuid";
 import {
   EntityColumnConfig,
@@ -23,13 +22,6 @@ import {
   HoverCardTimestamp,
 } from "./data-table-components";
 
-// Entity parameter definitions - same as in data-table.tsx
-const entityParams = {
-  entityId: parseAsString,
-  modal: parseAsString,
-};
-
-// Memoized EntityRefLink component to avoid re-renders
 const EntityRefLink = memo(
   ({
     id,
@@ -44,50 +36,12 @@ const EntityRefLink = memo(
     color?: string;
     basePath?: string;
   }) => {
-    const [, startTransition] = useTransition();
-    const navigate = useNavigate();
-
-    // Use the nuqs hooks directly
-    const [, setEntityId] = useQueryState(
-      "entityId",
-      entityParams.entityId.withOptions({
-        startTransition,
-        shallow: true, // This is key - shallow:true preserves other URL params
-      }),
-    );
-
-    const [, setModalType] = useQueryState(
-      "modal",
-      entityParams.modal.withOptions({
-        startTransition,
-        shallow: true, // This is key - shallow:true preserves other URL params
-      }),
-    );
-
-    // Create a click handler for opening the modal
-    const handleClick = useCallback(
-      (e: React.MouseEvent) => {
-        e.preventDefault();
-        if (basePath && id) {
-          // If basePath is provided, navigate to the base URL first, then set params after navigation
-          navigate(basePath, {
-            replace: true, // Use replace to avoid adding to history stack
-            state: { pendingEntityId: id }, // Pass the entity ID through state
-          });
-        } else {
-          // Otherwise use the existing behavior with URL params
-          Promise.all([
-            setEntityId(id || "", { shallow: true }),
-            setModalType("edit", { shallow: true }),
-          ]).catch(console.error);
-        }
-      },
-      [id, setEntityId, setModalType, basePath, navigate],
-    );
+    const to = `${basePath ?? ""}?entityId=${id}&modalType=edit`;
 
     return (
       <EntityRefLinkInner
-        onClick={handleClick}
+        to={to}
+        target="_blank"
         className={`${className || ""} cursor-pointer`}
         title={`Click to view ${displayText}`}
       >
@@ -101,7 +55,6 @@ const EntityRefLink = memo(
   },
 );
 
-// Memoized SecondaryInfoLink component
 const SecondaryInfoLink = memo(
   ({
     id,
@@ -114,59 +67,21 @@ const SecondaryInfoLink = memo(
     clickable: boolean;
     basePath?: string;
   }) => {
-    const [, startTransition] = useTransition();
-    const navigate = useNavigate();
-
-    // Use the nuqs hooks directly
-    const [, setEntityId] = useQueryState(
-      "entityId",
-      entityParams.entityId.withOptions({
-        startTransition,
-        shallow: true,
-      }),
-    );
-
-    const [, setModalType] = useQueryState(
-      "modal",
-      entityParams.modal.withOptions({
-        startTransition,
-        shallow: true,
-      }),
-    );
-
-    // Create a click handler for opening the modal
-    const handleClick = useCallback(
-      (e: React.MouseEvent) => {
-        e.preventDefault();
-        if (basePath && id) {
-          // If basePath is provided, navigate to the base URL first, then set params after navigation
-          navigate(basePath, {
-            replace: true, // Use replace to avoid adding to history stack
-            state: { pendingEntityId: id }, // Pass the entity ID through state
-          });
-        } else {
-          // Set both parameters with shallow:true to preserve page and pageSize
-          Promise.all([
-            setEntityId(id || "", { shallow: true }),
-            setModalType("edit", { shallow: true }),
-          ]).catch(console.error);
-        }
-      },
-      [id, setEntityId, setModalType, basePath, navigate],
-    );
-
     if (!clickable) {
       return <p>{displayText}</p>;
     }
 
+    const to = `${basePath ?? ""}?entityId=${id}&modalType=edit`;
+
     return (
-      <span
-        onClick={handleClick}
+      <Link
+        to={to}
+        target="_blank"
         className="text-2xs text-foreground underline hover:text-foreground/70 cursor-pointer"
         title={`Click to view ${displayText}`}
       >
         {displayText}
-      </span>
+      </Link>
     );
   },
 );
@@ -197,7 +112,7 @@ function EntityRefCellBase<TEntity, TParent extends Record<string, any>>(
   const clickable = secondaryInfo?.clickable ?? true;
 
   return (
-    <div className="flex flex-col gap-0.5">
+    <div className="flex flex-col gap-0.5 truncate">
       <EntityRefLink
         id={id}
         displayText={displayText}

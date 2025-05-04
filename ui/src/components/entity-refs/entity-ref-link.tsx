@@ -1,7 +1,8 @@
 import { cn } from "@/lib/utils";
 import React, { memo } from "react";
+import { Link } from "react-router";
 
-type EntityRefLinkInnerProps = React.ComponentProps<"button">;
+type EntityRefLinkInnerProps = React.ComponentProps<typeof Link>;
 
 export function EntityRefLinkInner({
   className,
@@ -9,13 +10,9 @@ export function EntityRefLinkInner({
   ...props
 }: EntityRefLinkInnerProps) {
   return (
-    <button
-      {...props}
-      type="button"
-      className={cn("cursor-pointer text-left", className)}
-    >
+    <Link {...props} className={cn("cursor-pointer text-left", className)}>
       {children}
-    </button>
+    </Link>
   );
 }
 

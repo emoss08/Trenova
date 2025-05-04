@@ -1,5 +1,4 @@
 "use no memo";
-import { DEBUG_TABLE } from "@/constants/env";
 import { useDataTableQuery } from "@/hooks/use-data-table-query";
 import { searchParamsParser } from "@/hooks/use-data-table-state";
 import { DataTableProps } from "@/types/data-table";
@@ -88,7 +87,6 @@ export function DataTable<TData extends Record<string, any>>({
     onRowSelectionChange: setRowSelection,
     getCoreRowModel: getCoreRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
-    debugAll: DEBUG_TABLE,
     meta: { getRowClassName },
   });
 
