@@ -6,7 +6,7 @@ import {
 import { ScrollArea } from "@/components/ui/scroll-area";
 import type { ShipmentSchema } from "@/lib/schemas/shipment-schema";
 import type { CustomerDocumentRequirement } from "@/types/customer";
-import { BillingReadinessBadge } from "./_components/billing-readiness-badge";
+import { BillingReadinessBadge } from "./billing-readiness-badge";
 
 type DocumentCategory = {
   id: string;
@@ -24,16 +24,21 @@ export function ShipmentDocumentSidebar({
   activeCategory,
   setActiveCategory,
   customerId,
+  shipmentStatus,
 }: {
   documentCategories: DocumentCategory[];
   isLoadingRequirements: boolean;
   activeCategory: string | null;
   setActiveCategory: (category: string) => void;
   customerId: ShipmentSchema["customerId"];
+  shipmentStatus: ShipmentSchema["status"];
 }) {
   return (
     <div className="w-1/4 bg-muted border-r border-border">
-      <ShipmentDocumentSidebarHeader documentCategories={documentCategories} />
+      <ShipmentDocumentSidebarHeader
+        shipmentStatus={shipmentStatus}
+        documentCategories={documentCategories}
+      />
       <ScrollArea className="flex h-[calc(100%-140px)]">
         <div className="p-2">
           {isLoadingRequirements ? (
@@ -58,12 +63,17 @@ export function ShipmentDocumentSidebar({
 
 function ShipmentDocumentSidebarHeader({
   documentCategories,
+  shipmentStatus,
 }: {
   documentCategories: DocumentCategory[];
+  shipmentStatus: ShipmentSchema["status"];
 }) {
   return (
     <ShipmentDocumentSidebarHeaderOuter>
-      <BillingReadinessBadge documentCategories={documentCategories} />
+      <BillingReadinessBadge
+        documentCategories={documentCategories}
+        shipmentStatus={shipmentStatus}
+      />
     </ShipmentDocumentSidebarHeaderOuter>
   );
 }

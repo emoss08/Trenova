@@ -18,21 +18,23 @@ import { APIError } from "@/types/errors";
 import { useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
 import { lazy, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
-import { ShipmentDocumentSidebar } from "./shipment-document-sidebar";
-import { ShipmentDocumentWorkflowHeader } from "./shipment-document-workflow-header";
+import { ShipmentDocumentSidebar } from "./_components/shipment-document-sidebar";
+import { ShipmentDocumentWorkflowHeader } from "./_components/shipment-document-workflow-header";
 
 const ShipmentDocumentContent = lazy(
-  () => import("./shipment-document-content"),
+  () => import("./_components/shipment-document-content"),
 );
 
 type ShipmentDocumentWorkflowProps = {
   shipmentId: ShipmentSchema["id"];
   customerId: string;
+  shipmentStatus: ShipmentSchema["status"];
 } & TableSheetProps;
 
 export function ShipmentDocumentWorkflow({
   shipmentId,
   customerId,
+  shipmentStatus,
   ...props
 }: ShipmentDocumentWorkflowProps) {
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
@@ -197,13 +199,14 @@ export function ShipmentDocumentWorkflow({
           </DialogHeader>
         </VisuallyHidden>
         <DialogBody className="p-0">
-          <div className="flex h-[calc(100vh-100px)] max-h-[800px]">
+          <ShipmentDocumentWorkflowInner>
             <ShipmentDocumentSidebar
               documentCategories={documentCategories}
               isLoadingRequirements={isLoadingRequirements}
               activeCategory={activeCategory}
               setActiveCategory={setActiveCategory}
               customerId={customerId}
+              shipmentStatus={shipmentStatus}
             />
             <div className="w-3/4 flex flex-col">
               <ShipmentDocumentWorkflowHeader
@@ -233,9 +236,19 @@ export function ShipmentDocumentWorkflow({
                 onChange={handleFileInputChange}
               />
             </div>
-          </div>
+          </ShipmentDocumentWorkflowInner>
         </DialogBody>
       </DialogContent>
     </Dialog>
+  );
+}
+
+function ShipmentDocumentWorkflowInner({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="flex h-[calc(100vh-100px)] max-h-[800px]">{children}</div>
   );
 }

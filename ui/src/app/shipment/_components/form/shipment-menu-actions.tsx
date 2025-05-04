@@ -15,8 +15,8 @@ import { faEllipsisVertical } from "@fortawesome/pro-regular-svg-icons";
 import { parseAsBoolean, useQueryState } from "nuqs";
 import { ShipmentCancellationDialog } from "../cancellation/shipment-cancellatioin-dialog";
 import { ShipmentDocumentDialog } from "../document/shipment-document-dialog";
-import { ShipmentDuplicateDialog } from "../duplicate/shipment-duplicate-dialog";
 import { ShipmentDocumentWorkflow } from "../document/shipment-document-workflow";
+import { ShipmentDuplicateDialog } from "../duplicate/shipment-duplicate-dialog";
 
 // Map of status that are allowed to be canceled.
 const cancellatedStatuses = [
@@ -163,6 +163,7 @@ export function ShipmentActions({
         onOpenChange={setAddDocumentDialogOpen}
         shipmentId={shipment.id}
         customerId={shipment.customerId}
+        shipmentStatus={shipment.status}
       />
     </>
   );

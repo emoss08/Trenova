@@ -2,13 +2,8 @@ import { SelectField } from "@/components/fields/select-field";
 import { SwitchField } from "@/components/fields/switch-field";
 import { Button } from "@/components/ui/button";
 import { FormControl, FormGroup } from "@/components/ui/form";
-import {
-  autoBillCriteriaChoices,
-  paymentTermChoices,
-  transferCriteriaChoices,
-} from "@/lib/choices";
+import { paymentTermChoices } from "@/lib/choices";
 import { queries } from "@/lib/queries";
-import { BillingControlSchema } from "@/lib/schemas/billing-schema";
 import { type CustomerSchema } from "@/lib/schemas/customer-schema";
 import { useQuery } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
@@ -47,11 +42,6 @@ export function BillingControlOverrides() {
       setValue("billingProfile.paymentTerm", billingControl.paymentTerm, {
         shouldDirty: true,
       });
-      setValue(
-        "billingProfile.transferCriteria",
-        billingControl.transferCriteria,
-        { shouldDirty: true },
-      );
       setValue("billingProfile.autoTransfer", billingControl.autoTransfer, {
         shouldDirty: true,
       });
@@ -63,11 +53,6 @@ export function BillingControlOverrides() {
       setValue("billingProfile.autoBill", billingControl.autoBill, {
         shouldDirty: true,
       });
-      setValue(
-        "billingProfile.autoBillCriteria",
-        billingControl.autoBillCriteria,
-        { shouldDirty: true },
-      );
       setValue(
         "billingProfile.enforceCustomerBillingReq",
         billingControl.enforceCustomerBillingReq,
@@ -101,9 +86,7 @@ export function BillingControlOverrides() {
         )}
       </div>
       {showBillingControlOverrides ? (
-        <BillingControlOverridesForm
-          billingControl={billingControl as BillingControlSchema}
-        />
+        <BillingControlOverridesForm />
       ) : (
         <Button
           onClick={() => toggleBillingControlOverrides(true)}
@@ -119,11 +102,7 @@ export function BillingControlOverrides() {
   );
 }
 
-function BillingControlOverridesForm({
-  billingControl,
-}: {
-  billingControl: BillingControlSchema;
-}) {
+function BillingControlOverridesForm() {
   const { control } = useFormContext<CustomerSchema>();
 
   return (
@@ -135,25 +114,6 @@ function BillingControlOverridesForm({
           label="Default Payment Terms"
           description="Establishes the standard timeframe for customer payment that applies when no specific terms have been negotiated."
           options={paymentTermChoices}
-        />
-      </FormControl>
-      <FormControl cols="full">
-        <SelectField
-          control={control}
-          name="billingProfile.transferCriteria"
-          label="Transfer Qualification Criteria"
-          description="Establishes the primary shipment milestone that triggers eligibility for transfer to the billing system."
-          options={transferCriteriaChoices}
-        />
-      </FormControl>
-      <FormControl cols="full">
-        <SelectField
-          control={control}
-          name="billingProfile.autoBillCriteria"
-          label="Auto Bill Criteria"
-          description="Defines when shipments will be automatically billed."
-          options={autoBillCriteriaChoices}
-          isDisabled={!billingControl?.autoBill}
         />
       </FormControl>
       <FormControl>
