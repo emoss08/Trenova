@@ -41,4 +41,5 @@ CREATE TABLE IF NOT EXISTS "customer_billing_profiles"(
 CREATE INDEX IF NOT EXISTS "idx_customer_billing_profiles_customer_id" ON "customer_billing_profiles"("customer_id", "organization_id", "business_unit_id");
 
 -- Add GIN index for the document_type_ids array
-CREATE INDEX IF NOT EXISTS "idx_customer_billing_profiles_document_type_ids" ON "customer_billing_profiles" USING GIN ("document_type_ids");
+CREATE INDEX IF NOT EXISTS "idx_customer_billing_profiles_document_type_ids" ON "customer_billing_profiles" USING GIN("document_type_ids");
+
