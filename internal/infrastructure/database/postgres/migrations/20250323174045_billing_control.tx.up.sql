@@ -13,7 +13,6 @@ CREATE TYPE "approval_requirement_enum" AS ENUM(
     'ExceptionOnly'
 );
 
-
 --bun:split
 CREATE TYPE "transfer_schedule_enum" AS ENUM(
     'Continuous',
@@ -33,25 +32,6 @@ CREATE TYPE "payment_term_enum" AS ENUM(
 );
 
 --bun:split
-CREATE TYPE "transfer_criteria_enum" AS ENUM(
-    'ReadyAndCompleted',
-    'Completed',
-    'ReadyToBill',
-    'DocumentsAttached',
-    'PODReceived'
-);
-
---bun:split
-CREATE TYPE "auto_bill_criteria_enum" AS ENUM(
-    'Delivered',
-    'Transferred',
-    'MarkedReadyToBill',
-    'PODReceived',
-    'DocumentsVerified'
-);
-
-
---bun:split
 CREATE TABLE IF NOT EXISTS "billing_controls"(
     "id" varchar(100) NOT NULL,
     "business_unit_id" varchar(100) NOT NULL,
@@ -67,7 +47,6 @@ CREATE TABLE IF NOT EXISTS "billing_controls"(
     "show_amount_due" boolean NOT NULL DEFAULT TRUE,
     -- Controls for the billing process
     "auto_transfer" boolean NOT NULL DEFAULT TRUE,
-    "transfer_criteria" transfer_criteria_enum NOT NULL DEFAULT 'ReadyAndCompleted',
     "transfer_schedule" transfer_schedule_enum NOT NULL DEFAULT 'Continuous',
     "transfer_batch_size" integer NOT NULL DEFAULT 100 CHECK ("transfer_batch_size" >= 1),
     "auto_mark_ready_to_bill" boolean NOT NULL DEFAULT TRUE,
@@ -76,7 +55,6 @@ CREATE TABLE IF NOT EXISTS "billing_controls"(
     "validate_customer_rates" boolean NOT NULL DEFAULT TRUE,
     -- Automated billing controls
     "auto_bill" boolean NOT NULL DEFAULT TRUE,
-    "auto_bill_criteria" auto_bill_criteria_enum NOT NULL DEFAULT 'Delivered',
     "send_auto_bill_notifications" boolean NOT NULL DEFAULT TRUE,
     "auto_bill_batch_size" integer NOT NULL DEFAULT 100 CHECK ("auto_bill_batch_size" >= 1),
     -- Exception handling

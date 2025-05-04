@@ -56,6 +56,16 @@ func (sm *ShipmentStateMachine) CanTransition(event TransitionEvent) bool {
 			EventShipmentCanceled:  true,
 		},
 		shipment.StatusCompleted: {
+			EventShipmentCanceled:    true,
+			EventShipmentReadyToBill: true,
+		},
+		shipment.StatusReadyToBill: {
+			EventShipmentBilled:         true,
+			EventShipmentReviewRequired: true,
+			EventShipmentCanceled:       true,
+		},
+		shipment.StatusReviewRequired: {
+			EventShipmentBilled:   true,
 			EventShipmentCanceled: true,
 		},
 
@@ -98,6 +108,12 @@ func (sm *ShipmentStateMachine) Transition(event TransitionEvent) error {
 		newStatus = shipment.StatusCompleted
 	case EventShipmentCanceled:
 		newStatus = shipment.StatusCanceled
+	case EventShipmentReadyToBill:
+		newStatus = shipment.StatusReadyToBill
+	case EventShipmentReviewRequired:
+		newStatus = shipment.StatusReviewRequired
+	case EventShipmentBilled:
+		newStatus = shipment.StatusBilled
 	default:
 		return newTransitionError(
 			string(sm.shipment.Status),

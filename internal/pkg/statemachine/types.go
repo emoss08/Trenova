@@ -29,9 +29,11 @@ const (
 	EventShipmentInTransit         = ShipmentTransitionEvent("ShipmentInTransit")
 	EventShipmentCompleted         = ShipmentTransitionEvent("ShipmentCompleted")
 	EventShipmentCanceled          = ShipmentTransitionEvent("ShipmentCanceled")
+	EventShipmentReadyToBill       = ShipmentTransitionEvent("ShipmentReadyToBill")
+	EventShipmentReviewRequired    = ShipmentTransitionEvent("ShipmentReviewRequired")
+	EventShipmentBilled            = ShipmentTransitionEvent("ShipmentBilled")
 	EventShipmentDelayed           = ShipmentTransitionEvent("ShipmentDelayed")
 	EventShipmentPartialCompleted  = ShipmentTransitionEvent("ShipmentPartialCompleted")
-	EventShipmentMarkedForBilling  = ShipmentTransitionEvent("ShipmentMarkedForBilling")
 )
 
 // TransitionEvent is a common interface for all transition event types

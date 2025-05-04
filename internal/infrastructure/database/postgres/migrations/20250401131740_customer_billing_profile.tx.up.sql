@@ -21,10 +21,8 @@ CREATE TABLE IF NOT EXISTS "customer_billing_profiles"(
     "has_overrides" boolean NOT NULL DEFAULT FALSE,
     "payment_term" payment_term_enum NOT NULL DEFAULT 'Net30',
     "auto_transfer" boolean NOT NULL DEFAULT TRUE,
-    "transfer_criteria" transfer_criteria_enum NOT NULL DEFAULT 'ReadyAndCompleted',
     "auto_mark_ready_to_bill" boolean NOT NULL DEFAULT TRUE,
     "auto_bill" boolean NOT NULL DEFAULT TRUE,
-    "auto_bill_criteria" auto_bill_criteria_enum NOT NULL DEFAULT 'Delivered',
     -- Metadata and versioning
     "version" bigint NOT NULL DEFAULT 0,
     "created_at" bigint NOT NULL DEFAULT EXTRACT(EPOCH FROM current_timestamp) ::bigint,

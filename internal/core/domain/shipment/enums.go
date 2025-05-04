@@ -29,6 +29,12 @@ const (
 	// StatusCompleted indicates that the shipment has been completed
 	StatusCompleted = Status("Completed")
 
+	// StatusReadyToBill indicates that the shipment is ready to be billed
+	StatusReadyToBill = Status("ReadyToBill")
+
+	// StatusReviewRequired indicates that the shipment requires review before it can be billed
+	StatusReviewRequired = Status("ReviewRequired")
+
 	// StatusBilled indicates that the shipment has been billed
 	StatusBilled = Status("Billed")
 
