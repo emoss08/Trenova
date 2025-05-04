@@ -68,7 +68,6 @@ function GeneralInformationSection({
           extraSearchParams={{
             status: Status.Active,
           }}
-          clearable
         />
       </FormControl>
       <FormControl>

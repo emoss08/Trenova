@@ -47,6 +47,15 @@ export class APIError extends Error {
     return this.data?.type === "validation-error";
   }
 
+  isVersionMismatchError(): boolean {
+    return (
+      this.data?.type === "validation-error" &&
+      this.data?.invalidParams.some(
+        (param) => param.code === "VERSION_MISMATCH",
+      )
+    );
+  }
+
   isRateLimitError(): boolean {
     return this.status === 429;
   }
