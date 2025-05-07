@@ -44,7 +44,7 @@ type Organization struct {
 	DOTNumber    string `json:"dotNumber" bun:"dot_number,type:VARCHAR(8),notnull"`
 	LogoURL      string `json:"logoUrl" bun:"logo_url,type:VARCHAR(255)"`
 	OrgType      Type   `json:"orgType" bun:"org_type,type:org_type_enum,notnull,default:'Asset'"`
-	BucketName   string `json:"-" bun:"bucket_name,type:VARCHAR(63),notnull"`
+	BucketName   string `json:"bucketName" bun:"bucket_name,type:VARCHAR(63),notnull"`
 	AddressLine1 string `json:"addressLine1" bun:"address_line1,type:VARCHAR(150),notnull"`
 	AddressLine2 string `json:"addressLine2" bun:"address_line2,type:VARCHAR(150)"`
 	City         string `json:"city" bun:"city,type:VARCHAR(100),notnull"`
@@ -115,7 +115,7 @@ func (o *Organization) ValidateUniqueness(ctx context.Context, tx bun.IDB, multi
 		WithFieldAndTemplate(
 			"scac_code",
 			o.ScacCode,
-			"Organization with SCAC code ':value' already exists in the business unit. Please try again with a different SCAC code.",
+			"Organization with SCAC code ':value' already exists in the busi\ness unit. Please try again with a different SCAC code.",
 			map[string]string{
 				"value": o.ScacCode,
 			}).

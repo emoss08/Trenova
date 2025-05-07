@@ -15,6 +15,7 @@ import (
 	"github.com/emoss08/trenova/internal/pkg/logger"
 	"github.com/emoss08/trenova/internal/pkg/utils/fileutils"
 	"github.com/emoss08/trenova/internal/pkg/utils/jsonutils"
+	"github.com/emoss08/trenova/internal/pkg/validator/organizationvalidator"
 	"github.com/emoss08/trenova/pkg/types"
 	"github.com/emoss08/trenova/pkg/types/pulid"
 	"github.com/rotisserie/eris"
@@ -30,6 +31,7 @@ type ServiceParams struct {
 	PermService  services.PermissionService
 	AuditService services.AuditService
 	FileService  services.FileService
+	Validator    *organizationvalidator.Validator
 }
 
 type Service struct {
@@ -38,6 +40,7 @@ type Service struct {
 	ps   services.PermissionService
 	as   services.AuditService
 	fs   services.FileService
+	v    *organizationvalidator.Validator
 }
 
 func NewService(p ServiceParams) *Service {
@@ -51,6 +54,7 @@ func NewService(p ServiceParams) *Service {
 		fs:   p.FileService,
 		as:   p.AuditService,
 		l:    &log,
+		v:    p.Validator,
 	}
 }
 
@@ -62,12 +66,12 @@ func (s *Service) SelectOptions(ctx context.Context, opts *ports.LimitOffsetQuer
 	}
 
 	// Convert the organizations to select options
-	options := make([]*types.SelectOption, len(result.Items))
-	for i, org := range result.Items {
-		options[i] = &types.SelectOption{
+	options := make([]*types.SelectOption, 0, len(result.Items))
+	for _, org := range result.Items {
+		options = append(options, &types.SelectOption{
 			Value: org.ID.String(),
 			Label: org.Name,
-		}
+		})
 	}
 
 	return options, nil
@@ -150,6 +154,10 @@ func (s *Service) Create(ctx context.Context, org *organization.Organization, us
 		return nil, errors.NewAuthorizationError("You do not have permission to create an organization")
 	}
 
+	if err := s.v.Validate(ctx, org); err != nil {
+		return nil, err
+	}
+
 	createdOrg, err := s.repo.Create(ctx, org)
 	if err != nil {
 		s.l.Error().Err(err).Interface("org", org).Msg("failed to create organization")
@@ -199,6 +207,10 @@ func (s *Service) Update(ctx context.Context, org *organization.Organization, us
 
 	if !result.Allowed {
 		return nil, errors.NewAuthorizationError("You do not have permission to update this organization")
+	}
+
+	if err := s.v.Validate(ctx, org); err != nil {
+		return nil, err
 	}
 
 	opts := repositories.GetOrgByIDOptions{
