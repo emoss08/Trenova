@@ -31,7 +31,6 @@ export default function ShipmentTable() {
         TableEditModal={ShipmentEditSheet}
         columns={columns}
         getRowClassName={(row) => {
-          console.log("row.original.status", row.original.status);
           return cn(getShipmentStatusRowClassName(row.original.status));
         }}
         // extraActions={[
