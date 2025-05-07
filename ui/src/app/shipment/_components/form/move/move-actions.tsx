@@ -1,12 +1,12 @@
 import { StopDialog } from "@/app/shipment/_components/sidebar/stop-details/stop-dialog";
 import { Button } from "@/components/ui/button";
 import {
-    DropdownMenu,
-    DropdownMenuContent,
-    DropdownMenuItem,
-    DropdownMenuLabel,
-    DropdownMenuSeparator,
-    DropdownMenuTrigger,
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Icon } from "@/components/ui/icons";
 import { http } from "@/lib/http-client";
@@ -32,6 +32,10 @@ export function MoveActions({
   // * TODO(Wolfred): we need to add a check before this is able to open, if the move is undefined.
   // * More than likely, we just need to disable the move actions if there is no move.
 
+  if (!move) {
+    return null;
+  }
+
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -43,7 +47,7 @@ export function MoveActions({
         <DropdownMenuLabel>Move Actions</DropdownMenuLabel>
         <DropdownMenuSeparator />
         <AssignmentAction move={move} currMoveIdx={moveIdx} />
-        <StopDialogAction moveIdx={moveIdx} />
+        <StopDialogAction moveIdx={moveIdx} stopIdx={0} />
         <DropdownMenuItem
           title="Split Move"
           description="Divide this move into multiple parts"
@@ -66,7 +70,13 @@ export function MoveActions({
 // * Statuses where the worker can be assigned.
 const validAssignmentStatuses = [MoveStatus.New, MoveStatus.Assigned];
 
-function StopDialogAction({ moveIdx }: { moveIdx: number }) {
+function StopDialogAction({
+  moveIdx,
+  stopIdx,
+}: {
+  moveIdx: number;
+  stopIdx: number;
+}) {
   const [isOpen, setIsOpen] = useState<boolean>(false);
 
   const handleOpen = useCallback(() => {
@@ -94,6 +104,7 @@ function StopDialogAction({ moveIdx }: { moveIdx: number }) {
           open={isOpen}
           onOpenChange={handleClose}
           moveIdx={moveIdx}
+          stopIdx={stopIdx}
         />
       )}
     </>

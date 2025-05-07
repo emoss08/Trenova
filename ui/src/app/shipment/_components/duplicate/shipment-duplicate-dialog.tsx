@@ -15,6 +15,7 @@ import {
   shipmentDuplicateSchema,
   type ShipmentDuplicateSchema,
 } from "@/lib/schemas/shipment-duplicate-schema";
+import type { ShipmentSchema } from "@/lib/schemas/shipment-schema";
 import { type TableSheetProps } from "@/types/data-table";
 import { type APIError } from "@/types/errors";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -23,7 +24,6 @@ import { useCallback } from "react";
 import { FormProvider, type Path, useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { ShipmentDuplicateForm } from "./shipment-duplicate-form";
-import type { ShipmentSchema } from "@/lib/schemas/shipment-schema";
 
 type ShipmentDuplicateDialogProps = TableSheetProps & {
   shipment: ShipmentSchema;
@@ -125,9 +125,8 @@ export function ShipmentDuplicateDialog({
                 onClick={() => handleSubmit(onSubmit)()}
                 isSubmitting={isSubmitting}
                 title="shipment duplication"
-              >
-                Duplicate
-              </FormSaveButton>
+                text="Duplicate"
+              />
             </DialogFooter>
           </Form>
         </FormProvider>

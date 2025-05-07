@@ -1,13 +1,5 @@
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
+/* eslint-disable react-hooks/exhaustive-deps */
+import { useDataTable } from "@/components/data-table/data-table-provider";
 import { Button, FormSaveButton } from "@/components/ui/button";
 import {
   Dialog,
@@ -21,21 +13,17 @@ import {
 import { Form } from "@/components/ui/form";
 import { VisuallyHidden } from "@/components/ui/visually-hidden";
 import { usePopoutWindow } from "@/hooks/popout-window/use-popout-window";
-import { useUnsavedChanges } from "@/hooks/use-form";
 import { useFormWithSave } from "@/hooks/use-form-with-save";
 import { broadcastQueryInvalidation } from "@/hooks/use-invalidate-query";
 import { http } from "@/lib/http-client";
 import { workerSchema, WorkerSchema } from "@/lib/schemas/worker-schema";
 import { EditTableSheetProps } from "@/types/data-table";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useCallback, useEffect } from "react";
+import { useCallback, useEffect, useMemo } from "react";
 import { FormProvider } from "react-hook-form";
 import { WorkerForm } from "./workers-form";
 
-function WorkerEditForm({
-  currentRecord,
-  onOpenChange,
-}: EditTableSheetProps<WorkerSchema>) {
+function WorkerEditForm({ currentRecord }: EditTableSheetProps<WorkerSchema>) {
   const { isPopout, closePopout } = usePopoutWindow();
 
   const form = useFormWithSave({
@@ -50,7 +38,6 @@ function WorkerEditForm({
       return response.data;
     },
     onSuccess: () => {
-      onOpenChange(false);
       broadcastQueryInvalidation({
         queryKey: ["worker", "worker-list"],
         options: {
@@ -73,23 +60,12 @@ function WorkerEditForm({
     handleSubmit,
     reset,
     onSubmit,
-    formState: { isDirty, isSubmitting, isSubmitSuccessful },
+    formState: { isSubmitting, isSubmitSuccessful },
   } = form;
 
   const handleClose = useCallback(() => {
-    onOpenChange(false);
     reset();
-  }, [onOpenChange, reset]);
-
-  const {
-    showWarning,
-    handleClose: onClose,
-    handleConfirmClose,
-    handleCancelClose,
-  } = useUnsavedChanges({
-    isDirty,
-    onClose: handleClose,
-  });
+  }, [reset]);
 
   // Make sure we populate the form with the current record
   useEffect(() => {
@@ -102,7 +78,7 @@ function WorkerEditForm({
   // This is recommended by react-hook-form - https://react-hook-form.com/docs/useform/reset
   useEffect(() => {
     reset();
-  }, [isSubmitSuccessful, currentRecord, reset, onOpenChange]);
+  }, [isSubmitSuccessful, currentRecord, reset]);
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
@@ -121,57 +97,100 @@ function WorkerEditForm({
   }, [isSubmitting, handleSubmit, onSubmit]);
 
   return (
-    <>
-      <FormProvider {...form}>
-        <Form className="space-y-0 p-0" onSubmit={handleSubmit(onSubmit)}>
-          <DialogBody className="p-0">
-            <WorkerForm />
-          </DialogBody>
-          <DialogFooter>
-            <Button type="button" variant="outline" onClick={onClose}>
-              Cancel
-            </Button>
-            <FormSaveButton
-              isPopout={isPopout}
-              isSubmitting={isSubmitting}
-              title="Worker"
-            />
-          </DialogFooter>
-        </Form>
-      </FormProvider>
-
-      {showWarning && (
-        <AlertDialog open={showWarning} onOpenChange={handleCancelClose}>
-          <AlertDialogContent>
-            <AlertDialogHeader>
-              <AlertDialogTitle>Unsaved Changes</AlertDialogTitle>
-              <AlertDialogDescription>
-                You have unsaved changes. Are you sure you want to close this
-                form? All changes will be lost.
-              </AlertDialogDescription>
-            </AlertDialogHeader>
-            <AlertDialogFooter>
-              <AlertDialogCancel onClick={handleCancelClose}>
-                Continue Editing
-              </AlertDialogCancel>
-              <AlertDialogAction onClick={handleConfirmClose}>
-                Discard Changes
-              </AlertDialogAction>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialog>
-      )}
-    </>
+    <FormProvider {...form}>
+      <Form className="space-y-0 p-0" onSubmit={handleSubmit(onSubmit)}>
+        <DialogBody className="p-0">
+          <WorkerForm />
+        </DialogBody>
+        <DialogFooter>
+          <Button type="button" variant="outline" onClick={handleClose}>
+            Cancel
+          </Button>
+          <FormSaveButton
+            isPopout={isPopout}
+            isSubmitting={isSubmitting}
+            title="Worker"
+          />
+        </DialogFooter>
+      </Form>
+    </FormProvider>
   );
 }
 
 export function EditWorkerModal({
-  open,
-  onOpenChange,
   currentRecord,
 }: EditTableSheetProps<WorkerSchema>) {
+  const { table, rowSelection, isLoading } = useDataTable();
+
+  const selectedRowKey = Object.keys(rowSelection)[0];
+
+  const selectedRow = useMemo(() => {
+    if (isLoading && !selectedRowKey) return;
+    return table
+      .getCoreRowModel()
+      .flatRows.find((row) => row.id === selectedRowKey);
+  }, [selectedRowKey, isLoading]);
+
+  const index = table
+    .getCoreRowModel()
+    .flatRows.findIndex((row) => row.id === selectedRow?.id);
+
+  const nextId = useMemo(
+    () => table.getCoreRowModel().flatRows[index + 1]?.id,
+    [index, isLoading],
+  );
+
+  const prevId = useMemo(
+    () => table.getCoreRowModel().flatRows[index - 1]?.id,
+    [index, isLoading],
+  );
+
+  const onPrev = useCallback(() => {
+    if (prevId) table.setRowSelection({ [prevId]: true });
+  }, [prevId, isLoading]);
+
+  const onNext = useCallback(() => {
+    if (nextId) table.setRowSelection({ [nextId]: true });
+  }, [nextId, isLoading, table]);
+
+  useEffect(() => {
+    const down = (e: KeyboardEvent) => {
+      if (!selectedRowKey) return;
+
+      // REMINDER: prevent dropdown navigation inside of sheet to change row selection
+      const activeElement = document.activeElement;
+      const isMenuActive = activeElement?.closest('[role="menu"]');
+
+      if (isMenuActive) return;
+
+      if (e.key === "ArrowUp") {
+        e.preventDefault();
+        onPrev();
+      }
+      if (e.key === "ArrowDown") {
+        e.preventDefault();
+        onNext();
+      }
+    };
+
+    document.addEventListener("keydown", down);
+    return () => document.removeEventListener("keydown", down);
+  }, [selectedRowKey, onNext, onPrev]);
+
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog
+      open={!!selectedRowKey}
+      onOpenChange={(open) => {
+        if (!open) {
+          const el = selectedRowKey
+            ? document.getElementById(selectedRowKey)
+            : null;
+          table.resetRowSelection();
+
+          setTimeout(() => el?.focus(), 0);
+        }
+      }}
+    >
       <DialogContent className="md:max-w-[700px] lg:max-w-[800px]">
         <VisuallyHidden>
           <DialogHeader>
@@ -181,11 +200,7 @@ export function EditWorkerModal({
             </DialogDescription>
           </DialogHeader>
         </VisuallyHidden>
-        <WorkerEditForm
-          open={open}
-          onOpenChange={onOpenChange}
-          currentRecord={currentRecord}
-        />
+        <WorkerEditForm currentRecord={currentRecord} />
       </DialogContent>
     </Dialog>
   );

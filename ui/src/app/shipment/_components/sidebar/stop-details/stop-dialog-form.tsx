@@ -15,7 +15,7 @@ export function StopDialogForm({
   moveIdx: number;
   stopIdx: number;
 }) {
-  const { control, setValue, getValues } = useFormContext<ShipmentSchema>();
+  const { control } = useFormContext<ShipmentSchema>();
 
   // * StopIdx, is nullable because there are instances where the dialog is going to add a new stop, and there is no stop index yet.
   // * If there is no stop index, we will use the append function to add a new stop.

@@ -27,7 +27,6 @@ const AssignmentDetailItem = memo(function AssignmentDetailItem({
           baseUrl={baseUrl}
           entityId={entityId}
           className="text-xs font-medium max-w-[100px] truncate"
-          value={value}
           modelOpen
         >
           {value ?? "-"}
