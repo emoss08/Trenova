@@ -2,7 +2,7 @@ import * as SelectPrimitive from "@radix-ui/react-select";
 import * as React from "react";
 
 import { cn } from "@/lib/utils";
-import { faChevronDown } from "@fortawesome/pro-regular-svg-icons";
+import type { SelectOption, SelectValue } from "@/types/fields";
 import {
   CheckIcon,
   ChevronDownIcon,
@@ -22,10 +22,21 @@ function SelectGroup({
   return <SelectPrimitive.Group data-slot="select-group" {...props} />;
 }
 
-function SelectValue({
-  ...props
-}: React.ComponentProps<typeof SelectPrimitive.Value>) {
-  return <SelectPrimitive.Value data-slot="select-value" {...props} />;
+function SelectValue({ color, ...props }: SelectValue) {
+  console.info("select value props", props);
+  return (
+    <div className="flex h-5 items-center text-sm font-normal text-foreground gap-x-1.5">
+      {color && (
+        <div
+          className="size-2 rounded-full"
+          style={{
+            backgroundColor: color,
+          }}
+        />
+      )}
+      <SelectPrimitive.Value data-slot="select-value" {...props} />
+    </div>
+  );
 }
 
 function SelectTrigger({
@@ -38,20 +49,17 @@ function SelectTrigger({
       data-slot="select-trigger"
       className={cn(
         "group border-muted-foreground/20 bg-muted flex h-7 w-full items-center justify-between whitespace-nowrap rounded-md border",
-        "px-3 py-2 text-xs ring-offset-background placeholder:text-muted-foreground outline-hidden",
+        "px-1.5 py-2 text-xs ring-offset-background placeholder:text-muted-foreground outline-hidden",
         "data-[state=open]:border-blue-600 data-[state=open]:outline-hidden data-[state=open]:ring-4 data-[state=open]:ring-blue-600/20",
         "transition-[border-color,box-shadow] duration-200 ease-in-out",
-        "disabled:opacity-50 [&>span]:line-clamp-1",
+        "disabled:opacity-50 [&>span]:line-clamp-1 cursor-pointer",
         className,
       )}
       {...props}
     >
       {children}
       <SelectPrimitive.Icon asChild>
-        <Icon
-          icon={faChevronDown}
-          className="group-data-[state=open]:rotate-180 transition-transform duration-200 ease-in-out size-3 opacity-50"
-        />
+        <ChevronDownIcon className="group-data-[state=open]:rotate-180 transition-transform duration-200 ease-in-out size-3 opacity-50" />
       </SelectPrimitive.Icon>
     </SelectPrimitive.Trigger>
   );
@@ -107,17 +115,30 @@ function SelectLabel({
 function SelectItem({
   className,
   children,
+  icon,
+  color,
   ...props
-}: React.ComponentProps<typeof SelectPrimitive.Item>) {
+}: Omit<SelectOption, "label">) {
   return (
     <SelectPrimitive.Item
       data-slot="select-item"
       className={cn(
-        "focus:bg-muted focus:text-accent-foreground [&_svg:not([class*='text-'])]:text-muted-foreground relative flex w-full cursor-default items-center gap-2 rounded-sm py-1.5 pr-8 pl-2 text-sm outline-hidden select-none data-[disabled]:pointer-events-none data-[disabled]:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4 *:[span]:last:flex *:[span]:last:items-center *:[span]:last:gap-2",
+        "focus:bg-muted focus:text-accent-foreground cursor-pointer data-[state=checked]:bg-muted [&_svg:not([class*='text-'])]:text-muted-foreground relative flex w-full items-center gap-2 rounded-sm py-1.5 pr-8 pl-2 text-2xs outline-hidden select-none data-[disabled]:pointer-events-none data-[disabled]:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4 *:[span]:last:flex *:[span]:last:items-center *:[span]:last:gap-2",
         className,
       )}
       {...props}
     >
+      {icon ? (
+        <Icon
+          icon={icon}
+          className="size-3 data-[state=checked]:text-foreground data-[state=checked]:bg-muted-foreground/10"
+        />
+      ) : color ? (
+        <span
+          className="block size-2 rounded-full"
+          style={{ backgroundColor: color }}
+        />
+      ) : null}
       <span className="absolute right-2 flex size-3.5 items-center justify-center">
         <SelectPrimitive.ItemIndicator>
           <CheckIcon className="size-4" />

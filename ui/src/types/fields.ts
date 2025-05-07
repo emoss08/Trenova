@@ -3,6 +3,7 @@ import type { TextareaProps } from "@/components/ui/textarea";
 import { NumberInput as ArkNumberInput } from "@ark-ui/react/number-input";
 import { type IconDefinition } from "@fortawesome/pro-regular-svg-icons";
 import { type CheckboxProps } from "@radix-ui/react-checkbox";
+import * as SelectPrimitive from "@radix-ui/react-select";
 import { SwitchProps } from "@radix-ui/react-switch";
 import { ComponentPropsWithoutRef } from "react";
 import type {
@@ -12,7 +13,6 @@ import type {
   RegisterOptions,
 } from "react-hook-form";
 import { FieldPath } from "react-hook-form";
-import type { Props as ReactSelectProps } from "react-select";
 import { type API_ENDPOINTS } from "./server";
 
 type BaseInputFieldProps = Omit<InputProps, "name"> & {
@@ -91,7 +91,11 @@ type BaseDateFieldProps = {
 export type DateFieldProps<T extends FieldValues> = BaseDateFieldProps &
   FormControlProps<T>;
 
-export type SelectOption = {
+export type SelectValue = React.ComponentProps<typeof SelectPrimitive.Value> & {
+  color?: string;
+};
+
+export type SelectOption = React.ComponentProps<typeof SelectPrimitive.Item> & {
   label: string;
   value: string | boolean | number;
   color?: string;
@@ -104,16 +108,14 @@ export type AddNewButtonProps = {
   popoutLink: string;
 };
 
-export type BaseSelectFieldProps = Omit<
-  ReactSelectProps,
-  "options" | "onChange" | "name"
-> & {
-  onChange: (...event: any[]) => void;
+export type BaseSelectFieldProps = {
   options: SelectOption[];
   label?: string;
   description?: string;
   isReadOnly?: boolean;
   isInvalid?: boolean;
+  className?: string;
+  placeholder?: string;
 };
 
 export type SelectFieldProps<T extends FieldValues> = BaseSelectFieldProps &
