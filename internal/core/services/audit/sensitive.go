@@ -137,68 +137,112 @@ func (sdm *SensitiveDataManager) sanitizeData(entry *audit.Entry) error {
 
 // sanitizeJSONMap sanitizes the data in a JSON map.
 func (sdm *SensitiveDataManager) sanitizeJSONMap(data map[string]any, fields []services.SensitiveField) error {
-	for _, field := range fields {
-		// Check for direct field match
-		if value, exists := data[field.Name]; exists {
-			if err := sdm.applySanitizationAction(data, field.Name, value, field.Action); err != nil {
-				return err
-			}
-		}
-
-		// Handle pattern matching if specified
-		if err := sdm.handlePatternMatching(data, field); err != nil {
-			return err
-		}
-
-		// Handle nested objects and arrays
-		if err := sdm.handleNestedStructures(data, fields); err != nil {
-			return err
-		}
+	// Apply direct and path-based sanitization
+	if err := sdm.applyNameAndPathRules(data, fields); err != nil {
+		return err
 	}
 
-	return nil
+	// Apply pattern-based sanitization and handle recursion
+	return sdm.applyPatternsAndRecurse(data, fields)
 }
 
-// handlePatternMatching handles pattern matching for sensitive fields
-func (sdm *SensitiveDataManager) handlePatternMatching(data map[string]any, field services.SensitiveField) error {
-	if field.Pattern == "" {
-		return nil
-	}
-
-	sdm.mu.RLock()
-	pattern, exists := sdm.regexCache[field.Pattern]
-	sdm.mu.RUnlock()
-
-	if !exists {
-		return nil
-	}
-
-	for key, value := range data {
-		strVal, ok := value.(string)
-		if !ok || !pattern.MatchString(strVal) {
+// applyNameAndPathRules handles the direct field matches and path-based rules (Phase 1)
+func (sdm *SensitiveDataManager) applyNameAndPathRules(data map[string]any, fields []services.SensitiveField) error {
+	for _, fieldRule := range fields {
+		// Skip purely pattern-based rules
+		if fieldRule.Pattern != "" && fieldRule.Name == "" && fieldRule.Path == "" {
 			continue
 		}
 
-		if err := sdm.applySanitizationAction(data, key, value, field.Action); err != nil {
-			return err
+		targetMap := data
+		keyName := fieldRule.Name
+
+		// Navigate to target map if path is specified
+		if fieldRule.Path != "" {
+			found, pathMap := sdm.findMapAtPath(data, fieldRule.Path)
+			if !found {
+				continue // Path not found
+			}
+			targetMap = pathMap
+		}
+
+		// Apply sanitization if field exists
+		if value, exists := targetMap[keyName]; exists {
+			if err := sdm.applySanitizationAction(targetMap, keyName, value, fieldRule.Action); err != nil {
+				return eris.Wrapf(err, "failed to apply sanitization to %s.%s", fieldRule.Path, keyName)
+			}
 		}
 	}
-
 	return nil
 }
 
-// handleNestedStructures recursively processes nested maps and arrays
-func (sdm *SensitiveDataManager) handleNestedStructures(data map[string]any, fields []services.SensitiveField) error {
-	for _, val := range data {
-		switch v := val.(type) {
-		case map[string]any:
-			if err := sdm.sanitizeJSONMap(v, fields); err != nil {
-				return err
+// findMapAtPath navigates to the map at the specified dot-separated path
+func (sdm *SensitiveDataManager) findMapAtPath(data map[string]any, path string) (bool, map[string]any) {
+	currentMap := data
+	pathSegments := strings.Split(path, ".")
+
+	for _, segment := range pathSegments {
+		nested, ok := currentMap[segment].(map[string]any)
+		if !ok {
+			return false, nil
+		}
+		currentMap = nested
+	}
+
+	return true, currentMap
+}
+
+// applyPatternsAndRecurse handles pattern matching and recursion (Phase 2)
+func (sdm *SensitiveDataManager) applyPatternsAndRecurse(data map[string]any, fields []services.SensitiveField) error {
+	for key, val := range data {
+		// Apply pattern-based rules
+		if err := sdm.applyPatternRules(data, key, val, fields); err != nil {
+			return err
+		}
+
+		// Recurse into nested structures
+		if err := sdm.recurseIntoNestedStructures(val, fields); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+// applyPatternRules applies pattern-based rules to a specific value
+func (sdm *SensitiveDataManager) applyPatternRules(data map[string]any, key string, val any, fields []services.SensitiveField) error {
+	strVal, ok := val.(string)
+	if !ok {
+		return nil // Only strings can match patterns
+	}
+
+	for _, fieldRule := range fields {
+		if fieldRule.Pattern == "" {
+			continue // Skip non-pattern rules
+		}
+
+		sdm.mu.RLock()
+		pattern, exists := sdm.regexCache[fieldRule.Pattern]
+		sdm.mu.RUnlock()
+
+		if exists && pattern.MatchString(strVal) {
+			if err := sdm.applySanitizationAction(data, key, val, fieldRule.Action); err != nil {
+				return eris.Wrapf(err, "failed to apply pattern sanitization to key %s", key)
 			}
-		case []any:
-			if err := sdm.sanitizeJSONArray(v, fields); err != nil {
-				return err
-			}
+		}
+	}
+	return nil
+}
+
+// recurseIntoNestedStructures recursively processes nested maps and arrays
+func (sdm *SensitiveDataManager) recurseIntoNestedStructures(val any, fields []services.SensitiveField) error {
+	switch v := val.(type) {
+	case map[string]any:
+		if err := sdm.sanitizeJSONMap(v, fields); err != nil {
+			return err
+		}
+	case []any:
+		if err := sdm.sanitizeJSONArray(v, fields); err != nil {
+			return err
 		}
 	}
 	return nil
