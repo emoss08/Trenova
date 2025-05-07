@@ -9,8 +9,6 @@ import { useForm } from "react-hook-form";
 import { FleetCodeForm } from "./fleet-code-form";
 
 export function EditFleetCodeModal({
-  open,
-  onOpenChange,
   currentRecord,
 }: EditTableSheetProps<FleetCodeSchema>) {
   const form = useForm({
@@ -21,8 +19,6 @@ export function EditFleetCodeModal({
   return (
     <FormEditModal
       currentRecord={currentRecord}
-      open={open}
-      onOpenChange={onOpenChange}
       url="/fleet-codes/"
       title="Fleet Code"
       queryKey="fleet-code-list"

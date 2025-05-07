@@ -9,8 +9,6 @@ import { useForm } from "react-hook-form";
 import { HazardousMaterialForm } from "./hazardous-material-form";
 
 export function EditHazardousMaterialModal({
-  open,
-  onOpenChange,
   currentRecord,
 }: EditTableSheetProps<HazardousMaterialSchema>) {
   const form = useForm({
@@ -21,8 +19,6 @@ export function EditHazardousMaterialModal({
   return (
     <FormEditModal
       currentRecord={currentRecord}
-      open={open}
-      onOpenChange={onOpenChange}
       url="/hazardous-materials/"
       title="Hazardous Material"
       queryKey="hazardous-material-list"

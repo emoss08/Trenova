@@ -9,8 +9,6 @@ import { useForm } from "react-hook-form";
 import { CommodityForm } from "./commodity-form";
 
 export function EditCommodityModal({
-  open,
-  onOpenChange,
   currentRecord,
 }: EditTableSheetProps<CommoditySchema>) {
   const form = useForm({
@@ -21,8 +19,6 @@ export function EditCommodityModal({
   return (
     <FormEditModal
       currentRecord={currentRecord}
-      open={open}
-      onOpenChange={onOpenChange}
       url="/commodities/"
       title="Commodity"
       queryKey="commodity-list"

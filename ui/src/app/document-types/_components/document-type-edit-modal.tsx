@@ -9,8 +9,6 @@ import { useForm } from "react-hook-form";
 import { DocumentTypeForm } from "./document-type-form";
 
 export function EditDocumentTypeModal({
-  open,
-  onOpenChange,
   currentRecord,
 }: EditTableSheetProps<DocumentTypeSchema>) {
   const form = useForm<DocumentTypeSchema>({
@@ -21,8 +19,6 @@ export function EditDocumentTypeModal({
   return (
     <FormEditModal
       currentRecord={currentRecord}
-      open={open}
-      onOpenChange={onOpenChange}
       url="/document-types/"
       title="Document Type"
       queryKey="document-type-list"

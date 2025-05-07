@@ -9,8 +9,6 @@ import { useForm } from "react-hook-form";
 import { HazmatSegregationRuleForm } from "./hazmat-segregation-rule-form";
 
 export function EditHazmatSegregationRuleModal({
-  open,
-  onOpenChange,
   currentRecord,
 }: EditTableSheetProps<HazmatSegregationRuleSchema>) {
   const form = useForm({
@@ -21,8 +19,6 @@ export function EditHazmatSegregationRuleModal({
   return (
     <FormEditModal
       currentRecord={currentRecord}
-      open={open}
-      onOpenChange={onOpenChange}
       url="/hazmat-segregation-rules/"
       title="Hazmat Segregation Rule"
       queryKey="hazmat-segregation-rule-list"

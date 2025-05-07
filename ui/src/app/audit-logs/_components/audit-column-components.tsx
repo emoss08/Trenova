@@ -336,16 +336,6 @@ export function AuditEntryResourceBadge({
       text: "",
       description: undefined,
     },
-    [Resource.Route]: {
-      variant: undefined,
-      text: "",
-      description: undefined,
-    },
-    [Resource.CommentType]: {
-      variant: undefined,
-      text: "",
-      description: undefined,
-    },
     [Resource.DelayCode]: {
       variant: undefined,
       text: "",

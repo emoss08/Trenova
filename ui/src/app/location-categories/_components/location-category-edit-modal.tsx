@@ -9,8 +9,6 @@ import { useForm } from "react-hook-form";
 import { LocationCategoryForm } from "./location-category-form";
 
 export function EditLocationCategoryModal({
-  open,
-  onOpenChange,
   currentRecord,
 }: EditTableSheetProps<LocationCategorySchema>) {
   const form = useForm({
@@ -21,8 +19,6 @@ export function EditLocationCategoryModal({
   return (
     <FormEditModal
       currentRecord={currentRecord}
-      open={open}
-      onOpenChange={onOpenChange}
       url="/location-categories/"
       title="Location Category"
       queryKey="location-category-list"
