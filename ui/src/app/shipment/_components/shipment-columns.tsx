@@ -28,15 +28,15 @@ export function getColumns(): ColumnDef<Shipment>[] {
       },
       size: 100,
     }),
-    columnHelper.display({
-      id: "proNumber",
+    {
+      accessorKey: "proNumber",
       header: "Pro Number",
       cell: ({ row }) => {
         const proNumber = row.original.proNumber;
         return <p>{proNumber}</p>;
       },
       size: 100,
-    }),
+    },
     createEntityRefColumn<Shipment, "customer">(columnHelper, "customer", {
       basePath: "/billing/configurations/customers",
       getId: (customer) => customer.id,
