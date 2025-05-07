@@ -117,12 +117,11 @@ export function NumberField<T extends FieldValues>({
         >
           <NumberInputRoot
             {...props}
-            {...field}
             formatOptions={formattedOptions}
             className={cn(className)}
             inputMode={inputMode}
             allowMouseWheel
-            defaultValue={field.value}
+            value={field.value ?? undefined}
             invalid={fieldState.invalid}
             onValueChange={(details) => {
               field.onChange(details.value);
@@ -133,7 +132,6 @@ export function NumberField<T extends FieldValues>({
                 id={inputId}
                 placeholder={placeholder}
                 aria-label={label}
-                value={field.value}
                 aria-describedby={cn(
                   description && descriptionId,
                   fieldState.error && errorId,
