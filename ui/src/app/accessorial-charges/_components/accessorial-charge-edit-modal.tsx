@@ -9,8 +9,6 @@ import { useForm } from "react-hook-form";
 import { AccessorialChargeForm } from "./accessorial-charge-form";
 
 export function EditAccessorialChargeModal({
-  open,
-  onOpenChange,
   currentRecord,
 }: EditTableSheetProps<AccessorialChargeSchema>) {
   const form = useForm({
@@ -21,8 +19,6 @@ export function EditAccessorialChargeModal({
   return (
     <FormEditModal
       currentRecord={currentRecord}
-      open={open}
-      onOpenChange={onOpenChange}
       url="/accessorial-charges/"
       title="Accessorial Charge"
       queryKey="accessorial-charge-list"

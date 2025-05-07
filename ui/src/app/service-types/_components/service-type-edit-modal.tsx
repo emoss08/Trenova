@@ -9,8 +9,6 @@ import { useForm } from "react-hook-form";
 import { ServiceTypeForm } from "./service-type-form";
 
 export function EditServiceTypeModal({
-  open,
-  onOpenChange,
   currentRecord,
 }: EditTableSheetProps<ServiceTypeSchema>) {
   const form = useForm({
@@ -21,8 +19,6 @@ export function EditServiceTypeModal({
   return (
     <FormEditModal
       currentRecord={currentRecord}
-      open={open}
-      onOpenChange={onOpenChange}
       url="/service-types/"
       title="Service Type"
       queryKey="service-type-list"

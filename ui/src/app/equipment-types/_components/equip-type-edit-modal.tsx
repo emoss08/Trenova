@@ -9,8 +9,6 @@ import { useForm } from "react-hook-form";
 import { EquipTypeForm } from "./equip-type-form";
 
 export function EditEquipTypeModal({
-  open,
-  onOpenChange,
   currentRecord,
 }: EditTableSheetProps<EquipmentTypeSchema>) {
   const form = useForm<EquipmentTypeSchema>({
@@ -21,8 +19,6 @@ export function EditEquipTypeModal({
   return (
     <FormEditModal
       currentRecord={currentRecord}
-      open={open}
-      onOpenChange={onOpenChange}
       url="/equipment-types/"
       title="Equipment Type"
       queryKey="equipment-type-list"
