@@ -81,10 +81,7 @@ function Tree({ item, currentPath }: { item: RouteInfo; currentPath: string }) {
       <SidebarMenu>
         <SidebarMenuItem>
           <SidebarMenuButton asChild data-active={isActive} isActive={isActive}>
-            <Link
-              to={item.link || "#"}
-              className="data-[active=true]:border data-[active=true]:border-input"
-            >
+            <Link to={item.link || "#"}>
               {item.icon && (
                 <Icon
                   icon={item.icon}

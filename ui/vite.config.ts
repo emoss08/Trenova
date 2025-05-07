@@ -45,7 +45,11 @@ const vendorChunks = {
     "nuqs",
     "sonner",
     "react-day-picker",
+    "react-markdown",
+    "@ark-ui/react",
   ],
+
+  "pdf-js": ["react-pdf"],
 
   // Table and Query functionality
   "data-tables": ["@tanstack/react-table"],
@@ -227,7 +231,11 @@ export default defineConfig({
       overlay: true,
     },
     warmup: {
-      clientFiles: ["./src/lib/utils.ts", "./src/lib/http-client.ts"],
+      clientFiles: [
+        "./src/lib/utils.ts",
+        "./src/lib/http-client.ts",
+        "./src/lib/json-viewer-utils.ts",
+      ],
     },
   },
 });

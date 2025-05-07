@@ -110,8 +110,6 @@ export function DoubleClickEditDate<T extends FieldValues>({
       rules={rules}
       render={({ field, fieldState }) => {
         const dateValue = toDate(field.value);
-        const error = fieldState.error?.message;
-
         const handleSelect = useCallback(
           (date: Date | undefined) => {
             field.onChange(toUnixTimeStamp(date));
