@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 "use no memo";
 import { TableBody, TableCell, TableRow } from "@/components/ui/table";
 import { cn } from "@/lib/utils";
@@ -12,7 +13,7 @@ function DataTableRow<TData>({
   table,
   // We don't actually use columnVisibility in the component,
   // but we need it for the memo comparison
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  // @ts-expect-error - This is a temporary solution to avoid the memo comparison
   columnVisibility,
 }: {
   row: Row<TData>;

@@ -52,7 +52,9 @@ export function PaginationRowSelector() {
           throw new Error("Invalid page size");
         }
 
-        onPageSizeChange(newPageSize);
+        onPageSizeChange(
+          newPageSize as (typeof DEFAULT_PAGE_SIZE_OPTIONS)[number],
+        );
         // Reset to first page when changing page size
         onPageChange(1);
       } catch (error) {
