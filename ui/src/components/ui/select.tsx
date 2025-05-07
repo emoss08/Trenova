@@ -23,9 +23,8 @@ function SelectGroup({
 }
 
 function SelectValue({ color, ...props }: SelectValue) {
-  console.info("select value props", props);
   return (
-    <div className="flex h-5 items-center text-sm font-normal text-foreground gap-x-1.5">
+    <div className="flex h-5 items-center text-xs font-normal text-foreground gap-x-1.5 max-w-[var(--radix-select-content-available-width)] truncate">
       {color && (
         <div
           className="size-2 rounded-full"
