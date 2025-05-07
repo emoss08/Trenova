@@ -251,8 +251,6 @@ export function ShipmentEditSheet({
           <FormProvider {...form}>
             <Form className="space-y-0 p-0" onSubmit={handleSubmit(onSubmit)}>
               <MemoizedShipmentSheetBody
-                open={!!selectedRowKey}
-                sheetRef={sheetRef}
                 selectedShipment={shipmentDetails}
                 isLoading={isDetailsLoading}
                 isError={isDetailsError}
@@ -267,14 +265,10 @@ export function ShipmentEditSheet({
 }
 
 function ShipmentSheetBody({
-  open,
-  sheetRef,
   isLoading,
   isError,
   selectedShipment,
 }: {
-  open: boolean;
-  sheetRef: React.RefObject<HTMLDivElement | null>;
   isLoading: boolean;
   isError: boolean;
   selectedShipment?: ShipmentSchema | null;
@@ -282,8 +276,6 @@ function ShipmentSheetBody({
   return (
     <SheetBody className="p-0">
       <ShipmentForm
-        open={open}
-        sheetRef={sheetRef}
         selectedShipment={selectedShipment}
         isLoading={isLoading}
         isError={isError}

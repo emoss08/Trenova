@@ -5,13 +5,8 @@ import { CustomerAutocompleteField } from "@/components/ui/autocomplete-fields";
 import { FormControl, FormGroup } from "@/components/ui/form";
 import { ratingMethodChoices } from "@/lib/choices";
 import { ShipmentSchema } from "@/lib/schemas/shipment-schema";
-import React, { lazy, useEffect } from "react";
+import React, { lazy } from "react";
 import { useFormContext } from "react-hook-form";
-import {
-  calculateBaseCharge,
-  calculateTotalAdditionalCharges,
-  calculateTotalChargeAmount,
-} from "./utils";
 
 const AdditionalChargeDetails = lazy(
   () => import("../additional-charge/additional-charge-details"),
@@ -48,94 +43,7 @@ function ShipmentBillingDetailsInner({
 }
 
 function ShipmentBillingDetailsForm() {
-  const { control, setValue, getValues } = useFormContext<ShipmentSchema>();
-
-  // // Handle changes to the form that affect billing calculations
-  // useEffect(() => {
-  //   const subscription = watch((value, { name }) => {
-  //     // Check if additionalCharges have been modified
-  //     if (
-  //       name?.startsWith("additionalCharges") ||
-  //       name === "additionalCharges"
-  //     ) {
-  //       try {
-  //         const shipment = value as ShipmentSchema;
-  //         const baseCharge = calculateBaseCharge(shipment);
-
-  //         // Calculate the total of all additional charges
-  //         const additionalChargesTotal = calculateTotalAdditionalCharges(
-  //           shipment,
-  //           baseCharge,
-  //         );
-
-  //         // Update the otherChargeAmount field with the sum of additional charges
-  //         setValue("otherChargeAmount", additionalChargesTotal, {
-  //           shouldValidate: true,
-  //           shouldDirty: false,
-  //         });
-  //       } catch (error) {
-  //         console.error("Error updating otherChargeAmount:", error);
-  //       }
-  //     }
-
-  //     // Update the total charge amount if any relevant fields change
-  //     if (
-  //       [
-  //         "ratingMethod",
-  //         "ratingUnit",
-  //         "commodities",
-  //         "weight",
-  //         "pieces",
-  //         "moves",
-  //         "otherChargeAmount",
-  //         "freightChargeAmount",
-  //         "additionalCharges",
-  //       ].includes(name ?? "") ||
-  //       name?.startsWith("additionalCharges")
-  //     ) {
-  //       try {
-  //         const shipment = value as ShipmentSchema;
-  //         setValue("totalChargeAmount", calculateTotalChargeAmount(shipment), {
-  //           shouldValidate: true,
-  //         });
-  //       } catch (error) {
-  //         console.error("Error updating totalChargeAmount:", error);
-  //       }
-  //     }
-  //   });
-
-  //   return () => subscription.unsubscribe();
-  // }, [watch, setValue]);
-
-  // Initialize calculations when the component mounts
-  useEffect(() => {
-    try {
-      const shipment = getValues() as ShipmentSchema;
-      const baseCharge = calculateBaseCharge(shipment);
-
-      // Calculate and set the additional charges total
-      const additionalChargesTotal = calculateTotalAdditionalCharges(
-        shipment,
-        baseCharge,
-      );
-
-      // Only set if there are actually additional charges to prevent overriding user input
-      if (shipment.additionalCharges && shipment.additionalCharges.length > 0) {
-        setValue("otherChargeAmount", additionalChargesTotal, {
-          shouldValidate: true,
-          shouldDirty: false,
-        });
-      }
-
-      // Calculate and set the total charge amount
-      setValue("totalChargeAmount", calculateTotalChargeAmount(shipment), {
-        shouldValidate: true,
-        shouldDirty: false,
-      });
-    } catch (error) {
-      console.error("Error initializing billing calculations:", error);
-    }
-  }, [getValues, setValue]);
+  const { control } = useFormContext<ShipmentSchema>();
 
   return (
     <FormGroup cols={2} className="gap-4">
