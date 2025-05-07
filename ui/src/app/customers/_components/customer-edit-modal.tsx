@@ -53,7 +53,6 @@ export function CustomerEditForm({
     formState: { isSubmitting },
   } = form;
 
-  // * Replace
   const { mutateAsync } = useApiMutation({
     mutationFn: async (values: CustomerSchema) => {
       const response = await http.put<CustomerSchema>(
