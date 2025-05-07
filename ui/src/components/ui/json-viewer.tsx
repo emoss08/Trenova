@@ -75,7 +75,10 @@ function CollapsibleNode({
     if (isSensitiveData) {
       valueDisplay = (
         <div className="inline-flex items-center">
-          <span className="max-w-[450px] truncate text-vitess-string">
+          <span
+            className="max-w-[350px] truncate text-vitess-string overflow-hidden text-ellipsis"
+            title={`${value}`}
+          >
             &quot;{value}&quot;
           </span>
           <SensitiveBadge />
@@ -83,7 +86,10 @@ function CollapsibleNode({
       );
     } else if (typeof value === "string") {
       valueDisplay = (
-        <span className="max-w-[450px] truncate text-vitess-string">
+        <span
+          className="max-w-[350px] truncate text-vitess-string overflow-hidden text-ellipsis"
+          title={`${value}`}
+        >
           &quot;{value}&quot;
         </span>
       );
@@ -117,7 +123,7 @@ function CollapsibleNode({
   const summary = isArray ? `[${childrenCount}]` : `{${childrenCount}}`;
 
   return (
-    <div className="rounded-sm transition-colors overflow-hidden">
+    <div className="w-full">
       <div
         className="flex items-center px-3 py-1 cursor-pointer"
         onClick={toggleExpand}
@@ -142,7 +148,7 @@ function CollapsibleNode({
       </div>
 
       {isExpanded && (
-        <ScrollArea className="ml-4 border-l border-border pl-3 py-0.5 max-h-[calc(100vh-200px)] overflow-y-auto">
+        <ScrollArea className="ml-4 border-l border-border pl-3 py-0.5 max-h-[calc(100vh-200px)]">
           {isArray
             ? // Handle array rendering
               value.map((item: any, index: number) => (
@@ -193,14 +199,14 @@ export function JsonViewer({
     <>
       <div
         className={cn(
-          "relative rounded-md overflow-hidden border border-border bg-card",
+          "size-full relative rounded-md overflow-hidden border border-border bg-card",
           className,
         )}
       >
         <div className="absolute top-3 right-3 z-10">
           <JsonViewerActions data={data} />
         </div>
-        <div className="p-3 font-mono text-sm">
+        <div className="p-3 font-mono text-sm overflow-x-auto">
           <CollapsibleNode
             name={null}
             value={data}
