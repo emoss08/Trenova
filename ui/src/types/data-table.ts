@@ -159,7 +159,7 @@ type DataTableProps<TData extends Record<string, any>> = {
   // filterFields: DataTableAdvancedFilterField<TData>[];
   // filterColumn: string;
   TableModal?: React.ComponentType<TableSheetProps>;
-  TableEditModal: React.ComponentType<EditTableSheetProps<TData>>;
+  TableEditModal?: React.ComponentType<EditTableSheetProps<TData>>;
   exportModelName: string;
   extraSearchParams?: Record<string, any>;
   // permissionName: string;

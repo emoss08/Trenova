@@ -175,11 +175,13 @@ export function DataTable<TData extends Record<string, any>>({
             onOpenChange={handleCreateModalClose}
           />
         )}
-        <TableEditModal
-          isLoading={dataQuery.isFetching || dataQuery.isLoading}
-          currentRecord={selectedRow?.original}
-          error={dataQuery.error}
-        />
+        {TableEditModal && (
+          <TableEditModal
+            isLoading={dataQuery.isFetching || dataQuery.isLoading}
+            currentRecord={selectedRow?.original}
+            error={dataQuery.error}
+          />
+        )}
       </div>
     </DataTableProvider>
   );
