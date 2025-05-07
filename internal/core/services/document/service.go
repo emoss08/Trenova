@@ -534,7 +534,7 @@ func (s *service) DeleteDocument(ctx context.Context, req *services.DeleteDocume
 			ResourceID:     doc.ID.String(),
 			Action:         permission.ActionDelete,
 			UserID:         req.UploadedByID,
-			CurrentState:   jsonutils.MustToJSON(doc),
+			PreviousState:  jsonutils.MustToJSON(doc),
 			OrganizationID: doc.OrganizationID,
 			BusinessUnitID: doc.BusinessUnitID,
 		},
