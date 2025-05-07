@@ -9,6 +9,8 @@ var cancelableShipmentStatuses = map[shipment.Status]bool{
 	shipment.StatusInTransit:          true,  // Can cancel in-transit shipments
 	shipment.StatusDelayed:            true,  // Can cancel delayed shipments
 	shipment.StatusPartiallyCompleted: true,  // Can cancel partially completed shipments
+	shipment.StatusReadyToBill:        true,  // Can cancel ready to bill shipments
+	shipment.StatusReviewRequired:     true,  // Can cancel review required shipments
 	shipment.StatusCompleted:          true,  // Can cancel completed shipments
 	shipment.StatusBilled:             false, // Can't cancel billed shipments
 	shipment.StatusCanceled:           false, // Can't cancel already canceled shipments

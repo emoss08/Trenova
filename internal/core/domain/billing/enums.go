@@ -1,6 +1,5 @@
 package billing
 
-
 // ExceptionHandling defines how to handle exceptions in the billing process
 type ExceptionHandling string
 
