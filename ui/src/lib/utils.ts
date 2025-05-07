@@ -1,12 +1,12 @@
 import { Resource } from "@/types/audit-entry";
 import { ResourcePageInfo, ResourceType, RouteInfo } from "@/types/nav-links";
 import {
-    faFileAlt,
-    faFileContract,
-    faFileExcel,
-    faFileImage,
-    faFilePdf,
-    faFileWord,
+  faFileAlt,
+  faFileContract,
+  faFileExcel,
+  faFileImage,
+  faFilePdf,
+  faFileWord,
 } from "@fortawesome/pro-solid-svg-icons";
 import { clsx, type ClassValue } from "clsx";
 import { RefObject, useEffect } from "react";
@@ -335,7 +335,6 @@ export function populateResourcePathMap(routeItems: RouteInfo[], prefix = "") {
  * Get page info for a specific resource type from our navigation structure
  */
 export function getRoutePageInfo(resourceType: ResourceType): ResourcePageInfo {
-  console.log("resourceType", resourceType);
   const pageInfo = resourcePathMap.get(resourceType);
 
   if (!pageInfo) {

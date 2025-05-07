@@ -50,7 +50,7 @@ func NewValidator(p ValidatorParams) *Validator {
 
 // Validate validates a trailer.
 //
-// Parameters:
+// Parameters
 //   - ctx: The context of the request.
 //   - valCtx: The validation context.
 //   - t: The trailer to validate.

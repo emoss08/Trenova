@@ -110,7 +110,6 @@ export function AddressField({
         !!loc.state,
     );
 
-    console.log("Filtered locations:", filtered);
     return filtered;
   }, [locationsData]);
 
