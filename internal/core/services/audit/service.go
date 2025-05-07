@@ -864,6 +864,7 @@ func (s *service) registerDefaultSensitiveFields() error {
 	if err := s.sdm.RegisterSensitiveFields(permission.ResourceWorker, []services.SensitiveField{
 		{Name: "licenseNumber", Action: services.SensitiveFieldMask},
 		{Name: "dateOfBirth", Action: services.SensitiveFieldMask},
+		{Path: "profile", Name: "licenseNumber", Action: services.SensitiveFieldMask},
 	}); err != nil {
 		s.l.Error().Err(err).Msg("failed to register worker sensitive fields")
 		return err

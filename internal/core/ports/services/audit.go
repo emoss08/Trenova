@@ -33,11 +33,12 @@ const (
 	SensitiveFieldEncrypt // New action for field-level encryption
 )
 
-// SensitiveField is a field that is considered sensitive and should be masked.
+// SensitiveField defines a sensitive field and the action to take.
 type SensitiveField struct {
-	Name    string
-	Action  SensitiveFieldAction
-	Pattern string // Optional regex pattern for more precise masking
+	Name    string               // Name of the field
+	Path    string               // Optional dot-separated path to the field relative to current context. e.g. "parent.child"
+	Action  SensitiveFieldAction // Action to take
+	Pattern string               // Optional regex pattern to match field values
 }
 
 type AuditService interface {
