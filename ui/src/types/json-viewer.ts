@@ -1,3 +1,5 @@
+export type JsonViewerType = "added" | "removed" | "unchanged";
+
 export type ActionType = "added" | "removed" | "unchanged";
 
 export type JsonDiffViewerProps = {
@@ -33,4 +35,10 @@ export type CollapsibleNodeProps = {
   isRoot?: boolean;
   initiallyExpanded?: boolean;
   withComma?: boolean;
+};
+
+export type NewLine = {
+  line: string;
+  lineNumber: number;
+  type: JsonViewerType;
 };
