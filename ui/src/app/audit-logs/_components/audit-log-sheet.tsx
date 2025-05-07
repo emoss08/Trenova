@@ -127,7 +127,7 @@ export function AuditLogDetailsSheet({
         }
       }}
     >
-      <SheetContent className="flex flex-col sm:max-w-2xl" withClose={false}>
+      <SheetContent className="flex flex-col sm:max-w-xl" withClose={false}>
         <VisuallyHidden>
           <SheetHeader>
             <SheetTitle>Audit Log Details</SheetTitle>
@@ -204,45 +204,55 @@ function AuditLogDetailsContent({ entry }: { entry?: AuditEntry }) {
 
         <ChangesTable changes={entry.changes} />
 
-        <div className="flex flex-col gap-2">
-          <div className="flex flex-col">
-            <h3 className="text-sm font-normal">Metadata</h3>
-            <p className="text-2xs text-muted-foreground">
-              Additional contextual information
-            </p>
-          </div>
+        <AuditLogDetailsSection
+          title="Metadata"
+          description="Additional contextual information"
+        >
           <JsonViewer data={entry.metadata} />
-        </div>
+        </AuditLogDetailsSection>
 
-        <div className="flex flex-col gap-2">
-          <div className="flex flex-col">
-            <h3 className="text-sm font-normal">Previous State</h3>
-            <p className="text-2xs text-muted-foreground">
-              State before the operation
-            </p>
-          </div>
+        <AuditLogDetailsSection
+          title="Previous State"
+          description="State before the operation"
+        >
           <JsonViewer data={entry.previousState} />
-        </div>
+        </AuditLogDetailsSection>
 
-        <div className="flex flex-col gap-2">
-          <div className="flex flex-col">
-            <h3 className="text-sm font-normal">Current State</h3>
-            <p className="text-2xs text-muted-foreground">
-              State after the operation
-            </p>
-          </div>
+        <AuditLogDetailsSection
+          title="Current State"
+          description="State after the operation"
+        >
           <JsonViewer data={entry.currentState} />
-        </div>
+        </AuditLogDetailsSection>
 
-        <div className="flex flex-col gap-2">
-          <div className="flex flex-col">
-            <h3 className="text-sm font-normal">Full Event Data</h3>
-            <p className="text-2xs text-muted-foreground">Complete raw data</p>
-          </div>
+        <AuditLogDetailsSection
+          title="Full Event Data"
+          description="Complete raw data"
+        >
           <JsonViewer data={entry} />
-        </div>
+        </AuditLogDetailsSection>
       </div>
     </ScrollArea>
+  );
+}
+
+function AuditLogDetailsSection({
+  children,
+  title,
+  description,
+}: {
+  children: React.ReactNode;
+  title: string;
+  description: string;
+}) {
+  return (
+    <div className="flex flex-col gap-2">
+      <div className="flex flex-col">
+        <h3 className="text-sm font-normal">{title}</h3>
+        <p className="text-2xs text-muted-foreground">{description}</p>
+      </div>
+      {children}
+    </div>
   );
 }
 
