@@ -57,14 +57,14 @@ export const shipmentControlSchema = z
       }
       const parsed = parseInt(String(val), 10);
       return isNaN(parsed) ? undefined : parsed;
-    }, z.number().optional()),
+    }, z.number().nullable().optional()),
     serviceFailureTarget: z.preprocess((val) => {
       if (val === "" || val === null || val === undefined) {
         return undefined;
       }
       const parsed = parseInt(String(val), 10);
       return isNaN(parsed) ? undefined : parsed;
-    }, z.number().optional()),
+    }, z.number().nullable().optional()),
     trackCustomerRejections: z.boolean(),
     checkForDuplicateBols: z.boolean(),
     allowMoveRemovals: z.boolean(),
