@@ -17,10 +17,7 @@ import { DataTableActions } from "./_components/data-table-actions";
 import { DataTableBody } from "./_components/data-table-body";
 import { DataTableHeader } from "./_components/data-table-header";
 import { DataTableOptions } from "./_components/data-table-options";
-import {
-  DataTablePagination,
-  PaginationInner,
-} from "./_components/data-table-pagination";
+import { PaginationInner } from "./_components/data-table-pagination";
 import { DataTableSearch } from "./_components/data-table-search";
 import { DataTableProvider } from "./data-table-provider";
 
@@ -149,40 +146,36 @@ export function DataTable<TData extends Record<string, any>>({
       rowSelection={rowSelection}
       columnVisibility={columnVisibility}
     >
-      <div className="mt-2 flex flex-col gap-3">
-        {includeOptions && (
-          <DataTableOptions>
-            <DataTableSearch />
-            <DataTableActions
-              table={table}
-              name={name}
-              exportModelName={exportModelName}
-              extraActions={extraActions}
-              handleCreateClick={handleCreateClick}
-            />
-          </DataTableOptions>
-        )}
-        <Table className="rounded-md border-x border-border border-separate border-spacing-0">
-          {includeHeader && <DataTableHeader table={table} />}
-          <DataTableBody table={table} columns={columns} />
-        </Table>
-        <DataTablePagination>
-          <PaginationInner table={table} />
-        </DataTablePagination>
-        {TableModal && isCreateModalOpen && (
-          <TableModal
-            open={isCreateModalOpen}
-            onOpenChange={handleCreateModalClose}
+      {includeOptions && (
+        <DataTableOptions>
+          <DataTableSearch />
+          <DataTableActions
+            table={table}
+            name={name}
+            exportModelName={exportModelName}
+            extraActions={extraActions}
+            handleCreateClick={handleCreateClick}
           />
-        )}
-        {TableEditModal && (
-          <TableEditModal
-            isLoading={dataQuery.isFetching || dataQuery.isLoading}
-            currentRecord={selectedRow?.original}
-            error={dataQuery.error}
-          />
-        )}
-      </div>
+        </DataTableOptions>
+      )}
+      <Table className="rounded-md border-x border-border border-separate border-spacing-0">
+        {includeHeader && <DataTableHeader table={table} />}
+        <DataTableBody table={table} columns={columns} />
+      </Table>
+      <PaginationInner table={table} />
+      {TableModal && isCreateModalOpen && (
+        <TableModal
+          open={isCreateModalOpen}
+          onOpenChange={handleCreateModalClose}
+        />
+      )}
+      {TableEditModal && (
+        <TableEditModal
+          isLoading={dataQuery.isFetching || dataQuery.isLoading}
+          currentRecord={selectedRow?.original}
+          error={dataQuery.error}
+        />
+      )}
     </DataTableProvider>
   );
 }
