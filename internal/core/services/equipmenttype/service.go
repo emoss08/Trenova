@@ -267,7 +267,7 @@ func (s *Service) Update(ctx context.Context, et *equipmenttype.EquipmentType, u
 			OrganizationID: updatedEntity.OrganizationID,
 			BusinessUnitID: updatedEntity.BusinessUnitID,
 		},
-		audit.WithComment("equipment type updated"),
+		audit.WithComment("Equipment Type updated"),
 		audit.WithDiff(original, updatedEntity),
 	)
 	if err != nil {
