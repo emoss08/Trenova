@@ -130,10 +130,9 @@ export function ShipmentCancellationDialog({
                 type="submit"
                 isSubmitting={isSubmitting}
                 title="shipment cancellation"
+                text="Confirm Cancellation"
                 variant="destructive"
-              >
-                Confirm Cancellation
-              </FormSaveButton>
+              />
             </DialogFooter>
           </Form>
         </FormProvider>

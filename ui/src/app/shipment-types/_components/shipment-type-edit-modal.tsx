@@ -9,8 +9,6 @@ import { useForm } from "react-hook-form";
 import { ShipmentTypeForm } from "./shipment-type-form";
 
 export function EditShipmentTypeModal({
-  open,
-  onOpenChange,
   currentRecord,
 }: EditTableSheetProps<ShipmentTypeSchema>) {
   const form = useForm({
@@ -21,8 +19,6 @@ export function EditShipmentTypeModal({
   return (
     <FormEditModal
       currentRecord={currentRecord}
-      open={open}
-      onOpenChange={onOpenChange}
       url="/shipment-types/"
       title="Shipment Type"
       queryKey="shipment-type-list"

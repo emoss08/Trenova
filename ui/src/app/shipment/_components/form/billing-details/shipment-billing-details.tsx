@@ -48,8 +48,7 @@ function ShipmentBillingDetailsInner({
 }
 
 function ShipmentBillingDetailsForm() {
-  const { watch, control, setValue, getValues } =
-    useFormContext<ShipmentSchema>();
+  const { control, setValue, getValues } = useFormContext<ShipmentSchema>();
 
   // // Handle changes to the form that affect billing calculations
   // useEffect(() => {

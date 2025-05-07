@@ -1,14 +1,4 @@
 import { FormSaveDock } from "@/components/form/form-save-dock";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
 import { Form } from "@/components/ui/form";
 import {
   Sheet,
@@ -32,7 +22,7 @@ import { MoveStatus } from "@/types/move";
 import { RatingMethod, ShipmentStatus } from "@/types/shipment";
 import { StopStatus, StopType } from "@/types/stop";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useCallback, useEffect, useRef } from "react";
+import { useEffect, useRef } from "react";
 import { FormProvider } from "react-hook-form";
 import { ShipmentForm } from "./form/shipment-form";
 
@@ -103,20 +93,6 @@ export function ShipmentCreateSheet({ open, onOpenChange }: TableSheetProps) {
     formState: { isSubmitting, isSubmitSuccessful },
   } = form;
 
-  const handleClose = useCallback(() => {
-    onOpenChange(false);
-  }, [onOpenChange]);
-
-  // const {
-  //   showWarning,
-  //   handleClose: onClose,
-  //   handleConfirmClose,
-  //   handleCancelClose,
-  // } = useUnsavedChanges({
-  //   isDirty,
-  //   onClose: handleClose,
-  // });
-
   // Reset the form when the mutation is successful
   // This is recommended by react-hook-form - https://react-hook-form.com/docs/useform/reset
   useEffect(() => {
@@ -141,56 +117,28 @@ export function ShipmentCreateSheet({ open, onOpenChange }: TableSheetProps) {
   }, [open, isSubmitting, handleSubmit, onSubmit]);
 
   return (
-    <>
-      <Sheet open={open} onOpenChange={onClose}>
-        <SheetContent
-          className="w-[500px] sm:max-w-[540px] p-0"
-          withClose={false}
-          ref={sheetRef}
-        >
-          <VisuallyHidden>
-            <SheetHeader>
-              <SheetTitle>Shipment Details</SheetTitle>
-            </SheetHeader>
-            <SheetDescription>Test</SheetDescription>
-          </VisuallyHidden>
+    <Sheet open={open} onOpenChange={onOpenChange}>
+      <SheetContent
+        className="w-[500px] sm:max-w-[540px] p-0"
+        withClose={false}
+        ref={sheetRef}
+      >
+        <VisuallyHidden>
+          <SheetHeader>
+            <SheetTitle>Shipment Details</SheetTitle>
+          </SheetHeader>
+          <SheetDescription>Test</SheetDescription>
+        </VisuallyHidden>
 
-          <FormProvider {...form}>
-            <Form className="space-y-0 p-0" onSubmit={handleSubmit(onSubmit)}>
-              <SheetBody className="p-0">
-                <ShipmentForm
-                  onBack={onClose}
-                  open={open}
-                  sheetRef={sheetRef}
-                />
-              </SheetBody>
-              <FormSaveDock />
-            </Form>
-          </FormProvider>
-        </SheetContent>
-      </Sheet>
-
-      {showWarning && (
-        <AlertDialog open={showWarning} onOpenChange={handleCancelClose}>
-          <AlertDialogContent>
-            <AlertDialogHeader>
-              <AlertDialogTitle>Unsaved Changes</AlertDialogTitle>
-              <AlertDialogDescription>
-                You have unsaved changes. Are you sure you want to close this
-                form? All changes will be lost.
-              </AlertDialogDescription>
-            </AlertDialogHeader>
-            <AlertDialogFooter>
-              <AlertDialogCancel onClick={handleCancelClose}>
-                Continue Editing
-              </AlertDialogCancel>
-              <AlertDialogAction onClick={handleConfirmClose}>
-                Discard Changes
-              </AlertDialogAction>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialog>
-      )}
-    </>
+        <FormProvider {...form}>
+          <Form className="space-y-0 p-0" onSubmit={handleSubmit(onSubmit)}>
+            <SheetBody className="p-0">
+              <ShipmentForm open={open} sheetRef={sheetRef} />
+            </SheetBody>
+            <FormSaveDock />
+          </Form>
+        </FormProvider>
+      </SheetContent>
+    </Sheet>
   );
 }

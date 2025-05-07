@@ -413,9 +413,12 @@ const MoveDialogComponent = ({
           <Button type="button" variant="outline" onClick={handleClose}>
             Cancel
           </Button>
-          <FormSaveButton title="move" type="button" onClick={handleSave}>
-            {saveButtonText}
-          </FormSaveButton>
+          <FormSaveButton
+            title="move"
+            type="button"
+            onClick={handleSave}
+            text={saveButtonText}
+          />
         </DialogFooter>
       </DialogContent>
     </Dialog>

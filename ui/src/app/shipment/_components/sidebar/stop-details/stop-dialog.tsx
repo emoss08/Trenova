@@ -17,7 +17,7 @@ import { StopDialogForm } from "./stop-dialog-form";
 
 type StopDialogProps = TableSheetProps & {
   moveIdx: number;
-  stopIdx?: number;
+  stopIdx: number;
 };
 
 export function StopDialog({

@@ -9,8 +9,6 @@ import { useForm } from "react-hook-form";
 import { TractorForm } from "./tractor-form";
 
 export function EditTractorModal({
-  open,
-  onOpenChange,
   currentRecord,
 }: EditTableSheetProps<TractorSchema>) {
   const form = useForm({
@@ -21,8 +19,6 @@ export function EditTractorModal({
   return (
     <FormEditModal
       currentRecord={currentRecord}
-      open={open}
-      onOpenChange={onOpenChange}
       url="/tractors/"
       title="Tractor"
       queryKey="tractor-list"
