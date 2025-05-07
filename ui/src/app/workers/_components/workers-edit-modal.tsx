@@ -13,31 +13,67 @@ import {
 import { Form } from "@/components/ui/form";
 import { VisuallyHidden } from "@/components/ui/visually-hidden";
 import { usePopoutWindow } from "@/hooks/popout-window/use-popout-window";
-import { useFormWithSave } from "@/hooks/use-form-with-save";
+import { useApiMutation } from "@/hooks/use-api-mutation";
+import { searchParamsParser } from "@/hooks/use-data-table-state";
 import { broadcastQueryInvalidation } from "@/hooks/use-invalidate-query";
 import { http } from "@/lib/http-client";
 import { workerSchema, WorkerSchema } from "@/lib/schemas/worker-schema";
 import { EditTableSheetProps } from "@/types/data-table";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useCallback, useEffect, useMemo } from "react";
-import { FormProvider } from "react-hook-form";
+import { useQueryClient } from "@tanstack/react-query";
+import { useQueryStates } from "nuqs";
+import { useCallback, useEffect, useMemo, useRef } from "react";
+import { FormProvider, useForm } from "react-hook-form";
+import { toast } from "sonner";
 import { WorkerForm } from "./workers-form";
 
 function WorkerEditForm({ currentRecord }: EditTableSheetProps<WorkerSchema>) {
+  const { table, isLoading } = useDataTable();
+  const queryClient = useQueryClient();
+  const [, setSearchParams] = useQueryStates(searchParamsParser);
   const { isPopout, closePopout } = usePopoutWindow();
+  const previousRecordIdRef = useRef<string | number | null>(null);
 
-  const form = useFormWithSave({
-    resourceName: "Worker",
-    formOptions: {
-      resolver: zodResolver(workerSchema),
-      defaultValues: currentRecord,
-      mode: "onChange",
-    },
+  const form = useForm({
+    resolver: zodResolver(workerSchema),
+    defaultValues: currentRecord,
+    mode: "onChange",
+  });
+
+  const {
+    setError,
+    reset,
+    handleSubmit,
+    formState: { isSubmitting },
+  } = form;
+
+  const { mutateAsync } = useApiMutation({
     mutationFn: async (values: WorkerSchema) => {
-      const response = await http.put(`/workers/${currentRecord?.id}`, values);
+      const response = await http.put<WorkerSchema>(
+        `/workers/${currentRecord?.id}`,
+        values,
+      );
       return response.data;
     },
-    onSuccess: () => {
+    onMutate: async (newValues) => {
+      await queryClient.cancelQueries({
+        queryKey: ["worker", currentRecord?.id],
+      });
+
+      const previousCustomer = queryClient.getQueryData([
+        "customer",
+        currentRecord?.id,
+      ]);
+
+      queryClient.setQueryData(["customer", currentRecord?.id], newValues);
+
+      return { previousCustomer, newValues };
+    },
+    onSuccess: (newValues) => {
+      toast.success("Changes have been saved", {
+        description: `Customer updated successfully`,
+      });
+
       broadcastQueryInvalidation({
         queryKey: ["worker", "worker-list"],
         options: {
@@ -48,24 +84,39 @@ function WorkerEditForm({ currentRecord }: EditTableSheetProps<WorkerSchema>) {
           refetchType: "all",
         },
       });
-    },
-    onSettled: () => {
+
+      reset(newValues);
+
+      table.resetRowSelection();
+
+      setSearchParams({ modalType: null, entityId: null });
+
       if (isPopout) {
         closePopout();
       }
     },
+    resourceName: "Worker",
+    setFormError: setError,
   });
 
-  const {
-    handleSubmit,
-    reset,
-    onSubmit,
-    formState: { isSubmitting, isSubmitSuccessful },
-  } = form;
+  const onSubmit = useCallback(
+    async (values: WorkerSchema) => {
+      await mutateAsync(values);
+    },
+    [mutateAsync],
+  );
 
-  const handleClose = useCallback(() => {
-    reset();
-  }, [reset]);
+  // Update form values when currentRecord changes and is not loading
+  useEffect(() => {
+    if (
+      !isLoading &&
+      currentRecord &&
+      currentRecord.id !== previousRecordIdRef.current
+    ) {
+      reset(currentRecord);
+      previousRecordIdRef.current = currentRecord.id ?? null;
+    }
+  }, [currentRecord, isLoading, reset]);
 
   // Make sure we populate the form with the current record
   useEffect(() => {
@@ -73,12 +124,6 @@ function WorkerEditForm({ currentRecord }: EditTableSheetProps<WorkerSchema>) {
       reset(currentRecord);
     }
   }, [currentRecord, reset]);
-
-  // Reset the form when the mutation is successful
-  // This is recommended by react-hook-form - https://react-hook-form.com/docs/useform/reset
-  useEffect(() => {
-    reset();
-  }, [isSubmitSuccessful, currentRecord, reset]);
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
@@ -96,6 +141,10 @@ function WorkerEditForm({ currentRecord }: EditTableSheetProps<WorkerSchema>) {
     return () => document.removeEventListener("keydown", handleKeyDown);
   }, [isSubmitting, handleSubmit, onSubmit]);
 
+  const onClose = useCallback(() => {
+    table.resetRowSelection();
+  }, [table]);
+
   return (
     <FormProvider {...form}>
       <Form className="space-y-0 p-0" onSubmit={handleSubmit(onSubmit)}>
@@ -103,7 +152,7 @@ function WorkerEditForm({ currentRecord }: EditTableSheetProps<WorkerSchema>) {
           <WorkerForm />
         </DialogBody>
         <DialogFooter>
-          <Button type="button" variant="outline" onClick={handleClose}>
+          <Button type="button" variant="outline" onClick={onClose}>
             Cancel
           </Button>
           <FormSaveButton
