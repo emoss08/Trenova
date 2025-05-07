@@ -298,6 +298,13 @@ export function ShipmentStatusBadge({
       description:
         "Invoice has been generated and posted for completed transportation services.",
     },
+    [ShipmentStatus.ReadyToBill]: {
+      variant: "teal",
+      text: "Ready to Bill",
+      icon: faPaperPlane,
+      description:
+        "All moves within this shipment have been completed, and the shipment is ready to be billed.",
+    },
     [ShipmentStatus.Canceled]: {
       variant: "inactive",
       text: "Canceled",
@@ -452,6 +459,12 @@ export function PlainShipmentStatusBadge({
       text: "Billed",
       description:
         "Invoice has been generated and posted for completed transportation services.",
+    },
+    [ShipmentStatus.ReadyToBill]: {
+      className: "bg-teal-600",
+      text: "Ready to Bill",
+      description:
+        "All moves within this shipment have been completed, and the shipment is ready to be billed.",
     },
     [ShipmentStatus.Canceled]: {
       className: "bg-red-600",
