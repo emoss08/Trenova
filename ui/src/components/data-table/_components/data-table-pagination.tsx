@@ -19,7 +19,7 @@ export function PaginationInner<TData>({
 
   return (
     totalPages > 1 && (
-      <div className="flex w-full flex-col-reverse items-center justify-between gap-4 overflow-auto sm:flex-row sm:gap-8">
+      <DataTablePaginationOuter>
         <PaginationSelectedRows table={table} />
 
         <div className="flex flex-col-reverse items-center gap-4 sm:flex-row sm:gap-6 lg:gap-8">
@@ -34,18 +34,18 @@ export function PaginationInner<TData>({
             <PaginationNavigation table={table} />
           </DataTableNavigationInner>
         </div>
-      </div>
+      </DataTablePaginationOuter>
     )
   );
 }
 
-export function DataTablePagination({
+export function DataTablePaginationOuter({
   children,
 }: {
   children: React.ReactNode;
 }) {
   return (
-    <div className="flex w-full flex-col-reverse items-center justify-between gap-4 overflow-auto sm:flex-row sm:gap-8">
+    <div className="flex w-full flex-col-reverse items-center justify-between gap-4 overflow-visible sm:flex-row sm:gap-8">
       {children}
     </div>
   );
