@@ -207,6 +207,7 @@ export function ShipmentDocumentWorkflow({
               setActiveCategory={setActiveCategory}
               customerId={customerId}
               shipmentStatus={shipmentStatus}
+              shipmentId={shipmentId}
             />
             <div className="w-3/4 flex flex-col">
               <ShipmentDocumentWorkflowHeader
