@@ -40,3 +40,10 @@ type ShipmentWorkflowPayload struct {
 	ProNumber string `json:"proNumber"`
 	Status    string `json:"status"`
 }
+
+// ReadyToBillWorkflowPayload contains ready-to-bill-specific workflow data
+type ReadyToBillWorkflowPayload struct {
+	ShipmentID string `json:"shipmentId"`
+	OrgID      string `json:"orgId"`
+	BuID       string `json:"buId"`
+}

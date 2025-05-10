@@ -485,3 +485,41 @@ func (s *Service) CheckForDuplicateBOLs(ctx context.Context, shp *shipment.Shipm
 
 	return nil
 }
+
+func (s *Service) MarkReadyToBill(ctx context.Context, req *repositories.UpdateShipmentStatusRequest) (*shipment.Shipment, error) {
+	log := s.l.With().
+		Str("operation", "MarkReadyToBill").
+		Str("shipmentID", req.GetOpts.ID.String()).
+		Logger()
+
+	result, err := s.ps.HasAnyPermissions(ctx, []*services.PermissionCheck{
+		{
+			UserID:         req.GetOpts.UserID,
+			Resource:       permission.ResourceShipment,
+			Action:         permission.ActionUpdate,
+			BusinessUnitID: req.GetOpts.BuID,
+			OrganizationID: req.GetOpts.OrgID,
+		},
+	})
+	if err != nil {
+		log.Error().Err(err).Msg("failed to check permissions")
+		return nil, err
+	}
+
+	if !result.Allowed {
+		return nil, errors.NewAuthorizationError("You do not have permission to mark this shipment as ready to bill")
+	}
+
+	// TODO(wolfred): Validate the requirements set by that particular customer on the server before allowing the shipment to be marked ready-to-bill
+
+	updatedEntity, err := s.repo.UpdateStatus(ctx, &repositories.UpdateShipmentStatusRequest{
+		GetOpts: req.GetOpts,
+		Status:  shipment.StatusReadyToBill,
+	})
+	if err != nil {
+		log.Error().Err(err).Msg("failed to update shipment status")
+		return nil, err
+	}
+
+	return updatedEntity, nil
+}

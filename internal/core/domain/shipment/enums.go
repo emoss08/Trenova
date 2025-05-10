@@ -62,6 +62,10 @@ func StatusFromString(status string) (Status, error) {
 		return StatusBilled, nil
 	case "Canceled":
 		return StatusCanceled, nil
+	case "ReadyToBill":
+		return StatusReadyToBill, nil
+	case "ReviewRequired":
+		return StatusReviewRequired, nil
 	default:
 		return "", eris.New("invalid shipment status")
 	}

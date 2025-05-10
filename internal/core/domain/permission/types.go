@@ -108,7 +108,8 @@ const (
 	ActionConfigure = Action("configure") // Configure system settings or resources.
 
 	// Shipment related actions
-	ActionSplit = Action("split") // Split a shipment.
+	ActionSplit       = Action("split")         // Split a shipment.
+	ActionReadyToBill = Action("ready_to_bill") // Mark a shipment as ready to bill.
 )
 
 type Scope string
@@ -296,6 +297,8 @@ var (
 				ActionModifyField,
 				ActionViewField,
 				ActionDuplicate,
+				ActionReadyToBill,
+				ActionSplit,
 			)...,
 		),
 		ResourceAssignment: {
