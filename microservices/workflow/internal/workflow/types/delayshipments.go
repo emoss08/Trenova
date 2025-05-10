@@ -1,5 +1,7 @@
 package types
 
+import "github.com/emoss08/trenova/microservices/workflow/internal/model"
+
 type ShipmentControlResults struct {
 	OrganizationID              string `json:"organizationId" bun:"organization_id"`
 	AutoDelayShipments          bool   `json:"autoDelayShipments" bun:"auto_delay_shipments"`
@@ -34,3 +36,9 @@ type DelayShipmentsInput struct {
 type DelayShipmentsOutput struct {
 	DelayedShipments int `json:"delayedShipments"`
 }
+
+// ShipmentUpdatedWorkflowInput is an alias for model.Message for the shipment updated workflow.
+type ShipmentUpdatedWorkflowInput = model.Message
+
+// ShipmentUpdatedWorkflowOutput is an alias for model.WorkflowResult for the shipment updated workflow.
+type ShipmentUpdatedWorkflowOutput = model.WorkflowResult

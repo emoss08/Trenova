@@ -14,8 +14,9 @@ import (
 	"github.com/emoss08/trenova/microservices/workflow/internal/email"
 	"github.com/emoss08/trenova/microservices/workflow/internal/model"
 	"github.com/emoss08/trenova/microservices/workflow/internal/workflow"
-	"github.com/hatchet-dev/hatchet/pkg/client"
-	"github.com/hatchet-dev/hatchet/pkg/worker"
+	"github.com/hatchet-dev/hatchet/pkg/cmdutils"
+	v1 "github.com/hatchet-dev/hatchet/pkg/v1"
+	"github.com/hatchet-dev/hatchet/pkg/v1/worker"
 	"github.com/joho/godotenv"
 	"github.com/uptrace/bun"
 	"github.com/uptrace/bun/dialect/pgdialect"
@@ -95,15 +96,34 @@ func provideDB(cfg *config.AppConfig) *bun.DB {
 }
 
 // provideHatchetClient creates a new Hatchet client
-func provideHatchetClient() (client.Client, error) {
-	return client.New()
+func provideHatchetClient() (v1.HatchetClient, error) {
+	client, err := v1.NewHatchetClient()
+	if err != nil {
+		return nil, err
+	}
+
+	return client, nil
 }
 
-// provideHatchetWorker creates and configures a Hatchet worker
-func provideHatchetWorker(hatchetClient client.Client) (*worker.Worker, error) {
-	return worker.NewWorker(
-		worker.WithClient(hatchetClient),
+// provideHatchetWorker creates and configures a Hatchet v1 worker.
+// It now returns worker.Worker (interface) instead of *worker.Worker.
+func provideHatchetWorker(client v1.HatchetClient, registry *workflow.Registry) (worker.Worker, error) {
+	workerName := "workflow-worker"
+
+	// Get workflow definitions from registry
+	workflows := registry.GetAllWorkflows(client)
+
+	w, err := client.Worker(
+		worker.WorkerOpts{
+			Name:      workerName,
+			Workflows: workflows, // Pass workflows during worker creation
+			Slots:     100,
+		},
 	)
+	if err != nil {
+		return nil, err
+	}
+	return w, nil
 }
 
 // provideEmailClient creates a new email client
@@ -116,8 +136,7 @@ func provideRabbitMQConsumer(cfg *config.AppConfig) (*consumer.RabbitMQConsumer,
 	return consumer.NewRabbitMQConsumer(cfg.RabbitMQ)
 }
 
-// provideHatchetHandler creates a new Hatchet handler
-func provideHatchetHandler(hatchetClient client.Client) *consumer.HatchetHandler {
+func provideHatchetHandler(hatchetClient v1.HatchetClient) *consumer.HatchetHandler {
 	return consumer.NewHatchetHandler(hatchetClient)
 }
 
@@ -125,41 +144,32 @@ func provideHatchetHandler(hatchetClient client.Client) *consumer.HatchetHandler
 func setupApplication(
 	lc fx.Lifecycle,
 	cfg *config.AppConfig,
-	hatchetWorker *worker.Worker,
+	hatchetWorker worker.Worker,
 	emailClient *email.Client,
-	registry *workflow.Registry,
 	rabbitConsumer *consumer.RabbitMQConsumer,
 	handler *consumer.HatchetHandler,
 ) {
-	// Register workflows
-	if err := registry.RegisterAllWorkflows(); err != nil {
-		log.Printf("Failed to register workflows: %v", err)
-	}
-
 	// Register handlers for different workflow types
 	rabbitConsumer.RegisterHandler(model.TypeShipmentUpdated, handler.HandleShipmentMessage)
 
-	// Add lifecycle hooks
 	lc.Append(fx.Hook{
 		OnStart: func(ctx context.Context) error {
-			// Start Hatchet worker
-			workerCleanup, err := hatchetWorker.Start()
-			if err != nil {
-				return err
-			}
-
-			// When application stops, cleanup the worker
-			lc.Append(fx.Hook{
-				OnStop: func(context.Context) error {
-					log.Println("Stopping Hatchet worker")
-					return workerCleanup()
-				},
-			})
-
 			// Start RabbitMQ consumer
-			if err = rabbitConsumer.Start(ctx); err != nil {
+			if err := rabbitConsumer.Start(ctx); err != nil {
 				return err
 			}
+
+			// Start Hatchet worker in a goroutine since StartBlocking will block until context is cancelled
+			go func() {
+				interruptCtx, cancel := cmdutils.NewInterruptContext()
+				defer cancel() // Only cancel when the goroutine exits
+
+				log.Println("Starting Hatchet worker...")
+				if err := hatchetWorker.StartBlocking(interruptCtx); err != nil {
+					log.Printf("Error in Hatchet worker: %v", err)
+				}
+				log.Println("Hatchet worker stopped")
+			}()
 
 			log.Printf("Workflow service started. Environment: %s", cfg.Environment)
 			return nil
@@ -174,6 +184,9 @@ func setupApplication(
 			if err := emailClient.Close(); err != nil {
 				log.Printf("Error closing email client: %v", err)
 			}
+
+			// Note: The Hatchet worker will be automatically stopped when the interruptCtx is cancelled
+			// in the defer cancel() in the goroutine above
 
 			return nil
 		},

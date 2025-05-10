@@ -7,13 +7,14 @@ import (
 
 	"github.com/emoss08/trenova/microservices/workflow/internal/model"
 	"github.com/hatchet-dev/hatchet/pkg/client"
+	v1 "github.com/hatchet-dev/hatchet/pkg/v1"
 )
 
 type HatchetHandler struct {
-	client client.Client
+	client v1.HatchetClient
 }
 
-func NewHatchetHandler(hatchetClient client.Client) *HatchetHandler {
+func NewHatchetHandler(hatchetClient v1.HatchetClient) *HatchetHandler {
 	return &HatchetHandler{
 		client: hatchetClient,
 	}
@@ -23,7 +24,7 @@ func (h *HatchetHandler) HandleShipmentMessage(ctx context.Context, msg *model.M
 	log.Printf("Processing shipment message: %s, ID: %s", msg.Type, msg.ID)
 
 	// Push the event to Hatchet
-	err := h.client.Event().Push(
+	err := h.client.Events().Push(
 		ctx,
 		string(msg.Type),
 		msg,
