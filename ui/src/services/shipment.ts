@@ -1,6 +1,7 @@
 import { http } from "@/lib/http-client";
+import type { ShipmentSchema } from "@/lib/schemas/shipment-schema";
 import { LimitOffsetResponse } from "@/types/server";
-import { Shipment, type ShipmentQueryParams } from "@/types/shipment";
+import { type Shipment, type ShipmentQueryParams } from "@/types/shipment";
 
 export async function getShipments(queryParams: ShipmentQueryParams) {
   const response = await http.get<LimitOffsetResponse<Shipment>>(
@@ -19,7 +20,7 @@ export async function getShipments(queryParams: ShipmentQueryParams) {
 }
 
 export async function getShipmentByID(
-  shipmentId: Shipment["id"],
+  shipmentId: ShipmentSchema["id"],
   expandShipmentDetails = false,
 ) {
   const response = await http.get<Shipment>(`/shipments/${shipmentId}`, {
@@ -31,8 +32,8 @@ export async function getShipmentByID(
 }
 
 export async function checkForDuplicateBOLs(
-  bol: Shipment["bol"],
-  shipmentId?: Shipment["id"],
+  bol: ShipmentSchema["bol"],
+  shipmentId?: ShipmentSchema["id"],
 ) {
   const response = await http.post<{ valid: boolean }>(
     "/shipments/check-for-duplicate-bols/",
@@ -40,6 +41,19 @@ export async function checkForDuplicateBOLs(
       bol,
       shipmentId,
     },
+  );
+  return response.data;
+}
+
+export async function markReadyToBill(shipmentId: ShipmentSchema["id"]) {
+  if (!shipmentId) {
+    throw new Error(
+      "Shipment ID is required to mark a shipment as ready to bill",
+    );
+  }
+  const response = await http.put<ShipmentSchema>(
+    `/shipments/${shipmentId}/mark-ready-to-bill/`,
+    {},
   );
   return response.data;
 }

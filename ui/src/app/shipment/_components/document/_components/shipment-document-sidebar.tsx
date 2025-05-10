@@ -25,6 +25,7 @@ export function ShipmentDocumentSidebar({
   setActiveCategory,
   customerId,
   shipmentStatus,
+  shipmentId,
 }: {
   documentCategories: DocumentCategory[];
   isLoadingRequirements: boolean;
@@ -32,12 +33,14 @@ export function ShipmentDocumentSidebar({
   setActiveCategory: (category: string) => void;
   customerId: ShipmentSchema["customerId"];
   shipmentStatus: ShipmentSchema["status"];
+  shipmentId: ShipmentSchema["id"];
 }) {
   return (
     <div className="w-1/4 bg-muted border-r border-border">
       <ShipmentDocumentSidebarHeader
         shipmentStatus={shipmentStatus}
         documentCategories={documentCategories}
+        shipmentId={shipmentId}
       />
       <ScrollArea className="flex h-[calc(100%-140px)]">
         <div className="p-2">
@@ -64,15 +67,18 @@ export function ShipmentDocumentSidebar({
 function ShipmentDocumentSidebarHeader({
   documentCategories,
   shipmentStatus,
+  shipmentId,
 }: {
   documentCategories: DocumentCategory[];
   shipmentStatus: ShipmentSchema["status"];
+  shipmentId: ShipmentSchema["id"];
 }) {
   return (
     <ShipmentDocumentSidebarHeaderOuter>
       <BillingReadinessBadge
         documentCategories={documentCategories}
         shipmentStatus={shipmentStatus}
+        shipmentId={shipmentId}
       />
     </ShipmentDocumentSidebarHeaderOuter>
   );

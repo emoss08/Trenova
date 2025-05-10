@@ -12,7 +12,9 @@ import { EquipmentStatus } from "@/types/tractor";
 import {
   faBadgeCheck,
   faCheck,
+  faCircleXmark,
   faClock,
+  faFileInvoiceDollar,
   faPaperPlane,
   faSparkles,
   faSpinner,
@@ -294,12 +296,12 @@ export function ShipmentStatusBadge({
     [ShipmentStatus.Billed]: {
       variant: "teal",
       text: "Billed",
-      icon: faPaperPlane,
+      icon: faFileInvoiceDollar,
       description:
         "Invoice has been generated and posted for completed transportation services.",
     },
     [ShipmentStatus.ReadyToBill]: {
-      variant: "teal",
+      variant: "pink",
       text: "Ready to Bill",
       icon: faPaperPlane,
       description:
@@ -308,7 +310,7 @@ export function ShipmentStatusBadge({
     [ShipmentStatus.Canceled]: {
       variant: "inactive",
       text: "Canceled",
-      icon: faXmark,
+      icon: faCircleXmark,
       description:
         "Shipment has been terminated and will not be completed as originally planned.",
     },

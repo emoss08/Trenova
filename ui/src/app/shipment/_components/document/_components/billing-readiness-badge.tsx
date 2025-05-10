@@ -1,19 +1,25 @@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Icon } from "@/components/ui/icons";
+import { useApiMutation } from "@/hooks/use-api-mutation";
+import { broadcastQueryInvalidation } from "@/hooks/use-invalidate-query";
 import type { ShipmentSchema } from "@/lib/schemas/shipment-schema";
 import { cn } from "@/lib/utils";
+import { markReadyToBill } from "@/services/shipment";
 import type { DocumentCategory } from "@/types/document";
 import { ShipmentStatus } from "@/types/shipment";
 import { faArrowRight } from "@fortawesome/pro-solid-svg-icons";
 import { useMemo } from "react";
+import { toast } from "sonner";
 
 export function BillingReadinessBadge({
   documentCategories,
   shipmentStatus,
+  shipmentId,
 }: {
   documentCategories: DocumentCategory[];
   shipmentStatus: ShipmentSchema["status"];
+  shipmentId: ShipmentSchema["id"];
 }) {
   const billingReadiness = useMemo(() => {
     const requiredCategories = documentCategories;
@@ -34,8 +40,35 @@ export function BillingReadinessBadge({
     };
   }, [documentCategories, shipmentStatus]);
 
+  const { mutateAsync, isPending } = useApiMutation({
+    mutationFn: async () => {
+      const response = await markReadyToBill(shipmentId ?? "");
+      return response;
+    },
+    resourceName: "Shipment",
+    onSuccess: () => {
+      toast.success("Shipment marked as ready to bill");
+
+      broadcastQueryInvalidation({
+        queryKey: ["shipment", "shipment-list", "stop", "assignment"],
+        options: {
+          correlationId: `update-shipment-${Date.now()}`,
+        },
+        config: {
+          predicate: true,
+          refetchType: "all",
+        },
+      });
+    },
+  });
+
+  const handleMarkReadyToBill = async () => {
+    await mutateAsync({});
+  };
+
   return (
-    billingReadiness.total > 0 && (
+    billingReadiness.total > 0 &&
+    shipmentStatus !== ShipmentStatus.ReadyToBill && (
       <div className="mt-3 p-3 rounded-lg bg-background border border-border">
         <div className="flex items-center justify-between mb-2">
           <div className="flex items-center">
@@ -58,6 +91,8 @@ export function BillingReadinessBadge({
               aria-label="Mark Ready to Bill"
               variant="green"
               size="xs"
+              onClick={handleMarkReadyToBill}
+              disabled={isPending}
             >
               Mark Ready to Bill
               <Icon icon={faArrowRight} className="size-4 ml-1" />
