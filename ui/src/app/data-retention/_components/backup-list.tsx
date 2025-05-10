@@ -82,7 +82,7 @@ export default function BackupList() {
 
   if (isLoading) {
     return (
-      <Card>
+      <Card className="py-0">
         <CardHeader>
           <CardTitle>Database Backups</CardTitle>
           <CardDescription>
@@ -132,12 +132,8 @@ export default function BackupList() {
     );
   }
 
-  // if (!data?.backups || data.backups.length === 0) {
-  //   return <BackupEmptyState />;
-  // }
-
   return (
-    <Card>
+    <Card className="py-0 pt-6">
       <CardHeader>
         <CardTitle>Database Backups</CardTitle>
         <CardDescription>
