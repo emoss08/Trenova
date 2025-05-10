@@ -63,6 +63,11 @@ func (h *Handler) RegisterRoutes(r fiber.Router, rl *middleware.RateLimiter) {
 		middleware.PerMinute(60), // 60 writes per minute
 	)...)
 
+	api.Put("/:shipmentID/mark-ready-to-bill/", rl.WithRateLimit(
+		[]fiber.Handler{h.markReadyToBill},
+		middleware.PerMinute(5), // 60 writes per minute
+	)...)
+
 	api.Post("/duplicate/", rl.WithRateLimit(
 		[]fiber.Handler{h.duplicate},
 		middleware.PerMinute(60), // 60 writes per minute
@@ -248,6 +253,31 @@ func (h *Handler) duplicate(c *fiber.Ctx) error {
 	}
 
 	return c.Status(fiber.StatusOK).JSON(newEntity)
+}
+
+func (h *Handler) markReadyToBill(c *fiber.Ctx) error {
+	reqCtx, err := ctx.WithRequestContext(c)
+	if err != nil {
+		return h.eh.HandleError(c, err)
+	}
+
+	req := new(repositories.UpdateShipmentStatusRequest)
+	shipmentID, err := pulid.MustParse(c.Params("shipmentID"))
+	if err != nil {
+		return h.eh.HandleError(c, err)
+	}
+
+	req.GetOpts.ID = shipmentID
+	req.GetOpts.BuID = reqCtx.BuID
+	req.GetOpts.OrgID = reqCtx.OrgID
+	req.GetOpts.UserID = reqCtx.UserID
+
+	updatedEntity, err := h.ss.MarkReadyToBill(c.UserContext(), req)
+	if err != nil {
+		return h.eh.HandleError(c, err)
+	}
+
+	return c.Status(fiber.StatusOK).JSON(updatedEntity)
 }
 
 // BOLCheckRequest represents the request structure for BOL duplicate checking

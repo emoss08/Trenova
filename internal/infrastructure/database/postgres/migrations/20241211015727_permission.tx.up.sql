@@ -21,6 +21,7 @@ CREATE TYPE "action_enum" AS ENUM (
     'view_field', -- Permission to view specific fields
     'approve', -- Permission to approve requests/changes
     'reject', -- Permission to reject requests/changes
+    'ready_to_bill', -- Permission to mark a shipment as ready to bill
     'split', -- Permission to split resources
     'submit', -- Permission to submit for approval
     'cancel', -- Permission to cancel operations

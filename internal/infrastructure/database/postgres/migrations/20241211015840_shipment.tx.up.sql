@@ -14,6 +14,10 @@ CREATE TYPE "shipment_status_enum" AS ENUM(
     -- Shipment has been partially completed
     'Completed',
     -- Shipment has been delivered successfully
+    'ReadyToBill',
+    -- Shipment is ready to be billed
+    'ReviewRequired',
+    -- Shipment requires review before being billed
     'Billed',
     -- Shipment has been billed to the customer
     'Canceled' -- Shipment has been Canceled

@@ -3,8 +3,8 @@ package workflow
 type Type string
 
 const (
-	TypeDocumentUpload  = Type("document_upload")
 	TypeShipmentUpdated = Type("shipment_updated")
+	TypeMarkReadyToBill = Type("mark_ready_to_bill")
 )
 
 func (t Type) String() string {
