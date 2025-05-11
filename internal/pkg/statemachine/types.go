@@ -4,6 +4,11 @@ import (
 	"fmt"
 )
 
+// TransitionEvent is a common interface for all transition event types
+type TransitionEvent interface {
+	EventType() string
+}
+
 type StopTransitionEvent string
 
 const (
@@ -11,6 +16,10 @@ const (
 	EventStopDeparted = StopTransitionEvent("StopDeparted")
 	EventStopCanceled = StopTransitionEvent("StopCanceled")
 )
+
+func (e StopTransitionEvent) EventType() string {
+	return string(e)
+}
 
 type MoveTransitionEvent string
 
@@ -20,6 +29,10 @@ const (
 	EventMoveCompleted = MoveTransitionEvent("MoveCompleted")
 	EventMoveCanceled  = MoveTransitionEvent("MoveCanceled")
 )
+
+func (e MoveTransitionEvent) EventType() string {
+	return string(e)
+}
 
 type ShipmentTransitionEvent string
 
@@ -36,21 +49,19 @@ const (
 	EventShipmentPartialCompleted  = ShipmentTransitionEvent("ShipmentPartialCompleted")
 )
 
-// TransitionEvent is a common interface for all transition event types
-type TransitionEvent interface {
-	EventType() string
-}
-
-// Implement the TransitionEvent interface for each event type
-func (e StopTransitionEvent) EventType() string {
-	return string(e)
-}
-
-func (e MoveTransitionEvent) EventType() string {
-	return string(e)
-}
-
 func (e ShipmentTransitionEvent) EventType() string {
+	return string(e)
+}
+
+type BillingTransitionEvent string
+
+const (
+	EventBillingDraftCreated = BillingTransitionEvent("BillingDraftCreated")
+	EventBillingBilled       = BillingTransitionEvent("BillingBilled")
+	EventBillingCanceled     = BillingTransitionEvent("BillingCanceled")
+)
+
+func (e BillingTransitionEvent) EventType() string {
 	return string(e)
 }
 
