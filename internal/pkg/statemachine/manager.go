@@ -3,6 +3,7 @@ package statemachine
 import (
 	"fmt"
 
+	"github.com/emoss08/trenova/internal/core/domain/billinglog"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/internal/pkg/errors"
 	"github.com/emoss08/trenova/internal/pkg/logger"
@@ -16,6 +17,7 @@ type Manager struct {
 	stopStateMachineFactory     func(stop *shipment.Stop) StateMachine
 	moveStateMachineFactory     func(move *shipment.ShipmentMove) StateMachine
 	shipmentStateMachineFactory func(shipment *shipment.Shipment) StateMachine
+	billingStateMachineFactory  func(log *billinglog.Log) StateMachine
 }
 
 type ManagerParams struct {
@@ -37,6 +39,7 @@ func NewManager(p ManagerParams) *Manager {
 	manager.stopStateMachineFactory = NewStopStateMachine
 	manager.moveStateMachineFactory = NewMoveStateMachine
 	manager.shipmentStateMachineFactory = NewShipmentStateMachine
+	manager.billingStateMachineFactory = NewBillingStateMachine
 
 	return manager
 }
@@ -51,6 +54,10 @@ func (m *Manager) ForMove(move *shipment.ShipmentMove) StateMachine {
 
 func (m *Manager) ForShipment(shp *shipment.Shipment) StateMachine {
 	return m.shipmentStateMachineFactory(shp)
+}
+
+func (m *Manager) ForBilling(log *billinglog.Log) StateMachine {
+	return m.billingStateMachineFactory(log)
 }
 
 // CalculateStatuses calculates and updates the statuses of a shipment and all its related entities
