@@ -8,6 +8,7 @@ import (
 	authHandler "github.com/emoss08/trenova/internal/api/handlers/auth"
 	"github.com/emoss08/trenova/internal/api/handlers/backup"
 	"github.com/emoss08/trenova/internal/api/handlers/billingcontrol"
+	"github.com/emoss08/trenova/internal/api/handlers/billingqueue"
 	"github.com/emoss08/trenova/internal/api/handlers/commodity"
 	"github.com/emoss08/trenova/internal/api/handlers/customer"
 	"github.com/emoss08/trenova/internal/api/handlers/document"
@@ -114,6 +115,7 @@ type RouterParams struct {
 	DocumentTypeHandler          *documenttype.Handler
 	IntegrationHandler           *integration.Handler
 	AnalyticsHandler             *analytics.Handler
+	BillingQueueHandler          *billingqueue.Handler
 }
 
 type Router struct {
@@ -286,4 +288,7 @@ func (r *Router) setupProtectedRoutes(router fiber.Router, rl *middleware.RateLi
 
 	// Analytics
 	r.p.AnalyticsHandler.RegisterRoutes(router, rl)
+
+	// Billing Queue
+	r.p.BillingQueueHandler.RegisterRoutes(router, rl)
 }

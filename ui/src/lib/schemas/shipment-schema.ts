@@ -1,6 +1,7 @@
 import { RatingMethod, ShipmentStatus } from "@/types/shipment";
 import { z } from "zod";
 import { additionalChargeSchema } from "./additional-charge-schema";
+import { customerSchema } from "./customer-schema";
 import { moveSchema } from "./move-schema";
 import { shipmentCommoditySchema } from "./shipment-commodity-schema";
 
@@ -124,6 +125,7 @@ export const shipmentSchema = z.object({
   moves: z.array(moveSchema),
   commodities: z.array(shipmentCommoditySchema).nullable().optional(),
   additionalCharges: z.array(additionalChargeSchema).nullable().optional(),
+  customer: customerSchema.nullable().optional(),
 });
 
 export type ShipmentSchema = z.infer<typeof shipmentSchema>;

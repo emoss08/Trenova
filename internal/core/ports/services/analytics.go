@@ -10,7 +10,8 @@ import (
 type AnalyticsPage string
 
 const (
-	ShipmentAnalyticsPage AnalyticsPage = "shipment-management"
+	ShipmentAnalyticsPage      AnalyticsPage = "shipment-management"
+	BillingClientAnalyticsPage AnalyticsPage = "billing-client"
 )
 
 // DateRange represents a time range for analytics queries

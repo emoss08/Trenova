@@ -42,6 +42,15 @@ const routes: RouteObject[] = [
                 },
               },
               {
+                path: "billing-queue",
+                async lazy() {
+                  let { BillingQueue } = await import(
+                    "@/app/billing-queue/page"
+                  );
+                  return { Component: BillingQueue };
+                },
+              },
+              {
                 path: "configurations/customers",
                 async lazy() {
                   let { Customers } = await import("@/app/customers/page");

@@ -8,10 +8,13 @@ export async function getShipments(queryParams: ShipmentQueryParams) {
     "/shipments/",
     {
       params: {
-        limit: queryParams.pageSize.toString(),
-        offset: (queryParams.pageIndex * queryParams.pageSize).toString(),
-        expandShipmentDetails: queryParams.expandShipmentDetails.toString(),
+        limit: queryParams.pageSize?.toString(),
+        offset: (
+          (queryParams?.pageIndex ?? 0) * (queryParams?.pageSize ?? 10)
+        ).toString(),
+        expandShipmentDetails: queryParams.expandShipmentDetails?.toString(),
         query: queryParams.query ?? "",
+        status: queryParams.status,
       },
     },
   );

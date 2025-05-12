@@ -6,6 +6,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/audit"
 	"github.com/emoss08/trenova/internal/core/services/auth"
 	"github.com/emoss08/trenova/internal/core/services/billingcontrol"
+	"github.com/emoss08/trenova/internal/core/services/billingqueue"
 	"github.com/emoss08/trenova/internal/core/services/calculator"
 	"github.com/emoss08/trenova/internal/core/services/commodity"
 	"github.com/emoss08/trenova/internal/core/services/customer"
@@ -84,6 +85,7 @@ var Module = fx.Module("services", fx.Provide(
 	document.NewService,
 	documenttype.NewService,
 	integration.NewService,
+	billingqueue.NewService,
 ),
 )
 
