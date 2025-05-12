@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/core/domain/billingqueue"
+	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/internal/core/ports"
 	"github.com/emoss08/trenova/internal/core/ports/db"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
@@ -25,15 +26,17 @@ import (
 type BillingQueueRepositoryParams struct {
 	fx.In
 
-	DB     db.Connection
-	Logger *logger.Logger
+	DB           db.Connection
+	Logger       *logger.Logger
+	ShipmentRepo repositories.ShipmentRepository
 }
 
 // billingQueueRepository implements the BillingQueueRepository interface
 // and provides methods to manage billing queue data, including CRUD operations.
 type billingQueueRepository struct {
-	db db.Connection
-	l  *zerolog.Logger
+	db           db.Connection
+	l            *zerolog.Logger
+	shipmentRepo repositories.ShipmentRepository
 }
 
 // NewBillingQueueRepository initalizes a new instance of billingQueueRepository with its dependencies.
@@ -49,8 +52,9 @@ func NewBillingQueueRepository(p BillingQueueRepositoryParams) repositories.Bill
 		Logger()
 
 	return &billingQueueRepository{
-		db: p.DB,
-		l:  &log,
+		db:           p.DB,
+		l:            &log,
+		shipmentRepo: p.ShipmentRepo,
 	}
 }
 
@@ -243,7 +247,11 @@ func (br *billingQueueRepository) Create(ctx context.Context, qi *billingqueue.Q
 	})
 	if err != nil {
 		log.Error().Err(err).Msg("failed to create billing queue item")
-		return nil, err
+		return nil, oops.
+			In("billing_queue_repository").
+			Tags("crud", "create").
+			Time(time.Now()).
+			Wrapf(err, "create billing queue item")
 	}
 
 	return qi, nil
@@ -316,4 +324,60 @@ func (br *billingQueueRepository) Update(ctx context.Context, qi *billingqueue.Q
 	}
 
 	return qi, nil
+}
+
+// BulkTransfer transfers all shipments that are ready to be billed to the billing queue.
+//
+// Parameters:
+//   - ctx: Context for request scope and cancellation.
+//   - req: BulkTransferRequest containing organization and business unit IDs.
+//
+// Returns:
+//   - error: If any database operation fails.
+func (br *billingQueueRepository) BulkTransfer(ctx context.Context, req *repositories.BulkTransferRequest) error {
+	dba, err := br.db.DB(ctx)
+	if err != nil {
+		return oops.
+			In("billing_queue_repository").
+			Time(time.Now()).
+			Wrapf(err, "get database connection")
+	}
+
+	shipments, err := br.shipmentRepo.List(ctx, &repositories.ListShipmentOptions{
+		ShipmentOptions: repositories.ShipmentOptions{Status: string(shipment.StatusReadyToBill)},
+	})
+	if err != nil {
+		return oops.
+			In("billing_queue_repository").
+			Tags("crud", "bulk_transfer").
+			Time(time.Now()).
+			Wrapf(err, "list shipments")
+	}
+
+	billingQueueItems := make([]*billingqueue.QueueItem, 0, shipments.Total)
+	for _, shipment := range shipments.Items {
+		billingQueueItems = append(billingQueueItems, &billingqueue.QueueItem{
+			OrganizationID: shipment.OrganizationID,
+			BusinessUnitID: shipment.BusinessUnitID,
+			ShipmentID:     shipment.ID,
+		})
+	}
+
+	err = dba.RunInTx(ctx, nil, func(c context.Context, tx bun.Tx) error {
+		_, iErr := tx.NewInsert().Model(&billingQueueItems).Exec(c)
+		if iErr != nil {
+			return iErr
+		}
+
+		return nil
+	})
+	if err != nil {
+		return oops.
+			In("billing_queue_repository").
+			Tags("crud", "transfer_shipments").
+			Time(time.Now()).
+			Wrapf(err, "transfer shipments")
+	}
+
+	return nil
 }

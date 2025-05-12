@@ -87,14 +87,14 @@ export function BillingReadinessBadge({
           </div>
           {billingReadiness.ready ? (
             <Button
-              title="Mark Ready to Bill"
-              aria-label="Mark Ready to Bill"
+              title="Release to Billing"
+              aria-label="Release to Billing"
               variant="green"
               size="xs"
               onClick={handleMarkReadyToBill}
               disabled={isPending}
             >
-              Mark Ready to Bill
+              Release to Billing
               <Icon icon={faArrowRight} className="size-4 ml-1" />
             </Button>
           ) : (

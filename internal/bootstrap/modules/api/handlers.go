@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/handlers/auth"
 	"github.com/emoss08/trenova/internal/api/handlers/backup"
 	"github.com/emoss08/trenova/internal/api/handlers/billingcontrol"
+	"github.com/emoss08/trenova/internal/api/handlers/billingqueue"
 	"github.com/emoss08/trenova/internal/api/handlers/commodity"
 	"github.com/emoss08/trenova/internal/api/handlers/customer"
 	"github.com/emoss08/trenova/internal/api/handlers/document"
@@ -79,4 +80,5 @@ var HandlersModule = fx.Module("api.Handlers", fx.Provide(
 	document.NewHandler,
 	documenttype.NewHandler,
 	integration.NewHandler,
+	billingqueue.NewHandler,
 ))

@@ -158,6 +158,12 @@ export const routes: RouteInfo[] = [
         supportsModal: true,
       },
       {
+        key: Resource.BillingQueue,
+        label: "Billing Queue",
+        link: "/billing/billing-queue",
+        supportsModal: true,
+      },
+      {
         key: Resource.Document,
         label: "Document Studio",
         link: "/billing/documents",

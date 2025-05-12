@@ -27,10 +27,16 @@ type GetBillingQueueItemRequest struct {
 	FilterOptions      BillingQueueFilterOptions `query:"filterOptions"`
 }
 
+type BulkTransferRequest struct {
+	OrgID  pulid.ID
+	BuID   pulid.ID
+	UserID pulid.ID
+}
+
 type BillingQueueRepository interface {
 	List(ctx context.Context, req *ListBillingQueueRequest) (*ports.ListResult[*billingqueue.QueueItem], error)
 	GetByID(ctx context.Context, req GetBillingQueueItemRequest) (*billingqueue.QueueItem, error)
 	Create(ctx context.Context, qi *billingqueue.QueueItem) (*billingqueue.QueueItem, error)
 	Update(ctx context.Context, qi *billingqueue.QueueItem) (*billingqueue.QueueItem, error)
-	// Delete(ctx context.Context, req *billingqueue.QueueItem) error
+	BulkTransfer(ctx context.Context, req *BulkTransferRequest) error
 }

@@ -71,6 +71,7 @@ export enum Resource {
   BusinessUnit = "business_unit",
   Organization = "organization",
   Document = "document",
+  BillingQueue = "billing_queue",
   DocumentQualityConfig = "document_quality_config",
   ChargeType = "charge_type",
   DivisionCode = "division_code",

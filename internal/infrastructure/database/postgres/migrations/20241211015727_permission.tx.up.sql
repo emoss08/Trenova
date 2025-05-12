@@ -22,6 +22,10 @@ CREATE TYPE "action_enum" AS ENUM (
     'approve', -- Permission to approve requests/changes
     'reject', -- Permission to reject requests/changes
     'ready_to_bill', -- Permission to mark a shipment as ready to bill
+    'release_to_billing', -- Permission to release a shipment to billing
+    'bulk_transfer', -- Permission to bulk transfer shipments to the billing queue
+    'review_invoice', -- Permission to review an invoice
+    'post_invoice', -- Permission to post an invoice
     'split', -- Permission to split resources
     'submit', -- Permission to submit for approval
     'cancel', -- Permission to cancel operations

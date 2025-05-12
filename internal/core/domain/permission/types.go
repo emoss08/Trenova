@@ -31,6 +31,7 @@ const (
 	ResourceTractor               = Resource("tractor")                 // Represents resources for managing tractors.
 	ResourceTrailer               = Resource("trailer")                 // Represents resources for managing trailers.
 	ResourceShipment              = Resource("shipment")                // Represents resources for managing shipments.
+	ResourceBillingQueue          = Resource("billing_queue")           // Represents resources for managing billing queue.
 	ResourceAssignment            = Resource("assignment")              // Represents resources for managing assignments.
 	ResourceShipmentMove          = Resource("shipment_move")           // Represents resources for managing movements.
 	ResourceStop                  = Resource("stop")                    // Represents resources for managing stops.
@@ -108,8 +109,14 @@ const (
 	ActionConfigure = Action("configure") // Configure system settings or resources.
 
 	// Shipment related actions
-	ActionSplit       = Action("split")         // Split a shipment.
-	ActionReadyToBill = Action("ready_to_bill") // Mark a shipment as ready to bill.
+	ActionSplit            = Action("split")              // Split a shipment.
+	ActionReadyToBill      = Action("ready_to_bill")      // Mark a shipment as ready to bill.
+	ActionReleaseToBilling = Action("release_to_billing") // Release a shipment to billing.
+
+	// Billing queue related actions
+	ActionBulkTransfer  = Action("bulk_transfer")  // Bulk transfer shipments to the billing queue.
+	ActionReviewInvoice = Action("review_invoice") // Review an invoice.
+	ActionPostInvoice   = Action("post_invoice")   // Post an invoice.
 )
 
 type Scope string
@@ -414,6 +421,12 @@ var (
 			ActionConfigure,
 			ActionAudit,
 			ActionDelegate,
+		),
+		ResourceBillingQueue: append(
+			BaseActions,
+			ActionReleaseToBilling,
+			ActionReviewInvoice,
+			ActionPostInvoice,
 		),
 		ResourceTemplate: append(
 			BaseActions,

@@ -2,6 +2,7 @@ package analytics
 
 import (
 	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/core/services/analytics/providers/billingclientprovider"
 	"github.com/emoss08/trenova/internal/core/services/analytics/providers/shipmentprovider"
 	"github.com/rs/zerolog/log"
 	"go.uber.org/fx"
@@ -45,12 +46,11 @@ var Module = fx.Module("analytics",
 			fx.ResultTags(`group:"analytics_providers"`),
 			fx.As(new(services.AnalyticsPageProvider)),
 		),
-		// * Add more providers with the same pattern:
-		// fx.Annotate(
-		//     billingprovider.NewProvider,
-		//     fx.ResultTags(`group:"analytics_providers"`),
-		//     fx.As(new(services.AnalyticsPageProvider)),
-		// ),
+		fx.Annotate(
+			billingclientprovider.NewProvider,
+			fx.ResultTags(`group:"analytics_providers"`),
+			fx.As(new(services.AnalyticsPageProvider)),
+		),
 	),
 	fx.Invoke(
 		RegisterProviders,

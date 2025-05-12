@@ -7,7 +7,7 @@ import { faXmark } from "@fortawesome/pro-regular-svg-icons";
 import { Icon } from "./icons";
 
 const sheetVariants = cva(
-  "fixed z-50 gap-4 bg-background transition ease-in-out data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:duration-300 data-[state=open]:duration-500 data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0",
+  "fixed z-40 gap-4 bg-background transition ease-in-out data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:duration-300 data-[state=open]:duration-500 data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0",
   {
     variants: {
       side: {
