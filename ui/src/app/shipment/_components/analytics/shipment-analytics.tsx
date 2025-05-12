@@ -4,7 +4,7 @@ import { cn } from "@/lib/utils";
 import { AnalyticsPage } from "@/types/analytics";
 import { useSuspenseQuery } from "@tanstack/react-query";
 
-export function ShipmentAnalytics() {
+export default function ShipmentAnalytics() {
   const { data: analytics } = useSuspenseQuery({
     ...queries.analytics.getAnalytics(AnalyticsPage.ShipmentManagement),
   });
@@ -31,7 +31,7 @@ export function ShipmentAnalytics() {
   );
 }
 
-export function ShipmentCountCard({
+function ShipmentCountCard({
   count,
   trendPercentage,
 }: {

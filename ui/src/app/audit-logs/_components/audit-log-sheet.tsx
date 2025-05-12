@@ -13,6 +13,7 @@ import {
   SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet";
+import { HeaderBackButton } from "@/components/ui/sheet-header-components";
 import {
   Tooltip,
   TooltipContent,
@@ -24,11 +25,7 @@ import { formatToUserTimezone } from "@/lib/date";
 import { useUser } from "@/stores/user-store";
 import { AuditEntry } from "@/types/audit-entry";
 import { EditTableSheetProps } from "@/types/data-table";
-import {
-  faChevronDown,
-  faChevronLeft,
-  faChevronUp,
-} from "@fortawesome/pro-solid-svg-icons";
+import { faChevronDown, faChevronUp } from "@fortawesome/pro-solid-svg-icons";
 import { memo, useCallback, useEffect, useMemo } from "react";
 import { AuditActions } from "./audit-actions";
 import { AuditEntryActionBadge } from "./audit-column-components";
@@ -293,12 +290,3 @@ function AuditDetailsHeader({ entry }: { entry?: AuditEntry }) {
 const MemoizedAuditDetailsHeader = memo(AuditDetailsHeader, (prev, next) => {
   return prev.entry === next.entry;
 }) as typeof AuditDetailsHeader;
-
-function HeaderBackButton({ onBack }: { onBack: () => void }) {
-  return (
-    <Button variant="outline" size="sm" onClick={onBack}>
-      <Icon icon={faChevronLeft} className="size-4" />
-      <span className="text-sm">Back</span>
-    </Button>
-  );
-}

@@ -1,21 +1,22 @@
-import { LazyComponent } from "@/components/error-boundary";
+import { QueryLazyComponent } from "@/components/error-boundary";
 import { FormSaveProvider } from "@/components/form";
 import { MetaTags } from "@/components/meta-tags";
 import { lazy, memo } from "react";
-import { ShipmentAnalytics } from "./_components/analytics/shipment-analytics";
 
 const ShipmentTable = lazy(() => import("./_components/shipment-table"));
-
+const ShipmentAnalytics = lazy(
+  () => import("./_components/analytics/shipment-analytics"),
+);
 export function Shipment() {
   return (
     <FormSaveProvider>
       <div className="space-y-6 p-6">
         <MetaTags title="Shipments" description="Shipments" />
         <Header />
-        <ShipmentAnalytics />
-        <LazyComponent>
+        <QueryLazyComponent queryKey={["shipment-list"]}>
+          <ShipmentAnalytics />
           <ShipmentTable />
-        </LazyComponent>
+        </QueryLazyComponent>
       </div>
     </FormSaveProvider>
   );

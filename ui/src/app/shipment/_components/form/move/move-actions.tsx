@@ -32,39 +32,102 @@ export function MoveActions({
   // * TODO(Wolfred): we need to add a check before this is able to open, if the move is undefined.
   // * More than likely, we just need to disable the move actions if there is no move.
 
-  if (!move) {
-    return null;
-  }
+  const [assignmentDialogOpen, setAssignmentDialogOpen] =
+    useState<boolean>(false);
+  const queryClient = useQueryClient();
+
+  // Use field array for the stops
+  const { update } = useFieldArray({
+    name: `moves.${moveIdx}`,
+  });
+
+  const { assignment, status } = move;
+
+  // Move is not new, so we cannot assign equipment and workers
+  const reassignEnabled = status === MoveStatus.Assigned;
+  const assignEnabled = validAssignmentStatuses.includes(status);
+
+  const handleOpenAssignmentDialog = useCallback(() => {
+    setAssignmentDialogOpen(true);
+  }, []);
+
+  const handleCloseAssignmentDialog = useCallback(
+    async (open: boolean) => {
+      setAssignmentDialogOpen(open);
+
+      if (!open && move.id) {
+        // Invalidate queries to ensure other components have the latest data
+        queryClient.invalidateQueries({
+          queryKey: ["shipment", "stop", "assignment", "move"],
+        });
+
+        // Wait briefly for the server to process the assignment
+        setTimeout(async () => {
+          try {
+            // Fetch the latest move data directly
+            const response = await http.get(
+              `/shipment-moves/${move.id}?expandMoveDetails=true`,
+            );
+            if (response.data) {
+              // Update the move data in the form
+              const updatedMove = { ...move, ...response.data };
+              update(moveIdx, updatedMove);
+            }
+          } catch (error) {
+            console.error("Failed to fetch updated move data:", error);
+          }
+        }, 300); // Small delay to ensure server has processed the assignment
+      }
+    },
+    [move, moveIdx, queryClient, update],
+  );
 
   return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button variant="outline" size="sm" className="p-2">
-          <Icon icon={faEllipsisVertical} className="size-4" />
-        </Button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent side="left" align="start">
-        <DropdownMenuLabel>Move Actions</DropdownMenuLabel>
-        <DropdownMenuSeparator />
-        <AssignmentAction move={move} currMoveIdx={moveIdx} />
-        <StopDialogAction moveIdx={moveIdx} stopIdx={0} />
-        <DropdownMenuItem
-          title="Split Move"
-          description="Divide this move into multiple parts"
+    <>
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button variant="outline" size="sm" className="p-2">
+            <Icon icon={faEllipsisVertical} className="size-4" />
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent side="left" align="start">
+          <DropdownMenuLabel>Move Actions</DropdownMenuLabel>
+          <DropdownMenuSeparator />
+          <DropdownMenuItem
+            title={reassignEnabled ? "Reassign" : "Assign"}
+            description="Assign equipment and worker(s) to the move"
+            onClick={handleOpenAssignmentDialog}
+            disabled={!assignEnabled}
+          />
+
+          <StopDialogAction moveIdx={moveIdx} stopIdx={0} />
+          <DropdownMenuItem
+            title="Split Move"
+            description="Divide this move into multiple parts"
+          />
+          <DropdownMenuItem
+            title="Edit Move"
+            description="Modify move details"
+            onClick={onEdit}
+          />
+          <DropdownMenuItem
+            title="Delete Move"
+            color="danger"
+            description="Remove this move from the shipment"
+            onClick={onDelete}
+          />
+        </DropdownMenuContent>
+      </DropdownMenu>
+
+      {assignmentDialogOpen && (
+        <AssignmentDialog
+          open={assignmentDialogOpen}
+          onOpenChange={handleCloseAssignmentDialog}
+          shipmentMoveId={move.id}
+          assignmentId={assignment?.id}
         />
-        <DropdownMenuItem
-          title="Edit Move"
-          description="Modify move details"
-          onClick={onEdit}
-        />
-        <DropdownMenuItem
-          title="Delete Move"
-          color="danger"
-          description="Remove this move from the shipment"
-          onClick={onDelete}
-        />
-      </DropdownMenuContent>
-    </DropdownMenu>
+      )}
+    </>
   );
 }
 // * Statuses where the worker can be assigned.
@@ -105,83 +168,6 @@ function StopDialogAction({
           onOpenChange={handleClose}
           moveIdx={moveIdx}
           stopIdx={stopIdx}
-        />
-      )}
-    </>
-  );
-}
-
-function AssignmentAction({
-  move,
-  currMoveIdx,
-}: {
-  move: MoveSchema;
-  currMoveIdx: number;
-}) {
-  const [assignmentDialogOpen, setAssignmentDialogOpen] =
-    useState<boolean>(false);
-  const queryClient = useQueryClient();
-
-  // Use field array for the stops
-  const { update } = useFieldArray({
-    name: `moves.${currMoveIdx}`,
-  });
-
-  const { assignment, status } = move;
-
-  // Move is not new, so we cannot assign equipment and workers
-  const reassignEnabled = status === MoveStatus.Assigned;
-  const assignEnabled = validAssignmentStatuses.includes(status);
-
-  const handleOpenAssignmentDialog = useCallback(() => {
-    setAssignmentDialogOpen(true);
-  }, []);
-
-  const handleCloseAssignmentDialog = useCallback(
-    async (open: boolean) => {
-      setAssignmentDialogOpen(open);
-
-      if (!open && move.id) {
-        // Invalidate queries to ensure other components have the latest data
-        queryClient.invalidateQueries({
-          queryKey: ["shipment", "stop", "assignment", "move"],
-        });
-
-        // Wait briefly for the server to process the assignment
-        setTimeout(async () => {
-          try {
-            // Fetch the latest move data directly
-            const response = await http.get(
-              `/shipment-moves/${move.id}?expandMoveDetails=true`,
-            );
-            if (response.data) {
-              // Update the move data in the form
-              const updatedMove = { ...move, ...response.data };
-              update(currMoveIdx, updatedMove);
-            }
-          } catch (error) {
-            console.error("Failed to fetch updated move data:", error);
-          }
-        }, 300); // Small delay to ensure server has processed the assignment
-      }
-    },
-    [move, currMoveIdx, queryClient, update],
-  );
-
-  return (
-    <>
-      <DropdownMenuItem
-        title={reassignEnabled ? "Reassign" : "Assign"}
-        description="Assign equipment and worker(s) to the move"
-        onClick={handleOpenAssignmentDialog}
-        disabled={!assignEnabled}
-      />
-      {assignmentDialogOpen && (
-        <AssignmentDialog
-          open={assignmentDialogOpen}
-          onOpenChange={handleCloseAssignmentDialog}
-          shipmentMoveId={move.id}
-          assignmentId={assignment?.id}
         />
       )}
     </>

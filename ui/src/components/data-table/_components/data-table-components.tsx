@@ -128,7 +128,7 @@ export function HoverCardTimestamp({
       </HoverCardTrigger>
       <HoverCardPortal>
         <HoverCardContent
-          className="p-2 w-auto z-10"
+          className="p-2 w-auto"
           {...{ side, align, alignOffset, sideOffset }}
         >
           <dl className="flex flex-col gap-1">

@@ -97,11 +97,12 @@ export type Shipment = BaseModel &
   };
 
 export type ShipmentQueryParams = {
-  pageIndex: number;
-  pageSize: number;
-  expandShipmentDetails: boolean;
+  pageIndex?: number;
+  pageSize?: number;
+  expandShipmentDetails?: boolean;
   query?: string;
   enabled?: boolean;
+  status?: ShipmentStatus;
 };
 
 export type ShipmentDetailsQueryParams = {
