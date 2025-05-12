@@ -14,6 +14,8 @@ import (
 	"go.uber.org/fx"
 )
 
+var _ services.AnalyticsPageProvider = (*Provider)(nil)
+
 // ShipmentProviderParams contains the dependencies for ShipmentProvider
 type ProviderParams struct {
 	fx.In

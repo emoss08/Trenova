@@ -65,7 +65,7 @@ func (h *Handler) RegisterRoutes(r fiber.Router, rl *middleware.RateLimiter) {
 
 	api.Put("/:shipmentID/mark-ready-to-bill/", rl.WithRateLimit(
 		[]fiber.Handler{h.markReadyToBill},
-		middleware.PerMinute(5), // 60 writes per minute
+		middleware.PerMinute(5), // 5 writes per minute
 	)...)
 
 	api.Post("/duplicate/", rl.WithRateLimit(
