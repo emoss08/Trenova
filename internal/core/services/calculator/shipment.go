@@ -256,9 +256,9 @@ func (sc *ShipmentCalculator) CalculateCommodityTotals(shp *shipment.Shipment) {
 }
 
 func (sc *ShipmentCalculator) CalculateStatus(shp *shipment.Shipment) error {
-	sc.l.Debug().
+	sc.l.Info().
 		Str("shipmentID", shp.ID.String()).
-		Msg("calculating shipment status")
+		Msg("calculating shipment status and timestamps")
 
 	// * use the state machine manager to calculate the status
 	if err := sc.smManager.CalculateStatuses(shp); err != nil {
@@ -270,10 +270,32 @@ func (sc *ShipmentCalculator) CalculateStatus(shp *shipment.Shipment) error {
 		return eris.Wrap(err, "failed to calculate shipment status")
 	}
 
-	sc.l.Debug().
+	sc.l.Info().
 		Str("shipmentID", shp.ID.String()).
 		Str("status", string(shp.Status)).
 		Msg("calculated shipment status")
+
+	return nil
+}
+
+func (sc *ShipmentCalculator) CalculateTimestamps(shp *shipment.Shipment) error {
+	sc.l.Debug().
+		Str("shipmentID", shp.ID.String()).
+		Msg("calculating shipment timestamp")
+
+	// * use the state machine manager to calculate the timestamps
+	if err := sc.smManager.CalculateShipmentTimestamps(shp); err != nil {
+		sc.l.Error().
+			Str("shipmentID", shp.ID.String()).
+			Err(err).
+			Msg("failed to calculate shipment timestamps")
+	}
+
+	sc.l.Debug().
+		Str("shipmentID", shp.ID.String()).
+		Int64("actualShipDate", *shp.ActualShipDate).
+		Int64("actualDeliveryDate", *shp.ActualDeliveryDate).
+		Msg("calculated shipment timestamps")
 
 	return nil
 }

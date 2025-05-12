@@ -19,70 +19,58 @@ func (sm *StopStateMachine) CurrentState() string {
 	return string(sm.stop.Status)
 }
 
+// validStopTransitions defines the allowed state transitions and the target state for each.
+// Format: map[currentState]map[triggeringEvent]targetState
+//
+//nolint:exhaustive // No need to include the terminal states
+var validStopTransitions = map[shipment.StopStatus]map[TransitionEvent]shipment.StopStatus{
+	shipment.StopStatusNew: {
+		EventStopArrived:  shipment.StopStatusInTransit,
+		EventStopCanceled: shipment.StopStatusCanceled,
+		EventStopDeparted: shipment.StopStatusCompleted, // New can go directly to Completed if departed (e.g. quick load/unload)
+	},
+	shipment.StopStatusInTransit: {
+		EventStopDeparted: shipment.StopStatusCompleted,
+		EventStopCanceled: shipment.StopStatusCanceled,
+	},
+	shipment.StopStatusCompleted: {
+		EventStopCanceled: shipment.StopStatusCanceled, // e.g., if a completed stop needs to be voided
+	},
+	// shipment.StopStatusCanceled is a terminal state, no transitions out.
+}
+
 func (sm *StopStateMachine) CanTransition(event TransitionEvent) bool {
 	currentState := sm.stop.Status
-
-	// Define valid transition based on current state and event
-	validTransitions := map[shipment.StopStatus]map[TransitionEvent]bool{
-		shipment.StopStatusNew: {
-			EventStopArrived:  true,
-			EventStopCanceled: true,
-			EventStopDeparted: true,
-		},
-		shipment.StopStatusInTransit: {
-			EventStopDeparted: true,
-			EventStopCanceled: true,
-		},
-		shipment.StopStatusCompleted: {
-			EventStopCanceled: true,
-		},
-		// Terminal State - no transitions allowed
-		shipment.StopStatusCanceled: {},
+	if transitions, ok := validStopTransitions[currentState]; ok {
+		if _, eventAllowed := transitions[event]; eventAllowed {
+			return true
+		}
 	}
 
-	if transitions, exists := validTransitions[currentState]; exists {
-		return transitions[event]
-	}
-
-	log.Debug().
-		Str("stopID", sm.stop.ID.String()).
-		Str("event", event.EventType()).
-		Str("currentState", string(currentState)).
-		Msg("stop transition not allowed")
+	log.Debug(). // Changed from Info to Debug as this might be noisy otherwise
+			Str("stopID", sm.stop.ID.String()).
+			Str("event", event.EventType()).
+			Str("currentState", string(currentState)).
+			Msg("stop transition not allowed")
 
 	return false
 }
 
 func (sm *StopStateMachine) Transition(event TransitionEvent) error {
-	if !sm.CanTransition(event) {
-		return newTransitionError(
-			string(sm.stop.Status),
-			event,
-			"transition not allowed",
-		)
+	currentState := sm.stop.Status
+	if transitions, ok := validStopTransitions[currentState]; ok {
+		if newStatus, eventAllowed := transitions[event]; eventAllowed {
+			sm.stop.Status = newStatus
+			return nil
+		}
 	}
 
-	var newStatus shipment.StopStatus
-
-	switch event {
-	case EventStopArrived:
-		newStatus = shipment.StopStatusInTransit
-	case EventStopDeparted:
-		newStatus = shipment.StopStatusCompleted
-	case EventStopCanceled:
-		newStatus = shipment.StopStatusCanceled
-	default:
-		return newTransitionError(
-			string(sm.stop.Status),
-			event,
-			"unsupported event",
-		)
-	}
-
-	// Update the stop status
-	sm.stop.Status = newStatus
-
-	return nil
+	// If we reach here, the transition is not allowed.
+	return newTransitionError(
+		string(currentState),
+		event,
+		"transition not allowed or event not defined for current state",
+	)
 }
 
 func (sm *StopStateMachine) IsInTerminalState() bool {

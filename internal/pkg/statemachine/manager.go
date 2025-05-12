@@ -6,6 +6,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/internal/pkg/errors"
 	"github.com/emoss08/trenova/internal/pkg/logger"
+	"github.com/emoss08/trenova/internal/pkg/utils/timeutils"
 	"github.com/rs/zerolog"
 	"go.uber.org/fx"
 )
@@ -83,6 +84,51 @@ func (m *Manager) CalculateStatuses(shp *shipment.Shipment) error {
 
 	if multiErr.HasErrors() {
 		return multiErr
+	}
+
+	return nil
+}
+
+func (m *Manager) CalculateShipmentTimestamps(shp *shipment.Shipment) error {
+	m.logger.Debug().
+		Str("shipmentID", shp.ID.String()).
+		Msg("calculating shipment timestamps")
+
+	if len(shp.Moves) == 0 {
+		m.logger.Debug().
+			Str("shipmentID", shp.ID.String()).
+			Msg("no moves found, skipping timestamp calculation")
+		return nil
+	}
+
+	// Calculate ActualShipDate
+	// This is the ActualDeparture of the first stop of the first move
+	firstMove := shp.Moves[0]
+	if len(firstMove.Stops) > 0 {
+		firstStop := firstMove.Stops[0]
+		// Ensure it's the origin stop and has departed
+		if firstStop.IsOriginStop() && firstStop.ActualDeparture != nil {
+			shp.ActualShipDate = firstStop.ActualDeparture
+			m.logger.Debug().
+				Str("shipmentID", shp.ID.String()).
+				Int64("actualShipDate", *shp.ActualShipDate).
+				Msg("updated actual ship date")
+		}
+	}
+
+	// Calculate ActualDeliveryDate
+	// This is the ActualArrival of the last stop of the last move
+	lastMove := shp.Moves[len(shp.Moves)-1]
+	if len(lastMove.Stops) > 0 {
+		lastStop := lastMove.Stops[len(lastMove.Stops)-1]
+		// Ensure it's the destination stop and has arrived
+		if lastStop.IsDestinationStop() && lastStop.ActualArrival != nil {
+			shp.ActualDeliveryDate = lastStop.ActualArrival
+			m.logger.Debug().
+				Str("shipmentID", shp.ID.String()).
+				Int64("actualDeliveryDate", *shp.ActualDeliveryDate).
+				Msg("updated actual delivery date")
+		}
 	}
 
 	return nil
@@ -224,18 +270,48 @@ func (m *Manager) processShipmentStatus(shp *shipment.Shipment, shipmentSM State
 	}
 }
 
+// hasDelayedStops checks if any active stop in the shipment is past its planned arrival time.
+func (m *Manager) hasDelayedStops(shp *shipment.Shipment, currentTime int64) bool {
+	for _, move := range shp.Moves {
+		for _, stop := range move.Stops {
+			// A stop contributes to delay if it's not completed or canceled,
+			// has a valid planned arrival time, and that time is in the past.
+			if stop.Status != shipment.StopStatusCompleted &&
+				stop.Status != shipment.StopStatusCanceled &&
+				stop.PlannedArrival > 0 && // Assuming 0 is not a valid/set planned time
+				currentTime > stop.PlannedArrival {
+				m.logger.Debug().
+					Str("shipmentID", shp.ID.String()).
+					Str("moveID", move.ID.String()).
+					Str("stopID", stop.ID.String()).
+					Int64("plannedArrival", stop.PlannedArrival).
+					Int64("currentTime", currentTime).
+					Msg("stop is delayed, contributing to shipment delay check")
+				return true // Found a delayed stop
+			}
+		}
+	}
+	return false // No delayed stops
+}
+
 // determineShipmentEvent determines the appropriate event for a shipment based on its moves
 func (m *Manager) determineShipmentEvent(shp *shipment.Shipment) TransitionEvent {
-	// * Analyze move statuses for shipment event
 	var (
-		totalMoves      = len(shp.Moves)
-		movesCompleted  = 0
-		movesInTransit  = 0
-		movesAssigned   = 0
-		hasDelayedMoves = false
+		totalMoves     = len(shp.Moves)
+		movesCompleted = 0
+		movesInTransit = 0
+		movesAssigned  = 0
 	)
 
+	if totalMoves == 0 { // Early exit if there are no moves
+		return nil
+	}
+
+	currentTime := timeutils.NowUnix()
+	hasDelayedMoves := m.hasDelayedStops(shp, currentTime)
+
 	for _, move := range shp.Moves {
+		//nolint:exhaustive // No need to include the terminal states
 		switch move.Status {
 		case shipment.MoveStatusCompleted:
 			movesCompleted++
@@ -243,16 +319,12 @@ func (m *Manager) determineShipmentEvent(shp *shipment.Shipment) TransitionEvent
 			movesInTransit++
 		case shipment.MoveStatusAssigned:
 			movesAssigned++
-		case shipment.MoveStatusNew:
-			// * New moves don't affect any counters
-		case shipment.MoveStatusCanceled:
-			// * Canceled moves don't affect any counters
+			// New and Canceled moves don't affect these counters for primary event determination
 		}
 	}
 
 	switch {
-	case totalMoves == 0:
-		return nil // * No moves, no state change needed
+	// Order of these cases is important for precedence
 	case movesCompleted == totalMoves:
 		return EventShipmentCompleted
 	case movesCompleted > 0 && movesCompleted < totalMoves:
@@ -266,6 +338,6 @@ func (m *Manager) determineShipmentEvent(shp *shipment.Shipment) TransitionEvent
 	case movesAssigned > 0 && movesAssigned < totalMoves:
 		return EventShipmentPartiallyAssigned
 	default:
-		return nil // * No transition needed
+		return nil // No specific event derived from move statuses
 	}
 }

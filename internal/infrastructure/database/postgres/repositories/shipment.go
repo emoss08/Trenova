@@ -307,6 +307,12 @@ func (sr *shipmentRepository) Create(ctx context.Context, shp *shipment.Shipment
 		return nil, err
 	}
 
+	// * Calculate the timestamps for the shipment
+	if err = sr.calc.CalculateTimestamps(shp); err != nil {
+		log.Error().Err(err).Msg("failed to calculate shipment timestamps")
+		return nil, err
+	}
+
 	err = dba.RunInTx(ctx, nil, func(c context.Context, tx bun.Tx) error {
 		shp.ProNumber = proNumber
 
@@ -374,10 +380,29 @@ func (sr *shipmentRepository) Update(ctx context.Context, shp *shipment.Shipment
 	// * Calculate the totals for the shipment
 	sr.calc.CalculateTotals(shp)
 
-	// * Calculate the status for the shipment
+	// * Calculate the status and timestamps for the shipment
 	if err = sr.calc.CalculateStatus(shp); err != nil {
 		log.Error().Err(err).Msg("failed to calculate shipment status")
-		return nil, err
+		return nil, oops.
+			In("shipment_repository").
+			Tags("crud", "update").
+			Time(time.Now()).
+			Wrapf(err, "calculate shipment status")
+	}
+
+	log.Info().
+		Str("shipmentID", shp.GetID()).
+		Str("status", string(shp.Status)).
+		Msg("calculated shipment status")
+
+	// * Calculate the timestamps for the shipment
+	if err = sr.calc.CalculateTimestamps(shp); err != nil {
+		log.Error().Err(err).Msg("failed to calculate shipment timestamps")
+		return nil, oops.
+			In("shipment_repository").
+			Tags("crud", "update").
+			Time(time.Now()).
+			Wrapf(err, "calculate shipment timestamps")
 	}
 
 	// * Run in a transaction
