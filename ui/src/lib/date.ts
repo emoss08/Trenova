@@ -296,3 +296,47 @@ export function formatToUserTimezone(
 export function isValidDate(date: unknown): date is Date {
   return date instanceof Date && !isNaN(date.getTime());
 }
+
+/**
+ * Formats a duration in seconds into a human-readable string (e.g., "4d 5h", "5h", "5m").
+ *
+ * @param durationInSeconds The duration in seconds.
+ * @returns A formatted string representing the duration.
+ */
+export function formatDurationFromSeconds(durationInSeconds: number): string {
+  if (
+    durationInSeconds === undefined ||
+    durationInSeconds === null ||
+    isNaN(durationInSeconds) ||
+    durationInSeconds < 0
+  ) {
+    return "0m";
+  }
+
+  if (durationInSeconds === 0) {
+    return "0m";
+  }
+
+  const days = Math.floor(durationInSeconds / 86400);
+  const hours = Math.floor((durationInSeconds % 86400) / 3600);
+  const minutes = Math.floor(((durationInSeconds % 86400) % 3600) / 60);
+
+  const parts: string[] = [];
+
+  if (days > 0) {
+    parts.push(`${days}d`);
+  }
+  if (hours > 0) {
+    parts.push(`${hours}h`);
+  }
+  if (minutes > 0) {
+    parts.push(`${minutes}m`);
+  }
+
+  if (parts.length === 0) {
+    // Duration is > 0 but < 60 seconds, display as "1m"
+    return "1m";
+  }
+
+  return parts.join(" ");
+}
