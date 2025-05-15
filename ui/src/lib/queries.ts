@@ -111,6 +111,7 @@ export const queries = createQueryKeyStore({
       resourceId: string,
       limit?: number,
       offset?: number,
+      enabled: boolean = true,
     ) => ({
       queryKey: [
         "document/documents-by-resource-id",
@@ -127,6 +128,7 @@ export const queries = createQueryKeyStore({
           offset,
         );
       },
+      enabled,
     }),
   },
   shipment: {
