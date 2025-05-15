@@ -2,6 +2,7 @@ import { Button } from "@/components/ui/button";
 import { Icon } from "@/components/ui/icons";
 import { billingClientSearchParams } from "@/hooks/use-billing-client-state";
 import { queries } from "@/lib/queries";
+import { cn } from "@/lib/utils";
 import { AnalyticsPage } from "@/types/analytics";
 import { faChevronRight } from "@fortawesome/pro-solid-svg-icons";
 import { useSuspenseQuery } from "@tanstack/react-query";
@@ -29,7 +30,12 @@ function ShipmentReadyToBillCard({ count }: { count: number }) {
 
   return (
     <>
-      <div className="p-4 rounded-lg bg-gradient-to-r from-blue-500 from-5% to-foreground to-95%">
+      <div
+        className={cn(
+          "p-4 rounded-lg bg-gradient-to-r from-5% via-foreground via-50% to-foreground to-90%",
+          count > 0 ? "from-blue-500" : "from-green-500",
+        )}
+      >
         <div className="p-0">
           <div className="flex flex-col pb-2">
             <dt className="font-medium text-xl text-background">
