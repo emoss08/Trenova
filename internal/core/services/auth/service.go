@@ -16,6 +16,7 @@ import (
 	"github.com/emoss08/trenova/pkg/types/pulid"
 	"github.com/rotisserie/eris"
 	"github.com/rs/zerolog"
+	"github.com/samber/oops"
 	"go.uber.org/fx"
 )
 
@@ -114,7 +115,12 @@ func (s *Service) ValidateSession(ctx context.Context, sessionID pulid.ID, clien
 			Str("clientIP", clientIP).
 			Err(err).
 			Msg("failed to validate session")
-		return false, eris.Wrap(err, "failed to validate session")
+		return false, oops.In("auth_service").
+			Tags("validate_session").
+			With("sessionID", sessionID.String()).
+			With("clientIP", clientIP).
+			Time(time.Now()).
+			Wrapf(err, "failed to validate session")
 	}
 
 	return true, nil
