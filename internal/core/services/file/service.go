@@ -9,8 +9,6 @@ import (
 	"io"
 	"maps"
 	"net/http"
-	"path/filepath"
-	"strings"
 	"time"
 
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
@@ -35,8 +33,8 @@ const (
 type Config struct {
 	// MaxFileSize is the maximum file size allowed for uploads
 	MaxFileSize int64
-	// AllowedFileTypes is a map of allowed file types and their corresponding extensions
-	AllowedFileTypes map[services.FileType][]string
+	// AllowedFileExtensions is a map of allowed file extensions
+	AllowedFileExtensions []services.FileExtension
 	// DefaultRegion is the default region for the file service
 	DefaultRegion string
 	// ClassificationPolicies is a map of classification policies and their corresponding retention periods, encryption requirements, and allowed categories
@@ -77,14 +75,9 @@ func NewService(p ServiceParams) services.FileService {
 		Logger()
 
 	cfg := &Config{
-		MaxFileSize: MaxFileSize,
-		//nolint:exhaustive // This is a map of allowed file types and their corresponding extensions
-		AllowedFileTypes: map[services.FileType][]string{
-			services.ImageFile: {".jpg", ".jpeg", ".png", ".gif", ".webp"},
-			services.DocFile:   {".doc", ".docx", ".xls", ".xlsx", ".csv"},
-			services.PDFFile:   {".pdf"},
-		},
-		DefaultRegion: defaultRegion,
+		MaxFileSize:           MaxFileSize,
+		AllowedFileExtensions: append(services.AllowedImageFileExtensions, services.AllowedDocFileExtensions...),
+		DefaultRegion:         defaultRegion,
 		ClassificationPolicies: map[services.FileClassification]services.ClassificationPolicy{
 			services.ClassificationPublic: {
 				RetentionPeriod:    30 * 24 * time.Hour, // 30 days
@@ -349,14 +342,12 @@ func (s *service) validateClassification(req *services.SaveFileRequest) error {
 	return nil
 }
 
-func (s *service) ValidateFile(filename string, size int64, fileType services.FileType) error {
+func (s *service) ValidateFile(size int64, fileExtension services.FileExtension) error {
 	if size > s.cfg.MaxFileSize {
 		return services.ErrFileSizeExceedsMaxSize
 	}
 
-	ext := strings.ToLower(filepath.Ext(filename))
-	allowedExts, ok := s.cfg.AllowedFileTypes[fileType]
-	if !ok || !lo.Contains(allowedExts, ext) {
+	if !lo.Contains(s.cfg.AllowedFileExtensions, fileExtension) {
 		return services.ErrFileExtensionNotAllowed
 	}
 
@@ -397,7 +388,7 @@ func (s *service) SaveFile(ctx context.Context, req *services.SaveFileRequest) (
 	}
 
 	// Validate file type and size
-	if err := s.ValidateFile(req.FileName, int64(len(req.File)), req.FileType); err != nil {
+	if err := s.ValidateFile(int64(len(req.File)), req.FileExtension); err != nil {
 		return nil, err
 	}
 
@@ -417,7 +408,7 @@ func (s *service) SaveFile(ctx context.Context, req *services.SaveFileRequest) (
 	metadata := http.Header{
 		"organization_id": []string{req.OrgID},
 		"user_id":         []string{req.UserID},
-		"file_type":       []string{string(req.FileType)},
+		"file_type":       []string{req.FileExtension.String()},
 		"classification":  []string{string(req.Classification)},
 		"category":        []string{string(req.Category)},
 		"content_type":    []string{http.DetectContentType(req.File)},
@@ -444,9 +435,9 @@ func (s *service) SaveFile(ctx context.Context, req *services.SaveFileRequest) (
 			UserMetadata: map[string]string{
 				"organization_id": req.OrgID,
 				"user_id":         req.UserID,
-				"file_type":       string(req.FileType),
-				"classification":  string(req.Classification),
-				"category":        string(req.Category),
+				"file_type":       req.FileExtension.String(),
+				"classification":  req.Classification.String(),
+				"category":        req.Category.String(),
 				"content_type":    http.DetectContentType(req.File),
 				"checksum":        checksum,
 			},

@@ -310,7 +310,7 @@ func (s *Service) SetLogo(ctx context.Context, orgID, buID, userID pulid.ID, log
 	updatedOrg, err := s.uploadLogo(ctx, org, userID, &services.SaveFileRequest{
 		File:           fileData,
 		FileName:       fileName,
-		FileType:       services.ImageFile,
+		FileExtension:  fileutils.GetFileTypeFromFileName(fileName),
 		Classification: services.ClassificationPublic,
 		Category:       services.CategoryBranding,
 		Tags:           map[string]string{"organization_id": org.ID.String()},
@@ -320,7 +320,7 @@ func (s *Service) SetLogo(ctx context.Context, orgID, buID, userID pulid.ID, log
 		Metadata: http.Header{
 			"organization_id": []string{org.ID.String()},
 			"user_id":         []string{userID.String()},
-			"file_type":       []string{string(services.ImageFile)},
+			"file_type":       []string{string(fileutils.GetFileTypeFromFileName(fileName))},
 		},
 	})
 	if err != nil {

@@ -8,6 +8,7 @@ import (
 	"path/filepath"
 	"time"
 
+	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/oklog/ulid/v2"
 	"github.com/rotisserie/eris"
 	"github.com/rs/zerolog/log"
@@ -76,4 +77,12 @@ func GetFileSize(path string) int64 {
 		return 0
 	}
 	return info.Size()
+}
+
+func GetFileExtensionFromFileName(fileName string) string {
+	return filepath.Ext(fileName)
+}
+
+func GetFileTypeFromFileName(fileName string) services.FileExtension {
+	return services.GetFileTypeFromExtension(GetFileExtensionFromFileName(fileName))
 }
