@@ -17,6 +17,53 @@ var (
 	ErrFileExtensionNotAllowed = eris.New("file extension not allowed")
 )
 
+type FileExtension string
+
+const (
+	FileExtensionPDF  = FileExtension(".pdf")
+	FileExtensionDOC  = FileExtension(".doc")
+	FileExtensionDOCX = FileExtension(".docx")
+	FileExtensionXLS  = FileExtension(".xls")
+	FileExtensionXLSX = FileExtension(".xlsx")
+	FileExtensionCSV  = FileExtension(".csv")
+	FileExtensionPPT  = FileExtension(".ppt")
+	FileExtensionPPTX = FileExtension(".pptx")
+	FileExtensionJPG  = FileExtension(".jpg")
+	FileExtensionJPEG = FileExtension(".jpeg")
+	FileExtensionPNG  = FileExtension(".png")
+	FileExtensionWEBP = FileExtension(".webp")
+	FileExtensionAVIF = FileExtension(".avif")
+)
+
+func (ft FileExtension) String() string {
+	return string(ft)
+}
+
+var (
+	AllowedDocFileExtensions   = []FileExtension{FileExtensionDOC, FileExtensionPDF, FileExtensionDOCX, FileExtensionXLS, FileExtensionXLSX, FileExtensionCSV}
+	AllowedImageFileExtensions = []FileExtension{FileExtensionJPG, FileExtensionJPEG, FileExtensionPNG, FileExtensionWEBP, FileExtensionAVIF}
+)
+
+func IsSupportedFileType(fileExtension FileExtension) bool {
+	return fileExtension == FileExtensionPDF ||
+		fileExtension == FileExtensionDOC ||
+		fileExtension == FileExtensionDOCX ||
+		fileExtension == FileExtensionXLS ||
+		fileExtension == FileExtensionXLSX ||
+		fileExtension == FileExtensionCSV ||
+		fileExtension == FileExtensionPPT ||
+		fileExtension == FileExtensionPPTX ||
+		fileExtension == FileExtensionJPG ||
+		fileExtension == FileExtensionJPEG ||
+		fileExtension == FileExtensionPNG ||
+		fileExtension == FileExtensionWEBP ||
+		fileExtension == FileExtensionAVIF
+}
+
+func GetFileTypeFromExtension(extension string) FileExtension {
+	return FileExtension(extension)
+}
+
 // FileClassification represents the security level of files
 type FileClassification string
 
@@ -48,32 +95,19 @@ func (fc FileCategory) String() string {
 	return string(fc)
 }
 
-type FileType string
-
-const (
-	ImageFile = FileType("image")
-	DocFile   = FileType("document")
-	PDFFile   = FileType("pdf")
-	OtherFile = FileType("other")
-)
-
-func (ft FileType) String() string {
-	return string(ft)
-}
-
 type Metadata struct {
-	OrgID       string
-	UserID      string
-	FileType    FileType
-	Tags        map[string]string
-	ContentType string
+	OrgID         string
+	UserID        string
+	FileExtension FileExtension
+	Tags          map[string]string
+	ContentType   string
 }
 
 type SaveFileRequest struct {
 	File           []byte
 	FileName       string
 	OrgID          string
-	FileType       FileType
+	FileExtension  FileExtension
 	Classification FileClassification
 	Category       FileCategory
 	BucketName     string
@@ -125,7 +159,7 @@ type FileService interface {
 	GetFileByBucketName(ctx context.Context, bucketName, objectName string) (*minio.Object, error)
 	GetSpecificVersion(ctx context.Context, bucketName, objectName, versionID string) ([]byte, *VersionInfo, error)
 	RestoreVersion(ctx context.Context, req *SaveFileRequest, versionID string) (*SaveFileResponse, error)
-	ValidateFile(filename string, size int64, fileType FileType) error
+	ValidateFile(size int64, fileExtension FileExtension) error
 	GetFileURL(ctx context.Context, bucketName, objectName string, expiry time.Duration) (string, error)
 	DeleteFile(ctx context.Context, bucketName, objectName string) error
 }

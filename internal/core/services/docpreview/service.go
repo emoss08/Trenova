@@ -8,15 +8,12 @@ import (
 	"strings"
 	"time"
 
-	"slices"
-
 	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/infrastructure/storage/minio"
 	"github.com/emoss08/trenova/internal/pkg/config"
-	"github.com/emoss08/trenova/internal/pkg/errors"
 	"github.com/emoss08/trenova/internal/pkg/logger"
-	"github.com/rotisserie/eris"
 	"github.com/rs/zerolog"
+	"github.com/samber/oops"
 	"go.uber.org/fx"
 )
 
@@ -38,7 +35,9 @@ type service struct {
 }
 
 func NewService(p ServiceParams) services.PreviewService {
-	l := p.Logger.With().Str("service", "docpreview").Logger()
+	l := p.Logger.With().
+		Str("service", "docpreview").
+		Logger()
 
 	return &service{
 		l:           &l,
@@ -54,10 +53,6 @@ func (s *service) GeneratePreview(ctx context.Context, req *services.GeneratePre
 		Str("operation", "GeneratePreview").
 		Str("fileName", req.FileName).
 		Logger()
-
-	if !s.isPreviewSupported(req.FileName) {
-		return nil, errors.NewBusinessError("Unsupported file type for preview")
-	}
 
 	// Create temporary files for document and image
 	tmpFilePath, tmpImagePath, err := s.createTempFiles(req.FileName, log)
@@ -125,7 +120,7 @@ func (s *service) createTempFiles(fileName string, log zerolog.Logger) (string, 
 	tmpFile.Close()
 
 	// Create a temporary file for the preview image
-	tmpImageFile, err := os.CreateTemp("", "preview-*.jpeg")
+	tmpImageFile, err := os.CreateTemp("", fmt.Sprintf("preview-*.%s", services.GetFileTypeFromExtension(filepath.Ext(fileName))))
 	if err != nil {
 		os.Remove(tmpFilePath)
 		log.Error().Err(err).Msg("failed to create temporary preview image file")
@@ -151,10 +146,11 @@ func (s *service) savePreviewImage(ctx context.Context, req *services.GeneratePr
 	// Generate a consistent preview path
 	timestamp := time.Now().Format("20060102150405")
 	safeResourceType := strings.ToLower(string(req.ResourceType))
-	previewFileName := fmt.Sprintf("previews/%s/%s/%s_preview.jpeg",
+	previewFileName := fmt.Sprintf("previews/%s/%s/%s_preview.%s",
 		safeResourceType,
 		req.ResourceID.String(),
-		timestamp)
+		timestamp,
+		services.GetFileTypeFromExtension(filepath.Ext(req.FileName)))
 
 	// Create file request
 	fileReq := &services.SaveFileRequest{
@@ -163,7 +159,7 @@ func (s *service) savePreviewImage(ctx context.Context, req *services.GeneratePr
 		UserID:         req.UserID,
 		FileName:       previewFileName,
 		File:           imgData,
-		FileType:       services.ImageFile,
+		FileExtension:  services.GetFileTypeFromExtension(filepath.Ext(req.FileName)),
 		Classification: services.ClassificationPublic,
 		Category:       services.CategoryOther,
 		Tags: map[string]string{
@@ -177,7 +173,13 @@ func (s *service) savePreviewImage(ctx context.Context, req *services.GeneratePr
 	_, err := s.fileService.SaveFile(ctx, fileReq)
 	if err != nil {
 		log.Error().Err(err).Msg("failed to save preview image")
-		return "", eris.Wrap(err, "save preview image")
+		return "", oops.In("save_preview_image").
+			Tags("service", "docpreview").
+			With("file_name", req.FileName).
+			With("bucket_name", req.BucketName).
+			With("file_type", services.GetFileTypeFromExtension(filepath.Ext(req.FileName))).
+			Time(time.Now()).
+			Wrapf(err, "save preview image")
 	}
 
 	return previewFileName, nil
@@ -199,19 +201,4 @@ func (s *service) DeletePreview(ctx context.Context, req *services.DeletePreview
 	}
 
 	return s.fileService.DeleteFile(ctx, req.BucketName, req.PreviewPath)
-}
-
-func (s *service) isPreviewSupported(fileName string) bool {
-	ext := strings.ToLower(filepath.Ext(fileName))
-
-	// List of supported file extensions
-	supportedExt := []string{
-		".pdf",
-		".doc", ".docx",
-		".xls", ".xlsx",
-		".ppt", ".pptx",
-		// Can easily add more supported types here
-	}
-
-	return slices.Contains(supportedExt, ext)
 }

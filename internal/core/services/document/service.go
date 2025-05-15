@@ -24,6 +24,7 @@ import (
 	"github.com/emoss08/trenova/pkg/types/pulid"
 	"github.com/rotisserie/eris"
 	"github.com/rs/zerolog"
+	"github.com/samber/oops"
 	"go.uber.org/fx"
 	"golang.org/x/sync/errgroup"
 )
@@ -345,7 +346,7 @@ func (s *service) uploadDocumentFile(ctx context.Context, req *services.UploadDo
 		UserID:         req.UploadedByID.String(),
 		FileName:       objectKey,
 		File:           req.File,
-		FileType:       s.determineFileType(req.FileName),
+		FileExtension:  services.GetFileTypeFromExtension(filepath.Ext(req.FileName)),
 		Classification: s.mapDocTypeToClassification(req.DocumentTypeID),
 		Category:       s.mapResourceTypeToCategory(req.ResourceType),
 		Tags: map[string]string{
@@ -382,7 +383,11 @@ func (s *service) uploadDocumentFile(ctx context.Context, req *services.UploadDo
 	})
 	if err != nil {
 		log.Error().Err(err).Msg("failed to generate preview")
-		return nil, "", err
+		return nil, "", oops.In("generate_preview").
+			Tags("service", "document").
+			Tags("file_name", req.FileName).
+			Time(time.Now()).
+			Wrapf(err, "generate preview")
 	}
 
 	return fileUploadResp, previewResp.PreviewPath, nil
@@ -558,21 +563,6 @@ func (s *service) generateObjectPath(req *services.UploadDocumentRequest, docTyp
 		docTypeName,
 		timestamp,
 		sanitizedFileName)
-}
-
-func (s *service) determineFileType(filename string) services.FileType {
-	ext := strings.ToLower(filepath.Ext(filename))
-
-	switch ext {
-	case ".jpg", ".jpeg", ".png", ".gif", ".webp", ".svg", ".bmp", ".tiff":
-		return services.ImageFile
-	case ".pdf":
-		return services.PDFFile
-	case ".doc", ".docx", ".xls", ".xlsx", ".csv", ".ppt", ".pptx", ".txt", ".rtf":
-		return services.DocFile
-	default:
-		return services.OtherFile
-	}
 }
 
 func (s *service) mapDocTypeToClassification(_ pulid.ID) services.FileClassification {

@@ -6,7 +6,6 @@ import (
 	"image/jpeg"
 	"os"
 	"path/filepath"
-	"strings"
 
 	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/pkg/errors"
@@ -43,19 +42,19 @@ func (s *service) ConvertToImage(ctx context.Context, req *services.ConvertToIma
 		Logger()
 
 	// Get file extension to determine converter to use
-	ext := filepath.Ext(req.FilePath)
-	ext = strings.ToLower(ext)
+	ext := services.GetFileTypeFromExtension(filepath.Ext(req.FilePath))
 
 	// Select appropriate converter based on file type
 	var err error
+	//nolint:exhaustive // We only support the file types we need to convert to images
 	switch ext {
-	case ".pdf":
+	case services.FileExtensionPDF:
 		err = s.convertPDFToImage(req.FilePath, req.OutputPath, req.Options)
-	case ".docx", ".doc":
+	case services.FileExtensionDOCX, services.FileExtensionDOC:
 		err = s.convertDocToImage(ctx, req.FilePath, req.OutputPath, req.Options)
-	case ".xlsx", ".xls":
+	case services.FileExtensionXLSX, services.FileExtensionXLS, services.FileExtensionCSV:
 		err = s.convertSpreadsheetToImage(ctx, req.FilePath, req.OutputPath, req.Options)
-	case ".pptx", ".ppt":
+	case services.FileExtensionPPTX, services.FileExtensionPPT:
 		err = s.convertPresentationToImage(ctx, req.FilePath, req.OutputPath, req.Options)
 	default:
 		return nil, errors.NewBusinessError(fmt.Sprintf("Unsupported file type: %s", ext))
