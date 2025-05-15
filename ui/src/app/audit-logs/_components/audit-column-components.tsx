@@ -179,10 +179,6 @@ export function AuditEntryResourceBadge({
       variant: "indigo",
       text: "Shipment",
     },
-    [Resource.BillingQueue]: {
-      variant: "indigo",
-      text: "Billing Queue",
-    },
     [Resource.DocumentType]: {
       variant: "indigo",
       text: "Document Type",
