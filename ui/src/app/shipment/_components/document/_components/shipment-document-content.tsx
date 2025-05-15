@@ -96,7 +96,7 @@ export default function ShipmentDocumentContent({
   }, [fileInputRef]);
 
   return (
-    <DocumentContntInner>
+    <DocumentContentInner>
       {isLoading && offset === 0 ? (
         <DocumentListSkeleton />
       ) : filteredDocuments.length > 0 ? (
@@ -133,7 +133,7 @@ export default function ShipmentDocumentContent({
           />
         </AddDocumentCardInner>
       )}
-    </DocumentContntInner>
+    </DocumentContentInner>
   );
 }
 
@@ -149,7 +149,7 @@ function DocumentListInner({ children }: { children: React.ReactNode }) {
   return <div className="space-y-4">{children}</div>;
 }
 
-function DocumentContntInner({ children }: { children: React.ReactNode }) {
+function DocumentContentInner({ children }: { children: React.ReactNode }) {
   return <div className="flex-1 p-4 overflow-auto">{children}</div>;
 }
 
