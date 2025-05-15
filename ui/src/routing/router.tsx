@@ -35,19 +35,27 @@ const routes: RouteObject[] = [
             },
             children: [
               {
-                path: "documents",
+                path: "client",
                 async lazy() {
-                  let { Document } = await import("@/app/document/page");
-                  return { Component: Document };
+                  let { BillingClient } = await import(
+                    "@/app/billing-client/page"
+                  );
+                  return { Component: BillingClient };
+                },
+                handle: {
+                  crumb: "Billing Client",
+                  title: "Billing Client",
                 },
               },
               {
-                path: "billing-queue",
+                path: "configurations/charge-types",
                 async lazy() {
-                  let { BillingQueue } = await import(
-                    "@/app/billing-queue/page"
-                  );
-                  return { Component: BillingQueue };
+                  let { ChargeTypes } = await import("@/app/charge-types/page");
+                  return { Component: ChargeTypes };
+                },
+                handle: {
+                  crumb: "Charge Types",
+                  title: "Charge Types",
                 },
               },
               {
@@ -113,25 +121,6 @@ const routes: RouteObject[] = [
             async lazy() {
               let { Commodities } = await import("@/app/commodities/page");
               return { Component: Commodities };
-            },
-          },
-          // Billing Links
-          {
-            path: "/billing/client",
-            async lazy() {
-              let { BillingClient } = await import("@/app/billing-client/page");
-              return { Component: BillingClient };
-            },
-          },
-          {
-            path: "/billing/configurations/charge-types",
-            async lazy() {
-              let { ChargeTypes } = await import("@/app/charge-types/page");
-              return { Component: ChargeTypes };
-            },
-            handle: {
-              crumb: "Charge Types",
-              title: "Charge Types",
             },
           },
           // Dispatch Links
