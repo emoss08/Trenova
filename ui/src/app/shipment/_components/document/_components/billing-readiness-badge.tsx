@@ -6,6 +6,7 @@ import { broadcastQueryInvalidation } from "@/hooks/use-invalidate-query";
 import type { ShipmentSchema } from "@/lib/schemas/shipment-schema";
 import { cn } from "@/lib/utils";
 import { markReadyToBill } from "@/services/shipment";
+import { AnalyticsPage } from "@/types/analytics";
 import type { DocumentCategory } from "@/types/document";
 import { ShipmentStatus } from "@/types/shipment";
 import { faArrowRight } from "@fortawesome/pro-solid-svg-icons";
@@ -50,9 +51,16 @@ export function BillingReadinessBadge({
       toast.success("Shipment marked as ready to bill");
 
       broadcastQueryInvalidation({
-        queryKey: ["shipment", "shipment-list", "stop", "assignment"],
+        queryKey: [
+          "shipment",
+          "shipment-list",
+          "stop",
+          "assignment",
+          "analytics",
+          AnalyticsPage.BillingClient,
+        ],
         options: {
-          correlationId: `update-shipment-${Date.now()}`,
+          correlationId: `update-shipment-${shipmentId}-${Date.now()}`,
         },
         config: {
           predicate: true,
