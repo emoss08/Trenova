@@ -130,6 +130,9 @@ export function AssignmentDialog({
       queryClient.invalidateQueries({
         queryKey: ["moves", shipmentMoveId],
       });
+
+      // close the dialog
+      onOpenChange(false);
     },
     setFormError: setError,
     resourceName: "Assignment",
