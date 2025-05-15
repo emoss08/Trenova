@@ -1,13 +1,14 @@
 import { Shipment } from "@/types/shipment";
 import { useMemo } from "react";
 import { LocationSchema } from "../schemas/location-schema";
+import type { ShipmentSchema } from "../schemas/shipment-schema";
 
 const STOP_TYPES = {
   PICKUP: "Pickup",
   DELIVERY: "Delivery",
 } as const;
 
-export function getOriginStopInfo(shipment: Shipment) {
+export function getOriginStopInfo(shipment: ShipmentSchema) {
   if (!shipment.moves?.length) {
     return null;
   }
@@ -26,7 +27,7 @@ export function getOriginStopInfo(shipment: Shipment) {
   return null;
 }
 
-function calculateOriginLocation(shipment: Shipment) {
+function calculateOriginLocation(shipment: ShipmentSchema) {
   const originStop = getOriginStopInfo(shipment);
 
   if (!originStop) {
@@ -40,7 +41,7 @@ function calculateOriginLocation(shipment: Shipment) {
   return originStop.location;
 }
 
-export function getDestinationStopInfo(shipment: Shipment) {
+export function getDestinationStopInfo(shipment: ShipmentSchema) {
   if (!shipment.moves?.length) {
     return null;
   }
@@ -59,7 +60,7 @@ export function getDestinationStopInfo(shipment: Shipment) {
   }
 }
 
-function calculateDestinationLocation(shipment: Shipment) {
+function calculateDestinationLocation(shipment: ShipmentSchema) {
   const destinationStop = getDestinationStopInfo(shipment);
 
   if (!destinationStop) {
@@ -74,14 +75,14 @@ function calculateDestinationLocation(shipment: Shipment) {
 }
 
 const locationCache = new WeakMap<
-  Shipment,
+  ShipmentSchema,
   {
     origin: LocationSchema | null;
     destination: LocationSchema | null;
   }
 >();
 
-function useShipmentLocations(shipment?: Shipment) {
+function useShipmentLocations(shipment?: ShipmentSchema) {
   return useMemo(
     () => ({
       origin: shipment ? calculateOriginLocation(shipment) : null,
@@ -93,7 +94,7 @@ function useShipmentLocations(shipment?: Shipment) {
 
 export const ShipmentLocations = {
   useLocations: useShipmentLocations,
-  getOrigin: (shipment: Shipment) => {
+  getOrigin: (shipment: ShipmentSchema) => {
     const cached = locationCache.get(shipment);
     if (cached) return cached.origin;
     const result = calculateOriginLocation(shipment);
@@ -104,7 +105,7 @@ export const ShipmentLocations = {
     return result;
   },
 
-  getDestination: (shipment: Shipment) => {
+  getDestination: (shipment: ShipmentSchema) => {
     const cached = locationCache.get(shipment);
     if (cached) return cached.destination;
     const result = calculateDestinationLocation(shipment);
@@ -119,7 +120,7 @@ export const ShipmentLocations = {
   },
 } as const;
 
-export function calculateShipmentMileage(shipment: Shipment) {
+export function calculateShipmentMileage(shipment: ShipmentSchema) {
   // First find all of the moves for the shipment
   const { moves } = shipment;
   if (!moves?.length) {
@@ -143,4 +144,42 @@ export function calculateShipmentMileage(shipment: Shipment) {
   }
 
   return totalDistance;
+}
+
+export function calculateShipmentDuration(shipment: ShipmentSchema) {
+  const originStop = getOriginStopInfo(shipment);
+  const destinationStop = getDestinationStopInfo(shipment);
+
+  if (
+    !originStop ||
+    typeof originStop.plannedArrival !== "number" ||
+    !destinationStop ||
+    typeof destinationStop.plannedArrival !== "number"
+  ) {
+    return 0;
+  }
+
+  const duration = destinationStop.plannedArrival - originStop.plannedArrival;
+
+  // Return 0 if duration is negative, otherwise return the duration
+  return duration > 0 ? duration : 0;
+}
+
+export function getShipmentStopCount(shipment: ShipmentSchema) {
+  // First find all of the moves for the shipment
+  const { moves } = shipment;
+  if (!moves?.length) {
+    return 0;
+  }
+
+  // Second, loop through all of the moves and sum up the stop count
+  let totalStopCount = 0;
+  for (const move of moves) {
+    const { stops } = move;
+    if (!stops?.length) continue;
+
+    totalStopCount += stops.length;
+  }
+
+  return totalStopCount;
 }
