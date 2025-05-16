@@ -24,6 +24,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/handlers/locationcategory"
 	organizationHandler "github.com/emoss08/trenova/internal/api/handlers/organization"
 	"github.com/emoss08/trenova/internal/api/handlers/reporting"
+	"github.com/emoss08/trenova/internal/api/handlers/resourceeditor"
 	"github.com/emoss08/trenova/internal/api/handlers/routing"
 	"github.com/emoss08/trenova/internal/api/handlers/servicetype"
 	"github.com/emoss08/trenova/internal/api/handlers/session"
@@ -116,6 +117,7 @@ type RouterParams struct {
 	IntegrationHandler           *integration.Handler
 	AnalyticsHandler             *analytics.Handler
 	BillingQueueHandler          *billingqueue.Handler
+	ResourceEditorHandler        *resourceeditor.Handler
 }
 
 type Router struct {
@@ -291,4 +293,7 @@ func (r *Router) setupProtectedRoutes(router fiber.Router, rl *middleware.RateLi
 
 	// Billing Queue
 	r.p.BillingQueueHandler.RegisterRoutes(router, rl)
+
+	// Resource Editor
+	r.p.ResourceEditorHandler.RegisterRoutes(router, rl)
 }

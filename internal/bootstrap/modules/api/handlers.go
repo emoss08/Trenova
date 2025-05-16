@@ -24,6 +24,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/handlers/locationcategory"
 	"github.com/emoss08/trenova/internal/api/handlers/organization"
 	"github.com/emoss08/trenova/internal/api/handlers/reporting"
+	"github.com/emoss08/trenova/internal/api/handlers/resourceeditor"
 	"github.com/emoss08/trenova/internal/api/handlers/routing"
 	"github.com/emoss08/trenova/internal/api/handlers/servicetype"
 	"github.com/emoss08/trenova/internal/api/handlers/session"
@@ -81,4 +82,5 @@ var HandlersModule = fx.Module("api.Handlers", fx.Provide(
 	documenttype.NewHandler,
 	integration.NewHandler,
 	billingqueue.NewHandler,
+	resourceeditor.NewHandler,
 ))
