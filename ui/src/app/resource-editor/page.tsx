@@ -2,8 +2,10 @@ import { MetaTags } from "@/components/meta-tags";
 import { http } from "@/lib/http-client";
 import { SchemaInformation } from "@/types/resource-editor";
 import { useQuery } from "@tanstack/react-query";
+import { lazy, Suspense } from "react";
 import { SchemaSidebar } from "./_components/schema-sidebar";
-import { SQLEditor } from "./_components/sql-editor";
+
+const SQLEditor = lazy(() => import("./_components/sql-editor"));
 
 export function ResourceEditor() {
   const { data: results, isLoading } = useQuery({
@@ -34,10 +36,16 @@ export function ResourceEditor() {
   return (
     <>
       <MetaTags title="Resource Editor" description="Resource Editor" />
-      <div className="flex h-screen">
+      <ResourceEditorOuter>
         <SchemaSidebar results={results} />
-        <SQLEditor results={results} />
-      </div>
+        <Suspense fallback={<div>Loading SQL Editor...</div>}>
+          <SQLEditor results={results} />
+        </Suspense>
+      </ResourceEditorOuter>
     </>
   );
+}
+
+function ResourceEditorOuter({ children }: { children: React.ReactNode }) {
+  return <div className="flex h-screen">{children}</div>;
 }
