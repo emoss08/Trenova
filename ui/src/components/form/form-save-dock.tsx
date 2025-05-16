@@ -47,7 +47,7 @@ export function FormSaveDock({
   className,
 }: FormSaveDockProps) {
   const { control, reset } = useFormContext();
-  const { isDirty, isSubmitting } = useFormState({
+  const { isDirty, dirtyFields, isSubmitting } = useFormState({
     control,
   });
 
@@ -60,6 +60,12 @@ export function FormSaveDock({
       },
     );
   }, [reset]);
+
+  console.info("FormSaveDock debug information", {
+    isDirty,
+    isSubmitting,
+    dirtyFields,
+  });
 
   // Position-specific classes
   const positionClasses = {
