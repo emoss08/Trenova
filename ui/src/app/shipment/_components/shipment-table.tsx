@@ -4,6 +4,7 @@ import { queries } from "@/lib/queries";
 import { getShipmentStatusRowClassName } from "@/lib/table-styles";
 import { cn } from "@/lib/utils";
 import { AnalyticsPage } from "@/types/analytics";
+import { Resource } from "@/types/audit-entry";
 import { Shipment, ShipmentStatus } from "@/types/shipment";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
@@ -27,6 +28,7 @@ export default function ShipmentTable() {
         }}
         queryKey="shipment-list"
         exportModelName="shipment"
+        resource={Resource.Shipment}
         TableModal={ShipmentCreateSheet}
         TableEditModal={ShipmentEditSheet}
         columns={columns}

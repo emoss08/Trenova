@@ -1,25 +1,37 @@
 "use no memo";
 import { useDataTableQuery } from "@/hooks/use-data-table-query";
 import { searchParamsParser } from "@/hooks/use-data-table-state";
+import { usePermissions } from "@/hooks/use-permissions";
 import { DataTableProps } from "@/types/data-table";
+import { Action } from "@/types/roles-permissions";
 import {
   getCoreRowModel,
   getPaginationRowModel,
   RowSelectionState,
+  Table as TableType,
   useReactTable,
   VisibilityState,
 } from "@tanstack/react-table";
 import { useLocalStorage } from "@uidotdev/usehooks";
 import { useQueryStates } from "nuqs";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import {
+  lazy,
+  Suspense,
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
+import { DataTablePermissionDeniedSkeleton } from "../ui/permission-skeletons";
 import { Table } from "../ui/table";
-import { DataTableActions } from "./_components/data-table-actions";
 import { DataTableBody } from "./_components/data-table-body";
 import { DataTableHeader } from "./_components/data-table-header";
 import { DataTableOptions } from "./_components/data-table-options";
 import { PaginationInner } from "./_components/data-table-pagination";
 import { DataTableSearch } from "./_components/data-table-search";
 import { DataTableProvider } from "./data-table-provider";
+
+const DataTableActions = lazy(() => import("./_components/data-table-actions"));
 
 export function DataTable<TData extends Record<string, any>>({
   columns,
@@ -34,6 +46,7 @@ export function DataTable<TData extends Record<string, any>>({
   includeHeader = true,
   includeOptions = true,
   extraActions,
+  resource,
   getRowClassName,
 }: DataTableProps<TData>) {
   const [searchParams, setSearchParams] = useQueryStates(searchParamsParser);
@@ -41,6 +54,7 @@ export function DataTable<TData extends Record<string, any>>({
   const [rowSelection, setRowSelection] = useState<RowSelectionState>(
     entityId ? { [entityId]: true } : {},
   );
+  const { can } = usePermissions();
   const [columnVisibility, setColumnVisibility] =
     useLocalStorage<VisibilityState>(
       `${name.toLowerCase()}-column-visibility`,
@@ -146,34 +160,46 @@ export function DataTable<TData extends Record<string, any>>({
       rowSelection={rowSelection}
       columnVisibility={columnVisibility}
     >
-      {includeOptions && (
-        <DataTableOptions>
-          <DataTableSearch />
-          <DataTableActions
-            table={table}
-            name={name}
-            exportModelName={exportModelName}
-            extraActions={extraActions}
-            handleCreateClick={handleCreateClick}
-          />
-        </DataTableOptions>
-      )}
-      <Table className="rounded-md border-x border-border border-separate border-spacing-0">
-        {includeHeader && <DataTableHeader table={table} />}
-        <DataTableBody table={table} columns={columns} />
-      </Table>
-      <PaginationInner table={table} />
-      {TableModal && isCreateModalOpen && (
-        <TableModal
-          open={isCreateModalOpen}
-          onOpenChange={handleCreateModalClose}
-        />
-      )}
-      {TableEditModal && (
-        <TableEditModal
-          isLoading={dataQuery.isFetching || dataQuery.isLoading}
-          currentRecord={selectedRow?.original}
-          error={dataQuery.error}
+      {can(resource, Action.Read) ? (
+        <>
+          {includeOptions && (
+            <DataTableOptions>
+              <DataTableSearch />
+              <Suspense fallback={<div>Loading...</div>}>
+                <DataTableActions
+                  table={table as unknown as TableType<unknown>}
+                  name={name}
+                  resource={resource}
+                  exportModelName={exportModelName}
+                  extraActions={extraActions}
+                  handleCreateClick={handleCreateClick}
+                />
+              </Suspense>
+            </DataTableOptions>
+          )}
+          <Table className="rounded-md border-x border-border border-separate border-spacing-0">
+            {includeHeader && <DataTableHeader table={table} />}
+            <DataTableBody table={table} columns={columns} />
+          </Table>
+          <PaginationInner table={table} />
+          {TableModal && isCreateModalOpen && (
+            <TableModal
+              open={isCreateModalOpen}
+              onOpenChange={handleCreateModalClose}
+            />
+          )}
+          {TableEditModal && (
+            <TableEditModal
+              isLoading={dataQuery.isFetching || dataQuery.isLoading}
+              currentRecord={selectedRow?.original}
+              error={dataQuery.error}
+            />
+          )}
+        </>
+      ) : (
+        <DataTablePermissionDeniedSkeleton
+          resource={resource}
+          action={Action.Read}
         />
       )}
     </DataTableProvider>

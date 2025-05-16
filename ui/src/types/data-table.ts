@@ -15,6 +15,7 @@ import type {
   VisibilityState,
 } from "@tanstack/react-table";
 import React from "react";
+import type { Resource } from "./audit-entry";
 
 export type Prettify<T> = {
   [K in keyof T]: T[K];
@@ -162,7 +163,7 @@ type DataTableProps<TData extends Record<string, any>> = {
   TableEditModal?: React.ComponentType<EditTableSheetProps<TData>>;
   exportModelName: string;
   extraSearchParams?: Record<string, any>;
-  // permissionName: string;
+  resource: Resource;
   initialPageSize?: number;
   defaultSort?: SortingState;
   includeHeader?: boolean;
