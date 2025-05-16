@@ -65,6 +65,8 @@ const vendorChunks = {
     "@dnd-kit/utilities",
   ],
 
+  "ace-editor": ["ace-builds", "react-ace"],
+
   // Icons and Assets
   icons: [
     "@radix-ui/react-icons",
@@ -90,6 +92,12 @@ const standardFontsDir = normalizePath(
   path.join(
     path.dirname(require.resolve("pdfjs-dist/package.json")),
     "standard_fonts",
+  ),
+);
+const aceBuildsDir = normalizePath(
+  path.join(
+    path.dirname(require.resolve("ace-builds/package.json")),
+    "src-noconflict",
   ),
 );
 
@@ -135,6 +143,7 @@ export default defineConfig({
       targets: [
         { src: cMapsDir, dest: "" },
         { src: standardFontsDir, dest: "" },
+        { src: aceBuildsDir, dest: "ace-builds" },
       ],
     }),
     compression({
