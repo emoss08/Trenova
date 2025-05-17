@@ -1,6 +1,11 @@
 import { BaseModel } from "./common";
 import { User } from "./user";
 
+export type AuditEntryResponse = {
+  items: AuditEntry[];
+  total: number;
+};
+
 export interface AuditEntry extends BaseModel {
   id: string;
   resourceId: string;

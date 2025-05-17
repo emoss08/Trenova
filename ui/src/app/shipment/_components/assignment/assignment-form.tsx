@@ -5,7 +5,7 @@ import {
 } from "@/components/ui/autocomplete-fields";
 import { FormControl, FormGroup } from "@/components/ui/form";
 import { AssignmentSchema } from "@/lib/schemas/assignment-schema";
-import { getTractorAssignments } from "@/services/tractor";
+import { api } from "@/services/api";
 import { EquipmentStatus } from "@/types/tractor";
 import { useQuery } from "@tanstack/react-query";
 import { useEffect } from "react";
@@ -17,8 +17,7 @@ function useTractorAssignment(tractorId: string) {
     queryFn: async () => {
       if (!tractorId) throw new Error("No Tractor ID provided!");
 
-      const response = await getTractorAssignments(tractorId);
-      return response.data;
+      return await api.assignments.getTractorAssignments(tractorId);
     },
     enabled: !!tractorId && tractorId !== "",
     staleTime: 30000,

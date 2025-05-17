@@ -1,4 +1,5 @@
-import { getShipmentByID, getShipments } from "@/services/shipment";
+import { api } from "@/services/api";
+import { getShipmentByID } from "@/services/shipment";
 import { type LimitOffsetResponse } from "@/types/server";
 import type {
   ShipmentDetailsQueryParams,
@@ -11,7 +12,7 @@ export function useShipments(queryParams: ShipmentQueryParams) {
   return useQuery<LimitOffsetResponse<ShipmentResponse>>({
     queryKey: ["shipments", queryParams],
     queryFn: async () => {
-      return await getShipments(queryParams);
+      return await api.shipments.getShipments(queryParams);
     },
     enabled: queryParams.enabled,
   });

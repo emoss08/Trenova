@@ -4,7 +4,7 @@ import { NumberField } from "@/components/ui/number-input";
 import { handleMutationError } from "@/hooks/use-api-mutation";
 import { queries } from "@/lib/queries";
 import { ShipmentSchema } from "@/lib/schemas/shipment-schema";
-import { checkForDuplicateBOLs } from "@/services/shipment";
+import { api } from "@/services/api";
 import { APIError } from "@/types/errors";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { useDebouncedEffect } from "@wojtekmaj/react-hooks";
@@ -60,7 +60,7 @@ function BOLField() {
 
   const { mutate: checkBols } = useMutation({
     mutationFn: async (bol: string) => {
-      return await checkForDuplicateBOLs(bol, getValues("id"));
+      return await api.shipments.checkForDuplicateBOLs(bol, getValues("id"));
     },
     onError: (error) => {
       // Standard error handling

@@ -1,7 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { Icon } from "@/components/ui/icons";
 import { Skeleton } from "@/components/ui/skeleton";
-import { getCustomerById } from "@/services/customer";
+import { api } from "@/services/api";
 import { faCheck, faFile, faPlus } from "@fortawesome/pro-solid-svg-icons";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "react-router";
@@ -10,7 +10,7 @@ export function NoDocumentRequirements({ customerId }: { customerId: string }) {
   const { data, isLoading } = useQuery({
     queryKey: ["customer", customerId],
     queryFn: async () => {
-      return await getCustomerById(customerId, {
+      return await api.customers.getById(customerId, {
         includeBillingProfile: false,
       });
     },

@@ -35,10 +35,7 @@ import {
 import { TerminalRestoreDialog } from "@/components/ui/terminal";
 import { generateDateTimeStringFromUnixTimestamp } from "@/lib/date";
 import { queries } from "@/lib/queries";
-import {
-  deleteDatabaseBackup,
-  restoreDatabaseBackup,
-} from "@/services/organization";
+import { api } from "@/services/api";
 import "@/styles/terminal.css";
 import { DatabaseBackup } from "@/types/database-backup";
 import {
@@ -187,7 +184,7 @@ function BackupActions({ backup }: { backup: DatabaseBackup }) {
   const deleteMutation = useMutation({
     mutationFn: async () => {
       // API call to delete the backup
-      await deleteDatabaseBackup(backup.filename);
+      return await api.databaseBackups.delete(backup.filename);
     },
     onSuccess: () => {
       toast.success("Backup deleted successfully");
@@ -208,7 +205,7 @@ function BackupActions({ backup }: { backup: DatabaseBackup }) {
     mutationFn: async () => {
       // API call to restore the backup
       try {
-        return await restoreDatabaseBackup(backup.filename);
+        return await api.databaseBackups.restore(backup.filename);
       } catch (error) {
         // Ensure we capture the full error object
         console.error("Full restore error:", error);

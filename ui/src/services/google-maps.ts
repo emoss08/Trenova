@@ -4,15 +4,17 @@ import type {
   CheckAPIKeyResponse,
 } from "@/types/google-maps";
 
-export async function locationAutocomplete(input: string) {
-  return http.post<AutoCompleteLocationResult>(
-    `/integrations/google-maps/autocomplete/`,
-    {
-      input,
-    },
-  );
-}
+export class GoogleMapsAPI {
+  async locationAutocomplete(input: string) {
+    return http.post<AutoCompleteLocationResult>(
+      `/integrations/google-maps/autocomplete/`,
+      {
+        input,
+      },
+    );
+  }
 
-export async function checkAPIKey() {
-  return http.get<CheckAPIKeyResponse>(`/google-maps/check-api-key/`);
+  async checkAPIKey() {
+    return http.get<CheckAPIKeyResponse>(`/google-maps/check-api-key/`);
+  }
 }

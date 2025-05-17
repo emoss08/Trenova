@@ -47,5 +47,7 @@ export function ResourceEditor() {
 }
 
 function ResourceEditorOuter({ children }: { children: React.ReactNode }) {
-  return <div className="flex h-screen">{children}</div>;
+  return (
+    <div className="grid grid-cols-[300px_minmax(0,1fr)] gap-6">{children}</div>
+  );
 }

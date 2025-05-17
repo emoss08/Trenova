@@ -1,16 +1,16 @@
-import { getCurrentUser, validateSession } from "@/services/auth";
+import { api } from "@/services/api";
 import { useAuthStore } from "@/stores/user-store";
 import { LoaderFunctionArgs, redirect } from "react-router";
 
 export async function checkAuthStatus() {
   try {
-    const { data: sessionData } = await validateSession();
+    const { data: sessionData } = await api.auth.validateSession();
 
     if (!sessionData.valid) {
       return null;
     }
 
-    const { data: userData } = await getCurrentUser();
+    const { data: userData } = await api.auth.getCurrentUser();
     return userData;
   } catch {
     return null;

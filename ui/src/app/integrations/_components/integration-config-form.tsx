@@ -5,7 +5,7 @@ import { useFormWithSave } from "@/hooks/use-form-with-save";
 import { broadcastQueryInvalidation } from "@/hooks/use-invalidate-query";
 import { queries } from "@/lib/queries";
 import { upperFirst } from "@/lib/utils";
-import { updateIntegration } from "@/services/integration";
+import { api } from "@/services/api";
 import { useUser } from "@/stores/user-store";
 import { Integration, IntegrationType } from "@/types/integration";
 import { useEffect } from "react";
@@ -50,7 +50,7 @@ export function IntegrationConfigForm({
       mode: "onChange",
     },
     mutationFn: async (data: Record<string, any>) => {
-      const response = await updateIntegration(
+      const response = await api.integrations.update(
         integration.id,
         data,
         user?.id || "",

@@ -71,7 +71,7 @@ export function ResultsSection({
 
 function ResultsSectionOuter({ children }: { children: React.ReactNode }) {
   return (
-    <div className="flex flex-col border border-border rounded-md bg-sidebar flex-[40%] max-h-[45vh]">
+    <div className="flex flex-col border border-border rounded-md bg-sidebar flex-[40%] min-h-[50vh] max-h-[50vh]">
       {children}
     </div>
   );

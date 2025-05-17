@@ -7,30 +7,31 @@ import type {
 } from "@/types/auth";
 import { User } from "@/types/user";
 
-export async function checkEmail(email: User["emailAddress"]) {
-  return http.post<CheckEmailResponse>("/auth/check-email/", {
-    emailAddress: email,
-  });
-}
+export class AuthAPI {
+  async checkEmail(email: User["emailAddress"]) {
+    return http.post<CheckEmailResponse>("/auth/check-email/", {
+      emailAddress: email,
+    });
+  }
+  async resetPassword(email: User["emailAddress"]) {
+    return http.post<ResetPasswordResponse>("/auth/reset-password/", {
+      emailAddress: email,
+    });
+  }
 
-export async function resetPassword(email: User["emailAddress"]) {
-  return http.post<ResetPasswordResponse>("/auth/reset-password/", {
-    emailAddress: email,
-  });
-}
+  async login(request: LoginRequest) {
+    return http.post<LoginResponse>("/auth/login/", request);
+  }
 
-export async function login(request: LoginRequest) {
-  return http.post<LoginResponse>("/auth/login/", request);
-}
+  async validateSession() {
+    return http.post<{ valid: boolean }>("/auth/validate-session/");
+  }
 
-export async function validateSession() {
-  return http.post<{ valid: boolean }>("/auth/validate-session/");
-}
+  async logout() {
+    return http.post("/auth/logout/");
+  }
 
-export async function logout() {
-  return http.post("/auth/logout/");
-}
-
-export async function getCurrentUser() {
-  return http.get<User>("/users/me/");
+  async getCurrentUser() {
+    return http.get<User>("/users/me/");
+  }
 }

@@ -25,7 +25,7 @@ import {
   BillingControlSchema,
   billingControlSchema,
 } from "@/lib/schemas/billing-schema";
-import { updateBillingControl } from "@/services/organization";
+import { api } from "@/services/api";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
 import { useCallback, useEffect, useState } from "react";
@@ -47,7 +47,7 @@ export default function BillingControlForm() {
 
   const { mutateAsync } = useApiMutation({
     mutationFn: async (values: BillingControlSchema) => {
-      const response = await updateBillingControl(values);
+      const response = await api.billingControl.update(values);
 
       return response.data;
     },

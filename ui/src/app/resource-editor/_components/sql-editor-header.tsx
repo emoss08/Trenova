@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import { Kbd } from "@/components/kbd";
 import { Button } from "@/components/ui/button";
+import { Icon } from "@/components/ui/icons";
 import {
   Tooltip,
   TooltipContent,
@@ -8,7 +9,8 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { resourceEditorSearchParamsParser } from "@/lib/search-params/resource-editor";
-import { PlayIcon, TerminalIcon } from "lucide-react";
+import { faTerminal } from "@fortawesome/pro-solid-svg-icons";
+import { PlayIcon } from "lucide-react";
 import { useQueryStates } from "nuqs";
 
 export function SQLEditorHeader({
@@ -16,7 +18,7 @@ export function SQLEditorHeader({
   isExecutingQuery,
   sqlQuery,
 }: {
-  handleExecuteQuery: () => void;
+  handleExecuteQuery: (query?: string) => void;
   isExecutingQuery: boolean;
   sqlQuery: string;
 }) {
@@ -26,37 +28,33 @@ export function SQLEditorHeader({
 
   return (
     <SQLEditorHeaderOuter>
-      <h2 className="text-lg font-semibold text-foreground flex items-center">
-        <TerminalIcon className="size-5 mr-2" /> SQL Editor
-        {searchParams.selectedTable && (
-          <span className="text-sm text-muted-foreground ml-2">
-            (Context: {searchParams.selectedTable})
-          </span>
-        )}
+      <h2 className="flex items-center gap-3">
+        <Icon icon={faTerminal} className="size-5" />
+        <div className="flex items-center text-center gap-1">
+          <h5 className="text-lg font-semibold text-foreground">SQL Editor</h5>
+          {searchParams.selectedTable && (
+            <h6 className="text-xs text-muted-foreground">
+              (Context: {searchParams.selectedTable})
+            </h6>
+          )}
+        </div>
       </h2>
       <TooltipProvider>
         <Tooltip>
           <TooltipTrigger asChild>
             <Button
-              onClick={handleExecuteQuery}
+              onClick={() => handleExecuteQuery(sqlQuery)}
               size="sm"
               disabled={!sqlQuery.trim() || isExecutingQuery}
               isLoading={isExecutingQuery}
               loadingText="Executing..."
             >
-              <PlayIcon
-                className={`mr-2 h-4 w-4 ${isExecutingQuery ? "animate-spin" : ""}`}
-              />
+              <PlayIcon className="size-4" />
               Execute Query
             </Button>
           </TooltipTrigger>
           <TooltipContent className="flex items-center gap-2 text-xs">
-            <Kbd className="-me-1 inline-flex h-5 max-h-full items-center rounded bg-background px-1 font-[inherit] text-[0.625rem] font-medium text-foreground">
-              Ctrl
-            </Kbd>
-            <Kbd className="-me-1 inline-flex h-5 max-h-full items-center rounded bg-background px-1 font-[inherit] text-[0.625rem] font-medium text-foreground">
-              Enter
-            </Kbd>
+            <Kbd>Ctrl + Shift + Enter</Kbd>
             <p>to execute the query</p>
           </TooltipContent>
         </Tooltip>

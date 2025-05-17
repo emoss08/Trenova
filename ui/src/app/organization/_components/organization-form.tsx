@@ -17,7 +17,7 @@ import {
   type OrganizationSchema,
 } from "@/lib/schemas/organization-schema";
 import { TIMEZONES } from "@/lib/timezone/timezone";
-import { updateOrganization } from "@/services/organization";
+import { api } from "@/services/api";
 import { useUser } from "@/stores/user-store";
 import type { APIError } from "@/types/errors";
 import { OrganizationType } from "@/types/organization";
@@ -52,7 +52,7 @@ export default function OrganizationForm() {
 
   const { mutateAsync } = useMutation({
     mutationFn: async (values: OrganizationSchema) => {
-      const response = await updateOrganization(
+      const response = await api.organization.update(
         user?.currentOrganizationId ?? "",
         values,
       );
@@ -323,11 +323,8 @@ function AddressForm() {
               name="stateId"
               label="State"
               placeholder="State"
-              menuPlacement="top"
               description="State jurisdiction for business operations and taxation"
               options={usStateOptions}
-              isLoading={usStates.isLoading}
-              isFetchError={usStates.isError}
             />
           </FormControl>
           <FormControl cols={2}>

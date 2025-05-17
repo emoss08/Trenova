@@ -46,7 +46,7 @@ export function ResultsTableVirtualizer({
               height: `${virtualRow.size}px`,
               transform: `translateY(${virtualRow.start}px)`,
             }}
-            className="flex border-b border-border hover:bg-muted/50 items-stretch" // Row styling, min-w-max for highlight
+            className="flex border-b border-border bg-background hover:bg-muted/50 items-stretch" // Row styling, min-w-max for highlight
           >
             {queryResult.columns.map((_colName, cellIndex) => (
               <Row
@@ -124,7 +124,7 @@ function ResultTableOuter({ children }: { children: React.ReactNode }) {
 
 function ResultTableInner({ children }: { children: React.ReactNode }) {
   return (
-    <div className="flex bg-background sticky top-0 z-10 border-b border-border select-none min-w-max">
+    <div className="flex bg-muted sticky top-0 z-10 border-b border-border select-none min-w-max">
       {children}
     </div>
   );

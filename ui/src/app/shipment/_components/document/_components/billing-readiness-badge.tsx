@@ -5,7 +5,7 @@ import { useApiMutation } from "@/hooks/use-api-mutation";
 import { broadcastQueryInvalidation } from "@/hooks/use-invalidate-query";
 import type { ShipmentSchema } from "@/lib/schemas/shipment-schema";
 import { cn } from "@/lib/utils";
-import { markReadyToBill } from "@/services/shipment";
+import { api } from "@/services/api";
 import { AnalyticsPage } from "@/types/analytics";
 import type { DocumentCategory } from "@/types/document";
 import { ShipmentStatus } from "@/types/shipment";
@@ -43,8 +43,7 @@ export function BillingReadinessBadge({
 
   const { mutateAsync, isPending } = useApiMutation({
     mutationFn: async () => {
-      const response = await markReadyToBill(shipmentId ?? "");
-      return response;
+      return await api.shipments.markReadyToBill(shipmentId ?? "");
     },
     resourceName: "Shipment",
     onSuccess: () => {

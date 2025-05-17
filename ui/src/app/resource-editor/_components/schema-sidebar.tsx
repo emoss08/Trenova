@@ -73,13 +73,13 @@ export function SchemaSidebar({
   const treeData = constructTreeData();
 
   return (
-    <div className="w-1/4 flex flex-col h-full rounded-lg border bg-sidebar">
+    <div className="h-[calc(100vh-80px)] rounded-lg border bg-sidebar">
       <div className="p-4 border-b">
         <h2 className="text-xl font-semibold text-card-foreground">
           Entities ({schemaInfo?.tables?.length ?? 0})
         </h2>
       </div>
-      <ScrollArea className="flex h-[calc(100%-60px)] text-card-foreground px-2">
+      <ScrollArea className="flex h-[calc(100vh-150px)] text-card-foreground px-2">
         {treeData.length > 0 ? (
           <TreeView
             data={treeData}

@@ -25,13 +25,12 @@ import {
   useRef,
   useState,
 } from "react";
-// import AceEditor from "react-ace";
+import { format as formatSQL } from "sql-formatter";
 import { ResultsSection } from "./results/result-section";
 import { SQLEditorHeader } from "./sql-editor-header";
 
 const AceEditor = lazy(() => import("react-ace"));
 
-// Configure Ace basePath for Vite environment
 ace.config.set("basePath", "/ace-builds/src-noconflict");
 
 export default function SQLEditor({
@@ -49,6 +48,10 @@ export default function SQLEditor({
     undefined,
   );
 
+  // Keep a ref to the Ace editor instance so we can access it outside
+  // of the onChange handler (e.g., for formatting).
+  const editorRef = useRef<any>(null);
+
   useEffect(() => {
     const getEffectiveTheme = () => {
       if (theme === "system") {
@@ -64,7 +67,6 @@ export default function SQLEditor({
       aceTheme: effectiveTheme === "dark" ? "tomorrow_night_bright" : "dawn",
     });
 
-    // Listener for system theme changes
     const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
     const handleChange = () => {
       if (theme === "system") {
@@ -83,54 +85,69 @@ export default function SQLEditor({
     };
   }, [theme, setSearchParams]);
 
-  const handleExecuteQuery = useCallback(async () => {
-    if (isExecutingQuery) {
-      return;
-    }
-    if (!sqlQuery.trim()) {
-      setQueryResult({
-        columns: [],
-        rows: [],
-        error: "Query cannot be empty.",
-      });
-      return;
-    }
-    setIsExecutingQuery(true);
-    setQueryResult(undefined); // Clear previous results
-    try {
-      const response = await http.post<ExecuteQueryResponse>(
-        "/resource-editor/execute-query/",
-        {
-          schemaName: results?.data?.schemaName || "public",
-          query: sqlQuery,
-        } as ExecuteQueryRequest,
-      );
-      setQueryResult(response.data.result);
-    } catch (error: any) {
-      console.error("Error executing query:", error);
-      setQueryResult({
-        columns: [],
-        rows: [],
-        error:
-          error.response?.data?.message ||
-          error.message ||
-          "Failed to execute query.",
-      });
-    }
-    setIsExecutingQuery(false);
-  }, [
-    isExecutingQuery,
-    sqlQuery,
-    results,
-    setQueryResult,
-    setIsExecutingQuery,
-  ]);
+  const handleExecuteQuery = useCallback(
+    async (queryOverride?: string) => {
+      const queryToExecute = queryOverride ?? sqlQuery;
 
-  const handleExecuteQueryRef = useRef(handleExecuteQuery);
+      if (isExecutingQuery) {
+        return;
+      }
+      if (!queryToExecute.trim()) {
+        setQueryResult({
+          columns: [],
+          rows: [] as any[][],
+          error: "Query cannot be empty.",
+        });
+        return;
+      }
+      setIsExecutingQuery(true);
+      setQueryResult(undefined);
 
-  useEffect(() => {
-    handleExecuteQueryRef.current = handleExecuteQuery;
-  }, [handleExecuteQuery]);
+      if (queryOverride !== undefined) {
+        setSqlQuery(queryOverride);
+      }
+
+      try {
+        const response = await http.post<ExecuteQueryResponse>(
+          "/resource-editor/execute-query/",
+          {
+            schemaName: results?.data?.schemaName || "public",
+            query: queryToExecute,
+          } as ExecuteQueryRequest,
+        );
+        setQueryResult(response.data.result);
+      } catch (error: any) {
+        console.error("Error executing query:", error);
+        setQueryResult({
+          columns: [],
+          rows: [] as any[][],
+          error:
+            error.response?.data?.message ||
+            error.message ||
+            "Failed to execute query.",
+        });
+      }
+      setIsExecutingQuery(false);
+    },
+    [isExecutingQuery, sqlQuery, results, setQueryResult, setIsExecutingQuery],
+  );
+
+  const handleFormatQuery = useCallback(() => {
+    if (!editorRef.current) return;
+
+    const raw = editorRef.current.getValue();
+    if (!raw.trim()) return;
+
+    const prettified = formatSQL(raw, {
+      language: "postgresql",
+      tabWidth: 2,
+      keywordCase: "upper",
+      linesBetweenQueries: 2,
+    });
+
+    editorRef.current.setValue(prettified, -1); // -1 => keep cursor
+    setSqlQuery(prettified);
+  }, [setSqlQuery]);
 
   useEffect(() => {
     if (
@@ -140,8 +157,14 @@ export default function SQLEditor({
       const langTools = ace.require("ace/ext/language_tools");
 
       const customSQLCompleter = {
-        getCompletions: async (session: any, prefix: string, callback: any) => {
-          const currentSchemaName = results.data?.schemaName || "public";
+        getCompletions: async (
+          _editor: any,
+          session: any,
+          _pos: any,
+          prefix: string,
+          callback: any,
+        ) => {
+          const currentSchemaName = results?.data?.schemaName || "public";
           const currentTableName = searchParams.selectedTable || "";
           const fullQuery = session.getValue();
 
@@ -152,7 +175,7 @@ export default function SQLEditor({
                 schemaName: currentSchemaName,
                 tableName: currentTableName,
                 currentQuery: fullQuery,
-                prefix: prefix,
+                prefix,
               } as AutocompleteRequest,
             );
 
@@ -173,8 +196,6 @@ export default function SQLEditor({
           }
         },
       };
-      // Register the custom completer
-      // Check if defaultCompleters exists, it was added in a later version of ace-builds
       if (langTools.setCompleters) {
         // Older API
         langTools.setCompleters([
@@ -186,7 +207,6 @@ export default function SQLEditor({
       } else if (
         ace.require("ace/autocomplete").Autocomplete.prototype.defaultCompleters
       ) {
-        // Newer Ace versions might have it here
         ace.require(
           "ace/autocomplete",
         ).Autocomplete.prototype.defaultCompleters = [
@@ -196,20 +216,17 @@ export default function SQLEditor({
           customSQLCompleter,
         ];
       } else {
-        // Fallback or log if no clear way to set completers, though one of the above should work for most ace-builds versions
         console.warn(
           "Could not set custom Ace completers using known methods.",
         );
-        // As a simpler fallback, trying to add it if an addCompleter method exists.
         if (langTools.addCompleter) {
           langTools.addCompleter(customSQLCompleter);
         }
       }
-      // Store a flag to avoid re-registering (optional)
       ace.require("ace/ext/language_tools").customCompleter =
         customSQLCompleter;
     }
-  }, [results, searchParams.selectedTable]); // Rerun when results or selectedTable changes to update context for completer
+  }, [results, searchParams.selectedTable]);
 
   return (
     <SQLEditorOuter>
@@ -233,17 +250,27 @@ export default function SQLEditor({
             editorProps={{ $blockScrolling: true }}
             value={sqlQuery}
             width="100%"
-            height="100%" // Fill available height from parent
+            height="100%"
             readOnly={isExecutingQuery}
             placeholder="Type your SQL query here, then press Ctrl+Shift+Enter or click Execute."
+            onLoad={(editor: any) => {
+              editorRef.current = editor;
+            }}
             commands={[
               {
                 name: "executeQuery",
                 bindKey: { win: "Ctrl-Shift-Enter", mac: "Cmd-Shift-Enter" },
+                exec: (editor: any) => {
+                  const currentQuery = editor.getValue();
+                  console.info("executing query", currentQuery);
+                  return handleExecuteQuery(currentQuery);
+                },
+              },
+              {
+                name: "formatSQL",
+                bindKey: { win: "Ctrl-Shift-F", mac: "Cmd-Shift-F" },
                 exec: () => {
-                  if (handleExecuteQueryRef.current) {
-                    handleExecuteQueryRef.current();
-                  }
+                  handleFormatQuery();
                 },
               },
             ]}
@@ -255,7 +282,6 @@ export default function SQLEditor({
               enableMobileMenu: true,
               tabSize: 2,
             }}
-            className="!h-full" // Override any default height to ensure it fills parent
           />
         </Suspense>
       </SQLEditorInner>
@@ -269,7 +295,7 @@ export default function SQLEditor({
 
 function SQLEditorOuter({ children }: { children: React.ReactNode }) {
   return (
-    <div className="w-3/4 flex flex-col px-4 space-y-4 overflow-hidden h-full">
+    <div className="size-full flex flex-col px-4 space-y-4 overflow-hidden">
       {children}
     </div>
   );
@@ -277,7 +303,7 @@ function SQLEditorOuter({ children }: { children: React.ReactNode }) {
 
 function SQLEditorInner({ children }: { children: React.ReactNode }) {
   return (
-    <div className="flex flex-col border border-border rounded-md bg-sidebar overflow-hidden flex-[60%]">
+    <div className="flex flex-col border border-border rounded-md bg-sidebar overflow-hidden h-[calc(50vh-100px)]">
       {children}
     </div>
   );
