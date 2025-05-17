@@ -65,7 +65,7 @@ const vendorChunks = {
     "@dnd-kit/utilities",
   ],
 
-  "ace-editor": ["ace-builds", "react-ace"],
+  "sql-editor": ["ace-builds", "react-ace", "sql-formatter"],
 
   // Icons and Assets
   icons: [
