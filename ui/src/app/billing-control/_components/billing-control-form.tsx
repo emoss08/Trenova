@@ -47,9 +47,7 @@ export default function BillingControlForm() {
 
   const { mutateAsync } = useApiMutation({
     mutationFn: async (values: BillingControlSchema) => {
-      const response = await api.billingControl.update(values);
-
-      return response.data;
+      return await api.billingControl.update(values);
     },
     onMutate: async (newValues) => {
       // * Cancel any outgoing refetches so they don't overwrite our optimistic update

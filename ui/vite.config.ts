@@ -126,6 +126,7 @@ export default defineConfig({
         globPatterns: ["**/*.{js,css,html,svg,png,ico,webp}"],
         cleanupOutdatedCaches: true,
         clientsClaim: true,
+        maximumFileSizeToCacheInBytes: 4 * 1024 * 1024, // 4MB
       },
       pwaAssets: {
         disabled: false,
@@ -244,6 +245,7 @@ export default defineConfig({
         "./src/lib/utils.ts",
         "./src/lib/http-client.ts",
         "./src/lib/json-viewer-utils.ts",
+        "./src/services/api.ts",
       ],
     },
   },

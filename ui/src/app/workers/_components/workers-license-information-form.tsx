@@ -60,8 +60,6 @@ export default function WorkersLicenseInformationForm() {
               placeholder="License State"
               description="The state of the worker's license"
               options={usStateOptions}
-              isLoading={usStates.isLoading}
-              isFetchError={usStates.isError}
             />
           </FormControl>
           <FormControl>

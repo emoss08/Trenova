@@ -1,5 +1,6 @@
 import { DataTable } from "@/components/data-table/data-table";
 import { type EquipmentTypeSchema } from "@/lib/schemas/equipment-type-schema";
+import { Resource } from "@/types/audit-entry";
 import { useMemo } from "react";
 import { getColumns } from "./equip-type-columns";
 import { CreateEquipTypeModal } from "./equip-type-create-modal";
@@ -10,6 +11,7 @@ export default function EquipmentTypeTable() {
 
   return (
     <DataTable<EquipmentTypeSchema>
+      resource={Resource.EquipmentType}
       name="Equipment Type"
       link="/equipment-types/"
       queryKey="equipment-type-list"

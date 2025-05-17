@@ -3,12 +3,13 @@ import {
   createEntityRefColumn,
 } from "@/components/data-table/_components/data-table-column-helpers";
 import { EquipmentStatusBadge } from "@/components/status-badge";
+import type { TractorSchema } from "@/lib/schemas/tractor-schema";
 import { type Tractor } from "@/types/tractor";
 import { createColumnHelper, type ColumnDef } from "@tanstack/react-table";
 
-export function getColumns(): ColumnDef<Tractor>[] {
-  const columnHelper = createColumnHelper<Tractor>();
-  const commonColumns = createCommonColumns();
+export function getColumns(): ColumnDef<TractorSchema>[] {
+  const columnHelper = createColumnHelper<TractorSchema>();
+  const commonColumns = createCommonColumns<TractorSchema>();
 
   return [
     columnHelper.display({

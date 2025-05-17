@@ -9,7 +9,7 @@ import { createColumnHelper, type ColumnDef } from "@tanstack/react-table";
 
 export function getColumns(): ColumnDef<HazardousMaterialSchema>[] {
   const columnHelper = createColumnHelper<HazardousMaterialSchema>();
-  const commonColumns = createCommonColumns();
+  const commonColumns = createCommonColumns<HazardousMaterialSchema>();
 
   return [
     commonColumns.status,

@@ -68,7 +68,11 @@ function convertToHumanReadableSize(size: number) {
 }
 
 export default function BackupList() {
-  const { data, isLoading, error } = useSuspenseQuery({
+  const {
+    data: results,
+    isLoading,
+    error,
+  } = useSuspenseQuery({
     ...queries.organization.getDatabaseBackups(),
   });
 
@@ -151,7 +155,7 @@ export default function BackupList() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {data.backups.map((backup) => (
+            {results.data.backups.map((backup) => (
               <TableRow className="hover:bg-transparent" key={backup.filename}>
                 <TableCell className="pl-6">
                   <Badge variant="indigo">{backup.database}</Badge>

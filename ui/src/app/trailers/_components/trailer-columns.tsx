@@ -5,12 +5,13 @@ import {
 } from "@/components/data-table/_components/data-table-column-helpers";
 import { LastInspectionDateBadge } from "@/components/data-table/_components/data-table-components";
 import { EquipmentStatusBadge } from "@/components/status-badge";
+import type { TrailerSchema } from "@/lib/schemas/trailer-schema";
 import { type Trailer } from "@/types/trailer";
 import { createColumnHelper, type ColumnDef } from "@tanstack/react-table";
 
-export function getColumns(): ColumnDef<Trailer>[] {
-  const columnHelper = createColumnHelper<Trailer>();
-  const commonColumns = createCommonColumns();
+export function getColumns(): ColumnDef<TrailerSchema>[] {
+  const columnHelper = createColumnHelper<TrailerSchema>();
+  const commonColumns = createCommonColumns<TrailerSchema>();
 
   return [
     columnHelper.display({

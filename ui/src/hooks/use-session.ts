@@ -1,5 +1,5 @@
 import { http } from "@/lib/http-client";
-import { validateSession } from "@/services/auth";
+import { api } from "@/services/api";
 import { useAuthActions, useUser } from "@/stores/user-store";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router";
@@ -18,7 +18,7 @@ export function useSession() {
     queryKey: ["currentUser"],
     queryFn: async () => {
       // First validate session
-      const sessionResponse = await validateSession();
+      const sessionResponse = await api.auth.validateSession();
       if (!sessionResponse.data.valid) {
         throw new Error("Session invalid");
       }

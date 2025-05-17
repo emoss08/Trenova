@@ -1,6 +1,5 @@
 import { Status, type BaseModel } from "./common";
 import { Organization } from "./organization";
-import { Role } from "./roles-permissions";
 
 export enum TimeFormat {
   TimeFormat12Hour = "12-hour",

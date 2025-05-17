@@ -219,6 +219,7 @@ export function createCommonColumns<T extends Record<string, unknown>>() {
       },
     },
     createdAt: {
+      accessorFn: (row: Row<T>) => row.original.createdAt,
       accessorKey: "createdAt",
       header: "Created At",
       cell: ({ row }: { row: Row<T> }) => {

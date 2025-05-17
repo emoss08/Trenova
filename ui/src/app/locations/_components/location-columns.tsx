@@ -2,13 +2,14 @@ import {
   createCommonColumns,
   createEntityRefColumn,
 } from "@/components/data-table/_components/data-table-column-helpers";
+import type { LocationSchema } from "@/lib/schemas/location-schema";
 import { formatLocation } from "@/lib/utils";
 import { Location } from "@/types/location";
 import { createColumnHelper, type ColumnDef } from "@tanstack/react-table";
 
-export function getColumns(): ColumnDef<Location>[] {
-  const columnHelper = createColumnHelper<Location>();
-  const commonColumns = createCommonColumns();
+export function getColumns(): ColumnDef<LocationSchema>[] {
+  const columnHelper = createColumnHelper<LocationSchema>();
+  const commonColumns = createCommonColumns<LocationSchema>();
 
   return [
     commonColumns.status,

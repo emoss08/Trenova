@@ -1,5 +1,6 @@
 import { DataTable } from "@/components/data-table/data-table";
 import { type CustomerSchema } from "@/lib/schemas/customer-schema";
+import { Resource } from "@/types/audit-entry";
 import { useMemo } from "react";
 import { getColumns } from "./customer-columns";
 import { CreateCustomerModal } from "./customer-create-modal";
@@ -10,6 +11,7 @@ export default function CustomersDataTable() {
 
   return (
     <DataTable<CustomerSchema>
+      resource={Resource.Customer}
       name="Customer"
       link="/customers/"
       queryKey="customer-list"

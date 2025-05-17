@@ -1,5 +1,6 @@
 import { DataTable } from "@/components/data-table/data-table";
-import { type Tractor } from "@/types/tractor";
+import type { TractorSchema } from "@/lib/schemas/tractor-schema";
+import { Resource } from "@/types/audit-entry";
 import { useMemo } from "react";
 import { getColumns } from "./tractor-columns";
 import { CreateTractorModal } from "./tractor-create-modal";
@@ -9,7 +10,8 @@ export default function TractorTable() {
   const columns = useMemo(() => getColumns(), []);
 
   return (
-    <DataTable<Tractor>
+    <DataTable<TractorSchema>
+      resource={Resource.Tractor}
       name="Tractor"
       link="/tractors/"
       extraSearchParams={{

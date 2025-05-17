@@ -4,12 +4,14 @@ import { useMemo } from "react";
 import { getColumns } from "./trailer-columns";
 import { CreateTrailerModal } from "./trailer-create-modal";
 import { EditTrailerModal } from "./trailer-edit-modal";
+import { Resource } from "@/types/audit-entry";
 
 export default function TrailerTable() {
   const columns = useMemo(() => getColumns(), []);
 
   return (
     <DataTable<TrailerSchema>
+      resource={Resource.Trailer}
       name="Trailer"
       link="/trailers/"
       extraSearchParams={{

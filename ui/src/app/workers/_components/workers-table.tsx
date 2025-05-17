@@ -4,6 +4,7 @@ import { useMemo } from "react";
 import { CreateWorkerModal } from "./workers-create-modal";
 import { EditWorkerModal } from "./workers-edit-modal";
 import { getColumns } from "./workers-table-columns";
+import { Resource } from "@/types/audit-entry";
 
 export default function WorkersDataTable() {
   const columns = useMemo(() => getColumns(), []);
@@ -75,6 +76,7 @@ export default function WorkersDataTable() {
       link="/workers/"
       exportModelName="Worker"
       columns={columns}
+      resource={Resource.Worker}
     />
   );
 }

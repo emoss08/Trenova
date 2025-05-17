@@ -2,6 +2,7 @@ import { http } from "@/lib/http-client";
 import type { TractorAssignment } from "@/types/assignment";
 import { Tractor } from "@/types/tractor";
 import { AnalyticsAPI } from "./analytics";
+import { AuditEntryAPI } from "./audit-entry";
 import { AuthAPI } from "./auth";
 import { BillingAPI } from "./billing";
 import { BillingControlAPI } from "./billing-control";
@@ -41,6 +42,7 @@ class API {
   shipmentControl: ShipmentControlAPI;
   billingControl: BillingControlAPI;
   databaseBackups: DatabaseBackupAPI;
+  auditEntries: AuditEntryAPI;
 
   constructor() {
     this.assignments = new AssignmentsAPI();
@@ -57,6 +59,7 @@ class API {
     this.shipmentControl = new ShipmentControlAPI();
     this.billingControl = new BillingControlAPI();
     this.databaseBackups = new DatabaseBackupAPI();
+    this.auditEntries = new AuditEntryAPI();
   }
 }
 

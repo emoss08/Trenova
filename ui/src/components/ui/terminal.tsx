@@ -433,7 +433,7 @@ drwxr-xr-x 12 postgres postgres 4096 Apr  5 15:29 ..
 -rw-r--r--  1 postgres postgres  220 Apr  5 15:20 .bash_logout
 -rw-r--r--  1 postgres postgres 3526 Apr  5 15:20 .bashrc
 -rw-r--r--  1 postgres postgres  807 Apr  5 15:20 .profile
-${backupData?.backups.map((backup) => `-rw-r--r--  1 postgres postgres   15 Apr  5 15:30 ${backup.filename}`).join("\n")}`,
+${backupData?.data.backups.map((backup) => `-rw-r--r--  1 postgres postgres   15 Apr  5 15:30 ${backup.filename}`).join("\n")}`,
               "output",
               "none",
               50,
@@ -516,7 +516,7 @@ ${backupData?.backups.map((backup) => `-rw-r--r--  1 postgres postgres   15 Apr 
       handleOpenChange,
       toggleAsciiArt,
       helpText,
-      backupData?.backups,
+      backupData?.data.backups,
     ],
   );
 
@@ -1002,3 +1002,4 @@ ${backupData?.backups.map((backup) => `-rw-r--r--  1 postgres postgres   15 Apr 
 }
 
 export { TerminalRestoreDialog };
+

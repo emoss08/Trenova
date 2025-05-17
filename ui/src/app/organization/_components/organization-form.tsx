@@ -52,12 +52,10 @@ export default function OrganizationForm() {
 
   const { mutateAsync } = useMutation({
     mutationFn: async (values: OrganizationSchema) => {
-      const response = await api.organization.update(
+      return await api.organization.update(
         user?.currentOrganizationId ?? "",
         values,
       );
-
-      return response.data;
     },
     onMutate: async (newValues) => {
       // * Cancel any outgoing refetches so they don't overwrite our optimistic update
