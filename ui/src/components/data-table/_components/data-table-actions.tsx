@@ -27,7 +27,6 @@ export default function DataTableActions<TData>({
 }) {
   const { can } = usePermissions();
 
-  console.info("resource", resource);
   return (
     <DataTableActionsInner>
       <DataTableViewOptions table={table} />
