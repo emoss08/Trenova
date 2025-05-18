@@ -2,17 +2,17 @@ import { DataTableConfig } from "@/config/data-table";
 import { API_ENDPOINTS } from "@/types/server";
 import { IconDefinition } from "@fortawesome/pro-regular-svg-icons";
 import type {
-  ColumnDef,
-  ColumnFilter,
-  ColumnFiltersState,
-  ColumnSort,
-  OnChangeFn,
-  PaginationState,
-  Row,
-  RowSelectionState,
-  SortingState,
-  Table,
-  VisibilityState,
+    ColumnDef,
+    ColumnFilter,
+    ColumnFiltersState,
+    ColumnSort,
+    OnChangeFn,
+    PaginationState,
+    Row,
+    RowSelectionState,
+    SortingState,
+    Table,
+    VisibilityState,
 } from "@tanstack/react-table";
 import React from "react";
 import type { Resource } from "./audit-entry";
@@ -93,6 +93,7 @@ type DataTableCreateButtonProps = {
 
 export type DataTableViewOptionsProps<TData> = {
   table: Table<TData>;
+  name: string;
 };
 
 export type TableStoreProps<TData extends Record<string, any>> = {
@@ -180,10 +181,10 @@ type DataTableBodyProps<TData extends Record<string, any>> = {
 };
 
 export type {
-  DataTableBodyProps,
-  DataTableCreateButtonProps,
-  DataTableProps,
-  DataTableState,
-  ExtraAction
+    DataTableBodyProps,
+    DataTableCreateButtonProps,
+    DataTableProps,
+    DataTableState,
+    ExtraAction
 };
 

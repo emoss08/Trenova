@@ -4,10 +4,11 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/domain/tableconfiguration"
+	tcdomain "github.com/emoss08/trenova/internal/core/domain/tableconfiguration"
 	"github.com/emoss08/trenova/internal/core/ports"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/pkg/ctx"
 	"github.com/emoss08/trenova/internal/pkg/errors"
 	"github.com/emoss08/trenova/internal/pkg/logger"
 	"github.com/emoss08/trenova/pkg/types/pulid"
@@ -71,7 +72,7 @@ func (s *Service) List(ctx context.Context, opts *repositories.TableConfiguratio
 	return entities, nil
 }
 
-func (s *Service) Create(ctx context.Context, config *tableconfiguration.Configuration) (*tableconfiguration.Configuration, error) {
+func (s *Service) Create(ctx context.Context, config *tcdomain.Configuration) (*tcdomain.Configuration, error) {
 	log := s.l.With().Str("method", "Create").
 		Str("orgID", config.OrganizationID.String()).
 		Str("businessUnitID", config.BusinessUnitID.String()).
@@ -125,7 +126,7 @@ func (s *Service) Create(ctx context.Context, config *tableconfiguration.Configu
 	return config, nil
 }
 
-func (s *Service) Update(ctx context.Context, config *tableconfiguration.Configuration) error {
+func (s *Service) Update(ctx context.Context, config *tcdomain.Configuration) error {
 	log := s.l.With().
 		Str("operation", "Update").
 		Str("configID", config.ID.String()).
@@ -220,7 +221,7 @@ func (s *Service) Delete(ctx context.Context, id pulid.ID, opts *repositories.Ge
 }
 
 // ShareConfiguration shares a configuration with specified users/roles/teams
-func (s *Service) ShareConfiguration(ctx context.Context, share *tableconfiguration.ConfigurationShare, userID pulid.ID) error {
+func (s *Service) ShareConfiguration(ctx context.Context, share *tcdomain.ConfigurationShare, userID pulid.ID) error {
 	log := s.l.With().
 		Str("operation", "ShareConfiguration").
 		Str("configID", share.ConfigurationID.String()).
@@ -267,7 +268,7 @@ func (s *Service) ShareConfiguration(ctx context.Context, share *tableconfigurat
 }
 
 // GetUserConfigurations retrieves configurations accessible to a user
-func (s *Service) GetUserConfigurations(ctx context.Context, tableID string, opts *repositories.GetUserByIDOptions) ([]*tableconfiguration.Configuration, error) {
+func (s *Service) GetUserConfigurations(ctx context.Context, tableID string, opts *repositories.GetUserByIDOptions) ([]*tcdomain.Configuration, error) {
 	log := s.l.With().
 		Str("operation", "GetUserConfigurations").
 		Str("userID", opts.UserID.String()).
@@ -302,4 +303,78 @@ func (s *Service) GetUserConfigurations(ctx context.Context, tableID string, opt
 	}
 
 	return configs, nil
+}
+
+// GetFirst retrieves a configuration for the given table identifier and current user.
+// If none exists it will create a new one with a minimal default payload so the
+// client always receives a valid configuration object.
+func (s *Service) GetDefaultOrLatestConfiguration(ctx context.Context, tableIdentifier string, rCtx *ctx.RequestContext) (*tcdomain.Configuration, error) {
+	// First attempt to find an existing configuration for this user/org/bu + table
+	config, err := s.repo.GetDefaultOrLatestConfiguration(ctx, tableIdentifier, &repositories.TableConfigurationFilters{
+		Base: &ports.FilterQueryOptions{
+			OrgID:  rCtx.OrgID,
+			BuID:   rCtx.BuID,
+			UserID: rCtx.UserID,
+		},
+	})
+	if err != nil {
+		return nil, eris.Wrap(err, "get configurations")
+	}
+
+	return config, nil
+}
+
+// Patch merges the supplied tableConfig fields into the existing JSON blob.
+func (s *Service) Patch(ctx context.Context, configID string, patch map[string]any, rCtx *ctx.RequestContext) (*tcdomain.Configuration, error) {
+	id := pulid.ID(configID)
+
+	cfg, err := s.repo.GetByID(ctx, id, &repositories.TableConfigurationFilters{
+		Base: &ports.FilterQueryOptions{
+			OrgID:  rCtx.OrgID,
+			BuID:   rCtx.BuID,
+			UserID: rCtx.UserID,
+		},
+	})
+	if err != nil {
+		return nil, eris.Wrap(err, "get configuration")
+	}
+
+	// Merge the patch map into cfg.TableConfig (shallow merge)
+	for k, v := range patch {
+		switch k {
+		case "columnVisibility":
+			if vis, ok := v.(map[string]any); ok {
+				// Convert to map[string]bool
+				nm := make(map[string]bool)
+				for key, val := range vis {
+					if b, ok := val.(bool); ok {
+						nm[key] = b
+					}
+				}
+				cfg.TableConfig.ColumnVisibility = nm
+			}
+		case "pageSize":
+			if ps, ok := v.(float64); ok { // JSON numbers unmarshal as float64
+				cfg.TableConfig.PageSize = int(ps)
+			}
+		case "sorting":
+			if sortSlice, ok := v.([]any); ok {
+				cfg.TableConfig.Sorting = sortSlice
+			}
+		case "filters":
+			// Filters patching can be implemented later; skip for now
+		case "joinOperator":
+			if jo, ok := v.(string); ok {
+				cfg.TableConfig.JoinOperator = jo
+			}
+		default:
+			// ignore unknown keys for now
+		}
+	}
+
+	if err = s.repo.Update(ctx, cfg); err != nil {
+		return nil, eris.Wrap(err, "update configuration")
+	}
+
+	return cfg, nil
 }

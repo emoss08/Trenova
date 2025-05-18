@@ -40,6 +40,18 @@ func (h *Handler) RegisterRoutes(r fiber.Router, rl *middleware.RateLimiter) {
 		[]fiber.Handler{h.create},
 		middleware.PerMinute(60),
 	)...)
+
+	// Retrieve or create configuration for current user by table identifier
+	api.Get(":tableIdentifier", rl.WithRateLimit(
+		[]fiber.Handler{h.getDefaultOrLatestConfiguration},
+		middleware.PerMinute(60),
+	)...)
+
+	// Partial update of configuration JSON blob
+	api.Patch(":configID", rl.WithRateLimit(
+		[]fiber.Handler{h.patch},
+		middleware.PerMinute(60),
+	)...)
 }
 
 func (h *Handler) list(c *fiber.Ctx) error {
@@ -90,4 +102,50 @@ func (h *Handler) create(c *fiber.Ctx) error {
 	}
 
 	return c.JSON(created)
+}
+
+// getDefaultOrLatestConfiguration returns a configuration for the given tableIdentifier
+// If none exists for the requesting user + org + bu, it will create a default one.
+func (h *Handler) getDefaultOrLatestConfiguration(c *fiber.Ctx) error {
+	reqCtx, err := ctx.WithRequestContext(c)
+	if err != nil {
+		return h.eh.HandleError(c, err)
+	}
+
+	tableID := c.Params("tableIdentifier")
+
+	config, err := h.ts.GetDefaultOrLatestConfiguration(c.UserContext(), tableID, reqCtx)
+	if err != nil {
+		return h.eh.HandleError(c, err)
+	}
+
+	if config == nil {
+		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": "configuration not found"})
+	}
+	return c.Status(fiber.StatusOK).JSON(config)
+}
+
+// patch allows partial updates to the tableConfig JSON blob.
+func (h *Handler) patch(c *fiber.Ctx) error {
+	reqCtx, err := ctx.WithRequestContext(c)
+	if err != nil {
+		return h.eh.HandleError(c, err)
+	}
+
+	var payload struct {
+		TableConfig map[string]any `json:"tableConfig"`
+	}
+
+	if err = c.BodyParser(&payload); err != nil {
+		return h.eh.HandleError(c, err)
+	}
+
+	configID := c.Params("configID")
+
+	updated, err := h.ts.Patch(c.UserContext(), configID, payload.TableConfig, reqCtx)
+	if err != nil {
+		return h.eh.HandleError(c, err)
+	}
+
+	return c.Status(fiber.StatusOK).JSON(updated)
 }

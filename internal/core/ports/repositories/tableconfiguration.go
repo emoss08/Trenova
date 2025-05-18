@@ -20,6 +20,7 @@ type TableConfigurationRepository interface {
 	Update(ctx context.Context, config *tableconfiguration.Configuration) error
 	Delete(ctx context.Context, id pulid.ID) error
 	GetUserConfigurations(ctx context.Context, tableID string, opts *TableConfigurationFilters) ([]*tableconfiguration.Configuration, error)
+	GetDefaultOrLatestConfiguration(ctx context.Context, tableID string, opts *TableConfigurationFilters) (*tableconfiguration.Configuration, error)
 	ShareConfiguration(ctx context.Context, share *tableconfiguration.ConfigurationShare) error
 	RemoveShare(ctx context.Context, configID pulid.ID, sharedWithID pulid.ID) error
 }

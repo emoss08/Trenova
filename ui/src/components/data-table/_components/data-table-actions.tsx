@@ -5,6 +5,7 @@ import type { Resource } from "@/types/audit-entry";
 import type { ExtraAction } from "@/types/data-table";
 import { Action } from "@/types/roles-permissions";
 import type { Table } from "@tanstack/react-table";
+import React from "react";
 import {
   DataTableCreateButton,
   DataTableViewOptions,
@@ -29,7 +30,7 @@ export default function DataTableActions<TData>({
 
   return (
     <DataTableActionsInner>
-      <DataTableViewOptions table={table} />
+      <DataTableViewOptions table={table} name={name} />
       {can(resource, Action.Create) ? (
         <>
           <Separator className="h-6 w-px bg-border" orientation="vertical" />

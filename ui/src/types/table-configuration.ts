@@ -26,11 +26,20 @@ export interface TableConfiguration extends BaseModelWithOrganization {
   // Relationships (optional due to `omitempty`)
   shares?: ConfigurationShare[];
   creator?: User;
+
+  // New fields
+  tableConfig: TableConfig;
 }
 
 export type CreateTableConfigurationRequest = Omit<
   TableConfiguration,
-  "id" | "createdAt" | "updatedAt" | "version" | "shares" | "creator"
+  | "id"
+  | "createdAt"
+  | "updatedAt"
+  | "version"
+  | "shares"
+  | "creator"
+  | "tableConfig"
 >;
 
 // ConfigurationShare interface
@@ -49,4 +58,23 @@ export interface ConfigurationShare {
   // Relationships (optional due to `omitempty`)
   shareWithUser?: User;
   configuration?: TableConfiguration;
+}
+
+export interface ColumnVisibilityState {
+  [columnId: string]: boolean;
+}
+
+export interface TableConfig {
+  /** Column visibility keyed by column id */
+  columnVisibility: ColumnVisibilityState;
+  /** Optional page size preference */
+  pageSize?: number;
+  /** Optional sorting preference */
+  sorting?: unknown;
+  /** Optional filters the user has applied */
+  filters?: unknown;
+  /** Logical operator to join filters */
+  joinOperator?: string;
+  /** Anything else we may store later */
+  [key: string]: unknown;
 }

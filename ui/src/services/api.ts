@@ -14,6 +14,7 @@ import { IntegrationAPI } from "./integration";
 import { OrganizationAPI } from "./organization";
 import { ShipmentAPI } from "./shipment";
 import { ShipmentControlAPI } from "./shipment-control";
+import { TableConfigurationAPI } from "./table-configuration";
 import { UsStateAPI } from "./us-state";
 
 class AssignmentsAPI {
@@ -43,6 +44,7 @@ class API {
   billingControl: BillingControlAPI;
   databaseBackups: DatabaseBackupAPI;
   auditEntries: AuditEntryAPI;
+  tableConfigurations: TableConfigurationAPI;
 
   constructor() {
     this.assignments = new AssignmentsAPI();
@@ -60,6 +62,7 @@ class API {
     this.billingControl = new BillingControlAPI();
     this.databaseBackups = new DatabaseBackupAPI();
     this.auditEntries = new AuditEntryAPI();
+    this.tableConfigurations = new TableConfigurationAPI();
   }
 }
 

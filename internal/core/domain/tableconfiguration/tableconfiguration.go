@@ -3,7 +3,6 @@ package tableconfiguration
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/core/domain"
 	"github.com/emoss08/trenova/internal/core/domain/businessunit"
 	"github.com/emoss08/trenova/internal/core/domain/organization"
 	"github.com/emoss08/trenova/internal/core/domain/user"
@@ -23,11 +22,15 @@ type Filter struct {
 	RowID    string   `json:"rowId"`    // Additional field
 }
 
-type FilterConfig struct {
-	Filters      []Filter `json:"filters"`      // Updated to handle an array of filter objects
-	JoinOperator string   `json:"joinOperator"` // e.g., "and"
-	Sorting      []any    `json:"sorting"`      // Assuming "sorting" is a list
-	PageSize     int      `json:"pageSize"`
+// TableConfig is a JSONB blob that stores all user-specific table preferences.
+// Over time we can safely extend it with new optional fields without having to
+// run DB migrations.
+type TableConfig struct {
+	Filters          []Filter        `json:"filters"`          // User-defined filters
+	JoinOperator     string          `json:"joinOperator"`     // "and" | "or"
+	Sorting          []any           `json:"sorting"`          // Sorting preference
+	PageSize         int             `json:"pageSize"`         // Default page size
+	ColumnVisibility map[string]bool `json:"columnVisibility"` // NEW – column -> visible?
 }
 
 type Configuration struct {
@@ -40,13 +43,12 @@ type Configuration struct {
 	UserID         pulid.ID `json:"userId" bun:"user_id,type:VARCHAR(100),notnull"`
 
 	// Core fields
-	Status          domain.Status `json:"status" bun:"status,type:status_enum,notnull,default:'Active'"`
-	Name            string        `json:"name" bun:"name,type:VARCHAR(255),notnull"`
-	Description     string        `json:"description" bun:"description,type:TEXT"`
-	TableIdentifier string        `json:"tableIdentifier" bun:"table_identifier,type:VARCHAR(100),notnull"`
-	FilterConfig    FilterConfig  `json:"filterConfig" bun:"filter_config,type:JSONB,notnull"`
-	Visibility      Visibility    `json:"visibility" bun:"visibility,type:configuration_visibility_enum,notnull,default:'Private'"`
-	IsDefault       bool          `json:"isDefault" bun:"is_default,type:BOOLEAN,notnull,default:false"`
+	Name            string      `json:"name" bun:"name,type:VARCHAR(255),notnull"`
+	Description     string      `json:"description" bun:"description,type:TEXT"`
+	TableIdentifier string      `json:"tableIdentifier" bun:"table_identifier,type:VARCHAR(100),notnull"`
+	TableConfig     TableConfig `json:"tableConfig" bun:"table_config,type:JSONB,notnull"`
+	Visibility      Visibility  `json:"visibility" bun:"visibility,type:configuration_visibility_enum,notnull,default:'Private'"`
+	IsDefault       bool        `json:"isDefault" bun:"is_default,type:BOOLEAN,notnull,default:false"`
 
 	// Metadata
 	Version   int64 `json:"version" bun:"version,type:BIGINT,notnull,default:0"`
@@ -69,16 +71,12 @@ func (c *Configuration) validate(ctx context.Context, multiErr *errors.MultiErro
 		validation.Field(&c.TableIdentifier,
 			validation.Required.Error("Table identifier is required"),
 		),
-		validation.Field(&c.FilterConfig,
-			validation.Required.Error("Filter configuration is required"),
+		validation.Field(&c.TableConfig,
+			validation.Required.Error("Table configuration is required"),
 		),
 		validation.Field(&c.Visibility,
 			validation.Required.Error("Visibility is required"),
 			validation.In(VisibilityPrivate, VisibilityPublic, VisibilityShared).Error("Visibility must be Private, Public, or Shared"),
-		),
-		validation.Field(&c.Status,
-			validation.Required.Error("Status is required"),
-			validation.In(domain.StatusActive, domain.StatusInactive).Error("Status must be either Active or Inactive"),
 		),
 	)
 	if err != nil {

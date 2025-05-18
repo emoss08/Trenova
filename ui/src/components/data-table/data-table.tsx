@@ -2,8 +2,10 @@
 import { useDataTableQuery } from "@/hooks/use-data-table-query";
 import { searchParamsParser } from "@/hooks/use-data-table-state";
 import { usePermissions } from "@/hooks/use-permissions";
+import { queries } from "@/lib/queries";
 import { DataTableProps } from "@/types/data-table";
 import { Action } from "@/types/roles-permissions";
+import { useQuery } from "@tanstack/react-query";
 import {
   getCoreRowModel,
   getPaginationRowModel,
@@ -60,6 +62,24 @@ export function DataTable<TData extends Record<string, any>>({
       `${name.toLowerCase()}-column-visibility`,
       {},
     );
+
+  // Fetch persisted table configuration from the server
+  const { data: tableConfig } = useQuery({
+    ...queries.tableConfiguration.get(name),
+  });
+
+  // On first successful fetch, hydrate the local column visibility if there is
+  // nothing stored locally yet.
+  useEffect(() => {
+    if (!tableConfig) return;
+    // Only overwrite if the current local storage value is empty
+    if (Object.keys(columnVisibility || {}).length === 0) {
+      setColumnVisibility(
+        tableConfig.tableConfig.columnVisibility as VisibilityState,
+      );
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [tableConfig]);
 
   // Derive pagination state from URL
   const pagination = useMemo(

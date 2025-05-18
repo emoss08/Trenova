@@ -124,6 +124,7 @@ export type BaseEndpoint =
   | "/analytics/new-shipment-count/"
   | "/audit-logs/"
   | "/accounting-control/"
+  | "/table-configurations/"
   | "/document-types/";
 
 export type API_ENDPOINTS = `${BaseEndpoint}${"" | `?${string}`}`;

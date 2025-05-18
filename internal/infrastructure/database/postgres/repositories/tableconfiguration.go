@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"time"
 
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/tableconfiguration"
@@ -19,6 +20,7 @@ import (
 	"github.com/emoss08/trenova/pkg/types/pulid"
 	"github.com/rotisserie/eris"
 	"github.com/rs/zerolog"
+	"github.com/samber/oops"
 	"github.com/uptrace/bun"
 	"go.uber.org/fx"
 )
@@ -38,7 +40,9 @@ type tableConfigurationRepository struct {
 }
 
 func NewTableConfigurationRepository(p TableConfigurationRepositoryParams) repositories.TableConfigurationRepository {
-	log := p.Logger.With().Str("repository", "table_configuration").Logger()
+	log := p.Logger.With().
+		Str("repository", "table_configuration").
+		Logger()
 
 	return &tableConfigurationRepository{
 		db:           p.DB,
@@ -129,8 +133,11 @@ func (tcr *tableConfigurationRepository) GetByID(ctx context.Context, id pulid.I
 	config := new(tableconfiguration.Configuration)
 
 	q := dba.NewSelect().Model(config).
-		Where("tc.id = ? AND tc.organization_id = ? AND tc.business_unit_id = ?",
-			id, opts.Base.OrgID, opts.Base.BuID)
+		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+			return sq.Where("tc.id = ?", id).
+				Where("tc.organization_id = ?", opts.Base.OrgID).
+				Where("tc.business_unit_id = ?", opts.Base.BuID)
+		})
 
 	if opts.IncludeShares {
 		q = q.Relation("Shares")
@@ -162,6 +169,40 @@ func (tcr *tableConfigurationRepository) Create(ctx context.Context, config *tab
 		Str("orgID", config.OrganizationID.String()).
 		Str("buID", config.BusinessUnitID.String()).
 		Logger()
+
+	// * if the incoming config is marked as default, then we need to get the existing default and set it to not default
+	if config.IsDefault {
+		dc := new(tableconfiguration.Configuration)
+		_, err = dba.NewUpdate().
+			Model(dc).
+			Set("is_default = ?", false).
+			WhereGroup(" AND ", func(sq *bun.UpdateQuery) *bun.UpdateQuery {
+				return sq.Where("tc.id = ?", dc.ID).
+					Where("tc.organization_id = ?", config.OrganizationID).
+					Where("tc.business_unit_id = ?", config.BusinessUnitID).
+					Where("tc.is_default = ?", true).
+					Where("tc.table_identifier = ?", config.TableIdentifier).
+					Where("tc.user_id = ?", config.UserID)
+			}).
+			Returning("*").
+			Exec(ctx)
+
+		if err != nil {
+			if eris.Is(err, sql.ErrNoRows) {
+				log.Info().Msg("no existing default configuration found")
+			}
+
+			log.Error().Err(err).Msg("failed to update existing default configuration")
+			return oops.In("table_configuration_repository").
+				Tags("create").
+				With("config", config).
+				With("orgID", config.OrganizationID).
+				With("buID", config.BusinessUnitID).
+				With("userID", config.UserID).
+				Time(time.Now()).
+				Wrapf(err, "update existing default configuration")
+		}
+	}
 
 	err = dba.RunInTx(ctx, nil, func(c context.Context, tx bun.Tx) error {
 		if err := config.DBValidate(c, tx); err != nil {
@@ -367,16 +408,7 @@ func (tcr *tableConfigurationRepository) GetUserConfigurations(
 		Model(&configs).
 		Where("tc.table_identifier = ?", tableID).
 		Where("tc.organization_id = ?", opts.Base.OrgID).
-		Where("tc.business_unit_id = ?", opts.Base.BuID).
-		Where(`(
-            tc.created_by = ? OR 
-            tc.visibility = ? OR 
-            (tc.visibility = ? AND EXISTS (
-                SELECT 1 FROM table_configuration_shares tcs 
-                WHERE tcs.configuration_id = tc.id 
-                AND tcs.shared_with_id = ?
-            ))
-        )`, opts.UserID, tableconfiguration.VisibilityPublic, tableconfiguration.VisibilityShared, opts.UserID)
+		Where("tc.business_unit_id = ?", opts.Base.BuID)
 
 	if err = q.Scan(ctx); err != nil {
 		log.Error().Err(err).Msg("failed to get user configurations")
@@ -384,6 +416,49 @@ func (tcr *tableConfigurationRepository) GetUserConfigurations(
 	}
 
 	return configs, nil
+}
+
+// GetDefaultOrLatestConfiguration returns the default configuration or the latest if no default exists
+func (tcr *tableConfigurationRepository) GetDefaultOrLatestConfiguration(ctx context.Context, tableID string, opts *repositories.TableConfigurationFilters) (*tableconfiguration.Configuration, error) {
+	dba, err := tcr.db.DB(ctx)
+	if err != nil {
+		return nil, eris.Wrap(err, "get database connection")
+	}
+
+	log := tcr.l.With().
+		Str("operation", "GetDefaultOrLatestConfiguration").
+		Str("tableID", tableID).
+		Logger()
+
+	config := new(tableconfiguration.Configuration)
+	q := dba.NewSelect().Model(config).
+		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+			return sq.Where("tc.table_identifier = ?", tableID).
+				Where("tc.organization_id = ?", opts.Base.OrgID).
+				Where("tc.business_unit_id = ?", opts.Base.BuID)
+		})
+
+	// * Query for the default configuration
+	q = q.Where("tc.is_default = ?", true)
+
+	// * if the default query returns not found, then query for the latest configuration
+	if err = q.Scan(ctx); err != nil {
+		if eris.Is(err, sql.ErrNoRows) {
+			q.Where("tc.is_default = ?", false)
+			log.Info().Msg("no default configuration found, querying for latest")
+		} else {
+			return nil, eris.Wrap(err, "get default or latest configuration")
+		}
+	}
+
+	q = q.Order("tc.created_at DESC")
+
+	if err = q.Scan(ctx); err != nil {
+		log.Error().Err(err).Msg("failed to get default or latest configuration")
+		return nil, eris.Wrap(err, "get default or latest configuration")
+	}
+
+	return config, nil
 }
 
 func (tcr *tableConfigurationRepository) ShareConfiguration(ctx context.Context, share *tableconfiguration.ConfigurationShare) error {
