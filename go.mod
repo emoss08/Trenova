@@ -12,12 +12,12 @@ require (
 	github.com/go-ozzo/ozzo-validation/v4 v4.3.0
 	github.com/gofiber/fiber/v2 v2.52.6
 	github.com/google/go-querystring v1.1.0
-	github.com/imroc/req/v3 v3.51.0
-	github.com/jackc/pgx/v5 v5.7.4
+	github.com/imroc/req/v3 v3.52.1
+	github.com/jackc/pgx/v5 v5.7.5
 	github.com/jaswdr/faker/v2 v2.5.0
 	github.com/lib/pq v1.10.9
 	github.com/logrusorgru/aurora v2.0.3+incompatible
-	github.com/minio/minio-go/v7 v7.0.91
+	github.com/minio/minio-go/v7 v7.0.92
 	github.com/oklog/ulid/v2 v2.1.0
 	github.com/rabbitmq/amqp091-go v1.10.0
 	github.com/redis/go-redis/v9 v9.8.0
@@ -109,6 +109,7 @@ require (
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.26.1 // indirect
 	github.com/hashicorp/errwrap v1.1.0 // indirect
 	github.com/hashicorp/go-multierror v1.1.1 // indirect
+	github.com/icholy/digest v1.1.0 // indirect
 	github.com/inconshreveable/mousetrap v1.1.0 // indirect
 	github.com/jackc/pgpassfile v1.0.0 // indirect
 	github.com/jackc/pgservicefile v0.0.0-20240606120523-5a60cdf6a761 // indirect
