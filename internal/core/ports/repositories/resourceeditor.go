@@ -85,14 +85,14 @@ type ExecuteQueryRequest struct {
 
 // QueryResult holds the structured result of a successful SELECT query.
 type QueryResult struct {
-	Columns     []string        `json:"columns"`           // List of column names in order
-	Rows        [][]interface{} `json:"rows"`              // Slice of rows, each row is a slice of interfaces
-	Message     string          `json:"message,omitempty"` // For non-SELECT queries or messages like "0 rows affected"
-	Error       string          `json:"error,omitempty"`   // If query execution itself had an error
-	TotalRows   *int64          `json:"totalRows,omitempty"`
-	TotalPages  *int            `json:"totalPages,omitempty"`
-	CurrentPage *int            `json:"currentPage,omitempty"`
-	PageSize    *int            `json:"pageSize,omitempty"`
+	Columns     []string `json:"columns"`           // List of column names in order
+	Rows        [][]any  `json:"rows"`              // Slice of rows, each row is a slice of interfaces
+	Message     string   `json:"message,omitempty"` // For non-SELECT queries or messages like "0 rows affected"
+	Error       string   `json:"error,omitempty"`   // If query execution itself had an error
+	TotalRows   *int64   `json:"totalRows,omitempty"`
+	TotalPages  *int     `json:"totalPages,omitempty"`
+	CurrentPage *int     `json:"currentPage,omitempty"`
+	PageSize    *int     `json:"pageSize,omitempty"`
 }
 
 // ExecuteQueryResponse is the response from executing a SQL query.

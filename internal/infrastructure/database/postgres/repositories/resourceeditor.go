@@ -57,6 +57,12 @@ type tableAlias struct {
 //
 // The algorithm is intentionally simple – it does not aim to fully parse SQL
 // but covers the majority of ad-hoc queries written in the resource editor.
+//
+// Parameters:
+//   - query: The SQL query to parse.
+//
+// Returns:
+//   - map[string]tableAlias: A map of table aliases to their corresponding table information.
 func parseTableAliases(query string) map[string]tableAlias {
 	aliasMap := make(map[string]tableAlias)
 
@@ -400,16 +406,207 @@ func (r *resourceEditorRepository) fetchIndexesForTable(ctx context.Context, sch
 //   - []repositories.ConstraintDetails: The constraint details for the given table.
 //   - error: An error if the operation fails.
 func (r *resourceEditorRepository) fetchConstraintsForTable(ctx context.Context, schemaName string, tableName string) ([]repositories.ConstraintDetails, error) {
-	dba, err := r.db.DB(ctx)
-	if err != nil {
-		r.logger.Error().Err(err).Msg("Failed to get database connection")
-		return nil, eris.Wrap(err, "failed to get database connection")
-	}
-
 	constraintsMap := make(map[string]*repositories.ConstraintDetails)
 	var orderedConstraintNames []string
 
-	// * Query for PK, UNIQUE, FK (base info)
+	if err := r.fetchKeyConstraints(ctx, schemaName, tableName, constraintsMap, &orderedConstraintNames); err != nil {
+		return nil, err
+	}
+
+	// Enhance FKs with foreign table/column details
+	if err := r.fetchForeignKeyDetails(ctx, schemaName, tableName, constraintsMap); err != nil {
+		return nil, err // Error already wrapped in helper
+	}
+
+	// Fetch CHECK constraints
+	if err := r.fetchCheckConstraints(ctx, schemaName, tableName, constraintsMap, &orderedConstraintNames); err != nil {
+		return nil, err // Error already wrapped in helper
+	}
+
+	var finalConstraints []repositories.ConstraintDetails
+	for _, name := range orderedConstraintNames {
+		if c, ok := constraintsMap[name]; ok {
+			finalConstraints = append(finalConstraints, *c)
+		}
+	}
+	return finalConstraints, nil
+}
+
+// fetchCheckConstraints fetches CHECK constraint information.
+//
+// Parameters:
+//   - ctx: The context for the database operation.
+//   - schemaName: The name of the schema to fetch.
+//   - tableName: The name of the table to fetch.
+//   - constraintsMap: A map of constraint names to their details.
+//   - orderedConstraintNames: A slice of constraint names in order of appearance.
+//
+// Returns:
+//   - error: An error if the operation fails.
+func (r *resourceEditorRepository) fetchCheckConstraints(
+	ctx context.Context,
+	schemaName string,
+	tableName string,
+	constraintsMap map[string]*repositories.ConstraintDetails,
+	orderedConstraintNames *[]string,
+) error {
+	dba, err := r.db.DB(ctx)
+	if err != nil {
+		r.logger.Error().Err(err).Msg("Failed to get database connection")
+		return eris.Wrap(err, "failed to get database connection")
+	}
+
+	checkConstraintsQuery := `
+    SELECT
+        tc.constraint_name,
+        cc.check_clause,
+        tc.is_deferrable,
+        tc.initially_deferred
+    FROM
+        information_schema.check_constraints cc
+    JOIN
+        information_schema.table_constraints tc ON cc.constraint_name = tc.constraint_name AND cc.constraint_schema = tc.constraint_schema
+    WHERE
+        tc.table_schema = ? AND tc.table_name = ?;
+    `
+	checkRows, err := dba.QueryContext(ctx, checkConstraintsQuery, schemaName, tableName)
+	if err != nil {
+		r.logger.Error().Err(err).Str("schemaName", schemaName).Str("tableName", tableName).Msg("Querying check constraints failed")
+		return eris.Wrap(err, "querying check constraints failed")
+	}
+	defer checkRows.Close()
+
+	for checkRows.Next() {
+		var consName, checkClause, isDeferrableStr, initiallyDeferredStr string
+		if err = checkRows.Scan(&consName, &checkClause, &isDeferrableStr, &initiallyDeferredStr); err != nil {
+			r.logger.Error().Err(err).Msg("Scanning check constraint row failed")
+			return eris.Wrap(err, "scanning check constraint row")
+		}
+		if _, exists := constraintsMap[consName]; !exists {
+			constraintsMap[consName] = &repositories.ConstraintDetails{
+				ConstraintName:    consName,
+				ConstraintType:    resourcesqltype.Check.String(),
+				CheckClause:       &checkClause,
+				Deferrable:        isDeferrableStr == string(resourcesqltype.KeywordYes),
+				InitiallyDeferred: initiallyDeferredStr == string(resourcesqltype.KeywordYes),
+			}
+			*orderedConstraintNames = append(*orderedConstraintNames, consName) // Add if it's a new constraint
+		} else {
+			// * This case should ideally not be hit if CHECK constraints are always in table_constraints
+			// * but if it is, update the existing entry.
+			constraintsMap[consName].CheckClause = &checkClause
+			constraintsMap[consName].ConstraintType = resourcesqltype.Check.String() // Ensure type is correct
+		}
+	}
+	if err = checkRows.Err(); err != nil {
+		r.logger.Error().Err(err).Msg("Error iterating check constraint rows")
+		return eris.Wrap(err, "error iterating check constraint rows")
+	}
+	if err = checkRows.Close(); err != nil {
+		return oops.
+			In("resource_edit_repository").
+			Tags("fetch_check_constraints"). // Updated tag
+			With("query", checkConstraintsQuery).
+			Wrapf(err, "close check constraint rows")
+	}
+	return nil
+}
+
+// fetchForeignKeyDetails enhances FOREIGN KEY constraints with details about the foreign table and columns.
+//
+// Parameters:
+//   - ctx: The context for the database operation.
+//   - schemaName: The name of the schema to fetch.
+//   - tableName: The name of the table to fetch.
+//   - constraintsMap: A map of constraint names to their details.
+//
+// Returns:
+//   - error: An error if the operation fails.
+func (r *resourceEditorRepository) fetchForeignKeyDetails(
+	ctx context.Context,
+	schemaName string,
+	tableName string,
+	constraintsMap map[string]*repositories.ConstraintDetails,
+) error {
+	dba, err := r.db.DB(ctx)
+	if err != nil {
+		r.logger.Error().Err(err).Msg("Failed to get database connection")
+		return eris.Wrap(err, "failed to get database connection")
+	}
+
+	fkDetailsQuery := `
+    SELECT
+        rc.constraint_name,
+        ccu.table_name AS foreign_table_name,
+        ccu.column_name AS foreign_column_name
+    FROM
+        information_schema.referential_constraints rc
+    JOIN
+        information_schema.key_column_usage kcu ON rc.constraint_name = kcu.constraint_name AND rc.constraint_schema = kcu.table_schema
+    JOIN
+        information_schema.constraint_column_usage ccu ON rc.unique_constraint_name = ccu.constraint_name AND rc.unique_constraint_schema = ccu.table_schema
+    WHERE
+        kcu.table_schema = ? AND kcu.table_name = ?
+    ORDER BY
+        rc.constraint_name, kcu.ordinal_position; -- Using kcu.ordinal_position to match local column order
+    `
+	fkRows, err := dba.QueryContext(ctx, fkDetailsQuery, schemaName, tableName)
+	if err != nil {
+		r.logger.Error().Err(err).Str("schemaName", schemaName).Str("tableName", tableName).Msg("Querying foreign key details failed")
+		return eris.Wrap(err, "querying foreign key details failed")
+	}
+	defer fkRows.Close()
+
+	tempFkStore := make(map[string]struct {
+		FTable string
+		FCols  []string
+	})
+	for fkRows.Next() {
+		var consName, fTable, fCol string
+		if err = fkRows.Scan(&consName, &fTable, &fCol); err != nil {
+			r.logger.Error().Err(err).Msg("Scanning foreign key detail row failed")
+			return eris.Wrap(err, "scanning foreign key detail row")
+		}
+		entry := tempFkStore[consName]
+		entry.FTable = fTable // * Will be the same for all columns of a given FK
+		entry.FCols = append(entry.FCols, fCol)
+		tempFkStore[consName] = entry
+	}
+	if err = fkRows.Err(); err != nil {
+		r.logger.Error().Err(err).Msg("Error iterating foreign key detail rows")
+		return eris.Wrap(err, "error iterating foreign key detail rows")
+	}
+	if err = fkRows.Close(); err != nil {
+		return oops.
+			In("resource_edit_repository").
+			Tags("fetch_foreign_key_details"). // Updated tag
+			With("query", fkDetailsQuery).
+			Wrapf(err, "close foreign key detail rows")
+	}
+
+	for consName, fkData := range tempFkStore {
+		if constraint, ok := constraintsMap[consName]; ok && constraint.ConstraintType == "FOREIGN KEY" {
+			constraint.ForeignTableName = &fkData.FTable
+			constraint.ForeignColumnNames = fkData.FCols
+		}
+	}
+	return nil
+}
+
+// fetchKeyConstraints fetches PRIMARY KEY, FOREIGN KEY, and UNIQUE constraint information.
+func (r *resourceEditorRepository) fetchKeyConstraints(
+	ctx context.Context,
+	schemaName string,
+	tableName string,
+	constraintsMap map[string]*repositories.ConstraintDetails,
+	orderedConstraintNames *[]string,
+) error {
+	dba, err := r.db.DB(ctx)
+	if err != nil {
+		r.logger.Error().Err(err).Msg("Failed to get database connection")
+		return eris.Wrap(err, "failed to get database connection")
+	}
+
 	keyConstraintsQuery := `
     SELECT
         tc.constraint_name,
@@ -430,7 +627,7 @@ func (r *resourceEditorRepository) fetchConstraintsForTable(ctx context.Context,
 	keyRows, err := dba.QueryContext(ctx, keyConstraintsQuery, schemaName, tableName)
 	if err != nil {
 		r.logger.Error().Err(err).Str("schemaName", schemaName).Str("tableName", tableName).Msg("Querying key constraints failed")
-		return nil, eris.Wrap(err, "querying key constraints failed")
+		return eris.Wrap(err, "querying key constraints failed")
 	}
 	defer keyRows.Close()
 
@@ -438,7 +635,7 @@ func (r *resourceEditorRepository) fetchConstraintsForTable(ctx context.Context,
 		var consName, consType, colName, isDeferrableStr, initiallyDeferredStr string
 		if err = keyRows.Scan(&consName, &consType, &colName, &isDeferrableStr, &initiallyDeferredStr); err != nil {
 			r.logger.Error().Err(err).Msg("Scanning key constraint row failed")
-			return nil, eris.Wrap(err, "scanning key constraint row")
+			return eris.Wrap(err, "scanning key constraint row")
 		}
 		if _, exists := constraintsMap[consName]; !exists {
 			constraintsMap[consName] = &repositories.ConstraintDetails{
@@ -448,142 +645,22 @@ func (r *resourceEditorRepository) fetchConstraintsForTable(ctx context.Context,
 				Deferrable:        isDeferrableStr == string(resourcesqltype.KeywordYes),
 				InitiallyDeferred: initiallyDeferredStr == string(resourcesqltype.KeywordYes),
 			}
-			orderedConstraintNames = append(orderedConstraintNames, consName)
+			*orderedConstraintNames = append(*orderedConstraintNames, consName)
 		}
 		constraintsMap[consName].ColumnNames = append(constraintsMap[consName].ColumnNames, colName)
 	}
 	if err = keyRows.Err(); err != nil {
 		r.logger.Error().Err(err).Msg("Error iterating key constraint rows")
-		return nil, eris.Wrap(err, "error iterating key constraint rows")
+		return eris.Wrap(err, "error iterating key constraint rows")
 	}
 	if err = keyRows.Close(); err != nil {
-		return nil, oops.
+		return oops.
 			In("resource_edit_repository").
-			Tags("fetch_constraints_for_table").
+			Tags("fetch_key_constraints"). // Updated tag
 			With("query", keyConstraintsQuery).
 			Wrapf(err, "close key constraint rows")
 	}
-
-	// * Enhance FKs with foreign table/column details
-	fkDetailsQuery := `
-    SELECT
-        rc.constraint_name,
-        ccu.table_name AS foreign_table_name,
-        ccu.column_name AS foreign_column_name
-    FROM
-        information_schema.referential_constraints rc
-    JOIN
-        information_schema.key_column_usage kcu ON rc.constraint_name = kcu.constraint_name AND rc.constraint_schema = kcu.table_schema
-    JOIN
-        information_schema.constraint_column_usage ccu ON rc.unique_constraint_name = ccu.constraint_name AND rc.unique_constraint_schema = ccu.table_schema
-    WHERE
-        kcu.table_schema = ? AND kcu.table_name = ?
-    ORDER BY
-        rc.constraint_name, kcu.ordinal_position; -- Using kcu.ordinal_position to match local column order
-    `
-	fkRows, err := dba.QueryContext(ctx, fkDetailsQuery, schemaName, tableName)
-	if err != nil {
-		r.logger.Error().Err(err).Str("schemaName", schemaName).Str("tableName", tableName).Msg("Querying foreign key details failed")
-		return nil, eris.Wrap(err, "querying foreign key details failed")
-	}
-	defer fkRows.Close()
-
-	tempFkStore := make(map[string]struct {
-		FTable string
-		FCols  []string
-	})
-	for fkRows.Next() {
-		var consName, fTable, fCol string
-		if err = fkRows.Scan(&consName, &fTable, &fCol); err != nil {
-			r.logger.Error().Err(err).Msg("Scanning foreign key detail row failed")
-			return nil, eris.Wrap(err, "scanning foreign key detail row")
-		}
-		entry := tempFkStore[consName]
-		entry.FTable = fTable // * Will be the same for all columns of a given FK
-		entry.FCols = append(entry.FCols, fCol)
-		tempFkStore[consName] = entry
-	}
-	if err = fkRows.Err(); err != nil {
-		r.logger.Error().Err(err).Msg("Error iterating foreign key detail rows")
-		return nil, eris.Wrap(err, "error iterating foreign key detail rows")
-	}
-	if err = fkRows.Close(); err != nil {
-		return nil, oops.
-			In("resource_edit_repository").
-			Tags("fetch_constraints_for_table").
-			With("query", fkDetailsQuery).
-			Wrapf(err, "close foreign key detail rows")
-	}
-
-	for consName, fkData := range tempFkStore {
-		if constraint, ok := constraintsMap[consName]; ok && constraint.ConstraintType == "FOREIGN KEY" {
-			constraint.ForeignTableName = &fkData.FTable
-			constraint.ForeignColumnNames = fkData.FCols
-		}
-	}
-
-	// * Fetch CHECK constraints
-	checkConstraintsQuery := `
-    SELECT
-        tc.constraint_name,
-        cc.check_clause,
-        tc.is_deferrable,
-        tc.initially_deferred
-    FROM
-        information_schema.check_constraints cc
-    JOIN
-        information_schema.table_constraints tc ON cc.constraint_name = tc.constraint_name AND cc.constraint_schema = tc.constraint_schema
-    WHERE
-        tc.table_schema = ? AND tc.table_name = ?;
-    `
-	checkRows, err := dba.QueryContext(ctx, checkConstraintsQuery, schemaName, tableName)
-	if err != nil {
-		r.logger.Error().Err(err).Str("schemaName", schemaName).Str("tableName", tableName).Msg("Querying check constraints failed")
-		return nil, eris.Wrap(err, "querying check constraints failed")
-	}
-	defer checkRows.Close()
-
-	for checkRows.Next() {
-		var consName, checkClause, isDeferrableStr, initiallyDeferredStr string
-		if err = checkRows.Scan(&consName, &checkClause, &isDeferrableStr, &initiallyDeferredStr); err != nil {
-			r.logger.Error().Err(err).Msg("Scanning check constraint row failed")
-			return nil, eris.Wrap(err, "scanning check constraint row")
-		}
-		if _, exists := constraintsMap[consName]; !exists {
-			constraintsMap[consName] = &repositories.ConstraintDetails{
-				ConstraintName:    consName,
-				ConstraintType:    resourcesqltype.Check.String(),
-				CheckClause:       &checkClause,
-				Deferrable:        isDeferrableStr == string(resourcesqltype.KeywordYes),
-				InitiallyDeferred: initiallyDeferredStr == string(resourcesqltype.KeywordYes),
-			}
-			orderedConstraintNames = append(orderedConstraintNames, consName) // Add if it's a new constraint
-		} else {
-			// * This case should ideally not be hit if CHECK constraints are always in table_constraints
-			// * but if it is, update the existing entry.
-			constraintsMap[consName].CheckClause = &checkClause
-			constraintsMap[consName].ConstraintType = resourcesqltype.Check.String() // Ensure type is correct
-		}
-	}
-	if err = checkRows.Err(); err != nil {
-		r.logger.Error().Err(err).Msg("Error iterating check constraint rows")
-		return nil, eris.Wrap(err, "error iterating check constraint rows")
-	}
-	if err = checkRows.Close(); err != nil {
-		return nil, oops.
-			In("resource_edit_repository").
-			Tags("fetch_constraints_for_table").
-			With("query", checkConstraintsQuery).
-			Wrapf(err, "close check constraint rows")
-	}
-
-	var finalConstraints []repositories.ConstraintDetails
-	for _, name := range orderedConstraintNames {
-		if c, ok := constraintsMap[name]; ok {
-			finalConstraints = append(finalConstraints, *c)
-		}
-	}
-	return finalConstraints, nil
+	return nil
 }
 
 // handleDotNotation processes dot notation completions (e.g. "table.") and adds relevant suggestions
@@ -656,94 +733,9 @@ func (r *resourceEditorRepository) GetAutocompleteSuggestions(ctx context.Contex
 	// * ------------------------------------------------------------------------------------------------
 
 	aliasMap := parseTableAliases(req.CurrentQuery)
+	trimmedWithoutPrefix, inSelectList := r.parseQueryContext(req)
 
-	// * Determine the portion of the query that appears *before* the current prefix being typed.
-	// * We can't rely on the prefix being at the very end of CurrentQuery, so we look for the last
-	// * occurrence (case-insensitive) of the prefix and slice everything before that index.
-	lowerQuery := strings.ToLower(req.CurrentQuery)
-	lowerPrefix := strings.ToLower(req.Prefix)
-	cutPos := strings.LastIndex(lowerQuery, lowerPrefix)
-	var trimmedWithoutPrefix string
-	if cutPos != -1 {
-		trimmedWithoutPrefix = req.CurrentQuery[:cutPos]
-	} else {
-		trimmedWithoutPrefix = req.CurrentQuery
-	}
-
-	// * Heuristic to decide if the user is editing the SELECT list (columns).
-	// * 1. If the last non-space char before the cursor is a comma, we assume they are adding another column.
-	// * 2. Otherwise, if SELECT appears before the cursor and the first FROM after that SELECT is located *after* the cursor (or absent), we are still in the list.
-
-	inSelectList := false
-
-	// * Rule 1 – check for trailing comma before cursor.
-	if cutPos > 0 {
-		i := cutPos - 1
-		for i >= 0 && unicode.IsSpace(rune(req.CurrentQuery[i])) {
-			i--
-		}
-		if i >= 0 && req.CurrentQuery[i] == ',' {
-			inSelectList = true
-		}
-	}
-
-	// * Rule 2 – fallback heuristic.
-	if !inSelectList {
-		upperQuery := strings.ToUpper(req.CurrentQuery)
-		selectIdx := strings.Index(upperQuery, resourcesqltype.Select.String())
-		if selectIdx != -1 {
-			// * Position of first FROM after SELECT (if any)
-			fromIdxRel := strings.Index(upperQuery[selectIdx+6:], resourcesqltype.From.String())
-			var fromIdxAbs int
-			if fromIdxRel != -1 {
-				fromIdxAbs = selectIdx + 6 + fromIdxRel
-			} else {
-				fromIdxAbs = -1
-			}
-
-			// * Find the last comma after SELECT (could be none)
-			commaIdxRel := strings.LastIndex(upperQuery[selectIdx+6:], ",")
-			if commaIdxRel != -1 {
-				commaIdxAbs := selectIdx + 6 + commaIdxRel
-
-				// * If comma occurs and either there is no FROM yet OR comma is before FROM, we likely are editing select list
-				if fromIdxAbs == -1 || commaIdxAbs < fromIdxAbs {
-					inSelectList = true
-				}
-			} else if fromIdxAbs == -1 {
-				// * No comma but also no FROM -> still editing first column(s)
-				inSelectList = true
-			}
-		}
-	}
-
-	tokens := strings.Fields(trimmedWithoutPrefix)
-	lastKeyword := ""
-	if len(tokens) > 0 {
-	OUTER:
-		// * Walk backwards until we find something that looks like a keyword
-		for i := len(tokens) - 1; i >= 0; i-- {
-			tokUpper := strings.ToUpper(tokens[i])
-			switch tokUpper {
-			case resourcesqltype.Select.String(),
-				resourcesqltype.From.String(),
-				resourcesqltype.Join.String(),
-				resourcesqltype.Where.String(),
-				resourcesqltype.On.String(),
-				resourcesqltype.GroupBy.String(),
-				resourcesqltype.OrderBy.String(),
-				resourcesqltype.Update.String(),
-				resourcesqltype.InsertInto.String(),
-				resourcesqltype.Into.String(),
-				resourcesqltype.DeleteFrom.String(),
-				resourcesqltype.Set.String():
-				lastKeyword = tokUpper
-				break OUTER
-			default:
-				// continue scanning
-			}
-		}
-	}
+	lastKeyword := r.extractLastKeyword(trimmedWithoutPrefix)
 
 	// * Base scores that can shift depending on context
 	columnHighScore := 115
@@ -762,142 +754,18 @@ func (r *resourceEditorRepository) GetAutocompleteSuggestions(ctx context.Contex
 	// * ------------------------------------------------------------------------------------------------
 	// * 3. Keyword suggestions (generic)
 	// * ------------------------------------------------------------------------------------------------
-	for _, kw := range resourcesqltype.AvailableKeywords {
-		if strings.HasPrefix(strings.ToUpper(kw.String()), strings.ToUpper(req.Prefix)) || req.Prefix == "" {
-			response.Suggestions = append(response.Suggestions, repositories.AutocompleteSuggestion{
-				Value:   kw.String(),
-				Caption: kw.String(),
-				Meta:    "keyword",
-				Score:   40, // * sslightly lower than before to prioritise context-aware results
-			})
-		}
-	}
+	r.addKeywordSuggestions(req, response)
 
 	// * ------------------------------------------------------------------------------------------------
 	// * 4. Schema suggestions (simple – we currently only expose req.SchemaName)
 	// * ------------------------------------------------------------------------------------------------
-	if req.SchemaName != "" && (strings.HasPrefix(strings.ToLower(req.SchemaName), strings.ToLower(req.Prefix)) || req.Prefix == "") {
-		response.Suggestions = append(response.Suggestions, repositories.AutocompleteSuggestion{
-			Value:   req.SchemaName,
-			Caption: req.SchemaName,
-			Meta:    "schema",
-			Score:   90,
-		})
-	}
+	r.addSchemaSuggestions(req, response)
 
 	// * ------------------------------------------------------------------------------------------------
 	// * 5. Table & column suggestions depending on detected context
 	// * ------------------------------------------------------------------------------------------------
 
-	addTableSuggestions := func() {
-		if req.SchemaName == "" {
-			return
-		}
-		tableQuery := `SELECT table_name FROM information_schema.tables WHERE table_schema = ? AND (table_name ILIKE ? OR ? = '') ORDER BY table_name;`
-		tableRows, qErr := dba.QueryContext(ctx, tableQuery, req.SchemaName, req.Prefix+"%", req.Prefix)
-		if qErr != nil {
-			r.logger.Error().Err(qErr).Str("schema", req.SchemaName).Msg("Failed to query tables for autocomplete")
-			return
-		}
-		defer tableRows.Close()
-		for tableRows.Next() {
-			var tableName string
-			if scanErr := tableRows.Scan(&tableName); scanErr == nil {
-				score := tableHighScore
-				if !inSelectList && (lastKeyword == resourcesqltype.From.String() || lastKeyword == resourcesqltype.Join.String() || lastKeyword == resourcesqltype.Update.String() || lastKeyword == resourcesqltype.Into.String()) {
-					score = 120 // * raise score when context expects a table name
-				}
-				response.Suggestions = append(response.Suggestions, repositories.AutocompleteSuggestion{
-					Value:   tableName,
-					Caption: tableName,
-					Meta:    "table",
-					Score:   score,
-				})
-			}
-		}
-		if err = tableRows.Err(); err != nil {
-			r.logger.Error().Err(err).Msg("Error iterating table rows")
-			return
-		}
-	}
-
-	addColumnSuggestions := func() {
-		// * Prefer explicit table context, fall back to alias map, finally req.TableName
-		columnAdded := make(map[string]struct{})
-
-		// * Helper to add column if not seen and matches prefix
-		addColumn := func(columnName, dataType string, score int) {
-			if _, ok := columnAdded[columnName]; ok {
-				return
-			}
-			if req.Prefix != "" && !strings.HasPrefix(strings.ToLower(columnName), strings.ToLower(req.Prefix)) {
-				return
-			}
-			response.Suggestions = append(response.Suggestions, repositories.AutocompleteSuggestion{
-				Value:   columnName,
-				Caption: columnName + " (" + dataType + ")",
-				Meta:    "column",
-				Score:   score,
-			})
-			columnAdded[columnName] = struct{}{}
-		}
-
-		// * Columns from alias map tables
-		for _, tbl := range aliasMap {
-			schema := tbl.Schema
-			if schema == "" {
-				schema = req.SchemaName
-			}
-			cols, cErr := r.fetchColumnsForTable(ctx, schema, tbl.Table)
-			if cErr != nil {
-				continue
-			}
-			for _, col := range cols {
-				addColumn(col.ColumnName, col.DataType, columnHighScore)
-			}
-		}
-
-		// * Fallback: columns from explicit TableName in request
-		if req.TableName != "" {
-			cols, cErr := r.fetchColumnsForTable(ctx, req.SchemaName, req.TableName)
-			if cErr == nil {
-				for _, col := range cols {
-					addColumn(col.ColumnName, col.DataType, columnHighScore)
-				}
-			}
-		}
-	}
-
-	switch lastKeyword {
-	case resourcesqltype.From.String(),
-		resourcesqltype.Join.String(),
-		resourcesqltype.Update.String(),
-		resourcesqltype.Into.String():
-		if inSelectList {
-			addColumnSuggestions()
-			addTableSuggestions()
-		} else {
-			addTableSuggestions()
-			addColumnSuggestions()
-		}
-	case resourcesqltype.Select.String(),
-		resourcesqltype.Where.String(),
-		resourcesqltype.On.String(),
-		resourcesqltype.GroupBy.String(),
-		resourcesqltype.OrderBy.String(),
-		resourcesqltype.Set.String(),
-		resourcesqltype.And.String(),
-		resourcesqltype.Or.String():
-		addColumnSuggestions()
-	default:
-		if inSelectList {
-			addColumnSuggestions()
-			addTableSuggestions()
-		} else {
-			addTableSuggestions()
-			addColumnSuggestions()
-		}
-	}
+	r.addContextualSuggestions(ctx, req, response, dba, aliasMap, lastKeyword, inSelectList, columnHighScore, tableHighScore)
 
 	// * ------------------------------------------------------------------------------------------------
 	// * 6. Final sorting & deduplication
@@ -929,6 +797,415 @@ func (r *resourceEditorRepository) GetAutocompleteSuggestions(ctx context.Contex
 	return response, nil
 }
 
+// addContextualSuggestions adds table and column suggestions based on the query context.
+//
+// Parameters:
+//   - ctx: The context for the database operation.
+//   - req: The autocomplete request containing the current query and prefix.
+//   - response: The autocomplete response to which suggestions will be added.
+//   - dba: The database connection.
+//   - aliasMap: A map of table aliases to their corresponding table information.
+//   - lastKeyword: The last keyword in the query.
+//   - inSelectList: Whether the cursor is within a SELECT list.
+//   - columnHighScore: The score for column suggestions.
+//   - tableHighScore: The score for table suggestions.
+//
+// Returns:
+//   - error: An error if the operation fails.
+func (r *resourceEditorRepository) addContextualSuggestions(
+	ctx context.Context,
+	req repositories.AutocompleteRequest,
+	response *repositories.AutocompleteResponse,
+	dba bun.IDB,
+	aliasMap map[string]tableAlias,
+	lastKeyword string,
+	inSelectList bool,
+	columnHighScore int,
+	tableHighScore int,
+) {
+	switch {
+	case resourcesqltype.IsTableFocusedContext(lastKeyword) && !inSelectList:
+		r.addTableSuggestions(ctx, req, response, dba, lastKeyword, inSelectList, tableHighScore)
+		r.addColumnSuggestions(ctx, req, response, aliasMap, columnHighScore)
+	case resourcesqltype.IsColumnFocusedContext(lastKeyword):
+		r.addColumnSuggestions(ctx, req, response, aliasMap, columnHighScore)
+	case inSelectList:
+		r.addColumnSuggestions(ctx, req, response, aliasMap, columnHighScore)
+		r.addTableSuggestions(ctx, req, response, dba, lastKeyword, inSelectList, tableHighScore)
+	default:
+		r.addTableSuggestions(ctx, req, response, dba, lastKeyword, inSelectList, tableHighScore)
+		r.addColumnSuggestions(ctx, req, response, aliasMap, columnHighScore)
+	}
+}
+
+// addTableSuggestions adds table suggestions to the response
+//
+// Parameters:
+//   - ctx: The context for the database operation.
+//   - req: The autocomplete request containing the current query and prefix.
+//   - response: The autocomplete response to which suggestions will be added.
+//   - dba: The database connection.
+//   - lastKeyword: The last keyword in the query.
+//   - inSelectList: Whether the cursor is within a SELECT list.
+//   - tableHighScore: The score for table suggestions.
+//
+// Returns:
+//   - error: An error if the operation fails.
+func (r *resourceEditorRepository) addTableSuggestions(
+	ctx context.Context,
+	req repositories.AutocompleteRequest,
+	response *repositories.AutocompleteResponse,
+	dba bun.IDB,
+	lastKeyword string,
+	inSelectList bool,
+	tableHighScore int,
+) {
+	if req.SchemaName == "" {
+		return
+	}
+
+	tableQuery := `SELECT table_name FROM information_schema.tables WHERE table_schema = ? AND (table_name ILIKE ? OR ? = '') ORDER BY table_name;`
+	tableRows, qErr := dba.QueryContext(ctx, tableQuery, req.SchemaName, req.Prefix+"%", req.Prefix)
+	if qErr != nil {
+		r.logger.Error().Err(qErr).Str("schema", req.SchemaName).Msg("Failed to query tables for autocomplete")
+		return
+	}
+	defer tableRows.Close()
+
+	for tableRows.Next() {
+		var tableName string
+		if scanErr := tableRows.Scan(&tableName); scanErr == nil {
+			score := r.determineTableScore(tableHighScore, inSelectList, lastKeyword)
+			r.addTableSuggestion(response, tableName, score)
+		}
+	}
+
+	if err := tableRows.Err(); err != nil {
+		r.logger.Error().Err(err).Msg("Error iterating table rows")
+	}
+}
+
+// determineTableScore calculates the score for a table suggestion based on context
+//
+// Parameters:
+//   - baseScore: The base score for the table suggestion.
+//   - inSelectList: Whether the cursor is within a SELECT list.
+//   - lastKeyword: The last keyword in the query.
+//
+// Returns:
+//   - int: The score for the table suggestion.
+func (r *resourceEditorRepository) determineTableScore(baseScore int, inSelectList bool, lastKeyword string) int {
+	if !inSelectList && resourcesqltype.IsTableFocusedContext(lastKeyword) {
+		return 120 // * raise score when context expects a table name
+	}
+	return baseScore
+}
+
+// addTableSuggestion adds a table suggestion to the response
+//
+// Parameters:
+//   - response: The autocomplete response to which suggestions will be added.
+//   - tableName: The name of the table to add.
+//   - score: The score for the table suggestion.
+//
+// Returns:
+//   - error: An error if the operation fails.
+func (r *resourceEditorRepository) addTableSuggestion(response *repositories.AutocompleteResponse, tableName string, score int) {
+	response.Suggestions = append(response.Suggestions, repositories.AutocompleteSuggestion{
+		Value:   tableName,
+		Caption: tableName,
+		Meta:    "table",
+		Score:   score,
+	})
+}
+
+// addColumnSuggestions adds column suggestions to the response
+//
+// Parameters:
+//   - ctx: The context for the database operation.
+//   - req: The autocomplete request containing the current query and prefix.
+//   - response: The autocomplete response to which suggestions will be added.
+//   - aliasMap: A map of table aliases to their corresponding table information.
+//   - columnHighScore: The score for column suggestions.
+//
+// Returns:
+//   - error: An error if the operation fails.
+func (r *resourceEditorRepository) addColumnSuggestions(
+	ctx context.Context,
+	req repositories.AutocompleteRequest,
+	response *repositories.AutocompleteResponse,
+	aliasMap map[string]tableAlias,
+	columnHighScore int,
+) {
+	columnAdded := make(map[string]struct{})
+
+	// Add columns from alias map tables
+	r.addColumnsFromAliases(ctx, req, response, aliasMap, columnAdded, columnHighScore)
+
+	// Fallback: columns from explicit TableName in request
+	r.addColumnsFromTableName(ctx, req, response, columnAdded, columnHighScore)
+}
+
+// addColumnsFromAliases adds column suggestions from tables in the alias map
+//
+// Parameters:
+//   - ctx: The context for the database operation.
+//   - req: The autocomplete request containing the current query and prefix.
+//   - response: The autocomplete response to which suggestions will be added.
+//   - aliasMap: A map of table aliases to their corresponding table information.
+//   - columnAdded: A map of column names that have already been added.
+//   - columnHighScore: The score for column suggestions.
+//
+// Returns:
+//   - error: An error if the operation fails.
+func (r *resourceEditorRepository) addColumnsFromAliases(
+	ctx context.Context,
+	req repositories.AutocompleteRequest,
+	response *repositories.AutocompleteResponse,
+	aliasMap map[string]tableAlias,
+	columnAdded map[string]struct{},
+	columnHighScore int,
+) {
+	for _, tbl := range aliasMap {
+		schema := tbl.Schema
+		if schema == "" {
+			schema = req.SchemaName
+		}
+
+		cols, cErr := r.fetchColumnsForTable(ctx, schema, tbl.Table)
+		if cErr != nil {
+			continue
+		}
+
+		for _, col := range cols {
+			r.addColumnIfRelevant(req, response, columnAdded, col.ColumnName, col.DataType, columnHighScore)
+		}
+	}
+}
+
+// addColumnsFromTableName adds column suggestions from the explicit TableName in the request
+//
+// Parameters:
+//   - ctx: The context for the database operation.
+//   - req: The autocomplete request containing the current query and prefix.
+//   - response: The autocomplete response to which suggestions will be added.
+//   - columnAdded: A map of column names that have already been added.
+//   - columnHighScore: The score for column suggestions.
+//
+// Returns:
+//   - error: An error if the operation fails.
+func (r *resourceEditorRepository) addColumnsFromTableName(
+	ctx context.Context,
+	req repositories.AutocompleteRequest,
+	response *repositories.AutocompleteResponse,
+	columnAdded map[string]struct{},
+	columnHighScore int,
+) {
+	if req.TableName == "" {
+		return
+	}
+
+	cols, cErr := r.fetchColumnsForTable(ctx, req.SchemaName, req.TableName)
+	if cErr != nil {
+		return
+	}
+
+	for _, col := range cols {
+		r.addColumnIfRelevant(req, response, columnAdded, col.ColumnName, col.DataType, columnHighScore)
+	}
+}
+
+// addColumnIfRelevant adds a column suggestion if it hasn't been added and matches the prefix
+//
+// Parameters:
+//   - req: The autocomplete request containing the current query and prefix.
+//   - response: The autocomplete response to which suggestions will be added.
+//   - columnAdded: A map of column names that have already been added.
+//   - columnName: The name of the column to add.
+//   - dataType: The data type of the column.
+//   - score: The score for the column suggestion.
+//
+// Returns:
+//   - error: An error if the operation fails.
+func (r *resourceEditorRepository) addColumnIfRelevant(
+	req repositories.AutocompleteRequest,
+	response *repositories.AutocompleteResponse,
+	columnAdded map[string]struct{},
+	columnName, dataType string,
+	score int,
+) {
+	if _, ok := columnAdded[columnName]; ok {
+		return
+	}
+
+	if req.Prefix != "" && !strings.HasPrefix(strings.ToLower(columnName), strings.ToLower(req.Prefix)) {
+		return
+	}
+
+	response.Suggestions = append(response.Suggestions, repositories.AutocompleteSuggestion{
+		Value:   columnName,
+		Caption: columnName + " (" + dataType + ")",
+		Meta:    "column",
+		Score:   score,
+	})
+
+	columnAdded[columnName] = struct{}{}
+}
+
+// parseQueryContext parses the query to determine the text before the prefix and if the cursor is in a SELECT list.
+//
+// Parameters:
+//   - req: The autocomplete request containing the current query and prefix.
+//
+// Returns:
+//   - string: The text before the prefix.
+//   - bool: Whether the cursor is in a SELECT list.
+func (r *resourceEditorRepository) parseQueryContext(req repositories.AutocompleteRequest) (string, bool) {
+	// * Determine the portion of the query that appears *before* the current prefix being typed.
+	// * We can't rely on the prefix being at the very end of CurrentQuery, so we look for the last
+	// * occurrence (case-insensitive) of the prefix and slice everything before that index.
+	lowerQuery := strings.ToLower(req.CurrentQuery)
+	lowerPrefix := strings.ToLower(req.Prefix)
+	cutPos := strings.LastIndex(lowerQuery, lowerPrefix)
+	var trimmedWithoutPrefix string
+	if cutPos != -1 {
+		trimmedWithoutPrefix = req.CurrentQuery[:cutPos]
+	} else {
+		trimmedWithoutPrefix = req.CurrentQuery
+	}
+
+	return trimmedWithoutPrefix, r.isInSelectList(req.CurrentQuery, cutPos)
+}
+
+// isInSelectList determines if the cursor is positioned within a SELECT list.
+//
+// Parameters:
+//   - query: The query to check.
+//   - cursorPos: The position of the cursor.
+//
+// Returns:
+//   - bool: Whether the cursor is in a SELECT list.
+func (r *resourceEditorRepository) isInSelectList(query string, cursorPos int) bool {
+	// * Heuristic to decide if the user is editing the SELECT list (columns).
+	// * 1. If the last non-space char before the cursor is a comma, we assume they are adding another column.
+	// * 2. Otherwise, if SELECT appears before the cursor and the first FROM after that SELECT is located *after* the cursor (or absent), we are still in the list.
+
+	// * Rule 1 – check for trailing comma before cursor.
+	if cursorPos > 0 {
+		i := cursorPos - 1
+		for i >= 0 && unicode.IsSpace(rune(query[i])) {
+			i--
+		}
+		if i >= 0 && query[i] == ',' {
+			return true
+		}
+	}
+
+	// * Rule 2 – fallback heuristic.
+	upperQuery := strings.ToUpper(query)
+	selectIdx := strings.Index(upperQuery, resourcesqltype.Select.String())
+	if selectIdx == -1 {
+		return false // No SELECT found
+	}
+
+	// * Position of first FROM after SELECT (if any)
+	fromIdxRel := strings.Index(upperQuery[selectIdx+6:], resourcesqltype.From.String())
+	if fromIdxRel == -1 {
+		// * No FROM yet, so we must be in SELECT list
+		return true
+	}
+
+	fromIdxAbs := selectIdx + 6 + fromIdxRel
+
+	// * If FROM occurs after cursor position, we're in SELECT list
+	if fromIdxAbs > cursorPos {
+		return true
+	}
+
+	// * Find the last comma after SELECT (could be none)
+	commaIdxRel := strings.LastIndex(upperQuery[selectIdx+6:cursorPos], ",")
+	if commaIdxRel == -1 {
+		return false // No comma in the relevant section
+	}
+
+	commaIdxAbs := selectIdx + 6 + commaIdxRel
+
+	// * If comma occurs and is after the most recent FROM but before cursor, likely in SELECT list
+	return commaIdxAbs > fromIdxAbs
+}
+
+// extractLastKeyword extracts the last significant SQL keyword from the query text preceding the prefix.
+//
+// Parameters:
+//   - queryText: The query text to extract the last keyword from.
+//
+// Returns:
+//   - string: The last significant SQL keyword.
+func (r *resourceEditorRepository) extractLastKeyword(queryText string) string {
+	tokens := strings.Fields(queryText)
+	lastKeyword := ""
+	if len(tokens) > 0 {
+	OUTER:
+		// * Walk backwards until we find something that looks like a keyword
+		for i := len(tokens) - 1; i >= 0; i-- {
+			tokUpper := strings.ToUpper(tokens[i])
+			switch tokUpper {
+			case resourcesqltype.Select.String(),
+				resourcesqltype.From.String(),
+				resourcesqltype.Join.String(),
+				resourcesqltype.Where.String(),
+				resourcesqltype.On.String(),
+				resourcesqltype.GroupBy.String(),
+				resourcesqltype.OrderBy.String(),
+				resourcesqltype.Update.String(),
+				resourcesqltype.InsertInto.String(),
+				resourcesqltype.Into.String(),
+				resourcesqltype.DeleteFrom.String(),
+				resourcesqltype.Set.String():
+				lastKeyword = tokUpper
+				break OUTER
+			default:
+				// continue scanning
+			}
+		}
+	}
+	return lastKeyword
+}
+
+// addKeywordSuggestions adds keyword suggestions to the autocomplete response.
+//
+// Parameters:
+//   - req: The autocomplete request containing the current query and prefix.
+//   - response: The autocomplete response to which suggestions will be added.
+func (r *resourceEditorRepository) addKeywordSuggestions(req repositories.AutocompleteRequest, response *repositories.AutocompleteResponse) {
+	for _, kw := range resourcesqltype.AvailableKeywords {
+		if strings.HasPrefix(strings.ToUpper(kw.String()), strings.ToUpper(req.Prefix)) || req.Prefix == "" {
+			response.Suggestions = append(response.Suggestions, repositories.AutocompleteSuggestion{
+				Value:   kw.String(),
+				Caption: kw.String(),
+				Meta:    "keyword",
+				Score:   40, // * sslightly lower than before to prioritise context-aware results
+			})
+		}
+	}
+}
+
+// addSchemaSuggestions adds schema suggestions to the autocomplete response.
+//
+// Parameters:
+//   - req: The autocomplete request containing the current query and prefix.
+//   - response: The autocomplete response to which suggestions will be added.
+func (r *resourceEditorRepository) addSchemaSuggestions(req repositories.AutocompleteRequest, response *repositories.AutocompleteResponse) {
+	if req.SchemaName != "" && (strings.HasPrefix(strings.ToLower(req.SchemaName), strings.ToLower(req.Prefix)) || req.Prefix == "") {
+		response.Suggestions = append(response.Suggestions, repositories.AutocompleteSuggestion{
+			Value:   req.SchemaName,
+			Caption: req.SchemaName,
+			Meta:    "schema",
+			Score:   90,
+		})
+	}
+}
+
 // ExecuteSQLQuery executes a SQL query and returns the result.
 //
 // Parameters:
@@ -939,89 +1216,137 @@ func (r *resourceEditorRepository) GetAutocompleteSuggestions(ctx context.Contex
 //   - *repositories.ExecuteQueryResponse: The execute query response containing the result.
 //   - error: An error if the operation fails.
 func (r *resourceEditorRepository) ExecuteSQLQuery(ctx context.Context, req repositories.ExecuteQueryRequest) (*repositories.ExecuteQueryResponse, error) {
-	dba, err := r.db.DB(ctx)
-	if err != nil {
-		r.logger.Error().Err(err).Msg("Failed to get database connection for query execution")
-		return nil, eris.Wrap(err, "failed to get database connection for query execution")
-	}
-
 	log := r.logger.With().
 		Str("operation", "ExecuteSQLQuery").
 		Str("query", req.Query).
 		Logger()
 
-	response := &repositories.ExecuteQueryResponse{}
-
 	log.Info().Msg("Executing user SQL query")
 
-	var resultsData [][]any
+	response := &repositories.ExecuteQueryResponse{}
+	result, err := r.executeQueryAndProcessResults(ctx, req.Query)
+	if err != nil {
+		return nil, err
+	}
 
-	// ! Some read-only operations might not work as expected in a transaction (e.g. some SHOW commands on some DBs)
-	err = dba.RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
-		rows, rErr := tx.QueryContext(ctx, req.Query)
-		if rErr != nil {
-			return rErr
-		}
-		defer rows.Close()
-
-		cols, cErr := rows.Columns()
-		if cErr != nil {
-			log.Error().Err(cErr).Msg("Error getting columns from query result")
-			response.Result.Error = "Failed to get columns from result: " + cErr.Error()
-			return cErr
-		}
-		response.Result.Columns = cols
-
-		for rows.Next() {
-			// * Create a slice of anys to represent a row, a bit like python's tuple
-			rowValues := make([]any, len(cols))
-			// * Create a slice of pointers to the above slice's elements for Scan
-			rowPointers := make([]any, len(cols))
-			for i := range rowValues {
-				rowPointers[i] = &rowValues[i]
-			}
-
-			if err = rows.Scan(rowPointers...); err != nil {
-				log.Error().Err(err).Msg("Error scanning row from query result")
-				response.Result.Error = "Failed to scan row: " + err.Error()
-				return err
-			}
-			resultsData = append(resultsData, rowValues)
-		}
-
-		if err = rows.Err(); err != nil {
-			log.Error().Err(err).Msg("Error iterating query result rows")
-			response.Result.Error = "Error iterating result rows: " + err.Error()
-			return err
-		}
-
-		response.Result.Rows = resultsData
-		switch {
-		case len(resultsData) == 0 && len(cols) > 0:
-			response.Result.Message = "Query executed successfully, 0 rows returned."
-		case len(resultsData) > 0:
-			response.Result.Message = fmt.Sprintf("Query executed successfully, %d rows returned.", len(resultsData))
-		default:
-			// * This case might be for non-SELECT statements if QueryContext was used and didn't error.
-			// * However, dba.ExecContext should be used for non-SELECTs.
-			// * For now, assume QueryContext might return no cols/rows for successful non-SELECTs that don't return rows.
-			// * A more robust solution would involve trying ExecContext if QueryContext fails or based on query type detection.
-			log.Warn().Msg("Query executed, but returned no columns. Possibly a non-SELECT statement or empty result.")
-
-			res, execErr := dba.ExecContext(ctx, req.Query)
-			if execErr != nil {
-				log.Error().Err(execErr).Msg("Error executing SQL query with ExecContext after QueryContext yielded no columns")
-				response.Result.Error = execErr.Error()
-				return execErr
-			}
-
-			rowsAffected, _ := res.RowsAffected()
-			response.Result.Message = fmt.Sprintf("Command executed successfully. Rows affected: %d", rowsAffected)
-		}
-
-		return nil
-	})
-
+	response.Result = result
 	log.Info().Int("rowsReturned", len(response.Result.Rows)).Msg("SQL query executed successfully")
 	return response, nil
+}
+
+// executeQueryAndProcessResults handles the execution of a SQL query and processes the results.
+//
+// Parameters:
+//   - ctx: The context for the database operation.
+//   - query: The query to execute.
+//
+// Returns:
+//   - repositories.QueryResult: The query result.
+//   - error: An error if the operation fails.
+func (r *resourceEditorRepository) executeQueryAndProcessResults(ctx context.Context, query string) (repositories.QueryResult, error) {
+	dba, err := r.db.DB(ctx)
+	if err != nil {
+		r.logger.Error().Err(err).Msg("Failed to get database connection")
+		return repositories.QueryResult{}, eris.Wrap(err, "failed to get database connection")
+	}
+
+	var result repositories.QueryResult
+	var resultsData [][]any
+
+	err = dba.RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
+		return r.processQueryInTransaction(ctx, tx, query, &result, &resultsData)
+	})
+
+	if err != nil {
+		r.logger.Error().Err(err).Msg("Error executing SQL query")
+		return result, err
+	}
+
+	result.Rows = resultsData
+	r.setResultMessage(ctx, &result, resultsData, query)
+	return result, nil
+}
+
+// processQueryInTransaction executes the query within a transaction and scans results.
+//
+// Parameters:
+//   - ctx: The context for the database operation.
+//   - tx: The database transaction.
+//   - query: The query to execute.
+//   - result: The query result.
+//   - resultsData: The data from the query result.
+//
+// Returns:
+//   - error: An error if the operation fails.
+func (r *resourceEditorRepository) processQueryInTransaction(ctx context.Context, tx bun.Tx, query string, result *repositories.QueryResult, resultsData *[][]any) error {
+	rows, err := tx.QueryContext(ctx, query)
+	if err != nil {
+		return err
+	}
+	defer rows.Close()
+
+	cols, err := rows.Columns()
+	if err != nil {
+		r.logger.Error().Err(err).Msg("Error getting columns from query result")
+		result.Error = "Failed to get columns from result: " + err.Error()
+		return err
+	}
+	result.Columns = cols
+
+	for rows.Next() {
+		rowValues := make([]any, len(cols))
+		rowPointers := make([]any, len(cols))
+		for i := range rowValues {
+			rowPointers[i] = &rowValues[i]
+		}
+
+		if err = rows.Scan(rowPointers...); err != nil {
+			r.logger.Error().Err(err).Msg("Error scanning row from query result")
+			result.Error = "Failed to scan row: " + err.Error()
+			return err
+		}
+		*resultsData = append(*resultsData, rowValues)
+	}
+
+	if err = rows.Err(); err != nil {
+		r.logger.Error().Err(err).Msg("Error iterating query result rows")
+		result.Error = "Error iterating result rows: " + err.Error()
+		return err
+	}
+
+	return nil
+}
+
+// setResultMessage sets an appropriate message based on the query results.
+//
+// Parameters:
+//   - ctx: The context for the database operation.
+//   - result: The query result.
+//   - resultsData: The data from the query result.
+//   - query: The query to execute.
+func (r *resourceEditorRepository) setResultMessage(ctx context.Context, result *repositories.QueryResult, resultsData [][]any, query string) {
+	dba, err := r.db.DB(ctx)
+	if err != nil {
+		r.logger.Error().Err(err).Msg("Failed to get database connection")
+		return
+	}
+
+	switch {
+	case len(resultsData) == 0 && len(result.Columns) > 0:
+		result.Message = "Query executed successfully, 0 rows returned."
+	case len(resultsData) > 0:
+		result.Message = fmt.Sprintf("Query executed successfully, %d rows returned.", len(resultsData))
+	default:
+		r.logger.Warn().Msg("Query executed, but returned no columns. Possibly a non-SELECT statement or empty result.")
+
+		res, execErr := dba.ExecContext(ctx, query)
+		if execErr != nil {
+			r.logger.Error().Err(execErr).Msg("Error executing SQL query with ExecContext after QueryContext yielded no columns")
+			result.Error = execErr.Error()
+			return
+		}
+
+		rowsAffected, _ := res.RowsAffected()
+		result.Message = fmt.Sprintf("Command executed successfully. Rows affected: %d", rowsAffected)
+	}
 }

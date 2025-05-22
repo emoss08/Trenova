@@ -362,6 +362,8 @@ func (sr *shipmentRepository) Create(ctx context.Context, shp *shipment.Shipment
 // Returns:
 //   - *shipment.Shipment: The updated shipment.
 //   - error: If the update fails or version conflicts occur.
+//
+//nolint:funlen // This is a long function, but it is a good function.
 func (sr *shipmentRepository) Update(ctx context.Context, shp *shipment.Shipment) (*shipment.Shipment, error) {
 	dba, err := sr.db.DB(ctx)
 	if err != nil {
