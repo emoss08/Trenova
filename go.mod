@@ -10,7 +10,7 @@ require (
 	github.com/gen2brain/go-fitz v1.24.14
 	github.com/go-co-op/gocron v1.37.0
 	github.com/go-ozzo/ozzo-validation/v4 v4.3.0
-	github.com/gofiber/fiber/v2 v2.52.6
+	github.com/gofiber/fiber/v2 v2.52.7
 	github.com/google/go-querystring v1.1.0
 	github.com/imroc/req/v3 v3.51.0
 	github.com/jackc/pgx/v5 v5.7.4
