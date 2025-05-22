@@ -103,7 +103,7 @@ export enum Resource {
   Invoice = "invoice",
   Dispatch = "dispatch",
   Report = "report",
-  AuditEntries = "audit_entries",
+  AuditEntry = "audit_entry",
   TableConfiguration = "table_configuration",
   Integration = "integration",
   Setting = "setting",

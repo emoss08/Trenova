@@ -38,7 +38,7 @@ func (h *Handler) RegisterRoutes(r fiber.Router, rl *middleware.RateLimiter) {
 		middleware.PerMinute(60), // 60 reads per minute
 	)...)
 
-	api.Get("/me/:tableIdentifier", rl.WithRateLimit(
+	api.Get("/me/:resource", rl.WithRateLimit(
 		[]fiber.Handler{h.listUserConfigurations},
 		middleware.PerMinute(60),
 	)...)
@@ -49,7 +49,7 @@ func (h *Handler) RegisterRoutes(r fiber.Router, rl *middleware.RateLimiter) {
 	)...)
 
 	// Retrieve or create configuration for current user by table identifier
-	api.Get(":tableIdentifier", rl.WithRateLimit(
+	api.Get(":resource", rl.WithRateLimit(
 		[]fiber.Handler{h.getDefaultOrLatestConfiguration},
 		middleware.PerMinute(60),
 	)...)
@@ -104,11 +104,11 @@ func (h *Handler) listUserConfigurations(c *fiber.Ctx) error {
 			return nil, h.eh.HandleError(fc, err)
 		}
 
-		tableID := fc.Params("tableIdentifier")
+		resource := fc.Params("resource")
 
 		return h.ts.ListUserConfigurations(fc.UserContext(), &repositories.ListUserConfigurationRequest{
-			TableIdentifier: tableID,
-			Filter:          filter,
+			Resource: resource,
+			Filter:   filter,
 		})
 	}
 
@@ -146,9 +146,9 @@ func (h *Handler) getDefaultOrLatestConfiguration(c *fiber.Ctx) error {
 		return h.eh.HandleError(c, err)
 	}
 
-	tableID := c.Params("tableIdentifier")
+	resource := c.Params("resource")
 
-	config, err := h.ts.GetDefaultOrLatestConfiguration(c.UserContext(), tableID, reqCtx)
+	config, err := h.ts.GetDefaultOrLatestConfiguration(c.UserContext(), resource, reqCtx)
 	if err != nil {
 		return h.eh.HandleError(c, err)
 	}

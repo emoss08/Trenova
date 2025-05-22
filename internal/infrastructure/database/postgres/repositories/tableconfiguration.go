@@ -52,10 +52,6 @@ func (tcr *tableConfigurationRepository) filterQuery(q *bun.SelectQuery, opts *r
 		TableAlias: "tc",
 	})
 
-	if opts.TableIdentifier != "" {
-		q = q.Where("tc.table_identifier = ?", opts.TableIdentifier)
-	}
-
 	if opts.CreatedBy.IsNotNil() {
 		q = q.Where("tc.user_id = ?", opts.CreatedBy)
 	}
@@ -84,7 +80,7 @@ func (tcr *tableConfigurationRepository) List(ctx context.Context, filters *repo
 
 	log := tcr.l.With().
 		Str("operation", "List").
-		Str("tableIdentifier", filters.TableIdentifier).
+		Str("resource", filters.Resource).
 		Logger()
 
 	configs := make([]*tableconfiguration.Configuration, 0)
@@ -117,7 +113,7 @@ func (tcr *tableConfigurationRepository) filterUserConfigurations(q *bun.SelectQ
 	q = q.WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
 		return sq.Where("tc.user_id = ?", opts.Filter.TenantOpts.UserID).
 			Where("tc.organization_id = ?", opts.Filter.TenantOpts.OrgID).
-			Where("tc.table_identifier = ?", opts.TableIdentifier).
+			Where("tc.resource = ?", opts.Resource).
 			Where("tc.business_unit_id = ?", opts.Filter.TenantOpts.BuID)
 	})
 
@@ -196,6 +192,7 @@ func (tcr *tableConfigurationRepository) GetByID(ctx context.Context, id pulid.I
 		if eris.Is(err, sql.ErrNoRows) {
 			return nil, errors.NewNotFoundError("Configuration not found")
 		}
+
 		log.Error().Err(err).Msg("failed to get configuration")
 		return nil, err
 	}
@@ -203,10 +200,10 @@ func (tcr *tableConfigurationRepository) GetByID(ctx context.Context, id pulid.I
 	return config, nil
 }
 
-func (tcr *tableConfigurationRepository) Create(ctx context.Context, config *tableconfiguration.Configuration) error {
+func (tcr *tableConfigurationRepository) Create(ctx context.Context, config *tableconfiguration.Configuration) (*tableconfiguration.Configuration, error) {
 	dba, err := tcr.db.DB(ctx)
 	if err != nil {
-		return eris.Wrap(err, "get database connection")
+		return nil, eris.Wrap(err, "get database connection")
 	}
 
 	log := tcr.l.With().
@@ -222,7 +219,7 @@ func (tcr *tableConfigurationRepository) Create(ctx context.Context, config *tab
 		err = dba.NewSelect().Model(existingDefault).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
 				return sq.Where("tc.organization_id = ?", config.OrganizationID).
-					Where("tc.table_identifier = ?", config.TableIdentifier).
+					Where("tc.resource = ?", config.Resource).
 					Where("tc.business_unit_id = ?", config.BusinessUnitID).
 					Where("tc.user_id = ?", config.UserID).
 					Where("tc.is_default = ?", true)
@@ -235,7 +232,7 @@ func (tcr *tableConfigurationRepository) Create(ctx context.Context, config *tab
 				log.Debug().Msg("no existing default configuration found, moving on...")
 			} else {
 				log.Error().Err(err).Msg("failed to get existing default configuration")
-				return err
+				return nil, err
 			}
 		}
 
@@ -246,7 +243,7 @@ func (tcr *tableConfigurationRepository) Create(ctx context.Context, config *tab
 			Exec(ctx)
 		if err != nil {
 			log.Error().Err(err).Msg("failed to update existing default configuration")
-			return err
+			return nil, err
 		}
 	}
 
@@ -261,10 +258,10 @@ func (tcr *tableConfigurationRepository) Create(ctx context.Context, config *tab
 	})
 	if err != nil {
 		log.Error().Err(err).Msg("failed to create configuration")
-		return err
+		return nil, err
 	}
 
-	return nil
+	return config, nil
 }
 
 func (tcr *tableConfigurationRepository) Update(ctx context.Context, config *tableconfiguration.Configuration) error {
@@ -366,7 +363,7 @@ func (tcr *tableConfigurationRepository) Delete(ctx context.Context, req reposit
 	return nil
 }
 
-func (tcr *tableConfigurationRepository) GetUserConfigurations(ctx context.Context, tableID string, opts *repositories.TableConfigurationFilters) ([]*tableconfiguration.Configuration, error) {
+func (tcr *tableConfigurationRepository) GetUserConfigurations(ctx context.Context, resource string, opts *repositories.TableConfigurationFilters) ([]*tableconfiguration.Configuration, error) {
 	dba, err := tcr.db.DB(ctx)
 	if err != nil {
 		return nil, eris.Wrap(err, "get database connection")
@@ -375,16 +372,18 @@ func (tcr *tableConfigurationRepository) GetUserConfigurations(ctx context.Conte
 	log := tcr.l.With().
 		Str("operation", "GetUserConfigurations").
 		Str("userID", opts.UserID.String()).
-		Str("tableID", tableID).
+		Str("resource", resource).
 		Logger()
 
 	configs := make([]*tableconfiguration.Configuration, 0)
 
 	q := dba.NewSelect().
 		Model(&configs).
-		Where("tc.table_identifier = ?", tableID).
-		Where("tc.organization_id = ?", opts.Base.OrgID).
-		Where("tc.business_unit_id = ?", opts.Base.BuID)
+		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+			return sq.Where("tc.resource = ?", resource).
+				Where("tc.organization_id = ?", opts.Base.OrgID).
+				Where("tc.business_unit_id = ?", opts.Base.BuID)
+		})
 
 	// * if the default query returns not found, then query for the latest configuration
 	q = q.Order("tc.created_at DESC")
@@ -398,7 +397,7 @@ func (tcr *tableConfigurationRepository) GetUserConfigurations(ctx context.Conte
 }
 
 // GetDefaultOrLatestConfiguration returns the default configuration or the latest if no default exists
-func (tcr *tableConfigurationRepository) GetDefaultOrLatestConfiguration(ctx context.Context, tableID string, opts *repositories.TableConfigurationFilters) (*tableconfiguration.Configuration, error) {
+func (tcr *tableConfigurationRepository) GetDefaultOrLatestConfiguration(ctx context.Context, resource string, opts *repositories.TableConfigurationFilters) (*tableconfiguration.Configuration, error) {
 	dba, err := tcr.db.DB(ctx)
 	if err != nil {
 		return nil, eris.Wrap(err, "get database connection")
@@ -406,13 +405,13 @@ func (tcr *tableConfigurationRepository) GetDefaultOrLatestConfiguration(ctx con
 
 	log := tcr.l.With().
 		Str("operation", "GetDefaultOrLatestConfiguration").
-		Str("tableID", tableID).
+		Str("resource", resource).
 		Logger()
 
 	config := new(tableconfiguration.Configuration)
 	q := dba.NewSelect().Model(config).
 		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-			return sq.Where("tc.table_identifier = ?", tableID).
+			return sq.Where("tc.resource = ?", resource).
 				Where("tc.organization_id = ?", opts.Base.OrgID).
 				Where("tc.business_unit_id = ?", opts.Base.BuID)
 		})
@@ -426,7 +425,7 @@ func (tcr *tableConfigurationRepository) GetDefaultOrLatestConfiguration(ctx con
 			log.Error().Err(err).Msg("failed to get default or latest configuration")
 			return nil, oops.In("table_configuration_repository").
 				Tags("get_default_or_latest_configuration").
-				With("tableID", tableID).
+				With("resource", resource).
 				With("orgID", opts.Base.OrgID).
 				With("buID", opts.Base.BuID).
 				Time(time.Now()).
@@ -446,7 +445,7 @@ func (tcr *tableConfigurationRepository) GetDefaultOrLatestConfiguration(ctx con
 		log.Error().Err(err).Msg("failed to get default configuration")
 		return nil, oops.In("table_configuration_repository").
 			Tags("get_default_or_latest_configuration").
-			With("tableID", tableID).
+			With("resource", resource).
 			With("orgID", opts.Base.OrgID).
 			With("buID", opts.Base.BuID).
 			Time(time.Now()).
@@ -473,9 +472,10 @@ func (tcr *tableConfigurationRepository) ShareConfiguration(ctx context.Context,
 		config := new(tableconfiguration.Configuration)
 		err = tx.NewSelect().
 			Model(config).
-			Where("id = ? AND visibility = ?",
-				share.ConfigurationID,
-				tableconfiguration.VisibilityShared).
+			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+				return sq.Where("id = ?", share.ConfigurationID).
+					Where("visibility = ?", tableconfiguration.VisibilityShared)
+			}).
 			Scan(c)
 		if err != nil {
 			if eris.Is(err, sql.ErrNoRows) {
@@ -516,7 +516,10 @@ func (tcr *tableConfigurationRepository) RemoveShare(ctx context.Context, config
 
 	result, err := dba.NewDelete().
 		Model((*tableconfiguration.ConfigurationShare)(nil)).
-		Where("configuration_id = ? AND shared_with_id = ?", configID, sharedWithID).
+		WhereGroup(" AND ", func(sq *bun.DeleteQuery) *bun.DeleteQuery {
+			return sq.Where("configuration_id = ?", configID).
+				Where("shared_with_id = ?", sharedWithID)
+		}).
 		Exec(ctx)
 	if err != nil {
 		log.Error().Err(err).Msg("failed to remove share")

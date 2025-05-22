@@ -31,7 +31,7 @@ export function DataTablePermissionDeniedSkeleton({
         <div className="flex flex-col gap-1">
           <p className="text-2xl font-medium text-foreground">Access Denied</p>
           <p className="text-base text-muted-foreground">
-            You don&apos;t have permission to {action} {upperFirst(resource)}s.
+            You don&apos;t have permission to {action} {upperFirst(resource)}.
           </p>
         </div>
         <p className="text-sm text-muted-foreground max-w-md">

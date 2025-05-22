@@ -14,6 +14,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/pkg/config"
+	"github.com/emoss08/trenova/internal/pkg/errors"
 	"github.com/emoss08/trenova/internal/pkg/logger"
 	"github.com/emoss08/trenova/pkg/types/pulid"
 	"github.com/rotisserie/eris"
@@ -57,6 +58,7 @@ type ServiceParams struct {
 
 	LC              fx.Lifecycle
 	AuditRepository repositories.AuditRepository
+	PermService     services.PermissionService
 	Logger          *logger.Logger
 	Config          *config.Manager
 }
@@ -66,6 +68,7 @@ type service struct {
 	buffer        *Buffer
 	repo          repositories.AuditRepository
 	config        *config.AuditConfig
+	ps            services.PermissionService
 	wg            *conc.WaitGroup
 	sdm           *SensitiveDataManager
 	mutex         sync.RWMutex
@@ -107,6 +110,7 @@ func NewService(p ServiceParams) services.AuditService {
 	auditService := &service{
 		repo:          p.AuditRepository,
 		l:             &log,
+		ps:            p.PermService,
 		buffer:        NewBuffer(cfg.BufferSize),
 		config:        &p.Config.Get().Audit,
 		sdm:           NewSensitiveDataManager(),
@@ -238,6 +242,26 @@ func (s *service) List(ctx context.Context, opts *ports.LimitOffsetQueryOptions)
 		Str("buID", opts.TenantOpts.BuID.String()).
 		Str("userID", opts.TenantOpts.UserID.String()).
 		Logger()
+
+	result, err := s.ps.HasAnyPermissions(ctx,
+		[]*services.PermissionCheck{
+			{
+				Resource:       permission.ResourceAuditEntry,
+				BusinessUnitID: opts.TenantOpts.BuID,
+				OrganizationID: opts.TenantOpts.OrgID,
+				UserID:         opts.TenantOpts.UserID,
+				Action:         permission.ActionRead,
+			},
+		},
+	)
+	if err != nil {
+		log.Error().Err(err).Msg("failed to check permissions")
+		return nil, err
+	}
+
+	if !result.Allowed {
+		return nil, errors.NewAuthorizationError("You do not have permission to read audit entries")
+	}
 
 	entities, err := s.repo.List(ctx, opts)
 	if err != nil {

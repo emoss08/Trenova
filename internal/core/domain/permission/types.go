@@ -53,9 +53,10 @@ const (
 	ResourceDocumentType      = Resource("document_type")      // Represents resources related to document types.
 
 	// Management resources
-	ResourceDispatch = Resource("dispatch")  // Represents resources for dispatch management.
-	ResourceReport   = Resource("report")    // Represents resources for managing reports.
-	ResourceAuditLog = Resource("audit_log") // Represents resources for tracking and auditing logs.
+	ResourceDispatch   = Resource("dispatch")    // Represents resources for dispatch management.
+	ResourceReport     = Resource("report")      // Represents resources for managing reports.
+	ResourceAuditEntry = Resource("audit_entry") // Represents resources for tracking and auditing logs.
+	ResourceAuditLog   = Resource("audit_log")   // Represents resources for tracking and auditing logs.
 
 	// System resources
 	ResourceTableConfiguration = Resource("table_configuration") // Represents resources for managing table configurations.
@@ -400,7 +401,13 @@ var (
 			BaseActions,
 			ActionExport,
 		),
+		// * TODO(Wolfred): We need to remove this one
 		ResourceAuditLog: {
+			ActionRead,
+			ActionExport,
+			ActionManage,
+		},
+		ResourceAuditEntry: {
 			ActionRead,
 			ActionExport,
 			ActionManage,

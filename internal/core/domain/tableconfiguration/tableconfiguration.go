@@ -51,12 +51,12 @@ type Configuration struct {
 	UserID         pulid.ID `json:"userId" bun:"user_id,type:VARCHAR(100),notnull"`
 
 	// Core fields
-	Name            string      `json:"name" bun:"name,type:VARCHAR(255),notnull"`
-	Description     string      `json:"description" bun:"description,type:TEXT"`
-	TableIdentifier string      `json:"tableIdentifier" bun:"table_identifier,type:VARCHAR(100),notnull"`
-	TableConfig     TableConfig `json:"tableConfig" bun:"table_config,type:JSONB,notnull"`
-	Visibility      Visibility  `json:"visibility" bun:"visibility,type:configuration_visibility_enum,notnull,default:'Private'"`
-	IsDefault       bool        `json:"isDefault" bun:"is_default,type:BOOLEAN,notnull,default:false"`
+	Name        string      `json:"name" bun:"name,type:VARCHAR(255),notnull"`
+	Description string      `json:"description" bun:"description,type:TEXT"`
+	Resource    string      `json:"resource" bun:"resource,type:VARCHAR(100),notnull"`
+	TableConfig TableConfig `json:"tableConfig" bun:"table_config,type:JSONB,notnull"`
+	Visibility  Visibility  `json:"visibility" bun:"visibility,type:configuration_visibility_enum,notnull,default:'Private'"`
+	IsDefault   bool        `json:"isDefault" bun:"is_default,type:BOOLEAN,notnull,default:false"`
 
 	// Metadata
 	Version   int64 `json:"version" bun:"version,type:BIGINT,notnull,default:0"`
@@ -76,8 +76,8 @@ func (c *Configuration) Validate(ctx context.Context, multiErr *errors.MultiErro
 			validation.Required.Error("Name is required"),
 			validation.Length(1, 255).Error("Name must be between 1 and 255 characters"),
 		),
-		validation.Field(&c.TableIdentifier,
-			validation.Required.Error("Table identifier is required"),
+		validation.Field(&c.Resource,
+			validation.Required.Error("Resource is required"),
 		),
 		validation.Field(&c.TableConfig,
 			validation.Required.Error("Table configuration is required"),
@@ -116,6 +116,10 @@ func (c *Configuration) GetTableName() string {
 
 func (c *Configuration) GetTableAlias() string {
 	return "tc"
+}
+
+func (c *Configuration) GetID() string {
+	return c.ID.String()
 }
 
 func (c *Configuration) GetPostgresSearchConfig() infra.PostgresSearchConfig {

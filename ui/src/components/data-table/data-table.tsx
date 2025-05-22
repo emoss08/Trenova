@@ -11,7 +11,7 @@ import {
   getPaginationRowModel,
   RowSelectionState,
   useReactTable,
-  VisibilityState
+  VisibilityState,
 } from "@tanstack/react-table";
 import { useLocalStorage } from "@uidotdev/usehooks";
 import { useQueryStates } from "nuqs";
@@ -58,13 +58,13 @@ export function DataTable<TData extends Record<string, any>>({
   const { can } = usePermissions();
   const [columnVisibility, setColumnVisibility] =
     useLocalStorage<VisibilityState>(
-      `${name.toLowerCase()}-column-visibility`,
+      `${resource.toLowerCase()}-column-visibility`,
       {},
     );
 
   // Fetch persisted table configuration from the server
   const { data: tableConfig } = useQuery({
-    ...queries.tableConfiguration.get(name),
+    ...queries.tableConfiguration.get(resource),
   });
 
   // On first successful fetch, hydrate the local column visibility if there is

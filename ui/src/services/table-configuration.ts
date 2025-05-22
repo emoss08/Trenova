@@ -1,4 +1,5 @@
 import { http } from "@/lib/http-client";
+import type { Resource } from "@/types/audit-entry";
 import type { LimitOffsetResponse } from "@/types/server";
 import type {
   TableConfig,
@@ -10,10 +11,10 @@ export class TableConfigurationAPI {
    * Fetch the table configuration for the given identifier. If none exists, the
    * API should create a default record and return it.
    */
-  async get(tableIdentifier: string) {
+  async get(resource: Resource) {
     try {
       const { data } = await http.get<TableConfiguration>(
-        `/table-configurations/${tableIdentifier}/`,
+        `/table-configurations/${resource}/`,
       );
       return data;
     } catch (error: any) {
@@ -24,9 +25,9 @@ export class TableConfigurationAPI {
     }
   }
 
-  async listUserConfigurations(tableIdentifier: string) {
+  async listUserConfigurations(resource: Resource) {
     const { data } = await http.get<LimitOffsetResponse<TableConfiguration>>(
-      `/table-configurations/me/${tableIdentifier}`,
+      `/table-configurations/me/${resource}`,
     );
 
     return data;
@@ -48,7 +49,7 @@ export class TableConfigurationAPI {
    */
   async create(payload: {
     name: string;
-    tableIdentifier: string;
+    resource: Resource;
     visibility: "Private" | "Public" | "Shared";
     tableConfig: TableConfig;
   }) {

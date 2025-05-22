@@ -9,8 +9,8 @@ export default function AuditLogTable() {
 
   return (
     <DataTable<AuditEntry>
-      resource={Resource.AuditEntries}
-      name="Audit Log"
+      resource={Resource.AuditEntry}
+      name="Audit Entry"
       link="/audit-logs/"
       includeOptions={false}
       queryKey="audit-log-list"

@@ -1,3 +1,4 @@
+import { Resource } from "@/types/audit-entry";
 import { Visibility } from "@/types/table-configuration";
 import { z } from "zod";
 
@@ -18,7 +19,7 @@ export const tableConfigurationSchema = z.object({
   // * Code Fields
   name: z.string().min(1, "Name is required"),
   description: z.string().optional(),
-  tableIdentifier: z.string().min(1, "Table identifier is required"),
+  resource: z.nativeEnum(Resource),
   tableConfig: tableConfigSchema,
   visibility: z.nativeEnum(Visibility),
   isDefault: z.boolean(),

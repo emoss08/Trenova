@@ -13,6 +13,7 @@ import { Switch } from "@/components/ui/switch";
 import { queries } from "@/lib/queries";
 import { toSentenceCase, toTitleCase } from "@/lib/utils";
 import { useTableStore } from "@/stores/table-store";
+import type { Resource } from "@/types/audit-entry";
 import { DataTableCreateButtonProps } from "@/types/data-table";
 import { faPlus, faSearch } from "@fortawesome/pro-regular-svg-icons";
 import { faColumns } from "@fortawesome/pro-solid-svg-icons";
@@ -126,7 +127,7 @@ export const DataTableCreateButton = memo(function DataTableCreateButton({
   );
 });
 
-export function DataTableViewOptions({ name }: { name: string }) {
+export function DataTableViewOptions({ resource }: { resource: Resource }) {
   const [open, setOpen] = useState(false);
   const [showConfigurationList, setShowConfigurationList] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
@@ -164,7 +165,7 @@ export function DataTableViewOptions({ name }: { name: string }) {
   );
 
   const { data: serverConfig } = useQuery({
-    ...queries.tableConfiguration.get(name),
+    ...queries.tableConfiguration.get(resource),
   });
 
   const visibilityState = table.getState().columnVisibility;
@@ -263,7 +264,7 @@ export function DataTableViewOptions({ name }: { name: string }) {
                   className="p-1 w-full"
                 >
                   <TableConfigurationList
-                    name={name}
+                    resource={resource}
                     open={showConfigurationList}
                   />
                 </PopoverContent>
@@ -282,7 +283,7 @@ export function DataTableViewOptions({ name }: { name: string }) {
       <CreateTableConfigurationModal
         open={showCreateModal}
         onOpenChange={setShowCreateModal}
-        table={name}
+        resource={resource}
         visiblityState={visibilityState}
       />
     </>

@@ -164,18 +164,18 @@ export const queries = createQueryKeyStore({
     }),
   },
   tableConfiguration: {
-    listUserConfigurations: (tableIdentifier: string) => ({
-      queryKey: ["table-configuration", tableIdentifier],
+    listUserConfigurations: (resource: Resource) => ({
+      queryKey: ["table-configuration", resource],
       queryFn: async () =>
-        api.tableConfigurations.listUserConfigurations(tableIdentifier),
+        api.tableConfigurations.listUserConfigurations(resource),
     }),
-    get: (tableIdentifier: string) => ({
-      queryKey: ["table-configuration", tableIdentifier],
-      queryFn: async () => api.tableConfigurations.get(tableIdentifier),
+    get: (resource: Resource) => ({
+      queryKey: ["table-configuration", resource],
+      queryFn: async () => api.tableConfigurations.get(resource),
     }),
     create: (payload: {
       name: string;
-      tableIdentifier: string;
+      resource: Resource;
       visibility: "Private" | "Public" | "Shared";
       tableConfig: TableConfig;
     }) => ({

@@ -5,6 +5,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Skeleton } from "@/components/ui/skeleton";
 import { queries } from "@/lib/queries";
 import { api } from "@/services/api";
+import type { Resource } from "@/types/audit-entry";
 import type { TableConfiguration } from "@/types/table-configuration";
 import { faSearch } from "@fortawesome/pro-regular-svg-icons";
 import { faSpinner, faTrash } from "@fortawesome/pro-solid-svg-icons";
@@ -46,16 +47,16 @@ const TableConfigurationListHeader = memo(
 );
 
 export function TableConfigurationList({
-  name,
+  resource,
   open,
 }: {
-  name: string;
+  resource: Resource;
   open: boolean;
 }) {
   const [searchQuery, setSearchQuery] = useState<string>("");
   const { data: userConfigurations, isLoading: isLoadingUserConfigurations } =
     useQuery({
-      ...queries.tableConfiguration.listUserConfigurations(name),
+      ...queries.tableConfiguration.listUserConfigurations(resource),
       enabled: open,
     });
 

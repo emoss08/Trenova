@@ -8,9 +8,11 @@ import (
 	"github.com/emoss08/trenova/internal/core/ports"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/core/services/audit"
 	"github.com/emoss08/trenova/internal/pkg/ctx"
 	"github.com/emoss08/trenova/internal/pkg/errors"
 	"github.com/emoss08/trenova/internal/pkg/logger"
+	"github.com/emoss08/trenova/internal/pkg/utils/jsonutils"
 	"github.com/emoss08/trenova/pkg/types/pulid"
 	"github.com/rotisserie/eris"
 	"github.com/rs/zerolog"
@@ -21,23 +23,28 @@ import (
 type ServiceParams struct {
 	fx.In
 
-	Logger      *logger.Logger
-	Repo        repositories.TableConfigurationRepository
-	PermService services.PermissionService
+	Logger       *logger.Logger
+	Repo         repositories.TableConfigurationRepository
+	PermService  services.PermissionService
+	AuditService services.AuditService
 }
 
 type Service struct {
+	l    *zerolog.Logger
 	repo repositories.TableConfigurationRepository
 	ps   services.PermissionService
-	l    *zerolog.Logger
+	as   services.AuditService
 }
 
 func NewService(p ServiceParams) *Service {
-	log := p.Logger.With().Str("service", "tableconfiguration").Logger()
+	log := p.Logger.With().
+		Str("service", "tableconfiguration").
+		Logger()
 
 	return &Service{
 		repo: p.Repo,
 		ps:   p.PermService,
+		as:   p.AuditService,
 		l:    &log,
 	}
 }
@@ -118,12 +125,29 @@ func (s *Service) Create(ctx context.Context, config *tcdomain.Configuration) (*
 		}
 	}
 
-	if err = s.repo.Create(ctx, config); err != nil {
+	createdEntity, err := s.repo.Create(ctx, config)
+	if err != nil {
 		log.Error().Err(err).Msg("failed to create table configuration")
 		return nil, eris.Wrap(err, "create configuration")
 	}
 
-	return config, nil
+	err = s.as.LogAction(
+		&services.LogActionParams{
+			Resource:       permission.ResourceTableConfiguration,
+			ResourceID:     createdEntity.GetID(),
+			Action:         permission.ActionCreate,
+			UserID:         config.UserID,
+			CurrentState:   jsonutils.MustToJSON(createdEntity),
+			BusinessUnitID: config.BusinessUnitID,
+			OrganizationID: config.OrganizationID,
+		},
+		audit.WithComment("Table configuration created"),
+	)
+	if err != nil {
+		log.Error().Err(err).Msg("failed to log table configuration creation")
+	}
+
+	return createdEntity, nil
 }
 
 func (s *Service) Update(ctx context.Context, config *tcdomain.Configuration) error {
@@ -357,9 +381,9 @@ func (s *Service) GetUserConfigurations(ctx context.Context, tableID string, opt
 // GetDefaultOrLatestConfiguration retrieves a configuration for the given table identifier and current user.
 // If none exists it will create a new one with a minimal default payload so the
 // client always receives a valid configuration object.
-func (s *Service) GetDefaultOrLatestConfiguration(ctx context.Context, tableIdentifier string, rCtx *ctx.RequestContext) (*tcdomain.Configuration, error) {
+func (s *Service) GetDefaultOrLatestConfiguration(ctx context.Context, resource string, rCtx *ctx.RequestContext) (*tcdomain.Configuration, error) {
 	// First attempt to find an existing configuration for this user/org/bu + table
-	config, err := s.repo.GetDefaultOrLatestConfiguration(ctx, tableIdentifier, &repositories.TableConfigurationFilters{
+	config, err := s.repo.GetDefaultOrLatestConfiguration(ctx, resource, &repositories.TableConfigurationFilters{
 		Base: &ports.FilterQueryOptions{
 			OrgID:  rCtx.OrgID,
 			BuID:   rCtx.BuID,

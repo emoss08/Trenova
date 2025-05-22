@@ -260,9 +260,9 @@ export function AuditEntryResourceBadge({
       variant: "pink",
       text: "Report",
     },
-    [Resource.AuditEntries]: {
+    [Resource.AuditEntry]: {
       variant: "pink",
-      text: "Audit Log",
+      text: "Audit Entry",
     },
     [Resource.TableConfiguration]: {
       variant: "pink",

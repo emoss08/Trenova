@@ -15,7 +15,7 @@ CREATE TABLE IF NOT EXISTS "table_configurations"(
     -- Core Fields
     "name" varchar(255) NOT NULL,
     "description" text,
-    "table_identifier" varchar(100) NOT NULL,
+    "resource" varchar(100) NOT NULL,
     "table_config" jsonb NOT NULL,
     "visibility" configuration_visibility_enum NOT NULL DEFAULT 'Private',
     "is_default" boolean NOT NULL DEFAULT FALSE,
@@ -32,7 +32,7 @@ CREATE TABLE IF NOT EXISTS "table_configurations"(
 );
 
 -- Disallow multiple default configurations for the same user
-CREATE UNIQUE INDEX "idx_table_configurations_default" ON "table_configurations"("user_id", "is_default")
+CREATE UNIQUE INDEX "idx_table_configurations_default" ON "table_configurations"("user_id", "resource", "is_default")
 WHERE
     "is_default" = TRUE;
 
@@ -42,7 +42,7 @@ CREATE INDEX "idx_table_configurations_organization" ON "table_configurations"("
 
 CREATE INDEX "idx_table_configurations_user_id" ON "table_configurations"("user_id");
 
-CREATE INDEX "idx_table_configurations_table_id" ON "table_configurations"("table_identifier");
+CREATE INDEX "idx_table_configurations_resource" ON "table_configurations"("resource");
 
 CREATE INDEX "idx_table_configurations_visibility" ON "table_configurations"("visibility");
 

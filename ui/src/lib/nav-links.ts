@@ -410,7 +410,7 @@ export const routes: RouteInfo[] = [
         supportsModal: false,
       },
       {
-        key: Resource.AuditEntries,
+        key: Resource.AuditEntry,
         label: "Audit Entries",
         link: "/organization/audit-entries/",
         supportsModal: false,

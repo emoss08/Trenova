@@ -1,4 +1,4 @@
-package repositories
+package resourceeditorrepo
 
 import (
 	"context"
@@ -20,19 +20,19 @@ import (
 	"go.uber.org/fx"
 )
 
-// ResourceEditorRepositoryParams defines dependencies required for initializing the ResourceEditorRepository.
+// RepositoryParams defines dependencies required for initializing the ResourceEditorRepository.
 // This includes database connection, logger, and resource editor repository.
-type ResourceEditorRepositoryParams struct {
+type RepositoryParams struct {
 	fx.In
 
 	DB     db.Connection
 	Logger *logger.Logger
 }
 
-// resourceEditorRepository implements the ResourceEditorRepository interface
+// repository implements the ResourceEditorRepository interface
 // and provides methods to manage resource editor, including fetching table schema,
 // columns, indexes, and constraints.
-type resourceEditorRepository struct {
+type repository struct {
 	db     db.Connection
 	logger *zerolog.Logger
 }
@@ -105,19 +105,19 @@ func parseTableAliases(query string) map[string]tableAlias {
 	return aliasMap
 }
 
-// NewResourceEditorRepository initializes a new instance of resourceEditorRepository with its dependencies.
+// NewRepository initializes a new instance of resourceEditorRepository with its dependencies.
 //
 // Parameters:
-//   - p: ResourceEditorRepositoryParams containing dependencies.
+//   - p: RepositoryParams containing dependencies.
 //
 // Returns:
 //   - repositories.ResourceEditorRepository: A ready-to-use resource editor repository instance.
-func NewResourceEditorRepository(p ResourceEditorRepositoryParams) repositories.ResourceEditorRepository {
+func NewRepository(p RepositoryParams) repositories.ResourceEditorRepository {
 	log := p.Logger.With().
 		Str("repository", "resourceeditor").
 		Logger()
 
-	return &resourceEditorRepository{
+	return &repository{
 		db:     p.DB,
 		logger: &log,
 	}
@@ -131,7 +131,7 @@ func NewResourceEditorRepository(p ResourceEditorRepositoryParams) repositories.
 //
 // Returns:
 //   - *repositories.SchemaInformation: The schema information for the given schema name.
-func (r *resourceEditorRepository) GetTableSchema(ctx context.Context, schemaName string) (*repositories.SchemaInformation, error) {
+func (r *repository) GetTableSchema(ctx context.Context, schemaName string) (*repositories.SchemaInformation, error) {
 	dba, err := r.db.DB(ctx)
 	if err != nil {
 		r.logger.Error().Err(err).Msg("Failed to get database connection")
@@ -222,7 +222,7 @@ func (r *resourceEditorRepository) GetTableSchema(ctx context.Context, schemaNam
 // Returns:
 //   - []repositories.ColumnDetails: The column details for the given table.
 //   - error: An error if the operation fails.
-func (r *resourceEditorRepository) fetchColumnsForTable(ctx context.Context, schemaName string, tableName string) ([]repositories.ColumnDetails, error) {
+func (r *repository) fetchColumnsForTable(ctx context.Context, schemaName string, tableName string) ([]repositories.ColumnDetails, error) {
 	dba, err := r.db.DB(ctx)
 	if err != nil {
 		r.logger.Error().Err(err).Msg("Failed to get database connection")
@@ -313,7 +313,7 @@ func (r *resourceEditorRepository) fetchColumnsForTable(ctx context.Context, sch
 // Returns:
 //   - []repositories.IndexDetails: The index details for the given table.
 //   - error: An error if the operation fails.
-func (r *resourceEditorRepository) fetchIndexesForTable(ctx context.Context, schemaName string, tableName string) ([]repositories.IndexDetails, error) {
+func (r *repository) fetchIndexesForTable(ctx context.Context, schemaName string, tableName string) ([]repositories.IndexDetails, error) {
 	dba, err := r.db.DB(ctx)
 	if err != nil {
 		r.logger.Error().Err(err).Msg("Failed to get database connection")
@@ -360,7 +360,7 @@ func (r *resourceEditorRepository) fetchIndexesForTable(ctx context.Context, sch
 			return nil, eris.Wrap(err, "scanning index row failed")
 		}
 
-		// Ensure indexName, indexDef, and columnName are valid
+		// * Ensure indexName, indexDef, and columnName are valid
 		if !indexName.Valid || !indexDef.Valid || !columnName.Valid {
 			r.logger.Warn().Msg("Skipping index row due to NULL essential fields (indexName, indexDef, or columnName)")
 			continue
@@ -405,7 +405,7 @@ func (r *resourceEditorRepository) fetchIndexesForTable(ctx context.Context, sch
 // Returns:
 //   - []repositories.ConstraintDetails: The constraint details for the given table.
 //   - error: An error if the operation fails.
-func (r *resourceEditorRepository) fetchConstraintsForTable(ctx context.Context, schemaName string, tableName string) ([]repositories.ConstraintDetails, error) {
+func (r *repository) fetchConstraintsForTable(ctx context.Context, schemaName string, tableName string) ([]repositories.ConstraintDetails, error) {
 	constraintsMap := make(map[string]*repositories.ConstraintDetails)
 	var orderedConstraintNames []string
 
@@ -413,14 +413,12 @@ func (r *resourceEditorRepository) fetchConstraintsForTable(ctx context.Context,
 		return nil, err
 	}
 
-	// Enhance FKs with foreign table/column details
 	if err := r.fetchForeignKeyDetails(ctx, schemaName, tableName, constraintsMap); err != nil {
-		return nil, err // Error already wrapped in helper
+		return nil, err
 	}
 
-	// Fetch CHECK constraints
 	if err := r.fetchCheckConstraints(ctx, schemaName, tableName, constraintsMap, &orderedConstraintNames); err != nil {
-		return nil, err // Error already wrapped in helper
+		return nil, err
 	}
 
 	var finalConstraints []repositories.ConstraintDetails
@@ -443,7 +441,7 @@ func (r *resourceEditorRepository) fetchConstraintsForTable(ctx context.Context,
 //
 // Returns:
 //   - error: An error if the operation fails.
-func (r *resourceEditorRepository) fetchCheckConstraints(
+func (r *repository) fetchCheckConstraints(
 	ctx context.Context,
 	schemaName string,
 	tableName string,
@@ -490,12 +488,12 @@ func (r *resourceEditorRepository) fetchCheckConstraints(
 				Deferrable:        isDeferrableStr == string(resourcesqltype.KeywordYes),
 				InitiallyDeferred: initiallyDeferredStr == string(resourcesqltype.KeywordYes),
 			}
-			*orderedConstraintNames = append(*orderedConstraintNames, consName) // Add if it's a new constraint
+			*orderedConstraintNames = append(*orderedConstraintNames, consName) // * Add if it's a new constraint
 		} else {
 			// * This case should ideally not be hit if CHECK constraints are always in table_constraints
 			// * but if it is, update the existing entry.
 			constraintsMap[consName].CheckClause = &checkClause
-			constraintsMap[consName].ConstraintType = resourcesqltype.Check.String() // Ensure type is correct
+			constraintsMap[consName].ConstraintType = resourcesqltype.Check.String() // * Ensure type is correct
 		}
 	}
 	if err = checkRows.Err(); err != nil {
@@ -522,7 +520,7 @@ func (r *resourceEditorRepository) fetchCheckConstraints(
 //
 // Returns:
 //   - error: An error if the operation fails.
-func (r *resourceEditorRepository) fetchForeignKeyDetails(
+func (r *repository) fetchForeignKeyDetails(
 	ctx context.Context,
 	schemaName string,
 	tableName string,
@@ -594,7 +592,7 @@ func (r *resourceEditorRepository) fetchForeignKeyDetails(
 }
 
 // fetchKeyConstraints fetches PRIMARY KEY, FOREIGN KEY, and UNIQUE constraint information.
-func (r *resourceEditorRepository) fetchKeyConstraints(
+func (r *repository) fetchKeyConstraints(
 	ctx context.Context,
 	schemaName string,
 	tableName string,
@@ -671,7 +669,7 @@ func (r *resourceEditorRepository) fetchKeyConstraints(
 //   - aliasMap: A map of table aliases to their corresponding table information.
 //   - response: The autocomplete response to which suggestions will be added.
 //   - columnHighScore: The score to use for column suggestions.
-func (r *resourceEditorRepository) handleDotNotation(ctx context.Context, req repositories.AutocompleteRequest, aliasMap map[string]tableAlias, response *repositories.AutocompleteResponse, columnHighScore int) {
+func (r *repository) handleDotNotation(ctx context.Context, req repositories.AutocompleteRequest, aliasMap map[string]tableAlias, response *repositories.AutocompleteResponse, columnHighScore int) {
 	dotIdx := strings.LastIndex(req.Prefix, ".")
 	if dotIdx == -1 {
 		return
@@ -717,7 +715,7 @@ func (r *resourceEditorRepository) handleDotNotation(ctx context.Context, req re
 // Returns:
 //   - *repositories.AutocompleteResponse: The autocomplete response containing the suggestions.
 //   - error: An error if the operation fails.
-func (r *resourceEditorRepository) GetAutocompleteSuggestions(ctx context.Context, req repositories.AutocompleteRequest) (*repositories.AutocompleteResponse, error) {
+func (r *repository) GetAutocompleteSuggestions(ctx context.Context, req repositories.AutocompleteRequest) (*repositories.AutocompleteResponse, error) {
 	dba, err := r.db.DB(ctx)
 	if err != nil {
 		r.logger.Error().Err(err).Msg("Failed to get database connection for autocomplete")
@@ -812,7 +810,7 @@ func (r *resourceEditorRepository) GetAutocompleteSuggestions(ctx context.Contex
 //
 // Returns:
 //   - error: An error if the operation fails.
-func (r *resourceEditorRepository) addContextualSuggestions(
+func (r *repository) addContextualSuggestions(
 	ctx context.Context,
 	req repositories.AutocompleteRequest,
 	response *repositories.AutocompleteResponse,
@@ -851,7 +849,7 @@ func (r *resourceEditorRepository) addContextualSuggestions(
 //
 // Returns:
 //   - error: An error if the operation fails.
-func (r *resourceEditorRepository) addTableSuggestions(
+func (r *repository) addTableSuggestions(
 	ctx context.Context,
 	req repositories.AutocompleteRequest,
 	response *repositories.AutocompleteResponse,
@@ -894,7 +892,7 @@ func (r *resourceEditorRepository) addTableSuggestions(
 //
 // Returns:
 //   - int: The score for the table suggestion.
-func (r *resourceEditorRepository) determineTableScore(baseScore int, inSelectList bool, lastKeyword string) int {
+func (r *repository) determineTableScore(baseScore int, inSelectList bool, lastKeyword string) int {
 	if !inSelectList && resourcesqltype.IsTableFocusedContext(lastKeyword) {
 		return 120 // * raise score when context expects a table name
 	}
@@ -910,7 +908,7 @@ func (r *resourceEditorRepository) determineTableScore(baseScore int, inSelectLi
 //
 // Returns:
 //   - error: An error if the operation fails.
-func (r *resourceEditorRepository) addTableSuggestion(response *repositories.AutocompleteResponse, tableName string, score int) {
+func (r *repository) addTableSuggestion(response *repositories.AutocompleteResponse, tableName string, score int) {
 	response.Suggestions = append(response.Suggestions, repositories.AutocompleteSuggestion{
 		Value:   tableName,
 		Caption: tableName,
@@ -930,7 +928,7 @@ func (r *resourceEditorRepository) addTableSuggestion(response *repositories.Aut
 //
 // Returns:
 //   - error: An error if the operation fails.
-func (r *resourceEditorRepository) addColumnSuggestions(
+func (r *repository) addColumnSuggestions(
 	ctx context.Context,
 	req repositories.AutocompleteRequest,
 	response *repositories.AutocompleteResponse,
@@ -958,7 +956,7 @@ func (r *resourceEditorRepository) addColumnSuggestions(
 //
 // Returns:
 //   - error: An error if the operation fails.
-func (r *resourceEditorRepository) addColumnsFromAliases(
+func (r *repository) addColumnsFromAliases(
 	ctx context.Context,
 	req repositories.AutocompleteRequest,
 	response *repositories.AutocompleteResponse,
@@ -994,7 +992,7 @@ func (r *resourceEditorRepository) addColumnsFromAliases(
 //
 // Returns:
 //   - error: An error if the operation fails.
-func (r *resourceEditorRepository) addColumnsFromTableName(
+func (r *repository) addColumnsFromTableName(
 	ctx context.Context,
 	req repositories.AutocompleteRequest,
 	response *repositories.AutocompleteResponse,
@@ -1027,7 +1025,7 @@ func (r *resourceEditorRepository) addColumnsFromTableName(
 //
 // Returns:
 //   - error: An error if the operation fails.
-func (r *resourceEditorRepository) addColumnIfRelevant(
+func (r *repository) addColumnIfRelevant(
 	req repositories.AutocompleteRequest,
 	response *repositories.AutocompleteResponse,
 	columnAdded map[string]struct{},
@@ -1044,7 +1042,7 @@ func (r *resourceEditorRepository) addColumnIfRelevant(
 
 	response.Suggestions = append(response.Suggestions, repositories.AutocompleteSuggestion{
 		Value:   columnName,
-		Caption: columnName + " (" + dataType + ")",
+		Caption: fmt.Sprintf("%s (%s)", columnName, dataType),
 		Meta:    "column",
 		Score:   score,
 	})
@@ -1060,7 +1058,7 @@ func (r *resourceEditorRepository) addColumnIfRelevant(
 // Returns:
 //   - string: The text before the prefix.
 //   - bool: Whether the cursor is in a SELECT list.
-func (r *resourceEditorRepository) parseQueryContext(req repositories.AutocompleteRequest) (string, bool) {
+func (r *repository) parseQueryContext(req repositories.AutocompleteRequest) (string, bool) {
 	// * Determine the portion of the query that appears *before* the current prefix being typed.
 	// * We can't rely on the prefix being at the very end of CurrentQuery, so we look for the last
 	// * occurrence (case-insensitive) of the prefix and slice everything before that index.
@@ -1085,7 +1083,7 @@ func (r *resourceEditorRepository) parseQueryContext(req repositories.Autocomple
 //
 // Returns:
 //   - bool: Whether the cursor is in a SELECT list.
-func (r *resourceEditorRepository) isInSelectList(query string, cursorPos int) bool {
+func (r *repository) isInSelectList(query string, cursorPos int) bool {
 	// * Heuristic to decide if the user is editing the SELECT list (columns).
 	// * 1. If the last non-space char before the cursor is a comma, we assume they are adding another column.
 	// * 2. Otherwise, if SELECT appears before the cursor and the first FROM after that SELECT is located *after* the cursor (or absent), we are still in the list.
@@ -1141,7 +1139,7 @@ func (r *resourceEditorRepository) isInSelectList(query string, cursorPos int) b
 //
 // Returns:
 //   - string: The last significant SQL keyword.
-func (r *resourceEditorRepository) extractLastKeyword(queryText string) string {
+func (r *repository) extractLastKeyword(queryText string) string {
 	tokens := strings.Fields(queryText)
 	lastKeyword := ""
 	if len(tokens) > 0 {
@@ -1177,7 +1175,7 @@ func (r *resourceEditorRepository) extractLastKeyword(queryText string) string {
 // Parameters:
 //   - req: The autocomplete request containing the current query and prefix.
 //   - response: The autocomplete response to which suggestions will be added.
-func (r *resourceEditorRepository) addKeywordSuggestions(req repositories.AutocompleteRequest, response *repositories.AutocompleteResponse) {
+func (r *repository) addKeywordSuggestions(req repositories.AutocompleteRequest, response *repositories.AutocompleteResponse) {
 	for _, kw := range resourcesqltype.AvailableKeywords {
 		if strings.HasPrefix(strings.ToUpper(kw.String()), strings.ToUpper(req.Prefix)) || req.Prefix == "" {
 			response.Suggestions = append(response.Suggestions, repositories.AutocompleteSuggestion{
@@ -1195,7 +1193,7 @@ func (r *resourceEditorRepository) addKeywordSuggestions(req repositories.Autoco
 // Parameters:
 //   - req: The autocomplete request containing the current query and prefix.
 //   - response: The autocomplete response to which suggestions will be added.
-func (r *resourceEditorRepository) addSchemaSuggestions(req repositories.AutocompleteRequest, response *repositories.AutocompleteResponse) {
+func (r *repository) addSchemaSuggestions(req repositories.AutocompleteRequest, response *repositories.AutocompleteResponse) {
 	if req.SchemaName != "" && (strings.HasPrefix(strings.ToLower(req.SchemaName), strings.ToLower(req.Prefix)) || req.Prefix == "") {
 		response.Suggestions = append(response.Suggestions, repositories.AutocompleteSuggestion{
 			Value:   req.SchemaName,
@@ -1215,7 +1213,7 @@ func (r *resourceEditorRepository) addSchemaSuggestions(req repositories.Autocom
 // Returns:
 //   - *repositories.ExecuteQueryResponse: The execute query response containing the result.
 //   - error: An error if the operation fails.
-func (r *resourceEditorRepository) ExecuteSQLQuery(ctx context.Context, req repositories.ExecuteQueryRequest) (*repositories.ExecuteQueryResponse, error) {
+func (r *repository) ExecuteSQLQuery(ctx context.Context, req repositories.ExecuteQueryRequest) (*repositories.ExecuteQueryResponse, error) {
 	log := r.logger.With().
 		Str("operation", "ExecuteSQLQuery").
 		Str("query", req.Query).
@@ -1243,7 +1241,7 @@ func (r *resourceEditorRepository) ExecuteSQLQuery(ctx context.Context, req repo
 // Returns:
 //   - repositories.QueryResult: The query result.
 //   - error: An error if the operation fails.
-func (r *resourceEditorRepository) executeQueryAndProcessResults(ctx context.Context, query string) (repositories.QueryResult, error) {
+func (r *repository) executeQueryAndProcessResults(ctx context.Context, query string) (repositories.QueryResult, error) {
 	dba, err := r.db.DB(ctx)
 	if err != nil {
 		r.logger.Error().Err(err).Msg("Failed to get database connection")
@@ -1278,7 +1276,7 @@ func (r *resourceEditorRepository) executeQueryAndProcessResults(ctx context.Con
 //
 // Returns:
 //   - error: An error if the operation fails.
-func (r *resourceEditorRepository) processQueryInTransaction(ctx context.Context, tx bun.Tx, query string, result *repositories.QueryResult, resultsData *[][]any) error {
+func (r *repository) processQueryInTransaction(ctx context.Context, tx bun.Tx, query string, result *repositories.QueryResult, resultsData *[][]any) error {
 	rows, err := tx.QueryContext(ctx, query)
 	if err != nil {
 		return err
@@ -1324,7 +1322,7 @@ func (r *resourceEditorRepository) processQueryInTransaction(ctx context.Context
 //   - result: The query result.
 //   - resultsData: The data from the query result.
 //   - query: The query to execute.
-func (r *resourceEditorRepository) setResultMessage(ctx context.Context, result *repositories.QueryResult, resultsData [][]any, query string) {
+func (r *repository) setResultMessage(ctx context.Context, result *repositories.QueryResult, resultsData [][]any, query string) {
 	dba, err := r.db.DB(ctx)
 	if err != nil {
 		r.logger.Error().Err(err).Msg("Failed to get database connection")

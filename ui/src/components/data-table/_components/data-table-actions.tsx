@@ -27,7 +27,7 @@ export default function DataTableActions({
 
   return (
     <DataTableActionsInner>
-      <DataTableViewOptions name={name} />
+      <DataTableViewOptions resource={resource} />
       {can(resource, Action.Create) ? (
         <>
           <Separator className="h-6 w-px bg-border" orientation="vertical" />

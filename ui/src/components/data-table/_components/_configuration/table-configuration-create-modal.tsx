@@ -3,6 +3,7 @@ import {
   tableConfigurationSchema,
   type TableConfigurationSchema,
 } from "@/lib/schemas/table-configuration-schema";
+import type { Resource } from "@/types/audit-entry";
 import { TableSheetProps } from "@/types/data-table";
 import { Visibility } from "@/types/table-configuration";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -12,14 +13,14 @@ import { useForm } from "react-hook-form";
 import { TableConfigurationForm } from "./table-configuration-form";
 
 type CreateTableConfigurationModalProps = TableSheetProps & {
-  table: string;
+  resource: Resource;
   visiblityState: VisibilityState;
 };
 
 export function CreateTableConfigurationModal({
   open,
   onOpenChange,
-  table,
+  resource,
   visiblityState,
 }: CreateTableConfigurationModalProps) {
   const form = useForm<TableConfigurationSchema>({
@@ -29,7 +30,7 @@ export function CreateTableConfigurationModal({
       description: "",
       visibility: Visibility.Private,
       isDefault: false,
-      tableIdentifier: table,
+      resource: resource,
       tableConfig: {
         columnVisibility: visiblityState,
       },
