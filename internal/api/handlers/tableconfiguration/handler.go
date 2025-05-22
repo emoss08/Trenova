@@ -35,34 +35,32 @@ func (h *Handler) RegisterRoutes(r fiber.Router, rl *middleware.RateLimiter) {
 
 	api.Get("/", rl.WithRateLimit(
 		[]fiber.Handler{h.list},
-		middleware.PerMinute(60), // 60 reads per minute
+		middleware.PerMinute(120), // 120 reads per minute
 	)...)
 
 	api.Get("/me/:resource", rl.WithRateLimit(
 		[]fiber.Handler{h.listUserConfigurations},
-		middleware.PerMinute(60),
+		middleware.PerSecond(5), // 5 reads per second
 	)...)
 
 	api.Post("/", rl.WithRateLimit(
 		[]fiber.Handler{h.create},
-		middleware.PerMinute(60),
+		middleware.PerSecond(3), // 3 writes per second
 	)...)
 
-	// Retrieve or create configuration for current user by table identifier
 	api.Get(":resource", rl.WithRateLimit(
 		[]fiber.Handler{h.getDefaultOrLatestConfiguration},
-		middleware.PerMinute(60),
+		middleware.PerSecond(10), // 10 reads per second
 	)...)
 
-	// Partial update of configuration JSON blob
-	api.Patch(":configID", rl.WithRateLimit(
-		[]fiber.Handler{h.patch},
-		middleware.PerMinute(60),
+	api.Put(":configID", rl.WithRateLimit(
+		[]fiber.Handler{h.update},
+		middleware.PerSecond(3), // 3 writes per second
 	)...)
 
 	api.Delete(":configID", rl.WithRateLimit(
 		[]fiber.Handler{h.delete},
-		middleware.PerMinute(60),
+		middleware.PerSecond(5), // 5 writes per second
 	)...)
 }
 
@@ -138,8 +136,6 @@ func (h *Handler) create(c *fiber.Ctx) error {
 	return c.JSON(created)
 }
 
-// getDefaultOrLatestConfiguration returns a configuration for the given tableIdentifier
-// If none exists for the requesting user + org + bu, it will create a default one.
 func (h *Handler) getDefaultOrLatestConfiguration(c *fiber.Ctx) error {
 	reqCtx, err := ctx.WithRequestContext(c)
 	if err != nil {
@@ -159,29 +155,33 @@ func (h *Handler) getDefaultOrLatestConfiguration(c *fiber.Ctx) error {
 	return c.Status(fiber.StatusOK).JSON(config)
 }
 
-// patch allows partial updates to the tableConfig JSON blob.
-func (h *Handler) patch(c *fiber.Ctx) error {
+func (h *Handler) update(c *fiber.Ctx) error {
 	reqCtx, err := ctx.WithRequestContext(c)
 	if err != nil {
 		return h.eh.HandleError(c, err)
 	}
 
-	var payload struct {
-		TableConfig map[string]any `json:"tableConfig"`
-	}
-
-	if err = c.BodyParser(&payload); err != nil {
-		return h.eh.HandleError(c, err)
-	}
-
-	configID := c.Params("configID")
-
-	updated, err := h.ts.Patch(c.UserContext(), configID, payload.TableConfig, reqCtx)
+	configID, err := pulid.MustParse(c.Params("configID"))
 	if err != nil {
 		return h.eh.HandleError(c, err)
 	}
 
-	return c.Status(fiber.StatusOK).JSON(updated)
+	tr := new(tableconfigurationdomain.Configuration)
+	tr.ID = configID
+	tr.OrganizationID = reqCtx.OrgID
+	tr.BusinessUnitID = reqCtx.BuID
+	tr.UserID = reqCtx.UserID
+
+	if err = c.BodyParser(tr); err != nil {
+		return h.eh.HandleError(c, err)
+	}
+
+	updatedConfig, err := h.ts.Update(c.UserContext(), tr)
+	if err != nil {
+		return h.eh.HandleError(c, err)
+	}
+
+	return c.Status(fiber.StatusOK).JSON(updatedConfig)
 }
 
 func (h *Handler) delete(c *fiber.Ctx) error {

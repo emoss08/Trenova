@@ -165,12 +165,12 @@ export const queries = createQueryKeyStore({
   },
   tableConfiguration: {
     listUserConfigurations: (resource: Resource) => ({
-      queryKey: ["table-configuration", resource],
+      queryKey: ["table-configurations", resource],
       queryFn: async () =>
         api.tableConfigurations.listUserConfigurations(resource),
     }),
     get: (resource: Resource) => ({
-      queryKey: ["table-configuration", resource],
+      queryKey: ["table-configurations", resource],
       queryFn: async () => api.tableConfigurations.get(resource),
     }),
     create: (payload: {
@@ -179,11 +179,11 @@ export const queries = createQueryKeyStore({
       visibility: "Private" | "Public" | "Shared";
       tableConfig: TableConfig;
     }) => ({
-      queryKey: ["table-configuration", payload],
+      queryKey: ["table-configurations", payload],
       queryFn: async () => api.tableConfigurations.create(payload),
     }),
     patch: (id: string, tableConfig: Partial<TableConfig>) => ({
-      queryKey: ["table-configuration", id, tableConfig],
+      queryKey: ["table-configurations", id, tableConfig],
       queryFn: async () => api.tableConfigurations.patch(id, tableConfig),
     }),
   },

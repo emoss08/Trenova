@@ -1,4 +1,5 @@
 import { http } from "@/lib/http-client";
+import type { TableConfigurationSchema } from "@/lib/schemas/table-configuration-schema";
 import type { Resource } from "@/types/audit-entry";
 import type { LimitOffsetResponse } from "@/types/server";
 import type {
@@ -36,8 +37,8 @@ export class TableConfigurationAPI {
   /**
    * Partially update the table configuration JSON blob.
    */
-  async patch(id: string, tableConfig: Partial<TableConfig>) {
-    const { data } = await http.patch<TableConfiguration>(
+  async patch(id: string, tableConfig: TableConfig) {
+    const { data } = await http.patch<TableConfig>(
       `/table-configurations/${id}/`,
       { tableConfig },
     );
@@ -47,14 +48,17 @@ export class TableConfigurationAPI {
   /**
    * Create a new table configuration.
    */
-  async create(payload: {
-    name: string;
-    resource: Resource;
-    visibility: "Private" | "Public" | "Shared";
-    tableConfig: TableConfig;
-  }) {
-    const { data } = await http.post<TableConfiguration>(
+  async create(payload: TableConfigurationSchema) {
+    const { data } = await http.post<TableConfigurationSchema>(
       "/table-configurations/",
+      payload,
+    );
+    return data;
+  }
+
+  async update(id: string, payload: TableConfigurationSchema) {
+    const { data } = await http.put<TableConfigurationSchema>(
+      `/table-configurations/${id}/`,
       payload,
     );
     return data;

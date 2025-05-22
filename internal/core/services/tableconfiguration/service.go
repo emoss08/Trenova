@@ -150,7 +150,7 @@ func (s *Service) Create(ctx context.Context, config *tcdomain.Configuration) (*
 	return createdEntity, nil
 }
 
-func (s *Service) Update(ctx context.Context, config *tcdomain.Configuration) error {
+func (s *Service) Update(ctx context.Context, config *tcdomain.Configuration) (*tcdomain.Configuration, error) {
 	log := s.l.With().
 		Str("operation", "Update").
 		Str("configID", config.ID.String()).
@@ -165,7 +165,7 @@ func (s *Service) Update(ctx context.Context, config *tcdomain.Configuration) er
 		})
 	if err != nil {
 		log.Error().Err(err).Msg("failed to get existing configuration")
-		return eris.Wrap(err, "get existing configuration")
+		return nil, eris.Wrap(err, "get existing configuration")
 	}
 
 	result, err := s.ps.HasPermission(ctx,
@@ -182,19 +182,19 @@ func (s *Service) Update(ctx context.Context, config *tcdomain.Configuration) er
 		})
 	if err != nil {
 		log.Error().Err(err).Msg("failed to check update permission")
-		return eris.Wrap(err, "check update permission")
+		return nil, eris.Wrap(err, "check update permission")
 	}
 
 	if !result.Allowed {
-		return errors.NewAuthorizationError("You do not have permission to update this table configuration")
+		return nil, errors.NewAuthorizationError("You do not have permission to update this table configuration")
 	}
 
 	if err = s.repo.Update(ctx, config); err != nil {
 		log.Error().Err(err).Msg("failed to update table configuration")
-		return eris.Wrap(err, "update configuration")
+		return nil, eris.Wrap(err, "update configuration")
 	}
 
-	return nil
+	return config, nil
 }
 
 // Delete deletes a table configuration with permission checks
@@ -395,61 +395,4 @@ func (s *Service) GetDefaultOrLatestConfiguration(ctx context.Context, resource 
 	}
 
 	return config, nil
-}
-
-// Patch merges the supplied tableConfig fields into the existing JSON blob.
-//
-//nolint:gocognit // This is a patch operation, it's ok to be complex
-func (s *Service) Patch(ctx context.Context, configID string, patch map[string]any, rCtx *ctx.RequestContext) (*tcdomain.Configuration, error) {
-	id := pulid.ID(configID)
-
-	cfg, err := s.repo.GetByID(ctx, id, &repositories.TableConfigurationFilters{
-		Base: &ports.FilterQueryOptions{
-			OrgID:  rCtx.OrgID,
-			BuID:   rCtx.BuID,
-			UserID: rCtx.UserID,
-		},
-	})
-	if err != nil {
-		return nil, eris.Wrap(err, "get configuration")
-	}
-
-	// Merge the patch map into cfg.TableConfig (shallow merge)
-	for k, v := range patch {
-		switch k {
-		case "columnVisibility":
-			if vis, ok := v.(map[string]any); ok {
-				// Convert to map[string]bool
-				nm := make(map[string]bool)
-				for key, val := range vis {
-					if b, bOk := val.(bool); bOk {
-						nm[key] = b
-					}
-				}
-				cfg.TableConfig.ColumnVisibility = nm
-			}
-		case "pageSize":
-			if ps, ok := v.(float64); ok { // JSON numbers unmarshal as float64
-				cfg.TableConfig.PageSize = int(ps)
-			}
-		case "sorting":
-			if sortSlice, ok := v.([]any); ok {
-				cfg.TableConfig.Sorting = sortSlice
-			}
-		case "filters":
-			// Filters patching can be implemented later; skip for now
-		case "joinOperator":
-			if jo, ok := v.(string); ok {
-				cfg.TableConfig.JoinOperator = jo
-			}
-		default:
-			// ignore unknown keys for now
-		}
-	}
-
-	if err = s.repo.Update(ctx, cfg); err != nil {
-		return nil, eris.Wrap(err, "update configuration")
-	}
-
-	return cfg, nil
 }

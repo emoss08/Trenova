@@ -125,8 +125,7 @@ func (tcr *tableConfigurationRepository) filterUserConfigurations(q *bun.SelectQ
 		)
 	}
 
-	// * Order by created at and is default
-	q = q.Order("tc.created_at DESC").Order("tc.is_default DESC")
+	q = q.Order("tc.is_default DESC", "tc.created_at DESC")
 
 	return q.Limit(opts.Filter.Limit).Offset(opts.Filter.Offset)
 }
@@ -443,13 +442,6 @@ func (tcr *tableConfigurationRepository) GetDefaultOrLatestConfiguration(ctx con
 	err = q.Scan(ctx)
 	if err != nil {
 		log.Error().Err(err).Msg("failed to get default configuration")
-		return nil, oops.In("table_configuration_repository").
-			Tags("get_default_or_latest_configuration").
-			With("resource", resource).
-			With("orgID", opts.Base.OrgID).
-			With("buID", opts.Base.BuID).
-			Time(time.Now()).
-			Wrapf(err, "get default configuration")
 	}
 
 	return config, nil

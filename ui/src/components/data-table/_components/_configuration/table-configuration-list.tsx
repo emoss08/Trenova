@@ -1,5 +1,3 @@
-import { Icon } from "@/components/ui/icons";
-
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -9,6 +7,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { Icon } from "@/components/ui/icons";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -28,6 +27,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import React, { memo, useState } from "react";
 import { toast } from "sonner";
 import { useDataTable } from "../../data-table-provider";
+import { TableConfigurationEditModal } from "./table-configuration-edit-modal";
 
 function TableConfigurationListInner({
   children,
@@ -144,7 +144,7 @@ function TableConfigurationListItem({
   const { table } = useDataTable();
   const queryClient = useQueryClient();
   const [dropdownOpen, setDropdownOpen] = useState(false);
-
+  const [editModalOpen, setEditModalOpen] = useState(false);
   const applyConfig = () => {
     if (!table) return;
 
@@ -165,71 +165,81 @@ function TableConfigurationListItem({
   });
 
   return (
-    <div className="group flex text-left items-center justify-between rounded-md py-0.5 px-2 w-full hover:bg-accent">
-      <div className="flex items-center gap-2">
-        {config.isDefault && (
-          <span
-            title="Default configuration"
-            aria-label="Default configuration"
-            aria-describedby={`${config.name} configuration is the default configuration`}
-          >
-            <div className="size-2 bg-yellow-500 rounded-full" />
-          </span>
-        )}
-        <p
-          title={`${config.name} configuration`}
-          aria-describedby={`${config.name} configuration`}
-          className="text-xs w-[180px] truncate"
-        >
-          {config.name}
-        </p>
-      </div>
-      <div className="flex items-center justify-center gap-2">
-        <DropdownMenu open={dropdownOpen} onOpenChange={setDropdownOpen}>
-          <DropdownMenuTrigger asChild>
-            <button
-              title={`${config.name} configuration options`}
-              aria-label={`${config.name} configuration options`}
-              aria-describedby={`${config.name} configuration options`}
-              type="button"
-              className={cn(
-                "opacity-0 cursor-pointer group-hover:opacity-100 transition-opacity",
-                dropdownOpen && "opacity-100",
-              )}
+    <>
+      <div className="group flex text-left items-center justify-between rounded-md py-0.5 px-2 w-full hover:bg-accent">
+        <div className="flex items-center gap-2">
+          {config.isDefault && (
+            <span
+              title="Default configuration"
+              aria-label="Default configuration"
+              aria-describedby={`${config.name} configuration is the default configuration`}
             >
-              <Icon
-                icon={faEllipsis}
-                className="size-3 text-muted-foreground"
-              />
-            </button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent>
-            <DropdownMenuGroup>
-              <DropdownMenuLabel>Actions</DropdownMenuLabel>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem
-                title="Apply"
-                description="Apply the configuration to the table"
-                onClick={applyConfig}
-                startContent={<Icon icon={faTableColumns} className="size-3" />}
-              />
-              <DropdownMenuItem
-                title="Edit"
-                description="Edit the configuration options"
-                startContent={<Icon icon={faPencil} className="size-3" />}
-              />
-              <DropdownMenuItem
-                title="Delete"
-                color="danger"
-                description="Delete the configuration"
-                onClick={() => deleteConfig(config.id)}
-                disabled={isDeletingConfig}
-                startContent={<Icon icon={faTrash} className="size-3" />}
-              />
-            </DropdownMenuGroup>
-          </DropdownMenuContent>
-        </DropdownMenu>
+              <div className="size-2 bg-yellow-500 rounded-full" />
+            </span>
+          )}
+          <p
+            title={`${config.name} configuration`}
+            aria-describedby={`${config.name} configuration`}
+            className="text-xs w-[180px] truncate"
+          >
+            {config.name}
+          </p>
+        </div>
+        <div className="flex items-center justify-center gap-2">
+          <DropdownMenu open={dropdownOpen} onOpenChange={setDropdownOpen}>
+            <DropdownMenuTrigger asChild>
+              <button
+                title={`${config.name} configuration options`}
+                aria-label={`${config.name} configuration options`}
+                aria-describedby={`${config.name} configuration options`}
+                type="button"
+                className={cn(
+                  "opacity-0 cursor-pointer group-hover:opacity-100 transition-opacity",
+                  dropdownOpen && "opacity-100",
+                )}
+              >
+                <Icon
+                  icon={faEllipsis}
+                  className="size-3 text-muted-foreground"
+                />
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent>
+              <DropdownMenuGroup>
+                <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem
+                  title="Apply"
+                  description="Apply the configuration to the table"
+                  onClick={applyConfig}
+                  startContent={
+                    <Icon icon={faTableColumns} className="size-3" />
+                  }
+                />
+                <DropdownMenuItem
+                  title="Edit"
+                  description="Edit the configuration options"
+                  startContent={<Icon icon={faPencil} className="size-3" />}
+                  onClick={() => setEditModalOpen(!editModalOpen)}
+                />
+                <DropdownMenuItem
+                  title="Delete"
+                  color="danger"
+                  description="Delete the configuration"
+                  onClick={() => deleteConfig(config.id)}
+                  disabled={isDeletingConfig}
+                  startContent={<Icon icon={faTrash} className="size-3" />}
+                />
+              </DropdownMenuGroup>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
       </div>
-    </div>
+      <TableConfigurationEditModal
+        config={config}
+        open={editModalOpen}
+        onOpenChange={setEditModalOpen}
+      />
+    </>
   );
 }

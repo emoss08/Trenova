@@ -10,7 +10,6 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { Switch } from "@/components/ui/switch";
-import { queries } from "@/lib/queries";
 import { toSentenceCase, toTitleCase } from "@/lib/utils";
 import { useTableStore } from "@/stores/table-store";
 import type { Resource } from "@/types/audit-entry";
@@ -18,7 +17,6 @@ import { DataTableCreateButtonProps } from "@/types/data-table";
 import { faPlus, faSearch } from "@fortawesome/pro-regular-svg-icons";
 import { faColumns } from "@fortawesome/pro-solid-svg-icons";
 import { ChevronDownIcon, PlusIcon, UploadIcon } from "@radix-ui/react-icons";
-import { useQuery } from "@tanstack/react-query";
 import { isValidElement, memo, useCallback, useMemo, useState } from "react";
 import { useDataTable } from "../data-table-provider";
 import { CreateTableConfigurationModal } from "./_configuration/table-configuration-create-modal";
@@ -164,25 +162,7 @@ export function DataTableViewOptions({ resource }: { resource: Resource }) {
     [table],
   );
 
-  const { data: serverConfig } = useQuery({
-    ...queries.tableConfiguration.get(resource),
-  });
-
   const visibilityState = table.getState().columnVisibility;
-
-  const isDirty = useMemo(() => {
-    if (!serverConfig) return false;
-    return (
-      JSON.stringify(visibilityState) !==
-      JSON.stringify(serverConfig.tableConfig.columnVisibility)
-    );
-  }, [serverConfig, visibilityState]);
-
-  console.info("isDirty", {
-    isDirty,
-    serverConfig,
-    visibilityState,
-  });
 
   return (
     <>
@@ -262,7 +242,7 @@ export function DataTableViewOptions({ resource }: { resource: Resource }) {
                   alignOffset={-10}
                   sideOffset={10}
                   side="left"
-                  className="p-1 w-full"
+                  className="p-1 w-[250px]"
                 >
                   <TableConfigurationList
                     resource={resource}

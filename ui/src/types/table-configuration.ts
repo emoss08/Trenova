@@ -1,3 +1,4 @@
+import type { Resource } from "./audit-entry";
 import type { BaseModelWithOrganization, Status } from "./common";
 import { User } from "./user";
 
@@ -18,7 +19,7 @@ export interface TableConfiguration extends BaseModelWithOrganization {
   status: Status;
   name: string;
   description?: string;
-  tableIdentifier: string;
+  resource: Resource;
   filterConfig: Record<string, any>;
   visibility: Visibility;
   isDefault: boolean;

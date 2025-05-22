@@ -3,55 +3,105 @@ import { SelectField } from "@/components/fields/select-field";
 import { SwitchField } from "@/components/fields/switch-field";
 import { TextareaField } from "@/components/fields/textarea-field";
 import { FormControl, FormGroup } from "@/components/ui/form";
+import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
 import { visibilityChoices } from "@/lib/choices";
 import { TableConfigurationSchema } from "@/lib/schemas/table-configuration-schema";
-import { useFormContext } from "react-hook-form";
+import { Controller, useFormContext, useWatch } from "react-hook-form";
+
+// Helper function to format column names for display
+function formatColumnName(name: string) {
+  const result = name.replace(/([A-Z])/g, " $1");
+  return result.charAt(0).toUpperCase() + result.slice(1);
+}
 
 export function TableConfigurationForm() {
   const { control, register } = useFormContext<TableConfigurationSchema>();
 
+  const columnVisibilityKeys = useWatch({
+    control,
+    name: "tableConfig.columnVisibility",
+  });
+
   return (
-    <FormGroup cols={2}>
-      <FormControl>
-        <SelectField
-          control={control}
-          options={visibilityChoices}
-          rules={{ required: true }}
-          name="visibility"
-          label="Visibility"
-          description="The visibility of the table configuration."
-        />
-      </FormControl>
-      <FormControl>
-        <InputField
-          control={control}
-          rules={{ required: true }}
-          name="name"
-          label="Name"
-          placeholder="Name"
-          description="The name of the table configuration."
-        />
-      </FormControl>
-      <FormControl cols="full">
-        <TextareaField
-          control={control}
-          name="description"
-          label="Description"
-          placeholder="Description"
-          description="The description of the table configuration."
-        />
-      </FormControl>
-      <FormControl cols="full">
-        <SwitchField
-          control={control}
-          outlined
-          name="isDefault"
-          label="Default"
-          description="When enabled, the system will automatically apply this table configuration to the table when the user first navigates to it."
-          position="left"
-        />
-      </FormControl>
-      <input type="hidden" {...register("tableConfig")} />
-    </FormGroup>
+    <div className="flex flex-col gap-3">
+      <FormGroup cols={2}>
+        <FormControl>
+          <SelectField
+            control={control}
+            options={visibilityChoices}
+            rules={{ required: true }}
+            name="visibility"
+            label="Visibility"
+            description="The visibility of the table configuration."
+          />
+        </FormControl>
+        <FormControl>
+          <InputField
+            control={control}
+            rules={{ required: true }}
+            name="name"
+            label="Name"
+            placeholder="Name"
+            description="The name of the table configuration."
+          />
+        </FormControl>
+        <FormControl cols="full">
+          <TextareaField
+            control={control}
+            name="description"
+            label="Description"
+            placeholder="Description"
+            description="The description of the table configuration."
+          />
+        </FormControl>
+        <FormControl cols="full">
+          <SwitchField
+            control={control}
+            outlined
+            name="isDefault"
+            label="Default"
+            description="When enabled, the system will automatically apply this table configuration to the table when the user first navigates to it."
+            position="left"
+          />
+        </FormControl>
+        <input type="hidden" {...register("tableConfig")} />
+      </FormGroup>
+      <div className="flex flex-col gap-3 bg-muted rounded-md p-2 border border-border border-dashed">
+        <h3 className="text-sm text-center font-medium border-b border-border border-dashed pb-2">
+          Column Visibility
+        </h3>
+        {columnVisibilityKeys &&
+        Object.keys(columnVisibilityKeys).length > 0 ? (
+          Object.keys(columnVisibilityKeys).map((key) => (
+            <Controller
+              key={key}
+              name={`tableConfig.columnVisibility.${key}`}
+              control={control}
+              render={({ field }) => (
+                <div className="flex items-center justify-between">
+                  <Label
+                    htmlFor={`col-vis-${key}`}
+                    className="flex-grow text-xs"
+                  >
+                    {formatColumnName(key)}
+                  </Label>
+                  <Switch
+                    id={`col-vis-${key}`}
+                    checked={field.value}
+                    onCheckedChange={field.onChange}
+                    size="sm"
+                  />
+                </div>
+              )}
+            />
+          ))
+        ) : (
+          <p className="text-sm text-center text-muted-foreground py-2">
+            No column visibility options to configure for this table.
+          </p>
+        )}
+      </div>
+    </div>
   );
 }
