@@ -72,7 +72,7 @@ func (h *Handler) GetAutocompleteSuggestionsHandler(c *fiber.Ctx) error {
 	}
 
 	var req repositories.AutocompleteRequest
-	if err := c.BodyParser(&req); err != nil {
+	if err = c.BodyParser(&req); err != nil {
 		return h.eh.HandleError(c, eris.Wrap(err, "failed to parse autocomplete request body"))
 	}
 
@@ -98,7 +98,7 @@ func (h *Handler) ExecuteQueryHandler(c *fiber.Ctx) error {
 	}
 
 	var req repositories.ExecuteQueryRequest
-	if err := c.BodyParser(&req); err != nil {
+	if err = c.BodyParser(&req); err != nil {
 		return h.eh.HandleError(c, eris.Wrap(err, "failed to parse execute query request body"))
 	}
 

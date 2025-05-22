@@ -374,6 +374,8 @@ func (s *Service) GetDefaultOrLatestConfiguration(ctx context.Context, tableIden
 }
 
 // Patch merges the supplied tableConfig fields into the existing JSON blob.
+//
+//nolint:gocognit // This is a patch operation, it's ok to be complex
 func (s *Service) Patch(ctx context.Context, configID string, patch map[string]any, rCtx *ctx.RequestContext) (*tcdomain.Configuration, error) {
 	id := pulid.ID(configID)
 
@@ -396,7 +398,7 @@ func (s *Service) Patch(ctx context.Context, configID string, patch map[string]a
 				// Convert to map[string]bool
 				nm := make(map[string]bool)
 				for key, val := range vis {
-					if b, ok := val.(bool); ok {
+					if b, bOk := val.(bool); bOk {
 						nm[key] = b
 					}
 				}

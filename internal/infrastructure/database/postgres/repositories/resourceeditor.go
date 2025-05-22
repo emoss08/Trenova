@@ -12,6 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/ports/db"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/pkg/logger"
+	"github.com/emoss08/trenova/pkg/types/resourcesqltype"
 	"github.com/rotisserie/eris"
 	"github.com/rs/zerolog"
 	"github.com/samber/oops"
@@ -19,6 +20,8 @@ import (
 	"go.uber.org/fx"
 )
 
+// ResourceEditorRepositoryParams defines dependencies required for initializing the ResourceEditorRepository.
+// This includes database connection, logger, and resource editor repository.
 type ResourceEditorRepositoryParams struct {
 	fx.In
 
@@ -26,6 +29,9 @@ type ResourceEditorRepositoryParams struct {
 	Logger *logger.Logger
 }
 
+// resourceEditorRepository implements the ResourceEditorRepository interface
+// and provides methods to manage resource editor, including fetching table schema,
+// columns, indexes, and constraints.
 type resourceEditorRepository struct {
 	db     db.Connection
 	logger *zerolog.Logger
@@ -54,9 +60,9 @@ type tableAlias struct {
 func parseTableAliases(query string) map[string]tableAlias {
 	aliasMap := make(map[string]tableAlias)
 
-	// (?i) – case-insensitive.
-	// first capture group is FROM|JOIN, second is the table (optionally
-	// schema.table), third is the alias (optional).
+	// * (?i) – case-insensitive.
+	// * first capture group is FROM|JOIN, second is the table (optionally
+	// * schema.table), third is the alias (optional).
 	re := regexp.MustCompile(`(?i)(?:from|join)\s+([^\s]+)(?:\s+(?:as\s+)?([a-zA-Z0-9_]+))?`)
 	matches := re.FindAllStringSubmatch(query, -1)
 
@@ -65,8 +71,8 @@ func parseTableAliases(query string) map[string]tableAlias {
 			continue
 		}
 
-		fullTable := strings.Trim(m[1], ",;()") // may include schema, trim punctuation
-		alias := m[2]                           // may be empty
+		fullTable := strings.Trim(m[1], ",;()") // * may include schema, trim punctuation
+		alias := m[2]                           // * may be empty
 
 		var schemaName, tableName string
 		parts := strings.Split(fullTable, ".")
@@ -78,21 +84,28 @@ func parseTableAliases(query string) map[string]tableAlias {
 			tableName = fullTable
 		}
 
-		// If no alias specified we use the table name itself as the alias so
-		// that "users." will still resolve.
+		// * If no alias specified we use the table name itself as the alias so
+		// * that "users." will still resolve.
 		if alias == "" {
 			alias = tableName
 		}
 
 		aliasMap[alias] = tableAlias{Schema: schemaName, Table: tableName}
-		// Also store the unqualified table name so we can resolve
-		// `schema.table` references without alias.
+		// * Also store the unqualified table name so we can resolve
+		// * `schema.table` references without alias.
 		aliasMap[tableName] = tableAlias{Schema: schemaName, Table: tableName}
 	}
 
 	return aliasMap
 }
 
+// NewResourceEditorRepository initializes a new instance of resourceEditorRepository with its dependencies.
+//
+// Parameters:
+//   - p: ResourceEditorRepositoryParams containing dependencies.
+//
+// Returns:
+//   - repositories.ResourceEditorRepository: A ready-to-use resource editor repository instance.
 func NewResourceEditorRepository(p ResourceEditorRepositoryParams) repositories.ResourceEditorRepository {
 	log := p.Logger.With().
 		Str("repository", "resourceeditor").
@@ -104,6 +117,14 @@ func NewResourceEditorRepository(p ResourceEditorRepositoryParams) repositories.
 	}
 }
 
+// GetTableSchema fetches the schema information for a given schema name.
+//
+// Parameters:
+//   - ctx: The context for the database operation.
+//   - schemaName: The name of the schema to fetch.
+//
+// Returns:
+//   - *repositories.SchemaInformation: The schema information for the given schema name.
 func (r *resourceEditorRepository) GetTableSchema(ctx context.Context, schemaName string) (*repositories.SchemaInformation, error) {
 	dba, err := r.db.DB(ctx)
 	if err != nil {
@@ -112,7 +133,7 @@ func (r *resourceEditorRepository) GetTableSchema(ctx context.Context, schemaNam
 	}
 
 	if schemaName == "" {
-		schemaName = "public" // Default to public if not specified
+		schemaName = "public" // * Default to public if not specified
 	}
 	r.logger.Info().Str("schemaName", schemaName).Msg("Fetching schema information")
 
@@ -121,7 +142,6 @@ func (r *resourceEditorRepository) GetTableSchema(ctx context.Context, schemaNam
 		Tables:     []repositories.TableDetails{},
 	}
 
-	// Assumes r.db has a QueryContext method (e.g., if it's sql.DB, bun.IDB, or a compatible interface)
 	tableRows, err := dba.QueryContext(ctx, `
 		SELECT table_name
 		FROM information_schema.tables
@@ -143,10 +163,12 @@ func (r *resourceEditorRepository) GetTableSchema(ctx context.Context, schemaNam
 		}
 		tableNames = append(tableNames, tableName)
 	}
+
 	if err = tableRows.Err(); err != nil {
 		r.logger.Error().Err(err).Msg("Error iterating table rows")
 		return nil, eris.Wrap(err, "error iterating table rows")
 	}
+
 	if err = tableRows.Close(); err != nil {
 		r.logger.Error().Err(err).Msg("Error closing table rows")
 		return nil, eris.Wrap(err, "error closing table rows")
@@ -158,22 +180,22 @@ func (r *resourceEditorRepository) GetTableSchema(ctx context.Context, schemaNam
 			TableName: tableName,
 		}
 
-		columns, err := r.fetchColumnsForTable(ctx, schemaName, tableName)
-		if err != nil {
+		columns, cErr := r.fetchColumnsForTable(ctx, schemaName, tableName)
+		if cErr != nil {
 			// Log already happens in fetchColumnsForTable or here
-			return nil, eris.Wrapf(err, "failed to fetch columns for table %s", tableName)
+			return nil, eris.Wrapf(cErr, "failed to fetch columns for table %s", tableName)
 		}
 		tableDetail.Columns = columns
 
-		indexes, err := r.fetchIndexesForTable(ctx, schemaName, tableName)
-		if err != nil {
-			return nil, eris.Wrapf(err, "failed to fetch indexes for table %s", tableName)
+		indexes, iErr := r.fetchIndexesForTable(ctx, schemaName, tableName)
+		if iErr != nil {
+			return nil, eris.Wrapf(iErr, "failed to fetch indexes for table %s", tableName)
 		}
 		tableDetail.Indexes = indexes
 
-		constraints, err := r.fetchConstraintsForTable(ctx, schemaName, tableName)
-		if err != nil {
-			return nil, eris.Wrapf(err, "failed to fetch constraints for table %s", tableName)
+		constraints, coErr := r.fetchConstraintsForTable(ctx, schemaName, tableName)
+		if coErr != nil {
+			return nil, eris.Wrapf(coErr, "failed to fetch constraints for table %s", tableName)
 		}
 		tableDetail.Constraints = constraints
 
@@ -184,6 +206,16 @@ func (r *resourceEditorRepository) GetTableSchema(ctx context.Context, schemaNam
 	return schemaInfo, nil
 }
 
+// fetchColumnsForTable fetches the column details for a given table.
+//
+// Parameters:
+//   - ctx: The context for the database operation.
+//   - schemaName: The name of the schema to fetch.
+//   - tableName: The name of the table to fetch.
+//
+// Returns:
+//   - []repositories.ColumnDetails: The column details for the given table.
+//   - error: An error if the operation fails.
 func (r *resourceEditorRepository) fetchColumnsForTable(ctx context.Context, schemaName string, tableName string) ([]repositories.ColumnDetails, error) {
 	dba, err := r.db.DB(ctx)
 	if err != nil {
@@ -265,6 +297,16 @@ func (r *resourceEditorRepository) fetchColumnsForTable(ctx context.Context, sch
 	return columns, nil
 }
 
+// fetchIndexesForTable fetches the index details for a given table.
+//
+// Parameters:
+//   - ctx: The context for the database operation.
+//   - schemaName: The name of the schema to fetch.
+//   - tableName: The name of the table to fetch.
+//
+// Returns:
+//   - []repositories.IndexDetails: The index details for the given table.
+//   - error: An error if the operation fails.
 func (r *resourceEditorRepository) fetchIndexesForTable(ctx context.Context, schemaName string, tableName string) ([]repositories.IndexDetails, error) {
 	dba, err := r.db.DB(ctx)
 	if err != nil {
@@ -304,9 +346,9 @@ func (r *resourceEditorRepository) fetchIndexesForTable(ctx context.Context, sch
 	var orderedIndexNames []string
 
 	for rows.Next() {
-		var indexName, indexDef, columnName, indexType sql.NullString // indexType can be null for some index kinds
+		var indexName, indexDef, columnName, indexType sql.NullString // * indexType can be null for some index kinds
 		var isUnique, isPrimary bool
-		err := rows.Scan(&indexName, &isUnique, &isPrimary, &indexDef, &columnName, &indexType)
+		err = rows.Scan(&indexName, &isUnique, &isPrimary, &indexDef, &columnName, &indexType)
 		if err != nil {
 			r.logger.Error().Err(err).Msg("Scanning index row failed")
 			return nil, eris.Wrap(err, "scanning index row failed")
@@ -325,7 +367,7 @@ func (r *resourceEditorRepository) fetchIndexesForTable(ctx context.Context, sch
 				IndexDefinition: indexDef.String,
 				IsUnique:        isUnique,
 				IsPrimary:       isPrimary,
-				IndexType:       "", // Default, will be set if valid
+				IndexType:       "", // * Default, will be set if valid
 				Columns:         []string{},
 			}
 			if indexType.Valid {
@@ -347,6 +389,16 @@ func (r *resourceEditorRepository) fetchIndexesForTable(ctx context.Context, sch
 	return indexes, nil
 }
 
+// fetchConstraintsForTable fetches the constraint details for a given table.
+//
+// Parameters:
+//   - ctx: The context for the database operation.
+//   - schemaName: The name of the schema to fetch.
+//   - tableName: The name of the table to fetch.
+//
+// Returns:
+//   - []repositories.ConstraintDetails: The constraint details for the given table.
+//   - error: An error if the operation fails.
 func (r *resourceEditorRepository) fetchConstraintsForTable(ctx context.Context, schemaName string, tableName string) ([]repositories.ConstraintDetails, error) {
 	dba, err := r.db.DB(ctx)
 	if err != nil {
@@ -357,7 +409,7 @@ func (r *resourceEditorRepository) fetchConstraintsForTable(ctx context.Context,
 	constraintsMap := make(map[string]*repositories.ConstraintDetails)
 	var orderedConstraintNames []string
 
-	// Query for PK, UNIQUE, FK (base info)
+	// * Query for PK, UNIQUE, FK (base info)
 	keyConstraintsQuery := `
     SELECT
         tc.constraint_name,
@@ -384,7 +436,7 @@ func (r *resourceEditorRepository) fetchConstraintsForTable(ctx context.Context,
 
 	for keyRows.Next() {
 		var consName, consType, colName, isDeferrableStr, initiallyDeferredStr string
-		if err := keyRows.Scan(&consName, &consType, &colName, &isDeferrableStr, &initiallyDeferredStr); err != nil {
+		if err = keyRows.Scan(&consName, &consType, &colName, &isDeferrableStr, &initiallyDeferredStr); err != nil {
 			r.logger.Error().Err(err).Msg("Scanning key constraint row failed")
 			return nil, eris.Wrap(err, "scanning key constraint row")
 		}
@@ -393,8 +445,8 @@ func (r *resourceEditorRepository) fetchConstraintsForTable(ctx context.Context,
 				ConstraintName:    consName,
 				ConstraintType:    consType,
 				ColumnNames:       []string{},
-				Deferrable:        isDeferrableStr == "YES",
-				InitiallyDeferred: initiallyDeferredStr == "YES",
+				Deferrable:        isDeferrableStr == string(resourcesqltype.KeywordYes),
+				InitiallyDeferred: initiallyDeferredStr == string(resourcesqltype.KeywordYes),
 			}
 			orderedConstraintNames = append(orderedConstraintNames, consName)
 		}
@@ -404,9 +456,15 @@ func (r *resourceEditorRepository) fetchConstraintsForTable(ctx context.Context,
 		r.logger.Error().Err(err).Msg("Error iterating key constraint rows")
 		return nil, eris.Wrap(err, "error iterating key constraint rows")
 	}
-	keyRows.Close()
+	if err = keyRows.Close(); err != nil {
+		return nil, oops.
+			In("resource_edit_repository").
+			Tags("fetch_constraints_for_table").
+			With("query", keyConstraintsQuery).
+			Wrapf(err, "close key constraint rows")
+	}
 
-	// Enhance FKs with foreign table/column details
+	// * Enhance FKs with foreign table/column details
 	fkDetailsQuery := `
     SELECT
         rc.constraint_name,
@@ -441,7 +499,7 @@ func (r *resourceEditorRepository) fetchConstraintsForTable(ctx context.Context,
 			return nil, eris.Wrap(err, "scanning foreign key detail row")
 		}
 		entry := tempFkStore[consName]
-		entry.FTable = fTable // Will be the same for all columns of a given FK
+		entry.FTable = fTable // * Will be the same for all columns of a given FK
 		entry.FCols = append(entry.FCols, fCol)
 		tempFkStore[consName] = entry
 	}
@@ -449,7 +507,13 @@ func (r *resourceEditorRepository) fetchConstraintsForTable(ctx context.Context,
 		r.logger.Error().Err(err).Msg("Error iterating foreign key detail rows")
 		return nil, eris.Wrap(err, "error iterating foreign key detail rows")
 	}
-	fkRows.Close()
+	if err = fkRows.Close(); err != nil {
+		return nil, oops.
+			In("resource_edit_repository").
+			Tags("fetch_constraints_for_table").
+			With("query", fkDetailsQuery).
+			Wrapf(err, "close foreign key detail rows")
+	}
 
 	for consName, fkData := range tempFkStore {
 		if constraint, ok := constraintsMap[consName]; ok && constraint.ConstraintType == "FOREIGN KEY" {
@@ -458,7 +522,7 @@ func (r *resourceEditorRepository) fetchConstraintsForTable(ctx context.Context,
 		}
 	}
 
-	// Fetch CHECK constraints
+	// * Fetch CHECK constraints
 	checkConstraintsQuery := `
     SELECT
         tc.constraint_name,
@@ -488,24 +552,24 @@ func (r *resourceEditorRepository) fetchConstraintsForTable(ctx context.Context,
 		if _, exists := constraintsMap[consName]; !exists {
 			constraintsMap[consName] = &repositories.ConstraintDetails{
 				ConstraintName:    consName,
-				ConstraintType:    "CHECK",
+				ConstraintType:    resourcesqltype.Check.String(),
 				CheckClause:       &checkClause,
-				Deferrable:        isDeferrableStr == "YES",
-				InitiallyDeferred: initiallyDeferredStr == "YES",
+				Deferrable:        isDeferrableStr == string(resourcesqltype.KeywordYes),
+				InitiallyDeferred: initiallyDeferredStr == string(resourcesqltype.KeywordYes),
 			}
 			orderedConstraintNames = append(orderedConstraintNames, consName) // Add if it's a new constraint
 		} else {
-			// This case should ideally not be hit if CHECK constraints are always in table_constraints
-			// but if it is, update the existing entry.
+			// * This case should ideally not be hit if CHECK constraints are always in table_constraints
+			// * but if it is, update the existing entry.
 			constraintsMap[consName].CheckClause = &checkClause
-			constraintsMap[consName].ConstraintType = "CHECK" // Ensure type is correct
+			constraintsMap[consName].ConstraintType = resourcesqltype.Check.String() // Ensure type is correct
 		}
 	}
 	if err = checkRows.Err(); err != nil {
 		r.logger.Error().Err(err).Msg("Error iterating check constraint rows")
 		return nil, eris.Wrap(err, "error iterating check constraint rows")
 	}
-	if err := checkRows.Close(); err != nil {
+	if err = checkRows.Close(); err != nil {
 		return nil, oops.
 			In("resource_edit_repository").
 			Tags("fetch_constraints_for_table").
@@ -522,6 +586,60 @@ func (r *resourceEditorRepository) fetchConstraintsForTable(ctx context.Context,
 	return finalConstraints, nil
 }
 
+// handleDotNotation processes dot notation completions (e.g. "table.") and adds relevant suggestions
+//
+// Parameters:
+//   - ctx: The context for the database operation.
+//   - req: The autocomplete request containing the current query and prefix.
+//   - aliasMap: A map of table aliases to their corresponding table information.
+//   - response: The autocomplete response to which suggestions will be added.
+//   - columnHighScore: The score to use for column suggestions.
+func (r *resourceEditorRepository) handleDotNotation(ctx context.Context, req repositories.AutocompleteRequest, aliasMap map[string]tableAlias, response *repositories.AutocompleteResponse, columnHighScore int) {
+	dotIdx := strings.LastIndex(req.Prefix, ".")
+	if dotIdx == -1 {
+		return
+	}
+
+	aliasCandidate := req.Prefix[:dotIdx]
+	columnPrefix := req.Prefix[dotIdx+1:]
+
+	tbl, ok := aliasMap[aliasCandidate]
+	if !ok {
+		return
+	}
+
+	schemaName := tbl.Schema
+	if schemaName == "" {
+		schemaName = req.SchemaName
+	}
+
+	cols, err := r.fetchColumnsForTable(ctx, schemaName, tbl.Table)
+	if err != nil {
+		r.logger.Warn().Err(err).Str("table", tbl.Table).Msg("Failed to fetch columns for alias completion")
+		return
+	}
+
+	for _, col := range cols {
+		if columnPrefix == "" || strings.HasPrefix(strings.ToLower(col.ColumnName), strings.ToLower(columnPrefix)) {
+			response.Suggestions = append(response.Suggestions, repositories.AutocompleteSuggestion{
+				Value:   col.ColumnName,
+				Caption: col.ColumnName + " (" + col.DataType + ")",
+				Meta:    "column",
+				Score:   columnHighScore,
+			})
+		}
+	}
+}
+
+// GetAutocompleteSuggestions generates autocomplete suggestions based on the current query and prefix.
+//
+// Parameters:
+//   - ctx: The context for the database operation.
+//   - req: The autocomplete request containing the current query and prefix.
+//
+// Returns:
+//   - *repositories.AutocompleteResponse: The autocomplete response containing the suggestions.
+//   - error: An error if the operation fails.
 func (r *resourceEditorRepository) GetAutocompleteSuggestions(ctx context.Context, req repositories.AutocompleteRequest) (*repositories.AutocompleteResponse, error) {
 	dba, err := r.db.DB(ctx)
 	if err != nil {
@@ -533,15 +651,15 @@ func (r *resourceEditorRepository) GetAutocompleteSuggestions(ctx context.Contex
 		Suggestions: []repositories.AutocompleteSuggestion{},
 	}
 
-	// ------------------------------------------------------------------------------------------------
-	// 1. Parse query context – table aliases & last significant keyword
-	// ------------------------------------------------------------------------------------------------
+	// * ------------------------------------------------------------------------------------------------
+	// * 1. Parse query context – table aliases & last significant keyword
+	// * ------------------------------------------------------------------------------------------------
 
 	aliasMap := parseTableAliases(req.CurrentQuery)
 
-	// Determine the portion of the query that appears *before* the current prefix being typed.
-	// We can't rely on the prefix being at the very end of CurrentQuery, so we look for the last
-	// occurrence (case-insensitive) of the prefix and slice everything before that index.
+	// * Determine the portion of the query that appears *before* the current prefix being typed.
+	// * We can't rely on the prefix being at the very end of CurrentQuery, so we look for the last
+	// * occurrence (case-insensitive) of the prefix and slice everything before that index.
 	lowerQuery := strings.ToLower(req.CurrentQuery)
 	lowerPrefix := strings.ToLower(req.Prefix)
 	cutPos := strings.LastIndex(lowerQuery, lowerPrefix)
@@ -552,13 +670,13 @@ func (r *resourceEditorRepository) GetAutocompleteSuggestions(ctx context.Contex
 		trimmedWithoutPrefix = req.CurrentQuery
 	}
 
-	// Heuristic to decide if the user is editing the SELECT list (columns).
-	// 1. If the last non-space char before the cursor is a comma, we assume they are adding another column.
-	// 2. Otherwise, if SELECT appears before the cursor and the first FROM after that SELECT is located *after* the cursor (or absent), we are still in the list.
+	// * Heuristic to decide if the user is editing the SELECT list (columns).
+	// * 1. If the last non-space char before the cursor is a comma, we assume they are adding another column.
+	// * 2. Otherwise, if SELECT appears before the cursor and the first FROM after that SELECT is located *after* the cursor (or absent), we are still in the list.
 
 	inSelectList := false
 
-	// Rule 1 – check for trailing comma before cursor.
+	// * Rule 1 – check for trailing comma before cursor.
 	if cutPos > 0 {
 		i := cutPos - 1
 		for i >= 0 && unicode.IsSpace(rune(req.CurrentQuery[i])) {
@@ -569,13 +687,13 @@ func (r *resourceEditorRepository) GetAutocompleteSuggestions(ctx context.Contex
 		}
 	}
 
-	// Rule 2 – fallback heuristic.
+	// * Rule 2 – fallback heuristic.
 	if !inSelectList {
 		upperQuery := strings.ToUpper(req.CurrentQuery)
-		selectIdx := strings.Index(upperQuery, "SELECT")
+		selectIdx := strings.Index(upperQuery, resourcesqltype.Select.String())
 		if selectIdx != -1 {
-			// Position of first FROM after SELECT (if any)
-			fromIdxRel := strings.Index(upperQuery[selectIdx+6:], "FROM")
+			// * Position of first FROM after SELECT (if any)
+			fromIdxRel := strings.Index(upperQuery[selectIdx+6:], resourcesqltype.From.String())
 			var fromIdxAbs int
 			if fromIdxRel != -1 {
 				fromIdxAbs = selectIdx + 6 + fromIdxRel
@@ -583,17 +701,17 @@ func (r *resourceEditorRepository) GetAutocompleteSuggestions(ctx context.Contex
 				fromIdxAbs = -1
 			}
 
-			// Find the last comma after SELECT (could be none)
+			// * Find the last comma after SELECT (could be none)
 			commaIdxRel := strings.LastIndex(upperQuery[selectIdx+6:], ",")
 			if commaIdxRel != -1 {
 				commaIdxAbs := selectIdx + 6 + commaIdxRel
 
-				// If comma occurs and either there is no FROM yet OR comma is before FROM, we likely are editing select list
+				// * If comma occurs and either there is no FROM yet OR comma is before FROM, we likely are editing select list
 				if fromIdxAbs == -1 || commaIdxAbs < fromIdxAbs {
 					inSelectList = true
 				}
 			} else if fromIdxAbs == -1 {
-				// No comma but also no FROM -> still editing first column(s)
+				// * No comma but also no FROM -> still editing first column(s)
 				inSelectList = true
 			}
 		}
@@ -603,11 +721,22 @@ func (r *resourceEditorRepository) GetAutocompleteSuggestions(ctx context.Contex
 	lastKeyword := ""
 	if len(tokens) > 0 {
 	OUTER:
-		// Walk backwards until we find something that looks like a keyword
+		// * Walk backwards until we find something that looks like a keyword
 		for i := len(tokens) - 1; i >= 0; i-- {
 			tokUpper := strings.ToUpper(tokens[i])
 			switch tokUpper {
-			case "SELECT", "FROM", "JOIN", "WHERE", "ON", "GROUP", "ORDER", "UPDATE", "INSERT", "INTO", "DELETE", "SET":
+			case resourcesqltype.Select.String(),
+				resourcesqltype.From.String(),
+				resourcesqltype.Join.String(),
+				resourcesqltype.Where.String(),
+				resourcesqltype.On.String(),
+				resourcesqltype.GroupBy.String(),
+				resourcesqltype.OrderBy.String(),
+				resourcesqltype.Update.String(),
+				resourcesqltype.InsertInto.String(),
+				resourcesqltype.Into.String(),
+				resourcesqltype.DeleteFrom.String(),
+				resourcesqltype.Set.String():
 				lastKeyword = tokUpper
 				break OUTER
 			default:
@@ -616,68 +745,37 @@ func (r *resourceEditorRepository) GetAutocompleteSuggestions(ctx context.Contex
 		}
 	}
 
-	// Base scores that can shift depending on context
+	// * Base scores that can shift depending on context
 	columnHighScore := 115
 	tableHighScore := 120
 	if inSelectList {
-		// Prioritise columns over tables in select list
+		// * Prioritise columns over tables in select list
 		columnHighScore = 130
 		tableHighScore = 70
 	}
 
-	// ------------------------------------------------------------------------------------------------
-	// 2. Dot-notation – alias/table column suggestions (e.g. `u.`)
-	// ------------------------------------------------------------------------------------------------
-	if dotIdx := strings.LastIndex(req.Prefix, "."); dotIdx != -1 {
-		aliasCandidate := req.Prefix[:dotIdx]
-		columnPrefix := req.Prefix[dotIdx+1:]
+	// * ------------------------------------------------------------------------------------------------
+	// * 2. Dot-notation – alias/table column suggestions (e.g. `u.`)
+	// * ------------------------------------------------------------------------------------------------
+	r.handleDotNotation(ctx, req, aliasMap, response, columnHighScore)
 
-		if tbl, ok := aliasMap[aliasCandidate]; ok {
-			schemaName := tbl.Schema
-			if schemaName == "" {
-				schemaName = req.SchemaName
-			}
-
-			cols, cErr := r.fetchColumnsForTable(ctx, schemaName, tbl.Table)
-			if cErr == nil {
-				for _, col := range cols {
-					// If columnPrefix is set, ensure we match it (ILIKE behaviour)
-					if columnPrefix == "" || strings.HasPrefix(strings.ToLower(col.ColumnName), strings.ToLower(columnPrefix)) {
-						response.Suggestions = append(response.Suggestions, repositories.AutocompleteSuggestion{
-							Value:   col.ColumnName,
-							Caption: col.ColumnName + " (" + col.DataType + ")",
-							Meta:    "column",
-							Score:   columnHighScore,
-						})
-					}
-				}
-			} else {
-				r.logger.Warn().Err(cErr).Str("table", tbl.Table).Msg("Failed to fetch columns for alias completion")
-			}
-			// Dot-notation context is very specific – return early after adding suggestions.
-			// We'll still fall through to add generic completions, but columns relevant to
-			// the alias have the highest scores.
-		}
-	}
-
-	// ------------------------------------------------------------------------------------------------
-	// 3. Keyword suggestions (generic)
-	// ------------------------------------------------------------------------------------------------
-	keywords := []string{"SELECT", "FROM", "WHERE", "JOIN", "LEFT JOIN", "RIGHT JOIN", "INNER JOIN", "ON", "GROUP BY", "ORDER BY", "LIMIT", "OFFSET", "INSERT INTO", "VALUES", "UPDATE", "SET", "DELETE FROM", "CREATE TABLE", "ALTER TABLE", "DROP TABLE", "AND", "OR", "NOT", "AS", "IN", "IS NULL", "IS NOT NULL", "LIKE", "BETWEEN", "EXISTS", "ALL", "ANY", "COUNT", "SUM", "AVG", "MIN", "MAX", "DISTINCT", "CASE", "WHEN", "THEN", "ELSE", "END"}
-	for _, kw := range keywords {
-		if strings.HasPrefix(strings.ToUpper(kw), strings.ToUpper(req.Prefix)) || req.Prefix == "" {
+	// * ------------------------------------------------------------------------------------------------
+	// * 3. Keyword suggestions (generic)
+	// * ------------------------------------------------------------------------------------------------
+	for _, kw := range resourcesqltype.AvailableKeywords {
+		if strings.HasPrefix(strings.ToUpper(kw.String()), strings.ToUpper(req.Prefix)) || req.Prefix == "" {
 			response.Suggestions = append(response.Suggestions, repositories.AutocompleteSuggestion{
-				Value:   kw,
-				Caption: kw,
+				Value:   kw.String(),
+				Caption: kw.String(),
 				Meta:    "keyword",
-				Score:   40, // slightly lower than before to prioritise context-aware results
+				Score:   40, // * sslightly lower than before to prioritise context-aware results
 			})
 		}
 	}
 
-	// ------------------------------------------------------------------------------------------------
-	// 4. Schema suggestions (simple – we currently only expose req.SchemaName)
-	// ------------------------------------------------------------------------------------------------
+	// * ------------------------------------------------------------------------------------------------
+	// * 4. Schema suggestions (simple – we currently only expose req.SchemaName)
+	// * ------------------------------------------------------------------------------------------------
 	if req.SchemaName != "" && (strings.HasPrefix(strings.ToLower(req.SchemaName), strings.ToLower(req.Prefix)) || req.Prefix == "") {
 		response.Suggestions = append(response.Suggestions, repositories.AutocompleteSuggestion{
 			Value:   req.SchemaName,
@@ -687,9 +785,9 @@ func (r *resourceEditorRepository) GetAutocompleteSuggestions(ctx context.Contex
 		})
 	}
 
-	// ------------------------------------------------------------------------------------------------
-	// 5. Table & column suggestions depending on detected context
-	// ------------------------------------------------------------------------------------------------
+	// * ------------------------------------------------------------------------------------------------
+	// * 5. Table & column suggestions depending on detected context
+	// * ------------------------------------------------------------------------------------------------
 
 	addTableSuggestions := func() {
 		if req.SchemaName == "" {
@@ -706,8 +804,8 @@ func (r *resourceEditorRepository) GetAutocompleteSuggestions(ctx context.Contex
 			var tableName string
 			if scanErr := tableRows.Scan(&tableName); scanErr == nil {
 				score := tableHighScore
-				if !inSelectList && (lastKeyword == "FROM" || lastKeyword == "JOIN" || lastKeyword == "UPDATE" || lastKeyword == "INTO") {
-					score = 120 // raise score when context expects a table name
+				if !inSelectList && (lastKeyword == resourcesqltype.From.String() || lastKeyword == resourcesqltype.Join.String() || lastKeyword == resourcesqltype.Update.String() || lastKeyword == resourcesqltype.Into.String()) {
+					score = 120 // * raise score when context expects a table name
 				}
 				response.Suggestions = append(response.Suggestions, repositories.AutocompleteSuggestion{
 					Value:   tableName,
@@ -717,13 +815,17 @@ func (r *resourceEditorRepository) GetAutocompleteSuggestions(ctx context.Contex
 				})
 			}
 		}
+		if err = tableRows.Err(); err != nil {
+			r.logger.Error().Err(err).Msg("Error iterating table rows")
+			return
+		}
 	}
 
 	addColumnSuggestions := func() {
-		// Prefer explicit table context, fall back to alias map, finally req.TableName
+		// * Prefer explicit table context, fall back to alias map, finally req.TableName
 		columnAdded := make(map[string]struct{})
 
-		// Helper to add column if not seen and matches prefix
+		// * Helper to add column if not seen and matches prefix
 		addColumn := func(columnName, dataType string, score int) {
 			if _, ok := columnAdded[columnName]; ok {
 				return
@@ -740,7 +842,7 @@ func (r *resourceEditorRepository) GetAutocompleteSuggestions(ctx context.Contex
 			columnAdded[columnName] = struct{}{}
 		}
 
-		// Columns from alias map tables
+		// * Columns from alias map tables
 		for _, tbl := range aliasMap {
 			schema := tbl.Schema
 			if schema == "" {
@@ -755,7 +857,7 @@ func (r *resourceEditorRepository) GetAutocompleteSuggestions(ctx context.Contex
 			}
 		}
 
-		// Fallback: columns from explicit TableName in request
+		// * Fallback: columns from explicit TableName in request
 		if req.TableName != "" {
 			cols, cErr := r.fetchColumnsForTable(ctx, req.SchemaName, req.TableName)
 			if cErr == nil {
@@ -767,7 +869,10 @@ func (r *resourceEditorRepository) GetAutocompleteSuggestions(ctx context.Contex
 	}
 
 	switch lastKeyword {
-	case "FROM", "JOIN", "UPDATE", "INTO":
+	case resourcesqltype.From.String(),
+		resourcesqltype.Join.String(),
+		resourcesqltype.Update.String(),
+		resourcesqltype.Into.String():
 		if inSelectList {
 			addColumnSuggestions()
 			addTableSuggestions()
@@ -775,7 +880,14 @@ func (r *resourceEditorRepository) GetAutocompleteSuggestions(ctx context.Contex
 			addTableSuggestions()
 			addColumnSuggestions()
 		}
-	case "SELECT", "WHERE", "ON", "GROUP", "ORDER", "SET", "AND", "OR":
+	case resourcesqltype.Select.String(),
+		resourcesqltype.Where.String(),
+		resourcesqltype.On.String(),
+		resourcesqltype.GroupBy.String(),
+		resourcesqltype.OrderBy.String(),
+		resourcesqltype.Set.String(),
+		resourcesqltype.And.String(),
+		resourcesqltype.Or.String():
 		addColumnSuggestions()
 	default:
 		if inSelectList {
@@ -787,9 +899,9 @@ func (r *resourceEditorRepository) GetAutocompleteSuggestions(ctx context.Contex
 		}
 	}
 
-	// ------------------------------------------------------------------------------------------------
-	// 6. Final sorting & deduplication
-	// ------------------------------------------------------------------------------------------------
+	// * ------------------------------------------------------------------------------------------------
+	// * 6. Final sorting & deduplication
+	// * ------------------------------------------------------------------------------------------------
 
 	sort.SliceStable(response.Suggestions, func(i, j int) bool {
 		if response.Suggestions[i].Score != response.Suggestions[j].Score {
@@ -817,6 +929,15 @@ func (r *resourceEditorRepository) GetAutocompleteSuggestions(ctx context.Contex
 	return response, nil
 }
 
+// ExecuteSQLQuery executes a SQL query and returns the result.
+//
+// Parameters:
+//   - ctx: The context for the database operation.
+//   - req: The execute query request containing the query to execute.
+//
+// Returns:
+//   - *repositories.ExecuteQueryResponse: The execute query response containing the result.
+//   - error: An error if the operation fails.
 func (r *resourceEditorRepository) ExecuteSQLQuery(ctx context.Context, req repositories.ExecuteQueryRequest) (*repositories.ExecuteQueryResponse, error) {
 	dba, err := r.db.DB(ctx)
 	if err != nil {
