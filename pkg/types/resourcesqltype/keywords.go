@@ -129,3 +129,23 @@ func KeywordFromString(s string) (Keyword, error) {
 
 	return "", eris.New("invalid keyword")
 }
+
+// isColumnFocusedContext checks if the context focuses on column suggestions
+func IsColumnFocusedContext(lastKeyword string) bool {
+	return lastKeyword == Select.String() ||
+		lastKeyword == Where.String() ||
+		lastKeyword == On.String() ||
+		lastKeyword == GroupBy.String() ||
+		lastKeyword == OrderBy.String() ||
+		lastKeyword == Set.String() ||
+		lastKeyword == And.String() ||
+		lastKeyword == Or.String()
+}
+
+// isTableFocusedContext checks if the context focuses on table suggestions
+func IsTableFocusedContext(lastKeyword string) bool {
+	return lastKeyword == From.String() ||
+		lastKeyword == Join.String() ||
+		lastKeyword == Update.String() ||
+		lastKeyword == Into.String()
+}
