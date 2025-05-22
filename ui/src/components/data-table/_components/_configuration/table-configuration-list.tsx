@@ -12,6 +12,7 @@ import { faSpinner, faTrash } from "@fortawesome/pro-solid-svg-icons";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import React, { memo, useState } from "react";
 import { toast } from "sonner";
+import { useDataTable } from "../../data-table-provider";
 
 function TableConfigurationListInner({
   children,
@@ -125,13 +126,19 @@ function TableConfigurationListItem({
 }: {
   config: TableConfiguration;
 }) {
+  const { table } = useDataTable();
   const queryClient = useQueryClient();
+
+  const applyConfig = () => {
+    if (!table) return;
+
+    table.setColumnVisibility(config.tableConfig.columnVisibility);
+  };
 
   const { mutate: deleteConfig, isPending: isDeletingConfig } = useMutation({
     mutationFn: api.tableConfigurations.delete,
     onSuccess: () => {
       toast.success("Configuration deleted");
-      // * Invalidate on success
       queryClient.invalidateQueries({
         queryKey: queries.tableConfiguration.listUserConfigurations._def,
       });
@@ -142,7 +149,10 @@ function TableConfigurationListItem({
   });
 
   return (
-    <div className="group flex items-center justify-between rounded-md py-0.5 px-2 w-full hover:bg-accent">
+    <div
+      onClick={applyConfig}
+      className="group flex items-center justify-between rounded-md py-0.5 px-2 w-full hover:bg-accent"
+    >
       <div className="flex items-center gap-2">
         {config.isDefault && (
           <span
